@@ -258,6 +258,54 @@ function setBodyColors(Carr) {
   for (let f = 0; f < nf; f++) { const cb = f*3, r = Carr[cb]/255, g = Carr[cb+1]/255, b = Carr[cb+2]/255; for (let k = 0; k < 6; k++) { col[o]=r; col[o+1]=g; col[o+2]=b; o += 3; } }
   geo.getAttribute('color').needsUpdate = true;
 }
+// ── THE BAKED SKIN ────────────────────────────────────────────────────────
+// public/skin/ carries a per-TEXEL intensity map baked from our own generated
+// turnaround (tools/skin/README.md), plus per-corner UVs in buildNeutralBody's
+// own face order. It replaces the per-FACE `D.Ib` byte and nothing else: race
+// is still snapRamp(ramp, i), so every tone and both beast ramps apply unchanged.
+// NEVER TRAPS: if either file is absent, skinTex stays null and setBodySkin
+// falls through to setBodyRamp, exactly as the title screen falls back.
+let skinI = null, skinTexCanvas = null, skinTex = null;
+async function loadSkin() {
+  try {
+    const [uv, img] = await Promise.all([
+      fetch('./skin/skin-uv.json').then((r) => r.ok ? r.json() : Promise.reject()),
+      new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i);
+        i.onerror = rej; i.src = './skin/skin-intensity.png'; }),
+    ]);
+    if (uv.n !== nf) return;                       // rig changed: do not guess
+    const uvs = new Float32Array(nf * 6 * 2);
+    let q = 0;
+    for (let f = 0; f < nf; f++) for (const vi of TRI) {
+      uvs[q++] = uv.uv[f * 8 + vi * 2]; uvs[q++] = uv.uv[f * 8 + vi * 2 + 1];
+    }
+    geo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+    const c = document.createElement('canvas');
+    c.width = img.width; c.height = img.height;
+    const g2 = c.getContext('2d'); g2.drawImage(img, 0, 0);
+    skinI = g2.getImageData(0, 0, c.width, c.height);
+    skinTexCanvas = document.createElement('canvas');
+    skinTexCanvas.width = c.width; skinTexCanvas.height = c.height;
+    skinTex = new THREE.CanvasTexture(skinTexCanvas);
+    skinTex.magFilter = THREE.NearestFilter; skinTex.minFilter = THREE.NearestFilter;
+    skinTex.generateMipmaps = false;
+    applyTone();
+  } catch { /* no skin assets: the ramp path still works */ }
+}
+// paint the intensity map through this race's ramp - the same snapRamp the
+// per-face path uses, so a race is still nothing more than a ramp swap
+function setBodySkin(ramp) {
+  if (!skinI || !skinTex) { setBodyRamp(ramp); return; }
+  const src = skinI.data;
+  const out = skinTexCanvas.getContext('2d').createImageData(skinI.width, skinI.height);
+  for (let i = 0; i < src.length; i += 4) {
+    const c = snapRamp(ramp, src[i]);
+    out.data[i] = c[0]; out.data[i + 1] = c[1]; out.data[i + 2] = c[2]; out.data[i + 3] = 255;
+  }
+  skinTexCanvas.getContext('2d').putImageData(out, 0, 0);
+  skinTex.needsUpdate = true;
+  if (mat.map !== skinTex) { mat.map = skinTex; mat.vertexColors = false; mat.needsUpdate = true; }
+}
 function setBodyRamp(ramp) { let o = 0; for (let f = 0; f < nf; f++) { const c = snapRamp(ramp, D.Ib ? D.Ib[f] : 150); const r=c[0]/255,g=c[1]/255,b=c[2]/255; for (let k = 0; k < 6; k++) { col[o]=r; col[o+1]=g; col[o+2]=b; o += 3; } } geo.getAttribute('color').needsUpdate = true; }
 const geo = new THREE.BufferGeometry();
 geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
@@ -352,10 +400,23 @@ const pieceTables = {
 const orcPieceMesh = pieceTables.orc;
 const undeadPieceMesh = pieceTables.undead;
 for (const t of Object.values(pieceTables)) hidePieces(t);
-const RACES = ['Human','Elf','Khajiit','Argonian']; let raceIx = 0;
+// Daggerfall has EIGHT races; the editor carried four families, so Breton,
+// Redguard and Nord all collapsed into one "Human" entry with one tone. The
+// palette families stay four (the payload keys them), but each race now picks
+// its own tone within its family, so a Redguard and a Nord are not the same skin.
+const RACES = ['Breton','Redguard','Nord','High Elf','Wood Elf','Dark Elf','Khajiit','Argonian'];
+const RACE_FAMILY = { Breton:'Human', Redguard:'Human', Nord:'Human',
+  'High Elf':'Elf', 'Wood Elf':'Elf', 'Dark Elf':'Elf', Khajiit:'Khajiit', Argonian:'Argonian' };
+// default tone index within the family, by DFU's own race order
+const RACE_TONE = { Breton:0, Redguard:2, Nord:1, 'High Elf':0, 'Wood Elf':1, 'Dark Elf':2,
+  Khajiit:0, Argonian:0 };
+const HAS_TAIL = { Khajiit:'cat', Argonian:'lizard' };
+let raceIx = 0;
 const raceHair = {};
 for (const R of RACES) {
-  const packs = (D.hair && D.hair[R]) ? D.hair[R] : {};
+  // hair packs are keyed by FAMILY, not by race - all three human races share
+  // the Human set, all three elves the Elf set
+  const packs = (D.hair && D.hair[RACE_FAMILY[R]]) ? D.hair[RACE_FAMILY[R]] : {};
   const styles = Object.keys(packs);
   raceHair[R] = { styles, meshes: {}, ix: 0 };
   for (const st of styles) { const m = buildPiece(packs[st]); m.visible = false; raceHair[R].meshes[st] = m; }
@@ -581,27 +642,31 @@ if (tailMesh) tailMesh.visible = false;
 if (tailCatMesh) tailCatMesh.visible = false;
 const helmOn = () => !!(pieceMesh.helm && pieceMesh.helm.visible);
 const PKEY = { Human:'human', Elf:'elf', Khajiit:'khajiit', Argonian:'argonian' };
-const toneIx = { Human:0, Elf:0, Khajiit:0, Argonian:0 };
+const toneIx = Object.fromEntries(RACES.map((R) => [R, RACE_TONE[R] ?? 0]));
 function applyTone() {
-  const R = RACES[raceIx], pal = (D.PALETTES||{})[PKEY[R]]; if (!pal) return;
+  const R = RACES[raceIx], pal = (D.PALETTES||{})[PKEY[RACE_FAMILY[R]]]; if (!pal) return;
   const e = pal[toneIx[R] % pal.length];
+  // TAILS ride the race, and only these two have one.
+  if (tailMesh) tailMesh.visible = (HAS_TAIL[R] === 'lizard');
+  if (tailCatMesh) tailCatMesh.visible = (HAS_TAIL[R] === 'cat');
   if (R === 'Khajiit') {
-    setBodyRamp(e.coat);
+    setBodySkin(e.coat);
     if (bodyFurCoat) bodyFurCoat.userData.recolor(e.coat);
     if (bodyFurBelly) bodyFurBelly.userData.recolor(e.belly);
     if (tailCatMesh) tailCatMesh.userData.recolor(e.coat);
     { const h = curHair(); if (h) h.userData.recolor(e.coat); }
   } else if (R === 'Argonian') {
-    setBodyRamp(e.ramp);
+    setBodySkin(e.ramp);
     if (bodyScalesMesh) bodyScalesMesh.userData.recolor(e.ramp);
     if (tailMesh) tailMesh.userData.recolor(e.ramp);
     { const h = curHair(); if (h) h.userData.recolor(e.ramp); }
   } else {
-    setBodyRamp(e.ramp); // Human / Elf skin tone
+    setBodySkin(e.ramp); // the six human/elf skin tones
   }
 }
 const syncHair = () => { const R = RACES[raceIx]; applyTone(); for (const rr of RACES) { const h = raceHair[rr]; if (h) for (const st of h.styles) h.meshes[st].visible = false; } const m = curHair(); if (m) m.visible = !helmOn(); if (tailMesh) tailMesh.visible = (RACES[raceIx] === 'Argonian'); if (tailCatMesh) tailCatMesh.visible = (RACES[raceIx] === 'Khajiit'); if (bodyScalesMesh) bodyScalesMesh.visible = (RACES[raceIx] === 'Argonian'); if (bodyFurCoat) bodyFurCoat.visible = (RACES[raceIx] === 'Khajiit'); if (bodyFurBelly) bodyFurBelly.visible = (RACES[raceIx] === 'Khajiit'); }; // per-race body detail
 syncHair();
+loadSkin();   // async; re-runs applyTone once the texture is up
 scene.add(pivot);
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0x40404a, 0.9));

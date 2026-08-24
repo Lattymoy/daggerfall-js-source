@@ -54,6 +54,7 @@ export function createPlayerMagic({
   onTeleport = null,   // TP-slice: the Teleport effect's prompt seam (the host owns the box)
   onIdentify = null,   // X7: the Identify effect's window seam ({chance, refund}) - same shape as onTeleport
   onDispel = null,     // X9: the creature-dispel sweep seam ({group, chance}) - the host owns the scan and the pool
+  onDispelMagic = null,// X10: the bundle-picker seam ({chance}) - the host owns the window
   rolls = Math.random,   // ENGINE-PRNG RULE: the saving-throw/magnitude roll slot (uniform; sequence-free)
 }) {
   const playerCaster = () => ({ entity: playerEntity, sinks: playerSinks });
@@ -136,6 +137,10 @@ export function createPlayerMagic({
     // the nearby scan and the foe pool the destroy acts on, so the
     // whole sweep goes out through one seam.
     if (r.dispel) onDispel?.(r.dispel);
+    // X10: DISPEL MAGIC opens a picker over the player's own live
+    // bundles. No refund here, unlike Identify - DFU charges the cast
+    // even if the popup is cancelled, "confirmed in classic".
+    if (r.dispelMagic) onDispelMagic?.(r.dispelMagic);
     if (r.identify) {
       playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity,
         (playerEntity.magicka ?? 0) + r.identify.refund);

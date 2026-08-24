@@ -257,8 +257,8 @@ export const SERVICE_DESTINATION = Object.freeze({
   BuySoulgems: 'guildServiceBuySoulgems',   // X6: the trade window in Buy mode over the daily soul-gem shelf
   Teleport: 'guildServiceTeleport',   // G5: the travel map, armed for teleportation
   DaedraSummoning: null,   // FLAGGED: the daedra summoning flow
-  Spymaster: null,         // FLAGGED: 402 then the quest offer
-  ReceiveArmor: null,      // FLAGGED: the knightly armor gift
+  Spymaster: 'guildServiceSpymaster',   // G6: the 402 greeting, then the NPC's own talk
+  ReceiveArmor: 'guildServiceReceiveArmor',   // G6: KnightlyOrder.ReceiveArmor
   ReceiveHouse: null,      // FLAGGED: banking / house ownership
 });
 export const serviceDestination = (service) => SERVICE_DESTINATION[service] ?? null;

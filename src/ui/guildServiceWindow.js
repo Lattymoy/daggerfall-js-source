@@ -100,6 +100,11 @@ export class GuildServiceWindow {
     if (button === MB_BUTTONS.Yes) b.onYes?.();
     else if (button === MB_BUTTONS.No) b.onNo?.();
     if (b.closesWindow) this._close();
+    // G6: ClickAnywhereToClose + OnClose (:436-437). The Spymaster's
+    // greeting is a box whose DISMISSAL is the service - it hands the
+    // player to the NPC's own talk window - so the hook runs after
+    // the close, not instead of it.
+    b.onDismiss?.();
   }
 
   _push(box) { if (box) this.boxes.push(box); }

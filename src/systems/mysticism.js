@@ -207,6 +207,73 @@ export function dispellableBundles(bundles) {
     DISPELLABLE_BUNDLE_TYPES.includes(b?.bundleType) && b?.showIcon !== false);
 }
 
+/** X10: the entity's live entries GROUPED into bundles, which is the
+ *  shape DispelMagic's picker actually wants. effects.js stamps every
+ *  entry one cast pushed with a shared bundleId/Name/Type; this reads
+ *  that back.
+ *
+ *  ShowIcon (DispelMagic.cs:100-112) is per-BUNDLE, not per-effect:
+ *  "at least one effect with remaining rounds must want to show an
+ *  icon, or be from an equipped item". So one icon-showing member
+ *  carries the whole bundle onto the list. The port's entries do not
+ *  each carry a ShowSpellIcon flag - the classes that set it false are
+ *  Open, Lock, Soul Trap, Dispel Magic and Identify, none of which
+ *  leave a lasting entry a picker could list except the ARMED
+ *  Open/Lock markers - so those two kinds are the port's showIcon
+ *  false set, named rather than inferred.
+ *
+ *  Entries with no bundleId at all (anything pushed before X10, or by
+ *  a path that does not go through applySpell) are skipped rather than
+ *  lumped together: an untagged entry belongs to no cast, and
+ *  inventing a bundle for it would let the picker offer something it
+ *  cannot coherently remove. */
+const NO_ICON_KINDS = new Set(['openArmed', 'lockArmed']);
+export function liveBundles(entity) {
+  const byId = new Map();
+  for (const a of entity?.activeEffects ?? []) {
+    if (a.ended || a.bundleId == null) continue;
+    let b = byId.get(a.bundleId);
+    if (!b) {
+      b = { bundleId: a.bundleId, name: a.bundleName ?? '', bundleType: a.bundleType ?? 'Spell',
+        entries: [], showIcon: false };
+      byId.set(a.bundleId, b);
+    }
+    b.entries.push(a);
+    // one icon-showing member is enough, and a held-item bundle always
+    // qualifies (the `|| fromEquippedItem != null` half)
+    if (!NO_ICON_KINDS.has(a.kind) || b.bundleType === 'HeldMagicItem') b.showIcon = true;
+  }
+  return [...byId.values()];
+}
+
+/** DispelMagic's SpellPicker_OnItemPicked (:114-137).
+ *
+ *  THE ONE ASYMMETRY: a bundle whose caster is the PLAYER is dispelled
+ *  UNCONDITIONALLY - "player self-cast spells are always dispelled,
+ *  otherwise use Chance roll". So your own buffs always come off, and
+ *  only something cast AT you gets to resist. `selfCast` is the port's
+ *  read of `bundle.caster.EntityType == EntityTypes.Player`.
+ *
+ *  Removing a bundle takes every entry that shares its id. Item
+ *  bundles come back on the next recast or re-equip, which DFU notes
+ *  explicitly, so this is not a permanent strip. */
+export function dispelBundle(entity, bundleId, { selfCast = false, roll01 = 0, chance = 0 } = {}) {
+  const list = entity?.activeEffects ?? [];
+  const doomed = list.filter((a) => a.bundleId === bundleId);
+  if (!doomed.length) return { removed: 0, alert: null };
+  if (!selfCast && Math.floor(roll01 * 100) >= chance) {
+    return { removed: 0, alert: 'dispelMagicFailed' };
+  }
+  entity.activeEffects = list.filter((a) => a.bundleId !== bundleId);
+  return { removed: doomed.length, alert: 'dispelMagicSuccess' };
+}
+
+/** Internal_Strings.csv - the two outcome lines. */
+export const DISPEL_MAGIC_TEXT = Object.freeze({
+  dispelMagicSuccess: 'Dispel magic was a success...',   // :1054
+  dispelMagicFailed: 'Dispel magic failed...',           // :1055
+});
+
 // ── Soul Trap (SoulTrap.cs :117-163, EnemyEntity.cs :157-238) ─────
 
 /** MiscItems.Soul_trap, the template DFU searches for by GROUP and

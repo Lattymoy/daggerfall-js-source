@@ -518,6 +518,13 @@ export function buildPaperdollPayload(pal, img, cif) {
   const payload = ({ n: faces.length, Ck, Ca, Ib, PALETTES, draped: drapedPacks, drapeGrids: drapeGridsOut, drapeMaterials: DRAPE_MATERIAL, bodyCore: BODY_CORE, poses: POSES, wristY: WRIST_JUNCTION_Y * 0.9, armX: ARM_X, neckY: NECK_PIVOT_Y * 0.9, attacks: ATTACKS_1H, attacks2H: ATTACKS_2H, attacksRanged: ATTACKS_RANGED, attacksFP: ATTACKS_FP, reactions: REACTIONS, strikes: STRIKES, dirToStrike: DIRECTION_TO_STRIKE,
     // WEAPON REGISTRY: [{name, hands, pack, items}] - the viewer's
     // weapon list is data. Steel display mesh; per-material items.
+    // THE TAILS WERE NEVER SHIPPED. buildTail has been imported here since the
+    // race system landed and packed nowhere, so D.tail/D.tailCat were undefined
+    // and the viewer's tailMesh/tailCatMesh were always null - the meshes it
+    // recolours in applyTone could not exist. raceCharacter.js has been building
+    // them all along for the in-engine bake; only the editor payload lacked them.
+    tail: packPiece(buildTail(ARGONIAN_HIDE, 'argonian')),
+    tailCat: packPiece(buildTail(KHAJIIT_FUR, 'khajiit')),
     arrow: packPiece(buildNockedArrow(weaponMaterialRamp(WEAPON_MATERIALS.Steel, (i) => pal.get(i)))),
     weaponPacks: (() => {
       const steel = weaponMaterialRamp(WEAPON_MATERIALS.Steel, (i) => pal.get(i));

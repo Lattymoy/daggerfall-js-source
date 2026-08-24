@@ -25,7 +25,9 @@ test('X9: the two CREATURE dispels answer a group and a chance; Dispel MAGIC is 
   assert.equal(isDispelCreature({ type: 6, subType: 0 }), false, 'Dispel Magic dispels BUNDLES, not creatures');
   assert.equal(effectByKey('6,1').ported, true);
   assert.equal(effectByKey('6,2').ported, true);
-  assert.equal(effectByKey('6,0').ported, false, 'and it stays inert - it needs the bundle picker');
+  // X10 gave 6,0 its picker, so it is ported too - but it is still not
+  // a CREATURE dispel, which is what this predicate is about.
+  assert.equal(effectByKey('6,0').ported, true, 'Dispel Magic ships its own arm since X10');
 });
 
 test('X9: ChanceFunction.Custom - the cast never fails, the chance travels', () => {
