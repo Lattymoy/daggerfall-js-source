@@ -54,7 +54,8 @@ import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { ChargenFlow } from '../ui/chargen.js';
 import { LevelUpScreen, CharSheet, preloadCharSheetArt } from '../ui/charsheet.js';
 import { charSheetHooks } from '../ui/charSheetNav.js';   // U32: the sheet's four navigation buttons
-import { SpellbookWindow, DeathScreen, knownSpells } from '../ui/inventory.js';
+import { DeathScreen } from '../ui/deathScreen.js';
+import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in)
 // U26: the dungeon finally gets the SAME inventory window the exterior
 // hosts have had since U8d - tabs, paperdoll, the real info panel and
 // point-and-click Use. The keyed InventoryWindow it used until now is
@@ -701,7 +702,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let activeOverlay = null;
 
   // ── U26: THE NATIVE INVENTORY IN THE DUNGEON ─────────────────────
-  // This host kept ui/inventory.js's keyed window while the exterior
+  // This host kept ui/deathScreen.js's keyed window while the exterior
   // hosts moved to the classic one at U8d, so a dungeon had no tabs,
   // no paperdoll, no real info panel and - after U25 - no Use mode
   // either, which is where a torch is actually lit. It was the last
@@ -719,6 +720,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   //    exactly as townTalk's seam has since G2.
   const droppedLoot = createDroppedLoot({ renderer, getTexture, uploadRecordFrame });
   preloadInventoryArt({ renderer, fetchBytes, palette });
+  preloadSpellbookArt({ renderer, fetchBytes, palette })   // U42: SPBK00I0/01I0 + the ICON/MASK sheets warm at boot
+    .catch((e) => console.warn('[spellbook] classic spellbook art unavailable:', e?.message ?? e));
   // U26: the PAPERDOLL too. The exterior hosts have warmed it since
   // U8f; this one never did, because its keyed window had no doll to
   // draw - so the native window opened here with an empty panel until
@@ -740,6 +743,24 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // the player may have opened something else - the reader takes the
   // slot only if it is still free (never clobbers a live window).
   const openBookHook = makeOpenBookHook({ fetchBytes, showReader: (w) => { if (!activeOverlay) activeOverlay = w; } });
+  /** U42: the CLASSIC spellbook, ONE construction for the F5 sheet's
+   *  button and the Backspace hotkey alike. PlayerEntity.GetSpells()
+   *  is the player's own array and the window WRITES to it, so it is
+   *  handed by reference. Null when the art has not landed - this
+   *  host has no HUD line to say so with, and DFU without SPBK00I0
+   *  has no window either. */
+  const makeSpellbookWindow = () => (spellbookArtLoaded()
+    ? new SpellbookWindow({
+      spells: () => (playerEntity.spells ??= []),
+      entity: playerEntity,
+      castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
+      // M3: the ready laws (silence gate, cost-at-ready, instant
+      // CasterOnly, the click latch) live in the ONE engine.
+      onReady: (sp, { noSpellPointCost } = {}) => magic.readySpell(sp, { free: !!noSpellPointCost }),
+      rows: (id) => textRsc?.variantLinesById(id) ?? [],
+    })
+    : null);
+
   function openInventory(lootItems, onEmptied = null) {
     return new NativeInventoryWindow({
       openBook: openBookHook,   // B1: the use-mode book arm
@@ -759,6 +780,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       entity: playerEntity,
       icons: { getTexture, uploadRecord, textures: renderer.textures },
       rows: (id) => textRsc?.variantLinesById(id) ?? [],   // AUDIT 22 F2
+      // U42: USING the Spellbook item opens the book
+      // (DaggerfallInventoryWindow.cs:1748-1764). The inventory has
+      // just run its own close law, so the slot is free.
+      openSpellbook: () => { const b = makeSpellbookWindow(); if (b) activeOverlay = b; },
       nowMinute: () => Math.floor(worldMinutes()),   // AUDIT 21 F2: the one clock
       loot: lootItems ? { items: () => lootItems } : undefined,
       // lastPlayerFeet is written by the frame loop; a drop before the
@@ -2808,12 +2833,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         entity: playerEntity,
         artDeps: { renderer, fetchBytes, palette },
         inventory: () => openInventory(null),
-        spellbook: () => (spellsByIndex
-          ? new SpellbookWindow(knownSpells(playerEntity, spellsByIndex), playerEntity, {
-            ready: (sp) => magic.readySpell(sp),
-            castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
-          })
-          : null),
+        spellbook: makeSpellbookWindow,
       }));
     },
     toggleInventory() {
@@ -2822,12 +2842,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     },
     toggleSpellbook() {
       if (activeOverlay) return;
-      activeOverlay = new SpellbookWindow(knownSpells(playerEntity, spellsByIndex), playerEntity, {
-        // M3: the ready laws (silence gate, cost-at-ready, instant
-        // CasterOnly, the click latch) live in the ONE engine.
-        ready: (sp) => magic.readySpell(sp),
-        castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
-      });
+      const w = makeSpellbookWindow();
+      if (w) activeOverlay = w;
     },
     // S2 pickup: piles + dead foes' corpses as activation targets;
     // U26: activating one now OPENS THE INVENTORY with the pile as the

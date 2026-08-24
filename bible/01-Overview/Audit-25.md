@@ -234,14 +234,18 @@ nameplates and a collision solver). Neither exists; "automap" appears
 in `src/` only in settings text and topic trees. The word does not
 appear in Port-Ledger.md at all. (~4,800 LOC.)
 
-**THE MAGIC CRAFTING WINDOWS - ~12% (7 windows, 4,581 C# LOC).** Six
+**THE MAGIC CRAFTING WINDOWS - ~12% (7 windows, 4,581 C# LOC).** ~~Six
 of seven unbuilt: spell maker, effect settings editor, item maker,
 potion maker, spell icon picker, colour picker. Only the spellbook has
 a counterpart (`ui/inventory.js SpellbookWindow`), and its BUY mode is
-missing. Behind all of them sits a shared unbuilt dependency: **the
-effect template registry** (`RegisterEffectTemplate` /
+missing.~~ Two still unbuilt as of U42: the spell ICON picker and the
+colour picker. S1 shipped the spell maker, M2 the potion maker, M4 the
+item maker, and U42 the spellbook itself on SPBK00I0.IMG with its BUY
+mode on SPBK01I0. Behind all of them sat a shared unbuilt dependency:
+**the effect template registry** (`RegisterEffectTemplate` /
 `GetEffectTemplate` / the crafting-station catalogue), without which
-no window can enumerate what a player may make. (~4,500 LOC.)
+no window could enumerate what a player may make - that is what
+`systems/spellEffects.js` became at S1. (~4,500 LOC.)
 
 **BANKING - 0% (`DaggerfallBankManager` 690 + `LoanChecker` 73 + two
 windows 1,017).** No accounts, no deposits, no loans, no letters of
@@ -400,11 +404,15 @@ house and ship ownership, the trade window's Repair and Identify
 modes, and the five FormulaHelper cost methods. Unblocks four guild
 services and the ReceiveHouse promotion branch.
 
-**S-E. THE MAGIC CRAFTING WINDOWS (~4,500 LOC, P1).** The effect
+**S-E. THE MAGIC CRAFTING WINDOWS (~4,500 LOC, P1).** ~~The effect
 template registry first, then spell maker + effect settings editor,
 item maker (needs S-C), potion maker + the twenty recipes, spellbook
-buy mode, icon/colour pickers. Closes six of the seventeen unbuilt
-guild service windows in one stroke.
+buy mode, icon/colour pickers.~~ MOSTLY SHIPPED: the registry (S1),
+the spell maker (S1), the potion maker (M2), the item maker (M4) and
+the spellbook with its buy mode (U42), which between them closed six
+of the seventeen unbuilt guild service windows. What is left of this
+row is the effect settings editor's remaining panels, the spell icon
+picker and the colour picker.
 
 **S-F. SAVE (~3,400 LOC, P1).** Multi-slot management with named
 saves and screenshots, building-interior save, `SceneCache_v1` /

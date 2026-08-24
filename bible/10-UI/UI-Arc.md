@@ -100,13 +100,16 @@ Systems). INVENTORY (classic F6): the player's items with stacks +
 the quantized weights and total; Enter on a Weapons item EQUIPS it
 through a scene callback - ?weapon is retired as the only path
 (loot a bow, use it); arrows refuse equip; drop/use pend.
-SPELLBOOK (DFU-default Backspace): the KNOWN list - the entity's own
+~~SPELLBOOK (DFU-default Backspace): the KNOWN list - the entity's own
 spells when present, else the INTERIM loud fallback of the file's
 ranged damage spells (classic starting-spell sets replace it when
-their data lands); Enter readies - ?spell retired as the only path.
-Both ride the U3 overlay seam; keys route in both hosts BELOW the
-overlay branch so Backspace still edits the chargen name. Windows
-close on ESC. Backgrounds FLAGGED as U2/U3.
+their data lands); Enter readies - ?spell retired as the only path.~~
+RETIRED at U42, which puts DaggerfallSpellBookWindow on the real
+SPBK00I0.IMG; the fallback went with it (chargen has assigned real
+starting spells since S3c, so it had been dead for players for
+months). Both rode the U3 overlay seam; keys route in every host
+BELOW the overlay branch so Backspace still edits the chargen name.
+Windows close on ESC. Backgrounds FLAGGED as U2/U3.
 
 ## U5 (HUD popup text): SHIPPED
 
@@ -224,15 +227,20 @@ delegates:
 ## Queue
 - Classic window art, per-ID TEXT.RSC verification (the database is
   now LIVE via U6; the id sweep remains).
-- Starting-spell sets: SHIPPED via Systems S6. AUDIT 18 struck this row's
+- ~~Starting-spell sets: SHIPPED via Systems S6. AUDIT 18 struck this row's
   parenthetical, which read "(the spellbook lists the character's real known
   spells)". It does when the character HAS spells; when `entity.spells` is
-  empty or absent, ui/inventory.js `knownSpells` falls through to an INTERIM
-  fallback that returns every ranged damage-health spell in SPELLS.STD - so
-  a Warrior's spellbook lists eight attack spells and can cast them.
-  DFU's DaggerfallSpellBookWindow.RefreshSpellsList has no fallback of any
-  kind. The fallback is flagged at its site (inventory.js:85-87); the row's
-  parenthetical is what let a reader treat that flag as already retired.
+  empty or absent, `knownSpells` falls through to an INTERIM fallback that
+  returns every ranged damage-health spell in SPELLS.STD - so a Warrior's
+  spellbook lists eight attack spells and can cast them. DFU's
+  DaggerfallSpellBookWindow.RefreshSpellsList has no fallback of any kind.~~
+  CLOSED at U42: the fallback is DELETED along with the window that used it,
+  and `SpellbookWindow` now reads `playerEntity.spells` and nothing else,
+  exactly as RefreshSpellsList does. A Warrior's book is empty and says so.
+  (The latch that guarded this row - `audit18_bible_docs`'s "UI-Arc does not
+  claim the spellbook lists real spells while the fallback lives" - reads the
+  fallback's own source text, so it goes dormant with the fallback rather
+  than silently passing over a live one.)
 
 ## U7 (the rest window): SHIPPED
 
@@ -2545,8 +2553,10 @@ its variant; the wagon says its line.
 ## U26 - THE DUNGEON GETS THE REAL INVENTORY (2026-08-19)
 
 `src/scenes/dungeonContext.js` + `src/scenes/dungeon.js` +
-`src/ui/input.js`; `src/ui/inventory.js`'s keyed `InventoryWindow` is
-DELETED. `test/nativeinventory.test.js` (+2 sweeps).
+`src/ui/input.js`; the keyed `InventoryWindow` in what was then
+`src/ui/inventory.js` (DELETED as a path at U42, when the last window
+left in it made it `src/ui/deathScreen.js`) is DELETED.
+`test/nativeinventory.test.js` (+2 sweeps).
 
 **The last host without it.** The exterior hosts moved to the classic
 window at U8d; the dungeon kept a text list, so underground there were
@@ -3026,9 +3036,9 @@ so it is pinned by name. History pages by whole 21-line pages, and its
 exit REWINDS to the first page before closing (`:127`), so reopening
 the book opens it at the start.
 
-Not done here: the spellbook's native-art retrofit (SPBK00I0.IMG over
+~~Not done here: the spellbook's native-art retrofit (SPBK00I0.IMG over
 its text idiom), which rides its own slice the way the level-up
-screen's does.
+screen's does.~~ That slice is U42, below.
 
 Pins: 7 in `charsheetnav.test.js`; 5 mutations, 5 killed.
 
@@ -3938,3 +3948,162 @@ the quest journal's click-through travel (`GotoPlace`) has no journal
 door yet; TextureReplacement's custom region maps and region
 overlays have no door; and the HUD smash-to-black around the trip
 waits on a fade layer the port does not have.
+
+## U42 - THE SPELLBOOK (2026-08-24)
+
+`src/ui/spellbookWindow.js` + `src/ui/spellIcons.js` (both new); the
+keyed window and `knownSpells` in `src/ui/inventory.js` are DELETED,
+and what is left of that module is the death screen, so the file is
+`src/ui/deathScreen.js` now. Wired in all four hosts;
+`src/systems/guildServiceFlow.js`'s two BuySpells nulls close;
+`src/systems/spellcast.js` gains the probe helper the fallback used
+to be. `test/spellbookwindow.test.js` (new), four pins re-aimed.
+
+**The last text stand-in on the daily loop is gone.** Every other
+window a player touches hourly had already moved onto its ARENA2 art
+- the inventory at U8d/U26, the char sheet at U8a, the trade window
+at U8c, the travel map at U41 - and the spellbook, which opens on
+EVERY cast, was still a text list on a brown rectangle. It is
+`DaggerfallSpellBookWindow.cs` now: SPBK00I0.IMG, sixteen rows with
+their live costs, the spell's own icon beside its target and element
+icons, three effect panels, and the four buttons painted into the
+art itself. DFU loads no cutouts and no highlight sprites for this
+window - every button is an invisible hit rect over the base IMG and
+selection is a COLOUR SWAP, which is why the port draws no chrome of
+its own either.
+
+**ONE WINDOW, TWO MODES, exactly as DFU has it.** The same class the
+player opens with Backspace is the one a Mages Guild or temple opens
+to sell spells - `buyMode` swaps the background to SPBK01I0.IMG, the
+list from the player's book to the guild's offer, the bottom-left
+button from DELETE to BUY, the spell-point label to a cost and a
+gold label, and removes the swap/sort row entirely. Two of the
+seventeen unbuilt guild services close on that one flag, because
+`DoGuildService`'s switch falls `BuySpells` straight into
+`BuySpellsMages` and pushes the same window with the same `true`.
+
+**The laws that are easy to get wrong, and are pinned:**
+
+- **The cost is recomputed every refresh**, because it rides the
+  caster's live skills, and the row reads `"{cost} - {name}"`. A
+  spell the player cannot currently pay for is not hidden or
+  disabled - all four of its colours lerp 75% toward grey.
+- **Lycanthropy casts free**, so its row shows 0 where classic shows
+  a cost, and readying it carries `noSpellPointCost` - DFU's own
+  comment says it is "setting cost to 0 so it displays correctly".
+- **Both confirmations close the book.** `CloseWindow()` sits
+  OUTSIDE the Yes arm in `DeleteSpellConfirm` and
+  `SortSpellsConfirm` alike, so answering No to "Delete this spell?"
+  puts you back in the world with the spell intact. Kept, quirk and
+  all - it is the kind of thing a reader "fixes" on sight.
+- **Sort is alphabetical, and only if that changed nothing does it
+  sort by point cost** - the SequenceEqual arm, which makes the
+  button a two-state toggle rather than a single sort.
+- **Swap forces one more row into view.** When the moved spell lands
+  the selection on the last visible row, the list scrolls one
+  further, so you can see where it is going. DFU comments the step;
+  the first mutation round proved a pin that could not see it (the
+  fixture's scroll index was already at the clamp).
+- **The two curse tags refuse before the prompt.** Vampire and
+  lycanthrope spells have no way back until the curse is cured, so
+  DELETE answers with a message and no YesNo at all.
+- **Buy price is the casting cost times four**, halved by a SHIFT on
+  Witches Festival with a floor of one, then run through
+  `CalculateTradePrice` against the building's quality. The ladder
+  is spellbook, then gold, then one of TEXT.RSC 260/261/262 chosen
+  by how the asking price compares to what the guild wanted -
+  `presentedCost >> 1` and `presentedCost - (presentedCost >> 2)`
+  are the two bands. Yes deducts through `DeductGoldAmount`, so a
+  letter of credit buys a spell.
+
+**RENAME retires a ledger row rather than idling.** U4 recorded that
+rename needed "per-entity spell COPIES + name persistence first",
+and both had quietly arrived. DFU's `EffectBundleSettings` is a
+STRUCT: `GetSpell` hands the handler a copy, the copy is renamed,
+`SetSpell` writes it into the player's slot, and the shared
+SPELLS.STD record is never touched. The port's records are objects
+shared by every caster, so `confirmRename` copies explicitly and
+marks the copy `custom` - which is exactly the flag `save.js` has
+read since S1 to store a whole record instead of a bare index. The
+rename is real, it is per-character, and it survives a save.
+
+**What the audits caught, all of it fixed:**
+
+- **`{}` for the haggle skills.** `tradePrice` passed an empty
+  options object to `calculateTradePrice`, which defaults Mercantile
+  to 0 and Personality to 50 - so every spell in the game would have
+  been priced against a merchant facing a haggler with no skill.
+  DFU's three-argument overload reaches for the player's LIVE pair
+  inside FormulaHelper; the port passes them in, and the host now
+  supplies the same pair every other trade surface does.
+- **`goldAmount` for the gold gate.** `GetGoldAmount` is coins PLUS
+  letters of credit; the draft read coins alone, which would have
+  refused a spell to a character holding a five-thousand-gold
+  letter. Both the gate and the gold label read `totalGoldAmount`
+  now - the same fix U41 made to the travel popup, in a second
+  window that had copied the wrong half.
+- **`-1` and `255` are the same "no subtype".** A SPELLS.STD record
+  reads the byte SIGNED and stores -1; a spell built in the maker
+  copies the catalog's 255; the effect table is keyed on 255. The
+  effect labels built their key raw, so a Free Action off the file
+  would have printed "Effect not found" in the book. Every other
+  consumer in the port already normalizes with `& 0xff`, and this
+  one does now.
+- **`this._rows` was both a field and a method.** The macro reader
+  and the row array collided on one name, and the collision was
+  invisible until the buy ladder tried to read TEXT.RSC 1703 and got
+  "this._rows is not a function". The reader is `_boxText` now.
+- **Five names with two homes.** `PANEL_X`, `PANEL_Y`,
+  `ROWS_DISPLAYED`, `LABEL_POS` and `TRADE_MESSAGE_BASE_ID` were all
+  already declared somewhere else in `src/`. The geometry folded
+  into one `SPELLBOOK_LAYOUT` export, and the ids, the row spacing,
+  the selected-row colour and the default text colour are imported
+  from the modules that already owned them. `SPELL_ICON_COUNT` was
+  the same story in the icon collection: `spellMaker.js` had held
+  `SpellIconCollection.SpellIconCount` since S1, so `spellIcons.js`
+  imports and re-exports it rather than writing 69 twice.
+
+**The item door opened too.** Using the Spellbook ITEM in the
+inventory has been a silent no-op since U25 - the useItem law
+answered `{ kind: 'spellbook' }` and `_useResult` had no arm for it,
+so the window that should open did not exist. It does now, and the
+inventory hands off through the same one-overlay-slot discipline the
+book reader uses (close law first, then the hook).
+
+**What the live probe caught: nothing, because it could not run.**
+This machine has no ARENA2, so SPBK00I0/SPBK01I0/ICON00I0/MASK04I0
+are build-verified and unit-pinned rather than seen. Both sheets are
+headerless IMGs the port's reader already sizes by byte length
+(20480 -> 320x64, 3200 -> 40x80), so no format work was needed; that
+is a claim about the reader, not about the pixels. The probe pass is
+owed, alongside U41's.
+
+Pins: 36 in `spellbookwindow.test.js`, and four existing pins
+re-aimed rather than deleted - `charsheetnav`'s ONE DFU MEMBER, ONE
+EXPORT sweep follows the window to its new home, `nativeinventory`'s
+four-hosts pin now asserts BOTH keyed windows are gone from the
+module and that the spellbook lives on its art, `mysticism`'s cast
+engine pin reads the free-cast rider on the ready call, and
+`audit18_hosts_dungeon`'s retired-flags pin reads the renamed hook.
+69 mutations, 68 dead and one PROVEN equivalent (a `void 0` after a
+label draw). The first round left five alive: the top-edge
+force-reveal step (whose fixture sat at the scroll clamp, so the
+step had nothing to do), a click-anywhere box's dismissal, Enter in
+buy mode, the selected row's missing shadow, and the icon size being
+derived from the atlas width rather than assumed. Each is its own
+pin now.
+
+FLAGGED: the ICON PICKER (`SpellIconPickerWindow`, 200 lines of DFU)
+is a window of its own, so clicking the icon panel says so rather
+than doing nothing; `ShowEffectPopup` reads each effect's
+`SpellBookDescription` tokens, which the port's effect table does
+not carry, so an effect panel's box shows the group/subgroup pair
+alone; the scroll thumb's three-slice art lives in Unity Resources
+rather than ARENA2, so the thumb is a flat bar at DFU's own
+geometry; DFU's double-click-to-buy on the list is a straight-through
+pick here, U24's recorded departure; the tooltip strings for the
+target and element icons are the en values, since the port has no
+localization table; and DFU wires the name label's rename in BOTH
+modes, where the handler then indexes the PLAYER's book with the
+OFFER's index - the port gates rename to cast mode and does not port
+the bug.

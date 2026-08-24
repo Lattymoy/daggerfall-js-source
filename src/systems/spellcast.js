@@ -162,6 +162,23 @@ export function rollMagnitude(effect, casterLevel, rolls = Math.random) {
 export const isDamageHealthEffect = (e) =>
   (e.type === 4 && e.subType === 0) || (e.type === 1 && e.subType === 0);
 
+/** U42: the FLIGHT PROBE's spell picker, and nothing else. It moved
+ *  here when the U4 keyed spellbook - whose `knownSpells` fallback
+ *  listed these as a stand-in for starting-spell data the port did
+ *  not have yet - retired onto the classic window. chargenSession
+ *  has assigned real starting spells since S3c, so no PLAYER reads
+ *  this: the two `__readyRanged` hooks do, to ready the cheapest
+ *  flier in SPELLS.STD for the missile leg (no classic starting set
+ *  carries one). */
+export function rangedDamageSpells(spellsByIndex) {
+  if (!spellsByIndex) return [];
+  const out = [];
+  for (const sp of spellsByIndex.values()) {
+    if ((sp.rangeType === 2 || sp.rangeType === 4) && sp.effects.some(isDamageHealthEffect)) out.push(sp);
+  }
+  return out;
+}
+
 /** ClassicTargetIndexToTargetType, verbatim (rangeType byte). */
 export const TARGET_TYPES = Object.freeze(['CasterOnly', 'ByTouch', 'SingleTargetAtRange', 'AreaAroundCaster', 'AreaAtRange']);
 

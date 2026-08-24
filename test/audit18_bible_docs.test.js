@@ -303,7 +303,7 @@ test('AUDIT 18: Home.md does not call the port desktop-only while the touch laye
 });
 
 test('AUDIT 18: UI-Arc does not claim the spellbook lists real spells while the fallback lives', () => {
-  const fallbackLives = /INTERIM fallback/.test(read('src/ui/inventory.js'));
+  const fallbackLives = /INTERIM fallback/.test(read('src/ui/deathScreen.js'));
   const uiArc = read('bible/10-UI/UI-Arc.md');
   if (fallbackLives) {
     assert.doesNotMatch(uiArc, /SHIPPED via Systems S6 \(the spellbook lists\n?\s*the character's real known spells\)/,

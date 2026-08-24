@@ -197,9 +197,16 @@ test('U26 / THE FOUR HOSTS: every host that opens an inventory opens the NATIVE 
   assert.equal(modes.includes('NativeInventoryWindow'), false, 'the interior host opens none');
   // ...and the keyed window is DELETED, not merely unimported. Its one
   // law lives in systems/equip.js, which every host reaches.
-  const keyed = readFileSync(join(root, 'src/ui/inventory.js'), 'utf8');
+  const keyed = readFileSync(join(root, 'src/ui/deathScreen.js'), 'utf8');
   assert.equal(keyed.includes('export class InventoryWindow'), false, 'the keyed window is gone');
-  assert.ok(keyed.includes('export class SpellbookWindow'), 'its module still carries the other two');
+  // U42 took the SPELLBOOK out of this module the same way U26 took
+  // the inventory - onto its own classic art - so what is left here
+  // is the death screen alone. Both-ways: the module must not have
+  // grown either window back.
+  assert.equal(keyed.includes('export class SpellbookWindow'), false, 'and so is the keyed spellbook (U42)');
+  assert.ok(keyed.includes('export class DeathScreen'), 'the death screen is what this module is now');
+  assert.ok(readFileSync(join(root, 'src/ui/spellbookWindow.js'), 'utf8').includes('export class SpellbookWindow'),
+    'the spellbook lives on the classic art');
 });
 
 test('U26: the dungeon routes RAW KEY CODES to a native overlay', () => {

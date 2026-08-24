@@ -98,6 +98,7 @@ export const USE_PENDING = Object.freeze({
   map: 'You study the map.',
   questItem: 'Nothing happens.',
   enchanted: 'Nothing happens.',
+  spellbook: 'You cannot open your spellbook here.',
 });
 
 /** TEXT.RSC 25 - the drop-gold prompt (:1272). */
@@ -308,6 +309,19 @@ export class NativeInventoryWindow {
       } else {
         this.boxes = [{ rows: [{ text: USE_PENDING.book, center: true }] }];
       }
+      return;
+    }
+    // U42: USING the Spellbook ITEM opens the spellbook window
+    // (DaggerfallInventoryWindow.cs:1748-1764 - PostMessage
+    // dfuiOpenSpellBookWindow). The empty-book arm is the useItem law's
+    // `noSpells` and lands in the textId branch below; this arm is the
+    // OPEN. The port has ONE overlay slot, so the inventory runs its
+    // close law FIRST (the same AUDIT B-C1 reason the book reader
+    // does) and the host's hook then takes the slot - a host with no
+    // hook keeps the window and says so.
+    if (r.kind === 'spellbook') {
+      if (this.hooks.openSpellbook) { this._closeSilently(); this.hooks.openSpellbook(); }
+      else this.boxes = [{ rows: [{ text: USE_PENDING.spellbook, center: true }] }];
       return;
     }
     if (r.text) this.boxes = [{ rows: [{ text: r.text, center: true }] }];

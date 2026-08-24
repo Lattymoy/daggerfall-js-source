@@ -104,10 +104,13 @@ test('U32: with NO quest source the logbook is withheld, not shown empty - the a
 test('U32: the spellbook is the ONE that already existed - no second implementation', () => {
   // ONE DFU MEMBER, ONE EXPORT. DaggerfallSpellBookWindow was ported at
   // U4 into ui/inventory.js with delete/swap/sort; wiring the button
-  // must not have minted a rival.
-  const files = ['ui/inventory.js', 'ui/charsheet.js', 'ui/charSheetNav.js', 'ui/questJournal.js', 'ui/playerHistory.js'];
+  // must not have minted a rival. U42 MOVED that one home onto the
+  // classic art (ui/spellbookWindow.js) and DELETED the U4 keyed
+  // window rather than leaving two - which is what this pin is for,
+  // so it follows the home instead of pinning the old address.
+  const files = ['ui/spellbookWindow.js', 'ui/deathScreen.js', 'ui/charsheet.js', 'ui/charSheetNav.js', 'ui/questJournal.js', 'ui/playerHistory.js'];
   const declarers = files.filter((f) => /export class SpellbookWindow/.test(src(f)));
-  assert.deepEqual(declarers, ['ui/inventory.js'], 'SpellbookWindow must be declared exactly once, where it already was');
+  assert.deepEqual(declarers, ['ui/spellbookWindow.js'], 'SpellbookWindow must be declared exactly once, where it now lives');
   // and the hosts hand the sheet THAT window
   for (const host of ['scenes/exterior.js', 'scenes/world.js', 'scenes/dungeonContext.js']) {
     const s = src(host);

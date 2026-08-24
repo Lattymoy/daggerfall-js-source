@@ -1673,16 +1673,21 @@ point cost when the sequence did not change (SortSpellsConfirm's
 SequenceEqual arm; the cost key is the window's castCost, which is
 DFU's null-caster cost because FormulaHelper resolves a null caster
 to the player). Every mutation is IN PLACE on entity.spells, so the
-save envelope's index array carries membership and order. RESIDUE on
+save envelope's index array carries membership and order. ~~RESIDUE on
 the ledger row: Rename (needs per-entity spell copies + name
 persistence), the prompt PROSE (keys cited, values pending a classic
-string source), and the window's OpenBook/PageTurn sounds.
+string source), and the window's OpenBook/PageTurn sounds.~~ The
+sounds landed with this slice; UI's U42 moved all of these laws onto
+the CLASSIC window (SPBK00I0.IMG) and closed Rename with them, so the
+keys here are the classic L/U/S/D bindings now and the residue is the
+prompt PROSE alone.
 
 **Verification.** 11 engine pins run the laws behaviorally
 (hostmagic.test.js); 5 wiring pins sweep every host's mount, click
 seam, frame drive, facades and save seam (hostmagic_wiring.test.js);
-5 spellbook pins run delete/swap/sort against the real window
-(inventoryui.test.js); S27's dungeon-only sweep INVERTED into the
+5 spellbook pins ran delete/swap/sort against the keyed window
+(inventoryui.test.js, DELETED at U42 - the laws are re-pinned against
+the classic window in spellbookwindow.test.js); S27's dungeon-only sweep INVERTED into the
 four-hosts-one-engine sweep. 5 mutations run, 5 killed. And because
 these hosts have no node coverage, tools/castProbe.mjs drives the
 LIVE pages frame-synced: the sort in a real book, the instant
