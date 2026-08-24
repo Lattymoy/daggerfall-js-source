@@ -872,6 +872,16 @@ export async function bootExterior(canvas, renderer, params, status) {
     // null skips both) - the same `region:location` string the world
     // host and townTalk's reveal use.
     discoveryLocationId: () => `${dfLocation.regionIndex}:${dfLocation.name ?? locationName}`,
+    // U39: this host never passed a scene context, so every consumer
+    // of questSceneCtx().mapId read the `?? 0` fallback - which the
+    // tavern's rental key exposed, since a room is stored by (mapId,
+    // buildingKey) and a buildingKey is only unique WITHIN a location.
+    // The world host has had this since Q4-v; the single-city host
+    // knows its own location outright.
+    questSceneCtx: () => ({
+      mapId: dfLocation?.mapTableData?.mapId ?? 0,
+      locationIndex: dfLocation?.locationIndex ?? 0,
+    }),
     // A5b: the tavern arm needs the host's clock, and leaving one has to
     // hand the street back its own song - the host owns both, so both
     // ride in as closures rather than worldModes reaching for a global.
@@ -1416,7 +1426,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (hudArt) {
       const _hfw = [-view[2], -view[10]];
       drawHud(renderer, canvas, hudArt, playerEntity,
-        ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt);
+        ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt,
+        { font: townTalk.font, cursorActive: townTalk.overlayActive || (modes?.overlayHeld ?? false) });   // U38
     }
     townTalk.frame(dt);   // T3b: HUD lines + the talk overlay, above everything
 

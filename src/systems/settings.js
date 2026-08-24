@@ -131,6 +131,11 @@ export const LIVE = Object.freeze({
   'GUI/ToolTipDelayInSeconds': 'src/ui/toolTip.js',
   'GUI/ToolTipTextColor': 'src/ui/toolTip.js',
   'GUI/ToolTipBackgroundColor': 'src/ui/toolTip.js',
+  // U38: the crosshair and the interaction-mode indicator. Both were
+  // stored-tier - the launcher offered a Crosshair toggle and an icon
+  // STYLE for components that did not exist.
+  'GUI/Crosshair': 'src/ui/hudCrosshair.js',
+  'GUI/InteractionModeIcon': 'src/ui/hudCrosshair.js',
 });
 /** unavailable: meaningless in a browser, or the port implements only
  *  ONE side of the branch. The launcher shows these disabled WITH the

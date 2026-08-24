@@ -2837,7 +2837,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (hudArt) {
       const _hfw = [-view[2], -view[10]];
       drawHud(renderer, canvas, hudArt, playerEntity,
-        ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt);
+        ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt,
+        { font: townTalk.font, cursorActive: townTalk.overlayActive || (modes?.overlayHeld ?? false) });   // U38
     }
     townTalk.frame(dt);   // T3b: HUD lines + the talk overlay, above everything
 

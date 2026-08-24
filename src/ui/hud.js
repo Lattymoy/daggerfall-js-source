@@ -16,6 +16,7 @@
 //   reference), min 1 - integer scaling keeps the art crisp.
 
 import { maxFatigue, maxBreath, liveStat } from '../systems/statMods.js';
+import { drawCrosshairAndModeIcon } from './hudCrosshair.js';   // U38
 import { playerDamageFlash } from './damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage rides the one HUD call
 
 export const COMPASS_BOX_OUTLINE = 2;
@@ -126,7 +127,8 @@ export async function loadHud({ fetchBytes, ImgFile, palette, renderer }) {
 
 /** Draw the HUD. vitals = { health, maxHealth, magicka, maxMagicka };
  *  heading01 = camera yaw / 2pi with 0 facing +z. */
-export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0) {
+export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
+  { font = null, cursorActive = false } = {}) {
   // AUDIT 24 (wave 39): ShowPlayerDamage's red flash, under the bars.
   // THE FOUR HOSTS RULE, applied before the fact: drawHud is the one
   // host-agnostic call all four make, "last, over the viewmodel", so
@@ -179,4 +181,12 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0) {
     { x: bx + COMPASS_BOX_OUTLINE * s, y: by + COMPASS_BOX_OUTLINE * s, w: bw - COMPASS_BOX_OUTLINE * 2 * s, h: stripH },
     { u0: scroll / art.compass.w, v0: 0, u1: (scroll + COMPASS_BOX_INTERIOR) / art.compass.w, v1: 1 });
   renderer.drawScreenQuad(box.tex, { x: bx, y: by, w: bw, h: bh });
+  // U38: the crosshair and the interaction-mode indicator, LAST -
+  // DaggerfallHUD draws them from one Update beside the vitals it
+  // already owns, and drawHud is the ONE host-agnostic call all four
+  // hosts make, so they ride it rather than four pasted frame bodies.
+  // The two geometry constants travel as arguments: this module is
+  // their home and hudCrosshair must not import back into it.
+  drawCrosshairAndModeIcon(renderer, canvas, font,
+    { cursorActive, scale: s, border: HUD_BORDER, barWidth: HUD_NATIVE_BAR_WIDTH });
 }

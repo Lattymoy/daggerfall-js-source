@@ -659,6 +659,11 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       if (font_) hud.draw(renderer, canvas, font_, hudScale(canvas.width, canvas.height));
     },
     get overlayActive() { return !!overlay; },
+    /** U38: the loaded HUD font, for the components drawHud draws
+     *  (the crosshair's mode label). This module already owns the ONE
+     *  FONT0003 both exterior hosts use; handing it out beats a second
+     *  load per host. */
+    get font() { return font; },
     /** AUDIT 21 (hosts lane, F6): the live overlay, so a death presenter can
      *  refuse to stack a second death screen on the first. */
     get overlay() { return overlay; },

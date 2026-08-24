@@ -47,6 +47,11 @@ const ENTITY_FIELDS = [
   // it a backward load left a FUTURE marker that froze all skill-raise
   // checks until the clock re-passed it.
   'lastSkillCheckTime',
+  // U39: the tavern's hunger clock (SerializablePlayer.cs:147, :316).
+  // DoFoodAndDrink's gate is a DIFFERENCE against it, so a save that
+  // dropped it would let a player eat every four in-game hours OR
+  // every reload, whichever came first.
+  'lastTimePlayerAteOrDrankAtTavern',
 ];
 
 /** AUDIT 17h F1: the ELEVEN social-group reputations DFU writes out
@@ -108,6 +113,10 @@ export function snapshotPlayer(entity, { position = null, classicMinutes = 0, re
   // (SerializablePlayer.cs:132/:300; each item's repairData rides the
   // plain spread, present only while a job runs).
   snap.otherItems = (entity.otherItems ?? []).map((it) => ({ ...it }));
+  // U39: PlayerEntity.RentedRooms (SerializablePlayer.cs:169, :336).
+  // Each record is plain data - name, mapId, buildingKey, bed index,
+  // expiry - so a shallow copy per room is the whole envelope.
+  snap.rentedRooms = (entity.rentedRooms ?? []).map((r) => ({ ...r }));
   // TP-slice: the Recall anchor (PlayerEntity.AnchorPosition - the
   // Teleport effect stores it on the entity, Teleport.cs:35).
   snap.anchorPosition = entity.anchorPosition ? { ...entity.anchorPosition } : null;
@@ -243,6 +252,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.items = snap.items.map((it) => ({ ...it }));
   entity.wagonItems = (snap.wagonItems ?? []).map((it) => ({ ...it }));   // W-slice (pre-W saves restore empty)
   entity.otherItems = (snap.otherItems ?? []).map((it) => ({ ...it }));   // R1: the in-repair collection (pre-R1 saves restore empty)
+  entity.rentedRooms = (snap.rentedRooms ?? []).map((r) => ({ ...r }));   // U39: the rented rooms (pre-U39 saves restore empty)
   entity.anchorPosition = snap.anchorPosition ? { ...snap.anchorPosition } : null;   // TP-slice
   // AUDIT 17f: a Currency stack saved before gold gained its template
   // index carries none, and stacksWith compares templateIndex - a

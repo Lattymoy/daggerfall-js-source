@@ -29,10 +29,13 @@ import {
 } from '../systems/guildServiceActions.js';
 import { SKILL_NAMES } from '../systems/skills.js';
 import { goldAmount } from '../systems/court.js';
+import { raceDisplayName, honorificOf } from '../systems/talkSession.js';
 
 /** DaggerfallInputMessageBox's own field width for the donation box
  *  (DaggerfallGuildServiceDonation :48-50: Numeric, MaxCharacters 8). */
-export const DONATION_FIELD = Object.freeze({ numeric: true, maxCharacters: DONATION_MAX_CHARACTERS });
+export const DONATION_FIELD = Object.freeze({
+  numeric: true, maxCharacters: DONATION_MAX_CHARACTERS, initial: DONATION_DEFAULT,
+});
 
 /** The prompt DFU shows over the donation field, from its
  *  Internal_Strings ("serviceDonateHowMuch"). */
@@ -56,9 +59,17 @@ export class ServiceFlowWindow {
     this.value = '';
     this._picker = null;
     this._syncPicker();
+    this._syncValue();
   }
 
   get top() { return this.boxes.length ? this.boxes[0] : null; }
+
+  /** DaggerfallInputMessageBox's `TextBox.Text = "..."` (donation
+   *  :51, the tavern's day count :168). The pre-fill belongs to the
+   *  FIELD, not to the window, because a chain can raise a second
+   *  field with a different default - so it is read every time the
+   *  top box changes rather than poked in once at construction. */
+  _syncValue() { this.value = this.top?.field?.initial ?? ''; }
 
   _syncPicker() {
     const t = this.top;
@@ -81,16 +92,20 @@ export class ServiceFlowWindow {
    *  show their next box immediately rather than behind the rest. */
   _advance(next = null) {
     this.boxes.shift();
-    this.value = '';
     if (next?.length) this.boxes.unshift(...next);
     this._picker = null;
     this._syncPicker();
+    this._syncValue();
     if (!this.boxes.length) this._close();
   }
 
   _close() { this.done = true; this.onClose?.(); }
 
-  push(boxes) { if (boxes?.length) this.boxes.unshift(...boxes); this._syncPicker(); }
+  push(boxes) {
+    if (boxes?.length) this.boxes.unshift(...boxes);
+    this._syncPicker();
+    this._syncValue();
+  }
 
   input(code, e = null) {
     const t = this.top;
@@ -151,14 +166,24 @@ export class ServiceFlowWindow {
   }
 }
 
-/** TEXT.RSC rows through the macro expansion, wrapped to the box.
- *  `rows(id)` is the host's TEXT.RSC reader. */
-const macroRows = (rows, id, ctx) => (rows(id) ?? [])
-  .map((r) => ({ ...r, text: expandGuildMacros(r.text, ctx) }))
-  .filter((r) => r.text !== '' || true);
+/** TEXT.RSC rows through the macro expansion. `rows(id)` is the host's
+ *  TEXT.RSC reader. Exported because U39's tavern speaks the same
+ *  records through the same expander - a second copy would be a second
+ *  place to forget a macro. */
+export const macroRows = (rows, id, ctx) => (rows(id) ?? [])
+  .map((r) => ({ ...r, text: expandGuildMacros(r.text, ctx) }));
 
 /** A plain string prompt as one centred row. */
 const line = (text) => [{ text, center: true }];
+
+/** U39: %ra and %hnr ride EVERY service record, because DFU expands
+ *  the whole MacroHelper table over each one. The tavern's own prompt
+ *  is where a live probe finally read one raw, but these three windows
+ *  speak the same records and had the same hole. */
+const identity = (entity) => ({
+  race: raceDisplayName(entity?.race),
+  honorific: honorificOf(entity?.gender),
+});
 
 // ── TRAINING ──────────────────────────────────────────────────────
 
@@ -171,7 +196,7 @@ const line = (text) => [{ text, center: true }];
 export function buildTrainingFlow(entity, guild, membership, deps) {
   const { rows, now, applyTraining, onClose, rolls = Math.random, guildTitle = '' } = deps;
   const offer = trainingOffer(entity, guild, membership, now());
-  const ctx = { amount: offer.price, gold: goldAmount(entity), guildTitle, playerName: entity.name ?? '' };
+  const ctx = { amount: offer.price, gold: goldAmount(entity), guildTitle, playerName: entity.name ?? '', ...identity(entity) };
   if (offer.kind === 'tooSoon') {
     return new ServiceFlowWindow([{ rows: macroRows(rows, offer.textId, ctx) }], { onClose });
   }
@@ -206,10 +231,9 @@ export function buildTrainingFlow(entity, guild, membership, deps) {
  *  is numeric-only. */
 export function buildDonationFlow(entity, store, divineFactionId, deps) {
   const { rows, onClose, rolls = Math.random, godName = '' } = deps;
-  let flow = null;
-  flow = new ServiceFlowWindow([{
+  return new ServiceFlowWindow([{
     rows: line(DONATE_HOW_MUCH),
-    field: DONATION_FIELD,
+    field: DONATION_FIELD,   // its `initial` IS TextBox.Text = "1000" (:51)
     onInput: (text) => {
       // int.TryParse: a non-number does NOTHING AT ALL in DFU - not
       // even a message - so an empty or unparsable field simply closes.
@@ -217,12 +241,10 @@ export function buildDonationFlow(entity, store, divineFactionId, deps) {
       if (amount === null) return null;
       const r = donate(entity, store, divineFactionId, amount, rolls);
       if (r.kind === 'invalid') return null;
-      const ctx = { amount, gold: goldAmount(entity), god: godName, playerName: entity.name ?? '' };
+      const ctx = { amount, gold: goldAmount(entity), god: godName, playerName: entity.name ?? '', ...identity(entity) };
       return [{ rows: macroRows(rows, r.textId, ctx) }];
     },
   }], { onClose });
-  flow.value = DONATION_DEFAULT;   // TextBox.Text = "1000" (:51)
-  return flow;
 }
 
 // ── CURE DISEASE ──────────────────────────────────────────────────
@@ -233,7 +255,7 @@ export function buildCureDiseaseFlow(entity, guild, membership, deps) {
   const offer = cureDiseaseOffer(entity, guild, membership, {
     quality, regionIndex, nowClassicMinutes: now(), becomingVampireOrWerebeast,
   });
-  const ctxFor = (amount) => ({ amount, gold: goldAmount(entity), god: godName, playerName: entity.name ?? '' });
+  const ctxFor = (amount) => ({ amount, gold: goldAmount(entity), god: godName, playerName: entity.name ?? '', ...identity(entity) });
 
   if (offer.kind === 'freeHoliday') {
     cureForFree(entity);
