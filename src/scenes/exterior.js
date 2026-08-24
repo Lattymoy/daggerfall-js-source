@@ -823,6 +823,9 @@ export async function bootExterior(canvas, renderer, params, status) {
   // dungeon host - the drag feeds the rig INSTEAD of the look.
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   addEventListener('mousemove', (e) => {
+    // U37: a window frees the mouse, so an open overlay gets the
+    // HOVER before the look gate refuses the unlocked pointer.
+    if (townTalk.hover(e) || modes?.hover?.(e)) return;
     if (document.pointerLockElement !== canvas) return;
     // AUDIT 24 (wave 45): RMB in walk mode ALWAYS ends here - it is a
     // weapon control, and whether this host or worldModes owns the

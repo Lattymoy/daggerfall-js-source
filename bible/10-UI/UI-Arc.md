@@ -3271,3 +3271,57 @@ survivors showed the first pins too soft. Live: tools/pauseProbe.mjs
 now drives the whole trip - Escape, CONTROLS, rebind MoveForwards from
 W to P, CONTINUE, back to the pause window, with the new binding in
 storage and the old one gone.
+
+## U37 - THE TOOLTIP, and the hover seam it forced (2026-08-23)
+
+ToolTip.cs on the native idiom - and with it THE MOUSE-MOVE SEAM the
+port has been missing since U25 flagged it on the inventory's info
+panel. DFU's tooltip is a shared component every button points at; the
+port has no retained widget tree, so a window owns one, tells it the
+hovered text each frame, and draws it LAST - DFU's own order, where
+the tooltip is the final component in the canvas.
+
+The law is small and every line of it is pinned: margin 2 all round,
+MouseOffset (0,4), rows split on `\r` with the two-character ESCAPED
+form collapsed first (text read from a plain-text file carries the
+escape, not the control character), and the box sized
+`glyph * rows + margins - 1`. That **-1 is DFU's own**, per box rather
+than per row, and it is pinned as such so a "rounding cleanup" cannot
+quietly take a pixel back.
+
+**The edge handling is a SHIFT, not a flip.** A box past the right or
+bottom edge is pushed back by exactly its overflow and ends flush
+against the edge; it never mirrors to the other side of the cursor.
+That is the detail most likely to be "improved" by someone who has
+seen other tooltips, so it has its own pin with the flip as the
+mutant.
+
+**Four settings stop being furniture.** `GUI/EnableToolTips`,
+`ToolTipDelayInSeconds`, `ToolTipTextColor` and `ToolTipBackgroundColor`
+all shipped stored-tier with no consumer. They are LIVE now, and the
+two colour defaults (404040D2, E6E6C8FF) are cross-checked against
+DaggerfallUI's Color32s - which is what lets the settings store be
+their one home instead of a second copy in this module. The delay is a
+REST, not a dwell: crossing to a different tip restarts its clock,
+resting on the same one keeps accumulating.
+
+**The seam.** `overlayHover(vx, vy)` on the dungeon channel and
+`hover(e)` on townTalk's, with all four hosts routing mousemove into
+one of them before their look gate - a window frees the mouse, so an
+open overlay gets the hover rather than a look delta the pointer lock
+would refuse anyway. `tick(dt)` is the clock, which is the name the
+hosts' overlay seam ALREADY called: one per-frame hook, not a second
+beside it.
+
+**The first consumer is I4's grid**, and it is DFU's own use: a key
+button offers a tip only where its label ELONGATED (SuppressToolTip,
+:214-216), and the tip is then the full text the `...` stands in for.
+The inventory's hover fill is now a narrower flag than it was - the
+seam exists; that window needs its own `hover`.
+
+Pins: 7 in `tooltip.test.js`; five mutations, five dead - one of them
+(the empty-text clear) only observable because the clear is IMMEDIATE
+rather than waiting for a tick, which is exactly what stops a window
+drawing a stale tip mid-frame. Live in tools/pauseProbe.mjs: the tip
+suppressed on a short label, showing the full text behind an
+elongated one, and gone on leave.

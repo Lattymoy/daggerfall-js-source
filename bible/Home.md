@@ -247,8 +247,8 @@ combat line numbers below are refreshed with it.
 - `src/scenes/exterior.js:495` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:621` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/exterior.js:740` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:942` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:1085` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:945` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:1088` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/shared.js:177` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:194` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
@@ -259,13 +259,13 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:1049` - stay the E1 FLAGGED seams no host computes.
 - `src/scenes/world.js:1177` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
 - `src/scenes/world.js:1410` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:1676` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:1841` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
-- `src/scenes/world.js:1918` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:2151` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:2170` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:2462` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:2766` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:1679` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:1844` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
+- `src/scenes/world.js:1921` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:2154` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:2173` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:2465` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:2769` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:209` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:251` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:399` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
@@ -279,7 +279,7 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:882` - with the trade window's own mode flow, the same INTERIM the
 - `src/scenes/worldModes.js:1080` - first (owned houses and quest buildings FLAGGED/seamed per
 - `src/scenes/worldModes.js:1088` - (:515). FLAGGED: the Open-spell bypass (:519), the bash arms with
-- `src/scenes/worldModes.js:2016` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
+- `src/scenes/worldModes.js:2036` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
@@ -366,7 +366,7 @@ combat line numbers below are refreshed with it.
 - `src/ui/nativeInventory.js:134` - *  is 0 until those effect channels exist (FLAGGED). Exported so the
 - `src/ui/nativeInventory.js:247` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
 - `src/ui/nativeInventory.js:491` - field is INTERIM-pending with the local Remove split.
-- `src/ui/nativeInventory.js:645` - FLAGGED: the hover fill is the mouse-move seam's, not this
+- `src/ui/nativeInventory.js:646` - the panel from the slot under the cursor - FLAGGED as that,
 - `src/ui/nativeTalk.js:237` - lands with the Tell-me-about slice (FLAGGED).
 - `src/ui/nativeTalk.js:259` - B5-6: the four pages that were INTERIM no-ops. Each falls back
 - `src/ui/nativeTrade.js:16` - scroll. FLAGGED loud: the basket + mode-action flow (DFU

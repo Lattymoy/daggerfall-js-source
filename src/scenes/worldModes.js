@@ -2004,6 +2004,26 @@ export function createWorldModes(host) {
     return true;
   }
 
+  /** U37: THE HOVER SEAM, the wheel seam's shape - both mode-owned
+   *  windows and the mounted dungeon context's. */
+  function hover(e) {
+    const at = () => {
+      const r = canvas.getBoundingClientRect();
+      return pointToNative(nativeMetrics(canvas),
+        (e.clientX - r.left) * (canvas.width / r.width),
+        (e.clientY - r.top) * (canvas.height / r.height));
+    };
+    if (mode === 'dungeon' && dungeonCtx?.uiOverlayActive) {
+      const v = at();
+      dungeonCtx.overlayHover?.(v ? v[0] : -1, v ? v[1] : -1);
+      return true;
+    }
+    if (mode !== 'interior' || !interiorOverlay?.hover) return false;
+    const v = at();
+    interiorOverlay.hover(v ? v[0] : -1, v ? v[1] : -1);
+    return true;
+  }
+
   return {
     get mode() { return mode; },
     get dungeonLocation() { return dungeonLoc; },   // B2: playerInside's dungeon arm
@@ -2130,6 +2150,7 @@ export function createWorldModes(host) {
       return null;                       // exterior: the host's own context stands
     },
     pointerdown,
+    hover,
     wheel,
     /** A mode-owned window is up (the hosts' look gate reads this
      *  alongside townTalk.overlayActive). */

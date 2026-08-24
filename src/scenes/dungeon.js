@@ -204,6 +204,16 @@ export async function bootDungeon(canvas, renderer, params, status) {
   });
   addEventListener('mousemove', (e) => {
     ctx.reportMouse?.(e.movementX, e.movementY, document.pointerLockElement === canvas);   // raw input truth for F8
+    // U37: a window frees the mouse, so an open overlay gets the HOVER
+    // (native coords) instead of the look delta.
+    if (ctx.uiOverlayActive) {
+      const r = canvas.getBoundingClientRect();
+      const v = pointToNative(nativeMetrics(canvas),
+        (e.clientX - r.left) * (canvas.width / r.width),
+        (e.clientY - r.top) * (canvas.height / r.height));
+      ctx.overlayHover?.(v ? v[0] : -1, v ? v[1] : -1);
+      return;
+    }
     if (document.pointerLockElement === canvas && (e.buttons & 2)) { ctx.playerAttackInput(e.movementX, e.movementY, true); return; }
     if (document.pointerLockElement !== canvas) return;
     cam.yaw += e.movementX * lookScale();   // HANDEDNESS (mat4's law): mouse-right turns toward +x = screen-right
@@ -255,6 +265,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
         box: (w.topBox?.rows ?? []).map((r) => r.text ?? r).join(' | ') || null,
       });
     };
+    window.__overlayWindow = () => ctx.overlayWindow?.() ?? null;   // U37 probe surface: the live window itself
     window.__overlayKey = (code) => ctx.overlayInput(code, { code, key: code });
     window.__overlayClick = (vx, vy) => ctx.overlayClick(vx, vy);
     window.__toggleInventory = () => { ctx.toggleInventory(); return window.__overlay(); };

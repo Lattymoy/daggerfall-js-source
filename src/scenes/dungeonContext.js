@@ -2709,6 +2709,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     /** The wheel seam (U-scroll): scroll never closes a window, so no
      *  done check. */
     overlayWheel(dir) { activeOverlay?.wheel?.(dir); },
+    /** U37: THE HOVER SEAM, flagged since U25 and unbuilt until the
+     *  tooltip needed it. Native coords, no done check - hovering
+     *  never closes anything. */
+    overlayHover(vx, vy) { activeOverlay?.hover?.(vx, vy); },
     /** U26: ui/input.js asks this before mapping a key to an action -
      *  a native window keys off raw codes. */
     get overlayIsNative() { return !!activeOverlay?.isChoiceWindow; },

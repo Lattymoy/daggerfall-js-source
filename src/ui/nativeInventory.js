@@ -640,10 +640,11 @@ export class NativeInventoryWindow {
     // U25: the ITEM INFO PANEL - a 50x37 cutout of ITEM00I0 drawn into
     // the 37x32 rect at (223,145), with the last-inspected item's rows
     // at itemInfoPanelLabel's own TextScale 0.43 and ExtraLeading 3.
-    // DFU fills it on HOVER; the port has no mouse-move surface on
-    // this window, so it shows the item the last Info click read.
-    // FLAGGED: the hover fill is the mouse-move seam's, not this
-    // slice's.
+    // DFU fills it on HOVER. U37 built the mouse-move seam this used
+    // to wait on (ui/toolTip.js + the hosts' overlayHover), so what
+    // remains is this window growing its own `hover(vx, vy)` to fill
+    // the panel from the slot under the cursor - FLAGGED as that,
+    // narrower than the seam-shaped gap it was.
     if (_art.info) {
       drawImgCrop(renderer, _art.info, m, INV_RECTS.infoCutout, INV_RECTS.itemInfoPanel);
       if (this.infoItem && this.hooks.rows) {

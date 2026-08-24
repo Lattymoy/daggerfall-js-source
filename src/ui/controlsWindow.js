@@ -47,9 +47,10 @@ import { ACTIONS, saveKeyBinds } from '../systems/inputActions.js';
 import { bindings } from './input.js';
 import {
   createUnsavedKeybinds, currentDict, setUnsavedBinding, checkDuplicates,
-  applyUnsavedKeybinds, resetUnsavedToDefaults, buttonText,
+  applyUnsavedKeybinds, resetUnsavedToDefaults, buttonText, ELONGATED_TEXT,
   INTERNAL_DUPE_COLOR, CROSS_DUPE_COLOR,
 } from '../systems/controlsConfig.js';
+import { ToolTip } from './toolTip.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 
@@ -124,6 +125,11 @@ export class ControlsWindow {
     this._removeAction = null;
     this._box = null;
     this.dupes = checkDuplicates(this.unsaved);
+    // U37: DFU points every key button at the shared tooltip and
+    // SUPPRESSES it unless the label elongated (:214-216) - the tip
+    // exists to show the full text a '...' is standing in for.
+    this.tip = new ToolTip();
+    this._hover = [-1, -1];
   }
 
   _click() { audio.playOneShot(SOUND.ButtonClick, 1); }
@@ -175,6 +181,30 @@ export class ControlsWindow {
       this._close();
     }
   }
+
+  /** U37: the hover seam. A key button whose label ELONGATED offers
+   *  its full text; everything else offers nothing, exactly as
+   *  SuppressToolTip decides (:214-216). */
+  hover(vx, vy) {
+    this._hover = [vx, vy];
+    if (this.capture || this.top) { this.tip.hide(); return; }
+    const dict = currentDict(this.unsaved);
+    for (const b of this.buttons) {
+      if (inRect([b.x, b.y, KEY_BTN.w, KEY_BTN.h], vx, vy)) {
+        const code = dict.get(b.action);
+        // the SUPPRESS rule: only an elongated label gets a tip
+        if (buttonText(code) !== ELONGATED_TEXT) { this.tip.hide(); return; }
+        this.tip.show(buttonText(code, true), vx, vy);
+        return;
+      }
+    }
+    this.tip.hide();
+  }
+
+  /** The tooltip's rest clock. `tick` is the name the hosts' overlay
+   *  seam already calls (townTalk.frame, dungeonContext.tickOverlay) -
+   *  ONE per-frame hook, not a second one beside it. */
+  tick(dt) { this.tip.update(dt); }
 
   /** vx/vy native; `right` marks the remove gesture (:371). */
   click(vx, vy, right = false) {
@@ -269,5 +299,6 @@ export class ControlsWindow {
         (this._box.rows ?? []).forEach((r, i) => drawText(renderer, font, r.text, m.ox + 20 * m.s, m.oy + (20 + i * 10) * m.s, m.s, TEXT_COLOR));
       }
     } else this._box = null;
+    this.tip.draw(renderer, m, font);   // LAST - DFU's final-component order
   }
 }
