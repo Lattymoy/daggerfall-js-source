@@ -458,17 +458,35 @@ test('audit18: the dungeon spell map keeps the FIRST duplicate, as DFU does', { 
   assert.equal(first.get(58).spellName ?? first.get(58).name, 'Holy Word');
   assert.equal(last.get(58).spellName ?? last.get(58).name, 'Holy Touch');
   assert.notEqual(first.get(58).rangeType, last.get(58).rangeType, 'and they behave differently');
-  // the host must build the first-wins map
-  assert.ok(/if \(!_byIndex\.has\(sp\.index\)\) _byIndex\.set\(sp\.index, sp\);/.test(hostSrc('dungeonContext.js')));
-  assert.equal(/new Map\(readSpellsStd\(/.test(hostSrc('dungeonContext.js')), false, 'the last-wins fold is gone');
+  // The LOADER must build the first-wins map. G4 moved it out of
+  // dungeonContext into the shared one, so the pin follows the law
+  // rather than the file it used to sit in.
+  assert.ok(/if \(!byIndex\.has\(sp\.index\)\) byIndex\.set\(sp\.index, sp\);/.test(hostSrc('shared.js')));
+  assert.equal(/new Map\(readSpellsStd\(/.test(hostSrc('shared.js')), false, 'the last-wins fold is gone');
 });
 
 test('audit18 sweep: SPELLS.STD and MAGIC.DEF no longer share one catch', () => {
-  const src = hostSrc('dungeonContext.js');
-  const i = src.indexOf('readSpellsStd(await fetchBytes(\'SPELLS.STD\')');
-  const j = src.indexOf('setMagicItemTemplates(readMagicDef');
-  assert.ok(i > 0 && j > i);
+  // G4 MOVED this law rather than retiring it. It used to live in
+  // dungeonContext, which is exactly why the EXTERIOR hosts never had
+  // the registries at all - a magic item minted out there found no
+  // templates. The two-catch rule now lives with the one loader, and
+  // the pin follows it there and gets stronger: every host reaches
+  // the registries through that loader and none of them reads the two
+  // files itself.
+  const src = hostSrc('shared.js');
+  const i = src.indexOf("readSpellsStd(await fetch('SPELLS.STD')");
+  const j = src.indexOf('readMagicDef(await fetch(');
+  assert.ok(i > 0 && j > i, 'both reads live in loadMagicRegistries');
   assert.ok(src.slice(i, j).includes('} catch {'), 'a bad MAGIC.DEF must not null the spell table');
+
+  for (const [name, host] of allHosts()) {
+    if (name === 'shared.js') continue;
+    assert.equal(/readMagicDef\(/.test(host), false, `${name} must not read MAGIC.DEF itself`);
+    assert.equal(/readSpellsStd\(/.test(host), false, `${name} must not read SPELLS.STD itself`);
+  }
+  for (const n of ['dungeonContext.js', 'exterior.js', 'world.js']) {
+    assert.ok(hostSrc(n).includes('loadMagicRegistries('), `${n} loads the registries`);
+  }
 });
 
 // ---------------------------------------------------------------

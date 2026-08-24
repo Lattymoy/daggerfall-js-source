@@ -25,6 +25,9 @@ import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { SOUND } from '../systems/soundClips.js';
 import { surfacePlayer, hurtPlayer } from '../characters/playerEntity.js';
+import { readSpellsStd } from '../formats/spellsStd.js';   // G4: the two magic registries, one home
+import { readMagicDef } from '../formats/magicDef.js';
+import { setMagicItemTemplates, setSpellRecordsByIndex } from '../systems/loot.js';
 import { music } from '../systems/music.js';
 import { SongManager, musicEnvironment, holdEnvironment } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
@@ -36,6 +39,39 @@ import { getBytes } from './dataSource.js';
  *  source (memory -> IndexedDB -> network); signature unchanged. */
 export async function fetchBytes(name) {
   return getBytes(name);
+}
+
+/**
+ * G4 - THE TWO MAGIC REGISTRIES, in ONE place. THE FOUR HOSTS RULE:
+ * these were set only in dungeonContext's boot, so a magic item
+ * minted from the EXTERIOR host - shop loot, a city corpse, and as of
+ * this slice the guild's Buy Magic Items shelf - found no templates
+ * and was silently skipped. The guild shelf is what made it visible:
+ * it came back holding a spellbook and nothing else.
+ *
+ * TWO TRY BLOCKS, still (AUDIT 18): they shared one, and a bad
+ * MAGIC.DEF nulled the whole spell table with it.
+ *
+ * SPELLS.STD carries DUPLICATE indices and DFU keeps the FIRST - a
+ * straight `new Map(entries)` keeps the LAST, so classic spell 58
+ * would ready Holy Touch where DFU readies Holy Word.
+ */
+export async function loadMagicRegistries(fetch = fetchBytes) {
+  let spellsByIndex = null;
+  let magicItemTemplates = null;
+  try {
+    const byIndex = new Map();
+    for (const sp of readSpellsStd(await fetch('SPELLS.STD'))) {
+      if (!byIndex.has(sp.index)) byIndex.set(sp.index, sp);
+    }
+    spellsByIndex = byIndex;
+    setSpellRecordsByIndex(byIndex);
+  } catch { /* data absent: casts no-op, and a CastWhen* slot prices at 0 - DFU's own answer */ }
+  try {
+    magicItemTemplates = readMagicDef(await fetch('MAGIC.DEF'));
+    setMagicItemTemplates(magicItemTemplates);
+  } catch { /* data absent: the loot MI category and the guild shelf stay empty */ }
+  return { spellsByIndex, magicItemTemplates };
 }
 
 export function parseSeason(params) {
@@ -248,6 +284,16 @@ export function createDetectFeed(entity, { entities = () => [], loot = () => [],
     get markers() { return markers; },
     /** A scene transition: the previous scene's objects are gone. */
     reset() { scan.reset(); markers = []; },
+    /** X9: a FRESH scan on demand, bypassing both the 0.33s cadence
+     *  and the live-detector gate. Dispel is a one-shot at cast, and
+     *  DFU reads PlayerGPS's list at that instant - a list the port
+     *  only keeps warm while a Detect spell is running, so a dispel
+     *  cast with no detector up would otherwise read an empty or
+     *  stale one. Rebuilding here is the honest equivalent of DFU
+     *  always having a warm list. */
+    scanNow() {
+      return updateNearbyObjects(feet(), { entities: entities(), loot: loot() });
+    },
   };
 }
 

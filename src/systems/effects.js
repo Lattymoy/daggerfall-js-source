@@ -28,7 +28,8 @@ import { savingThrow, rollMagnitude, EFFECT_FLAGS, careerTolerance } from './spe
 import { raceById, raceByKey } from './races.js';   // L2-slice (magic-10): the racial immunity arm
 import { STAT_KEYS_ORDER, FATIGUE_MULTIPLIER, maxFatigue } from './statMods.js';
 import { dice100 } from '../combat/formulas.js';
-import { tryAbsorption, effectCastingCost } from './absorption.js';   // S24; X7: the Identify refund reads the same per-effect cost
+import { tryAbsorption, effectCastingCost } from './absorption.js';
+import { enemyGroupOf, NEARBY } from './nearbyObjects.js';   // X8: Pacify matches on DFU's EnemyGroups, the same table X4 ported   // S24; X7: the Identify refund reads the same per-effect cost
 // AUDIT 24 (wave 31): the concealment BREAK lives in its own leaf so that
 // combat/formulas.js can reach it without the effects -> spellcast ->
 // formulas cycle. Re-exported here because this is the module its readers
@@ -161,6 +162,24 @@ export const buffKind = (e) => BUFF_KINDS[`${e.type},${classicSub(e)}`] ?? null;
  *  the cast-time chance is forced true and the landing gates on the
  *  target's kind. */
 export const isSoulTrapEffect = (e) => e.type === 12 && classicSub(e) === 255;
+/** X9: the two CREATURE dispels. (6,0) Dispel Magic is not here -
+ *  it dispels BUNDLES rather than creatures and needs the picker. */
+export const DISPEL_GROUP = Object.freeze({
+  1: NEARBY.Undead,
+  2: NEARBY.Daedra,
+});
+export const isDispelCreature = (e) => e.type === 6 && DISPEL_GROUP[classicSub(e)] != null;
+/** X8: Pacify's four variants (33,0..3) and Charm (34,255). The
+ *  subType IS PacifyEffect's variantIndex, and the order is the
+ *  SetVariantProperties call order (:70-73), not alphabetical. */
+export const PACIFY_GROUP = Object.freeze({
+  0: NEARBY.Animal,
+  1: NEARBY.Undead,
+  2: NEARBY.Humanoid,
+  3: NEARBY.Daedra,
+});
+export const isPacifyEffect = (e) => e.type === 33 && PACIFY_GROUP[classicSub(e)] != null;
+export const isCharmEffect = (e) => e.type === 34 && classicSub(e) === 255;
 /** X7: Identify (40,255) - a window opener, not a lasting effect. */
 export const isIdentifyEffect = (e) => e.type === 40 && classicSub(e) === 255;
 /** Identify.cs:54-55 - the refund never drops below 5. */
@@ -910,6 +929,74 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // The HOST speaks the alert (mysticism.js owns the texts; this
       // module cannot import it - mysticism imports effects).
       out.armed = armedKind;
+      continue;
+    }
+    // X9: DISPEL UNDEAD (6,1) and DISPEL DAEDRA (6,2). Both are the
+    // same six lines in DFU (DispelUndead.cs:45-58, DispelDaedra.cs
+    // the twin): scan the nearby list for one group flag, roll PER
+    // OBJECT, and Destroy whatever the roll takes.
+    //
+    // Three things decide the shape here:
+    //  - ChanceFunction.Custom (:32), so the cast-time gate does NOT
+    //    run and the chance travels to the per-object rolls, exactly
+    //    as Open's and Identify's do;
+    //  - AllowedTargets is TargetFlags_SELF, so this lands on the
+    //    CASTER and sweeps the area around them - it is not aimed;
+    //  - the scan is the host's, because the library has no world. So
+    //    the arm answers the flag and the chance and the host does the
+    //    sweep through mysticism.dispelNearby, which has carried the
+    //    destroy law (destroyed, NOT killed - no loot, no death, and
+    //    it can break quests) since before anything could call it.
+    //
+    // DISPEL MAGIC (6,0) is deliberately NOT here: it needs the live
+    // bundle picker, which is its own arc. It stays inert.
+    if (isDispelCreature(e)) {
+      out.dispel = {
+        group: DISPEL_GROUP[classicSub(e)],
+        chance: chanceValue(e, casterLevel),
+      };
+      continue;
+    }
+    // X8: PACIFY (33,0..3) and CHARM (34,255). One arm, because they
+    // are one effect split by target class - DFU's own note on Charm
+    // says it "operates just like Pacify Humanoid, but only on enemy
+    // classes", and Pacify Humanoid's note says it "only operates on
+    // humanoid monsters (not enemy classes)". Between them they cover
+    // every humanoid and neither overlaps the other.
+    //
+    // A RECORDED DEPARTURE, and the only one in this lane.
+    // Both classes do their work in MagicRound(), and neither sets
+    // SupportDuration - Charm's is commented out DELIBERATELY, with
+    // the reason written above it: "As Duration has no effect in
+    // classic, it is intentionally disabled here." But
+    // EntityEffect.SetDuration (:920-933) gives an effect with no
+    // duration support roundsRemaining = 0, and
+    // EntityEffectManager.DoMagicRound (:1733-1734) calls MagicRound()
+    // only `if (effect.RoundsRemaining > 0 || fromEquippedItem)`. So
+    // in DFU as it stands the pacify NEVER RUNS: the spell rolls its
+    // chance, spends its magicka and does nothing at all. The two
+    // deliberate decisions collided.
+    //
+    // The port implements the INTENT, which the source states in full
+    // rather than leaving to inference: "Enemy class will remain
+    // pacified permanently until player attacks them (confirmed in
+    // classic)". So the pacify lands AT CAST and is PERMANENT, and
+    // the "until attacked" half already exists here - every foe
+    // damage door re-hostiles a pacified target
+    // (MakeEnemyHostileToAttacker), which enemyMotor.js:397 has
+    // anticipated by name since the C-slice.
+    //
+    // Chance-only, no magnitude, TargetFlags_Other - so it takes the
+    // ordinary OnCast chance gate and nothing else.
+    if (isPacifyEffect(e) || isCharmEffect(e)) {
+      const mt = target?.mobileType;
+      if (mt == null) continue;                 // not an enemy: IsGroupMatch/IsEnemyClass both refuse
+      const matches = isCharmEffect(e)
+        ? mt >= 128                             // IsClassEnemyId - Charm is enemy CLASSES only
+        : enemyGroupOf(mt) === PACIFY_GROUP[classicSub(e)];
+      if (!matches) continue;                   // a mismatch is silent, exactly as DFU's `if` is
+      if (!dice100(chanceValue(e, casterLevel), rolls())) { out.chanceFailed = (out.chanceFailed ?? 0) + 1; continue; }
+      out.pacify = true;
       continue;
     }
     // X7: IDENTIFY (Thaumaturgy 40,255). DFU's whole effect is a

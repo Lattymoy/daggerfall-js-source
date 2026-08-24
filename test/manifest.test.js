@@ -28,6 +28,18 @@ test('manifest: Testing.md pins the real suite', () => {
 
   const doc = readFileSync(join(root, 'bible/09-Testing/Testing.md'), 'utf8');
 
+  // V1: NO UNRESOLVED MERGE, and only ONE Suite line. Both halves are
+  // here because the manifest gate let a real defect through: a merge
+  // resolved with a regex that collapsed only the FIRST conflict block
+  // left four marker lines and THREE Suite lines in the committed doc,
+  // and this test passed anyway - `match` returns the first hit, which
+  // happened to be the correct one. The count agreeing says nothing
+  // about the file being intact.
+  const markers = doc.match(/^(<<<<<<<|>>>>>>>|=======)/gm) || [];
+  assert.deepEqual(markers, [], 'Testing.md carries unresolved merge markers');
+  const suiteLines = doc.match(/Suite: \d+ tests across \d+ files\./g) || [];
+  assert.equal(suiteLines.length, 1, `Testing.md has ${suiteLines.length} Suite lines, expected exactly 1`);
+
   // Total line: "Suite: N tests across M files."
   const totalMatch = doc.match(/Suite: (\d+) tests across (\d+) files\./);
   assert.ok(totalMatch, 'Testing.md is missing the "Suite: N tests across M files." line');

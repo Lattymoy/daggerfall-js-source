@@ -36,7 +36,7 @@ import { getGroundArchive } from '../world/climateSwaps.js';
 import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js';
 import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
-import { worldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C12): the one clock
+import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C12): the one clock; G4's probe moves it
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
 import { maxFatigue, liveStat } from '../systems/statMods.js';   // AUDIT 23 (C5); U40: strength for MaxEncumbrance
@@ -64,13 +64,14 @@ import { ChoiceWindow } from '../ui/talkWindow.js';
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from '../ui/text.js';
 import { hudScale } from '../ui/hud.js';
-import { isShop, isRepairShop, stockShopShelf, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems } from '../systems/shopStock.js';   // X6: the soul-gem shelf
+import { isShop, isRepairShop, stockShopShelf, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves
 import { identifySpellPass, identifiedTallyText } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll
 import { LevelUpScreen } from '../ui/charsheet.js';   // AUDIT 21 hosts F3: levelling in a building
 import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded, TRADE_RECTS } from '../ui/nativeTrade.js';   // U8c
 // U23: the static-NPC seam and the guild service popup.
 import { STATIC_NPC_ACTIVATION_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../systems/talk.js';
 import { staticNpcRoute, showsJoinButton, serviceAccess, onPushEffects } from '../systems/guildServiceFlow.js';
+import { canAccessService } from '../systems/guildServices.js';   // G4: does THIS guild also sell soul gems?
 import { npcServiceKind, freeHealing, freeMagickaRecharge } from '../systems/guildServices.js';
 import { createGuildForGroup } from '../systems/guildVariants.js';
 import { membershipOf, joinGuild, joinDecision } from '../systems/guilds.js';
@@ -131,7 +132,7 @@ import { SpellMakerWindow } from '../ui/spellMakerWindow.js';   // S1: the Mages
 // M2: the potion maker - the other half of the guild's magic economy.
 import { PotionMakerWindow, preloadPotionArt, potionArtLoaded } from '../ui/potionMakerWindow.js';
 import { ItemMakerWindow, preloadItemMakerArt, itemMakerArtLoaded, ITEM_RECTS, rowLayout as itemMakerRowLayout } from '../ui/itemMakerWindow.js';
-import { createPotion } from '../systems/loot.js';   // M2: ItemBuilder.CreatePotion, one minter
+import { createPotion, getMagicItemTemplates } from '../systems/loot.js';   // M2: ItemBuilder.CreatePotion, one minter; G4: the MAGIC.DEF registry
 import { SITE_TYPES } from '../systems/quest/place.js';
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring, finally called
 import { placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1 (PlaceFoeFreely reads the fieldOfView import below)
@@ -555,7 +556,7 @@ export function createWorldModes(host) {
    *  transaction that concludes. `shelf.items` is DFU's remoteItems in
    *  Buy mode and the place sold goods land in Sell mode - the same
    *  shelf either way, which is what makes buy-backs work. */
-  function openTradeWindow(shelf, b, mode) {
+  function openTradeWindow(shelf, b, mode, { guildFactionId = null } = {}) {
     const skills = () => ({
       mercantile: skillValue(playerEntity, SKILLS.Mercantile),
       personality: playerEntity.stats?.personality ?? 50,
@@ -576,7 +577,14 @@ export function createWorldModes(host) {
         // UNLIKE the tavern's meal, this one reads the player's REAL
         // region (:437), so a regional holiday actually lands.
         holidayId: getHolidayId(Math.floor(worldMinutes()), b.regionIndex ?? 0),
-        guildFactionId: null,   // FLAGGED: a guild-run shop pends the guild-store arm
+        // G4: THE GUILD STORE ARM. This had been a FLAGGED null since
+        // U40, which meant buyHolidayHalvesPrice's Mages Guild clause
+        // - Tales and Tallow halving the price of anything bought AT
+        // the Mages Guild - had never had a caller able to satisfy
+        // it. A guild service opening the trade window is exactly the
+        // case that supplies one; a high-street shop still passes
+        // null, because a shop belongs to no guild.
+        guildFactionId,
         skills: skills(),
       }),
       gold: () => goldAmount(playerEntity),
@@ -1199,7 +1207,9 @@ export function createWorldModes(host) {
     // reads in this mode.
     if (destination === 'guildServiceIdentify' && tradeArtLoaded()) {
       _identifySpell = null;   // the PAID service - gold, not a per-item roll
-      flow = openTradeWindow({ items: [] }, b ?? {}, 'Identify');
+      // G4: ...and the guild's OWN faction id, which is what a guild
+      // store has to price with.
+      flow = openTradeWindow({ items: [] }, b ?? {}, 'Identify', { guildFactionId: guild?.factionId ?? null });
       return flow;
     }
     // X6: BUY SOULGEMS. DFU's own service window is the trade window in
@@ -1226,7 +1236,43 @@ export function createWorldModes(host) {
       // close hook, so nothing more is needed here. (openMerchantSell
       // assigns hooks.onClose for this and it is inert; see the note
       // there.) closeSelf is the keyed-flow idiom and does not apply.
-      flow = openTradeWindow(shelf, b ?? {}, 'Buy');
+      flow = openTradeWindow(shelf, b ?? {}, 'Buy', { guildFactionId: guild?.factionId ?? null });
+      return flow;
+    }
+    // G4: the remaining trade-mode services. U40 built every mode and
+    // X6 proved the shelf pattern; these were destination strings and
+    // nothing else. All of them - and X6's and X7's arms above - pass
+    // the guild's OWN faction id, which is what makes the holiday
+    // clause reachable at all.
+    if (destination === 'guildServiceSellMagicItems' && tradeArtLoaded()) {
+      // SellMagic works off the PLAYER'S PACK - there is no shelf to
+      // stock, which is why DFU passes the trade window a mode and a
+      // guild and nothing else (:409-411). X7 took the Identify arm
+      // above on the same shape.)
+      flow = openTradeWindow({ items: [] }, b ?? {}, 'SellMagic', { guildFactionId: guild?.factionId ?? null });
+      return flow;
+    }
+    if (destination === 'guildServiceBuyPotions' && tradeArtLoaded()) {
+      const shelf = { items: stockGuildPotions({ quality: b?.quality ?? 0, gameMinutes: Math.floor(worldMinutes()) }) };
+      flow = openTradeWindow(shelf, b ?? {}, 'Buy', { guildFactionId: guild?.factionId ?? null });
+      return flow;
+    }
+    if (destination === 'guildServiceBuyMagicItems' && tradeArtLoaded()) {
+      // The soul-gem arm rides ALONG when this guild also sells them
+      // (:248) - one shelf, two services' stock - and it walks the
+      // day's sequence AFTER the magic items, so these gems are not
+      // the ones the Buy Soulgems shelf shows.
+      const shelf = { items: stockGuildMagicItems({
+        quality: b?.quality ?? 0,
+        gameMinutes: Math.floor(worldMinutes()),
+        sellsSoulGems: canAccessService(guild, membership, 'BuySoulgems'),
+      }, {
+        magicItemTemplates: getMagicItemTemplates(),
+        playerLevel: playerEntity.level ?? 1,
+        gender: playerEntity.gender ?? 0,
+        soulPointsOf: (t) => ENEMY_BASICS[t]?.soulPts ?? 0,
+      }) };
+      flow = openTradeWindow(shelf, b ?? {}, 'Buy', { guildFactionId: guild?.factionId ?? null });
       return flow;
     }
     if (destination === 'guildServiceRepair') {
@@ -2421,13 +2467,56 @@ export function createWorldModes(host) {
     // dispatcher rather than a private shortcut - the destination
     // string is the seam that was a FLAGGED null until this slice,
     // and a probe that bypassed it would prove nothing about it.
-    window.__openItemMaker = () => {
+    /** G4 probe seams: drop whatever overlay is up, and move the one
+     *  clock (a holiday is a DAY OF YEAR, so a probe cannot reach one
+     *  by waiting). */
+    window.__closeOverlay = () => { interiorOverlay = null; return true; };
+    window.__setWorldMinutes = (m) => setWorldMinutes(m);
+    /** G4: open ANY guild-service destination through the real
+     *  dispatcher, at the Mages Guild by default - the four store
+     *  arms all price off the guild's own faction id, so a probe that
+     *  faked the guild would not be testing the thing that was
+     *  broken. */
+    window.__openGuildService = (destination, group = GUILD_GROUPS.MagesGuild) => {
       const dict = townTalk?.factionDict ?? null;
-      const guild = createGuildForGroup(GUILD_GROUPS.MagesGuild, 0, dict);
+      const guild = createGuildForGroup(group, 0, dict);
       const memberships = (playerEntity.guildMemberships ??= {});
-      openServiceFlow('guildServiceItemMaker', { guild, memberships, store: null, rows: null, route: null });
+      // The real caller assigns what openServiceFlow RETURNS - the
+      // trade arms hand back a flow for the popup to mount, where the
+      // maker windows mount themselves and answer null. A probe that
+      // dropped the return value would test only half of them.
+      const flow = openServiceFlow(destination, { guild, memberships, store: null, rows: null, route: null });
+      if (flow) interiorOverlay = flow;
+      return guild?.factionId ?? null;
+    };
+    /** Join a guild at a chosen rank, so a probe can reach the
+     *  member-only half of a service (the gem run on the magic shelf
+     *  is gated on CanAccessService, which is false for a stranger). */
+    window.__joinGuild = (group = GUILD_GROUPS.MagesGuild, rank = 6) => {
+      const guild = createGuildForGroup(group, 0, townTalk?.factionDict ?? null);
+      const memberships = (playerEntity.guildMemberships ??= {});
+      const m = joinGuild(memberships, guild, Math.floor(worldMinutes()));
+      m.rank = rank;
+      return JSON.stringify(m);
+    };
+    window.__openItemMaker = () => {
+      window.__openGuildService('guildServiceItemMaker');
       return window.__itemMakerOverlay();
     };
+    /** What the trade window is showing, and the price context it is
+     *  pricing with - the guildFactionId in particular, which was the
+     *  FLAGGED null this slice closed. */
+    window.__tradeOverlay = () => JSON.stringify(interiorOverlay instanceof NativeTradeWindow ? {
+      trade: true,
+      mode: interiorOverlay.mode,
+      remote: interiorOverlay.remoteList().map((i) => ({
+        name: i.name, value: i.value, identified: !!i.isIdentified,
+        soul: i.trappedSoulType === undefined ? undefined : i.trappedSoulType,
+      })),
+      local: interiorOverlay.localList().length,
+      priceCtx: (() => { const c = interiorOverlay.hooks.priceCtx(); return { quality: c.quality, holidayId: c.holidayId, guildFactionId: c.guildFactionId }; })(),
+      cost: interiorOverlay.cost(),
+    } : null);
     window.__itemMakerOverlay = () => JSON.stringify(interiorOverlay instanceof ItemMakerWindow ? {
       itemMaker: true,
       done: interiorOverlay.done,

@@ -500,5 +500,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     }
   }
 
-  return { foes, spawnFoe, damageFoe, update, resolvePlayerHit, batches, offsetAll, activeCount, lootTargets, takeLoot };
+  // X9: removeFoe is exported because the creature DISPEL needs the
+  // same Destroy(gameObject) the cull and the quest teardown use -
+  // gone with no corpse, no loot and no death, which is exactly
+  // what DFU's dispel does and why it can break quests.
+  return { foes, spawnFoe, damageFoe, update, resolvePlayerHit, batches, offsetAll, activeCount, lootTargets, takeLoot,
+    removeFoe: questPoolOps.removeFoe };
 }
