@@ -2719,6 +2719,23 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // pause gameplay while any overlay is active.
     get uiOverlayActive() { return !!activeOverlay; },
     overlayWindow: () => activeOverlay,   // U26 probe surface
+    /** U43-ii: the way IN to that slot. The context has held an
+     *  overlay since U3 and exposed only a getter, so the quest
+     *  machine's popup - which the outer host raises, not this one -
+     *  had nowhere to go and world.js warned to the console instead.
+     *  The classic start runs _TUTOR__ and _BRISIEN inside
+     *  Privateer's Hold, so a new game's opening text was among the
+     *  things that never reached a screen.
+     *
+     *  It REFUSES rather than clobbers: a window already up owns the
+     *  slot, exactly as townTalk.showOverlay's callers check
+     *  overlayActive first, and the caller reads the false to keep
+     *  its own reference clean. */
+    showOverlay(win) {
+      if (!win || activeOverlay) return false;
+      activeOverlay = win;
+      return true;
+    },
     dropped: () => droppedLoot._piles,
     /** AUDIT 18 F5: the overlay's own clock. DFU runs
      *  DaggerfallRestWindow.Update every frame the window is topmost

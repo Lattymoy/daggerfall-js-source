@@ -219,9 +219,9 @@ export function createWorldModes(host) {
   });
   const interiorTicker = createPlayerTicker(playerEntity, {
     onExhausted: onExhaustedInterior,   // AUDIT 23 (C5)
-    say: (msg) => console.log('[player]', msg),
+    say,
     onLevelUp: () => {
-      console.log('[player] You have gained a level!');
+      say('You have gained a level!');
       if (!interiorOverlay) interiorOverlay = new LevelUpScreen(playerEntity);
     },
   });
@@ -255,13 +255,18 @@ export function createWorldModes(host) {
 
   let mode = 'exterior';
   let zPrev = false;   // ReadyWeapon (Z) edge state
+  // U43-ii: the interior HUD-text layer is the OUTER host's, and
+  // always was - townTalk's hud draws above the modal render. The
+  // "pends its arc" flag was a line of plumbing: a broken weapon, a
+  // fatigue warning and a level-up all spoke to devtools while the
+  // player stood in a shop with a HUD on screen.
+  const say = (l) => { if (townTalk?.say) townTalk.say(l); else console.warn('[interior]', l); };
   // C9: the INTERIOR mode's FP weapon (the dungeon context owns its
   // own audited copy; the host rule wants the weapon in every mode).
-  // say -> console FLAGGED: the interior HUD-text layer pends its arc.
   const interiorWeapon = createWeaponRig({
     spellArmed: () => magic?.spellArmed() ?? false,   // M2
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
-    say: (l) => console.warn('[interior]', l),
+    say,
   });
   // C13: the interior arrow flights (collider late-resolved - each
   // building brings its own).
@@ -3154,10 +3159,24 @@ export function createWorldModes(host) {
     /** Q4-v: a quest parchment box lands in the interior overlay slot
      *  while a building is mounted (the host routes exterior popups to
      *  its own overlay). */
-    showQuestOverlay(win) { if (mode === 'interior') { interiorOverlay = win; return true; } return false; },
+    /** U43-ii: the quest machine's popup, in EVERY modal mode. The
+     *  dungeon arm was missing, so world.js's showQuestBox fell
+     *  through to a console.warn - and the CLASSIC START runs
+     *  _TUTOR__ and _BRISIEN inside Privateer's Hold, which meant the
+     *  first ten minutes of a new game were silent. The dungeon
+     *  context has had an overlay slot since U14; nothing exported a
+     *  way in. */
+    showQuestOverlay(win) {
+      if (mode === 'interior') { interiorOverlay = win; return true; }
+      if (mode === 'dungeon' && dungeonCtx?.showOverlay) return dungeonCtx.showOverlay(win);
+      return false;
+    },
     // wave 21: the host asks whether the box it pushed is still the
     // one in the slot before it stacks another onto it
-    get questOverlay() { return mode === 'interior' ? interiorOverlay : null; },
+    get questOverlay() {
+      if (mode === 'interior') return interiorOverlay;
+      return mode === 'dungeon' ? (dungeonCtx?.overlayWindow?.() ?? null) : null;
+    },
     tryEnter,
     frame,
     installShotProbes,

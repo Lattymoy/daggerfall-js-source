@@ -1144,7 +1144,16 @@ export async function bootExterior(canvas, renderer, params, status) {
       // there from an un-awaited load, so a constellation started on
       // the way in would hang until its deadline. Ticked and drawn
       // ABOVE the modal render, which is where townTalk always draws.
-      if (townTalk.overlayActive) townTalk.frame(dt);
+      // U43-ii: UNCONDITIONAL. AUDIT F2-I1 added this line to tick a
+      // window held in the townTalk slot while the player was inside a
+      // building or a dungeon, and gated it on the window existing -
+      // but townTalk.frame ticks and draws the HUD TEXT LAYER too
+      // (townTalk.js:571, :586). So every HUD line raised in a modal
+      // mode had nowhere to land, which is why the interior weapon
+      // rig's `say` was a console.warn and the interior ticker's was a
+      // console.log. Drawn ABOVE the modal render, which is where
+      // townTalk always draws.
+      townTalk.frame(dt);
       requestAnimationFrame(frame);
       return;
     }

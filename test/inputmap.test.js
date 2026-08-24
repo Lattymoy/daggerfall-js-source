@@ -194,3 +194,39 @@ test('U43: ONE dispatch - the interior host routes the same table as the dungeon
     modes.indexOf('addEventListener(\'keydown\''));
   assert.equal(/quickSave/.test(ctxBlock), false, 'no interior quicksave hook');
 });
+
+test('U43-ii: every modal mode can SPEAK - no HUD line goes to the console', () => {
+  // townTalk.frame ticks and DRAWS the HUD text layer as well as the
+  // overlay (townTalk.js:571, :586), and the two exterior hosts called
+  // it in their modal branch only when a window was up. So a broken
+  // weapon, a fatigue warning and a level-up inside a building all
+  // spoke to devtools while the player watched a HUD with nothing on
+  // it. The quest popup was the same shape one layer up: the dungeon
+  // arm of showQuestOverlay did not exist, and the classic start runs
+  // _TUTOR__ and _BRISIEN inside Privateer's Hold.
+  const src = (rel) => readFileSync(join(root, 'src', rel), 'utf8');
+  for (const rel of ['scenes/world.js', 'scenes/exterior.js']) {
+    const text = src(rel);
+    assert.equal(/if \(townTalk\.overlayActive\) townTalk\.frame\(dt\);/.test(text), false,
+      `${rel} must tick the HUD layer in a modal mode, not only a window`);
+    assert.match(text, /\n {6}townTalk\.frame\(dt\);/, `${rel} ticks it unconditionally`);
+  }
+  const modes = src('scenes/worldModes.js');
+  assert.match(modes, /const say = \(l\) => \{ if \(townTalk\?\.say\) townTalk\.say\(l\); else console\.warn/,
+    'the interior say reaches the outer HUD, and falls back loudly');
+  assert.equal(/say: \(l\) => console\.warn\('\[interior\]', l\)/.test(modes), false,
+    'the weapon rig no longer speaks to the console');
+  assert.equal(/say: \(msg\) => console\.log\('\[player\]', msg\)/.test(modes), false,
+    'nor does the interior ticker');
+  assert.equal(/console\.log\('\[player\] You have gained a level!'\)/.test(modes), false,
+    'nor does a level-up');
+  // the quest popup reaches BOTH modal slots
+  assert.match(modes, /if \(mode === 'dungeon' && dungeonCtx\?\.showOverlay\) return dungeonCtx\.showOverlay\(win\);/,
+    'showQuestOverlay has a dungeon arm');
+  const dc = src('scenes/dungeonContext.js');
+  assert.match(dc, /showOverlay\(win\) \{\n {6}if \(!win \|\| activeOverlay\) return false;/,
+    'and the dungeon slot REFUSES rather than clobbering a live window');
+  // ...and the host stops warning, because the fall-through is gone
+  assert.equal(/popup in dungeon mode pends/.test(src('scenes/world.js')), false,
+    "world.js's dungeon-popup warning is retired, not silenced");
+});

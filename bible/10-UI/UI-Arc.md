@@ -4393,8 +4393,31 @@ One more survived after that: `questJournalHooks()` appears twice in
 the logbook button went dark with the pin green. Scoped to the
 sheet's own hook bag.
 
-Pins: 2 added in `inputmap.test.js`, 2 in `charsheetnav.test.js`, 2
-re-aimed (`audit21_hosts`, `pausewindow`). 19 mutations, 19 dead.
+**U43-ii: and then the messages.** The window half left two seams
+still speaking to devtools, both of them one line of plumbing rather
+than an arc:
+
+- `townTalk.frame` ticks and draws the HUD TEXT LAYER as well as the
+  overlay (`townTalk.js:571, :586`), and both exterior hosts called it
+  in their modal branch only WHEN A WINDOW WAS UP. AUDIT F2-I1 added
+  that line to tick a window and gated it on the window existing. So
+  inside a building a broken weapon, a fatigue warning and a level-up
+  all spoke to the console while the player watched a HUD with nothing
+  on it. Unconditional now, and the interior host's `say` is the outer
+  host's.
+- `showQuestOverlay` answered `interior` and returned false for
+  `dungeon`, so `world.js`'s `showQuestBox` fell through to a
+  `console.warn` saying the dungeon seam "pends". The dungeon context
+  has held an overlay since U3 and exposed only a GETTER; nothing
+  exported a way in. It has a `showOverlay` that REFUSES rather than
+  clobbers a live window, and the fall-through is townTalk's own slot
+  - which draws above the modal render in every mode - rather than a
+  warning. THE CLASSIC START runs `_TUTOR__` and `_BRISIEN` inside
+  Privateer's Hold, so what this was silencing was the first ten
+  minutes of a new game.
+
+Pins: 3 added in `inputmap.test.js`, 2 in `charsheetnav.test.js`, 2
+re-aimed (`audit21_hosts`, `pausewindow`). 26 mutations, 26 dead.
 
 FLAGGED: the two EXTERIOR hosts still hand-roll their chain rather
 than routing `routeKey` - the same seven arms, gated on a mode test

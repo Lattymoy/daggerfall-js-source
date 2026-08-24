@@ -1896,10 +1896,15 @@ export async function bootWorld(canvas, renderer, params, status) {
       onClose: () => { if (_questBoxWin === win) _questBoxWin = null; },
     });
     _questBoxWin = win;
+    // U43-ii: the modal slot first - interior OR dungeon, both of
+    // which showQuestOverlay now answers. It REFUSES when a window is
+    // already up, and the fall-through is townTalk's own slot, which
+    // draws above the modal render in every mode. The old line here
+    // was a console.warn saying the dungeon seam "pends", and the
+    // CLASSIC START runs _TUTOR__ and _BRISIEN inside Privateer's
+    // Hold - so the first ten minutes of a new game were silent.
     if (modes?.showQuestOverlay?.(win)) return;
-    if ((modes?.mode ?? 'exterior') === 'exterior') { townTalk.showOverlay(win); return; }
-    _questBoxWin = null;
-    console.warn('[quest] popup in dungeon mode pends the dungeon overlay seam:', box.rows?.[0] ?? '');
+    townTalk.showOverlay(win);
   };
   /** A window is only still "the top of the stack" while the overlay
    *  slot it went into is still showing it - the player may have
@@ -2665,7 +2670,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       // there from an un-awaited load, so a constellation started on
       // the way in would hang until its deadline. Ticked and drawn
       // ABOVE the modal render, which is where townTalk always draws.
-      if (townTalk.overlayActive) townTalk.frame(dt);
+      // U43-ii: UNCONDITIONAL. AUDIT F2-I1 added this line to tick a
+      // window held in the townTalk slot while the player was inside a
+      // building or a dungeon, and gated it on the window existing -
+      // but townTalk.frame ticks and draws the HUD TEXT LAYER too
+      // (townTalk.js:571, :586). So every HUD line raised in a modal
+      // mode had nowhere to land, which is why the interior weapon
+      // rig's `say` was a console.warn and the interior ticker's was a
+      // console.log. Drawn ABOVE the modal render, which is where
+      // townTalk always draws.
+      townTalk.frame(dt);
       requestAnimationFrame(frame);
       return;
     }
