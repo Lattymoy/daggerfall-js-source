@@ -273,20 +273,20 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:282` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:430` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
 - `src/scenes/worldModes.js:507` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
-- `src/scenes/worldModes.js:564` - guildFactionId: null,   // FLAGGED: a guild-run shop pends the guild-store arm
-- `src/scenes/worldModes.js:595` - credit instead. FLAGGED: there is nowhere to cash one yet, so
-- `src/scenes/worldModes.js:695` - Person placed in a dungeon is the quest machine's, FLAGGED
-- `src/scenes/worldModes.js:758` - trade window in Sell mode. The BANKING arm stays FLAGGED below;
-- `src/scenes/worldModes.js:836` - FLAGGED, each with the slice it waits on:
-- `src/scenes/worldModes.js:953` - FLAGGED: house and ship OWNERSHIP need the building directory
-- `src/scenes/worldModes.js:1049` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:1116` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
-- `src/scenes/worldModes.js:1154` - been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:1260` - with the trade window's own mode flow, the same INTERIM the
-- `src/scenes/worldModes.js:1462` - first (owned houses and quest buildings FLAGGED/seamed per
-- `src/scenes/worldModes.js:1470` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
-- `src/scenes/worldModes.js:2189` - too. FLAGGED: interior loot containers are the loot arc's -
-- `src/scenes/worldModes.js:2537` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
+- `src/scenes/worldModes.js:570` - guildFactionId: null,   // FLAGGED: a guild-run shop pends the guild-store arm
+- `src/scenes/worldModes.js:601` - credit instead. FLAGGED: there is nowhere to cash one yet, so
+- `src/scenes/worldModes.js:701` - Person placed in a dungeon is the quest machine's, FLAGGED
+- `src/scenes/worldModes.js:764` - trade window in Sell mode. The BANKING arm stays FLAGGED below;
+- `src/scenes/worldModes.js:842` - FLAGGED, each with the slice it waits on:
+- `src/scenes/worldModes.js:959` - FLAGGED: house and ship OWNERSHIP need the building directory
+- `src/scenes/worldModes.js:1055` - FactionData; the port's pre-chargen INTERIM entity does not, and
+- `src/scenes/worldModes.js:1122` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
+- `src/scenes/worldModes.js:1187` - been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:1293` - with the trade window's own mode flow, the same INTERIM the
+- `src/scenes/worldModes.js:1495` - first (owned houses and quest buildings FLAGGED/seamed per
+- `src/scenes/worldModes.js:1503` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
+- `src/scenes/worldModes.js:2222` - too. FLAGGED: interior loot containers are the loot arc's -
+- `src/scenes/worldModes.js:2570` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
@@ -327,7 +327,6 @@ combat line numbers below are refreshed with it.
 - `src/systems/guildServiceFlow.js:250` - BuyMagicItems: null,     // FLAGGED: trade Buy + CreateRandomMagicItem
 - `src/systems/guildServiceFlow.js:251` - MakeMagicItems: null,    // FLAGGED: the item maker
 - `src/systems/guildServiceFlow.js:252` - SellMagicItems: null,    // FLAGGED: trade SellMagic mode
-- `src/systems/guildServiceFlow.js:253` - BuySoulgems: null,       // FLAGGED: trade Buy + the soul-trap stock
 - `src/systems/guildServiceFlow.js:254` - Teleport: null,          // FLAGGED: the travel map's teleport mode
 - `src/systems/guildServiceFlow.js:255` - DaedraSummoning: null,   // FLAGGED: the daedra summoning flow
 - `src/systems/guildServiceFlow.js:256` - Spymaster: null,         // FLAGGED: 402 then the quest offer
@@ -350,7 +349,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/settings.js:39` - INTERIM doctrine - named, not silently ignored)
 - `src/systems/shopStock.js:18` - drift is FLAGGED to the calendar/economy sim.
 - `src/systems/shopStock.js:20` - INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);
-- `src/systems/shopStock.js:157` - if (group === 'MagicItems') continue;   // INTERIM loud (the loot MI interim)
+- `src/systems/shopStock.js:159` - if (group === 'MagicItems') continue;   // INTERIM loud (the loot MI interim)
 - `src/systems/skills.js:88` - *  AUDIT 18: the +10% used to be INTERIM 0 behind a flag blaming a
 - `src/systems/startingGear.js:3` - seedStartingEquipment's INTERIM iron dagger: a new character now
 - `src/systems/talk.js:17` - crime/quest slices - FLAGGED there, not here).

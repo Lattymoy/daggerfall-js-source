@@ -64,7 +64,7 @@ import { ChoiceWindow } from '../ui/talkWindow.js';
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from '../ui/text.js';
 import { hudScale } from '../ui/hud.js';
-import { isShop, isRepairShop, stockShopShelf, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem } from '../systems/shopStock.js';
+import { isShop, isRepairShop, stockShopShelf, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems } from '../systems/shopStock.js';   // X6: the soul-gem shelf
 import { LevelUpScreen } from '../ui/charsheet.js';   // AUDIT 21 hosts F3: levelling in a building
 import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded, TRADE_RECTS } from '../ui/nativeTrade.js';   // U8c
 // U23: the static-NPC seam and the guild service popup.
@@ -530,6 +530,12 @@ export function createWorldModes(host) {
       : [];
     let win = null;
     win = openTradeWindow(target, b, 'Sell');
+    // NOTE (found wiring X6): this assignment is INERT. NativeTradeWindow
+    // never calls hooks.onClose - it sets `done` on Escape/E and the
+    // frame's sweep at :2450/:2517 frees the slot. Left in place because
+    // it is harmless and the sweep already does the job, but do not copy
+    // it expecting a callback: a trade window that needs cleanup on
+    // close has to hang it off the sweep, not off this hook.
     win.hooks.onClose = () => { if (interiorOverlay === win) interiorOverlay = null; };
     interiorOverlay = win;
     return true;
@@ -1139,6 +1145,33 @@ export function createWorldModes(host) {
     // shops open, with guild.ReducedRepairCost bound (FightersGuild's
     // rank scaling; the base guild returns the price unchanged, so
     // binding it for every guild IS DFU's `guild != null` arm).
+    // X6: BUY SOULGEMS. DFU's own service window is the trade window in
+    // Buy mode over GetMerchantMagicItems(onlySoulGems: true)
+    // (DaggerfallGuildServicePopupWindow.cs:247-266), which is exactly
+    // what the port's Buy mode already is - the shelf is the only new
+    // part, and it is a pure law in shopStock.js.
+    //
+    // QUIRK, ported rather than fixed: DFU regenerates the shelf on
+    // every open and seeds it from the DAY, so closing the window and
+    // reopening it the same game day restores everything the player
+    // just bought. DFU chose that seeding deliberately to stop the
+    // stock flickering ("magic item stock not being deterministic
+    // every time player opens window"); the restock is its
+    // consequence. Making it persist would be a silent departure, so
+    // it is left as DFU has it and recorded here instead.
+    if (destination === 'guildServiceBuySoulgems' && tradeArtLoaded()) {
+      const shelf = { items: stockSoulGems(
+        { quality: b?.quality ?? 0, gameMinutes: Math.floor(worldMinutes()) },
+        { soulPointsOf: (t) => ENEMY_BASICS[t]?.soulPts ?? 0 }) };
+      // The slot is freed by the frame's own `done` sweep (:2450,
+      // :2517), which is how EVERY trade window is dismissed -
+      // NativeTradeWindow sets `done` on Escape/E and never calls a
+      // close hook, so nothing more is needed here. (openMerchantSell
+      // assigns hooks.onClose for this and it is inert; see the note
+      // there.) closeSelf is the keyed-flow idiom and does not apply.
+      flow = openTradeWindow(shelf, b ?? {}, 'Buy');
+      return flow;
+    }
     if (destination === 'guildServiceRepair') {
       openRepairService({ reducedRepairCost: (price) => reducedRepairCost(guild, membership, price) });
       return interiorOverlay;

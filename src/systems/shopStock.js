@@ -30,6 +30,8 @@ import { getRandomBookID } from './books.js';   // B1
 import { isLeather, isPlate } from './armorMaterials.js';
 import { CLOTHING_DYES } from '../characters/dyes.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
+import { MINUTES_PER_DAY } from './gameDate.js';   // X6: the soul-gem stock's daily seed
+import { SOUL_TRAP_TEMPLATE } from './mysticism.js';   // X6: one home for the template id (X5 put it there with fillEmptyTrap)
 
 // ItemGroups ids used by the shelf tables (DaggerfallUnityEnums).
 const GROUP_NAMES = Object.freeze({
@@ -230,4 +232,119 @@ export function calculateTradePrice(cost, shopQuality, { mercantile = 0, persona
   dm = ((Math.trunc((merchantLevel << 8) / 200) + 128) * (Math.trunc(((100 - mercantile) << 8) / 200) + 128)) >> 8;
   dp = (((Math.trunc((merchantLevel << 8) / 200) + 128) * (Math.trunc(((100 - personality) << 8) / 200) + 128)) >> 8) << 6;
   return ((((192 * dm) >> 8) + (dp >> 8)) * cost) >> 8;
+}
+
+
+// ── X6: THE SOUL GEM STOCK (the Mages Guild's Buy Soulgems service) ──
+//
+// X5 made Soul Trap fire, and then could not be reached in play: no
+// code path in the port MINTED a soul trap item, so there was never
+// an empty gem for a caught soul to enter. DFU has exactly three
+// minting sites for MiscItems.Soul_trap, and only one of them is a
+// way for the player to ACQUIRE one - the guild service stock
+// (DaggerfallGuildServicePopupWindow.cs:247-266). The other two are
+// SoulBound's own reads. So this is that stock.
+//
+// GetMerchantMagicItems(onlySoulGems: true) (:221-268), verbatim:
+//   - numOfItems = trunc(quality / 2) + 1;
+//   - the loop is `for (i = 0; i <= numOfItems; i++)` - INCLUSIVE, so
+//     it mints numOfItems + 1 gems, not numOfItems. stockShopShelf
+//     above already honours the same off-by-one in its own quality
+//     ladder, so the port has the precedent;
+//   - each gem: Dice100.FailedRoll(25) -> an EMPTY trap worth a flat
+//     5000; otherwise a randomly filled one. FailedRoll(25) is
+//     `Random.Range(0,100) >= 25`, i.e. TRUE three times in four - so
+//     the stock is 75% EMPTY gems and only 25% filled, which reads
+//     backwards until you notice an empty gem is the useful one for a
+//     Soul Trap caster.
+//
+// THE DAILY SEED. DFU calls Random.InitState with
+// ToClassicDaggerfallTime() / MinutesPerDay - the day number - so the
+// stock is deterministic and rotates every 24 game hours, and the
+// window can be reopened without re-rolling. DFU's own comment admits
+// this is a stand-in: "Doesn't match classic exactly as classic
+// stocking method unknown, but should be good enough for now". The
+// port injects `rolls` rather than seeding a global stream, so
+// dailyStockRolls below is the equivalent - xorshift32 over the day,
+// the same substitution dungeonEnemies.makeSlotRng already makes for
+// Unity's seeded stream (a recorded Ledger A departure).
+
+/** A deterministic [0,1) stream for one game day. */
+export function dailyStockRolls(dayIndex) {
+  let s = ((dayIndex >>> 0) || 1) >>> 0;
+  return () => {
+    s ^= s << 13; s >>>= 0;
+    s ^= s >>> 17;
+    s ^= s << 5; s >>>= 0;
+    return s / 0x100000000;
+  };
+}
+
+/** The classic day number DFU seeds from: whole days of game time. */
+export const stockDayIndex = (gameMinutes) => Math.floor((gameMinutes ?? 0) / MINUTES_PER_DAY);
+
+/** ItemBuilder.CreateRandomlyFilledSoulTrap (:285-306).
+ *
+ *  The soul is drawn from Range(Rat, Lamia + 1) - the WHOLE monster
+ *  range, 0..42 inclusive - and re-drawn while it lands on one of two
+ *  excluded ids. DFU's note explains the pair: Horse_Invalid (39) is
+ *  an unused career with no texture, and Dragonling (34) "is soulless,
+ *  only soul of Dragonling_Alternate (40) from B0B70Y16 has a soul".
+ *
+ *  Note what is NOT excluded: the nine other creatures whose SoulPts
+ *  are zero (Rat, Giant Bat, Grizzly Bear, Sabertooth, Spider,
+ *  Slaughterfish, Skeletal Warrior, Zombie, Giant Scorpion) are all
+ *  fair draws, and a trap filled with one of them is worth 5000 +
+ *  0 - exactly what an EMPTY trap is worth. That is DFU behaviour,
+ *  not an oversight here. */
+export const SOUL_TRAP_BASE_VALUE = 5000;
+const SOULLESS_DRAWS = new Set([34, 39]);   // Dragonling, Horse_Invalid
+
+export function createRandomlyFilledSoulTrap(rolls = Math.random, soulPointsOf = null) {
+  let soul = -1;
+  // Range(Rat, Lamia + 1) = 0..42 inclusive, redrawn on the two vetoes.
+  // Bounded rather than `while (true)`: 41 of 43 draws are valid, so a
+  // stream that somehow never yields one is a broken stream, not a
+  // reason to hang the frame.
+  for (let i = 0; i < 64 && soul < 0; i++) {
+    const draw = Math.floor(rolls() * 43);
+    if (!SOULLESS_DRAWS.has(draw)) soul = draw;
+  }
+  if (soul < 0) soul = 0;   // Rat: the first valid draw, so a dead stream still mints a legal gem
+  const pts = soulPointsOf ? (soulPointsOf(soul) ?? 0) : 0;
+  return mintCondition({
+    group: 'MiscItems',
+    templateIndex: SOUL_TRAP_TEMPLATE,
+    trappedSoulType: soul,
+    value: SOUL_TRAP_BASE_VALUE + pts,
+  });
+}
+
+/** An EMPTY trap as the service stocks it - a FLAT 5000, written onto
+ *  the item rather than left to the template's own 500 basePrice
+ *  (:255-257 sets value explicitly). */
+export function createEmptySoulTrap() {
+  return mintCondition({
+    group: 'MiscItems',
+    templateIndex: SOUL_TRAP_TEMPLATE,
+    trappedSoulType: null,
+    value: SOUL_TRAP_BASE_VALUE,
+  });
+}
+
+/** The Buy Soulgems shelf. `quality` is the guild hall's building
+ *  quality, `gameMinutes` the world clock - the same day yields the
+ *  same shelf. */
+export function stockSoulGems({ quality = 0, gameMinutes = 0 } = {}, { soulPointsOf = null } = {}) {
+  const rolls = dailyStockRolls(stockDayIndex(gameMinutes));
+  const numOfItems = Math.trunc(quality / 2) + 1;
+  const out = [];
+  for (let i = 0; i <= numOfItems; i++) {   // INCLUSIVE - numOfItems + 1 gems
+    // Dice100.FailedRoll(25): Random.Range(0,100) >= 25, true 75% of
+    // the time, and the true branch is the EMPTY gem.
+    out.push(Math.floor(rolls() * 100) >= 25
+      ? createEmptySoulTrap()
+      : createRandomlyFilledSoulTrap(rolls, soulPointsOf));
+  }
+  return out;
 }

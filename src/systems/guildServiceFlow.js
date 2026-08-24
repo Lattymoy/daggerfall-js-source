@@ -250,7 +250,7 @@ export const SERVICE_DESTINATION = Object.freeze({
   BuyMagicItems: null,     // FLAGGED: trade Buy + CreateRandomMagicItem
   MakeMagicItems: null,    // FLAGGED: the item maker
   SellMagicItems: null,    // FLAGGED: trade SellMagic mode
-  BuySoulgems: null,       // FLAGGED: trade Buy + the soul-trap stock
+  BuySoulgems: 'guildServiceBuySoulgems',   // X6: the trade window in Buy mode over the daily soul-gem shelf
   Teleport: null,          // FLAGGED: the travel map's teleport mode
   DaedraSummoning: null,   // FLAGGED: the daedra summoning flow
   Spymaster: null,         // FLAGGED: 402 then the quest offer
