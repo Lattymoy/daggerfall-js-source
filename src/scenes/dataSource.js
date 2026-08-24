@@ -54,10 +54,13 @@ const mem = new Map(); // NAME -> Uint8Array
 // are named one at a time, and ONLY when something actually plays them:
 // ANIM0001 is the splash (1.4MB) and is wired in main.js; ANIM0012 is
 // the death video (DaggerfallUI.cs:50), wired by D1 and ingested below.
-// DFU names four more - ANIM0000/ANIM0011/DAG2 the new-game cinematics
-// (DaggerfallStartNewGameWizard.cs:33-35, 26.6MB between them),
-// ANIM0002/ANIM0004 the lycanthropy and vampire dreams - and none of
-// THOSE is wired here yet, so none is ingested. (The merge audit found
+// V1 wired the two dream videos, so the rule fed them: ANIM0002 (the
+// lycanthropy dream, 1.3MB) and ANIM0004 (the vampire dream, 1.3MB)
+// now play from scenes/shared.js's wireInfectionVideos, and the fake
+// death reuses ANIM0012, already here for D1. DFU names three more -
+// ANIM0000/ANIM0011/DAG2, the new-game cinematics
+// (DaggerfallStartNewGameWizard.cs:33-35, 26.6MB between them) - and
+// none of THOSE is wired here yet, so none is ingested. (The merge audit found
 // this comment and the Ledger row it mirrors both still saying the
 // diet held ANIM0001 alone, fourteen lines above the KEEP that names
 // ANIM0012 - the exact drift the rule below exists to prevent.) Adding a file nobody plays costs every user the bytes for
@@ -74,11 +77,13 @@ export const KEEP = (name, lean = LEAN) => /^TEXTURE\.\d+$/.test(name) ||
   /\.(BSA|COL|PAL|PAK|CFG|FNT|WLD|DEF|STD|IMG|CIF|RSC|RCI|SND|TXT|GFX)$/.test(name) ||
   name === 'CLASSES.DAT' ||
   name === 'ANIM0001.VID' ||                // the U22 splash - see the VID note above
-  name === 'ANIM0012.VID' ||                // D1 the death video (DaggerfallUI.cs:50)
+  name === 'ANIM0012.VID' ||                // D1 the death video (DaggerfallUI.cs:50), reused as V1's fake death
+  name === 'ANIM0002.VID' ||                // V1 the lycanthropy dream (LycanthropyInfection.cs:95)
+  name === 'ANIM0004.VID' ||                // V1 the vampire dream (VampirismInfection.cs:109)
   name === 'ROGUE.CEL' || name === 'MAGE.CEL' || name === 'WARRIOR.CEL' ||   // F2 the chargen constellations
   (!lean && /^SKY\d+\.DAT$/.test(name));   // skies: 247MB - full sets on desktop, gradient fallback on the lean diet
 const MANIFEST_KEY = '__MANIFEST__';
-const MANIFEST_V = 6;   // v1 = the broken-era sets (pre-diet), v2 = the sets missing BIOG*/FACTION/CLASSES, v3 = the sets missing the U22 splash VID, v4 = the sets missing the .GFX scroll (AUDIT 19 F8), v5 = the sets missing the D1 death video + the F2 constellation CELs - all auto-wiped
+const MANIFEST_V = 7;   // v1 = the broken-era sets (pre-diet), v2 = the sets missing BIOG*/FACTION/CLASSES, v3 = the sets missing the U22 splash VID, v4 = the sets missing the .GFX scroll (AUDIT 19 F8), v5 = the sets missing the D1 death video + the F2 constellation CELs, v6 = the sets missing V1's two dream VIDs - all auto-wiped
 
 /** Uppercase basename: the canonical ARENA2 key. Exported for tests. */
 export function normalizeName(name) {

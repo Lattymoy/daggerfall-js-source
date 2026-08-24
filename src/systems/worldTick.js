@@ -19,6 +19,7 @@
 // list, and no other host has one.
 
 import { updateDiseases } from './diseases.js';
+import { runInfections } from './infection.js';   // V1: UpdateDisease's override, which the base walk skips
 import { updatePoisons } from './poisons.js';
 import { tickActiveEffects } from './effects.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
@@ -124,6 +125,13 @@ export function runMagicRoundsFor(entity, from, to, { sinks, rolls = Math.random
   // expired entry (DFU removes at the end of the same DoMagicRound).
   for (let r = from; r < to; r++) {
     updateDiseases(entity, Math.floor((r + 1) / MINUTES_PER_DAY), sinks, rolls, say);
+    // V1: the two infections override UpdateDisease and manage their
+    // own lifecycle, so diseases.js skips them and they run here - in
+    // the SAME round, because in DFU they are the same DoMagicRound
+    // over the same instancedBundles. One home means every host that
+    // feeds the tick gets the dream and the turn; the video and the
+    // clock arrive through infection.js's registered host.
+    runInfections(entity, Math.floor((r + 1) / MINUTES_PER_DAY));
     updatePoisons(entity, r + 1, sinks, rolls, say);
     tickActiveEffects(entity, sinks);
     // E1: the enchantment pump rides the SAME round (DoMagicRound's
