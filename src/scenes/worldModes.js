@@ -217,6 +217,24 @@ export function createWorldModes(host) {
     if (mode === 'exterior' && prevDeathPresenter) return prevDeathPresenter();
     presentInteriorDeath();
   });
+  // U43-ii: the interior HUD-text layer is the OUTER host's, and
+  // always was - townTalk's hud draws above the modal render. The
+  // "pends its arc" flag was a line of plumbing: a broken weapon, a
+  // fatigue warning and a level-up all spoke to devtools while the
+  // player stood in a shop with a HUD on screen.
+  //
+  // V4: DECLARED HERE, AND IT HAS TO BE. This sat below, after the
+  // `host` destructuring - and the interiorTicker two lines down takes
+  // `say` as a dep, so reading it hit the const's temporal dead zone
+  // and createWorldModes threw `Cannot access 'say' before
+  // initialization` on the FIRST LINE OF THE GAME. Nothing caught it:
+  // a TDZ is legal syntax, so lint and the vite build both pass, and
+  // no test executes this constructor. The first-hour probe found it
+  // the only way it can be found - by starting the game, which never
+  // reached a mode. It reads `host.townTalk` rather than the
+  // destructured binding for the same reason: that destructuring also
+  // happens below.
+  const say = (l) => { if (host.townTalk?.say) host.townTalk.say(l); else console.warn('[interior]', l); };
   const interiorTicker = createPlayerTicker(playerEntity, {
     onExhausted: onExhaustedInterior,   // AUDIT 23 (C5)
     say,
@@ -255,12 +273,6 @@ export function createWorldModes(host) {
 
   let mode = 'exterior';
   let zPrev = false;   // ReadyWeapon (Z) edge state
-  // U43-ii: the interior HUD-text layer is the OUTER host's, and
-  // always was - townTalk's hud draws above the modal render. The
-  // "pends its arc" flag was a line of plumbing: a broken weapon, a
-  // fatigue warning and a level-up all spoke to devtools while the
-  // player stood in a shop with a HUD on screen.
-  const say = (l) => { if (townTalk?.say) townTalk.say(l); else console.warn('[interior]', l); };
   // C9: the INTERIOR mode's FP weapon (the dungeon context owns its
   // own audited copy; the host rule wants the weapon in every mode).
   const interiorWeapon = createWeaponRig({

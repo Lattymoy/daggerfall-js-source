@@ -212,8 +212,19 @@ test('U43-ii: every modal mode can SPEAK - no HUD line goes to the console', () 
     assert.match(text, /\n {6}townTalk\.frame\(dt\);/, `${rel} ticks it unconditionally`);
   }
   const modes = src('scenes/worldModes.js');
-  assert.match(modes, /const say = \(l\) => \{ if \(townTalk\?\.say\) townTalk\.say\(l\); else console\.warn/,
+  // V4: reads `host.townTalk` rather than the destructured binding,
+  // and is declared ABOVE the interiorTicker that takes it as a dep.
+  // It had to move: as written it sat below both, so the ticker's
+  // `say` hit the const's temporal dead zone and createWorldModes
+  // threw `Cannot access 'say' before initialization` on the first
+  // line of the game. Lint, the build and all 3005 tests passed on
+  // that - see test/tdz.test.js, which is the gate for the class. So
+  // this pin now asks for the SHAPE (outer HUD, loud fallback) rather
+  // than a spelling that could not run.
+  assert.match(modes, /const say = \(l\) => \{ if \((?:host\.)?townTalk\?\.say\) (?:host\.)?townTalk\.say\(l\); else console\.warn/,
     'the interior say reaches the outer HUD, and falls back loudly');
+  assert.ok(modes.indexOf('const say = (l) =>') < modes.indexOf('const interiorTicker = createPlayerTicker'),
+    'and is DECLARED before the ticker that takes it - the dead zone that broke the boot');
   assert.equal(/say: \(l\) => console\.warn\('\[interior\]', l\)/.test(modes), false,
     'the weapon rig no longer speaks to the console');
   assert.equal(/say: \(msg\) => console\.log\('\[player\]', msg\)/.test(modes), false,
