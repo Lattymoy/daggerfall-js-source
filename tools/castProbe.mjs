@@ -53,13 +53,29 @@ const frames = async (n, cap = 20000) => {   // wait for n RENDERED frames
 };
 
 if (which === 'dungeon') {
-  // The dungeon page readies ?spell=7 at boot; KeyC casts the missile.
+  // The dungeon page readies ?spell=7 at boot, which ARMS the click
+  // cast (hostMagic.readySpell -> clickCast.arm) - the attack click
+  // fires it (I2 retired the C cast key).
   out.steps.before = { mp: await page.evaluate(() => window.__playerEntity?.magicka ?? null) };
-  await page.keyboard.press('c');
+  await page.mouse.move(480, 300);
+  await page.mouse.down({ button: 'right' });
+  await page.waitForTimeout(50);
+  await page.mouse.up({ button: 'right' });
   await page.waitForTimeout(120);
   out.steps.after = { mp: await page.evaluate(() => window.__playerEntity?.magicka ?? null) };
   out.ok = out.steps.after.mp != null && out.steps.after.mp < out.steps.before.mp;
 } else {
+  // The quest arc's boot boxes - the start letter (a plain parchment,
+  // any key advances) and the tutorial YesNo (answers ONLY to Y/N/
+  // Escape) - eat the keyboard until dismissed, exactly as DFU's do.
+  // They can arrive a few ticks in, so drain until the slot is QUIET
+  // for two consecutive checks; Escape advances a plain box AND
+  // declines a YesNo.
+  for (let i = 0, quiet = 0; i < 30 && quiet < 2; i++) {
+    const up = await page.evaluate(() => JSON.parse(window.__talk()).overlay);
+    if (up) { quiet = 0; await page.keyboard.press('Escape'); } else quiet++;
+    await frames(2);
+  }
   out.steps.boot = await magic();
   // The spellbook: Backspace opens; the M4 sort runs live (s, then y
   // on the YesNo - the book stays open); Enter readies row 0, which
@@ -100,7 +116,11 @@ if (which === 'dungeon') {
   // require the retirement to leave no leak.
   out.steps.rangedName = await page.evaluate(() => window.__readyRanged());
   await page.evaluate(() => { const [x, y, z] = window.__player.pos; window.__pose(x, y, z, Math.PI, 1.2); });
-  await page.keyboard.press('c');
+  // I2: the readied spell is ARMED - the attack click casts it.
+  await page.mouse.move(480, 300);
+  await page.mouse.down({ button: 'right' });
+  await page.waitForTimeout(50);
+  await page.mouse.up({ button: 'right' });
   await page.waitForTimeout(60);
   out.steps.missile = await magic();
   await frames(90, 120000);   // the world city crawls near 2fps - the cap must clear 90 frames there
@@ -136,7 +156,7 @@ if (which === 'dungeon') {
   const tr = out.steps.touchReadied, cw = out.steps.clickWhiff;
   out.ok = !!(r && r.mp < b.mp                     // the CasterOnly ready cast instantly and spent
     && tr && tr.armed && tr.mp === r.mp            // ByTouch readies ARMED, no spend
-    && cw && cw.mp === tr.mp && !cw.armed          // the click fired it; the whiff spent nothing, the latch is consumed
+    && cw && cw.mp === tr.mp && cw.armed           // the whiff spent nothing and the READY SURVIVES - CastReadySpell aborts before spending (the ByTouch abort law; I2 killed the latch that used to eat the armed state here)
     && m && m.missiles > 0 && m.mp < r.mp          // the ranged cast flies
     && out.steps.retired.missiles === 0);          // and retires on the street, leaving no leak
   out.interiorOk = out.steps.interiorMode !== 'interior' ? 'no-door'

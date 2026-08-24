@@ -33,7 +33,6 @@ import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: t
 import { loadHud, drawHud, hudScale as hudScaleFor } from '../ui/hud.js';
 import { drawText, makeFont } from '../ui/text.js';
 import { HudText } from '../ui/hudText.js';
-import { OneShotLatch } from '../ui/input.js';
 import { FntFile } from '../formats/fntFile.js';
 import { ImgFile } from '../formats/imgFile.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
@@ -1361,8 +1360,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     billboardBatches.push(batch);   // hosts draw + destroy() frees
   }
   function playerAttackInput(dx, dy, held) {   // host mouse events buffer here
-    if (playerWeapon.sheathed) return;   // WeaponManager verbatim: no attack processing while sheathed (audit 2026-08-17)
+    // I2 (cast probe): the CAST intercept runs BEFORE the sheath gate.
+    // DFU's cast is EntityEffectManager's own Update - a separate
+    // component from WeaponManager - so a sheathed player still fires
+    // a readied spell on the click; only the SWING needs the weapon
+    // out (WeaponManager verbatim, audit 2026-08-17).
     if (magic.interceptAttack(held)) return;   // the armed click casts, no swing
+    if (playerWeapon.sheathed) return;
     weaponRig.attackInput(dx, dy, held);
   }
   function resolvePlayerHit(eye, inViewFn, playerFeet, lookDir) {
@@ -2452,7 +2456,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // version missed - a touch tap while sheathed no longer swings
     // (WeaponManager: no attack processing while sheathed).
     playerClickAttack: weaponRig.clickAttack,
-    playerCastInput: magic.castInput,   // S5: C key in the hosts
     /** Verbatim MovePlayerToMarker + FixStanding: the start marker
      *  + up * (height 1.8 * 0.6), then the instant floor snap. ONE
      *  source - both hosts spawn through this (the standalone's raw

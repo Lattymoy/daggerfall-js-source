@@ -237,8 +237,10 @@ test('A1 wiring pins: entry identity at the push sites, the 5 Hz tick in BOTH du
 
 test('A1 wiring pins: the M binding and the mesh shader slice seam', () => {
   const input = src('src/ui/input.js');
-  assert.match(input, /KeyM'\) return 'automap'/, 'M is the DFU AutoMap default');
-  assert.match(input, /case 'automap': ctx\.toggleAutomap\?\.\(\)/);
+  // I2: the binding is the registry's ['KeyM', 'AutoMap'] default
+  // (inputActions.js, ResetDefaults :1027); the router consumes it.
+  assert.match(src('src/systems/inputActions.js'), /\['KeyM', 'AutoMap'\]/, 'M is the DFU AutoMap default');
+  assert.match(input, /case 'AutoMap': ctx\.toggleAutomap\?\.\(\)/);
   const r = src('src/render/renderer.js');
   assert.match(r, /if \(vWorldPos\.y > uClipY\) discard;/, 'the ceiling cut lives in the mesh FS (_SclicingPositionY)');
   assert.match(r, /setClipY\(y\) \{ this\._clipY = y \?\? 1e9; \}/, 'off = 1e9, the automap window restores it');

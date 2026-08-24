@@ -41,7 +41,7 @@ import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
 import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 import { nearestLights } from '../world/cityLights.js';
 import { lookAt, perspective, mirrorProjectionX } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
-import { routeKey, overlayAction } from '../ui/input.js';
+import { routeKey, overlayAction, actionOf, held, moveHeld, anyMove } from '../ui/input.js';
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible interior arrows
@@ -1510,7 +1510,7 @@ export function createWorldModes(host) {
     // Covers both modes. The dungeon arm sets it again later from its own
     // view matrix, which is a pure write and harmless.
     audio.setListener(cam.pos, fwd);
-    const jumpHeld = keys.has('Space');
+    const jumpHeld = held(keys, 'Jump');
     if (mode === 'dungeon' && dungeonCtx) {
       player.slowFalling = dungeonCtx.playerSlowFalling;   // S8 slowfall (P14: the verbatim constant-speed law lives in the motor)
       // P11 host parity (2026-08-16 audit: the standalone ?dungeon
@@ -1559,8 +1559,9 @@ export function createWorldModes(host) {
     if (mode === 'dungeon') for (const s of [...dungeonQuestFlats]) s.behaviour?.update();   // B2: foe behaviours drive inside drawFoes
     if (!overlayHeld) questBridge?.tick(dt);
     const inputHeld = paralyzed || overlayHeld;
-    const crouchHeld = keys.has('KeyX');
-    const moving = !inputHeld && (keys.has('KeyW') || keys.has('KeyS') || keys.has('KeyA') || keys.has('KeyD'));
+    const crouchHeld = held(keys, 'Crouch');   // I2: DFU's default C (was the port's X)
+    const mv = moveHeld(keys);
+    const moving = !inputHeld && anyMove(mv);
     // Platform riding (the DFU MoveWithMovingPlatform shape) was wired
     // ONLY into the standalone ?dungeon scene, so a world/exterior
     // hosted dungeon dropped the mover delta and the lift penetrated
@@ -1568,13 +1569,13 @@ export function createWorldModes(host) {
     if (!overlayHeld) ridePlatform(player, mode === 'dungeon' ? dungeonCtx?.actions : interiorCtx?.actions);
     // Audit F3: crouch stays live while paralyzed (DFU gates movement/jump only)
     player.update(dt, inputHeld ? { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false, crouch: crouchHeld && !latch.crouch } : {
-      forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
-      strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
-      run: keys.has('ShiftLeft'),
-      sneak: keys.has('AltLeft'),   // P15: DFU's default Sneak binding (LeftAlt), held
+      forward: (mv.forwards ? 1 : 0) - (mv.backwards ? 1 : 0),
+      strafe: (mv.right ? 1 : 0) - (mv.left ? 1 : 0),
+      run: held(keys, 'Run'),
+      sneak: held(keys, 'Sneak'),   // P15: DFU's default Sneak binding (LeftAlt), held
       jump: jumpHeld,   // P14: HELD, verbatim (the 0.1 s grounded gate owns re-fire)
-      up: jumpHeld || keys.has('PageUp'),
-      down: keys.has('PageDown'),
+      up: jumpHeld || held(keys, 'FloatUp'),
+      down: held(keys, 'FloatDown'),
       crouch: crouchHeld && !latch.crouch,
     }, cam.yaw, cam.pitch);
     latch.crouch = crouchHeld;
@@ -1586,7 +1587,7 @@ export function createWorldModes(host) {
       const _surf = player.waterSurfaceY;
       const _step = _footsteps.update(player.pos, {
         grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
-        standingStill: !keys.has('KeyW') && !keys.has('KeyS') && !keys.has('KeyA') && !keys.has('KeyD'),
+        standingStill: !anyMove(mv),
         halfSpeed: player.movingLessThanHalfSpeed,
       }, pickFootstepSet(mode === 'interior'
         ? { inside: true, inBuilding: true }
@@ -1598,7 +1599,7 @@ export function createWorldModes(host) {
     if (mode === 'dungeon' && dungeonCtx) {
       // P11: the splash/jump/swim-minute fatigue feed (same seam as
       // the standalone scene); P14's fall landing rides the same call.
-      dungeonCtx.reportActivity?.({ running: keys.has('ShiftLeft') && moving, swimming: player.swimming, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing
+      dungeonCtx.reportActivity?.({ running: held(keys, 'Run') && moving, swimming: player.swimming, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing
       // PlayerMotor.StartRestGroundedCheck (:184-194) reads the LIVE
       // grounded state; dungeonContext's `_grounded` is host-fed and
       // only dungeon.js:270 fed it, so in a world-hosted dungeon the
@@ -1632,8 +1633,8 @@ export function createWorldModes(host) {
       });
     }
     cam.pos = player.eye;
-    const useHeld = keys.has('KeyE');
-    const zNow = keys.has('KeyZ');   // ReadyWeapon: sheathe toggle (audit 2026-08-17)
+    const useHeld = keys.has('KeyE');   // I2 departure: DFU activates on Mouse0 and E is AbortSpell - the pointer-parity slice owns the move
+    const zNow = held(keys, 'ReadyWeapon');   // sheathe toggle (audit 2026-08-17)
     // C9: per-mode routing (the old unconditional dungeonCtx read
     // CRASHED on Z inside a building - dungeonCtx is null there).
     if (zNow && !zPrev) {
@@ -1676,7 +1677,7 @@ export function createWorldModes(host) {
       // drawn over the dungeon, and in ?world the streaming recenter
       // fed dungeon-local coordinates.
       if (dungeonCtx.uiOverlayActive) { dungeonCtx.tickOverlay(dt); dungeonCtx.drawOverlay(canvas); return true; }   // U2b/U3: overlays gate the dungeon (AUDIT 18 F5: the overlay's own clock still runs)
-      dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, keys.has('KeyW') || keys.has('KeyA') || keys.has('KeyS') || keys.has('KeyD'), player.height);   // moveHeld: the collision-trigger input gate (verbatim)   // C8 foes + S3b clock + S4b missiles - internally gated, must run foes or not (trap spells fire in empty dungeons)
+      dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, anyMove(moveHeld(keys)), player.height);   // moveHeld: the collision-trigger input gate (verbatim)   // C8 foes + S3b clock + S4b missiles - internally gated, must run foes or not (trap spells fire in empty dungeons)
       if (dungeonCtx.waterQuads.length) {
         renderer.drawWater(dungeonCtx.waterQuads, DUNGEON_WATER_COLOR,
           renderer.textures.get(`${dungeonReturn.waterArchive}_0`),
@@ -1922,10 +1923,12 @@ export function createWorldModes(host) {
       e.preventDefault();
       return;
     }
-    // M2: casting INSIDE a building - the spellbook (Backspace) and
-    // the cast key, riding the interior overlay channel.
+    // M2/I2: casting INSIDE a building - the CastSpell action opens
+    // the spellbook (GameManager.cs:550-553), riding the interior
+    // overlay channel. The cast itself is the attack click
+    // (interceptAttack); the old C-cast key retired with I2.
     if (mode === 'interior' && magic) {
-      if (e.key === 'Backspace') {
+      if (actionOf(e) === 'CastSpell') {
         e.preventDefault();
         const sbi = typeof spellsByIndex === 'function' ? spellsByIndex() : spellsByIndex;
         if (!interiorOverlay && sbi) {
@@ -1936,14 +1939,10 @@ export function createWorldModes(host) {
         }
         return;
       }
-      if (e.code === 'KeyC') {
-        magic.castInput([...cam.pos], eyeDir());
-        return;
-      }
     }
     // The input map (ui/input.js) owns all bindings.
     if (mode !== 'dungeon' || !dungeonCtx) return;
-    if (routeKey(e, dungeonCtx, () => ({ eye: cam.pos, dir: eyeDir() }), (p) => player.spawn(p[0], p[1], p[2]))) e.preventDefault();   // P14 (AUDIT 23): a load clears motion state, same applier as dungeon.js
+    if (routeKey(e, dungeonCtx, (p) => player.spawn(p[0], p[1], p[2]))) e.preventDefault();   // P14 (AUDIT 23): a load clears motion state, same applier as dungeon.js
   });
 
   // U8c: pointer routing for interior native windows (the townTalk

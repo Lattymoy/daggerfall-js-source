@@ -46,7 +46,6 @@ import { applySpell } from '../systems/effects.js';
 import { SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { tallySkill } from '../systems/skills.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
-import { OneShotLatch } from '../ui/input.js';
 
 export function createPlayerMagic({
   renderer, audio, getTexture, uploadRecord, uploadRecordFrame = null, collider,
@@ -56,7 +55,12 @@ export function createPlayerMagic({
   rolls = Math.random,   // ENGINE-PRNG RULE: the saving-throw/magnitude roll slot (uniform; sequence-free)
 }) {
   const playerCaster = () => ({ entity: playerEntity, sinks: playerSinks });
-  const clickCast = new OneShotLatch();   // classic click-to-cast: armed by readying
+  // Classic click-to-cast: DFU's armed state IS the readied spell -
+  // EntityEffectManager.cs:250 fires on `readySpell != null`, and
+  // CastReadySpell clears it. The port used to mirror that in a
+  // separate one-shot latch, which could DESYNC from readiedSpell
+  // (setReadiedByIndex set the spell and not the latch - found live
+  // by the I2 cast probe). The latch is gone; armed derives.
   let pendingClickCast = false;
   let readiedSpell = null;
   let readiedFree = false;   // readySpellDoesNotCostSpellPoints (magic-8)
@@ -219,7 +223,6 @@ export function createPlayerMagic({
     readiedSpell = sp;
     readiedFree = free;
     if (sp.rangeType === 0) { castInput(null, null); return; }
-    clickCast.arm();
     // AUDIT 24 scenes: SetReadySpell's own line, verbatim -
     // GetLocalizedText("pressButtonToFireSpell") = "Press button to
     // fire spell." (Internal_Strings_en, EntityEffectManager.cs:355).
@@ -342,12 +345,12 @@ export function createPlayerMagic({
     applySpellToPlayer,
     /** WeaponManager's HasReadySpell leg - the weapon hides while a
      *  cast is armed or pending. */
-    spellArmed: () => clickCast.armed || pendingClickCast,
+    spellArmed: () => readiedSpell != null || pendingClickCast,
     /** The attack click: an ARMED cast consumes the click instead of
      *  a swing. The host fires the cast on its next frame with the
      *  live eye/dir (firePending). */
     interceptAttack(held) {
-      if (held && clickCast.consume()) { pendingClickCast = true; return true; }
+      if (held && readiedSpell != null && !pendingClickCast) { pendingClickCast = true; return true; }
       return false;
     },
     firePending(eye, dir) {

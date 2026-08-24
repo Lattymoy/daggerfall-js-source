@@ -3092,3 +3092,67 @@ reconcile against this table in I2 as adoptions or Ledger-A rows.
 Pins: 10 in `inputactions.test.js`; ten mutations, ten dead - two of
 them (the alt-dict autofill guard, the unknown round-trip) added after
 survivors proved the first pins too soft.
+
+## U34 / I2 - THE HOSTS CONSUME THE REGISTRY (2026-08-23)
+
+I1 shipped the law; this slice makes every gameplay key READ it. The
+per-event routers (`routeKey`, the exterior hosts' hand-routed
+F5/F6/Backspace arms) resolve through `actionOf(e)` and switch on
+DFU's action names; the per-frame polls (`keys.has('KeyW')`, 69 sites
+across five files) read `held(keys, action)` / `moveHeld(keys)`. Two
+escapes stay raw, each visible in its line: the dev fly-camera
+branches (`fly-cam (dev)`, counted exactly per host) and E-activate
+(`I2 departure`, one line per host - DFU activates on Mouse0 and E is
+AbortSpell; the pointer-parity slice owns that move). The sweep in
+`inputmap.test.js` enforces the rule the AUDIT 21 F2 way: any bound
+code read raw outside a marked escape is red, and a bogus escape
+marker is red too because the counts are exact.
+
+**Departures retired (each sentence deleted at its site):**
+- **C-cast / X-crouch.** DFU has no cast key: `CastSpell` (Backspace)
+  OPENS THE SPELLBOOK - GameManager.cs:550-553, which is literally
+  what the port's Backspace already did under another name - and a
+  readied spell fires on the attack click. C now crouches (DFU's
+  default), X is unbound, and a player can rebind either.
+- **The V third-person toggle** (exterior.js only - ?world never had
+  it). V is DFU's TravelMap default and the ?world host already
+  consumes it there; third person rides the ?tp URL param in both.
+- **The touch cast button.** The armed cast fires on the attack tap,
+  same as desktop; the spellbook button stands.
+
+**Three real parity bugs the live probes forced out:**
+1. **The click latch could desync from the readied spell.** DFU's
+   armed state IS `readySpell != null` (EntityEffectManager.cs:250 -
+   CastReadySpell fires on ActivateCenterObject when a spell is
+   readied, and casting clears it). The port mirrored that in a
+   separate OneShotLatch that only `readySpell` armed -
+   `setReadiedByIndex` set the spell and not the latch, so a
+   boot-readied spell could never click-cast. The latch is DELETED;
+   `spellArmed`/`interceptAttack` derive from `readiedSpell`.
+2. **A sheathed player could not cast.** dungeonContext's
+   `playerAttackInput` gated on `playerWeapon.sheathed` BEFORE the
+   cast intercept. DFU's cast is EntityEffectManager's own Update - a
+   separate component from WeaponManager - so the sheath gates only
+   the swing. Reordered; the cast probe pins it (mp 140 -> 60 with
+   the weapon away).
+3. **A ByTouch whiff now KEEPS the ready.** The old latch consumed
+   the armed state on a missed touch, so the next click swung. The
+   port's own audited ByTouch law ("CastReadySpell aborts BEFORE
+   spending when no target sits in touch range") returns without
+   clearing `readiedSpell` - DFU's next click retries the touch. The
+   cast probe's whiff expectation was re-aimed at the law it already
+   cited.
+
+**Probe-fleet repairs riding along** (all red on BASELINE, none ours):
+the quest arc's boot boxes - the start letter (any key advances) and
+the tutorial YesNo (answers ONLY Y/N/Escape) - eat the keyboard until
+dismissed, so castProbe and travelProbe drain them with Escape before
+driving keys; `__travelNearest` now honours G8's hidden-dungeon gate
+(it named a hidden coven the map's search can no longer list); the
+travel probe tolerates this box's CURSOR.IMG 404 the way the others
+do. All green after: cast in all three hosts, travel end to end
+(clock +1060, pixel exact, gold paid), crouch on C live
+(eye 1.7 -> 0.8 -> 1.7), X inert.
+
+Pins: 7 in `inputmap.test.js` (the sweep + exact escape counts + the
+registry reads); 3 I2 mutations dead on top of I1's ten.

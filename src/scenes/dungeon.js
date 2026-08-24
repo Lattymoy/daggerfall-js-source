@@ -28,7 +28,7 @@ import {
   pickActivatable, activationTargets,
 } from '../player/activate.js';
 import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform } from './shared.js';
-import { routeKey } from '../ui/input.js';
+import { routeKey, held, moveHeld, anyMove } from '../ui/input.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { buildDungeonContext } from './dungeonContext.js';
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U14: the overlay pointer seam
@@ -229,6 +229,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     window.__pose = (x, y, z, yaw, pitch) => { cam.pos = [x, y, z]; cam.yaw = yaw; cam.pitch = pitch; };
     window.__player = {
       get pos() { return [...player.pos]; },
+      get eye() { return [...player.eye]; },   // I2 probe surface: the crouch drop is visible here
       warp: (x, y, z) => player.spawn(x, y, z),
     };
     window.__chargenFlow = () => ctx.chargenFlow?.() ?? null;   // AUDIT 17i probe surface
@@ -284,11 +285,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
     last = now;
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];   // HANDEDNESS (mat4's law): screen-right = (cos, 0, -sin) under the mirrored projection - Unity's own right
-    const held = ctx.uiOverlayActive;   // overlays HOLD the world: no movers, no motor - typing a name must not walk the player off the start ledge
-    lookGate(held);   // a window up frees the cursor; closing re-locks
-    if (!held) ctx.actions.update(dt);
-    if (!held) ctx.automapTick?.(dt, cam.pos, fwd);   // A1: the 5 Hz reveal probes (paused under overlays, as DFU's coroutine pauses under the open map)
-    if (walkMode && !held) {
+    const overlayHeld = ctx.uiOverlayActive;   // overlays HOLD the world: no movers, no motor - typing a name must not walk the player off the start ledge
+    lookGate(overlayHeld);   // a window up frees the cursor; closing re-locks
+    if (!overlayHeld) ctx.actions.update(dt);
+    if (!overlayHeld) ctx.automapTick?.(dt, cam.pos, fwd);   // A1: the 5 Hz reveal probes (paused under overlays, as DFU's coroutine pauses under the open map)
+    if (walkMode && !overlayHeld) {
       // Platform riding (Ledger C row -> SHIPPED 2026-08-14): standing
       // on a mover applies its frame delta through the resolver
       // BEFORE the player's own move - the DFU global-point-delta
@@ -298,7 +299,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // AUDIT 18: extracted to shared.js so the worldModes host (which
       // had dropped it entirely) cannot half-apply it again.
       ridePlatform(player, ctx.actions);
-      const jumpHeld = keys.has('Space');
+      const jumpHeld = held(keys, 'Jump');
       player.slowFalling = ctx.playerSlowFalling;   // S8 slowfall (P14: the verbatim constant-speed law lives in the motor)
       // P11: the swim toggle (PlayerEnterExit verbatim - the CENTER
       // + 50*GlobalScale - 0.95 below the block water surface swims)
@@ -306,9 +307,8 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // the centre is the LIVE capsule's (feet + height/2), and a
       // swimmer is force-crouched, so the toggle and the motor's
       // surface clamp track each other exactly as DFU's do.
-      // Float keys: Jump/FloatUp = Space/PageUp; FloatDown = PageDown
-      // (DFU's default binding; DFU's Crouch alternative is C, which
-      // this port binds to castSpell - crouch itself pends).
+      // Float: Jump/FloatUp = Space/PageUp; FloatDown = PageDown
+      // (DFU's defaults, read through the I2 registry).
       const surf = ctx.waterSurfaceYAt(player.pos[0], player.pos[2]);
       player.waterSurfaceY = surf;
       player.swimming = surf != null && player.pos[1] + player.height / 2 + 50 * 0.025 - 0.95 < surf;
@@ -318,21 +318,22 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // player still falls / rides platforms), AcrobatMotor cancels
       // the jump, LevitateMotor cancels levitate movement. Look
       // stays live (no DFU gate on mouselook).
-      // P12 crouch: toggled on the KeyX edge (DFU's default Crouch C
-      // is this port's castSpell - documented departure).
+      // P12 crouch: toggled on the Crouch edge (DFU's default C -
+      // I2 retired the port's X-crouch/C-cast departure).
       const paralyzed = ctx.playerParalyzed?.() ?? false;
-      const crouchHeld = keys.has('KeyX');
-      const moving = !paralyzed && (keys.has('KeyW') || keys.has('KeyS') || keys.has('KeyA') || keys.has('KeyD'));
+      const crouchHeld = held(keys, 'Crouch');
+      const mv = moveHeld(keys);
+      const moving = !paralyzed && anyMove(mv);
       // Audit F3: the crouch toggle stays LIVE while paralyzed - DFU
       // gates movement/jump only (DecideHeightAction has no check).
       player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false, crouch: crouchHeld && !prevCrouch } : {
-        forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
-        strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
-        run: keys.has('ShiftLeft'),
-        sneak: keys.has('AltLeft'),   // P15: DFU's default Sneak binding (LeftAlt), held
+        forward: (mv.forwards ? 1 : 0) - (mv.backwards ? 1 : 0),
+        strafe: (mv.right ? 1 : 0) - (mv.left ? 1 : 0),
+        run: held(keys, 'Run'),
+        sneak: held(keys, 'Sneak'),   // P15: DFU's default Sneak binding (LeftAlt), held
         jump: jumpHeld,   // P14: HELD, verbatim (AcrobatMotor re-fires past the 0.1 s grounded gate - intended bunny-hopping)
-        up: jumpHeld || keys.has('PageUp'),
-        down: keys.has('PageDown'),
+        up: jumpHeld || held(keys, 'FloatUp'),
+        down: held(keys, 'FloatDown'),
         crouch: crouchHeld && !prevCrouch,
       }, cam.yaw, cam.pitch);
       prevCrouch = crouchHeld;
@@ -349,21 +350,21 @@ export async function bootDungeon(canvas, renderer, params, status) {
         if (_step) audio.playOneShot(_step.clip, _step.volume);
       }
       cam.pos = player.eye;
-      ctx.reportActivity?.({ running: keys.has('ShiftLeft') && moving, swimming: player.swimming, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing
+      ctx.reportActivity?.({ running: held(keys, 'Run') && moving, swimming: player.swimming, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing
       ctx.reportMotor(player.grounded, player.velY, cam.yaw);
       ctx.reportInput?.([...keys].join('+') || 'none', cam.pitch);
-      const useHeld = keys.has('KeyE');
-      const zNow = keys.has('KeyZ');   // ReadyWeapon: sheathe toggle (audit 2026-08-17)
+      const useHeld = keys.has('KeyE');   // I2 departure: DFU activates on Mouse0 and E is AbortSpell - the pointer-parity slice owns the move
+      const zNow = held(keys, 'ReadyWeapon');   // sheathe toggle (audit 2026-08-17)
       if (zNow && !zPrev) ctx.toggleSheath?.();
       zPrev = zNow;
       if (useHeld && !prevUse) tryActivate();
       prevUse = useHeld;
     } else if (!held) {
-      const speed = (keys.has('ShiftLeft') ? 24 : 5) * dt;
-      if (keys.has('KeyW')) for (let a = 0; a < 3; a++) cam.pos[a] += fwd[a] * speed;
-      if (keys.has('KeyS')) for (let a = 0; a < 3; a++) cam.pos[a] -= fwd[a] * speed;
-      if (keys.has('KeyA')) for (let a = 0; a < 3; a++) cam.pos[a] -= right[a] * speed;
-      if (keys.has('KeyD')) for (let a = 0; a < 3; a++) cam.pos[a] += right[a] * speed;
+      const speed = (keys.has('ShiftLeft') ? 24 : 5) * dt;   // fly-cam (dev): raw keys, not an action
+      if (keys.has('KeyW')) for (let a = 0; a < 3; a++) cam.pos[a] += fwd[a] * speed;   // fly-cam (dev)
+      if (keys.has('KeyS')) for (let a = 0; a < 3; a++) cam.pos[a] -= fwd[a] * speed;   // fly-cam (dev)
+      if (keys.has('KeyA')) for (let a = 0; a < 3; a++) cam.pos[a] -= right[a] * speed;   // fly-cam (dev)
+      if (keys.has('KeyD')) for (let a = 0; a < 3; a++) cam.pos[a] += right[a] * speed;   // fly-cam (dev)
     }
 
     const target = [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]];
@@ -405,7 +406,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       requestAnimationFrame(frame);
       return;   // U2b/U3: hold gameplay, keep the loop (AUDIT 18 F5: the overlay's own clock still runs - DFU's RestWindow.Update ticks on realtime under timeScale 0)
     }
-    ctx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, keys.has('KeyW') || keys.has('KeyA') || keys.has('KeyS') || keys.has('KeyD'), player.height);   // moveHeld: the collision-trigger input gate (verbatim)   // internally gated (S4b: missiles fire without foes)   // C8 E1+E2: rigged class enemies, classic senses + pursuit
+    ctx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, anyMove(moveHeld(keys)), player.height);   // moveHeld: the collision-trigger input gate (verbatim)   // internally gated (S4b: missiles fire without foes)   // C8 E1+E2: rigged class enemies, classic senses + pursuit
     renderer.drawWater(ctx.waterQuads, WATER_COLOR,
       renderer.textures.get(`${waterArchive}_0`),
       (now / 1000) * WATER_SCROLL_TILES_PER_SEC);
