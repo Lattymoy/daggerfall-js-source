@@ -48,8 +48,8 @@ test('worldsave: the envelope round-trips the world half and the streamer invert
 
 test('worldsave: the world host wires F9/F11 with the native envelope and the load-time guards', () => {
   const s = readFileSync(join(root, 'src/scenes/world.js'), 'utf8');
-  assert.ok(s.includes("e.key === 'F9'") && s.includes('worldQuickSave()'), 'F9 saves (InputManager.SetupDefaults)');
-  assert.ok(s.includes("e.key === 'F11'") && s.includes('worldQuickLoad()'), 'F11 loads');
+  assert.ok(s.includes("act === 'QuickSave'") && s.includes('worldQuickSave()'), 'the QuickSave action saves (I2; F9 is its registry default, InputManager.SetupDefaults)');
+  assert.ok(s.includes("act === 'QuickLoad'") && s.includes('worldQuickLoad()'), 'and QuickLoad loads (F11 default)');
   const i = s.indexOf('function worldQuickSave');
   const fn = s.slice(i, i + 1000);   // TK-iv widened it (SaveDataConversation whole rides the talk slot)
   assert.ok(fn.includes('state.worldCoords(pf)'), 'the save stores NATIVES, not local scene positions');

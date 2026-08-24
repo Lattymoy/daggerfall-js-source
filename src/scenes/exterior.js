@@ -73,7 +73,7 @@ import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the sho
 import { hitSoundFor, swingSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
-import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, climbingDeps, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
+import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, climbingDeps, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -85,6 +85,8 @@ import { SEASON } from '../world/climateSwaps.js';
 import { addGold } from '../systems/court.js';   // U10 probe surface
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
+import { actionOf, held, moveHeld, anyMove } from '../ui/input.js';   // I2: the rebindable registry
+import { openPauseFlow, preloadPauseFlowArt, pauseArtLoaded } from '../ui/pauseWindow.js';   // I3/I4
 import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
 import { discoveredBuildings } from '../systems/discovery.js';   // A2: the nameplates' gate
 
@@ -468,6 +470,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   });
   townTalk.ensureLoaded();
   preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: INFO00I0 warms at boot
+  preloadPauseFlowArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] pause/controls art unavailable:', e?.message ?? e));   // I3/I4
   preloadBookArt({ renderer, fetchBytes, palette });   // B1: BOOK00I0 warms at boot
   // B1 + AUDIT B-C2: an async open must not clobber a window the
   // player opened while the book was loading.
@@ -705,7 +708,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   player.spawn(loc.width * RMB_SIDE * 0.46, GROUND_OFFSET * 0.025 + 2, loc.height * RMB_SIDE * 0.5);
   // Edge-detect latch shared with the mode machine: a held key must not
   // re-trigger across a mode switch.
-  const latch = { use: false, view: false, crouch: false };   // audit 16f: jump is HELD since P14 - the latch slot was dead
+  const latch = { use: false, crouch: false };   // audit 16f: jump is HELD since P14 - the latch slot was dead; I2 retired the view latch with the V toggle
   console.log(`player: collider ${colliderTris} tris, walk=${walkMode}`);
   if (shotMode) {
     window.__player = {
@@ -736,7 +739,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     // the session. Routing F5/F6 into interiors is its own arc
     // (FLAGGED); swallowing the browser reload is not optional.
     if (e.code === 'F5' || e.code === 'F6') e.preventDefault();
-    if (e.code === 'F5' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
+    const act = actionOf(e);   // I2: the registry owns the code -> action read
+    if (act === 'CharacterSheet' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
       townTalk.showOverlay(new CharSheet(playerEntity, charSheetHooks({
         entity: playerEntity,
         artDeps: { renderer, fetchBytes, palette },
@@ -747,25 +751,35 @@ export async function bootExterior(canvas, renderer, params, status) {
     }
     // U8d: F6 opens the classic inventory (DFU's default Inventory
     // binding; same host rule as F5).
-    if (e.code === 'F6' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && inventoryArtLoaded()) {
+    if (act === 'Inventory' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && inventoryArtLoaded()) {
       townTalk.showOverlay(makeInventoryWindow());
       return;
     }
-    // M2: the DFU spellbook binding (Backspace) and our cast key -
-    // gameAction's own map, hand-routed like this host's F5/F6 arms.
-    if (e.key === 'Backspace' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
+    // M2/I2: the CastSpell action opens the spellbook
+    // (GameManager.cs:550-553); the cast is the attack click. The
+    // C-cast key retired with I2.
+    if (act === 'CastSpell' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
       e.preventDefault();
       toggleSpellbook();
       return;
     }
-    if (e.code === 'KeyC' && walkMode && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
-      const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
-      magic.castInput([...cam.pos], fwd);
+    // I3: the Escape window. This dev host has no save path (the
+    // quicksave lives in ?world and the dungeon contexts), so the
+    // SAVE button answers with DFU's own cannot-save line and LOAD
+    // has nothing to load - both stated by the hooks, not invented.
+    if (act === 'Escape' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && pauseArtLoaded()) {
+      openPauseFlow((w) => townTalk.showOverlay(w), {
+        savingPrevented: () => true,
+        exitToMenu: exitToTitleMenu,
+        textLines: (id) => townTalk.lines(id),
+      });
       return;
     }
-    // A2: the exterior automap on M (Actions.AutoMap outdoors,
+    // A2: the exterior automap (Actions.AutoMap outdoors,
     // DaggerfallUI.cs:633-650); this host always stands on a location.
-    if (e.code === 'KeyM' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
+    // I2: through the registry, so M is rebindable like every other
+    // action rather than a second hardcoded literal.
+    if (act === 'AutoMap' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
       const locId = `${dfLocation.regionIndex}:${dfLocation.name ?? locationName}`;
       townTalk.showOverlay(new ExteriorAutomapWindow({
         locationName: dfLocation.name ?? locationName,
@@ -1024,8 +1038,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];   // HANDEDNESS (mat4's law): screen-right = (cos, 0, -sin) under the mirrored projection - Unity's own right
     if (walkMode) {
       // Grounded movement: verbatim speeds in the motor, Space edge-jumps.
-      const jumpHeld = keys.has('Space');
-      const crouchHeld = keys.has('KeyX');   // P12 host parity (audit F4)
+      const jumpHeld = held(keys, 'Jump');
+      const crouchHeld = held(keys, 'Crouch');   // P12 host parity (audit F4); I2: DFU's default C
       const _overlayHeld = (modes?.dungeonCtx?.uiOverlayActive ?? false) || townTalk.overlayActive;   // chargen/windows/talk hold the motor - typing must not walk the player
       // AUDIT 18 F9: the player's world clock, HELD by the same gate.
       // It ran only inside a dungeon before F8 moved it here; F8 then
@@ -1053,17 +1067,18 @@ export async function bootExterior(canvas, renderer, params, status) {
       // (Levitate.cs:131/:136); swimming is false outdoors (there is
       // no blockWaterLevel - PlayerEnterExit.IsPlayerSwimming).
       applyMotorEffectFlags(player, playerEntity);
+      const mv = moveHeld(keys);
       if (!_overlayHeld) player.update(dt, {
-        forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
-        strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
-        run: keys.has('ShiftLeft'),
-        sneak: keys.has('AltLeft'),   // P15: DFU's default Sneak binding (LeftAlt), held
+        forward: (mv.forwards ? 1 : 0) - (mv.backwards ? 1 : 0),
+        strafe: (mv.right ? 1 : 0) - (mv.left ? 1 : 0),
+        run: held(keys, 'Run'),
+        sneak: held(keys, 'Sneak'),   // P15: DFU's default Sneak binding (LeftAlt), held
         jump: jumpHeld,   // P14: HELD, verbatim (the 0.1 s grounded gate owns re-fire)
         crouch: crouchHeld && !latch.crouch,
       }, cam.yaw);
       latch.crouch = crouchHeld;
       // C9: ReadyWeapon (Z) - the sheathe toggle, host parity.
-      const zNowW = keys.has('KeyZ');
+      const zNowW = held(keys, 'ReadyWeapon');
       if (zNowW && !zPrevW) weaponRig.toggleSheath();
       zPrevW = zNowW;
       // P14 fall damage (host parity; the outdoor-water exemption is
@@ -1073,13 +1088,13 @@ export async function bootExterior(canvas, renderer, params, status) {
       {
         const _step = footsteps.update(player.pos, {
           grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
-          standingStill: !keys.has('KeyW') && !keys.has('KeyS') && !keys.has('KeyA') && !keys.has('KeyD'),
+          standingStill: !anyMove(mv),
           halfSpeed: player.movingLessThanHalfSpeed,
         }, pickFootstepSet({ inside: false, winter: season === SEASON.Winter, climateIndex: locClimateIndex }));
         if (_step) audio.playOneShot(_step.clip, _step.volume);
       }
       cam.pos = player.eye;
-      const useHeld = keys.has('KeyE');
+      const useHeld = keys.has('KeyE');   // I2 departure: DFU activates on Mouse0 and E is AbortSpell - the pointer-parity slice owns the move
       if (useHeld && !latch.use && !modes.transitioning) {
         // T3b: a townsperson under the ray wins the activation (the
         // PlayerActivate nearest-hit order); G3: a guard corpse next
@@ -1110,20 +1125,15 @@ export async function bootExterior(canvas, renderer, params, status) {
         }
       }
       latch.use = useHeld;
-      // V toggles first/third person (edge-latched like jump/use);
-      // the rig builds lazily on first entry into third person.
-      const viewHeld = keys.has('KeyV');
-      if (viewHeld && !latch.view) {
-        tpMode = !tpMode;
-        if (tpMode && !rig) buildRig().catch((e) => console.error(e));
-      }
-      latch.view = viewHeld;
+      // I2 retired the V third-person toggle: V is DFU's TravelMap
+      // default and the ?world host already consumes it there; third
+      // person rides the ?tp URL param, as it always has in ?world.
     } else {
-      const speed = (keys.has('ShiftLeft') ? 120 : 30) * dt;
-      if (keys.has('KeyW')) for (let a = 0; a < 3; a++) cam.pos[a] += fwd[a] * speed;
-      if (keys.has('KeyS')) for (let a = 0; a < 3; a++) cam.pos[a] -= fwd[a] * speed;
-      if (keys.has('KeyA')) for (let a = 0; a < 3; a++) cam.pos[a] -= right[a] * speed;
-      if (keys.has('KeyD')) for (let a = 0; a < 3; a++) cam.pos[a] += right[a] * speed;
+      const speed = (keys.has('ShiftLeft') ? 120 : 30) * dt;   // fly-cam (dev): raw keys, not an action
+      if (keys.has('KeyW')) for (let a = 0; a < 3; a++) cam.pos[a] += fwd[a] * speed;   // fly-cam (dev)
+      if (keys.has('KeyS')) for (let a = 0; a < 3; a++) cam.pos[a] -= fwd[a] * speed;   // fly-cam (dev)
+      if (keys.has('KeyA')) for (let a = 0; a < 3; a++) cam.pos[a] -= right[a] * speed;   // fly-cam (dev)
+      if (keys.has('KeyD')) for (let a = 0; a < 3; a++) cam.pos[a] += right[a] * speed;   // fly-cam (dev)
     }
 
     // Shot vantage scales with the location extent.
@@ -1228,9 +1238,8 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (riding) {
         // Gait from live input over the SAME keys the motor reads;
         // airborne keeps the last grounded gait's look via stand.
-        const mvF = (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0);
-        const mvS = (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0);
-        rig.setGait((mvF || mvS) ? (keys.has('ShiftLeft') ? 2 : 1) : 3);
+        const gmv = moveHeld(keys);
+        rig.setGait(anyMove(gmv) ? (held(keys, 'Run') ? 2 : 1) : 3);
       } else rig.setGait(1);   // parked probe rig: the slice-2 walking-in-place semantics
       rig.update(dt);
       const s = rig.scale;

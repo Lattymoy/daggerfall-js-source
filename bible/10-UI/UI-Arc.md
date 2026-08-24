@@ -3031,3 +3031,243 @@ its text idiom), which rides its own slice the way the level-up
 screen's does.
 
 Pins: 7 in `charsheetnav.test.js`; 5 mutations, 5 killed.
+
+## U33 / I1 - THE INPUT REGISTRY: InputManager's binding law (2026-08-23)
+
+The port's keys were hardcoded twice over - `ui/input.js`'s
+`gameAction` if-chain, and every host reading `keys.has('KeyW')` raw -
+so nothing could ever be rebound, the settings window's controls
+section had nothing to edit, and the main-menu hotkeys row sat on the
+Ledger with no registry to land on. Port-Completion-Analysis called
+the input layer the highest-leverage move left; this slice is its law
+half. `systems/inputActions.js` cites `InputManager.cs` throughout.
+
+**What is DFU's, verbatim.** The `Actions` enum (:324-384), names and
+order. The 44-row `ResetDefaults` default table (:979-1032), KeyCode
+translated to `KeyboardEvent.code` for the same physical key
+('Mouse0'..'Mouse2' kept as Unity names them - left/right/middle).
+Both binding dicts are CODE -> ACTION, DFU's orientation, with
+SetBinding's exact order of operations (:727-758): steal the code from
+the other dict, clear the action's old code in this one, then bind -
+and binding a force-removed action un-removes it. The two clears
+(:803-846), `AddRemovedPrimaryAction` (:795-798), `GetBinding` /
+`GetBindings` (:641-724).
+
+**The reset quirk, kept.** `ResetDefaults` full-mode clears the
+primary dict and the removed list but NOT the secondary dict
+(:956-960) - each default then steals its own code back out of the
+secondary through SetBinding's alt-removal, and a secondary binding on
+a non-default code survives the reset. Tidying that into "clear both"
+reads more sensible and is not what DFU does; it is pinned as the
+quirk it is.
+
+**The autofill pass.** `TestSetBinding` (:1405-1422): a default lands
+only if the action is missing, its code is free in BOTH dicts, and the
+action was not force-removed. This is DFU's "push new actions into an
+old KeyBindings.txt" startup arm (:445-448), and the both-dicts guard
+earned its pin by surviving the first mutation round (M5).
+
+**The save file.** `KeyBindData_v1`'s shape (:871-930) minus the
+axis/joystick blocks the port has no engine for: `actionKeyBinds` /
+`secondaryActionKeyBinds` as {keyString: actionName} plus
+`removedPrimaryActions`. A NEWER build's unknown action names are held
+and re-serialized rather than stripped (:899-916), unless the key was
+rebound here - this build's meaning wins. Loading uses RAW adds
+(:1950-1969), never setBinding: a hand-edited file binding two keys to
+one action loads both, exactly as DFU's does. A removed-primary mark
+only loads for a known action not currently bound (:1985-1991).
+Persistence is its own localStorage key beside the settings store's,
+as KeyBindings.txt sits beside settings.ini.
+
+**The frame model.** currentActions/previousActions with
+HasAction/ActionStarted/ActionComplete (:610-637) and the LateUpdate
+swap, as `createActionState`/`endFrame` - the shape I2 wires the hosts
+through.
+
+FLAGGED at the module tail: key combos (GetComboCode :1165-1218 - no
+default uses one), the axis/joystick layer, and the port's four
+standing key departures (C cast, X crouch, E activate, V view) which
+reconcile against this table in I2 as adoptions or Ledger-A rows.
+
+Pins: 10 in `inputactions.test.js`; ten mutations, ten dead - two of
+them (the alt-dict autofill guard, the unknown round-trip) added after
+survivors proved the first pins too soft.
+
+## U34 / I2 - THE HOSTS CONSUME THE REGISTRY (2026-08-23)
+
+I1 shipped the law; this slice makes every gameplay key READ it. The
+per-event routers (`routeKey`, the exterior hosts' hand-routed
+F5/F6/Backspace arms) resolve through `actionOf(e)` and switch on
+DFU's action names; the per-frame polls (`keys.has('KeyW')`, 69 sites
+across five files) read `held(keys, action)` / `moveHeld(keys)`. Two
+escapes stay raw, each visible in its line: the dev fly-camera
+branches (`fly-cam (dev)`, counted exactly per host) and E-activate
+(`I2 departure`, one line per host - DFU activates on Mouse0 and E is
+AbortSpell; the pointer-parity slice owns that move). The sweep in
+`inputmap.test.js` enforces the rule the AUDIT 21 F2 way: any bound
+code read raw outside a marked escape is red, and a bogus escape
+marker is red too because the counts are exact.
+
+**Departures retired (each sentence deleted at its site):**
+- **C-cast / X-crouch.** DFU has no cast key: `CastSpell` (Backspace)
+  OPENS THE SPELLBOOK - GameManager.cs:550-553, which is literally
+  what the port's Backspace already did under another name - and a
+  readied spell fires on the attack click. C now crouches (DFU's
+  default), X is unbound, and a player can rebind either.
+- **The V third-person toggle** (exterior.js only - ?world never had
+  it). V is DFU's TravelMap default and the ?world host already
+  consumes it there; third person rides the ?tp URL param in both.
+- **The touch cast button.** The armed cast fires on the attack tap,
+  same as desktop; the spellbook button stands.
+
+**Three real parity bugs the live probes forced out:**
+1. **The click latch could desync from the readied spell.** DFU's
+   armed state IS `readySpell != null` (EntityEffectManager.cs:250 -
+   CastReadySpell fires on ActivateCenterObject when a spell is
+   readied, and casting clears it). The port mirrored that in a
+   separate OneShotLatch that only `readySpell` armed -
+   `setReadiedByIndex` set the spell and not the latch, so a
+   boot-readied spell could never click-cast. The latch is DELETED;
+   `spellArmed`/`interceptAttack` derive from `readiedSpell`.
+2. **A sheathed player could not cast.** dungeonContext's
+   `playerAttackInput` gated on `playerWeapon.sheathed` BEFORE the
+   cast intercept. DFU's cast is EntityEffectManager's own Update - a
+   separate component from WeaponManager - so the sheath gates only
+   the swing. Reordered; the cast probe pins it (mp 140 -> 60 with
+   the weapon away).
+3. **A ByTouch whiff now KEEPS the ready.** The old latch consumed
+   the armed state on a missed touch, so the next click swung. The
+   port's own audited ByTouch law ("CastReadySpell aborts BEFORE
+   spending when no target sits in touch range") returns without
+   clearing `readiedSpell` - DFU's next click retries the touch. The
+   cast probe's whiff expectation was re-aimed at the law it already
+   cited.
+
+**Probe-fleet repairs riding along** (all red on BASELINE, none ours):
+the quest arc's boot boxes - the start letter (any key advances) and
+the tutorial YesNo (answers ONLY Y/N/Escape) - eat the keyboard until
+dismissed, so castProbe and travelProbe drain them with Escape before
+driving keys; `__travelNearest` now honours G8's hidden-dungeon gate
+(it named a hidden coven the map's search can no longer list); the
+travel probe tolerates this box's CURSOR.IMG 404 the way the others
+do. All green after: cast in all three hosts, travel end to end
+(clock +1060, pixel exact, gold paid), crouch on C live
+(eye 1.7 -> 0.8 -> 1.7), X inert.
+
+Pins: 7 in `inputmap.test.js` (the sweep + exact escape counts + the
+registry reads); 3 I2 mutations dead on top of I1's ten.
+
+## U35 / I3 - THE PAUSE OPTIONS WINDOW: Escape finally answers (2026-08-23)
+
+DaggerfallPauseOptionsWindow on the real OPTN00I0.IMG (150x84, centred
+with DFU's own y=40 - alignment overrides position PER AXIS, so the
+declared y applies where the guild popup's did not). Until this slice
+the port had no pause menu at all; the Ledger's "the launcher is the
+ONLY door" row is struck.
+
+The geometry is DFU's, rect for rect (`:86-141`), including the two
+toggle ticks at (64,3.2,3.7,3.2) and the three 109.1-wide bars with
+their (0,1,w,3.5) fills in Color32(146,12,4) - the checkbox toggle
+colour every DFU window shares. The bar click law is verbatim
+(`:230-241`): the sub-1%/over-99% snaps and the two-place rounding,
+with the boundary pinned just inside the band because the exact edge
+is a strict float compare no multiplication can land on.
+
+Escape opens it in ALL FOUR HOSTS through I2's registry - routeKey's
+Escape case for the two dungeon contexts (threading the host's
+position applier so the LOAD arm can move the player), hand-routes in
+the exterior pair, and worldModes' own interior arm - and the same
+key toggles it closed (`:186-190`; DFU keys on the UP edge, the
+port's overlay channel on DOWN, one edge earlier, recorded). PAUSING
+COSTS NOTHING: the hosts' overlay-hold law (AUDIT 18 F9) already is
+Time.timeScale = 0.
+
+Save/Load ride the quicksave with DFU's IsSavingPrevented gate kept
+("You cannot save the game right now." where a host has no save
+path - the block-test exterior and interiors today). EXIT confirms on
+TEXT.RSC 1069 then takes `exitToTitleMenu` - the ONE bare-URL unwind,
+now also the death sequence's last line (dfuiExitGame is
+Application.Quit; a browser has no quit - Ledger A). The sound/music
+bars write their LIVE keys; the detail bar, FULL SCREEN (DFU's quirk
+kept: the button flips LargeHUD, the tick shows its negation) and
+HEAD BOBBING write stored-tier keys through `effectiveSettings` - the
+settings MENU's own display surface, because the tier doctrine
+reserves the typed getters for keys whose value changes play (the
+tier guard caught the first draft reading them raw). The saveSettings
+LATCH is DFU's: nothing persists until a control was touched, then
+the store saves on close - and the probe's first draft "proved" the
+bar wrote by reading the DEFAULT back (0.5 IS the ini default and the
+sparse store drops default-equal writes); it clicks 0.25 now.
+
+Pending, stated in-window or at the site: the CONTROLS button answers
+with a note until I4's rebinding grid; the multi-slot save window;
+PauseOptionsDropdown (a DFU-era addition, with the settings arc).
+
+Pins: 7 in `pausewindow.test.js` (geometry literal-for-literal, the
+bar and detail laws, the confirm/save/load flows, the four-host
+wiring sweep); five mutations, five dead. Live: tools/pauseProbe.mjs
+- Escape opens over a real dungeon, the bar write survives the close,
+N declines the exit, Escape toggles both ways.
+
+## U36 / I4 - THE CONTROLS GRID: keys rebind at last (2026-08-23)
+
+DaggerfallControlsWindow on CNFG00I0.IMG, with CNFG00I1's
+mouse-look-alt panel at (152,100,168,45). The grid I1's registry has
+been waiting for since the arc opened, and the last piece of the
+Ledger's KEYBINDING REGISTRY row.
+
+**The staging law** (`systems/controlsConfig.js` = ControlsConfigManager
+minus its combo arms): the window edits a COPY of both binding dicts,
+and nothing reaches the live registry until it closes. `GetDuplicates`
+answers which codes repeat (unbound never counts, however many actions
+share it); `CheckDuplicateKeyCodes` returns them as data - red for a
+clash INSIDE the shown dict, DFU's blue for one across the two - and
+`ok` is DFU's own `noRedDupes && cross == 0`: BOTH kinds block the
+exit. The cross check dedupes each dict first, so an internal pair
+does not double as a cross clash (a mutation proved that arm real).
+
+**THE APPLY CONTRACT, found by a failing fixture.** `SetBinding`
+steals a code from whoever holds it, so applying a set where two
+actions share one code is ORDER-DEPENDENT: the later action wins and
+the earlier ends up unbound. DFU's `SetKeyBindValues` has exactly this
+shape and never reaches it, because the window refuses to close while
+duplicates exist. That is *why* the gate blocks the exit rather than
+merely colouring the labels. Both halves are pinned together so nobody
+"fixes" the apply and quietly retires its guard. The removed-primary
+mark rides the TRANSITION, not the state - applying an unchanged set
+marks nothing, which is what makes reopening the window and pressing
+CONTINUE harmless (the mutant that reads it as state survived the
+first round and earned its own pin).
+
+**The grid** is Actions[2..40) - thirty-eight buttons in nine groups
+at DFU's first-setup anchors, 47x7 on an 11px stride. Six actions are
+NOT offered (Escape, ToggleConsole below the range; QuickSave,
+QuickLoad, PrintScreen, AutoRun past its end) - DFU's own omission,
+kept and pinned by name. Left-click captures the next key (ReservedKeys
+is empty in DFU, so Escape binds like any other); right-click prompts
+to remove; DEFAULT confirms through the registry's own reset; CONTINUE
+on a clean grid applies and saves. The prompts are Internal_Strings'
+own, recovered - "You have multiple assignments...", "Are you sure you
+want to set default controls?", the removeKeybind format with its
+camel-split action name and full key text - and the pause window's
+cannotSaveNow line was corrected to the real string in the same pass.
+
+**One construction seam.** `openPauseFlow(show, hooks)` builds the
+pause window with its controls round trip once; each host passes only
+its own slot assignment. The U24 dispatch law holds at both ends: a
+window that opens another marks itself done FIRST and the host's slot
+assignment replaces it. A test forbids any host from hand-rolling
+`new PauseOptionsWindow` past the factory.
+
+DFU's UpdateKeybindButtons re-anchors every group one pixel up-left
+after the first rebind (56,12 against 57,13), so its labels shift by
+(1,1) mid-session. The port draws from ONE table; reproducing the
+drift would need a second layout table whose only purpose is to lie
+identically, so it is recorded here instead.
+
+Pins: 8 in `controlswindow.test.js`; seven mutations, seven dead - two
+of them (the unconditional rebind, the per-dict dedupe) added after
+survivors showed the first pins too soft. Live: tools/pauseProbe.mjs
+now drives the whole trip - Escape, CONTROLS, rebind MoveForwards from
+W to P, CONTINUE, back to the pause window, with the new binding in
+storage and the old one gone.

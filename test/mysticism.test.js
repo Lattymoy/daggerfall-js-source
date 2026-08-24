@@ -205,7 +205,7 @@ test('S27: THE FOUR HOSTS - every host mounts the ONE cast engine', () => {
   }
   const wm = read('src/scenes/worldModes.js');
   assert.ok(/magic\.readySpell\(sp\)/.test(wm), 'the interior arm readies through the engine');
-  assert.ok(/magic\.castInput\(/.test(wm), 'and casts through it');
+  assert.ok(/magic\?\.interceptAttack\(/.test(wm), 'and casts through it (I2: the attack click, not a cast key)');
   // and worldModes is still the ROUTER for the dungeon context
   assert.ok(/buildDungeonContext/.test(wm), 'worldModes mounts the dungeon context');
 });

@@ -15,7 +15,11 @@ const browser = await chromium.launch({
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e.message)));
-page.on('console', (m) => { if (m.type() === 'error') errors.push(`[console] ${m.text()}`); });
+page.on('console', (m) => {
+  // A resource 404 (this box's ARENA2 lacks CURSOR.IMG) is not a page
+  // error - the cursor module logs and falls back. Real errors gate.
+  if (m.type() === 'error' && !/status of 404/.test(m.text())) errors.push(`[console] ${m.text()}`);
+});
 
 await page.goto('http://localhost:5210/?world&nomenu&class=0&novideo&shot&play');
 await page.waitForTimeout(Number(process.env.BOOT_WAIT ?? 14000));
@@ -32,12 +36,22 @@ const frames = async (n, cap = 30000) => {
 };
 
 const out = { steps: {} };
+// Drain the quest arc's boot boxes (the start letter + the tutorial
+// YesNo) before driving keys - Escape advances a plain box and
+// declines a YesNo. Same guard as castProbe's.
+for (let i = 0, quiet = 0; i < 30 && quiet < 2; i++) {
+  const up = await page.evaluate(() => JSON.parse(window.__talk()).overlay);
+  if (up) { quiet = 0; await page.keyboard.press('Escape'); } else quiet++;
+  await frames(2);
+}
+out.steps.overlayAfterDrain = await page.evaluate(() => JSON.parse(window.__talk()).overlay);
 out.steps.before = await page.evaluate(() => JSON.parse(window.__travelProbe()));
 const dest = await page.evaluate(() => JSON.parse(window.__travelNearest()));
 out.steps.dest = { name: dest.name, region: dest.region, pixel: dest.pixel };
 
 await page.keyboard.press('v');
 await frames(2);
+out.steps.overlayAfterV = await page.evaluate(() => JSON.parse(window.__talk()).overlay);
 for (const c of dest.name) {
   if (c === ' ') await page.keyboard.press('Space');
   else if (/[a-zA-Z0-9'-]/.test(c)) await page.keyboard.press(c);
