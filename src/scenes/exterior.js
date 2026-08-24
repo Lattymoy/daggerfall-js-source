@@ -397,7 +397,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         tallySkill(playerEntity, SKILLS.Medical);
         surfacePlayer();
       } else {
-        hurtPlayer(playerEntity, playerEntity.health);   // SetHealth(0) through the one damage door
+        hurtPlayer(playerEntity, playerEntity.health, { bypassShield: true });   // SetHealth(0) through the one damage door
       }
     } finally { _inExhaustion = false; }
   }

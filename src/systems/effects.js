@@ -764,9 +764,22 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     // (Shield.cs:53-63).
     if (isShieldEffect(e)) {
       const rounds = rollDuration(e, casterLevel);
-      const pool = rollMagnitude(e, casterLevel, rolls);
+      // REVIEW FIX: the pool rides the SAME magnitude path every other
+      // magnitude family uses, which is what GetMagnitude does - so a
+      // By-Touch or ranged Shield really does run the target's saving
+      // throw (EntityEffect.cs:804-806 ModifyEffectAmount). The raw
+      // roll this used to take made a ranged Shield unsaveable, which
+      // the comment above already claimed it was not.
+      const pool = magnitude(e);
       if (rounds > 0 && pool > 0) {
-        const inc = findInc((a) => a.kind === 'shield');
+        // REVIEW FIX: a BUSTED pool is no longer an incumbent - that
+        // is exactly what DamageShield's ResignAsIncumbent does on
+        // bust (Shield.cs:85). Without the `!a.ended` test a recast
+        // merged into the corpse, refilled a pool nothing reads
+        // (damageShieldPool skips ended entries) and pushed its rounds
+        // back above zero so the ticker never swept it - Shield
+        // stopped absorbing for good after its first bust.
+        const inc = findInc((a) => a.kind === 'shield' && !a.ended);
         if (inc) {
           inc.roundsRemaining += rounds;
           inc.shieldRemaining = Math.min(inc.startingShield, inc.shieldRemaining + pool);

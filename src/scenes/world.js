@@ -610,7 +610,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         tallySkill(playerEntity, SKILLS.Medical);
         surfacePlayer();
       } else {
-        hurtPlayer(playerEntity, playerEntity.health);
+        hurtPlayer(playerEntity, playerEntity.health, { bypassShield: true });   // SetHealth(0)
       }
     } finally { _inExhaustion = false; }
   }
