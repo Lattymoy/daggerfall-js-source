@@ -175,7 +175,7 @@ export function createWorldModes(host) {
         playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity, (playerEntity.magicka ?? 0) + out.magicka);
         tallySkill(playerEntity, SKILLS.Medical);
       } else {
-        hurtPlayer(playerEntity, playerEntity.health);
+        hurtPlayer(playerEntity, playerEntity.health, { bypassShield: true });   // SetHealth(0): no shield stands against the collapse
       }
     } finally { _inExhaustion = false; }
   }

@@ -1939,7 +1939,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const surf = waterSurfaceYAt(playerFeet[0], playerFeet[2]);
       const submerged = surf != null && playerFeet[1] + playerHeight / 2 + 76 * 0.025 - 0.95 < surf;
       if (breathStep(playerEntity, submerged, _breathState) === 'drowned') {
-        hurtPlayer(playerEntity.health);   // SetHealth(0): drowned
+        // REVIEW FIX: this lost its ENTITY argument, so health went in
+        // as `entity` and the damage was undefined - the guard at the top
+        // of hurtPlayer returned at once and DUNGEON DROWNING never dealt
+        // a point. Pre-dates X1; found reviewing the shield's door.
+        hurtPlayer(playerEntity, playerEntity.health, { bypassShield: true });   // SetHealth(0): drowned
       }
     }
   }

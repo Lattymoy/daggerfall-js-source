@@ -93,15 +93,24 @@ export function damageShieldPool(entity, dmg) {
   return dmg;
 }
 
-export function hurtPlayer(entity, dmg) {
+export function hurtPlayer(entity, dmg, { bypassShield = false } = {}) {
   if (!(dmg > 0)) return false;
   // X1: THE SHIELD POOL (Shield.cs DamageShield :78-98) sits in front
   // of the health subtraction, on the ONE door every damage source
   // already comes through. All-or-overflow per hit: a hit no larger
   // than the pool is reduced to ZERO, and the hit that empties it
   // passes only its excess. Returns the damage that survives.
-  dmg = damageShieldPool(entity, dmg);
-  if (!(dmg > 0)) return false;
+  //
+  // REVIEW FIX - bypassShield is the SetHealth(0) door. DFU's
+  // drowning and lethal-exhaustion collapse SET health to zero rather
+  // than dealing damage, so no shield stands between the player and
+  // them; routing them through this one door (which the port does, so
+  // the death presenter fires once) meant a Shield made drowning
+  // survivable. The callers that mean "kill, do not damage" say so.
+  if (!bypassShield) {
+    dmg = damageShieldPool(entity, dmg);
+    if (!(dmg > 0)) return false;
+  }
   const wasAlive = (entity.health ?? 0) > 0;
   entity.health = Math.max(0, entity.health - dmg);
   surfacePlayer();

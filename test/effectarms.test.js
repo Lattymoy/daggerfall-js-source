@@ -4,7 +4,11 @@
 // yet)" marks disappear as the arms land.
 
 import { test } from 'node:test';
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 import { applySpell } from '../src/systems/effects.js';
 import { jumpSpeedMultiplier, JUMP_SPELL_MULTIPLIER } from '../src/systems/skills.js';
 import { climbingDeps } from '../src/scenes/shared.js';
@@ -298,4 +302,51 @@ test('X1 Shield: the pool sits on the ONE damage door, so every source is covere
   assert.equal(hurtPlayer(e2, a2.shieldRemaining - 1), false, 'no death transition');
   assert.equal(e2.health, before, 'the one door consulted the pool');
   assert.equal(effectByKey('35,255').ported, true);
+});
+
+test('X1 REVIEW: a busted Shield resigns - a recast makes a NEW live pool, and the corpse stays dead', () => {
+  // The review's P0/P1, found by two reviewers independently: findInc
+  // matched the busted entry, so a recast refilled a pool that
+  // damageShieldPool skips (ended) while pushing rounds back above 0
+  // so the ticker never swept it. Shield stopped absorbing for good
+  // after its first bust, and every later cast fed the corpse.
+  const [e, dead] = shielded();
+  hurtPlayer(e, dead.startingShield + 5);
+  assert.equal(dead.ended, true);
+  applySpell(shieldSpell(20), 1, e, {}, () => 0.5, null, {});
+  const live = e.activeEffects.filter((a) => a.kind === 'shield' && !a.ended);
+  assert.equal(live.length, 1, 'the recast is its own live incumbent');
+  assert.notEqual(live[0], dead);
+  assert.equal(dead.roundsRemaining, 0, 'the corpse was never revived');
+  // and the fresh pool really absorbs
+  const h = e.health;
+  hurtPlayer(e, 10);
+  assert.equal(e.health, h, 'the new shield works');
+});
+
+test('X1 REVIEW: SetHealth(0) bypasses the shield - drowning and the collapse still kill', () => {
+  // DFU's drowning and lethal exhaustion SET health to zero rather
+  // than dealing damage, so no pool stands between them and the
+  // player. The port routes them through the one damage door (so the
+  // death presenter fires once), which made a Shield survive them.
+  const [e] = shielded();
+  hurtPlayer(e, e.health, { bypassShield: true });
+  assert.equal(e.health, 0, 'the collapse is not absorbable');
+  // and the ordinary door still shields
+  const [e2, a2] = shielded();
+  hurtPlayer(e2, 5);
+  assert.equal(e2.health, 100);
+  assert.ok(a2.shieldRemaining < a2.startingShield);
+});
+
+test('X1 REVIEW: the four SetHealth(0) callers all say bypassShield, and dungeon drowning passes its ENTITY', () => {
+  // The dungeon drown call had lost its entity argument entirely -
+  // health went in as `entity`, damage was undefined, and the guard
+  // at the top of hurtPlayer returned at once: dungeon drowning never
+  // dealt a point. Pre-dates X1; found reviewing the shield's door.
+  const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
+  for (const p of ['src/scenes/worldModes.js', 'src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js']) {
+    assert.match(rd(p), /hurtPlayer\(playerEntity, playerEntity\.health, \{ bypassShield: true \}\)/, `${p} kills rather than damages`);
+  }
+  assert.doesNotMatch(rd('src/scenes/dungeonContext.js'), /hurtPlayer\(playerEntity\.health\)/, 'the entity-less call is gone');
 });
