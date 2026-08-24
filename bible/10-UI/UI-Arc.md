@@ -4146,6 +4146,24 @@ ONE CONSTRUCTION SEAM rule exists to catch, and its sweep missed it
 because the sweep only checks hooks it NAMES. `openSpellbook:` is in
 that list now.
 
+**And the verification pass found one more, in a file U42 never
+touched.** A second adversarial round - five lenses over the
+corrections, each finding handed to a refuter told to default to
+"refuted" - killed 24 of its 32 candidates and left eight. Seven were
+drifted citations, two of them introduced by the CITATION-FIX commit
+itself, on the very law that commit rewrote. The eighth was real and
+belongs to the character sheet: `CharSheet` nests a pushed child and
+forwards `tick`, `wheel`, `input` and `click` to it, and NOT `hover`.
+The hosts' hover seams test for the method on the OVERLAY - which on
+that route is the SHEET - so `townTalk.js`'s
+`if (!overlay?.hover) return false` bailed and the child was never
+reached. Three of the four hosts open the spellbook through the
+sheet's button, so THERE it had no list highlight and none of its
+three tooltips, while the same window opened on Backspace had all of
+them. The fix is four lines of forwarding; the pin sweeps all five
+seams by name, because the next seam a child owns would be forgotten
+the same way.
+
 **What the live probe caught: nothing, because it could not run.**
 This machine has no ARENA2, so SPBK00I0/SPBK01I0/ICON00I0/MASK04I0
 are build-verified and unit-pinned rather than seen. Both sheets are
@@ -4164,9 +4182,10 @@ through its confirmation - the classic one closes on either answer,
 so the probe reopens the book first now.
 
 Pins: 46 in `spellbookwindow.test.js`, one new in
-`nativeinventory.test.js` for the item door's hand-off order, two
-re-pinned in `spellmakerwindow.test.js` for the registry split, and
-five existing pins
+`nativeinventory.test.js` for the item door's hand-off order, one in
+`charsheetnav.test.js` sweeping all five of the sheet's child seams,
+two re-pinned in `spellmakerwindow.test.js` for the registry split,
+and five existing pins
 re-aimed rather than deleted - `charsheetnav`'s ONE DFU MEMBER, ONE
 EXPORT sweep follows the window to its new home, `nativeinventory`'s
 four-hosts pin now asserts BOTH keyed windows are gone from the

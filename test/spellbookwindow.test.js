@@ -208,7 +208,7 @@ test('U42 list: the arrows clamp at both ends and scroll the window to follow', 
 });
 
 test('U42 list: the scroll clause is INSIDE the movement guard, and nudges by ONE', () => {
-  // ListBox.SelectPrevious (:718-728) / SelectNext (:730-740). Both
+  // ListBox.SelectPrevious (:709-724) / SelectNext (:726-741). Both
   // details are reachable only because the wheel moves scrollIndex
   // without moving the selection (SpellsListBox_OnMouseScroll,
   // :793-796), which is the state a guard-outside version corrupts.
@@ -722,6 +722,17 @@ test('U42 tooltips: the three icon panels answer, exactly as SetupIcons wires th
   assert.equal(at(SPELLBOOK_RECTS.targetIcon), TARGET_DESCRIPTIONS[2]);
   assert.equal(at(SPELLBOOK_RECTS.elementIcon), ELEMENT_DESCRIPTIONS[1]);
   assert.equal(at(SPELLBOOK_RECTS.spellIcon), 'Select icon', 'the icon panel names its PICKER');
+  // ...and NOT in buy mode: the port gates the icon panel's picker to
+  // cast mode (DFU wires it in both and then indexes the PLAYER's book
+  // with the OFFER's index), so a tip naming an unreachable picker
+  // would advertise the bug the port declines to port.
+  const s = shop([spell('Arc Bolt', 20, { rangeType: 2, element: 1 })]);
+  s.w.hover(PX + SPELLBOOK_RECTS.spellIcon[0] + 2, PY + SPELLBOOK_RECTS.spellIcon[1] + 2);
+  s.w.tick(10);
+  assert.equal(s.w.tip.text, null, 'no picker tip over the guild\'s offer');
+  s.w.hover(PX + SPELLBOOK_RECTS.targetIcon[0] + 2, PY + SPELLBOOK_RECTS.targetIcon[1] + 2);
+  s.w.tick(10);
+  assert.equal(s.w.tip.text, TARGET_DESCRIPTIONS[2], 'but the other two still answer');
   // the description follows the SELECTION, it is not baked
   w.deps.spells().push(spell('Shock', 9, { rangeType: 4, element: 3 }));
   w.refreshSpellsList(true);

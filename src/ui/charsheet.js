@@ -185,6 +185,25 @@ export class CharSheet {
   tick(dt) { if (this.child) { this.child.tick?.(dt); this._stepChild(); } }
   wheel(dir) { if (this.child) { this.child.wheel?.(dir); this._stepChild(); return true; } return false; }
 
+  /** U42: the sheet forwarded tick, wheel, input and click to a
+   *  pushed window and NOT hover, so every hover-driven behaviour a
+   *  child owns was dead on the sheet's route into it - which is the
+   *  route THREE of the four hosts take, through charSheetHooks'
+   *  `spellbook` button. The host seams test for the method on the
+   *  OVERLAY (the sheet), find it missing, and never reach the child
+   *  (townTalk.js's `if (!overlay?.hover) return false`). It cost the
+   *  spellbook its list highlight and all three of its icon tooltips,
+   *  and only on that route, because Backspace makes the window the
+   *  overlay itself. The sheet has nothing of its own to hover, so
+   *  this is pure forwarding; `true` is what the seams read as
+   *  "consumed". */
+  hover(vx, vy, e = null) {
+    if (!this.child) return false;
+    this.child.hover?.(vx, vy, e);
+    this._stepChild();
+    return true;
+  }
+
   input(action, e = null) {
     // A pushed window owns the keyboard until it closes.
     if (this.child) { this.child.input?.(action, e); this._stepChild(); return; }
