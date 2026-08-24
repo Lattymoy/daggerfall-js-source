@@ -2091,3 +2091,49 @@ consumption shape; DFRandom's rand stays where the classic byte
 draws belong (the enemy attack machine). Pinned in
 exteriorfoes.test.js X4 (2 more mutations killed); the 30-run soak
 stands as the flake's tombstone.
+
+## P1 - THE SCENE CACHE AND THE PERMANENT SET (2026-08-24)
+
+SerializableStateManager's scene half, and the shared blocker three
+slices had each flagged on their own: the tavern's rented room
+"keeps its interior loaded across a save" (U39), and both of banking's
+deeds do the same for a bought house and a bought ship (B1).
+
+**The port had no scene cache at all.** Every interior was rebuilt from
+the block data on entry, so anything the player changed inside one was
+gone the moment they stepped out: a sword dropped in a shop never
+existed, an emptied shelf restocked, an opened door re-closed.
+
+**The two-tier model** is the whole design. The CACHE is keyed by scene
+NAME and holds what the player changed - written on the way out,
+read on the way back in. The PERMANENT SET is a list of names whose
+cache entries survive `ClearSceneCache`; everything else is dropped
+when the world moves on, which is exactly what makes an ordinary shop
+forget and a rented room remember.
+
+**Three things worth naming.** Restoring CONSUMES: the entry is
+deleted as it is handed back, so the cache is a hand-off rather than a
+store. A new game clears both the cache and the permanent set; a world
+move clears only the ordinary. And the permanent clear STRIPS THE
+CORPSES - a body left in your own house does not survive the world
+moving on though the chest beside it does, which is DFU's own "sans
+corpses" comment made into a filter.
+
+**The scene names are the key**, so they are pinned character for
+character: `DaggerfallInterior [MapID=%d, BuildingKey=%d]` and
+`DaggerfallWorld [mapX=%d, mapY=%d]`. A reformatting is a silent cache
+miss, not an error.
+
+**One flag retired outright.** `rentRoom` now names the scene it holds
+and the expiry sweep releases it - the landlord clears the room, which
+the port had nowhere to say until the set existed. The house deed's
+own `AddPermanentScene` still waits on the building directory; the
+ship's two scenes name themselves and are ready.
+
+Pins: 10 in `scenecache.test.js` plus two in `tavern.test.js` for the
+retired flag. 12 mutations, 12 dead. Live:
+`tools/sceneCacheProbe.mjs` walks into a real bookshop, takes an item
+off a shelf, leaves, comes back and reads the shelf at 2 where a
+restock would say 3 - the discriminating half, because the first draft
+of that probe compared 3 with 3 and would have passed on a shelf that
+simply re-stocked.

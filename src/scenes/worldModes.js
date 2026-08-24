@@ -117,6 +117,11 @@ import { freeTavernRooms } from '../systems/guildServices.js';
 // B2: the bank - the window, the per-region accounts and the purse seam.
 import { BankWindow, preloadBankArt, bankArtLoaded, BANK_RECTS, BANK_PANEL_X, BANK_PANEL_Y } from '../ui/bankWindow.js';
 import { createBankAccounts, BANK_REGION_COUNT } from '../systems/banking.js';
+// P1: the scene cache - what an interior remembers across a visit.
+import {
+  createSceneCache, cacheScene, restoreCachedScene,
+  interiorSceneName, LOOT_CONTAINER_TYPES,
+} from '../systems/sceneCache.js';
 import { orderOf } from '../systems/guildVariants.js';
 import { joinedGuildOfGroup } from '../systems/guilds.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js';
@@ -843,6 +848,76 @@ export function createWorldModes(host) {
     townTalk?.say?.('You get no response.');
   }
 
+  // ---- P1: THE SCENE CACHE ------------------------------------------
+  // The port rebuilt every interior from block data on entry, so
+  // anything the player changed inside one was gone the moment they
+  // stepped out: a sword dropped in a shop never existed, an emptied
+  // shelf restocked, an opened door re-closed. DFU caches the two
+  // stateful kinds (loot and action doors) under the scene's NAME on
+  // the way out and restores them on the way back in.
+  //
+  // The cache lives on the ENTITY so it rides the save with everything
+  // else, and is minted lazily the first time an interior is left.
+  const sceneCache = () => (playerEntity.sceneCache ??= createSceneCache());
+
+  /** DaggerfallInterior.GetSceneName for the interior the player is
+   *  standing in. Null when the building has no key - an unkeyed
+   *  interior cannot be cached, because it cannot be named. */
+  function currentInteriorScene() {
+    const key = interiorBuilding?.buildingKey;
+    if (!key) return null;
+    return interiorSceneName(questSceneCtx?.()?.mapId ?? 0, key);
+  }
+
+  /** What this interior currently holds that the player could have
+   *  changed. Shelves are the port's ShopShelves containers and carry
+   *  their stocked items; the action system's objects carry the door
+   *  and switch states. */
+  function currentSceneState() {
+    const ctx = interiorCtx;
+    if (!ctx) return { lootContainers: [], actionDoors: [] };
+    const lootContainers = [
+      ...(ctx.shelves ?? []).map((sh, i) => ({
+        containerType: LOOT_CONTAINER_TYPES.ShopShelves, key: `shelf:${i}`, items: sh.items ?? null,
+      })),
+      ...(ctx.containers ?? []).map((c, i) => ({
+        containerType: LOOT_CONTAINER_TYPES.HouseContainers, key: `container:${i}`, items: c.items ?? null,
+      })),
+    ];
+    const actionDoors = [...(ctx.actions?.objects?.values?.() ?? [])]
+      .map((o) => ({ key: o.key, state: o.state }));
+    return { lootContainers, actionDoors };
+  }
+
+  /** CacheScene on the way OUT (PlayerEnterExit.cs:860). */
+  function cacheInteriorScene() {
+    const name = currentInteriorScene();
+    if (!name) return;
+    cacheScene(sceneCache(), name, currentSceneState());
+  }
+
+  /** RestoreCachedScene on the way IN (:804). A scene never cached
+   *  answers null and the interior stands as the block data built it,
+   *  which is every first visit. */
+  function restoreInteriorScene() {
+    const name = currentInteriorScene();
+    if (!name || !interiorCtx) return;
+    const data = restoreCachedScene(sceneCache(), name);
+    if (!data) return;
+    for (const c of data.lootContainers) {
+      const [kind, i] = c.key.split(':');
+      const target = kind === 'shelf' ? interiorCtx.shelves?.[+i] : interiorCtx.containers?.[+i];
+      // `items: null` is a shelf that was never opened - restoring it
+      // as null keeps the LAZY stock, which is what makes a first
+      // browse still roll fresh goods after an uneventful visit.
+      if (target && c.items !== null) target.items = c.items;
+    }
+    for (const d of data.actionDoors) {
+      const o = interiorCtx.actions?.objects?.get?.(d.key);
+      if (o) o.state = d.state;
+    }
+  }
+
   /** B2: the bank. Accounts are PER REGION and live on the entity, so
    *  they ride the save with everything else; the array is minted on
    *  first use at the map reader's region count. */
@@ -946,6 +1021,7 @@ export function createWorldModes(host) {
       // SetHealth, through the entity's own ceiling.
       heal: (n) => { playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n); },
       onTalk: () => openStaticNpc(pn, { forceTalk: true }),
+      sceneCache: () => sceneCache(),   // P1: renting HOLDS the room's interior
       // The U24 identity guard: a window that dispatches to another
       // must not be nulled by its OWN onClose.
       onClose: () => { if (interiorOverlay === win) interiorOverlay = null; },
@@ -1431,6 +1507,9 @@ export function createWorldModes(host) {
       // host's merge closure; shops warm the browse font.
       interiorBuilding = buildingDataForDoor?.(hit) ?? null;
       ensureInteriorWindowArt();   // U23: every interior can open a window now
+      // P1: RestoreCachedScene (:804) - after the identity is known,
+      // because the scene NAME is built from the building key.
+      restoreInteriorScene();
       // Q4-v: the quest layer mounts with the interior (RMBLayout's
       // AddQuestResourceObjects moment - the walk runs once the site's
       // buildingKey is known).
@@ -1613,6 +1692,9 @@ export function createWorldModes(host) {
       [player.pos[0], player.pos[1] + 1.8 * 0.65, player.pos[2]],
       exitReturn.siblings.map((e) => e.door));
     if (!landing) { console.error('exit: no exterior landing (empty sibling doors)'); return false; }   // tryEnter guards its landing; this path was unguarded - a null here killed the frame loop
+    // P1: CacheScene (:860) - BEFORE the teardown, while the shelves
+    // and the action objects are still alive to be read.
+    cacheInteriorScene();
     teardownQuestFlats();   // Q4-v: OnDestroy for the quest stands, before the batch teardown
     interiorCtx.destroy();
     interiorCtx = null;
@@ -2101,6 +2183,21 @@ export function createWorldModes(host) {
     };
     window.__openMerchantSell = () => { openMerchantSell(); return window.__shopOverlay(); };
     // B2: the bank's own surface, for the probe.
+    // P1: the scene cache's own surface.
+    window.__sceneCache = () => JSON.stringify({
+      scene: currentInteriorScene(),
+      cached: [...(playerEntity.sceneCache?.scenes?.keys?.() ?? [])],
+      permanent: [...(playerEntity.sceneCache?.permanent ?? [])],
+      shelves: (interiorCtx?.shelves ?? []).map((sh) => sh.items?.length ?? null),
+    });
+    /** Take one item off a shelf, so a probe can prove a CHANGE
+     *  survives rather than reading the same number twice. */
+    window.__takeFromShelf = (i) => {
+      const sh = interiorCtx?.shelves?.[i];
+      if (!sh?.items?.length) return null;
+      sh.items.pop();
+      return sh.items.length;
+    };
     window.__openBank = () => { openBank(); return window.__bankOverlay(); };
     window.__bankOverlay = () => JSON.stringify(interiorOverlay instanceof BankWindow ? {
       bank: true,

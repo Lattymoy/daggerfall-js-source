@@ -12,6 +12,10 @@ import {
 } from '../src/systems/tavern.js';
 import { HOLIDAYS, holidayDayOfYear, getHolidayId } from '../src/systems/holidays.js';
 import { MINUTES_PER_DAY } from '../src/systems/gameDate.js';
+import {
+  createSceneCache, containsPermanentScene, interiorSceneName,
+  cacheScene, clearSceneCache,
+} from '../src/systems/sceneCache.js';
 
 /** A date whose dayOfYear is `n` (month*30 + day+1). */
 const dateOfYearDay = (n) => ({ year: 405, month: Math.floor((n - 1) / 30), day: (n - 1) % 30 });
@@ -187,4 +191,35 @@ test('U39: the two HOLIDAY arms, DFU\'s own and neither matching its description
   // and the halved price is what the healing doubles - not the menu one
   assert.equal(eatOrDrink(3, { gold: 100, gameMinutes: harvestMinute }).heal, 2);
   assert.equal(eatOrDrink(3, { gold: 100, gameMinutes: ordinaryDay }).heal, 6);
+});
+
+test('U39/P1: renting HOLDS the room\'s interior; expiry releases it (:246, PlayerEntity:261)', () => {
+  // The flag U39 filed said a rented room's CONTENTS were not
+  // preserved because the port had no permanent-scene set. P1 built
+  // one, so this is the flag being spent rather than restated.
+  const cache = createSceneCache();
+  const rooms = [];
+  const now = 500 * MINUTES_PER_DAY;
+  const scene = interiorSceneName(2, 9);
+
+  rentRoom(rooms, {
+    room: null, days: 3, nowMinutes: now, mapId: 2, buildingKey: 9,
+    name: 'The Odd Blades', bedCount: 4, rolls: () => 0.5, sceneCache: cache,
+  });
+  assert.equal(containsPermanentScene(cache, scene), true, 'the room is held while rented');
+  // ...so anything left inside survives the world moving on
+  cacheScene(cache, scene, { lootContainers: [{ containerType: 5, key: 'container:0', items: ['sword'] }] });
+  clearSceneCache(cache, { start: false });
+  assert.ok(cache.scenes.has(scene), 'and its contents outlive the clear');
+
+  // a RENEWAL holds it again rather than dropping it
+  rentRoom(rooms, { room: rooms[0], days: 2, nowMinutes: now, sceneCache: cache });
+  assert.equal(containsPermanentScene(cache, scene), true);
+
+  // and the expiry sweep RELEASES it - the landlord clears the room
+  removeExpiredRooms(rooms, now + 10 * MINUTES_PER_DAY, cache);
+  assert.equal(containsPermanentScene(cache, scene), false, 'an expired room is no longer held');
+  // the sweep still works with no cache handed in - every existing
+  // caller passes none
+  assert.doesNotThrow(() => removeExpiredRooms([{ mapId: 1, buildingKey: 1, expiryMinutes: 0 }], 100));
 });

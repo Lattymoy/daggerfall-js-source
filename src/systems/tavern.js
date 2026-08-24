@@ -10,6 +10,7 @@
 import { HOLIDAYS, getHolidayId } from './holidays.js';
 import { calculateTradePrice } from './shopStock.js';
 import { dayOfYear } from './gameDate.js';
+import { interiorSceneName, addPermanentScene, removePermanentScene } from './sceneCache.js';   // P1: the rented room's own scene
 
 /** The TEXT.RSC records the window speaks (:37-41). */
 export const TOO_MANY_DAYS_ID = 16;
@@ -82,8 +83,17 @@ export const roomRemainingHours = (room, nowMinutes) =>
  *  is a CEILING, `< 1` is true exactly when no time at all is left, so
  *  the plain `expiry > now` here is the same predicate and not a
  *  loosening of it. */
-export const removeExpiredRooms = (rooms, nowMinutes) =>
-  rooms.filter((r) => roomRemainingHours(r, nowMinutes) >= 1);
+export function removeExpiredRooms(rooms, nowMinutes, sceneCache = null) {
+  return rooms.filter((r) => {
+    if (roomRemainingHours(r, nowMinutes) >= 1) return true;
+    // RemovePermanentScene (PlayerEntity.cs:261) - an expired room
+    // stops being held the moment the sweep drops it, so its contents
+    // go the next time the world moves on. The landlord clears the
+    // room; the port had nowhere to say so until P1.
+    if (sceneCache) removePermanentScene(sceneCache, interiorSceneName(r.mapId, r.buildingKey));
+    return false;
+  });
+}
 
 /** GetRentedRoom (:158): this inn's room, by map AND building. */
 export const findRentedRoom = (rooms, mapId, buildingKey) =>
@@ -125,7 +135,13 @@ export function rentalDecision(input, { room = null, nowMinutes = 0, date, quali
  *  bed marker; a renewal only EXTENDS the expiry. The bed index is
  *  stored rather than a position because "building positions are not
  *  stable" (DFU's own comment). */
-export function rentRoom(rooms, { room, days, nowMinutes, mapId, buildingKey, name, bedCount = 1, rolls = Math.random }) {
+export function rentRoom(rooms, { room, days, nowMinutes, mapId, buildingKey, name, bedCount = 1, rolls = Math.random, sceneCache = null }) {
+  // AddPermanentScene (:246) - a rented room's interior is held across
+  // the world moving on, so the things left in it are still there when
+  // the tenant comes back. P1 built the set; this names the scene.
+  if (sceneCache) {
+    addPermanentScene(sceneCache, interiorSceneName(mapId ?? room?.mapId, buildingKey ?? room?.buildingKey));
+  }
   if (room) {
     room.expiryMinutes += 24 * 60 * days;
     return room;
@@ -179,8 +195,8 @@ export function eatOrDrink(index, { gold = 0, gameMinutes = 0 } = {}) {
 // FLAGGED, with the slices they wait on:
 //  - the TALK button routes to TalkManager.TalkToStaticNPC, which the
 //    talk arc owns (the guild popup's TALK button has the same seam).
-//  - AddPermanentScene (:246) keeps a rented room's interior loaded
-//    across a save; the port has no permanent-scene set, so a rented
-//    room's contents are not yet preserved - the RENTAL is.
+//  - (RETIRED by P1: AddPermanentScene (:246) keeps a rented room's
+//    interior loaded across a save. The port now has a permanent-scene
+//    set, and rentRoom names the scene it should hold.)
 //  - the rest window's bed-marker arm (allocatedBedIndex) is stored
 //    here and read by nobody until resting in a rented room lands.
