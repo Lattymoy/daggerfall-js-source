@@ -43,7 +43,14 @@ test('A2 layout: the byte -> colour-group law digit for digit (ExteriorAutomap.c
   assert.equal(at(bmp, 4, 0), COLOURS.tavern, 'tavern 16');
   assert.equal(at(bmp, 5, 0), COLOURS.house, 'house-for-sale 2');
   assert.equal(at(bmp, 6, 0), COLOURS.house, 'town23 24');
-  assert.equal(at(bmp, 7, 0), (0xff000000 | (99 << 16) | 0xff) >>> 0, 'unknown bytes debug red (255, 0, byte)');
+  // the unknown-byte arm decomposed into DFU's own channels
+  // (r=255, g=0, b=the raw byte, a=255) rather than restating the
+  // port's packing expression
+  const dbg = at(bmp, 7, 0);
+  assert.equal(dbg & 0xff, 255, 'debug red: r = 255');
+  assert.equal((dbg >>> 8) & 0xff, 0, 'debug red: g = 0');
+  assert.equal((dbg >>> 16) & 0xff, 99, 'debug red: b = the raw byte');
+  assert.equal((dbg >>> 24) & 0xff, 255, 'debug red: opaque');
   assert.equal(at(bmp, 8, 0), 0, 'ship 25 hides outside showAll (:1519-1528)');
   assert.equal(at(bmp, 9, 0), 0, 'ground flat 0xfb strips in Original');
   assert.equal(at(bmp, 10, 0), 0, 'byte 0 is transparent');
@@ -149,6 +156,19 @@ test('A2 wiring pins: the M-outside dispatch in both exterior hosts, gated on a 
   const e = src('src/scenes/exterior.js');
   assert.match(e, /e\.code === 'KeyM' && !townTalk\.overlayActive/);
   assert.match(e, /new ExteriorAutomapWindow\(/);
+});
+
+test('A2 review: every townTalk overlay drop frees the occupant (the A1 death-presenter lesson on THIS slot)', () => {
+  // uploadTexture memoizes forever, so a window replaced or dropped
+  // without dispose leaks its texture AND leaves a live cache key -
+  // the exact A1 bug, one slot over. All four clear-points covered.
+  const t = src('src/scenes/townTalk.js');
+  assert.match(t, /if \(overlay && overlay !== win\) overlay\.dispose\?\.\(\);/, 'showOverlay frees what it replaces');
+  assert.match(t, /overlay\.dispose\?\.\(\); overlay = null; \}/, 'the font-less drop frees');
+  assert.match(t, /_onOverlayClosed = null;\n\s*overlay\.dispose\?\.\(\);/, 'the keydown close frees');
+  assert.match(t, /_onOverlayClosed = null; overlay\.dispose\?\.\(\); overlay = null; cb\?\.\(\);/, 'the pointerdown close frees');
+  // and the exterior window really exposes one
+  assert.match(src('src/ui/exteriorAutomapWindow.js'), /dispose\(\) \{/);
 });
 
 test('A2 grayscale pins: the shader law and the two-tier dungeon pass (DaggerfallAutomap.shader:102-110)', () => {

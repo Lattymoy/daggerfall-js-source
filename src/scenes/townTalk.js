@@ -219,6 +219,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
         // re-fire when a LATER unrelated window closes.
         const cb = _onOverlayClosed;
         _onOverlayClosed = null;
+        overlay.dispose?.();   // A2: a window holding GL resources frees them (idempotent)
         overlay = null;
         cb?.();
       }
@@ -230,7 +231,16 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   // G2: the arrest/court flows push their own windows through the
   // same overlay slot (one motor-holding seam).
   let _onOverlayClosed = null;
-  function showOverlay(win, onClosed = null) { overlay = win; _onOverlayClosed = onClosed; }
+  // A2 (the A1 death-presenter lesson, applied to THIS slot): every
+  // point that drops the occupant must free its GL resources - the
+  // automap windows own uploaded textures and billboard batches, and
+  // uploadTexture memoizes forever, so a silent replace both leaks
+  // and leaves a live cache key behind.
+  function showOverlay(win, onClosed = null) {
+    if (overlay && overlay !== win) overlay.dispose?.();
+    overlay = win;
+    _onOverlayClosed = onClosed;
+  }
 
   /** NextInteractionMode (the touch cycle button); returns the new mode. */
   function nextMode() { setMode(nextInteractionMode(getInteractionMode())); return getInteractionMode(); }
@@ -563,7 +573,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     const s = hudScale(canvas.width, canvas.height);
     if (font) hud.draw(renderer, canvas, font, s);
     if (overlay && font) overlay.draw(renderer, canvas, font, s);
-    else if (overlay && !font) overlay = null;   // font-less: never trap the motor
+    else if (overlay && !font) { overlay.dispose?.(); overlay = null; }   // font-less: never trap the motor
   }
 
   // U8b: pointer routing for native windows (phone taps + mouse) -
@@ -578,7 +588,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     const v = pointToNative(m, px, py);
     if (v) overlay.click(v[0], v[1]);
     if (overlay.done) {
-      const cb = _onOverlayClosed; _onOverlayClosed = null; overlay = null; cb?.();
+      const cb = _onOverlayClosed; _onOverlayClosed = null; overlay.dispose?.(); overlay = null; cb?.();
     }
     return true;   // an open native window owns the pointer either way
   }
