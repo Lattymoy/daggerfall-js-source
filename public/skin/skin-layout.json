@@ -38,5 +38,18 @@
   "h": 277,
   "y0": 0.0045,
   "y1": 0.9
+ },
+ "head": {
+  "x": 651,
+  "y": 8,
+  "w": 96,
+  "h": 48,
+  "y0": 1.53,
+  "y1": 1.827,
+  "faceArc": [
+   0.25,
+   0.75
+  ],
+  "note": "front arc is painted at runtime from FACE*.CIF"
  }
 }
