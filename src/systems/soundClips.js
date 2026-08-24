@@ -2,6 +2,7 @@
 // DFU SoundClips.cs. Only the consumed subset lives here; grow it
 // with the consumers (the full 400+ enum stays in the source).
 export const SOUND = {
+  MakeItem: 364,            // M4: the enchanter's chime (SoundClips.cs:448)
   MakePotion: 365,          // M2: the cauldron's chime on a matched recipe (SoundClips.cs:449)
   ArrowShoot: 3,            // SoundClips.ArrowShoot - the bow loose (frame 4)
   BodyFall: 15,             // AUDIT 24 wave 38: EnemyDeath plays it at the corpse, every death

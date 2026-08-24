@@ -9,10 +9,15 @@ import {
   itemEnchantmentPower, enchantmentListCost, totalEnchantmentCost, totalGoldCost,
   enchantDecision, applyEnchantments, enchantmentCostLabel,
   NOT_ENOUGH_GOLD_TO_ENCHANT, BEYOND_ITEM_LIMIT, ITEM_ENCHANTED,
+  openPickerDecision, ITEM_MUST_BE_SELECTED, NO_ENCHANTMENTS_PREPARED,
+  CANNOT_ENCHANT_MORE_POWERS, NO_MORE_SIDE_EFFECTS,
 } from '../src/systems/enchanting.js';
 import { WEAPON_MATERIALS } from '../src/characters/weapons.js';
 import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
 import { templateByIndex } from '../src/systems/itemTemplates.js';
+import {
+  enchantmentCost, enchantmentParamValues, sideEffectTypes,
+} from '../src/systems/enchantmentCatalogue.js';
 
 /** A power costing n; `parent` makes it a FORCED enchantment. */
 const power = (n, parent = 0) => ({ enchantCost: n, parentEnchantment: parent });
@@ -123,7 +128,8 @@ test('M3: TWO SUMS OVER OVERLAPPING SETS (:229-237)', () => {
   assert.equal(totalGoldCost(powers), (10 + 20) * GOLD_PER_ENCHANTMENT_POINT);
   assert.equal(GOLD_PER_ENCHANTMENT_POINT, 10);
 
-  // so: a SIDE EFFECT costs points and no gold...
+  // so: a SIDE EFFECT lands in the point sum and never in the gold
+  // one (its SIGN is the next test's business)...
   assert.equal(totalEnchantmentCost([], sides), 8);
   assert.equal(totalGoldCost([]), 0);
   // ...and a FORCED enchantment costs gold and no points. They are two
@@ -138,6 +144,58 @@ test('M3: TWO SUMS OVER OVERLAPPING SETS (:229-237)', () => {
   assert.equal(enchantmentListCost([]), 0);
   // a missing cost reads as 0 rather than NaN
   assert.equal(enchantmentListCost([{}]), 0);
+});
+
+test('M3: THE SIGN IS THE MECHANIC - a side effect BUYS budget and costs no gold', () => {
+  // M3's first header said a side effect "costs enchantment points".
+  // It does not: every side effect's EnchantCost is NEGATIVE, so
+  // summing it into the enchantment total REDUCES that total. Taking
+  // a drawback BUYS you budget, and the gold walk skips it, so the
+  // budget is free. Pinned against the CATALOGUE's real costs rather
+  // than against invented ones, so the two modules cannot drift.
+  const deteriorates = enchantmentCost('ItemDeteriorates', 0);
+  const sunlight = enchantmentCost('UserTakesDamage', 0);
+  const regens = enchantmentCost('RegensHealth', 0);
+  assert.equal(deteriorates, -3000);
+  assert.equal(sunlight, -6000);
+  assert.equal(regens, 4000);
+
+  const ench = (c) => ({ enchantCost: c, parentEnchantment: 0 });
+  const powers = [ench(regens)];
+  const alone = totalEnchantmentCost(powers, []);
+  assert.equal(alone, 4000);
+
+  // ADDING a drawback makes the total SMALLER, not larger. `-` in
+  // place of `+` in totalEnchantmentCost is the mutant, and it would
+  // answer 7000 here.
+  const withDrawback = totalEnchantmentCost(powers, [ench(deteriorates)]);
+  assert.equal(withDrawback, 1000);
+  assert.ok(withDrawback < alone, 'a drawback REDUCES the enchantment total');
+  assert.notEqual(withDrawback, alone - deteriorates);
+
+  // ...and the GOLD is untouched by it, at either end
+  assert.equal(totalGoldCost(powers), 40000);
+  assert.equal(totalGoldCost([]), 0);
+
+  // which is the whole trade: an item too weak to hold the power can
+  // hold it once a drawback pays the difference - at the SAME gold.
+  const item = { group: 'Weapons', templateIndex: 117, material: WEAPON_MATERIALS.Steel };
+  assert.equal(itemEnchantmentPower(item), 450);
+  const refused = enchantDecision(item, powers, [], { gold: 10 ** 9 });
+  assert.equal(refused.kind, 'overLimit', '4000 points will not fit in 450');
+  const allowed = enchantDecision(item, powers, [ench(sunlight)], { gold: 10 ** 9 });
+  assert.equal(allowed.kind, 'enchant', 'the drawback bought the room');
+  assert.equal(allowed.cost, -2000);
+  assert.equal(allowed.goldCost, totalGoldCost(powers), 'and it cost nothing to buy');
+  assert.equal(refused.goldCost, undefined, 'the overLimit arm quotes no gold at all');
+
+  // every side effect in the catalogue prices this way round - none
+  // of them is a positive charge dressed up as a drawback
+  for (const type of sideEffectTypes()) {
+    const costs = enchantmentParamValues(type).map((p) => enchantmentCost(type, p));
+    assert.ok(costs.some((c) => c < 0), `${type} carries a negative cost`);
+    assert.ok(costs.every((c) => c <= 0), `${type} never charges points`);
+  }
 });
 
 test('M3: the GOLD is checked FIRST, so the poorer refusal wins (:727-746)', () => {
@@ -191,4 +249,68 @@ test('M3: ten enchantments is a CAP, not a refusal (:1271-1280)', () => {
 test('M3: the cost label is used/available (:206)', () => {
   assert.equal(enchantmentCostLabel(30, 100), '30/100');
   assert.equal(enchantmentCostLabel(0, 0), '0/0');
+});
+
+test('M4: the enchant ladder has FIVE arms, and the two new ones come FIRST', () => {
+  const item = { group: 'Weapons', templateIndex: 117, material: WEAPON_MATERIALS.Steel };
+
+  // no item at all - and this outranks everything, including having
+  // no gold and having prepared nothing
+  const none = enchantDecision(null, [], [], { gold: 0 });
+  assert.equal(none.kind, 'noItem');
+  assert.equal(none.text, ITEM_MUST_BE_SELECTED);
+  assert.equal(enchantDecision(null, [power(999999)], [], { gold: 0 }).kind, 'noItem');
+
+  // an item, but nothing prepared - which outranks the gold check, so
+  // a penniless player with an empty item hears about the item
+  const empty = enchantDecision(item, [], [], { gold: 0 });
+  assert.equal(empty.kind, 'noEnchantments');
+  assert.equal(empty.text, NO_ENCHANTMENTS_PREPARED);
+  // ...and note this arm has to come before the gold one to be
+  // reachable at all: an empty powers list costs zero gold, so the
+  // gold check would always pass and the sums would say 'enchant' on
+  // an item with no enchantments.
+  assert.equal(totalGoldCost([]), 0);
+  assert.equal(totalEnchantmentCost([], []), 0);
+
+  // a SIDE EFFECT alone is enough to count as prepared, even though
+  // it costs no gold and REDUCES the point total
+  const drawbackOnly = enchantDecision(item, [], [{ enchantCost: -3000, parentEnchantment: 0 }], { gold: 0 });
+  assert.equal(drawbackOnly.kind, 'enchant');
+  assert.equal(drawbackOnly.goldCost, 0);
+  assert.equal(drawbackOnly.cost, -3000);
+
+  // and the three old arms still run in their old order underneath
+  assert.equal(enchantDecision(item, [power(1)], [], { gold: 0 }).kind, 'noGold');
+  assert.equal(enchantDecision(item, [power(9999)], [], { gold: 10 ** 9 }).kind, 'overLimit');
+  assert.equal(enchantDecision(item, [power(1)], [], { gold: 10 }).kind, 'enchant');
+});
+
+test('M4: the picker guard tests == 10, and nothing else caps the lists', () => {
+  const item = { group: 'Weapons', templateIndex: 117 };
+  const filler = (n) => Array.from({ length: n }, () => power(1));
+
+  assert.equal(openPickerDecision(true, { item: null }).text, ITEM_MUST_BE_SELECTED);
+  assert.equal(openPickerDecision(false, { item: null }).kind, 'refuse');
+  assert.equal(openPickerDecision(true, { item }).kind, 'open');
+
+  // the two buttons share the ladder and differ only in the line
+  const full = { item, powers: filler(6), sideEffects: filler(4) };
+  assert.equal(openPickerDecision(true, full).text, CANNOT_ENCHANT_MORE_POWERS);
+  assert.equal(openPickerDecision(false, full).text, NO_MORE_SIDE_EFFECTS);
+  // the count spans BOTH lists
+  assert.equal(openPickerDecision(true, { item, powers: filler(10), sideEffects: [] }).kind, 'refuse');
+  assert.equal(openPickerDecision(true, { item, powers: filler(9), sideEffects: [] }).kind, 'open');
+
+  // THE QUIRK: the test is `== 10`, so ELEVEN walks straight past it.
+  // Nothing else stops the lists growing - the picker's room check
+  // runs only for a bound soul - so an item can be loaded past the
+  // cap and M3's SetEnchantments truncation is what silently drops
+  // the surplus. `>= 10` is the mutant, and it would refuse here.
+  assert.equal(openPickerDecision(true, { item, powers: filler(11), sideEffects: [] }).kind, 'open',
+    'eleven is not ten, so the guard does not match');
+  assert.equal(openPickerDecision(true, { item, powers: filler(6), sideEffects: filler(6) }).kind, 'open');
+  // and what an over-loaded item actually keeps is the first ten
+  const twelve = Array.from({ length: 12 }, (_, i) => power(i + 1));
+  assert.equal(applyEnchantments({}, twelve).enchantments.length, MAX_ENCHANTMENTS);
 });

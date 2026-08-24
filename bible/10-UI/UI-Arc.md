@@ -3635,6 +3635,114 @@ mix and DFU refuses instead, with the classic line commented out
 beside its own explanation.
 
 Pins: 11 in `potionmakerwindow.test.js`. 8 mutations, 8 dead.
+
+## M4 - THE ITEM MAKER (2026-08-24)
+
+The second magic crafting window, and the one M3 wrote the arithmetic
+for. `SERVICE_DESTINATION.MakeMagicItems` has been a FLAGGED `null`
+since G3. What M3 left behind was a cost accounting with no COSTS -
+every effect declares its own `EnchantmentSettings` inside its effect
+class, the way the potion recipes did, so a port with no broker to
+register with needs them gathered into one table. That table is
+`systems/enchantmentCatalogue.js`, and gathering it corrected M3.
+
+**M3 DESCRIBED THE SIGN BACKWARDS.** Its header said "a side effect
+costs enchantment points and costs no gold". A side effect's
+`EnchantCost` is NEGATIVE - ItemDeteriorates −3000, UserTakesDamage
+−6000, BadRepWith −5000 - so summing it into the enchantment total
+REDUCES that total. Taking a drawback BUYS you budget, and because the
+gold walk skips the side effects entirely, the budget is free. That is
+the whole trade the window offers, and it is why the two lists are
+SUMMED rather than subtracted. The header is corrected and the sign is
+now pinned against the catalogue's real costs, so the two modules
+cannot drift apart.
+
+**FOUR SHAPES, AND `ClassicParam` DOES NOT MEAN THE SAME THING IN
+EACH.** This is the thing the table had to get right, and my first
+draft got it wrong:
+
+- fourteen effects index a `costs` array BY ClassicParam, 0..n−1;
+- six mint ONE cost at ClassicParam **−1**, not 0 - so a flat
+  `costs[param]` lookup answers `undefined` for the param they
+  actually mint and a real number for one they never do;
+- EnhancesSkill has one FLAT cost over all thirty-five skills, and its
+  param is the SKILL id;
+- the three `CastWhen*` are keyed by classic SPELL id, which is
+  neither an index nor dense.
+
+Those last three were FLAGGED as needing the spell list. They do not:
+`classicSpellIDs` and `classicSpellCosts` sit side by side in each
+effect class, so all twenty-four are here and the flag never shipped.
+The tables carry a fact an index lookup could never see - **Ice Storm
+costs 1420 cast-on-use and 840 cast-on-strike**, the same spell at two
+prices.
+
+**THE TABLE WAS MACHINE-DIFFED, NOT EYEBALLED.** Every cost was
+extracted from the C# by script and compared cell for cell: 24 of 24
+exact. Re-typing them into a test would only assert my own
+transcription back at me, so what the suite adds instead is an
+aggregate - 209 settings, 99680 summed, plus a per-effect sum table -
+which no single wrong digit in two hundred cells can survive. Both
+digit-mutants die there.
+
+**SOULBOUND IS THE ONLY SOURCE OF FORCED ENCHANTMENTS IN THE GAME.**
+`GetForcedEnchantments` is overridden by SoulBound and by nothing
+else, so M3's whole forced-versus-chosen split exists to serve bound
+souls. Nine of the forty-three souls carry a set; binding a Daedra
+Lord drags in Potent vs Daedra, User Takes Damage in holy places and
+Extra Weight, each marked with the soul's key. DFU sorts those
+children by `EnchantCost > 0` - the INSTANCE's cost at its OWN param,
+a different question from what the effect IS - and on the nine sets as
+shipped the two cannot disagree, because no forced child prices at
+zero. That is swept rather than claimed, so a zero-cost child added
+later trips the pin instead of sliding into the wrong list.
+
+**THE ROOM CHECK RUNS ONLY FOR A BOUND SOUL.** The overflow test sits
+INSIDE `if (forcedEnchantmentSet != null)`, so an enchantment with no
+forced children is never checked for room at all. And the picker
+buttons' own guard tests `== 10`, not `>= 10`. Put those together and
+a player can pile plain enchantments past ten, walk straight past a
+guard that no longer matches, and keep going - with M3's
+`SetEnchantments` truncation silently dropping the surplus at the end.
+Verbatim, and pinned as such.
+
+**THE EXCLUSIONS DEPEND ON WHICH SCREEN YOU ARE ON.** Eight effects
+override `IsEnchantmentExclusiveTo`, in two kinds: unconditional pairs
+(FeatherWeight/ExtraWeight, StrengthensArmor/WeakensArmor) and
+param-matched opposites (PotentVs/LowDamageVs, GoodRepWith/BadRepWith).
+DFU calls it with NO comparer param from the primary picker and WITH
+one from the secondary - so Potent vs Undead does not remove "Low
+Damage Vs" from the effect list at all; it removes "Undead" from that
+effect's own param list one screen later, leaving the other three.
+Dropping the stage guard bars it a screen early, which is a visible
+difference and a dead mutant.
+
+Two names the catalogue does NOT own: EnhancesSkill's params are the
+skill names and SoulBound's are the enemy names, read from `skills.js`
+and `enemyBasics.js` rather than copied - which is also what makes the
+five alpha-sorting effects sort by what the picker actually prints.
+It has a consequence worth seeing: the soul list shows **two rows both
+named "Dragonling"**, one worth nothing and one worth 5000, because
+that is the name both spawns have.
+
+One Ledger row added: the item list rides the port's shared item
+scroller rather than this window's own one-pixel-different geometry.
+
+**PROBED LIVE** (`tools/itemMakerProbe.mjs`), through the real
+guild-service destination rather than a private opener - the seam that
+was the FLAGGED null. An iron Wakizashi reads `0/337` in the real
+label, which is M3's flooring quirk visible on screen; Potent vs
+Undead leaves Low Damage vs Undead offered but takes Undead out of its
+params; adding Low Damage vs Animals moves the label to `-400/337`
+while the gold stays at 8000, so the drawback bought budget and cost
+nothing; binding a Daedra Lord adds four rows of which three carry
+`SoulBound:31`; removing the soul takes all three with it and leaves
+the chosen rows standing; enchanting spends 8000 real gold, lands the
+enchantments on the item, and the item leaves the list because an
+enchanted item is not offered again.
+
+Pins: 16 in `enchantmentcatalogue.test.js` (18 mutations, 16 dead,
+2 recorded equivalent) and 3 added to `enchanting.test.js`.
 ## U41 - THE TRAVEL MAP (2026-08-24)
 
 The classic world map, at last: the province art on V, the region

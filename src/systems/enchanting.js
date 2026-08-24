@@ -17,9 +17,16 @@
 //   the GOLD cost (:234-237) adds the POWERS ONLY, INCLUDES the forced
 //   ones, and multiplies by ten.
 //
-// So a side effect costs enchantment points and costs no gold, and a
-// forced enchantment costs gold and costs no points. They are not the
-// same sum with a different scale; they are two different walks.
+// AND THE SIGN IS THE MECHANIC. A side effect's EnchantCost is
+// NEGATIVE (ItemDeteriorates -3000, UserTakesDamage -6000, BadRepWith
+// -5000), so adding it to the enchantment sum REDUCES that sum:
+// taking a drawback BUYS you budget. The gold sum skips the side
+// effects entirely, so the budget it buys is free - a player who
+// loads an item with drawbacks gets a more powerful item at the same
+// price, not a cheaper one. A forced enchantment runs the other way:
+// it costs gold and costs no points. They are not the same sum with a
+// different scale; they are two different walks. M4's catalogue holds
+// the costs themselves.
 //
 // AND THE GOLD IS CHECKED FIRST (:733-746). A player who can afford
 // neither is told about the gold, not about the item's limit.
@@ -122,21 +129,59 @@ export const totalEnchantmentCost = (powers = [], sideEffects = []) =>
 export const totalGoldCost = (powers = []) =>
   enchantmentListCost(powers, { countForced: true }) * GOLD_PER_ENCHANTMENT_POINT;
 
-/** The two TEXT.RSC refusals the maker speaks. */
-export const NOT_ENOUGH_GOLD_TO_ENCHANT = 'You do not have the gold to properly pay the enchanter.';
-export const BEYOND_ITEM_LIMIT = 'You cannot enchant this item beyond its limit.';
-export const ITEM_ENCHANTED = 'The item has been enchanted.';
+/** What the maker speaks. Five come straight off TEXT.RSC 1650-1658,
+ *  verified against the real ARENA2 file; ONE does not. DFU replaced
+ *  the empty-lists line with its own localized "noEnchantments"
+ *  string, and classic's record 1654 reads "No enchantments have been
+ *  placed on the item." instead - the same refusal, differently
+ *  worded. DFU's is the one this port speaks, as with M2's mixing
+ *  lines (Ledger B). */
+export const NOT_ENOUGH_GOLD_TO_ENCHANT = 'You do not have the gold to properly pay the enchanter.';  // 1650
+export const BEYOND_ITEM_LIMIT = 'You cannot enchant this item beyond its limit.';                   // 1651
+export const ITEM_ENCHANTED = 'The item has been enchanted.';                                        // 1652
+export const ITEM_MUST_BE_SELECTED = 'An item must be selected to be enchanted.';                    // 1653
+export const NO_ENCHANTMENTS_PREPARED = 'You have not prepared enchantments for this item.';         // DFU's own
+export const CANNOT_ENCHANT_MORE_POWERS = 'You cannot enchant this item with any more powers.';      // 1657
+export const NO_MORE_SIDE_EFFECTS = 'No further side-effects may be enchanted in this item.';        // 1658
 
 /**
- * EnchantItemButton_OnMouseClick's ladder (:727-751) as a decision.
- * THE ORDER IS DFU'S AND IS OBSERVABLE: gold is checked BEFORE the
- * item's power, so a player who can afford neither is told about the
- * gold. Answers one of
+ * PowersButton / SideEffectsButton_OnMouseClick's guard (:614-633,
+ * :660-679). The two buttons share a ladder and differ only in the
+ * line they speak at the top.
+ *
+ * THE COUNT TEST IS `== 10`, NOT `>= 10` - and that matters, because
+ * nothing else stops the lists growing past ten. The picker's own
+ * room check runs ONLY for a bound soul (see the catalogue), so a
+ * player who adds eleven plain enchantments walks straight past this
+ * guard, which no longer matches, and keeps adding. Verbatim.
+ *
+ * Answers { kind: 'refuse', text } or { kind: 'open' }.
+ */
+export function openPickerDecision(selectingPowers, { item = null, powers = [], sideEffects = [] } = {}) {
+  if (!item) return { kind: 'refuse', text: ITEM_MUST_BE_SELECTED };
+  if (powers.length + sideEffects.length === MAX_ENCHANTMENTS) {
+    return { kind: 'refuse', text: selectingPowers ? CANNOT_ENCHANT_MORE_POWERS : NO_MORE_SIDE_EFFECTS };
+  }
+  return { kind: 'open' };
+}
+
+/**
+ * EnchantItemButton_OnMouseClick's ladder (:705-751) as a decision.
+ * FIVE ARMS IN DFU'S ORDER, and the order is observable at every
+ * step: no item first, then nothing prepared, then the GOLD, and only
+ * then the item's power - so a player who can afford neither is told
+ * about the gold. Answers one of
+ *   { kind: 'noItem', text }
+ *   { kind: 'noEnchantments', text }
  *   { kind: 'noGold', text, goldCost }
  *   { kind: 'overLimit', text, cost, power }
  *   { kind: 'enchant', text, goldCost, cost, power }
  */
-export function enchantDecision(item, powers, sideEffects, { gold = 0 } = {}) {
+export function enchantDecision(item, powers = [], sideEffects = [], { gold = 0 } = {}) {
+  if (!item) return { kind: 'noItem', text: ITEM_MUST_BE_SELECTED };
+  if (powers.length === 0 && sideEffects.length === 0) {
+    return { kind: 'noEnchantments', text: NO_ENCHANTMENTS_PREPARED };
+  }
   const cost = totalEnchantmentCost(powers, sideEffects);
   const goldCost = totalGoldCost(powers);
   const power = itemEnchantmentPower(item);
@@ -163,9 +208,6 @@ export function applyEnchantments(item, enchantments) {
 /** The cost label the window shows (:206): "used/available". */
 export const enchantmentCostLabel = (cost, power) => `${cost}/${power}`;
 
-// FLAGGED, with the slice it waits on:
-//  - the WINDOW (M4) - the item list, the two enchantment pickers,
-//    the name field and the icon picker DFU opens from it.
-//  - each effect's own EnchantmentSettings (its EnchantCost and any
-//    forced children) are declared per effect class, as the potion
-//    recipes were; M4 gathers them the same way M1 gathered those.
+// M4 closed both of M3's flags: systems/enchantmentCatalogue.js
+// gathers every effect's EnchantmentSettings and SoulBound's forced
+// sets, and ui/itemMakerWindow.js is the window.
