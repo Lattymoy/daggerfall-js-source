@@ -704,6 +704,14 @@ export async function bootExterior(canvas, renderer, params, status) {
     // the slot, so this bypasses toggleSpellbook's already-open guard
     // - the inventory has just run its own close law.
     openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },
+    // U44: NULL on purpose. RecordLocationFromMap reveals a random
+    // undiscovered location in the CURRENT REGION, and this page has
+    // no region index to walk - `?town` is one built location, not a
+    // streamed world. The map arm reads the null and leaves the item
+    // unread rather than eating it for nothing. Named rather than
+    // omitted, so the construction sweep sees a DECISION.
+    revealMap: null,
+    drinkPotion: (key) => magic.drinkPotion(key),   // U44: DrinkPotion through the ONE cast engine
     nowMinute: () => Math.floor(playerTicker.classicMinutes),
     onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),   // U8e: OnPop mints the world pile
     ...extra,
@@ -1243,6 +1251,8 @@ export async function bootExterior(canvas, renderer, params, status) {
               icons: { getTexture, uploadRecord, textures: renderer.textures },
               rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
               openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },   // U42: the Spellbook item's own door, on the LOOT-pile window too
+              revealMap: null,   // U44: no region index on this page - see the bare window's note
+              drinkPotion: (key) => magic.drinkPotion(key),   // U44: DrinkPotion through the ONE cast engine
               nowMinute: () => Math.floor(playerTicker.classicMinutes),
               onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),
             }));

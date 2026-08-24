@@ -43,6 +43,7 @@ import {
 import { silenceBlocksCast, SILENCED_TEXT, PRESS_BUTTON_TO_FIRE_SPELL, DOOR_SPELL_TEXT, SOUL_TRAP_TEXT } from '../systems/mysticism.js';
 import { calculateCastCost, effectSchool, EFFECT_COST_TABLE } from '../systems/spellcost.js';
 import { applySpell } from '../systems/effects.js';
+import { potionBundle } from '../systems/potions.js';   // U44: DrinkPotion's bundle
 import { SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { tallySkill } from '../systems/skills.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
@@ -400,6 +401,22 @@ export function createPlayerMagic({
     castByItemSelf,   // E2: the enchantCtx applySpellToSelf seam
     explodeAt,             // the dungeon's enemy half reuses these (M3)
     applySpellToPlayer,
+    /** U44: EntityEffectManager.DrinkPotion (:903-947). The bundle is
+     *  potions.js's (BundleTypes.Potion, TargetTypes.CasterOnly, the
+     *  recipe's one shared settings struct); this is AssignBundle's
+     *  half - BypassSavingThrows | BypassChance (:942) and the cast
+     *  sound, which DrinkPotion plays for the PLAYER only (:945-946)
+     *  and keys on ElementTypes.Magic. Answers the potion's display
+     *  name, or null for a bottle whose recipe key names nothing -
+     *  DFU's `PotionRecipeKey == 0` guard (:906). */
+    drinkPotion(recipeKey) {
+      const bundle = potionBundle(recipeKey);
+      if (!bundle) return null;
+      applySpellToPlayer(bundle, playerEntity.level, null,
+        { bypassSavingThrows: true, bypassChance: true });
+      audio.playOneShot(SPELL_CAST_SOUND[bundle.element] ?? SPELL_CAST_SOUND[4], 1);
+      return bundle.name;
+    },
     /** WeaponManager's HasReadySpell leg - the weapon hides while a
      *  cast is armed or pending. */
     spellArmed: () => readiedSpell != null || pendingClickCast,

@@ -783,6 +783,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // (DaggerfallInventoryWindow.cs:1748-1764). The inventory has
       // just run its own close law, so the slot is free.
       openSpellbook: () => { const b = makeSpellbookWindow(); if (b) activeOverlay = b; },
+      drinkPotion: (key) => magic.drinkPotion(key),   // U44: DrinkPotion through the ONE cast engine
+      // U44: no reveal seam - this context has no region index to walk
+      revealMap: null,
       nowMinute: () => Math.floor(worldMinutes()),   // AUDIT 21 F2: the one clock
       loot: lootItems ? { items: () => lootItems } : undefined,
       // lastPlayerFeet is written by the frame loop; a drop before the

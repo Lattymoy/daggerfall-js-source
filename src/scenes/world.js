@@ -151,6 +151,9 @@ import { openPauseFlow, preloadPauseFlowArt, pauseArtLoaded } from '../ui/pauseW
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
  *  DiscoverRandomLocation name. */
 const REVEAL_NOTE_TEXT = Object.freeze({
+  // U44: the map ITEM's own note (DaggerfallInventoryWindow.cs:1834),
+  // Internal_Strings.csv :810.
+  readMap: 'Discovered the location of %map after studying a map.',
   readMapTG: 'The Thieves Guild have revealed the closely-guarded whereabouts of a treasure trove called %map.',
   readMapDB: 'The Dark Brotherhood revealed the secret of some treasure-laden crypts located somewhere called %map.',
 });
@@ -1180,6 +1183,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the slot, so this bypasses toggleSpellbook's already-open guard
     // - the inventory has just run its own close law.
     openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },
+    // U44: RecordLocationFromMap's reveal. DFU's own note key for the
+    // map ITEM is `readMap`, the third caller of this one seam.
+    revealMap: () => revealLocation('readMap'),
+    drinkPotion: (key) => magic.drinkPotion(key),   // U44: DrinkPotion through the ONE cast engine
     nowMinute: () => Math.floor(playerTicker.classicMinutes),
     onDrop: (items) => droppedLoot.dropPile(items, dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`),   // U8e: OnPop mints the world pile; P2: stamped with its map pixel
     ...extra,
@@ -1188,6 +1195,27 @@ export async function bootWorld(canvas, renderer, params, status) {
   // player's own array and the window WRITES to it (delete, swap,
   // sort, rename), so it is handed by reference - the save envelope
   // reads the same array and carries the new order.
+  /** PlayerGPS.DiscoverRandomLocation over the CURRENT region, plus
+   *  the notebook note its caller names. Three callers now: the two
+   *  guild map reveals (G8) and U44's map ITEM, whose note key is
+   *  DFU's own `readMap` (DaggerfallInventoryWindow.cs:1833-1834).
+   *  Only this host has a region index to walk - the standalone town
+   *  and dungeon pages legitimately answer nothing. */
+  const revealLocation = (noteKey) => {
+    const dfLoc = locationIndex.get(`${playerTravelPixel().x},${playerTravelPixel().y}`);
+    const region = dfLoc ? maps.getRegion(dfLoc.regionIndex) : null;
+    if (!region) return null;
+    const rows = region.mapTable.map((row, i) => ({
+      mapId: row.mapId, discovered: row.discovered,
+      name: region.mapNames[i], regionName: region.name,
+    }));
+    const picked = discoverRandomLocation(rows);
+    // ThievesGuild.cs:114-116 / DarkBrotherhood.cs:107-109 -
+    // `GetLocalizedText(noteKey).Replace("%map", name)`, verbatim.
+    if (picked) questBridge?.notebook?.addNote(REVEAL_NOTE_TEXT[noteKey]?.replace('%map', picked.name) ?? '');
+    return picked?.name ?? null;
+  };
+
   let _spellbook = null;   // U42: the live window, for the probe surface
   const makeSpellbookWindow = () => (spellbookArtLoaded()
     ? (_spellbook = new SpellbookWindow({
@@ -2435,20 +2463,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // its dependency list; worldModes only chooses the slot.
     makeCharSheet: () => (charSheetArtLoaded() ? makeCharSheetWindow() : null),
     makeJournal: (mode) => makeJournalWindow(mode),
-    revealLocation: (noteKey) => {
-      const dfLoc = locationIndex.get(`${playerTravelPixel().x},${playerTravelPixel().y}`);
-      const region = dfLoc ? maps.getRegion(dfLoc.regionIndex) : null;
-      if (!region) return null;
-      const rows = region.mapTable.map((row, i) => ({
-        mapId: row.mapId, discovered: row.discovered,
-        name: region.mapNames[i], regionName: region.name,
-      }));
-      const picked = discoverRandomLocation(rows);
-      // ThievesGuild.cs:114-116 / DarkBrotherhood.cs:107-109 -
-      // `GetLocalizedText(noteKey).Replace("%map", name)`, verbatim.
-      if (picked) questBridge?.notebook?.addNote(REVEAL_NOTE_TEXT[noteKey]?.replace('%map', picked.name) ?? '');
-      return picked?.name ?? null;
-    },
+    revealLocation,
     magic, spellsByIndex: () => spellsByIndex,   // M2: the one cast engine + SPELLS.STD ride into the interior arm
     townTalk,   // U23: the interior host borrows FACTION.TXT/TEXT.RSC + the talk seam
     // A5b: the tavern arm needs the host's clock, and leaving one has to
@@ -2799,6 +2814,8 @@ export async function bootWorld(canvas, renderer, params, status) {
                 icons: { getTexture, uploadRecord, textures: renderer.textures },
                 rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
                 openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },   // U42: the Spellbook item's own door, on the LOOT-pile window too
+                revealMap: () => revealLocation('readMap'),   // U44: the map item's reveal, on the loot-pile window too
+                drinkPotion: (key) => magic.drinkPotion(key),   // U44: DrinkPotion through the ONE cast engine
                 nowMinute: () => Math.floor(playerTicker.classicMinutes),
                 onDrop: (items) => droppedLoot.dropPile(items, dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`),   // P2: stamped
               }));

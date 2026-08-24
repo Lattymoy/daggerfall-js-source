@@ -2,12 +2,16 @@
 // effect classes register, and DaggerfallPotionMakerWindow's mixing.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
-  POTION_RECIPES, potionRecipeKey, potionKeyFromCauldron,
+  POTION_RECIPES, potionRecipeKey, potionKeyFromCauldron, potionBundle,
   potionRecipeByKey, potionRecipeKeys, mixCauldron, isIngredient, knownRecipes,
   CAULDRON_CAPACITY, cauldronAccepts, consumeCauldron, gatherRecipe,
 } from '../src/systems/potions.js';
 import { templateByIndex } from '../src/systems/itemTemplates.js';
+import { applySpell, isHealSpellPoints, HEAL_SPELL_POINTS_KEY } from '../src/systems/effects.js';
 
 const byName = (n) => POTION_RECIPES.find((r) => r.name === n);
 
@@ -190,4 +194,160 @@ test('M1: the recipe picker fills what it CAN and leaves the rest (:283-309)', (
   assert.deepEqual(twoWater.missing, [59], 'one Pure Water cannot fill two slots');
   // ...and with two, both slots fill
   assert.deepEqual(gatherRecipe({ ingredients: [59, 59] }, [59, 59]).missing, []);
+});
+
+// ── U44: DRINKING one ─────────────────────────────────────────────
+
+test('U44: every recipe carries the effect its own class registers', () => {
+  // The twenty were transcribed from the fifteen effect classes that
+  // call new PotionRecipe(...), and each effect's classic pair from
+  // that class's MakeClassicKey. A transposed row here is invisible
+  // until someone drinks the wrong thing for an hour, so the whole
+  // table is pinned rather than sampled.
+  const by = Object.fromEntries(POTION_RECIPES.map((r) => [r.name, r]));
+  const EXPECTED = {
+    // ElementalResistance's four variants: the enum is Fire 0, Frost 1,
+    // DiseaseOrPoison 2, Shock 3 - so SHOCK is 3 and POISON is 2, and
+    // the class assigns them in the order Fire/Frost/Shock/Poison
+    // (:142-145). That inversion is the transposition to fear.
+    resistFire: '8,0', resistFrost: '8,1', resistPoison: '8,2', resistShock: '8,3',
+    slowFalling: '25,255', waterBreathing: '30,255', waterWalking: '31,255',
+    chameleonForm: '23,0', shadowForm: '24,0', invisibility: '13,0',
+    levitation: '14,255', freeAction: '26,255',
+    cureDisease: '3,0', purification: '3,0', curePoison: '3,1',
+    orcStrength: '9,0',
+    // Heal-Health twice (healing / healTrue) and Heal-Fatigue for
+    // stamina - one class, two recipes, DFU's own variant ordering
+    stamina: '10,9', healing: '10,8', healTrue: '10,8',
+    // ...and the one with NO classic pair at all
+    restorePower: HEAL_SPELL_POINTS_KEY,
+  };
+  assert.equal(POTION_RECIPES.length, 20);
+  for (const [name, key] of Object.entries(EXPECTED)) {
+    assert.ok(by[name], `no recipe named ${name}`);
+    assert.equal(by[name].effect, key, `${name}'s effect`);
+  }
+  assert.deepEqual(Object.keys(EXPECTED).sort(), POTION_RECIPES.map((r) => r.name).sort(),
+    'the table and the pin name the same twenty');
+  // DisplayName is the recipe NAME used as a localization key, so
+  // every row carries the en string that key resolves to
+  assert.equal(by.healTrue.displayName, 'Heal True');
+  assert.equal(by.orcStrength.displayName, 'Orc Strength');
+  assert.equal(by.restorePower.displayName, 'Restore Power');
+  for (const r of POTION_RECIPES) assert.ok(r.displayName, `${r.name} has no display name`);
+});
+
+test('U44: only the fields that DIFFER are named, and DFU\'s names map to the classic ones', () => {
+  // DefaultEffectSettings is all eleven at 1 (EntityEffect.cs:946-968),
+  // so a recipe's `settings` names only what its class changed. DFU's
+  // EffectSettings names map onto the classic record's through its own
+  // converter (EntityEffectBroker.cs:952-976) - ChancePlus is
+  // chanceMod, MagnitudePlusMin/Max are magnitudeLevelBase/LevelHigh -
+  // and getting that pairing wrong is silent.
+  const by = Object.fromEntries(POTION_RECIPES.map((r) => [r.name, r]));
+  assert.deepEqual(by.resistFire.settings, { chanceBase: 100 });
+  assert.deepEqual(by.resistPoison.settings, { chanceBase: 5, chanceMod: 19 });
+  assert.deepEqual(by.cureDisease.settings, { chanceMod: 10 }, 'ChanceBase 1 IS the default - unnamed');
+  assert.deepEqual(by.healing.settings,
+    { magnitudeBaseLow: 5, magnitudeBaseHigh: 5, magnitudeLevelBase: 9, magnitudeLevelHigh: 9 });
+  assert.deepEqual(by.healTrue.settings,
+    { magnitudeBaseLow: 5, magnitudeBaseHigh: 5, magnitudeLevelBase: 19, magnitudeLevelHigh: 19 });
+  assert.deepEqual(by.orcStrength.settings,
+    { magnitudeLevelBase: 14, magnitudeLevelHigh: 14 }, 'its written-out 1,1 base IS the default');
+  assert.equal(by.slowFalling.settings, undefined, 'a pure DefaultEffectSettings recipe names nothing');
+  // and the bundle fills the rest in at 1
+  const bundle = potionBundle(potionRecipeKey(by.slowFalling.ingredients));
+  for (const f of ['durationBase', 'durationMod', 'durationPerLevel', 'chanceBase',
+    'chanceMod', 'chancePerLevel', 'magnitudeBaseLow', 'magnitudeBaseHigh',
+    'magnitudeLevelBase', 'magnitudeLevelHigh', 'magnitudePerLevel']) {
+    assert.equal(bundle.effects[0][f], 1, `${f} defaults to 1`);
+  }
+});
+
+test('U44: DrinkPotion builds a CasterOnly potion bundle, one settings struct shared', () => {
+  // EntityEffectManager.DrinkPotion (:903-947). Purification is the
+  // ONLY recipe in DFU with secondary effects, and the single
+  // `potionRecipe.Settings` struct is shared by all three (:914-930) -
+  // so its Heal-Health and Invisibility inherit cureDisease's numbers
+  // rather than their own defaults. A per-effect copy would look
+  // identical until someone read the magnitudes.
+  const pur = POTION_RECIPES.find((r) => r.name === 'purification');
+  const b = potionBundle(potionRecipeKey(pur.ingredients));
+  assert.equal(b.name, 'Purification');
+  assert.equal(b.rangeType, 0, 'TargetTypes.CasterOnly');
+  assert.equal(b.element, 4, 'ElementTypes.Magic - the cast sound\'s element');
+  assert.equal(b.bundleType, 'potion');
+  assert.deepEqual(b.effects.map((e) => `${e.type},${e.subType}`), ['3,0', '10,8', '13,0'],
+    'primary first, then the secondaries in order');
+  for (const e of b.effects) {
+    assert.equal(e.chanceMod, 10, 'every effect shares the ONE settings struct');
+    assert.equal(e.magnitudeLevelHigh, 19);
+  }
+  // an unknown bottle is drunk and does nothing (the PotionRecipeKey
+  // == 0 guard, :906)
+  assert.equal(potionBundle(0), null);
+  assert.equal(potionBundle(123456), null);
+});
+
+test('U44: the one effect with no classic pair rides under its DFU key', () => {
+  // Heal-SpellPoints is PotionMaker-only and sets no ClassicKey
+  // (HealSpellPoints.cs:21-30), so no SPELLS.STD row can name it -
+  // which is why S15 pulled it off (10,9) and effects.js has said
+  // since that no classic spell restores magicka. A potion bundle is
+  // keyed by STRING, so this one travels that way.
+  const rp = POTION_RECIPES.find((r) => r.name === 'restorePower');
+  const e = potionBundle(potionRecipeKey(rp.ingredients)).effects[0];
+  assert.equal(e.key, HEAL_SPELL_POINTS_KEY);
+  assert.equal(e.type, -1, 'no classic pair to carry');
+  assert.ok(isHealSpellPoints(e));
+  assert.equal(isHealSpellPoints({ type: 10, subType: 9 }), false, 'and it is NOT heal fatigue');
+});
+
+test('U44: every host that opens an inventory can DRINK from it', () => {
+  // The hook chain is host -> window -> useItem -> the ONE cast
+  // engine, and a break anywhere in it is silent: the arm falls back
+  // to its `pending` line and the potion does nothing, which is the
+  // state this slice found. Swept at the host end; the window's
+  // forwarding is pinned in nativeinventory.test.js.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  for (const rel of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js']) {
+    const src = readFileSync(join(root, rel), 'utf8');
+    assert.match(src, /drinkPotion: \(key\) => magic\.drinkPotion\(key\)/,
+      `${rel} hands the drink through its cast engine`);
+  }
+  // both of world.js's inventory sites, bare and over a loot pile
+  const world = readFileSync(join(root, 'src/scenes/world.js'), 'utf8');
+  assert.equal((world.match(/drinkPotion: \(key\)/g) ?? []).length, 2,
+    'the loot-pile window can drink too');
+  // and the engine's own half is DFU's AssignBundle flags
+  const hm = readFileSync(join(root, 'src/scenes/hostMagic.js'), 'utf8');
+  assert.match(hm, /bypassSavingThrows: true, bypassChance: true/,
+    'AssignBundleFlags.BypassSavingThrows | BypassChance (:942)');
+});
+
+test('U44: drinking one actually reaches the sinks - the whole point', () => {
+  // The arm consumed the bottle and printed "You drink the potion."
+  // over an entity nothing had touched, for the whole of the item arc.
+  const drink = (name, sinks, level = 6) => {
+    const r = POTION_RECIPES.find((x) => x.name === name);
+    return applySpell(potionBundle(potionRecipeKey(r.ingredients)), level,
+      { health: 10, maxHealth: 100, magicka: 5, maxMagicka: 50, level },
+      sinks, () => 0.5, null, { bypassSavingThrows: true, bypassChance: true });
+  };
+  // GetMagnitude: base + plus-per-level x level. healing is 5 + 9L,
+  // healTrue 5 + 19L, restorePower 5 + 4L.
+  let healed = 0;
+  drink('healing', { heal: (n) => { healed = n; } });
+  assert.equal(healed, 5 + 9 * 6);
+  healed = 0;
+  drink('healTrue', { heal: (n) => { healed = n; } });
+  assert.equal(healed, 5 + 19 * 6);
+  // ...and the magicka half, which no classic spell can reach
+  let mag = 0;
+  drink('restorePower', { restoreMagicka: (n) => { mag = n; } });
+  assert.equal(mag, 5 + 4 * 6, 'IncreaseMagicka(magnitude) - and NO x64, unlike its fatigue sibling');
+  // stamina IS the x64 one
+  let fat = 0;
+  drink('stamina', { restoreFatigue: (n) => { fat = n; } });
+  assert.equal(fat, (5 + 4 * 6) * 64, 'HealFatigue carries the fatigue multiplier');
 });

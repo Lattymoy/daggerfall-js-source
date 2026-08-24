@@ -406,6 +406,14 @@ export class NativeInventoryWindow {
       spellCount: () => this.hooks.entity?.spells?.length ?? 0,
       isEnchanted,
       nowMinute: this.hooks.nowMinute?.() ?? 0,
+      // U44: RecordLocationFromMap's DiscoverRandomLocation. Only a
+      // host with a region index can walk one, so this is a hook and
+      // a host that has none leaves the map unread rather than
+      // claiming a reveal it did not make.
+      revealMap: this.hooks.revealMap ?? null,
+      // U44: DrinkPotion. The host's cast engine owns it - assigning a
+      // bundle needs the player's effect sinks.
+      drinkPotion: this.hooks.drinkPotion ?? null,
     }));
   }
 
