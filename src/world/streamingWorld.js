@@ -26,7 +26,7 @@ import { TERRAIN_SIZE } from './terrainSampler.js';
 import { GLOBAL_SCALE } from './meshReader.js';
 import { WORLD_MAP_TILE_DIM, getLocationTerrainTileOrigin } from './terrainTiles.js';
 
-export const TERRAIN_DISTANCE = 3;
+export const TERRAIN_DISTANCE = 3;   // DFU's default (StreamingWorld.cs:56); D1: the world host passes the LIVE Experimental/TerrainDistance (1..4) into the constructor
 const VERTICAL_THRESHOLD = 500;
 const SCENE_MAP_RATIO = 1 / GLOBAL_SCALE;
 const NATIVE_PIXEL = 32768; // MapsFile world units per map pixel

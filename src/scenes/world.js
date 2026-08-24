@@ -550,7 +550,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   }
 
   // --- Streaming state + player ------------------------------------------
-  const state = new StreamingWorldState();
+  // D1: TerrainDistance goes LIVE - the launcher's "Land View
+  // Distance" row (Experimental/TerrainDistance) sizes the streamed
+  // grid, clamped 1..4 exactly as DFU clamps it (SettingsManager.cs
+  // :952-963; StreamingWorld.cs:55-56 [Range(1,4)], default 3 = the
+  // 7x7). Read once at scene mount - DFU applies it the same way, at
+  // StartGameBehaviour.ApplyStartSettings (:283), never rebuilding a
+  // live world mid-session.
+  const state = new StreamingWorldState(getInt('Experimental', 'TerrainDistance', 1, 4));
   const queue = state.init(startPixel.x, startPixel.y);
   let building = false;
 

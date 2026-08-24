@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 2580 tests across 289 files.
+Node 22). Suite: 2581 tests across 289 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -218,7 +218,7 @@ Node 22). Suite: 2580 tests across 289 files.
 | snd.test.js | 3 | 459 sounds, byte-exact header, zero-length record 5 |
 | climate.test.js | 5 | applyClimate verbatim rules, texture-info classification, exterior-window table, nature/ground archives, 8820-combo corpus sweep (735 pairs, 0 missing) |
 | spectral.test.js | 2 | SetSpectral constants + gray remap (eyes 14->247, 96-index), the V^1.9 emission lerp (red eyes, body toward black) on a hand-built albedo |
-| streaming.test.js | 7 | world-coord conversions, nearest-first 7x7, crossing offsets + column swaps, two-pixel jumps, vertical recenter, 30-crossing floating-origin invariant, 2000-step invariant fuzz |
+| streaming.test.js | 8 | world-coord conversions, nearest-first 7x7, crossing offsets + column swaps, two-pixel jumps, vertical recenter, 30-crossing floating-origin invariant, 2000-step invariant fuzz. D1: the grid radius is the LIVE Experimental/TerrainDistance - the (2d+1)^2 tile counts 9/25/49/81 with inRange at the Chebyshev edge, the bare-constructor default staying DFU's 3, and the world host passing the setting through DFU's own 1..4 clamp (StreamingWorld.cs:51-56, SettingsManager.cs:952-963) |
 | terrain.test.js | 14 | WOODS.WLD reader + corpus pins, perlin, cubic, sampler pins, umRandom (float + int), marching-squares lookup, blend flattening, Daggerfall-on-terrain integration, 15251-location corpus sweep, terrain key, nature scatter rules + integration |
 | weather.test.js | 4 | verbatim fog tables, mapping, offsets, scales, fog math, lightning strobe |
 | window.test.js | 2 | MaterialReader style constants, real glass-texel mask pins |

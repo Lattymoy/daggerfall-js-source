@@ -110,6 +110,11 @@ export const LIVE = Object.freeze({
   'Map/DungeonMicMapQoL': 'src/ui/automapWindow.js',
   'Map/DunMicMapInnerColor': 'src/ui/automapWindow.js',
   'Map/DunMicMapBorderColor': 'src/ui/automapWindow.js',
+  // D1: the streamed-grid radius (StreamingWorld.TerrainDistance,
+  // 1..4). The launcher row said "saved, but nothing reads it" while
+  // the world host ran the hardcoded default - the exact live-tier
+  // gap GUI/ShowOptionsAtStart taught this file to test for.
+  'Experimental/TerrainDistance': 'src/scenes/world.js',
 });
 /** unavailable: meaningless in a browser, or the port implements only
  *  ONE side of the branch. The launcher shows these disabled WITH the
