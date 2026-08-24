@@ -27,7 +27,7 @@ import { pickActivatable, worldAabb, activationTargets } from '../player/activat
 import { transferAll, removeOne, addItem } from '../systems/inventory.js';
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
-import { createPlayerTicker , endRunToTitleMenu } from './shared.js';   // AUDIT 18: the interior host's world clock
+import { createPlayerTicker , endRunToTitleMenu, exitToTitleMenu } from './shared.js';   // AUDIT 18: the interior host's world clock
 import { buildInteriorContext } from './interiorContext.js';
 import { buildDungeonContext } from './dungeonContext.js';
 import { DOOR_TYPE } from '../world/meshReader.js';
@@ -95,6 +95,7 @@ import {
   MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID, DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID, CANNOT_BE_REPAIRED_TEXT,
 } from '../systems/repairService.js';
 import { GuildServiceWindow, preloadGuildServiceArt, guildServiceArtLoaded } from '../ui/guildServiceWindow.js';
+import { PauseOptionsWindow, preloadPauseArt, pauseArtLoaded } from '../ui/pauseWindow.js';   // I3
 import { preloadMessageBoxArt } from '../ui/messageBox.js';
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
@@ -233,6 +234,7 @@ export function createWorldModes(host) {
   const ensureInteriorWindowArt = () => {
     ensureShopFont();                                       // FONT0003 + the trade art
     preloadGuildServiceArt({ renderer, fetchBytes, palette });
+    preloadPauseArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] OPTN00I0 unavailable:', e?.message ?? e));   // I3
     preloadMessageBoxArt({ renderer, fetchBytes, palette });   // U11 parchment for its boxes
     preloadListPickerArt({ renderer, fetchBytes, palette });   // U24: PICK00I0 for the training skill list
   };
@@ -1939,6 +1941,20 @@ export function createWorldModes(host) {
         }
         return;
       }
+    }
+    // I3: Escape inside a BUILDING opens the pause window in the
+    // interior overlay slot (the dungeon arm rides routeKey's Escape
+    // case into dungeonCtx.togglePause). No interior save path exists
+    // yet - the composer saves from ?world's exterior and the dungeon
+    // contexts - so the SAVE button answers DFU's cannot-save line.
+    if (mode === 'interior' && !interiorOverlay && actionOf(e) === 'Escape' && pauseArtLoaded()) {
+      interiorOverlay = new PauseOptionsWindow({
+        savingPrevented: () => true,
+        exitToMenu: exitToTitleMenu,
+        textLines: (id) => townTalk?.lines?.(id) ?? null,
+      });
+      e.preventDefault();
+      return;
     }
     // The input map (ui/input.js) owns all bindings.
     if (mode !== 'dungeon' || !dungeonCtx) return;

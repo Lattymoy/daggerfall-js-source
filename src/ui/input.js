@@ -94,6 +94,10 @@ export function routeKey(e, ctx, setPlayerPos = null) {
   // no consumer here yet, and the debug HUD is the port's own.
   if (e.code === 'F8') { ctx.toggleDebugHud?.(); return true; }
   switch (actionOf(e)) {
+    // Escape with no overlay up opens the pause options window
+    // (GameManager's escape door; the window closes itself on the
+    // same key). Optional-chained: hosts grow the seam one at a time.
+    case 'Escape': return ctx.togglePause ? (ctx.togglePause(setPlayerPos), true) : false;
     case 'CharacterSheet': ctx.toggleCharSheet(); return true;
     case 'Inventory': ctx.toggleInventory(); return true;
     // GameManager.cs:550-553 - the CastSpell ACTION opens the

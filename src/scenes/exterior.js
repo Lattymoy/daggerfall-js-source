@@ -73,7 +73,7 @@ import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the sho
 import { hitSoundFor, swingSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
-import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, climbingDeps, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
+import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, climbingDeps, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -86,6 +86,7 @@ import { addGold } from '../systems/court.js';   // U10 probe surface
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { actionOf, held, moveHeld, anyMove } from '../ui/input.js';   // I2: the rebindable registry
+import { PauseOptionsWindow, preloadPauseArt, pauseArtLoaded } from '../ui/pauseWindow.js';   // I3
 
 export async function bootExterior(canvas, renderer, params, status) {
   const regionName = params.get('region') || 'Daggerfall';
@@ -467,6 +468,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   });
   townTalk.ensureLoaded();
   preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: INFO00I0 warms at boot
+  preloadPauseArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] OPTN00I0 unavailable:', e?.message ?? e));   // I3
   preloadBookArt({ renderer, fetchBytes, palette });   // B1: BOOK00I0 warms at boot
   // B1 + AUDIT B-C2: an async open must not clobber a window the
   // player opened while the book was loading.
@@ -757,6 +759,18 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (act === 'CastSpell' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
       e.preventDefault();
       toggleSpellbook();
+      return;
+    }
+    // I3: the Escape window. This dev host has no save path (the
+    // quicksave lives in ?world and the dungeon contexts), so the
+    // SAVE button answers with DFU's own cannot-save line and LOAD
+    // has nothing to load - both stated by the hooks, not invented.
+    if (act === 'Escape' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && pauseArtLoaded()) {
+      townTalk.showOverlay(new PauseOptionsWindow({
+        savingPrevented: () => true,
+        exitToMenu: exitToTitleMenu,
+        textLines: (id) => townTalk.lines(id),
+      }));
       return;
     }
     keys.add(e.code);

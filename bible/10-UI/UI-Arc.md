@@ -3156,3 +3156,55 @@ do. All green after: cast in all three hosts, travel end to end
 
 Pins: 7 in `inputmap.test.js` (the sweep + exact escape counts + the
 registry reads); 3 I2 mutations dead on top of I1's ten.
+
+## U35 / I3 - THE PAUSE OPTIONS WINDOW: Escape finally answers (2026-08-23)
+
+DaggerfallPauseOptionsWindow on the real OPTN00I0.IMG (150x84, centred
+with DFU's own y=40 - alignment overrides position PER AXIS, so the
+declared y applies where the guild popup's did not). Until this slice
+the port had no pause menu at all; the Ledger's "the launcher is the
+ONLY door" row is struck.
+
+The geometry is DFU's, rect for rect (`:86-141`), including the two
+toggle ticks at (64,3.2,3.7,3.2) and the three 109.1-wide bars with
+their (0,1,w,3.5) fills in Color32(146,12,4) - the checkbox toggle
+colour every DFU window shares. The bar click law is verbatim
+(`:230-241`): the sub-1%/over-99% snaps and the two-place rounding,
+with the boundary pinned just inside the band because the exact edge
+is a strict float compare no multiplication can land on.
+
+Escape opens it in ALL FOUR HOSTS through I2's registry - routeKey's
+Escape case for the two dungeon contexts (threading the host's
+position applier so the LOAD arm can move the player), hand-routes in
+the exterior pair, and worldModes' own interior arm - and the same
+key toggles it closed (`:186-190`; DFU keys on the UP edge, the
+port's overlay channel on DOWN, one edge earlier, recorded). PAUSING
+COSTS NOTHING: the hosts' overlay-hold law (AUDIT 18 F9) already is
+Time.timeScale = 0.
+
+Save/Load ride the quicksave with DFU's IsSavingPrevented gate kept
+("You cannot save the game right now." where a host has no save
+path - the block-test exterior and interiors today). EXIT confirms on
+TEXT.RSC 1069 then takes `exitToTitleMenu` - the ONE bare-URL unwind,
+now also the death sequence's last line (dfuiExitGame is
+Application.Quit; a browser has no quit - Ledger A). The sound/music
+bars write their LIVE keys; the detail bar, FULL SCREEN (DFU's quirk
+kept: the button flips LargeHUD, the tick shows its negation) and
+HEAD BOBBING write stored-tier keys through `effectiveSettings` - the
+settings MENU's own display surface, because the tier doctrine
+reserves the typed getters for keys whose value changes play (the
+tier guard caught the first draft reading them raw). The saveSettings
+LATCH is DFU's: nothing persists until a control was touched, then
+the store saves on close - and the probe's first draft "proved" the
+bar wrote by reading the DEFAULT back (0.5 IS the ini default and the
+sparse store drops default-equal writes); it clicks 0.25 now.
+
+Pending, stated in-window or at the site: the CONTROLS button answers
+with a note until I4's rebinding grid; the multi-slot save window;
+PauseOptionsDropdown (a DFU-era addition, with the settings arc).
+
+Pins: 7 in `pausewindow.test.js` (geometry literal-for-literal, the
+bar and detail laws, the confirm/save/load flows, the four-host
+wiring sweep); five mutations, five dead. Live: tools/pauseProbe.mjs
+- Escape opens over a real dungeon, the bar write survives the close,
+N declines the exit, Escape toggles both ways.

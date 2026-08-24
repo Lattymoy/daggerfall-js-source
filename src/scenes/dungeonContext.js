@@ -21,6 +21,7 @@ import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE } from '../world/rdbLayout.js';
 import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, DOOR_VERB_FLAGS, classifyPlacementAction, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT } from '../world/actionSystem.js';
 import { TextRsc } from '../formats/textRsc.js';
+import { PauseOptionsWindow, preloadPauseArt, pauseArtLoaded } from '../ui/pauseWindow.js';
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, setDeathPresenter } from '../characters/playerEntity.js';
 import { addItem, removeOne } from '../systems/inventory.js';
@@ -70,7 +71,7 @@ import { spendPoolLowest } from '../systems/chargen.js';
 import { readSpellsStd } from '../formats/spellsStd.js';
 import { readMagicDef } from '../formats/magicDef.js';
 import { ClassFile } from '../formats/classFile.js';
-import { fetchBytes, ensureAudio, raiseAtRestEnd, endRunToTitleMenu, sensesContext } from './shared.js';
+import { fetchBytes, ensureAudio, raiseAtRestEnd, endRunToTitleMenu, exitToTitleMenu, sensesContext } from './shared.js';
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
 import {
@@ -680,6 +681,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // pressed F5 at some point first. Nothing failed loudly; the box
   // just quietly wasn't classic.
   preloadMessageBoxArt({ renderer, fetchBytes, palette });
+  // I3: the Escape window's panel, same failure posture (a missing
+  // OPTN00I0 costs the pause menu, loudly, never the boot).
+  preloadPauseArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] OPTN00I0 unavailable:', e?.message ?? e));
   // S16: enemy spell lists ride SPELLS.STD (loaded just above, after
   // the foe build) - SetEnemyCareer's assignment tail per live foe:
   // class enemies with CastsMagic take EnemyClassSpells[min(6,
@@ -2427,6 +2431,22 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       automapEntranceTick(automapRec, sm ? [sm.x, sm.y, sm.z] : null, eye, collider);
     },
     automapRecord: () => automapRec,   // probe surface + the window's live view
+    /** I3: the Escape window, same one-slot idiom. Art-gated: with no
+     *  OPTN00I0 loaded the window would close itself on first draw,
+     *  so an art-less boot simply has no pause menu (stated, not
+     *  silent - preloadPauseArt logs its own failure). */
+    togglePause(setPlayerPos = null) {
+      if (activeOverlay || !pauseArtLoaded()) return;
+      const ctx = this;   // the sibling save verbs on this same context
+      activeOverlay = new PauseOptionsWindow({
+        quickSave: () => ctx.quickSave?.(),
+        // the LOAD arm needs the host's position applier, exactly as
+        // routeKey's own QuickLoad case passes it
+        quickLoad: () => ctx.quickLoad?.(setPlayerPos),
+        exitToMenu: exitToTitleMenu,
+        textLines: (id) => rscLines(id),
+      });
+    },
     /** A1: the M window, in the one overlay slot (toggleCharSheet's
      *  idiom - an occupied slot refuses, the window closes itself). */
     toggleAutomap() {
