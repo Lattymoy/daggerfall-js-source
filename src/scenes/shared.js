@@ -213,7 +213,14 @@ export function climbingDeps(entity, say = null) {
 
 /** X1: the ARMED Open/Lock spell a host hands to actions.activate.
  *  Answers null when nothing is armed. Open wins if both are somehow
- *  armed (it is the one that can still fail on the lock). */
+ *  armed (it is the one that can still fail on the lock).
+ *
+ *  X3: the level travels LIVE. Both triggers read
+ *  manager.EntityBehaviour.Entity.Level at the door (Open.cs:118,
+ *  Lock.cs:116) - the HOLDER of the armed effect, whatever their level
+ *  is when they touch it - and neither AddState stores anything, so
+ *  there is no cast-time level to carry. Reading it here, per
+ *  activation, is that read. */
 export function doorSpellFor(entity) {
   const find = (k) => entity?.activeEffects?.find((a) => a.kind === k && !a.ended);
   const open = find('openArmed');
@@ -222,10 +229,12 @@ export function doorSpellFor(entity) {
   if (!armed) return null;
   return {
     kind: open ? 'open' : 'lock',
-    casterLevel: armed.casterLevel ?? entity?.level ?? 1,
+    holderLevel: entity?.level ?? 1,
     // FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
-    // 432/20, Open.cs:176-180) bypasses the level test. The port has
-    // no artifact identity yet, so no item can claim it.
+    // 432/20, Open.cs:176-180) bypasses the level test on INTERIOR
+    // doors only - the exterior arm checks the level regardless
+    // (Open.cs:142). The port has no artifact identity yet, so no
+    // item can claim it.
     skeletonKey: false,
   };
 }

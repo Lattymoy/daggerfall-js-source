@@ -154,3 +154,32 @@ test('climbing M3 LIVE: the motor climbs a real wall, and the release falls from
   assert.ok(m.grounded, 'the drop landed');
   assert.ok(Math.abs(landed - topY) < 0.6, `the fall billed from the release height (landed=${landed.toFixed(2)} vs top=${topY.toFixed(2)})`);
 });
+
+test('X3 climbing LIVE: the Climbing SPELL doubles the climb SPEED, not just the skill check', () => {
+  // PlayerSpeedChanger.GetClimbingSpeed reads player.IsEnhancedClimbing
+  // at the move (:424-431) - the port called climbingSpeed with one
+  // argument, so the spell's speed half was dead and only the skill
+  // check doubled. Both walls, both climbs, one difference.
+  const wall = (enhanced) => {
+    const col = new Collider(() => -100);
+    const I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+    col.addMesh('floor', new Float32Array([-5, 0, -5, 5, 0, -5, 5, 0, 5, -5, 0, 5]), [0, 1, 2, 0, 2, 3], I);
+    col.addMesh('wall', new Float32Array([-5, 0, 0.4, 5, 0, 0.4, 5, 40, 0.4, -5, 40, 0.4]), [0, 1, 2, 0, 2, 3], I);
+    const m = new PlayerMotor(col, { speed: 50, running: 30 }, {
+      climbing: { inputs: () => ({ climbing: 50, luck: 50, enhanced }), tally: () => {}, rolls: () => 0, say: () => {} },
+    });
+    m.spawn(0, 0.02, 0);
+    const fwd = { forward: 1, strafe: 0, run: false, jump: false };
+    for (let i = 0; i < 60; i++) m.update(1 / 30, fwd, 0);
+    assert.equal(m.climb.isClimbing, true);
+    return m.pos[1];
+  };
+  const plain = wall(false);
+  const spelled = wall(true);
+  assert.ok(plain > 0.5, `the unbuffed climb rose (y=${plain.toFixed(2)})`);
+  // the climb starts on the same frame in both runs (rolls() => 0
+  // passes every check), so the whole difference is the x2 speed
+  assert.ok(spelled > plain * 1.8,
+    `the spell climbs about twice as fast (plain=${plain.toFixed(2)} spelled=${spelled.toFixed(2)})`);
+  assert.ok(spelled < plain * 2.2, 'about twice - not some other multiplier');
+});

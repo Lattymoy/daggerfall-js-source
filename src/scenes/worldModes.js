@@ -27,7 +27,8 @@ import { pickActivatable, worldAabb, activationTargets } from '../player/activat
 import { transferAll, removeOne, addItem, isEnchanted, totalWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
-import { createPlayerTicker , endRunToTitleMenu, exitToTitleMenu, doorSpellFor, wireDoorSpells} from './shared.js';   // AUDIT 18: the interior host's world clock
+import { createPlayerTicker , endRunToTitleMenu, exitToTitleMenu, doorSpellFor, consumeDoorSpell, wireDoorSpells} from './shared.js';   // AUDIT 18: the interior host's world clock
+import { triggerExteriorOpen, DOOR_SPELL_TEXT } from '../systems/mysticism.js';   // X3: the Open spell's EXTERIOR-door arm
 import { buildInteriorContext } from './interiorContext.js';
 import { buildDungeonContext } from './dungeonContext.js';
 import { DOOR_TYPE } from '../world/meshReader.js';
@@ -1344,7 +1345,7 @@ export function createWorldModes(host) {
     // tallying Lockpicking before the roll, entering ONCE on success
     // (no persistent unlock - DFU's isBrokenIn is local) and recording
     // the skill on failure. DiscoverBuilding fires on the activation
-    // (:515). FLAGGED: the Open-spell bypass (:519), the bash arms with
+    // (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
     // their Breaking_And_Entering crimes (:571-583/:621-627 - no
     // weapon-vs-static-door path exists yet), the house greeting
     // (:585-628) and TallyCrimeGuildRequirements (the TG advancement
@@ -1375,8 +1376,28 @@ export function createWorldModes(host) {
             return questBridge.machine.getSiteLinks(SITE_TYPES.Building, mapId, b.buildingKey).length > 0;
           },
         });
-        if (!unlocked) {
-          const lockValue = buildingLockValue(bd.quality);
+        // X3: HandleOpenEffectOnExteriorDoor (:519-520). An armed OPEN
+        // spell is tried on a locked building BEFORE the mode ladder,
+        // and it spends itself either way (Open.cs:158's CancelEffect
+        // sits outside the success branch) - a failure falls through
+        // to the ordinary refusal/pick ladder below with the spell
+        // gone. LOCK has no exterior arm at all in DFU (PlayerActivate
+        // calls HandleLockEffect only from the action-door path), so an
+        // armed Lock is left untouched here, still waiting for a real
+        // door: doorSpellFor only answers 'lock' when no Open is armed,
+        // and the kind test below refuses it.
+        let opened = unlocked;
+        const lockValue = buildingLockValue(bd.quality);
+        if (!opened) {
+          const spell = doorSpellFor(playerEntity);
+          if (spell?.kind === 'open') {
+            const r = triggerExteriorOpen(lockValue, spell.holderLevel);
+            consumeDoorSpell(playerEntity, 'open');
+            if (r.alert) townTalk?.say?.(DOOR_SPELL_TEXT[r.alert]);
+            opened = r.opened;
+          }
+        }
+        if (!opened) {
           const lockpick = skillValue(playerEntity, SKILLS.Lockpicking);
           if (getInteractionMode() !== 'steal') {
             townTalk?.say?.(LOCKED_EXTERIOR_DOOR_TEXT);

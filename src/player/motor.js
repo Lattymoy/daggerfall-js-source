@@ -444,8 +444,13 @@ export class PlayerMotor {
       this.fallStart = this.pos[1];
       this.velY = 0;
       const wd = probe.wallDir ?? [Math.sin(yaw), 0, Math.cos(yaw)];
+      // X3: GetClimbingSpeed reads player.IsEnhancedClimbing LIVE at
+      // the move (PlayerSpeedChanger.cs:424-431) - the same flag the
+      // skill check doubles - so the Climbing spell's speed half rides
+      // the deps thunk per frame, not a value latched at mount.
+      const enhanced = !!climb.deps?.inputs?.().enhanced;
       const r = this.collider.move(this.pos,
-        wd[0] * this.speed * dt, climbingSpeed(this.speed) * dt, wd[2] * this.speed * dt,
+        wd[0] * this.speed * dt, climbingSpeed(this.speed, enhanced) * dt, wd[2] * this.speed * dt,
         this.height, false);
       this.grounded = r.grounded;
     } else {

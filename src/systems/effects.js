@@ -877,8 +877,14 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       if (!chanceOk) { out.chanceFailed = (out.chanceFailed ?? 0) + 1; continue; }
       const armedKind = opening ? 'openArmed' : 'lockArmed';
       const inc = findInc((a) => a.kind === armedKind);
-      if (inc) inc.casterLevel = casterLevel;   // a recast re-arms at the new level
-      else pushPermanent(target, { kind: armedKind, permanent: true, casterLevel });
+      // X3: AddState is EMPTY on both classes (Open.cs:77-79,
+      // Lock.cs:72-74) - a like-kind recast changes NOTHING about the
+      // incumbent, and there is nothing to change: the trigger reads
+      // the HOLDER's level live (Open.cs:118, Lock.cs:116), so no
+      // level is latched at cast at all. The port used to store the
+      // cast-time casterLevel and refresh it on a recast; both halves
+      // of that are gone. The entry is now pure presence.
+      if (!inc) pushPermanent(target, { kind: armedKind, permanent: true });
       // The HOST speaks the alert (mysticism.js owns the texts; this
       // module cannot import it - mysticism imports effects).
       out.armed = armedKind;

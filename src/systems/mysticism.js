@@ -96,26 +96,33 @@ export const isMysticism = (e) => Object.values(MYSTICISM_EFFECTS)
 // them to activate a door. A failed roll cancels before anything is
 // armed.
 
-/** StartWaitingForDoor (:73-95). An item cast - and the Skeleton's Key -
- *  skips the roll entirely but is STILL subject to the level rule below. */
-export function armOpen({ castByItem = false, castBySkeletonKey = false, rollChance = () => true } = {}) {
-  if (castByItem || castBySkeletonKey) return { armed: true, alert: 'readyToOpen' };
-  if (!rollChance()) return { armed: false, alert: 'spellEffectFailed' };
-  return { armed: true, alert: 'readyToOpen' };
-}
+/* StartWaitingForDoor (:81-98) does NOT live here. X1 wrote it twice -
+ * once as an armOpen() helper nobody called, once inline in the effect
+ * library's Open/Lock arm - and X3 deleted the copy. The arming is a
+ * cast-time effect landing, so it belongs in systems/effects.js with
+ * every other landing, and its item arm is the shared
+ * AssignBundleFlags.BypassChance path (ctx.bypassChance) rather than a
+ * flag of its own. This module keeps only what the DOOR needs: the two
+ * triggers below and the alert table at the foot of the file. */
 
 /** TriggerOpenEffect (:97-131), against the port's ActionSystem door
  *  record ({currentLockValue, state}).
  *
- *  The lock only yields to a caster whose LEVEL reaches its value -
- *  "unlocks chest or door to lock-level of caster" - and the
- *  Skeleton's Key ignores even that. A door that is left locked is NOT
- *  opened; an unlocked, CLOSED door is. The effect cancels either way,
- *  so a wasted cast is spent. */
-export function triggerOpen(door, casterLevel, { castBySkeletonKey = false } = {}) {
+ *  The lock only yields to a HOLDER whose LEVEL reaches its value -
+ *  the description says "unlocks chest or door to lock-level of
+ *  caster", but the code reads manager.EntityBehaviour.Entity.Level
+ *  (Open.cs:118): the level of whoever is HOLDING the armed effect,
+ *  read AT THE TRIGGER, not the level frozen at cast. X3 corrected
+ *  the port, which had latched the cast-time level into the armed
+ *  entry - a level gained between casting and touching the door now
+ *  counts, exactly as it does in DFU. The Skeleton's Key ignores the
+ *  test entirely (interior doors only - see triggerExteriorOpen). A
+ *  door that is left locked is NOT opened; an unlocked, CLOSED door
+ *  is. The effect cancels either way, so a wasted cast is spent. */
+export function triggerOpen(door, holderLevel, { castBySkeletonKey = false } = {}) {
   const out = { unlocked: false, opened: false, alert: null };
   if (door.currentLockValue > 0) {
-    if (castBySkeletonKey || door.currentLockValue <= casterLevel) {
+    if (castBySkeletonKey || door.currentLockValue <= holderLevel) {
       door.currentLockValue = 0;
       out.unlocked = true;
     } else {
@@ -133,16 +140,39 @@ export function triggerOpen(door, casterLevel, { castBySkeletonKey = false } = {
 // ── Lock (Lock.cs :95-135) ────────────────────────────────────────
 
 /** TriggerLockEffect. Note the asymmetry with Open: Lock has NO level
- *  test - it locks to the CASTER'S OWN LEVEL whatever the door was -
+ *  test - it locks to the HOLDER'S OWN LEVEL whatever the door was,
+ *  read at the trigger (Lock.cs:116, the same live read as Open) -
  *  and an already-locked door is simply refused rather than
  *  re-locked harder. An OPEN door is swung shut. */
-export function triggerLock(door, casterLevel) {
+export function triggerLock(door, holderLevel) {
   if (door.currentLockValue > 0) {
     return { locked: false, closed: false, alert: 'doorAlreadyLocked' };
   }
-  door.currentLockValue = casterLevel;
+  door.currentLockValue = holderLevel;
   const closed = door.state === 'end';
   return { locked: true, closed, alert: 'doorLocked' };
+}
+
+// ── Open on an EXTERIOR building door (Open.cs :138-161) ──────────
+
+/** TriggerExteriorOpenEffect. The building half of Open, and it is a
+ *  DIFFERENT rule from the interior one: there is no door record to
+ *  unlock, only a building lock VALUE, the test is the reverse
+ *  inequality written out longhand (`Level < buildingLockValue` is
+ *  the FAILURE), and DFU's own comment is explicit that the Skeleton's
+ *  Key gets no exemption here - "for the classic effect, the player's
+ *  level is always checked, even for the Skeleton Key". The effect
+ *  CANCELS on both outcomes (:158), so a failed exterior trigger
+ *  spends the cast exactly like a failed interior one.
+ *
+ *  DFU also carries a standing NOTE above HandleOpenEffectOnExteriorDoor
+ *  (PlayerActivate.cs:1033-1034) that the effect "currently ALWAYS
+ *  works on exterior doors, should operate on lock level" - stale:
+ *  the level test below is what the code does today, and it is what
+ *  the port does. */
+export function triggerExteriorOpen(buildingLockValue, holderLevel) {
+  if (holderLevel < buildingLockValue) return { opened: false, alert: 'openFailed' };
+  return { opened: true, alert: null };
 }
 
 // ── Dispel Undead / Daedra (DispelUndead.cs :44-58) ───────────────
@@ -226,9 +256,22 @@ export const isSilenced = (entity) => !!entity?.isSilenced || isSilencedEffect(e
 export function silenceBlocksCast(entity, { costsSpellPoints = true } = {}) {
   return costsSpellPoints && isSilenced(entity);
 }
-/** X1: the door-spell alert lines. armOpen/triggerOpen/triggerLock
- *  answer localisation KEYS (Internal_Strings.csv); these are their
- *  English, which is what the port's HUD speaks. */
+/** X1: the door-spell alert lines. The trigger laws answer localisation
+ *  KEYS (Internal_Strings.csv); these are their English, which is what
+ *  the port's HUD speaks. Who speaks each (X3 wired the arming pair -
+ *  before it, half this table was unreachable):
+ *    readyToOpen / readyToLock   scenes/hostMagic.js, off out.armed
+ *    openFailed                  the interior trigger, through
+ *                                wireDoorSpells; and the exterior one,
+ *                                through worldModes' static-door arm
+ *    doorLocked / doorAlreadyLocked   the interior Lock trigger
+ *    spellEffectFailed           NOT spoken from here - Open and Lock
+ *                                are both CasterOnly, so a failed
+ *                                chance takes AssignBundle's generic
+ *                                caster-only arm in hostMagic, which
+ *                                says this same string. The row stays
+ *                                as the record of DFU's own
+ *                                Open.cs:87 AddHUDText call. */
 export const DOOR_SPELL_TEXT = Object.freeze({
   readyToOpen: 'Ready to open.',            // :652
   openFailed: 'Lock is too powerful.',      // :655

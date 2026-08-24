@@ -726,10 +726,15 @@ export class ActionSystem {
     // systems/mysticism.js, which this file calls rather than copies.
     if (doorSpell && o.kind === 'door' && !o.special) {
       const result = doorSpell.kind === 'open'
-        ? triggerOpen(o, doorSpell.casterLevel, { castBySkeletonKey: doorSpell.skeletonKey === true })
-        : triggerLock(o, doorSpell.casterLevel);
+        ? triggerOpen(o, doorSpell.holderLevel, { castBySkeletonKey: doorSpell.skeletonKey === true })
+        : triggerLock(o, doorSpell.holderLevel);
+      // X3: BOTH swings are ToggleDoor(activatedByPlayer), and this
+      // path IS the player activating (Open.cs:131, Lock.cs:122-126).
+      // Lock's auto-close passed false, which suppresses the door's
+      // own action record - a door wired to fire a trap or a linked
+      // mover on close stayed silent when a Lock spell shut it.
       if (result.opened) this.toggleDoor(o, true);
-      if (result.closed) this.toggleDoor(o, false);
+      if (result.closed) this.toggleDoor(o, true);
       this.onDoorSpell?.(o, doorSpell.kind, result);
       this.receive(o, 'Direct');
       return true;

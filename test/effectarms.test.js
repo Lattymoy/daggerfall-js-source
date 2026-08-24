@@ -79,7 +79,10 @@ test('X1 Open/Lock: the cast ARMS and waits - DFU never acts at cast time', () =
   // forcedRoundsRemaining = 1 with RemoveRound undecremented: the entry
   // must NOT expire on its own - only the door (or a recast) ends it
   assert.equal(e.activeEffects[0].permanent, true);
-  assert.deepEqual(doorSpellFor(e), { kind: 'open', casterLevel: 5, skeletonKey: false });
+  // X3: the level is the HOLDER's, read HERE - the cast was at level 5
+  // (castTouch's casterLevel) and the entity is level 1, so 1 is what
+  // travels to the door.
+  assert.deepEqual(doorSpellFor(e), { kind: 'open', holderLevel: 1, skeletonKey: false });
   // Lock arms its own marker
   const e2 = entity();
   assert.equal(castTouch(e2, 16).armed, 'lockArmed');
@@ -415,4 +418,71 @@ test('X2: a non-CasterOnly defence buff can be SAVED against and dropped whole; 
   const outEl = applySpell(buildCustomSpell({ slots: [{ type: 8, subType: 0, settings: { ...blankEffectSettings(), durationBase: 10, chanceBase: 50 } }], rangeType: 1 }),
     1, el, {}, () => 0.2, { level: 5 }, {});
   assert.equal(outEl.saved, 1);
+});
+
+// ── X3: the last five X1-review findings ──────────────────────────
+test('X3 Open/Lock: the level travels LIVE from the HOLDER, and a recast latches nothing', () => {
+  // Both triggers read manager.EntityBehaviour.Entity.Level AT THE
+  // DOOR (Open.cs:118, Lock.cs:116), and both AddState overrides are
+  // EMPTY bodies (Open.cs:77-79, Lock.cs:72-74) - so there is no
+  // cast-time level anywhere in the effect. The port used to freeze
+  // the caster's level into the armed entry and refresh it on recast:
+  // a character who levelled while the spell was armed opened doors
+  // at their old level.
+  const e = entity();
+  castTouch(e, 17, 5);
+  assert.equal(e.level, 1);
+  assert.equal(doorSpellFor(e).holderLevel, 1, 'the level-5 CAST does not travel');
+  assert.equal(e.activeEffects[0].casterLevel, undefined, 'nothing is latched on the entry');
+  // level up while armed: the door now sees the new level
+  e.level = 9;
+  assert.equal(doorSpellFor(e).holderLevel, 9);
+  // and a recast is a no-op on the incumbent - one entry, unchanged
+  const before = { ...e.activeEffects[0] };
+  castTouch(e, 17, 40);
+  assert.equal(e.activeEffects.length, 1, 'AddState merges, it does not add');
+  assert.deepEqual({ ...e.activeEffects[0] }, before, 'and an EMPTY AddState changes nothing');
+});
+
+test('X3 Lock: the auto-close is ToggleDoor(activatedByPlayer) - it fires the door record', () => {
+  // Lock.cs:122-126 passes the same activatedByPlayer both branches
+  // use; the port passed `false` on the close alone, which suppresses
+  // the door's own action record (a trap or linked mover wired to the
+  // door stayed silent when a Lock spell shut it).
+  const rd = readFileSync(join(ROOT, 'src/world/actionSystem.js'), 'utf8');
+  const arm = rd.slice(rd.indexOf('if (doorSpell && o.kind'), rd.indexOf('// R1: ActivateActionDoor'));
+  assert.match(arm, /if \(result\.opened\) this\.toggleDoor\(o, true\);/);
+  assert.match(arm, /if \(result\.closed\) this\.toggleDoor\(o, true\);/);
+  assert.doesNotMatch(arm, /toggleDoor\(o, false\)/, 'no byPlayer=false swing survives on this path');
+});
+
+test('X3 Open/Lock: the host SPEAKS the arming line - it is the only sign the spell worked', () => {
+  // Neither effect acts at cast, so "Ready to open."/"Ready to lock."
+  // (Open.cs:93-97, Lock.cs:84-89) is the entire visible outcome.
+  // out.armed had zero readers before X3: the spell was silent AND
+  // invisible until you touched a door.
+  assert.equal(castTouch(entity(), 17).armed, 'openArmed');
+  assert.equal(castTouch(entity(), 16).armed, 'lockArmed');
+  const host = readFileSync(join(ROOT, 'src/scenes/hostMagic.js'), 'utf8');
+  assert.match(host, /if \(r\.armed\) say\(r\.armed === 'openArmed' \? DOOR_SPELL_TEXT\.readyToOpen : DOOR_SPELL_TEXT\.readyToLock\)/,
+    'applySpellToPlayer is the "host manager is player" gate, so only the player hears it');
+  assert.equal(DOOR_SPELL_TEXT.readyToOpen, 'Ready to open.');
+  assert.equal(DOOR_SPELL_TEXT.readyToLock, 'Ready to lock.');
+});
+
+test('X3 Open: the EXTERIOR building door arm exists, spends the spell either way, and refuses Lock', () => {
+  // PlayerActivate.cs:519-520 tries HandleOpenEffectOnExteriorDoor
+  // BEFORE the mode ladder; Open.cs:158 cancels outside the success
+  // branch, so a failed exterior trigger falls through to the normal
+  // refusal with the spell gone. The catalog claimed 17,255 ported
+  // while this half did not exist.
+  const wm = readFileSync(join(ROOT, 'src/scenes/worldModes.js'), 'utf8');
+  const arm = wm.slice(wm.indexOf('let opened = unlocked;'), wm.indexOf('tallySkill(playerEntity, SKILLS.Lockpicking, 1)'));
+  assert.match(arm, /spell\?\.kind === 'open'/, 'an armed LOCK has no exterior arm in DFU and is left alone');
+  assert.match(arm, /triggerExteriorOpen\(lockValue, spell\.holderLevel\)/);
+  // the consume is UNCONDITIONAL - not inside the success branch
+  const consumeAt = arm.indexOf("consumeDoorSpell(playerEntity, 'open')");
+  const openedAt = arm.indexOf('opened = r.opened');
+  assert.ok(consumeAt > 0 && consumeAt < openedAt, 'the cast is spent before the outcome is read');
+  assert.equal(effectByKey('17,255').ported, true);
 });

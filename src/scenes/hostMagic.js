@@ -40,7 +40,7 @@ import {
   missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS,
   MISSILE_LIFESPAN_S, EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
 } from '../systems/spellcast.js';
-import { silenceBlocksCast, SILENCED_TEXT, PRESS_BUTTON_TO_FIRE_SPELL } from '../systems/mysticism.js';
+import { silenceBlocksCast, SILENCED_TEXT, PRESS_BUTTON_TO_FIRE_SPELL, DOOR_SPELL_TEXT } from '../systems/mysticism.js';
 import { calculateCastCost, effectSchool, EFFECT_COST_TABLE } from '../systems/spellcost.js';
 import { applySpell } from '../systems/effects.js';
 import { SPELL_CAST_SOUND } from '../systems/enemySpells.js';
@@ -86,6 +86,16 @@ export function createPlayerMagic({
     // contact fails and full saves say "Save versus spell made."
     if (r.chanceFailed) say(spell.rangeType === 0 ? 'Spell effect failed.' : 'Save versus spell made.');
     if (r.saved) say('Save versus spell made.');
+    // X3: the ARMED half of Open/Lock. Neither effect does anything at
+    // cast - it waits in forcedRoundsRemaining for a door - so this
+    // line is the ONLY sign the spell worked, and DFU speaks it from
+    // StartWaitingForDoor gated on "the host manager is player"
+    // (Open.cs:93-97, Lock.cs:84-89). applySpellToPlayer IS that gate:
+    // a foe host runs applySpell directly and stays silent. The alert
+    // repeats on a recast (awakeAlert is per-INSTANCE, and the merged
+    // instance still runs its own Start), which is why it hangs off
+    // the arm rather than off the incumbent being new.
+    if (r.armed) say(r.armed === 'openArmed' ? DOOR_SPELL_TEXT.readyToOpen : DOOR_SPELL_TEXT.readyToLock);
     // TP-slice: a landed Teleport effect prompts (Teleport.cs Start
     // :63-68); the marker only rises on CasterOnly arrivals and this
     // is the PLAYER seam - :88-90's player gate, structurally.

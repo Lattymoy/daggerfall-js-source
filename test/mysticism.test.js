@@ -10,7 +10,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   MYSTICISM_EFFECTS, SUPPORTS_MAGNITUDE, isMysticism,
-  armOpen, triggerOpen, triggerLock, dispelNearby,
+  triggerOpen, triggerLock, triggerExteriorOpen, dispelNearby,
   dispellableBundles, DISPELLABLE_BUNDLE_TYPES, fillEmptyTrap,
   isSilenced, silenceBlocksCast,
 } from '../src/systems/mysticism.js';
@@ -43,16 +43,20 @@ test('mysticism: the ten classic keys, and NOT ONE supports magnitude', () => {
   assert.equal(isMysticism({ type: 4, subType: 0 }), false, 'Damage Health is Destruction');
 });
 
-test('mysticism: Open is ARMED at cast, and an item skips the roll', () => {
-  // The chance is rolled at CAST and the payload waits for a door.
-  assert.deepEqual(armOpen({ rollChance: () => true }), { armed: true, alert: 'readyToOpen' });
-  assert.deepEqual(armOpen({ rollChance: () => false }), { armed: false, alert: 'spellEffectFailed' });
-  // an item cast and the Skeleton's Key skip the roll ENTIRELY - even a
-  // roll that would have failed
-  assert.deepEqual(armOpen({ castByItem: true, rollChance: () => false }),
-    { armed: true, alert: 'readyToOpen' });
-  assert.deepEqual(armOpen({ castBySkeletonKey: true, rollChance: () => false }),
-    { armed: true, alert: 'readyToOpen' });
+test('X3 mysticism: Open on an EXTERIOR building door is a DIFFERENT rule (Open.cs:146-161)', () => {
+  // The building has no door record to unlock, only a lock VALUE, and
+  // the test is a strict `Level < value` failure - so level EQUAL to
+  // the value succeeds, matching the interior arm's <= from the other
+  // side of the inequality.
+  assert.deepEqual(triggerExteriorOpen(10, 9), { opened: false, alert: 'openFailed' });
+  assert.deepEqual(triggerExteriorOpen(10, 10), { opened: true, alert: null });
+  assert.deepEqual(triggerExteriorOpen(10, 11), { opened: true, alert: null });
+  // an unlocked building (value 0) opens at any level
+  assert.equal(triggerExteriorOpen(0, 1).opened, true);
+  // and there is NO Skeleton's Key exemption out here - DFU's comment
+  // is explicit ("the player's level is always checked, even for the
+  // Skeleton Key"), which is why this function takes no options at all
+  assert.equal(triggerExteriorOpen.length, 2);
 });
 
 test('mysticism: Open yields a lock only to a caster whose LEVEL reaches it', () => {
