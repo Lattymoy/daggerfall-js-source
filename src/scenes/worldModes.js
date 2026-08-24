@@ -1259,6 +1259,24 @@ export function createWorldModes(host) {
       flow = openTradeWindow(shelf, b ?? {}, 'Buy', { guildFactionId: guild?.factionId ?? null });
       return flow;
     }
+    // G5: TELEPORT. DFU arms the travel map and pushes it
+    // (DaggerfallGuildServicePopupWindow:449-453); the map's own
+    // teleport arm takes it from there. The WINDOW is the world
+    // host's - only that host has a streaming world to land in - so
+    // it arrives through a host door the same shape as G8's
+    // revealLocation, and a host without one answers null, which is
+    // the popup's own "not available yet" arm.
+    //
+    // The window is returned as WELL as mounted: an arm that mounts
+    // itself and answers null cannot be told apart from a service
+    // that does not exist, and the popup needs the difference to know
+    // whether to close.
+    if (destination === 'guildServiceTeleport') {
+      const win = host.openTeleportMap?.();
+      if (!win) return null;
+      interiorOverlay = win;
+      return win;
+    }
     if (destination === 'guildServiceRepair') {
       openRepairService({ reducedRepairCost: (price) => reducedRepairCost(guild, membership, price) });
       return interiorOverlay;

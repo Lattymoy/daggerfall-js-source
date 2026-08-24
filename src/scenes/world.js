@@ -1213,6 +1213,39 @@ export async function bootWorld(canvas, renderer, params, status) {
     npcSession.onWorldChanged();
   }
 
+  /**
+   * G5 - TeleportAway (DaggerfallTeleportPopUp.cs:134-150). The
+   * arrival WITHOUT the journey: no gold, no clock advance, no
+   * arrival clamp, no cautious heal, no encounter bookkeeping - the
+   * three things fastTravelTo does around this same call are exactly
+   * what teleporting skips.
+   *
+   * What it keeps is the two calls DFU makes. TransitionExterior
+   * FIRST when the player is inside (:140-141) - you cannot teleport
+   * out of a building - and then TeleportToCoordinates, which raises
+   * OnInitWorld, whose weather half applies the destination climate's
+   * ARRAY slot. That is the same handler fast travel's arrival runs,
+   * so the destination's weather lands the same way; what does NOT
+   * run is tickWeather, because no time passed to tick.
+   */
+  let _teleporting = false;
+  async function teleportTo(pick) {
+    if (_teleporting) return;
+    _teleporting = true;
+    try {
+      modes?.forceExitToExterior();
+      await _teleportToPixel(pick.pixel.x, pick.pixel.y);
+      if (!weatherOverride) {
+        applyClimateWeather(maps.getClimateIndex(pick.pixel.x, pick.pixel.y));
+        if (currentWeather() !== weather) applyWeather(currentWeather());
+      }
+      surfacePlayer();
+      townTalk.say(`You arrive at ${pick.name}.`);
+    } finally {
+      _teleporting = false;
+    }
+  }
+
   // ---- B3 (AUDIT 25 blocker 3): THE RESPAWN PRIMITIVE.
   // PlayerEnterExit.RespawnPlayer + its Respawner coroutine
   // (:430-556): destroy whatever context the player stands in, move
@@ -1368,7 +1401,29 @@ export async function bootWorld(canvas, renderer, params, status) {
     // one (the HUD/pause law: a missing IMG closes a door, never the
     // game).
     if (!travelMapArtLoaded()) { townTalk.say('(the travel map art is unavailable)'); return; }
-    _travelMap = new TravelMapWindow({
+    _travelMap = buildTravelMapWindow({ onTravel: (pick, opts, computed) => { fastTravelTo(pick, opts, computed); } });
+    townTalk.showOverlay(_travelMap);
+  };
+  /** G5: the map the guild's TELEPORT service opens - the same
+   *  window, armed. Only this host answers, because only this host
+   *  has a streaming world to land in; the interior arm reads it off
+   *  `host` and a host without one refuses the service. */
+  function openTeleportMap() {
+    if (!travelMapArtLoaded()) return null;
+    let win = null;
+    win = buildTravelMapWindow({
+      onTeleport: (pick) => { teleportTo(pick); },
+      onClose: () => { if (modes?.questOverlay === win) modes?.showQuestOverlay?.(null); },
+    });
+    win.activateTeleportationTravel();
+    return win;
+  }
+
+  /** ONE construction for the map, because G5 gave it a second opener
+   *  and the dependency list is long enough that two copies would
+   *  drift (the ONE CONSTRUCTION SEAM rule). */
+  function buildTravelMapWindow(extra = {}) {
+    return new TravelMapWindow({
       maps, mapDict,
       getPlayerPixel: playerTravelPixel,
       getClimateIndex: (x, yy) => maps.getClimateIndex(x, yy),
@@ -1385,10 +1440,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       hasShip: false,
       diseaseCount: () => diseaseCount(playerEntity),
       poisonCount: () => poisonCount(playerEntity),
-      onTravel: (pick, opts, computed) => { fastTravelTo(pick, opts, computed); },
+      ...extra,
     });
-    townTalk.showOverlay(_travelMap);
-  };
+  }
   // A2: the exterior automap's own dispatch half (DaggerfallUI.cs
   // :633-650): M outside opens the TOWN map only when the current
   // map pixel carries a location - empty wilderness opens nothing.
@@ -2290,6 +2344,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // wired 340 lines above this. So the reveal has been happening and
     // the player has had no record of WHICH dungeon was revealed since
     // the day the guild promotions landed.
+    // G5: THE TELEPORT DOOR. The guild service asks the host for a
+    // travel map already armed for teleportation; only this host has
+    // a streaming world to land in, so only this host answers. The
+    // window is built here rather than in the interior arm because
+    // its whole dependency list - maps, the player pixel, the climate
+    // reader - is the world's.
+    openTeleportMap,
     revealLocation: (noteKey) => {
       const dfLoc = locationIndex.get(`${playerTravelPixel().x},${playerTravelPixel().y}`);
       const region = dfLoc ? maps.getRegion(dfLoc.regionIndex) : null;
@@ -2395,7 +2456,30 @@ export async function bootWorld(canvas, renderer, params, status) {
       locationSelected: _travelMap.locationSelected, find: _travelMap.findText,
       days: _travelMap.popUp?.countdownValueTravelTimeDays ?? null,
       cost: _travelMap.popUp?.trip?.totalCost ?? null,
+      // G5: the teleport arm's own state, which is deliberately NOT
+      // the popUp field - see the note on the window's telePopUp.
+      armed: _travelMap.teleportationTravel,
+      telePopUp: _travelMap.telePopUp
+        ? { name: _travelMap.telePopUp.destination.name, pixel: _travelMap.telePopUp.destination.pixel }
+        : null,
+      save: _travelMap.getTravelMapSaveData(),
     } : null);
+    /** G5: open the travel map ARMED, the way the guild service does,
+     *  and drive its teleport box - the map is the same map, so the
+     *  probe reaches it through the host's own opener. */
+    window.__openTeleportMap = () => {
+      const win = openTeleportMap();
+      if (!win) return null;
+      _travelMap = win;
+      townTalk.showOverlay(win);
+      return window.__travelMap();
+    };
+    window.__teleportAnswer = (yes) => {
+      if (!_travelMap?.telePopUp) return null;
+      _travelMap.telePopUp.input(yes ? 'KeyY' : 'KeyN');
+      if (_travelMap.telePopUp?.done) _travelMap.telePopUp = null;
+      return window.__travelMap();
+    };
     window.__encounters = () => JSON.stringify({ active: exteriorFoes.activeCount(), foes: exteriorFoes.foes.filter((f) => !f.dead).map((f) => ({ type: f.mobileType, dist: +f.ai._dist.toFixed(1), detected: f.ai.detected })) });
     window.__spawnEncounter = (type, dist = 10) => {
       const pf = walkMode && playerSpawned ? player.pos : cam.pos;

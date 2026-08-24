@@ -774,6 +774,11 @@ test('U41: the preload asks for exactly the classic files, and a missing one clo
       'TRAV0I00.IMG', 'TRAV0I03.IMG', 'TRAV01I0.IMG', 'TRAV01I1.IMG',
       'TRAVAI05.IMG', 'TRAVBI05.IMG', 'TRAVCI05.IMG', 'TRAVDI05.IMG', 'MBRD00I0.IMG',
       'TEXT.RSC', 'TRAV0I04.IMG',
+      // G5: TELE00I0 joins the list. Its own loader SWALLOWS an
+      // absent file where the map's rethrow closes the door, because
+      // a missing teleport panel must not shut the travel map - the
+      // popup falls back to a plain rect and the service still works.
+      'TELE00I0.IMG',
     ], 'the constants block, file for file');
     _setTravelMapArtForTests(null);
     // a missing overworld leaves the door shut rather than opening a
@@ -887,4 +892,124 @@ test('U41: the source carries the laws it claims', () => {
   assert.ok(src.includes('this.identifyLastChangeTime = _clock - IDENTIFY_FLASH_INTERVAL'),
     'the flash stamp stores the DISTANCE, so the first map of a session flashes at once');
   assert.ok(/^let _clock = 0;$/m.test(src), 'against ONE monotonic clock, as realtimeSinceStartup is');
+});
+
+// ---------------------------------------------------------------
+// G5: the TELEPORT arm. The map is the same map; what changes is
+// which popup a pick opens and what happens when it says yes.
+// ---------------------------------------------------------------
+
+test('G5: teleport mode forks the popup, and is a ONE-SHOT that the close clears', () => {
+  restoreDiscovery(null);
+  mountArt();
+  try {
+    const teleported = [];
+    const { deps } = mkWorld({ deps: { onTeleport: (pick) => teleported.push(pick) } });
+    const w = new TravelMapWindow(deps);
+    assert.equal(w.teleportationTravel, false, 'an ordinary map is not armed');
+
+    // ActivateTeleportationTravel (:209-212) is called BEFORE the
+    // window is shown, by the guild service.
+    w.activateTeleportationTravel();
+    assert.equal(w.teleportationTravel, true);
+
+    w._openRegionPanel(DAGGERFALL);
+    const hoverMap = (mx, my) => w.hover(mx - ORIGIN[0], my - ORIGIN[1] + 12);
+    hoverMap(50, 120);
+    w.click(50 - ORIGIN[0], 120 - ORIGIN[1] + 12);
+
+    // the TELEPORT popup opens, and the TRAVEL popup does not
+    assert.ok(w.telePopUp, 'the teleport popup is up');
+    assert.equal(w.popUp, null, 'and the travel popup is not');
+    assert.deepEqual(w.telePopUp.destination.pixel, { x: 50, y: 120 });
+    assert.equal(w.telePopUp.destination.name, 'Daggerfall');
+
+    // yes hands the whole pick back - the same shape onTravel gets,
+    // minus the trip, because there is no trip
+    w.telePopUp.input('KeyY');
+    assert.equal(teleported.length, 1);
+    assert.deepEqual(teleported[0].pixel, { x: 50, y: 120 });
+    assert.equal(teleported[0].name, 'Daggerfall');
+    assert.equal(teleported[0].region, 'Daggerfall');
+    assert.equal(w.telePopUp, null, 'the box is dropped');
+    assert.equal(w.done, true, 'and the map closes behind it');
+
+    // THE ONE-SHOT: OnPop (:368) clears the arm. A map that closed
+    // still armed would teleport the next traveller for free.
+    assert.equal(w.teleportationTravel, false);
+  } finally { _setTravelMapArtForTests(null); }
+});
+
+test('G5: NO leaves the map open and still armed, so another destination can be picked', () => {
+  restoreDiscovery(null);
+  mountArt();
+  try {
+    const teleported = [];
+    const { deps } = mkWorld({ deps: { onTeleport: (pick) => teleported.push(pick) } });
+    const w = new TravelMapWindow(deps);
+    w.activateTeleportationTravel();
+    w._openRegionPanel(DAGGERFALL);
+    const hoverMap = (mx, my) => w.hover(mx - ORIGIN[0], my - ORIGIN[1] + 12);
+    hoverMap(50, 120);
+    w.click(50 - ORIGIN[0], 120 - ORIGIN[1] + 12);
+    assert.ok(w.telePopUp);
+
+    // NoButton_OnMouseClick is CloseWindow and nothing else (:112-115)
+    w.telePopUp.input('KeyN');
+    assert.equal(w.telePopUp, null);
+    assert.equal(teleported.length, 0);
+    assert.equal(w.done, false, 'the map is still open');
+    assert.equal(w.teleportationTravel, true, 'and still armed');
+
+    // ...and picking again opens the teleport box again, not a travel one
+    hoverMap(52, 121);
+    hoverMap(50, 120);
+    w.click(50 - ORIGIN[0], 120 - ORIGIN[1] + 12);
+    assert.ok(w.telePopUp);
+    assert.equal(w.popUp, null);
+  } finally { _setTravelMapArtForTests(null); }
+});
+
+test('G5: the teleport box is its OWN field, so the save envelope never reads it', () => {
+  restoreDiscovery(null);
+  mountArt();
+  try {
+    const { deps } = mkWorld();
+    // DFU keeps the travel popup in the `popUp` FIELD and the teleport
+    // popup in a LOCAL (:1708-1713) - it goes on the UI stack and the
+    // map never holds it. The port has to hold its sub-window, so it
+    // holds this one somewhere else, and this is why: the save
+    // envelope reads the three travel toggles straight off `popUp`.
+    const travel = new TravelMapWindow(deps);
+    travel._openRegionPanel(DAGGERFALL);
+    const hoverT = (mx, my) => travel.hover(mx - ORIGIN[0], my - ORIGIN[1] + 12);
+    hoverT(50, 120);
+    travel.click(50 - ORIGIN[0], 120 - ORIGIN[1] + 12);
+    travel.popUp.input('KeyS');   // reckless
+    const withTravelBox = travel.getTravelMapSaveData();
+    assert.equal(withTravelBox.speedCautious, false, 'the open travel box IS the envelope');
+    assert.equal(typeof withTravelBox.sleepInn, 'boolean');
+
+    const tele = new TravelMapWindow(deps);
+    tele.activateTeleportationTravel();
+    tele._openRegionPanel(DAGGERFALL);
+    const hoverE = (mx, my) => tele.hover(mx - ORIGIN[0], my - ORIGIN[1] + 12);
+    hoverE(50, 120);
+    tele.click(50 - ORIGIN[0], 120 - ORIGIN[1] + 12);
+    assert.ok(tele.telePopUp, 'the teleport box is up');
+    assert.equal(tele.popUp, null);
+
+    // a quicksave taken RIGHT NOW still records three booleans. Put
+    // the teleport box in `popUp` and all three read `undefined`.
+    const env = tele.getTravelMapSaveData();
+    for (const key of ['sleepInn', 'speedCautious', 'travelShip']) {
+      assert.equal(typeof env[key], 'boolean', `${key} survived the teleport box`);
+    }
+
+    // and the box takes input/hover/click without the map reaching
+    // for a method it does not have - hover in particular, which the
+    // travel popup answers and a yes/no box does not
+    tele.hover(10, 10);
+    assert.ok(tele.telePopUp, 'a hover over a teleport box is simply nothing');
+  } finally { _setTravelMapArtForTests(null); }
 });
