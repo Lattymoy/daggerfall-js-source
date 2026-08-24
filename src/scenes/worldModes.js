@@ -2532,13 +2532,25 @@ export function createWorldModes(host) {
       lines: interiorOverlay.lines, options: interiorOverlay.options?.filter((o) => o.label).map((o) => o.label),
     } : null);
     /** Click a trade-panel rect by name (the probe cannot aim at art). */
+    // V4: THE DONE-SWEEP. These two call the window's click() directly
+    // and skipped the sweep pointerdown does (:2909) and
+    // __inventoryPickRemote already did - so a window that had set
+    // `done` (EXIT is the obvious one) stayed in the slot and every
+    // reader downstream still saw it open. The playthrough probe
+    // bought a horse, pressed EXIT through here, and reported that
+    // the trade window would not close; the window had closed, the
+    // hook had not noticed.
+    const _tradeSweep = (r) => {
+      if (interiorOverlay?.done) { interiorOverlay = null; _identifySpell = null; }
+      return r;
+    };
     window.__tradeClick = (key) => {
       const [x, y, w, h] = TRADE_RECTS[key];
-      return interiorOverlay?.click?.(x + w / 2, y + h / 2) ?? false;
+      return _tradeSweep(interiorOverlay?.click?.(x + w / 2, y + h / 2) ?? false);
     };
     window.__tradeSlot = (which, slot) => {
       const [x, y] = TRADE_RECTS[which === 'local' ? 'localList' : 'remoteList'];
-      return interiorOverlay?.click?.(x + 30, y + 20 + slot * 38) ?? false;
+      return _tradeSweep(interiorOverlay?.click?.(x + 30, y + 20 + slot * 38) ?? false);
     };
     window.__openMerchantSell = () => { openMerchantSell(); return window.__shopOverlay(); };
     // B2: the bank's own surface, for the probe.

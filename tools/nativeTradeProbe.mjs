@@ -104,9 +104,24 @@ if (o.remote > 0) {
 } else {
   console.log('empty shelf (valid stock roll) - the screen rendered');
 }
-await click(241, 188);   // exit
+// EXIT, BOTH WAYS. The window's own rect through __tradeClick, and
+// the real pointer. V4 found that __tradeClick/__tradeSlot called
+// click() directly and skipped the done-sweep pointerdown does, so a
+// window that had closed itself stayed in the slot and every reader
+// downstream still saw it open - the playthrough probe reported that
+// the trade window would not close after a purchase when it had.
+await page.evaluate(() => window.__tradeClick('exit'));
+await waitFrames(3);
 o = JSON.parse(await page.evaluate(() => window.__shopOverlay()));
-console.log('after exit:', o);
+console.log('after __tradeClick exit:', o);
+if (o) { console.log('THE HOOK DID NOT SWEEP THE CLOSED WINDOW'); process.exit(1); }
+
+o = JSON.parse(await page.evaluate(() => window.__openShelf(0)));
+await waitFrames(6);
+if (!o?.native) { console.log('REOPEN FAILED'); process.exit(1); }
+await click(241, 188);   // exit, by the real pointer
+o = JSON.parse(await page.evaluate(() => window.__shopOverlay()));
+console.log('after pointer exit:', o);
 if (o) { console.log('DID NOT CLOSE'); process.exit(1); }
 console.log('NATIVE TRADE OK');
 await browser.close(); await server.close();
