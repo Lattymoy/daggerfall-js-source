@@ -255,7 +255,7 @@ export const SERVICE_DESTINATION = Object.freeze({
   MakeMagicItems: 'guildServiceItemMaker',   // M4: the keyed item maker
   SellMagicItems: 'guildServiceSellMagicItems',   // G4: the trade window in SellMagic mode
   BuySoulgems: 'guildServiceBuySoulgems',   // X6: the trade window in Buy mode over the daily soul-gem shelf
-  Teleport: null,          // FLAGGED: the travel map's teleport mode
+  Teleport: 'guildServiceTeleport',   // G5: the travel map, armed for teleportation
   DaedraSummoning: null,   // FLAGGED: the daedra summoning flow
   Spymaster: null,         // FLAGGED: 402 then the quest offer
   ReceiveArmor: null,      // FLAGGED: the knightly armor gift

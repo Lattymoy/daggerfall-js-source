@@ -259,16 +259,16 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:729` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/world.js:1081` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
 - `src/scenes/world.js:1084` - stay the E1 FLAGGED seams no host computes.
-- `src/scenes/world.js:1243` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
-- `src/scenes/world.js:1497` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:1772` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:1937` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
-- `src/scenes/world.js:2014` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:2247` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:2266` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:2591` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:2896` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/world.js:2969` - (FLAGGED: exterior corpse containers are the loot arc's), so
+- `src/scenes/world.js:1276` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
+- `src/scenes/world.js:1551` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:1826` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:1991` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
+- `src/scenes/world.js:2068` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:2301` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:2320` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:2675` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:2980` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:3053` - (FLAGGED: exterior corpse containers are the loot arc's), so
 - `src/scenes/worldModes.js:244` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:292` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:440` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
@@ -282,16 +282,16 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:1087` - FactionData; the port's pre-chargen INTERIM entity does not, and
 - `src/scenes/worldModes.js:1154` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
 - `src/scenes/worldModes.js:1198` - skip, the refusal line. Only the destination was a FLAGGED null,
-- `src/scenes/worldModes.js:1290` - been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:1327` - destination has been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:1346` - been FLAGGED nulls since G3.
-- `src/scenes/worldModes.js:1449` - with the trade window's own mode flow, the same INTERIM the
-- `src/scenes/worldModes.js:1651` - first (owned houses and quest buildings FLAGGED/seamed per
-- `src/scenes/worldModes.js:1659` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
-- `src/scenes/worldModes.js:2378` - too. FLAGGED: interior loot containers are the loot arc's -
-- `src/scenes/worldModes.js:2472` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:2512` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:2850` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
+- `src/scenes/worldModes.js:1308` - been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:1345` - destination has been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:1364` - been FLAGGED nulls since G3.
+- `src/scenes/worldModes.js:1467` - with the trade window's own mode flow, the same INTERIM the
+- `src/scenes/worldModes.js:1669` - first (owned houses and quest buildings FLAGGED/seamed per
+- `src/scenes/worldModes.js:1677` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
+- `src/scenes/worldModes.js:2396` - too. FLAGGED: interior loot containers are the loot arc's -
+- `src/scenes/worldModes.js:2490` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:2530` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:2868` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
@@ -325,7 +325,6 @@ combat line numbers below are refreshed with it.
 - `src/systems/gameDate.js:23` - FLAGGED, deliberately: the two LUNAR PHASE getters (:134-150,
 - `src/systems/guildServiceActions.js:190` - *  turning into a vampire or werebeast - FLAGGED: the port has no
 - `src/systems/guildServiceFlow.js:236` - *  override's law). Every other arm is FLAGGED with the window it
-- `src/systems/guildServiceFlow.js:258` - Teleport: null,          // FLAGGED: the travel map's teleport mode
 - `src/systems/guildServiceFlow.js:259` - DaedraSummoning: null,   // FLAGGED: the daedra summoning flow
 - `src/systems/guildServiceFlow.js:260` - Spymaster: null,         // FLAGGED: 402 then the quest offer
 - `src/systems/guildServiceFlow.js:261` - ReceiveArmor: null,      // FLAGGED: the knightly armor gift
@@ -388,9 +387,10 @@ combat line numbers below are refreshed with it.
 - `src/ui/spellbookWindow.js:103` - FLAGGED, idling loudly: the icon picker; the effect popup's body
 - `src/ui/spellbookWindow.js:866` - *  drawn as a flat bar in the panel's own brass - FLAGGED. */
 - `src/ui/tavernWindow.js:40` - FLAGGED, with the slices they wait on:
+- `src/ui/teleportPopUp.js:8` - `Teleport: null, // FLAGGED: the travel map's teleport mode`. Two
+- `src/ui/teleportPopUp.js:37` - FLAGGED: the HUD smash-to-black/fade either side of the jump
 - `src/ui/travelMapWindow.js:10` - this window since the F-slice - the Ledger row called it INTERIM
 - `src/ui/travelMapWindow.js:75` - FLAGGED, idling loudly: the journal's click-through travel
-- `src/ui/travelMapWindow.js:817` - *  arm is FLAGGED). */
 - `src/ui/travelPopUp.js:52` - FLAGGED, each idling loudly: the HUD smash-to-black/fade
 - `src/ui/travelPopUp.js:155` - this.travelTimeTotalMins = t.minutes;   // GuildManager.FastTravel (:284) FLAGGED
 

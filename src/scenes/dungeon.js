@@ -293,6 +293,14 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // the record itself - its ai flags, its entity, its position - so
     // a probe that only sees the summary cannot exercise either.
     window.__foeRecord = (i) => ctx.foes[i] ?? null;
+    // V3: kill a foe through the REAL damage door, where the Soul
+    // Trap intercept sits. Returns the foe's live state after.
+    window.__damageFoe = (i, n) => {
+      const f = ctx.foes[i];
+      if (!f) return null;
+      ctx.damageFoe(f, n ?? (f.entity?.health ?? 1), null, null);
+      return JSON.stringify({ dead: !!f.dead, health: f.entity?.health, corpse: !!f.corpseBatch });
+    };
     window.__liveFoeRecords = () => ctx.foes
       .filter((f) => !f.dead && f.ai)
       .map((f) => ({ ref: f, pos: f.ai.feet,
