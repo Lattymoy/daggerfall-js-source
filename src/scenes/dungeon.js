@@ -280,10 +280,24 @@ export async function bootDungeon(canvas, renderer, params, status) {
     window.__combat = { toggleSheath: ctx.toggleSheath, clickAttack: ctx.playerClickAttack, applySpellToPlayer: ctx.applySpellToPlayer };   // S24
     window.__foes = () => JSON.stringify(ctx.foes.map((f, i) => ({
       i, type: f.mobileType, dead: !!f.dead, health: f.entity?.health,
+      // V1: the DESTROY-vs-KILL discriminator. damageFoe spawns a
+      // corpse billboard; removeFoe (Destroy(gameObject)) never
+      // does. Nothing else distinguishes the two from outside.
+      corpse: !!f.corpseBatch,
       pos: f.ai ? f.ai.feet.map((v) => Number(v.toFixed(2))) : null,
       yaw: f.ai ? Number(f.ai.yaw.toFixed(3)) : null,   // C11: the sprite-orientation probe reads it
       sprite: f.mobile ? { state: f.mobile.state, o: f.mobile.orientation, frame: f.mobile.frame } : null,
     })));
+    // V1 probe surface (X4-X9): the LIVE foe records, not the JSON
+    // summary above. The nearby scan and the pacify door both act on
+    // the record itself - its ai flags, its entity, its position - so
+    // a probe that only sees the summary cannot exercise either.
+    window.__foeRecord = (i) => ctx.foes[i] ?? null;
+    window.__liveFoeRecords = () => ctx.foes
+      .filter((f) => !f.dead && f.ai)
+      .map((f) => ({ ref: f, pos: f.ai.feet,
+        mobileType: f.mobileType ?? f.entity?.mobileType ?? 128,
+        effectCount: (f.entity?.activeEffects ?? []).filter((a) => !a.ended).length }));
     window.__frame = 0;
     window.__renderer = renderer;   // U38 probe surface: the live draw path
   }

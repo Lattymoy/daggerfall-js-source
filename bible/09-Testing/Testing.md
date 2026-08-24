@@ -1,15 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-<<<<<<< HEAD
-<<<<<<< HEAD
 Node 22). Suite: 2898 tests across 316 files.
-=======
-Node 22). Suite: 2842 tests across 311 files.
->>>>>>> origin/main
-=======
-Node 22). Suite: 2878 tests across 313 files.
->>>>>>> origin/main
 
 **THE ARENA2-GATED PINS ARE HALF-BLIND, AND THAT IS A KNOWN COST.** A
 pin behind `{ skip: skipReal }` never runs on CI, so a law change that
