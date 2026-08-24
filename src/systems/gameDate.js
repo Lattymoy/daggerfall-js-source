@@ -112,6 +112,14 @@ export const classicGameStartDate = () => dateFromClassicMinutes(CLASSIC_GAME_ST
  *  is 1-based and the first day of the year is 1. Guild.cs's
  *  CalculateDaySinceZero reads exactly this. */
 export const dayOfYear = (date) => (date.month * DAYS_PER_MONTH) + (date.day + 1);
+/** The SAME day of year, read off a raw CLASSIC-MINUTES counter
+ *  instead of a date record - the arithmetic GetHolidayId does inline
+ *  (`(gameMinutes % minutesPerYear) / 1440 + 1`). It lives here rather
+ *  than in each caller because two modules deriving a day of year two
+ *  ways is how a room's Heart's Day and a meal's holiday end up
+ *  disagreeing about what day it is. */
+export const dayOfYearFromMinutes = (gameMinutes) =>
+  Math.floor((gameMinutes % (DAYS_PER_YEAR * MINUTES_PER_DAY)) / MINUTES_PER_DAY) + 1;
 /** GetMonthOfYear (:635-639) and GetDayOfMonth (:623-627): both 1-based. */
 export const monthOfYear = (date) => date.month + 1;
 export const dayOfMonth = (date) => date.day + 1;

@@ -106,6 +106,16 @@ import { goldAmount, deductGold, addGold } from '../systems/court.js';
 // mount adapter and the modal tick.
 import { getReputation } from '../systems/factionRep.js';
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
+// U39: the tavern - the window, the knightly free-room perk and the
+// two guild readers that recover the player's own order.
+import {
+  TavernWindow, preloadTavernArt, tavernArtLoaded,
+  TAVERN_RECTS, TAVERN_PANEL_X, TAVERN_PANEL_Y,
+} from '../ui/tavernWindow.js';
+import { freeTavernRooms } from '../systems/guildServices.js';
+import { orderOf } from '../systems/guildVariants.js';
+import { joinedGuildOfGroup } from '../systems/guilds.js';
+import { GUILD_GROUPS } from '../formats/factionFile.js';
 import { SpellMakerWindow } from '../ui/spellMakerWindow.js';   // S1: the Mages Guild / Kynareth spell maker
 import { SITE_TYPES } from '../systems/quest/place.js';
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring, finally called
@@ -238,6 +248,7 @@ export function createWorldModes(host) {
     preloadPauseFlowArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] pause/controls art unavailable:', e?.message ?? e));   // I3/I4
     preloadMessageBoxArt({ renderer, fetchBytes, palette });   // U11 parchment for its boxes
     preloadListPickerArt({ renderer, fetchBytes, palette });   // U24: PICK00I0 for the training skill list
+    preloadTavernArt({ renderer, fetchBytes, palette });   // U39: TVRN00I0 for the innkeeper's panel
   };
 
   // ---- Q4-v: THE QUEST LAYER'S INTERIOR MOUNT -----------------------
@@ -631,11 +642,16 @@ export function createWorldModes(host) {
     // skipped and menu:true, TalkButton_OnMouseClick :143-148), and
     // Sell - FLAGGED with the plain-merchant sell arm below (it opens
     // the trade window's Sell mode, which needs the shelf flow's mode
-    // split). The banking/tavern arms stay FLAGGED below too.
+    // split). The BANKING arm stays FLAGGED below; the tavern's landed
+    // with U39.
     if (!forceTalk && route.kind === 'merchant' && route.service === 'repair') {
       openRepairService({ onTalk: () => openStaticNpc(pn, { forceTalk: true }) });
       return;
     }
+    // U39: DaggerfallTavernWindow. Same shape as the repair arm - the
+    // routing has said 'tavern' since G8 and nothing consumed it.
+    if (!forceTalk && route.kind === 'merchant' && route.service === 'tavern'
+      && openTavern(pn)) return;
     // TK-iv: THE QUESTOR DOOR. TalkToStaticNPC's first act, before the
     // NPC type is even set (:758-770): an NPC the work pool is
     // carrying, or a castle NPC who wins its one 25% roll, opens the
@@ -692,10 +708,11 @@ export function createWorldModes(host) {
     // already said its piece through the session's messageBox seam
     if (talk && talk.kind !== 'talk') return;
     // FLAGGED, each with the slice it waits on:
-    //   merchant  - DaggerfallMerchantServicePopupWindow (sell /
-    //               banking / repair / tavern rooms). The tavern and
-    //               banking arms need the rest window's room booking
-    //               and a bank that does not exist yet.
+    //   merchant  - DaggerfallMerchantServicePopupWindow's SELL and
+    //               BANKING arms: sell needs the trade window's mode
+    //               split, banking needs a bank that does not exist
+    //               yet. (Repair landed with R1 and the tavern with
+    //               U39; both are consumed above.)
     //   witchesCoven - DaggerfallWitchesCovenPopupWindow.
     // Both fall through to TALK, which is DFU's own last arm for an
     // NPC with no special handling, so nothing is inert.
@@ -712,6 +729,53 @@ export function createWorldModes(host) {
       return;
     }
     townTalk?.say?.('You get no response.');
+  }
+
+  /** U39: the innkeeper's four-button panel. Answers whether it
+   *  opened - a host with no art or no font falls through to TALK,
+   *  which is the U8 idiom and keeps the NPC answering. */
+  function openTavern(pn) {
+    if (!tavernArtLoaded() || !_shopFont) return false;
+    const dict = townTalk?.factionDict ?? null;
+    const b = interiorBuilding;
+    // GuildManager.GetGuild(KnightlyOrder).FreeTavernRooms() - the
+    // order the PLAYER belongs to, not this building's. The stored
+    // membership is keyed by group and carries the guild's name, so
+    // the order is recoverable from it; a non-member has no row and
+    // pays like everyone else.
+    const memberships = (playerEntity.guildMemberships ??= {});
+    const km = joinedGuildOfGroup(memberships, GUILD_GROUPS.KnightlyOrder);
+    const knightGuild = km?.guild?.startsWith('Order:') ? orderOf(km.guild.slice('Order:'.length)) : null;
+    let win = null;
+    win = new TavernWindow({
+      entity: playerEntity,
+      rows: (id) => townTalk?.lines?.(id) ?? [],
+      now: () => Math.floor(worldMinutes()),
+      mapId: () => questSceneCtx?.()?.mapId ?? 0,
+      buildingKey: () => b?.buildingKey ?? 0,
+      buildingName: () => b?.name ?? '',
+      quality: () => b?.quality ?? 0,
+      // RentRoom's `FindMarkers(InteriorMarkerTypes.Rest)` (:239-240).
+      bedCount: () => (interiorCtx?.markers ?? []).filter((m) => m.type === INTERIOR_MARKER.REST).length || 1,
+      freeRooms: () => (knightGuild
+        ? freeTavernRooms(knightGuild, km, {
+          regionIndex: b?.regionIndex ?? 0,
+          orderRegion: dict?.get(knightGuild.factionId)?.region ?? null,
+        })
+        : false),
+      skills: () => ({
+        mercantile: skillValue(playerEntity, SKILLS.Mercantile),
+        personality: playerEntity.stats?.personality ?? 50,
+      }),
+      // SetHealth, through the entity's own ceiling.
+      heal: (n) => { playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n); },
+      onTalk: () => openStaticNpc(pn, { forceTalk: true }),
+      // The U24 identity guard: a window that dispatches to another
+      // must not be nulled by its OWN onClose.
+      onClose: () => { if (interiorOverlay === win) interiorOverlay = null; },
+    });
+    interiorOverlay = win;
+    return true;
   }
 
   function openGuildService(pn, route) {
@@ -1885,6 +1949,25 @@ export function createWorldModes(host) {
       value: interiorOverlay.value ?? null,
       queued: interiorOverlay.boxes.length,
     } : null);
+    // U39: the tavern panel and, once a button is pressed, the chain
+    // it raised - one reader, because the chain lives INSIDE the
+    // window (both buttons close the tavern before it runs, so the
+    // panel and the box are never both on screen).
+    window.__tavernOverlay = () => JSON.stringify(interiorOverlay instanceof TavernWindow ? {
+      tavern: true,
+      done: interiorOverlay.done,
+      rooms: (playerEntity.rentedRooms ?? []).length,
+      gold: goldAmount(playerEntity),
+      box: interiorOverlay.flow?.top?.rows?.map((r) => r.text ?? r).join(' | ') ?? null,
+      buttons: interiorOverlay.flow?.top?.buttons ?? null,
+      picker: interiorOverlay.flow?.top?.picker ?? null,
+      field: !!interiorOverlay.flow?.top?.field,
+      value: interiorOverlay.flow?.value ?? null,
+    } : null);
+    window.__tavernClick = (key) => {
+      const [x, y, w, h] = TAVERN_RECTS[key];
+      return interiorOverlay?.click?.(TAVERN_PANEL_X + x + w / 2, TAVERN_PANEL_Y + y + h / 2) ?? false;
+    };
     window.__building = () => JSON.stringify(interiorBuilding ? {
       type: interiorBuilding.buildingType, faction: interiorBuilding.factionId, name: interiorBuilding.name,
     } : null);

@@ -3376,3 +3376,98 @@ killed, because at scale exactly 3 the reduction arm computes (1/3)*3
 and IEEE754 rounds it back to 1. Live: tools/hudCrosshairProbe.mjs
 counts the component's own draw calls in a real frame - present while
 aiming, zero under the pause window, back when it closes.
+
+## U39 - THE TAVERN (2026-08-24)
+
+The innkeeper's four-button panel, and the first slice of this arc
+whose window is genuinely small and whose LAW is not.
+
+**What was already there and unreachable.** `staticNpcRoute` has
+answered `{ merchant, service: 'tavern' }` since G8, and nothing
+consumed it - the innkeeper fell through to talk, so a player could
+stand in an inn and never be offered a bed. `freeTavernRooms` had been
+ported with the knightly-order perks and had exactly one caller, the
+travel calculator's inn hook. The routing, the perk and the holiday
+tables were all waiting on a window that did not exist.
+
+**The law half** (`systems/tavern.js`) is `DaggerfallTavernWindow`'s
+handlers plus `FormulaHelper.CalculateRoomCost`. Three pieces of it
+are worth naming because none reads the way its name suggests:
+
+- **Heart's Day is a SPAN, not a "today is".** A stay that starts on
+  or before day 46 and runs PAST it loses one day's charge; a stay that
+  ENDS exactly on it does not (`doy + days > 46`, strictly). Renting
+  only Heart's Day is free, and DFU pops that box from INSIDE the
+  formula - which a pure function cannot do, so the port answers
+  `{ cost, freeForHeartsDay }` and the window shows the box.
+- **The 350-day ceiling is tested BEFORE the knightly exemption.** So
+  even a free room cannot be booked past it. The order is DFU's and is
+  load-bearing; swapping the two arms is the mutant that pin kills.
+- **The two holiday arms, neither matching its own description** -
+  DFU's own comment says so. New Life skips the gold TEST as well as
+  the charge, so a penniless player eats and the meal heals as if
+  bought (`price` is never re-read). Harvest's End halves with a floor
+  of ONE, so a 1-gold ale does not become free. Verbatim, both.
+
+**The room price is `CalculateTradePrice`, not `CalculateCost`.** The
+first draft reached for the item-shop formula and would have charged
+every character the same; DFU reads mercantile and personality, so a
+silver-tongued character sleeps cheaper.
+
+**Three closing quirks the window exists to preserve.** `DoFoodAndDrink`
+calls CloseWindow FIRST and only then tests hunger, so "You are not
+hungry." appears with the panel already gone. `ConfirmRenting` likewise
+closes before it looks at the button, so declining a price closes the
+tavern rather than returning to the panel. And the gold test happens at
+the YES, not at the offer - the game shows you a price you cannot
+afford and tells you so only after you agree to it.
+
+**ONE CLOCK.** The day of year the room formula reads is derived from
+the same classic-minute counter as everything else in the window, not
+from a second `date()` hook - two clocks is exactly how a room's
+Heart's Day and a meal's holiday end up disagreeing about what day it
+is. The arithmetic moved to `gameDate.dayOfYearFromMinutes` and
+`getHolidayId` now calls it, so there is one road rather than two.
+
+**THE INDEX TRAP, closed.** The holiday tables are indexed by enum
+MINUS ONE (`GetHolidayId` returns its loop counter plus one), so
+reading one with the enum value lands on the NEXT holiday's row - a
+silently wrong answer, not an error. This slice's first draft made
+exactly that mistake, which is why `holidayDayOfYear` and
+`holidayRegion` now exist and why the mistake is pinned from both
+sides.
+
+**The window half** borrows U24's `ServiceFlowWindow` for its box
+chain rather than growing a second one: the room flow is field ->
+YesNo -> message and the food flow is picker -> message, which is what
+that window already is. The one thing it needed was a field PRE-FILL
+(`TextBox.Text = "1"`), which now belongs to the field rather than
+being poked into the window after construction - the donation box's
+"1000" moved onto the same seam.
+
+**What the live probe caught that no unit test could.** `%ra` printed
+RAW. TEXT.RSC 5102 opens "Good day, %ra." and `expandGuildMacros`
+filled `%a`, `%gii`, `%god` and `%pct` and left the two IDENTITY
+macros alone - so every service window in the port had been showing
+them unexpanded since U24, with both readers (`raceDisplayName`,
+`honorificOf`) already sitting in `talkSession.js`. Fixed in the
+shared expander, so the guild windows get it too. The probe also
+exposed `mapId: 0`: the `?exterior` host never passed a scene context,
+and a room is keyed by (mapId, buildingKey) where a buildingKey is
+only unique WITHIN a location - so two taverns in different cities
+could have collided. That host now knows its own location.
+
+Pins: 8 in `tavern.test.js` (8 mutations, 8 dead) and 15 in
+`tavernwindow.test.js` (15 mutations, 15 dead), plus the accessor pin
+in `holidays.test.js` (3 dead). Live: `tools/tavernProbe.mjs` walks
+into a real tavern, rents a room for three days, checks the gold
+CHARGED equals the price OFFERED, reopens for the renewal prompt with
+`%dwr` filled, buys a meal and proves the four-hour gate closes behind
+it.
+
+FLAGGED: the TALK button routes to `TalkToStaticNPC`, which the talk
+arc owns; `AddPermanentScene` keeps a rented room's interior loaded
+across a save and the port has no permanent-scene set, so a rented
+room's CONTENTS are not preserved (the rental is); and the stored
+`allocatedBedIndex` is read by nobody until resting in a rented room
+lands.

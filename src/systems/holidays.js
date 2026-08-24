@@ -18,8 +18,11 @@
 // - `dayOfYear = gameMinutes % 518400 / 1440 + 1` computes the day
 //   from the RAW MINUTE COUNT with C# integer division, and 518400 is
 //   360 * 1440 - a whole year of minutes. This is the same day number
-//   gameDate.dayOfYear derives, by a different road, and it is written
-//   here the way DFU writes it.
+//   gameDate.dayOfYear derives, by a different road. U39 needed the
+//   MINUTE road from a second module (the tavern's Heart's Day span
+//   has to agree with the meal's holiday about what day it is), so the
+//   line now lives in gameDate as dayOfYearFromMinutes and is called
+//   from here - the arithmetic is unchanged, it just has one home.
 // - `if (dayOfYear <= 355)` means THE LAST FIVE DAYS OF THE YEAR ARE
 //   NEVER A HOLIDAY. The tables end at day 355 (0x163, Saturalia), so
 //   the gate is exactly inclusive of the last row and days 356-360
@@ -28,6 +31,8 @@
 //   is reachable and holiday ids run 1..53. The enum's 54th member,
 //   Old_Life_Festival, has NO ROW - which is what DFU's own "// Not
 //   used" comment means. It is kept in the enum and unreachable here.
+
+import { dayOfYearFromMinutes } from './gameDate.js';
 
 /** DFLocation.Holidays (:286-343). The value IS the id GetHolidayId
  *  returns; None = 0 means "not a holiday today". */
@@ -66,6 +71,23 @@ export const HOLIDAY_DAYS_OF_YEAR = Object.freeze([
   0x11B, 0x125, 0x12C, 0x12F, 0x134, 0x13E, 0x140, 0x159, 0x15C, 0x162, 0x163,
 ]);
 
+/** THE INDEX TRAP, closed. Both tables are indexed by `holidayID`
+ *  as GetHolidayId's LOOP COUNTER runs it - 0..52 - and the enum
+ *  value it returns is that index PLUS ONE. So the day of
+ *  HOLIDAYS.Hearts_Day (10) is row 9, not row 10; reading the table
+ *  with the enum value directly is off by one and lands on the NEXT
+ *  holiday's day, which is a silent wrong answer rather than an
+ *  error. U39 made exactly that mistake writing the tavern's tests,
+ *  so the accessor exists to make it unavailable. */
+export const holidayDayOfYear = (holidayId) =>
+  (holidayId >= 1 && holidayId <= HOLIDAY_DAYS_OF_YEAR.length
+    ? HOLIDAY_DAYS_OF_YEAR[holidayId - 1] : null);
+
+/** The region that celebrates it, same offset (0xFF = everywhere). */
+export const holidayRegion = (holidayId) =>
+  (holidayId >= 1 && holidayId <= REGION_CELEBRATING_HOLIDAY.length
+    ? REGION_CELEBRATING_HOLIDAY[holidayId - 1] : null);
+
 /** The `while (holidayID < 53)` bound. Both tables are exactly 53
  *  rows, so this covers all of them; the enum's 54th member has no row
  *  and cannot be returned. */
@@ -80,7 +102,7 @@ export const MINUTES_PER_YEAR = 518400;
  *  arithmetic and the 355 gate. `gameMinutes` is CLASSIC minutes (the
  *  same counter gameDate.dateToClassicMinutes produces). */
 export function getHolidayId(gameMinutes, regionIndex) {
-  const dayOfYear = Math.floor((gameMinutes % MINUTES_PER_YEAR) / 1440) + 1;
+  const dayOfYear = dayOfYearFromMinutes(gameMinutes);
   if (dayOfYear > HOLIDAY_LAST_DAY) return HOLIDAYS.None;
   for (let holidayID = 0; holidayID < HOLIDAY_SEARCH_LIMIT; holidayID++) {
     const region = REGION_CELEBRATING_HOLIDAY[holidayID];

@@ -5,6 +5,7 @@ import {
   HOLIDAYS, REGION_CELEBRATING_HOLIDAY, HOLIDAY_DAYS_OF_YEAR,
   HOLIDAY_SEARCH_LIMIT, HOLIDAY_LAST_DAY, MINUTES_PER_YEAR,
   getHolidayId, FREE_CURE_HOLIDAYS, HALF_PRICE_CURE_HOLIDAY,
+  holidayDayOfYear, holidayRegion,
 } from '../src/systems/holidays.js';
 import { DAYS_PER_YEAR, MINUTES_PER_DAY } from '../src/systems/gameDate.js';
 
@@ -91,5 +92,31 @@ test('S29: a holiday id is its table row + 1, across the whole year', () => {
     const first = HOLIDAY_DAYS_OF_YEAR.findIndex((d, j) => d === day
       && (REGION_CELEBRATING_HOLIDAY[j] === 0xFF || REGION_CELEBRATING_HOLIDAY[j] === r + 1));
     assert.equal(atDay(day, r), first + 1, `row ${i} on day ${day}`);
+  }
+});
+
+test('S29/U39: the tables are indexed by enum MINUS ONE, and the accessor says so', () => {
+  // GetHolidayId loops its counter 0..52 over the tables and returns
+  // that counter PLUS ONE as the enum value, so the enum and the row
+  // are off by one. Reading a table with the enum value lands on the
+  // NEXT holiday's row - a silently wrong answer, not an error. U39's
+  // tavern tests made exactly that mistake, which is why the accessor
+  // exists; this pins both halves of the offset.
+  assert.equal(HOLIDAYS.New_Life, 1);
+  assert.equal(holidayDayOfYear(HOLIDAYS.New_Life), 1, 'New Life is day ONE');
+  assert.equal(HOLIDAY_DAYS_OF_YEAR[HOLIDAYS.New_Life], 2, 'and row 1 is the NEXT holiday - the trap');
+  assert.equal(holidayDayOfYear(HOLIDAYS.Hearts_Day), 46);
+  assert.equal(holidayRegion(HOLIDAYS.New_Life), 0xFF, 'everywhere');
+  // the accessor answers null outside the enum rather than undefined
+  assert.equal(holidayDayOfYear(0), null, 'None has no day');
+  assert.equal(holidayDayOfYear(54), null, 'and neither has the unreachable 54th');
+  assert.equal(holidayRegion(0), null);
+  // and it agrees with the live lookup on every row
+  for (let id = 1; id <= HOLIDAY_SEARCH_LIMIT; id++) {
+    const day = holidayDayOfYear(id);
+    const region = holidayRegion(id);
+    if (region !== 0xFF) continue;                    // region-gated rows need their own region
+    const minutes = (day - 1) * 1440 + 60;
+    assert.equal(getHolidayId(minutes, 0), id, `holiday ${id} is found on its own day`);
   }
 });
