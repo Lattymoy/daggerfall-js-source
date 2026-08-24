@@ -71,7 +71,7 @@ import { spendPoolLowest } from '../systems/chargen.js';
 import { readSpellsStd } from '../formats/spellsStd.js';
 import { readMagicDef } from '../formats/magicDef.js';
 import { ClassFile } from '../formats/classFile.js';
-import { fetchBytes, ensureAudio, raiseAtRestEnd, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells} from './shared.js';
+import { fetchBytes, ensureAudio, raiseAtRestEnd, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord} from './shared.js';
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
 import {
@@ -795,6 +795,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // cast is spent whether or not the lock yielded, exactly as DFU's
   // CancelEffect on trigger does.
   wireDoorSpells(actions, playerEntity, (t) => hudText.add(t));
+  // X4: the Detect scan. This host has both nearby pools DFU walks -
+  // live foes and loot piles - so all three Detect spells are real
+  // here. The thunks are lazy: `foes` and `lootPiles` are populated
+  // further down and only read at tick time.
+  const detectFeed = createDetectFeed(playerEntity, {
+    entities: () => foes.filter((f) => !f.dead && f.ai).map(foeNearbyRecord),
+    loot: () => lootPiles.map(lootNearbyRecord),
+    feet: () => lastPlayerFeet ?? [0, 0, 0],
+  });
   // A2: DaggerfallAction.Play's sound - the RDB soundIndex fires from
   // the object on every Play (the default min1/max500 3D profile;
   // movers speak from their live matrix, effect objects from origin).
@@ -2348,8 +2357,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // forward this file already derives (0 = +z, wrapped 0..1).
     const hfw = [-view[2], -view[10]];
     const heading01 = ((Math.atan2(hfw[0], hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1;
+    // X4: the Detect markers ride the same call - foes and loot piles
+    // are this host's two nearby pools.
+    const detected = detectFeed.tick(dt);
     drawHud(renderer, canvas, hudArt, playerEntity, heading01, dt,
-      { font: hudFont, cursorActive: !!activeOverlay });   // U38
+      { font: hudFont, cursorActive: !!activeOverlay,
+        detected, playerXZ: playerFeet ? [playerFeet[0], playerFeet[2]] : null });   // U38 + X4
     hudText.tick(dt);
     if (hudFont) hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.width, canvas.height));
     // The CLICK TO LOOK banner retired with click-to-look itself: the

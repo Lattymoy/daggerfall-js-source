@@ -73,7 +73,7 @@ import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the sho
 import { hitSoundFor, swingSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
-import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, climbingDeps, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
+import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -547,6 +547,14 @@ export async function bootExterior(canvas, renderer, params, status) {
   // draw. EnemyBlood is per-entity in DFU only because Unity hangs a
   // component off each enemy; there is one archive and one clock.
   const hitEffects = createHitEffects({ renderer, getTexture, uploadRecordFrame });
+  // X4: the Detect scan - declared before cityGuards so the frame body
+  // and the feed share one definition; the thunks are lazy.
+  const detectFeet = () => (walkMode ? player.pos : cam.pos);
+  const detectFeed = createDetectFeed(playerEntity, {
+    entities: () => ((modes?.mode ?? 'exterior') === 'exterior' ? cityGuards.guards : [])
+      .filter((f) => !f.dead && f.ai).map(foeNearbyRecord),
+    feet: detectFeet,
+  });
   const cityGuards = createCityGuards({
     renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, hitEffects,
     playerWeaponSheathed: () => !!weaponRig.playerWeapon.sheathed,   // AUDIT 24 (wave 42): pacification's drawn-weapon penalty
@@ -1425,9 +1433,16 @@ export async function bootExterior(canvas, renderer, params, status) {
     // layer, because a talk window is a modal above the vitals.
     if (hudArt) {
       const _hfw = [-view[2], -view[10]];
+      // X4: the Detect markers. This host's nearby pool is the city
+      // guards - the only entities it spawns. No loot piles above
+      // ground (FLAGGED with world.js's same gap), so Detect Treasure
+      // is live and finds nothing here.
+      const _dFeet = detectFeet();
+      const _detected = detectFeed.tick(dt);
       drawHud(renderer, canvas, hudArt, playerEntity,
         ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt,
-        { font: townTalk.font, cursorActive: townTalk.overlayActive || (modes?.overlayHeld ?? false) });   // U38
+        { font: townTalk.font, cursorActive: townTalk.overlayActive || (modes?.overlayHeld ?? false),
+          detected: _detected, playerXZ: [_dFeet[0], _dFeet[2]] });   // U38 + X4
     }
     townTalk.frame(dt);   // T3b: HUD lines + the talk overlay, above everything
 

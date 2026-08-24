@@ -79,6 +79,20 @@ export const BUFF_KINDS = Object.freeze({
   // active-effect list IS that flag, read where the motor asks.
   '27,255': 'jumping',
   '28,255': 'climbing',
+  // X4: the DETECT family (Thaumaturgy 39/0..2). All three classes are
+  // identical but for the flag they scan with and Treasure's cheaper
+  // duration cost - SupportDuration ALONE, CasterOnly, Magic element,
+  // and an AddState that stacks rounds onto the incumbent and nothing
+  // else (DetectMagic.cs:36-40 and its two twins). That is precisely
+  // this table's arm, so the effects half of Detect is three rows: the
+  // entry's PRESENCE is DFU's registeredDetectors membership, exactly
+  // as jumping/climbing above are IsEnhancedJumping/IsEnhancedClimbing.
+  // The scan and the compass markers live in systems/nearbyObjects.js
+  // and ui/hud.js - neither belongs to the effect, which in DFU does
+  // nothing but hold a list refreshed once a magic round.
+  '39,0': 'detectMagic',
+  '39,1': 'detectEnemy',
+  '39,2': 'detectTreasure',
   // AUDIT 21 F5 SILENCE (19,255). The GATE was ported and the PRODUCER was
   // not, so `entity.isSilenced` had no writer anywhere in src/ and
   // silenceBlocksCast was a constant false for every entity in the game -

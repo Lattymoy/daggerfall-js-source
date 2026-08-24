@@ -27,7 +27,7 @@ import { pickActivatable, worldAabb, activationTargets } from '../player/activat
 import { transferAll, removeOne, addItem, isEnchanted, totalWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
-import { createPlayerTicker , endRunToTitleMenu, exitToTitleMenu, doorSpellFor, consumeDoorSpell, wireDoorSpells} from './shared.js';   // AUDIT 18: the interior host's world clock
+import { createPlayerTicker , endRunToTitleMenu, exitToTitleMenu, doorSpellFor, consumeDoorSpell, wireDoorSpells, createDetectFeed} from './shared.js';   // AUDIT 18: the interior host's world clock
 import { triggerExteriorOpen, DOOR_SPELL_TEXT } from '../systems/mysticism.js';   // X3: the Open spell's EXTERIOR-door arm
 import { buildInteriorContext } from './interiorContext.js';
 import { buildDungeonContext } from './dungeonContext.js';
@@ -214,6 +214,10 @@ export function createWorldModes(host) {
     },
   });
   const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null, discoveryLocationId = null } = host;   // R1: the discovery store's location key (the anti-grind record's namespace)   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
+
+  // X4: the interior arm's Detect scan (see the frame body). Both
+  // pools are empty until interior loot containers ship.
+  const detectFeed = createDetectFeed(playerEntity, { feet: () => player.pos });
   const { getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, arch, palette } = pipeline;
   // AUDIT 21 (hosts lane, F7): the HUD art for interior mode. A missing file
   // answers null and drawHud no-ops, so this host draws no HUD rather than
@@ -2132,8 +2136,21 @@ export function createWorldModes(host) {
     // last, over the viewmodel, under the overlay.
     if (hudArt) {
       const _hfw = [-view[2], -view[10]];
+      // X4: the Detect markers, interior arm. THE FOUR HOSTS RULE -
+      // the feed is mounted here even though both pools are empty
+      // today, so the seam is visible rather than a host silently
+      // missing an effect. What an interior would contribute in DFU
+      // is LOOT CONTAINERS: static interior NPCs are StaticNPC
+      // components and are NOT in PlayerGPS's list at all (only
+      // enemies and CIVILIAN MOBILE behaviours are, and the port has
+      // neither indoors), so an empty scan in a shop is DFU's answer
+      // too. FLAGGED: interior loot containers are the loot arc's -
+      // when they land they plug into `loot` below and Detect
+      // Treasure lights up indoors with no other change here.
+      const _detected = detectFeed.tick(dt);
       drawHud(renderer, canvas, hudArt, playerEntity,
-        ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt);
+        ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt,
+        { detected: _detected, playerXZ: [player.pos[0], player.pos[2]] });
     }
     // MERGE AUDIT: the interior arm SAYS things - the static-NPC and
     // guild fallthroughs at :362/:368/:416 all speak through

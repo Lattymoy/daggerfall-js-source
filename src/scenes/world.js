@@ -85,7 +85,7 @@ import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, 
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
-import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, climbingDeps, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
+import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
 import { PlayerMotor } from '../player/motor.js';
 import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter } from '../characters/playerEntity.js';
@@ -1047,9 +1047,17 @@ export async function bootWorld(canvas, renderer, params, status) {
   // there with the rest of its enchant wiring. isResting stays absent
   // above ground (no rest window here yet), and inSunlight/inHolyPlace
   // stay the E1 FLAGGED seams no host computes.
+  // X4: hoisted out of the enchant block below - the Detect feed and
+  // the frame body need the same two live reads the enchant ctx does
+  // (the player's feet, and exterior mode's foe pool), and one
+  // definition beats two that can drift.
+  const enchantFeet = () => (walkMode && playerSpawned ? player.pos : cam.pos);
+  const enchantFoes = () => ((modes?.mode ?? 'exterior') === 'exterior' ? [...cityGuards.guards, ...exteriorFoes.foes] : []);
+  const detectFeed = createDetectFeed(playerEntity, {
+    entities: () => enchantFoes().filter((f) => !f.dead && f.ai).map(foeNearbyRecord),
+    feet: () => enchantFeet(),
+  });
   {
-    const enchantFeet = () => (walkMode && playerSpawned ? player.pos : cam.pos);
-    const enchantFoes = () => ((modes?.mode ?? 'exterior') === 'exterior' ? [...cityGuards.guards, ...exteriorFoes.foes] : []);
     setDefaultEnchantCtx({
       spellsByIndex: () => spellsByIndex,
       now: () => Math.floor(playerTicker.classicMinutes),
@@ -2836,9 +2844,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     // layer, because a talk window is a modal above the vitals.
     if (hudArt) {
       const _hfw = [-view[2], -view[10]];
+      // X4: the Detect markers. Exterior mode's nearby pool is the
+      // guards plus the encounter foes - the same list the spell
+      // engine already targets. There are no loot PILES above ground
+      // (FLAGGED: exterior corpse containers are the loot arc's), so
+      // Detect Treasure is live but finds nothing out here, which is
+      // its own honest answer rather than a missing feature.
+      const _detected = detectFeed.tick(dt);
       drawHud(renderer, canvas, hudArt, playerEntity,
         ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt,
-        { font: townTalk.font, cursorActive: townTalk.overlayActive || (modes?.overlayHeld ?? false) });   // U38
+        { font: townTalk.font, cursorActive: townTalk.overlayActive || (modes?.overlayHeld ?? false),
+          detected: _detected, playerXZ: [enchantFeet()[0], enchantFeet()[2]] });   // U38 + X4
     }
     townTalk.frame(dt);   // T3b: HUD lines + the talk overlay, above everything
 
