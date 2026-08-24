@@ -2506,6 +2506,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // through the host's own absorption path (the same function the
     // foe-cast and missile-impact sites call).
     applySpellToPlayer: magic.applySpellToPlayer,
+    // V3 probe surface: the ONE foe damage door. Soul Trap's kill
+    // intercept lives inside it, so a probe that killed a foe any
+    // other way would be testing a path the game never takes.
+    damageFoe,
     // C10: the rig's clickAttack carries the sheathed gate the inline
     // version missed - a touch tap while sheathed no longer swings
     // (WeaponManager: no attack processing while sheathed).
