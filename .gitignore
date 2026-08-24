@@ -39,3 +39,6 @@ public/visual-changes/
 # transient audit scratch dropped in the repo root by tooling runs
 .ast*.mjs
 .eslint.audit*.config.js
+
+# V4's playthrough screenshots (tools/firstHourProbe.mjs default SHOTS dir).
+firsthour-shots/

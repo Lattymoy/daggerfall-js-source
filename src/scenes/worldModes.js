@@ -2537,13 +2537,25 @@ export function createWorldModes(host) {
       lines: interiorOverlay.lines, options: interiorOverlay.options?.filter((o) => o.label).map((o) => o.label),
     } : null);
     /** Click a trade-panel rect by name (the probe cannot aim at art). */
+    // V4: THE DONE-SWEEP. These two call the window's click() directly
+    // and skipped the sweep pointerdown does, and that
+    // __inventoryPickRemote already did - so a window that had set
+    // `done` (EXIT is the obvious one) stayed in the slot and every
+    // reader downstream still saw it open. The playthrough probe
+    // bought a horse, pressed EXIT through here, and reported that the
+    // trade window would not close; the window had closed, the hook
+    // had not noticed.
+    const _tradeSweep = (r) => {
+      if (interiorOverlay?.done) { interiorOverlay = null; _identifySpell = null; }
+      return r;
+    };
     window.__tradeClick = (key) => {
       const [x, y, w, h] = TRADE_RECTS[key];
-      return interiorOverlay?.click?.(x + w / 2, y + h / 2) ?? false;
+      return _tradeSweep(interiorOverlay?.click?.(x + w / 2, y + h / 2) ?? false);
     };
     window.__tradeSlot = (which, slot) => {
       const [x, y] = TRADE_RECTS[which === 'local' ? 'localList' : 'remoteList'];
-      return interiorOverlay?.click?.(x + 30, y + 20 + slot * 38) ?? false;
+      return _tradeSweep(interiorOverlay?.click?.(x + 30, y + 20 + slot * 38) ?? false);
     };
     window.__openMerchantSell = () => { openMerchantSell(); return window.__shopOverlay(); };
     // B2: the bank's own surface, for the probe.
@@ -2726,6 +2738,55 @@ export function createWorldModes(host) {
       actions: dungeonCtx.actions.objects.size,
     }) : null;
     window.__dungeonExit = () => tryExitDungeon();
+
+    // V4 (the first-hour playthrough probe): THE WORLD HOST'S DUNGEON
+    // MODE HAD NO COMBAT OR LOOT SURFACE AT ALL. worldModes mounts a
+    // real dungeonContext but installed none of the hooks
+    // scenes/dungeon.js:279-305 carries, so a probe could take the
+    // classic start into Privateer's Hold and then see nothing inside
+    // it - no foes, no vitals, no corpses. Same names and same shapes
+    // as the standalone host's, so one probe reads either.
+    window.__hp = () => JSON.stringify({
+      health: playerEntity.health, maxHealth: playerEntity.maxHealth,
+      fatigue: playerEntity.fatigue ?? null, magicka: playerEntity.magicka ?? null,
+    });
+    window.__foes = () => (dungeonCtx ? JSON.stringify(dungeonCtx.foes.map((f, i) => ({
+      i, type: f.mobileType, dead: !!f.dead, health: f.entity?.health,
+      corpse: !!f.corpseBatch,   // V1's DESTROY-vs-KILL discriminator
+      pos: f.ai ? f.ai.feet.map((v) => +v.toFixed(2)) : null,
+    }))) : null);
+    // The REAL damage door, where the Soul Trap intercept and the
+    // corpse spawn sit (V3's seam, this host's copy).
+    window.__damageFoe = (i, n) => {
+      const f = dungeonCtx?.foes?.[i];
+      if (!f) return null;
+      dungeonCtx.damageFoe(f, n ?? (f.entity?.health ?? 1), null, null);
+      return JSON.stringify({ dead: !!f.dead, health: f.entity?.health, corpse: !!f.corpseBatch });
+    };
+    window.__piles = () => (dungeonCtx
+      ? JSON.stringify((dungeonCtx.dropped?.() ?? []).map((p) => ({ n: p.items.length, flat: !!p.batch })))
+      : null);
+    // ...and the OTHER loot door, which is the one a kill uses. An
+    // enemy's loot rides its OWN entity (GenerateItems(lootTableKey) at
+    // spawn) and its CORPSE becomes the container; nothing is ever
+    // dropped on the floor. The playthrough probe asserted __piles
+    // after a kill, got nothing, and briefly called the game broken.
+    window.__lootTargets = () => (dungeonCtx ? JSON.stringify(dungeonCtx.lootTargets().map((t) => t.key)) : null);
+    window.__takeLoot = (k) => (dungeonCtx ? dungeonCtx.takeLoot(k) : null);
+    /** Move remote slot `slot` into the pack through the window's own
+     *  pick (the __inventoryPickRemote idiom, dungeon side). */
+    window.__dungeonPickRemote = (slot) => {
+      const w = dungeonCtx?.overlayWindow?.();
+      if (!w?._pickRemote) return null;
+      w._pickRemote(slot);
+      return JSON.stringify({ kind: w.constructor.name, local: w._filtered?.().length ?? null, remote: w._remote?.().length ?? null });
+    };
+    // One read that answers "is a window up, and which" for the two
+    // modes THIS module owns. The exterior's overlay slot belongs to
+    // world.js (townTalk) - a probe reads that through __talk().
+    window.__overlayKind = () => (mode === 'dungeon'
+      ? (dungeonCtx?.overlayWindow?.()?.constructor?.name ?? null)
+      : (interiorOverlay?.constructor?.name ?? null));
     // U31: probe-only warp. The dungeon EXIT is a raycast pick against
     // the real exit door (tryExitDungeon), so proving the classic start
     // can get out means standing the player at that door the way a
@@ -2887,6 +2948,20 @@ export function createWorldModes(host) {
     // is live in here - and both hosts register their own listener on
     // the same target with neither stopping propagation, so without
     // this the interior arm answered keys aimed at that window.
+    //
+    // V4 arrived at the same line from the other end, and its evidence
+    // is worth keeping: the first-hour probe's opening screenshot of
+    // the starting DUNGEON was the automap, over a 0%-explored
+    // Privateer's Hold, on a game one minute old. The classic start
+    // runs the chargen wizard with the player already inside, and the
+    // character's name was MAC - inputActions binds KeyM to AutoMap.
+    // Any letter in a name is a keybinding: R starts a rest, N the
+    // notebook, L the logbook, F9 quicksaves a half-made character,
+    // and whatever opened was still up when the wizard closed. So the
+    // rule covers the DUNGEON arm below as much as the interior one:
+    // this return is the only thing standing between a typed name and
+    // the bindings. Pinned in test/modalkeys.test.js, red-proofed both
+    // ways.
     if (townTalk?.overlayActive) return;
     // U43: THE ONE DISPATCH. GameManager.Update (:509-557) is a single
     // flat chain with no scene gate at all - the window a key opens
