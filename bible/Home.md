@@ -246,10 +246,10 @@ combat line numbers below are refreshed with it.
 - `src/scenes/exterior.js:492` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:498` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:638` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:770` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:991` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:1134` - FLAGGED here exactly as in world.js - no tile lookup yet).
-- `src/scenes/exterior.js:1466` - ground (FLAGGED with world.js's same gap), so Detect Treasure
+- `src/scenes/exterior.js:771` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/exterior.js:1003` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:1146` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:1478` - ground (FLAGGED with world.js's same gap), so Detect Treasure
 - `src/scenes/shared.js:215` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:232` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:337` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
@@ -259,16 +259,16 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:729` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/world.js:1081` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
 - `src/scenes/world.js:1084` - stay the E1 FLAGGED seams no host computes.
-- `src/scenes/world.js:1242` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
-- `src/scenes/world.js:1496` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:1771` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:1936` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
-- `src/scenes/world.js:2013` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:2246` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:2265` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:2579` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:2883` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/world.js:2956` - (FLAGGED: exterior corpse containers are the loot arc's), so
+- `src/scenes/world.js:1243` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
+- `src/scenes/world.js:1497` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:1772` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:1937` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
+- `src/scenes/world.js:2014` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:2247` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:2266` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:2591` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:2895` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:2968` - (FLAGGED: exterior corpse containers are the loot arc's), so
 - `src/scenes/worldModes.js:244` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:292` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:440` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
@@ -285,13 +285,13 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:1290` - been a FLAGGED null since G3.
 - `src/scenes/worldModes.js:1327` - destination has been a FLAGGED null since G3.
 - `src/scenes/worldModes.js:1346` - been FLAGGED nulls since G3.
-- `src/scenes/worldModes.js:1445` - with the trade window's own mode flow, the same INTERIM the
-- `src/scenes/worldModes.js:1647` - first (owned houses and quest buildings FLAGGED/seamed per
-- `src/scenes/worldModes.js:1655` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
-- `src/scenes/worldModes.js:2374` - too. FLAGGED: interior loot containers are the loot arc's -
-- `src/scenes/worldModes.js:2468` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:2508` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:2846` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
+- `src/scenes/worldModes.js:1449` - with the trade window's own mode flow, the same INTERIM the
+- `src/scenes/worldModes.js:1651` - first (owned houses and quest buildings FLAGGED/seamed per
+- `src/scenes/worldModes.js:1659` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
+- `src/scenes/worldModes.js:2378` - too. FLAGGED: interior loot containers are the loot arc's -
+- `src/scenes/worldModes.js:2472` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:2512` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:2850` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED

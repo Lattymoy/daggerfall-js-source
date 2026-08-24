@@ -4075,10 +4075,19 @@ This machine has no ARENA2, so SPBK00I0/SPBK01I0/ICON00I0/MASK04I0
 are build-verified and unit-pinned rather than seen. Both sheets are
 headerless IMGs the port's reader already sizes by byte length
 (20480 -> 320x64, 3200 -> 40x80), so no format work was needed; that
-is a claim about the reader, not about the pixels. The probe pass is
-owed, alongside U41's.
+is a claim about the reader, not about the pixels.
+`tools/spellbookProbe.mjs` is written and waiting for a box with game
+data: it clicks the REAL rects through the panel's half-pixel offset
+and reads the window's state back through a new `__spellbook` surface
+on both exterior hosts, because a window whose buttons are painted
+into its background cannot be driven blind. The probe pass is owed,
+alongside U41's. One probe that already existed needed repairing
+here: `castProbe.mjs` sorted the book and then pressed Enter to ready
+a spell, which worked only because the KEYED window stayed open
+through its confirmation - the classic one closes on either answer,
+so the probe reopens the book first now.
 
-Pins: 36 in `spellbookwindow.test.js`, and four existing pins
+Pins: 37 in `spellbookwindow.test.js`, and four existing pins
 re-aimed rather than deleted - `charsheetnav`'s ONE DFU MEMBER, ONE
 EXPORT sweep follows the window to its new home, `nativeinventory`'s
 four-hosts pin now asserts BOTH keyed windows are gone from the

@@ -1167,8 +1167,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // player's own array and the window WRITES to it (delete, swap,
   // sort, rename), so it is handed by reference - the save envelope
   // reads the same array and carries the new order.
+  let _spellbook = null;   // U42: the live window, for the probe surface
   const makeSpellbookWindow = () => (spellbookArtLoaded()
-    ? new SpellbookWindow({
+    ? (_spellbook = new SpellbookWindow({
       spells: () => (playerEntity.spells ??= []),
       entity: playerEntity,
       castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
@@ -1176,7 +1177,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // then PopToHUD - and the lycanthropy spell casts free.
       onReady: (sp, { noSpellPointCost } = {}) => magic.readySpell(sp, { free: !!noSpellPointCost }),
       rows: (id) => townTalk.lines(id),
-    })
+    }))
     : null);
   const toggleSpellbook = () => {
     if (townTalk.overlayActive) return;
@@ -2402,6 +2403,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     // destination at least two pixels out (the live probe types its
     // name into the real window).
     window.__travelProbe = () => JSON.stringify({ pixel: playerTravelPixel(), minutes: Math.floor(playerTicker.classicMinutes), gold: goldAmount(playerEntity) });
+    // U42: the classic spellbook's live state. Its buttons are hit
+    // rects painted into SPBK00I0, so a probe cannot see what it is
+    // clicking - it reads the selection, the pushed box and the rows
+    // back through here instead of sleeping and hoping.
+    window.__spellbook = () => JSON.stringify(_spellbook && !_spellbook.done ? {
+      buyMode: _spellbook.buyMode, selected: _spellbook.selectedIndex,
+      scroll: _spellbook.scrollIndex, top: _spellbook.top,
+      name: _spellbook.selected?.name ?? null,
+      effects: [0, 1, 2].map((i) => _spellbook.effectLabels(i)),
+      rows: _spellbook._rows.map((r) => ({ text: r.text, dim: r.dim })),
+    } : null);
     // U41: the art window's live state - which page is open, what the
     // label reads, which box or sub-window is up, and the popup's
     // numbers. The keyed stand-in could be driven blind; a click

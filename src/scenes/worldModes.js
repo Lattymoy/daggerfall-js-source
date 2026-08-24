@@ -1350,9 +1350,9 @@ export function createWorldModes(host) {
     // internal spells, sort by name - live in the window, where DFU
     // keeps them. The price rides this building's quality, so the
     // same spell costs more at a shabby temple.
-    if (destination === 'guildServiceSpellbook') {
+    if (destination === 'guildServiceSpellbook' && spellbookArtLoaded() && _shopFont) {
       const sbi = typeof spellsByIndex === 'function' ? spellsByIndex() : spellsByIndex;
-      if (!spellbookArtLoaded() || !sbi) return null;
+      if (!sbi) return null;
       let bookWin = null;
       bookWin = new SpellbookWindow({
         spells: () => (playerEntity.spells ??= []),
@@ -1369,8 +1369,12 @@ export function createWorldModes(host) {
         rows,
         onClose: () => { if (interiorOverlay === bookWin) interiorOverlay = null; },
       }, { buyMode: true });
+      // Mount AND hand back, the repair arm's shape rather than the
+      // maker windows' `return null` - the popup's onService reads the
+      // return value, and a null makes it answer "not available yet"
+      // over a window that just opened.
       interiorOverlay = bookWin;
-      return null;
+      return bookWin;
     }
     if (destination === 'guildServiceSpellMaker') {
       interiorOverlay = new SpellMakerWindow({

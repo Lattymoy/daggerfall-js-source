@@ -692,14 +692,15 @@ export async function bootExterior(canvas, renderer, params, status) {
   // U42: the CLASSIC spellbook - the same ONE construction the world
   // host makes, handing the player's own array by reference so the
   // window's delete/swap/sort/rename land in the save envelope.
+  let _spellbook = null;   // U42: the live window, for the probe surface
   const makeSpellbookWindow = () => (spellbookArtLoaded()
-    ? new SpellbookWindow({
+    ? (_spellbook = new SpellbookWindow({
       spells: () => (playerEntity.spells ??= []),
       entity: playerEntity,
       castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
       onReady: (sp, { noSpellPointCost } = {}) => magic.readySpell(sp, { free: !!noSpellPointCost }),
       rows: (id) => townTalk.lines(id),
-    })
+    }))
     : null);
   const toggleSpellbook = () => {
     if (townTalk.overlayActive) return;
@@ -957,6 +958,17 @@ export async function bootExterior(canvas, renderer, params, status) {
     };
     modes.installShotProbes();
     window.__magic = () => JSON.stringify({ mp: playerEntity.magicka, readied: magic.readied()?.name ?? null, armed: magic.spellArmed(), missiles: magic.missileCount(), mode: modes?.mode ?? 'exterior', book: (playerEntity.spells ?? []).map((sp) => ({ name: sp.name, range: sp.rangeType })) });   // M5 cast probe
+    // U42: the classic spellbook's live state - the same surface the
+    // world host carries, because tools/spellbookProbe.mjs drives
+    // BOTH exterior pages and the window's buttons are hit rects
+    // painted into SPBK00I0 that a probe cannot see.
+    window.__spellbook = () => JSON.stringify(_spellbook && !_spellbook.done ? {
+      buyMode: _spellbook.buyMode, selected: _spellbook.selectedIndex,
+      scroll: _spellbook.scrollIndex, top: _spellbook.top,
+      name: _spellbook.selected?.name ?? null,
+      effects: [0, 1, 2].map((i) => _spellbook.effectLabels(i)),
+      rows: _spellbook._rows.map((r) => ({ text: r.text, dim: r.dim })),
+    } : null);
     window.__readyRanged = () => { const sp = rangedDamageSpells(spellsByIndex).map((x) => [calculateCastCost(x, playerEntity).sp, x]).sort((a, b) => a[0] - b[0])[0]?.[1]; magic.setReadied(sp); return sp ? `${sp.name}:${calculateCastCost(sp, playerEntity).sp}` : null; };   // M5: no classic starting set carries a missile spell - ready the cheapest flier for the flight leg
     // T1: the townsfolk probe surface
     window.__people = () => JSON.stringify((population?.pool ?? []).map((it, i) => ({

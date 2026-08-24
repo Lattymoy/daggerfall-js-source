@@ -747,4 +747,31 @@ test('U42: BuySpells and BuySpellsMages are no longer FLAGGED nulls', () => {
   assert.ok(modes.includes("destination === 'guildServiceSpellbook'"), 'the interior host runs the arm');
   assert.ok(/\{ buyMode: true \}/.test(modes), '...in BUY mode');
   assert.ok(/offered: \(\) => \[\.\.\.sbi\.values\(\)\]/.test(modes), 'over the whole of SPELLS.STD');
+  // The popup's onService reads what openServiceFlow RETURNS and
+  // answers "not available yet" on a null, so this arm hands the
+  // window back as the repair arm does rather than mounting silently.
+  assert.ok(/interiorOverlay = bookWin;\n      return bookWin;/.test(modes),
+    'the arm mounts AND returns the window');
+});
+
+test('U42: the live probe surface exists on both exterior hosts, and castProbe reopens', () => {
+  // The window's buttons are hit rects painted into SPBK00I0 and
+  // selection is a colour swap, so nothing about it can be seen from
+  // outside - tools/spellbookProbe.mjs reads its state back through
+  // `__spellbook` instead of sleeping and hoping.
+  for (const host of ['scenes/world.js', 'scenes/exterior.js']) {
+    const s = readFileSync(new URL(`../src/${host}`, import.meta.url), 'utf8');
+    assert.ok(s.includes('window.__spellbook = () =>'), `${host} carries the probe surface`);
+    assert.ok(/_spellbook = new SpellbookWindow\(/.test(s), `${host}'s factory holds the live window`);
+  }
+  const probe = readFileSync(new URL('../tools/spellbookProbe.mjs', import.meta.url), 'utf8');
+  assert.ok(probe.includes('__spellbook'), 'the probe reads that surface');
+  assert.ok(probe.includes('30.5'), 'and clicks through the panel\'s half-pixel offset');
+  // castProbe sorted the book then pressed Enter, which only worked
+  // while the KEYED window stayed open through its confirmation.
+  const cast = readFileSync(new URL('../tools/castProbe.mjs', import.meta.url), 'utf8');
+  const sortLeg = cast.slice(cast.indexOf("await page.keyboard.press('s');"));
+  const reopen = sortLeg.indexOf("await page.keyboard.press('Backspace');");
+  const ready = sortLeg.indexOf("await page.keyboard.press('Enter');");
+  assert.ok(reopen > 0 && reopen < ready, 'castProbe reopens the book before readying');
 });
