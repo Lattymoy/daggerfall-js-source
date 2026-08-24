@@ -382,3 +382,45 @@ test('B1: DeductGoldAmount - a LETTER OF CREDIT is legal tender (:1324-1354)', (
   // that ignore the return are unaffected
   assert.equal(deductGold(player(500), 500), 0);
 });
+
+test('B1: the accounts and the loan SURVIVE a save (SerializablePlayer)', async () => {
+  const { snapshotPlayer, restorePlayer } = await import('../src/systems/save.js');
+  const e = {
+    name: 'Rin', stats: { strength: 50 }, skills: [], skillUses: [], items: [],
+    spells: [], activeEffects: [], level: 5,
+    bankAccounts: createBankAccounts(62),
+  };
+  borrowLoan(e.bankAccounts, 17, 10000, { level: 5, nowMinutes: 500000 });
+  e.bankAccounts[3].accountGold = 777;
+  e.bankAccounts[3].hasDefaulted = true;
+
+  const snap = snapshotPlayer(e, {});
+  // clobber the live state the way a fresh session would
+  const loaded = { stats: {}, items: [] };
+  restorePlayer(loaded, snap);
+
+  assert.equal(loaded.bankAccounts.length, 62, 'every region came back');
+  assert.equal(accountTotal(loaded.bankAccounts, 17), 10000);
+  assert.equal(loanedTotal(loaded.bankAccounts, 17), 11000, 'the loan survived');
+  assert.equal(loanDueDate(loaded.bankAccounts, 17), 500000 + LOAN_REPAY_MINUTES,
+    'and so did its due date - without this the checker forgets to collect');
+  assert.equal(accountTotal(loaded.bankAccounts, 3), 777, 'a DIFFERENT region kept its own gold');
+  assert.equal(hasDefaulted(loaded.bankAccounts, 3), true, 'and its defaulted flag');
+  // the snapshot is DETACHED from the live entity - banking after a
+  // save must not rewrite the save. Mutating the ENTITY is the side
+  // that matters; mutating the restored copy proves nothing, because
+  // restore already built fresh objects.
+  e.bankAccounts[17].accountGold = 1;
+  e.bankAccounts[17].loanTotal = 0;
+  assert.equal(snap.bankAccounts[17].accountGold, 10000, 'the snapshot did not follow the entity');
+  assert.equal(snap.bankAccounts[17].loanTotal, 11000);
+  // ...and the restored copy is detached from the snapshot too
+  loaded.bankAccounts[3].accountGold = 5;
+  assert.equal(snap.bankAccounts[3].accountGold, 777);
+  // a PRE-B1 save restores empty rather than throwing
+  const old = { ...snap };
+  delete old.bankAccounts;
+  const fresh = { stats: {}, items: [] };
+  restorePlayer(fresh, old);
+  assert.deepEqual(fresh.bankAccounts, []);
+});

@@ -126,7 +126,13 @@ export const houseSellPrice = (meshRadius) => Math.trunc(housePrice(meshRadius) 
 
 /** SetupAccounts (:237-246) / SetupHouses (:175-184) - one record per
  *  region, each remembering its own index. */
-export function createBankAccounts(regionCount) {
+/** MapFileReader.RegionCount - four BSA records per region, which is
+ *  62 in the shipping MAPS.BSA. The accounts array is sized from the
+ *  reader where one is in scope and from this where none is; a save
+ *  restores its own length either way. */
+export const BANK_REGION_COUNT = 62;
+
+export function createBankAccounts(regionCount = BANK_REGION_COUNT) {
   return Array.from({ length: regionCount }, (_, regionIndex) => ({
     regionIndex, accountGold: 0, loanTotal: 0, loanDueDate: 0, hasDefaulted: false,
   }));
@@ -328,6 +334,79 @@ export function settleOverdueLoan(accounts, regionIndex, player) {
   if (hasDefaulted(accounts, regionIndex)) return { kind: 'alreadyDefaulted' };
   setDefaulted(accounts, regionIndex, true);
   return { kind: 'defaulted', crime: CRIMES.LoanDefault };
+}
+
+// ── the window's own decisions (DaggerfallBankingWindow.cs) ────────
+// The buttons are not all live all the time, and three of them refuse
+// before they open anything. Keeping that here rather than in the
+// window is what lets it be pinned without art.
+
+/** UpdateButtons (:252-265). EVERY button is dead while a transaction
+ *  input is open - the window takes one amount at a time - and Repay
+ *  is additionally dead with no loan to repay. DFU sets depoLOCButton
+ *  twice in this block and loanRepayButton is the only one with a
+ *  second clause; the duplicate is harmless and kept out of the port
+ *  because a repeated assignment is not a behaviour. */
+export function bankButtonEnabled(button, { transactionType = TRANSACTION_TYPE.None, accounts = null, regionIndex = 0 } = {}) {
+  if (transactionType !== TRANSACTION_TYPE.None) return false;
+  if (button === 'loanRepay') return !!accounts && hasLoan(accounts, regionIndex);
+  return true;
+}
+
+/** ToggleTransactionInput (:268-278). Two guards, and the second is
+ *  the interesting one: a request to switch from one LIVE transaction
+ *  straight to another is REFUSED, so the player must finish or
+ *  cancel before starting a different one. Only a move through None
+ *  is allowed. */
+export function toggleTransactionInput(current, next) {
+  if (current === next) return current;
+  if (current !== TRANSACTION_TYPE.None && next !== TRANSACTION_TYPE.None) return current;
+  return next;
+}
+
+/** HandleTransactionInput (:280-295). int.TryParse, then `< 1` - an
+ *  empty, unparsable or zero amount does NOTHING AT ALL, not an error
+ *  box. The same silence the tavern's day count answers with. */
+export function parseTransactionAmount(text) {
+  if (text == null || text === '') return null;
+  const n = Number.parseInt(text, 10);
+  if (!Number.isFinite(n) || n < 1) return null;
+  return n;
+}
+
+/** LoanBorrowButton_OnMouseClick (:398-415). Two refusals BEFORE the
+ *  input opens, and their order is DFU's: a defaulted region is told
+ *  so even if it also has a loan outstanding. */
+export function borrowDecision(accounts, regionIndex) {
+  if (hasDefaulted(accounts, regionIndex)) return { kind: 'refuse', result: TRANSACTION_RESULT.ALREADY_DEFAULTED };
+  if (hasLoan(accounts, regionIndex)) return { kind: 'refuse', result: TRANSACTION_RESULT.ALREADY_HAVE_LOAN };
+  return { kind: 'input', transactionType: TRANSACTION_TYPE.Borrowing_loan };
+}
+
+/** BuyHouseButton (:417-436) and BuyShipButton (:453-464). Both refuse
+ *  what you already own; the ship additionally refuses OUTSIDE A PORT
+ *  TOWN, which is the one place PortTownAndUnknown is read. */
+export function buyHouseDecision({ ownsHouse = false, housesForSale = 0 } = {}) {
+  if (ownsHouse) return { kind: 'refuse', result: TRANSACTION_RESULT.ALREADY_OWN_HOUSE };
+  if (housesForSale < 1) return { kind: 'refuse', result: TRANSACTION_RESULT.NO_HOUSES_FOR_SALE };
+  return { kind: 'pick' };
+}
+export function buyShipDecision({ ownsShip = false, isPortTown = false } = {}) {
+  if (ownsShip) return { kind: 'refuse', result: TRANSACTION_RESULT.ALREADY_OWN_SHIP };
+  if (!isPortTown) return { kind: 'refuse', result: TRANSACTION_RESULT.NOT_PORT_TOWN };
+  return { kind: 'pick' };
+}
+
+/** The two SELL buttons (:438-451, :466-472). Owning nothing is a
+ *  silent no-op - DFU has no else - and owning something raises the
+ *  offer box carrying the sell price. */
+export function sellDecision(kind, { owns = false, price = 0 } = {}) {
+  if (!owns) return { kind: 'ignore' };
+  return {
+    kind: 'offer',
+    result: kind === 'ship' ? TRANSACTION_RESULT.SELL_SHIP_OFFER : TRANSACTION_RESULT.SELL_HOUSE_OFFER,
+    price,
+  };
 }
 
 // FLAGGED, with the slices they wait on:
