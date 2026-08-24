@@ -127,9 +127,17 @@ test('I3: the wiring - four hosts, one Escape door each, art preloaded', () => {
     assert.match(code(rel), /act === 'Escape' && !townTalk\.overlayActive/, `${rel} opens on Escape`);
     assert.match(code(rel), /preloadPauseFlowArt\(/, `${rel} warms the art`);
   }
-  // the interior arm rides worldModes' own overlay slot
-  assert.match(code('scenes/worldModes.js'), /mode === 'interior' && !interiorOverlay && actionOf\(e\) === 'Escape'/);
-  assert.match(code('scenes/worldModes.js'), /preloadPauseFlowArt\(/);
+  // the interior arm rides worldModes' own overlay slot. U43 moved it
+  // onto routeKey's Escape case - the SAME door the two dungeon
+  // contexts use, which is what "one Escape door each" was always
+  // reaching for - so this pins the ctx method the table calls rather
+  // than the hand-rolled `mode === 'interior' && actionOf(e)` arm it
+  // replaced.
+  const modes = code('scenes/worldModes.js');
+  assert.match(modes, /const interiorKeyCtx = \{/, 'the interior arm has a routeKey ctx');
+  assert.match(modes, /togglePause\(\) \{/, '...whose Escape door is togglePause, as routeKey calls it');
+  assert.match(modes, /if \(routeKey\(e, interiorKeyCtx\)\)/, '...and the table drives it');
+  assert.match(modes, /preloadPauseFlowArt\(/);
   // and the door out is the ONE menu unwind (audit24_onehome watches
   // the symbol; this pins the CALL in the exit hook of each host)
   for (const rel of ['scenes/world.js', 'scenes/exterior.js', 'scenes/worldModes.js', 'scenes/dungeonContext.js']) {

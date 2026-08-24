@@ -43,7 +43,7 @@ import { maxFatigue, liveStat } from '../systems/statMods.js';   // AUDIT 23 (C5
 import { maxEncumbrance } from '../combat/formulas.js';   // U40: the letter-of-credit gate
 import { nearestLights } from '../world/cityLights.js';
 import { lookAt, perspective, mirrorProjectionX } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
-import { routeKey, overlayAction, actionOf, held, moveHeld, anyMove } from '../ui/input.js';
+import { routeKey, actionOf, held, moveHeld, anyMove } from '../ui/input.js';
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible interior arrows
@@ -2826,51 +2826,72 @@ export function createWorldModes(host) {
     if (e.button === 2) modalAttackSink()?.(0, 0, true);
   });
 
-  addEventListener('keydown', (e) => {
-    // E2: an open shop overlay owns the keys (the townTalk pattern:
-    // done-then-clear so chained windows survive the keydown).
-    if (mode === 'interior' && interiorOverlay) {
+  /** U43: the interior host's routeKey context - the same shape the
+   *  dungeon context answers, so ONE table (ui/input.js) drives both.
+   *
+   *  Its windows are the OUTER host's: `host.makeInventory`,
+   *  `host.makeCharSheet` and `host.makeJournal` are that host's own
+   *  builders, riding in the way G6's gift window already did. The
+   *  interior host builds nothing of its own here - THE ONE
+   *  CONSTRUCTION SEAM - it only decides which slot the window lands
+   *  in, because this mode draws `interiorOverlay` and not townTalk's.
+   *
+   *  Deliberately absent: quickSave/quickLoad. Interior saving really
+   *  is unbuilt (the composer saves from the exterior and the dungeon
+   *  contexts), and the pause window's SAVE button already answers
+   *  DFU's cannot-save line rather than pretending. */
+  const mountInterior = (w) => { if (w) interiorOverlay = w; };
+  const interiorKeyCtx = {
+    get uiOverlayActive() { return !!interiorOverlay; },
+    // AUDIT 21 (hosts lane, F3): a ChoiceWindow wants the raw CODE and
+    // a LevelUpScreen wants up/down and plus/minus. routeKey's overlay
+    // branch already makes exactly that choice - raw code for a
+    // "native" window, the shared overlayAction map for anything else
+    // - so this answers its question and forwards whatever it decided.
+    // The interior arm used to re-do the mapping itself, which is the
+    // duplication F3 was written about.
+    get overlayIsNative() { return !!interiorOverlay?.isChoiceWindow; },
+    overlayInput(code, e) {
       const w = interiorOverlay;
-      // AUDIT 21 (hosts lane, F3): the same widening townTalk needed. This
-      // passed the raw key CODE, which is what a ChoiceWindow wants and is
-      // useless to a LevelUpScreen - it needs up/down and plus/minus. So a
-      // level-up in a building could not be driven even once it was opened.
-      if (w.isChoiceWindow) w.input(e.code, e);
-      else {
-        const a = overlayAction(e);
-        if (a) w.input(a, e);
-        else w.input(e.code, e);
-      }
+      if (!w) return;
+      w.input(code, e);
       if (w.done && interiorOverlay === w) { interiorOverlay = null; _identifySpell = null; }   // X7: the spell latch dies with its window
-      e.preventDefault();
-      return;
-    }
-    // M2/I2: casting INSIDE a building - the CastSpell action opens
-    // the spellbook (GameManager.cs:550-553), riding the interior
-    // overlay channel. The cast itself is the attack click
-    // (interceptAttack); the old C-cast key retired with I2.
-    if (mode === 'interior' && magic) {
-      if (actionOf(e) === 'CastSpell') {
-        e.preventDefault();
-        if (!interiorOverlay) {
-          const w = makeSpellbookWindow();
-          if (w) interiorOverlay = w;
-        }
-        return;
-      }
-    }
-    // I3: Escape inside a BUILDING opens the pause window in the
-    // interior overlay slot (the dungeon arm rides routeKey's Escape
-    // case into dungeonCtx.togglePause). No interior save path exists
-    // yet - the composer saves from ?world's exterior and the dungeon
-    // contexts - so the SAVE button answers DFU's cannot-save line.
-    if (mode === 'interior' && !interiorOverlay && actionOf(e) === 'Escape' && pauseArtLoaded()) {
+    },
+    togglePause() {
+      if (!pauseArtLoaded()) return;
+      // I3: the SAVE button answers DFU's cannot-save line here.
       openPauseFlow((w) => { interiorOverlay = w; }, {
         savingPrevented: () => true,
         exitToMenu: exitToTitleMenu,
         textLines: (id) => townTalk?.lines?.(id) ?? null,
       });
-      e.preventDefault();
+    },
+    toggleCharSheet() { mountInterior(host.makeCharSheet?.()); },
+    toggleInventory() { mountInterior(host.makeInventory?.()); },
+    // M2/I2: the CastSpell action opens the spellbook
+    // (GameManager.cs:550-553); the cast itself is the attack click.
+    toggleSpellbook() { if (magic) mountInterior(makeSpellbookWindow()); },
+    toggleLogbook() { mountInterior(host.makeJournal?.('activeQuests')); },
+    toggleNotebook() { mountInterior(host.makeJournal?.('notebook')); },
+  };
+
+  addEventListener('keydown', (e) => {
+    // U43: an overlay held in the OUTER host's slot owns the keyboard.
+    // townTalk draws its overlay above the modal render in every mode
+    // (world.js's frame, AUDIT F2-I1), so a window opened out there
+    // is live in here - and both hosts register their own listener on
+    // the same target with neither stopping propagation, so without
+    // this the interior arm answered keys aimed at that window.
+    if (townTalk?.overlayActive) return;
+    // U43: THE ONE DISPATCH. GameManager.Update (:509-557) is a single
+    // flat chain with no scene gate at all - the window a key opens
+    // does not care where the player is standing. The port had three
+    // divergent chains, and the interior one answered exactly two
+    // actions: F5, F6, L, N and R all died the moment you stepped
+    // through a shop door. This routes the same ui/input.js table the
+    // dungeon arm has always used, over an interior ctx.
+    if (mode === 'interior') {
+      if (routeKey(e, interiorKeyCtx)) e.preventDefault();
       return;
     }
     // The input map (ui/input.js) owns all bindings.

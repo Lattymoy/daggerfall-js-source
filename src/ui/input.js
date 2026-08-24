@@ -104,6 +104,15 @@ export function routeKey(e, ctx, setPlayerPos = null) {
     // spellbook window; the cast itself is the attack click.
     case 'CastSpell': ctx.toggleSpellbook(); return true;
     case 'Rest': ctx.toggleRest?.(); return true;
+    // U43: the two journal doors. GameManager's chain has had both
+    // since the quest machine landed (:541-548) and the bindings have
+    // been in the table since I1 - L and N - with NOTHING in src/
+    // reading either, while ui/questJournal.js sat fully built with
+    // all four of its pages. They are ONE window: LogBook pushes it as
+    // it stands, NoteBook sets DisplayMode = Notebook first
+    // (DaggerfallUI.cs:704-711).
+    case 'LogBook': ctx.toggleLogbook?.(); return true;
+    case 'NoteBook': ctx.toggleNotebook?.(); return true;
     case 'AutoMap': ctx.toggleAutomap?.(); return true;   // A1 (optional-chained: only the dungeon contexts carry one today)
     case 'QuickSave': ctx.quickSave?.(); return true;
     case 'QuickLoad': ctx.quickLoad?.(setPlayerPos); return true;

@@ -98,13 +98,22 @@ export class QuestJournalWindow {
    * @param {object} deps
    *   questMessages() - QuestMachine.getAllQuestLogMessages()
    *   notebook()      - the PlayerNotebook
+   *   mode            - the DisplayMode the window opens on
    */
-  constructor({ questMessages = () => [], notebook = () => null } = {}) {
+  constructor({ questMessages = () => [], notebook = () => null, mode = 'activeQuests' } = {}) {
     this.deps = { questMessages, notebook };
     this.done = false;
     this.isChoiceWindow = true;
     // OnPush (:190-200): the page resets to the top every open.
-    this.mode = 'activeQuests';
+    //
+    // U43: the DisplayMode the window opens ON is the caller's. DFU
+    // has TWO doors into this one window and they differ only here -
+    // dfuiOpenQuestJournalWindow (the LogBook binding) pushes it as
+    // it stands, and dfuiOpenNotebookWindow sets
+    // `DisplayMode = JournalDisplay.Notebook` first
+    // (DaggerfallUI.cs:704-711). Both are in GameManager's one
+    // dispatch chain (:541-548).
+    this.mode = JOURNAL_MODES.includes(mode) ? mode : 'activeQuests';
     this.currentMessageIndex = 0;
     this.messageCount = 0;
     this.questMessages = questMessages() ?? [];

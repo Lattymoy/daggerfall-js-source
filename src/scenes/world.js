@@ -63,6 +63,7 @@ import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold, totalGoldAmo
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
 import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet (LevelUpScreen: AUDIT 21 hosts F3)
+import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
 import { charSheetHooks } from '../ui/charSheetNav.js';   // U32: the sheet's four navigation buttons
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
@@ -1205,6 +1206,30 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!w) { townTalk.say('(the spellbook art is unavailable)'); return; }
     townTalk.showOverlay(w);
   };
+  // U43: ONE construction for the character sheet too. It was built
+  // inline in this host's keydown, which meant the INTERIOR host -
+  // which mounts this host's windows rather than building its own -
+  // had no way to reach it, and F5 in a shop did nothing.
+  const makeCharSheetWindow = () => new CharSheet(playerEntity, charSheetHooks({
+    entity: playerEntity,
+    artDeps: { renderer, fetchBytes, palette },
+    inventory: () => (inventoryArtLoaded() ? makeInventoryWindow() : null),
+    spellbook: makeSpellbookWindow,
+    // Q4-v: the live machine's log walk and the player's notebook
+    questMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
+    notebook: () => questBridge?.notebook ?? null,
+  }));
+  /** U43: the two journal doors (GameManager.cs:541-548), ONE window
+   *  either way - LogBook opens it as it stands, NoteBook on the
+   *  Notebook page (DaggerfallUI.cs:704-711). */
+  const makeJournalWindow = (mode) => {
+    preloadQuestJournalArt({ renderer, fetchBytes, palette });
+    return new QuestJournalWindow({
+      questMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
+      notebook: () => questBridge?.notebook ?? null,
+      mode,
+    });
+  };
   const arrows = new ArrowFlight({ getGpuMesh, collider: () => collider });   // C13
   let playerSpawned = false;
   // F-slice: FAST TRAVEL. The window collects the popup's choices;
@@ -1572,15 +1597,21 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (e.code === 'F5' || e.code === 'F6') e.preventDefault();
     const act = actionOf(e);   // I2: the registry owns the code -> action read
     if (act === 'CharacterSheet' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
-      townTalk.showOverlay(new CharSheet(playerEntity, charSheetHooks({
-        entity: playerEntity,
-        artDeps: { renderer, fetchBytes, palette },
-        inventory: () => (inventoryArtLoaded() ? makeInventoryWindow() : null),
-        spellbook: makeSpellbookWindow,
-        // Q4-v: the live machine's log walk and the player's notebook
-        questMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
-        notebook: () => questBridge?.notebook ?? null,
-      })));
+      townTalk.showOverlay(makeCharSheetWindow());
+      return;
+    }
+    // U43: LogBook (L) and NoteBook (N) - two of GameManager's own
+    // dispatch chain (:541-548) that the port bound at I1 and then
+    // read NOWHERE, while ui/questJournal.js sat built with all four
+    // of its pages. The interior and dungeon hosts answer them too.
+    if (act === 'LogBook' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
+      e.preventDefault();
+      townTalk.showOverlay(makeJournalWindow('activeQuests'));
+      return;
+    }
+    if (act === 'NoteBook' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
+      e.preventDefault();
+      townTalk.showOverlay(makeJournalWindow('notebook'));
       return;
     }
     // U8d: F6 opens the classic inventory (DFU's default Inventory
@@ -2394,6 +2425,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // G6: the knightly smith's gift needs THIS host's inventory
     // window in choose-one mode - one builder, one dependency list.
     makeInventory: (extra) => (inventoryArtLoaded() ? makeInventoryWindow(extra) : null),
+    // U43: and the other two windows the INTERIOR host answers keys
+    // for. Same rule as makeInventory - this host owns the builder and
+    // its dependency list; worldModes only chooses the slot.
+    makeCharSheet: () => (charSheetArtLoaded() ? makeCharSheetWindow() : null),
+    makeJournal: (mode) => makeJournalWindow(mode),
     revealLocation: (noteKey) => {
       const dfLoc = locationIndex.get(`${playerTravelPixel().x},${playerTravelPixel().y}`);
       const region = dfLoc ? maps.getRegion(dfLoc.regionIndex) : null;

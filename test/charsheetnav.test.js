@@ -101,6 +101,45 @@ test('U32: with NO quest source the logbook is withheld, not shown empty - the a
   assert.ok(none.history() instanceof PlayerHistoryWindow);
 });
 
+test('U43: the journal opens on the page its door asks for', () => {
+  // DFU has TWO doors into ONE window: dfuiOpenQuestJournalWindow (the
+  // LogBook binding) pushes it as it stands, and dfuiOpenNotebookWindow
+  // sets DisplayMode = Notebook first (DaggerfallUI.cs:704-711). Both
+  // sit in GameManager's one dispatch chain (:541-548).
+  const deps = { questMessages: () => [], notebook: () => null };
+  assert.equal(new QuestJournalWindow(deps).mode, 'activeQuests', 'the LogBook door');
+  assert.equal(new QuestJournalWindow({ ...deps, mode: 'notebook' }).mode, 'notebook', 'the NoteBook door');
+  // every page is reachable by name, and an unknown one does not
+  // strand the window on a page it cannot draw
+  for (const m of JOURNAL_MODES) assert.equal(new QuestJournalWindow({ ...deps, mode: m }).mode, m);
+  assert.equal(new QuestJournalWindow({ ...deps, mode: 'nonsense' }).mode, 'activeQuests',
+    'an unknown DisplayMode falls back rather than sticking');
+});
+
+test('U43: the dungeon host opens the journal only when it can SEE quests', () => {
+  // The sheet's logbook button used to be withheld here on a comment
+  // saying "this host has no quest bridge" - which was true of the
+  // standalone ?dungeon page and false of every dungeon worldModes
+  // mounts, where the bridge has ridden in through opts since B4. So
+  // a player standing in a quest dungeon with three active quests was
+  // told the screen could not see them.
+  const dc = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
+  assert.match(dc, /const questJournalHooks = \(\) => \(opts\.questBridge \? \{/,
+    'the hooks come from the bridge, or not at all');
+  assert.match(dc, /getAllQuestLogMessages\(\) \?\? \[\]/);
+  // scoped to the SHEET's own hook bag - questJournalHooks() also
+  // appears in _openJournal, so an unscoped match passes with the
+  // sheet's spread deleted and the logbook button dark again
+  const sheetBag = dc.slice(dc.indexOf('activeOverlay = new CharSheet(playerEntity, charSheetHooks({'),
+    dc.indexOf('toggleLogbook()'));
+  assert.match(sheetBag, /\.\.\.questJournalHooks\(\),/, 'and the SHEET gets them');
+  assert.match(dc, /toggleLogbook\(\) \{ this\._openJournal\('activeQuests'\); \}/);
+  assert.match(dc, /toggleNotebook\(\) \{ this\._openJournal\('notebook'\); \}/);
+  // the standalone page still gets the honest refusal, not an empty book
+  assert.match(dc, /if \(activeOverlay \|\| !opts\.questBridge\) return;/,
+    'no bridge, no journal - charSheetHooks says the same for the button');
+});
+
 test('U42: the sheet forwards EVERY seam to a pushed child, hover included', () => {
   // The sheet nests a child window (inventory, spellbook, logbook,
   // history) and the hosts' seams test for the method on the OVERLAY -

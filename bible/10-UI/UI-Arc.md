@@ -4308,3 +4308,102 @@ this and the fast travel that shares its map.
 
 Pins: 7 in `teleportpopup.test.js` and 3 added to
 `travelmapwindow.test.js`. 10 mutations, 10 dead.
+
+## U43 - ONE DISPATCH: the windows work everywhere (2026-08-24)
+
+`src/ui/input.js` (routeKey grows the two journal doors) +
+`src/ui/questJournal.js` (a DisplayMode door) + `src/ui/charsheet.js`
++ the four hosts. `test/inputmap.test.js` and
+`test/charsheetnav.test.js` (+2 each), two existing pins re-aimed.
+
+**Step through a shop door and seven windows stopped existing.**
+`GameManager.Update` (`:509-557`) is a single flat dispatch chain -
+CharacterSheet, Inventory, TravelMap, Rest, Transport, LogBook,
+NoteBook, CastSpell, UseMagicItem - with **no scene gate of any
+kind**. DFU has one UI stack and it does not care where the player is
+standing. The port had THREE chains: the two exterior hosts hand-roll
+one each, every arm of it gated on
+`(modes?.mode ?? 'exterior') === 'exterior'`, and `worldModes`'
+interior arm hand-rolled a third that answered exactly two actions -
+CastSpell and Escape. So F5, F6, L and N all died the moment the
+player walked into a building, while the windows themselves sat built
+and mounted somewhere else.
+
+**The dungeon arm was already right.** `routeKey` in `ui/input.js` is
+the port's `Update()`: a table keyed on the action registry, with each
+host supplying a ctx of hooks. It has driven the two dungeon contexts
+since I2. The interior arm now routes the same table over an
+`interiorKeyCtx`, which makes two of the four hosts share one
+dispatch and leaves the exterior pair's hand-rolled chain as the
+remaining divergence - FLAGGED below rather than half-converted.
+
+**The windows are the OUTER host's, not new ones.** The interior host
+already mounted `host.makeInventory` for G6's knightly gift; it now
+takes `host.makeCharSheet` and `host.makeJournal` the same way. THE
+ONE CONSTRUCTION SEAM holds: the host that owns the dependency list
+builds the window, and the interior host only decides which slot it
+lands in - `interiorOverlay`, because that is what this mode draws,
+clicks, hovers and keys.
+
+**Two of GameManager's own actions had never been read at all.** L
+and N have been in the binding table since I1 and `grep` found no
+consumer anywhere in `src/` outside the table and the rebinding grid,
+while `ui/questJournal.js` sat fully built with all four of its
+pages. They are ONE window with two doors:
+`dfuiOpenQuestJournalWindow` pushes it as it stands and
+`dfuiOpenNotebookWindow` sets `DisplayMode = Notebook` first
+(`DaggerfallUI.cs:704-711`), which is now the window's `mode`
+argument.
+
+**A comment that had gone false.** `dungeonContext`'s character sheet
+withheld its LOGBOOK button on the note "this host has no quest
+bridge". True of the standalone `?dungeon` page; false of every
+dungeon `worldModes` mounts, where the bridge rides in through `opts`
+and the save seam has been reading it since B4. A player standing in
+a quest dungeon with three active quests was told the screen could
+not see them. The bridge's own null is passed through rather than
+substituted with an empty list, so the standalone page still gets
+`charSheetHooks`' honest refusal - and `?town`, which mounts no
+bridge either, answers neither L nor N for the same reason.
+
+**What the interior arm deliberately does NOT answer.** There is no
+`quickSave` hook. Interior saving really is unbuilt - the composer
+saves from the exterior and the dungeon contexts - and the pause
+window's SAVE button already gives DFU's cannot-save line rather than
+pretending. The pin asserts the ABSENCE, so wiring the key without
+building the save fails here.
+
+**Two pins re-aimed rather than deleted.** AUDIT 21's F3 pin demanded
+the literal `overlayAction(e)` in `worldModes`, and I3's demanded its
+hand-rolled `mode === 'interior' && actionOf(e) === 'Escape'` arm.
+Both named a SPELLING of a law now satisfied through `routeKey` -
+whose overlay branch makes exactly F3's fork, and whose `Escape` case
+is exactly the one door I3 was reaching for. The interior arm's own
+copy of the fork was the duplication F3 was written about, so it is
+deleted and the pin now asserts `worldModes` does NOT map the action
+a second time.
+
+**What the mutation campaign caught.** 19 mutants, and the first pass
+killed only 11. Every survivor was the same mistake: the pins matched
+a method's NAME, so emptying `toggleLogbook`'s body left it answering
+the key and opening nothing - which is the gate this slice removed,
+wearing a different hat. Each hook is pinned by what it MOUNTS now.
+One more survived after that: `questJournalHooks()` appears twice in
+`dungeonContext`, so deleting the SHEET's spread still matched, and
+the logbook button went dark with the pin green. Scoped to the
+sheet's own hook bag.
+
+Pins: 2 added in `inputmap.test.js`, 2 in `charsheetnav.test.js`, 2
+re-aimed (`audit21_hosts`, `pausewindow`). 19 mutations, 19 dead.
+
+FLAGGED: the two EXTERIOR hosts still hand-roll their chain rather
+than routing `routeKey` - the same seven arms, gated on a mode test
+that is now correct only because the interior host answers for
+itself. Converting them is the other half of this slice and wants its
+own pass, because their ctx is the one with the quicksave, the travel
+map and the automap in it. TravelMap and Rest are in DFU's chain and
+in neither the interior ctx nor `routeKey`'s table: Rest is its own
+slice (`CanRest` + `MoveToBed`, and the tavern's rented room is
+waiting on it), and fast travel from inside a building wants the
+teleport arm's guards looked at first. Transport and UseMagicItem
+have no window to open at all.

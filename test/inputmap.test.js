@@ -125,3 +125,72 @@ test('I2: the sweep\'s escapes are themselves bounded', () => {
       `${rel} fly-cam escapes are counted - a new one is a decision, not a drift`);
   }
 });
+
+test('U43: the two journal doors are in the ONE dispatch, and are one window', () => {
+  // GameManager.Update (:541-548) dispatches LogBook and NoteBook in
+  // the same flat chain as CharacterSheet and Inventory. The port has
+  // bound L and N since I1 and read NEITHER anywhere in src/, while
+  // ui/questJournal.js sat built with all four of its pages - the
+  // exact shape of a binding table nobody consults.
+  withDefaults();
+  const calls = [];
+  const ctx = {
+    uiOverlayActive: false,
+    overlayInput: (a) => calls.push('ov:' + a),
+    toggleLogbook: () => calls.push('log'),
+    toggleNotebook: () => calls.push('note'),
+  };
+  assert.ok(routeKey({ key: 'l', code: 'KeyL' }, ctx), 'L opens the logbook');
+  assert.ok(routeKey({ key: 'n', code: 'KeyN' }, ctx), 'N opens the notebook');
+  assert.deepEqual(calls, ['log', 'note']);
+  // a host without the seam is not consumed - the table is optional
+  // per host, the way Rest and AutoMap already are
+  assert.equal(routeKey({ key: 'l', code: 'KeyL' }, { uiOverlayActive: false }), true,
+    'the case still answers; the hook is optional-chained');
+  // and an open overlay owns them, like every other window key - the
+  // letter reaches the WINDOW as a typed character, which is what a
+  // spell being renamed in the book needs
+  ctx.uiOverlayActive = true;
+  calls.length = 0;
+  routeKey({ key: 'l', code: 'KeyL' }, ctx);
+  assert.deepEqual(calls, ['ov:char:l'], 'the live window types it; no logbook opens');
+});
+
+test('U43: ONE dispatch - the interior host routes the same table as the dungeon', () => {
+  // GameManager.Update has NO scene gate: the window a key opens does
+  // not care where the player stands. The port had three divergent
+  // chains, and the interior one answered two actions - so F5, F6, L
+  // and N all died the moment the player stepped through a shop door,
+  // with the windows themselves built and mounted elsewhere.
+  const src = (rel) => readFileSync(join(root, 'src', rel), 'utf8');
+  const modes = src('scenes/worldModes.js');
+  assert.match(modes, /if \(routeKey\(e, interiorKeyCtx\)\) e\.preventDefault\(\);/,
+    'the interior arm routes the shared table');
+  // Each hook must MOUNT something, not merely exist - a named method
+  // with an empty body answers the key and opens nothing, which is
+  // indistinguishable from the gate this slice removed. The windows
+  // are the OUTER host's: one construction, one dependency list; the
+  // interior host only picks the slot.
+  const MOUNTS = [
+    ['toggleCharSheet', /toggleCharSheet\(\) \{ mountInterior\(host\.makeCharSheet\?\.\(\)\); \}/],
+    ['toggleInventory', /toggleInventory\(\) \{ mountInterior\(host\.makeInventory\?\.\(\)\); \}/],
+    ['toggleSpellbook', /toggleSpellbook\(\) \{ if \(magic\) mountInterior\(makeSpellbookWindow\(\)\); \}/],
+    ['toggleLogbook', /toggleLogbook\(\) \{ mountInterior\(host\.makeJournal\?\.\('activeQuests'\)\); \}/],
+    ['toggleNotebook', /toggleNotebook\(\) \{ mountInterior\(host\.makeJournal\?\.\('notebook'\)\); \}/],
+  ];
+  for (const [hook, re] of MOUNTS) assert.match(modes, re, `the interior ctx MOUNTS a window for ${hook}`);
+  // ...and Escape really opens the pause flow rather than returning
+  assert.match(modes, /togglePause\(\) \{\n      if \(!pauseArtLoaded\(\)\) return;\n      \/\/ I3[^]*?openPauseFlow\(/,
+    'the interior Escape door opens the pause flow');
+  assert.match(src('scenes/world.js'), /makeCharSheet: \(\) =>/, 'world.js hands its builder down');
+  assert.match(src('scenes/world.js'), /makeJournal: \(mode\) =>/);
+  // ...and it yields to a window the outer host is already holding,
+  // because townTalk draws its overlay in EVERY mode
+  assert.match(modes, /if \(townTalk\?\.overlayActive\) return;/,
+    'the interior arm must not answer keys aimed at the outer overlay');
+  // the honest absence: interior SAVING is unbuilt, so no quickSave
+  // hook - the pause window says so rather than the key doing nothing
+  const ctxBlock = modes.slice(modes.indexOf('const interiorKeyCtx = {'),
+    modes.indexOf('addEventListener(\'keydown\''));
+  assert.equal(/quickSave/.test(ctxBlock), false, 'no interior quicksave hook');
+});
