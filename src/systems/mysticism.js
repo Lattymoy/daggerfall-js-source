@@ -226,6 +226,18 @@ export const isSilenced = (entity) => !!entity?.isSilenced || isSilencedEffect(e
 export function silenceBlocksCast(entity, { costsSpellPoints = true } = {}) {
   return costsSpellPoints && isSilenced(entity);
 }
+/** X1: the door-spell alert lines. armOpen/triggerOpen/triggerLock
+ *  answer localisation KEYS (Internal_Strings.csv); these are their
+ *  English, which is what the port's HUD speaks. */
+export const DOOR_SPELL_TEXT = Object.freeze({
+  readyToOpen: 'Ready to open.',            // :652
+  openFailed: 'Lock is too powerful.',      // :655
+  readyToLock: 'Ready to lock.',            // :651
+  doorLocked: 'Door is now locked.',        // :653
+  doorAlreadyLocked: 'Door already locked.',// :654
+  spellEffectFailed: 'Spell effect failed.',// :647
+});
+
 export const SILENCED_TEXT = 'You are silenced.';
 // SetReadySpell's HUD line (EntityEffectManager.cs:355) -
 // GetLocalizedText('pressButtonToFireSpell'), Internal_Strings_en

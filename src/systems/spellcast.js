@@ -70,7 +70,27 @@ const raceTemplateOf = (target) =>
  * by the ElementalResistance family (classic 8,0..4), which the
  * effect library has not reached, so nothing can raise one yet.
  */
+/** X1: the live Elemental Resistance chance for one element, summed
+ *  over every active instance (DFU's additive RaiseResistanceChance).
+ *  0 = no resistance flag set, which is the common case. */
+export function elementalResistanceChance(target, element) {
+  let total = 0;
+  for (const a of target?.activeEffects ?? []) {
+    if (a.kind === 'elementalResistance' && a.element === element && !a.ended) total += a.chance ?? 0;
+  }
+  return total;
+}
+
 export function savingThrow(element, effectFlags, target, modifier = 0, rolls = Math.random) {
+  // X1: ELEMENTAL RESISTANCE comes FIRST and is absolute - DFU tests
+  // the resistance flag at the very top of SavingThrow (FH:1442-1452)
+  // and a successful roll returns 0 outright: the effect is resisted
+  // whole, not scaled. Multiple instances on one element STACK their
+  // chances additively (DoConstantEffects re-raises each live effect's
+  // chance onto a cleared slate every frame, EEM:1679-1702), which the
+  // sum below reproduces.
+  const resist = elementalResistanceChance(target, element);
+  if (resist > 0 && Math.floor(rolls() * 100) < resist) return 0;
   let saving = 50;
   let biographyMod = 0;
   const career = target.career ?? {};

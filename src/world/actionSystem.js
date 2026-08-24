@@ -50,6 +50,7 @@ import { trs, multiply } from './mat4.js';
 import { ACTION_FLAGS, TRIGGER_FLAGS, MOVE_ACTION_FLAGS } from './rdbLayout.js';
 import { CASTSPELL_COOLDOWN_TICK } from '../systems/spellcast.js';   // single source (DaggerfallAction 45.454546)
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
+import { triggerOpen, triggerLock } from '../systems/mysticism.js';   // X1: the Open/Lock door laws live there, not here
 
 // The RDB effect-action family (DaggerfallAction delegates that hurt
 // rather than move). Combat-arc row from Port-Ledger C:
@@ -713,9 +714,26 @@ export class ActionSystem {
    *  DaggerfallActionDoor component, so ActionDoorCheck misses it and
    *  only the Direct Receive lands - which its None/Collision01 trigger
    *  flag then rejects. That is why a secret door is lever-only. */
-  activate(key, { steal = false } = {}) {
+  activate(key, { steal = false, doorSpell = null } = {}) {
     const o = this.objects.get(key);
     if (!o) return false;
+    // X1: an ARMED Open/Lock spell fires on the next door activated
+    // and consumes itself, whatever the interaction mode - DFU's Open
+    // and Lock wait in forcedRoundsRemaining for exactly this and
+    // CancelEffect on the trigger (Open.cs:118-121, Lock.cs:116). The
+    // caller supplies the armed state and hears the outcome through
+    // onDoorSpell, then drops the effect; the LAWS live in
+    // systems/mysticism.js, which this file calls rather than copies.
+    if (doorSpell && o.kind === 'door' && !o.special) {
+      const result = doorSpell.kind === 'open'
+        ? triggerOpen(o, doorSpell.casterLevel, { castBySkeletonKey: doorSpell.skeletonKey === true })
+        : triggerLock(o, doorSpell.casterLevel);
+      if (result.opened) this.toggleDoor(o, true);
+      if (result.closed) this.toggleDoor(o, false);
+      this.onDoorSpell?.(o, doorSpell.kind, result);
+      this.receive(o, 'Direct');
+      return true;
+    }
     // R1: ActivateActionDoor's mode routing (PlayerActivate.cs:698-703):
     // Steal mode on a LOCKED, not-open door attempts the pick; every
     // other combination toggles (whose lock gate speaks the look-at

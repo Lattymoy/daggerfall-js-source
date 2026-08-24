@@ -73,6 +73,12 @@ export const BUFF_KINDS = Object.freeze({
   // S22 FreeAction (26,255): Restoration duration buff - the entity
   // is IMMUNE TO PARALYSIS while it lives (IsImmuneToParalysis).
   '26,255': 'freeAction',
+  // X1: the two motor buffs. DFU keeps each as a bool on the entity
+  // (IsEnhancedJumping / IsEnhancedClimbing, DaggerfallEntity.cs:84-85)
+  // set by the effect's Start and cleared by its End; the port's
+  // active-effect list IS that flag, read where the motor asks.
+  '27,255': 'jumping',
+  '28,255': 'climbing',
   // AUDIT 21 F5 SILENCE (19,255). The GATE was ported and the PRODUCER was
   // not, so `entity.isSilenced` had no writer anywhere in src/ and
   // silenceBlocksCast was a constant false for every entity in the game -
@@ -221,6 +227,23 @@ export const isHealFatigue = (e) => e.type === 10 && e.subType === 9;
 export const isDamageFatigue = (e) => e.type === 4 && e.subType === 1;
 export const isContinuousDamageFatigue = (e) => e.type === 1 && e.subType === 1;
 export const isRegenerate = (e) => e.type === 18 && classicSub(e) === 255;
+// X1: the two door spells (Lock.cs / Open.cs classic keys)
+export const isLockSpell = (e) => e.type === 16 && classicSub(e) === 255;
+export const isOpenSpell = (e) => e.type === 17 && classicSub(e) === 255;
+// X1: Elemental Resistance (8, element 0..4) - Fire/Frost/Poison/Shock/Magic
+export const isElementalResistance = (e) => e.type === 8 && e.subType >= 0 && e.subType <= 4;
+// X1: the two chance-buff defences read by the incoming chain
+export const isSpellAbsorptionEffect = (e) => e.type === 20 && classicSub(e) === 255;
+export const isSpellResistanceEffect = (e) => e.type === 22 && classicSub(e) === 255;
+export const isShieldEffect = (e) => e.type === 35 && classicSub(e) === 255;
+/** The live Spell Resistance chance, summed over instances. */
+export function spellResistanceChance(target) {
+  let total = 0;
+  for (const a of target?.activeEffects ?? []) {
+    if (a.kind === 'spellResistance' && !a.ended) total += a.chance ?? 0;
+  }
+  return total;
+}
 // S19: Paralyze (0, 255) - duration + CHANCE, no magnitude. The
 // entity is paralyzed while a 'paralyze' entry is live
 // (ConstantEffect sets IsParalyzed every frame; presence = paralyzed
@@ -474,11 +497,23 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // E1: IsAbsorbingSpells (:1196) is LIVE - the AbsorbsSpells
       // enchantment's constant fold on the target. The caller's own
       // ctx.absorbing (probe surface) still wins when set.
-      const sp = tryAbsorption(e, spell.rangeType ?? 0, target, { ...ctx, absorbing: ctx?.absorbing ?? entityAbsorbsSpells(target) });
+      const sp = tryAbsorption(e, spell.rangeType ?? 0, target, { ...ctx, absorbing: ctx?.absorbing ?? entityAbsorbsSpells(target), rolls });
       if (sp > 0) {
         totalAbsorbed += sp;
         out.absorbed = (out.absorbed ?? 0) + sp;
         continue;
+      }
+      // X1: SPELL RESISTANCE, third in DFU's chain (TryResistance
+      // :1247-1270). On success the effect simply FAILS - no magicka,
+      // no re-target, no reduced magnitude, just dropped. A CasterOnly
+      // spell is never resisted (:1256), so a self-buff cannot be
+      // refused by the caster's own resistance.
+      if ((spell.rangeType ?? 0) !== 0 && ctx.bypassSavingThrows !== true) {
+        const rc = spellResistanceChance(target);
+        if (rc > 0 && Math.floor(rolls() * 100) < rc) {
+          out.resisted = (out.resisted ?? 0) + 1;
+          continue;
+        }
       }
     }
     if (e.type === 43) {
@@ -718,6 +753,93 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       cureAllOfKind(target, CURE_KINDS[e.subType]);
       pushInstantMarker(target, CURE_MARKER_KINDS[e.subType]);   // after the removal pass, as AssignBundle adds before MagicRound cures
       out.cured = (out.cured ?? 0) + 1;
+      continue;
+    }
+    // X1: SHIELD (Alteration 35) - the magnitude IS the pool, one
+    // point per hit point, rolled once through the same magnitude
+    // path every other effect uses (so a ranged cast still runs the
+    // saving throw). A like-kind recast stacks rounds and TOPS UP the
+    // pool, capped at the incumbent's ORIGINAL startingShield -
+    // never above it, and startingShield itself never rises
+    // (Shield.cs:53-63).
+    if (isShieldEffect(e)) {
+      const rounds = rollDuration(e, casterLevel);
+      const pool = rollMagnitude(e, casterLevel, rolls);
+      if (rounds > 0 && pool > 0) {
+        const inc = findInc((a) => a.kind === 'shield');
+        if (inc) {
+          inc.roundsRemaining += rounds;
+          inc.shieldRemaining = Math.min(inc.startingShield, inc.shieldRemaining + pool);
+        } else {
+          pushActive(target, { kind: 'shield', startingShield: pool, shieldRemaining: pool, roundsRemaining: rounds }, sinks, rolls);
+        }
+        out.buffs = (out.buffs ?? 0) + 1;
+      }
+      continue;
+    }
+    // X1: SPELL ABSORPTION (20) and SPELL RESISTANCE (22) - both are
+    // chance-carrying duration buffs the INCOMING-spell chain reads,
+    // not effects that act when cast. Absorption's chance is consulted
+    // by absorption.js at the top of every incoming effect;
+    // Resistance's by the resistance gate below. Both declare
+    // ChanceFunction.Custom (SpellAbsorption.cs:30 / SpellResistance
+    // .cs:30) so they never roll at cast time - the chance IS the
+    // defence. Reflection (21) still pends: it re-targets the whole
+    // bundle at its caster, which needs the caster's own effect
+    // manager, and the port has no such re-entry yet. FLAGGED.
+    if (isSpellAbsorptionEffect(e) || isSpellResistanceEffect(e)) {
+      const rounds = rollDuration(e, casterLevel);
+      if (rounds > 0) {
+        const k = isSpellAbsorptionEffect(e) ? 'spellAbsorption' : 'spellResistance';
+        const chance = chanceValue(e, casterLevel);
+        const inc = findInc((a) => a.kind === k);
+        if (inc) inc.roundsRemaining += rounds;   // rounds stack; the incumbent's chance stands
+        else pushActive(target, { kind: k, chance, roundsRemaining: rounds }, sinks, rolls);
+        out.buffs = (out.buffs ?? 0) + 1;
+      }
+      continue;
+    }
+    // X1: ELEMENTAL RESISTANCE (Alteration 8, subType = the element).
+    // Not part of the absorb/reflect chain at all: it raises a
+    // per-element resistance the SAVING THROW consults first, and a
+    // successful resistance roll drops the incoming effect whole
+    // (FormulaHelper.SavingThrow :1442-1452). ChanceSuccess is
+    // overridden true (ElementalResistance.cs:50-54), so its own
+    // startup roll can never fail - the chance IS the resistance.
+    if (isElementalResistance(e)) {
+      const rounds = rollDuration(e, casterLevel);
+      if (rounds > 0) {
+        const chance = chanceValue(e, casterLevel);
+        const inc = findInc((a) => a.kind === 'elementalResistance' && a.element === e.subType);
+        // AddState stacks ROUNDS onto the incumbent and nothing else
+        // (ElementalResistance.cs:153-157) - the like-kind instance is
+        // discarded, so the incumbent KEEPS its own chance.
+        if (inc) inc.roundsRemaining += rounds;
+        else pushActive(target, { kind: 'elementalResistance', element: e.subType, chance, roundsRemaining: rounds }, sinks, rolls);
+        out.buffs = (out.buffs ?? 0) + 1;
+      }
+      continue;
+    }
+    // X1: OPEN and LOCK (Mysticism 17/16) - the ARMING half. DFU's
+    // Open and Lock do not act at cast: each sets forcedRoundsRemaining
+    // = 1 and waits, and RemoveRound returns it UNDECREMENTED, so the
+    // effect never expires on its own - only the door activation that
+    // triggers it (or a new cast) ends it. That is a PERMANENT entry
+    // here, consumed by the host's door path (world/actionSystem.js).
+    // Open rolls its own chance (ChanceFunction.Custom, Open.cs:36) and
+    // a failed roll wastes the cast; Lock takes the OnCast default,
+    // which the shared gate below would apply - so it rolls here too.
+    if (isOpenSpell(e) || isLockSpell(e)) {
+      const opening = isOpenSpell(e);
+      const chanceOk = ctx.bypassChance === true || dice100(chanceValue(e, casterLevel), rolls());
+      if (!chanceOk) { out.chanceFailed = (out.chanceFailed ?? 0) + 1; continue; }
+      const armedKind = opening ? 'openArmed' : 'lockArmed';
+      const inc = findInc((a) => a.kind === armedKind);
+      if (inc) inc.casterLevel = casterLevel;   // a recast re-arms at the new level
+      else pushPermanent(target, { kind: armedKind, permanent: true, casterLevel });
+      // The HOST speaks the alert (mysticism.js owns the texts; this
+      // module cannot import it - mysticism imports effects).
+      out.armed = armedKind;
       continue;
     }
     const kind = buffKind(e);

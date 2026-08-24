@@ -61,13 +61,30 @@ export function careerAbsorbs(career, { day = false, inside = true } = {}) {
  *  when the effect passes through. `absorbing` is DFU's persistent
  *  IsAbsorbingSpells state (:1196) - the port has no such effect yet,
  *  so it is an injectable the caller may leave false. */
-export function tryAbsorption(effect, targetType, target, { day = false, inside = true, absorbing = false } = {}) {
+export function tryAbsorption(effect, targetType, target, { day = false, inside = true, absorbing = false, rolls = Math.random } = {}) {
   if (!effect) return 0;
   if (!isDestructionEffect(effect)) return 0;
   const cost = effectCastingCost(effect, targetType, target);
   const available = (target?.maxMagicka ?? 0) - (target?.magicka ?? 0);
   if (cost > available) return 0;
+  // X1: the EFFECT-based arm is tried FIRST (:1186-1189), and it is
+  // the one place DFU rolls the TARGET's level rather than the
+  // caster's (TryEffectBasedAbsorption :1287-1292 vs the generic
+  // ChanceValue). A failed roll falls THROUGH to career and to the
+  // persistent flag - DFU's own order, not classic's override.
+  const chance = spellAbsorptionChance(target);
+  if (chance > 0 && Math.floor(rolls() * 100) < chance) return cost;
   if (careerAbsorbs(target?.career, { day, inside })) return cost;
   if (absorbing) return cost;
   return 0;
+}
+
+/** The live Spell Absorption chance granted by the EFFECT (20,255),
+ *  summed over instances as every other stacking chance is. */
+export function spellAbsorptionChance(target) {
+  let total = 0;
+  for (const a of target?.activeEffects ?? []) {
+    if (a.kind === 'spellAbsorption' && !a.ended) total += a.chance ?? 0;
+  }
+  return total;
 }

@@ -91,11 +91,14 @@ export function tallySkill(entity, skillId, amount = 1) {
  *  abilityFlagsAndSpellPointsBitfield 0x1406, so a VANILLA Acrobat,
  *  not just a custom class, jumped 10% short.
  *
- *  Still honestly 0 here: improvedAthleticism (+0.1) is an
- *  ImprovesTalents ENCHANTMENT and the Jump spell (+0.6) an active
- *  effect - neither family exists yet. P14. */
+ *  improvedAthleticism (+0.1) is an ImprovesTalents ENCHANTMENT and
+ *  still pends; X1 landed the Jump SPELL's term (+0.6, AcrobatMotor's
+ *  own jumpSpellMultiplier :16, added when IsEnhancedJumping :104-105
+ *  - which the port reads as the live 'jumping' effect). P14. */
+export const JUMP_SPELL_MULTIPLIER = 0.6;   // AcrobatMotor.cs:16
 export function jumpSpeedMultiplier(entity) {
   let m = 1 + (skillValue(entity, SKILLS.Jumping) * 0.5) / 100;
+  if (entity?.activeEffects?.some((a) => a.kind === 'jumping')) m += JUMP_SPELL_MULTIPLIER;
   // DFCareer.HasSpecialAbility: the flag masked against the
   // bitfield's LOW BYTE, verbatim (the C# (byte)flags cast).
   const bits = entity.career?.abilityFlagsAndSpellPointsBitfield ?? 0;

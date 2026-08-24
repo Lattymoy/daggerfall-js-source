@@ -115,16 +115,22 @@ export const PORTED_KEYS = new Set([
   '9,0', '9,1', '9,2', '9,3', '9,4', '9,5', '9,6', '9,7',           // Fortify{Attribute}
   '10,0', '10,1', '10,2', '10,3', '10,4', '10,5', '10,6', '10,7', '10,8', '10,9',   // Heal{...}
   '11,0', '11,1', '11,2', '11,3', '11,4', '11,5', '11,6', '11,7', '11,8', '11,9',   // Transfer{...}
+  '8,0', '8,1', '8,2', '8,3', '8,4',                                // Elemental Resistance (X1)
   '13,0', '13,1',                                                   // Invisibility (BUFF_KINDS)
   '14,255',                                                         // Levitate
+  '16,255', '17,255',                                               // Lock / Open (X1 - armed at cast, fired by the door)
   '18,255',                                                         // Regenerate
   '19,255',                                                         // Silence
+  '20,255', '22,255',                                               // Spell Absorption / Resistance (X1; Reflection 21 pends)
   '23,0', '23,1',                                                   // Chameleon
   '24,0', '24,1',                                                   // Shadow
   '25,255',                                                         // Slowfall
   '26,255',                                                         // Free Action
+  '27,255',                                                         // Jumping (X1)
+  '28,255',                                                         // Climbing (X1)
   '30,255',                                                         // Water Breathing
   '31,255',                                                         // Water Walking
+  '35,255',                                                         // Shield (X1 - the damage pool)
   '43,255',                                                         // Teleport (the inline arm)
 ]);
 

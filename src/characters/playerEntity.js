@@ -73,7 +73,34 @@ export function setDeathPresenter(fn) {
 
 /** THE damage door. Every path that can take player health goes through here.
  *  Returns true when this blow killed. */
+/** X1: consume `dmg` from any live Shield pool and answer what is
+ *  left. Emptying the pool ENDS the effect at once (ResignAsIncumbent
+ *  + RoundsRemaining = 0), and exactly zeroing it still busts it. */
+export function damageShieldPool(entity, dmg) {
+  for (const a of entity?.activeEffects ?? []) {
+    if (a.kind !== 'shield' || a.ended) continue;
+    if (!(a.shieldRemaining > 0)) continue;   // a busted pool absorbs nothing
+    a.shieldRemaining -= dmg;
+    if (a.shieldRemaining <= 0) {
+      const overflow = Math.abs(a.shieldRemaining);
+      a.shieldRemaining = 0;
+      a.ended = true;
+      a.roundsRemaining = 0;
+      return overflow;   // only the excess gets through
+    }
+    return 0;            // fully absorbed
+  }
+  return dmg;
+}
+
 export function hurtPlayer(entity, dmg) {
+  if (!(dmg > 0)) return false;
+  // X1: THE SHIELD POOL (Shield.cs DamageShield :78-98) sits in front
+  // of the health subtraction, on the ONE door every damage source
+  // already comes through. All-or-overflow per hit: a hit no larger
+  // than the pool is reduced to ZERO, and the hit that empties it
+  // passes only its excess. Returns the damage that survives.
+  dmg = damageShieldPool(entity, dmg);
   if (!(dmg > 0)) return false;
   const wasAlive = (entity.health ?? 0) > 0;
   entity.health = Math.max(0, entity.health - dmg);

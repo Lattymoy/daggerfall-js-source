@@ -27,7 +27,7 @@ import { jumpSpeedMultiplier } from '../systems/skills.js';
 import {
   pickActivatable, activationTargets,
 } from '../player/activate.js';
-import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform } from './shared.js';
+import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells } from './shared.js';
 import { routeKey, held, moveHeld, anyMove } from '../ui/input.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { buildDungeonContext } from './dungeonContext.js';
@@ -135,7 +135,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       ctx.takeLoot(key);
       return key;
     }
-    if (key) ctx.actions.activate(key, { steal: getInteractionMode() === 'steal' });   // R1: Steal mode picks a locked door
+    if (key) ctx.actions.activate(key, { steal: getInteractionMode() === 'steal', doorSpell: doorSpellFor(playerEntity) });   // R1: Steal mode picks a locked door; X1: an armed Open/Lock fires here
     return key;
   };
   const keys = new Set();

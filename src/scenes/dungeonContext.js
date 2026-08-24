@@ -71,7 +71,7 @@ import { spendPoolLowest } from '../systems/chargen.js';
 import { readSpellsStd } from '../formats/spellsStd.js';
 import { readMagicDef } from '../formats/magicDef.js';
 import { ClassFile } from '../formats/classFile.js';
-import { fetchBytes, ensureAudio, raiseAtRestEnd, endRunToTitleMenu, exitToTitleMenu, sensesContext } from './shared.js';
+import { fetchBytes, ensureAudio, raiseAtRestEnd, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells} from './shared.js';
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
 import {
@@ -790,6 +790,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     hudText.add(success ? LOCKPICKING_SUCCESS_TEXT : LOCKPICKING_FAILURE_TEXT);
     if (success) audio.play3d(SOUND.ActivateLockUnlock, [o.matrix[12], o.matrix[13], o.matrix[14]]);
   };
+  // X1: the Open/Lock SPELL outcome - the same door, one law up
+  // (systems/mysticism.js). The armed effect is consumed here, so a
+  // cast is spent whether or not the lock yielded, exactly as DFU's
+  // CancelEffect on trigger does.
+  wireDoorSpells(actions, playerEntity, (t) => hudText.add(t));
   // A2: DaggerfallAction.Play's sound - the RDB soundIndex fires from
   // the object on every Play (the default min1/max500 3D profile;
   // movers speak from their live matrix, effect objects from origin).
