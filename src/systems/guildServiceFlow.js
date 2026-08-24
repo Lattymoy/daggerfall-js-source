@@ -243,7 +243,7 @@ export const SERVICE_DESTINATION = Object.freeze({
   Identify: null,          // FLAGGED: DaggerfallTradeWindow Identify mode
   Repair: 'guildServiceRepair',   // R1: the keyed repair flow (FG rank discount rides it)
   BuyPotions: null,        // FLAGGED: trade Buy + CreateRandomPotion
-  MakePotions: null,       // FLAGGED: the potion maker
+  MakePotions: 'guildServicePotionMaker',   // M2: the keyed potion maker
   BuySpells: null,         // FLAGGED: the spellbook's buy mode
   BuySpellsMages: null,    // FLAGGED: the spellbook's buy mode
   MakeSpells: 'guildServiceSpellMaker',   // S1: the keyed spell maker

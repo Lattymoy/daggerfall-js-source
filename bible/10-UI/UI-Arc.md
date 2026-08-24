@@ -3599,3 +3599,39 @@ deposits 20,000 off the entity, withdraws it back, borrows 10,000 at
 11,000 owed with a rendered due date ("Middas the 4th of Morning
 Star"), and reads the real refusal record back when it asks for a
 second loan.
+
+## M2 - THE POTION MAKER (2026-08-24)
+
+The first of the magic crafting windows Audit-25 listed at or near
+zero, on M1's law. `SERVICE_DESTINATION.MakePotions` has been a
+FLAGGED `null` since G3 - the temple and the Mages Guild both offer
+the service and clicking it did nothing.
+
+**MASK00I0 is a full-screen background**, not a centred panel - the
+one window in this arc whose art is the whole 320×200 - so every rect
+is screen-absolute and there is no alignment to compute. DFU also
+paints a 60% black wash on the native panel UNDER the texture, which
+is neither the opaque black most windows use nor ScreenDimColor.
+
+**Two grids, and the cauldron's size is not arbitrary.** The
+ingredients list is three columns of four on a 56/38 stride; the
+cauldron is two columns of the same four rows, which is exactly eight
+- and eight is the law's cap, and purification needs all eight. The
+window shows precisely what it can hold.
+
+**A failed mix burns the herbs.** Mixing spends the ingredients
+whether or not a recipe matched, and the consume walk falls back to
+the wagon before giving up. When it gives up it BREAKS mid-loop, so
+the pot is left standing with whatever it already took gone - a
+partial spend, verbatim.
+
+**The recipes button fills what it can.** A player missing one herb
+gets the other three in the pot rather than a refusal, and knowing no
+recipes at all is a message box rather than an empty picker.
+
+One Ledger row added, for a departure the port INHERITS rather than
+makes: classic creates a useless "Unknown Powers" potion on a failed
+mix and DFU refuses instead, with the classic line commented out
+beside its own explanation.
+
+Pins: 11 in `potionmakerwindow.test.js`. 8 mutations, 8 dead.
