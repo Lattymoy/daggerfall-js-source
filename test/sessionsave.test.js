@@ -36,8 +36,18 @@ test('composeSessionState: bridge + trio -> {quest, talk}; absent halves -> null
   // SaveDataConversation WHOLE - the three getSaveData halves merge flat
   assert.deepEqual(full.talk, { listRumorMill: [1], dictQuestorPostQuestMessage: {}, dictQuestInfo: { 7: {} }, npcsWithWork: [] });
   // the standalone ?dungeon scene mounts neither - the composer writes
-  // nulls, byte-shape of every pre-B4 save
-  assert.deepEqual(composeSessionState({}), { quest: null, talk: null });
+  // nulls, byte-shape of every pre-B4 save. U41 added a THIRD half:
+  // TravelMapSaveData rides the same composer (SaveLoadManager.cs:871)
+  // and needs no seam passed in, because the travel map's session
+  // state lives in systems/travelMapState.js.
+  assert.deepEqual(composeSessionState({}), {
+    quest: null,
+    talk: null,
+    travelMap: {
+      filterDungeons: false, filterTemples: false, filterHomes: false, filterTowns: false,
+      sleepInn: true, speedCautious: true, travelShip: true,
+    },
+  });
 });
 
 test('restoreSessionState: quest before conversation (the C# order), the mill orphan sweep asks the machine, and the return latches _questStarted', () => {

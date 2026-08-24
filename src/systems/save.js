@@ -21,6 +21,7 @@ import { snapshotAutomap, restoreAutomap } from './automap.js';   // A1: dictAut
 import { createSceneCache, snapshotSceneCache, restoreSceneCache } from './sceneCache.js';   // P1
 import { seedCustomSpellIndex } from './spellMaker.js';   // S1: made spells carry their own record
 import { SOCIAL_GROUPS } from '../formats/factionFile.js';   // AUDIT 24
+import { travelMapSaveData, restoreTravelMapSaveData } from './travelMapState.js';   // U41: TravelMapSaveData
 
 export const SAVE_VERSION = 1;
 export const QUICKSAVE_KEY = 'dagger.quicksave';
@@ -396,6 +397,12 @@ export function composeSessionState({ questBridge = null, talk = null } = {}) {
   return {
     quest: questBridge ? questBridge.snapshot() : null,
     talk: talk ? { ...talk.mill.getSaveData(), ...talk.tree.getSaveData(), ...talk.session.getSaveData() } : null,
+    // U41: TravelMapSaveData (SaveLoadManager.cs:871) - DFU saves the
+    // travel map's filters and the popup's three choices with the
+    // game, off the ONE window it keeps alive. The port's state lives
+    // in systems/travelMapState.js, so it rides the same composer
+    // both hosts already call rather than a second inline envelope.
+    travelMap: travelMapSaveData(),
   };
 }
 
@@ -409,6 +416,11 @@ export function composeSessionState({ questBridge = null, talk = null } = {}) {
 export function restoreSessionState(extras, { questBridge = null, talk = null } = {}) {
   // restore(null) is a no-op and the live machine stands (Q4-v law).
   questBridge?.restore(extras?.quest ?? null);
+  // U41: SetTravelMapFromSaveData(null) is DFU's own arm for a save
+  // with no block (:1344-1345) - it restores the struct's defaults,
+  // so a pre-U41 save clears the filters rather than keeping the
+  // live session's.
+  restoreTravelMapSaveData(extras?.travelMap ?? null);
   if (extras?.talk && talk) {
     talk.mill.restoreSaveData(extras.talk);
     talk.tree.restoreSaveData(extras.talk);   // the orphan sweep + relink + TellMeAbout tail run inside

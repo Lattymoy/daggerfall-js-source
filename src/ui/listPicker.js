@@ -61,12 +61,20 @@ export const listPickerArtLoaded = () => !!_art;
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + PICKER_X && y >= ry + PICKER_Y
   && x < rx + PICKER_X + rw && y < ry + PICKER_Y + rh;
 
-/** hooks = { items: string[], onPick(index, label), onCancel() }. */
+/** hooks = { items: string[], onPick(index, label), onCancel(),
+ *  backdrop }. BACKDROP: DFU's picker is a DaggerfallPopupWindow over
+ *  a previousWindow, and DaggerfallPopupWindow paints Color.clear
+ *  behind itself (ScreenDimColor, nativePanel.js's note), so the
+ *  window underneath stays VISIBLE - which is what 'none' does. The
+ *  default stays the opaque menu fill because the port's box-chain
+ *  callers (guildServiceWindows) draw nothing of their own while a
+ *  picker is up and would otherwise float over the live world. */
 export class ListPickerWindow {
-  constructor({ items = [], onPick = null, onCancel = null } = {}) {
+  constructor({ items = [], onPick = null, onCancel = null, backdrop = 'menu' } = {}) {
     this.items = items;
     this.onPick = onPick;
     this.onCancel = onCancel;
+    this.backdrop = backdrop;
     this.done = false;
     this.isChoiceWindow = true;
     this.scrollIndex = 0;
@@ -146,7 +154,7 @@ export class ListPickerWindow {
     if (!_art) { this._cancel(); return; }
     this._font = font;
     const m = nativeMetrics(canvas);
-    drawMenuBackdrop(renderer, canvas);
+    if (this.backdrop !== 'none') drawMenuBackdrop(renderer, canvas);
     drawImg(renderer, _art.base, m, PICKER_X, PICKER_Y);
     this._clampScroll();
     const [lx, ly] = PICKER_RECTS.list;

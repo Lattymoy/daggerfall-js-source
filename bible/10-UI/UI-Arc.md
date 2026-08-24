@@ -3743,3 +3743,198 @@ enchanted item is not offered again.
 
 Pins: 16 in `enchantmentcatalogue.test.js` (18 mutations, 16 dead,
 2 recorded equivalent) and 3 added to `enchanting.test.js`.
+## U41 - THE TRAVEL MAP (2026-08-24)
+
+The classic world map, at last: the province art on V, the region
+pages with their location dots, the find box, and the travel popup
+behind them. The F-slice shipped the fast-travel LAW in August and
+stood a keyed typeahead in front of it, flagged INTERIM in the same
+breath; the Ledger row it opened has been the head of the fast-travel
+residue ever since. This closes it and DELETES `ui/travelMap.js`.
+
+**The map is three surfaces stacked, and only one of them is art.**
+TRAV0I00.IMG is the whole 320x200 window; the region page is a
+separate 320x160 IMG drawn into the hole it frames at y=12; and the
+location dots are a texture the window GENERATES every time a filter,
+a page or a discovery changes - one pixel per map pixel, coloured out
+of FMAP_PAL.COL by location type. The dot colours are palette indices
+(237/240/243/246/0/53/51/55/96/101/39/33/35/37), not RGB constants,
+so they had to come off the real palette file rather than a table.
+
+**Unity's textures are bottom-up and ours are top-down**, which is
+the single largest difference between DFU's draw and this one. The
+dots walk writes `((height - y - 1) * width + x)`, the crosshair
+writes the same flip, the region-shape flash writes
+`(height - y - diff) * width + x`, and the zoom's crop rect measures
+its Y from the BOTTOM of the texture. The port keeps every one of
+those expressions verbatim, builds the buffer in DFU's order, and
+flips whole rows at upload - so the arithmetic can be compared line
+for line with the C# instead of being re-derived, and the crop
+converts with one subtraction at the draw.
+
+**DFU's own offset-times-scale quirk is what makes Betony draw.**
+The dots walk multiplies the whole buffer OFFSET by the region's map
+scale (`offset = ((height - y - 1) * width + x) * scale`), which is
+not a coordinate transform by any reading - but Betony is the one
+region with a scale (4), and its page is plotted by that
+multiplication plus the -477 crosshair fixup and the +60/+212 mouse
+fixup. Kept as written.
+
+**The find box is a DISTANCE, not a match.** DFU runs a weighted edit
+distance (`EditDistance.cs`, configured by `DaggerfallDistance.cs`)
+over the open region's names: separators cost 3 to insert where a
+letter costs 12, an exact prefix seeks for free, and the trim padding
+makes a missing last letter cost 0.4 where a missing middle letter
+costs the full 12. Two consequences the interim typeahead did not
+have: "daggerfal" finds Daggerfall AND Daggerfall Chapel (both inside
+MatchesCutOff's half-relevance band, so the LIST PICKER opens), and a
+nonsense query still lands on the nearest names - so TEXT.RSC 13,
+the "does not exist" box, is reachable only on an EMPTY query
+(FindLocation's IsNullOrEmpty arm) or in a region with nothing
+discovered at all. The port carries the matcher whole,
+including the heap's ordering law: relevance descending, ties by text
+ASCENDING, which falls out of `string.Compare(other.text, this.text)`
+being dumped in reverse.
+
+**Eighteen regions have no page, and DFU throws on them.**
+`offsetLookup` has 51 rows; the eleven wildernesses, the two generic
+villages, the four coast strips and Bantha are not among them, so
+`UpdateMapLocationDotsTexture` would index a missing key. Nothing
+normally clicks one - the region picker does not paint them - but
+`UpdateMouseOverLocation` can name one through the politic map, and
+one click later DFU is in a KeyNotFoundException. The port REFUSES
+the page instead (`hasRegionPage`), which is the same nothing-happens
+a player sees, minus the crash. Recorded as a departure.
+
+**The outline is half a SCREEN pixel, not half a virtual one.** DFU
+displaces its four outline panels by `disp * thickness /
+NativePanel.LocalScale`, so the virtual offset shrinks as the window
+grows and the visible offset is always half a real pixel. The port
+computes the same thing from the other end - `disp / m.s` virtual,
+which is `disp` screen - and the outline colour (0,0,0,128) needs
+`{ blend: true }` at the quad, because the screen-quad shader's
+default arm is the 1-bit cutout law every piece of classic art wants
+and would have painted this one SOLID black.
+
+**checkLocationDiscovered gates three surfaces here, not one.** The
+TV slice applied the law to the typeahead, which was the only surface
+the port had. The art window asks it for the DOT, for whether a
+hovered place can be selected at all, and for the find results - and
+`CanFindPlace` asks it through a region+name pair. A hidden dungeon
+is invisible, unhoverable and unfindable; one `discoverLocation` call
+turns all three on together.
+
+**The popup's ship default had been wrong since the F-slice.** DFU's
+`travelShip` field initialises TRUE, and the toggle panel starts on
+the ship row; the keyed window defaulted it false. Two more of its
+laws land with the real window: a CLICK assigns its own option (a
+second click on the live one does nothing) while the HOTKEY toggles
+the pair, and the trip does not run when BEGIN is pressed - the days
+label counts down one day per 0.05s of real time and only an empty
+counter departs.
+
+**DFU keeps ONE window; the port mints one per open.** DaggerfallUI
+holds a single DaggerfallTravelMapWindow and re-PUSHES it, so its
+four filters and the popup's three choices survive a close - and
+SaveLoadManager writes them into every save as TravelMapSaveData.
+The port's windows are per-open objects, so that state moved to
+`systems/travelMapState.js` (the A2 zoom-memory shape) and rides
+`composeSessionState`, the one envelope composer both hosts already
+call. Two consequences worth naming: a filter set on the map is
+still set the next time V is pressed, and a save from before this
+slice restores the struct's own defaults rather than leaving the
+live session's filters standing - which is exactly what DFU's
+`SetTravelMapFromSaveData(null)` arm does.
+
+**The identify flash is flow control, not decoration.** It runs four
+ON states for a region and two for a selected location, and
+`StopIdentify(true)` is where the travel confirmation is created - so
+after a find, it is the END of the flashing crosshair that asks "do
+you wish to travel to %tcn?". Clicking the flashing place skips the
+wait to the same door.
+
+**What the parity RE-READ caught, since the probe could not run.**
+Five adversarial readers went back over the C# against the port, and
+seven of their findings were real:
+
+- **The gold is two pools, not one.** `GetGoldAmount` is coins PLUS
+  letters of credit, and `DeductFastTravelGold` takes the inn nights
+  out of the coins ALONE before the rest may reach the letters -
+  "Taverns only accept gold pieces" is DFU's own comment on the
+  test. The F-slice had recorded the port's purse as one pool, but
+  `court.js`'s `DeductGoldAmount` has spent letters since B1, so the
+  recording was stale and the window was both refusing trips a
+  letter could pay for and letting a letter pay for a bed. Both
+  halves are live now, and the label shows the COINS, as DFU's does.
+- **A POISONED traveller was never warned.** DFU's test is
+  `DiseaseCount > 0 || PoisonCount > 0`; the port had only the
+  disease half, while its own poison bundles have been on the entity
+  since the disease arc.
+- **A horse and a cart were invisible to the calculator.** The
+  general store sells both and the wagon gate already reads
+  `Items.Contains(Transportation, Small_cart)`, but the window was
+  wired `hasHorse: false, hasCart: false` - so a mounted player was
+  quoted the on-foot day count and the on-foot inn bill.
+- **The paging arrows painted on the province map.** DFU creates
+  them disabled and only SetupArrowButtons turns them on, so a
+  player whose own region pages (Alik'r, Dragontail, Wrothgarian)
+  saw two arrows over the world map before opening anything.
+- **The first flash was half a second late.** `identifyLastChangeTime
+  = 0` works in C# because it is compared against
+  `Time.realtimeSinceStartup`, which is never near zero. The port
+  stores the same DISTANCE against one monotonic clock instead.
+- **The zoomed outline thinned where DFU's thickens**: DFU displaces
+  the outline copies' CROP as well as their panel, and the 2x zoom
+  magnifies that second half.
+- **A third of the C# line citations had drifted** by 10-80 lines,
+  including the whole identify block, which pointed into the console
+  commands. Swept against the reference file symbol by symbol.
+- **A right-click behind the map fired a readied spell.** RMB is the
+  map's ZOOM, and both exterior hosts bound RMB to the weapon rig
+  and the pending cast without an overlay gate - so one zoom toggle
+  spent magicka or loosed an arrow at a world the player could not
+  see. The dungeon host has had the gate since I4; the other two
+  never got it. Pre-existing, but the travel map is what made it a
+  routine gesture.
+- **The location picker painted the map out.** DFU's picker is a
+  popup over the window that pushed it and DaggerfallPopupWindow
+  dims nothing (ScreenDimColor is Color.clear), so the map stays
+  visible behind the list; the port's picker filled the canvas with
+  opaque black. It now takes a backdrop mode, and the travel map
+  asks for none.
+- **The poison half of the warning never reached the popup.** The
+  host passed `poisonCount` and the popup read it, and the window in
+  between did not forward it - the one production path, and the only
+  path no pin drove. Pinned through the window now, not the
+  constructor.
+
+**What the live probe caught: nothing, because it could not run.**
+This machine has no ARENA2, so every art path is build-verified and
+unit-pinned rather than seen. `tools/travelProbe.mjs` was rewritten
+for the new window - it opens the map on V, opens the player's own
+region with Return (falling back to the I'M AT button when the flash
+has already stopped), types the nearest real destination into the
+find box, waits out the crosshair, answers Y, and presses B - and it
+polls the window's own state through a new `__travelMap` probe
+surface rather than sleeping, because a click surface cannot be
+driven blind. It needs a box with game data; that pass is owed.
+
+Pins: 23 in `travelmapwindow.test.js`, 11 in `travelmap.test.js`, 6 in
+`editdistance.test.js`, 2 re-pinned in `travelvisibility.test.js`.
+All 51 rows of the offset table are transcribed from the C# into
+the pin and deepEqual'd, because nothing else in the port can catch
+a mistyped origin - a wrong pair simply puts a region's dots on the
+wrong map pixels. 51 mutations, 50 dead and one PROVEN equivalent
+(shifting the flash clock by a constant moves the stored stamp with
+it, so nothing can observe it). The first round left five alive -
+both arrow directions, the pageless refusal, the popup's
+assign-not-toggle click, and the map dict's first-wins collision arm
+- and each is now its own pin.
+
+FLAGGED: the guild TELEPORT mode (`ActivateTeleportationTravel` +
+`DaggerfallTeleportPopUp`) still waits on the guild arc's teleport
+service, and `guildServiceFlow`'s `Teleport: null` still points here;
+the quest journal's click-through travel (`GotoPlace`) has no journal
+door yet; TextureReplacement's custom region maps and region
+overlays have no door; and the HUD smash-to-black around the trip
+waits on a fade layer the port does not have.
