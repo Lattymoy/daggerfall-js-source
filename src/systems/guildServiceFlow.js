@@ -246,7 +246,7 @@ export const SERVICE_DESTINATION = Object.freeze({
   MakePotions: null,       // FLAGGED: the potion maker
   BuySpells: null,         // FLAGGED: the spellbook's buy mode
   BuySpellsMages: null,    // FLAGGED: the spellbook's buy mode
-  MakeSpells: null,        // FLAGGED: the spell maker
+  MakeSpells: 'guildServiceSpellMaker',   // S1: the keyed spell maker
   BuyMagicItems: null,     // FLAGGED: trade Buy + CreateRandomMagicItem
   MakeMagicItems: null,    // FLAGGED: the item maker
   SellMagicItems: null,    // FLAGGED: trade SellMagic mode
