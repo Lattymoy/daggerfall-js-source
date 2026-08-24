@@ -285,6 +285,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
+- `src/systems/banking.js:333` - FLAGGED, with the slices they wait on:
 - `src/systems/biography.js:14` - FLAGGED, exactly as DFU flags them: AE, AF and AO are parsed and
 - `src/systems/biography.js:81` - INTERIM, loud and the same one shopStock.js:115 carries: message
 - `src/systems/buildingLocks.js:48` - *                                   (FLAGGED: banking is a ledger row -
@@ -296,7 +297,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/chargenSession.js:7` - played the pre-chargen INTERIM entity (flat skills 30, maxHealth
 - `src/systems/controlsConfig.js:8` - FLAGGED with I1's combo flag: GetDuplicates' second and third
 - `src/systems/court.js:28` - FLAGGED loud: guild rescues (Thieves/Dark Brotherhood) pend the
-- `src/systems/court.js:178` - *  daysInPrison } (guild rescues FLAGGED). */
+- `src/systems/court.js:224` - *  daysInPrison } (guild rescues FLAGGED). */
 - `src/systems/effects.js:25` - FLAGGED skipped (the library grows here).
 - `src/systems/effects.js:42` - *  effect (:515). FLAGGED: DFU pulls it from the localised string
 - `src/systems/effects.js:495` - enchantment bundles are FLAGGED to their own arc.
