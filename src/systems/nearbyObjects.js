@@ -279,6 +279,23 @@ export function detectedMarkers(entity, list) {
   return out;
 }
 
+// TWO DFU DEFECTS THIS SHAPE AVOIDS, recorded so the divergence is
+// deliberate rather than accidental. DFU's compass keeps its own
+// `registeredDetectors` LIST, pushed by Start and popped by End:
+//   - a duplicate cast pushes a SECOND detector which the manager then
+//     discards as a like-kind merge - and nothing ever deregisters it,
+//     so the list grows for the rest of the session;
+//   - there is no Resume() override, so a Detect spell that survives a
+//     save/load keeps counting down but never re-registers, and shows
+//     no markers for the remainder of its duration.
+// Neither can happen here because there IS no separate registry: the
+// entity's own activeEffects list is the registry, so a recast merges
+// into the incumbent by the same law every other buff uses, and a
+// restored entry is a live detector the moment it is read back. The
+// port is closer to the effect's INTENT than DFU's own bookkeeping;
+// where that is a behaviour difference a player could notice, it is
+// this one, and it favours the port.
+
 /** Is any Detect effect live? The hosts' gate for doing the scan at
  *  all - DFU keeps its nearby list warm for every system that reads
  *  it, but the port has only these consumers so far, and a scan

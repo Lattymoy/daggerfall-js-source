@@ -18,6 +18,7 @@
 // default. The final `default:` arm catches potions (a filled glass
 // bottle) before falling back to the misc record.
 import { unitWeightInKg } from './inventory.js';   // AUDIT 23 (items-8)
+import { enemyDisplayName } from '../characters/enemyBasics.js';   // X5: %hs, the trapped soul's name
 import { templateByIndex, itemBaseValue } from './itemTemplates.js';
 import { isPotion, isPotionRecipe, TEMPLATES } from './useItem.js';
 import { materialArmorValue, isShieldTemplate } from './armorMaterials.js';
@@ -157,17 +158,22 @@ export function materialName(item) {
 }
 
 /** The panel's macro pass. Everything the port can compute is filled;
- *  the four it cannot are named rather than left raw:
- *    %hs  the trapped soul's NAME (the monster name table is the
- *         enemy arc's), %po the potion's recipe name (the potion
- *         maker's), %bt/%ba the book's title and author (BOOKS.BSA
- *         has no reader yet). Each falls back to the item's own name
- *         or a dash, which is what an unfilled macro would otherwise
- *         print raw on screen.
- *  FLAGGED as a group - they land with their own arcs. */
+ *  the ones it cannot are named rather than left raw: %po the potion's
+ *  recipe name, %bt/%ba the book's title and author (BOOKS.BSA has no
+ *  reader yet). Each falls back to the item's own name or a dash,
+ *  which is what an unfilled macro would otherwise print raw on
+ *  screen. FLAGGED as a group - they land with their own arcs.
+ *
+ *  X5: %hs LEFT THAT GROUP. It is the trapped soul's name, and it had
+ *  no producer because nothing could fill a soul trap; now the trap
+ *  fires, so the default resolves the item's own trappedSoulType
+ *  through the bestiary rather than printing "Nothing" over a full
+ *  gem. An explicit `soul` still wins, and an EMPTY trap still reads
+ *  "Nothing" - which is the right word for it. */
 export function expandItemInfo(text, item, { name = null, soul = null, potion = null, bookTitle = null, bookAuthor = null } = {}) {
   const t = templateByIndex(item?.templateIndex);
   const itemName = name ?? item?.name ?? t?.name ?? '';
+  const soulName = soul ?? (item?.trappedSoulType != null ? enemyDisplayName(item.trappedSoulType) : null);
   return (text ?? '')
     .replaceAll('%it', itemName)
     .replaceAll('%arm', itemName)
@@ -175,7 +181,7 @@ export function expandItemInfo(text, item, { name = null, soul = null, potion = 
     .replaceAll('%bt', bookTitle ?? itemName)
     .replaceAll('%ba', bookAuthor ?? 'Anonymous')
     .replaceAll('%po', potion ?? itemName)
-    .replaceAll('%hs', soul ?? 'Nothing')
+    .replaceAll('%hs', soulName ?? 'Nothing')
     .replaceAll('%mat', materialName(item))
     .replaceAll('%qua', conditionWord(item))
     .replaceAll('%kg', weightString(item))

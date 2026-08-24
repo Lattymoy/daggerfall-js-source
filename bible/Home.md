@@ -305,10 +305,10 @@ combat line numbers below are refreshed with it.
 - `src/systems/court.js:224` - *  daysInPrison } (guild rescues FLAGGED). */
 - `src/systems/effects.js:25` - FLAGGED skipped (the library grows here).
 - `src/systems/effects.js:42` - *  effect (:515). FLAGGED: DFU pulls it from the localised string
-- `src/systems/effects.js:513` - enchantment bundles are FLAGGED to their own arc.
-- `src/systems/effects.js:820` - manager, and the port has no such re-entry yet. FLAGGED.
-- `src/systems/effects.js:941` - out.skipped++;   // FLAGGED: the library grows one family at a time
-- `src/systems/effects.js:945` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
+- `src/systems/effects.js:517` - enchantment bundles are FLAGGED to their own arc.
+- `src/systems/effects.js:824` - manager, and the port has no such re-entry yet. FLAGGED.
+- `src/systems/effects.js:987` - out.skipped++;   // FLAGGED: the library grows one family at a time
+- `src/systems/effects.js:991` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
 - `src/systems/enchantments.js:39` - FLAGGED: no host computes them yet, so the conditional arms of
 - `src/systems/enchantments.js:41` - moonPhase() (FLAGGED: lunar phases are a Ledger C row),
 - `src/systems/enchantments.js:246` - *  condition holds. Params 0-3 seasons, 4-6 moons (FLAGGED: lunar
@@ -336,8 +336,8 @@ combat line numbers below are refreshed with it.
 - `src/systems/inputActions.js:302` - FLAGGED, each with the slice it waits on:
 - `src/systems/inventory.js:43` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
 - `src/systems/itemInfo.js:5` - U8e's inventory shipped an INTERIM info panel that made up its own
-- `src/systems/itemInfo.js:79` - if (isPotionRecipe(item)) return INFO_TEXT.misc;   // DFU builds recipe tokens by hand - FLAGGED
-- `src/systems/itemInfo.js:167` - *  FLAGGED as a group - they land with their own arcs. */
+- `src/systems/itemInfo.js:80` - if (isPotionRecipe(item)) return INFO_TEXT.misc;   // DFU builds recipe tokens by hand - FLAGGED
+- `src/systems/itemInfo.js:165` - *  screen. FLAGGED as a group - they land with their own arcs.
 - `src/systems/itemTemplates.js:112` - if (!Object.isExtensible(item)) return item;   // C-slice: the frozen pre-chargen stand-ins (INTERIM_WEAPON) carry no condition
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
 - `src/systems/loot.js:212` - FLAGGED to the ENCHANTMENT-EFFECTS slice (the shops themselves

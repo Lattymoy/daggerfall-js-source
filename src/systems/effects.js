@@ -157,6 +157,10 @@ export const CONCEALMENT_START_TEXT = Object.freeze({
  *  certifies what it pins", again). */
 export const classicSub = (e) => e.subType & 0xff;
 export const buffKind = (e) => BUFF_KINDS[`${e.type},${classicSub(e)}`] ?? null;
+/** X5: Soul Trap (12,255). Its own arm rather than a BUFF_KINDS row -
+ *  the cast-time chance is forced true and the landing gates on the
+ *  target's kind. */
+export const isSoulTrapEffect = (e) => e.type === 12 && classicSub(e) === 255;
 export const hasActiveEffect = (entity, kind) =>
   !!entity?.activeEffects?.some((a) => a.kind === kind);   // presence = active; expired entries End on the NEXT tick pass (DFU shape)
 
@@ -902,6 +906,48 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // The HOST speaks the alert (mysticism.js owns the texts; this
       // module cannot import it - mysticism imports effects).
       out.armed = armedKind;
+      continue;
+    }
+    // X5: SOUL TRAP (Mysticism 12,255). It does not belong in
+    // BUFF_KINDS: two of its three laws are its own.
+    //
+    // 1. ChanceSuccess is hardcoded TRUE (SoulTrap.cs:47-52) so the
+    //    effect ALWAYS attaches - the chance is deliberately saved for
+    //    the kill, where RollTrapChance() spends it. The cast cannot
+    //    fail. The chance is still computed HERE, from the caster's
+    //    level, and frozen on the entry (the X2 asymmetry: RollChance
+    //    -> ChanceValue -> the CASTER's level, not the target's).
+    // 2. BecomeIncumbent (:64-87) gates on the TARGET's entity type
+    //    and kills its own effect for two of the three cases:
+    //      EnemyMonster    -> "Trap active." and it stays
+    //      EnemyClass /
+    //      CivilianNPC     -> "Trap will not work on humanoids." and
+    //                         it Resigns + Ends AT ONCE. Note DFU's
+    //                         humanoid arm `break`s rather than
+    //                         `return`s, so the message DOES print;
+    //                         the default arm returns first and is
+    //                         therefore SILENT.
+    //      anything else   -> Resign + End, no message at all.
+    //    The port reads mobileType for that split: monsters are
+    //    0..127, class enemies 128+, and a target with no mobileType
+    //    at all (the player) takes the silent default.
+    if (isSoulTrapEffect(e)) {
+      const rounds = rollDuration(e, casterLevel);
+      const mt = target?.mobileType;
+      if (mt == null) continue;                          // the silent default arm
+      if (mt >= 128) { out.trapAlert = 'trapHumanoid'; continue; }   // humanoid: speaks, then ends
+      if (rounds > 0) {
+        const inc = findInc((a) => a.kind === 'soulTrap' && !a.ended);
+        // AddState stacks ROUNDS onto the incumbent and nothing else
+        // (SoulTrap.cs:94-97) - the incumbent keeps its own chance,
+        // so a recast cannot sharpen a trap already running.
+        if (inc) inc.roundsRemaining += rounds;
+        else {
+          pushActive(target, { kind: 'soulTrap', chance: chanceValue(e, casterLevel), roundsRemaining: rounds }, sinks, rolls);
+          out.trapAlert = 'trapActive';   // BecomeIncumbent speaks only for a NEW incumbent
+        }
+        out.buffs = (out.buffs ?? 0) + 1;
+      }
       continue;
     }
     const kind = buffKind(e);

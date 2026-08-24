@@ -219,3 +219,25 @@ test('X4 detect: the 14-unit reach is the DEFAULT and it counts height', () => {
   const above = updateNearbyObjects([0, 0, 0], { entities: [{ pos: [0, 20, 0], mobileType: 0 }] });
   assert.equal(detectedMarkers(e, above).length, 0, 'the dungeon level above does not leak onto the compass');
 });
+
+test('X4 detect: a recast and a RESTORE both keep detecting - two DFU defects this shape avoids', () => {
+  // DFU registers detectors in a list on the compass, pushed by Start
+  // and popped by End. A duplicate cast pushes a second detector the
+  // manager then discards as a like-kind merge, and nothing ever
+  // deregisters it; and there is no Resume() override, so a Detect
+  // spell restored from a save never re-registers and shows nothing
+  // for the rest of its duration. The port has no separate registry -
+  // activeEffects IS the registry - so neither can happen.
+  const e = player();
+  castDetect(e, 1);
+  castDetect(e, 1);
+  assert.equal(e.activeEffects.length, 1, 'a recast merges, leaking no second registration');
+  const list = updateNearbyObjects([0, 0, 0], { entities: [{ pos: [1, 0, 0], mobileType: 0 }] });
+  assert.equal(detectedMarkers(e, list).length, 1, 'and still detects exactly once');
+  // a RESTORED entry (a plain object off a save snapshot) detects at
+  // once - there is nothing to re-register
+  const restored = player();
+  restored.activeEffects.push({ kind: 'detectEnemy', roundsRemaining: 4 });
+  assert.equal(hasLiveDetector(restored), true);
+  assert.equal(detectedMarkers(restored, list).length, 1);
+});

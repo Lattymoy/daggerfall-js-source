@@ -79,7 +79,7 @@ import {
   MISSILE_LIFESPAN_S,
   EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
 } from '../systems/spellcast.js';
-import { silenceBlocksCast, SILENCED_TEXT } from '../systems/mysticism.js';   // S27
+import { silenceBlocksCast, SILENCED_TEXT, attemptSoulTrap, SOUL_TRAP_TEXT } from '../systems/mysticism.js';   // S27; X5 the soul trap's kill intercept
 import { applySpell, hasActiveEffect, entityIsParalyzed, maxFatigue } from '../systems/effects.js';
 import { FATIGUE_LOSS, liveStat, killIfAnyLiveStatZero } from '../systems/statMods.js';
 import { breathStep } from '../systems/breath.js';
@@ -1751,6 +1751,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (foe.ai && !foe.ai.isHostile) { foe.ai.isHostile = true; foe.ai.makeHostileToPlayer?.(undefined, lastPlayerFeet); }   // wave 36: seeded with where the attack came from
     foe.entity.health -= damage;
     if (foe.entity.health <= 0) {
+      // X5: SOUL TRAP intercepts the kill, exactly where DFU's
+      // EnemyEntity.SetHealth override does (:157-177) - before the
+      // death, on every damage source alike. A successful roll with no
+      // empty gem TETHERS the foe at 1 health instead of killing it,
+      // and the next killing blow rolls again.
+      const trap = attemptSoulTrap(foe.entity, foe.mobileType, playerEntity.items, Math.random());
+      if (trap.alert) hudText.add(SOUL_TRAP_TEXT[trap.alert]);
+      if (!trap.allowDeath) { foe.entity.health = 1; return; }
       foe.dead = true;
       // E-slice: EnemyDeath:132-136 - the targeting foe's death
       // clears the alert (survivors re-raise it next update).
