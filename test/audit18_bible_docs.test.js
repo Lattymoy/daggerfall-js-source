@@ -350,3 +350,32 @@ test('AUDIT 21: bible/Home.md open-flags list matches the regenerator', () => {
     `${r.stderr || r.stdout}\nthe checked-in open-flags list is not what the tool produces - `
     + 'run: node tools/regenOpenFlags.mjs');
 });
+
+// ---------------------------------------------------------------------------
+// U42: the two arc pages COUNT their own modules, and nothing checked the
+// number.
+//
+// UI.md said 52 while `src/ui/` held 56, and Systems.md said 37 while
+// `src/systems/` held 93 - the systems figure had been wrong by a factor of
+// two and a half since the S arc's early slices, on a page whose whole job
+// is to tell a reader how big the arc is. Both pages already carry a
+// standing gate for their PROSE (the "Not started" latch above); this is
+// the same gate for their arithmetic, and the failure message carries the
+// real number so the fix is a copy rather than a recount.
+// ---------------------------------------------------------------------------
+
+test('U42: every arc page that counts its own modules counts them right', () => {
+  const PAGES = [
+    ['bible/10-UI/UI.md', 'src/ui'],
+    ['bible/06-Systems/Systems.md', 'src/systems'],
+  ];
+  for (const [page, dir] of PAGES) {
+    const real = readdirSync(join(root, dir)).filter((f) => f.endsWith('.js')).length;
+    const doc = read(page);
+    const m = doc.match(/(\d+) modules\s*\n?\s*live under\s*\n?\s*`(src\/[a-z]+)\/`/);
+    assert.ok(m, `${page} lost its "N modules live under \`${dir}/\`" line`);
+    assert.equal(m[2], dir, `${page} counts the wrong directory`);
+    assert.equal(Number(m[1]), real,
+      `${page} says ${m[1]} modules live under ${dir}/; there are ${real}`);
+  }
+});
