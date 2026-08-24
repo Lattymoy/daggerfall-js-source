@@ -32,6 +32,16 @@ const tracked = (dir) => execFileSync('git', ['ls-files', dir], { cwd: root, enc
 const PUBLIC_ALLOWLIST = new Map([
   ['public/README.md', 'documentation'],
   ['public/logo.png', "OUR artwork - the title screen brand (U21c), the port's own"],
+  // THE BAKED SKIN (tools/skin/). These pixels never touched ARENA2: the
+  // source is our own generated eight-direction turnaround, projected onto
+  // buildNeutralBody, which is a from-scratch DESIGNED figure and not a trace
+  // of any classic sprite. No classic silhouette survives in them, which is
+  // the question this list exists to ask. They are the first character
+  // texture in the project that ships rather than loading through the data
+  // door, and the reason viewer.html no longer needs ARENA2 for its skin.
+  ['public/skin/skin-intensity.png', 'OURS - intensity baked from our own generated turnaround'],
+  ['public/skin/skin-uv.json', "OURS - UVs over our own rig's geometry, no pixels at all"],
+  ['public/skin/skin-layout.json', 'OURS - atlas cell rectangles, no pixels at all'],
 ]);
 
 test('doctrine: nothing ships out of public/ that is not provably ours', () => {
