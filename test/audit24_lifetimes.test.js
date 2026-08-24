@@ -51,7 +51,16 @@ test('audit24 lifetimes: an encounter foe frees its billboard batch on BOTH ends
   // and death - where the record STAYS in `foes` (the tail splice
   // spares corpses), so the batch would be unreachable and undead
   const dmg = bodyOf(src, 'function damageFoe(f, damage, playerFeet, knockDir = null)');
-  assert.match(dmg, /health <= 0[\s\S]{0,700}releaseFoeBatch\(f\)/, 'death releases too');
+  // The window is a PROXIMITY bound, not a law - it exists so the
+  // release cannot drift out of the death branch entirely. X5 put the
+  // Soul Trap intercept between the two points (the trap can refuse
+  // the death, so it must run BEFORE the batch is freed), which is
+  // legitimate code in that gap; the bound moved to fit it rather than
+  // the documentation being cut to fit the bound.
+  assert.match(dmg, /health <= 0[\s\S]{0,900}releaseFoeBatch\(f\)/, 'death releases too');
+  // and the intercept must sit ahead of the release, not after it
+  assert.ok(dmg.indexOf('attemptSoulTrap') < dmg.indexOf('releaseFoeBatch(f)'),
+    'a trap that refuses the death must not have freed the batch first');
   assert.match(bodyOf(src, 'function batches()'), /if \(f\.dead \|\| !f\._mout\) continue/,
     'and nothing draws a dead foe, which is what makes the release safe');
 });

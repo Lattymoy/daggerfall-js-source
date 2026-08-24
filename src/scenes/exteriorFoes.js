@@ -21,7 +21,7 @@ import { EnemyCaster, castEnemySpell, hasRangedSpell } from '../characters/enemy
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';   // X3
 import { applySpell, maxFatigue, entityIsParalyzed } from '../systems/effects.js';   // X3: self-casts land through the effect spine
 import { calculateCastCost } from '../systems/spellcost.js';   // X3: costs priced off the player (magic-15 note)
-import { silenceBlocksCast } from '../systems/mysticism.js';   // X3: the enemy silence gate
+import { silenceBlocksCast, attemptSoulTrap, SOUL_TRAP_TEXT } from '../systems/mysticism.js';   // X3: the enemy silence gate; X5: the soul trap's kill intercept
 import { EnemyAttack } from '../characters/enemyAttack.js';
 import { makeEnemyEntity, loadMonsterCareer } from '../characters/enemyEntity.js';
 import { MobileUnit } from '../characters/mobileUnit.js';
@@ -182,6 +182,11 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (f.ai && !f.ai.isHostile) { f.ai.isHostile = true; f.ai.makeHostileToPlayer?.(undefined, playerFeet ?? null); }   // wave 36: seeded with where the attack came from
     f.entity.health -= damage;
     if (f.entity.health <= 0) {
+      // X5: the SOUL TRAP intercept, where EnemyEntity.SetHealth's
+      // override sits (:157-177) - before the death, every source alike.
+      const trap = attemptSoulTrap(f.entity, f.mobileType, playerEntity.items, Math.random());
+      if (trap.alert) say?.(SOUL_TRAP_TEXT[trap.alert]);
+      if (!trap.allowDeath) { f.entity.health = 1; return; }
       f.dead = true;
       f.corpse = true;
       // the LIVE batch is finished the moment the foe is - batches()

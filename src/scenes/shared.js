@@ -19,6 +19,7 @@ import { tickPlayerMinutes, runMagicRoundsFor, worldMinutes, setWorldMinutes, CL
 import { killIfAnyLiveStatZero } from '../systems/statMods.js';   // AUDIT 24 (wave 32): the per-entity laws a foe pool owes
 import { decayEnemyAlert } from '../systems/encounters.js';   // AUDIT 24 (wave 36): PlayerEntity.Update's 8-hour decay, in every context
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
+import { createNearbyScan, updateNearbyObjects, detectedMarkers, hasLiveDetector } from '../systems/nearbyObjects.js';   // X4: the Detect scan
 import { liveStat, maxFatigue } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
@@ -210,6 +211,63 @@ export function climbingDeps(entity, say = null) {
     say,
   };
 }
+
+/** X4: the DETECT feed - one nearby-objects scan per host, shared so
+ *  the four hosts cannot each grow their own (which is how the port
+ *  ended up with world.js's lone nearbyFoes measuring range with an
+ *  INCLUSIVE `<=` where PlayerGPS is strict).
+ *
+ *  DFU keeps PlayerGPS's list warm unconditionally, for every system
+ *  that reads it. The port gates the rebuild on a live detector: the
+ *  scan has no other consumer wired yet, and a rebuild nothing reads
+ *  is pure per-frame cost. The moment dispelNearby or the enchantment
+ *  affinity arms are fed from here, that gate comes off - it is a
+ *  performance choice, not a law, and is marked as one.
+ *
+ *  entities()/loot() answer the host's OWN live pools; the adapters
+ *  below turn the port's standard foe and loot-pile shapes into the
+ *  NearbyObject record. feet() is the player's position AT THE
+ *  REBUILD, which is what PlayerGPS measures every distance from.
+ */
+export function createDetectFeed(entity, { entities = () => [], loot = () => [], feet = () => [0, 0, 0] } = {}) {
+  const scan = createNearbyScan(() =>
+    updateNearbyObjects(feet(), { entities: entities(), loot: loot() }));
+  let markers = [];
+  return {
+    tick(dt) {
+      if (!hasLiveDetector(entity)) {
+        // No detector: drop the list rather than let a stale one sit.
+        // DFU has no equivalent because it never stops scanning, but
+        // a port that DOES stop must not resume from a stale snapshot.
+        if (markers.length) { scan.reset(); markers = []; }
+        return markers;
+      }
+      markers = detectedMarkers(entity, scan.tick(dt));
+      return markers;
+    },
+    get markers() { return markers; },
+    /** A scene transition: the previous scene's objects are gone. */
+    reset() { scan.reset(); markers = []; },
+  };
+}
+
+/** The port's standard foe record -> a NearbyObject entity record.
+ *  A DEAD foe is dropped rather than passed as inactive: DFU's
+ *  GetActiveEnemyBehaviours walks live behaviours, and a corpse's
+ *  loot pile is what carries the Treasure bit afterwards. */
+export const foeNearbyRecord = (f) => ({
+  ref: f,
+  pos: f?.ai?.feet,
+  mobileType: f?.mobileType ?? f?.entity?.mobileType ?? 128,
+  effectCount: (f?.entity?.activeEffects ?? []).filter((a) => !a.ended).length,
+});
+
+/** A dungeon loot pile -> a NearbyObject loot record. */
+export const lootNearbyRecord = (p) => ({
+  ref: p,
+  pos: p?.pos,
+  itemCount: (p?.items ?? []).length,
+});
 
 /** X1: the ARMED Open/Lock spell a host hands to actions.activate.
  *  Answers null when nothing is armed. Open wins if both are somehow

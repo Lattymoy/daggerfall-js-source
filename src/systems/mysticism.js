@@ -207,19 +207,39 @@ export function dispellableBundles(bundles) {
     DISPELLABLE_BUNDLE_TYPES.includes(b?.bundleType) && b?.showIcon !== false);
 }
 
-// ── Soul Trap (SoulTrap.cs :111-165) ──────────────────────────────
+// ── Soul Trap (SoulTrap.cs :117-163, EnemyEntity.cs :157-238) ─────
+
+/** MiscItems.Soul_trap, the template DFU searches for by GROUP and
+ *  INDEX (SoulTrap.cs:144). The port's own useItem.js carries the
+ *  same 274. */
+export const SOUL_TRAP_TEMPLATE = 274;
 
 /** FillEmptyTrapItem. AZURA'S STAR FIRST, always: the reusable artifact
  *  amulet takes the soul before any ordinary gem, and `azurasStarOnly`
  *  makes it the only candidate. Otherwise the first EMPTY soul trap in
  *  the pack takes it. A pack with no empty trap fills nothing.
  *
- *  `isAzurasStar` and `isSoulTrap` are passed in so this stays a pure
- *  rule over the port's own item shape. */
+ *  DFU's own comment on the ordering is worth keeping: in CLASSIC the
+ *  pack is walked once and the first empty trap OR star wins, so which
+ *  one fills "would probably depend on the order in which the items
+ *  were added to the inventory"; DFU picks the Star deliberately as
+ *  "the behavior players would expect". That is a chosen departure
+ *  from classic, and the port inherits DFU's choice.
+ *
+ *  X5 FIX. The default `isSoulTrap` was `it.name === 'Soul trap'` and
+ *  could not match anything: the port's items are {group,
+ *  templateIndex} records that carry no `name` at all, and the
+ *  template's own name is "Soul Trap" with a capital T. The predicate
+ *  was never caught because this function had no production caller -
+ *  its test supplied a fixture built to match the broken default. DFU
+ *  searches by GROUP AND TEMPLATE (SearchItems(ItemGroups.MiscItems,
+ *  (int)MiscItems.Soul_trap)), which is what the port does now and
+ *  what every other item predicate here already did (useItem.js's
+ *  isPotionRecipe/isMap). */
 export function fillEmptyTrap(items, soulType, {
   azurasStarOnly = false,
   isAzurasStar = (it) => it?.azurasStar === true,
-  isSoulTrap = (it) => it?.name === 'Soul trap',
+  isSoulTrap = (it) => it?.group === 'MiscItems' && it?.templateIndex === SOUL_TRAP_TEMPLATE,
 } = {}) {
   const empty = (it) => (it?.trappedSoulType ?? null) === null;
   let trap = (items ?? []).find((it) => isAzurasStar(it) && empty(it)) ?? null;
@@ -228,6 +248,72 @@ export function fillEmptyTrap(items, soulType, {
   if (!trap) return null;
   trap.trappedSoulType = soulType;
   return trap;
+}
+
+/** The five Soul Trap HUD lines (Internal_Strings.csv :658-662). */
+export const SOUL_TRAP_TEXT = Object.freeze({
+  trapActive: 'Trap active.',                        // :658
+  trapHumanoid: 'Trap will not work on humanoids.',  // :659
+  trapSuccess: 'Trapped soul.',                      // :660
+  trapFail: 'Trap failed.',                          // :661
+  trapNoneEmpty: 'You have no empty soul traps!',    // :662
+});
+
+/** EnemyEntity.AttemptSoulTrap (:194-238) + the SetHealth override
+ *  (:157-177) that calls it, as one pure law over the port's shapes.
+ *
+ *  This is the most interesting arm in the school, because ONE of its
+ *  outcomes refuses the death:
+ *
+ *    - no live trap on the target        -> dies normally, silent
+ *    - the death-time roll FAILS         -> dies normally, "Trap failed."
+ *    - roll succeeds, a gem takes it     -> dies normally, "Trapped soul."
+ *    - roll succeeds, NO empty gem       -> the entity is TETHERED at
+ *      1 health and does NOT die, with "You have no empty soul traps!"
+ *
+ *  DFU's own comment on that last arm: "keep entity tethered to life -
+ *  player is alerted so they know what's happening". The tether is not
+ *  a one-off: the effect stays, so the NEXT killing blow re-enters
+ *  here and rolls again, and the entity only dies once a roll fails,
+ *  the effect expires, or a gem frees up. An unfillable trap makes the
+ *  target unkillable for the spell's duration.
+ *
+ *  THE ROLL IS A RE-ROLL. SoulTrap.ChanceSuccess is hardcoded TRUE
+ *  (SoulTrap.cs:47-52) purely so the effect always attaches - "Chance
+ *  will be re-rolled using RollTrapChance() when entity is slain".
+ *  So the cast never fails; the chance is spent here, at the kill,
+ *  against the chance frozen at cast (RollChance -> ChanceValue ->
+ *  the CASTER's level, the X2 asymmetry).
+ *
+ *  `soulType` is passed EXPLICITLY, as DFU passes mobileEnemy.ID
+ *  (:217) - the port keeps the mobile id on the FOE record rather
+ *  than the entity, so the door that knows the foe supplies it.
+ *  `roll01` is the engine PRNG slot; `items` is the PLAYER's pack -
+ *  the soul goes to the player who cast it, never to the corpse. */
+export function attemptSoulTrap(target, soulType, items, roll01, { azurasStarOnly = false } = {}) {
+  const trap = (target?.activeEffects ?? []).find((a) => a.kind === 'soulTrap' && !a.ended);
+  if (!trap) return { allowDeath: true, alert: null, filled: null };
+  // Dice100.SuccessRoll, the port's convention throughout.
+  if (Math.floor(roll01 * 100) >= (trap.chance ?? 0)) {
+    return { allowDeath: true, alert: 'trapFail', filled: null };
+  }
+  const filled = fillEmptyTrap(items, soulType, { azurasStarOnly });
+  if (filled) return { allowDeath: true, alert: 'trapSuccess', filled };
+  return { allowDeath: false, alert: 'trapNoneEmpty', filled: null };
+}
+
+/** ItemHelper.ResolveItemLongName's soul-trap tail (:352-368): a
+ *  FILLED trap shows its soul in brackets, an empty one shows nothing.
+ *  DFU left the "(empty)" alternative commented out at :365-368, so
+ *  the blank is deliberate rather than missing.
+ *
+ *  `enemyName` is injected - this module must not import the bestiary. */
+export function soulTrapNameSuffix(item, enemyName) {
+  if (item?.group !== 'MiscItems' || item?.templateIndex !== SOUL_TRAP_TEMPLATE) return '';
+  const soul = item?.trappedSoulType;
+  if (soul === null || soul === undefined) return '';
+  const name = enemyName?.(soul);
+  return name ? ` (${name})` : '';
 }
 
 // ── Silence (Silence.cs + EntityEffectManager.SilenceCheck :1932) ──

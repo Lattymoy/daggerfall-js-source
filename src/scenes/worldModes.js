@@ -27,7 +27,7 @@ import { pickActivatable, worldAabb, activationTargets } from '../player/activat
 import { transferAll, removeOne, addItem, isEnchanted, totalWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
-import { createPlayerTicker , endRunToTitleMenu, exitToTitleMenu, doorSpellFor, consumeDoorSpell, wireDoorSpells} from './shared.js';   // AUDIT 18: the interior host's world clock
+import { createPlayerTicker , endRunToTitleMenu, exitToTitleMenu, doorSpellFor, consumeDoorSpell, wireDoorSpells, createDetectFeed} from './shared.js';   // AUDIT 18: the interior host's world clock
 import { triggerExteriorOpen, DOOR_SPELL_TEXT } from '../systems/mysticism.js';   // X3: the Open spell's EXTERIOR-door arm
 import { buildInteriorContext } from './interiorContext.js';
 import { buildDungeonContext } from './dungeonContext.js';
@@ -127,6 +127,9 @@ import { orderOf } from '../systems/guildVariants.js';
 import { joinedGuildOfGroup } from '../systems/guilds.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js';
 import { SpellMakerWindow } from '../ui/spellMakerWindow.js';   // S1: the Mages Guild / Kynareth spell maker
+// M2: the potion maker - the other half of the guild's magic economy.
+import { PotionMakerWindow, preloadPotionArt, potionArtLoaded } from '../ui/potionMakerWindow.js';
+import { createPotion } from '../systems/loot.js';   // M2: ItemBuilder.CreatePotion, one minter
 import { SITE_TYPES } from '../systems/quest/place.js';
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring, finally called
 import { placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1 (PlaceFoeFreely reads the fieldOfView import below)
@@ -214,6 +217,10 @@ export function createWorldModes(host) {
     },
   });
   const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null, discoveryLocationId = null } = host;   // R1: the discovery store's location key (the anti-grind record's namespace)   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
+
+  // X4: the interior arm's Detect scan (see the frame body). Both
+  // pools are empty until interior loot containers ship.
+  const detectFeed = createDetectFeed(playerEntity, { feet: () => player.pos });
   const { getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, arch, palette } = pipeline;
   // AUDIT 21 (hosts lane, F7): the HUD art for interior mode. A missing file
   // answers null and drawHud no-ops, so this host draws no HUD rather than
@@ -260,6 +267,7 @@ export function createWorldModes(host) {
     preloadListPickerArt({ renderer, fetchBytes, palette });   // U24: PICK00I0 for the training skill list
     preloadTavernArt({ renderer, fetchBytes, palette });   // U39: TVRN00I0 for the innkeeper's panel
     preloadBankArt({ renderer, fetchBytes, palette });   // B2: BANK00I0 for the teller's screen
+    preloadPotionArt({ renderer, fetchBytes, palette });   // M2: MASK00I0 for the cauldron
   };
 
   // ---- Q4-v: THE QUEST LAYER'S INTERIOR MOUNT -----------------------
@@ -1141,6 +1149,44 @@ export function createWorldModes(host) {
     // spellbook check lives in the purchase ladder, where DFU also
     // runs it (the window opens either way, as DFU's does once the
     // popup's own check passes).
+    // M2: the potion maker. Same seam as the spell maker below - the
+    // temple and Mages Guild both offer it, and the destination has
+    // been a FLAGGED null since G3.
+    if (destination === 'guildServicePotionMaker' && potionArtLoaded() && _shopFont) {
+      let potionWin = null;
+      potionWin = new PotionMakerWindow({
+        packItems: () => (playerEntity.items ??= []),
+        wagonItems: () => (playerEntity.wagonItems ??= []),
+        gold: () => goldAmount(playerEntity),
+        // The recipes the player has LEARNED. Reading a recipe scroll
+        // is the useItem arm that fills this; until then a character
+        // knows none and the button says so, which is DFU's own
+        // answer for a new character.
+        recipeKeys: () => playerEntity.potionRecipeKeys ?? [],
+        // ItemBuilder.CreatePotion (:324) - loot.js has minted these
+        // since E1 for random treasure; a mixed potion is the same
+        // bottle carrying the same key, so there is one minter.
+        addPotion: (recipe, key) => {
+          const bottle = createPotion(key);
+          bottle.name = recipe.name;
+          bottle.value = recipe.price;
+          addItem(playerEntity.items, bottle);
+          surfacePlayer();
+        },
+        takeOne: (templateIndex, where) => {
+          const list = where === 'pack' ? playerEntity.items : (playerEntity.wagonItems ?? []);
+          const i = list.findIndex((it) => it.templateIndex === templateIndex);
+          if (i < 0) return false;
+          removeOne(list, list[i]);
+          return true;
+        },
+        icons: { getTexture, uploadRecord, textures: renderer.textures },
+        entity: playerEntity,
+        onClose: () => { if (interiorOverlay === potionWin) interiorOverlay = null; },
+      });
+      interiorOverlay = potionWin;
+      return null;
+    }
     if (destination === 'guildServiceSpellMaker') {
       interiorOverlay = new SpellMakerWindow({
         entity: playerEntity,
@@ -2132,8 +2178,21 @@ export function createWorldModes(host) {
     // last, over the viewmodel, under the overlay.
     if (hudArt) {
       const _hfw = [-view[2], -view[10]];
+      // X4: the Detect markers, interior arm. THE FOUR HOSTS RULE -
+      // the feed is mounted here even though both pools are empty
+      // today, so the seam is visible rather than a host silently
+      // missing an effect. What an interior would contribute in DFU
+      // is LOOT CONTAINERS: static interior NPCs are StaticNPC
+      // components and are NOT in PlayerGPS's list at all (only
+      // enemies and CIVILIAN MOBILE behaviours are, and the port has
+      // neither indoors), so an empty scan in a shop is DFU's answer
+      // too. FLAGGED: interior loot containers are the loot arc's -
+      // when they land they plug into `loot` below and Detect
+      // Treasure lights up indoors with no other change here.
+      const _detected = detectFeed.tick(dt);
       drawHud(renderer, canvas, hudArt, playerEntity,
-        ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt);
+        ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt,
+        { detected: _detected, playerXZ: [player.pos[0], player.pos[2]] });
     }
     // MERGE AUDIT: the interior arm SAYS things - the static-NPC and
     // guild fallthroughs at :362/:368/:416 all speak through

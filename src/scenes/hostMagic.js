@@ -40,7 +40,7 @@ import {
   missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS,
   MISSILE_LIFESPAN_S, EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
 } from '../systems/spellcast.js';
-import { silenceBlocksCast, SILENCED_TEXT, PRESS_BUTTON_TO_FIRE_SPELL, DOOR_SPELL_TEXT } from '../systems/mysticism.js';
+import { silenceBlocksCast, SILENCED_TEXT, PRESS_BUTTON_TO_FIRE_SPELL, DOOR_SPELL_TEXT, SOUL_TRAP_TEXT } from '../systems/mysticism.js';
 import { calculateCastCost, effectSchool, EFFECT_COST_TABLE } from '../systems/spellcost.js';
 import { applySpell } from '../systems/effects.js';
 import { SPELL_CAST_SOUND } from '../systems/enemySpells.js';
@@ -75,6 +75,19 @@ export function createPlayerMagic({
   /** Every spell landing ON THE PLAYER rides this: the S19 Paralyze
    *  awakeAlert ("You are paralyzed.", once per new instance) fires
    *  for player hosts only, exactly like DFU's StartParalyzation. */
+  // X5: every spell the PLAYER lands on a foe goes through here, so
+  // the one message a foe-targeted effect owes the player's HUD gets
+  // spoken once and in one place. DFU's SoulTrap.BecomeIncumbent calls
+  // DaggerfallUI.AddHUDText directly (SoulTrap.cs:86) - a global UI
+  // call, so it reaches the player even though the effect lives on the
+  // monster. The foe's own sinks carry no `say` and should not: the
+  // line belongs to the caster, not the target.
+  function applySpellToFoe(spell, casterLevel, foe, caster = null, ctx = undefined) {
+    const r = applySpell(spell, casterLevel, foe.entity, foeSinks(foe), rolls, caster, ctx);
+    if (r.trapAlert) say(SOUL_TRAP_TEXT[r.trapAlert]);
+    return r;
+  }
+
   function applySpellToPlayer(spell, casterLevel, caster = null, extraCtx = null) {
     // S24: the absorption context, read from the HOST at landing.
     const base = absorbCtx();
@@ -112,7 +125,7 @@ export function createPlayerMagic({
   function explodeAt(pos, spell, casterLevel, playerFeet, caster = null, { excludeFoe = null } = {}) {
     for (const t of sweepFoes(pos, EXPLOSION_RADIUS, foes())) {
       if (excludeFoe && t === excludeFoe) continue;
-      applySpell(spell, casterLevel, t.entity, foeSinks(t), rolls, caster);
+      applySpellToFoe(spell, casterLevel, t, caster);
     }
     if (playerFeet) {
       const d = Math.hypot(playerFeet[0] - pos[0], playerFeet[1] + 0.9 - pos[1], playerFeet[2] - pos[2]);
@@ -190,7 +203,7 @@ export function createPlayerMagic({
       lastCastCost = cost;
       tallyCastSkills(sp);
       surfacePlayer();
-      applySpell(sp, playerEntity.level, t.entity, foeSinks(t), rolls, playerCaster());
+      applySpellToFoe(sp, playerEntity.level, t, playerCaster());
       readiedSpell = null;   // DFU OnReleaseFrame: a cast consumes the ready
       return true;
     }
@@ -201,7 +214,7 @@ export function createPlayerMagic({
       tallyCastSkills(sp);
       surfacePlayer();
       for (const t of sweepFoes(eye, EXPLOSION_RADIUS, foes())) {
-        applySpell(sp, playerEntity.level, t.entity, foeSinks(t), rolls, playerCaster());
+        applySpellToFoe(sp, playerEntity.level, t, playerCaster());
       }
       readiedSpell = null;   // DFU OnReleaseFrame: a cast consumes the ready
       return true;
@@ -322,7 +335,7 @@ export function createPlayerMagic({
         const fx = f.ai.feet[0] - m.pos[0], fy = f.ai.feet[1] + 0.9 - m.pos[1], fz = f.ai.feet[2] - m.pos[2];
         if (Math.hypot(fx, fy, fz) <= MISSILE_COLLIDER_RADIUS + 0.45) {
           if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, playerEntity.level, playerFeet, playerCaster());
-          else applySpell(m.spell, playerEntity.level, f.entity, foeSinks(f), rolls, playerCaster());
+          else applySpellToFoe(m.spell, playerEntity.level, f, playerCaster());
           retireMissile(m);
           break;
         }

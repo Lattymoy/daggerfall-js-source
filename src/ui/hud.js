@@ -57,6 +57,74 @@ export const BREATH_COLOR_NORMAL = [247, 239, 41];
 export const BREATH_COLOR_SHORT = [148, 12, 0];
 export const breathShortThreshold = (liveEndurance) => (liveEndurance >> 3) + 4;
 
+// X4: the DETECT MARKER (HUDCompass.cs:219-257). The three Detect
+// effects do not draw anything themselves - each registers with the
+// compass (DetectMagic.cs:63-71 and its two twins are identical but
+// for the flag), and the compass draws one marker per detected
+// object above the compass box every frame.
+//
+// SUBSTITUTION (recorded departure). DFU's icon is
+// Assets/Resources/DetectMarker.png - a DFU-AUTHORED asset outside
+// ARENA2, so it is neither in the game data the port reads nor
+// shippable here. It is a 5x3 RGBA image and its content is trivially
+// describable: a downward-pointing triangle, rows of 5, 3 and 1
+// pixels centred, every opaque pixel the SAME colour (154, 24, 8).
+// The port draws that shape from these constants instead of loading
+// a file - pixel-identical to DFU's art without carrying it.
+export const DETECT_MARKER_W = 5;
+export const DETECT_MARKER_H = 3;
+export const DETECT_MARKER_RGB = [154, 24, 8];
+/** Filled pixel width per row, top to bottom - centred in the 5px box. */
+export const DETECT_MARKER_ROWS = Object.freeze([5, 3, 1]);
+
+// TWO DFU GATES, recorded: HUDCompass.Draw early-outs on `Enabled`
+// (:89), and the LARGE HUD setting force-disables the compass
+// entirely - which silently kills every Detect marker with no
+// alternative presentation, so a Large HUD player gets nothing from
+// a Detect spell but the spell-point bill. Neither gate is ported
+// because the port has no Large HUD (ui/pauseWindow.js:46 records
+// that) and its compass is unconditional; both become live the day
+// one ships.
+
+/** HUDCompass.ChangeRange (:254-257), verbatim. */
+export const changeRange = (v, oldMin, oldMax, newMin, newMax) =>
+  (v - oldMin) * (newMax - newMin) / (oldMax - oldMin) + newMin;
+
+/** DrawMarker's bearing half (:221-239), verbatim, answering the
+ *  0..1 lerp along the compass box.
+ *
+ *  Two things here are easy to get wrong and are load-bearing:
+ *
+ *  1. targetDirection is `playerXZ - targetXZ` - FROM the target TO
+ *     the player, not the other way round. Flipping it mirrors every
+ *     marker through the centre.
+ *  2. The lerp is NOT clamped by this formula: `angle` spans 0..1 and
+ *     each branch maps a QUARTER-turn window onto 0..1, so the halves
+ *     of the circle behind the player produce -0.5..0 and 1..1.5.
+ *     Unity's Mathf.Lerp clamps t, which is what pins those markers
+ *     to the compass edges rather than drawing them off-box - so the
+ *     clamp is part of the behaviour and lives in the draw below.
+ *
+ *  heading01 is the port's camera yaw / 2pi with 0 facing +z, which
+ *  is exactly DFU's eulerAngles.y / 360 - so facing is
+ *  (sin, 0, cos) of the yaw, the same forward the motor uses. */
+export function compassMarkerLerp(targetXZ, playerXZ, heading01) {
+  const dx = playerXZ[0] - targetXZ[0];
+  const dz = playerXZ[1] - targetXZ[1];
+  const len = Math.hypot(dx, dz);
+  if (!(len > 0)) return 0.5;   // standing inside the target: dead ahead
+  const tx = dx / len, tz = dz / len;
+  const yaw = heading01 * Math.PI * 2;
+  const fx = Math.sin(yaw), fz = Math.cos(yaw);
+  // Vector3.SignedAngle(from, to, up) about +Y for XZ vectors:
+  // atan2(cross.y, dot) where cross.y = from.z*to.x - from.x*to.z.
+  const signed = Math.atan2(tz * fx - tx * fz, tx * fx + tz * fz) * 180 / Math.PI;
+  const angle = (180 - signed) / 360;
+  return (angle >= 0 && angle < 0.5)
+    ? changeRange(angle, 0.25, 0.0, 1.0, 0.5)    // object is to the RIGHT
+    : changeRange(angle, 1.0, 0.75, 0.5, 0.0);   // object is to the LEFT
+}
+
 /** scroll = int(nonWrappedPart * heading01), verbatim. */
 export const compassScroll = (heading01) =>
   Math.trunc(COMPASS_NON_WRAPPED * (((heading01 % 1) + 1) % 1));
@@ -128,7 +196,7 @@ export async function loadHud({ fetchBytes, ImgFile, palette, renderer }) {
 /** Draw the HUD. vitals = { health, maxHealth, magicka, maxMagicka };
  *  heading01 = camera yaw / 2pi with 0 facing +z. */
 export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
-  { font = null, cursorActive = false } = {}) {
+  { font = null, cursorActive = false, detected = null, playerXZ = null } = {}) {
   // AUDIT 24 (wave 39): ShowPlayerDamage's red flash, under the bars.
   // THE FOUR HOSTS RULE, applied before the fact: drawHud is the one
   // host-agnostic call all four make, "last, over the viewmodel", so
@@ -181,6 +249,35 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
     { x: bx + COMPASS_BOX_OUTLINE * s, y: by + COMPASS_BOX_OUTLINE * s, w: bw - COMPASS_BOX_OUTLINE * 2 * s, h: stripH },
     { u0: scroll / art.compass.w, v0: 0, u1: (scroll + COMPASS_BOX_INTERIOR) / art.compass.w, v1: 1 });
   renderer.drawScreenQuad(box.tex, { x: bx, y: by, w: bw, h: bh });
+  // X4: DrawTrackedObjects (HUDCompass.cs:198-217), AFTER the box -
+  // HUDCompass.Draw() calls DrawCompass() then DrawTrackedObjects(),
+  // so markers sit OVER the frame, and above it: DFU's marker y is
+  // `Position.y - icon.height * Scale.y`, the box's TOP edge minus
+  // the icon. `detected` is the union of every live detector's
+  // objects, which is what registeredDetectors amounts to once the
+  // per-detector loop is flattened - DFU draws one marker per object
+  // per detector, so an object matched by TWO live Detect spells is
+  // drawn twice, exactly on top of itself.
+  if (detected && detected.length && playerXZ) {
+    const mw = DETECT_MARKER_W * s, mh = DETECT_MARKER_H * s;
+    const boxLeft = bx, boxRight = bx + bw - mw;
+    const my = by - mh;
+    const rowH = mh / DETECT_MARKER_H;
+    const col = [DETECT_MARKER_RGB[0] / 255, DETECT_MARKER_RGB[1] / 255, DETECT_MARKER_RGB[2] / 255, 1];
+    for (const t of detected) {
+      const raw = compassMarkerLerp(t, playerXZ, heading01);
+      // Mathf.Lerp CLAMPS t - the half-circle behind the player maps
+      // outside 0..1 and pins to the box edges rather than drawing off it.
+      const lerp = Math.min(1, Math.max(0, raw));
+      const mx = boxLeft + (boxRight - boxLeft) * lerp;
+      // the 5x3 triangle, row by row, centred
+      for (let r = 0; r < DETECT_MARKER_ROWS.length; r++) {
+        const fill = DETECT_MARKER_ROWS[r] * s;
+        renderer.drawScreenQuad(null,
+          { x: mx + (mw - fill) / 2, y: my + r * rowH, w: fill, h: rowH }, undefined, col);
+      }
+    }
+  }
   // U38: the crosshair and the interaction-mode indicator, LAST -
   // DaggerfallHUD draws them from one Update beside the vitals it
   // already owns, and drawHud is the ONE host-agnostic call all four

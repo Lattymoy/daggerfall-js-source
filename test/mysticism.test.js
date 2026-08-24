@@ -10,7 +10,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   MYSTICISM_EFFECTS, SUPPORTS_MAGNITUDE, isMysticism,
-  triggerOpen, triggerLock, triggerExteriorOpen, dispelNearby,
+  triggerOpen, triggerLock, triggerExteriorOpen, dispelNearby, SOUL_TRAP_TEMPLATE,
   dispellableBundles, DISPELLABLE_BUNDLE_TYPES, fillEmptyTrap,
   isSilenced, silenceBlocksCast,
 } from '../src/systems/mysticism.js';
@@ -132,9 +132,14 @@ test('mysticism: Dispel Magic offers spells and held items, nothing else', () =>
 });
 
 test('mysticism: Soul Trap fills AZURA\'S STAR before any ordinary gem', () => {
+  // X5: these were {name: 'Soul trap'} fixtures built to match a
+  // default predicate that could never fire on a REAL item - the
+  // port's items are {group, templateIndex} records carrying no
+  // `name`, and the template's own name is "Soul Trap". Now they are
+  // real records, matched the way DFU matches them (group + index).
   const star = { azurasStar: true, trappedSoulType: null };
-  const gem1 = { name: 'Soul trap', trappedSoulType: null };
-  const gem2 = { name: 'Soul trap', trappedSoulType: null };
+  const gem1 = { group: 'MiscItems', templateIndex: SOUL_TRAP_TEMPLATE, trappedSoulType: null };
+  const gem2 = { group: 'MiscItems', templateIndex: SOUL_TRAP_TEMPLATE, trappedSoulType: null };
   const items = [gem1, star, gem2];
   assert.equal(fillEmptyTrap(items, 'Daedroth'), star, 'the artifact takes it first, wherever it sits');
   assert.equal(star.trappedSoulType, 'Daedroth');
@@ -147,7 +152,7 @@ test('mysticism: Soul Trap fills AZURA\'S STAR before any ordinary gem', () => {
 });
 
 test('mysticism: azurasStarOnly refuses to fall back to a gem', () => {
-  const gem = { name: 'Soul trap', trappedSoulType: null };
+  const gem = { group: 'MiscItems', templateIndex: SOUL_TRAP_TEMPLATE, trappedSoulType: null };
   assert.equal(fillEmptyTrap([gem], 'Lich', { azurasStarOnly: true }), null);
   assert.equal(gem.trappedSoulType, null, 'and leaves it untouched');
   assert.equal(fillEmptyTrap([gem], 'Lich'), gem, 'while the ordinary path takes it');
