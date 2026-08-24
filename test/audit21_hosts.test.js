@@ -105,11 +105,24 @@ test('AUDIT 21 hosts F3: a non-ChoiceWindow overlay gets the FULL action map', (
   // worldModes passed the raw key CODE - so even once the screen opened above
   // ground it could not be driven. Both now route through overlayAction, the
   // same map routeKey feeds the dungeon host.
-  for (const h of ['scenes/townTalk.js', 'scenes/worldModes.js']) {
-    const text = code(h);
-    assert.match(text, /overlayAction\(e\)/, `${h} must use the shared action map`);
-    assert.match(text, /isChoiceWindow/, `${h} must still pass raw codes to a ChoiceWindow`);
-  }
+  // townTalk owns its own seam and calls the map directly.
+  assert.match(code('scenes/townTalk.js'), /overlayAction\(e\)/,
+    'scenes/townTalk.js must use the shared action map');
+  assert.match(code('scenes/townTalk.js'), /isChoiceWindow/,
+    'scenes/townTalk.js must still pass raw codes to a ChoiceWindow');
+  // U43: worldModes' interior arm satisfies the same law THROUGH
+  // routeKey, whose overlay branch makes exactly this choice (raw code
+  // for a "native" window, overlayAction for anything else). It used
+  // to re-implement the fork beside it, which is the duplication this
+  // pin was written about - so what it must show now is that it
+  // answers routeKey's question and forwards, and does NOT map again.
+  const modes = code('scenes/worldModes.js');
+  assert.match(modes, /get overlayIsNative\(\) \{ return !!interiorOverlay\?\.isChoiceWindow; \}/,
+    'worldModes must answer routeKey\'s native question from the window itself');
+  assert.equal(/overlayAction\(/.test(modes), false,
+    'worldModes must not map the action a second time - routeKey already did');
+  assert.match(code('ui/input.js'), /if \(ctx\.overlayIsNative\) \{ ctx\.overlayInput\(e\.code, e\); return true; \}/,
+    'and routeKey is where that fork lives');
   // and the screen really does want those actions
   const s = new LevelUpScreen({ stats: { strength: 40, intelligence: 30, willpower: 35,
     agility: 45, endurance: 50, personality: 25, speed: 55, luck: 20 }, pendingLevel: 2 }, () => 0.5);

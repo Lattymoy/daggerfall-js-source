@@ -302,8 +302,42 @@ async function loadSkin() {
 // shading only; this paints the chosen record into its FRONT ARC, so the
 // skull keeps its ramp all the way round and the face layers over the front.
 let facePick = 0;
+const faceCache = new Map();          // archive name -> decoded records
+let faceSet = D.faceSet || null;      // boot set (FACE00I0), replaced per race
+async function loadFaceSet() {
+  const R = RACES[raceIx];
+  let name;
+  try {
+    const { raceArt } = await import('../systems/races.js');
+    name = raceArt(RACE_KEY[R], gender).heads;
+  } catch { return; }
+  if (faceCache.has(name)) { faceSet = faceCache.get(name); applyTone(); return; }
+  try {
+    const [{ getBytes }, { DFPalette }, { CifRciFile }] = await Promise.all([
+      import('../scenes/dataSource.js'),
+      import('../formats/dfPalette.js'),
+      import('../formats/cifRciFile.js'),
+    ]);
+    const p2 = new DFPalette(); p2.load(await getBytes('ART_PAL.COL'), 'ART_PAL.COL');
+    const c2 = new CifRciFile(); c2.load(await getBytes(name), name, p2);
+    const set = [];
+    for (let r = 0; r < 10; r++) {
+      try {
+        const b = c2.getDFBitmap(r, 0);
+        const rgba = [];
+        for (let i2 = 0; i2 < b.data.length; i2++) {
+          const idx = b.data[i2];
+          if (idx) { const c = p2.get(idx); rgba.push(c.r, c.g, c.b, 255); } else rgba.push(0, 0, 0, 0);
+        }
+        set.push({ w: b.width, h: b.height, rgba });
+      } catch { break; }
+    }
+    if (!set.length) return;
+    faceCache.set(name, set); faceSet = set; applyTone();
+  } catch { /* no ARENA2: the head keeps its ramp, as it always did */ }
+}
 function paintFace(ctx) {
-  const c = (skinLayout || {}).head, set = D.faceSet;
+  const c = (skinLayout || {}).head, set = faceSet;
   if (!c || !set || !set.length) return;
   const f = set[facePick % set.length];
   const [a0, a1] = c.faceArc || [0.25, 0.75];
@@ -435,6 +469,13 @@ const RACE_FAMILY = { Breton:'Human', Redguard:'Human', Nord:'Human',
 const RACE_TONE = { Breton:0, Redguard:2, Nord:1, 'High Elf':0, 'Wood Elf':1, 'Dark Elf':2,
   Khajiit:0, Argonian:0 };
 const HAS_TAIL = { Khajiit:'cat', Argonian:'lizard' };
+// races.js keys are CamelCase without spaces; raceArt() resolves the FACE
+// archive off the race's ART INDEX (Breton 0 .. Argonian 7) and gender, which
+// is why a Khajiit was wearing FACE00I0 - the viewer only ever loaded that one.
+const RACE_KEY = { Breton:'Breton', Redguard:'Redguard', Nord:'Nord',
+  'High Elf':'HighElf', 'Wood Elf':'WoodElf', 'Dark Elf':'DarkElf',
+  Khajiit:'Khajiit', Argonian:'Argonian' };
+let gender = 'male';
 let raceIx = 0;
 const raceHair = {};
 for (const R of RACES) {
@@ -688,10 +729,12 @@ function applyTone() {
     setBodySkin(e.ramp); // the six human/elf skin tones
   }
 }
-const syncHair = () => { const R = RACES[raceIx]; applyTone(); for (const rr of RACES) { const h = raceHair[rr]; if (h) for (const st of h.styles) h.meshes[st].visible = false; } const m = curHair(); if (m) m.visible = !helmOn(); if (tailMesh) tailMesh.visible = (RACES[raceIx] === 'Argonian'); if (tailCatMesh) tailCatMesh.visible = (RACES[raceIx] === 'Khajiit'); if (bodyScalesMesh) bodyScalesMesh.visible = (RACES[raceIx] === 'Argonian'); if (bodyFurCoat) bodyFurCoat.visible = (RACES[raceIx] === 'Khajiit'); if (bodyFurBelly) bodyFurBelly.visible = (RACES[raceIx] === 'Khajiit'); }; // per-race body detail
+const syncHair = () => { const R = RACES[raceIx]; applyTone(); loadFaceSet(); for (const rr of RACES) { const h = raceHair[rr]; if (h) for (const st of h.styles) h.meshes[st].visible = false; } const m = curHair(); if (m) m.visible = !helmOn(); if (tailMesh) tailMesh.visible = (RACES[raceIx] === 'Argonian'); if (tailCatMesh) tailCatMesh.visible = (RACES[raceIx] === 'Khajiit'); if (bodyScalesMesh) bodyScalesMesh.visible = (RACES[raceIx] === 'Argonian'); if (bodyFurCoat) bodyFurCoat.visible = (RACES[raceIx] === 'Khajiit'); if (bodyFurBelly) bodyFurBelly.visible = (RACES[raceIx] === 'Khajiit'); }; // per-race body detail
 window.__face = (i) => { facePick = ((i % 10) + 10) % 10; applyTone(); };
+window.__gender = (g) => { gender = (g === 'female') ? 'female' : 'male'; facePick = 0; loadFaceSet(); };
 syncHair();
-loadSkin();   // async; re-runs applyTone once the texture is up
+loadSkin();
+loadFaceSet();   // async; re-runs applyTone once the texture is up
 scene.add(pivot);
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0x40404a, 0.9));

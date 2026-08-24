@@ -53,6 +53,7 @@ import { preloadChargenArt, stopConstellationAnim } from '../ui/chargenArt.js'; 
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { ChargenFlow } from '../ui/chargen.js';
 import { LevelUpScreen, CharSheet, preloadCharSheetArt } from '../ui/charsheet.js';
+import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
 import { charSheetHooks } from '../ui/charSheetNav.js';   // U32: the sheet's four navigation buttons
 import { DeathScreen } from '../ui/deathScreen.js';
 import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in)
@@ -751,6 +752,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       rows: (id) => textRsc?.variantLinesById(id) ?? [],
     })
     : null);
+
+  /** The quest bridge's two reads, or NEITHER - charSheetHooks turns
+   *  the absence into the sheet's refusal rather than an empty book. */
+  const questJournalHooks = () => (opts.questBridge ? {
+    questMessages: () => opts.questBridge.machine.getAllQuestLogMessages() ?? [],
+    notebook: () => opts.questBridge.notebook ?? null,
+  } : {});
 
   function openInventory(lootItems, onEmptied = null) {
     return new NativeInventoryWindow({
@@ -2711,6 +2719,23 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // pause gameplay while any overlay is active.
     get uiOverlayActive() { return !!activeOverlay; },
     overlayWindow: () => activeOverlay,   // U26 probe surface
+    /** U43-ii: the way IN to that slot. The context has held an
+     *  overlay since U3 and exposed only a getter, so the quest
+     *  machine's popup - which the outer host raises, not this one -
+     *  had nowhere to go and world.js warned to the console instead.
+     *  The classic start runs _TUTOR__ and _BRISIEN inside
+     *  Privateer's Hold, so a new game's opening text was among the
+     *  things that never reached a screen.
+     *
+     *  It REFUSES rather than clobbers: a window already up owns the
+     *  slot, exactly as townTalk.showOverlay's callers check
+     *  overlayActive first, and the caller reads the false to keep
+     *  its own reference clean. */
+    showOverlay(win) {
+      if (!win || activeOverlay) return false;
+      activeOverlay = win;
+      return true;
+    },
     dropped: () => droppedLoot._piles,
     /** AUDIT 18 F5: the overlay's own clock. DFU runs
      *  DaggerfallRestWindow.Update every frame the window is topmost
@@ -2832,16 +2857,36 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     toggleCharSheet() {
       if (activeOverlay) return;
       preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: lazy - ready by the next open at worst
-      // U32: the sheet's navigation buttons. This host has no quest
-      // bridge, so charSheetHooks withholds the logbook and the sheet
-      // says so - rather than opening an empty book and implying the
-      // player has no quests when it simply cannot see them here.
+      // U32: the sheet's navigation buttons.
+      //
+      // U43: this used to read "this host has no quest bridge, so
+      // charSheetHooks withholds the logbook and the sheet says so".
+      // It has one whenever worldModes mounts it - the bridge rides in
+      // through opts and the save seam has been reading it since B4
+      // (:2658) - so the sheet was refusing a logbook to a player
+      // standing in a quest dungeon with three active quests. The
+      // STANDALONE ?dungeon page really has none, and there
+      // charSheetHooks' refusal is still the honest answer, which is
+      // why this passes the bridge's own null through rather than
+      // substituting an empty list.
       activeOverlay = new CharSheet(playerEntity, charSheetHooks({
         entity: playerEntity,
         artDeps: { renderer, fetchBytes, palette },
         inventory: () => openInventory(null),
         spellbook: makeSpellbookWindow,
+        ...questJournalHooks(),
       }));
+    },
+    /** U43: the two journal doors (GameManager.cs:541-548). ONE window
+     *  either way - LogBook opens it as it stands, NoteBook on the
+     *  Notebook page (DaggerfallUI.cs:704-711). A host with no bridge
+     *  opens neither, the same refusal the sheet's button gives. */
+    toggleLogbook() { this._openJournal('activeQuests'); },
+    toggleNotebook() { this._openJournal('notebook'); },
+    _openJournal(mode) {
+      if (activeOverlay || !opts.questBridge) return;
+      preloadQuestJournalArt({ renderer, fetchBytes, palette });
+      activeOverlay = new QuestJournalWindow({ ...questJournalHooks(), mode });
     },
     toggleInventory() {
       if (activeOverlay) return;

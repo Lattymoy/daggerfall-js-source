@@ -43,7 +43,7 @@ import { maxFatigue, liveStat } from '../systems/statMods.js';   // AUDIT 23 (C5
 import { maxEncumbrance } from '../combat/formulas.js';   // U40: the letter-of-credit gate
 import { nearestLights } from '../world/cityLights.js';
 import { lookAt, perspective, mirrorProjectionX } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
-import { routeKey, overlayAction, actionOf, held, moveHeld, anyMove } from '../ui/input.js';
+import { routeKey, actionOf, held, moveHeld, anyMove } from '../ui/input.js';
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible interior arrows
@@ -219,9 +219,9 @@ export function createWorldModes(host) {
   });
   const interiorTicker = createPlayerTicker(playerEntity, {
     onExhausted: onExhaustedInterior,   // AUDIT 23 (C5)
-    say: (msg) => console.log('[player]', msg),
+    say,
     onLevelUp: () => {
-      console.log('[player] You have gained a level!');
+      say('You have gained a level!');
       if (!interiorOverlay) interiorOverlay = new LevelUpScreen(playerEntity);
     },
   });
@@ -255,13 +255,18 @@ export function createWorldModes(host) {
 
   let mode = 'exterior';
   let zPrev = false;   // ReadyWeapon (Z) edge state
+  // U43-ii: the interior HUD-text layer is the OUTER host's, and
+  // always was - townTalk's hud draws above the modal render. The
+  // "pends its arc" flag was a line of plumbing: a broken weapon, a
+  // fatigue warning and a level-up all spoke to devtools while the
+  // player stood in a shop with a HUD on screen.
+  const say = (l) => { if (townTalk?.say) townTalk.say(l); else console.warn('[interior]', l); };
   // C9: the INTERIOR mode's FP weapon (the dungeon context owns its
   // own audited copy; the host rule wants the weapon in every mode).
-  // say -> console FLAGGED: the interior HUD-text layer pends its arc.
   const interiorWeapon = createWeaponRig({
     spellArmed: () => magic?.spellArmed() ?? false,   // M2
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
-    say: (l) => console.warn('[interior]', l),
+    say,
   });
   // C13: the interior arrow flights (collider late-resolved - each
   // building brings its own).
@@ -2533,13 +2538,13 @@ export function createWorldModes(host) {
     } : null);
     /** Click a trade-panel rect by name (the probe cannot aim at art). */
     // V4: THE DONE-SWEEP. These two call the window's click() directly
-    // and skipped the sweep pointerdown does (:2909) and
+    // and skipped the sweep pointerdown does, and that
     // __inventoryPickRemote already did - so a window that had set
     // `done` (EXIT is the obvious one) stayed in the slot and every
     // reader downstream still saw it open. The playthrough probe
-    // bought a horse, pressed EXIT through here, and reported that
-    // the trade window would not close; the window had closed, the
-    // hook had not noticed.
+    // bought a horse, pressed EXIT through here, and reported that the
+    // trade window would not close; the window had closed, the hook
+    // had not noticed.
     const _tradeSweep = (r) => {
       if (interiorOverlay?.done) { interiorOverlay = null; _identifySpell = null; }
       return r;
@@ -2736,12 +2741,11 @@ export function createWorldModes(host) {
 
     // V4 (the first-hour playthrough probe): THE WORLD HOST'S DUNGEON
     // MODE HAD NO COMBAT OR LOOT SURFACE AT ALL. worldModes mounts a
-    // real dungeonContext (buildDungeonContext, :2065) but installed
-    // none of the hooks scenes/dungeon.js:279-305 carries, so a probe
-    // could take the classic start into Privateer's Hold and then see
-    // nothing inside it - no foes, no vitals, no dropped piles. Same
-    // names and same shapes as the standalone host's, so one probe
-    // reads either.
+    // real dungeonContext but installed none of the hooks
+    // scenes/dungeon.js:279-305 carries, so a probe could take the
+    // classic start into Privateer's Hold and then see nothing inside
+    // it - no foes, no vitals, no corpses. Same names and same shapes
+    // as the standalone host's, so one probe reads either.
     window.__hp = () => JSON.stringify({
       health: playerEntity.health, maxHealth: playerEntity.maxHealth,
       fatigue: playerEntity.fatigue ?? null, magicka: playerEntity.magicka ?? null,
@@ -2752,7 +2756,7 @@ export function createWorldModes(host) {
       pos: f.ai ? f.ai.feet.map((v) => +v.toFixed(2)) : null,
     }))) : null);
     // The REAL damage door, where the Soul Trap intercept and the
-    // corpse/loot spawn sit (V3's seam, this host's copy).
+    // corpse spawn sit (V3's seam, this host's copy).
     window.__damageFoe = (i, n) => {
       const f = dungeonCtx?.foes?.[i];
       if (!f) return null;
@@ -2763,10 +2767,9 @@ export function createWorldModes(host) {
       ? JSON.stringify((dungeonCtx.dropped?.() ?? []).map((p) => ({ n: p.items.length, flat: !!p.batch })))
       : null);
     // ...and the OTHER loot door, which is the one a kill uses. An
-    // enemy's loot rides its OWN entity (dungeonContext:489 -
-    // GenerateItems(lootTableKey) at spawn) and its corpse becomes an
-    // activation target with CorpseActivationDistance; nothing is ever
-    // dropped on the floor. The first-hour probe asserted __piles
+    // enemy's loot rides its OWN entity (GenerateItems(lootTableKey) at
+    // spawn) and its CORPSE becomes the container; nothing is ever
+    // dropped on the floor. The playthrough probe asserted __piles
     // after a kill, got nothing, and briefly called the game broken.
     window.__lootTargets = () => (dungeonCtx ? JSON.stringify(dungeonCtx.lootTargets().map((t) => t.key)) : null);
     window.__takeLoot = (k) => (dungeonCtx ? dungeonCtx.takeLoot(k) : null);
@@ -2889,75 +2892,86 @@ export function createWorldModes(host) {
     if (e.button === 2) modalAttackSink()?.(0, 0, true);
   });
 
-  addEventListener('keydown', (e) => {
-    // V4 - THE OUTER HOST'S MODAL DID NOT OWN THE KEYBOARD, and the
-    // first-hour probe caught it in a SCREENSHOT: its very first
-    // picture of the starting dungeon is the automap, sitting over a
-    // 0%-explored Privateer's Hold on a game one minute old.
-    //
-    // world.js gates each of its own actions on `!townTalk.overlayActive`
-    // (:1574 onward). THIS handler gated on nothing, and both listen on
-    // the same target without stopping propagation - so while the
-    // CHARGEN WIZARD was up (it lives in the outer host's overlay slot,
-    // and the classic start runs it with the player already inside the
-    // dungeon), every key typed into it ALSO reached
-    // `routeKey(e, dungeonCtx)` below. routeKey's own overlay branch
-    // reads `ctx.uiOverlayActive` - dungeonCtx's slot, which is empty -
-    // so it waved them straight through to the bindings.
-    //
-    // Typing the name MAC opened the automap on the M
-    // (inputActions.js: KeyM -> AutoMap) and left it up when the wizard
-    // closed. R starts a rest, N opens the notebook, L the logbook, Z
-    // readies a weapon, F9 quicksaves a half-made character. Any letter
-    // in a name is a keybinding.
-    //
-    // This is AUDIT 24's two-chargen-wizards defect at a second seam,
-    // and the rule it needed is the same one: ONE MODAL OWNS THE KEYS.
-    if (townTalk?.overlayActive) return;
-    // E2: an open shop overlay owns the keys (the townTalk pattern:
-    // done-then-clear so chained windows survive the keydown).
-    if (mode === 'interior' && interiorOverlay) {
+  /** U43: the interior host's routeKey context - the same shape the
+   *  dungeon context answers, so ONE table (ui/input.js) drives both.
+   *
+   *  Its windows are the OUTER host's: `host.makeInventory`,
+   *  `host.makeCharSheet` and `host.makeJournal` are that host's own
+   *  builders, riding in the way G6's gift window already did. The
+   *  interior host builds nothing of its own here - THE ONE
+   *  CONSTRUCTION SEAM - it only decides which slot the window lands
+   *  in, because this mode draws `interiorOverlay` and not townTalk's.
+   *
+   *  Deliberately absent: quickSave/quickLoad. Interior saving really
+   *  is unbuilt (the composer saves from the exterior and the dungeon
+   *  contexts), and the pause window's SAVE button already answers
+   *  DFU's cannot-save line rather than pretending. */
+  const mountInterior = (w) => { if (w) interiorOverlay = w; };
+  const interiorKeyCtx = {
+    get uiOverlayActive() { return !!interiorOverlay; },
+    // AUDIT 21 (hosts lane, F3): a ChoiceWindow wants the raw CODE and
+    // a LevelUpScreen wants up/down and plus/minus. routeKey's overlay
+    // branch already makes exactly that choice - raw code for a
+    // "native" window, the shared overlayAction map for anything else
+    // - so this answers its question and forwards whatever it decided.
+    // The interior arm used to re-do the mapping itself, which is the
+    // duplication F3 was written about.
+    get overlayIsNative() { return !!interiorOverlay?.isChoiceWindow; },
+    overlayInput(code, e) {
       const w = interiorOverlay;
-      // AUDIT 21 (hosts lane, F3): the same widening townTalk needed. This
-      // passed the raw key CODE, which is what a ChoiceWindow wants and is
-      // useless to a LevelUpScreen - it needs up/down and plus/minus. So a
-      // level-up in a building could not be driven even once it was opened.
-      if (w.isChoiceWindow) w.input(e.code, e);
-      else {
-        const a = overlayAction(e);
-        if (a) w.input(a, e);
-        else w.input(e.code, e);
-      }
+      if (!w) return;
+      w.input(code, e);
       if (w.done && interiorOverlay === w) { interiorOverlay = null; _identifySpell = null; }   // X7: the spell latch dies with its window
-      e.preventDefault();
-      return;
-    }
-    // M2/I2: casting INSIDE a building - the CastSpell action opens
-    // the spellbook (GameManager.cs:550-553), riding the interior
-    // overlay channel. The cast itself is the attack click
-    // (interceptAttack); the old C-cast key retired with I2.
-    if (mode === 'interior' && magic) {
-      if (actionOf(e) === 'CastSpell') {
-        e.preventDefault();
-        if (!interiorOverlay) {
-          const w = makeSpellbookWindow();
-          if (w) interiorOverlay = w;
-        }
-        return;
-      }
-    }
-    // I3: Escape inside a BUILDING opens the pause window in the
-    // interior overlay slot (the dungeon arm rides routeKey's Escape
-    // case into dungeonCtx.togglePause). No interior save path exists
-    // yet - the composer saves from ?world's exterior and the dungeon
-    // contexts - so the SAVE button answers DFU's cannot-save line.
-    if (mode === 'interior' && !interiorOverlay && actionOf(e) === 'Escape' && pauseArtLoaded()) {
+    },
+    togglePause() {
+      if (!pauseArtLoaded()) return;
+      // I3: the SAVE button answers DFU's cannot-save line here.
       openPauseFlow((w) => { interiorOverlay = w; }, {
         savingPrevented: () => true,
         exitToMenu: exitToTitleMenu,
         textLines: (id) => townTalk?.lines?.(id) ?? null,
       });
-      e.preventDefault();
+    },
+    toggleCharSheet() { mountInterior(host.makeCharSheet?.()); },
+    toggleInventory() { mountInterior(host.makeInventory?.()); },
+    // M2/I2: the CastSpell action opens the spellbook
+    // (GameManager.cs:550-553); the cast itself is the attack click.
+    toggleSpellbook() { if (magic) mountInterior(makeSpellbookWindow()); },
+    toggleLogbook() { mountInterior(host.makeJournal?.('activeQuests')); },
+    toggleNotebook() { mountInterior(host.makeJournal?.('notebook')); },
+  };
+
+  addEventListener('keydown', (e) => {
+    // U43: an overlay held in the OUTER host's slot owns the keyboard.
+    // townTalk draws its overlay above the modal render in every mode
+    // (world.js's frame, AUDIT F2-I1), so a window opened out there
+    // is live in here - and both hosts register their own listener on
+    // the same target with neither stopping propagation, so without
+    // this the interior arm answered keys aimed at that window.
+    //
+    // V4 arrived at the same line from the other end, and its evidence
+    // is worth keeping: the first-hour probe's opening screenshot of
+    // the starting DUNGEON was the automap, over a 0%-explored
+    // Privateer's Hold, on a game one minute old. The classic start
+    // runs the chargen wizard with the player already inside, and the
+    // character's name was MAC - inputActions binds KeyM to AutoMap.
+    // Any letter in a name is a keybinding: R starts a rest, N the
+    // notebook, L the logbook, F9 quicksaves a half-made character,
+    // and whatever opened was still up when the wizard closed. So the
+    // rule covers the DUNGEON arm below as much as the interior one:
+    // this return is the only thing standing between a typed name and
+    // the bindings. Pinned in test/modalkeys.test.js, red-proofed both
+    // ways.
+    if (townTalk?.overlayActive) return;
+    // U43: THE ONE DISPATCH. GameManager.Update (:509-557) is a single
+    // flat chain with no scene gate at all - the window a key opens
+    // does not care where the player is standing. The port had three
+    // divergent chains, and the interior one answered exactly two
+    // actions: F5, F6, L, N and R all died the moment you stepped
+    // through a shop door. This routes the same ui/input.js table the
+    // dungeon arm has always used, over an interior ctx.
+    if (mode === 'interior') {
+      if (routeKey(e, interiorKeyCtx)) e.preventDefault();
       return;
     }
     // The input map (ui/input.js) owns all bindings.
@@ -3220,10 +3234,24 @@ export function createWorldModes(host) {
     /** Q4-v: a quest parchment box lands in the interior overlay slot
      *  while a building is mounted (the host routes exterior popups to
      *  its own overlay). */
-    showQuestOverlay(win) { if (mode === 'interior') { interiorOverlay = win; return true; } return false; },
+    /** U43-ii: the quest machine's popup, in EVERY modal mode. The
+     *  dungeon arm was missing, so world.js's showQuestBox fell
+     *  through to a console.warn - and the CLASSIC START runs
+     *  _TUTOR__ and _BRISIEN inside Privateer's Hold, which meant the
+     *  first ten minutes of a new game were silent. The dungeon
+     *  context has had an overlay slot since U14; nothing exported a
+     *  way in. */
+    showQuestOverlay(win) {
+      if (mode === 'interior') { interiorOverlay = win; return true; }
+      if (mode === 'dungeon' && dungeonCtx?.showOverlay) return dungeonCtx.showOverlay(win);
+      return false;
+    },
     // wave 21: the host asks whether the box it pushed is still the
     // one in the slot before it stacks another onto it
-    get questOverlay() { return mode === 'interior' ? interiorOverlay : null; },
+    get questOverlay() {
+      if (mode === 'interior') return interiorOverlay;
+      return mode === 'dungeon' ? (dungeonCtx?.overlayWindow?.() ?? null) : null;
+    },
     tryEnter,
     frame,
     installShotProbes,

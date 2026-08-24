@@ -63,6 +63,7 @@ import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold, totalGoldAmo
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
 import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet (LevelUpScreen: AUDIT 21 hosts F3)
+import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
 import { charSheetHooks } from '../ui/charSheetNav.js';   // U32: the sheet's four navigation buttons
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
@@ -1205,6 +1206,30 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!w) { townTalk.say('(the spellbook art is unavailable)'); return; }
     townTalk.showOverlay(w);
   };
+  // U43: ONE construction for the character sheet too. It was built
+  // inline in this host's keydown, which meant the INTERIOR host -
+  // which mounts this host's windows rather than building its own -
+  // had no way to reach it, and F5 in a shop did nothing.
+  const makeCharSheetWindow = () => new CharSheet(playerEntity, charSheetHooks({
+    entity: playerEntity,
+    artDeps: { renderer, fetchBytes, palette },
+    inventory: () => (inventoryArtLoaded() ? makeInventoryWindow() : null),
+    spellbook: makeSpellbookWindow,
+    // Q4-v: the live machine's log walk and the player's notebook
+    questMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
+    notebook: () => questBridge?.notebook ?? null,
+  }));
+  /** U43: the two journal doors (GameManager.cs:541-548), ONE window
+   *  either way - LogBook opens it as it stands, NoteBook on the
+   *  Notebook page (DaggerfallUI.cs:704-711). */
+  const makeJournalWindow = (mode) => {
+    preloadQuestJournalArt({ renderer, fetchBytes, palette });
+    return new QuestJournalWindow({
+      questMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
+      notebook: () => questBridge?.notebook ?? null,
+      mode,
+    });
+  };
   const arrows = new ArrowFlight({ getGpuMesh, collider: () => collider });   // C13
   let playerSpawned = false;
   // F-slice: FAST TRAVEL. The window collects the popup's choices;
@@ -1572,15 +1597,21 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (e.code === 'F5' || e.code === 'F6') e.preventDefault();
     const act = actionOf(e);   // I2: the registry owns the code -> action read
     if (act === 'CharacterSheet' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
-      townTalk.showOverlay(new CharSheet(playerEntity, charSheetHooks({
-        entity: playerEntity,
-        artDeps: { renderer, fetchBytes, palette },
-        inventory: () => (inventoryArtLoaded() ? makeInventoryWindow() : null),
-        spellbook: makeSpellbookWindow,
-        // Q4-v: the live machine's log walk and the player's notebook
-        questMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
-        notebook: () => questBridge?.notebook ?? null,
-      })));
+      townTalk.showOverlay(makeCharSheetWindow());
+      return;
+    }
+    // U43: LogBook (L) and NoteBook (N) - two of GameManager's own
+    // dispatch chain (:541-548) that the port bound at I1 and then
+    // read NOWHERE, while ui/questJournal.js sat built with all four
+    // of its pages. The interior and dungeon hosts answer them too.
+    if (act === 'LogBook' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
+      e.preventDefault();
+      townTalk.showOverlay(makeJournalWindow('activeQuests'));
+      return;
+    }
+    if (act === 'NoteBook' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
+      e.preventDefault();
+      townTalk.showOverlay(makeJournalWindow('notebook'));
       return;
     }
     // U8d: F6 opens the classic inventory (DFU's default Inventory
@@ -1865,10 +1896,15 @@ export async function bootWorld(canvas, renderer, params, status) {
       onClose: () => { if (_questBoxWin === win) _questBoxWin = null; },
     });
     _questBoxWin = win;
+    // U43-ii: the modal slot first - interior OR dungeon, both of
+    // which showQuestOverlay now answers. It REFUSES when a window is
+    // already up, and the fall-through is townTalk's own slot, which
+    // draws above the modal render in every mode. The old line here
+    // was a console.warn saying the dungeon seam "pends", and the
+    // CLASSIC START runs _TUTOR__ and _BRISIEN inside Privateer's
+    // Hold - so the first ten minutes of a new game were silent.
     if (modes?.showQuestOverlay?.(win)) return;
-    if ((modes?.mode ?? 'exterior') === 'exterior') { townTalk.showOverlay(win); return; }
-    _questBoxWin = null;
-    console.warn('[quest] popup in dungeon mode pends the dungeon overlay seam:', box.rows?.[0] ?? '');
+    townTalk.showOverlay(win);
   };
   /** A window is only still "the top of the stack" while the overlay
    *  slot it went into is still showing it - the player may have
@@ -2394,6 +2430,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // G6: the knightly smith's gift needs THIS host's inventory
     // window in choose-one mode - one builder, one dependency list.
     makeInventory: (extra) => (inventoryArtLoaded() ? makeInventoryWindow(extra) : null),
+    // U43: and the other two windows the INTERIOR host answers keys
+    // for. Same rule as makeInventory - this host owns the builder and
+    // its dependency list; worldModes only chooses the slot.
+    makeCharSheet: () => (charSheetArtLoaded() ? makeCharSheetWindow() : null),
+    makeJournal: (mode) => makeJournalWindow(mode),
     revealLocation: (noteKey) => {
       const dfLoc = locationIndex.get(`${playerTravelPixel().x},${playerTravelPixel().y}`);
       const region = dfLoc ? maps.getRegion(dfLoc.regionIndex) : null;
@@ -2629,7 +2670,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       // there from an un-awaited load, so a constellation started on
       // the way in would hang until its deadline. Ticked and drawn
       // ABOVE the modal render, which is where townTalk always draws.
-      if (townTalk.overlayActive) townTalk.frame(dt);
+      // U43-ii: UNCONDITIONAL. AUDIT F2-I1 added this line to tick a
+      // window held in the townTalk slot while the player was inside a
+      // building or a dungeon, and gated it on the window existing -
+      // but townTalk.frame ticks and draws the HUD TEXT LAYER too
+      // (townTalk.js:571, :586). So every HUD line raised in a modal
+      // mode had nowhere to land, which is why the interior weapon
+      // rig's `say` was a console.warn and the interior ticker's was a
+      // console.log. Drawn ABOVE the modal render, which is where
+      // townTalk always draws.
+      townTalk.frame(dt);
       requestAnimationFrame(frame);
       return;
     }

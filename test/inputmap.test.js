@@ -125,3 +125,108 @@ test('I2: the sweep\'s escapes are themselves bounded', () => {
       `${rel} fly-cam escapes are counted - a new one is a decision, not a drift`);
   }
 });
+
+test('U43: the two journal doors are in the ONE dispatch, and are one window', () => {
+  // GameManager.Update (:541-548) dispatches LogBook and NoteBook in
+  // the same flat chain as CharacterSheet and Inventory. The port has
+  // bound L and N since I1 and read NEITHER anywhere in src/, while
+  // ui/questJournal.js sat built with all four of its pages - the
+  // exact shape of a binding table nobody consults.
+  withDefaults();
+  const calls = [];
+  const ctx = {
+    uiOverlayActive: false,
+    overlayInput: (a) => calls.push('ov:' + a),
+    toggleLogbook: () => calls.push('log'),
+    toggleNotebook: () => calls.push('note'),
+  };
+  assert.ok(routeKey({ key: 'l', code: 'KeyL' }, ctx), 'L opens the logbook');
+  assert.ok(routeKey({ key: 'n', code: 'KeyN' }, ctx), 'N opens the notebook');
+  assert.deepEqual(calls, ['log', 'note']);
+  // a host without the seam is not consumed - the table is optional
+  // per host, the way Rest and AutoMap already are
+  assert.equal(routeKey({ key: 'l', code: 'KeyL' }, { uiOverlayActive: false }), true,
+    'the case still answers; the hook is optional-chained');
+  // and an open overlay owns them, like every other window key - the
+  // letter reaches the WINDOW as a typed character, which is what a
+  // spell being renamed in the book needs
+  ctx.uiOverlayActive = true;
+  calls.length = 0;
+  routeKey({ key: 'l', code: 'KeyL' }, ctx);
+  assert.deepEqual(calls, ['ov:char:l'], 'the live window types it; no logbook opens');
+});
+
+test('U43: ONE dispatch - the interior host routes the same table as the dungeon', () => {
+  // GameManager.Update has NO scene gate: the window a key opens does
+  // not care where the player stands. The port had three divergent
+  // chains, and the interior one answered two actions - so F5, F6, L
+  // and N all died the moment the player stepped through a shop door,
+  // with the windows themselves built and mounted elsewhere.
+  const src = (rel) => readFileSync(join(root, 'src', rel), 'utf8');
+  const modes = src('scenes/worldModes.js');
+  assert.match(modes, /if \(routeKey\(e, interiorKeyCtx\)\) e\.preventDefault\(\);/,
+    'the interior arm routes the shared table');
+  // Each hook must MOUNT something, not merely exist - a named method
+  // with an empty body answers the key and opens nothing, which is
+  // indistinguishable from the gate this slice removed. The windows
+  // are the OUTER host's: one construction, one dependency list; the
+  // interior host only picks the slot.
+  const MOUNTS = [
+    ['toggleCharSheet', /toggleCharSheet\(\) \{ mountInterior\(host\.makeCharSheet\?\.\(\)\); \}/],
+    ['toggleInventory', /toggleInventory\(\) \{ mountInterior\(host\.makeInventory\?\.\(\)\); \}/],
+    ['toggleSpellbook', /toggleSpellbook\(\) \{ if \(magic\) mountInterior\(makeSpellbookWindow\(\)\); \}/],
+    ['toggleLogbook', /toggleLogbook\(\) \{ mountInterior\(host\.makeJournal\?\.\('activeQuests'\)\); \}/],
+    ['toggleNotebook', /toggleNotebook\(\) \{ mountInterior\(host\.makeJournal\?\.\('notebook'\)\); \}/],
+  ];
+  for (const [hook, re] of MOUNTS) assert.match(modes, re, `the interior ctx MOUNTS a window for ${hook}`);
+  // ...and Escape really opens the pause flow rather than returning
+  assert.match(modes, /togglePause\(\) \{\n      if \(!pauseArtLoaded\(\)\) return;\n      \/\/ I3[^]*?openPauseFlow\(/,
+    'the interior Escape door opens the pause flow');
+  assert.match(src('scenes/world.js'), /makeCharSheet: \(\) =>/, 'world.js hands its builder down');
+  assert.match(src('scenes/world.js'), /makeJournal: \(mode\) =>/);
+  // ...and it yields to a window the outer host is already holding,
+  // because townTalk draws its overlay in EVERY mode
+  assert.match(modes, /if \(townTalk\?\.overlayActive\) return;/,
+    'the interior arm must not answer keys aimed at the outer overlay');
+  // the honest absence: interior SAVING is unbuilt, so no quickSave
+  // hook - the pause window says so rather than the key doing nothing
+  const ctxBlock = modes.slice(modes.indexOf('const interiorKeyCtx = {'),
+    modes.indexOf('addEventListener(\'keydown\''));
+  assert.equal(/quickSave/.test(ctxBlock), false, 'no interior quicksave hook');
+});
+
+test('U43-ii: every modal mode can SPEAK - no HUD line goes to the console', () => {
+  // townTalk.frame ticks and DRAWS the HUD text layer as well as the
+  // overlay (townTalk.js:571, :586), and the two exterior hosts called
+  // it in their modal branch only when a window was up. So a broken
+  // weapon, a fatigue warning and a level-up inside a building all
+  // spoke to devtools while the player watched a HUD with nothing on
+  // it. The quest popup was the same shape one layer up: the dungeon
+  // arm of showQuestOverlay did not exist, and the classic start runs
+  // _TUTOR__ and _BRISIEN inside Privateer's Hold.
+  const src = (rel) => readFileSync(join(root, 'src', rel), 'utf8');
+  for (const rel of ['scenes/world.js', 'scenes/exterior.js']) {
+    const text = src(rel);
+    assert.equal(/if \(townTalk\.overlayActive\) townTalk\.frame\(dt\);/.test(text), false,
+      `${rel} must tick the HUD layer in a modal mode, not only a window`);
+    assert.match(text, /\n {6}townTalk\.frame\(dt\);/, `${rel} ticks it unconditionally`);
+  }
+  const modes = src('scenes/worldModes.js');
+  assert.match(modes, /const say = \(l\) => \{ if \(townTalk\?\.say\) townTalk\.say\(l\); else console\.warn/,
+    'the interior say reaches the outer HUD, and falls back loudly');
+  assert.equal(/say: \(l\) => console\.warn\('\[interior\]', l\)/.test(modes), false,
+    'the weapon rig no longer speaks to the console');
+  assert.equal(/say: \(msg\) => console\.log\('\[player\]', msg\)/.test(modes), false,
+    'nor does the interior ticker');
+  assert.equal(/console\.log\('\[player\] You have gained a level!'\)/.test(modes), false,
+    'nor does a level-up');
+  // the quest popup reaches BOTH modal slots
+  assert.match(modes, /if \(mode === 'dungeon' && dungeonCtx\?\.showOverlay\) return dungeonCtx\.showOverlay\(win\);/,
+    'showQuestOverlay has a dungeon arm');
+  const dc = src('scenes/dungeonContext.js');
+  assert.match(dc, /showOverlay\(win\) \{\n {6}if \(!win \|\| activeOverlay\) return false;/,
+    'and the dungeon slot REFUSES rather than clobbering a live window');
+  // ...and the host stops warning, because the fall-through is gone
+  assert.equal(/popup in dungeon mode pends/.test(src('scenes/world.js')), false,
+    "world.js's dungeon-popup warning is retired, not silenced");
+});

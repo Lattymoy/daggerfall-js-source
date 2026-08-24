@@ -58,6 +58,7 @@ import { createArrestFlow } from './arrestFlow.js';   // G2
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
 import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet (LevelUpScreen: AUDIT 21 hosts F3)
+import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
 import { charSheetHooks } from '../ui/charSheetNav.js';   // U32: the sheet's four navigation buttons
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
@@ -726,6 +727,22 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (!w) { townTalk.say('(the spellbook art is unavailable)'); return; }
     townTalk.showOverlay(w);
   };
+  // U43: ONE construction for the character sheet too. It was built
+  // inline in this host's keydown, which meant the INTERIOR host -
+  // which mounts this host's windows rather than building its own -
+  // had no way to reach it, and F5 in a shop did nothing.
+  const makeCharSheetWindow = () => new CharSheet(playerEntity, charSheetHooks({
+    entity: playerEntity,
+    artDeps: { renderer, fetchBytes, palette },
+    inventory: () => (inventoryArtLoaded() ? makeInventoryWindow() : null),
+    spellbook: makeSpellbookWindow,
+    // U43: NO quest hooks here, on purpose. `?town` mounts no quest
+    // bridge, so charSheetHooks withholds the LOGBOOK button and the
+    // sheet gives its refusal - the same honest answer the standalone
+    // `?dungeon` page gets. An empty journal would tell a player they
+    // have no quests when the truth is this page cannot see them, and
+    // for the same reason this host answers neither L nor N.
+  }));
   const arrows = new ArrowFlight({ getGpuMesh, collider: () => collider });   // C13
   let zPrevW = false;   // the ReadyWeapon (Z) edge
   const modeNow = () => modes?.mode ?? 'exterior';   // lazy - modes binds below (boot-time mouse events)
@@ -923,6 +940,10 @@ export async function bootExterior(canvas, renderer, params, status) {
     // G6: the knightly smith's gift needs THIS host's inventory
     // window in choose-one mode - one builder, one dependency list.
     makeInventory: (extra) => (inventoryArtLoaded() ? makeInventoryWindow(extra) : null),
+    // U43: and the other two windows the INTERIOR host answers keys
+    // for. Same rule as makeInventory - this host owns the builder and
+    // its dependency list; worldModes only chooses the slot.
+    makeCharSheet: () => (charSheetArtLoaded() ? makeCharSheetWindow() : null),
     magic, spellsByIndex: () => spellsByIndex,   // M2: the one cast engine + SPELLS.STD ride into the interior arm
     townTalk,   // U23: the interior host borrows FACTION.TXT/TEXT.RSC + the talk seam
     // R1: without this the exterior-lock anti-grind record and
@@ -1123,7 +1144,16 @@ export async function bootExterior(canvas, renderer, params, status) {
       // there from an un-awaited load, so a constellation started on
       // the way in would hang until its deadline. Ticked and drawn
       // ABOVE the modal render, which is where townTalk always draws.
-      if (townTalk.overlayActive) townTalk.frame(dt);
+      // U43-ii: UNCONDITIONAL. AUDIT F2-I1 added this line to tick a
+      // window held in the townTalk slot while the player was inside a
+      // building or a dungeon, and gated it on the window existing -
+      // but townTalk.frame ticks and draws the HUD TEXT LAYER too
+      // (townTalk.js:571, :586). So every HUD line raised in a modal
+      // mode had nowhere to land, which is why the interior weapon
+      // rig's `say` was a console.warn and the interior ticker's was a
+      // console.log. Drawn ABOVE the modal render, which is where
+      // townTalk always draws.
+      townTalk.frame(dt);
       requestAnimationFrame(frame);
       return;
     }
