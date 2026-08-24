@@ -126,6 +126,9 @@ import { orderOf } from '../systems/guildVariants.js';
 import { joinedGuildOfGroup } from '../systems/guilds.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js';
 import { SpellMakerWindow } from '../ui/spellMakerWindow.js';   // S1: the Mages Guild / Kynareth spell maker
+// M2: the potion maker - the other half of the guild's magic economy.
+import { PotionMakerWindow, preloadPotionArt, potionArtLoaded } from '../ui/potionMakerWindow.js';
+import { createPotion } from '../systems/loot.js';   // M2: ItemBuilder.CreatePotion, one minter
 import { SITE_TYPES } from '../systems/quest/place.js';
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring, finally called
 import { placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1 (PlaceFoeFreely reads the fieldOfView import below)
@@ -259,6 +262,7 @@ export function createWorldModes(host) {
     preloadListPickerArt({ renderer, fetchBytes, palette });   // U24: PICK00I0 for the training skill list
     preloadTavernArt({ renderer, fetchBytes, palette });   // U39: TVRN00I0 for the innkeeper's panel
     preloadBankArt({ renderer, fetchBytes, palette });   // B2: BANK00I0 for the teller's screen
+    preloadPotionArt({ renderer, fetchBytes, palette });   // M2: MASK00I0 for the cauldron
   };
 
   // ---- Q4-v: THE QUEST LAYER'S INTERIOR MOUNT -----------------------
@@ -1140,6 +1144,44 @@ export function createWorldModes(host) {
     // spellbook check lives in the purchase ladder, where DFU also
     // runs it (the window opens either way, as DFU's does once the
     // popup's own check passes).
+    // M2: the potion maker. Same seam as the spell maker below - the
+    // temple and Mages Guild both offer it, and the destination has
+    // been a FLAGGED null since G3.
+    if (destination === 'guildServicePotionMaker' && potionArtLoaded() && _shopFont) {
+      let potionWin = null;
+      potionWin = new PotionMakerWindow({
+        packItems: () => (playerEntity.items ??= []),
+        wagonItems: () => (playerEntity.wagonItems ??= []),
+        gold: () => goldAmount(playerEntity),
+        // The recipes the player has LEARNED. Reading a recipe scroll
+        // is the useItem arm that fills this; until then a character
+        // knows none and the button says so, which is DFU's own
+        // answer for a new character.
+        recipeKeys: () => playerEntity.potionRecipeKeys ?? [],
+        // ItemBuilder.CreatePotion (:324) - loot.js has minted these
+        // since E1 for random treasure; a mixed potion is the same
+        // bottle carrying the same key, so there is one minter.
+        addPotion: (recipe, key) => {
+          const bottle = createPotion(key);
+          bottle.name = recipe.name;
+          bottle.value = recipe.price;
+          addItem(playerEntity.items, bottle);
+          surfacePlayer();
+        },
+        takeOne: (templateIndex, where) => {
+          const list = where === 'pack' ? playerEntity.items : (playerEntity.wagonItems ?? []);
+          const i = list.findIndex((it) => it.templateIndex === templateIndex);
+          if (i < 0) return false;
+          removeOne(list, list[i]);
+          return true;
+        },
+        icons: { getTexture, uploadRecord, textures: renderer.textures },
+        entity: playerEntity,
+        onClose: () => { if (interiorOverlay === potionWin) interiorOverlay = null; },
+      });
+      interiorOverlay = potionWin;
+      return null;
+    }
     if (destination === 'guildServiceSpellMaker') {
       interiorOverlay = new SpellMakerWindow({
         entity: playerEntity,
