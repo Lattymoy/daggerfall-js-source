@@ -17,9 +17,22 @@ const skipReal = !ARENA2 || !existsSync(ARENA2)
 
 const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
 
+/** The batch-free counter every makeDeps hands its stub renderer. */
+const destroyed = { n: 0 };
+
 function makeDeps(rand) {
+  destroyed.n = 0;
   return {
-    renderer: { createBillboardBatch: () => ({}), textures: new Map() },
+    // AUDIT 24 (wave 6, EVERY ALLOCATION HAS AN OWNER): a released
+    // guard frees its billboard batch. The stub predated that call and
+    // threw when it landed - and because this file is ARENA2-gated, CI
+    // never saw it. Counted rather than swallowed, so the pin proves
+    // the free HAPPENS instead of merely tolerating it.
+    renderer: {
+      createBillboardBatch: () => ({}),
+      destroyBillboardBatch: () => { destroyed.n++; },
+      textures: new Map(),
+    },
     collider: { heightAt: () => 0, raycast: () => Infinity },
     fetchBytes: async (name) => new Uint8Array(readFileSync(join(ARENA2, name))),
     getTexture: async () => ({
@@ -80,6 +93,10 @@ test('guards G3: killed guards are loot targets, walk-aways are not, loot takes 
   // WITHOUT a corpse (they walk away) - never a loot target
   g.update(0, [0, 0, 0], [0, 1.7, 0]);
   assert.ok(g.guards[0].dead && !g.guards[0].corpse);
+  // AUDIT 24 wave 6's law, now observable: the walk-away RELEASES its
+  // billboard batch. Silently stubbing the free would have let a leak
+  // pass here, which is how this file came to throw on it at all.
+  assert.equal(destroyed.n, 1, 'the released guard frees its batch');
   assert.equal(g.lootTargets().length, 0, 'walk-aways vanish with their items');
   // a KILLED guard leaves a lootable corpse through the real death path
   await g.spawnCityGuards(true, { playerFeet: [0, 0, 0], playerFwd: [0, 0, 1], pool: pool() });

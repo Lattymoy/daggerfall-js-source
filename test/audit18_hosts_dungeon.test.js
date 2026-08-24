@@ -344,7 +344,7 @@ test('guards audit18: the watch spawns EQUIPPED, and its loot rolls the PLAYER g
   assert.ok(/gender: playerEntity\.gender/.test(hostSrc('cityGuards.js')));
 });
 
-test('guards audit18: a swing costs 11 fatigue and tallies the weapon skill AND CriticalStrike', { skip: skipReal }, async () => {
+test('guards audit18: a connecting swing tallies the weapon skill AND CriticalStrike (the fatigue is the host\'s - wave 42)', { skip: skipReal }, async () => {
   const player = makePlayer();
   const g = createCityGuards(makeDeps(() => 0.5, player));
   await g.spawnCityGuards(true, {
@@ -355,7 +355,15 @@ test('guards audit18: a swing costs 11 fatigue and tallies the weapon skill AND 
   pw.weapon = { name: 'Some Enchanted Blade', templateIndex: 120, material: 0, flags: 0x10, minDamage: 3, maxDamage: 12 };
   const before = player.fatigue;
   const hit = g.resolvePlayerHit(pw, [0, 1.7, 0], [0, 0, 1], [0, 0, 0], () => true, null);
-  assert.equal(player.fatigue, before - 11, 'DecreaseFatigue(swingWeaponFatigueLoss) is unconditional');
+  // AUDIT 24 (wave 42) MOVED the drain out of here, and this
+  // ARENA2-gated pin kept asserting the old shape - invisible on CI,
+  // which is why it sat red. DFU charges swingWeaponFatigueLoss ONCE
+  // per swing at WeaponManager.cs:420, a property of swinging rather
+  // than of what you swung at; both exterior hosts drain it in their
+  // melee arm BEFORE calling this, so a second charge here billed 22
+  // near the watch and 11 everywhere else. The law is now: the hit
+  // resolver takes no fatigue at all.
+  assert.equal(player.fatigue, before, 'the swing drain belongs to the HOST, not the hit resolver');
   assert.ok(hit, 'the guard is inside reach, in view and in LOS');
   assert.equal(player.skillUses[SKILLS.LongBlade], 1, 'the TEMPLATE skill, not Hand-to-Hand');
   assert.equal(player.skillUses[SKILLS.HandToHand], 0);
