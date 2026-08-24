@@ -32,16 +32,50 @@ const rd = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
 const decomment = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
 const line = (src, n) => src.split('\n')[n - 1];
 
-/** Runs one shipped listener-registration line with `modes` in exactly
- *  the state the crash happened in: hoisted, declared, unassigned. */
+/** The whole registration STATEMENT starting at `needle`, however many
+ *  lines it spans. U43 made the pointerdown listener multi-line (the
+ *  large HUD's panels have to be offered the click before the relock),
+ *  and a gate that could only read a one-liner would have gone quiet
+ *  on the exact edit that reopens the crash. Brace-balanced rather
+ *  than line-counted, so it follows the law and not the formatting. */
+function statementAt(src, needle) {
+  const lines = src.split('\n');
+  const start = lines.findIndex((l) => l.includes(needle));
+  assert.ok(start >= 0, `no registration line matching ${needle}`);
+  let depth = 0, out = [];
+  for (let i = start; i < lines.length; i++) {
+    const l = lines[i];
+    out.push(l);
+    for (const ch of decomment(l)) {
+      if (ch === '(' || ch === '{' || ch === '[') depth++;
+      else if (ch === ')' || ch === '}' || ch === ']') depth--;
+    }
+    if (depth <= 0 && out.length) return out.join('\n');
+  }
+  assert.fail(`unbalanced statement at ${needle}`);
+  return '';
+}
+
+/** Runs one shipped listener registration with `modes` in exactly the
+ *  state the crash happened in: hoisted, declared, unassigned. */
 function fireListener(lineSrc, event = {}) {
   const seen = [];
-  const canvas = { addEventListener: (type, fn) => seen.push({ type, fn }) };
-  const townTalk = { pointerdown: () => false, wheel: () => false };
+  const canvas = {
+    addEventListener: (type, fn) => seen.push({ type, fn }),
+    getBoundingClientRect: () => ({ left: 0, top: 0, width: 320, height: 200 }),
+    width: 320, height: 200,
+  };
+  const townTalk = { pointerdown: () => false, wheel: () => false, overlayActive: false };
   const requestLook = () => seen.push({ type: 'requestLook' });
-  new Function('canvas', 'townTalk', 'requestLook', `var modes; ${lineSrc}`)(canvas, townTalk, requestLook);
+  // U43: the bar is off in this harness, which is the state that must
+  // still reach requestLook - a HUD that swallowed the click when it
+  // is not even drawn would be the same class of bug as the crash.
+  const routeLargeHudClick = () => false;
+  const hudCtx = {};
+  new Function('canvas', 'townTalk', 'requestLook', 'routeLargeHudClick', 'hudCtx',
+    `var modes; ${lineSrc}`)(canvas, townTalk, requestLook, routeLargeHudClick, hudCtx);
   assert.equal(seen.length, 1, 'one listener registered');
-  seen[0].fn({ preventDefault: () => seen.push({ type: 'preventDefault' }), ...event });
+  seen[0].fn({ preventDefault: () => seen.push({ type: 'preventDefault' }), button: 0, clientX: 0, clientY: 0, ...event });
   return seen.map((s) => s.type);
 }
 
@@ -59,8 +93,8 @@ test('audit24 wave37: the crashing shape really does crash, and the shipped one 
   // to its own default arm.
   for (const host of HOSTS) {
     const src = rd(host);
-    const pd = src.split('\n').find((l) => l.includes("addEventListener('pointerdown'"));
-    const wh = src.split('\n').find((l) => l.includes("addEventListener('wheel'"));
+    const pd = statementAt(src, "addEventListener('pointerdown'");
+    const wh = statementAt(src, "addEventListener('wheel'");
     assert.deepEqual(fireListener(pd), ['pointerdown', 'requestLook'], `${host}: a click before the mode machine exists still grabs the pointer`);
     assert.deepEqual(fireListener(wh), ['wheel'], `${host}: and a scroll is simply not eaten`);
   }

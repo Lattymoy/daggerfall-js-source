@@ -8,7 +8,7 @@ builder and the special advantages window, the settings screen and the
 launcher, the pause options window and the rebindable controls grid, the
 tooltip, the guild service windows, the spell maker, the tavern, the bank
 teller, the classic TRAVEL MAP with its region pages and travel popup,
-and the SPELLBOOK with its icons and the guilds' buy mode). 57 modules
+and the SPELLBOOK with its icons and the guilds' buy mode). 58 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

@@ -4289,3 +4289,123 @@ this and the fast travel that shares its map.
 
 Pins: 7 in `teleportpopup.test.js` and 3 added to
 `travelmapwindow.test.js`. 10 mutations, 10 dead.
+
+## U43 - HUDLARGE: the bar every screenshot of Daggerfall has (2026-08-24)
+
+`HUDLarge.cs`, whole. The classic bottom status bar — the single most
+recognisable piece of Daggerfall's screen, and this port drew none of
+it. What made this slice worth taking now is not the bar: it is that
+**two live seams were already pointing at it and neither had anything
+on the other end.**
+
+**THE SETTING NOTHING READ.** `GUI/LargeHUD` has been in the settings
+store since the MENU slice, and the pause window's FULL SCREEN button
+has been *writing* it since I3 — its own comment said "No large HUD
+exists in the port yet". The settings screen was reporting a working
+toggle for a feature that did not exist. The settings audit's
+both-ways tier map now names `ui/hudLarge.js` as its consumer, along
+with the three that shape it.
+
+**THE OTHER DEAD SEAM WAS THE ONE THAT MATTERED.**
+`IsLargeHUDInteractable` is `cursorActive && !paused`, and
+`cursorActive` is `PlayerMouseLook`'s ActivateCursor toggle — Enter,
+bound in the input registry since I1, **with no consumer anywhere in
+the port**. So the port had no way to free the mouse during play at
+all, and the eleven panels would have been decoration. It lands in
+`player/pointerLock.js`, where the lock lifecycle already lives, and
+DFU's own precedence rule ("when cursor simply active from closing a
+popup, a click will recapture cursor" — but a *deliberately* activated
+one is not taken back) is **one line inside `requestLook`**, which
+every relock-on-gesture arm in every host already goes through. Eight
+call sites, no ninth to remember.
+
+**IT IS AN ALTERNATIVE HUD, NOT AN ADDITION.**
+`DaggerfallHUD.cs:214-220` turns off the vitals, the compass *and* the
+interaction-mode icon whenever the bar is up, "as they conflict in
+space or utility". The crosshair and the breath bar stay. So this is
+an early branch inside `drawHud` rather than a fifth draw call at the
+end, and the one component that outlives it is drawn there with the
+mode icon suppressed.
+
+**ELEVEN CLICKABLE PANELS, EIGHT OF WHICH DRAW NOTHING.** The bar art
+already has the buttons painted on it, so options, spellbook,
+inventory, sheath, use-magic-item, transport, map and rest are pure
+hit rectangles over `MAIN00I0`. Only four things draw over the bar —
+the colour field, the compass needle, the head, the mode icon — plus
+the three vitals in their own rects inside it. The eleven are proven
+**disjoint in both directions**, which is why DFU's component order
+cannot matter and neither can this port's loop.
+
+**THE PANELS POST ACTIONS.** DFU's handlers `PostMessage` into the UI
+manager; the port's equivalent vocabulary is the input registry, so
+`routeAction` was pulled out of `routeKey` and both the keyboard and
+the bar now reach **one door per destination**. The exterior hosts'
+hand-rolled ladders collapsed onto the same `hudCtx` object in the
+process — they had been a second copy of the same list. A hit on the
+bar is **consumed whether or not anything answers it**: an unwired
+action must still swallow the click, or pressing REST in a host with
+no rest door would fall through and swing the player's sword at the
+floor.
+
+**THE TWO MODE CYCLES DISAGREE — and it is DFU's, not a slip.**
+`PlayerActivate.NextInteractionMode` walks the enum: Steal → Grab →
+Info → Talk. This panel's left click walks Steal → **Talk** →
+**Grab** → Info, and its right click is the exact inverse of *that*.
+So clicking the bar's mode button and pressing the mode key move
+through the same four modes in different orders, and a player who does
+both gets a sequence neither would produce alone. Ported as two walks,
+because they are two.
+
+**THE ART IS ALL CLASSIC** — no Ledger-A departure here, unlike U38's
+crosshair and icons, which DFU authors as its own PNGs. `MAIN00I0.IMG`
+(320×46), `MAIN01I0.IMG` (the four 47×23 mode icons in one 47×92
+sheet), `MCOL00I0.CIF` record 0 (the 66×36 colour field behind the
+portrait and vitals), and `CMPA00I0.BSS` — which needed **a new
+reader**.
+
+**THE TWELFTH IMAGE FORMAT.** `formats/bssFile.js` is the simplest
+file in ARENA2: ten bytes of header (five `Int16`) and then
+`FrameCount` frames of raw palette indices, so `10 + n·w·h` *is* the
+file size — the corpus gate, exact to the byte on all three shipping
+files. All three carry **32 frames** and differ in *size* (48×40,
+34×28, 30×25), so a reader that hardcoded the standard needle's
+dimensions would decode two of the three as garbage while consuming
+exactly the right number of bytes. The header also carries a screen
+position — (272, 157) — that nothing reads, because `HUDLarge` places
+the compass at its own (275, 2) inside the bar. Ported anyway: a
+reader that silently drops two fields cannot be checked against the
+bytes. `.BSS` joined the download diet under `dataSource.js`'s own
+rule, all three needles for 116KB.
+
+**DOCKED COLLAPSES TO SOMETHING SIMPLE.** `AutoSizeModes.ScaleToFit`
+scales by height first, that overflows the width test immediately (a
+320×46 bar filling 200 units of height is seven screens wide), and the
+fallback wins — so the bar is exactly the screen's width, its height
+in proportion, flush to the bottom, and the `CustomScale` term cancels
+out of both. Undocked is the native scale times
+`LargeHUDUndockedScale`, aligned — with alignment *None* forced to
+Centre, so 0 and 2 are the same bar.
+
+**PROBED LIVE** (`tools/hudLargeProbe.mjs`) at 1280×720: with the
+setting off the bar reports nothing; flipping it draws a bar 1280 wide
+and 184 tall flush to the bottom edge; all four ARENA2 files decode
+and upload at their real sizes with a **32-frame** needle and a racial
+head; the mode panel walks `steal → dialogue → grab → info` while the
+keyboard walks `steal → grab → info → dialogue` **in the same live
+session**; all eight probed panels post the right action, with the map
+answering AutoMap on the left and TravelMap on the right; and a
+synthesised `pointerdown` on the INVENTORY panel opens the real
+inventory window in the exterior host.
+
+**FLAGGED, by name:** `HUDActiveSpells` (the buff/debuff icon rows)
+and `HUDEscortingNPCFaces` (quest-gated) are the rest of that Ledger
+row. `LargeHUDOffsetHorse` and `LargeHUDUndockedOffsetWeapon` move the
+bar for a horse sprite this port does not draw and a viewmodel with no
+such offset seam, so both settings stay read by nothing and are
+recorded that way rather than silently tiered live. The interior
+host's char-sheet and inventory panels swallow their click and do
+nothing, because F5 and F6 do not reach interiors either — the same
+arc, named in the same place.
+
+Pins: 11 in `hudlarge.test.js`, 4 in `bss.test.js`. 14 mutations, 13
+dead, 1 recorded equivalent.

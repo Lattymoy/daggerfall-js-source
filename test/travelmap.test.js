@@ -224,8 +224,16 @@ test('U41 popup: EXIT closes without travelling, and Escape is the same door', (
 
 test('U41: the world host mounts the art window and keeps performFastTravel\'s order', () => {
   const src = readFileSync(join(root, 'src/scenes/world.js'), 'utf8');
-  assert.ok(src.includes("act === 'TravelMap' && !townTalk.overlayActive"),
+  // U43 lifted the overlay/mode gate to cover the whole ladder at once
+  // - the same ladder the large HUD's map panel reaches through
+  // hudCtx, whose RIGHT click is the travel map - so the pin follows
+  // the law: the gate, then the arm inside it, then the panel that
+  // shares the door.
+  const gate = src.indexOf("if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {");
+  const arm = src.indexOf("if (act === 'TravelMap') { hudCtx.openTravelMap(); return; }");
+  assert.ok(gate > 0 && arm > gate,
     'the TravelMap action opens the map (I2; V is its registry default, InputManager:1028)');
+  assert.match(src, /openTravelMap: \(\) => toggleTravelMap\(\)/, 'and the large HUD reaches the same door');
   const i = src.indexOf('async function fastTravelTo');
   assert.ok(i > 0);
   const fn = src.slice(i, src.indexOf('const toggleTravelMap', i));

@@ -58,6 +58,7 @@ import { fetchBytes, applyMotorEffectFlags, applyFallLanding, ridePlatform } fro
 import { setDeathPresenter, hurtPlayer } from '../characters/playerEntity.js';   // AUDIT 21 hosts F6; AUDIT 23 C5 fatal collapse
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying in a building
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the HUD vanished inside buildings
+import { largeHudOptions, routeLargeHudClick, hudLargeNextMode, hudLargePrevMode } from '../ui/hudLarge.js';   // U43: the classic bottom bar and its eleven panels
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
 // E2: the shop shelf browse/buy layer (node-pure laws in shopStock.js)
 import { ChoiceWindow } from '../ui/talkWindow.js';
@@ -90,6 +91,7 @@ import { getTitle } from '../systems/guilds.js';
 import { getDivine, DIVINES } from '../systems/guildVariants.js';
 import { BUILDING_TYPES, isResidence } from '../world/buildingNames.js';
 import { getInteractionMode } from '../player/interactionMode.js';   // R1: PlayerActivate.currentMode, the one home
+import { bindCursorToggle } from '../player/pointerLock.js';   // U43: PlayerMouseLook.cursorActive
 import { buildingIsUnlocked, buildingLockValue, LOCKED_EXTERIOR_DOOR_TEXT } from '../systems/buildingLocks.js';   // R1: opening hours + the unlocked ladder
 import { exteriorLockpickingChance, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT } from '../world/actionSystem.js';
 import { discoverBuilding, getLastLockpickAttempt, setLastLockpickAttempt } from '../systems/discovery.js';
@@ -2471,7 +2473,8 @@ export function createWorldModes(host) {
       const _detected = detectFeed.tick(dt);
       drawHud(renderer, canvas, hudArt, playerEntity,
         ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt,
-        { detected: _detected, playerXZ: [player.pos[0], player.pos[2]] });
+        { detected: _detected, playerXZ: [player.pos[0], player.pos[2]],
+          largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity) });   // U43
     }
     // MERGE AUDIT: the interior arm SAYS things - the static-NPC and
     // guild fallthroughs at :362/:368/:416 all speak through
@@ -2807,6 +2810,8 @@ export function createWorldModes(host) {
   // C8 E3c: RMB drag-to-swing forwarded to the active dungeon context
   // (the shared machine consumes deltas once per frame). contextmenu
   // suppressed so the right button is a weapon control, as classic.
+  // U43: Actions.ActivateCursor (Enter) frees the mouse during play.
+  bindCursorToggle(canvas, () => (mode === 'dungeon' ? !!dungeonCtx?.uiOverlayActive : !!interiorOverlay), actionOf);
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   // C9: interior mode routes the same RMB seam to its weapon rig.
   const modalAttackSink = () =>
@@ -2878,6 +2883,27 @@ export function createWorldModes(host) {
     if (routeKey(e, dungeonCtx, (p) => player.spawn(p[0], p[1], p[2]))) e.preventDefault();   // P14 (AUDIT 23): a load clears motion state, same applier as dungeon.js
   });
 
+  // U43: the interior arm's routeAction contract. The interior host's
+  // window set is smaller than the exterior's - the char sheet and the
+  // inventory are FLAGGED here exactly as F5/F6 already are (the
+  // AUDIT 17e F41 note above: "routing F5/F6 into interiors is its own
+  // arc") - so the panels that have no interior door swallow their
+  // click and do nothing, which is what routeLargeHudClick promises.
+  const interiorHudCtx = {
+    toggleCharSheet: () => {},        // FLAGGED with F5's own interior arc
+    toggleInventory: () => {},        // FLAGGED with F6's
+    toggleSpellbook: () => { if (!interiorOverlay) { const w = makeSpellbookWindow(); if (w) interiorOverlay = w; } },
+    togglePause: () => {
+      if (interiorOverlay || !pauseArtLoaded()) return;
+      openPauseFlow((w) => { interiorOverlay = w; }, {
+        savingPrevented: () => true,
+        exitToMenu: exitToTitleMenu,
+        textLines: (id) => townTalk?.lines?.(id) ?? null,
+      });
+    },
+    cycleMode: (dir) => townTalk?.setMode?.(dir > 0 ? hudLargeNextMode(getInteractionMode()) : hudLargePrevMode(getInteractionMode())),
+  };
+
   // U8c: pointer routing for interior native windows (the townTalk
   // shape) - hosts call this before requestLook.
   function pointerdown(e) {
@@ -2902,6 +2928,13 @@ export function createWorldModes(host) {
     // window with no click handler must still withhold the pointer
     // (DFU's top window consumes the click), or a pointerdown escapes
     // to requestLook and grabs pointer lock from under the menu.
+    // U43: the large HUD's panels, in BOTH of this host's modes and
+    // before either falls through to the world. dungeonCtx is the
+    // routeAction contract in dungeon mode; the interior arm carries
+    // its own below.
+    if (routeLargeHudClick(px, py, e.button,
+      mode === 'dungeon' ? dungeonCtx : interiorHudCtx,
+      { windowUp: mode === 'dungeon' ? !!dungeonCtx?.uiOverlayActive : !!interiorOverlay })) return true;
     if (mode !== 'interior' || !interiorOverlay) return false;
     const v = pointToNative(nativeMetrics(canvas), px, py);
     if (v) interiorOverlay.click?.(v[0], v[1], e.button === 2);   // I4: the remove gesture rides the button
