@@ -269,25 +269,27 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:2483` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
 - `src/scenes/world.js:2787` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/world.js:2860` - (FLAGGED: exterior corpse containers are the loot arc's), so
-- `src/scenes/worldModes.js:242` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
-- `src/scenes/worldModes.js:287` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
-- `src/scenes/worldModes.js:435` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
-- `src/scenes/worldModes.js:512` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
-- `src/scenes/worldModes.js:575` - guildFactionId: null,   // FLAGGED: a guild-run shop pends the guild-store arm
-- `src/scenes/worldModes.js:606` - credit instead. FLAGGED: there is nowhere to cash one yet, so
-- `src/scenes/worldModes.js:721` - Person placed in a dungeon is the quest machine's, FLAGGED
-- `src/scenes/worldModes.js:784` - trade window in Sell mode. The BANKING arm stays FLAGGED below;
-- `src/scenes/worldModes.js:862` - FLAGGED, each with the slice it waits on:
-- `src/scenes/worldModes.js:979` - FLAGGED: house and ship OWNERSHIP need the building directory
-- `src/scenes/worldModes.js:1075` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:1142` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
-- `src/scenes/worldModes.js:1172` - skip, the refusal line. Only the destination was a FLAGGED null,
-- `src/scenes/worldModes.js:1226` - been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:1332` - with the trade window's own mode flow, the same INTERIM the
-- `src/scenes/worldModes.js:1534` - first (owned houses and quest buildings FLAGGED/seamed per
-- `src/scenes/worldModes.js:1542` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
-- `src/scenes/worldModes.js:2261` - too. FLAGGED: interior loot containers are the loot arc's -
-- `src/scenes/worldModes.js:2631` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
+- `src/scenes/worldModes.js:243` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
+- `src/scenes/worldModes.js:289` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
+- `src/scenes/worldModes.js:437` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
+- `src/scenes/worldModes.js:514` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
+- `src/scenes/worldModes.js:577` - guildFactionId: null,   // FLAGGED: a guild-run shop pends the guild-store arm
+- `src/scenes/worldModes.js:608` - credit instead. FLAGGED: there is nowhere to cash one yet, so
+- `src/scenes/worldModes.js:723` - Person placed in a dungeon is the quest machine's, FLAGGED
+- `src/scenes/worldModes.js:786` - trade window in Sell mode. The BANKING arm stays FLAGGED below;
+- `src/scenes/worldModes.js:864` - FLAGGED, each with the slice it waits on:
+- `src/scenes/worldModes.js:981` - FLAGGED: house and ship OWNERSHIP need the building directory
+- `src/scenes/worldModes.js:1077` - FactionData; the port's pre-chargen INTERIM entity does not, and
+- `src/scenes/worldModes.js:1144` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
+- `src/scenes/worldModes.js:1174` - skip, the refusal line. Only the destination was a FLAGGED null,
+- `src/scenes/worldModes.js:1228` - been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:1265` - destination has been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:1349` - with the trade window's own mode flow, the same INTERIM the
+- `src/scenes/worldModes.js:1551` - first (owned houses and quest buildings FLAGGED/seamed per
+- `src/scenes/worldModes.js:1559` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
+- `src/scenes/worldModes.js:2278` - too. FLAGGED: interior loot containers are the loot arc's -
+- `src/scenes/worldModes.js:2372` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:2710` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
@@ -310,7 +312,6 @@ combat line numbers below are refreshed with it.
 - `src/systems/effects.js:828` - manager, and the port has no such re-entry yet. FLAGGED.
 - `src/systems/effects.js:1017` - out.skipped++;   // FLAGGED: the library grows one family at a time
 - `src/systems/effects.js:1021` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
-- `src/systems/enchanting.js:166` - FLAGGED, with the slice it waits on:
 - `src/systems/enchantments.js:39` - FLAGGED: no host computes them yet, so the conditional arms of
 - `src/systems/enchantments.js:41` - moonPhase() (FLAGGED: lunar phases are a Ledger C row),
 - `src/systems/enchantments.js:246` - *  condition holds. Params 0-3 seasons, 4-6 moons (FLAGGED: lunar
@@ -325,7 +326,6 @@ combat line numbers below are refreshed with it.
 - `src/systems/guildServiceFlow.js:247` - BuySpells: null,         // FLAGGED: the spellbook's buy mode
 - `src/systems/guildServiceFlow.js:248` - BuySpellsMages: null,    // FLAGGED: the spellbook's buy mode
 - `src/systems/guildServiceFlow.js:250` - BuyMagicItems: null,     // FLAGGED: trade Buy + CreateRandomMagicItem
-- `src/systems/guildServiceFlow.js:251` - MakeMagicItems: null,    // FLAGGED: the item maker
 - `src/systems/guildServiceFlow.js:252` - SellMagicItems: null,    // FLAGGED: trade SellMagic mode
 - `src/systems/guildServiceFlow.js:254` - Teleport: null,          // FLAGGED: the travel map's teleport mode
 - `src/systems/guildServiceFlow.js:255` - DaedraSummoning: null,   // FLAGGED: the daedra summoning flow
@@ -374,6 +374,7 @@ combat line numbers below are refreshed with it.
 - `src/ui/inventory.js:11` - Enter readies one (retires ?spell). INTERIM loud: with no
 - `src/ui/inventory.js:53` - table is not in the source snapshot, so the VALUES are FLAGGED
 - `src/ui/inventory.js:155` - /** The known list: entity.spells when it exists; the INTERIM fallback
+- `src/ui/itemMakerWindow.js:46` - FLAGGED: DFU opens a DaggerfallInputMessageBox from the rename
 - `src/ui/listPicker.js:22` - FLAGGED: the scroll bar draws as DFU's plain thumb rect rather than
 - `src/ui/messageBox.js:35` - FLAGGED: the scrolling variant (a label taller than MaxTextHeight
 - `src/ui/messageBox.js:155` - so the strip never rides higher than that. FLAGGED as a
