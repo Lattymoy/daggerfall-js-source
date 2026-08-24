@@ -185,13 +185,17 @@ export async function bootDungeon(canvas, renderer, params, status) {
 
   addEventListener('keydown', (e) => {
     // The input map (ui/input.js) owns all bindings.
-    const dir = () => ({ eye: cam.pos, dir: [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)] });
     // AUDIT 23 (hosts-6) - AUDIT 17e F41's own law, which only the
     // exterior hosts carried: swallowing the browser reload is not
     // optional. F5 under a keyed overlay (rest, level-up, chargen)
     // fell through routeKey's overlay branch and reloaded the page.
     if (e.code === 'F5' || e.code === 'F6') e.preventDefault();
-    if (routeKey(e, ctx, dir, (p) => player.spawn(p[0], p[1], p[2]))) e.preventDefault();   // P14: a load clears motion state (DFU CancelMovement + ClearFallingDamage)
+    // I2 FOLLOW-UP: routeKey lost its castDir parameter when the cast
+    // key became the spellbook opener, and this host was the one call
+    // site not updated - it still passed the old `dir` thunk, which
+    // landed in setPlayerPos, so a quickload here restored the
+    // character and left them standing wherever they were.
+    if (routeKey(e, ctx, (p) => player.spawn(p[0], p[1], p[2]))) e.preventDefault();   // P14: a load clears motion state (DFU CancelMovement + ClearFallingDamage)
   });
   addEventListener('mouseup', (e) => { if (e.button === 2) ctx.playerAttackInput(0, 0, false); });
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; look/attack ride the same seams as mouse

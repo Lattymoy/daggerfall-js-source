@@ -140,6 +140,16 @@ test('AUDIT 23: both dungeon-mounting hosts pass the spawn applier; the snapshot
     'worldModes routeKey applier calls player.spawn');
   assert.equal(wm.includes('player.pos[0] = p[0]'), false,
     'the raw-pos applier is gone');
+  // I2 FOLLOW-UP: the applier has to be routeKey's THIRD argument, and
+  // the input arc's signature change left this host passing the old
+  // castDir thunk there - the applier was silently never called, so a
+  // quickload in ?dungeon restored the character without moving them.
+  // Both hosts are pinned to the three-argument form.
+  const dj = readFileSync(join(root, 'src/scenes/dungeon.js'), 'utf8');
+  for (const [name, sourceText] of [['dungeon.js', dj], ['worldModes.js', wm]]) {
+    const call = /routeKey\(e, \w+, \(p\) => player\.spawn\(p\[0\], p\[1\], p\[2\]\)\)/.exec(sourceText);
+    assert.ok(call, `${name} passes the spawn applier as routeKey's third argument`);
+  }
   const dc = readFileSync(join(root, 'src/scenes/dungeonContext.js'), 'utf8');
   assert.ok(/droppedLoot: droppedLoot\._piles\.map/.test(dc), 'collectWorld carries the piles');
   assert.ok(/droppedLoot\.restorePiles\(w\.droppedLoot\)/.test(dc), 'applyWorld restores them');
