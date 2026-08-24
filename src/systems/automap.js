@@ -49,10 +49,13 @@
 // stores minutes (the one clock); the envelope rides snapshotPlayer
 // beside snap.discovery, every host for free.
 //
-// A2 FLAGGED residue: the grayscale PRESENTATION of prior-run
-// geometry (the state ships here, the mesh pass has no per-draw
-// tint), user note markers, teleporter portals, the 3D view mode +
-// native AMAP art window, and the exterior automap.
+// A2 shipped the grayscale presentation (the renderer's uAutomapMode
+// - visitedThisRun draws colour, prior-run geometry grayscale) and
+// the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
+// residue: user note markers, teleporter portals, the 3D view mode +
+// the native AMAP art windows, the render modes (wireframe/
+// transparent/cutout), beacon focus cycling, and the
+// interior-BUILDING automap arm.
 
 import { getInt } from './settings.js';
 import { MINUTES_PER_DAY } from './gameDate.js';

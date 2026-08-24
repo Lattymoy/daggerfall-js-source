@@ -85,6 +85,8 @@ import { SEASON } from '../world/climateSwaps.js';
 import { addGold } from '../systems/court.js';   // U10 probe surface
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
+import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
+import { discoveredBuildings } from '../systems/discovery.js';   // A2: the nameplates' gate
 
 export async function bootExterior(canvas, renderer, params, status) {
   const regionName = params.get('region') || 'Daggerfall';
@@ -759,6 +761,22 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (e.code === 'KeyC' && walkMode && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
       const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
       magic.castInput([...cam.pos], fwd);
+      return;
+    }
+    // A2: the exterior automap on M (Actions.AutoMap outdoors,
+    // DaggerfallUI.cs:633-650); this host always stands on a location.
+    if (e.code === 'KeyM' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
+      const locId = `${dfLocation.regionIndex}:${dfLocation.name ?? locationName}`;
+      townTalk.showOverlay(new ExteriorAutomapWindow({
+        locationName: dfLocation.name ?? locationName,
+        locationId: locId,
+        gridW: loc.width, gridH: loc.height,
+        blocks: loc.blocks.map((bl) => ({ x: bl.x, y: bl.y, autoMap: bl.dfBlock?.rmbBlock?.fldHeader?.autoMapData })),
+        playerPos: () => (walkMode ? [...player.pos] : [...cam.pos]),
+        playerYaw: () => cam.yaw,
+        directory: () => townTalk.directory,
+        discovered: () => discoveredBuildings(locId),
+      }));
       return;
     }
     keys.add(e.code);

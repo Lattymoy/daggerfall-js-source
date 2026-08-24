@@ -39,6 +39,7 @@ import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   //
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
 import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 import { TravelMapWindow, buildTravelIndex } from '../ui/travelMap.js';   // F-slice
+import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
@@ -1318,6 +1319,34 @@ export async function bootWorld(canvas, renderer, params, status) {
       onTravel: (pick, opts, computed) => { fastTravelTo(pick, opts, computed); },
     }));
   };
+  // A2: the exterior automap's own dispatch half (DaggerfallUI.cs
+  // :633-650): M outside opens the TOWN map only when the current
+  // map pixel carries a location - empty wilderness opens nothing.
+  // (Inside, routeKey's 'automap' arm opens the dungeon map instead.)
+  const toggleExteriorAutomap = () => {
+    if (townTalk.overlayActive) return;
+    const px = playerTravelPixel();
+    const key = `${px.x},${px.y}`;
+    const dfLoc = locationIndex.get(key);
+    const b = built.get(key);
+    if (!dfLoc || !b?.locBlocks || !b.locOrigin) return;
+    const feet = walkMode ? player.pos : cam.pos;
+    const t = state.pixelTranslation(px.x, px.y);
+    // location-local player frame - the Where-is directory's own
+    // conversion (setTopics' playerPos closure); the overlay holds
+    // the motor, so the open-time capture stays truthful
+    const local = [feet[0] - t[0] - b.locOrigin[0], feet[1] - t[1] - b.locOrigin[1], feet[2] - t[2] - b.locOrigin[2]];
+    townTalk.showOverlay(new ExteriorAutomapWindow({
+      locationName: dfLoc.name,
+      locationId: `${dfLoc.regionIndex}:${dfLoc.name}`,
+      gridW: dfLoc.exterior.exteriorData.width, gridH: dfLoc.exterior.exteriorData.height,
+      blocks: b.locBlocks.map((bl) => ({ x: bl.x, y: bl.y, autoMap: bl.dfBlock?.rmbBlock?.fldHeader?.autoMapData })),
+      playerPos: () => local,
+      playerYaw: () => cam.yaw,
+      directory: () => townTalk.directory,
+      discovered: () => discoveredBuildings(`${dfLoc.regionIndex}:${dfLoc.name}`),
+    }));
+  };
   // Edge-detect latch shared with the mode machine: a held key must not
   // re-trigger across a mode switch.
   const latch = { use: false, crouch: false };   // audit 16f: jump is HELD since P14 - the latch slot was dead
@@ -1416,6 +1445,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     // F-slice: the travel map on V (InputManager.SetupDefaults:1028).
     if (e.code === 'KeyV' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
       toggleTravelMap();
+      return;
+    }
+    // A2: the exterior automap on M (Actions.AutoMap outdoors,
+    // DaggerfallUI.cs:633-650 - the town-map half of the dispatch).
+    if (e.code === 'KeyM' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
+      toggleExteriorAutomap();
       return;
     }
     if (e.code === 'KeyC' && walkMode && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {

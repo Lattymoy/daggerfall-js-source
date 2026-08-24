@@ -17,8 +17,8 @@
 // press, scaled from DFU's per-second speeds), no mouse. The native
 // art window, the 3D view mode, render modes (cutout/wireframe/
 // transparent), beacon focus cycling, note markers and teleporter
-// portals are A2 FLAGGED (with the grayscale presentation - see
-// systems/automap.js).
+// portals stay FLAGGED (systems/automap.js keeps the list); A2
+// brought the grayscale prior-run presentation here.
 //
 // THE PASS. The host draws overlays after its own world pass, so this
 // window opens a SECOND camera frame: beginFrame with the top-down
@@ -221,17 +221,28 @@ export class AutomapWindow {
       // runs with the depth test off).
       renderer.drawScreenQuad(null, { x: 0, y: 0, w: renderer.canvas.width, h: renderer.canvas.height }, undefined, [0, 0, 0, 1]);
       // the revealed-only pass - MeshRenderer.enabled = discovered,
-      // as a filter over the LIVE draw lists (systems/automap.js)
+      // as a filter over the LIVE draw lists (systems/automap.js).
+      // A2: two tiers, DFU's RENDER_IN_GRAYSCALE law - visited this
+      // run draws in colour (mode 1: the slice-distance dim alone),
+      // geometry revealed on a PRIOR run draws grayscale (mode 2) -
+      // Automap.cs:60-79's two bits, finally presented.
       if (rec) {
-        for (const d of this.deps.drawList) if (d.key != null && rec.revealed.has(d.key)) renderer.drawMesh(d.mesh, d.matrix, this.deps.texRemap);
-        for (const d of this.deps.dynamicDraws) if (rec.revealed.has(d.object.key)) renderer.drawMesh(d.gpu, d.object.matrix, this.deps.texRemap);
+        const run = rec.visitedThisRun;
+        renderer.setAutomapMode(1);
+        for (const d of this.deps.drawList) if (d.key != null && run.has(d.key)) renderer.drawMesh(d.mesh, d.matrix, this.deps.texRemap);
+        for (const d of this.deps.dynamicDraws) if (run.has(d.object.key)) renderer.drawMesh(d.gpu, d.object.matrix, this.deps.texRemap);
+        renderer.setAutomapMode(2);
+        for (const d of this.deps.drawList) if (d.key != null && rec.revealed.has(d.key) && !run.has(d.key)) renderer.drawMesh(d.mesh, d.matrix, this.deps.texRemap);
+        for (const d of this.deps.dynamicDraws) if (rec.revealed.has(d.object.key) && !run.has(d.object.key)) renderer.drawMesh(d.gpu, d.object.matrix, this.deps.texRemap);
       }
-      // BEACONS ARE NEVER SLICED: DFU injects the slicing shader into
-      // the duplicated GEOMETRY only (:1906); the arrow and markers
-      // live under gameobjectBeacons with Standard materials
-      // (:1355-1362), so slicing below your feet must not erase your
-      // own position marker (A1 review). setClipY uploads immediately.
+      // BEACONS ARE NEVER SLICED (nor dimmed, nor grayed): DFU
+      // injects the slicing shader into the duplicated GEOMETRY only
+      // (:1906); the arrow and markers live under gameobjectBeacons
+      // with Standard materials (:1355-1362), so slicing below your
+      // feet must not erase your own position marker (A1 review).
+      // Both setters upload immediately.
       renderer.setClipY(null);
+      renderer.setAutomapMode(0);
       // the player marker arrow: mesh 99900 at the player's own
       // position + yaw (Automap.cs:1353-1361); red quad fallback
       if (this.deps.arrowMesh && p?.feet) {
@@ -258,6 +269,7 @@ export class AutomapWindow {
       // hand the state back exactly as the dungeon hosts set it
       // (dungeon.js:221-223 / worldModes.js:1662-1663)
       renderer.setClipY(null);
+      renderer.setAutomapMode(0);
       renderer.setFog('exp', 0.005, 0, 0, new Float32Array([0, 0, 0]));
       renderer.setLighting(new Float32Array(DUNGEON_AMBIENT), 0);
       renderer.setScreenOffset(off[0], off[1]);
