@@ -151,20 +151,70 @@ test('U25: the spellbook opens, or says 12 when empty', () => {
 });
 
 test('U25: a map and a potion leave the pack; the doll (no collection) keeps them', () => {
-  const map = { group: 'MiscItems', templateIndex: TEMPLATES.Map };
+  const mk = () => ({ group: 'MiscItems', templateIndex: TEMPLATES.Map });
+  // U44: RecordLocationFromMap really reveals now, so the arm needs the
+  // host's DiscoverRandomLocation seam. A revealed name gets record
+  // 499 and the map is consumed.
+  const map = mk();
   const bag = [map];
-  const r = useItem(map, bag, {});
+  const r = useItem(map, bag, { revealMap: () => 'Privateers Hold' });
   assert.equal(r.kind, 'map');
   assert.equal(r.textId, MAP_TEXT_ID);
+  assert.equal(r.revealed, 'Privateers Hold');
   assert.equal(bag.length, 0);
+  // an EXHAUSTED region still eats the map - DFU's RemoveItem sits
+  // outside RecordLocationFromMap's try/catch - and answers readMapFail
+  const spent = mk();
+  const bag3 = [spent];
+  const r3 = useItem(spent, bag3, { revealMap: () => null });
+  assert.equal(r3.text, USE_TEXT.readMapFail);
+  assert.equal(r3.textId, undefined, 'no 499 box over a failed read');
+  assert.equal(bag3.length, 0, 'the map is spent either way');
+  // a host with NO reveal seam does not eat it and does not claim an
+  // outcome it cannot produce
+  const noSeam = mk();
+  const bag4 = [noSeam];
+  const r4 = useItem(noSeam, bag4, {});
+  assert.equal(r4.pending, true);
+  assert.equal(r4.textId, undefined);
+  assert.equal(bag4.length, 1, 'the map survives a host that cannot reveal');
   // UseItem(item) from the paperdoll passes NO collection, and the map
   // arm is guarded on it
-  const map2 = { group: 'MiscItems', templateIndex: TEMPLATES.Map };
-  assert.notEqual(useItem(map2, null, {}).kind, 'map');
+  assert.notEqual(useItem(mk(), null, { revealMap: () => 'X' }).kind, 'map');
   const potion = { group: 'UselessItems1', templateIndex: TEMPLATES.Glass_Bottle };
   const bag2 = [potion];
   assert.equal(useItem(potion, bag2, {}).kind, 'potion');
   assert.equal(bag2.length, 0);
+});
+
+test('U44: drinking a potion reaches DrinkPotion, and says what it drank', () => {
+  // The arm consumed the bottle and answered `pending`, which printed
+  // "You drink the potion." over an entity nothing had touched. It
+  // hands the recipe key to the host's cast engine now and reports the
+  // potion's display name; a bottle naming no recipe is still drunk
+  // and still does nothing, which is DrinkPotion's own
+  // `PotionRecipeKey == 0` guard (:906).
+  const bottle = (key) => ({ group: 'UselessItems1', templateIndex: TEMPLATES.Glass_Bottle, potionRecipeKey: key });
+  const seen = [];
+  const drinkPotion = (k) => { seen.push(k); return k === 77 ? 'Healing' : null; };
+  const good = bottle(77);
+  const bag = [good];
+  const r = useItem(good, bag, { drinkPotion });
+  assert.deepEqual(seen, [77], 'the recipe key reaches the engine');
+  assert.equal(r.potion, 'Healing', 'and the window is told what it was');
+  assert.equal(r.pending, undefined, 'no "pending" line over a real effect');
+  assert.equal(bag.length, 0);
+  // an unknown recipe: drunk, consumed, nothing happens - and the
+  // window falls back to the pending line rather than naming a potion
+  const junk = bottle(1);
+  const bag2 = [junk];
+  const r2 = useItem(junk, bag2, { drinkPotion });
+  assert.equal(r2.pending, true);
+  assert.equal(r2.potion, undefined);
+  assert.equal(bag2.length, 0, 'still consumed - DFU drinks it either way');
+  // a host with no engine does not pretend
+  const noEngine = bottle(77);
+  assert.equal(useItem(noEngine, [noEngine], {}).pending, true);
 });
 
 test('U25: the catch-all is NextVariant, and an enchanted item runs its payload on top', () => {

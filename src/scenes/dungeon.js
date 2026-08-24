@@ -12,7 +12,7 @@ import { Arch3dFile } from '../formats/arch3dFile.js';
 import { getInteractionMode, setInteractionMode } from '../player/interactionMode.js';   // R1: the global PlayerActivate mode
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { audio } from '../systems/audio.js';   // FS-slice: the stride plays flat 2D, as PlayerFootsteps' customAudioSource does
-import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLock.js';   // U44: PlayerMouseLook.cursorActive
+import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLock.js';   // U45: PlayerMouseLook.cursorActive
 import { playerEntity } from '../characters/playerEntity.js';   // shot-mode __hp probe
 import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
@@ -29,7 +29,7 @@ import {
 } from '../player/activate.js';
 import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells } from './shared.js';
 import { routeKey, held, moveHeld, anyMove, actionOf } from '../ui/input.js';
-import { routeLargeHudClick } from '../ui/hudLarge.js';   // U44: the bar's eleven panels
+import { routeLargeHudClick } from '../ui/hudLarge.js';   // U45: the bar's eleven panels
 import { createDataPipeline } from './dataPipeline.js';
 import { buildDungeonContext } from './dungeonContext.js';
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U14: the overlay pointer seam
@@ -171,7 +171,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       if (v && ctx.overlayClick?.(v[0], v[1], e.button === 2)) return;
       return;   // a window is up: never grab the pointer behind it
     }
-    // U44: the large HUD's eleven panels, BEFORE the relock - a click
+    // U45: the large HUD's eleven panels, BEFORE the relock - a click
     // on the bar is a button press, never a grab for the pointer. The
     // ctx it routes into is the SAME one routeKey uses, which is the
     // whole point of pulling routeAction out of it.
@@ -186,7 +186,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     ctx.overlayWheel?.(Math.sign(e.deltaY));
   }, { passive: false });
   // C8 E3c: RMB drag-to-swing (classic weapon control; menu suppressed)
-  // U44: Actions.ActivateCursor (Enter) frees the mouse during play.
+  // U45: Actions.ActivateCursor (Enter) frees the mouse during play.
   bindCursorToggle(canvas, () => ctx.uiOverlayActive, actionOf);
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   addEventListener('mousedown', (e) => { if (e.button === 2 && !ctx.uiOverlayActive) ctx.playerAttackInput(0, 0, true); });   // I4: a right-click on a window is the window's (the remove gesture), never a swing

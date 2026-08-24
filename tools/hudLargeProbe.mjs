@@ -1,4 +1,4 @@
-// U44 probe: the classic bottom bar, live, in a real town.
+// U45 probe: the classic bottom bar, live, in a real town.
 //
 // The unit tests drive the geometry and the two cycles over fixtures.
 // This proves the HOST half, which is where every previous slice's

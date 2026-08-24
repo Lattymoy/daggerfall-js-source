@@ -629,7 +629,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   }
 
   return {
-    keydown, tryActivate, frame, ensureLoaded, nextMode, setMode, showOverlay, setTopics, pointerdown, wheel, hover,   // U44: setMode is the large HUD's mode panel, whose cycle is not nextMode's
+    keydown, tryActivate, frame, ensureLoaded, nextMode, setMode, showOverlay, setTopics, pointerdown, wheel, hover,   // U45: setMode is the large HUD's mode panel, whose cycle is not nextMode's
     openTalkWindow,   // B7: TalkToStaticNPC's window push routes here (worldModes' click + the guild popup's TALK)
     /** TK-v: the two halves of the tone the ENGINE asks the host for -
      *  which tone button is selected, and the tier computation for a

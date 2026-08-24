@@ -2455,3 +2455,91 @@ directions.
 
 Pins: 16 in `infection.test.js`, plus the rewritten `OnMonsterHit`
 row in `diseases.test.js`. 18 mutations, 18 dead.
+
+## S39 / U44 - DRINK IT AND SOMETHING HAPPENS (2026-08-24)
+
+`src/systems/potions.js` (the twenty recipes widened, plus
+DrinkPotion's bundle) + `src/systems/effects.js` (the one effect with
+no classic key) + `src/systems/useItem.js` + `src/ui/nativeInventory.js`
++ the four hosts. `test/potions.test.js` (+5),
+`test/useitem.test.js` (+1), `test/nativeinventory.test.js` (+1).
+
+**The game was lying.** `useItem`'s potion arm removed the bottle
+from the pack and answered `pending`, and the window printed "You
+drink the potion." over an entity nothing had touched. The map arm
+did the same: removed the map, printed "You study the map.", revealed
+nothing. Both had been that way for the whole of the item arc, and
+both are the worst kind of gap - not a missing feature a player can
+see is missing, but a claimed outcome that never happened.
+
+**DrinkPotion, verbatim.** `EntityEffectManager.DrinkPotion`
+(`:903-947`) builds an `EffectBundleSettings` of `BundleTypes.Potion`
+and `TargetTypes.CasterOnly` whose effects are the recipe's primary
+followed by its secondaries, and then assigns it with
+`BypassSavingThrows | BypassChance`. The detail worth naming: all of
+those effects share **one** `potionRecipe.Settings` struct (`:914-930`),
+not a copy each - so purification's Heal-Health and Invisibility
+inherit cureDisease's chance and magnitude rather than their own
+defaults. A per-effect copy would look identical until someone read
+the numbers.
+
+**The data, and the two ways to get it wrong.** Every row was lifted
+from the fifteen effect classes that call `new PotionRecipe(...)`:
+
+- **The enum order.** `ElementalResistance` registers its four in the
+  order Fire / Frost / **Shock** / **Poison** (`:142-145`), but the
+  variant index is `DFCareer.Elements`, where DiseaseOrPoison is 2 and
+  Shock is 3. So resistShock is `8,3` and resistPoison `8,2` - the
+  two are crossed relative to the source order, and the pin names
+  that specifically.
+- **The field names.** DFU's `EffectSettings` and the classic record
+  use different names for the same slots, and DFU's own converter
+  (`EntityEffectBroker.cs:952-976`) is the mapping: `ChancePlus` is
+  `chanceMod`, `MagnitudeBaseMin/Max` are `magnitudeBaseLow/High`, and
+  `MagnitudePlusMin/Max` are `magnitudeLevelBase/LevelHigh`. A
+  recipe's `settings` names only what differs from
+  `DefaultEffectSettings`, which is all eleven fields at 1 - so
+  orcStrength's explicitly-written `1, 1` base is *the default* and
+  goes unnamed, while its `14, 14` plus does not.
+
+**The one effect with no classic key.** `Heal-SpellPoints` is
+registered PotionMaker-only, with no `MagicSkill` and no spell-book
+description (`HealSpellPoints.cs:21-30`), and sets no `ClassicKey` at
+all. No SPELLS.STD row can name it - which is precisely what
+`effects.js:246-252` recorded when S15 undid an earlier mis-mapping of
+`(10,9)` onto it, and why the sink list has read *"restoreMagicka
+returns with potions"* ever since. It returns here. A potion bundle
+is not a spell record: DFU builds one from `EffectEntry(effect.Key,
+settings)` - a STRING key - and the classic pair is only how a
+SPELLS.STD row reaches an effect. So this one travels under its DFU
+key with `type: -1`, and the apply loop lets a keyed entry past the
+sentinel that skips the reader's empty slots. Its magnitude carries
+**no** multiplier where its fatigue sibling has the x64
+(`HealSpellPoints.cs:62-64`).
+
+**And the map.** `RecordLocationFromMap` (`:1819-1846`) is
+`DiscoverRandomLocation`, then record 499 on success and `readMapFail`
+when the region is exhausted - and `RemoveItem` sits OUTSIDE the
+try/catch, so the map is spent either way. The reveal is the host's,
+because only a host with a region index can walk one: `?world` has
+`revealLocation`, already the seam behind the two guild map reveals,
+and DFU's own note key for the item is `readMap`. `?town` and
+`?dungeon` name the hook `null` on purpose rather than omitting it -
+the construction sweep should see a decision - and the arm reads that
+null and leaves the map unread rather than eating it for nothing.
+
+Pins: 5 in `potions.test.js`, 1 each in `useitem.test.js` and
+`nativeinventory.test.js`. 20 mutations, 20 dead. The first pass left
+three alive, all the same shape: the HOST supplied a hook and nothing
+checked that the WINDOW forwarded it into the law - which is silent,
+because the arm then falls back to the very `pending` line this slice
+removed.
+
+FLAGGED: the potion's own message. DFU shows no box for a drink at
+all - the effect speaks for itself - and the port's window still
+prints its `pending` line for an unknown recipe, which is right, but
+`USE_PENDING.potion` is now reachable only through a bottle whose
+recipe key names nothing. The cast SOUND is DrinkPotion's
+`GetCastSoundID(ElementTypes.Magic)`; DFU gates it on
+`IsPlayerEntity`, and the port's engine is the player's, so the gate
+is structural rather than written.

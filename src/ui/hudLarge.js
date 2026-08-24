@@ -1,4 +1,4 @@
-// U44 - HUDLARGE: the classic bottom status bar (HUDLarge.cs, MIT,
+// U45 - HUDLARGE: the classic bottom status bar (HUDLarge.cs, MIT,
 // Daggerfall Workshop). The single most recognisable piece of
 // Daggerfall's screen, and this port drew none of it: `GUI/LargeHUD`
 // has been in the settings store since the MENU slice, the pause
@@ -435,7 +435,7 @@ export function largeHudOptions(deps, entity) {
  * path. Returns true when the bar took the click.
  *
  * IsLargeHUDInteractable (:392-395) is `cursorActive && !paused`, and
- * both halves matter here. The cursor half is what U44 had to build -
+ * both halves matter here. The cursor half is what U45 had to build -
  * see player/pointerLock.js - because with the pointer locked there
  * is no cursor to click a panel with. The paused half is the caller's
  * `windowUp`: a window over the bar owns the click.

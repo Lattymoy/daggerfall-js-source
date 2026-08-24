@@ -6,7 +6,7 @@
 
 import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
 import { Arch3dFile } from '../formats/arch3dFile.js';
-import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLock.js';   // U44: bindCursorToggle is PlayerMouseLook.cursorActive
+import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLock.js';   // U45: bindCursorToggle is PlayerMouseLook.cursorActive
 import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
@@ -63,8 +63,8 @@ import { charSheetHooks } from '../ui/charSheetNav.js';   // U32: the sheet's fo
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw
-import { largeHudOptions, routeLargeHudClick, hudLargeNextMode, hudLargePrevMode } from '../ui/hudLarge.js';   // U44: the classic bottom bar and its eleven panels
-import { getInteractionMode } from '../player/interactionMode.js';   // U44: the mode panel's cycle reads it
+import { largeHudOptions, routeLargeHudClick, hudLargeNextMode, hudLargePrevMode } from '../ui/hudLarge.js';   // U45: the classic bottom bar and its eleven panels
+import { getInteractionMode } from '../player/interactionMode.js';   // U45: the mode panel's cycle reads it
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
 import { NativeInventoryWindow, preloadInventoryArt, inventoryArtLoaded } from '../ui/nativeInventory.js';   // U8d: the native inventory
 import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
@@ -706,6 +706,14 @@ export async function bootExterior(canvas, renderer, params, status) {
     // the slot, so this bypasses toggleSpellbook's already-open guard
     // - the inventory has just run its own close law.
     openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },
+    // U44: NULL on purpose. RecordLocationFromMap reveals a random
+    // undiscovered location in the CURRENT REGION, and this page has
+    // no region index to walk - `?town` is one built location, not a
+    // streamed world. The map arm reads the null and leaves the item
+    // unread rather than eating it for nothing. Named rather than
+    // omitted, so the construction sweep sees a DECISION.
+    revealMap: null,
+    drinkPotion: (key) => magic.drinkPotion(key),   // U44: DrinkPotion through the ONE cast engine
     nowMinute: () => Math.floor(playerTicker.classicMinutes),
     onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),   // U8e: OnPop mints the world pile
     ...extra,
@@ -797,7 +805,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // or the browser menu steals focus (Firefox activates it on keyUP).
   // T3b: the town seam eats its keys FIRST (F1-F4 modes; overlay
   // Esc/Enter) so a held overlay never leaks into the movement set.
-  // U44 - THE ONE DOOR PER DESTINATION. The keydown ladder below and
+  // U45 - THE ONE DOOR PER DESTINATION. The keydown ladder below and
   // the large HUD's eleven panels open the same windows, and DFU
   // reaches them the same way from both (PostMessage into the UI
   // manager). This object is that contract - ui/input.js's routeAction
@@ -852,7 +860,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // (FLAGGED); swallowing the browser reload is not optional.
     if (e.code === 'F5' || e.code === 'F6') e.preventDefault();
     const act = actionOf(e);   // I2: the registry owns the code -> action read
-    // U44: the ladder below and the large HUD's panels are the SAME
+    // U45: the ladder below and the large HUD's panels are the SAME
     // doors, so they are one object now rather than two ladders that
     // would drift. `hudCtx` is ui/input.js's routeAction contract.
     if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
@@ -887,7 +895,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (!townTalk.overlayActive && !(modes?.overlayHeld ?? false) && document.pointerLockElement !== canvas) requestLook(canvas);
   });
   addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
-  // U44: Actions.ActivateCursor (Enter) frees the mouse during play
+  // U45: Actions.ActivateCursor (Enter) frees the mouse during play
   // and takes it back - PlayerMouseLook.cursorActive, which had been
   // bound since I1 with no consumer at all. Without it the large HUD
   // is unreachable, because IsLargeHUDInteractable IS this flag.
@@ -912,7 +920,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   canvas.addEventListener('pointerdown', (e) => {
     if (townTalk.pointerdown(e)) return;
     if (modes?.pointerdown?.(e)) return;
-    // U44: the large HUD's panels, BEFORE the relock - a click on the
+    // U45: the large HUD's panels, BEFORE the relock - a click on the
     // bar is a button press, never a grab for the pointer.
     const _r = canvas.getBoundingClientRect();
     if (routeLargeHudClick(
@@ -1280,6 +1288,8 @@ export async function bootExterior(canvas, renderer, params, status) {
               icons: { getTexture, uploadRecord, textures: renderer.textures },
               rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
               openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },   // U42: the Spellbook item's own door, on the LOOT-pile window too
+              revealMap: null,   // U44: no region index on this page - see the bare window's note
+              drinkPotion: (key) => magic.drinkPotion(key),   // U44: DrinkPotion through the ONE cast engine
               nowMinute: () => Math.floor(playerTicker.classicMinutes),
               onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),
             }));

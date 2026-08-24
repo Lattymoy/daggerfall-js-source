@@ -97,7 +97,7 @@ export function routeKey(e, ctx, setPlayerPos = null) {
 }
 
 /**
- * THE ACTION LADDER ALONE, without the key event. U44 pulled it out
+ * THE ACTION LADDER ALONE, without the key event. U45 pulled it out
  * of routeKey because the large HUD's eleven panels post ACTIONS -
  * DFU's own handlers PostMessage into the UI manager - so a click on
  * the bar and a press of the bound key have to arrive at the same
@@ -135,7 +135,7 @@ export function routeAction(action, ctx, setPlayerPos = null) {
     case 'AutoMap': ctx.toggleAutomap?.(); return true;   // A1 (optional-chained: only the dungeon contexts carry one today)
     case 'QuickSave': ctx.quickSave?.(); return true;
     case 'QuickLoad': ctx.quickLoad?.(setPlayerPos); return true;
-    // U44: the four the large HUD reaches that no keybind in this
+    // U45: the four the large HUD reaches that no keybind in this
     // port has ever routed. Each is a real DFU destination and each
     // is optional here, so the panel is live the moment a host grows
     // the door and dead - not broken - until then.

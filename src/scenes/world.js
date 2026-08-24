@@ -8,7 +8,7 @@
 
 import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
 import { Arch3dFile } from '../formats/arch3dFile.js';
-import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLock.js';   // U44: bindCursorToggle is PlayerMouseLook.cursorActive
+import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLock.js';   // U45: bindCursorToggle is PlayerMouseLook.cursorActive
 import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
@@ -68,8 +68,8 @@ import { charSheetHooks } from '../ui/charSheetNav.js';   // U32: the sheet's fo
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw
-import { largeHudOptions, routeLargeHudClick, hudLargeNextMode, hudLargePrevMode } from '../ui/hudLarge.js';   // U44: the classic bottom bar and its eleven panels
-import { getInteractionMode } from '../player/interactionMode.js';   // U44: the mode panel's cycle reads it
+import { largeHudOptions, routeLargeHudClick, hudLargeNextMode, hudLargePrevMode } from '../ui/hudLarge.js';   // U45: the classic bottom bar and its eleven panels
+import { getInteractionMode } from '../player/interactionMode.js';   // U45: the mode panel's cycle reads it
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
 import { NativeInventoryWindow, preloadInventoryArt, inventoryArtLoaded } from '../ui/nativeInventory.js';   // U8d: the native inventory
 import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
@@ -153,6 +153,9 @@ import { openPauseFlow, preloadPauseFlowArt, pauseArtLoaded } from '../ui/pauseW
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
  *  DiscoverRandomLocation name. */
 const REVEAL_NOTE_TEXT = Object.freeze({
+  // U44: the map ITEM's own note (DaggerfallInventoryWindow.cs:1834),
+  // Internal_Strings.csv :810.
+  readMap: 'Discovered the location of %map after studying a map.',
   readMapTG: 'The Thieves Guild have revealed the closely-guarded whereabouts of a treasure trove called %map.',
   readMapDB: 'The Dark Brotherhood revealed the secret of some treasure-laden crypts located somewhere called %map.',
 });
@@ -1182,6 +1185,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the slot, so this bypasses toggleSpellbook's already-open guard
     // - the inventory has just run its own close law.
     openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },
+    // U44: RecordLocationFromMap's reveal. DFU's own note key for the
+    // map ITEM is `readMap`, the third caller of this one seam.
+    revealMap: () => revealLocation('readMap'),
+    drinkPotion: (key) => magic.drinkPotion(key),   // U44: DrinkPotion through the ONE cast engine
     nowMinute: () => Math.floor(playerTicker.classicMinutes),
     onDrop: (items) => droppedLoot.dropPile(items, dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`),   // U8e: OnPop mints the world pile; P2: stamped with its map pixel
     ...extra,
@@ -1190,6 +1197,27 @@ export async function bootWorld(canvas, renderer, params, status) {
   // player's own array and the window WRITES to it (delete, swap,
   // sort, rename), so it is handed by reference - the save envelope
   // reads the same array and carries the new order.
+  /** PlayerGPS.DiscoverRandomLocation over the CURRENT region, plus
+   *  the notebook note its caller names. Three callers now: the two
+   *  guild map reveals (G8) and U44's map ITEM, whose note key is
+   *  DFU's own `readMap` (DaggerfallInventoryWindow.cs:1833-1834).
+   *  Only this host has a region index to walk - the standalone town
+   *  and dungeon pages legitimately answer nothing. */
+  const revealLocation = (noteKey) => {
+    const dfLoc = locationIndex.get(`${playerTravelPixel().x},${playerTravelPixel().y}`);
+    const region = dfLoc ? maps.getRegion(dfLoc.regionIndex) : null;
+    if (!region) return null;
+    const rows = region.mapTable.map((row, i) => ({
+      mapId: row.mapId, discovered: row.discovered,
+      name: region.mapNames[i], regionName: region.name,
+    }));
+    const picked = discoverRandomLocation(rows);
+    // ThievesGuild.cs:114-116 / DarkBrotherhood.cs:107-109 -
+    // `GetLocalizedText(noteKey).Replace("%map", name)`, verbatim.
+    if (picked) questBridge?.notebook?.addNote(REVEAL_NOTE_TEXT[noteKey]?.replace('%map', picked.name) ?? '');
+    return picked?.name ?? null;
+  };
+
   let _spellbook = null;   // U42: the live window, for the probe surface
   const makeSpellbookWindow = () => (spellbookArtLoaded()
     ? (_spellbook = new SpellbookWindow({
@@ -1587,7 +1615,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // or the browser menu steals focus (Firefox activates it on keyUP).
   // T3b: the town seam eats its keys FIRST (F1-F4 modes; overlay
   // Esc/Enter) so a held overlay never leaks into the movement set.
-  // U44: ui/input.js's routeAction contract for this host - the same
+  // U45: ui/input.js's routeAction contract for this host - the same
   // object the keydown ladder below calls and the large HUD's panels
   // reach through routeLargeHudClick. Every member is an arrow, so
   // nothing here runs before the helper it names exists.
@@ -1625,7 +1653,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // (FLAGGED); swallowing the browser reload is not optional.
     if (e.code === 'F5' || e.code === 'F6') e.preventDefault();
     const act = actionOf(e);   // I2: the registry owns the code -> action read
-    // U44 - THE ONE DOOR PER DESTINATION: this ladder and the large
+    // U45 - THE ONE DOOR PER DESTINATION: this ladder and the large
     // HUD's eleven panels open the same windows, so they read the same
     // object. It is the same law U43 applied to the interior arm, one
     // host over. QuickLoad keeps its own arm below because it is the
@@ -1670,7 +1698,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!townTalk.overlayActive && !(modes?.overlayHeld ?? false) && document.pointerLockElement !== canvas) requestLook(canvas);
   });
   addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
-  // U44: Actions.ActivateCursor (Enter) - PlayerMouseLook.cursorActive,
+  // U45: Actions.ActivateCursor (Enter) - PlayerMouseLook.cursorActive,
   // bound since I1 with no consumer, and the flag the large HUD's
   // IsLargeHUDInteractable actually is.
   bindCursorToggle(canvas, () => townTalk.overlayActive || (modes?.overlayHeld ?? false), actionOf);
@@ -1692,7 +1720,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   canvas.addEventListener('pointerdown', (e) => {
     if (townTalk.pointerdown(e)) return;
     if (modes?.pointerdown?.(e)) return;
-    // U44: the large HUD's panels, BEFORE the relock.
+    // U45: the large HUD's panels, BEFORE the relock.
     const _r = canvas.getBoundingClientRect();
     if (routeLargeHudClick(
       (e.clientX - _r.left) * (canvas.width / _r.width),
@@ -2449,20 +2477,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // its dependency list; worldModes only chooses the slot.
     makeCharSheet: () => (charSheetArtLoaded() ? makeCharSheetWindow() : null),
     makeJournal: (mode) => makeJournalWindow(mode),
-    revealLocation: (noteKey) => {
-      const dfLoc = locationIndex.get(`${playerTravelPixel().x},${playerTravelPixel().y}`);
-      const region = dfLoc ? maps.getRegion(dfLoc.regionIndex) : null;
-      if (!region) return null;
-      const rows = region.mapTable.map((row, i) => ({
-        mapId: row.mapId, discovered: row.discovered,
-        name: region.mapNames[i], regionName: region.name,
-      }));
-      const picked = discoverRandomLocation(rows);
-      // ThievesGuild.cs:114-116 / DarkBrotherhood.cs:107-109 -
-      // `GetLocalizedText(noteKey).Replace("%map", name)`, verbatim.
-      if (picked) questBridge?.notebook?.addNote(REVEAL_NOTE_TEXT[noteKey]?.replace('%map', picked.name) ?? '');
-      return picked?.name ?? null;
-    },
+    revealLocation,
     magic, spellsByIndex: () => spellsByIndex,   // M2: the one cast engine + SPELLS.STD ride into the interior arm
     townTalk,   // U23: the interior host borrows FACTION.TXT/TEXT.RSC + the talk seam
     // A5b: the tavern arm needs the host's clock, and leaving one has to
@@ -2813,6 +2828,8 @@ export async function bootWorld(canvas, renderer, params, status) {
                 icons: { getTexture, uploadRecord, textures: renderer.textures },
                 rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
                 openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },   // U42: the Spellbook item's own door, on the LOOT-pile window too
+                revealMap: () => revealLocation('readMap'),   // U44: the map item's reveal, on the loot-pile window too
+                drinkPotion: (key) => magic.drinkPotion(key),   // U44: DrinkPotion through the ONE cast engine
                 nowMinute: () => Math.floor(playerTicker.classicMinutes),
                 onDrop: (items) => droppedLoot.dropPile(items, dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`),   // P2: stamped
               }));

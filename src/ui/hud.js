@@ -18,7 +18,7 @@
 import { maxFatigue, maxBreath, liveStat } from '../systems/statMods.js';
 import { drawCrosshairAndModeIcon } from './hudCrosshair.js';   // U38
 import { playerDamageFlash } from './damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage rides the one HUD call
-import { drawHudLarge } from './hudLarge.js';   // U44: the classic bottom bar - an ALTERNATIVE HUD, see below
+import { drawHudLarge } from './hudLarge.js';   // U45: the classic bottom bar - an ALTERNATIVE HUD, see below
 
 export const COMPASS_BOX_OUTLINE = 2;
 export const COMPASS_BOX_INTERIOR = 64;
@@ -194,7 +194,7 @@ export async function loadHud({ fetchBytes, ImgFile, palette, renderer }) {
   }
 }
 
-/** U44: the rect the large HUD last drew itself into, so a host's
+/** U45: the rect the large HUD last drew itself into, so a host's
  *  pointer handler can hit-test the bar without recomputing a layout
  *  it does not own. Null whenever the bar is off - which is also what
  *  makes a click fall through to the world. */
@@ -214,7 +214,7 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   playerDamageFlash.tick(dt);
   playerDamageFlash.draw(renderer, canvas);
   if (!art) return;
-  // U44 - THE LARGE HUD IS AN ALTERNATIVE, NOT AN ADDITION.
+  // U45 - THE LARGE HUD IS AN ALTERNATIVE, NOT AN ADDITION.
   // DaggerfallHUD.cs:214-220 turns off the vitals, the compass AND the
   // interaction-mode icon whenever it is on, "as they conflict in
   // space or utility"; the CROSSHAIR and the breath bar stay, and the

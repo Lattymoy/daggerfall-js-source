@@ -130,7 +130,7 @@ export function drawCrosshairAndModeIcon(renderer, canvas, font,
   }
 
   // The corner indicator only exists in the NON-xhair styles (:100).
-  // U44: and not at all under the large HUD, which draws the mode as
+  // U45: and not at all under the large HUD, which draws the mode as
   // a PANEL of its own - DaggerfallHUD.cs:219 disables this component
   // outright while the bar is up, so the corner word would be a
   // second copy of something already on screen.

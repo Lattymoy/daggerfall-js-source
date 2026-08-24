@@ -1,4 +1,4 @@
-// U44 - THE BSS READER, the twelfth image format. BssFile.cs is the
+// U45 - THE BSS READER, the twelfth image format. BssFile.cs is the
 // simplest file in ARENA2 and the corpus gate is correspondingly
 // absolute: `10 + frames * width * height` IS the file size, to the
 // byte, for every BSS the game ships.

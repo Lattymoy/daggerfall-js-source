@@ -19,7 +19,7 @@
 
 let _errBound = false;
 
-// U44 - PlayerMouseLook.cursorActive (:32, :185-213), THE TOGGLE THAT
+// U45 - PlayerMouseLook.cursorActive (:32, :185-213), THE TOGGLE THAT
 // HAD NO CONSUMER. `ActivateCursor` has been bound to Enter in the
 // input registry since I1 and nothing has ever read it, so the port
 // had no way to free the mouse during play at all - and the large

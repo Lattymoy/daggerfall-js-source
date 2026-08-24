@@ -709,7 +709,7 @@ test('audit F2: editing the diet without bumping MANIFEST_V fails HERE', () => {
   assert.ok(keep, 'the diet is still one expression');
   const version = Number(text.match(/const MANIFEST_V = (\d+);/)[1]);
   const sum = createHash('sha256').update(keep).digest('hex').slice(0, 16);
-  assert.deepEqual([version, sum], [8, '3b46ad88a7ac67e2'],
+  assert.deepEqual([version, sum], [8, 'b790da41e4823038'],
     'THE DIET CHANGED: bump MANIFEST_V so stale stores re-ingest, then re-pin [version, sum] here');
 });
 

@@ -1,4 +1,4 @@
-// U44 - HUDLARGE, the classic bottom status bar. Geometry, the eleven
+// U45 - HUDLARGE, the classic bottom status bar. Geometry, the eleven
 // panels, the two disagreeing mode cycles, and the wiring in all four
 // hosts. Everything pinned here was mutation-proven.
 
@@ -238,7 +238,7 @@ test('hudLarge: every panel posts an action ui/input.js can route', () => {
     'AutoMap', 'TravelMap', 'Rest',
   ]);
   // A host that has not grown a door yet does not consume the action -
-  // for the FIVE arms U44 added. The four that predate it (Rest,
+  // for the FIVE arms U45 added. The four that predate it (Rest,
   // AutoMap, QuickSave, QuickLoad) return true whether or not a
   // handler exists, because they were written for routeKey where the
   // answer means "preventDefault", not "something happened". Pinned as

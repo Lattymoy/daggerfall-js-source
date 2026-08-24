@@ -164,7 +164,8 @@ test('U25 / THE ONE CONSTRUCTION SEAM: all four inventory sites pass the same ho
   // were left printing "You cannot open your spellbook here." over a
   // Spellbook the player was holding. The list only catches a hook it
   // NAMES, so every hook this window's hosts share belongs in it.
-  const REQUIRED = ['items:', 'entity:', 'icons:', 'rows:', 'nowMinute:', 'openSpellbook:'];
+  const REQUIRED = ['items:', 'entity:', 'icons:', 'rows:', 'nowMinute:', 'openSpellbook:',
+    'revealMap:', 'drinkPotion:'];
   let sites = 0;
   for (const f of ['src/scenes/exterior.js', 'src/scenes/world.js']) {
     const src = readFileSync(join(root, f), 'utf8');
@@ -181,6 +182,18 @@ test('U25 / THE ONE CONSTRUCTION SEAM: all four inventory sites pass the same ho
     }
   }
   assert.equal(sites, 4, 'the number of construction sites changed - re-read this rule');
+});
+
+test('U44: the window FORWARDS its item-use hooks into the law', () => {
+  // The window is where a hook stops being a host's business and
+  // becomes useItem's argument. Naming a hook in the host and dropping
+  // it here is invisible: the arm falls back to its `pending` line,
+  // which is exactly the "You drink the potion." lie U44 removed.
+  const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..',
+    'src/ui/nativeInventory.js'), 'utf8');
+  const call = src.slice(src.indexOf('this._useResult(useItem('), src.indexOf('}));', src.indexOf('this._useResult(useItem(')));
+  assert.match(call, /revealMap: this\.hooks\.revealMap \?\? null/, 'the reveal hook is forwarded');
+  assert.match(call, /drinkPotion: this\.hooks\.drinkPotion \?\? null/, 'and the drink hook');
 });
 
 test('U42: USING the Spellbook item closes the inventory FIRST, then opens the book', () => {

@@ -4431,7 +4431,7 @@ waiting on it), and fast travel from inside a building wants the
 teleport arm's guards looked at first. Transport and UseMagicItem
 have no window to open at all.
 
-## U44 - HUDLARGE: the bar every screenshot of Daggerfall has (2026-08-24)
+## U45 - HUDLARGE: the bar every screenshot of Daggerfall has (2026-08-24)
 
 `HUDLarge.cs`, whole. The classic bottom status bar — the single most
 recognisable piece of Daggerfall's screen, and this port drew none of
