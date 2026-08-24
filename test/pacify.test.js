@@ -86,22 +86,29 @@ test('X8: a non-enemy target takes nothing (IsGroupMatch / IsEnemyClass both ref
   assert.deepEqual(player.activeEffects, []);
 });
 
-test('X8 DEPARTURE: DFU\'s own code never runs this - the port implements the stated intent', () => {
-  // The finding, pinned so it cannot be quietly "corrected" back:
-  //   PacifyEffect and CharmEffect both act in MagicRound().
-  //   Neither sets SupportDuration - Charm's is commented out
-  //   deliberately ("As Duration has no effect in classic, it is
-  //   intentionally disabled here").
-  //   EntityEffect.SetDuration gives a no-duration effect
-  //   roundsRemaining = 0, and DoMagicRound calls MagicRound() only
-  //   when RoundsRemaining > 0.
-  //   => the pacify never fires. Two deliberate decisions collided.
-  // The port follows the intent DFU writes out in full: "Enemy class
-  // will remain pacified permanently until player attacks them
-  // (confirmed in classic)."
+test('X8: the pacify lands ONCE at cast and is permanent - the assign-time magic round', () => {
+  // CORRECTED IN X10. This test previously asserted the arm called
+  // itself a DEPARTURE from a DFU bug, on the reasoning that:
+  //   PacifyEffect and CharmEffect act in MagicRound(); neither sets
+  //   SupportDuration (Charm's is commented out deliberately);
+  //   SetDuration therefore leaves roundsRemaining = 0; and
+  //   DoMagicRound's per-round gate only calls MagicRound() when
+  //   RoundsRemaining > 0 - so the pacify never fires.
+  // Every step of that is true except the conclusion. AssignBundle
+  // gives EVERY effect one unconditional MagicRound at assign time
+  // (EntityEffectManager.cs:594, "At this point effect is ready and
+  // gets initial magic round"), outside any duration test. A
+  // duration-less effect fires exactly once, at cast - which is the
+  // whole design here, and matches DFU's own "pacified permanently
+  // until player attacks them".
+  // The port's BEHAVIOUR was right all along; the justification was
+  // not, and a test that pinned the false justification would have
+  // kept it alive. This one pins the real mechanism instead.
   const arm = readFileSync(join(ROOT, 'src/systems/effects.js'), 'utf8');
-  assert.match(arm, /A RECORDED DEPARTURE/, 'the departure is stated at the arm');
-  assert.match(arm, /the pacify NEVER RUNS/, 'with the mechanism that makes it a no-op upstream');
+  assert.match(arm, /:594/, 'the arm cites AssignBundle\'s assign-time magic round');
+  assert.match(arm, /initial magic round/, 'quoting DFU\'s own comment on it');
+  assert.doesNotMatch(arm, /the pacify NEVER RUNS/,
+    'and no longer claims DFU is broken here');
   // and the pacify is applied at CAST with no entry to expire, which
   // is what "permanent" means here
   const t = foe(0);

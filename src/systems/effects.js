@@ -964,27 +964,38 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     // humanoid monsters (not enemy classes)". Between them they cover
     // every humanoid and neither overlaps the other.
     //
-    // A RECORDED DEPARTURE, and the only one in this lane.
+    // WHY IT LANDS ONCE, AT CAST, AND IS PERMANENT.
     // Both classes do their work in MagicRound(), and neither sets
     // SupportDuration - Charm's is commented out DELIBERATELY, with
     // the reason written above it: "As Duration has no effect in
-    // classic, it is intentionally disabled here." But
-    // EntityEffect.SetDuration (:920-933) gives an effect with no
-    // duration support roundsRemaining = 0, and
-    // EntityEffectManager.DoMagicRound (:1733-1734) calls MagicRound()
-    // only `if (effect.RoundsRemaining > 0 || fromEquippedItem)`. So
-    // in DFU as it stands the pacify NEVER RUNS: the spell rolls its
-    // chance, spends its magicka and does nothing at all. The two
-    // deliberate decisions collided.
+    // classic, it is intentionally disabled here." That means
+    // EntityEffect.SetDuration (:920-933) leaves roundsRemaining = 0,
+    // so DoMagicRound's per-round gate (:1733-1734, `if
+    // (RoundsRemaining > 0 || fromEquippedItem)`) never calls
+    // MagicRound() again.
     //
-    // The port implements the INTENT, which the source states in full
-    // rather than leaving to inference: "Enemy class will remain
-    // pacified permanently until player attacks them (confirmed in
-    // classic)". So the pacify lands AT CAST and is PERMANENT, and
-    // the "until attacked" half already exists here - every foe
-    // damage door re-hostiles a pacified target
-    // (MakeEnemyHostileToAttacker), which enemyMotor.js:397 has
-    // anticipated by name since the C-slice.
+    // It does not need to. AssignBundle gives EVERY effect one
+    // unconditional MagicRound at assign time (:594, "At this point
+    // effect is ready and gets initial magic round"), after the
+    // chance and saving-throw gates and outside any duration test. So
+    // a duration-less effect fires exactly ONCE, at cast - which for
+    // these two is the whole design, and matches the source's own
+    // statement of it: "Enemy class will remain pacified permanently
+    // until player attacks them (confirmed in classic)".
+    //
+    // CORRECTION (X10 found this): the comment here previously called
+    // that a DFU bug and this arm a departure implementing intent over
+    // broken code. It is not - the behaviour below is what DFU does,
+    // by the assign-time round. The mechanism above is real and worth
+    // knowing, the conclusion drawn from it was wrong, and a false
+    // "upstream is broken" note is worse than none: it would have had
+    // the next reader distrust DFU, or "fix" the port toward a bug
+    // that does not exist.
+    //
+    // The "until attacked" half already exists here - every foe damage
+    // door re-hostiles a pacified target (MakeEnemyHostileToAttacker),
+    // which enemyMotor.js:397 has anticipated by name since the
+    // C-slice.
     //
     // Chance-only, no magnitude, TargetFlags_Other - so it takes the
     // ordinary OnCast chance gate and nothing else.

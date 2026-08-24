@@ -311,8 +311,8 @@ combat line numbers below are refreshed with it.
 - `src/systems/effects.js:43` - *  effect (:515). FLAGGED: DFU pulls it from the localised string
 - `src/systems/effects.js:540` - enchantment bundles are FLAGGED to their own arc.
 - `src/systems/effects.js:847` - manager, and the port has no such re-entry yet. FLAGGED.
-- `src/systems/effects.js:1104` - out.skipped++;   // FLAGGED: the library grows one family at a time
-- `src/systems/effects.js:1108` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
+- `src/systems/effects.js:1115` - out.skipped++;   // FLAGGED: the library grows one family at a time
+- `src/systems/effects.js:1119` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
 - `src/systems/enchantments.js:39` - FLAGGED: no host computes them yet, so the conditional arms of
 - `src/systems/enchantments.js:41` - moonPhase() (FLAGGED: lunar phases are a Ledger C row),
 - `src/systems/enchantments.js:116` - had been FLAGGED at its own site since S4c - "a magic item still
