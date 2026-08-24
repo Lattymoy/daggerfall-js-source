@@ -350,3 +350,69 @@ test('X1 REVIEW: the four SetHealth(0) callers all say bypassShield, and dungeon
   }
   assert.doesNotMatch(rd('src/scenes/dungeonContext.js'), /hurtPlayer\(playerEntity\.health\)/, 'the entity-less call is gone');
 });
+
+// ── X2: the defence parity gaps ───────────────────────────────────
+test('X2: absorption recomputes from the TARGET level at absorb time; resistance stays frozen at the caster level', () => {
+  // The one asymmetry in DFU's defence chain:
+  // TryEffectBasedAbsorption reads entity.Level of the TARGET
+  // (EEM:1287-1292), while TryResistance goes through RollChance ->
+  // ChanceValue, which uses the CASTER's level (EntityEffect:740-745).
+  const settings = { ...blankEffectSettings(), durationBase: 20, chanceBase: 5, chanceMod: 5, chancePerLevel: 1 };
+  const abs = buildCustomSpell({ slots: [{ type: 20, subType: 255, settings }], rangeType: 0 });
+  const t = target({ level: 2 });
+  applySpell(abs, 12, t, {}, () => 0.5, null, {});   // a level-12 caster
+  assert.equal(spellAbsorptionChance(t), 15, 'the TARGET is level 2: 5 + 5*2');
+  t.level = 10;
+  assert.equal(spellAbsorptionChance(t), 55, 'levelling up raises it live - the arithmetic is at absorb time');
+  // resistance is the opposite: the caster's level, fixed at cast
+  const res = buildCustomSpell({ slots: [{ type: 22, subType: 255, settings }], rangeType: 0 });
+  const r = target({ level: 2 });
+  applySpell(res, 12, r, {}, () => 0.5, null, {});
+  assert.equal(spellResistanceChance(r), 65, 'the CASTER was level 12: 5 + 5*12');
+  r.level = 40;
+  assert.equal(spellResistanceChance(r), 65, 'and the target levelling changes nothing');
+});
+
+test('X2: absorption and resistance read ONE incumbent, never a sum (Elemental Resistance keeps its sum)', () => {
+  // FindIncumbentEffect returns the first match and nothing else
+  // (EEM:666-678). Summing made a 50% enchanted item alongside a 50%
+  // spell read as a certainty. ElementalResistance is the genuine
+  // exception - RaiseResistanceChance sums onto a cleared slate.
+  const e = target();
+  e.activeEffects.push({ kind: 'spellResistance', chance: 50, roundsRemaining: 99 });
+  e.activeEffects.push({ kind: 'spellResistance', chance: 50, roundsRemaining: 99 });
+  assert.equal(spellResistanceChance(e), 50, 'one incumbent, not 100');
+  const a = target();
+  a.activeEffects.push({ kind: 'spellAbsorption', chance: 40, roundsRemaining: 99 });
+  a.activeEffects.push({ kind: 'spellAbsorption', chance: 40, roundsRemaining: 99 });
+  assert.equal(spellAbsorptionChance(a), 40, 'and a pre-X2 frozen chance is still honoured');
+  // the elemental sum stands
+  const el = target();
+  const half = buildCustomSpell({ slots: [{ type: 8, subType: 3, settings: { ...blankEffectSettings(), durationBase: 5, chanceBase: 30 } }], rangeType: 0 });
+  applySpell(half, 1, el, {}, () => 0.5, null, {});
+  el.activeEffects.push({ kind: 'elementalResistance', element: 3, chance: 30, roundsRemaining: 99 });
+  assert.ok(elementalResistanceChance(el, 3) > 31, 'elemental chances still ADD');
+});
+
+test('X2: a non-CasterOnly defence buff can be SAVED against and dropped whole; a self-cast never is', () => {
+  // SupportMagnitude is false on all three, so AssignBundle runs the
+  // no-magnitude saving throw and `continue`s past the effect when the
+  // target makes it (EEM:563-579).
+  const touch = (type) => buildCustomSpell({
+    slots: [{ type, subType: 255, settings: { ...blankEffectSettings(), durationBase: 10, chanceBase: 50 } }], rangeType: 1 });
+  // a Breton carries racial magic resistance, so a low roll saves
+  const b = target({ race: 'Breton', isPlayer: true });
+  const out = applySpell(touch(22), 1, b, {}, () => 0.2, { level: 5 }, {});
+  assert.equal(out.saved, 1, 'the save was made');
+  assert.equal(b.activeEffects.length, 0, 'and the buff was dropped WHOLE, not weakened');
+  // the same cast at CasterOnly is never saved against
+  const c = target({ race: 'Breton', isPlayer: true });
+  applySpell(buildCustomSpell({ slots: [{ type: 22, subType: 255, settings: { ...blankEffectSettings(), durationBase: 10, chanceBase: 50 } }], rangeType: 0 }),
+    1, c, {}, () => 0.2, { level: 5 }, {});
+  assert.equal(c.activeEffects.length, 1, 'your own buff cannot be refused');
+  // and Elemental Resistance rides the same gate
+  const el = target({ race: 'Breton', isPlayer: true });
+  const outEl = applySpell(buildCustomSpell({ slots: [{ type: 8, subType: 0, settings: { ...blankEffectSettings(), durationBase: 10, chanceBase: 50 } }], rangeType: 1 }),
+    1, el, {}, () => 0.2, { level: 5 }, {});
+  assert.equal(outEl.saved, 1);
+});

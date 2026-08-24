@@ -79,12 +79,20 @@ export function tryAbsorption(effect, targetType, target, { day = false, inside 
   return 0;
 }
 
-/** The live Spell Absorption chance granted by the EFFECT (20,255),
- *  summed over instances as every other stacking chance is. */
+/** X2: the live Spell Absorption chance - the FIRST incumbent
+ *  (FindIncumbentEffect returns one, EEM:666-678), recomputed HERE
+ *  from the TARGET's level rather than read off the entry.
+ *  TryEffectBasedAbsorption is the one place DFU rolls the target's
+ *  level instead of the caster's (EEM:1287-1292), so the entry
+ *  carries the chance SETTINGS and the arithmetic happens at absorb
+ *  time - a target who levels up mid-buff really does absorb better.
+ *  A pre-X2 entry that still carries a frozen `chance` is honoured. */
 export function spellAbsorptionChance(target) {
-  let total = 0;
   for (const a of target?.activeEffects ?? []) {
-    if (a.kind === 'spellAbsorption' && !a.ended) total += a.chance ?? 0;
+    if (a.kind !== 'spellAbsorption' || a.ended) continue;
+    if (a.chanceBase == null) return a.chance ?? 0;
+    const per = Math.max(1, a.chancePerLevel ?? 1);
+    return (a.chanceBase ?? 0) + (a.chanceMod ?? 0) * Math.floor((target?.level ?? 1) / per);
   }
-  return total;
+  return 0;
 }

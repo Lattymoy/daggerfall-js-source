@@ -299,10 +299,10 @@ combat line numbers below are refreshed with it.
 - `src/systems/court.js:178` - *  daysInPrison } (guild rescues FLAGGED). */
 - `src/systems/effects.js:25` - FLAGGED skipped (the library grows here).
 - `src/systems/effects.js:42` - *  effect (:515). FLAGGED: DFU pulls it from the localised string
-- `src/systems/effects.js:495` - enchantment bundles are FLAGGED to their own arc.
-- `src/systems/effects.js:802` - manager, and the port has no such re-entry yet. FLAGGED.
-- `src/systems/effects.js:892` - out.skipped++;   // FLAGGED: the library grows one family at a time
-- `src/systems/effects.js:896` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
+- `src/systems/effects.js:499` - enchantment bundles are FLAGGED to their own arc.
+- `src/systems/effects.js:806` - manager, and the port has no such re-entry yet. FLAGGED.
+- `src/systems/effects.js:921` - out.skipped++;   // FLAGGED: the library grows one family at a time
+- `src/systems/effects.js:925` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
 - `src/systems/enchantments.js:39` - FLAGGED: no host computes them yet, so the conditional arms of
 - `src/systems/enchantments.js:41` - moonPhase() (FLAGGED: lunar phases are a Ledger C row),
 - `src/systems/enchantments.js:246` - *  condition holds. Params 0-3 seasons, 4-6 moons (FLAGGED: lunar

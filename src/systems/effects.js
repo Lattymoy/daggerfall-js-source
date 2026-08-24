@@ -236,13 +236,17 @@ export const isElementalResistance = (e) => e.type === 8 && e.subType >= 0 && e.
 export const isSpellAbsorptionEffect = (e) => e.type === 20 && classicSub(e) === 255;
 export const isSpellResistanceEffect = (e) => e.type === 22 && classicSub(e) === 255;
 export const isShieldEffect = (e) => e.type === 35 && classicSub(e) === 255;
-/** The live Spell Resistance chance, summed over instances. */
+/** X2: the live Spell Resistance chance - the FIRST live instance,
+ *  not a sum. DFU reads FindIncumbentEffect<SpellResistance>(), which
+ *  returns the first match and nothing else (EEM:666-678); summing
+ *  made a 50% item and a 50% spell read as a certainty. (Elemental
+ *  Resistance really IS additive - RaiseResistanceChance sums onto a
+ *  per-frame-cleared slate - so that one keeps its sum.) */
 export function spellResistanceChance(target) {
-  let total = 0;
   for (const a of target?.activeEffects ?? []) {
-    if (a.kind === 'spellResistance' && !a.ended) total += a.chance ?? 0;
+    if (a.kind === 'spellResistance' && !a.ended) return a.chance ?? 0;
   }
-  return total;
+  return 0;
 }
 // S19: Paralyze (0, 255) - duration + CHANCE, no magnitude. The
 // entity is paralyzed while a 'paralyze' entry is live
@@ -801,13 +805,30 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     // bundle at its caster, which needs the caster's own effect
     // manager, and the port has no such re-entry yet. FLAGGED.
     if (isSpellAbsorptionEffect(e) || isSpellResistanceEffect(e)) {
+      // X2: the same no-magnitude saving throw as above.
+      if (saveScaled && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {
+        out.saved = (out.saved ?? 0) + 1;
+        continue;
+      }
       const rounds = rollDuration(e, casterLevel);
       if (rounds > 0) {
         const k = isSpellAbsorptionEffect(e) ? 'spellAbsorption' : 'spellResistance';
-        const chance = chanceValue(e, casterLevel);
         const inc = findInc((a) => a.kind === k);
         if (inc) inc.roundsRemaining += rounds;   // rounds stack; the incumbent's chance stands
-        else pushActive(target, { kind: k, chance, roundsRemaining: rounds }, sinks, rolls);
+        else {
+          // X2: ABSORPTION carries its chance SETTINGS, not a frozen
+          // number - TryEffectBasedAbsorption recomputes
+          // base + plus * floor(level / perLevel) from the TARGET's
+          // level at absorb time (EEM:1287-1292), the one place DFU
+          // reads the target rather than the caster. RESISTANCE is
+          // the opposite: RollChance -> ChanceValue uses the CASTER's
+          // level (EntityEffect.cs:740-745), so its chance is
+          // rightly fixed at cast.
+          const entry = k === 'spellAbsorption'
+            ? { kind: k, chanceBase: e.chanceBase, chanceMod: e.chanceMod, chancePerLevel: e.chancePerLevel, roundsRemaining: rounds }
+            : { kind: k, chance: chanceValue(e, casterLevel), roundsRemaining: rounds };
+          pushActive(target, entry, sinks, rolls);
+        }
         out.buffs = (out.buffs ?? 0) + 1;
       }
       continue;
@@ -820,6 +841,14 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     // overridden true (ElementalResistance.cs:50-54), so its own
     // startup roll can never fail - the chance IS the resistance.
     if (isElementalResistance(e)) {
+      // X2: the NO-MAGNITUDE saving throw (EEM:563-579). These three
+      // declare SupportMagnitude = false, so AssignBundle rolls the
+      // target's save on any non-CasterOnly cast and drops the effect
+      // WHOLE when it makes it - a By-Touch buff can be refused.
+      if (saveScaled && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {
+        out.saved = (out.saved ?? 0) + 1;
+        continue;
+      }
       const rounds = rollDuration(e, casterLevel);
       if (rounds > 0) {
         const chance = chanceValue(e, casterLevel);
