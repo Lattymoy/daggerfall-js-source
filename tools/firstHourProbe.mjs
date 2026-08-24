@@ -261,19 +261,30 @@ if (haveFoes) {
   if (!target) {
     skip('the foe notices the player', 'no live positioned foe');
   } else {
-    // STAND WHERE THE FOE STANDS. Through the motor, not the camera
-    // (V1: __pose moves the camera, the AI measures from the motor).
+    // WALK IN FROM WHERE THE PLAYER ACTUALLY IS. Through the motor, not
+    // the camera (V1: __pose moves the camera, the AI measures from the
+    // motor).
     //
-    // The first draft stood four units behind the foe on the z axis,
-    // and that offset is a guess about geometry the probe cannot see:
-    // in a corridor it lands in the rock, and the screenshot then
-    // shows a lit chamber hanging in the renderer's clear colour with
-    // the near walls culled away - a picture that reads as a hole in
-    // the world and is nothing of the sort. A dungeon foe is placed on
-    // walkable floor by construction, so its own feet are the one spot
-    // known to be inside the room.
+    // Two earlier drafts got this wrong in opposite directions. The
+    // first stood four units behind the foe on the z axis - a guess
+    // about geometry the probe cannot see, which in a corridor lands
+    // in the rock, where the near walls cull away and the screenshot
+    // shows a lit chamber hanging in the renderer's clear colour: a
+    // picture that reads as a hole in the world and is nothing of the
+    // sort. The second stood ON the foe's own feet, which is certainly
+    // inside the room and certainly pointed at a wall.
+    //
+    // The player's CURRENT position is inside the map by definition,
+    // so a point on the line between them is the principled place to
+    // stand - and facing back down that line puts the foe in frame.
     const [fx, fy, fz] = target.pos;
-    await page.evaluate(([p, y]) => window.__warpTo(p, y), [[fx, fy + 0.4, fz], Math.PI]);
+    const here = await J(() => JSON.stringify(window.__player.pos));
+    let dx = here[0] - fx, dz = here[2] - fz;
+    const len = Math.hypot(dx, dz) || 1;
+    dx /= len; dz /= len;
+    const back = Math.min(3, len * 0.6);   // never past the player's own spot
+    await page.evaluate(([p, y]) => window.__warpTo(p, y),
+      [[fx + dx * back, fy + 0.4, fz + dz * back], Math.atan2(-dx, -dz)]);
     await waitFrames(3);
     const hp0 = await hp();
     const before = (await J(() => window.__foes()))[target.i];
