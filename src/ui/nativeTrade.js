@@ -8,14 +8,23 @@
 // shelf's stock - four ~38px slots each, REAL item icons through
 // the world-texture records the E1 templates carry.
 //
-// The trade model this slice (the E2/E3 loop on classic art):
-// clicking a REMOTE item buys it (gold check, CalculateTradePrice
-// buy), clicking a LOCAL item sells it (the selling branch; the
-// item lands on the shelf, buy-backs work); the cost strip shows
-// the LAST price + live gold. The list's top/bottom 12px bands
-// scroll. FLAGGED loud: the basket + mode-action flow (DFU
-// accumulates then Buy), wagon/info/select/steal buttons (consumed
-// no-ops), the material-dye icon variants, scroll-arrow art.
+// U40: THE MODE FLOW. U8c shipped this screen in BUY mode only and
+// transacted AT THE CLICK, flagging the gap loud. DFU does neither:
+// a click STAGES an item and the MODE ACTION button commits the lot
+// behind one Yes/No popup. That is why there is a Clear button.
+//
+// The two lists are not "player" and "shop" - they are LOCAL and
+// REMOTE, and what each holds depends on the mode:
+//   Buy   local = the BASKET first, then the pack (:677-701)
+//         remote = the shelf's stock
+//   other local = the pack, narrowed by mode (Sell to the groups this
+//         shop buys, SellMagic to enchanted items only)
+//         remote = what you have STAGED, which starts empty
+// So in Sell mode the right-hand list fills up as you click, and the
+// cost strip totals it. Clicking a staged item takes it back.
+//
+// The laws are systems/tradeModes.js's; this file is the panel, the
+// hit rects, the staging collections and the confirm box.
 
 import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
@@ -24,89 +33,269 @@ import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from './text.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
+import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
+import {
+  MODE_ACTION_ART, SELL_GOLD_ART, modeActionArt,
+  tradeCost, getTradePrice, tradeDecision, sellProceeds,
+  localListAccepts, localClickDecision, DOESNT_NEED_IDENTIFY,
+  MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID, DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID,
+} from '../systems/tradeModes.js';
+import { CANNOT_BE_REPAIRED_TEXT } from '../systems/repairService.js';
+import { expandGuildMacros } from '../systems/guildServiceActions.js';
 
 // re-exported so the composed window keeps one import surface
 export { LIST_SLOTS, CELL_X, CELL_W, SLOT_H, ARROW_H, DOWN_ARROW_Y };
 
 export const TRADE_RECTS = Object.freeze({
   costPanel: [49, 13, 111, 9],           // SHOP00I0 strip
-  actionPanel: [222, 10, 39, 190],       // INVE08I0 (buy buttons; the sell-mode INVE10 art pends the mode flow)
+  actionPanel: [222, 10, 39, 190],       // the mode's own panel - INVE08/10/12/14 (:755-764)
   localList: [163, 48, 59, 152],
   remoteList: [261, 48, 59, 152],
   exit: [222 + 0, 178, 39, 22],          // the inventory exit rect over the action panel art
-  modeAction: [222 + 4, 10 + 124, 31, 14],   // the Buy button (panel-child 4,124)
+  modeAction: [222 + 4, 10 + 124, 31, 14],   // the mode action (panel-child 4,124)
   clear: [222 + 4, 10 + 146, 31, 14],
 });
 // The ItemListScroller layout lives in itemScroller.js (the 17d UI
 // audit's corrected law, shared with the inventory window).
 
 let _art = null;
+/** LoadTextures (:751-771). Every mode's panel is loaded up front
+ *  rather than on open: they are five small IMGs, two of the five
+ *  names are the SAME file (Sell and SellMagic share INVE10), and a
+ *  window that had to await art on construction could not answer
+ *  tradeArtLoaded() before the host had already decided to open it.
+ *  INVE11 rides along because DFU loads it in every mode - it is the
+ *  GOLD panel the select button's selected state is cut out of. */
 export async function preloadTradeArt(deps) {
   if (_art) return;
   try {
-    const [base, action, cost, fnt4] = await Promise.all([
-      loadImg(deps, 'INVE00I0.IMG'), loadImg(deps, 'INVE08I0.IMG'), loadImg(deps, 'SHOP00I0.IMG'),
+    const names = [...new Set([...Object.values(MODE_ACTION_ART), SELL_GOLD_ART])];
+    const [base, cost, fnt4, ...panels] = await Promise.all([
+      loadImg(deps, 'INVE00I0.IMG'), loadImg(deps, 'SHOP00I0.IMG'),
       deps.fetchBytes('FONT0004.FNT'),   // the stack-count font (DFU Font4)
+      ...names.map((n) => loadImg(deps, n)),
     ]);
-    _art = { base, action, cost, font4: makeFont(deps.renderer, new FntFile().load(fnt4), 'FONT0004') };
-  } catch { console.warn('[trade] INVE00I0/INVE08I0/SHOP00I0 unavailable; the keyed shelf window stands in'); }
+    _art = {
+      base, cost, panels: new Map(names.map((n, i) => [n, panels[i]])),
+      font4: makeFont(deps.renderer, new FntFile().load(fnt4), 'FONT0004'),
+    };
+  } catch { console.warn('[trade] INVE00I0/SHOP00I0/mode panels unavailable; the keyed shelf window stands in'); }
 }
 export const tradeArtLoaded = () => !!_art;
+/** The panel this mode draws, or null in Inventory mode - DFU's own
+ *  `if (actionButtonsTexture != null)` guard at :213. */
+export const modeActionPanel = (mode) => _art?.panels.get(modeActionArt(mode)) ?? null;
 
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
 
-/** hooks = { shelfItems() -> [], sellables() -> [], buy(item) ->
- *  price|null, sell(item) -> price, gold() -> n, icons:
- *  { getTexture, uploadRecord, textures } (the host pipeline),
- *  shopName }. */
+/**
+ * hooks:
+ *   mode           'Buy' | 'Sell' | 'SellMagic' | 'Repair' | 'Identify'
+ *   shelfItems()   -> the shop's stock (the Buy mode remote list)
+ *   packItems()    -> the player's own items, already minus equipped
+ *   accepts(item)  -> storeBuysItemType for THIS shop (Sell's filter)
+ *   enchanted(item)-> SellMagic's filter
+ *   priceCtx()     -> { quality, priceAdjustment, holidayId, guildFactionId,
+ *                       skills, reducedRepairCost, reducedIdentifyCost }
+ *   gold(), rows(textId), weight() -> { carriedWeightKg, maxEncumbranceKg }
+ *   commit(mode, staged, price, proceeds) - the host's transaction
+ *   icons, entity, shopName
+ */
 export class NativeTradeWindow {
   constructor(hooks) {
     this.hooks = hooks;
+    this.mode = hooks.mode ?? 'Buy';
     this.done = false;
     this.isChoiceWindow = true;   // raw codes through the overlay seams
     this.localScroll = 0;
     this.remoteScroll = 0;
     this.lastPrice = null;
-    // AUDIT 17f: the wearer identity rides too - the local list is the
-    // player's own gear. The REMOTE (shelf) list borrows it, FLAGGED at
-    // playerArchiveFor: shop stock carries no owner identity yet.
+    // THE TWO STAGING COLLECTIONS. In Buy mode the basket holds what
+    // you have picked off the shelf; in every other mode `staged` is
+    // the remote list itself, which starts EMPTY and fills as you
+    // click. They are separate fields rather than one because Buy
+    // shows its basket in the LOCAL list (:677-686) and the others
+    // show theirs in the remote one - the same collection would have
+    // to be drawn on both sides depending on mode.
+    this.basket = [];
+    this.staged = [];
+    this.box = null;             // the confirm / refusal box, when one is up
     this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);   // the shared scroller's warm cache
   }
 
+  /** The collection the cost strip totals (:430, :453). */
+  get stagedForCost() { return this.mode === 'Buy' ? this.basket : this.staged; }
+
+  /** FilterLocalItems (:672-703): the basket FIRST in Buy mode, then
+   *  the pack narrowed by the mode's own gate. */
+  localList() {
+    const pack = (this.hooks.packItems?.() ?? []).filter((it) => localListAccepts(this.mode, it, {
+      accepts: this.hooks.accepts, enchanted: this.hooks.enchanted,
+    }));
+    return this.mode === 'Buy' ? [...this.basket, ...pack] : pack;
+  }
+
+  /** The remote list: the shelf in Buy mode, the staged lot otherwise. */
+  remoteList() { return this.mode === 'Buy' ? (this.hooks.shelfItems?.() ?? []) : this.staged; }
+
+  /** UpdateCostAndGold (:425-489) - the strip's number and whether the
+   *  mode action is live, from one walk. */
+  cost() {
+    return tradeCost(this.mode, this.stagedForCost, {
+      ...(this.hooks.priceCtx?.() ?? {}),
+      isBeingRepaired: this.hooks.isBeingRepaired ?? (() => false),
+    });
+  }
+
+  _move(item, from, to) {
+    const i = from.indexOf(item);
+    if (i >= 0) from.splice(i, 1);
+    to.push(item);
+  }
+
+  /** TEXT.RSC rows through the macro table. The trade records quote
+   *  the SHOP, the CITY and the PRICE back at the player - "%cpn
+   *  prides itself on having the lowest prices in %cn ... I can sell
+   *  for no less than %a gold pieces" - and every one of the three was
+   *  printing raw until U40's live probe read the box off the real
+   *  game. %a is the PRICE, so this is not cosmetic. */
+  _rows(id, amount = null) {
+    return (this.hooks.rows?.(id) ?? []).map((r) => ({
+      ...r,
+      text: expandGuildMacros(r.text, {
+        amount,
+        gold: this.hooks.gold?.() ?? 0,
+        shopName: this.hooks.shopName ?? '',
+        cityName: this.hooks.cityName?.() ?? '',
+        playerName: this.hooks.entity?.name ?? '',
+      }),
+    }));
+  }
+
+  _refuse(refusal) {
+    const rows = (id) => this._rows(id);
+    const text = {
+      magic: rows(MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID),
+      undamaged: rows(DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID),
+      notRepairable: [{ text: CANNOT_BE_REPAIRED_TEXT, center: true }],
+      identified: [{ text: DOESNT_NEED_IDENTIFY, center: true }],
+    }[refusal] ?? [];
+    this.box = { rows: text.length ? text : [{ text: '...', center: true }], buttons: null };
+  }
+
+  /** LocalItemListScroller_OnItemClick (:788-826), through the law. */
+  _pickLocal(slot) {
+    const item = this.localList()[this.localScroll + slot];
+    if (!item) return;
+    const d = localClickDecision(this.mode, item, {
+      inBasket: (i) => this.basket.includes(i),
+      allowMagicRepairs: this.hooks.allowMagicRepairs ?? false,
+      usingIdentifySpell: this.hooks.usingIdentifySpell ?? false,
+    });
+    if (d.kind === 'stage') { this._move(item, this.hooks.packItems(), this.staged); return; }
+    // Buy: a basket item clicks back OUT to the shelf (:800-801)
+    if (d.kind === 'unstage') { this._move(item, this.basket, this.hooks.shelfItems()); return; }
+    if (d.kind === 'refuse') this._refuse(d.refusal);
+  }
+
+  /** RemoteItemListScroller_OnItemClick (:833-860). In Buy mode a
+   *  shelf item goes to the BASKET; in every other mode a staged item
+   *  comes back OUT of the deal. */
+  _pickRemote(slot) {
+    const item = this.remoteList()[this.remoteScroll + slot];
+    if (!item) return;
+    if (this.mode === 'Buy') this._move(item, this.hooks.shelfItems(), this.basket);
+    else this._move(item, this.staged, this.hooks.packItems());
+  }
+
+  /** ClearButton_OnMouseClick (:1020-1025) - everything staged goes
+   *  back where it came from. */
+  _clear() {
+    if (this.mode === 'Buy') {
+      while (this.basket.length) this._move(this.basket[0], this.basket, this.hooks.shelfItems());
+    } else {
+      while (this.staged.length) this._move(this.staged[0], this.staged, this.hooks.packItems());
+    }
+  }
+
+  /** DoModeAction -> ShowTradePopup (:954-998, :1100-1134). */
+  _modeAction() {
+    const { cost, modeActionEnabled } = this.cost();
+    if (!modeActionEnabled) return;          // DFU disables the button outright
+    const ctx = this.hooks.priceCtx?.() ?? {};
+    const price = getTradePrice(this.mode, cost, ctx.quality ?? 0, ctx.skills ?? {});
+    const d = tradeDecision(this.mode, { cost, tradePrice: price, gold: this.hooks.gold() });
+    if (d.kind === 'notEnoughGold') {
+      // the two records CONCATENATED into one click-anywhere box
+      this.box = { rows: d.textIds.flatMap((id) => this._rows(id, price)), buttons: null };
+      return;
+    }
+    this.box = { rows: this._rows(d.textId, price), buttons: 'YesNo', price, cost, onYes: () => this._confirm(price) };
+  }
+
+  /** ConfirmTrade_OnButtonClick's Yes arm (:1027-1092). */
+  _confirm(price) {
+    const selling = this.mode === 'Sell' || this.mode === 'SellMagic';
+    const proceeds = selling
+      ? sellProceeds(price, this.hooks.weight?.() ?? {})
+      : null;
+    this.hooks.commit?.(this.mode, [...this.stagedForCost], price, proceeds);
+    this.basket.length = 0;
+    this.staged.length = 0;
+    this.lastPrice = price;
+    // "a concluded deal clinks" - and a LETTER OF CREDIT scratches
+    // instead (:1084-1087), which is the one place that sound is used.
+    audio.playOneShot(proceeds?.kind === 'letterOfCredit' ? SOUND.ParchmentScratching : SOUND.GoldPieces, 1);
+    this.localScroll = 0;
+    this.remoteScroll = 0;
+  }
+
+  _dismissBox(button = null) {
+    const b = this.box;
+    this.box = null;
+    if (b?.buttons === 'YesNo' && button === MB_BUTTONS.Yes) b.onYes?.();
+  }
+
   input(code) {
-    if (code === 'Escape' || code === 'Enter' || code === 'KeyE') { this.done = true; return; }
-    const d = /^Digit([1-4])$/.exec(code);   // keyboard: digits buy the visible remote slots
+    if (this.box) {
+      if (this.box.buttons === 'YesNo') {
+        if (code === 'KeyY') this._dismissBox(MB_BUTTONS.Yes);
+        else if (code === 'KeyN' || code === 'Escape') this._dismissBox(MB_BUTTONS.No);
+      } else this._dismissBox();
+      return;
+    }
+    if (code === 'Escape' || code === 'KeyE') { this.done = true; return; }
+    // The port's own accelerators (Ledger A - DFU reads DaggerfallShortcut):
+    // Enter commits the deal rather than closing, which is what the
+    // mode-action button is for and what a keyboard player expects.
+    if (code === 'Enter') { this._modeAction(); return; }
+    if (code === 'KeyC') { this._clear(); return; }
+    const d = /^Digit([1-4])$/.exec(code);   // digits stage the visible remote slots
     if (d) this._pickRemote(Number(d[1]) - 1);
     // AUDIT 18: KeyN had no upper clamp, so the keyboard alone could
     // drive the shelf list past its end into a blank panel. Route both
     // through the shared ItemListScroller clamp (DFU sends every scroll
     // index through VerticalScrollBar.SetScrollIndex, which bounds it
     // to [0, totalUnits - displayUnits]), exactly as nativeInventory does.
-    if (code === 'KeyN') this.remoteScroll = applyScroll(this.remoteScroll, 'down', this.hooks.shelfItems().length);
-    if (code === 'KeyP') this.remoteScroll = applyScroll(this.remoteScroll, 'up', this.hooks.shelfItems().length);
+    if (code === 'KeyN') this.remoteScroll = applyScroll(this.remoteScroll, 'down', this.remoteList().length);
+    if (code === 'KeyP') this.remoteScroll = applyScroll(this.remoteScroll, 'up', this.remoteList().length);
   }
 
-  _pickRemote(slot) {
-    const it = this.hooks.shelfItems()[this.remoteScroll + slot];
-    if (!it) return;
-    const price = this.hooks.buy(it);
-    // ConfirmTrade_OnButtonClick (:1085-1087): a concluded deal clinks
-    // (GoldPieces; the letter-of-credit ParchmentScratching arm waits
-    // on banking) - the port's trades conclude at the click.
-    if (price != null) { audio.playOneShot(SOUND.GoldPieces, 1); this.lastPrice = price; }
-  }
-  _pickLocal(slot) {
-    const it = this.hooks.sellables()[this.localScroll + slot];
-    if (!it) return;
-    const price = this.hooks.sell(it);
-    if (price != null) { audio.playOneShot(SOUND.GoldPieces, 1); this.lastPrice = price; }
-  }
   click(vx, vy) {
+    if (this.box) {
+      if (this.box.buttons === 'YesNo') {
+        const hit = this._boxLayout ? messageBoxHit(this._boxLayout, vx, vy) : null;
+        if (hit !== null) this._dismissBox(hit);
+      } else this._dismissBox();
+      return true;
+    }
     const R = TRADE_RECTS;
     if (inRect(R.exit, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.done = true; return true; }   // every trade button clicks (:887-1022)
+    if (inRect(R.modeAction, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._modeAction(); return true; }
+    if (inRect(R.clear, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._clear(); return true; }
     for (const [rect, which, items, pick] of [
-      [R.remoteList, 'remoteScroll', this.hooks.shelfItems(), (s) => this._pickRemote(s)],
-      [R.localList, 'localScroll', this.hooks.sellables(), (s) => this._pickLocal(s)],
+      [R.remoteList, 'remoteScroll', this.remoteList(), (s) => this._pickRemote(s)],
+      [R.localList, 'localScroll', this.localList(), (s) => this._pickLocal(s)],
     ]) {
       const hit = scrollerHit(rect, vx, vy);
       if (!hit) continue;
@@ -114,7 +303,8 @@ export class NativeTradeWindow {
       else this[which] = applyScroll(this[which], hit.kind, items.length);
       return true;
     }
-    // action-panel buttons: consumed no-ops this slice (basket/haggle pend)
+    // the remaining action-panel buttons (wagon/info/select/steal)
+    // are consumed no-ops - each waits on its own slice
     return inRect(R.actionPanel, vx, vy) || inRect(R.costPanel, vx, vy);
   }
 
@@ -137,18 +327,33 @@ export class NativeTradeWindow {
     drawScreenDimBackdrop(renderer, canvas);
     drawImg(renderer, _art.base, m, 0, 0);
     const R = TRADE_RECTS;
-    drawImg(renderer, _art.action, m, R.actionPanel[0], R.actionPanel[1]);
+    // The mode's own panel (:213) - Inventory mode has none, and the
+    // guard is DFU's, not a defensive extra.
+    const panel = modeActionPanel(this.mode);
+    if (panel) drawImg(renderer, panel, m, R.actionPanel[0], R.actionPanel[1]);
     drawImg(renderer, _art.cost, m, R.costPanel[0], R.costPanel[1]);
-    shadowText(renderer, font, String(this.lastPrice ?? 0), m, R.costPanel[0] + 28, R.costPanel[1] + 2);
+    // The strip shows the LIVE total of what is staged, re-totalled
+    // every frame the way Refresh -> UpdateCostAndGold re-totals it -
+    // not the last concluded price, which is what the pre-mode-flow
+    // window had to show because it transacted at the click.
+    shadowText(renderer, font, String(this.cost().cost), m, R.costPanel[0] + 28, R.costPanel[1] + 2);
     shadowText(renderer, font, String(this.hooks.gold()), m, R.costPanel[0] + 68, R.costPanel[1] + 2);
     for (const [rect, scroll, items] of [
-      [R.remoteList, this.remoteScroll, this.hooks.shelfItems()],
-      [R.localList, this.localScroll, this.hooks.sellables()],
+      [R.remoteList, this.remoteScroll, this.remoteList()],
+      [R.localList, this.localScroll, this.localList()],
     ]) {
       items.slice(scroll, scroll + LIST_SLOTS).forEach((it, s) => {
         this._drawIcon(renderer, m, it, rect, s);
         drawStackLabel(renderer, _art?.font4 ?? font, m, it, rect, s);
       });
     }
+    // The confirm / refusal box sits OVER the panel - DFU pushes it as
+    // its own window and the trade screen stays behind it, which is
+    // why this draws last and the window is not closed to show it.
+    if (this.box) {
+      const buttons = this.box.buttons === 'YesNo' ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : [];
+      this._boxLayout = layoutMessageBox(font, this.box.rows, buttons);
+      drawMessageBox(renderer, m, font, this._boxLayout);
+    } else this._boxLayout = null;
   }
 }

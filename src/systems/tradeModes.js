@@ -55,7 +55,7 @@
 
 import { calculateCost, calculateTradePrice } from './shopStock.js';
 import { GOLD_PIECE_WEIGHT_KG } from './inventory.js';
-import { calculateItemRepairCost } from './repairService.js';
+import { calculateItemRepairCost, repairRefusal } from './repairService.js';
 import { HOLIDAYS } from './holidays.js';
 import { GUILDS } from './guilds.js';
 import {
@@ -94,9 +94,14 @@ export const SELL_GOLD_ART = 'INVE11I0.IMG';
 
 export const modeActionArt = (mode) => MODE_ACTION_ART[mode] ?? null;
 
-/** The two ids the mode action's own labels use (:87-88). */
-export const DOES_NOT_NEED_REPAIR_TEXT_ID = 24;
-export const MAGIC_CANNOT_BE_REPAIRED_TEXT_ID = 33;
+/** The two refusal ids the Repair arm speaks (:87-88). DFU declares
+ *  them a second time here; the port's repair law already owns them,
+ *  so these are its bindings and not a fresh 24 and 33. The NAMES
+ *  differ between the two DFU sites, which is exactly how a duplicate
+ *  slips past a guard that matches on identifiers. */
+export {
+  DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID, MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID,
+} from './repairService.js';
 
 /** CalculateItemIdentifyCost's numerator (:1950) - `(25 * value) >> 8`. */
 export const IDENTIFY_COST_MULTIPLIER = 25;
@@ -249,6 +254,57 @@ export function sellProceeds(tradePrice, { carriedWeightKg = 0, maxEncumbranceKg
     ? { kind: 'gold', amount: tradePrice }
     : { kind: 'letterOfCredit', amount: tradePrice };
 }
+
+/** FilterLocalItems' mode gate (:672-703). The player's own pack is
+ *  shown WHOLE in most modes, but the two selling modes narrow it:
+ *  Sell to the groups this shop actually buys (storeBuysItemType, the
+ *  port's shopBuysItem), SellMagic to ENCHANTED items only. An
+ *  equipped item never appears in any mode, which is the port's
+ *  existing AUDIT 17e F4 rule reaching the same conclusion DFU does.
+ *  Note SellMagic does NOT also apply the shop's accepted groups - a
+ *  fence takes an enchanted item the shop would refuse plain. */
+export function localListAccepts(mode, item, { accepts = () => true, enchanted = () => false } = {}) {
+  if (mode === 'Sell') return accepts(item);
+  if (mode === 'SellMagic') return enchanted(item);
+  return true;
+}
+
+/** LocalItemListScroller_OnItemClick as a decision (:788-826). A click
+ *  on the player's own item either STAGES it or is REFUSED with a
+ *  box, and which of the two is entirely mode-dependent:
+ *    Sell/SellMagic - always stages (the list is already filtered)
+ *    Repair         - the three refusals, in DFU's own click order
+ *    Identify       - refused when the item is already identified,
+ *                     UNLESS the spell is in use ("matches classic")
+ *    Buy            - a BASKET item clicks back out to the shelf;
+ *                     anything else is the equip path, not a trade
+ *  Answers { kind: 'stage' } | { kind: 'unstage' } | { kind: 'refuse',
+ *  textId | text } | { kind: 'ignore' }. */
+export function localClickDecision(mode, item, {
+  inBasket = () => false, allowMagicRepairs = false, usingIdentifySpell = false,
+} = {}) {
+  switch (mode) {
+    case 'Sell':
+    case 'SellMagic':
+      return { kind: 'stage' };
+    case 'Repair': {
+      const refusal = repairRefusal(item, { allowMagicRepairs });
+      if (!refusal) return { kind: 'stage' };
+      return { kind: 'refuse', refusal };
+    }
+    case 'Identify':
+      return (!item.isIdentified || usingIdentifySpell)
+        ? { kind: 'stage' }
+        : { kind: 'refuse', refusal: 'identified' };
+    case 'Buy':
+      return inBasket(item) ? { kind: 'unstage' } : { kind: 'ignore' };
+    default:
+      return { kind: 'ignore' };
+  }
+}
+
+/** "doesntNeedIdentify" - Internal_Strings, recovered. */
+export const DOESNT_NEED_IDENTIFY = 'This item does not need to be identified.';
 
 // FLAGGED, with the slices they wait on:
 //  - the IDENTIFY SPELL arm (:956-996): DoModeAction has a whole

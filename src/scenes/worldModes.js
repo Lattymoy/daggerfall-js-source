@@ -24,7 +24,7 @@
 import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding } from '../player/enterExit.js';
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { pickActivatable, worldAabb, activationTargets } from '../player/activate.js';
-import { transferAll, removeOne, addItem } from '../systems/inventory.js';
+import { transferAll, removeOne, addItem, isEnchanted, totalWeight, letterOfCredit } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { createPlayerTicker , endRunToTitleMenu, exitToTitleMenu } from './shared.js';   // AUDIT 18: the interior host's world clock
@@ -38,7 +38,8 @@ import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
 import { worldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C12): the one clock
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
-import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
+import { maxFatigue, liveStat } from '../systems/statMods.js';   // AUDIT 23 (C5); U40: strength for MaxEncumbrance
+import { maxEncumbrance } from '../combat/formulas.js';   // U40: the letter-of-credit gate
 import { nearestLights } from '../world/cityLights.js';
 import { lookAt, perspective, mirrorProjectionX } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { routeKey, overlayAction, actionOf, held, moveHeld, anyMove } from '../ui/input.js';
@@ -64,7 +65,7 @@ import { makeFont } from '../ui/text.js';
 import { hudScale } from '../ui/hud.js';
 import { isShop, isRepairShop, stockShopShelf, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem } from '../systems/shopStock.js';
 import { LevelUpScreen } from '../ui/charsheet.js';   // AUDIT 21 hosts F3: levelling in a building
-import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded } from '../ui/nativeTrade.js';   // U8c
+import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded, TRADE_RECTS } from '../ui/nativeTrade.js';   // U8c
 // U23: the static-NPC seam and the guild service popup.
 import { STATIC_NPC_ACTIVATION_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../systems/talk.js';
 import { staticNpcRoute, showsJoinButton, serviceAccess, onPushEffects } from '../systems/guildServiceFlow.js';
@@ -91,7 +92,7 @@ import { getBool } from '../systems/settings.js';   // R1: InstantRepairs / Allo
 import { reducedRepairCost } from '../systems/guildServices.js';   // R1: FightersGuild.ReducedRepairCost finds its caller
 import {
   calculateItemRepairCost, updateRepairTimes, repairJobsAt, repairRefusal, repairStatusLabel,
-  isBeingRepaired, isRepairFinished, collectRepaired,
+  isBeingRepaired, isRepairFinished, collectRepaired, calculateItemRepairTime, leaveForRepair,
   MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID, DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID, CANNOT_BE_REPAIRED_TEXT,
 } from '../systems/repairService.js';
 import { GuildServiceWindow, preloadGuildServiceArt, guildServiceArtLoaded } from '../ui/guildServiceWindow.js';
@@ -490,19 +491,114 @@ export function createWorldModes(host) {
     // U8c: the native trade screen when the art is up (the E2/E3
     // loop on INVE00I0 + TRAD00I0 + SHOP00I0; keyed fallback stays)
     if (tradeArtLoaded()) {
-      interiorOverlay = new NativeTradeWindow({
-        shelfItems: () => shelf.items,
-        sellables: () => (playerEntity.items ?? []).filter((it) => shopBuysItem(b.buildingType, it) && !isEquipped(it)),   // AUDIT 17e F4
-        buy: (it) => doBuy(shelf, it),
-        sell: (it) => doSell(shelf, it),
-        gold: () => goldAmount(playerEntity),
-        icons: { getTexture, uploadRecord, textures: renderer.textures },
-        entity: playerEntity,   // AUDIT 17f: icons address for the wearer's morphology
-        shopName: b.name ?? '',
-      });
+      interiorOverlay = openTradeWindow(shelf, b, 'Buy');
       return;
     }
     showShelfList(shelf, 0);
+  }
+
+  /** U40: the merchant's own Sell screen. DFU's merchant popup sells
+   *  into the SHOP rather than into a shelf, so the goods land on the
+   *  building's own collection - the same place the shelf flow puts
+   *  them, which is what makes a sold item buyable back. A building
+   *  with no shelf yet gets one lazily, exactly as openShelf does. */
+  function openMerchantSell() {
+    const b = interiorBuilding;
+    if (!b || !tradeArtLoaded() || !_shopFont) return false;
+    const shelf = (interiorCtx?.shelves ?? [])[0] ?? (interiorCtx ? (interiorCtx.shelves ??= [])[0] : null);
+    const target = shelf ?? { items: null };
+    target.items ??= isShop(b.buildingType)
+      ? stockShopShelf({ buildingType: b.buildingType, quality: b.quality }, playerEntity)
+      : [];
+    let win = null;
+    win = openTradeWindow(target, b, 'Sell');
+    win.hooks.onClose = () => { if (interiorOverlay === win) interiorOverlay = null; };
+    interiorOverlay = win;
+    return true;
+  }
+
+  /** U40: ONE opener for all five modes. The window owns the staging;
+   *  the host owns the collections it stages BETWEEN and the
+   *  transaction that concludes. `shelf.items` is DFU's remoteItems in
+   *  Buy mode and the place sold goods land in Sell mode - the same
+   *  shelf either way, which is what makes buy-backs work. */
+  function openTradeWindow(shelf, b, mode) {
+    const skills = () => ({
+      mercantile: skillValue(playerEntity, SKILLS.Mercantile),
+      personality: playerEntity.stats?.personality ?? 50,
+    });
+    return new NativeTradeWindow({
+      mode,
+      shelfItems: () => shelf.items,
+      // AUDIT 17e F4: an EQUIPPED item never reaches either list -
+      // selling a worn item left equip.slots pointing at it.
+      packItems: () => (playerEntity.items ??= []).filter((it) => !isEquipped(it)),
+      accepts: (it) => shopBuysItem(b.buildingType, it),
+      enchanted: (it) => isEnchanted(it),
+      isBeingRepaired: (it) => isBeingRepaired(it),
+      allowMagicRepairs: getBool('Controls', 'AllowMagicRepairs'),
+      priceCtx: () => ({
+        quality: b.quality ?? 0,
+        priceAdjustment: regionPriceAdjustment(playerEntity, b.regionIndex ?? 0),
+        // UNLIKE the tavern's meal, this one reads the player's REAL
+        // region (:437), so a regional holiday actually lands.
+        holidayId: getHolidayId(Math.floor(worldMinutes()), b.regionIndex ?? 0),
+        guildFactionId: null,   // FLAGGED: a guild-run shop pends the guild-store arm
+        skills: skills(),
+      }),
+      gold: () => goldAmount(playerEntity),
+      rows: (id) => townTalk?.lines?.(id) ?? [],
+      cityName: () => townTalk?.cityName?.() ?? (interiorBuilding?.name ?? ''),
+      weight: () => ({
+        carriedWeightKg: totalWeight(playerEntity.items ?? []),
+        maxEncumbranceKg: maxEncumbrance(liveStat(playerEntity, 'strength')),
+      }),
+      commit: (m, staged, price, proceeds) => commitTrade(shelf, m, staged, price, proceeds),
+      icons: { getTexture, uploadRecord, textures: renderer.textures },
+      entity: playerEntity,   // AUDIT 17f: icons address for the wearer's morphology
+      shopName: b.name ?? '',
+    });
+  }
+
+  /** ConfirmTrade_OnButtonClick's Yes arm (:1027-1092), host side.
+   *  One Mercantile tally per CONCLUDED DEAL, not per item - DFU
+   *  raises OnTrade once and tallies once, however many goods moved. */
+  function commitTrade(shelf, mode, staged, price, proceeds) {
+    if (mode === 'Buy') {
+      deductGold(playerEntity, price);
+      for (const it of staged) {
+        const i = shelf.items.indexOf(it);
+        if (i >= 0) shelf.items.splice(i, 1);
+        addItem(playerEntity.items, it);
+      }
+    } else if (mode === 'Sell' || mode === 'SellMagic') {
+      // The proceeds were weighed before they were paid: a purse that
+      // would push the player past MaxEncumbrance becomes a letter of
+      // credit instead. FLAGGED: there is nowhere to cash one yet, so
+      // the letter is minted and carried (banking's arc owns the rest).
+      if (proceeds?.kind === 'letterOfCredit') {
+        playerEntity.items.unshift(letterOfCredit(proceeds.amount));
+      } else {
+        addGold(playerEntity, price);
+      }
+      for (const it of staged) shelf.items.push(it);   // sold goods land on the open shelf
+    } else if (mode === 'Repair') {
+      deductGold(playerEntity, price);
+      const now = Math.floor(worldMinutes());
+      for (const it of staged) {
+        if (getBool('Controls', 'InstantRepairs')) it.currentCondition = it.maxCondition;
+        else leaveForRepair(it, interiorBuilding?.buildingKey ?? 0,
+          calculateItemRepairTime(it.currentCondition ?? 0, it.maxCondition ?? 0), now);
+        // a non-instant repair keeps the item in the SHOP's hands
+        if (!getBool('Controls', 'InstantRepairs')) continue;
+        addItem(playerEntity.items, it);
+      }
+    } else if (mode === 'Identify') {
+      deductGold(playerEntity, price);
+      for (const it of staged) { it.isIdentified = true; addItem(playerEntity.items, it); }
+    }
+    tallySkill(playerEntity, SKILLS.Mercantile, 1);
+    surfacePlayer();
   }
 
   // U8c: the transaction core, shared by the keyed windows and the
@@ -640,14 +736,22 @@ export function createWorldModes(host) {
     // The popup carries THREE buttons (:82-97): Repair (the window's
     // list), Talk (T - re-runs this routing with the merchant arm
     // skipped and menu:true, TalkButton_OnMouseClick :143-148), and
-    // Sell - FLAGGED with the plain-merchant sell arm below (it opens
-    // the trade window's Sell mode, which needs the shelf flow's mode
-    // split). The BANKING arm stays FLAGGED below; the tavern's landed
-    // with U39.
+    // and Sell, which U40 landed - the popup's third button opens the
+    // trade window in Sell mode. The BANKING arm stays FLAGGED below;
+    // the tavern's landed with U39.
     if (!forceTalk && route.kind === 'merchant' && route.service === 'repair') {
-      openRepairService({ onTalk: () => openStaticNpc(pn, { forceTalk: true }) });
+      openRepairService({
+        onTalk: () => openStaticNpc(pn, { forceTalk: true }),
+        onSell: () => openMerchantSell(),
+      });
       return;
     }
+    // U40: the PLAIN MERCHANT's sell arm. staticNpcRoute has answered
+    // 'sell' since G8 and the only consumer was the repair shop's
+    // list; a shopkeeper in a non-repair shop fell through to talk, so
+    // there was no way to sell anything without finding a shelf first.
+    if (!forceTalk && route.kind === 'merchant' && route.service === 'sell'
+      && openMerchantSell()) return;
     // U39: DaggerfallTavernWindow. Same shape as the repair arm - the
     // routing has said 'tavern' since G8 and nothing consumed it.
     if (!forceTalk && route.kind === 'merchant' && route.service === 'tavern'
@@ -1000,6 +1104,10 @@ export function createWorldModes(host) {
     if ((page + 1) * per < locals.length) options.push({ code: 'KeyN', label: 'N - more', action: () => showRepairList(page + 1, ctx) });
     if (jobs.length) options.push({ code: 'KeyC', label: `C - collect (${jobs.length} in repair)`, action: () => showRepairJobs(ctx) });
     if (ctx.onTalk) options.push({ code: 'KeyT', label: 'T - talk', action: () => ctx.onTalk() });
+    // U40: the popup's THIRD button, which R1 flagged as waiting on the
+    // trade window's mode split (DaggerfallMerchantRepairPopupWindow's
+    // Sell). The split landed, so the button does.
+    if (ctx.onSell) options.push({ code: 'KeyS', label: 'S - sell', action: () => ctx.onSell() });
     options.push({ code: 'Escape', label: 'Esc - close', action: () => {} });
     interiorOverlay = new ChoiceWindow({
       lines: [interiorBuilding?.name || 'Repairs', `Repair: (you have ${goldAmount(playerEntity)} gold)`],
@@ -1889,11 +1997,34 @@ export function createWorldModes(host) {
     window.__openShelf = (i) => { openShelf(i); return window.__shopOverlay(); };
     window.__shopOverlay = () => JSON.stringify(interiorOverlay ? {
       native: !!interiorOverlay.hooks,   // U8c: the trade screen surfaces its lists
-      remote: interiorOverlay.hooks?.shelfItems()?.length,
-      local: interiorOverlay.hooks?.sellables()?.length,
+      // U40: the two lists are LOCAL and REMOTE and what each holds
+      // depends on the mode, so the probe reads them through the
+      // window's own accessors rather than through a hook that only
+      // ever meant "the shelf".
+      mode: interiorOverlay.mode,
+      remote: interiorOverlay.remoteList?.().length,
+      local: interiorOverlay.localList?.().length,
+      basket: interiorOverlay.basket?.length,
+      staged: interiorOverlay.staged?.length,
+      cost: interiorOverlay.cost?.().cost,
+      canCommit: interiorOverlay.cost?.().modeActionEnabled,
+      box: interiorOverlay.box ? {
+        buttons: interiorOverlay.box.buttons,
+        rows: interiorOverlay.box.rows?.map((r) => r.text ?? r),
+      } : null,
       lastPrice: interiorOverlay.lastPrice,
       lines: interiorOverlay.lines, options: interiorOverlay.options?.filter((o) => o.label).map((o) => o.label),
     } : null);
+    /** Click a trade-panel rect by name (the probe cannot aim at art). */
+    window.__tradeClick = (key) => {
+      const [x, y, w, h] = TRADE_RECTS[key];
+      return interiorOverlay?.click?.(x + w / 2, y + h / 2) ?? false;
+    };
+    window.__tradeSlot = (which, slot) => {
+      const [x, y] = TRADE_RECTS[which === 'local' ? 'localList' : 'remoteList'];
+      return interiorOverlay?.click?.(x + 30, y + 20 + slot * 38) ?? false;
+    };
+    window.__openMerchantSell = () => { openMerchantSell(); return window.__shopOverlay(); };
     window.__dungeon = () => dungeonCtx ? JSON.stringify({
       exits: dungeonCtx.exitDoors.map((d) => ({ pos: doorWorldPosition(d).map((v) => +v.toFixed(2)), normal: doorWorldNormal(d).map((v) => +v.toFixed(3)) })),
       actions: dungeonCtx.actions.objects.size,

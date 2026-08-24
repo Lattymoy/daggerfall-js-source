@@ -39,7 +39,7 @@ import { expandMacros } from './talkSession.js';
  *  The shared %pcn/%pcf/%cn/%oth live in talkSession.expandMacros and
  *  are applied first, so a guild record with a player name in it
  *  reads correctly too. */
-export function expandGuildMacros(text, { amount = null, gold = null, god = null, guildTitle = null, roomHours = null, race = null, honorific = null, playerName = '', cityName = '' } = {}) {
+export function expandGuildMacros(text, { amount = null, gold = null, god = null, guildTitle = null, roomHours = null, race = null, honorific = null, shopName = null, playerName = '', cityName = '' } = {}) {
   let out = expandMacros(text ?? '', { playerName, cityName });
   // U39: %ra and %hnr are MacroHelper STATICS - ExpandRandomTextRecord
   // runs the whole table over every record, so they resolve in a
@@ -60,6 +60,11 @@ export function expandGuildMacros(text, { amount = null, gold = null, god = null
   // rather than in the tavern because this is the one table every
   // service window's TEXT.RSC goes through.
   if (roomHours != null) out = out.replaceAll('%dwr', String(roomHours));
+  // U40: MacroHelper.cs:69 `{ "%cpn", ShopName }` - the CURRENT SHOP's
+  // name, which the trade records quote back at the player ("%cpn
+  // prides itself on having the lowest prices in %cn"). The live probe
+  // read all three of that record's macros raw off the real game.
+  if (shopName != null) out = out.replaceAll('%cpn', shopName);
   return out;
 }
 

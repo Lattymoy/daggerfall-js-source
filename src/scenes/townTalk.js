@@ -634,6 +634,12 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // one of these with GetRandomTokens - the rank refusal alone has
     // eight, and the port drew the same one forever.
     lines: (id) => textRsc?.variantLinesById(id, rolls) ?? [],
+    /** U40: MacroHelper.CityName (%cn). The reader has existed since
+     *  T3 and only expandRecord could see it; the trade window's
+     *  records quote it too ("the lowest prices in %cn"), so the
+     *  accessor is exposed rather than a second locationName lookup
+     *  being written in the host. */
+    cityName: () => cityName(),
     /** TK-i: GetRandomTokens for the rumor mill (a random variant as
      *  TOKENS - AddNonQuestRumor freezes one per add). */
     variantTokens: (id) => textRsc?.variantTokensById(id, rolls) ?? [],

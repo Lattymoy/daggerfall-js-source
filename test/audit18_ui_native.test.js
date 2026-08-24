@@ -349,16 +349,18 @@ test('audit18 ui-native F10b: the WINDOW wraps its conversation at 114, not 112'
 // ---------------------------------------------------------------
 test('audit18 ui-native F11: KeyN cannot drive the shelf list off its end', () => {
   const shelf = [{ name: 'a' }, { name: 'b' }, { name: 'c' }];
-  const bought = [];
   const w = new NativeTradeWindow({
-    shelfItems: () => shelf, sellables: () => [],
-    buy: (it) => { bought.push(it.name); return 7; }, sell: () => 0, gold: () => 100,
-    icons: {}, entity: {},
+    mode: 'Buy', shelfItems: () => shelf, packItems: () => [],
+    priceCtx: () => ({ quality: 10, skills: {} }), gold: () => 100,
+    rows: () => [], icons: {}, entity: {},
   });
   for (let i = 0; i < 10; i++) w.input('KeyN');
   assert.equal(w.remoteScroll, 0, '3 items, 4 slots -> max scroll 0');
+  // U40: the slot resolves into the BASKET now rather than into a
+  // purchase, but the clamp is the same law and the same defect - an
+  // unclamped KeyN leaves slot 0 pointing past the end of the list.
   w._pickRemote(0);
-  assert.deepEqual(bought, ['a'], 'the visible slot still resolves');
+  assert.deepEqual(w.basket.map((i) => i.name), ['a'], 'the visible slot still resolves');
   // a longer shelf clamps at len - LIST_SLOTS, and KeyP floors at 0
   const long = Array.from({ length: 9 }, (_, i) => ({ name: `i${i}` }));
   shelf.length = 0; shelf.push(...long);

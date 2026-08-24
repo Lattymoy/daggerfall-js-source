@@ -3471,3 +3471,89 @@ across a save and the port has no permanent-scene set, so a rented
 room's CONTENTS are not preserved (the rental is); and the stored
 `allocatedBedIndex` is read by nobody until resting in a rented room
 lands.
+
+## U40 - THE TRADE WINDOW'S MODE FLOW (2026-08-24)
+
+The largest PARTIAL in the port, and the named blocker at four sites.
+U8c shipped the shop screen in Buy mode only and flagged the gap
+loud - "the basket + mode-action flow (DFU accumulates then Buy)" -
+and three other slices then wrote their own flags pointing at it: the
+repair popup's SELL button, the plain-merchant sell arm, and
+nativeTrade's own unused INVE10 art.
+
+**The model was wrong, not just incomplete.** DFU does not transact at
+the click. A click STAGES: in Buy mode into the BASKET, in every other
+mode into the REMOTE list, which in a selling mode starts EMPTY and
+fills as you click. The cost strip re-totals the whole staged
+collection every frame, and the mode-action button commits the lot
+behind one Yes/No. That is why there is a Clear button at all, and why
+the strip can show a number for goods the player does not own yet. The
+port had been buying one item per click at a fixed price.
+
+**The two lists are LOCAL and REMOTE, not "player" and "shop".** In
+Buy mode the basket is drawn in the LOCAL list, ahead of the pack
+(`:677-686`), so you can click a basket item back out onto the shelf.
+In the selling modes the pack is narrowed - Sell to the groups this
+shop actually buys, SellMagic to enchanted items only, and SellMagic
+does NOT also apply the shop's accepted groups, so a fence takes what
+the shop would refuse.
+
+**Three things that do not read the way they look**, each pinned as
+the thing it is:
+
+- **Sell does not price by condition.** The call site passes
+  `item.ConditionPercentage` into `CalculateCost`'s third parameter
+  and that parameter's body never reads it - it exists only so a mod
+  override can see it. A battered sword and a pristine one fetch the
+  same price.
+- **The Buy-mode holiday discounts are three different predicates.**
+  Merchants Festival halves everything but only outside a guild; Tales
+  and Tallow only inside the Mages Guild; Warriors Festival only
+  weapons and only outside a guild. And unlike U39's tavern meal -
+  which passes region 0 as a literal - this one reads the player's
+  real region.
+- **The halving cannot truncate.** `CalculateCost` ends in `2 * (...)`,
+  so every price it returns is even, which makes DFU's integer `/= 2`
+  unable to reach an odd number - and makes halve-per-unit vs
+  halve-the-total an equivalent mutant. Recorded, swept over eight
+  values by six qualities rather than asserted on one case.
+
+**The haggle message turned out to be the temple's.** ShowTradePopup's
+three bands are character for character the ones the cure-disease
+window uses, which the port already carried as `cureOfferMessageOffset`.
+DFU wrote it twice; there is one home, plus the +3 that moves the sell
+modes onto their own records.
+
+**What the live probe caught.** The offer box was printing RAW MACROS:
+`%cpn`, `%cn` and `%a` - and `%a` is the price, so a player was being
+asked to agree to a literal percent-a. The window had never expanded
+its rows at all. Fixed in the shared expander (which learned `%cpn`)
+and by exposing townTalk's `cityName` accessor, which had existed
+since T3 and only its own private `expandRecord` could see.
+
+**A drawn-text harness, new to this repo.** The other UI suites pin
+drawn text by reading the source, which cannot tell a live total from
+a stale one. `drawText` asks the font for every glyph by INDEX, so a
+font that records those indices reconstructs exactly the string the
+renderer was asked to paint. That is what kills the mutant where the
+cost strip shows the last concluded price - it reads 0 in both states
+until something is bought, so only a real draw separates them. It is
+ARENA2-gated, because `draw` returns early without art.
+
+Two dead routes now have consumers: the plain-merchant Sell arm (a
+shopkeeper in a non-repair shop fell through to talk, so there was no
+way to sell without finding a shelf first) and the repair popup's
+third button.
+
+Pins: 13 in `trademodes.test.js` and 13 in `nativetrade.test.js`. 34
+mutations, 34 dead. Live: `tools/tradeModeProbe.mjs` walks into a real
+bookshop, proves a click stages without moving a coin, commits the
+basket for the haggled price, sells back through the merchant arm, and
+clears the staging back onto the shelf.
+
+FLAGGED: the Identify SPELL arm (it pays in magicka and rolls per
+item) waits on the magic arc; the letter of credit is minted and
+carried but there is nowhere to cash one until banking lands; the
+wagon/info/select/steal buttons remain consumed no-ops; and a
+guild-run shop passes `guildFactionId: null`, so Tales and Tallow
+cannot yet fire - the guild-store arm is its own slice.

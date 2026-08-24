@@ -1,67 +1,206 @@
-// U8c: the native trade window - the composed geometry + the click
-// trade machine over fake hooks (the transaction core is the host's).
+// U8c: the native trade window - the composed geometry. U40 replaced
+// the CLICK-TRADE machine this file used to pin: DFU does not
+// transact at the click, it STAGES, and the mode action commits. The
+// geometry half is unchanged and stays; the interaction half now pins
+// the staging model, which is what the source actually carries.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { NativeTradeWindow, TRADE_RECTS, LIST_SLOTS, SLOT_H, CELL_W, CELL_X, ARROW_H, DOWN_ARROW_Y } from '../src/ui/nativeTrade.js';
+import { FNT_ASCII_START } from '../src/formats/fntFile.js';
+import { preloadTradeArt, tradeArtLoaded } from '../src/ui/nativeTrade.js';
+import { DFPalette } from '../src/formats/dfPalette.js';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
-const hooks = () => {
-  const shelf = [{ templateIndex: 277, name: 'Book A' }, { templateIndex: 277, name: 'Book B' }];
-  const bag = [{ templateIndex: 277, name: 'Mine' }];
-  let gold = 100;
+const hooks = (mode = 'Buy') => {
+  const shelf = [{ templateIndex: 277, name: 'Book A', value: 40 }, { templateIndex: 277, name: 'Book B', value: 40 }];
+  const bag = [{ templateIndex: 277, name: 'Mine', value: 40 }];
+  let gold = 100000;
+  const committed = [];
   return {
-    shelf, bag,
+    shelf, bag, committed, mode,
     shelfItems: () => shelf,
-    sellables: () => bag,
-    buy: (it) => { if (gold < 10) return null; gold -= 10; shelf.splice(shelf.indexOf(it), 1); bag.push(it); return 10; },
-    sell: (it) => { gold += 8; bag.splice(bag.indexOf(it), 1); shelf.push(it); return 8; },
+    packItems: () => bag,
+    accepts: () => true,
+    enchanted: () => true,
+    priceCtx: () => ({ quality: 10, skills: { mercantile: 50, personality: 50 } }),
     gold: () => gold,
+    rows: (id) => [{ text: `#${id}`, center: true }],
+    weight: () => ({ carriedWeightKg: 0, maxEncumbranceKg: 1e9 }),
+    commit: (m, staged, price) => {
+      committed.push({ m, n: staged.length, price });
+      gold += (m === 'Sell' || m === 'SellMagic') ? price : -price;
+      for (const it of staged) {
+        const from = m === 'Buy' ? shelf : bag;
+        const to = m === 'Buy' ? bag : shelf;
+        const i = from.indexOf(it);
+        if (i >= 0) from.splice(i, 1);
+        to.push(it);
+      }
+    },
     icons: { getTexture: async () => ({ recordCount: 0 }), uploadRecord: () => {}, textures: new Map() },
   };
 };
 
-test('nativeTrade: the composed rects + the click trade machine', () => {
+/** The middle of a visible list slot, below the 12px scroll band. */
+const REMOTE_SLOT0 = [290, 48 + 20];
+const LOCAL_SLOT0 = [192, 48 + 20];
+
+test('U8c/U40: the composed rects', () => {
   // DFU geometry: inventory lists + the trade panels
   assert.deepEqual([...TRADE_RECTS.localList], [163, 48, 59, 152]);
   assert.deepEqual([...TRADE_RECTS.remoteList], [261, 48, 59, 152]);
   assert.deepEqual([...TRADE_RECTS.costPanel], [49, 13, 111, 9]);
   assert.deepEqual([...TRADE_RECTS.actionPanel], [222, 10, 39, 190]);
+  // the two mode-flow buttons are PANEL-CHILD rects (:44-45)
+  assert.deepEqual([...TRADE_RECTS.modeAction], [226, 134, 31, 14]);
+  assert.deepEqual([...TRADE_RECTS.clear], [226, 156, 31, 14]);
   assert.equal(SLOT_H, 38);
   assert.equal(LIST_SLOTS, 4);
   assert.equal(CELL_W, 50, 'ItemListScroller itemButtonRects4');
   assert.equal(CELL_X, 9, 'itemListPanelRect - the buttons sit at x9, the rail is LEFT');
   assert.equal(ARROW_H, 16);
   assert.equal(DOWN_ARROW_Y, 136);
-  const h = hooks();
+});
+
+test('U40: a BUY click STAGES into the basket - it does not transact', () => {
+  const h = hooks('Buy');
   const w = new NativeTradeWindow(h);
-  // click remote slot 0 (below the 12px scroll band) -> buys
-  assert.ok(w.click(290, 48 + 20));
-  assert.equal(w.lastPrice, 10);
-  assert.equal(h.gold(), 90);
-  assert.equal(h.shelf.length, 1);
-  assert.equal(h.bag.length, 2);
-  // click local slot 0 -> sells (back onto the shelf)
-  assert.ok(w.click(192, 48 + 20));
-  assert.equal(w.lastPrice, 8);
-  assert.equal(h.gold(), 98);
+  assert.equal(w.cost().cost, 0, 'an empty basket costs nothing');
+  assert.equal(w.cost().modeActionEnabled, false, 'and the button is dead');
+
+  assert.ok(w.click(...REMOTE_SLOT0));
+  // THE POINT: no gold moved, no item entered the pack
+  assert.equal(h.gold(), 100000, 'not a coin - a click is not a purchase');
+  assert.equal(h.bag.length, 1, 'nothing entered the pack');
+  assert.equal(h.shelf.length, 1, 'but it did leave the shelf');
+  assert.equal(w.basket.length, 1);
+  // the basket shows in the LOCAL list, ahead of the pack (:677-686)
+  assert.equal(w.localList().length, 2);
+  assert.equal(w.localList()[0], w.basket[0], 'the basket comes FIRST');
+  // and the cost strip now totals it
+  assert.ok(w.cost().cost > 0);
+  assert.equal(w.cost().modeActionEnabled, true);
+
+  // clicking the basket item in the LOCAL list puts it back (:800-801)
+  assert.ok(w.click(...LOCAL_SLOT0));
+  assert.equal(w.basket.length, 0);
   assert.equal(h.shelf.length, 2);
+  assert.equal(w.cost().cost, 0);
+});
+
+test('U40: the mode action commits the whole basket behind one Yes/No', () => {
+  const h = hooks('Buy');
+  const w = new NativeTradeWindow(h);
+  w.click(...REMOTE_SLOT0);
+  w.click(...REMOTE_SLOT0);          // both books
+  assert.equal(w.basket.length, 2);
+  const staged = w.cost().cost;
+
+  w.click(226 + 15, 134 + 7);        // the mode action
+  assert.ok(w.box, 'the confirm box is up');
+  assert.equal(w.box.buttons, 'YesNo');
+  assert.equal(h.committed.length, 0, 'nothing has happened yet');
+  assert.ok(staged > 0);
+
+  w.input('KeyY');
+  assert.equal(h.committed.length, 1, 'ONE deal, not one per item');
+  assert.equal(h.committed[0].n, 2, 'and it carried both');
+  assert.equal(h.committed[0].m, 'Buy');
+  assert.equal(w.basket.length, 0, 'the basket is spent');
+  assert.equal(h.bag.length, 3);
+  assert.ok(h.gold() < 100000, 'and NOW the gold moved');
+  assert.equal(w.box, null);
+});
+
+test('U40: saying NO to the offer keeps the staging - nothing is lost', () => {
+  const h = hooks('Buy');
+  const w = new NativeTradeWindow(h);
+  w.click(...REMOTE_SLOT0);
+  w.click(226 + 15, 134 + 7);
+  w.input('KeyN');
+  assert.equal(h.committed.length, 0);
+  assert.equal(w.basket.length, 1, 'the basket survives a refusal - only Clear empties it');
+  assert.equal(h.gold(), 100000);
+});
+
+test('U40: Clear puts everything back where it came from (:1020-1025)', () => {
+  const h = hooks('Buy');
+  const w = new NativeTradeWindow(h);
+  w.click(...REMOTE_SLOT0);
+  w.click(...REMOTE_SLOT0);
+  assert.equal(h.shelf.length, 0);
+  w.click(226 + 15, 156 + 7);        // Clear
+  assert.equal(w.basket.length, 0);
+  assert.equal(h.shelf.length, 2, 'both books are back on the shelf');
+  assert.equal(w.cost().cost, 0);
+});
+
+test('U40: in SELL mode the REMOTE list is what you have staged, and it starts empty', () => {
+  const h = hooks('Sell');
+  const w = new NativeTradeWindow(h);
+  assert.deepEqual(w.remoteList(), [], 'the right-hand list starts EMPTY in a selling mode');
+  assert.equal(w.localList().length, 1, 'and the left is your pack');
+
+  assert.ok(w.click(...LOCAL_SLOT0));
+  assert.equal(w.remoteList().length, 1, 'the click staged it to the right');
+  assert.equal(h.bag.length, 0, 'and out of the pack');
+  assert.equal(h.gold(), 100000, 'no gold yet - staging is not selling');
+  assert.ok(w.cost().cost > 0);
+
+  // a staged item clicks back OUT
+  assert.ok(w.click(...REMOTE_SLOT0));
+  assert.equal(w.remoteList().length, 0);
+  assert.equal(h.bag.length, 1);
+
+  // stage again and commit - now the gold comes the OTHER way
+  w.click(...LOCAL_SLOT0);
+  w.click(226 + 15, 134 + 7);
+  w.input('KeyY');
+  assert.equal(h.committed[0].m, 'Sell');
+  assert.ok(h.gold() > 100000, 'a sale PAYS the player');
+});
+
+test('U40: a buyer who cannot pay gets a box and no Yes/No (:1116-1124)', () => {
+  const h = hooks('Buy');
+  h.gold = () => 1;
+  const w = new NativeTradeWindow(h);
+  w.click(...REMOTE_SLOT0);
+  w.click(226 + 15, 134 + 7);
+  assert.ok(w.box);
+  assert.equal(w.box.buttons, null, 'no Yes/No at all - the deal is refused, not offered');
+  // the two records are concatenated: the haggle line AND the refusal
+  assert.equal(w.box.rows.length, 2);
+  assert.match(w.box.rows[1].text, /454/, 'notEnoughGold rides second');
+  // dismissing it leaves the basket alone
+  w.input('Enter');
+  assert.equal(w.box, null);
+  assert.equal(w.basket.length, 1);
+});
+
+test('U40: the dead mode action does nothing at all', () => {
+  const h = hooks('Buy');
+  const w = new NativeTradeWindow(h);
+  // nothing staged -> DFU disables the button, so the click is inert
+  assert.ok(w.click(226 + 15, 134 + 7), 'the rect is still consumed');
+  assert.equal(w.box, null, 'but no popup opens');
+  assert.equal(h.committed.length, 0);
+});
+
+test('U8c: the scroll rail never trades, and exit closes', () => {
+  const h = hooks('Buy');
+  const w = new NativeTradeWindow(h);
   // the LEFT 9px rail never picks items (up arrow 0,0,9,16 / down
   // 0,136,9,16 / the bar between)
-  const before = h.shelf.length;
   assert.ok(w.click(261 + 4, 48 + 5));      // the up arrow
   assert.ok(w.click(261 + 4, 48 + 140));    // the down arrow
   assert.ok(w.click(261 + 4, 48 + 70));     // the bar between
-  assert.equal(h.shelf.length, before, 'the rail scrolls, never trades');
+  assert.equal(w.basket.length, 0, 'the rail scrolls, never stages');
+  assert.equal(h.shelf.length, 2);
   // outside every rect: not consumed; exit closes
   assert.equal(w.click(10, 100), false);
   assert.ok(w.click(241, 188));
   assert.ok(w.done);
-  // keyboard: digits buy visible remote slots
-  const h2 = hooks();
-  const w2 = new NativeTradeWindow(h2);
-  w2.input('Digit1');
-  assert.equal(h2.gold(), 90);
-  w2.input('Escape');
-  assert.ok(w2.done);
 });
 
 test('nativeTrade: icon draws V-FLIP the record texture (the bottom-up GL rows)', () => {
@@ -103,4 +242,95 @@ test('nativeTrade: icons NEVER upscale and centre in the 50x38 cell (ItemListScr
   // AUDIT 17e F26: ScaleToFit fits the button's INTERIOR - the 2px
   // margin on all sides (ItemListScroller.cs:98,:339) makes it 46x34.
   assert.equal(captured.dst.w, 46, 'downscaled to the button INTERIOR, not the full cell');
+});
+
+// ---------------------------------------------------------------
+// U40  The cost strip is LIVE, and proving it needs to see the draw
+// ---------------------------------------------------------------
+// There was no harness in this repo for asserting DRAWN text - the
+// other UI suites pin it by reading the source, which cannot tell a
+// live total from a stale one. drawText asks the font for every glyph
+// by INDEX (text.js:88-89), so a font that records those indices
+// reconstructs exactly the string the renderer was asked to paint.
+// That is an observation of the draw, not of the code.
+//
+// It is ARENA2-gated because draw() returns early without art (the
+// U8c fallback), so there is no way to reach the strip on a host with
+// no game data - the standing half-blind cost this repo already
+// records for its other art pins.
+const ARENA2 = process.env.ARENA2_PATH;
+const SKIP = ARENA2 ? false : 'ARENA2_PATH not set - the drawn-text pin needs real art';
+
+const drawSpy = () => {
+  const chars = [];
+  const font = {
+    tex: null,
+    fnt: {
+      fixedHeight: 6,
+      glyphWidth: (gi) => { chars.push(String.fromCharCode(gi + FNT_ASCII_START)); return 4; },
+    },
+  };
+  return { font, painted: () => chars.join('') };
+};
+
+test('U40: the cost strip totals what is STAGED, re-read every frame', { skip: SKIP }, async () => {
+  const palette = new DFPalette();
+  palette.load(new Uint8Array(readFileSync(join(ARENA2, 'ART_PAL.COL'))), 'ART_PAL.COL');
+  const renderer = {
+    uploadTexture: (g, name) => `tex:${name}`,
+    releaseTexture: () => {},
+    drawScreenQuad: () => {},
+  };
+  await preloadTradeArt({ renderer, palette, fetchBytes: async (n) => new Uint8Array(readFileSync(join(ARENA2, n))) });
+  assert.ok(tradeArtLoaded(), 'INVE00I0 + the mode panels');
+
+  const h = hooks('Buy');
+  const w = new NativeTradeWindow(h);
+  const canvas = { width: 640, height: 400 };
+
+  // nothing staged: the gold is painted and the cost reads 0
+  const a = drawSpy();
+  w.draw(renderer, canvas, a.font);
+  assert.match(a.painted(), /100000/, 'the gold is drawn');
+
+  // stage one book and draw again - the SAME window, no commit
+  w.click(...REMOTE_SLOT0);
+  const staged = w.cost().cost;
+  assert.ok(staged > 0, 'the fixture really does cost something');
+  const b = drawSpy();
+  w.draw(renderer, canvas, b.font);
+  assert.match(b.painted(), new RegExp(String(staged)),
+    'the strip shows the live basket total before any deal concludes');
+  // and this is the discriminating half: a window that showed the LAST
+  // CONCLUDED PRICE would still be showing 0 here, because nothing has
+  // been bought yet. lastPrice is null and the strip is not reading it.
+  assert.equal(w.lastPrice, null);
+
+  // clear it and the strip goes back to 0
+  w._clear();
+  assert.equal(w.cost().cost, 0);
+});
+
+test('U40: the offer box expands %cpn, %cn and %a - the LIVE PROBE read all three raw', () => {
+  // TEXT.RSC 260-265 quote the shop, the city and the price back at
+  // the player: "%cpn prides itself on having the lowest prices in
+  // %cn ... I can sell for no less than %a gold pieces". The window
+  // had never expanded any of them. %a is the PRICE, so a player was
+  // being asked to agree to a literal percent-a.
+  const h = hooks('Buy');
+  h.shopName = "The Adventurer's Book Dealer";
+  h.cityName = () => 'Daggerfall';
+  h.rows = () => [{ text: '%cpn, lowest prices in %cn, no less than %a gold.', center: true }];
+  const w = new NativeTradeWindow(h);
+  w.click(...REMOTE_SLOT0);
+  w.click(226 + 15, 134 + 7);
+  const text = w.box.rows[0].text;
+  assert.match(text, /The Adventurer's Book Dealer/);
+  assert.match(text, /lowest prices in Daggerfall/);
+  assert.doesNotMatch(text, /%/, 'no macro survives into the box');
+  // and %a is the TRADE PRICE, not the staged cost - the two differ
+  // because the price is the cost haggled through CalculateTradePrice
+  const price = Number(/than (\d+) gold/.exec(text)[1]);
+  assert.equal(price, w.box.price);
+  assert.notEqual(price, w.box.cost, 'the haggle really did move it');
 });

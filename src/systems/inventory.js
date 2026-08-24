@@ -51,6 +51,20 @@ export const goldStack = (stackCount = 0) => ({
   stackCount,
 });
 
+/** MiscItems.Letter_of_credit (ItemEnums.cs) - minted the one place
+ *  DFU mints it (DaggerfallTradeWindow.cs:1044-1048): a sale whose
+ *  proceeds would push the player past MaxEncumbrance pays in paper
+ *  instead of coin, and the letter's VALUE is the whole trade price.
+ *  It lives beside goldStack because it is the same kind of thing -
+ *  a minter for a currency-shaped item - and because the trade law
+ *  decides WHETHER to mint one while the pack decides what one is. */
+export const LETTER_OF_CREDIT_TEMPLATE = 275;
+export const letterOfCredit = (value = 0) => ({
+  group: 'MiscItems', templateIndex: LETTER_OF_CREDIT_TEMPLATE,
+  name: templates.find((t) => t.index === LETTER_OF_CREDIT_TEMPLATE)?.name ?? 'Letter of credit',
+  value, stackCount: 1,
+});
+
 /** Weapons.Arrow / UselessItems2.Oil (ItemEnums.cs) - the two
  *  IsOfTemplate arms of IsItemStackable. */
 export const ARROW_TEMPLATE = 131;
