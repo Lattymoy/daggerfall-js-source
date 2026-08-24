@@ -191,6 +191,14 @@ export class NativeInventoryWindow {
     // DFU's no-loot arm opens STRAIGHT onto the wagon in Remove mode
     // (the classic leave-the-haul-at-the-entrance flow).
     this.usingWagon = false;
+    // G6: SetChooseOne (:259-264). The reward list becomes the REMOTE
+    // side and taking ONE item closes the window and fires the
+    // callback (:1585-1591); the local Remove transfer is barred
+    // while it is on (:1994), so nothing of the player's can be
+    // dumped into a pile they are only choosing from. DFU clears the
+    // mode in OnPop, so closing WITHOUT taking claims nothing.
+    this.chooseOne = hooks.chooseOne ?? null;
+    if (this.chooseOne) this.mode = 'remove';
     this.allowDungeonWagonAccess = !!(hooks.dungeon?.inside && this._hasCart() && hooks.dungeon?.nearExit?.());
     if (this.allowDungeonWagonAccess && !hooks.loot) { this.usingWagon = true; this.mode = 'remove'; }
     this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);   // AUDIT 17f: icons follow the wearer's morphology
@@ -221,6 +229,7 @@ export class NativeInventoryWindow {
   _filtered() { return filterByTab(this.hooks.items(), this.tab); }
   _remote() {
     if (this.usingWagon) return this.hooks.wagonItems?.() ?? (this._wagonLocal ??= []);
+    if (this.chooseOne) return this.chooseOne.items;
     return this.hooks.loot ? this.hooks.loot.items() : this.dropped;
   }
   _setTab(t) { audio.playOneShot(SOUND.ButtonClick, 1); this.tab = t; this.scroll = 0; }   // the four tab buttons (:1209-1227)
@@ -403,6 +412,8 @@ export class NativeInventoryWindow {
       // the bag, so dropping the cart into its own wagon locked the
       // player out of the wagon now holding it.
       if (it.group === 'Transportation') return;
+      // G6 (:1994): nothing goes INTO a choose-one pile.
+      if (this.chooseOne && !this.usingWagon) return;
       // LocalItemListScroller_OnItemClick Remove: transfer to the
       // remote items (whole stacks - the split popup pends).
       // W-slice: INTO THE WAGON the 750kg cart limit gates first
@@ -498,6 +509,15 @@ export class NativeInventoryWindow {
         // S23: the taken item still has to pass the career gate
         if (this._refuseForbidden(taken)) return;
         if (equipItem(this.hooks.entity, taken) !== null) refreshPaperDoll(this.hooks.entity);
+      }
+      // G6 (:1585-1591): ONE is the whole gift. The window closes and
+      // the callback runs - which is where the rank's flag is set, so
+      // the claim and the taking are the same event.
+      if (this.chooseOne && !this.usingWagon) {
+        const cb = this.chooseOne.onChoose;
+        this.chooseOne = null;
+        this._closeSilently();
+        cb?.(taken);
       }
     }
   }

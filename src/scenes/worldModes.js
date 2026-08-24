@@ -72,8 +72,12 @@ import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded, TRADE_RECTS } from 
 import { STATIC_NPC_ACTIVATION_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../systems/talk.js';
 import { staticNpcRoute, showsJoinButton, serviceAccess, onPushEffects } from '../systems/guildServiceFlow.js';
 import { canAccessService } from '../systems/guildServices.js';   // G4: does THIS guild also sell soul gems?
+import {
+  receiveArmorDecision, claimArmor, SPYMASTER_GREETING_TEXT_ID,
+} from '../systems/knightlyGifts.js';   // G6
+import { mintCondition } from '../systems/itemTemplates.js';   // G6: the gift's pieces mint like any other item
 import { npcServiceKind, freeHealing, freeMagickaRecharge } from '../systems/guildServices.js';
-import { createGuildForGroup } from '../systems/guildVariants.js';
+import { createGuildForGroup, ORDERS } from '../systems/guildVariants.js';
 import { membershipOf, joinGuild, joinDecision } from '../systems/guilds.js';
 import { ensureFactionRep } from '../systems/factionRep.js';
 import { dateFromClassicMinutes, dateString } from '../systems/gameDate.js';   // B2: the loan due date
@@ -1076,6 +1080,25 @@ export function createWorldModes(host) {
   }
 
   function openGuildService(pn, route) {
+    /** B7: the popup's TALK button is TalkToStaticNPC with menu
+     *  defaulted TRUE (DaggerfallGuildServicePopupWindow.cs:294) -
+     *  the same engine doors, then the window push. G6 gave it a
+     *  SECOND caller: the Spymaster's greeting hands the player to
+     *  this same door on dismissal, with isSpyMaster true (:713). */
+    const talkToStaticNpcHere = ({ isSpyMaster }) => {
+      const dict2 = townTalk?.factionDict ?? null;
+      const npcData2 = pn.factionID ? staticNpcData(pn, { ...(questSceneCtx?.() ?? {}), buildingKey: interiorBuilding?.buildingKey ?? 0 }) : null;
+      const displayName2 = npcData2 ? staticNpcName(npcData2, { getFaction: (id) => dict2?.get(id) ?? null }) : (pn.displayName ?? '');
+      const talk2 = npcSession?.talkToStaticNPC(
+        { data: pn, isChildNPC: !!pn.isChildNPC, displayName: displayName2 },
+        { menu: true, isSpyMaster });
+      if (talk2?.kind === 'talk' && townTalk?.openTalkWindow) {
+        interiorOverlay = null;   // the popup yields to the conversation, as DFU's CloseWindow-then-push does
+        townTalk.openTalkWindow(talk2.greeting, { npcSeed: pn.nameSeed ?? 0, npcName: displayName2 });
+        return;
+      }
+      if (!talk2) townTalk?.say?.('You get no response.');   // no session mounted - the old line
+    };
     const dict = townTalk?.factionDict ?? null;
     const guild = createGuildForGroup(route.guildGroup, route.buildingFactionId, dict);
     if (!guild) { townTalk?.say?.('You get no response.'); return; }
@@ -1129,20 +1152,7 @@ export function createWorldModes(host) {
       /** B7: the popup's TALK button is TalkToStaticNPC with menu
        *  defaulted TRUE (DaggerfallGuildServicePopupWindow.cs:294) -
        *  the same engine doors, then the window push. */
-      onTalk: () => {
-        const dict2 = townTalk?.factionDict ?? null;
-        const npcData2 = pn.factionID ? staticNpcData(pn, { ...(questSceneCtx?.() ?? {}), buildingKey: interiorBuilding?.buildingKey ?? 0 }) : null;
-        const displayName2 = npcData2 ? staticNpcName(npcData2, { getFaction: (id) => dict2?.get(id) ?? null }) : (pn.displayName ?? '');
-        const talk2 = npcSession?.talkToStaticNPC(
-          { data: pn, isChildNPC: !!pn.isChildNPC, displayName: displayName2 },
-          { menu: true, isSpyMaster: false });
-        if (talk2?.kind === 'talk' && townTalk?.openTalkWindow) {
-          interiorOverlay = null;   // the popup yields to the conversation, as DFU's CloseWindow-then-push does
-          townTalk.openTalkWindow(talk2.greeting, { npcSeed: pn.nameSeed ?? 0, npcName: displayName2 });
-          return;
-        }
-        if (!talk2) townTalk?.say?.('You get no response.');   // no session mounted - the old line
-      },
+      onTalk: () => talkToStaticNpcHere({ isSpyMaster: false }),
       onService: () => {
         const access = serviceAccess(guild, membershipOf(memberships, guild), service);
         if (!access.allowed) {
@@ -1150,8 +1160,22 @@ export function createWorldModes(host) {
         }
         // U24: the three the port can perform. Every other arm is
         // FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
-        const flow = openServiceFlow(serviceDestination(service), { guild, memberships, store, rows, route });
+        const flow = openServiceFlow(serviceDestination(service), {
+          guild, memberships, store, rows, route,
+          // G6: the greeting's dismissal IS the service - the same
+          // talk door the popup's own Talk button opens, with
+          // isSpyMaster TRUE (:713), which is the one thing that
+          // differs between the two.
+          talkAsSpymaster: () => talkToStaticNpcHere({ isSpyMaster: true }),
+        });
         if (!flow) return { rows: ['That service is not available yet.'] };
+        // G6: an arm may answer a BOX instead of a window - the
+        // smith's refusal and the Spymaster's greeting both do, and
+        // both belong ON the popup rather than in place of it. The
+        // caller used to mount whatever came back, so a box would
+        // land in the overlay slot and the next frame would ask a
+        // plain object to draw itself.
+        if (flow.rows) return flow;
         interiorOverlay = flow;
         return { dispatched: true };
       },
@@ -1163,7 +1187,7 @@ export function createWorldModes(host) {
   /** DoGuildService's three built arms (U24). Each returns a
    *  ServiceFlowWindow, or null for a destination that does not exist
    *  yet. `onClose` uses the same identity guard as the popup's. */
-  function openServiceFlow(destination, { guild, memberships, store, rows, route }) {
+  function openServiceFlow(destination, { guild, memberships, store, rows, route, talkAsSpymaster = null }) {
     if (!destination) return null;
     const membership = membershipOf(memberships, guild);
     const b = interiorBuilding;
@@ -1271,6 +1295,42 @@ export function createWorldModes(host) {
     // itself and answers null cannot be told apart from a service
     // that does not exist, and the popup needs the difference to know
     // whether to close.
+    // G6: THE SPYMASTER. A random TEXT.RSC 402 variant, click-anywhere
+    // to close, and the close hands the player to the NPC's OWN talk
+    // window (:711-714 TalkToStaticNPC with isSpyMaster true). It is
+    // a greeting rather than a service: nothing is bought, and the
+    // conversation that follows is the one the popup's Talk button
+    // would have opened anyway.
+    if (destination === 'guildServiceSpymaster') {
+      const spyRows = rows?.(SPYMASTER_GREETING_TEXT_ID) ?? [];
+      return {
+        rows: spyRows.length ? spyRows : [{ text: 'I am the Spymaster.', center: true }],
+        closesWindow: true,
+        onDismiss: () => { talkAsSpymaster?.(); },
+      };
+    }
+    // G6: THE KNIGHTLY SMITH'S GIFT. The refusal is a box on the
+    // popup; the offer opens THIS HOST's inventory in choose-one mode
+    // over the reward pile, and taking a piece is what claims the
+    // rank (systems/knightlyGifts.js).
+    if (destination === 'guildServiceReceiveArmor') {
+      const decision = receiveArmorDecision(membership, {
+        makeArmor: (templateIndex, material) => mintCondition({ group: 'Armor', templateIndex, material }),
+      });
+      if (decision.kind === 'refuse') {
+        const refusal = rows?.(decision.textId) ?? [];
+        return { rows: refusal.length ? refusal : [{ text: 'You have already received your armor for your current rank.', center: true }] };
+      }
+      const win = host.makeInventory?.({
+        chooseOne: {
+          items: decision.pieces,
+          onChoose: () => { claimArmor(membership, decision.mask); surfacePlayer(); },
+        },
+      });
+      if (!win) return null;
+      interiorOverlay = win;
+      return win;
+    }
     if (destination === 'guildServiceTeleport') {
       const win = host.openTeleportMap?.();
       if (!win) return null;
@@ -2445,27 +2505,62 @@ export function createWorldModes(host) {
      *  arms all price off the guild's own faction id, so a probe that
      *  faked the guild would not be testing the thing that was
      *  broken. */
-    window.__openGuildService = (destination, group = GUILD_GROUPS.MagesGuild) => {
+    window.__openGuildService = (destination, group = GUILD_GROUPS.MagesGuild, buildingFactionId = 0) => {
       const dict = townTalk?.factionDict ?? null;
-      const guild = createGuildForGroup(group, 0, dict);
+      const guild = createGuildForGroup(group, buildingFactionId, dict);
       const memberships = (playerEntity.guildMemberships ??= {});
       // The real caller assigns what openServiceFlow RETURNS - the
       // trade arms hand back a flow for the popup to mount, where the
       // maker windows mount themselves and answer null. A probe that
       // dropped the return value would test only half of them.
       const flow = openServiceFlow(destination, { guild, memberships, store: null, rows: null, route: null });
-      if (flow) interiorOverlay = flow;
+      // the same contract the real caller keeps: a window mounts, a
+      // BOX does not (it belongs on the popup that asked)
+      if (flow && !flow.rows) interiorOverlay = flow;
       return guild?.factionId ?? null;
     };
     /** Join a guild at a chosen rank, so a probe can reach the
      *  member-only half of a service (the gem run on the magic shelf
      *  is gated on CanAccessService, which is false for a stranger). */
-    window.__joinGuild = (group = GUILD_GROUPS.MagesGuild, rank = 6) => {
-      const guild = createGuildForGroup(group, 0, townTalk?.factionDict ?? null);
+    window.__joinGuild = (group = GUILD_GROUPS.MagesGuild, rank = 6, buildingFactionId = 0) => {
+      const guild = createGuildForGroup(group, buildingFactionId, townTalk?.factionDict ?? null);
       const memberships = (playerEntity.guildMemberships ??= {});
       const m = joinGuild(memberships, guild, Math.floor(worldMinutes()));
       m.rank = rank;
       return JSON.stringify(m);
+    };
+    window.__knightlyGroup = GUILD_GROUPS.KnightlyOrder;
+    // A knightly order is VARIANT-keyed: createGuildForGroup needs the
+    // hall's own faction id to know WHICH order, so a probe has to
+    // name one (the Order of the Candle, 408).
+    window.__knightlyFaction = ORDERS.Candle;
+    /** G6: the inventory overlay's live state, and its two pick
+     *  doors - the choose-one law is entirely in what a click on
+     *  either list does.
+     *
+     *  Recognised by SHAPE rather than by type: this host constructs
+     *  no inventory window of its own (U26's four-hosts pin), it
+     *  mounts the one its host builds, so importing the class here
+     *  purely to name it would make that pin read false. */
+    const isInventory = (w) => !!w && typeof w._pickRemote === 'function' && typeof w._remote === 'function';
+    window.__inventoryOverlay = () => JSON.stringify(isInventory(interiorOverlay) ? {
+      inventory: true,
+      mode: interiorOverlay.mode,
+      chooseOne: !!interiorOverlay.chooseOne,
+      remote: interiorOverlay._remote().map((i) => ({ t: i.templateIndex, m: i.material })),
+      local: interiorOverlay._filtered().length,
+    } : null);
+    window.__inventoryPickLocal = (slot) => {
+      if (!isInventory(interiorOverlay)) return null;
+      interiorOverlay._pick(slot);
+      return window.__inventoryOverlay();
+    };
+    window.__inventoryPickRemote = (slot) => {
+      if (!isInventory(interiorOverlay)) return null;
+      const w = interiorOverlay;
+      w._pickRemote(slot);
+      if (w.done && interiorOverlay === w) interiorOverlay = null;
+      return window.__inventoryOverlay();
     };
     window.__openItemMaker = () => {
       window.__openGuildService('guildServiceItemMaker');
