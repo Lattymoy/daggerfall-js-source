@@ -125,11 +125,11 @@ test('I3: the wiring - four hosts, one Escape door each, art preloaded', () => {
   // the exterior hosts hand-route, gated exactly like their siblings
   for (const rel of ['scenes/world.js', 'scenes/exterior.js']) {
     assert.match(code(rel), /act === 'Escape' && !townTalk\.overlayActive/, `${rel} opens on Escape`);
-    assert.match(code(rel), /preloadPauseArt\(/, `${rel} warms the art`);
+    assert.match(code(rel), /preloadPauseFlowArt\(/, `${rel} warms the art`);
   }
   // the interior arm rides worldModes' own overlay slot
   assert.match(code('scenes/worldModes.js'), /mode === 'interior' && !interiorOverlay && actionOf\(e\) === 'Escape'/);
-  assert.match(code('scenes/worldModes.js'), /preloadPauseArt\(/);
+  assert.match(code('scenes/worldModes.js'), /preloadPauseFlowArt\(/);
   // and the door out is the ONE menu unwind (audit24_onehome watches
   // the symbol; this pins the CALL in the exit hook of each host)
   for (const rel of ['scenes/world.js', 'scenes/exterior.js', 'scenes/worldModes.js', 'scenes/dungeonContext.js']) {

@@ -45,12 +45,35 @@ out.steps.sound = await page.evaluate(() => JSON.parse(localStorage.getItem('dag
 await page.keyboard.press('Escape');
 await frames(2);
 out.steps.reopened = await overlay();
+// I4: the CONTROLS door, a live rebind, and the round trip back.
+// Reopen, click CONTROLS (5,60 inside the panel), rebind MoveForwards
+// (the grid's first button at 57,13) to KeyP, then CONTINUE (240,190)
+// and confirm the registry persisted it.
+await page.evaluate(() => window.__overlayClick(85 + 5 + 2, 40 + 60 + 2));
+await frames(2);
+out.steps.controls = await overlay();
+await page.evaluate(() => window.__overlayClick(57 + 2, 13 + 2));   // MoveForwards
+await frames(1);
+await page.evaluate(() => window.__overlayKey('KeyP'));
+await frames(1);
+await page.evaluate(() => window.__overlayClick(240 + 2, 190 + 2));  // CONTINUE
+await frames(2);
+out.steps.backToPause = await overlay();
+out.steps.rebound = await page.evaluate(() => JSON.parse(localStorage.getItem('dagger.keybinds') ?? '{}').actionKeyBinds?.KeyP ?? null);
+out.steps.oldGone = await page.evaluate(() => JSON.parse(localStorage.getItem('dagger.keybinds') ?? '{}').actionKeyBinds?.KeyW ?? null);
+await page.keyboard.press('Escape');
+await frames(2);
+
 out.ok = !!(out.steps.boot === null
   && out.steps.open && out.steps.open.kind === 'PauseOptionsWindow'
   && out.steps.sound === '0.25'
   && out.steps.declined && out.steps.declined.kind === 'PauseOptionsWindow'
   && out.steps.closed === null
   && out.steps.reopened && out.steps.reopened.kind === 'PauseOptionsWindow'
+  && out.steps.controls && out.steps.controls.kind === 'ControlsWindow'
+  && out.steps.backToPause && out.steps.backToPause.kind === 'PauseOptionsWindow'
+  && out.steps.rebound === 'MoveForwards'
+  && out.steps.oldGone === null
   && errors.length === 0);
 out.errors = errors.slice(0, 6);
 console.log(JSON.stringify(out, null, 2));

@@ -3208,3 +3208,66 @@ bar and detail laws, the confirm/save/load flows, the four-host
 wiring sweep); five mutations, five dead. Live: tools/pauseProbe.mjs
 - Escape opens over a real dungeon, the bar write survives the close,
 N declines the exit, Escape toggles both ways.
+
+## U36 / I4 - THE CONTROLS GRID: keys rebind at last (2026-08-23)
+
+DaggerfallControlsWindow on CNFG00I0.IMG, with CNFG00I1's
+mouse-look-alt panel at (152,100,168,45). The grid I1's registry has
+been waiting for since the arc opened, and the last piece of the
+Ledger's KEYBINDING REGISTRY row.
+
+**The staging law** (`systems/controlsConfig.js` = ControlsConfigManager
+minus its combo arms): the window edits a COPY of both binding dicts,
+and nothing reaches the live registry until it closes. `GetDuplicates`
+answers which codes repeat (unbound never counts, however many actions
+share it); `CheckDuplicateKeyCodes` returns them as data - red for a
+clash INSIDE the shown dict, DFU's blue for one across the two - and
+`ok` is DFU's own `noRedDupes && cross == 0`: BOTH kinds block the
+exit. The cross check dedupes each dict first, so an internal pair
+does not double as a cross clash (a mutation proved that arm real).
+
+**THE APPLY CONTRACT, found by a failing fixture.** `SetBinding`
+steals a code from whoever holds it, so applying a set where two
+actions share one code is ORDER-DEPENDENT: the later action wins and
+the earlier ends up unbound. DFU's `SetKeyBindValues` has exactly this
+shape and never reaches it, because the window refuses to close while
+duplicates exist. That is *why* the gate blocks the exit rather than
+merely colouring the labels. Both halves are pinned together so nobody
+"fixes" the apply and quietly retires its guard. The removed-primary
+mark rides the TRANSITION, not the state - applying an unchanged set
+marks nothing, which is what makes reopening the window and pressing
+CONTINUE harmless (the mutant that reads it as state survived the
+first round and earned its own pin).
+
+**The grid** is Actions[2..40) - thirty-eight buttons in nine groups
+at DFU's first-setup anchors, 47x7 on an 11px stride. Six actions are
+NOT offered (Escape, ToggleConsole below the range; QuickSave,
+QuickLoad, PrintScreen, AutoRun past its end) - DFU's own omission,
+kept and pinned by name. Left-click captures the next key (ReservedKeys
+is empty in DFU, so Escape binds like any other); right-click prompts
+to remove; DEFAULT confirms through the registry's own reset; CONTINUE
+on a clean grid applies and saves. The prompts are Internal_Strings'
+own, recovered - "You have multiple assignments...", "Are you sure you
+want to set default controls?", the removeKeybind format with its
+camel-split action name and full key text - and the pause window's
+cannotSaveNow line was corrected to the real string in the same pass.
+
+**One construction seam.** `openPauseFlow(show, hooks)` builds the
+pause window with its controls round trip once; each host passes only
+its own slot assignment. The U24 dispatch law holds at both ends: a
+window that opens another marks itself done FIRST and the host's slot
+assignment replaces it. A test forbids any host from hand-rolling
+`new PauseOptionsWindow` past the factory.
+
+DFU's UpdateKeybindButtons re-anchors every group one pixel up-left
+after the first rebind (56,12 against 57,13), so its labels shift by
+(1,1) mid-session. The port draws from ONE table; reproducing the
+drift would need a second layout table whose only purpose is to lie
+identically, so it is recorded here instead.
+
+Pins: 8 in `controlswindow.test.js`; seven mutations, seven dead - two
+of them (the unconditional rebind, the per-dict dedupe) added after
+survivors showed the first pins too soft. Live: tools/pauseProbe.mjs
+now drives the whole trip - Escape, CONTROLS, rebind MoveForwards from
+W to P, CONTINUE, back to the pause window, with the new binding in
+storage and the old one gone.

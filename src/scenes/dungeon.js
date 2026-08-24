@@ -167,7 +167,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       const px = (e.clientX - r.left) * (canvas.width / r.width);
       const py = (e.clientY - r.top) * (canvas.height / r.height);
       const v = pointToNative(nativeMetrics(canvas), px, py);
-      if (v && ctx.overlayClick?.(v[0], v[1])) return;
+      if (v && ctx.overlayClick?.(v[0], v[1], e.button === 2)) return;
       return;   // a window is up: never grab the pointer behind it
     }
     requestLook(canvas);   // safe: a refused lock never crashes (was bare requestPointerLock - the sh/< crash + lock:N frozen yaw)
@@ -181,7 +181,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   }, { passive: false });
   // C8 E3c: RMB drag-to-swing (classic weapon control; menu suppressed)
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-  addEventListener('mousedown', (e) => { if (e.button === 2) ctx.playerAttackInput(0, 0, true); });
+  addEventListener('mousedown', (e) => { if (e.button === 2 && !ctx.uiOverlayActive) ctx.playerAttackInput(0, 0, true); });   // I4: a right-click on a window is the window's (the remove gesture), never a swing
 
   addEventListener('keydown', (e) => {
     // The input map (ui/input.js) owns all bindings.

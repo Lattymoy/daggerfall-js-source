@@ -95,7 +95,7 @@ import {
   MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID, DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID, CANNOT_BE_REPAIRED_TEXT,
 } from '../systems/repairService.js';
 import { GuildServiceWindow, preloadGuildServiceArt, guildServiceArtLoaded } from '../ui/guildServiceWindow.js';
-import { PauseOptionsWindow, preloadPauseArt, pauseArtLoaded } from '../ui/pauseWindow.js';   // I3
+import { openPauseFlow, preloadPauseFlowArt, pauseArtLoaded } from '../ui/pauseWindow.js';   // I3/I4
 import { preloadMessageBoxArt } from '../ui/messageBox.js';
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
@@ -234,7 +234,7 @@ export function createWorldModes(host) {
   const ensureInteriorWindowArt = () => {
     ensureShopFont();                                       // FONT0003 + the trade art
     preloadGuildServiceArt({ renderer, fetchBytes, palette });
-    preloadPauseArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] OPTN00I0 unavailable:', e?.message ?? e));   // I3
+    preloadPauseFlowArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] pause/controls art unavailable:', e?.message ?? e));   // I3/I4
     preloadMessageBoxArt({ renderer, fetchBytes, palette });   // U11 parchment for its boxes
     preloadListPickerArt({ renderer, fetchBytes, palette });   // U24: PICK00I0 for the training skill list
   };
@@ -1948,7 +1948,7 @@ export function createWorldModes(host) {
     // yet - the composer saves from ?world's exterior and the dungeon
     // contexts - so the SAVE button answers DFU's cannot-save line.
     if (mode === 'interior' && !interiorOverlay && actionOf(e) === 'Escape' && pauseArtLoaded()) {
-      interiorOverlay = new PauseOptionsWindow({
+      openPauseFlow((w) => { interiorOverlay = w; }, {
         savingPrevented: () => true,
         exitToMenu: exitToTitleMenu,
         textLines: (id) => townTalk?.lines?.(id) ?? null,
@@ -1978,7 +1978,7 @@ export function createWorldModes(host) {
     // shape that has bitten this flow four times.
     if (mode === 'dungeon' && dungeonCtx?.uiOverlayActive) {
       const vd = pointToNative(nativeMetrics(canvas), px, py);
-      if (vd) dungeonCtx.overlayClick?.(vd[0], vd[1]);
+      if (vd) dungeonCtx.overlayClick?.(vd[0], vd[1], e.button === 2);
       return true;   // an open window withholds the pointer lock, as in dungeon.js
     }
     // The guard is on the WINDOW, not on its click method: an open
@@ -1987,7 +1987,7 @@ export function createWorldModes(host) {
     // to requestLook and grabs pointer lock from under the menu.
     if (mode !== 'interior' || !interiorOverlay) return false;
     const v = pointToNative(nativeMetrics(canvas), px, py);
-    if (v) interiorOverlay.click?.(v[0], v[1]);
+    if (v) interiorOverlay.click?.(v[0], v[1], e.button === 2);   // I4: the remove gesture rides the button
     if (interiorOverlay?.done) interiorOverlay = null;
     return true;
   }

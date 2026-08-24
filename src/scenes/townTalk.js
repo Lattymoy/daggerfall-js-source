@@ -576,7 +576,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     const py = (e.clientY - r.top) * (canvas.height / r.height);
     const m = nativeMetrics(canvas);
     const v = pointToNative(m, px, py);
-    if (v) overlay.click(v[0], v[1]);
+    if (v) overlay.click(v[0], v[1], e.button === 2);   // I4: the remove gesture rides the button
     if (overlay.done) {
       const cb = _onOverlayClosed; _onOverlayClosed = null; overlay = null; cb?.();
     }

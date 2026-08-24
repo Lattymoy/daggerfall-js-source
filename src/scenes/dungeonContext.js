@@ -21,7 +21,7 @@ import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE } from '../world/rdbLayout.js';
 import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, DOOR_VERB_FLAGS, classifyPlacementAction, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT } from '../world/actionSystem.js';
 import { TextRsc } from '../formats/textRsc.js';
-import { PauseOptionsWindow, preloadPauseArt, pauseArtLoaded } from '../ui/pauseWindow.js';
+import { openPauseFlow, preloadPauseFlowArt, pauseArtLoaded } from '../ui/pauseWindow.js';
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, setDeathPresenter } from '../characters/playerEntity.js';
 import { addItem, removeOne } from '../systems/inventory.js';
@@ -683,7 +683,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   preloadMessageBoxArt({ renderer, fetchBytes, palette });
   // I3: the Escape window's panel, same failure posture (a missing
   // OPTN00I0 costs the pause menu, loudly, never the boot).
-  preloadPauseArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] OPTN00I0 unavailable:', e?.message ?? e));
+  preloadPauseFlowArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] pause/controls art unavailable:', e?.message ?? e));
   // S16: enemy spell lists ride SPELLS.STD (loaded just above, after
   // the foe build) - SetEnemyCareer's assignment tail per live foe:
   // class enemies with CastsMagic take EnemyClassSpells[min(6,
@@ -2438,7 +2438,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     togglePause(setPlayerPos = null) {
       if (activeOverlay || !pauseArtLoaded()) return;
       const ctx = this;   // the sibling save verbs on this same context
-      activeOverlay = new PauseOptionsWindow({
+      openPauseFlow((w) => { activeOverlay = w; }, {
         quickSave: () => ctx.quickSave?.(),
         // the LOAD arm needs the host's position applier, exactly as
         // routeKey's own QuickLoad case passes it
@@ -2680,12 +2680,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  clickable since U8b. Takes NATIVE (320x200) coords like
      *  townTalk's seam does, and reports whether it consumed the
      *  click so the caller can withhold the pointer lock. */
-    overlayClick(vx, vy) {
+    overlayClick(vx, vy, right = false) {
       // U26: a native window exposes `click`, the keyed ones
-      // `clickNative`. Both route here.
+      // `clickNative`. Both route here. I4: the right-button flag
+      // rides along for the controls grid's remove gesture.
       if (!activeOverlay?.clickNative && !activeOverlay?.click) return false;
       if (activeOverlay.clickNative) activeOverlay.clickNative(vx, vy);
-      else activeOverlay.click(vx, vy);
+      else activeOverlay.click(vx, vy, right);
       if (activeOverlay.done) {
         if (activeOverlay === chargenFlow) { finishChargenHere(); }
         surfacePlayer();

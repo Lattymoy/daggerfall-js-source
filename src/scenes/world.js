@@ -138,7 +138,7 @@ import { setWeather, currentWeather, tickWeather, weatherRespawn, applyClimateWe
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { actionOf, held, moveHeld, anyMove } from '../ui/input.js';   // I2: the rebindable registry
-import { PauseOptionsWindow, preloadPauseArt, pauseArtLoaded } from '../ui/pauseWindow.js';   // I3
+import { openPauseFlow, preloadPauseFlowArt, pauseArtLoaded } from '../ui/pauseWindow.js';   // I3/I4
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -688,7 +688,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   townTalk.ensureLoaded();
   preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: INFO00I0 warms at boot
   preloadBookArt({ renderer, fetchBytes, palette });   // B1: BOOK00I0 warms at boot
-  preloadPauseArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] OPTN00I0 unavailable:', e?.message ?? e));   // I3
+  preloadPauseFlowArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] pause/controls art unavailable:', e?.message ?? e));   // I3/I4
   // B1 + AUDIT B-C2: an async open must not clobber a window the
   // player opened while the book was loading.
   const openBookHook = makeOpenBookHook({ fetchBytes, showReader: (w) => { if (!townTalk.overlayActive) townTalk.showOverlay(w); } });
@@ -1419,12 +1419,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     // I3: Escape with no overlay opens the pause options window; the
     // window closes itself on the same key.
     if (act === 'Escape' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && pauseArtLoaded()) {
-      townTalk.showOverlay(new PauseOptionsWindow({
+      openPauseFlow((w) => townTalk.showOverlay(w), {
         quickSave: worldQuickSave,
         quickLoad: worldQuickLoad,
         exitToMenu: exitToTitleMenu,
         textLines: (id) => townTalk.lines(id),
-      }));
+      });
       return;
     }
     keys.add(e.code);

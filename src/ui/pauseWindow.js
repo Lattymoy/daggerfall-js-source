@@ -61,6 +61,7 @@
 // settings arc. The version label draws the PORT's build tag (Ledger
 // A: VersionInfo strings are DFU's identity, not this port's).
 
+import { ControlsWindow, preloadControlsArt, controlsArtLoaded } from './controlsWindow.js';
 import { loadImg, nativeMetrics, drawImg, drawRect, shadowText } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
 import { drawMenuBackdrop } from './chargenArt.js';
@@ -190,7 +191,7 @@ export class PauseOptionsWindow {
       this._click();
       if (this.hooks.savingPrevented?.()) {
         this.top = 'note';
-        this._noteRows = ['You cannot save the game right now.'];   // cannotSaveNow (:298)
+        this._noteRows = ['You cannot save now.'];   // cannotSaveNow (Internal_Strings, recovered)
       } else { this._closeWith(); this.hooks.quickSave?.(); }
       return true;
     }
@@ -229,8 +230,17 @@ export class PauseOptionsWindow {
     }
     if (inRect(R.controls, vx, vy)) {
       this._click();
-      this.top = 'note';
-      this._noteRows = ['The controls window arrives with the next slice (I4).'];
+      // ControlsButton (:311-315): dispatch to the controls window.
+      // The U24 dispatch law: mark done, then open - the host's slot
+      // assignment replaces this window, never nulls the successor.
+      if (this.hooks.openControls) {
+        if (this._saveSettings) saveSettings();
+        this.done = true;
+        this.hooks.openControls();
+      } else {
+        this.top = 'note';
+        this._noteRows = ['The controls window needs its art loaded.'];
+      }
       return true;
     }
     void by;
@@ -276,4 +286,33 @@ export class PauseOptionsWindow {
       }
     } else this._box = null;
   }
+}
+
+/** THE ONE CONSTRUCTION SEAM for the pause flow. Every host mounts
+ *  the pause window through this, so the pause -> controls -> pause
+ *  round trip is built once rather than four times: `show(win)` is
+ *  the host's own slot assignment (townTalk.showOverlay, the interior
+ *  slot, the dungeon's activeOverlay), and CONTINUE out of the
+ *  controls grid re-enters the pause window exactly as DFU's window
+ *  stack pops back to it (DaggerfallControlsWindow's previousWindow).
+ *
+ *  The U24 dispatch law applies at both ends: a window that opens
+ *  another marks itself done FIRST and the host's slot assignment
+ *  replaces it - never an onClose that nulls its own successor. */
+export function openPauseFlow(show, hooks = {}) {
+  const win = new PauseOptionsWindow({
+    ...hooks,
+    openControls: controlsArtLoaded()
+      ? () => show(new ControlsWindow({ onBack: () => openPauseFlow(show, hooks) }))
+      : null,
+  });
+  show(win);
+  return win;
+}
+
+/** Both panels warm together - the pause window's CONTROLS button is
+ *  live only where the grid's art loaded. */
+export async function preloadPauseFlowArt(deps) {
+  await preloadPauseArt(deps);
+  await preloadControlsArt(deps);
 }
