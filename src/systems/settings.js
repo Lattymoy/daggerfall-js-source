@@ -136,6 +136,10 @@ export const LIVE = Object.freeze({
   // STYLE for components that did not exist.
   'GUI/Crosshair': 'src/ui/hudCrosshair.js',
   'GUI/InteractionModeIcon': 'src/ui/hudCrosshair.js',
+  // U41: the classic travel map. Stored-tier since the settings
+  // screen shipped - the outline it offers is drawn by a window the
+  // port did not have until the region pages landed.
+  'GUI/TravelMapLocationsOutline': 'src/ui/travelMapWindow.js',
 });
 /** unavailable: meaningless in a browser, or the port implements only
  *  ONE side of the branch. The launcher shows these disabled WITH the

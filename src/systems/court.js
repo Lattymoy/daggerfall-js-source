@@ -151,6 +151,28 @@ export function lowerRepForCrime(player, regionIndex, crime) {
 export function goldAmount(player) {
   return player.items?.find((it) => it.group === 'Currency')?.stackCount ?? 0;
 }
+/** ItemCollection.GetCreditAmount (ItemCollection.cs:108-118): every
+ *  letter of credit in the pack, by VALUE. U41: the travel popup's
+ *  gold gate is DFU's GetGoldAmount, which is coins PLUS paper. */
+export function creditAmount(player) {
+  return (player.items ?? []).reduce(
+    (sum, it) => (it.templateIndex === LETTER_OF_CREDIT_TEMPLATE ? sum + (it.value ?? 0) : sum), 0);
+}
+/** PlayerEntity.GetGoldAmount (:1313-1316) - what a purchase is
+ *  tested against, where goldAmount alone is DFU's `goldPieces`. */
+export function totalGoldAmount(player) {
+  return goldAmount(player) + creditAmount(player);
+}
+/** `GoldPieces -= amount` (DeductFastTravelGold's first half,
+ *  DaggerfallTravelPopUp.cs:471). Coins only, no letters: DFU's
+ *  setter is unclamped and every caller gates on the amount first,
+ *  so this mirrors it and floors at zero rather than minting a
+ *  negative purse the port has no other way to hold. */
+export function deductGoldPieces(player, amount) {
+  const stack = player.items?.find((it) => it.group === 'Currency');
+  if (!stack) return;
+  stack.stackCount = Math.max(0, stack.stackCount - amount);
+}
 /** PlayerEntity.DeductGoldAmount (:1324-1354), which the port had
  *  been standing in for with a clamp. Two halves were missing, and B1
  *  needed both:
