@@ -32,7 +32,7 @@
 
 import { rand } from '../formats/dfRandom.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
-import { goldStack } from './inventory.js';   // AUDIT 17f: one gold mint
+import { goldStack, LETTER_OF_CREDIT_TEMPLATE } from './inventory.js';   // AUDIT 17f: one gold mint; B1: letters are tender
 import { getPeopleOfCurrentRegion } from './talk.js';   // T3a shipped the lookup
 import { changeReputation } from './factionRep.js';     // S25
 
@@ -151,9 +151,55 @@ export function lowerRepForCrime(player, regionIndex, crime) {
 export function goldAmount(player) {
   return player.items?.find((it) => it.group === 'Currency')?.stackCount ?? 0;
 }
+/** PlayerEntity.DeductGoldAmount (:1324-1354), which the port had
+ *  been standing in for with a clamp. Two halves were missing, and B1
+ *  needed both:
+ *
+ *  - A LETTER OF CREDIT IS LEGAL TENDER. When the purse cannot cover
+ *    a payment, DFU spends letters - whole ones first, then part of
+ *    the last, writing the remainder back onto it (:1331-1341). So a
+ *    character holding a 5000-gold letter and ten coins can pay a
+ *    100-gold fine, which the clamp made impossible. Every caller in
+ *    the tree is more correct for this: fines, guild donations,
+ *    training, the tavern's room, the trade window's basket.
+ *
+ *  - IT RETURNS THE SHORTFALL, not nothing. An underpayment answers
+ *    what it could not cover and leaves the purse at zero (:1347-1349);
+ *    a full payment answers 0. B1's loan repayment is the first caller
+ *    that reads it - the bank takes the remainder off the ACCOUNT, so
+ *    one repayment can span purse, letters and account.
+ *
+ *  Note the ORDER, which is DFU's and is not the obvious one: the
+ *  purse is tried first ONLY if it can cover the whole amount. If it
+ *  cannot, the letters are spent FIRST and the purse is raided for
+ *  what is left - so a small payment never breaks a large letter, but
+ *  a large one takes the letters before the coins. */
 export function deductGold(player, amount) {
   const stack = player.items?.find((it) => it.group === 'Currency');
-  if (stack) stack.stackCount = Math.max(0, stack.stackCount - amount);
+  const purse = stack?.stackCount ?? 0;
+  if (amount <= purse) {
+    if (stack) stack.stackCount = purse - amount;
+    return 0;
+  }
+  let owed = amount;
+  const items = player.items ?? [];
+  for (;;) {
+    const loc = items.find((it) => it.templateIndex === LETTER_OF_CREDIT_TEMPLATE);
+    if (!loc) break;
+    if (owed < (loc.value ?? 0)) { loc.value -= owed; owed = 0; break; }
+    owed -= loc.value ?? 0;
+    items.splice(items.indexOf(loc), 1);
+  }
+  if (owed > 0) {
+    if (owed <= purse) {
+      if (stack) stack.stackCount = purse - owed;
+      return 0;
+    }
+    owed -= purse;
+    if (stack) stack.stackCount = 0;
+    return owed;   // underpaid - the caller decides what covers the rest
+  }
+  return 0;
 }
 export function addGold(player, amount) {   // E3: sale proceeds
   player.items = player.items || [];

@@ -113,6 +113,14 @@ export function snapshotPlayer(entity, { position = null, classicMinutes = 0, re
   // (SerializablePlayer.cs:132/:300; each item's repairData rides the
   // plain spread, present only while a job runs).
   snap.otherItems = (entity.otherItems ?? []).map((it) => ({ ...it }));
+  // B1: the per-region bank accounts and house deeds
+  // (SerializablePlayer/BankRecordData_v1). One record per region, all
+  // plain data - gold, the loan and its due date, the defaulted flag.
+  // Without these a quicksave/load cleared every account and every
+  // outstanding loan, which is a rather generous bug.
+  snap.bankAccounts = (entity.bankAccounts ?? []).map((a) => ({ ...a }));
+  snap.houses = (entity.houses ?? []).map((h) => ({ ...h }));
+  snap.ownedShip = entity.ownedShip ?? -1;
   // U39: PlayerEntity.RentedRooms (SerializablePlayer.cs:169, :336).
   // Each record is plain data - name, mapId, buildingKey, bed index,
   // expiry - so a shallow copy per room is the whole envelope.
@@ -253,6 +261,9 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.wagonItems = (snap.wagonItems ?? []).map((it) => ({ ...it }));   // W-slice (pre-W saves restore empty)
   entity.otherItems = (snap.otherItems ?? []).map((it) => ({ ...it }));   // R1: the in-repair collection (pre-R1 saves restore empty)
   entity.rentedRooms = (snap.rentedRooms ?? []).map((r) => ({ ...r }));   // U39: the rented rooms (pre-U39 saves restore empty)
+  entity.bankAccounts = (snap.bankAccounts ?? []).map((a) => ({ ...a }));   // B1 (pre-B1 saves restore empty)
+  entity.houses = (snap.houses ?? []).map((h) => ({ ...h }));
+  entity.ownedShip = snap.ownedShip ?? -1;
   entity.anchorPosition = snap.anchorPosition ? { ...snap.anchorPosition } : null;   // TP-slice
   // AUDIT 17f: a Currency stack saved before gold gained its template
   // index carries none, and stacksWith compares templateIndex - a
