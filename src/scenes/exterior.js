@@ -87,6 +87,8 @@ import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseL
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { actionOf, held, moveHeld, anyMove } from '../ui/input.js';   // I2: the rebindable registry
 import { openPauseFlow, preloadPauseFlowArt, pauseArtLoaded } from '../ui/pauseWindow.js';   // I3/I4
+import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
+import { discoveredBuildings } from '../systems/discovery.js';   // A2: the nameplates' gate
 
 export async function bootExterior(canvas, renderer, params, status) {
   const regionName = params.get('region') || 'Daggerfall';
@@ -771,6 +773,24 @@ export async function bootExterior(canvas, renderer, params, status) {
         exitToMenu: exitToTitleMenu,
         textLines: (id) => townTalk.lines(id),
       });
+      return;
+    }
+    // A2: the exterior automap (Actions.AutoMap outdoors,
+    // DaggerfallUI.cs:633-650); this host always stands on a location.
+    // I2: through the registry, so M is rebindable like every other
+    // action rather than a second hardcoded literal.
+    if (act === 'AutoMap' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
+      const locId = `${dfLocation.regionIndex}:${dfLocation.name ?? locationName}`;
+      townTalk.showOverlay(new ExteriorAutomapWindow({
+        locationName: dfLocation.name ?? locationName,
+        locationId: locId,
+        gridW: loc.width, gridH: loc.height,
+        blocks: loc.blocks.map((bl) => ({ x: bl.x, y: bl.y, autoMap: bl.dfBlock?.rmbBlock?.fldHeader?.autoMapData })),
+        playerPos: () => (walkMode ? [...player.pos] : [...cam.pos]),
+        playerYaw: () => cam.yaw,
+        directory: () => townTalk.directory,
+        discovered: () => discoveredBuildings(locId),
+      }));
       return;
     }
     keys.add(e.code);

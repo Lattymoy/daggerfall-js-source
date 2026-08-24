@@ -182,9 +182,11 @@ export function snapshotPlayer(entity, { position = null, classicMinutes = 0, re
   // the snapshot reads the store, not the entity.
   snap.discovery = snapshotDiscovery();
   // A1: the automap dungeon-discovery dictionary (Automap.GetState -
-  // DFU serialises it in SaveData_v1's sceneCache). Module-level world
-  // state beside the discovery store, LRU-pruned at entry time.
-  snap.automap = snapshotAutomap();
+  // DFU serialises it in SaveData_v1's sceneCache). Module-level
+  // world state beside the discovery store; the snapshot itself runs
+  // DFU's save-time laws (live-dungeon stamp, LRU prune, the N=0
+  // outside-forget), so it takes the clock.
+  snap.automap = snapshotAutomap(snap.classicMinutes);
   // AUDIT 23 (items lane): RegionData.PriceAdjustment rides DFU's save
   // (SerializablePlayer.cs:168); without it every load rerolled the
   // 750..1250 band and shifted all shop prices mid-session.

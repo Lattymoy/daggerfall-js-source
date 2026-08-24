@@ -49,10 +49,13 @@
 // stores minutes (the one clock); the envelope rides snapshotPlayer
 // beside snap.discovery, every host for free.
 //
-// A2 FLAGGED residue: the grayscale PRESENTATION of prior-run
-// geometry (the state ships here, the mesh pass has no per-draw
-// tint), user note markers, teleporter portals, the 3D view mode +
-// native AMAP art window, and the exterior automap.
+// A2 shipped the grayscale presentation (the renderer's uAutomapMode
+// - visitedThisRun draws colour, prior-run geometry grayscale) and
+// the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
+// residue: user note markers, teleporter portals, the 3D view mode +
+// the native AMAP art windows, the render modes (wireframe/
+// transparent/cutout), beacon focus cycling, and the
+// interior-BUILDING automap arm.
 
 import { getInt } from './settings.js';
 import { MINUTES_PER_DAY } from './gameDate.js';
@@ -67,38 +70,65 @@ const HIT_POINT_TOLERANCE = 0.05;                  // the identity-resolution sk
 // ---- the per-dungeon store (module singleton - one player) ---------
 
 let _dungeons = new Map();   // key -> { revealed:Set, visitedThisRun:Set, entranceDiscovered, lastVisited }
+let _inside = false;         // GameManager.IsPlayerInside's automap half - the N=0 forget law reads it
+let _liveKey = null;         // the dungeon the player stands in - structurally unevictable (see prune)
 
 /** The DFU dictionary key is "RegionName/Name" (:2206); the port
  *  speaks the region INDEX + location name - the same identity, one
  *  lookup earlier. */
 export const automapDungeonKey = (regionIndex, name) => `${regionIndex}/${name}`;
 
-/** Enter a dungeon: fetch-or-create its record, stamp the visit
- *  clock, and reset visitedThisRun UNLESS restoring a mid-dungeon
- *  load (InitWhenInInteriorOrDungeon :2492-2493). Prunes the store
- *  to the newest AutomapNumberOfDungeons AFTER the stamp, so the
- *  current dungeon always survives its own entry. */
+/** Enter a dungeon: fetch-or-create its record, and on a REAL entry
+ *  stamp the visit clock, reset visitedThisRun and prune. The LOAD
+ *  arm (fromLoad - InitWhenInInteriorOrDungeon :2492-2493) does NONE
+ *  of that: DFU's load path is a bare dictionary replacement plus a
+ *  renderer re-apply (SetState :387-389, RestoreState... :2351-2422);
+ *  the stamp and prune belong to SAVE time (:2155, :2216-2238), so a
+ *  load must never evict records the save itself carried (A1 review). */
 export function enterDungeonAutomap(key, nowMinutes, { fromLoad = false } = {}) {
   let rec = _dungeons.get(key);
   if (!rec) {
     rec = { revealed: new Set(), visitedThisRun: new Set(), entranceDiscovered: false, lastVisited: 0 };
     _dungeons.set(key, rec);
   }
-  rec.lastVisited = nowMinutes;
-  if (!fromLoad) rec.visitedThisRun = new Set();
-  pruneAutomapStore();
+  _inside = true;
+  _liveKey = key;
+  if (!fromLoad) {
+    rec.lastVisited = nowMinutes;
+    rec.visitedThisRun = new Set();
+    pruneAutomapStore();
+  }
   return rec;
 }
 
-/** The LRU prune (:2216-2238): keep the newest N by lastVisited.
- *  N = 0 is classic's own forgetfulness - inside a dungeon it is
- *  treated as 1 so the live record survives (:2145-2149); the port
- *  prunes only at entry, so the live record is always the newest. */
+/** Leaving a dungeon (OnTransitionToDungeonExterior's automap half,
+ *  :2530-2534 -> SaveStateAutomapDungeon): with the setting at 0 the
+ *  whole dictionary CLEARS - vanilla Daggerfall forgets the map the
+ *  moment you exit (:2133-2137; the A1 review caught this arm
+ *  dropped). dungeonContext.destroy() calls this in both hosts. */
+export function exitDungeonAutomap() {
+  _inside = false;
+  _liveKey = null;
+  if (getInt('Map', 'AutomapNumberOfDungeons', 0, 100) === 0) _dungeons = new Map();
+}
+
+/** The LRU prune (:2216-2238), DFU's own removal law: everything
+ *  whose stamp is STRICTLY OLDER than the N-th newest goes; boundary
+ *  ties all survive ('timeInSecondsLastVisited < timeInSecondsLimit',
+ *  :2231 - the store can briefly hold more than N, as DFU's can).
+ *  N = 0 is treated as 1 while inside (:2145-2149). The LIVE dungeon
+ *  never evicts: DFU gets that structurally (the save-time stamp is
+ *  always the maximum, :2155); the port's floored world-save clock
+ *  can under-stamp a fresh entry, so the protection is explicit
+ *  (A1 review - the quickLoad eviction). */
 export function pruneAutomapStore() {
   const n = Math.max(1, getInt('Map', 'AutomapNumberOfDungeons', 0, 100));
   if (_dungeons.size <= n) return;
-  const byTime = [..._dungeons.entries()].sort((a, b) => b[1].lastVisited - a[1].lastVisited);
-  _dungeons = new Map(byTime.slice(0, n));
+  const stamps = [..._dungeons.values()].map((r) => r.lastVisited).sort((a, b) => b - a);
+  const limit = stamps[n - 1];
+  for (const [key, rec] of _dungeons) {
+    if (rec.lastVisited < limit && key !== _liveKey) _dungeons.delete(key);
+  }
 }
 
 export const getDungeonAutomap = (key) => _dungeons.get(key) ?? null;
@@ -106,8 +136,22 @@ export const getDungeonAutomap = (key) => _dungeons.get(key) ?? null;
 /** The save halves - Sets travel as arrays (plain JSON). DFU's
  *  positional model lists collapse to the entry keys, which are
  *  stable per rebuild (the block-local byte position + the block
- *  instance index, the action system's own identity). */
-export function snapshotAutomap() {
+ *  instance index, the action system's own identity).
+ *  This IS SaveStateAutomapDungeon (GetState :378-382 runs it on
+ *  every save): with N = 0 and the player OUTSIDE the whole
+ *  dictionary clears - the vanilla forget law (:2133-2137); inside,
+ *  the live dungeon's stamp is written NOW (:2155 - which is what
+ *  makes it the newest) and the store prunes (:2216-2238). */
+export function snapshotAutomap(nowMinutes = null) {
+  if (!_inside && getInt('Map', 'AutomapNumberOfDungeons', 0, 100) === 0) {
+    _dungeons = new Map();
+    return {};
+  }
+  const live = _liveKey ? _dungeons.get(_liveKey) : null;
+  if (live && Number.isFinite(nowMinutes)) {
+    live.lastVisited = nowMinutes;
+    pruneAutomapStore();
+  }
   const out = {};
   for (const [key, rec] of _dungeons) {
     out[key] = {
@@ -119,9 +163,15 @@ export function snapshotAutomap() {
   }
   return out;
 }
+/** SetState (:387-389), with DFU's missing-data arm kept: a save
+ *  that carries NO automap field (pre-A1) leaves the session's
+ *  in-memory dictionary UNTOUCHED - SaveLoadManager restores the
+ *  automap only `if (automapState != null)` (:1503-1509), so loading
+ *  an old save never erases the maps explored this session (A1
+ *  review - the wipe-on-null arm). */
 export function restoreAutomap(snap) {
+  if (!snap) return;
   _dungeons = new Map();
-  if (!snap) return;   // a pre-A1 save carries none - nothing remembered
   for (const [key, rec] of Object.entries(snap)) {
     _dungeons.set(key, {
       revealed: new Set(rec.revealed ?? []),
@@ -131,7 +181,7 @@ export function restoreAutomap(snap) {
     });
   }
 }
-export function resetAutomapStore() { _dungeons = new Map(); }
+export function resetAutomapStore() { _dungeons = new Map(); _inside = false; _liveKey = null; }
 
 // ---- the reveal index + the probe law ------------------------------
 

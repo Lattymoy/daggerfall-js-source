@@ -110,6 +110,20 @@ export const LIVE = Object.freeze({
   'Map/DungeonMicMapQoL': 'src/ui/automapWindow.js',
   'Map/DunMicMapInnerColor': 'src/ui/automapWindow.js',
   'Map/DunMicMapBorderColor': 'src/ui/automapWindow.js',
+  // D1: the streamed-grid radius (StreamingWorld.TerrainDistance,
+  // 1..4). The launcher row said "saved, but nothing reads it" while
+  // the world host ran the hardcoded default - the exact live-tier
+  // gap GUI/ShowOptionsAtStart taught this file to test for.
+  'Experimental/TerrainDistance': 'src/scenes/world.js',
+  // A2: the exterior automap - the four building-group colours
+  // (ExteriorAutomap.cs:1482-1541) and the zoom memory pair
+  // (window :460-461, :513-533).
+  'Map/AutomapTempleColor': 'src/ui/exteriorAutomapWindow.js',
+  'Map/AutomapShopColor': 'src/ui/exteriorAutomapWindow.js',
+  'Map/AutomapTavernColor': 'src/ui/exteriorAutomapWindow.js',
+  'Map/AutomapHouseColor': 'src/ui/exteriorAutomapWindow.js',
+  'Map/ExteriorMapDefaultZoomLevel': 'src/ui/exteriorAutomapWindow.js',
+  'Map/ExteriorMapResetZoomLevelOnNewLocation': 'src/ui/exteriorAutomapWindow.js',
 });
 /** unavailable: meaningless in a browser, or the port implements only
  *  ONE side of the branch. The launcher shows these disabled WITH the

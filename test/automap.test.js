@@ -14,7 +14,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   SCAN_INTERVAL_S, RAYCAST_DISTANCE_DOWN, RAYCAST_DISTANCE_VIEW, RAYCAST_DISTANCE_ENTRANCE,
-  FLOOR_MARCH_STEP, automapDungeonKey, enterDungeonAutomap, getDungeonAutomap,
+  FLOOR_MARCH_STEP, automapDungeonKey, enterDungeonAutomap, exitDungeonAutomap, getDungeonAutomap,
   snapshotAutomap, restoreAutomap, resetAutomapStore, buildRevealIndex,
   automapRevealTick, automapEntranceTick, slicingPositionY, DEFAULT_SLICING_BIAS_Y,
 } from '../src/systems/automap.js';
@@ -54,11 +54,71 @@ test('A1 entry law: fresh entry resets visitedThisRun, a LOAD arm preserves it (
     assert.equal(again.revealed.has('0:64'), true);
     assert.equal(again.visitedThisRun.size, 0, 'a fresh entry forgets the run');
     assert.equal(again.lastVisited, 2000);
-    // the load arm keeps the run - a mid-dungeon quickload is not a re-entry
+    // the load arm is a BARE fetch - a mid-dungeon quickload is not a
+    // re-entry: no run reset, no stamp, no prune (DFU's SetState is a
+    // dictionary replacement; stamping belongs to save time, :2155)
     again.visitedThisRun.add('0:64');
     const loaded = enterDungeonAutomap(key, 3000, { fromLoad: true });
     assert.equal(loaded.visitedThisRun.has('0:64'), true);
+    assert.equal(loaded.lastVisited, 2000, 'a load never re-stamps the visit clock');
   } finally { resetAutomapStore(); }
+});
+
+test('A1 review: a load never evicts save-carried records; the save-time prune is where the cap bites (GetState :378-382)', () => {
+  resetAutomapStore(); _resetForTests();
+  try {
+    // a restored store already AT the default cap of 5
+    restoreAutomap(Object.fromEntries([1, 2, 3, 4, 5].map((i) => [`r/${i}`, { revealed: [], visitedThisRun: [], entranceDiscovered: false, lastVisited: i * 100 }])));
+    // standing in a SIXTH dungeon, F11: the re-fetch adds a record but
+    // prunes nothing - the save's data survives the act of loading
+    enterDungeonAutomap('r/6', 999, { fromLoad: true });
+    assert.equal([...Array(5)].every((_, i) => getDungeonAutomap(`r/${i + 1}`)), true);
+    assert.ok(getDungeonAutomap('r/6'));
+    // the NEXT save stamps the live dungeon newest and prunes to the
+    // cap - dropping the save's oldest, exactly as DFU's own save does
+    const snap = snapshotAutomap(1000);
+    assert.equal(getDungeonAutomap('r/1'), null, 'the oldest record prunes at SAVE time');
+    assert.ok(snap['r/6']);
+    assert.equal(snap['r/6'].lastVisited, 1000, 'the live dungeon is stamped at save time (:2155)');
+  } finally { resetAutomapStore(); _resetForTests(); }
+});
+
+test('A1 review: the live dungeon never evicts and boundary ties survive (the strict-< removal, :2229-2237)', () => {
+  resetAutomapStore(); _resetForTests();
+  try {
+    setValue('Map', 'AutomapNumberOfDungeons', 1);
+    // the floored-clock inversion: a restored record carries a
+    // FRACTIONAL stamp newer than the floored clock the entry gets
+    restoreAutomap({ 'r/C': { revealed: ['x'], visitedThisRun: [], entranceDiscovered: false, lastVisited: 12345.7 } });
+    enterDungeonAutomap('r/A', 12345);
+    assert.ok(getDungeonAutomap('r/A'), 'the dungeon the player stands in survives its own entry');
+    assert.ok(getDungeonAutomap('r/C'), 'the boundary record survives too (ties/overflow, as DFU)');
+    // an exact tie at the limit: strict-< removes neither
+    resetAutomapStore();
+    restoreAutomap({ 'r/X': { revealed: [], visitedThisRun: [], entranceDiscovered: false, lastVisited: 500 } });
+    enterDungeonAutomap('r/Y', 500);
+    assert.ok(getDungeonAutomap('r/X') && getDungeonAutomap('r/Y'));
+  } finally { resetAutomapStore(); _resetForTests(); }
+});
+
+test('A1 review: AutomapNumberOfDungeons = 0 forgets at EXIT and at outside-save (the vanilla law, :2133-2137)', () => {
+  resetAutomapStore(); _resetForTests();
+  try {
+    setValue('Map', 'AutomapNumberOfDungeons', 0);
+    const rec = enterDungeonAutomap('r/P', 100);
+    rec.revealed.add('0:64');
+    // inside, saving keeps the map (0 treated as 1 while inside)
+    assert.ok(snapshotAutomap(100)['r/P']);
+    // stepping OUT forgets it on the spot (OnTransitionToDungeonExterior)
+    exitDungeonAutomap();
+    assert.equal(getDungeonAutomap('r/P'), null);
+    // and a save made outside writes (and keeps) an empty dictionary
+    enterDungeonAutomap('r/P', 200).revealed.add('0:64');
+    exitDungeonAutomap();   // N=0 already cleared, but prove the snapshot arm too
+    restoreAutomap({ 'r/Q': { revealed: [], visitedThisRun: [], entranceDiscovered: false, lastVisited: 1 } });
+    assert.deepEqual(snapshotAutomap(300), {}, 'saving while outside clears the dictionary');
+    assert.equal(getDungeonAutomap('r/Q'), null);
+  } finally { resetAutomapStore(); _resetForTests(); }
 });
 
 test('A1 LRU prune: the newest AutomapNumberOfDungeons survive; N=0 keeps the live record (:2145-2149, :2216-2238)', () => {
@@ -156,10 +216,13 @@ test('A1 save: the dictionary rides snapshotPlayer beside discovery, JSON-clean,
     assert.equal(back.visitedThisRun.has('0:64'), true, 'a load never resets the run (:2492-2493)');
     assert.equal(back.entranceDiscovered, true);
     assert.equal(back.lastVisited, 5000);
-    // a pre-A1 snapshot carries no field - nothing remembered, no throw
+    // a pre-A1 snapshot carries no field - the session's own maps
+    // SURVIVE the load: DFU restores the automap only when the save
+    // carries data (SaveLoadManager :1503-1509), never wiping the
+    // in-memory dictionary over a missing file (A1 review)
     delete snap.automap;
     restorePlayer({}, snap);
-    assert.equal(getDungeonAutomap('17/Hold'), null);
+    assert.ok(getDungeonAutomap('17/Hold'), 'a field-less save leaves session memory alone');
     // and the plain module halves roundtrip on their own
     enterDungeonAutomap('1/X', 10).revealed.add('k');
     const s2 = snapshotAutomap();
@@ -231,7 +294,7 @@ test('A1 wiring pins: entry identity at the push sites, the 5 Hz tick in BOTH du
   assert.match(ctx, /enterDungeonAutomap\(automapKey, classicMinutesRef\.value, \{ fromLoad: true \}\)/, 'quickLoad re-enters on the LOAD arm');
   assert.match(src('src/scenes/dungeon.js'), /automapTick\?\.\(dt, cam\.pos, fwd\)/, 'the standalone host ticks');
   assert.match(src('src/scenes/worldModes.js'), /automapTick\?\.\(dt, cam\.pos, fwd\)/, 'the streaming host ticks');
-  assert.match(src('src/systems/save.js'), /snap\.automap = snapshotAutomap\(\)/);
+  assert.match(src('src/systems/save.js'), /snap\.automap = snapshotAutomap\(snap\.classicMinutes\)/, 'the snapshot takes the clock - the save-time stamp law');
   assert.match(src('src/systems/save.js'), /restoreAutomap\(snap\.automap \?\? null\)/);
 });
 
@@ -243,10 +306,21 @@ test('A1 wiring pins: the M binding and the mesh shader slice seam', () => {
   assert.match(input, /case 'AutoMap': ctx\.toggleAutomap\?\.\(\)/);
   const r = src('src/render/renderer.js');
   assert.match(r, /if \(vWorldPos\.y > uClipY\) discard;/, 'the ceiling cut lives in the mesh FS (_SclicingPositionY)');
-  assert.match(r, /setClipY\(y\) \{ this\._clipY = y \?\? 1e9; \}/, 'off = 1e9, the automap window restores it');
+  assert.match(r, /this\._clipY = y \?\? 1e9;/, 'off = 1e9, the automap window restores it');
+  assert.match(r, /gl\.uniform1f\(this\._solidFog\.clipY, this\._clipY\)/, 'setClipY uploads immediately - the window lifts the slice MID-pass for the beacons');
   // the window rides the mirrored projection (its mesh pass CULLS -
   // the handedness law) and hands lighting/fog/slice back after
   const w = src('src/ui/automapWindow.js');
   assert.match(w, /mirrorProjectionX\(perspective\(FIELD_OF_VIEW_2D/, 'HANDEDNESS: the culling pass mirrors');
   assert.match(w, /finally \{[\s\S]{0,400}setClipY\(null\)[\s\S]{0,400}setFog\('exp', 0\.005/, 'the dungeon fog returns even if the pass throws');
+  // A1 review: beacons are never sliced (DFU injects the slicing
+  // shader into the GEOMETRY only, Automap.cs:1906 vs :1355-1362) -
+  // the slice lifts before the arrow/marker draws
+  assert.match(w, /setClipY\(null\);\n\s*renderer\.setAutomapMode\(0\);\n\s*\/\/ the player marker arrow/, 'the arrow draws with the slice lifted (and untinted, A2)');
+  // A1 review: the death presenter force-replaces the overlay slot -
+  // it must release the occupant, and the micro-map version counter
+  // is module-global so a leaked key can never serve a stale bitmap
+  assert.match(src('src/scenes/dungeonContext.js'), /activeOverlay\?\.dispose\?\.\(\);/, 'the forced overwrite disposes first');
+  assert.match(w, /let _microVer = 0;/, 'module-level micro-map versions');
+  assert.match(src('src/scenes/dungeonContext.js'), /destroy\(\) \{\n[\s\S]{0,300}exitDungeonAutomap\(\);/, 'dungeon teardown runs the exit law (N=0 forgets)');
 });

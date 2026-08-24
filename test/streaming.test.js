@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   StreamingWorldState, worldCoordToMapPixel, mapPixelToWorldCoords, TERRAIN_DISTANCE,
 } from '../src/world/streamingWorld.js';
@@ -175,4 +176,22 @@ test('streaming: 2000-step fuzz holds every invariant', async () => {
     assert.equal(s.loaded.size, 49);
     for (const p of s.loaded.values()) assert.ok(s.inRange(p.px, p.py));
   }
+});
+
+test('D1: the grid radius is the LIVE Land View Distance - DFU sizes and DFU clamp (StreamingWorld.cs:51-56)', () => {
+  // the constructor takes the distance; (2d+1)^2 tiles, 1->9 ... 4->81
+  for (const [d, tiles] of [[1, 9], [2, 25], [3, 49], [4, 81]]) {
+    const s = new StreamingWorldState(d);
+    assert.equal(s.init(100, 100).length, tiles, `distance ${d} streams ${tiles} pixels`);
+    assert.equal(s.inRange(100 + d, 100 - d), true);
+    assert.equal(s.inRange(100 + d + 1, 100), false);
+  }
+  // the bare constructor stays DFU's default 3 (the 7x7)
+  assert.equal(new StreamingWorldState().terrainDistance, TERRAIN_DISTANCE);
+  assert.equal(TERRAIN_DISTANCE, 3);
+  // and the world host really passes the setting, with DFU's own 1..4
+  // clamp (SettingsManager.cs:952-963 - clamp on parse, MIN on failure;
+  // the port's getInt carries the identical law)
+  const src = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
+  assert.match(src, /new StreamingWorldState\(getInt\('Experimental', 'TerrainDistance', 1, 4\)\)/);
 });

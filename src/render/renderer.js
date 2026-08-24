@@ -47,6 +47,7 @@ uniform float uFogDensity;
 uniform vec2 uFogRange; // start, end
 uniform vec3 uCamPos;
 uniform float uClipY;  // A1: the automap slice plane (_SclicingPositionY's law) - fragments above it discard; 1e9 = off
+uniform float uAutomapMode;  // A2: 0 = off, 1 = automap (slice-distance dim), 2 = automap grayscale (prior-run geometry)
 out vec4 outColor;
 float fogFactorAt(vec3 worldPos) {
   if (uFogMode == 0) return 1.0;
@@ -85,6 +86,20 @@ void main() {
   // active window style (MaterialReader semantics: emission adds on top).
   vec3 emission = texture(uEmissionTex, vUV).rgb * uEmissionColor;
   outColor = vec4(mix(uFogColor, lit + emission, fogFactorAt(vWorldPos)), 1.0);
+  // A2: the Daggerfall/Automap shader's presentation, verbatim
+  // (DaggerfallAutomap.shader:102-110): brightness falls with vertical
+  // distance from the slice plane (floored at 40%), then the
+  // RENDER_IN_GRAYSCALE variant collapses to the 0.3/0.59/0.11
+  // luminance. A maxed-out slice (1e9) dims everything to the 40%
+  // floor - DFU's own AlwaysMaxOutSliceLevel behavior, bug for bug.
+  if (uAutomapMode > 0.5) {
+    float sliceDist = abs(vWorldPos.y - uClipY);
+    outColor.rgb *= 1.0 - clamp(sliceDist / 20.0, 0.0, 0.6);
+    if (uAutomapMode > 1.5) {
+      float grayValue = dot(outColor.rgb, vec3(0.3, 0.59, 0.11));
+      outColor.rgb = vec3(grayValue);
+    }
+  }
 }`;
 
 const CHAR_VS = `#version 300 es
@@ -463,10 +478,12 @@ export class Renderer {
     this._fogColor = new Float32Array([0, 0, 0]);
     this._camPos = new Float32Array(3);
     this._clipY = 1e9;   // A1: the automap slice, off by default
+    this._automapMode = 0;   // A2: 0 off, 1 automap dim, 2 automap grayscale
     const fogLocs = (program) => ({
       fogColor: gl.getUniformLocation(program, 'uFogColor'),
       fogMode: gl.getUniformLocation(program, 'uFogMode'),
       clipY: gl.getUniformLocation(program, 'uClipY'),
+      amMode: gl.getUniformLocation(program, 'uAutomapMode'),
       fogDensity: gl.getUniformLocation(program, 'uFogDensity'),
       fogRange: gl.getUniformLocation(program, 'uFogRange'),
       camPos: gl.getUniformLocation(program, 'uCamPos'),
@@ -1143,13 +1160,40 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform2fv(prog.fogRange, this._fogRange);
     gl.uniform3fv(prog.camPos, this._camPos);
     if (prog.clipY) gl.uniform1f(prog.clipY, this._clipY);   // A1: only the mesh shader carries the slice
+    if (prog.amMode) gl.uniform1f(prog.amMode, this._automapMode);   // A2: and the automap presentation
   }
 
   /** A1: the automap slice plane - fragments of the SOLID mesh pass
    *  above this world-space Y discard (the global _SclicingPositionY,
    *  Automap.cs:1296-1303). 1e9 = off; the automap window sets
-   *  playerY + eye height + bias and restores off after its pass. */
-  setClipY(y) { this._clipY = y ?? 1e9; }
+   *  playerY + eye height + bias and restores off after its pass.
+   *  Uploads IMMEDIATELY when the solid program exists: fog uniforms
+   *  otherwise ride beginFrame alone, and the window must lift the
+   *  slice MID-pass for the beacon draws (the arrow is never sliced,
+   *  A1 review). drawMesh binds this.program per call, so touching
+   *  the binding here is safe. */
+  setClipY(y) {
+    this._clipY = y ?? 1e9;
+    if (this._solidFog?.clipY) {
+      const gl = this.gl;
+      gl.useProgram(this.program);
+      gl.uniform1f(this._solidFog.clipY, this._clipY);
+    }
+  }
+
+  /** A2: the automap presentation mode for the SOLID mesh pass -
+   *  0 off (the world), 1 = automap (the slice-distance dim), 2 =
+   *  automap grayscale (prior-run geometry, RENDER_IN_GRAYSCALE's
+   *  law). Immediate upload, same reason as setClipY: the automap
+   *  window flips it between draw groups MID-pass. */
+  setAutomapMode(m) {
+    this._automapMode = m ?? 0;
+    if (this._solidFog?.amMode) {
+      const gl = this.gl;
+      gl.useProgram(this.program);
+      gl.uniform1f(this._solidFog.amMode, this._automapMode);
+    }
+  }
 
   /** Scene-space point lights as flat vec4s [x,y,z,range], max 16. */
   setPointLights(data, color) {

@@ -10,7 +10,7 @@
 
 import { FlatAnimator, armFlatAnim, MISSILE_FPS } from '../render/flatAnimation.js';   // FA1: the flats that move
 import { layoutDungeon } from '../world/dungeonLayout.js';
-import { enterDungeonAutomap, buildRevealIndex, automapRevealTick, automapEntranceTick, automapDungeonKey, SCAN_INTERVAL_S } from '../systems/automap.js';   // A1
+import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, automapRevealTick, automapEntranceTick, automapDungeonKey, SCAN_INTERVAL_S } from '../systems/automap.js';   // A1
 import { AutomapWindow } from '../ui/automapWindow.js';   // A1: the M window
 import { applyTextureTable } from '../world/dungeonTextures.js';
 import { collectDungeonLights } from '../world/dungeonLights.js';
@@ -950,7 +950,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // the four writers that checked for death, which is exactly why the other
   // three could go on writing health raw and nobody noticed.
   setDeathPresenter(() => {
-    if (!(activeOverlay instanceof DeathScreen)) activeOverlay = new DeathScreen({ onReset: () => endRunToTitleMenu(renderer) });   // D1
+    if (!(activeOverlay instanceof DeathScreen)) {
+      // A1 review: this is the one FORCED overwrite of the overlay
+      // slot - a window holding GL resources (the automap's batches
+      // + micro-map texture) must release them or they leak per death.
+      activeOverlay?.dispose?.();
+      activeOverlay = new DeathScreen({ onReset: () => endRunToTitleMenu(renderer) });   // D1
+    }
   });
   function hurtPlayer(dmg) {
     hurtEntity(playerEntity, dmg);
@@ -2456,7 +2462,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         drawList, dynamicDraws, texRemap,
         player: () => ({ feet: lastPlayerFeet, eye: _automapEye, yaw: _motorYaw }),
         startMarker: dungeon.startMarker,
-        blocks: dungeon.blocks.map((b) => ({ x: b.originX / RDB_SIDE, z: b.originZ / RDB_SIDE, name: b.name })),
+        // Math.round: (n * 51.2) / 51.2 drifts off the integer for
+        // n = 3, 6, 12... and a fractional grid coordinate writes
+        // NOTHING into the micro-map's typed array (a silent no-op).
+        blocks: dungeon.blocks.map((b) => ({ x: Math.round(b.originX / RDB_SIDE), z: Math.round(b.originZ / RDB_SIDE), name: b.name })),
         arrowMesh: automapArrow,
         dungeonName: dfLocation?.name ?? 'Dungeon',
         indexSize: automapIndex.length,
@@ -2605,9 +2614,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (extras.world && extras.locationKey === _locationKey) applyWorld(extras.world);
       else if (extras.world) hudText.add('(different dungeon - world state left as built)');   // cross-location travel-on-load pends
       // A1: restorePlayer replaced the automap store, so the live
-      // record reference is stale. Re-enter on the LOAD arm
-      // (initFromLoadingSave, Automap.cs:2492-2493): a load never
-      // resets visitedThisRun - only a fresh walk-in entry does.
+      // record reference is stale. Re-fetch on the LOAD arm
+      // (initFromLoadingSave, Automap.cs:2492-2493): a bare
+      // fetch-or-create - no visitedThisRun reset, no stamp, no
+      // prune. DFU's load is a dictionary replacement; stamping and
+      // pruning belong to save time, and a prune here could evict a
+      // record the save itself carried (A1 review).
       automapRec = enterDungeonAutomap(automapKey, classicMinutesRef.value, { fromLoad: true });
       if (extras.position && extras.locationKey === _locationKey && setPlayerPos) setPlayerPos(extras.position);
       surfacePlayer();
@@ -2845,6 +2857,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     exitDoors,
     colliderTris,
     destroy() {
+      // A1: OnTransitionToDungeonExterior's automap half - marks the
+      // player outside and, at AutomapNumberOfDungeons = 0, forgets
+      // the map the moment you leave (Automap.cs:2530-2534).
+      exitDungeonAutomap();
       // B1: OnDestroy for every quest foe standing in this dungeon -
       // the resource uncouples exactly as Unity's scene teardown does.
       for (const f of foes) f.questBehaviour?.notifyDestroyed();
