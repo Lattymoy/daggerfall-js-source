@@ -18,6 +18,7 @@ import { snapshotWeather, restoreWeather } from './weatherSim.js';   // W1: play
 import { goldStack } from './inventory.js';   // AUDIT 17f
 import { snapshotDiscovery, restoreDiscovery } from './discovery.js';   // T4
 import { snapshotAutomap, restoreAutomap } from './automap.js';   // A1: dictAutomapDungeonsDiscoveryState rides SaveData_v1
+import { createSceneCache, snapshotSceneCache, restoreSceneCache } from './sceneCache.js';   // P1
 import { seedCustomSpellIndex } from './spellMaker.js';   // S1: made spells carry their own record
 import { SOCIAL_GROUPS } from '../formats/factionFile.js';   // AUDIT 24
 
@@ -113,6 +114,11 @@ export function snapshotPlayer(entity, { position = null, classicMinutes = 0, re
   // (SerializablePlayer.cs:132/:300; each item's repairData rides the
   // plain spread, present only while a job runs).
   snap.otherItems = (entity.otherItems ?? []).map((it) => ({ ...it }));
+  // P1: the scene cache and its permanent set (SaveData_v1's
+  // sceneCache + permanentScenes). Without it, everything an interior
+  // remembers is forgotten by a reload even though it survives a walk
+  // outside - which is a worse bug than not remembering at all.
+  snap.sceneCache = entity.sceneCache ? snapshotSceneCache(entity.sceneCache) : null;
   // B1: the per-region bank accounts and house deeds
   // (SerializablePlayer/BankRecordData_v1). One record per region, all
   // plain data - gold, the loan and its due date, the defaulted flag.
@@ -262,6 +268,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.otherItems = (snap.otherItems ?? []).map((it) => ({ ...it }));   // R1: the in-repair collection (pre-R1 saves restore empty)
   entity.rentedRooms = (snap.rentedRooms ?? []).map((r) => ({ ...r }));   // U39: the rented rooms (pre-U39 saves restore empty)
   entity.bankAccounts = (snap.bankAccounts ?? []).map((a) => ({ ...a }));   // B1 (pre-B1 saves restore empty)
+  entity.sceneCache = restoreSceneCache(createSceneCache(), snap.sceneCache);   // P1
   entity.houses = (snap.houses ?? []).map((h) => ({ ...h }));
   entity.ownedShip = snap.ownedShip ?? -1;
   entity.anchorPosition = snap.anchorPosition ? { ...snap.anchorPosition } : null;   // TP-slice

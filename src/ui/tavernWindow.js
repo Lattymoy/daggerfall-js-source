@@ -149,7 +149,7 @@ export class TavernWindow {
   _room() {
     const h = this.hooks;
     const now = h.now();
-    h.entity.rentedRooms = removeExpiredRooms(h.entity.rentedRooms ?? [], now);
+    h.entity.rentedRooms = removeExpiredRooms(h.entity.rentedRooms ?? [], now, h.sceneCache?.());
     const room = findRentedRoom(h.entity.rentedRooms, h.mapId(), h.buildingKey());
     this._chain([{
       // 5100 quotes the hours left (%dwr); 5102 has no room to quote.
@@ -205,6 +205,7 @@ export class TavernWindow {
       mapId: h.mapId(), buildingKey: h.buildingKey(),
       name: h.buildingName?.() ?? '', bedCount: h.bedCount?.() ?? 1,
       rolls: h.rolls ?? Math.random,
+      sceneCache: h.sceneCache?.() ?? null,   // P1: the room's interior is HELD while rented
     });
   }
 
