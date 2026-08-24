@@ -8,7 +8,7 @@
 
 import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
 import { Arch3dFile } from '../formats/arch3dFile.js';
-import { requestLook, makeLookGate } from '../player/pointerLock.js';
+import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLock.js';   // U44: bindCursorToggle is PlayerMouseLook.cursorActive
 import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
@@ -68,6 +68,8 @@ import { charSheetHooks } from '../ui/charSheetNav.js';   // U32: the sheet's fo
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw
+import { largeHudOptions, routeLargeHudClick, hudLargeNextMode, hudLargePrevMode } from '../ui/hudLarge.js';   // U44: the classic bottom bar and its eleven panels
+import { getInteractionMode } from '../player/interactionMode.js';   // U44: the mode panel's cycle reads it
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
 import { NativeInventoryWindow, preloadInventoryArt, inventoryArtLoaded } from '../ui/nativeInventory.js';   // U8d: the native inventory
 import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
@@ -1585,6 +1587,33 @@ export async function bootWorld(canvas, renderer, params, status) {
   // or the browser menu steals focus (Firefox activates it on keyUP).
   // T3b: the town seam eats its keys FIRST (F1-F4 modes; overlay
   // Esc/Enter) so a held overlay never leaks into the movement set.
+  // U44: ui/input.js's routeAction contract for this host - the same
+  // object the keydown ladder below calls and the large HUD's panels
+  // reach through routeLargeHudClick. Every member is an arrow, so
+  // nothing here runs before the helper it names exists.
+  const hudCtx = {
+    // U43 factored the window builders out for the interior arm to
+    // mount; this reads the same ones rather than a third copy.
+    toggleCharSheet: () => townTalk.showOverlay(makeCharSheetWindow()),
+    toggleLogbook: () => townTalk.showOverlay(makeJournalWindow('activeQuests')),
+    toggleNotebook: () => townTalk.showOverlay(makeJournalWindow('notebook')),
+    toggleInventory: () => { if (inventoryArtLoaded()) townTalk.showOverlay(makeInventoryWindow()); },
+    toggleSpellbook: () => toggleSpellbook(),
+    toggleAutomap: () => toggleExteriorAutomap(),
+    openTravelMap: () => toggleTravelMap(),
+    quickSave: () => worldQuickSave(),
+    quickLoad: () => worldQuickLoad(),
+    togglePause: () => {
+      if (!pauseArtLoaded()) return;
+      openPauseFlow((w) => townTalk.showOverlay(w), {
+        quickSave: worldQuickSave,
+        quickLoad: worldQuickLoad,
+        exitToMenu: exitToTitleMenu,
+        textLines: (id) => townTalk.lines(id),
+      });
+    },
+    cycleMode: (dir) => townTalk.setMode(dir > 0 ? hudLargeNextMode(getInteractionMode()) : hudLargePrevMode(getInteractionMode())),
+  };
   addEventListener('keydown', (e) => {
     if (townTalk.keydown(e)) return;
     // U8a: F5 opens the classic character sheet (the dungeon's key,
@@ -1596,71 +1625,42 @@ export async function bootWorld(canvas, renderer, params, status) {
     // (FLAGGED); swallowing the browser reload is not optional.
     if (e.code === 'F5' || e.code === 'F6') e.preventDefault();
     const act = actionOf(e);   // I2: the registry owns the code -> action read
-    if (act === 'CharacterSheet' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
-      townTalk.showOverlay(makeCharSheetWindow());
-      return;
-    }
-    // U43: LogBook (L) and NoteBook (N) - two of GameManager's own
-    // dispatch chain (:541-548) that the port bound at I1 and then
-    // read NOWHERE, while ui/questJournal.js sat built with all four
-    // of its pages. The interior and dungeon hosts answer them too.
-    if (act === 'LogBook' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
-      e.preventDefault();
-      townTalk.showOverlay(makeJournalWindow('activeQuests'));
-      return;
-    }
-    if (act === 'NoteBook' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
-      e.preventDefault();
-      townTalk.showOverlay(makeJournalWindow('notebook'));
-      return;
-    }
-    // U8d: F6 opens the classic inventory (DFU's default Inventory
-    // binding; same host rule as F5).
-    if (act === 'Inventory' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && inventoryArtLoaded()) {
-      townTalk.showOverlay(makeInventoryWindow());
-      return;
-    }
-    // M2/I2: the CastSpell action opens the spellbook
-    // (GameManager.cs:550-553); the cast is the attack click.
-    if (act === 'CastSpell' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
-      e.preventDefault();
-      toggleSpellbook();
-      return;
-    }
-    // P-slice: the classic quicksave bindings (F9 save, F11 load -
-    // InputManager.SetupDefaults), above ground at last.
-    if (act === 'QuickSave' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
-      e.preventDefault();
-      worldQuickSave();
-      return;
+    // U44 - THE ONE DOOR PER DESTINATION: this ladder and the large
+    // HUD's eleven panels open the same windows, so they read the same
+    // object. It is the same law U43 applied to the interior arm, one
+    // host over. QuickLoad keeps its own arm below because it is the
+    // one action that works with a window UP (the death screen's F11).
+    if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
+      if (act === 'CharacterSheet') { hudCtx.toggleCharSheet(); return; }
+      // U43: LogBook (L) and NoteBook (N) - two of GameManager's own
+      // dispatch chain (:541-548) that the port bound at I1 and then
+      // read NOWHERE, while ui/questJournal.js sat built with all four
+      // of its pages. The interior and dungeon hosts answer them too.
+      if (act === 'LogBook') { e.preventDefault(); hudCtx.toggleLogbook(); return; }
+      if (act === 'NoteBook') { e.preventDefault(); hudCtx.toggleNotebook(); return; }
+      // U8d: F6 opens the classic inventory (DFU's default Inventory
+      // binding; same host rule as F5).
+      if (act === 'Inventory' && inventoryArtLoaded()) { hudCtx.toggleInventory(); return; }
+      // M2/I2: the CastSpell action opens the spellbook
+      // (GameManager.cs:550-553); the cast is the attack click.
+      if (act === 'CastSpell') { e.preventDefault(); hudCtx.toggleSpellbook(); return; }
+      // P-slice: the classic quicksave bindings (F9 save, F11 load -
+      // InputManager.SetupDefaults), above ground at last.
+      if (act === 'QuickSave') { e.preventDefault(); hudCtx.quickSave(); return; }
+      // F-slice: the travel map (V - InputManager.SetupDefaults:1028).
+      if (act === 'TravelMap') { hudCtx.openTravelMap(); return; }
+      // A2: the exterior automap (Actions.AutoMap outdoors,
+      // DaggerfallUI.cs:633-650 - the town-map half of the dispatch).
+      // I2: through the registry, so M is rebindable like every other
+      // action rather than a second hardcoded literal.
+      if (act === 'AutoMap') { hudCtx.toggleAutomap(); return; }
+      // I3: Escape with no overlay opens the pause options window; the
+      // window closes itself on the same key.
+      if (act === 'Escape' && pauseArtLoaded()) { hudCtx.togglePause(); return; }
     }
     if (act === 'QuickLoad' && (modes?.mode ?? 'exterior') === 'exterior') {
       e.preventDefault();
-      worldQuickLoad();
-      return;
-    }
-    // F-slice: the travel map (V - InputManager.SetupDefaults:1028).
-    if (act === 'TravelMap' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
-      toggleTravelMap();
-      return;
-    }
-    // A2: the exterior automap (Actions.AutoMap outdoors,
-    // DaggerfallUI.cs:633-650 - the town-map half of the dispatch).
-    // I2: through the registry, so M is rebindable like every other
-    // action rather than a second hardcoded literal.
-    if (act === 'AutoMap' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
-      toggleExteriorAutomap();
-      return;
-    }
-    // I3: Escape with no overlay opens the pause options window; the
-    // window closes itself on the same key.
-    if (act === 'Escape' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && pauseArtLoaded()) {
-      openPauseFlow((w) => townTalk.showOverlay(w), {
-        quickSave: worldQuickSave,
-        quickLoad: worldQuickLoad,
-        exitToMenu: exitToTitleMenu,
-        textLines: (id) => townTalk.lines(id),
-      });
+      hudCtx.quickLoad();
       return;
     }
     keys.add(e.code);
@@ -1670,6 +1670,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!townTalk.overlayActive && !(modes?.overlayHeld ?? false) && document.pointerLockElement !== canvas) requestLook(canvas);
   });
   addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
+  // U44: Actions.ActivateCursor (Enter) - PlayerMouseLook.cursorActive,
+  // bound since I1 with no consumer, and the flag the large HUD's
+  // IsLargeHUDInteractable actually is.
+  bindCursorToggle(canvas, () => townTalk.overlayActive || (modes?.overlayHeld ?? false), actionOf);
   // AUDIT 24 (wave 37) - THE LIVE CRASH. `modes` is a VAR, deliberately
   // hoisted so these two listeners can be installed HERE and still reach
   // the mode machine that is not built until ~600 lines below. `var`
@@ -1685,7 +1689,17 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and took the whole scene down. Reported from the deployed build.
   // test/audit24_wave37.test.js holds both halves of the cure: `modes?.`
   // on every reference above the declaration, and `var` at it.
-  canvas.addEventListener('pointerdown', (e) => { if (townTalk.pointerdown(e)) return; if (modes?.pointerdown?.(e)) return; requestLook(canvas); });   // U8b/U8c: native windows own the pointer
+  canvas.addEventListener('pointerdown', (e) => {
+    if (townTalk.pointerdown(e)) return;
+    if (modes?.pointerdown?.(e)) return;
+    // U44: the large HUD's panels, BEFORE the relock.
+    const _r = canvas.getBoundingClientRect();
+    if (routeLargeHudClick(
+      (e.clientX - _r.left) * (canvas.width / _r.width),
+      (e.clientY - _r.top) * (canvas.height / _r.height),
+      e.button, hudCtx, { windowUp: townTalk.overlayActive || (modes?.overlayHeld ?? false) })) return;
+    requestLook(canvas);
+  });   // U8b/U8c: native windows own the pointer
   canvas.addEventListener('wheel', (e) => { if (townTalk.wheel(e) || modes?.wheel?.(e)) e.preventDefault(); }, { passive: false });   // U-scroll: an open window owns the wheel
   // C9: RMB is a weapon control (drag-to-swing) exactly as the
   // dungeon host - the drag feeds the rig INSTEAD of the look.
@@ -3130,7 +3144,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       drawHud(renderer, canvas, hudArt, playerEntity,
         ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt,
         { font: townTalk.font, cursorActive: townTalk.overlayActive || (modes?.overlayHeld ?? false),
-          detected: _detected, playerXZ: [enchantFeet()[0], enchantFeet()[2]] });   // U38 + X4
+          detected: _detected, playerXZ: [enchantFeet()[0], enchantFeet()[2]],
+          largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity) });   // U38 + X4 + U43
     }
     townTalk.frame(dt);   // T3b: HUD lines + the talk overlay, above everything
 

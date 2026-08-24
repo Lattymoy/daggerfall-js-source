@@ -19,7 +19,56 @@
 
 let _errBound = false;
 
+// U44 - PlayerMouseLook.cursorActive (:32, :185-213), THE TOGGLE THAT
+// HAD NO CONSUMER. `ActivateCursor` has been bound to Enter in the
+// input registry since I1 and nothing has ever read it, so the port
+// had no way to free the mouse during play at all - and the large
+// HUD's eleven panels are unreachable without one, because
+// IsLargeHUDInteractable is exactly this flag.
+//
+// DFU'S OWN COMMENT DRAWS THE DISTINCTION THIS FLAG EXISTS FOR: "This
+// is distinct from cursor being left active when UI open... When
+// cursor simply active from closing a popup, etc. a click will
+// recapture cursor" - a deliberately activated cursor TAKES
+// PRECEDENCE and survives the click that would otherwise re-lock. In
+// this port that precedence is one line inside requestLook, which
+// every relock-on-gesture arm in every host already goes through, so
+// there is no ninth call site to remember.
+//
+// FLAGGED: DFU also refuses the toggle for 0.3 seconds after an input
+// message box closes, because Return both submits the box and is the
+// default binding here ("players often think this is a bug"). The
+// port's boxes do not share a clock with this module yet.
+let _cursorActive = false;
+export const cursorActive = () => _cursorActive;
+export const setCursorActive = (b) => { _cursorActive = !!b; };
+export function toggleCursorActive(canvas) {
+  _cursorActive = !_cursorActive;
+  if (_cursorActive) releaseLook();
+  else if (canvas) requestLook(canvas);
+  return _cursorActive;
+}
+
+/** One call per host at boot: Enter (Actions.ActivateCursor) frees
+ *  the mouse during play and takes it back. `isWindowUp` is the
+ *  host's own overlay predicate - DFU gates on !IsGamePaused, and a
+ *  window up is this port's paused. */
+export function bindCursorToggle(canvas, isWindowUp = () => false, actionOf = null) {
+  if (typeof addEventListener !== 'function' || !actionOf) return () => {};
+  const onKey = (e) => {
+    if (isWindowUp()) return;
+    if (actionOf(e) !== 'ActivateCursor') return;
+    e.preventDefault();
+    toggleCursorActive(canvas);
+  };
+  addEventListener('keydown', onKey);
+  return () => removeEventListener('keydown', onKey);
+}
+
 export function requestLook(canvas) {
+  // The precedence above: a cursor the player activated is not taken
+  // back by the next gesture, only by the toggle.
+  if (_cursorActive) return;
   if (!_errBound && typeof document !== 'undefined') {
     document.addEventListener('pointerlockerror', () => {
       console.warn('[input] pointer lock refused (focus/cooldown); the next gesture retries');

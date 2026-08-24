@@ -18,6 +18,7 @@
 import { maxFatigue, maxBreath, liveStat } from '../systems/statMods.js';
 import { drawCrosshairAndModeIcon } from './hudCrosshair.js';   // U38
 import { playerDamageFlash } from './damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage rides the one HUD call
+import { drawHudLarge } from './hudLarge.js';   // U44: the classic bottom bar - an ALTERNATIVE HUD, see below
 
 export const COMPASS_BOX_OUTLINE = 2;
 export const COMPASS_BOX_INTERIOR = 64;
@@ -193,10 +194,17 @@ export async function loadHud({ fetchBytes, ImgFile, palette, renderer }) {
   }
 }
 
+/** U44: the rect the large HUD last drew itself into, so a host's
+ *  pointer handler can hit-test the bar without recomputing a layout
+ *  it does not own. Null whenever the bar is off - which is also what
+ *  makes a click fall through to the world. */
+let lastLargeHudBar = null;
+export const largeHudBar = () => lastLargeHudBar;
+
 /** Draw the HUD. vitals = { health, maxHealth, magicka, maxMagicka };
  *  heading01 = camera yaw / 2pi with 0 facing +z. */
 export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
-  { font = null, cursorActive = false, detected = null, playerXZ = null } = {}) {
+  { font = null, cursorActive = false, detected = null, playerXZ = null, largeHud = null } = {}) {
   // AUDIT 24 (wave 39): ShowPlayerDamage's red flash, under the bars.
   // THE FOUR HOSTS RULE, applied before the fact: drawHud is the one
   // host-agnostic call all four make, "last, over the viewmodel", so
@@ -206,6 +214,24 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   playerDamageFlash.tick(dt);
   playerDamageFlash.draw(renderer, canvas);
   if (!art) return;
+  // U44 - THE LARGE HUD IS AN ALTERNATIVE, NOT AN ADDITION.
+  // DaggerfallHUD.cs:214-220 turns off the vitals, the compass AND the
+  // interaction-mode icon whenever it is on, "as they conflict in
+  // space or utility"; the CROSSHAIR and the breath bar stay, and the
+  // arrow counter goes too (:273, on DFU's own unresolved TODO). So
+  // this is an early branch rather than another draw call at the end,
+  // and the one thing that outlives it - the crosshair - is drawn
+  // here with the mode icon suppressed.
+  if (largeHud?.art) {
+    const s2 = hudScale(canvas.width, canvas.height);
+    lastLargeHudBar = drawHudLarge(renderer, canvas, largeHud.art, vitals, heading01, {
+      ...largeHud, barFill, maxFatigueOf: maxFatigue, barArt: art,
+    });
+    drawCrosshairAndModeIcon(renderer, canvas, font,
+      { cursorActive, scale: s2, border: HUD_BORDER, barWidth: HUD_NATIVE_BAR_WIDTH, showModeIcon: false });
+    return;
+  }
+  lastLargeHudBar = null;
   const s = hudScale(canvas.width, canvas.height);
   const bottom = canvas.height - HUD_BORDER;
   // Vitals, left to right: health, fatigue, magicka (classic order),

@@ -32,16 +32,50 @@ const rd = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
 const decomment = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
 const line = (src, n) => src.split('\n')[n - 1];
 
-/** Runs one shipped listener-registration line with `modes` in exactly
- *  the state the crash happened in: hoisted, declared, unassigned. */
+/** The whole registration STATEMENT starting at `needle`, however many
+ *  lines it spans. U43 made the pointerdown listener multi-line (the
+ *  large HUD's panels have to be offered the click before the relock),
+ *  and a gate that could only read a one-liner would have gone quiet
+ *  on the exact edit that reopens the crash. Brace-balanced rather
+ *  than line-counted, so it follows the law and not the formatting. */
+function statementAt(src, needle) {
+  const lines = src.split('\n');
+  const start = lines.findIndex((l) => l.includes(needle));
+  assert.ok(start >= 0, `no registration line matching ${needle}`);
+  let depth = 0, out = [];
+  for (let i = start; i < lines.length; i++) {
+    const l = lines[i];
+    out.push(l);
+    for (const ch of decomment(l)) {
+      if (ch === '(' || ch === '{' || ch === '[') depth++;
+      else if (ch === ')' || ch === '}' || ch === ']') depth--;
+    }
+    if (depth <= 0 && out.length) return out.join('\n');
+  }
+  assert.fail(`unbalanced statement at ${needle}`);
+  return '';
+}
+
+/** Runs one shipped listener registration with `modes` in exactly the
+ *  state the crash happened in: hoisted, declared, unassigned. */
 function fireListener(lineSrc, event = {}) {
   const seen = [];
-  const canvas = { addEventListener: (type, fn) => seen.push({ type, fn }) };
-  const townTalk = { pointerdown: () => false, wheel: () => false };
+  const canvas = {
+    addEventListener: (type, fn) => seen.push({ type, fn }),
+    getBoundingClientRect: () => ({ left: 0, top: 0, width: 320, height: 200 }),
+    width: 320, height: 200,
+  };
+  const townTalk = { pointerdown: () => false, wheel: () => false, overlayActive: false };
   const requestLook = () => seen.push({ type: 'requestLook' });
-  new Function('canvas', 'townTalk', 'requestLook', `var modes; ${lineSrc}`)(canvas, townTalk, requestLook);
+  // U43: the bar is off in this harness, which is the state that must
+  // still reach requestLook - a HUD that swallowed the click when it
+  // is not even drawn would be the same class of bug as the crash.
+  const routeLargeHudClick = () => false;
+  const hudCtx = {};
+  new Function('canvas', 'townTalk', 'requestLook', 'routeLargeHudClick', 'hudCtx',
+    `var modes; ${lineSrc}`)(canvas, townTalk, requestLook, routeLargeHudClick, hudCtx);
   assert.equal(seen.length, 1, 'one listener registered');
-  seen[0].fn({ preventDefault: () => seen.push({ type: 'preventDefault' }), ...event });
+  seen[0].fn({ preventDefault: () => seen.push({ type: 'preventDefault' }), button: 0, clientX: 0, clientY: 0, ...event });
   return seen.map((s) => s.type);
 }
 
@@ -59,8 +93,8 @@ test('audit24 wave37: the crashing shape really does crash, and the shipped one 
   // to its own default arm.
   for (const host of HOSTS) {
     const src = rd(host);
-    const pd = src.split('\n').find((l) => l.includes("addEventListener('pointerdown'"));
-    const wh = src.split('\n').find((l) => l.includes("addEventListener('wheel'"));
+    const pd = statementAt(src, "addEventListener('pointerdown'");
+    const wh = statementAt(src, "addEventListener('wheel'");
     assert.deepEqual(fireListener(pd), ['pointerdown', 'requestLook'], `${host}: a click before the mode machine exists still grabs the pointer`);
     assert.deepEqual(fireListener(wh), ['wheel'], `${host}: and a scroll is simply not eaten`);
   }
@@ -128,4 +162,106 @@ test('audit24 wave37: the crash shape is gone from every scene host', () => {
   // and no second hoisted binding has quietly appeared to repeat it
   const vars = HOSTS.flatMap((h) => [...decomment(rd(h)).matchAll(/^\s*var\s+(\w+)/gm)].map((m) => m[1]));
   assert.deepEqual([...new Set(vars)], ['modes'], 'the only var in the scene hosts is the deliberate one');
+});
+
+
+// U44 - THE SAME SHAPE, THIRD INSTANCE, AND THE FIRST THAT SHIPPED.
+// The three gates above all watch ONE name (`modes`) in TWO files,
+// because that is where the crash was found. `say` was read in
+// createWorldModes' `createPlayerTicker` options object and declared
+// with `const` forty lines below, so the function threw
+// "Cannot access 'say' before initialization" on its first statement
+// and bootExterior died with it - THE EXTERIOR HOST DID NOT BOOT AT
+// ALL, and no pin in this suite could see it, because every one of
+// them reads a source string rather than running the module.
+//
+// This gate is mechanical over the whole boot body: a top-level
+// `const`/`let` must not be NAMED anywhere above its own declaration.
+// It cannot see into an arrow that only RUNS later (`() => say(x)`
+// above the declaration is legal and common), so it deliberately
+// ignores any occurrence inside a `=>` body on the same line - which
+// is what the port's lazy seams look like. What is left is the
+// eager read that actually throws.
+test('audit24 wave37: no top-level binding in a host boot is read above its own declaration', () => {
+  const BOOTS = [
+    ['src/scenes/worldModes.js', 'export function createWorldModes('],
+    ['src/scenes/exterior.js', 'export async function bootExterior('],
+    ['src/scenes/world.js', 'export async function bootWorld('],
+  ];
+  let checked = 0;
+  for (const [file, opener] of BOOTS) {
+    // Quoted strings are blanked too: `params.get('loc')` is not a
+    // read of the binding `loc`. Backticks are LEFT ALONE, because a
+    // template's `${...}` really is a read.
+    const destring = (t) => t
+      .replace(/'(?:\\.|[^'\\])*'/g, "''")
+      .replace(/"(?:\\.|[^"\\])*"/g, '""')
+      // A template keeps only its `${...}` expressions: those really
+      // are reads, its prose is not ("building player pixel" named a
+      // binding declared fifteen lines later and meant nothing).
+      .replace(/`(?:\\.|[^`\\])*`/g, (m) => (m.match(/\$\{[^}]*\}/g) ?? []).join(' '));
+    const whole = destring(decomment(rd(file)));
+    const from = whole.indexOf(opener);
+    assert.ok(from > 0, `${file}: ${opener} found`);
+    const body = whole.slice(from);
+    const lines = body.split('\n');
+    // top-level declarations of the boot function: exactly two spaces
+    const decls = new Map();
+    lines.forEach((l, i) => {
+      const m = /^ {2}(?:const|let) ([A-Za-z_$][\w$]*) =/.exec(l);
+      if (m && !decls.has(m[1])) { decls.set(m[1], i); return; }
+      // A DESTRUCTURE binds too, and this host's `const { canvas,
+      // renderer, ... } = host` binds twenty names at once - moving it
+      // below its own use is the same crash by another spelling.
+      const d = /^ {2}(?:const|let) \{(.*?)\} =/.exec(l);
+      if (!d) return;
+      for (const part of d[1].split(',')) {
+        const n = /^\s*([A-Za-z_$][\w$]*)\s*(?::\s*([A-Za-z_$][\w$]*))?/.exec(part);
+        if (!n) continue;
+        const bound = n[2] ?? n[1];   // `a: b` binds b, not a
+        if (!decls.has(bound)) decls.set(bound, i);
+      }
+    });
+    assert.ok(decls.size > 20, `${file}: the boot really does declare bindings (${decls.size})`);
+    // A reference is EAGER only when nothing between it and the boot
+    // body is a function - an object literal or a call argument runs
+    // now, a function body runs later. Tracked as a stack of "did this
+    // brace open a function", pushed per line by net depth.
+    const eager = new Array(lines.length).fill(false);
+    const stack = [];
+    for (let i = 0; i < lines.length; i++) {
+      eager[i] = !stack.some(Boolean);
+      const l = lines[i];
+      // Line 0 is the BOOT FUNCTION'S OWN opener. Counting it as a
+      // function frame marks every line inside it lazy, which is how
+      // the first draft of this gate passed while the crash it was
+      // written for sat four lines from the top.
+      const opensFn = i > 0 && /=>|\bfunction\b|^\s*(?:get|set)\s+[A-Za-z_$]|^\s*[A-Za-z_$][\w$]*\s*\([^)]*\)\s*\{/.test(l);
+      let delta = 0;
+      for (const ch of l) { if (ch === '{') delta++; else if (ch === '}') delta--; }
+      for (let d = 0; d < delta; d++) stack.push(opensFn);
+      for (let d = 0; d < -delta; d++) stack.pop();
+    }
+    for (const [name, at] of decls) {
+      // Not a property access (`flatGroups.keys()`), and not an
+      // object-literal KEY (`say: x` writes the property, `say,`
+      // READS the binding - which is exactly the crash this gate
+      // exists for, so the shorthand form must stay caught).
+      const re = new RegExp(`(?<![.\\w$])${name}\\b(?!\\s*:)`);
+      for (let i = 0; i < at; i++) {
+        if (!eager[i] || !re.test(lines[i])) continue;
+        // A one-line arrow opens no brace, so the stack cannot see it:
+        // `collider: () => interiorCtx?.collider` is a later call, not
+        // an eager read. Anything AFTER the first `=>` on a line is
+        // inside that arrow. (A line with both an eager read and an
+        // arrow, in that order, is still caught - the read comes
+        // first.)
+        const arrow = lines[i].indexOf('=>');
+        if (arrow >= 0 && lines[i].search(re) > arrow) continue;
+        assert.fail(`${file}: '${name}' is read EAGERLY at line ${i + 1} of the boot, declared at ${at + 1}\n    ${lines[i].trim()}`);
+      }
+      checked++;
+    }
+  }
+  assert.ok(checked > 60, `the gate really walked the bindings (${checked})`);
 });
