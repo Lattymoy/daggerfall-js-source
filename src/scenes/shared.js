@@ -198,7 +198,12 @@ export function climbingDeps(entity, say = null) {
       climbing: skillValue(entity, SKILLS.Climbing),
       luck: entity.stats?.luck != null ? liveStat(entity, 'luck') : 50,
       khajiit: entity.race === 'Khajiit',
-      enhanced: false,
+      // X1: the Climbing SPELL - "target can climb twice as well",
+      // which DFU applies by DOUBLING the effective skill after the
+      // racial bonus (FormulaHelper.cs:304-306) and doubling climb
+      // speed (PlayerSpeedChanger.cs:428). Both ride climbing.js's
+      // `enhanced`, which was hardcoded false waiting for this.
+      enhanced: !!entity?.activeEffects?.some((a) => a.kind === 'climbing'),
     }),
     tally: () => tallySkill(entity, SKILLS.Climbing),
     say,

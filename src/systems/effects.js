@@ -73,6 +73,12 @@ export const BUFF_KINDS = Object.freeze({
   // S22 FreeAction (26,255): Restoration duration buff - the entity
   // is IMMUNE TO PARALYSIS while it lives (IsImmuneToParalysis).
   '26,255': 'freeAction',
+  // X1: the two motor buffs. DFU keeps each as a bool on the entity
+  // (IsEnhancedJumping / IsEnhancedClimbing, DaggerfallEntity.cs:84-85)
+  // set by the effect's Start and cleared by its End; the port's
+  // active-effect list IS that flag, read where the motor asks.
+  '27,255': 'jumping',
+  '28,255': 'climbing',
   // AUDIT 21 F5 SILENCE (19,255). The GATE was ported and the PRODUCER was
   // not, so `entity.isSilenced` had no writer anywhere in src/ and
   // silenceBlocksCast was a constant false for every entity in the game -

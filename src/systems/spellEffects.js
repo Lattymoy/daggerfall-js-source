@@ -123,6 +123,8 @@ export const PORTED_KEYS = new Set([
   '24,0', '24,1',                                                   // Shadow
   '25,255',                                                         // Slowfall
   '26,255',                                                         // Free Action
+  '27,255',                                                         // Jumping (X1)
+  '28,255',                                                         // Climbing (X1)
   '30,255',                                                         // Water Breathing
   '31,255',                                                         // Water Walking
   '43,255',                                                         // Teleport (the inline arm)
