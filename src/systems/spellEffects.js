@@ -130,6 +130,7 @@ export const PORTED_KEYS = new Set([
   '28,255',                                                         // Climbing (X1)
   '30,255',                                                         // Water Breathing
   '31,255',                                                         // Water Walking
+  '35,255',                                                         // Shield (X1 - the damage pool)
   '43,255',                                                         // Teleport (the inline arm)
 ]);
 

@@ -232,3 +232,70 @@ test('X1 Spell Resistance: the effect is silently DROPPED, and a self-cast is ne
   }
   assert.equal(effectByKey('21,255').ported, false, 'Spell Reflection still pends its re-target path');
 });
+
+// ── X1d: Shield's damage pool ─────────────────────────────────────
+import { hurtPlayer, damageShieldPool } from '../src/characters/playerEntity.js';
+
+const shieldSpell = (mag) => buildCustomSpell({
+  slots: [{ type: 35, subType: 255, settings: { ...blankEffectSettings(), durationBase: 10, magnitudeBaseLow: mag, magnitudeBaseHigh: mag } }],
+  rangeType: 0,
+});
+const shielded = (mag = 20) => {
+  const e = target({ health: 100, maxHealth: 100 });
+  applySpell(shieldSpell(mag), 1, e, {}, () => 0.5, null, {});
+  return [e, e.activeEffects.find((a) => a.kind === 'shield')];
+};
+
+test('X1 Shield: all-or-overflow per hit - the magnitude IS the pool, one point per hit point', () => {
+  const [e, a] = shielded();
+  assert.equal(a.shieldRemaining, a.startingShield, 'the pool opens full');
+  const pool = a.shieldRemaining;
+  // a hit no larger than the pool is reduced to ZERO
+  hurtPlayer(e, pool - 5);
+  assert.equal(e.health, 100, 'fully absorbed - no health lost');
+  assert.equal(a.shieldRemaining, 5);
+  // the hit that empties it passes ONLY its excess
+  hurtPlayer(e, 25);
+  assert.equal(e.health, 80, 'the 5-point pool ate 5 of the 25');
+  assert.equal(a.shieldRemaining, 0);
+  assert.equal(a.ended, true, 'running out ends the effect at once');
+  // a busted pool absorbs nothing further
+  hurtPlayer(e, 10);
+  assert.equal(e.health, 70);
+});
+
+test('X1 Shield: exactly zeroing the pool still BUSTS it, and passes zero through', () => {
+  const [e, a] = shielded();
+  hurtPlayer(e, a.startingShield);
+  assert.equal(e.health, 100, 'nothing got through');
+  assert.equal(a.ended, true, 'but the shield is spent');
+  assert.equal(a.shieldRemaining, 0);
+});
+
+test('X1 Shield: a recast tops the pool up, capped at the ORIGINAL starting pool', () => {
+  const [e, a] = shielded();
+  const start = a.startingShield;
+  hurtPlayer(e, 5);
+  assert.equal(a.shieldRemaining, start - 5);
+  const rounds = a.roundsRemaining;
+  applySpell(shieldSpell(20), 1, e, {}, () => 0.5, null, {});
+  assert.equal(e.activeEffects.filter((x) => x.kind === 'shield').length, 1, 'one incumbent');
+  assert.equal(a.shieldRemaining, start, 'topped up to the cap, never above');
+  assert.equal(a.startingShield, start, 'and startingShield itself never rises');
+  assert.ok(a.roundsRemaining > rounds, 'rounds stack');
+});
+
+test('X1 Shield: the pool sits on the ONE damage door, so every source is covered', () => {
+  // damageShieldPool is the primitive hurtPlayer calls; anything that
+  // reaches the player's health goes through it
+  const [, a] = shielded();
+  assert.equal(damageShieldPool({ activeEffects: [a] }, 3), 0, 'absorbed');
+  assert.equal(damageShieldPool({ activeEffects: [] }, 7), 7, 'no shield: damage passes unchanged');
+  // and hurtPlayer really routes through it: a shielded entity takes
+  // no health loss from a hit the pool covers, whatever the source
+  const [e2, a2] = shielded();
+  const before = e2.health;
+  assert.equal(hurtPlayer(e2, a2.shieldRemaining - 1), false, 'no death transition');
+  assert.equal(e2.health, before, 'the one door consulted the pool');
+  assert.equal(effectByKey('35,255').ported, true);
+});

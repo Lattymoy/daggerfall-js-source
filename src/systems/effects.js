@@ -235,6 +235,7 @@ export const isElementalResistance = (e) => e.type === 8 && e.subType >= 0 && e.
 // X1: the two chance-buff defences read by the incoming chain
 export const isSpellAbsorptionEffect = (e) => e.type === 20 && classicSub(e) === 255;
 export const isSpellResistanceEffect = (e) => e.type === 22 && classicSub(e) === 255;
+export const isShieldEffect = (e) => e.type === 35 && classicSub(e) === 255;
 /** The live Spell Resistance chance, summed over instances. */
 export function spellResistanceChance(target) {
   let total = 0;
@@ -752,6 +753,28 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       cureAllOfKind(target, CURE_KINDS[e.subType]);
       pushInstantMarker(target, CURE_MARKER_KINDS[e.subType]);   // after the removal pass, as AssignBundle adds before MagicRound cures
       out.cured = (out.cured ?? 0) + 1;
+      continue;
+    }
+    // X1: SHIELD (Alteration 35) - the magnitude IS the pool, one
+    // point per hit point, rolled once through the same magnitude
+    // path every other effect uses (so a ranged cast still runs the
+    // saving throw). A like-kind recast stacks rounds and TOPS UP the
+    // pool, capped at the incumbent's ORIGINAL startingShield -
+    // never above it, and startingShield itself never rises
+    // (Shield.cs:53-63).
+    if (isShieldEffect(e)) {
+      const rounds = rollDuration(e, casterLevel);
+      const pool = rollMagnitude(e, casterLevel, rolls);
+      if (rounds > 0 && pool > 0) {
+        const inc = findInc((a) => a.kind === 'shield');
+        if (inc) {
+          inc.roundsRemaining += rounds;
+          inc.shieldRemaining = Math.min(inc.startingShield, inc.shieldRemaining + pool);
+        } else {
+          pushActive(target, { kind: 'shield', startingShield: pool, shieldRemaining: pool, roundsRemaining: rounds }, sinks, rolls);
+        }
+        out.buffs = (out.buffs ?? 0) + 1;
+      }
       continue;
     }
     // X1: SPELL ABSORPTION (20) and SPELL RESISTANCE (22) - both are
