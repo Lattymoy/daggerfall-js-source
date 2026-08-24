@@ -3325,3 +3325,54 @@ rather than waiting for a tick, which is exactly what stops a window
 drawing a stale tip mid-frame. Live in tools/pauseProbe.mjs: the tip
 suppressed on a short label, showing the full text behind an
 elongated one, and gone on leave.
+
+## U38 - THE CROSSHAIR AND THE MODE INDICATOR (2026-08-23)
+
+The two HUD components the gap audit found missing outright, and the
+first place this arc had to draw rather than load.
+
+**THE ART DEPARTURE (Ledger A), stated first because it shapes the
+rest.** Both components load DFU-AUTHORED PNGs out of Unity's
+Resources folder - "Crosshair", and four icon sets of four files each.
+None of that is ARENA2 data; it is DFU's own artwork, outside the C#
+this project translates and absent from the sparse clone. So the port
+draws a centred cross of its own geometry, and shows the mode's NAME
+in the HUD font where the icon would sit. Every LAW around them is
+DFU's, because the law is the half the source actually carries.
+
+**The laws that matter.** The crosshair is not drawn while the cursor
+is active (`:62-66`) - a window is up and the player is pointing, not
+aiming; a crosshair painted over an open inventory is exactly the bug
+that suppress exists to prevent, and it is the pin the live probe
+drives. The indicator sits at `(barWidth * scale) * 5 + border * 2`
+from the left on the vitals' baseline (`:129`), and `resScale`
+(`:107`) shrinks it at low resolutions as a DIVISOR - at scale 1 the
+icon is a third of nominal, which reads backwards until you notice
+DFU's own comment saying so.
+
+**The xhair suffix.** A style name ENDING in "xhair" means the
+indicator is drawn AS the crosshair rather than in the corner
+(`:189`), and in that mode Grab alone keeps the plain cross
+(`:76-91`) - which is why Grab is the mode you aim in. The branch is
+kept, and pinned in both directions: the mutant that lets Grab lose
+its cross dies, and so does the one that reads "xhair" as a substring.
+
+**One call, four hosts.** Both components ride `drawHud`, which was
+already the one host-agnostic call all four make - so they cannot
+drift the way four pasted frame bodies would. The dependency runs ONE
+way: `hud.js` calls `hudCrosshair.js` and passes its own two geometry
+constants in, because importing them back would make a cycle and
+re-declaring them would make a second home for numbers that already
+have one. A test pins the direction.
+
+`GUI/Crosshair` and `GUI/InteractionModeIcon` stop being furniture -
+the launcher had been offering a toggle and an icon STYLE for
+components that did not exist.
+
+Pins: 8 in `hudcrosshair.test.js`, the behavioural ones driving a fake
+renderer and COUNTING quads. Six mutations: five dead, one recorded as
+a genuine equivalent - `>` vs `>=` on resScale's boundary cannot be
+killed, because at scale exactly 3 the reduction arm computes (1/3)*3
+and IEEE754 rounds it back to 1. Live: tools/hudCrosshairProbe.mjs
+counts the component's own draw calls in a real frame - present while
+aiming, zero under the pause window, back when it closes.

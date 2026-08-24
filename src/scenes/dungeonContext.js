@@ -2339,7 +2339,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // forward this file already derives (0 = +z, wrapped 0..1).
     const hfw = [-view[2], -view[10]];
     const heading01 = ((Math.atan2(hfw[0], hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1;
-    drawHud(renderer, canvas, hudArt, playerEntity, heading01, dt);
+    drawHud(renderer, canvas, hudArt, playerEntity, heading01, dt,
+      { font: hudFont, cursorActive: !!activeOverlay });   // U38
     hudText.tick(dt);
     if (hudFont) hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.width, canvas.height));
     // The CLICK TO LOOK banner retired with click-to-look itself: the

@@ -281,6 +281,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       sprite: f.mobile ? { state: f.mobile.state, o: f.mobile.orientation, frame: f.mobile.frame } : null,
     })));
     window.__frame = 0;
+    window.__renderer = renderer;   // U38 probe surface: the live draw path
   }
 
   let frames = 0;

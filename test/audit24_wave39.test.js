@@ -259,9 +259,11 @@ test('audit24 wave39: which hits flash is a LAW, not an omission', () => {
   const hud = rd('src/ui/hud.js');
   const body = hud.slice(hud.indexOf('export function drawHud('));
   assert.ok(body.indexOf('playerDamageFlash.draw(') < body.indexOf('if (!art) return;'), 'before the art guard');
-  assert.match(hud, /export function drawHud\(renderer, canvas, art, vitals, heading01, dt = 0\)/);
+  assert.match(hud, /export function drawHud\(renderer, canvas, art, vitals, heading01, dt = 0,/);
   for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
-    assert.match(rd(f), /heading01, dt\)|% 1, dt\)/, `${f}: passes the clock`);
+    // U38 widened drawHud with an options object, so the clock is no
+    // longer the LAST argument. The law is that it is PASSED.
+    assert.match(rd(f), /heading01, dt[,)]|% 1, dt[,)]/, `${f}: passes the clock`);
   }
 });
 
