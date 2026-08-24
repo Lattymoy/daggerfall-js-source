@@ -99,7 +99,8 @@ export const TRANSPORT_HORSE = 94;        // Transportation.Horse (template)
 export const TRANSPORT_SMALL_CART = 93;   // Transportation.Small_cart
 // AUDIT 24 (wave 24): Books.Book0..Book3 all resolve to 277 - one
 // constant, declared here and in loot.js.
-import { BOOK_TEMPLATE } from './loot.js';
+import { BOOK_TEMPLATE, createRegularMagicItem, createRandomPotion } from './loot.js';   // G4: the guild shelves' two minters
+import { SPELLBOOK_TEMPLATE_INDEX } from './spellMaker.js';   // G4: one home for MiscItems 132
 
 export { BOOK_TEMPLATE };
 
@@ -332,19 +333,85 @@ export function createEmptySoulTrap() {
   });
 }
 
-/** The Buy Soulgems shelf. `quality` is the guild hall's building
- *  quality, `gameMinutes` the world clock - the same day yields the
- *  same shelf. */
-export function stockSoulGems({ quality = 0, gameMinutes = 0 } = {}, { soulPointsOf = null } = {}) {
+/**
+ * GetMerchantMagicItems (DaggerfallGuildServicePopupWindow:221-271) -
+ * ONE function serving TWO services, which is why they share a shelf
+ * size and a seed and why this is not two functions here either.
+ *
+ *   numOfItems = trunc(quality / 2) + 1, and both loops are
+ *   `i <= numOfItems` - INCLUSIVE, so each carries numOfItems + 1.
+ *
+ *   The seed is the DAY (classic minutes / minutes-per-day), so the
+ *   shelf is stable for twenty-four game hours and rotates after -
+ *   DFU's own note says classic's stocking method is unknown and this
+ *   is "good enough".
+ *
+ * THE MAGIC ARM RUNS FIRST AND CONSUMES DRAWS, so a guild that offers
+ * BOTH services shows DIFFERENT soul gems on its Buy Magic Items
+ * shelf than on its Buy Soulgems shelf, on the same day, from the
+ * same seed. That is the single random sequence being walked to two
+ * different depths, and it is observable.
+ *
+ * ...and the soul-gem arm runs whether or not `onlySoulGems` was
+ * asked for: a guild that sells gems sells them ON the magic shelf
+ * too, with a SPELLBOOK between the two runs.
+ */
+export function stockGuildMagicItems({ quality = 0, gameMinutes = 0, sellsSoulGems = false, onlySoulGems = false } = {},
+  { magicItemTemplates = null, playerLevel = 1, gender = 0, soulPointsOf = null } = {}) {
   const rolls = dailyStockRolls(stockDayIndex(gameMinutes));
   const numOfItems = Math.trunc(quality / 2) + 1;
   const out = [];
-  for (let i = 0; i <= numOfItems; i++) {   // INCLUSIVE - numOfItems + 1 gems
-    // Dice100.FailedRoll(25): Random.Range(0,100) >= 25, true 75% of
-    // the time, and the true branch is the EMPTY gem.
-    out.push(Math.floor(rolls() * 100) >= 25
-      ? createEmptySoulTrap()
-      : createRandomlyFilledSoulTrap(rolls, soulPointsOf));
+  if (!onlySoulGems) {
+    for (let i = 0; i <= numOfItems; i++) {   // INCLUSIVE
+      // A shop's magic item arrives ALREADY IDENTIFIED (:242), which
+      // is why the Identify service never has anything to do with the
+      // stock of the guild that sells it.
+      if (!magicItemTemplates) break;
+      const it = createRegularMagicItem(magicItemTemplates, playerLevel, gender, rolls);
+      it.isIdentified = true;
+      out.push(it);
+    }
+    out.push(mintCondition({ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX }));
+  }
+  if (sellsSoulGems) {
+    for (let i = 0; i <= numOfItems; i++) {   // INCLUSIVE - numOfItems + 1 gems
+      // Dice100.FailedRoll(25): Random.Range(0,100) >= 25, true 75% of
+      // the time, and the true branch is the EMPTY gem.
+      out.push(Math.floor(rolls() * 100) >= 25
+        ? createEmptySoulTrap()
+        : createRandomlyFilledSoulTrap(rolls, soulPointsOf));
+    }
+  }
+  return out;
+}
+
+/** The Buy Soulgems shelf - GetMerchantMagicItems(onlySoulGems: true).
+ *  X6's own entry point, kept as the name its callers use. */
+export function stockSoulGems({ quality = 0, gameMinutes = 0 } = {}, { soulPointsOf = null } = {}) {
+  return stockGuildMagicItems({ quality, gameMinutes, sellsSoulGems: true, onlySoulGems: true }, { soulPointsOf });
+}
+
+/**
+ * GetMerchantPotions (:273-280). `n = quality; while (n-- >= 0)` is
+ * quality + 1 potions, and it does NOT reseed - it walks on from
+ * wherever the sequence stands, so the potion shelf is not stable the
+ * way the magic one is. Seeded on the day here anyway, because the
+ * port has no ambient global stream to walk on from and a shelf that
+ * rerolled on every open would restock itself for free.
+ *
+ * AND THE DISCARDED DRAW: DFU passes `Random.Range(1, 5)` as
+ * CreateRandomPotion's stackSize, and CreateRandomPotion
+ * (ItemBuilder:761-766) NEVER READS stackSize - the argument is
+ * dropped on the floor. The DRAW still happens though, and it still
+ * advances the sequence, so the potion that comes back is the one
+ * AFTER it. Consumed here for that reason and for no other.
+ */
+export function stockGuildPotions({ quality = 0, gameMinutes = 0 } = {}) {
+  const rolls = dailyStockRolls(stockDayIndex(gameMinutes));
+  const out = [];
+  for (let n = quality; n >= 0; n--) {   // quality + 1 potions
+    rolls();                              // Range(1, 5) - drawn, discarded, still counted
+    out.push(createRandomPotion(rolls));
   }
   return out;
 }

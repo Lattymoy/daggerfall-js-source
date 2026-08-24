@@ -23,6 +23,7 @@ import { dice100 } from '../combat/formulas.js';
 import { goldStack } from './inventory.js';
 import { ITEM_TEMPLATES, mintCondition, GROUP_TEMPLATE_INDICES, templateByIndex } from './itemTemplates.js';
 import { CLOTHING_DYES } from '../characters/dyes.js';
+import { legacyEnchantmentValue } from './enchantments.js';   // G4: ItemBuilder's closing value sum
 
 // LootChanceMatrix rows, verbatim (22 keys, '-' included).
 export const LOOT_MATRICES = Object.freeze({
@@ -176,6 +177,14 @@ export function generateRandomLoot(matrix, who, rolls = Math.random) {
 // The MAGIC.DEF registry: set once per context after the file loads.
 let _magicItemTemplates = null;
 export function setMagicItemTemplates(templates) { _magicItemTemplates = templates; }
+// G4: the SPELLS.STD records, by index, for the CastWhen* arm of the
+// value sum below. The same module-level-registry idiom, set from the
+// same host block that builds the map (dungeonContext) - and absent
+// it, DFU's own answer applies: a spell the reader cannot find scores
+// zero, because GetSpellEnchantPtCost's loop simply never matches.
+let _spellsByIndex = null;
+export function setSpellRecordsByIndex(byIndex) { _spellsByIndex = byIndex; }
+export const spellRecordOfIndex = (index) => _spellsByIndex?.get?.(index) ?? null;
 
 // "The possible groups are determined by the 33rd byte" - group 0
 // picks from {Armor 2, Weapons 3, MensClothing 6, ReligiousItems 10,
@@ -208,16 +217,24 @@ export function createRegularMagicItem(templates, playerLevel, gender, rolls = M
   else if (groupId === 14) base = { group: 'Gems', templateIndex: pick(ITEM_GROUPS.Gems, rolls) };
   else base = { group: 'Jewellery', templateIndex: pick(ITEM_GROUPS.Jewellery, rolls) };
   // The regular name is replaced by the magic name; enchantments ride
-  // raw; condition = uses. Item VALUE from enchantment costs is
-  // FLAGGED to the ENCHANTMENT-EFFECTS slice (the shops themselves
-  // shipped at E1-E3; AUDIT 23 re-routed the stale pointer - a magic
-  // item still sells at its mundane base until the enchantment cost
-  // sum is ported).
+  // raw; condition = uses.
+  //
+  // G4: THE VALUE IS OVERWRITTEN (:632). This had been FLAGGED here
+  // since S4c - the enchantment cost sum was unported, so a magic
+  // item sold at its mundane base - and M4's catalogue closed that
+  // half. `newItem.value = value` REPLACES whatever the base item was
+  // worth, so a daedric longsword and a leather boot with the same
+  // enchantment are worth the same; and it replaces MAGIC.DEF's own
+  // stored `value` field too, which is why that field is read and
+  // never used. On the shipping file the two disagree by up to a
+  // factor of six.
+  const enchantments = magicItem.enchantments.filter((e) => e.type !== -1);
   return {
     ...base,
     name: magicItem.name,
     magic: true,
-    enchantments: magicItem.enchantments.filter((e) => e.type !== -1),
+    enchantments,
+    value: legacyEnchantmentValue(enchantments, { spellOfIndex: spellRecordOfIndex }),
     maxCondition: magicItem.uses,
     currentCondition: magicItem.uses,
   };
