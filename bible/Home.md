@@ -238,11 +238,11 @@ combat line numbers below are refreshed with it.
 - `src/scenes/cityGuards.js:27` - FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
 - `src/scenes/cityGuards.js:272` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
 - `src/scenes/cityGuards.js:522` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
-- `src/scenes/dungeonContext.js:220` - the chain lives, the motion is INTERIM (loud) until flats can tween.
-- `src/scenes/dungeonContext.js:639` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:645` - effects FLAGGED to the effect-library slice.
-- `src/scenes/dungeonContext.js:672` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:1069` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/dungeonContext.js:221` - the chain lives, the motion is INTERIM (loud) until flats can tween.
+- `src/scenes/dungeonContext.js:640` - index into the 18 careers) or the INTERIM default Warrior (16,
+- `src/scenes/dungeonContext.js:646` - effects FLAGGED to the effect-library slice.
+- `src/scenes/dungeonContext.js:673` - "database FLAGGED" narrows to the skill/loot message ids).
+- `src/scenes/dungeonContext.js:1070` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/exterior.js:489` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:495` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:629` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
@@ -252,23 +252,23 @@ combat line numbers below are refreshed with it.
 - `src/scenes/exterior.js:1444` - ground (FLAGGED with world.js's same gap), so Detect Treasure
 - `src/scenes/shared.js:179` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:196` - *  mirrors motorStats (the INTERIM entity carries no stats). */
-- `src/scenes/shared.js:291` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
+- `src/scenes/shared.js:301` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:685` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:718` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:724` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1060` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
-- `src/scenes/world.js:1063` - stay the E1 FLAGGED seams no host computes.
-- `src/scenes/world.js:1205` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
-- `src/scenes/world.js:1459` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:1734` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:1899` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
-- `src/scenes/world.js:1976` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:2209` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:2228` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:2542` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:2846` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/world.js:2919` - (FLAGGED: exterior corpse containers are the loot arc's), so
+- `src/scenes/world.js:687` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:720` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:726` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1072` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
+- `src/scenes/world.js:1075` - stay the E1 FLAGGED seams no host computes.
+- `src/scenes/world.js:1217` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
+- `src/scenes/world.js:1471` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:1746` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:1911` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
+- `src/scenes/world.js:1988` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:2221` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:2240` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:2554` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:2858` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:2931` - (FLAGGED: exterior corpse containers are the loot arc's), so
 - `src/scenes/worldModes.js:243` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:289` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:437` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
@@ -308,10 +308,10 @@ combat line numbers below are refreshed with it.
 - `src/systems/court.js:246` - *  daysInPrison } (guild rescues FLAGGED). */
 - `src/systems/effects.js:25` - FLAGGED skipped (the library grows here).
 - `src/systems/effects.js:43` - *  effect (:515). FLAGGED: DFU pulls it from the localised string
-- `src/systems/effects.js:533` - enchantment bundles are FLAGGED to their own arc.
-- `src/systems/effects.js:840` - manager, and the port has no such re-entry yet. FLAGGED.
-- `src/systems/effects.js:1071` - out.skipped++;   // FLAGGED: the library grows one family at a time
-- `src/systems/effects.js:1075` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
+- `src/systems/effects.js:540` - enchantment bundles are FLAGGED to their own arc.
+- `src/systems/effects.js:847` - manager, and the port has no such re-entry yet. FLAGGED.
+- `src/systems/effects.js:1104` - out.skipped++;   // FLAGGED: the library grows one family at a time
+- `src/systems/effects.js:1108` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
 - `src/systems/enchantments.js:39` - FLAGGED: no host computes them yet, so the conditional arms of
 - `src/systems/enchantments.js:41` - moonPhase() (FLAGGED: lunar phases are a Ledger C row),
 - `src/systems/enchantments.js:246` - *  condition holds. Params 0-3 seasons, 4-6 moons (FLAGGED: lunar

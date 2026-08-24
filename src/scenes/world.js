@@ -86,6 +86,8 @@ import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, 
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
+import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
+import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
 import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
 import { PlayerMotor } from '../player/motor.js';
 import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
@@ -1010,6 +1012,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     // lives in worldModes with the rest of the overlay stack, so this
     // routes exactly as onTeleport does. A refusal (no art, or an
     // overlay already open) says so rather than eating the cast.
+    // X9: the creature dispel, exterior arm. The encounter pool is
+    // the one that can hold undead or daedra above ground; guards are
+    // class enemies and carry no group bit at all, so they are exempt
+    // by the same table that exempts them from Pacify Humanoid.
+    onDispel: ({ group, chance }) => {
+      const list = getNearbyObjects(detectFeed.scanNow(), group) ?? [];
+      const gone = dispelNearby(list.map((no) => no.ref), () => Math.floor(Math.random() * 100) < chance);
+      for (const f of gone) exteriorFoes.removeFoe(f);
+      if (gone.length) townTalk.say(`${gone.length} dispelled.`);
+    },
     onIdentify: (d) => {
       if (!modes?.openIdentifyWindow?.({ chance: d.chance, refund: d.refund })) {
         townTalk.say('You cannot concentrate on that right now.');

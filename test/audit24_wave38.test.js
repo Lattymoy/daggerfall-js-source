@@ -212,8 +212,13 @@ test('audit24 wave38: the kill notice, and the name table that was out of reach'
 
 test('audit24 wave38: the encounter pool exports the seam, and the host asks BOTH pools', () => {
   const src = rd('src/scenes/exteriorFoes.js');
-  assert.match(src, /return \{ foes, spawnFoe, damageFoe, update, resolvePlayerHit, batches, offsetAll, activeCount, lootTargets, takeLoot \}/,
-    'the pool that rolls the loot can now be asked for it');
+  // The pin is about the loot SEAM being exported, not about the
+  // export list being frozen - X9 added removeFoe beside it for the
+  // creature dispel. Check the members this test is actually about.
+  const ret = src.slice(src.lastIndexOf('return {'));
+  for (const member of ['foes', 'spawnFoe', 'damageFoe', 'lootTargets', 'takeLoot']) {
+    assert.ok(new RegExp(`\\b${member}\\b`).test(ret), `${member} is exported`);
+  }
   assert.match(src, /corpseLootTargets\(foes, 'foeCorpse'/);
   // the target sits at the GROUND position the marker landed on
   assert.match(src, /feetOf: \(f\) => f\.corpseMarker\?\.pos \?\? f\.ai\?\.feet \?\? null/);

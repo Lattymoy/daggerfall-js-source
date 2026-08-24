@@ -248,6 +248,16 @@ export function createDetectFeed(entity, { entities = () => [], loot = () => [],
     get markers() { return markers; },
     /** A scene transition: the previous scene's objects are gone. */
     reset() { scan.reset(); markers = []; },
+    /** X9: a FRESH scan on demand, bypassing both the 0.33s cadence
+     *  and the live-detector gate. Dispel is a one-shot at cast, and
+     *  DFU reads PlayerGPS's list at that instant - a list the port
+     *  only keeps warm while a Detect spell is running, so a dispel
+     *  cast with no detector up would otherwise read an empty or
+     *  stale one. Rebuilding here is the honest equivalent of DFU
+     *  always having a warm list. */
+    scanNow() {
+      return updateNearbyObjects(feet(), { entities: entities(), loot: loot() });
+    },
   };
 }
 

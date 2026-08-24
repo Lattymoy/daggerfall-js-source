@@ -130,6 +130,7 @@ export const PORTED_KEYS = new Set([
   '28,255',                                                         // Climbing (X1)
   '30,255',                                                         // Water Breathing
   '31,255',                                                         // Water Walking
+  '6,1', '6,2',                                                     // Dispel {Undead,Daedra} (X9 - the nearby sweep; 6,0 Magic pends the bundle picker)
   '12,255',                                                         // Soul Trap (X5 - the kill-time re-roll + the gem)
   '33,0', '33,1', '33,2', '33,3',                                   // Pacify {Animal,Undead,Humanoid,Daedra} (X8)
   '34,255',                                                         // Charm (X8 - Pacify Humanoid for enemy CLASSES)

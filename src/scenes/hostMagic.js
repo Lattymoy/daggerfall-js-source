@@ -53,6 +53,7 @@ export function createPlayerMagic({
   foes, foeSinks, absorbCtx,
   onTeleport = null,   // TP-slice: the Teleport effect's prompt seam (the host owns the box)
   onIdentify = null,   // X7: the Identify effect's window seam ({chance, refund}) - same shape as onTeleport
+  onDispel = null,     // X9: the creature-dispel sweep seam ({group, chance}) - the host owns the scan and the pool
   rolls = Math.random,   // ENGINE-PRNG RULE: the saving-throw/magnitude roll slot (uniform; sequence-free)
 }) {
   const playerCaster = () => ({ entity: playerEntity, sinks: playerSinks });
@@ -130,6 +131,11 @@ export function createPlayerMagic({
     // refund - the player is not charged for a window that never
     // opened, which is the same shape as DFU refunding first and
     // opening second.
+    // X9: DISPEL UNDEAD / DAEDRA. Self-targeted, so it lands here on
+    // the caster and sweeps the area around them. The host owns both
+    // the nearby scan and the foe pool the destroy acts on, so the
+    // whole sweep goes out through one seam.
+    if (r.dispel) onDispel?.(r.dispel);
     if (r.identify) {
       playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity,
         (playerEntity.magicka ?? 0) + r.identify.refund);

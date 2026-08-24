@@ -162,6 +162,13 @@ export const buffKind = (e) => BUFF_KINDS[`${e.type},${classicSub(e)}`] ?? null;
  *  the cast-time chance is forced true and the landing gates on the
  *  target's kind. */
 export const isSoulTrapEffect = (e) => e.type === 12 && classicSub(e) === 255;
+/** X9: the two CREATURE dispels. (6,0) Dispel Magic is not here -
+ *  it dispels BUNDLES rather than creatures and needs the picker. */
+export const DISPEL_GROUP = Object.freeze({
+  1: NEARBY.Undead,
+  2: NEARBY.Daedra,
+});
+export const isDispelCreature = (e) => e.type === 6 && DISPEL_GROUP[classicSub(e)] != null;
 /** X8: Pacify's four variants (33,0..3) and Charm (34,255). The
  *  subType IS PacifyEffect's variantIndex, and the order is the
  *  SetVariantProperties call order (:70-73), not alphabetical. */
@@ -922,6 +929,32 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // The HOST speaks the alert (mysticism.js owns the texts; this
       // module cannot import it - mysticism imports effects).
       out.armed = armedKind;
+      continue;
+    }
+    // X9: DISPEL UNDEAD (6,1) and DISPEL DAEDRA (6,2). Both are the
+    // same six lines in DFU (DispelUndead.cs:45-58, DispelDaedra.cs
+    // the twin): scan the nearby list for one group flag, roll PER
+    // OBJECT, and Destroy whatever the roll takes.
+    //
+    // Three things decide the shape here:
+    //  - ChanceFunction.Custom (:32), so the cast-time gate does NOT
+    //    run and the chance travels to the per-object rolls, exactly
+    //    as Open's and Identify's do;
+    //  - AllowedTargets is TargetFlags_SELF, so this lands on the
+    //    CASTER and sweeps the area around them - it is not aimed;
+    //  - the scan is the host's, because the library has no world. So
+    //    the arm answers the flag and the chance and the host does the
+    //    sweep through mysticism.dispelNearby, which has carried the
+    //    destroy law (destroyed, NOT killed - no loot, no death, and
+    //    it can break quests) since before anything could call it.
+    //
+    // DISPEL MAGIC (6,0) is deliberately NOT here: it needs the live
+    // bundle picker, which is its own arc. It stays inert.
+    if (isDispelCreature(e)) {
+      out.dispel = {
+        group: DISPEL_GROUP[classicSub(e)],
+        chance: chanceValue(e, casterLevel),
+      };
       continue;
     }
     // X8: PACIFY (33,0..3) and CHARM (34,255). One arm, because they

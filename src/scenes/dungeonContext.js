@@ -72,6 +72,7 @@ import { readSpellsStd } from '../formats/spellsStd.js';
 import { readMagicDef } from '../formats/magicDef.js';
 import { ClassFile } from '../formats/classFile.js';
 import { fetchBytes, ensureAudio, raiseAtRestEnd, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord} from './shared.js';
+import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
 import {
@@ -79,7 +80,7 @@ import {
   MISSILE_LIFESPAN_S,
   EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
 } from '../systems/spellcast.js';
-import { silenceBlocksCast, SILENCED_TEXT, attemptSoulTrap, SOUL_TRAP_TEXT } from '../systems/mysticism.js';   // S27; X5 the soul trap's kill intercept
+import { silenceBlocksCast, SILENCED_TEXT, attemptSoulTrap, SOUL_TRAP_TEXT, dispelNearby } from '../systems/mysticism.js';   // S27; X5 the soul trap's kill intercept
 import { applySpell, hasActiveEffect, entityIsParalyzed, maxFatigue } from '../systems/effects.js';
 import { FATIGUE_LOSS, liveStat, killIfAnyLiveStatZero } from '../systems/statMods.js';
 import { breathStep } from '../systems/breath.js';
@@ -1067,6 +1068,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // line in this file speaks through hudText, including the one four
     // below it.
     onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+    // X9: the creature dispel. This host is where undead and daedra
+    // actually live, so it is the one that matters. removeFoe IS
+    // GameObject.Destroy - no corpse, no loot, no death - and
+    // dispelNearby carries the roll and DFU's warning that this can
+    // break quests, which is why the quest resource is uncoupled by
+    // the same call.
+    onDispel: ({ group, chance }) => {
+      const list = getNearbyObjects(detectFeed.scanNow(), group) ?? [];
+      const gone = dispelNearby(list.map((no) => no.ref), () => Math.floor(Math.random() * 100) < chance);
+      for (const f of gone) questPoolOps.removeFoe(f);
+      if (gone.length) hudText.add(`${gone.length} dispelled.`);
+    },
     renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
     collider,
     playerEntity, playerSinks,
