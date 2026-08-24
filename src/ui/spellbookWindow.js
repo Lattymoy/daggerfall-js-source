@@ -21,7 +21,7 @@
 //   the art, so an unknown icon reads as a black square, not a hole.
 // - three effect panels at (138,40/78/116,118,28), each carrying TWO
 //   centred labels at y=5 and y=17: the effect's GROUP name and its
-//   SUBGROUP name (:487-496, :624-649).
+//   SUBGROUP name (:486-496, :624-649).
 // - the labels: spell name at (123,2), spell points at (214,2), and
 //   in buy mode the cost at (76,154) and the player's gold at
 //   (116,154).
@@ -91,10 +91,14 @@
 //   says so rather than doing nothing - FLAGGED below.
 // - DFU's spell VERSION gate (:746-747) has nothing to gate: the
 //   port's records carry no bundle version.
-// - DFU wires the name label's rename in BOTH modes (:465), where the
-//   handler then indexes the PLAYER's book with the OFFER's index
-//   (:929, :947) - renaming whatever spell happens to sit at that slot.
-//   The port gates rename to cast mode; the bug is not ported.
+// - DFU wires the name label's rename AND the icon panel's picker in
+//   BOTH modes (:465, :437; SetupIcons is called unconditionally at
+//   :145), and both handlers then index the PLAYER's book with the
+//   OFFER's index (:929, :962) - editing whatever spell happens to
+//   sit at that slot. The port gates BOTH to cast mode, and gates
+//   the icon panel's `selectIcon` TOOLTIP with them, since a tip
+//   naming a picker that is deliberately unreachable would be the
+//   window advertising the bug it declines to port.
 // - buy mode prices the offer with a bare CalculateTotalEffectCosts
 //   (:521) - no minimumCastingCost - where the LIST rows
 //   pass both (:262). The port has one castCost hook for both, so
@@ -316,13 +320,13 @@ export class SpellbookWindow {
     this.scrollIndex = Math.min(Math.max(0, this.scrollIndex), max);
   }
 
-  /** SelectPrevious (ListBox.cs:718-728) and SelectNext (:730-740),
+  /** SelectPrevious (ListBox.cs:709-724) and SelectNext (:726-741),
    *  which the two arrow buttons and the keyboard share.
    *
    *  The scroll clause lives INSIDE the movement guard and nudges by
    *  exactly one row - it does not snap. Both details are reachable,
    *  because the wheel moves scrollIndex without moving the selection
-   *  (SpellsListBox_OnMouseScroll, :793-796): scroll five rows down,
+   *  (SpellsListBox_OnMouseScroll, :789-792): scroll five rows down,
    *  press Up at the top of the book, and DFU leaves the view where
    *  it is while a guard-outside version yanks it back to zero. */
   selectPrevious() {
@@ -359,9 +363,9 @@ export class SpellbookWindow {
   }
 
   /** The three icon panels' tooltips. The spell icon's is the static
-   *  `selectIcon` (:437) - it names the PICKER the click opens, not
+   *  `selectIcon` (:436) - it names the PICKER the click opens, not
    *  the icon - and the other two are recomputed per selection by
-   *  UpdateSelection (:571, :574) from GetTargetTypeDescription and
+   *  UpdateSelection (:572, :574) from GetTargetTypeDescription and
    *  GetElementDescription. A panel is only tipped when ShowIcons is
    *  on (:565-575), i.e. when a spell is selected at all. */
   _tipHover(x, y, vx, vy) {
@@ -824,8 +828,8 @@ export class SpellbookWindow {
         drawIcon(renderer, m, value, dst);
       }
       // the effect panels' two labels each, centred IN THE PANEL
-      // (HorizontalAlignment.Center, :488) and clipped to
-      // MaxCharacters (:487)
+      // (HorizontalAlignment.Center, :490) and clipped to
+      // MaxCharacters (:489)
       for (let i = 0; i < 3; i++) {
         const [ex, ey, ew] = SPELLBOOK_RECTS.effect[i];
         this.effectLabels(i).forEach((text, row) => {

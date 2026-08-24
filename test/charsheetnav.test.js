@@ -101,6 +101,40 @@ test('U32: with NO quest source the logbook is withheld, not shown empty - the a
   assert.ok(none.history() instanceof PlayerHistoryWindow);
 });
 
+test('U42: the sheet forwards EVERY seam to a pushed child, hover included', () => {
+  // The sheet nests a child window (inventory, spellbook, logbook,
+  // history) and the hosts' seams test for the method on the OVERLAY -
+  // which is the SHEET, not the child. It forwarded tick, wheel, input
+  // and click and NOT hover, so a hover-driven behaviour a child owns
+  // was dead on the sheet's route into it: the spellbook lost its list
+  // highlight and all three icon tooltips, and only there, because
+  // Backspace makes it the overlay itself. Every seam a child can
+  // implement is swept, so the next one added cannot be forgotten.
+  const src = readFileSync(new URL('../src/ui/charsheet.js', import.meta.url), 'utf8');
+  for (const seam of ['tick', 'wheel', 'input', 'click', 'hover']) {
+    assert.match(src, new RegExp(`this\\.child\\.${seam}\\??\\.?\\(`),
+      `CharSheet does not forward ${seam} to its pushed child`);
+  }
+  // and it really forwards, with the child's own coordinates
+  const seen = [];
+  const child = {
+    done: false,
+    hover: (vx, vy) => seen.push(['hover', vx, vy]),
+    tick: (dt) => seen.push(['tick', dt]),
+    wheel: (d) => seen.push(['wheel', d]),
+  };
+  const sheet = new CharSheet(entity(), { inventory: () => child });
+  sheet.input('Digit1');   // any page; the push is what matters
+  sheet.child = child;
+  assert.equal(sheet.hover(11, 22), true, 'the sheet answers CONSUMED so the host stops looking');
+  sheet.tick(0.5);
+  sheet.wheel(-1);
+  assert.deepEqual(seen, [['hover', 11, 22], ['tick', 0.5], ['wheel', -1]]);
+  // with no child the sheet has nothing to hover and says so
+  const bare = new CharSheet(entity(), {});
+  assert.equal(bare.hover(11, 22), false);
+});
+
 test('U32: the spellbook is the ONE that already existed - no second implementation', () => {
   // ONE DFU MEMBER, ONE EXPORT. DaggerfallSpellBookWindow was ported at
   // U4 into ui/inventory.js with delete/swap/sort; wiring the button
