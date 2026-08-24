@@ -2244,3 +2244,71 @@ Pins: 8 in `guildstore.test.js`. 11 mutations, 10 dead, 1 recorded
 equivalent — DFU's explicit `type != None` test guards a C# array
 index that would throw, where the port's lookup degrades to null, so
 dropping it is observable in DFU and not here.
+
+## G6 - THE KNIGHTLY GIFTS AND THE SPYMASTER (2026-08-24)
+
+Two more FLAGGED service destinations, and the last two that need no
+window of their own. Four guild services remain after this, one of
+them genuinely blocked.
+
+**THE ARMOUR IS ONCE PER RANK, and the bookkeeping is a bitfield.**
+`armorMask = ArmorFlagStart << rank`, with `ArmorFlagStart` 4, so the
+house owns bit 1 and the ten ranks own bits 2 through 11. A counter
+would not do: **a promotion re-opens a gift the previous rank
+closed**, and claiming the new rank leaves the old rank's bit
+standing. The membership grew a `flags` column, which rides the save
+through the shallow clone that was already there — and a membership
+saved before this slice reads as *nothing* claimed rather than
+everything.
+
+**THE MATERIAL IS THE RANK, through integer arithmetic on the enum's
+own values.** `ArmorMaterialTypes.Iron + rank`, and Iron is `0x0200`
+with the nine metals above it filling `0x0201`–`0x0209`. Ten ranks map
+onto ten metals exactly. Leather, Chain and Chain2 sit *below* Iron
+and the gift can never reach them, however low the rank.
+
+**FOUR TO SEVEN PIECES — NEVER THREE.** `for (int i = Range(3, 7); i
+>= 0; i--)` draws 3..6 and then runs `i + 1` times. The low bound is
+the one that matters: a straight port of "Range(3,7) pieces" offers
+three, which the player never sees. Same family as the shop shelves'
+inclusive loops. The pieces are Cuirass through Boots *inclusive*,
+seven body slots and no shield.
+
+**AND THE GIFT IS CLAIMED BY TAKING.** DFU hands the list to the
+inventory window in choose-one mode and sets the rank's flag *from the
+take callback*, so closing the window without taking leaves the flag
+clear and the armour claimable later. Declining costs nothing. The
+port's native inventory grew that mode: the reward list becomes the
+remote side, nothing of the player's can go *into* a pile they are
+only choosing from, and the take closes the window and fires the
+claim. The window is built by the **host** through a new
+`makeInventory(extra)` door — one builder per host, so the service
+gets that host's own dependency list rather than a second one
+assembled from scratch.
+
+**The Spymaster** is a greeting rather than a service: a random
+TEXT.RSC 402 variant, click-anywhere to close, and the *dismissal*
+hands the player to the NPC's own talk window with `isSpyMaster` true.
+That is the same door the popup's Talk button opens, so the two now
+share one `talkToStaticNpcHere({ isSpyMaster })` and the only thing
+that differs between them is the flag. The pin that guarded the old
+shape follows the law to the new one and gets stronger.
+
+**A DEFECT THE PROBE FOUND.** Both of these arms answer a message
+**box** rather than a window — the smith's refusal and the Spymaster's
+greeting — and the caller mounted whatever came back. A box landed in
+the overlay slot and the next frame asked a plain object to draw
+itself: `interiorOverlay.draw is not a function`. Unreachable before
+this slice, because no arm had ever returned a box. The caller now
+hands a box back to the popup that asked for it, and the pin checks
+that the test comes *before* the mount — where it would otherwise
+never run.
+
+**PROBED LIVE** (`tools/knightlyGiftProbe.mjs`), in a real building
+with a rank-4 Order of the Candle membership: the smith offers five
+Dwarven pieces (Iron + 4 = 516, and the count inside 4..7); a click on
+the player's own gear does not reach the pile; taking one puts exactly
+one piece in the real pack, sets flags to 64 (`4 << 4`) and closes the
+window itself; and asking again offers no second pile.
+
+Pins: 8 in `knightlygifts.test.js`. 7 mutations, 7 dead.

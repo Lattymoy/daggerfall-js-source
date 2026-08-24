@@ -1154,7 +1154,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   });
   // U32: ONE construction for the world inventory and spellbook - F6
   // and Backspace open them, and so do the character sheet's buttons.
-  const makeInventoryWindow = () => new NativeInventoryWindow({
+  // G6: the `extra` bag is the CHOOSE-ONE seam (and whatever a
+  // later service needs). One builder per host, still - the
+  // service asks the host for its own window rather than
+  // assembling a second one from a different dependency list.
+  const makeInventoryWindow = (extra = {}) => new NativeInventoryWindow({
     openBook: openBookHook,   // B1: the use-mode book arm
     items: () => (playerEntity.items ??= []),
     wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
@@ -1168,6 +1172,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },
     nowMinute: () => Math.floor(playerTicker.classicMinutes),
     onDrop: (items) => droppedLoot.dropPile(items, dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`),   // U8e: OnPop mints the world pile; P2: stamped with its map pixel
+    ...extra,
   });
   // U42: the CLASSIC spellbook. PlayerEntity.GetSpells() is the
   // player's own array and the window WRITES to it (delete, swap,
@@ -2377,6 +2382,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // its whole dependency list - maps, the player pixel, the climate
     // reader - is the world's.
     openTeleportMap,
+    // G6: the knightly smith's gift needs THIS host's inventory
+    // window in choose-one mode - one builder, one dependency list.
+    makeInventory: (extra) => (inventoryArtLoaded() ? makeInventoryWindow(extra) : null),
     revealLocation: (noteKey) => {
       const dfLoc = locationIndex.get(`${playerTravelPixel().x},${playerTravelPixel().y}`);
       const region = dfLoc ? maps.getRegion(dfLoc.regionIndex) : null;

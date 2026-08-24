@@ -110,7 +110,14 @@ test('B7 seam gate: the static-NPC conversation opens the window instead of "You
   assert.match(modes, /if \(talk\?\.kind === 'talk' && townTalk\?\.openTalkWindow\) \{\s*\n\s*townTalk\.openTalkWindow\(talk\.greeting, \{ npcSeed: pn\.nameSeed \?\? 0, npcName: displayName \}\);/);
   // the guild popup's TALK button routes TalkToStaticNPC with menu TRUE
   // (DaggerfallGuildServicePopupWindow.cs:294) and yields to the window
-  assert.match(modes, /\{ menu: true, isSpyMaster: false \}\);/);
+  // G6 gave that door a SECOND caller, so the pin follows the law
+  // rather than the shape it used to have: ONE talk door, and the
+  // only thing the two callers differ on is the flag.
+  assert.match(modes, /\{ menu: true, isSpyMaster \}\);/, 'one door, the flag passed in');
+  assert.match(modes, /onTalk: \(\) => talkToStaticNpcHere\(\{ isSpyMaster: false \}\)/,
+    'the Talk button is not the Spymaster');
+  assert.match(modes, /talkAsSpymaster: \(\) => talkToStaticNpcHere\(\{ isSpyMaster: true \}\)/,
+    'and the 402 greeting\'s dismissal is');
   assert.match(modes, /interiorOverlay = null;\s*\/\/ the popup yields to the conversation/);
   // ONE window-opener - the mobile path and the static path share it
   assert.match(town, /function openTalkWindow\(greeting, \{ npcSeed = 0, npcName = '' \} = \{\}\)/);

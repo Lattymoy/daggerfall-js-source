@@ -674,7 +674,11 @@ export async function bootExterior(canvas, renderer, params, status) {
   // U32: ONE construction for the town inventory - F6 opens it, and so
   // does the character sheet's INVENTORY button. Two `new` sites would
   // be two things to keep in step.
-  const makeInventoryWindow = () => new NativeInventoryWindow({
+  // G6: the `extra` bag is the CHOOSE-ONE seam (and whatever a
+  // later service needs). One builder per host, still - the
+  // service asks the host for its own window rather than
+  // assembling a second one from a different dependency list.
+  const makeInventoryWindow = (extra = {}) => new NativeInventoryWindow({
     openBook: openBookHook,   // B1: the use-mode book arm
     items: () => (playerEntity.items ??= []),
     wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
@@ -688,6 +692,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },
     nowMinute: () => Math.floor(playerTicker.classicMinutes),
     onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),   // U8e: OnPop mints the world pile
+    ...extra,
   });
   // U42: the CLASSIC spellbook - the same ONE construction the world
   // host makes, handing the player's own array by reference so the
@@ -902,6 +907,9 @@ export async function bootExterior(canvas, renderer, params, status) {
   // what test/audit24_wave37.test.js asserts, both ways.
   var modes = createWorldModes({
     canvas, renderer, player, cam, keys, latch, blocks,
+    // G6: the knightly smith's gift needs THIS host's inventory
+    // window in choose-one mode - one builder, one dependency list.
+    makeInventory: (extra) => (inventoryArtLoaded() ? makeInventoryWindow(extra) : null),
     magic, spellsByIndex: () => spellsByIndex,   // M2: the one cast engine + SPELLS.STD ride into the interior arm
     townTalk,   // U23: the interior host borrows FACTION.TXT/TEXT.RSC + the talk seam
     // R1: without this the exterior-lock anti-grind record and
