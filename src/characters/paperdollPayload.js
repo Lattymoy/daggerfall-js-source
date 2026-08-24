@@ -179,6 +179,30 @@ export function buildPaperdollPayload(pal, img, cif) {
   // (The old `outfit`/`armor`/`mats` sample zones were built and never
   // passed to anything - the cloth path had no consumer until the
   // villager designs below became its first.)
+  // THE FACE WAS DECODED AND THROWN AWAY. This object has been built from
+  // FACE00I0 and handed to buildNeutralBody as `{ face }` since the race
+  // system landed, and buildNeutralBody reads opts.build / clothZones /
+  // armorZones / mats / cloth - never opts.face. So the head has never had
+  // one. It is shipped in the payload now and composited onto the head by
+  // the viewer, which is where a sprite belongs: it cannot be baked into
+  // public/skin/ because a render of game data IS game data.
+  let faceSet = null;
+  if (cif) {
+    faceSet = [];
+    for (let r = 0; r < 10; r++) {           // FACES_PER_RACE records per CIF
+      try {
+        const b = cif.getDFBitmap(r, 0);
+        const rgb = [];
+        for (let i2 = 0; i2 < b.data.length; i2++) {
+          const idx = b.data[i2];
+          if (idx) { const c = pal.get(idx); rgb.push(c.r, c.g, c.b, 255); } else rgb.push(0, 0, 0, 0);
+        }
+        faceSet.push({ w: b.width, h: b.height, rgba: rgb });
+      } catch { break; }
+    }
+    if (!faceSet.length) faceSet = null;
+  }
+
   const faces = buildNeutralBody(ramps, { face });
 
   // ═════════════════════════════════════════════════════════════════
@@ -523,6 +547,7 @@ export function buildPaperdollPayload(pal, img, cif) {
     // and the viewer's tailMesh/tailCatMesh were always null - the meshes it
     // recolours in applyTone could not exist. raceCharacter.js has been building
     // them all along for the in-engine bake; only the editor payload lacked them.
+    faceSet,
     tail: packPiece(buildTail(ARGONIAN_HIDE, 'argonian')),
     tailCat: packPiece(buildTail(KHAJIIT_FUR, 'khajiit')),
     arrow: packPiece(buildNockedArrow(weaponMaterialRamp(WEAPON_MATERIALS.Steel, (i) => pal.get(i)))),

@@ -265,14 +265,16 @@ function setBodyColors(Carr) {
 // is still snapRamp(ramp, i), so every tone and both beast ramps apply unchanged.
 // NEVER TRAPS: if either file is absent, skinTex stays null and setBodySkin
 // falls through to setBodyRamp, exactly as the title screen falls back.
-let skinI = null, skinTexCanvas = null, skinTex = null;
+let skinI = null, skinTexCanvas = null, skinTex = null, skinLayout = null;
 async function loadSkin() {
   try {
-    const [uv, img] = await Promise.all([
+    const [uv, lay, img] = await Promise.all([
       fetch('./skin/skin-uv.json').then((r) => r.ok ? r.json() : Promise.reject()),
+      fetch('./skin/skin-layout.json').then((r) => r.ok ? r.json() : Promise.reject()),
       new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i);
         i.onerror = rej; i.src = './skin/skin-intensity.png'; }),
     ]);
+    skinLayout = lay;
     if (uv.n !== nf) return;                       // rig changed: do not guess
     const uvs = new Float32Array(nf * 6 * 2);
     let q = 0;
@@ -294,6 +296,26 @@ async function loadSkin() {
 }
 // paint the intensity map through this race's ramp - the same snapRamp the
 // per-face path uses, so a race is still nothing more than a ramp swap
+// THE FACE IS A SPRITE, so it is composited at RUNTIME from the user's own
+// FACE*.CIF rather than baked into public/skin/ - a render of game data is
+// game data (test/doctrine.test.js). The head cell ships carrying geometry
+// shading only; this paints the chosen record into its FRONT ARC, so the
+// skull keeps its ramp all the way round and the face layers over the front.
+let facePick = 0;
+function paintFace(ctx) {
+  const c = (skinLayout || {}).head, set = D.faceSet;
+  if (!c || !set || !set.length) return;
+  const f = set[facePick % set.length];
+  const [a0, a1] = c.faceArc || [0.25, 0.75];
+  const dx = Math.round(c.x + a0 * c.w), dw = Math.max(1, Math.round((a1 - a0) * c.w));
+  const src = ctx.createImageData(f.w, f.h);
+  src.data.set(f.rgba);
+  const tmp = document.createElement('canvas');
+  tmp.width = f.w; tmp.height = f.h;
+  tmp.getContext('2d').putImageData(src, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(tmp, dx, c.y, dw, c.h);
+}
 function setBodySkin(ramp) {
   if (!skinI || !skinTex) { setBodyRamp(ramp); return; }
   const src = skinI.data;
@@ -302,7 +324,9 @@ function setBodySkin(ramp) {
     const c = snapRamp(ramp, src[i]);
     out.data[i] = c[0]; out.data[i + 1] = c[1]; out.data[i + 2] = c[2]; out.data[i + 3] = 255;
   }
-  skinTexCanvas.getContext('2d').putImageData(out, 0, 0);
+  const ctx = skinTexCanvas.getContext('2d');
+  ctx.putImageData(out, 0, 0);
+  paintFace(ctx);            // the sprite layers OVER the ramped skull
   skinTex.needsUpdate = true;
   if (mat.map !== skinTex) { mat.map = skinTex; mat.vertexColors = false; mat.needsUpdate = true; }
 }
@@ -665,6 +689,7 @@ function applyTone() {
   }
 }
 const syncHair = () => { const R = RACES[raceIx]; applyTone(); for (const rr of RACES) { const h = raceHair[rr]; if (h) for (const st of h.styles) h.meshes[st].visible = false; } const m = curHair(); if (m) m.visible = !helmOn(); if (tailMesh) tailMesh.visible = (RACES[raceIx] === 'Argonian'); if (tailCatMesh) tailCatMesh.visible = (RACES[raceIx] === 'Khajiit'); if (bodyScalesMesh) bodyScalesMesh.visible = (RACES[raceIx] === 'Argonian'); if (bodyFurCoat) bodyFurCoat.visible = (RACES[raceIx] === 'Khajiit'); if (bodyFurBelly) bodyFurBelly.visible = (RACES[raceIx] === 'Khajiit'); }; // per-race body detail
+window.__face = (i) => { facePick = ((i % 10) + 10) % 10; applyTone(); };
 syncHair();
 loadSkin();   // async; re-runs applyTone once the texture is up
 scene.add(pivot);

@@ -37,6 +37,7 @@
 // verbatim so sequences match.
 
 import { savingThrow, EFFECT_FLAGS } from './spellcast.js';
+import { INFECTION, startInfection } from './infection.js';   // V1: the three special infections OnMonsterHit mints
 import { FATIGUE_MULTIPLIER } from './statMods.js';
 import { dice100 } from '../combat/formulas.js';
 import { MOBILE_TYPES } from '../characters/mobileTypes.js';
@@ -184,6 +185,13 @@ function incrementDailyDiseaseEffects(entry, sinks, rolls) {
  * day too).
  */
 export function updateDiseaseEntry(entry, currentDay, sinks, rolls = Math.random, onAlert = null) {
+  // V1: the two infections OVERRIDE UpdateDisease and do not call
+  // base (VampirismInfection.cs:99-103) - their whole lifecycle is
+  // infection.js's, and classicDiseaseType is None, so there is no
+  // DiseaseData row here to walk. Without this arm the daily damage
+  // loop reads DISEASE_DATA[null] and throws on the first day of an
+  // infection, which is the four-hosts version of never shipping it.
+  if (entry.infection) return;
   if (entry.ended) return;   // do nothing if expiring out
   const daysPast = currentDay - entry.lastDay;
   // same day = incubation; 0xfe = disease has run its course
@@ -262,14 +270,27 @@ export function onMonsterHit(attacker, target, damage, deps = {}) {
       // a free cast through the enemy spell seam.
       if (!target.activeEffects?.some((a) => a.kind === 'paralyze') && deps.castParalyze) deps.castParalyze();
       break;
-    case MOBILE_TYPES.Werewolf:
-    case MOBILE_TYPES.Wereboar:
-      // ROUTED: specialInfectionChance -> lycanthropy infection
-      rolls();   // Random.Range(0f, 100f) consumed verbatim
+    case MOBILE_TYPES.Werewolf: {
+      const random = rolls() * 100;   // Random.Range(0f, 100f)
+      if (random <= SPECIAL_INFECTION_CHANCE && target.isPlayer) {
+        startInfection(target, INFECTION.Werewolf, { day: currentDay, regionIndex: deps.regionIndex ?? -1 });
+      }
       break;
+    }
     case MOBILE_TYPES.Nymph:
       fatigueDamage(target, damage, sinks);
       break;
+    // DFU puts the Nymph BETWEEN the two lycanthropes and gives each
+    // its own arm (:1307-1329) - they are not the shared case this
+    // port had while both were routed, because each mints its own
+    // strain and the two cancel each other.
+    case MOBILE_TYPES.Wereboar: {
+      const random = rolls() * 100;   // Random.Range(0f, 100f)
+      if (random <= SPECIAL_INFECTION_CHANCE && target.isPlayer) {
+        startInfection(target, INFECTION.Wereboar, { day: currentDay, regionIndex: deps.regionIndex ?? -1 });
+      }
+      break;
+    }
     case MOBILE_TYPES.Zombie:
       // nothing in classic; DF Chronicles' 2% kept (DFU choice)
       if (dice100(2, rolls())) inflict(DISEASE_LIST_C);
@@ -281,7 +302,10 @@ export function onMonsterHit(attacker, target, damage, deps = {}) {
     case MOBILE_TYPES.VampireAncient: {
       const random = rolls() * 100;   // Random.Range(0f, 100f)
       if (random <= SPECIAL_INFECTION_CHANCE && target.isPlayer) {
-        // ROUTED: stage-one vampirism infection
+        // Stage-one vampirism, which records WHERE it was caught: the
+        // clan is read from this region at deployment, not from
+        // wherever the player is standing when they turn.
+        startInfection(target, INFECTION.Vampirism, { day: currentDay, regionIndex: deps.regionIndex ?? -1 });
       } else if (random <= 2.0) {
         inflict(DISEASE_LIST_A);
       }
