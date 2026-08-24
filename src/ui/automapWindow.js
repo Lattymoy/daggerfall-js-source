@@ -63,6 +63,14 @@ const MICRO_RED = 0xff0000ff;                     // player (:1828)
 // unless the setting holds (DaggerfallAutomapWindow.cs:568-572).
 let _rememberedBias = DEFAULT_SLICING_BIAS_Y;
 
+// The micro-map version counter is MODULE-level: uploadTexture
+// memoizes by key forever, and a window torn down without dispose()
+// (the death presenter's forced overwrite) would otherwise leave
+// 'micro-1' cached - the next window's per-instance counter would
+// re-mint the same key and be handed the dead session's bitmap
+// (A1 review).
+let _microVer = 0;
+
 /** "RRGGBBAA" -> packed ABGR uint32 (the settings colour law,
  *  settingsLaw.js's widget format). Bad strings answer the fallback. */
 export function hexColor32(rrggbbaa, fallback) {
@@ -123,7 +131,6 @@ export class AutomapWindow {
     this.biasY = getBool('Map', 'AutomapRememberSliceLevel') ? _rememberedBias : DEFAULT_SLICING_BIAS_Y;
     this._renderer = null;
     this._micro = null;      // { key, tex, w, h, stamp }
-    this._microVer = 0;
     this._markers = null;    // { entrance, player } billboard batches
   }
 
@@ -136,7 +143,7 @@ export class AutomapWindow {
     const up = [Math.sin(yaw), Math.cos(yaw)];        // screen-up in world xz
     const right = [Math.cos(yaw), -Math.sin(yaw)];    // screen-right (the mirrored convention's [cos, 0, -sin])
     switch (action) {
-      case 'back': case 'char:m': case 'char:M': this._close(); return;
+      case 'back': case 'char:m': case 'char:M': this.done = true; this.dispose(); return;
       case 'up': case 'char:w': case 'char:W': pan(up[0], up[1]); return;
       case 'down': case 'char:s': case 'char:S': pan(-up[0], -up[1]); return;
       case 'char:a': case 'char:A': pan(-right[0], -right[1]); return;
@@ -163,8 +170,9 @@ export class AutomapWindow {
     }
   }
 
-  _close() {
-    this.done = true;
+  /** Release the window's GL resources. Idempotent; also called by
+   *  the death presenter when it force-replaces the overlay slot. */
+  dispose() {
     const r = this._renderer;
     if (!r) return;
     if (this._micro) { r.releaseTexture('amap', this._micro.key); this._micro = null; }
@@ -218,6 +226,12 @@ export class AutomapWindow {
         for (const d of this.deps.drawList) if (d.key != null && rec.revealed.has(d.key)) renderer.drawMesh(d.mesh, d.matrix, this.deps.texRemap);
         for (const d of this.deps.dynamicDraws) if (rec.revealed.has(d.object.key)) renderer.drawMesh(d.gpu, d.object.matrix, this.deps.texRemap);
       }
+      // BEACONS ARE NEVER SLICED: DFU injects the slicing shader into
+      // the duplicated GEOMETRY only (:1906); the arrow and markers
+      // live under gameobjectBeacons with Standard materials
+      // (:1355-1362), so slicing below your feet must not erase your
+      // own position marker (A1 review). setClipY uploads immediately.
+      renderer.setClipY(null);
       // the player marker arrow: mesh 99900 at the player's own
       // position + yaw (Automap.cs:1353-1361); red quad fallback
       if (this.deps.arrowMesh && p?.feet) {
@@ -277,7 +291,7 @@ export class AutomapWindow {
       });
       if (!bmp) return;
       if (this._micro) renderer.releaseTexture('amap', this._micro.key);
-      const key = `micro-${++this._microVer}`;
+      const key = `micro-${++_microVer}`;
       this._micro = { key, tex: renderer.uploadTexture('amap', key, bmp), w: bmp.width, h: bmp.height, stamp };
     }
     renderer.drawScreenQuad(this._micro.tex, { x: 2 * s, y: 52 * s, w: this._micro.w * 2 * s, h: this._micro.h * 2 * s });

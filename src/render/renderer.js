@@ -1148,8 +1148,20 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   /** A1: the automap slice plane - fragments of the SOLID mesh pass
    *  above this world-space Y discard (the global _SclicingPositionY,
    *  Automap.cs:1296-1303). 1e9 = off; the automap window sets
-   *  playerY + eye height + bias and restores off after its pass. */
-  setClipY(y) { this._clipY = y ?? 1e9; }
+   *  playerY + eye height + bias and restores off after its pass.
+   *  Uploads IMMEDIATELY when the solid program exists: fog uniforms
+   *  otherwise ride beginFrame alone, and the window must lift the
+   *  slice MID-pass for the beacon draws (the arrow is never sliced,
+   *  A1 review). drawMesh binds this.program per call, so touching
+   *  the binding here is safe. */
+  setClipY(y) {
+    this._clipY = y ?? 1e9;
+    if (this._solidFog?.clipY) {
+      const gl = this.gl;
+      gl.useProgram(this.program);
+      gl.uniform1f(this._solidFog.clipY, this._clipY);
+    }
+  }
 
   /** Scene-space point lights as flat vec4s [x,y,z,range], max 16. */
   setPointLights(data, color) {
