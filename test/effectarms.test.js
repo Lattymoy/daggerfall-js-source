@@ -140,3 +140,95 @@ test('X1 door spells: a failed chance roll wastes the cast and arms nothing', ()
   assert.equal(effectByKey('16,255').ported, true);
   assert.equal(effectByKey('17,255').ported, true);
 });
+
+// ── X1c: the magic defences ───────────────────────────────────────
+import { elementalResistanceChance, savingThrow } from '../src/systems/spellcast.js';
+import { spellAbsorptionChance, effectCastingCost } from '../src/systems/absorption.js';
+import { spellResistanceChance } from '../src/systems/effects.js';
+
+// a NORD - Bretons carry racial magic resistance, which would mask
+// every defence test behind a saving throw of its own
+const target = (over = {}) => ({
+  stats: { luck: 50, willpower: 50 }, skills: [], activeEffects: [], race: 'Nord',
+  level: 1, health: 50, maxHealth: 50, magicka: 0, maxMagicka: 300, ...over,
+});
+const grant = (ent, type, chance = 100) => applySpell(
+  buildCustomSpell({ slots: [{ type, subType: 255, settings: { ...blankEffectSettings(), durationBase: 10, chanceBase: chance } }], rangeType: 0 }),
+  1, ent, {}, () => 0.5, null, {});
+const incoming = (ent, rangeType = 2, mag = 10) => applySpell(
+  buildCustomSpell({ slots: [{ type: 4, subType: 0, settings: { ...blankEffectSettings(), magnitudeBaseLow: mag, magnitudeBaseHigh: mag } }], rangeType }),
+  5, ent, {}, () => 0.5, { level: 5 }, {});
+
+test('X1 Elemental Resistance: a successful roll drops the effect WHOLE, per element, stacking additively', () => {
+  const e = target();
+  const out = applySpell(
+    buildCustomSpell({ slots: [{ type: 8, subType: 0, settings: { ...blankEffectSettings(), durationBase: 10, chanceBase: 100 } }], rangeType: 0 }),
+    1, e, {}, () => 0.5, null, {});
+  assert.equal(out.skipped, 0);
+  assert.equal(e.activeEffects[0].element, 0, 'the subType IS the element');
+  assert.ok(elementalResistanceChance(e, 0) >= 100);
+  assert.equal(elementalResistanceChance(e, 1), 0, 'resisting Fire is not resisting Frost');
+  // the saving throw returns 0 - resisted whole, not scaled - and only
+  // for the element resisted. A roll that would NOT save normally.
+  assert.equal(savingThrow(0, 8, e, 0, () => 0.99), 0, 'Fire is resisted outright');
+  assert.equal(savingThrow(1, 16, e, 0, () => 0.99), 100, 'Frost lands in full');
+  // a like-kind recast (SAME element) merges: AddState stacks ROUNDS
+  // onto the incumbent and touches nothing else, so the incumbent
+  // keeps its OWN chance (ElementalResistance.cs:148-157)
+  const s = target();
+  const half = buildCustomSpell({ slots: [{ type: 8, subType: 3, settings: { ...blankEffectSettings(), durationBase: 5, chanceBase: 30 } }], rangeType: 0 });
+  applySpell(half, 1, s, {}, () => 0.5, null, {});
+  const chance1 = elementalResistanceChance(s, 3);
+  const rounds1 = s.activeEffects[0].roundsRemaining;
+  applySpell(half, 1, s, {}, () => 0.5, null, {});
+  assert.equal(s.activeEffects.length, 1, 'like-kind merges into one incumbent');
+  assert.ok(s.activeEffects[0].roundsRemaining > rounds1, 'rounds STACK');
+  assert.equal(elementalResistanceChance(s, 3), chance1, 'the chance is the incumbent\'s, unchanged');
+  // a DIFFERENT element is not like-kind - its own instance
+  applySpell(buildCustomSpell({ slots: [{ type: 8, subType: 1, settings: { ...blankEffectSettings(), durationBase: 5, chanceBase: 30 } }], rangeType: 0 }), 1, s, {}, () => 0.5, null, {});
+  assert.equal(s.activeEffects.length, 2);
+});
+
+test('X1 Spell Absorption: the effect arm swallows the spell and credits its cost as magicka', () => {
+  const e = target();
+  grant(e, 20);
+  assert.ok(spellAbsorptionChance(e) >= 100);
+  const cost = effectCastingCost(
+    buildCustomSpell({ slots: [{ type: 4, subType: 0, settings: { ...blankEffectSettings(), magnitudeBaseLow: 10, magnitudeBaseHigh: 10 } }] }).effects[0], 2, e);
+  const out = incoming(e);
+  assert.equal(out.absorbed, cost, 'the points absorbed ARE the recomputed casting cost');
+  assert.equal(out.damage, 0, 'and the effect never lands');
+  assert.equal(e.magicka, cost, 'credited to the target');
+  // without it the same spell hurts
+  assert.ok(incoming(target()).damage > 0);
+});
+
+test('X1 Spell Absorption: all-or-nothing - no room for the whole cost means no absorption at all', () => {
+  // DFU refuses a PARTIAL absorb (EEM:1180-1182): if the cost exceeds
+  // the free magicka the effect passes through untouched.
+  const e = target({ magicka: 295, maxMagicka: 300 });
+  grant(e, 20);
+  const out = incoming(e);
+  assert.equal(out.absorbed, undefined, 'nothing absorbed');
+  assert.ok(out.damage > 0, 'the spell lands in full');
+  assert.equal(e.magicka, 295, 'and no magicka was gained');
+});
+
+test('X1 Spell Resistance: the effect is silently DROPPED, and a self-cast is never resisted', () => {
+  const e = target();
+  grant(e, 22);
+  assert.ok(spellResistanceChance(e) >= 100);
+  const out = incoming(e, 2);
+  assert.equal(out.resisted, 1);
+  assert.equal(out.damage, 0, 'dropped, not reduced');
+  assert.equal(out.absorbed, undefined, 'resistance grants no magicka');
+  assert.equal(e.magicka, 0);
+  // TargetTypes.CasterOnly is never resisted (:1256) - your own buff
+  // cannot be refused by your own resistance
+  assert.ok(incoming(e, 0).damage > 0, 'a self-cast lands');
+  // the catalog marks all seven live; Reflection still pends
+  for (const k of ['8,0', '8,1', '8,2', '8,3', '8,4', '20,255', '22,255']) {
+    assert.equal(effectByKey(k).ported, true, `${k} is live`);
+  }
+  assert.equal(effectByKey('21,255').ported, false, 'Spell Reflection still pends its re-target path');
+});
