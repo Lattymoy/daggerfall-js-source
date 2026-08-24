@@ -66,6 +66,8 @@ import { makeFont } from '../ui/text.js';
 import { hudScale } from '../ui/hud.js';
 import { isShop, isRepairShop, stockShopShelf, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves
 import { identifySpellPass, identifiedTallyText } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll
+import { liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // X10: the Dispel Magic picker
+import { ListPickerWindow, listPickerArtLoaded } from '../ui/listPicker.js';   // X10
 import { LevelUpScreen } from '../ui/charsheet.js';   // AUDIT 21 hosts F3: levelling in a building
 import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded, TRADE_RECTS } from '../ui/nativeTrade.js';   // U8c
 // U23: the static-NPC seam and the guild service popup.
@@ -2795,6 +2797,35 @@ export function createWorldModes(host) {
      *  Answers false when the window cannot open (no art, or an
      *  overlay already holds the slot), so the caller can say so
      *  rather than silently swallowing the cast. */
+    /** X10: the DISPEL MAGIC picker. DFU pushes a
+     *  DaggerfallListPickerWindow listing the player's live bundles by
+     *  name; picking one removes it, and cancelling wastes the cast.
+     *  The port's ListPickerWindow is the same widget the guild flows
+     *  and the item maker already use. */
+    openDispelPicker({ chance } = {}) {
+      if (!listPickerArtLoaded() || interiorOverlay) return false;
+      const bundles = dispellableBundles(liveBundles(playerEntity));
+      if (!bundles.length) { townTalk?.say?.('You have no magic to dispel.'); return true; }
+      const win = new ListPickerWindow({
+        items: bundles.map((b) => b.name || '(unnamed)'),
+        onPick: (i) => {
+          const b = bundles[i];
+          if (b) {
+            const r = dispelBundle(playerEntity, b.bundleId, {
+              // The one asymmetry: the player's OWN casts always come
+              // off; only something cast AT them gets a roll.
+              selfCast: b.bundleType === 'Spell' && b.selfCast !== false,
+              roll01: Math.random(), chance,
+            });
+            if (r.alert) townTalk?.say?.(DISPEL_MAGIC_TEXT[r.alert]);
+          }
+          interiorOverlay = null;
+        },
+        onCancel: () => { interiorOverlay = null; },
+      });
+      interiorOverlay = win;
+      return true;
+    },
     openIdentifyWindow({ chance, refund } = {}) {
       if (!tradeArtLoaded() || interiorOverlay) return false;
       // The magicka the window will charge on the Identify click IS

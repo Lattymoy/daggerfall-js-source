@@ -1028,6 +1028,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (const f of gone) exteriorFoes.removeFoe(f);
       if (gone.length) townTalk.say(`${gone.length} dispelled.`);
     },
+    // X10: the Dispel Magic picker, routed like onIdentify.
+    onDispelMagic: (d) => {
+      if (!modes?.openDispelPicker?.({ chance: d.chance })) {
+        townTalk.say('You cannot concentrate on that right now.');
+      }
+    },
     onIdentify: (d) => {
       if (!modes?.openIdentifyWindow?.({ chance: d.chance, refund: d.refund })) {
         townTalk.say('You cannot concentrate on that right now.');

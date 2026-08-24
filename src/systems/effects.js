@@ -169,6 +169,15 @@ export const DISPEL_GROUP = Object.freeze({
   2: NEARBY.Daedra,
 });
 export const isDispelCreature = (e) => e.type === 6 && DISPEL_GROUP[classicSub(e)] != null;
+/** X10: Dispel MAGIC (6,0) - the bundle picker, not a creature sweep. */
+export const isDispelMagic = (e) => e.type === 6 && classicSub(e) === 0;
+/** X10: bundle ids are per-session and monotonic - they identify a
+ *  cast's entries to each other, nothing more, so a restored save
+ *  keeping its old ids is harmless as long as new ones never
+ *  collide. seedBundleSeq lifts the counter past a restored high
+ *  water mark for exactly that. */
+let _bundleSeq = 0;
+export const seedBundleSeq = (n) => { _bundleSeq = Math.max(_bundleSeq, n | 0); };
 /** X8: Pacify's four variants (33,0..3) and Charm (34,255). The
  *  subType IS PacifyEffect's variantIndex, and the order is the
  *  SetVariantProperties call order (:70-73), not alphabetical. */
@@ -950,6 +959,19 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     //
     // DISPEL MAGIC (6,0) is deliberately NOT here: it needs the live
     // bundle picker, which is its own arc. It stays inert.
+    // X10: DISPEL MAGIC (6,0) - the picker, not a creature sweep. Like
+    // its two siblings it is ChanceFunction.Custom and self-targeted,
+    // and like Identify it hands the host a window rather than landing
+    // anything. Unlike Identify it does NOT refund: DFU's comment is
+    // explicit - "confirmed in classic that Dispel Magic spell point
+    // cost is applied when casting even if player cancels popup. So
+    // not refunding spell points at cast time here like Identify."
+    // Cancelling the picker wastes the whole cast, deliberately.
+    if (isDispelMagic(e)) {
+      if (target?.mobileType != null) continue;   // "target must be player"
+      out.dispelMagic = { chance: chanceValue(e, casterLevel) };
+      continue;
+    }
     if (isDispelCreature(e)) {
       out.dispel = {
         group: DISPEL_GROUP[classicSub(e)],
@@ -1125,6 +1147,46 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
   if (heldItem) {
     const list = target.activeEffects ?? [];
     for (let i = pinStart; i < list.length; i++) if (!list[i].instant) list[i].heldItem = heldItem;
+  }
+  // X10: THE BUNDLE TAG. DFU groups live effects into LiveEffectBundles
+  // - one per cast, carrying the spell's NAME and its BundleType - and
+  // Dispel Magic picks a whole BUNDLE to remove, not an effect. The
+  // port's activeEffects is flat, so a bundle here is the RANGE of
+  // entries one applySpell pushed, stamped over exactly the span the
+  // heldItem pin above already uses.
+  //
+  // That is the same thing DFU means: a bundle IS the effects one cast
+  // produced. Stamping rather than restructuring keeps every existing
+  // consumer reading entries as before, and the tags ride save/restore
+  // for free because copyEffectEntry spreads whole entries.
+  //
+  // ONE MODELLING DIFFERENCE, stated rather than hidden: DFU's
+  // AssignBundle adds the new bundle to instancedBundles even when the
+  // effect inside it merges into an incumbent via AddState, so two
+  // casts of Levitate leave DFU's picker showing TWO entries. Here a
+  // bundle IS the entries a cast pushed, and an incumbent recast
+  // pushes none - so it stays one. Arguably the more coherent answer
+  // (there is one levitation to dispel), but it is a difference.
+  //
+  // bundleType is DFU's: an equipped item's effects are HeldMagicItem,
+  // everything else a Spell. Dispel Magic accepts both, and DFU is
+  // explicit that this matches classic - "confirmed classic allows
+  // player to dispel effects from items. Item effects will be
+  // reapplied on next recast or when item is unequipped and equipped
+  // again", which is why removing them here is not permanent.
+  {
+    const list = target.activeEffects ?? [];
+    if (list.length > pinStart) {
+      const id = ++_bundleSeq;
+      const name = spell?.name ?? '';
+      const type = heldItem ? 'HeldMagicItem' : 'Spell';
+      for (let i = pinStart; i < list.length; i++) {
+        if (list[i].instant) continue;   // instants are probe residue, not a live bundle
+        list[i].bundleId = id;
+        list[i].bundleName = name;
+        list[i].bundleType = type;
+      }
+    }
   }
   // S24: refund the absorbed points (:596-608). A SELF-cast cannot
   // give back more than it cost - absorption is tallied per effect and
