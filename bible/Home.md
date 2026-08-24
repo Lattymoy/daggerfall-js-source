@@ -309,6 +309,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/effects.js:824` - manager, and the port has no such re-entry yet. FLAGGED.
 - `src/systems/effects.js:987` - out.skipped++;   // FLAGGED: the library grows one family at a time
 - `src/systems/effects.js:991` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
+- `src/systems/enchanting.js:166` - FLAGGED, with the slice it waits on:
 - `src/systems/enchantments.js:39` - FLAGGED: no host computes them yet, so the conditional arms of
 - `src/systems/enchantments.js:41` - moonPhase() (FLAGGED: lunar phases are a Ledger C row),
 - `src/systems/enchantments.js:246` - *  condition holds. Params 0-3 seasons, 4-6 moons (FLAGGED: lunar
