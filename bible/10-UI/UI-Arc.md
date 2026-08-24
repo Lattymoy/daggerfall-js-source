@@ -3557,3 +3557,45 @@ carried but there is nowhere to cash one until banking lands; the
 wagon/info/select/steal buttons remain consumed no-ops; and a
 guild-run shop passes `guildFactionId: null`, so Tales and Tallow
 cannot yet fire - the guild-store arm is its own slice.
+
+## B2 - THE BANKING WINDOW (2026-08-24)
+
+The teller's screen, on B1's law. Audit-25 listed banking among the
+six systems at or near zero; `staticNpcRoute` has answered
+`{ merchant, 'banking' }` since G8 into a dead arm, so a bank teller
+fell through to talk.
+
+**One transaction at a time**, and that is the whole interaction
+model. A button chooses a transaction TYPE, the field takes the
+amount, Return commits it - and while a field is open EVERY button is
+dead, including the one that opened it. A request to switch from one
+live transaction straight to another is refused; only a move through
+None is allowed. Escape closes the FIELD rather than the window, which
+is why the pin needs a second Escape to close the bank at all.
+
+**Three buttons refuse before they open anything.** Borrowing checks
+DEFAULTED before it checks HAVE-A-LOAN, so a region with both is told
+it defaulted. Buying a ship checks ownership before the port-town
+test. Selling what you do not own is a silent no-op, because DFU has
+no else there.
+
+**TOO_HEAVY is the one result with no record behind it.** Every other
+TransactionResult IS a TEXT.RSC id - 0282-0299 is one contiguous block
+of banking dialogue - so the window looks each up by its own value and
+supplies its own line only for the weight refusal.
+
+**The inventory label carries the wagon.** One label, two purses:
+`1000 (+5000)` when the cart holds gold, because the deposit arm can
+reach into it and a player needs to see that at a glance.
+
+The house and ship PURCHASE popups are flagged, not built: they need
+the building directory and the permanent-scene set. Both buttons refuse
+through the law's own decisions, which is also what DFU answers when
+the directory is missing.
+
+Pins: 11 in `bankwindow.test.js`. 15 mutations, 15 dead. Live:
+`tools/bankProbe.mjs` mints 62 regional accounts in a real interior,
+deposits 20,000 off the entity, withdraws it back, borrows 10,000 at
+11,000 owed with a rendered due date ("Middas the 4th of Morning
+Star"), and reads the real refusal record back when it asks for a
+second loan.

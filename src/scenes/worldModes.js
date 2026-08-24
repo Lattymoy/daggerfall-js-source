@@ -24,7 +24,7 @@
 import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding } from '../player/enterExit.js';
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { pickActivatable, worldAabb, activationTargets } from '../player/activate.js';
-import { transferAll, removeOne, addItem, isEnchanted, totalWeight, letterOfCredit } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
+import { transferAll, removeOne, addItem, isEnchanted, totalWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { createPlayerTicker , endRunToTitleMenu, exitToTitleMenu, doorSpellFor, wireDoorSpells} from './shared.js';   // AUDIT 18: the interior host's world clock
@@ -73,7 +73,7 @@ import { npcServiceKind, freeHealing, freeMagickaRecharge } from '../systems/gui
 import { createGuildForGroup } from '../systems/guildVariants.js';
 import { membershipOf, joinGuild, joinDecision } from '../systems/guilds.js';
 import { ensureFactionRep } from '../systems/factionRep.js';
-import { dateFromClassicMinutes } from '../systems/gameDate.js';
+import { dateFromClassicMinutes, dateString } from '../systems/gameDate.js';   // B2: the loan due date
 import { serviceDestination } from '../systems/guildServiceFlow.js';
 import { buildTrainingFlow, buildDonationFlow, buildCureDiseaseFlow } from '../ui/guildServiceWindows.js';
 import { preloadListPickerArt } from '../ui/listPicker.js';
@@ -114,6 +114,9 @@ import {
   TAVERN_RECTS, TAVERN_PANEL_X, TAVERN_PANEL_Y,
 } from '../ui/tavernWindow.js';
 import { freeTavernRooms } from '../systems/guildServices.js';
+// B2: the bank - the window, the per-region accounts and the purse seam.
+import { BankWindow, preloadBankArt, bankArtLoaded, BANK_RECTS, BANK_PANEL_X, BANK_PANEL_Y } from '../ui/bankWindow.js';
+import { createBankAccounts, BANK_REGION_COUNT } from '../systems/banking.js';
 import { orderOf } from '../systems/guildVariants.js';
 import { joinedGuildOfGroup } from '../systems/guilds.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js';
@@ -250,6 +253,7 @@ export function createWorldModes(host) {
     preloadMessageBoxArt({ renderer, fetchBytes, palette });   // U11 parchment for its boxes
     preloadListPickerArt({ renderer, fetchBytes, palette });   // U24: PICK00I0 for the training skill list
     preloadTavernArt({ renderer, fetchBytes, palette });   // U39: TVRN00I0 for the innkeeper's panel
+    preloadBankArt({ renderer, fetchBytes, palette });   // B2: BANK00I0 for the teller's screen
   };
 
   // ---- Q4-v: THE QUEST LAYER'S INTERIOR MOUNT -----------------------
@@ -746,6 +750,10 @@ export function createWorldModes(host) {
       });
       return;
     }
+    // B2: DaggerfallBankingWindow. The routing has answered 'banking'
+    // since G8 into a dead arm - the bank teller fell through to talk.
+    if (!forceTalk && route.kind === 'merchant' && route.service === 'banking'
+      && openBank()) return;
     // U40: the PLAIN MERCHANT's sell arm. staticNpcRoute has answered
     // 'sell' since G8 and the only consumer was the repair shop's
     // list; a shopkeeper in a non-repair shop fell through to talk, so
@@ -833,6 +841,70 @@ export function createWorldModes(host) {
       return;
     }
     townTalk?.say?.('You get no response.');
+  }
+
+  /** B2: the bank. Accounts are PER REGION and live on the entity, so
+   *  they ride the save with everything else; the array is minted on
+   *  first use at the map reader's region count. */
+  function openBank() {
+    if (!bankArtLoaded() || !_shopFont) return false;
+    // MapFileReader.RegionCount (:237-246). The host has no map
+    // reader in scope, so the count comes from the accounts already
+    // restored by a save, and 62 is the shipped value otherwise.
+    const regions = playerEntity.bankAccounts?.length || BANK_REGION_COUNT;
+    playerEntity.bankAccounts ??= createBankAccounts(regions);
+    const b = interiorBuilding;
+    let win = null;
+    win = new BankWindow({
+      accounts: () => playerEntity.bankAccounts,
+      regionIndex: () => b?.regionIndex ?? 0,
+      level: () => playerEntity.level ?? 1,
+      now: () => Math.floor(worldMinutes()),
+      player: bankPurse(),
+      wagonGold: () => (playerEntity.wagonItems ?? []).find((i) => i.group === 'Currency')?.stackCount ?? 0,
+      rows: (id) => townTalk?.lines?.(id) ?? [],
+      // GetLoanDueDateString (:571-580) - empty when nothing is owed,
+      // otherwise DateString(), which carries no year.
+      dueDateText: (minutes) => (minutes > 0 ? dateString(dateFromClassicMinutes(minutes)) : ''),
+      // FLAGGED: house and ship OWNERSHIP need the building directory
+      // and the two fixed ship scenes; until then the buttons refuse
+      // through the law's own decisions rather than opening a picker.
+      ownsHouse: () => false,
+      ownsShip: () => false,
+      ownedShip: () => -1,
+      housesForSale: () => 0,
+      isPortTown: () => false,
+      houseSellPrice: () => 0,
+      onClose: () => { if (interiorOverlay === win) interiorOverlay = null; },
+    });
+    interiorOverlay = win;
+    return true;
+  }
+
+  /** The purse seam banking.js's transactions take. The wagon half is
+   *  the deposit arm's - DFU reaches into the cart for the shortfall
+   *  after the purse is empty. */
+  function bankPurse() {
+    const wagonStack = () => (playerEntity.wagonItems ?? []).find((i) => i.group === 'Currency') ?? null;
+    return {
+      gold: () => goldAmount(playerEntity),
+      deductGold: (n) => deductGold(playerEntity, n),
+      addGold: (n) => addGold(playerEntity, n),
+      wagonGold: () => wagonStack()?.stackCount ?? 0,
+      takeWagonGold: (n) => {
+        const st = wagonStack();
+        if (!st) return;
+        st.stackCount -= n;
+        if (st.stackCount < 1) playerEntity.wagonItems.splice(playerEntity.wagonItems.indexOf(st), 1);
+      },
+      takeLetter: () => {
+        const i = (playerEntity.items ?? []).findIndex((it) => it.templateIndex === LETTER_OF_CREDIT_TEMPLATE);
+        return i < 0 ? null : playerEntity.items.splice(i, 1)[0];
+      },
+      addLetter: (loc) => { (playerEntity.items ??= []).unshift(loc); },
+      carriedWeightKg: () => totalWeight(playerEntity.items ?? []),
+      maxEncumbranceKg: () => maxEncumbrance(liveStat(playerEntity, 'strength')),
+    };
   }
 
   /** U39: the innkeeper's four-button panel. Answers whether it
@@ -2028,6 +2100,26 @@ export function createWorldModes(host) {
       return interiorOverlay?.click?.(x + 30, y + 20 + slot * 38) ?? false;
     };
     window.__openMerchantSell = () => { openMerchantSell(); return window.__shopOverlay(); };
+    // B2: the bank's own surface, for the probe.
+    window.__openBank = () => { openBank(); return window.__bankOverlay(); };
+    window.__bankOverlay = () => JSON.stringify(interiorOverlay instanceof BankWindow ? {
+      bank: true,
+      done: interiorOverlay.done,
+      type: interiorOverlay.transactionType,
+      value: interiorOverlay.value,
+      labels: interiorOverlay.labels(),
+      region: interiorOverlay.region,
+      box: interiorOverlay.box ? {
+        buttons: interiorOverlay.box.buttons,
+        rows: interiorOverlay.box.rows?.map((r) => r.text ?? r),
+      } : null,
+      enabled: Object.fromEntries(['depositGold', 'withdrawGold', 'loanRepay', 'loanBorrow']
+        .map((k) => [k, interiorOverlay.enabled(k)])),
+    } : null);
+    window.__bankClick = (key) => {
+      const [x, y, w, h] = BANK_RECTS[key];
+      return interiorOverlay?.click?.(BANK_PANEL_X + x + w / 2, BANK_PANEL_Y + y + h / 2) ?? false;
+    };
     window.__dungeon = () => dungeonCtx ? JSON.stringify({
       exits: dungeonCtx.exitDoors.map((d) => ({ pos: doorWorldPosition(d).map((v) => +v.toFixed(2)), normal: doorWorldNormal(d).map((v) => +v.toFixed(3)) })),
       actions: dungeonCtx.actions.objects.size,
