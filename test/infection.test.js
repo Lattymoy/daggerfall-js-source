@@ -23,6 +23,7 @@ import {
   diseaseCount, updateDiseases, startDisease, DISEASES,
 } from '../src/systems/diseases.js';
 import { runMagicRoundsFor, MINUTES_PER_DAY } from '../src/systems/worldTick.js';
+import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
 
 const P = (level = 5) => ({ isPlayer: true, level, activeEffects: [] });
 const noSinks = { hurt: () => {}, drainFatigue: () => {}, drainMagicka: () => {} };
@@ -317,4 +318,31 @@ test('infection: all four hosts register the video seam, and the two dreams are 
   assert.ok(diet.includes("name === 'ANIM0002.VID'"));
   assert.ok(diet.includes("name === 'ANIM0004.VID'"));
   assert.ok(diet.includes("name === 'ANIM0012.VID'"), 'the fake death reuses D1 death video');
+});
+
+// ---------------------------------------------------------------
+// 8. THE SAVE
+// ---------------------------------------------------------------
+
+test('infection: the infection rides the save as a disease, and the TURN rides as its own field', () => {
+  setInfectionHost(null);
+  const p = P();
+  startInfection(p, INFECTION.Vampirism, { day: 7, regionIndex: 31 });
+  const mid = { stats: {} }; restorePlayer(mid, snapshotPlayer(p, {}));
+  const e = liveInfection(mid);
+  assert.equal(e.infection, INFECTION.Vampirism);
+  assert.equal(e.startingDay, 7);
+  assert.equal(e.regionIndex, 31, 'the clan is read from this at the turn, so it has to survive');
+  assert.equal(diseaseCount(mid), 1);
+
+  // ...and once it deploys, the disease is OVER and the marker is the
+  // only record left. A save here used to come back human, and
+  // catchable, because nothing carried it.
+  runInfections(p, 8); runInfections(p, 11); runInfections(p, 11);
+  assert.equal(diseaseCount(p), 0);
+  const turned = { stats: {} }; restorePlayer(turned, snapshotPlayer(p, {}));
+  assert.equal(turned.racialOverridePending.key, INFECTION.Vampirism);
+  assert.equal(infectionAccepted(turned, INFECTION.Werewolf), false);
+  // MUTATION: dropping either save.js line leaves the restored player
+  // able to catch lycanthropy the moment they load.
 });
