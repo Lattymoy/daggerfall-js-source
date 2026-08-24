@@ -2721,6 +2721,57 @@ export function createWorldModes(host) {
       actions: dungeonCtx.actions.objects.size,
     }) : null;
     window.__dungeonExit = () => tryExitDungeon();
+
+    // V4 (the first-hour playthrough probe): THE WORLD HOST'S DUNGEON
+    // MODE HAD NO COMBAT OR LOOT SURFACE AT ALL. worldModes mounts a
+    // real dungeonContext (buildDungeonContext, :2065) but installed
+    // none of the hooks scenes/dungeon.js:279-305 carries, so a probe
+    // could take the classic start into Privateer's Hold and then see
+    // nothing inside it - no foes, no vitals, no dropped piles. Same
+    // names and same shapes as the standalone host's, so one probe
+    // reads either.
+    window.__hp = () => JSON.stringify({
+      health: playerEntity.health, maxHealth: playerEntity.maxHealth,
+      fatigue: playerEntity.fatigue ?? null, magicka: playerEntity.magicka ?? null,
+    });
+    window.__foes = () => (dungeonCtx ? JSON.stringify(dungeonCtx.foes.map((f, i) => ({
+      i, type: f.mobileType, dead: !!f.dead, health: f.entity?.health,
+      corpse: !!f.corpseBatch,   // V1's DESTROY-vs-KILL discriminator
+      pos: f.ai ? f.ai.feet.map((v) => +v.toFixed(2)) : null,
+    }))) : null);
+    // The REAL damage door, where the Soul Trap intercept and the
+    // corpse/loot spawn sit (V3's seam, this host's copy).
+    window.__damageFoe = (i, n) => {
+      const f = dungeonCtx?.foes?.[i];
+      if (!f) return null;
+      dungeonCtx.damageFoe(f, n ?? (f.entity?.health ?? 1), null, null);
+      return JSON.stringify({ dead: !!f.dead, health: f.entity?.health, corpse: !!f.corpseBatch });
+    };
+    window.__piles = () => (dungeonCtx
+      ? JSON.stringify((dungeonCtx.dropped?.() ?? []).map((p) => ({ n: p.items.length, flat: !!p.batch })))
+      : null);
+    // ...and the OTHER loot door, which is the one a kill uses. An
+    // enemy's loot rides its OWN entity (dungeonContext:489 -
+    // GenerateItems(lootTableKey) at spawn) and its corpse becomes an
+    // activation target with CorpseActivationDistance; nothing is ever
+    // dropped on the floor. The first-hour probe asserted __piles
+    // after a kill, got nothing, and briefly called the game broken.
+    window.__lootTargets = () => (dungeonCtx ? JSON.stringify(dungeonCtx.lootTargets().map((t) => t.key)) : null);
+    window.__takeLoot = (k) => (dungeonCtx ? dungeonCtx.takeLoot(k) : null);
+    /** Move remote slot `slot` into the pack through the window's own
+     *  pick (the __inventoryPickRemote idiom, dungeon side). */
+    window.__dungeonPickRemote = (slot) => {
+      const w = dungeonCtx?.overlayWindow?.();
+      if (!w?._pickRemote) return null;
+      w._pickRemote(slot);
+      return JSON.stringify({ kind: w.constructor.name, local: w._filtered?.().length ?? null, remote: w._remote?.().length ?? null });
+    };
+    // One read that answers "is a window up, and which" for the two
+    // modes THIS module owns. The exterior's overlay slot belongs to
+    // world.js (townTalk) - a probe reads that through __talk().
+    window.__overlayKind = () => (mode === 'dungeon'
+      ? (dungeonCtx?.overlayWindow?.()?.constructor?.name ?? null)
+      : (interiorOverlay?.constructor?.name ?? null));
     // U31: probe-only warp. The dungeon EXIT is a raycast pick against
     // the real exit door (tryExitDungeon), so proving the classic start
     // can get out means standing the player at that door the way a
@@ -2827,6 +2878,30 @@ export function createWorldModes(host) {
   });
 
   addEventListener('keydown', (e) => {
+    // V4 - THE OUTER HOST'S MODAL DID NOT OWN THE KEYBOARD, and the
+    // first-hour probe caught it in a SCREENSHOT: its very first
+    // picture of the starting dungeon is the automap, sitting over a
+    // 0%-explored Privateer's Hold on a game one minute old.
+    //
+    // world.js gates each of its own actions on `!townTalk.overlayActive`
+    // (:1574 onward). THIS handler gated on nothing, and both listen on
+    // the same target without stopping propagation - so while the
+    // CHARGEN WIZARD was up (it lives in the outer host's overlay slot,
+    // and the classic start runs it with the player already inside the
+    // dungeon), every key typed into it ALSO reached
+    // `routeKey(e, dungeonCtx)` below. routeKey's own overlay branch
+    // reads `ctx.uiOverlayActive` - dungeonCtx's slot, which is empty -
+    // so it waved them straight through to the bindings.
+    //
+    // Typing the name MAC opened the automap on the M
+    // (inputActions.js: KeyM -> AutoMap) and left it up when the wizard
+    // closed. R starts a rest, N opens the notebook, L the logbook, Z
+    // readies a weapon, F9 quicksaves a half-made character. Any letter
+    // in a name is a keybinding.
+    //
+    // This is AUDIT 24's two-chargen-wizards defect at a second seam,
+    // and the rule it needed is the same one: ONE MODAL OWNS THE KEYS.
+    if (townTalk?.overlayActive) return;
     // E2: an open shop overlay owns the keys (the townTalk pattern:
     // done-then-clear so chained windows survive the keydown).
     if (mode === 'interior' && interiorOverlay) {
