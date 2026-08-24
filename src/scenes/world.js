@@ -87,7 +87,7 @@ import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, 
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
-import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
+import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
 import { PlayerMotor } from '../player/motor.js';
@@ -736,6 +736,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   // found no templates at all. Fired and not awaited: the boot
   // does not block on it and every consumer is a later frame.
   loadMagicRegistries(fetchBytes).then((r) => { spellsByIndex = spellsByIndex ?? r.spellsByIndex; });
+  // V1: the infection's host seam - the dream/death videos, the
+  // fortnight clock raise, the clan's region read and the popup.
+  // One call per host (THE FOUR HOSTS RULE); without it the
+  // lifecycle still runs and the player just never sees the dream.
+  wireInfectionVideos(renderer, {
+    textAt: (id) => townTalk.lines(id),
+    showText: (lines) => townTalk.showOverlay(new ChoiceWindow({ lines })),
+    factionDict: () => townTalk.factionDict ?? null,
+  });
   // Q4-v: InitAtGameStart runs ONCE when a NEW character finishes
   // chargen (DFU's OnStartGame path into QuestListsManager). Chargen
   // resolves asynchronously and the bridge is composed further down

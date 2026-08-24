@@ -225,6 +225,7 @@ import { Parser } from './parser.js';
 import { defaultActionTemplates } from './actions.js';
 import { QuestResourceBehaviour } from './resourceBehaviour.js';
 import { FACTION_TYPES } from '../../formats/factionFile.js';
+import { SECONDS_PER_WEEK } from '../gameDate.js';
 import { Quest } from './quest.js';
 import { Task } from './task.js';
 import { Person } from './person.js';
@@ -242,8 +243,10 @@ export { QUEST_MESSAGES } from './quest.js';   // QuestMachine.cs:260's enum, de
 /** QuestMachine.cs:45 - how often DFU ticks quest logic per second
  *  of real time. The host paces tick() by this. */
 export const TICKS_PER_SECOND = 10;
-/** DaggerfallDateTime: tombstoned quests expire after one week. */
-export const SECONDS_PER_WEEK = 7 * 86400;
+/** DaggerfallDateTime: tombstoned quests expire after one week. One
+ *  home in systems/gameDate.js since V1 - re-exported here because
+ *  the quest lane reads it by this name. */
+export { SECONDS_PER_WEEK };
 /** QuestMachine.IsProtectedQuest: the main-quest spine never
  *  error-terminates (case-insensitive, as C#). */
 export const PROTECTED_QUESTS = Object.freeze(['S0000999', 'S0000977', '_BRISIEN']);

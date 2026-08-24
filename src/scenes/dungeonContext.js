@@ -70,7 +70,7 @@ import { applyLevelUp } from '../systems/advancement.js';
 import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
 import { spendPoolLowest } from '../systems/chargen.js';
 import { ClassFile } from '../formats/classFile.js';
-import { fetchBytes, ensureAudio, loadMagicRegistries, raiseAtRestEnd, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord} from './shared.js';
+import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, raiseAtRestEnd, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord} from './shared.js';
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
@@ -682,6 +682,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
 
   let chargenFlow = null;
   let activeOverlay = null;
+  // V1: the infection's host seam - the dream/death videos, the
+  // fortnight clock raise and the popup (THE FOUR HOSTS RULE). The
+  // dungeon has no FACTION.TXT of its own, so a player turned
+  // underground reads the clan off GetVampireClan's own default,
+  // which is Lyrezi and not a missing value.
+  wireInfectionVideos(renderer, {
+    textAt: (id) => textRsc?.plainText(id) ?? null,
+    showText: (lines) => { if (!activeOverlay) activeOverlay = new ActionTextBox(lines); },
+  });
 
   // ── U26: THE NATIVE INVENTORY IN THE DUNGEON ─────────────────────
   // This host kept ui/deathScreen.js's keyed window while the exterior

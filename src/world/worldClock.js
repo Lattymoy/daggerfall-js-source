@@ -26,15 +26,15 @@
 
 import { UMRandom } from '../formats/umRandom.js';
 
-export const DAWN_HOUR = 6;
-export const DUSK_HOUR = 18;
 export const LIGHTS_ON_HOUR = 17;
 export const LIGHTS_OFF_HOUR = 8;
 // AUDIT 24 (wave 24): DaggerfallDateTime's calendar constants have
-// one home in systems/gameDate.js.
-import { MINUTES_PER_HOUR, MINUTES_PER_DAY } from '../systems/gameDate.js';
+// one home in systems/gameDate.js. V1 moved DAWN_HOUR and DUSK_HOUR
+// there too - they are the same class's members, and the vampire
+// turn's raise needs dusk from outside the light rig.
+import { MINUTES_PER_HOUR, MINUTES_PER_DAY, DAWN_HOUR, DUSK_HOUR } from '../systems/gameDate.js';
 
-export { MINUTES_PER_HOUR, MINUTES_PER_DAY };
+export { MINUTES_PER_HOUR, MINUTES_PER_DAY, DAWN_HOUR, DUSK_HOUR };
 
 export const SUN_RIG_INTENSITY = 0.6;
 export const SUN_RIG_COLOR = Object.freeze([0.8161765, 0.954361, 1]);

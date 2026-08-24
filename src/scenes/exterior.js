@@ -74,7 +74,11 @@ import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the sho
 import { hitSoundFor, swingSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
-import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
+import { ChoiceWindow } from '../ui/talkWindow.js';   // V1: the infection popup's box
+import { startInfection, liveInfection } from '../systems/infection.js';   // V1 probe surface: the bite and the lifecycle
+import { diseaseCount } from '../systems/diseases.js';
+import { MINUTES_PER_DAY } from '../systems/gameDate.js';
+import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -505,6 +509,15 @@ export async function bootExterior(canvas, renderer, params, status) {
   // found no templates at all. Fired and not awaited: the boot
   // does not block on it and every consumer is a later frame.
   loadMagicRegistries(fetchBytes).then((r) => { spellsByIndex = spellsByIndex ?? r.spellsByIndex; });
+  // V1: the infection's host seam - the dream/death videos, the
+  // fortnight clock raise, the clan's region read and the popup.
+  // One call per host (THE FOUR HOSTS RULE); without it the
+  // lifecycle still runs and the player just never sees the dream.
+  wireInfectionVideos(renderer, {
+    textAt: (id) => townTalk.lines(id),
+    showText: (lines) => townTalk.showOverlay(new ChoiceWindow({ lines })),
+    factionDict: () => townTalk.factionDict ?? null,
+  });
   if (!playerEntity.chargenDone && params.has('class')) {
     // AUDIT 17f: ?class=N is the headless skip - parsed here for the
     // DUNGEON the host might build, but never honoured for the host's
@@ -993,6 +1006,19 @@ export async function bootExterior(canvas, renderer, params, status) {
     window.__chargenConfirm = () => townTalk._debug().overlayFlow?.raceConfirm ?? null;   // U11 probe surface
     window.__chargenFlow = () => townTalk._debug().overlayFlow ?? null;   // S3e probe surface
     window.__addGold = (n) => addGold(playerEntity, n);   // U10 probe surface: gold through the real producer
+    // V1 probe surface: the bite, the clock and the lifecycle state.
+    // The infection is minted through the REAL producer path's
+    // startInfection, not by hand, so a probe cannot pass over a
+    // shape the game never builds.
+    window.__infect = (key) => JSON.stringify(startInfection(playerEntity, key, {
+      day: Math.floor(playerTicker.classicMinutes / MINUTES_PER_DAY), regionIndex: dfLocation.regionIndex ?? -1,
+    }) ?? null);
+    window.__advanceDays = (d) => { playerTicker.advance(d * MINUTES_PER_DAY); return playerTicker.classicMinutes; };
+    window.__infection = () => JSON.stringify({
+      entry: liveInfection(playerEntity), diseases: diseaseCount(playerEntity),
+      pending: playerEntity.racialOverridePending ?? null,
+      videos: (typeof window !== 'undefined' ? window.__infectionVideos : null) ?? [],
+    });
     window.__guards = () => JSON.stringify(cityGuards._debug());   // G1 probe surface
     window.__droppedLoot = () => JSON.stringify(droppedLoot._piles.map((pl) => ({ n: pl.items.length, pos: pl.pos.map((v) => +v.toFixed(1)), record: pl.record, flat: !!pl.batch })));   // U8e probe surface
     window.__crime = () => _crimeResponse();   // G1: force the response without pickpocket RNG

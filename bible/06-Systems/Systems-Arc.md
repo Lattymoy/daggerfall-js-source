@@ -2312,3 +2312,146 @@ one piece in the real pack, sets flags to 64 (`4 << 4`) and closes the
 window itself; and asking again offers no second pile.
 
 Pins: 8 in `knightlygifts.test.js`. 7 mutations, 7 dead.
+
+## V1 - THE INFECTION HALF: three days to stop being human (2026-08-24)
+
+`VampirismInfection.cs` and `LycanthropyInfection.cs`, whole. The two
+diseases that do not wear off — they end by replacing the player's
+race — plus the producer that mints them and the tick that runs them.
+Audit-25 listed vampirism and lycanthropy among the systems at zero,
+and this is the half that runs before the player turns.
+
+**THEY ARE DISEASES, and that is the whole trick of the port.** DFU
+gives each a `DiseaseData` of all zeroes at `0xFF` days of symptoms —
+its own comment reads *"Permanent no-effect disease, will manage
+custom lifecycle"* — so the disease machinery carries the infection
+(the daily tick, the temple's count, Cure Disease) while the effect
+does the counting of days itself. The port already had every one of
+those, so an infection is an `activeEffects` entry with `kind:
+'disease'` and nothing structurally new. What it is *not* is a disease
+with a row: `classicDiseaseType = Diseases.None`, and `UpdateDisease`
+is overridden and **does not call base**. Without that arm the daily
+damage walk reads `DISEASE_DATA[null]` and throws on the first day —
+so `diseases.js` skips an infection and `worldTick` runs it instead.
+
+**THE LIFECYCLE IS TWO GATES, AND BOTH ARE OFF BY ONE.** `daysPast >
+0` schedules the warning dream — one *full* day, not the day of the
+bite. `daysPast > 3` turns the player — the **fourth** day, whatever
+DFU's own comment ("after 3 days have passed") reads like. And the
+second gate also requires the dream to have been **played**, not
+merely scheduled: the flag comes off the modal video's `OnClose`, so a
+dream left open holds the infection at that gate for ever. A year
+later, still nothing.
+
+**THE TWO DEPLOYMENTS DIFFER IN WHO FIRES THEM.** Lycanthropy turns in
+the tick, at the gate. Vampirism schedules a *second* video there — a
+fake death — and turns on **its** close, so the tick's job for
+vampirism ends at pushing the window. Which means the port has to keep
+the close callback rather than folding it into the next tick: DFU's
+`fakeDeathVideoPlayed` is set when the window is *pushed*, so a player
+who never dismisses the death video is a vampire who never arrives.
+Named `deathScheduled` here, because that is what it holds.
+
+**THE CANCELS.** An existing racial override cancels the incoming
+infection outright — you cannot catch lycanthropy as a vampire. The
+same strain twice ends the *duplicate*, so a second bite does not buy
+three more days. And the two lycanthropy strains cancel each other —
+the **opposing** one only, so a vampirism infection does not bar a
+werewolf bite and a player can be four days from two different fates
+at once. A `live.length` test reads the same from the call site and is
+wrong; the pin catches it.
+
+**GETVAMPIRECLAN DEFAULTS TO LYREZI, NOT NONE.** The region's Province
+faction carries a `vam` column naming the clan that holds it, and the
+enum's values *are* those faction ids, so DFU's nine-arm switch is an
+identity read plus a membership test. The tail is the part worth
+having: *"The Lyrezi are the default like in classic."* `None` is a
+value the enum has and this function never returns — a region with no
+Province record still turns you. The clan is read from where the bite
+happened, not from where the player is standing when they turn (DFU's
+own note: *"Think classic uses current region at time of turning, this
+will use current region at time of infection"*).
+
+**THE CLOCK RAISE IS SIGNED.** `(2 * SecondsPerWeek) + (DuskHour + 1 -
+Hour) * 3600`. Turning at 22:00 gives `18 + 1 - 22 = -3` hours, so the
+arrival is three hours *before* the fortnight mark rather than after
+it — and that is the point: every turn lands at 19:00 whatever hour it
+began, so a new vampire never wakes in daylight. An `abs()` or a clamp
+passes a "roughly two weeks" pin and dies against all 24 start hours.
+
+**THE PRODUCER WAS SITTING THERE, ROUTED.** `OnMonsterHit`'s three
+special-infection arms had been comments reading *ROUTED* since S18 —
+the roll was consumed and nothing happened, and a pin asserted the
+player was left untouched. All three mint real infections now. The
+Werewolf and Wereboar cases were **split**, because DFU gives each its
+own switch arm with the Nymph between them and each mints its own
+strain; sharing one case was harmless only while both went nowhere.
+`DiseaseEffect.Start`'s gate is reached through `base.Start` before
+either records anything, so a **level-1 player cannot be turned** any
+more than they can catch plague.
+
+**AND THE PRICE THE TEMPLE CHARGES WAS ALREADY RIGHT** — which
+corrects the Ledger row that opened this arc. That row said the
+cure-disease count is short by one until a vampirism timer lands, and
+that the arc "lands by filling one parameter". `GetDiseaseCount`
+counts every bundle of type Disease, and an infection **is** one, so a
+DFU-native infection was already counted the moment it existed.
+`TimeToBecomeVampireOrWerebeast` is read from a classic `.SAV`
+character record and is set by nothing else in DFU: its `+1` prices an
+*imported* character who carries the timer without carrying the
+effect. This port has no classic-save reader, so the parameter stays
+false and the count is correct through the disease it already is.
+`EndDisease` is the turn's last line, so a cure bought a minute before
+the turn works and a minute after has nothing to cure.
+
+**ONE HOME FOR THE TICK, ONE SEAM FOR THE HOSTS.** The lifecycle runs
+in `worldTick`'s magic round beside the disease pass — the same
+`DoMagicRound` over the same bundles in DFU — so every host that feeds
+the tick gets the dream and the turn without a line in a frame body.
+The three things only a host can supply (the video player, the clock
+raise, the popup) arrive through `scenes/shared.js`'s
+`wireInfectionVideos`, registered once per host boot in **all four**.
+Unregistered, the null object still runs the lifecycle: a video that
+cannot be played counts as watched, so a node test and a headless
+probe both reach the turn.
+
+**THE VIDEOS ARE REAL.** `ANIM0002.VID` (the lycanthropy dream) and
+`ANIM0004.VID` (the vampire dream) joined the download diet under
+`dataSource.js`'s own rule — *"wire a video, and the pin makes you
+feed it"* — and the fake death reuses `ANIM0012.VID`, already there
+for D1. All three play with `EndOnAnyKey` **false**, as DFU sets them:
+they cannot be skipped.
+
+**THE ONE-HOME GUARD EARNED ITS KEEP TWICE.** `DUSK_HOUR` and
+`SECONDS_PER_WEEK` are both `DaggerfallDateTime` members, and both
+already existed — in `world/worldClock.js` and `systems/quest/
+machine.js`, neither of which ports `DaggerfallDateTime`. They now
+live in `systems/gameDate.js`, which does, with re-exports left behind.
+
+**PROBED LIVE** (`tools/infectionProbe.mjs`) in a real town at 22:00:
+the level-1 character the probe boots is refused; at level 5 the bite
+mints an entry the temple counts as one disease; one day later
+`ANIM0004.VID` is fetched from the live diet and **decodes** (the
+probe reads the player's own `played` result); on day 3 nothing has
+happened; on day 4 the fake death plays and the turn lands a real clan
+faction id read off region 17, with the disease count back to zero and
+a following werewolf bite refused.
+
+**FLAGGED, and it is the rest of the system (V2):** the racial
+override itself — `VampirismEffect` and `LycanthropyEffect` on the
+`RacialOverrideEffect` spine, the sun damage, the blood hunger, the
+transformation, the cemetery respawn, the clan's spells, and the guild
+swap `guilds.js` has carried `membershipsFor(store, hasVampirism)` for
+since G1. The turn lands `entity.racialOverridePending`, which is
+V2's producer and already bars a second infection.
+
+**AND THE SAVE CARRIES BOTH HALVES.** The infection rides
+`activeEffects` like any disease, region index included, because
+`copyEffectEntry` spreads whole entries. But the moment it *deploys*
+the disease is over and `racialOverridePending` is the only record
+left — so a save between the turn and V2's racial override came back
+human, and catchable. It is a named field in the envelope now, both
+directions.
+
+Pins: 16 in `infection.test.js`, plus the rewritten `OnMonsterHit`
+row in `diseases.test.js`. 18 mutations, 18 dead.

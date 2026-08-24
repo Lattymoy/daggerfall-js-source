@@ -35,6 +35,16 @@ export const DAYS_PER_WEEK = 7;
 export const DAYS_PER_MONTH = 30;
 export const MONTHS_PER_YEAR = 12;
 export const DAYS_PER_YEAR = DAYS_PER_MONTH * MONTHS_PER_YEAR;   // 360
+/** :48-49. The two DaggerfallDateTime members the rest of the port
+ *  reached for by re-declaring them: the seconds in a week (quest
+ *  tombstones expire on it, and V1's vampire turn raises the clock by
+ *  two of them) and DUSK, which is both the light rig's cutover and
+ *  the hour a new vampire always wakes at. ONE DFU MEMBER, ONE
+ *  EXPORT - world/worldClock.js and systems/quest/machine.js now read
+ *  them from here, the way both already read MINUTES_PER_DAY. */
+export const SECONDS_PER_WEEK = 7 * 86400;
+export const DAWN_HOUR = 6;
+export const DUSK_HOUR = 18;
 
 /** :28-29. The epoch conversion and the new-game start, verbatim. */
 export const CLASSIC_EPOCH_IN_SECONDS = 12566016000;
