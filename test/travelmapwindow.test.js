@@ -16,6 +16,8 @@ import {
   getRegionMapNames, getRegionMapScale, getPixelColorIndex, hasRegionPage,
   _setTravelMapArtForTests, setRevealUndiscoveredLocations,
 } from '../src/ui/travelMapWindow.js';
+import { resetTravelMapState, travelMapSaveData, setTravelMapPopUpState } from '../src/systems/travelMapState.js';
+import { composeSessionState, restoreSessionState } from '../src/systems/save.js';
 import { buildMapDict, locationSummaryAt, hasLocation } from '../src/systems/mapDirectory.js';
 import { REGION_NAMES, LOCATION_TYPES, CLIMATES, getMapPixelID } from '../src/formats/mapsFile.js';
 import { discoverLocation, restoreDiscovery } from '../src/systems/discovery.js';
@@ -52,6 +54,9 @@ const ENTRIES = [
 ];
 
 function mkWorld(over = {}) {
+  // the filters and the popup toggles outlive a window on purpose
+  // (DFU keeps one instance), so every fixture starts from defaults
+  resetTravelMapState();
   const regions = { [DAGGERFALL]: mkRegion(DAGGERFALL, ENTRIES) };
   const maps = {
     regionCount: 62,
@@ -426,6 +431,24 @@ test('U41: the arrows page a four-screen region, and a pageless one refuses to o
     assert.equal(w.hasVerticalMaps, false);
     w._arrowButtonClick('horizontal');
     assert.equal(w.mapIndex, 0, 'and the arrow does nothing');
+    // the arrow art stretches to the 22x20 BUTTON, not to its own size
+    w._closeRegionPanel();
+    w._openRegionPanel(1);
+    const r = recorder();
+    w.draw(r, canvas, font());
+    const arrowsOf = (rec) => rec.quads.filter((q) => String(q.tex).startsWith('tex:TRAV') && q.w === 22 * 4);
+    assert.equal(arrowsOf(r).length, 2, 'both arrows draw for a four-page region');
+    assert.deepEqual(arrowsOf(r).map((q) => [q.x / 4, q.y / 4, q.w / 4, q.h / 4]),
+      [[231, 176, 22, 20], [254, 176, 22, 20]]);
+    // and NEITHER paints on the province map, even when the region
+    // just closed was a four-page one (:511, :519, :1111-1112)
+    w._closeRegionPanel();
+    const r2 = recorder();
+    w.draw(r2, canvas, font());
+    assert.equal(arrowsOf(r2).length, 0, 'no arrows over the province map');
+    assert.equal(w.mapIndex, 0);
+    w.click(231 + 11, 176 + 10);   // the dead button does not page either
+    assert.equal(w.mapIndex, 0);
     // the eighteen pageless regions refuse rather than throwing the
     // way DFU's missing offsetLookup row does
     assert.equal(hasRegionPage(31), false);
@@ -548,19 +571,127 @@ test('U41: the draw lays the page, the dots and the bar where DFU puts them', ()
   } finally { _setTravelMapArtForTests(null); _resetForTests(); }
 });
 
+test('U41: the zoomed outline displaces its CROP too, so it thickens instead of thinning', () => {
+  restoreDiscovery(null);
+  _resetForTests();
+  mountArt();
+  try {
+    setValue('GUI', 'TravelMapLocationsOutline', true);
+    const { deps } = mkWorld();
+    const w = new TravelMapWindow(deps);
+    w._openRegionPanel(DAGGERFALL);
+    w.click(160, 92, true);            // zoom on the page's centre
+    const r = recorder();
+    w.draw(r, canvas, font());
+    const dots = r.quads.find((q) => String(q.tex).includes('travelmap_dots'));
+    const outlines = r.quads.filter((q) => String(q.tex).includes('travelmap_outline'));
+    assert.equal(outlines.length, 4);
+    // the DESTINATION is half a screen pixel out (as unzoomed) AND
+    // the SOURCE window moves with it (:784-792), which the 2x crop
+    // magnifies - the same displacement twice over
+    const left = outlines.find((q) => q.x < dots.x);
+    assert.ok(left, 'one copy sits left of the dots');
+    assert.equal(dots.x - left.x, 0.5, 'half a screen pixel of destination');
+    const srcShift = (dots.uv.u0 - left.uv.u0) * REGION_W;
+    assert.ok(Math.abs(srcShift - 0.5 / 4) < 1e-9,
+      `and half a screen pixel of SOURCE too (${srcShift})`);
+  } finally { _setTravelMapArtForTests(null); _resetForTests(); }
+});
+
 test('U41: the identify flash is four states for a region and two for a location', () => {
   mountArt();
   try {
     const { deps } = mkWorld();
     const w = new TravelMapWindow(deps);
     assert.equal(w.identifying, true, 'Setup identifies the player\'s region');
+    // identifyLastChangeTime is 0 against a MONOTONIC clock, so the
+    // first ON state lands on the next tick rather than half a second
+    // later (:1732-1743 against Time.realtimeSinceStartup)
+    w.tick(0.001);
+    assert.equal(w.identifyState, true, 'the shape lights up immediately');
+    w.tick(0.001);
+    assert.equal(w.identifyState, true, 'and then HOLDS for the interval - it does not strobe');
     let flips = 0;
     for (let i = 0; i < 40 && w.identifying; i++) { w.tick(0.6); flips++; }
     assert.equal(w.identifying, false);
     assert.ok(flips >= 8 && flips <= 10, `four ON states at 0.5s each (${flips} ticks)`);
     w._atButtonClick();
     assert.equal(w.identifying, true, 'I\'m At re-identifies');
+    // DFU updates only the TOP window: a box or the picker freezes
+    // the flash rather than letting it end underneath them
+    w.top = 'find';
+    for (let i = 0; i < 40; i++) w.tick(0.6);
+    assert.equal(w.identifying, true, 'the flash is frozen under the find box');
+    w.top = null;
+    for (let i = 0; i < 40 && w.identifying; i++) w.tick(0.6);
+    assert.equal(w.identifying, false, 'and runs out once it closes');
   } finally { _setTravelMapArtForTests(null); }
+});
+
+test('U41: the filters and the popup toggles outlive the window', () => {
+  restoreDiscovery(null);
+  mountArt();
+  try {
+    const { deps } = mkWorld();
+    const first = new TravelMapWindow(deps);
+    first._openRegionPanel(DAGGERFALL);
+    first._filterButtonClick('towns');
+    first._filterButtonClick('homes');
+    first.closeTravelWindows(true);
+    // DFU re-pushes ONE window; the port mints a new one and the
+    // state it would have carried is waiting for it
+    const second = new TravelMapWindow(deps);
+    assert.deepEqual(second.filters, { dungeons: false, temples: false, homes: true, towns: true });
+    const save = second.getTravelMapSaveData();
+    assert.deepEqual(save, {
+      filterDungeons: false, filterHomes: true, filterTemples: false, filterTowns: true,
+      sleepInn: true, speedCautious: true, travelShip: true,
+    }, 'GetTravelMapSaveData reads the live state and the struct\'s own defaults');
+    // a popup's choices come back on the NEXT popup
+    second._openRegionPanel(DAGGERFALL);
+    second.locationSelected = true;
+    second.locationSummary = locationSummaryAt(second.deps.mapDict, 50, 120);
+    second._createPopUpWindow();
+    second.popUp.input('KeyS');   // reckless
+    second.popUp.input('KeyN');   // camp out
+    second.popUp.exit();
+    second._createPopUpWindow();
+    assert.equal(second.popUp.speedCautious, false);
+    assert.equal(second.popUp.sleepModeInn, false);
+    assert.equal(second.getTravelMapSaveData().speedCautious, false);
+    // a null envelope is DFU's "use the defaults" (:1344-1345)
+    second.setTravelMapFromSaveData(null);
+    assert.deepEqual(second.filters, { dungeons: false, temples: false, homes: false, towns: false });
+    assert.equal(second.popUp.speedCautious, true);
+    // and the envelope really rides the ONE composer both hosts call
+    // (SaveLoadManager.cs:871 / :1479)
+    second._filterButtonClick('dungeons');
+    setTravelMapPopUpState({ speedCautious: false, sleepModeInn: false, travelShip: false });
+    const envelope = composeSessionState({});
+    assert.deepEqual(envelope.travelMap, {
+      filterDungeons: true, filterTemples: false, filterHomes: false, filterTowns: false,
+      sleepInn: false, speedCautious: false, travelShip: false,
+    });
+    restoreSessionState({ travelMap: envelope.travelMap }, {});
+    assert.deepEqual(travelMapSaveData(), envelope.travelMap, 'a round trip is a fixed point');
+    restoreSessionState({}, {});
+    assert.deepEqual(travelMapSaveData(), {
+      filterDungeons: false, filterTemples: false, filterHomes: false, filterTowns: false,
+      sleepInn: true, speedCautious: true, travelShip: true,
+    }, 'a pre-U41 save restores the struct\'s defaults, as DFU\'s null arm does');
+  } finally { _setTravelMapArtForTests(null); resetTravelMapState(); }
+});
+
+test('U41: a window that finishes in its own tick is cleared by the host', () => {
+  // the popup's countdown departs on a clock, not on a key: the
+  // overlay seam has to notice `done` in frame(), the way the dungeon
+  // host's tickOverlay does
+  const tt = readFileSync(new URL('../src/scenes/townTalk.js', import.meta.url), 'utf8');
+  const frame = tt.slice(tt.indexOf('function frame(dt)'), tt.indexOf('function frame(dt)') + 900);
+  assert.ok(/overlay\?\.tick\?\.\(dt\)/.test(frame), 'the overlay ticks');
+  assert.ok(frame.includes('if (overlay?.done)'), 'and a finished window is dropped in the same pass');
+  assert.ok(frame.indexOf('overlay?.tick') < frame.indexOf('if (overlay?.done)'), 'in that order');
+  assert.ok(frame.includes('overlay.dispose?.()'), 'freeing its textures');
 });
 
 test('U41: the source carries the laws it claims', () => {
@@ -572,4 +703,7 @@ test('U41: the source carries the laws it claims', () => {
   assert.ok(src.includes('yAdjust = regionIndex === BETONY_INDEX ? -477 : 0'), 'Betony\'s crosshair fixup');
   assert.ok(src.includes('x += 60; y += 212;'), 'Betony\'s mouse fixup');
   assert.ok(src.includes('xDiff = Math.trunc(xDiff / 4)'), 'the Cybiades quarter-scale fix');
+  assert.ok(src.includes('this.identifyLastChangeTime = _clock - IDENTIFY_FLASH_INTERVAL'),
+    'the flash stamp stores the DISTANCE, so the first map of a session flashes at once');
+  assert.ok(/^let _clock = 0;$/m.test(src), 'against ONE monotonic clock, as realtimeSinceStartup is');
 });

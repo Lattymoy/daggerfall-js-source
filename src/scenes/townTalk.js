@@ -570,6 +570,18 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   function frame(dt) {
     hud.tick(dt);
     overlay?.tick?.(dt);   // D1: the death sequence's clock (any overlay may want one)
+    // U41: a window may FINISH inside its own tick - the travel
+    // popup's day countdown departs on a clock, not on a key - and
+    // this seam had no done check, so such a window stayed painted
+    // over the world until the next keypress. The dungeon host's
+    // tickOverlay (dungeonContext:2692-2696) has always had one.
+    if (overlay?.done) {
+      const cb = _onOverlayClosed;
+      _onOverlayClosed = null;
+      overlay.dispose?.();
+      overlay = null;
+      cb?.();
+    }
     const s = hudScale(canvas.width, canvas.height);
     if (font) hud.draw(renderer, canvas, font, s);
     if (overlay && font) overlay.draw(renderer, canvas, font, s);

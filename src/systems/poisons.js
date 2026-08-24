@@ -72,6 +72,12 @@ export const isDrugType = (poisonType) => poisonType >= POISONS.Indulcet && pois
  * with self") and create the live entry. currentMinute = the classic
  * minute count at infection.
  */
+/** EntityEffectManager.GetPoisonCount (:1502-1512): how many poison
+ *  bundles are live. The travel popup's warning ORs this with the
+ *  disease count (DaggerfallTravelPopUp.cs:419). */
+export const poisonCount = (entity) =>
+  (entity?.activeEffects ?? []).filter((a) => a.kind === 'poison' && !a.ended).length;
+
 export function startPoison(target, poisonType, currentMinute, rolls = Math.random) {
   if (poisonType === POISONS.None) return null;
   // NO EFFECT IS REGISTERED FOR AN UNKNOWN TYPE. DFU builds the bundle

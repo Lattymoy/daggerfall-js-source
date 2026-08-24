@@ -11,6 +11,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { TravelPopUpWindow, POPUP_RECTS, TOGGLE_POS, TOGGLE_SIZE, TRAVEL_TOGGLE_COLOR, LABEL_POS, COUNTDOWN_TICK } from '../src/ui/travelPopUp.js';
 import { CLIMATES } from '../src/formats/mapsFile.js';
+import { FNT_ASCII_START } from '../src/formats/fntFile.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -83,6 +84,28 @@ test('U41 popup: a click ASSIGNS its own option, a hotkey TOGGLES the pair', () 
   assert.equal(w.trip.totalCost, 5, 'one inn stay over dry land');
 });
 
+test('U41 popup: a wheel notch over a pair toggles it, in either direction', () => {
+  const { w } = mk();
+  const centre = (key) => {
+    const [x, y, rw, rh] = POPUP_RECTS[key];
+    return [x + rw / 2, y + rh / 2];
+  };
+  w.wheel(1);
+  assert.equal(w.speedCautious, true, 'the wheel outside every button does nothing');
+  w.hover(...centre('reckless'));
+  w.wheel(1);
+  assert.equal(w.speedCautious, false, 'scrolling over EITHER member flips the pair');
+  w.wheel(-1);
+  assert.equal(w.speedCautious, true, 'both directions toggle');
+  w.hover(...centre('ship'));
+  w.wheel(1);
+  assert.equal(w.travelShip, false);
+  w.hover(...centre('inns'));
+  w.wheel(1);
+  assert.equal(w.sleepModeInn, false);
+  assert.equal(w.trip.minutes, 1210, 'and the numbers follow');
+});
+
 test('U41 popup: the ship costs, the gold gate refuses without closing', () => {
   const { w, traveled } = mk({ getClimateIndex: () => CLIMATES.Ocean, gold: () => 3 });
   assert.equal(w.trip.oceanPixels, 10);
@@ -94,6 +117,40 @@ test('U41 popup: the ship costs, the gold gate refuses without closing', () => {
   assert.equal(w.done, false, 'and the popup stays');
   w.input('Enter');   // click-anywhere-to-close
   assert.equal(w.top, null);
+});
+
+test('U41 popup: the gold test is TWO-SIDED - letters pay the passage, only coins pay the inn', () => {
+  // GetGoldAmount is coins + letters of credit; the inn nights are
+  // tested against the COINS alone ("Taverns only accept gold pieces")
+  const { w, traveled } = mk({
+    getClimateIndex: () => CLIMATES.Ocean,
+    gold: () => 3 + 5000,       // three coins and a 5000g letter
+    goldPieces: () => 3,
+  });
+  assert.equal(w.trip.totalCost, 30, '25 ship rental + 5 inn');
+  assert.equal(w.trip.piecesCost, 5);
+  w.input('KeyB');
+  assert.equal(w.top, 'gold', 'the letter cannot pay for the bed');
+  w.input('Enter');
+  w.input('KeyN');              // camp out: no inn nights at all
+  assert.equal(w.trip.piecesCost, 0);
+  assert.equal(w.trip.totalCost, 25);
+  w.input('KeyB');
+  assert.equal(w.doFastTravel, true, 'and the letter pays the passage');
+  assert.equal(traveled.length, 0);
+});
+
+test('U41 popup: a POISONED player is warned too, and the transport flags reach the calculator', () => {
+  const poisoned = mk({ diseaseCount: () => 0, poisonCount: () => 1 });
+  poisoned.w.input('KeyB');
+  assert.equal(poisoned.w.top, 'diseased', 'DiseaseCount > 0 OR PoisonCount > 0');
+  // Items.Contains(Transportation, Horse) is read ONCE at push
+  const onFoot = mk().w;
+  const mounted = mk({ hasHorse: () => true }).w;
+  assert.equal(onFoot.trip.minutes, 1040);
+  assert.equal(mounted.trip.minutes, 520, 'a horse is the 128/256 transport modifier');
+  const carted = mk({ hasCart: true }).w;
+  assert.equal(carted.trip.minutes, 770, 'a cart is 192/256, and a plain boolean dep still works');
 });
 
 test('U41 popup: a disease warns first, and Yes runs the gold check behind it', () => {
@@ -109,6 +166,28 @@ test('U41 popup: a disease warns first, and Yes runs the gold check behind it', 
   assert.equal(w.top, null);
   assert.equal(w.doFastTravel, true, 'Yes falls through to the gold check');
   assert.equal(traveled.length, 0, 'and still nothing has moved');
+});
+
+test('U41 popup: the label shows the COINS, not the coins plus the paper', () => {
+  // availableGoldLabel is PlayerEntity.GoldPieces (:280) - a player
+  // holding a 5000g letter still reads their three coins there
+  const { w } = mk({ gold: () => 5003, goldPieces: () => 3 });
+  const painted = [];
+  const font = {
+    tex: null,
+    fnt: {
+      fixedHeight: 6, fixedWidth: 4,
+      glyphWidth: (gi) => { painted.push(String.fromCharCode(gi + FNT_ASCII_START)); return 4; },
+    },
+  };
+  const quads = [];
+  const renderer = { drawScreenQuad: (tex, rect) => quads.push(rect), uploadTexture: () => 't', releaseTexture: () => {} };
+  w.draw(renderer, { width: 1280, height: 800 }, font);
+  // shadowText measures once and paints twice, so every label's
+  // glyphs arrive three times: gold, then trip cost, then days
+  const text = painted.join('');
+  assert.ok(text.startsWith('333555111'), `coins 3, cost 5, one day (${text.slice(0, 20)})`);
+  assert.ok(!text.includes('5003'), 'GetGoldAmount never reaches the label');
 });
 
 test('U41 popup: the day countdown empties before the trip runs', () => {
@@ -169,6 +248,14 @@ test('U41: the world host mounts the art window and keeps performFastTravel\'s o
   assert.ok(src.includes('if (!travelMapArtLoaded())'), 'no art, no window');
   assert.ok(src.includes('new TravelMapWindow({\n      maps, mapDict,'), 'the window gets the maps and the dict');
   assert.ok(!src.includes('buildTravelIndex'), 'the keyed typeahead\'s directory is retired');
+  // DeductFastTravelGold (:469-473): coins for the inn, letters for
+  // the rest - and the popup is handed both pools plus the transport
+  assert.ok(fn.includes('deductGoldPieces(playerEntity, computed.piecesCost'), 'the inn nights come out of coin');
+  assert.ok(fn.includes('deductGold(playerEntity, computed.totalCost - (computed.piecesCost'), 'the rest may be paid on paper');
+  assert.ok(src.includes('gold: () => totalGoldAmount(playerEntity)'), 'the gate sees GetGoldAmount');
+  assert.ok(src.includes('goldPieces: () => goldAmount(playerEntity)'), 'and the coins alone');
+  assert.ok(src.includes('hasHorse: () => hasTransport(TRANSPORT_HORSE)'), 'a bought horse reaches the calculator');
+  assert.ok(src.includes('poisonCount: () => poisonCount(playerEntity)'), 'and a poison reaches the warning');
   const k = src.indexOf('async function _teleportToPixel');
   assert.ok(k > 0, 'the shared teleport core exists');
   const core = src.slice(k, k + 900);

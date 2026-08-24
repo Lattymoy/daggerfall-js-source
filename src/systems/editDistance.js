@@ -25,12 +25,22 @@
 //   the other way. Nothing in the window depends on it: the
 //   relevance CUTOFF is a >= test, and both sides of an exact tie
 //   are kept.
-// - SortedDictionary<string,string> iterates by the CURRENT
-//   CULTURE's string order; this sorts ORDINAL. The iteration
-//   order is only observable once the heap starts dropping
-//   results, which needs more names than ntop - and the window
-//   passes ntop = 1000 against regions of a few hundred
-//   locations, so it never does.
+// - TWO COLLATIONS are ordinal here where C# is culture-sensitive,
+//   and the second one is user-visible:
+//   (a) SetDictionary's SortedDictionary<string,string> iterates in
+//       the CURRENT CULTURE's order. That order is only observable
+//       once the heap starts DROPPING, which it really does: the
+//       window passes ntop = 1000 and Daggerfall alone holds 1331
+//       locations (test/maps.test.js:190), so the drop path is live
+//       in the biggest regions. It moves only the TAIL, because the
+//       heap always drops its current minimum and MatchesCutOff
+//       keeps the head - but it is not dead code, and a debugger
+//       chasing the find box in Daggerfall should know that.
+//   (b) CompareTo's tie-break is string.Compare(other, this,
+//       InvariantCulture); this compares ordinal. That one IS the
+//       output order, so a group of equal-relevance names differing
+//       only by an apostrophe or a hyphen can reach the list picker
+//       in a different order than DFU's.
 
 /** DaggerfallDistance.IsSeparator (:64-67). */
 export const isSeparator = (c) => c === ' ' || c === '-' || c === '\'';

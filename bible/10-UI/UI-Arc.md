@@ -3689,12 +3689,62 @@ the pair, and the trip does not run when BEGIN is pressed - the days
 label counts down one day per 0.05s of real time and only an empty
 counter departs.
 
+**DFU keeps ONE window; the port mints one per open.** DaggerfallUI
+holds a single DaggerfallTravelMapWindow and re-PUSHES it, so its
+four filters and the popup's three choices survive a close - and
+SaveLoadManager writes them into every save as TravelMapSaveData.
+The port's windows are per-open objects, so that state moved to
+`systems/travelMapState.js` (the A2 zoom-memory shape) and rides
+`composeSessionState`, the one envelope composer both hosts already
+call. Two consequences worth naming: a filter set on the map is
+still set the next time V is pressed, and a save from before this
+slice restores the struct's own defaults rather than leaving the
+live session's filters standing - which is exactly what DFU's
+`SetTravelMapFromSaveData(null)` arm does.
+
 **The identify flash is flow control, not decoration.** It runs four
 ON states for a region and two for a selected location, and
 `StopIdentify(true)` is where the travel confirmation is created - so
 after a find, it is the END of the flashing crosshair that asks "do
 you wish to travel to %tcn?". Clicking the flashing place skips the
 wait to the same door.
+
+**What the parity RE-READ caught, since the probe could not run.**
+Five adversarial readers went back over the C# against the port, and
+seven of their findings were real:
+
+- **The gold is two pools, not one.** `GetGoldAmount` is coins PLUS
+  letters of credit, and `DeductFastTravelGold` takes the inn nights
+  out of the coins ALONE before the rest may reach the letters -
+  "Taverns only accept gold pieces" is DFU's own comment on the
+  test. The F-slice had recorded the port's purse as one pool, but
+  `court.js`'s `DeductGoldAmount` has spent letters since B1, so the
+  recording was stale and the window was both refusing trips a
+  letter could pay for and letting a letter pay for a bed. Both
+  halves are live now, and the label shows the COINS, as DFU's does.
+- **A POISONED traveller was never warned.** DFU's test is
+  `DiseaseCount > 0 || PoisonCount > 0`; the port had only the
+  disease half, while its own poison bundles have been on the entity
+  since the disease arc.
+- **A horse and a cart were invisible to the calculator.** The
+  general store sells both and the wagon gate already reads
+  `Items.Contains(Transportation, Small_cart)`, but the window was
+  wired `hasHorse: false, hasCart: false` - so a mounted player was
+  quoted the on-foot day count and the on-foot inn bill.
+- **The paging arrows painted on the province map.** DFU creates
+  them disabled and only SetupArrowButtons turns them on, so a
+  player whose own region pages (Alik'r, Dragontail, Wrothgarian)
+  saw two arrows over the world map before opening anything.
+- **The first flash was half a second late.** `identifyLastChangeTime
+  = 0` works in C# because it is compared against
+  `Time.realtimeSinceStartup`, which is never near zero. The port
+  stores the same DISTANCE against one monotonic clock instead.
+- **The zoomed outline thinned where DFU's thickens**: DFU displaces
+  the outline copies' CROP as well as their panel, and the 2x zoom
+  magnifies that second half.
+- **A third of the C# line citations had drifted** by 10-80 lines,
+  including the whole identify block, which pointed into the console
+  commands. Swept against the reference file symbol by symbol.
 
 **What the live probe caught: nothing, because it could not run.**
 This machine has no ARENA2, so every art path is build-verified and
@@ -3707,21 +3757,20 @@ polls the window's own state through a new `__travelMap` probe
 surface rather than sleeping, because a click surface cannot be
 driven blind. It needs a box with game data; that pass is owed.
 
-Pins: 15 in `travelmapwindow.test.js`, 7 in `travelmap.test.js`, 6 in
+Pins: 18 in `travelmapwindow.test.js`, 11 in `travelmap.test.js`, 6 in
 `editdistance.test.js`, 2 re-pinned in `travelvisibility.test.js`.
 The offset table is diffed against the C# key for key and value for
-value. 38 mutations, 38 dead - the first round left five alive (both
-arrow directions, the pageless refusal, the popup's assign-not-toggle
-click, and the map dict's first-wins collision arm), each of which is
-now its own pin.
+value. 44 mutations, 43 dead and one PROVEN equivalent (shifting the
+flash clock by a constant moves the stored stamp with it, so nothing
+can observe it). The first round left five alive - both arrow
+directions, the pageless refusal, the popup's assign-not-toggle
+click, and the map dict's first-wins collision arm - and each is now
+its own pin.
 
 FLAGGED: the guild TELEPORT mode (`ActivateTeleportationTravel` +
 `DaggerfallTeleportPopUp`) still waits on the guild arc's teleport
 service, and `guildServiceFlow`'s `Teleport: null` still points here;
 the quest journal's click-through travel (`GotoPlace`) has no journal
-door yet; `TravelMapSaveData` is offered by the window
-(`getTravelMapSaveData`/`setTravelMapFromSaveData`) and nothing in the
-host's envelope carries it, so the filter toggles reset each session;
-TextureReplacement's custom region maps and region overlays have no
-door; and the HUD smash-to-black around the trip waits on a fade
-layer the port does not have.
+door yet; TextureReplacement's custom region maps and region
+overlays have no door; and the HUD smash-to-black around the trip
+waits on a fade layer the port does not have.

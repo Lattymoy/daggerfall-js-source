@@ -53,12 +53,12 @@ import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { locationCompassDirection, findFactionByTypeAndRegion } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search
 import { seasonValue, SEASONS, dateFromClassicMinutes, dateTimeString, midDateTimeString } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes
-import { regionPriceAdjustment } from '../systems/shopStock.js';   // Q4-v: CreateGold's regional term (the shops' own producer)
+import { regionPriceAdjustment, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from '../systems/shopStock.js';   // Q4-v: CreateGold's regional term (the shops' own producer); U41: Items.Contains(Transportation, ...)
 import { getNameBankOfRegion } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5)
 import { createHitEffects } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';
-import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold } from '../systems/court.js';   // AUDIT 17e F6   // G2   // F-slice: travel gold
+import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold, totalGoldAmount, deductGoldPieces } from '../systems/court.js';   // AUDIT 17e F6   // G2   // F-slice: travel gold; U41: GetGoldAmount + the pieces half of DeductFastTravelGold
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
 import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet (LevelUpScreen: AUDIT 21 hosts F3)
@@ -128,7 +128,8 @@ import { fullName as nameHelperFullName, GENDERS, BANK_TYPES } from '../characte
 // NameHelper.BankTypes -> the Races name TalkManagerMCP's Oath reads
 const RACE_BY_NAME_BANK = Object.freeze(Object.fromEntries(
   Object.entries(BANK_TYPES).map(([race, bank]) => [bank, race])));
-import { startDisease, endDisease, diseaseCount } from '../systems/diseases.js';   // AUDIT 24: the quest bridge's MakePcDiseased / CurePcDisease seams (W1: the popup's diseased warning)
+import { startDisease, endDisease, diseaseCount } from '../systems/diseases.js';   // AUDIT 24: the quest bridge's MakePcDiseased / CurePcDisease seams; U41: the popup's diseased warning
+import { poisonCount } from '../systems/poisons.js';   // U41: the warning's other half
 import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverBuilding, discoveredBuildings, hasDiscoveredLocationId } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
@@ -1140,6 +1141,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // dictionary - one MapSummary per location, keyed by map pixel.
   const mapDict = buildMapDict(maps);
   let _travelMap = null;   // the live window, for the probe surface
+  /** ItemCollection.Contains(ItemGroups.Transportation, template) -
+   *  the same one-line test ui/nativeInventory.js's wagon gate uses. */
+  const hasTransport = (template) => (playerEntity.items ?? []).some((it) => it.templateIndex === template);
   const playerTravelPixel = () => {
     const wc = state.worldCoords(walkMode ? player.pos : cam.pos);
     return worldCoordToMapPixel(wc.x, wc.z);
@@ -1209,7 +1213,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (_traveling) return;
     _traveling = true;
     try {
-      deductGold(playerEntity, computed.totalCost);
+      // DeductFastTravelGold (:469-473): the inn nights come out of
+      // COIN, and only what is left may be paid with a letter of
+      // credit - "Taverns only accept gold pieces".
+      deductGoldPieces(playerEntity, computed.piecesCost ?? 0);
+      deductGold(playerEntity, computed.totalCost - (computed.piecesCost ?? 0));
       await _teleportToPixel(pick.pixel.x, pick.pixel.y);
       // cautious arrival heals in full; magicka honors NoRegenSpellPoints
       if (opts.speedCautious) {
@@ -1328,10 +1336,19 @@ export async function bootWorld(canvas, renderer, params, status) {
       maps, mapDict,
       getPlayerPixel: playerTravelPixel,
       getClimateIndex: (x, yy) => maps.getClimateIndex(x, yy),
-      gold: () => goldAmount(playerEntity),
-      // transport ownership rides the transport arc; on foot for now
-      hasHorse: false, hasCart: false, hasShip: false,
+      // GetGoldAmount is coins PLUS letters of credit; the popup's
+      // second test and its label want the coins alone.
+      gold: () => totalGoldAmount(playerEntity),
+      goldPieces: () => goldAmount(playerEntity),
+      // Items.Contains(Transportation, Horse / Small_cart)
+      // (DaggerfallTravelPopUp.cs:216-217) - the general store sells
+      // both, so the calculator's transport modifier is real. A SHIP
+      // still has no ownership state (the transport arc's row).
+      hasHorse: () => hasTransport(TRANSPORT_HORSE),
+      hasCart: () => hasTransport(TRANSPORT_SMALL_CART),
+      hasShip: false,
       diseaseCount: () => diseaseCount(playerEntity),
+      poisonCount: () => poisonCount(playerEntity),
       onTravel: (pick, opts, computed) => { fastTravelTo(pick, opts, computed); },
     });
     townTalk.showOverlay(_travelMap);

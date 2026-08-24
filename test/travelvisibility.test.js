@@ -4,15 +4,16 @@
 // runtime discoveredLocations store - one uniform test, no type
 // distinction (towns pass because the DATA marks them). It gates
 // THREE surfaces in the classic window, where the keyed stand-in had
-// only one: the DOTS drawn on a region page (:687-689), the find
-// box's results (:1508-1510), and whether a hovered location can be
-// selected at all (:1230-1232). CanFindPlace (:1134-1146) is the
+// only one: the DOTS drawn on a region page (:702-703), the find
+// box's results (:1510-1512), and whether a hovered location can be
+// selected at all (:1231-1233). CanFindPlace (:1134-1146) is the
 // same test through a region+name pair. The write half: entering a
 // location's pixel discovers it.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { TravelMapWindow, OFFSET_LOOKUP, REGION_W, REGION_H, _setTravelMapArtForTests } from '../src/ui/travelMapWindow.js';
+import { resetTravelMapState } from '../src/systems/travelMapState.js';
 import { buildMapDict } from '../src/systems/mapDirectory.js';
 import { REGION_NAMES, LOCATION_TYPES, CLIMATES, getMapPixelID } from '../src/formats/mapsFile.js';
 import { discoverLocation, restoreDiscovery } from '../src/systems/discovery.js';
@@ -27,6 +28,7 @@ const row = (x, y, locationType, discovered) => ({
 });
 
 function world() {
+  resetTravelMapState();
   const entries = [
     ['Daggerfall', row(50, 120, LOCATION_TYPES.TownCity, true)],
     ['Privateers Hold', row(52, 121, LOCATION_TYPES.DungeonRuin, false)],

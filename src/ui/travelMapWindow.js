@@ -13,43 +13,43 @@
 // and the arrival seam (onTravel -> the host's fastTravelTo).
 //
 // THE NATIVE-WINDOW RULE, element by element:
-// - the background is the whole 320x200 TRAV0I00.IMG (:325-326);
+// - the background is the whole 320x200 TRAV0I00.IMG (:326);
 //   the region pages draw INTO the 320x160 window it frames, at
-//   (0, regionPanelOffset=12) (:117).
+//   (0, regionPanelOffset=12) (:121).
 // - the region label is a centred default-shadowed label at y=2
-//   (:277-279).
+//   (:280-282).
 // - the bottom bar's buttons: EXIT (278,175,39,22) - art already in
 //   the background - FIND (3,175) and I'M AT (3,186) cut out of
 //   TRAV0I03.IMG's 45x22 sheet, the four filter buttons cut out of
 //   TRAV01I0/TRAV01I1's 179x22 sheets (enabled/disabled pairs) at
 //   (50,175) (50,186) (149,175) (149,186), and the two 22x20 arrow
-//   buttons at (231,176) and (254,176) (:449-522).
+//   buttons at (231,176) and (254,176) (:463-527).
 // - MBRD00I0.IMG borders the region page whenever it is not zoomed
 //   (:319-322, :795-799).
 // - the location dots are a GENERATED 320x160 texture, one pixel per
 //   map pixel, coloured out of FMAP_PAL.COL by location type
-//   (:249-267); with TravelMapLocationsOutline on, a second
+//   (:253-269); with TravelMapLocationsOutline on, a second
 //   half-transparent black copy draws four times at half-pixel
 //   offsets to outline them (:296-311, :672-732).
 //
 // THE LAWS, verbatim:
-// - the offset table (:600-645) that aligns each region page to map
+// - the offset table (:590-648) that aligns each region page to map
 //   pixels, Betony's scale of 4 and its -477/+60/+212 fixups, and
-//   the Cybiades quarter-scale mouse fix (:1188-1199).
-// - the dots walk (:677-720): politic index must equal the open
+//   the Cybiades quarter-scale mouse fix (:1193-1198).
+// - the dots walk (:687-731): politic index must equal the open
 //   region, the pixel must carry a location, the location must be
 //   discovered, and its type must survive the filters. DFU's own
 //   `offset * scale` indexing quirk is kept - it is what makes the
 //   Betony page plot at all.
-// - the identify flash (:1815-1866): 0.5s per state, four flashes
+// - the identify flash (:1732-1780): 0.5s per state, four flashes
 //   for a region and two for a selected location, and the flash's
 //   END is what pops the travel confirmation after a find.
-// - the zoom (:731-800): right-click toggles a 2x crop centred on
+// - the zoom (:736-803): right-click toggles a 2x crop centred on
 //   the cursor, shift-move pans it, and the crop clamps to the page
 //   edges. The port's textures are TOP-DOWN where Unity's are
 //   bottom-up, so the buffers are built in DFU's bottom-up order and
 //   flipped at upload; the crop rect is flipped with them.
-// - the find box (:963-975) runs DFU's weighted edit distance over
+// - the find box (:951-957) runs DFU's weighted edit distance over
 //   the OPEN region's names (systems/editDistance.js), not a prefix
 //   match, with MatchesCutOff's relevance gate.
 //
@@ -57,7 +57,12 @@
 // - no localization layer: every name is the canonical MAPS.BSA one,
 //   so GetLocalizedLocationName / GetLocalizedRegionName collapse to
 //   the map table and REGION_NAMES, and the localizedMapNameLookup
-//   dictionary reduces to the region's own name list.
+//   dictionary reduces to the region's own name list. With it goes
+//   the COLLATION: DFU's L-key list is OrderBy(p => p), which is
+//   culture-sensitive, and this sorts ordinal - visible as the row
+//   order of names that differ only by an apostrophe or a hyphen
+//   (systems/editDistance.js records the same departure on the find
+//   box's own two orderings).
 // - no TextureReplacement: the imported region overlays and custom
 //   region maps (:648-660, :821-833) have no door here.
 // - no world data replacement: checkLocationDiscovered reads the
@@ -90,10 +95,11 @@ import { locationSummaryAt } from '../systems/mapDirectory.js';
 import { getDaggerfallDistance, MatchesCutOff } from '../systems/editDistance.js';
 import { hasDiscoveredLocationId } from '../systems/discovery.js';
 import { getBool } from '../systems/settings.js';
+import { travelMapFilters, travelMapPopUpState, setTravelMapPopUpState, travelMapSaveData, restoreTravelMapSaveData } from '../systems/travelMapState.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 
-// --- DFU's fields (:36-63) ---
+// --- DFU's fields (:38-63) ---
 export const BETONY_INDEX = 19;
 export const REGION_PANEL_OFFSET = 12;
 export const IDENTIFY_FLASH_COUNT = 4;
@@ -107,11 +113,11 @@ export const DOT_OUTLINE_RGBA = Object.freeze([0, 0, 0, 128]);
 export const OUTLINE_DISPLACEMENTS = Object.freeze([[-0.5, 0], [0, -0.5], [0, 0.5], [0.5, 0]]);
 export const ZOOM_FACTOR = 2;
 export const MAX_MATCHING_RESULTS = 1000;
-/** regionTextureOverlayPanelRect (:117) - the region page. */
+/** regionTextureOverlayPanelRect (:121) - the region page. */
 export const REGION_RECT = Object.freeze([0, REGION_PANEL_OFFSET, 320, 160]);
 export const REGION_W = 320, REGION_H = 160;
 
-/** The bottom bar (:449-522). */
+/** The bottom bar (:463-527). */
 export const BUTTON_RECTS = Object.freeze({
   exit: [278, 175, 39, 22],
   find: [3, 175, 45, 11],
@@ -123,8 +129,8 @@ export const BUTTON_RECTS = Object.freeze({
   horizontalArrow: [231, 176, 22, 20],
   verticalArrow: [254, 176, 22, 20],
 });
-/** The filter sheets' source rects on DFSize(179,22) (:118-121) and
- *  the find/at cutouts on DFSize(45,22) (:122-123). */
+/** The filter sheets' source rects on DFSize(179,22) (:122-125) and
+ *  the find/at cutouts on DFSize(45,22) (:126-127). */
 export const FILTER_SRC = Object.freeze({
   dungeons: [0, 0, 99, 11], temples: [0, 11, 99, 11],
   homes: [99, 0, 80, 11], towns: [99, 11, 80, 11],
@@ -136,14 +142,14 @@ export const AT_SRC = Object.freeze([0, 11, 45, 11]);
 export const FIND_PROMPT = 'Enter name of place : ';
 export const FIND_MAX_CHARACTERS = 32;
 
-/** locationPixelColors' palette indices (:253-268) and the identify
- *  flash colour (:270), read out of FMAP_PAL.COL. */
+/** locationPixelColors' palette indices (:253-269) and the identify
+ *  flash colour (:271), read out of FMAP_PAL.COL. */
 export const LOCATION_PIXEL_COLOR_INDICES = Object.freeze([
   237, 240, 243, 246, 0, 53, 51, 55, 96, 101, 39, 33, 35, 37,
 ]);
 export const IDENTIFY_FLASH_COLOR_INDEX = 244;
 
-/** PopulateRegionOffsetDict (:598-645): the map pixel the top-left
+/** PopulateRegionOffsetDict (:590-648): the map pixel the top-left
  *  of each region page sits on. */
 export const OFFSET_LOOKUP = Object.freeze({
   'FMAPAI00.IMG': [212, 340], 'FMAPBI00.IMG': [322, 340],
@@ -169,7 +175,7 @@ export const OFFSET_LOOKUP = Object.freeze({
   'FMAP0I60.IMG': [107, 11], 'FMAP0I61.IMG': [255, 275],   // Cybiades
 });
 
-/** The eighteen regions with NO page in the offset table (:598-645):
+/** The eighteen regions with NO page in the offset table (:590-648):
  *  the wildernesses, the two generic villages and the four coast
  *  strips. DFU's UpdateMapLocationDotsTexture indexes offsetLookup
  *  directly, so opening one of these throws KeyNotFoundException;
@@ -190,7 +196,7 @@ export function getRegionMapNames(region) {
 /** GetRegionMapScale (:1674-1680). */
 export function getRegionMapScale(region) { return region === BETONY_INDEX ? 4 : 1; }
 
-/** GetPixelColorIndex (:1355-1432): the type's dot colour, or -1
+/** GetPixelColorIndex (:1369-1431): the type's dot colour, or -1
  *  when it has none or a filter hides it. `filters` is
  *  { dungeons, temples, homes, towns }. */
 export function getPixelColorIndex(locationType, filters = {}) {
@@ -224,7 +230,7 @@ export function getPixelColorIndex(locationType, filters = {}) {
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
 const packRGBA = (r, g, b, a) => (((a << 24) >>> 0) | (b << 16) | (g << 8) | r) >>> 0;
 
-// map_reveallocations / map_hidelocations (:1870-1900) - the flag
+// map_reveallocations / map_hidelocations (:1788-1884) - the flag
 // outlives the console the port does not have.
 let _revealUndiscoveredLocations = false;
 export function setRevealUndiscoveredLocations(on) { _revealUndiscoveredLocations = !!on; }
@@ -233,6 +239,22 @@ export const revealUndiscoveredLocations = () => _revealUndiscoveredLocations;
 // The A1/A2 texture-key lesson: uploadTexture memoizes forever, so
 // every generated texture gets a MODULE-level version in its key.
 let _texVer = 0;
+
+// AnimateIdentify compares against Time.realtimeSinceStartup, which
+// is always far past `identifyLastChangeTime = 0` - so DFU's first
+// flash is ON the frame after the window opens. A per-window
+// accumulator would start at 0 and hold the map dark for half a
+// second on EVERY open (the port mints a window per open), so the
+// clock is module-level and monotonic, exactly as DFU's is.
+let _clock = 0;
+
+// DFU keeps ONE DaggerfallTravelMapWindow alive in DaggerfallUI and
+// re-PUSHES it (OnPush :353-366 re-identifies and closes the region
+// panel), so the four filters and the popup's three toggles survive
+// every open - and the save envelope carries them. The port mints a
+// window per open, so that state lives in systems/travelMapState.js
+// (the A2 zoom-memory shape), where the save layer can reach it
+// without importing a window.
 
 let _art = null;
 /** The window's whole art bundle: the overworld, the picker BITMAP
@@ -255,7 +277,7 @@ export async function preloadTravelMapArt(deps) {
     ]);
   let textRsc = null;
   try { textRsc = new TextRsc().load(await fetchBytes('TEXT.RSC')); } catch { textRsc = null; }
-  // The dot colours and the flash colour are FMAP_PAL entries (:253-270).
+  // The dot colours and the flash colour are FMAP_PAL entries (:253-271).
   const locationPixelColors = LOCATION_PIXEL_COLOR_INDICES.map((i) =>
     packRGBA(fmapPalette.getRed(i), fmapPalette.getGreen(i), fmapPalette.getBlue(i), 255));
   const identifyFlashColor = packRGBA(
@@ -268,7 +290,10 @@ export async function preloadTravelMapArt(deps) {
     regionMaps: new Map(),   // lazily filled, DFU's regionTextures
     deps,
   };
-  await preloadTravelPopUpArt(deps);
+  // Both of these keep their own art-less fallback, so a missing
+  // TRAV0I04 or PICK00I0 costs the popup its frame or the picker its
+  // panel - it does not close the map.
+  await preloadTravelPopUpArt(deps).catch((e) => console.warn('[travelmap] TRAV0I04.IMG unavailable:', e?.message ?? e));
   await preloadListPickerArt(deps).catch(() => { /* the picker keeps its own fallback */ });
   return _art;
 }
@@ -294,7 +319,7 @@ export class TravelMapWindow {
     this.deps = deps;
     this.done = false;
     this.isChoiceWindow = true;   // this window reads raw key codes
-    // DFU's state (:130-158)
+    // DFU's state (:135-163)
     this.selectedRegion = -1;
     this.mouseOverRegion = -1;
     this.mapIndex = 0;
@@ -311,8 +336,7 @@ export class TravelMapWindow {
     this.identifyState = false;
     this.identifyChanges = 0;
     this.identifyLastChangeTime = 0;
-    this._clock = 0;            // Time.realtimeSinceStartup's stand-in
-    this.filters = { dungeons: false, temples: false, homes: false, towns: false };
+    this.filters = travelMapFilters();   // the store, so a filter outlives the window
     this.lastMousePos = [0, 0];
     this.selectedRegionMapNames = getRegionMapNames(this._getPlayerRegion());
     this.borderEnabled = false;
@@ -334,12 +358,12 @@ export class TravelMapWindow {
     this._distance = null;
     this._distanceRegionName = null;
     this._regionMapName = null;   // the page whose art is mounted
-    // Setup's tail (:344-348) - identify the player's region.
+    // Setup's tail (:343-347) - identify the player's region.
     this._startIdentify();
     this._updateIdentifyTextureForPlayerRegion();
   }
 
-  // --- properties (:170-200) ---
+  // --- properties (:175-207) ---
   get hasMultipleMaps() { return this.selectedRegionMapNames.length > 1; }
   get hasVerticalMaps() { return this.selectedRegionMapNames.length > 2; }
   get regionSelected() { return this.selectedRegion !== -1; }
@@ -350,9 +374,9 @@ export class TravelMapWindow {
 
   _click() { audio.playOneShot(SOUND.ButtonClick, 1); }
 
-  // --- helpers (:1637-1680) ---
+  // --- helpers (:1609-1680) ---
 
-  /** GetPlayerRegion (:1637-1646) - DFU's own raw politic read, not
+  /** GetPlayerRegion (:1609-1618) - DFU's own raw politic read, not
    *  PlayerGPS's patched one. */
   _getPlayerRegion() {
     const maps = this.deps.maps;
@@ -365,7 +389,7 @@ export class TravelMapWindow {
 
   _getRegionName(region) { return REGION_NAMES[region] ?? ''; }
 
-  /** GetLocationNameInCurrentRegion (:1620-1650). The fallback arm
+  /** GetLocationNameInCurrentRegion (:1630-1658). The fallback arm
    *  reads locationSummary.MapIndex rather than the argument - DFU's
    *  own quirk, kept. */
   _getLocationNameInCurrentRegion() {
@@ -392,7 +416,7 @@ export class TravelMapWindow {
     return summary ? this.checkLocationDiscovered(summary) : false;
   }
 
-  // --- the region page (:648-800) ---
+  // --- the region page (:651-809) ---
 
   _updateMapTextures() {
     if (!this.regionSelected) return;
@@ -402,7 +426,7 @@ export class TravelMapWindow {
     this._updateMapLocationDotsTexture();
   }
 
-  /** UpdateMapLocationDotsTexture (:669-732). The buffers are built
+  /** UpdateMapLocationDotsTexture (:673-734). The buffers are built
    *  in DFU's BOTTOM-UP order; the upload flips them. */
   _updateMapLocationDotsTexture() {
     const maps = this.deps.maps;
@@ -420,7 +444,7 @@ export class TravelMapWindow {
     this._outlineBuf.fill(0);
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
-        // the `* scale` on the whole offset is DFU's own (:679)
+        // the `* scale` on the whole offset is DFU's own (:691)
         const offset = Math.trunc((((height - y - 1) * width) + x) * this.scale);
         if (offset >= width * height) continue;
         const sampleRegion = maps.getPoliticIndex(originX + x, originY + y) - 128;
@@ -437,7 +461,7 @@ export class TravelMapWindow {
     this._dotsDirty = true;
   }
 
-  /** ZoomMapTextures (:734-800) - the crop's ORIGIN; the draw applies
+  /** ZoomMapTextures (:736-803) - the crop's ORIGIN; the draw applies
    *  it. startY is bottom-up, exactly as Unity's tex coords are. */
   _zoomMapTextures() {
     if (!this.regionSelected || !this.zoom) { this._updateBorder(); return; }
@@ -454,10 +478,10 @@ export class TravelMapWindow {
     this._updateBorder();
   }
 
-  /** UpdateBorder (:802-806). */
+  /** UpdateBorder (:805-809). */
   _updateBorder() { this.borderEnabled = this.regionSelected && !this.zoom; }
 
-  /** UpdateIdentifyTextureForPlayerRegion (:808-870) - the province
+  /** UpdateIdentifyTextureForPlayerRegion (:811-857) - the province
    *  shape, filled out of the picker bitmap. */
   _updateIdentifyTextureForPlayerRegion() {
     if (this.regionSelected) return;
@@ -483,7 +507,7 @@ export class TravelMapWindow {
     this._identifyDirty = true;
   }
 
-  /** UpdateCrosshair (:872-878). */
+  /** UpdateCrosshair (:859-865). */
   _updateCrosshair() {
     if (this.findingLocationActive) {
       const pos = getPixelFromPixelID(this.locationSummary.id);
@@ -494,7 +518,7 @@ export class TravelMapWindow {
     }
   }
 
-  /** UpdateIdentifyTextureForPosition (:888-928) - the crosshair. */
+  /** UpdateIdentifyTextureForPosition (:875-916) - the crosshair. */
   _updateIdentifyTextureForPosition(mapPixelX, mapPixelY, regionIndex) {
     if (!this.regionSelected) return;
     if (regionIndex === -1) regionIndex = this._getPlayerRegion();
@@ -502,7 +526,7 @@ export class TravelMapWindow {
     const mapName = this.selectedRegionMapNames[this.mapIndex];
     const origin = OFFSET_LOOKUP[mapName] ?? [0, 0];
     const scale = getRegionMapScale(regionIndex);
-    const yAdjust = regionIndex === BETONY_INDEX ? -477 : 0;   // (:900-903)
+    const yAdjust = regionIndex === BETONY_INDEX ? -477 : 0;   // (:889-892)
     const scaledX = Math.trunc((mapPixelX - origin[0]) * scale);
     const scaledY = Math.trunc((mapPixelY - origin[1]) * scale) + REGION_PANEL_OFFSET + yAdjust;
     const width = REGION_W, height = REGION_H;
@@ -517,9 +541,9 @@ export class TravelMapWindow {
     this._identifyDirty = true;
   }
 
-  // --- the region panel's life (:1069-1119) ---
+  // --- the region panel's life (:1072-1119) ---
 
-  /** OpenRegionPanel (:1071-1097). */
+  /** OpenRegionPanel (:1072-1098). */
   _openRegionPanel(region) {
     this._click();
     const mapNames = getRegionMapNames(region);
@@ -549,13 +573,13 @@ export class TravelMapWindow {
     this._updateIdentifyTextureForPlayerRegion();
   }
 
-  /** CloseTravelWindows (:1290-1296). */
+  /** CloseTravelWindows (:1288-1295). */
   closeTravelWindows(forceClose = false) {
     if (!this.regionSelected || forceClose) { this.done = true; this.deps.onClose?.(); }
     else this._closeRegionPanel();
   }
 
-  // --- mouse (:1148-1288) ---
+  // --- mouse (:1148-1295) ---
 
   /** GetCoordinates (:1148-1172) - the map pixel under the cursor.
    *  `pos` is the cursor inside the REGION page, so the panel's own
@@ -574,7 +598,7 @@ export class TravelMapWindow {
     return [Math.floor(origin[0] + pos[0]), Math.floor(origin[1] + pos[1])];
   }
 
-  /** UpdateMouseOverLocation (:1176-1240). */
+  /** UpdateMouseOverLocation (:1174-1239). */
   _updateMouseOverLocation() {
     if (!this.regionSelected || this.findingLocationActive) return;
     this.locationSelected = false;
@@ -590,8 +614,8 @@ export class TravelMapWindow {
     let x = Math.trunc(coordinates[0] / scale);
     let y = Math.trunc(coordinates[1] / scale);
 
-    if (this.selectedRegion === BETONY_INDEX) { x += 60; y += 212; }   // (:1194-1198)
-    if (this.selectedRegion === 61) {                                   // Cybiades (:1200-1210)
+    if (this.selectedRegion === BETONY_INDEX) { x += 60; y += 212; }   // (:1193-1198)
+    if (this.selectedRegion === 61) {                                   // Cybiades (:1200-1209)
       let xDiff = x - 440, yDiff = y - 340;
       xDiff = Math.trunc(xDiff / 4); yDiff = Math.trunc(yDiff / 4);
       x = 440 + xDiff; y = 340 + yDiff;
@@ -612,7 +636,7 @@ export class TravelMapWindow {
     }
   }
 
-  /** UpdateMouseOverRegion (:1243-1270) - the picker bitmap answers
+  /** UpdateMouseOverRegion (:1241-1273) - the picker bitmap answers
    *  which province the cursor is over. */
   _updateMouseOverRegion() {
     this.mouseOverRegion = -1;
@@ -633,7 +657,7 @@ export class TravelMapWindow {
     this.mouseOverRegion = region;
   }
 
-  /** UpdateRegionLabel (:1273-1283). */
+  /** UpdateRegionLabel (:1275-1286). */
   regionLabelText() {
     if (!this.regionSelected) return this._getRegionName(this.mouseOverRegion);
     if (this.locationSelected) {
@@ -643,14 +667,19 @@ export class TravelMapWindow {
     return this._getRegionName(this.mouseOverRegion);
   }
 
-  // --- identify (:1815-1866) ---
+  // --- identify (:1732-1780) ---
 
   _startIdentify() {
     if (this.identifying) this._stopIdentify(false);
     this.identifying = true;
     this.identifyState = false;
     this.identifyChanges = 0;
-    this.identifyLastChangeTime = 0;
+    // C# stores 0 and compares against Time.realtimeSinceStartup,
+    // which is ALWAYS past 0 + the interval - so the first flash is
+    // on the very next frame. Storing 0 against a clock that starts
+    // at 0 would hold the first map of a session dark for half a
+    // second, so the port stores the same DISTANCE instead.
+    this.identifyLastChangeTime = _clock - IDENTIFY_FLASH_INTERVAL;
   }
 
   _stopIdentify(createPopUp = true) {
@@ -664,7 +693,7 @@ export class TravelMapWindow {
   _animateIdentify() {
     if (!this.identifying) return;
     const lastIdentifyState = this.identifyState;
-    const time = this._clock;
+    const time = _clock;
     if (time > this.identifyLastChangeTime + IDENTIFY_FLASH_INTERVAL) {
       this.identifyState = !this.identifyState;
       this.identifyLastChangeTime = time;
@@ -675,9 +704,9 @@ export class TravelMapWindow {
     }
   }
 
-  // --- the find flow (:1435-1600) ---
+  // --- the find flow (:1435-1607) ---
 
-  /** GetCurrentRegionLocalizedMapNames (:1462-1478) - deduped, in
+  /** GetCurrentRegionLocalizedMapNames (:1465-1478) - deduped, in
    *  map-table order (the port's names are canonical). */
   _currentRegionMapNames() {
     const names = [];
@@ -692,7 +721,7 @@ export class TravelMapWindow {
 
   _nameIndex(name) { return this.currentDFRegion?.mapNameLookup?.get(name) ?? -1; }
 
-  /** FindLocation (:1481-1531). */
+  /** FindLocation (:1483-1531). */
   findLocation(name) {
     const matching = [];
     if (!name) return matching;
@@ -761,7 +790,7 @@ export class TravelMapWindow {
     this._handleLocationFindEvent(locationName);
   }
 
-  /** CreateConfirmationPopUp (:1682-1706) - TEXT.RSC 31 with %tcn
+  /** CreateConfirmationPopUp (:1682-1703) - TEXT.RSC 31 with %tcn
    *  swapped for the place's name. */
   _createConfirmationPopUp() {
     if (!this.locationSelected) return;
@@ -777,7 +806,7 @@ export class TravelMapWindow {
     });
   }
 
-  /** CreatePopUpWindow (:1708-1728) - the travel popup (the teleport
+  /** CreatePopUpWindow (:1705-1730) - the travel popup (the teleport
    *  arm is FLAGGED). */
   _createPopUpWindow() {
     const pos = getPixelFromPixelID(this.locationSummary.id);
@@ -792,8 +821,9 @@ export class TravelMapWindow {
       diseaseCount: this.deps.diseaseCount,
       textRsc: _art?.textRsc ?? null,
       pick: this.deps.pick,
-      onExit: () => { this.popUp = null; },
+      onExit: () => { this._rememberPopUpState(); this.popUp = null; },
       onTravel: (endPos, opts, computed) => {
+        this._rememberPopUpState();
         this.popUp = null;
         this.deps.onTravel?.({
           pixel: endPos,
@@ -806,43 +836,34 @@ export class TravelMapWindow {
         this.closeTravelWindows(true);
       },
     });
-    // SetTravelMapFromSaveData's popup half (:1325-1336): the three
-    // toggles a save restored land on the popup when it is minted.
-    if (this._pendingPopUpState) Object.assign(this.popUp, this._pendingPopUpState);
+    // The three toggles DFU's persistent popup would still be
+    // holding (SetTravelMapFromSaveData's half, :1325-1336).
+    Object.assign(this.popUp, travelMapPopUpState());
     this.popUp.refresh();
   }
 
-  // --- the save envelope (:1298-1340) ---
-
-  getTravelMapSaveData() {
-    return {
-      filterDungeons: this.filters.dungeons,
-      filterHomes: this.filters.homes,
-      filterTemples: this.filters.temples,
-      filterTowns: this.filters.towns,
-      sleepInn: this.popUp?.sleepModeInn ?? true,
-      speedCautious: this.popUp?.speedCautious ?? true,
-      travelShip: this.popUp?.travelShip ?? true,
-    };
+  /** The popup is minted per trip here where DFU keeps one; its three
+   *  toggles go back to the module store as it closes. */
+  _rememberPopUpState() {
+    if (!this.popUp) return;
+    setTravelMapPopUpState(this.popUp);
   }
 
+  // --- the save envelope (:1324-1363) ---
+
+  getTravelMapSaveData() { return travelMapSaveData(this.popUp); }
+
+  /** SetTravelMapFromSaveData (:1342-1363) - a NULL envelope means
+   *  the struct's defaults, which is how a pre-U41 save loads. */
   setTravelMapFromSaveData(data) {
-    const d = data ?? {};
-    this.filters = {
-      dungeons: !!d.filterDungeons, homes: !!d.filterHomes,
-      temples: !!d.filterTemples, towns: !!d.filterTowns,
-    };
-    this._pendingPopUpState = {
-      sleepModeInn: d.sleepInn ?? true,
-      speedCautious: d.speedCautious ?? true,
-      travelShip: d.travelShip ?? true,
-    };
+    this.filters = restoreTravelMapSaveData(data);
+    if (this.popUp) Object.assign(this.popUp, travelMapPopUpState());
     if (this.regionSelected) this._updateMapLocationDotsTexture();
   }
 
-  // --- event handlers (:930-1064) ---
+  // --- event handlers (:918-1070) ---
 
-  /** ClickHandler (:933-960). */
+  /** ClickHandler (:918-946). */
   _clickHandler(vx, vy) {
     const y = vy - REGION_PANEL_OFFSET;
     if (vx < 0 || vx > REGION_W || y < 0 || y > REGION_H) return;
@@ -856,15 +877,17 @@ export class TravelMapWindow {
     }
   }
 
-  /** AtButtonClickHandler (:969-975). */
+  /** AtButtonClickHandler (:951-957). On the province map
+   *  UpdateCrosshair falls straight back out (:875-878), so I'M AT
+   *  there re-flashes the region shape CloseRegionPanel already
+   *  built rather than rebuilding it - DFU's own shape, kept. */
   _atButtonClick() {
     this.findingLocation = false;
     this._startIdentify();
-    if (this.regionSelected) this._updateCrosshair();
-    else this._updateIdentifyTextureForPlayerRegion();
+    this._updateCrosshair();
   }
 
-  /** FindlocationButtonClickHandler (:977-991) - the input box. */
+  /** FindlocationButtonClickHandler (:959-975) - the input box. */
   _findLocationButtonClick() {
     if (!this.regionSelected) return;
     this._click();
@@ -872,7 +895,7 @@ export class TravelMapWindow {
     this.findText = '';
   }
 
-  /** ArrowButtonClickHandler (:1006-1039). */
+  /** ArrowButtonClickHandler (:990-1022). */
   _arrowButtonClick(which) {
     if (!this.regionSelected || !this.hasMultipleMaps) return;
     let newIndex = this.mapIndex;
@@ -884,7 +907,7 @@ export class TravelMapWindow {
     this._updateCrosshair();
   }
 
-  /** FilterButtonClickHandler (:1044-1064). */
+  /** FilterButtonClickHandler (:1024-1070). */
   _filterButtonClick(which) {
     if (!(which in this.filters)) return;
     this.filters[which] = !this.filters[which];
@@ -914,12 +937,12 @@ export class TravelMapWindow {
       }
       if (code === 'Backspace') { this.findText = this.findText.slice(0, -1); return; }
       const ch = typedChar(code, e);
-      if (ch && this.findText.length < FIND_MAX_CHARACTERS) this.findText += ch;   // (:986)
+      if (ch && this.findText.length < FIND_MAX_CHARACTERS) this.findText += ch;   // (:968)
       return;
     }
     if (this.top === 'notfound') { this.top = null; return; }     // ClickAnywhereToClose
     if (this.top === 'confirm') {
-      // ConfirmTravelPopupButtonClick (:993-1001)
+      // ConfirmTravelPopupButtonClick (:977-988)
       if (code === 'KeyY') { this._click(); this.top = null; this._createPopUpWindow(); return; }
       if (code === 'KeyN' || code === 'Escape') { this._click(); this.top = null; this._stopIdentify(); }
       return;
@@ -933,7 +956,8 @@ export class TravelMapWindow {
     if (this.regionSelected) {
       if (code === 'KeyL') {
         if ((this.currentDFRegion?.locationCount ?? 0) < 1) return;
-        this._showLocationPicker([...this._currentRegionMapNames()].sort(), true);
+        // OrderBy(p => p) (:424-425) - ordinal here, see the header
+        this._showLocationPicker(this._currentRegionMapNames().sort(), true);
         return;
       }
       if (code === 'KeyF') { this._findLocationButtonClick(); return; }
@@ -945,7 +969,8 @@ export class TravelMapWindow {
   }
 
   hover(vx, vy, e = null) {
-    if (this.popUp || this.picker || this.top) return;
+    if (this.popUp) { this.popUp.hover(vx, vy); return; }
+    if (this.picker || this.top) return;
     if (vx === this.lastMousePos[0] && vy === this.lastMousePos[1]) return;
     this.lastMousePos = [vx, vy];
     if (this.regionSelected) this._updateMouseOverLocation();
@@ -974,7 +999,10 @@ export class TravelMapWindow {
       else if (hit === MB_BUTTONS.No) this.input('KeyN');
       return true;
     }
-    if (this.top) { this.top = null; return true; }
+    // TEXT.RSC 13 is ClickAnywhereToClose (:1454); the find box is a
+    // FIELD and answers only Return and Escape.
+    if (this.top === 'notfound') { this.top = null; return true; }
+    if (this.top) return true;
     if (right) {
       // Zoom to mouse position (:388-395)
       if (this.regionSelected) {
@@ -991,8 +1019,13 @@ export class TravelMapWindow {
     for (const which of ['dungeons', 'temples', 'homes', 'towns']) {
       if (inRect(BUTTON_RECTS[which], vx, vy)) { this._filterButtonClick(which); return true; }
     }
-    if (this.hasMultipleMaps && inRect(BUTTON_RECTS.horizontalArrow, vx, vy)) { this._arrowButtonClick('horizontal'); return true; }
-    if (this.hasVerticalMaps && inRect(BUTTON_RECTS.verticalArrow, vx, vy)) { this._arrowButtonClick('vertical'); return true; }
+    // Both arrow buttons are created Enabled=false and are turned on
+    // only by SetupArrowButtons, which no province map ever calls -
+    // so on the province map they neither draw nor take a click, even
+    // when the player's own region happens to page (:511, :519,
+    // :529-549, :1111-1112).
+    if (this.regionSelected && this.hasMultipleMaps && inRect(BUTTON_RECTS.horizontalArrow, vx, vy)) { this._arrowButtonClick('horizontal'); return true; }
+    if (this.regionSelected && this.hasVerticalMaps && inRect(BUTTON_RECTS.verticalArrow, vx, vy)) { this._arrowButtonClick('vertical'); return true; }
     // A click lands where the cursor is: keep the hover state honest
     // for hosts that never send a move (touch).
     this.lastMousePos = [vx, vy];
@@ -1002,16 +1035,24 @@ export class TravelMapWindow {
     return true;
   }
 
-  /** The wheel belongs to whatever is on top (the picker scrolls). */
-  wheel(dir) { this.picker?.wheel?.(dir); }
+  /** The wheel belongs to whatever is on top: the picker scrolls, the
+   *  popup's option pairs toggle under the cursor. */
+  wheel(dir) {
+    if (this.popUp) { this.popUp.wheel(dir); return; }
+    this.picker?.wheel?.(dir);
+  }
 
   tick(dt) {
-    this._clock += dt;
     if (this.popUp) {
       this.popUp.tick(dt);
       if (this.popUp?.done) this.popUp = null;
       return;
     }
+    // DFU's UI manager updates only the TOP window, so the flash is
+    // frozen while a box or the picker is up - and that is what keeps
+    // an ending flash from creating a confirmation UNDER them.
+    if (this.top || this.picker) return;
+    _clock += dt;
     this._animateIdentify();
   }
 
@@ -1060,12 +1101,16 @@ export class TravelMapWindow {
 
   /** The zoom crop as a TOP-DOWN source rect on a texture of the
    *  given size (DFU's BackgroundCroppedRect, whose y is bottom-up). */
-  _cropRect(texW, texH) {
+  _cropRect(texW, texH, dx = 0, dy = 0) {
     const ratioX = texW / REGION_W, ratioY = texH / REGION_H;
     const sw = (REGION_W / ZOOM_FACTOR) * ratioX;
     const sh = (REGION_H / ZOOM_FACTOR) * ratioY;
-    const sx = this.zoomOffset[0] * ratioX;
-    const sy = texH - (this.zoomOffset[1] * ratioY + sh);
+    // The outline copies displace the CROP as well as the panel
+    // (:784-792), which the 2x zoom then magnifies - that is why the
+    // outline thickens when you zoom in rather than thinning. dx/dy
+    // arrive in classic (320x160) pixels, DFU's own units there.
+    const sx = (this.zoomOffset[0] + dx) * ratioX;
+    const sy = texH - ((this.zoomOffset[1] + dy) * ratioY + sh);
     return [sx, sy, sw, sh];
   }
 
@@ -1073,7 +1118,7 @@ export class TravelMapWindow {
     const dst = { x: m.ox + (REGION_RECT[0] + dx) * m.s, y: m.oy + (REGION_RECT[1] + dy) * m.s, w: REGION_W * m.s, h: REGION_H * m.s };
     let src = { u0: 0, v0: 0, u1: 1, v1: 1 };
     if (this.zoom) {
-      const [sx, sy, sw, sh] = this._cropRect(texW, texH);
+      const [sx, sy, sw, sh] = this._cropRect(texW, texH, dx, dy);
       src = { u0: sx / texW, v0: sy / texH, u1: (sx + sw) / texW, v1: (sy + sh) / texH };
     }
     renderer.drawScreenQuad(tex, dst, src, [1, 1, 1, 1], opts);
@@ -1089,7 +1134,7 @@ export class TravelMapWindow {
     if (this.regionSelected) {
       const art = _art?.regionMaps?.get(this._regionMapName ?? '');
       if (art) this._drawPage(renderer, m, art.tex, art.w, art.h, 0, 0);
-      // the outline copies ride half a SCREEN pixel out (:296-311)
+      // the outline copies ride half a SCREEN pixel out (:295-311)
       if (this.outlineEnabled && this._outlineTex) {
         for (const [dx, dy] of OUTLINE_DISPLACEMENTS) {
           this._drawPage(renderer, m, this._outlineTex, REGION_W, REGION_H,
@@ -1113,25 +1158,28 @@ export class TravelMapWindow {
         const sheet = this.filters[which] ? _art.filterOff : _art.filterOn;
         drawImgCrop(renderer, sheet, m, FILTER_SRC[which], BUTTON_RECTS[which]);
       }
-      if (this.hasMultipleMaps) {
-        const horiz = (this.mapIndex % 2 === 0) ? _art.rightArrow : _art.leftArrow;
-        drawImg(renderer, horiz, m, BUTTON_RECTS.horizontalArrow[0], BUTTON_RECTS.horizontalArrow[1]);
+      // SetupArrowButtons (:529-549): the button is 22x20 and the
+      // texture is a Button BackgroundTexture, so it stretches to the
+      // BUTTON, not to its own size.
+      if (this.regionSelected && this.hasMultipleMaps) {
+        const [hx, hy, hw, hh] = BUTTON_RECTS.horizontalArrow;
+        drawImg(renderer, (this.mapIndex % 2 === 0) ? _art.rightArrow : _art.leftArrow, m, hx, hy, hw, hh);
       }
-      if (this.hasVerticalMaps) {
-        const vert = (this.mapIndex > 1) ? _art.upArrow : _art.downArrow;
-        drawImg(renderer, vert, m, BUTTON_RECTS.verticalArrow[0], BUTTON_RECTS.verticalArrow[1]);
+      if (this.regionSelected && this.hasVerticalMaps) {
+        const [vx, vy, vw, vh] = BUTTON_RECTS.verticalArrow;
+        drawImg(renderer, (this.mapIndex > 1) ? _art.upArrow : _art.downArrow, m, vx, vy, vw, vh);
       }
     }
 
     if (!font) return;
-    // the centred region label at y=2 (:277-279)
+    // the centred region label at y=2 (:280-282)
     const label = this.regionLabelText();
     if (label) shadowText(renderer, font, label, m, 0, 2, { align: 'center', w: NATIVE_W });
 
     if (this.popUp) { this.popUp.draw(renderer, canvas, font); return; }
     if (this.picker) { this.picker.draw(renderer, canvas, font); return; }
     if (this.top === 'find') {
-      // DaggerfallInputMessageBox with NULL tokens (:983): the box is
+      // DaggerfallInputMessageBox with NULL tokens (:965): the box is
       // the LABEL and the field, on one line, 32 characters wide.
       this._box = layoutMessageBox(font, [`${FIND_PROMPT}${this.findText}_`], [],
         { sizingRows: [`${FIND_PROMPT}${'M'.repeat(FIND_MAX_CHARACTERS)}_`] });
