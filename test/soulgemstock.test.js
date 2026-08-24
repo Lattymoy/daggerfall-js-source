@@ -107,9 +107,13 @@ test('X6: a bought gem is one fillEmptyTrap accepts - the chain closes', () => {
 
 test('X6: the service destination is no longer a FLAGGED null', () => {
   assert.equal(serviceDestination('BuySoulgems'), 'guildServiceBuySoulgems');
-  // the neighbouring arms this lane deliberately did NOT take stay null
-  assert.equal(serviceDestination('BuyMagicItems'), null);
-  assert.equal(serviceDestination('BuyPotions'), null);
+  // X6 left its two neighbours null and this pin said so. G4 took
+  // them, along with the other two trade-mode arms, so the sentence
+  // is replaced rather than struck: all five ride ONE window now.
+  assert.equal(serviceDestination('BuyMagicItems'), 'guildServiceBuyMagicItems');
+  assert.equal(serviceDestination('BuyPotions'), 'guildServiceBuyPotions');
+  assert.equal(serviceDestination('Identify'), 'guildServiceIdentify');
+  assert.equal(serviceDestination('SellMagicItems'), 'guildServiceSellMagicItems');
 });
 
 test('X6: the daily stream is a real stream - spread, and not all one value', () => {

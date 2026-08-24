@@ -50,6 +50,7 @@ import { equipTableOf, lowerCondition, setEnchantmentHooks } from './equip.js';
 import { MINUTES_PER_DAY } from './gameDate.js';   // the canonical home - worldTick re-exports it and imports the pump below, so this leaf must not close the cycle
 import { classicCastingCost } from './spellcost.js';   // E2: CastWhenHeld's equip durability hit IS the spell's classic casting cost
 import { skillValue } from './skills.js';
+import { enchantmentCost, defaultParam } from './enchantmentCatalogue.js';   // G4: the legacy value sum reads M4's costs
 
 /** EnchantmentTypes (ItemsFile.cs:111-141), verbatim. */
 export const ENCHANTMENT_TYPES = Object.freeze({
@@ -109,6 +110,94 @@ export function itemEnchantments(item) {
 }
 
 export const isEnchantedItem = (item) => !!itemEnchantments(item);
+
+// ---- G4: what a LEGACY magic item is WORTH --------------------------
+// ItemBuilder.CreateRegularMagicItem's closing sum (:599-635). This
+// had been FLAGGED at its own site since S4c - "a magic item still
+// sells at its mundane base until the enchantment cost sum is ported"
+// - and M4's catalogue is that sum's missing half, so the flag closes
+// here.
+//
+// THE BOUND IS THE ENUM'S OWN ORDER (:604-605): only
+// `type < ItemDeteriorates` counts, and ItemDeteriorates is 16. Types
+// 16-25 are exactly the drawbacks, so a legacy item's value counts
+// its POWERS and nothing else - the same shape M3's GetTotalGoldCost
+// takes for a hand-made one. `None` (-1) is skipped by the same test
+// only because it also fails `!= None`, which DFU writes out.
+//
+// AND THE ONE THAT DOES NOT FIT: SoulBound is 15, UNDER the bound, so
+// it counts - but it is scored `+ SoulPts` off the enemy table, a
+// POSITIVE, where the item maker charges the catalogue's NEGATIVE for
+// the same enchantment. DFU's own comment beside it reads "Not sure
+// about this. Should be negative? Needs to be tested." So a bound
+// soul makes a SHOP item dearer and a HAND-MADE item cheaper, and
+// both are verbatim.
+//
+// THE THREE CastWhen* ARE PRICED TWICE OVER, differently: here it is
+// `10 * CalculateCastingCost` of the SPELLS.STD record
+// (FormulaHelper.GetSpellEnchantPtCost :2387-2402), where the item
+// maker charges the flat classicSpellCosts table M4 gathered. The
+// same enchantment is worth one thing bought and another made.
+export const VALUE_COUNTS_BELOW = ENCHANTMENT_TYPES.ItemDeteriorates;   // 16
+
+/** The five ItemBuilder routes into enchantmentPointCostsForNonParamTypes
+ *  (:615-621), which is indexed by TYPE and ignores the stored param
+ *  entirely. Four of them mint at ClassicParam -1, so ignoring the
+ *  param and reading the single cost are the same thing. THE FIFTH IS
+ *  NOT: EnhancesSkill mints one flat cost across all thirty-five
+ *  skills, and its stored param is a real skill id - so reading it at
+ *  -1 answers null and the item prices at ZERO. (%it of Venom
+ *  Spitting is exactly that item: one EnhancesSkill slot at param 7,
+ *  and it was the one record in MAGIC.DEF this scored free.) Reading
+ *  each at the FIRST param it mints is the one lookup that is right
+ *  for all five, because a flat cost is flat.
+ *
+ *  DFU's array also holds live-looking values in slots 1-4 that this
+ *  arm can never reach - the switch routes those types elsewhere - so
+ *  a wholesale transcription of it would be five sixths dead weight
+ *  and one sixth a trap. */
+const NO_PARAM_VALUE_TYPES = new Set([
+  ENCHANTMENT_TYPES.RepairsObjects, ENCHANTMENT_TYPES.AbsorbsSpells,
+  ENCHANTMENT_TYPES.EnhancesSkill, ENCHANTMENT_TYPES.FeatherWeight,
+  ENCHANTMENT_TYPES.StrengthensArmor,
+]);
+const CAST_WHEN_TYPES = new Set([
+  ENCHANTMENT_TYPES.CastWhenUsed, ENCHANTMENT_TYPES.CastWhenHeld,
+  ENCHANTMENT_TYPES.CastWhenStrikes,
+]);
+const TYPE_NAME = Object.freeze(Object.entries(ENCHANTMENT_TYPES)
+  .reduce((a, [k, v]) => { a[v] = k; return a; }, {}));
+
+/** GetSpellEnchantPtCost (:2387-2402): ten times the classic casting
+ *  cost of the SPELLS.STD record with that index, at the enchanting
+ *  skill of 50. A spell the reader cannot find scores ZERO there -
+ *  the loop simply never matches - so an absent SPELLS.STD makes the
+ *  cast-when arms free rather than throwing. */
+export const spellEnchantPtCost = (spell) => (spell ? 10 * classicCastingCost(spell) : 0);
+
+/**
+ * The value ItemBuilder writes onto a freshly minted legacy magic
+ * item. Hooks, because the two lookups it needs are host data:
+ *   spellOfIndex(index) -> a SPELLS.STD record, or null
+ *   soulPointsOf(mobileType) -> SoulPts (defaults to the enemy table)
+ */
+export function legacyEnchantmentValue(enchantments, { spellOfIndex = null, soulPointsOf = null } = {}) {
+  let value = 0;
+  for (const e of enchantments ?? []) {
+    if (!e || e.type === ENCHANTMENT_TYPES.None) continue;
+    if (!(e.type < VALUE_COUNTS_BELOW)) continue;
+    if (CAST_WHEN_TYPES.has(e.type)) {
+      value += spellEnchantPtCost(spellOfIndex ? spellOfIndex(e.param) : null);
+    } else if (e.type === ENCHANTMENT_TYPES.SoulBound) {
+      value += soulPointsOf ? (soulPointsOf(e.param) ?? 0) : (ENEMY_BASICS[e.param]?.soulPts ?? 0);
+    } else {
+      const name = TYPE_NAME[e.type];
+      const param = NO_PARAM_VALUE_TYPES.has(e.type) ? defaultParam(name) : e.param;
+      value += enchantmentCost(name, param) ?? 0;
+    }
+  }
+  return value;
+}
 
 // ---- E2: the HOST ctx and the effects doors -------------------------
 // A host mounts ONE enchantCtx for its session (setDefaultEnchantCtx -
