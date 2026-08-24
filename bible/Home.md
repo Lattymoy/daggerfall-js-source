@@ -253,20 +253,20 @@ combat line numbers below are refreshed with it.
 - `src/scenes/shared.js:195` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:233` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:683` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:714` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:720` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1046` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
-- `src/scenes/world.js:1049` - stay the E1 FLAGGED seams no host computes.
-- `src/scenes/world.js:1177` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
-- `src/scenes/world.js:1410` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:1679` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:1844` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
-- `src/scenes/world.js:1921` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:2154` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:2173` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:2465` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:2769` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:684` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:717` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:723` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1049` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
+- `src/scenes/world.js:1052` - stay the E1 FLAGGED seams no host computes.
+- `src/scenes/world.js:1183` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
+- `src/scenes/world.js:1424` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:1693` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:1858` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
+- `src/scenes/world.js:1935` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:2168` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:2187` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:2501` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:2805` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:230` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:274` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:422` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
@@ -384,6 +384,11 @@ combat line numbers below are refreshed with it.
 - `src/ui/pauseWindow.js:58` - FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
 - `src/ui/restWindow.js:2` - text-panel idiom (backgrounds FLAGGED pending art-name
 - `src/ui/tavernWindow.js:40` - FLAGGED, with the slices they wait on:
+- `src/ui/travelMapWindow.js:10` - this window since the F-slice - the Ledger row called it INTERIM
+- `src/ui/travelMapWindow.js:70` - FLAGGED, idling loudly: the journal's click-through travel
+- `src/ui/travelMapWindow.js:781` - *  arm is FLAGGED). */
+- `src/ui/travelPopUp.js:42` - FLAGGED, each idling loudly: the HUD smash-to-black/fade
+- `src/ui/travelPopUp.js:142` - this.travelTimeTotalMins = t.minutes;   // GuildManager.FastTravel (:280) FLAGGED
 
 ## Audits
 

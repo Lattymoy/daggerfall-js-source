@@ -1,7 +1,10 @@
-// F-slice: does FAST TRAVEL work in the live world host? Opens the
-// real window on V, types the nearest real destination's name, and
-// travels - then verifies the clock advanced, the pixel moved, the
-// gold paid, and no page errors. Frame-synced like castProbe.
+// U41 (was F-slice): does FAST TRAVEL work in the live world host,
+// through the CLASSIC ART WINDOW? Opens the real map on V, opens the
+// player's own region page with Return, finds the nearest real
+// destination by name, waits out the identify flash, answers the
+// travel confirmation, and begins the trip - then verifies the clock
+// advanced, the pixel moved, the gold paid, and no page errors.
+// Frame-synced like castProbe.
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 
@@ -34,6 +37,22 @@ const frames = async (n, cap = 30000) => {
     if (await page.evaluate(() => window.__frame ?? 0) >= f0 + n) break;
   }
 };
+const map = () => page.evaluate(() => JSON.parse(window.__travelMap()));
+/** Poll the window's own state rather than sleeping: the identify
+ *  flash and the day countdown both run off real time inside the
+ *  frame loop, which SwiftShader paces in seconds. */
+const until = async (pred, cap = 30000) => {
+  const t0 = Date.now();
+  for (;;) {
+    const st = await map();
+    if (pred(st)) return st;
+    if (Date.now() - t0 > cap) return st;
+    await frames(1, 5000);
+  }
+};
+// The window lays out on the virtual 320x200 screen; this viewport is
+// an exact 4x with no letterbox.
+const clickNative = (x, y) => page.mouse.click(x * 4, y * 4);
 
 const out = { steps: {} };
 // Drain the quest arc's boot boxes (the start letter + the tutorial
@@ -51,17 +70,41 @@ out.steps.dest = { name: dest.name, region: dest.region, pixel: dest.pixel };
 
 await page.keyboard.press('v');
 await frames(2);
-out.steps.overlayAfterV = await page.evaluate(() => JSON.parse(window.__talk()).overlay);
+out.steps.opened = await map();
+
+// Return opens the player's own region page while the identify flash
+// is running; I'M AT restarts it if the flash has already finished.
+if (!out.steps.opened?.identifying) await clickNative(25, 191);
+await page.keyboard.press('Enter');
+await frames(1);
+let st = await map();
+if (!st?.regionSelected) { await clickNative(25, 191); await page.keyboard.press('Enter'); await frames(1); st = await map(); }
+out.steps.regionPage = st;
+
+// FIND, then the name, then Return.
+await page.keyboard.press('f');
+await frames(1);
 for (const c of dest.name) {
   if (c === ' ') await page.keyboard.press('Space');
   else if (/[a-zA-Z0-9'-]/.test(c)) await page.keyboard.press(c);
   await page.waitForTimeout(30);
 }
+out.steps.typed = await map();
+await page.keyboard.press('Enter');
 await frames(1);
-await page.keyboard.press('Enter');   // pick
+// A fuzzy match opens the list picker; its first row is the best one.
+if ((await map())?.picker) { await page.keyboard.press('Enter'); await frames(1); }
+out.steps.found = await map();
+
+// The crosshair flashes twice over the found place and the flash's
+// END pops the travel confirmation. Y opens the popup, B begins.
+out.steps.confirm = await until((s) => s?.top === 'confirm' || s?.popUp, 40000);
+if ((await map())?.top === 'confirm') await page.keyboard.press('y');
 await frames(1);
-await page.keyboard.press('Enter');   // travel (cautious/inns defaults)
-await frames(8, 60000);               // arrival: rebuild + the ticker jump
+out.steps.popUp = await map();
+await page.keyboard.press('b');
+await frames(8, 60000);               // the day countdown, then the arrival rebuild
+await until((s) => s === null, 60000);
 out.steps.after = await page.evaluate(() => JSON.parse(window.__travelProbe()));
 
 const b = out.steps.before, a = out.steps.after;
@@ -69,6 +112,8 @@ out.ok = !!(a.minutes > b.minutes                                      // the cl
   && (a.pixel.x !== b.pixel.x || a.pixel.y !== b.pixel.y)              // the player moved pixels
   && Math.abs(a.pixel.x - dest.pixel.x) <= 1 && Math.abs(a.pixel.y - dest.pixel.y) <= 1   // to the destination
   && a.gold <= b.gold                                                  // the trip was paid (inns cost)
+  && out.steps.regionPage?.regionSelected                              // the page really opened
+  && out.steps.found?.locationSelected                                 // the find really landed
   && errors.length === 0);
 out.minutesAdvanced = a.minutes - b.minutes;
 out.errors = errors.slice(0, 8);

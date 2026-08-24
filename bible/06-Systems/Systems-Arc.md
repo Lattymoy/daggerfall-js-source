@@ -1744,6 +1744,17 @@ host's arrival-order sweep). 3 mutations run, 3 killed. The residue
 - the TRAV art, the exterior arms, transport ownership, the
 sun-averse producers, spawn prevention - is ONE ledger row.
 
+### S31 addendum (U41, 2026-08-24): the WINDOW paragraph above is
+history. `ui/travelMap.js` is DELETED and the keyed typeahead with
+it: the classic art window ships in `ui/travelMapWindow.js` +
+`ui/travelPopUp.js` (UI-Arc's U41), so the region-map click surface,
+the location dots, the find box and the popup's own art are all
+real. The LAW half of this slice is untouched - `systems/travel.js`
+still owns the calculator, the cost and the clamps, and world.js's
+arrival is still performFastTravel's order. What moved is who calls
+it: the popup hands the host the same `(pick, opts, computed)` the
+keyed window did.
+
 ## S32 - RANDOM ENCOUNTERS: the dungeon dark answers back
 
 2026-08-20. The E-slice; entity-14's spawner half. The 45 encounter

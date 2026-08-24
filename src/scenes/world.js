@@ -12,7 +12,7 @@ import { requestLook, makeLookGate } from '../player/pointerLock.js';
 import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
-import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, REGION_RACES } from '../formats/mapsFile.js';
+import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES } from '../formats/mapsFile.js';
 import { WoodsFile } from '../formats/woodsFile.js';
 import { buildTerrainGrid, buildTerrainIndices, convertTilemap, TERRAIN_TILE_DIM } from '../world/terrainSurface.js';
 import { windowEmissionRGB } from '../render/windowEmission.js';
@@ -38,7 +38,8 @@ import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 46
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
 import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
-import { TravelMapWindow, buildTravelIndex } from '../ui/travelMap.js';   // F-slice
+import { TravelMapWindow, preloadTravelMapArt, travelMapArtLoaded } from '../ui/travelMapWindow.js';   // W1: the classic art window (retires the F-slice's keyed stand-in)
+import { buildMapDict } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict
 import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
@@ -127,8 +128,8 @@ import { fullName as nameHelperFullName, GENDERS, BANK_TYPES } from '../characte
 // NameHelper.BankTypes -> the Races name TalkManagerMCP's Oath reads
 const RACE_BY_NAME_BANK = Object.freeze(Object.fromEntries(
   Object.entries(BANK_TYPES).map(([race, bank]) => [bank, race])));
-import { startDisease, endDisease } from '../systems/diseases.js';   // AUDIT 24: the quest bridge's MakePcDiseased / CurePcDisease seams
-import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverBuilding, discoveredBuildings } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover
+import { startDisease, endDisease, diseaseCount } from '../systems/diseases.js';   // AUDIT 24: the quest bridge's MakePcDiseased / CurePcDisease seams (W1: the popup's diseased warning)
+import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverBuilding, discoveredBuildings, hasDiscoveredLocationId } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -710,6 +711,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   preloadInventoryArt({ renderer, fetchBytes, palette });   // U8d: INVE00I0/01I0 warm at boot
   preloadChargenArt({ renderer, fetchBytes, palette });   // U10: CHAR0*/PICK00/TMAP00 warm at boot
   preloadMessageBoxArt({ renderer, fetchBytes, palette });   // U11: SPOP/BUTTONS warm at boot
+  preloadTravelMapArt({ renderer, fetchBytes, palette })   // W1: TRAV0I00/01/03/04 + the FMAP palette warm at boot
+    .catch((e) => console.warn('[travelmap] classic travel map art unavailable:', e?.message ?? e));
   preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/BODY/FACE + the item-record pipeline (town context; Breton male 0 is the PRE-chargen default, reloaded on the chosen identity)
   // S3d: the INTERIM dagger seed is the FALLBACK only - a character
   // who runs chargen gets AssignStartingGear's real kit instead, so
@@ -1133,7 +1136,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // deduct, teleport, cautious restores, RaiseTime, the clamps. The
   // teleport is the streamer's OWN re-init (verbatim
   // ResetStreamingWorld) after tearing the built pixels down.
-  const travelIndex = buildTravelIndex(maps, longitudeLatitudeToMapPixel);
+  // W1: the window reads the map through ContentReader's own
+  // dictionary - one MapSummary per location, keyed by map pixel.
+  const mapDict = buildMapDict(maps);
+  let _travelMap = null;   // the live window, for the probe surface
   const playerTravelPixel = () => {
     const wc = state.worldCoords(walkMode ? player.pos : cam.pos);
     return worldCoordToMapPixel(wc.x, wc.z);
@@ -1313,14 +1319,22 @@ export async function bootWorld(canvas, renderer, params, status) {
   }
   const toggleTravelMap = () => {
     if (townTalk.overlayActive) return;
-    townTalk.showOverlay(new TravelMapWindow(travelIndex, {
+    // W1: the classic window needs its art. Without it there is no
+    // map to click, so the door says so rather than opening a blank
+    // one (the HUD/pause law: a missing IMG closes a door, never the
+    // game).
+    if (!travelMapArtLoaded()) { townTalk.say('(the travel map art is unavailable)'); return; }
+    _travelMap = new TravelMapWindow({
+      maps, mapDict,
       getPlayerPixel: playerTravelPixel,
       getClimateIndex: (x, yy) => maps.getClimateIndex(x, yy),
       gold: () => goldAmount(playerEntity),
       // transport ownership rides the transport arc; on foot for now
       hasHorse: false, hasCart: false, hasShip: false,
+      diseaseCount: () => diseaseCount(playerEntity),
       onTravel: (pick, opts, computed) => { fastTravelTo(pick, opts, computed); },
-    }));
+    });
+    townTalk.showOverlay(_travelMap);
   };
   // A2: the exterior automap's own dispatch half (DaggerfallUI.cs
   // :633-650): M outside opens the TOWN map only when the current
@@ -2310,6 +2324,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     // destination at least two pixels out (the live probe types its
     // name into the real window).
     window.__travelProbe = () => JSON.stringify({ pixel: playerTravelPixel(), minutes: Math.floor(playerTicker.classicMinutes), gold: goldAmount(playerEntity) });
+    // U41: the art window's live state - which page is open, what the
+    // label reads, which box or sub-window is up, and the popup's
+    // numbers. The keyed stand-in could be driven blind; a click
+    // surface cannot.
+    window.__travelMap = () => JSON.stringify(_travelMap && !_travelMap.done ? {
+      regionSelected: _travelMap.regionSelected, region: _travelMap.selectedRegion,
+      label: _travelMap.regionLabelText(), top: _travelMap.top,
+      picker: _travelMap.picker ? _travelMap.picker.items.length : 0,
+      popUp: !!_travelMap.popUp, identifying: _travelMap.identifying,
+      locationSelected: _travelMap.locationSelected, find: _travelMap.findText,
+      days: _travelMap.popUp?.countdownValueTravelTimeDays ?? null,
+      cost: _travelMap.popUp?.trip?.totalCost ?? null,
+    } : null);
     window.__encounters = () => JSON.stringify({ active: exteriorFoes.activeCount(), foes: exteriorFoes.foes.filter((f) => !f.dead).map((f) => ({ type: f.mobileType, dist: +f.ai._dist.toFixed(1), detected: f.ai.detected })) });
     window.__spawnEncounter = (type, dist = 10) => {
       const pf = walkMode && playerSpawned ? player.pos : cam.pos;
@@ -2328,15 +2355,24 @@ export async function bootWorld(canvas, renderer, params, status) {
     window.__travelNearest = () => {
       const p0 = playerTravelPixel();
       let best = null, bd = Infinity;
-      for (const e of travelIndex) {
+      for (const summary of mapDict.values()) {
         // G8 made HIDDEN dungeons unfindable on the map; the probe's
         // nearest must honour the same gate or it names a place the
-        // search cannot list.
-        if (!e.discovered) continue;
-        const d = Math.max(Math.abs(e.pixel.x - p0.x), Math.abs(e.pixel.y - p0.y));
-        if (d >= 2 && d < bd) { bd = d; best = e; }
+        // search cannot list. W1: that gate is now the window's own
+        // checkLocationDiscovered - the baked flag OR the store.
+        if (!summary.discovered && !hasDiscoveredLocationId(summary.id)) continue;
+        const pixel = getPixelFromPixelID(summary.id);
+        const d = Math.max(Math.abs(pixel.x - p0.x), Math.abs(pixel.y - p0.y));
+        if (d >= 2 && d < bd) { bd = d; best = { summary, pixel }; }
       }
-      return JSON.stringify(best);
+      if (!best) return JSON.stringify(null);
+      const region = maps.getRegion(best.summary.regionIndex);
+      return JSON.stringify({
+        name: region?.mapNames?.[best.summary.mapIndex] ?? '',
+        region: maps.getRegionName(best.summary.regionIndex),
+        pixel: best.pixel, type: best.summary.locationType,
+        mapId: best.summary.mapID, discovered: true,
+      });
     };
   }
   window.__readyRanged = () => { const sp = knownSpells({}, spellsByIndex).map((x) => [calculateCastCost(x, playerEntity).sp, x]).sort((a, b) => a[0] - b[0])[0]?.[1]; magic.setReadied(sp); return sp ? `${sp.name}:${calculateCastCost(sp, playerEntity).sp}` : null; };   // M5: no classic starting set carries a missile spell - ready the cheapest flier for the flight leg

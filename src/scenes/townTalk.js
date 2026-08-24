@@ -601,7 +601,10 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     const px = (e.clientX - r.left) * (canvas.width / r.width);
     const py = (e.clientY - r.top) * (canvas.height / r.height);
     const v = pointToNative(nativeMetrics(canvas), px, py);
-    overlay.hover(v ? v[0] : -1, v ? v[1] : -1);
+    // U41: the EVENT rides along, the way U20a's keydown seam does -
+    // the travel map's zoomed pan is a SHIFT-move, and modifier state
+    // reaches a window no other way.
+    overlay.hover(v ? v[0] : -1, v ? v[1] : -1, e);
     return true;
   }
 
