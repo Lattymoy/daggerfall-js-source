@@ -34,7 +34,12 @@ const toRow = (w, kind, i = 0) => {
 };
 
 test('S1 catalog: DFU offers 90 spell-maker effects, families expanded in DFCareer.Stats order', () => {
-  assert.equal(SPELL_MAKER_EFFECTS.length, 90);
+  // U42 turned this table into the BROKER's registry rather than the
+  // maker's offer list: the spellbook names an effect through
+  // GetEffectTemplate, which sees rows no crafting station offers.
+  // The OFFER is still exactly 90 - what `craftable` gates.
+  assert.equal(SPELL_MAKER_EFFECTS.filter((e) => e.craftable).length, 90, 'the maker offers 90');
+  assert.equal(SPELL_MAKER_EFFECTS.length, 91, 'and the registry carries one more (MorphSelf)');
   // PERSONALITY is stat 5, ahead of Speed - the classic subType order
   assert.deepEqual(STAT_SUBGROUPS, ['Strength', 'Intelligence', 'Willpower', 'Agility', 'Endurance', 'Personality', 'Speed', 'Luck']);
   assert.equal(effectByKey('9,5').name, 'Fortify Attribute Personality');
@@ -59,8 +64,17 @@ test('S1 catalog: the support flags gate the editor panels, per DFU class', () =
   // Charm's SupportDuration is COMMENTED OUT in this build - chance
   // only, kept as the build has it rather than as the wiki reads
   assert.deepEqual(f('34,255'), [false, true, false]);
-  // MorphSelf carries a classic key but is not offered at this station
-  assert.equal(effectByKey('29,255'), null, 'MorphSelf: AllowedCraftingStations = None');
+  // MorphSelf carries a classic key but is not offered at this
+  // station (MorphSelf.cs:30). It IS in the registry, because the
+  // spellbook has to be able to NAME it - U42 found a 29,255 spell
+  // printing "<effect not found>" - so the pin is that it is present
+  // and NOT craftable, and that neither picker list can reach it.
+  const morph = effectByKey('29,255');
+  assert.ok(morph, 'MorphSelf is in the registry (GetEffectTemplate finds it)');
+  assert.equal(morph.craftable, false, 'MorphSelf: AllowedCraftingStations = None');
+  assert.equal(morph.name, 'Morph Self');
+  assert.equal(spellMakerGroups().includes('Morph Self'), false, 'and no picker offers it');
+  assert.equal(spellMakerSubgroups('Morph Self').length, 0);
 });
 
 test('S1 catalog: the pickers de-duplicate and sort, and the port marks its inert rows', () => {

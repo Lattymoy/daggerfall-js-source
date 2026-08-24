@@ -11,7 +11,7 @@
 //   included, because that is what HorizontalAlignment.Center
 //   computes and the classic art is an odd width.
 // - the spell list is a 110x130 ListBox at (5,13) showing SIXTEEN
-//   rows (:341), with its scroll bar at (122,28,7,103) and the two
+//   rows (:349), with its scroll bar at (122,28,7,103) and the two
 //   arrow buttons at (121,11) and (121,132), 9x16 each.
 // - the bottom row is four 38x9 buttons at y=152 - DELETE (or BUY),
 //   UP, SORT, DOWN - and EXIT is 43x15 at (216,149).
@@ -21,42 +21,42 @@
 //   the art, so an unknown icon reads as a black square, not a hole.
 // - three effect panels at (138,40/78/116,118,28), each carrying TWO
 //   centred labels at y=5 and y=17: the effect's GROUP name and its
-//   SUBGROUP name (:485-500, :620-645).
+//   SUBGROUP name (:487-496, :624-649).
 // - the labels: spell name at (123,2), spell points at (214,2), and
 //   in buy mode the cost at (76,154) and the player's gold at
 //   (116,154).
 //
 // THE LAWS, verbatim:
 // - a row reads "{cost} - {name}" and the cost is recomputed EVERY
-//   refresh, because it rides the caster's live skills (:253-278).
+//   refresh, because it rides the caster's live skills (:256-282).
 //   A spell the player cannot currently afford is DESATURATED 75%
 //   toward grey rather than hidden.
 // - the lycanthropy tag casts free, so its row shows 0 even though
-//   classic shows a cost (:262-265).
+//   classic shows a cost (:266-267).
 // - DELETE refuses the vampire and lycanthropy tags with their own
-//   messages BEFORE prompting (:811-830) - those spells have no way
+//   messages BEFORE prompting (:821-831) - those spells have no way
 //   back until the curse is cured.
 // - both confirmations CLOSE THE BOOK. DeleteSpellConfirm and
 //   SortSpellsConfirm each end in CloseWindow() outside the Yes arm
-//   (:845-852, :907-925), so answering either way puts you back in
+//   (:851, :924), so answering either way puts you back in
 //   the world. Kept.
 // - SORT is alphabetical, and only if that changed nothing does it
-//   sort by point cost (:907-921).
+//   sort by point cost (:911-921).
 // - the swap buttons move the spell AND the selection, then force
 //   one more row into view when the selection lands on the visible
-//   edge (:872-897).
+//   edge (:876-897).
 // - clicking the spell NAME renames it (a non-empty answer only,
-//   :925-950); clicking the ICON opens the picker; clicking an
-//   effect panel pops that effect's spellbook description (:729-762).
+//   :929-950); clicking the ICON opens the picker; clicking an
+//   effect panel pops that effect's spellbook description (:730-763).
 // - BUY mode offers every SPELLS.STD record whose name does NOT
 //   start with '!' - the file's internal spells - sorted by name,
 //   duplicates of what you already know included (:283-323).
 // - BUY mode: the price is the casting cost x4, halved (floor 1) on
 //   Witches Festival, then run through CalculateTradePrice against
-//   the shop's quality (:519-536, :672-675). The ladder is
+//   the shop's quality (:519-536, :685-688). The ladder is
 //   spellbook, then gold, then a haggle line chosen by how the
 //   asking price compares - TEXT.RSC 260/261/262 - and Yes deducts,
-//   adds the spell and closes (:975-1029). The gold read is
+//   adds the spell and closes (:975-1024). The gold read is
 //   GetGoldAmount, so a letter of credit buys a spell.
 //
 // RENAME retires a ledger row. DFU's EffectBundleSettings is a
@@ -69,22 +69,35 @@
 // U4's "rename needs per-entity copies + name persistence first" is
 // answered: it has both.
 //
+// THE STRINGS ARE REAL. U4 recorded that "the classic en string
+// table is not in the source snapshot", and U42 inherited that and
+// wrote its own prose for the prompts. The table IS in the snapshot -
+// StreamingAssets/Text/Master Localization CSV Files/
+// Internal_Strings.csv - and every string this window needs is in
+// it: the two curse refusals (:850-851), deleteSpell and sortSpells
+// (:956-957), enterSpellName (:954), effectNotFoundError (:958),
+// selectIcon (:950), and the ten target/element descriptions
+// (:940-949). All ten of those live in ui/spellIcons.js. The port
+// has no localization LOOKUP, so these are the en values held as
+// constants rather than TextManager calls - that is the departure,
+// and it is a mechanism one, not a content one.
+//
 // RECORDED DEPARTURES:
-// - no localization: the target and element tooltip strings are the
-//   en values (ui/spellIcons.js carries them), and the four prompts
-//   are the port's own prose with their TextManager keys named.
+// - no localization LOOKUP: every string above is DFU's own en text,
+//   read out of Internal_Strings.csv and held as a constant with its
+//   TextManager key named, rather than resolved at runtime.
 // - the ICON PICKER is a port window of its own (SpellIconPickerWindow
-//   is 200 lines of DFU); until it lands, clicking the icon panel
+//   is 352 lines of DFU); until it lands, clicking the icon panel
 //   says so rather than doing nothing - FLAGGED below.
-// - DFU's spell VERSION gate (:743-745) has nothing to gate: the
+// - DFU's spell VERSION gate (:746-747) has nothing to gate: the
 //   port's records carry no bundle version.
-// - DFU wires the name label's rename in BOTH modes (:475), where the
+// - DFU wires the name label's rename in BOTH modes (:465), where the
 //   handler then indexes the PLAYER's book with the OFFER's index
-//   (:925-927) - renaming whatever spell happens to sit at that slot.
+//   (:929, :947) - renaming whatever spell happens to sit at that slot.
 //   The port gates rename to cast mode; the bug is not ported.
 // - buy mode prices the offer with a bare CalculateTotalEffectCosts
-//   (:521) - no caster, no minimumCastingCost - where the LIST rows
-//   pass both (:245). The port has one castCost hook for both, so
+//   (:521) - no minimumCastingCost - where the LIST rows
+//   pass both (:262). The port has one castCost hook for both, so
 //   the offer's price rides the player's live skills either way.
 //
 // FLAGGED, idling loudly: the icon picker; the effect popup's body
@@ -107,9 +120,12 @@ import { effectByKey } from '../systems/spellEffects.js';
 import { calculateTradePrice } from '../systems/shopStock.js';
 import { ROW_SPACING, SELECTED_TEXT_COLOR } from './listPicker.js';   // ListBox.cs:36-37 and DaggerfallUI.cs:62 - one home each
 import { ALT_SHADOW_1 } from './chargenArt.js';   // DaggerfallAlternateShadowColor1, already homed
-import { expandGuildMacros, TRADE_MESSAGE_BASE_ID, NOT_ENOUGH_GOLD_ID } from '../systems/guildServiceActions.js';   // DaggerfallTradeWindow's shared ids (:33-34), already homed
+import { ToolTip } from './toolTip.js';   // U37's shared component - SetupIcons points three panels at it
+import {
+  expandGuildMacros, TRADE_MESSAGE_BASE_ID, NOT_ENOUGH_GOLD_ID, cureOfferMessageOffset,
+} from '../systems/guildServiceActions.js';   // DaggerfallTradeWindow's shared ids (:33-34) and the three haggle BANDS, all already homed
 import { getHolidayId, HOLIDAYS } from '../systems/holidays.js';
-import { NO_SPELLBOOK_ID, SPELLBOOK_TEMPLATE_INDEX, purchaseSpell } from '../systems/spellMaker.js';
+import { NO_SPELLBOOK_ID, SPELLBOOK_TEMPLATE_INDEX, MAX_SPELL_NAME, purchaseSpell } from '../systems/spellMaker.js';
 import { totalGoldAmount } from '../systems/court.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -132,15 +148,15 @@ export const SPELLBOOK_RECTS = Object.freeze({
   effect: [[138, 40, 118, 28], [138, 78, 118, 28], [138, 116, 118, 28]],
 });
 /** The label anchors (:33-36) and the two rows inside an effect
- *  panel (:497-500). */
+ *  panel (:493-496). */
 const LABEL_POS = Object.freeze({ name: [123, 2], points: [214, 2], cost: [76, 154], gold: [116, 154] });
 const EFFECT_LABEL_ROWS = Object.freeze([5, 17]);
-const EFFECT_LABEL_MAX_CHARS = 24;   // TextLabel.MaxCharacters (:487)
-/** mainPanel is Center/Middle on the native panel (:333-334), which
+const EFFECT_LABEL_MAX_CHARS = 24;   // TextLabel.MaxCharacters (:489)
+/** mainPanel is Center/Middle on the native panel (:342-343), which
  *  on a 259-wide panel lands it on a HALF pixel. */
 const PANEL_X = (320 - SPELLBOOK_RECTS.main[2]) / 2;   // 30.5
 const PANEL_Y = (200 - SPELLBOOK_RECTS.main[3]) / 2;   // 18
-const ROWS_DISPLAYED = 16;             // spellsListBox.RowsDisplayed (:341)
+const ROWS_DISPLAYED = 16;             // spellsListBox.RowsDisplayed (:349)
 /** ONE export for the geometry the tests and the hosts read, so
  *  PANEL_X/ROWS_DISPLAYED/LABEL_POS do not each become a second
  *  module-level home for a name another window already owns. */
@@ -148,24 +164,30 @@ export const SPELLBOOK_LAYOUT = Object.freeze({
   x: PANEL_X, y: PANEL_Y, rowsDisplayed: ROWS_DISPLAYED, rowSpacing: ROW_SPACING,
   labels: LABEL_POS, effectLabelRows: EFFECT_LABEL_ROWS, effectLabelMaxChars: EFFECT_LABEL_MAX_CHARS,
 });
-/** noSpellBook (:99) and the buy ladder's records (:977-979). */
+/** noSpellBook (:100) and the buy ladder's records (:977-979). */
 export const NO_SPELLBOOK_TEXT_ID = NO_SPELLBOOK_ID;
 const NOT_ENOUGH_GOLD_TEXT_ID = NOT_ENOUGH_GOLD_ID;
-/** The four prompts, with DFU's TextManager keys. */
-export const CANNOT_DELETE_VAMP = 'You cannot delete vampiric powers.';        // cannotDeleteVamp
-export const CANNOT_DELETE_WERE = 'You cannot delete lycanthropic powers.';    // cannotDeleteWere
-export const DELETE_SPELL_PROMPT = 'Delete this spell?';                       // deleteSpell
-export const SORT_SPELLS_PROMPT = 'Sort your spellbook?';                      // sortSpells
-export const ENTER_SPELL_NAME = 'Enter spell name ';                           // enterSpellName
-export const EFFECT_NOT_FOUND = 'Effect not found';                            // effectNotFoundError
-export const SELECT_ICON_TIP = 'Select Icon';                                  // selectIcon
+/** The window's strings, VERBATIM from DFU's own en table
+ *  (StreamingAssets/Text/Master Localization CSV Files/
+ *  Internal_Strings.csv :850-851, :954, :956-958). U42 first shipped
+ *  these as the port's own prose, inheriting the U4 window's claim
+ *  that "the classic en string table is not in the source snapshot";
+ *  it is, and every one of them is in it. `enterSpellName` keeps the
+ *  trailing space the window appends to the label (:934). */
+export const CANNOT_DELETE_VAMP = 'Cannot delete special vampire spells.';     // cannotDeleteVamp
+export const CANNOT_DELETE_WERE = 'Cannot delete special lycanthropy spell.';  // cannotDeleteWere
+export const DELETE_SPELL_PROMPT = 'Do you want to delete this spell?';        // deleteSpell
+export const SORT_SPELLS_PROMPT = 'Do you want to sort spells?';               // sortSpells
+export const ENTER_SPELL_NAME = 'Enter spell name : ';                         // enterSpellName + " " (:934)
+export const EFFECT_NOT_FOUND = '<effect not found>';                          // effectNotFoundError
+export const SELECT_ICON_TIP = 'Select icon';                                  // selectIcon
 /** PlayerEntity.cs:41-42 - the two tags DELETE refuses. */
 export const VAMPIRE_SPELL_TAG = 'vampire';
 export const LYCANTHROPY_SPELL_TAG = 'lycanthrope';
 /** ListItem's desaturation toward grey when the spell is unaffordable
  *  (:276-279). */
 export const DESATURATION = 0.75;
-/** DaggerfallUI.cs:56, :60 - the HOVERED row and the hovered SELECTED
+/** DaggerfallUI.cs:57, :63 - the HOVERED row and the hovered SELECTED
  *  row (ListBox.cs:71, :73, applied by DecideTextColor :358-390). */
 const HIGHLIGHT_TEXT_COLOR = Object.freeze([255 / 255, 130 / 255, 40 / 255, 1]);
 const HIGHLIGHT_SELECTED_TEXT_COLOR = Object.freeze([254 / 255, 56 / 255, 18 / 255, 1]);
@@ -177,11 +199,11 @@ const lerpGrey = (c) => c.map((v, i) => (i === 3 ? v : v + (0.5 - v) * DESATURAT
 
 /** The effect slots a record really carries: the reader keeps three
  *  and marks the unused ones type -1, where DFU's converted bundle
- *  simply has fewer (:646-664 walks Effects.Length). */
+ *  simply has fewer (:552-560 walks Effects.Length). */
 export const spellEffects = (spell) => (spell?.effects ?? []).filter((e) => e && e.type >= 0);
 
-/** PopulateSpellsList's row text (:266) and its free-cast quirk
- *  (:262-265). */
+/** PopulateSpellsList's row text (:271) and its free-cast quirk
+ *  (:266-267). */
 export function spellRowText(spell, cost) { return `${cost} - ${spell.name}`; }
 export function spellPointCost(spell, castCost) {
   if (spell?.tag === LYCANTHROPY_SPELL_TAG) return 0;
@@ -225,6 +247,10 @@ export class SpellbookWindow {
     this._rows = [];
     this.offeredSpells = [];
     this.highlightedIndex = -1;
+    // SetupIcons (:436, :448, :454) points all three icon panels at
+    // the shared defaultToolTip. U37 built that component; this is
+    // the second window to hold one.
+    this.tip = new ToolTip();
     this.refreshSpellsList(false);
     this.setDefaults();
     // OnPush (:172-176): the book opens with a page turn, the shop
@@ -240,7 +266,7 @@ export class SpellbookWindow {
     return (this.buyMode ? this.offeredSpells : this.deps.spells?.()) ?? [];
   }
 
-  /** LoadSpellsForSale (:283-323). Two laws live here and nowhere
+  /** LoadSpellsForSale (:284-323). Two laws live here and nowhere
    *  else: a record whose name starts with '!' is one of the file's
    *  INTERNAL spells and is never offered, and the offer is sorted by
    *  NAME before it reaches the list. Classic allows buying a
@@ -254,7 +280,7 @@ export class SpellbookWindow {
     return this.offeredSpells;
   }
 
-  /** RefreshSpellsList (:216-252). */
+  /** RefreshSpellsList (:217-254). */
   refreshSpellsList(preservePosition = false) {
     const oldScroll = this.scrollIndex;
     const oldSelected = this.selectedIndex;
@@ -277,7 +303,7 @@ export class SpellbookWindow {
     }
   }
 
-  /** SetDefaults (:185-203): the first spell, or none. */
+  /** SetDefaults (:186-203): the first spell, or none. */
   setDefaults() {
     this.selectedIndex = this._rows.length > 0 ? 0 : -1;
     this.scrollIndex = 0;
@@ -290,19 +316,27 @@ export class SpellbookWindow {
     this.scrollIndex = Math.min(Math.max(0, this.scrollIndex), max);
   }
 
-  /** SelectPrevious / SelectNext, which the two arrow buttons and the
-   *  keyboard share (ListBox.cs), plus the scroll that keeps the
-   *  selection visible. */
+  /** SelectPrevious (ListBox.cs:718-728) and SelectNext (:730-740),
+   *  which the two arrow buttons and the keyboard share.
+   *
+   *  The scroll clause lives INSIDE the movement guard and nudges by
+   *  exactly one row - it does not snap. Both details are reachable,
+   *  because the wheel moves scrollIndex without moving the selection
+   *  (SpellsListBox_OnMouseScroll, :793-796): scroll five rows down,
+   *  press Up at the top of the book, and DFU leaves the view where
+   *  it is while a guard-outside version yanks it back to zero. */
   selectPrevious() {
-    if (this.selectedIndex > 0) this.selectedIndex--;
-    if (this.selectedIndex < this.scrollIndex) this.scrollIndex = this.selectedIndex;
-    this._clampScroll();
+    if (this.selectedIndex > 0) {
+      this.selectedIndex--;
+      if (this.selectedIndex < this.scrollIndex) this.scrollIndex = this.selectedIndex;
+    }
   }
 
   selectNext() {
-    if (this.selectedIndex < this._rows.length - 1) this.selectedIndex++;
-    if (this.selectedIndex >= this.scrollIndex + ROWS_DISPLAYED) this.scrollIndex = this.selectedIndex - ROWS_DISPLAYED + 1;
-    this._clampScroll();
+    if (this.selectedIndex < this._rows.length - 1) {
+      this.selectedIndex++;
+      if (this.selectedIndex > this.scrollIndex + (ROWS_DISPLAYED - 1)) this.scrollIndex++;
+    }
   }
 
   wheel(dir) {
@@ -317,15 +351,41 @@ export class SpellbookWindow {
   hover(vx, vy) {
     const [lx, ly, lw, lh] = SPELLBOOK_RECTS.list;
     const x = vx - PANEL_X, y = vy - PANEL_Y;
+    this._tipHover(x, y, vx, vy);
     if (this.top || !inRect([lx, ly, lw, lh], x, y)) { this.highlightedIndex = -1; return; }
     const row = Math.floor((y - ly) / this._rowHeight());
     const index = this.scrollIndex + row;
     this.highlightedIndex = (index >= 0 && index < this._rows.length) ? index : -1;
   }
 
+  /** The three icon panels' tooltips. The spell icon's is the static
+   *  `selectIcon` (:437) - it names the PICKER the click opens, not
+   *  the icon - and the other two are recomputed per selection by
+   *  UpdateSelection (:571, :574) from GetTargetTypeDescription and
+   *  GetElementDescription. A panel is only tipped when ShowIcons is
+   *  on (:565-575), i.e. when a spell is selected at all. */
+  _tipHover(x, y, vx, vy) {
+    const spell = this.selected;
+    if (this.top || !spell) { this.tip.hide(); return; }
+    if (inRect(SPELLBOOK_RECTS.spellIcon, x, y) && !this.buyMode) { this.tip.show(SELECT_ICON_TIP, vx, vy); return; }
+    if (inRect(SPELLBOOK_RECTS.targetIcon, x, y)) {
+      this.tip.show(TARGET_DESCRIPTIONS[spell.rangeType] ?? null, vx, vy);
+      return;
+    }
+    if (inRect(SPELLBOOK_RECTS.elementIcon, x, y)) {
+      this.tip.show(ELEMENT_DESCRIPTIONS[spell.element] ?? null, vx, vy);
+      return;
+    }
+    this.tip.hide();
+  }
+
+  /** The tooltip's rest clock - the same `tick` name every host's
+   *  overlay seam already calls (townTalk.frame, tickOverlay). */
+  tick(dt) { this.tip.update(dt); }
+
   // --- the selection's panels (:508-575) ---
 
-  /** UpdateSelection's buy-mode half (:519-536): the casting cost x4,
+  /** UpdateSelection's buy-mode half (:520-534): the casting cost x4,
    *  halved on Witches Festival with a floor of one. */
   _updatePresentedCost() {
     const spell = this.selected;
@@ -355,7 +415,7 @@ export class SpellbookWindow {
       this.deps.skills?.() ?? {}, false);
   }
 
-  /** SetEffectLabels (:620-645): the group and subgroup names of the
+  /** SetEffectLabels (:624-649): the group and subgroup names of the
    *  effect in this slot, or the not-found pair, which puts the RAW
    *  KEY on the second row.
    *
@@ -381,7 +441,7 @@ export class SpellbookWindow {
   _click() { audio.playOneShot(SOUND.ButtonClick, 1); }
   _edit() { audio.playOneShot(SOUND.PageTurn, 1); }
 
-  /** SpellsListBox_OnUseSelectedItem (:766-784): ready the spell and
+  /** SpellsListBox_OnUseSelectedItem (:770-787): ready the spell and
    *  drop back to the HUD. Lycanthropy casts free. */
   useSelected() {
     const spell = this.selected;
@@ -390,7 +450,7 @@ export class SpellbookWindow {
     this._close();
   }
 
-  /** DeleteButton_OnMouseClick (:809-838). */
+  /** DeleteButton_OnMouseClick (:811-837). */
   deleteButton() {
     if (this.selectedIndex === -1) return;
     const spell = this.selected;
@@ -400,8 +460,8 @@ export class SpellbookWindow {
     this.top = 'delete';
   }
 
-  /** DeleteSpellConfirm_OnButtonClick (:840-852) - note the
-   *  CloseWindow() OUTSIDE the Yes arm: either answer closes. */
+  /** DeleteSpellConfirm_OnButtonClick (:839-852) - note the
+   *  CloseWindow() OUTSIDE the Yes arm (:851): either answer closes. */
   confirmDelete(yes) {
     if (yes && this.deleteSpellIndex !== -1) {
       const list = this.deps.spells?.() ?? [];
@@ -435,9 +495,9 @@ export class SpellbookWindow {
     }
   }
 
-  /** SortSpellsConfirm_OnButtonClick (:907-925): alphabetical, and
-   *  point cost only if the alphabetical pass changed nothing. This
-   *  one closes the book on either answer too. */
+  /** SortSpellsConfirm_OnButtonClick (:906-925): alphabetical, and
+   *  point cost only if the alphabetical pass changed nothing (:912-
+   *  918). This one closes the book on either answer too (:924). */
   confirmSort(yes) {
     if (yes) {
       const list = this.deps.spells?.() ?? [];
@@ -455,8 +515,8 @@ export class SpellbookWindow {
     this._close();
   }
 
-  /** SpellNameLabel_OnMouseClick (:925-935) + RenameSpellPromptHandler
-   *  (:937-950). */
+  /** SpellNameLabel_OnMouseClick (:927-938) + RenameSpellPromptHandler
+   *  (:940-951). */
   renameButton() {
     if (this.selectedIndex === -1 || !this.selected) return;
     this.renameText = this.selected.name ?? '';
@@ -473,9 +533,12 @@ export class SpellbookWindow {
    *  reload the ORIGINAL name). That retires the U4 ledger's rename
    *  row: renaming is real and it persists. */
   confirmRename() {
-    const input = this.renameText.trim();
+    // RAW, not trimmed: DFU's guard is string.IsNullOrEmpty (:944), so
+    // a name of three spaces is a legal rename in classic and the
+    // port keeps it legal rather than quietly being stricter.
+    const input = this.renameText;
     this.top = null;
-    if (this.selectedIndex === -1 || !input) return;   // "Must not be blank" (:940-942)
+    if (this.selectedIndex === -1 || !input) return;   // "Must not be blank" (:943-944)
     const list = this.deps.spells?.() ?? [];
     const spell = list[this.selectedIndex];
     if (!spell) return;
@@ -494,13 +557,15 @@ export class SpellbookWindow {
       (it) => it.group === 'MiscItems' && it.templateIndex === SPELLBOOK_TEMPLATE_INDEX);
     if (!hasBook) { this.top = 'noSpellbook'; return; }
     if (totalGoldAmount(entity) < price) { this.top = 'notEnoughGold'; return; }
-    let msgOffset = 0;
-    if (this.presentedCost >> 1 <= price) msgOffset = (this.presentedCost - (this.presentedCost >> 2) <= price) ? 2 : 1;
-    this._tradeOffset = msgOffset;
+    // The three bands (:984-990) are cureOfferMessageOffset's - DFU
+    // wrote the same comparison in the temple, the trade window and
+    // here, and the port keeps ONE home (tradeModes.js already reuses
+    // it for the trade records).
+    this._tradeOffset = cureOfferMessageOffset(this.presentedCost, price);
     this.top = 'trade';
   }
 
-  /** ConfirmTrade_OnButtonClick (:1015-1029) - and the close is
+  /** ConfirmTrade_OnButtonClick (:1011-1024) - and the close is
    *  outside the Yes arm here as well. */
   confirmTrade(yes) {
     if (yes) {
@@ -529,7 +594,10 @@ export class SpellbookWindow {
       if (code === 'Enter' || code === 'NumpadEnter') { this.confirmRename(); return; }
       if (code === 'Backspace') { this.renameText = this.renameText.slice(0, -1); return; }
       const ch = typedChar(code, e);
-      if (ch) this.renameText += ch;
+      // TextBox.maxCharacters (TextBox.cs:26, :425). The port already
+      // homes the 31 in spellMaker.js, where the maker's own name box
+      // reads it.
+      if (ch && this.renameText.length < MAX_SPELL_NAME) this.renameText += ch;
       return;
     }
     if (this.top === 'delete') {
@@ -555,7 +623,11 @@ export class SpellbookWindow {
       case 'ArrowUp': this.selectPrevious(); return;
       case 'ArrowDown': this.selectNext(); return;
       case 'Enter': case 'NumpadEnter':
-        if (this.buyMode) this.buyButton(); else this.useSelected();
+        // OnUseSelectedItem - what Return raises - is subscribed ONLY
+        // outside buy mode (:357-360); the shop wires
+        // OnMouseDoubleClick instead, so Enter does nothing there and
+        // B or the BUY button is the keyboard path.
+        if (!this.buyMode) this.useSelected();
         return;
       case 'KeyE': this._close(); return;                                   // SpellbookExit
       default: break;
@@ -564,10 +636,10 @@ export class SpellbookWindow {
       if (code === 'KeyB') this.buyButton();                                 // SpellbookBuy
       return;
     }
-    if (code === 'KeyL') { this._edit(); this.deleteButton(); }              // SpellbookDelete
+    if (code === 'KeyL') { this.deleteButton(); }                            // SpellbookDelete
     else if (code === 'KeyU') { this.swap(-1); }                             // SpellbookUp
     else if (code === 'KeyD') { this.swap(1); }                              // SpellbookDown
-    else if (code === 'KeyS') { this._edit(); this.top = 'sort'; }           // SpellbookSort
+    else if (code === 'KeyS') { this.top = 'sort'; }                         // SpellbookSort
   }
 
   click(vx, vy) {
@@ -584,26 +656,26 @@ export class SpellbookWindow {
     if (hitPanel(SPELLBOOK_RECTS.downArrow, vx, vy)) { this._edit(); this.selectNext(); return true; }
     if (hitPanel(SPELLBOOK_RECTS.deleteOrBuy, vx, vy)) {
       if (this.buyMode) this.buyButton();
-      else { this._edit(); this.deleteButton(); }
+      else this.deleteButton();
       return true;
     }
     if (!this.buyMode) {
       if (hitPanel(SPELLBOOK_RECTS.up, vx, vy)) { this.swap(-1); return true; }
       if (hitPanel(SPELLBOOK_RECTS.down, vx, vy)) { this.swap(1); return true; }
-      if (hitPanel(SPELLBOOK_RECTS.sort, vx, vy)) { this._edit(); this.top = 'sort'; return true; }
+      if (hitPanel(SPELLBOOK_RECTS.sort, vx, vy)) { this.top = 'sort'; return true; }
       if (inRect([LABEL_POS.name[0], LABEL_POS.name[1], 110, 10], vx - PANEL_X, vy - PANEL_Y)) {
         this.renameButton();
         return true;
       }
       if (hitPanel(SPELLBOOK_RECTS.spellIcon, vx, vy)) {
-        // SpellIconPanel_OnMouseClick pushes the picker (:1031-1035)
+        // SpellIconPanel_OnMouseClick pushes the picker (:954-958)
         this._click();
         this.top = 'note';
         this._noteRows = ['The icon picker is not built yet.'];
         return true;
       }
     }
-    // the three effect panels pop their effect's description (:729-762)
+    // the three effect panels pop their effect's description (:730-763)
     for (let i = 0; i < 3; i++) {
       if (!hitPanel(SPELLBOOK_RECTS.effect[i], vx, vy)) continue;
       if (this.buyMode) this._click();
@@ -628,7 +700,7 @@ export class SpellbookWindow {
     return true;
   }
 
-  /** ShowEffectPopup (:602-610) reads the effect's own
+  /** ShowEffectPopup (:651-660) reads the effect's own
    *  SpellBookDescription; the port has no per-effect description
    *  text source yet, so the box carries the name alone and says so. */
   _effectDescription() { return null; }
@@ -728,7 +800,15 @@ export class SpellbookWindow {
     } else {
       const flat = (text, [lx2, ly2]) => drawText(renderer, font, text,
         m.ox + (PANEL_X + lx2) * m.s, m.oy + (PANEL_Y + ly2) * m.s, m.s, DEFAULT_TEXT_COLOR);
-      flat(String(this.tradePrice()), LABEL_POS.cost);
+      // The label is the PRESENTED cost (:534) - the casting cost x4,
+      // Witches-Festival-halved - NOT the trade price. They are
+      // deliberately different numbers: the whole 260/261/262 ladder
+      // exists to compare one against the other, so a shop asking
+      // less than the sticker gets a friendlier line. GetTradePrice
+      // (:685-688) is read only by the ladder, the %a macro and the
+      // deduction.
+      this._updatePresentedCost();
+      flat(String(this.presentedCost), LABEL_POS.cost);
       flat(String(totalGoldAmount(this.deps.entity)), LABEL_POS.gold);
     }
 
@@ -766,6 +846,8 @@ export class SpellbookWindow {
       this._box = layoutMessageBox(font, this._boxRows(), buttons);
       this._drawBox(renderer, m, font);
     } else this._box = null;
+
+    this.tip.draw(renderer, m, font);   // LAST - DFU's final-component order
   }
 
   _drawBox(renderer, m, font) {

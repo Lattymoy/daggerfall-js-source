@@ -409,8 +409,10 @@ template registry first, then spell maker + effect settings editor,
 item maker (needs S-C), potion maker + the twenty recipes, spellbook
 buy mode, icon/colour pickers.~~ MOSTLY SHIPPED: the registry (S1),
 the spell maker (S1), the potion maker (M2), the item maker (M4) and
-the spellbook with its buy mode (U42), which between them closed six
-of the seventeen unbuilt guild service windows. What is left of this
+the spellbook with its buy mode (U42), which between them closed five
+of the seventeen unbuilt guild service windows (MakeSpells,
+MakePotions, MakeMagicItems, and BuySpells + BuySpellsMages, which
+share one destination). What is left of this
 row is the effect settings editor's remaining panels, the spell icon
 picker and the colour picker.
 

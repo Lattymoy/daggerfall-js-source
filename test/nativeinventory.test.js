@@ -2,7 +2,7 @@
 // filter law, and the shared ItemListScroller component.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { NativeInventoryWindow, INV_RECTS, TABS, filterByTab, isIngredientTemplate, NO_WAGON_TEXT
+import { NativeInventoryWindow, INV_RECTS, TABS, filterByTab, isIngredientTemplate, NO_WAGON_TEXT, USE_PENDING
 } from '../src/ui/nativeInventory.js';
 import { scrollerHit, applyScroll, LIST_SLOTS, CELL_X, ARROW_H, DOWN_ARROW_Y } from '../src/ui/itemScroller.js';
 import { readFileSync } from 'node:fs';
@@ -158,7 +158,13 @@ test('U25 / THE ONE CONSTRUCTION SEAM: all four inventory sites pass the same ho
   // them is exactly the failure this rule exists for. The window has
   // no execution coverage in node, so the seam is read.
   const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const REQUIRED = ['items:', 'entity:', 'icons:', 'rows:', 'nowMinute:'];
+  // U42 is the proof this rule was written for: `openSpellbook:` went
+  // onto three of the FIVE sites (the bare window in each of the two
+  // exterior hosts and the dungeon's), and the two loot-pile windows
+  // were left printing "You cannot open your spellbook here." over a
+  // Spellbook the player was holding. The list only catches a hook it
+  // NAMES, so every hook this window's hosts share belongs in it.
+  const REQUIRED = ['items:', 'entity:', 'icons:', 'rows:', 'nowMinute:', 'openSpellbook:'];
   let sites = 0;
   for (const f of ['src/scenes/exterior.js', 'src/scenes/world.js']) {
     const src = readFileSync(join(root, f), 'utf8');
@@ -175,6 +181,36 @@ test('U25 / THE ONE CONSTRUCTION SEAM: all four inventory sites pass the same ho
     }
   }
   assert.equal(sites, 4, 'the number of construction sites changed - re-read this rule');
+});
+
+test('U42: USING the Spellbook item closes the inventory FIRST, then opens the book', () => {
+  // DaggerfallInventoryWindow.cs:1748-1764 posts the open; the port
+  // has ONE overlay slot, so the order matters exactly as AUDIT B-C1
+  // found for the book reader: hand off before the close law runs and
+  // the window that just took the slot is torn back down, and a
+  // session's dropped pile never mints.
+  const order = [];
+  const w = new NativeInventoryWindow({
+    items: () => [], wagonItems: () => [], entity: { items: [] },
+    icons: { getTexture: () => null, uploadRecord: () => null, textures: {} },
+    rows: () => [], nowMinute: () => 0,
+    onClose: () => order.push('close'),
+    openSpellbook: () => order.push('open'),
+  });
+  w._useResult({ kind: 'spellbook' });
+  assert.deepEqual(order, ['close', 'open'], 'the close law runs BEFORE the hand-off');
+  assert.equal(w.done, true);
+  assert.equal(w.boxes?.length ?? 0, 0, 'and no message box is left behind');
+
+  // a host with no hook keeps the window and says so
+  const bare = new NativeInventoryWindow({
+    items: () => [], wagonItems: () => [], entity: { items: [] },
+    icons: { getTexture: () => null, uploadRecord: () => null, textures: {} },
+    rows: () => [], nowMinute: () => 0,
+  });
+  bare._useResult({ kind: 'spellbook' });
+  assert.equal(bare.done, false);
+  assert.equal(bare.boxes[0].rows[0].text, USE_PENDING.spellbook);
 });
 
 test('U26 / THE FOUR HOSTS: every host that opens an inventory opens the NATIVE one', () => {

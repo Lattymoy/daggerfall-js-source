@@ -2641,6 +2641,7 @@ export async function bootWorld(canvas, renderer, params, status) {
                 loot: { items: () => pile.items },
                 icons: { getTexture, uploadRecord, textures: renderer.textures },
                 rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
+                openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },   // U42: the Spellbook item's own door, on the LOOT-pile window too
                 nowMinute: () => Math.floor(playerTicker.classicMinutes),
                 onDrop: (items) => droppedLoot.dropPile(items, dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`),   // P2: stamped
               }));

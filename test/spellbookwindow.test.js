@@ -15,6 +15,7 @@ import {
   SpellbookWindow, SPELLBOOK_RECTS, SPELLBOOK_LAYOUT, DESATURATION,
   VAMPIRE_SPELL_TAG, LYCANTHROPY_SPELL_TAG, CANNOT_DELETE_VAMP, CANNOT_DELETE_WERE,
   DELETE_SPELL_PROMPT, SORT_SPELLS_PROMPT, NO_SPELLBOOK_TEXT_ID,
+  ENTER_SPELL_NAME, EFFECT_NOT_FOUND, SELECT_ICON_TIP,
   spellEffects, spellRowText, spellPointCost, _setSpellbookArtForTests,
 } from '../src/ui/spellbookWindow.js';
 import {
@@ -23,8 +24,13 @@ import {
 } from '../src/ui/spellIcons.js';
 import { HOLIDAYS, getHolidayId } from '../src/systems/holidays.js';
 import { calculateTradePrice } from '../src/systems/shopStock.js';
-import { SPELLBOOK_TEMPLATE_INDEX } from '../src/systems/spellMaker.js';
+import { SPELLBOOK_TEMPLATE_INDEX, MAX_SPELL_NAME } from '../src/systems/spellMaker.js';
 import { LETTER_OF_CREDIT_TEMPLATE } from '../src/systems/inventory.js';
+import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
+import { cureOfferMessageOffset } from '../src/systems/guildServiceActions.js';
+import { TARGET_DESCRIPTIONS, ELEMENT_DESCRIPTIONS } from '../src/ui/spellIcons.js';
+import { audio } from '../src/systems/audio.js';
+import { SOUND } from '../src/systems/soundClips.js';
 import { FNT_ASCII_START } from '../src/formats/fntFile.js';
 
 const PX = SPELLBOOK_LAYOUT.x, PY = SPELLBOOK_LAYOUT.y;
@@ -55,6 +61,14 @@ function spyFont() {
       glyphWidth: (gi) => { chars.push(String.fromCharCode(gi + FNT_ASCII_START)); return 4; },
     },
   };
+}
+
+/** The UI-sound spy the port already uses (test/uisounds.test.js). */
+function withSounds(fn) {
+  const played = [];
+  const orig = audio.playOneShot;
+  audio.playOneShot = (i) => { played.push(i); return 0.1; };
+  try { fn(played); } finally { audio.playOneShot = orig; }
 }
 
 const mountArt = () => {
@@ -116,6 +130,27 @@ test('U42 layout: the rects are DaggerfallSpellBookWindow.cs:39-54 verbatim', ()
   assert.equal(SPELLBOOK_LAYOUT.effectLabelMaxChars, 24, 'TextLabel.MaxCharacters (:487)');
 });
 
+test('U42 strings: every one is DFU\'s own en text, character for character', () => {
+  // U4 recorded that "the classic en string table is not in the source
+  // snapshot" and U42 inherited the claim, writing its own prose. The
+  // table IS in the snapshot - StreamingAssets/Text/Master
+  // Localization CSV Files/Internal_Strings.csv - so these are pinned
+  // as LITERALS rather than through the constants, which would let a
+  // rewrite move both sides at once.
+  assert.equal(CANNOT_DELETE_VAMP, 'Cannot delete special vampire spells.');      // :850
+  assert.equal(CANNOT_DELETE_WERE, 'Cannot delete special lycanthropy spell.');   // :851
+  assert.equal(DELETE_SPELL_PROMPT, 'Do you want to delete this spell?');         // :956
+  assert.equal(SORT_SPELLS_PROMPT, 'Do you want to sort spells?');                // :957
+  assert.equal(ENTER_SPELL_NAME, 'Enter spell name : ');   // :954 + the window's own " " (:934)
+  assert.equal(EFFECT_NOT_FOUND, '<effect not found>');                           // :958
+  assert.equal(SELECT_ICON_TIP, 'Select icon');                                   // :950
+  // sentence case, and NO hyphen in the elements (:940-949)
+  assert.deepEqual([...TARGET_DESCRIPTIONS],
+    ['Caster only', 'By touch', 'Single target at range', 'Area around caster', 'Area at range']);
+  assert.deepEqual([...ELEMENT_DESCRIPTIONS],
+    ['Fire based', 'Cold based', 'Poison based', 'Shock based', 'Magic based']);
+});
+
 // ── the list ──────────────────────────────────────────────────────
 
 test('U42 list: "{cost} - {name}", recomputed live, and the unaffordable rows desaturate', () => {
@@ -170,6 +205,37 @@ test('U42 list: the arrows clamp at both ends and scroll the window to follow', 
   assert.equal(w.scrollIndex, 4, 'clamped at count - rowsDisplayed');
   for (let i = 0; i < 20; i++) w.wheel(-1);
   assert.equal(w.scrollIndex, 0);
+});
+
+test('U42 list: the scroll clause is INSIDE the movement guard, and nudges by ONE', () => {
+  // ListBox.SelectPrevious (:718-728) / SelectNext (:730-740). Both
+  // details are reachable only because the wheel moves scrollIndex
+  // without moving the selection (SpellsListBox_OnMouseScroll,
+  // :793-796), which is the state a guard-outside version corrupts.
+  const many = Array.from({ length: 40 }, (_, i) => spell(`S${i}`, 1));
+  const a = book(...many);
+  a.w.wheel(1); a.w.wheel(1); a.w.wheel(1); a.w.wheel(1); a.w.wheel(1);
+  assert.deepEqual([a.w.selectedIndex, a.w.scrollIndex], [0, 5], 'wheeled away from the selection');
+  a.w.selectPrevious();
+  assert.deepEqual([a.w.selectedIndex, a.w.scrollIndex], [0, 5],
+    'Up at the HEAD moves nothing at all - the scroll clause is inside the guard');
+
+  // The tail case needs the selection BELOW the visible band, or the
+  // scroll clause has nothing to do either way: wheel back to the top
+  // with the last row still selected, then press Down.
+  const b = book(...many);
+  b.w.selectedIndex = 39;
+  b.w.scrollIndex = 0;
+  b.w.selectNext();
+  assert.deepEqual([b.w.selectedIndex, b.w.scrollIndex], [39, 0],
+    'Down at the TAIL moves nothing either - not even the scroll');
+
+  // ...and when it does move, it nudges by one rather than snapping
+  const c = book(...many);
+  c.w.selectedIndex = 25; c.w.scrollIndex = 0;
+  c.w.selectNext();
+  assert.deepEqual([c.w.selectedIndex, c.w.scrollIndex], [26, 1],
+    'one row, not selectedIndex - rowsDisplayed + 1');
 });
 
 // ── delete ────────────────────────────────────────────────────────
@@ -311,13 +377,49 @@ test('U42 rename: a COPY takes the new name, marked custom so the save carries i
   assert.equal(w._rows[0].text, '20 - Nyra\'s Kindling', 'and the list refreshed');
 });
 
-test('U42 rename: a blank answer changes nothing (:940-942)', () => {
-  const { entity, w } = book(spell('Fireball', 20));
+test('U42 rename: the renamed COPY survives the save envelope', () => {
+  // The `custom` flag is not decoration - save.js:142 stores the whole
+  // record for a custom spell and a bare SPELLS.STD index for every
+  // other, so without it a reload would hand back the ORIGINAL name.
+  // This drives the real envelope rather than asserting the flag.
+  const { entity, w } = book(spell('Fireball', 20, { index: 12 }));
   w.renameButton();
-  w.renameText = '   ';
+  w.renameText = 'Probe Spell';
   w.confirmRename();
-  assert.equal(entity.spells[0].name, 'Fireball');
-  assert.equal(w.top, null, 'the prompt still closes');
+  const snap = snapshotPlayer(entity, {});
+  assert.equal(typeof snap.spells[0], 'object', 'a custom record is stored WHOLE, not as an index');
+  assert.equal(snap.spells[0].name, 'Probe Spell');
+  const reloaded = { items: [] };
+  // the SHARED map still holds the original, as a reload would
+  restorePlayer(reloaded, snap, new Map([[12, spell('Fireball', 20, { index: 12 })]]));
+  assert.equal(reloaded.spells[0].name, 'Probe Spell', 'and comes back renamed');
+});
+
+test('U42 rename: an EMPTY answer changes nothing, but spaces are a name (:943-944)', () => {
+  // "Must not be blank" is string.IsNullOrEmpty on the RAW input, so
+  // classic accepts a name of three spaces. Trimming would be the
+  // port being quietly stricter than the game.
+  const empty = book(spell('Fireball', 20));
+  empty.w.renameButton();
+  empty.w.renameText = '';
+  empty.w.confirmRename();
+  assert.equal(empty.entity.spells[0].name, 'Fireball');
+  assert.equal(empty.w.top, null, 'the prompt still closes');
+  const spaces = book(spell('Fireball', 20));
+  spaces.w.renameButton();
+  spaces.w.renameText = '   ';
+  spaces.w.confirmRename();
+  assert.equal(spaces.entity.spells[0].name, '   ', 'a name of spaces is legal in classic');
+});
+
+test('U42 rename: the field caps at TextBox.maxCharacters', () => {
+  // TextBox.cs:26, :425 - 31, the same constant the spell maker's own
+  // name box reads out of systems/spellMaker.js.
+  const { w } = book(spell('Fireball', 20));
+  w.renameButton();
+  w.renameText = '';
+  for (let i = 0; i < 50; i++) w.input('KeyA', { key: 'a' });
+  assert.equal(w.renameText.length, MAX_SPELL_NAME, `capped at ${MAX_SPELL_NAME}`);
 });
 
 // ── the selection's panels ────────────────────────────────────────
@@ -331,11 +433,19 @@ test('U42 effects: the labels are the effect template\'s group and subgroup', ()
   const [g0, s0] = w.effectLabels(0);
   assert.ok(g0.length, `slot 0 resolves a group (got ${JSON.stringify([g0, s0])})`);
   const [g1, s1] = w.effectLabels(1);
-  assert.equal(g1, 'Effect not found');
+  assert.equal(g1, '<effect not found>', 'effectNotFoundError, verbatim');
   assert.equal(s1, '99,99', 'the raw key is the second row');
   // -1 and 255 are the SAME "no subtype": a SPELLS.STD record reads
   // the byte signed, the maker copies the catalog's 255, and the
   // effect table is keyed on 255. Both must resolve.
+  // ...and the table the labels read is the BROKER's registry, not
+  // the spell MAKER's offer list: MorphSelf (29,255) carries a classic
+  // key with AllowedCraftingStations = None, so a spellbook holding
+  // one printed "<effect not found>" while the maker's catalogue was
+  // the only lookup.
+  const morph = book(spell('Wereform', 10, { effects: [effect(29, 255), EMPTY, EMPTY] }));
+  assert.deepEqual(morph.w.effectLabels(0), ['Morph Self', ''],
+    'a registry-only effect is NAMED, not reported missing');
   const stock = book(spell('Free Action', 10, { effects: [effect(26, -1), EMPTY, EMPTY] }));
   const made = book(spell('Free Action', 10, { effects: [effect(26, 255), EMPTY, EMPTY] }));
   assert.deepEqual(stock.w.effectLabels(0), made.w.effectLabels(0));
@@ -357,8 +467,13 @@ test('U42 icons: the three sheets are cut by enum order, top-down', () => {
     assert.deepEqual(spellIconRect(0), [0, 0, 16, 16]);
     assert.deepEqual(spellIconRect(19), [19 * 16, 0, 16, 16], 'the last icon of row 0');
     assert.deepEqual(spellIconRect(20), [0, 16, 16, 16], 'row 1 starts over at x=0');
-    assert.deepEqual(spellIconRect(SPELL_ICON_COUNT), spellIconRect(0), 'SetIcon wraps at the count');
-    assert.deepEqual(spellIconRect(-1), spellIconRect(SPELL_ICON_COUNT - 1), '...in both directions');
+    // GetSpellIcon (:151-157) answers NULL outside [0, Count) and the
+    // panel shows its black background. The `% count` wrap is
+    // SpellMakerWindow.SetIcon's law, applied at MINT time in
+    // systems/spellMaker.js - not the collection's.
+    assert.equal(spellIconRect(SPELL_ICON_COUNT), null, 'off the end is null, not a wrap');
+    assert.equal(spellIconRect(-1), null, '...and so is below the start');
+    assert.deepEqual(spellIconRect(SPELL_ICON_COUNT - 1), [8 * 16, 3 * 16, 16, 16], 'the last real icon');
     assert.equal(SPELL_ICON_ROW_COUNT, 20);
     assert.equal(SPELL_ICON_COUNT, 69);
     for (let i = 0; i < 5; i++) {
@@ -427,12 +542,72 @@ test('U42 draw: the rows read "{cost} - {name}" and the SELECTED one is the dark
   } finally { unmountArt(); }
 });
 
+test('U42 draw: the tooltip is drawn LAST, and an off-sheet icon draws NOTHING', () => {
+  mountArt();
+  try {
+    const { w } = book(spell('Frostbite', 12, { icon: 3 }));
+    // the tip, over everything else (DFU's final-component order)
+    w.hover(PX + SPELLBOOK_RECTS.targetIcon[0] + 2, PY + SPELLBOOK_RECTS.targetIcon[1] + 2);
+    w.tick(10);
+    const f = spyFont();
+    const r = recorder();
+    w.draw(r, canvas, f);
+    assert.ok(f.drawn.includes('Singletargetatrange'.slice(0, 6)), 'the tip text is painted');
+    // an icon byte off the end of the sheet: GetSpellIcon answers null
+    // and only the BLACK panel remains
+    const bad = book(spell('Broken', 5, { icon: 200 }));
+    const r2 = recorder();
+    bad.w.draw(r2, canvas, font());
+    assert.equal(r2.quads.some((q) => q.tex === 'icon00'), false, 'nothing is cut from the atlas');
+    assert.ok(r2.quads.some((q) => q.tex === null && q.w === 16 && q.h === 16),
+      'and the black panel is still there');
+  } finally { unmountArt(); }
+});
+
 test('U42 draw: no art draws a plate rather than nothing (the U8 idiom)', () => {
   const { w } = book(spell('A', 1));
   const r = recorder();
   w.draw(r, canvas, font());
   const plate = r.quads.find((q) => q.tex === null && q.w === 259 && q.h === 164);
   assert.ok(plate, 'the window still has a body without SPBK00I0');
+});
+
+test('U42 sounds: OnPush/OnPop per mode, and the page turn plays ONCE', () => {
+  // OnPush (:168-175) / OnPop (:178-183): the book opens and shuts
+  // with a page turn, the shop with a button click. AddButton sets no
+  // ClickSound (DaggerfallUI.cs:981-998) and editSpellBook plays in
+  // the CONFIRM handlers only (:848, :921) - so arming a prompt is
+  // silent and the arrow buttons, which DFU does sound (:801, :807),
+  // are not.
+  withSounds((played) => {
+    const { w } = book(spell('A', 5), spell('B', 5));
+    assert.deepEqual(played, [SOUND.OpenBook], 'the book opens with a page turn');
+    played.length = 0;
+    w.input('KeyL');
+    assert.deepEqual(played, [], 'arming the delete prompt is SILENT');
+    w.input('KeyY');
+    assert.deepEqual(played, [SOUND.ButtonClick, SOUND.PageTurn, SOUND.PageTurn],
+      'the box answers, the edit turns a page, and the close turns another');
+  });
+  withSounds((played) => {
+    const { w } = book(spell('A', 5), spell('B', 5));
+    played.length = 0;
+    w.input('KeyS');
+    assert.deepEqual(played, [], 'arming the sort prompt is SILENT too');
+    played.length = 0;
+    w.click(PX + SPELLBOOK_RECTS.sort[0] + 1, PY + SPELLBOOK_RECTS.sort[1] + 1);
+    assert.deepEqual(played, [], '...and so is clicking the button');
+  });
+  withSounds((played) => {
+    const { w } = book(spell('A', 5), spell('B', 5));
+    played.length = 0;
+    w.click(PX + SPELLBOOK_RECTS.downArrow[0] + 1, PY + SPELLBOOK_RECTS.downArrow[1] + 1);
+    assert.deepEqual(played, [SOUND.PageTurn], 'the ARROW buttons really do sound (:801, :807)');
+  });
+  withSounds((played) => {
+    shop([spell('Arc Bolt', 20)]);
+    assert.deepEqual(played, [SOUND.ButtonClick], 'the shop opens with a click, not a page turn');
+  });
 });
 
 // ── the seams ─────────────────────────────────────────────────────
@@ -497,6 +672,67 @@ test('U42 keys: a click-anywhere box closes on the next key, and does not close 
   assert.equal(w.top, null, 'any key dismisses it');
   assert.equal(w.done, false, 'and the book is still open');
   assert.equal(w.selectedIndex, 0, 'the dismissing key did not also move the selection');
+});
+
+test('U42 keys: B is the BUY hotkey, and only in buy mode', () => {
+  // DialogShortcuts.txt:104 - SpellbookBuy, B. The buy tests reach
+  // buyButton through Enter and the button rect; this is the hotkey
+  // itself, which nothing else exercised.
+  const { w } = shop([spell('Arc Bolt', 20)]);
+  w.input('KeyB');
+  assert.equal(w.top, 'trade', 'B opens the trade box');
+  // and in CAST mode there is no buy button at all (:390-417), so B
+  // must not reach one
+  const cast = book(spell('Arc Bolt', 20));
+  cast.w.input('KeyB');
+  assert.equal(cast.w.top, null, 'B does nothing in the player\'s own book');
+  assert.equal(cast.w.done, false);
+});
+
+test('U42 effects: a long label is CLIPPED at MaxCharacters, not wrapped', () => {
+  // TextLabel.MaxCharacters = 24 (:489). The constant is pinned in the
+  // layout test; this drives the clip the draw actually performs.
+  mountArt();
+  try {
+    const MAX = SPELLBOOK_LAYOUT.effectLabelMaxChars;
+    const { w } = book(spell('Long', 5));
+    // one panel only, so the tape is not three clipped labels running
+    // together into a longer string than any of them
+    w.effectLabels = (slot) => (slot === 0 ? ['A'.repeat(40), ''] : ['', '']);
+    const f = spyFont();
+    w.draw(recorder(), canvas, f);
+    // shadowText measures once and draws twice, so a painted label
+    // walks the tape three times
+    const painted = (f.drawn.match(/A/g) ?? []).length;
+    assert.equal(painted, MAX * 3, `24 characters painted three times, not 40 (got ${painted})`);
+  } finally { unmountArt(); }
+});
+
+test('U42 tooltips: the three icon panels answer, exactly as SetupIcons wires them', () => {
+  // SetupIcons points all three panels at the shared defaultToolTip
+  // (:436, :448, :454): the spell icon's text is the STATIC selectIcon
+  // - it names the picker the click opens - and the other two are
+  // recomputed per selection by UpdateSelection (:571, :574).
+  const { w } = book(spell('Frostbite', 12, { rangeType: 2, element: 1 }));
+  const at = (rect) => {
+    w.hover(PX + rect[0] + 2, PY + rect[1] + 2);
+    w.tick(10);   // past the rest delay
+    return w.tip.text;
+  };
+  assert.equal(at(SPELLBOOK_RECTS.targetIcon), TARGET_DESCRIPTIONS[2]);
+  assert.equal(at(SPELLBOOK_RECTS.elementIcon), ELEMENT_DESCRIPTIONS[1]);
+  assert.equal(at(SPELLBOOK_RECTS.spellIcon), 'Select icon', 'the icon panel names its PICKER');
+  // the description follows the SELECTION, it is not baked
+  w.deps.spells().push(spell('Shock', 9, { rangeType: 4, element: 3 }));
+  w.refreshSpellsList(true);
+  w.selectNext();
+  assert.equal(at(SPELLBOOK_RECTS.targetIcon), TARGET_DESCRIPTIONS[4]);
+  assert.equal(at(SPELLBOOK_RECTS.elementIcon), ELEMENT_DESCRIPTIONS[3]);
+  // off the panels, and behind a pushed box, there is nothing
+  w.hover(PX + 60, PY + 60); w.tick(10);
+  assert.equal(w.tip.text, null);
+  w.deleteButton();
+  assert.equal(at(SPELLBOOK_RECTS.targetIcon), null, 'a pushed box hides the tip');
 });
 
 test('U42 clicks: every button hits through the half-pixel panel offset', () => {
@@ -629,6 +865,16 @@ test('U42 buy: the ladder is spellbook, then gold, then the haggle line', () => 
   broke.w.buyButton();
   assert.equal(broke.w.top, 'notEnoughGold');
   assert.ok(broke.w._boxRows()[0].text.startsWith('[454]'), 'record 454');
+  // ...and the gate is the TRADE price (:982), not the presented cost.
+  // With a purse BETWEEN the two the shop still sells, because the
+  // trade price is what it is actually asking.
+  const between = shop([spell('Arc Bolt', 20)]);
+  const price = between.w.tradePrice();
+  assert.ok(price < between.w.presentedCost, 'quality 10 discounts the sticker');
+  between.entity.items = [{ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX },
+    { group: 'Currency', stackCount: price }];
+  between.w.buyButton();
+  assert.equal(between.w.top, 'trade', 'exactly the asking price is enough');
 
   const ok = shop([spell('Arc Bolt', 20)]);
   ok.w.buyButton();
@@ -639,18 +885,35 @@ test('U42 buy: the ladder is spellbook, then gold, then the haggle line', () => 
   assert.ok(row.includes('Nyra'), '%pct is the player\'s FIRST name here (:719-722)');
 });
 
-test('U42 buy: the haggle offset is chosen by how the asking price compares', () => {
-  // :984-990. presentedCost >> 1 <= price picks 1 or 2; below that, 0.
-  const { w } = shop([spell('Arc Bolt', 20)]);
-  const at = (price) => {
-    w.presentedCost = 80;
-    let off = 0;
-    if (80 >> 1 <= price) off = (80 - (80 >> 2) <= price) ? 2 : 1;
-    return off;
-  };
-  assert.equal(at(10), 0, 'a bargain gets the surly record');
-  assert.equal(at(40), 1);
-  assert.equal(at(60), 2, '80 - 20 = 60, so 60 or more is the friendliest record');
+test('U42 buy: the haggle offset is DRIVEN by the price the shop asks', () => {
+  // :984-990, through the window rather than re-implemented beside it:
+  // the shop's QUALITY is what moves the trade price, so each quality
+  // below drives buyButton() and reads the offset the window chose.
+  // The bands themselves are cureOfferMessageOffset's ONE home
+  // (guildServiceActions.js), which the temple and the trade window
+  // already share - so this also pins that the window did not grow a
+  // second copy of the comparison.
+  const seen = new Map();
+  for (const quality of [1, 5, 10, 15, 20]) {
+    const { w } = shop([spell('Arc Bolt', 20)], { buildingQuality: () => quality });
+    const price = w.tradePrice();
+    w.buyButton();
+    assert.equal(w.top, 'trade', `quality ${quality} reaches the trade box`);
+    assert.equal(w._tradeOffset, cureOfferMessageOffset(w.presentedCost, price),
+      `quality ${quality}: the offset is the shared band law`);
+    assert.equal(w._boxRows()[0].text.startsWith(`[${260 + w._tradeOffset}]`), true,
+      `quality ${quality}: the record is 260 + that offset`);
+    seen.set(w._tradeOffset, (seen.get(w._tradeOffset) ?? 0) + 1);
+  }
+  assert.ok(seen.size >= 2, `the quality range spans more than one band (saw ${[...seen.keys()].join(',')})`);
+  // and the boundaries themselves, at the one home
+  assert.equal(cureOfferMessageOffset(80, 10), 0, 'a bargain gets the surly record');
+  assert.equal(cureOfferMessageOffset(80, 40), 1, '80 >> 1 = 40, so 40 is the middle band');
+  assert.equal(cureOfferMessageOffset(80, 39), 0, '...and 39 is not');
+  assert.equal(cureOfferMessageOffset(80, 60), 2, '80 - (80 >> 2) = 60 is the friendliest');
+  assert.equal(cureOfferMessageOffset(80, 59), 1, '...and 59 is not');
+  const src = readFileSync(new URL('../src/ui/spellbookWindow.js', import.meta.url), 'utf8');
+  assert.equal(/presentedCost >> 1 <=/.test(src), false, 'the window does not re-implement the bands');
 });
 
 test('U42 buy: Yes deducts through DeductGoldAmount, adds the spell, and closes', () => {
@@ -682,8 +945,20 @@ test('U42 buy: a letter of credit is legal tender at the counter', () => {
   entity.items = [{ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX },
     { group: 'Currency', stackCount: 1 },
     { group: 'UselessItems2', templateIndex: LETTER_OF_CREDIT_TEMPLATE, value: 5000 }];
+  const price = w.tradePrice();
   w.buyButton();
   assert.equal(w.top, 'trade', 'the letter covers the price');
+  // ...and it is really SPENT - DeductGoldAmount takes the purse
+  // first, then writes the remainder back onto the letter.
+  // ...and it is really SPENT. DeductGoldAmount's order is DFU's: a
+  // purse that cannot cover the payment is left alone and the LETTERS
+  // are spent first, whole ones then part of the last, with the
+  // remainder written back onto it (PlayerEntity.cs:1331-1341).
+  w.confirmTrade(true);
+  assert.equal(entity.items.find((i) => i.templateIndex === LETTER_OF_CREDIT_TEMPLATE).value, 5000 - price,
+    'the letter carries the whole price');
+  assert.equal(entity.items.find((i) => i.group === 'Currency').stackCount, 1, 'and the coin is untouched');
+  assert.equal(entity.spells.length, 1, 'the spell is bought');
 });
 
 test('U42 buy: the bottom-left button is BUY, and the swap/sort/rename arms are gone', () => {
@@ -697,10 +972,12 @@ test('U42 buy: the bottom-left button is BUY, and the swap/sort/rename arms are 
   w.click(...hit(SPELLBOOK_RECTS.deleteOrBuy));
   assert.equal(w.top, 'trade', 'the bottom-left button is BUY here');
   w.top = null;
-  // and Enter is the BUY button in buy mode, not a cast
+  // Enter is a NO-OP in buy mode: OnUseSelectedItem is subscribed
+  // only outside it (:357-360), where the shop wires
+  // OnMouseDoubleClick instead. B and the BUY button are the paths.
   w.input('Enter');
-  assert.equal(w.top, 'trade', 'Enter buys rather than readying (:353-356)');
-  assert.equal(w.done, false);
+  assert.equal(w.top, null, 'Enter neither buys nor readies in the shop');
+  assert.equal(w.done, false, 'and certainly does not close the window');
 });
 
 test('U42 buy: SPBK01I0 is the background, and the cost/gold labels replace the points', () => {
@@ -713,7 +990,13 @@ test('U42 buy: SPBK01I0 is the background, and the cost/gold labels replace the 
     assert.ok(r.quads.some((q) => q.tex === 'spbk01'), 'the buy-mode art');
     assert.equal(r.quads.some((q) => q.tex === 'spbk00'), false, 'and not the cast one');
     const painted = f.drawn;
-    assert.ok(painted.includes(String(w.tradePrice())), 'the price label');
+    // spellCostLabel is the PRESENTED cost (:534) - casting cost x4 -
+    // NOT GetTradePrice. The two are deliberately different: the
+    // 260/261/262 ladder exists to compare one against the other.
+    w.tradePrice();
+    assert.notEqual(w.presentedCost, w.tradePrice(), 'the two numbers really do differ here');
+    assert.ok(painted.includes(String(w.presentedCost)), 'the label is the presented cost');
+    assert.equal(painted.includes(String(w.tradePrice())), false, 'and not the trade price');
     assert.ok(painted.includes('5000'), 'the gold label');
     assert.equal(painted.includes('20/40'), false, 'no spell-point label in buy mode (:477-482)');
   } finally { unmountArt(); }

@@ -236,7 +236,11 @@ delegates:
   DaggerfallSpellBookWindow.RefreshSpellsList has no fallback of any kind.~~
   CLOSED at U42: the fallback is DELETED along with the window that used it,
   and `SpellbookWindow` now reads `playerEntity.spells` and nothing else,
-  exactly as RefreshSpellsList does. A Warrior's book is empty and says so.
+  exactly as RefreshSpellsList does. A Warrior's book opens EMPTY - no
+  rows, no name, no icons and no message, which is what DFU does too
+  (GameManager.cs:550-553 posts the open unconditionally). The only
+  path that says anything is the ITEM's, whose `noSpells` arm answers
+  TEXT.RSC 12.
   (The latch that guarded this row - `audit18_bible_docs`'s "UI-Arc does not
   claim the spellbook lists real spells while the fallback lives" - reads the
   fallback's own source text, so it goes dormant with the fallback rather
@@ -4027,8 +4031,36 @@ marks the copy `custom` - which is exactly the flag `save.js` has
 read since S1 to store a whole record instead of a bare index. The
 rename is real, it is per-character, and it survives a save.
 
+**THE STRINGS WERE NEVER MISSING.** U4 recorded that "the classic en
+string table is not in the source snapshot", flagged its prompt
+prose as pending one, and every slice since inherited the claim -
+including U42's own first pass, which wrote "Delete this spell?" and
+"You cannot delete vampiric powers." The table is in the snapshot,
+at `StreamingAssets/Text/Master Localization CSV Files/
+Internal_Strings.csv`, and every string this window wants is in it:
+`deleteSpell` is "Do you want to delete this spell?", `cannotDeleteVamp`
+is "Cannot delete special vampire spells.", `enterSpellName` carries a
+colon, `effectNotFoundError` is "<effect not found>" with the angle
+brackets, and the ten target/element descriptions are sentence case
+with no hyphen ("Fire based", not "Fire-based"). All of them are
+verbatim now, and the Port-Ledger's "the YesNo/refusal PROSE is
+flagged pending a classic string source" residue retires with them.
+What is left is a MECHANISM departure, not a content one: the port
+holds the en values as constants instead of resolving TextManager
+lookups.
+
 **What the audits caught, all of it fixed:**
 
+- **The cost label painted the wrong number.** `spellCostLabel` is
+  the PRESENTED cost - the casting cost times four - and the window
+  painted `GetTradePrice()` instead. They are deliberately different
+  numbers, which is the entire point of the 260/261/262 ladder: the
+  bands compare `presentedCost >> 1` and
+  `presentedCost - (presentedCost >> 2)` against what the shop is
+  actually asking, so the sticker price has to be visible beside it.
+  At quality 10 with no Mercantile, a 25-point spell showed 70 where
+  classic shows 100. The first pin certified the wrong value, because
+  it asserted whatever `tradePrice()` returned.
 - **`{}` for the haggle skills.** `tradePrice` passed an empty
   options object to `calculateTradePrice`, which defaults Mercantile
   to 0 and Personality to 50 - so every spell in the game would have
@@ -4053,6 +4085,44 @@ rename is real, it is per-character, and it survives a save.
   and the row array collided on one name, and the collision was
   invisible until the buy ladder tried to read TEXT.RSC 1703 and got
   "this._rows is not a function". The reader is `_boxText` now.
+- **The two selection methods scrolled where DFU's do not.**
+  `ListBox.SelectPrevious`/`SelectNext` put the scroll adjustment
+  INSIDE the movement guard and nudge by exactly one row; the port
+  ran it unconditionally and SNAPPED. It is reachable because the
+  wheel moves the scroll without moving the selection, exactly as
+  `SpellsListBox_OnMouseScroll` does: scroll five rows down, press Up
+  at the top of the book, and DFU leaves the view alone while the
+  port yanked it back to zero.
+- **`Enter` bought in buy mode.** `OnUseSelectedItem` - what Return
+  raises - is subscribed only OUTSIDE buy mode; the shop wires
+  `OnMouseDoubleClick` instead, so Enter does nothing there and B or
+  the BUY button is the keyboard path.
+- **The rename field had no cap and trimmed.** DFU's text box stops
+  at 31 characters (the constant the spell maker already homes), and
+  its "must not be blank" guard is `IsNullOrEmpty` on the RAW string -
+  so a name of three spaces is legal in classic and the port was
+  quietly stricter.
+- **DELETE and SORT played their page-turn twice.** `AddButton` sets
+  no `ClickSound`; `editSpellBook` plays in the confirm HANDLERS
+  only. The arrow buttons really do play it on press, and still do.
+- **The icon atlas wrapped where the collection returns null.**
+  `GetSpellIcon` answers null outside `[0, Count)` and the panel
+  shows its black background; the `index % 69` wrap is
+  `SpellMakerWindow.SetIcon`'s law, applied at MINT time in
+  `systems/spellMaker.js`. A record carrying a bad icon byte now
+  reads as a black square rather than as some other spell's icon.
+- **The effect labels read the wrong table.** `SetEffectLabels` goes
+  through `EntityEffectBroker.GetEffectTemplate` - the whole registry
+  - where the port went through the spell MAKER's catalogue, which
+  deliberately omits MorphSelf (`AllowedCraftingStations = None`). A
+  spellbook holding a 29,255 effect printed "<effect not found>".
+  `spellEffects.js` is the registry now, with a `craftable` flag the
+  two picker lists filter on, so the maker still offers exactly 90.
+- **The three haggle bands had a second home.** `cureOfferMessageOffset`
+  in `guildServiceActions.js` is the one the temple and the trade
+  window share; the buy ladder had rewritten the same comparison
+  inline. The ONE-HOME sweep in this slice caught five constants and
+  missed the law next door.
 - **Five names with two homes.** `PANEL_X`, `PANEL_Y`,
   `ROWS_DISPLAYED`, `LABEL_POS` and `TRADE_MESSAGE_BASE_ID` were all
   already declared somewhere else in `src/`. The geometry folded
@@ -4068,7 +4138,13 @@ inventory has been a silent no-op since U25 - the useItem law
 answered `{ kind: 'spellbook' }` and `_useResult` had no arm for it,
 so the window that should open did not exist. It does now, and the
 inventory hands off through the same one-overlay-slot discipline the
-book reader uses (close law first, then the hook).
+book reader uses (close law first, then the hook). The first pass
+wired three of the FIVE construction sites and left both LOOT-PILE
+windows printing "You cannot open your spellbook here." over a
+spellbook the player was holding - which is exactly the failure U25's
+ONE CONSTRUCTION SEAM rule exists to catch, and its sweep missed it
+because the sweep only checks hooks it NAMES. `openSpellbook:` is in
+that list now.
 
 **What the live probe caught: nothing, because it could not run.**
 This machine has no ARENA2, so SPBK00I0/SPBK01I0/ICON00I0/MASK04I0
@@ -4087,32 +4163,47 @@ a spell, which worked only because the KEYED window stayed open
 through its confirmation - the classic one closes on either answer,
 so the probe reopens the book first now.
 
-Pins: 37 in `spellbookwindow.test.js`, and four existing pins
+Pins: 46 in `spellbookwindow.test.js`, one new in
+`nativeinventory.test.js` for the item door's hand-off order, two
+re-pinned in `spellmakerwindow.test.js` for the registry split, and
+five existing pins
 re-aimed rather than deleted - `charsheetnav`'s ONE DFU MEMBER, ONE
 EXPORT sweep follows the window to its new home, `nativeinventory`'s
 four-hosts pin now asserts BOTH keyed windows are gone from the
 module and that the spellbook lives on its art, `mysticism`'s cast
 engine pin reads the free-cast rider on the ready call, and
-`audit18_hosts_dungeon`'s retired-flags pin reads the renamed hook.
-69 mutations, 68 dead and one PROVEN equivalent (a `void 0` after a
-label draw). The first round left five alive: the top-edge
-force-reveal step (whose fixture sat at the scroll clamp, so the
-step had nothing to do), a click-anywhere box's dismissal, Enter in
-buy mode, the selected row's missing shadow, and the icon size being
-derived from the atlas width rather than assumed. Each is its own
-pin now.
+`audit18_hosts_dungeon`'s retired-flags pin reads the renamed hook,
+and U25's ONE CONSTRUCTION SEAM sweep names `openSpellbook:` so the
+loot-pile windows cannot be forgotten again.
+103 mutations across two campaigns, 102 dead and one PROVEN
+equivalent (a `void 0` after a label draw). The first campaign of 69
+left five alive: the top-edge force-reveal step (whose fixture sat at
+the scroll clamp, so the step had nothing to do), a click-anywhere
+box's dismissal, Enter in buy mode, the selected row's missing
+shadow, and the icon size being derived from the atlas width rather
+than assumed. The SECOND campaign ran only the laws the adversarial
+review had corrected, on the reasoning that a law nobody had got
+right was a law nobody had pinned - and 14 of its 34 survived the
+first pass, including all seven of the en STRINGS (asserted through
+the very constants a rewrite would move), both halves of the
+scroll-inside-the-guard rule, and the doubled page turn. Two fixtures
+were themselves the bug: the tail case sat at the scroll clamp and
+the head case at zero, so in both the mutant and the original had
+nothing to do. Every one is its own pin now.
 
-FLAGGED: the ICON PICKER (`SpellIconPickerWindow`, 200 lines of DFU)
+FLAGGED: the ICON PICKER (`SpellIconPickerWindow`, 352 lines of DFU)
 is a window of its own, so clicking the icon panel says so rather
 than doing nothing; `ShowEffectPopup` reads each effect's
 `SpellBookDescription` tokens, which the port's effect table does
 not carry, so an effect panel's box shows the group/subgroup pair
 alone; the scroll thumb's three-slice art lives in Unity Resources
 rather than ARENA2, so the thumb is a flat bar at DFU's own
-geometry; DFU's double-click-to-buy on the list is a straight-through
-pick here, U24's recorded departure; the tooltip strings for the
-target and element icons are the en values, since the port has no
-localization table; and DFU wires the name label's rename in BOTH
+geometry; DFU fires a list row's use/buy from a DOUBLE click
+(ListBox.cs:507-509) where the port takes a second click on the
+already-selected row with no timing window, U24's recorded departure;
+the three icon TOOLTIPS carry DFU's own en strings as constants
+rather than TextManager lookups, since the port has no localization
+LOOKUP; and DFU wires the name label's rename in BOTH
 modes, where the handler then indexes the PLAYER's book with the
 OFFER's index - the port gates rename to cast mode and does not port
 the bug.

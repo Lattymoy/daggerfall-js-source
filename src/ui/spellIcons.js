@@ -33,12 +33,12 @@ import { loadImg, drawImgCrop } from './nativePanel.js';
 // written a second time.
 import { SPELL_ICON_COUNT } from '../systems/spellMaker.js';
 
-/** classicSpellIconsRowCount / classicSpellIconsCount (:35-37). */
+/** classicSpellIconsRowCount / classicSpellIconsCount (:36-37). */
 export const SPELL_ICON_ROW_COUNT = 20;
 export { SPELL_ICON_COUNT };
-/** spellTargetIconsCount / spellElementIconsCount (:37-38) and the
+/** spellTargetIconsCount / spellElementIconsCount (:38-39) and the
  *  three sizes LoadClassicSpellTargetAndElementIcons reads with
- *  (:441-443) over the 40x80 sheet (:40). */
+ *  (:443-445) over the 40x80 sheet (:40). */
 export const TARGET_ICON_COUNT = 5;
 export const ELEMENT_ICON_COUNT = 5;
 export const TARGET_ICON_W = 24;
@@ -67,13 +67,23 @@ export function _setSpellIconsForTests(art) { _art = art; }
  *  assumed - a replacement atlas is allowed to be bigger. */
 export const spellIconDim = () => (_art ? Math.trunc(_art.icons.w / SPELL_ICON_ROW_COUNT) : ICON_H);
 
-/** The source rect of spell icon `index` on ICON00I0, TOP-DOWN.
+/** The source rect of spell icon `index` on ICON00I0, TOP-DOWN, or
+ *  NULL when the index is off the sheet.
+ *
  *  DFU walks the atlas from its top-left in Unity's bottom-up space
- *  (srcY starts at height - dim and DECREASES per row, :418-434),
- *  which is row-major from the top in ours. */
+ *  (srcY starts at height - dim and DECREASES per row, :419-433),
+ *  which is row-major from the top in ours.
+ *
+ *  The null matters: GetSpellIcon (:151-157) answers null outside
+ *  [0, Count) and the panel then shows its black background. The
+ *  `index % count` WRAP belongs to SpellMakerWindow.SetIcon, which
+ *  clamps at MINT time - systems/spellMaker.js:131 already does it -
+ *  not to the collection, so a record carrying a bad icon byte reads
+ *  as a black square here rather than as some other spell's icon. */
 export function spellIconRect(index) {
+  const i = index | 0;
+  if (i < 0 || i >= SPELL_ICON_COUNT) return null;
   const dim = spellIconDim();
-  const i = ((index % SPELL_ICON_COUNT) + SPELL_ICON_COUNT) % SPELL_ICON_COUNT;   // SetIcon's own wrap
   return [(i % SPELL_ICON_ROW_COUNT) * dim, Math.trunc(i / SPELL_ICON_ROW_COUNT) * dim, dim, dim];
 }
 
@@ -94,8 +104,9 @@ export function elementIconRect(elementType) {
  *  to the panel it owns (BackgroundLayout.StretchToFill), so the
  *  destination size is the caller's. */
 export function drawSpellIcon(renderer, m, index, dst) {
-  if (!_art) return false;
-  drawImgCrop(renderer, _art.icons, m, spellIconRect(index), dst);
+  const src = _art ? spellIconRect(index) : null;
+  if (!src) return false;   // GetSpellIcon's null - the panel stays black
+  drawImgCrop(renderer, _art.icons, m, src, dst);
   return true;
 }
 
@@ -111,14 +122,17 @@ export function drawElementIcon(renderer, m, elementType, dst) {
   return true;
 }
 
-/** GetTargetTypeDescription (:576-593) and GetElementDescription
- *  (:595-612) - the tooltip strings, in enum order. The port has no
- *  localization table, so these are the en values from DFU's own
- *  Internal_Strings. */
+/** DaggerfallSpellBookWindow's GetTargetTypeDescription (:578-595)
+ *  and GetElementDescription (:597-614) - the tooltip strings, in
+ *  enum order, VERBATIM from DFU's own en table (StreamingAssets/
+ *  Text/Master Localization CSV Files/Internal_Strings.csv :940-949).
+ *  U42 first shipped these Title-Cased with a hyphen in the elements;
+ *  DFU's are neither. The port has no localization table, so the en
+ *  values stand in for the TextManager lookups. */
 export const TARGET_DESCRIPTIONS = Object.freeze([
-  'Caster Only', 'By Touch', 'Single Target at Range',
-  'Area Around Caster', 'Area at Range',
+  'Caster only', 'By touch', 'Single target at range',
+  'Area around caster', 'Area at range',
 ]);
 export const ELEMENT_DESCRIPTIONS = Object.freeze([
-  'Fire-based', 'Cold-based', 'Poison-based', 'Shock-based', 'Magic-based',
+  'Fire based', 'Cold based', 'Poison based', 'Shock based', 'Magic based',
 ]);

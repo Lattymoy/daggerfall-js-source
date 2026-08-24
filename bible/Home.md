@@ -249,7 +249,7 @@ combat line numbers below are refreshed with it.
 - `src/scenes/exterior.js:771` - (FLAGGED); swallowing the browser reload is not optional.
 - `src/scenes/exterior.js:1003` - (FLAGGED: the climate People table pends; the test city is
 - `src/scenes/exterior.js:1146` - FLAGGED here exactly as in world.js - no tile lookup yet).
-- `src/scenes/exterior.js:1478` - ground (FLAGGED with world.js's same gap), so Detect Treasure
+- `src/scenes/exterior.js:1479` - ground (FLAGGED with world.js's same gap), so Detect Treasure
 - `src/scenes/shared.js:215` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:232` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:337` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
@@ -267,8 +267,8 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:2247` - FLAGGED: the QuestComplete loot window pends the UI arc - the
 - `src/scenes/world.js:2266` - castle interior (FLAGGED with the palace blocks).
 - `src/scenes/world.js:2591` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:2895` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/world.js:2968` - (FLAGGED: exterior corpse containers are the loot arc's), so
+- `src/scenes/world.js:2896` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:2969` - (FLAGGED: exterior corpse containers are the loot arc's), so
 - `src/scenes/worldModes.js:244` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:292` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:440` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
@@ -384,9 +384,9 @@ combat line numbers below are refreshed with it.
 - `src/ui/pauseWindow.js:58` - FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
 - `src/ui/potionMakerWindow.js:24` - FLAGGED: DFU's ingredient buttons carry a tooltip and a stack-count
 - `src/ui/restWindow.js:2` - text-panel idiom (backgrounds FLAGGED pending art-name
-- `src/ui/spellbookWindow.js:78` - says so rather than doing nothing - FLAGGED below.
-- `src/ui/spellbookWindow.js:90` - FLAGGED, idling loudly: the icon picker; the effect popup's body
-- `src/ui/spellbookWindow.js:784` - *  drawn as a flat bar in the panel's own brass - FLAGGED. */
+- `src/ui/spellbookWindow.js:91` - says so rather than doing nothing - FLAGGED below.
+- `src/ui/spellbookWindow.js:103` - FLAGGED, idling loudly: the icon picker; the effect popup's body
+- `src/ui/spellbookWindow.js:866` - *  drawn as a flat bar in the panel's own brass - FLAGGED. */
 - `src/ui/tavernWindow.js:40` - FLAGGED, with the slices they wait on:
 - `src/ui/travelMapWindow.js:10` - this window since the F-slice - the Ledger row called it INTERIM
 - `src/ui/travelMapWindow.js:75` - FLAGGED, idling loudly: the journal's click-through travel
