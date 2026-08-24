@@ -52,6 +52,7 @@ export function createPlayerMagic({
   playerEntity, playerSinks, say, surfacePlayer,
   foes, foeSinks, absorbCtx,
   onTeleport = null,   // TP-slice: the Teleport effect's prompt seam (the host owns the box)
+  onIdentify = null,   // X7: the Identify effect's window seam ({chance, refund}) - same shape as onTeleport
   rolls = Math.random,   // ENGINE-PRNG RULE: the saving-throw/magnitude roll slot (uniform; sequence-free)
 }) {
   const playerCaster = () => ({ entity: playerEntity, sinks: playerSinks });
@@ -113,6 +114,20 @@ export function createPlayerMagic({
     // :63-68); the marker only rises on CasterOnly arrivals and this
     // is the PLAYER seam - :88-90's player gate, structurally.
     if (r.teleport) onTeleport?.();
+    // X7: the Identify effect opens a window rather than landing. The
+    // REFUND happens here, at the one place that charged the cast:
+    // Identify.cs:50-56 gives back its own spell point cost (floored
+    // at 5) because the real magicka is spent on the window's own
+    // Identify click. A host with no window seam still gets the
+    // refund - the player is not charged for a window that never
+    // opened, which is the same shape as DFU refunding first and
+    // opening second.
+    if (r.identify) {
+      playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity,
+        (playerEntity.magicka ?? 0) + r.identify.refund);
+      surfacePlayer();
+      onIdentify?.(r.identify);
+    }
     return r;
   }
 

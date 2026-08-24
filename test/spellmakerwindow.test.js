@@ -76,9 +76,12 @@ test('S1 catalog: the pickers de-duplicate and sort, and the port marks its iner
   assert.equal(solo[0].subgroup, '');
   // the inert mark: implemented effects are flagged, the rest are not
   assert.equal(effectByKey('4,0').ported, true, 'Damage Health casts');
-  // (Lock lived here until X1 gave it a runtime; Identify still needs
-  // unidentified-item state, so it is the standing inert example)
-  assert.equal(effectByKey('40,255').ported, false, 'Identify has no runtime arm yet');
+  // The standing inert example, walked forward as the arms land: Lock
+  // lived here until X1, Identify until X7 gave it unidentified-item
+  // state. Spell Reflection is the one left that needs a whole missing
+  // system (the re-target path), so it is the durable choice.
+  assert.equal(effectByKey('40,255').ported, true, 'Identify casts since X7');
+  assert.equal(effectByKey('21,255').ported, false, 'Spell Reflection still pends its re-target path');
   assert.equal(PORTED_KEYS.size, SPELL_MAKER_EFFECTS.filter((e) => e.ported).length);
   assert.ok(PORTED_KEYS.size > 0 && PORTED_KEYS.size < SPELL_MAKER_EFFECTS.length, 'a real subset, not all-or-nothing');
 });

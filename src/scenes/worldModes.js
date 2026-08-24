@@ -65,6 +65,7 @@ import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from '../ui/text.js';
 import { hudScale } from '../ui/hud.js';
 import { isShop, isRepairShop, stockShopShelf, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems } from '../systems/shopStock.js';   // X6: the soul-gem shelf
+import { identifySpellPass, identifiedTallyText } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll
 import { LevelUpScreen } from '../ui/charsheet.js';   // AUDIT 21 hosts F3: levelling in a building
 import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded, TRADE_RECTS } from '../ui/nativeTrade.js';   // U8c
 // U23: the static-NPC seam and the guild service popup.
@@ -221,6 +222,10 @@ export function createWorldModes(host) {
   // X4: the interior arm's Detect scan (see the frame body). Both
   // pools are empty until interior loot containers ship.
   const detectFeed = createDetectFeed(playerEntity, { feet: () => player.pos });
+  // X7: set while an IDENTIFY SPELL's window is open ({chance, cost}),
+  // null for the paid guild service. The trade window is one window
+  // serving both, exactly as DFU's is.
+  let _identifySpell = null;
   const { getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, arch, palette } = pipeline;
   // AUDIT 21 (hosts lane, F7): the HUD art for interior mode. A missing file
   // answers null and drawHud no-ops, so this host draws no HUD rather than
@@ -618,8 +623,23 @@ export function createWorldModes(host) {
         addItem(playerEntity.items, it);
       }
     } else if (mode === 'Identify') {
-      deductGold(playerEntity, price);
-      for (const it of staged) { it.isIdentified = true; addItem(playerEntity.items, it); }
+      // X7: two Identify paths through one arm, as DFU has them. The
+      // SERVICE charges gold and identifies everything staged; the
+      // SPELL rolls per item against its own chance and spends
+      // magicka ONCE for the whole list, whatever the outcome
+      // (DaggerfallTradeWindow.cs:966-991).
+      if (_identifySpell) {
+        const pass = identifySpellPass(staged, _identifySpell.chance, Math.random);
+        for (const it of pass.identified) it.isIdentified = true;
+        if (pass.spendMagicka) {
+          playerEntity.magicka = Math.max(0, (playerEntity.magicka ?? 0) - _identifySpell.cost);
+        }
+        townTalk?.say?.(identifiedTallyText(pass.successCount, pass.total));
+        for (const it of staged) addItem(playerEntity.items, it);
+      } else {
+        deductGold(playerEntity, price);
+        for (const it of staged) { it.isIdentified = true; addItem(playerEntity.items, it); }
+      }
     }
     tallySkill(playerEntity, SKILLS.Mercantile, 1);
     surfacePlayer();
@@ -1145,6 +1165,25 @@ export function createWorldModes(host) {
     // shops open, with guild.ReducedRepairCost bound (FightersGuild's
     // rank scaling; the base guild returns the price unchanged, so
     // binding it for every guild IS DFU's `guild != null` arm).
+    // X7: IDENTIFY. DFU's service is the trade window in Identify mode
+    // (DaggerfallGuildServicePopupWindow pushes it exactly as it does
+    // Repair), and the port's Identify mode was already whole - the
+    // cost formula with its Witches Festival free arm, the per-item
+    // skip, the refusal line. Only the destination was a FLAGGED null,
+    // and under it the identified state was being read raw rather than
+    // DERIVED, so opening this mode before X7 would have offered to
+    // identify a rusty dagger for money.
+    //
+    // The player's own pack is BOTH lists here: DFU's Identify mode
+    // stages out of localItems into remoteItems and hands everything
+    // back, so there is no shop shelf at all - the empty one below is
+    // what the window's Buy-side plumbing expects to find and never
+    // reads in this mode.
+    if (destination === 'guildServiceIdentify' && tradeArtLoaded()) {
+      _identifySpell = null;   // the PAID service - gold, not a per-item roll
+      flow = openTradeWindow({ items: [] }, b ?? {}, 'Identify');
+      return flow;
+    }
     // X6: BUY SOULGEMS. DFU's own service window is the trade window in
     // Buy mode over GetMerchantMagicItems(onlySoulGems: true)
     // (DaggerfallGuildServicePopupWindow.cs:247-266), which is exactly
@@ -2455,7 +2494,7 @@ export function createWorldModes(host) {
         if (a) w.input(a, e);
         else w.input(e.code, e);
       }
-      if (w.done && interiorOverlay === w) interiorOverlay = null;
+      if (w.done && interiorOverlay === w) { interiorOverlay = null; _identifySpell = null; }   // X7: the spell latch dies with its window
       e.preventDefault();
       return;
     }
@@ -2522,7 +2561,7 @@ export function createWorldModes(host) {
     if (mode !== 'interior' || !interiorOverlay) return false;
     const v = pointToNative(nativeMetrics(canvas), px, py);
     if (v) interiorOverlay.click?.(v[0], v[1], e.button === 2);   // I4: the remove gesture rides the button
-    if (interiorOverlay?.done) interiorOverlay = null;
+    if (interiorOverlay?.done) { interiorOverlay = null; _identifySpell = null; }   // X7: the spell latch dies with its window
     return true;
   }
 
@@ -2561,6 +2600,28 @@ export function createWorldModes(host) {
   return {
     get mode() { return mode; },
     get dungeonLocation() { return dungeonLoc; },   // B2: playerInside's dungeon arm
+    /** X7: the Identify SPELL's window (Identify.cs:71-76 pushes the
+     *  trade window itself). The spell can be cast anywhere, but the
+     *  window lives here with the rest of the interior overlay stack,
+     *  so the world host routes its onIdentify seam through this -
+     *  the same direction its onTeleport already runs.
+     *
+     *  Answers false when the window cannot open (no art, or an
+     *  overlay already holds the slot), so the caller can say so
+     *  rather than silently swallowing the cast. */
+    openIdentifyWindow({ chance, refund } = {}) {
+      if (!tradeArtLoaded() || interiorOverlay) return false;
+      // The magicka the window will charge on the Identify click IS
+      // the cost the effect just refunded (Identify.cs:74's
+      // IdentifySpellCost = cost.spellPointCost) - the refund and the
+      // charge are the same number, which is what makes the round trip
+      // free when the player closes the window without identifying.
+      _identifySpell = { chance: chance ?? 0, cost: refund ?? 0 };
+      const win = openTradeWindow({ items: [] }, interiorBuilding ?? {}, 'Identify');
+      win.hooks.usingIdentifySpell = true;
+      interiorOverlay = win;
+      return true;
+    },
     startInDungeon,
     /** B1: CreateFoe's TryPlacement, this host's two INSIDE arms
      *  (CreateFoe.cs:194-211). The dungeon arm runs PlaceFoeFreely

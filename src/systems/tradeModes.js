@@ -54,7 +54,7 @@
 //    modes onto their own three records.
 
 import { calculateCost, calculateTradePrice } from './shopStock.js';
-import { GOLD_PIECE_WEIGHT_KG } from './inventory.js';
+import { GOLD_PIECE_WEIGHT_KG, isEnchanted } from './inventory.js';
 import { calculateItemRepairCost, repairRefusal } from './repairService.js';
 import { HOLIDAYS } from './holidays.js';
 import { GUILDS } from './guilds.js';
@@ -106,6 +106,29 @@ export {
 /** CalculateItemIdentifyCost's numerator (:1950) - `(25 * value) >> 8`. */
 export const IDENTIFY_COST_MULTIPLIER = 25;
 
+/** DaggerfallUnityItem.GetIsIdentified (:1821-1827), which is a
+ *  DERIVATION and not a field:
+ *
+ *      if (!IsEnchanted) return true;
+ *      return (flags & identifiedMask) > 0;
+ *
+ *  An UNENCHANTED item is ALWAYS identified - the flag only means
+ *  anything for something with magic in it, which is why DFU's own
+ *  comment on the member says "only relevant if item has some
+ *  enchantments".
+ *
+ *  X7 FIX. Every reader below took `item.isIdentified` raw. The port's
+ *  items are plain records that carry the field only once something
+ *  has written it, so an ordinary iron dagger read `undefined` -
+ *  FALSY - and therefore UNIDENTIFIED. The Identify mode would have
+ *  accepted a rusty dagger and charged (25 * value) >> 8 to identify
+ *  it, and the mode-action button would have lit up over a pack with
+ *  no magic in it at all. It was never seen because the Identify
+ *  destination has been a FLAGGED null, so the mode could not be
+ *  opened; this lane opens it, so the derivation has to be right
+ *  first. */
+export const itemIsIdentified = (item) => !isEnchanted(item) || item?.isIdentified === true;
+
 /** FormulaHelper.CalculateItemIdentifyCost (:1935-1955). FREE on the
  *  Witches Festival, and the guild discount applies after the shift.
  *  The holiday arm is gated on HasCurrentLocation, so identifying in
@@ -116,6 +139,42 @@ export function calculateItemIdentifyCost(baseItemValue, { holidayId = HOLIDAYS.
   const cost = (IDENTIFY_COST_MULTIPLIER * baseItemValue) >> 8;
   return reducedIdentifyCost ? reducedIdentifyCost(cost) : cost;
 }
+
+/** DaggerfallTradeWindow's Identify-spell pass (:966-991).
+ *
+ *  The SERVICE identifies everything staged for gold; the SPELL rolls
+ *  PER ITEM against the spell's own chance and charges magicka once.
+ *  Three details that are easy to lose:
+ *
+ *   - an ALREADY-IDENTIFIED item counts as a SUCCESS rather than being
+ *     skipped (:970-975), so the tally the player is shown is
+ *     "how many of these do you now know", not "how many did the spell
+ *     work on". In spell mode identified items can be staged at all
+ *     (:823's `|| UsingIdentifySpell`), which is what makes that
+ *     reachable - DFU's comment says it matches classic;
+ *   - the magicka is spent ONCE for the whole list and only when the
+ *     list is non-empty (:985-987) - not per item, and not per success;
+ *   - a FAILED roll leaves the item unidentified and simply does not
+ *     count. There is no retry cost and nothing is consumed.
+ *
+ *  Returns the tally DFU shows and the items it identified. */
+export function identifySpellPass(items, chance, rolls = Math.random) {
+  const list = items ?? [];
+  const identified = [];
+  let successCount = 0;
+  for (const item of list) {
+    if (itemIsIdentified(item)) { successCount++; continue; }   // already known counts as a success
+    if (Math.floor(rolls() * 100) < chance) {                   // Dice100.SuccessRoll
+      identified.push(item);
+      successCount++;
+    }
+  }
+  return { successCount, total: list.length, identified, spendMagicka: list.length > 0 };
+}
+
+/** Internal_Strings.csv:1053 - `totalIdentified,{0} out of {1} identified.` */
+export const identifiedTallyText = (successCount, total) =>
+  `${successCount} out of ${total} identified.`;
 
 /** The three Buy-mode holiday halvings (:444-449), as ONE predicate
  *  per arm so each can be pinned alone. `guildFactionId` is null
@@ -183,7 +242,7 @@ export function tradeCost(mode, staged = [], {
           { reducedRepairCost, priceAdjustment }) * stack;
         break;
       case 'Identify':
-        if (item.isIdentified) break;
+        if (itemIsIdentified(item)) break;
         modeActionEnabled = true;
         // "Identify spell remains free" (:479-481) - the button still
         // enables, so the spell can be cast on a list that costs nothing.
@@ -293,7 +352,7 @@ export function localClickDecision(mode, item, {
       return { kind: 'refuse', refusal };
     }
     case 'Identify':
-      return (!item.isIdentified || usingIdentifySpell)
+      return (!itemIsIdentified(item) || usingIdentifySpell)
         ? { kind: 'stage' }
         : { kind: 'refuse', refusal: 'identified' };
     case 'Buy':

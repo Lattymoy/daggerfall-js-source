@@ -1001,6 +1001,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Anchor = the S33 native shape; Teleport = the quickload warp,
     // the anchor CONSUMED on arrival (:133/:255 both null it). A cast
     // inside a mode leaves it first (:151's immediate transition).
+    // X7: the Identify SPELL's window. The effect refunds its own cost
+    // in the engine and hands the two numbers here; the window itself
+    // lives in worldModes with the rest of the overlay stack, so this
+    // routes exactly as onTeleport does. A refusal (no art, or an
+    // overlay already open) says so rather than eating the cast.
+    onIdentify: (d) => {
+      if (!modes?.openIdentifyWindow?.({ chance: d.chance, refund: d.refund })) {
+        townTalk.say('You cannot concentrate on that right now.');
+      }
+    },
     onTeleport: () => {
       townTalk.showOverlay(new ChoiceWindow({
         lines: ['Teleport, or set anchor?'],   // key teleportOrSetAnchor (4000), prose ours

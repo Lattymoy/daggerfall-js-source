@@ -257,36 +257,37 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:683` - FLAGGED loud: the People faction rides the START location's
 - `src/scenes/world.js:714` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/world.js:720` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1046` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
-- `src/scenes/world.js:1049` - stay the E1 FLAGGED seams no host computes.
-- `src/scenes/world.js:1185` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
-- `src/scenes/world.js:1418` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:1687` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:1852` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
-- `src/scenes/world.js:1929` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:2162` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:2181` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:2473` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:2777` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/world.js:2850` - (FLAGGED: exterior corpse containers are the loot arc's), so
-- `src/scenes/worldModes.js:237` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
-- `src/scenes/worldModes.js:282` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
-- `src/scenes/worldModes.js:430` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
-- `src/scenes/worldModes.js:507` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
-- `src/scenes/worldModes.js:570` - guildFactionId: null,   // FLAGGED: a guild-run shop pends the guild-store arm
-- `src/scenes/worldModes.js:601` - credit instead. FLAGGED: there is nowhere to cash one yet, so
-- `src/scenes/worldModes.js:701` - Person placed in a dungeon is the quest machine's, FLAGGED
-- `src/scenes/worldModes.js:764` - trade window in Sell mode. The BANKING arm stays FLAGGED below;
-- `src/scenes/worldModes.js:842` - FLAGGED, each with the slice it waits on:
-- `src/scenes/worldModes.js:959` - FLAGGED: house and ship OWNERSHIP need the building directory
-- `src/scenes/worldModes.js:1055` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:1122` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
-- `src/scenes/worldModes.js:1187` - been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:1293` - with the trade window's own mode flow, the same INTERIM the
-- `src/scenes/worldModes.js:1495` - first (owned houses and quest buildings FLAGGED/seamed per
-- `src/scenes/worldModes.js:1503` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
-- `src/scenes/worldModes.js:2222` - too. FLAGGED: interior loot containers are the loot arc's -
-- `src/scenes/worldModes.js:2570` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
+- `src/scenes/world.js:1056` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
+- `src/scenes/world.js:1059` - stay the E1 FLAGGED seams no host computes.
+- `src/scenes/world.js:1195` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
+- `src/scenes/world.js:1428` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:1697` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:1862` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
+- `src/scenes/world.js:1939` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:2172` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:2191` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:2483` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:2787` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:2860` - (FLAGGED: exterior corpse containers are the loot arc's), so
+- `src/scenes/worldModes.js:242` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
+- `src/scenes/worldModes.js:287` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
+- `src/scenes/worldModes.js:435` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
+- `src/scenes/worldModes.js:512` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
+- `src/scenes/worldModes.js:575` - guildFactionId: null,   // FLAGGED: a guild-run shop pends the guild-store arm
+- `src/scenes/worldModes.js:606` - credit instead. FLAGGED: there is nowhere to cash one yet, so
+- `src/scenes/worldModes.js:721` - Person placed in a dungeon is the quest machine's, FLAGGED
+- `src/scenes/worldModes.js:784` - trade window in Sell mode. The BANKING arm stays FLAGGED below;
+- `src/scenes/worldModes.js:862` - FLAGGED, each with the slice it waits on:
+- `src/scenes/worldModes.js:979` - FLAGGED: house and ship OWNERSHIP need the building directory
+- `src/scenes/worldModes.js:1075` - FactionData; the port's pre-chargen INTERIM entity does not, and
+- `src/scenes/worldModes.js:1142` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
+- `src/scenes/worldModes.js:1172` - skip, the refusal line. Only the destination was a FLAGGED null,
+- `src/scenes/worldModes.js:1226` - been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:1332` - with the trade window's own mode flow, the same INTERIM the
+- `src/scenes/worldModes.js:1534` - first (owned houses and quest buildings FLAGGED/seamed per
+- `src/scenes/worldModes.js:1542` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
+- `src/scenes/worldModes.js:2261` - too. FLAGGED: interior loot containers are the loot arc's -
+- `src/scenes/worldModes.js:2631` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
@@ -305,10 +306,10 @@ combat line numbers below are refreshed with it.
 - `src/systems/court.js:224` - *  daysInPrison } (guild rescues FLAGGED). */
 - `src/systems/effects.js:25` - FLAGGED skipped (the library grows here).
 - `src/systems/effects.js:42` - *  effect (:515). FLAGGED: DFU pulls it from the localised string
-- `src/systems/effects.js:517` - enchantment bundles are FLAGGED to their own arc.
-- `src/systems/effects.js:824` - manager, and the port has no such re-entry yet. FLAGGED.
-- `src/systems/effects.js:987` - out.skipped++;   // FLAGGED: the library grows one family at a time
-- `src/systems/effects.js:991` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
+- `src/systems/effects.js:521` - enchantment bundles are FLAGGED to their own arc.
+- `src/systems/effects.js:828` - manager, and the port has no such re-entry yet. FLAGGED.
+- `src/systems/effects.js:1017` - out.skipped++;   // FLAGGED: the library grows one family at a time
+- `src/systems/effects.js:1021` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
 - `src/systems/enchanting.js:166` - FLAGGED, with the slice it waits on:
 - `src/systems/enchantments.js:39` - FLAGGED: no host computes them yet, so the conditional arms of
 - `src/systems/enchantments.js:41` - moonPhase() (FLAGGED: lunar phases are a Ledger C row),
@@ -320,7 +321,6 @@ combat line numbers below are refreshed with it.
 - `src/systems/gameDate.js:23` - FLAGGED, deliberately: the two LUNAR PHASE getters (:134-150,
 - `src/systems/guildServiceActions.js:190` - *  turning into a vampire or werebeast - FLAGGED: the port has no
 - `src/systems/guildServiceFlow.js:236` - *  override's law). Every other arm is FLAGGED with the window it
-- `src/systems/guildServiceFlow.js:243` - Identify: null,          // FLAGGED: DaggerfallTradeWindow Identify mode
 - `src/systems/guildServiceFlow.js:245` - BuyPotions: null,        // FLAGGED: trade Buy + CreateRandomPotion
 - `src/systems/guildServiceFlow.js:247` - BuySpells: null,         // FLAGGED: the spellbook's buy mode
 - `src/systems/guildServiceFlow.js:248` - BuySpellsMages: null,    // FLAGGED: the spellbook's buy mode
@@ -336,8 +336,8 @@ combat line numbers below are refreshed with it.
 - `src/systems/inputActions.js:302` - FLAGGED, each with the slice it waits on:
 - `src/systems/inventory.js:43` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
 - `src/systems/itemInfo.js:5` - U8e's inventory shipped an INTERIM info panel that made up its own
-- `src/systems/itemInfo.js:80` - if (isPotionRecipe(item)) return INFO_TEXT.misc;   // DFU builds recipe tokens by hand - FLAGGED
-- `src/systems/itemInfo.js:165` - *  screen. FLAGGED as a group - they land with their own arcs.
+- `src/systems/itemInfo.js:81` - if (isPotionRecipe(item)) return INFO_TEXT.misc;   // DFU builds recipe tokens by hand - FLAGGED
+- `src/systems/itemInfo.js:166` - *  screen. FLAGGED as a group - they land with their own arcs.
 - `src/systems/itemTemplates.js:112` - if (!Object.isExtensible(item)) return item;   // C-slice: the frozen pre-chargen stand-ins (INTERIM_WEAPON) carry no condition
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
 - `src/systems/loot.js:212` - FLAGGED to the ENCHANTMENT-EFFECTS slice (the shops themselves
@@ -358,7 +358,8 @@ combat line numbers below are refreshed with it.
 - `src/systems/talkSession.js:21` - FLAGGED: the guild greeting indexes (records 8550..8571) pend the
 - `src/systems/tavern.js:195` - FLAGGED, with the slices they wait on:
 - `src/systems/tradeModes.js:4` - U8c shipped the shop screen in BUY mode only, and said so: "FLAGGED
-- `src/systems/tradeModes.js:309` - FLAGGED, with the slices they wait on:
+- `src/systems/tradeModes.js:127` - *  destination has been a FLAGGED null, so the mode could not be
+- `src/systems/tradeModes.js:368` - FLAGGED, with the slices they wait on:
 - `src/systems/useItem.js:235` - lantern's and refuses when it would overflow. FLAGGED: DFU
 - `src/ui/automapWindow.js:20` - portals stay FLAGGED (systems/automap.js keeps the list); A2
 - `src/ui/bankWindow.js:26` - FLAGGED: the house and ship PURCHASE popups (DaggerfallBankPurchasePopUp)

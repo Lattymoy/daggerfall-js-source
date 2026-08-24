@@ -133,6 +133,7 @@ export const PORTED_KEYS = new Set([
   '12,255',                                                         // Soul Trap (X5 - the kill-time re-roll + the gem)
   '35,255',                                                         // Shield (X1 - the damage pool)
   '39,0', '39,1', '39,2',                                           // Detect {Magic,Enemy,Treasure} (X4 - the compass markers)
+  '40,255',                                                         // Identify (X7 - the window opener + the per-item roll)
   '43,255',                                                         // Teleport (the inline arm)
 ]);
 

@@ -28,7 +28,7 @@ import { savingThrow, rollMagnitude, EFFECT_FLAGS, careerTolerance } from './spe
 import { raceById, raceByKey } from './races.js';   // L2-slice (magic-10): the racial immunity arm
 import { STAT_KEYS_ORDER, FATIGUE_MULTIPLIER, maxFatigue } from './statMods.js';
 import { dice100 } from '../combat/formulas.js';
-import { tryAbsorption } from './absorption.js';   // S24
+import { tryAbsorption, effectCastingCost } from './absorption.js';   // S24; X7: the Identify refund reads the same per-effect cost
 // AUDIT 24 (wave 31): the concealment BREAK lives in its own leaf so that
 // combat/formulas.js can reach it without the effects -> spellcast ->
 // formulas cycle. Re-exported here because this is the module its readers
@@ -161,6 +161,10 @@ export const buffKind = (e) => BUFF_KINDS[`${e.type},${classicSub(e)}`] ?? null;
  *  the cast-time chance is forced true and the landing gates on the
  *  target's kind. */
 export const isSoulTrapEffect = (e) => e.type === 12 && classicSub(e) === 255;
+/** X7: Identify (40,255) - a window opener, not a lasting effect. */
+export const isIdentifyEffect = (e) => e.type === 40 && classicSub(e) === 255;
+/** Identify.cs:54-55 - the refund never drops below 5. */
+export const IDENTIFY_REFUND_FLOOR = 5;
 export const hasActiveEffect = (entity, kind) =>
   !!entity?.activeEffects?.some((a) => a.kind === kind);   // presence = active; expired entries End on the NEXT tick pass (DFU shape)
 
@@ -906,6 +910,32 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // The HOST speaks the alert (mysticism.js owns the texts; this
       // module cannot import it - mysticism imports effects).
       out.armed = armedKind;
+      continue;
+    }
+    // X7: IDENTIFY (Thaumaturgy 40,255). DFU's whole effect is a
+    // WINDOW OPENER (Identify.cs:46-77) - its own comment says
+    // "currently just opens a free identify window". Three laws:
+    //
+    //  1. It REFUNDS its own spell point cost before opening, floored
+    //     at 5 (:50-56), because the real magicka is spent when the
+    //     player clicks Identify in the window. DFU is explicit that
+    //     only THIS effect's cost comes back: "any other effects
+    //     bundled with identify on spell will not have their spell
+    //     point cost refunded", so a spell that bundles Identify with
+    //     something else still pays for the something else.
+    //  2. The target must be the PLAYER (:66-69) - no effect on any
+    //     other entity, and nothing lands on them either.
+    //  3. ChanceFunction.Custom (:32), so the chance is NOT rolled at
+    //     cast; it travels to the window as the per-item roll.
+    //
+    // The window itself is the host's - this arm hands over the two
+    // numbers it needs and the refund it owes.
+    if (isIdentifyEffect(e)) {
+      if (target?.mobileType != null) continue;   // "target must be player"
+      out.identify = {
+        chance: chanceValue(e, casterLevel),
+        refund: Math.max(IDENTIFY_REFUND_FLOOR, effectCastingCost(e, spell.rangeType, target)),
+      };
       continue;
     }
     // X5: SOUL TRAP (Mysticism 12,255). It does not belong in

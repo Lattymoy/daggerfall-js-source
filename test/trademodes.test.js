@@ -176,11 +176,20 @@ test('U40: Repair skips an item already in the shop; Identify skips one already 
   assert.equal(tradeCost('Repair', [broken, already], ctx).cost, live.cost);
   assert.equal(tradeCost('Repair', [broken, already], ctx).modeActionEnabled, true);
 
-  // Identify, same shape on isIdentified
-  const known = it(1000, { isIdentified: true });
+  // Identify, same shape on isIdentified. X7: only an ENCHANTED item
+  // can be unidentified - GetIsIdentified returns true outright for
+  // anything unenchanted (DaggerfallUnityItem.cs:1821-1827), so
+  // `unknown` below carries an enchantment. It used to be a plain
+  // weapon, which pinned the port's old raw `item.isIdentified` read:
+  // a mundane iron dagger came back FALSY and was charged to identify.
+  const enchant = { enchantments: [{ type: 0, param: 1 }] };
+  const known = it(1000, { ...enchant, isIdentified: true });
   assert.deepEqual(tradeCost('Identify', [known], { quality: 10 }), { cost: 0, modeActionEnabled: false });
-  const unknown = it(1000);
+  const unknown = it(1000, enchant);
   assert.equal(tradeCost('Identify', [unknown], { quality: 10 }).cost, calculateItemIdentifyCost(1000));
+  // and the mundane item is free AND unofferable, which is the fix
+  assert.deepEqual(tradeCost('Identify', [it(1000)], { quality: 10 }),
+    { cost: 0, modeActionEnabled: false }, 'an unenchanted item is ALWAYS identified');
   // the SPELL identifies free but still ENABLES the button (:479-481)
   assert.deepEqual(tradeCost('Identify', [unknown], { quality: 10, usingIdentifySpell: true }),
     { cost: 0, modeActionEnabled: true });

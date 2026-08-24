@@ -19,6 +19,7 @@
 // bottle) before falling back to the misc record.
 import { unitWeightInKg } from './inventory.js';   // AUDIT 23 (items-8)
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // X5: %hs, the trapped soul's name
+import { itemIsIdentified } from './tradeModes.js';   // X7: the DERIVED identified state
 import { templateByIndex, itemBaseValue } from './itemTemplates.js';
 import { isPotion, isPotionRecipe, TEMPLATES } from './useItem.js';
 import { materialArmorValue, isShieldTemplate } from './armorMaterials.js';
@@ -172,7 +173,20 @@ export function materialName(item) {
  *  "Nothing" - which is the right word for it. */
 export function expandItemInfo(text, item, { name = null, soul = null, potion = null, bookTitle = null, bookAuthor = null } = {}) {
   const t = templateByIndex(item?.templateIndex);
-  const itemName = name ?? item?.name ?? t?.name ?? '';
+  // X7: ResolveItemName (:265-292) and ResolveItemLongName (:296-303).
+  // An UNIDENTIFIED item gives up two things at once: its own name
+  // falls back to the bare TEMPLATE name - so an enchanted blade reads
+  // "Broadsword" rather than whatever its shortName calls it - and the
+  // long name drops the MATERIAL prefix as well, so a Daedric one does
+  // not announce itself either. Both are the same `if (!IsIdentified)`
+  // early return in DFU, one per function.
+  //
+  // An ARTIFACT shares the material half of that (`!IsIdentified ||
+  // IsArtifact` at :302) - Azura's Star is not "an Ebony Amulet".
+  const identified = itemIsIdentified(item);
+  const itemName = identified
+    ? (name ?? item?.name ?? t?.name ?? '')
+    : (t?.name ?? '');
   const soulName = soul ?? (item?.trappedSoulType != null ? enemyDisplayName(item.trappedSoulType) : null);
   return (text ?? '')
     .replaceAll('%it', itemName)
@@ -182,7 +196,7 @@ export function expandItemInfo(text, item, { name = null, soul = null, potion = 
     .replaceAll('%ba', bookAuthor ?? 'Anonymous')
     .replaceAll('%po', potion ?? itemName)
     .replaceAll('%hs', soulName ?? 'Nothing')
-    .replaceAll('%mat', materialName(item))
+    .replaceAll('%mat', identified && !item?.artifact ? materialName(item) : '')
     .replaceAll('%qua', conditionWord(item))
     .replaceAll('%kg', weightString(item))
     .replaceAll('%wth', String((item?.value ?? itemBaseValue(item)) * (item?.stackCount ?? 1)))   // AUDIT 23 (items-7): Worth() = value x stackCount

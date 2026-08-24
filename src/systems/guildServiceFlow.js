@@ -240,7 +240,7 @@ export const SERVICE_DESTINATION = Object.freeze({
   Donate: 'guildServiceDonation',
   CureDisease: 'guildServiceCureDisease',
   Quests: 'questOffer',    // Q4-ii: QuestOfferFlow.offerGuildQuest
-  Identify: null,          // FLAGGED: DaggerfallTradeWindow Identify mode
+  Identify: 'guildServiceIdentify',   // X7: the trade window's Identify mode
   Repair: 'guildServiceRepair',   // R1: the keyed repair flow (FG rank discount rides it)
   BuyPotions: null,        // FLAGGED: trade Buy + CreateRandomPotion
   MakePotions: 'guildServicePotionMaker',   // M2: the keyed potion maker
