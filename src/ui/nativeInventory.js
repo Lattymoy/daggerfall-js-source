@@ -51,7 +51,7 @@ import { useItem, isLightSource } from '../systems/useItem.js';   // U25
 import { itemInfoRows, INFO_TEXT } from '../systems/itemInfo.js';   // U25
 import { goldAmount, deductGold } from '../systems/court.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
-import { addItem, isEnchanted, goldStack, canHoldAmount, effectiveUnitWeightInKg, totalWeight } from '../systems/inventory.js';   // L-slice (items-9)
+import { addItem, isEnchanted, goldStack, canHoldAmount, effectiveUnitWeightInKg, totalWeight, GOLD_PIECE_WEIGHT_KG } from '../systems/inventory.js';   // L-slice (items-9)
 import { maxEncumbrance } from '../combat/formulas.js';   // L-slice (items-9)
 import { liveStat } from '../systems/statMods.js';   // L-slice (items-9)
 import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, isBrokenItem, FORBIDDEN_EQUIPMENT_TEXT_ID, ITEM_BROKEN_TEXT_ID } from '../systems/equip.js';   // S23
@@ -107,7 +107,6 @@ export const NO_WAGON_TEXT = "You don't own a wagon.";
 // W-slice: the wagon goes live.
 export const WAGON_KG_LIMIT = 750;      // ItemHelper.WagonKgLimit (:56)
 export const SMALL_CART_TEMPLATE = 93;  // ItemGroups.Transportation.Small_cart's template
-export const GOLD_PIECE_WEIGHT_KG = 0.0025;   // DaggerfallBankManager.goldPieceWeightInKg
 /** key "exitTooFar" (:1239) - prose ours pending a string source. */
 export const EXIT_TOO_FAR_TEXT = 'You are too far from the exit.';
 /** key "cannotHoldAnymore" (WagonCanHoldAmount :1431). */

@@ -203,6 +203,15 @@ export const totalWeight = (list) => list.reduce((a, i) => a + itemWeight(i), 0)
  *  RoundToInt banker's tie cannot arise on multiples of 1/400). */
 export const weightInGPUnits = (kg) => Math.round(kg * 400);
 
+/** DaggerfallBankManager.goldPieceWeightInKg (:82-91) - read off the
+ *  Currency template's baseWeight, which ships 0.0025; the obsolete
+ *  const beside it in C# names the same number. It lives HERE, with
+ *  the rest of the weight law, because two consumers need it and
+ *  neither is the other's: the inventory window's wagon-gold clamp
+ *  and U40's letter-of-credit gate, which asks whether a sale's
+ *  proceeds would push the player past MaxEncumbrance. */
+export const GOLD_PIECE_WEIGHT_KG = 0.0025;
+
 /** ComputeCanHoldAmount (DaggerfallInventoryWindow.cs:1444-1455,
  *  L-slice AUDIT 23 items-9): how many units of an item fit under a
  *  capacity, in GP-unit INTEGER arithmetic - `(roundCapacity -

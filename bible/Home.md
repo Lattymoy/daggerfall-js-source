@@ -347,6 +347,8 @@ combat line numbers below are refreshed with it.
 - `src/systems/talk.js:223` - TallyCrimeGuildRequirements(true, 1) FLAGGED: the TG
 - `src/systems/talkSession.js:21` - FLAGGED: the guild greeting indexes (records 8550..8571) pend the
 - `src/systems/tavern.js:179` - FLAGGED, with the slices they wait on:
+- `src/systems/tradeModes.js:4` - U8c shipped the shop screen in BUY mode only, and said so: "FLAGGED
+- `src/systems/tradeModes.js:253` - FLAGGED, with the slices they wait on:
 - `src/systems/useItem.js:235` - lantern's and refuses when it would overflow. FLAGGED: DFU
 - `src/ui/automapWindow.js:20` - portals stay FLAGGED (systems/automap.js keeps the list); A2
 - `src/ui/bookReader.js:25` - INTERIM, loud: lines draw in the host font at a fixed 10px row -
@@ -363,10 +365,10 @@ combat line numbers below are refreshed with it.
 - `src/ui/messageBox.js:35` - FLAGGED: the scrolling variant (a label taller than MaxTextHeight
 - `src/ui/messageBox.js:155` - so the strip never rides higher than that. FLAGGED as a
 - `src/ui/nativeInventory.js:41` - still said Equip and equip-after-transfer were FLAGGED after U8g
-- `src/ui/nativeInventory.js:134` - *  is 0 until those effect channels exist (FLAGGED). Exported so the
-- `src/ui/nativeInventory.js:247` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
-- `src/ui/nativeInventory.js:491` - field is INTERIM-pending with the local Remove split.
-- `src/ui/nativeInventory.js:646` - the panel from the slot under the cursor - FLAGGED as that,
+- `src/ui/nativeInventory.js:133` - *  is 0 until those effect channels exist (FLAGGED). Exported so the
+- `src/ui/nativeInventory.js:246` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
+- `src/ui/nativeInventory.js:490` - field is INTERIM-pending with the local Remove split.
+- `src/ui/nativeInventory.js:645` - the panel from the slot under the cursor - FLAGGED as that,
 - `src/ui/nativeTalk.js:237` - lands with the Tell-me-about slice (FLAGGED).
 - `src/ui/nativeTalk.js:259` - B5-6: the four pages that were INTERIM no-ops. Each falls back
 - `src/ui/nativeTrade.js:16` - scroll. FLAGGED loud: the basket + mode-action flow (DFU
