@@ -76,7 +76,9 @@ test('S1 catalog: the pickers de-duplicate and sort, and the port marks its iner
   assert.equal(solo[0].subgroup, '');
   // the inert mark: implemented effects are flagged, the rest are not
   assert.equal(effectByKey('4,0').ported, true, 'Damage Health casts');
-  assert.equal(effectByKey('16,255').ported, false, 'Lock has no runtime arm yet');
+  // (Lock lived here until X1 gave it a runtime; Identify still needs
+  // unidentified-item state, so it is the standing inert example)
+  assert.equal(effectByKey('40,255').ported, false, 'Identify has no runtime arm yet');
   assert.equal(PORTED_KEYS.size, SPELL_MAKER_EFFECTS.filter((e) => e.ported).length);
   assert.ok(PORTED_KEYS.size > 0 && PORTED_KEYS.size < SPELL_MAKER_EFFECTS.length, 'a real subset, not all-or-nothing');
 });

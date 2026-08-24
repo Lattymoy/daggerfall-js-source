@@ -13,6 +13,7 @@ import { SEASON } from '../world/climateSwaps.js';
 import { skyFrameForTime } from '../world/worldClock.js';
 import { hasActiveEffect, isBlending, isInvisible, isAShade } from '../systems/effects.js';
 import { skillValue, tallySkill, SKILLS, SKILL_NAMES } from '../systems/skills.js';
+import { DOOR_SPELL_TEXT } from '../systems/mysticism.js';   // X1: the door-spell alert lines
 import { raiseSkills } from '../systems/advancement.js';   // AUDIT 23 (entity-1): the rest-end raise
 import { tickPlayerMinutes, runMagicRoundsFor, worldMinutes, setWorldMinutes, CLASSIC_MINUTES_PER_SECOND } from '../systems/worldTick.js';
 import { killIfAnyLiveStatZero } from '../systems/statMods.js';   // AUDIT 24 (wave 32): the per-entity laws a foe pool owes
@@ -207,6 +208,42 @@ export function climbingDeps(entity, say = null) {
     }),
     tally: () => tallySkill(entity, SKILLS.Climbing),
     say,
+  };
+}
+
+/** X1: the ARMED Open/Lock spell a host hands to actions.activate.
+ *  Answers null when nothing is armed. Open wins if both are somehow
+ *  armed (it is the one that can still fail on the lock). */
+export function doorSpellFor(entity) {
+  const find = (k) => entity?.activeEffects?.find((a) => a.kind === k && !a.ended);
+  const open = find('openArmed');
+  const lock = open ? null : find('lockArmed');
+  const armed = open ?? lock;
+  if (!armed) return null;
+  return {
+    kind: open ? 'open' : 'lock',
+    casterLevel: armed.casterLevel ?? entity?.level ?? 1,
+    // FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
+    // 432/20, Open.cs:176-180) bypasses the level test. The port has
+    // no artifact identity yet, so no item can claim it.
+    skeletonKey: false,
+  };
+}
+
+/** Drop the armed entry once a door has consumed it - DFU's
+ *  CancelEffect on the trigger (Open.cs:166-170, Lock.cs:135-139). */
+export function consumeDoorSpell(entity, kind) {
+  const want = kind === 'open' ? 'openArmed' : 'lockArmed';
+  if (!entity?.activeEffects) return;
+  const i = entity.activeEffects.findIndex((a) => a.kind === want);
+  if (i >= 0) entity.activeEffects.splice(i, 1);
+}
+
+/** Wire the outcome line + the consume onto one ActionSystem. */
+export function wireDoorSpells(actions, entity, say) {
+  actions.onDoorSpell = (_o, kind, result) => {
+    if (result?.alert) say?.(DOOR_SPELL_TEXT[result.alert] ?? '');
+    consumeDoorSpell(entity, kind);
   };
 }
 

@@ -27,7 +27,7 @@ import { pickActivatable, worldAabb, activationTargets } from '../player/activat
 import { transferAll, removeOne, addItem } from '../systems/inventory.js';
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
-import { createPlayerTicker , endRunToTitleMenu, exitToTitleMenu } from './shared.js';   // AUDIT 18: the interior host's world clock
+import { createPlayerTicker , endRunToTitleMenu, exitToTitleMenu, doorSpellFor, wireDoorSpells} from './shared.js';   // AUDIT 18: the interior host's world clock
 import { buildInteriorContext } from './interiorContext.js';
 import { buildDungeonContext } from './dungeonContext.js';
 import { DOOR_TYPE } from '../world/meshReader.js';
@@ -1244,6 +1244,9 @@ export function createWorldModes(host) {
       if (!landing) throw new Error('no interior landing');
       exitReturn = { siblings };
       interiorCtx = ctx;
+      // X1: an armed Open/Lock spell fires on this interior's doors
+      // too - the same law the dungeon context wires for its own.
+      wireDoorSpells(ctx.actions, playerEntity, (t) => townTalk?.say?.(t));
       // E2: the building's identity (type/quality/key/name) rides the
       // host's merge closure; shops warm the browse font.
       interiorBuilding = buildingDataForDoor?.(hit) ?? null;
@@ -1418,7 +1421,7 @@ export function createWorldModes(host) {
         }
         return true;
       }
-      interiorCtx.actions.activate(key, { steal: getInteractionMode() === 'steal' });
+      interiorCtx.actions.activate(key, { steal: getInteractionMode() === 'steal', doorSpell: doorSpellFor(playerEntity) });   // X1
       return true;
     }
     // Verbatim BuildingTransitionExteriorLogic: the closest exterior
@@ -1546,7 +1549,7 @@ export function createWorldModes(host) {
       return true;
     }
     if (!key.startsWith('exit:')) {
-      dungeonCtx.actions.activate(key, { steal: getInteractionMode() === 'steal' });
+      dungeonCtx.actions.activate(key, { steal: getInteractionMode() === 'steal', doorSpell: doorSpellFor(playerEntity) });   // X1
       return true;
     }
     // Verbatim PositionPlayerToDungeonExit; the camera faces the normal.

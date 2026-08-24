@@ -227,6 +227,9 @@ export const isHealFatigue = (e) => e.type === 10 && e.subType === 9;
 export const isDamageFatigue = (e) => e.type === 4 && e.subType === 1;
 export const isContinuousDamageFatigue = (e) => e.type === 1 && e.subType === 1;
 export const isRegenerate = (e) => e.type === 18 && classicSub(e) === 255;
+// X1: the two door spells (Lock.cs / Open.cs classic keys)
+export const isLockSpell = (e) => e.type === 16 && classicSub(e) === 255;
+export const isOpenSpell = (e) => e.type === 17 && classicSub(e) === 255;
 // S19: Paralyze (0, 255) - duration + CHANCE, no magnitude. The
 // entity is paralyzed while a 'paralyze' entry is live
 // (ConstantEffect sets IsParalyzed every frame; presence = paralyzed
@@ -724,6 +727,28 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       cureAllOfKind(target, CURE_KINDS[e.subType]);
       pushInstantMarker(target, CURE_MARKER_KINDS[e.subType]);   // after the removal pass, as AssignBundle adds before MagicRound cures
       out.cured = (out.cured ?? 0) + 1;
+      continue;
+    }
+    // X1: OPEN and LOCK (Mysticism 17/16) - the ARMING half. DFU's
+    // Open and Lock do not act at cast: each sets forcedRoundsRemaining
+    // = 1 and waits, and RemoveRound returns it UNDECREMENTED, so the
+    // effect never expires on its own - only the door activation that
+    // triggers it (or a new cast) ends it. That is a PERMANENT entry
+    // here, consumed by the host's door path (world/actionSystem.js).
+    // Open rolls its own chance (ChanceFunction.Custom, Open.cs:36) and
+    // a failed roll wastes the cast; Lock takes the OnCast default,
+    // which the shared gate below would apply - so it rolls here too.
+    if (isOpenSpell(e) || isLockSpell(e)) {
+      const opening = isOpenSpell(e);
+      const chanceOk = ctx.bypassChance === true || dice100(chanceValue(e, casterLevel), rolls());
+      if (!chanceOk) { out.chanceFailed = (out.chanceFailed ?? 0) + 1; continue; }
+      const armedKind = opening ? 'openArmed' : 'lockArmed';
+      const inc = findInc((a) => a.kind === armedKind);
+      if (inc) inc.casterLevel = casterLevel;   // a recast re-arms at the new level
+      else pushPermanent(target, { kind: armedKind, permanent: true, casterLevel });
+      // The HOST speaks the alert (mysticism.js owns the texts; this
+      // module cannot import it - mysticism imports effects).
+      out.armed = armedKind;
       continue;
     }
     const kind = buffKind(e);

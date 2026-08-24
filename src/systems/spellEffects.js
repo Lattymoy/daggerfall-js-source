@@ -117,6 +117,7 @@ export const PORTED_KEYS = new Set([
   '11,0', '11,1', '11,2', '11,3', '11,4', '11,5', '11,6', '11,7', '11,8', '11,9',   // Transfer{...}
   '13,0', '13,1',                                                   // Invisibility (BUFF_KINDS)
   '14,255',                                                         // Levitate
+  '16,255', '17,255',                                               // Lock / Open (X1 - armed at cast, fired by the door)
   '18,255',                                                         // Regenerate
   '19,255',                                                         // Silence
   '23,0', '23,1',                                                   // Chameleon

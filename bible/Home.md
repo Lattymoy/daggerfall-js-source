@@ -242,15 +242,16 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:639` - index into the 18 careers) or the INTERIM default Warrior (16,
 - `src/scenes/dungeonContext.js:645` - effects FLAGGED to the effect-library slice.
 - `src/scenes/dungeonContext.js:672` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:1055` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/dungeonContext.js:1060` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/exterior.js:489` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:495` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:621` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/exterior.js:740` - (FLAGGED); swallowing the browser reload is not optional.
 - `src/scenes/exterior.js:955` - (FLAGGED: the climate People table pends; the test city is
 - `src/scenes/exterior.js:1098` - FLAGGED here exactly as in world.js - no tile lookup yet).
-- `src/scenes/shared.js:177` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
-- `src/scenes/shared.js:194` - *  mirrors motorStats (the INTERIM entity carries no stats). */
+- `src/scenes/shared.js:178` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
+- `src/scenes/shared.js:195` - *  mirrors motorStats (the INTERIM entity carries no stats). */
+- `src/scenes/shared.js:226` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
 - `src/scenes/world.js:683` - FLAGGED loud: the People faction rides the START location's
 - `src/scenes/world.js:714` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
@@ -279,7 +280,7 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:961` - with the trade window's own mode flow, the same INTERIM the
 - `src/scenes/worldModes.js:1159` - first (owned houses and quest buildings FLAGGED/seamed per
 - `src/scenes/worldModes.js:1167` - (:515). FLAGGED: the Open-spell bypass (:519), the bash arms with
-- `src/scenes/worldModes.js:2134` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
+- `src/scenes/worldModes.js:2137` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
@@ -297,9 +298,9 @@ combat line numbers below are refreshed with it.
 - `src/systems/court.js:178` - *  daysInPrison } (guild rescues FLAGGED). */
 - `src/systems/effects.js:25` - FLAGGED skipped (the library grows here).
 - `src/systems/effects.js:42` - *  effect (:515). FLAGGED: DFU pulls it from the localised string
-- `src/systems/effects.js:478` - enchantment bundles are FLAGGED to their own arc.
-- `src/systems/effects.js:763` - out.skipped++;   // FLAGGED: the library grows one family at a time
-- `src/systems/effects.js:767` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
+- `src/systems/effects.js:481` - enchantment bundles are FLAGGED to their own arc.
+- `src/systems/effects.js:788` - out.skipped++;   // FLAGGED: the library grows one family at a time
+- `src/systems/effects.js:792` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
 - `src/systems/enchantments.js:39` - FLAGGED: no host computes them yet, so the conditional arms of
 - `src/systems/enchantments.js:41` - moonPhase() (FLAGGED: lunar phases are a Ledger C row),
 - `src/systems/enchantments.js:246` - *  condition holds. Params 0-3 seasons, 4-6 moons (FLAGGED: lunar
