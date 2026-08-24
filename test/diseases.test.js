@@ -7,12 +7,13 @@ import {
   DISEASES, DISEASE_DATA, DISEASE_LIST_A, DISEASE_LIST_B, DISEASE_LIST_C,
   PERMANENT_DISEASE_VALUE, COMPLETED_DISEASE_VALUE, isDiseasePermanent,
   contractedMessageRecord, YOU_FEEL_SOMEWHAT_BAD,
-  startDisease, updateDiseases, inflictDisease, onMonsterHit, fatigueDamage,
+  startDisease, updateDiseases, inflictDisease, onMonsterHit, fatigueDamage, diseaseCount,
 } from '../src/systems/diseases.js';
 import { tickActiveEffects, healAttributeDamage, maxFatigue } from '../src/systems/effects.js';
 import { liveStat } from '../src/systems/statMods.js';
 import { calculateAttackDamage } from '../src/combat/formulas.js';
 import { MOBILE_TYPES } from '../src/characters/mobileTypes.js';
+import { INFECTION } from '../src/systems/infection.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
 
 const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
@@ -206,14 +207,39 @@ test('diseases: OnMonsterHit - nymph/lamia fatigue, vampire branch, routed speci
   const p = P();
   onMonsterHit({ careerIndex: MOBILE_TYPES.Vampire }, p, 4, { rolls: seq(0.015, 0.99, 0) });
   assert.equal(p.activeEffects[0].disease, DISEASES.Plague);
-  // Vampire roll 0.5% <= 0.6: the vampirism branch (ROUTED) - no disease
+  // Vampire roll 0.5% <= 0.6: stage-one vampirism. V1 CONNECTED this -
+  // the arm used to be a comment reading "ROUTED" and the pin below
+  // asserted the player was left untouched.
   const q = P();
-  onMonsterHit({ careerIndex: MOBILE_TYPES.VampireAncient }, q, 4, { rolls: seq(0.005) });
-  assert.equal(q.activeEffects, undefined);
-  // Werewolf consumes its infection roll and does nothing else (ROUTED)
-  const rolls = seq(0.5);
-  onMonsterHit({ careerIndex: MOBILE_TYPES.Werewolf }, P(), 4, { rolls });
-  assert.equal(rolls(), 0.5);   // exactly one value was consumed
+  onMonsterHit({ careerIndex: MOBILE_TYPES.VampireAncient }, q, 4, { rolls: seq(0.005), currentDay: 12, regionIndex: 17 });
+  assert.equal(q.activeEffects[0].infection, INFECTION.Vampirism);
+  assert.equal(q.activeEffects[0].disease, null);          // classicDiseaseType None
+  assert.equal(q.activeEffects[0].startingDay, 12);
+  assert.equal(q.activeEffects[0].regionIndex, 17);        // where it was CAUGHT
+  // ...and it is a disease for every purpose that counts them, which
+  // is the whole reason the temple's cure-disease price is already
+  // right without a vampirism parameter.
+  assert.equal(diseaseCount(q), 1);
+  // Werewolf: a 50% roll is far above the 0.6% chance, so the roll is
+  // consumed and nothing takes hold.
+  let consumed = 0;
+  const rolls = () => { consumed++; return 0.5; };
+  const missed = P();
+  onMonsterHit({ careerIndex: MOBILE_TYPES.Werewolf }, missed, 4, { rolls });
+  assert.equal(consumed, 1);   // exactly one value was consumed
+  assert.equal(missed.activeEffects, undefined);
+  // Each lycanthrope mints ITS OWN strain - DFU gives them separate
+  // switch arms with the Nymph between, and this port shared one case
+  // for as long as both were routed to nothing.
+  const ww = P(); onMonsterHit({ careerIndex: MOBILE_TYPES.Werewolf }, ww, 4, { rolls: seq(0.005) });
+  const wb = P(); onMonsterHit({ careerIndex: MOBILE_TYPES.Wereboar }, wb, 4, { rolls: seq(0.005) });
+  assert.equal(ww.activeEffects[0].infection, INFECTION.Werewolf);
+  assert.equal(wb.activeEffects[0].infection, INFECTION.Wereboar);
+  // A LEVEL-1 player catches nothing, DiseaseEffect.Start's own gate
+  // reached through base.Start - a werewolf can maul them all night.
+  const cub = P(1);
+  onMonsterHit({ careerIndex: MOBILE_TYPES.Werewolf }, cub, 4, { rolls: seq(0.005) });
+  assert.equal(cub.activeEffects, undefined);
   // Spider: paralysis pends S19 - no rolls, no effect
   const s = P();
   onMonsterHit({ careerIndex: MOBILE_TYPES.Spider }, s, 4, { rolls: () => { throw new Error('no roll'); } });

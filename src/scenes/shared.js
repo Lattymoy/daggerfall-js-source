@@ -15,7 +15,10 @@ import { hasActiveEffect, isBlending, isInvisible, isAShade } from '../systems/e
 import { skillValue, tallySkill, SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { DOOR_SPELL_TEXT } from '../systems/mysticism.js';   // X1: the door-spell alert lines
 import { raiseSkills } from '../systems/advancement.js';   // AUDIT 23 (entity-1): the rest-end raise
-import { tickPlayerMinutes, runMagicRoundsFor, worldMinutes, setWorldMinutes, CLASSIC_MINUTES_PER_SECOND } from '../systems/worldTick.js';
+import { tickPlayerMinutes, runMagicRoundsFor, worldMinutes, setWorldMinutes, advanceWorldMinutes, MINUTES_PER_DAY, CLASSIC_MINUTES_PER_SECOND } from '../systems/worldTick.js';
+import { setInfectionHost, vampireClanForFaction } from '../systems/infection.js';   // V1: the host seam for the dream/death videos and the turn's clock raise
+import { findFactions } from '../systems/talk.js';   // V1: GetRegionFaction's FindFactions(Province, region)
+import { FACTION_TYPES } from '../formats/factionFile.js';
 import { killIfAnyLiveStatZero } from '../systems/statMods.js';   // AUDIT 24 (wave 32): the per-entity laws a foe pool owes
 import { decayEnemyAlert } from '../systems/encounters.js';   // AUDIT 24 (wave 36): PlayerEntity.Update's 8-hour decay, in every context
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
@@ -844,6 +847,71 @@ export async function endRunToTitleMenu(renderer) {
     console.warn('[death] ANIM0012.VID unavailable - skipping the death video:', e?.message ?? e);
   }
   exitToTitleMenu();
+}
+
+/**
+ * V1 - THE INFECTION'S HOST SEAM, registered once per host boot.
+ *
+ * The lifecycle runs in the magic round (systems/worldTick.js), which
+ * has no renderer and no faction dictionary. This hands it the three
+ * things only a host can give: the video player, the clock raise and
+ * the popup. infection.js's null object still runs the lifecycle
+ * without them, so a host that forgets this loses the DREAM, not the
+ * disease - which is why the four-hosts pin greps for the call.
+ *
+ * ENDONANYKEY IS FALSE for all three (VampirismInfection.cs:126,
+ * :136): the dream and the death play to the end and cannot be
+ * skipped, unlike the splash and the death-screen video.
+ *
+ * NEVER TRAPS, the endRunToTitleMenu rule: a missing or undecodable
+ * VID costs the video and the infection still progresses, because the
+ * close callback is what carries the lifecycle forward and it runs on
+ * every path out.
+ */
+export function wireInfectionVideos(renderer, { textAt = null, showText = null, factionDict = null } = {}) {
+  setInfectionHost({
+    playVideo(name, onClose) {
+      // Off the tick's own frame: playVideo OWNS the frame loop for
+      // its lifetime, and pushing it from inside a frame body is the
+      // re-entrancy DaggerfallUI avoids by pushing a WINDOW.
+      Promise.resolve().then(async () => {
+        try {
+          const { playVideo } = await import('../ui/videoPlayer.js');
+          const { getBytes } = await import('./dataSource.js');
+          const played = await playVideo(renderer.canvas, renderer, await getBytes(name), { endOnAnyKey: false });
+          if (typeof window !== 'undefined') (window.__infectionVideos ??= []).push({ name, played });
+        } catch (e) {
+          console.warn(`[infection] ${name} unavailable - skipping the video:`, e?.message ?? e);
+        }
+        onClose();
+      });
+    },
+    // DaggerfallDateTime.RaiseTime + `SyntheticTimeIncrease = true`
+    // (:161-162): the fortnight is a CLOCK MOVE, not fourteen days of
+    // magic rounds - the broker is told to sit the jump out, so a
+    // new vampire does not wake up starved and diseased. The port's
+    // advanceWorldMinutes is that same bare move.
+    raiseTime: (seconds) => advanceWorldMinutes(seconds / 60),
+    // "Death is not eternal" (:187-188) - a DaggerfallMessageBox on
+    // TEXT.RSC 401. The LINES are shared; the BOX is the host's, the
+    // same split D1's DeathScreen mount uses, because the dungeon
+    // draws an ActionTextBox where the town hosts draw a
+    // ChoiceWindow and neither is the other's overlay.
+    messageBox: (id) => {
+      const lines = textAt?.(id);
+      if (lines?.length) showText?.(lines);
+    },
+    // GetVampireClan's region read (:400-427), assembled from the
+    // host's FACTION.TXT: the Province faction of the region the
+    // infection was CAUGHT in, not the one the player turns in. A
+    // getter because FACTION.TXT loads after boot.
+    clanOf: (regionIndex) => {
+      const dict = typeof factionDict === 'function' ? factionDict() : factionDict;
+      const province = dict ? findFactions(dict, { type: FACTION_TYPES.Province, region: regionIndex })[0] : null;
+      return vampireClanForFaction(province);
+    },
+    hourNow: () => Math.floor((worldMinutes() % MINUTES_PER_DAY) / 60),
+  });
 }
 
 /** I3 - the pause window's EXIT door, and the death seam's last line.
