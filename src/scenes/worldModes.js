@@ -105,6 +105,7 @@ import { goldAmount, deductGold, addGold } from '../systems/court.js';
 // mount adapter and the modal tick.
 import { getReputation } from '../systems/factionRep.js';
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
+import { SpellMakerWindow } from '../ui/spellMakerWindow.js';   // S1: the Mages Guild / Kynareth spell maker
 import { SITE_TYPES } from '../systems/quest/place.js';
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring, finally called
 import { placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1 (PlaceFoeFreely reads the fieldOfView import below)
@@ -813,6 +814,20 @@ export function createWorldModes(host) {
     // binding it for every guild IS DFU's `guild != null` arm).
     if (destination === 'guildServiceRepair') {
       openRepairService({ reducedRepairCost: (price) => reducedRepairCost(guild, membership, price) });
+      return interiorOverlay;
+    }
+    // S1: the spell maker. DFU pushes its own singleton window from
+    // the service popup (DaggerfallGuildServicePopupWindow:389-394);
+    // the port mounts the keyed window in the interior slot. The
+    // spellbook check lives in the purchase ladder, where DFU also
+    // runs it (the window opens either way, as DFU's does once the
+    // popup's own check passes).
+    if (destination === 'guildServiceSpellMaker') {
+      interiorOverlay = new SpellMakerWindow({
+        entity: playerEntity,
+        onClose: () => { if (interiorOverlay === flow) interiorOverlay = null; },
+      });
+      flow = interiorOverlay;
       return interiorOverlay;
     }
     if (destination === 'guildServiceTraining') {

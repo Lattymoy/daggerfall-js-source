@@ -18,6 +18,7 @@ import { snapshotWeather, restoreWeather } from './weatherSim.js';   // W1: play
 import { goldStack } from './inventory.js';   // AUDIT 17f
 import { snapshotDiscovery, restoreDiscovery } from './discovery.js';   // T4
 import { snapshotAutomap, restoreAutomap } from './automap.js';   // A1: dictAutomapDungeonsDiscoveryState rides SaveData_v1
+import { seedCustomSpellIndex } from './spellMaker.js';   // S1: made spells carry their own record
 import { SOCIAL_GROUPS } from '../formats/factionFile.js';   // AUDIT 24
 
 export const SAVE_VERSION = 1;
@@ -110,7 +111,11 @@ export function snapshotPlayer(entity, { position = null, classicMinutes = 0, re
   // TP-slice: the Recall anchor (PlayerEntity.AnchorPosition - the
   // Teleport effect stores it on the entity, Teleport.cs:35).
   snap.anchorPosition = entity.anchorPosition ? { ...entity.anchorPosition } : null;
-  snap.spells = (entity.spells ?? []).map((sp) => sp.index);   // resolve against SPELLS.STD on load
+  // S1: a STOCK spell travels as its SPELLS.STD index (the compact
+  // shape every pre-S1 save carries); a MADE spell has no file index,
+  // so its whole record rides instead. The restore tells them apart
+  // by type - number = look it up, object = it IS the spell.
+  snap.spells = (entity.spells ?? []).map((sp) => (sp?.custom ? JSON.parse(JSON.stringify(sp)) : sp.index));
   // E2: ITEM-PINNED entries (held enchantments) are NOT serialized -
   // the pin is a live item reference and the snapshot's items are
   // fresh copies, so a saved pin could never re-link. DFU serializes
@@ -327,9 +332,14 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
     ? Object.fromEntries(
       Object.entries(snap.guildMemberships).map(([k, m]) => [k, { ...m }]))
     : {};
-  entity.spells = spellsByIndex
-    ? snap.spells.map((i) => spellsByIndex.get(i)).filter(Boolean)
-    : [];
+  // S1: made spells restore from their own carried record (and re-seed
+  // the index mint below the lowest one, so a spell made after this
+  // load cannot collide with one the save brought). Stock spells
+  // resolve against SPELLS.STD exactly as before; a spellless host
+  // (no table loaded) still restores the made ones.
+  entity.spells = (snap.spells ?? []).map((s) => (
+    typeof s === 'object' && s !== null ? s : (spellsByIndex ? spellsByIndex.get(s) : null))).filter(Boolean);
+  seedCustomSpellIndex(entity.spells);
   // T4: a load replaces the discovery store; a pre-T4 save carries no
   // field and restores an empty one (nothing was discoverable then).
   restoreDiscovery(snap.discovery);

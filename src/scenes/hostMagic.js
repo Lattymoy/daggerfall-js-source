@@ -383,7 +383,13 @@ export function createPlayerMagic({
     readied: () => readiedSpell,
     readiedIndex: () => readiedSpell?.index ?? null,
     setReadiedByIndex(index, spellsByIndex) {
-      readiedSpell = index != null ? spellsByIndex?.get(index) ?? null : null;
+      // S1: a MADE spell has no SPELLS.STD index (it carries a
+      // negative one of its own), so the file table cannot answer for
+      // it - the player's own book can. Without this a custom spell
+      // readied at save time came back unreadied.
+      readiedSpell = index != null
+        ? (spellsByIndex?.get(index) ?? (playerEntity?.spells ?? []).find((sp) => sp?.index === index) ?? null)
+        : null;
       readiedFree = false;   // every writer of readiedSpell declares its freeness (magic-8)
     },
     setReadied(sp) { readiedSpell = sp ?? null; readiedFree = false; },
