@@ -3,6 +3,17 @@
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
 Node 22). Suite: 2605 tests across 292 files.
 
+**THE ARENA2-GATED PINS ARE HALF-BLIND, AND THAT IS A KNOWN COST.** A
+pin behind `{ skip: skipReal }` never runs on CI, so a law change that
+contradicts it goes unnoticed until someone runs the suite WITH game
+data. Two did (2026-08-23, found while merging the input arc):
+audit18_hosts_dungeon's swing-fatigue pin still asserted the drain
+AUDIT 24 wave 42 had deliberately moved to the hosts, and
+cityguards.test.js's stub renderer lacked the `destroyBillboardBatch`
+wave 6's batch-free calls - it THREW rather than failed. Both are
+fixed, and both by making the pin say MORE, not less. When you change
+a law, grep the ARENA2-gated files for it too.
+
 | File | Tests | Covers |
 |---|---|---|
 | action.test.js | 6 | door lifecycle/verbatim constants, move tween + chain gate, activation picking; U6 text actions (the 8600/5400/7700 bases + the verbatim type-12 answers, ShowText firing, ShowTextWithInput skipping the up-front cascade with only a case-insensitive answer match firing ActivateNext, DoorText remapping 7701->7705 + holding the door on first activation + the axisRaw>5 trespass gate); P10 locks (lock value 16 / magic threshold 20, the clamp(5..95) lockpicking chance, all five LookAtInteriorLock text tiers, locked-door refusal firing onLockedDoor while solid, Lock/Unlock/Open/Close delegates through door-riding action nodes incl. only-when-unlocked and StartingLockValue restore) and P10 teleport (resolved next-object warp, null destination refuses, actionless-destination cascade no-op) + the block-instance key namespace (two instances of one RDB position both register and play independently - the 3108-dungeon repeated-block collision fix) |
