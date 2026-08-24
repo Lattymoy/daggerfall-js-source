@@ -267,22 +267,23 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:2173` - castle interior (FLAGGED with the palace blocks).
 - `src/scenes/world.js:2465` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
 - `src/scenes/world.js:2769` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/worldModes.js:230` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
-- `src/scenes/worldModes.js:274` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
-- `src/scenes/worldModes.js:422` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
-- `src/scenes/worldModes.js:499` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
-- `src/scenes/worldModes.js:556` - guildFactionId: null,   // FLAGGED: a guild-run shop pends the guild-store arm
-- `src/scenes/worldModes.js:587` - credit instead. FLAGGED: there is nowhere to cash one yet, so
-- `src/scenes/worldModes.js:687` - Person placed in a dungeon is the quest machine's, FLAGGED
-- `src/scenes/worldModes.js:750` - trade window in Sell mode. The BANKING arm stays FLAGGED below;
-- `src/scenes/worldModes.js:828` - FLAGGED, each with the slice it waits on:
-- `src/scenes/worldModes.js:945` - FLAGGED: house and ship OWNERSHIP need the building directory
-- `src/scenes/worldModes.js:1041` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:1108` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
-- `src/scenes/worldModes.js:1214` - with the trade window's own mode flow, the same INTERIM the
-- `src/scenes/worldModes.js:1416` - first (owned houses and quest buildings FLAGGED/seamed per
-- `src/scenes/worldModes.js:1424` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
-- `src/scenes/worldModes.js:2478` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
+- `src/scenes/worldModes.js:233` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
+- `src/scenes/worldModes.js:278` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
+- `src/scenes/worldModes.js:426` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
+- `src/scenes/worldModes.js:503` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
+- `src/scenes/worldModes.js:560` - guildFactionId: null,   // FLAGGED: a guild-run shop pends the guild-store arm
+- `src/scenes/worldModes.js:591` - credit instead. FLAGGED: there is nowhere to cash one yet, so
+- `src/scenes/worldModes.js:691` - Person placed in a dungeon is the quest machine's, FLAGGED
+- `src/scenes/worldModes.js:754` - trade window in Sell mode. The BANKING arm stays FLAGGED below;
+- `src/scenes/worldModes.js:832` - FLAGGED, each with the slice it waits on:
+- `src/scenes/worldModes.js:949` - FLAGGED: house and ship OWNERSHIP need the building directory
+- `src/scenes/worldModes.js:1045` - FactionData; the port's pre-chargen INTERIM entity does not, and
+- `src/scenes/worldModes.js:1112` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
+- `src/scenes/worldModes.js:1150` - been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:1256` - with the trade window's own mode flow, the same INTERIM the
+- `src/scenes/worldModes.js:1458` - first (owned houses and quest buildings FLAGGED/seamed per
+- `src/scenes/worldModes.js:1466` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
+- `src/scenes/worldModes.js:2520` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
@@ -317,7 +318,6 @@ combat line numbers below are refreshed with it.
 - `src/systems/guildServiceFlow.js:236` - *  override's law). Every other arm is FLAGGED with the window it
 - `src/systems/guildServiceFlow.js:243` - Identify: null,          // FLAGGED: DaggerfallTradeWindow Identify mode
 - `src/systems/guildServiceFlow.js:245` - BuyPotions: null,        // FLAGGED: trade Buy + CreateRandomPotion
-- `src/systems/guildServiceFlow.js:246` - MakePotions: null,       // FLAGGED: the potion maker
 - `src/systems/guildServiceFlow.js:247` - BuySpells: null,         // FLAGGED: the spellbook's buy mode
 - `src/systems/guildServiceFlow.js:248` - BuySpellsMages: null,    // FLAGGED: the spellbook's buy mode
 - `src/systems/guildServiceFlow.js:250` - BuyMagicItems: null,     // FLAGGED: trade Buy + CreateRandomMagicItem
@@ -339,6 +339,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
 - `src/systems/loot.js:212` - FLAGGED to the ENCHANTMENT-EFFECTS slice (the shops themselves
 - `src/systems/npcSession.js:628` - FLAGGED: no host calls this. C# populates the pool INSIDE
+- `src/systems/potions.js:163` - FLAGGED, with the slice it waits on:
 - `src/systems/races.js:6` - port had only ever instantiated for Breton (the loud INTERIM the
 - `src/systems/save.js:105` - (playerEntity's INTERIM skills: 30) - spreading it threw.
 - `src/systems/sceneCache.js:154` - FLAGGED, with the slice it waits on:
@@ -382,6 +383,7 @@ combat line numbers below are refreshed with it.
 - `src/ui/paperDoll.js:18` - Human +2 - Breton INTERIM), record = playerTextureRecord
 - `src/ui/paperDoll.js:63` - table, the loud INTERIM the U8f/U8g records flagged.
 - `src/ui/pauseWindow.js:58` - FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
+- `src/ui/potionMakerWindow.js:24` - FLAGGED: DFU's ingredient buttons carry a tooltip and a stack-count
 - `src/ui/restWindow.js:2` - text-panel idiom (backgrounds FLAGGED pending art-name
 - `src/ui/tavernWindow.js:40` - FLAGGED, with the slices they wait on:
 
