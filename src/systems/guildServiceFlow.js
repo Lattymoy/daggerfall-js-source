@@ -240,16 +240,16 @@ export const SERVICE_DESTINATION = Object.freeze({
   Donate: 'guildServiceDonation',
   CureDisease: 'guildServiceCureDisease',
   Quests: 'questOffer',    // Q4-ii: QuestOfferFlow.offerGuildQuest
-  Identify: null,          // FLAGGED: DaggerfallTradeWindow Identify mode
+  Identify: 'guildServiceIdentify',   // G4: the trade window in Identify mode
   Repair: 'guildServiceRepair',   // R1: the keyed repair flow (FG rank discount rides it)
-  BuyPotions: null,        // FLAGGED: trade Buy + CreateRandomPotion
+  BuyPotions: 'guildServiceBuyPotions',   // G4: Buy mode over the daily potion shelf
   MakePotions: 'guildServicePotionMaker',   // M2: the keyed potion maker
   BuySpells: null,         // FLAGGED: the spellbook's buy mode
   BuySpellsMages: null,    // FLAGGED: the spellbook's buy mode
   MakeSpells: 'guildServiceSpellMaker',   // S1: the keyed spell maker
-  BuyMagicItems: null,     // FLAGGED: trade Buy + CreateRandomMagicItem
+  BuyMagicItems: 'guildServiceBuyMagicItems',   // G4: Buy mode over the daily magic shelf
   MakeMagicItems: 'guildServiceItemMaker',   // M4: the keyed item maker
-  SellMagicItems: null,    // FLAGGED: trade SellMagic mode
+  SellMagicItems: 'guildServiceSellMagicItems',   // G4: the trade window in SellMagic mode
   BuySoulgems: 'guildServiceBuySoulgems',   // X6: the trade window in Buy mode over the daily soul-gem shelf
   Teleport: null,          // FLAGGED: the travel map's teleport mode
   DaedraSummoning: null,   // FLAGGED: the daedra summoning flow

@@ -2137,3 +2137,94 @@ off a shelf, leaves, comes back and reads the shelf at 2 where a
 restock would say 3 - the discriminating half, because the first draft
 of that probe compared 3 with 3 and would have passed on a shelf that
 simply re-stocked.
+
+## G4 - THE GUILD STORE ARM (2026-08-24)
+
+Four of the eleven remaining guild-service destinations were FLAGGED
+nulls that needed almost no new law: U40 built every trade-window mode
+and X6 proved the shelf pattern, so `Identify`, `SellMagicItems`,
+`BuyPotions` and `BuyMagicItems` were destination strings and a shelf
+minter. What made the slice worth taking is what wiring them forced.
+
+**THE FLAG THAT HAD NEVER HAD A CALLER.** `openTradeWindow` passed
+`guildFactionId: null` with a FLAGGED comment since U40, which meant
+`buyHolidayHalvesPrice`'s Mages Guild clause — Tales and Tallow
+halving the price of anything bought **at** the Mages Guild — could
+never be satisfied by any caller in the port. A guild service opening
+the trade window is exactly the case that supplies one. A high-street
+shop still passes null, because a shop belongs to no guild, and the
+mirror clause (Merchants Festival halves *outside* a guild only) reads
+the same field from the other side.
+
+**THE VALUE SUM M4 UNBLOCKED.** `createRegularMagicItem` had carried
+its own flag since S4c — *"a magic item still sells at its mundane
+base until the enchantment cost sum is ported"* — and M4's catalogue
+was that sum's missing half. `legacyEnchantmentValue` is
+ItemBuilder's closing walk, and three things about it are worth
+keeping:
+
+- **The bound is the enum's own order.** `type < ItemDeteriorates`,
+  and ItemDeteriorates is 16 with every drawback above it — so a
+  legacy item's value counts its powers and nothing else, the same
+  shape M3's `GetTotalGoldCost` takes for a hand-made one, written as
+  a comparison rather than a list.
+- **SoulBound is the one drawback under that bound**, and it scores
+  `+SoulPts` off the enemy table where the item maker charges the
+  catalogue's negative. A Daedra Lord is −8000 to make and +800000 to
+  buy. DFU's own comment beside the line: *"Not sure about this.
+  Should be negative? Needs to be tested."*
+- **The three `CastWhen*` are priced twice over, differently.** Here
+  it is ten times the SPELLS.STD record's casting cost; at the item
+  maker it is the flat `classicSpellCosts` table. The same enchantment
+  is worth one thing bought and another made.
+
+**A BUG THE REAL DATA CAUGHT.** ItemBuilder routes five effects
+through an array indexed by TYPE, ignoring the stored param. Four of
+them mint at ClassicParam −1, so "ignore the param" and "read the
+single cost" are the same thing — and I wrote it as a read at −1.
+EnhancesSkill is the fifth and is not like that: one flat cost across
+all thirty-five skills, with a real skill id in the param, so reading
+it at −1 answers null and free-prices the item. On the shipping
+MAGIC.DEF exactly one record has that shape — *%it of Venom Spitting*,
+a single EnhancesSkill slot at param 7 — and it priced at zero until
+the lookup moved to *the first param the effect mints*, which is right
+for all five because a flat cost is flat.
+
+**AND A FOUR-HOSTS GAP THE PROBE SURFACED.** The magic registries were
+set only in the dungeon host's boot, so any magic item minted from an
+exterior host — shop loot, a city corpse, and now this shelf — found
+no templates at all and was silently skipped. The guild shelf is what
+made it visible: it came back holding a spellbook and nothing else.
+Both registries now load through one `loadMagicRegistries` in
+`scenes/shared.js`, which all four hosts call; AUDIT 18's two-catch
+rule and the first-wins duplicate-index law moved with it, and the
+pins that guarded them in dungeonContext follow the law to its new
+home rather than being retired.
+
+**THE SHELVES.** `GetMerchantMagicItems` is one function serving two
+services, which is why this is one function here too: both loops are
+`i <= numOfItems` (inclusive), the seed is the day, stock arrives
+already identified, a spellbook closes the magic run, and the gem run
+rides along on the magic shelf whenever the guild also sells gems —
+**after** the magic run, so the Buy Magic Items gems and the Buy
+Soulgems gems differ on the same day at the same guild from the same
+seed. The potion shelf is `quality + 1` and burns a draw DFU throws
+away: `CreateRandomPotion` never reads the `Range(1, 5)` stackSize its
+caller computes, but the draw still advances the stream.
+
+**PROBED LIVE** (`tools/guildStoreProbe.mjs`), through the real
+guild-service dispatcher: all four arms reach the trade window; the
+Mages Guild's faction id (40) arrives in the price context; the magic
+shelf stocks from the real MAGIC.DEF at enchantment-derived prices
+(1530, 1200, 1020, 1200, 1040) with the spellbook closing it; a
+member's shelf carries gems `25,empty,empty,empty,empty` where the Buy
+Soulgems shelf the same day carries `28,empty,empty,empty,empty`;
+Identify and SellMagic open with no shelf and the player's own pack;
+and with the clock moved to day 243 the price context holds holiday 38
+**and** a Mages Guild id at once, which is the first time both halves
+of that clause have ever been present.
+
+Pins: 8 in `guildstore.test.js`. 11 mutations, 10 dead, 1 recorded
+equivalent — DFU's explicit `type != None` test guards a C# array
+index that would throw, where the port's lookup degrades to null, so
+dropping it is observable in DFU and not here.

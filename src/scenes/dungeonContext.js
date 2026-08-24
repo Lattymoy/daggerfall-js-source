@@ -68,10 +68,8 @@ import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../pla
 import { applyLevelUp } from '../systems/advancement.js';
 import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
 import { spendPoolLowest } from '../systems/chargen.js';
-import { readSpellsStd } from '../formats/spellsStd.js';
-import { readMagicDef } from '../formats/magicDef.js';
 import { ClassFile } from '../formats/classFile.js';
-import { fetchBytes, ensureAudio, raiseAtRestEnd, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord} from './shared.js';
+import { fetchBytes, ensureAudio, loadMagicRegistries, raiseAtRestEnd, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord} from './shared.js';
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
 import {
@@ -106,7 +104,7 @@ import {
 import { CLASSIC_UPDATE_INTERVAL } from '../characters/weaponStates.js';
 import { BUILD_TAG } from '../buildTag.js';
 import {
-  generateItems as generateLootItems, addEnemyLootExtras, addPileLootExtras, setMagicItemTemplates,   // AUDIT 24 (wave 43)
+  generateItems as generateLootItems, addEnemyLootExtras, addPileLootExtras,   // AUDIT 24 (wave 43)
   RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS,
   RANDOM_TREASURE_MARKER_RECORD, DUNGEON_LOOT_KEYS,
 } from '../systems/loot.js';
@@ -645,28 +643,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // effects FLAGGED to the effect-library slice.
   const _pendingCasts = [];
   const missiles = [];
-  let spellsByIndex = null;
-  try {
-    // AUDIT 18: SPELLS.STD carries DUPLICATE indices and DFU keeps the
-    // FIRST (SpellRecord's `if (!map.ContainsKey(index)) map.Add(...)`
-    // shape) - a straight `new Map(entries)` keeps the LAST, so
-    // classic spell 58 readied Holy Touch (rangeType 1) where DFU
-    // readies Holy Word (rangeType 3).
-    const _byIndex = new Map();
-    for (const sp of readSpellsStd(await fetchBytes('SPELLS.STD'))) {
-      if (!_byIndex.has(sp.index)) _byIndex.set(sp.index, sp);
-    }
-    spellsByIndex = _byIndex;
-  } catch { /* data absent: casts no-op, loudly flagged */ }
-  try {
-    // S4c: MAGIC.DEF registers the magic-item templates - a
-    // module-level registry, correct for the single active context
-    // (each dungeon build re-sets it); the loot MI category is live
-    // from here (absent -> stays flagged-skip). AUDIT 18: its own try
-    // block - it shared one with the SPELLS.STD fold, so a bad
-    // MAGIC.DEF silently nulled the whole spell table too.
-    setMagicItemTemplates(readMagicDef(await fetchBytes('MAGIC.DEF')));
-  } catch { /* data absent: the loot MI category stays flagged-skip */ }
+  // G4: BOTH magic registries, through the one shared loader. This
+  // used to be two try blocks HERE, which is why the exterior host
+  // never had them - see scenes/shared.js for the rule and the
+  // duplicate-index law it still carries.
+  const { spellsByIndex } = await loadMagicRegistries(fetchBytes);
   // U6: the TEXT.RSC database goes LIVE for the action text boxes
   // (the reader shipped with the U-series; the hudText note's
   // "database FLAGGED" narrows to the skill/loot message ids).
