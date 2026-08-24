@@ -54,17 +54,52 @@ const g0 = await gold();
 if (o.remote > 0) {
   await click(290, 68);   // remote slot 0 (below the scroll band)
   o = JSON.parse(await page.evaluate(() => window.__shopOverlay()));
+  // STAGE, THEN COMMIT. This probe asserted that ONE click took the
+  // gold, and had been failing quietly ever since the basket landed
+  // (nativeTrade.js:13 - "a click STAGES an item and the MODE ACTION
+  // button commits the lot"). It read `basket:1, cost:4426,
+  // canCommit:true, gold unchanged` and called the game broken. Found
+  // by V4's playthrough probe, which had inherited the same wrong
+  // model and was corrected against the screenshot.
+  console.log('after the stage click:', JSON.stringify(o));
+  if (!(o.basket > 0 && o.cost > 0 && o.canCommit)) { console.log('STAGE CLICK FAILED'); process.exit(1); }
+  await click(226 + 15, 134 + 7);   // TRADE_RECTS.modeAction - the BUY button
+  // ...and BUY raises the merchant's HAGGLE OFFER, a Yes/No box
+  // ("I can sell for no less than N gold pieces") - ShowTradePopup's
+  // three bands, ported at systems/tradeModes.js:280. So a purchase is
+  // THREE gestures: stage, ask, agree.
+  o = JSON.parse(await page.evaluate(() => window.__shopOverlay()));
+  if (!(o.box?.buttons === 'YesNo')) { console.log('NO HAGGLE OFFER', JSON.stringify(o.box)); process.exit(1); }
+  console.log('the offer:', o.box.rows.join(' '));
+  await page.keyboard.press('y');
+  await waitFrames(4);
+  o = JSON.parse(await page.evaluate(() => window.__shopOverlay()));
   const g1 = await gold();
-  console.log('after buy click:', JSON.stringify(o), 'gold', g0, '->', g1);
-  if (!(g1 < g0 && o.lastPrice > 0)) { console.log('BUY CLICK FAILED'); process.exit(1); }
+  console.log('after BUY:', JSON.stringify(o), 'gold', g0, '->', g1);
+  if (!(g1 < g0)) { console.log('BUY COMMIT FAILED'); process.exit(1); }
   await waitFrames(8);
   await page.screenshot({ path: '/home/claude/trade-native-bought.png' });
+  // THE SELL HALF NEEDS THE SELL WINDOW. In Buy mode a click on the
+  // LOCAL list unstages a basket item back onto the shelf
+  // (nativeTrade.js:197) - it does not sell, and this probe used to
+  // assert that it did. Selling is its own mode, opened the way the
+  // merchant's own offer opens it.
+  o = JSON.parse(await page.evaluate(() => window.__openMerchantSell()));
+  await waitFrames(8);
+  console.log('sell window:', JSON.stringify(o));
+  if (o?.mode !== 'Sell') { console.log('SELL MODE DID NOT OPEN'); process.exit(1); }
   if (o.local > 0) {
-    await click(192, 68);   // local slot 0 -> sell it back
+    await click(192, 68);   // local slot 0 -> stage it for sale
+    o = JSON.parse(await page.evaluate(() => window.__shopOverlay()));
+    console.log('after the stage click:', JSON.stringify(o));
+    if (!(o.staged > 0 && o.cost > 0)) { console.log('SELL STAGE FAILED'); process.exit(1); }
+    await click(226 + 15, 134 + 7);   // the mode action - now SELL
+    o = JSON.parse(await page.evaluate(() => window.__shopOverlay()));
+    if (o.box?.buttons === 'YesNo') { await page.keyboard.press('y'); await waitFrames(4); }
     o = JSON.parse(await page.evaluate(() => window.__shopOverlay()));
     const g2 = await gold();
-    console.log('after sell click:', JSON.stringify(o), 'gold', g1, '->', g2);
-    if (!(g2 > g1)) { console.log('SELL CLICK FAILED'); process.exit(1); }
+    console.log('after SELL:', JSON.stringify(o), 'gold', g1, '->', g2);
+    if (!(g2 > g1)) { console.log('SELL COMMIT FAILED'); process.exit(1); }
   }
 } else {
   console.log('empty shelf (valid stock roll) - the screen rendered');

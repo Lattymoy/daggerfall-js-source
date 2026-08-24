@@ -261,11 +261,19 @@ if (haveFoes) {
   if (!target) {
     skip('the foe notices the player', 'no live positioned foe');
   } else {
-    // Stand where a player who walked into the room would stand -
-    // through the motor, not the camera (V1: __pose moves the camera,
-    // the AI measures from the motor).
+    // STAND WHERE THE FOE STANDS. Through the motor, not the camera
+    // (V1: __pose moves the camera, the AI measures from the motor).
+    //
+    // The first draft stood four units behind the foe on the z axis,
+    // and that offset is a guess about geometry the probe cannot see:
+    // in a corridor it lands in the rock, and the screenshot then
+    // shows a lit chamber hanging in the renderer's clear colour with
+    // the near walls culled away - a picture that reads as a hole in
+    // the world and is nothing of the sort. A dungeon foe is placed on
+    // walkable floor by construction, so its own feet are the one spot
+    // known to be inside the room.
     const [fx, fy, fz] = target.pos;
-    await page.evaluate(([p, y]) => window.__warpTo(p, y), [[fx, fy + 0.4, fz + 4], Math.PI]);
+    await page.evaluate(([p, y]) => window.__warpTo(p, y), [[fx, fy + 0.4, fz], Math.PI]);
     await waitFrames(3);
     const hp0 = await hp();
     const before = (await J(() => window.__foes()))[target.i];
@@ -280,14 +288,6 @@ if (haveFoes) {
     }, 60000);
     check('the foe notices the player and acts', !!engaged,
       engaged ? `${engaged.moved ? 'closed the distance' : ''}${engaged.hurt ? ' and landed a hit' : ''}` : 'it never moved and never swung');
-    // A WORD ON THIS PICTURE, so nobody reads it as a hole in the
-    // world: the warp above puts the camera four units behind the foe
-    // WITHOUT asking whether that spot is inside the room, so it often
-    // lands in the rock outside. From there the near walls are culled
-    // away (frontFace CW) and everything that is not a room is the
-    // renderer's clear colour - so 06-fight can show a lit chamber
-    // hanging in pale blue. 05-dungeon, taken where the player really
-    // starts, is the honest picture: a dark cave corridor.
     await shot('06-fight');
     // Kill it through the REAL damage door (the one that mints the
     // corpse and rolls the loot), not by zeroing a field.
@@ -519,35 +519,43 @@ if (inShop) {
     // the click landed somewhere else entirely. __tradeSlot addresses
     // the same rect the window lays the row out at, which is what the
     // item-maker probes do and what this stage actually means to test.
-    // TWO CHECKS, DELIBERATELY SPLIT. The first run failed here and
-    // could not say whether BUYING was broken or only the pointer
-    // route into this host's trade window - and those are different
-    // bugs with different fixes (the sibling probe that buys by mouse
-    // drives ?exterior, a DIFFERENT host, which is exactly the shape
-    // that has bitten this project repeatedly). So: the real mouse
-    // first, the window's own hit test second, each reported.
+    // DFU'S TRADE WINDOW IS TWO GESTURES, NOT ONE. A click on the
+    // shelf STAGES the item into the basket and moves the COST; the
+    // MODE ACTION button ("BUY") commits the lot and takes the gold
+    // (nativeTrade.js:13, :222-242). The first draft of this stage
+    // clicked once, saw the purse unmoved, and was about to report
+    // that buying was broken - the screenshot settled it: COST had
+    // gone 0 -> 348 and the goods were sitting in the basket. The
+    // sibling probe tools/nativeTradeProbe.mjs had the same wrong
+    // model and had been failing quietly for exactly this reason.
+    //
+    // Split in two on purpose: the mouse gesture is tested through the
+    // REAL pointer route (a screen point computed from the live canvas),
+    // the commit through the window's own button rect.
     const m = await nativeClick(261 + 30, 48 + 20);   // TRADE_RECTS.remoteList, row 0
     console.log(`  [note] canvas ${m.cw}x${m.ch}, native scale ${m.s}, letterbox ${m.ox},${m.oy}`);
     await waitFrames(4);
     o = await J(() => window.__shopOverlay());
-    let after = await entity();
-    const byMouse = check('a mouse click on the shelf item buys it',
-      after.gold < before.gold,
-      after.gold < before.gold
-        ? `${stock?.remote?.[0]?.name ?? '?'} for ${before.gold - after.gold}g`
-        : `nothing bought; the window is ${o ? 'still open' : 'GONE'}`);
-    if (!byMouse) {
-      // Re-open and buy through the window's own rect, so the walk
-      // continues and the failure above is pinned to the POINTER.
-      o = await J(() => window.__openShelf(0));
-      await waitFrames(6);
-      await page.evaluate(() => window.__tradeSlot('remote', 0));
-      await waitFrames(4);
-      after = await entity();
-    }
-    bought = check('buying works at all (the window\'s own hit test)',
-      after.gold < before.gold,
-      `${before.gold}g/${before.items} items -> ${after.gold}g/${after.items} items`);
+    check('a mouse click on the shelf item stages it for purchase',
+      (o?.basket ?? 0) > 0 && (o?.cost ?? 0) > 0,
+      `${stock?.remote?.[0]?.name ?? '?'}: basket ${o?.basket ?? 0}, cost ${o?.cost ?? 0}`);
+    await shot('13b-staged');
+    await page.evaluate(() => window.__tradeClick('modeAction'));   // the BUY button
+    await waitFrames(4);
+    // ...and BUY raises the merchant's HAGGLE OFFER, a Yes/No box
+    // ("I can sell for no less than N gold pieces") - ShowTradePopup's
+    // three bands, ported at systems/tradeModes.js:280. A purchase is
+    // THREE gestures: stage, ask, agree.
+    const offer = await J(() => window.__shopOverlay());
+    check('the merchant makes an offer', offer?.box?.buttons === 'YesNo',
+      (offer?.box?.rows ?? []).join(' ').trim().slice(0, 90));
+    await key('y', 4);
+    const after = await entity();
+    const done = await J(() => window.__shopOverlay());
+    bought = check('and agreeing pays for it',
+      after.gold < before.gold && after.items > before.items,
+      `${stock?.remote?.[0]?.name ?? '?'} for ${before.gold - after.gold}g `
+      + `(the offer said ${done?.lastPrice}); ${before.items} -> ${after.items} items`);
     await shot('14-bought');
     await page.evaluate(() => window.__tradeClick('exit'));
     await waitFrames(3);
