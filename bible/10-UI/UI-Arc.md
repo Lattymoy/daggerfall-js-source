@@ -3938,3 +3938,85 @@ the quest journal's click-through travel (`GotoPlace`) has no journal
 door yet; TextureReplacement's custom region maps and region
 overlays have no door; and the HUD smash-to-black around the trip
 waits on a fade layer the port does not have.
+
+## G5 - TELEPORT: two flags pointing at each other (2026-08-24)
+
+The Mages Guild's teleport service and the travel map's teleport mode
+had each been waiting on the other, in writing:
+
+- `ui/travelMapWindow.js` (U41): *"FLAGGED, idling loudly: … the guild
+  TELEPORT mode (ActivateTeleportationTravel + DaggerfallTeleportPopUp),
+  **which waits on the guild arc's teleport service**."*
+- `systems/guildServiceFlow.js`: `Teleport: null, // FLAGGED: **the
+  travel map's teleport mode**`
+
+Neither was waiting on anything that did not exist. Both flags retire
+here, and what closed them was 171 lines of C# and a host door.
+
+**THE RECT'S OWN POSITION IS DEAD.** `DaggerfallTeleportPopUp` sets
+`Position = mainPanelRect.position` — which is `(0, 50)` — and then
+sets `HorizontalAlignment.Center` and `VerticalAlignment.Middle`.
+`BaseScreenComponent`'s alignment switches (`:1205-1230`) assign
+`rectangle.x`/`.y` outright on every arm but `None`, so the 50 never
+reaches the screen. A port that transcribed the rect wholesale would
+put the box thirty pixels high and hard against the left edge. It is
+centred: (75, 72), both halves landing on .5 and rounding the way
+every other centred panel here rounds. Pinned both ways — the real
+values, and a not-equal against the rect's own.
+
+**THE TELEPORT BOX IS ITS OWN FIELD, and that is DFU's structure
+rather than tidiness.** `CreatePopUpWindow` keeps the travel popup in
+the `popUp` **field** and the teleport popup in a **local** — it goes
+on the UI stack and the map never holds it. The port has no UI stack,
+so the map must hold its sub-window; putting a teleport box in `popUp`
+would hand it to `GetTravelMapSaveData`, which reads the three travel
+toggles straight off whatever is there and would write `undefined` for
+all three into a quicksave taken with the box open. It would also have
+crashed on the first mouse move, because the map calls `popUp.hover`
+and a yes/no box has none. Separate field, and the *reason* is pinned
+rather than the arrangement.
+
+**TELEPORT MODE IS A ONE-SHOT.** `ActivateTeleportationTravel` sets a
+flag before the map is pushed and `OnPop` clears it, so it lasts
+exactly one visit: a map closed while still armed would teleport the
+next traveller for free. Saying **No** to the box, though, leaves the
+map open *and* still armed — the destination was declined, not the
+service — so another place can be picked and it opens the teleport box
+again.
+
+**WHAT TELEPORTING ISN'T.** It reuses the travel map's destination
+pick and throws the journey away: no gold, no time, no
+speed/transport/lodging choice, no arrival clamp, no cautious heal, no
+disease warning. What it keeps is DFU's two calls — `TransitionExterior`
+**first** when the player is inside (you cannot teleport out of a
+building), then `TeleportToCoordinates`, whose `OnInitWorld` applies
+the destination climate's weather slot exactly as fast travel's
+arrival does. That last symmetry is why the weather line stays and the
+`tickWeather` line goes: no time passed to tick. The host law has no
+seam to drive from a unit test, so it is pinned at its source — the
+two calls present and in order, the six journey calls absent, and the
+same six asserted *present* in `fastTravelTo` so the list is not a
+straw man.
+
+**THE HOST DOOR.** The interior arm cannot build this window: the
+travel map's dependency list is the world's, and only the world host
+has a streaming world to land in. So the service asks
+`host.openTeleportMap?.()`, the same shape G8's `revealLocation`
+takes, and a host without one gets the popup's own "not available yet"
+arm rather than a crash. The world host arms the map before handing it
+over; the other two hosts are swept to prove they carry no such door.
+The construction of the map itself moved into one
+`buildTravelMapWindow` while this was wired, because a second opener
+and a twelve-dependency list is exactly how two copies drift.
+
+**PROBED LIVE** (`tools/teleportProbe.mjs`), in the world host: the
+map opens armed through the host's own door; finding Burgcester and
+picking it opens the **teleport** box and not the travel one, naming
+the right place; the save envelope is still three booleans with the
+box up; No leaves the map armed; and Yes lands the player at
+(204, 210) with **gold 100 → 100 and the clock 523530 → 523530** —
+free of gold and free of time, which is the whole difference between
+this and the fast travel that shares its map.
+
+Pins: 7 in `teleportpopup.test.js` and 3 added to
+`travelmapwindow.test.js`. 10 mutations, 10 dead.
