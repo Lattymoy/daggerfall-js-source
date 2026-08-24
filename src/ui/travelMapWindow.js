@@ -83,6 +83,7 @@ import { loadImg, nativeMetrics, drawImg, drawImgCrop, drawRect, shadowText, NAT
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded } from './messageBox.js';
 import { ListPickerWindow, preloadListPickerArt, listPickerArtLoaded } from './listPicker.js';
 import { TravelPopUpWindow, preloadTravelPopUpArt } from './travelPopUp.js';
+import { TeleportPopUpWindow, preloadTeleportPopUpArt } from './teleportPopUp.js';   // G5
 import { drawText } from './text.js';
 import { typedChar, bindings } from './input.js';
 import { actionForCode } from '../systems/inputActions.js';
@@ -296,6 +297,7 @@ export async function preloadTravelMapArt(deps) {
   // no-ops rather than a half-drawn window. preloadListPickerArt
   // swallows its own failure, which is why it is not caught here.
   await preloadTravelPopUpArt(deps).catch((e) => console.warn('[travelmap] TRAV0I04.IMG unavailable:', e?.message ?? e));
+  await preloadTeleportPopUpArt(deps);   // G5: TELE00I0 - its own loader swallows an absent file
   await preloadListPickerArt(deps);
   return _art;
 }
@@ -344,8 +346,24 @@ export class TravelMapWindow {
     this.borderEnabled = false;
     // sub-windows and boxes, in the order they take input
     this.popUp = null;
+    // G5: the TELEPORT popup is its OWN field, and that is DFU's own
+    // structure rather than tidiness. CreatePopUpWindow (:1705-1730)
+    // keeps the travel popup in the `popUp` FIELD and the teleport
+    // popup in a LOCAL - it is pushed on the UI stack and the map
+    // never holds it. The port has no UI stack, so the map has to
+    // hold its sub-window; putting a teleport popup in `popUp` would
+    // hand it to GetTravelMapSaveData, which reads the three travel
+    // toggles off whatever is there and would write `undefined` for
+    // all three into a quicksave taken with the box open.
+    this.telePopUp = null;
     this.picker = null;
     this.top = null;            // 'find' | 'notfound' | 'confirm'
+    // G5: teleportationTravel (:148). A ONE-SHOT arm: the guild's
+    // teleport service sets it before the map is pushed and DFU
+    // clears it in OnPop (:368), so it lasts exactly one visit -
+    // closing the map without picking loses it, and the next M press
+    // is an ordinary travel map again.
+    this.teleportationTravel = false;
     this.findText = '';
     this._box = null;
     // the generated textures
@@ -575,10 +593,24 @@ export class TravelMapWindow {
     this._updateIdentifyTextureForPlayerRegion();
   }
 
+  /** ActivateTeleportationTravel (:209-212). Called BEFORE the window
+   *  is shown; see the one-shot note on the field. */
+  activateTeleportationTravel() { this.teleportationTravel = true; }
+
   /** CloseTravelWindows (:1288-1295). */
   closeTravelWindows(forceClose = false) {
-    if (!this.regionSelected || forceClose) { this.done = true; this.deps.onClose?.(); }
-    else this._closeRegionPanel();
+    if (!this.regionSelected || forceClose) {
+      this.done = true;
+      // OnPop (:365-372) clears the one-shot arm as the window leaves
+      // the stack. It matters even though the port mints a fresh
+      // window per open: the SAME instance is reachable again while a
+      // teleport popup is up over it, and a cancelled popup must not
+      // leave the map armed for a destination the player then picks
+      // by accident.
+      this.teleportationTravel = false;
+      this.telePopUp = null;
+      this.deps.onClose?.();
+    } else this._closeRegionPanel();
   }
 
   // --- mouse (:1148-1295) ---
@@ -813,10 +845,30 @@ export class TravelMapWindow {
     });
   }
 
-  /** CreatePopUpWindow (:1705-1730) - the travel popup (the teleport
-   *  arm is FLAGGED). */
+  /** CreatePopUpWindow (:1705-1730). TWO popups, one pick: the
+   *  teleport arm takes the same destination and skips the journey
+   *  entirely - see ui/teleportPopUp.js. */
   _createPopUpWindow() {
     const pos = getPixelFromPixelID(this.locationSummary.id);
+    if (this.teleportationTravel) {
+      const name = this._getLocationNameInCurrentRegion();
+      this.telePopUp = new TeleportPopUpWindow({ pixel: pos, name }, {
+        onExit: () => { this.telePopUp = null; },
+        onTeleport: (pixel, destName) => {
+          this.telePopUp = null;
+          this.deps.onTeleport?.({
+            pixel,
+            name: destName,
+            region: this._getRegionName(this.locationSummary.regionIndex),
+            mapId: this.locationSummary.mapID,
+            regionIndex: this.locationSummary.regionIndex,
+            locationIndex: this.locationSummary.mapIndex,
+          });
+          this.closeTravelWindows(true);
+        },
+      });
+      return;
+    }
     this.popUp = new TravelPopUpWindow(pos, {
       getPlayerPixel: this.deps.getPlayerPixel,
       getClimateIndex: this.deps.getClimateIndex,
@@ -925,6 +977,11 @@ export class TravelMapWindow {
   // --- the host seam ---
 
   input(code, e = null) {
+    if (this.telePopUp) {
+      this.telePopUp.input(code, e);
+      if (this.telePopUp?.done) this.telePopUp = null;
+      return;
+    }
     if (this.popUp) {
       this.popUp.input(code, e);
       if (this.popUp?.done) this.popUp = null;
@@ -977,6 +1034,7 @@ export class TravelMapWindow {
   }
 
   hover(vx, vy, e = null) {
+    if (this.telePopUp) return;   // a yes/no box has nothing to hover
     if (this.popUp) { this.popUp.hover(vx, vy); return; }
     if (this.picker || this.top) return;
     if (vx === this.lastMousePos[0] && vy === this.lastMousePos[1]) return;
@@ -991,6 +1049,11 @@ export class TravelMapWindow {
   }
 
   click(vx, vy, right = false) {
+    if (this.telePopUp) {
+      this.telePopUp.click(vx, vy);
+      if (this.telePopUp?.done) this.telePopUp = null;
+      return true;
+    }
     if (this.popUp) {
       this.popUp.click(vx, vy);
       if (this.popUp?.done) this.popUp = null;
@@ -1184,6 +1247,7 @@ export class TravelMapWindow {
     const label = this.regionLabelText();
     if (label) shadowText(renderer, font, label, m, 0, 2, { align: 'center', w: NATIVE_W });
 
+    if (this.telePopUp) { this.telePopUp.draw(renderer, canvas, font); return; }
     if (this.popUp) { this.popUp.draw(renderer, canvas, font); return; }
     if (this.picker) { this.picker.draw(renderer, canvas, font); return; }
     if (this.top === 'find') {
