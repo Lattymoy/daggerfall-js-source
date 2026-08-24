@@ -1,16 +1,54 @@
 // The input map (UI arc). One bindings module retiring the
-// duplicated per-host key routers and if-chains. Bindings follow
-// DFU's classic defaults where they exist: F5 character sheet, F6
-// inventory, Backspace spellbook. Casting on C is OURS (classic
-// casts by click after readying; the click-to-cast refinement is a
-// queue row) - flagged here, the single place it lives now.
+// duplicated per-host key routers and if-chains - and since I2, a
+// CONSUMER of the rebindable registry (systems/inputActions.js,
+// InputManager.cs's law) rather than a table of literals. Every
+// gameplay key resolves through the player's bindings; the DFU
+// defaults live in inputActions.DEFAULT_BINDINGS.
+//
+// I2 RETIRED the C-cast departure this header used to carry: DFU has
+// no cast key - CastSpell (Backspace) OPENS THE SPELLBOOK
+// (GameManager.cs:550-553), and a readied spell fires on the attack
+// click (hostMagic.interceptAttack, live in all four hosts). What
+// still pends the pointer-parity slice: DFU casts and activates on
+// Mouse0 (ActivateCenterObject - EntityEffectManager.cs:250,
+// PlayerActivate.cs:280) where the port clicks Mouse2 and holds E,
+// and E's DFU meaning (AbortSpell) with Q's (RecastSpell) - FLAGGED
+// at the E sites in the hosts.
+import { loadOrCreateBindings, actionForCode } from '../systems/inputActions.js';
 
-/** A one-shot latch: arm once, consume once (click-to-cast). */
-export class OneShotLatch {
-  constructor() { this.armed = false; }
-  arm() { this.armed = true; }
-  consume() { const a = this.armed; this.armed = false; return a; }
+// The registry singleton - built on first read, so the module can be
+// imported by tests without touching storage until asked.
+let _bindings = null;
+export function bindings() { return (_bindings ??= loadOrCreateBindings()); }
+/** Tests (and the I3 controls window) swap the live store. */
+export function setBindings(b) { _bindings = b; }
+
+/** The action a key event means under the live bindings, or null. */
+export function actionOf(e) { return actionForCode(bindings(), e.code); }
+
+/** Held-state read for the hosts' per-frame polls: is ANY key bound
+ *  to the action (primary or secondary) in the host's held-keys set?
+ *  This is InputManager.GetKey's dual-dict fallthrough (:1084) over
+ *  the port's `keys` Set idiom. */
+export function held(keys, action) {
+  const b = bindings();
+  for (const [code, a] of b.primary) if (a === action && keys.has(code)) return true;
+  for (const [code, a] of b.secondary) if (a === action && keys.has(code)) return true;
+  return false;
 }
+
+/** The four movement axes in one read - each host's frame builds this
+ *  once and derives forward/strafe/moving/standingStill from it,
+ *  instead of twelve raw keys.has() calls. */
+export function moveHeld(keys) {
+  return {
+    forwards: held(keys, 'MoveForwards'),
+    backwards: held(keys, 'MoveBackwards'),
+    left: held(keys, 'MoveLeft'),
+    right: held(keys, 'MoveRight'),
+  };
+}
+export const anyMove = (mv) => mv.forwards || mv.backwards || mv.left || mv.right;
 
 /** Overlay-mode actions (chargen, level-up, sheet, windows). Digits
  *  joined for the U6 input box (the blind-god answer is "1"). */
@@ -20,20 +58,6 @@ export function overlayAction(e) {
     ArrowUp: 'up', ArrowDown: 'down', Enter: 'confirm', Backspace: 'backspace',
     Escape: 'back', '+': 'plus', '=': 'plus', '-': 'minus', r: 'reroll', R: 'reroll',
   })[e.key] ?? null;
-}
-
-/** Gameplay-mode actions. */
-export function gameAction(e) {
-  if (e.key === 'F5') return 'charSheet';          // classic
-  if (e.key === 'F6') return 'inventory';          // classic
-  if (e.key === 'Backspace') return 'spellbook';   // DFU default
-  if (e.code === 'KeyC') return 'castSpell';       // ours (classic click-to-cast also live)
-  if (e.code === 'KeyR') return 'rest';            // DFU default (U7)
-  if (e.code === 'KeyM') return 'automap';         // DFU default (InputManager.Actions.AutoMap)
-  if (e.key === 'F9') return 'quickSave';          // DFU default
-  if (e.key === 'F11') return 'quickLoad';         // DFU default (InputManager.SetupDefaults:1032)
-  if (e.key === 'F8') return 'debugHud';           // diagnostics
-  return null;
 }
 
 /** The character a key event types, for the windows that carry a text
@@ -49,8 +73,9 @@ export function typedChar(code, e = null) {
 }
 
 /** Route one keydown against a dungeon context. Returns true when
- *  consumed (the host preventDefaults and stops). */
-export function routeKey(e, ctx, castDir, setPlayerPos = null) {
+ *  consumed (the host preventDefaults and stops). Cases carry DFU's
+ *  action names; each cites its DFU consumer. */
+export function routeKey(e, ctx, setPlayerPos = null) {
   if (ctx.uiOverlayActive) {
     // U26: a NATIVE window keys off raw codes, exactly as townTalk's
     // seam has since G2 - the action map ('back'/'confirm'/'up') is
@@ -62,19 +87,26 @@ export function routeKey(e, ctx, castDir, setPlayerPos = null) {
     if (a) { ctx.overlayInput(a); return true; }
     // Quickload works from ANY overlay (the death screen's F11 hint
     // must be true); everything else stays gated.
-    if (gameAction(e) === 'quickLoad') { ctx.quickLoad?.(setPlayerPos); return true; }
+    if (actionOf(e) === 'QuickLoad') { ctx.quickLoad?.(setPlayerPos); return true; }
     return false;
   }
-  switch (gameAction(e)) {
-    case 'charSheet': ctx.toggleCharSheet(); return true;
-    case 'inventory': ctx.toggleInventory(); return true;
-    case 'spellbook': ctx.toggleSpellbook(); return true;
-    case 'castSpell': { const d = castDir(); ctx.playerCastInput(d.eye, d.dir); return true; }
-    case 'rest': ctx.toggleRest?.(); return true;
-    case 'automap': ctx.toggleAutomap?.(); return true;   // A1 (optional-chained: only the dungeon contexts carry one today)
-    case 'quickSave': ctx.quickSave?.(); return true;
-    case 'quickLoad': ctx.quickLoad?.(setPlayerPos); return true;
-    case 'debugHud': ctx.toggleDebugHud?.(); return true;
+  // Diagnostics, not a DFU action: DFU's F8 is PrintScreen, which has
+  // no consumer here yet, and the debug HUD is the port's own.
+  if (e.code === 'F8') { ctx.toggleDebugHud?.(); return true; }
+  switch (actionOf(e)) {
+    // Escape with no overlay up opens the pause options window
+    // (GameManager's escape door; the window closes itself on the
+    // same key). Optional-chained: hosts grow the seam one at a time.
+    case 'Escape': return ctx.togglePause ? (ctx.togglePause(setPlayerPos), true) : false;
+    case 'CharacterSheet': ctx.toggleCharSheet(); return true;
+    case 'Inventory': ctx.toggleInventory(); return true;
+    // GameManager.cs:550-553 - the CastSpell ACTION opens the
+    // spellbook window; the cast itself is the attack click.
+    case 'CastSpell': ctx.toggleSpellbook(); return true;
+    case 'Rest': ctx.toggleRest?.(); return true;
+    case 'AutoMap': ctx.toggleAutomap?.(); return true;   // A1 (optional-chained: only the dungeon contexts carry one today)
+    case 'QuickSave': ctx.quickSave?.(); return true;
+    case 'QuickLoad': ctx.quickLoad?.(setPlayerPos); return true;
     default: return false;
   }
 }

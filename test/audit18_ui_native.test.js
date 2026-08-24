@@ -25,7 +25,8 @@ import { NativeTradeWindow } from '../src/ui/nativeTrade.js';
 import { CharSheet, CHARSHEET_RECTS } from '../src/ui/charsheet.js';
 import { NativeInventoryWindow } from '../src/ui/nativeInventory.js';   // U26: the keyed window is deleted
 const ICONS = { getTexture: async () => ({ recordCount: 0 }), uploadRecord: () => {}, textures: new Map() };
-import { gameAction } from '../src/ui/input.js';
+import { actionOf, setBindings } from '../src/ui/input.js';
+import { createBindings, resetDefaults } from '../src/systems/inputActions.js';
 import { equipItem, equipTableOf, EQUIP_SLOTS } from '../src/systems/equip.js';
 import { wrapText } from '../src/ui/talkWindow.js';
 import { nativeMetrics } from '../src/ui/nativePanel.js';
@@ -429,9 +430,12 @@ test('audit18 ui-native F13: the dungeon equips every group, arrows excepted', (
 // F14  QuickLoad is F11
 // ---------------------------------------------------------------
 test('audit18 ui-native F14: QuickLoad binds F11 (InputManager.SetupDefaults)', () => {
-  assert.equal(gameAction({ key: 'F11' }), 'quickLoad');
-  assert.equal(gameAction({ key: 'F12' }), null, 'F12 appears nowhere in SetupDefaults');
-  assert.equal(gameAction({ key: 'F9' }), 'quickSave');
+  const b = createBindings();
+  resetDefaults(b);
+  setBindings(b);
+  assert.equal(actionOf({ code: 'F11' }), 'QuickLoad');
+  assert.equal(actionOf({ code: 'F12' }), null, 'F12 appears nowhere in SetupDefaults');
+  assert.equal(actionOf({ code: 'F9' }), 'QuickSave');
 });
 
 // ---------------------------------------------------------------

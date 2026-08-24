@@ -94,8 +94,9 @@ export function attachTouch(canvas, hooks = {}) {
   button('\u2191\u2191', 'right:16px', 'bottom:16px', 64, () => down('Space'), () => up('Space'));   // jump
   button('F5', 'left:16px', 'top:16px', 48, () => tap('F5'));
   button('F6', 'left:72px', 'top:16px', 48, () => tap('F6'));
-  button('\u2630', 'left:128px', 'top:16px', 48, () => tap('Backspace'));   // spellbook
-  button('C', 'left:184px', 'top:16px', 48, () => tap('KeyC'));             // cast
+  button('\u2630', 'left:128px', 'top:16px', 48, () => tap('Backspace'));   // CastSpell: opens the spellbook (GameManager.cs:550-553)
+  // I2 retired the C cast button with the C-cast key: a readied spell
+  // casts on the attack tap (hostMagic.interceptAttack), same as desktop.
   // Save/load (2026-08-14): phones had NO path to F9/F11 - a reload
   // meant chargen from scratch. Same synthetic-key seam as the rest.
   button('SV', 'left:240px', 'top:16px', 48, () => tap('F9'));              // quicksave

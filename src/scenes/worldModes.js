@@ -27,7 +27,7 @@ import { pickActivatable, worldAabb, activationTargets } from '../player/activat
 import { transferAll, removeOne, addItem } from '../systems/inventory.js';
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
-import { createPlayerTicker , endRunToTitleMenu } from './shared.js';   // AUDIT 18: the interior host's world clock
+import { createPlayerTicker , endRunToTitleMenu, exitToTitleMenu } from './shared.js';   // AUDIT 18: the interior host's world clock
 import { buildInteriorContext } from './interiorContext.js';
 import { buildDungeonContext } from './dungeonContext.js';
 import { DOOR_TYPE } from '../world/meshReader.js';
@@ -41,7 +41,7 @@ import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
 import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 import { nearestLights } from '../world/cityLights.js';
 import { lookAt, perspective, mirrorProjectionX } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
-import { routeKey, overlayAction } from '../ui/input.js';
+import { routeKey, overlayAction, actionOf, held, moveHeld, anyMove } from '../ui/input.js';
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible interior arrows
@@ -95,6 +95,7 @@ import {
   MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID, DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID, CANNOT_BE_REPAIRED_TEXT,
 } from '../systems/repairService.js';
 import { GuildServiceWindow, preloadGuildServiceArt, guildServiceArtLoaded } from '../ui/guildServiceWindow.js';
+import { openPauseFlow, preloadPauseFlowArt, pauseArtLoaded } from '../ui/pauseWindow.js';   // I3/I4
 import { preloadMessageBoxArt } from '../ui/messageBox.js';
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
@@ -234,6 +235,7 @@ export function createWorldModes(host) {
   const ensureInteriorWindowArt = () => {
     ensureShopFont();                                       // FONT0003 + the trade art
     preloadGuildServiceArt({ renderer, fetchBytes, palette });
+    preloadPauseFlowArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] pause/controls art unavailable:', e?.message ?? e));   // I3/I4
     preloadMessageBoxArt({ renderer, fetchBytes, palette });   // U11 parchment for its boxes
     preloadListPickerArt({ renderer, fetchBytes, palette });   // U24: PICK00I0 for the training skill list
   };
@@ -1525,7 +1527,7 @@ export function createWorldModes(host) {
     // Covers both modes. The dungeon arm sets it again later from its own
     // view matrix, which is a pure write and harmless.
     audio.setListener(cam.pos, fwd);
-    const jumpHeld = keys.has('Space');
+    const jumpHeld = held(keys, 'Jump');
     if (mode === 'dungeon' && dungeonCtx) {
       player.slowFalling = dungeonCtx.playerSlowFalling;   // S8 slowfall (P14: the verbatim constant-speed law lives in the motor)
       // P11 host parity (2026-08-16 audit: the standalone ?dungeon
@@ -1574,8 +1576,9 @@ export function createWorldModes(host) {
     if (mode === 'dungeon') for (const s of [...dungeonQuestFlats]) s.behaviour?.update();   // B2: foe behaviours drive inside drawFoes
     if (!overlayHeld) questBridge?.tick(dt);
     const inputHeld = paralyzed || overlayHeld;
-    const crouchHeld = keys.has('KeyX');
-    const moving = !inputHeld && (keys.has('KeyW') || keys.has('KeyS') || keys.has('KeyA') || keys.has('KeyD'));
+    const crouchHeld = held(keys, 'Crouch');   // I2: DFU's default C (was the port's X)
+    const mv = moveHeld(keys);
+    const moving = !inputHeld && anyMove(mv);
     // Platform riding (the DFU MoveWithMovingPlatform shape) was wired
     // ONLY into the standalone ?dungeon scene, so a world/exterior
     // hosted dungeon dropped the mover delta and the lift penetrated
@@ -1583,13 +1586,13 @@ export function createWorldModes(host) {
     if (!overlayHeld) ridePlatform(player, mode === 'dungeon' ? dungeonCtx?.actions : interiorCtx?.actions);
     // Audit F3: crouch stays live while paralyzed (DFU gates movement/jump only)
     player.update(dt, inputHeld ? { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false, crouch: crouchHeld && !latch.crouch } : {
-      forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
-      strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
-      run: keys.has('ShiftLeft'),
-      sneak: keys.has('AltLeft'),   // P15: DFU's default Sneak binding (LeftAlt), held
+      forward: (mv.forwards ? 1 : 0) - (mv.backwards ? 1 : 0),
+      strafe: (mv.right ? 1 : 0) - (mv.left ? 1 : 0),
+      run: held(keys, 'Run'),
+      sneak: held(keys, 'Sneak'),   // P15: DFU's default Sneak binding (LeftAlt), held
       jump: jumpHeld,   // P14: HELD, verbatim (the 0.1 s grounded gate owns re-fire)
-      up: jumpHeld || keys.has('PageUp'),
-      down: keys.has('PageDown'),
+      up: jumpHeld || held(keys, 'FloatUp'),
+      down: held(keys, 'FloatDown'),
       crouch: crouchHeld && !latch.crouch,
     }, cam.yaw, cam.pitch);
     latch.crouch = crouchHeld;
@@ -1601,7 +1604,7 @@ export function createWorldModes(host) {
       const _surf = player.waterSurfaceY;
       const _step = _footsteps.update(player.pos, {
         grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
-        standingStill: !keys.has('KeyW') && !keys.has('KeyS') && !keys.has('KeyA') && !keys.has('KeyD'),
+        standingStill: !anyMove(mv),
         halfSpeed: player.movingLessThanHalfSpeed,
       }, pickFootstepSet(mode === 'interior'
         ? { inside: true, inBuilding: true }
@@ -1613,7 +1616,7 @@ export function createWorldModes(host) {
     if (mode === 'dungeon' && dungeonCtx) {
       // P11: the splash/jump/swim-minute fatigue feed (same seam as
       // the standalone scene); P14's fall landing rides the same call.
-      dungeonCtx.reportActivity?.({ running: keys.has('ShiftLeft') && moving, swimming: player.swimming, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing
+      dungeonCtx.reportActivity?.({ running: held(keys, 'Run') && moving, swimming: player.swimming, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing
       // PlayerMotor.StartRestGroundedCheck (:184-194) reads the LIVE
       // grounded state; dungeonContext's `_grounded` is host-fed and
       // only dungeon.js:270 fed it, so in a world-hosted dungeon the
@@ -1647,8 +1650,8 @@ export function createWorldModes(host) {
       });
     }
     cam.pos = player.eye;
-    const useHeld = keys.has('KeyE');
-    const zNow = keys.has('KeyZ');   // ReadyWeapon: sheathe toggle (audit 2026-08-17)
+    const useHeld = keys.has('KeyE');   // I2 departure: DFU activates on Mouse0 and E is AbortSpell - the pointer-parity slice owns the move
+    const zNow = held(keys, 'ReadyWeapon');   // sheathe toggle (audit 2026-08-17)
     // C9: per-mode routing (the old unconditional dungeonCtx read
     // CRASHED on Z inside a building - dungeonCtx is null there).
     if (zNow && !zPrev) {
@@ -1691,7 +1694,7 @@ export function createWorldModes(host) {
       // drawn over the dungeon, and in ?world the streaming recenter
       // fed dungeon-local coordinates.
       if (dungeonCtx.uiOverlayActive) { dungeonCtx.tickOverlay(dt); dungeonCtx.drawOverlay(canvas); return true; }   // U2b/U3: overlays gate the dungeon (AUDIT 18 F5: the overlay's own clock still runs)
-      dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, keys.has('KeyW') || keys.has('KeyA') || keys.has('KeyS') || keys.has('KeyD'), player.height);   // moveHeld: the collision-trigger input gate (verbatim)   // C8 foes + S3b clock + S4b missiles - internally gated, must run foes or not (trap spells fire in empty dungeons)
+      dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, anyMove(moveHeld(keys)), player.height);   // moveHeld: the collision-trigger input gate (verbatim)   // C8 foes + S3b clock + S4b missiles - internally gated, must run foes or not (trap spells fire in empty dungeons)
       if (dungeonCtx.waterQuads.length) {
         renderer.drawWater(dungeonCtx.waterQuads, DUNGEON_WATER_COLOR,
           renderer.textures.get(`${dungeonReturn.waterArchive}_0`),
@@ -1937,10 +1940,12 @@ export function createWorldModes(host) {
       e.preventDefault();
       return;
     }
-    // M2: casting INSIDE a building - the spellbook (Backspace) and
-    // the cast key, riding the interior overlay channel.
+    // M2/I2: casting INSIDE a building - the CastSpell action opens
+    // the spellbook (GameManager.cs:550-553), riding the interior
+    // overlay channel. The cast itself is the attack click
+    // (interceptAttack); the old C-cast key retired with I2.
     if (mode === 'interior' && magic) {
-      if (e.key === 'Backspace') {
+      if (actionOf(e) === 'CastSpell') {
         e.preventDefault();
         const sbi = typeof spellsByIndex === 'function' ? spellsByIndex() : spellsByIndex;
         if (!interiorOverlay && sbi) {
@@ -1951,14 +1956,24 @@ export function createWorldModes(host) {
         }
         return;
       }
-      if (e.code === 'KeyC') {
-        magic.castInput([...cam.pos], eyeDir());
-        return;
-      }
+    }
+    // I3: Escape inside a BUILDING opens the pause window in the
+    // interior overlay slot (the dungeon arm rides routeKey's Escape
+    // case into dungeonCtx.togglePause). No interior save path exists
+    // yet - the composer saves from ?world's exterior and the dungeon
+    // contexts - so the SAVE button answers DFU's cannot-save line.
+    if (mode === 'interior' && !interiorOverlay && actionOf(e) === 'Escape' && pauseArtLoaded()) {
+      openPauseFlow((w) => { interiorOverlay = w; }, {
+        savingPrevented: () => true,
+        exitToMenu: exitToTitleMenu,
+        textLines: (id) => townTalk?.lines?.(id) ?? null,
+      });
+      e.preventDefault();
+      return;
     }
     // The input map (ui/input.js) owns all bindings.
     if (mode !== 'dungeon' || !dungeonCtx) return;
-    if (routeKey(e, dungeonCtx, () => ({ eye: cam.pos, dir: eyeDir() }), (p) => player.spawn(p[0], p[1], p[2]))) e.preventDefault();   // P14 (AUDIT 23): a load clears motion state, same applier as dungeon.js
+    if (routeKey(e, dungeonCtx, (p) => player.spawn(p[0], p[1], p[2]))) e.preventDefault();   // P14 (AUDIT 23): a load clears motion state, same applier as dungeon.js
   });
 
   // U8c: pointer routing for interior native windows (the townTalk
@@ -1978,7 +1993,7 @@ export function createWorldModes(host) {
     // shape that has bitten this flow four times.
     if (mode === 'dungeon' && dungeonCtx?.uiOverlayActive) {
       const vd = pointToNative(nativeMetrics(canvas), px, py);
-      if (vd) dungeonCtx.overlayClick?.(vd[0], vd[1]);
+      if (vd) dungeonCtx.overlayClick?.(vd[0], vd[1], e.button === 2);
       return true;   // an open window withholds the pointer lock, as in dungeon.js
     }
     // The guard is on the WINDOW, not on its click method: an open
@@ -1987,7 +2002,7 @@ export function createWorldModes(host) {
     // to requestLook and grabs pointer lock from under the menu.
     if (mode !== 'interior' || !interiorOverlay) return false;
     const v = pointToNative(nativeMetrics(canvas), px, py);
-    if (v) interiorOverlay.click?.(v[0], v[1]);
+    if (v) interiorOverlay.click?.(v[0], v[1], e.button === 2);   // I4: the remove gesture rides the button
     if (interiorOverlay?.done) interiorOverlay = null;
     return true;
   }
@@ -2001,6 +2016,26 @@ export function createWorldModes(host) {
     }
     if (mode !== 'interior' || !interiorOverlay) return false;
     interiorOverlay.wheel?.(Math.sign(e.deltaY));
+    return true;
+  }
+
+  /** U37: THE HOVER SEAM, the wheel seam's shape - both mode-owned
+   *  windows and the mounted dungeon context's. */
+  function hover(e) {
+    const at = () => {
+      const r = canvas.getBoundingClientRect();
+      return pointToNative(nativeMetrics(canvas),
+        (e.clientX - r.left) * (canvas.width / r.width),
+        (e.clientY - r.top) * (canvas.height / r.height));
+    };
+    if (mode === 'dungeon' && dungeonCtx?.uiOverlayActive) {
+      const v = at();
+      dungeonCtx.overlayHover?.(v ? v[0] : -1, v ? v[1] : -1);
+      return true;
+    }
+    if (mode !== 'interior' || !interiorOverlay?.hover) return false;
+    const v = at();
+    interiorOverlay.hover(v ? v[0] : -1, v ? v[1] : -1);
     return true;
   }
 
@@ -2130,6 +2165,7 @@ export function createWorldModes(host) {
       return null;                       // exterior: the host's own context stands
     },
     pointerdown,
+    hover,
     wheel,
     /** A mode-owned window is up (the hosts' look gate reads this
      *  alongside townTalk.overlayActive). */

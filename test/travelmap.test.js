@@ -88,7 +88,7 @@ test('travelmap: the gold gate refuses without closing; ship costs flow through'
 
 test('travelmap: the world host wires V, the arrival order, and the ONE-clock advance', () => {
   const src = readFileSync(join(root, 'src/scenes/world.js'), 'utf8');
-  assert.ok(src.includes("e.code === 'KeyV' && !townTalk.overlayActive"), 'V opens the map (InputManager:1028)');
+  assert.ok(src.includes("act === 'TravelMap' && !townTalk.overlayActive"), 'the TravelMap action opens the map (I2; V is its registry default, InputManager:1028)');
   const i = src.indexOf('async function fastTravelTo');
   assert.ok(i > 0);
   const fn = src.slice(i, src.indexOf('const toggleTravelMap', i));

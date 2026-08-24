@@ -21,6 +21,7 @@ import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE } from '../world/rdbLayout.js';
 import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, DOOR_VERB_FLAGS, classifyPlacementAction, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT } from '../world/actionSystem.js';
 import { TextRsc } from '../formats/textRsc.js';
+import { openPauseFlow, preloadPauseFlowArt, pauseArtLoaded } from '../ui/pauseWindow.js';
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, setDeathPresenter } from '../characters/playerEntity.js';
 import { addItem, removeOne } from '../systems/inventory.js';
@@ -33,7 +34,6 @@ import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: t
 import { loadHud, drawHud, hudScale as hudScaleFor } from '../ui/hud.js';
 import { drawText, makeFont } from '../ui/text.js';
 import { HudText } from '../ui/hudText.js';
-import { OneShotLatch } from '../ui/input.js';
 import { FntFile } from '../formats/fntFile.js';
 import { ImgFile } from '../formats/imgFile.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
@@ -71,7 +71,7 @@ import { spendPoolLowest } from '../systems/chargen.js';
 import { readSpellsStd } from '../formats/spellsStd.js';
 import { readMagicDef } from '../formats/magicDef.js';
 import { ClassFile } from '../formats/classFile.js';
-import { fetchBytes, ensureAudio, raiseAtRestEnd, endRunToTitleMenu, sensesContext } from './shared.js';
+import { fetchBytes, ensureAudio, raiseAtRestEnd, endRunToTitleMenu, exitToTitleMenu, sensesContext } from './shared.js';
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
 import {
@@ -681,6 +681,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // pressed F5 at some point first. Nothing failed loudly; the box
   // just quietly wasn't classic.
   preloadMessageBoxArt({ renderer, fetchBytes, palette });
+  // I3: the Escape window's panel, same failure posture (a missing
+  // OPTN00I0 costs the pause menu, loudly, never the boot).
+  preloadPauseFlowArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] pause/controls art unavailable:', e?.message ?? e));
   // S16: enemy spell lists ride SPELLS.STD (loaded just above, after
   // the foe build) - SetEnemyCareer's assignment tail per live foe:
   // class enemies with CastsMagic take EnemyClassSpells[min(6,
@@ -1367,8 +1370,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     billboardBatches.push(batch);   // hosts draw + destroy() frees
   }
   function playerAttackInput(dx, dy, held) {   // host mouse events buffer here
-    if (playerWeapon.sheathed) return;   // WeaponManager verbatim: no attack processing while sheathed (audit 2026-08-17)
+    // I2 (cast probe): the CAST intercept runs BEFORE the sheath gate.
+    // DFU's cast is EntityEffectManager's own Update - a separate
+    // component from WeaponManager - so a sheathed player still fires
+    // a readied spell on the click; only the SWING needs the weapon
+    // out (WeaponManager verbatim, audit 2026-08-17).
     if (magic.interceptAttack(held)) return;   // the armed click casts, no swing
+    if (playerWeapon.sheathed) return;
     weaponRig.attackInput(dx, dy, held);
   }
   function resolvePlayerHit(eye, inViewFn, playerFeet, lookDir) {
@@ -2429,6 +2437,22 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       automapEntranceTick(automapRec, sm ? [sm.x, sm.y, sm.z] : null, eye, collider);
     },
     automapRecord: () => automapRec,   // probe surface + the window's live view
+    /** I3: the Escape window, same one-slot idiom. Art-gated: with no
+     *  OPTN00I0 loaded the window would close itself on first draw,
+     *  so an art-less boot simply has no pause menu (stated, not
+     *  silent - preloadPauseArt logs its own failure). */
+    togglePause(setPlayerPos = null) {
+      if (activeOverlay || !pauseArtLoaded()) return;
+      const ctx = this;   // the sibling save verbs on this same context
+      openPauseFlow((w) => { activeOverlay = w; }, {
+        quickSave: () => ctx.quickSave?.(),
+        // the LOAD arm needs the host's position applier, exactly as
+        // routeKey's own QuickLoad case passes it
+        quickLoad: () => ctx.quickLoad?.(setPlayerPos),
+        exitToMenu: exitToTitleMenu,
+        textLines: (id) => rscLines(id),
+      });
+    },
     /** A1: the M window, in the one overlay slot (toggleCharSheet's
      *  idiom - an occupied slot refuses, the window closes itself). */
     toggleAutomap() {
@@ -2461,7 +2485,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // version missed - a touch tap while sheathed no longer swings
     // (WeaponManager: no attack processing while sheathed).
     playerClickAttack: weaponRig.clickAttack,
-    playerCastInput: magic.castInput,   // S5: C key in the hosts
     /** Verbatim MovePlayerToMarker + FixStanding: the start marker
      *  + up * (height 1.8 * 0.6), then the instant floor snap. ONE
      *  source - both hosts spawn through this (the standalone's raw
@@ -2669,12 +2692,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  clickable since U8b. Takes NATIVE (320x200) coords like
      *  townTalk's seam does, and reports whether it consumed the
      *  click so the caller can withhold the pointer lock. */
-    overlayClick(vx, vy) {
+    overlayClick(vx, vy, right = false) {
       // U26: a native window exposes `click`, the keyed ones
-      // `clickNative`. Both route here.
+      // `clickNative`. Both route here. I4: the right-button flag
+      // rides along for the controls grid's remove gesture.
       if (!activeOverlay?.clickNative && !activeOverlay?.click) return false;
       if (activeOverlay.clickNative) activeOverlay.clickNative(vx, vy);
-      else activeOverlay.click(vx, vy);
+      else activeOverlay.click(vx, vy, right);
       if (activeOverlay.done) {
         if (activeOverlay === chargenFlow) { finishChargenHere(); }
         surfacePlayer();
@@ -2685,6 +2709,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     /** The wheel seam (U-scroll): scroll never closes a window, so no
      *  done check. */
     overlayWheel(dir) { activeOverlay?.wheel?.(dir); },
+    /** U37: THE HOVER SEAM, flagged since U25 and unbuilt until the
+     *  tooltip needed it. Native coords, no done check - hovering
+     *  never closes anything. */
+    overlayHover(vx, vy) { activeOverlay?.hover?.(vx, vy); },
     /** U26: ui/input.js asks this before mapping a key to an action -
      *  a native window keys off raw codes. */
     get overlayIsNative() { return !!activeOverlay?.isChoiceWindow; },

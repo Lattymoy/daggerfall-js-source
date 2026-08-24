@@ -586,11 +586,23 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     const py = (e.clientY - r.top) * (canvas.height / r.height);
     const m = nativeMetrics(canvas);
     const v = pointToNative(m, px, py);
-    if (v) overlay.click(v[0], v[1]);
+    if (v) overlay.click(v[0], v[1], e.button === 2);   // I4: the remove gesture rides the button
     if (overlay.done) {
       const cb = _onOverlayClosed; _onOverlayClosed = null; overlay.dispose?.(); overlay = null; cb?.();
     }
     return true;   // an open native window owns the pointer either way
+  }
+
+  /** U37: THE HOVER SEAM - native coords to whatever window is up.
+   *  Hovering never closes a window, so no done check. */
+  function hover(e) {
+    if (!overlay?.hover) return false;
+    const r = canvas.getBoundingClientRect();
+    const px = (e.clientX - r.left) * (canvas.width / r.width);
+    const py = (e.clientY - r.top) * (canvas.height / r.height);
+    const v = pointToNative(nativeMetrics(canvas), px, py);
+    overlay.hover(v ? v[0] : -1, v ? v[1] : -1);
+    return true;
   }
 
   /** The wheel seam (U-scroll): an open window owns the wheel; the
@@ -602,7 +614,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   }
 
   return {
-    keydown, tryActivate, frame, ensureLoaded, nextMode, showOverlay, setTopics, pointerdown, wheel,
+    keydown, tryActivate, frame, ensureLoaded, nextMode, showOverlay, setTopics, pointerdown, wheel, hover,
     openTalkWindow,   // B7: TalkToStaticNPC's window push routes here (worldModes' click + the guild popup's TALK)
     /** TK-v: the two halves of the tone the ENGINE asks the host for -
      *  which tone button is selected, and the tier computation for a

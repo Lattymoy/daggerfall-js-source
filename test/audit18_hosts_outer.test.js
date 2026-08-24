@@ -633,7 +633,9 @@ test('audit18 hosts: an open interior window swallows the pointer even with no c
   const wm = src('src/scenes/worldModes.js');
   assert.match(wm, /if \(mode !== 'interior' \|\| !interiorOverlay\) return false;/,
     'a click-less overlay lets the pointerdown escape to requestLook');
-  assert.match(wm, /interiorOverlay\.click\?\.\(v\[0\], v\[1\]\)/);
+  // I4 widened the call with the right-button flag; the LAW this pin
+  // holds is the OPTIONAL call (a click-less window still consumes).
+  assert.match(wm, /interiorOverlay\.click\?\.\(v\[0\], v\[1\]/);
 });
 
 test('audit18 hosts: interior point lights carry their PER-LIGHT range in both hosts', () => {

@@ -150,12 +150,16 @@ test('A2 window: the zoom band, the remembered level, and the reset-on-new-locat
 });
 
 test('A2 wiring pins: the M-outside dispatch in both exterior hosts, gated on a location (DaggerfallUI.cs:633-650)', () => {
+  // I2: the dispatch reads the ACTION, not the raw code - M is its
+  // registry default (inputActions ResetDefaults :1027) and rebinding
+  // it moves the town map with it, as DFU's does.
   const w = src('src/scenes/world.js');
-  assert.match(w, /e\.code === 'KeyM' && !townTalk\.overlayActive && \(modes\?\.mode \?\? 'exterior'\) === 'exterior'/);
+  assert.match(w, /act === 'AutoMap' && !townTalk\.overlayActive && \(modes\?\.mode \?\? 'exterior'\) === 'exterior'/);
   assert.match(w, /if \(!dfLoc \|\| !b\?\.locBlocks \|\| !b\.locOrigin\) return;/, 'empty wilderness opens nothing');
   const e = src('src/scenes/exterior.js');
-  assert.match(e, /e\.code === 'KeyM' && !townTalk\.overlayActive/);
+  assert.match(e, /act === 'AutoMap' && !townTalk\.overlayActive/);
   assert.match(e, /new ExteriorAutomapWindow\(/);
+  assert.match(src('src/systems/inputActions.js'), /\['KeyM', 'AutoMap'\]/, 'and M is that action\'s default');
 });
 
 test('A2 review: every townTalk overlay drop frees the occupant (the A1 death-presenter lesson on THIS slot)', () => {

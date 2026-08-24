@@ -124,6 +124,13 @@ export const LIVE = Object.freeze({
   'Map/AutomapHouseColor': 'src/ui/exteriorAutomapWindow.js',
   'Map/ExteriorMapDefaultZoomLevel': 'src/ui/exteriorAutomapWindow.js',
   'Map/ExteriorMapResetZoomLevelOnNewLocation': 'src/ui/exteriorAutomapWindow.js',
+  // U37: the tooltip. All four shipped stored-tier with no consumer -
+  // the component that reads them did not exist until the controls
+  // grid needed to show the full text behind an elongated key label.
+  'GUI/EnableToolTips': 'src/ui/toolTip.js',
+  'GUI/ToolTipDelayInSeconds': 'src/ui/toolTip.js',
+  'GUI/ToolTipTextColor': 'src/ui/toolTip.js',
+  'GUI/ToolTipBackgroundColor': 'src/ui/toolTip.js',
 });
 /** unavailable: meaningless in a browser, or the port implements only
  *  ONE side of the branch. The launcher shows these disabled WITH the

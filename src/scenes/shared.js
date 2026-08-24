@@ -688,6 +688,15 @@ export async function endRunToTitleMenu(renderer) {
   } catch (e) {
     console.warn('[death] ANIM0012.VID unavailable - skipping the death video:', e?.message ?? e);
   }
+  exitToTitleMenu();
+}
+
+/** I3 - the pause window's EXIT door, and the death seam's last line.
+ *  DFU's pause exit posts dfuiExitGame - Application.Quit on
+ *  standalone - and a browser has no quit, so the door out is the
+ *  title menu by the same bare-URL unwind chargen's cancel uses.
+ *  Dying takes the same door AFTER its video (above). */
+export function exitToTitleMenu() {
   if (typeof location !== 'undefined') location.href = location.pathname;
 }
 
