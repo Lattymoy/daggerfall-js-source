@@ -3681,8 +3681,9 @@ costs the full 12. Two consequences the interim typeahead did not
 have: "daggerfal" finds Daggerfall AND Daggerfall Chapel (both inside
 MatchesCutOff's half-relevance band, so the LIST PICKER opens), and a
 nonsense query still lands on the nearest names - so TEXT.RSC 13,
-the "does not exist" box, is only reachable when the region has
-nothing discovered at all. The port carries the matcher whole,
+the "does not exist" box, is reachable only on an EMPTY query
+(FindLocation's IsNullOrEmpty arm) or in a region with nothing
+discovered at all. The port carries the matcher whole,
 including the heap's ordering law: relevance descending, ties by text
 ASCENDING, which falls out of `string.Compare(other.text, this.text)`
 being dumped in reverse.
@@ -3780,6 +3781,24 @@ seven of their findings were real:
 - **A third of the C# line citations had drifted** by 10-80 lines,
   including the whole identify block, which pointed into the console
   commands. Swept against the reference file symbol by symbol.
+- **A right-click behind the map fired a readied spell.** RMB is the
+  map's ZOOM, and both exterior hosts bound RMB to the weapon rig
+  and the pending cast without an overlay gate - so one zoom toggle
+  spent magicka or loosed an arrow at a world the player could not
+  see. The dungeon host has had the gate since I4; the other two
+  never got it. Pre-existing, but the travel map is what made it a
+  routine gesture.
+- **The location picker painted the map out.** DFU's picker is a
+  popup over the window that pushed it and DaggerfallPopupWindow
+  dims nothing (ScreenDimColor is Color.clear), so the map stays
+  visible behind the list; the port's picker filled the canvas with
+  opaque black. It now takes a backdrop mode, and the travel map
+  asks for none.
+- **The poison half of the warning never reached the popup.** The
+  host passed `poisonCount` and the popup read it, and the window in
+  between did not forward it - the one production path, and the only
+  path no pin drove. Pinned through the window now, not the
+  constructor.
 
 **What the live probe caught: nothing, because it could not run.**
 This machine has no ARENA2, so every art path is build-verified and
@@ -3792,15 +3811,17 @@ polls the window's own state through a new `__travelMap` probe
 surface rather than sleeping, because a click surface cannot be
 driven blind. It needs a box with game data; that pass is owed.
 
-Pins: 19 in `travelmapwindow.test.js`, 11 in `travelmap.test.js`, 6 in
+Pins: 23 in `travelmapwindow.test.js`, 11 in `travelmap.test.js`, 6 in
 `editdistance.test.js`, 2 re-pinned in `travelvisibility.test.js`.
-The offset table is diffed against the C# key for key and value for
-value. 44 mutations, 43 dead and one PROVEN equivalent (shifting the
-flash clock by a constant moves the stored stamp with it, so nothing
-can observe it). The first round left five alive - both arrow
-directions, the pageless refusal, the popup's assign-not-toggle
-click, and the map dict's first-wins collision arm - and each is now
-its own pin.
+All 51 rows of the offset table are transcribed from the C# into
+the pin and deepEqual'd, because nothing else in the port can catch
+a mistyped origin - a wrong pair simply puts a region's dots on the
+wrong map pixels. 51 mutations, 50 dead and one PROVEN equivalent
+(shifting the flash clock by a constant moves the stored stamp with
+it, so nothing can observe it). The first round left five alive -
+both arrow directions, the pageless refusal, the popup's
+assign-not-toggle click, and the map dict's first-wins collision arm
+- and each is now its own pin.
 
 FLAGGED: the guild TELEPORT mode (`ActivateTeleportationTravel` +
 `DaggerfallTeleportPopUp`) still waits on the guild arc's teleport

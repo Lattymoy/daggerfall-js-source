@@ -27,10 +27,11 @@
 //   defaulted travelShip false; DFU's field is true and the toggle
 //   panel starts on the ship row.
 // - a CLICK on one of a pair picks that pair member (sender ==
-//   button, :382-425); the HOTKEY toggles instead (:387-391 and the
-//   scroll handlers), so S/T/N flip and the clicks assign.
+//   button: :501, :521, :541 inside the handler block :497-556);
+//   the HOTKEY toggles instead (:505-509, :525-529, :545-549), so
+//   S/T/N flip where the clicks assign.
 // - BEGIN refreshes, then warns when the player carries a disease or
-//   poison (a random TEXT.RSC 1010 variant behind Yes/No, :351-364)
+//   poison (a random TEXT.RSC 1010 variant behind Yes/No, :421-427)
 //   before the gold check; not enough gold shows TEXT.RSC 454 and
 //   refuses (:388-403, :458-468).
 // - travel then runs DFU's countdown: one day per 0.05s of REAL
@@ -49,8 +50,8 @@
 // deduction; the label above shows the COINS, as DFU's does.
 //
 // FLAGGED, each idling loudly: the HUD smash-to-black/fade
-// (:242, :382 - no fade layer in the port), GuildManager
-// .FastTravel's membership discount (:280 - no guild perk seam),
+// (:242, :381 - no fade layer in the port), GuildManager
+// .FastTravel's membership discount (:284 - no guild perk seam),
 // RaiseSkills on arrival (:380), and EXIT's key-UP deferral
 // (:482-495: DFU plays the click on key-down and pops the window on
 // key-up, so holding E keeps the popup; the port's overlay seam has

@@ -1558,8 +1558,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     cam.yaw += e.movementX * lookScale();   // HANDEDNESS (mat4's law): mouse-right turns toward +x = screen-right
     cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * lookScale() * lookInvert()));
   });
-  addEventListener('mousedown', (e) => { if (e.button === 2 && walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); } });   // M2
-  addEventListener('mouseup', (e) => { if (e.button === 2 && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });
+  // U41: `!townTalk.overlayActive` is the dungeon host's own gate
+  // (dungeon.js:184, "a right-click on a window is the window's...
+  // never a swing"), which these two hosts never got. It matters now
+  // that the travel map makes RMB a ROUTINE gesture - its zoom - and
+  // an ungated one fires a readied spell or looses an arrow at the
+  // world behind the map.
+  addEventListener('mousedown', (e) => { if (e.button === 2 && !townTalk.overlayActive && walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); } });   // M2
+  addEventListener('mouseup', (e) => { if (e.button === 2 && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });   // the RELEASE is never gated - a window opened mid-swing must still let go
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; drag-look rides the mouse factor
     look: (dx, dy) => {
       cam.yaw += dx * lookScale();   // HANDEDNESS (mat4's law)

@@ -73,16 +73,15 @@
 //   are told (hover/click), so the same work happens on the move.
 //
 // FLAGGED, idling loudly: the journal's click-through travel
-// (GotoPlace, :438-449), the guild TELEPORT mode
-// (ActivateTeleportationTravel + DaggerfallTeleportPopUp, :1720-1728)
-// which waits on the guild arc's teleport service, and DFU's
-// TravelMapSaveData round trip, which is offered here
-// (getTravelMapSaveData/setTravelMapFromSaveData) and waits on the
-// host's save envelope to carry it.
+// (GotoPlace, :432-446) and the guild TELEPORT mode
+// (ActivateTeleportationTravel + DaggerfallTeleportPopUp, :1705-1730),
+// which waits on the guild arc's teleport service. (TravelMapSaveData
+// is NOT flagged: it ships through systems/travelMapState.js and the
+// session envelope.)
 
 import { loadImg, nativeMetrics, drawImg, drawImgCrop, drawRect, shadowText, NATIVE_W } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded } from './messageBox.js';
-import { ListPickerWindow, preloadListPickerArt } from './listPicker.js';
+import { ListPickerWindow, preloadListPickerArt, listPickerArtLoaded } from './listPicker.js';
 import { TravelPopUpWindow, preloadTravelPopUpArt } from './travelPopUp.js';
 import { drawText } from './text.js';
 import { typedChar, bindings } from './input.js';
@@ -290,11 +289,14 @@ export async function preloadTravelMapArt(deps) {
     regionMaps: new Map(),   // lazily filled, DFU's regionTextures
     deps,
   };
-  // Both of these keep their own art-less fallback, so a missing
-  // TRAV0I04 or PICK00I0 costs the popup its frame or the picker its
-  // panel - it does not close the map.
+  // Neither closes the map. A missing TRAV0I04 costs the popup its
+  // frame and nothing else (it draws a flat panel with real rows);
+  // a missing PICK00I0 costs the LIST entirely - listPicker refuses
+  // to open without its art, so L and a multi-match find become
+  // no-ops rather than a half-drawn window. preloadListPickerArt
+  // swallows its own failure, which is why it is not caught here.
   await preloadTravelPopUpArt(deps).catch((e) => console.warn('[travelmap] TRAV0I04.IMG unavailable:', e?.message ?? e));
-  await preloadListPickerArt(deps).catch(() => { /* the picker keeps its own fallback */ });
+  await preloadListPickerArt(deps);
   return _art;
 }
 export const travelMapArtLoaded = () => !!_art;
@@ -313,8 +315,8 @@ async function loadRegionMap(name) {
 
 export class TravelMapWindow {
   /** deps: { maps, mapDict, getPlayerPixel, getClimateIndex, gold,
-   *  goldPieces, hasHorse, hasCart, hasShip, diseaseCount, onTravel,
-   *  onClose, pick }. */
+   *  goldPieces, hasHorse, hasCart, hasShip, diseaseCount,
+   *  poisonCount, onTravel, onClose, pick }. */
   constructor(deps = {}) {
     this.deps = deps;
     this.done = false;
@@ -775,8 +777,13 @@ export class TravelMapWindow {
       }
       filtered.push(name);
     }
+    // ShowLocationPicker pushes the picker over THIS window, and a
+    // DaggerfallPopupWindow does not dim what it covers - the map
+    // stays visible behind the list.
+    if (!listPickerArtLoaded()) return;   // no PICK00I0, no list (listPicker.js's own law)
     this.picker = new ListPickerWindow({
       items: filtered,
+      backdrop: 'none',
       onPick: (index, name) => this.handleLocationPickEvent(index, name),
       onCancel: () => { this.picker = null; },
     });
@@ -819,6 +826,7 @@ export class TravelMapWindow {
       hasCart: this.deps.hasCart,
       hasShip: this.deps.hasShip,
       diseaseCount: this.deps.diseaseCount,
+      poisonCount: this.deps.poisonCount,
       textRsc: _art?.textRsc ?? null,
       pick: this.deps.pick,
       onExit: () => { this._rememberPopUpState(); this.popUp = null; },

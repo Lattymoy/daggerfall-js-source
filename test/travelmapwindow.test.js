@@ -24,6 +24,28 @@ import { discoverLocation, restoreDiscovery } from '../src/systems/discovery.js'
 import { setValue, _resetForTests } from '../src/systems/settings.js';
 import { DFPalette } from '../src/formats/dfPalette.js';
 
+/** PopulateRegionOffsetDict, transcribed from
+ *  DaggerfallTravelMapWindow.cs:590-648. */
+const EXPECTED_OFFSETS = {
+  'FMAPAI00.IMG': [212, 340], 'FMAPBI00.IMG': [322, 340], 'FMAPAI01.IMG': [583, 279],
+  'FMAPBI01.IMG': [680, 279], 'FMAPCI01.IMG': [583, 340], 'FMAPDI01.IMG': [680, 340],
+  'FMAP0I05.IMG': [381, 4], 'FMAP0I09.IMG': [525, 114], 'FMAP0I11.IMG': [437, 340],
+  'FMAPAI16.IMG': [578, 0], 'FMAPBI16.IMG': [680, 0], 'FMAPCI16.IMG': [578, 52],
+  'FMAPDI16.IMG': [680, 52], 'FMAP0I17.IMG': [39, 106], 'FMAP0I18.IMG': [20, 29],
+  'FMAP0I19.IMG': [80, 123], 'FMAP0I20.IMG': [217, 293], 'FMAP0I21.IMG': [263, 79],
+  'FMAP0I22.IMG': [548, 219], 'FMAP0I23.IMG': [680, 146], 'FMAP0I26.IMG': [680, 80],
+  'FMAP0I32.IMG': [41, 0], 'FMAP0I33.IMG': [660, 101], 'FMAP0I34.IMG': [578, 40],
+  'FMAP0I35.IMG': [525, 3], 'FMAP0I36.IMG': [440, 40], 'FMAP0I37.IMG': [448, 0],
+  'FMAP0I38.IMG': [366, 0], 'FMAP0I39.IMG': [300, 8], 'FMAP0I40.IMG': [202, 0],
+  'FMAP0I41.IMG': [223, 6], 'FMAP0I42.IMG': [148, 76], 'FMAP0I43.IMG': [15, 340],
+  'FMAP0I44.IMG': [61, 340], 'FMAP0I45.IMG': [86, 338], 'FMAP0I46.IMG': [132, 340],
+  'FMAP0I47.IMG': [344, 309], 'FMAP0I48.IMG': [381, 251], 'FMAP0I49.IMG': [553, 255],
+  'FMAP0I50.IMG': [661, 217], 'FMAP0I51.IMG': [672, 275], 'FMAP0I52.IMG': [680, 256],
+  'FMAP0I53.IMG': [680, 340], 'FMAP0I54.IMG': [491, 340], 'FMAP0I55.IMG': [293, 340],
+  'FMAP0I56.IMG': [263, 340], 'FMAP0I57.IMG': [680, 157], 'FMAP0I58.IMG': [17, 53],
+  'FMAP0I59.IMG': [0, 0], 'FMAP0I60.IMG': [107, 11], 'FMAP0I61.IMG': [255, 275],
+};
+
 const DAGGERFALL = 17;                 // FMAP0I17.IMG, origin (39,106)
 const ORIGIN = OFFSET_LOOKUP['FMAP0I17.IMG'];
 
@@ -109,6 +131,22 @@ function mountArt(over = {}) {
   return colors;
 }
 
+
+/** The list picker refuses to open without PICK00I0, so the tests
+ *  that drive it warm its module cache the way the host does. */
+let _pickerWarmed = false;
+async function warmPickerArt() {
+  if (_pickerWarmed) return;
+  const { preloadListPickerArt } = await import('../src/ui/listPicker.js');
+  const palette = new DFPalette();
+  await preloadListPickerArt({
+    renderer: { uploadTexture: () => 'tex', releaseTexture: () => {}, drawScreenQuad: () => {} },
+    palette,
+    fetchBytes: async () => new Uint8Array(64000),
+  });
+  _pickerWarmed = true;
+}
+
 /** The recording renderer the native lane uses (audit18_ui_native). */
 function recorder() {
   const quads = [];
@@ -160,6 +198,10 @@ test('U41: the layout table is DFU\'s, rect for rect', () => {
   }
   assert.deepEqual(pageless, [2, 3, 4, 6, 7, 8, 10, 12, 13, 14, 15, 24, 25, 27, 28, 29, 30, 31],
     'the wildernesses, the two generic villages and the four coast strips');
+  // PopulateRegionOffsetDict (:590-648) transcribed from the C#, row
+  // for row - these 51 pairs decide whether a page's dots land on the
+  // right map pixels, and nothing else in the port can catch a typo
+  assert.deepEqual(OFFSET_LOOKUP, EXPECTED_OFFSETS);
   assert.equal(Object.keys(OFFSET_LOOKUP).length, 51, 'DFU lists fifty-one pages');
   assert.deepEqual(OFFSET_LOOKUP['FMAP0I19.IMG'], [80, 123], 'Betony');
   assert.deepEqual(OFFSET_LOOKUP['FMAP0I59.IMG'], [0, 0], 'Glenumbra Moors correct at 0,0');
@@ -363,8 +405,9 @@ test('U41: the find box searches by edit distance, flashes, and pops the confirm
   } finally { _setTravelMapArtForTests(null); }
 });
 
-test('U41: a fuzzy find offers the picker; a nonsense find answers the not-found box', () => {
+test('U41: a fuzzy find offers the picker; a nonsense find answers the not-found box', async () => {
   restoreDiscovery(null);
+  await warmPickerArt();
   mountArt();
   try {
     const { deps } = mkWorld();
@@ -375,6 +418,15 @@ test('U41: a fuzzy find offers the picker; a nonsense find answers the not-found
     w._handleLocationFindEvent('daggerfal');
     assert.ok(w.picker, 'two matches open the list picker');
     assert.deepEqual(w.picker.items, ['Daggerfall', 'Daggerfall Chapel']);
+    // a DaggerfallPopupWindow dims NOTHING (ScreenDimColor is
+    // Color.clear), so the map is still there behind the list
+    const r = recorder();
+    w.draw(r, canvas, font());
+    const opaqueFullCanvas = r.quads.filter((q) => q.tex === null && q.w === canvas.width
+      && q.h === canvas.height && (q.color?.[3] ?? 1) >= 1);
+    assert.deepEqual(opaqueFullCanvas, [], 'the picker paints no black over the map');
+    assert.ok(r.quads.some((q) => q.tex === 'tex:TRAV0I00'), 'the province art is still drawn');
+    assert.ok(r.quads.some((q) => q.tex === 'tex:FMAP0I17'), 'and the region page under the list');
     w.handleLocationPickEvent(1, 'Daggerfall Chapel');
     assert.equal(w.picker, null);
     assert.equal(w.locationSelected, true);
@@ -736,6 +788,91 @@ test('U41: the preload asks for exactly the classic files, and a missing one clo
     }).then(() => assert.fail('a missing IMG must reject')).catch((e) => assert.match(String(e.message), /missing/));
     assert.equal(travelMapArtLoaded(), false);
   } finally { _setTravelMapArtForTests(null); }
+});
+
+test('U41: the identify buffers carry the province shape and the crosshair', () => {
+  restoreDiscovery(null);
+  // a picker bitmap with one known blob of the player's own region
+  const bmp = { width: 320, height: 200, data: new Uint8Array(320 * 200) };
+  bmp.data[100 * 320 + 40] = 128 + DAGGERFALL;
+  bmp.data[101 * 320 + 41] = 128 + 23;          // a neighbour, never lit
+  mountArt({ pickerBitmap: bmp });
+  try {
+    const { deps } = mkWorld();
+    const w = new TravelMapWindow(deps);
+    // UpdateIdentifyTextureForPlayerRegion (:811-857): the picker row
+    // y lands at buffer row (height - y - diff), diff = 200-160-12+1
+    const diff = bmp.height - REGION_H - 12 + 1;
+    const at = (x, y) => w._identifyBuf[((bmp.height - y - diff) * bmp.width) + x];
+    assert.notEqual(at(40, 100), 0, 'the province shape is filled');
+    assert.equal(at(41, 101), 0, 'and only this province');
+    assert.equal(w._identifyBuf[0], 0);
+
+    // UpdateIdentifyTextureForPosition (:875-916): a full-height
+    // column and a full-width row crossing on the player's pixel
+    w._openRegionPanel(DAGGERFALL);
+    w._updateCrosshair();
+    const col = 50 - ORIGIN[0], row = 120 - ORIGIN[1];
+    const px = (x, y) => w._identifyBuf[((REGION_H - y - 1) * REGION_W) + x];
+    assert.notEqual(px(col, 0), 0, 'the column runs the page\'s height');
+    assert.notEqual(px(col, REGION_H - 1), 0);
+    assert.notEqual(px(0, row), 0, 'the row runs its width');
+    assert.notEqual(px(col, row), 0, 'and they cross on the player');
+    assert.equal(px(col + 1, row + 1), 0, 'nothing else is lit');
+  } finally { _setTravelMapArtForTests(null); }
+});
+
+test('U41: a location can still be hovered and picked while ZOOMED', () => {
+  restoreDiscovery(null);
+  mountArt();
+  try {
+    const { deps } = mkWorld();
+    const w = new TravelMapWindow(deps);
+    w._openRegionPanel(DAGGERFALL);
+    w.click(160, 92, true);
+    assert.deepEqual(w.zoomOffset, [80, 40]);
+    // GetCoordinates' zoom arm (:1148-1172), inverted: the city at map
+    // pixel (50,120) sits at panel (11,14), which the 2x crop centred
+    // at [80,40] puts off-page - so zoom somewhere that contains it
+    w.click(30, 40, true); w.click(30, 40, true);   // re-zoom near the top-left
+    assert.deepEqual(w.zoomOffset, [0, 80]);
+    // page x = (mapX - originX - offsetX) * 2, and the zoom arm's own
+    // y algebra reduces to (mapY - originY - (160 - offsetY - 80)) * 2
+    const vx = (50 - ORIGIN[0] - 0) * 2;
+    const vy = 12 + (120 - ORIGIN[1] - (REGION_H - 80 - 80)) * 2;
+    w.hover(vx, vy);
+    assert.equal(w.locationSelected, true, 'the zoomed transform still finds the city');
+    assert.equal(w.regionLabelText(), 'Daggerfall : Daggerfall');
+    w.click(vx, vy);
+    assert.ok(w.popUp, 'and clicking it opens the popup');
+  } finally { _setTravelMapArtForTests(null); }
+});
+
+test('U41: a POISONED traveller is warned through the window\'s own popup', () => {
+  restoreDiscovery(null);
+  mountArt();
+  try {
+    const { deps } = mkWorld({ deps: { diseaseCount: () => 0, poisonCount: () => 3 } });
+    const w = new TravelMapWindow(deps);
+    w._openRegionPanel(DAGGERFALL);
+    w.locationSelected = true;
+    w.locationSummary = locationSummaryAt(deps.mapDict, 50, 120);
+    w._createPopUpWindow();
+    w.popUp.input('KeyB');
+    assert.equal(w.popUp.top, 'diseased', 'the window forwards poisonCount to the popup');
+    assert.equal(w.popUp.doFastTravel, false);
+  } finally { _setTravelMapArtForTests(null); }
+});
+
+test('U41: a right-click on the map is the map\'s, never a swing', () => {
+  // the travel map makes RMB a routine gesture (its zoom), so the two
+  // exterior hosts need the dungeon host's gate (dungeon.js:184)
+  for (const host of ['world', 'exterior']) {
+    const src = readFileSync(new URL(`../src/scenes/${host}.js`, import.meta.url), 'utf8');
+    const line = src.split('\n').find((l) => l.includes("addEventListener('mousedown'") && l.includes('e.button === 2'));
+    assert.ok(line, `${host} binds RMB`);
+    assert.ok(line.includes('!townTalk.overlayActive'), `${host}'s RMB swing is gated on the overlay`);
+  }
 });
 
 test('U41: the source carries the laws it claims', () => {

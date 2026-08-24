@@ -247,9 +247,9 @@ combat line numbers below are refreshed with it.
 - `src/scenes/exterior.js:495` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:629` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/exterior.js:748` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:963` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:1106` - FLAGGED here exactly as in world.js - no tile lookup yet).
-- `src/scenes/exterior.js:1438` - ground (FLAGGED with world.js's same gap), so Detect Treasure
+- `src/scenes/exterior.js:969` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:1112` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:1444` - ground (FLAGGED with world.js's same gap), so Detect Treasure
 - `src/scenes/shared.js:179` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:196` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:291` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
@@ -261,14 +261,14 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:1053` - stay the E1 FLAGGED seams no host computes.
 - `src/scenes/world.js:1195` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
 - `src/scenes/world.js:1449` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:1718` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:1883` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
-- `src/scenes/world.js:1960` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:2193` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:2212` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:2526` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:2830` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/world.js:2903` - (FLAGGED: exterior corpse containers are the loot arc's), so
+- `src/scenes/world.js:1724` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:1889` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
+- `src/scenes/world.js:1966` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:2199` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:2218` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:2532` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:2836` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:2909` - (FLAGGED: exterior corpse containers are the loot arc's), so
 - `src/scenes/worldModes.js:237` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:282` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:430` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
@@ -392,9 +392,9 @@ combat line numbers below are refreshed with it.
 - `src/ui/tavernWindow.js:40` - FLAGGED, with the slices they wait on:
 - `src/ui/travelMapWindow.js:10` - this window since the F-slice - the Ledger row called it INTERIM
 - `src/ui/travelMapWindow.js:75` - FLAGGED, idling loudly: the journal's click-through travel
-- `src/ui/travelMapWindow.js:810` - *  arm is FLAGGED). */
-- `src/ui/travelPopUp.js:51` - FLAGGED, each idling loudly: the HUD smash-to-black/fade
-- `src/ui/travelPopUp.js:154` - this.travelTimeTotalMins = t.minutes;   // GuildManager.FastTravel (:284) FLAGGED
+- `src/ui/travelMapWindow.js:817` - *  arm is FLAGGED). */
+- `src/ui/travelPopUp.js:52` - FLAGGED, each idling loudly: the HUD smash-to-black/fade
+- `src/ui/travelPopUp.js:155` - this.travelTimeTotalMins = t.minutes;   // GuildManager.FastTravel (:284) FLAGGED
 
 ## Audits
 
