@@ -144,6 +144,14 @@ const ENEMY_GROUP_BIT = Object.freeze({
   // 37 FleshAtronach, 38 IceAtronach: no group bit.
 });
 
+/** FormulaHelper.GetEnemyEntityEnemyGroup as a plain lookup - the
+ *  group BIT for a mobile id, or NEARBY.None for a class enemy and
+ *  the four atronachs. X8's Pacify family reads this rather than
+ *  re-transcribing the career switch: DFU's PacifyEffect matches on
+ *  exactly this enum (PacifyEffect.cs:131-132), so the two must not
+ *  be allowed to drift apart. */
+export const enemyGroupOf = (mobileType) => ENEMY_GROUP_BIT[mobileType] ?? NEARBY.None;
+
 /** GetEntityFlags (:779-819).
  *  rec = { mobileType, civilian?, effectCount? }.
  *  A CIVILIAN takes Humanoid alone - never Enemy, and never a group

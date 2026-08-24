@@ -86,6 +86,14 @@ export function createPlayerMagic({
   function applySpellToFoe(spell, casterLevel, foe, caster = null, ctx = undefined) {
     const r = applySpell(spell, casterLevel, foe.entity, foeSinks(foe), rolls, caster, ctx);
     if (r.trapAlert) say(SOUL_TRAP_TEXT[r.trapAlert]);
+    // X8: PACIFY / CHARM. The effect answers whether the target was
+    // pacified; the AI flag lives on the foe RECORD rather than the
+    // entity, so this door - the one place that holds both - is where
+    // it lands. Permanent by design: nothing expires it, and the
+    // damage doors restore hostility when the player attacks
+    // (MakeEnemyHostileToAttacker), which is classic's own
+    // "until player attacks them".
+    if (r.pacify && foe.ai) foe.ai.isHostile = false;
     return r;
   }
 
