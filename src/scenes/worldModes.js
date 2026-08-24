@@ -129,6 +129,7 @@ import { GUILD_GROUPS } from '../formats/factionFile.js';
 import { SpellMakerWindow } from '../ui/spellMakerWindow.js';   // S1: the Mages Guild / Kynareth spell maker
 // M2: the potion maker - the other half of the guild's magic economy.
 import { PotionMakerWindow, preloadPotionArt, potionArtLoaded } from '../ui/potionMakerWindow.js';
+import { ItemMakerWindow, preloadItemMakerArt, itemMakerArtLoaded, ITEM_RECTS, rowLayout as itemMakerRowLayout } from '../ui/itemMakerWindow.js';
 import { createPotion } from '../systems/loot.js';   // M2: ItemBuilder.CreatePotion, one minter
 import { SITE_TYPES } from '../systems/quest/place.js';
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring, finally called
@@ -268,6 +269,7 @@ export function createWorldModes(host) {
     preloadTavernArt({ renderer, fetchBytes, palette });   // U39: TVRN00I0 for the innkeeper's panel
     preloadBankArt({ renderer, fetchBytes, palette });   // B2: BANK00I0 for the teller's screen
     preloadPotionArt({ renderer, fetchBytes, palette });   // M2: MASK00I0 for the cauldron
+    preloadItemMakerArt({ renderer, fetchBytes, palette });   // M4: ITEM00I0 + the gold tab strip
   };
 
   // ---- Q4-v: THE QUEST LAYER'S INTERIOR MOUNT -----------------------
@@ -1185,6 +1187,21 @@ export function createWorldModes(host) {
         onClose: () => { if (interiorOverlay === potionWin) interiorOverlay = null; },
       });
       interiorOverlay = potionWin;
+      return null;
+    }
+    // M4: the item maker. The Mages Guild's own enchanter, and the
+    // destination has been a FLAGGED null since G3.
+    if (destination === 'guildServiceItemMaker' && itemMakerArtLoaded() && _shopFont) {
+      let itemWin = null;
+      itemWin = new ItemMakerWindow({
+        packItems: () => (playerEntity.items ??= []),
+        player: playerEntity,
+        icons: { getTexture, uploadRecord, textures: renderer.textures },
+        entity: playerEntity,
+        onEnchanted: () => surfacePlayer(),
+        onClose: () => { if (interiorOverlay === itemWin) interiorOverlay = null; },
+      });
+      interiorOverlay = itemWin;
       return null;
     }
     if (destination === 'guildServiceSpellMaker') {
@@ -2277,6 +2294,68 @@ export function createWorldModes(host) {
       if (!sh?.items?.length) return null;
       sh.items.pop();
       return sh.items.length;
+    };
+    // M4: the item maker, opened through the REAL guild-service
+    // dispatcher rather than a private shortcut - the destination
+    // string is the seam that was a FLAGGED null until this slice,
+    // and a probe that bypassed it would prove nothing about it.
+    window.__openItemMaker = () => {
+      const dict = townTalk?.factionDict ?? null;
+      const guild = createGuildForGroup(GUILD_GROUPS.MagesGuild, 0, dict);
+      const memberships = (playerEntity.guildMemberships ??= {});
+      openServiceFlow('guildServiceItemMaker', { guild, memberships, store: null, rows: null, route: null });
+      return window.__itemMakerOverlay();
+    };
+    window.__itemMakerOverlay = () => JSON.stringify(interiorOverlay instanceof ItemMakerWindow ? {
+      itemMaker: true,
+      done: interiorOverlay.done,
+      tab: interiorOverlay.tab,
+      listed: interiorOverlay.items().map((it) => it.name),
+      selected: interiorOverlay.selected?.name ?? null,
+      labels: interiorOverlay.labels(),
+      powers: interiorOverlay.powers.map((e) => ({ type: e.type, param: e.param, cost: e.enchantCost, parent: e.parentEnchantment })),
+      sideEffects: interiorOverlay.sideEffects.map((e) => ({ type: e.type, param: e.param, cost: e.enchantCost, parent: e.parentEnchantment })),
+      picker: interiorOverlay.picker ? interiorOverlay.picker.items : null,
+      box: interiorOverlay.box ? interiorOverlay.box.rows?.map((r) => r.text ?? r) : null,
+    } : null);
+    window.__itemMakerClick = (key) => {
+      const [x, y, w, h] = ITEM_RECTS[key];
+      return interiorOverlay?.click?.(x + w / 2, y + h / 2) ?? false;
+    };
+    /** Click a row of whichever list picker is up, by its LABEL - so a
+     *  probe names the enchantment it wants rather than an index that
+     *  the alpha sort would silently move. */
+    /** Click item SLOT i of the scroller, at the middle of that
+     *  slot's own cell - the rect centre lands on slot 1, which is a
+     *  fine way to prove nothing. */
+    window.__itemMakerSlot = (i) => {
+      const [x, y] = ITEM_RECTS.itemList;
+      interiorOverlay?.click?.(x + 9 + 20, y + i * 38 + 19);
+      return window.__itemMakerOverlay();
+    };
+    /** Click a ROW of one of the two enchantment lists, by its key -
+     *  through the window's own click(), at the rect rowLayout puts
+     *  that row at, so the probe exercises the real hit test. */
+    window.__itemMakerRemoveRow = (which, key) => {
+      const w = interiorOverlay;
+      if (!(w instanceof ItemMakerWindow)) return null;
+      const rect = which === 'powers' ? ITEM_RECTS.powersList : ITEM_RECTS.sideEffectsList;
+      const row = itemMakerRowLayout(which === 'powers' ? w.powers : w.sideEffects)
+        .find((r) => r.entry.key === key);
+      if (!row) return null;
+      w.click(rect[0] + 2, rect[1] + row.y + 1);
+      return window.__itemMakerOverlay();
+    };
+    window.__itemMakerPick = (label) => {
+      const p = interiorOverlay?.picker;
+      const i = p?.items?.indexOf(label) ?? -1;
+      if (i < 0) return null;
+      p._pick(i);
+      // the CURRENT picker, not the one just used: picking a primary
+      // effect opens a SECOND picker from inside onPick, and testing
+      // the old one (which is now done) would close the new one.
+      if (interiorOverlay.picker?.done) interiorOverlay.picker = null;
+      return window.__itemMakerOverlay();
     };
     window.__openBank = () => { openBank(); return window.__bankOverlay(); };
     window.__bankOverlay = () => JSON.stringify(interiorOverlay instanceof BankWindow ? {

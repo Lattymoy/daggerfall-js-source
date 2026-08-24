@@ -248,7 +248,7 @@ export const SERVICE_DESTINATION = Object.freeze({
   BuySpellsMages: null,    // FLAGGED: the spellbook's buy mode
   MakeSpells: 'guildServiceSpellMaker',   // S1: the keyed spell maker
   BuyMagicItems: null,     // FLAGGED: trade Buy + CreateRandomMagicItem
-  MakeMagicItems: null,    // FLAGGED: the item maker
+  MakeMagicItems: 'guildServiceItemMaker',   // M4: the keyed item maker
   SellMagicItems: null,    // FLAGGED: trade SellMagic mode
   BuySoulgems: null,       // FLAGGED: trade Buy + the soul-trap stock
   Teleport: null,          // FLAGGED: the travel map's teleport mode

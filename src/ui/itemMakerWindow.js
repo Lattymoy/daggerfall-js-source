@@ -1,0 +1,423 @@
+// M4 - THE ITEM MAKER: DaggerfallItemMakerWindow (MIT, Daggerfall
+// Workshop / Hazelnut, Gavin Clayton) on real ARENA2 art, over M3's
+// arithmetic and the M4 catalogue's tables.
+//
+// THE NATIVE-WINDOW RULE, element by element:
+// - the panel is ITEM00I0.IMG, which ships a FULL 320x200 - a
+//   whole-screen background like the potion maker's, so every rect
+//   here is screen-absolute and there is no centring to compute.
+//   It is read with alternateAlphaIndex 12 (:110), the same cut the
+//   inventory sheets take.
+// - FOUR TAB BUTTONS down the right at x175, 81x9 each, on a 9-pixel
+//   stride from y6 (:29-32). Their SELECTED state is a subrect of
+//   ITEM01I0.IMG - an 81x36 strip that is four 81x9 gold tabs stacked
+//   in the tab order (:290-294), so the selected tab is drawn from
+//   row index * 9.
+// - TWO ENCHANTMENT LISTS: powers (10,58,75,120) and side effects
+//   (108,58,75,120), with the buttons that fill them directly under
+//   at (8,183,77,10) and (106,183,77,10).
+// - the ENCHANT button (200,115,43,15), the selected-item well
+//   (196,68,50,37) and the exit (202,176,39,22).
+// - the item scroller (253,49,60,148), and a rename strip across the
+//   top (4,2,157,7).
+// - FOUR LABELS (:296-302): the item name at (52,3), the player's
+//   gold at (71,15), the gold cost at (64,27) and the "used/available"
+//   enchantment cost at (98,39).
+//
+// A LIST ROW is EnchantmentListPicker.EnchantmentPanel: 75 wide (71
+// once the list scrolls), and SEVEN tall with no secondary name or
+// TWELVE with one - the primary name at y2 and the secondary indented
+// two spaces at y8. Rows stack from y2 on a five-pixel gap. A FORCED
+// row - one a bound soul dragged in - is drawn in DFU's own
+// DaggerfallForcedEnchantmentTextColor (186,207,125) rather than the
+// default, which is the only way the window tells you that a row is
+// not yours to have chosen.
+//
+// The laws are systems/enchanting.js's and systems/enchantmentCatalogue.js's
+// - every refusal, both sums, the exclusions, the picker filters and
+// the forced sets. This file is the panel, the hit rects and the box.
+//
+// DEPARTURE: the item list rides the port's SHARED item scroller
+// (ui/itemScroller.js), whose cells are 9 across on a 38-pixel stride
+// where this window's own itemListPanelRect is 10 on a 37 - so icons
+// sit one pixel left and rows one pixel taller than DFU's. One
+// scroller, corrected once, is worth the pixel (Ledger A).
+//
+// FLAGGED: DFU opens a DaggerfallInputMessageBox from the rename
+// strip and an icon picker from the selected-item well; the rename
+// rides the port's own inline field here, and the icon picker waits
+// on the item-icon variant seam.
+
+import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
+import { drawScreenDimBackdrop } from './chargenArt.js';
+import { layoutMessageBox, drawMessageBox } from './messageBox.js';
+import { ListPickerWindow, listPickerArtLoaded } from './listPicker.js';
+import {
+  makeIconDrawer, drawStackLabel, scrollerHit, applyScroll, safeScrollIndex,
+  LIST_SLOTS, CELL_X,
+} from './itemScroller.js';
+import { typedChar } from './input.js';
+import { audio } from '../systems/audio.js';
+import { SOUND } from '../systems/soundClips.js';
+import {
+  enchantDecision, applyEnchantments, enchantmentCostLabel, totalGoldCost,
+  totalEnchantmentCost, itemEnchantmentPower, openPickerDecision,
+} from '../systems/enchanting.js';
+import {
+  enchantmentName, enchantmentParams, primaryPickerList, primaryPick,
+  pickEnchantment, removeEnchantment, PARAM_NONE,
+} from '../systems/enchantmentCatalogue.js';
+import { deductGold, goldAmount } from '../systems/court.js';
+
+/** DaggerfallInventoryWindow.TabPages, in the order the four buttons
+ *  sit in (:29-32). */
+export const TAB_PAGES = Object.freeze(['WeaponsAndArmor', 'MagicItems', 'ClothingAndMisc', 'Ingredients']);
+
+/** ITEM00I0 is a full-screen background (:107), so these are
+ *  screen-absolute. */
+export const ITEM_RECTS = Object.freeze({
+  weaponsAndArmor: [175, 6, 81, 9],
+  magicItems: [175, 15, 81, 9],
+  clothingAndMisc: [175, 24, 81, 9],
+  ingredients: [175, 33, 81, 9],
+  powersButton: [8, 183, 77, 10],
+  sideEffectsButton: [106, 183, 77, 10],
+  exit: [202, 176, 39, 22],
+  enchant: [200, 115, 43, 15],
+  selectedItem: [196, 68, 50, 37],
+  nameItem: [4, 2, 157, 7],
+  powersList: [10, 58, 75, 120],
+  sideEffectsList: [108, 58, 75, 120],
+  itemList: [253, 49, 60, 148],
+});
+/** The four live labels (:296-302). */
+export const ITEM_LABELS = Object.freeze({
+  itemName: [52, 3], availableGold: [71, 15], goldCost: [64, 27], enchantmentCost: [98, 39],
+});
+
+/** EnchantmentPanel's own metrics (:299-305, :22-26). */
+export const ROW_W = 75, ROW_W_SCROLLED = 71;
+export const ROW_H_PLAIN = 7, ROW_H_SECONDARY = 12;
+export const ROW_GAP = 5, ROW_START_Y = 2, ROWS_VISIBLE = 7;
+export const SECONDARY_INDENT = '  ';
+/** DaggerfallUI.DaggerfallForcedEnchantmentTextColor (:64). */
+export const FORCED_TEXT_COLOR = [186 / 255, 207 / 255, 125 / 255, 1];
+
+/** AddFilteredItem (:415-443). An item already selected, an already
+ *  ENCHANTED item and a potion are out of every tab; then the tab
+ *  decides. MagicItems lists NOTHING - DFU disabled it because
+ *  classic lists nothing there either, and the empty tab is kept
+ *  (Ledger B). */
+export function itemMakerFilter(item, tabPage, selected = null) {
+  if (!item || item === selected) return false;
+  if (item.enchantments?.length || item.group === 'UselessItems2') return false;
+  if (item.potionRecipe !== undefined && item.potionRecipe !== null) return false;
+  const isWeaponOrArmor = (item.group === 'Weapons' || item.group === 'Armor')
+    && !(item.group === 'Weapons' && item.name === 'Arrow');
+  switch (tabPage) {
+    case 'WeaponsAndArmor': return isWeaponOrArmor;
+    case 'MagicItems': return false;
+    case 'Ingredients': return item.group === 'Gems';
+    case 'ClothingAndMisc':
+      return item.group === 'MensClothing' || item.group === 'WomensClothing'
+        || item.group === 'Jewellery';
+    default: return false;
+  }
+}
+
+let _art = null;
+let _tabs = null;
+export async function preloadItemMakerArt(deps) {
+  if (_art) return;
+  try {
+    _art = await loadImg(deps, 'ITEM00I0.IMG');
+    _tabs = await loadImg(deps, 'ITEM01I0.IMG');
+  } catch { console.warn('[itemmaker] ITEM00I0 unavailable; the item maker stays closed'); }
+}
+export const itemMakerArtLoaded = () => !!_art && !!_tabs;
+
+const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
+
+/** Where each row of a list sits and how tall it is - the layout
+ *  RefreshPanelLayout walks (:222-231). A row is twelve tall when its
+ *  effect has a parameter name to print underneath and seven when it
+ *  does not, so the stride is not uniform. */
+export function rowLayout(list) {
+  const out = [];
+  let y = ROW_START_Y;
+  for (const e of list) {
+    const h = enchantmentParams(e.type).length > 0 ? ROW_H_SECONDARY : ROW_H_PLAIN;
+    out.push({ y, h, entry: e });
+    y += h + ROW_GAP;
+  }
+  return out;
+}
+
+/**
+ * hooks:
+ *   packItems()  -> the player's items (the tabs filter them)
+ *   player       the purse seam deductGold takes
+ *   icons, entity
+ *   onClose()
+ */
+export class ItemMakerWindow {
+  constructor(hooks) {
+    this.hooks = hooks;
+    this.done = false;
+    this.isChoiceWindow = true;
+    this.tab = TAB_PAGES[0];
+    this.selected = null;
+    this.powers = [];
+    this.sideEffects = [];
+    this.selectingPowers = true;
+    this.scroll = 0;
+    this.itemName = '';
+    this.renaming = false;
+    this.box = null;
+    this.picker = null;
+    this._pickerType = null;
+    this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);
+  }
+
+  _close() { this.done = true; this.hooks.onClose?.(); }
+  _say(text) { this.box = { rows: [{ text, center: true }] }; }
+
+  items() {
+    return (this.hooks.packItems?.() ?? []).filter((it) => itemMakerFilter(it, this.tab, this.selected));
+  }
+
+  gold() { return goldAmount(this.hooks.player ?? this.hooks.entity ?? {}); }
+
+  _selectTab(tab) {
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    this.tab = tab;
+    this.scroll = 0;
+  }
+
+  /** SelectedItemButton_OnMouseClick (:605-611) - deselecting an item
+   *  DISCARDS both lists. The work is not kept against the next one. */
+  _deselect() {
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    this.selected = null;
+    this.powers = [];
+    this.sideEffects = [];
+    this.itemName = '';
+  }
+
+  _selectItem(item) {
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    this.selected = item;
+    this.powers = [];
+    this.sideEffects = [];
+    this.itemName = item?.name ?? '';
+  }
+
+  /** PowersButton / SideEffectsButton (:614-656) - the guard, then
+   *  the primary list. An EMPTY list still opens the picker in DFU;
+   *  it just has nothing in it. */
+  _openPicker(selectingPowers) {
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    const d = openPickerDecision(selectingPowers, {
+      item: this.selected, powers: this.powers, sideEffects: this.sideEffects,
+    });
+    if (d.kind === 'refuse') { this._say(d.text); return; }
+    this.selectingPowers = selectingPowers;
+    const types = primaryPickerList(selectingPowers, {
+      item: this.selected, powers: this.powers, sideEffects: this.sideEffects,
+    });
+    this._pickerType = null;
+    this.picker = new ListPickerWindow({
+      items: types.map(enchantmentName),
+      onPick: (i) => { this.picker = null; this._pickPrimary(types[i]); },
+      onCancel: () => { this.picker = null; },
+    });
+  }
+
+  /** EnchantmentPrimaryPicker_OnUseSelectedItem (:820-866). */
+  _pickPrimary(type) {
+    const pick = primaryPick(type, {
+      powers: this.powers, sideEffects: this.sideEffects, selectingPowers: this.selectingPowers,
+    });
+    if (!pick) return;
+    if (pick.kind === 'add') { this._add(pick.settings); return; }
+    this._pickerType = type;
+    const options = pick.options;
+    this.picker = new ListPickerWindow({
+      items: options.map((o) => o.label),
+      onPick: (i) => { this.picker = null; this._pickSecondary(type, options[i].param); },
+      onCancel: () => { this.picker = null; },
+    });
+  }
+
+  /** EnchantmentSecondaryPicker_OnUseSelectedItem (:869-906) - where
+   *  a bound soul's forced children arrive, and the only place the
+   *  window can refuse for room. */
+  _pickSecondary(type, param) {
+    const result = pickEnchantment(type, param, { powers: this.powers, sideEffects: this.sideEffects });
+    if (!result) return;
+    if (result.kind === 'noRoom') { this._say(result.text); return; }
+    this._add(result.settings);
+    this.powers.push(...result.powers);
+    this.sideEffects.push(...result.sideEffects);
+  }
+
+  _add(settings) {
+    if (!settings) return;
+    (this.selectingPowers ? this.powers : this.sideEffects).push(settings);
+  }
+
+  /** EnchantmentList_OnRemoveItem (:914-918) - removing a row takes
+   *  its forced children out of BOTH lists with it. */
+  _removeRow(entry) {
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    this.powers = removeEnchantment(this.powers, entry.key);
+    this.sideEffects = removeEnchantment(this.sideEffects, entry.key);
+  }
+
+  /** EnchantButton_OnMouseClick (:705-770). */
+  _enchant() {
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    const d = enchantDecision(this.selected, this.powers, this.sideEffects, { gold: this.gold() });
+    if (d.kind !== 'enchant') { this._say(d.text); return; }
+    // DeductGoldAmount, which spends letters of credit as well as the
+    // purse - the one deduction seam (court.js).
+    deductGold(this.hooks.player ?? this.hooks.entity, d.goldCost);
+    applyEnchantments(this.selected, [...this.powers, ...this.sideEffects]);
+    if (this.itemName) this.selected.name = this.itemName;
+    audio.playOneShot(SOUND.MakeItem, 1);
+    this._say(d.text);
+    this.selected = null;
+    this.powers = [];
+    this.sideEffects = [];
+    this.itemName = '';
+    this.hooks.onEnchanted?.();
+  }
+
+  labels() {
+    if (!this.selected) {
+      return { itemName: '', availableGold: String(this.gold()), goldCost: '', enchantmentCost: '' };
+    }
+    return {
+      itemName: this.itemName,
+      availableGold: String(this.gold()),
+      goldCost: String(totalGoldCost(this.powers)),
+      enchantmentCost: enchantmentCostLabel(
+        totalEnchantmentCost(this.powers, this.sideEffects), itemEnchantmentPower(this.selected)),
+    };
+  }
+
+  input(code, e = null) {
+    if (this.picker) { this.picker.input(code); if (this.picker?.done) this.picker = null; return; }
+    if (this.box) { this.box = null; return; }
+    if (this.renaming) {
+      if (code === 'Enter' || code === 'Escape') { this.renaming = false; return; }
+      if (code === 'backspace' || code === 'Backspace') { this.itemName = this.itemName.slice(0, -1); return; }
+      const ch = typedChar(code, e);
+      if (ch && this.itemName.length < 26) this.itemName += ch;
+      return;
+    }
+    if (code === 'Escape' || code === 'KeyE') this._close();
+  }
+
+  click(vx, vy) {
+    if (this.picker) { this.picker.click(vx, vy, this._font); if (this.picker?.done) this.picker = null; return true; }
+    if (this.box) { this.box = null; return true; }
+    if (this.renaming) { this.renaming = false; return true; }
+
+    if (inRect(ITEM_RECTS.exit, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return true; }
+    for (let i = 0; i < TAB_PAGES.length; i++) {
+      const key = ['weaponsAndArmor', 'magicItems', 'clothingAndMisc', 'ingredients'][i];
+      if (inRect(ITEM_RECTS[key], vx, vy)) { this._selectTab(TAB_PAGES[i]); return true; }
+    }
+    if (inRect(ITEM_RECTS.powersButton, vx, vy)) { this._openPicker(true); return true; }
+    if (inRect(ITEM_RECTS.sideEffectsButton, vx, vy)) { this._openPicker(false); return true; }
+    if (inRect(ITEM_RECTS.enchant, vx, vy)) { this._enchant(); return true; }
+    if (inRect(ITEM_RECTS.selectedItem, vx, vy)) { if (this.selected) this._deselect(); return true; }
+    if (inRect(ITEM_RECTS.nameItem, vx, vy)) { if (this.selected) this.renaming = true; return true; }
+
+    for (const [rect, list] of [[ITEM_RECTS.powersList, this.powers],
+      [ITEM_RECTS.sideEffectsList, this.sideEffects]]) {
+      if (!inRect(rect, vx, vy)) continue;
+      const hit = rowLayout(list).find((r) => vy >= rect[1] + r.y && vy < rect[1] + r.y + r.h);
+      if (hit) this._removeRow(hit.entry);
+      return true;
+    }
+
+    const list = this.items();
+    const hit = scrollerHit(ITEM_RECTS.itemList, vx, vy);
+    if (hit) {
+      if (hit.kind === 'slot') {
+        const item = list[safeScrollIndex(this.scroll, list.length) + hit.slot];
+        if (item) this._selectItem(item);
+      } else this.scroll = applyScroll(this.scroll, hit.kind, list.length);
+      return true;
+    }
+    return true;   // the background is the whole screen
+  }
+
+  draw(renderer, canvas, font) {
+    if (!_art) { this._close(); return; }
+    this._font = font;
+    const m = nativeMetrics(canvas);
+    drawScreenDimBackdrop(renderer, canvas);
+    drawImg(renderer, _art, m, 0, 0);
+
+    // the SELECTED tab is a row of the 81x36 gold strip, drawn back
+    // over the base at the tab's own rect (:290-294)
+    const tabIndex = TAB_PAGES.indexOf(this.tab);
+    if (tabIndex >= 0 && _tabs) {
+      const [tx, ty, tw, th] = ITEM_RECTS[['weaponsAndArmor', 'magicItems', 'clothingAndMisc', 'ingredients'][tabIndex]];
+      renderer.drawScreenQuad(_tabs.tex,
+        { x: m.ox + tx * m.s, y: m.oy + ty * m.s, w: tw * m.s, h: th * m.s },
+        { u0: 0, v0: (tabIndex * 9) / _tabs.h, u1: 1, v1: (tabIndex * 9 + 9) / _tabs.h });
+    }
+
+    const L = this.labels();
+    for (const [key, [x, y]] of Object.entries(ITEM_LABELS)) {
+      shadowText(renderer, font, L[key] + (key === 'itemName' && this.renaming ? '_' : ''), m, x, y);
+    }
+
+    // the two enchantment lists
+    for (const [rect, list] of [[ITEM_RECTS.powersList, this.powers],
+      [ITEM_RECTS.sideEffectsList, this.sideEffects]]) {
+      const scrolled = list.length > ROWS_VISIBLE;
+      for (const row of rowLayout(list)) {
+        if (row.y + row.h > rect[3]) break;
+        // a FORCED row is the one thing this window colours
+        // differently - it is how you can tell a row you did not pick
+        const opts = row.entry.parentEnchantment !== 0 ? { color: FORCED_TEXT_COLOR } : undefined;
+        shadowText(renderer, font, enchantmentName(row.entry.type), m, rect[0], rect[1] + row.y + 2, opts);
+        const names = enchantmentParams(row.entry.type);
+        if (names.length > 0 && row.entry.param !== PARAM_NONE) {
+          shadowText(renderer, font, SECONDARY_INDENT + (names[row.entry.param] ?? ''),
+            m, rect[0], rect[1] + row.y + 8, opts);
+        }
+        void scrolled;
+      }
+    }
+
+    // the item list, through the shared scroller
+    const items = this.items();
+    const start = safeScrollIndex(this.scroll, items.length);
+    for (let i = 0; i < LIST_SLOTS; i++) {
+      const it = items[start + i];
+      if (!it) continue;
+      this._icon(renderer, m, it, ITEM_RECTS.itemList, i);
+      drawStackLabel(renderer, font, m, it, ITEM_RECTS.itemList, i);
+    }
+    // ...and the WELL, which shows the item being worked on. The
+    // shared drawer places an icon by (rect, slot), and the well is
+    // one 50x37 cell - close enough to the scroller's 50x38 that slot
+    // 0 of a rect shifted back by CELL_X lands it right.
+    if (this.selected) {
+      const [sx, sy] = ITEM_RECTS.selectedItem;
+      this._icon(renderer, m, this.selected, [sx - CELL_X, sy], 0);
+    }
+
+    if (this.picker && listPickerArtLoaded()) { this.picker.draw(renderer, canvas, font); return; }
+    if (this.box) {
+      this._boxLayout = layoutMessageBox(font, this.box.rows, []);
+      drawMessageBox(renderer, m, font, this._boxLayout);
+    } else this._boxLayout = null;
+  }
+}
