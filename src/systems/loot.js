@@ -116,7 +116,8 @@ const pick = (list, rolls) => list[Math.floor(rolls() * list.length)];
 /** DaggerfallUnityItem.ItemName is the TEMPLATE's name for every
  *  plain item (only magic items and weapons carry their own).
  *  AUDIT 18: the loot factories minted bare {group, templateIndex},
- *  so the dungeon item list (ui/inventory.js) labelled a looted
+ *  so the dungeon item list (the keyed window that lived in what is
+ *  now ui/deathScreen.js) labelled a looted
  *  Yellow Flowers "PlantIngredients1". */
 const named = (item) => ({ ...item, name: item.name ?? ITEM_TEMPLATES[item.templateIndex]?.name });
 

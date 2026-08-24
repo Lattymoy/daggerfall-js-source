@@ -79,6 +79,15 @@ const ROWS = [
   [26, 255, 'Free Action', '', [D]],
   [27, 255, 'Jumping', '', [D]],
   [28, 255, 'Climbing', '', [D]],
+  // U42: MorphSelf is a REGISTRY row that the maker never offers -
+  // see the exclusions note above. It is here because
+  // SetEffectLabels reads EntityEffectBroker.GetEffectTemplate
+  // (DaggerfallSpellBookWindow.cs:641), the full registry, not the
+  // maker's catalogue: a spellbook holding a 29,255 effect printed
+  // "<effect not found>" while it was absent. `craftable: false`
+  // keeps it out of the two picker lists, which is what
+  // AllowedCraftingStations = None means (MorphSelf.cs:30).
+  [29, 255, 'Morph Self', '', [D], false],
   [30, 255, 'Water Breathing', '', [D]],
   [31, 255, 'Water Walking', '', [D]],
   [33, 0, 'Pacify', 'Animal', [C]],
@@ -144,25 +153,37 @@ export const PORTED_KEYS = new Set([
  *  subgroup, name, duration, chance, magnitude, ported }. */
 export const SPELL_MAKER_EFFECTS = Object.freeze((() => {
   const out = [];
-  const push = (type, subType, group, subgroup, supports) => out.push(Object.freeze({
+  const push = (type, subType, group, subgroup, supports, craftable = true) => out.push(Object.freeze({
     key: `${type},${subType}`, type, subType, group, subgroup,
     name: subgroup ? `${group} ${subgroup}` : group,     // DisplayName = "{GroupName} {SubGroupName}"
     duration: supports.includes(D), chance: supports.includes(C), magnitude: supports.includes(M),
     ported: PORTED_KEYS.has(`${type},${subType}`),
+    // AllowedCraftingStations != None. A false row is in the REGISTRY
+    // (so the spellbook can name the effect) and out of the maker's
+    // two picker lists.
+    craftable,
   }));
-  for (const [t, s, g, sub, sup] of ROWS) push(t, s, g, sub, sup);
+  for (const [t, s, g, sub, sup, craft] of ROWS) push(t, s, g, sub, sup, craft);
   for (const [t, g, subs, sup] of FAMILIES) subs.forEach((sub, i) => push(t, i, g, sub, sup));
   return out.sort((a, b) => (a.group === b.group ? a.subType - b.subType : a.group.localeCompare(b.group)));
 })());
 
 /** The group picker's list: de-duplicated group names, alpha-sorted
- *  (EntityEffectBroker.GetGroupNames(sortAlpha: true)). */
-export const spellMakerGroups = () => [...new Set(SPELL_MAKER_EFFECTS.map((e) => e.group))].sort();
+ *  (EntityEffectBroker.GetGroupNames(sortAlpha: true)). GetGroupNames
+ *  filters on the crafting station, so a registry-only row (MorphSelf)
+ *  is not offered. */
+export const spellMakerGroups = () =>
+  [...new Set(SPELL_MAKER_EFFECTS.filter((e) => e.craftable).map((e) => e.group))].sort();
 
 /** The subgroup picker's list for one group, sorted by SubGroupName
  *  as DFU sorts before populating. A group whose single effect has
  *  no subgroup skips the picker entirely (the window's own arm). */
 export const spellMakerSubgroups = (group) =>
-  SPELL_MAKER_EFFECTS.filter((e) => e.group === group).sort((a, b) => a.subgroup.localeCompare(b.subgroup));
+  SPELL_MAKER_EFFECTS.filter((e) => e.group === group && e.craftable)
+    .sort((a, b) => a.subgroup.localeCompare(b.subgroup));
 
+/** EntityEffectBroker.GetEffectTemplate (:641) - the whole REGISTRY,
+ *  including the rows no crafting station offers. The spellbook names
+ *  effects through this; the maker's pickers go through the two
+ *  functions above. */
 export const effectByKey = (key) => SPELL_MAKER_EFFECTS.find((e) => e.key === key) ?? null;

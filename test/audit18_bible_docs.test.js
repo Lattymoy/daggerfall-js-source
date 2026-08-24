@@ -302,15 +302,33 @@ test('AUDIT 18: Home.md does not call the port desktop-only while the touch laye
     'deleting the false rule is not enough - the ground rules must state the true one');
 });
 
-test('AUDIT 18: UI-Arc does not claim the spellbook lists real spells while the fallback lives', () => {
-  const fallbackLives = /INTERIM fallback/.test(read('src/ui/inventory.js'));
-  const uiArc = read('bible/10-UI/UI-Arc.md');
-  if (fallbackLives) {
-    assert.doesNotMatch(uiArc, /SHIPPED via Systems S6 \(the spellbook lists\n?\s*the character's real known spells\)/,
-      "UI-Arc's queue closes the starting-spell row on a claim ui/inventory.js contradicts");
-    assert.match(uiArc, /INTERIM\n?\s*fallback/,
-      'UI-Arc must name the fallback it used to paper over');
+test('AUDIT 18 / U42: the spellbook fallback is GONE, and UI-Arc says so', () => {
+  // AUDIT 18 wrote this as a LATCH: while ui/inventory.js's
+  // `knownSpells` still fell through to "every ranged damage spell in
+  // SPELLS.STD", UI-Arc was forbidden from closing the starting-spell
+  // row and required to name the fallback. U42 deleted the fallback,
+  // which turned the latch's condition permanently false - and a latch
+  // that can never fire reads as coverage while checking nothing.
+  //
+  // So it is inverted, the way U25's inventory pin was inverted at
+  // U26: the pin now asserts the fallback is gone from EVERY module
+  // that could hold it, that no host reaches for it, and that the
+  // Queue row is closed with the reason. It goes red if anyone
+  // reintroduces a "list something plausible when the book is empty"
+  // arm, which is the failure the latch was really guarding.
+  for (const f of SRC_FILES) {
+    assert.equal(/INTERIM fallback/.test(read(f)) && /knownSpells/.test(read(f)), false,
+      `${f} carries the interim known-spells fallback again`);
+    assert.equal(/export function knownSpells/.test(read(f)), false,
+      `${f} declares knownSpells again - the book is playerEntity.spells and nothing else`);
   }
+  const uiArc = read('bible/10-UI/UI-Arc.md');
+  assert.match(uiArc, /CLOSED at U42: the fallback is DELETED/,
+    'the Queue row must record WHY it closed, not merely close');
+  // ...and RefreshSpellsList really is the only source now
+  const book = read('src/ui/spellbookWindow.js');
+  assert.match(book, /this\.deps\.spells\?\.\(\)/, 'the list reads the host-supplied book');
+  assert.equal(/isDamageHealthEffect/.test(book), false, 'and never synthesises one');
 });
 
 test('AUDIT 18: exterior static NPCs are recorded as unwired while nothing calls them', () => {
@@ -349,4 +367,33 @@ test('AUDIT 21: bible/Home.md open-flags list matches the regenerator', () => {
   assert.equal(r.status, 0,
     `${r.stderr || r.stdout}\nthe checked-in open-flags list is not what the tool produces - `
     + 'run: node tools/regenOpenFlags.mjs');
+});
+
+// ---------------------------------------------------------------------------
+// U42: the two arc pages COUNT their own modules, and nothing checked the
+// number.
+//
+// UI.md said 52 while `src/ui/` held 56, and Systems.md said 37 while
+// `src/systems/` held 93 - the systems figure had been wrong by a factor of
+// two and a half since the S arc's early slices, on a page whose whole job
+// is to tell a reader how big the arc is. Both pages already carry a
+// standing gate for their PROSE (the "Not started" latch above); this is
+// the same gate for their arithmetic, and the failure message carries the
+// real number so the fix is a copy rather than a recount.
+// ---------------------------------------------------------------------------
+
+test('U42: every arc page that counts its own modules counts them right', () => {
+  const PAGES = [
+    ['bible/10-UI/UI.md', 'src/ui'],
+    ['bible/06-Systems/Systems.md', 'src/systems'],
+  ];
+  for (const [page, dir] of PAGES) {
+    const real = readdirSync(join(root, dir)).filter((f) => f.endsWith('.js')).length;
+    const doc = read(page);
+    const m = doc.match(/(\d+) modules\s*\n?\s*live under\s*\n?\s*`(src\/[a-z]+)\/`/);
+    assert.ok(m, `${page} lost its "N modules live under \`${dir}/\`" line`);
+    assert.equal(m[2], dir, `${page} counts the wrong directory`);
+    assert.equal(Number(m[1]), real,
+      `${page} says ${m[1]} modules live under ${dir}/; there are ${real}`);
+  }
 });

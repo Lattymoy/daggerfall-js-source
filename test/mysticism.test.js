@@ -213,7 +213,10 @@ test('S27: THE FOUR HOSTS - every host mounts the ONE cast engine', () => {
     assert.ok(/createPlayerMagic\(\{/.test(src), `${host} mounts the engine`);
   }
   const wm = read('src/scenes/worldModes.js');
-  assert.ok(/magic\.readySpell\(sp\)/.test(wm), 'the interior arm readies through the engine');
+  // U42: the classic spellbook hands the ready callback DFU's own
+  // noSpellPointCost flag (the lycanthropy free cast), so the call
+  // carries a second argument now - still the ONE engine.
+  assert.ok(/magic\.readySpell\(sp, \{ free:/.test(wm), 'the interior arm readies through the engine');
   assert.ok(/magic\?\.interceptAttack\(/.test(wm), 'and casts through it (I2: the attack click, not a cast key)');
   // and worldModes is still the ROUTER for the dungeon context
   assert.ok(/buildDungeonContext/.test(wm), 'worldModes mounts the dungeon context');

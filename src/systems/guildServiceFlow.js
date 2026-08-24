@@ -244,8 +244,12 @@ export const SERVICE_DESTINATION = Object.freeze({
   Repair: 'guildServiceRepair',   // R1: the keyed repair flow (FG rank discount rides it)
   BuyPotions: 'guildServiceBuyPotions',   // G4: Buy mode over the daily potion shelf
   MakePotions: 'guildServicePotionMaker',   // M2: the keyed potion maker
-  BuySpells: null,         // FLAGGED: the spellbook's buy mode
-  BuySpellsMages: null,    // FLAGGED: the spellbook's buy mode
+  // U42: BOTH arms are one destination because DFU's switch falls
+  // one case into the other (:383-387) - the temples' BuySpells and
+  // the Mages Guild's BuySpellsMages push the SAME window with the
+  // same `true`, and the only thing that differs is who may ask.
+  BuySpells: 'guildServiceSpellbook',        // U42: the spellbook's buy mode
+  BuySpellsMages: 'guildServiceSpellbook',   // U42: the spellbook's buy mode
   MakeSpells: 'guildServiceSpellMaker',   // S1: the keyed spell maker
   BuyMagicItems: 'guildServiceBuyMagicItems',   // G4: Buy mode over the daily magic shelf
   MakeMagicItems: 'guildServiceItemMaker',   // M4: the keyed item maker

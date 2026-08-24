@@ -78,16 +78,21 @@ if (which === 'dungeon') {
   }
   out.steps.boot = await magic();
   // The spellbook: Backspace opens; the M4 sort runs live (s, then y
-  // on the YesNo - the book stays open); Enter readies row 0, which
-  // alphabetically is Balyna's Balm for a Mage - CasterOnly, so the
-  // READY ITSELF casts instantly and spends (readySpell's law).
+  // on the YesNo). U42 put this on the classic window, where
+  // SortSpellsConfirm's CloseWindow() sits OUTSIDE the Yes arm - the
+  // book CLOSES on either answer - so the book is reopened before
+  // Enter readies row 0, which alphabetically is Balyna's Balm for a
+  // Mage: CasterOnly, so the READY ITSELF casts instantly and spends
+  // (readySpell's law).
   await page.keyboard.press('Backspace');
   await frames(2);
   await page.keyboard.press('s');
   await frames(1);
   await page.keyboard.press('y');
-  await frames(1);
+  await frames(2);
   out.steps.sortedBook = (await magic())?.book ?? null;
+  await page.keyboard.press('Backspace');
+  await frames(2);
   await page.keyboard.press('Enter');
   await frames(2);
   out.steps.readied = await magic();

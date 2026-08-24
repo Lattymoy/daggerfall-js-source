@@ -567,7 +567,12 @@ test('audit18: the three retired flags are DELETED, not rewritten', () => {
   // M3: the range arms live in the ONE engine (scenes/hostMagic.js).
   const engineSrc = hostSrc('hostMagic.js');
   assert.ok(/sp\.rangeType === 1/.test(engineSrc) && /sp\.rangeType === 3/.test(engineSrc), 'rangeTypes 1 and 3 really are handled');
-  assert.ok(/ready: \(sp\) =>/.test(src), 'the spellbook really does ready a spell');
+  // U42: the classic window's ready hook is DFU's own
+  // SpellsListBox_OnUseSelectedItem seam, so it carries the
+  // noSpellPointCost flag (the lycanthropy free cast) alongside the
+  // spell. The claim this pins is unchanged: the book READIES.
+  assert.ok(/onReady: \(sp, \{ noSpellPointCost \} = \{\}\) =>/.test(src),
+    'the spellbook really does ready a spell');
   // the truncated "INTERIM (loud): the" sentence with no predicate
   assert.equal(/INTERIM \(loud\): the\n/.test(src), false);
   // the WORLD-state-is-FLAGGED quicksave note, false since collectWorld shipped

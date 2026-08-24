@@ -18,7 +18,7 @@ import {
 } from '../src/systems/playerDeath.js';
 import { RACES } from '../src/systems/races.js';
 import { combatVoicesEnabled } from '../src/combat/combatVoices.js';
-import { DeathScreen } from '../src/ui/inventory.js';
+import { DeathScreen } from '../src/ui/deathScreen.js';
 import { SOUND } from '../src/systems/soundClips.js';
 import { EYE_HEIGHT, CAPSULE_HEIGHT } from '../src/player/motor.js';
 import { KEEP } from '../src/scenes/dataSource.js';

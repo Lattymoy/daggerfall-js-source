@@ -51,12 +51,12 @@ import { tallySkill, skillValue, SKILLS } from '../systems/skills.js';
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS } from './hostCombat.js';   // AUDIT 21 hosts F8: the swing law, shared with the dungeon and the guards
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { audio } from '../systems/audio.js';
-import { SpellbookWindow, knownSpells } from '../ui/inventory.js';   // M2
+import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in), and the guilds' BUY mode
 import { calculateCastCost } from '../systems/spellcost.js';   // M2
 import { SOUND, swingSoundFor } from '../systems/soundClips.js';   // AUDIT 23: the bow loose + no-enemy swing sounds
 import { fetchBytes, applyMotorEffectFlags, applyFallLanding, ridePlatform } from './shared.js';
 import { setDeathPresenter, hurtPlayer } from '../characters/playerEntity.js';   // AUDIT 21 hosts F6; AUDIT 23 C5 fatal collapse
-import { DeathScreen } from '../ui/inventory.js';   // AUDIT 21 hosts F6: dying in a building
+import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying in a building
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the HUD vanished inside buildings
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
 // E2: the shop shelf browse/buy layer (node-pure laws in shopStock.js)
@@ -278,6 +278,8 @@ export function createWorldModes(host) {
     preloadBankArt({ renderer, fetchBytes, palette });   // B2: BANK00I0 for the teller's screen
     preloadPotionArt({ renderer, fetchBytes, palette });   // M2: MASK00I0 for the cauldron
     preloadItemMakerArt({ renderer, fetchBytes, palette });   // M4: ITEM00I0 + the gold tab strip
+    preloadSpellbookArt({ renderer, fetchBytes, palette })   // U42: SPBK00I0 (cast) + SPBK01I0 (the guilds' buy mode)
+      .catch((e) => console.warn('[spellbook] classic spellbook art unavailable:', e?.message ?? e));
   };
 
   // ---- Q4-v: THE QUEST LAYER'S INTERIOR MOUNT -----------------------
@@ -1162,6 +1164,20 @@ export function createWorldModes(host) {
     interiorOverlay = win;
   }
 
+  /** U42: the CLASSIC spellbook in CAST mode - the interior host's
+   *  Backspace window, ONE construction. The player's own array is
+   *  handed by reference: the window's delete/swap/sort/rename write
+   *  into it, and the save envelope reads the same array. */
+  const makeSpellbookWindow = () => (spellbookArtLoaded()
+    ? new SpellbookWindow({
+      spells: () => (playerEntity.spells ??= []),
+      entity: playerEntity,
+      castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
+      onReady: (sp, { noSpellPointCost } = {}) => magic.readySpell(sp, { free: !!noSpellPointCost }),
+      rows: (id) => townTalk?.lines?.(id) ?? [],
+    })
+    : null);
+
   /** DoGuildService's three built arms (U24). Each returns a
    *  ServiceFlowWindow, or null for a destination that does not exist
    *  yet. `onClose` uses the same identity guard as the popup's. */
@@ -1341,6 +1357,44 @@ export function createWorldModes(host) {
       });
       interiorOverlay = itemWin;
       return null;
+    }
+    // U42: BUY SPELLS. DFU pushes the spellbook itself in BUY MODE
+    // from the service popup - one window, one `true` argument
+    // (DaggerfallGuildServicePopupWindow.cs:383-387) - which is why
+    // BuySpells (the temples' service) and BuySpellsMages (the Mages
+    // Guild's, open to non-members) share one destination. Both have
+    // been FLAGGED nulls since G3.
+    //
+    // The OFFER is every SPELLS.STD record the host loaded;
+    // LoadSpellsForSale's own two laws - drop the '!'-prefixed
+    // internal spells, sort by name - live in the window, where DFU
+    // keeps them. The price rides this building's quality, so the
+    // same spell costs more at a shabby temple.
+    if (destination === 'guildServiceSpellbook' && spellbookArtLoaded() && _shopFont) {
+      const sbi = typeof spellsByIndex === 'function' ? spellsByIndex() : spellsByIndex;
+      if (!sbi) return null;
+      let bookWin = null;
+      bookWin = new SpellbookWindow({
+        spells: () => (playerEntity.spells ??= []),
+        entity: playerEntity,
+        castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
+        offered: () => [...sbi.values()],
+        buildingQuality: () => b?.quality ?? 0,
+        shopName: () => b?.name ?? '',
+        skills: () => ({
+          mercantile: skillValue(playerEntity, SKILLS.Mercantile),
+          personality: playerEntity.stats?.personality ?? 50,
+        }),
+        classicMinutes: () => Math.floor(worldMinutes()),
+        rows,
+        onClose: () => { if (interiorOverlay === bookWin) interiorOverlay = null; },
+      }, { buyMode: true });
+      // Mount AND hand back, the repair arm's shape rather than the
+      // maker windows' `return null` - the popup's onService reads the
+      // return value, and a null makes it answer "not available yet"
+      // over a window that just opened.
+      interiorOverlay = bookWin;
+      return bookWin;
     }
     if (destination === 'guildServiceSpellMaker') {
       interiorOverlay = new SpellMakerWindow({
@@ -2693,12 +2747,9 @@ export function createWorldModes(host) {
     if (mode === 'interior' && magic) {
       if (actionOf(e) === 'CastSpell') {
         e.preventDefault();
-        const sbi = typeof spellsByIndex === 'function' ? spellsByIndex() : spellsByIndex;
-        if (!interiorOverlay && sbi) {
-          interiorOverlay = new SpellbookWindow(knownSpells(playerEntity, sbi), playerEntity, {
-            ready: (sp) => magic.readySpell(sp),
-            castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
-          });
+        if (!interiorOverlay) {
+          const w = makeSpellbookWindow();
+          if (w) interiorOverlay = w;
         }
         return;
       }

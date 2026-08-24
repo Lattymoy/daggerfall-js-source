@@ -30,8 +30,9 @@ import { createPlayerMagic } from './hostMagic.js';   // M2: spellcasting above 
 import { setDefaultEnchantCtx } from '../systems/enchantments.js';   // E2: the host's enchantCtx mount
 import { applySpell } from '../systems/effects.js';   // E2: CastWhenStrikes' target arm
 import { ChoiceWindow } from '../ui/talkWindow.js';   // TP-slice: the anchor/teleport prompt
-import { SpellbookWindow, knownSpells } from '../ui/inventory.js';   // M2
+import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in)
 import { calculateCastCost } from '../systems/spellcost.js';   // M2   // T3b
+import { rangedDamageSpells } from '../systems/spellcast.js';   // U42: the flight probe's picker
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C2): the ONE clock
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice } from './hostCombat.js';
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 46): the arrow owes the flash too   // AUDIT 23 (C14)
@@ -64,7 +65,7 @@ import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
 import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet (LevelUpScreen: AUDIT 21 hosts F3)
 import { charSheetHooks } from '../ui/charSheetNav.js';   // U32: the sheet's four navigation buttons
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
-import { DeathScreen } from '../ui/inventory.js';   // AUDIT 21 hosts F6: dying above ground
+import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
 import { NativeInventoryWindow, preloadInventoryArt, inventoryArtLoaded } from '../ui/nativeInventory.js';   // U8d: the native inventory
@@ -716,6 +717,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   preloadMessageBoxArt({ renderer, fetchBytes, palette });   // U11: SPOP/BUTTONS warm at boot
   preloadTravelMapArt({ renderer, fetchBytes, palette })   // W1: TRAV0I00/01/03/04 + the FMAP palette warm at boot
     .catch((e) => console.warn('[travelmap] classic travel map art unavailable:', e?.message ?? e));
+  preloadSpellbookArt({ renderer, fetchBytes, palette })   // U42: SPBK00I0/01I0 + the ICON/MASK sheets warm at boot
+    .catch((e) => console.warn('[spellbook] classic spellbook art unavailable:', e?.message ?? e));
   preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/BODY/FACE + the item-record pipeline (town context; Breton male 0 is the PRE-chargen default, reloaded on the chosen identity)
   // S3d: the INTERIM dagger seed is the FALLBACK only - a character
   // who runs chargen gets AssignStartingGear's real kit instead, so
@@ -1158,18 +1161,35 @@ export async function bootWorld(canvas, renderer, params, status) {
     entity: playerEntity,
     icons: { getTexture, uploadRecord, textures: renderer.textures },
     rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
+    // U42: USING the Spellbook item opens the book
+    // (DaggerfallInventoryWindow.cs:1748-1764). showOverlay REPLACES
+    // the slot, so this bypasses toggleSpellbook's already-open guard
+    // - the inventory has just run its own close law.
+    openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },
     nowMinute: () => Math.floor(playerTicker.classicMinutes),
     onDrop: (items) => droppedLoot.dropPile(items, dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`),   // U8e: OnPop mints the world pile; P2: stamped with its map pixel
   });
-  const makeSpellbookWindow = () => (spellsByIndex
-    ? new SpellbookWindow(knownSpells(playerEntity, spellsByIndex), playerEntity, {
-      ready: (sp) => magic.readySpell(sp),
+  // U42: the CLASSIC spellbook. PlayerEntity.GetSpells() is the
+  // player's own array and the window WRITES to it (delete, swap,
+  // sort, rename), so it is handed by reference - the save envelope
+  // reads the same array and carries the new order.
+  let _spellbook = null;   // U42: the live window, for the probe surface
+  const makeSpellbookWindow = () => (spellbookArtLoaded()
+    ? (_spellbook = new SpellbookWindow({
+      spells: () => (playerEntity.spells ??= []),
+      entity: playerEntity,
       castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
-    })
+      // SpellsListBox_OnUseSelectedItem (:770-784): SetReadySpell,
+      // then PopToHUD - and the lycanthropy spell casts free.
+      onReady: (sp, { noSpellPointCost } = {}) => magic.readySpell(sp, { free: !!noSpellPointCost }),
+      rows: (id) => townTalk.lines(id),
+    }))
     : null);
   const toggleSpellbook = () => {
-    if (townTalk.overlayActive || !spellsByIndex) return;
-    townTalk.showOverlay(makeSpellbookWindow());
+    if (townTalk.overlayActive) return;
+    const w = makeSpellbookWindow();
+    if (!w) { townTalk.say('(the spellbook art is unavailable)'); return; }
+    townTalk.showOverlay(w);
   };
   const arrows = new ArrowFlight({ getGpuMesh, collider: () => collider });   // C13
   let playerSpawned = false;
@@ -2450,6 +2470,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     // destination at least two pixels out (the live probe types its
     // name into the real window).
     window.__travelProbe = () => JSON.stringify({ pixel: playerTravelPixel(), minutes: Math.floor(playerTicker.classicMinutes), gold: goldAmount(playerEntity) });
+    // U42: the classic spellbook's live state. Its buttons are hit
+    // rects painted into SPBK00I0, so a probe cannot see what it is
+    // clicking - it reads the selection, the pushed box and the rows
+    // back through here instead of sleeping and hoping.
+    window.__spellbook = () => JSON.stringify(_spellbook && !_spellbook.done ? {
+      buyMode: _spellbook.buyMode, selected: _spellbook.selectedIndex,
+      scroll: _spellbook.scrollIndex, top: _spellbook.top,
+      name: _spellbook.selected?.name ?? null,
+      effects: [0, 1, 2].map((i) => _spellbook.effectLabels(i)),
+      rows: _spellbook._rows.map((r) => ({ text: r.text, dim: r.dim })),
+    } : null);
     // U41: the art window's live state - which page is open, what the
     // label reads, which box or sub-window is up, and the popup's
     // numbers. The keyed stand-in could be driven blind; a click
@@ -2524,7 +2555,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       });
     };
   }
-  window.__readyRanged = () => { const sp = knownSpells({}, spellsByIndex).map((x) => [calculateCastCost(x, playerEntity).sp, x]).sort((a, b) => a[0] - b[0])[0]?.[1]; magic.setReadied(sp); return sp ? `${sp.name}:${calculateCastCost(sp, playerEntity).sp}` : null; };   // M5: no classic starting set carries a missile spell - ready the cheapest flier for the flight leg
+  window.__readyRanged = () => { const sp = rangedDamageSpells(spellsByIndex).map((x) => [calculateCastCost(x, playerEntity).sp, x]).sort((a, b) => a[0] - b[0])[0]?.[1]; magic.setReadied(sp); return sp ? `${sp.name}:${calculateCastCost(sp, playerEntity).sp}` : null; };   // M5: no classic starting set carries a missile spell - ready the cheapest flier for the flight leg
 
   const ambience = new AmbientEffects(EXTERIOR_AMBIENT_WAITS);   // A3
   let _lastPlayerPos = null, _playerStill = false;   // T2: the politeness still-tracker
@@ -2700,6 +2731,7 @@ export async function bootWorld(canvas, renderer, params, status) {
                 loot: { items: () => pile.items },
                 icons: { getTexture, uploadRecord, textures: renderer.textures },
                 rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
+                openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },   // U42: the Spellbook item's own door, on the LOOT-pile window too
                 nowMinute: () => Math.floor(playerTicker.classicMinutes),
                 onDrop: (items) => droppedLoot.dropPile(items, dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`),   // P2: stamped
               }));
