@@ -2445,5 +2445,13 @@ swap `guilds.js` has carried `membershipsFor(store, hasVampirism)` for
 since G1. The turn lands `entity.racialOverridePending`, which is
 V2's producer and already bars a second infection.
 
-Pins: 15 in `infection.test.js`, plus the rewritten `OnMonsterHit`
-row in `diseases.test.js`. 16 mutations, 16 dead.
+**AND THE SAVE CARRIES BOTH HALVES.** The infection rides
+`activeEffects` like any disease, region index included, because
+`copyEffectEntry` spreads whole entries. But the moment it *deploys*
+the disease is over and `racialOverridePending` is the only record
+left — so a save between the turn and V2's racial override came back
+human, and catchable. It is a named field in the envelope now, both
+directions.
+
+Pins: 16 in `infection.test.js`, plus the rewritten `OnMonsterHit`
+row in `diseases.test.js`. 18 mutations, 18 dead.

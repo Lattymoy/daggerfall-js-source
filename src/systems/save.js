@@ -135,6 +135,11 @@ export function snapshotPlayer(entity, { position = null, classicMinutes = 0, re
   // TP-slice: the Recall anchor (PlayerEntity.AnchorPosition - the
   // Teleport effect stores it on the entity, Teleport.cs:35).
   snap.anchorPosition = entity.anchorPosition ? { ...entity.anchorPosition } : null;
+  // V1: the turn's marker. The infection itself rides activeEffects
+  // like any disease, but the moment it DEPLOYS the disease ends and
+  // the only record left is this - so a save between the turn and V2's
+  // racial override would otherwise come back human, and catchable.
+  snap.racialOverridePending = entity.racialOverridePending ? { ...entity.racialOverridePending } : null;
   // S1: a STOCK spell travels as its SPELLS.STD index (the compact
   // shape every pre-S1 save carries); a MADE spell has no file index,
   // so its whole record rides instead. The restore tells them apart
@@ -273,6 +278,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.houses = (snap.houses ?? []).map((h) => ({ ...h }));
   entity.ownedShip = snap.ownedShip ?? -1;
   entity.anchorPosition = snap.anchorPosition ? { ...snap.anchorPosition } : null;   // TP-slice
+  entity.racialOverridePending = snap.racialOverridePending ? { ...snap.racialOverridePending } : null;   // V1
   // AUDIT 17f: a Currency stack saved before gold gained its template
   // index carries none, and stacksWith compares templateIndex - a
   // restored save would grow a SECOND gold stack the next time gold
