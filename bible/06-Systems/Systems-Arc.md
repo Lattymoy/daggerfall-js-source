@@ -2943,12 +2943,20 @@ now, and it is pinned both by driving the shape and by asserting no
 unguarded drain is left anywhere in the tree - because the next window
 that closes itself will find the same seam.
 
+The same hazard sits one step further on in `worldModes`, which ticks,
+drains and then DRAWS: a tick that cleared the slot left
+`else if (_shopFont) interiorOverlay.draw(...)` reading null, so dying
+mid-rest inside a building crashed the frame loop. That seam captures
+the window for the tick and the drain and then paints whatever is in
+the slot NOW - which covers an emptied slot and a handed-on one at
+once, with no branch a test cannot reach.
+
 Pins: 52 in `restlodging.test.js`, two of them END TO END - every law
 in this slice driven together through one host-shaped deps bag, from
 the key press to the wake. That is the closest thing to a live probe a
 machine with no ARENA2 data can run, and it is here because a slice
 whose parts each pass and whose whole was never run is exactly what a
-probe catches. 105 mutations, 105 dead. The first
+probe catches. 106 mutations, 106 dead. The first
 pass left four alive and all four were the same failure of nerve: a
 pin that named a thing instead of exercising it. The host pins matched
 `act === 'Rest'`, which survives `if (false && act === 'Rest')`, so

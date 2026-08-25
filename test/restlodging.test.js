@@ -632,7 +632,7 @@ test('S40: the rest CLOCK rides the seam all four hosts already drive', () => {
   assert.doesNotMatch(dc, /isRestWindow\) activeOverlay\.tickRest/);
   // And the three seams that drive it all exist.
   assert.match(src('src/scenes/townTalk.js'), /overlay\?\.tick\?\.\(dt\)/);
-  assert.match(src('src/scenes/worldModes.js'), /interiorOverlay\.tick\?\.\(dt\)/);
+  assert.match(src('src/scenes/worldModes.js'), /const w = interiorOverlay;\n\s+w\.tick\?\.\(dt\);/);
   assert.match(dc, /activeOverlay\.tick\?\.\(dt\)/);
 });
 
@@ -1378,7 +1378,7 @@ test('S40: the interior overlay seam DRAINS done, like the other three', () => {
   // draining - so such a window stayed painted over the world. The
   // other three seams all drain and two call it not optional.
   assert.match(src('src/scenes/worldModes.js'),
-    /if \(interiorOverlay\?\.done\) \{ interiorOverlay\.dispose\?\.\(\); interiorOverlay = null; \}/);
+    /if \(w\.done\) \{ w\.dispose\?\.\(\); if \(interiorOverlay === w\) interiorOverlay = null; \}/);
   // The death path is the one that reaches it: _end() closes without
   // ever entering the 'ended' state.
   const w = new RestWindow(winDeps({ dead: () => true }));
@@ -1638,6 +1638,28 @@ test('S40: a window that clears the slot from INSIDE its own input does not cras
   slot = new RestWindow(deps);
   slot.input('char:1'); slot.input('confirm');
   assert.doesNotThrow(() => { slot.click(); if (slot?.done) slot = null; });
+
+  // The DRAW seam is the same hazard one step further on: worldModes
+  // ticks, drains, and then DRAWS - and a tick that cleared the slot
+  // left `else if (_shopFont) interiorOverlay.draw(...)` reading null.
+  // Dying mid-rest inside a building crashed the frame loop.
+  slot = new RestWindow({ ...deps, dead: () => true });
+  slot.input('char:1'); slot.input('confirm');
+  const font = {};
+  assert.doesNotThrow(() => {
+    const w = slot;                       // the capture IS the fix
+    w.tick?.(0.2);
+    if (w.done) { w.dispose?.(); if (slot === w) slot = null; }
+    if (!slot) { /* gone */ }
+    else if (font) slot.draw({ drawScreenQuad() {} }, { width: 1, height: 1 }, font, 1);
+  });
+  assert.equal(slot, null);
+  assert.match(src('src/scenes/worldModes.js'),
+    /const w = interiorOverlay;\n\s+w\.tick\?\.\(dt\);/, 'the interior seam captures before ticking');
+  // ...and DRAWS whatever is in the slot now, not the capture - the
+  // tick may have emptied it or handed it on to a successor.
+  assert.match(src('src/scenes/worldModes.js'),
+    /if \(!interiorOverlay\) \{[^}]*\}\n\s+else if \(_shopFont\) interiorOverlay\.draw\(/);
 
   // EVERY drain in the tree is guarded - five of them, and an
   // unguarded one is a crash waiting for the next window that closes

@@ -2526,14 +2526,30 @@ export function createWorldModes(host) {
       // building left the death sequence frozen and the run never
       // ended. The other three hosts tick through townTalk.frame and
       // dungeonContext.tickOverlay; this is the fourth.
-      interiorOverlay.tick?.(dt);
-      // S40: THE DONE-DRAIN, which the other three seams carry and two
-      // of them call not optional in so many words (townTalk.frame,
+      //
+      // S40: the window is CAPTURED first, and every read below is of
+      // the capture. A window may now clear this slot from inside its
+      // own tick - RestWindow's death path does, through the PopToHUD
+      // door - and re-reading `interiorOverlay` afterwards crashed the
+      // frame loop on the draw. Capturing is the shape this module's
+      // own overlayInput already uses, and it is robust whether the
+      // window clears the slot, the drain does, or nobody does.
+      const w = interiorOverlay;
+      w.tick?.(dt);
+      // THE DONE-DRAIN, which the other three seams carry and two of
+      // them call not optional in so many words (townTalk.frame,
       // dungeonContext.tickOverlay). A window may FINISH inside its
       // own tick - RestWindow does, on the death path and on a missing
       // endLines - and until now only overlayInput cleared this slot,
       // so such a window stayed painted over the world.
-      if (interiorOverlay?.done) { interiorOverlay.dispose?.(); interiorOverlay = null; }
+      if (w.done) { w.dispose?.(); if (interiorOverlay === w) interiorOverlay = null; }
+      // ...and DRAW whatever is in the slot NOW, not the capture. The
+      // tick may have emptied it (the drain above) or handed it on to
+      // a successor - this module's windows do dispatch to one another
+      // - and painting the capture would show last frame's window over
+      // this frame's. One read, both cases, no branch a test cannot
+      // reach.
+      if (!interiorOverlay) { /* the window is gone; nothing to paint */ }
       else if (_shopFont) interiorOverlay.draw(renderer, canvas, _shopFont, hudScale(canvas.width, canvas.height));
       else interiorOverlay = null;
     }

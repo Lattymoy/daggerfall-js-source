@@ -290,9 +290,9 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:1777` - first (owned houses and quest buildings FLAGGED/seamed per
 - `src/scenes/worldModes.js:1785` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
 - `src/scenes/worldModes.js:2504` - too. FLAGGED: interior loot containers are the loot arc's -
-- `src/scenes/worldModes.js:2618` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:2693` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:3273` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
+- `src/scenes/worldModes.js:2634` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:2709` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:3289` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
