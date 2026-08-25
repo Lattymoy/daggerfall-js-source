@@ -10,7 +10,11 @@ for f in range(1,11):
     c=np.array(Image.open(f'heads/cell_{f}.png').convert('RGB')).astype(float)
     W=c.shape[1]
     H=c.shape[0]
-    face=c[int(H*0.26):int(H*0.52), int(W*0.455):int(W*0.545)]
+    # SAMPLE THE WHOLE FRONT SECTOR. Measured across all 80 faces: a single
+    # nose box disagrees with its own head 13 times, four small boxes twice,
+    # the whole lit sector once. Paint, a hood or an ornament can fill a small
+    # box; none of them fill the sector.
+    face=c[int(H*0.12):int(H*0.86), int(W*0.38):int(W*0.62)]
     lum=0.3*face[:,:,0]+0.59*face[:,:,1]+0.11*face[:,:,2]
     ref=np.median(lum)
     # Reject on HUE as well as brightness. An eye or a specular highlight is
@@ -20,19 +24,22 @@ for f in range(1,11):
     # or crest can FILL the box - Argonian 6's gold band sits exactly at
     # nose-bridge height - and then the ornament becomes the reference and the
     # body renders gold. The cell is mostly hide, so its median is the hide.
-    _cl=0.30*c[:,:,0]+0.59*c[:,:,1]+0.11*c[:,:,2]
-    _cn=c/np.maximum(_cl[:,:,None],1.0)
-    _sel=_cl>np.percentile(_cl,55)
-    _med=np.array([np.median(_cn[:,:,k][_sel]) for k in range(3)])
+    # THE SAMPLE IS ITS OWN REFERENCE. The whole-cell reference and the vote
+    # between them existed only because the sample was a small box an ornament
+    # could fill; the sector cannot be filled. And the vote was BIASED TOWARD
+    # GREY - a neutral hue sits in the middle of hue space, so it is near
+    # everything and always wins. Redguard 8's grey hair beat its own warm skin
+    # 49069 to 41100 and gave it a grey body.
     _n=face/np.maximum(lum[:,:,None],1.0)
+    _med=np.array([np.median(_n[:,:,k]) for k in range(3)])
     _hue=np.abs(_n-_med).sum(axis=2)
     # Widen until the sample is big enough rather than skipping the face: the
     # whole-cell reference is stricter than the box one, and two Redguards fell
     # to 101 and 45 px and produced NO ramp at all.
     sel=None
-    for _tol in (0.28, 0.40, 0.55, 9.9):
+    for _tol in (0.18, 0.26, 0.36, 9.9):
         sel=(lum>ref*0.45)&(lum<ref*1.75)&(_hue<_tol)
-        if sel.sum()>=400: break
+        if sel.sum()>=1500: break
     px=face[sel]; pl=lum[sel]
     if len(px)<200: continue
     order=np.argsort(pl); px=px[order]; pl=pl[order]

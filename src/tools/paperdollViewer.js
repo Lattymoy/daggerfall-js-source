@@ -279,7 +279,7 @@ const BEAST = { Khajiit: 1, Argonian: 1 };
 let headCells = null, skinRamps = null, headPick = 0, headRace = null;
 const HEAD_SET = { Breton: 'breton', Redguard: 'redguard', Nord: 'nord',
   'Dark Elf': 'darkelf', 'High Elf': 'highelf', 'Wood Elf': 'woodelf',
-  Argonian: 'argonian' };
+  Argonian: 'argonian', Khajiit: 'khajiit' };
 async function loadHeads() {
   const key = HEAD_SET[RACES[raceIx]];
   if (!key) { headCells = null; skinRamps = null; headRace = null; applyTone(); return; }
