@@ -6,6 +6,72 @@ exist, nothing shows them), then the paper windows (chargen, char
 sheet, inventory, spellbook) that retire the headless interim
 policies one by one.
 
+
+## U49 THE ENHANCED FRONT DOOR (2026-08-25, Mac's call)
+
+The port's front door was FOUR screens in a row - `ui/titleScreen.js`,
+`scenes/launcherScene.js` + `ui/settingsWindow.js`, ANIM0001.VID, and
+`ui/startWindow.js` - three of them separate hosts with their own event
+wiring, and settings reachable only at boot: once you were playing there
+was no door back that was not a reload. Classic works that way because
+classic is a DOS program with a fixed 320x200 screen. Neither reason
+survives here.
+
+`ui/enhancedMenu.js` is one screen carrying continue, new game, load,
+settings, mods and about. `systems/uiSkin.js` chooses between it and the
+classic path, ENHANCED BY DEFAULT, with a toggle in both screens and a
+`?skin=` override that persists nothing (the pin that keeps the 25
+probes in `tools/` pinning classic geometry).
+
+THE LABELS ARE TYPE. PICK03I0.IMG has Load Game, Start New Game and Exit
+painted INTO the bitmap and DFU lays invisible click rects over the
+words, which is why U21 had to land those three rects to the pixel or
+the hit boxes drifted off the labels. Art that carries text cannot
+reflow, scale, localise or be read on a phone.
+
+THE LAW IS BORROWED, NOT REWRITTEN. The settings pane renders through
+the same four modules the classic screen uses - `systems/settings.js`,
+`ui/settingsMap.js`, `ui/settingsLaw.js`, `ui/settingsCopy.js` - and
+`widgetFor` is total over all 171 keys, so the enhanced screen makes no
+judgement about any of them. ~850 lines of DFU-cited law reused
+untouched, ~650 lines of WebGL drawing replaced. The toggles WRITE:
+one store, two views.
+
+THE DATA GATE MOVED BEHIND THE DOOR. Nothing on the enhanced screen
+needs ARENA2, so `ensureData()` is now a function every other path calls
+first and the enhanced door calls after - a player who opens the page to
+change a setting, read the build or check whether their save is still
+there is never asked for a folder, which on a phone is a zip upload. The
+classic door cannot do this and still gates first: it needs PICK03I0, a
+palette and FONT0003 before it can draw one word.
+
+ONE IMPLEMENTATION, TWO HOSTS. `/menu.html` and the game mount the same
+module; `src/tools/enhancedMenu.js` is four lines and `menu.html` carries
+no tokens or layout at all (`ui/enhancedStyle.js` owns both and injects
+them at mount, so a player who chose classic never loads a byte of it).
+A prototype with its own copy of the design is a prototype arguing about
+a screen the player will never see.
+
+AUDIT 19 F3 IS NOW STRUCTURALLY IMPOSSIBLE rather than guarded: the
+classic menu drew Load unconditionally and had to check for a save at
+press time (it fell through and silently started a NEW game), where
+these panes are built FROM the save, so a button that would load nothing
+cannot be drawn.
+
+NOT RUN ON THE ENHANCED DOOR, each recorded as a real loss rather than
+dropped quietly: the boot LAUNCHER (settings are one press away, so a
+screen in front of the menu would be a screen in front of the menu), and
+the TITLE and SPLASH, both of which read ARENA2 - the whole point of this
+door is that it opens before the folder pick. `?skin=classic` still plays
+both, and giving the enhanced door its own title moment is its own slice.
+
+PROVED LIVE with no game data at all: `tools/enhancedMenuProbe.mjs`
+boots index.html on a desktop and a Pixel 5, renders the menu, changes a
+setting and reads it back through the store, presses Begin and watches
+the ARENA2 pick appear at that moment and not before, then checks
+`?skin=classic` still gates first. 16/16, zero page errors.
+
+
 ## U1 (classic HUD - vitals + compass): SHIPPED
 
 The renderer gains ONE screen-space primitive: drawScreenQuad -

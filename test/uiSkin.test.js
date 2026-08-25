@@ -95,7 +95,10 @@ test('the CLASSIC settings screen carries a way back to enhanced', () => {
 });
 
 test('the ENHANCED menu carries a way back to classic', () => {
-  const src = readFileSync(new URL('../src/tools/enhancedMenu.js', import.meta.url), 'utf8');
+  // the screen moved to src/ui/ when the game started mounting it;
+  // src/tools/enhancedMenu.js is the prototype HOST now and carries
+  // no screen of its own
+  const src = readFileSync(new URL('../src/ui/enhancedMenu.js', import.meta.url), 'utf8');
   assert.match(src, /function skinRow\(\)/);
   assert.match(src, /setUiSkin\(otherSkin\(uiSkin\(\)\)\)/);
   assert.match(src, /searchParams\.delete\('skin'\)/);

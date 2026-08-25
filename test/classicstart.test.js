@@ -40,8 +40,15 @@ test('U31: the classic start boots the WORLD host, not the exitless dungeon scen
   // The dev and probe routes are UNCHANGED: 25 probes in tools/ drive
   // ?shot and ?nomenu into the dungeon scene, and ?dungeon=<name> is
   // the named-dungeon dev boot.
-  assert.match(main, /if \(params\.has\('dungeon'\)\) return bootDungeon/);
-  assert.match(main, /if \(params\.has\('shot'\) \|\| params\.has\('nomenu'\)\) return bootDungeon/);
+  //
+  // THE ASSERTION IS THE ROUTE, NOT ITS PUNCTUATION. These two pinned
+  // the exact one-line form and went red when the enhanced front door
+  // gave every path an explicit `await ensureData()` - the routing was
+  // untouched and the pin was describing the line rather than the law
+  // (the shape AUDIT 24 corrected four pins for). What must hold is
+  // that each param still reaches bootDungeon and nothing else.
+  assert.match(main, /params\.has\('dungeon'\)\)[^\n]*bootDungeon\(canvas, renderer, params, status\)/);
+  assert.match(main, /params\.has\('shot'\) \|\| params\.has\('nomenu'\)\)[^\n]*bootDungeon\(canvas, renderer, params, status\)/);
 });
 
 test('U31: the start cell comes from settings, and starting inside is gated the way DFU gates it', () => {
