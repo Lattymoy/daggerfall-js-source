@@ -19,6 +19,10 @@ import { maxFatigue, maxBreath, liveStat } from '../systems/statMods.js';
 import { drawCrosshairAndModeIcon } from './hudCrosshair.js';   // U38
 import { playerDamageFlash } from './damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage rides the one HUD call
 import { drawHudLarge } from './hudLarge.js';   // U45: the classic bottom bar - an ALTERNATIVE HUD, see below
+import { drawActiveSpells, activeSpellAt, createBlinkClock, hudPointer } from './hudActiveSpells.js';   // U46: the buff/debuff icon rows
+import { preloadSpellIcons } from './spellIcons.js';   // U46: the sheet the rows draw from
+import { nativeMetrics } from './nativePanel.js';
+import { ToolTip } from './toolTip.js';
 
 export const COMPASS_BOX_OUTLINE = 2;
 export const COMPASS_BOX_INTERIOR = 64;
@@ -164,6 +168,16 @@ export function bitmapToColor32(bmp, palette) {
 }
 
 export async function loadHud({ fetchBytes, ImgFile, palette, renderer }) {
+  // U46: the spell-icon sheet loads HERE, with the rest of the HUD's
+  // art, and not with the spellbook window that used to be its only
+  // consumer. Left there, the buff rows were invisible until the
+  // player happened to open their spellbook once - the F2 shape: a
+  // feature that silently does nothing while every pin stays green.
+  // Fired and NOT awaited, exactly as the registries are: the bars do
+  // not wait on icons, and a frame before the sheet lands simply
+  // draws none.
+  preloadSpellIcons({ fetchBytes, palette, renderer })
+    .catch((e) => console.warn('[hud] spell icon sheets unavailable:', e?.message ?? e));
   const load = async (name) => {
     const img = new ImgFile();
     img.load(await fetchBytes(name), name, palette);
@@ -201,10 +215,55 @@ export async function loadHud({ fetchBytes, ImgFile, palette, renderer }) {
 let lastLargeHudBar = null;
 export const largeHudBar = () => lastLargeHudBar;
 
+// U46 - THE ACTIVE-SPELL ICONS. One blink clock and one tooltip for
+// the whole game, because DFU has one HUD: four hosts each counting
+// their own phase would strobe when the player walks through a door.
+// The tooltip is this component's own (DFU gives HUDActiveSpells a
+// `defaultToolTip` of its own, :57), and it is drawn LAST.
+// LAZY, and not for tidiness: ui/toolTip.js reaches ui/nativePanel.js,
+// which reaches back here for bitmapToColor32 - so constructing a
+// ToolTip at THIS module's top level runs `new ToolTip()` before the
+// class declaration it names has been evaluated, and every importer
+// dies with "Cannot access 'ToolTip' before initialization". Built on
+// first draw instead, by which time every module is up.
+const _spellBlink = createBlinkClock();
+let _spellTip = null;
+const spellTip = () => (_spellTip ??= new ToolTip());
+let _placedSpellIcons = [];
+export const activeSpellIconsPlaced = () => _placedSpellIcons;
+export function _resetActiveSpellHud() { _spellBlink._reset(); _spellTip?.hide(); _placedSpellIcons = []; }
+
+/**
+ * The icon rows, drawn from the ONE host-agnostic call - and drawn on
+ * BOTH branches, because DaggerfallHUD.cs:209 enables activeSpells
+ * from ShowActiveSpells alone and the large-HUD block below it never
+ * touches them. They ride over the bar, lifted clear of it.
+ *
+ * The tooltip follows DFU's own gate (:141-147): shown when the game
+ * is PAUSED or the cursor is active, never while the player is
+ * looking around with the pointer captured.
+ */
+function drawSpellIconRows(renderer, canvas, vitals, dt, { font, cursorActive, largeHudRect, hover }) {
+  const at = hover ?? hudPointer();
+  const m = nativeMetrics(canvas);
+  const blink = _spellBlink.tick(dt);
+  // The bar's top edge in VIRTUAL units - what AdjustIconPosition
+  // ForLargeHUD computes as `(Screen.height - hudHeight) / LocalScale`.
+  const largeHudTop = largeHudRect ? (canvas.height - largeHudRect.h) / m.s : null;
+  _placedSpellIcons = drawActiveSpells(renderer, m, vitals, {
+    blinkState: blink, paused: cursorActive, largeHudTop,
+  });
+  if (!font) { spellTip().hide(); return; }
+  const hit = (cursorActive && at) ? activeSpellAt(_placedSpellIcons, at[0], at[1]) : null;
+  spellTip().show(hit?.displayName ?? null, at?.[0] ?? 0, at?.[1] ?? 0);
+  spellTip().update(dt);
+  if (cursorActive) spellTip().draw(renderer, m, font);
+}
+
 /** Draw the HUD. vitals = { health, maxHealth, magicka, maxMagicka };
  *  heading01 = camera yaw / 2pi with 0 facing +z. */
 export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
-  { font = null, cursorActive = false, detected = null, playerXZ = null, largeHud = null } = {}) {
+  { font = null, cursorActive = false, detected = null, playerXZ = null, largeHud = null, hover = null } = {}) {
   // AUDIT 24 (wave 39): ShowPlayerDamage's red flash, under the bars.
   // THE FOUR HOSTS RULE, applied before the fact: drawHud is the one
   // host-agnostic call all four make, "last, over the viewmodel", so
@@ -229,6 +288,7 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
     });
     drawCrosshairAndModeIcon(renderer, canvas, font,
       { cursorActive, scale: s2, border: HUD_BORDER, barWidth: HUD_NATIVE_BAR_WIDTH, showModeIcon: false });
+    drawSpellIconRows(renderer, canvas, vitals, dt, { font, cursorActive, largeHudRect: lastLargeHudBar, hover });
     return;
   }
   lastLargeHudBar = null;
@@ -312,4 +372,5 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // their home and hudCrosshair must not import back into it.
   drawCrosshairAndModeIcon(renderer, canvas, font,
     { cursorActive, scale: s, border: HUD_BORDER, barWidth: HUD_NATIVE_BAR_WIDTH });
+  drawSpellIconRows(renderer, canvas, vitals, dt, { font, cursorActive, largeHudRect: null, hover });
 }

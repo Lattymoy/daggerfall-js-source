@@ -30,6 +30,7 @@ import {
 import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells } from './shared.js';
 import { routeKey, held, moveHeld, anyMove, actionOf } from '../ui/input.js';
 import { routeLargeHudClick } from '../ui/hudLarge.js';   // U45: the bar's eleven panels
+import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { createDataPipeline } from './dataPipeline.js';
 import { buildDungeonContext } from './dungeonContext.js';
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U14: the overlay pointer seam
@@ -218,6 +219,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     ctx.reportMouse?.(e.movementX, e.movementY, document.pointerLockElement === canvas);   // raw input truth for F8
     // U37: a window frees the mouse, so an open overlay gets the HOVER
     // (native coords) instead of the look delta.
+    trackHudPointer(canvas, e);   // U46: the spell-icon rows' tooltip, before the overlay return
     if (ctx.uiOverlayActive) {
       const r = canvas.getBoundingClientRect();
       const v = pointToNative(nativeMetrics(canvas),

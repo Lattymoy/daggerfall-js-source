@@ -235,6 +235,7 @@ export function liveBundles(entity) {
     let b = byId.get(a.bundleId);
     if (!b) {
       b = { bundleId: a.bundleId, name: a.bundleName ?? '', bundleType: a.bundleType ?? 'Spell',
+        icon: a.bundleIcon ?? 0, selfCast: !!a.bundleSelfCast,   // U46: the HUD's icon and its buff/debuff row
         entries: [], showIcon: false };
       byId.set(a.bundleId, b);
     }
