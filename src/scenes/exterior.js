@@ -28,7 +28,8 @@ import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
-import { withCandleLight } from './magicCandle.js';   // X11: the Light effect's candle
+import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
+import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { applyClimate, getGroundArchive, getNatureArchive } from '../world/climateSwaps.js';
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, mirrorProjectionX, transformPoint, trs } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
@@ -1607,9 +1608,10 @@ export async function bootExterior(canvas, renderer, params, status) {
     const lightsOn = lightsOnAt(minute);
     if (lightsOn) lightAnimator.tick(dt);
     renderer.setPointLights(
-      withCandleLight(lightsOn
+      withPlayerLights(lightsOn
         ? nearestLights(cityLights, eye, 16, lightAnimator.ranges)
-        : new Float32Array(0), magic?.candleLight()),   // X11: the candle burns by day too - the effect has no time gate
+        : new Float32Array(0),
+      magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw)),   // X11: the candle burns by day too - the effect has no time gate; T1: so does the torch
       CITY_LIGHT_COLOR_F32
     );
     renderer.beginFrame(proj, view, sunDirection(minute));

@@ -108,20 +108,31 @@ export function createCandleWobble(rolls = Math.random) {
 }
 
 /**
- * Put a candle at the FRONT of a host's `nearestLights` array.
+ * Put the lights the PLAYER carries at the front of a host's
+ * `nearestLights` array.
  *
- * The candle is 1.4 units away, so it is always the nearest light the
- * player has and nearestLights' own distance sort would put it first
- * anyway - prepending saves re-sorting. The renderer's cap is 16
- * vec4s (setPointLights subarrays at 16 * 4), so the last light drops
- * off rather than the array growing past it.
+ * They are always the nearest lights there are - the candle hangs 1.4
+ * units away and the torch is in the player's own hand - so
+ * nearestLights' distance sort would put them first anyway;
+ * prepending saves re-sorting. The renderer's cap is 16 vec4s
+ * (setPointLights subarrays at 16 * 4), so the far lights drop off
+ * rather than the array growing past it.
+ *
+ * T1 renamed this from `withCandleLight` (X11a, the same day): the
+ * magic candle was its first consumer and the player's torch is its
+ * second, so a name that says "candle" would have been the first half
+ * of a drift. Nulls are skipped, which is how a host says "no torch"
+ * and "no candle" without branching.
  */
-export function withCandleLight(base, light) {
-  if (!light) return base;
-  const keep = Math.min(15, base.length / 4) * 4;
-  const out = new Float32Array(keep + 4);
-  out[0] = light.x; out[1] = light.y; out[2] = light.z; out[3] = light.range;
-  out.set(base.subarray(0, keep), 4);
+export function withPlayerLights(base, ...lights) {
+  const live = lights.filter(Boolean);
+  if (!live.length) return base;
+  const keep = Math.min(Math.max(0, 16 - live.length), base.length / 4) * 4;
+  const out = new Float32Array(keep + live.length * 4);
+  live.forEach((l, i) => {
+    out[i * 4] = l.x; out[i * 4 + 1] = l.y; out[i * 4 + 2] = l.z; out[i * 4 + 3] = l.range;
+  });
+  out.set(base.subarray(0, keep), live.length * 4);
   return out;
 }
 

@@ -20,7 +20,7 @@ import { buildCustomSpell, blankEffectSettings } from '../src/systems/spellMaker
 import { effectByKey, PORTED_KEYS, SPELL_MAKER_EFFECTS } from '../src/systems/spellEffects.js';
 import { calculateEnemyPacification } from '../src/combat/formulas.js';
 import { SKILLS } from '../src/systems/skills.js';
-import { CANDLE, candleBase, createCandleWobble, insideUnitSphere, withCandleLight } from '../src/scenes/magicCandle.js';
+import { CANDLE, candleBase, createCandleWobble, insideUnitSphere, withPlayerLights } from '../src/scenes/magicCandle.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -285,15 +285,15 @@ test('X11 the magic candle: the wobble stays inside its 0.125 sphere and keeps m
 
 test('X11 the magic candle: the light goes to the FRONT of a host\'s array, and the cap holds', () => {
   const base = new Float32Array(16 * 4).fill(7);
-  const out = withCandleLight(base, { x: 1, y: 2, z: 3, range: 15 });
+  const out = withPlayerLights(base, { x: 1, y: 2, z: 3, range: 15 });
   assert.equal(out.length, 16 * 4, 'the renderer takes 16 vec4s and no more');
   assert.deepEqual([...out.subarray(0, 4)], [1, 2, 3, 15], 'the candle is first - it is always the nearest');
   assert.equal(out[4], 7, 'the rest follow');
   // an empty array (a daylight exterior) still gets the candle
-  assert.deepEqual([...withCandleLight(new Float32Array(0), { x: 1, y: 2, z: 3, range: 15 })], [1, 2, 3, 15]);
+  assert.deepEqual([...withPlayerLights(new Float32Array(0), { x: 1, y: 2, z: 3, range: 15 })], [1, 2, 3, 15]);
   // no candle, no copy
   const b2 = new Float32Array(8);
-  assert.equal(withCandleLight(b2, null), b2);
+  assert.equal(withPlayerLights(b2, null), b2);
 });
 
 test('X11 the magic candle: every host that lets the player cast puts it in its light array', () => {
@@ -309,10 +309,10 @@ test('X11 the magic candle: every host that lets the player cast puts it in its 
     'src/scenes/dungeon.js': 1,
   };
   for (const [f, n] of Object.entries(sites)) {
-    const hits = src(f).split('withCandleLight(').length - 1;
+    const hits = src(f).split('withPlayerLights(').length - 1;
     assert.equal(hits, n, `${f} prepends the candle at ${n} light site(s), found ${hits}`);
   }
-  assert.ok(!src('src/scenes/interior.js').includes('withCandleLight'),
+  assert.ok(!src('src/scenes/interior.js').includes('withPlayerLights'),
     'the standalone interior host builds no cast engine, so it has no candle to draw');
   // and the tick reaches all four, with a real look direction
   for (const f of ['src/scenes/worldModes.js', 'src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js']) {

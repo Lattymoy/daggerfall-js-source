@@ -21,7 +21,8 @@ import { MapsFile } from '../formats/mapsFile.js';
 import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js';
 import { INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { nearestLights } from '../world/cityLights.js';
-import { withCandleLight } from './magicCandle.js';   // X11
+import { withPlayerLights } from './magicCandle.js';   // X11/T1
+import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { lookAt, perspective, mirrorProjectionX } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { PlayerMotor } from '../player/motor.js';
 import { jumpSpeedMultiplier } from '../systems/skills.js';
@@ -330,6 +331,9 @@ export async function bootDungeon(canvas, renderer, params, status) {
       light: ctx.candleLight?.() ?? null,
       first: [...(renderer._pointLights ?? [])].slice(0, 4),
       count: (renderer._pointLights?.length ?? 0) / 4,
+      // T1: the WHOLE array, so a probe can find the torch's own vec4
+      // rather than guessing which slot it landed in.
+      all: [...(renderer._pointLights ?? [])],
     });
   }
 
@@ -434,7 +438,8 @@ export async function bootDungeon(canvas, renderer, params, status) {
 
     ctx.flicker.tick(dt);
     renderer.setPointLights(
-      withCandleLight(nearestLights(ctx.lights, cam.pos, 16, ctx.flicker.ranges), ctx.candleLight?.()),   // X11: the Light effect's candle
+      withPlayerLights(nearestLights(ctx.lights, cam.pos, 16, ctx.flicker.ranges),
+        ctx.candleLight?.(), playerTorchLight(playerEntity, player.pos, cam.yaw)),   // X11 candle; T1 torch
       new Float32Array(DUNGEON_LIGHT_COLOR));
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
     for (const d of ctx.drawList) renderer.drawMesh(d.mesh, d.matrix, ctx.texRemap);

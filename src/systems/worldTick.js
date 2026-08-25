@@ -40,6 +40,7 @@ import { updateRegionalPrices } from './shopStock.js';            // FormulaHelp
 import { rollClimateWeathersForDay } from './weatherSim.js';      // WeatherManager.SetClimateWeathers (:419)
 import { removeExpiredRooms } from './tavern.js';                 // PlayerEntity.RemoveExpiredRentedRooms (:257)
 import { removeExpiredItems } from './createItem.js';             // X11b: ItemCollection.RemoveExpiredItems (:125), the per-minute sweep
+import { tickPlayerTorch } from './playerTorch.js';               // T1: EnablePlayerTorch.Update, on the REAL clock
 import { checkOverdueLoans, settleOverdueLoan } from './banking.js';   // LoanChecker.CheckOverdueLoans (:17)
 import { lowerRepForCrime } from './court.js';                    // OverdueLoan's LowerRepForCrime (:70)
 import { REGION_NAMES } from '../formats/mapsFile.js';            // loanReminder2's %s
@@ -443,6 +444,15 @@ export function tickPlayerMinutes({
     // your conjured armour's expiry has to lose you the armour.
     removeExpiredItems(entity, Math.floor(next));
   }
+
+  // T1 - EnablePlayerTorch.Update, and it sits OUTSIDE the per-minute
+  // block on purpose: DFU accumulates Time.deltaTime toward a 20-REAL-
+  // second timer (:26, :63), not game minutes. A torch burns on the
+  // wall clock, so a paused game burns none of it and a fast time
+  // scale does not eat it faster - the same reasoning that puts
+  // killIfAnyLiveStatZero below on its own real-time cadence rather
+  // than in a magic round.
+  tickPlayerTorch(entity, dt, { say, rolls });
 
   // S41 - THE DAY CHANGE (PlayerEntity.cs:441-450). It sits AFTER the
   // fatigue band because DFU's does: the swimming roll at :412 is

@@ -63,7 +63,7 @@ export const ALL_KEYS = Object.freeze(
  *  entry names the consumer so settings.test.js can check it. */
 export const LIVE = Object.freeze({
   'Enhancements/CombatVoices': 'src/combat/combatVoices.js',
-  'Enhancements/PlayerTorchFromItems': 'src/systems/startingGear.js',
+  'Enhancements/PlayerTorchFromItems': 'src/systems/playerTorch.js',   // T1: it gates the torch itself now, not just the starting gear
   'Enhancements/LoiterLimitInHours': 'src/systems/restSession.js',
   // S40: the illegal-rest confirm. OFF makes camping in a town simply
   // impossible (CanRest refuses and no time passes); ON turns it into

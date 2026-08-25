@@ -17,7 +17,8 @@ import { WoodsFile } from '../formats/woodsFile.js';
 import { buildTerrainGrid, buildTerrainIndices, convertTilemap, TERRAIN_TILE_DIM } from '../world/terrainSurface.js';
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
-import { withCandleLight } from './magicCandle.js';   // X11: the Light effect's candle
+import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
+import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { applyClimate, getGroundArchive, getNatureArchive, SEASON } from '../world/climateSwaps.js';
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, mirrorProjectionX, trs } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
@@ -3296,7 +3297,8 @@ export async function bootWorld(canvas, renderer, params, status) {
         }
       }
       renderer.setPointLights(
-        withCandleLight(nearestLights(sceneLights, cam.pos, 16, worldLightAnimator.ranges), magic?.candleLight()),   // X11
+        withPlayerLights(nearestLights(sceneLights, cam.pos, 16, worldLightAnimator.ranges),
+          magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw)),   // X11 candle; T1 torch
         CITY_LIGHT_COLOR_F32
       );
     } else {
@@ -3304,7 +3306,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       // (the lantern one is DaggerfallLight's, not the effect's), and
       // this branch used to send the renderer an empty array, so a
       // daylight Light cast would have lit nothing at all.
-      renderer.setPointLights(withCandleLight(new Float32Array(0), magic?.candleLight()), CITY_LIGHT_COLOR_F32);
+      renderer.setPointLights(withPlayerLights(new Float32Array(0),
+        magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw)), CITY_LIGHT_COLOR_F32);
     }
     renderer.beginFrame(proj, view, sunDirection(minute));
     sky.draw(cam.yaw, cam.pitch, fieldOfView(), canvas.clientWidth / canvas.clientHeight);

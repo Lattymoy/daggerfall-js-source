@@ -83,11 +83,14 @@ const kinds = () => page.evaluate(() => (window.__playerEntity.activeEffects ?? 
   check('and it reaches the renderer, FIRST in the array',
     // The tolerance is the WOBBLE, not slack: the host sets the light
     // array where it draws and the engine ticks the candle later in the
-    // same frame, so the renderer holds the previous frame's jitter -
-    // documented, and under 0.02 units at 60fps.
-    lit.light !== null && Math.abs(first[0] - lit.light.x) < 0.05
-      && Math.abs(first[1] - lit.light.y) < 0.05
-      && Math.abs(first[2] - lit.light.z) < 0.05 && first[3] === 15,
+    // same frame, so the renderer holds the PREVIOUS frame's jitter.
+    // At 60fps that is ~0.02 units; under swiftshader a frame can eat a
+    // whole leg of the lerp, so the bound is the jitter sphere's own
+    // diameter (2 * 0.125) - which still pins the identity, because
+    // nothing else in the array is within 25cm of the player's hand at
+    // range exactly 15.
+    lit.light !== null && first[3] === 15
+      && Math.hypot(first[0] - lit.light.x, first[1] - lit.light.y, first[2] - lit.light.z) <= 0.25 + 1e-6,
     { first, light: lit.light });
 
   await shot('02-lit');
@@ -273,6 +276,84 @@ if (pageErrors.length !== realErrors.length) console.log('  [note] CURSOR.IMG is
   }, [made.exp]);
   check('and the per-minute tick sweeps it away when its time is up',
     vanished.after === vanished.before2 - 1, vanished);
+}
+
+// ---- T1: the torch, in the dungeon it exists to light ---------------
+{
+  const before = await page.evaluate(() => JSON.parse(window.__candle()).count);
+  const lit = await page.evaluate(async () => {
+    const st = await import('/src/systems/settings.js');
+    const ui = await import('/src/systems/useItem.js');
+    const pt = await import('/src/systems/playerTorch.js');
+    // the SHIPPED setting, the SHIPPED use door
+    st.setValue('Enhancements', 'PlayerTorchFromItems', 'True');
+    const e = window.__playerEntity;
+    const torch = { group: 'UselessItems2', templateIndex: 247, name: 'Torch', currentCondition: 4, maxCondition: 50 };
+    (e.items ??= []).push(torch);
+    const r = ui.useItem(torch, e.items, { entity: e });
+    return { kind: r.kind, text: r.text, slot: e.lightSource === torch, range: pt.torchRange(torch) };
+  });
+  check('using a torch lights it', lit.kind === 'lit' && lit.slot === true, lit);
+  await frames(4);
+  const inArray = await page.evaluate(() => {
+    const c = JSON.parse(window.__candle());
+    const p = window.__player.pos;
+    // the torch's vec4 is the one at the player's own hand
+    const near = [];
+    for (let i = 0; i < c.count; i++) near.push(c.all.slice(i * 4, i * 4 + 4));
+    const hit = near.find((v) => Math.hypot(v[0] - p[0], v[1] - (p[1] + 1.2), v[2] - p[2]) < 0.6);
+    return { count: c.count, hit, feet: p.map((n) => Number(n.toFixed(2))) };
+  });
+  check('and the torch reaches the renderer, at the player\'s hand, at the template radius',
+    !!inArray.hit && Math.abs(inArray.hit[3] - 14) < 1e-3, inArray);
+  // THE CAMERA HAS TO BE WHERE THE PLAYER IS. Earlier steps warped the
+  // player onto a foe forty units away while the fly-cam stayed at the
+  // start - so a screenshot taken here showed an unlit corridor the
+  // torch was nowhere near, which reads exactly like a broken torch.
+  // The numeric check above is the proof; this makes the picture agree
+  // with it.
+  await page.evaluate(() => {
+    const e = window.__player.eye;
+    window.__pose(e[0], e[1], e[2], 0, 0);
+  });
+  await frames(3);
+  await shot('04-torch-lit');
+  await page.evaluate(async () => {
+    const st = await import('/src/systems/settings.js');
+    st.setValue('Enhancements', 'PlayerTorchFromItems', 'False');
+    window.__playerEntity.lightSource = null;
+  });
+  await frames(3);
+  await shot('05-torch-doused');
+  await page.evaluate(async () => {
+    const st = await import('/src/systems/settings.js');
+    st.setValue('Enhancements', 'PlayerTorchFromItems', 'True');
+    const e = window.__playerEntity;
+    e.lightSource = (e.items ?? []).find((i) => i.templateIndex === 247) ?? null;
+  });
+  await frames(3);
+  // it BURNS. 20 real seconds per point, and this torch has 4.
+  const burned = await page.evaluate(async () => {
+    const e = window.__playerEntity;
+    const t0 = performance.now();
+    const start = e.lightSource?.currentCondition ?? -1;
+    // The host clamps its frame delta at 0.1s (dungeon.js:349), and
+    // under swiftshader a frame takes far longer than that - so the
+    // torch burns in CLAMPED frame time, roughly a third of the wall
+    // clock here. That is the host's own guard, not the torch's, and
+    // every other dt-driven law in this host lives with it; the probe
+    // simply waits long enough rather than pretending otherwise.
+    while (performance.now() - t0 < 150000 && (e.lightSource?.currentCondition ?? -1) === start) {
+      await new Promise((r) => requestAnimationFrame(r));
+    }
+    return { start, now: e.lightSource?.currentCondition ?? null, waited: Math.round(performance.now() - t0),
+      state: e._torch ? { buf: Number(e._torch.tickTimeBuffer.toFixed(2)), range: Number((e._torch.range ?? 0).toFixed(2)) } : null };
+  });
+  check('and it burns a point of fuel on the wall clock', burned.now === burned.start - 1, burned);
+  await page.evaluate(async () => {
+    const st = await import('/src/systems/settings.js');
+    st.setValue('Enhancements', 'PlayerTorchFromItems', 'False');
+  });
 }
 
 check('zero page errors', realErrors.length === 0, { errors: realErrors.slice(0, 4) });
