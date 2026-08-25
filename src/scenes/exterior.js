@@ -665,7 +665,8 @@ export async function bootExterior(canvas, renderer, params, status) {
       grounded: startRestGroundedCheck(!!player.grounded, player.pos, collider),
     });
     if (!gate.ok) {
-      // DFU raises the enemy alert on the enemies arm (:655).
+      // DFU raises the enemy alert on the enemies arm
+      // (DaggerfallUI.cs:655 - not the rest window's :655).
       if (gate.alert) setEnemyAlert(playerEntity, true, Math.floor(worldMinutes()));
       const lines = townTalk.lines(gate.textId);
       if (lines) townTalk.showOverlay(new ActionTextBox(lines));

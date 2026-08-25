@@ -925,7 +925,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // AUDIT 24 (wave 30) - THE BROKER RUNS UNDER THE REST WINDOW.
     // The old line here said "the round loop catches the magic
     // rounds up", and it does not: dungeon.js returns at the
-    // overlay gate (:385-396) before this host's frame body, so
+    // overlay gate (its `hold gameplay, keep the loop` return -
+    // NAMED, not numbered: it was cited as :385-396, which drift has
+    // since made the footsteps block) before this host's frame body, so
     // through a whole rested night nothing ticked a disease, a
     // poison or an active effect - and the marker then fired the
     // entire backlog in ONE burst on the first frame after the
@@ -2612,7 +2614,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       });
       if (!gate.ok) {
         // E-slice: the ROUTED leg closes - DFU raises the alert on the
-        // enemies arm (:655), which is what arms this host's
+        // enemies arm (DaggerfallUI.cs:655, not the rest window's
+        // :655), which is what arms this host's
         // rest-encounter roll.
         if (gate.alert) setEnemyAlert(playerEntity, true, classicMinutesRef.value);
         const lines = rscLines(gate.textId);

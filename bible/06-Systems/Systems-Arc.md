@@ -2742,6 +2742,20 @@ pin that checks the Rest arm sits inside the ladder's guard compared
 two `indexOf` results raw, so an arm hoisted ABOVE the guard would
 give `-1` and pass - the exact escape it existed to catch.
 
+**The citation sweep was the lesson, not the citations.** Round four
+fixed drifted citations one string at a time and left a third copy of
+the Vagrancy range in `world.js` untouched - which is exactly how this
+failure mode survives a review. A MECHANICAL sweep over all 63 C#
+citations in the slice (extract, resolve the file, print the real
+lines, read them) then found two more that no reader would have
+caught: a bare `(:655)` in three hosts, which means
+`DaggerfallUI.cs:655` but resolves against those blocks' other
+`DaggerfallRestWindow` numbers to `DoRestForAWhile(false)`; and a
+PORT-INTERNAL citation, `dungeon.js (:385-396)`, which drift had
+turned into the footsteps block. Both are now spelled out or named
+rather than numbered. The sweep is the right shape for this class -
+one grep per range beats one careful reader.
+
 Pins: 37 in `restlodging.test.js`. 62 mutations, 62 dead. The first
 pass left four alive and all four were the same failure of nerve: a
 pin that named a thing instead of exercising it. The host pins matched

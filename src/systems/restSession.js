@@ -95,7 +95,9 @@ export const illegalRestWarning = () => getBool('GUI', 'IllegalRestWarning');
  * three more hosts a rest key, so the gate needs one home too.
  *
  *  1. AreEnemiesNearby(TRUE) - the RESTING variant, the same one the
- *     hourly break uses. DFU raises the enemy alert HERE (:655), which
+ *     hourly break uses. DFU raises the enemy alert HERE
+ *     (DaggerfallUI.cs:655 - every other number in this doc is the
+ *     rest window's, so this one is spelled out), which
  *     is what arms the dungeon's rest-encounter roll, and then shows
  *     TEXT.RSC 354.
  *  2. Swimming, or failing StartRestGroundedCheck (PlayerMotor.cs:
