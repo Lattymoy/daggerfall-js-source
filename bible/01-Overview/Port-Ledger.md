@@ -285,7 +285,7 @@ restate them independently.
 - SPELL_MAKER_EFFECTS rows: **91**
 - ...of which still inert (no runtime arm): **6**
 - SERVICE_DESTINATION guild services: **20**
-- ...of which still unbuilt (destination null): **1**   <!-- H1: ReceiveHouse shipped; DaedraSummoning is the last -->
+- ...of which still unbuilt (destination null): **0**   <!-- G7: DaedraSummoning was the last -->
 
 | Feature | DFU source | Target |
 | The outdoor RAIN LOOP keeps playing indoors (`src/systems/ambientEffects.js`) | AUDIT 21's hosts lane filed this as a major bug - it is DFU. WeatherManager.Update (:146-155) opens with "Do nothing if player inside" and RETURNS, so SetAmbientEffects never runs and `Presets` stays frozen at Rain; AmbientEffectsPlayer.Update (:134-137) keeps the loop alive while Presets says so. The component is still running indoors, which its own `IsCemeteryNearby && !playerEnterExit.IsPlayerInside` guard at :154 proves - that line would be dead code otherwise. So the rain follows you into the tavern and layers under the dungeon ambience in DFU exactly as it does here, and a setPreset('none') on the transition would be a DEPARTURE rather than a fix. Recorded so the next audit does not re-file it |

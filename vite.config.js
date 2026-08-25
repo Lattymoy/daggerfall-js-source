@@ -49,6 +49,9 @@ export default defineConfig({
         // A PROTOTYPE, and deployed on purpose: a design that claims to
         // adapt to a phone has to be opened on one.
         enhanced: 'enhanced.html',
+        // The same, for the FRONT DOOR - the four boot screens
+        // (title, launcher, splash, PICK03I0) as one menu.
+        menu: 'menu.html',
       },
     },
   },

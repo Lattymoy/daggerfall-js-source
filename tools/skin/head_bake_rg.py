@@ -9,28 +9,12 @@ YAWS=[0,45,90,135,180,225,270,315]
 # for the same head - a 55% spread - so the same rig height sampled the brow in
 # one view and the mouth in another and the blend averaged them: mush at 45,
 # two faces at 90. The views share a frame now, so the landmark transfers.
-def _headEnd(path):
-    """The head ends at the NECK. This was right the first time and every guard
-    I bolted on afterwards moved away from it: the plain pinch gave 0.731 where
-    a visual sweep says 0.75, within 3%, while the skin-valley and skin-end
-    variants landed at 0.55-0.66 and cut the mouth off the bottom of the cell.
-    The narrowest silhouette row between the head and the shoulders, required to
-    be a real pinch rather than a gap, plus 3% because the rig's head group ends
-    just below the neck rather than at it."""
-    _m=np.array(Image.open(path).convert('RGBA'))[:,:,3]>0
-    _h=_m.shape[0]; _w=np.array([int(_m[r].sum()) for r in range(_h)])
-    _hw=int(_w[int(_h*0.15):int(_h*0.50)].max())
-    _lo,_hi=int(_h*0.45),int(_h*0.92)
-    _nk=min(range(_lo,_hi), key=lambda r:_w[r])
-    if _hw*0.10 < _w[_nk] < _hw*0.72:
-        return min(0.92, _nk/_h + 0.03)
-    return max(((int(_w[r+1])-int(_w[r]), r) for r in range(int(_h*0.55),_h-2)))[1]/_h
-
-_fr=[_headEnd(f'heads/f{FACE}_{_Y:03d}.png') for _Y in YAWS]
-SH_FRAC=float(np.median(_fr))
-print(f'head ends at {SH_FRAC:.3f} (spread {min(_fr):.2f}..{max(_fr):.2f})')
+import json as _json
+_SPANS=_json.load(open('spans.json'))
+SH_FRAC=float(_SPANS[str(FACE-1)])
+print(f'span {SH_FRAC:.2f} (confirmed by eye, not detected)')
 def _skinSide(Y):
-    A=np.array(Image.open(f'heads/f{FACE}_{Y:03d}.png').convert('RGBA'))
+    A=np.array(Image.open(f'heads_rg/f{FACE}_{Y:03d}.png').convert('RGBA'))
     m=A[:,:,3]>0; rgb=A[:,:,:3].astype(int); H=m.shape[0]
     r0,r1=int(H*0.849*0.28),int(H*0.849*0.60)
     sub=rgb[r0:r1]; ms=m[r0:r1]
@@ -43,7 +27,7 @@ print(f'rotation: {"REFLECTED" if _flip else "as-labelled"}'
       + (f'  (90<->270, 45<->315, 135<->225)' if _flip else ''))
 V={}
 for Y in YAWS:
-    im=Image.open(f'heads/f{FACE}_{SRC[Y]:03d}.png').convert('RGBA'); A=np.array(im)
+    im=Image.open(f'heads_rg/f{FACE}_{SRC[Y]:03d}.png').convert('RGBA'); A=np.array(im)
     m=A[:,:,3]>0; H,W=m.shape
     w=[int(m[r].sum()) for r in range(H)]
     top=next(r for r in range(H) if w[r]>0)
@@ -272,5 +256,5 @@ for d in range(3):
     a=cell[:,d].astype(np.float32); b=cell[:,HW-1-d].astype(np.float32)
     m=(a+b)/2
     cell[:,d]=m.astype(np.uint8); cell[:,HW-1-d]=m.astype(np.uint8)
-Image.fromarray(cell).save(f'heads/cell_{FACE}.png')
-print(f'baked head cell {HW}x{HH} -> heads/cell_{FACE}.png')
+Image.fromarray(cell).save(f'heads_rg/cell_{FACE}.png')
+print(f'baked head cell {HW}x{HH} -> heads_rg/cell_{FACE}.png')

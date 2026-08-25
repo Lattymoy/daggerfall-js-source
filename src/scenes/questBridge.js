@@ -261,6 +261,10 @@ export function createQuestBridge(ctx) {
      *  DaggerfallQuestOfferWindow instead of the talk window when the
      *  clicked NPC is carrying work (:758-770), so this is the arm
      *  that finally makes a townsperson a questor. */
+    /** G7: the daedric quest a successful summoning offers. */
+    offerDaedricQuest(questName, summonerFactionId) {
+      return offerFlow.offerNamedQuest(questName, summonerFactionId);
+    },
     offerSocialQuest(npcData, socialGroup, menu = false) {
       return offerFlow.offerSocialQuest(npcData, socialGroup, menu);
     },
