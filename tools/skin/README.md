@@ -38,6 +38,18 @@ the browser.
 The head cell is baked from an eight-direction head turnaround the same way the
 body is, then the face is layered per race at runtime from `FACE*.CIF`.
 
+## Skin tone (skin_ramps.py)
+
+The HEAD is the authority on skin tone - it carries the artist's actual colour -
+so each face derives the body ramp its own head implies, and the body's
+intensity map runs through that. Mean |head jaw - body chest| falls from 8.9 on
+one shared Breton ramp to 5.8, and six of the ten land within 1.5.
+
+The ramp is HISTOGRAM-MATCHED to the body atlas, not evenly sampled across the
+face's tonal range: the body averages ~192 of 255, so an even ramp puts the
+whole torso on its bright end and the body comes out pale against the face.
+`ramp[i]` is the face's skin at the percentile body-intensity `i` occupies.
+
 ## Laws learned building it (do not relearn these)
 
 - **Bin count must not exceed the data.** The head is 168 faces built from SEVEN
