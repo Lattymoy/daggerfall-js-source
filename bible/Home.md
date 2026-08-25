@@ -254,21 +254,21 @@ combat line numbers below are refreshed with it.
 - `src/scenes/shared.js:238` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:343` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:706` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:741` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:747` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1167` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
-- `src/scenes/world.js:1171` - while inSunlight/inHolyPlace stay the E1 FLAGGED seams no host
-- `src/scenes/world.js:1541` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
-- `src/scenes/world.js:1942` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:2218` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:2388` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
-- `src/scenes/world.js:2472` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:2714` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:2741` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:3137` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:3457` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/world.js:3530` - (FLAGGED: exterior corpse containers are the loot arc's), so
+- `src/scenes/world.js:707` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:742` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:748` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1168` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
+- `src/scenes/world.js:1172` - while inSunlight/inHolyPlace stay the E1 FLAGGED seams no host
+- `src/scenes/world.js:1542` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
+- `src/scenes/world.js:1943` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:2219` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:2389` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
+- `src/scenes/world.js:2473` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:2721` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:2748` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:3144` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:3464` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:3537` - (FLAGGED: exterior corpse containers are the loot arc's), so
 - `src/scenes/worldModes.js:287` - rather than pretending to scan. FLAGGED.
 - `src/scenes/worldModes.js:412` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:560` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
