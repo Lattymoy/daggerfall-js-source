@@ -51,6 +51,10 @@ export async function runLauncher(canvas, renderer, status) {
         const { pickMusicFolder } = await import('./dataSource.js');
         await pickMusicFolder();
       },
+      onPickTextures: async () => {
+        const { pickTextureFolder } = await import('./dataSource.js');
+        await pickTextureFolder();
+      },
     });
     const finish = () => {
       if (done) return;

@@ -239,6 +239,12 @@ export class ChargenFlow {
     // above; the defaults are unchanged.
     this.buildBackstory = (backstoryId, effects) => buildBackstory(backstoryId, effects);
     this.repBoxRows = (changed) => repBoxRows(changed);
+    // The summary's unspent-points refusal, on the same terms - the
+    // fifth and last of the flow's TEXT.RSC readers, and the one that
+    // gates the OK button. Its default's own fallback is [''], so
+    // without a source the box opens EMPTY: a refusal with no reason
+    // in it, which reads as a dead button.
+    this.bonusPointsRows = () => bonusPointsRows();
     this.cursor = 0;          // the BIOGRAPHY screen's answer cursor
     // U16: StatsRollout and SkillsRollout are two INDEPENDENT DFU
     // components with a selection each. One shared cursor was fine
@@ -1219,7 +1225,7 @@ export class ChargenFlow {
    *  ClickAnywhereToClose box rather than closing the window. */
   confirmSummary() {
     if (this.statPool > 0 || this.pools.primary > 0 || this.pools.major > 0 || this.pools.minor > 0) {
-      this.poolBox = bonusPointsRows?.() ?? [''];
+      this.poolBox = this.bonusPointsRows?.() ?? [''];
       return;
     }
     // GetUpdatedCharacterDocument (:138-148): the OK arm is where the

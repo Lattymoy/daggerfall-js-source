@@ -138,7 +138,11 @@ export const RECTS = Object.freeze({
 export const SUMMARY_REFLEX_ORIGIN = Object.freeze([246, 95]);
 
 /** CreateCharSummary.cs:32 - strYouMustDistributeYourBonusPoints. */
-const SUMMARY_BONUS_TEXT_ID = 14;
+/** TEXT.RSC's unspent-points box, the summary's OK gate. Exported for
+ *  the same reason CLASS_DESCRIPTION_TEXT_ID is: the enhanced view
+ *  needs the record and a second literal 14 is how the two skins come
+ *  to refuse with different words. */
+export const SUMMARY_BONUS_TEXT_ID = 14;
 
 /** CreateCharClassSelect.cs:31 - startClassDescriptionID. The picked
  *  class's description is record 2100 + its index. */

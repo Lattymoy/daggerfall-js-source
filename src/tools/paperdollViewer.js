@@ -278,7 +278,8 @@ const BEAST = { Khajiit: 1, Argonian: 1 };
 // skin tone (lit skin R 161..209), and the head is the authority on that.
 let headCells = null, skinRamps = null, headPick = 0, headRace = null;
 const HEAD_SET = { Breton: 'breton', Redguard: 'redguard', Nord: 'nord',
-  'Dark Elf': 'darkelf', 'High Elf': 'highelf', 'Wood Elf': 'woodelf' };
+  'Dark Elf': 'darkelf', 'High Elf': 'highelf', 'Wood Elf': 'woodelf',
+  Argonian: 'argonian' };
 async function loadHeads() {
   const key = HEAD_SET[RACES[raceIx]];
   if (!key) { headCells = null; skinRamps = null; headRace = null; applyTone(); return; }

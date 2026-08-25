@@ -30,14 +30,14 @@ YAWS=[0,45,90,135,180,225,270,315]
 # hair falls below the chin, so it frames at 0.75.
 import json as _json
 import os as _os
-_sp=_json.load(open('spans_we.json'))[str(FACE-1)]
+_sp=_json.load(open('spans_ar.json'))[str(FACE-1)]
 if 'SPAN' in _os.environ: _sp=[float(x) for x in _os.environ['SPAN'].split(':')] if ':' in _os.environ['SPAN'] else float(_os.environ['SPAN'])
 # a span may be a single number (bottom only) or top:bottom. A topknot or
 # tall hair sits ABOVE the crown and no bottom trim can frame it out.
 TOP_FRAC, SH_FRAC = (float(_sp[0]), float(_sp[1])) if isinstance(_sp,(list,tuple)) else (0.0, float(_sp))
 print(f'span {TOP_FRAC:.2f}:{SH_FRAC:.2f}')
 def _skinSide(Y):
-    A=np.array(Image.open(f'heads_we/f{FACE}_{Y:03d}.png').convert('RGBA'))
+    A=np.array(Image.open(f'heads_ar/f{FACE}_{Y:03d}.png').convert('RGBA'))
     m=A[:,:,3]>0; rgb=A[:,:,:3].astype(int); H=m.shape[0]
     r0,r1=int(H*0.849*0.28),int(H*0.849*0.60)
     sub=rgb[r0:r1]; ms=m[r0:r1]
@@ -50,7 +50,7 @@ print(f'rotation: {"REFLECTED" if _flip else "as-labelled"}'
       + (f'  (90<->270, 45<->315, 135<->225)' if _flip else ''))
 V={}
 for Y in YAWS:
-    im=Image.open(f'heads_we/f{FACE}_{SRC[Y]:03d}.png').convert('RGBA'); A=np.array(im)
+    im=Image.open(f'heads_ar/f{FACE}_{SRC[Y]:03d}.png').convert('RGBA'); A=np.array(im)
     m=A[:,:,3]>0; H,W=m.shape
     w=[int(m[r].sum()) for r in range(H)]
     top=next(r for r in range(H) if w[r]>0)
@@ -292,5 +292,5 @@ if len(_i)>8:
     if abs(_c-0.5)>0.012:
         cell=np.roll(cell, int(round((0.5-_c)*HW)), axis=1)
         print(f'recentred {(_c-0.5)*360:+.1f} deg')
-Image.fromarray(cell).save(f'heads_we/cell_{FACE}.png')
-print(f'baked head cell {HW}x{HH} -> heads_we/cell_{FACE}.png')
+Image.fromarray(cell).save(f'heads_ar/cell_{FACE}.png')
+print(f'baked head cell {HW}x{HH} -> heads_ar/cell_{FACE}.png')

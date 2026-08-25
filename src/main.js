@@ -55,10 +55,13 @@ async function boot() {
   // chosen a game folder straight into a music picker would be asking
   // for the second thing before the first. Idempotent, so a path that
   // gates again below costs nothing.
-  if (params.has('music')) {
+  if (params.has('music') || params.has('textures')) {
     await ensureData();
-    const { pickMusicFolder } = await import('./scenes/dataSource.js');
-    await pickMusicFolder();
+    const ds = await import('./scenes/dataSource.js');
+    // Both, when both are asked for - they are separate packs and a
+    // player setting up for the first time wants one trip, not two.
+    if (params.has('music')) await ds.pickMusicFolder();
+    if (params.has('textures')) await ds.pickTextureFolder();
   }
   // Window emission style for every scene. DFU's GetMaterial default is Day.
   renderer.setWindowEmission(windowEmissionRGB(params.get('window') || 'day'));

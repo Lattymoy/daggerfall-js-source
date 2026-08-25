@@ -228,14 +228,24 @@ test('music: replacements get their OWN store, away from the download diet', () 
   // KEEP - the ingest diet - rejects every audio extension by design,
   // and a pin fails if that filter moves without a MANIFEST_V bump. A
   // music pack in the arena2 store would be filtered out at pick time.
+  // M-TEX RE-AIMED THIS. The pin used to spell out the music store's
+  // own transactions and its own create-if-missing line; the ingest is
+  // shared with textures now, so those exact strings are gone while
+  // the LAW is unchanged - the pin follows it rather than being
+  // loosened. The law: music is a store of its own, not the ARENA2
+  // one, and it is reached through the shared asset helpers.
   const d = src('scenes/dataSource.js');
   assert.match(d, /const MUSIC_STORE = 'music';/);
-  assert.match(d, /transaction\(MUSIC_STORE/);
-  // the upgrade creates what is MISSING - an existing player arrives at
-  // version 1 holding a full ARENA2 ingest and must not lose it
-  assert.match(d, /indexedDB\.open\(DB_NAME, 2\)/);
+  assert.match(d, /ASSET_STORES = \[MUSIC_STORE, TEXTURE_STORE\]/,
+    'music is an ASSET store, listed apart from the ARENA2 one');
+  assert.match(d, /assetNames\(MUSIC_STORE\)/);
+  assert.match(d, /assetBytes\(MUSIC_STORE, fileName\)/);
+  assert.match(d, /storeAssets\(MUSIC_STORE, files/);
+  // the upgrade creates what is MISSING - an existing player arrives on
+  // an older version holding a full ARENA2 ingest and must not lose it
+  assert.match(d, /indexedDB\.open\(DB_NAME, 3\)/);
   assert.match(d, /if \(!d\.objectStoreNames\.contains\(STORE\)\) d\.createObjectStore\(STORE\);/);
-  assert.match(d, /if \(!d\.objectStoreNames\.contains\(MUSIC_STORE\)\) d\.createObjectStore\(MUSIC_STORE\);/);
+  assert.match(d, /if \(!d\.objectStoreNames\.contains\(name\)\) d\.createObjectStore\(name\);/);
   // clearStoredData is ARENA2 recovery and must NOT sweep the music:
   // re-picking the game files is not asking to lose the pack
   const clear = d.slice(d.indexOf('export async function clearStoredData()'));

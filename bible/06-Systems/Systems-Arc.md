@@ -3243,3 +3243,89 @@ a session - the same distribution, a different position in the
 stream. And the **live probe** is owed with S40/U41/U42's: no ARENA2
 data on this machine, so a year of game time has been driven only in
 node.
+
+## M-EXT / M-FM / M-TEX - THE ASSET INJECTION ARC (2026-08-25)
+
+The whole arc came out of a request to hear better music, and the
+useful part is where it refused to go.
+
+**THE LINE, FIRST, BECAUSE EVERY SLICE HERE SITS ON IT.** Daggerfall's
+game data is freeware and not redistributable; `scenes/dataSource.js`
+has said so since it was written, and the picker says it to every
+player. The same is true, more strongly, of a third party's remake
+pack. So nothing in this arc bundles audio or art: the player points at
+their own folder and it is stored in their own browser. "Open source"
+does not change that - a licence covers the code its author wrote, not
+music they did not, which is why Daggerfall Unity is MIT and still
+makes every user supply their own game files. The architecture already
+knew this; the arc only had to not break it.
+
+**THE PATTERN, ESTABLISHED ONCE AND REUSED TWICE.** DFU's
+`Utility/AssetInjection` layer reads loose files from
+`StreamingAssets`, gated on `Settings.AssetInjection`, and asks for a
+replacement BEFORE it reaches its own data. `systems/musicReplacement.js`
+ports that shape - index by name, check the gate INSIDE the lookup,
+answer bytes or nothing, let the caller read nothing as "use the
+classic" - and `systems/textureReplacement.js` is deliberately the same
+shape one domain over. A second domain that invented its own would be a
+second thing to learn and a second thing to get wrong.
+
+**THE SETUP WIN CAME FROM READING DFU'S NAMING, NOT INVENTING ONE.**
+`SoundReplacement` asks for `song.ToString()` over a `SongFiles` enum
+whose members are `song_` + the archive record, lowercased; texture
+names come from `GetName` as `{archive:000}_{record}-{frame}`. So a
+pack built for Daggerfall Unity is ALREADY named correctly for this
+port. Accepting those forms turned "hand-rename a hundred files" into
+"point at the folder you downloaded" - the single largest usability
+change in the arc, and it cost one regex once the source was read.
+The `song_` strip is safe because the archive says so: an ARENA2-gated
+corpus pin walks all 131 records and proves none begins with `SONG_`,
+because a record that did would point its replacement at a DIFFERENT
+song and the failure would be a wrong track playing, which no unit
+fixture can notice.
+
+**THE TWO DOMAINS DIVERGE ON ONE THING, AND IT IS THE INTERESTING
+ONE.** Music can commit and arrive late: `playSong` returns true, the
+decode lands a beat later, and a song is a continuous thing. A texture
+cannot - `uploadRecord` is synchronous and runs off the draw path, so a
+late arrival is a visible pop or a missing wall. Textures therefore
+decode AHEAD, in `getTexture()`, where there is already an await and
+the result is already cached per archive, and before the archive is
+published or a draw could beat them. Same law, different physics.
+
+**THREE FINDINGS THE WORK TURNED UP THAT WERE NOT THE WORK.**
+
+`Audio/AlternateMusic` reached nothing. Every FM playlist had been
+ported since A5 with its DFU quirks intact, `outdoorPlaylist` and
+`playlistFor` branched on `fm`, `SongManager` took it, and
+`createMusicDirector` accepted and forwarded it - while all three hosts
+called it with no arguments. The read went into the factory, not the
+call sites: three call sites are three chances to forget and one read
+is none.
+
+The settings screen's two input paths disagreed. `onYes` is the house
+idiom five other windows use, and the MOUSE path honoured it while the
+KEYBOARD path had no branch for it. Nothing set it on a settings dialog
+until this arc, so it was latent - the first dialog to carry an action
+would have worked on click and done nothing on Enter.
+
+And a false green, which is the one to remember. Pinning a tool's label
+map meant importing it from a test, and the tool did its work at the
+top level and called `process.exit` - so the import KILLED THE RUNNER
+after the first test. The file reported `# tests 1 / # fail 0` and
+looked healthy while ten of its eleven tests never ran. Neither the
+manifest guard nor the pass line could catch that: both count tests in
+the SOURCE, not tests that executed. The only signal was the total.
+Any module with top-level side effects can truncate the suite, and
+green means nothing while one is being imported.
+
+STILL OUT: `WorldDataReplacement` (JSON regions, locations, blocks,
+buildings), and the `.dfmod` bridge. A `.dfmod` is a Unity AssetBundle -
+binary, Unity-version-locked, holding serialized Unity objects and
+often compiled C# - so running one is out permanently and always was;
+what is reachable is an OFFLINE unpacker that turns an asset-only mod
+into loose files this layer already reads. Not attempted yet for one
+reason worth recording: there is no `.dfmod` on this machine to test
+against, and a binary parser written against a remembered spec and
+shipped unverified is the exact shape this project's pins exist to
+prevent.

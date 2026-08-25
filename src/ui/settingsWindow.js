@@ -28,6 +28,7 @@ import { widgetFor, formatValue, stepValue, blockedReason } from './settingsLaw.
 import { effectiveSettings, setValue, saveSettings, resetToDefaults, tierOf, DEFAULTS } from '../systems/settings.js';
 import { getPref, setPref, isOpen, setOpen } from '../systems/uiPrefs.js';
 import { replacementCount } from '../systems/musicReplacement.js';   // M-EXT: the row reports what the pick covers
+import { textureReplacementCount } from '../systems/textureReplacement.js';   // M-TEX: and the texture half
 import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES } from '../systems/uiSkin.js';
 import { measureText, drawText } from './text.js';
 import { drawRect, shadowText } from './nativePanel.js';
@@ -59,7 +60,7 @@ const GROUPS = [
 const inRect = ([x, y, w, h], px, py) => px >= x && py >= y && px < x + w && py < y + h;
 
 export class SettingsWindow {
-  constructor({ onLaunch = () => {}, dataSourceLabel = '', onPickMusic = null } = {}) {
+  constructor({ onLaunch = () => {}, dataSourceLabel = '', onPickMusic = null, onPickTextures = null } = {}) {
     this.onLaunch = onLaunch;
     // M-EXT: the music-pack picker. A HOOK and not an import,
     // because the picker lives in scenes/dataSource.js and a ui/
@@ -68,6 +69,7 @@ export class SettingsWindow {
     // feature and simply offers no button - which is what a host
     // that cannot pick files (a test, a headless harness) should get.
     this.onPickMusic = onPickMusic;
+    this.onPickTextures = onPickTextures;
     this.dataSourceLabel = dataSourceLabel;
     this.done = false;
     this.isChoiceWindow = true;
@@ -364,14 +366,18 @@ export class SettingsWindow {
     if (key === 'Enhancements/AssetInjection' && this.onPickMusic) {
       lines.push('');
       lines.push(`Music files supplied: ${replacementCount()}`);
+      lines.push(`Texture files supplied: ${textureReplacementCount()}`);
       lines.push('A Daggerfall Unity music pack works AS-IS - its');
       lines.push('song_*.ogg names are already the right ones.');
       lines.push('Otherwise name files after the song they replace,');
       lines.push('e.g. GDAY___D.ogg. Skipped songs keep the original.');
       return {
         title: labelOf(key), key, lines,
-        buttons: [{ id: 'pick', label: 'Choose Folder' }, { id: 'close', label: 'Close' }],
+        buttons: [{ id: 'pick', label: 'Enter - Music' },
+          ...(this.onPickTextures ? [{ id: 'pickTex', label: 'T - Textures' }] : []),
+          { id: 'close', label: 'Esc - Close' }],
         onYes: () => this.onPickMusic(),
+        onAlt: this.onPickTextures ? () => this.onPickTextures() : null,
       };
     }
     return { title: labelOf(key), key, lines, buttons: [{ id: 'close', label: 'Close' }] };
@@ -397,6 +403,19 @@ export class SettingsWindow {
   input(code, e = null, canvas = null) {
     const L = this.layout(canvas ?? { width: 1280, height: 800 });
     if (this.dialog) {
+      // M-TEX: a SECOND action needs a way to be chosen, and this
+      // dialog has no button hit-testing - Enter/Space/Escape are the
+      // whole vocabulary. So the alternate carries its own key, which
+      // is the keyed-window idiom ChoiceWindow already uses for Y/N,
+      // and the button is LABELLED with it rather than looking
+      // clickable and doing nothing.
+      if (code === 'KeyT' && this.dialog.onAlt) {
+        const alt = this.dialog.onAlt;
+        this.dialog = null;
+        alt();
+        this._click();
+        return;
+      }
       if (code === 'Escape' || code === 'Enter' || code === 'Space') {
         const d = this.dialog;
         this.dialog = null;
