@@ -355,6 +355,30 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   border-top: 1px solid var(--iron); background: var(--ink);
 }
 
+/* ── A STAGE THAT IS ONLY ITS QUESTION ──────────────────────────
+   Sex and the class METHOD are two choices each. Two choices get two
+   large targets and an empty screen around them: a two-button question
+   dressed as a form is a two-button question that reads as work. */
+.choose { display: grid; place-content: center; gap: 28px; padding: 40px 30px; height: 100%; }
+.choose h2 {
+  font-family: var(--display); font-weight: 300; font-size: 30px;
+  margin: 0; text-align: center;
+}
+.bigchoice { display: grid; grid-template-columns: repeat(2, minmax(200px, 260px)); gap: 12px; }
+.bigchoice.tall { grid-template-columns: minmax(280px, 420px); }
+.bigbtn {
+  padding: 26px 22px; min-height: 88px; border: 1px solid #39424e;
+  background: #12161b; color: var(--dim); text-align: center;
+  letter-spacing: 0.05em; font-size: 17px;
+}
+.bigchoice.tall .bigbtn { text-align: left; }
+.bigbtn:hover { color: var(--bone); border-color: var(--dim); }
+.bigbtn.on { color: var(--brass); border-color: var(--brass); }
+.bigk { display: block; font-size: 17px; color: var(--bone); }
+.bigbtn:hover .bigk { color: var(--brass); }
+.bign { display: block; font-size: 13px; color: var(--dim); margin-top: 7px; letter-spacing: 0.02em; }
+.stagebody > .list { background: var(--slate); overflow: auto; }
+
 /* ── THE PROVINCE MAP ───────────────────────────────────────
    Traced from the player's own TAMRIEL2.IMG (ui/provinceMap.js), so
    these are Bethesda's coastlines and ours is only the ink. Unselected
@@ -431,6 +455,9 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   .stagebody > .detail.sheet.open { transform: translateY(0); }
   /* the rail is the desk's; the strip is the phone's - never both */
   .wizard .rail { display: none; }
+  .choose { padding: 28px 20px; gap: 22px; }
+  .choose h2 { font-size: 24px; }
+  .bigchoice, .bigchoice.tall { grid-template-columns: 1fr; }
   .wizard .stepstrip { display: block; order: 3; background: var(--ink); padding: 12px 20px max(12px, env(safe-area-inset-bottom)); }
   .wizard .brand { padding-bottom: 12px; }
   .provlabel { font-size: 7px; }
