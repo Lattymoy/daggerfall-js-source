@@ -1059,7 +1059,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // window wherever it is mounted - and an outdoor rest is exactly
     // where a quest CreateFoe wave lands beside a sleeping player.
     abortRestForEnemySpawn: () => {
-      if (townTalk.overlay?.isRestWindow) townTalk.overlay.session?.abortForEnemySpawn?.();
+      if (townTalk.overlay?.isRestWindow) townTalk.overlay.abortForEnemySpawn?.();
     },
     // U43: and the other two windows the INTERIOR host answers keys
     // for. Same rule as makeInventory - this host owns the builder and

@@ -3304,7 +3304,7 @@ export function createWorldModes(host) {
      *  rest window was true until this slice and is not now. */
     raiseOnEncounterEvent() {
       if (mode === 'dungeon') { dungeonCtx?.abortRestForEnemySpawn?.(); return; }
-      if (interiorOverlay?.isRestWindow) { interiorOverlay.session?.abortForEnemySpawn?.(); return; }
+      if (interiorOverlay?.isRestWindow) { interiorOverlay.abortForEnemySpawn?.(); return; }
       // ...and the OUTER host's slot, which is where an outdoor rest
       // window lives (townTalk's). The first S40 pass routed the two
       // slots this module owns and wrote a comment saying the

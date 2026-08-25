@@ -390,7 +390,9 @@ combat line numbers below are refreshed with it.
 - `src/ui/pauseWindow.js:58` - FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
 - `src/ui/potionMakerWindow.js:24` - FLAGGED: DFU's ingredient buttons carry a tooltip and a stack-count
 - `src/ui/restWindow.js:2` - text-panel idiom (backgrounds FLAGGED pending art-name
-- `src/ui/restWindow.js:73` - host whose enchant ctx was FLAGGED unmounted. The flag is raised
+- `src/ui/restWindow.js:74` - host whose enchant ctx was FLAGGED unmounted. The flag is raised
+- `src/ui/restWindow.js:96` - FLAGGED, all three from OnPop/Update and all three belonging to
+- `src/ui/restWindow.js:309` - where classic counts DOWN. The backgrounds are still FLAGGED
 - `src/ui/spellbookWindow.js:91` - says so rather than doing nothing - FLAGGED below.
 - `src/ui/spellbookWindow.js:107` - FLAGGED, idling loudly: the icon picker; the effect popup's body
 - `src/ui/spellbookWindow.js:870` - *  drawn as a flat bar in the panel's own brass - FLAGGED. */

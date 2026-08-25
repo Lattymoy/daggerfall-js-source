@@ -2788,12 +2788,35 @@ the session. `IsLoitering` rides the same lifecycle (`:789` / `:285`);
 DFU has no consumer for it either, and it is carried so a later reader
 finds it right rather than because anything reads it now.
 
-Pins: 40 in `restlodging.test.js`, two of them END TO END - every law
+**Three more from the same lens, and one of them is visible.**
+`ShowStatus` (`:317-346`) picks a different NUMBER and a different
+background per mode: hours PAST for FullRest, hours REMAINING for
+TimedRest and Loiter. The port printed hours-past for all three, so a
+timed rest counted UP on screen where classic counts DOWN. The
+backgrounds stay FLAGGED pending art; the number is not a presentation
+choice. Then the OnEncounter latch: it lived on the SESSION, which
+does not exist while the player is still on the selection page, so a
+quest `CreateFoe` wave landing in that window was lost - DFU sets the
+flag on the WINDOW in `OnPush` and never resets it, so it fires on the
+first `TickRest` after a mode IS picked. And `endEarly` hardcoded "You
+wake up." for a FullRest, where `EndRest` picks
+`IsPlayerFullyHealed() ? healed : wakeUp` at the moment it runs.
+
+Three OnPop behaviours are FLAGGED rather than ported, each because it
+belongs to another arc: `OnSleepEnd` (`:288-289`), whose one consumer
+drains `itemsPendingReroll` - a set the port fills and drains INLINE
+in the magic round, which S40's own `advanceMinutes` runs through the
+sleep, so the same items reroll on the same clock at a different
+moment; `UpdateNpcPresence` (`:277-280`), which the port has no
+NPC-presence pass for at all; and `RaiseOnSleepTickEvent`, which has
+no consumer in DFU's own tree either.
+
+Pins: 43 in `restlodging.test.js`, two of them END TO END - every law
 in this slice driven together through one host-shaped deps bag, from
 the key press to the wake. That is the closest thing to a live probe a
 machine with no ARENA2 data can run, and it is here because a slice
 whose parts each pass and whose whole was never run is exactly what a
-probe catches. 70 mutations, 70 dead. The first
+probe catches. 75 mutations, 75 dead. The first
 pass left four alive and all four were the same failure of nerve: a
 pin that named a thing instead of exercising it. The host pins matched
 `act === 'Rest'`, which survives `if (false && act === 'Rest')`, so

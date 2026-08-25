@@ -18,7 +18,7 @@ import { interiorSceneName } from '../src/systems/sceneCache.js';
 import { setValue, _resetForTests } from '../src/systems/settings.js';
 import { maxFatigue } from '../src/systems/statMods.js';
 import { RAPID_HEALING, healthRecoveryRate } from '../src/systems/rest.js';
-import { REST_WAIT_PER_HOUR } from '../src/systems/restSession.js';
+import { REST_WAIT_PER_HOUR, LOITER_WAIT_PER_HOUR } from '../src/systems/restSession.js';
 import { SKILLS } from '../src/systems/skills.js';
 import { startRestGroundedCheck, CAPSULE_HEIGHT } from '../src/player/motor.js';
 import { areEnemiesNearby } from '../src/systems/encounters.js';
@@ -1128,4 +1128,86 @@ test('S40 IsResting: raised on OPEN, cleared on EVERY exit, and the enchant rate
   assert.match(src('src/scenes/shared.js'), /setLoitering: \(b\) => \{ entity\.isLoitering = !!b; \},/);
   // The window has exactly ONE door that sets `done`.
   assert.equal((src('src/ui/restWindow.js').match(/this\.done = true/g) ?? []).length, 1);
+});
+
+
+test('S40 ShowStatus: FullRest counts hours PAST, timed and loiter count DOWN', () => {
+  // ShowStatus (:317-346) picks a different NUMBER and a different
+  // background per mode: hoursPastTexture + totalHours for FullRest,
+  // hoursRemainingTexture + hoursRemaining for TimedRest and Loiter.
+  // The port showed hours-past for all three, so a timed rest counted
+  // UP where classic counts DOWN. The backgrounds are still FLAGGED
+  // pending art; the number is not a presentation choice.
+  const page = (mode, hours) => {
+    const w = new RestWindow(winDeps());
+    w.input(mode === 'loiter' ? 'char:3' : mode === 'full' ? 'char:2' : 'char:1');
+    if (mode !== 'full') { w.input(`char:${hours}`); w.input('confirm'); }
+    // Rest one hour so the two numbers actually differ. LOITER runs on
+    // its OWN cadence (LOITER_WAIT_PER_HOUR, 1.25s an hour against
+    // rest's 0.75), and a helper that used the rest rate for all three
+    // advanced a loiter only 36 minutes - which is the fixture-at-a-
+    // boundary trap this file has already been caught by twice.
+    const per = (mode === 'loiter' ? LOITER_WAIT_PER_HOUR : REST_WAIT_PER_HOUR) / 10;
+    for (let i = 0; i < 6; i++) w.tick(per + 1e-9);
+    return w;
+  };
+  const t = page('timed', 5);
+  assert.equal(t.session.totalHours, 1);
+  assert.equal(t.session.hoursRemaining, 4, 'one of five hours is gone');
+  const l = page('loiter', 3);
+  assert.equal(l.session.hoursRemaining, 2);
+  const f = page('full');
+  assert.equal(f.session.totalHours, 1);
+
+  // The draw branch reads the right one per mode.
+  const w = src('src/ui/restWindow.js');
+  assert.match(w, /this\.mode === 'full'\n\s+\? `Hours passed: \$\{this\.session\.totalHours\}`\n\s+: `Hours remaining: \$\{this\.session\.hoursRemaining\}`/);
+});
+
+test('S40: an encounter raised BEFORE a mode is picked still breaks the rest', () => {
+  // GameManager_OnEncounter is subscribed in OnPush (:264) and sets
+  // the latch on the WINDOW; DFU never resets it, so a CreateFoe wave
+  // that lands while the player is still on the selection page fires
+  // on the first TickRest after a mode IS picked (:351-354). The port
+  // held the latch on the session, which does not exist yet then - so
+  // the wave was simply lost.
+  const w = new RestWindow(winDeps());
+  assert.equal(w.session, null, 'no session on the selection page');
+  w.abortForEnemySpawn();
+  w.input('char:1'); w.input('char:9'); w.input('confirm');
+  const r = w.session.tick(0);
+  assert.equal(r.enemyBroke, true);
+  assert.equal(r.textId, REST_TEXT.enemiesNearby);
+
+  // ...and mid-rest it still latches straight through.
+  const w2 = new RestWindow(winDeps());
+  w2.input('char:1'); w2.input('char:9'); w2.input('confirm');
+  w2.abortForEnemySpawn();
+  assert.equal(w2.session.tick(0).enemyBroke, true);
+
+  // All four hosts route to the WINDOW, not to its session.
+  for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/worldModes.js',
+    'src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.match(src(f), /\.abortForEnemySpawn\?\.\(\)/, f);
+    assert.doesNotMatch(src(f), /session\?\.abortForEnemySpawn/, `${f}: the session is not the latch's home`);
+  }
+});
+
+test('S40 endEarly: stopping a COMPLETED FullRest still says healed', () => {
+  // EndRest's FullRest arm (:493-499) picks the message at the moment
+  // it runs - `IsPlayerFullyHealed() ? healed : wakeUp` - not at the
+  // moment the hours ran out.
+  const healed = new RestWindow(winDeps({ fullyHealed: () => true }));
+  healed.input('char:2');
+  assert.equal(healed.session.endEarly().textId, REST_TEXT.healed);
+  const hurt = new RestWindow(winDeps({ fullyHealed: () => false }));
+  hurt.input('char:2');
+  assert.equal(hurt.session.endEarly().textId, REST_TEXT.wakeUp);
+  // A timed rest stopped early always wakes; a loiter always loiters.
+  const t = new RestWindow(winDeps({ fullyHealed: () => true }));
+  t.input('char:1'); t.input('char:5'); t.input('confirm');
+  assert.equal(t.session.endEarly().textId, REST_TEXT.wakeUp);
+  const l = new RestWindow(winDeps({ fullyHealed: () => true }));
+  l.input('char:3'); l.input('char:2'); l.input('confirm');
+  assert.equal(l.session.endEarly().textId, REST_TEXT.loiterDone);
 });

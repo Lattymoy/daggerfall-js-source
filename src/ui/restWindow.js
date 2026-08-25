@@ -65,6 +65,7 @@ export class RestWindow {
     this._pending = null;       // the button waiting behind the confirm
     this._allocatedBed = null;  // CanRest's out-parameters, both of
     this._remainingHoursRented = -1;   // them, carried to the session
+    this._pendingEnemySpawn = false;   // a latch raised before a mode is picked
     // OnPush (:266-268): "Raise player resting flag when UI opens.
     // This is used for random enemy spawning and influences
     // CastWhenHeld durability loss" - DFU's own comment. The port HAS
@@ -91,6 +92,26 @@ export class RestWindow {
   }
 
   dispose() { this._close(); }
+
+  // FLAGGED, all three from OnPop/Update and all three belonging to
+  // other arcs rather than to rest:
+  //
+  //  - OnSleepEnd (:288-289): a sleep of MORE than six hours
+  //    (sleepEventMinimumHours, :60) raises an event whose ONE
+  //    consumer is EntityEffectManager.RerollItemEffects
+  //    (:2170-2173), which drains `itemsPendingReroll` - the set
+  //    DoMagicRound fills on each item's own hour clock. The port
+  //    FUSED the queue and the drain: enchantments.js fires the
+  //    RerollEffect payload inline in the magic round once an item is
+  //    REROLL_MINIMUM_HOURS old, and S40's advanceMinutes runs the
+  //    magic rounds THROUGH the sleep, so a rested night rerolls as it
+  //    passes rather than in one flush at the end. Same items, same
+  //    clock, a different moment - written down, not left silent.
+  //  - UpdateNpcPresence (:277-280): leaving the rest window inside a
+  //    building re-rolls which static NPCs are home. The port has no
+  //    NPC-presence pass at all; that is the interior/talk arc's.
+  //  - RaiseOnSleepTickEvent (:206-208) has no consumer in DFU's own
+  //    tree - it is a mod hook.
 
   /** CanRest(alreadyWarned) (:542-599) with DFU's side effects
    *  attached: the crime lands on BOTH the refused and the confirmed
@@ -215,7 +236,22 @@ export class RestWindow {
   _start(mode, hours) {
     this.mode = mode;
     this.session = new RestSession(mode, hours, this.deps, this._remainingHoursRented);
+    // GameManager_OnEncounter is subscribed in OnPush (:264) and sets
+    // the latch on the WINDOW, so a CreateFoe wave that lands while
+    // the player is still on the selection page is not lost - DFU
+    // never resets the flag, and TickRest reads it (:351-354) on the
+    // first tick after a mode IS picked. The port held the latch on
+    // the session, which does not exist yet at that moment.
+    if (this._pendingEnemySpawn) { this._pendingEnemySpawn = false; this.session.abortForEnemySpawn(); }
     this.state = 'resting';
+  }
+
+  /** AbortRestForEnemySpawn (:301-304), routed by the hosts. Before a
+   *  mode is picked there is no session to latch, so the window holds
+   *  it and hands it over at _start. */
+  abortForEnemySpawn() {
+    if (this.session) this.session.abortForEnemySpawn();
+    else this._pendingEnemySpawn = true;
   }
 
   _end(result) {
@@ -266,7 +302,18 @@ export class RestWindow {
       if (this.notice) lines = [...this.notice, '', ...lines];
     } else if (this.state === 'resting') {
       const v = this.deps.vitals?.() ?? null;
-      lines = [this.mode === 'loiter' ? 'Loitering...' : 'Resting...', `Hours passed: ${this.session.totalHours}`];
+      // ShowStatus (:317-346): FullRest shows hours PAST against the
+      // hoursPastTexture; TimedRest and Loiter show hours REMAINING
+      // against hoursRemainingTexture. Two numbers, and the port
+      // showed hours-past for all three - so a timed rest counted UP
+      // where classic counts DOWN. The backgrounds are still FLAGGED
+      // pending art, but the NUMBER is not a presentation choice.
+      lines = [
+        this.mode === 'loiter' ? 'Loitering...' : 'Resting...',
+        this.mode === 'full'
+          ? `Hours passed: ${this.session.totalHours}`
+          : `Hours remaining: ${this.session.hoursRemaining}`,
+      ];
       if (v) lines.push(`Health ${v.health}/${v.maxHealth}  Fatigue ${v.fatigue}  Magicka ${v.magicka}`);
       lines.push('', 'Esc - stop');
     } else if (this.state === 'refused') {

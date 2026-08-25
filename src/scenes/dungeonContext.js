@@ -2764,7 +2764,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  (AbortRestForEnemySpawn; the session answers enemies-nearby on
      *  its next tick). */
     abortRestForEnemySpawn() {
-      if (activeOverlay?.isRestWindow) activeOverlay.session?.abortForEnemySpawn?.();
+      if (activeOverlay?.isRestWindow) activeOverlay.abortForEnemySpawn?.();
     },
     tickOverlay(dt) {
       if (!activeOverlay) return;

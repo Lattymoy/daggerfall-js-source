@@ -237,7 +237,14 @@ export class RestSession {
   /** End the session early (the toggle key / Escape): the mode's own
    *  finish text, exactly as DFU's EndRest on the rest binding. */
   endEarly() {
-    return this._finish(this.mode === 'loiter' ? REST_TEXT.loiterDone : REST_TEXT.wakeUp);
+    // EndRest's mode arms (:487-503), not a flat "You wake up.": a
+    // FullRest stopped on the very frame it completes still reports
+    // healed, because DFU picks `IsPlayerFullyHealed() ? healed :
+    // wakeUp` at the moment EndRest runs rather than at the moment the
+    // hours ran out. Narrow, and one line to be exact about.
+    if (this.mode === 'loiter') return this._finish(REST_TEXT.loiterDone);
+    if (this.mode === 'full' && this.deps.fullyHealed?.()) return this._finish(REST_TEXT.healed);
+    return this._finish(REST_TEXT.wakeUp);
   }
 
   /** GameManager.OnEncounter -> DaggerfallRestWindow.
