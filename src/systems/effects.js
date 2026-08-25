@@ -1207,11 +1207,23 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       const id = ++_bundleSeq;
       const name = spell?.name ?? '';
       const type = heldItem ? 'HeldMagicItem' : 'Spell';
+      // U46: two more fields the HUD's icon rows need, and neither is
+      // derivable after the fact. The ICON is the spell record's own
+      // (LiveEffectBundle.icon); and SELF-CAST is
+      // `bundle.caster == GameManager.PlayerEntityBehaviour`, which
+      // sorts an icon into the buff row or the debuff row - a NULL
+      // caster counts as OTHER, exactly as DFU's `caster == null ||`
+      // arm does. Once the entries are on the list there is nothing
+      // left to read either from.
+      const icon = spell?.icon ?? 0;
+      const selfCast = !!caster?.entity && caster.entity === target;
       for (let i = pinStart; i < list.length; i++) {
         if (list[i].instant) continue;   // instants are probe residue, not a live bundle
         list[i].bundleId = id;
         list[i].bundleName = name;
         list[i].bundleType = type;
+        list[i].bundleIcon = icon;
+        list[i].bundleSelfCast = selfCast;
       }
     }
   }

@@ -4554,21 +4554,120 @@ why: `Cannot access 'say' before initialization`, thrown by
 `createWorldModes` **on its first statement** — `say` is read inside
 `createPlayerTicker`'s options object and declared with `const` forty
 lines below. `bootExterior` died with it, so **the exterior host did
-not boot at all**. This is the third instance of AUDIT 24 wave 37's
-shape and the first that was not merely latent. The two declarations
-move above their use, and wave 37 grew a **fourth gate**: mechanical
-over each host boot's whole body, a top-level `const`/`let`
-(destructures included, which is how twenty names bind at once here)
-must not be *named* above its own declaration. Getting that gate to
-actually fail took four corrections, each recorded at the line it
-fixed — the boot function's own opener counted as a lazy frame and
-marked every line inside it safe (the first draft passed while the
-crash sat four lines from the top); a one-line arrow opens no brace,
-so the depth stack cannot see it; `params.get('loc')` is not a read of
-`loc`; and a template's prose named a binding fifteen lines early
-while its `${...}` really is a read. Proven against the shipped bug
-both ways.
+not boot at all**. Two declarations move above their use. A gate for
+it landed here first and was **removed one slice later**: another
+session found the same crash from the other side — by starting the
+game, in a first-hour playthrough probe — and wrote
+`test/tdz.test.js`, which parses every file in `src/` to an AST and
+reports a reference evaluated in the same execution scope as a
+declaration it precedes. That is this law done properly over the whole
+tree rather than over three boot functions by line, and two gates for
+one law is the second copy this project keeps deleting.
 
 Pins: 11 in `hudlarge.test.js`, 4 in `bss.test.js`, 1 added to
 `audit24_wave37.test.js`. 16 mutations, 15 dead, 1 recorded
 equivalent.
+
+## U46 - HUDACTIVESPELLS: the magic you have been under all along (2026-08-25)
+
+`HUDActiveSpells.cs`, whole. The second of the three components on
+U45's Ledger row, and the one that makes the magic the port has
+*already been running* visible: every buff, drain, paralysis and
+concealment since the S-arc has been invisible on screen unless the
+player opened the spellbook and counted.
+
+**IT READS THE BUNDLES X10 ALREADY BUILT.** `systems/mysticism.js`'s
+`liveBundles` folds each cast's entries back into one bundle carrying
+its name, its type and DFU's per-bundle **ShowIcon** law — and that
+law is word for word this window's `ShowIcon` (:177-190). So the
+Dispel Magic picker and the HUD read one function, not two: an armed
+Open marker is skipped in both, and a held item's bundle shows
+whatever its kind, which is the `|| fromEquippedItem != null` half.
+
+**TWO FIELDS JOINED THE BUNDLE STAMP,** because neither is derivable
+once the entries are on the list: the spell record's own **icon**, and
+whether the **player** cast it. DFU's split is `caster == null ||
+caster != player` → the debuff row, so a bundle with no recorded
+caster is a debuff — which is what a trap or an RDB action's cast
+looks like, and DFU says as much in its own comment. The pin for that
+needs a fixture that really leaves the field *absent*, because the law
+lives in `liveBundles`' `!!` normaliser and a pin one layer up cannot
+see it.
+
+**ONE POOL, TWENTY-FOUR SLOTS, AND THE INDEX IS SHARED.** `poolIndex`
+increments across both lists in one walk, *before* the split, and
+`AlignIcons` then skips anything past the end. So the cap is on the
+total: thirty bundles list thirty and draw twenty-four, and an icon
+that overflows is silently absent while still having consumed its
+number. A per-row counter draws thirty and fails the pin twice.
+
+**EIGHT LAYOUT SCHEMES, AND THE EIGHTH IS WORTH READING TWICE.**
+`smallhorzbottom` sets `iconColumns` to **zero**, against a
+`++column == iconColumns` test that a counter starting at 1 can never
+satisfy — which is exactly what its own comment ("No wrapping") means.
+Ported as written rather than special-cased, because the arithmetic
+already says it. It is also the one scheme that puts the **debuffs
+above the buffs**, because both its rows are at the bottom and
+stacking is the only way to separate them. An unknown scheme name
+falls to Classic, where DFU's defaultless switch leaves both
+positionings null and throws on the first icon.
+
+**THE BLINK IS THE WARNING, AND IT IS NOT FOR ITEMS.** A bundle whose
+*longest* effect has under two rounds left is expiring and blinks at
+4Hz — the longest, because "a spell can have multiple effects with
+different round durations" and the icon belongs to the whole cast, so
+one long member keeps a mixed cast solid. An equipped item's icon
+never blinks: its effect is not running out, it is just there. Paused,
+everything shows. The clock toggles **once per frame**, DFU's `if` and
+not a drain, so a two-second stall makes the blink lag rather than
+strobe — a difference that is visible, which is why it is verbatim.
+
+**THE ROWS DODGE THE BAR, UPWARD ONLY.**
+`AdjustIconPositionForLargeHUD`: "Icon will remain in default position
+unless it needs to avoid being drawn under HUD." The buff row at y=16
+is already clear and must not move; the debuff row at y=177 lifts to
+the bar's top minus 18. And the rows are drawn on **both** branches of
+`drawHud` — `DaggerfallHUD.cs:209` enables them from `ShowActiveSpells`
+alone, and the large-HUD block below it turns off the vitals, the
+compass and the mode icon without ever touching these.
+
+**A SEAM THAT WAS FEEDING ONE CONSUMER.** The spell icon sheet loaded
+with the **spellbook window** — its only reader until now — so the
+rows would have been blank until the player happened to open their
+book once. It loads with the rest of the HUD's art instead, fired and
+not awaited like the registries beside it. That is the F2 shape: a
+feature that silently does nothing while every pin stays green.
+`GUI/IconsPositioningScheme` is tiered live at last, the third setting
+in two slices that the screen was offering with nothing behind it.
+
+**THE POINTER IS ONE STORE.** DFU hangs a ToolTip off every pooled
+icon panel and lets each panel's MouseEnter raise it. The HUD is not a
+window here and owns no pointer handler — the four hosts own the
+mouse — so the virtual position lands in one store on its way past,
+before each host's overlay return, because an overlay up is exactly
+when the tooltip is allowed to show. One store, one blink clock, one
+tooltip: there is one HUD, and four hosts each counting their own
+phase would strobe when the player walked through a door.
+
+**PROBED LIVE** (`tools/activeSpellsProbe.mjs`) at 1280×720 on a real
+character: the sheet is loaded with the spellbook never opened; a real
+**Chameleon** from the starting book, self-cast through `applySpell`,
+lands in the buff row at (27, 16) carrying icon 2 with its non-vendor
+`!` trimmed; a second spell cast by a *foe* lands in the debuff row at
+y=177 (a re-cast of the same spell would not — AddState stacks rounds
+onto the incumbent and pushes no entry at all, which the probe says
+out loud); turning the large HUD on leaves the buff at 16 and lifts
+the debuff from 177 to 160; and the tooltip finds the icon under the
+pointer and nothing on empty screen.
+
+**FLAGGED:** `HUDEscortingNPCFaces`, the third component of that row,
+is quest-gated and not here. DFU's icon *packs*
+(`Resources/SpellIcons`) remain the Ledger note they already were on
+`ui/spellIcons.js`.
+
+Pins: 13 in `hudactivespells.test.js`. 10 mutations, 8 dead, 2
+recorded equivalent — the wrap test's guarded `>=` (a counter that
+resets at N can only reach N, so it is the same program) and the
+caster split's `=== false` (`liveBundles` has already normalised the
+field, so nothing undefined reaches that line; the pin that matters is
+one layer down, and it is there).

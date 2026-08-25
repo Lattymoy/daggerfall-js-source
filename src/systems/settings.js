@@ -141,6 +141,9 @@ export const LIVE = Object.freeze({
   'GUI/LargeHUDDocked': 'src/ui/hudLarge.js',
   'GUI/LargeHUDUndockedScale': 'src/ui/hudLarge.js',
   'GUI/LargeHUDUndockedAlignment': 'src/ui/hudLarge.js',
+  // U46: the eight buff/debuff icon layouts. Another key the settings
+  // screen offered with nothing on the other end.
+  'GUI/IconsPositioningScheme': 'src/ui/hudActiveSpells.js',
   'GUI/Crosshair': 'src/ui/hudCrosshair.js',
   'GUI/InteractionModeIcon': 'src/ui/hudCrosshair.js',
   // U41: the classic travel map. Stored-tier since the settings

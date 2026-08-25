@@ -59,6 +59,7 @@ import { setDeathPresenter, hurtPlayer } from '../characters/playerEntity.js';  
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying in a building
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the HUD vanished inside buildings
 import { largeHudOptions, routeLargeHudClick } from '../ui/hudLarge.js';   // U45: the classic bottom bar and its eleven panels
+import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
 // E2: the shop shelf browse/buy layer (node-pure laws in shopStock.js)
 import { ChoiceWindow } from '../ui/talkWindow.js';
@@ -3060,6 +3061,7 @@ export function createWorldModes(host) {
   /** U37: THE HOVER SEAM, the wheel seam's shape - both mode-owned
    *  windows and the mounted dungeon context's. */
   function hover(e) {
+    trackHudPointer(canvas, e);   // U46: the spell-icon rows' tooltip, in BOTH modes
     const at = () => {
       const r = canvas.getBoundingClientRect();
       return pointToNative(nativeMetrics(canvas),
