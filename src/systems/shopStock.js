@@ -14,8 +14,10 @@
 //   2*(cost*(quality-10)/100 + cost) in C# integer math.
 // - Regional prices initialize Random.Range(0,501)+750 per region
 //   (RandomizeInitialRegionalPrices - engine PRNG in DFU too, the
-//   approved uniform-roll slot); the daily UpdateRegionalPrices
-//   drift is FLAGGED to the calendar/economy sim.
+//   approved uniform-roll slot) and then DRIFT once per elapsed day
+//   through UpdateRegionalPrices (S41), which the day-change block in
+//   worldTick.js drives. The condition-flag half of that member
+//   (PricesHigh/PricesLow) pends the region-conditions arc.
 //
 // INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);
 // the Alchemist's 25% potion recipe pends potion recipes; book items
@@ -32,6 +34,9 @@ import { CLOTHING_DYES } from '../characters/dyes.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { MINUTES_PER_DAY } from './gameDate.js';   // X6: the soul-gem stock's daily seed
 import { SOUL_TRAP_TEMPLATE } from './mysticism.js';   // X6: one home for the template id (X5 put it there with fillEmptyTrap)
+import { FACTION_TYPES } from '../formats/factionFile.js';        // S41: UpdateRegionalPrices' type-7 region walk
+import { findFactionByTypeAndRegion } from './talk.js';           // S41: PersistentFactionData.FindFactionByTypeAndRegion, one home
+import { MERCHANTS_FACTION_ID } from './guilds.js';               // S41: FactionIDs.The_Merchants, one home
 
 // ItemGroups ids used by the shelf tables (DaggerfallUnityEnums).
 const GROUP_NAMES = Object.freeze({
@@ -206,6 +211,91 @@ export function regionPriceAdjustment(playerEntity, regionIndex, rolls = Math.ra
   playerEntity.regionPrices ??= {};
   playerEntity.regionPrices[regionIndex] ??= 750 + Math.floor(rolls() * 501);
   return playerEntity.regionPrices[regionIndex];
+}
+
+/** PlayerEntity.regionData.Length (:99) - `new RegionDataRecord[62]`.
+ *  The same 62 the bank keeps an account per (banking.js's
+ *  BANK_REGION_COUNT); this one is named off PlayerEntity because
+ *  the price walk is PlayerEntity's array, not the bank's. */
+export const REGION_COUNT = 62;
+
+/** Mathf.Clamp(PriceAdjustment, 250, 4000) (FormulaHelper.cs:2074). */
+export const PRICE_ADJUSTMENT_MIN = 250;
+export const PRICE_ADJUSTMENT_MAX = 4000;
+
+/**
+ * S41 - FormulaHelper.UpdateRegionalPrices (:2053-2089), THE DAILY
+ * DRIFT, which the port did not have at all.
+ *
+ * Every price in the game runs through calculateCost's
+ * ApplyRegionalPriceAdjustment term, and the port set that term ONCE
+ * per region - RandomizeInitialRegionalPrices' 750..1250 - and then
+ * never moved it again. A region that rolled 780 at boot sold at 78%
+ * for the rest of the character's life, and one that rolled 1240 at
+ * 124%; no amount of play could change either, and the merchants'
+ * faction power - the whole point of the formula - had no consumer.
+ * This file's own header carried an open flag against the drift,
+ * pending the calendar; the calendar exists now, so it ships and
+ * the flag is retired.
+ *
+ * The walk, verbatim: bail entirely if The Merchants is missing from
+ * the dictionary; else for each region that HAS a Province (type 7)
+ * faction, run `times` independent steps of
+ *
+ *     chance = (merchantsPower - regionPower) / 5
+ *              + 50 - (adjustment - 1000) / 25
+ *
+ * and move the adjustment to 49/50ths of itself on a FAILED roll or
+ * 51/50ths on a passed one, then clamp to [250, 4000]. Both divisions
+ * can go negative (powers are 1..100 either way round; the adjustment
+ * runs 250..4000 against a 1000 pivot) so both are Math.trunc, C#'s
+ * truncate-toward-zero, not Math.floor.
+ *
+ * Note the sign: a HIGH adjustment lowers `chance`, so a passed roll
+ * - the 51/50 RISE - gets rarer as prices climb. It is a mean-
+ * reverting walk around 1000 that the merchants' power tilts.
+ *
+ * FLAGGED (recorded, not silent): DFU also drives the PricesHigh /
+ * PricesLow region CONDITION FLAGS from each step (:2075-2087). The
+ * port has no RegionDataFlags store at all - the whole
+ * RegionPowerAndConditionsUpdate arc (PlayerEntity.cs:1626-2115) is
+ * unported, and nothing in the port reads those flags - so writing
+ * them here would be a store with no reader. They come with that arc.
+ *
+ * DEVIATION (recorded): DFU fills all 62 adjustments at game start,
+ * so this walk draws no init rolls. The port's regionPriceAdjustment
+ * is lazy, so the first drift of a session materialises whatever the
+ * shops have not touched yet, and each of those draws one roll here
+ * where DFU drew it at StartGameBehaviour. Same distribution, a
+ * different position in the stream.
+ *
+ * @param {object} playerEntity  carries regionPrices
+ * @param {Map}    factionDict   the live faction store's dict
+ * @param {number} times         daysPast - DFU's own loop bound
+ */
+export function updateRegionalPrices(playerEntity, factionDict, times, rolls = Math.random) {
+  if (!factionDict || !(times > 0)) return;
+  // GetFactionData(The_Merchants) - `if (!...) return`, so a missing
+  // merchants faction stops the WHOLE walk, not just one region.
+  const merchants = factionDict.get(MERCHANTS_FACTION_ID);
+  if (!merchants) return;
+  for (let i = 0; i < REGION_COUNT; i++) {
+    const regionFaction = findFactionByTypeAndRegion(factionDict, FACTION_TYPES.Province, i);
+    if (!regionFaction) continue;
+    for (let j = 0; j < times; j++) {
+      const adj = regionPriceAdjustment(playerEntity, i, rolls);
+      const chanceOfPriceRise = Math.trunc((merchants.power - regionFaction.power) / 5)
+        + 50 - Math.trunc((adj - 1000) / 25);
+      // Dice100.FailedRoll(chance) is !SuccessRoll(chance), and
+      // dice100() here IS SuccessRoll - one roll drawn either way,
+      // which is why the negation is on the RESULT and not a second
+      // draw.
+      const next = dice100(chanceOfPriceRise, rolls())
+        ? Math.trunc(51 * adj / 50)
+        : Math.trunc(49 * adj / 50);
+      playerEntity.regionPrices[i] = Math.min(PRICE_ADJUSTMENT_MAX, Math.max(PRICE_ADJUSTMENT_MIN, next));
+    }
+  }
 }
 
 /** FormulaHelper.CalculateCost, verbatim C# integer math. */

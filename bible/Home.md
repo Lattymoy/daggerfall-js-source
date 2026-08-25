@@ -251,7 +251,7 @@ combat line numbers below are refreshed with it.
 - `src/scenes/exterior.js:1029` - (FLAGGED); swallowing the browser reload is not optional.
 - `src/scenes/exterior.js:1308` - (FLAGGED: the climate People table pends; the test city is
 - `src/scenes/exterior.js:1460` - FLAGGED here exactly as in world.js - no tile lookup yet).
-- `src/scenes/exterior.js:1795` - ground (FLAGGED with world.js's same gap), so Detect Treasure
+- `src/scenes/exterior.js:1796` - ground (FLAGGED with world.js's same gap), so Detect Treasure
 - `src/scenes/shared.js:218` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:235` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:340` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
@@ -262,15 +262,15 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:1149` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
 - `src/scenes/world.js:1153` - while inSunlight/inHolyPlace stay the E1 FLAGGED seams no host
 - `src/scenes/world.js:1502` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
-- `src/scenes/world.js:1901` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:2177` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:2347` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
-- `src/scenes/world.js:2424` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:2657` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:2684` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:3080` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:3387` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/world.js:3460` - (FLAGGED: exterior corpse containers are the loot arc's), so
+- `src/scenes/world.js:1903` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:2179` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:2349` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
+- `src/scenes/world.js:2426` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:2659` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:2686` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:3082` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:3392` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:3465` - (FLAGGED: exterior corpse containers are the loot arc's), so
 - `src/scenes/worldModes.js:273` - rather than pretending to scan. FLAGGED.
 - `src/scenes/worldModes.js:361` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:509` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
@@ -350,9 +350,9 @@ combat line numbers below are refreshed with it.
 - `src/systems/save.js:106` - (playerEntity's INTERIM skills: 30) - spreading it threw.
 - `src/systems/sceneCache.js:154` - FLAGGED, with the slice it waits on:
 - `src/systems/settings.js:39` - INTERIM doctrine - named, not silently ignored)
-- `src/systems/shopStock.js:18` - drift is FLAGGED to the calendar/economy sim.
-- `src/systems/shopStock.js:20` - INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);
-- `src/systems/shopStock.js:160` - if (group === 'MagicItems') continue;   // INTERIM loud (the loot MI interim)
+- `src/systems/shopStock.js:22` - INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);
+- `src/systems/shopStock.js:165` - if (group === 'MagicItems') continue;   // INTERIM loud (the loot MI interim)
+- `src/systems/shopStock.js:258` - * FLAGGED (recorded, not silent): DFU also drives the PricesHigh /
 - `src/systems/skills.js:88` - *  AUDIT 18: the +10% used to be INTERIM 0 behind a flag blaming a
 - `src/systems/startingGear.js:3` - seedStartingEquipment's INTERIM iron dagger: a new character now
 - `src/systems/talk.js:17` - crime/quest slices - FLAGGED there, not here).

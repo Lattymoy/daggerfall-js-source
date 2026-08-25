@@ -1549,8 +1549,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       // re-roll - TeleportToCoordinates raises OnInitWorld, whose
       // weather half applies the destination climate's ARRAY slot
       // (WeatherManager.cs:524-543). Applied after the clock advance
-      // so a date-crossing trip lands on the arrival day's array (the
-      // frame tick re-rolls the zones first if the date moved).
+      // so a date-crossing trip lands on the ARRIVAL day's array: the
+      // advance above runs the tick, whose day block (S41) re-rolls
+      // the zones and raises updateWeatherFromClimateArray, and the
+      // tickWeather here is the drain that applies it.
       if (!weatherOverride) {
         tickWeather(Math.floor(playerTicker.classicMinutes), maps.getClimateIndex(pick.pixel.x, pick.pixel.y));
         applyClimateWeather(maps.getClimateIndex(pick.pixel.x, pick.pixel.y));
@@ -3191,9 +3193,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     const view = lookAt(cam.pos, [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]], [0, 1, 0]);
     // World clock (R5): sun, ambient, window style, sky frame by time.
     const minute = minuteNow();
-    // W1: the sim ticks on the exterior frame - WeatherManager.Update
-    // returns while inside, so days passed indoors apply on the first
-    // frame back out. A pinned ?weather never ticks.
+    // W1/S41: the DRAIN ticks on the exterior frame, which is
+    // WeatherManager.Update's own shape - it returns while the player
+    // is inside, so a sky rolled by a day spent indoors or underground
+    // lands on the first frame back out. The ROLL is the entity tick's
+    // day block, and runs wherever the player is. A pinned ?weather
+    // never ticks.
     if (!weatherOverride) {
       const _pp = playerTravelPixel();
       tickWeather(Math.floor(playerTicker.classicMinutes), maps.getClimateIndex(_pp.x, _pp.y));

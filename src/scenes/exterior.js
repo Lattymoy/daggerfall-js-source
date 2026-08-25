@@ -1536,12 +1536,13 @@ export async function bootExterior(canvas, renderer, params, status) {
     // World clock (R5): sun direction/intensity and ambient follow the time
     // of day; the sun is off at night leaving the 0.25 ambient floor.
     const minute = minuteNow();
-    // W1: the sim ticks on the exterior frame (this host is one
-    // location - locClimateIndex is the player's climate); a pinned
-    // ?weather never ticks. Loads restore through save.js's one law
-    // and re-present here on the next changed tick... which the day
-    // stamp suppresses, so the applied value re-derives each frame
-    // below from `weather` - refreshed when tickWeather answers true.
+    // W1/S41: the DRAIN ticks on the exterior frame (this host is one
+    // location - locClimateIndex is the player's climate); the ROLL is
+    // the entity tick's day block. A pinned ?weather never ticks.
+    // Loads restore through save.js's one law and re-present here on
+    // the next changed tick... which the restore's flag-down stamp
+    // suppresses, so the applied value re-derives each frame below
+    // from `weather` - refreshed when tickWeather answers true.
     if (!weatherOverride) {
       tickWeather(Math.floor(playerTicker.classicMinutes), locClimateIndex);
       if (currentWeather() !== weather) applyWeather(currentWeather());   // drift-aware (world.js's twin note)

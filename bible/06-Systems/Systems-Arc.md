@@ -3030,3 +3030,154 @@ bank slice buys one. The **live probe** for this slice is owed with
 U41/U42's: no ARENA2 data on this machine, so the rented-room round
 trip (rent a room, walk out, walk back, sleep in the bed the rental
 minted) has been driven only in node.
+
+## S41 - THE DAY CHANGE HAD NO HOME (2026-08-25)
+
+`src/systems/worldTick.js` (`runDayChange`, and the call from
+`tickPlayerMinutes` that gives it to all four hosts) +
+`src/systems/shopStock.js` (`updateRegionalPrices`, `REGION_COUNT`,
+the two clamp bounds, a flag retired) + `src/systems/weatherSim.js`
+(`rollClimateWeathersForDay`, `tickWeather` rebuilt as the drain,
+`_lastDay` deleted) + `src/systems/save.js` (the restore stamp moved
+into `restoreWeather`, and `lastGameMinutes` re-anchored) +
+`src/scenes/world.js` + `src/scenes/exterior.js` (comments only - the
+mechanism under them changed). `test/daychange.test.js` (new, 19);
+`test/weathersim.test.js` grew one.
+
+**Four members, and the port ran one of them.** DFU's
+`PlayerEntity.Update` closes each frame with a date check
+(`:441-450`):
+
+    uint lastDay = lastGameMinutes / 1440;
+    uint currentDay = gameMinutes / 1440;
+    int daysPast = (int)(currentDay - lastDay);
+    if (daysPast > 0)
+    {
+        FormulaHelper.UpdateRegionalPrices(ref regionData, daysPast);
+        WeatherManager.SetClimateWeathers();
+        WeatherManager.UpdateWeatherFromClimateArray = true;
+        RemoveExpiredRentedRooms();
+        LoanChecker.CheckOverdueLoans(lastGameMinutes);
+    }
+
+Three of those four were already in the port as correct, tested laws.
+None of them had a caller on a day boundary. That is the shape this
+slice is about: the bug was not in any member, it was in the absence
+of the block that runs them.
+
+**`CheckOverdueLoans` had no caller anywhere in `src/`.** Not a wrong
+one - none. `grep` found the export, `banking.test.js`, and nothing
+else. So every line of B1's loan law worked and none of it could ever
+fire: borrow, the 10% that rides from the instant of the loan, the
+6/3/1-month reminder crossings, `OverdueLoan`'s account raid, the
+`LoanDefault` reputation hit. A character could borrow the maximum in
+all sixty-two regions and never owe a thing, because nothing in the
+game advanced a loan toward its due date. This is the second time a
+whole ported subsystem has been found with the wiring missing rather
+than the law, and both times the unit tests were green - a test
+proves the member, and only a caller proves the game has it.
+
+**Every shop price in the world was frozen at its boot roll.**
+`UpdateRegionalPrices` (`FormulaHelper.cs:2053-2089`) was not ported
+at all. `regionPriceAdjustment` rolled 750..1250 once per region and
+that number then stood for the life of the character: a region that
+rolled 780 sold at 78% forever and one that rolled 1240 at 124%, and
+no amount of play could move either. The merchants' faction power -
+the whole point of the formula - had no consumer in the port. The
+walk is mean-reverting and the sign is the part worth reading twice:
+
+    chance = (merchantsPower - regionPower) / 5
+             + 50 - (adjustment - 1000) / 25
+
+A HIGH adjustment lowers `chance`, and `chance` is the probability of
+the 51/50 RISE, so an expensive region gets likelier to fall the
+more expensive it is. At the 4000 ceiling `chance` is -70 and the
+region falls on every step no matter what the dice say. Both
+divisions can go negative and both are C# integer division, so both
+are `Math.trunc`; `Math.floor` is wrong in each, and the pins prove
+it at the exact roll value that separates them rather than at a
+convenient one.
+
+**Two markers for one day change is one marker too many.** The
+weather member had been ported - `tickWeather` - with its own private
+`_lastDay` and its own `daysPast > 0` guard, fused to the apply and
+called from the exterior frame. That is not where DFU splits it.
+`PlayerEntity` ROLLS the six zones and raises
+`updateWeatherFromClimateArray`; `WeatherManager.Update` DRAINS that
+flag (`:146-156` -> `:406-415`) and returns early while the player is
+inside. The roll runs wherever the player is; only the apply waits
+for daylight. Fused and hung off an exterior frame, the port rolled
+the zones ZERO times for any day boundary crossed underground: ten
+days in a dungeon came back out to one catch-up roll where DFU had
+rolled ten. Splitting it also removed the marker: the day is
+`PlayerEntity.lastGameMinutes`' business now, and that marker
+re-anchors on restore (`SerializablePlayer.cs:339`), which is a
+better version of the day stamp `restoreWeather` used to take.
+
+**The rented-room sweep is the merge's deferred finding, shipped.**
+The three-lane rest merge found `RemoveExpiredRentedRooms` missing
+from the day change in all three lanes and wrote it down rather than
+folding it in, because it belongs to the world tick's day boundary
+and not to rest. It ran in exactly two places - a tavern window
+opening, and a rest ENDING on an already-expired room - so a rental
+that ran out while the player was asleep in a dungeon was never
+collected, and its interior stayed a permanent scene for the rest of
+the session.
+
+**Nothing had to be threaded from a host.** Every input the block
+needs is already on the entity: `rentedRooms`, `bankAccounts`,
+`regionPrices`, `factionRep`, `sceneCache`. So `runDayChange` takes
+the entity and the two clock values `tickPlayerMinutes` already has
+in scope, and all four hosts get the law without a line of host code
+- which is the whole point, because the FOUR HOSTS RULE exists
+because a line a host has to remember is a line a host forgets.
+
+**The block sits after the fatigue band, and that is not cosmetic.**
+DFU draws the swimming roll at `:412` and the first price roll at
+`:446`. The port's tick had already reordered the normalize loop
+ahead of the fatigue band (those two share no generator, so it is
+free), but a day block placed before the swim roll would shift every
+draw after it. There is a pin that watches which caller gets which
+value out of a scripted two-element sequence.
+
+**The gate could not be pinned on the thing it gates.** The first
+draft tested `daysPast > 0` by asserting the prices had not moved on
+a same-day tick - and `updateRegionalPrices` returns immediately at
+`times = 0`, so relaxing the gate to `>= 0` changed nothing
+observable and the mutation lived. The room sweep takes no day count,
+so it is the member that can tell the two apart; the pin moved onto
+it. 19 mutations, 19 killed.
+
+**And a marker the restore never re-anchored.** `SerializablePlayer`
+sets `entity.LastGameMinutes` to the restored world time on every load
+(`:338-339`), which is precisely why the field is not in the save
+envelope - and `worldTick.js` has cited that line as the reason since
+AUDIT 23, while the line itself was never ported. So the marker just
+carried over from whatever the session was doing before the load. That
+was survivable when the only reader was the reputation-normalise loop.
+It stopped being survivable the moment this slice hung the day block
+off the same gap: a load into a session sitting behind the save's
+clock would have drifted a year of prices and re-run a loan check over
+months the saved game had already played through. One line, ported.
+This is the second time in this file a comment has been found citing a
+C# line the port does not contain, and both times the comment read as
+proof that the work was done.
+
+Pins: `test/daychange.test.js` (19) covers each member against its
+C# and, separately, the wiring - a year-long jump through
+`tickPlayerMinutes` that drifts the prices, collects an expired
+rental and defaults a loan in one tick.
+
+FLAGGED: `UpdateRegionalPrices` also drives the `PricesHigh` /
+`PricesLow` region CONDITION FLAGS (`FormulaHelper.cs:2075-2087`).
+The port has no `RegionDataFlags` store at all - the whole
+`RegionPowerAndConditionsUpdate` arc (`PlayerEntity.cs:1626-2115`) is
+unported and nothing reads those flags - so writing them here would
+be a store with no reader; they come with that arc. Recorded, not
+flagged: DFU fills all 62 price adjustments at `StartGameBehaviour`
+and this walk therefore draws no init rolls, while the port's lazy
+`regionPriceAdjustment` materialises stragglers on the first drift of
+a session - the same distribution, a different position in the
+stream. And the **live probe** is owed with S40/U41/U42's: no ARENA2
+data on this machine, so a year of game time has been driven only in
+node.

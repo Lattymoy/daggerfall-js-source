@@ -11,6 +11,7 @@ import {
   WEATHER_TABLE, WEATHER_ENUM, weatherTableFor, rollWeather,
   setClimateWeathers, weatherForClimate, tickWeather, weatherRespawn,
   applyClimateWeather, setWeather, currentWeather, restoreWeather, resetWeatherSim,
+  rollClimateWeathersForDay,
 } from '../src/systems/weatherSim.js';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -53,19 +54,52 @@ test('W1 roll: the cumulative walk with its <= 0 boundary and the compiled Snow-
   for (const row of Object.values(WEATHER_TABLE.desert)) assert.equal(row[5], 0);
 });
 
-test('W1 daily tick: the date change re-rolls all six zones and applies the player slot; same-day never rolls', () => {
+test('W1/S41 daily tick: the ROLL is the day block\'s and the APPLY is the frame\'s, and the frame drains the flag exactly once', () => {
   resetWeatherSim();
   try {
-    // Woodlands (231) in classic winter (the epoch sits in Morning
-    // Star); rolls pinned high -> Woodlands Winter row lands snow
-    const changed = tickWeather(100, CLIMATES.Woodlands, () => 0.99);
-    assert.equal(changed, true);
+    // S41 split tickWeather in two. The DAY CHANGE rolls the zones and
+    // raises WeatherManager's updateWeatherFromClimateArray; the
+    // EXTERIOR FRAME drains that flag. Before the split both halves
+    // sat behind weatherSim's own private `_lastDay`, which is why a
+    // day boundary crossed underground rolled nothing at all.
+    //
+    // Frame one is the boot roll (StartGameBehaviour.cs:435-436):
+    // Woodlands (231) in classic winter, dice pinned high -> snow.
+    assert.equal(tickWeather(100, CLIMATES.Woodlands, () => 0.99), true);
     assert.equal(currentWeather(), 'snow');
-    // the same day never re-rolls, whatever the dice would say
-    assert.equal(tickWeather(200, CLIMATES.Woodlands, () => 0.0), false);
+    // Every later frame with no day change is INERT - it does not
+    // even look at the dice, because DFU's is `if (flag)` and nothing
+    // has raised it.
+    let dice = 0;
+    assert.equal(tickWeather(200, CLIMATES.Woodlands, () => { dice++; return 0.0; }), false);
+    assert.equal(dice, 0, 'a frame with the flag down consumes no roll');
     assert.equal(currentWeather(), 'snow');
-    // the next day rolls again - low dice land sunny
-    assert.equal(tickWeather(100 + MINUTES_PER_DAY, CLIMATES.Woodlands, () => 0.0), true);
+
+    // THE DAY BLOCK rolls - and does NOT apply. The sky is unchanged
+    // until a frame drains the flag, which is what defers a rolled
+    // sky to the first frame back outside.
+    rollClimateWeathersForDay(100 + MINUTES_PER_DAY, () => 0.0);
+    assert.equal(currentWeather(), 'snow', 'the roll alone never touches the sky');
+    // ...and now the frame applies it: low dice land Woodlands sunny.
+    assert.equal(tickWeather(100 + MINUTES_PER_DAY, CLIMATES.Woodlands, () => 0.99), true);
+    assert.equal(currentWeather(), 'sunny', 'the APPLIED value came from the DAY roll, not this frame');
+    // and the flag is down again - one drain per raise (:411-414)
+    assert.equal(tickWeather(100 + MINUTES_PER_DAY, CLIMATES.Woodlands, () => 0.99), false);
+  } finally { resetWeatherSim(); }
+});
+
+test('W1/S41 daily tick: a day crossed UNDERGROUND still rolls, and the sky lands on the way out', () => {
+  resetWeatherSim();
+  try {
+    tickWeather(100, CLIMATES.Woodlands, () => 0.99);   // boot: snow
+    assert.equal(currentWeather(), 'snow');
+    // Ten days pass in a dungeon. No exterior frame runs, so the old
+    // fused tickWeather saw nothing at all; the day block runs
+    // wherever the player is, exactly as PlayerEntity.Update does.
+    for (let d = 1; d <= 10; d++) rollClimateWeathersForDay(100 + d * MINUTES_PER_DAY, () => 0.0);
+    assert.equal(currentWeather(), 'snow', 'still underground - nothing applied');
+    // The first frame back outside drains the flag once.
+    assert.equal(tickWeather(100 + 10 * MINUTES_PER_DAY, CLIMATES.Woodlands, () => 0.99), true);
     assert.equal(currentWeather(), 'sunny');
   } finally { resetWeatherSim(); }
 });
@@ -118,7 +152,8 @@ test('W1 save: one weather value rides every host\'s envelope; the restore stamp
     assert.equal(currentWeather(), 'sunny');
     restorePlayer({}, snap);
     assert.equal(currentWeather(), 'rain', 'restorePlayer restored the sim');
-    // the boot tick on the SAME day is suppressed (startedFromLoadedSaveGame)
+    // the boot roll is suppressed (startedFromLoadedSaveGame) - the
+    // restore stamped the array rolled and the flag down
     assert.equal(tickWeather(5001, CLIMATES.Woodlands, () => 0.99), false);
     assert.equal(currentWeather(), 'rain');
     // a pre-W1 snapshot restores nothing and the current sky stands
@@ -129,13 +164,25 @@ test('W1 save: one weather value rides every host\'s envelope; the restore stamp
   } finally { resetWeatherSim(); }
 });
 
-test('W1 restore law: restoreWeather alone pins the value and the day', () => {
+test('W1 restore law: restoreWeather alone pins the value, and no frame can clobber it until a DAY rolls', () => {
   resetWeatherSim();
   try {
-    restoreWeather('overcast', 3 * MINUTES_PER_DAY + 7);
+    restoreWeather('overcast');
     assert.equal(currentWeather(), 'overcast');
-    assert.equal(tickWeather(3 * MINUTES_PER_DAY + 100, CLIMATES.Desert, () => 0.99), false, 'same day - no roll');
-    assert.equal(tickWeather(4 * MINUTES_PER_DAY, CLIMATES.Desert, () => 0.99), true, 'the next day rolls');
+    // startedFromLoadedSaveGame's else arm (WeatherManager.cs:540-542)
+    // - the restore stamps the array ROLLED and the pending-apply flag
+    // DOWN, so no exterior frame re-rolls or re-applies over the
+    // loaded sky, however many frames or in-game days of them run.
+    let dice = 0;
+    const noisy = () => { dice++; return 0.99; };
+    assert.equal(tickWeather(3 * MINUTES_PER_DAY + 100, CLIMATES.Desert, noisy), false);
+    assert.equal(tickWeather(4 * MINUTES_PER_DAY, CLIMATES.Desert, noisy), false, 'a later frame is still inert');
+    assert.equal(dice, 0, 'the restore left nothing for a frame to roll');
+    assert.equal(currentWeather(), 'overcast');
+    // Only the DAY BLOCK re-arms it (Desert Winter at 0.99 -> thunder).
+    rollClimateWeathersForDay(4 * MINUTES_PER_DAY, () => 0.99);
+    assert.equal(tickWeather(4 * MINUTES_PER_DAY, CLIMATES.Desert, () => 0.99), true);
+    assert.equal(currentWeather(), 'thunder');
   } finally { resetWeatherSim(); }
 });
 
@@ -149,7 +196,10 @@ test('W1 review: fast travel applies the ARRAY slot (OnInitWorld), never a fresh
     applyClimateWeather(CLIMATES.Mountain);
     assert.equal(diceRolled, 0);
     assert.equal(currentWeather(), 'snow');
-    // the clock moving BACKWARD never re-rolls (daysPast > 0 exactly)
+    // S41: the `daysPast > 0` guard that used to live here is the day
+    // block's now (runDayChange), and a frame with the flag down is
+    // inert whatever the clock says - including a clock that moved
+    // BACKWARD, which is a load.
     assert.equal(tickWeather(100 - MINUTES_PER_DAY, CLIMATES.Woodlands, () => { diceRolled++; return 0.0; }), false);
     assert.equal(diceRolled, 0);
   } finally { resetWeatherSim(); }

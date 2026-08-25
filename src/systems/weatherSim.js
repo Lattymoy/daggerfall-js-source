@@ -38,7 +38,7 @@
 
 import { CLIMATE_INDICES } from './travel.js';   // {0,0,0,1,2,3,4,5,5,5} by (climate - Ocean) - TravelTimeCalculator.cs:30, the same map WeatherManager.cs:432 spends
 import { CLIMATES, CLIMATE_BASE_TYPES, getWorldClimateSettings } from '../formats/mapsFile.js';
-import { SEASONS, seasonValue, dateFromClassicMinutes, MINUTES_PER_DAY } from './gameDate.js';
+import { SEASONS, seasonValue, dateFromClassicMinutes } from './gameDate.js';
 import { WEATHER_TYPES } from '../world/weather.js';
 
 export { WEATHER_TYPES };
@@ -140,7 +140,8 @@ export function rollWeather(climateIndex, season, rolls = Math.random) {
 
 let _climateWeathers = new Uint8Array(6);   // [Desert, Mountain, Rainforest, Swamp, Subtropical, Woodlands] (WeatherManager.cs:421-426)
 let _current = WEATHER_ENUM.sunny;          // PlayerWeather.WeatherType - the one persisted value
-let _lastDay = null;                        // the PlayerEntity daily tick's date memory
+let _climateWeathersRolled = false;         // StartGameBehaviour.cs:435-436's one-shot "Randomize weathers"
+let _updateFromClimateArray = false;        // WeatherManager.updateWeatherFromClimateArray (:105)
 let _lastClimateBase = CLIMATE_BASE_TYPES.None;   // lastRespawnClimate (WeatherManager.cs:90)
 
 export const currentWeather = () => WEATHER_TYPES[_current];
@@ -193,26 +194,58 @@ export function applyClimateWeather(climateIndex) {
   return true;
 }
 
-/** THE DAILY TICK (PlayerEntity.cs:440-448 + the flag walk): when the
- *  game DATE changes, re-roll all six zones for the season and apply
- *  the player's slot. Call from the exterior frame with the player's
- *  raw CLIMATE.PAK index; answers true when the applied weather
- *  CHANGED (the host re-derives its presentation). The first call
- *  after boot rolls too (StartGameBehaviour.cs:435-436 randomizes at
- *  new game); a restore suppresses that by stamping the day
- *  (startedFromLoadedSaveGame, WeatherManager.cs:524-543). */
-export function tickWeather(nowMinutes, climateIndex, rolls = Math.random) {
-  const day = Math.floor(nowMinutes / MINUTES_PER_DAY);
-  // daysPast > 0 exactly (PlayerEntity.cs:444) - a clock that moves
-  // BACKWARD never re-rolls; only the fresh-boot null rolls forward
-  // from nothing.
-  if (_lastDay !== null && day <= _lastDay) return false;
-  _lastDay = day;
+/**
+ * S41 - THE DAY CHANGE'S WEATHER MEMBER (PlayerEntity.cs:447-448),
+ * and ONLY that: roll the six zones for the season, and raise
+ * WeatherManager's updateWeatherFromClimateArray so the next
+ * exterior frame applies the player's slot.
+ *
+ * This used to be fused into tickWeather along with its own private
+ * `_lastDay` marker, which put a SECOND day-change marker in the port
+ * beside PlayerEntity's own - and the fused version only ever ran on
+ * an exterior frame. Days spent underground therefore rolled the
+ * zones ZERO times: a ten-day crawl came back out to one catch-up
+ * roll where DFU's PlayerEntity.Update - which runs wherever the
+ * player is - had rolled on each of the ten day boundaries. One day
+ * change, one marker, one home: worldTick's day block calls this.
+ *
+ * The APPLY does not happen here, because it does not happen here in
+ * DFU either: PlayerEntity raises the flag and WeatherManager.Update
+ * drains it (:146-156 -> :406-415), and that Update RETURNS EARLY while the
+ * player is inside. That is what defers a rolled sky to the first
+ * frame back outside, and it is a flag rather than a poll so that
+ * nothing else - a quest, a spell, a ?weather pin - gets clobbered on
+ * the frames in between.
+ */
+export function rollClimateWeathersForDay(nowMinutes, rolls = Math.random) {
   setClimateWeathers(seasonValue(dateFromClassicMinutes(nowMinutes)), rolls);
-  const next = weatherForClimate(climateIndex);
-  if (next === _current) return false;
-  _current = next;
-  return true;
+  _climateWeathersRolled = true;
+  _updateFromClimateArray = true;
+}
+
+/** THE EXTERIOR FRAME'S WEATHER DRAIN - WeatherManager.Update's
+ *  UpdateFromClimateArrayCheck (:406-415), plus StartGameBehaviour's
+ *  one-shot roll (:435-436).
+ *
+ *  Call from the exterior frame with the player's raw CLIMATE.PAK
+ *  index; answers true when the applied weather CHANGED (the host
+ *  re-derives its presentation). Returns false - and does nothing at
+ *  all - on every frame where no day change has raised the flag,
+ *  which is DFU's `if (updateWeatherFromClimateArray)`.
+ *
+ *  The boot roll is StartGameBehaviour's "Randomize weathers" at new
+ *  game, lazily: the array is all-zero until something rolls it, and
+ *  a restore stamps it rolled instead (startedFromLoadedSaveGame,
+ *  WeatherManager.cs:524-543) so the loaded sky survives. */
+export function tickWeather(nowMinutes, climateIndex, rolls = Math.random) {
+  if (!_climateWeathersRolled) {
+    setClimateWeathers(seasonValue(dateFromClassicMinutes(nowMinutes)), rolls);
+    _climateWeathersRolled = true;
+    _updateFromClimateArray = true;   // OnInitWorld raises it at every non-load start (:534)
+  }
+  if (!_updateFromClimateArray) return false;
+  _updateFromClimateArray = false;
+  return applyClimateWeather(climateIndex);
 }
 
 /** PollWeatherChanges(true) at respawn (WeatherManager.cs:514-522 +
@@ -235,15 +268,23 @@ export function weatherRespawn(nowMinutes, climateIndex, rolls = Math.random) {
  *  change; the restore stamps the day so the boot tick does not
  *  clobber the loaded sky. */
 export const snapshotWeather = () => currentWeather();
-export function restoreWeather(weather, nowMinutes) {
+export function restoreWeather(weather) {
   if (weather != null) setWeather(weather);
-  _lastDay = Math.floor((nowMinutes ?? 0) / MINUTES_PER_DAY);
+  // startedFromLoadedSaveGame's else arm (WeatherManager.cs:540-542):
+  // "so no weather update from climate array happens in case of
+  // loaded savegame". The loaded sky stands until the next DAY
+  // CHANGE rolls the array - which is PlayerEntity's marker now, and
+  // that marker re-anchors on restore too (SerializablePlayer.cs:339),
+  // so a load cannot fire a day change of its own.
+  _climateWeathersRolled = true;
+  _updateFromClimateArray = false;
 }
 
 /** Test seam: back to the fresh-boot state. */
 export function resetWeatherSim() {
   _climateWeathers = new Uint8Array(6);
   _current = WEATHER_ENUM.sunny;
-  _lastDay = null;
+  _climateWeathersRolled = false;
+  _updateFromClimateArray = false;
   _lastClimateBase = CLIMATE_BASE_TYPES.None;
 }
