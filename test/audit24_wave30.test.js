@@ -140,8 +140,10 @@ test('audit24 wave30: runMagicRounds keeps the broker\'s cap and its load re-anc
 
 test('audit24 wave30: the dungeon rest advance runs BOTH halves of the broker event', () => {
   const src = rd('src/scenes/dungeonContext.js');
-  const i = src.indexOf('advanceMinutes: (n) => {');
-  const arm = src.slice(i, src.indexOf('onRestFinished:', i));
+  // S40: the other five rest deps moved to shared.js' one composition,
+  // so this arm is a named function now and ends at its own close.
+  const i = src.indexOf('const _restAdvance = (n) => {');
+  const arm = src.slice(i, src.indexOf('\n  };', i));
   assert.ok(i > 0 && arm.length > 200, 'the rest advance arm was found');
   // wave 32 reshaped this: the window is CLAIMED once (that is the broker) and
   // then run on the player and on every foe - one raise, every manager.

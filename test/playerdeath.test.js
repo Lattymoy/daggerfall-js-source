@@ -118,7 +118,10 @@ test('death: every overlay slot TICKS, or the sequence stalls in that host alone
     'townTalk (world + exterior) must tick its overlay');
   assert.match(code('scenes/dungeonContext.js'), /activeOverlay\.tick\?\.\(dt\)/,
     'the dungeon context must tick its overlay');
-  assert.match(code('scenes/worldModes.js'), /interiorOverlay\.tick\?\.\(dt\)/,
+  // S40: the interior arm CAPTURES the window before ticking, because
+  // a window may now clear the slot from inside its own tick (the rest
+  // window's death path does) and the draw below would then read null.
+  assert.match(code('scenes/worldModes.js'), /const w = interiorOverlay;\n\s+w\.tick\?\.\(dt\);/,
     'the interior arm must tick its overlay');
 });
 

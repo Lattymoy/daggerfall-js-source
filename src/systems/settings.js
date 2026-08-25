@@ -65,6 +65,10 @@ export const LIVE = Object.freeze({
   'Enhancements/CombatVoices': 'src/combat/combatVoices.js',
   'Enhancements/PlayerTorchFromItems': 'src/systems/startingGear.js',
   'Enhancements/LoiterLimitInHours': 'src/systems/restSession.js',
+  // S40: the illegal-rest confirm. OFF makes camping in a town simply
+  // impossible (CanRest refuses and no time passes); ON turns it into
+  // a Yes/No box. Either way the Vagrancy crime lands.
+  'GUI/IllegalRestWarning': 'src/systems/restSession.js',
   'Controls/SoundVolume': 'src/systems/audio.js',
   'Controls/InstantRepairs': 'src/scenes/worldModes.js',      // R1: the repair flow's instant branch
   'Controls/AllowMagicRepairs': 'src/scenes/worldModes.js',   // R1: the repair entry gate + world.js's enchantCtx seam

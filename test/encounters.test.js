@@ -114,20 +114,39 @@ test('encounters: the enemy alert - raise stamps the time, the 8-hour decay clea
 
 test('encounters: the dungeon host arm - the rest loop, the sight raise, the kill clear, the closed leg', () => {
   const src = readFileSync(join(root, 'src/scenes/dungeonContext.js'), 'utf8');
-  const i = src.indexOf('advanceMinutes: (n) => {');
+  const i = src.indexOf('const _restAdvance = (n) => {');
   // The window ends at the NEXT rest dep, not at a character count: wave 30
   // grew this arm by thirty lines and a fixed 900-char slice stopped reaching
   // the spawn loop, so the pin failed for the one reason a pin must not -
   // the code moved, not changed.
-  const fn = src.slice(i, src.indexOf('onRestFinished:', i));
+  // S40 pulled the OTHER five rest deps out to shared.js' one
+  // composition, so the window ends at this function's own close.
+  const fn = src.slice(i, src.indexOf('\n  };', i));
   assert.ok(i > 0 && fn.length > 200 && fn.length < 3000, 'the rest advance arm was found whole');
   assert.ok(fn.includes('intermittentEnemySpawn({'), 'the rest advance runs the catch-up loop');
   assert.ok(fn.includes('enemyAlertActive: !!playerEntity.enemyAlertActive'), 'gated on the alert');
   assert.ok(fn.includes('_spawnEncounter(hit); break;'), 'one spawn per advance, as the C# break');
   assert.ok(src.includes('if (f.ai.inSight && f.ai.detected && !f.dead) setEnemyAlert(playerEntity, true'), 'sight raises');
   assert.ok(src.includes("if (foe.ai?.detected) setEnemyAlert(playerEntity, false)"), 'the targeting kill clears');
-  assert.ok(src.includes('setEnemyAlert(playerEntity, true, classicMinutesRef.value);\n        const lines = rscLines(REST_TEXT.enemiesNearby)'),
+  // S40 moved the rest OPEN GATE to systems/restSession.js - DFU raises
+  // it from one scene-free handler and three more hosts can rest now -
+  // so this pin follows it: the gate must still say `alert` on the
+  // enemies arm, and this host must still act on it. Pinned in BOTH
+  // places, because a gate that reports the alert and a host that
+  // ignores it is the same closed leg reopening.
+  // MERGED: the gate is `restDecision` and answers a KIND rather than
+  // an `alert` flag - the enemies arm IS the alert arm, which is
+  // tighter than a boolean beside it.
+  const rest = readFileSync(join(root, 'src/systems/restSession.js'), 'utf8');
+  assert.ok(rest.includes("if (enemiesNearby) return { kind: 'enemies', textId: REST_TEXT.enemiesNearby };"),
+    'the open gate refuses on enemies, and that arm is the alert arm');
+  assert.ok(src.includes("if (d.kind === 'enemies') setEnemyAlert(playerEntity, true, classicMinutesRef.value);"),
     'the rest refusal raises (the old routed leg closed)');
+  // ...and so do the hosts the rest lanes gave rest to.
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const h = readFileSync(join(root, f), 'utf8');
+    assert.ok(h.includes("if (d.kind === 'enemies') setEnemyAlert(playerEntity, true, Math.floor(worldMinutes()));"), f);
+  }
   // AUDIT 24 (wave 36): the 8-hour decay MOVED. PlayerEntity.Update
   // :380-384 runs it in every context, and the dungeon frame body was
   // its only caller - so an alert raised above ground (exteriorFoes has

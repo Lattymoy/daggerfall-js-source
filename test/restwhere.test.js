@@ -106,7 +106,11 @@ test('rest: the grounded check has ONE home, and all three rest hosts call it', 
     assert.match(src(h), /startRestGroundedCheck\(/, `${h} calls the one home`);
   }
   // the inline geometry must be GONE from the dungeon, not shadowed
-  assert.doesNotMatch(src('scenes/dungeonContext.js'), /const nearFloor = /,
+  // MERGED: the pin used to forbid a `const nearFloor =` local, which
+  // was a proxy for "the inline geometry is gone". The geometry itself
+  // is the thing to forbid, and forbidding the local would have made
+  // a named intermediate a failure - so this asks the real question.
+  assert.doesNotMatch(src('scenes/dungeonContext.js'), /CAPSULE_HEIGHT \/ 2 \+ 0\.2/,
     'the dungeon must not keep its own copy of the ray');
   // THE RAW FLAG IS NOT ENOUGH UP HERE, and for a reason DFU never
   // has: on a page whose motor is never stepped `grounded` sits at its
@@ -135,13 +139,18 @@ test('rest: both above-ground hosts run the DISPATCH before CanRest, and raise t
     // that restDecision appeared in the file, which a toggle that
     // hardcodes `{ kind: 'rest' }` and leaves the helper unused passes
     // - both hosts survived that mutant.
-    const toggle = h.slice(h.indexOf('function toggleExteriorRest()'));
-    assert.match(toggle.slice(0, 300), /const d = exteriorRestDispatch\(\);/,
+    // MERGED: the key's own function is `toggleRest` in both hosts now
+    // (the two lanes named it differently); what matters is unchanged -
+    // the toggle itself runs the dispatch rather than hardcoding a
+    // verdict and leaving the helper unused, a mutant both hosts once
+    // survived.
+    const toggle = h.slice(h.indexOf('const toggleRest = () => {'));
+    assert.match(toggle.slice(0, 600), /const d = restDecision\(\{/,
       `${host}'s toggle must run the dispatch, not a literal`);
-    assert.match(h, /setEnemyAlert\(playerEntity, true, worldMinutes\(\)\)/, `${host} raises the alert`);
+    assert.match(h, /setEnemyAlert\(playerEntity, true, Math\.floor\(worldMinutes\(\)\)\)/, `${host} raises the alert`);
     // the alert is raised on the ENEMY arm only - it is what arms the
     // rest-encounter roll, and the water arm must not arm it
-    const arm = h.slice(h.indexOf('if (d.kind !== \'rest\')'), h.indexOf('if (d.kind !== \'rest\')') + 400);
+    const arm = h.slice(h.indexOf('if (d.kind !== \'rest\')'), h.indexOf('if (d.kind !== \'rest\')') + 900);
     assert.match(arm, /d\.kind === 'enemies'.*setEnemyAlert/s, `${host} raises it on the enemy arm`);
     // ...and a racial override says NOTHING: no box at all
     assert.match(arm, /d\.kind === 'blocked'\) return;/, `${host} refuses silently for a racial override`);

@@ -22,12 +22,13 @@
 //   baseCollider() - the collider to restore on exit.
 
 import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding } from '../player/enterExit.js';
+import { startRestGroundedCheck } from '../player/motor.js';   // S40: the rest gate's grounded input
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { pickActivatable, worldAabb, activationTargets } from '../player/activate.js';
 import { transferAll, removeOne, addItem, isEnchanted, totalWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
-import { createPlayerTicker , wireInfectionVideos, endRunToTitleMenu, exitToTitleMenu, doorSpellFor, consumeDoorSpell, wireDoorSpells, createDetectFeed} from './shared.js';   // AUDIT 18: the interior host's world clock
+import { createPlayerTicker , wireInfectionVideos, endRunToTitleMenu, exitToTitleMenu, doorSpellFor, consumeDoorSpell, wireDoorSpells, createDetectFeed, createRestDeps} from './shared.js';   // AUDIT 18: the interior host's world clock; S40: its rest deps
 import { triggerExteriorOpen, DOOR_SPELL_TEXT } from '../systems/mysticism.js';   // X3: the Open spell's EXTERIOR-door arm
 import { buildInteriorContext } from './interiorContext.js';
 import { buildDungeonContext } from './dungeonContext.js';
@@ -106,10 +107,7 @@ import { guildOfFaction, isMember } from '../systems/guilds.js';
 import { RestWindow } from '../ui/restWindow.js';
 import { canRest, HAVE_NOT_RENTED_ROOM, REST_TEXT } from '../systems/restSession.js';
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
-import { findRentedRoom } from '../systems/tavern.js';
-import { canRest as guildCanRest } from '../systems/guildServices.js';
-import { containsPermanentScene } from '../systems/sceneCache.js';
-import { createRestDeps, plainLines } from './shared.js';
+import { plainLines } from './shared.js';   // V5b: TEXT.RSC answers ROWS, and these windows iterate strings
 import { hallAccessAnytime } from '../systems/guildServices.js';
 import { resolveVariantGuild } from '../systems/guildVariants.js';
 import { getBool } from '../systems/settings.js';   // R1: InstantRepairs / AllowMagicRepairs go LIVE
@@ -149,8 +147,13 @@ import { createBankAccounts, createHouses, BANK_REGION_COUNT, TRANSACTION_RESULT
 // P1: the scene cache - what an interior remembers across a visit.
 import {
   createSceneCache, cacheScene, restoreCachedScene,
-  interiorSceneName, LOOT_CONTAINER_TYPES, addPermanentScene,
+  interiorSceneName, LOOT_CONTAINER_TYPES, containsPermanentScene, addPermanentScene,
 } from '../systems/sceneCache.js';
+// S40: resting where the player has a claim - the rented-room finder
+// the tavern rents through, and FightersGuild.CanRest.
+import { findRentedRoom, removeExpiredRooms } from '../systems/tavern.js';
+import { canRest as guildCanRest } from '../systems/guildServices.js';
+import { interiorRestPlace, restDecision } from '../systems/restSession.js';   // CanRest's inside-a-building bag + the scene-free open gate above it
 import { orderOf } from '../systems/guildVariants.js';
 import { joinedGuildOfGroup } from '../systems/guilds.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js';
@@ -266,24 +269,13 @@ export function createWorldModes(host) {
   // own parseAst and reports any const or let read in the SAME
   // execution scope as, and before, its declaration.
   const say = (l) => { if (townTalk?.say) townTalk.say(l); else console.warn('[interior]', l); };
-  // V5: this host's rest, from the ONE factory (shared.createRestDeps).
-  // Only the two halves a host can uniquely answer are written here.
-  // Both are closures, so reading interiorTicker and interiorOverlay
-  // from above their own declarations is deferred and legal - the
-  // distinction test/tdz.test.js exists to keep honest.
-  const interiorRestDeps = createRestDeps(playerEntity, {
-    say,
-    onLevelUp: () => { if (!interiorOverlay) interiorOverlay = new LevelUpScreen(playerEntity); },
-    textLines: (id) => townTalk?.lines?.(id) ?? null,
-    inside: () => true,
-    // AreEnemiesNearby, the RESTING variant. A BUILDING HAS NO FOE
-    // POOL in this port - the Q4-v flag on interior enemies is still
-    // open - so this answers false and says so rather than pretending
-    // to scan. The moment an interior grows a pool, this is the line
-    // that makes a rest breakable in one. FLAGGED.
-    enemiesNearby: () => false,
-    advanceMinutes: (n) => { interiorTicker.advance(n); },
-  });
+  // V5's interiorRestDeps retired into the fuller one below (search
+  // `place: interiorRestPlaceHere`), which carries the same two
+  // host-only halves plus the place bag, MoveToBed, the quest tick and
+  // the expired-room sweep. Its one note is worth keeping: A BUILDING
+  // HAS NO FOE POOL in this port - the Q4-v flag on interior enemies
+  // is still open - so `enemiesNearby` answers false and says so
+  // rather than pretending to scan. FLAGGED.
   const interiorTicker = createPlayerTicker(playerEntity, {
     onExhausted: onExhaustedInterior,   // AUDIT 23 (C5)
     say,
@@ -1201,62 +1193,14 @@ export function createWorldModes(host) {
     };
   }
 
-  /**
-   * V5 - RESTING INSIDE A BUILDING. Until this, `ctx.toggleRest` (the
-   * only consumer of the Rest binding, ui/input.js:106) existed in
-   * exactly one of the four hosts, so KeyR did nothing anywhere but a
-   * dungeon. The first-hour probe put a number on it: a character
-   * rented a room in Burgley for five gold - the gold left the purse,
-   * the rental record landed - and then could not sleep in it.
-   *
-   * DaggerfallRestWindow's own order: CanRest first, then MoveToBed
-   * (:601-609), then the window.
-   */
-  function toggleInteriorRest() {
-    if (interiorOverlay) return;
-    const b = interiorBuilding;
-    const mapId = questSceneCtx?.()?.mapId ?? 0;
-    const scene = currentInteriorScene();
-    const dict = townTalk?.factionDict ?? null;
-    const guild = b?.factionId ? guildOfFaction(b.factionId, resolveVariantGuild(dict), dict) : null;
-    const restMarkers = (interiorCtx?.markers ?? []).filter((m) => m.type === INTERIOR_MARKER.REST);
-    const verdict = canRest({
-      // Inside a building IsPlayerInTown(true, true) is false by its
-      // own mustBeOutside gate - the camping arm cannot fire in here.
-      inTownOutside: false,
-      inTownLocation: isPlayerInTown(gps?.locationType?.() ?? 0xffff),
-      insideBuilding: true,
-      buildingType: b?.buildingType ?? null,
-      permanentScene: !!scene && containsPermanentScene(sceneCache(), scene),
-      isShip: b?.buildingType === BUILDING_TYPES.Ship,
-      // H1 CLOSED THIS. V5 left it FALSE with a note saying "the moment
-      // a house can be bought, this is the line that lets you sleep in
-      // it" - and that moment is now: DaggerfallBankManager.IsHouseOwned
-      // is live over the region's own registry slot.
-      houseOwned: isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, b?.buildingKey ?? 0),
-      room: findRentedRoom(playerEntity.rentedRooms ?? [], mapId, b?.buildingKey ?? 0),
-      nowMinutes: Math.floor(worldMinutes()),
-      restMarkers: restMarkers.length,
-      guildCanRest: guild ? guildCanRest(guild, membershipOf((playerEntity.guildMemberships ??= {}), guild)) : false,
-    });
-    if (!verdict.allowed) {
-      // plainLines: TEXT.RSC answers { text, center } rows and
-      // ActionTextBox iterates STRINGS (shared.js's note).
-      const lines = verdict.line ? [verdict.line] : plainLines(townTalk?.lines?.(verdict.textId));
-      if (lines) interiorOverlay = new ActionTextBox(lines);
-      return;
-    }
-    // MoveToBed (:601-609): the allocated marker, then FixStanding.
-    // The index is stored rather than a position because building
-    // positions are not stable (DFU's own comment) - which is exactly
-    // why this resolves the marker LIST here and not at rental time.
-    const bed = verdict.bedIndex >= 0 ? restMarkers[verdict.bedIndex] : null;
-    if (bed) {
-      player.spawn(bed.x, bed.y, bed.z);
-      cam.pos = [...player.eye];
-    }
-    interiorOverlay = new RestWindow(interiorRestDeps);
-  }
+  // V5's toggleInteriorRest retired: its bag-building lives in
+  // `interiorRestPlaceHere` below, which hands the bag to the WINDOW
+  // instead of calling CanRest here - DFU gates on the WHILE and
+  // HEALED buttons (:641-690), not at open, which is what keeps LOITER
+  // free of the refusal and the crime. What came across intact: H1's
+  // `isHouseOwned` over the region's own registry slot, the
+  // permanent-scene test through `currentInteriorScene`, and
+  // `plainLines` on the refusal.
 
   /** U39: the innkeeper's four-button panel. Answers whether it
    *  opened - a host with no art or no font falls through to TALK,
@@ -2805,8 +2749,31 @@ export function createWorldModes(host) {
       // building left the death sequence frozen and the run never
       // ended. The other three hosts tick through townTalk.frame and
       // dungeonContext.tickOverlay; this is the fourth.
-      interiorOverlay.tick?.(dt);
-      if (_shopFont) interiorOverlay.draw(renderer, canvas, _shopFont, hudScale(canvas.width, canvas.height));
+      //
+      // S40: the window is CAPTURED first, and every read below is of
+      // the capture. A window may now clear this slot from inside its
+      // own tick - RestWindow's death path does, through the PopToHUD
+      // door - and re-reading `interiorOverlay` afterwards crashed the
+      // frame loop on the draw. Capturing is the shape this module's
+      // own overlayInput already uses, and it is robust whether the
+      // window clears the slot, the drain does, or nobody does.
+      const w = interiorOverlay;
+      w.tick?.(dt);
+      // THE DONE-DRAIN, which the other three seams carry and two of
+      // them call not optional in so many words (townTalk.frame,
+      // dungeonContext.tickOverlay). A window may FINISH inside its
+      // own tick - RestWindow does, on the death path and on a missing
+      // endLines - and until now only overlayInput cleared this slot,
+      // so such a window stayed painted over the world.
+      if (w.done) { w.dispose?.(); if (interiorOverlay === w) interiorOverlay = null; }
+      // ...and DRAW whatever is in the slot NOW, not the capture. The
+      // tick may have emptied it (the drain above) or handed it on to
+      // a successor - this module's windows do dispatch to one another
+      // - and painting the capture would show last frame's window over
+      // this frame's. One read, both cases, no branch a test cannot
+      // reach.
+      if (!interiorOverlay) { /* the window is gone; nothing to paint */ }
+      else if (_shopFont) interiorOverlay.draw(renderer, canvas, _shopFont, hudScale(canvas.width, canvas.height));
       else interiorOverlay = null;
     }
     return true;
@@ -3219,7 +3186,126 @@ export function createWorldModes(host) {
    *  is unbuilt (the composer saves from the exterior and the dungeon
    *  contexts), and the pause window's SAVE button already answers
    *  DFU's cannot-save line rather than pretending. */
-  const mountInterior = (w) => { if (w) interiorOverlay = w; };
+  /** Mount a window in this host's ONE overlay slot, disposing whatever
+   *  it replaces - the shape townTalk.showOverlay has always had
+   *  (:243-247) and this seam did not.
+   *
+   *  It matters now that a rest window is mountable here. DFU pauses a
+   *  rest while another window is on top (TickRest :362-365, and again
+   *  at :397-400 because "quest tick above can perfectly align with
+   *  rest ending") and resumes it after. A single overlay slot cannot
+   *  stack, so the port cannot pause - the incoming window REPLACES
+   *  the rest. Without a dispose that replacement was silent AND
+   *  leaky: the rest simply stopped with no wake text, and because
+   *  `_close()` never ran, `IsResting` stayed raised for the rest of
+   *  the session - no per-minute fatigue drain ever again, and held
+   *  enchantments eating their items at 60 a round instead of 4.
+   *  FLAGGED: pause-and-resume is the DFU behaviour and a
+   *  single-slot host cannot have it; ending cleanly is the honest
+   *  approximation, not a claim to have ported it. */
+  const mountInterior = (w) => {
+    if (!w) return;
+    if (interiorOverlay && interiorOverlay !== w) interiorOverlay.dispose?.();
+    interiorOverlay = w;
+  };
+
+  // CanRest's argument bag for INSIDE A BUILDING. `inTownOutside`
+  // is a constant false here and that is the law, not a shortcut:
+  // IsPlayerInTown(true, true) passes `mustBeOutside`, and the player
+  // is by definition not. `inTown` is the bare IsPlayerInTown() -
+  // location TYPE only, no rect test and no inside test, because both
+  // of its optional flags default off (PlayerGPS.cs:504-527).
+  const interiorRestPlaceHere = () => {
+    const b = interiorBuilding;
+    const mapId = questSceneCtx?.()?.mapId ?? 0;
+    const buildingKey = b?.buildingKey ?? 0;
+    const memberships = (playerEntity.guildMemberships ??= {});
+    const dict = townTalk?.factionDict ?? null;
+    const guild = b?.factionId ? guildOfFaction(b.factionId, resolveVariantGuild(dict), dict) : null;
+    // The SHAPE is systems/restSession.js' (a review round showed a bag
+    // built in a closure can only be pinned by a regex over its own
+    // source, and proved that hollow); this reads the live values.
+    const scene = currentInteriorScene();
+    return interiorRestPlace({
+      inTownLocation: host.inTownLocation?.() ?? false,
+      building: b,
+      nowMinutes: Math.floor(worldMinutes()),
+      // Interior.FindMarkers(InteriorMarkerTypes.Rest) - the same read
+      // rentRoom's bedCount makes, so the stored index lines up with
+      // the list it indexes. canRest wants the COUNT and answers an
+      // index; the marker itself is resolved at MoveToBed.
+      restMarkers: interiorRestMarkers().length,
+      permanentScene: !!scene && containsPermanentScene(sceneCache(), scene),
+      // H1 CLOSED THIS. Both rest lanes left it false with a note
+      // saying "the moment a house can be bought, this is the line
+      // that lets you sleep in it" - and that moment arrived in the
+      // same merge: DaggerfallBankManager.IsHouseOwned is live over
+      // the region's own registry slot.
+      houseOwned: isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, b?.buildingKey ?? 0),
+      // GetRentedRoom(mapId, buildingKey), through the SAME finder the
+      // tavern window rents with - so the bed this answers is the bed
+      // that was sold (tavern.js's own flag, retired here).
+      room: findRentedRoom(playerEntity.rentedRooms ?? [], mapId, buildingKey),
+      // GuildManager.GetGuild(factionID).CanRest() - THIS building's
+      // faction, not the player's chosen guild. canRest() applies the
+      // tavern exclusion itself.
+      guildCanRest: !!guild && guildCanRest(guild, membershipOf(memberships, guild)),
+    });
+  };
+  /** The Rest markers this interior has, resolved once - canRest wants
+   *  the count, MoveToBed wants the list. */
+  const interiorRestMarkers = () =>
+    (interiorCtx?.markers ?? []).filter((m) => m.type === INTERIOR_MARKER.REST);
+
+  // The interior host's RestWindow deps: the shared composition plus
+  // what only this host knows. MoveToBed lands the player on the bed
+  // marker CanRest picked (PlayerMotor.transform.position +
+  // FixStanding; the port's spawn does the standing fix).
+  const interiorRestDeps = createRestDeps(playerEntity, {
+    advanceMinutes: (n) => interiorTicker.advance(n),
+    // TickRest :379 - QuestMachine.Instance.Tick() rides the same
+    // sub-tick as the clock, UNPACED (DFU calls the machine directly,
+    // not through QuestMachine.Update's ticksPerSecond timer). This
+    // host's ordinary quest tick is gated on "no overlay up", so
+    // without this a rested night ran none at all.
+    tickQuests: () => questBridge?.machine?.tick?.(),
+    enemiesNearby: () => false,   // this host mounts no foe pool
+    place: interiorRestPlaceHere,
+    // MoveToBed (:601-609) is `transform.position = allocatedBed` and
+    // then FixStanding(0.4, 0.4) - the snap is NOT optional. floorLanding
+    // is this port's FixStanding, and skipping it is the exact failure
+    // the dungeon's own start-marker comment records: a marker in tight
+    // geometry leaves the capsule inside the collider and the player
+    // wedges. The +1.08 lifts the marker point to the capsule centre,
+    // the same offset startSpawn uses.
+    moveToBed: (bedIndex) => {
+      const m = bedIndex >= 0 ? interiorRestMarkers()[bedIndex] : null;
+      if (!m || !interiorCtx) return;
+      const f = floorLanding(interiorCtx.collider, [m.x, m.y + 1.08, m.z]);
+      player.spawn(f[0], f[1], f[2]);
+      cam.pos = [...player.eye];
+    },
+    endLines: (id) => townTalk?.lines?.(id) ?? null,
+    // EndRest's expired arm calls RemoveExpiredRentedRooms as it prints
+    // the line (:485) - the SAME sweep the tavern runs before a rental,
+    // so a room slept to the last hour is gone by the time the
+    // innkeeper is asked again, and its held scene goes with it.
+    onRentExpired: () => {
+      playerEntity.rentedRooms = removeExpiredRooms(
+        playerEntity.rentedRooms ?? [], Math.floor(worldMinutes()), sceneCache());
+    },
+    // PopToHUD, before RaiseSkills can want the slot for a level-up
+    // screen. The U24 identity guard: a window that dispatches to
+    // another must not be nulled by its OWN onClose.
+    onClose: () => { if (interiorOverlay?.isRestWindow) interiorOverlay = null; },
+    say,
+    onLevelUp: () => {
+      say('You have gained a level!');
+      if (!interiorOverlay) interiorOverlay = new LevelUpScreen(playerEntity);
+    },
+    day: () => false, inside: () => true,   // a building interior, always
+  });
+
   const interiorKeyCtx = {
     get uiOverlayActive() { return !!interiorOverlay; },
     // AUDIT 21 (hosts lane, F3): a ChoiceWindow wants the raw CODE and
@@ -3252,12 +3338,39 @@ export function createWorldModes(host) {
     toggleSpellbook() { if (magic) mountInterior(makeSpellbookWindow()); },
     toggleLogbook() { mountInterior(host.makeJournal?.('activeQuests')); },
     toggleNotebook() { mountInterior(host.makeJournal?.('notebook')); },
-    // V5: the last dead arm of this ctx. U43 routed the Rest action in
-    // here, and `ctx.toggleRest?.()` (ui/input.js:106) then optional-
-    // chained into nothing, because no host outside dungeonContext had
-    // ever built one. That is what the first-hour probe hit: a room
-    // rented in Burgley for five gold, and R opening nothing in it.
-    toggleRest() { toggleInteriorRest(); },
+    // THE REST KEY, INSIDE - the last dead arm of this ctx. U43 routed
+    // the Rest action in here and `ctx.toggleRest?.()` (ui/input.js)
+    // then optional-chained into nothing, because no host outside
+    // dungeonContext had ever built one. That is what the first-hour
+    // probe hit: a room rented in Burgley for five gold, and R opening
+    // nothing in it.
+    //
+    // THE OPEN GATE runs here too - DFU raises it from one scene-free
+    // handler (DaggerfallUI.cs:651-687). This host mounts no foe pool
+    // and has no water, but StartRestGroundedCheck is very much live
+    // indoors: a levitating player cannot lie down in a shop any more
+    // than in a dungeon.
+    //
+    // CanRest itself does NOT run here. It runs on the WHILE and
+    // HEALED buttons inside the window (:641-690), which is what keeps
+    // LOITER free of the camping refusal and the Vagrancy charge -
+    // LoiterButton never calls it (:693-706). Gating at open would
+    // have made loitering in a city a crime.
+    toggleRest() {
+      if (interiorOverlay) return;
+      const d = restDecision({
+        enemiesNearby: false,   // no foe pool in a building interior
+        swimming: false,        // nor water
+        grounded: startRestGroundedCheck(!!player.grounded, player.pos, interiorCtx?.collider),
+      });
+      if (d.kind !== 'rest') {
+        if (d.kind === 'blocked') return;   // a racial override says nothing at all
+        const lines = d.message ? [d.message] : plainLines(townTalk?.lines?.(d.textId));
+        if (lines) mountInterior(new ActionTextBox(lines));
+        return;
+      }
+      mountInterior(new RestWindow(interiorRestDeps));
+    },
   };
 
   addEventListener('keydown', (e) => {
@@ -3333,9 +3446,21 @@ export function createWorldModes(host) {
     // one U43's dispatch already built - dungeonCtx below ground,
     // interiorKeyCtx inside a building - so a panel and a key reach
     // the same door here too, and there is no third object.
-    if (routeLargeHudClick(px, py, e.button,
-      mode === 'dungeon' ? dungeonCtx : interiorKeyCtx,
-      { windowUp: mode === 'dungeon' ? !!dungeonCtx?.uiOverlayActive : !!interiorOverlay })) return true;
+    // ...but ONLY in a mode this host actually draws. `mode` starts
+    // at 'exterior' and the outer host calls this before its own
+    // routeLargeHudClick, so without the gate every panel click above
+    // ground reached interiorKeyCtx and mounted a window into
+    // `interiorOverlay` - a slot the frame never draws and the
+    // keydown arm (`if (mode === 'interior')`) never feeds. The
+    // orphan then sat there until the player walked through a door.
+    // Harmless-looking before S40 only because interiorKeyCtx had no
+    // toggleRest and routeAction's `?.()` no-opped; the S40 review
+    // found it the moment it did.
+    if (mode === 'dungeon' || mode === 'interior') {
+      if (routeLargeHudClick(px, py, e.button,
+        mode === 'dungeon' ? dungeonCtx : interiorKeyCtx,
+        { windowUp: mode === 'dungeon' ? !!dungeonCtx?.uiOverlayActive : !!interiorOverlay })) return true;
+    }
     if (mode !== 'interior' || !interiorOverlay) return false;
     const v = pointToNative(nativeMetrics(canvas), px, py);
     if (v) interiorOverlay.click?.(v[0], v[1], e.button === 2);   // I4: the remove gesture rides the button
@@ -3475,9 +3600,21 @@ export function createWorldModes(host) {
     /** B1: GameManager.RaiseOnEncounterEvent's one core consumer is
      *  the rest window's AbortRestForEnemySpawn - the machine raises
      *  it per pending CreateFoe tick and this routes it to the live
-     *  rest overlay (dungeon mode is the only mode with one). */
+     *  rest overlay. S40: in DFU the subscription is on the WINDOW
+     *  (OnPush at :264, OnPop at :275), not on a scene, so it follows
+     *  the window into whichever slot holds it - the parenthetical
+     *  that stood here saying dungeon mode is the only mode with a
+     *  rest window was true until this slice and is not now. */
     raiseOnEncounterEvent() {
-      if (mode === 'dungeon') dungeonCtx?.abortRestForEnemySpawn?.();
+      if (mode === 'dungeon') { dungeonCtx?.abortRestForEnemySpawn?.(); return; }
+      if (interiorOverlay?.isRestWindow) { interiorOverlay.abortForEnemySpawn?.(); return; }
+      // ...and the OUTER host's slot, which is where an outdoor rest
+      // window lives (townTalk's). The first S40 pass routed the two
+      // slots this module owns and wrote a comment saying the
+      // subscription follows the window - which was only two thirds
+      // true, and outdoors is exactly where a quest CreateFoe wave
+      // lands next to a sleeping player.
+      host.abortRestForEnemySpawn?.();
     },
     /** B3: TeleportPc's marker landing (:120-135) - the marker's
      *  scene position in whichever frame the mounted mode speaks
@@ -3576,7 +3713,13 @@ export function createWorldModes(host) {
      *  context has had an overlay slot since U14; nothing exported a
      *  way in. */
     showQuestOverlay(win) {
-      if (mode === 'interior') { interiorOverlay = win; return true; }
+      // Through mountInterior, so the window this REPLACES is disposed.
+      // A quest popup is the one thing that can take the slot from a
+      // running rest - the rest sub-tick calls QuestMachine.Tick, which
+      // is exactly what DFU's second `TopWindow != this` check
+      // (:397-400) exists for - and a raw assignment left the rest
+      // window's IsResting raised for the rest of the session.
+      if (mode === 'interior') { mountInterior(win); return true; }
       if (mode === 'dungeon' && dungeonCtx?.showOverlay) return dungeonCtx.showOverlay(win);
       return false;
     },

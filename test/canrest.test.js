@@ -149,11 +149,30 @@ test('V5: the guild-hall privilege, and the TAVERN exclusion that has to come wi
   assert.equal(BUILDING_TAVERN, 15, 'DFLocation.BuildingTypes.Tavern');
 });
 
-test('V5: remainingHoursRented truncates toward zero, and answers -1 for no room', () => {
+test('V5: remainingHoursRented CEILS, and answers -1 for no room', () => {
+  // CORRECTED in the three-way merge. This pin asserted truncation,
+  // reading `(int)Math.Ceiling(...)` as a truncating cast - but the
+  // cast is applied to a value Math.Ceiling has ALREADY rounded up
+  // (PlayerEntity.cs:268-275), so it truncates nothing.
+  //
+  //     double remainingSecs = room.expiryTime - Now.ToSeconds();
+  //     return (int)Math.Ceiling(remainingSecs / SecondsPerHour);
+  //
+  // It shows in two places. A room with ONE MINUTE left reads one hour
+  // rather than zero, so `> 0` still lets you sleep in it - and
+  // RemoveExpiredRentedRooms (:257-266) evicts a room whose hours are
+  // `< 1`, which under a ceiling is true exactly when no time at all
+  // is left. Under truncation the sweep would throw out a tenant with
+  // fifty-nine minutes still paid for.
   assert.equal(remainingHoursRented(null, 0), -1);
-  assert.equal(remainingHoursRented({ expiryMinutes: 90 }, 0), 1, 'an hour and a half is one hour');
+  assert.equal(remainingHoursRented({ expiryMinutes: 90 }, 0), 2, 'ninety minutes ceils to two');
+  assert.equal(remainingHoursRented({ expiryMinutes: 60 }, 0), 1, 'and an exact hour is one');
+  assert.equal(remainingHoursRented({ expiryMinutes: 1 }, 0), 1,
+    'ONE MINUTE is still an hour you paid for - the sweep keeps the room');
+  assert.equal(remainingHoursRented({ expiryMinutes: 0 }, 0), 0,
+    'and nothing left is 0, which is what CanRest tests > 0 against');
   assert.equal(remainingHoursRented({ expiryMinutes: 0 }, 90), -1,
-    'expired truncates toward zero, so it is NEGATIVE rather than 0 - and CanRest tests > 0');
+    'past expiry goes negative - ceil(-1.5) is -1, and CanRest tests > 0');
 });
 
 test('V5: every host that can hold a player now has a rest arm', () => {
@@ -161,19 +180,30 @@ test('V5: every host that can hold a player now has a rest arm', () => {
   // with one caller is a law three quarters of the game cannot reach.
   const dungeon = code('scenes/dungeonContext.js');
   assert.match(dungeon, /toggleRest\(\)/, 'the dungeon has always had one');
-  assert.match(code('scenes/worldModes.js'), /toggleRest\(\) \{ toggleInteriorRest\(\); \}/,
+  // MERGED: the interior arm inlined when its bag-building moved to
+  // the window's `restPlace` dep - CanRest runs on the WHILE and
+  // HEALED buttons (:641-690), not at open, which is what keeps LOITER
+  // free of the camping refusal and the Vagrancy charge.
+  assert.match(code('scenes/worldModes.js'), /toggleRest\(\) \{\n\s+if \(interiorOverlay\) return;/,
     'the interior arm, on the ctx U43 routes keys through');
-  assert.match(code('scenes/world.js'), /toggleRest: \(\) => toggleExteriorRest\(\)/,
+  assert.match(code('scenes/world.js'), /toggleRest: \(\) => toggleRest\(\),/,
     'the exterior arm, on hudCtx');
   assert.match(code('scenes/world.js'), /act === 'Rest'/,
     'and the exterior key ladder actually routes the action');
 
-  // The two new arms must both go through the LAW, not re-decide it.
-  for (const h of ['scenes/world.js', 'scenes/worldModes.js']) {
-    assert.match(code(h), /canRest\(\{/, `${h} calls CanRest rather than inventing a gate`);
+  // Every arm goes through the LAW rather than re-deciding it - and
+  // after the merge they reach it the way DFU does, by handing the
+  // window a PLACE BAG that its buttons feed to CanRest.
+  assert.match(code('ui/restWindow.js'), /const d = canRest\(\{ \.\.\.place, alreadyWarned \}\);/);
+  for (const h of ['scenes/world.js', 'scenes/worldModes.js', 'scenes/exterior.js']) {
+    assert.match(code(h), /place: /, `${h} supplies CanRest's bag rather than inventing a gate`);
   }
-  // ...and the interior one must MOVE THE PLAYER TO THE BED (:601-609)
-  assert.match(code('scenes/worldModes.js'), /verdict\.bedIndex >= 0 \? restMarkers\[verdict\.bedIndex\] : null/);
+  // ...and the interior one must MOVE THE PLAYER TO THE BED (:601-609),
+  // through floorLanding - which is this port's FixStanding, and which
+  // both lanes' first cut left out of a two-statement C# method.
+  assert.match(code('scenes/worldModes.js'),
+    /const m = bedIndex >= 0 \? interiorRestMarkers\(\)\[bedIndex\] : null;/);
+  assert.match(code('scenes/worldModes.js'), /floorLanding\(interiorCtx\.collider/);
 });
 
 test('V5: ONE generic tick drives the rest window, so no host can forget it', () => {
@@ -183,11 +213,14 @@ test('V5: ONE generic tick drives the rest window, so no host can forget it', ()
   // with. RestWindow.tick now forwards, every host already calls
   // `overlay.tick?.(dt)`, and the dungeon's explicit line had to GO or
   // it would rest at double speed.
-  assert.match(code('ui/restWindow.js'), /tick\(dt\) \{ this\.tickRest\(dt\); \}/);
+  // MERGED: `tick` is the real method and `tickRest` the alias (the
+  // other lane had it the other way round). Either way the point
+  // stands: one generic call, no per-host branch.
+  assert.match(code('ui/restWindow.js'), /tickRest\(dt\) \{ this\.tick\(dt\); \}/);
   assert.equal(/isRestWindow\) activeOverlay\.tickRest\(dt\)/.test(code('scenes/dungeonContext.js')), false,
     'the dungeon must NOT also tick it explicitly - that is a double tick');
   assert.match(code('scenes/dungeonContext.js'), /activeOverlay\.tick\?\.\(dt\)/, 'the generic call stays');
-  assert.match(code('scenes/worldModes.js'), /interiorOverlay\.tick\?\.\(dt\)/);
+  assert.match(code('scenes/worldModes.js'), /const w = interiorOverlay;\n\s+w\.tick\?\.\(dt\);/);
   assert.match(code('scenes/townTalk.js'), /overlay\?\.tick\?\.\(dt\)/);
 });
 
@@ -249,5 +282,9 @@ test('V5: TEXT.RSC rows are not strings, and the windows that draw them iterate 
     'the three town hosts still hand back ROWS - if that changes, the flatten above is why it is safe either way');
   // ...and the shared factory flattens for every host at once, so a
   // new host cannot get this wrong by omission.
-  assert.match(code('scenes/shared.js'), /endLines: \(id\) => plainLines\(textLines\(id\)\)/);
+  // MERGED: the dep is named `endLines` on the caller side now (the
+  // other lane's composition kept DFU's own word), and the flatten
+  // moved with it. Same guarantee: every host at once, so a new host
+  // cannot get this wrong by omission.
+  assert.match(code('scenes/shared.js'), /endLines: \(id\) => plainLines\(rest\.endLines\?\.\(id\)\)/);
 });

@@ -302,10 +302,12 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // E2: re-instantiate the held enchantments from the worn set the
   // equip table just rebuilt - a recast, so no durability is billed.
   restartHeldEnchantments(entity);
-  // W1: the restored weather + the day stamp that keeps the boot tick
-  // from clobbering it (startedFromLoadedSaveGame, WeatherManager.cs:
-  // 524-543). A pre-W1 save carries none - the current sky stands.
-  restoreWeather(snap.weather ?? null, snap.classicMinutes ?? 0);
+  // W1: the restored weather, which S41 made self-suppressing -
+  // restoreWeather now stamps the array rolled and the pending-apply
+  // flag DOWN (startedFromLoadedSaveGame's else arm, WeatherManager.cs
+  // :540-542) rather than taking a day stamp from here. A pre-W1 save
+  // carries no weather - the current sky stands.
+  restoreWeather(snap.weather ?? null);
   // Missing on a pre-17h save: leave whatever the entity carries (a
   // fresh entity starts every group at zero, which is classic's own
   // starting state), the additive-field shape DFU's serializer gives.
@@ -385,6 +387,19 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // AUDIT 23: the sticky per-region price band (see snapshot side); a
   // pre-fix save re-mints lazily, exactly as an unvisited region does.
   entity.regionPrices = snap.regionPrices ? { ...snap.regionPrices } : {};
+  // S41 - SerializablePlayer.cs:338-339, "Set time tracked in player
+  // entity": the entity's OWN clock marker is re-anchored to the
+  // restored world time. It is not in the envelope for exactly this
+  // reason, and worldTick.js has cited this line as the reason since
+  // AUDIT 23 - while the line itself was never ported, so the marker
+  // simply carried over from whatever the session was doing before
+  // the load. A load FORWARD then left a stale marker behind a jumped
+  // clock, and the next tick read the gap as elapsed time: harmless
+  // enough when the only reader was the reputation-normalise loop,
+  // and not harmless once S41 hung the DAY BLOCK off the same gap - a
+  // load would have run a spurious multi-day price drift and re-run a
+  // loan check over a window the saved game had already lived.
+  entity.lastGameMinutes = Math.floor(snap.classicMinutes ?? 0);
   return { position: snap.position, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null };
 }
 

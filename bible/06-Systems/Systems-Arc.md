@@ -2543,3 +2543,684 @@ recipe key names nothing. The cast SOUND is DrinkPotion's
 `GetCastSoundID(ElementTypes.Magic)`; DFU gates it on
 `IsPlayerEntity`, and the port's engine is the player's, so the gate
 is structural rather than written.
+
+## S40 - A BED YOU CAN SLEEP IN (2026-08-25)
+
+`src/systems/restSession.js` (CanRest, `restOpenGate`,
+`interiorRestPlace`, CheckRent, the illegal-rest confirm) +
+`src/ui/restWindow.js` (the gate on the buttons that own it, MoveToBed,
+the IsResting lifecycle) + `src/scenes/shared.js`
+(`restVitals`/`restFullyHealed`/`createRestDeps` - the rested hour, one
+home) + `src/formats/mapsFile.js` (`isTownLocationType`) +
+`src/systems/encounters.js` (`areEnemiesNearby`) + `src/player/motor.js`
+(`startRestGroundedCheck`) + `src/systems/worldTick.js` (the
+`!isResting` fatigue gate) + `src/scenes/townTalk.js` (`closeOverlay`)
++ `src/systems/settings.js` (IllegalRestWarning goes live) +
+`src/systems/tavern.js` (a flag retired) + all four hosts.
+`test/restlodging.test.js` (new, 51).
+
+**Rest was a dungeon feature.** `toggleRest` existed in exactly one
+host. Outside a dungeon the R key did nothing, so a character above
+ground could not heal, could not pass an hour, and could not sleep off
+a disease - and the tavern, which has sold rooms since U39, sold a bed
+`tavern.js` itself described as "stored here and read by nobody". The
+window and the session machine were both already built and correct.
+What was missing was the arm that decides WHERE.
+
+**`alreadyWarned` does not mean what it looks like.** `CanRest(bool
+alreadyWarned)` (`:542-599`) returns `alreadyWarned` from its
+in-town-outdoors branch, which reads like "the second press works".
+It is not. The producer is `Settings.IllegalRestWarning`: with it on
+(its shipped value) the WHILE and HEALED buttons raise a Yes/No box
+**before** calling `CanRest` at all (`:645-657`, `:671-683`), and only
+that Yes arm passes `true`. With it off, `DoRestForAWhile(false)` runs
+straight into the refusal - so camping in a town is not merely
+discouraged, it is **impossible**, and pressing R again changes
+nothing. The first draft of this slice wrote the "second press rests"
+reading into the source comment and the test; reading the two button
+handlers is what corrected it.
+
+What does not depend on the setting: `CrimeCommitted = Vagrancy` and
+`SpawnCityGuards(true)` fire on **both** paths (`:559-561`). Being
+turned away still puts the watch on the street. That is the quirk
+worth keeping, and it is pinned on both branches.
+
+**LOITER is not rest.** `LoiterButton_OnMouseClick` (`:693-706`) never
+calls `CanRest` and never calls `MoveToBed`. Loitering three hours in
+the middle of a city is free and legal. Only the two REST buttons
+carry the gate, so the gate lives on them and not on the window's
+open, which is where a "tidier" port would put it and would then have
+made loitering a crime.
+
+**The claim ladder, inside.** A building is somewhere the player may
+sleep only through one of three claims, tested in DFU's order. First,
+is the interior a **permanent scene** - the set the port built at P1
+and which `rentRoom` has been naming since U39. If it is: a Ship or a
+`DaggerfallBankManager.IsHouseOwned` house rests outright, and
+otherwise the rental record decides, with the bed relinked **by
+index** into `FindMarkers(Rest)` because "building positions are not
+stable" (DFU's own comment - a terrain mod moves them). Second, guild
+hall privileges - `GetGuild(factionID).CanRest()`, **excluding
+taverns**, and that exclusion is load-bearing rather than cosmetic:
+every tavern in the data carries the fighters-guild faction, so
+without it one Fighters Guild membership sleeps free in every inn in
+the Bay. Third, `haveNotRentedRoom`.
+
+Two guards in the port's `canRest` are **ours** and are named as
+deviations rather than smoothed over: DFU dereferences `room` without
+a null check and indexes `restMarkers[bedIndex]` without a length
+check, and would throw on a permanent scene with no rental or an
+interior with no Rest marker. Neither shape is reachable in DFU's own
+data - only `RentRoom` adds a non-owned permanent scene - so this is a
+crash the port declines to reproduce, not a rule it bends.
+
+**"In town" was wrong everywhere.** `PlayerGPS.IsPlayerInTown`
+(`:504-527`) counts **seven** location types. The port's one
+implementation read `locationType <= 2`, which is City / Hamlet /
+Village and silently drops HomeFarms, HomeWealthy, the standalone
+Tavern and ReligionTemple - and it never tested `mustBeOutside` at
+all, so "in town, outdoors" was true while standing in a shop. That
+predicate is not S40's: the quest machine reads it too
+(`machine.cs:134`), and every rule keyed on it exempted those four
+settlement types. The type list now has one home
+(`isTownLocationType`), and the strict variant has one closure per
+outdoor host that the quest bridge shares.
+
+The two flags of `IsPlayerInTown` are also two different questions,
+and CanRest asks both: `IsPlayerInTown(true, true)` for the camping
+arm and the bare `IsPlayerInTown()` - type only, no rect, no inside
+test - for the building arm. The interior host cannot answer the
+second (it does not know the location), so it asks its outer host
+through an `inTownLocation` seam, which both outdoor hosts supply.
+
+**One home for the rested hour.** `TickRest`'s vitals half and
+`IsPlayerFullyHealed` lived inside the dungeon host, privately,
+because it was the only host that could rest. Three hosts needed them
+the moment this slice landed, so they moved to `shared.js` as
+`restVitals` / `restFullyHealed`, with `createRestDeps` composing the
+five closures every host owes the window. The dungeon keeps its own
+`advanceMinutes` - `IntermittentEnemySpawn`'s catch-up loop is a
+dungeon law and belongs there. `CalculateHealthRecoveryRate`'s
+`day`/`inside` flags are now LIVE outdoors rather than the fixed
+`false, true` the dungeon hard-codes, which is the one place
+RapidHealing InLight differs.
+
+**THE REVIEW ROUND FOUND THE HALF THIS SLICE HAD SKIPPED.** Five
+adversarial readers over the C# and the diff, each finding refuted by
+default; four survived, and two were whole behaviours rather than
+details.
+
+**The OPEN GATE is scene-free.** `DaggerfallUI.cs:651-687` is the
+`dfuiOpenRestWindow` handler, and three refusals stand between the
+Rest action and the window ever being pushed: `AreEnemiesNearby(true)`
+raises the enemy alert and shows TEXT.RSC 354; swimming or a failed
+`StartRestGroundedCheck` shows 355; and then the prevented-rest /
+offer / racial-override chain, which is FLAGGED. DFU raises all of it
+from ONE message handler with no scene test at all. The port had it
+written out inside `dungeonContext.toggleRest`, because that is where
+rest lived - so the three hosts this slice gave a Rest key would have
+let the player lie down with a foe at their back, swimming, or
+mid-levitation. It is `restOpenGate` now, and all four hosts run it
+before they build a window.
+
+**`remainingHoursRented` was a dead output.** `CanRest` computes it
+and the port carried it back and then read it nowhere. What that drops
+is `CheckRent` (`:441-448`), run from `TickRest` every rested hour:
+the rental counts DOWN, and the hour it reaches zero ends the rest -
+with `EndRest`'s own first arm (`:480-486`), which outranks both "You
+wake up." and "You are healed.", says "Your time for this room has
+expired." (a STRING, `Internal_Strings :358`, with no TEXT.RSC record),
+and calls `RemoveExpiredRentedRooms` as it prints. Two details are
+easy to lose: `-1` returns BEFORE the decrement, so an unrented rest is
+never billed; and DFU writes `finished |= CheckRent()`, so the
+decrement runs even on the hour the mode itself finishes.
+
+**"Is any guard alive" is not AreEnemiesNearby.** Both outdoor hosts'
+first-draft `enemiesNearby` asked `cityGuards.activeCount() > 0`,
+copied from this host's exhaustion arm. For exhaustion that is rough;
+for rest it is a different rule, because guards persist until the
+crime clears - one spawned across town would block sleep forever.
+`GameManager.AreEnemiesNearby` (`:684-730`) walks the foes and, in its
+RESTING form, SKIPS an unaware one past 12 units entirely. That is the
+whole point of the flag, and it now has a home in `encounters.js` that
+all three foe-bearing hosts read.
+
+**AND A SECOND ROUND FOUND FIVE MORE**, of which the worst was a wire
+this slice cut with its own hand. `createRestDeps` destructured a
+CLOSED option list and returned a CLOSED literal, so the
+`onRentExpired` closure the interior host handed it was dropped on the
+floor and `RemoveExpiredRentedRooms` never ran - while the pin beside
+it, which matched the SOURCE TEXT of the host, passed. That is the
+whole lesson of the round: a wire is pinned by running current through
+it, not by reading the label. The composition spreads what it does not
+name now, and the pin builds its deps THROUGH `createRestDeps` and
+drives a refusal end to end.
+
+The same round retired the last of the dungeon's private
+composition: it kept a second body of the five closures
+`createRestDeps` produces, semantically identical today and free to
+drift tomorrow. It reads the shared one now and keeps only
+`advanceMinutes`.
+
+**`grounded` is not StartRestGroundedCheck.** `PlayerMotor.cs:184-194`
+returns true when grounded, and OTHERWISE casts a ray of
+`height / 2 + 0.2` - DFU's own comment says why: "Collision fix for
+when player is levitating but feet are 'close enough' to ground to
+rest". The dungeon host had that ray written out and the three new
+hosts passed the raw motor flag, so the same levitating character
+could sleep below ground and was refused TEXT.RSC 355 in a shop, a
+street and a field. It lives in `motor.js` beside the constant it
+derives from.
+
+**Two routing seams.** `AbortRestForEnemySpawn` reached the two slots
+`worldModes` owns and not the OUTER host's, which is where an outdoor
+rest window lives - and outdoors is exactly where a quest `CreateFoe`
+wave lands beside a sleeping player. In DFU the subscription is on the
+WINDOW (`OnPush :264`, `OnPop :275`), so it follows the window; the
+comment claiming so was written before the third slot was routed.
+And `worldModes.pointerdown` routed the large HUD's panels in EVERY
+mode, `interiorKeyCtx` included, while `mode` starts at 'exterior' and
+both outdoor hosts call it FIRST - so a REST panel click above ground
+mounted the interior window into a slot the frame never draws. That
+one predates S40 and was invisible only because `interiorKeyCtx` had
+no `toggleRest` for `routeAction`'s `?.()` to find.
+
+**And the review's last find was in the review's own work.** The
+`restVitals` pin ran its fixture with `career: {}`, and with no
+RapidHealing flag `CalculateHealthRecoveryRate` returns the same
+number for all four `day`/`inside` combinations - so the pin that
+existed to prove those flags reach the formula proved nothing, and a
+mutant hardcoding them inside `restVitals`, or dropping them from
+`createRestDeps`' `tickVitals`, passed. RapidHealing InLight is the
+one place they differ (+100 instead of +60, and only outdoors by
+daylight); InDarkness is its exact complement, so the pin asks both
+and a swapped pair fails from either side.
+
+**Six drifted C# citations and one vacuous assertion**, from the
+citation lens - the failure mode this project has hit in every slice
+that cites line numbers. `Update` is `:185-229` not `:183-227`;
+`IsPlayerFullyHealed` is `:524-537`; the vitals half is `TickVitals`
+at `:509-522`, not the `:229-299` that names no vitals code at all;
+`ConfirmIllegalRestUntilHealed` is `:684-691`; CanRest's second arm
+opens at `:563`; and the Vagrancy citation started one line AFTER the
+line that registers the crime. The vacuous one is worth naming: the
+pin that checks the Rest arm sits inside the ladder's guard compared
+two `indexOf` results raw, so an arm hoisted ABOVE the guard would
+give `-1` and pass - the exact escape it existed to catch.
+
+**The citation sweep was the lesson, not the citations.** Round four
+fixed drifted citations one string at a time and left a third copy of
+the Vagrancy range in `world.js` untouched - which is exactly how this
+failure mode survives a review. A MECHANICAL sweep over all 63 C#
+citations in the slice (extract, resolve the file, print the real
+lines, read them) then found two more that no reader would have
+caught: a bare `(:655)` in three hosts, which means
+`DaggerfallUI.cs:655` but resolves against those blocks' other
+`DaggerfallRestWindow` numbers to `DoRestForAWhile(false)`; and a
+PORT-INTERNAL citation, `dungeon.js (:385-396)`, which drift had
+turned into the footsteps block. Both are now spelled out or named
+rather than numbered. And the sweep, being diff-scoped, then missed five MORE in comment
+blocks the slice never edited but now owns - a `WhileButton /
+HealedButton (:641-690)` that opens on a blank line and closes inside
+a third member, a `StopRestButton (:713-718)` that is the head of the
+KEYBOARD handler while the mouse one is :708-712, the prompt clamp
+cited at its parse GUARD (:745-748) instead of the clamp itself
+(:749-752), and a second `Update (:183-227)` twin in dungeonContext.
+The final check is content-addressed rather than eyeballed: 48
+citations, each asserted to CONTAIN the member it names and to open
+and close on a non-blank line. The lesson holds either way - one grep
+per range beats one careful reader, and the grep has to cover whole
+files, not just the diff.
+
+**The entity flag nobody was writing.** `OnPush` raises
+`playerEntity.IsResting` (`:266-268`) and DFU's own comment says what
+for: "used for random enemy spawning and influences CastWhenHeld
+durability loss". The port HAS that consumer - `enchantments.js` picks
+`HELD_DEGRADE_RATE_RESTING` (60) over `HELD_DEGRADE_RATE` (4), a 15x
+difference in how fast a held enchantment eats its item - and nothing
+had ever fed it, because rest lived in the one host whose enchant ctx
+is FLAGGED unmounted. `world.js` said so out loud: "isResting stays
+absent above ground (no rest window here yet)". This slice put one
+there, which made the sentence false and the gap reachable in the same
+commit.
+
+The flag is raised on OPEN, not on the first rested hour - standing in
+the window deciding already costs a held enchantment - and cleared on
+every one of the window's five exits plus `dispose()`, through a
+single `_close()`. That door is the point: a flag raised on open and
+cleared on four of five exits is worse than no flag, because it leaves
+the player permanently "resting" and burning items 15x for the rest of
+the session. `IsLoitering` rides the same lifecycle (`:789` / `:285`);
+DFU has no consumer for it either, and it is carried so a later reader
+finds it right rather than because anything reads it now.
+
+**Three more from the same lens, and one of them is visible.**
+`ShowStatus` (`:317-346`) picks a different NUMBER and a different
+background per mode: hours PAST for FullRest, hours REMAINING for
+TimedRest and Loiter. The port printed hours-past for all three, so a
+timed rest counted UP on screen where classic counts DOWN. The
+backgrounds stay FLAGGED pending art; the number is not a presentation
+choice. Then the OnEncounter latch: it lived on the SESSION, which
+does not exist while the player is still on the selection page, so a
+quest `CreateFoe` wave landing in that window was lost - DFU sets the
+flag on the WINDOW in `OnPush` and never resets it, so it fires on the
+first `TickRest` after a mode IS picked. And `endEarly` hardcoded "You
+wake up." for a FullRest, where `EndRest` picks
+`IsPlayerFullyHealed() ? healed : wakeUp` at the moment it runs.
+
+Three OnPop behaviours are FLAGGED rather than ported, each because it
+belongs to another arc: `OnSleepEnd` (`:288-289`), whose one consumer
+drains `itemsPendingReroll` - a set the port fills and drains INLINE
+in the magic round, which S40's own `advanceMinutes` runs through the
+sleep, so the same items reroll on the same clock at a different
+moment; `UpdateNpcPresence` (`:277-280`), which the port has no
+NPC-presence pass for at all; and `RaiseOnSleepTickEvent`, which has
+no consumer in DFU's own tree either.
+
+**And three from the window's LIFECYCLE rather than its laws, one of
+them a level lost outright.** `RestFinishedPopup_OnClose` is
+`PopToHUD(); RaiseSkills();` (`:728-732`) IN THAT ORDER, and the port
+ran them the other way round. Every host guards its `onLevelUp` with
+"only if the overlay slot is free" - and at the moment `RaiseSkills`
+ran, the slot still held the finishing rest window. So a level crossed
+during a long sleep never showed its screen: `advancement.js` took its
+headless arm and dumped every attribute point into the LOWEST stats.
+That is AUDIT 21 hosts F3's defect arriving by a second door, and the
+fix is DFU's own order - the window vacates the slot first, through
+the identity-guarded `onClose` idiom this port already uses, with
+`townTalk` growing the `closeOverlay` door it never had.
+
+Second: `RestWindow` had no `click`, and `townTalk.pointerdown` bails
+on any overlay without one - after which both outdoor hosts fall
+through to `requestLook` and grab pointer lock UNDER the open window,
+spinning the camera behind the rest panel. The two modal hosts refuse
+exactly that, and the seam they refuse through is the presence of the
+method. It has one now, and it does what DFU's message boxes do.
+
+Third: `worldModes`' interior seam ticked the window and never drained
+`done` - the one seam of four without the drain, which the other three
+carry and two call not optional in so many words. `RestWindow` sets
+`done` from inside `tick()` on the death path, so that window stayed
+painted over the world.
+
+**And the flag had a third reader the slice talked itself out of.**
+The comment S40 wrote beside `IsResting` said "its one consumer is
+CastWhenHeld's degrade rate". There are three, and DFU's own comment
+at `:266-267` already names two - "random enemy spawning AND
+CastWhenHeld durability loss". The third is
+`PlayerEntity.cs:417-418`: `if (!isResting) DecreaseFatigue(amount);`.
+The port had no such gate, so it charged 66 fatigue an HOUR through
+every rest - measured, not inferred. Worse for LOITER, which by DFU's
+own law calls no `tickVitals` at all: nothing was restoring it, so a
+long enough loiter walked the player toward exhaustion while they
+stood about. The dungeon host was accidentally exempt, its rest
+advance never routing through the ticker; the three hosts this slice
+gave rest to were not.
+
+The gate is narrow on purpose: the JUMPING drain is C#'s `:427`,
+outside the per-minute block and ungated, and the Swimming tally at
+`:414` runs BEFORE the gate. A false sentence in a comment is what
+licensed the omission, which is the argument for the rule that
+comments must be true stated about as plainly as it gets.
+
+**The last lens ran its own mutations, and found nine.** Not against
+the code - against the PINS. Every one was this slice's testing at
+fault, and the pattern is the one that has recurred all the way
+through: a pin that reads a thing instead of running it. The worst
+was the interior host's place bag, pinned entirely by regexes over its
+own source inside a closure - so flipping `insideBuilding` to false
+there bypassed the whole lodging economy (every interior rests free,
+no room, no bed, no rent countdown) with the full suite green. The bag
+is a law in `restSession.js` now, `interiorRestPlace`, and the pin
+runs it; the host reads the law instead of rebuilding the shape.
+
+The other eight: `restVitals`' three `Math.min` clamps, exercised by
+no fixture - and dropping them is not cosmetic, because
+`restFullyHealed` uses `===`, so one point of overshoot makes the
+equality unreachable and a Rest-Until-Healed NEVER TERMINATES;
+`_isPlayerInTownStrict`, the input the whole camping-crime arm keys
+on, unpinned in both outdoor hosts with an anti-regression guard that
+was CASE-MISMATCHED (`locationType()` against the real
+`_musicLocationType()`) and so could never fire; `exterior.js`'s foe
+POOL unpinned, where the watch is the ONLY pool, so an empty one means
+sleeping through a beating; the fatigue rate pinned only `> 0`, so any
+constant passed; the loiter fixture typing 2 against a 3-hour cap,
+leaving the refusal branch inert; the empty-entry no-op and the
+2-digit/99-hour field cap with no test in the repo at all; the gate's
+refusal MESSAGE pinned leaving `restOpenGate` and never arriving at a
+host; and `areEnemiesNearby`'s `_dist ?? Infinity` fallback never
+taken.
+
+**And two last ones in the code.** All FOUR of `EndRest`'s arms
+attach `OnClose` (`:461-462`, `:468-469`, `:482-483`, `:489-490`,
+`:496-497`) - the DEATH arm included, since DFU's death path sets
+`youNeverAwaken` and calls `EndRest`, whose box closes into
+`PopToHUD(); RaiseSkills();`. The port skipped the raise on death and
+on a missing endLines, so a poison that killed the sleeper cost a
+whole night's advancement as well as the life. The death screen still
+owns the MESSAGE - that deviation is named and stands - but not the
+raise. And `CanRest`'s refusal (`:594-596`) is the ONE
+EndRest-adjacent path DFU leaves without an `OnClose`, so it must stay
+silent; the pin holds the pair apart.
+
+Second: the dungeon was the one host of four without the PopToHUD
+door the previous round gave the other three. Three of four is how
+this rule keeps being broken, and it is why the rule is written down.
+
+**And the sub-tick was ported at half its purpose.** `TickRest`
+`:376-379` is two calls inside one sub-tick - `RaiseTime` and then
+`QuestMachine.Instance.Tick()` - and DFU's own comment two lines above
+says the ten-minute granularity exists FOR the second one: "This
+allows quest machine to have more time resolution while still counting
+off rest in hourly increments." The port took the clock half and left
+the quest half, and every host gates its ordinary `questBridge.tick`
+on "no overlay up" - so a rested night ran ZERO quest ticks. That is
+precisely the shape AUDIT 24 wave 30 found for the MAGIC-ROUND half of
+the same freeze and fixed only there. It is the session's law, not a
+host's: DFU calls the machine directly, bypassing
+`QuestMachine.Update`'s real-time pacing, so the port calls the
+unpaced door too.
+
+**And the hours prompt was the port's law, not DFU's.** Both prompts
+prefill the field with `"0"` (`:619`, `:700`) and cap it at EIGHT
+characters (`:621`, `:702`). So Enter on an untouched prompt parses
+and starts a 0-hour rest, and the unparseable no-op is reachable only
+once the player has EMPTIED the field. The port started the field
+empty at two digits and its comment called that "the 99-hour cap by
+construction" - which was wrong twice over: it made DFU's actual
+99-hour arm (TEXT.RSC 26, `:753-757`) unreachable, and it would have
+let a 100-hour rest through the day anyone widened the field. Both are
+DFU's now.
+
+**And the PopToHUD fix introduced a crash of its own.** `RestWindow`
+became the first window in this port that clears the host's overlay
+slot from INSIDE its own `input()` - and every host drain re-reads
+that slot afterwards and dereferenced it unguarded
+(`activeOverlay.done`, `overlay.done`). So the very key that closes
+the rest window threw a TypeError in three of the four hosts. It was
+reproduced before being fixed, all five drains are optional-chained
+now, and it is pinned both by driving the shape and by asserting no
+unguarded drain is left anywhere in the tree - because the next window
+that closes itself will find the same seam.
+
+The same hazard sits one step further on in `worldModes`, which ticks,
+drains and then DRAWS: a tick that cleared the slot left
+`else if (_shopFont) interiorOverlay.draw(...)` reading null, so dying
+mid-rest inside a building crashed the frame loop. That seam captures
+the window for the tick and the drain and then paints whatever is in
+the slot NOW - which covers an emptied slot and a handed-on one at
+once, with no branch a test cannot reach.
+
+**THE MERGE, and the one gap porting the quest tick opened.** Three
+lanes shipped this in a day - V5, U48 and S40 - and the reconciliation
+kept the union rather than a winner; the Port-Ledger row lists it
+law by law. What is worth recording HERE is the gap that only existed
+after the merge. `TickRest` checks `uiManager.TopWindow != this`
+TWICE: once before the sub-tick (`:362-365`) and again after it
+(`:397-400`), with its own comment saying why - "Checking for second
+time as quest tick above can perfectly align with rest ending". The
+second check is about the quest tick, which this merge finally ported,
+so it became reachable in the same change.
+
+DFU PAUSES the rest and resumes it. A single overlay slot cannot
+stack, so the port cannot pause - the incoming window REPLACES the
+rest, and that is FLAGGED as the approximation it is. What it must not
+do is replace it SILENTLY: `_close()` would never run, `IsResting`
+would stay raised for the rest of the session, and with it gone would
+go every per-minute fatigue drain while held enchantments ate their
+items at 60 a round instead of 4. `mountInterior` disposes what it
+replaces now - the shape `townTalk.showOverlay` has always had - and
+the quest box goes through it rather than assigning the slot raw.
+
+FLAGGED, the other half of the same C#: `TickRest` also re-checks
+`GameManager.GetPreventedRestMessage()` TWICE mid-rest - once before
+the sub-tick (`:357-360`) and again at the hour boundary (`:409-412`)
+- and each returns true, ending the rest with that message. The port
+asks the registry only at the OPEN gate (`restDecision`), so something
+that STARTS preventing rest while the player sleeps does not wake
+them: they sleep through to the mode's own finish line. No lane had
+this. It needs a `preventedMessage()` dep on the session and a feed
+from each host, so it is named here rather than smuggled in.
+
+Pins: 52 in `restlodging.test.js`, two of them END TO END - every law
+in this slice driven together through one host-shaped deps bag, from
+the key press to the wake. That is the closest thing to a live probe a
+machine with no ARENA2 data can run, and it is here because a slice
+whose parts each pass and whose whole was never run is exactly what a
+probe catches. 106 mutations, 106 dead. The first
+pass left four alive and all four were the same failure of nerve: a
+pin that named a thing instead of exercising it. The host pins matched
+`act === 'Rest'`, which survives `if (false && act === 'Rest')`, so
+they now match the whole guard including its body; the bed-index range
+was pinned at 9-of-4 and not at 4-of-4, so `<` and `<=` were
+indistinguishable; and `restFullyHealed` was only ever asked about a
+character with everything full, so dropping the fatigue clause changed
+no answer. The town-type set is pinned against the seven names and the
+nine non-towns, and both outdoor hosts are pinned to read the law
+rather than a literal.
+
+**The clock had one caller.** `RestWindow`'s per-frame method was
+`tickRest`, and `dungeonContext.tickOverlay` was the only thing in the
+tree that called it - because the dungeon was the only host that could
+open the window. Every host drives `tick(dt)` on whatever is in its
+overlay slot (`townTalk.frame:572` for the two outdoor hosts,
+`worldModes:2502` for the interior one), so the moment rest reached
+them their windows would have sat on "Hours passed: 0" until Escape.
+That is the same defect AUDIT D-C1 records for the interior death
+sequence and the dungeon's own `tickOverlay` comment records for the
+rest clock's earlier home - a clock wired to one seam in a
+four-seam tree. `tick` is now the method, `tickRest` an alias, and the
+dungeon's special case is gone because calling both would rest at
+double speed.
+
+**MoveToBed is two statements, not one.** `:601-609` sets
+`transform.position` and then calls `FixStanding(0.4f, 0.4f)`. The
+first draft here wrote the spawn and dropped the snap, which is
+exactly the failure the dungeon host's start-marker comment already
+records - a marker in tight geometry leaves the capsule inside the
+collider and the player wedges, feet reading below the marker while
+the numbers jitter and net travel stays zero. `floorLanding` is this
+port's FixStanding; the bed goes through it like every other marker
+landing in the tree.
+
+**U45 arrived mid-merge, and it fits.** The two outdoor hosts' key
+ladders became `hudCtx` while this slice was in flight - one object
+the ladder AND the large HUD's eleven panels both read, so a click on
+the bar and a press of the bound key reach the same door. The Rest
+arm moved into it, which means the large HUD's rest panel
+(`hudLarge.js:152`, `action: 'Rest'`) now has a destination in every
+host: it had been posting an action nothing above ground answered.
+`routeAction`'s own `case 'Rest': ctx.toggleRest?.()` already carried
+the interior host.
+
+FLAGGED: `DaggerfallBankManager.IsHouseOwned` reads DFU's default for
+a player who has bought nothing, because the bank's house ledger is
+unported - so the owned-house arm is correct and unreachable until the
+bank slice buys one. The **live probe** for this slice is owed with
+U41/U42's: no ARENA2 data on this machine, so the rented-room round
+trip (rent a room, walk out, walk back, sleep in the bed the rental
+minted) has been driven only in node.
+
+## S41 - THE DAY CHANGE HAD NO HOME (2026-08-25)
+
+`src/systems/worldTick.js` (`runDayChange`, and the call from
+`tickPlayerMinutes` that gives it to all four hosts) +
+`src/systems/shopStock.js` (`updateRegionalPrices`, `REGION_COUNT`,
+the two clamp bounds, a flag retired) + `src/systems/weatherSim.js`
+(`rollClimateWeathersForDay`, `tickWeather` rebuilt as the drain,
+`_lastDay` deleted) + `src/systems/save.js` (the restore stamp moved
+into `restoreWeather`, and `lastGameMinutes` re-anchored) +
+`src/scenes/world.js` + `src/scenes/exterior.js` (comments only - the
+mechanism under them changed). `test/daychange.test.js` (new, 19);
+`test/weathersim.test.js` grew one.
+
+**Four members, and the port ran one of them.** DFU's
+`PlayerEntity.Update` closes each frame with a date check
+(`:441-450`):
+
+    uint lastDay = lastGameMinutes / 1440;
+    uint currentDay = gameMinutes / 1440;
+    int daysPast = (int)(currentDay - lastDay);
+    if (daysPast > 0)
+    {
+        FormulaHelper.UpdateRegionalPrices(ref regionData, daysPast);
+        WeatherManager.SetClimateWeathers();
+        WeatherManager.UpdateWeatherFromClimateArray = true;
+        RemoveExpiredRentedRooms();
+        LoanChecker.CheckOverdueLoans(lastGameMinutes);
+    }
+
+Three of those four were already in the port as correct, tested laws.
+None of them had a caller on a day boundary. That is the shape this
+slice is about: the bug was not in any member, it was in the absence
+of the block that runs them.
+
+**`CheckOverdueLoans` had no caller anywhere in `src/`.** Not a wrong
+one - none. `grep` found the export, `banking.test.js`, and nothing
+else. So every line of B1's loan law worked and none of it could ever
+fire: borrow, the 10% that rides from the instant of the loan, the
+6/3/1-month reminder crossings, `OverdueLoan`'s account raid, the
+`LoanDefault` reputation hit. A character could borrow the maximum in
+all sixty-two regions and never owe a thing, because nothing in the
+game advanced a loan toward its due date. This is the second time a
+whole ported subsystem has been found with the wiring missing rather
+than the law, and both times the unit tests were green - a test
+proves the member, and only a caller proves the game has it.
+
+**Every shop price in the world was frozen at its boot roll.**
+`UpdateRegionalPrices` (`FormulaHelper.cs:2053-2089`) was not ported
+at all. `regionPriceAdjustment` rolled 750..1250 once per region and
+that number then stood for the life of the character: a region that
+rolled 780 sold at 78% forever and one that rolled 1240 at 124%, and
+no amount of play could move either. The merchants' faction power -
+the whole point of the formula - had no consumer in the port. The
+walk is mean-reverting and the sign is the part worth reading twice:
+
+    chance = (merchantsPower - regionPower) / 5
+             + 50 - (adjustment - 1000) / 25
+
+A HIGH adjustment lowers `chance`, and `chance` is the probability of
+the 51/50 RISE, so an expensive region gets likelier to fall the
+more expensive it is. At the 4000 ceiling `chance` is -70 and the
+region falls on every step no matter what the dice say. Both
+divisions can go negative and both are C# integer division, so both
+are `Math.trunc`; `Math.floor` is wrong in each, and the pins prove
+it at the exact roll value that separates them rather than at a
+convenient one.
+
+**Two markers for one day change is one marker too many.** The
+weather member had been ported - `tickWeather` - with its own private
+`_lastDay` and its own `daysPast > 0` guard, fused to the apply and
+called from the exterior frame. That is not where DFU splits it.
+`PlayerEntity` ROLLS the six zones and raises
+`updateWeatherFromClimateArray`; `WeatherManager.Update` DRAINS that
+flag (`:146-156` -> `:406-415`) and returns early while the player is
+inside. The roll runs wherever the player is; only the apply waits
+for daylight. Fused and hung off an exterior frame, the port rolled
+the zones ZERO times for any day boundary crossed underground: ten
+days in a dungeon came back out to one catch-up roll where DFU had
+rolled ten. Splitting it also removed the marker: the day is
+`PlayerEntity.lastGameMinutes`' business now, and that marker
+re-anchors on restore (`SerializablePlayer.cs:339`), which is a
+better version of the day stamp `restoreWeather` used to take.
+
+**The rented-room sweep is the merge's deferred finding, shipped.**
+The three-lane rest merge found `RemoveExpiredRentedRooms` missing
+from the day change in all three lanes and wrote it down rather than
+folding it in, because it belongs to the world tick's day boundary
+and not to rest. It ran in exactly two places - a tavern window
+opening, and a rest ENDING on an already-expired room - so a rental
+that ran out while the player was asleep in a dungeon was never
+collected, and its interior stayed a permanent scene for the rest of
+the session.
+
+**Nothing had to be threaded from a host.** Every input the block
+needs is already on the entity: `rentedRooms`, `bankAccounts`,
+`regionPrices`, `factionRep`, `sceneCache`. So `runDayChange` takes
+the entity and the two clock values `tickPlayerMinutes` already has
+in scope, and all four hosts get the law without a line of host code
+- which is the whole point, because the FOUR HOSTS RULE exists
+because a line a host has to remember is a line a host forgets.
+
+**The block sits after the fatigue band, and that is not cosmetic.**
+DFU draws the swimming roll at `:412` and the first price roll at
+`:446`. The port's tick had already reordered the normalize loop
+ahead of the fatigue band (those two share no generator, so it is
+free), but a day block placed before the swim roll would shift every
+draw after it. There is a pin that watches which caller gets which
+value out of a scripted two-element sequence.
+
+**The gate could not be pinned on the thing it gates.** The first
+draft tested `daysPast > 0` by asserting the prices had not moved on
+a same-day tick - and `updateRegionalPrices` returns immediately at
+`times = 0`, so relaxing the gate to `>= 0` changed nothing
+observable and the mutation lived. The room sweep takes no day count,
+so it is the member that can tell the two apart; the pin moved onto
+it. 19 mutations, 19 killed.
+
+**And a marker the restore never re-anchored.** `SerializablePlayer`
+sets `entity.LastGameMinutes` to the restored world time on every load
+(`:338-339`), which is precisely why the field is not in the save
+envelope - and `worldTick.js` has cited that line as the reason since
+AUDIT 23, while the line itself was never ported. So the marker just
+carried over from whatever the session was doing before the load. That
+was survivable when the only reader was the reputation-normalise loop.
+It stopped being survivable the moment this slice hung the day block
+off the same gap: a load into a session sitting behind the save's
+clock would have drifted a year of prices and re-run a loan check over
+months the saved game had already played through. One line, ported.
+This is the second time in this file a comment has been found citing a
+C# line the port does not contain, and both times the comment read as
+proof that the work was done.
+
+**And the re-entrancy this slice made reachable.** DFU crosses a
+calendar boundary exactly once because it cannot do otherwise:
+`PlayerEntity.cs:368-371` THROWS when `gameMinutes < lastGameMinutes`,
+so the marker can never end a frame ahead of the clock. Its exhaustion
+collapse is a bare `RaiseTime(1 * SecondsPerHour)` (`:2429`) that
+returns; `Update` is not re-entered.
+
+The port's hosts implement that same RaiseTime as
+`playerTicker.advance(60)` (`exterior.js:407`, `world.js:626`), fired
+from inside `sinks.drainFatigue` - so it re-enters `tickPlayerMinutes`
+from inside that function's own fatigue band. The nested tick wrote the
+marker an hour ahead, the outer frame's own `setWorldMinutes` then
+reset the world clock BELOW it, and the next frame pulled the marker
+back down - so the same midnight was crossed, and processed, TWICE.
+Measured: one collapse at 23:30 drifted the region price 1000 -> 980 ->
+960 for a single day change, rolled the six climate zones twice, and
+ran the room sweep and the loan check twice each.
+
+Nothing was exposed to this before S41. The only reader of that marker
+was the 112-day reputation-normalise loop, where a repeat is invisible,
+and the one day-change law the port did have - the weather roll -
+carried its own monotonic module marker, which is exactly the
+`_lastDay` this slice deleted. Hanging all four members off the shared
+marker is what turned a latent host quirk into four wrong laws.
+
+The marker is monotonic now. That is DFU's invariant restated, not a
+liberty: DFU asserts it with a throw, and the port cannot, because it
+has a caller DFU does not. The genuine backward move - a load - does
+not come through here at all, because `save.js` re-anchors explicitly.
+FOUND AND NOT FIXED, because it is the host's and not this slice's: the
+outer frame's write-back also DISCARDS the collapse's hour, so the port
+recovers the vitals of a rested hour without spending it.
+
+Pins: `test/daychange.test.js` (20) covers each member against its
+C# and, separately, the wiring - a year-long jump through
+`tickPlayerMinutes` that drifts the prices, collects an expired
+rental and defaults a loan in one tick.
+
+FLAGGED: `UpdateRegionalPrices` also drives the `PricesHigh` /
+`PricesLow` region CONDITION FLAGS (`FormulaHelper.cs:2075-2087`).
+The port has no `RegionDataFlags` store at all - the whole
+`RegionPowerAndConditionsUpdate` arc (`PlayerEntity.cs:1626-2115`) is
+unported and nothing reads those flags - so writing them here would
+be a store with no reader; they come with that arc. Recorded, not
+flagged: DFU fills all 62 price adjustments at `StartGameBehaviour`
+and this walk therefore draws no init rolls, while the port's lazy
+`regionPriceAdjustment` materialises stragglers on the first drift of
+a session - the same distribution, a different position in the
+stream. And the **live probe** is owed with S40/U41/U42's: no ARENA2
+data on this machine, so a year of game time has been driven only in
+node.

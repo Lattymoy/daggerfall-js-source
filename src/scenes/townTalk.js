@@ -213,7 +213,11 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
         if (a) overlay.input(a, e);
         else if (e.code === 'KeyE') overlay.input('confirm');   // this host's own alias
       }
-      if (overlay.done) {
+      // S40: OPTIONAL. A window may clear this slot from inside its
+      // own input - RestWindow calls closeOverlay() so the slot is
+      // free before RaiseSkills can want it for a level-up screen -
+      // and the unguarded re-read threw on the key that closes it.
+      if (overlay?.done) {
         // AUDIT 2026-08-17c: clear the close-callback BEFORE firing -
         // a stale G2 callback (e.g. the court verdict) must never
         // re-fire when a LATER unrelated window closes.
@@ -607,6 +611,11 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     const py = (e.clientY - r.top) * (canvas.height / r.height);
     const m = nativeMetrics(canvas);
     const v = pointToNative(m, px, py);
+    // BOTH lanes optional-chained this line for different reasons and
+    // both stand: a window may have no `click` at all (V5/U48's rest
+    // window has none), and a window that HAS one may clear this slot
+    // from inside it (S40's does, through the PopToHUD door), so the
+    // `.done` read below is optional too.
     if (v) overlay.click?.(v[0], v[1], e.button === 2);   // I4: the remove gesture rides the button
     if (overlay?.done) {
       const cb = _onOverlayClosed; _onOverlayClosed = null; overlay.dispose?.(); overlay = null; cb?.();
@@ -697,6 +706,22 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     /** AUDIT 21 (hosts lane, F6): the live overlay, so a death presenter can
      *  refuse to stack a second death screen on the first. */
     get overlay() { return overlay; },
+    /** S40: PopToHUD. A window that must VACATE the slot before it
+     *  hands control on - the rest window does, because DFU pops to
+     *  the HUD before RaiseSkills and the level-up screen it can raise
+     *  needs this slot free - has had no door to do it through. The
+     *  identity guard is the caller's: pass the window that is
+     *  closing, and a slot already holding something else is left
+     *  alone. Runs the same drain `frame` does, callback included. */
+    closeOverlay(win = null) {
+      if (!overlay || (win && overlay !== win)) return false;
+      const cb = _onOverlayClosed;
+      _onOverlayClosed = null;
+      overlay.dispose?.();
+      overlay = null;
+      cb?.();
+      return true;
+    },
     get mode() { return getInteractionMode(); },
     get directory() { return directory; },   // E2: the hosts name shops for the browse window by buildingKey
     get locationName() { return cityName(); },   // G2: %cn for the court boxes (MacroHelper.CityName)

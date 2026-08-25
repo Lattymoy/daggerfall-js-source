@@ -158,14 +158,18 @@ export function swimSpeed(baseSpeed, swimmingSkill) {
  * never reports grounded because Unity only resolves that collision
  * while moving.
  *
- * It lives here because this is where DFU puts it, and because the
- * check now has THREE callers: the dungeon context (which held the
+ * TWO LANES EXTRACTED THIS INDEPENDENTLY, to the character, which is
+ * some evidence it was the right move. It lives here because this is
+ * where DFU puts it, and because the check now has FOUR callers: the dungeon context (which held the
  * only copy and fed it host state), and U48's two above-ground hosts.
  * The exterior page found the third case the raycast covers and the
  * flag `grounded` does not: on a page with no walking player the
  * motor is never stepped, so `grounded` sits at its initialiser
  * `false` forever and the rest key answered "You cannot sleep now."
- * on solid ground.
+ * on solid ground. The other lane found the other end of the same
+ * divergence: the three hosts that gained rest were passing the raw
+ * flag, so a levitating character could sleep below ground and was
+ * refused in a shop, a street and a field.
  *
  * @param {boolean} grounded the motor's live flag
  * @param {ArrayLike<number>|null} feet world-space FEET position
@@ -682,3 +686,5 @@ export class PlayerMotor {
     if (r.hitCeiling && this.velY > 0) this.velY = -this.velY;
   }
 }
+
+

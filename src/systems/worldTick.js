@@ -33,6 +33,15 @@ import { RACES } from './races.js';
 // AUDIT 24 (wave 24): one home, systems/gameDate.js.
 import { MINUTES_PER_DAY } from './gameDate.js';
 import { enchantmentMagicRound } from './enchantments.js';   // E1: the per-round item payload pump
+// S41 - the day-change block's four members. They live in their own
+// systems; this file is only the ONE PLACE that runs them on a day
+// boundary, which is where PlayerEntity.Update runs them.
+import { updateRegionalPrices } from './shopStock.js';            // FormulaHelper.UpdateRegionalPrices (:2053)
+import { rollClimateWeathersForDay } from './weatherSim.js';      // WeatherManager.SetClimateWeathers (:419)
+import { removeExpiredRooms } from './tavern.js';                 // PlayerEntity.RemoveExpiredRentedRooms (:257)
+import { checkOverdueLoans, settleOverdueLoan } from './banking.js';   // LoanChecker.CheckOverdueLoans (:17)
+import { lowerRepForCrime } from './court.js';                    // OverdueLoan's LowerRepForCrime (:70)
+import { REGION_NAMES } from '../formats/mapsFile.js';            // loanReminder2's %s
 
 export { MINUTES_PER_DAY };
 
@@ -178,6 +187,100 @@ export function runMagicRounds({ entity, fromMinute, toMinute, sinks, rolls = Ma
  *          magicRoundWindow is the window the broker CLAIMED this tick - the host
  *          runs it on its own foes with runMagicRoundsFor (wave 32).
  */
+/**
+ * S41 - PlayerEntity.Update's DAY-CHANGE BLOCK (:441-450), which the
+ * port did not have a home for at all.
+ *
+ *     uint lastDay = lastGameMinutes / 1440;
+ *     uint currentDay = gameMinutes / 1440;
+ *     int daysPast = (int)(currentDay - lastDay);
+ *     if (daysPast > 0) { UpdateRegionalPrices; SetClimateWeathers;
+ *                         RemoveExpiredRentedRooms; CheckOverdueLoans; }
+ *
+ * FOUR members, and the port ran ONE of them. Three were ported as
+ * laws and then never called on a day boundary by anybody:
+ *
+ *  - UpdateRegionalPrices was not ported at all, so every shop price
+ *    in the world was frozen at its boot roll for the life of the
+ *    character (shopStock.js).
+ *  - SetClimateWeathers was fused into weatherSim's tickWeather with
+ *    a SECOND private day marker, and only ran on an exterior frame,
+ *    so days underground rolled the zones zero times.
+ *  - RemoveExpiredRentedRooms ran when a tavern window opened and
+ *    when a rest ENDED on an expired room, and nowhere else: sleep
+ *    out a rental in a dungeon and the landlord never noticed, so
+ *    the room's interior stayed a permanent scene forever.
+ *  - CheckOverdueLoans had NO CALLER IN THE PORT. Every line of the
+ *    loan system worked - borrow, repay, the 6/3/1-month reminder
+ *    crossings, the account raid, the LoanDefault reputation hit -
+ *    and none of it could ever fire, because nothing advanced a loan
+ *    towards its due date. You could borrow the maximum in all 62
+ *    regions and never owe a thing.
+ *
+ * It lives HERE, in the entity tick, because that is where DFU puts
+ * it and because every one of its inputs is on the ENTITY - the
+ * rentals, the bank accounts, the regional prices, the faction store,
+ * the scene cache. Nothing has to be threaded from a host, which is
+ * precisely why all four hosts get the law and none of them can
+ * forget a line.
+ *
+ * DFU's own ordering is kept exactly, because three of the four draw
+ * from the same generator.
+ *
+ * @param {number} lastMinutes  PlayerEntity.lastGameMinutes, BEFORE the tick
+ *                              advanced it - the day block reads the marker's
+ *                              old value and CheckOverdueLoans takes it whole.
+ * @returns {{daysPast: number, loanReminders: object[], loanDefaults: number[]}}
+ */
+export function runDayChange({ entity, lastMinutes, nowMinutes, rolls = Math.random, say = () => {} } = {}) {
+  const none = { daysPast: 0, loanReminders: [], loanDefaults: [] };
+  if (!entity) return none;
+  const daysPast = Math.floor(nowMinutes / MINUTES_PER_DAY) - Math.floor(lastMinutes / MINUTES_PER_DAY);
+  if (!(daysPast > 0)) return none;
+
+  // :446 - the merchants' tug-of-war on every region's price index.
+  updateRegionalPrices(entity, entity.factionRep?.dict ?? null, daysPast, rolls);
+
+  // :447-448 - roll the six climate zones and RAISE the pending-apply
+  // flag; the exterior frame's tickWeather drains it. Splitting those
+  // is not a liberty, it is WeatherManager's own shape (:146-156).
+  rollClimateWeathersForDay(nowMinutes, rolls);
+
+  // :449 - the landlord's sweep. `entity.sceneCache` may not exist yet
+  // (a host that never entered a building), and removeExpiredRooms
+  // takes null for exactly that.
+  if (entity.rentedRooms?.length) {
+    entity.rentedRooms = removeExpiredRooms(entity.rentedRooms, nowMinutes, entity.sceneCache ?? null);
+  }
+
+  // :450 - LoanChecker.CheckOverdueLoans(lastGameMinutes). DFU hands
+  // it the OLD marker and reads `now` off WorldTime itself, which is
+  // what makes the 6/3/1-month reminder a CROSSING rather than a
+  // state - see banking.js.
+  const loanReminders = [];
+  const loanDefaults = [];
+  if (entity.bankAccounts?.length) {
+    const { reminders, overdue } = checkOverdueLoans(entity.bankAccounts, lastMinutes, nowMinutes);
+    for (const r of reminders) {
+      // Internal_Strings.csv:861-862, both lines, verbatim - DFU
+      // AddHUDTexts them one after the other and the second carries
+      // the region name.
+      say(`You have a loan of ${r.owed} gold pieces due in`);
+      say(`less than ${r.months} months in ${REGION_NAMES[r.regionIndex] ?? ''}`);
+      loanReminders.push(r);
+    }
+    for (const regionIndex of overdue) {
+      // OverdueLoan (:53-72): the account is raided first, and only a
+      // loan still standing after that is a default.
+      const outcome = settleOverdueLoan(entity.bankAccounts, regionIndex, entity);
+      if (outcome.kind !== 'defaulted') continue;
+      lowerRepForCrime(entity, regionIndex, outcome.crime);
+      loanDefaults.push(regionIndex);
+    }
+  }
+  return { daysPast, loanReminders, loanDefaults };
+}
+
 export function tickPlayerMinutes({
   entity,
   classicMinutes,
@@ -226,7 +329,37 @@ export function tickPlayerMinutes({
       normalizeReputations(entity, entity.factionRep ?? null);
     }
   }
-  entity.lastGameMinutes = nowMinutes;   // :521, the tail of the same update
+  // :521, the tail of the same update - but MONOTONIC, which is DFU's
+  // own hard invariant rather than a liberty: PlayerEntity.cs:368-371
+  // THROWS when `gameMinutes < lastGameMinutes`, so in DFU this marker
+  // can never end a frame ahead of the clock and a calendar boundary is
+  // therefore crossed exactly once.
+  //
+  // The port cannot make that a throw, because it has a caller DFU does
+  // not: the exhaustion collapse. DFU's is PlayerEntity.cs:2429, a bare
+  // `RaiseTime(1 hour)` that returns - the port's hosts implement it as
+  // `playerTicker.advance(60)` (exterior.js:407, world.js:626), fired
+  // from inside sinks.drainFatigue, which re-enters THIS FUNCTION from
+  // inside its own fatigue band. The nested tick wrote the marker an
+  // hour ahead, the outer frame then reset the world clock to its own
+  // smaller value, and the marker was pulled BACK on the next frame -
+  // so the same midnight was crossed, and processed, twice.
+  //
+  // S41 is what made that reachable: before it, the only reader of this
+  // marker was the 112-day reputation-normalise loop, and the weather
+  // member - the one day-change law the port had - carried its own
+  // monotonic module marker that was immune. Hanging all four day-change
+  // members off this one exposed it. Measured: one collapse at 23:30
+  // drifted the region price twice (1000 -> 980 -> 960), rolled the six
+  // climate zones twice, and ran the room sweep and the loan check twice.
+  //
+  // Clamping restores DFU's invariant at the one seam that can break it.
+  // A genuine BACKWARD move of the clock is a load, and that no longer
+  // arrives here at all: save.js re-anchors the marker explicitly, which
+  // is SerializablePlayer.cs:338-339.
+  if (!Number.isFinite(entity.lastGameMinutes) || nowMinutes > entity.lastGameMinutes) {
+    entity.lastGameMinutes = nowMinutes;
+  }
 
   // PlayerEntity.cs:528-530, the tail of the SAME update: the flag is
   // a ONE-JUMP shield, cleared the moment the jump it covered is over.
@@ -285,8 +418,24 @@ export function tickPlayerMinutes({
         && !dice100(skillValue(entity, SKILLS.Swimming), rolls())) loss = FATIGUE_LOSS.Swimming;
       tallySkill(entity, SKILLS.Swimming);          // the 20000 clamp is load-bearing
     }
-    sinks.drainFatigue?.(Math.trunc(loss * fatigueMultiplier));
+    // S40 - PlayerEntity.cs:417-418, `if (!isResting) DecreaseFatigue`.
+    // The gate is on THIS drain only: the jumping one above is C#'s
+    // :427, outside the per-minute block and ungated, and the
+    // Swimming tally at :414 runs BEFORE the gate, so both stay where
+    // they are. Missing it cost 66 fatigue an hour through a rest -
+    // and a LOITER, which by DFU's own law calls no tickVitals, has
+    // nothing restoring it, so a long enough loiter drained the
+    // player to exhaustion. The dungeon host was accidentally exempt
+    // (its rest advance never routes through this tick); the three
+    // hosts S40 gave rest to were not.
+    if (!entity.isResting) sinks.drainFatigue?.(Math.trunc(loss * fatigueMultiplier));
   }
+
+  // S41 - THE DAY CHANGE (PlayerEntity.cs:441-450). It sits AFTER the
+  // fatigue band because DFU's does: the swimming roll at :412 is
+  // drawn before the price rolls at :446, and a generator does not
+  // forgive a reordered draw.
+  runDayChange({ entity, lastMinutes, nowMinutes, rolls, say });
 
   // EntityEffectManager.UpdateEntityMods' tail (:1855-1866), on its own
   // 0.2s real-time cadence: a live stat at zero kills the host. It sits

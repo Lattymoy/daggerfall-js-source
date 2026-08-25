@@ -89,6 +89,14 @@ export const LOCATION_TYPES = Object.freeze({
   Graveyard: 12, Coven: 13, HomeYourShips: 14, None: 0xffff,
 });
 
+/* PlayerGPS.IsPlayerInTown's seven-type set lived here briefly - two
+ * lanes ported it in the same week - and now lives in
+ * systems/nearbyObjects.js beside the port's other PlayerGPS members,
+ * as `isPlayerInTown(locationType, { mustBeInLocationRect,
+ * mustBeOutside, inLocationRect, inside })`, which models BOTH of the
+ * C#'s optional flags rather than the type list alone. That is the
+ * fuller port and the better home; this file reads MAPS.BSA. */
+
 export const DUNGEON_TYPES = Object.freeze({
   Crypt: 0, OrcStronghold: 1, HumanStronghold: 2, Prison: 3,
   DesecratedTemple: 4, Mine: 5, NaturalCave: 6, Coven: 7,

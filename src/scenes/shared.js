@@ -21,7 +21,7 @@ import { findFactions } from '../systems/talk.js';   // V1: GetRegionFaction's F
 import { FACTION_TYPES } from '../formats/factionFile.js';
 import { killIfAnyLiveStatZero } from '../systems/statMods.js';   // AUDIT 24 (wave 32): the per-entity laws a foe pool owes
 import { decayEnemyAlert } from '../systems/encounters.js';   // AUDIT 24 (wave 36): PlayerEntity.Update's 8-hour decay, in every context
-import { hasSpecialAbility, SPECIAL_ABILITY, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate } from '../systems/rest.js';   // V5: the three per-hour rates a rest ticks, in one place for all three hosts
+import { hasSpecialAbility, SPECIAL_ABILITY, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate } from '../systems/rest.js';   // the rested hour's three rates, one home for every host (V5 + S40, same line from two lanes)
 import { createNearbyScan, updateNearbyObjects, detectedMarkers, hasLiveDetector } from '../systems/nearbyObjects.js';   // X4: the Detect scan
 import { liveStat, maxFatigue } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
@@ -646,62 +646,18 @@ export const plainLines = (rows) => (rows?.length
   : null);
 
 /**
- * V5 - THE REST DEPS, BUILT ONCE FOR EVERY HOST.
- *
- * Resting worked in a dungeon and nowhere else, and the reason was
- * not the law: RestWindow and RestSession have been finished since
- * U7. It was that dungeonContext built the deps object by hand
- * (:903-968) and no other host had a copy, so `ctx.toggleRest` - the
- * ONLY consumer of the Rest binding (ui/input.js:106) - existed in
- * exactly one of the four hosts. The first-hour probe found what that
- * costs: a character rents a room in a tavern, gold leaves the purse,
- * the rental record lands, and pressing Rest in it opens nothing.
- *
- * So the COMMON half lives here and every host gets the same rest.
- * What a host still owns is what only it can know:
- *   advanceMinutes(n)  - moving its own clock, and whatever its own
- *                        world has to catch up (the dungeon spawns
- *                        into an advanced hour; a town does not)
- *   enemiesNearby()    - the RESTING variant over ITS pool
- * Everything else - the three per-hour rates, the Medical tally, the
- * fully-healed test, the vitals read, the death test, the rest-end
- * skill raise - is one law and is now written once.
- *
- * `inside` and `day` ride in because healthRecoveryRate reads both
- * (a Nightfall/Daylight career heals differently under the sun), and
- * only the host knows which of its modes it is in.
+ * V5's REST DEPS retired into S40's, which is the same idea with the
+ * same author's-note - resting worked in a dungeon and nowhere else
+ * because dungeonContext built the deps by hand and no other host had
+ * a copy - and three things that lane's version did not have: the
+ * pass-through (a host dep the composition does not name still
+ * reaches the window), the IsResting/IsLoitering writes, and
+ * IsPlayerFullyHealed's NoRegenSpellPoints clause. See createRestDeps
+ * below. What came the OTHER way is `plainLines`, above: TEXT.RSC
+ * answers ROWS and this window iterates strings, which V5b's
+ * first-hour probe caught as a TypeError at draw time and no unit
+ * test in either lane could have.
  */
-export function createRestDeps(entity, {
-  advanceMinutes, enemiesNearby, say = () => {}, onLevelUp = null,
-  textLines = () => null, inside = () => true, day = () => false,
-} = {}) {
-  const fullyHealed = () => entity.health >= entity.maxHealth
-    && (entity.fatigue ?? 0) >= maxFatigue(entity)
-    && (entity.magicka ?? 0) >= (entity.maxMagicka ?? 0);
-  return {
-    advanceMinutes,
-    enemiesNearby,
-    fullyHealed,
-    // DaggerfallRestWindow.cs:729-732 - the FINISHED popup's close is
-    // the advancement moment, not the per-minute tick.
-    onRestFinished: () => raiseAtRestEnd(entity, { say, onLevelUp }),
-    tickVitals: () => {
-      entity.health = Math.min(entity.maxHealth, entity.health + healthRecoveryRate(entity, { day: day(), inside: inside() }));
-      entity.fatigue = Math.min(maxFatigue(entity), (entity.fatigue ?? 0) + fatigueRecoveryRate(maxFatigue(entity)));
-      entity.magicka = Math.min(entity.maxMagicka ?? Infinity, (entity.magicka ?? 0) + spellPointRecoveryRate(entity));
-      tallySkill(entity, SKILLS.Medical);
-      surfacePlayer();
-      return fullyHealed();
-    },
-    dead: () => entity.health <= 0,
-    vitals: () => ({
-      health: entity.health, maxHealth: entity.maxHealth,
-      fatigue: Math.round((entity.fatigue ?? 0) / 64), magicka: entity.magicka ?? 0,
-    }),
-    endLines: (id) => plainLines(textLines(id)),
-  };
-}
-
 export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, onExhausted = null } = {}) {
   // AUDIT 21 F2: a VIEW on the one world clock, not an owner. This used to
   // close over its own accumulator, so the three hosts that build a ticker -
@@ -1083,3 +1039,100 @@ export function routeMouseDrag({ walkMode, buttons, mode = 'exterior' }) {
   return mode === 'exterior' ? 'swing' : 'modal';
 }
 
+
+// --- S40: the rested HOUR, one home for all four hosts ---------------
+
+/** DaggerfallRestWindow.TickVitals (:509-522) and the FullRest
+ *  completion test it returns, IsPlayerFullyHealed (:524-537) - the
+ *  same two facts
+ *  every host needs and which three of the four did not have at all -
+ *  rest lived only in the dungeon. `day`/`inside` are
+ *  CalculateHealthRecoveryRate's, and they matter: RapidHealing
+ *  InLight heals faster outdoors by daylight, and InDarkness
+ *  everywhere else - which is the ONE place the two flags change the
+ *  answer (rest.js' healthRecoveryRate). */
+export function restVitals(entity, { day = false, inside = true } = {}) {
+  entity.health = Math.min(entity.maxHealth, entity.health + healthRecoveryRate(entity, { day, inside }));
+  entity.fatigue = Math.min(maxFatigue(entity), (entity.fatigue ?? 0) + fatigueRecoveryRate(maxFatigue(entity)));
+  entity.magicka = Math.min(entity.maxMagicka ?? Infinity, (entity.magicka ?? 0) + spellPointRecoveryRate(entity));
+  tallySkill(entity, SKILLS.Medical);
+  surfacePlayer();
+  return restFullyHealed(entity);
+}
+
+/** IsPlayerFullyHealed (:524-537) - health AND fatigue at max, and
+ *  magicka at max UNLESS the career cannot regenerate it at all. */
+export const restFullyHealed = (entity) =>
+  entity.health === entity.maxHealth
+  && (entity.fatigue ?? 0) === maxFatigue(entity)
+  && ((entity.magicka ?? 0) === (entity.maxMagicka ?? 0)
+    || hasSpecialAbility(entity.career, SPECIAL_ABILITY.NoRegenSpellPoints));
+
+/**
+ * The RestWindow deps every host shares, so a host adds rest with one
+ * call and the dungeon - which owned this composition privately,
+ * being the only host that could rest - reads it too rather than
+ * keeping a second body of the same five closures. THE FOUR HOSTS
+ * RULE, which is exactly the drift a second body invites.
+ *
+ * The host still supplies what only it knows:
+ *   advanceMinutes(n)  its clock jump - the dungeon's also runs
+ *                      IntermittentEnemySpawn's catch-up, which is a
+ *                      dungeon law and stays there
+ *   onRentExpired()    RemoveExpiredRentedRooms, for the host that can
+ *                      actually be standing in a rented room
+ * (setResting/setLoitering are written HERE, not by the hosts: they
+ *  are entity flags with one meaning everywhere.)
+ *   enemiesNearby()    the RESTING variant over ITS foe list
+ *   place()            canRest()'s argument bag for where it stands
+ *   commitCrime(c,sg)  CrimeCommitted + SpawnCityGuards
+ *   moveToBed(marker)  PlayerMotor.transform.position
+ *   endLines(id)       its TEXT.RSC reader
+ *   say / onLevelUp    its presenters
+ */
+export function createRestDeps(entity, opts = {}) {
+  const {
+    say = () => {}, onLevelUp = null, day = () => false, inside = () => true,
+    place = null, ...rest
+  } = opts;
+  return {
+    // PlayerEntity.IsResting / IsLoitering (:268, :284, :789, :285).
+    // Every host owes these identically - they are entity flags, not
+    // host state - so the composition writes them rather than asking
+    // four hosts to remember. A host may still override via the
+    // spread if it needs to observe the edge.
+    setResting: (b) => { entity.isResting = !!b; },
+    setLoitering: (b) => { entity.isLoitering = !!b; },
+    // THE PASS-THROUGH IS LOAD BEARING, and it is here because a review
+    // round caught the shape without it: worldModes handed this
+    // function an `onRentExpired` closure and the closed destructure
+    // silently dropped it on the floor, so RemoveExpiredRentedRooms
+    // never ran and the source-text pin beside it still passed. Any
+    // dep a host supplies reaches the window; only the five this
+    // function COMPOSES are written below, and they win over a
+    // same-named key so a host cannot half-override the composition.
+    ...rest,
+    // U39's rental record is named `restPlace` on the window and
+    // `place` here, which is the one rename - so it cannot ride the
+    // spread.
+    restPlace: place ?? rest.restPlace ?? undefined,
+    enemiesNearby: rest.enemiesNearby ?? (() => false),
+    onRestFinished: () => raiseAtRestEnd(entity, { say, onLevelUp }),
+    tickVitals: () => restVitals(entity, { day: day(), inside: inside() }),
+    fullyHealed: () => restFullyHealed(entity),
+    dead: () => entity.health <= 0,
+    vitals: () => ({
+      health: entity.health, maxHealth: entity.maxHealth,
+      fatigue: Math.round((entity.fatigue ?? 0) / 64), magicka: entity.magicka ?? 0,
+    }),
+    // V5b, and this lane had the same bug unshipped: TEXT.RSC answers
+    // `{ text, center }` ROWS - the record's own bytes carry
+    // justification - while RestWindow, ActionTextBox and ChoiceWindow
+    // all iterate the STRING. Handing `townTalk.lines(id)` straight to
+    // a rest window ends the rested night in `TypeError: text is not
+    // iterable` from drawText. Nothing in either lane's suite DRAWS,
+    // so no unit test could catch it; their first-hour probe did, at
+    // the last stage of the walk. Flatten here, once, for every host.
+    endLines: (id) => plainLines(rest.endLines?.(id)),
+  };
+}

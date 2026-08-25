@@ -142,3 +142,44 @@ export function decayEnemyAlert(entity, gameMinutes) {
     setEnemyAlert(entity, false);
   }
 }
+
+// ---- GameManager.AreEnemiesNearby (:684-732), one home ---------------
+
+/** The RESTING test's shorter distance (:687). The spawn-band one is
+ *  the foe's own `wouldBeSpawned`, which the AI already answers. */
+export const RESTING_DISTANCE = 12;
+
+/**
+ * AreEnemiesNearby, verbatim over a list of foes carrying the port's
+ * AI shape ({ dead, ai: { detected, inSight, wouldBeSpawned, _dist } }).
+ *
+ * The C# walks every active enemy behaviour and asks two questions in
+ * this order:
+ *   enemyCanSeePlayer = Target is the player AND TargetInSight (:698)
+ *   if RESTING and it cannot see you and it is further than 12, SKIP
+ *     it entirely (:701-702) - this is the whole point of the resting
+ *     variant, and using the strict one instead refuses rest for any
+ *     unaware foe anywhere in the 1024-unit spawn band
+ *   otherwise it counts if it can see you OR would have spawned in
+ *     classic (:705)
+ *
+ * S40 gave this a home because three hosts needed it at once and the
+ * two above ground had been answering a much coarser question - "is
+ * ANY guard alive" - which for rest is not an approximation but a
+ * different rule: a guard spawned across town blocks sleep forever,
+ * since guards persist until the crime clears.
+ *
+ * FLAGGED, both from the tail of the C#: the pacified/team test
+ * (`IsHostile && Team != PlayerAlly`, :710) pends the pacify effect,
+ * and the FoeSpawner sweep (:721-728) pends quest spawners carrying a
+ * live position.
+ */
+export function areEnemiesNearby(foes, { resting = false } = {}) {
+  for (const f of foes ?? []) {
+    if (!f || f.dead || !f.ai) continue;
+    const canSee = !!(f.ai.detected && f.ai.inSight);
+    if (resting && !canSee && (f.ai._dist ?? Infinity) > RESTING_DISTANCE) continue;
+    if (canSee || f.ai.wouldBeSpawned) return true;
+  }
+  return false;
+}

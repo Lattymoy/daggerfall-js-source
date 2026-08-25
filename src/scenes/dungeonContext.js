@@ -67,12 +67,12 @@ import { preloadPaperDollForEntity } from '../ui/paperDoll.js';   // U26: the do
 import { createDroppedLoot } from './droppedLoot.js';   // U8e, mounted here at U26
 import { createPlayerMagic } from './hostMagic.js';   // M3: the ONE cast engine
 import { tallySkill, skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.js';
-import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT, startRestGroundedCheck } from '../player/motor.js';   // U48: the rest gate's ONE home
+import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
 import { applyLevelUp } from '../systems/advancement.js';
 import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
 import { spendPoolLowest } from '../systems/chargen.js';
 import { ClassFile } from '../formats/classFile.js';
-import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, raiseAtRestEnd, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord} from './shared.js';
+import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, raiseAtRestEnd, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord, restVitals, restFullyHealed, createRestDeps} from './shared.js';
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
@@ -87,9 +87,9 @@ import { FATIGUE_LOSS, liveStat, killIfAnyLiveStatZero } from '../systems/statMo
 import { breathStep } from '../systems/breath.js';
 import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
 import { inflictPoison } from '../systems/poisons.js';
-import { exhaustionOutcome, EXHAUSTED_IN_WATER, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate, hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
-import { REST_TEXT } from '../systems/restSession.js';
-import { intermittentEnemySpawn, setEnemyAlert } from '../systems/encounters.js';   // E-slice
+import { exhaustionOutcome, EXHAUSTED_IN_WATER, hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
+import { restDecision } from '../systems/restSession.js';   // the scene-free open gate, one home
+import { intermittentEnemySpawn, setEnemyAlert, areEnemiesNearby } from '../systems/encounters.js';   // E-slice; S40: the resting test, one home
 import { RestWindow } from '../ui/restWindow.js';
 import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects.js';
 import { dice100, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies, KB_UNIT } from '../combat/formulas.js';   // C15: + knockback
@@ -882,10 +882,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // spawn-band range, an unaware one only within the 12-unit resting
   // distance; fullyHealed follows IsPlayerFullyHealed (magicka full
   // OR a NoRegenSpellPoints career).
-  const _restFullyHealed = () =>
-    playerEntity.health === playerEntity.maxHealth &&
-    (playerEntity.fatigue ?? 0) === maxFatigue(playerEntity) &&
-    ((playerEntity.magicka ?? 0) === (playerEntity.maxMagicka ?? 0) || hasSpecialAbility(playerEntity.career, SPECIAL_ABILITY.NoRegenSpellPoints));
+  // S40: IsPlayerFullyHealed and the rested hour moved to shared.js -
+  // this host was the only one that could rest, so it owned the
+  // composition; three hosts now need the same two facts.
+  const _restFullyHealed = () => restFullyHealed(playerEntity);
   // U3: the level-up screen replaces the headless auto-apply (shared
   // by the rest-end raise and any future travel arm).
   const _onLevelUp = () => {
@@ -912,74 +912,87 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       return;
     }
   }
-  const _restDeps = {
-    advanceMinutes: (n) => {
-      // E-slice: IntermittentEnemySpawn's catch-up loop across the
-      // advanced minutes (PlayerEntity.Update:486-492) - resting in
-      // a dungeon under an active enemy alert can spawn ONE foe; the
-      // hourly enemy check then breaks the rest, DFU's own flow.
-      const start = Math.floor(classicMinutesRef.value);
-      classicMinutesRef.value += n;
-      // AUDIT 24 (wave 30) - THE BROKER RUNS UNDER THE REST WINDOW.
-      // The old line here said "the round loop catches the magic
-      // rounds up", and it does not: dungeon.js returns at the
-      // overlay gate (:385-396) before this host's frame body, so
-      // through a whole rested night nothing ticked a disease, a
-      // poison or an active effect - and the marker then fired the
-      // entire backlog in ONE burst on the first frame after the
-      // window closed, after tickVitals had already healed every
-      // hour of it. In DFU the broker's Update runs under
-      // Time.timeScale = 0 and interleaves, minute by minute, with
-      // TickRest's hourly heal; a poison can kill you in your sleep
-      // and the rest ends "You never awaken."
-      const _w = claimMagicRounds(start, classicMinutesRef.value);
-      runMagicRoundsFor(playerEntity, _w.from, _w.to, { sinks: playerSinks, say: (msg) => hudText.add(msg) });
-      // ...and the FOE half of the same broker event. OnNewMagicRound
-      // is global - every EntityEffectManager in the scene subscribes
-      // - so a foe's poisons and effects age through the rest too.
-      // The frame body's own foe loop anchors on the clock at the top
-      // of THIS frame, so these minutes were not merely late for the
-      // foes, they were lost.
-      for (const f of foes) {
-        if (f.dead) continue;
-        runMagicRoundsFor(f.entity, _w.from, _w.to, { sinks: foeSinks(f) });
-      }
-      for (let l = 0; l < n; l++) {
-        const hit = intermittentEnemySpawn({
-          gameMinutes: start + l + 1, inside: true, inDungeon: true, isResting: true,
-          enemyAlertActive: !!playerEntity.enemyAlertActive,
-          dungeonType: dfLocation.mapTableData.dungeonType,
-          playerLevel: playerEntity.level,
-        });
-        if (hit) { _spawnEncounter(hit); break; }
-      }
-    },
-    // AUDIT 23 (entity-1): the rest-finished close raises skills - the
-    // per-minute tick no longer does (DaggerfallRestWindow.cs:731).
-    onRestFinished: () => raiseAtRestEnd(playerEntity, {
-      say: (msg) => hudText.add(msg), onLevelUp: _onLevelUp,
-    }),
-    tickVitals: () => {
-      playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + healthRecoveryRate(playerEntity, { day: false, inside: true }));
-      playerEntity.fatigue = Math.min(maxFatigue(playerEntity), (playerEntity.fatigue ?? 0) + fatigueRecoveryRate(maxFatigue(playerEntity)));
-      playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity, (playerEntity.magicka ?? 0) + spellPointRecoveryRate(playerEntity));
-      tallySkill(playerEntity, SKILLS.Medical);
-      surfacePlayer();
-      return _restFullyHealed();
-    },
-    fullyHealed: _restFullyHealed,
-    enemiesNearby: () => foes.some((f) => {
-      if (f.dead) return false;
-      const seen = f.ai.detected && f.ai.inSight;
-      return seen || (f.ai.wouldBeSpawned && f.ai._dist <= 12);
-    }),
-    dead: () => playerEntity.health <= 0,
-    vitals: () => ({
-      health: playerEntity.health, maxHealth: playerEntity.maxHealth,
-      fatigue: Math.round((playerEntity.fatigue ?? 0) / 64), magicka: playerEntity.magicka ?? 0,
-    }),
-    endLines: (id) => rscLines(id),
+  /** The rest window's clock jump for THIS host: the world minutes
+   *  plus IntermittentEnemySpawn's catch-up loop, which is a dungeon
+   *  law and is the one rest dep createRestDeps cannot supply. */
+  const _restAdvance = (n) => {
+    // E-slice: IntermittentEnemySpawn's catch-up loop across the
+    // advanced minutes (PlayerEntity.Update:486-492) - resting in
+    // a dungeon under an active enemy alert can spawn ONE foe; the
+    // hourly enemy check then breaks the rest, DFU's own flow.
+    const start = Math.floor(classicMinutesRef.value);
+    classicMinutesRef.value += n;
+    // AUDIT 24 (wave 30) - THE BROKER RUNS UNDER THE REST WINDOW.
+    // The old line here said "the round loop catches the magic
+    // rounds up", and it does not: dungeon.js returns at the
+    // overlay gate (its `hold gameplay, keep the loop` return -
+    // NAMED, not numbered: it was cited as :385-396, which drift has
+    // since made the footsteps block) before this host's frame body, so
+    // through a whole rested night nothing ticked a disease, a
+    // poison or an active effect - and the marker then fired the
+    // entire backlog in ONE burst on the first frame after the
+    // window closed, after tickVitals had already healed every
+    // hour of it. In DFU the broker's Update runs under
+    // Time.timeScale = 0 and interleaves, minute by minute, with
+    // TickRest's hourly heal; a poison can kill you in your sleep
+    // and the rest ends "You never awaken."
+    const _w = claimMagicRounds(start, classicMinutesRef.value);
+    runMagicRoundsFor(playerEntity, _w.from, _w.to, { sinks: playerSinks, say: (msg) => hudText.add(msg) });
+    // ...and the FOE half of the same broker event. OnNewMagicRound
+    // is global - every EntityEffectManager in the scene subscribes
+    // - so a foe's poisons and effects age through the rest too.
+    // The frame body's own foe loop anchors on the clock at the top
+    // of THIS frame, so these minutes were not merely late for the
+    // foes, they were lost.
+    for (const f of foes) {
+      if (f.dead) continue;
+      runMagicRoundsFor(f.entity, _w.from, _w.to, { sinks: foeSinks(f) });
+    }
+    for (let l = 0; l < n; l++) {
+    const hit = intermittentEnemySpawn({
+      gameMinutes: start + l + 1, inside: true, inDungeon: true, isResting: true,
+      enemyAlertActive: !!playerEntity.enemyAlertActive,
+      dungeonType: dfLocation.mapTableData.dungeonType,
+      playerLevel: playerEntity.level,
+    });
+    if (hit) { _spawnEncounter(hit); break; }
+    }
   };
+  // S40: and the five closures every host owes the window, from the
+  // ONE composition. This host wrote them out because it was the only
+  // host that could rest; leaving them written out would have left the
+  // shared version with two bodies, which is the drift THE FOUR HOSTS
+  // RULE exists to stop. Only `advanceMinutes` stays here, because
+  // IntermittentEnemySpawn's catch-up loop is a dungeon law.
+  //
+  // AUDIT 23 (entity-1): the rest-finished close raises skills - the
+  // per-minute tick no longer does (DaggerfallRestWindow.cs:731).
+  //
+  // A dungeon is inside and never in daylight, so both of
+  // CalculateHealthRecoveryRate's flags are fixed here.
+  //
+  // AreEnemiesNearby's RESTING variant is systems/encounters.js' now
+  // too - three more hosts ask it, and two were asking a much coarser
+  // question before this slice.
+  const _restDeps = createRestDeps(playerEntity, {
+    advanceMinutes: (n) => _restAdvance(n),
+    // TickRest :379 - QuestMachine.Instance.Tick() rides the same
+    // sub-tick as the clock, UNPACED. This host holds the bridge as
+    // opts.questBridge (world.js and worldModes hand theirs down); a
+    // standalone ?dungeon page has none, and then there is nothing to
+    // tick, which the optional chain says.
+    tickQuests: () => opts.questBridge?.machine?.tick?.(),
+    enemiesNearby: () => areEnemiesNearby(foes, { resting: true }),
+    endLines: (id) => rscLines(id),
+    say: (msg) => hudText.add(msg),
+    onLevelUp: _onLevelUp,
+    // PopToHUD before RaiseSkills (:728-732) - the fourth host's door,
+    // which the first pass gave the other three and not this one. The
+    // U24 identity guard: a window must not null a slot that has moved
+    // on to something else (the death screen, above all).
+    onClose: () => { if (activeOverlay?.isRestWindow) activeOverlay = null; },
+    day: () => false, inside: () => true,
+  });
   // U4: the ONE player-damage door - every source (traps, melee,
   // arrows, spell missiles) lands here; death opens the overlay.
   function healPlayer(n) {
@@ -2600,31 +2613,45 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     reportMotor(grounded, velY, yaw) { _grounded = grounded; _motorYaw = yaw; _motorState = `g:${grounded ? 1 : 0} vy:${velY.toFixed(1)} yaw:${yaw.toFixed(2)}`; },
     // U7: the rest key. Pre-rest gates (the classic order): enemies
     // nearby -> TEXT.RSC 354; swimming or airborne -> 355 "You
-    // cannot rest now."; else the rest window opens. A second press
-    // routes through the overlay as 'back' (ends a running rest).
+    // cannot rest now."; else the rest window opens. S40 struck the
+    // sentence that followed, which said a second press "routes
+    // through the overlay as 'back' (ends a running rest)": it does
+    // not, and never did. With a window up, overlayAction turns any
+    // single character into `char:<k>`, so KeyR arrives as 'char:r',
+    // which the running page ignores and the selection page reads as
+    // rest-for-a-while. DFU's toggle-close binding is FLAGGED in
+    // ui/restWindow.js' header.
     toggleRest() {
       if (activeOverlay) return;
-      // Audit 2026-08-16f: the PRE-gate uses AreEnemiesNearby(true) -
-      // the RESTING variant (an unaware foe blocks only within 12
-      // units), same as the hourly break check. The first cut used
-      // the strict variant and refused rest with any unaware foe in
-      // the whole 1024-unit spawn band. E-slice: the alert state
-      // exists now and IS raised below - the old routed leg closed.
-      if (_restDeps.enemiesNearby()) {
-        // E-slice: the ROUTED leg closes - DFU raises the alert here
-        // (DaggerfallUI:650-655), which is what arms the dungeon
-        // rest-encounter roll.
-        setEnemyAlert(playerEntity, true, classicMinutesRef.value);
-        const lines = rscLines(REST_TEXT.enemiesNearby);
-        if (lines) activeOverlay = new ActionTextBox(lines);
-        return;
-      }
-      // U48: StartRestGroundedCheck moved to its DFU home
-      // (player/motor.js) when the two above-ground hosts became its
-      // second and third callers. The geometry is unchanged; what is
-      // gone is the copy.
-      if (_activity.swimming || !startRestGroundedCheck(_grounded, lastPlayerFeet, collider)) {
-        const lines = rscLines(REST_TEXT.cannotRestNow);
+      // S40: the gate itself moved to systems/restSession.js. It was
+      // written out here because this was the only host that could
+      // rest; three more can now, and DFU raises it from ONE
+      // message handler (DaggerfallUI.cs:651-687) with no scene test
+      // at all. What stays here is what only this host knows.
+      //
+      // Audit 2026-08-16f: AreEnemiesNearby(true) is the RESTING
+      // variant (an unaware foe blocks only within 12 units), same as
+      // the hourly break check. The first cut used the strict variant
+      // and refused rest with any unaware foe in the whole 1024-unit
+      // spawn band.
+      //
+      // StartRestGroundedCheck moved to player/motor.js beside the
+      // constant it derives from - three more hosts ask it now, and
+      // they were passing the raw `grounded` flag, which refuses a
+      // near-ground levitator DFU lets sleep (review 16f found the
+      // drift risk; the S40 review found the divergence).
+      const d = restDecision({
+        enemiesNearby: _restDeps.enemiesNearby(),
+        swimming: _activity.swimming,
+        grounded: startRestGroundedCheck(_grounded, lastPlayerFeet, collider),
+      });
+      if (d.kind !== 'rest') {
+        // E-slice: the ROUTED leg closes - DFU raises the alert on the
+        // enemies arm (DaggerfallUI.cs:655, not the rest window's
+        // :655), which is what arms this host's rest-encounter roll.
+        if (d.kind === 'enemies') setEnemyAlert(playerEntity, true, classicMinutesRef.value);
+        if (d.kind === 'blocked') return;   // a racial override says nothing at all
+        const lines = d.message ? [d.message] : rscLines(d.textId);
         if (lines) activeOverlay = new ActionTextBox(lines);
         return;
       }
@@ -2755,7 +2782,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     dropped: () => droppedLoot._piles,
     /** AUDIT 18 F5: the overlay's own clock. DFU runs
      *  DaggerfallRestWindow.Update every frame the window is topmost
-     *  (DaggerfallRestWindow.cs:183-227), and TickRest reads
+     *  (DaggerfallRestWindow.cs:185-229), and TickRest reads
      *  Time.realtimeSinceStartup, so PauseWhileOpen's timeScale = 0
      *  does not stop it. The port had the tick inside drawFoes, which
      *  the hosts SKIP whenever an overlay is up - so U7's rest never
@@ -2770,16 +2797,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  (AbortRestForEnemySpawn; the session answers enemies-nearby on
      *  its next tick). */
     abortRestForEnemySpawn() {
-      if (activeOverlay?.isRestWindow) activeOverlay.session?.abortForEnemySpawn?.();
+      if (activeOverlay?.isRestWindow) activeOverlay.abortForEnemySpawn?.();
     },
     tickOverlay(dt) {
       if (!activeOverlay) return;
-      // D1: the death sequence's clock - and, since V5, the rest
-      // window's too. RestWindow.tick forwards to tickRest, so the
+      // D1: the death sequence's clock - and, since the rest lanes,
+      // the rest window's too. RestWindow.tick IS its Update, so the
       // explicit `if (isRestWindow) tickRest(dt)` that used to sit
       // here would now drive it TWICE and rest at double speed. The
       // generic call is the point: a host cannot forget a branch it
-      // does not have to write.
+      // does not have to write. Two lanes found this independently.
       activeOverlay.tick?.(dt);
       // ui-chargen-4: backing out of the race screen cancels the
       // wizard - DFU unwinds the UI stack to the start screen
@@ -2788,7 +2815,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // back on title -> main menu; a dev-scene URL re-offers the
       // wizard fresh (SetRaceSelectWindow Resets on re-entry).
       if (activeOverlay === chargenFlow && chargenFlow?.cancelled) { location.reload(); return; }
-      if (activeOverlay.done) {
+      if (activeOverlay?.done) {   // S40: optional - a window may clear the slot from inside its own tick
         if (activeOverlay === chargenFlow) finishChargenHere();
         surfacePlayer();
         activeOverlay = null;
@@ -2808,7 +2835,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!activeOverlay?.clickNative && !activeOverlay?.click) return false;
       if (activeOverlay.clickNative) activeOverlay.clickNative(vx, vy);
       else activeOverlay.click(vx, vy, right);
-      if (activeOverlay.done) {
+      // S40: optional. RestWindow grew a `click` and clears this slot
+      // from inside it, so this seam reaches a null now - and it did
+      // not before, which is why the unguarded read stood.
+      if (activeOverlay?.done) {
         if (activeOverlay === chargenFlow) { finishChargenHere(); }
         surfacePlayer();
         activeOverlay = null;
@@ -2828,7 +2858,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     overlayInput(action, e = null) {
       if (!activeOverlay) return;
       activeOverlay.input(action, e);
-      if (activeOverlay.done) {
+      // S40: OPTIONAL. A window may now clear this slot from INSIDE
+      // its own input - RestWindow does, because DFU pops to the HUD
+      // before RaiseSkills and the level-up screen that raise can
+      // mount needs the slot free. Re-reading `activeOverlay` after
+      // input() and dereferencing it unguarded threw on the very key
+      // that closes the rest window.
+      if (activeOverlay?.done) {
         if (activeOverlay === chargenFlow) finishChargenHere();
         surfacePlayer();
         activeOverlay = null;
