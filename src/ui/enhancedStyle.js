@@ -486,7 +486,10 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   stroke-linejoin: round; transition: fill 0.12s ease, stroke 0.12s ease;
   cursor: pointer;
 }
-.prov.hot { fill: #2b3440; stroke: var(--dim); }
+/* CSS owns the highlight. It used to be a class the view re-rendered
+   itself to apply, and that repaint destroyed the node the pointer was
+   over - see ui/enhancedChargen.js's pointerenter handler. */
+.prov:not(.inert):hover { fill: #2b3440; stroke: var(--dim); }
 /* The Imperial Province: drawn, unlit, unpressable. */
 .prov.inert { fill: #141922; stroke: #252c35; cursor: default; }
 .provlabel.inert { fill: #4a4740; }
