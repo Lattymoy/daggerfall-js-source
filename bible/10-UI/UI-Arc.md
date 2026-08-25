@@ -4742,3 +4742,76 @@ Pins: 4 added to `nativeinventory.test.js`, two existing pins re-aimed
 named a *spelling* of a law that now lives one file over). 7
 mutations, 7 dead — three of them only after the pins that should have
 caught them were rewritten.
+
+## U48 — the rest dispatch, and the fourth host
+
+V5 landed while this slice was in flight, and it did the same work
+from the other end: `CanRest` ported whole, three hosts wired,
+`plainLines` for the TEXT.RSC rows, one generic `tick` so no host can
+forget the clock. Two implementations of one law cannot both live, so
+V5's is the port and U48 is what it left. `canRestHere`,
+`makeRestDeps` and a second tick seam were deleted rather than merged.
+
+**THE LADDER THAT RUNS BEFORE CANREST.** `CanRest` answers *where* a
+player may sleep. `DaggerfallUI.cs:651-688` answers *whether the
+window opens at all*, and it still lived inline inside
+`dungeonContext` alone — so above ground the rest window opened while
+swimming, while falling, and with a foe in the street. It has no scene
+gate: enemies, water, the ground, and nothing else.
+
+Three things in that ladder are worth reading twice. **Enemies outrank
+the water**, because DFU's is an `if`/`else if` chain — and it
+matters, because only the enemy arm raises the alert that arms the
+rest-encounter roll. The **prevented-rest registry's empty string** is
+deliberate: `RegisterPreventRestCondition` turns a null message into
+`""` so a caller can block rest without wording it, and the dispatch
+falls back to TEXT.RSC 355 rather than showing a blank box. And a
+**racial override refuses silently** — DFU simply returns, so that
+verdict carries no text at all — from the *bottom* of the ladder, so a
+swimming vampire is told about the water, which is the arm they can
+act on.
+
+**STARTRESTGROUNDEDCHECK MOVED TO ITS DFU HOME.** `PlayerMotor.cs:184-194`
+short-circuits on the flag, then casts a ray from the controller
+*centre* for `height/2 + 0.2` — DFU's "collision fix for when player
+is levitating but feet are close enough to ground to rest". It lived
+inline in the dungeon context, which was fine while that was its only
+caller; U48 gave it two more, so the copy is gone rather than
+duplicated. A hit at distance **zero** is a hit — the ray starts
+inside the capsule — which is why the test is `Number.isFinite` and
+not truthiness.
+
+The raw `grounded` flag turns out to be wrong up here for a reason DFU
+never has: on a page whose motor is never stepped it sits at its
+initialiser `false` forever, so the rest key answered *"You cannot
+sleep now."* on solid ground. That is what makes the fallback ray
+load-bearing outside the levitation case, and it is pinned as the
+initialiser for exactly that reason.
+
+**THE ?TOWN PAGE IS THE FOURTH HOST.** V5's own pin says *"every host
+that can hold a player now has a rest arm"* and names three. This page
+holds one. It goes through the same two laws, the same deps factory
+and the same verbatim two-step — and its `CanRest` arm is a
+**constant**, because the page *is* a location and its player is
+always outdoors: there is no wilderness to step into and no building
+to step inside.
+
+**AND THE ENCOUNTER ROLL RIDES INSIDE THE ADVANCE**, in the world host
+alone. It is the only host with a mobile foe pool, and its frame body
+returns at the overlay gate — so left to the frame, a whole rested
+night's rolls fire in one burst the moment the window closes, which is
+AUDIT 24 wave 30's finding about the magic rounds, one system over.
+
+**THREE PINS NEEDED A SECOND DRAFT**, each because it matched *prose*
+or a neighbour rather than the code: a ban on the raw `grounded` flag
+found the world host's probe surface; an ordering pin found the
+comment that explains the two-step thirty lines above it; and asking
+only that `restDecision` *appeared* in a file passed a toggle that
+hardcodes `{ kind: 'rest' }` and leaves the helper unused — both hosts
+survived that one.
+
+Pins: `test/restwhere.test.js`, 8 tests, **28 mutations, 28 dead**.
+Two pins in `travelmapwindow.test.js` were re-aimed on the way past:
+one sliced `frame()` by a magic 900 characters, and the other checked
+for a `dispose` anywhere in the function rather than in the drain, and
+survived its own mutant.

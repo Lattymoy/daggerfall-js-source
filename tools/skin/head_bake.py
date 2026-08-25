@@ -9,18 +9,16 @@ YAWS=[0,45,90,135,180,225,270,315]
 # for the same head - a 55% spread - so the same rig height sampled the brow in
 # one view and the mouth in another and the blend averaged them: mush at 45,
 # two faces at 90. The views share a frame now, so the landmark transfers.
-import glob as _glob
 _fr=[]
-for _p in sorted(_glob.glob('heads/f*_000.png')):
-    _m=np.array(Image.open(_p).convert('RGBA'))[:,:,3]>0
+for _Y in YAWS:
+    _m=np.array(Image.open(f'heads/f{FACE}_{_Y:03d}.png').convert('RGBA'))[:,:,3]>0
     _h=_m.shape[0]
-    if _h<200: continue                      # skip the body sheet
     _ww=[int(_m[r].sum()) for r in range(_h)]
     _lo=int(_h*0.55)
     _fr.append(max(((_ww[r+1]-_ww[r], r) for r in range(_lo,_h-2)))[1]/_h)
-SH_FRAC=float(np.median(_fr)) if _fr else 0.83
-print(f'shoulder fraction: median {SH_FRAC:.3f} across {len(_fr)} heads '
-      f'(per-face range {min(_fr):.3f}..{max(_fr):.3f})')
+SH_FRAC=float(np.median(_fr))
+print(f'shoulder fraction {SH_FRAC:.3f} (median of this face\'s own 8 views, '
+      f'spread {min(_fr):.2f}..{max(_fr):.2f})')
 def _skinSide(Y):
     A=np.array(Image.open(f'heads/f{FACE}_{Y:03d}.png').convert('RGBA'))
     m=A[:,:,3]>0; rgb=A[:,:,:3].astype(int); H=m.shape[0]
@@ -148,6 +146,7 @@ def sample(px,py,pz,arc):
     acc=np.zeros(3); wsum=0.0; satsum=0.0
     for Yd in YAWS:
         tv=(90-Yd)%360                       # the arc this view looks at
+        CARD = (Yd % 90 == 0)                # 0/90/180/270 carry the real subject
         d=((math.degrees(arc)-tv+180)%360)-180
         cc=math.cos(math.radians(d))
         # VISIBILITY, not just weight. xr = px*cos(Y)+pz*sin(Y) is a PROJECTION,
@@ -157,11 +156,16 @@ def sample(px,py,pz,arc):
         # why no weighting scheme could fix it. A view may only paint the
         # hemisphere it can actually SEE.
         if cc <= 0.02: continue              # facing away: this view sees nothing here
-        # cos^4 let the two 3/4 views put a THIRD of their own faces into the
-        # front-centre pixel, each mapped by its own chord projection. Different
-        # content in the same texel is the mush. Sharpen so a view OWNS its
-        # sector and the neighbours only feather the join.
-        wgt=cc**24
+        # THE FRONT VIEW MUST OWN THE WHOLE FACE. A face spans roughly arc
+        # 45..135, but equal 45-degree sectors give view 0 only 67.5..112.5, so
+        # the 3/4 views paint the rest - and their faces land at their OWN
+        # sector centres (u 0.375 and 0.625) instead of on top of the front
+        # view's at 0.5. That is the second face. Cardinals (0/90/180/270) carry
+        # the real subject, so give them a wide sector and let the 3/4 views
+        # fill only the joins.
+        half = 52.0 if CARD else 22.0
+        wgt = math.cos(math.radians(min(90.0, abs(d)*45.0/half)))**8
+        if CARD: wgt *= 3.0
         if wgt<1e-4: continue
         vv=V[Yd]
         row=vv['r1']-t*(vv['r1']-vv['r0'])      # crown at t=1, shoulderline at t=0

@@ -38,6 +38,18 @@ the browser.
 The head cell is baked from an eight-direction head turnaround the same way the
 body is, then the face is layered per race at runtime from `FACE*.CIF`.
 
+## Skin tone (skin_ramps.py)
+
+The HEAD is the authority on skin tone - it carries the artist's actual colour -
+so each face derives the body ramp its own head implies, and the body's
+intensity map runs through that. Mean |head jaw - body chest| falls from 8.9 on
+one shared Breton ramp to 5.8, and six of the ten land within 1.5.
+
+The ramp is HISTOGRAM-MATCHED to the body atlas, not evenly sampled across the
+face's tonal range: the body averages ~192 of 255, so an even ramp puts the
+whole torso on its bright end and the body comes out pale against the face.
+`ramp[i]` is the face's skin at the percentile body-intensity `i` occupies.
+
 ## Laws learned building it (do not relearn these)
 
 - **Bin count must not exceed the data.** The head is 168 faces built from SEVEN
@@ -61,16 +73,25 @@ body is, then the face is layered per race at runtime from `FACE*.CIF`.
   its image linearly across that arc - two silhouette edges, no axis, no scale,
   and every view's content lands in its own sector BY CONSTRUCTION. Chord
   mapping put the moustache on the EAR.
+- **The cardinal views must own their whole subject.** A face spans roughly arc
+  45..135, so equal 45-degree sectors give the FRONT view only 67.5..112.5 and
+  the 3/4 views paint the rest - putting their faces at their own sector centres
+  (u 0.375 and 0.625) instead of on top of the front view's at 0.5. That is a
+  literal second face, and no amount of sharpening the blend fixes it because
+  the 3/4 views are placing correct content in the wrong place. Cardinals
+  (0/90/180/270) own 52 degrees each; the 3/4 views fill only the joins.
 - **Check which way each turnaround ROTATES.** Nine of the ten Breton sheets
   turn one way and one turns the other - and the odd one out was the head this
   pipeline was tuned on, so every other head had its side views mirrored, which
   shows as a doubled brow and mouth at 45 degrees. Detect it (which side the skin
   sits on at "90") and reflect the labels about 0/180 rather than trusting the
   grid order.
-- **A shoulder line belongs to the SET, not the face.** Detecting it per face let
-  flared hair beat the shoulders on the max-step test (0.669 against a 0.826
-  median), scaling those heads 25% short so they overran the skull and clipped.
-  One consistently framed set shares one landmark.
+- **Take a landmark from a face's OWN eight views, not from one view and not
+  from the set.** One view can be fooled by hair flare (0.66 where that same
+  face's other seven agree on 0.86); eight cannot. Forcing the set's median on
+  everyone was up to 0.080 out, an 8% vertical scale error on that head, which
+  reads as stretch. Median across the face's own views is robust AND keeps
+  genuine per-face differences.
 - **A metric that improves while the picture degrades is the wrong metric.** An
   axis correction took mean centring offset from 0.0146 to 0.0055 and made every
   one of the ten faces visibly worse - shifting the mapping centre per row

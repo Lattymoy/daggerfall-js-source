@@ -148,6 +148,37 @@ export function swimSpeed(baseSpeed, swimmingSkill) {
 }
 
 /**
+ * U48 - PlayerMotor.StartRestGroundedCheck (:184-194), verbatim, and
+ * the ONE HOME for it.
+ *
+ * "Standard grounded will pass check immediately"; otherwise a
+ * downward ray from the controller CENTRE for height/2 + 0.2, which
+ * is DFU's "collision fix for when player is levitating but feet are
+ * close enough to ground to rest" - a levitating player's controller
+ * never reports grounded because Unity only resolves that collision
+ * while moving.
+ *
+ * It lives here because this is where DFU puts it, and because the
+ * check now has THREE callers: the dungeon context (which held the
+ * only copy and fed it host state), and U48's two above-ground hosts.
+ * The exterior page found the third case the raycast covers and the
+ * flag `grounded` does not: on a page with no walking player the
+ * motor is never stepped, so `grounded` sits at its initialiser
+ * `false` forever and the rest key answered "You cannot sleep now."
+ * on solid ground.
+ *
+ * @param {boolean} grounded the motor's live flag
+ * @param {ArrayLike<number>|null} feet world-space FEET position
+ * @param {{raycast:(o:number[],d:number[],max:number)=>number}} collider
+ */
+export function startRestGroundedCheck(grounded, feet, collider) {
+  if (grounded) return true;
+  if (!feet || !collider?.raycast) return false;
+  return Number.isFinite(collider.raycast(
+    [feet[0], feet[1] + CAPSULE_HEIGHT / 2, feet[2]], [0, -1, 0], CAPSULE_HEIGHT / 2 + 0.2));
+}
+
+/**
  * Grounded first-person motor. Feeds a wish direction to the collider
  * and integrates AcrobatMotor-style vertical motion.
  */
