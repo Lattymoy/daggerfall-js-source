@@ -267,9 +267,9 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:2278` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
 - `src/scenes/world.js:2511` - FLAGGED: the QuestComplete loot window pends the UI arc - the
 - `src/scenes/world.js:2534` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:2912` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:3219` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/world.js:3292` - (FLAGGED: exterior corpse containers are the loot arc's), so
+- `src/scenes/world.js:2917` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:3224` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:3297` - (FLAGGED: exterior corpse containers are the loot arc's), so
 - `src/scenes/worldModes.js:277` - that makes a rest breakable in one. FLAGGED.
 - `src/scenes/worldModes.js:367` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:515` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon

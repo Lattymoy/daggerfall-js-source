@@ -32,6 +32,15 @@ import {
 } from '../src/systems/knightlyGifts.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 import { serviceDestination } from '../src/systems/guildServiceFlow.js';
+import { locationBuildings } from '../src/systems/talkTopics.js';
+import { MapsFile } from '../src/formats/mapsFile.js';
+import { BlocksFile } from '../src/formats/blocksFile.js';
+import { layoutLocation } from '../src/world/locationLayout.js';
+import { existsSync } from 'node:fs';
+
+const ARENA2 = process.env.ARENA2_PATH;
+const skipReal = !ARENA2 || !existsSync(ARENA2)
+  ? 'ARENA2_PATH not set or missing - real-data validation skipped' : false;
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
 const code = (p) => readFileSync(join(SRC, p), 'utf8')
@@ -207,4 +216,54 @@ test('H1: the four consumers are wired, and each goes through the law', () => {
   assert.match(readFileSync(join(SRC, 'systems/save.js'), 'utf8'), /snap\.houses/, 'the save round-trips the registry');
   // and ReceiveHouse is a destination now
   assert.equal(serviceDestination('ReceiveHouse'), 'guildServiceReceiveHouse');
+});
+
+test('H1 DEFECT: a house on the market must carry its KEY - on REAL data', { skip: skipReal }, () => {
+  // THE BUG THIS TEST EXISTS FOR, and it was mine, shipped an hour
+  // before it was found. H1's roll read `location.exterior.buildings`
+  // - the raw DFLocation.BuildingData array, whose records carry
+  // nameSeed/factionId/quality/buildingType and NO buildingKey. So
+  // every house it offered had `buildingKey: undefined`,
+  // allocateHouseToPlayer wrote that into the registry, and ownsHouse
+  // tests `> 0`: the house a knight was just given was not theirs, and
+  // nothing above noticed because every fixture in this file sets the
+  // key BY HAND. A synthetic fixture cannot catch a missing field that
+  // the fixture itself supplies - so this one runs on the shipped
+  // MAPS.BSA and BLOCKS.BSA and asks the question of real records.
+  const maps = new MapsFile();
+  maps.load(
+    new Uint8Array(readFileSync(join(ARENA2, 'MAPS.BSA'))),
+    new Uint8Array(readFileSync(join(ARENA2, 'CLIMATE.PAK'))),
+    new Uint8Array(readFileSync(join(ARENA2, 'POLITIC.PAK'))),
+  );
+  const blocksFile = new BlocksFile();
+  blocksFile.load(new Uint8Array(readFileSync(join(ARENA2, 'BLOCKS.BSA'))));
+
+  for (const name of ['Daggerfall', 'Burgley']) {
+    const loc = maps.getLocationByName('Daggerfall', name);
+    assert.ok(loc, `${name} is in the shipped data`);
+    const laid = layoutLocation(loc, maps, blocksFile);
+    const all = locationBuildings(loc.exterior?.buildings ?? [], laid.blocks);
+    assert.ok(all.length > 0, `${name} has buildings`);
+
+    // THE RAW ARRAY HAS NO KEYS - the thing H1 read.
+    assert.equal((loc.exterior?.buildings ?? []).some((b) => b.buildingKey !== undefined), false,
+      'DFLocation.BuildingData carries no buildingKey; that is why the roll needs the correlation');
+
+    // ...and the correlated list does, on every single record.
+    for (const b of all) {
+      assert.equal(typeof b.buildingKey, 'number', `${name}: every building has a numeric key`);
+      assert.ok(b.buildingKey > 0, `${name}: and it is > 0, which is what ownsHouse tests`);
+    }
+    // keys are unique within a location, or two houses are one house
+    assert.equal(new Set(all.map((b) => b.buildingKey)).size, all.length, `${name}: keys are unique`);
+
+    // and the roll over the REAL list hands back real keys
+    for (const h of housesForSale(all, { mapId: loc.mapTableData?.mapId ?? 0, month: 3 })) {
+      assert.ok(h.buildingKey > 0, `${name}: a house on the market has a usable key`);
+      const houses = createHouses(2);
+      allocateHouseToPlayer(houses, 0, { buildingKey: h.buildingKey, mapId: 1, location: name });
+      assert.equal(ownsHouse(houses, 0), true, `${name}: and allocating it actually makes it yours`);
+    }
+  }
 });

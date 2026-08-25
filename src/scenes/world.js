@@ -87,7 +87,7 @@ import { seedStartingEquipment, EQUIP_SLOTS } from '../systems/equip.js';   // U
 import { createChargenFlow, createChargenWindow, finishChargen, loadSpellIndex, applyHeadlessChargen } from '../systems/chargenSession.js';   // S3c/U9
 import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
-import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the shop identity
+import { buildingDataForDoor, locationBuildings } from '../systems/talkTopics.js';   // E2: the shop identity   // H2: every building, with its key
 import { hitSoundFor, swingSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
@@ -2565,8 +2565,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     buildingDirectory: () => {
       const loc = _questLoc();
       if (!loc) return null;
+      // H2: the buildings must carry their KEYS. `loc.exterior.buildings`
+      // is the raw BuildingData array and has none - H1 rolled its
+      // houses-for-sale over it and handed out `buildingKey: undefined`,
+      // so the house you were given was never yours.
+      const px = built.get(`${playerTravelPixel().x},${playerTravelPixel().y}`);
       return {
-        buildings: loc.exterior?.buildings ?? [],
+        buildings: px?.locBlocks ? locationBuildings(loc.exterior?.buildings ?? [], px.locBlocks) : [],
         mapId: loc.mapTableData?.mapId ?? 0,
         regionIndex: loc.regionIndex ?? 0,
         locationName: loc.name ?? '',
