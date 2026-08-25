@@ -8,35 +8,52 @@ import math, json
 from PIL import Image
 import numpy as np
 LAY=json.load(open('/mnt/user-data/outputs/skin-layout.json'))
+# IDEMPOTENT: a rerun must not append a second head cell onto the first
+if 'head' in LAY:
+    LAY.pop('head')
+    _bw=max(c['x']+c['w'] for c in LAY.values())+8
+    Image.open('/mnt/user-data/outputs/skin-intensity.png').convert('L')\
+         .crop((0,0,_bw,293)).save('/mnt/user-data/outputs/skin-intensity.png')
 base=Image.open('/mnt/user-data/outputs/skin-intensity.png').convert('L')
 BW,BH=base.size
 
 hf=[f2 for f2 in F if f2['g']=='head']
 ys=[f2['p'][i*3+1] for f2 in hf for i in range(4)]
 HY0,HY1=min(ys),max(ys)
-NBH=120
-bins=[[] for _ in range(NBH)]
+per={}
 for f2 in hf:
     for i in range(4):
         x,y,z=f2['p'][i*3],f2['p'][i*3+1],f2['p'][i*3+2]
-        bins[min(NBH-1,int((y-HY0)/(HY1-HY0)*NBH))].append((x,z))
-prof=[]
-for b in bins:
-    if not b: prof.append(None); continue
-    xs=[p[0] for p in b]; zs=[p[1] for p in b]
-    prof.append(((min(xs)+max(xs))/2,(min(zs)+max(zs))/2,
-                 max(1e-3,(max(xs)-min(xs))/2),max(1e-3,(max(zs)-min(zs))/2)))
-ok=[i for i,p in enumerate(prof) if p]
-prof=[p if p else (prof[ok[0]] if i<NBH/2 else prof[ok[-1]]) for i,p in enumerate(prof)]
+        per.setdefault(round(y,4),[]).append((x,z))
+_ks=sorted(per)
+print(f'head UVs built on {len(_ks)} real ring heights (was 120 bins, 113 empty)')
+_xs=_ks
+_vs=[((min(a for a,_ in per[y])+max(a for a,_ in per[y]))/2,
+      (min(b for _,b in per[y])+max(b for _,b in per[y]))/2,
+      max(1e-3,(max(a for a,_ in per[y])-min(a for a,_ in per[y]))/2),
+      max(1e-3,(max(b for _,b in per[y])-min(b for _,b in per[y]))/2)) for y in _ks]
+def PROF(y):
+    if y<=_xs[0]: return _vs[0]
+    if y>=_xs[-1]: return _vs[-1]
+    i=max(j for j in range(len(_xs)-1) if _xs[j]<=y); j=i+1
+    t=(y-_xs[i])/(_xs[j]-_xs[i])
+    t=t*t*(3-2*t)                      # smoothstep: C1 across the knots
+    return tuple(_vs[i][k]+(_vs[j][k]-_vs[i][k])*t for k in range(4))
 print(f'head: {len(hf)} faces, y {HY0:.3f}..{HY1:.3f}')
 
 rows=int(round(abs(ymap(HY0)-ymap(HY1)))) or 60
-HW,HH=96,max(48,rows)
+# The cell's aspect must match the SURFACE's. Head circumference 0.7824 over
+# height 0.2970 is 2.63:1; a 192x128 cell is 1.50:1, which squeezes horizontal
+# detail 1.76x and shows up as stretch when mapped back on. 336x128 = 2.62:1.
+# The source head is ~303 rows; a 128-row cell threw away 2.4x of the vertical
+# detail and squashed the brow, eyes and mouth into bands - which reads as
+# smear, not as scale. Keep the 2.63:1 surface aspect and give it the rows.
+HW,HH=672,256
 print(f'head cell {HW}x{HH}')
 L=np.array([-0.45,0.55,0.70]); L/=np.linalg.norm(L)
 cell=np.zeros((HH,HW),dtype=np.uint8)
 for ax in range(HW):
-    th=(ax+0.5)/HW*2*math.pi
+    th=(ax+0.5)/HW*2*math.pi - math.pi/2      # same zero as the UVs above
     n=np.array([math.cos(th),0.0,math.sin(th)])
     for ay in range(HH):
         t=(ay+0.5)/HH                       # 0 = crown, 1 = chin
@@ -65,9 +82,11 @@ for f2 in F:
         px,py,pz=f2['p'][i*3],f2['p'][i*3+1],f2['p'][i*3+2]
         if g=='head':
             c=LAY['head']
-            k=min(NBH-1,int((py-HY0)/(HY1-HY0+1e-9)*NBH))
-            cx,cz,rx,rz=prof[k]
-            th=math.atan2((pz-cz)/rz,(px-cx)/rx)%(2*math.pi)
+            cx,cz,rx,rz=PROF(py)
+            # +pi/2 so u=0.5 is the FRONT of the head and the seam falls at the
+            # back. Probed: without it u=0.5 is the BACK and faceArc [.25,.75]
+            # wraps the face around the left temple.
+            th=(math.atan2((pz-cz)/rz,(px-cx)/rx)+math.pi/2)%(2*math.pi)
             ax=c['x']+th/(2*math.pi)*c['w']
             ay=c['y']+(c['y1']-py)/(c['y1']-c['y0']+1e-9)*c['h']
         elif g in ('body','armL','armR','legL','legR'):
