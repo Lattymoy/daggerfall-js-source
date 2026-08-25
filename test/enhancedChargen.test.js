@@ -7,7 +7,7 @@
 // tools/enhancedTapProbe.mjs.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { traceProvinces, PROVINCE_NAMES, INERT_REGION, MAP_W, MAP_H } from '../src/ui/provinceMap.js';
@@ -187,6 +187,43 @@ test('a real text field keeps its own keys', () => {
   // and it must not swallow keys it did not use, or Tab stops working
   assert.ok(fn.indexOf('if (!action) return;') < fn.indexOf('preventDefault'),
     'preventDefault must come AFTER the table has claimed the key');
+});
+
+// ── THE SEAM ─────────────────────────────────────────────────────
+// The skin is chosen in ONE place. AUDIT 17i split createChargenWindow
+// out because three separate bugs came from hosts wiring chargen by
+// hand, and a host reaching for the DOM wizard itself would be that
+// shape again - so the sweep says so rather than the next author
+// remembering.
+test('no host mounts the enhanced wizard itself', () => {
+  const dir = new URL('../src/scenes/', import.meta.url);
+  for (const f of readdirSync(dir)) {
+    if (!f.endsWith('.js')) continue;
+    const src = readFileSync(new URL(f, dir), 'utf8');
+    assert.ok(!/enhancedChargen/.test(src),
+      `src/scenes/${f} reaches for the enhanced wizard - it goes through createChargenWindow`);
+  }
+});
+
+test('the seam forks on the skin, and needs a DOM to do it', () => {
+  const src = readFileSync(new URL('../src/systems/chargenSession.js', import.meta.url), 'utf8');
+  assert.match(src, /if \(isEnhanced\(\) && typeof document !== 'undefined'\)/,
+    'a DOM view needs a DOM; without one the canvas wizard stands');
+  assert.match(src, /enhancedChargenOverlay\(flow/);
+  // the hosts tear an overlay down when it reports done, and a DOM
+  // node outlives the object reporting it - so unmount comes first
+  const fn = src.slice(src.indexOf('function enhancedChargenOverlay'));
+  assert.ok(fn.indexOf('view?.unmount()') < fn.indexOf('onDone?.('),
+    'the view must come down BEFORE done fires');
+});
+
+test('the FOUR HOSTS are each named at the seam', () => {
+  const src = readFileSync(new URL('../src/systems/chargenSession.js', import.meta.url), 'utf8');
+  for (const host of ['world.js', 'exterior.js', 'worldModes.js', 'dungeonContext.js']) {
+    assert.ok(src.includes(host), `the seam does not name ${host}`);
+  }
+  assert.match(src, /dungeonContext\.js\s+FLAGGED/,
+    'the host that cannot reach the fork must be FLAGGED by name, not omitted');
 });
 
 // ── THE REAL CORPUS ──────────────────────────────────────────────

@@ -241,7 +241,10 @@ export function runDayChange({ entity, lastMinutes, nowMinutes, rolls = Math.ran
   if (!(daysPast > 0)) return none;
 
   // :446 - the merchants' tug-of-war on every region's price index.
-  updateRegionalPrices(entity, entity.factionRep?.dict ?? null, daysPast, rolls);
+  // S42: the condition store rides the entity like every other day-block
+  // input, so the price walk's PricesHigh/PricesLow half reaches it with
+  // no host wiring - the same reason the whole block lives here.
+  updateRegionalPrices(entity, entity.factionRep?.dict ?? null, daysPast, rolls, entity.regionConditions ?? null);
 
   // :447-448 - roll the six climate zones and RAISE the pending-apply
   // flag; the exterior frame's tickWeather drains it. Splitting those

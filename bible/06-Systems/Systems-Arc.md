@@ -3329,3 +3329,84 @@ reason worth recording: there is no `.dfmod` on this machine to test
 against, and a binary parser written against a remembered spec and
 shipped unverified is the exact shape this project's pins exist to
 prevent.
+
+## S42 - THE REGION CONDITION STORE (2026-08-25)
+
+`src/systems/regionConditions.js` (new: the flags enum, the group map,
+both duration tables, `turnOnConditionFlag` / `turnOffConditionFlag`,
+`resetWarDataForRegion`, the store and its save halves) +
+`src/systems/shopStock.js` (S41's flagged half ships; `REGION_COUNT`
+moves to its one home) + `src/systems/worldTick.js` (the store rides
+the day block) + `src/systems/save.js` (the envelope).
+`test/regionconditions.test.js` (new, 13).
+
+**A store two shipped writers were already waiting on.** S41 ported
+`FormulaHelper.UpdateRegionalPrices` and had to FLAG its
+PricesHigh/PricesLow half with a plain reason: the port had no
+`RegionDataFlags` store at all, so writing those flags would have been
+a store with no reader. The whole `RegionPowerAndConditionsUpdate` arc
+(`PlayerEntity.cs:1626-2115`) has the same dependency - a war, a
+famine, a plague or a crime wave has nowhere to land without it. This
+slice builds the store and closes S41's flag; the arc itself is next.
+
+**One record, split three ways, and that is recorded.** DFU's
+`RegionDataRecord` (`:1575-1585`) carries `LegalRep` and
+`PriceAdjustment` alongside the condition arrays. The port already has
+both, in their own homes and with their own shipped laws - `court.js`
+owns `player.legalRep[region]`, `shopStock.js` owns
+`entity.regionPrices[region]`. Folding them in here would rewrite two
+working systems for a field-layout parity no behaviour depends on, so
+this module owns the CONDITION half and the other two keep theirs. The
+three together are DFU's record, and the split is written down rather
+than left for the next reader to discover.
+
+**THE THREE WIDTHS DISAGREE.** This is the part worth reading twice:
+
+    the enum          30 members (0..29)
+    Values / Flags    29 wide    (:2194, :2199)
+    valuesMin / Max   26 wide    (:2142-2143)
+    Flags2            14 wide    (:2203)
+
+So `Condition29` has no `Values` or `Flags` slot, `Condition26..29`
+have no duration entry, and `TurnOnConditionFlag` on any of them would
+read past two arrays and throw in C#. The group-clear loop's `i < 29`
+(`:2148`) tracks the FLAGS width rather than the enum's, so it never
+touches index 29 either. All of it is unreachable, because nothing in
+DFU sets those four - and the port keeps every width exactly as it
+found it. A tidied width is a different program, and the next reader
+who "fixes" one of these needs the C# in front of them, not a comment
+saying the arrays agree.
+
+**The group gate is the mechanism, not a guard.** `TurnOnConditionFlag`
+clears the other flags in a group only `if (Flags2[group])` (`:2146`) -
+the GROUP flag, not the flag being set. That is what lets
+`WarBeginning` replace `WarOngoing` without either knowing the other
+exists: one region, one war state. It also has a consequence worth
+pinning rather than smoothing, because `TurnOffConditionFlag` clears
+the whole group: turn one condition off and its siblings stay LIT while
+the group reads unlit, so the next `turnOn` finds the gate down and
+does not clear them. DFU's shape, and observable.
+
+**S41's flag is retired, and the boundaries are inclusive.** The three
+price arms land now (`FormulaHelper.cs:2075-2087`), with the asymmetry
+DFU has: the normal band clears BOTH flags on every single step, while
+the two extremes only ever light their own. Both band boundaries
+survived their first mutation round because every fixture straddled
+them - 4000, 1000 and 250 say nothing about 2000 and 500 themselves.
+The shipped pins land exactly ON the edge: 2041 falls to exactly 2000,
+491 rises to exactly 500.
+
+Pins: `test/regionconditions.test.js` (13). 15 mutations, 15 killed;
+the first round left the two boundary mutations alive and both are
+covered now. Every one of the 16 C# citations was checked by opening
+the range and confirming it contains the member named - four were wrong
+on the first pass and are corrected.
+
+FLAGGED: this is the store, not the simulation. Nothing yet WRITES a
+war, famine, plague, witch burning or crime wave into it - that is
+`RegionPowerAndConditionsUpdate` itself, which also needs
+`PersistentFactionData`'s alliance mutators
+(`GetNumberOfCommonAlliesAndEnemies`, `EndFactionAllies` and their
+siblings), none of which the port has. `InitializeRegionData`'s twelve
+bootstrap update passes (`:2214-2217`) are deliberately absent for the
+same reason: they call the member this slice does not port.

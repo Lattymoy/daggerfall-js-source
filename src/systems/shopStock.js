@@ -37,6 +37,7 @@ import { SOUL_TRAP_TEMPLATE } from './mysticism.js';   // X6: one home for the t
 import { FACTION_TYPES } from '../formats/factionFile.js';        // S41: UpdateRegionalPrices' type-7 region walk
 import { findFactionByTypeAndRegion } from './talk.js';           // S41: PersistentFactionData.FindFactionByTypeAndRegion, one home
 import { MERCHANTS_FACTION_ID } from './guilds.js';               // S41: FactionIDs.The_Merchants, one home
+import { turnOnConditionFlag, turnOffConditionFlag, REGION_FLAGS, REGION_COUNT } from './regionConditions.js';   // S42: the store S41's flag was waiting on
 
 // ItemGroups ids used by the shelf tables (DaggerfallUnityEnums).
 const GROUP_NAMES = Object.freeze({
@@ -213,11 +214,11 @@ export function regionPriceAdjustment(playerEntity, regionIndex, rolls = Math.ra
   return playerEntity.regionPrices[regionIndex];
 }
 
-/** PlayerEntity.regionData.Length (:99) - `new RegionDataRecord[62]`.
- *  The same 62 the bank keeps an account per (banking.js's
- *  BANK_REGION_COUNT); this one is named off PlayerEntity because
- *  the price walk is PlayerEntity's array, not the bank's. */
-export const REGION_COUNT = 62;
+// ONE DFU MEMBER, ONE EXPORT: REGION_COUNT is PlayerEntity.regionData's
+// length (:99), so S42 took it into regionConditions.js beside the rest
+// of that record. S41 declared it here first and the two collided; the
+// re-export keeps this file's readers working off the one home.
+export { REGION_COUNT } from './regionConditions.js';
 
 /** Mathf.Clamp(PriceAdjustment, 250, 4000) (FormulaHelper.cs:2074). */
 export const PRICE_ADJUSTMENT_MIN = 250;
@@ -255,12 +256,19 @@ export const PRICE_ADJUSTMENT_MAX = 4000;
  * - the 51/50 RISE - gets rarer as prices climb. It is a mean-
  * reverting walk around 1000 that the merchants' power tilts.
  *
- * FLAGGED (recorded, not silent): DFU also drives the PricesHigh /
- * PricesLow region CONDITION FLAGS from each step (:2075-2087). The
- * port has no RegionDataFlags store at all - the whole
- * RegionPowerAndConditionsUpdate arc (PlayerEntity.cs:1626-2115) is
- * unported, and nothing in the port reads those flags - so writing
- * them here would be a store with no reader. They come with that arc.
+ * THE CONDITION-FLAG HALF SHIPS (:2075-2087). S41 had to flag this
+ * because the port had no RegionDataFlags store to write into; S42
+ * built one (systems/regionConditions.js), so the three arms land
+ * here now, in DFU's own shape: at or under 2000 and at or over 500
+ * turns BOTH flags off, under 500 turns PricesLow on, and over 2000
+ * turns PricesHigh on. Note the asymmetry DFU has and this keeps -
+ * the "normal" band clears both flags every single step, while the
+ * two extremes only ever turn their own on.
+ *
+ * The flags are written through turnOnConditionFlag, which DRAWS a
+ * roll of its own for the condition's duration, so a region sitting
+ * at an extreme consumes one extra draw per day. That is DFU's
+ * stream, not an addition: the same call does the same thing there.
  *
  * DEVIATION (recorded): DFU fills all 62 adjustments at game start,
  * so this walk draws no init rolls. The port's regionPriceAdjustment
@@ -272,8 +280,10 @@ export const PRICE_ADJUSTMENT_MAX = 4000;
  * @param {object} playerEntity  carries regionPrices
  * @param {Map}    factionDict   the live faction store's dict
  * @param {number} times         daysPast - DFU's own loop bound
+ * @param {object[]} conditions   the region-condition store (S42). Null
+ *        skips the flag half - the price walk itself is unchanged.
  */
-export function updateRegionalPrices(playerEntity, factionDict, times, rolls = Math.random) {
+export function updateRegionalPrices(playerEntity, factionDict, times, rolls = Math.random, conditions = null) {
   if (!factionDict || !(times > 0)) return;
   // GetFactionData(The_Merchants) - `if (!...) return`, so a missing
   // merchants faction stops the WHOLE walk, not just one region.
@@ -293,7 +303,20 @@ export function updateRegionalPrices(playerEntity, factionDict, times, rolls = M
       const next = dice100(chanceOfPriceRise, rolls())
         ? Math.trunc(51 * adj / 50)
         : Math.trunc(49 * adj / 50);
-      playerEntity.regionPrices[i] = Math.min(PRICE_ADJUSTMENT_MAX, Math.max(PRICE_ADJUSTMENT_MIN, next));
+      const adjusted = Math.min(PRICE_ADJUSTMENT_MAX, Math.max(PRICE_ADJUSTMENT_MIN, next));
+      playerEntity.regionPrices[i] = adjusted;
+      // :2075-2087, verbatim including the nesting.
+      if (!conditions) continue;
+      if (adjusted <= 2000) {
+        if (adjusted >= 500) {
+          turnOffConditionFlag(conditions, i, REGION_FLAGS.PricesHigh);
+          turnOffConditionFlag(conditions, i, REGION_FLAGS.PricesLow);
+        } else {
+          turnOnConditionFlag(conditions, i, REGION_FLAGS.PricesLow, rolls);
+        }
+      } else {
+        turnOnConditionFlag(conditions, i, REGION_FLAGS.PricesHigh, rolls);
+      }
     }
   }
 }
