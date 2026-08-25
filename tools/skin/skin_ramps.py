@@ -11,7 +11,8 @@ for f in range(1,11):
     W=c.shape[1]
     front=c[:, int(W*0.40):int(W*0.60)]
     lum=0.3*front[:,:,0]+0.59*front[:,:,1]+0.11*front[:,:,2]
-    warm=(front[:,:,0]-front[:,:,2]>30)&(lum>70)
+    _gr=front[:,:,1]/np.maximum(front[:,:,0],1.0)
+    warm=(front[:,:,0]-front[:,:,2]>30)&(lum>70)&(_gr>0.55)&(_gr<0.78)
     px=front[warm]; pl=lum[warm]
     if len(px)<200: continue
     order=np.argsort(pl); px=px[order]; pl=pl[order]
