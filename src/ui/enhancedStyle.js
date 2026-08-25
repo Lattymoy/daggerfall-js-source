@@ -379,6 +379,38 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .bign { display: block; font-size: 13px; color: var(--dim); margin-top: 7px; letter-spacing: 0.02em; }
 .stagebody > .list { background: var(--slate); overflow: auto; }
 
+/* ── A QUESTION AND ITS ANSWERS ─────────────────────────────────
+   DFU stacks ten answer buttons in two columns because it has 320x200
+   to spend. The answers are SENTENCES, so one column and full width
+   reads far better and costs nothing but scroll. */
+.question { padding: 34px 30px 40px; max-width: 760px; margin: 0 auto; width: 100%; overflow: auto; }
+.qcount {
+  color: var(--brass); font-size: 11px; letter-spacing: 0.2em;
+  text-transform: uppercase; margin-bottom: 12px;
+}
+.question h2 {
+  font-family: var(--display); font-weight: 300; font-size: 27px;
+  margin: 0 0 24px; line-height: 1.25;
+}
+.answers { display: flex; flex-direction: column; gap: 8px; }
+.answer {
+  padding: 15px 18px; min-height: 52px; border: 1px solid var(--iron);
+  background: #12161b; color: var(--dim); font-size: 15px; line-height: 1.4;
+}
+.answer:hover { color: var(--bone); border-color: var(--brass); }
+.repbox { max-width: 560px; }
+.repbox p { color: var(--dim); font-size: 14px; margin: 0 0 8px; }
+
+/* ── THE NAME BOX ───────────────────────────────────────────────── */
+.namebox {
+  width: min(420px, 80vw); padding: 14px 16px; min-height: 52px;
+  background: #12161b; border: 1px solid #39424e; color: var(--bone);
+  font-family: var(--display); font-size: 24px; letter-spacing: 0.02em;
+  text-align: center;
+}
+.namebox:focus { outline: none; border-color: var(--brass); }
+.choose .acts { justify-content: center; }
+
 /* ── THE PROVINCE MAP ───────────────────────────────────────
    Traced from the player's own TAMRIEL2.IMG (ui/provinceMap.js), so
    these are Bethesda's coastlines and ours is only the ink. Unselected
@@ -457,6 +489,8 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   .wizard .rail { display: none; }
   .choose { padding: 28px 20px; gap: 22px; }
   .choose h2 { font-size: 24px; }
+  .question { padding: 22px 20px 30px; }
+  .question h2 { font-size: 22px; }
   .bigchoice, .bigchoice.tall { grid-template-columns: 1fr; }
   .wizard .stepstrip { display: block; order: 3; background: var(--ink); padding: 12px 20px max(12px, env(safe-area-inset-bottom)); }
   .wizard .brand { padding-bottom: 12px; }

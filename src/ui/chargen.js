@@ -230,6 +230,15 @@ export class ChargenFlow {
     // U20a: and a bare TEXT.RSC record source for the builder's
     // refusal boxes (301/300/302/306 + the rep window's 303).
     this.describeText = (id) => textRecordLines(id);
+    // The biography's two text sources, injectable on the same terms
+    // and for the same reason: the defaults read chargenArt's
+    // _art.textRsc, which only the CLASSIC art load fills, so a host
+    // that draws no classic art got an empty backstory and no
+    // reputation box - and _finishBiography reads a missing box as
+    // "nothing to show" and walks past it. Same shape as the three
+    // above; the defaults are unchanged.
+    this.buildBackstory = (backstoryId, effects) => buildBackstory(backstoryId, effects);
+    this.repBoxRows = (changed) => repBoxRows(changed);
     this.cursor = 0;          // the BIOGRAPHY screen's answer cursor
     // U16: StatsRollout and SkillsRollout are two INDEPENDENT DFU
     // components with a selection each. One shared cursor was fine
@@ -1025,9 +1034,9 @@ export class ChargenFlow {
    *  box rows the screen simply ends. */
   _finishBiography() {
     const b = this.biogFor(this.classIndex);
-    this.backStory = buildBackstory?.(b.backstoryId, this.biographyEffects) ?? [];
+    this.backStory = this.buildBackstory?.(b.backstoryId, this.biographyEffects) ?? [];
     this.repChanges = digestRepChanges(this.biographyEffects);
-    this.biogRepBox = repBoxRows?.(this.repChanges) ?? null;
+    this.biogRepBox = this.repBoxRows?.(this.repChanges) ?? null;
     if (!this.biogRepBox?.length) this._leaveBiography();
   }
 

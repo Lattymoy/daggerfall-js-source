@@ -42,6 +42,8 @@
 
 import { RACE_TEMPLATES } from '../systems/races.js';
 import { CLASS_DESCRIPTION_TEXT_ID } from './chargenArt.js';   // ONE DFU MEMBER, ONE EXPORT
+import { generateBackstory } from '../systems/biography.js';
+import { NAME_MAX_CHARACTERS as NAME_MAX } from './chargen.js';
 import { traceProvinces, MAP_W, MAP_H, PROVINCE_NAMES } from './provinceMap.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 
@@ -306,6 +308,132 @@ function classStage() {
   return pane;
 }
 
+// ── HOW YOUR HISTORY IS WRITTEN ──────────────────────────────────
+// WizardStages.SelectBiographyMethod. Same two-button shape as the
+// class method, and the same law: both handlers close, so a press
+// chooses and goes. The GENERATE arm is not a skip - it answers every
+// question at rand.Next(0, Count) and lands every effect, which is why
+// it says so rather than reading as "none of this".
+function bioMethodStage() {
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'choose');
+  wrap.append(el('h2', null, 'Where have you been?'));
+  const row = el('div', 'bigchoice tall');
+  const ask = el('button', 'bigbtn');
+  ask.append(el('span', 'bigk', 'Answer twelve questions'));
+  ask.append(el('span', 'bign', 'Your answers move skills, gold, gear and how people take to you.'));
+  ask.onclick = () => { flow.applyHit({ bioMethod: 'questions' }); paint(); };
+  const auto = el('button', 'bigbtn');
+  auto.append(el('span', 'bigk', 'Let it be written for you'));
+  auto.append(el('span', 'bign', 'Answered at random, and every answer still counts.'));
+  auto.onclick = () => { flow.applyHit({ bioMethod: 'generate' }); paint(); };
+  row.append(ask, auto);
+  wrap.append(row);
+  pane.append(wrap);
+  return pane;
+}
+
+// ── THE TWELVE QUESTIONS ─────────────────────────────────────────
+// One question, its answers, and nothing else - DFU's screen shows the
+// question above ten answer buttons in two columns, and the reason to
+// keep it to one column here is that the answers are SENTENCES, not
+// labels. The last answer composes the backstory and pops the
+// reputation box (TEXT.RSC 35), which is a ClickAnywhereToClose in
+// DFU and a single button here.
+function biographyStage() {
+  const pane = el('div', 'stagebody solo');
+
+  if (flow.biogRepBox?.length) {
+    const wrap = el('div', 'choose');
+    wrap.append(el('h2', null, 'Word gets around'));
+    const card = el('div', 'card repbox');
+    for (const row of flow.biogRepBox) {
+      const text = typeof row === 'string' ? row : row.text;
+      if (text?.trim()) card.append(el('p', null, text));
+    }
+    const a = el('div', 'acts');
+    const ok = el('button', 'act primary', 'Go on');
+    // The box is modal and ANY press closes it; the flow's own key arm
+    // is what moves the wizard on, so this goes through input rather
+    // than reaching into biogRepBox.
+    ok.onclick = () => { flow.input('confirm'); paint(); };
+    a.append(ok);
+    card.append(a);
+    wrap.append(card);
+    pane.append(wrap);
+    return pane;
+  }
+
+  const q = flow.biogQuestion();
+  if (!q) return pendingStage(STAGE_RAIL[stageOf(flow.state)]);
+  const wrap = el('div', 'question');
+  const total = flow.biogFor?.(flow.classIndex)?.questions?.length ?? 0;
+  wrap.append(el('div', 'qcount', total ? `Question ${flow.biogQuestionIndex + 1} of ${total}` : ''));
+  // BiogFile parses a question as TWO lines (q.text is [l0, l1]) and
+  // the second is often empty - a question is one sentence here, so
+  // the pair joins rather than the first winning.
+  wrap.append(el('h2', null, (Array.isArray(q.text) ? q.text : [q.text])
+    .filter((l) => l && l.trim()).join(' ')));
+  const answers = el('div', 'answers');
+  (q.answers ?? []).forEach((a, i) => {
+    const b = el('button', 'answer', a.text ?? String(a));
+    b.onclick = () => { flow.answerBiography(i); paint(); };
+    answers.append(b);
+  });
+  wrap.append(answers);
+  pane.append(wrap);
+  return pane;
+}
+
+// ── YOUR NAME ────────────────────────────────────────────────────
+// A text box and the RANDOM button, which is not a garnish: DFU
+// disables it until a race template exists (which is what forced U15's
+// reorder) and reseeds DFRandom on every push of the screen, because
+// without that every character of a race and gender got the same
+// suggestion on every boot (AUDIT 17j F1). The reseed already happened
+// in _enterName; this only has to press the button.
+//
+// An EMPTY name does not advance - AcceptName's own law - so the
+// primary is disabled rather than silently inert.
+function nameStage() {
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'choose');
+  wrap.append(el('h2', null, 'What are you called?'));
+
+  const box = el('input', 'namebox');
+  box.type = 'text';
+  box.value = flow.name;
+  box.maxLength = NAME_MAX;
+  box.autocomplete = 'off';
+  box.spellcheck = false;
+  // The FLOW owns the text, so typing is fed through its own char /
+  // backspace actions rather than assigned: NAME_MAX_CHARACTERS is
+  // TextBox's 31 (AUDIT 17j F5 - the port had capped it at 16, short
+  // enough to cut real names and to mint a random name you could not
+  // retype), and the cap belongs to the flow, not to this input.
+  box.oninput = () => {
+    const next = box.value;
+    while (flow.name.length) flow.input('backspace');
+    for (const ch of next) flow.input(`char:${ch}`);
+    box.value = flow.name;
+    ok.disabled = !flow.name.length;
+  };
+  box.onkeydown = (e) => { if (e.key === 'Enter' && flow.name.length) { flow.input('confirm'); paint(); } };
+  wrap.append(box);
+
+  const a = el('div', 'acts');
+  const ok = el('button', 'act primary', 'Continue');
+  ok.disabled = !flow.name.length;
+  ok.onclick = () => { flow.input('confirm'); paint(); };
+  const dice = el('button', 'act', 'Suggest one');
+  dice.onclick = () => { flow.applyHit({ randomName: true }); paint(); };
+  a.append(ok, dice);
+  wrap.append(a);
+  pane.append(wrap);
+  requestAnimationFrame(() => box.focus());
+  return pane;
+}
+
 // ── THE STAGES NOT YET REDESIGNED ────────────────────────────────
 // Named, with the classic screen that still owns them. An empty pane
 // would read as a bug and a half-built one would read as the design.
@@ -363,6 +491,7 @@ function paint() {
   const STAGES = {
     race: raceStage, gender: genderStage,
     classMethod: classMethodStage, class: classStage,
+    bioMethod: bioMethodStage, biography: biographyStage, name: nameStage,
   };
   pane.append((STAGES[flow.state] ?? (() => pendingStage(STAGE_RAIL[here])))());
 
@@ -403,6 +532,22 @@ export function attachChargenText(f, textRsc) {
   f.describeRace = (race) => (race ? textRsc.linesById(race.descriptionId) : []);
   f.describeClass = (i) => textRsc.linesById(CLASS_DESCRIPTION_TEXT_ID + i);
   f.describeText = (id) => textRsc.linesById(id);
+  // THE BIOGRAPHY'S TWO TEXT SOURCES, and they are not decoration. The
+  // BACKSTORY is what U13 built and what the character sheet's History
+  // page reads for the rest of the game, and the REPUTATION BOX is
+  // TEXT.RSC 35 with %r1..%r5 filled from DigestRepChanges - the one
+  // moment the player is told what their answers did. Both hang off
+  // chargenArt's _art.textRsc, so a DOM view got an empty backstory
+  // and no box at all, and the flow's own arm reads a missing box as
+  // "nothing to show" and walks straight past it. Silent, and
+  // permanent: the backstory is written once.
+  f.buildBackstory = (backstoryId, effects) =>
+    generateBackstory(textRsc, backstoryId, effects).map((r) => r.text);
+  f.repBoxRows = (changed) => (changed
+    ? textRsc.linesById(35).map((r) => ({
+      ...r, text: r.text.replace(/%r([1-5])/g, (_, n) => String(changed[Number(n) - 1] ?? 0)),
+    }))
+    : null);
   return f;
 }
 
