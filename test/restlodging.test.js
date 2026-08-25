@@ -17,6 +17,7 @@ import { isTownLocationType, TOWN_LOCATION_TYPES, LOCATION_TYPES } from '../src/
 import { interiorSceneName } from '../src/systems/sceneCache.js';
 import { setValue, _resetForTests } from '../src/systems/settings.js';
 import { maxFatigue } from '../src/systems/statMods.js';
+import { RAPID_HEALING } from '../src/systems/rest.js';
 import { REST_WAIT_PER_HOUR } from '../src/systems/restSession.js';
 import { SKILLS } from '../src/systems/skills.js';
 import { startRestGroundedCheck, CAPSULE_HEIGHT } from '../src/player/motor.js';
@@ -414,6 +415,44 @@ test('S40 restVitals: one home for the rested hour, and the dungeon host uses it
   // TickRest tallies MEDICAL every rested hour - the one skill rest
   // itself advances (and the reason a long convalescence trains it).
   assert.ok((e.skillUses?.[SKILLS.Medical] ?? 0) > 0, 'the rested hour tallies Medical');
+
+  // day/inside must actually REACH CalculateHealthRecoveryRate. A
+  // career with no RapidHealing makes all four combinations identical
+  // - which is what the first version of this pin used, so a mutant
+  // that hardcoded the flags inside restVitals, or dropped them from
+  // createRestDeps' tickVitals, passed. RapidHealing InLight is the
+  // ONE place they differ: +100 instead of +60, and only by daylight
+  // OUTDOORS. (rest.js:44-56.)
+  const lit = (over) => ({
+    isPlayer: true, level: 5, health: 0, maxHealth: 50, magicka: 40, maxMagicka: 40,
+    fatigue: 0, stats: { strength: 50, endurance: 50, willpower: 50 }, skills: 30,
+    career: { rapidHealing: RAPID_HEALING.InLight }, skillUses: { [SKILLS.Medical]: 0 }, ...over,
+  });
+  const heal = (flags) => { const x = lit(); restVitals(x, flags); return x.health; };
+  assert.equal(heal({ day: true, inside: false }), 6, 'InLight: outdoors by day is the fast rate');
+  assert.equal(heal({ day: false, inside: false }), 4, 'not by night');
+  assert.equal(heal({ day: true, inside: true }), 4, 'not indoors');
+  // ...and InDarkness is its exact complement, so a swapped pair is
+  // caught from both sides.
+  const dark = (flags) => {
+    const x = lit({ career: { rapidHealing: RAPID_HEALING.InDarkness } });
+    restVitals(x, flags); return x.health;
+  };
+  assert.equal(dark({ day: true, inside: false }), 4);
+  assert.equal(dark({ day: false, inside: false }), 6);
+  assert.equal(dark({ day: true, inside: true }), 6);
+
+  // The four hosts pass the flags their PLACE actually has: fixed for
+  // the two that are always inside and never lit, LIVE for the two
+  // outdoors - which is the only place InLight can ever fire.
+  assert.match(src('src/scenes/dungeonContext.js'), /day: \(\) => false, inside: \(\) => true,/);
+  assert.match(src('src/scenes/worldModes.js'), /day: \(\) => false, inside: \(\) => true,/);
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.match(src(f), /day: \(\) => !isNight\(minuteNow\(\)\), inside: \(\) => false/, f);
+  }
+  // ...and createRestDeps CALLS them rather than closing over a value.
+  assert.match(src('src/scenes/shared.js'),
+    /tickVitals: \(\) => restVitals\(entity, \{ day: day\(\), inside: inside\(\) \}\),/);
 
   // Each of the three must be at max INDEPENDENTLY: fill two and the
   // completion must still be false, or FullRest ends early.

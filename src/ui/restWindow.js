@@ -198,8 +198,10 @@ export class RestWindow {
    *  PauseWhileOpen's timeScale = 0 does not stop it.
    *
    *  S40: this is named `tick` because that is the seam ALL FOUR hosts
-   *  already drive (townTalk.frame:572, worldModes:2502,
-   *  dungeonContext.tickOverlay). It was `tickRest`, which exactly one
+   *  already drive (townTalk's `frame`, worldModes' interior overlay
+   *  arm, dungeonContext's `tickOverlay` - named rather than cited by
+   *  line, because a port-internal line number drifts on every edit
+   *  above it and this one already had). It was `tickRest`, which one
    *  host knew to call - so the moment rest reached the other three
    *  their rest windows would have sat on "Hours passed: 0" until
    *  Escape, which is the same defect AUDIT D-C1 and the dungeon's own

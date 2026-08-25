@@ -2719,7 +2719,18 @@ mounted the interior window into a slot the frame never draws. That
 one predates S40 and was invisible only because `interiorKeyCtx` had
 no `toggleRest` for `routeAction`'s `?.()` to find.
 
-Pins: 37 in `restlodging.test.js`. 58 mutations, 58 dead. The first
+**And the review's last find was in the review's own work.** The
+`restVitals` pin ran its fixture with `career: {}`, and with no
+RapidHealing flag `CalculateHealthRecoveryRate` returns the same
+number for all four `day`/`inside` combinations - so the pin that
+existed to prove those flags reach the formula proved nothing, and a
+mutant hardcoding them inside `restVitals`, or dropping them from
+`createRestDeps`' `tickVitals`, passed. RapidHealing InLight is the
+one place they differ (+100 instead of +60, and only outdoors by
+daylight); InDarkness is its exact complement, so the pin asks both
+and a swapped pair fails from either side.
+
+Pins: 37 in `restlodging.test.js`. 62 mutations, 62 dead. The first
 pass left four alive and all four were the same failure of nerve: a
 pin that named a thing instead of exercising it. The host pins matched
 `act === 'Rest'`, which survives `if (false && act === 'Rest')`, so
