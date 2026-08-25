@@ -197,6 +197,37 @@ export function allocateHouseToPlayer(houses, regionIndex, { buildingKey, mapId,
   return slot;
 }
 
+/**
+ * PurchaseHouse (:408-427). The one transaction in this module that
+ * spends from BOTH pockets: the purse first and the bank account for
+ * whatever the purse could not cover.
+ *
+ * The mechanism is DeductGoldAmount's return value, which is the
+ * SHORTFALL rather than nothing (court.js:199 ports it, letters of
+ * credit and all) - so `accountGold -= deductGold(...)` subtracts
+ * exactly the remainder, and subtracts ZERO when the purse covered it.
+ * Written any other way this either double-charges or lets the account
+ * pay for a purchase the purse already made.
+ *
+ * `houseKey < 1` answers NONE before anything is spent (:410-411) -
+ * the same guard IsHouseOwned makes, for the same reason: key 0 is
+ * "no building".
+ */
+export function purchaseHouse(accounts, houses, regionIndex, house, player, {
+  meshRadius = 0, mapId = 0, location = '', sideEffects = {},
+} = {}) {
+  if (!(house?.buildingKey > 0)) return { result: TRANSACTION_RESULT.NONE };
+  const amount = housePrice(meshRadius);
+  const purse = player.gold();
+  const account = accounts[regionIndex].accountGold;
+  if (amount > purse + account) return { result: TRANSACTION_RESULT.NOT_ENOUGH_GOLD, amount };
+  accounts[regionIndex].accountGold -= player.deductGold(amount);
+  allocateHouseToPlayer(houses, regionIndex, {
+    buildingKey: house.buildingKey, mapId, location,
+  }, sideEffects);
+  return { result: TRANSACTION_RESULT.PURCHASED_HOUSE, amount };
+}
+
 /** SellHouse (:450-465), the mirror: the bank ACCOUNT is credited
  *  (not the purse - DFU pays a deed into the account), the interior
  *  stops being permanent, the building is undiscovered, and the slot

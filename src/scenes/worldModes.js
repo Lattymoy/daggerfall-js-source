@@ -139,7 +139,8 @@ import {
 import { freeTavernRooms } from '../systems/guildServices.js';
 // B2: the bank - the window, the per-region accounts and the purse seam.
 import { BankWindow, preloadBankArt, bankArtLoaded, BANK_RECTS, BANK_PANEL_X, BANK_PANEL_Y } from '../ui/bankWindow.js';
-import { createBankAccounts, createHouses, BANK_REGION_COUNT, TRANSACTION_RESULT, ownsHouse, isHouseOwned, housesForSale, allocateHouseToPlayer } from '../systems/banking.js';   // H1
+import { BankPurchaseWindow, preloadPurchaseArt, purchaseArtLoaded } from '../ui/bankPurchaseWindow.js';   // H2
+import { createBankAccounts, createHouses, BANK_REGION_COUNT, TRANSACTION_RESULT, ownsHouse, isHouseOwned, housesForSale, allocateHouseToPlayer, purchaseHouse } from '../systems/banking.js';   // H1/H2
 // P1: the scene cache - what an interior remembers across a visit.
 import {
   createSceneCache, cacheScene, restoreCachedScene,
@@ -349,6 +350,7 @@ export function createWorldModes(host) {
     preloadListPickerArt({ renderer, fetchBytes, palette });   // U24: PICK00I0 for the training skill list
     preloadTavernArt({ renderer, fetchBytes, palette });   // U39: TVRN00I0 for the innkeeper's panel
     preloadBankArt({ renderer, fetchBytes, palette });   // B2: BANK00I0 for the teller's screen
+    preloadPurchaseArt({ renderer, fetchBytes, palette });   // H2: BANK01I0 for the house market
     preloadPotionArt({ renderer, fetchBytes, palette });   // M2: MASK00I0 for the cauldron
     preloadItemMakerArt({ renderer, fetchBytes, palette });   // M4: ITEM00I0 + the gold tab strip
     preloadSpellbookArt({ renderer, fetchBytes, palette })   // U42: SPBK00I0 (cast) + SPBK01I0 (the guilds' buy mode)
@@ -1001,6 +1003,28 @@ export function createWorldModes(host) {
         : false),
     });
   }
+  /**
+   * H2 - GetHousePrice's input (:164-171): the mesh RADIUS of the
+   * building's own model, which DFU reads through MeshReader and the
+   * port reads off the same ARCH3D record (arch3dFile:380 already
+   * divides by POINT_DIVISOR, as DFU's DFMesh.Radius does).
+   * Answers 0 for a model the reader cannot resolve, which prices the
+   * house at 0 rather than throwing - a house nobody can value is not
+   * one the window should refuse to list.
+   */
+  function houseMeshRadius(building) {
+    const id = building?.modelIdNum;
+    if (id == null) return 0;
+    try {
+      const rec = arch?.getRecordIndex?.(id);
+      if (rec == null || rec < 0) return 0;
+      return arch.getMesh(rec)?.radius ?? 0;
+    } catch { return 0; }
+  }
+  /** The market, priced. */
+  const pricedHousesForSale = () => currentHousesForSale()
+    .map((h) => ({ ...h, meshRadius: houseMeshRadius(h) }));
+
   /** The side effects AllocateHouseToPlayer carries besides the slot:
    *  discovery, the permanent scene, and the deed in the notebook. */
   function houseSideEffects() {
@@ -1108,6 +1132,29 @@ export function createWorldModes(host) {
       // refusing through the law's own decisions.
       ownsHouse: () => ownsHouse(playerEntity.houses ?? [], b?.regionIndex ?? 0),
       housesForSale: () => currentHousesForSale().length,
+      // H2: BUY HOUSE reaches the purchase window. The U24 identity
+      // guard again - a window that dispatches to another must not be
+      // nulled by its OWN onClose - and the bank is restored when the
+      // purchase window closes, which is DFU's PushWindow/PopWindow.
+      openPurchase: () => {
+        if (!purchaseArtLoaded() || !_shopFont) return false;
+        const dir = buildingDirectory?.();
+        const region = b?.regionIndex ?? 0;
+        let pw = null;
+        pw = new BankPurchaseWindow({
+          houses: () => pricedHousesForSale(),
+          rows: (id) => townTalk?.lines?.(id) ?? [],
+          buy: (h) => purchaseHouse(playerEntity.bankAccounts, playerEntity.houses, region, h, bankPurse(), {
+            meshRadius: h.meshRadius ?? 0,
+            mapId: dir?.mapId ?? 0,
+            location: dir?.locationName ?? '',
+            sideEffects: { ...houseSideEffects(), playerName: playerEntity.name ?? '', regionName: dir?.regionName ?? '' },
+          }),
+          onClose: () => { if (interiorOverlay === pw) interiorOverlay = win; },
+        });
+        interiorOverlay = pw;
+        return true;
+      },
       // FLAGGED, and now at the RIGHT thing: the sell PRICE needs the
       // owned building's mesh radius, which means resolving the model
       // behind a buildingKey - the same reader DaggerfallBankPurchase-

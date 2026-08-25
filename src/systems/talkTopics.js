@@ -222,7 +222,19 @@ export function locationBuildings(exteriorBuildings, blocks) {
     const count = Math.min(list.length, b.dfBlock.rmbBlock.subRecords?.length ?? list.length);
     for (let i = 0; i < count; i++) {
       if (!list[i]) continue;
-      out.push({ ...list[i], buildingKey: makeBuildingKey(b.x ?? 0, b.y ?? 0, i), recordIndex: i });
+      // H2: BuildingSummary.ModelID (RMBLayout.cs:577) - the FIRST 3D
+      // object of the building's own subrecord. It is what the house
+      // price is measured from (GetHousePrice reads that model's mesh
+      // radius) and what the purchase window would render.
+      const sub = b.dfBlock.rmbBlock.subRecords?.[i];
+      const model = sub?.exterior?.block3dObjectRecords?.[0] ?? null;
+      out.push({
+        ...list[i],
+        buildingKey: makeBuildingKey(b.x ?? 0, b.y ?? 0, i),
+        recordIndex: i,
+        modelId: model?.modelId ?? null,
+        modelIdNum: model?.modelIdNum ?? null,
+      });
     }
   }
   return out;
