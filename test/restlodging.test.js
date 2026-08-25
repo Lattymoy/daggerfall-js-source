@@ -17,7 +17,7 @@ import { isTownLocationType, TOWN_LOCATION_TYPES, LOCATION_TYPES } from '../src/
 import { interiorSceneName } from '../src/systems/sceneCache.js';
 import { setValue, _resetForTests } from '../src/systems/settings.js';
 import { maxFatigue } from '../src/systems/statMods.js';
-import { RAPID_HEALING } from '../src/systems/rest.js';
+import { RAPID_HEALING, healthRecoveryRate } from '../src/systems/rest.js';
 import { REST_WAIT_PER_HOUR } from '../src/systems/restSession.js';
 import { SKILLS } from '../src/systems/skills.js';
 import { startRestGroundedCheck, CAPSULE_HEIGHT } from '../src/player/motor.js';
@@ -897,4 +897,159 @@ test('S40 startRestGroundedCheck: grounded short-circuits, else a ray of height/
   assert.equal(startRestGroundedCheck(false, [0, 0, 0], null), false);
   assert.equal(startRestGroundedCheck(false, null, hit(0.1)), false);
   assert.equal(startRestGroundedCheck(true, null, null), true);
+});
+
+
+// ---- END TO END ------------------------------------------------------
+
+test('S40 END TO END: rent a room, sleep in it, and the room runs out under you', () => {
+  // Every law in this slice is pinned alone above. This drives all of
+  // them together through one host-shaped deps bag, from the key press
+  // to the wake, because a slice whose parts each pass and whose whole
+  // was never run is exactly what the live probe would have caught -
+  // and there is no ARENA2 data on this machine to run one.
+  _resetForTests();
+  setValue('GUI', 'IllegalRestWarning', 'True');
+
+  const NOW = { m: 8 * 60 };                     // 08:00 on day 0
+  const MAP = 42, KEY = 900;
+  const scene = new Set([interiorSceneName(MAP, KEY)]);
+  const rooms = [{ name: 'The Ale Cellar', mapId: MAP, buildingKey: KEY,
+    allocatedBedIndex: 1, expiryMinutes: 8 * 60 + 3 * 60 }];   // 3 hours left
+  const markers = [{ x: 0, y: 0, z: 0 }, { x: 7, y: 2, z: 9 }];
+  const player = { health: 12, maxHealth: 60, magicka: 0, maxMagicka: 40, fatigue: 0,
+    isPlayer: true, level: 6, stats: { strength: 50, endurance: 50, willpower: 50 },
+    skills: 30, career: {}, skillUses: { [SKILLS.Medical]: 0 } };
+  const moved = [], swept = [], said = [];
+
+  const deps = createRestDeps(player, {
+    advanceMinutes: (n) => { NOW.m += n; },
+    enemiesNearby: () => areEnemiesNearby([], { resting: true }),
+    place: () => ({
+      inTownStrict: false, inTown: true, insideBuilding: true,
+      buildingType: BUILDING_TYPES.Tavern, buildingKey: KEY, mapId: MAP,
+      isPermanentScene: (n) => scene.has(n),
+      rentedRoom: () => rooms.find((r) => r.mapId === MAP && r.buildingKey === KEY) ?? null,
+      nowMinutes: NOW.m, restMarkers: markers, guildCanRest: () => false,
+    }),
+    moveToBed: (m) => moved.push(m),
+    onRentExpired: () => { swept.push(NOW.m); rooms.length = 0; },
+    endLines: (id) => [`RSC${id}`],
+    say: (t) => said.push(t),
+    day: () => true, inside: () => true,        // inside a building, by day
+  });
+
+  // The open gate passes: no foes, dry, on the floor.
+  const gate = restOpenGate({ enemiesNearby: deps.enemiesNearby(), swimming: false, grounded: true });
+  assert.equal(gate.ok, true);
+
+  // Rest for a while, 9 hours - longer than the room has left.
+  const w = new RestWindow(deps);
+  w.input('char:1');
+  assert.equal(w.state, 'hours', 'the room is rented, so CanRest passes and no crime is committed');
+  w.input('char:9'); w.input('confirm');
+  assert.equal(w.state, 'resting');
+  // MoveToBed put the sleeper in the bed the RENTAL minted, index 1.
+  assert.deepEqual(moved, [{ x: 7, y: 2, z: 9 }]);
+  assert.equal(w.session.remainingHoursRented, 3);
+
+  // Now run the clock through the window's own tick - the seam every
+  // host drives - until it ends.
+  let ended = false;
+  for (let i = 0; i < 5000 && !ended; i++) {
+    w.tick(REST_WAIT_PER_HOUR / 10 + 1e-9);
+    ended = w.state !== 'resting';
+  }
+  assert.equal(w.state, 'ended', 'the rest finished on its own');
+
+  // THREE hours passed, not nine: the room ran out first.
+  assert.equal(NOW.m - 8 * 60, 180);
+  assert.equal(w.session.totalHours, 3);
+  // ...and it says so, in the line that outranks "You wake up.".
+  assert.deepEqual(w.endLines, [EXPIRED_RENTED_ROOM]);
+  // The landlord cleared the room as the player woke.
+  assert.deepEqual(swept, [8 * 60 + 180]);
+  assert.equal(rooms.length, 0);
+
+  // Three rested hours of vitals landed, and Medical tallied. The
+  // rate is DERIVED from the formula, not written down: hardcoding it
+  // would silently follow a mutant that changed maxHealth's role.
+  const perHour = healthRecoveryRate({ ...player, health: 0 }, { day: true, inside: true });
+  assert.equal(perHour, 5, 'END 50 / Medical 30 / maxHealth 60 -> floor(90*60/1000)');
+  assert.equal(player.health, 12 + 3 * perHour);
+  assert.equal(player.magicka, 3 * 5);
+  assert.equal(player.skillUses[SKILLS.Medical], 3);
+
+  // Closing the finished popup is the RaiseSkills moment, and only
+  // there - the whole rest raised nothing until this input.
+  w.input('confirm');
+  assert.equal(w.done, true);
+
+  // And now the room is gone, the same building refuses.
+  const after = canRest({
+    inTown: true, insideBuilding: true, buildingType: BUILDING_TYPES.Tavern,
+    buildingKey: KEY, mapId: MAP, isPermanentScene: (n) => scene.has(n),
+    rentedRoom: () => null, nowMinutes: NOW.m, restMarkers: markers,
+  });
+  assert.equal(after.ok, false);
+  assert.equal(after.text, HAVE_NOT_RENTED_ROOM);
+});
+
+test('S40 END TO END: camping in a city - confirm, crime, guards, and a full night', () => {
+  _resetForTests();
+  setValue('GUI', 'IllegalRestWarning', 'True');
+  const NOW = { m: 22 * 60 };
+  const crimes = [], moved = [];
+  const player = { health: 30, maxHealth: 60, magicka: 10, maxMagicka: 40, fatigue: 0,
+    isPlayer: true, level: 6, stats: { strength: 50, endurance: 50, willpower: 50 },
+    skills: 30, career: {}, skillUses: { [SKILLS.Medical]: 0 } };
+  const deps = createRestDeps(player, {
+    advanceMinutes: (n) => { NOW.m += n; },
+    place: () => ({ inTownStrict: true, inTown: true, insideBuilding: false }),
+    commitCrime: (c, sg) => crimes.push([c, sg]),
+    moveToBed: (m) => moved.push(m),
+    endLines: (id) => [`RSC${id}`],
+    day: () => false, inside: () => false,      // outdoors, at night
+  });
+
+  const w = new RestWindow(deps);
+  w.input('char:1');
+  assert.equal(w.state, 'confirm', 'the illegal-rest box comes first');
+  assert.deepEqual(crimes, [], 'and it does not touch CanRest, so no crime yet');
+  w.input('char:y');
+  assert.equal(w.state, 'hours');
+  assert.deepEqual(crimes, [['Vagrancy', true]], 'the Yes arm commits it, guards and all');
+  w.input('char:4'); w.input('confirm');
+  assert.deepEqual(moved, [], 'there is no bed in a city street');
+
+  let ended = false;
+  for (let i = 0; i < 5000 && !ended; i++) {
+    w.tick(REST_WAIT_PER_HOUR / 10 + 1e-9);
+    ended = w.state !== 'resting';
+  }
+  assert.equal(NOW.m - 22 * 60, 240, 'four hours passed');
+  assert.deepEqual(w.endLines, [`RSC${REST_TEXT.wakeUp}`]);
+  // Outdoors AT NIGHT - and with no RapidHealing flag that is the same
+  // rate as indoors, which is exactly why the day/inside pin above
+  // needs a career that HAS one.
+  const nightRate = healthRecoveryRate({ ...player, health: 0 }, { day: false, inside: false });
+  assert.equal(player.health, 30 + 4 * nightRate);
+  // The rental counter never engaged: there was no room.
+  assert.equal(w.session.remainingHoursRented, -1);
+
+  // With the warning OFF the same press is refused outright - and the
+  // crime lands anyway, which is the quirk this slice exists to keep.
+  _resetForTests();
+  setValue('GUI', 'IllegalRestWarning', 'False');
+  const crimes2 = [];
+  const w2 = new RestWindow(createRestDeps(player, {
+    advanceMinutes: () => {},
+    place: () => ({ inTownStrict: true }),
+    commitCrime: (c, sg) => crimes2.push([c, sg]),
+    endLines: (id) => [`RSC${id}`],
+  }));
+  w2.input('char:1');
+  assert.equal(w2.state, 'refused');
+  assert.deepEqual(w2.refusalLines, [`RSC${CITY_CAMPING_ILLEGAL_ID}`]);
+  assert.deepEqual(crimes2, [['Vagrancy', true]]);
 });
