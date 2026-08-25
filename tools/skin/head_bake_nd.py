@@ -13,7 +13,8 @@ YAWS=[0,45,90,135,180,225,270,315]
 # whole image and there is nothing to detect. Nord 4 is the one exception: its
 # hair falls below the chin, so it frames at 0.75.
 import json as _json
-SH_FRAC=float(_json.load(open('spans_nd.json'))[str(FACE-1)])
+import os as _os
+SH_FRAC=float(_os.environ['SPAN']) if 'SPAN' in _os.environ else float(_json.load(open('spans_nd.json'))[str(FACE-1)])
 print(f'span {SH_FRAC:.2f}')
 def _skinSide(Y):
     A=np.array(Image.open(f'heads_nd/f{FACE}_{Y:03d}.png').convert('RGBA'))
