@@ -2797,7 +2797,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // back on title -> main menu; a dev-scene URL re-offers the
       // wizard fresh (SetRaceSelectWindow Resets on re-entry).
       if (activeOverlay === chargenFlow && chargenFlow?.cancelled) { location.reload(); return; }
-      if (activeOverlay.done) {
+      if (activeOverlay?.done) {   // S40: optional - a window may clear the slot from inside its own tick
         if (activeOverlay === chargenFlow) finishChargenHere();
         surfacePlayer();
         activeOverlay = null;
@@ -2817,7 +2817,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!activeOverlay?.clickNative && !activeOverlay?.click) return false;
       if (activeOverlay.clickNative) activeOverlay.clickNative(vx, vy);
       else activeOverlay.click(vx, vy, right);
-      if (activeOverlay.done) {
+      // S40: optional. RestWindow grew a `click` and clears this slot
+      // from inside it, so this seam reaches a null now - and it did
+      // not before, which is why the unguarded read stood.
+      if (activeOverlay?.done) {
         if (activeOverlay === chargenFlow) { finishChargenHere(); }
         surfacePlayer();
         activeOverlay = null;
@@ -2837,7 +2840,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     overlayInput(action, e = null) {
       if (!activeOverlay) return;
       activeOverlay.input(action, e);
-      if (activeOverlay.done) {
+      // S40: OPTIONAL. A window may now clear this slot from INSIDE
+      // its own input - RestWindow does, because DFU pops to the HUD
+      // before RaiseSkills and the level-up screen that raise can
+      // mount needs the slot free. Re-reading `activeOverlay` after
+      // input() and dereferencing it unguarded threw on the very key
+      // that closes the rest window.
+      if (activeOverlay?.done) {
         if (activeOverlay === chargenFlow) finishChargenHere();
         surfacePlayer();
         activeOverlay = null;

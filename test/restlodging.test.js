@@ -1609,3 +1609,43 @@ test('S40: the quest machine ticks THROUGH a rest, which is what the sub-tick is
   assert.match(src('src/scenes/world.js'), /if \(!townTalk\.overlayActive && !_loading\) questBridge\.tick\(dt\);/);
   assert.match(src('src/scenes/worldModes.js'), /if \(!overlayHeld\) questBridge\?\.tick\(dt\);/);
 });
+
+
+test('S40: a window that clears the slot from INSIDE its own input does not crash the host', () => {
+  // The PopToHUD fix made RestWindow the first window in this port
+  // that nulls the host's overlay slot from inside input()/click().
+  // Every host drain re-READ the slot afterwards and dereferenced it
+  // unguarded - `activeOverlay.done`, `overlay.done` - so the very
+  // key that closes the rest window threw a TypeError in three of the
+  // four hosts. Reproduced before the fix; this is the shape.
+  let slot = null;
+  const deps = {
+    advanceMinutes() {}, tickVitals: () => false, fullyHealed: () => false,
+    enemiesNearby: () => false, dead: () => false, endLines: (id) => [`x${id}`],
+    onClose: () => { if (slot?.isRestWindow) slot = null; },
+  };
+  // dungeonContext.overlayInput / townTalk.keydown, verbatim shape.
+  const drain = (action) => {
+    if (!slot) return;
+    slot.input(action);
+    if (slot?.done) slot = null;          // the `?.` is the fix
+  };
+  slot = new RestWindow(deps);
+  assert.doesNotThrow(() => drain('back'));
+  assert.equal(slot, null, 'and the slot really is clear');
+
+  // The click seam too, now that the window has one.
+  slot = new RestWindow(deps);
+  slot.input('char:1'); slot.input('confirm');
+  assert.doesNotThrow(() => { slot.click(); if (slot?.done) slot = null; });
+
+  // EVERY drain in the tree is guarded - five of them, and an
+  // unguarded one is a crash waiting for the next window that closes
+  // itself.
+  for (const f of ['src/scenes/townTalk.js', 'src/scenes/dungeonContext.js', 'src/scenes/worldModes.js']) {
+    const h = src(f);
+    assert.doesNotMatch(h, /\bif \(activeOverlay\.done\)/, `${f}: unguarded activeOverlay drain`);
+    assert.doesNotMatch(h, /\bif \(overlay\.done\)/, `${f}: unguarded overlay drain`);
+    assert.doesNotMatch(h, /\bif \(interiorOverlay\.done\)/, `${f}: unguarded interiorOverlay drain`);
+  }
+});

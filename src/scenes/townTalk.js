@@ -213,7 +213,11 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
         if (a) overlay.input(a, e);
         else if (e.code === 'KeyE') overlay.input('confirm');   // this host's own alias
       }
-      if (overlay.done) {
+      // S40: OPTIONAL. A window may clear this slot from inside its
+      // own input - RestWindow calls closeOverlay() so the slot is
+      // free before RaiseSkills can want it for a level-up screen -
+      // and the unguarded re-read threw on the key that closes it.
+      if (overlay?.done) {
         // AUDIT 2026-08-17c: clear the close-callback BEFORE firing -
         // a stale G2 callback (e.g. the court verdict) must never
         // re-fire when a LATER unrelated window closes.
@@ -599,7 +603,9 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     const m = nativeMetrics(canvas);
     const v = pointToNative(m, px, py);
     if (v) overlay.click(v[0], v[1], e.button === 2);   // I4: the remove gesture rides the button
-    if (overlay.done) {
+    // S40: optional, same reason as the keydown drain - a window may
+    // clear this slot from inside its own click.
+    if (overlay?.done) {
       const cb = _onOverlayClosed; _onOverlayClosed = null; overlay.dispose?.(); overlay = null; cb?.();
     }
     return true;   // an open native window owns the pointer either way

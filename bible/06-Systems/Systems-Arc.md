@@ -2932,12 +2932,23 @@ construction" - which was wrong twice over: it made DFU's actual
 let a 100-hour rest through the day anyone widened the field. Both are
 DFU's now.
 
-Pins: 51 in `restlodging.test.js`, two of them END TO END - every law
+**And the PopToHUD fix introduced a crash of its own.** `RestWindow`
+became the first window in this port that clears the host's overlay
+slot from INSIDE its own `input()` - and every host drain re-reads
+that slot afterwards and dereferenced it unguarded
+(`activeOverlay.done`, `overlay.done`). So the very key that closes
+the rest window threw a TypeError in three of the four hosts. It was
+reproduced before being fixed, all five drains are optional-chained
+now, and it is pinned both by driving the shape and by asserting no
+unguarded drain is left anywhere in the tree - because the next window
+that closes itself will find the same seam.
+
+Pins: 52 in `restlodging.test.js`, two of them END TO END - every law
 in this slice driven together through one host-shaped deps bag, from
 the key press to the wake. That is the closest thing to a live probe a
 machine with no ARENA2 data can run, and it is here because a slice
 whose parts each pass and whose whole was never run is exactly what a
-probe catches. 103 mutations, 103 dead. The first
+probe catches. 105 mutations, 105 dead. The first
 pass left four alive and all four were the same failure of nerve: a
 pin that named a thing instead of exercising it. The host pins matched
 `act === 'Rest'`, which survives `if (false && act === 'Rest')`, so
