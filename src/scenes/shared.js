@@ -33,6 +33,7 @@ import { readMagicDef } from '../formats/magicDef.js';
 import { setMagicItemTemplates, setSpellRecordsByIndex } from '../systems/loot.js';
 import { music } from '../systems/music.js';
 import { setMusicReplacements } from '../systems/musicReplacement.js';   // M-EXT: SoundReplacement's registry
+import { getBool } from '../systems/settings.js';   // M-FM: Audio/AlternateMusic, read once for all three hosts
 import { SongManager, musicEnvironment, holdEnvironment } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
 
@@ -981,13 +982,31 @@ export function exitToTitleMenu() {
   if (typeof location !== 'undefined') location.href = location.pathname;
 }
 
-export function createMusicDirector({ fm = false, play = null, stop = null, playing = null } = {}) {
+export function createMusicDirector({ fm = null, play = null, stop = null, playing = null } = {}) {
   const isPlaying = playing ?? (() => music.playing);
   let _lastEnvironment = null;
+  // M-FM: Audio/AlternateMusic, and it is read HERE rather than at the
+  // three host call sites. Every FM playlist has been ported since A5,
+  // outdoorPlaylist and playlistFor have branched on `fm` all along,
+  // SongManager has taken it, and this factory has accepted and
+  // forwarded it - and all three hosts called createMusicDirector()
+  // with no arguments, so the setting the menu offers reached nothing.
+  // Three call sites are three chances to forget; one read is none,
+  // which is the same lesson ensureAudio's own header records.
+  //
+  // DFU swaps the nineteen playlist fields ONCE, in SongManager.Start
+  // (:169-190), so a mid-session toggle does not move the music until
+  // the scene reboots. Read at construction here for the same reason
+  // and with the same consequence - a director is built once per host
+  // boot. Verbatim, not an oversight.
+  //
+  // `null` means ask the setting; an explicit true/false is an
+  // override, which is what the pins drive.
+  const useFm = fm === null ? getBool('Audio', 'AlternateMusic') : fm;
   const manager = new SongManager({
     play: play ?? ((name) => music.playFrom([name], { gameDays: 0 })),
     stop: stop ?? (() => music.stop()),
-    fm,
+    fm: useFm,
   });
   return {
     manager,

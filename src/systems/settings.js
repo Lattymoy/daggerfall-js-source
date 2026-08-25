@@ -151,6 +151,7 @@ export const LIVE = Object.freeze({
   'GUI/Crosshair': 'src/ui/hudCrosshair.js',
   'GUI/IllegalRestWarning': 'src/scenes/world.js',   // V5: the "it is illegal to camp" Yes/No before a town rest (U48: and scenes/exterior.js)
   'Enhancements/AssetInjection': 'src/systems/musicReplacement.js',   // M-EXT: DFU's own gate on SoundReplacement, now real for MUSIC
+  'Audio/AlternateMusic': 'src/scenes/shared.js',   // M-FM: read once in createMusicDirector, for all three hosts
   'GUI/InteractionModeIcon': 'src/ui/hudCrosshair.js',
   // U41: the classic travel map. Stored-tier since the settings
   // screen shipped - the outline it offers is drawn by a window the
