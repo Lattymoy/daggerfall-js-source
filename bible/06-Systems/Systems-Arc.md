@@ -2885,12 +2885,28 @@ refusal MESSAGE pinned leaving `restOpenGate` and never arriving at a
 host; and `areEnemiesNearby`'s `_dist ?? Infinity` fallback never
 taken.
 
-Pins: 49 in `restlodging.test.js`, two of them END TO END - every law
+**And two last ones in the code.** All FOUR of `EndRest`'s arms
+attach `OnClose` (`:461-462`, `:468-469`, `:482-483`, `:489-490`,
+`:496-497`) - the DEATH arm included, since DFU's death path sets
+`youNeverAwaken` and calls `EndRest`, whose box closes into
+`PopToHUD(); RaiseSkills();`. The port skipped the raise on death and
+on a missing endLines, so a poison that killed the sleeper cost a
+whole night's advancement as well as the life. The death screen still
+owns the MESSAGE - that deviation is named and stands - but not the
+raise. And `CanRest`'s refusal (`:594-596`) is the ONE
+EndRest-adjacent path DFU leaves without an `OnClose`, so it must stay
+silent; the pin holds the pair apart.
+
+Second: the dungeon was the one host of four without the PopToHUD
+door the previous round gave the other three. Three of four is how
+this rule keeps being broken, and it is why the rule is written down.
+
+Pins: 50 in `restlodging.test.js`, two of them END TO END - every law
 in this slice driven together through one host-shaped deps bag, from
 the key press to the wake. That is the closest thing to a live probe a
 machine with no ARENA2 data can run, and it is here because a slice
 whose parts each pass and whose whole was never run is exactly what a
-probe catches. 95 mutations, 95 dead. The first
+probe catches. 98 mutations, 98 dead. The first
 pass left four alive and all four were the same failure of nerve: a
 pin that named a thing instead of exercising it. The host pins matched
 `act === 'Rest'`, which survives `if (false && act === 'Rest')`, so

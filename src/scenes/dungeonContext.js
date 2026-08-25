@@ -980,6 +980,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     endLines: (id) => rscLines(id),
     say: (msg) => hudText.add(msg),
     onLevelUp: _onLevelUp,
+    // PopToHUD before RaiseSkills (:728-732) - the fourth host's door,
+    // which the first pass gave the other three and not this one. The
+    // U24 identity guard: a window must not null a slot that has moved
+    // on to something else (the death screen, above all).
+    onClose: () => { if (activeOverlay?.isRestWindow) activeOverlay = null; },
     day: () => false, inside: () => true,
   });
   // U4: the ONE player-damage door - every source (traps, melee,

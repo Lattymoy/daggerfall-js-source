@@ -1498,3 +1498,53 @@ test('S40: a refused OPEN GATE actually shows its record, in every host', () => 
   assert.equal(restOpenGate({ enemiesNearby: true }).textId, 354);
   assert.equal(restOpenGate({ swimming: true }).textId, 355);
 });
+
+
+test('S40: EVERY EndRest arm raises skills - the death exit included', () => {
+  // All four EndRest arms attach OnClose (:461-462, :468-469, :482-483,
+  // :489-490, :496-497), the DEATH arm among them: DFU sets
+  // `youNeverAwaken` and calls EndRest, whose box closes into
+  // PopToHUD + RaiseSkills. The port dropped the raise on death and on
+  // a missing endLines, losing a whole night's advancement to a poison
+  // that killed the sleeper. The ONE EndRest-adjacent path with no
+  // OnClose is CanRest's refusal (:594-596), and that one must stay
+  // silent - which is the pair this pin holds apart.
+  let raised = 0;
+  const mk = (over) => new RestWindow(winDeps({ onRestFinished: () => { raised++; }, ...over }));
+
+  const dead = mk({ dead: () => true });
+  dead.input('char:1'); dead.input('char:1'); dead.input('confirm');
+  dead.tick(0);
+  assert.equal(dead.done, true);
+  assert.equal(raised, 1, 'the death exit raises');
+
+  raised = 0;
+  const mute = mk({ endLines: () => null });
+  mute.input('char:1'); mute.input('char:1'); mute.input('confirm');
+  for (let i = 0; i < 5000 && !mute.done; i++) mute.tick(REST_WAIT_PER_HOUR / 10 + 1e-9);
+  assert.equal(raised, 1, 'and so does a host whose TEXT.RSC came back empty');
+
+  // ...but a REFUSAL does not. CanRest's is the one arm DFU leaves
+  // without an OnClose, and closing it must raise nothing.
+  raised = 0;
+  _resetForTests();
+  setValue('GUI', 'IllegalRestWarning', 'False');
+  const no = mk({ restPlace: () => ({ inTownStrict: true }) });
+  no.input('char:1');
+  assert.equal(no.state, 'refused');
+  no.input('confirm');
+  assert.equal(no.done, true);
+  assert.equal(raised, 0, 'a refusal raises nothing');
+
+  // All FOUR hosts supply the PopToHUD door, not three.
+  assert.match(src('src/scenes/dungeonContext.js'),
+    /onClose: \(\) => \{ if \(activeOverlay\?\.isRestWindow\) activeOverlay = null; \},/);
+  assert.match(src('src/scenes/worldModes.js'),
+    /onClose: \(\) => \{ if \(interiorOverlay\?\.isRestWindow\) interiorOverlay = null; \},/);
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.match(src(f), /onClose: \(\) => \{ if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\); \},/, f);
+  }
+  // The identity guard is what stops the death screen being nulled by
+  // a rest window closing underneath it.
+  assert.match(src('src/ui/restWindow.js'), /this\.deps\.onClose\?\.\(\);/);
+});

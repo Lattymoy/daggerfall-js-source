@@ -293,7 +293,22 @@ export class RestWindow {
     if (result.rentExpired) this.deps.onRentExpired?.();
     this.endLines = result.died ? null
       : (result.text ? [result.text] : (this.deps.endLines?.(result.textId) ?? null));
-    if (result.died || !this.endLines) { this._close(); return; }   // death: the death screen owns the flow
+    if (result.died || !this.endLines) {
+      // The death screen owns the MESSAGE - that is this port's named
+      // deviation and it stands - but not the RAISE. Every one of
+      // EndRest's four arms attaches OnClose (:461-462, :468-469,
+      // :482-483, :489-490, :496-497), the death arm included: DFU's
+      // death path sets `youNeverAwaken` and calls EndRest, whose box
+      // closes into PopToHUD + RaiseSkills. The ONE EndRest-adjacent
+      // path with no OnClose is CanRest's refusal (:594-596), which
+      // this port already routes through 'refused' and not here.
+      // Dropping the raise here lost a whole night's advancement to a
+      // poison that killed the sleeper, and to any host whose TEXT.RSC
+      // lookup came back empty.
+      this._close();
+      this.deps.onRestFinished?.();
+      return;
+    }
     this.state = 'ended';
   }
 
