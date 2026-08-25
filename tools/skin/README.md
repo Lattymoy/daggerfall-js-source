@@ -99,6 +99,11 @@ whole torso on its bright end and the body comes out pale against the face.
   everyone was up to 0.080 out, an 8% vertical scale error on that head, which
   reads as stretch. Median across the face's own views is robust AND keeps
   genuine per-face differences.
+- **Judge a head on the RIG, never on a narrow crop of the cell.** A 20%-wide
+  slice of the cell is 72 degrees of arc through a cylindrical wrap: it looks
+  like horizontal stripes for every face, working or broken, and cost four
+  sweeps chasing a fault it could not have shown. The cell is for finding a
+  cause; the render is for confirming a fix.
 - **A metric that improves while the picture degrades is the wrong metric.** An
   axis correction took mean centring offset from 0.0146 to 0.0055 and made every
   one of the ten faces visibly worse - shifting the mapping centre per row
