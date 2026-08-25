@@ -28,8 +28,9 @@ import {
   pickActivatable, activationTargets,
 } from '../player/activate.js';
 import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells } from './shared.js';
-import { routeKey, held, moveHeld, anyMove, actionOf } from '../ui/input.js';
+import { routeKey, held, moveHeld, anyMove, actionOf, swallowBrowserKey } from '../ui/input.js';
 import { routeLargeHudClick } from '../ui/hudLarge.js';   // U45: the bar's eleven panels
+import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { createDataPipeline } from './dataPipeline.js';
 import { buildDungeonContext } from './dungeonContext.js';
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U14: the overlay pointer seam
@@ -197,7 +198,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // exterior hosts carried: swallowing the browser reload is not
     // optional. F5 under a keyed overlay (rest, level-up, chargen)
     // fell through routeKey's overlay branch and reloaded the page.
-    if (e.code === 'F5' || e.code === 'F6') e.preventDefault();
+    swallowBrowserKey(e);   // U47: F11 joined F5/F6 - one list, in ui/input.js
     // I2 FOLLOW-UP: routeKey lost its castDir parameter when the cast
     // key became the spellbook opener, and this host was the one call
     // site not updated - it still passed the old `dir` thunk, which
@@ -218,6 +219,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     ctx.reportMouse?.(e.movementX, e.movementY, document.pointerLockElement === canvas);   // raw input truth for F8
     // U37: a window frees the mouse, so an open overlay gets the HOVER
     // (native coords) instead of the look delta.
+    trackHudPointer(canvas, e);   // U46: the spell-icon rows' tooltip, before the overlay return
     if (ctx.uiOverlayActive) {
       const r = canvas.getBoundingClientRect();
       const v = pointToNative(nativeMetrics(canvas),

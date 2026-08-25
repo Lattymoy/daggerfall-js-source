@@ -244,56 +244,56 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:647` - effects FLAGGED to the effect-library slice.
 - `src/scenes/dungeonContext.js:657` - "database FLAGGED" narrows to the skill/loot message ids).
 - `src/scenes/dungeonContext.js:1097` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:499` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/exterior.js:505` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:654` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:860` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:1103` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:1255` - FLAGGED here exactly as in world.js - no tile lookup yet).
-- `src/scenes/exterior.js:1590` - ground (FLAGGED with world.js's same gap), so Detect Treasure
+- `src/scenes/exterior.js:500` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/exterior.js:506` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/exterior.js:655` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/exterior.js:861` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/exterior.js:1122` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:1274` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:1609` - ground (FLAGGED with world.js's same gap), so Detect Treasure
 - `src/scenes/shared.js:218` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:235` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:340` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:701` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:736` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:742` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1141` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
-- `src/scenes/world.js:1144` - stay the E1 FLAGGED seams no host computes.
-- `src/scenes/world.js:1390` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
-- `src/scenes/world.js:1755` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:2026` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:2196` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
-- `src/scenes/world.js:2273` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:2506` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:2525` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:2888` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:3195` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/world.js:3268` - (FLAGGED: exterior corpse containers are the loot arc's), so
-- `src/scenes/worldModes.js:275` - that makes a rest breakable in one. FLAGGED.
-- `src/scenes/worldModes.js:365` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
-- `src/scenes/worldModes.js:513` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
-- `src/scenes/worldModes.js:590` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
-- `src/scenes/worldModes.js:653` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
-- `src/scenes/worldModes.js:691` - credit instead. FLAGGED: there is nowhere to cash one yet, so
-- `src/scenes/worldModes.js:806` - Person placed in a dungeon is the quest machine's, FLAGGED
-- `src/scenes/worldModes.js:869` - trade window in Sell mode. The BANKING arm stays FLAGGED below;
-- `src/scenes/worldModes.js:947` - FLAGGED, each with the slice it waits on:
-- `src/scenes/worldModes.js:1064` - FLAGGED: house and ship OWNERSHIP need the building directory
-- `src/scenes/worldModes.js:1137` - it. FLAGGED.
-- `src/scenes/worldModes.js:1235` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:1289` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
-- `src/scenes/worldModes.js:1347` - skip, the refusal line. Only the destination was a FLAGGED null,
-- `src/scenes/worldModes.js:1493` - been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:1530` - destination has been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:1549` - been FLAGGED nulls since G3.
-- `src/scenes/worldModes.js:1652` - with the trade window's own mode flow, the same INTERIM the
-- `src/scenes/worldModes.js:1854` - first (owned houses and quest buildings FLAGGED/seamed per
-- `src/scenes/worldModes.js:1862` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
-- `src/scenes/worldModes.js:2581` - too. FLAGGED: interior loot containers are the loot arc's -
-- `src/scenes/worldModes.js:2688` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:2763` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:3230` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
+- `src/scenes/world.js:702` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:737` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:743` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1142` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
+- `src/scenes/world.js:1145` - stay the E1 FLAGGED seams no host computes.
+- `src/scenes/world.js:1391` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
+- `src/scenes/world.js:1756` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:2028` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:2198` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
+- `src/scenes/world.js:2275` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:2508` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:2527` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:2890` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:3197` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:3270` - (FLAGGED: exterior corpse containers are the loot arc's), so
+- `src/scenes/worldModes.js:276` - that makes a rest breakable in one. FLAGGED.
+- `src/scenes/worldModes.js:366` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
+- `src/scenes/worldModes.js:514` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
+- `src/scenes/worldModes.js:591` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
+- `src/scenes/worldModes.js:654` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
+- `src/scenes/worldModes.js:692` - credit instead. FLAGGED: there is nowhere to cash one yet, so
+- `src/scenes/worldModes.js:807` - Person placed in a dungeon is the quest machine's, FLAGGED
+- `src/scenes/worldModes.js:870` - trade window in Sell mode. The BANKING arm stays FLAGGED below;
+- `src/scenes/worldModes.js:948` - FLAGGED, each with the slice it waits on:
+- `src/scenes/worldModes.js:1065` - FLAGGED: house and ship OWNERSHIP need the building directory
+- `src/scenes/worldModes.js:1138` - it. FLAGGED.
+- `src/scenes/worldModes.js:1236` - FactionData; the port's pre-chargen INTERIM entity does not, and
+- `src/scenes/worldModes.js:1290` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
+- `src/scenes/worldModes.js:1348` - skip, the refusal line. Only the destination was a FLAGGED null,
+- `src/scenes/worldModes.js:1494` - been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:1531` - destination has been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:1550` - been FLAGGED nulls since G3.
+- `src/scenes/worldModes.js:1653` - with the trade window's own mode flow, the same INTERIM the
+- `src/scenes/worldModes.js:1855` - first (owned houses and quest buildings FLAGGED/seamed per
+- `src/scenes/worldModes.js:1863` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
+- `src/scenes/worldModes.js:2582` - too. FLAGGED: interior loot containers are the loot arc's -
+- `src/scenes/worldModes.js:2689` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:2764` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:3238` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
@@ -369,6 +369,7 @@ combat line numbers below are refreshed with it.
 - `src/ui/chargenArt.js:842` - *  from the difficulty law). FLAGGED: the dagger's one-second fading
 - `src/ui/exteriorAutomapWindow.js:22` - (:682-709) is FLAGGED - the port's directory carries named
 - `src/ui/guildServiceWindow.js:33` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
+- `src/ui/hudActiveSpells.js:45` - FLAGGED: HUDEscortingNPCFaces, the third component of that row, is
 - `src/ui/hudLarge.js:46` - head hook is FLAGGED below and falls to the plain racial head.
 - `src/ui/hudLarge.js:48` - FLAGGED, by name: HUDActiveSpells (the buff/debuff icon rows) and
 - `src/ui/hudLarge.js:242` - *  FLAGGED: RacialOverrideEffect.GetCustomHeadImageData (:314-320)
@@ -378,10 +379,9 @@ combat line numbers below are refreshed with it.
 - `src/ui/messageBox.js:35` - FLAGGED: the scrolling variant (a label taller than MaxTextHeight
 - `src/ui/messageBox.js:155` - so the strip never rides higher than that. FLAGGED as a
 - `src/ui/nativeInventory.js:41` - still said Equip and equip-after-transfer were FLAGGED after U8g
-- `src/ui/nativeInventory.js:134` - *  is 0 until those effect channels exist (FLAGGED). Exported so the
-- `src/ui/nativeInventory.js:256` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
-- `src/ui/nativeInventory.js:523` - field is INTERIM-pending with the local Remove split.
-- `src/ui/nativeInventory.js:687` - the panel from the slot under the cursor - FLAGGED as that,
+- `src/ui/nativeInventory.js:147` - *  is 0 until those effect channels exist (FLAGGED). Exported so the
+- `src/ui/nativeInventory.js:283` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
+- `src/ui/nativeInventory.js:550` - field is INTERIM-pending with the local Remove split.
 - `src/ui/nativeTalk.js:237` - lands with the Tell-me-about slice (FLAGGED).
 - `src/ui/nativeTalk.js:259` - B5-6: the four pages that were INTERIM no-ops. Each falls back
 - `src/ui/paperDoll.js:18` - Human +2 - Breton INTERIM), record = playerTextureRecord

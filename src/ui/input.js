@@ -111,6 +111,26 @@ export function routeKey(e, ctx, setPlayerPos = null) {
  *
  * Returns true when consumed.
  */
+/**
+ * U47 - THE KEYS THE BROWSER WOULD STEAL. F5 reloads the page, F6
+ * moves focus, F11 goes fullscreen - and all three are DFU bindings
+ * (CharacterSheet, Inventory, QuickLoad). AUDIT 17e F41 made the point
+ * for F5 the hard way: the mode gate skipped the handler AND its
+ * preventDefault, so pressing it inside a building destroyed the
+ * session. Swallowing is NOT conditional on the host having a
+ * destination - the exterior host has nothing to quickload and must
+ * still not go fullscreen.
+ *
+ * One list, because there is one keyboard, and every host that
+ * registers a keydown calls this FIRST.
+ */
+export const BROWSER_STEALS = Object.freeze(['F5', 'F6', 'F11']);
+export function swallowBrowserKey(e) {
+  if (!BROWSER_STEALS.includes(e.code)) return false;
+  e.preventDefault();
+  return true;
+}
+
 export function routeAction(action, ctx, setPlayerPos = null) {
   switch (action) {
     // Escape with no overlay up opens the pause options window

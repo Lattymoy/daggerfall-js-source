@@ -76,6 +76,7 @@ import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw
 import { largeHudOptions, routeLargeHudClick, hudLargeNextMode, hudLargePrevMode } from '../ui/hudLarge.js';   // U45: the classic bottom bar and its eleven panels
+import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { getInteractionMode } from '../player/interactionMode.js';   // U45: the mode panel's cycle reads it
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
 import { NativeInventoryWindow, preloadInventoryArt, inventoryArtLoaded } from '../ui/nativeInventory.js';   // U8d: the native inventory
@@ -153,7 +154,7 @@ import { PrecipitationRenderer } from '../render/precipitation.js';
 import { setWeather, currentWeather, tickWeather, weatherRespawn, applyClimateWeather } from '../systems/weatherSim.js';   // W1: the live weather state (the save halves ride save.js)
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
-import { actionOf, held, moveHeld, anyMove } from '../ui/input.js';   // I2: the rebindable registry
+import { actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';   // I2: the rebindable registry
 import { openPauseFlow, preloadPauseFlowArt, pauseArtLoaded } from '../ui/pauseWindow.js';   // I3/I4
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
@@ -1753,7 +1754,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // pressing F5 inside a building reloaded the page and destroyed
     // the session. Routing F5/F6 into interiors is its own arc
     // (FLAGGED); swallowing the browser reload is not optional.
-    if (e.code === 'F5' || e.code === 'F6') e.preventDefault();
+    swallowBrowserKey(e);   // U47: F5/F6/F11 - one list, in ui/input.js
     const act = actionOf(e);   // I2: the registry owns the code -> action read
     // U45 - THE ONE DOOR PER DESTINATION: this ladder and the large
     // HUD's eleven panels open the same windows, so they read the same
@@ -1842,6 +1843,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   addEventListener('mousemove', (e) => {
     // U37: a window frees the mouse, so an open overlay gets the
     // HOVER before the look gate refuses the unlocked pointer.
+    trackHudPointer(canvas, e);   // U46: the spell-icon rows' tooltip, before the overlay return
     if (townTalk.hover(e) || modes?.hover?.(e)) return;
     if (document.pointerLockElement !== canvas) return;
     // AUDIT 24 (wave 45): RMB in walk mode ALWAYS ends here - it is a

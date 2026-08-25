@@ -33,7 +33,37 @@ see `01-Overview/Port-Doctrine.md`.
 the viewer applies them index-for-index and no projection logic is duplicated in
 the browser.
 
+## The head (head_cell.py, head_bake.py)
+
+The head cell is baked from an eight-direction head turnaround the same way the
+body is, then the face is layered per race at runtime from `FACE*.CIF`.
+
 ## Laws learned building it (do not relearn these)
+
+- **Bin count must not exceed the data.** The head is 168 faces built from SEVEN
+  loft rings, so its vertices sit at seven heights. Binning its profile into 140
+  gave 133 EMPTY bins, nearest-copied into a staircase, and interpolating across
+  that staircase swung the sampled column 27px between adjacent rows. Build
+  profiles from the rings that exist. The same bug lived on in the UV generator
+  after the bake was fixed - fix both.
+- **A median filter is edge-preserving.** It is built to KEEP steps, so it is the
+  wrong tool for smoothing a ragged silhouette profile. Gaussian.
+- **Never map outside the silhouette.** A smoothed centre or half-width can put
+  the sampled column past the outline, where it reads background and then clamps
+  onto the dark hair edge - a grey wash over the sides of the head. 1252 rows of
+  2402 were doing this. Contain the mapped range inside the row's real run.
+- **CHORD UNPROJECTION IS NOT RECOVERABLE HERE, USE ARC.** Unprojecting needs the
+  head's rotation axis and its scale in each view and the reference supplies
+  neither: the silhouette is hair, so its width barely moves across views
+  (275/255/258/247) while the skull's projection must change 1.00->1.30; its
+  centre is hair-biased (147, inside the skin run 122..270); the neck centre is
+  unreliable (204.8 at view 135). A view sees exactly 180 degrees of arc, so map
+  its image linearly across that arc - two silhouette edges, no axis, no scale,
+  and every view's content lands in its own sector BY CONSTRUCTION. Chord
+  mapping put the moustache on the EAR.
+- **Instrument the loop, do not reason about the picture.** Every one of the
+  above took one dump of actual sampled rows and columns to find, and several
+  rounds of theorising before that dump to get around to.
 
 - **A front view does not contain a body.** Half of a closed surface is
   unreachable from one projection; that is why the reference is a turnaround.

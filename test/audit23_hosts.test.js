@@ -133,7 +133,14 @@ test('AUDIT 23 hosts-1: worldModes routes death by LIVE mode and restores the ex
 });
 
 test('AUDIT 23 hosts-6 + hosts-9: the dungeon host swallows F5/F6 and feeds music above the gate', () => {
-  assert.ok(DUNGEON.includes("if (e.code === 'F5' || e.code === 'F6') e.preventDefault();"));
+  // U47 moved the list into ui/input.js and added F11 to it - F5, F6
+  // and F11 are all DFU bindings AND browser gestures, and a list per
+  // host is four lists that drift. The law is unchanged and the pin
+  // follows it to its home: this host still swallows, through the
+  // shared call, and the list still holds all three.
+  assert.ok(DUNGEON.includes('swallowBrowserKey(e);'), 'the dungeon host swallows');
+  assert.match(readFileSync(join(root, 'src/ui/input.js'), 'utf8'),
+    /BROWSER_STEALS = Object\.freeze\(\['F5', 'F6', 'F11'\]\)/, 'and the list is all three');
   const feed = DUNGEON.indexOf('musicDirector.update({');
   // the FRAME-loop gate is the one whose branch draws the overlay (the
   // pointer handler also gates on uiOverlayActive, earlier in the file)

@@ -90,6 +90,19 @@ export const INFO_LABEL = Object.freeze({ x: 2, scale: 0.43, extraLeading: 3, ma
 /** TEXT.RSC 1016 - the "Item powers" box DFU chains behind an
  *  enchanted item's info (:1614). */
 export const INFO_TEXT_POWERS = 1016;
+
+/** U47: UpdateItemInfoPanelGold (:2249-2258). The GOLD button's hover
+ *  fills the panel with two GENERATED lines rather than a TEXT.RSC
+ *  record - Internal_Strings `goldAmount` and `goldWeight`, verbatim.
+ *
+ *  THE FORMAT IS CONDITIONAL: `weight.ToString(weight % 1 == 0 ?
+ *  "F0" : "F2")`, so a whole number of kilograms shows none of the
+ *  decimals and anything else shows exactly two. At 0.0025 kg a coin,
+ *  that is every multiple of 400 gold and nothing between. */
+export const goldPanelRows = (gold, weightKg) => [
+  { text: `${gold} gold pieces`, center: true },
+  { text: `Weight: ${weightKg % 1 === 0 ? weightKg.toFixed(0) : weightKg.toFixed(2)} kg`, center: true },
+];
 /** The arms whose destination window the port has not built. Named,
  *  so a Use click SAYS something rather than eating itself. */
 export const USE_PENDING = Object.freeze({
@@ -181,6 +194,7 @@ export class NativeInventoryWindow {
     this.mode = hooks.loot ? 'remove' : 'equip';
     this.scroll = 0;
     this.remoteScroll = 0;
+    this.infoGold = false;   // U47: the gold button's hover fills the panel instead of an item
     this.dropped = [];             // droppedItems (the default remote target)
     this.boxes = [];               // U25: the message-box queue (info, use, wagon, gold)
     this.infoItem = null;
@@ -233,7 +247,20 @@ export class NativeInventoryWindow {
     if (this.chooseOne) return this.chooseOne.items;
     return this.hooks.loot ? this.hooks.loot.items() : this.dropped;
   }
-  _setTab(t) { audio.playOneShot(SOUND.ButtonClick, 1); this.tab = t; this.scroll = 0; }   // the four tab buttons (:1209-1227)
+  _setTab(t) {
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    this.tab = t;
+    this.scroll = 0;
+    // U47: SelectTabPage CLEARS the info panel (:814-816). The panel
+    // is otherwise STICKY - DFU never clears it on moving OFF an item,
+    // only here and on a window push - so the last thing looked at
+    // stays readable while the pointer travels.
+    this._clearInfo();
+  }   // the four tab buttons (:1209-1227)
+
+  /** itemInfoPanelLabel.SetText(new Token[0]) - the panel's two clear
+   *  sites, :663-664 (a window push) and :814-816 (a tab change). */
+  _clearInfo() { this.infoItem = null; this.infoGold = false; }
   _close() {
     audio.playOneShot(SOUND.ButtonClick, 1);   // exit, mouse and key alike (:2082, :2090)
     this._closeSilently();
@@ -573,6 +600,55 @@ export class NativeInventoryWindow {
     if (t) this._setTab(TABS[Number(t[1]) - 1]);
   }
 
+  /**
+   * U47 - THE HOVER INFO PANEL. DFU fills the 37x32 panel from
+   * OnMouseEnter on every list slot, the paperdoll and the gold
+   * button; U37 built the mouse-move seam this waited on, and this is
+   * the window growing its own `hover(vx, vy)` at last.
+   *
+   * THE PANEL IS STICKY. Nothing here clears it - DFU has no
+   * OnMouseLeave arm at all, only the two SetText(empty) sites in
+   * _clearInfo - so the last item looked at stays readable while the
+   * pointer crosses dead space, which is what makes the panel usable
+   * at 37 pixels wide.
+   *
+   * A BOX OWNS THE SCREEN. `topBox` is DFU's pushed window, which
+   * clears the panel on the way in (:663-664) and takes the pointer
+   * with it; hovering behind one changes nothing.
+   */
+  hover(vx, vy) {
+    if (this.topBox) return;
+    const R = INV_RECTS;
+    // The GOLD button (:2243-2247). Not an item - two generated lines,
+    // the amount and its weight.
+    if (inRect(R.gold, vx, vy)) { this.infoItem = null; this.infoGold = true; return; }
+    // The PAPERDOLL (:2185-2197). DFU reads EquipTable[index] and the
+    // index comes from the doll's own item layers, so bare skin
+    // resolves to no index and an empty slot cannot be reached - the
+    // panel is left alone rather than cleared, exactly as the click
+    // arm treats the same miss.
+    if (inRect(R.paperDoll, vx, vy) && this.hooks.entity) {
+      const slot = slotAtPaperDoll(Math.floor(vx - R.paperDoll[0]), Math.floor(vy - R.paperDoll[1]));
+      const worn = slot != null ? this.hooks.entity.equip?.slots?.[slot] : null;
+      if (worn) { this.infoItem = worn; this.infoGold = false; }
+      return;
+    }
+    // The two LISTS (:2224-2242). ItemListScroller raises OnHover for
+    // a slot that HOLDS an item; the scroll arrows and the gaps raise
+    // nothing, so they leave the panel as it stands.
+    const local = scrollerHit(R.localList, vx, vy);
+    if (local?.kind === 'slot') {
+      const it = this._filtered()[this.scroll + local.slot];
+      if (it) { this.infoItem = it; this.infoGold = false; }
+      return;
+    }
+    const remote = scrollerHit(R.remoteList, vx, vy);
+    if (remote?.kind === 'slot') {
+      const it = this._remote()[this.remoteScroll + remote.slot];
+      if (it) { this.infoItem = it; this.infoGold = false; }
+    }
+  }
+
   click(vx, vy) {
     if (this.topBox) {
       if (!this.topBox.field) this._dismissBox();   // a field takes keys, not clicks
@@ -679,18 +755,23 @@ export class NativeInventoryWindow {
       });
     }
     // U25: the ITEM INFO PANEL - a 50x37 cutout of ITEM00I0 drawn into
-    // the 37x32 rect at (223,145), with the last-inspected item's rows
-    // at itemInfoPanelLabel's own TextScale 0.43 and ExtraLeading 3.
-    // DFU fills it on HOVER. U37 built the mouse-move seam this used
-    // to wait on (ui/toolTip.js + the hosts' overlayHover), so what
-    // remains is this window growing its own `hover(vx, vy)` to fill
-    // the panel from the slot under the cursor - FLAGGED as that,
-    // narrower than the seam-shaped gap it was.
+    // the 37x32 rect at (223,145), at itemInfoPanelLabel's own
+    // TextScale 0.43 and ExtraLeading 3. U47 filled it from HOVER, as
+    // DFU does: `hover(vx, vy)` above reads the slot, the doll layer
+    // or the gold button under the cursor, and the panel is STICKY
+    // between them.
     if (_art.info) {
       drawImgCrop(renderer, _art.info, m, INV_RECTS.infoCutout, INV_RECTS.itemInfoPanel);
-      if (this.infoItem && this.hooks.rows) {
+      // U47: the GOLD button's own two lines, which are generated and
+      // need no TEXT.RSC - so they draw even in a host with none.
+      const carriedGold = this.infoGold
+        ? goldAmount(this.hooks.entity ?? { items: this.hooks.items() }) : 0;
+      const panelRows = this.infoGold
+        ? goldPanelRows(carriedGold, carriedGold * GOLD_PIECE_WEIGHT_KG)
+        : ((this.infoItem && this.hooks.rows) ? itemInfoRows(this.infoItem, this.hooks.rows) : null);
+      if (panelRows) {
         const [px, py, , ph] = INV_RECTS.itemInfoPanel;
-        const rows = itemInfoRows(this.infoItem, this.hooks.rows);
+        const rows = panelRows;
         const lineH = (font.fnt?.fixedHeight ?? 6) * INFO_LABEL.scale + INFO_LABEL.extraLeading;
         const top = py + Math.max(0, (ph - rows.length * lineH) / 2);   // VerticalAlignment.Middle
         rows.forEach((r, i) => drawText(renderer, font, r.text,

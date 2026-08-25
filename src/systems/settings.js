@@ -141,6 +141,9 @@ export const LIVE = Object.freeze({
   'GUI/LargeHUDDocked': 'src/ui/hudLarge.js',
   'GUI/LargeHUDUndockedScale': 'src/ui/hudLarge.js',
   'GUI/LargeHUDUndockedAlignment': 'src/ui/hudLarge.js',
+  // U46: the eight buff/debuff icon layouts. Another key the settings
+  // screen offered with nothing on the other end.
+  'GUI/IconsPositioningScheme': 'src/ui/hudActiveSpells.js',
   'GUI/Crosshair': 'src/ui/hudCrosshair.js',
   'GUI/IllegalRestWarning': 'src/scenes/world.js',   // V5: the "it is illegal to camp" Yes/No before a town rest
   'GUI/InteractionModeIcon': 'src/ui/hudCrosshair.js',

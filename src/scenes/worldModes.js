@@ -43,7 +43,7 @@ import { maxFatigue, liveStat } from '../systems/statMods.js';   // AUDIT 23 (C5
 import { maxEncumbrance } from '../combat/formulas.js';   // U40: the letter-of-credit gate
 import { nearestLights } from '../world/cityLights.js';
 import { lookAt, perspective, mirrorProjectionX } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
-import { routeKey, actionOf, held, moveHeld, anyMove } from '../ui/input.js';
+import { routeKey, actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible interior arrows
@@ -59,6 +59,7 @@ import { setDeathPresenter, hurtPlayer } from '../characters/playerEntity.js';  
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying in a building
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the HUD vanished inside buildings
 import { largeHudOptions, routeLargeHudClick } from '../ui/hudLarge.js';   // U45: the classic bottom bar and its eleven panels
+import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
 // E2: the shop shelf browse/buy layer (node-pure laws in shopStock.js)
 import { ChoiceWindow } from '../ui/talkWindow.js';
@@ -3059,6 +3060,12 @@ export function createWorldModes(host) {
   };
 
   addEventListener('keydown', (e) => {
+    // U47: FIRST, before any early return. F5, F6 and F11 are DFU
+    // bindings AND browser gestures, and this host's keydown returns
+    // in a dozen places - so a swallow anywhere else is a swallow
+    // that some mode skips. Pressing F5 in a building used to reload
+    // the page (AUDIT 17e F41); F11 still went fullscreen here.
+    swallowBrowserKey(e);
     // U43: an overlay held in the OUTER host's slot owns the keyboard.
     // townTalk draws its overlay above the modal render in every mode
     // (world.js's frame, AUDIT F2-I1), so a window opened out there
@@ -3150,6 +3157,7 @@ export function createWorldModes(host) {
   /** U37: THE HOVER SEAM, the wheel seam's shape - both mode-owned
    *  windows and the mounted dungeon context's. */
   function hover(e) {
+    trackHudPointer(canvas, e);   // U46: the spell-icon rows' tooltip, in BOTH modes
     const at = () => {
       const r = canvas.getBoundingClientRect();
       return pointToNative(nativeMetrics(canvas),
