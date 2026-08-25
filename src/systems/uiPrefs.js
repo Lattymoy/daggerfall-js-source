@@ -1,5 +1,7 @@
-// MENU: the screen's OWN preferences - which category was open, which
-// groups are unfolded, and the player's Text Size choice.
+// The UI's OWN preferences - which settings category was open, which
+// groups are unfolded, the player's Text Size choice, and WHICH SKIN
+// the game wears (systems/uiSkin.js owns that decision; this owns the
+// bytes).
 //
 // These are deliberately NOT in the settings store. That store is
 // DFU's SettingsManager and it holds exactly 171 keys; a 172nd would
@@ -9,6 +11,10 @@
 const STORAGE_KEY = 'dagger.ui.v1';
 
 export const PREF_DEFAULTS = Object.freeze({
+  // ENHANCED IS THE DEFAULT (Mac, 2026-08-25). Read it through
+  // uiSkin.js rather than here - that module resolves the ?skin
+  // override on top of this and is the one place the vocabulary lives.
+  skin: 'enhanced',
   textScale: 0,        // 0 = normal, 1 = large (buys a whole scale step)
   category: 'game',
   open: {},            // "video:stored" -> true
