@@ -200,6 +200,112 @@ function raceStage() {
   return pane;
 }
 
+// ── SEX ──────────────────────────────────────────────────────────
+// DFU's is a two-button message box, and the buttons SET AND CLOSE -
+// there is no separate confirm (U14 found the port had invented one).
+// Two choices deserve two large targets and nothing else on the
+// screen, so this is the one stage that is only its own question.
+function genderStage() {
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'choose');
+  wrap.append(el('h2', null, 'Are you a man or a woman?'));
+  const row = el('div', 'bigchoice');
+  for (const [key, label] of [['male', 'Man'], ['female', 'Woman']]) {
+    const b = el('button', `bigbtn${flow.gender === key ? ' on' : ''}`, label);
+    b.onclick = () => { flow.applyHit({ setGender: key }); paint(); };
+    row.append(b);
+  }
+  wrap.append(row);
+  pane.append(wrap);
+  return pane;
+}
+
+// ── HOW YOU CHOOSE A CLASS ───────────────────────────────────────
+// WizardStages.SelectClassMethod. DFU's BUTN01I0 screen: pick from the
+// list, or answer the questions and be told what you are. Both buttons
+// close, and an Escape goes to the LIST rather than back - the
+// OnClose has no cancelled arm at all (U18).
+function classMethodStage() {
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'choose');
+  wrap.append(el('h2', null, 'How do you want to choose?'));
+  const row = el('div', 'bigchoice tall');
+  const list = el('button', 'bigbtn');
+  list.append(el('span', 'bigk', 'Choose from a list'));
+  list.append(el('span', 'bign', 'The eighteen classic classes, or build your own.'));
+  list.onclick = () => { flow.applyHit({ classMethod: 'list' }); paint(); };
+  const quiz = el('button', 'bigbtn');
+  quiz.append(el('span', 'bigk', 'Answer ten questions'));
+  quiz.append(el('span', 'bign', 'The game picks a class from your answers.'));
+  quiz.onclick = () => { flow.applyHit({ classMethod: 'questions' }); paint(); };
+  row.append(list, quiz);
+  wrap.append(row);
+  pane.append(wrap);
+  return pane;
+}
+
+// ── THE CLASS LIST ───────────────────────────────────────────────
+// A ListBox with two gestures, which U17 landed after Mac reported
+// double-tap not working: MouseClick SELECTS, MouseDoubleClick USES,
+// and picking is not choosing - OnItemPicked opens the class
+// DESCRIPTION in a Yes/No box on TEXT.RSC 2100 + index.
+//
+// A list on a phone does not need a double tap to mean something
+// different from a single one, so the enhanced screen gives the second
+// gesture its own BUTTON and lets a tap select. The flow's own
+// clickClassRow is still what a tap calls, double-tap included, so the
+// classic gesture keeps working for anyone who uses it.
+function classStage() {
+  const pane = el('div', 'stagebody');
+
+  const list = el('div', 'list');
+  for (let i = 0; i < flow.classRowCount(); i++) {
+    const name = flow.classRowName(i);
+    const row = el('div', `row${i === flow.classListIndex ? ' on' : ''}`);
+    const main = el('button', 'row-main');
+    main.append(el('div', 'row-name', name));
+    if (i === flow.careers.length) main.append(el('div', 'row-sub', 'Build a class of your own'));
+    main.onclick = () => { flow.clickClassRow(i, flow._now()); paint(); };
+    row.append(main);
+    list.append(row);
+  }
+  pane.append(list);
+
+  const detail = el('div', `detail${flow.classConfirm ? ' sheet open' : ''}`);
+  const close = el('button', 'sheet-close', 'Back to the list');
+  close.onclick = () => { flow.applyHit({ cancelClass: true }); paint(); };
+  detail.append(close);
+  const d = el('div', 'dcard');
+  const picked = flow.classRowName(flow.classListIndex);
+  d.append(el('h3', null, picked));
+  if (flow.classConfirm) {
+    for (const line of flow.classConfirm) {
+      const text = typeof line === 'string' ? line : line.text;
+      if (text?.trim()) d.append(el('p', null, text));
+    }
+    const a = el('div', 'acts');
+    const yes = el('button', 'act primary', `Play as a ${picked}`);
+    yes.onclick = () => { flow.applyHit({ confirmClass: true }); paint(); };
+    const no = el('button', 'act', 'Choose again');
+    no.onclick = () => { flow.applyHit({ cancelClass: true }); paint(); };
+    a.append(yes, no);
+    d.append(a);
+  } else {
+    d.append(el('p', null, flow.classListIndex === flow.careers.length
+      ? 'Twelve skills, your own attributes, your own advantages, and a difficulty that moves as you spend.'
+      : 'Read what this class is before you commit to it.'));
+    const a = el('div', 'acts');
+    const read = el('button', 'act primary',
+      flow.classListIndex === flow.careers.length ? 'Build it' : `Read about the ${picked}`);
+    read.onclick = () => { flow.useClass(); paint(); };
+    a.append(read);
+    d.append(a);
+  }
+  detail.append(d);
+  pane.append(detail);
+  return pane;
+}
+
 // ── THE STAGES NOT YET REDESIGNED ────────────────────────────────
 // Named, with the classic screen that still owns them. An empty pane
 // would read as a bug and a half-built one would read as the design.
@@ -254,7 +360,11 @@ function paint() {
   side.append(foot);
 
   const pane = el('main', 'pane');
-  pane.append(flow.state === 'race' ? raceStage() : pendingStage(STAGE_RAIL[here]));
+  const STAGES = {
+    race: raceStage, gender: genderStage,
+    classMethod: classMethodStage, class: classStage,
+  };
+  pane.append((STAGES[flow.state] ?? (() => pendingStage(STAGE_RAIL[here])))());
 
   // THE ACTION BAR. Back is always here, because AUDIT 17j found the
   // wizard's back arms wrong on every screen it checked and the fix
