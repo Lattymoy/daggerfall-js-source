@@ -570,6 +570,21 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   function frame(dt) {
     hud.tick(dt);
     overlay?.tick?.(dt);   // D1: the death sequence's clock (any overlay may want one)
+    // U48: THE REST WINDOW'S OWN CLOCK, and it is a SECOND name -
+    // RestWindow spells it tickRest, so `tick?.()` above walks past
+    // it. This is AUDIT 18 F5's finding arriving at the other seam:
+    // there the tick sat inside drawFoes, which the hosts skip while
+    // an overlay is up, and the window sat on "Hours passed: 0" until
+    // Escape. Here the seam simply never called it, and the live
+    // probe caught it the only way it could be caught - by watching
+    // the world clock across a loitered hour and seeing 0 minutes
+    // pass. DFU runs DaggerfallRestWindow.Update every frame the
+    // window is topmost (:183-227) and TickRest reads
+    // realtimeSinceStartup, so a paused timeScale does not stop it.
+    // ABOVE the done drain, so a rest that ends ITSELF (full rest
+    // healed, hours run out, death) is cleared on the same frame
+    // rather than latching a dead window on screen.
+    if (overlay?.isRestWindow) overlay.tickRest?.(dt);
     // U41: a window may FINISH inside its own tick - the travel
     // popup's day countdown departs on a clock, not on a key - and
     // this seam had no done check, so such a window stayed painted
@@ -714,6 +729,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       // the probe surface follows it - the equip refusal that S23
       // watched here is now a real TEXT.RSC box in this queue.
       overlayBox: (overlay?.boxes?.[0]?.rows ?? []).map((r) => r.text ?? r).join(' | ') || null,
+      overlayRest: !!overlay?.isRestWindow,   // U48: rest above ground, in BOTH hosts that draw here
     }),
   };
 }

@@ -48,7 +48,7 @@ import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: Create
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1
 import { SITE_TYPES } from '../systems/quest/place.js';   // B3: the respawn dispatch reads the site type
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
-import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE } from '../systems/encounters.js';   // X-slice
+import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert } from '../systems/encounters.js';   // X-slice; U48: the rest refusal raises the alert
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
@@ -63,6 +63,8 @@ import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold, totalGoldAmo
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
 import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet (LevelUpScreen: AUDIT 21 hosts F3)
+import { RestWindow } from '../ui/restWindow.js';   // U48: rest above ground at last
+import { restDecision, canRestHere } from '../systems/restSession.js';   // U48: DaggerfallUI's ladder + CanRest's WHERE gate
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
 import { charSheetHooks } from '../ui/charSheetNav.js';   // U32: the sheet's four navigation buttons
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
@@ -91,10 +93,11 @@ import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, 
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
+import { makeRestDeps } from './shared.js';   // U48: the eight rest deps, built once
 import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
-import { PlayerMotor } from '../player/motor.js';
+import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // U48: the rest gate's ONE home
 import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -1620,6 +1623,58 @@ export async function bootWorld(canvas, renderer, params, status) {
   // object the keydown ladder below calls and the large HUD's panels
   // reach through routeLargeHudClick. Every member is an arrow, so
   // nothing here runs before the helper it names exists.
+  // U48 - REST ABOVE GROUND (see scenes/exterior.js for the shape).
+  // This host is the one that also carries the ENCOUNTER roll through
+  // the rest: it owns exteriorFoes, so a night in the wilderness can
+  // be broken by something walking up.
+  const restDeps = makeRestDeps(playerEntity, {
+    ticker: playerTicker,
+    enemiesNearby: () => (cityGuards?.activeCount?.() ?? 0) > 0 || exteriorFoes.foes.some((f) => !f.dead),
+    day: () => !isNight(minuteNow()),
+    inside: () => false,
+    say: (msg) => townTalk.say(msg),
+    onLevelUp: () => { townTalk.say('You have gained a level!'); townTalk.showOverlay(new LevelUpScreen(playerEntity)); },
+    endLines: (id) => townTalk.lines(id),
+    afterAdvance: () => runEncounterTick(walkMode && playerSpawned ? player.pos : cam.pos),
+  });
+  let _campWarned = false;   // CanRest's `alreadyWarned`
+  function toggleRestWorld() {
+    if (townTalk.overlayActive) return;
+    const d = restDecision({
+      enemiesNearby: restDeps.enemiesNearby(),
+      swimming: !!player.swimming,
+      // StartRestGroundedCheck, not the raw flag: DFU's fallback ray
+      // is what lets a levitating player rest, and up here it is also
+      // what lets a page whose motor is never stepped rest at all.
+      grounded: startRestGroundedCheck(player.grounded, player.pos, collider),
+    });
+    if (d.kind === 'enemies') {
+      setEnemyAlert(playerEntity, true, worldMinutes());   // raised BEFORE the refusal (DaggerfallUI:654-655)
+      townTalk.showOverlay(new ActionTextBox(townTalk.lines(d.textId) ?? ['Enemies are nearby.']));
+      return;
+    }
+    if (d.kind === 'cannot') {
+      townTalk.showOverlay(new ActionTextBox(townTalk.lines(d.textId) ?? ['You cannot rest now.']));
+      return;
+    }
+    if (d.kind !== 'rest') return;
+    // CanRest's town branch. Unlike ?town, this host has WILDERNESS:
+    // `inLocationRect` is the port's read of IsPlayerInTown, so
+    // camping in a field is legal and camping in a street is not.
+    const inTown = locationIndex.has(`${playerTravelPixel().x},${playerTravelPixel().y}`);
+    const where = canRestHere({ inTown, insideBuilding: false, alreadyWarned: _campWarned });
+    if (where.crime) {
+      playerEntity.crimeCommitted = where.crime;
+      cityGuards?.spawnCityGuards?.(true, { playerFeet: [...player.pos], playerFwd: [0, 0, 1], pool: [] });
+    }
+    if (where.kind === 'refuse') {
+      _campWarned = true;
+      townTalk.showOverlay(new ActionTextBox(townTalk.lines(where.textId) ?? ['Camping in the city is illegal.']));
+      return;
+    }
+    townTalk.showOverlay(new RestWindow(restDeps));
+  }
+
   const hudCtx = {
     // U43 factored the window builders out for the interior arm to
     // mount; this reads the same ones rather than a third copy.
@@ -1628,6 +1683,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     toggleNotebook: () => townTalk.showOverlay(makeJournalWindow('notebook')),
     toggleInventory: () => { if (inventoryArtLoaded()) townTalk.showOverlay(makeInventoryWindow()); },
     toggleSpellbook: () => toggleSpellbook(),
+    toggleRest: () => toggleRestWorld(),
     toggleAutomap: () => toggleExteriorAutomap(),
     openTravelMap: () => toggleTravelMap(),
     quickSave: () => worldQuickSave(),
@@ -1683,6 +1739,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       // I2: through the registry, so M is rebindable like every other
       // action rather than a second hardcoded literal.
       if (act === 'AutoMap') { hudCtx.toggleAutomap(); return; }
+      // U48: Actions.Rest (KeyR), bound since I1 and read by one host
+      if (act === 'Rest') { hudCtx.toggleRest(); return; }
       // I3: Escape with no overlay opens the pause options window; the
       // window closes itself on the same key.
       if (act === 'Escape' && pauseArtLoaded()) { hudCtx.togglePause(); return; }

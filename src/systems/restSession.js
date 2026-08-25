@@ -28,6 +28,7 @@
 // loiter requests above the classic 3-hour cap are refused with the
 // cannot-loiter lines. Building trespass/rent rules pend towns.
 
+import { CRIMES } from './court.js';   // U48: camping in a town is Vagrancy
 import { getInt } from './settings.js';   // SETT: LoiterLimitInHours
 
 export const MINUTES_PER_TICK = 10;          // classic minutes per sub-tick
@@ -43,6 +44,112 @@ export const loiterLimitHours = () => getInt('Enhancements', 'LoiterLimitInHours
 export const REST_TEXT = Object.freeze({
   loiterDone: 349, healed: 350, wakeUp: 353, enemiesNearby: 354, cannotRestNow: 355,
 });
+/**
+ * U48 - THE REST DISPATCH (DaggerfallUI.cs:651-688), the ladder that
+ * decides whether the rest window opens at all.
+ *
+ * IT HAS NO SCENE GATE. DFU's `dfuiOpenRestWindow` arm asks about
+ * ENEMIES, SWIMMING and the GROUND, and about nothing else - not
+ * whether the player is in a dungeon, a building or a field. The port
+ * had this ladder in exactly one host (the dungeon context), so KeyR
+ * did nothing at all above ground, which is the same shape U43 found
+ * for the character sheet and the inventory one door over.
+ *
+ * THE ENEMY ARM RAISES THE ALERT before it refuses (:654-655), and
+ * that is not decoration: the alert is what arms the rest-encounter
+ * roll, so a player who tries to rest with something nearby has made
+ * the dungeon more dangerous whether or not they get to sleep.
+ *
+ * `preventedMessage` is GetPreventedRestMessage (GameManager.cs:641),
+ * a registry of (predicate, message) pairs - and its EMPTY STRING is
+ * a real case DFU handles separately: RegisterPreventRestCondition
+ * turns a null message into "" precisely so a caller can block rest
+ * without wording it, and the dispatch then falls back to 355.
+ *
+ * Answers one of
+ *   { kind: 'enemies', textId }   - and the caller RAISES THE ALERT
+ *   { kind: 'cannot', textId }
+ *   { kind: 'prevented', message } - a registered condition's own words
+ *   { kind: 'blocked' }            - a racial override says no, silently
+ *   { kind: 'rest' }
+ */
+export function restDecision({
+  enemiesNearby = false, swimming = false, grounded = true,
+  preventedMessage = null, racialOverrideBlocks = false,
+} = {}) {
+  if (enemiesNearby) return { kind: 'enemies', textId: REST_TEXT.enemiesNearby };
+  if (swimming || !grounded) return { kind: 'cannot', textId: REST_TEXT.cannotRestNow };
+  if (preventedMessage !== null && preventedMessage !== undefined) {
+    return preventedMessage === ''
+      ? { kind: 'cannot', textId: REST_TEXT.cannotRestNow }
+      : { kind: 'prevented', message: preventedMessage };
+  }
+  // RacialOverrideEffect.CheckStartRest - "Allow custom race to block
+  // rest (e.g. vampire not sated)". It says nothing when it refuses;
+  // DFU simply returns. V2 is the producer.
+  if (racialOverrideBlocks) return { kind: 'blocked' };
+  return { kind: 'rest' };
+}
+
+/** TEXT.RSC 17 - "camping in the city is illegal" (:69). */
+export const CITY_CAMPING_ILLEGAL = 17;
+/** Internal_Strings haveNotRentedRoom - the interior refusal (:594). */
+export const HAVE_NOT_RENTED_ROOM = 'You have not rented a room here.';
+
+/**
+ * U48 - CANREST (DaggerfallRestWindow.cs:542-599), the WHERE gate,
+ * which is a different question from restDecision's WHETHER and runs
+ * after it. Three branches, and the port had none of them because it
+ * had no rest above ground to gate.
+ *
+ * CAMPING IN A TOWN IS A CRIME, and this is the branch that makes
+ * "rest above ground" more than a key binding. Outdoors inside a town
+ * the first attempt REFUSES with TEXT.RSC 17 - and commits VAGRANCY
+ * and spawns the city guards while doing it. `alreadyWarned` is then
+ * true, and the SECOND attempt is allowed: DFU returns
+ * `alreadyWarned`, so the player may camp, having already been booked
+ * for it. The crime and the guards are charged on BOTH attempts,
+ * because they sit above the return.
+ *
+ * INSIDE A BUILDING it is the owned-or-rented ladder, and the order
+ * matters: the permanent-scene test gates the ship/house/room arm
+ * ENTIRELY, so a building the player has never held anything in
+ * cannot be rested in however the room record reads. The guild arm
+ * that follows EXCLUDES TAVERNS, and DFU says why - "they are all
+ * marked as fighters guilds in data", so without that test every inn
+ * in the Bay would be a free bed for a Fighters Guild member.
+ *
+ * ANYWHERE ELSE - a dungeon, the wilderness, a town's interior that
+ * is not a building - answers true at the tail.
+ *
+ * Answers { kind: 'allow' } or { kind: 'refuse', textId | message,
+ * crime, spawnGuards }.
+ */
+export function canRestHere({
+  inTown = false, insideBuilding = false, alreadyWarned = false,
+  permanentScene = false, isShip = false, houseOwned = false,
+  remainingHoursRented = -1, buildingIsTavern = false, guildCanRest = false,
+} = {}) {
+  if (inTown && !insideBuilding) {
+    // The crime and the guards are charged whether or not this is the
+    // warned attempt - they are above the return, not inside the
+    // refusal.
+    const out = { crime: CRIMES.Vagrancy, spawnGuards: true };
+    return alreadyWarned
+      ? { kind: 'allow', ...out }
+      : { kind: 'refuse', textId: CITY_CAMPING_ILLEGAL, ...out };
+  }
+  if (inTown && insideBuilding) {
+    if (permanentScene) {
+      if (isShip || houseOwned) return { kind: 'allow' };
+      if (remainingHoursRented > 0) return { kind: 'allow' };
+    }
+    if (!buildingIsTavern && guildCanRest) return { kind: 'allow' };
+    return { kind: 'refuse', message: HAVE_NOT_RENTED_ROOM };
+  }
+  return { kind: 'allow' };
+}
+
 export const REST_PROMPT = 'Rest how many hours : ';
 export const LOITER_PROMPT = 'Loiter how many hours : ';
 export const cannotLoiterLines = () => Object.freeze([

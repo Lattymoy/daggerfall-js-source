@@ -2967,6 +2967,21 @@ export function createWorldModes(host) {
     toggleSpellbook() { if (magic) mountInterior(makeSpellbookWindow()); },
     toggleLogbook() { mountInterior(host.makeJournal?.('activeQuests')); },
     toggleNotebook() { mountInterior(host.makeJournal?.('notebook')); },
+    // U48 FLAGGED: no toggleRest here, and the omission is the SHAPE
+    // of the gap, not an oversight. Rest above ground is wired in
+    // world.js and exterior.js, where CanRest's answer is the OUTDOOR
+    // branch (camping is vagrancy or it is a field). This host is the
+    // INSIDE-A-BUILDING branch, and that branch is a ladder of five
+    // facts no one here can answer yet: whether the building is a
+    // PERMANENT SCENE, whether it is a ship, whether the player owns
+    // the house, how many hours are left on a rented room
+    // (GetRemainingHours, -1 for no room and 0 for an expired one),
+    // and whether the player's guild grants rest here with taverns
+    // excluded. systems/restSession.js's canRestHere takes all five
+    // and is pinned over all of them; what is missing is the
+    // BUILDING CONTEXT that would feed it. Binding KeyR before that
+    // exists would let the player sleep in any shop in the Bay, which
+    // is worse than the key doing nothing.
   };
 
   addEventListener('keydown', (e) => {

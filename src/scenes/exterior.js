@@ -13,7 +13,7 @@ import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
 import { convertTilemap } from '../world/terrainSurface.js';
 import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
-import { PlayerMotor } from '../player/motor.js';
+import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // U48: the rest gate's ONE home
 import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible exterior arrows
@@ -57,7 +57,10 @@ import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';   // G2
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
-import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet (LevelUpScreen: AUDIT 21 hosts F3)
+import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';
+import { RestWindow } from '../ui/restWindow.js';   // U48: rest above ground at last
+import { restDecision, canRestHere } from '../systems/restSession.js';   // U48: DaggerfallUI's ladder + CanRest's WHERE gate
+import { setEnemyAlert } from '../systems/encounters.js';   // U48: the enemy arm RAISES it before refusing   // U8a: the native char sheet (LevelUpScreen: AUDIT 21 hosts F3)
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
 import { charSheetHooks } from '../ui/charSheetNav.js';   // U32: the sheet's four navigation buttons
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
@@ -82,6 +85,7 @@ import { ChoiceWindow } from '../ui/talkWindow.js';   // V1: the infection popup
 import { startInfection, liveInfection } from '../systems/infection.js';   // V1 probe surface: the bite and the lifecycle
 import { diseaseCount } from '../systems/diseases.js';
 import { MINUTES_PER_DAY } from '../systems/gameDate.js';
+import { makeRestDeps } from './shared.js';   // U48: the eight rest deps, built once
 import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
@@ -813,6 +817,64 @@ export async function bootExterior(canvas, renderer, params, status) {
   // reads it, the ladder below calls it, and routeLargeHudClick hands
   // it a click. Every member is an arrow, so nothing here is evaluated
   // before the helpers it names exist.
+  // U48 - REST ABOVE GROUND. KeyR has been bound since I1 and read by
+  // ONE host, so pressing it in a town did nothing at all - the same
+  // shape U43 found for F5/F6/L/N one door over, and the rest window
+  // itself has been built since U7. The deps come from the shared
+  // builder; only the CONTEXT is this host's: the city guards are its
+  // nearby enemies, and it is outdoors, where a Rapid Healing career
+  // heals at 100 in daylight.
+  const restDeps = makeRestDeps(playerEntity, {
+    ticker: playerTicker,
+    enemiesNearby: () => (cityGuards?.activeCount?.() ?? 0) > 0,
+    day: () => !isNight(minuteNow()),
+    inside: () => false,
+    say: (msg) => townTalk.say(msg),
+    onLevelUp: () => { townTalk.say('You have gained a level!'); townTalk.showOverlay(new LevelUpScreen(playerEntity)); },
+    endLines: (id) => townTalk.lines(id),
+  });
+  let _campWarned = false;   // CanRest's `alreadyWarned` - the second press is allowed
+  function toggleRestExterior() {
+    if (townTalk.overlayActive) return;
+    const d = restDecision({
+      enemiesNearby: restDeps.enemiesNearby(),
+      swimming: !!player.swimming,
+      // StartRestGroundedCheck, not the raw flag: DFU's fallback ray
+      // is what lets a levitating player rest, and up here it is also
+      // what lets a page whose motor is never stepped rest at all.
+      grounded: startRestGroundedCheck(player.grounded, player.pos, collider),
+    });
+    if (d.kind === 'enemies') {
+      // The alert is RAISED before the refusal (DaggerfallUI:654-655)
+      // - it is what arms the encounter roll, so the attempt costs
+      // something even when it fails.
+      setEnemyAlert(playerEntity, true, worldMinutes());
+      townTalk.showOverlay(new ActionTextBox(townTalk.lines(d.textId) ?? ['Enemies are nearby.']));
+      return;
+    }
+    if (d.kind === 'cannot') {
+      townTalk.showOverlay(new ActionTextBox(townTalk.lines(d.textId) ?? ['You cannot rest now.']));
+      return;
+    }
+    if (d.kind !== 'rest') return;
+    // CanRest's town branch (DaggerfallRestWindow.cs:549-561). This
+    // host always stands ON a location, so camping here is always the
+    // illegal kind: the first press books the player for VAGRANCY,
+    // spawns the guards and refuses; the second lets them sleep,
+    // having already paid for it.
+    const where = canRestHere({ inTown: true, insideBuilding: false, alreadyWarned: _campWarned });
+    if (where.crime) {
+      playerEntity.crimeCommitted = where.crime;
+      cityGuards?.spawnCityGuards?.(true, { playerFeet: [...player.pos], playerFwd: [0, 0, 1], pool: [] });
+    }
+    if (where.kind === 'refuse') {
+      _campWarned = true;
+      townTalk.showOverlay(new ActionTextBox(townTalk.lines(where.textId) ?? ['Camping in the city is illegal.']));
+      return;
+    }
+    townTalk.showOverlay(new RestWindow(restDeps));
+  }
+
   const hudCtx = {
     toggleCharSheet: () => townTalk.showOverlay(new CharSheet(playerEntity, charSheetHooks({
       entity: playerEntity,
@@ -832,6 +894,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     },
     // A2: the exterior automap (Actions.AutoMap outdoors,
     // DaggerfallUI.cs:633-650); this host always stands on a location.
+    toggleRest: () => toggleRestExterior(),
     toggleAutomap: () => {
       const locId = `${dfLocation.regionIndex}:${dfLocation.name ?? locationName}`;
       townTalk.showOverlay(new ExteriorAutomapWindow({
@@ -883,6 +946,8 @@ export async function bootExterior(canvas, renderer, params, status) {
       // location. I2: through the registry, so M is rebindable like
       // every other action rather than a second hardcoded literal.
       if (act === 'AutoMap') { hudCtx.toggleAutomap(); return; }
+      // U48: Actions.Rest (KeyR), bound since I1 and read by one host
+      if (act === 'Rest') { hudCtx.toggleRest(); return; }
     }
     // A2: the exterior automap (Actions.AutoMap outdoors,
     // DaggerfallUI.cs:633-650); this host always stands on a location.

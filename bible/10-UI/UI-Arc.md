@@ -4742,3 +4742,111 @@ Pins: 4 added to `nativeinventory.test.js`, two existing pins re-aimed
 named a *spelling* of a law that now lives one file over). 7
 mutations, 7 dead — three of them only after the pins that should have
 caught them were rewritten.
+
+## U48 — rest above ground
+
+`KeyR` has been bound since I1 and read by exactly **one** scene for
+the whole life of the project. Press it in a town, a field, a shop or
+an inn and nothing happened at all — and the rest window itself, with
+its per-hour rates, its enemy break and its three completion texts,
+has been finished since U7. This is the fourth slice in a row whose
+finding was the same shape: everything built, nobody bound it.
+
+**THE DISPATCH HAS NO SCENE GATE.** `DaggerfallUI.cs:651-688` asks
+about **enemies**, **swimming** and the **ground**, and about nothing
+else — not whether the player is in a dungeon, a building or a field.
+The port had that ladder inside `dungeonContext`, which is what made
+it look like a dungeon feature. `systems/restSession.js` now carries
+it as `restDecision`, and the two above-ground hosts call it.
+
+Three things in that ladder are worth reading twice. **Enemies
+outrank the water**, because DFU's is an `if`/`else if` chain — and it
+matters, because only the enemy arm raises the alert that arms the
+rest-encounter roll. The **prevented-rest registry's empty string** is
+deliberate: `RegisterPreventRestCondition` turns a null message into
+`""` so a caller can block rest without wording it, and the dispatch
+falls back to TEXT.RSC 355 rather than showing a blank box. And a
+**racial override refuses silently** — DFU simply returns — from the
+*bottom* of the ladder, so a swimming vampire is told about the water,
+which is the arm they can act on.
+
+**CAMPING IN A TOWN IS VAGRANCY**, and that is what makes this more
+than a key binding. `CanRest` (`DaggerfallRestWindow.cs:542-599`) is
+ported whole as `canRestHere`. Outdoors inside a town the first press
+refuses with TEXT.RSC 17 — *"It is illegal to camp in or near a
+city."* — while committing the crime and spawning the city guards. The
+second press is **allowed**: DFU returns `alreadyWarned`. The crime
+and the guards ride **both** attempts, because they sit above the
+return rather than inside the refusal, so the player who finally gets
+to sleep has been booked twice for it.
+
+Inside a building it is the owned-or-rented ladder, and the order is
+the law: the **permanent-scene test gates the ship/house/room arm
+entirely**, so forty-eight hours on a room record cannot help in a
+building the player has never held anything in, and an *expired* room
+is not hours left (`GetRemainingHours` answers `-1` for no room and
+`0` for one that has run out). The guild arm that follows **excludes
+taverns**, and DFU says why — *"they are all marked as fighters guilds
+in data"* — without which every inn in the Bay is a free bed for a
+Fighters Guild member.
+
+**THE LIVE PROBE FOUND WHAT CAMPING COSTS.** `tools/restProbe.mjs`
+presses R three times in one Daggerfall street. The first press
+refuses and books Vagrancy. The second gets **TEXT.RSC 354** — because
+the guards the first press summoned are now nearby, and the dispatch
+checks enemies *before* the window opens. Only with the street clear
+does the window come up. Nothing designed that; it falls out of
+porting both functions in DFU's own order.
+
+**TWO THINGS CAME OUT OF THE WIRING RATHER THAN THE PORT.**
+`StartRestGroundedCheck` (`PlayerMotor.cs:184-194`) moved to its DFU
+home in `player/motor.js` when the dungeon context stopped being its
+only caller — the geometry is unchanged, what is gone is the copy. And
+the raw `grounded` flag is wrong up here for a reason DFU never has:
+on a page whose motor is never stepped it sits at its initialiser
+`false` forever, so before the fallback ray landed the rest key
+answered *"You cannot sleep now."* on solid ground.
+
+**THE INTERIOR HOST IS FLAGGED BY NAME**, at the exact seam where the
+binding would go. `canRestHere` takes five building facts — permanent
+scene, ship, owned house, `roomRemainingHours`, tavern exclusion plus
+`guildServices.canRest` — and is pinned over all five; what is missing
+is the building *context* that would feed them. Binding `KeyR` there
+before that exists would let the player sleep in any shop in the Bay,
+which is worse than the key doing nothing.
+
+**AND THE WINDOW OPENED AND NEVER TICKED.** The last thing the probe
+found is the one nothing in the unit suite could have: both hosts put
+a real rest window on screen that did not advance a single minute.
+`RestWindow` spells its clock `tickRest`, and `townTalk.frame`'s
+shared overlay seam calls `overlay?.tick?.(dt)` — a **second name**
+the optional call walks straight past in silence. This is AUDIT 18
+F5's finding arriving at the other seam: there the tick sat inside
+`drawFoes`, which the hosts skip whenever an overlay is up, so U7's
+rest sat on *"Hours passed: 0"* until Escape. The session machine
+ticks perfectly well when something ticks it, which is exactly why
+only a live clock reading could catch this — `tools/restProbe.mjs`
+loiters an hour and asserts the world clock moved sixty classic
+minutes, not one sub-tick. The call goes **above** the done drain, so
+a rest that ends itself (fully healed, hours run out, death) is
+cleared on the same frame rather than latching a dead window.
+
+The ordering pin is worth one line of its own: it has to match the
+**statement**, not the word. The comment beside the call says
+`tickRest` too, so the first draft found the comment, and moving the
+call below the drain left the pin green.
+
+**AND THEN THE HOUR THAT FINALLY COMPLETED THREW.** With the clock
+running, the probe's page-error channel caught `text is not iterable`
+on the first rest that actually *ended*. Every `endLines` feed in the
+tree is a TEXT.RSC reader — `rscLines` in the dungeon, `townTalk.lines`
+in both above-ground hosts — and those answer `{ text, center }`
+records. `RestWindow` is the plain text-panel idiom, which measures a
+line by iterating it. `r.text ?? r` is the house idiom in five other
+windows; this was the one that never got it. It survived this long
+because nothing above ground could open the window at all, and the
+dungeon's own rest sat on *"Hours passed: 0"* until AUDIT 18 F5 gave
+it a clock — so the finish text has had almost no live exercise in the
+project's life.
+
+Pins: `test/restwhere.test.js`, 11 tests, **37 mutations, 37 dead**.

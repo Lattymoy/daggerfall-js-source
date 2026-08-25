@@ -82,7 +82,19 @@ export class RestWindow {
   }
 
   _end(result) {
-    this.endLines = result.died ? null : (this.deps.endLines?.(result.textId) ?? null);
+    // U48: `r.text ?? r`, the house idiom, and this window was the one
+    // place that never got it. Every endLines feed is a TEXT.RSC
+    // reader and those answer { text, center } ROWS, not strings -
+    // this panel is the plain text-panel idiom and measures each line
+    // by iterating it, so a row object threw "text is not iterable"
+    // the moment a rest actually ENDED. It went unseen because until
+    // U48 nothing above ground could open the window at all, and the
+    // dungeon's own rest sat on "Hours passed: 0" until AUDIT 18 F5
+    // gave it a clock - so the finish text has had very little live
+    // exercise. Found by the U48 probe's page-error channel on the
+    // first hour that completed.
+    const rows = result.died ? null : (this.deps.endLines?.(result.textId) ?? null);
+    this.endLines = rows?.length ? rows.map((r) => r.text ?? r) : null;
     if (result.died || !this.endLines) { this.done = true; return; }   // death: the death screen owns the flow
     this.state = 'ended';
   }

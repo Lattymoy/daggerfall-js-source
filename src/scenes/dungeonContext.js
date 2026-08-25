@@ -67,7 +67,7 @@ import { preloadPaperDollForEntity } from '../ui/paperDoll.js';   // U26: the do
 import { createDroppedLoot } from './droppedLoot.js';   // U8e, mounted here at U26
 import { createPlayerMagic } from './hostMagic.js';   // M3: the ONE cast engine
 import { tallySkill, skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.js';
-import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';
+import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT, startRestGroundedCheck } from '../player/motor.js';   // U48: the rest gate's ONE home
 import { applyLevelUp } from '../systems/advancement.js';
 import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
 import { spendPoolLowest } from '../systems/chargen.js';
@@ -2603,16 +2603,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (lines) activeOverlay = new ActionTextBox(lines);
         return;
       }
-      // StartRestGroundedCheck verbatim: grounded passes at once;
-      // otherwise a short downward ray from the controller center,
-      // height/2 + 0.2 (= floor within 0.2 below the feet) lets a
-      // near-ground levitator rest. Derived from CAPSULE_HEIGHT so
-      // the geometry cannot drift from the motor's (review 16f).
-      const feet = lastPlayerFeet;
-      const nearFloor = _grounded || (feet
-        && Number.isFinite(collider.raycast(
-          [feet[0], feet[1] + CAPSULE_HEIGHT / 2, feet[2]], [0, -1, 0], CAPSULE_HEIGHT / 2 + 0.2)));
-      if (_activity.swimming || !nearFloor) {
+      // U48: StartRestGroundedCheck moved to its DFU home
+      // (player/motor.js) when the two above-ground hosts became its
+      // second and third callers. The geometry is unchanged; what is
+      // gone is the copy.
+      if (_activity.swimming || !startRestGroundedCheck(_grounded, lastPlayerFeet, collider)) {
         const lines = rscLines(REST_TEXT.cannotRestNow);
         if (lines) activeOverlay = new ActionTextBox(lines);
         return;

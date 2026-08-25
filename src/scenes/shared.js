@@ -21,7 +21,7 @@ import { findFactions } from '../systems/talk.js';   // V1: GetRegionFaction's F
 import { FACTION_TYPES } from '../formats/factionFile.js';
 import { killIfAnyLiveStatZero } from '../systems/statMods.js';   // AUDIT 24 (wave 32): the per-entity laws a foe pool owes
 import { decayEnemyAlert } from '../systems/encounters.js';   // AUDIT 24 (wave 36): PlayerEntity.Update's 8-hour decay, in every context
-import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
+import { hasSpecialAbility, SPECIAL_ABILITY, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate } from '../systems/rest.js';   // U48: the rest deps' three per-hour rates
 import { createNearbyScan, updateNearbyObjects, detectedMarkers, hasLiveDetector } from '../systems/nearbyObjects.js';   // X4: the Detect scan
 import { liveStat, maxFatigue } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
@@ -847,6 +847,75 @@ export async function endRunToTitleMenu(renderer) {
     console.warn('[death] ANIM0012.VID unavailable - skipping the death video:', e?.message ?? e);
   }
   exitToTitleMenu();
+}
+
+/**
+ * U48 - THE REST DEPS, above ground. DaggerfallRestWindow needs eight
+ * things from its scene, and the dungeon context has been assembling
+ * them by hand since U7 while the other three hosts had no rest at
+ * all. This is that set built ONCE from what every host already has:
+ * an entity, a ticker and a foe count.
+ *
+ * THE TICKER IS THE DIFFERENCE, and it is a simplification rather
+ * than a departure. The dungeon host hand-rolls its advanceMinutes -
+ * move the clock, claim the magic-round window, run it on the player
+ * AND on its foes, then walk the minutes for an encounter roll -
+ * because it owns a foe list and a spawner. Above ground the ticker
+ * already IS that loop: `advance(n)` runs tickPlayerMinutes over the
+ * jump, which claims the broker's window and fires every per-minute
+ * law, and subscribeFoePools fans it out to whatever pools the host
+ * registered. So a night rested in a field ages diseases, poisons and
+ * spell durations exactly as one rested underground does.
+ *
+ * THE ENCOUNTER ROLL rides `afterAdvance`, which the WORLD host
+ * passes and the other two do not - and that asymmetry is real, not
+ * an oversight: `?world` is the only above-ground host with a mobile
+ * foe pool to spawn into (scenes/exteriorFoes.js, the X-slice). The
+ * fixed `?town` page and the interior arm have none, so a roll there
+ * would land nowhere; S32's residue row already names that gap and
+ * this builder does not paper over it.
+ */
+export function makeRestDeps(entity, {
+  ticker, enemiesNearby = () => false, day = () => false, inside = () => false,
+  say = () => {}, onLevelUp = null, endLines = () => null, onVitals = () => {},
+  afterAdvance = null,
+} = {}) {
+  const fullyHealed = () =>
+    entity.health === entity.maxHealth
+    && (entity.fatigue ?? 0) === maxFatigue(entity)
+    && ((entity.magicka ?? 0) === (entity.maxMagicka ?? 0)
+      || hasSpecialAbility(entity.career, SPECIAL_ABILITY.NoRegenSpellPoints));
+  return {
+    // ...and `afterAdvance` is the ENCOUNTER catch-up, for a host that
+    // has one. It runs INSIDE the advance rather than on the next
+    // frame, because a host's frame body returns at its overlay gate:
+    // left to the frame, a whole rested night's rolls fire in one
+    // burst the moment the window closes, which is AUDIT 24 wave 30's
+    // finding about the magic rounds, one system over.
+    advanceMinutes: (n) => { ticker.advance(n); afterAdvance?.(); },
+    onRestFinished: () => raiseAtRestEnd(entity, { say, onLevelUp }),
+    tickVitals: () => {
+      // The three per-hour rates (S20). `day && !inside` is the arm
+      // that only exists up here: a Rapid Healing career heals at 100
+      // in DAYLIGHT outdoors and at 60 otherwise, and the dungeon host
+      // hardcodes `inside: true` because it has to.
+      const ctx = { day: day(), inside: inside() };
+      entity.health = Math.min(entity.maxHealth, entity.health + healthRecoveryRate(entity, ctx));
+      entity.fatigue = Math.min(maxFatigue(entity), (entity.fatigue ?? 0) + fatigueRecoveryRate(maxFatigue(entity)));
+      entity.magicka = Math.min(entity.maxMagicka ?? Infinity, (entity.magicka ?? 0) + spellPointRecoveryRate(entity));
+      tallySkill(entity, SKILLS.Medical);
+      onVitals();
+      return fullyHealed();
+    },
+    fullyHealed,
+    enemiesNearby,
+    dead: () => entity.health <= 0,
+    vitals: () => ({
+      health: entity.health, maxHealth: entity.maxHealth,
+      fatigue: Math.round((entity.fatigue ?? 0) / 64), magicka: entity.magicka ?? 0,
+    }),
+    endLines,
+  };
 }
 
 /**

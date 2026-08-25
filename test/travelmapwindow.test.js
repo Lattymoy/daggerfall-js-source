@@ -740,11 +740,20 @@ test('U41: a window that finishes in its own tick is cleared by the host', () =>
   // overlay seam has to notice `done` in frame(), the way the dungeon
   // host's tickOverlay does
   const tt = readFileSync(new URL('../src/scenes/townTalk.js', import.meta.url), 'utf8');
-  const frame = tt.slice(tt.indexOf('function frame(dt)'), tt.indexOf('function frame(dt)') + 900);
+  // U48: sliced to the FUNCTION, not to a magic 900 characters. A
+  // comment added inside frame() pushed the done check past the count
+  // and this pin went red without its law changing - a character
+  // budget is a fragile proxy for "inside this function".
+  const frame = tt.slice(tt.indexOf('function frame(dt)'), tt.indexOf('function pointerdown'));
   assert.ok(/overlay\?\.tick\?\.\(dt\)/.test(frame), 'the overlay ticks');
   assert.ok(frame.includes('if (overlay?.done)'), 'and a finished window is dropped in the same pass');
   assert.ok(frame.indexOf('overlay?.tick') < frame.indexOf('if (overlay?.done)'), 'in that order');
-  assert.ok(frame.includes('overlay.dispose?.()'), 'freeing its textures');
+  // ...and the dispose must be in the DRAIN, not merely somewhere in
+  // frame(): the font-less bail a few lines down carries one too, so
+  // a bare includes() over the whole function passed with the drain's
+  // own dispose deleted (found while re-proving this pin at U48).
+  const drain = frame.slice(frame.indexOf('if (overlay?.done)'), frame.indexOf('const s = hudScale'));
+  assert.ok(drain.includes('overlay.dispose?.()'), 'freeing its textures');
 });
 
 test('U41: the preload asks for exactly the classic files, and a missing one closes the door', async () => {
