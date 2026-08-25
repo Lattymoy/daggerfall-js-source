@@ -10,6 +10,8 @@ import {
   replacementBytes, replacementCount, replacementKeys,
 } from '../src/systems/musicReplacement.js';
 import { setValue } from '../src/systems/settings.js';
+import * as SM from '../src/systems/songManager.js';
+import { CONTEXT } from '../tools/musicNames.mjs';
 
 const src = (rel) => readFileSync(new URL(`../src/${rel}`, import.meta.url), 'utf8');
 const on = () => setValue('Enhancements', 'AssetInjection', 'True');
@@ -204,4 +206,20 @@ test('music: replacements get their OWN store, away from the download diet', () 
   assert.doesNotMatch(clear.slice(0, 400), /MUSIC_STORE/);
   // registration rides the ONE bootstrap all four hosts already call
   assert.match(src('scenes/shared.js'), /setMusicReplacements\(names, loadMusicFile\)/);
+});
+
+test('music: every playlist has a human label, or the song table hides songs', () => {
+  // tools/musicNames.mjs is what a pack author reads to learn which
+  // record is the tavern and which is the palace. Its context labels
+  // are keyed by playlist export name, so a playlist added to
+  // songManager.js without a label silently drops its songs out of
+  // that table - and those records then look like they do not exist.
+  // The tool exits non-zero on its own, but a tool nobody runs is not
+  // a guard, so the drift is caught here.
+  const names = Object.entries(SM)
+    .filter(([n, v]) => /^[A-Z_]+_SONGS(_FM)?$/.test(n) && Array.isArray(v))
+    .map(([n]) => n.replace(/_FM$/, ''));
+  assert.ok(names.length >= 19, `expected the full playlist set, saw ${names.length}`);
+  const unlabelled = [...new Set(names)].filter((n) => !CONTEXT[n]);
+  assert.deepEqual(unlabelled, [], 'these playlists have no label in tools/musicNames.mjs');
 });
