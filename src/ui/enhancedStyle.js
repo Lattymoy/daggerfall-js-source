@@ -411,6 +411,44 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .namebox:focus { outline: none; border-color: var(--brass); }
 .choose .acts { justify-content: center; }
 
+/* ── THE FACE PICKER ────────────────────────────────────────────
+   DFU shows one portrait with a previous/next pair because it has
+   320x200 to spend. Ten fit here at once, and a picker you can see all
+   of is one decision instead of ten. */
+.facegrid { display: grid; grid-template-columns: repeat(5, auto); gap: 10px; justify-content: center; }
+.facecell {
+  padding: 6px; border: 1px solid var(--iron); background: #12161b;
+  display: grid; place-items: center; min-width: 56px; min-height: 64px;
+  image-rendering: pixelated;
+}
+.facecell canvas { display: block; image-rendering: pixelated; }
+.facecell:hover { border-color: var(--dim); }
+.facecell.on { border-color: var(--brass); box-shadow: inset 0 0 0 1px var(--brass); }
+.facenum { color: #4a4740; font-size: 15px; }
+
+/* ── POOLS AND SPINNERS ─────────────────────────────────────────
+   The pool is the gate on both of these screens - DFU will not leave
+   until it is spent - so it is stated, and the primary says how many
+   are left rather than refusing in silence. */
+.poolbar {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 12px 18px; border-bottom: 1px solid #20262e;
+  position: sticky; top: 0; background: var(--slate); z-index: 2;
+}
+.poolk { color: var(--dim); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; }
+.poolv { color: var(--brass); font-size: 19px; font-variant-numeric: tabular-nums; }
+
+.skillpane { padding: 24px 30px 34px; overflow: auto; max-width: 760px; margin: 0 auto; width: 100%; }
+.skillgroup { margin-bottom: 22px; }
+.skillhead {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 0 0 8px; border-bottom: 1px solid var(--iron); margin-bottom: 4px;
+}
+.skillk { color: var(--bone); font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; }
+.skillpool { color: var(--brass); font-size: 12px; }
+.skillpane .row { border-bottom: 1px solid #20262e; }
+.skillpane .acts { justify-content: flex-end; }
+
 /* ── THE PROVINCE MAP ───────────────────────────────────────
    Traced from the player's own TAMRIEL2.IMG (ui/provinceMap.js), so
    these are Bethesda's coastlines and ours is only the ink. Unselected
@@ -490,6 +528,8 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   .choose { padding: 28px 20px; gap: 22px; }
   .choose h2 { font-size: 24px; }
   .question { padding: 22px 20px 30px; }
+  .facegrid { grid-template-columns: repeat(4, auto); gap: 8px; }
+  .skillpane { padding: 18px 20px 28px; }
   .question h2 { font-size: 22px; }
   .bigchoice, .bigchoice.tall { grid-template-columns: 1fr; }
   .wizard .stepstrip { display: block; order: 3; background: var(--ink); padding: 12px 20px max(12px, env(safe-area-inset-bottom)); }
