@@ -43,7 +43,7 @@ import { maxFatigue, liveStat } from '../systems/statMods.js';   // AUDIT 23 (C5
 import { maxEncumbrance } from '../combat/formulas.js';   // U40: the letter-of-credit gate
 import { nearestLights } from '../world/cityLights.js';
 import { lookAt, perspective, mirrorProjectionX } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
-import { routeKey, actionOf, held, moveHeld, anyMove } from '../ui/input.js';
+import { routeKey, actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible interior arrows
@@ -2970,6 +2970,12 @@ export function createWorldModes(host) {
   };
 
   addEventListener('keydown', (e) => {
+    // U47: FIRST, before any early return. F5, F6 and F11 are DFU
+    // bindings AND browser gestures, and this host's keydown returns
+    // in a dozen places - so a swallow anywhere else is a swallow
+    // that some mode skips. Pressing F5 in a building used to reload
+    // the page (AUDIT 17e F41); F11 still went fullscreen here.
+    swallowBrowserKey(e);
     // U43: an overlay held in the OUTER host's slot owns the keyboard.
     // townTalk draws its overlay above the modal render in every mode
     // (world.js's frame, AUDIT F2-I1), so a window opened out there

@@ -248,9 +248,9 @@ combat line numbers below are refreshed with it.
 - `src/scenes/exterior.js:506` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:655` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/exterior.js:861` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:1109` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:1261` - FLAGGED here exactly as in world.js - no tile lookup yet).
-- `src/scenes/exterior.js:1596` - ground (FLAGGED with world.js's same gap), so Detect Treasure
+- `src/scenes/exterior.js:1122` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:1274` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:1609` - ground (FLAGGED with world.js's same gap), so Detect Treasure
 - `src/scenes/shared.js:218` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:235` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:340` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
@@ -291,7 +291,7 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:2498` - too. FLAGGED: interior loot containers are the loot arc's -
 - `src/scenes/worldModes.js:2605` - string is the seam that was a FLAGGED null until this slice,
 - `src/scenes/worldModes.js:2680` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:3142` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
+- `src/scenes/worldModes.js:3148` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
@@ -377,10 +377,9 @@ combat line numbers below are refreshed with it.
 - `src/ui/messageBox.js:35` - FLAGGED: the scrolling variant (a label taller than MaxTextHeight
 - `src/ui/messageBox.js:155` - so the strip never rides higher than that. FLAGGED as a
 - `src/ui/nativeInventory.js:41` - still said Equip and equip-after-transfer were FLAGGED after U8g
-- `src/ui/nativeInventory.js:134` - *  is 0 until those effect channels exist (FLAGGED). Exported so the
-- `src/ui/nativeInventory.js:256` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
-- `src/ui/nativeInventory.js:523` - field is INTERIM-pending with the local Remove split.
-- `src/ui/nativeInventory.js:687` - the panel from the slot under the cursor - FLAGGED as that,
+- `src/ui/nativeInventory.js:147` - *  is 0 until those effect channels exist (FLAGGED). Exported so the
+- `src/ui/nativeInventory.js:283` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
+- `src/ui/nativeInventory.js:550` - field is INTERIM-pending with the local Remove split.
 - `src/ui/nativeTalk.js:237` - lands with the Tell-me-about slice (FLAGGED).
 - `src/ui/nativeTalk.js:259` - B5-6: the four pages that were INTERIM no-ops. Each falls back
 - `src/ui/paperDoll.js:18` - Human +2 - Breton INTERIM), record = playerTextureRecord

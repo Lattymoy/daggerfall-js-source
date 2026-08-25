@@ -4671,3 +4671,74 @@ resets at N can only reach N, so it is the same program) and the
 caster split's `=== false` (`liveBundles` has already normalised the
 field, so nothing undefined reaches that line; the pin that matters is
 one layer down, and it is there).
+
+## U47 - THE HOVER INFO PANEL, and two doors that leaked (2026-08-25)
+
+Three rows off the Ledger in one sitting, and all three were the same
+shape: something drawn, bound or built, with nothing on the other end.
+
+**THE INFO PANEL.** U25 drew the 37×32 cutout at (223, 145) and filled
+it from the last Info-mode *click*. DFU fills it from **hover** —
+`OnMouseEnter` on every list slot, on the paperdoll's item layers, and
+on the gold button. U37 built the mouse-move seam this waited on;
+what was left was the window growing its own `hover(vx, vy)`, and now
+it has one.
+
+**THE PANEL IS STICKY, and that is the part worth stating.** DFU has
+no `OnMouseLeave` arm at all — only two `SetText(empty)` sites, a tab
+change (:814-816) and a window push (:663-664). So moving off an item
+leaves the panel exactly as it was, which is what makes a panel 37
+pixels wide usable: you read it *after* your hand has moved on.
+
+Pinning that took a second pass. The obvious pin hovers over dead
+space and asserts nothing changed — and it passes whether or not the
+code clears the panel on a miss, because dead space never reaches the
+miss branch. The arm that matters is an **empty slot inside the
+list**: DFU's scroller raises `OnHover` only for a slot that *holds*
+an item, so slot 2 of a two-item bag is the branch a clearing bug
+would take. Same correction for the box pin — hovering on *nothing*
+behind a box proves nothing; hovering squarely on a **different item**
+does.
+
+**THE GOLD BUTTON'S LINES ARE GENERATED,** not TEXT.RSC:
+Internal_Strings `goldAmount` and `goldWeight`, with a **conditional**
+format — `weight.ToString(weight % 1 == 0 ? "F0" : "F2")`. A whole
+number of kilograms shows no decimals, anything else shows exactly
+two. At 0.0025 kg a coin, that is every multiple of 400 gold and
+nothing between.
+
+**A DOOR THAT LEAKED THE POINTER.** `townTalk.pointerdown` tested
+`overlay?.click` where it should test `overlay`, so a click on an open
+window that happens to have no click handler fell **through** to the
+host's `requestLook` and grabbed pointer lock out from under the menu
+the player was reading. `worldModes` carries the corrected shape with
+the reasoning spelled out beside it; this host was the copy that never
+got it (AUDIT 18, routed 62). The pin has to read the guard *inside*
+`pointerdown`: `hover` a few lines below carries the same line, and
+the first draft matched that one while the defect was restored.
+
+**AND THREE KEYS THE BROWSER WOULD STEAL.** F5 reloads, F6 moves
+focus, F11 goes fullscreen — and all three are DFU bindings
+(CharacterSheet, Inventory, QuickLoad). Each host kept its own
+two-key list; F11 was in none of them. One list now,
+`BROWSER_STEALS` in `ui/input.js`, called **first** by every host that
+registers a keydown. Swallowing is deliberately *not* conditional on
+the host having a destination — that is exactly what left the exterior
+host out, since it has nothing to quickload and must still not go
+fullscreen, and `worldModes` returns before any `preventDefault` in a
+dozen places.
+
+**PROBED LIVE** (`tools/hoverPanelProbe.mjs`) with a real mouse: F6
+opens the real inventory, a `page.mouse.move` onto list slot 0 fills
+the panel with **Saber**, moving to dead space leaves it there, the
+gold button takes it, and a click on the Ingredients tab empties it.
+That is the seam this proves rather than the law: `townTalk`'s hover
+channel has gated on `overlay?.hover` since U37, so the inventory was
+the window it silently skipped — and a method nothing calls is the
+failure this project keeps finding.
+
+Pins: 4 added to `nativeinventory.test.js`, two existing pins re-aimed
+(I4's right-click seam and AUDIT 23's hosts-6 swallow, both of which
+named a *spelling* of a law that now lives one file over). 7
+mutations, 7 dead — three of them only after the pins that should have
+caught them were rewritten.
