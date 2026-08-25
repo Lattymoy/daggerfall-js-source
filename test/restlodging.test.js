@@ -1655,3 +1655,44 @@ test('S40: a window that clears the slot from INSIDE its own input does not cras
     assert.doesNotMatch(h, /\bif \(interiorOverlay\.done\)/, `${f}: unguarded interiorOverlay drain`);
   }
 });
+
+
+test('S40/merge: a rest REPLACED in the slot still clears its flags', () => {
+  // DFU PAUSES a rest while another window is on top - TickRest
+  // :362-365, and again at :397-400 with its own comment, "Checking
+  // for second time as quest tick above can perfectly align with rest
+  // ending". That second check exists because the sub-tick calls
+  // QuestMachine.Tick, which this merge finally ported - so a quest
+  // popup landing mid-rest became reachable in the same change.
+  //
+  // A single overlay slot cannot stack, so the port cannot pause: the
+  // incoming window REPLACES the rest. What it must not do is replace
+  // it silently, because `_close()` would never run and `IsResting`
+  // would stay raised for the rest of the session - no per-minute
+  // fatigue drain ever again, and held enchantments eating their items
+  // at 60 a round instead of 4.
+  const e = {
+    isPlayer: true, level: 1, health: 5, maxHealth: 10, magicka: 0, maxMagicka: 8,
+    fatigue: 0, stats: { strength: 50, endurance: 50, willpower: 50 }, skills: 20,
+    career: {}, skillUses: { [SKILLS.Medical]: 0 },
+  };
+  let slot = null;
+  const mount = (w) => {           // worldModes' mountInterior, verbatim shape
+    if (!w) return;
+    if (slot && slot !== w) slot.dispose?.();
+    slot = w;
+  };
+  mount(new RestWindow(createRestDeps(e, { advanceMinutes() {}, endLines: (id) => [`x${id}`] })));
+  slot.input('char:1'); slot.input('confirm');
+  assert.equal(e.isResting, true, 'a running rest holds the flag');
+  mount({ isQuestBox: true });     // a quest popup takes the slot
+  assert.equal(e.isResting, false, 'and the replaced window clears it');
+
+  // The two seams that can do the replacing both dispose.
+  const wm = src('src/scenes/worldModes.js');
+  assert.match(wm, /const mountInterior = \(w\) => \{\n\s+if \(!w\) return;\n\s+if \(interiorOverlay && interiorOverlay !== w\) interiorOverlay\.dispose\?\.\(\);/);
+  assert.match(wm, /if \(mode === 'interior'\) \{ mountInterior\(win\); return true; \}/,
+    'the quest box goes through it, not a raw assignment');
+  assert.match(src('src/scenes/townTalk.js'), /if \(overlay && overlay !== win\) overlay\.dispose\?\.\(\);/,
+    'townTalk has always had this shape - it is where the interior one came from');
+});

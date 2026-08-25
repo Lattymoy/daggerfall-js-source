@@ -2951,6 +2951,27 @@ the window for the tick and the drain and then paints whatever is in
 the slot NOW - which covers an emptied slot and a handed-on one at
 once, with no branch a test cannot reach.
 
+**THE MERGE, and the one gap porting the quest tick opened.** Three
+lanes shipped this in a day - V5, U48 and S40 - and the reconciliation
+kept the union rather than a winner; the Port-Ledger row lists it
+law by law. What is worth recording HERE is the gap that only existed
+after the merge. `TickRest` checks `uiManager.TopWindow != this`
+TWICE: once before the sub-tick (`:362-365`) and again after it
+(`:397-400`), with its own comment saying why - "Checking for second
+time as quest tick above can perfectly align with rest ending". The
+second check is about the quest tick, which this merge finally ported,
+so it became reachable in the same change.
+
+DFU PAUSES the rest and resumes it. A single overlay slot cannot
+stack, so the port cannot pause - the incoming window REPLACES the
+rest, and that is FLAGGED as the approximation it is. What it must not
+do is replace it SILENTLY: `_close()` would never run, `IsResting`
+would stay raised for the rest of the session, and with it gone would
+go every per-minute fatigue drain while held enchantments ate their
+items at 60 a round instead of 4. `mountInterior` disposes what it
+replaces now - the shape `townTalk.showOverlay` has always had - and
+the quest box goes through it rather than assigning the slot raw.
+
 Pins: 52 in `restlodging.test.js`, two of them END TO END - every law
 in this slice driven together through one host-shaped deps bag, from
 the key press to the wake. That is the closest thing to a live probe a

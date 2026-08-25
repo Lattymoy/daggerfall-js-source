@@ -294,7 +294,8 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:2653` - too. FLAGGED: interior loot containers are the loot arc's -
 - `src/scenes/worldModes.js:2783` - string is the seam that was a FLAGGED null until this slice,
 - `src/scenes/worldModes.js:2858` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:3469` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
+- `src/scenes/worldModes.js:3129` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
+- `src/scenes/worldModes.js:3490` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED

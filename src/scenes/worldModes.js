@@ -3112,7 +3112,28 @@ export function createWorldModes(host) {
    *  is unbuilt (the composer saves from the exterior and the dungeon
    *  contexts), and the pause window's SAVE button already answers
    *  DFU's cannot-save line rather than pretending. */
-  const mountInterior = (w) => { if (w) interiorOverlay = w; };
+  /** Mount a window in this host's ONE overlay slot, disposing whatever
+   *  it replaces - the shape townTalk.showOverlay has always had
+   *  (:243-247) and this seam did not.
+   *
+   *  It matters now that a rest window is mountable here. DFU pauses a
+   *  rest while another window is on top (TickRest :362-365, and again
+   *  at :397-400 because "quest tick above can perfectly align with
+   *  rest ending") and resumes it after. A single overlay slot cannot
+   *  stack, so the port cannot pause - the incoming window REPLACES
+   *  the rest. Without a dispose that replacement was silent AND
+   *  leaky: the rest simply stopped with no wake text, and because
+   *  `_close()` never ran, `IsResting` stayed raised for the rest of
+   *  the session - no per-minute fatigue drain ever again, and held
+   *  enchantments eating their items at 60 a round instead of 4.
+   *  FLAGGED: pause-and-resume is the DFU behaviour and a
+   *  single-slot host cannot have it; ending cleanly is the honest
+   *  approximation, not a claim to have ported it. */
+  const mountInterior = (w) => {
+    if (!w) return;
+    if (interiorOverlay && interiorOverlay !== w) interiorOverlay.dispose?.();
+    interiorOverlay = w;
+  };
 
   // CanRest's argument bag for INSIDE A BUILDING. `inTownOutside`
   // is a constant false here and that is the law, not a shortcut:
@@ -3618,7 +3639,13 @@ export function createWorldModes(host) {
      *  context has had an overlay slot since U14; nothing exported a
      *  way in. */
     showQuestOverlay(win) {
-      if (mode === 'interior') { interiorOverlay = win; return true; }
+      // Through mountInterior, so the window this REPLACES is disposed.
+      // A quest popup is the one thing that can take the slot from a
+      // running rest - the rest sub-tick calls QuestMachine.Tick, which
+      // is exactly what DFU's second `TopWindow != this` check
+      // (:397-400) exists for - and a raw assignment left the rest
+      // window's IsResting raised for the rest of the session.
+      if (mode === 'interior') { mountInterior(win); return true; }
       if (mode === 'dungeon' && dungeonCtx?.showOverlay) return dungeonCtx.showOverlay(win);
       return false;
     },
