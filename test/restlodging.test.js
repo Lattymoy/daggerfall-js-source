@@ -1211,3 +1211,94 @@ test('S40 endEarly: stopping a COMPLETED FullRest still says healed', () => {
   l.input('char:3'); l.input('char:2'); l.input('confirm');
   assert.equal(l.session.endEarly().textId, REST_TEXT.loiterDone);
 });
+
+
+test('S40: PopToHUD runs BEFORE RaiseSkills, so a rest-end level-up is not swallowed', () => {
+  // RestFinishedPopup_OnClose is `PopToHUD(); RaiseSkills();`
+  // (:728-732), in that order. Every host guards its onLevelUp with
+  // "only if the overlay slot is free" - and the slot still held THIS
+  // window at that moment, so the guard was false and the level-up
+  // screen never appeared. advancement.js then took its headless arm
+  // and dumped every point into the LOWEST stats, which is the exact
+  // defect AUDIT 21 hosts F3 fixed once already for the ticker path.
+  const order = [];
+  const w = new RestWindow(winDeps({
+    onClose: () => order.push('popToHUD'),
+    onRestFinished: () => order.push('raiseSkills'),
+  }));
+  w.input('char:1'); w.input('char:1'); w.input('confirm');
+  for (let i = 0; i < 5000 && w.state === 'resting'; i++) w.tick(REST_WAIT_PER_HOUR / 10 + 1e-9);
+  assert.equal(w.state, 'ended');
+  assert.deepEqual(order, []);
+  w.input('confirm');
+  assert.deepEqual(order, ['popToHUD', 'raiseSkills'], 'the slot is vacated FIRST');
+
+  // Every exit vacates - a window that leaves itself in the slot is a
+  // window the host paints forever.
+  for (const exit of [(x) => x.input('back'), (x) => x.dispose()]) {
+    const seen = [];
+    const v = new RestWindow(winDeps({ onClose: () => seen.push(1) }));
+    exit(v);
+    assert.deepEqual(seen, [1]);
+  }
+
+  // The three hosts that mount it supply the door, identity-guarded.
+  assert.match(src('src/scenes/worldModes.js'),
+    /onClose: \(\) => \{ if \(interiorOverlay\?\.isRestWindow\) interiorOverlay = null; \},/);
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.match(src(f), /onClose: \(\) => \{ if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\); \},/, f);
+  }
+  // ...and townTalk grew that door, with the caller's identity guard.
+  assert.match(src('src/scenes/townTalk.js'), /closeOverlay\(win = null\) \{\n\s+if \(!overlay \|\| \(win && overlay !== win\)\) return false;/);
+});
+
+test('S40: the window owns the POINTER, so no host grabs look under it', () => {
+  // townTalk.pointerdown bails on any overlay with no `click` (:595),
+  // after which world.js/exterior.js fall through to requestLook and
+  // grab pointer lock UNDER the open window - the camera then spins
+  // behind the rest panel. The two modal hosts refuse exactly that,
+  // and the seam they refuse through is the presence of this method.
+  const w = new RestWindow(winDeps());
+  assert.equal(typeof w.click, 'function');
+  assert.equal(w.click(), true, 'the window owns the click either way');
+
+  // A click on the running page STOPS the rest (StopButton_OnMouseClick
+  // :708-712), and on the end page closes it.
+  const r = new RestWindow(winDeps());
+  r.input('char:1'); r.input('char:2'); r.input('confirm');
+  assert.equal(r.state, 'resting');
+  r.click();
+  assert.equal(r.state, 'ended');
+  r.click();
+  assert.equal(r.done, true);
+
+  // ...and a refusal closes on a click too.
+  _resetForTests();
+  setValue('GUI', 'IllegalRestWarning', 'False');
+  const f = new RestWindow(winDeps({ restPlace: () => ({ inTownStrict: true }) }));
+  f.input('char:1');
+  assert.equal(f.state, 'refused');
+  f.click();
+  assert.equal(f.done, true);
+
+  // The header no longer claims a key re-route no host performs.
+  const w2 = src('src/ui/restWindow.js');
+  assert.doesNotMatch(w2, /the rest key\n\/\/ re-routed as 'back'/);
+  assert.doesNotMatch(src('src/scenes/dungeonContext.js'), /A second press\n\s+\/\/ routes through the overlay as 'back'/);
+});
+
+test('S40: the interior overlay seam DRAINS done, like the other three', () => {
+  // RestWindow sets `done` from inside tick() on two paths (the death
+  // exit and a missing endLines), and worldModes' seam ticked without
+  // draining - so such a window stayed painted over the world. The
+  // other three seams all drain and two call it not optional.
+  assert.match(src('src/scenes/worldModes.js'),
+    /if \(interiorOverlay\?\.done\) \{ interiorOverlay\.dispose\?\.\(\); interiorOverlay = null; \}/);
+  // The death path is the one that reaches it: _end() closes without
+  // ever entering the 'ended' state.
+  const w = new RestWindow(winDeps({ dead: () => true }));
+  w.input('char:1'); w.input('char:1'); w.input('confirm');
+  w.tick(0);
+  assert.equal(w.done, true, 'death ends the window from inside tick');
+  assert.equal(w.state, 'resting', 'and never through the ended page');
+});

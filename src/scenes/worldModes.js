@@ -2527,7 +2527,14 @@ export function createWorldModes(host) {
       // ended. The other three hosts tick through townTalk.frame and
       // dungeonContext.tickOverlay; this is the fourth.
       interiorOverlay.tick?.(dt);
-      if (_shopFont) interiorOverlay.draw(renderer, canvas, _shopFont, hudScale(canvas.width, canvas.height));
+      // S40: THE DONE-DRAIN, which the other three seams carry and two
+      // of them call not optional in so many words (townTalk.frame,
+      // dungeonContext.tickOverlay). A window may FINISH inside its
+      // own tick - RestWindow does, on the death path and on a missing
+      // endLines - and until now only overlayInput cleared this slot,
+      // so such a window stayed painted over the world.
+      if (interiorOverlay?.done) { interiorOverlay.dispose?.(); interiorOverlay = null; }
+      else if (_shopFont) interiorOverlay.draw(renderer, canvas, _shopFont, hudScale(canvas.width, canvas.height));
       else interiorOverlay = null;
     }
     return true;
@@ -3013,6 +3020,10 @@ export function createWorldModes(host) {
       playerEntity.rentedRooms = removeExpiredRooms(
         playerEntity.rentedRooms ?? [], Math.floor(worldMinutes()), sceneCache());
     },
+    // PopToHUD, before RaiseSkills can want the slot for a level-up
+    // screen. The U24 identity guard: a window that dispatches to
+    // another must not be nulled by its OWN onClose.
+    onClose: () => { if (interiorOverlay?.isRestWindow) interiorOverlay = null; },
     say,
     onLevelUp: () => {
       say('You have gained a level!');

@@ -2811,12 +2811,38 @@ moment; `UpdateNpcPresence` (`:277-280`), which the port has no
 NPC-presence pass for at all; and `RaiseOnSleepTickEvent`, which has
 no consumer in DFU's own tree either.
 
-Pins: 43 in `restlodging.test.js`, two of them END TO END - every law
+**And three from the window's LIFECYCLE rather than its laws, one of
+them a level lost outright.** `RestFinishedPopup_OnClose` is
+`PopToHUD(); RaiseSkills();` (`:728-732`) IN THAT ORDER, and the port
+ran them the other way round. Every host guards its `onLevelUp` with
+"only if the overlay slot is free" - and at the moment `RaiseSkills`
+ran, the slot still held the finishing rest window. So a level crossed
+during a long sleep never showed its screen: `advancement.js` took its
+headless arm and dumped every attribute point into the LOWEST stats.
+That is AUDIT 21 hosts F3's defect arriving by a second door, and the
+fix is DFU's own order - the window vacates the slot first, through
+the identity-guarded `onClose` idiom this port already uses, with
+`townTalk` growing the `closeOverlay` door it never had.
+
+Second: `RestWindow` had no `click`, and `townTalk.pointerdown` bails
+on any overlay without one - after which both outdoor hosts fall
+through to `requestLook` and grab pointer lock UNDER the open window,
+spinning the camera behind the rest panel. The two modal hosts refuse
+exactly that, and the seam they refuse through is the presence of the
+method. It has one now, and it does what DFU's message boxes do.
+
+Third: `worldModes`' interior seam ticked the window and never drained
+`done` - the one seam of four without the drain, which the other three
+carry and two call not optional in so many words. `RestWindow` sets
+`done` from inside `tick()` on the death path, so that window stayed
+painted over the world.
+
+Pins: 46 in `restlodging.test.js`, two of them END TO END - every law
 in this slice driven together through one host-shaped deps bag, from
 the key press to the wake. That is the closest thing to a live probe a
 machine with no ARENA2 data can run, and it is here because a slice
 whose parts each pass and whose whole was never run is exactly what a
-probe catches. 75 mutations, 75 dead. The first
+probe catches. 80 mutations, 80 dead. The first
 pass left four alive and all four were the same failure of nerve: a
 pin that named a thing instead of exercising it. The host pins matched
 `act === 'Rest'`, which survives `if (false && act === 'Rest')`, so

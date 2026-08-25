@@ -688,6 +688,22 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     /** AUDIT 21 (hosts lane, F6): the live overlay, so a death presenter can
      *  refuse to stack a second death screen on the first. */
     get overlay() { return overlay; },
+    /** S40: PopToHUD. A window that must VACATE the slot before it
+     *  hands control on - the rest window does, because DFU pops to
+     *  the HUD before RaiseSkills and the level-up screen it can raise
+     *  needs this slot free - has had no door to do it through. The
+     *  identity guard is the caller's: pass the window that is
+     *  closing, and a slot already holding something else is left
+     *  alone. Runs the same drain `frame` does, callback included. */
+    closeOverlay(win = null) {
+      if (!overlay || (win && overlay !== win)) return false;
+      const cb = _onOverlayClosed;
+      _onOverlayClosed = null;
+      overlay.dispose?.();
+      overlay = null;
+      cb?.();
+      return true;
+    },
     get mode() { return getInteractionMode(); },
     get directory() { return directory; },   // E2: the hosts name shops for the browse window by buildingKey
     get locationName() { return cityName(); },   // G2: %cn for the court boxes (MacroHelper.CityName)

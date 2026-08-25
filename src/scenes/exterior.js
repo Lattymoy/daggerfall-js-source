@@ -643,6 +643,10 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (spawnGuards) _crimeResponse();
     },
     endLines: (id) => townTalk.lines(id),
+    // PopToHUD (:730) runs BEFORE RaiseSkills (:731), and onLevelUp
+    // below only mounts when the slot is free - so the window has to
+    // vacate it first or a rest-end level-up is silently swallowed.
+    onClose: () => { if (townTalk.overlay?.isRestWindow) townTalk.closeOverlay?.(); },
     say: (msg) => townTalk.say(msg),
     onLevelUp: () => {
       townTalk.say('You have gained a level!');

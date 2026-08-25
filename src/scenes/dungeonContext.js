@@ -2586,8 +2586,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     reportMotor(grounded, velY, yaw) { _grounded = grounded; _motorYaw = yaw; _motorState = `g:${grounded ? 1 : 0} vy:${velY.toFixed(1)} yaw:${yaw.toFixed(2)}`; },
     // U7: the rest key. Pre-rest gates (the classic order): enemies
     // nearby -> TEXT.RSC 354; swimming or airborne -> 355 "You
-    // cannot rest now."; else the rest window opens. A second press
-    // routes through the overlay as 'back' (ends a running rest).
+    // cannot rest now."; else the rest window opens. S40 struck the
+    // sentence that followed, which said a second press "routes
+    // through the overlay as 'back' (ends a running rest)": it does
+    // not, and never did. With a window up, overlayAction turns any
+    // single character into `char:<k>`, so KeyR arrives as 'char:r',
+    // which the running page ignores and the selection page reads as
+    // rest-for-a-while. DFU's toggle-close binding is FLAGGED in
+    // ui/restWindow.js' header.
     toggleRest() {
       if (activeOverlay) return;
       // S40: the gate itself moved to systems/restSession.js. It was

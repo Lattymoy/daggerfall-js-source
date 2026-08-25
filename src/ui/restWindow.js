@@ -5,9 +5,19 @@
 // modes, and the running page showing hours passed + live vitals
 // while the RestSession (systems/restSession.js) drives the clock.
 // The world keeps running under the overlay - foes approach and can
-// break the rest, exactly the DFU shape. Escape (or the rest key
-// re-routed as 'back') ends a running rest with its finish text;
-// the end page is click/key-to-close.
+// break the rest, exactly the DFU shape. Escape ends a running rest
+// with its finish text; the end page closes on a click or a key.
+//
+// FLAGGED: DFU's Update also closes on the TOGGLE BINDING - the key
+// that opened the window (:189-198, `toggleClosedBinding`, captured at
+// OnPush) ends the rest or closes the page. The port cannot: with a
+// window up every host routes keys through overlayAction
+// (ui/input.js), whose first line turns any single character into
+// `char:<k>`, so KeyR arrives as 'char:r' and on the selection page
+// STARTS a rest-for-a-while instead of closing. A per-window
+// toggle-close binding is a UI-arc facility, not a rest law, so this
+// is named rather than bolted on here. The comment that used to stand
+// on this line claimed the re-route already existed.
 
 import { drawText, measureText } from './text.js';
 import {
@@ -89,6 +99,18 @@ export class RestWindow {
     this.done = true;
     this.deps.setResting?.(false);
     this.deps.setLoitering?.(false);
+    // RestFinishedPopup_OnClose is `PopToHUD(); RaiseSkills();`
+    // (:728-732) IN THAT ORDER, and the order is load bearing: the
+    // level-up screen RaiseSkills can raise needs the host's overlay
+    // slot, and every host guards its onLevelUp with "only if the slot
+    // is free". The window cannot clear a host's slot itself, so it
+    // asks - the identity-guarded onClose idiom this port already uses
+    // for every window that dispatches to another. Without it the slot
+    // still held THIS window at that moment, the guard was false, and
+    // the level-up screen never appeared: advancement.js took its
+    // headless arm and dumped every point into the LOWEST stats, which
+    // is the exact defect AUDIT 21 hosts F3 fixed for the ticker path.
+    this.deps.onClose?.();
   }
 
   dispose() { this._close(); }
@@ -283,6 +305,20 @@ export class RestWindow {
    *  tickOverlay comment each record for a different clock. `tickRest`
    *  stays as the old name for callers that still use it; it must not
    *  be called IN ADDITION to tick, or the rest runs at double speed. */
+  /** The pointer half. Two reasons this exists, and neither is
+   *  cosmetic. DFU's message boxes close on a click, so the end page
+   *  and the refusal must; and townTalk.pointerdown bails on any
+   *  overlay with no `click`, after which the host calls requestLook
+   *  and GRABS POINTER LOCK under the open window - the camera then
+   *  spins behind the rest panel. The two modal hosts already refuse
+   *  exactly that; the two outdoor ones could not, because the seam
+   *  they refuse through is the presence of this method. */
+  click() {
+    if (this.state === 'ended' || this.state === 'refused') this.input(this.state === 'ended' ? 'confirm' : 'back');
+    else if (this.state === 'resting') this.input('back');   // StopButton_OnMouseClick (:708-712)
+    return true;
+  }
+
   tick(dt) {
     if (this.state !== 'resting') return;
     const r = this.session.tick(dt);
