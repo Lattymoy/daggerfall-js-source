@@ -159,6 +159,36 @@ test('every wizard state belongs to exactly one rail stage', () => {
   }
 });
 
+// ── THE KEYBOARD ─────────────────────────────────────────────────
+// Live proof is tools/enhancedChargenProbe.mjs, which walks the whole
+// wizard to `done` without a pointer event. What a sweep holds is the
+// three things that would rot quietly.
+test('the wizard routes keys through the SHARED table, not a second map', () => {
+  const src = readFileSync(new URL('../src/ui/enhancedChargen.js', import.meta.url), 'utf8');
+  assert.match(src, /import \{ overlayAction \} from '\.\/input\.js'/,
+    'a second key map is how the two skins come to disagree about what Escape does');
+  assert.match(src, /const action = overlayAction\(e\);/);
+  assert.match(src, /flow\.input\(action\)/, 'and the FLOW answers it, not this file');
+});
+
+test('the key handler has an owner - it is removed on unmount', () => {
+  const src = readFileSync(new URL('../src/ui/enhancedChargen.js', import.meta.url), 'utf8');
+  assert.match(src, /addEventListener\('keydown'/);
+  const unmount = src.slice(src.indexOf('unmount()'));
+  assert.match(unmount, /removeEventListener\('keydown'/,
+    'a window-level listener outlives the DOM it was mounted for');
+});
+
+test('a real text field keeps its own keys', () => {
+  const src = readFileSync(new URL('../src/ui/enhancedChargen.js', import.meta.url), 'utf8');
+  const fn = src.slice(src.indexOf('function onKey'), src.indexOf('\n}', src.indexOf('function onKey')));
+  assert.match(fn, /tagName === 'INPUT'/,
+    'the name boxes feed the flow themselves - a stolen key is a doubled letter');
+  // and it must not swallow keys it did not use, or Tab stops working
+  assert.ok(fn.indexOf('if (!action) return;') < fn.indexOf('preventDefault'),
+    'preventDefault must come AFTER the table has claimed the key');
+});
+
 // ── THE REAL CORPUS ──────────────────────────────────────────────
 test('the real TAMRIEL2 traces to nine regions', { skip: skipReal }, () => {
   const data = new Uint8Array(readFileSync(join(arena2, 'TAMRIEL2.IMG')));

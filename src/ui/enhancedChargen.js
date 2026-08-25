@@ -46,6 +46,7 @@ import { generateBackstory } from '../systems/biography.js';
 import { FACES_PER_RACE } from '../systems/races.js';
 import { bitmapCanvas } from './bitmapCanvas.js';
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
+import { overlayAction } from './input.js';
 import { SKILL_NAMES } from '../systems/skills.js';
 import { NAME_MAX_CHARACTERS as NAME_MAX } from './chargen.js';
 import { traceProvinces, MAP_W, MAP_H, PROVINCE_NAMES } from './provinceMap.js';
@@ -90,6 +91,7 @@ let loadFaces = null;   // (raceKey, gender) => Promise<DFBitmap[]>
 let provinces = [];
 let hover = null;      // the race key under the cursor, for the readout
 let onExit = () => {};
+let keyHandler = null;
 
 // ── THE MAP ──────────────────────────────────────────────────────
 
@@ -925,6 +927,39 @@ export function attachChargenText(f, textRsc) {
 }
 
 /**
+ * THE KEYBOARD, and it is not an extra.
+ *
+ * The classic wizard answers a full keyboard - twenty-two back arms,
+ * confirm, up/down, typing, the stat and skill spinners - and while
+ * ENHANCED is the default skin, a pointer-only wizard is a regression
+ * against the path it replaced. U14 made this same point in reverse
+ * when the dungeon host had no pointer seam and chargen there was
+ * keyboard-only.
+ *
+ * It is wired through overlayAction, the SHARED table ui/input.js
+ * already owns and the classic window already routes through - not a
+ * second key map. So the flow's own arms answer, every one of them,
+ * and a key does here exactly what it does there.
+ *
+ * TWO THINGS IT MUST NOT DO. It must not steal a key from a real text
+ * field: the name boxes feed the flow themselves, so a keystroke
+ * landing in one would be typed twice. And it must not preventDefault
+ * on a key it did not use, or Tab stops moving focus and the screen
+ * becomes unreachable to anyone driving it that way.
+ */
+function onKey(e) {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const t = e.target;
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+  const action = overlayAction(e);
+  if (!action) return;
+  e.preventDefault();
+  flow.input(action);
+  if (flow.done) { onExit('done'); return; }
+  paint();
+}
+
+/**
  * Mount the wizard. `picker` is TAMRIEL2's DFBitmap when the caller
  * has it - absent, the map degrades to the named list and the wizard
  * runs on regardless.
@@ -947,11 +982,24 @@ export function mountEnhancedChargen(hostEl, {
     console.warn('[chargen] TAMRIEL2 would not trace; the map falls back to a list', e);
     provinces = [];
   }
+  keyHandler = onKey;
+  globalThis.addEventListener('keydown', keyHandler);
   paint();
   globalThis.__chargen = () => JSON.stringify({
     state: flow.state, race: flow.race.key, gender: flow.gender,
     stage: stageOf(flow.state), provinces: provinces.length,
     confirming: !!flow.raceConfirm,
   });
-  return { repaint: paint, unmount() { hostEl.innerHTML = ''; delete globalThis.__chargen; } };
+  return {
+    repaint: paint,
+    unmount() {
+      // EVERY LISTENER HAS AN OWNER. A window-level keydown outlives
+      // the DOM it was mounted for, so a wizard torn down without this
+      // keeps eating keys for the whole session.
+      if (keyHandler) globalThis.removeEventListener('keydown', keyHandler);
+      keyHandler = null;
+      hostEl.innerHTML = '';
+      delete globalThis.__chargen;
+    },
+  };
 }

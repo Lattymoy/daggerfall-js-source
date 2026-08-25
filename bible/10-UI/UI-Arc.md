@@ -28,10 +28,11 @@ a wiring afternoon: the three hosts mount chargen through
 `createChargenWindow`, which returns a CANVAS overlay for
 `townTalk.showOverlay`, and this wizard is DOM over the canvas - so
 that one seam has to mount either, with `dungeonContext`'s own
-construction named too (the FOUR HOSTS rule). And the wizard is
-POINTER-ONLY where the classic flow answers twenty-two back arms and a
-full keyboard; that is a regression against the classic path while
-enhanced is the default, and it is its own pass.
+construction named too (the FOUR HOSTS rule). THE KEYBOARD IS DONE (2026-08-25): keys route through overlayAction,
+the shared table ui/input.js already owns, so the flow's own arms
+answer and a key does here exactly what it does on the classic screen.
+tools/enhancedChargenProbe.mjs walks the whole wizard to `done` with
+no pointer event at all.
 
 THE FLOW IS NOT REBUILT. `ui/chargen.js`'s ChargenFlow carries every
 law - the stage order in the enum's own sequence, the pools, the
