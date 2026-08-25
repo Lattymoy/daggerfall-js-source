@@ -13,7 +13,7 @@ import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
 import { convertTilemap } from '../world/terrainSurface.js';
 import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
-import { PlayerMotor } from '../player/motor.js';
+import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // U48: the rest gate's ONE home
 import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible exterior arrows
@@ -57,7 +57,11 @@ import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';   // G2
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
-import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet (LevelUpScreen: AUDIT 21 hosts F3)
+import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';
+import { RestWindow } from '../ui/restWindow.js';   // U48: rest above ground at last
+import { canRest, restDecision, ILLEGAL_REST_WARNING } from '../systems/restSession.js';   // U48: the dispatch + V5's CanRest
+import { getBool } from '../systems/settings.js';   // U48: GUI/IllegalRestWarning gates the two-step
+import { setEnemyAlert } from '../systems/encounters.js';   // U48: the enemy arm RAISES it before refusing   // U8a: the native char sheet (LevelUpScreen: AUDIT 21 hosts F3)
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
 import { charSheetHooks } from '../ui/charSheetNav.js';   // U32: the sheet's four navigation buttons
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
@@ -82,7 +86,7 @@ import { ChoiceWindow } from '../ui/talkWindow.js';   // V1: the infection popup
 import { startInfection, liveInfection } from '../systems/infection.js';   // V1 probe surface: the bite and the lifecycle
 import { diseaseCount } from '../systems/diseases.js';
 import { MINUTES_PER_DAY } from '../systems/gameDate.js';
-import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
+import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -91,7 +95,7 @@ import {
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { setWeather, currentWeather, tickWeather } from '../systems/weatherSim.js';   // W1: the live weather state
 import { SEASON } from '../world/climateSwaps.js';
-import { addGold } from '../systems/court.js';   // U10 probe surface
+import { addGold, CRIMES } from '../systems/court.js';   // U10 probe surface; U48: camping in a town is Vagrancy
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';   // I2: the rebindable registry
@@ -813,6 +817,93 @@ export async function bootExterior(canvas, renderer, params, status) {
   // reads it, the ladder below calls it, and routeLargeHudClick hands
   // it a click. Every member is an arrow, so nothing here is evaluated
   // before the helpers it names exist.
+  // U48 - THE FOURTH HOST. V5 wired the world, interior and dungeon
+  // hosts to CanRest and its own pin says "every host that can hold a
+  // player now has a rest arm" - this page holds one and had none, so
+  // KeyR in the single-location ?town view still did nothing at all.
+  // The deps come from the ONE factory; only the two halves a host can
+  // uniquely answer are written here. This page is always ON a
+  // location and always outdoors, so CanRest's town arm is the only
+  // one it can ever take, and a Rapid Healing career heals under the
+  // open sky.
+  const exteriorRestDeps = createRestDeps(playerEntity, {
+    say: (msg) => townTalk.say(msg),
+    onLevelUp: () => { townTalk.say('You have gained a level!'); townTalk.showOverlay(new LevelUpScreen(playerEntity)); },
+    textLines: (id) => townTalk.lines(id),
+    inside: () => false,
+    day: () => !isNight(minuteNow()),
+    // AreEnemiesNearby, the resting variant. This page has one live
+    // hostile pool: the city watch, which answers for itself.
+    enemiesNearby: () => (cityGuards?.activeCount?.() ?? 0) > 0,
+    advanceMinutes: (n) => { playerTicker.advance(n); },
+  });
+  /** U48 - the DISPATCH (DaggerfallUI.cs:651-688), which asks about
+   *  enemies, water and the ground and about nothing else. The enemy
+   *  arm RAISES THE ALERT before refusing (:654-655) - it is what arms
+   *  the rest-encounter roll, so the attempt costs something even when
+   *  it fails. */
+  function exteriorRestDispatch() {
+    return restDecision({
+      enemiesNearby: exteriorRestDeps.enemiesNearby(),
+      swimming: !!player.swimming,
+      // StartRestGroundedCheck, not the raw flag: the fallback ray is
+      // what lets a near-ground levitator rest, and on a page whose
+      // motor is never stepped it is what lets anyone rest at all -
+      // `grounded` sits at its initialiser `false` there.
+      grounded: startRestGroundedCheck(player.grounded, player.pos, collider),
+    });
+  }
+  function exteriorRestVerdict(alreadyWarned) {
+    // This page IS a location and its player is always outdoors, so
+    // IsPlayerInTown(true, true) is a constant here - there is no
+    // wilderness to step into and no building to step inside.
+    return canRest({ inTownOutside: true, inTownLocation: false, alreadyWarned });
+  }
+  function doExteriorRest(alreadyWarned) {
+    const v = exteriorRestVerdict(alreadyWarned);
+    if (v.crime) {
+      // The same door the pickpocket and the assault take.
+      playerEntity.crimeCommitted = CRIMES.Vagrancy;
+      if (v.spawnGuards) _crimeResponse();
+    }
+    if (!v.allowed) {
+      // plainLines: TEXT.RSC answers { text, center } rows and
+      // ChoiceWindow iterates STRINGS.
+      const lines = v.textId != null ? plainLines(townTalk.lines(v.textId)) : null;
+      if (lines) townTalk.showOverlay(new ChoiceWindow({ lines }));
+      return;
+    }
+    townTalk.showOverlay(new RestWindow(exteriorRestDeps));
+  }
+  function toggleExteriorRest() {
+    if (townTalk.overlayActive) return;
+    const d = exteriorRestDispatch();
+    if (d.kind !== 'rest') {
+      if (d.kind === 'enemies') setEnemyAlert(playerEntity, true, worldMinutes());
+      if (d.kind === 'blocked') return;   // a racial override says nothing at all
+      const lines = d.message ? [d.message] : plainLines(townTalk.lines(d.textId));
+      if (lines) townTalk.showOverlay(new ChoiceWindow({ lines }));
+      return;
+    }
+    // DaggerfallRestWindow's own two-step (:640-691): in a town's rect
+    // the buttons ask "It is illegal to camp in or near a city.
+    // Continue?" before calling through with alreadyWarned = true, and
+    // CanRest answers `alreadyWarned` itself - while registering
+    // Vagrancy and calling the watch EITHER WAY.
+    if (getBool('GUI', 'IllegalRestWarning') && exteriorRestVerdict(false).crime) {
+      townTalk.showOverlay(new ChoiceWindow({
+        lines: [ILLEGAL_REST_WARNING],
+        options: [
+          { code: 'KeyY', label: 'Y - yes', action: () => doExteriorRest(true) },
+          { code: 'KeyN', label: 'N - no', action: () => {} },
+          { code: 'Escape', label: 'Esc - no', action: () => {} },
+        ],
+      }));
+      return;
+    }
+    doExteriorRest(false);
+  }
+
   const hudCtx = {
     toggleCharSheet: () => townTalk.showOverlay(new CharSheet(playerEntity, charSheetHooks({
       entity: playerEntity,
@@ -832,6 +923,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     },
     // A2: the exterior automap (Actions.AutoMap outdoors,
     // DaggerfallUI.cs:633-650); this host always stands on a location.
+    toggleRest: () => toggleExteriorRest(),   // U48
     toggleAutomap: () => {
       const locId = `${dfLocation.regionIndex}:${dfLocation.name ?? locationName}`;
       townTalk.showOverlay(new ExteriorAutomapWindow({
@@ -883,6 +975,8 @@ export async function bootExterior(canvas, renderer, params, status) {
       // location. I2: through the registry, so M is rebindable like
       // every other action rather than a second hardcoded literal.
       if (act === 'AutoMap') { hudCtx.toggleAutomap(); return; }
+      // U48: Actions.Rest (KeyR), bound since I1 and read by one host
+      if (act === 'Rest') { hudCtx.toggleRest(); return; }
     }
     // A2: the exterior automap (Actions.AutoMap outdoors,
     // DaggerfallUI.cs:633-650); this host always stands on a location.

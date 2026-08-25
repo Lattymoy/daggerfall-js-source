@@ -62,6 +62,53 @@ export const remainingHoursRented = (room, nowMinutes) =>
   (room ? Math.trunc((room.expiryMinutes - nowMinutes) / 60) : -1);
 
 /**
+ * U48 - THE REST DISPATCH (DaggerfallUI.cs:651-688), which is the
+ * question ABOVE CanRest: not where the player may sleep, but whether
+ * the window opens at all.
+ *
+ * IT HAS NO SCENE GATE. The `dfuiOpenRestWindow` arm asks about
+ * ENEMIES, SWIMMING and the GROUND, and about nothing else. V5 ported
+ * CanRest and wired three hosts to it; this ladder still lived inline
+ * inside dungeonContext, so above ground a player could open the rest
+ * window while swimming, while falling, and with a foe in the street.
+ *
+ * FOUR THINGS IN ORDER, and the order is the law:
+ *
+ * 1. ENEMIES OUTRANK THE WATER, because DFU's is an if/else-if chain -
+ *    and it matters, because only this arm RAISES THE ALERT (:654-655),
+ *    which is what arms the rest-encounter roll. A player who tries to
+ *    rest with something nearby has paid for the attempt.
+ * 2. Swimming or airborne is 355. StartRestGroundedCheck is the
+ *    grounded half and lives in player/motor.js, its DFU home.
+ * 3. THE PREVENTED-REST REGISTRY (GameManager.GetPreventedRestMessage,
+ *    :641-653) and its EMPTY STRING, which is deliberate:
+ *    RegisterPreventRestCondition turns a null message into "" so a
+ *    caller can block rest without wording it, and the dispatch falls
+ *    back to 355 rather than showing a blank box. null is NOT "".
+ * 4. A RACIAL OVERRIDE REFUSES SILENTLY - RacialOverrideEffect
+ *    .CheckStartRest, "allow custom race to block rest (e.g. vampire
+ *    not sated)" - and it is LAST, so a swimming vampire is told about
+ *    the water, which is the arm they can act on.
+ *
+ * Answers { kind: 'rest' | 'enemies' | 'cannot' | 'prevented' |
+ * 'blocked' } with the textId or message the caller speaks.
+ */
+export function restDecision({
+  enemiesNearby = false, swimming = false, grounded = true,
+  preventedMessage = null, racialOverrideBlocks = false,
+} = {}) {
+  if (enemiesNearby) return { kind: 'enemies', textId: REST_TEXT.enemiesNearby };
+  if (swimming || !grounded) return { kind: 'cannot', textId: REST_TEXT.cannotRestNow };
+  if (preventedMessage !== null && preventedMessage !== undefined) {
+    return preventedMessage === ''
+      ? { kind: 'cannot', textId: REST_TEXT.cannotRestNow }
+      : { kind: 'prevented', message: preventedMessage };
+  }
+  if (racialOverrideBlocks) return { kind: 'blocked' };
+  return { kind: 'rest' };
+}
+
+/**
  * DaggerfallRestWindow.CanRest (:542-600), verbatim in shape.
  *
  * THE WHOLE TOWN HALF OF RESTING WAS UNPORTED until V5, and the

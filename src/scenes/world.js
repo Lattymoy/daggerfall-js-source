@@ -43,7 +43,7 @@ import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 // finished since U7; what was missing was a host outside the dungeon
 // that opens one, and CanRest's whole town half.
 import { RestWindow } from '../ui/restWindow.js';
-import { canRest, REST_TEXT, ILLEGAL_REST_WARNING } from '../systems/restSession.js';
+import { canRest, restDecision, REST_TEXT, ILLEGAL_REST_WARNING } from '../systems/restSession.js';   // U48: the DISPATCH above CanRest
 import { isHouseOwned } from '../systems/banking.js';   // H1: the quest residence filter
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
 import { CRIMES } from '../systems/court.js';
@@ -56,7 +56,7 @@ import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: Create
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1
 import { SITE_TYPES } from '../systems/quest/place.js';   // B3: the respawn dispatch reads the site type
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
-import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE } from '../systems/encounters.js';   // X-slice
+import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert } from '../systems/encounters.js';   // X-slice; U48: the rest refusal raises the alert
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
@@ -102,7 +102,7 @@ import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../sy
 import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
-import { PlayerMotor } from '../player/motor.js';
+import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // U48: StartRestGroundedCheck's ONE home
 import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -970,7 +970,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // wilderness half. Both are closures over pools declared below.
     enemiesNearby: () => (cityGuards?.activeCount?.() ?? 0) > 0
       || exteriorFoes.foes.some((f) => !f.dead && (f.ai?.detected || (f.ai?._dist ?? Infinity) <= 12)),
-    advanceMinutes: (n) => { playerTicker.advance(n); },
+    // U48: the ENCOUNTER catch-up rides INSIDE the advance. This host
+    // is the only one with a mobile foe pool to spawn into, and its
+    // frame body returns at the overlay gate - so left to the frame, a
+    // whole rested night's rolls fire in one burst the moment the
+    // window closes, which is AUDIT 24 wave 30's finding about the
+    // magic rounds, one system over.
+    advanceMinutes: (n) => { playerTicker.advance(n); runEncounterTick(walkMode && playerSpawned ? player.pos : cam.pos); },
   });
   // The classic catch-up loop (PlayerEntity.Update:486-492): per
   // elapsed game minute, one intermittent roll; break on a spawn.
@@ -1708,8 +1714,36 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     townTalk.showOverlay(new RestWindow(exteriorRestDeps));
   }
+  /**
+   * U48 - THE DISPATCH ABOVE CANREST (DaggerfallUI.cs:651-688). V5
+   * ported CanRest and wired this host to it, but the ladder that
+   * runs BEFORE it still lived inline in dungeonContext alone - so up
+   * here the rest window opened while swimming, while falling, and
+   * with a foe in the street. Note the arm order: enemies outrank the
+   * water, and only the enemy arm RAISES THE ALERT, which is what
+   * arms the rest-encounter roll.
+   */
+  function exteriorRestDispatch() {
+    return restDecision({
+      enemiesNearby: exteriorRestDeps.enemiesNearby(),
+      swimming: !!player.swimming,
+      // StartRestGroundedCheck, not the raw flag: DFU's fallback ray
+      // is what lets a near-ground levitator rest, and up here it is
+      // also what lets a page whose motor is never stepped rest at
+      // all - `grounded` sits at its initialiser `false` there.
+      grounded: startRestGroundedCheck(player.grounded, player.pos, collider),
+    });
+  }
   function toggleExteriorRest() {
     if (townTalk.overlayActive) return;
+    const d = exteriorRestDispatch();
+    if (d.kind !== 'rest') {
+      if (d.kind === 'enemies') setEnemyAlert(playerEntity, true, worldMinutes());   // raised BEFORE the refusal (:654-655)
+      if (d.kind === 'blocked') return;   // a racial override says nothing at all
+      const lines = d.message ? [d.message] : plainLines(townTalk.lines(d.textId));
+      if (lines) townTalk.showOverlay(new ChoiceWindow({ lines }));
+      return;
+    }
     if (getBool('GUI', 'IllegalRestWarning') && exteriorRestVerdict(false).crime) {
       townTalk.showOverlay(new ChoiceWindow({
         lines: [ILLEGAL_REST_WARNING],
