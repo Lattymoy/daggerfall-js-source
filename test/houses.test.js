@@ -24,7 +24,7 @@ import { fileURLToPath } from 'node:url';
 import {
   createHouses, createBankAccounts, ownsHouse, ownedHouseKey, isHouseOwned,
   allocateHouseToPlayer, sellHouse, housesForSale, houseSellPrice, housePrice,
-  MAX_HOUSES_FOR_SALE, TRANSACTION_RESULT,
+  MAX_HOUSES_FOR_SALE, TRANSACTION_RESULT, purchaseHouse,
 } from '../src/systems/banking.js';
 import {
   receiveHouseDecision, claimHouse, HOUSE_FLAG_MASK, RECEIVE_HOUSE_RANK,
@@ -265,5 +265,155 @@ test('H1 DEFECT: a house on the market must carry its KEY - on REAL data', { ski
       allocateHouseToPlayer(houses, 0, { buildingKey: h.buildingKey, mapId: 1, location: name });
       assert.equal(ownsHouse(houses, 0), true, `${name}: and allocating it actually makes it yours`);
     }
+  }
+});
+
+// ---- H2: the purchase window ----
+
+test('H2: PurchaseHouse spends the purse FIRST and the account for the rest', () => {
+  // :408-427, and the mechanism is DeductGoldAmount's return value:
+  // it answers the SHORTFALL, not nothing (court.js:199 ports it,
+  // letters of credit and all). So `accountGold -= deductGold(amount)`
+  // subtracts exactly the remainder, and subtracts ZERO when the purse
+  // covered it. Written any other way this double-charges, or lets the
+  // account pay for a purchase the purse already made.
+  const purse = (start) => {
+    let g = start;
+    return { gold: () => g, deductGold: (n) => { const take = Math.min(g, n); g -= take; return n - take; } };
+  };
+  const buy = (start, account, radius) => {
+    const houses = createHouses(2);
+    const accounts = createBankAccounts(2);
+    accounts[0].accountGold = account;
+    const p = purse(start);
+    const r = purchaseHouse(accounts, houses, 0, { buildingKey: 5 }, p,
+      { meshRadius: radius, mapId: 1, location: 'Burgley' });
+    return { r, purse: p.gold(), account: accounts[0].accountGold, owns: ownsHouse(houses, 0) };
+  };
+  const price = housePrice(50);
+
+  const rich = buy(price + 1000, 5000, 50);
+  assert.equal(rich.r.result, TRANSACTION_RESULT.PURCHASED_HOUSE);
+  assert.equal(rich.purse, 1000, 'the purse paid all of it');
+  assert.equal(rich.account, 5000, 'and the account was not touched');
+  assert.equal(rich.owns, true);
+
+  const topUp = buy(1000, price, 50);
+  assert.equal(topUp.r.result, TRANSACTION_RESULT.PURCHASED_HOUSE);
+  assert.equal(topUp.purse, 0, 'the purse went first, to the last coin');
+  assert.equal(topUp.account, price - (price - 1000), 'and the account covered exactly the remainder');
+  assert.equal(topUp.owns, true);
+
+  const broke = buy(10, 10, 50);
+  assert.equal(broke.r.result, TRANSACTION_RESULT.NOT_ENOUGH_GOLD);
+  assert.equal(broke.purse, 10, 'a refused purchase spends NOTHING');
+  assert.equal(broke.account, 10);
+  assert.equal(broke.owns, false);
+
+  // :410-411 - key 0 is "no building", answered before anything moves
+  const none = buy(1e6, 1e6, 50);
+  assert.equal(none.r.result, TRANSACTION_RESULT.PURCHASED_HOUSE);
+  const zero = createHouses(2);
+  assert.equal(purchaseHouse(createBankAccounts(2), zero, 0, { buildingKey: 0 }, purse(1e6),
+    { meshRadius: 50 }).result, TRANSACTION_RESULT.NONE);
+  assert.equal(ownsHouse(zero, 0), false);
+});
+
+test('H2: the window lists, scrolls, selects and buys', async () => {
+  const { BankPurchaseWindow, priceRow, LIST_ROWS } = await import('../src/ui/bankPurchaseWindow.js');
+  const market = Array.from({ length: 14 }, (_, i) => ({ buildingKey: i + 1, meshRadius: 10 + i }));
+  let bought = null;
+  const win = new BankPurchaseWindow({
+    houses: () => market,
+    buy: (h) => { bought = h; return { result: TRANSACTION_RESULT.PURCHASED_HOUSE, amount: housePrice(h.meshRadius) }; },
+    rows: () => [{ text: 'Congratulations.', center: true }],
+    onClose: () => {},
+  });
+
+  // SelectNone (:298) - nothing is picked when it opens, and BUY on
+  // nothing does NOTHING AT ALL, which is DFU's own
+  // `if (SelectedIndex < 0) return;` and is why the button feels dead.
+  assert.equal(win.selected, -1);
+  win.input('Enter');
+  assert.equal(bought, null, 'BUY with no selection buys nothing and says nothing');
+  assert.equal(win.box, null);
+
+  // ten rows displayed, the price row verbatim
+  assert.equal(win.rows().length, LIST_ROWS);
+  assert.equal(win.rows()[0].text, priceRow(housePrice(10)));
+
+  // scrolling stops where the list does
+  assert.equal(win.canScrollUp(), false);
+  assert.equal(win.canScrollDown(), true);
+  for (let i = 0; i < 20; i++) win.wheel(1);
+  assert.equal(win.scroll, market.length - LIST_ROWS, 'the last full page, and no further');
+  assert.equal(win.canScrollDown(), false);
+  for (let i = 0; i < 20; i++) win.wheel(-1);
+  assert.equal(win.scroll, 0);
+
+  // the keyboard walk drags the view with the selection
+  for (let i = 0; i < LIST_ROWS + 2; i++) win.input('ArrowDown');
+  assert.equal(win.selected, LIST_ROWS + 1);
+  assert.ok(win.selected >= win.scroll && win.selected < win.scroll + LIST_ROWS, 'the pick stays on screen');
+
+  // ...and BUY takes the SELECTED house, not the first
+  win.input('Enter');
+  assert.equal(bought, market[LIST_ROWS + 1]);
+  assert.ok(win.box, 'the result is a message');
+  assert.equal(win.box.bought, true);
+  // a completed purchase closes the market with the box
+  win._dismissBox();
+  assert.equal(win.done, true);
+});
+
+test('H2: a refused purchase leaves the window open', async () => {
+  const { BankPurchaseWindow } = await import('../src/ui/bankPurchaseWindow.js');
+  const win = new BankPurchaseWindow({
+    houses: () => [{ buildingKey: 1, meshRadius: 10 }],
+    buy: () => ({ result: TRANSACTION_RESULT.NOT_ENOUGH_GOLD, amount: 999 }),
+    rows: () => [{ text: 'You do not have enough gold.', center: true }],
+    onClose: () => {},
+  });
+  win.input('ArrowDown');
+  win.input('Enter');
+  assert.equal(win.box.bought, false);
+  win._dismissBox();
+  assert.equal(win.done, false, 'you stay in the market to look at something cheaper');
+});
+
+test('H2: the bank routes BUY HOUSE to the window, and the refusals stay the law\'s', () => {
+  const bank = code('ui/bankWindow.js');
+  assert.match(bank, /if \(d\.kind === 'refuse'\) \{ this\._popup\(d\.result\); return; \}/,
+    'already-own-one and nothing-for-sale still answer through buyHouseDecision');
+  assert.match(bank, /this\.hooks\.openPurchase\?\.\(\)/, 'and a pick opens the purchase window');
+  // the host mounts it, restoring the bank when it closes (PushWindow/PopWindow)
+  const modes = code('scenes/worldModes.js');
+  assert.match(modes, /new BankPurchaseWindow\(\{/);
+  assert.match(modes, /onClose: \(\) => \{ if \(interiorOverlay === pw\) interiorOverlay = win; \}/,
+    'closing the market returns to the teller, not to the room');
+  // and the price comes from the model, not a guess
+  assert.match(modes, /function houseMeshRadius\(building\)/);
+  assert.match(modes, /arch\.getMesh\(rec\)\?\.radius/);
+});
+
+test('H2: a house on the real market resolves a model and a price', { skip: skipReal }, () => {
+  // GetHousePrice reads the building's own mesh radius, so the model
+  // has to be reachable from the building record. RMBLayout.cs:577 -
+  // BuildingSummary.ModelID is the FIRST 3D object of the building's
+  // subrecord - and locationBuildings carries it now.
+  const maps = new MapsFile();
+  maps.load(
+    new Uint8Array(readFileSync(join(ARENA2, 'MAPS.BSA'))),
+    new Uint8Array(readFileSync(join(ARENA2, 'CLIMATE.PAK'))),
+    new Uint8Array(readFileSync(join(ARENA2, 'POLITIC.PAK'))),
+  );
+  const blocksFile = new BlocksFile();
+  blocksFile.load(new Uint8Array(readFileSync(join(ARENA2, 'BLOCKS.BSA'))));
+  const loc = maps.getLocationByName('Daggerfall', 'Burgley');
+  const all = locationBuildings(loc.exterior?.buildings ?? [], layoutLocation(loc, maps, blocksFile).blocks);
+  assert.ok(all.length > 0);
+  for (const b of all) {
+    assert.equal(typeof b.modelIdNum, 'number', 'every building resolves its own model');
+    assert.ok(b.modelIdNum > 0);
   }
 });

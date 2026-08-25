@@ -10,8 +10,9 @@ tooltip, the guild service windows, the spell maker, the tavern, the bank
 teller, the classic TRAVEL MAP with its region pages and travel popup,
 the SPELLBOOK with its icons and the guilds' buy mode, ONE
 DISPATCH so those windows work in a building and not only outdoors,
-and the classic LARGE HUD with its eleven clickable panels).
-59 modules
+and the classic LARGE HUD with its eleven clickable panels, and the
+BANK'S HOUSE MARKET).
+60 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

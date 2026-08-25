@@ -270,34 +270,34 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:2917` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
 - `src/scenes/world.js:3224` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/world.js:3297` - (FLAGGED: exterior corpse containers are the loot arc's), so
-- `src/scenes/worldModes.js:277` - that makes a rest breakable in one. FLAGGED.
-- `src/scenes/worldModes.js:367` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
-- `src/scenes/worldModes.js:515` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
-- `src/scenes/worldModes.js:592` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
-- `src/scenes/worldModes.js:655` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
-- `src/scenes/worldModes.js:693` - credit instead. FLAGGED: there is nowhere to cash one yet, so
-- `src/scenes/worldModes.js:808` - Person placed in a dungeon is the quest machine's, FLAGGED
-- `src/scenes/worldModes.js:871` - trade window in Sell mode. The BANKING arm stays FLAGGED below;
-- `src/scenes/worldModes.js:949` - FLAGGED, each with the slice it waits on:
-- `src/scenes/worldModes.js:1107` - fixed ship scenes and stays FLAGGED, so those buttons keep
-- `src/scenes/worldModes.js:1111` - FLAGGED, and now at the RIGHT thing: the sell PRICE needs the
-- `src/scenes/worldModes.js:1283` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:1337` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
-- `src/scenes/worldModes.js:1395` - skip, the refusal line. Only the destination was a FLAGGED null,
-- `src/scenes/worldModes.js:1569` - been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:1606` - destination has been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:1625` - been FLAGGED nulls since G3.
-- `src/scenes/worldModes.js:1728` - with the trade window's own mode flow, the same INTERIM the
-- `src/scenes/worldModes.js:1930` - first (owned houses and quest buildings FLAGGED/seamed per
-- `src/scenes/worldModes.js:1938` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
-- `src/scenes/worldModes.js:2662` - too. FLAGGED: interior loot containers are the loot arc's -
-- `src/scenes/worldModes.js:2769` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:2844` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:3318` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
+- `src/scenes/worldModes.js:278` - that makes a rest breakable in one. FLAGGED.
+- `src/scenes/worldModes.js:369` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
+- `src/scenes/worldModes.js:517` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
+- `src/scenes/worldModes.js:594` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
+- `src/scenes/worldModes.js:657` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
+- `src/scenes/worldModes.js:695` - credit instead. FLAGGED: there is nowhere to cash one yet, so
+- `src/scenes/worldModes.js:810` - Person placed in a dungeon is the quest machine's, FLAGGED
+- `src/scenes/worldModes.js:873` - trade window in Sell mode. The BANKING arm stays FLAGGED below;
+- `src/scenes/worldModes.js:951` - FLAGGED, each with the slice it waits on:
+- `src/scenes/worldModes.js:1131` - fixed ship scenes and stays FLAGGED, so those buttons keep
+- `src/scenes/worldModes.js:1158` - FLAGGED, and now at the RIGHT thing: the sell PRICE needs the
+- `src/scenes/worldModes.js:1330` - FactionData; the port's pre-chargen INTERIM entity does not, and
+- `src/scenes/worldModes.js:1384` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
+- `src/scenes/worldModes.js:1442` - skip, the refusal line. Only the destination was a FLAGGED null,
+- `src/scenes/worldModes.js:1616` - been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:1653` - destination has been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:1672` - been FLAGGED nulls since G3.
+- `src/scenes/worldModes.js:1775` - with the trade window's own mode flow, the same INTERIM the
+- `src/scenes/worldModes.js:1977` - first (owned houses and quest buildings FLAGGED/seamed per
+- `src/scenes/worldModes.js:1985` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
+- `src/scenes/worldModes.js:2709` - too. FLAGGED: interior loot containers are the loot arc's -
+- `src/scenes/worldModes.js:2816` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:2891` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:3365` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
-- `src/systems/banking.js:525` - FLAGGED, with the slices they wait on:
+- `src/systems/banking.js:556` - FLAGGED, with the slices they wait on:
 - `src/systems/biography.js:14` - FLAGGED, exactly as DFU flags them: AE, AF and AO are parsed and
 - `src/systems/biography.js:81` - INTERIM, loud and the same one shopStock.js:115 carries: message
 - `src/systems/buildingLocks.js:48` - *                                   (FLAGGED: banking is a ledger row -
@@ -362,8 +362,9 @@ combat line numbers below are refreshed with it.
 - `src/systems/tradeModes.js:368` - FLAGGED, with the slices they wait on:
 - `src/systems/useItem.js:275` - lantern's and refuses when it would overflow. FLAGGED: DFU
 - `src/ui/automapWindow.js:20` - portals stay FLAGGED (systems/automap.js keeps the list); A2
-- `src/ui/bankWindow.js:26` - FLAGGED: the house and ship PURCHASE popups (DaggerfallBankPurchasePopUp)
-- `src/ui/bankWindow.js:187` - FLAGGED: 'pick' needs the building directory, so it refuses
+- `src/ui/bankPurchaseWindow.js:17` - FLAGGED, and it is presentation rather than function: the 104x91
+- `src/ui/bankPurchaseWindow.js:49` - display: [117, 12, 104, 91],   // FLAGGED: the 3D preview
+- `src/ui/bankWindow.js:28` - law's. The SHIP popup is still FLAGGED - it needs the two fixed
 - `src/ui/bookReader.js:25` - INTERIM, loud: lines draw in the host font at a fixed 10px row -
 - `src/ui/chargenArt.js:710` - *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
 - `src/ui/chargenArt.js:842` - *  from the difficulty law). FLAGGED: the dagger's one-second fading
