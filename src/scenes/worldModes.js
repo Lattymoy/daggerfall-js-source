@@ -42,6 +42,7 @@ import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
 import { maxFatigue, liveStat } from '../systems/statMods.js';   // AUDIT 23 (C5); U40: strength for MaxEncumbrance
 import { maxEncumbrance } from '../combat/formulas.js';   // U40: the letter-of-credit gate
 import { nearestLights } from '../world/cityLights.js';
+import { withCandleLight } from './magicCandle.js';   // X11: the Light effect's candle rides every host's light array
 import { lookAt, perspective, mirrorProjectionX } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { routeKey, actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
@@ -2670,7 +2671,7 @@ export function createWorldModes(host) {
       renderer.setLighting(new Float32Array(DUNGEON_AMBIENT), 0);
       renderer.setFog('exp', 0.005, 0, 0, new Float32Array([0, 0, 0]));
       renderer.setPointLights(
-        nearestLights(dungeonCtx.lights, cam.pos, 16, dungeonCtx.flicker.ranges),
+        withCandleLight(nearestLights(dungeonCtx.lights, cam.pos, 16, dungeonCtx.flicker.ranges), magic?.candleLight()),   // X11: the Light effect's candle
         new Float32Array(DUNGEON_LIGHT_COLOR));
       renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
       for (const d of dungeonCtx.drawList) renderer.drawMesh(d.mesh, d.matrix, dungeonCtx.texRemap);
@@ -2701,7 +2702,7 @@ export function createWorldModes(host) {
     renderer.setLighting(new Float32Array(isNight(worldMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT), 0);
     renderer.setFog('exp', 0.001, 0, 0, new Float32Array([0, 0, 0]));
     renderer.setPointLights(
-      nearestLights(interiorCtx.lights, cam.pos, 16, interiorCtx.lights.map((l) => l.range)),   // per-light range (DaggerfallInterior.AddLight); a scalar drops the per-record switch
+      withCandleLight(nearestLights(interiorCtx.lights, cam.pos, 16, interiorCtx.lights.map((l) => l.range)), magic?.candleLight()),   // per-light range (DaggerfallInterior.AddLight); a scalar drops the per-record switch   // X11: the Light effect's candle
       new Float32Array(INTERIOR_LIGHT_COLOR));
     interiorCtx.actions.update(dt);
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
@@ -2718,7 +2719,7 @@ export function createWorldModes(host) {
       // M2: the armed click's cast + missile flight, on the interior's
       // own collider (the engine's mode-aware raycast reads it).
       magic.firePending([...cam.pos], eyeDir());
-      magic.update(dt, player.pos);
+      magic.update(dt, player.pos, eyeDir(), player.height);   // X11: the candle hangs off the look direction
       if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, new Float32Array([0, 1, 0]));
     }
     if (interiorCtx.animateChars) interiorCtx.animateChars((performance.now() - _charT0) / 1000, _charAnimMode);

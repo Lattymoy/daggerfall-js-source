@@ -2082,7 +2082,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     for (const f of foes) if (!f.dead) killIfAnyLiveStatZero(f.entity, foeSinks(f), dt);
     collisionTriggers(dt, playerFeet, moveHeld);
     updateMissiles(dt, playerFeet);
-    magic.update(dt, playerFeet);   // M3: player spell missiles fly in the engine
+    // X11: the look direction and the capsule height ride along now -
+    // the engine hangs the Light effect's magic candle 1.4 units in
+    // FRONT of the player, and `-view[2..10]` is the same forward the
+    // cast above fires down.
+    magic.update(dt, playerFeet, [-view[2], -view[6], -view[10]], playerHeight);   // M3: player spell missiles fly in the engine
     // S19: WeaponManager's paralysis gate - weapons hide and the
     // machine holds while paralyzed (casting is NOT gated, verbatim:
     // DFU has no IsParalyzed check in the casting path).
@@ -2489,6 +2493,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     flatAnims,   // FA1: the host ticks the flats it draws
     hitEffects,  // AUDIT 24 (wave 39): and the blood splashes it draws
     lights,
+    /** X11: the Light effect's candle. The engine owns the candle (it
+     *  is the player's, and every casting host builds one engine); the
+     *  LIGHT has to be handed out because each host builds its own
+     *  point-light array. ?world reads magic.candleLight() directly
+     *  off its own engine; the standalone ?dungeon host only ever
+     *  holds this context, so it reads it here. */
+    candleLight: () => magic.candleLight(),
+    /** X11 probe seams: the FOE cast door and the per-foe sinks. Both
+     *  halves of a reflection live here - the spell going out and the
+     *  caster's own vitals doors it comes back through. */
+    castAtFoe: (spell, foe, caster = null) => magic.applySpellToFoe(spell, playerEntity.level, foe, caster),
+    foeSinksFor: (foe) => foeSinks(foe),
     flicker,
     waterQuads,
     startMarker: dungeon.startMarker,

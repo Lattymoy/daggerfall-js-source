@@ -233,11 +233,12 @@ test('X1 Spell Resistance: the effect is silently DROPPED, and a self-cast is ne
   // TargetTypes.CasterOnly is never resisted (:1256) - your own buff
   // cannot be refused by your own resistance
   assert.ok(incoming(e, 0).damage > 0, 'a self-cast lands');
-  // the catalog marks all seven live; Reflection still pends
-  for (const k of ['8,0', '8,1', '8,2', '8,3', '8,4', '20,255', '22,255']) {
+  // X11 closed the last gap in this row: the catalog now marks all
+  // EIGHT live, Reflection included - its re-target path is the host
+  // seam (scenes/hostMagic.js), which is where DFU puts it too.
+  for (const k of ['8,0', '8,1', '8,2', '8,3', '8,4', '20,255', '21,255', '22,255']) {
     assert.equal(effectByKey(k).ported, true, `${k} is live`);
   }
-  assert.equal(effectByKey('21,255').ported, false, 'Spell Reflection still pends its re-target path');
 });
 
 // ── X1d: Shield's damage pool ─────────────────────────────────────

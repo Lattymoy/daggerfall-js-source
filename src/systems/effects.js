@@ -105,6 +105,21 @@ export const BUFF_KINDS = Object.freeze({
   // (SupportDuration + SupportChance, no SupportMagnitude), which is exactly
   // this buff arm - so it needs no new machinery, only its row.
   '19,255': 'silenced',
+  // X11: LIGHT (Illusion 15,255). LightNormal.cs is duration-only,
+  // CasterOnly, an IncumbentEffect whose AddState stacks rounds and
+  // nothing else (:57-62) - this table's arm exactly. Everything the
+  // effect DOES is the magic candle it hangs in front of the player
+  // (StartLight/EndLight, :64-101), and a candle is a scene object,
+  // not effect state: the entry's PRESENCE is the light, the same way
+  // jumping/climbing above are IsEnhancedJumping/IsEnhancedClimbing.
+  // The hosts read it through magicCandle() below.
+  //
+  // DFU's StartLight has a `if (entityBehaviour == PlayerEntityBehaviour)`
+  // gate on the candle (:76-77): a Light cast on a FOE lands its
+  // rounds and lights nothing. The port keeps that where DFU keeps
+  // it - in the candle producer, not in this table - so a foe really
+  // does carry the effect and really does stay dark.
+  '15,255': 'light',
 });
 
 /** DaggerfallEntity.IsInvisible / IsBlending / IsAShade, verbatim:
@@ -307,6 +322,45 @@ export function spellResistanceChance(target) {
   }
   return 0;
 }
+// X11: the third member of the absorb/reflect/resist chain, and the
+// one the X2 note above said still pended. SpellReflection.cs is the
+// same SHAPE as SpellResistance - IncumbentEffect, duration+chance,
+// ChanceFunction.Custom (:33), AddState stacks rounds (:49-52) - so
+// its landing rides the same arm and its chance is frozen at cast
+// from the CASTER's level, exactly as resistance's is.
+export const isSpellReflectionEffect = (e) => e.type === 21 && classicSub(e) === 255;
+/** The live Spell Reflection chance. FindIncumbentEffect returns the
+ *  FIRST match and nothing else (EEM:666-678) - the X2 rule, which
+ *  cost the port a bug when resistance summed instead. */
+export function spellReflectionChance(target) {
+  for (const a of target?.activeEffects ?? []) {
+    if (a.kind === 'spellReflection' && !a.ended) return a.chance ?? 0;
+  }
+  return 0;
+}
+/** "Spell was reflected." - the HUD line TryReflection prints, and
+ *  only when the PLAYER is the one reflecting (EEM:1231-1233). */
+export const SPELL_REFLECTED_TEXT = 'Spell was reflected.';
+
+// X11: COMPREHEND LANGUAGES (Mysticism 44,255). Another Custom-chance
+// incumbent (ComprehendLanguages.cs:31-33), and the only one whose
+// consumer is a FORMULA rather than the incoming-spell chain:
+// CalculateEnemyPacification adds the live effect's ChanceValue to
+// the language roll (FormulaHelper.cs:377-380). combat/formulas.js
+// has carried a comment naming this seam since the C-slice.
+export const isComprehendLanguages = (e) => e.type === 44 && classicSub(e) === 255;
+/** The live Comprehend Languages bonus, or 0. Same first-match law. */
+export function comprehendLanguagesChance(target) {
+  for (const a of target?.activeEffects ?? []) {
+    if (a.kind === 'comprehendLanguages' && !a.ended) return a.chance ?? 0;
+  }
+  return 0;
+}
+
+// X11: DISINTEGRATE (Destruction 5,255). The shortest effect class in
+// DFU - chance-only, TargetFlags_Other, and a MagicRound that does one
+// thing: `entityBehaviour.Entity.SetHealth(0)` (Disintegrate.cs:44-53).
+export const isDisintegrate = (e) => e.type === 5 && classicSub(e) === 255;
 // S19: Paralyze (0, 255) - duration + CHANCE, no magnitude. The
 // entity is paralyzed while a 'paralyze' entry is live
 // (ConstantEffect sets IsParalyzed every frame; presence = paralyzed
@@ -554,6 +608,21 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
   // (EntityEffectManager :507-518), and an absorbed effect is skipped
   // entirely - `continue`, not a reduced magnitude.
   let totalAbsorbed = 0;
+  // X11: sourceBundle.ReflectedCount, and it is a BUNDLE field, not an
+  // effect one - TryReflection refuses a bundle already reflected once
+  // (:1210-1212) and IncrementReflectionCount mutates the source. Two
+  // consequences the port keeps verbatim, both counter-intuitive:
+  //   - a reflected bundle cannot bounce back again, so two reflecting
+  //     entities do not volley (DFU's own comment says so, and says it
+  //     could be raised later);
+  //   - the increment happens INSIDE the per-effect loop, so on a
+  //     multi-effect spell only the FIRST effect reflects. The whole
+  //     bundle goes back at the caster, and effects 2..n still land on
+  //     the original target as well. That is a real DFU quirk, not a
+  //     port shortcut: a Damage Health + Paralyze spell reflected by
+  //     its target hits the caster with BOTH and the target with the
+  //     paralyze. Recorded in Ledger B.
+  let reflectedCount = ctx.reflectedCount ?? 0;
   for (const e of spell.effects) {
     // U44: an entry with a string KEY is DFU's EffectEntry shape and
     // has no classic pair to carry, so it rides with type -1. Every
@@ -572,6 +641,32 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
         totalAbsorbed += sp;
         out.absorbed = (out.absorbed ?? 0) + sp;
         continue;
+      }
+      // X11: SPELL REFLECTION, SECOND in DFU's chain (TryReflection
+      // :1207-1244) - between absorption and resistance, and unlike
+      // both of those it does not drop the effect: it re-targets the
+      // WHOLE BUNDLE back at its caster, who then runs their own
+      // absorb/reflect/resist gauntlet on arrival.
+      //
+      // The re-target is the CALLER's, not this module's. DFU reaches
+      // the caster's EntityEffectManager and calls AssignBundle on it;
+      // the port's equivalent of "the caster's manager" is the host
+      // seam that holds both parties and their sinks - the same seam
+      // that already owns the pacify, dispel, teleport and identify
+      // answers. Doing it here instead would either lose the arrival
+      // messages (they hang off the caller's arms) or hand this module
+      // a foe pool it has no business knowing about.
+      //
+      // No CasterOnly test: DFU has none either, because "do not
+      // reflect spells from same caster onto self" (:1220-1222)
+      // already covers it - a CasterOnly spell has caster === target.
+      if (ctx.bypassSavingThrows !== true && reflectedCount === 0 && caster.entity !== target) {
+        const fc = spellReflectionChance(target);
+        if (fc > 0 && dice100(fc, rolls())) {
+          reflectedCount++;                        // sourceBundle.IncrementReflectionCount()
+          out.reflected = (out.reflected ?? 0) + 1;
+          continue;
+        }
       }
       // X1: SPELL RESISTANCE, third in DFU's chain (TryResistance
       // :1247-1270). On success the effect simply FAILS - no magicka,
@@ -623,6 +718,42 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
         else pushActive(target, { kind: 'continuousDamage', effect: e, casterLevel, caster: caster?.entity ?? null, element: spell.element, flag, saveScaled, roundsRemaining: rounds }, sinks, rolls);
         out.continuous++;
       }
+      continue;
+    }
+    // X11: DISINTEGRATE (Destruction 5,255). Chance-only, no duration,
+    // no magnitude, TargetFlags_Other - and a MagicRound whose entire
+    // body is `entityBehaviour.Entity.SetHealth(0)` (Disintegrate.cs
+    // :44-53). It fires ONCE because it has no duration: the initial
+    // magic round every effect gets at assignment (EEM:594) is the
+    // only one it will ever get, the same mechanism the Pacify arm
+    // below documents at length.
+    //
+    // ORDER MATTERS AND IS DFU'S. AssignBundle runs the OnCast chance
+    // gate FIRST (:531-551), then the no-magnitude saving throw
+    // (:561-579), then MagicRound. So a made save spares a target that
+    // the chance roll already caught - two independent gates, not one.
+    //
+    // MECHANISM NOTE (recorded departure, Ledger A). DFU calls
+    // SetHealth(0), which clamps and raises the death event directly.
+    // The port has no SetHealth sink: `sinks.hurt` IS the port's
+    // vitals-and-death door, so the kill goes through it for the
+    // target's whole remaining health. That routes the blow through
+    // EnemyEntity.SetHealth's own soul-trap intercept - which is where
+    // DFU puts it too (dungeonContext damageFoe, X5) - and additionally
+    // through MakeEnemyHostileToAttacker, which DFU's SetHealth path
+    // does not run. The difference is unobservable: the only entity it
+    // could re-hostile is one that is dying in the same call.
+    if (isDisintegrate(e)) {
+      if (!dice100(chanceValue(e, casterLevel), rolls())) { out.chanceFailed = (out.chanceFailed ?? 0) + 1; continue; }
+      // The no-magnitude save (SupportMagnitude is never set on this
+      // class), skipped for a CasterOnly cast exactly as X2's arms are.
+      if (saveScaled && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {
+        out.saved = (out.saved ?? 0) + 1;
+        continue;
+      }
+      const left = target?.health ?? 0;
+      out.disintegrated = (out.disintegrated ?? 0) + 1;
+      if (left > 0 && sinks.hurt) { out.damage += left; sinks.hurt(left); }
       continue;
     }
     if (isFortifyAttribute(e)) {
@@ -878,10 +1009,24 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     // Resistance's by the resistance gate below. Both declare
     // ChanceFunction.Custom (SpellAbsorption.cs:30 / SpellResistance
     // .cs:30) so they never roll at cast time - the chance IS the
-    // defence. Reflection (21) still pends: it re-targets the whole
-    // bundle at its caster, which needs the caster's own effect
-    // manager, and the port has no such re-entry yet. FLAGGED.
-    if (isSpellAbsorptionEffect(e) || isSpellResistanceEffect(e)) {
+    // defence.
+    //
+    // X11 ADDS THE OTHER TWO OF THIS SHAPE, and answers the note that
+    // used to stand here - "Reflection (21) still pends: it re-targets
+    // the whole bundle at its caster, which needs the caster's own
+    // effect manager, and the port has no such re-entry yet." The
+    // re-entry is the host seam, and it existed all along.
+    //   REFLECTION (21,255) is the second rung of the incoming chain,
+    //     consulted by the gate above rather than by a formula.
+    //   COMPREHEND LANGUAGES (44,255) is not a defence at all - it is
+    //     the same class shape wearing a different consumer, the
+    //     pacification roll in combat/formulas.js.
+    // All four are IncumbentEffects with duration, a Custom chance and
+    // no magnitude, and all four stack rounds onto an incumbent and
+    // leave its chance alone (ComprehendLanguages.cs:50-53 and
+    // SpellReflection.cs:49-52 - the same two lines each).
+    if (isSpellAbsorptionEffect(e) || isSpellResistanceEffect(e)
+      || isSpellReflectionEffect(e) || isComprehendLanguages(e)) {
       // X2: the same no-magnitude saving throw as above.
       if (saveScaled && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {
         out.saved = (out.saved ?? 0) + 1;
@@ -889,7 +1034,9 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       }
       const rounds = rollDuration(e, casterLevel);
       if (rounds > 0) {
-        const k = isSpellAbsorptionEffect(e) ? 'spellAbsorption' : 'spellResistance';
+        const k = isSpellAbsorptionEffect(e) ? 'spellAbsorption'
+          : isSpellReflectionEffect(e) ? 'spellReflection'
+            : isComprehendLanguages(e) ? 'comprehendLanguages' : 'spellResistance';
         const inc = findInc((a) => a.kind === k);
         if (inc) inc.roundsRemaining += rounds;   // rounds stack; the incumbent's chance stands
         else {

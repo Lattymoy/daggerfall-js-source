@@ -130,7 +130,10 @@ export const PORTED_KEYS = new Set([
   '16,255', '17,255',                                               // Lock / Open (X1 - armed at cast, fired by the door)
   '18,255',                                                         // Regenerate
   '19,255',                                                         // Silence
-  '20,255', '22,255',                                               // Spell Absorption / Resistance (X1; Reflection 21 pends)
+  '5,255',                                                          // Disintegrate (X11 - chance, then the no-magnitude save, then the kill)
+  '15,255',                                                         // Light (X11 - BUFF_KINDS; the candle is scenes/magicCandle.js)
+  '20,255', '21,255', '22,255',                                     // Spell Absorption / Reflection (X11) / Resistance (X1)
+  '44,255',                                                         // Comprehend Languages (X11 - the pacification bonus)
   '23,0', '23,1',                                                   // Chameleon
   '24,0', '24,1',                                                   // Shadow
   '25,255',                                                         // Slowfall

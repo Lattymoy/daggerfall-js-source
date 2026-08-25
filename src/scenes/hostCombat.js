@@ -19,6 +19,7 @@ import { swingSoundFor } from '../systems/soundClips.js';
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
 import { ATTRACT_RADIUS } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41)
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // AUDIT 24 (wave 42)
+import { comprehendLanguagesChance } from '../systems/effects.js';   // X11: the pacification bonus DFU reads inside its own formula
 
 // ---- DaggerfallUnityItem.GetWeaponSkillUsed / GetWeaponSkillIDAsShort ----
 /** The attack skill is a property of the weapon TEMPLATE, never of its
@@ -360,7 +361,15 @@ export function tryLanguagePacification(ai, entity, mobileType, playerEntity, {
   if (isQuestFoe) return null;
   const lang = enemyLanguageSkill(entity);
   if (lang === -1) return null;   // Skills.None - most monsters have no tongue
-  if (calculateEnemyPacification(playerEntity, lang, sheathed)) {
+  // X11: COMPREHEND LANGUAGES. DFU reads the live effect off
+  // PlayerEffectManager inside CalculateEnemyPacification itself
+  // (FormulaHelper.cs:377-380); the port hands it in, because
+  // combat/formulas.js cannot import systems/effects.js without the
+  // cycle its concealment leaf exists to dodge. This is the one seam
+  // all three enemy pools share, so one read covers dungeon foes,
+  // exterior foes and the city watch alike.
+  const comprehend = comprehendLanguagesChance(playerEntity);
+  if (calculateEnemyPacification(playerEntity, lang, sheathed, undefined, comprehend)) {
     ai.isHostile = false;
     say(`${enemyDisplayName(mobileType) ?? 'The enemy'} is pacified by your ${SKILL_NAMES[lang]} skill.`);   // languagePacified %e/%s
     tallySkill(playerEntity, lang, 3);

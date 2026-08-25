@@ -42,11 +42,13 @@ import {
 } from '../systems/spellcast.js';
 import { silenceBlocksCast, SILENCED_TEXT, PRESS_BUTTON_TO_FIRE_SPELL, DOOR_SPELL_TEXT, SOUL_TRAP_TEXT } from '../systems/mysticism.js';
 import { calculateCastCost, effectSchool, EFFECT_COST_TABLE } from '../systems/spellcost.js';
-import { applySpell } from '../systems/effects.js';
+import { applySpell, SPELL_REFLECTED_TEXT, hasActiveEffect } from '../systems/effects.js';
 import { potionBundle } from '../systems/potions.js';   // U44: DrinkPotion's bundle
 import { SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { tallySkill } from '../systems/skills.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
+import { createMagicCandle, CANDLE } from './magicCandle.js';   // X11: the Light effect's candle
+import { CAPSULE_HEIGHT } from '../player/motor.js';   // PlayerController.height, the candle's y term
 
 export function createPlayerMagic({
   renderer, audio, getTexture, uploadRecord, uploadRecordFrame = null, collider,
@@ -75,6 +77,20 @@ export function createPlayerMagic({
   const missiles = [];
   const flatAnims = new FlatAnimator();   // FA1: the missile flats
   const batches = [];
+  // X11: THE MAGIC CANDLE, mounted here for the same reason the
+  // missiles are - the Light effect belongs to the player, every host
+  // that lets the player cast builds this engine, and the engine
+  // already holds the three renderer deps a billboard needs. Riding
+  // `batches` means all four hosts draw the candle with the line they
+  // already have for missiles; only the LIGHT needs a per-host read,
+  // because each host owns its own light array.
+  const candle = createMagicCandle({
+    renderer,
+    getTexture,
+    uploadRecord,
+    onSpawn: (b) => batches.push(b),
+    onRetire: (b) => { const i = batches.indexOf(b); if (i >= 0) batches.splice(i, 1); },
+  });
 
   /** Every spell landing ON THE PLAYER rides this: the S19 Paralyze
    *  awakeAlert ("You are paralyzed.", once per new instance) fires
@@ -97,6 +113,18 @@ export function createPlayerMagic({
     // (MakeEnemyHostileToAttacker), which is classic's own
     // "until player attacks them".
     if (r.pacify && foe.ai) foe.ai.isHostile = false;
+    // X11: SPELL REFLECTION - the FOE is the reflector here, so no HUD
+    // line (TryReflection's "Spell was reflected." is gated on
+    // `IsPlayerEntity` on the REFLECTING manager, EEM:1231-1233), and
+    // the bundle goes back at whoever cast it. This function is DFU's
+    // `casterEffectManager.AssignBundle(sourceBundle)`: the seam that
+    // holds both parties, which is why the re-target lives here and
+    // not inside the effect module.
+    if (r.reflected && caster?.entity) {
+      const back = { ...(ctx ?? {}), reflectedCount: 1 };
+      if (caster.entity === playerEntity) applySpellToPlayer(spell, casterLevel, caster, back);
+      else applySpell(spell, casterLevel, caster.entity, caster.sinks ?? {}, rolls, caster, back);
+    }
     return r;
   }
 
@@ -147,6 +175,19 @@ export function createPlayerMagic({
         (playerEntity.magicka ?? 0) + r.identify.refund);
       surfacePlayer();
       onIdentify?.(r.identify);
+    }
+    // X11: the PLAYER is the reflector, so the line IS spoken here -
+    // and the bundle goes back at the caster's own manager, which
+    // re-runs their absorb/reflect/resist chain on arrival. The caster
+    // is a foe (a self-cast never reaches the reflect gate: caster ===
+    // target), so its arrival needs no HUD arms and goes through
+    // applySpell directly.
+    if (r.reflected) {
+      say(SPELL_REFLECTED_TEXT);
+      if (caster?.entity && caster.entity !== playerEntity) {
+        applySpell(spell, casterLevel, caster.entity, caster.sinks ?? {}, rolls, caster,
+          { ...(extraCtx ?? {}), reflectedCount: 1 });
+      }
     }
     return r;
   }
@@ -326,11 +367,21 @@ export function createPlayerMagic({
    *  AreaAtRange payload explodes AT THE IMPACT POINT - AUDIT 23
    *  magic-2, DaggerfallMissile.cs:399-402), advance, and the
    *  mid-capsule foe contact (rangeType 4 explodes, 2 applies). */
-  function update(dt, playerFeet) {
+  function update(dt, playerFeet, forward = null, playerHeight = CAPSULE_HEIGHT) {
     // FA1: the missile flats' clock rides the module's OWN update, not
     // each host's frame - hostMagic is shared by three of them and a
     // per-host tick is the four-hosts shape waiting to happen.
     flatAnims.tick(dt);
+    // X11: the candle, same reasoning. A host that passes no forward
+    // gets a candle straight in front of the world's +Z rather than a
+    // crash, and that is visible enough to be reported rather than
+    // quietly wrong.
+    candle.update(dt, {
+      active: hasActiveEffect(playerEntity, 'light'),
+      feet: playerFeet ?? [0, 0, 0],
+      height: playerHeight,
+      forward,
+    });
     for (const m of missiles) {
       if (m.dead) continue;
       ensureMissileBatch(m);
@@ -401,6 +452,11 @@ export function createPlayerMagic({
     castByItemSelf,   // E2: the enchantCtx applySpellToSelf seam
     explodeAt,             // the dungeon's enemy half reuses these (M3)
     applySpellToPlayer,
+    /** X11: the FOE door, beside the player one it has always sat
+     *  next to internally. Both are needed from outside now - each is
+     *  half of Spell Reflection's re-target, and a probe that can only
+     *  reach one of them can only see half the bounce. */
+    applySpellToFoe,
     /** U44: EntityEffectManager.DrinkPotion (:903-947). The bundle is
      *  potions.js's (BundleTypes.Potion, TargetTypes.CasterOnly, the
      *  recipe's one shared settings struct); this is AssignBundle's
@@ -447,6 +503,7 @@ export function createPlayerMagic({
      *  Both `pos` and `firePos` shift - the batch origin is their
      *  DIFFERENCE, recomputed next update, so no GL churn is needed. */
     offsetAll(offset) {
+      candle.offsetAll(offset);
       for (const m of missiles) {
         if (m.dead) continue;
         for (let a = 0; a < 3; a++) {
@@ -456,6 +513,12 @@ export function createPlayerMagic({
       }
     },
     batches: () => batches,
+    /** X11: the candle's point light, in nearestLights' own vec4 shape,
+     *  or null. Each host prepends it to the array it hands the
+     *  renderer - the candle is 1.4 units away, so it is always the
+     *  nearest light there is and the sort would put it first anyway. */
+    candleLight: () => candle.light(),
+    candleRange: CANDLE.range,
     missileCount: () => missiles.length,   // M5 probe surface
     readied: () => readiedSpell,
     readiedIndex: () => readiedSpell?.index ?? null,

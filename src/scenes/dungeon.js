@@ -21,6 +21,7 @@ import { MapsFile } from '../formats/mapsFile.js';
 import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js';
 import { INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { nearestLights } from '../world/cityLights.js';
+import { withCandleLight } from './magicCandle.js';   // X11
 import { lookAt, perspective, mirrorProjectionX } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { PlayerMotor } from '../player/motor.js';
 import { jumpSpeedMultiplier } from '../systems/skills.js';
@@ -318,6 +319,18 @@ export async function bootDungeon(canvas, renderer, params, status) {
         effectCount: (f.entity?.activeEffects ?? []).filter((a) => !a.ended).length }));
     window.__frame = 0;
     window.__renderer = renderer;   // U38 probe surface: the live draw path
+    // X11 probe surface: the Light effect's candle, as the DRAW PATH
+    // sees it. `light` is what the host prepends; `first` is the vec4
+    // the renderer actually holds after setPointLights, which is the
+    // only way to tell "the candle exists" from "the candle reaches
+    // the shader".
+    window.__castAtFoe = (spell, foe, caster) => ctx.castAtFoe(spell, foe, caster);
+    window.__foeSinksFor = (foe) => ctx.foeSinksFor(foe);
+    window.__candle = () => JSON.stringify({
+      light: ctx.candleLight?.() ?? null,
+      first: [...(renderer._pointLights ?? [])].slice(0, 4),
+      count: (renderer._pointLights?.length ?? 0) / 4,
+    });
   }
 
   let frames = 0;
@@ -421,7 +434,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
 
     ctx.flicker.tick(dt);
     renderer.setPointLights(
-      nearestLights(ctx.lights, cam.pos, 16, ctx.flicker.ranges),
+      withCandleLight(nearestLights(ctx.lights, cam.pos, 16, ctx.flicker.ranges), ctx.candleLight?.()),   // X11: the Light effect's candle
       new Float32Array(DUNGEON_LIGHT_COLOR));
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
     for (const d of ctx.drawList) renderer.drawMesh(d.mesh, d.matrix, ctx.texRemap);
