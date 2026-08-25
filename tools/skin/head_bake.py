@@ -9,18 +9,16 @@ YAWS=[0,45,90,135,180,225,270,315]
 # for the same head - a 55% spread - so the same rig height sampled the brow in
 # one view and the mouth in another and the blend averaged them: mush at 45,
 # two faces at 90. The views share a frame now, so the landmark transfers.
-import glob as _glob
 _fr=[]
-for _p in sorted(_glob.glob('heads/f*_000.png')):
-    _m=np.array(Image.open(_p).convert('RGBA'))[:,:,3]>0
+for _Y in YAWS:
+    _m=np.array(Image.open(f'heads/f{FACE}_{_Y:03d}.png').convert('RGBA'))[:,:,3]>0
     _h=_m.shape[0]
-    if _h<200: continue                      # skip the body sheet
     _ww=[int(_m[r].sum()) for r in range(_h)]
     _lo=int(_h*0.55)
     _fr.append(max(((_ww[r+1]-_ww[r], r) for r in range(_lo,_h-2)))[1]/_h)
-SH_FRAC=float(np.median(_fr)) if _fr else 0.83
-print(f'shoulder fraction: median {SH_FRAC:.3f} across {len(_fr)} heads '
-      f'(per-face range {min(_fr):.3f}..{max(_fr):.3f})')
+SH_FRAC=float(np.median(_fr))
+print(f'shoulder fraction {SH_FRAC:.3f} (median of this face\'s own 8 views, '
+      f'spread {min(_fr):.2f}..{max(_fr):.2f})')
 def _skinSide(Y):
     A=np.array(Image.open(f'heads/f{FACE}_{Y:03d}.png').convert('RGBA'))
     m=A[:,:,3]>0; rgb=A[:,:,:3].astype(int); H=m.shape[0]

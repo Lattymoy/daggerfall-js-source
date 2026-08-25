@@ -74,10 +74,12 @@ body is, then the face is layered per race at runtime from `FACE*.CIF`.
   shows as a doubled brow and mouth at 45 degrees. Detect it (which side the skin
   sits on at "90") and reflect the labels about 0/180 rather than trusting the
   grid order.
-- **A shoulder line belongs to the SET, not the face.** Detecting it per face let
-  flared hair beat the shoulders on the max-step test (0.669 against a 0.826
-  median), scaling those heads 25% short so they overran the skull and clipped.
-  One consistently framed set shares one landmark.
+- **Take a landmark from a face's OWN eight views, not from one view and not
+  from the set.** One view can be fooled by hair flare (0.66 where that same
+  face's other seven agree on 0.86); eight cannot. Forcing the set's median on
+  everyone was up to 0.080 out, an 8% vertical scale error on that head, which
+  reads as stretch. Median across the face's own views is robust AND keeps
+  genuine per-face differences.
 - **A metric that improves while the picture degrades is the wrong metric.** An
   axis correction took mean centring offset from 0.0146 to 0.0055 and made every
   one of the ten faces visibly worse - shifting the mapping centre per row
