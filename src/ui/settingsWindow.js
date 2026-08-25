@@ -364,8 +364,10 @@ export class SettingsWindow {
     if (key === 'Enhancements/AssetInjection' && this.onPickMusic) {
       lines.push('');
       lines.push(`Music files supplied: ${replacementCount()}`);
-      lines.push('Name each file after the song it replaces, e.g.');
-      lines.push('GDAY___D.ogg. Anything you skip keeps the original.');
+      lines.push('A Daggerfall Unity music pack works AS-IS - its');
+      lines.push('song_*.ogg names are already the right ones.');
+      lines.push('Otherwise name files after the song they replace,');
+      lines.push('e.g. GDAY___D.ogg. Skipped songs keep the original.');
       return {
         title: labelOf(key), key, lines,
         buttons: [{ id: 'pick', label: 'Choose Folder' }, { id: 'close', label: 'Close' }],
