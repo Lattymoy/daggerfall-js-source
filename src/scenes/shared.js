@@ -999,13 +999,15 @@ export function routeMouseDrag({ walkMode, buttons, mode = 'exterior' }) {
 
 // --- S40: the rested HOUR, one home for all four hosts ---------------
 
-/** DaggerfallRestWindow.TickRest's vitals half (:229-299) and the
- *  FullRest completion test (:520-536), which are the same two facts
+/** DaggerfallRestWindow.TickVitals (:509-522) and the FullRest
+ *  completion test it returns, IsPlayerFullyHealed (:524-537) - the
+ *  same two facts
  *  every host needs and which three of the four did not have at all -
  *  rest lived only in the dungeon. `day`/`inside` are
  *  CalculateHealthRecoveryRate's, and they matter: RapidHealing
- *  InLight heals a vampire-hunter faster outdoors by daylight and
- *  InDarkness heals everywhere else. */
+ *  InLight heals faster outdoors by daylight, and InDarkness
+ *  everywhere else - which is the ONE place the two flags change the
+ *  answer (rest.js' healthRecoveryRate). */
 export function restVitals(entity, { day = false, inside = true } = {}) {
   entity.health = Math.min(entity.maxHealth, entity.health + healthRecoveryRate(entity, { day, inside }));
   entity.fatigue = Math.min(maxFatigue(entity), (entity.fatigue ?? 0) + fatigueRecoveryRate(maxFatigue(entity)));
@@ -1015,7 +1017,7 @@ export function restVitals(entity, { day = false, inside = true } = {}) {
   return restFullyHealed(entity);
 }
 
-/** IsPlayerFullyHealed (:520-536) - health AND fatigue at max, and
+/** IsPlayerFullyHealed (:524-537) - health AND fatigue at max, and
  *  magicka at max UNLESS the career cannot regenerate it at all. */
 export const restFullyHealed = (entity) =>
   entity.health === entity.maxHealth

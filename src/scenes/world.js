@@ -2522,7 +2522,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     questBridge,
     // S40: IsPlayerInTown() with BOTH flags at their defaults - the
     // location TYPE alone, no rect test, no inside test. That is what
-    // CanRest's second arm asks (:562), and it is a different question
+    // CanRest's second arm asks (:563), and it is a different question
     // from isPlayerInTown above.
     inTownLocation: () => isTownLocationType(_musicLocationType()),
     questSceneCtx: () => ({ mapId: _questLoc()?.mapTableData?.mapId ?? 0, locationIndex: _questLoc()?.locationIndex ?? 0 }),

@@ -2730,6 +2730,18 @@ one place they differ (+100 instead of +60, and only outdoors by
 daylight); InDarkness is its exact complement, so the pin asks both
 and a swapped pair fails from either side.
 
+**Six drifted C# citations and one vacuous assertion**, from the
+citation lens - the failure mode this project has hit in every slice
+that cites line numbers. `Update` is `:185-229` not `:183-227`;
+`IsPlayerFullyHealed` is `:524-537`; the vitals half is `TickVitals`
+at `:509-522`, not the `:229-299` that names no vitals code at all;
+`ConfirmIllegalRestUntilHealed` is `:684-691`; CanRest's second arm
+opens at `:563`; and the Vagrancy citation started one line AFTER the
+line that registers the crime. The vacuous one is worth naming: the
+pin that checks the Rest arm sits inside the ladder's guard compared
+two `indexOf` results raw, so an arm hoisted ABOVE the guard would
+give `-1` and pass - the exact escape it existed to catch.
+
 Pins: 37 in `restlodging.test.js`. 62 mutations, 62 dead. The first
 pass left four alive and all four were the same failure of nerve: a
 pin that named a thing instead of exercising it. The host pins matched

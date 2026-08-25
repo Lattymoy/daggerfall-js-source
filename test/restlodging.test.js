@@ -511,9 +511,17 @@ test('S40 hosts: all four can now rest, and each supplies its own place', () => 
     assert.match(s, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return; \}/, f);
     assert.match(s, /toggleRest: \(\) => toggleRest\(\),/, f);
     // ...and it sits INSIDE the overlay/mode guard the ladder opens
-    // with, not after it.
-    const ladder = s.slice(s.indexOf("if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {"));
-    assert.ok(ladder.indexOf("hudCtx.toggleRest()") < ladder.indexOf('\n    }'), `${f}: the Rest arm escaped the guard`);
+    // with, not after it. Both indices are asserted FOUND first: the
+    // first version compared them raw, so an arm hoisted ABOVE the
+    // guard gave indexOf === -1 and the `<` passed vacuously - the
+    // exact escape the assertion existed to catch.
+    const g = s.indexOf("if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {");
+    assert.ok(g > 0, `${f}: the ladder guard was not found`);
+    const ladder = s.slice(g);
+    const at = ladder.indexOf('hudCtx.toggleRest()');
+    const close = ladder.indexOf('\n    }');
+    assert.ok(at > 0, `${f}: the Rest arm is not below the guard at all`);
+    assert.ok(close > 0 && at < close, `${f}: the Rest arm escaped the guard`);
     assert.match(s, /new RestWindow\(outdoorRestDeps\)/, f);
     assert.match(s, /playerEntity\.crimeCommitted = crime/, f);
     assert.match(s, /if \(spawnGuards\) _crimeResponse\(\)/, f);

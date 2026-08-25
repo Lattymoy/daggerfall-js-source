@@ -122,7 +122,7 @@ export function restOpenGate({ enemiesNearby = false, swimming = false, grounded
  *
  * Three arms, in DFU's order:
  *
- *  1. IN TOWN AND OUTDOORS. Camping is illegal. DFU returns
+ *  1. IN TOWN AND OUTDOORS (:549-562). Camping is illegal. DFU returns
  *     `alreadyWarned`, and that word is easy to misread: it is NOT
  *     "you pressed rest once already". It is the Yes answer to the
  *     IllegalRestWarning box, which the WHILE and HEALED buttons
@@ -132,8 +132,8 @@ export function restOpenGate({ enemiesNearby = false, swimming = false, grounded
  *     window closes on TEXT.RSC 17 and no time passes, no matter how
  *     many times the key is pressed. What does NOT depend on the
  *     setting: Vagrancy is registered and SpawnCityGuards(true) fires
- *     on BOTH paths, so being turned away still puts guards on the
- *     street. That is the quirk worth keeping.
+ *     on BOTH paths (:558-559), so being turned away still puts
+ *     guards on the street. That is the quirk worth keeping.
  *  2. IN TOWN AND INSIDE. If the building is a PERMANENT SCENE it is
  *     one the player has a claim on - a ship or an owned house rests
  *     outright, otherwise the rented-room record decides, and the
@@ -164,7 +164,7 @@ export function canRest({
     return {
       ...none,
       ok: alreadyWarned,   // the confirm box's Yes, not a second press
-      crime: 'Vagrancy',   // registered on BOTH paths (:559-561)
+      crime: 'Vagrancy',   // registered on BOTH paths (:558-559)
       spawnGuards: true,
       textId: alreadyWarned ? null : CITY_CAMPING_ILLEGAL_ID,
     };
@@ -255,7 +255,8 @@ export class RestSession {
     return this.remainingHoursRented === 0;
   }
 
-  /** EndRest's FIRST arm (:480-486). It outranks the mode's own line:
+  /** EndRest (:450) reaches four arms; this is the first of its final
+   *  ELSE (:480-486), and it outranks the mode's own line:
    *  a timed rest whose room expires on the last hour says "Your time
    *  for this room has expired.", not "You wake up." - and DFU calls
    *  RemoveExpiredRentedRooms right there, so the landlord clears the

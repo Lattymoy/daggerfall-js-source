@@ -123,7 +123,7 @@ export class RestWindow {
   input(action) {
     if (this.state === 'refused') { this.done = true; return; }
     if (this.state === 'confirm') {
-      // ConfirmIllegalRest*_OnButtonClick (:659-666, :685-692): the box
+      // ConfirmIllegalRest*_OnButtonClick (:659-666, :684-691): the box
       // closes either way, and only Yes carries on - No leaves the
       // rest window standing on its selection page.
       if (action === 'char:y' || action === 'char:Y' || action === 'confirm') { const w = this._pending; this._pending = null; this._restButton(w, true); }
@@ -181,7 +181,8 @@ export class RestWindow {
   }
 
   _end(result) {
-    // EndRest's FIRST arm (:480-486): the expired-room line outranks
+    // EndRest's else-block FIRST arm (:480-486): the expired-room line
+    // outranks
     // "You wake up." and "You are healed." both. It carries a STRING
     // rather than a record id (Internal_Strings :358 has it, TEXT.RSC
     // does not), and DFU calls RemoveExpiredRentedRooms right there -
@@ -193,7 +194,7 @@ export class RestWindow {
     this.state = 'ended';
   }
 
-  /** DaggerfallRestWindow.Update (:183-227), which runs every frame the
+  /** DaggerfallRestWindow.Update (:185-229), which runs every frame the
    *  window is topmost and reads Time.realtimeSinceStartup - so
    *  PauseWhileOpen's timeScale = 0 does not stop it.
    *
