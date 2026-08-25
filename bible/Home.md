@@ -260,16 +260,16 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:737` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/world.js:1104` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
 - `src/scenes/world.js:1107` - stay the E1 FLAGGED seams no host computes.
-- `src/scenes/world.js:1424` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
-- `src/scenes/world.js:1730` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:2000` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:2170` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
-- `src/scenes/world.js:2247` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:2480` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:2498` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:2870` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:3177` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/world.js:3250` - (FLAGGED: exterior corpse containers are the loot arc's), so
+- `src/scenes/world.js:1428` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
+- `src/scenes/world.js:1734` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:2004` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:2174` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
+- `src/scenes/world.js:2251` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:2484` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:2502` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:2874` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:3181` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:3254` - (FLAGGED: exterior corpse containers are the loot arc's), so
 - `src/scenes/worldModes.js:344` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:492` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
 - `src/scenes/worldModes.js:569` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)

@@ -1294,8 +1294,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       insideBuilding: false,
     }),
     // PlayerEntity.CrimeCommitted = Vagrancy + SpawnCityGuards(true),
-    // on BOTH the refused and the confirmed path (:559-561). The
-    // crime is a STRING key here, the shape arrestFlow already reads.
+    // on BOTH the refused and the confirmed path (:558-561). The
+    // range covers the two crime lines AND the `return alreadyWarned`
+    // they sit unconditionally above, because that return is what
+    // makes "both paths" true - restSession's twin cites the pair
+    // alone (:558-559) since its header carries the claim. The crime
+    // is a STRING key here, the shape arrestFlow already reads.
     commitCrime: (crime, spawnGuards) => {
       playerEntity.crimeCommitted = crime;
       if (spawnGuards) _crimeResponse();
