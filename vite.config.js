@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite';
-import { createReadStream, existsSync, readdirSync } from 'node:fs';
+import { createReadStream, existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 // Dev-only: serve ARENA2 game data at /arena2/*. The data is freeware but
@@ -55,6 +55,38 @@ function arena2DevServer() {
   };
 }
 
+// THE DEPLOY'S OWN NAME, stamped where a verifier can read it without
+// parsing minified JavaScript. `scripts/buildTag.mjs` already writes
+// HEAD's sha into src/buildTag.js at prebuild; that constant reaches
+// the browser inside a rollup chunk whose variable name is minified
+// away, so the only thing tools/verify-deploy.mjs could compare was
+// the ENTRY CHUNK'S HASH - an exact-match test that fails the moment
+// another session pushes past your build tag, even though the deploy
+// that landed CONTAINS your commit. It cost four cycles before it was
+// worth fixing. A meta tag makes the deployed head self-describing:
+// the verifier reads one attribute out of the live index and can then
+// ask git whether the commit it is looking for is an ANCESTOR of it.
+// Build-only - the dev server's src/buildTag.js is whatever the last
+// build left behind, and nothing verifies dev.
+function buildTagMeta() {
+  return {
+    name: 'build-tag-meta',
+    apply: 'build',
+    transformIndexHtml() {
+      let sha = '';
+      try {
+        sha = readFileSync('src/buildTag.js', 'utf8').match(/'([^']*)'/)?.[1] ?? '';
+      } catch { /* no stamp yet - the tag is simply absent, not wrong */ }
+      if (!sha) return [];
+      return [{
+        tag: 'meta',
+        attrs: { name: 'build-tag', content: sha },
+        injectTo: 'head',
+      }];
+    },
+  };
+}
+
 // base is set for GitHub Pages deploy at lattymoy.github.io/<repo>/
 export default defineConfig({
   base: './',
@@ -80,5 +112,5 @@ export default defineConfig({
       },
     },
   },
-  plugins: [arena2DevServer()],
+  plugins: [arena2DevServer(), buildTagMeta()],
 });
