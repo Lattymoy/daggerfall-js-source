@@ -92,11 +92,14 @@ let provinces = [];
 let hover = null;      // the race key under the cursor, for the readout
 let onExit = () => {};
 let keyHandler = null;
+let lockHandler = null;
 
 // ── THE MAP ──────────────────────────────────────────────────────
 
 function mapPane() {
   const wrap = el('div', 'mappane');
+  hoverTitle = null;
+  hoverBody = null;
 
   if (!provinces.length) {
     // NEVER TRAPS, the law every art-backed screen here follows: no
@@ -127,13 +130,27 @@ function mapPane() {
     // would have lit High Rock.
     const path = svg('path', {
       d: p.d, 'fill-rule': 'evenodd',
-      class: `prov${p.inert ? ' inert' : ''}${p.key === sel ? ' on' : ''}${p.key === hover ? ' hot' : ''}`,
+      class: `prov${p.inert ? ' inert' : ''}${p.key === sel ? ' on' : ''}`,
     });
     // The Imperial Province is drawn and NOT offered: no homeland, no
     // hover, no press. It is there because Tamriel is there.
     if (!p.inert) {
-      path.addEventListener('pointerenter', () => { hover = p.key; paint(); });
-      path.addEventListener('pointerleave', () => { if (hover === p.key) { hover = null; paint(); } });
+      // HOVER MUST NOT REPAINT, and this is not a nicety - it is the
+      // bug Mac found in play. Setting `hover` and calling paint()
+      // rebuilds the whole screen, which DESTROYS the node the pointer
+      // is over; the browser then fires pointerenter on the fresh one
+      // and the screen repaints again, forever. The map took no clicks
+      // at all, because a mousedown and a mouseup have to land on the
+      // SAME node for a click to exist and this one never survived
+      // between them. Every prototype walk had dispatched a synthetic
+      // click straight at the element, so not one of them touched the
+      // path a real mouse takes.
+      //
+      // The highlight is CSS `:hover` now, and the readout beside the
+      // map is updated by writing to two text nodes rather than by
+      // rebuilding the screen that contains them.
+      path.addEventListener('pointerenter', () => { hover = p.key; refreshHover(); });
+      path.addEventListener('pointerleave', () => { if (hover === p.key) { hover = null; refreshHover(); } });
       path.addEventListener('click', () => pick(p.key));
     }
     frame.append(path);
@@ -152,6 +169,21 @@ function mapPane() {
   }
   wrap.append(frame);
   return wrap;
+}
+
+let hoverTitle = null;
+let hoverBody = null;
+
+/** The readout under the pointer, written into the two nodes that
+ *  carry it. See the pointerenter handler for why this is not a
+ *  repaint. */
+function refreshHover() {
+  if (!hoverTitle || !hoverBody) return;
+  const who = hover ? RACE_TEMPLATES.find((r) => r.key === hover) : null;
+  hoverTitle.textContent = who ? (PROVINCE_NAMES[who.key] ?? who.name) : 'Where are you from?';
+  hoverBody.textContent = who
+    ? `Home of the ${who.name}. Press to read what it means to be born here.`
+    : 'Your homeland sets your face, your name and how much of Tamriel greets you kindly.';
 }
 
 /** A province press. The flow owns what happens next: setRace records
@@ -195,16 +227,15 @@ function raceStage() {
     d.append(a);
     detail.append(d);
   } else {
-    const d = el('div', 'dcard');
     // The MAP says the place; the readout says the people. Naming both
     // in one line is what makes "Hammerfell" and "Redguard" the same
     // answer to the same question.
-    const who = hover ? RACE_TEMPLATES.find((r) => r.key === hover) : null;
-    d.append(el('h3', null, who ? PROVINCE_NAMES[who.key] : 'Where are you from?'));
-    d.append(el('p', null, who
-      ? `Home of the ${who.name}. Press to read what it means to be born here.`
-      : 'Your homeland sets your face, your name and how much of Tamriel greets you kindly.'));
+    const d = el('div', 'dcard');
+    hoverTitle = el('h3', null, '');
+    hoverBody = el('p', null, '');
+    d.append(hoverTitle, hoverBody);
     detail.append(d);
+    refreshHover();
   }
   pane.append(detail);
   return pane;
@@ -954,9 +985,40 @@ function onKey(e) {
   const action = overlayAction(e);
   if (!action) return;
   e.preventDefault();
+  // A MODAL OVERLAY OWNS ITS INPUT. Mac, playing the deployed build:
+  // the wizard came up over a live dungeon and the game kept reading
+  // the keyboard underneath it. The listener is on CAPTURE and stops
+  // the event here, so the host's own window keydown - which walks the
+  // player, routes dungeon keys and re-takes the look - never sees a
+  // key the wizard used. The `!action` return above is what leaves
+  // everything else alone.
+  e.stopPropagation();
   flow.input(action);
   if (flow.done) { onExit('done'); return; }
   paint();
+}
+
+/**
+ * AND THE POINTER LOCK, which is the same report's other half: the
+ * cursor was captured and the view swung with the mouse while the map
+ * ignored every click.
+ *
+ * A locked pointer does not travel through the DOM at all - every
+ * mouse event goes to the locked element as a movement delta - so a
+ * fixed div over the canvas is invisible to it however high its
+ * z-index. The hosts' own gate only stops them RE-taking the lock
+ * (`!townTalk.overlayActive`); nothing released a lock already held,
+ * and the classic wizard never had to care because it draws INSIDE
+ * the canvas that holds it.
+ *
+ * So the view drops the lock on mount and keeps dropping it: a host
+ * that re-takes it while the wizard is up gets it taken back, once,
+ * rather than the wizard fighting for clicks it cannot receive.
+ */
+function releaseLock() {
+  try {
+    if (typeof document !== 'undefined' && document.pointerLockElement) document.exitPointerLock();
+  } catch { /* a browser that refuses is a browser with no lock to drop */ }
 }
 
 /**
@@ -983,7 +1045,10 @@ export function mountEnhancedChargen(hostEl, {
     provinces = [];
   }
   keyHandler = onKey;
-  globalThis.addEventListener('keydown', keyHandler);
+  globalThis.addEventListener('keydown', keyHandler, { capture: true });
+  lockHandler = releaseLock;
+  releaseLock();
+  document.addEventListener('pointerlockchange', lockHandler);
   paint();
   globalThis.__chargen = () => JSON.stringify({
     state: flow.state, race: flow.race.key, gender: flow.gender,
@@ -996,8 +1061,10 @@ export function mountEnhancedChargen(hostEl, {
       // EVERY LISTENER HAS AN OWNER. A window-level keydown outlives
       // the DOM it was mounted for, so a wizard torn down without this
       // keeps eating keys for the whole session.
-      if (keyHandler) globalThis.removeEventListener('keydown', keyHandler);
+      if (keyHandler) globalThis.removeEventListener('keydown', keyHandler, { capture: true });
+      if (lockHandler) document.removeEventListener('pointerlockchange', lockHandler);
       keyHandler = null;
+      lockHandler = null;
       hostEl.innerHTML = '';
       delete globalThis.__chargen;
     },
