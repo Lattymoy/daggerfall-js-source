@@ -469,6 +469,27 @@ export function writeQuicksave(snap, storage = globalThis.localStorage) {
     return false;
   }
 }
+/**
+ * IS THERE A GAME THIS BUILD CAN ACTUALLY RESTORE?
+ *
+ * AUDIT (2026-08-25) F2. Both menus asked `readQuicksave()` and treated
+ * any parsed blob as a game - but restorePlayer REFUSES anything whose
+ * `v` is not SAVE_VERSION, and it refuses AFTER the world has booted.
+ * So an envelope from an older build drew a full Continue card, and
+ * pressing it printed "Save version mismatch." into a HUD nobody is
+ * looking at yet and came up on the chargen wizard instead: LOAD
+ * SILENTLY STARTING A NEW GAME, which is AUDIT 19 F3 exactly, one
+ * layer down and past the guard F3 installed.
+ *
+ * The test is HERE, beside the restorer whose law it is, and both
+ * front doors call it. A predicate that lives anywhere else is a
+ * predicate that drifts from the thing it predicts.
+ */
+export function restorableQuicksave(storage = globalThis.localStorage) {
+  const snap = readQuicksave(storage);
+  return snap && snap.v === SAVE_VERSION ? snap : null;
+}
+
 export function readQuicksave(storage = globalThis.localStorage) {
   if (!storage) return null;
   const raw = storage.getItem(QUICKSAVE_KEY);

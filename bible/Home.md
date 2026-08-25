@@ -370,9 +370,9 @@ combat line numbers below are refreshed with it.
 - `src/ui/bankPurchaseWindow.js:49` - display: [117, 12, 104, 91],   // FLAGGED: the 3D preview
 - `src/ui/bankWindow.js:28` - law's. The SHIP popup is still FLAGGED - it needs the two fixed
 - `src/ui/bookReader.js:25` - INTERIM, loud: lines draw in the host font at a fixed 10px row -
-- `src/ui/chargenArt.js:710` - *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
-- `src/ui/chargenArt.js:842` - *  from the difficulty law). FLAGGED: the dagger's one-second fading
-- `src/ui/enhancedMenu.js:539` - if (action === 'delete') return;   // FLAGGED: no save manager yet
+- `src/ui/chargenArt.js:714` - *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
+- `src/ui/chargenArt.js:846` - *  from the difficulty law). FLAGGED: the dagger's one-second fading
+- `src/ui/enhancedMenu.js:626` - if (action === 'delete') return;   // FLAGGED: no save manager yet
 - `src/ui/exteriorAutomapWindow.js:22` - (:682-709) is FLAGGED - the port's directory carries named
 - `src/ui/guildServiceWindow.js:33` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
 - `src/ui/hudActiveSpells.js:45` - FLAGGED: HUDEscortingNPCFaces, the third component of that row, is
@@ -412,6 +412,79 @@ combat line numbers below are refreshed with it.
 ## Audits
 
 Newest first.
+
+**2026-08-25 - THE ENHANCED-MENU AUDIT (U49 and everything under it).**
+Mac's call the day the front door shipped. Scope: `ui/enhancedMenu.js`,
+`ui/enhancedStyle.js`, `systems/uiSkin.js`, the `main.js` routing and
+the two front doors, read adversarially against the port's own standing
+laws rather than against DFU - none of this HAS a DFU original, which
+is exactly why it needed reading. EIGHT findings, all fixed at root and
+pinned, seven mutation-proven.
+
+TWO WERE SEVERE AND BOTH ARE OLD SHAPES IN NEW CLOTHES.
+
+(F1) AUDIT 24'S OWN LAW, BROKEN IN THE SCREEN THAT REPLACED THE SCREEN
+IT WAS FOUND IN. Forty sub-44px touch targets on a Pixel 5: every row
+label 19px tall, every value pill 38, every stepper 34 - and the CSS
+carried a comment saying "the hit box around it is 44 because a thumb
+is" over a rule that read `content: ''` and `position: absolute` and
+nothing else. It drew no box, claimed no space and hit nothing. A
+comment asserting a law the code does not implement is worse than no
+comment: it is the thing a reader checks INSTEAD of measuring, which is
+the AUDIT 17m shape. The classic screen's pin (settingsUI T14) could
+not see this side, so `tools/enhancedTapProbe.mjs` now MEASURES every
+button on every pane and every settings category on a phone in both
+orientations - `getBoundingClientRect`, not a stylesheet - and kills
+the original bug when the dead rule is put back.
+
+(F2) CONTINUE COULD SILENTLY START A NEW GAME, which is AUDIT 19 F3
+exactly, one layer down and past the guard F3 installed. `readQuicksave`
+parses the blob; it does not test its VERSION, and `restorePlayer`
+refuses a stale envelope AFTER the world has booted - printing "Save
+version mismatch." into a HUD nobody is looking at yet and coming up on
+the chargen wizard. Both front doors had it: the classic menu's
+`hasSavedGame` was `!!readQuicksave()` and had been since U21. The
+question is "can this build restore it", the answer belongs beside the
+restorer whose law it is, and `restorableQuicksave` is now that one
+home with both doors calling it.
+
+(F8) WAS FOUND BY THE LIVE CHECK RATHER THAN BY READING, and that is
+the entry's real lesson. On a phone the settings detail pane is a sheet
+that only rises when a ROW is tapped, so the CATEGORY card - and the
+Reset button living inside it - could never be reached at all.
+Playwright spent thirty seconds trying to click a control translated
+101% off the bottom of the screen. Same family as F1 and as AUDIT 24: a
+control that exists, is drawn, and is unreachable on the device that
+needs it most. A second tap on the active category opens it, which is
+`settingsWindow`'s own second-tap-acts gesture one level up rather than
+an invention, with a dot on the active tab because a gesture nobody can
+see is a gesture nobody uses.
+
+THE REST. (F3) Reset wiped every override on one press where the
+classic screen has always confirmed - and the classic screen's own
+confirm TEXT lies, promising to clear "this screen's own preferences,
+like Text Size" when `resetToDefaults` never touches `uiPrefs`; the
+enhanced copy says what it actually does. (F4) Delete was drawn
+undimmed and operable-looking and did nothing, caught by `onAction` and
+returned - the exact lie the anti-lie law forbids; it is wired now,
+behind the same confirm. (F5) Colour and text rows drew a value with no
+control and no reason, reading as broken rather than as unbuilt; colour
+rows get the browser's own picker, writing through the same `setValue`
+door as every other row and CARRYING DFU'S ALPHA BYTE through
+(`ToolTipBackgroundColor` ships D2 and means it). (F6) The enhanced
+skin pulls two font families from Google - the port's ONLY third-party
+request, made by the DEFAULT skin, in a build whose doctrine is that it
+ships self-contained; non-blocking and with fallbacks, but undocumented,
+which is what made it a finding rather than a choice. Now a Ledger A
+row with a `?nofonts` opt-out, and self-hosting is Mac's call. (F7)
+`effectiveSettings()` - a full merge of all 171 keys - ran ONCE PER
+ROW, so Video rebuilt the whole store sixty-six times per render.
+
+CLEARED, recorded because each was checked: the mount/unmount cycle
+leaks no listeners and resets its own state; `?skin` still persists
+nothing; the classic path is byte-for-byte untouched; every control is
+a real `<button>` so tab focus and Enter work with the browser's own
+focus ring.
 
 **2026-08-23 - AUDIT 25, THE COMPLETENESS AUDIT.** `01-Overview/Audit-25.md`.
 Mac asked what we need to complete the 1:1 port. AUDIT 23 and 24 were

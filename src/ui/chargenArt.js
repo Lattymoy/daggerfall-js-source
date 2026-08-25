@@ -142,7 +142,11 @@ const SUMMARY_BONUS_TEXT_ID = 14;
 
 /** CreateCharClassSelect.cs:31 - startClassDescriptionID. The picked
  *  class's description is record 2100 + its index. */
-const CLASS_DESCRIPTION_TEXT_ID = 2100;
+/** TEXT.RSC's class descriptions, 2100 + classIndex. Exported because
+ *  the enhanced view needs the same record and ONE DFU MEMBER, ONE
+ *  EXPORT - a second 2100 literal is how the two skins would come to
+ *  describe different classes. */
+export const CLASS_DESCRIPTION_TEXT_ID = 2100;
 
 /** BaseScreenComponent.cs:54 - doubleClickDelay, in SECONDS. The test
  *  at :691 is on TIME ALONE; the two clicks need not land on the same

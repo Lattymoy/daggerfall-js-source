@@ -52,6 +52,8 @@ export default defineConfig({
         // The same, for the FRONT DOOR - the four boot screens
         // (title, launcher, splash, PICK03I0) as one menu.
         menu: 'menu.html',
+        // And for the wizard behind it, one stage at a time.
+        chargen: 'chargen.html',
       },
     },
   },

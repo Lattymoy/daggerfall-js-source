@@ -10,6 +10,7 @@ work queue routed to arcs.
 
 | What | Ours | Approved via |
 |---|---|---|
+| **THE ENHANCED SKIN'S WEB FONTS - the port's ONLY third-party request** | AUDIT 2026-08-25 F6. `ui/enhancedStyle.js` pulls Cormorant and Barlow Semi Condensed from `fonts.googleapis.com` / `fonts.gstatic.com`, and it does so on the DEFAULT skin, in a build whose doctrine is that it ships self-contained and reads its game data off the player's own disk. Nothing else in `src/` reaches a third party. The request is NON-BLOCKING and the screens lay out in the stack's fallbacks (Georgia, the system sans) when it is blocked or offline - the never-traps law - and `?nofonts` skips it outright. SELF-HOSTING the two families is the real answer and is its own slice: it costs bytes in the repo, which is Mac's call. What made this a finding is that it was undocumented, not that it was wrong | Recorded 2026-08-25 (Mac to rule on self-hosting) |
 | Presentation layer | Hand-rolled WebGL2, no Unity concepts | Port-Doctrine |
 | Characters/paperdoll | Mac's voxel system | Port-Doctrine |
 | ~~Music (HMI/XMI, MIDI.BSA)~~ **STRUCK - see the MIDI.BSA SONG READER row below** | AUDIT 21 (doctrine lane, F6): this row still read "Routed to Audio arc" while the row below describes `src/formats/hmiFile.js` as shipped and corpus-gated over all 131 songs / 1286 tracks. The identical double-bookkeeping this file diagnoses further down ("the ledger claimed music both shipped and had no reader"), recurring. Struck in favour of the reader's own row | Struck (shipped) |
