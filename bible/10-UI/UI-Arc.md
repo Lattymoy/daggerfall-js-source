@@ -11,9 +11,10 @@ policies one by one.
 ## U50 THE ENHANCED WIZARD (2026-08-25, Mac's call, ONE STAGE AT A TIME)
 
 Character creation in the enhanced skin. ALL TEN journey stages have
-their own screen and the wizard REACHES `done` - but it is NOT
-INTEGRATED: New Game still boots the classic flow. It lives at
-`/chargen.html` beside `/menu.html` and is argued with there first.
+their own screen, the wizard reaches `done`, it answers a full
+keyboard, and IT IS THE WIZARD THE GAME MOUNTS: New Game on the
+enhanced skin lands on the province map. `/chargen.html` remains, as
+the place a stage is argued with before it ships.
 
 REVIEW is what closes it, and nothing else sets `done`. Its OK gate is
 FOUR pools rather than one, because the summary lets you take points
@@ -23,12 +24,26 @@ review and watching OK refuse. The name and reflexes there are the
 SUMMARY's own (backing out reverts both; only the OK arm writes them
 through), and Restart is soft.
 
-WHAT INTEGRATION STILL NEEDS, so the next reader does not assume it is
-a wiring afternoon: the three hosts mount chargen through
-`createChargenWindow`, which returns a CANVAS overlay for
-`townTalk.showOverlay`, and this wizard is DOM over the canvas - so
-that one seam has to mount either, with `dungeonContext`'s own
-construction named too (the FOUR HOSTS rule). THE KEYBOARD IS DONE (2026-08-25): keys route through overlayAction,
+THE SEAM IS `createChargenWindow` AND ONLY THAT. It was already THE ONE
+CONSTRUCTION SEAM (AUDIT 17i split it out after three separate bugs
+came from hosts wiring chargen by hand), so the skin is chosen there
+and the two hosts that call it - world and exterior - needed no edit at
+all. The enhanced arm answers the same overlay contract and does almost
+nothing with it: the div is fixed and opaque so pointers never reach
+the host's seam, and the view's own keydown answers keys through the
+same table this window uses, so every host arm is a NO-OP BY DESIGN and
+says so. `done` stays FALSE until the view is down, because a host
+tears an overlay down when it reports done and a DOM node outlives the
+object reporting it. THE FOUR HOSTS: world WIRED, exterior WIRED,
+worldModes N/A (interiors never run the wizard), dungeonContext FLAGGED
+- it holds the RAW flow as its own overlay and cannot reach the fork,
+so it keeps the classic wizard; since U31 that is the `?dungeon` dev
+scene alone.
+
+PROVED IN THE RUNNING GAME by `tools/enhancedIntegrationProbe.mjs`:
+front door, New Game, the world host booting, and the map traced from
+the player's own ARENA2 into nine regions - on a desktop and a Pixel 5,
+with `?skin=classic` proven never to mount it. 9/9, zero page errors. THE KEYBOARD IS DONE (2026-08-25): keys route through overlayAction,
 the shared table ui/input.js already owns, so the flow's own arms
 answer and a key does here exactly what it does on the classic screen.
 tools/enhancedChargenProbe.mjs walks the whole wizard to `done` with
