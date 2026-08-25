@@ -296,3 +296,65 @@ test('AUDIT 21 music F2/F3: the hosts FEED the fields the fold reads', () => {
   assert.match(ctx, /inCastle:\s*castleBlockAt\(/,
     'and fed to the ambient one-shots too - doNotPlayInCastle was read by nobody');
 });
+
+test('M-FM: Audio/AlternateMusic reaches the playlists, through ONE read', () => {
+  // THE WHOLE FEATURE WAS BUILT AND NOTHING JOINED IT. Every FM
+  // playlist has been ported since A5, outdoorPlaylist and playlistFor
+  // have branched on `fm` all along, SongManager has taken it, and
+  // createMusicDirector has accepted and forwarded it - while all
+  // three hosts called createMusicDirector() with no arguments, so the
+  // checkbox the settings screen offers moved nothing at all.
+  const shared = readFileSync(new URL('../src/scenes/shared.js', import.meta.url), 'utf8');
+  assert.match(shared, /getBool\('Audio', 'AlternateMusic'\)/,
+    'the setting must be read');
+  // ...in the FACTORY, not at the call sites. Three call sites are
+  // three chances to forget; one read is none.
+  const factory = shared.slice(shared.indexOf('export function createMusicDirector'));
+  assert.match(factory.slice(0, 1600), /getBool\('Audio', 'AlternateMusic'\)/,
+    'the read belongs inside createMusicDirector');
+  for (const host of ['world.js', 'exterior.js', 'dungeon.js']) {
+    const h = readFileSync(new URL(`../src/scenes/${host}`, import.meta.url), 'utf8');
+    assert.match(h, /createMusicDirector\(\)/, `${host} still calls it bare - and now gets the setting`);
+    assert.doesNotMatch(h, /getBool\('Audio', 'AlternateMusic'\)/,
+      `${host} must NOT read the setting itself - that is the shape this fixes`);
+  }
+});
+
+test('M-FM: null asks the setting, an explicit flag overrides it', async () => {
+  const { createMusicDirector } = await import('../src/scenes/shared.js');
+  const { setValue } = await import('../src/systems/settings.js');
+  const { DUNGEON_SONGS, DUNGEON_SONGS_FM } = await import('../src/systems/songManager.js');
+  // The FM set is a DIFFERENT set, or none of this is observable.
+  assert.notDeepEqual([...DUNGEON_SONGS], [...DUNGEON_SONGS_FM]);
+
+  const played = [];
+  const build = (opts) => createMusicDirector({
+    play: (n) => played.push(n), stop: () => {}, playing: () => false, ...opts,
+  });
+  // The director DERIVES the environment (musicEnvironment) rather than
+  // taking one - a first draft passed `environment: 'dungeonInterior'`
+  // straight in and got the outdoor day song, because that field is
+  // simply not an input. Driven the way this file's other pins do it.
+  const drive = (d) => {
+    played.length = 0;
+    d.update(OUTDOOR, { inside: true, insideDungeon: true, locationIndex: 2, dungeonKey: 7 });
+    return played[0] ?? null;
+  };
+
+  setValue('Audio', 'AlternateMusic', 'False');
+  const gm = drive(build({}));
+  setValue('Audio', 'AlternateMusic', 'True');
+  const fm = drive(build({}));
+  assert.ok(gm && fm, 'both settings must actually pick a song');
+  assert.notEqual(gm, fm, 'the setting must change which song plays');
+  assert.ok(DUNGEON_SONGS.includes(gm), `off should play the General MIDI set, got ${gm}`);
+  assert.ok(DUNGEON_SONGS_FM.includes(fm), `on should play the FM set, got ${fm}`);
+
+  // An explicit flag is an override, whichever way the setting sits -
+  // which is what makes the existing fm-driven pins independent of it.
+  setValue('Audio', 'AlternateMusic', 'True');
+  assert.ok(DUNGEON_SONGS.includes(drive(build({ fm: false }))), 'fm:false overrides the setting');
+  setValue('Audio', 'AlternateMusic', 'False');
+  assert.ok(DUNGEON_SONGS_FM.includes(drive(build({ fm: true }))), 'fm:true overrides the setting');
+  setValue('Audio', 'AlternateMusic', 'False');
+});

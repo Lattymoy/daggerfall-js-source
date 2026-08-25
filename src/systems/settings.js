@@ -150,6 +150,8 @@ export const LIVE = Object.freeze({
   'GUI/IconsPositioningScheme': 'src/ui/hudActiveSpells.js',
   'GUI/Crosshair': 'src/ui/hudCrosshair.js',
   'GUI/IllegalRestWarning': 'src/scenes/world.js',   // V5: the "it is illegal to camp" Yes/No before a town rest (U48: and scenes/exterior.js)
+  'Enhancements/AssetInjection': 'src/systems/musicReplacement.js',   // M-EXT: DFU's own gate on SoundReplacement, now real for MUSIC
+  'Audio/AlternateMusic': 'src/scenes/shared.js',   // M-FM: read once in createMusicDirector, for all three hosts
   'GUI/InteractionModeIcon': 'src/ui/hudCrosshair.js',
   // U41: the classic travel map. Stored-tier since the settings
   // screen shipped - the outline it offers is drawn by a window the
@@ -164,7 +166,6 @@ export const UNAVAILABLE = Object.freeze({
   'Enhancements/EnhancedCombatAI': 'the port implements the CLASSIC enemy AI only (Ledger A)',
   'Enhancements/AdvancedClimbing': 'the port implements the CLASSIC climbing path only (Ledger A)',
   'Enhancements/LypyL_ModSystem': 'no mod system (Ledger C, Not planned)',
-  'Enhancements/AssetInjection': 'no mod system (Ledger C, Not planned)',
   'Enhancements/CompressModdedTextures': 'no mod system (Ledger C, Not planned)',
   'Experimental/CustomBooksImport': 'no mod system (Ledger C, Not planned)',
   'Daggerfall/MyDaggerfallPath': 'the browser picks a folder or zip; there is no path (dataSource.js)',

@@ -80,6 +80,13 @@ whole torso on its bright end and the body comes out pale against the face.
   literal second face, and no amount of sharpening the blend fixes it because
   the 3/4 views are placing correct content in the wrong place. Cardinals
   (0/90/180/270) own 52 degrees each; the 3/4 views fill only the joins.
+- **Prefer a REGION that is the thing to a RULE that describes it.** Body skin
+  tone is derived from the head, and the sample was chosen by colour. Blonde
+  hair leaked in, so the mask gained a G/R gate - which then inverted on Dunmer,
+  passing 5624 of 6164 HAIR texels and rejecting grey skin. On two Dunmer both
+  skin and hair are grey and no colour rule separates them at all. A box at the
+  centre of the front sector at nose-bridge height is skin by construction for
+  every race and needs no tuning.
 - **Check which way each turnaround ROTATES.** Nine of the ten Breton sheets
   turn one way and one turns the other - and the odd one out was the head this
   pipeline was tuned on, so every other head had its side views mirrored, which

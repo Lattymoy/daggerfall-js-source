@@ -48,7 +48,7 @@ rows=int(round(abs(ymap(HY0)-ymap(HY1)))) or 60
 # The source head is ~303 rows; a 128-row cell threw away 2.4x of the vertical
 # detail and squashed the brow, eyes and mouth into bands - which reads as
 # smear, not as scale. Keep the 2.63:1 surface aspect and give it the rows.
-HW,HH=672,256
+HW,HH=1344,512
 print(f'head cell {HW}x{HH}')
 L=np.array([-0.45,0.55,0.70]); L/=np.linalg.norm(L)
 cell=np.zeros((HH,HW),dtype=np.uint8)

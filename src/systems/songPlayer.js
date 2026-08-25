@@ -377,3 +377,75 @@ export class SongPlayer {
     return buf;
   }
 }
+
+/**
+ * M-EXT - the player for a USER-SUPPLIED song.
+ *
+ * DFU's SoundReplacement hands Unity an AudioClip and the same
+ * AudioSource plays it, so replacement and built-in music share one
+ * volume and one "is something playing" answer. That sharing is the
+ * part worth keeping, and it is why this lives beside SongPlayer
+ * rather than in the replacement module: `musicGain()` is the one
+ * volume law (MUSIC_GAIN x Controls/MusicVolume) and both players read
+ * it, so the mixer cannot drift between a built-in song and a
+ * replacement of the same song.
+ *
+ * LOOPS BY DEFAULT, because Daggerfall's songs do. A replacement track
+ * that has been cut with its own fade still loops - DFU's clips loop
+ * too, and a one-shot would leave silence until the environment
+ * changed, which is worse than a seam.
+ */
+export class AudioSongPlayer {
+  /**
+   * @param {AudioContext} ctx
+   * @param {AudioNode} [destination]  defaults to ctx.destination
+   */
+  constructor(ctx, destination = null) {
+    this.ctx = ctx;
+    this.playing = false;
+    this.loop = true;
+    this._source = null;
+    this._master = null;
+    this._destination = destination;
+  }
+
+  _ensureMaster() {
+    if (this._master || !this.ctx) return;
+    this._master = this.ctx.createGain();
+    this._master.gain.value = musicGain();
+    this._master.connect(this._destination ?? this.ctx.destination);
+  }
+
+  /** Start a decoded AudioBuffer. Returns false rather than throwing on
+   *  anything missing, the same contract SongPlayer.play answers to. */
+  play(buffer) {
+    if (!this.ctx || !buffer) return false;
+    this.stop();
+    this._ensureMaster();
+    // The gain is re-read on every start, not just on the first: a
+    // player who moves the music slider between songs expects the next
+    // one to obey it, and the node is built once.
+    this._master.gain.value = musicGain();
+    const src = this.ctx.createBufferSource();
+    src.buffer = buffer;
+    src.loop = this.loop;
+    src.connect(this._master);
+    // A non-looping clip has to clear `playing`, or the director reads
+    // a song that is still sounding forever and never re-evaluates.
+    src.onended = () => { if (this._source === src) { this.playing = false; this._source = null; } };
+    src.start();
+    this._source = src;
+    this.playing = true;
+    return true;
+  }
+
+  stop() {
+    this.playing = false;
+    const src = this._source;
+    this._source = null;
+    if (src) {
+      src.onended = null;   // stop() must not look like a track ending
+      try { src.stop(); } catch { /* already stopped */ }
+    }
+  }
+}

@@ -252,9 +252,9 @@ combat line numbers below are refreshed with it.
 - `src/scenes/exterior.js:1317` - (FLAGGED: the climate People table pends; the test city is
 - `src/scenes/exterior.js:1469` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/exterior.js:1805` - ground (FLAGGED with world.js's same gap), so Detect Treasure
-- `src/scenes/shared.js:218` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
-- `src/scenes/shared.js:235` - *  mirrors motorStats (the INTERIM entity carries no stats). */
-- `src/scenes/shared.js:340` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
+- `src/scenes/shared.js:220` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
+- `src/scenes/shared.js:237` - *  mirrors motorStats (the INTERIM entity carries no stats). */
+- `src/scenes/shared.js:342` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
 - `src/scenes/world.js:704` - FLAGGED loud: the People faction rides the START location's
 - `src/scenes/world.js:739` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
@@ -372,6 +372,7 @@ combat line numbers below are refreshed with it.
 - `src/ui/bookReader.js:25` - INTERIM, loud: lines draw in the host font at a fixed 10px row -
 - `src/ui/chargenArt.js:710` - *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
 - `src/ui/chargenArt.js:842` - *  from the difficulty law). FLAGGED: the dagger's one-second fading
+- `src/ui/enhancedMenu.js:539` - if (action === 'delete') return;   // FLAGGED: no save manager yet
 - `src/ui/exteriorAutomapWindow.js:22` - (:682-709) is FLAGGED - the port's directory carries named
 - `src/ui/guildServiceWindow.js:33` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
 - `src/ui/hudActiveSpells.js:45` - FLAGGED: HUDEscortingNPCFaces, the third component of that row, is

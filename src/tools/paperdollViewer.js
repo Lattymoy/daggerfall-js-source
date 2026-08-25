@@ -271,7 +271,7 @@ let skinI = null, skinTexCanvas = null, skinTex = null, skinLayout = null;
 // ship. Each face also implies its own body ramp, because the ten are not one
 // skin tone (lit skin R 161..209), and the head is the authority on that.
 let headCells = null, skinRamps = null, headPick = 0, headRace = null;
-const HEAD_SET = { Breton: 'breton', Redguard: 'redguard' };   // races baked so far
+const HEAD_SET = { Breton: 'breton', Redguard: 'redguard', Nord: 'nord', 'Dark Elf': 'darkelf' };
 async function loadHeads() {
   const key = HEAD_SET[RACES[raceIx]];
   if (!key) { headCells = null; skinRamps = null; headRace = null; applyTone(); return; }
