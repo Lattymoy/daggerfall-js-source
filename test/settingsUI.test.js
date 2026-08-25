@@ -293,3 +293,61 @@ test('MENU T16: driving the screen by KEY, a muted volume comes back by fraction
   assert.equal(w.layout(canvas).list.placed.find((r) => r.key === 'Controls/SoundVolume').display, '100%');
   _resetForTests();
 });
+
+test('M-EXT: the music-pack row is reachable, and BOTH input paths run its action', () => {
+  // A feature reachable only by typing ?music is a feature nobody
+  // finds. AssetInjection is DFU's own gate on replacement assets and
+  // the port implements its SOUND half, so that row is where the
+  // folder gets picked.
+  let picked = 0;
+  const win = new SettingsWindow({ onPickMusic: () => { picked++; } });
+  const d = win._detail('Enhancements/AssetInjection');
+  assert.ok(d.buttons.some((b) => b.id === 'pick'), 'the row offers a Choose Folder button');
+  assert.equal(typeof d.onYes, 'function');
+
+  // THE MOUSE PATH has honoured `onYes` all along...
+  win.dialog = win._detail('Enhancements/AssetInjection');
+  win.click(0, 0, { width: 1280, height: 800 });
+  assert.equal(picked, 1, 'a click runs the action');
+  assert.equal(win.dialog, null, 'and closes the dialog');
+
+  // ...and THE KEYBOARD PATH did NOT, which is the divergence this
+  // fixes. Nothing set onYes on a settings dialog before, so it was
+  // latent: the first dialog to carry an action would have worked on
+  // click and done nothing on Enter.
+  win.dialog = win._detail('Enhancements/AssetInjection');
+  win.input('Enter', null, { width: 1280, height: 800 });
+  assert.equal(picked, 2, 'Enter runs the action too');
+  assert.equal(win.dialog, null);
+
+  // ESCAPE IS A REFUSAL on both paths - it must not pick anything.
+  win.dialog = win._detail('Enhancements/AssetInjection');
+  win.input('Escape', null, { width: 1280, height: 800 });
+  assert.equal(picked, 2, 'Escape declines');
+  assert.equal(win.dialog, null);
+
+  // A HOST THAT CANNOT PICK FILES gets the explanation and no button,
+  // rather than a control that does nothing - the same anti-lie rule
+  // the blocked rows follow.
+  const headless = new SettingsWindow({});
+  const plain = headless._detail('Enhancements/AssetInjection');
+  assert.ok(!plain.buttons.some((b) => b.id === 'pick'));
+  assert.equal(plain.onYes, undefined);
+});
+
+test('M-EXT: the confirm this shares its path with still works', () => {
+  // `onYes` was inserted AHEAD of the ShowOptionsAtStart confirm, which
+  // is the one action that path already carried. Both arms have to
+  // survive: a dialog with onYes runs it, a dialog without falls
+  // through to the commit.
+  _resetForTests();
+  const win = new SettingsWindow({});
+  win.dialog = {
+    title: 'x', key: 'GUI/ShowOptionsAtStart', lines: [],
+    buttons: [{ id: 'yes', label: 'Turn Off' }, { id: 'no', label: 'Keep It' }],
+  };
+  win.input('Enter', null, { width: 1280, height: 800 });
+  assert.equal(effectiveSettings().GUI.ShowOptionsAtStart, 'False',
+    'the lock-out confirm still commits');
+  _resetForTests();
+});
