@@ -15,6 +15,7 @@ import { clampLegalReputations } from './court.js';   // AUDIT 23 (C4)
 import { rebuildEquipState } from './equip.js';   // AUDIT 17e C1
 import { restartHeldEnchantments } from './enchantments.js';   // E2: the held bundles' restore half
 import { snapshotWeather, restoreWeather } from './weatherSim.js';   // W1: playerPosition.weather (SerializablePlayer.cs:225) - one value, every host
+import { snapshotRegionConditions, restoreRegionConditions } from './regionConditions.js';   // S42: the CONDITION half of RegionDataRecord
 import { goldStack } from './inventory.js';   // AUDIT 17f
 import { snapshotDiscovery, restoreDiscovery } from './discovery.js';   // T4
 import { snapshotAutomap, restoreAutomap } from './automap.js';   // A1: dictAutomapDungeonsDiscoveryState rides SaveData_v1
@@ -225,6 +226,7 @@ export function snapshotPlayer(entity, { position = null, classicMinutes = 0, re
   // (SerializablePlayer.cs:168); without it every load rerolled the
   // 750..1250 band and shifted all shop prices mid-session.
   snap.regionPrices = entity.regionPrices ? { ...entity.regionPrices } : null;
+  snap.regionConditions = snapshotRegionConditions(entity.regionConditions);   // S42
   return snap;
 }
 
@@ -387,6 +389,10 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // AUDIT 23: the sticky per-region price band (see snapshot side); a
   // pre-fix save re-mints lazily, exactly as an unvisited region does.
   entity.regionPrices = snap.regionPrices ? { ...snap.regionPrices } : {};
+  // S42: the CONDITION half of DFU's RegionDataRecord. A pre-S42 save
+  // carries none and restores a blank store, which is what
+  // InitializeRegionData mints at a new game anyway.
+  entity.regionConditions = restoreRegionConditions(snap.regionConditions);
   // S41 - SerializablePlayer.cs:338-339, "Set time tracked in player
   // entity": the entity's OWN clock marker is re-anchored to the
   // restored world time. It is not in the envelope for exactly this
