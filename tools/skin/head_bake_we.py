@@ -9,28 +9,19 @@ YAWS=[0,45,90,135,180,225,270,315]
 # for the same head - a 55% spread - so the same rig height sampled the brow in
 # one view and the mouth in another and the blend averaged them: mush at 45,
 # two faces at 90. The views share a frame now, so the landmark transfers.
-def _headEnd(path):
-    """The head ends at the NECK. This was right the first time and every guard
-    I bolted on afterwards moved away from it: the plain pinch gave 0.731 where
-    a visual sweep says 0.75, within 3%, while the skin-valley and skin-end
-    variants landed at 0.55-0.66 and cut the mouth off the bottom of the cell.
-    The narrowest silhouette row between the head and the shoulders, required to
-    be a real pinch rather than a gap, plus 3% because the rig's head group ends
-    just below the neck rather than at it."""
-    _m=np.array(Image.open(path).convert('RGBA'))[:,:,3]>0
-    _h=_m.shape[0]; _w=np.array([int(_m[r].sum()) for r in range(_h)])
-    _hw=int(_w[int(_h*0.15):int(_h*0.50)].max())
-    _lo,_hi=int(_h*0.45),int(_h*0.92)
-    _nk=min(range(_lo,_hi), key=lambda r:_w[r])
-    if _hw*0.10 < _w[_nk] < _hw*0.72:
-        return min(0.92, _nk/_h + 0.03)
-    return max(((int(_w[r+1])-int(_w[r]), r) for r in range(int(_h*0.55),_h-2)))[1]/_h
-
-_fr=[_headEnd(f'heads/f{FACE}_{_Y:03d}.png') for _Y in YAWS]
-SH_FRAC=float(np.median(_fr))
-print(f'head ends at {SH_FRAC:.3f} (spread {min(_fr):.2f}..{max(_fr):.2f})')
+# The Nord crops are HEAD-ONLY - no shoulders, no garment - so the span is the
+# whole image and there is nothing to detect. Nord 4 is the one exception: its
+# hair falls below the chin, so it frames at 0.75.
+import json as _json
+import os as _os
+_sp=_json.load(open('spans_we.json'))[str(FACE-1)]
+if 'SPAN' in _os.environ: _sp=[float(x) for x in _os.environ['SPAN'].split(':')] if ':' in _os.environ['SPAN'] else float(_os.environ['SPAN'])
+# a span may be a single number (bottom only) or top:bottom. A topknot or
+# tall hair sits ABOVE the crown and no bottom trim can frame it out.
+TOP_FRAC, SH_FRAC = (float(_sp[0]), float(_sp[1])) if isinstance(_sp,(list,tuple)) else (0.0, float(_sp))
+print(f'span {TOP_FRAC:.2f}:{SH_FRAC:.2f}')
 def _skinSide(Y):
-    A=np.array(Image.open(f'heads/f{FACE}_{Y:03d}.png').convert('RGBA'))
+    A=np.array(Image.open(f'heads_we/f{FACE}_{Y:03d}.png').convert('RGBA'))
     m=A[:,:,3]>0; rgb=A[:,:,:3].astype(int); H=m.shape[0]
     r0,r1=int(H*0.849*0.28),int(H*0.849*0.60)
     sub=rgb[r0:r1]; ms=m[r0:r1]
@@ -43,10 +34,11 @@ print(f'rotation: {"REFLECTED" if _flip else "as-labelled"}'
       + (f'  (90<->270, 45<->315, 135<->225)' if _flip else ''))
 V={}
 for Y in YAWS:
-    im=Image.open(f'heads/f{FACE}_{SRC[Y]:03d}.png').convert('RGBA'); A=np.array(im)
+    im=Image.open(f'heads_we/f{FACE}_{SRC[Y]:03d}.png').convert('RGBA'); A=np.array(im)
     m=A[:,:,3]>0; H,W=m.shape
     w=[int(m[r].sum()) for r in range(H)]
     top=next(r for r in range(H) if w[r]>0)
+    top=max(top, int(round(TOP_FRAC*H)))
     sh=int(round(SH_FRAC*H))
     runs={}; skinr={}
     rgb=A[:,:,:3].astype(int)
@@ -284,5 +276,5 @@ if len(_i)>8:
     if abs(_c-0.5)>0.012:
         cell=np.roll(cell, int(round((0.5-_c)*HW)), axis=1)
         print(f'recentred {(_c-0.5)*360:+.1f} deg')
-Image.fromarray(cell).save(f'heads/cell_{FACE}.png')
-print(f'baked head cell {HW}x{HH} -> heads/cell_{FACE}.png')
+Image.fromarray(cell).save(f'heads_we/cell_{FACE}.png')
+print(f'baked head cell {HW}x{HH} -> heads_we/cell_{FACE}.png')

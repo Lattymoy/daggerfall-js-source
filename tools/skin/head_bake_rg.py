@@ -256,5 +256,17 @@ for d in range(3):
     a=cell[:,d].astype(np.float32); b=cell[:,HW-1-d].astype(np.float32)
     m=(a+b)/2
     cell[:,d]=m.astype(np.uint8); cell[:,HW-1-d]=m.astype(np.uint8)
+# RECENTRE. arc-linear maps about the silhouette's centre, and a braid or an
+# asymmetric hank of hair moves that off the head's axis - Wood Elf 8 came out
+# 20.5 degrees round the skull. A WHOLE-CELL ROLL is safe where the per-row axis
+# correction was not: it is a rigid horizontal wrap, so it cannot shear.
+_b=cell[int(HH*0.30):int(HH*0.60)].astype(int)
+_w=(_b[:,:,0]-_b[:,:,2]>34)&(_b[:,:,0]>90)
+_i=np.where(_w.mean(axis=0)>0.45)[0]
+if len(_i)>8:
+    _c=(_i.min()+_i.max())/2.0/HW
+    if abs(_c-0.5)>0.012:
+        cell=np.roll(cell, int(round((0.5-_c)*HW)), axis=1)
+        print(f'recentred {(_c-0.5)*360:+.1f} deg')
 Image.fromarray(cell).save(f'heads_rg/cell_{FACE}.png')
 print(f'baked head cell {HW}x{HH} -> heads_rg/cell_{FACE}.png')
