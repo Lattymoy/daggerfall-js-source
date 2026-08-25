@@ -596,15 +596,27 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   // the hosts call this BEFORE requestLook; a consumed click never
   // grabs pointer lock. Canvas CSS size maps to backing pixels first.
   function pointerdown(e) {
-    if (!overlay?.click) return false;
+    // U47 (AUDIT 18, routed 62): THE GUARD IS ON THE WINDOW, not on
+    // its click method. This tested `overlay?.click` and so let a
+    // click FALL THROUGH whenever the open window had no click
+    // handler - straight to the host's requestLook, which grabs
+    // pointer lock out from under the menu the player is reading. DFU
+    // has no such hole: its top window consumes the click whatever it
+    // does with it. worldModes.js carries the corrected shape with
+    // this reasoning spelled out beside it; this host was the copy
+    // that never got it.
+    if (!overlay) return false;
     const r = canvas.getBoundingClientRect();
     const px = (e.clientX - r.left) * (canvas.width / r.width);
     const py = (e.clientY - r.top) * (canvas.height / r.height);
     const m = nativeMetrics(canvas);
     const v = pointToNative(m, px, py);
-    if (v) overlay.click(v[0], v[1], e.button === 2);   // I4: the remove gesture rides the button
-    // S40: optional, same reason as the keydown drain - a window may
-    // clear this slot from inside its own click.
+    // BOTH lanes optional-chained this line for different reasons and
+    // both stand: a window may have no `click` at all (V5/U48's rest
+    // window has none), and a window that HAS one may clear this slot
+    // from inside it (S40's does, through the PopToHUD door), so the
+    // `.done` read below is optional too.
+    if (v) overlay.click?.(v[0], v[1], e.button === 2);   // I4: the remove gesture rides the button
     if (overlay?.done) {
       const cb = _onOverlayClosed; _onOverlayClosed = null; overlay.dispose?.(); overlay = null; cb?.();
     }
@@ -727,6 +739,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       // the probe surface follows it - the equip refusal that S23
       // watched here is now a real TEXT.RSC box in this queue.
       overlayBox: (overlay?.boxes?.[0]?.rows ?? []).map((r) => r.text ?? r).join(' | ') || null,
+      overlayRest: !!overlay?.isRestWindow,   // U48: the rest probe, in BOTH hosts that draw here
     }),
   };
 }

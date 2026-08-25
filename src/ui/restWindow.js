@@ -22,8 +22,9 @@
 import { drawText, measureText } from './text.js';
 import {
   RestSession, REST_PROMPT, LOITER_PROMPT, loiterLimitHours, cannotLoiterLines,
-  canRest, illegalRestWarning, ILLEGAL_REST_WARNING, CITY_CAMPING_ILLEGAL_ID,
+  canRest, illegalRestWarning, ILLEGAL_REST_WARNING,
   CANNOT_REST_MORE_THAN_99_HOURS_ID, MAX_REST_HOURS, PROMPT_MAX_CHARS, PROMPT_INITIAL,
+  REST_TEXT,
 } from '../systems/restSession.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -154,20 +155,24 @@ export class RestWindow {
     // through it would ask the host for deps it never had.
     if (!place) { this._allocatedBed = null; this._remainingHoursRented = -1; return true; }
     const d = canRest({ ...place, alreadyWarned });
-    this._allocatedBed = d.allocatedBed ?? null;
+    // canRest answers DFU's two out-parameters by their DFU names:
+    // `bedIndex` is allocatedBed resolved to an INDEX (the host owns
+    // the marker list, since building positions are not stable), and
+    // -1 is its "no bed".
+    this._allocatedBed = (d.bedIndex ?? -1) >= 0 ? d.bedIndex : null;
     // CheckRent counts this down every rested hour, so the rental has
-    // to reach the session. Before S40 it was computed and dropped.
+    // to reach the session - both lanes computed it and dropped it.
     // No `?? -1` here: canRest returns the field on every one of its
     // exits, so a fallback would be unreachable - and unreachable
     // code no pin can kill is a place for a wrong answer to hide.
-    this._remainingHoursRented = d.remainingHoursRented;
+    this._remainingHoursRented = d.hoursRented;
     if (d.crime) this.deps.commitCrime?.(d.crime, d.spawnGuards);
-    if (d.ok) return true;
+    if (d.allowed) return true;
     // CloseWindow() then MessageBox: the rest window is GONE and the
     // text stands alone. Here the window becomes the text and then
     // goes - and crucially NOT through the 'ended' state, which is
     // the RaiseSkills moment (:729-732). A refusal raises nothing.
-    this.refusalLines = (d.text ? [d.text] : this.deps.endLines?.(d.textId ?? CITY_CAMPING_ILLEGAL_ID)) ?? null;
+    this.refusalLines = (d.line ? [d.line] : this.deps.endLines?.(d.textId ?? REST_TEXT.cityCampingIllegal)) ?? null;
     if (!this.refusalLines) { this._close(); return false; }
     this.state = 'refused';
     return false;
@@ -185,7 +190,7 @@ export class RestWindow {
    *  absent from this path - loitering in town is never gated and
    *  never moves the player to a bed. */
   _restButton(which, alreadyWarned) {
-    if (!alreadyWarned && illegalRestWarning() && this.deps.restPlace?.()?.inTownStrict) {
+    if (!alreadyWarned && illegalRestWarning() && this.deps.restPlace?.()?.inTownOutside) {
       // VERBATIM, and a quirk: WhileButton plays ButtonClick a SECOND
       // time before raising the box (:644 then :647). HealedButton
       // takes the same branch and plays it once (:670). Nobody would
@@ -328,8 +333,9 @@ export class RestWindow {
    *  window is topmost and reads Time.realtimeSinceStartup - so
    *  PauseWhileOpen's timeScale = 0 does not stop it.
    *
-   *  S40: this is named `tick` because that is the seam ALL FOUR hosts
-   *  already drive (townTalk's `frame`, worldModes' interior overlay
+   *  BOTH rest lanes found this independently, which is some evidence
+   *  it was the real defect: it is named `tick` because that is the
+   *  seam ALL FOUR hosts already drive (townTalk's `frame`, worldModes' interior overlay
    *  arm, dungeonContext's `tickOverlay` - named rather than cited by
    *  line, because a port-internal line number drifts on every edit
    *  above it and this one already had). It was `tickRest`, which one

@@ -4554,21 +4554,264 @@ why: `Cannot access 'say' before initialization`, thrown by
 `createWorldModes` **on its first statement** — `say` is read inside
 `createPlayerTicker`'s options object and declared with `const` forty
 lines below. `bootExterior` died with it, so **the exterior host did
-not boot at all**. This is the third instance of AUDIT 24 wave 37's
-shape and the first that was not merely latent. The two declarations
-move above their use, and wave 37 grew a **fourth gate**: mechanical
-over each host boot's whole body, a top-level `const`/`let`
-(destructures included, which is how twenty names bind at once here)
-must not be *named* above its own declaration. Getting that gate to
-actually fail took four corrections, each recorded at the line it
-fixed — the boot function's own opener counted as a lazy frame and
-marked every line inside it safe (the first draft passed while the
-crash sat four lines from the top); a one-line arrow opens no brace,
-so the depth stack cannot see it; `params.get('loc')` is not a read of
-`loc`; and a template's prose named a binding fifteen lines early
-while its `${...}` really is a read. Proven against the shipped bug
-both ways.
+not boot at all**. Two declarations move above their use. A gate for
+it landed here first and was **removed one slice later**: another
+session found the same crash from the other side — by starting the
+game, in a first-hour playthrough probe — and wrote
+`test/tdz.test.js`, which parses every file in `src/` to an AST and
+reports a reference evaluated in the same execution scope as a
+declaration it precedes. That is this law done properly over the whole
+tree rather than over three boot functions by line, and two gates for
+one law is the second copy this project keeps deleting.
 
 Pins: 11 in `hudlarge.test.js`, 4 in `bss.test.js`, 1 added to
 `audit24_wave37.test.js`. 16 mutations, 15 dead, 1 recorded
 equivalent.
+
+## U46 - HUDACTIVESPELLS: the magic you have been under all along (2026-08-25)
+
+`HUDActiveSpells.cs`, whole. The second of the three components on
+U45's Ledger row, and the one that makes the magic the port has
+*already been running* visible: every buff, drain, paralysis and
+concealment since the S-arc has been invisible on screen unless the
+player opened the spellbook and counted.
+
+**IT READS THE BUNDLES X10 ALREADY BUILT.** `systems/mysticism.js`'s
+`liveBundles` folds each cast's entries back into one bundle carrying
+its name, its type and DFU's per-bundle **ShowIcon** law — and that
+law is word for word this window's `ShowIcon` (:177-190). So the
+Dispel Magic picker and the HUD read one function, not two: an armed
+Open marker is skipped in both, and a held item's bundle shows
+whatever its kind, which is the `|| fromEquippedItem != null` half.
+
+**TWO FIELDS JOINED THE BUNDLE STAMP,** because neither is derivable
+once the entries are on the list: the spell record's own **icon**, and
+whether the **player** cast it. DFU's split is `caster == null ||
+caster != player` → the debuff row, so a bundle with no recorded
+caster is a debuff — which is what a trap or an RDB action's cast
+looks like, and DFU says as much in its own comment. The pin for that
+needs a fixture that really leaves the field *absent*, because the law
+lives in `liveBundles`' `!!` normaliser and a pin one layer up cannot
+see it.
+
+**ONE POOL, TWENTY-FOUR SLOTS, AND THE INDEX IS SHARED.** `poolIndex`
+increments across both lists in one walk, *before* the split, and
+`AlignIcons` then skips anything past the end. So the cap is on the
+total: thirty bundles list thirty and draw twenty-four, and an icon
+that overflows is silently absent while still having consumed its
+number. A per-row counter draws thirty and fails the pin twice.
+
+**EIGHT LAYOUT SCHEMES, AND THE EIGHTH IS WORTH READING TWICE.**
+`smallhorzbottom` sets `iconColumns` to **zero**, against a
+`++column == iconColumns` test that a counter starting at 1 can never
+satisfy — which is exactly what its own comment ("No wrapping") means.
+Ported as written rather than special-cased, because the arithmetic
+already says it. It is also the one scheme that puts the **debuffs
+above the buffs**, because both its rows are at the bottom and
+stacking is the only way to separate them. An unknown scheme name
+falls to Classic, where DFU's defaultless switch leaves both
+positionings null and throws on the first icon.
+
+**THE BLINK IS THE WARNING, AND IT IS NOT FOR ITEMS.** A bundle whose
+*longest* effect has under two rounds left is expiring and blinks at
+4Hz — the longest, because "a spell can have multiple effects with
+different round durations" and the icon belongs to the whole cast, so
+one long member keeps a mixed cast solid. An equipped item's icon
+never blinks: its effect is not running out, it is just there. Paused,
+everything shows. The clock toggles **once per frame**, DFU's `if` and
+not a drain, so a two-second stall makes the blink lag rather than
+strobe — a difference that is visible, which is why it is verbatim.
+
+**THE ROWS DODGE THE BAR, UPWARD ONLY.**
+`AdjustIconPositionForLargeHUD`: "Icon will remain in default position
+unless it needs to avoid being drawn under HUD." The buff row at y=16
+is already clear and must not move; the debuff row at y=177 lifts to
+the bar's top minus 18. And the rows are drawn on **both** branches of
+`drawHud` — `DaggerfallHUD.cs:209` enables them from `ShowActiveSpells`
+alone, and the large-HUD block below it turns off the vitals, the
+compass and the mode icon without ever touching these.
+
+**A SEAM THAT WAS FEEDING ONE CONSUMER.** The spell icon sheet loaded
+with the **spellbook window** — its only reader until now — so the
+rows would have been blank until the player happened to open their
+book once. It loads with the rest of the HUD's art instead, fired and
+not awaited like the registries beside it. That is the F2 shape: a
+feature that silently does nothing while every pin stays green.
+`GUI/IconsPositioningScheme` is tiered live at last, the third setting
+in two slices that the screen was offering with nothing behind it.
+
+**THE POINTER IS ONE STORE.** DFU hangs a ToolTip off every pooled
+icon panel and lets each panel's MouseEnter raise it. The HUD is not a
+window here and owns no pointer handler — the four hosts own the
+mouse — so the virtual position lands in one store on its way past,
+before each host's overlay return, because an overlay up is exactly
+when the tooltip is allowed to show. One store, one blink clock, one
+tooltip: there is one HUD, and four hosts each counting their own
+phase would strobe when the player walked through a door.
+
+**PROBED LIVE** (`tools/activeSpellsProbe.mjs`) at 1280×720 on a real
+character: the sheet is loaded with the spellbook never opened; a real
+**Chameleon** from the starting book, self-cast through `applySpell`,
+lands in the buff row at (27, 16) carrying icon 2 with its non-vendor
+`!` trimmed; a second spell cast by a *foe* lands in the debuff row at
+y=177 (a re-cast of the same spell would not — AddState stacks rounds
+onto the incumbent and pushes no entry at all, which the probe says
+out loud); turning the large HUD on leaves the buff at 16 and lifts
+the debuff from 177 to 160; and the tooltip finds the icon under the
+pointer and nothing on empty screen.
+
+**FLAGGED:** `HUDEscortingNPCFaces`, the third component of that row,
+is quest-gated and not here. DFU's icon *packs*
+(`Resources/SpellIcons`) remain the Ledger note they already were on
+`ui/spellIcons.js`.
+
+Pins: 13 in `hudactivespells.test.js`. 10 mutations, 8 dead, 2
+recorded equivalent — the wrap test's guarded `>=` (a counter that
+resets at N can only reach N, so it is the same program) and the
+caster split's `=== false` (`liveBundles` has already normalised the
+field, so nothing undefined reaches that line; the pin that matters is
+one layer down, and it is there).
+
+## U47 - THE HOVER INFO PANEL, and two doors that leaked (2026-08-25)
+
+Three rows off the Ledger in one sitting, and all three were the same
+shape: something drawn, bound or built, with nothing on the other end.
+
+**THE INFO PANEL.** U25 drew the 37×32 cutout at (223, 145) and filled
+it from the last Info-mode *click*. DFU fills it from **hover** —
+`OnMouseEnter` on every list slot, on the paperdoll's item layers, and
+on the gold button. U37 built the mouse-move seam this waited on;
+what was left was the window growing its own `hover(vx, vy)`, and now
+it has one.
+
+**THE PANEL IS STICKY, and that is the part worth stating.** DFU has
+no `OnMouseLeave` arm at all — only two `SetText(empty)` sites, a tab
+change (:814-816) and a window push (:663-664). So moving off an item
+leaves the panel exactly as it was, which is what makes a panel 37
+pixels wide usable: you read it *after* your hand has moved on.
+
+Pinning that took a second pass. The obvious pin hovers over dead
+space and asserts nothing changed — and it passes whether or not the
+code clears the panel on a miss, because dead space never reaches the
+miss branch. The arm that matters is an **empty slot inside the
+list**: DFU's scroller raises `OnHover` only for a slot that *holds*
+an item, so slot 2 of a two-item bag is the branch a clearing bug
+would take. Same correction for the box pin — hovering on *nothing*
+behind a box proves nothing; hovering squarely on a **different item**
+does.
+
+**THE GOLD BUTTON'S LINES ARE GENERATED,** not TEXT.RSC:
+Internal_Strings `goldAmount` and `goldWeight`, with a **conditional**
+format — `weight.ToString(weight % 1 == 0 ? "F0" : "F2")`. A whole
+number of kilograms shows no decimals, anything else shows exactly
+two. At 0.0025 kg a coin, that is every multiple of 400 gold and
+nothing between.
+
+**A DOOR THAT LEAKED THE POINTER.** `townTalk.pointerdown` tested
+`overlay?.click` where it should test `overlay`, so a click on an open
+window that happens to have no click handler fell **through** to the
+host's `requestLook` and grabbed pointer lock out from under the menu
+the player was reading. `worldModes` carries the corrected shape with
+the reasoning spelled out beside it; this host was the copy that never
+got it (AUDIT 18, routed 62). The pin has to read the guard *inside*
+`pointerdown`: `hover` a few lines below carries the same line, and
+the first draft matched that one while the defect was restored.
+
+**AND THREE KEYS THE BROWSER WOULD STEAL.** F5 reloads, F6 moves
+focus, F11 goes fullscreen — and all three are DFU bindings
+(CharacterSheet, Inventory, QuickLoad). Each host kept its own
+two-key list; F11 was in none of them. One list now,
+`BROWSER_STEALS` in `ui/input.js`, called **first** by every host that
+registers a keydown. Swallowing is deliberately *not* conditional on
+the host having a destination — that is exactly what left the exterior
+host out, since it has nothing to quickload and must still not go
+fullscreen, and `worldModes` returns before any `preventDefault` in a
+dozen places.
+
+**PROBED LIVE** (`tools/hoverPanelProbe.mjs`) with a real mouse: F6
+opens the real inventory, a `page.mouse.move` onto list slot 0 fills
+the panel with **Saber**, moving to dead space leaves it there, the
+gold button takes it, and a click on the Ingredients tab empties it.
+That is the seam this proves rather than the law: `townTalk`'s hover
+channel has gated on `overlay?.hover` since U37, so the inventory was
+the window it silently skipped — and a method nothing calls is the
+failure this project keeps finding.
+
+Pins: 4 added to `nativeinventory.test.js`, two existing pins re-aimed
+(I4's right-click seam and AUDIT 23's hosts-6 swallow, both of which
+named a *spelling* of a law that now lives one file over). 7
+mutations, 7 dead — three of them only after the pins that should have
+caught them were rewritten.
+
+## U48 — the rest dispatch, and the fourth host
+
+V5 landed while this slice was in flight, and it did the same work
+from the other end: `CanRest` ported whole, three hosts wired,
+`plainLines` for the TEXT.RSC rows, one generic `tick` so no host can
+forget the clock. Two implementations of one law cannot both live, so
+V5's is the port and U48 is what it left. `canRestHere`,
+`makeRestDeps` and a second tick seam were deleted rather than merged.
+
+**THE LADDER THAT RUNS BEFORE CANREST.** `CanRest` answers *where* a
+player may sleep. `DaggerfallUI.cs:651-688` answers *whether the
+window opens at all*, and it still lived inline inside
+`dungeonContext` alone — so above ground the rest window opened while
+swimming, while falling, and with a foe in the street. It has no scene
+gate: enemies, water, the ground, and nothing else.
+
+Three things in that ladder are worth reading twice. **Enemies outrank
+the water**, because DFU's is an `if`/`else if` chain — and it
+matters, because only the enemy arm raises the alert that arms the
+rest-encounter roll. The **prevented-rest registry's empty string** is
+deliberate: `RegisterPreventRestCondition` turns a null message into
+`""` so a caller can block rest without wording it, and the dispatch
+falls back to TEXT.RSC 355 rather than showing a blank box. And a
+**racial override refuses silently** — DFU simply returns, so that
+verdict carries no text at all — from the *bottom* of the ladder, so a
+swimming vampire is told about the water, which is the arm they can
+act on.
+
+**STARTRESTGROUNDEDCHECK MOVED TO ITS DFU HOME.** `PlayerMotor.cs:184-194`
+short-circuits on the flag, then casts a ray from the controller
+*centre* for `height/2 + 0.2` — DFU's "collision fix for when player
+is levitating but feet are close enough to ground to rest". It lived
+inline in the dungeon context, which was fine while that was its only
+caller; U48 gave it two more, so the copy is gone rather than
+duplicated. A hit at distance **zero** is a hit — the ray starts
+inside the capsule — which is why the test is `Number.isFinite` and
+not truthiness.
+
+The raw `grounded` flag turns out to be wrong up here for a reason DFU
+never has: on a page whose motor is never stepped it sits at its
+initialiser `false` forever, so the rest key answered *"You cannot
+sleep now."* on solid ground. That is what makes the fallback ray
+load-bearing outside the levitation case, and it is pinned as the
+initialiser for exactly that reason.
+
+**THE ?TOWN PAGE IS THE FOURTH HOST.** V5's own pin says *"every host
+that can hold a player now has a rest arm"* and names three. This page
+holds one. It goes through the same two laws, the same deps factory
+and the same verbatim two-step — and its `CanRest` arm is a
+**constant**, because the page *is* a location and its player is
+always outdoors: there is no wilderness to step into and no building
+to step inside.
+
+**AND THE ENCOUNTER ROLL RIDES INSIDE THE ADVANCE**, in the world host
+alone. It is the only host with a mobile foe pool, and its frame body
+returns at the overlay gate — so left to the frame, a whole rested
+night's rolls fire in one burst the moment the window closes, which is
+AUDIT 24 wave 30's finding about the magic rounds, one system over.
+
+**THREE PINS NEEDED A SECOND DRAFT**, each because it matched *prose*
+or a neighbour rather than the code: a ban on the raw `grounded` flag
+found the world host's probe surface; an ordering pin found the
+comment that explains the two-step thirty lines above it; and asking
+only that `restDecision` *appeared* in a file passed a toggle that
+hardcodes `{ kind: 'rest' }` and leaves the helper unused — both hosts
+survived that one.
+
+Pins: `test/restwhere.test.js`, 8 tests, **28 mutations, 28 dead**.
+Two pins in `travelmapwindow.test.js` were re-aimed on the way past:
+one sliced `frame()` by a magic 900 characters, and the other checked
+for a `dispose` anywhere in the function rather than in the drain, and
+survived its own mutant.

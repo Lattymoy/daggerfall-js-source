@@ -259,7 +259,7 @@ export const SERVICE_DESTINATION = Object.freeze({
   DaedraSummoning: null,   // FLAGGED: the daedra summoning flow
   Spymaster: 'guildServiceSpymaster',   // G6: the 402 greeting, then the NPC's own talk
   ReceiveArmor: 'guildServiceReceiveArmor',   // G6: KnightlyOrder.ReceiveArmor
-  ReceiveHouse: null,      // FLAGGED: banking / house ownership
+  ReceiveHouse: 'guildServiceReceiveHouse',   // H1: KnightlyOrder.ReceiveHouse, over the live house registry
 });
 export const serviceDestination = (service) => SERVICE_DESTINATION[service] ?? null;
 

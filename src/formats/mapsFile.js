@@ -89,19 +89,13 @@ export const LOCATION_TYPES = Object.freeze({
   Graveyard: 12, Coven: 13, HomeYourShips: 14, None: 0xffff,
 });
 
-/** PlayerGPS.IsPlayerInTown's location-type set (PlayerGPS.cs:507-513)
- *  - SEVEN types, not the three the port's one caller checked. The
- *  three it had (City/Hamlet/Village) are the ones with streets; the
- *  four it dropped are the small settlements and the standalone
- *  tavern/temple, and every rule that keys on "in town" - S40's
- *  camping crime, the quest system's own IsPlayerInTown - applied to
- *  none of them. */
-export const TOWN_LOCATION_TYPES = Object.freeze([
-  LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage,
-  LOCATION_TYPES.HomeFarms, LOCATION_TYPES.HomeWealthy,
-  LOCATION_TYPES.Tavern, LOCATION_TYPES.ReligionTemple,
-]);
-export const isTownLocationType = (t) => TOWN_LOCATION_TYPES.includes(t);
+/* PlayerGPS.IsPlayerInTown's seven-type set lived here briefly - two
+ * lanes ported it in the same week - and now lives in
+ * systems/nearbyObjects.js beside the port's other PlayerGPS members,
+ * as `isPlayerInTown(locationType, { mustBeInLocationRect,
+ * mustBeOutside, inLocationRect, inside })`, which models BOTH of the
+ * C#'s optional flags rather than the type list alone. That is the
+ * fuller port and the better home; this file reads MAPS.BSA. */
 
 export const DUNGEON_TYPES = Object.freeze({
   Crypt: 0, OrcStronghold: 1, HumanStronghold: 2, Prison: 3,

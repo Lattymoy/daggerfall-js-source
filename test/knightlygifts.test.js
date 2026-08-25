@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {
   HOUSE_FLAG_MASK, ARMOR_FLAG_START, armorMaskForRank, hasClaimedArmor,
   giftArmorMaterial, GIFT_ARMOR_PIECES, receiveArmorDecision, claimArmor,
-  ARMOR_TEXT_ID, NO_ARMOR_TEXT_ID, NO_HOUSE_TEXT_ID, SPYMASTER_GREETING_TEXT_ID,
+  ARMOR_TEXT_ID, NO_ARMOR_TEXT_ID, NO_HOUSE_TEXT_ID, HOUSE_TEXT_ID, SPYMASTER_GREETING_TEXT_ID,
 } from '../src/systems/knightlyGifts.js';
 import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
 import { ARMOR_ENUM } from '../src/combat/enemyEquipment.js';
@@ -206,11 +206,14 @@ test('G6: the two destinations, and the records they speak', () => {
   assert.equal(NO_ARMOR_TEXT_ID, 461);
   assert.equal(NO_HOUSE_TEXT_ID, 460);
   assert.equal(SPYMASTER_GREETING_TEXT_ID, 402);
-  // ReceiveHouse is still a FLAGGED null - it needs house ownership,
-  // which banking flagged as waiting on the building directory. Its
-  // refusal record is kept beside its siblings so the day it lands
-  // there is one place to look.
-  assert.equal(serviceDestination('ReceiveHouse'), null);
+  // H1: THAT DAY CAME. This asserted a FLAGGED null "until house
+  // ownership lands, which banking flagged as waiting on the building
+  // directory" - both halves are built now, so ReceiveHouse is the
+  // third destination this module speaks for and the two records it
+  // was already keeping (NO_HOUSE_TEXT_ID here, HOUSE_FLAG_MASK
+  // above) have a caller at last.
+  assert.equal(serviceDestination('ReceiveHouse'), 'guildServiceReceiveHouse');
+  assert.equal(HOUSE_TEXT_ID, 462);
 });
 
 test('G6: an arm may answer a BOX, and a box is not a window', () => {

@@ -23,11 +23,13 @@
 // The laws are systems/banking.js's - every refusal, every gate and
 // the arithmetic. This file is the panel, the hit rects and the box.
 //
-// FLAGGED: the house and ship PURCHASE popups (DaggerfallBankPurchasePopUp)
-// need the building directory and the permanent-scene set, so those
-// two buttons refuse through the law's own decisions and never reach
-// a picker; DFU binds each button to a DaggerfallShortcut hotkey, and
-// the accelerators here are the port's own (Ledger A).
+// H2 opened the HOUSE half of this: BUY HOUSE reaches
+// ui/bankPurchaseWindow.js now, and the refusals above it are the
+// law's. The SHIP popup is still FLAGGED - it needs the two fixed
+// ship scenes at map pixels (2,2) and (5,5), which is a streaming-
+// world seam and not a banking one. DFU binds each button to a
+// DaggerfallShortcut hotkey; the accelerators here are the port's own
+// (Ledger A).
 
 import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
@@ -104,6 +106,7 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + BANK_PANEL_X && y >= ry + B
  *   rows(textId)   -> the host's TEXT.RSC reader
  *   dueDateText(minutes) -> GetLoanDueDateString
  *   ownsHouse(), ownsShip(), housesForSale(), isPortTown(), houseSellPrice()
+ *   openPurchase()  -> H2: mounts the purchase window; false if it cannot
  *   onClose()
  */
 export class BankWindow {
@@ -184,10 +187,12 @@ export class BankWindow {
     }
     if (name === 'buyHouse') {
       const d = buyHouseDecision({ ownsHouse: this.hooks.ownsHouse?.(), housesForSale: this.hooks.housesForSale?.() ?? 0 });
-      // FLAGGED: 'pick' needs the building directory, so it refuses
-      // with NO_HOUSES_FOR_SALE until that seam lands - which is also
-      // DFU's own answer when the directory is missing (:433-434).
-      this._popup(d.kind === 'refuse' ? d.result : TRANSACTION_RESULT.NO_HOUSES_FOR_SALE);
+      // H2: 'pick' reaches the purchase window at last. The refusals
+      // are still the law's - already own one, nothing for sale - and
+      // a host with no purchase window falls back to DFU's own answer
+      // for a missing directory (:433-434).
+      if (d.kind === 'refuse') { this._popup(d.result); return; }
+      if (!this.hooks.openPurchase?.()) this._popup(TRANSACTION_RESULT.NO_HOUSES_FOR_SALE);
       return;
     }
     if (name === 'buyShip') {

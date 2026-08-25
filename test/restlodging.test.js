@@ -6,16 +6,16 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  canRest, CITY_CAMPING_ILLEGAL_ID, HAVE_NOT_RENTED_ROOM,
-  ILLEGAL_REST_WARNING, illegalRestWarning,
-  restOpenGate, REST_TEXT, RestSession, EXPIRED_RENTED_ROOM, interiorRestPlace,
-  cannotLoiterLines, loiterLimitHours,
+  canRest, HAVE_NOT_RENTED_ROOM, ILLEGAL_REST_WARNING, illegalRestWarning,
+  restDecision, REST_TEXT, RestSession, EXPIRED_RENTED_ROOM, interiorRestPlace,
+  cannotLoiterLines, loiterLimitHours, BUILDING_TAVERN, BUILDING_SHIP,
   CANNOT_REST_MORE_THAN_99_HOURS_ID, PROMPT_MAX_CHARS, PROMPT_INITIAL,
 } from '../src/systems/restSession.js';
 import { RestWindow } from '../src/ui/restWindow.js';
 import { restVitals, restFullyHealed, createRestDeps } from '../src/scenes/shared.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
-import { isTownLocationType, TOWN_LOCATION_TYPES, LOCATION_TYPES } from '../src/formats/mapsFile.js';
+import { LOCATION_TYPES } from '../src/formats/mapsFile.js';
+import { isPlayerInTown, TOWN_LOCATION_TYPES } from '../src/systems/nearbyObjects.js';
 import { interiorSceneName } from '../src/systems/sceneCache.js';
 import { setValue, _resetForTests } from '../src/systems/settings.js';
 import { maxFatigue } from '../src/systems/statMods.js';
@@ -32,190 +32,170 @@ const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 // ---- the LAW ---------------------------------------------------------
 
 test('S40 canRest: in town and OUTDOORS - the crime lands either way, the refusal only unwarned', () => {
-  const cold = canRest({ inTownStrict: true });
+  const cold = canRest({ inTownOutside: true });
   // CloseWindow() + MessageBox(cityCampingIllegal), and NO rest.
-  assert.equal(cold.ok, false);
-  assert.equal(cold.textId, CITY_CAMPING_ILLEGAL_ID);
+  assert.equal(cold.allowed, false);
+  assert.equal(cold.textId, REST_TEXT.cityCampingIllegal);
   // ...but the crime is registered anyway. This is the quirk: being
   // turned away still puts guards on the street.
   assert.equal(cold.crime, 'Vagrancy');
   assert.equal(cold.spawnGuards, true);
 
   // `alreadyWarned` is the CONFIRM BOX's Yes, not a second keypress.
-  const warned = canRest({ inTownStrict: true, alreadyWarned: true });
-  assert.equal(warned.ok, true);
+  const warned = canRest({ inTownOutside: true, alreadyWarned: true });
+  assert.equal(warned.allowed, true);
   assert.equal(warned.textId, null);      // no message box on this path
   assert.equal(warned.crime, 'Vagrancy'); // still a crime
   assert.equal(warned.spawnGuards, true);
 
   // Neither path allocates a bed - you are sleeping in the street.
   for (const d of [cold, warned]) {
-    assert.equal(d.allocatedBed, null);
-    assert.equal(d.remainingHoursRented, -1);
+    assert.equal(d.bedIndex, -1);
+    assert.equal(d.hoursRented, -1);
   }
 });
 
 test('S40 canRest: the strict arm WINS over the inside arm, and outside a town rest is free', () => {
-  // DFU's chain is if/else-if: inTownStrict short-circuits, so the
+  // DFU's chain is if/else-if: inTownOutside short-circuits, so the
   // building fields are never even read.
   const d = canRest({
-    inTownStrict: true, inTown: true, insideBuilding: true,
-    buildingType: BUILDING_TYPES.Tavern, guildCanRest: () => true,
+    inTownOutside: true, inTownLocation: true, insideBuilding: true,
+    buildingType: BUILDING_TAVERN, guildCanRest: true,
   });
-  assert.equal(d.ok, false);
-  assert.equal(d.textId, CITY_CAMPING_ILLEGAL_ID);
+  assert.equal(d.allowed, false);
+  assert.equal(d.textId, REST_TEXT.cityCampingIllegal);
 
   // The tail: wilderness, dungeon, anywhere that is not a town.
-  const wild = canRest({ inTownStrict: false, inTown: false, insideBuilding: false });
+  const wild = canRest({ inTownOutside: false, inTownLocation: false, insideBuilding: false });
   assert.deepEqual(
-    { ok: wild.ok, crime: wild.crime, spawnGuards: wild.spawnGuards, bed: wild.allocatedBed },
-    { ok: true, crime: null, spawnGuards: false, bed: null });
+    { allowed: wild.allowed, crime: wild.crime, spawnGuards: wild.spawnGuards, bed: wild.bedIndex },
+    { allowed: true, crime: undefined, spawnGuards: undefined, bed: -1 });
   // In a town but INSIDE nothing (standing on a street the rect test
   // missed) is the same tail - both halves of the && are required.
-  assert.equal(canRest({ inTown: true, insideBuilding: false }).ok, true);
-  assert.equal(canRest({ inTown: false, insideBuilding: true }).ok, true);
+  assert.equal(canRest({ inTownLocation: true, insideBuilding: false }).allowed, true);
+  assert.equal(canRest({ inTownLocation: false, insideBuilding: true }).allowed, true);
 });
 
 const ROOM_PLACE = (over = {}) => ({
-  inTown: true, insideBuilding: true, mapId: 17, buildingKey: 4200,
-  buildingType: BUILDING_TYPES.Tavern, nowMinutes: 1000,
-  isPermanentScene: (n) => n === interiorSceneName(17, 4200),
-  rentedRoom: () => ({ allocatedBedIndex: 2, expiryMinutes: 1000 + 60 * 30 }),
-  restMarkers: ['bed0', 'bed1', 'bed2', 'bed3'],
+  inTownLocation: true, insideBuilding: true, buildingType: BUILDING_TAVERN,
+  nowMinutes: 1000, permanentScene: true,
+  room: { allocatedBedIndex: 2, expiryMinutes: 1000 + 60 * 30 },
+  restMarkers: 4,
   ...over,
 });
 
 test('S40 canRest: a live rented room sleeps, in the bed that was SOLD', () => {
   const d = canRest(ROOM_PLACE());
-  assert.equal(d.ok, true);
-  assert.equal(d.crime, null);
-  // GetRemainingHours: ceil((expiry - now)/60) = 30
-  assert.equal(d.remainingHoursRented, 30);
-  // The marker is relinked BY INDEX - allocatedBedIndex 2.
-  assert.equal(d.allocatedBed, 'bed2');
+  assert.equal(d.allowed, true);
+  assert.equal(d.crime, undefined);
+  assert.equal(d.hoursRented, 30);            // ceil((expiry - now)/60)
+  assert.equal(d.bedIndex, 2);                // relinked BY INDEX
 });
 
 test('S40 canRest: the bed index falls back to 0 out of range, and the hour count CEILS', () => {
-  assert.equal(canRest(ROOM_PLACE({
-    rentedRoom: () => ({ allocatedBedIndex: 9, expiryMinutes: 1000 + 60 }),
-  })).allocatedBed, 'bed0');
-  assert.equal(canRest(ROOM_PLACE({
-    rentedRoom: () => ({ allocatedBedIndex: -1, expiryMinutes: 1000 + 60 }),
-  })).allocatedBed, 'bed0');
+  const bed = (i) => canRest(ROOM_PLACE({
+    room: { allocatedBedIndex: i, expiryMinutes: 1000 + 60 },
+  })).bedIndex;
+  assert.equal(bed(9), 0);
+  assert.equal(bed(-1), 0);
   // The bound is EXCLUSIVE (`< restMarkers.Length`), so an index equal
   // to the count falls back too - `<=` would read one past the end.
-  assert.equal(canRest(ROOM_PLACE({
-    rentedRoom: () => ({ allocatedBedIndex: 4, expiryMinutes: 1000 + 60 }),
-  })).allocatedBed, 'bed0');
-  // ...and the LAST valid index is still itself.
-  assert.equal(canRest(ROOM_PLACE({
-    rentedRoom: () => ({ allocatedBedIndex: 3, expiryMinutes: 1000 + 60 }),
-  })).allocatedBed, 'bed3');
+  assert.equal(bed(4), 0);
+  assert.equal(bed(3), 3, 'and the LAST valid index is still itself');
   // One minute left still reads as ONE hour, and one hour still sleeps.
-  const d = canRest(ROOM_PLACE({ rentedRoom: () => ({ allocatedBedIndex: 0, expiryMinutes: 1001 }) }));
-  assert.equal(d.remainingHoursRented, 1);
-  assert.equal(d.ok, true);
+  const d = canRest(ROOM_PLACE({ room: { allocatedBedIndex: 0, expiryMinutes: 1001 } }));
+  assert.equal(d.hoursRented, 1);
+  assert.equal(d.allowed, true);
 });
 
 test('S40 canRest: an EXPIRED room in a held scene refuses - and says which line', () => {
-  const d = canRest(ROOM_PLACE({
-    rentedRoom: () => ({ allocatedBedIndex: 1, expiryMinutes: 1000 }),   // 0 hours left
-  }));
-  assert.equal(d.ok, false);
-  assert.equal(d.text, HAVE_NOT_RENTED_ROOM);
-  assert.equal(d.remainingHoursRented, 0);
-  // DFU sets allocatedBed BEFORE the remaining-hours test, so the
-  // refusal still carries it. Nothing reads it, and that is faithful.
-  assert.equal(d.allocatedBed, 'bed1');
-  // No crime indoors, ever.
-  assert.equal(d.crime, null);
-  assert.equal(d.spawnGuards, false);
+  const d = canRest(ROOM_PLACE({ room: { allocatedBedIndex: 1, expiryMinutes: 1000 } }));
+  assert.equal(d.allowed, false);
+  assert.equal(d.line, HAVE_NOT_RENTED_ROOM);
+  // BOTH out-parameters survive the refusal, as DFU leaves them - and
+  // hoursRented 0 rather than -1 is what makes CheckRent's expired arm
+  // reachable. Returning a flat -1 from the arms was one of the two
+  // lanes' shape, and it made the whole rent countdown dead.
+  assert.equal(d.hoursRented, 0);
+  assert.equal(d.bedIndex, 1);
+  assert.equal(d.crime, undefined, 'no crime indoors, ever');
 });
 
 test('S40 canRest: a SHIP and an owned house sleep outright, with no room and no bed', () => {
-  const ship = canRest(ROOM_PLACE({
-    buildingType: BUILDING_TYPES.Ship,
-    rentedRoom: () => { throw new Error('the ship arm must return BEFORE the room lookup'); },
-  }));
-  assert.equal(ship.ok, true);
-  assert.equal(ship.remainingHoursRented, -1);
-  assert.equal(ship.allocatedBed, null);
-
-  const house = canRest(ROOM_PLACE({
-    buildingType: BUILDING_TYPES.House2,
-    isHouseOwned: (k) => k === 4200,
-    rentedRoom: () => { throw new Error('an owned house needs no rental'); },
-  }));
-  assert.equal(house.ok, true);
+  const ship = canRest(ROOM_PLACE({ buildingType: BUILDING_SHIP, isShip: true, room: null }));
+  assert.equal(ship.allowed, true);
+  assert.equal(ship.hoursRented, -1);
+  assert.equal(ship.bedIndex, -1);
+  // H1 made the second arm reachable: DaggerfallBankManager.IsHouseOwned
+  // is live now, so an owned house sleeps without a rental.
+  const house = canRest(ROOM_PLACE({ buildingType: 18, houseOwned: true, room: null }));
+  assert.equal(house.allowed, true);
+  assert.equal(house.hoursRented, -1);
 });
 
 test('S40 canRest: a building that is NOT a held scene skips the room arm entirely', () => {
-  const d = canRest(ROOM_PLACE({
-    isPermanentScene: () => false,
-    rentedRoom: () => { throw new Error('no held scene, no room lookup'); },
-  }));
-  assert.equal(d.ok, false);
-  assert.equal(d.text, HAVE_NOT_RENTED_ROOM);
-  assert.equal(d.remainingHoursRented, -1);
-  assert.equal(d.allocatedBed, null);
+  // permanentScene gates the WHOLE ladder: with it false the rental is
+  // never consulted, which is why a room in an un-held interior cannot
+  // be slept in even while the record exists.
+  const d = canRest(ROOM_PLACE({ permanentScene: false }));
+  assert.equal(d.allowed, false);
+  assert.equal(d.line, HAVE_NOT_RENTED_ROOM);
+  assert.equal(d.hoursRented, -1);
+  assert.equal(d.bedIndex, -1);
 });
 
 test('S40 canRest: THE TAVERN EXCLUSION - the guild arm skips inns', () => {
   const base = {
-    inTown: true, insideBuilding: true, isPermanentScene: () => false,
-    guildCanRest: () => true, restMarkers: ['hallBed', 'other'],
+    inTownLocation: true, insideBuilding: true, permanentScene: false,
+    guildCanRest: true, restMarkers: 2,
   };
   // Every tavern in the data carries the fighters-guild faction, so
   // without this a Fighters Guild member sleeps free in every inn.
-  const inn = canRest({ ...base, buildingType: BUILDING_TYPES.Tavern });
-  assert.equal(inn.ok, false);
-  assert.equal(inn.text, HAVE_NOT_RENTED_ROOM);
+  const inn = canRest({ ...base, buildingType: BUILDING_TAVERN });
+  assert.equal(inn.allowed, false);
+  assert.equal(inn.line, HAVE_NOT_RENTED_ROOM);
 
   // The hall itself: FindMarker (singular) takes the FIRST rest marker.
-  const hall = canRest({ ...base, buildingType: BUILDING_TYPES.GuildHall });
-  assert.equal(hall.ok, true);
-  assert.equal(hall.allocatedBed, 'hallBed');
-  assert.equal(hall.remainingHoursRented, -1);
+  const hall = canRest({ ...base, buildingType: 11 });
+  assert.equal(hall.allowed, true);
+  assert.equal(hall.bedIndex, 0);
+  assert.equal(hall.hoursRented, -1);
 
   // ...and a non-member in the same hall is turned away.
-  assert.equal(canRest({ ...base, buildingType: BUILDING_TYPES.GuildHall, guildCanRest: () => false }).ok, false);
+  assert.equal(canRest({ ...base, buildingType: 11, guildCanRest: false }).allowed, false);
+  // A hall with no rest marker at all answers "no bed" rather than 0.
+  assert.equal(canRest({ ...base, buildingType: 11, restMarkers: 0 }).bedIndex, -1);
 });
 
-test('S40 canRest: the guild arm OVERWRITES the room bed with the first marker', () => {
-  // FindMarker (singular) writes allocatedBed unconditionally, so the
-  // hall bed replaces whatever the fallen-through room arm left there.
+test('S40 canRest: the guild arm OVERWRITES the bed and KEEPS the room hours', () => {
+  // FindMarker (singular) writes allocatedBed unconditionally (:591),
+  // so the hall bed replaces whatever the fallen-through room arm left.
+  // remainingHoursRented is NOT reset - DFU never touches it again - so
+  // an expired room's 0 survives into this arm and EndRest still
+  // reports the room as expired. Both lanes' first cut returned a flat
+  // -1 here, which loses the second half.
   const d = canRest(ROOM_PLACE({
-    buildingType: BUILDING_TYPES.GuildHall,
-    rentedRoom: () => ({ allocatedBedIndex: 2, expiryMinutes: 1000 }),
-    guildCanRest: () => true,
+    buildingType: 11,
+    room: { allocatedBedIndex: 2, expiryMinutes: 1000 },
+    guildCanRest: true,
   }));
-  assert.equal(d.allocatedBed, 'bed0');
-  assert.notEqual(d.allocatedBed, 'bed2');
+  assert.equal(d.allowed, true);
+  assert.equal(d.bedIndex, 0);
+  assert.notEqual(d.bedIndex, 2);
+  assert.equal(d.hoursRented, 0, 'the expired room survives into the guild arm');
 });
 
-test('S40 canRest: an expired room in a guild hall still sleeps, and keeps the room\'s hour count', () => {
-  // The guild arm runs AFTER the room arm falls through, so
-  // remainingHoursRented survives from it - DFU never resets it.
-  const d = canRest(ROOM_PLACE({
-    buildingType: BUILDING_TYPES.GuildHall,
-    rentedRoom: () => ({ allocatedBedIndex: 3, expiryMinutes: 1000 }),
-    guildCanRest: () => true,
-  }));
-  assert.equal(d.ok, true);
-  assert.equal(d.remainingHoursRented, 0);
-  assert.equal(d.allocatedBed, 'bed0');   // FindMarker overwrites with the first
-});
 
-test('S40 canRest: no rest markers at all answers no bed rather than throwing', () => {
-  // OURS, and named as a deviation: DFU indexes restMarkers[bedIndex]
-  // unguarded and would throw. Unreachable in DFU's data.
-  const d = canRest(ROOM_PLACE({ restMarkers: [] }));
-  assert.equal(d.ok, true);
-  assert.equal(d.allocatedBed, null);
-  const noRoom = canRest(ROOM_PLACE({ rentedRoom: () => null }));
-  assert.equal(noRoom.ok, false);
-  assert.equal(noRoom.remainingHoursRented, -1);
-  assert.equal(noRoom.allocatedBed, 'bed0');
+test('S40 canRest: no markers and no room answer "no bed" rather than throwing', () => {
+  // DFU dereferences `room` unguarded at :582, having just called
+  // GetRemainingHours which handles null - a permanent scene whose
+  // rental the sweep has not yet collected is a NullReferenceException
+  // there. Both ports decline to reproduce that crash, and say so.
+  assert.equal(canRest(ROOM_PLACE({ restMarkers: 0 })).bedIndex, -1);
+  const noRoom = canRest(ROOM_PLACE({ room: null }));
+  assert.equal(noRoom.allowed, false);
+  assert.equal(noRoom.hoursRented, -1);
+  assert.equal(noRoom.bedIndex, 0, 'the null room falls to bed 0, as :582 would');
 });
 
 // ---- the TOWN TYPE SET ----------------------------------------------
@@ -223,23 +203,30 @@ test('S40 canRest: no rest markers at all answers no bed rather than throwing', 
 test('S40: PlayerGPS.IsPlayerInTown counts SEVEN location types, not three', () => {
   for (const t of ['TownCity', 'TownHamlet', 'TownVillage', 'HomeFarms',
     'HomeWealthy', 'Tavern', 'ReligionTemple']) {
-    assert.equal(isTownLocationType(LOCATION_TYPES[t]), true, t);
+    assert.equal(isPlayerInTown(LOCATION_TYPES[t]), true, t);
   }
-  assert.equal(TOWN_LOCATION_TYPES.length, 7);
+  assert.equal(TOWN_LOCATION_TYPES.size, 7);
   // The four the old `locationType <= 2` read would have caught by
   // accident are the three towns; these must NOT be towns.
   for (const t of ['DungeonLabyrinth', 'DungeonKeep', 'ReligionCult',
     'DungeonRuin', 'HomePoor', 'Graveyard', 'Coven', 'HomeYourShips', 'None']) {
-    assert.equal(isTownLocationType(LOCATION_TYPES[t]), false, t);
+    assert.equal(isPlayerInTown(LOCATION_TYPES[t]), false, t);
   }
   // ...and both outdoor hosts read it through the ONE law, not a
   // literal. The interior host does NOT: it is never the one that
   // knows the location type, so it asks its outer host through the
   // `inTownLocation` seam - which is the same law, one call away.
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.match(src(f), /isTownLocationType/, f);
+    assert.match(src(f), /isPlayerInTown\(_musicLocationType\(\)/, f);
   }
-  assert.match(src('src/scenes/worldModes.js'), /inTown: host\.inTownLocation\?\.\(\) \?\? false/);
+  assert.match(src('src/scenes/worldModes.js'), /inTownLocation: host\.inTownLocation\?\.\(\) \?\? false/);
+  // The law models BOTH optional flags, not just the type set - which
+  // is what the OTHER lane's version added and this one's
+  // `isTownLocationType` did not, and is why that one was retired.
+  assert.equal(isPlayerInTown(LOCATION_TYPES.TownCity, { mustBeOutside: true, inside: true }), false);
+  assert.equal(isPlayerInTown(LOCATION_TYPES.TownCity, { mustBeInLocationRect: true, inLocationRect: false }), false);
+  assert.equal(isPlayerInTown(LOCATION_TYPES.TownCity, {
+    mustBeInLocationRect: true, mustBeOutside: true, inLocationRect: true, inside: false }), true);
   // The old anti-regression guard was CASE-MISMATCHED and could never
   // fire: the identifier in both hosts is `_musicLocationType()`, with
   // a capital L, so /locationType\(\)/ matched nothing mutated or not.
@@ -247,7 +234,7 @@ test('S40: PlayerGPS.IsPlayerInTown counts SEVEN location types, not three', () 
   // it is the input the whole camping-crime arm keys on.
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     assert.match(src(f),
-      /_isPlayerInTownStrict = \(\) => _musicInLocationRect\(\)\n\s+&& isTownLocationType\(_musicLocationType\(\)\)\n\s+&& \(modes\?\.mode \?\? 'exterior'\) === 'exterior';/, f);
+      /_isPlayerInTownStrict = \(\) => _musicInLocationRect\(\)\n\s+&& isPlayerInTown\(_musicLocationType\(\), \{\n\s+mustBeInLocationRect: true, mustBeOutside: true,\n\s+inLocationRect: true, inside: \(modes\?\.mode \?\? 'exterior'\) !== 'exterior',\n\s+\}\);/, f);
     assert.doesNotMatch(src(f), /_musicLocationType\(\)\s*<=\s*2/, f);
   }
 });
@@ -278,7 +265,7 @@ test('S40 RestWindow: with the warning ON, camping in town is a Yes/No box', () 
   assert.equal(illegalRestWarning(), true);
   const crimes = [];
   const w = new RestWindow(winDeps({
-    restPlace: () => ({ inTownStrict: true }),
+    restPlace: () => ({ inTownOutside: true }),
     commitCrime: (c, sg) => crimes.push([c, sg]),
   }));
   w.input('char:1');
@@ -302,18 +289,18 @@ test('S40 RestWindow: with the warning OFF, camping in town is IMPOSSIBLE - and 
   setValue('GUI', 'IllegalRestWarning', 'False');
   const crimes = [];
   const w = new RestWindow(winDeps({
-    restPlace: () => ({ inTownStrict: true }),
+    restPlace: () => ({ inTownOutside: true }),
     commitCrime: (c, sg) => crimes.push([c, sg]),
   }));
   w.input('char:1');
   assert.equal(w.state, 'refused');
-  assert.deepEqual(w.refusalLines, [`text:${CITY_CAMPING_ILLEGAL_ID}`]);
+  assert.deepEqual(w.refusalLines, [`text:${REST_TEXT.cityCampingIllegal}`]);
   assert.deepEqual(crimes, [['Vagrancy', true]]);
   // The refusal is NOT the 'ended' state, so closing it raises no
   // skills (:729-732 is the advancement moment and a refusal is not it).
   let raised = 0;
   const w2 = new RestWindow(winDeps({
-    restPlace: () => ({ inTownStrict: true }),
+    restPlace: () => ({ inTownOutside: true }),
     onRestFinished: () => { raised++; },
   }));
   w2.input('char:2');
@@ -324,7 +311,7 @@ test('S40 RestWindow: with the warning OFF, camping in town is IMPOSSIBLE - and 
   // Pressing again is not a second chance - the window is gone, and a
   // fresh one refuses the same way. `alreadyWarned` is the box, not a
   // press count.
-  const w3 = new RestWindow(winDeps({ restPlace: () => ({ inTownStrict: true }) }));
+  const w3 = new RestWindow(winDeps({ restPlace: () => ({ inTownOutside: true }) }));
   w3.input('char:1');
   assert.equal(w3.state, 'refused');
 });
@@ -334,7 +321,7 @@ test('S40 RestWindow: LOITER is never gated and never moves the player', () => {
   setValue('GUI', 'IllegalRestWarning', 'True');
   const beds = [], crimes = [];
   const w = new RestWindow(winDeps({
-    restPlace: () => ({ inTownStrict: true }),
+    restPlace: () => ({ inTownOutside: true }),
     commitCrime: (c) => crimes.push(c),
     moveToBed: (m) => beds.push(m),
   }));
@@ -358,15 +345,13 @@ test('S40 RestWindow: LOITER is never gated and never moves the player', () => {
 test('S40 RestWindow: MoveToBed - the healed button moves at once, timed after the prompt', () => {
   _resetForTests();
   const place = () => ({
-    inTown: true, insideBuilding: true, mapId: 1, buildingKey: 2,
-    isPermanentScene: () => true, nowMinutes: 0,
-    rentedRoom: () => ({ allocatedBedIndex: 1, expiryMinutes: 600 }),
-    restMarkers: [{ x: 0, y: 0, z: 0 }, { x: 9, y: 1, z: 3 }],
+    inTownLocation: true, insideBuilding: true, permanentScene: true, nowMinutes: 0,
+    room: { allocatedBedIndex: 1, expiryMinutes: 600 }, restMarkers: 2,
   });
   const beds = [];
   const h = new RestWindow(winDeps({ restPlace: place, moveToBed: (m) => beds.push(m) }));
   h.input('char:2');
-  assert.deepEqual(beds, [{ x: 9, y: 1, z: 3 }]);
+  assert.deepEqual(beds, [1], 'MoveToBed gets the INDEX; the host owns the marker list');
 
   const t = new RestWindow(winDeps({ restPlace: place, moveToBed: (m) => beds.push(m) }));
   t.input('char:1');
@@ -386,8 +371,8 @@ test('S40 RestWindow: an unrented inn room refuses with the string, not a record
   _resetForTests();
   const w = new RestWindow(winDeps({
     restPlace: () => ({
-      inTown: true, insideBuilding: true, buildingType: BUILDING_TYPES.Tavern,
-      isPermanentScene: () => false, guildCanRest: () => true,
+      inTownLocation: true, insideBuilding: true, buildingType: BUILDING_TAVERN,
+      permanentScene: false, guildCanRest: true,
     }),
   }));
   w.input('char:1');
@@ -402,7 +387,7 @@ test('S40 RestWindow: the confirm page paints the verbatim warning', () => {
   _resetForTests();
   setValue('GUI', 'IllegalRestWarning', 'True');
   assert.equal(ILLEGAL_REST_WARNING, 'It is illegal to camp in or near a city. Continue?');
-  const w = new RestWindow(winDeps({ restPlace: () => ({ inTownStrict: true }) }));
+  const w = new RestWindow(winDeps({ restPlace: () => ({ inTownOutside: true }) }));
   w.input('char:2');
   assert.equal(w.state, 'confirm');
   assert.equal(w._pending, 'healed');   // the button waiting behind the box
@@ -412,7 +397,7 @@ test('S40 RestWindow: the confirm page paints the verbatim warning', () => {
     /lines = \[ILLEGAL_REST_WARNING, '', 'Y - yes', 'N - no'\]/);
   // Confirm is a live state everywhere it must be: it does not fall
   // through to the hours-entry tail.
-  const w2 = new RestWindow(winDeps({ restPlace: () => ({ inTownStrict: true }) }));
+  const w2 = new RestWindow(winDeps({ restPlace: () => ({ inTownOutside: true }) }));
   w2.input('char:1');
   w2.input('char:5');                   // a digit is not an answer
   assert.equal(w2.state, 'confirm');
@@ -539,34 +524,39 @@ test('S40 hosts: all four can now rest, and each supplies its own place', () => 
   // bypassed the entire lodging economy - every interior rests free,
   // no room, no bed, no rent countdown - with the whole suite green.
   const bag = interiorRestPlace({
-    inTown: true,
-    building: { buildingType: BUILDING_TYPES.Tavern, buildingKey: 77 },
-    mapId: 5, nowMinutes: 600, restMarkers: ['a', 'b'],
+    inTownLocation: true,
+    building: { buildingType: BUILDING_TAVERN, buildingKey: 77 },
+    nowMinutes: 600, restMarkers: 2, permanentScene: true, houseOwned: true,
   });
   assert.equal(bag.insideBuilding, true, 'CanRest arm 2 needs BOTH halves of its &&');
-  assert.equal(bag.inTownStrict, false, 'inside, mustBeOutside cannot pass');
-  assert.equal(bag.inTown, true);
-  assert.equal(bag.buildingType, BUILDING_TYPES.Tavern);
-  assert.equal(bag.buildingKey, 77);
-  assert.equal(bag.mapId, 5);
+  assert.equal(bag.inTownOutside, false, 'inside, mustBeOutside cannot pass');
+  assert.equal(bag.inTownLocation, true);
+  assert.equal(bag.buildingType, BUILDING_TAVERN);
+  assert.equal(bag.isShip, false);
   assert.equal(bag.nowMinutes, 600);
-  assert.deepEqual(bag.restMarkers, ['a', 'b']);
-  assert.equal(bag.isHouseOwned(), false, 'the bank ledger is unported; DFU default');
+  assert.equal(bag.restMarkers, 2);
+  assert.equal(bag.permanentScene, true);
+  assert.equal(bag.houseOwned, true, 'H1 made this reachable; it is no longer a constant false');
+  // A ship IS derived from the building type - CanRest's ship arm
+  // (:580) reads BuildingTypes.Ship, not a separate flag.
+  assert.equal(interiorRestPlace({ building: { buildingType: BUILDING_SHIP } }).isShip, true);
   // A bag with no building at all still answers, and answers None -
   // the host can be asked before a door is walked through.
   const empty = interiorRestPlace();
-  assert.equal(empty.buildingType, BUILDING_TYPES.None);
-  assert.equal(empty.buildingKey, 0);
+  assert.equal(empty.buildingType, -1);
   assert.equal(empty.insideBuilding, true);
+  assert.equal(empty.houseOwned, false);
   // ...and the whole bag drives canRest to the lodging arms.
-  assert.equal(canRest({ ...bag, isPermanentScene: () => false }).text, HAVE_NOT_RENTED_ROOM);
+  assert.equal(canRest({ ...bag, permanentScene: false, houseOwned: false }).line, HAVE_NOT_RENTED_ROOM);
 
   // The host reads the law rather than rebuilding its shape.
   assert.match(wm, /return interiorRestPlace\(\{/);
-  assert.match(wm, /rentedRoom: \(\) => findRentedRoom\(playerEntity\.rentedRooms/);
+  assert.match(wm, /room: findRentedRoom\(playerEntity\.rentedRooms/);
+  // H1's ledger, which both rest lanes had to leave as a constant.
+  assert.match(wm, /houseOwned: isHouseOwned\(playerEntity\.houses/);
   assert.match(wm, /guildCanRest\(guild, membershipOf/);
   assert.match(wm, /m\.type === INTERIOR_MARKER\.REST/);
-  assert.match(wm, /isPermanentScene: \(name\) => containsPermanentScene/);
+  assert.match(wm, /permanentScene: !!scene && containsPermanentScene\(sceneCache\(\), scene\)/);
   // MoveToBed is position + FixStanding, and floorLanding IS this
   // port's FixStanding - a raw spawn wedges the capsule in tight
   // geometry, which is the dungeon start-marker bug already on record.
@@ -599,7 +589,7 @@ test('S40 hosts: all four can now rest, and each supplies its own place', () => 
     assert.match(s, /new RestWindow\(outdoorRestDeps\)/, f);
     assert.match(s, /playerEntity\.crimeCommitted = crime/, f);
     assert.match(s, /if \(spawnGuards\) _crimeResponse\(\)/, f);
-    assert.match(s, /inTownStrict: _isPlayerInTownStrict\(\)/, f);
+    assert.match(s, /inTownOutside: _isPlayerInTownStrict\(\)/, f);
     assert.match(s, /insideBuilding: false/, f);
     // CalculateHealthRecoveryRate's flags are LIVE outdoors.
     assert.match(s, /day: \(\) => !isNight\(minuteNow\(\)\), inside: \(\) => false/, f);
@@ -607,7 +597,7 @@ test('S40 hosts: all four can now rest, and each supplies its own place', () => 
 
   // ...and the interior host gets the bare IsPlayerInTown from both.
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.match(src(f), /inTownLocation: \(\) => isTownLocationType/, f);
+    assert.match(src(f), /inTownLocation: \(\) => isPlayerInTown\(_musicLocationType\(\)\)/, f);
   }
 });
 
@@ -649,24 +639,31 @@ test('S40: the tavern sells a bed that is now READ', () => {
 
 // ---- THE OPEN GATE ---------------------------------------------------
 
-test('S40 restOpenGate: three refusals, in DFU\'s order, and the enemy alert rides the first', () => {
+test('S40 restDecision: FIVE refusals, in DFU\'s order, and the alert rides the first', () => {
   // DaggerfallUI.cs:651-687. Enemies FIRST, and only that arm raises
   // the alert - which is what arms the dungeon rest-encounter roll.
-  const foes = restOpenGate({ enemiesNearby: true, swimming: true, grounded: false });
-  assert.deepEqual(foes, { ok: false, textId: REST_TEXT.enemiesNearby, alert: true });
-  // Then swimming or not grounded, sharing one record and raising no
-  // alert. StartRestGroundedCheck is the `grounded` input's law.
-  assert.deepEqual(restOpenGate({ swimming: true }),
-    { ok: false, textId: REST_TEXT.cannotRestNow, alert: false });
-  assert.deepEqual(restOpenGate({ grounded: false }),
-    { ok: false, textId: REST_TEXT.cannotRestNow, alert: false });
-  // Clear on all three: the window opens.
-  assert.deepEqual(restOpenGate({ enemiesNearby: false, swimming: false, grounded: true }),
-    { ok: true, textId: null, alert: false });
-  assert.deepEqual(restOpenGate(), { ok: true, textId: null, alert: false });
+  assert.deepEqual(restDecision({ enemiesNearby: true, swimming: true, grounded: false }),
+    { kind: 'enemies', textId: REST_TEXT.enemiesNearby });
+  // Then swimming or not grounded, sharing one record and no alert.
+  assert.deepEqual(restDecision({ swimming: true }), { kind: 'cannot', textId: REST_TEXT.cannotRestNow });
+  assert.deepEqual(restDecision({ grounded: false }), { kind: 'cannot', textId: REST_TEXT.cannotRestNow });
+  // GetPreventedRestMessage, and its EMPTY STRING - deliberate:
+  // RegisterPreventRestCondition turns a null message into "" so a
+  // caller can block without wording it, and the dispatch falls back
+  // to 355 rather than showing a blank box. null is NOT "".
+  assert.deepEqual(restDecision({ preventedMessage: 'The dead do not sleep.' }),
+    { kind: 'prevented', message: 'The dead do not sleep.' });
+  assert.deepEqual(restDecision({ preventedMessage: '' }), { kind: 'cannot', textId: REST_TEXT.cannotRestNow });
+  // A racial override refuses SILENTLY, and it is LAST - so a swimming
+  // vampire is told about the water, the arm they can act on.
+  assert.deepEqual(restDecision({ racialOverrideBlocks: true }), { kind: 'blocked' });
+  assert.deepEqual(restDecision({ swimming: true, racialOverrideBlocks: true }),
+    { kind: 'cannot', textId: REST_TEXT.cannotRestNow });
+  // Clear on all five: the window opens.
+  assert.deepEqual(restDecision(), { kind: 'rest' });
 });
 
-test('S40 restOpenGate: it is SCENE-FREE - all four hosts run it before opening', () => {
+test('S40 restDecision: it is SCENE-FREE - all four hosts run it before opening', () => {
   const wm = src('src/scenes/worldModes.js');
   // The gate lived written-out in dungeonContext because rest was a
   // dungeon feature. DFU raises it from ONE message handler with no
@@ -674,34 +671,23 @@ test('S40 restOpenGate: it is SCENE-FREE - all four hosts run it before opening'
   for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/world.js',
     'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
     const h = src(f);
-    assert.match(h, /const gate = restOpenGate\(\{/, f);
-    assert.match(h, /if \(!gate\.ok\) \{/, f);
-    // ...and the window is only built AFTER the gate passes.
-    assert.ok(h.indexOf('restOpenGate({') < h.indexOf('new RestWindow('), `${f}: the gate must precede the window`);
+    assert.match(h, /restDecision\(\{/, f);
+    assert.match(h, /if \(d\.kind !== 'rest'\)/, f);
+    assert.ok(h.indexOf('restDecision({') < h.indexOf('new RestWindow('), `${f}: the gate must precede the window`);
+    // ...and each acts on the two arms that need acting on.
+    assert.match(h, /if \(d\.kind === 'blocked'\) return;/, f);
   }
-  // The dungeon stopped keeping its own copy.
   assert.doesNotMatch(src('src/scenes/dungeonContext.js'), /if \(_restDeps\.enemiesNearby\(\)\) \{/);
   // Every host that HAS motor state feeds it LIVE, not as a constant.
-  // The interior one included: it mounts no foe pool and has no water,
-  // so those two are honestly false there - but StartRestGroundedCheck
-  // is live indoors, since a levitating player cannot lie down in a
-  // shop any more than in a dungeon.
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     assert.match(src(f), /swimming: !!player\.swimming,/, f);
   }
   assert.match(wm, /enemiesNearby: false,[^}]*swimming: false,/s);
-  assert.match(src('src/scenes/dungeonContext.js'), /swimming: _activity\.swimming, grounded: nearFloor,/);
-  // ...and EVERY host asks StartRestGroundedCheck rather than the raw
-  // motor flag. The raw flag reads false for a levitating player an
-  // inch off the floor, whom DFU lets sleep (PlayerMotor.cs:190-193).
   for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/world.js',
     'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
     const h = src(f);
     assert.match(h, /startRestGroundedCheck\(/, f);
-    // Scoped to the GATE call, because `grounded: !!player.grounded`
-    // is also a legitimate debug readout elsewhere in world.js.
-    const g = h.slice(h.indexOf('restOpenGate({'), h.indexOf('restOpenGate({') + 400);
-    assert.doesNotMatch(g, /grounded: !!player\.grounded/, `${f}: the raw flag is not the check`);
+    const g = h.slice(h.indexOf('restDecision({'), h.indexOf('restDecision({') + 500);
     assert.match(g, /grounded: (startRestGroundedCheck\(|nearFloor)/, f);
   }
 });
@@ -775,10 +761,9 @@ test('S40 CheckRent: CanRest\'s hour count REACHES the session, and the sweep ru
   const w = new RestWindow(winDeps({
     onRentExpired: () => swept.push(1),
     restPlace: () => ({
-      inTown: true, insideBuilding: true, mapId: 1, buildingKey: 2,
-      isPermanentScene: () => true, nowMinutes: 0,
-      rentedRoom: () => ({ allocatedBedIndex: 0, expiryMinutes: 120 }),   // 2 hours
-      restMarkers: [{ x: 0, y: 0, z: 0 }],
+      inTownLocation: true, insideBuilding: true, permanentScene: true, nowMinutes: 0,
+      room: { allocatedBedIndex: 0, expiryMinutes: 120 },   // 2 hours
+      restMarkers: 1,
     }),
   }));
   w.input('char:1');
@@ -798,7 +783,7 @@ test('S40 CheckRent: CanRest\'s hour count REACHES the session, and the sweep ru
 test('S40 RestWindow: the confirm box answers a CAPSED keyboard too', () => {
   _resetForTests();
   setValue('GUI', 'IllegalRestWarning', 'True');
-  const mk = () => new RestWindow(winDeps({ restPlace: () => ({ inTownStrict: true }) }));
+  const mk = () => new RestWindow(winDeps({ restPlace: () => ({ inTownOutside: true }) }));
   const y = mk(); y.input('char:1'); y.input('char:Y');
   assert.equal(y.state, 'hours');
   const n = mk(); n.input('char:1'); n.input('char:N');
@@ -881,7 +866,7 @@ test('S40 createRestDeps: a host dep the composition does not name still REACHES
     onRentExpired: () => seen.push('swept'),
     commitCrime: (c) => seen.push(c),
     moveToBed: () => seen.push('bed'),
-    place: () => ({ inTownStrict: true }),
+    place: () => ({ inTownOutside: true }),
     endLines: (id) => [`t${id}`],
   });
   for (const k of ['onRentExpired', 'commitCrime', 'moveToBed', 'restPlace', 'endLines']) {
@@ -1011,13 +996,13 @@ test('S40 END TO END: rent a room, sleep in it, and the room runs out under you'
     advanceMinutes: (n) => { NOW.m += n; },
     enemiesNearby: () => areEnemiesNearby([], { resting: true }),
     place: () => ({
-      inTownStrict: false, inTown: true, insideBuilding: true,
-      buildingType: BUILDING_TYPES.Tavern, buildingKey: KEY, mapId: MAP,
-      isPermanentScene: (n) => scene.has(n),
-      rentedRoom: () => rooms.find((r) => r.mapId === MAP && r.buildingKey === KEY) ?? null,
-      nowMinutes: NOW.m, restMarkers: markers, guildCanRest: () => false,
+      inTownOutside: false, inTownLocation: true, insideBuilding: true,
+      buildingType: BUILDING_TAVERN,
+      permanentScene: scene.has(interiorSceneName(MAP, KEY)),
+      room: rooms.find((r) => r.mapId === MAP && r.buildingKey === KEY) ?? null,
+      nowMinutes: NOW.m, restMarkers: markers.length, guildCanRest: false,
     }),
-    moveToBed: (m) => moved.push(m),
+    moveToBed: (i) => moved.push(i),
     onRentExpired: () => { swept.push(NOW.m); rooms.length = 0; },
     endLines: (id) => [`RSC${id}`],
     say: (t) => said.push(t),
@@ -1025,8 +1010,8 @@ test('S40 END TO END: rent a room, sleep in it, and the room runs out under you'
   });
 
   // The open gate passes: no foes, dry, on the floor.
-  const gate = restOpenGate({ enemiesNearby: deps.enemiesNearby(), swimming: false, grounded: true });
-  assert.equal(gate.ok, true);
+  assert.deepEqual(restDecision({ enemiesNearby: deps.enemiesNearby(), swimming: false, grounded: true }),
+    { kind: 'rest' });
 
   // Rest for a while, 9 hours - longer than the room has left.
   const w = new RestWindow(deps);
@@ -1035,7 +1020,7 @@ test('S40 END TO END: rent a room, sleep in it, and the room runs out under you'
   w.input('char:9'); w.input('confirm');
   assert.equal(w.state, 'resting');
   // MoveToBed put the sleeper in the bed the RENTAL minted, index 1.
-  assert.deepEqual(moved, [{ x: 7, y: 2, z: 9 }]);
+  assert.deepEqual(moved, [1], 'the bed the RENTAL minted, by index');
   assert.equal(w.session.remainingHoursRented, 3);
 
   // Now run the clock through the window's own tick - the seam every
@@ -1072,12 +1057,12 @@ test('S40 END TO END: rent a room, sleep in it, and the room runs out under you'
 
   // And now the room is gone, the same building refuses.
   const after = canRest({
-    inTown: true, insideBuilding: true, buildingType: BUILDING_TYPES.Tavern,
+    inTownLocation: true, insideBuilding: true, buildingType: BUILDING_TAVERN,
     buildingKey: KEY, mapId: MAP, isPermanentScene: (n) => scene.has(n),
     rentedRoom: () => null, nowMinutes: NOW.m, restMarkers: markers,
   });
-  assert.equal(after.ok, false);
-  assert.equal(after.text, HAVE_NOT_RENTED_ROOM);
+  assert.equal(after.allowed, false);
+  assert.equal(after.line, HAVE_NOT_RENTED_ROOM);
 });
 
 test('S40 END TO END: camping in a city - confirm, crime, guards, and a full night', () => {
@@ -1090,7 +1075,7 @@ test('S40 END TO END: camping in a city - confirm, crime, guards, and a full nig
     skills: 30, career: {}, skillUses: { [SKILLS.Medical]: 0 } };
   const deps = createRestDeps(player, {
     advanceMinutes: (n) => { NOW.m += n; },
-    place: () => ({ inTownStrict: true, inTown: true, insideBuilding: false }),
+    place: () => ({ inTownOutside: true, inTownLocation: true, insideBuilding: false }),
     commitCrime: (c, sg) => crimes.push([c, sg]),
     moveToBed: (m) => moved.push(m),
     endLines: (id) => [`RSC${id}`],
@@ -1129,13 +1114,13 @@ test('S40 END TO END: camping in a city - confirm, crime, guards, and a full nig
   const crimes2 = [];
   const w2 = new RestWindow(createRestDeps(player, {
     advanceMinutes: () => {},
-    place: () => ({ inTownStrict: true }),
+    place: () => ({ inTownOutside: true }),
     commitCrime: (c, sg) => crimes2.push([c, sg]),
     endLines: (id) => [`RSC${id}`],
   }));
   w2.input('char:1');
   assert.equal(w2.state, 'refused');
-  assert.deepEqual(w2.refusalLines, [`RSC${CITY_CAMPING_ILLEGAL_ID}`]);
+  assert.deepEqual(w2.refusalLines, [`RSC${REST_TEXT.cityCampingIllegal}`]);
   assert.deepEqual(crimes2, [['Vagrancy', true]]);
 });
 
@@ -1180,7 +1165,7 @@ test('S40 IsResting: raised on OPEN, cleared on EVERY exit, and the enchant rate
   assert.equal(w3.done, true);
 
   const w4 = mk();                       // a refusal
-  Object.assign(w4.deps, { restPlace: () => ({ inTownStrict: true }) });
+  Object.assign(w4.deps, { restPlace: () => ({ inTownOutside: true }) });
   _resetForTests();
   setValue('GUI', 'IllegalRestWarning', 'False');
   w4.input('char:1');
@@ -1360,7 +1345,7 @@ test('S40: the window owns the POINTER, so no host grabs look under it', () => {
   // ...and a refusal closes on a click too.
   _resetForTests();
   setValue('GUI', 'IllegalRestWarning', 'False');
-  const f = new RestWindow(winDeps({ restPlace: () => ({ inTownStrict: true }) }));
+  const f = new RestWindow(winDeps({ restPlace: () => ({ inTownOutside: true }) }));
   f.input('char:1');
   assert.equal(f.state, 'refused');
   f.click();
@@ -1499,23 +1484,22 @@ test('S40: a refused OPEN GATE actually shows its record, in every host', () => 
   // never on the way INTO a host: deleting the two lines that look the
   // record up and mount it left `return;` alone, and the player got
   // SILENCE instead of TEXT.RSC 355 while swimming or 354 with foes.
+  const arm = (f) => { const h = src(f); const i = h.indexOf('restDecision({'); return h.slice(i, i + 1400); };
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    const h = src(f);
-    const arm = h.slice(h.indexOf('const gate = restOpenGate({'), h.indexOf('const gate = restOpenGate({') + 1400);
-    assert.match(arm, /const lines = townTalk\.lines\(gate\.textId\);/, f);
-    assert.match(arm, /if \(lines\) townTalk\.showOverlay\(new ActionTextBox\(lines\)\);/, f);
+    // plainLines, because TEXT.RSC answers ROWS and ActionTextBox
+    // iterates STRINGS - the other lane's probe caught that as a
+    // TypeError at draw time and this one had it unshipped.
+    assert.match(arm(f), /const lines = d\.message \? \[d\.message\] : plainLines\(townTalk\.lines\(d\.textId\)\);/, f);
+    assert.match(arm(f), /if \(lines\) townTalk\.showOverlay\(new ActionTextBox\(lines\)\);/, f);
   }
-  const wm = src('src/scenes/worldModes.js');
-  const iarm = wm.slice(wm.indexOf('const gate = restOpenGate({'), wm.indexOf('const gate = restOpenGate({') + 1400);
-  assert.match(iarm, /const lines = townTalk\?\.lines\?\.\(gate\.textId\);/);
-  assert.match(iarm, /if \(lines\) mountInterior\(new ActionTextBox\(lines\)\);/);
-  const dc = src('src/scenes/dungeonContext.js');
-  const darm = dc.slice(dc.indexOf('const gate = restOpenGate({'), dc.indexOf('const gate = restOpenGate({') + 1400);
-  assert.match(darm, /const lines = rscLines\(gate\.textId\);/);
-  assert.match(darm, /if \(lines\) activeOverlay = new ActionTextBox\(lines\);/);
+  assert.match(arm('src/scenes/worldModes.js'),
+    /const lines = d\.message \? \[d\.message\] : plainLines\(townTalk\?\.lines\?\.\(d\.textId\)\);/);
+  assert.match(arm('src/scenes/worldModes.js'), /if \(lines\) mountInterior\(new ActionTextBox\(lines\)\);/);
+  assert.match(arm('src/scenes/dungeonContext.js'), /const lines = d\.message \? \[d\.message\] : rscLines\(d\.textId\);/);
+  assert.match(arm('src/scenes/dungeonContext.js'), /if \(lines\) activeOverlay = new ActionTextBox\(lines\);/);
   // ...and the two records the gate can name are the right two.
-  assert.equal(restOpenGate({ enemiesNearby: true }).textId, 354);
-  assert.equal(restOpenGate({ swimming: true }).textId, 355);
+  assert.equal(restDecision({ enemiesNearby: true }).textId, 354);
+  assert.equal(restDecision({ swimming: true }).textId, 355);
 });
 
 
@@ -1548,7 +1532,7 @@ test('S40: EVERY EndRest arm raises skills - the death exit included', () => {
   raised = 0;
   _resetForTests();
   setValue('GUI', 'IllegalRestWarning', 'False');
-  const no = mk({ restPlace: () => ({ inTownStrict: true }) });
+  const no = mk({ restPlace: () => ({ inTownOutside: true }) });
   no.input('char:1');
   assert.equal(no.state, 'refused');
   no.input('confirm');

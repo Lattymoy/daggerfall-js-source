@@ -193,6 +193,53 @@ export function buildingDataForDoor(exteriorBuildings, blocks, door) {
   return { ...data, buildingKey: makeBuildingKey(inst.x ?? 0, inst.y ?? 0, door.recordIndex) };
 }
 
+/**
+ * H2 - EVERY building in a location, each carrying its buildingKey.
+ *
+ * buildBuildingDirectory answers only the NAMED types, because its job
+ * is the talk directory. Houses are not named, so nothing in the port
+ * could enumerate them - and H1's houses-for-sale roll was written
+ * against `location.exterior.buildings`, the raw DFLocation.BuildingData
+ * array, whose records carry nameSeed/factionId/quality/buildingType
+ * and NO KEY AT ALL. The roll therefore handed out houses with
+ * `buildingKey: undefined`, allocateHouseToPlayer wrote it into the
+ * registry, and `ownsHouse` tests `> 0` - so the house you were just
+ * given was not yours. H1's own tests passed because their fixtures
+ * set the key by hand, which is the vacuous-fixture shape this repo
+ * keeps catching, self-inflicted.
+ *
+ * The correlation is mergeNamedBuildings' own: the block instance's
+ * buildingDataList, indexed by record, keyed by
+ * MakeBuildingKey(block.x, block.y, recordIndex). Same rule, same
+ * subRecords.length bound - a garbage entry past the subrecord count
+ * is not a building.
+ */
+export function locationBuildings(exteriorBuildings, blocks) {
+  const merged = mergeNamedBuildings(exteriorBuildings, blocks);
+  const out = [];
+  for (const b of blocks) {
+    const list = merged.get(b) ?? [];
+    const count = Math.min(list.length, b.dfBlock.rmbBlock.subRecords?.length ?? list.length);
+    for (let i = 0; i < count; i++) {
+      if (!list[i]) continue;
+      // H2: BuildingSummary.ModelID (RMBLayout.cs:577) - the FIRST 3D
+      // object of the building's own subrecord. It is what the house
+      // price is measured from (GetHousePrice reads that model's mesh
+      // radius) and what the purchase window would render.
+      const sub = b.dfBlock.rmbBlock.subRecords?.[i];
+      const model = sub?.exterior?.block3dObjectRecords?.[0] ?? null;
+      out.push({
+        ...list[i],
+        buildingKey: makeBuildingKey(b.x ?? 0, b.y ?? 0, i),
+        recordIndex: i,
+        modelId: model?.modelId ?? null,
+        modelIdNum: model?.modelIdNum ?? null,
+      });
+    }
+  }
+  return out;
+}
+
 export function buildBuildingDirectory(exteriorBuildings, blocks, doors, nameOpts) {
   const merged = mergeNamedBuildings(exteriorBuildings, blocks);
   const blockOf = (d) => blockInstanceOf(blocks, d);

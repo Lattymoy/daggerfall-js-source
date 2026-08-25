@@ -44,7 +44,7 @@ import { maxFatigue, liveStat } from '../systems/statMods.js';   // AUDIT 23 (C5
 import { maxEncumbrance } from '../combat/formulas.js';   // U40: the letter-of-credit gate
 import { nearestLights } from '../world/cityLights.js';
 import { lookAt, perspective, mirrorProjectionX } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
-import { routeKey, actionOf, held, moveHeld, anyMove } from '../ui/input.js';
+import { routeKey, actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible interior arrows
@@ -60,6 +60,7 @@ import { setDeathPresenter, hurtPlayer } from '../characters/playerEntity.js';  
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying in a building
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the HUD vanished inside buildings
 import { largeHudOptions, routeLargeHudClick } from '../ui/hudLarge.js';   // U45: the classic bottom bar and its eleven panels
+import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
 // E2: the shop shelf browse/buy layer (node-pure laws in shopStock.js)
 import { ChoiceWindow } from '../ui/talkWindow.js';
@@ -78,13 +79,14 @@ import { staticNpcRoute, showsJoinButton, serviceAccess, onPushEffects } from '.
 import { canAccessService } from '../systems/guildServices.js';   // G4: does THIS guild also sell soul gems?
 import {
   receiveArmorDecision, claimArmor, SPYMASTER_GREETING_TEXT_ID,
+  receiveHouseDecision, claimHouse, ALREADY_GIVEN_HOUSE,   // H1
 } from '../systems/knightlyGifts.js';   // G6
 import { mintCondition } from '../systems/itemTemplates.js';   // G6: the gift's pieces mint like any other item
 import { npcServiceKind, freeHealing, freeMagickaRecharge } from '../systems/guildServices.js';
 import { createGuildForGroup, ORDERS } from '../systems/guildVariants.js';
 import { membershipOf, joinGuild, joinDecision } from '../systems/guilds.js';
 import { ensureFactionRep } from '../systems/factionRep.js';
-import { dateFromClassicMinutes, dateString } from '../systems/gameDate.js';   // B2: the loan due date
+import { dateFromClassicMinutes, dateString, MINUTES_PER_DAY, DAYS_PER_MONTH } from '../systems/gameDate.js';   // B2: the loan due date   // H1: the month the houses-for-sale list turns over on
 import { serviceDestination } from '../systems/guildServiceFlow.js';
 import { buildTrainingFlow, buildDonationFlow, buildCureDiseaseFlow } from '../ui/guildServiceWindows.js';
 import { preloadListPickerArt } from '../ui/listPicker.js';
@@ -98,6 +100,13 @@ import { exteriorLockpickingChance, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LO
 import { discoverBuilding, getLastLockpickAttempt, setLastLockpickAttempt } from '../systems/discovery.js';
 import { getHolidayId } from '../systems/holidays.js';
 import { guildOfFaction, isMember } from '../systems/guilds.js';
+// V5: rest above ground. The window and the session have been finished
+// since U7; what was missing was a host outside the dungeon that opens
+// one, and CanRest's whole town half.
+import { RestWindow } from '../ui/restWindow.js';
+import { canRest, HAVE_NOT_RENTED_ROOM, REST_TEXT } from '../systems/restSession.js';
+import { isPlayerInTown } from '../systems/nearbyObjects.js';
+import { plainLines } from './shared.js';   // V5b: TEXT.RSC answers ROWS, and these windows iterate strings
 import { hallAccessAnytime } from '../systems/guildServices.js';
 import { resolveVariantGuild } from '../systems/guildVariants.js';
 import { getBool } from '../systems/settings.js';   // R1: InstantRepairs / AllowMagicRepairs go LIVE
@@ -128,18 +137,18 @@ import {
 import { freeTavernRooms } from '../systems/guildServices.js';
 // B2: the bank - the window, the per-region accounts and the purse seam.
 import { BankWindow, preloadBankArt, bankArtLoaded, BANK_RECTS, BANK_PANEL_X, BANK_PANEL_Y } from '../ui/bankWindow.js';
-import { createBankAccounts, BANK_REGION_COUNT } from '../systems/banking.js';
+import { BankPurchaseWindow, preloadPurchaseArt, purchaseArtLoaded } from '../ui/bankPurchaseWindow.js';   // H2
+import { createBankAccounts, createHouses, BANK_REGION_COUNT, TRANSACTION_RESULT, ownsHouse, isHouseOwned, housesForSale, allocateHouseToPlayer, purchaseHouse } from '../systems/banking.js';   // H1/H2
 // P1: the scene cache - what an interior remembers across a visit.
 import {
   createSceneCache, cacheScene, restoreCachedScene,
-  interiorSceneName, LOOT_CONTAINER_TYPES, containsPermanentScene,
+  interiorSceneName, LOOT_CONTAINER_TYPES, containsPermanentScene, addPermanentScene,
 } from '../systems/sceneCache.js';
 // S40: resting where the player has a claim - the rented-room finder
 // the tavern rents through, and FightersGuild.CanRest.
 import { findRentedRoom, removeExpiredRooms } from '../systems/tavern.js';
 import { canRest as guildCanRest } from '../systems/guildServices.js';
-import { RestWindow } from '../ui/restWindow.js';
-import { restOpenGate, interiorRestPlace } from '../systems/restSession.js';   // S40: the scene-free open gate + CanRest's inside-a-building bag, both testable laws
+import { interiorRestPlace, restDecision } from '../systems/restSession.js';   // CanRest's inside-a-building bag + the scene-free open gate above it
 import { orderOf } from '../systems/guildVariants.js';
 import { joinedGuildOfGroup } from '../systems/guilds.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js';
@@ -239,7 +248,7 @@ export function createWorldModes(host) {
   // The host destructure moves with it, because `say` closes over
   // `townTalk`. It reads only the function's own argument, so it is
   // safe anywhere inside the body.
-  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null, discoveryLocationId = null } = host;   // R1: the discovery store's location key (the anti-grind record's namespace)   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
+  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null, discoveryLocationId = null, gps = null, buildingDirectory = null } = host;   // H1: the location's whole building list, for the houses-for-sale roll   // V5: gps = PlayerGPS's location reads, for CanRest   // R1: the discovery store's location key (the anti-grind record's namespace)   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
   // U43-ii: the interior HUD-text layer is the OUTER host's, and
   // always was - townTalk's hud draws above the modal render. The
   // "pends its arc" flag was a line of plumbing: a broken weapon, a
@@ -255,6 +264,13 @@ export function createWorldModes(host) {
   // own parseAst and reports any const or let read in the SAME
   // execution scope as, and before, its declaration.
   const say = (l) => { if (townTalk?.say) townTalk.say(l); else console.warn('[interior]', l); };
+  // V5's interiorRestDeps retired into the fuller one below (search
+  // `place: interiorRestPlaceHere`), which carries the same two
+  // host-only halves plus the place bag, MoveToBed, the quest tick and
+  // the expired-room sweep. Its one note is worth keeping: A BUILDING
+  // HAS NO FOE POOL in this port - the Q4-v flag on interior enemies
+  // is still open - so `enemiesNearby` answers false and says so
+  // rather than pretending to scan. FLAGGED.
   const interiorTicker = createPlayerTicker(playerEntity, {
     onExhausted: onExhaustedInterior,   // AUDIT 23 (C5)
     say,
@@ -326,6 +342,7 @@ export function createWorldModes(host) {
     preloadListPickerArt({ renderer, fetchBytes, palette });   // U24: PICK00I0 for the training skill list
     preloadTavernArt({ renderer, fetchBytes, palette });   // U39: TVRN00I0 for the innkeeper's panel
     preloadBankArt({ renderer, fetchBytes, palette });   // B2: BANK00I0 for the teller's screen
+    preloadPurchaseArt({ renderer, fetchBytes, palette });   // H2: BANK01I0 for the house market
     preloadPotionArt({ renderer, fetchBytes, palette });   // M2: MASK00I0 for the cauldron
     preloadItemMakerArt({ renderer, fetchBytes, palette });   // M4: ITEM00I0 + the gold tab strip
     preloadSpellbookArt({ renderer, fetchBytes, palette })   // U42: SPBK00I0 (cast) + SPBK01I0 (the guilds' buy mode)
@@ -959,6 +976,63 @@ export function createWorldModes(host) {
   // else, and is minted lazily the first time an interior is left.
   const sceneCache = () => (playerEntity.sceneCache ??= createSceneCache());
 
+  /**
+   * H1 - the town's houses on the market, from the ONE producer
+   * (banking.housesForSale). The month is the classic calendar's, so
+   * the list turns over on the first of the month exactly as DFU's
+   * `+ Now.Month` term intends - see the departure recorded at the law.
+   */
+  function currentHousesForSale() {
+    const dir = buildingDirectory?.();
+    if (!dir?.buildings?.length) return [];
+    return housesForSale(dir.buildings, {
+      mapId: dir.mapId,
+      month: Math.floor(worldMinutes() / (MINUTES_PER_DAY * DAYS_PER_MONTH)),
+      // IsActiveQuestBuilding(building, residencesOnly: true) - a house
+      // the quest machine is using is not for sale (:169).
+      isActiveQuestBuilding: (bs) => (questBridge
+        ? questBridge.machine.getSiteLinks(SITE_TYPES.Building, dir.mapId, bs.buildingKey).length > 0
+        : false),
+    });
+  }
+  /**
+   * H2 - GetHousePrice's input (:164-171): the mesh RADIUS of the
+   * building's own model, which DFU reads through MeshReader and the
+   * port reads off the same ARCH3D record (arch3dFile:380 already
+   * divides by POINT_DIVISOR, as DFU's DFMesh.Radius does).
+   * Answers 0 for a model the reader cannot resolve, which prices the
+   * house at 0 rather than throwing - a house nobody can value is not
+   * one the window should refuse to list.
+   */
+  function houseMeshRadius(building) {
+    const id = building?.modelIdNum;
+    if (id == null) return 0;
+    try {
+      const rec = arch?.getRecordIndex?.(id);
+      if (rec == null || rec < 0) return 0;
+      return arch.getMesh(rec)?.radius ?? 0;
+    } catch { return 0; }
+  }
+  /** The market, priced. */
+  const pricedHousesForSale = () => currentHousesForSale()
+    .map((h) => ({ ...h, meshRadius: houseMeshRadius(h) }));
+
+  /** The side effects AllocateHouseToPlayer carries besides the slot:
+   *  discovery, the permanent scene, and the deed in the notebook. */
+  function houseSideEffects() {
+    return {
+      // DiscoverBuilding(key, "<player>'s residence") - the port's
+      // discovery store is keyed by LOCATION and takes the building
+      // record, so the name rides as an override on a synthetic one.
+      discoverBuilding: (key, name) => {
+        const locId = discoveryLocationId?.();
+        if (locId) discoverBuilding(locId, { buildingKey: key, buildingType: BUILDING_TYPES.House1, name });
+      },
+      addPermanentScene: (mapId, key) => addPermanentScene(sceneCache(), interiorSceneName(mapId, key)),
+      addNote: (text) => questBridge?.notebook?.addNote?.(text),
+    };
+  }
+
   /** DaggerfallInterior.GetSceneName for the interior the player is
    *  standing in. Null when the building has no key - an unkeyed
    *  interior cannot be cached, because it cannot be named. */
@@ -1027,6 +1101,11 @@ export function createWorldModes(host) {
     // restored by a save, and 62 is the shipped value otherwise.
     const regions = playerEntity.bankAccounts?.length || BANK_REGION_COUNT;
     playerEntity.bankAccounts ??= createBankAccounts(regions);
+    // H1: the house registry is minted beside the accounts, on the
+    // same region count. createHouses has existed since the banking
+    // slice and had no caller - the save has round-tripped
+    // `entity.houses` all along, over an array nothing ever made.
+    playerEntity.houses ??= createHouses(regions);
     const b = interiorBuilding;
     let win = null;
     win = new BankWindow({
@@ -1040,15 +1119,43 @@ export function createWorldModes(host) {
       // GetLoanDueDateString (:571-580) - empty when nothing is owed,
       // otherwise DateString(), which carries no year.
       dueDateText: (minutes) => (minutes > 0 ? dateString(dateFromClassicMinutes(minutes)) : ''),
-      // FLAGGED: house and ship OWNERSHIP need the building directory
-      // and the two fixed ship scenes; until then the buttons refuse
-      // through the law's own decisions rather than opening a picker.
-      ownsHouse: () => false,
+      // H1: house ownership is live. SHIP ownership still needs the two
+      // fixed ship scenes and stays FLAGGED, so those buttons keep
+      // refusing through the law's own decisions.
+      ownsHouse: () => ownsHouse(playerEntity.houses ?? [], b?.regionIndex ?? 0),
+      housesForSale: () => currentHousesForSale().length,
+      // H2: BUY HOUSE reaches the purchase window. The U24 identity
+      // guard again - a window that dispatches to another must not be
+      // nulled by its OWN onClose - and the bank is restored when the
+      // purchase window closes, which is DFU's PushWindow/PopWindow.
+      openPurchase: () => {
+        if (!purchaseArtLoaded() || !_shopFont) return false;
+        const dir = buildingDirectory?.();
+        const region = b?.regionIndex ?? 0;
+        let pw = null;
+        pw = new BankPurchaseWindow({
+          houses: () => pricedHousesForSale(),
+          rows: (id) => townTalk?.lines?.(id) ?? [],
+          buy: (h) => purchaseHouse(playerEntity.bankAccounts, playerEntity.houses, region, h, bankPurse(), {
+            meshRadius: h.meshRadius ?? 0,
+            mapId: dir?.mapId ?? 0,
+            location: dir?.locationName ?? '',
+            sideEffects: { ...houseSideEffects(), playerName: playerEntity.name ?? '', regionName: dir?.regionName ?? '' },
+          }),
+          onClose: () => { if (interiorOverlay === pw) interiorOverlay = win; },
+        });
+        interiorOverlay = pw;
+        return true;
+      },
+      // FLAGGED, and now at the RIGHT thing: the sell PRICE needs the
+      // owned building's mesh radius, which means resolving the model
+      // behind a buildingKey - the same reader DaggerfallBankPurchase-
+      // PopUp needs for its 3D preview. Zero until that lands, so the
+      // sell offer quotes nothing rather than a wrong number.
+      houseSellPrice: () => 0,
       ownsShip: () => false,
       ownedShip: () => -1,
-      housesForSale: () => 0,
       isPortTown: () => false,
-      houseSellPrice: () => 0,
       onClose: () => { if (interiorOverlay === win) interiorOverlay = null; },
     });
     interiorOverlay = win;
@@ -1080,6 +1187,15 @@ export function createWorldModes(host) {
       maxEncumbranceKg: () => maxEncumbrance(liveStat(playerEntity, 'strength')),
     };
   }
+
+  // V5's toggleInteriorRest retired: its bag-building lives in
+  // `interiorRestPlaceHere` below, which hands the bag to the WINDOW
+  // instead of calling CanRest here - DFU gates on the WHILE and
+  // HEALED buttons (:641-690), not at open, which is what keeps LOITER
+  // free of the refusal and the crime. What came across intact: H1's
+  // `isHouseOwned` over the region's own registry slot, the
+  // permanent-scene test through `currentInteriorScene`, and
+  // `plainLines` on the refusal.
 
   /** U39: the innkeeper's four-button panel. Answers whether it
    *  opened - a host with no art or no font falls through to TALK,
@@ -1394,6 +1510,34 @@ export function createWorldModes(host) {
       if (!win) return null;
       interiorOverlay = win;
       return win;
+    }
+    if (destination === 'guildServiceReceiveHouse') {
+      const region = b?.regionIndex ?? 0;
+      playerEntity.houses ??= createHouses(playerEntity.bankAccounts?.length || BANK_REGION_COUNT);
+      const dir = buildingDirectory?.();
+      const decision = receiveHouseDecision(membership, {
+        ownsHouse: ownsHouse(playerEntity.houses, region),
+        housesForSale: currentHousesForSale(),
+        alreadyOwnResult: TRANSACTION_RESULT.ALREADY_OWN_HOUSE,
+        noneForSaleResult: TRANSACTION_RESULT.NO_HOUSES_FOR_SALE,
+      });
+      if (decision.kind === 'refuse') {
+        const refusal = decision.line ? [{ text: decision.line, center: true }]
+          : (rows?.(decision.textId ?? decision.result) ?? []);
+        return { rows: refusal.length ? refusal : [{ text: ALREADY_GIVEN_HOUSE, center: true }] };
+      }
+      allocateHouseToPlayer(playerEntity.houses, region, {
+        buildingKey: decision.house.buildingKey,
+        mapId: dir?.mapId ?? 0,
+        location: dir?.locationName ?? '',
+      }, {
+        ...houseSideEffects(),
+        playerName: playerEntity.name ?? '',
+        regionName: dir?.regionName ?? '',
+      });
+      claimHouse(membership);
+      surfacePlayer();
+      return { rows: rows?.(decision.textId) ?? [{ text: 'I have a house for you.', center: true }] };
     }
     if (destination === 'guildServiceTeleport') {
       const win = host.openTeleportMap?.();
@@ -1812,6 +1956,11 @@ export function createWorldModes(host) {
             const mapId = questSceneCtx?.()?.mapId ?? 0;
             return questBridge.machine.getSiteLinks(SITE_TYPES.Building, mapId, b.buildingKey).length > 0;
           },
+          // H1: your own front door is not locked against you
+          // (buildingLocks.js:65 - the first thing the ladder tests).
+          // The hook has been in that law's contract since R1 with
+          // nothing able to answer it.
+          isHouseOwned: (key) => isHouseOwned(playerEntity.houses ?? [], bd.regionIndex ?? 0, key),
         });
         // X3: HandleOpenEffectOnExteriorDoor (:519-520). An armed OPEN
         // spell is tried on a locked building BEFORE the mode ladder,
@@ -2965,7 +3114,7 @@ export function createWorldModes(host) {
    *  DFU's cannot-save line rather than pretending. */
   const mountInterior = (w) => { if (w) interiorOverlay = w; };
 
-  // S40: CanRest's argument bag for INSIDE A BUILDING. `inTownStrict`
+  // CanRest's argument bag for INSIDE A BUILDING. `inTownOutside`
   // is a constant false here and that is the law, not a shortcut:
   // IsPlayerInTown(true, true) passes `mustBeOutside`, and the player
   // is by definition not. `inTown` is the bare IsPlayerInTown() -
@@ -2981,26 +3130,37 @@ export function createWorldModes(host) {
     // The SHAPE is systems/restSession.js' (a review round showed a bag
     // built in a closure can only be pinned by a regex over its own
     // source, and proved that hollow); this reads the live values.
+    const scene = currentInteriorScene();
     return interiorRestPlace({
-      inTown: host.inTownLocation?.() ?? false,
+      inTownLocation: host.inTownLocation?.() ?? false,
       building: b,
-      mapId,
       nowMinutes: Math.floor(worldMinutes()),
       // Interior.FindMarkers(InteriorMarkerTypes.Rest) - the same read
       // rentRoom's bedCount makes, so the stored index lines up with
-      // the list it indexes.
-      restMarkers: (interiorCtx?.markers ?? []).filter((m) => m.type === INTERIOR_MARKER.REST),
-      isPermanentScene: (name) => containsPermanentScene(sceneCache(), name),
+      // the list it indexes. canRest wants the COUNT and answers an
+      // index; the marker itself is resolved at MoveToBed.
+      restMarkers: interiorRestMarkers().length,
+      permanentScene: !!scene && containsPermanentScene(sceneCache(), scene),
+      // H1 CLOSED THIS. Both rest lanes left it false with a note
+      // saying "the moment a house can be bought, this is the line
+      // that lets you sleep in it" - and that moment arrived in the
+      // same merge: DaggerfallBankManager.IsHouseOwned is live over
+      // the region's own registry slot.
+      houseOwned: isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, b?.buildingKey ?? 0),
       // GetRentedRoom(mapId, buildingKey), through the SAME finder the
       // tavern window rents with - so the bed this answers is the bed
       // that was sold (tavern.js's own flag, retired here).
-      rentedRoom: () => findRentedRoom(playerEntity.rentedRooms ?? [], mapId, buildingKey),
+      room: findRentedRoom(playerEntity.rentedRooms ?? [], mapId, buildingKey),
       // GuildManager.GetGuild(factionID).CanRest() - THIS building's
       // faction, not the player's chosen guild. canRest() applies the
       // tavern exclusion itself.
-      guildCanRest: () => !!guild && guildCanRest(guild, membershipOf(memberships, guild)),
+      guildCanRest: !!guild && guildCanRest(guild, membershipOf(memberships, guild)),
     });
   };
+  /** The Rest markers this interior has, resolved once - canRest wants
+   *  the count, MoveToBed wants the list. */
+  const interiorRestMarkers = () =>
+    (interiorCtx?.markers ?? []).filter((m) => m.type === INTERIOR_MARKER.REST);
 
   // The interior host's RestWindow deps: the shared composition plus
   // what only this host knows. MoveToBed lands the player on the bed
@@ -3023,10 +3183,12 @@ export function createWorldModes(host) {
     // geometry leaves the capsule inside the collider and the player
     // wedges. The +1.08 lifts the marker point to the capsule centre,
     // the same offset startSpawn uses.
-    moveToBed: (m) => {
-      if (!interiorCtx) return;
+    moveToBed: (bedIndex) => {
+      const m = bedIndex >= 0 ? interiorRestMarkers()[bedIndex] : null;
+      if (!m || !interiorCtx) return;
       const f = floorLanding(interiorCtx.collider, [m.x, m.y + 1.08, m.z]);
       player.spawn(f[0], f[1], f[2]);
+      cam.pos = [...player.eye];
     },
     endLines: (id) => townTalk?.lines?.(id) ?? null,
     // EndRest's expired arm calls RemoveExpiredRentedRooms as it prints
@@ -3081,23 +3243,34 @@ export function createWorldModes(host) {
     toggleSpellbook() { if (magic) mountInterior(makeSpellbookWindow()); },
     toggleLogbook() { mountInterior(host.makeJournal?.('activeQuests')); },
     toggleNotebook() { mountInterior(host.makeJournal?.('notebook')); },
-    // S40: THE REST KEY, INSIDE. Before this the R binding died at
-    // the interior host - a rented room could be bought and never
-    // slept in. THE OPEN GATE runs here too: DFU raises it from one
-    // scene-free message handler (DaggerfallUI.cs:651-687), and while
-    // this host mounts no foe pool, StartRestGroundedCheck is very
-    // much live indoors - a levitating player cannot lie down in a
-    // shop any more than in a dungeon.
+    // THE REST KEY, INSIDE - the last dead arm of this ctx. U43 routed
+    // the Rest action in here and `ctx.toggleRest?.()` (ui/input.js)
+    // then optional-chained into nothing, because no host outside
+    // dungeonContext had ever built one. That is what the first-hour
+    // probe hit: a room rented in Burgley for five gold, and R opening
+    // nothing in it.
+    //
+    // THE OPEN GATE runs here too - DFU raises it from one scene-free
+    // handler (DaggerfallUI.cs:651-687). This host mounts no foe pool
+    // and has no water, but StartRestGroundedCheck is very much live
+    // indoors: a levitating player cannot lie down in a shop any more
+    // than in a dungeon.
+    //
+    // CanRest itself does NOT run here. It runs on the WHILE and
+    // HEALED buttons inside the window (:641-690), which is what keeps
+    // LOITER free of the camping refusal and the Vagrancy charge -
+    // LoiterButton never calls it (:693-706). Gating at open would
+    // have made loitering in a city a crime.
     toggleRest() {
-      const gate = restOpenGate({
+      if (interiorOverlay) return;
+      const d = restDecision({
         enemiesNearby: false,   // no foe pool in a building interior
         swimming: false,        // nor water
-        // StartRestGroundedCheck, not the raw flag - the near-ground
-        // ray is DFU's own levitation fix and applies indoors too.
         grounded: startRestGroundedCheck(!!player.grounded, player.pos, interiorCtx?.collider),
       });
-      if (!gate.ok) {
-        const lines = townTalk?.lines?.(gate.textId);
+      if (d.kind !== 'rest') {
+        if (d.kind === 'blocked') return;   // a racial override says nothing at all
+        const lines = d.message ? [d.message] : plainLines(townTalk?.lines?.(d.textId));
         if (lines) mountInterior(new ActionTextBox(lines));
         return;
       }
@@ -3106,6 +3279,12 @@ export function createWorldModes(host) {
   };
 
   addEventListener('keydown', (e) => {
+    // U47: FIRST, before any early return. F5, F6 and F11 are DFU
+    // bindings AND browser gestures, and this host's keydown returns
+    // in a dozen places - so a swallow anywhere else is a swallow
+    // that some mode skips. Pressing F5 in a building used to reload
+    // the page (AUDIT 17e F41); F11 still went fullscreen here.
+    swallowBrowserKey(e);
     // U43: an overlay held in the OUTER host's slot owns the keyboard.
     // townTalk draws its overlay above the modal render in every mode
     // (world.js's frame, AUDIT F2-I1), so a window opened out there
@@ -3209,6 +3388,7 @@ export function createWorldModes(host) {
   /** U37: THE HOVER SEAM, the wheel seam's shape - both mode-owned
    *  windows and the mounted dungeon context's. */
   function hover(e) {
+    trackHudPointer(canvas, e);   // U46: the spell-icon rows' tooltip, in BOTH modes
     const at = () => {
       const r = canvas.getBoundingClientRect();
       return pointToNative(nativeMetrics(canvas),

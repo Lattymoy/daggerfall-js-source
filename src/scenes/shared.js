@@ -21,7 +21,7 @@ import { findFactions } from '../systems/talk.js';   // V1: GetRegionFaction's F
 import { FACTION_TYPES } from '../formats/factionFile.js';
 import { killIfAnyLiveStatZero } from '../systems/statMods.js';   // AUDIT 24 (wave 32): the per-entity laws a foe pool owes
 import { decayEnemyAlert } from '../systems/encounters.js';   // AUDIT 24 (wave 36): PlayerEntity.Update's 8-hour decay, in every context
-import { hasSpecialAbility, SPECIAL_ABILITY, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate } from '../systems/rest.js';   // S40: the rest hour, one home
+import { hasSpecialAbility, SPECIAL_ABILITY, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate } from '../systems/rest.js';   // the rested hour's three rates, one home for every host (V5 + S40, same line from two lanes)
 import { createNearbyScan, updateNearbyObjects, detectedMarkers, hasLiveDetector } from '../systems/nearbyObjects.js';   // X4: the Detect scan
 import { liveStat, maxFatigue } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
@@ -626,6 +626,38 @@ export function raiseAtRestEnd(entity, { say = () => {}, onLevelUp = null, rolls
   return raised;
 }
 
+/**
+ * V5 - TEXT.RSC ROWS ARE NOT STRINGS, and the two shapes are easy to
+ * hand to the wrong window. `textRsc.linesById` (:216-247) answers
+ * `{ text, center }` records, because the record's own bytes carry
+ * justification; dungeonContext's local `rscLines` (:851) flattens
+ * them to plain strings, which is what RestWindow, ActionTextBox and
+ * ChoiceWindow all iterate.
+ *
+ * V5's first cut handed `townTalk.lines(id)` straight to a RestWindow
+ * and the rested night ended in `TypeError: text is not iterable` from
+ * drawText - a real page error, in a draw path no unit test walks, and
+ * the first-hour probe's own zero-page-errors gate is what caught it.
+ * So the flattening is a shared function now rather than a habit one
+ * host happens to have.
+ */
+export const plainLines = (rows) => (rows?.length
+  ? rows.map((r) => (typeof r === 'string' ? r : (r?.text ?? ''))).filter((l) => l !== null)
+  : null);
+
+/**
+ * V5's REST DEPS retired into S40's, which is the same idea with the
+ * same author's-note - resting worked in a dungeon and nowhere else
+ * because dungeonContext built the deps by hand and no other host had
+ * a copy - and three things that lane's version did not have: the
+ * pass-through (a host dep the composition does not name still
+ * reaches the window), the IsResting/IsLoitering writes, and
+ * IsPlayerFullyHealed's NoRegenSpellPoints clause. See createRestDeps
+ * below. What came the OTHER way is `plainLines`, above: TEXT.RSC
+ * answers ROWS and this window iterates strings, which V5b's
+ * first-hour probe caught as a TypeError at draw time and no unit
+ * test in either lane could have.
+ */
 export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, onExhausted = null } = {}) {
   // AUDIT 21 F2: a VIEW on the one world clock, not an owner. This used to
   // close over its own accumulator, so the three hosts that build a ticker -
@@ -898,7 +930,18 @@ export function wireInfectionVideos(renderer, { textAt = null, showText = null, 
     // draws an ActionTextBox where the town hosts draw a
     // ChoiceWindow and neither is the other's overlay.
     messageBox: (id) => {
-      const lines = textAt?.(id);
+      // V5: plainLines, and it is a FIX rather than tidying. Three of
+      // the four textAt providers hand back TEXT.RSC ROWS - world.js,
+      // exterior.js and worldModes.js all pass `townTalk.lines(id)`,
+      // which answers { text, center } records - while dungeonContext
+      // passes `textRsc.plainText(id)`, which answers strings. Both
+      // windows this reaches iterate the STRING (ChoiceWindow
+      // talkWindow.js:58-59, ActionTextBox likewise), so "Death is not
+      // eternal" threw `TypeError: text is not iterable` on draw
+      // everywhere above ground and worked only in a dungeon: the
+      // four-hosts divergence this project keeps meeting. Flattened
+      // HERE, at the one consumer, so no provider has to be right.
+      const lines = plainLines(textAt?.(id));
       if (lines?.length) showText?.(lines);
     },
     // GetVampireClan's region read (:400-427), assembled from the
@@ -1082,6 +1125,14 @@ export function createRestDeps(entity, opts = {}) {
       health: entity.health, maxHealth: entity.maxHealth,
       fatigue: Math.round((entity.fatigue ?? 0) / 64), magicka: entity.magicka ?? 0,
     }),
-    endLines: rest.endLines ?? (() => null),
+    // V5b, and this lane had the same bug unshipped: TEXT.RSC answers
+    // `{ text, center }` ROWS - the record's own bytes carry
+    // justification - while RestWindow, ActionTextBox and ChoiceWindow
+    // all iterate the STRING. Handing `townTalk.lines(id)` straight to
+    // a rest window ends the rested night in `TypeError: text is not
+    // iterable` from drawText. Nothing in either lane's suite DRAWS,
+    // so no unit test could catch it; their first-hour probe did, at
+    // the last stage of the walk. Flatten here, once, for every host.
+    endLines: (id) => plainLines(rest.endLines?.(id)),
   };
 }

@@ -10,10 +10,11 @@ import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLo
 import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
-import { MapsFile, longitudeLatitudeToMapPixel, isTownLocationType } from '../formats/mapsFile.js';   // S40: PlayerGPS's town-type set
+import { MapsFile, longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
+import { isPlayerInTown } from '../systems/nearbyObjects.js';   // PlayerGPS.IsPlayerInTown, both optional flags
 import { convertTilemap } from '../world/terrainSurface.js';
 import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
-import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // S40: the rest gate's grounded input
+import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
 import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible exterior arrows
@@ -46,8 +47,7 @@ import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AU
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice } from './hostCombat.js';   // AUDIT 23 (C14)
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
 import { RestWindow } from '../ui/restWindow.js';   // S40: rest above ground
-import { restOpenGate } from '../systems/restSession.js';   // S40: the scene-free open gate
-import { setEnemyAlert, areEnemiesNearby } from '../systems/encounters.js';   // S40: the open gate's alert + the resting test
+import { setEnemyAlert, areEnemiesNearby } from '../systems/encounters.js';   // the enemy arm RAISES the alert before refusing; the RESTING variant asks the pool
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5): the collapse box
 import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
@@ -60,13 +60,16 @@ import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';   // G2
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
-import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet (LevelUpScreen: AUDIT 21 hosts F3)
+import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';
+import { canRest, restDecision, ILLEGAL_REST_WARNING } from '../systems/restSession.js';   // U48: the dispatch + V5's CanRest
+import { getBool } from '../systems/settings.js';   // U48: GUI/IllegalRestWarning gates the two-step
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
 import { charSheetHooks } from '../ui/charSheetNav.js';   // U32: the sheet's four navigation buttons
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw
 import { largeHudOptions, routeLargeHudClick, hudLargeNextMode, hudLargePrevMode } from '../ui/hudLarge.js';   // U45: the classic bottom bar and its eleven panels
+import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { getInteractionMode } from '../player/interactionMode.js';   // U45: the mode panel's cycle reads it
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
 import { NativeInventoryWindow, preloadInventoryArt, inventoryArtLoaded } from '../ui/nativeInventory.js';   // U8d: the native inventory
@@ -84,7 +87,7 @@ import { ChoiceWindow } from '../ui/talkWindow.js';   // V1: the infection popup
 import { startInfection, liveInfection } from '../systems/infection.js';   // V1 probe surface: the bite and the lifecycle
 import { diseaseCount } from '../systems/diseases.js';
 import { MINUTES_PER_DAY } from '../systems/gameDate.js';
-import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag, createRestDeps } from './shared.js';
+import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -93,10 +96,10 @@ import {
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { setWeather, currentWeather, tickWeather } from '../systems/weatherSim.js';   // W1: the live weather state
 import { SEASON } from '../world/climateSwaps.js';
-import { addGold } from '../systems/court.js';   // U10 probe surface
+import { addGold, CRIMES } from '../systems/court.js';   // U10 probe surface; U48: camping in a town is Vagrancy
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
-import { actionOf, held, moveHeld, anyMove } from '../ui/input.js';   // I2: the rebindable registry
+import { actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';   // I2: the rebindable registry
 import { openPauseFlow, preloadPauseFlowArt, pauseArtLoaded } from '../ui/pauseWindow.js';   // I3/I4
 import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
 import { discoveredBuildings } from '../systems/discovery.js';   // A2: the nameplates' gate
@@ -624,8 +627,10 @@ export async function bootExterior(canvas, renderer, params, status) {
    *  rect, so IsPlayerInTown(true, true) is the type test plus "not
    *  inside". No foe pool here but the city watch, which counts. */
   const _isPlayerInTownStrict = () => _musicInLocationRect()
-    && isTownLocationType(_musicLocationType())
-    && (modes?.mode ?? 'exterior') === 'exterior';
+    && isPlayerInTown(_musicLocationType(), {
+      mustBeInLocationRect: true, mustBeOutside: true,
+      inLocationRect: true, inside: (modes?.mode ?? 'exterior') !== 'exterior',
+    });
   const outdoorRestDeps = createRestDeps(playerEntity, {
     advanceMinutes: (n) => playerTicker.advance(n),
     // No tickQuests: this dev host mounts no quest bridge at all
@@ -639,8 +644,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     // good the moment one guard spawned anywhere in town.
     enemiesNearby: () => areEnemiesNearby(cityGuards.guards, { resting: true }),
     place: () => ({
-      inTownStrict: _isPlayerInTownStrict(),
-      inTown: isTownLocationType(_musicLocationType()),
+      inTownOutside: _isPlayerInTownStrict(),
+      inTownLocation: isPlayerInTown(_musicLocationType()),
       insideBuilding: false,
     }),
     commitCrime: (crime, spawnGuards) => {
@@ -665,19 +670,26 @@ export async function bootExterior(canvas, renderer, params, status) {
     // this host had none of it, because rest was a dungeon feature.
     // Outdoors all three inputs are live: real foes, real water, and a
     // levitating or falling player who cannot lie down.
-    const gate = restOpenGate({
+    const d = restDecision({
       enemiesNearby: outdoorRestDeps.enemiesNearby(),
       swimming: !!player.swimming,
       // StartRestGroundedCheck, not the raw flag: a levitating player
       // an inch off the floor reads grounded === false and DFU lets
-      // them sleep anyway (PlayerMotor.cs:190-193's own comment).
+      // them sleep anyway (PlayerMotor.cs:190-193's own comment) - and
+      // up here it is also what lets a page whose motor is never
+      // stepped rest at all, since `grounded` sits at its initialiser.
       grounded: startRestGroundedCheck(!!player.grounded, player.pos, collider),
     });
-    if (!gate.ok) {
+    if (d.kind !== 'rest') {
       // DFU raises the enemy alert on the enemies arm
-      // (DaggerfallUI.cs:655 - not the rest window's :655).
-      if (gate.alert) setEnemyAlert(playerEntity, true, Math.floor(worldMinutes()));
-      const lines = townTalk.lines(gate.textId);
+      // (DaggerfallUI.cs:655 - NOT the rest window's :655, which is
+      // DoRestForAWhile; a bare citation here resolves to the wrong
+      // file, since every other number in this block is the window's).
+      if (d.kind === 'enemies') setEnemyAlert(playerEntity, true, Math.floor(worldMinutes()));
+      if (d.kind === 'blocked') return;   // a racial override says nothing at all
+      // plainLines: TEXT.RSC answers { text, center } ROWS and
+      // ActionTextBox iterates STRINGS (V5b's finding).
+      const lines = d.message ? [d.message] : plainLines(townTalk.lines(d.textId));
       if (lines) townTalk.showOverlay(new ActionTextBox(lines));
       return;
     }
@@ -879,6 +891,93 @@ export async function bootExterior(canvas, renderer, params, status) {
   // reads it, the ladder below calls it, and routeLargeHudClick hands
   // it a click. Every member is an arrow, so nothing here is evaluated
   // before the helpers it names exist.
+  // U48 - THE FOURTH HOST. V5 wired the world, interior and dungeon
+  // hosts to CanRest and its own pin says "every host that can hold a
+  // player now has a rest arm" - this page holds one and had none, so
+  // KeyR in the single-location ?town view still did nothing at all.
+  // The deps come from the ONE factory; only the two halves a host can
+  // uniquely answer are written here. This page is always ON a
+  // location and always outdoors, so CanRest's town arm is the only
+  // one it can ever take, and a Rapid Healing career heals under the
+  // open sky.
+  const exteriorRestDeps = createRestDeps(playerEntity, {
+    say: (msg) => townTalk.say(msg),
+    onLevelUp: () => { townTalk.say('You have gained a level!'); townTalk.showOverlay(new LevelUpScreen(playerEntity)); },
+    textLines: (id) => townTalk.lines(id),
+    inside: () => false,
+    day: () => !isNight(minuteNow()),
+    // AreEnemiesNearby, the resting variant. This page has one live
+    // hostile pool: the city watch, which answers for itself.
+    enemiesNearby: () => (cityGuards?.activeCount?.() ?? 0) > 0,
+    advanceMinutes: (n) => { playerTicker.advance(n); },
+  });
+  /** U48 - the DISPATCH (DaggerfallUI.cs:651-688), which asks about
+   *  enemies, water and the ground and about nothing else. The enemy
+   *  arm RAISES THE ALERT before refusing (:654-655) - it is what arms
+   *  the rest-encounter roll, so the attempt costs something even when
+   *  it fails. */
+  function exteriorRestDispatch() {
+    return restDecision({
+      enemiesNearby: exteriorRestDeps.enemiesNearby(),
+      swimming: !!player.swimming,
+      // StartRestGroundedCheck, not the raw flag: the fallback ray is
+      // what lets a near-ground levitator rest, and on a page whose
+      // motor is never stepped it is what lets anyone rest at all -
+      // `grounded` sits at its initialiser `false` there.
+      grounded: startRestGroundedCheck(player.grounded, player.pos, collider),
+    });
+  }
+  function exteriorRestVerdict(alreadyWarned) {
+    // This page IS a location and its player is always outdoors, so
+    // IsPlayerInTown(true, true) is a constant here - there is no
+    // wilderness to step into and no building to step inside.
+    return canRest({ inTownOutside: true, inTownLocation: false, alreadyWarned });
+  }
+  function doExteriorRest(alreadyWarned) {
+    const v = exteriorRestVerdict(alreadyWarned);
+    if (v.crime) {
+      // The same door the pickpocket and the assault take.
+      playerEntity.crimeCommitted = CRIMES.Vagrancy;
+      if (v.spawnGuards) _crimeResponse();
+    }
+    if (!v.allowed) {
+      // plainLines: TEXT.RSC answers { text, center } rows and
+      // ChoiceWindow iterates STRINGS.
+      const lines = v.textId != null ? plainLines(townTalk.lines(v.textId)) : null;
+      if (lines) townTalk.showOverlay(new ChoiceWindow({ lines }));
+      return;
+    }
+    townTalk.showOverlay(new RestWindow(exteriorRestDeps));
+  }
+  function toggleExteriorRest() {
+    if (townTalk.overlayActive) return;
+    const d = exteriorRestDispatch();
+    if (d.kind !== 'rest') {
+      if (d.kind === 'enemies') setEnemyAlert(playerEntity, true, worldMinutes());
+      if (d.kind === 'blocked') return;   // a racial override says nothing at all
+      const lines = d.message ? [d.message] : plainLines(townTalk.lines(d.textId));
+      if (lines) townTalk.showOverlay(new ChoiceWindow({ lines }));
+      return;
+    }
+    // DaggerfallRestWindow's own two-step (:640-691): in a town's rect
+    // the buttons ask "It is illegal to camp in or near a city.
+    // Continue?" before calling through with alreadyWarned = true, and
+    // CanRest answers `alreadyWarned` itself - while registering
+    // Vagrancy and calling the watch EITHER WAY.
+    if (getBool('GUI', 'IllegalRestWarning') && exteriorRestVerdict(false).crime) {
+      townTalk.showOverlay(new ChoiceWindow({
+        lines: [ILLEGAL_REST_WARNING],
+        options: [
+          { code: 'KeyY', label: 'Y - yes', action: () => doExteriorRest(true) },
+          { code: 'KeyN', label: 'N - no', action: () => {} },
+          { code: 'Escape', label: 'Esc - no', action: () => {} },
+        ],
+      }));
+      return;
+    }
+    doExteriorRest(false);
+  }
+
   const hudCtx = {
     toggleCharSheet: () => townTalk.showOverlay(new CharSheet(playerEntity, charSheetHooks({
       entity: playerEntity,
@@ -900,6 +999,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     },
     // A2: the exterior automap (Actions.AutoMap outdoors,
     // DaggerfallUI.cs:633-650); this host always stands on a location.
+    toggleRest: () => toggleExteriorRest(),   // U48
     toggleAutomap: () => {
       const locId = `${dfLocation.regionIndex}:${dfLocation.name ?? locationName}`;
       townTalk.showOverlay(new ExteriorAutomapWindow({
@@ -927,7 +1027,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // pressing F5 inside a building reloaded the page and destroyed
     // the session. Routing F5/F6 into interiors is its own arc
     // (FLAGGED); swallowing the browser reload is not optional.
-    if (e.code === 'F5' || e.code === 'F6') e.preventDefault();
+    swallowBrowserKey(e);   // U47: F5/F6/F11 - one list, in ui/input.js
     const act = actionOf(e);   // I2: the registry owns the code -> action read
     // U45: the ladder below and the large HUD's panels are the SAME
     // doors, so they are one object now rather than two ladders that
@@ -955,6 +1055,8 @@ export async function bootExterior(canvas, renderer, params, status) {
       // location. I2: through the registry, so M is rebindable like
       // every other action rather than a second hardcoded literal.
       if (act === 'AutoMap') { hudCtx.toggleAutomap(); return; }
+      // U48: Actions.Rest (KeyR), bound since I1 and read by one host
+      if (act === 'Rest') { hudCtx.toggleRest(); return; }
     }
     // A2: the exterior automap (Actions.AutoMap outdoors,
     // DaggerfallUI.cs:633-650); this host always stands on a location.
@@ -1007,6 +1109,11 @@ export async function bootExterior(canvas, renderer, params, status) {
   // dungeon host - the drag feeds the rig INSTEAD of the look.
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   addEventListener('mousemove', (e) => {
+    // U46: the HUD is not a window and owns no pointer handler, so the
+    // virtual position lands in its one store on the way past - BEFORE
+    // the overlay return, because an overlay up is exactly when the
+    // spell-icon tooltip is allowed to show.
+    trackHudPointer(canvas, e);
     // U37: a window frees the mouse, so an open overlay gets the
     // HOVER before the look gate refuses the unlocked pointer.
     if (townTalk.hover(e) || modes?.hover?.(e)) return;
@@ -1058,7 +1165,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // S40: IsPlayerInTown() with both flags at their defaults - the
     // location TYPE alone (PlayerGPS.cs:504-527), which is what
     // CanRest's inside-a-building arm asks.
-    inTownLocation: () => isTownLocationType(_musicLocationType()),
+    inTownLocation: () => isPlayerInTown(_musicLocationType()),
     // G6: the knightly smith's gift needs THIS host's inventory
     // window in choose-one mode - one builder, one dependency list.
     makeInventory: (extra) => (inventoryArtLoaded() ? makeInventoryWindow(extra) : null),
@@ -1157,6 +1264,19 @@ export async function bootExterior(canvas, renderer, params, status) {
     window.__chargenConfirm = () => townTalk._debug().overlayFlow?.raceConfirm ?? null;   // U11 probe surface
     window.__chargenFlow = () => townTalk._debug().overlayFlow ?? null;   // S3e probe surface
     window.__addGold = (n) => addGold(playerEntity, n);   // U10 probe surface: gold through the real producer
+    // U47 probe surface: the inventory's info panel, whatever window
+    // holds it. The panel is the ONLY state the hover seam writes, so
+    // it is also the only way to prove from outside that a real
+    // mousemove reached the window at all.
+    window.__invInfo = () => {
+      const o = townTalk.overlay;
+      // duck-typed, as worldModes' own inventory probe is - the host
+      // must not import the window class to recognise it (U26's pin)
+      const isInv = !!o && typeof o._remote === 'function' && typeof o.hover === 'function';
+      return isInv
+        ? JSON.stringify({ item: o.infoItem?.name ?? null, gold: !!o.infoGold, tab: o.tab })
+        : 'null';
+    };
     // V1 probe surface: the bite, the clock and the lifecycle state.
     // The infection is minted through the REAL producer path's
     // startInfection, not by hand, so a probe cannot pass over a

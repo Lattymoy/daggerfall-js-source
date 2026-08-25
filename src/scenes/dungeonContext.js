@@ -67,7 +67,7 @@ import { preloadPaperDollForEntity } from '../ui/paperDoll.js';   // U26: the do
 import { createDroppedLoot } from './droppedLoot.js';   // U8e, mounted here at U26
 import { createPlayerMagic } from './hostMagic.js';   // M3: the ONE cast engine
 import { tallySkill, skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.js';
-import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT, startRestGroundedCheck } from '../player/motor.js';   // S40: the rest gate's grounded input
+import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
 import { applyLevelUp } from '../systems/advancement.js';
 import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
 import { spendPoolLowest } from '../systems/chargen.js';
@@ -88,7 +88,7 @@ import { breathStep } from '../systems/breath.js';
 import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
 import { inflictPoison } from '../systems/poisons.js';
 import { exhaustionOutcome, EXHAUSTED_IN_WATER, hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
-import { restOpenGate } from '../systems/restSession.js';   // S40: the open gate, one home
+import { restDecision } from '../systems/restSession.js';   // the scene-free open gate, one home
 import { intermittentEnemySpawn, setEnemyAlert, areEnemiesNearby } from '../systems/encounters.js';   // E-slice; S40: the resting test, one home
 import { RestWindow } from '../ui/restWindow.js';
 import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects.js';
@@ -2624,18 +2624,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // they were passing the raw `grounded` flag, which refuses a
       // near-ground levitator DFU lets sleep (review 16f found the
       // drift risk; the S40 review found the divergence).
-      const nearFloor = startRestGroundedCheck(_grounded, lastPlayerFeet, collider);
-      const gate = restOpenGate({
+      const d = restDecision({
         enemiesNearby: _restDeps.enemiesNearby(),
-        swimming: _activity.swimming, grounded: nearFloor,
+        swimming: _activity.swimming,
+        grounded: startRestGroundedCheck(_grounded, lastPlayerFeet, collider),
       });
-      if (!gate.ok) {
+      if (d.kind !== 'rest') {
         // E-slice: the ROUTED leg closes - DFU raises the alert on the
         // enemies arm (DaggerfallUI.cs:655, not the rest window's
-        // :655), which is what arms this host's
-        // rest-encounter roll.
-        if (gate.alert) setEnemyAlert(playerEntity, true, classicMinutesRef.value);
-        const lines = rscLines(gate.textId);
+        // :655), which is what arms this host's rest-encounter roll.
+        if (d.kind === 'enemies') setEnemyAlert(playerEntity, true, classicMinutesRef.value);
+        if (d.kind === 'blocked') return;   // a racial override says nothing at all
+        const lines = d.message ? [d.message] : rscLines(d.textId);
         if (lines) activeOverlay = new ActionTextBox(lines);
         return;
       }
@@ -2785,10 +2785,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     },
     tickOverlay(dt) {
       if (!activeOverlay) return;
-      // D1: the death sequence's clock, and S40 the rest clock too -
-      // RestWindow.tick IS its Update, so the special case that used
-      // to sit here would now tick the rest TWICE a frame and rest at
-      // double speed. One seam, four hosts.
+      // D1: the death sequence's clock - and, since the rest lanes,
+      // the rest window's too. RestWindow.tick IS its Update, so the
+      // explicit `if (isRestWindow) tickRest(dt)` that used to sit
+      // here would now drive it TWICE and rest at double speed. The
+      // generic call is the point: a host cannot forget a branch it
+      // does not have to write. Two lanes found this independently.
       activeOverlay.tick?.(dt);
       // ui-chargen-4: backing out of the race screen cancels the
       // wizard - DFU unwinds the UI stack to the start screen

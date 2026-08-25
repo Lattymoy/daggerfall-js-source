@@ -64,6 +64,8 @@
 // is strict).
 
 /** PlayerGPS.NearbyObjectFlags (:112-123), verbatim. */
+import { LOCATION_TYPES } from '../formats/mapsFile.js';   // V5: IsPlayerInTown's seven town types
+
 export const NEARBY = Object.freeze({
   None: 0,
   Enemy: 1,
@@ -150,6 +152,37 @@ const ENEMY_GROUP_BIT = Object.freeze({
  *  re-transcribing the career switch: DFU's PacifyEffect matches on
  *  exactly this enum (PacifyEffect.cs:131-132), so the two must not
  *  be allowed to drift apart. */
+/**
+ * V5 - PlayerGPS.IsPlayerInTown (:504-527), verbatim including its
+ * two optional gates, because getting them backwards inverts the
+ * whole rest law.
+ *
+ *   IsPlayerInTown(mustBeInLocationRect = false, mustBeOutside = false)
+ *
+ * MUST BE OUTSIDE is the one to read twice: `IsPlayerInTown(true,
+ * true)` - CanRest's first test - is TRUE only standing in the open
+ * inside a town's rect, and FALSE the moment you step through a door.
+ * Read the other way round, every shop and inn in Tamriel would refuse
+ * to let you sleep and would charge you with vagrancy for asking.
+ *
+ * The seven town types are DFU's list, not "the three called Town":
+ * HomeFarms, HomeWealthy, Tavern and ReligionTemple are towns here too.
+ */
+export const TOWN_LOCATION_TYPES = Object.freeze(new Set([
+  LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage,
+  LOCATION_TYPES.HomeFarms, LOCATION_TYPES.HomeWealthy,
+  LOCATION_TYPES.Tavern, LOCATION_TYPES.ReligionTemple,
+]));
+export function isPlayerInTown(locationType, {
+  mustBeInLocationRect = false, mustBeOutside = false,
+  inLocationRect = false, inside = false,
+} = {}) {
+  if (!TOWN_LOCATION_TYPES.has(locationType)) return false;
+  if (mustBeInLocationRect && !inLocationRect) return false;
+  if (mustBeOutside && inside) return false;
+  return true;
+}
+
 export const enemyGroupOf = (mobileType) => ENEMY_GROUP_BIT[mobileType] ?? NEARBY.None;
 
 /** GetEntityFlags (:779-819).

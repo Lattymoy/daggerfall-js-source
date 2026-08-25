@@ -158,6 +158,11 @@ export function createQuestBridge(ctx) {
     makeHeldQuestItemsPermanent: (uid, sym) => ctx.makeHeldQuestItemsPermanent?.(uid, sym),
     offerReward: (q, item) => ctx.offerReward?.(q, item),
     isPlayerInTown: () => ctx.isPlayerInTown?.() ?? false,
+    // H1: DaggerfallBankManager.IsHouseOwned. place.js has read this
+    // since the quest arc landed (:439 - a house you own is never
+    // handed out as a quest site) and nothing could answer it, so it
+    // defaulted false and your own home stayed eligible.
+    isHouseOwned: (buildingKey) => ctx.isHouseOwned?.(buildingKey) ?? false,
     getGuild: (fid) => ctx.getGuild?.(fid) ?? null,
     regionPriceAdjustment: () => ctx.regionPriceAdjustment?.() ?? 0,
     changeReputation: (fid, amount, propagate) => ctx.changeReputation?.(fid, amount, propagate),
