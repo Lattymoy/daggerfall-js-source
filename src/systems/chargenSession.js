@@ -21,6 +21,7 @@ import { ChargenFlow } from '../ui/chargen.js';
 import { applyCharacter, createCharacter, startingSpells, CLASS_CAREERS } from './chargen.js';
 import { levelUpSkillSum } from './advancement.js';   // AUDIT 18: SetCurrentLevelUpSkillSum, one home
 import { overlayAction } from '../ui/input.js';
+import { isEnhanced } from './uiSkin.js';   // THE SKIN: which wizard
 import { assignStartingGear } from './startingGear.js';   // S3d
 import { NUMBER_BODY_PARTS } from './armorMaterials.js';   // wave 28: CharacterDocument's 7-part table
 import { readSpellsStd, spellsByIndexMap } from '../formats/spellsStd.js';
@@ -274,9 +275,36 @@ export async function createChargenFlow(fetchBytes, { rolls = Math.random } = {}
 }
 
 /** An overlay-shaped chargen window for the exterior hosts.
- *  onDone(result) fires once, after the flow reaches 'done'. */
+ *  onDone(result) fires once, after the flow reaches 'done'.
+ *
+ *  THE SKIN IS CHOSEN HERE AND NOWHERE ELSE. This is already THE ONE
+ *  CONSTRUCTION SEAM (AUDIT 17i split it out because three separate
+ *  bugs came from hosts wiring chargen by hand), so the enhanced
+ *  wizard mounts through the same door rather than teaching each host
+ *  a second one. A host that reached for ui/enhancedChargen.js itself
+ *  would be the 17i shape again, and a sweep fails the suite if one
+ *  does.
+ *
+ *  THE FOUR HOSTS, each named as the rule demands:
+ *    - scenes/world.js       WIRED (it calls this)
+ *    - scenes/exterior.js    WIRED (it calls this)
+ *    - scenes/worldModes.js  N/A - interiors never run the wizard
+ *    - scenes/dungeonContext.js  FLAGGED: it holds the RAW flow as its
+ *      own overlay and draws it directly, so it cannot reach this
+ *      fork. It keeps the CLASSIC wizard. Since U31 the classic start
+ *      boots the WORLD host, so that path is the `?dungeon` dev scene
+ *      alone - a real gap, and a small one, recorded rather than
+ *      quietly left. */
 export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {}) {
   let _fired = false;
+  // A DOM view needs a DOM. The headless suite constructs this window
+  // to pin the fire-once law and has no document, so the fork asks
+  // rather than assuming - and a host without one keeps the canvas
+  // wizard, which is the never-traps law rather than a special case
+  // for tests.
+  if (isEnhanced() && typeof document !== 'undefined') {
+    return enhancedChargenOverlay(flow, { onDone, onCancel });
+  }
   return {
     flow,
     isChoiceWindow: true,   // raw key codes through the overlay seam
@@ -314,6 +342,107 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
     tick(dt) { flow.tick?.(dt); },
     draw(renderer, canvas, font) { flow.draw(renderer, canvas, font, hudScale); },
   };
+}
+
+/**
+ * THE ENHANCED WIZARD, in the shape the hosts already push.
+ *
+ * It answers the same overlay contract and does almost nothing with
+ * it, because the DOM view owns its own input: the div is fixed and
+ * opaque over the canvas, so pointers never reach the host's seam, and
+ * the wizard's own keydown listener answers keys through the same
+ * overlayAction table this window uses. The host's arms are therefore
+ * NO-OPS BY DESIGN rather than by omission, and each says so - a
+ * silently empty input() here would look identical to a broken one.
+ *
+ * `done` stays FALSE until the view has been taken down. The hosts
+ * tear an overlay down when it reports done, and a DOM node outlives
+ * the object that reports it, so the order is: unmount, then fire.
+ */
+function enhancedChargenOverlay(flow, { onDone, onCancel } = {}) {
+  let fired = false;
+  let view = null;
+  const finish = (why) => {
+    if (fired) return;
+    fired = true;
+    view?.unmount();
+    view = null;
+    if (why === 'cancel') onCancel?.();
+    else onDone?.(flow.result());
+  };
+  // Mounted lazily and asynchronously: the module carries the whole
+  // enhanced design and a player on the classic skin must not pay for
+  // it. A failure to load costs the wizard, so it says so loudly
+  // rather than leaving a host with an overlay that draws nothing.
+  const host = document.createElement('div');
+  host.id = 'enhanced-chargen';
+  host.style.cssText = 'position:fixed;inset:0;z-index:14;background:#0e1013;overflow:hidden';
+  document.body.append(host);
+  import('../ui/enhancedChargen.js').then(async ({ mountEnhancedChargen, attachChargenText }) => {
+    const deps = await chargenViewDeps();
+    attachChargenText(flow, deps.textRsc);
+    view = mountEnhancedChargen(host, { flow, ...deps, onExit: finish });
+    view.unmount = ((inner) => () => { inner(); host.remove(); })(view.unmount);
+  }).catch((e) => {
+    console.warn('[chargen] the enhanced wizard would not mount', e);
+    host.remove();
+  });
+  return {
+    flow,
+    isChoiceWindow: true,
+    get done() { return fired; },
+    input() { /* the view's own keydown owns the keyboard */ },
+    click() { /* the view is a fixed opaque div; pointers never get here */ },
+    wheel() { /* the view scrolls itself */ },
+    tick() { /* no constellation animation on this side yet */ },
+    draw() { /* DOM, not canvas */ },
+    dispose() { view?.unmount(); view = null; host.remove(); },
+  };
+}
+
+/** The art the DOM view needs and the GL path never did: both map
+ *  files with a palette, the ten head records as canvases, and
+ *  TEXT.RSC for the five injectable text sources. Every one is
+ *  optional - the wizard runs without any of them and says what it
+ *  lost. */
+async function chargenViewDeps() {
+  const out = { picker: null, picture: null, palette: null, loadFaces: null, textRsc: null };
+  const [{ ImgFile }, { DFPalette }, { CifRciFile }, { TextRsc }, races, { bitmapCanvas }] =
+    await Promise.all([
+      import('../formats/imgFile.js'), import('../formats/dfPalette.js'),
+      import('../formats/cifRciFile.js'), import('../formats/textRsc.js'),
+      import('./races.js'), import('../ui/bitmapCanvas.js'),
+    ]);
+  const { getBytes } = await import('../scenes/dataSource.js');
+  const img = async (name) => {
+    const f = new ImgFile();
+    f.load(await getBytes(name), name, new DFPalette());
+    return f.getDFBitmap(0, 0);
+  };
+  try { out.textRsc = new TextRsc().load(await getBytes('TEXT.RSC')); }
+  catch (e) { console.warn('[chargen] TEXT.RSC unavailable; descriptions stay empty', e); }
+  try {
+    const pal = new DFPalette();
+    pal.load(await getBytes('ART_PAL.COL'), 'ART_PAL.COL');
+    const rgb = (i) => { const c = pal.get(i); return [c.r, c.g, c.b]; };
+    out.palette = rgb;
+    out.picker = await img('TAMRIEL2.IMG');
+    try { out.picture = await img('TMAP00I0.IMG'); }
+    catch (e) { console.warn('[chargen] TMAP00I0 unavailable; the Imperial Province is absent', e); }
+    out.loadFaces = async (raceKey, gender) => {
+      const name = races.raceArt(raceKey, gender).heads;
+      const cif = new CifRciFile();
+      cif.load(await getBytes(name), name, pal);
+      const set = [];
+      for (let i = 0; i < races.FACES_PER_RACE; i++) {
+        set.push(bitmapCanvas(cif.getDFBitmap(i, 0), rgb, { scale: 2 }));
+      }
+      return set;
+    };
+  } catch (e) {
+    console.warn('[chargen] the map art is unavailable; the homelands fall to a list', e);
+  }
+  return out;
 }
 
 /** The hosts hand us KeyboardEvent.code strings; overlayAction reads
