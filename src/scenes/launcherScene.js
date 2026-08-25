@@ -43,7 +43,15 @@ export async function runLauncher(canvas, renderer, status) {
 
   return new Promise((resolve) => {
     let done = false;
-    const win = new SettingsWindow({ onLaunch: () => {} });
+    const win = new SettingsWindow({
+      onLaunch: () => {},
+      // M-EXT: the picker is the SCENE's to hand over - it touches
+      // IndexedDB and the DOM, neither of which a ui/ window owns.
+      onPickMusic: async () => {
+        const { pickMusicFolder } = await import('./dataSource.js');
+        await pickMusicFolder();
+      },
+    });
     const finish = () => {
       if (done) return;
       done = true;

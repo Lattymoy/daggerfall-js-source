@@ -14,10 +14,10 @@ YAWS=[0,45,90,135,180,225,270,315]
 # hair falls below the chin, so it frames at 0.75.
 import json as _json
 import os as _os
-SH_FRAC=float(_os.environ['SPAN']) if 'SPAN' in _os.environ else float(_json.load(open('spans_nd.json'))[str(FACE-1)])
+SH_FRAC=float(_os.environ['SPAN']) if 'SPAN' in _os.environ else float(_json.load(open('spans_he.json'))[str(FACE-1)])
 print(f'span {SH_FRAC:.2f}')
 def _skinSide(Y):
-    A=np.array(Image.open(f'heads_nd/f{FACE}_{Y:03d}.png').convert('RGBA'))
+    A=np.array(Image.open(f'heads_he/f{FACE}_{Y:03d}.png').convert('RGBA'))
     m=A[:,:,3]>0; rgb=A[:,:,:3].astype(int); H=m.shape[0]
     r0,r1=int(H*0.849*0.28),int(H*0.849*0.60)
     sub=rgb[r0:r1]; ms=m[r0:r1]
@@ -30,7 +30,7 @@ print(f'rotation: {"REFLECTED" if _flip else "as-labelled"}'
       + (f'  (90<->270, 45<->315, 135<->225)' if _flip else ''))
 V={}
 for Y in YAWS:
-    im=Image.open(f'heads_nd/f{FACE}_{SRC[Y]:03d}.png').convert('RGBA'); A=np.array(im)
+    im=Image.open(f'heads_he/f{FACE}_{SRC[Y]:03d}.png').convert('RGBA'); A=np.array(im)
     m=A[:,:,3]>0; H,W=m.shape
     w=[int(m[r].sum()) for r in range(H)]
     top=next(r for r in range(H) if w[r]>0)
@@ -259,5 +259,5 @@ for d in range(3):
     a=cell[:,d].astype(np.float32); b=cell[:,HW-1-d].astype(np.float32)
     m=(a+b)/2
     cell[:,d]=m.astype(np.uint8); cell[:,HW-1-d]=m.astype(np.uint8)
-Image.fromarray(cell).save(f'heads_nd/cell_{FACE}.png')
-print(f'baked head cell {HW}x{HH} -> heads_nd/cell_{FACE}.png')
+Image.fromarray(cell).save(f'heads_he/cell_{FACE}.png')
+print(f'baked head cell {HW}x{HH} -> heads_he/cell_{FACE}.png')

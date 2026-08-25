@@ -266,12 +266,19 @@ function setBodyColors(Carr) {
 // NEVER TRAPS: if either file is absent, skinTex stays null and setBodySkin
 // falls through to setBodyRamp, exactly as the title screen falls back.
 let skinI = null, skinTexCanvas = null, skinTex = null, skinLayout = null;
+// The body atlas is baked from a HUMAN turnaround, so it carries human anatomy:
+// pectorals, abdominals, navel. Tinting that fur-brown leaves a Khajiit with a
+// six-pack, so the fur and scale races use a smoothed copy - broad form shading
+// kept, fine detail (measured amplitude 13-18 per texel) removed.
+let skinIBeast = null;
+const BEAST = { Khajiit: 1, Argonian: 1 };
 // THE BAKED HEADS. public/skin/heads/ carries one cell per face, baked from our
 // own generated turnarounds (tools/skin/head_bake.py) - no ARENA2, so they
 // ship. Each face also implies its own body ramp, because the ten are not one
 // skin tone (lit skin R 161..209), and the head is the authority on that.
 let headCells = null, skinRamps = null, headPick = 0, headRace = null;
-const HEAD_SET = { Breton: 'breton', Redguard: 'redguard', Nord: 'nord', 'Dark Elf': 'darkelf' };
+const HEAD_SET = { Breton: 'breton', Redguard: 'redguard', Nord: 'nord',
+  'Dark Elf': 'darkelf', 'High Elf': 'highelf' };
 async function loadHeads() {
   const key = HEAD_SET[RACES[raceIx]];
   if (!key) { headCells = null; skinRamps = null; headRace = null; applyTone(); return; }
@@ -312,6 +319,14 @@ async function loadSkin() {
     c.width = img.width; c.height = img.height;
     const g2 = c.getContext('2d'); g2.drawImage(img, 0, 0);
     skinI = g2.getImageData(0, 0, c.width, c.height);
+    try {
+      const bi = await new Promise((res, rej) => { const i = new Image();
+        i.onload = () => res(i); i.onerror = rej; i.src = './skin/skin-intensity-beast.png'; });
+      const bc = document.createElement('canvas');
+      bc.width = bi.width; bc.height = bi.height;
+      bc.getContext('2d').drawImage(bi, 0, 0);
+      skinIBeast = bc.getContext('2d').getImageData(0, 0, bc.width, bc.height);
+    } catch { skinIBeast = null; }   // no beast map: the human one still works
     skinTexCanvas = document.createElement('canvas');
     skinTexCanvas.width = c.width; skinTexCanvas.height = c.height;
     skinTex = new THREE.CanvasTexture(skinTexCanvas);
@@ -381,7 +396,8 @@ function setBodySkin(ramp) {
   // each face's own head implies its own body tone, so the neck matches the jaw
   const rr = (skinRamps && skinRamps[headPick]) ? skinRamps[headPick] : ramp;
   ramp = rr;
-  const src = skinI.data;
+  const beast = BEAST[RACES[raceIx]] && skinIBeast;
+  const src = (beast ? skinIBeast : skinI).data;
   const out = skinTexCanvas.getContext('2d').createImageData(skinI.width, skinI.height);
   for (let i = 0; i < src.length; i += 4) {
     const c = snapRamp(ramp, src[i]);

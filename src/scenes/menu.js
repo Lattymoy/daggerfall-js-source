@@ -28,7 +28,7 @@ import { StartWindow, loadStartArt } from '../ui/startWindow.js';
 import { TitleScreen, loadTitleArt } from '../ui/titleScreen.js';
 import { fetchBytes } from './shared.js';
 import { music } from '../systems/music.js';
-import { readQuicksave } from '../systems/save.js';
+import { restorableQuicksave } from '../systems/save.js';
 
 const TITLE_SONGS = ['5STRONG.HMI', '03.HMI'];   // DFU start scene song, then the stand-in
 
@@ -108,8 +108,14 @@ export async function runMenu(canvas, renderer, status) {
 }
 
 /** Is there a game to load? The menu shows Load unconditionally, as
- *  DFU does; this is for the host that has to act on the press. */
-export const hasSavedGame = () => !!readQuicksave();
+ *  DFU does; this is for the host that has to act on the press.
+ *
+ *  AUDIT (2026-08-25) F2: this asked readQuicksave, which parses the
+ *  blob and does not test its VERSION - so F3's own guard passed on an
+ *  envelope restorePlayer would refuse, and Load came up on the chargen
+ *  wizard. The question is "can this build restore it", and that
+ *  question has one home. */
+export const hasSavedGame = () => !!restorableQuicksave();
 
 /**
  * U21c: the title screen, before the menu. Resolves as soon as the

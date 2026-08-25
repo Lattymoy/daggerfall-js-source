@@ -3206,7 +3206,26 @@ FOUND AND NOT FIXED, because it is the host's and not this slice's: the
 outer frame's write-back also DISCARDS the collapse's hour, so the port
 recovers the vitals of a rested hour without spending it.
 
-Pins: `test/daychange.test.js` (20) covers each member against its
+**And one ordering inversion against the C#.** DFU runs the day block
+(`:441-450`) and THEN the per-minute normalise loop (`:453-477`); the
+port had that loop hoisted to the top of `tickPlayerMinutes`. It costs
+the roll stream nothing - neither the loop nor `normalizeReputations`
+draws - which is why it had never mattered. It is not free for STATE:
+the day block's loan arm calls `LowerRepForCrime`
+(`LoanChecker.cs:70`), so DFU lands the fresh -10 legal hit and decays
+it by one in the same tick, while the hoisted order decayed an old
+value first and applied the hit after. Same inversion on the faction
+channel the People half writes. Every 112-day boundary IS a day
+boundary (161280 = 112 x 1440), so this needed no coincidence beyond a
+loan coming due that day.
+
+The loop moved below the day block, and the
+`preventNormalizingReputations` clear came down with it - the loop
+READS that flag and DFU clears it at the tail (`:528-530`), so moving
+one without the other would have left the prison-skip shield reading an
+already-cleared flag and dying silently.
+
+Pins: `test/daychange.test.js` (21) covers each member against its
 C# and, separately, the wiring - a year-long jump through
 `tickPlayerMinutes` that drifts the prices, collects an expired
 rental and defaults a loan in one tick.

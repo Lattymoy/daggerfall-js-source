@@ -132,6 +132,15 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 }
 .act:hover { color: var(--bone); border-color: var(--dim); }
 .act.primary { border-color: var(--brass); color: var(--brass); }
+/* A value pill inside a settings row is drawn compact (a 44px pill
+   beside a 44px row is a wall of brass) and TARGETED at 44 the same
+   way the stepper is. */
+.row .act { position: relative; }
+.row .act::after {
+  content: ''; position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%; height: 44px; min-width: 44px;
+}
 .act.primary:hover { background: var(--brass); color: var(--ink); }
 .act[disabled] { opacity: 0.4; cursor: not-allowed; }
 .act[disabled]:hover { color: var(--dim); border-color: var(--iron); }
@@ -166,6 +175,11 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .subbtn:hover { color: var(--bone); }
 .subbtn.on { color: var(--brass); border-left-color: var(--brass); background: #12161b; }
 .subbtn .count { float: right; font-size: 11px; color: #5f5b53; font-variant-numeric: tabular-nums; }
+/* The affordance for "tap me again to read about this group and reset
+   it" - the only way to the category card on a phone (AUDIT F8). It
+   shows on the ACTIVE tab only, because that is the only tab the
+   gesture applies to. */
+.subbtn .more-dot { display: none; }
 
 .row {
   display: flex; align-items: center; gap: 14px; width: 100%;
@@ -173,7 +187,14 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 }
 .row:hover { background: #12161b; }
 .row.on { background: #12161b; box-shadow: inset 2px 0 0 var(--brass); }
-.row-main { flex: 1; min-width: 0; }
+.row-main {
+  flex: 1; min-width: 0;
+  /* THE WHOLE ROW HEIGHT, not the height of the words in it. This was
+     a 19px target inside a 52px row - the label sized itself and the
+     36px of row around it hit nothing at all. */
+  align-self: stretch; display: flex; flex-direction: column; justify-content: center;
+  padding: 6px 0; min-height: 44px;
+}
 .row-name { font-size: 14px; }
 .row.blocked .row-name { color: var(--dim); }
 
@@ -189,12 +210,27 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .step {
   width: 34px; height: 34px; display: grid; place-items: center;
   border: 1px solid var(--iron); color: var(--dim); margin-left: 6px;
+  position: relative;
 }
 .step:hover { color: var(--bone); border-color: var(--dim); }
-/* AUDIT 24's finding, kept: the drawn size and the TARGET size are
-   two rects. The pill is 34px because 44px of brass reads as a
-   button bar; the hit box around it is 44 because a thumb is. */
-.step::after { content: ''; position: absolute; }
+/* AUDIT 24's finding, and this file FAILED IT until 2026-08-25.
+   The drawn size and the TARGET size really are two rects - a 44px
+   pill reads as a button bar and a 34px target is not a thumb - but
+   the rule that was here said content:'' and position:absolute and
+   nothing else, so it drew no box, claimed no space and hit nothing.
+   A comment asserting a law the code does not implement is worse than
+   no comment: it is the thing a reader checks INSTEAD of measuring.
+   Measured now, on a Pixel 5, by tools/enhancedTapProbe.mjs.
+
+   The pseudo-element is centred on the pill and forced to 44,
+   so the target grows
+   OUTWARD from the drawn pill and the row's own height is unchanged. */
+.step::after {
+  content: ''; position: absolute; inset: -5px -5px;
+  min-width: 44px; min-height: 44px;
+  left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 44px; height: 44px;
+}
 .swatch { width: 26px; height: 20px; border: 1px solid var(--iron); }
 
 /* THE TIER IS A DOT. The word was correct and it was also
@@ -268,6 +304,13 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   }
   .subbtn.on { border-left: 0; border-bottom-color: var(--brass); }
   .subbtn .count { float: none; margin-left: 7px; }
+  /* THE ONLY WAY TO THE CATEGORY CARD ON A PHONE (AUDIT F8), so the
+     gesture needs to be visible. Active tab only - it is the only tab
+     the second tap applies to. */
+  .subbtn.on .more-dot {
+    display: inline-block; width: 4px; height: 4px; border-radius: 50%;
+    background: var(--brass); vertical-align: middle; margin-left: 7px;
+  }
   .detail {
     position: fixed; left: 0; right: 0; bottom: 0; max-height: 74dvh; z-index: 20;
     transform: translateY(101%); transition: transform 0.22s ease;
@@ -283,6 +326,142 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* ── THE WIZARD ─────────────────────────────────────────────
+   Character creation borrows the menu's shell whole - same rail, same
+   panes, same phone laws - because it is the same interface one press
+   further in. What it adds is a WALK: the rail shows where you are
+   rather than where you may go, and an action bar sits under the
+   stage because Back must be a control you can see (AUDIT 17j found
+   the wizard's back arms wrong on every screen it checked). */
+.wizard .railbtn.done .rk { color: var(--dim); }
+.wizard .railbtn.done { border-left-color: #3a3226; }
+.wizard .railbtn.todo .rk { color: #4a4740; }
+.wizard .railbtn[disabled] { cursor: default; }
+.wizard .pane { display: flex; flex-direction: column; }
+
+.stagebody {
+  flex: 1; min-height: 0; display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  gap: var(--gap); background: var(--iron);
+}
+.stagebody.solo { grid-template-columns: 1fr; }
+.stagebody > .detail { background: #12161b; overflow: auto; }
+.stagebody .empty { margin: 30px; background: var(--slate); }
+
+.actionbar {
+  display: flex; gap: 8px; padding: 12px 20px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--iron); background: var(--ink);
+}
+
+/* ── A STAGE THAT IS ONLY ITS QUESTION ──────────────────────────
+   Sex and the class METHOD are two choices each. Two choices get two
+   large targets and an empty screen around them: a two-button question
+   dressed as a form is a two-button question that reads as work. */
+.choose { display: grid; place-content: center; gap: 28px; padding: 40px 30px; height: 100%; }
+.choose h2 {
+  font-family: var(--display); font-weight: 300; font-size: 30px;
+  margin: 0; text-align: center;
+}
+.bigchoice { display: grid; grid-template-columns: repeat(2, minmax(200px, 260px)); gap: 12px; }
+.bigchoice.tall { grid-template-columns: minmax(280px, 420px); }
+.bigbtn {
+  padding: 26px 22px; min-height: 88px; border: 1px solid #39424e;
+  background: #12161b; color: var(--dim); text-align: center;
+  letter-spacing: 0.05em; font-size: 17px;
+}
+.bigchoice.tall .bigbtn { text-align: left; }
+.bigbtn:hover { color: var(--bone); border-color: var(--dim); }
+.bigbtn.on { color: var(--brass); border-color: var(--brass); }
+.bigk { display: block; font-size: 17px; color: var(--bone); }
+.bigbtn:hover .bigk { color: var(--brass); }
+.bign { display: block; font-size: 13px; color: var(--dim); margin-top: 7px; letter-spacing: 0.02em; }
+.stagebody > .list { background: var(--slate); overflow: auto; }
+
+/* ── THE PROVINCE MAP ───────────────────────────────────────
+   Traced from the player's own TAMRIEL2.IMG (ui/provinceMap.js), so
+   these are Bethesda's coastlines and ours is only the ink. Unselected
+   provinces are drawn as outline alone: a map where every region is
+   filled is a map where none of them is chosen. */
+.mappane { padding: 20px; display: grid; place-items: center; min-height: 0; }
+.map { width: 100%; height: 100%; min-height: 0; display: block; }
+.prov {
+  fill: #1b2027; stroke: #39424e; stroke-width: 0.6;
+  stroke-linejoin: round; transition: fill 0.12s ease, stroke 0.12s ease;
+  cursor: pointer;
+}
+.prov.hot { fill: #2b3440; stroke: var(--dim); }
+/* The Imperial Province: drawn, unlit, unpressable. */
+.prov.inert { fill: #141922; stroke: #252c35; cursor: default; }
+.provlabel.inert { fill: #4a4740; }
+.prov.on { fill: rgba(192, 138, 62, 0.22); stroke: var(--brass); stroke-width: 0.9; }
+.provlabel {
+  fill: var(--dim); font-family: var(--data); font-size: 6px;
+  letter-spacing: 0.06em; pointer-events: none; user-select: none;
+}
+.provlabel.on { fill: var(--brass); }
+.mapnote { color: var(--dim); font-size: 13px; margin: 0 0 16px; }
+
+/* The map's own fallback, and a real control in its own right: eight
+   homelands read perfectly well as eight buttons. */
+.racegrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.racecell {
+  padding: 16px; min-height: 56px; border: 1px solid var(--iron);
+  color: var(--dim); letter-spacing: 0.04em;
+}
+.racecell:hover { color: var(--bone); border-color: var(--dim); }
+.racecell.on { color: var(--brass); border-color: var(--brass); }
+
+/* The wizard's phone progress strip. Hidden on a desk, where the rail
+   already says it at length. */
+.stepstrip { display: none; }
+.segs { display: flex; gap: 3px; }
+.seg { flex: 1; height: 2px; background: var(--iron); }
+.seg.on { background: var(--brass); }
+.steptext {
+  color: var(--dim); font-size: 11px; letter-spacing: 0.14em;
+  text-transform: uppercase; margin-top: 8px;
+}
+
+@media (max-width: 860px) {
+  /* ONE COLUMN. The map takes the height it needs for its own aspect
+     and the prompt sits under it - a picker whose prompt is off-screen
+     is a picker that looks broken. Only the DESCRIPTION becomes a
+     sheet, raised by the press that chose the province, because it is
+     long and because DFU's is modal. */
+  .stagebody { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  /* the map keeps the room it had - it is the picker, not a header */
+  .stagebody { grid-template-rows: 1fr auto; }
+  .mappane { padding: 12px; }
+  /* The MENU's phone rule turns every .detail into a sheet, and this
+     one is not the menu's - so the inline arm undoes it explicitly.
+     A shared class name across two screens is worth the reset: the
+     alternative is a second class doing the same job in a second
+     stylesheet, which is how two screens drift. */
+  .stagebody > .detail:not(.sheet) {
+    position: static; transform: none; max-height: none; z-index: auto;
+    border-top: 1px solid var(--iron); padding-bottom: 0;
+    background: var(--slate);
+  }
+  .stagebody > .detail:not(.sheet) .sheet-close { display: none; }
+  .stagebody > .detail.sheet {
+    position: fixed; left: 0; right: 0; bottom: 0; max-height: 72dvh; z-index: 20;
+    background: #12161b;
+    transform: translateY(101%); transition: transform 0.22s ease;
+    border-top: 1px solid var(--brass);
+    padding-bottom: max(76px, calc(env(safe-area-inset-bottom) + 76px));
+  }
+  .stagebody > .detail.sheet.open { transform: translateY(0); }
+  /* the rail is the desk's; the strip is the phone's - never both */
+  .wizard .rail { display: none; }
+  .choose { padding: 28px 20px; gap: 22px; }
+  .choose h2 { font-size: 24px; }
+  .bigchoice, .bigchoice.tall { grid-template-columns: 1fr; }
+  .wizard .stepstrip { display: block; order: 3; background: var(--ink); padding: 12px 20px max(12px, env(safe-area-inset-bottom)); }
+  .wizard .brand { padding-bottom: 12px; }
+  .provlabel { font-size: 7px; }
+}
 `;
 
 const STYLE_ID = 'dagger-enhanced-style';
@@ -297,12 +476,29 @@ export function injectEnhancedStyle(doc = document) {
   doc.head.append(el);
 }
 
-/** The web fonts. Separate from the stylesheet because a font is a
- *  NETWORK request and the sheet is not: if Google Fonts is blocked or
- *  offline the screens still lay out, in the stack's fallbacks
- *  (Georgia and the system sans), which is the same never-traps law
- *  the title screen follows when its art is missing. */
-export function injectEnhancedFonts(doc = document) {
+/** The web fonts.
+ *
+ *  A RECORDED DEPARTURE (AUDIT 2026-08-25 F6, Port-Ledger A). This is
+ *  the ONLY third-party request the game makes, and it is made by the
+ *  DEFAULT skin, on a build whose whole doctrine is that it ships
+ *  self-contained and reads its game data off the player's own disk.
+ *  Nobody had written that down, which is the part that made it a
+ *  finding rather than a choice.
+ *
+ *  It is separate from the stylesheet because a font is a NETWORK
+ *  request and the sheet is not: blocked, offline or opted out, the
+ *  screens still lay out in the stack's fallbacks (Georgia and the
+ *  system sans), which is the same never-traps law the title screen
+ *  follows when its art is missing.
+ *
+ *  And it is SKIPPABLE. `?nofonts` is the escape hatch for anyone who
+ *  does not want the request at all - a probe, an offline build, or a
+ *  player who would rather not tell Google their browser exists.
+ *  Self-hosting the two families is the real answer and is its own
+ *  slice: it costs bytes in the repo and that is Mac's call, not
+ *  mine. */
+export function injectEnhancedFonts(doc = document, search = globalThis.location?.search ?? '') {
+  if (new URLSearchParams(search).has('nofonts')) return;
   if (doc.getElementById('dagger-enhanced-fonts')) return;
   const link = doc.createElement('link');
   link.id = 'dagger-enhanced-fonts';

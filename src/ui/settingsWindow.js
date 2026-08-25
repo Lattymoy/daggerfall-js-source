@@ -27,6 +27,7 @@ import { labelOf, helpOf, TIER_TEXT, INSTEAD } from './settingsCopy.js';
 import { widgetFor, formatValue, stepValue, blockedReason } from './settingsLaw.js';
 import { effectiveSettings, setValue, saveSettings, resetToDefaults, tierOf, DEFAULTS } from '../systems/settings.js';
 import { getPref, setPref, isOpen, setOpen } from '../systems/uiPrefs.js';
+import { replacementCount } from '../systems/musicReplacement.js';   // M-EXT: the row reports what the pick covers
 import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES } from '../systems/uiSkin.js';
 import { measureText, drawText } from './text.js';
 import { drawRect, shadowText } from './nativePanel.js';
@@ -58,8 +59,15 @@ const GROUPS = [
 const inRect = ([x, y, w, h], px, py) => px >= x && py >= y && px < x + w && py < y + h;
 
 export class SettingsWindow {
-  constructor({ onLaunch = () => {}, dataSourceLabel = '' } = {}) {
+  constructor({ onLaunch = () => {}, dataSourceLabel = '', onPickMusic = null } = {}) {
     this.onLaunch = onLaunch;
+    // M-EXT: the music-pack picker. A HOOK and not an import,
+    // because the picker lives in scenes/dataSource.js and a ui/
+    // module reaching into scenes/ is the layering the rest of this
+    // directory does not do. Null means the row still explains the
+    // feature and simply offers no button - which is what a host
+    // that cannot pick files (a test, a headless harness) should get.
+    this.onPickMusic = onPickMusic;
     this.dataSourceLabel = dataSourceLabel;
     this.done = false;
     this.isChoiceWindow = true;
@@ -348,6 +356,22 @@ export class SettingsWindow {
       if (inst) lines.push(inst);
     }
     lines.push(`Saved as [${sec}] ${k}`);
+    // M-EXT: the one row with somewhere to go. AssetInjection is DFU's
+    // own gate on replacement assets and the port implements its SOUND
+    // half, so this is where a player picks the folder - a feature
+    // reachable only by typing ?music is a feature nobody finds, which
+    // is the exact gap this project keeps re-discovering.
+    if (key === 'Enhancements/AssetInjection' && this.onPickMusic) {
+      lines.push('');
+      lines.push(`Music files supplied: ${replacementCount()}`);
+      lines.push('Name each file after the song it replaces, e.g.');
+      lines.push('GDAY___D.ogg. Anything you skip keeps the original.');
+      return {
+        title: labelOf(key), key, lines,
+        buttons: [{ id: 'pick', label: 'Choose Folder' }, { id: 'close', label: 'Close' }],
+        onYes: () => this.onPickMusic(),
+      };
+    }
     return { title: labelOf(key), key, lines, buttons: [{ id: 'close', label: 'Close' }] };
   }
 
@@ -374,7 +398,14 @@ export class SettingsWindow {
       if (code === 'Escape' || code === 'Enter' || code === 'Space') {
         const d = this.dialog;
         this.dialog = null;
-        if (code !== 'Escape' && d.buttons?.[0]?.id === 'yes') this._commit(d.key, 'False');
+        // M-EXT: `onYes` is the house idiom five other windows use, and
+        // the MOUSE path here has honoured it all along while this one
+        // did not. Nothing set it on a settings dialog until now, so it
+        // was a latent divergence rather than a live bug - the first
+        // dialog to carry an action would have worked on click and done
+        // nothing on Enter. Escape is still a refusal on both paths.
+        if (code !== 'Escape' && d.onYes) d.onYes();
+        else if (code !== 'Escape' && d.buttons?.[0]?.id === 'yes') this._commit(d.key, 'False');
         this._click();
       }
       return;

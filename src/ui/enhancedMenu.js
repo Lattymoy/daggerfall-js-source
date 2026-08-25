@@ -74,7 +74,7 @@ import { labelOf, helpOf, INSTEAD, TIER_TEXT } from '../ui/settingsCopy.js';
 import {
   effectiveSettings, setValue, saveSettings, resetToDefaults, tierOf, DEFAULTS,
 } from '../systems/settings.js';
-import { readQuicksave } from '../systems/save.js';
+import { restorableQuicksave, QUICKSAVE_KEY } from '../systems/save.js';
 import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES } from '../systems/uiSkin.js';
 import { dateFromClassicMinutes, dateString } from '../systems/gameDate.js';
 import { BUILD_TAG } from '../buildTag.js';
@@ -106,13 +106,16 @@ const el = (t, cls, txt) => {
 };
 
 // ── THE SAVE, READ FOR REAL ──────────────────────────────────────
-// readQuicksave is save.js's own reader, so this reads exactly what
-// the game wrote - no second parse of the envelope. There is ONE slot
-// today (systems/save.js:27, `dagger.quicksave`), which is a fact the
-// Load pane has to state rather than dress up as a list of one.
+// restorableQuicksave is save.js's own reader AND its own version
+// test, so a card is drawn only for an envelope this build can
+// actually restore. Reading it with readQuicksave was AUDIT F2: an
+// older save drew a full Continue card and pressing it came up on the
+// chargen wizard. There is ONE slot today (systems/save.js:27,
+// `dagger.quicksave`), which is a fact the Load pane has to state
+// rather than dress up as a list of one.
 function savedGame() {
   let snap = null;
-  try { snap = readQuicksave(); } catch { snap = null; }
+  try { snap = restorableQuicksave(); } catch { snap = null; }
   if (!snap) return null;
   const date = Number.isFinite(snap.classicMinutes) ? dateFromClassicMinutes(snap.classicMinutes) : null;
   return {
@@ -154,6 +157,29 @@ function empty(title, line) {
   e.append(el('p', null, line));
   return e;
 }
+
+// ── THE CONFIRM ──────────────────────────────────────────────────
+// AUDIT F3/F4. Two destructive actions shipped without one: Reset
+// wiped every override on a single press (the CLASSIC screen has
+// always confirmed - settingsWindow's 'r' arm) and Delete did nothing
+// at all, drawn undimmed and operable-looking, because onAction caught
+// it and returned. A button that looks operable and is not is the
+// thing the anti-lie law forbids; a destructive one that does not ask
+// is worse.
+let confirming = null;   // { title, body, label, onYes }
+
+function confirmCard() {
+  const c = el('div', 'card');
+  c.append(el('h3', null, confirming.title));
+  c.append(el('p', 'meta', confirming.body));
+  c.append(acts([
+    { label: confirming.label, primary: true, onClick: () => { const f = confirming.onYes; confirming = null; f(); render(); } },
+    { label: 'Cancel', onClick: () => { confirming = null; render(); } },
+  ]));
+  return c;
+}
+
+const ask = (title, body, label, onYes) => { confirming = { title, body, label, onYes }; render(); };
 
 /** ONE LINE. It carried a kicker, a title and a blurb - the rail's own
  *  word said three times before the player reaches anything pressable. */
@@ -219,7 +245,12 @@ function paneLoad(body) {
     c.append(el('p', 'meta', [save.when, save.hour].filter(Boolean).join(' · ')));
     c.append(acts([
       { label: 'Load', primary: true, onClick: () => onAction('load') },
-      { label: 'Delete', onClick: () => onAction('delete') },
+      { label: 'Delete', onClick: () => ask(
+        'Delete this game',
+        `${save.name} is the only saved game, and deleting it cannot be undone.`,
+        'Delete',
+        () => { try { globalThis.localStorage?.removeItem(QUICKSAVE_KEY); } catch { /* storage disabled */ } },
+      ) },
     ]));
     body.append(c);
   }
@@ -236,9 +267,30 @@ function paneSettings(pane) {
 
   const rail = el('div', 'subrail');
   for (const cat of CATEGORIES) {
-    const b = el('button', `subbtn${cat.id === category ? ' on' : ''}`, cat.title);
+    const on = cat.id === category;
+    const b = el('button', `subbtn${on ? ' on' : ''}`, cat.title);
     b.append(el('span', 'count', String(keysOf(cat.id).length)));
-    b.onclick = () => { category = cat.id; pickedKey = null; render(); };
+    // AUDIT F8, found by the live check rather than by reading: on a
+    // PHONE the detail pane is a sheet that only rises when a ROW is
+    // tapped, so the category card - and the Reset button living in it
+    // - could never be seen at all. Playwright spent thirty seconds
+    // trying to click a button translated 101% off the bottom of the
+    // screen, which is exactly the AUDIT 24 shape: a control that
+    // exists, is drawn, and cannot be reached on the device that needs
+    // it most.
+    //
+    // A SECOND TAP ON THE SELECTED CATEGORY OPENS ITS CARD. That is
+    // not invented: settingsWindow's click arm already makes a second
+    // tap on an already-selected row act on it ("one finger, no
+    // modifier, the phone equivalent of Right"), so this is the
+    // port's own gesture applied one level up. The dot on the active
+    // tab is the affordance, because a gesture nobody can see is a
+    // gesture nobody uses.
+    b.onclick = () => {
+      if (on) { pickedKey = null; sheetOpen = true; } else { category = cat.id; pickedKey = null; }
+      render();
+    };
+    if (on) b.append(el('span', 'more-dot'));
     rail.append(b);
   }
 
@@ -262,9 +314,9 @@ function paneSettings(pane) {
 
   const detail = el('div', 'detail');
   const close = el('button', 'sheet-close', 'Close');
-  close.onclick = () => { sheetOpen = false; render(); };
+  close.onclick = () => { sheetOpen = false; confirming = null; render(); };
   detail.append(close);
-  detail.append(pickedKey ? helpCard(pickedKey) : categoryCard());
+  detail.append(confirming ? confirmCard() : (pickedKey ? helpCard(pickedKey) : categoryCard()));
   if (sheetOpen) detail.classList.add('open');
 
   panes.append(rail, list, detail);
@@ -301,7 +353,13 @@ function categoryCard() {
   d.append(el('h3', null, cat.title));
   d.append(el('p', null, cat.blurb));
   const b = el('button', 'act', 'Reset everything to defaults');
-  b.onclick = () => { resetToDefaults(); render(); };
+  b.onclick = () => ask(
+    'Reset Everything',
+    'Put every setting back the way Daggerfall Unity ships it. '
+    + 'Your interface style and text size are not settings and are left alone.',
+    'Reset',
+    () => { resetToDefaults(); _eff = null; },
+  );
   d.append(b);
   return d;
 }
@@ -343,9 +401,23 @@ function helpCard(key) {
  * EnhancedCombatAI True and we run the classic path, so a working
  * toggle there would be a lying toggle.
  */
+// AUDIT F7: this read effectiveSettings() - a full merge of all 171
+// keys over the defaults - ONCE PER ROW, so the Game category rebuilt
+// the whole store twenty-one times per render and Video sixty-six.
+//
+// The cache lives as long as the mount and is dropped by every path
+// that can change the store: write(), the reset, and the mount itself.
+// Nothing else in the running page writes settings while this screen
+// is up - it is the only screen up - so a longer-lived cache would
+// still be correct, but tying it to the writers is what makes that
+// true by construction rather than by circumstance.
+let _eff = null;
+const effective = () => (_eff ??= effectiveSettings());
+
 function settingRow(key, { compact = false } = {}) {
   const widget = widgetFor(key);
-  const raw = effectiveSettings()[key.split('/')[0]]?.[key.split('/')[1]];
+  const [_sec, _k] = key.split('/');
+  const raw = effective()[_sec]?.[_k];
   const tier = tierOf(key);
   const blocked = widget === 'blocked';
 
@@ -365,8 +437,19 @@ function settingRow(key, { compact = false } = {}) {
   if (blocked || widget === 'text') {
     ctl.append(val);
   } else if (widget === 'colour') {
-    const sw = el('span', 'swatch');
-    sw.style.background = `#${String(raw ?? '').slice(0, 6)}`;
+    // AUDIT F5: these rows drew a value with no control and no reason,
+    // which reads as broken rather than as unbuilt. A native colour
+    // input IS the editor - it is the one widget a browser gives us
+    // that beats anything the classic screen could draw - and it
+    // writes through the same setValue every other row uses.
+    const sw = el('input', 'swatch');
+    sw.type = 'color';
+    sw.value = `#${String(raw ?? '').slice(0, 6)}`;
+    sw.setAttribute('aria-label', labelOf(key));
+    // DFU's colour keys are RGBA8; the picker owns RGB, so the stored
+    // ALPHA byte is carried through untouched rather than silently
+    // reset to FF (ToolTipBackgroundColor ships D2 and means it).
+    sw.oninput = () => write(key, (sw.value.slice(1) + String(raw ?? '').slice(6)).toUpperCase());
     ctl.append(sw, val);
   } else if (widget === 'switch') {
     // A switch has one direction, so it gets one control rather than a
@@ -403,6 +486,7 @@ function write(key, next) {
   const [sec, k] = key.split('/');
   setValue(sec, k, next);
   saveSettings();
+  _eff = null;   // the store changed - drop the cache, then redraw from it
   render();
 }
 
@@ -437,7 +521,7 @@ function paneAbout(body) {
 }
 
 // ── SHELL ────────────────────────────────────────────────────────
-function go(id) { section = id; pickedKey = null; sheetOpen = false; render(); }
+function go(id) { section = id; pickedKey = null; sheetOpen = false; confirming = null; render(); }
 
 function render() {
   app.innerHTML = '';
@@ -474,7 +558,8 @@ function render() {
   } else {
     pane.append(head(SECTIONS.find((l) => idOf(l) === section)));
     const body = el('div', 'body');
-    ({ continue: paneContinue, new: paneNew, load: paneLoad, mods: paneMods, about: paneAbout })[section](body);
+    if (confirming) body.append(confirmCard());
+    else ({ continue: paneContinue, new: paneNew, load: paneLoad, mods: paneMods, about: paneAbout })[section](body);
     pane.append(body);
   }
 
@@ -498,6 +583,8 @@ export function mountEnhancedMenu(host, { onAction: handler = () => {} } = {}) {
   category = CATEGORIES[0].id;
   pickedKey = null;
   sheetOpen = false;
+  confirming = null;
+  _eff = null;
   render();
   // The probe surface, the same shape settingsProbe.mjs drives: a real
   // browser check should read the SAME layout a finger taps.

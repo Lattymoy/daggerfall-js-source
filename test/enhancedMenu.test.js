@@ -90,11 +90,84 @@ test('the classic door still gates its data first', () => {
 test('only the three game actions resolve the door', () => {
   const src = read('src/ui/enhancedMenu.js');
   const calls = [...src.matchAll(/onAction\('([a-z]+)'\)/g)].map((m) => m[1]).sort();
-  assert.deepEqual([...new Set(calls)], ['continue', 'delete', 'load', 'new'],
+  assert.deepEqual([...new Set(calls)], ['continue', 'load', 'new'],
     'settings, mods and about are destinations INSIDE this screen, not exits from it');
-  // and delete is caught before it can resolve - there is no save
-  // manager yet, so it must not fall through and boot a world
-  assert.match(src, /if \(action === 'delete'\) return;/);
+});
+
+// AUDIT F3/F4: two destructive actions shipped without a confirm -
+// Reset wiped every override on one press where the CLASSIC screen has
+// always asked, and Delete did nothing at all while drawn undimmed and
+// operable-looking. Delete is wired now; both go through one ask().
+test('the destructive actions ask first', () => {
+  const src = read('src/ui/enhancedMenu.js');
+  assert.match(src, /const ask = \(title, body, label, onYes\)/, 'one confirm, not two');
+  const resetAt = src.indexOf('Reset everything to defaults');
+  assert.match(src.slice(resetAt, resetAt + 400), /b\.onclick = \(\) => ask\(/,
+    'Reset must ask - the classic screen does');
+  const delAt = src.indexOf("label: 'Delete'");
+  assert.match(src.slice(delAt, delAt + 400), /onClick: \(\) => ask\(/,
+    'Delete must ask');
+  assert.match(src.slice(delAt, delAt + 500), /removeItem\(QUICKSAVE_KEY\)/,
+    'and it must actually delete - a button that does nothing is the lie the anti-lie law forbids');
+});
+
+// AUDIT F8, found by the live check rather than by reading: on a PHONE
+// the detail pane is a sheet that only rises when a ROW is tapped, so
+// the category card - and the Reset button inside it - could not be
+// reached at all. A second tap on the ACTIVE category opens it, which
+// is settingsWindow's own second-tap-acts gesture one level up.
+test('the category card is reachable on a phone', () => {
+  const src = read('src/ui/enhancedMenu.js');
+  const at = src.indexOf('const rail = el(\'div\', \'subrail\')');
+  const arm = src.slice(at, at + 1600);
+  assert.match(arm, /if \(on\) \{[^}]*sheetOpen = true;/,
+    'a second tap on the active category must raise the sheet');
+  assert.match(arm, /more-dot/, 'and the gesture needs a visible affordance');
+  const css = read('src/ui/enhancedStyle.js');
+  const phone = css.slice(css.indexOf('@media (max-width: 860px)'));
+  assert.match(phone, /\.subbtn\.on \.more-dot \{[\s\S]{0,140}display: inline-block/,
+    'the dot shows on the phone, where the gesture is the only way in');
+});
+
+// AUDIT F5: colour rows drew a value with no control and no reason,
+// which reads as broken rather than as unbuilt.
+test('colour settings have an editor, and it keeps the alpha byte', () => {
+  const src = read('src/ui/enhancedMenu.js');
+  const at = src.indexOf("widget === 'colour'");
+  const arm = src.slice(at, at + 900);
+  assert.match(arm, /sw\.type = 'color'/, 'the browser gives us the right widget - use it');
+  assert.match(arm, /sw\.value\.slice\(1\) \+ String\(raw \?\? ''\)\.slice\(6\)/,
+    'DFU colour keys are RGBA8 and the picker owns RGB: the stored alpha must survive '
+    + '(ToolTipBackgroundColor ships D2 and means it)');
+  assert.match(arm, /write\(key,/, 'and it writes through the same door every other row uses');
+});
+
+// AUDIT F7: this read the whole 171-key store once PER ROW.
+test('the settings pane reads the store once, not once per row', () => {
+  const src = read('src/ui/enhancedMenu.js');
+  assert.match(src, /_eff \?\?= effectiveSettings\(\)/);
+  // count CALLS, not mentions: the import has no parentheses and the
+  // comment explaining the fix names the function it is about.
+  const code = src.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
+  assert.equal((code.match(/effectiveSettings\(\)/g) || []).length, 1,
+    'exactly one call site - a second one is a second store read per row');
+  // and every path that can change the store drops the cache
+  const writes = ['_eff = null;   // the store changed', 'resetToDefaults(); _eff = null;'];
+  for (const w of writes) assert.ok(src.includes(w), `the cache must be dropped by: ${w}`);
+});
+
+// AUDIT F2: the version test belongs to the RESTORER, so both front
+// doors ask the restorer's own question. readQuicksave parses; it does
+// not judge, and restorePlayer refuses AFTER the world has booted.
+test('both front doors test the save VERSION, through one predicate', () => {
+  assert.match(read('src/systems/save.js'),
+    /export function restorableQuicksave[\s\S]{0,220}snap\.v === SAVE_VERSION/);
+  for (const f of ['src/ui/enhancedMenu.js', 'src/scenes/menu.js']) {
+    const src = read(f);
+    assert.match(src, /restorableQuicksave/, `${f} must ask whether the save is RESTORABLE`);
+    assert.ok(!/[^a-zA-Z]readQuicksave\(/.test(src),
+      `${f} must not read the envelope without testing its version`);
+  }
 });
 
 test('main.js maps the actions to the load flag, both ways', () => {

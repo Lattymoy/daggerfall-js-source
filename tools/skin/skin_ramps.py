@@ -13,7 +13,13 @@ for f in range(1,11):
     face=c[int(H*0.26):int(H*0.52), int(W*0.455):int(W*0.545)]
     lum=0.3*face[:,:,0]+0.59*face[:,:,1]+0.11*face[:,:,2]
     ref=np.median(lum)
-    sel=(lum>ref*0.45)&(lum<ref*1.75)      # drop the odd eye/nostril outlier
+    # Reject on HUE as well as brightness. An eye or a specular highlight is
+    # skin-bright but not skin-coloured, and one of those in the sample put a
+    # bluish entry mid-ramp - red running 194 then 112 while luminance rose.
+    _n=face/np.maximum(lum[:,:,None],1.0)
+    _med=np.array([np.median(_n[:,:,k]) for k in range(3)])
+    _hue=np.abs(_n-_med).sum(axis=2)
+    sel=(lum>ref*0.45)&(lum<ref*1.75)&(_hue<0.28)
     px=face[sel]; pl=lum[sel]
     if len(px)<200: continue
     order=np.argsort(pl); px=px[order]; pl=pl[order]
@@ -30,6 +36,8 @@ for f in range(1,11):
         w=max(1,len(px)//40)
         ramp.append([float(np.median(px[max(0,i-w):i+w+1,k])) for k in range(3)])
     ramp=np.array(ramp)
+    _l=0.30*ramp[:,0]+0.59*ramp[:,1]+0.11*ramp[:,2]
+    ramp=ramp[np.argsort(_l)]                 # monotonic by construction
     # extend the dark end so shadowed body geometry has somewhere to go
     ramp[0]=ramp[0]*0.55; ramp[1]=ramp[1]*0.75
     out[f-1]=[[int(round(v)) for v in row] for row in ramp]

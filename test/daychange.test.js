@@ -27,7 +27,7 @@ import { FACTION_TYPES } from '../src/formats/factionFile.js';
 import { currentWeather, resetWeatherSim, tickWeather, setWeather } from '../src/systems/weatherSim.js';
 import { CLIMATES } from '../src/formats/mapsFile.js';
 import { createSceneCache, addPermanentScene, containsPermanentScene, interiorSceneName } from '../src/systems/sceneCache.js';
-import { REPUTATION_LOSS_PER_CRIME, CRIMES, legalRepOf } from '../src/systems/court.js';
+import { REPUTATION_LOSS_PER_CRIME, CRIMES, legalRepOf, NORMALIZE_INTERVAL_MINUTES } from '../src/systems/court.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
 
 // A SYNTHETIC faction dictionary. UpdateRegionalPrices reads exactly
@@ -524,4 +524,43 @@ test('S41 re-entrancy: the exhaustion collapse re-enters the tick, and one midni
     setWorldMinutes(saved);
     resetWeatherSim();
   }
+});
+
+// ── the day block runs BEFORE the normalise loop, as DFU's does ────
+
+test('S41 order: a loan default on a 112-day boundary is decayed in the SAME tick, not before it lands', () => {
+  // DFU's order inside one Update is the day block (:441-450) and THEN
+  // the per-minute normalise loop (:453-477). The port had the loop
+  // hoisted to the top of tickPlayerMinutes, which costs the roll
+  // stream nothing (neither the loop nor normalizeReputations draws)
+  // but is NOT free for state: the day block's loan arm calls
+  // LowerRepForCrime (LoanChecker.cs:70), so DFU lands the fresh hit
+  // and then decays it by one in the same tick, where the hoisted
+  // order decayed an old value first and applied the hit afterwards.
+  //
+  // Every 112-day boundary IS a day boundary (161280 = 112 * 1440), so
+  // this needs no exotic coincidence - only a loan coming due that day.
+  const boundary = NORMALIZE_INTERVAL_MINUTES;          // minute 161280 exactly
+  const e = {
+    health: 20, maxHealth: 20, fatigue: 500, stats: {},
+    skills: [30], skillUses: [], items: [], activeEffects: [],
+    regionPrices: {}, factionRep: null, legalRep: {},
+    bankAccounts: createBankAccounts(4),
+    lastGameMinutes: boundary - 1,
+  };
+  borrowLoan(e.bankAccounts, 0, 1000, { level: 10, nowMinutes: 0 });
+  e.bankAccounts[0].loanDueDate = boundary - MINUTES_PER_DAY;   // already overdue
+  e.bankAccounts[0].accountGold = 0;
+
+  tickPlayerMinutes({
+    entity: e, classicMinutes: boundary - 1, dt: 2 / CLASSIC_MINUTES_PER_SECOND,
+    sinks: {}, rolls: () => 0.5, say: () => {},
+  });
+
+  assert.equal(hasDefaulted(e.bankAccounts, 0), true, 'the loan defaulted on this tick');
+  const loss = REPUTATION_LOSS_PER_CRIME[CRIMES.LoanDefault];
+  // DFU: LowerRepForCrime lands -loss, then the normalise loop nudges
+  // it back toward zero by one in the same tick.
+  assert.equal(legalRepOf(e, 0), -loss + 1,
+    `the hit must land BEFORE the decay (-${loss} then +1); the hoisted order left -${loss}`);
 });
