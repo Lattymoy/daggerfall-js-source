@@ -2837,12 +2837,32 @@ carry and two call not optional in so many words. `RestWindow` sets
 `done` from inside `tick()` on the death path, so that window stayed
 painted over the world.
 
-Pins: 46 in `restlodging.test.js`, two of them END TO END - every law
+**And the flag had a third reader the slice talked itself out of.**
+The comment S40 wrote beside `IsResting` said "its one consumer is
+CastWhenHeld's degrade rate". There are three, and DFU's own comment
+at `:266-267` already names two - "random enemy spawning AND
+CastWhenHeld durability loss". The third is
+`PlayerEntity.cs:417-418`: `if (!isResting) DecreaseFatigue(amount);`.
+The port had no such gate, so it charged 66 fatigue an HOUR through
+every rest - measured, not inferred. Worse for LOITER, which by DFU's
+own law calls no `tickVitals` at all: nothing was restoring it, so a
+long enough loiter walked the player toward exhaustion while they
+stood about. The dungeon host was accidentally exempt, its rest
+advance never routing through the ticker; the three hosts this slice
+gave rest to were not.
+
+The gate is narrow on purpose: the JUMPING drain is C#'s `:427`,
+outside the per-minute block and ungated, and the Swimming tally at
+`:414` runs BEFORE the gate. A false sentence in a comment is what
+licensed the omission, which is the argument for the rule that
+comments must be true stated about as plainly as it gets.
+
+Pins: 47 in `restlodging.test.js`, two of them END TO END - every law
 in this slice driven together through one host-shaped deps bag, from
 the key press to the wake. That is the closest thing to a live probe a
 machine with no ARENA2 data can run, and it is here because a slice
 whose parts each pass and whose whole was never run is exactly what a
-probe catches. 80 mutations, 80 dead. The first
+probe catches. 82 mutations, 82 dead. The first
 pass left four alive and all four were the same failure of nerve: a
 pin that named a thing instead of exercising it. The host pins matched
 `act === 'Rest'`, which survives `if (false && act === 'Rest')`, so

@@ -22,6 +22,8 @@ import { REST_WAIT_PER_HOUR, LOITER_WAIT_PER_HOUR } from '../src/systems/restSes
 import { SKILLS } from '../src/systems/skills.js';
 import { startRestGroundedCheck, CAPSULE_HEIGHT } from '../src/player/motor.js';
 import { areEnemiesNearby } from '../src/systems/encounters.js';
+import { createPlayerTicker } from '../src/scenes/shared.js';
+import { setWorldMinutes } from '../src/systems/worldTick.js';
 
 const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
@@ -1301,4 +1303,58 @@ test('S40: the interior overlay seam DRAINS done, like the other three', () => {
   w.tick(0);
   assert.equal(w.done, true, 'death ends the window from inside tick');
   assert.equal(w.state, 'resting', 'and never through the ended page');
+});
+
+
+test('S40 IsResting: the THIRD consumer - no per-minute fatigue drain while resting', () => {
+  // PlayerEntity.cs:417-418 verbatim: `if (!isResting)
+  // DecreaseFatigue(amount);`, inside the per-minute block. The port
+  // charged it through every rested minute - 66 an hour, measured -
+  // and a LOITER, which by DFU's own law calls no tickVitals, has
+  // nothing restoring it, so a long enough loiter drained the player
+  // toward exhaustion while they stood about.
+  //
+  // The comment that let this through said the flag's "one consumer
+  // is CastWhenHeld's degrade rate". There are THREE, and DFU's own
+  // comment at :266-267 already names two of them.
+  const mk = () => ({
+    isPlayer: true, level: 5, health: 50, maxHealth: 50, magicka: 0, maxMagicka: 40,
+    fatigue: 6400, stats: { strength: 50, endurance: 50, willpower: 50 },
+    skills: 30, career: {}, skillUses: {},
+  });
+  const hour = (resting) => {
+    const e = mk(); e.isResting = resting;
+    setWorldMinutes(1000);
+    const t = createPlayerTicker(e, {});
+    for (let i = 0; i < 6; i++) t.advance(10);
+    return 6400 - e.fatigue;
+  };
+  assert.ok(hour(false) > 0, 'awake, the per-minute drain bills');
+  assert.equal(hour(true), 0, 'resting, it does not');
+
+  // The gate is on THIS drain only. The JUMPING one is C#:427, outside
+  // the per-minute block and ungated - a mutant that guarded both, or
+  // that guarded the wrong one, has to fail.
+  const jumped = (resting) => {
+    const e = mk(); e.isResting = resting;
+    setWorldMinutes(1000);
+    const t = createPlayerTicker(e, {});
+    t.tick(1 / 60, { running: false, swimming: false, jumped: true });
+    return 6400 - e.fatigue;
+  };
+  assert.ok(jumped(true) > 0, 'a jump still costs fatigue while the window is up');
+
+  // ...and the Swimming tally at C#:414 runs BEFORE the gate.
+  const sw = mk(); sw.isResting = true; sw.raceId = 99; sw.skillUses = { };
+  setWorldMinutes(1000);
+  createPlayerTicker(sw, {}).tick(60 / 12, { running: false, swimming: true });
+  assert.match(src('src/systems/worldTick.js'),
+    /tallySkill\(entity, SKILLS\.Swimming\);[\s\S]{0,900}?if \(!entity\.isResting\) sinks\.drainFatigue/);
+
+  // The window is what raises the flag, so the gate is live end to end.
+  const e = mk();
+  const w = new RestWindow(createRestDeps(e, { advanceMinutes() {}, endLines: (id) => [`t${id}`] }));
+  assert.equal(e.isResting, true);
+  w.dispose();
+  assert.equal(e.isResting, false);
 });

@@ -285,7 +285,17 @@ export function tickPlayerMinutes({
         && !dice100(skillValue(entity, SKILLS.Swimming), rolls())) loss = FATIGUE_LOSS.Swimming;
       tallySkill(entity, SKILLS.Swimming);          // the 20000 clamp is load-bearing
     }
-    sinks.drainFatigue?.(Math.trunc(loss * fatigueMultiplier));
+    // S40 - PlayerEntity.cs:417-418, `if (!isResting) DecreaseFatigue`.
+    // The gate is on THIS drain only: the jumping one above is C#'s
+    // :427, outside the per-minute block and ungated, and the
+    // Swimming tally at :414 runs BEFORE the gate, so both stay where
+    // they are. Missing it cost 66 fatigue an hour through a rest -
+    // and a LOITER, which by DFU's own law calls no tickVitals, has
+    // nothing restoring it, so a long enough loiter drained the
+    // player to exhaustion. The dungeon host was accidentally exempt
+    // (its rest advance never routes through this tick); the three
+    // hosts S40 gave rest to were not.
+    if (!entity.isResting) sinks.drainFatigue?.(Math.trunc(loss * fatigueMultiplier));
   }
 
   // EntityEffectManager.UpdateEntityMods' tail (:1855-1866), on its own

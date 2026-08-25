@@ -78,10 +78,17 @@ export class RestWindow {
     this._pendingEnemySpawn = false;   // a latch raised before a mode is picked
     // OnPush (:266-268): "Raise player resting flag when UI opens.
     // This is used for random enemy spawning and influences
-    // CastWhenHeld durability loss" - DFU's own comment. The port HAS
-    // that consumer (enchantments.js' HELD_DEGRADE_RATE_RESTING, 60
-    // against 4) and nothing fed it, because rest lived in the one
-    // host whose enchant ctx was FLAGGED unmounted. The flag is raised
+    // CastWhenHeld durability loss" - DFU's own comment, and it names
+    // TWO of the flag's THREE readers. All three:
+    //   CastWhenHeld.cs:135      degrade 60/round rather than 4
+    //   PlayerEntity.cs:605      the dungeon rest-encounter roll
+    //   PlayerEntity.cs:417-418  `if (!isResting) DecreaseFatigue` -
+    //                            no per-minute fatigue drain while
+    //                            resting, which the port was charging
+    // The first two were ported and unfed; the third was not ported at
+    // all, and the sentence that used to stand here saying "its ONE
+    // consumer is CastWhenHeld's degrade rate" is what licensed
+    // leaving it out. The flag is raised
     // on OPEN, not on the first rested hour: standing in the window
     // deciding already costs a held enchantment.
     this.deps.setResting?.(true);
