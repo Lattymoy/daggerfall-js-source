@@ -41,7 +41,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { RACE_TEMPLATES } from '../systems/races.js';
-import { CLASS_DESCRIPTION_TEXT_ID } from './chargenArt.js';   // ONE DFU MEMBER, ONE EXPORT
+import { CLASS_DESCRIPTION_TEXT_ID, SUMMARY_BONUS_TEXT_ID, PLAYER_REFLEXES } from './chargenArt.js';   // ONE DFU MEMBER, ONE EXPORT
 import { generateBackstory } from '../systems/biography.js';
 import { FACES_PER_RACE } from '../systems/races.js';
 import { bitmapCanvas } from './bitmapCanvas.js';
@@ -631,6 +631,177 @@ function stepper(value, step) {
   return ctl;
 }
 
+// ── REFLEXES ─────────────────────────────────────────────────────
+// Five bands, and not cosmetic: the EnemyAttack melee timer and the
+// monster multi-attack gate both read this, and both read a hardcoded
+// Average for slices because nothing could set it until U13 built the
+// screen. Faster reflexes mean faster enemies, which is why the band
+// says what it costs rather than only what it is.
+const REFLEX_ROWS = Object.freeze([
+  ['VeryHigh', 'Very High', 'Enemies strike fastest.'],
+  ['High', 'High', 'Enemies strike faster.'],
+  ['Average', 'Average', 'The pace the game is balanced for.'],
+  ['Low', 'Low', 'Enemies strike slower.'],
+  ['VeryLow', 'Very Low', 'Enemies strike slowest.'],
+]);
+
+function reflexStage() {
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'choose');
+  wrap.append(el('h2', null, 'How quick are you?'));
+  const col = el('div', 'bigchoice tall');
+  for (const [key, label, note] of REFLEX_ROWS) {
+    const v = PLAYER_REFLEXES[key];
+    const b = el('button', `bigbtn${flow.reflexes === v ? ' on' : ''}`);
+    b.append(el('span', 'bigk', label));
+    b.append(el('span', 'bign', note));
+    b.onclick = () => { flow.applyHit({ setReflexes: v }); paint(); };
+    col.append(b);
+  }
+  wrap.append(col);
+  const a = el('div', 'acts');
+  const ok = el('button', 'act primary', 'Continue');
+  ok.onclick = () => { flow.input('confirm'); paint(); };
+  a.append(ok);
+  wrap.append(a);
+  pane.append(wrap);
+  return pane;
+}
+
+// ── REVIEW ───────────────────────────────────────────────────────
+// CreateCharSummary, and the stage that CLOSES the wizard - nothing
+// else sets state to 'done'. It is barely a layout of its own in DFU
+// either: it composites the stats rollout, the skills rollout, the
+// face picker, the reflex picker and a name box, all of which exist.
+//
+// THE OK GATE IS FOUR POOLS, not one, because the summary lets you
+// take points back DOWN off any of them, and unspent points pop
+// TEXT.RSC 14 rather than closing the window.
+//
+// AND THE NAME AND REFLEXES ARE THE SUMMARY'S OWN. Backing out reverts
+// both - SummaryWindow_OnClose's cancel copies back the skills, the
+// stats, the pools and the face and nothing else - so this edits
+// sumName and sumReflexes and lets confirmSummary write them through.
+// RESTART is soft: the document survives.
+function summaryStage() {
+  const pane = el('div', 'stagebody');
+
+  if (flow.poolBox) {
+    const solo = el('div', 'stagebody solo');
+    const wrap = el('div', 'choose');
+    wrap.append(el('h2', null, 'Points left to spend'));
+    const card = el('div', 'card repbox');
+    for (const row of flow.poolBox) {
+      const text = typeof row === 'string' ? row : row.text;
+      if (text?.trim()) card.append(el('p', null, text));
+    }
+    const a = el('div', 'acts');
+    const ok = el('button', 'act primary', 'Back to it');
+    ok.onclick = () => { flow.input('confirm'); paint(); };
+    a.append(ok);
+    card.append(a);
+    wrap.append(card);
+    solo.append(wrap);
+    return solo;
+  }
+
+  const list = el('div', 'list');
+  const face = faces?.canvases?.[flow.faceIndex] ?? null;
+  const who = el('div', 'reviewhead');
+  const portrait = el('div', 'reviewface');
+  if (face) portrait.append(face);
+  who.append(portrait);
+
+  const box = el('input', 'namebox small');
+  box.type = 'text';
+  box.value = flow.sumName ?? '';
+  box.oninput = () => {
+    const next = box.value;
+    while (flow.sumName.length) flow.input('backspace');
+    for (const ch of next) flow.input(`char:${ch}`);
+    box.value = flow.sumName;
+  };
+  const idcol = el('div', 'reviewid');
+  idcol.append(box);
+  idcol.append(el('div', 'reviewsub',
+    `${PROVINCE_NAMES[flow.race.key] ?? ''} \u00b7 ${flow.race.name} \u00b7 ${flow.classRowName(flow.classIndex)}`));
+  who.append(idcol);
+  list.append(who);
+
+  list.append(sectionHead('Attributes', flow.statPool));
+  STAT_KEYS_ORDER.forEach((key, i) => {
+    list.append(reviewRow(key[0].toUpperCase() + key.slice(1), flow.stats?.[key] ?? 0, (dir) => {
+      flow.applyHit({ setStatCursor: i });
+      flow.applyHit({ statStep: dir });
+      paint();
+    }));
+  });
+
+  let cursor = 0;
+  for (const [group, ids] of flow.skillRows()) {
+    list.append(sectionHead(group[0].toUpperCase() + group.slice(1), flow.pools?.[group] ?? 0));
+    for (const id of ids) {
+      const at = cursor++;
+      list.append(reviewRow(SKILL_NAMES[id] ?? `Skill ${id}`, flow.skills?.[id] ?? 0, (dir) => {
+        flow.applyHit({ setSkillCursor: at });
+        flow.applyHit({ skillStep: dir, group });
+        paint();
+      }));
+    }
+  }
+  pane.append(list);
+
+  const detail = el('div', 'detail');
+  const d = el('div', 'dcard');
+  d.append(el('h3', null, 'Reflexes'));
+  const rf = el('div', 'reflexpick');
+  for (const [key, label] of REFLEX_ROWS) {
+    const v = PLAYER_REFLEXES[key];
+    const b = el('button', `reflexbtn${flow.sumReflexes === v ? ' on' : ''}`, label);
+    b.onclick = () => { flow.applyHit({ setReflexes: v }); paint(); };
+    rf.append(b);
+  }
+  d.append(rf);
+
+  d.append(el('h3', null, 'Face'));
+  const fa = el('div', 'acts');
+  for (const [dir, label] of [[-1, 'Previous'], [1, 'Next']]) {
+    const b = el('button', 'act', label);
+    b.onclick = () => { flow.applyHit({ faceStep: dir }); paint(); };
+    fa.append(b);
+  }
+  d.append(fa);
+
+  const left = (flow.statPool ?? 0) + Object.values(flow.pools ?? {}).reduce((n, v) => n + v, 0);
+  const a = el('div', 'acts');
+  const ok = el('button', 'act primary', left > 0 ? `${left} left to spend` : 'Begin your life');
+  ok.onclick = () => { flow.confirmSummary(); if (flow.done) onExit('done'); else paint(); };
+  const restart = el('button', 'act', 'Start over');
+  restart.onclick = () => { flow.applyHit({ restart: true }); paint(); };
+  a.append(ok, restart);
+  d.append(a);
+  detail.append(d);
+  pane.append(detail);
+  ensureFaces();
+  return pane;
+}
+
+function sectionHead(label, pool) {
+  const h = el('div', 'skillhead review');
+  h.append(el('span', 'skillk', label));
+  h.append(el('span', 'skillpool', pool > 0 ? `${pool} to spend` : ''));
+  return h;
+}
+
+function reviewRow(label, value, step) {
+  const row = el('div', 'row');
+  const main = el('div', 'row-main');
+  main.append(el('div', 'row-name', label));
+  row.append(main);
+  row.append(stepper(value, step));
+  return row;
+}
+
 // ── THE STAGES NOT YET REDESIGNED ────────────────────────────────
 // Named, with the classic screen that still owns them. An empty pane
 // would read as a bug and a half-built one would read as the design.
@@ -690,6 +861,7 @@ function paint() {
     classMethod: classMethodStage, class: classStage,
     bioMethod: bioMethodStage, biography: biographyStage, name: nameStage,
     face: faceStage, stats: statsStage, skills: skillsStage,
+    reflexes: reflexStage, summary: summaryStage,
   };
   pane.append(flow.biogRepBox?.length
     ? repBoxPane()
@@ -743,6 +915,7 @@ export function attachChargenText(f, textRsc) {
   // permanent: the backstory is written once.
   f.buildBackstory = (backstoryId, effects) =>
     generateBackstory(textRsc, backstoryId, effects).map((r) => r.text);
+  f.bonusPointsRows = () => textRsc.linesById(SUMMARY_BONUS_TEXT_ID);
   f.repBoxRows = (changed) => (changed
     ? textRsc.linesById(35).map((r) => ({
       ...r, text: r.text.replace(/%r([1-5])/g, (_, n) => String(changed[Number(n) - 1] ?? 0)),

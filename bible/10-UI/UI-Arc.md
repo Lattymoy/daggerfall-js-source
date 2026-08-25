@@ -10,11 +10,28 @@ policies one by one.
 
 ## U50 THE ENHANCED WIZARD (2026-08-25, Mac's call, ONE STAGE AT A TIME)
 
-Character creation in the enhanced skin. NINE of DFU's ten journey
-stages have their own screen; REFLEXES and REVIEW are still the classic
-ones, and THE WIZARD IS NOT INTEGRATED - New Game still boots the
-classic flow. It lives at `/chargen.html` beside `/menu.html` and is
-argued with there first.
+Character creation in the enhanced skin. ALL TEN journey stages have
+their own screen and the wizard REACHES `done` - but it is NOT
+INTEGRATED: New Game still boots the classic flow. It lives at
+`/chargen.html` beside `/menu.html` and is argued with there first.
+
+REVIEW is what closes it, and nothing else sets `done`. Its OK gate is
+FOUR pools rather than one, because the summary lets you take points
+back down off any of them, and unspent points pop TEXT.RSC 14 instead
+of closing the window - proven live by un-spending a point on the
+review and watching OK refuse. The name and reflexes there are the
+SUMMARY's own (backing out reverts both; only the OK arm writes them
+through), and Restart is soft.
+
+WHAT INTEGRATION STILL NEEDS, so the next reader does not assume it is
+a wiring afternoon: the three hosts mount chargen through
+`createChargenWindow`, which returns a CANVAS overlay for
+`townTalk.showOverlay`, and this wizard is DOM over the canvas - so
+that one seam has to mount either, with `dungeonContext`'s own
+construction named too (the FOUR HOSTS rule). And the wizard is
+POINTER-ONLY where the classic flow answers twenty-two back arms and a
+full keyboard; that is a regression against the classic path while
+enhanced is the default, and it is its own pass.
 
 THE FLOW IS NOT REBUILT. `ui/chargen.js`'s ChargenFlow carries every
 law - the stage order in the enum's own sequence, the pools, the

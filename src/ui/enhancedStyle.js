@@ -449,6 +449,31 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .skillpane .row { border-bottom: 1px solid #20262e; }
 .skillpane .acts { justify-content: flex-end; }
 
+/* ── REVIEW ─────────────────────────────────────────────────────
+   The stage that closes the wizard. Everything on it is a control you
+   have already met, which is the point: a review you cannot edit is a
+   receipt. */
+.reviewhead {
+  display: flex; gap: 16px; align-items: center; padding: 18px;
+  border-bottom: 1px solid var(--iron); background: #12161b;
+  position: sticky; top: 0; z-index: 2;
+}
+.reviewface { border: 1px solid var(--iron); padding: 4px; line-height: 0; }
+.reviewface canvas { display: block; image-rendering: pixelated; }
+.reviewid { flex: 1; min-width: 0; }
+.namebox.small {
+  width: 100%; font-size: 20px; text-align: left; padding: 8px 10px; min-height: 44px;
+}
+.reviewsub { color: var(--dim); font-size: 12px; letter-spacing: 0.06em; margin-top: 6px; }
+.skillhead.review { padding: 14px 18px 8px; margin-bottom: 0; }
+.reflexpick { display: flex; flex-direction: column; gap: 4px; margin: 0 0 22px; }
+.reflexbtn {
+  padding: 11px 14px; min-height: 44px; border: 1px solid var(--iron);
+  background: #12161b; color: var(--dim); font-size: 14px;
+}
+.reflexbtn:hover { color: var(--bone); border-color: var(--dim); }
+.reflexbtn.on { color: var(--brass); border-color: var(--brass); }
+
 /* ── THE PROVINCE MAP ───────────────────────────────────────
    Traced from the player's own TAMRIEL2.IMG (ui/provinceMap.js), so
    these are Bethesda's coastlines and ours is only the ink. Unselected
