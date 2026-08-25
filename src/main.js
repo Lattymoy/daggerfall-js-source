@@ -34,6 +34,14 @@ async function boot() {
   // (Port-Doctrine) - dev serves it via middleware, production asks
   // for the folder once and persists it in IndexedDB.
   await ensureArena2();
+  // M-EXT: ?music opens the replacement-music pick, after the data gate
+  // so it cannot be confused with the ARENA2 one. A feature nobody can
+  // reach is the exact gap this project keeps finding, so the door is
+  // here from the first commit rather than "when the settings row lands".
+  if (params.has('music')) {
+    const { pickMusicFolder } = await import('./scenes/dataSource.js');
+    await pickMusicFolder();
+  }
   // The classic pointer for every surface (fire-and-forget; never traps).
   installCursor(getBytes);
   // Window emission style for every scene. DFU's GetMaterial default is Day.

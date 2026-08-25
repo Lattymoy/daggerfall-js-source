@@ -17,13 +17,15 @@
 
 import { audio } from './audio.js';
 import { MidiBsaFile } from '../formats/hmiFile.js';
-import { SongPlayer } from './songPlayer.js';
 import { selectSong } from './songManager.js';
+import { SongPlayer, AudioSongPlayer } from './songPlayer.js';   // M-EXT: the replacement's player shares the volume law
+import { hasReplacement, replacementBytes } from './musicReplacement.js';   // M-EXT: SoundReplacement.TryImportSong
 
 export class MusicService {
   constructor() {
     this.archive = null;
     this.player = null;
+    this._audio = null;   // M-EXT: the replacement player, built lazily like `player`
     this.enabled = false;
     // null, NOT false: `ensure` memoises with `??=`, which assigns only
     // over null/undefined. A `false` here is neither, so _boot was never
@@ -119,7 +121,26 @@ export class MusicService {
       this._pending = name;
       return false;
     }
-    if (this._current === name && player.playing) return true;
+    if (this._current === name && this.playing) return true;
+    // M-EXT: a user-supplied track OVERRIDES the built-in song
+    // (SoundReplacement.TryImportSong, and DFU asks before it reaches
+    // its own data too). The lookup is synchronous - a Map hit behind
+    // the AssetInjection gate - but loading and decoding are not, so
+    // the commit happens here and the sound arrives a beat later.
+    if (hasReplacement(name)) {
+      this._current = name;
+      this._startReplacement(name);
+      return true;
+    }
+    return this._playBuiltIn(name);
+  }
+
+  /** The MIDI.BSA path - what playSong did before replacements existed,
+   *  and still the fallback for every song a pick does not cover. */
+  _playBuiltIn(name) {
+    const player = this._ensurePlayer();
+    if (!player) return false;
+    this._audio?.stop();   // a replacement must not sound underneath
     const index = this.archive.getSongIndex(name);
     if (index === null || index === undefined || index < 0) {
       console.warn(`[music] no song named ${name} in MIDI.BSA`);
@@ -138,6 +159,47 @@ export class MusicService {
     return player.play(song);
   }
 
+  _ensureAudioPlayer() {
+    if (this._audio) return this._audio;
+    if (!audio.ctx) return null;
+    this._audio = new AudioSongPlayer(audio.ctx);
+    return this._audio;
+  }
+
+  /**
+   * Load, decode and start a replacement. Fire-and-forget by design:
+   * playSong has already committed and returned true.
+   *
+   * THE PLAYING FLAG IS RAISED BEFORE THE AWAIT. createMusicDirector
+   * re-evaluates every frame on `songEnded: !isPlaying()`, so a decode
+   * gap with the flag down reads as "the song finished" and re-requests
+   * the same song on every frame until it lands - a request storm that
+   * also restarts the decode each time.
+   *
+   * NEVER TRAPS: anything that goes wrong falls back to the built-in
+   * song, which is DFU's own behaviour when TryImportSong answers false.
+   */
+  async _startReplacement(name) {
+    const player = this._ensureAudioPlayer();
+    if (!player) return;
+    this.player?.stop();          // the MIDI player must not sound underneath
+    player.playing = true;        // commit BEFORE the await - see above
+    let buffer = null;
+    try {
+      const bytes = await replacementBytes(name);
+      // A mode change can overtake a decode. Whatever this was for is
+      // no longer what the game wants, so drop it rather than talking
+      // over the song that replaced it.
+      if (this._current !== name) return;
+      if (bytes) buffer = await audio.ctx.decodeAudioData(bytes.buffer ? bytes.buffer.slice(0) : bytes);
+    } catch (e) {
+      console.warn(`[music] replacement for ${name} would not decode:`, e?.message ?? e);
+    }
+    if (this._current !== name) return;
+    if (!buffer) { player.playing = false; this._playBuiltIn(name); return; }
+    player.play(buffer);
+  }
+
   /** Pick from one of songManager's verbatim playlists and play it. */
   playFrom(playlist, opts = {}) {
     const picked = selectSong(playlist, opts);
@@ -148,7 +210,7 @@ export class MusicService {
   /** Is a song sounding right now? The director asks each frame - it is
    *  the port's stand-in for DFU's `songPlayer.IsPlaying`, which drives
    *  both the re-evaluation and the replay in UpdateSong. */
-  get playing() { return Boolean(this.player?.playing); }
+  get playing() { return Boolean(this.player?.playing || this._audio?.playing); }
 
   stop() {
     // AUDIT 19 F12: clear the PENDING request too. `_pending` is what the
@@ -158,6 +220,7 @@ export class MusicService {
     this._current = null;
     this._pending = null;
     this.player?.stop();
+    this._audio?.stop();   // M-EXT: both players, or a replacement outlives the stop
   }
 
   get current() { return this._current; }
