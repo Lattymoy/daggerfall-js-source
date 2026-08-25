@@ -243,15 +243,15 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:641` - index into the 18 careers) or the INTERIM default Warrior (16,
 - `src/scenes/dungeonContext.js:647` - effects FLAGGED to the effect-library slice.
 - `src/scenes/dungeonContext.js:657` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:1104` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/dungeonContext.js:2600` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
+- `src/scenes/dungeonContext.js:1110` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/dungeonContext.js:2606` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
 - `src/scenes/exterior.js:502` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:508` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:716` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:924` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:1183` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:1335` - FLAGGED here exactly as in world.js - no tile lookup yet).
-- `src/scenes/exterior.js:1670` - ground (FLAGGED with world.js's same gap), so Detect Treasure
+- `src/scenes/exterior.js:721` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/exterior.js:929` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/exterior.js:1188` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:1340` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:1675` - ground (FLAGGED with world.js's same gap), so Detect Treasure
 - `src/scenes/shared.js:218` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:235` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:340` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
@@ -261,16 +261,16 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:737` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/world.js:1104` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
 - `src/scenes/world.js:1108` - while inSunlight/inHolyPlace stay the E1 FLAGGED seams no host
-- `src/scenes/world.js:1444` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
-- `src/scenes/world.js:1750` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:2020` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:2190` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
-- `src/scenes/world.js:2267` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:2500` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:2518` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:2890` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:3197` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/world.js:3270` - (FLAGGED: exterior corpse containers are the loot arc's), so
+- `src/scenes/world.js:1450` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
+- `src/scenes/world.js:1756` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:2026` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:2196` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
+- `src/scenes/world.js:2273` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:2506` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:2524` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:2896` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:3203` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:3276` - (FLAGGED: exterior corpse containers are the loot arc's), so
 - `src/scenes/worldModes.js:344` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:492` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
 - `src/scenes/worldModes.js:569` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
@@ -292,7 +292,7 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:2504` - too. FLAGGED: interior loot containers are the loot arc's -
 - `src/scenes/worldModes.js:2618` - string is the seam that was a FLAGGED null until this slice,
 - `src/scenes/worldModes.js:2693` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:3267` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
+- `src/scenes/worldModes.js:3273` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
@@ -344,8 +344,8 @@ combat line numbers below are refreshed with it.
 - `src/systems/npcSession.js:628` - FLAGGED: no host calls this. C# populates the pool INSIDE
 - `src/systems/potions.js:241` - FLAGGED, with the slice it waits on:
 - `src/systems/races.js:6` - port had only ever instantiated for Breton (the loud INTERIM the
-- `src/systems/restSession.js:107` - *     CheckStartRest, which are FLAGGED: the vampire's "not sated"
-- `src/systems/restSession.js:150` - player who has bought nothing. FLAGGED with the bank slice.
+- `src/systems/restSession.js:121` - *     CheckStartRest, which are FLAGGED: the vampire's "not sated"
+- `src/systems/restSession.js:164` - player who has bought nothing. FLAGGED with the bank slice.
 - `src/systems/save.js:106` - (playerEntity's INTERIM skills: 30) - spreading it threw.
 - `src/systems/sceneCache.js:154` - FLAGGED, with the slice it waits on:
 - `src/systems/settings.js:39` - INTERIM doctrine - named, not silently ignored)
@@ -392,8 +392,8 @@ combat line numbers below are refreshed with it.
 - `src/ui/potionMakerWindow.js:24` - FLAGGED: DFU's ingredient buttons carry a tooltip and a stack-count
 - `src/ui/restWindow.js:2` - text-panel idiom (backgrounds FLAGGED pending art-name
 - `src/ui/restWindow.js:11` - FLAGGED: DFU's Update also closes on the TOGGLE BINDING - the key
-- `src/ui/restWindow.js:125` - FLAGGED, all three from OnPop/Update and all three belonging to
-- `src/ui/restWindow.js:367` - where classic counts DOWN. The backgrounds are still FLAGGED
+- `src/ui/restWindow.js:126` - FLAGGED, all three from OnPop/Update and all three belonging to
+- `src/ui/restWindow.js:379` - where classic counts DOWN. The backgrounds are still FLAGGED
 - `src/ui/spellbookWindow.js:91` - says so rather than doing nothing - FLAGGED below.
 - `src/ui/spellbookWindow.js:107` - FLAGGED, idling loudly: the icon picker; the effect popup's body
 - `src/ui/spellbookWindow.js:870` - *  drawn as a flat bar in the panel's own brass - FLAGGED. */

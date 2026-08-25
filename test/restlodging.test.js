@@ -10,6 +10,7 @@ import {
   ILLEGAL_REST_WARNING, illegalRestWarning,
   restOpenGate, REST_TEXT, RestSession, EXPIRED_RENTED_ROOM, interiorRestPlace,
   cannotLoiterLines, loiterLimitHours,
+  CANNOT_REST_MORE_THAN_99_HOURS_ID, PROMPT_MAX_CHARS, PROMPT_INITIAL,
 } from '../src/systems/restSession.js';
 import { RestWindow } from '../src/ui/restWindow.js';
 import { restVitals, restFullyHealed, createRestDeps } from '../src/scenes/shared.js';
@@ -343,11 +344,12 @@ test('S40 RestWindow: LOITER is never gated and never moves the player', () => {
   // OVER the cap first: loiterLimitHours ships 3, and the old fixture
   // typed 2 - under the boundary, so the refusal branch was inert and
   // a mutant raising the cap to 999 passed the whole suite.
-  w.input('char:9'); w.input('confirm');
+  assert.equal(w.value, PROMPT_INITIAL, 'the field is PREFILLED with "0" (:700)');
+  w.input('backspace'); w.input('char:9'); w.input('confirm');
   assert.equal(w.state, 'hours', 'a 9-hour loiter is refused, not started');
   assert.deepEqual(w.notice, cannotLoiterLines());
-  assert.equal(w.value, '', 'and the field is cleared for another try');
-  w.input('char:2'); w.input('confirm');
+  assert.equal(w.value, PROMPT_INITIAL, 'and the field resets to "0" for another try');
+  w.input('backspace'); w.input('char:2'); w.input('confirm');
   assert.equal(w.state, 'resting');
   assert.deepEqual(crimes, []);
   assert.deepEqual(beds, []);       // LoiterPrompt has no MoveToBed
@@ -1441,38 +1443,55 @@ test('S40 IsResting: the THIRD consumer - no per-minute fatigue drain while rest
 });
 
 
-test('S40 RestWindow: the hours page - an empty entry is a NO-OP, and the field caps at 2 digits', () => {
-  // Two laws with no test in the repo at all. TimedRestPrompt_
-  // OnGotUserInput opens `bool result = int.TryParse(input, out time);
-  // if (!result) return;` - an unparseable entry does NOTHING, and
-  // `Number('')` is 0, so without the guard a bare Enter starts a
-  // 0-hour rest. And the 2-digit field is what enforces the 99-hour
-  // cap by construction, DFU's cannotRestMoreThan99Hours arm having
-  // no port equivalent: a third digit would let a 100-hour rest through.
+test('S40 RestWindow: the hours page - PREFILLED with 0, and the 99-hour arm is DFU\'s', () => {
+  // Two laws that had no test in the repo, and both were WRONG once
+  // the C# was read properly. DFU sets `mb.TextBox.Text = "0"` (:619,
+  // :700) with `MaxCharacters = 8` (:621, :702) - so Enter on an
+  // untouched prompt parses "0" and starts a 0-hour rest, and the
+  // unparseable no-op is reachable only after the field is EMPTIED.
+  // The port started the field empty with a 2-digit cap and called
+  // that "the 99-hour cap by construction", which made DFU's actual
+  // 99-hour arm (TEXT.RSC 26, :753-757) unreachable.
   _resetForTests();
-  const w = new RestWindow(winDeps());
-  w.input('char:1');
-  assert.equal(w.state, 'hours');
-  w.input('confirm');
-  assert.equal(w.state, 'hours', 'a bare Enter does nothing at all');
-  assert.equal(w.session, null, 'and starts no session');
-
-  // Two digits go in; a third does not.
-  w.input('char:9'); w.input('char:9'); w.input('char:9');
-  assert.equal(w.value, '99', 'the field caps at two digits - the 99-hour cap');
-  w.input('backspace');
-  assert.equal(w.value, '9');
-  w.input('confirm');
-  assert.equal(w.session.hoursRemaining, 9);
-
-  // A 0-hour rest IS accepted when typed, and ends at once with no
-  // world time passing (AUDIT 23 corrected the old reading).
   let minutes = 0;
-  const z = new RestWindow(winDeps({ advanceMinutes: (n) => { minutes += n; } }));
-  z.input('char:1'); z.input('char:0'); z.input('confirm');
-  const r = z.session.tick(1);
-  assert.equal(r.textId, REST_TEXT.wakeUp);
+  const w = new RestWindow(winDeps({ advanceMinutes: (n) => { minutes += n; } }));
+  w.input('char:1');
+  assert.equal(w.value, PROMPT_INITIAL, 'the field is prefilled with "0"');
+
+  // Enter on the untouched prompt: a 0-hour rest that passes no time.
+  w.input('confirm');
+  assert.equal(w.state, 'resting');
+  assert.equal(w.session.hoursRemaining, 0);
+  assert.equal(w.session.tick(1).textId, REST_TEXT.wakeUp);
   assert.equal(minutes, 0, 'no world time at all');
+
+  // Emptied and confirmed: THAT is the unparseable no-op.
+  const e = new RestWindow(winDeps());
+  e.input('char:1'); e.input('backspace');
+  assert.equal(e.value, '');
+  e.input('confirm');
+  assert.equal(e.state, 'hours', 'an emptied field does nothing');
+  assert.equal(e.session, null);
+
+  // The field takes EIGHT characters, not two...
+  const wide = new RestWindow(winDeps());
+  wide.input('char:1'); wide.input('backspace');
+  for (let i = 0; i < 12; i++) wide.input('char:7');
+  assert.equal(wide.value, '77777777');
+  assert.equal(wide.value.length, PROMPT_MAX_CHARS);
+
+  // ...and the 99-hour refusal is what stops a longer rest, with the
+  // prompt STAYING UP and the field reset, exactly as :753-757.
+  wide.input('confirm');
+  assert.equal(wide.state, 'hours', 'refused, not started');
+  assert.deepEqual(wide.notice, [`text:${CANNOT_REST_MORE_THAN_99_HOURS_ID}`]);
+  assert.equal(wide.value, PROMPT_INITIAL);
+  assert.equal(wide.session, null);
+  // 99 exactly is allowed - the arm is `time > 99`.
+  wide.input('backspace'); wide.input('char:9'); wide.input('char:9');
+  wide.input('confirm');
+  assert.equal(wide.state, 'resting');
+  assert.equal(wide.session.hoursRemaining, 99);
 });
 
 test('S40: a refused OPEN GATE actually shows its record, in every host', () => {
@@ -1547,4 +1566,46 @@ test('S40: EVERY EndRest arm raises skills - the death exit included', () => {
   // The identity guard is what stops the death screen being nulled by
   // a rest window closing underneath it.
   assert.match(src('src/ui/restWindow.js'), /this\.deps\.onClose\?\.\(\);/);
+});
+
+
+test('S40: the quest machine ticks THROUGH a rest, which is what the sub-tick is FOR', () => {
+  // TickRest :376-379 is two calls in one sub-tick: `RaiseTime
+  // (minutesPerTick * 60)` then `QuestMachine.Instance.Tick()`. DFU's
+  // own comment two lines above says why the ten-minute granularity
+  // exists at all: "This allows quest machine to have more time
+  // resolution while still counting off rest in hourly increments."
+  //
+  // The port ported the clock half and not the quest half - and every
+  // host gates its ordinary questBridge.tick on "no overlay up", so a
+  // rested night ran ZERO quest ticks. Exactly the shape AUDIT 24
+  // wave 30 found for the magic-round half and fixed only there.
+  const beats = [];
+  const s2 = new RestSession('timed', 2, {
+    advanceMinutes: (n) => beats.push(['clock', n]),
+    tickQuests: () => beats.push(['quest']),
+    tickVitals: () => false, fullyHealed: () => false,
+    enemiesNearby: () => false, dead: () => false,
+  });
+  for (let i = 0; i < 6; i++) s2.tick(REST_WAIT_PER_HOUR / 10 + 1e-9);
+  // One hour = six sub-ticks, each a clock beat THEN a quest beat.
+  assert.equal(beats.filter((b) => b[0] === 'quest').length, 6);
+  assert.deepEqual(beats.slice(0, 4), [['clock', 10], ['quest'], ['clock', 10], ['quest']],
+    'RaiseTime first, then the machine - DFU\'s order');
+
+  // It is UNPACED: DFU calls the machine directly, bypassing
+  // QuestMachine.Update's ticksPerSecond timer, so the hosts must
+  // reach `machine.tick` and not questBridge.tick.
+  for (const f of ['src/scenes/world.js', 'src/scenes/worldModes.js']) {
+    assert.match(src(f), /tickQuests: \(\) => questBridge\?\.machine\?\.tick\?\.\(\),/, f);
+  }
+  assert.match(src('src/scenes/dungeonContext.js'),
+    /tickQuests: \(\) => opts\.questBridge\?\.machine\?\.tick\?\.\(\),/);
+  // exterior.js mounts no bridge at all, and says so rather than
+  // omitting the key - the construction sweep should see a decision.
+  assert.match(src('src/scenes/exterior.js'), /tickQuests: null,/);
+  // ...and the ordinary tick really is gated on the overlay, which is
+  // what made this reachable.
+  assert.match(src('src/scenes/world.js'), /if \(!townTalk\.overlayActive && !_loading\) questBridge\.tick\(dt\);/);
+  assert.match(src('src/scenes/worldModes.js'), /if \(!overlayHeld\) questBridge\?\.tick\(dt\);/);
 });

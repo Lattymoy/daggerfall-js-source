@@ -50,6 +50,18 @@ export const REST_TEXT = Object.freeze({
   loiterDone: 349, healed: 350, wakeUp: 353, enemiesNearby: 354, cannotRestNow: 355,
 });
 export const REST_PROMPT = 'Rest how many hours : ';
+/** TimedRestPrompt's range arm (:753-757): past 99 hours DFU refuses
+ *  with TEXT.RSC 26 and the prompt STAYS UP. The port used to make
+ *  this unreachable by capping the field at two digits, which is a
+ *  cap DFU does not have - its MaxCharacters is 8 (:621, :702). */
+export const CANNOT_REST_MORE_THAN_99_HOURS_ID = 26;
+export const MAX_REST_HOURS = 99;
+/** DaggerfallInputMessageBox.TextBox.MaxCharacters on both prompts
+ *  (:621, :702). The field is PREFILLED with "0" (:619, :700), so
+ *  Enter on an untouched prompt parses and starts a 0-hour rest -
+ *  int.TryParse only fails once the player has emptied it. */
+export const PROMPT_MAX_CHARS = 8;
+export const PROMPT_INITIAL = '0';
 export const LOITER_PROMPT = 'Loiter how many hours : ';
 export const cannotLoiterLines = () => Object.freeze([
   'You cannot loiter more', `than ${loiterLimitHours()} hours at a time.`,
@@ -59,6 +71,8 @@ export const cannotLoiterLines = () => Object.freeze([
  * One running rest. mode = 'timed' | 'full' | 'loiter'; hours only
  * for timed/loiter. deps (the scene's):
  *   advanceMinutes(n)  - move the classic clock (magic rounds catch up)
+ *   tickQuests()       - QuestMachine.Instance.Tick(), unpaced, once
+ *                        per sub-tick (TickRest :379)
  *   tickVitals()       - apply the three per-hour rates + the Medical
  *                        tally; returns TRUE when fully healed
  *   enemiesNearby()    - the RESTING variant
@@ -346,6 +360,21 @@ export class RestSession {
     while (this._timer >= this._subTickEvery) {
       this._timer -= this._subTickEvery;
       this.deps.advanceMinutes(MINUTES_PER_TICK);
+      // TickRest :376-379, `RaiseTime` then `QuestMachine.Instance.
+      // Tick()`, in that order and inside the SAME sub-tick. DFU's own
+      // comment two lines above says the ten-minute granularity exists
+      // for exactly this: "This allows quest machine to have more time
+      // resolution while still counting off rest in hourly
+      // increments." The port ported the clock half and not the quest
+      // half, and every host gates its ordinary questBridge.tick on
+      // "no overlay up" - so a rested night ran ZERO quest ticks. Same
+      // shape as AUDIT 24 wave 30, which found the magic-round half of
+      // this frozen and fixed only that half.
+      //
+      // It is the SESSION's law and not a host's: DFU calls the
+      // machine directly here, bypassing QuestMachine.Update's
+      // real-time pacing, so the port must call the unpaced door too.
+      this.deps.tickQuests?.();
       this._minutesOfHour += MINUTES_PER_TICK;
       if (this._minutesOfHour < 60) continue;
       this._minutesOfHour = 0;

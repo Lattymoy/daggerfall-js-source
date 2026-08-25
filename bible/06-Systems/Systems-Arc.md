@@ -2546,12 +2546,18 @@ is structural rather than written.
 
 ## S40 - A BED YOU CAN SLEEP IN (2026-08-25)
 
-`src/systems/restSession.js` (CanRest, the illegal-rest confirm) +
-`src/ui/restWindow.js` (the gate on the buttons that own it, MoveToBed)
-+ `src/scenes/shared.js` (`restVitals`/`restFullyHealed`/`createRestDeps`
-- the rested hour, one home) + `src/formats/mapsFile.js`
-(`isTownLocationType`) + all four hosts. `test/restlodging.test.js`
-(new, 21).
+`src/systems/restSession.js` (CanRest, `restOpenGate`,
+`interiorRestPlace`, CheckRent, the illegal-rest confirm) +
+`src/ui/restWindow.js` (the gate on the buttons that own it, MoveToBed,
+the IsResting lifecycle) + `src/scenes/shared.js`
+(`restVitals`/`restFullyHealed`/`createRestDeps` - the rested hour, one
+home) + `src/formats/mapsFile.js` (`isTownLocationType`) +
+`src/systems/encounters.js` (`areEnemiesNearby`) + `src/player/motor.js`
+(`startRestGroundedCheck`) + `src/systems/worldTick.js` (the
+`!isResting` fatigue gate) + `src/scenes/townTalk.js` (`closeOverlay`)
++ `src/systems/settings.js` (IllegalRestWarning goes live) +
+`src/systems/tavern.js` (a flag retired) + all four hosts.
+`test/restlodging.test.js` (new, 51).
 
 **Rest was a dungeon feature.** `toggleRest` existed in exactly one
 host. Outside a dungeon the R key did nothing, so a character above
@@ -2901,12 +2907,37 @@ Second: the dungeon was the one host of four without the PopToHUD
 door the previous round gave the other three. Three of four is how
 this rule keeps being broken, and it is why the rule is written down.
 
-Pins: 50 in `restlodging.test.js`, two of them END TO END - every law
+**And the sub-tick was ported at half its purpose.** `TickRest`
+`:376-379` is two calls inside one sub-tick - `RaiseTime` and then
+`QuestMachine.Instance.Tick()` - and DFU's own comment two lines above
+says the ten-minute granularity exists FOR the second one: "This
+allows quest machine to have more time resolution while still counting
+off rest in hourly increments." The port took the clock half and left
+the quest half, and every host gates its ordinary `questBridge.tick`
+on "no overlay up" - so a rested night ran ZERO quest ticks. That is
+precisely the shape AUDIT 24 wave 30 found for the MAGIC-ROUND half of
+the same freeze and fixed only there. It is the session's law, not a
+host's: DFU calls the machine directly, bypassing
+`QuestMachine.Update`'s real-time pacing, so the port calls the
+unpaced door too.
+
+**And the hours prompt was the port's law, not DFU's.** Both prompts
+prefill the field with `"0"` (`:619`, `:700`) and cap it at EIGHT
+characters (`:621`, `:702`). So Enter on an untouched prompt parses
+and starts a 0-hour rest, and the unparseable no-op is reachable only
+once the player has EMPTIED the field. The port started the field
+empty at two digits and its comment called that "the 99-hour cap by
+construction" - which was wrong twice over: it made DFU's actual
+99-hour arm (TEXT.RSC 26, `:753-757`) unreachable, and it would have
+let a 100-hour rest through the day anyone widened the field. Both are
+DFU's now.
+
+Pins: 51 in `restlodging.test.js`, two of them END TO END - every law
 in this slice driven together through one host-shaped deps bag, from
 the key press to the wake. That is the closest thing to a live probe a
 machine with no ARENA2 data can run, and it is here because a slice
 whose parts each pass and whose whole was never run is exactly what a
-probe catches. 98 mutations, 98 dead. The first
+probe catches. 103 mutations, 103 dead. The first
 pass left four alive and all four were the same failure of nerve: a
 pin that named a thing instead of exercising it. The host pins matched
 `act === 'Rest'`, which survives `if (false && act === 'Rest')`, so

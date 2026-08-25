@@ -628,6 +628,11 @@ export async function bootExterior(canvas, renderer, params, status) {
     && (modes?.mode ?? 'exterior') === 'exterior';
   const outdoorRestDeps = createRestDeps(playerEntity, {
     advanceMinutes: (n) => playerTicker.advance(n),
+    // No tickQuests: this dev host mounts no quest bridge at all
+    // (grep questBridge in this file returns nothing), so TickRest
+    // :379 has nothing to call. Named rather than omitted, because
+    // the construction sweep should see a decision.
+    tickQuests: null,
     // AreEnemiesNearby's RESTING variant. This host mounts no foe pool
     // but the city watch, and `activeCount() > 0` - which the first
     // draft borrowed from the exhaustion arm - would block sleep for

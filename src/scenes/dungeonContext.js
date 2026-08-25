@@ -976,6 +976,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // question before this slice.
   const _restDeps = createRestDeps(playerEntity, {
     advanceMinutes: (n) => _restAdvance(n),
+    // TickRest :379 - QuestMachine.Instance.Tick() rides the same
+    // sub-tick as the clock, UNPACED. This host holds the bridge as
+    // opts.questBridge (world.js and worldModes hand theirs down); a
+    // standalone ?dungeon page has none, and then there is nothing to
+    // tick, which the optional chain says.
+    tickQuests: () => opts.questBridge?.machine?.tick?.(),
     enemiesNearby: () => areEnemiesNearby(foes, { resting: true }),
     endLines: (id) => rscLines(id),
     say: (msg) => hudText.add(msg),

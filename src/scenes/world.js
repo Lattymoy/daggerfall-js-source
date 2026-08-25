@@ -1289,6 +1289,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     && (modes?.mode ?? 'exterior') === 'exterior';
   const outdoorRestDeps = createRestDeps(playerEntity, {
     advanceMinutes: (n) => playerTicker.advance(n),
+    // TickRest :379 - QuestMachine.Instance.Tick() rides the same
+    // sub-tick as the clock, UNPACED (DFU calls the machine directly,
+    // not through QuestMachine.Update's ticksPerSecond timer). This
+    // host's ordinary quest tick is gated on "no overlay up", so
+    // without this a rested night ran none at all.
+    tickQuests: () => questBridge?.machine?.tick?.(),
     // AreEnemiesNearby's RESTING variant, over BOTH exterior pools -
     // the city watch counts, since guards on your trail wake you. The
     // first draft asked `activeCount() > 0`, copying this host's

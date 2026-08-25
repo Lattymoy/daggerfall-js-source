@@ -23,6 +23,7 @@ import { drawText, measureText } from './text.js';
 import {
   RestSession, REST_PROMPT, LOITER_PROMPT, loiterLimitHours, cannotLoiterLines,
   canRest, illegalRestWarning, ILLEGAL_REST_WARNING, CITY_CAMPING_ILLEGAL_ID,
+  CANNOT_REST_MORE_THAN_99_HOURS_ID, MAX_REST_HOURS, PROMPT_MAX_CHARS, PROMPT_INITIAL,
 } from '../systems/restSession.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -196,7 +197,7 @@ export class RestWindow {
     }
     if (!this._canRest(alreadyWarned)) return;
     if (which === 'while') {
-      this.state = 'hours'; this.mode = 'timed'; this.value = ''; this.notice = null;
+      this.state = 'hours'; this.mode = 'timed'; this.value = PROMPT_INITIAL; this.notice = null;
     } else {
       this._start('full', 0);
       this._moveToBed();
@@ -234,23 +235,34 @@ export class RestWindow {
       // Loiter :695, Stop :711
       if (action === 'char:1' || action === 'char:r') { audio.playOneShot(SOUND.ButtonClick, 1); this._restButton('while', false); }
       else if (action === 'char:2' || action === 'char:h') { audio.playOneShot(SOUND.ButtonClick, 1); this._restButton('healed', false); }
-      else if (action === 'char:3' || action === 'char:l') { audio.playOneShot(SOUND.ButtonClick, 1); this.state = 'hours'; this.mode = 'loiter'; this.value = ''; this.notice = null; }
+      else if (action === 'char:3' || action === 'char:l') { audio.playOneShot(SOUND.ButtonClick, 1); this.state = 'hours'; this.mode = 'loiter'; this.value = PROMPT_INITIAL; this.notice = null; }
       return;
     }
     // hours entry: digits, backspace, confirm
     if (action === 'back') { this.state = 'selection'; this.notice = null; return; }
     if (action === 'backspace') { this.value = this.value.slice(0, -1); return; }
     if (action === 'confirm') {
-      // DFU's prompt: an unparseable (empty) entry does nothing; 0 IS
-      // accepted - and the session ENDS IMMEDIATELY, passing no world
+      // int.TryParse then the RANGE arms (:741-757, :763-784). An
+      // unparseable entry returns and does nothing - reachable only
+      // once the player has EMPTIED the field, because DFU prefills it
+      // with "0" (:619, :700), so Enter on an untouched prompt starts
+      // a 0-hour rest. That rest ends immediately and passes no world
       // time (restSession's hoursRemaining < 1 pre-check; AUDIT 23
-      // corrected the old 'rests one full hour' claim, the same
-      // backwards reading AUDIT 18 struck from Ledger B). The 2-digit
-      // entry field enforces the 99-hour cap by construction (DFU
-      // shows TEXT 26 past 99).
+      // corrected the old 'rests one full hour' claim).
+      //
+      // The 99-hour arm is DFU's, not a field width: MaxCharacters is
+      // 8 on both prompts (:621, :702), and the port used to cap the
+      // field at two digits and call that "the 99-hour cap by
+      // construction" - which made TEXT.RSC 26 unreachable and let a
+      // 100-hour rest through the day someone widened the field.
       if (this.value === '') return;
       const hours = Number(this.value);
-      if (this.mode === 'loiter' && hours > loiterLimitHours()) { this.notice = cannotLoiterLines(); this.value = ''; return; }
+      if (this.mode === 'loiter' && hours > loiterLimitHours()) { this.notice = cannotLoiterLines(); this.value = PROMPT_INITIAL; return; }
+      if (this.mode === 'timed' && hours > MAX_REST_HOURS) {
+        this.notice = this.deps.endLines?.(CANNOT_REST_MORE_THAN_99_HOURS_ID) ?? null;
+        this.value = PROMPT_INITIAL;
+        return;
+      }
       this._start(this.mode, hours);
       // TimedRestPrompt_OnGotUserInput (:762) ends on MoveToBed; the
       // loiter prompt sets IsLoitering (:789) and does NOT move.
@@ -259,7 +271,7 @@ export class RestWindow {
       return;
     }
     const m = /^char:(\d)$/.exec(action);
-    if (m && this.value.length < 2) this.value += m[1];
+    if (m && this.value.length < PROMPT_MAX_CHARS) this.value += m[1];
   }
 
   _start(mode, hours) {

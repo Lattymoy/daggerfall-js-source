@@ -2992,6 +2992,12 @@ export function createWorldModes(host) {
   // FixStanding; the port's spawn does the standing fix).
   const interiorRestDeps = createRestDeps(playerEntity, {
     advanceMinutes: (n) => interiorTicker.advance(n),
+    // TickRest :379 - QuestMachine.Instance.Tick() rides the same
+    // sub-tick as the clock, UNPACED (DFU calls the machine directly,
+    // not through QuestMachine.Update's ticksPerSecond timer). This
+    // host's ordinary quest tick is gated on "no overlay up", so
+    // without this a rested night ran none at all.
+    tickQuests: () => questBridge?.machine?.tick?.(),
     enemiesNearby: () => false,   // this host mounts no foe pool
     place: interiorRestPlaceHere,
     // MoveToBed (:601-609) is `transform.position = allocatedBed` and
