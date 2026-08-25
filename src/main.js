@@ -49,6 +49,17 @@ async function boot() {
     // The classic pointer for every surface (fire-and-forget; never traps).
     installCursor(getBytes);
   })());
+  // M-EXT: ?music opens the replacement-music pick. It goes through
+  // ensureData() FIRST and not around it: the picker needs the same
+  // IndexedDB the ingest opens, and dropping a player who has never
+  // chosen a game folder straight into a music picker would be asking
+  // for the second thing before the first. Idempotent, so a path that
+  // gates again below costs nothing.
+  if (params.has('music')) {
+    await ensureData();
+    const { pickMusicFolder } = await import('./scenes/dataSource.js');
+    await pickMusicFolder();
+  }
   // Window emission style for every scene. DFU's GetMaterial default is Day.
   renderer.setWindowEmission(windowEmissionRGB(params.get('window') || 'day'));
   if (params.has('interior')) { await ensureData(); return bootInterior(canvas, renderer, params, status); }

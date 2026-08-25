@@ -32,10 +32,11 @@ import { readSpellsStd } from '../formats/spellsStd.js';   // G4: the two magic 
 import { readMagicDef } from '../formats/magicDef.js';
 import { setMagicItemTemplates, setSpellRecordsByIndex } from '../systems/loot.js';
 import { music } from '../systems/music.js';
+import { setMusicReplacements } from '../systems/musicReplacement.js';   // M-EXT: SoundReplacement's registry
 import { SongManager, musicEnvironment, holdEnvironment } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
 
-import { getBytes } from './dataSource.js';
+import { getBytes, storedMusicNames, loadMusicFile } from './dataSource.js';   // M-EXT: the player's own music pack
 
 
 /** The data seam every scene uses - delegates to the ARENA2 data
@@ -569,7 +570,21 @@ export function applyFallLanding(entity, distance, { hurt = null, sound = null }
 export function ensureAudio(fetch = fetchBytes) {
   const sound = audio.ensure(fetch);
   const songs = music.ensure(fetch);
-  return Promise.all([sound, songs]);
+  // M-EXT: the player's own music pack registers on the SAME seam, for
+  // the third time and the same reason - a separate bootstrap is a
+  // fourth thing every host has to remember. Registration is a name
+  // list and a loader, not the audio: nothing is read off disk until a
+  // song that has a replacement is actually asked for.
+  //
+  // NEVER TRAPS. No IndexedDB (private mode), no pick, a store that
+  // will not open - all of them mean "no replacements", which is the
+  // state DFU is in when StreamingAssets/Sound is empty. The built-in
+  // songs play and the player is never told about a subsystem they did
+  // not ask for.
+  const replacements = storedMusicNames()
+    .then((names) => setMusicReplacements(names, loadMusicFile))
+    .catch(() => 0);
+  return Promise.all([sound, songs, replacements]);
 }
 
 // --- The outdoor fog COLOUR (DaggerfallSky.SetSkyFogColor) -----------
