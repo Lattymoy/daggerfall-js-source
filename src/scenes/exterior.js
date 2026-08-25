@@ -94,7 +94,7 @@ import { SEASON } from '../world/climateSwaps.js';
 import { addGold } from '../systems/court.js';   // U10 probe surface
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
-import { actionOf, held, moveHeld, anyMove } from '../ui/input.js';   // I2: the rebindable registry
+import { actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';   // I2: the rebindable registry
 import { openPauseFlow, preloadPauseFlowArt, pauseArtLoaded } from '../ui/pauseWindow.js';   // I3/I4
 import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
 import { discoveredBuildings } from '../systems/discovery.js';   // A2: the nameplates' gate
@@ -859,7 +859,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // pressing F5 inside a building reloaded the page and destroyed
     // the session. Routing F5/F6 into interiors is its own arc
     // (FLAGGED); swallowing the browser reload is not optional.
-    if (e.code === 'F5' || e.code === 'F6') e.preventDefault();
+    swallowBrowserKey(e);   // U47: F5/F6/F11 - one list, in ui/input.js
     const act = actionOf(e);   // I2: the registry owns the code -> action read
     // U45: the ladder below and the large HUD's panels are the SAME
     // doors, so they are one object now rather than two ladders that
@@ -1078,6 +1078,19 @@ export async function bootExterior(canvas, renderer, params, status) {
     window.__chargenConfirm = () => townTalk._debug().overlayFlow?.raceConfirm ?? null;   // U11 probe surface
     window.__chargenFlow = () => townTalk._debug().overlayFlow ?? null;   // S3e probe surface
     window.__addGold = (n) => addGold(playerEntity, n);   // U10 probe surface: gold through the real producer
+    // U47 probe surface: the inventory's info panel, whatever window
+    // holds it. The panel is the ONLY state the hover seam writes, so
+    // it is also the only way to prove from outside that a real
+    // mousemove reached the window at all.
+    window.__invInfo = () => {
+      const o = townTalk.overlay;
+      // duck-typed, as worldModes' own inventory probe is - the host
+      // must not import the window class to recognise it (U26's pin)
+      const isInv = !!o && typeof o._remote === 'function' && typeof o.hover === 'function';
+      return isInv
+        ? JSON.stringify({ item: o.infoItem?.name ?? null, gold: !!o.infoGold, tab: o.tab })
+        : 'null';
+    };
     // V1 probe surface: the bite, the clock and the lifecycle state.
     // The infection is minted through the REAL producer path's
     // startInfection, not by hand, so a probe cannot pass over a

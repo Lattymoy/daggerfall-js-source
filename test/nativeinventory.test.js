@@ -2,9 +2,10 @@
 // filter law, and the shared ItemListScroller component.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { NativeInventoryWindow, INV_RECTS, TABS, filterByTab, isIngredientTemplate, NO_WAGON_TEXT, USE_PENDING
+import { NativeInventoryWindow, INV_RECTS, TABS, filterByTab, isIngredientTemplate, NO_WAGON_TEXT, USE_PENDING,
+  goldPanelRows,
 } from '../src/ui/nativeInventory.js';
-import { scrollerHit, applyScroll, LIST_SLOTS, CELL_X, ARROW_H, DOWN_ARROW_Y } from '../src/ui/itemScroller.js';
+import { scrollerHit, applyScroll, LIST_SLOTS, CELL_X, ARROW_H, DOWN_ARROW_Y, SLOT_H } from '../src/ui/itemScroller.js';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -322,4 +323,109 @@ test('U26: the dungeon host wires the four things the swap needed', () => {
   // ...and the shot counter advances under an overlay, or a probe
   // cannot frame-sync through one (the Process rule forbids sleeping).
   assert.ok(/uiOverlayActive\) \{[\s\S]{0,600}?frames\+\+/.test(scene), 'the frame counter still ticks');
+});
+
+// ---------------------------------------------------------------
+// U47 - THE HOVER INFO PANEL
+// ---------------------------------------------------------------
+
+/** The vertical centre of list slot `slot` (SLOT_H = 38). */
+const CELL_Y = (slot) => INV_RECTS.localList[1] + slot * SLOT_H + 10;
+
+test('U47: hovering a list slot fills the info panel, and the panel is STICKY', () => {
+  const bag = [
+    { group: 'Weapons', templateIndex: 113, name: 'Dagger' },
+    { group: 'Weapons', templateIndex: 121, name: 'Longsword' },
+  ];
+  const w = new NativeInventoryWindow({ items: () => bag, icons: ICONS, rows: () => [{ text: 'x' }] });
+  assert.equal(w.infoItem ?? null, null, 'nothing looked at yet');
+  w.hover(INV_RECTS.localList[0] + 20, CELL_Y(0));
+  assert.equal(w.infoItem?.name, 'Dagger');
+  w.hover(INV_RECTS.localList[0] + 20, CELL_Y(1));
+  assert.equal(w.infoItem?.name, 'Longsword');
+  // DFU has NO OnMouseLeave arm: moving off an item leaves the panel
+  // exactly as it was, which is what makes a 37-pixel panel usable.
+  w.hover(10, 100);
+  assert.equal(w.infoItem?.name, 'Longsword', 'the panel is sticky over dead space');
+  // ...and over an EMPTY SLOT INSIDE the list, which is the arm that
+  // matters: DFU's scroller raises OnHover only for a slot that HOLDS
+  // an item, so slot 2 of a two-item bag reaches the miss branch and
+  // must leave the panel alone.
+  assert.equal(bag.length, 2);
+  assert.ok(scrollerHit(INV_RECTS.localList, INV_RECTS.localList[0] + 20, CELL_Y(2))?.kind === 'slot',
+    'slot 2 really is a slot, and really is empty');
+  w.hover(INV_RECTS.localList[0] + 20, CELL_Y(2));
+  assert.equal(w.infoItem?.name, 'Longsword', 'an empty slot changes nothing');
+  // ...and the scroll ARROWS raise nothing either (:2224-2242)
+  w.hover(INV_RECTS.localList[0] + 2, INV_RECTS.localList[1] + 2);
+  assert.equal(w.infoItem?.name, 'Longsword', 'the up arrow is not an item');
+  // MUTATION: clearing infoItem on a miss empties the panel the moment
+  // the pointer moves and both of the last two fail.
+});
+
+test('U47: the panel CLEARS on a tab change and behind a box - DFU\'s only two clear sites', () => {
+  const bag = [{ group: 'Weapons', templateIndex: 113, name: 'Dagger' }];
+  const w = new NativeInventoryWindow({ items: () => bag, icons: ICONS, rows: () => [{ text: 'x' }] });
+  w.hover(INV_RECTS.localList[0] + 20, CELL_Y(0));
+  assert.equal(w.infoItem?.name, 'Dagger');
+  // SelectTabPage (:814-816)
+  w.click(INV_RECTS.tabIngredients[0] + 5, 5);
+  assert.equal(w.infoItem, null, 'a tab change empties it');
+  // ...and a pushed window owns the pointer: hovering behind a box
+  // changes nothing (the push itself cleared it at :663-664).
+  w.click(INV_RECTS.tabWeapons[0] + 5, 5);
+  w.hover(INV_RECTS.localList[0] + 20, CELL_Y(0));
+  assert.equal(w.infoItem?.name, 'Dagger');
+  const second = { group: 'Weapons', templateIndex: 121, name: 'Longsword' };
+  bag.push(second);
+  w.boxes = [{ rows: [{ text: 'a box' }] }];
+  w.hover(INV_RECTS.localList[0] + 20, CELL_Y(1));   // squarely on the second item
+  assert.equal(w.infoItem?.name, 'Dagger', 'a box holds the panel where it was');
+  w.boxes = [];
+  w.hover(INV_RECTS.localList[0] + 20, CELL_Y(1));
+  assert.equal(w.infoItem?.name, 'Longsword', '...and it moves again once the box is gone');
+});
+
+test('U47: the GOLD button fills the panel with its own two generated lines', () => {
+  // Internal_Strings goldAmount / goldWeight, verbatim, and the
+  // CONDITIONAL format: `weight % 1 == 0 ? "F0" : "F2"`.
+  assert.deepEqual(goldPanelRows(400, 1).map((r) => r.text), ['400 gold pieces', 'Weight: 1 kg']);
+  assert.deepEqual(goldPanelRows(1, 0.0025).map((r) => r.text), ['1 gold pieces', 'Weight: 0.00 kg']);
+  assert.deepEqual(goldPanelRows(1000, 2.5).map((r) => r.text), ['1000 gold pieces', 'Weight: 2.50 kg']);
+  // MUTATION: an unconditional toFixed(2) writes "1.00 kg" for a whole
+  // number and the first line fails.
+  const bag = [{ group: 'Weapons', templateIndex: 113, name: 'Dagger' }];
+  const w = new NativeInventoryWindow({ items: () => bag, icons: ICONS, rows: () => [{ text: 'x' }] });
+  w.hover(INV_RECTS.localList[0] + 20, CELL_Y(0));
+  assert.equal(w.infoGold, false);
+  w.hover(INV_RECTS.gold[0] + 5, INV_RECTS.gold[1] + 5);
+  assert.equal(w.infoGold, true, 'the gold button takes the panel');
+  assert.equal(w.infoItem, null, '...and it is not an item');
+  w.hover(INV_RECTS.localList[0] + 20, CELL_Y(0));
+  assert.equal(w.infoGold, false, 'an item takes it back');
+});
+
+test('U47: the window is the guard, not its click method - and F11 no longer goes fullscreen', () => {
+  const code = (rel) => readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'src', rel), 'utf8');
+  // AUDIT 18 routed 62: townTalk tested `overlay?.click`, so a click
+  // on a window with no click handler fell through to requestLook and
+  // grabbed pointer lock from under the menu.
+  // ...and the guard has to be read INSIDE pointerdown: `hover` a few
+  // lines below carries the same line, so a whole-file regex matches
+  // whatever pointerdown says. The first draft of this pin did, and
+  // survived restoring the defect.
+  const tt = code('scenes/townTalk.js');
+  const pd = tt.slice(tt.indexOf('function pointerdown(e) {'), tt.indexOf('function hover(e) {'));
+  assert.match(pd, /if \(!overlay\) return false;/, 'the guard is on the WINDOW');
+  assert.doesNotMatch(pd, /if \(!overlay\?\.click\)/, 'and not on its click method');
+  assert.match(pd, /overlay\.click\?\.\(/, 'the call is what is optional');
+  // AUDIT 18: F11 is QuickLoad AND the browser's fullscreen key. One
+  // list now, called first in every host that registers a keydown -
+  // including the exterior host, which has nothing to quickload and
+  // must still not go fullscreen.
+  assert.match(code('ui/input.js'), /BROWSER_STEALS = Object\.freeze\(\['F5', 'F6', 'F11'\]\)/);
+  for (const host of ['scenes/world.js', 'scenes/exterior.js', 'scenes/worldModes.js', 'scenes/dungeon.js']) {
+    assert.match(code(host), /swallowBrowserKey\(e\)/, `${host} swallows them`);
+    assert.doesNotMatch(code(host), /e\.code === 'F5' \|\| e\.code === 'F6'/, `${host} keeps no second list`);
+  }
 });
