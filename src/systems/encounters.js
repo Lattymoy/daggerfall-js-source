@@ -143,7 +143,7 @@ export function decayEnemyAlert(entity, gameMinutes) {
   }
 }
 
-// ---- GameManager.AreEnemiesNearby (:684-730), one home ---------------
+// ---- GameManager.AreEnemiesNearby (:684-732), one home ---------------
 
 /** The RESTING test's shorter distance (:687). The spawn-band one is
  *  the foe's own `wouldBeSpawned`, which the AI already answers. */

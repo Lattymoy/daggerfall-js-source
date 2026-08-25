@@ -95,7 +95,7 @@ export class RestWindow {
     if (this._allocatedBed && !this.ignoreAllocatedBed) this.deps.moveToBed?.(this._allocatedBed);
   }
 
-  /** WhileButton / HealedButton (:641-690). The IllegalRestWarning
+  /** WhileButton (:642-657) / HealedButton (:668-682). The IllegalRestWarning
    *  box comes FIRST and does not touch CanRest; its Yes arm is what
    *  supplies `alreadyWarned`. LoiterButton (:693-706) is deliberately
    *  absent from this path - loitering in town is never gated and
@@ -138,13 +138,17 @@ export class RestWindow {
       return;
     }
     if (this.state === 'resting') {
-      // StopRestButton (:713-718) clicks like the rest (:644-718)
+      // StopButton_OnMouseClick (:708-712) - EndRest, then the same
+      // ButtonClick every other button plays. (Its keyboard twin,
+      // :714-726, defers the close to KeyUp; the port's overlay seam
+      // has no key-down/key-up split, so that half is structural.)
       if (action === 'back') { audio.playOneShot(SOUND.ButtonClick, 1); this._end(this.session.endEarly()); }
       return;
     }
     if (this.state === 'selection') {
       if (action === 'back') { audio.playOneShot(SOUND.ButtonClick, 1); this.done = true; return; }
-      // the while/healed/loiter buttons all assign ButtonClick (:644-718)
+      // every button assigns ButtonClick: While :644, Healed :670,
+      // Loiter :695, Stop :711
       if (action === 'char:1' || action === 'char:r') { audio.playOneShot(SOUND.ButtonClick, 1); this._restButton('while', false); }
       else if (action === 'char:2' || action === 'char:h') { audio.playOneShot(SOUND.ButtonClick, 1); this._restButton('healed', false); }
       else if (action === 'char:3' || action === 'char:l') { audio.playOneShot(SOUND.ButtonClick, 1); this.state = 'hours'; this.mode = 'loiter'; this.value = ''; this.notice = null; }

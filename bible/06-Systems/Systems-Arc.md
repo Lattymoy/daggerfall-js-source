@@ -2753,8 +2753,18 @@ caught: a bare `(:655)` in three hosts, which means
 `DaggerfallRestWindow` numbers to `DoRestForAWhile(false)`; and a
 PORT-INTERNAL citation, `dungeon.js (:385-396)`, which drift had
 turned into the footsteps block. Both are now spelled out or named
-rather than numbered. The sweep is the right shape for this class -
-one grep per range beats one careful reader.
+rather than numbered. And the sweep, being diff-scoped, then missed five MORE in comment
+blocks the slice never edited but now owns - a `WhileButton /
+HealedButton (:641-690)` that opens on a blank line and closes inside
+a third member, a `StopRestButton (:713-718)` that is the head of the
+KEYBOARD handler while the mouse one is :708-712, the prompt clamp
+cited at its parse GUARD (:745-748) instead of the clamp itself
+(:749-752), and a second `Update (:183-227)` twin in dungeonContext.
+The final check is content-addressed rather than eyeballed: 48
+citations, each asserted to CONTAIN the member it names and to open
+and close on a non-blank line. The lesson holds either way - one grep
+per range beats one careful reader, and the grep has to cover whole
+files, not just the diff.
 
 Pins: 39 in `restlodging.test.js`, the last two END TO END - every law
 in this slice driven together through one host-shaped deps bag, from

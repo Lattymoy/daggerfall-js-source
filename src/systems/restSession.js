@@ -74,7 +74,7 @@ export const HAVE_NOT_RENTED_ROOM = 'You have not rented a room here.';
 /** Internal_Strings.csv :871, verbatim - the Yes/No box the WHILE and
  *  HEALED buttons raise BEFORE they ever reach CanRest, when
  *  Settings.IllegalRestWarning is on and the player is in town
- *  outdoors (:645-657, :671-683). Its Yes arm is the ONLY producer of
+ *  outdoors (:645-652, :671-677). Its Yes arm is the ONLY producer of
  *  CanRest's `alreadyWarned`. */
 export const ILLEGAL_REST_WARNING = 'It is illegal to camp in or near a city. Continue?';
 /** Internal_Strings.csv :358, verbatim - EndRest's FIRST arm, which
@@ -274,7 +274,9 @@ export class RestSession {
     // already-healed FullRest ends without waiting for an hour; and a
     // NON-FullRest session with hoursRemaining < 1 ends BEFORE
     // TickRest runs - so a 0-hour timed/loiter request (the prompts
-    // clamp a negative input to 0 and accept it, :745-748/:770-773)
+    // clamp a negative input to 0 and accept it, :749-752/:774-777 -
+    // the parse GUARD that returns on unparseable input is the pair
+    // above each, :745-746/:770-771)
     // passes no world time at all: no RaiseTime, no enemy check, no
     // vitals. The `hoursRemaining < 1` test inside TickRest is the
     // SECOND one, not the only one.

@@ -2749,7 +2749,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     dropped: () => droppedLoot._piles,
     /** AUDIT 18 F5: the overlay's own clock. DFU runs
      *  DaggerfallRestWindow.Update every frame the window is topmost
-     *  (DaggerfallRestWindow.cs:183-227), and TickRest reads
+     *  (DaggerfallRestWindow.cs:185-229), and TickRest reads
      *  Time.realtimeSinceStartup, so PauseWhileOpen's timeScale = 0
      *  does not stop it. The port had the tick inside drawFoes, which
      *  the hosts SKIP whenever an overlay is up - so U7's rest never
