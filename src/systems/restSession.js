@@ -300,7 +300,7 @@ export class RestSession {
       this.totalHours++;
       // A full hour: the enemy break first, then vitals/completion.
       if (this.deps.enemiesNearby()) return { textId: REST_TEXT.enemiesNearby, enemyBroke: true, died: false };
-      // TickRest's own order (:405-438): the mode's completion is
+      // TickRest's own order (:348-438): the mode's completion is
       // decided FIRST and CheckRent runs after it, so a rest that
       // finishes on the very hour the room expires answers the
       // EXPIRED line - _finish is where that precedence lives.

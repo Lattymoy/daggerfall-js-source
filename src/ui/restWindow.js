@@ -163,7 +163,7 @@ export class RestWindow {
       if (this.mode === 'loiter' && hours > loiterLimitHours()) { this.notice = cannotLoiterLines(); this.value = ''; return; }
       this._start(this.mode, hours);
       // TimedRestPrompt_OnGotUserInput (:762) ends on MoveToBed; the
-      // loiter prompt (:788) sets IsLoitering and does NOT move.
+      // loiter prompt (:789) sets IsLoitering and does NOT move.
       if (this.mode === 'timed') this._moveToBed();
       return;
     }
