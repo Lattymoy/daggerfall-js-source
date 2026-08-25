@@ -23,6 +23,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { MISSILE_SPEED } from '../systems/spellcast.js';   // AUDIT 23: the arrow speed's one home
+import { createSkin } from './paperdoll/skin.js';
 import { buildPaperdollPayload } from '../characters/paperdollPayload.js';
 import { makeCoreFn, buildCloth, stepCloth, articulatedCapsules } from '../characters/clothSim.js';
 import { beastAttackPose, hitPointOf } from '../characters/beastAttack.js';
@@ -187,7 +188,7 @@ const basePos = pos.slice();
 // because the animator poses from it rather than from `pos`.
 const pristinePos = pos.slice(), pristineCol = col.slice();
 let villagerOn = null;
-// ORDER MATTERS HERE. applyVillagerHair -> syncHair -> applyTone calls
+// ORDER MATTERS HERE. applyVillagerTone -> syncRace -> applyTone calls
 // setBodyRamp, which repaints EVERY body face from the skin ramp - run
 // it after the delta and the villager's clothes are wiped, leaving a
 // nude body under a floating gown. So: reset, set the skin tone and
@@ -196,7 +197,7 @@ let villagerOn = null;
 // delta's colour, which is what both halves want.
 function applyVillager(v) {
   pos.set(pristinePos); col.set(pristineCol);
-  applyVillagerHair(v);
+  applyVillagerTone(v);
   if (v) {
     for (let k = 0; k < v.idx.length; k++) {
       const f = v.idx[k], pb = k * 12, cb = k * 3;
@@ -258,165 +259,6 @@ function setBodyColors(Carr) {
   for (let f = 0; f < nf; f++) { const cb = f*3, r = Carr[cb]/255, g = Carr[cb+1]/255, b = Carr[cb+2]/255; for (let k = 0; k < 6; k++) { col[o]=r; col[o+1]=g; col[o+2]=b; o += 3; } }
   geo.getAttribute('color').needsUpdate = true;
 }
-// ── THE BAKED SKIN ────────────────────────────────────────────────────────
-// public/skin/ carries a per-TEXEL intensity map baked from our own generated
-// turnaround (tools/skin/README.md), plus per-corner UVs in buildNeutralBody's
-// own face order. It replaces the per-FACE `D.Ib` byte and nothing else: race
-// is still snapRamp(ramp, i), so every tone and both beast ramps apply unchanged.
-// NEVER TRAPS: if either file is absent, skinTex stays null and setBodySkin
-// falls through to setBodyRamp, exactly as the title screen falls back.
-let skinI = null, skinTexCanvas = null, skinTex = null, skinLayout = null;
-// The body atlas is baked from a HUMAN turnaround, so it carries human anatomy:
-// pectorals, abdominals, navel. Tinting that fur-brown leaves a Khajiit with a
-// six-pack, so the fur and scale races use a smoothed copy - broad form shading
-// kept, fine detail (measured amplitude 13-18 per texel) removed.
-let skinIBeast = null;
-const BEAST = { Khajiit: 1, Argonian: 1 };
-// THE BAKED HEADS. public/skin/heads/ carries one cell per face, baked from our
-// own generated turnarounds (tools/skin/head_bake.py) - no ARENA2, so they
-// ship. Each face also implies its own body ramp, because the ten are not one
-// skin tone (lit skin R 161..209), and the head is the authority on that.
-let headCells = null, skinRamps = null, headPick = 0, headRace = null;
-const HEAD_SET = { Breton: 'breton', Redguard: 'redguard', Nord: 'nord',
-  'Dark Elf': 'darkelf', 'High Elf': 'highelf', 'Wood Elf': 'woodelf',
-  Argonian: 'argonian', Khajiit: 'khajiit' };
-async function loadHeads() {
-  const key = HEAD_SET[RACES[raceIx]];
-  if (!key) { headCells = null; skinRamps = null; headRace = null; applyTone(); return; }
-  if (headRace === key) return;                                // already loaded
-  headRace = key;
-  try {
-    skinRamps = await fetch(`./skin/${key}-skin-ramps.json`).then((r) => r.ok ? r.json() : null);
-  } catch { skinRamps = null; }
-  const cells = [];
-  for (let i = 0; i < 10; i++) {
-    try {
-      cells.push(await new Promise((res, rej) => {
-        const im = new Image(); im.onload = () => res(im); im.onerror = rej;
-        im.src = `./skin/heads/${key}-${i}.png`;
-      }));
-    } catch { break; }
-  }
-  headCells = cells.length ? cells : null;
-  if (headRace === key) applyTone();                           // a later race may have won
-}
-async function loadSkin() {
-  try {
-    const [uv, lay, img] = await Promise.all([
-      fetch('./skin/skin-uv.json').then((r) => r.ok ? r.json() : Promise.reject()),
-      fetch('./skin/skin-layout.json').then((r) => r.ok ? r.json() : Promise.reject()),
-      new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i);
-        i.onerror = rej; i.src = './skin/skin-intensity.png'; }),
-    ]);
-    skinLayout = lay;
-    if (uv.n !== nf) return;                       // rig changed: do not guess
-    const uvs = new Float32Array(nf * 6 * 2);
-    let q = 0;
-    for (let f = 0; f < nf; f++) for (const vi of TRI) {
-      uvs[q++] = uv.uv[f * 8 + vi * 2]; uvs[q++] = uv.uv[f * 8 + vi * 2 + 1];
-    }
-    geo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
-    const c = document.createElement('canvas');
-    c.width = img.width; c.height = img.height;
-    const g2 = c.getContext('2d'); g2.drawImage(img, 0, 0);
-    skinI = g2.getImageData(0, 0, c.width, c.height);
-    try {
-      const bi = await new Promise((res, rej) => { const i = new Image();
-        i.onload = () => res(i); i.onerror = rej; i.src = './skin/skin-intensity-beast.png'; });
-      const bc = document.createElement('canvas');
-      bc.width = bi.width; bc.height = bi.height;
-      bc.getContext('2d').drawImage(bi, 0, 0);
-      skinIBeast = bc.getContext('2d').getImageData(0, 0, bc.width, bc.height);
-    } catch { skinIBeast = null; }   // no beast map: the human one still works
-    skinTexCanvas = document.createElement('canvas');
-    skinTexCanvas.width = c.width; skinTexCanvas.height = c.height;
-    skinTex = new THREE.CanvasTexture(skinTexCanvas);
-    skinTex.magFilter = THREE.NearestFilter; skinTex.minFilter = THREE.NearestFilter;
-    skinTex.generateMipmaps = false;
-    applyTone();
-  } catch { /* no skin assets: the ramp path still works */ }
-}
-// paint the intensity map through this race's ramp - the same snapRamp the
-// per-face path uses, so a race is still nothing more than a ramp swap
-// THE FACE IS A SPRITE, so it is composited at RUNTIME from the user's own
-// FACE*.CIF rather than baked into public/skin/ - a render of game data is
-// game data (test/doctrine.test.js). The head cell ships carrying geometry
-// shading only; this paints the chosen record into its FRONT ARC, so the
-// skull keeps its ramp all the way round and the face layers over the front.
-let facePick = 0;
-const faceCache = new Map();          // archive name -> decoded records
-let faceSet = D.faceSet || null;      // boot set (FACE00I0), replaced per race
-async function loadFaceSet() {
-  const R = RACES[raceIx];
-  let name;
-  try {
-    const { raceArt } = await import('../systems/races.js');
-    name = raceArt(RACE_KEY[R], gender).heads;
-  } catch { return; }
-  if (faceCache.has(name)) { faceSet = faceCache.get(name); applyTone(); return; }
-  try {
-    const [{ getBytes }, { DFPalette }, { CifRciFile }] = await Promise.all([
-      import('../scenes/dataSource.js'),
-      import('../formats/dfPalette.js'),
-      import('../formats/cifRciFile.js'),
-    ]);
-    const p2 = new DFPalette(); p2.load(await getBytes('ART_PAL.COL'), 'ART_PAL.COL');
-    const c2 = new CifRciFile(); c2.load(await getBytes(name), name, p2);
-    const set = [];
-    for (let r = 0; r < 10; r++) {
-      try {
-        const b = c2.getDFBitmap(r, 0);
-        const rgba = [];
-        for (let i2 = 0; i2 < b.data.length; i2++) {
-          const idx = b.data[i2];
-          if (idx) { const c = p2.get(idx); rgba.push(c.r, c.g, c.b, 255); } else rgba.push(0, 0, 0, 0);
-        }
-        set.push({ w: b.width, h: b.height, rgba });
-      } catch { break; }
-    }
-    if (!set.length) return;
-    faceCache.set(name, set); faceSet = set; applyTone();
-  } catch { /* no ARENA2: the head keeps its ramp, as it always did */ }
-}
-function paintFace(ctx) {
-  const c = (skinLayout || {}).head, set = faceSet;
-  if (!c || !set || !set.length) return;
-  const f = set[facePick % set.length];
-  const [a0, a1] = c.faceArc || [0.25, 0.75];
-  const dx = Math.round(c.x + a0 * c.w), dw = Math.max(1, Math.round((a1 - a0) * c.w));
-  const src = ctx.createImageData(f.w, f.h);
-  src.data.set(f.rgba);
-  const tmp = document.createElement('canvas');
-  tmp.width = f.w; tmp.height = f.h;
-  tmp.getContext('2d').putImageData(src, 0, 0);
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(tmp, dx, c.y, dw, c.h);
-}
-function setBodySkin(ramp) {
-  if (!skinI || !skinTex) { setBodyRamp(ramp); return; }
-  // each face's own head implies its own body tone, so the neck matches the jaw
-  const rr = (skinRamps && skinRamps[headPick]) ? skinRamps[headPick] : ramp;
-  ramp = rr;
-  const beast = BEAST[RACES[raceIx]] && skinIBeast;
-  const src = (beast ? skinIBeast : skinI).data;
-  const out = skinTexCanvas.getContext('2d').createImageData(skinI.width, skinI.height);
-  for (let i = 0; i < src.length; i += 4) {
-    const c = snapRamp(ramp, src[i]);
-    out.data[i] = c[0]; out.data[i + 1] = c[1]; out.data[i + 2] = c[2]; out.data[i + 3] = 255;
-  }
-  const ctx = skinTexCanvas.getContext('2d');
-  ctx.putImageData(out, 0, 0);
-  // the baked head REPLACES the head cell's geometry shading
-  const hc = skinLayout && skinLayout.head;
-  if (hc && headCells && headCells[headPick]) {
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(headCells[headPick], hc.x, hc.y, hc.w, hc.h);
-  } else {
-    paintFace(ctx);          // no baked head: fall back to the CIF sprite
-  }
-  skinTex.needsUpdate = true;
-  if (mat.map !== skinTex) { mat.map = skinTex; mat.vertexColors = false; mat.needsUpdate = true; }
-}
 function setBodyRamp(ramp) { let o = 0; for (let f = 0; f < nf; f++) { const c = snapRamp(ramp, D.Ib ? D.Ib[f] : 150); const r=c[0]/255,g=c[1]/255,b=c[2]/255; for (let k = 0; k < 6; k++) { col[o]=r; col[o+1]=g; col[o+2]=b; o += 3; } } geo.getAttribute('color').needsUpdate = true; }
 const geo = new THREE.BufferGeometry();
 geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
@@ -453,6 +295,7 @@ function buildPiece(cp) {
   m.userData.recolor = (ramp) => { if (!cp.I) return; let oo = 0; for (let f = 0; f < ncf; f++) { const c = snapRamp(ramp, cp.I[f]); const r=c[0]/255,g=c[1]/255,b=c[2]/255; for (let k=0;k<6;k++){ pc[oo]=r; pc[oo+1]=g; pc[oo+2]=b; oo+=3; } } geo.getAttribute('color').needsUpdate = true; };
   return m;
 }
+
 // Animated targets: body + every piece mesh (same FK moves armour with the body).
 const animTargets = [{ pos, base: basePos, vgrp, geo }];
 const pieceMesh = {};
@@ -530,16 +373,19 @@ const RACE_KEY = { Breton:'Breton', Redguard:'Redguard', Nord:'Nord',
   Khajiit:'Khajiit', Argonian:'Argonian' };
 let gender = 'male';
 let raceIx = 0;
-const raceHair = {};
-for (const R of RACES) {
-  // hair packs are keyed by FAMILY, not by race - all three human races share
-  // the Human set, all three elves the Elf set
-  const packs = (D.hair && D.hair[RACE_FAMILY[R]]) ? D.hair[RACE_FAMILY[R]] : {};
-  const styles = Object.keys(packs);
-  raceHair[R] = { styles, meshes: {}, ix: 0 };
-  for (const st of styles) { const m = buildPiece(packs[st]); m.visible = false; raceHair[R].meshes[st] = m; }
-}
-const curHair = () => { const h = raceHair[RACES[raceIx]]; return h && h.styles.length ? h.meshes[h.styles[h.ix]] : null; };
+
+// ── SKIN AND HEADS ────────────────────────────────────────────────────────
+// Lifted whole into ./paperdoll/skin.js. It reached outside itself for
+// thirteen things; those are declared here instead of being ambient.
+const SKIN = createSkin({
+  THREE, D, geo, mat, nf, TRI, RACES, RACE_KEY, snapRamp, setBodyRamp,
+  getRaceIx: () => raceIx,
+  getGender: () => gender,
+  onReady: () => applyTone(),
+});
+const { loadSkin, loadHeads, loadFaceSet, ensureHead, setBodySkin } = SKIN;
+
+
 const tailMesh = D.tail ? buildPiece(D.tail) : null;
 const tailCatMesh = D.tailCat ? buildPiece(D.tailCat) : null;
 const bodyScalesMesh = D.bodyScales ? buildPiece(D.bodyScales) : null;
@@ -585,7 +431,7 @@ function dyeDrape(nm, ramp) {
 // baked brown at build time; recolour() re-snaps each face's stored
 // intensity onto the design's ramp, which is exactly the drape's
 // static path.
-function applyVillagerHair(v) {
+function applyVillagerTone(v) {
   // The design's RACE picks a skin tone out of the human palette; the
   // rig race stays Human (Redguard/Nord/Breton all are). Deselecting
   // restores the viewer's own tone rather than stranding the last
@@ -597,16 +443,9 @@ function applyVillagerHair(v) {
   } else if (!v) { toneIx.Human = 0; }
   { const pal = (D.PALETTES || {})[PKEY[RACES[raceIx]]]; const b = document.getElementById('tone');
     if (pal && b) b.textContent = 'tone: ' + pal[toneIx[RACES[raceIx]] % pal.length].name; }
-  const h = raceHair[RACES[raceIx]];
-  if (!h || !h.styles.length) { applyTone(); return; }
-  const ramps = D.hairRamps || {};
-  const want = v && v.hair && h.styles.indexOf(v.hair.style);
-  if (want >= 0) h.ix = want;
-  const ramp = (v && v.hair && ramps[v.hair.ramp]) || ramps.brown;
-  if (ramp) for (const st of h.styles) { const m = h.meshes[st]; if (m && m.userData.recolor) m.userData.recolor(ramp); }
-  syncHair();
-  refreshHairLabel();
+  syncRace();
 }
+
 // Selecting a villager DRIVES the drape control: their gown is part of
 // the design, not a separate toggle the reader has to find.
 // ═══════════════════════════════════════════════════════════════════
@@ -772,21 +611,21 @@ function applyTone() {
     if (bodyFurCoat) bodyFurCoat.userData.recolor(e.coat);
     if (bodyFurBelly) bodyFurBelly.userData.recolor(e.belly);
     if (tailCatMesh) tailCatMesh.userData.recolor(e.coat);
-    { const h = curHair(); if (h) h.userData.recolor(e.coat); }
   } else if (R === 'Argonian') {
     setBodySkin(e.ramp);
     if (bodyScalesMesh) bodyScalesMesh.userData.recolor(e.ramp);
     if (tailMesh) tailMesh.userData.recolor(e.ramp);
-    { const h = curHair(); if (h) h.userData.recolor(e.ramp); }
   } else {
     setBodySkin(e.ramp); // the six human/elf skin tones
   }
 }
-const syncHair = () => { const R = RACES[raceIx]; applyTone(); loadFaceSet(); loadHeads(); for (const rr of RACES) { const h = raceHair[rr]; if (h) for (const st of h.styles) h.meshes[st].visible = false; } const m = curHair(); if (m) m.visible = !helmOn(); if (tailMesh) tailMesh.visible = (RACES[raceIx] === 'Argonian'); if (tailCatMesh) tailCatMesh.visible = (RACES[raceIx] === 'Khajiit'); if (bodyScalesMesh) bodyScalesMesh.visible = (RACES[raceIx] === 'Argonian'); if (bodyFurCoat) bodyFurCoat.visible = (RACES[raceIx] === 'Khajiit'); if (bodyFurBelly) bodyFurBelly.visible = (RACES[raceIx] === 'Khajiit'); }; // per-race body detail
-window.__face = (i) => { facePick = ((i % 10) + 10) % 10; applyTone(); };
-window.__head = (i) => { headPick = ((i % 10) + 10) % 10; applyTone(); };
-window.__gender = (g) => { gender = (g === 'female') ? 'female' : 'male'; facePick = 0; loadFaceSet(); };
-syncHair();
+// Everything a race change touches: tone, the FACE archive, the head set.
+const syncRace = () => { applyTone(); loadFaceSet(); loadHeads(); };
+// The picks live in the module now; these go through its accessors.
+window.__face = (i) => { SKIN.setFacePick(i); applyTone(); };
+window.__head = async (i) => { SKIN.setHeadPick(i); await ensureHead(SKIN.getHeadPick()); applyTone(); };
+window.__gender = (g) => { gender = (g === 'female') ? 'female' : 'male'; SKIN.setFacePick(0); loadFaceSet(); };
+syncRace();
 loadSkin();
 loadFaceSet();
 loadHeads();   // async; re-runs applyTone once the texture is up
@@ -822,9 +661,7 @@ function applyOrc(o) {
   orcOn = o;
   if (!o) { applyVillager(null); return; }
   // Hide the human head furniture: an orc wears neither.
-  const hs = document.getElementById('hairstyle');
   applyVillager(null);
-  for (const rr of RACES) { const h = raceHair[rr]; if (h) for (const st of h.styles) h.meshes[st].visible = false; }
   setLoosePieces(false); // an orc wears neither. See applyVillager.
   // Body: repaint to the orc hide first (setBodyRamp touches EVERY body
   // face), THEN lay the delta over it - same ordering hazard the
@@ -894,7 +731,6 @@ function applyOrc(o) {
   // is a design that wears nothing. Same rule the loose armour pieces
   // got: what a design wears is what its design says and nothing else.
   applyVillagerDrape(o);
-  if (hs) hs.textContent = 'hair: none (' + (o.line || 'orc') + ')';
 }
 
 // ── THE UNDEAD USE THE SAME PATH ─────────────────────────────────
@@ -1391,12 +1227,9 @@ document.getElementById('wire').onclick = (e) => { mat.wireframe = !mat.wirefram
 let bgi = 0; const bgs = [0x14141a, 0x000000, 0x808088, 0xf0f0f0];
 postMat.uniforms.bg.value = new THREE.Color(bgs[0]);
 
-for (const name of ['pauldrons','helm']) { const btn = document.getElementById(name); if (btn) btn.onclick = (e) => { const m = pieceMesh[name]; if (m) { m.visible = !m.visible; e.target.classList.toggle('on', m.visible); if (name === 'helm') syncHair(); } }; }
-document.getElementById('race').onclick = (e) => { raceIx = (raceIx+1)%RACES.length; syncHair(); e.target.textContent = 'race: '+RACES[raceIx]; const pal=(D.PALETTES||{})[PKEY[RACES[raceIx]]]; if(pal) document.getElementById('tone').textContent='tone: '+pal[toneIx[RACES[raceIx]]%pal.length].name; refreshHairLabel(); };
+for (const name of ['pauldrons','helm']) { const btn = document.getElementById(name); if (btn) btn.onclick = (e) => { const m = pieceMesh[name]; if (m) { m.visible = !m.visible; e.target.classList.toggle('on', m.visible); if (name === 'helm') syncRace(); } }; }
+document.getElementById('race').onclick = (e) => { raceIx = (raceIx+1)%RACES.length; syncRace(); e.target.textContent = 'race: '+RACES[raceIx]; const pal=(D.PALETTES||{})[PKEY[RACES[raceIx]]]; if(pal) document.getElementById('tone').textContent='tone: '+pal[toneIx[RACES[raceIx]]%pal.length].name;  };
 document.getElementById('tone').onclick = (e) => { const R=RACES[raceIx], pal=(D.PALETTES||{})[PKEY[R]]; if(!pal)return; toneIx[R]=(toneIx[R]+1)%pal.length; applyTone(); e.target.textContent='tone: '+pal[toneIx[R]%pal.length].name; };
-function refreshHairLabel(){ const h=raceHair[RACES[raceIx]]; const b=document.getElementById('hairstyle'); if(b) b.textContent = (h&&h.styles.length>1)?('hair: '+h.styles[h.ix]):'hair: -'; }
-document.getElementById('hairstyle').onclick = () => { const h=raceHair[RACES[raceIx]]; if(!h||h.styles.length<2) return; h.ix=(h.ix+1)%h.styles.length; syncHair(); refreshHairLabel(); };
-refreshHairLabel();
 document.getElementById('walk').onclick = (e) => { gaitIx = (gaitIx+1)%3; e.target.textContent = ['idle','walk','run'][gaitIx]; e.target.classList.toggle('on', gaitIx>0); };
 const poseBtn = document.getElementById('pose');
 const setPose = (i) => { poseIx = ((i % POSE_NAMES.length) + POSE_NAMES.length) % POSE_NAMES.length; poseBtn.textContent = 'pose: ' + POSE_NAMES[poseIx]; poseBtn.classList.toggle('on', poseIx > 0); atk = null; wm = null; arrowFlight = null; arrowHidden = false; arrowVisible(); swordInfo.textContent = ''; };   // a pose change is a STATE change: clear the clip + the weapon machine (a drawn bow must not persist over a melee stance)
