@@ -15,7 +15,12 @@ const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=sw
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
 const errors = [];
 page.on('pageerror', (e) => { errors.push(e.message); console.log('[pageerror]', e.message); });
-await page.goto('http://localhost:5220/?shot&play&exterior&time=12:00');
+// T2: `class=16` SKIPS THE CHARGEN WIZARD. Without it the wizard holds
+// townTalk's overlay slot and townTalk.keydown - FIRST in this host's
+// keydown ladder (exterior.js:1046-1047) - swallows every
+// page.keyboard.press below, so this probe pressed its keys into a
+// character-creation screen it never knew was up.
+await page.goto('http://localhost:5220/?shot&play&exterior&time=12:00&class=16');
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 180000 });
 
 const fail = (m) => { console.log('FAIL:', m); process.exit(1); };

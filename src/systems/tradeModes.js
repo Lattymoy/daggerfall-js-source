@@ -301,6 +301,14 @@ export function tradeDecision(mode, { cost, tradePrice, gold = 0 }) {
   return { kind: 'offer', textId, price: tradePrice };
 }
 
+/** ConfirmTrade_OnButtonClick's TAIL (:1092-1093), Internal_Strings
+ *  `letterOfCredit` verbatim. DFU announces the parchment: the gold
+ *  did not move and the player is owed an explanation, or a sale of a
+ *  valuable item while overloaded reads as a sale that simply failed.
+ *  The sound alone (ParchmentScratching, already ported at :1084) is
+ *  not that explanation - it plays where GoldPieces would have. */
+export const LETTER_OF_CREDIT_TEXT = 'You are paid with a letter of credit.';
+
 /** ConfirmTrade's SELL arm (:1035-1050): the proceeds are weighed
  *  BEFORE they are paid, and a purse that would push the player past
  *  MaxEncumbrance becomes a LETTER OF CREDIT for the full amount

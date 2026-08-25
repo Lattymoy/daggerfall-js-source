@@ -37,7 +37,7 @@ import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './m
 import {
   MODE_ACTION_ART, SELL_GOLD_ART, modeActionArt,
   tradeCost, getTradePrice, tradeDecision, sellProceeds,
-  localListAccepts, localClickDecision, DOESNT_NEED_IDENTIFY,
+  localListAccepts, localClickDecision, DOESNT_NEED_IDENTIFY, LETTER_OF_CREDIT_TEXT,
   MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID, DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID,
 } from '../systems/tradeModes.js';
 import { CANNOT_BE_REPAIRED_TEXT } from '../systems/repairService.js';
@@ -248,6 +248,21 @@ export class NativeTradeWindow {
     audio.playOneShot(proceeds?.kind === 'letterOfCredit' ? SOUND.ParchmentScratching : SOUND.GoldPieces, 1);
     this.localScroll = 0;
     this.remoteScroll = 0;
+    // ...and it is ANNOUNCED (:1092-1093). T2: the port minted the
+    // letter and scratched the parchment but said nothing, so a sale
+    // made while overloaded looked to the player like a sale that had
+    // silently failed - the gold simply did not move.
+    //
+    // The ORDER is DFU's. A bare `CloseWindow()` in a message-box
+    // handler pops the TOP window (UserInterfaceWindow.cs:127-132),
+    // which at that moment is the CONFIRM box, not the trade window -
+    // so DFU dismisses the confirmation and raises the letter's box
+    // over a trade screen that is still open. _dismissBox has already
+    // nulled `this.box` before it calls onYes, so writing the box here
+    // is exactly that sequence.
+    if (proceeds?.kind === 'letterOfCredit') {
+      this.box = { rows: [{ text: LETTER_OF_CREDIT_TEXT, center: true }], buttons: null };
+    }
   }
 
   _dismissBox(button = null) {

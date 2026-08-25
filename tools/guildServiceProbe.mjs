@@ -17,7 +17,16 @@ const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=sw
 const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 page.on('console', (m) => { if (/guild|interior|static/i.test(m.text())) console.log('[page]', m.text()); });
-await page.goto('http://localhost:5201/?shot&play&exterior&time=12:00');
+// T2: `class=16` SKIPS THE CHARGEN WIZARD. Without it the wizard holds
+// townTalk's overlay slot and townTalk.keydown - FIRST in this host's
+// keydown ladder (exterior.js:1046-1047) - swallows every
+// page.keyboard.press below, so this probe pressed its keys into a
+// character-creation screen it never knew was up.
+// class=0 and not the usual 16: this probe walks into THE MAGES GUILD,
+// and a Warrior is turned away at the door ("I am sad to say that you
+// are ineligible") - which the de-trapped run reported the moment the
+// join keypress started arriving at all.
+await page.goto('http://localhost:5201/?shot&play&exterior&time=12:00&class=0');
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 180000 });
 
 const waitFrames = async (n) => {

@@ -3631,9 +3631,32 @@ bookshop, proves a click stages without moving a coin, commits the
 basket for the haggled price, sells back through the merchant arm, and
 clears the staging back onto the shelf.
 
+**...and for its whole life before T2 (2026-08-25) it proved none of
+that**, because it booted the exterior host with no `class=` and the
+chargen wizard held townTalk's overlay slot: every
+`page.keyboard.press` went into a character-creation screen, so the
+Yes on the haggle offer never arrived and the probe reported "the
+commit did not charge" against a game that charged correctly. Its
+second lie was its own purse - 500,000 gold is 1250 kg at
+`goldPieceWeightInKg`, against a MaxEncumbrance near 90, so every sale
+correctly took ConfirmTrade's letter-of-credit branch and the probe
+asserted coins. It walks BOTH proceeds arms deliberately now, reading
+the window's own weighing rather than recomputing it. The same trap
+was found in FOURTEEN other probes and is gated in
+`test/probehygiene.test.js`.
+
 FLAGGED: the Identify SPELL arm (it pays in magicka and rolls per
 item) waits on the magic arc; the letter of credit is minted and
-carried but there is nowhere to cash one until banking lands; the
+carried but there is nowhere to cash one until banking lands (T2
+2026-08-25 closed the OTHER half of that clause - the letter was
+minted in SILENCE, where DFU announces it: `DaggerfallUI.MessageBox`
+on Internal_Strings' `letterOfCredit` at :1092-1093. Without the line
+the only signal reaching a player who sold something valuable while
+overloaded was gold that did not move, which reads as a sale that
+failed. The window raises it as a click-anywhere box over the still-
+open trade screen, which is DFU's own order: a bare `CloseWindow()`
+in a message-box handler pops the TOP window - the CONFIRM box, not
+the trade window, UserInterfaceWindow.cs:127-132); the
 wagon/info/select/steal buttons remain consumed no-ops; and a
 guild-run shop passes `guildFactionId: null`, so Tales and Tallow
 cannot yet fire - the guild-store arm is its own slice.

@@ -6,6 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { NativeTradeWindow, TRADE_RECTS, LIST_SLOTS, SLOT_H, CELL_W, CELL_X, ARROW_H, DOWN_ARROW_Y } from '../src/ui/nativeTrade.js';
+import { LETTER_OF_CREDIT_TEXT } from '../src/systems/tradeModes.js';
 import { FNT_ASCII_START } from '../src/formats/fntFile.js';
 import { preloadTradeArt, tradeArtLoaded } from '../src/ui/nativeTrade.js';
 import { DFPalette } from '../src/formats/dfPalette.js';
@@ -27,8 +28,8 @@ const hooks = (mode = 'Buy') => {
     gold: () => gold,
     rows: (id) => [{ text: `#${id}`, center: true }],
     weight: () => ({ carriedWeightKg: 0, maxEncumbranceKg: 1e9 }),
-    commit: (m, staged, price) => {
-      committed.push({ m, n: staged.length, price });
+    commit: (m, staged, price, proceeds) => {
+      committed.push({ m, n: staged.length, price, proceeds });
       gold += (m === 'Sell' || m === 'SellMagic') ? price : -price;
       for (const it of staged) {
         const from = m === 'Buy' ? shelf : bag;
@@ -159,6 +160,52 @@ test('U40: in SELL mode the REMOTE list is what you have staged, and it starts e
   w.input('KeyY');
   assert.equal(h.committed[0].m, 'Sell');
   assert.ok(h.gold() > 100000, 'a sale PAYS the player');
+});
+
+test('T2: an overloaded seller is PAID IN PARCHMENT, and is told so (:1039-1048, :1092-1093)', () => {
+  // The law: the proceeds are weighed BEFORE they are paid, and a
+  // purse that would push the player past MaxEncumbrance becomes a
+  // letter of credit for the full amount instead. The port has
+  // minted the letter since U40 and scratched the right sound since
+  // U40 - it never SAID anything, so the only signal reaching a
+  // player who sold something valuable while overloaded was gold that
+  // did not move.
+  const h = hooks('Sell');
+  h.weight = () => ({ carriedWeightKg: 100, maxEncumbranceKg: 100 });   // full to the brim
+  const w = new NativeTradeWindow(h);
+  w.click(...LOCAL_SLOT0);
+  w.click(226 + 15, 134 + 7);            // the mode action raises the offer
+  assert.equal(w.box?.buttons, 'YesNo', 'no offer to accept');
+  w.input('KeyY');
+  assert.equal(h.committed.length, 1, 'the deal did not conclude');
+  assert.equal(h.committed[0].proceeds?.kind, 'letterOfCredit',
+    'the host was not told the proceeds were parchment');
+  // ...and the window says so, in a click-anywhere box over the
+  // still-open trade screen (DFU pops the CONFIRM box, not the trade
+  // window - UserInterfaceWindow.cs:127-132)
+  assert.ok(w.box, 'the letter was minted in silence');
+  assert.equal(w.box.buttons, null, 'the announcement is click-anywhere, not a question');
+  // the LITERAL, not the constant. Comparing the box against the same
+  // export the box is built from passes however the string drifts -
+  // this line is the port's copy of Internal_Strings.csv:824, so it
+  // has to carry the words.
+  assert.equal(w.box.rows[0].text, 'You are paid with a letter of credit.');
+  assert.equal(LETTER_OF_CREDIT_TEXT, 'You are paid with a letter of credit.');
+  assert.ok(!w.done, 'the trade window closed - DFU pops the CONFIRM box and keeps the trade screen up');
+  // one more click dismisses it and leaves the window usable
+  w.click(160, 100);
+  assert.equal(w.box, null, 'the announcement will not go away');
+});
+
+test('T2: a seller with room is paid in COINS and told nothing - the box is the letter\'s alone', () => {
+  const h = hooks('Sell');
+  h.weight = () => ({ carriedWeightKg: 0, maxEncumbranceKg: 1e9 });
+  const w = new NativeTradeWindow(h);
+  w.click(...LOCAL_SLOT0);
+  w.click(226 + 15, 134 + 7);
+  w.input('KeyY');
+  assert.equal(h.committed[0].proceeds?.kind, 'gold');
+  assert.equal(w.box, null, 'a coin sale raised a box it has no line for');
 });
 
 test('U40: a buyer who cannot pay gets a box and no Yes/No (:1116-1124)', () => {

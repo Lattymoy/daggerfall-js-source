@@ -3013,6 +3013,12 @@ export function createWorldModes(host) {
         local: w.localList().length,
         localNames: w.localList().map((i) => i.name),   // X11c: a probe cannot aim at art, and slot 0 is rarely the one it means
         priceCtx: (() => { const c = w.hooks.priceCtx(); return { quality: c.quality, holidayId: c.holidayId, guildFactionId: c.guildFactionId }; })(),
+        // T2: the window's OWN weighing input - what ConfirmTrade's
+        // sell arm tests the proceeds against (:1039). Without it a
+        // probe cannot tell a sale that refused to pay from a sale
+        // correctly paid in parchment, and tools/tradeModeProbe.mjs
+        // spent its whole life reporting the first for the second.
+        weight: w.hooks.weight?.() ?? null,
         cost: w.cost(),
         usingIdentifySpell: !!w.hooks.usingIdentifySpell,   // X11c
         box: w.box ? { buttons: w.box.buttons, rows: w.box.rows?.map((r) => r.text ?? r) } : null,   // X11c: the confirmation the deal raises

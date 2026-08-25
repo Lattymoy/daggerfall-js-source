@@ -296,8 +296,8 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:2786` - too. FLAGGED: interior loot containers are the loot arc's -
 - `src/scenes/worldModes.js:2928` - string is the seam that was a FLAGGED null until this slice,
 - `src/scenes/worldModes.js:3003` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:3286` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
-- `src/scenes/worldModes.js:3707` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
+- `src/scenes/worldModes.js:3292` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
+- `src/scenes/worldModes.js:3713` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
@@ -365,7 +365,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/tavern.js:195` - FLAGGED, with the slices they wait on:
 - `src/systems/tradeModes.js:4` - U8c shipped the shop screen in BUY mode only, and said so: "FLAGGED
 - `src/systems/tradeModes.js:127` - *  destination has been a FLAGGED null, so the mode could not be
-- `src/systems/tradeModes.js:368` - FLAGGED, with the slices they wait on:
+- `src/systems/tradeModes.js:376` - FLAGGED, with the slices they wait on:
 - `src/systems/useItem.js:275` - lantern's and refuses when it would overflow. FLAGGED: DFU
 - `src/ui/automapWindow.js:20` - portals stay FLAGGED (systems/automap.js keeps the list); A2
 - `src/ui/bankPurchaseWindow.js:17` - FLAGGED, and it is presentation rather than function: the 104x91
