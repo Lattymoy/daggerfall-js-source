@@ -61,6 +61,11 @@ body is, then the face is layered per race at runtime from `FACE*.CIF`.
   its image linearly across that arc - two silhouette edges, no axis, no scale,
   and every view's content lands in its own sector BY CONSTRUCTION. Chord
   mapping put the moustache on the EAR.
+- **A metric that improves while the picture degrades is the wrong metric.** An
+  axis correction took mean centring offset from 0.0146 to 0.0055 and made every
+  one of the ten faces visibly worse - shifting the mapping centre per row
+  without moving the scale with it SHEARS the image, and a centroid cannot see
+  shear. Instrument to FIND a cause; look at the render to CONFIRM a fix.
 - **Instrument the loop, do not reason about the picture.** Every one of the
   above took one dump of actual sampled rows and columns to find, and several
   rounds of theorising before that dump to get around to.
