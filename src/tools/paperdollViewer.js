@@ -270,22 +270,27 @@ let skinI = null, skinTexCanvas = null, skinTex = null, skinLayout = null;
 // own generated turnarounds (tools/skin/head_bake.py) - no ARENA2, so they
 // ship. Each face also implies its own body ramp, because the ten are not one
 // skin tone (lit skin R 161..209), and the head is the authority on that.
-let headCells = null, skinRamps = null, headPick = 0;
+let headCells = null, skinRamps = null, headPick = 0, headRace = null;
+const HEAD_SET = { Breton: 'breton', Redguard: 'redguard' };   // races baked so far
 async function loadHeads() {
+  const key = HEAD_SET[RACES[raceIx]];
+  if (!key) { headCells = null; skinRamps = null; headRace = null; applyTone(); return; }
+  if (headRace === key) return;                                // already loaded
+  headRace = key;
   try {
-    skinRamps = await fetch('./skin/breton-skin-ramps.json').then((r) => r.ok ? r.json() : null);
+    skinRamps = await fetch(`./skin/${key}-skin-ramps.json`).then((r) => r.ok ? r.json() : null);
   } catch { skinRamps = null; }
-  headCells = [];
+  const cells = [];
   for (let i = 0; i < 10; i++) {
     try {
-      headCells.push(await new Promise((res, rej) => {
+      cells.push(await new Promise((res, rej) => {
         const im = new Image(); im.onload = () => res(im); im.onerror = rej;
-        im.src = `./skin/heads/breton-${i}.png`;
+        im.src = `./skin/heads/${key}-${i}.png`;
       }));
     } catch { break; }
   }
-  if (!headCells.length) headCells = null;
-  applyTone();
+  headCells = cells.length ? cells : null;
+  if (headRace === key) applyTone();                           // a later race may have won
 }
 async function loadSkin() {
   try {
@@ -760,7 +765,7 @@ function applyTone() {
     setBodySkin(e.ramp); // the six human/elf skin tones
   }
 }
-const syncHair = () => { const R = RACES[raceIx]; applyTone(); loadFaceSet(); for (const rr of RACES) { const h = raceHair[rr]; if (h) for (const st of h.styles) h.meshes[st].visible = false; } const m = curHair(); if (m) m.visible = !helmOn(); if (tailMesh) tailMesh.visible = (RACES[raceIx] === 'Argonian'); if (tailCatMesh) tailCatMesh.visible = (RACES[raceIx] === 'Khajiit'); if (bodyScalesMesh) bodyScalesMesh.visible = (RACES[raceIx] === 'Argonian'); if (bodyFurCoat) bodyFurCoat.visible = (RACES[raceIx] === 'Khajiit'); if (bodyFurBelly) bodyFurBelly.visible = (RACES[raceIx] === 'Khajiit'); }; // per-race body detail
+const syncHair = () => { const R = RACES[raceIx]; applyTone(); loadFaceSet(); loadHeads(); for (const rr of RACES) { const h = raceHair[rr]; if (h) for (const st of h.styles) h.meshes[st].visible = false; } const m = curHair(); if (m) m.visible = !helmOn(); if (tailMesh) tailMesh.visible = (RACES[raceIx] === 'Argonian'); if (tailCatMesh) tailCatMesh.visible = (RACES[raceIx] === 'Khajiit'); if (bodyScalesMesh) bodyScalesMesh.visible = (RACES[raceIx] === 'Argonian'); if (bodyFurCoat) bodyFurCoat.visible = (RACES[raceIx] === 'Khajiit'); if (bodyFurBelly) bodyFurBelly.visible = (RACES[raceIx] === 'Khajiit'); }; // per-race body detail
 window.__face = (i) => { facePick = ((i % 10) + 10) % 10; applyTone(); };
 window.__head = (i) => { headPick = ((i % 10) + 10) % 10; applyTone(); };
 window.__gender = (g) => { gender = (g === 'female') ? 'female' : 'male'; facePick = 0; loadFaceSet(); };
