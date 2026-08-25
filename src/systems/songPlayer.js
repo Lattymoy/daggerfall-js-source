@@ -80,6 +80,69 @@ export function applyChannelEvents(state, events) {
   return state;
 }
 
+/**
+ * CC64 SUSTAIN PEDAL - the per-channel intervals the pedal is DOWN.
+ *
+ * AUDIT (2026-08-25): 593 pedal events across the archive were being
+ * dropped, so every note released on its own duration and nothing ever
+ * rang on. It is the only ignored controller that changes what you
+ * hear: CC123/CC121 matter to a MIDI device that must be told to stop,
+ * and this scheduler cannot hang a note in the first place, because an
+ * HMI note-on carries its own duration and the voice is given an
+ * explicit stop time.
+ *
+ * Pure, and computed from the WHOLE event list rather than a live flag,
+ * because the scheduler works a lookahead window at a time: a note
+ * scheduled now may need to ring past the end of the window, and only
+ * the full stream knows when the pedal comes up.
+ *
+ * MIDI's threshold is 64 - below is up, 64 and above is down. A pedal
+ * left down at the end of the song closes at Infinity, so the last
+ * chord rings to the loop rather than being cut by a missing up.
+ */
+export function sustainIntervals(events) {
+  const byChannel = new Map();
+  const open = new Map();
+  for (const e of events ?? []) {
+    if (e.type !== 'controller' || e.controller !== 64 || e.channel == null) continue;
+    const down = e.value >= 64;
+    if (down) {
+      if (!open.has(e.channel)) open.set(e.channel, e.tick);
+    } else if (open.has(e.channel)) {
+      if (!byChannel.has(e.channel)) byChannel.set(e.channel, []);
+      byChannel.get(e.channel).push([open.get(e.channel), e.tick]);
+      open.delete(e.channel);
+    }
+  }
+  for (const [ch, tick] of open) {
+    if (!byChannel.has(ch)) byChannel.set(ch, []);
+    byChannel.get(ch).push([tick, Infinity]);
+  }
+  return byChannel;
+}
+
+/**
+ * How long a note actually sounds, in TICKS, given the pedal.
+ *
+ * A note whose own end falls while the pedal is down rings until the
+ * pedal lifts. A note that ends before the pedal goes down, or after it
+ * lifts, is untouched - the pedal never SHORTENS anything.
+ */
+export function sustainedDuration(startTick, durationTicks, intervals) {
+  const end = startTick + durationTicks;
+  for (const [down, up] of intervals ?? []) {
+    // No Math.max here, and it is not an oversight: the guard `end < up`
+    // IS `startTick + durationTicks < up`, so `up - startTick` is
+    // already strictly greater than durationTicks whenever this branch
+    // is taken. A max() would be dead code - it was there, a mutation
+    // proved it could never fire, and it is gone rather than left
+    // looking like a safeguard. The pedal cannot shorten a note because
+    // a note ending outside the interval never reaches this line.
+    if (end >= down && end < up) return up - startTick;
+  }
+  return durationTicks;
+}
+
 /** A fresh 16-channel state. CC7 defaults to full: a song that never
  *  sends a volume must not be silent. */
 export function freshChannelState() {
@@ -118,6 +181,9 @@ export class SongPlayer {
     this.stop();
     this._ensureMaster();
     this.song = song;
+    // Computed once per song, not per window: the pedal map is a pure
+    // function of the event list and the scheduler re-enters constantly.
+    this._sustain = sustainIntervals(song.events);
     this.playing = true;
     this._state = freshChannelState();
     this._resyncChannelGains();   // audio-4: a new song starts at full channel volume
@@ -180,7 +246,7 @@ export class SongPlayer {
         if (e.type !== 'noteOn') this._control(e, this._originTime + e.tick * secondsPerTick);
         if (e.type !== 'noteOn' || !e.velocity) continue;
         this._voice(e, this._originTime + e.tick * secondsPerTick,
-          (e.duration || 0) * secondsPerTick);
+          sustainedDuration(e.tick, e.duration || 0, this._sustain?.get(e.channel)) * secondsPerTick);
       }
       this._cursorTick = toTick;
     }
@@ -239,8 +305,15 @@ export class SongPlayer {
         node = ctx.createOscillator();
         node.type = 'sine';
         node.frequency.setValueAtTime(spec.hz, when);
-        // A drum's pitch drop is what makes it read as a drum.
-        node.frequency.exponentialRampToValueAtTime(spec.hz * 0.5, when + spec.decay);
+        // A drum's pitch drop is what makes it read as a drum - and
+        // holding pitch is what makes a triangle, cowbell, claves or
+        // agogo read as ITSELF. `drop` is the multiple the pitch falls
+        // to over the decay; 1 holds. exponentialRamp cannot take an
+        // equal value without warning on some engines, so a held pitch
+        // simply schedules nothing further.
+        if (spec.drop !== 1) {
+          node.frequency.exponentialRampToValueAtTime(spec.hz * spec.drop, when + spec.decay);
+        }
         node.connect(gain);
       }
       const peak = amp * spec.gain;

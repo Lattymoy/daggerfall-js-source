@@ -581,6 +581,215 @@ test('AUDIT 19: the GM PERCUSSION KEY MAP is spec, and is held to it', async () 
   for (const k of [38, 40, 42, 46, 49, 51]) assert.equal(percussionSpec(k).kind, 'noise', `key ${k}`);
   // Hi-hats: closed must ring SHORTER than open, or the groove inverts.
   assert.ok(percussionSpec(42).decay < percussionSpec(46).decay, 'closed hat is shorter than open');
+
+  // AUDIT 2026-08-25: THE MAP RUNS 35..87, and the whole point is that
+  // no note inside it resolves to a NEIGHBOUR. It used to stop at 51,
+  // and percussionSpec resolves by nearest neighbour, so every key
+  // above it answered as the ride cymbal - measured over the real
+  // archive, 25 of the 30 drum notes in use and 14,000+ hits were one
+  // sound. Each key owning ITSELF is the law; what it sounds like is
+  // still ours.
+  for (let k = 35; k <= 87; k++) {
+    assert.equal(percussionSpec(k).note, k, `GM key ${k} must own itself, not borrow a neighbour`);
+  }
+  // ...and OUTSIDE the map the nearest-neighbour fallback still stands,
+  // because a key with no sound is worse than an approximate one.
+  assert.equal(percussionSpec(34).note, 35);
+  assert.equal(percussionSpec(120).note, 87);
+});
+
+test('AUDIT 2026-08-25: the archive\'s own drums land on 30 SOUNDS, not one', { skip: skipReal }, () => {
+  // THE MEASUREMENT THAT FOUND THE DEFECT, kept as the pin that proves
+  // it stays fixed. A synthetic fixture cannot see this: the map looked
+  // reasonable in isolation and only the real archive shows that
+  // Daggerfall's percussion sits almost entirely ABOVE where the table
+  // used to stop. Before: 30 notes in use, 5 distinct sounds, and 25 of
+  // them - 14,000+ hits - all the ride cymbal.
+  const archive = new MidiBsaFile();
+  assert.equal(archive.load(new Uint8Array(readFileSync(join(ARENA2, 'MIDI.BSA')))), true);
+
+  const notes = new Map();
+  for (let i = 0; i < archive.count; i++) {
+    let song;
+    try { song = archive.getSong(i); } catch { continue; }
+    for (const e of song.events) {
+      if (e.type === 'noteOn' && e.channel === PERCUSSION_CHANNEL) {
+        notes.set(e.note, (notes.get(e.note) ?? 0) + 1);
+      }
+    }
+  }
+  assert.ok(notes.size >= 25, `the archive should use a wide kit, saw ${notes.size} notes`);
+
+  // Group by SOUND - dropping `key`, which carries the note identity and
+  // would make every spec unique whatever it resolved to. That mistake
+  // is why the first measurement of this reported 30 sounds when there
+  // were 5, so the pin spells it out.
+  const groups = new Map();
+  for (const note of notes.keys()) {
+    const { key, ...spec } = percussionSpec(note);
+    const id = JSON.stringify(spec);
+    if (!groups.has(id)) groups.set(id, []);
+    groups.get(id).push(note);
+  }
+  const collided = [...groups.values()].filter((g) => g.length > 1);
+  assert.deepEqual(collided, [],
+    `these notes share one sound: ${collided.map((g) => g.join('+')).join(', ')}`);
+  assert.equal(groups.size, notes.size, 'every note the archive plays has a sound of its own');
+});
+
+test('AUDIT 2026-08-25: articulation beats family, where the two disagree', async () => {
+  const { fmSpec } = await import('../src/systems/gmSynth.js');
+  // fmSpec resolves a family with `program >> 3`, so eight programs
+  // share one voice. That is a fair BASE - GM groups mostly by timbre -
+  // but it collapsed pairs whose articulation is opposite, and
+  // articulation is what the ear names an instrument by. Harp and
+  // timpani both sat in `strings` and came out bowed: one is plucked and
+  // rings, the other is struck and thuds.
+  //
+  // The pin is STRUCTURAL, as this module requires: not "a harp sounds
+  // like X" but "a plucked thing must not have a bowed envelope".
+  const bowed = fmSpec(40);          // violin - the family's own shape
+  for (const p of [45, 46, 47]) {    // pizzicato, harp, timpani
+    const v = fmSpec(p);
+    assert.equal(v.family, 'strings', `${p} is still IN the strings family`);
+    assert.ok(v.attack < bowed.attack / 10, `${p} must start immediately, not swell like a bow`);
+    assert.ok(v.sustain < bowed.sustain / 5, `${p} must decay away, not hold like a bow`);
+  }
+  const pad = fmSpec(48);            // string ensemble - a slow pad
+  const hit = fmSpec(55);            // orchestra hit - a stab
+  assert.ok(hit.attack < pad.attack / 10 && hit.sustain < pad.sustain / 5, 'a hit is not a pad');
+
+  // The one envelope that runs BACKWARDS stays backwards.
+  const reverse = fmSpec(119);
+  assert.ok(reverse.attack > reverse.decay, 'a reverse cymbal swells rather than strikes');
+
+  // An override REPLACES only what it restates - a listed program keeps
+  // every other field from its family, or each override becomes a
+  // partial voice with holes in it.
+  const harp = fmSpec(46);
+  assert.equal(harp.car, fmSpec(40).car);
+  assert.equal(harp.gain, fmSpec(40).gain, 'gain was never overridden for 46');
+
+  // EVERY program still resolves to a complete, finite voice - the
+  // override merge must not be able to emit NaN into the audio graph.
+  for (let p = 0; p < 128; p++) {
+    const v = fmSpec(p);
+    for (const k of ['car', 'mod', 'index', 'idxDecay', 'attack', 'decay', 'sustain', 'release', 'gain']) {
+      assert.ok(Number.isFinite(v[k]), `program ${p} has a non-finite ${k}`);
+    }
+    assert.ok(v.attack >= 0 && v.decay > 0 && v.release > 0);
+    assert.ok(v.sustain >= 0 && v.sustain <= 1);
+    assert.ok(v.gain > 0 && v.gain <= 1);
+  }
+});
+
+test('AUDIT 2026-08-25: the SUSTAIN PEDAL, which was being dropped entirely', async () => {
+  const { sustainIntervals, sustainedDuration } = await import('../src/systems/songPlayer.js');
+  const cc = (tick, value, channel = 0) => ({ type: 'controller', controller: 64, tick, value, channel });
+
+  // MIDI's threshold is 64: below is up, 64 and above is down. Not 63,
+  // not 65 - a wrong threshold makes half the pedal marks read backwards.
+  assert.deepEqual([...sustainIntervals([cc(0, 64), cc(10, 63)]).get(0)], [[0, 10]]);
+  assert.deepEqual([...sustainIntervals([cc(0, 63), cc(10, 0)]).values()], [], 'a 63 never presses');
+  assert.deepEqual([...sustainIntervals([cc(0, 127), cc(10, 0)]).get(0)], [[0, 10]]);
+
+  // A repeated press does NOT restart the interval - the pedal is already
+  // down, and re-opening it would cut the notes it is holding.
+  assert.deepEqual([...sustainIntervals([cc(0, 127), cc(5, 127), cc(10, 0)]).get(0)], [[0, 10]]);
+
+  // Left down at the end, it rings to the loop rather than being cut by
+  // an up that never comes.
+  assert.deepEqual([...sustainIntervals([cc(0, 127)]).get(0)], [[0, Infinity]]);
+
+  // ONLY CC64 IS THE PEDAL. Every fixture above is made of pedal events,
+  // so none of them could tell whether the controller number was checked
+  // at all - a mutation that treated EVERY controller as a pedal
+  // survived them. The archive sends 60,920 CC7s and 54,851 CC10s, so
+  // getting this wrong would make almost every volume and pan change
+  // press the sustain pedal.
+  const noisy = sustainIntervals([
+    { type: 'controller', controller: 7, tick: 0, value: 127, channel: 0 },
+    { type: 'controller', controller: 10, tick: 5, value: 100, channel: 0 },
+    { type: 'controller', controller: 1, tick: 8, value: 64, channel: 0 },
+    { type: 'programChange', tick: 9, program: 40, channel: 0 },
+  ]);
+  assert.equal(noisy.size, 0, 'nothing but CC64 presses the pedal');
+
+  // Channels are independent - one player's pedal is not another's.
+  const two = sustainIntervals([cc(0, 127, 1), cc(4, 127, 2), cc(8, 0, 1), cc(12, 0, 2)]);
+  assert.deepEqual([...two.get(1)], [[0, 8]]);
+  assert.deepEqual([...two.get(2)], [[4, 12]]);
+
+  // THE EXTENSION. A note whose own end falls while the pedal is down
+  // rings until it lifts; one that ends outside is untouched.
+  const held = [[100, 200]];
+  assert.equal(sustainedDuration(90, 20, held), 110, 'ends at 110, inside - rings to 200');
+  assert.equal(sustainedDuration(90, 5, held), 5, 'ends at 95, before the pedal - untouched');
+  assert.equal(sustainedDuration(210, 10, held), 10, 'ends after the pedal lifted - untouched');
+
+  // The boundaries, which is where an off-by-one would hide: a note
+  // ending exactly ON the press is caught, one ending exactly on the
+  // release is not - the pedal is already up by then.
+  assert.equal(sustainedDuration(50, 50, held), 150, 'end == down is inside');
+  assert.equal(sustainedDuration(100, 100, held), 100, 'end == up is outside, and unchanged');
+
+  // THE PEDAL NEVER SHORTENS - and the pin has to test the case that
+  // actually reaches the decision. A first draft used a note so long it
+  // ended past the pedal entirely, which returns early and proves
+  // nothing; a mutation that dropped the length guard survived it. The
+  // real law is that a note ending OUTSIDE the interval is returned
+  // untouched, whether it is longer or shorter than the pedal.
+  assert.equal(sustainedDuration(90, 500, held), 500, 'a note outstaying the pedal keeps its length');
+  assert.equal(sustainedDuration(0, 1000, held), 1000, 'and so does one that spans it entirely');
+  // Inside the interval the note always GROWS - `end < up` guarantees
+  // `up - startTick` exceeds the note's own duration, which is why the
+  // implementation needs no max().
+  for (const [st, d] of [[90, 20], [50, 50], [120, 10]]) {
+    const out = sustainedDuration(st, d, held);
+    assert.ok(out > d, `note at ${st} for ${d} must lengthen, got ${out}`);
+    assert.equal(out, 200 - st, 'and it rings to exactly where the pedal lifts');
+  }
+
+  // No pedal at all, and a channel with none, both leave the note alone.
+  assert.equal(sustainedDuration(0, 42, undefined), 42);
+  assert.equal(sustainedDuration(0, 42, []), 42);
+
+  // ...and the scheduler must actually USE it, computed ONCE per song
+  // rather than per lookahead window.
+  const src = readFileSync(new URL('../src/systems/songPlayer.js', import.meta.url), 'utf8');
+  assert.match(src, /sustainedDuration\(e\.tick, e\.duration \|\| 0, this\._sustain\?\.get\(e\.channel\)\)/);
+  assert.match(src, /this\._sustain = sustainIntervals\(song\.events\);/);
+  const play = src.slice(src.indexOf('  play(song) {'), src.indexOf('  stop() {'));
+  assert.match(play, /_sustain = sustainIntervals/, 'built in play(), not in the pump');
+});
+
+test('AUDIT 2026-08-25: pitched percussion HOLDS its note', () => {
+  // The tone path ramps pitch down to `hz * drop` over the decay, and a
+  // falling pitch is exactly what makes a drum read as a drum. It is
+  // also what stops a triangle reading as a triangle: struck metal and
+  // wood do not swoop. So `drop` is 1 for those and the kit keeps the
+  // full octave it always had.
+  for (const k of [53, 56, 67, 68, 71, 72, 75, 76, 77, 80, 81, 83]) {
+    assert.equal(percussionSpec(k).drop, 1, `key ${k} is struck metal or wood - it must hold pitch`);
+  }
+  for (const k of [35, 36, 41, 45, 47, 50]) {
+    assert.equal(percussionSpec(k).drop, 0.5, `key ${k} is a drum - it falls the full octave`);
+  }
+  // hand drums fall, but less than the kit
+  for (const k of [60, 61, 62, 63, 64]) {
+    const d = percussionSpec(k).drop;
+    assert.ok(d > 0.5 && d < 1, `key ${k} is a skinned hand drum - it falls a little`);
+  }
+  // EVERY key has one, in range, or the ramp emits NaN into the graph
+  for (let k = 0; k < 128; k++) {
+    const d = percussionSpec(k).drop;
+    assert.ok(Number.isFinite(d) && d > 0 && d <= 1, `key ${k} drop out of range: ${d}`);
+  }
+  // and the player must actually READ it - a table nothing consults is
+  // the dead-data shape this project keeps finding
+  const src = readFileSync(new URL('../src/systems/songPlayer.js', import.meta.url), 'utf8');
+  assert.match(src, /spec\.hz \* spec\.drop/);
+  assert.match(src, /if \(spec\.drop !== 1\)/, 'a held pitch schedules no ramp at all');
 });
 
 test('AUDIT 19: MIDI has sixteen channels, and percussion is one of them', async () => {

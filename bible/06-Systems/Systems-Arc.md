@@ -3559,3 +3559,76 @@ persecuted temple, crime wave, witch burnings and the new-ruler roll.
 predicate are exercised by their pins and by nothing in `src/` yet,
 which is a gap this arc closes in its next slice and not a defect to be
 discovered later.
+
+## AUDIO AUDIT - the music "just seemed off", and it was (2026-08-25)
+
+Reported by ear, confirmed by measurement, and all three findings were
+in the VOICE BANK rather than the data path. That distinction is the
+first useful thing the audit produced: `hmiFile.js` decodes MIDI.BSA
+byte-exactly and `songManager.js` carries DFU's tables verbatim, so
+nothing here is a parity bug against DFU - the bank is Ledger A, ours,
+and it was ours that was wrong.
+
+**THE DRUM MAP STOPPED AT NOTE 51.** `percussionSpec` resolves by
+NEAREST NEIGHBOUR, so every key above the table's last entry answered
+as the ride cymbal. In isolation the table looked reasonable; against
+the real archive it was catastrophic, because **Daggerfall's percussion
+is hand drums and bells, not a rock kit** - tambourine 3,364 hits,
+jingle bell 2,561, congas 3,874, claves 919, agogo 650, every one of
+them above 51. Twenty-five of the thirty drum notes in use, over 14,000
+hits, played one wash of cymbal. The entire rhythm section of the
+soundtrack was a monotone.
+
+Only real data could show this, which is why the measurement is kept as
+an ARENA2-gated pin rather than thrown away: the archive's own notes
+must land on as many distinct sounds as there are notes.
+
+`drop` came out of the same fix and is not merely a longer list. The
+tone path ramps pitch down over the decay, and a falling pitch is what
+makes a drum read as a drum - it is also what stops a triangle,
+cowbell, claves or agogo reading as itself. Struck metal and wood hold
+pitch; skinned hand drums fall a little; the kit keeps the full octave
+it always had.
+
+**ARTICULATION BEATS FAMILY.** `fmSpec` resolves a voice with
+`program >> 3`, which is a fair base - GM groups mostly by timbre - but
+it collapses pairs whose articulation is opposite, and articulation is
+what the ear names an instrument by. A harp and a timpani both sat in
+`strings` and came out BOWED: one is plucked and rings, the other is
+struck and thuds, and neither is bowed. Eight programs the archive
+actually plays now override their family, and only where the family is
+wrong about HOW the note is made rather than merely about its colour.
+
+**THE SUSTAIN PEDAL WAS DROPPED ENTIRELY** - 593 CC64 events - and it
+is the ONLY ignored controller that changes what is heard. CC123 and
+CC121 matter to a MIDI device that must be told to stop; this scheduler
+cannot hang a note, because an HMI note-on carries its own duration and
+the voice is given an explicit stop time. The pedal is computed from
+the whole event list rather than a live flag, because a note scheduled
+now may need to ring past the end of the lookahead window.
+
+**TWO MUTANTS PROVED THE FIX HAD DEAD CODE.**
+`Math.max(durationTicks, up - startTick)` can never pick its first
+argument: the guard `end < up` already means the second is larger. It
+was removed rather than left looking like a safeguard, and the
+never-shortens pin was re-aimed at the case that actually reaches the
+decision - the first draft used a note so long it returned early and
+proved nothing. A third mutant showed every pedal fixture was made of
+CC64 events, so none of them could tell whether the controller number
+was checked at all; the archive sends 60,920 CC7s and 54,851 CC10s, and
+without that check every one of them would press the pedal.
+
+**CLEARED WITH EVIDENCE**, recorded so nobody re-chases them: zero
+tempo meta events across all 131 songs, so the constant
+`secondsPerTick` and the comment claiming it are both honest; CC105's
+2,572 events are exactly 1,286 ones and 1,286 zeros against an archive
+of 1,286 tracks, making it a per-track HMI marker rather than music;
+no RPN 0,0 anywhere, so the hardcoded two-semitone bend range is right;
+and CC10 does reach a real StereoPanner.
+
+STILL OUT, and honestly the ceiling on all of this: oscillators are the
+least good-sounding answer available, kept because they ship nothing
+and ask for nothing. The bank stays behind `voiceSpec` and
+`percussionSpec` precisely so an SF2 or sample set replaces it without
+touching the scheduler - and now that M-EXT exists, a player-supplied
+soundfont is the obvious next slice.
