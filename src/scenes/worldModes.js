@@ -58,6 +58,7 @@ import { fetchBytes, applyMotorEffectFlags, applyFallLanding, ridePlatform } fro
 import { setDeathPresenter, hurtPlayer } from '../characters/playerEntity.js';   // AUDIT 21 hosts F6; AUDIT 23 C5 fatal collapse
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying in a building
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the HUD vanished inside buildings
+import { largeHudOptions, routeLargeHudClick } from '../ui/hudLarge.js';   // U45: the classic bottom bar and its eleven panels
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
 // E2: the shop shelf browse/buy layer (node-pure laws in shopStock.js)
 import { ChoiceWindow } from '../ui/talkWindow.js';
@@ -90,6 +91,7 @@ import { getTitle } from '../systems/guilds.js';
 import { getDivine, DIVINES } from '../systems/guildVariants.js';
 import { BUILDING_TYPES, isResidence } from '../world/buildingNames.js';
 import { getInteractionMode } from '../player/interactionMode.js';   // R1: PlayerActivate.currentMode, the one home
+import { bindCursorToggle } from '../player/pointerLock.js';   // U45: PlayerMouseLook.cursorActive
 import { buildingIsUnlocked, buildingLockValue, LOCKED_EXTERIOR_DOOR_TEXT } from '../systems/buildingLocks.js';   // R1: opening hours + the unlocked ladder
 import { exteriorLockpickingChance, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT } from '../world/actionSystem.js';
 import { discoverBuilding, getLastLockpickAttempt, setLastLockpickAttempt } from '../systems/discovery.js';
@@ -217,24 +219,35 @@ export function createWorldModes(host) {
     if (mode === 'exterior' && prevDeathPresenter) return prevDeathPresenter();
     presentInteriorDeath();
   });
+  // U45 - A LIVE BOOT CRASH, fixed by moving two declarations up.
+  // `say` was READ here, in createPlayerTicker's options object, and
+  // declared with `const` forty lines below - a temporal dead zone,
+  // so createWorldModes threw `Cannot access 'say' before
+  // initialization` on its first statement and bootExterior died with
+  // it. The exterior host did not boot AT ALL. This is the third
+  // instance of AUDIT 24 wave 37's shape (a reference above its own
+  // declaration) and the first that was not merely latent, so the
+  // wave-37 gate now covers this host too.
+  //
+  // The host destructure moves with it, because `say` closes over
+  // `townTalk`. It reads only the function's own argument, so it is
+  // safe anywhere inside the body.
+  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null, discoveryLocationId = null } = host;   // R1: the discovery store's location key (the anti-grind record's namespace)   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
   // U43-ii: the interior HUD-text layer is the OUTER host's, and
   // always was - townTalk's hud draws above the modal render. The
   // "pends its arc" flag was a line of plumbing: a broken weapon, a
   // fatigue warning and a level-up all spoke to devtools while the
   // player stood in a shop with a HUD on screen.
   //
-  // V4: DECLARED HERE, AND IT HAS TO BE. This sat below, after the
-  // `host` destructuring - and the interiorTicker two lines down takes
-  // `say` as a dep, so reading it hit the const's temporal dead zone
-  // and createWorldModes threw `Cannot access 'say' before
-  // initialization` on the FIRST LINE OF THE GAME. Nothing caught it:
-  // a TDZ is legal syntax, so lint and the vite build both pass, and
-  // no test executes this constructor. The first-hour probe found it
-  // the only way it can be found - by starting the game, which never
-  // reached a mode. It reads `host.townTalk` rather than the
-  // destructured binding for the same reason: that destructuring also
-  // happens below.
-  const say = (l) => { if (host.townTalk?.say) host.townTalk.say(l); else console.warn('[interior]', l); };
+  // V4 found this one LIVE, which is the part worth keeping: the
+  // first-hour probe started a new game and sat at `mode null` for
+  // 420 seconds. Lint, the vite build and all 3005 tests were green
+  // on it - a TDZ is legal syntax, the identifier IS bound, and
+  // nothing in the suite executes a host constructor. test/tdz.test.js
+  // is the gate for the whole class now: it parses src/ with rollup's
+  // own parseAst and reports any const or let read in the SAME
+  // execution scope as, and before, its declaration.
+  const say = (l) => { if (townTalk?.say) townTalk.say(l); else console.warn('[interior]', l); };
   const interiorTicker = createPlayerTicker(playerEntity, {
     onExhausted: onExhaustedInterior,   // AUDIT 23 (C5)
     say,
@@ -243,7 +256,6 @@ export function createWorldModes(host) {
       if (!interiorOverlay) interiorOverlay = new LevelUpScreen(playerEntity);
     },
   });
-  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null, discoveryLocationId = null } = host;   // R1: the discovery store's location key (the anti-grind record's namespace)   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
 
   // V1: the infection's host seam (THE FOUR HOSTS RULE). The interior
   // host borrows the exterior's townTalk for FACTION.TXT and TEXT.RSC,
@@ -2488,7 +2500,8 @@ export function createWorldModes(host) {
       const _detected = detectFeed.tick(dt);
       drawHud(renderer, canvas, hudArt, playerEntity,
         ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt,
-        { detected: _detected, playerXZ: [player.pos[0], player.pos[2]] });
+        { detected: _detected, playerXZ: [player.pos[0], player.pos[2]],
+          largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity) });   // U45
     }
     // MERGE AUDIT: the interior arm SAYS things - the static-NPC and
     // guild fallthroughs at :362/:368/:416 all speak through
@@ -2885,6 +2898,8 @@ export function createWorldModes(host) {
   // C8 E3c: RMB drag-to-swing forwarded to the active dungeon context
   // (the shared machine consumes deltas once per frame). contextmenu
   // suppressed so the right button is a weapon control, as classic.
+  // U45: Actions.ActivateCursor (Enter) frees the mouse during play.
+  bindCursorToggle(canvas, () => (mode === 'dungeon' ? !!dungeonCtx?.uiOverlayActive : !!interiorOverlay), actionOf);
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   // C9: interior mode routes the same RMB seam to its weapon rig.
   const modalAttackSink = () =>
@@ -3015,6 +3030,14 @@ export function createWorldModes(host) {
     // window with no click handler must still withhold the pointer
     // (DFU's top window consumes the click), or a pointerdown escapes
     // to requestLook and grabs pointer lock from under the menu.
+    // U45: the large HUD's panels, in BOTH of this host's modes and
+    // before either falls through to the world. Each mode's ctx is the
+    // one U43's dispatch already built - dungeonCtx below ground,
+    // interiorKeyCtx inside a building - so a panel and a key reach
+    // the same door here too, and there is no third object.
+    if (routeLargeHudClick(px, py, e.button,
+      mode === 'dungeon' ? dungeonCtx : interiorKeyCtx,
+      { windowUp: mode === 'dungeon' ? !!dungeonCtx?.uiOverlayActive : !!interiorOverlay })) return true;
     if (mode !== 'interior' || !interiorOverlay) return false;
     const v = pointToNative(nativeMetrics(canvas), px, py);
     if (v) interiorOverlay.click?.(v[0], v[1], e.button === 2);   // I4: the remove gesture rides the button

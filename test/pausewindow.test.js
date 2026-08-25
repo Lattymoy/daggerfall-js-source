@@ -122,10 +122,18 @@ test('I3: the wiring - four hosts, one Escape door each, art preloaded', () => {
   // routeKey's Escape case covers the two dungeon contexts
   assert.match(code('ui/input.js'), /case 'Escape': return ctx\.togglePause/);
   assert.match(code('scenes/dungeonContext.js'), /togglePause\(setPlayerPos = null\)/);
-  // the exterior hosts hand-route, gated exactly like their siblings
+  // The exterior hosts hand-route. U43 moved the overlay/mode gate up
+  // to cover the whole ladder at once - the same ladder the large HUD's
+  // panels now reach through hudCtx - so the Escape ARM is inside that
+  // gate rather than carrying its own copy, and the pin follows it.
   for (const rel of ['scenes/world.js', 'scenes/exterior.js']) {
-    assert.match(code(rel), /act === 'Escape' && !townTalk\.overlayActive/, `${rel} opens on Escape`);
-    assert.match(code(rel), /preloadPauseFlowArt\(/, `${rel} warms the art`);
+    const src = code(rel);
+    const gate = src.indexOf("if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {");
+    assert.ok(gate > 0, `${rel} gates its ladder on the overlay AND the mode`);
+    const arm = src.indexOf("if (act === 'Escape' && pauseArtLoaded()) { hudCtx.togglePause(); return; }");
+    assert.ok(arm > gate, `${rel} opens on Escape, inside that gate`);
+    assert.match(src, /togglePause: \(\) => \{/, `${rel} has exactly one pause door`);
+    assert.match(src, /preloadPauseFlowArt\(/, `${rel} warms the art`);
   }
   // the interior arm rides worldModes' own overlay slot. U43 moved it
   // onto routeKey's Escape case - the SAME door the two dungeon

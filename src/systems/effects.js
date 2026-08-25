@@ -274,6 +274,15 @@ export const isTransferAttribute = (e) => e.type === 11 && e.subType >= 0 && e.s
 export const isTransferHealth = (e) => e.type === 11 && e.subType === 8;
 export const isTransferFatigue = (e) => e.type === 11 && e.subType === 9;
 export const isHealFatigue = (e) => e.type === 10 && e.subType === 9;
+/** U44: HealSpellPoints, the ONE effect in DFU with no ClassicKey -
+ *  registered PotionMaker-only, no MagicSkill, no spell-book
+ *  description (HealSpellPoints.cs:21-30). No SPELLS.STD row can name
+ *  it, which is what the note above records. A POTION bundle can:
+ *  DFU builds one from EffectEntry(effect.Key, settings) - a STRING
+ *  key - so this effect travels under its own, and `type` stays -1
+ *  because there is no pair to carry. */
+export const HEAL_SPELL_POINTS_KEY = 'Heal-SpellPoints';
+export const isHealSpellPoints = (e) => e.key === HEAL_SPELL_POINTS_KEY;
 export const isDamageFatigue = (e) => e.type === 4 && e.subType === 1;
 export const isContinuousDamageFatigue = (e) => e.type === 1 && e.subType === 1;
 export const isRegenerate = (e) => e.type === 18 && classicSub(e) === 255;
@@ -479,7 +488,11 @@ function pushInstantMarker(target, kind, stat = null) {
  * Apply a spell to a target entity through the sinks:
  *   hurt(n)           - damage (the caller owns floors/death)
  *   heal(n)           - IncreaseHealth (the caller owns the max clamp)
- *   drainMagicka(n)   (restoreMagicka returns with potions/absorption - no classic spell key reaches it)
+ *   drainMagicka(n) / restoreMagicka(n) - U44: the restore half
+ *                     arrived with the POTIONS, exactly as this line
+ *                     predicted. No classic SPELL key reaches it;
+ *                     DFU's Heal-SpellPoints is potion-only and
+ *                     carries no ClassicKey at all.
  *   drainFatigue(n) / restoreFatigue(n)  - RAW fatigue points (the x64
  *                       is applied here; the caller owns the 0/max
  *                       clamps and the exhaustion consumer)
@@ -542,7 +555,10 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
   // entirely - `continue`, not a reduced magnitude.
   let totalAbsorbed = 0;
   for (const e of spell.effects) {
-    if (e.type <= -1) continue;
+    // U44: an entry with a string KEY is DFU's EffectEntry shape and
+    // has no classic pair to carry, so it rides with type -1. Every
+    // other -1 is the classic reader's empty-slot sentinel.
+    if (e.type <= -1 && !e.key) continue;
     // DFU requires a CASTER ENTITY on the bundle (:505) and
     // BundleType == Spell (:509). The port's applySpell is the spell
     // path only, so the caster check is the whole gate here; item and
@@ -705,6 +721,17 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       if (n > 0 && sinks.restoreFatigue) sinks.restoreFatigue(n * FATIGUE_MULTIPLIER);
       pushInstantMarker(target, 'healFatigue');
       out.fatigueHealed = (out.fatigueHealed ?? 0) + 1;
+      continue;
+    }
+    if (isHealSpellPoints(e)) {
+      // U44: HealSpellPoints.MagicRound - IncreaseMagicka(magnitude),
+      // and NO multiplier, where its fatigue sibling above carries the
+      // x64 (HealSpellPoints.cs:62-64). This is the `restoreMagicka
+      // returns with potions` the sink list has promised since S15.
+      const n = magnitude(e);
+      if (n > 0 && sinks.restoreMagicka) sinks.restoreMagicka(n);
+      pushInstantMarker(target, 'healSpellPoints');
+      out.magickaHealed = (out.magickaHealed ?? 0) + n;
       continue;
     }
     if (isDamageFatigue(e)) {
@@ -1230,6 +1257,7 @@ export function effectActiveIdentity(e) {
   if (isDamageSpellPoints(e)) return { kind: 'damageSpellPoints' };
   if (isHealHealth(e)) return { kind: 'healHealth' };
   if (isHealFatigue(e)) return { kind: 'healFatigue' };
+  if (isHealSpellPoints(e)) return { kind: 'healSpellPoints' };
   if (isHealAttribute(e)) return { kind: 'healAttribute', stat: STAT_KEYS_ORDER[e.subType] };
   if (isTransferHealth(e)) return { kind: 'transferHealth' };
   if (isTransferFatigue(e)) return { kind: 'transferFatigue' };

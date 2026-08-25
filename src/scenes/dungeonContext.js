@@ -32,6 +32,7 @@ import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: t
 // the duplicate pair here had nothing left to serve. AUDIT 17e F17's
 // point stands and is now made in ONE place instead of two.
 import { loadHud, drawHud, hudScale as hudScaleFor } from '../ui/hud.js';
+import { largeHudOptions } from '../ui/hudLarge.js';   // U45: the classic bottom bar
 import { drawText, makeFont } from '../ui/text.js';
 import { HudText } from '../ui/hudText.js';
 import { FntFile } from '../formats/fntFile.js';
@@ -783,6 +784,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // (DaggerfallInventoryWindow.cs:1748-1764). The inventory has
       // just run its own close law, so the slot is free.
       openSpellbook: () => { const b = makeSpellbookWindow(); if (b) activeOverlay = b; },
+      drinkPotion: (key) => magic.drinkPotion(key),   // U44: DrinkPotion through the ONE cast engine
+      // U44: no reveal seam - this context has no region index to walk
+      revealMap: null,
       nowMinute: () => Math.floor(worldMinutes()),   // AUDIT 21 F2: the one clock
       loot: lootItems ? { items: () => lootItems } : undefined,
       // lastPlayerFeet is written by the frame loop; a drop before the
@@ -2406,7 +2410,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const detected = detectFeed.tick(dt);
     drawHud(renderer, canvas, hudArt, playerEntity, heading01, dt,
       { font: hudFont, cursorActive: !!activeOverlay,
-        detected, playerXZ: playerFeet ? [playerFeet[0], playerFeet[2]] : null });   // U38 + X4
+        detected, playerXZ: playerFeet ? [playerFeet[0], playerFeet[2]] : null,
+        largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity) });   // U38 + X4 + U43
     hudText.tick(dt);
     if (hudFont) hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.width, canvas.height));
     // The CLICK TO LOOK banner retired with click-to-look itself: the

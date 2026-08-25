@@ -120,6 +120,11 @@ export const USE_TEXT = Object.freeze({
   lightFull: 'Your %it is full.',
   cannotUseThis: 'You cannot use this.',
   bookUnavailable: 'The book is ruined and is now unreadable.',
+  // RecordLocationFromMap's catch arm (:1841-1845) - "Player has
+  // already descovered all valid locations in this region!", DFU's
+  // own typo in its own comment. Verbatim from Internal_Strings.csv
+  // :813.
+  readMapFail: 'You have already discovered the location shown by this map.',
 });
 /** TEXT.RSC 12 - the spellbook's "you have no spells" (:1665). */
 export const NO_SPELLS_TEXT_ID = 12;
@@ -151,6 +156,16 @@ export const expandItemMacro = (text, item, name) =>
 export function useItem(item, collection, {
   entity = null, rolls = Math.random, nowMinute = 0,
   localItems = null, spellCount = () => 0, isEnchanted = () => false,
+  // U44: EntityEffectManager.DrinkPotion (:903-947) - the host's cast
+  // engine owns it, because assigning a bundle needs the player's
+  // effect sinks. Answers the potion's display name.
+  drinkPotion = null,
+  // U44: RecordLocationFromMap's PlayerGPS.DiscoverRandomLocation
+  // (:1826). The host owns it, because only a host with a region
+  // index can walk one - `?town` and `?dungeon` are standalone pages
+  // and legitimately answer nothing. Returns the revealed name, null
+  // when the region is exhausted.
+  revealMap = null,
 } = {}) {
   if (!item) return { kind: 'none' };
   const named = (t) => expandItemMacro(USE_TEXT[t], item);
@@ -189,15 +204,40 @@ export function useItem(item, collection, {
     // since every potion is the same Glass_Bottle template and only
     // its recipe differs.
     if (collection) removeOneRecord(collection, item);
-    out = { kind: 'potion', pending: true };
+    // U44: and then it actually DOES something. The arm consumed the
+    // bottle and answered `pending`, which printed "You drink the
+    // potion." over an entity nothing had touched - the game claiming
+    // an outcome it had not produced, for the whole of the item arc.
+    // DrinkPotion's own guard is `PotionRecipeKey == 0` (:906), so a
+    // bottle naming no recipe is drunk and does nothing, exactly as
+    // here.
+    const drank = drinkPotion ? drinkPotion(item.potionRecipeKey ?? 0) : null;
+    out = drank ? { kind: 'potion', potion: drank } : { kind: 'potion', pending: true };
   }
 
   else if (isPotionRecipe(item)) out = { kind: 'potionRecipe', text: named('cannotUseThis') };
 
   else if (isMap(item) && collection) {
-    const i = collection.indexOf(item);
-    if (i >= 0) collection.splice(i, 1);   // RemoveItem, not RemoveOne
-    out = { kind: 'map', pending: true, textId: MAP_TEXT_ID };
+    // RecordLocationFromMap (:1819-1846). DiscoverRandomLocation, then
+    // record 499 on success and readMapFail when the region has
+    // nothing left. The map is consumed EITHER WAY - DFU's
+    // RemoveItem sits outside the try/catch (:1745) - and the
+    // notebook note is the reveal seam's, as it is for the two guild
+    // reveals that share it.
+    //
+    // A host with no reveal seam does not eat the map. The arm used
+    // to consume it and answer `pending`, which printed "You study
+    // the map." over a world where nothing had been discovered - the
+    // game claiming an outcome it had not produced.
+    if (!revealMap) { out = { kind: 'map', pending: true }; }
+    else {
+      const i = collection.indexOf(item);
+      if (i >= 0) collection.splice(i, 1);   // RemoveItem, not RemoveOne
+      const revealed = revealMap();
+      out = revealed
+        ? { kind: 'map', textId: MAP_TEXT_ID, revealed }
+        : { kind: 'map', text: named('readMapFail') };
+    }
   }
 
   else if (isSpellbook(item)) {
