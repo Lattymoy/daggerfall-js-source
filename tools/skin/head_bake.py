@@ -60,6 +60,22 @@ for Y in YAWS:
         w=skinr.get(r); c0,c1=runs[r]
         if not w or (w[1]-w[0])<6: continue
         anchor[r]=(w[1],c0) if faceRight else (w[0],c1)
+    axis={}
+    for r in ks:
+        c0,c1=runs[r]; w=skinr.get(r)
+        silc=(c0+c1)/2.0
+        if w and (w[1]-w[0])>10:
+            skc=(w[0]+w[1])/2.0
+            vis=min(1.0,(w[1]-w[0])/max(1.0,(c1-c0)*0.62))   # how much face is shown
+            axis[r]=silc+(skc-silc)*vis
+        else:
+            axis[r]=silc
+    ax_k=sorted(axis)
+    _av=np.array([axis[r] for r in ax_k])
+    _r=18
+    _k=np.exp(-0.5*(np.arange(-_r,_r+1)/6.0)**2); _k/=_k.sum()
+    _av=np.convolve(np.pad(_av,(_r,_r),mode='edge'),_k,mode='valid')
+    axis={r:_av[i] for i,r in enumerate(ax_k)}
     prof_run={}
     for i,r in enumerate(ks):
         c0,c1=runs[r]
@@ -67,7 +83,7 @@ for Y in YAWS:
         if hi-lo < 2: lo,hi=c0,c1
         prof_run[r]=((lo+hi)/2.0, max(0.5,(hi-lo)/2.0))
     V[Y]={'rgb':A[:,:,:3],'a':m,'runs':runs,'prof':prof_run,'skin':skinr,
-          'anchor':anchor,'faceRight':faceRight,'r0':top,'r1':sh}
+          'anchor':anchor,'faceRight':faceRight,'axis':axis,'r0':top,'r1':sh}
     print(f'   view {Y}: face points {"RIGHT" if faceRight else "LEFT"}, {len(anchor)} anchored rows')
 print(f'face {FACE}: one shoulder frac {SH_FRAC:.3f}; spans ' +
       ', '.join(f'{Y}:{V[Y]["r0"]}..{V[Y]["r1"]}' for Y in YAWS))
@@ -161,7 +177,9 @@ def sample(px,py,pz,arc):
         # profile's face edge goes to the FRONT of the head, not to the ear.
         rel=((math.degrees(arc)-((90-Yd)%360)+90.0)%360.0)/180.0
         if rel<0.0 or rel>1.0: continue
-        col=int(round(c0+rel*(c1-c0)))
+        axc=vv['axis'].get(ri,(c0+c1)/2.0)
+        # map about the head's AXIS, not the hair-biased silhouette centre
+        col=int(round(axc+(rel-0.5)*(c1-c0)))
         col=min(max(col,c0),c1)
         if not vv['a'][ri,col]:
             hit=False
