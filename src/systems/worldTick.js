@@ -298,37 +298,17 @@ export function tickPlayerMinutes({
   const magicRoundWindow = claimMagicRounds(classicMinutes, next);
   const rounds = runMagicRoundsFor(entity, magicRoundWindow.from, magicRoundWindow.to, { sinks, rolls, say });
 
-  // PlayerEntity.cs:452-475, and NOT the broker's: the per-minute loop in
-  // PlayerEntity.Update runs on PLAYERENTITY'S OWN lastGameMinutes, which is a
-  // different marker from the broker's and - this is the part wave 30 got
-  // wrong by folding it into the round loop - has NO 2880-minute cap. DFU
-  // steps a 21-day prison sentence through all 30,240 of its minutes here
-  // while the broker sees only the last 2,880.
+  // PLAYERENTITY'S OWN MARKER, which is not the broker's. The per-minute loop
+  // in PlayerEntity.Update (:453-477) runs on lastGameMinutes and - this is the
+  // part wave 30 got wrong by folding it into the round loop - has NO
+  // 2880-minute cap. DFU steps a 21-day prison sentence through all 30,240 of
+  // its minutes there while the broker sees only the last 2,880.
   //
-  // AUDIT 23 (C4: guilds-4 = cross-1 = entity-6) - :455-459: every 161280th
-  // game minute (112 days) normalizes the legal AND faction reputations toward
-  // zero, unless the prison skip set preventNormalizingReputations for its
-  // jump. (The other three arms of that loop - faction powers at 7 days,
-  // regional conditions at 38, the racial override quest at 84 - are
-  // unported.)
-  // ...and it is OFF BY ONE from the broker's, which is why moving it here
-  // mattered. DFU tests `(i + lastGameMinutes) % 161280 == 0` for i in
-  // [0, minutesPassed), i.e. the minute VALUES [last, now) with no +1, while
-  // the broker's rounds represent the minutes [last+1, now]. AUDIT 23 wrote
-  // this loop inside the broker's and inherited its `r + 1`, so the port
-  // normalised one game minute late. DFU's own inconsistency, reproduced.
-  //
-  // A rewound clock re-anchors instead of looping backwards, which is exactly
-  // what SerializablePlayer.cs:339 does on restore ("entity.LastGameMinutes =
-  // ...ToClassicDaggerfallTime()") - so the field is deliberately NOT in the
-  // save envelope.
+  // The two values are captured HERE, at the top, because three separate things
+  // downstream read them: the marker write just below, the day block, and the
+  // normalise loop that follows it. The loop's own commentary is at its body.
   const lastMinutes = Number.isFinite(entity.lastGameMinutes) ? entity.lastGameMinutes : Math.floor(classicMinutes);
   const nowMinutes = Math.floor(next);
-  for (let i = lastMinutes; i < nowMinutes; i++) {
-    if (i % NORMALIZE_INTERVAL_MINUTES === 0 && !entity.preventNormalizingReputations) {
-      normalizeReputations(entity, entity.factionRep ?? null);
-    }
-  }
   // :521, the tail of the same update - but MONOTONIC, which is DFU's
   // own hard invariant rather than a liberty: PlayerEntity.cs:368-371
   // THROWS when `gameMinutes < lastGameMinutes`, so in DFU this marker
@@ -369,7 +349,7 @@ export function tickPlayerMinutes({
   // PreventNormalizingReputations across the skip precisely so the
   // elapsed days cannot decay what it just credited... not harmless
   // now that it is [ported]") described a line that was not there.
-  if (entity.preventNormalizingReputations) entity.preventNormalizingReputations = false;
+  // (CLEARED BELOW, at the tail, which is where DFU clears it.)
 
   // AUDIT 23 (C6: hosts-10 = entity-4) - PlayerEntity.cs:425-430: the
   // per-jump fatigue (11 x multiplier) and TallySkill(Jumping) live in
@@ -436,6 +416,53 @@ export function tickPlayerMinutes({
   // drawn before the price rolls at :446, and a generator does not
   // forgive a reordered draw.
   runDayChange({ entity, lastMinutes, nowMinutes, rolls, say });
+
+  // PlayerEntity.cs:453-477, the per-minute loop - and it runs AFTER the day
+  // block because DFU's does (:441-450 then :453-477). The port had it hoisted
+  // to the top of this function, which is free for the roll stream (neither
+  // this loop nor normalizeReputations draws one) but NOT free for state: the
+  // day block's loan arm calls LowerRepForCrime (LoanChecker.cs:70), so on a
+  // tick that crosses a 112-day boundary with a loan defaulting, DFU lands the
+  // fresh -10 legal hit and then decays it by one in the same tick, while the
+  // hoisted order decayed first and applied the hit after - one point of legal
+  // reputation, and the same inversion on the faction channel the People
+  // half writes. Every 112-day boundary IS a day boundary (161280 = 112 x
+  // 1440), so the coincidence is only "a loan came due that day".
+  //
+  // AUDIT 23 (C4: guilds-4 = cross-1 = entity-6) - :455-459: every 161280th
+  // game minute (112 days) normalizes the legal AND faction reputations toward
+  // zero, unless the prison skip set preventNormalizingReputations for its
+  // jump. (The other three arms of that loop - faction powers at 7 days,
+  // regional conditions at 38, the racial override quest at 84 - are
+  // unported.)
+  //
+  // It is OFF BY ONE from the broker's, deliberately. DFU tests
+  // `(i + lastGameMinutes) % 161280 == 0` for i in [0, minutesPassed), i.e. the
+  // minute VALUES [last, now) with no +1, while the broker's rounds represent
+  // [last+1, now]. AUDIT 23 wrote this loop inside the broker's and inherited
+  // its `r + 1`, so the port normalised one game minute late. DFU's own
+  // inconsistency, reproduced.
+  //
+  // A rewound clock loops zero times rather than backwards; the restore
+  // re-anchors the marker explicitly (SerializablePlayer.cs:338-339), which is
+  // why the field is deliberately NOT in the save envelope.
+  for (let i = lastMinutes; i < nowMinutes; i++) {
+    if (i % NORMALIZE_INTERVAL_MINUTES === 0 && !entity.preventNormalizingReputations) {
+      normalizeReputations(entity, entity.factionRep ?? null);
+    }
+  }
+
+  // PlayerEntity.cs:528-530, the tail of the SAME update: the flag is a
+  // ONE-JUMP shield, cleared the moment the jump it covered is over. It has to
+  // sit below the loop that READS it, which is why it came down here with it.
+  //
+  // AUDIT 24 (the seven-slice sweep): nothing set it and nothing cleared it, so
+  // both halves of the rule were dead - the read above was a constant `true`,
+  // and the prison arm's own comment ("it sets PreventNormalizingReputations
+  // across the skip precisely so the elapsed days cannot decay what it just
+  // credited... not harmless now that it is [ported]") described a line that
+  // was not there.
+  if (entity.preventNormalizingReputations) entity.preventNormalizingReputations = false;
 
   // EntityEffectManager.UpdateEntityMods' tail (:1855-1866), on its own
   // 0.2s real-time cadence: a live stat at zero kills the host. It sits
