@@ -453,3 +453,55 @@ restate them independently.
 | THE STANDALONE DUNGEON HOST HAS NO TRADE WINDOW (X11c 2026-08-25). `scenes/dungeonContext.js` builds its own cast engine and routes `onCreateItem` and `onDispel`, but not `onIdentify` - it imports no `NativeTradeWindow` and warms no trade art, so the one window Identify needs has nowhere to mount there. The streaming host (`bootWorld`, which is the route the main menu and every save load take) mounts all three seams in all three modes; `?dungeon` is a dev route reached only by URL. Whoever takes this owes the host a trade art warm and the same `mountSpellWindow`-shaped slot pick `worldModes.js` grew at X11b - and should take Dispel Magic's picker in the same pass, which the standalone host also does not route. | DaggerfallTradeWindow; Identify.cs:74 | a dungeon-host lane |
 | THREE PROBES THE T2 SWEEP FOUND STALE IN THEIR OWN RIGHT, none of them caused by the chargen trap that lane fixed - each A/B'd against a pristine HEAD copy and failing identically there. (1) `tools/shopProbe.mjs` still drives the KEYED BROWSE window: it reads `overlay.options` for digit rows ("1 - ...") and dies on `undefined.some`, because U8c/U40 replaced that window with the native trade screen and this probe never moved across; its subject is covered twice over by `tradeModeProbe` and `nativeTradeProbe`, so the question is port-or-retire, not keep-running. (2) `tools/toneProbe.mjs` is the same shape one window along - it wants a `tone: Normal` TEXT option, and B5-6's native talk window draws the tone as art. T2's fix moved it from hanging silently to failing in three seconds with an accurate message, which is the whole difference. (3) `tools/worldWhereIsProbe.mjs` answers NO LIVE WALKER on the world host: the classic-start intro box holds the world still, so nobody walks; it needs the intro dismissed the way `firstHourProbe` does. SEPARATELY, and worth its own eye: `tools/guildServiceProbe.mjs` ASSERTS NOTHING - it prints and ends on an unconditional `console.log('OK')`, so the run where a Warrior was turned away at the Mages Guild door and no service ran at all still exited 0 saying OK. T2 gave it an eligible character (class=0) and the whole flow now runs - join, train, 100 gold, a skill use - but it still could not FAIL. **T3 2026-08-25 closed that half** and swept for the rest: SIX probes could not fail and now can (`cullProbe`, which computed its own verdict and threw it away; `musicProbe`, which measured RMS and judged none of it; `bootProbe`, written to catch invisible host crashes and reporting them as successes; `talkProbe`, which swallowed its own 30-second timeout; `arrestProbe`, which walked the whole court flow unjudged; and `guildServiceProbe` itself). All six verified green against the live game, and `test/probehygiene.test.js` gates the class. | DaggerfallTradeWindow; DaggerfallTalkWindow; DaggerfallGuildServicePopupWindow | a probe-hygiene lane |
 | TangentSolver / lightmap UVs | MeshReader | Not planned (Unity-specific) |
+
+## D. THE BOARD (next up, in order)
+
+Logged 2026-08-25, at the end of the X11c/T2/T3/P1/H3 run. Section C is
+the standing GAP list and answers "what is not ported"; this is the
+much shorter WORKING list and answers "what should be picked up next".
+Every entry below was re-verified against the tree the day it was
+written, in the L1 discipline - a stale board sends the next slice to
+build what already ships.
+
+**The rule that keeps this honest: close a row here by striking it and
+naming the slice, the same way section C rows are closed. If an entry
+is still open after a slice that touched its area, say why.**
+
+### 1. The bank purchase window's 3D model preview
+
+`ui/bankPurchaseWindow.js:49` - `display: [117, 12, 104, 91], //
+FLAGGED: the 3D preview`. The rect is drawn and empty. This is the last
+piece of the bank purchase flow H2 left open, and H3 made it tractable
+without meaning to: `houseMeshRadius` already resolves the model behind
+a `buildingKey` and reads its mesh, which is the same lookup the
+preview needs, and `SHIP_MODEL_IDS`/`shipCameraDist` are already in
+`systems/banking.js` for the ship half. Self-contained, no new
+subsystem. **Recommended next.**
+
+### 2. The sixteen `.FLC` summoning videos
+
+`systems/daedraSummoning.js:38` names it: HIRCINE.FLC and its fifteen
+siblings, one per Daedra prince, played when a summoning succeeds. G7
+shipped the SERVICE whole; this is its residue. The decoder already
+exists - `formats/flcFile.js` (F1) and `ui/flcPlayer.js` (F2a) were
+built for the three chargen constellation animations and are the same
+reader. Mostly a mount, not a port.
+
+### 3. Morph Self, the last inert effect
+
+The GATED figure in the Derived block above says it plainly: one of the
+91 catalog rows still has no runtime arm, and it is Morph Self. It is
+durable rather than difficult - its only consumer is `LycanthropyEffect`,
+a racial override nobody has built, and its `AllowedCraftingStations`
+is None, so no station offers it. Whoever takes it takes lycanthropy.
+
+### 4. The probe residue T2 and X11c routed
+
+Four rows already sit in section C above and are repeated here only so
+the working list is complete: `tools/shopProbe.mjs` and
+`tools/toneProbe.mjs` are stale against windows U40 and B5-6 replaced;
+`tools/worldWhereIsProbe.mjs` stalls on the classic-start intro box;
+and the standalone `?dungeon` host mounts no trade window, so Identify
+has nowhere to open there. All four are small and none is urgent - the
+shipped route (`bootWorld`) carries all three window seams.
+
