@@ -44,6 +44,7 @@ import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 // that opens one, and CanRest's whole town half.
 import { RestWindow } from '../ui/restWindow.js';
 import { canRest, REST_TEXT, ILLEGAL_REST_WARNING } from '../systems/restSession.js';
+import { isHouseOwned } from '../systems/banking.js';   // H1: the quest residence filter
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
 import { CRIMES } from '../systems/court.js';
 import { TravelMapWindow, preloadTravelMapArt, travelMapArtLoaded } from '../ui/travelMapWindow.js';   // W1: the classic art window (retires the F-slice's keyed stand-in)
@@ -2517,6 +2518,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // IsPlayerInTown(true, true): inside the rect of a City/Hamlet/
     // Village location (LocationTypes 0/1/2).
     isPlayerInTown: () => _musicInLocationRect() && _musicLocationType() <= 2,
+    // H1: the quest machine's residence filter. The region is the
+    // CURRENT one, which is IsHouseOwned's own key (:140-148).
+    isHouseOwned: (buildingKey) => isHouseOwned(
+      playerEntity.houses ?? [], _questLoc()?.regionIndex ?? 0, buildingKey),
     getGuild: (fid) => {
       const dict = townTalk.factionDict ?? null;
       const g = guildOfFaction(fid, resolveVariantGuild(dict), dict);
@@ -2553,6 +2558,21 @@ export async function bootWorld(canvas, renderer, params, status) {
     // place the player is standing in, and the rest law's first two
     // tests are both IsPlayerInTown reads.
     gps: { locationType: () => _musicLocationType(), inLocationRect: () => _musicInLocationRect() },
+    // H1: BuildingDirectory for the pixel the player is standing on.
+    // Only this host holds the location index, and the houses-for-sale
+    // law needs the whole building list rather than the one door the
+    // player is looking at.
+    buildingDirectory: () => {
+      const loc = _questLoc();
+      if (!loc) return null;
+      return {
+        buildings: loc.exterior?.buildings ?? [],
+        mapId: loc.mapTableData?.mapId ?? 0,
+        regionIndex: loc.regionIndex ?? 0,
+        locationName: loc.name ?? '',
+        regionName: maps.getRegionName(loc.regionIndex ?? 0) ?? '',
+      };
+    },
     // Q4-v: the quest bridge + the scene context the NPC-data law needs
     questBridge,
     questSceneCtx: () => ({ mapId: _questLoc()?.mapTableData?.mapId ?? 0, locationIndex: _questLoc()?.locationIndex ?? 0 }),

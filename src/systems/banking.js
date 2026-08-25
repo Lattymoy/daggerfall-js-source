@@ -38,6 +38,7 @@
 //    early saves nothing.
 
 import { CRIMES } from './court.js';
+import { BUILDING_TYPES, isResidence } from '../world/buildingNames.js';   // H1: the houses-for-sale filter
 import { GOLD_PIECE_WEIGHT_KG, letterOfCredit } from './inventory.js';
 import { DAYS_PER_YEAR, DAYS_PER_MONTH, MINUTES_PER_DAY } from './gameDate.js';
 
@@ -141,6 +142,118 @@ export function createHouses(regionCount) {
   return Array.from({ length: regionCount }, (_, regionIndex) => ({
     regionIndex, location: '', mapId: 0, buildingKey: 0,
   }));
+}
+
+/**
+ * H1 - THE HOUSE REGISTRY GOES LIVE. `createHouses` has minted the
+ * array since the banking slice; nothing could ever WRITE to it,
+ * because the one producer was missing and every consumer therefore
+ * shipped stubbed to false:
+ *   - the bank window's BUY HOUSE / SELL HOUSE buttons
+ *     (worldModes' `ownsHouse: () => false`, flagged there);
+ *   - CanRest's owned-house arm (V5 flagged it: you may sleep in a
+ *     house you own, and nobody could own one);
+ *   - buildingLocks.isHouseOwned (your own front door is not locked
+ *     against you);
+ *   - quest place.js' residence filter, which must not hand the
+ *     player's own home out as a quest site.
+ *
+ * IsHouseOwned is keyed by the CURRENT REGION and that is verbatim
+ * (:140-148): the registry holds one house per region, and a house in
+ * Daggerfall reads as unowned while you stand in Wayrest. Every
+ * consumer above is asking about the building in front of them, so
+ * the region is always the one they mean.
+ */
+export const ownsHouse = (houses, regionIndex) => (houses?.[regionIndex]?.buildingKey ?? 0) > 0;
+export const ownedHouseKey = (houses, regionIndex) => houses?.[regionIndex]?.buildingKey ?? 0;
+export function isHouseOwned(houses, regionIndex, buildingKey) {
+  if (!(buildingKey > 0)) return false;          // :142 - key 0 is "no building"
+  return ownedHouseKey(houses, regionIndex) === buildingKey;
+}
+
+/**
+ * AllocateHouseToPlayer (:429-448). Writing the slot is a quarter of
+ * it; the other three are what make the house a HOME and each has a
+ * consumer already built:
+ *   - the building is DISCOVERED, named "<player>'s residence", so it
+ *     is on the automap and the travel map;
+ *   - its interior joins the PERMANENT scenes, so what you leave in
+ *     it is still there when the world moves on (P1 built that set);
+ *   - a deed goes in the notebook.
+ * Answers the record so a caller can log it; the three side effects
+ * ride optional hooks, since not every host has all three.
+ */
+export function allocateHouseToPlayer(houses, regionIndex, { buildingKey, mapId, location = '' }, {
+  discoverBuilding = null, addPermanentScene = null, addNote = null,
+  playerName = '', regionName = '',
+} = {}) {
+  const slot = houses[regionIndex];
+  slot.location = location;
+  slot.mapId = mapId;
+  slot.buildingKey = buildingKey;
+  discoverBuilding?.(buildingKey, `${playerName}'s residence`);
+  addPermanentScene?.(mapId, buildingKey);
+  addNote?.(`Deed to a house in ${location}, ${regionName}.`);
+  return slot;
+}
+
+/** SellHouse (:450-465), the mirror: the bank ACCOUNT is credited
+ *  (not the purse - DFU pays a deed into the account), the interior
+ *  stops being permanent, the building is undiscovered, and the slot
+ *  resets to a fresh record that still remembers its region. */
+export function sellHouse(accounts, houses, regionIndex, { meshRadius = 0 } = {}, {
+  removePermanentScene = null, undiscoverBuilding = null,
+} = {}) {
+  const slot = houses[regionIndex];
+  if (!(slot.buildingKey > 0)) return { kind: 'none' };
+  const price = houseSellPrice(meshRadius);
+  accounts[regionIndex].accountGold += price;
+  removePermanentScene?.(slot.mapId, slot.buildingKey);
+  undiscoverBuilding?.(slot.buildingKey);
+  houses[regionIndex] = { regionIndex, location: '', mapId: 0, buildingKey: 0 };
+  return { kind: 'sold', price };
+}
+
+/**
+ * BuildingDirectory.GetHousesForSale (:156-184).
+ *
+ * Every HouseForSale building is on the market outright; the list is
+ * then TOPPED UP at random from ordinary House1-House4 residences
+ * that are not an active quest site, to a ceiling of
+ * min(buildings / 10, 20).
+ *
+ * A RECORDED DEPARTURE, and DFU's line is not portable. Its seed is
+ *     Random.InitState(buildingDict.GetHashCode() + Now.Month)
+ * and `GetHashCode()` on a Dictionary is the CLR's object-identity
+ * hash - a different number every time the process runs. So DFU's own
+ * `+ Month`, which plainly intends "the same houses are for sale all
+ * month", is defeated by the term it is added to: the list reshuffles
+ * on every load. A JS port cannot reproduce a CLR identity hash and
+ * should not want to, so the seed here is the LOCATION and the month,
+ * which is what that expression was reaching for. Recorded in Ledger A.
+ */
+export const MAX_HOUSES_FOR_SALE = 20;
+export function housesForSale(buildings, { mapId = 0, month = 0, isActiveQuestBuilding = null } = {}) {
+  const maxForSale = Math.min(Math.floor(buildings.length / 10), MAX_HOUSES_FOR_SALE);
+  const forSale = [];
+  const candidates = [];
+  for (const b of buildings) {
+    if (b.buildingType === BUILDING_TYPES.HouseForSale) forSale.push(b);
+    else if (isResidence(b.buildingType) && !(isActiveQuestBuilding?.(b) ?? false)) candidates.push(b);
+  }
+  // xorshift32 over (mapId, month) - the port's own deterministic
+  // generator, seeded by what DFU meant rather than what it wrote.
+  let seed = ((mapId * 0x9e3779b1) ^ (month + 1)) >>> 0 || 1;
+  const roll = () => {
+    seed ^= seed << 13; seed >>>= 0;
+    seed ^= seed >>> 17;
+    seed ^= seed << 5; seed >>>= 0;
+    return seed / 0x100000000;
+  };
+  for (let c = maxForSale - forSale.length; c > 0 && candidates.length > 0; c--) {
+    forSale.push(candidates.splice(Math.floor(roll() * candidates.length), 1)[0]);
+  }
+  return forSale;
 }
 
 /** ValidateRegion (:559-567). Every reader goes through it; DFU's
@@ -410,9 +523,16 @@ export function sellDecision(kind, { owns = false, price = 0 } = {}) {
 }
 
 // FLAGGED, with the slices they wait on:
-//  - PurchaseHouse/SellHouse (:406-462) need the building directory
-//    and the permanent-scene set, neither of which the port has; the
-//    PRICE law is here and pinned, the allocation is not.
+//  - H1 RETIRED THE HOUSE HALF OF THIS. The building directory and
+//    the permanent-scene set both exist now, so housesForSale,
+//    allocateHouseToPlayer and sellHouse are above and live. What is
+//    still out is the BUY UI, and it is a specific thing rather than
+//    a missing system: DaggerfallBankPurchasePopUp is a 436-line
+//    window that renders the house's own 3D MODEL on a dedicated
+//    camera and layer beside a price list. Until that lands the bank's
+//    BUY HOUSE button refuses - which is also DFU's own answer when
+//    the directory is missing (:433-434) - and the one path that
+//    grants a house without it, KnightlyOrder.ReceiveHouse, is live.
 //  - PurchaseShip/SellShip (:464-506) need the two fixed ship scenes
 //    at map pixels (2,2) and (5,5), which is a streaming-world seam.
 //  - ReadNativeBankData (:580+) reads a classic .SAV BankAccount

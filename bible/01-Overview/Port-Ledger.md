@@ -54,6 +54,22 @@ work queue routed to arcs.
 | The constellation CEL RE-ARMS its frame buffer on every replay (`src/ui/chargenArt.js` `startConstellationAnim`) | F2 audit. `FLCPlayer.Start()` rewinds `currentFrame` to 0 and sets `playing`, but leaves the DECODED BUFFER holding the LAST run's final frame - harmless in DFU, where the questions window constructs a fresh FLCPlayer per push, and NOT harmless here, where one player is reused for all ten answers: Update() displays the current buffer BEFORE decoding the next, so replays 2..10 would each flash the previous run's end frame for one frame. The port calls `bufferNextFrame(0)` before `start()`. One extra decode per answer; same first frame DFU shows | Approved (a reuse the DFU shape does not have) |
 | ~~**THE SETTINGS SURFACE: there isn't one - every DFU setting our code branches on is PINNED as a constant**~~ RETIRED SAME WEEK by the SETT-slice, which built the surface. What replaced it: `systems/settings.js` IS DFU's SettingsManager - the 13 sections, 171 keys and every DEFAULT come from the VENDORED `defaults.ini.txt` (vendor/dfu-settings, MIT, the quest-pack route) baked by `scripts/bakeSettings.mjs`, never hand-transcribed, and the typed getters carry DFU's failure modes verbatim: `GetBool` reads FALSE on an unparseable value rather than the default (SettingsManager.cs:921-936), `GetInt(min,max)` clamps and reads MIN on failure (:952-964), `GetFloat` likewise (:971-996), `GetString` is raw (:911-914). STILL OURS (the presentation split every screen here takes): WHERE values live - DFU writes an ini beside the executable, a browser has none, so the store persists a DELTA against the defaults in localStorage; and the TIERS, which are a claim about THIS port, not about DFU - `live` (a consumer exists: CombatVoices, PlayerTorchFromItems, LoiterLimitInHours, SoundVolume, MusicVolume, MouseLookSensitivity, InvertMouseVertical), `stored` (round-trips, no consumer yet - the INTERIM doctrine), `unavailable` (meaningless here, or the port implements ONE side of the branch). **THE DIVERGENCE THE OLD ROW EXISTED TO NAME SURVIVES AND IS NOW ENFORCED: `EnhancedCombatAI` is SHIPPED TRUE by DFU and this port implements the classic FALSE path** - enemy FOV 180 not 190 (EnemySenses.cs:239-241), no strafing, no backing away, no retreat roll, `TargetRateOfApproach` identically zero (:354-363) - so it is tiered `unavailable` WITH that reason on screen rather than offered as a toggle that would lie. `AdvancedClimbing` is the same shape. settings.test.js re-derives the live set from the code, so a tier that lies fails the suite (it caught two of mine while this row was being written) | Recorded 2026-08-21, built the same day at Mac's "develop our own launcher and implement the settings" |
 
+## A-note (H1): the houses-for-sale seed
+
+DFU rolls the town's house market with
+
+    Random.InitState(buildingDict.GetHashCode() + Now.Month)
+
+and `GetHashCode()` on a Dictionary is the CLR's OBJECT-IDENTITY hash -
+a different number every time the process runs. So the `+ Month` term,
+which plainly intends "the same houses are for sale all month", is
+defeated by the term it is added to: in DFU the market reshuffles on
+every load. A JS port cannot reproduce a CLR identity hash and should
+not want to, so `banking.housesForSale` seeds on the LOCATION and the
+month - what that expression was reaching for. Pinned both ways in
+`test/houses.test.js`: stable inside a month, turned over between them,
+and different per town.
+
 ## B. Verbatim quirks preserved (real-data reality)
 
 World:
@@ -269,7 +285,7 @@ restate them independently.
 - SPELL_MAKER_EFFECTS rows: **91**
 - ...of which still inert (no runtime arm): **6**
 - SERVICE_DESTINATION guild services: **20**
-- ...of which still unbuilt (destination null): **2**
+- ...of which still unbuilt (destination null): **1**   <!-- H1: ReceiveHouse shipped; DaedraSummoning is the last -->
 
 | Feature | DFU source | Target |
 | The outdoor RAIN LOOP keeps playing indoors (`src/systems/ambientEffects.js`) | AUDIT 21's hosts lane filed this as a major bug - it is DFU. WeatherManager.Update (:146-155) opens with "Do nothing if player inside" and RETURNS, so SetAmbientEffects never runs and `Presets` stays frozen at Rain; AmbientEffectsPlayer.Update (:134-137) keeps the loop alive while Presets says so. The component is still running indoors, which its own `IsCemeteryNearby && !playerEnterExit.IsPlayerInside` guard at :154 proves - that line would be dead code otherwise. So the rain follows you into the tavern and layers under the dungeon ambience in DFU exactly as it does here, and a setPreset('none') on the transition would be a DEPARTURE rather than a fix. Recorded so the next audit does not re-file it |

@@ -78,13 +78,14 @@ import { staticNpcRoute, showsJoinButton, serviceAccess, onPushEffects } from '.
 import { canAccessService } from '../systems/guildServices.js';   // G4: does THIS guild also sell soul gems?
 import {
   receiveArmorDecision, claimArmor, SPYMASTER_GREETING_TEXT_ID,
+  receiveHouseDecision, claimHouse, ALREADY_GIVEN_HOUSE,   // H1
 } from '../systems/knightlyGifts.js';   // G6
 import { mintCondition } from '../systems/itemTemplates.js';   // G6: the gift's pieces mint like any other item
 import { npcServiceKind, freeHealing, freeMagickaRecharge } from '../systems/guildServices.js';
 import { createGuildForGroup, ORDERS } from '../systems/guildVariants.js';
 import { membershipOf, joinGuild, joinDecision } from '../systems/guilds.js';
 import { ensureFactionRep } from '../systems/factionRep.js';
-import { dateFromClassicMinutes, dateString } from '../systems/gameDate.js';   // B2: the loan due date
+import { dateFromClassicMinutes, dateString, MINUTES_PER_DAY, DAYS_PER_MONTH } from '../systems/gameDate.js';   // B2: the loan due date   // H1: the month the houses-for-sale list turns over on
 import { serviceDestination } from '../systems/guildServiceFlow.js';
 import { buildTrainingFlow, buildDonationFlow, buildCureDiseaseFlow } from '../ui/guildServiceWindows.js';
 import { preloadListPickerArt } from '../ui/listPicker.js';
@@ -138,11 +139,11 @@ import {
 import { freeTavernRooms } from '../systems/guildServices.js';
 // B2: the bank - the window, the per-region accounts and the purse seam.
 import { BankWindow, preloadBankArt, bankArtLoaded, BANK_RECTS, BANK_PANEL_X, BANK_PANEL_Y } from '../ui/bankWindow.js';
-import { createBankAccounts, BANK_REGION_COUNT } from '../systems/banking.js';
+import { createBankAccounts, createHouses, BANK_REGION_COUNT, TRANSACTION_RESULT, ownsHouse, isHouseOwned, housesForSale, allocateHouseToPlayer } from '../systems/banking.js';   // H1
 // P1: the scene cache - what an interior remembers across a visit.
 import {
   createSceneCache, cacheScene, restoreCachedScene,
-  interiorSceneName, LOOT_CONTAINER_TYPES,
+  interiorSceneName, LOOT_CONTAINER_TYPES, addPermanentScene,
 } from '../systems/sceneCache.js';
 import { orderOf } from '../systems/guildVariants.js';
 import { joinedGuildOfGroup } from '../systems/guilds.js';
@@ -243,7 +244,7 @@ export function createWorldModes(host) {
   // The host destructure moves with it, because `say` closes over
   // `townTalk`. It reads only the function's own argument, so it is
   // safe anywhere inside the body.
-  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null, discoveryLocationId = null, gps = null } = host;   // V5: gps = PlayerGPS's location reads, for CanRest   // R1: the discovery store's location key (the anti-grind record's namespace)   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
+  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null, discoveryLocationId = null, gps = null, buildingDirectory = null } = host;   // H1: the location's whole building list, for the houses-for-sale roll   // V5: gps = PlayerGPS's location reads, for CanRest   // R1: the discovery store's location key (the anti-grind record's namespace)   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
   // U43-ii: the interior HUD-text layer is the OUTER host's, and
   // always was - townTalk's hud draws above the modal render. The
   // "pends its arc" flag was a line of plumbing: a broken weapon, a
@@ -981,6 +982,41 @@ export function createWorldModes(host) {
   // else, and is minted lazily the first time an interior is left.
   const sceneCache = () => (playerEntity.sceneCache ??= createSceneCache());
 
+  /**
+   * H1 - the town's houses on the market, from the ONE producer
+   * (banking.housesForSale). The month is the classic calendar's, so
+   * the list turns over on the first of the month exactly as DFU's
+   * `+ Now.Month` term intends - see the departure recorded at the law.
+   */
+  function currentHousesForSale() {
+    const dir = buildingDirectory?.();
+    if (!dir?.buildings?.length) return [];
+    return housesForSale(dir.buildings, {
+      mapId: dir.mapId,
+      month: Math.floor(worldMinutes() / (MINUTES_PER_DAY * DAYS_PER_MONTH)),
+      // IsActiveQuestBuilding(building, residencesOnly: true) - a house
+      // the quest machine is using is not for sale (:169).
+      isActiveQuestBuilding: (bs) => (questBridge
+        ? questBridge.machine.getSiteLinks(SITE_TYPES.Building, dir.mapId, bs.buildingKey).length > 0
+        : false),
+    });
+  }
+  /** The side effects AllocateHouseToPlayer carries besides the slot:
+   *  discovery, the permanent scene, and the deed in the notebook. */
+  function houseSideEffects() {
+    return {
+      // DiscoverBuilding(key, "<player>'s residence") - the port's
+      // discovery store is keyed by LOCATION and takes the building
+      // record, so the name rides as an override on a synthetic one.
+      discoverBuilding: (key, name) => {
+        const locId = discoveryLocationId?.();
+        if (locId) discoverBuilding(locId, { buildingKey: key, buildingType: BUILDING_TYPES.House1, name });
+      },
+      addPermanentScene: (mapId, key) => addPermanentScene(sceneCache(), interiorSceneName(mapId, key)),
+      addNote: (text) => questBridge?.notebook?.addNote?.(text),
+    };
+  }
+
   /** DaggerfallInterior.GetSceneName for the interior the player is
    *  standing in. Null when the building has no key - an unkeyed
    *  interior cannot be cached, because it cannot be named. */
@@ -1049,6 +1085,11 @@ export function createWorldModes(host) {
     // restored by a save, and 62 is the shipped value otherwise.
     const regions = playerEntity.bankAccounts?.length || BANK_REGION_COUNT;
     playerEntity.bankAccounts ??= createBankAccounts(regions);
+    // H1: the house registry is minted beside the accounts, on the
+    // same region count. createHouses has existed since the banking
+    // slice and had no caller - the save has round-tripped
+    // `entity.houses` all along, over an array nothing ever made.
+    playerEntity.houses ??= createHouses(regions);
     const b = interiorBuilding;
     let win = null;
     win = new BankWindow({
@@ -1062,15 +1103,20 @@ export function createWorldModes(host) {
       // GetLoanDueDateString (:571-580) - empty when nothing is owed,
       // otherwise DateString(), which carries no year.
       dueDateText: (minutes) => (minutes > 0 ? dateString(dateFromClassicMinutes(minutes)) : ''),
-      // FLAGGED: house and ship OWNERSHIP need the building directory
-      // and the two fixed ship scenes; until then the buttons refuse
-      // through the law's own decisions rather than opening a picker.
-      ownsHouse: () => false,
+      // H1: house ownership is live. SHIP ownership still needs the two
+      // fixed ship scenes and stays FLAGGED, so those buttons keep
+      // refusing through the law's own decisions.
+      ownsHouse: () => ownsHouse(playerEntity.houses ?? [], b?.regionIndex ?? 0),
+      housesForSale: () => currentHousesForSale().length,
+      // FLAGGED, and now at the RIGHT thing: the sell PRICE needs the
+      // owned building's mesh radius, which means resolving the model
+      // behind a buildingKey - the same reader DaggerfallBankPurchase-
+      // PopUp needs for its 3D preview. Zero until that lands, so the
+      // sell offer quotes nothing rather than a wrong number.
+      houseSellPrice: () => 0,
       ownsShip: () => false,
       ownedShip: () => -1,
-      housesForSale: () => 0,
       isPortTown: () => false,
-      houseSellPrice: () => 0,
       onClose: () => { if (interiorOverlay === win) interiorOverlay = null; },
     });
     interiorOverlay = win;
@@ -1131,12 +1177,11 @@ export function createWorldModes(host) {
       buildingType: b?.buildingType ?? null,
       permanentScene: !!scene && containsPermanentScene(sceneCache(), scene),
       isShip: b?.buildingType === BUILDING_TYPES.Ship,
-      // DaggerfallBankManager.IsHouseOwned - the port has no house
-      // purchase yet (ReceiveHouse is one of the two unbuilt guild
-      // services), so this is FALSE rather than absent: the moment a
-      // house can be bought, this is the line that lets you sleep in
-      // it. FLAGGED.
-      houseOwned: false,
+      // H1 CLOSED THIS. V5 left it FALSE with a note saying "the moment
+      // a house can be bought, this is the line that lets you sleep in
+      // it" - and that moment is now: DaggerfallBankManager.IsHouseOwned
+      // is live over the region's own registry slot.
+      houseOwned: isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, b?.buildingKey ?? 0),
       room: findRentedRoom(playerEntity.rentedRooms ?? [], mapId, b?.buildingKey ?? 0),
       nowMinutes: Math.floor(worldMinutes()),
       restMarkers: restMarkers.length,
@@ -1474,6 +1519,34 @@ export function createWorldModes(host) {
       if (!win) return null;
       interiorOverlay = win;
       return win;
+    }
+    if (destination === 'guildServiceReceiveHouse') {
+      const region = b?.regionIndex ?? 0;
+      playerEntity.houses ??= createHouses(playerEntity.bankAccounts?.length || BANK_REGION_COUNT);
+      const dir = buildingDirectory?.();
+      const decision = receiveHouseDecision(membership, {
+        ownsHouse: ownsHouse(playerEntity.houses, region),
+        housesForSale: currentHousesForSale(),
+        alreadyOwnResult: TRANSACTION_RESULT.ALREADY_OWN_HOUSE,
+        noneForSaleResult: TRANSACTION_RESULT.NO_HOUSES_FOR_SALE,
+      });
+      if (decision.kind === 'refuse') {
+        const refusal = decision.line ? [{ text: decision.line, center: true }]
+          : (rows?.(decision.textId ?? decision.result) ?? []);
+        return { rows: refusal.length ? refusal : [{ text: ALREADY_GIVEN_HOUSE, center: true }] };
+      }
+      allocateHouseToPlayer(playerEntity.houses, region, {
+        buildingKey: decision.house.buildingKey,
+        mapId: dir?.mapId ?? 0,
+        location: dir?.locationName ?? '',
+      }, {
+        ...houseSideEffects(),
+        playerName: playerEntity.name ?? '',
+        regionName: dir?.regionName ?? '',
+      });
+      claimHouse(membership);
+      surfacePlayer();
+      return { rows: rows?.(decision.textId) ?? [{ text: 'I have a house for you.', center: true }] };
     }
     if (destination === 'guildServiceTeleport') {
       const win = host.openTeleportMap?.();
@@ -1892,6 +1965,11 @@ export function createWorldModes(host) {
             const mapId = questSceneCtx?.()?.mapId ?? 0;
             return questBridge.machine.getSiteLinks(SITE_TYPES.Building, mapId, b.buildingKey).length > 0;
           },
+          // H1: your own front door is not locked against you
+          // (buildingLocks.js:65 - the first thing the ladder tests).
+          // The hook has been in that law's contract since R1 with
+          // nothing able to answer it.
+          isHouseOwned: (key) => isHouseOwned(playerEntity.houses ?? [], bd.regionIndex ?? 0, key),
         });
         // X3: HandleOpenEffectOnExteriorDoor (:519-520). An armed OPEN
         // spell is tried on a locked building BEFORE the mode ladder,
