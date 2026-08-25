@@ -74,7 +74,7 @@ const mem = new Map(); // NAME -> Uint8Array
 const LEAN = typeof window !== 'undefined' &&
   ('ontouchstart' in window || (navigator?.maxTouchPoints ?? 0) > 0);
 export const KEEP = (name, lean = LEAN) => /^TEXTURE\.\d+$/.test(name) ||
-  /\.(BSA|COL|PAL|PAK|CFG|FNT|WLD|DEF|STD|IMG|CIF|RSC|RCI|SND|TXT|GFX)$/.test(name) ||
+  /\.(BSA|COL|PAL|PAK|CFG|FNT|WLD|DEF|STD|IMG|CIF|RSC|RCI|SND|TXT|GFX|BSS)$/.test(name) ||   // U45 added BSS: the three compass needles, 116KB for all three
   name === 'CLASSES.DAT' ||
   name === 'ANIM0001.VID' ||                // the U22 splash - see the VID note above
   name === 'ANIM0012.VID' ||                // D1 the death video (DaggerfallUI.cs:50), reused as V1's fake death
@@ -83,7 +83,7 @@ export const KEEP = (name, lean = LEAN) => /^TEXTURE\.\d+$/.test(name) ||
   name === 'ROGUE.CEL' || name === 'MAGE.CEL' || name === 'WARRIOR.CEL' ||   // F2 the chargen constellations
   (!lean && /^SKY\d+\.DAT$/.test(name));   // skies: 247MB - full sets on desktop, gradient fallback on the lean diet
 const MANIFEST_KEY = '__MANIFEST__';
-const MANIFEST_V = 7;   // v1 = the broken-era sets (pre-diet), v2 = the sets missing BIOG*/FACTION/CLASSES, v3 = the sets missing the U22 splash VID, v4 = the sets missing the .GFX scroll (AUDIT 19 F8), v5 = the sets missing the D1 death video + the F2 constellation CELs, v6 = the sets missing V1's two dream VIDs - all auto-wiped
+const MANIFEST_V = 8;   // v1 = the broken-era sets (pre-diet), v2 = the sets missing BIOG*/FACTION/CLASSES, v3 = the sets missing the U22 splash VID, v4 = the sets missing the .GFX scroll (AUDIT 19 F8), v5 = the sets missing the D1 death video + the F2 constellation CELs, v6 = the sets missing V1's two dream VIDs, v7 = the sets missing U45's .BSS compass needles - all auto-wiped
 
 /** Uppercase basename: the canonical ARENA2 key. Exported for tests. */
 export function normalizeName(name) {

@@ -451,10 +451,16 @@ test('S40 hosts: all four can now rest, and each supplies its own place', () => 
   // Both outdoor hosts answer the Rest action and commit the crime.
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const s = src(f);
-    // The WHOLE guard, not the action name - a `false &&` in front of
-    // it leaves the name intact and the key dead.
-    assert.match(s,
-      /if \(act === 'Rest' && !townTalk\.overlayActive && \(modes\?\.mode \?\? 'exterior'\) === 'exterior'\) \{\n\s+e\.preventDefault\(\);\n\s+toggleRest\(\);/, f);
+    // U45 turned both outdoor ladders into `hudCtx`, the ONE door the
+    // large HUD's rest panel posts through too. Pin the WHOLE arm and
+    // the door behind it - matching the action NAME alone survives a
+    // `false &&` in front of it, which leaves the key dead.
+    assert.match(s, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return; \}/, f);
+    assert.match(s, /toggleRest: \(\) => toggleRest\(\),/, f);
+    // ...and it sits INSIDE the overlay/mode guard the ladder opens
+    // with, not after it.
+    const ladder = s.slice(s.indexOf("if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {"));
+    assert.ok(ladder.indexOf("hudCtx.toggleRest()") < ladder.indexOf('\n    }'), `${f}: the Rest arm escaped the guard`);
     assert.match(s, /new RestWindow\(outdoorRestDeps\)/, f);
     assert.match(s, /playerEntity\.crimeCommitted = crime/, f);
     assert.match(s, /if \(spawnGuards\) _crimeResponse\(\)/, f);

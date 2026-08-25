@@ -153,11 +153,22 @@ test('A2 wiring pins: the M-outside dispatch in both exterior hosts, gated on a 
   // I2: the dispatch reads the ACTION, not the raw code - M is its
   // registry default (inputActions ResetDefaults :1027) and rebinding
   // it moves the town map with it, as DFU's does.
+  // U43 collapsed the per-arm guards into ONE gate per host - the
+  // ladder and the large HUD's panels now open the same windows
+  // through one hudCtx - so the pin follows the law to its new shape
+  // rather than to the line it used to sit on. The gate and the arm
+  // are checked separately, and the arm must be INSIDE the gate.
+  const GATE = "if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {";
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const h = src(host);
+    const g = h.indexOf(GATE);
+    assert.ok(g > 0, `${host}: the ladder is gated once, on the overlay AND the mode`);
+    const arm = h.indexOf("if (act === 'AutoMap') { hudCtx.toggleAutomap(); return; }");
+    assert.ok(arm > g, `${host}: and M-outside sits inside that gate`);
+  }
   const w = src('src/scenes/world.js');
-  assert.match(w, /act === 'AutoMap' && !townTalk\.overlayActive && \(modes\?\.mode \?\? 'exterior'\) === 'exterior'/);
   assert.match(w, /if \(!dfLoc \|\| !b\?\.locBlocks \|\| !b\.locOrigin\) return;/, 'empty wilderness opens nothing');
   const e = src('src/scenes/exterior.js');
-  assert.match(e, /act === 'AutoMap' && !townTalk\.overlayActive/);
   assert.match(e, /new ExteriorAutomapWindow\(/);
   assert.match(src('src/systems/inputActions.js'), /\['KeyM', 'AutoMap'\]/, 'and M is that action\'s default');
 });

@@ -2675,6 +2675,16 @@ the numbers jitter and net travel stays zero. `floorLanding` is this
 port's FixStanding; the bed goes through it like every other marker
 landing in the tree.
 
+**U45 arrived mid-merge, and it fits.** The two outdoor hosts' key
+ladders became `hudCtx` while this slice was in flight - one object
+the ladder AND the large HUD's eleven panels both read, so a click on
+the bar and a press of the bound key reach the same door. The Rest
+arm moved into it, which means the large HUD's rest panel
+(`hudLarge.js:152`, `action: 'Rest'`) now has a destination in every
+host: it had been posting an action nothing above ground answered.
+`routeAction`'s own `case 'Rest': ctx.toggleRest?.()` already carried
+the interior host.
+
 FLAGGED: `DaggerfallBankManager.IsHouseOwned` reads DFU's default for
 a player who has bought nothing, because the bank's house ledger is
 unported - so the owned-house arm is correct and unreachable until the

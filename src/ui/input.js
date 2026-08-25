@@ -93,7 +93,26 @@ export function routeKey(e, ctx, setPlayerPos = null) {
   // Diagnostics, not a DFU action: DFU's F8 is PrintScreen, which has
   // no consumer here yet, and the debug HUD is the port's own.
   if (e.code === 'F8') { ctx.toggleDebugHud?.(); return true; }
-  switch (actionOf(e)) {
+  return routeAction(actionOf(e), ctx, setPlayerPos);
+}
+
+/**
+ * THE ACTION LADDER ALONE, without the key event. U45 pulled it out
+ * of routeKey because the large HUD's eleven panels post ACTIONS -
+ * DFU's own handlers PostMessage into the UI manager - so a click on
+ * the bar and a press of the bound key have to arrive at the same
+ * door. Two doors is how the port would grow two behaviours for one
+ * button.
+ *
+ * Every arm past the first four is optional-chained, which is the
+ * seam this file already uses for a law the hosts adopt one at a
+ * time: an action no host has wired yet is simply not consumed, and
+ * the caller can say so rather than crashing.
+ *
+ * Returns true when consumed.
+ */
+export function routeAction(action, ctx, setPlayerPos = null) {
+  switch (action) {
     // Escape with no overlay up opens the pause options window
     // (GameManager's escape door; the window closes itself on the
     // same key). Optional-chained: hosts grow the seam one at a time.
@@ -116,6 +135,22 @@ export function routeKey(e, ctx, setPlayerPos = null) {
     case 'AutoMap': ctx.toggleAutomap?.(); return true;   // A1 (optional-chained: only the dungeon contexts carry one today)
     case 'QuickSave': ctx.quickSave?.(); return true;
     case 'QuickLoad': ctx.quickLoad?.(setPlayerPos); return true;
+    // U45: the four the large HUD reaches that no keybind in this
+    // port has ever routed. Each is a real DFU destination and each
+    // is optional here, so the panel is live the moment a host grows
+    // the door and dead - not broken - until then.
+    case 'Status': return ctx.showStatus ? (ctx.showStatus(), true) : false;
+    case 'TravelMap': return ctx.openTravelMap ? (ctx.openTravelMap(), true) : false;
+    case 'ReadyWeapon': return ctx.toggleSheath ? (ctx.toggleSheath(), true) : false;
+    case 'UseMagicItem': return ctx.openUseMagicItem ? (ctx.openUseMagicItem(), true) : false;
+    case 'Transport': return ctx.openTransport ? (ctx.openTransport(), true) : false;
+    // ...and the mode cycle, which is the ONE panel that changes state
+    // itself rather than opening a window. It is not an InputManager
+    // action in DFU either - the panel calls ChangeInteractionMode
+    // directly - so these two names are the port's, and the host that
+    // owns the mode HUD line answers them.
+    case 'CycleModeForward': return ctx.cycleMode ? (ctx.cycleMode(1), true) : false;
+    case 'CycleModeBackward': return ctx.cycleMode ? (ctx.cycleMode(-1), true) : false;
     default: return false;
   }
 }

@@ -138,6 +138,13 @@ export const LIVE = Object.freeze({
   // U38: the crosshair and the interaction-mode indicator. Both were
   // stored-tier - the launcher offered a Crosshair toggle and an icon
   // STYLE for components that did not exist.
+  // U45: the large HUD. `LargeHUD` itself had been WRITTEN by the pause
+  // window since I3 and read by nothing at all, which the settings
+  // screen was quietly reporting as a working toggle.
+  'GUI/LargeHUD': 'src/ui/hudLarge.js',
+  'GUI/LargeHUDDocked': 'src/ui/hudLarge.js',
+  'GUI/LargeHUDUndockedScale': 'src/ui/hudLarge.js',
+  'GUI/LargeHUDUndockedAlignment': 'src/ui/hudLarge.js',
   'GUI/Crosshair': 'src/ui/hudCrosshair.js',
   'GUI/InteractionModeIcon': 'src/ui/hudCrosshair.js',
   // U41: the classic travel map. Stored-tier since the settings

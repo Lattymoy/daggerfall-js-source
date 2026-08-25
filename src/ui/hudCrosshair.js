@@ -103,7 +103,7 @@ export const MODE_LABEL = Object.freeze({
  * window is up and the pointer is free.
  */
 export function drawCrosshairAndModeIcon(renderer, canvas, font,
-  { cursorActive = false, scale = 1, border = 10, barWidth = 4 } = {}) {
+  { cursorActive = false, scale = 1, border = 10, barWidth = 4, showModeIcon = true } = {}) {
   // Draw (:62-66) - the cursor's activity hides the crosshair
   // outright, before anything else is considered.
   if (cursorActive) return;
@@ -130,7 +130,11 @@ export function drawCrosshairAndModeIcon(renderer, canvas, font,
   }
 
   // The corner indicator only exists in the NON-xhair styles (:100).
-  if (asCrosshair || !font) return;
+  // U45: and not at all under the large HUD, which draws the mode as
+  // a PANEL of its own - DaggerfallHUD.cs:219 disables this component
+  // outright while the bar is up, so the corner word would be a
+  // second copy of something already on screen.
+  if (asCrosshair || !font || !showModeIcon) return;
   const label = MODE_LABEL[mode] ?? '';
   if (!label) return;
   const iconScale = Math.max(1, (iconStyleScale(style) / iconResScale(scale)) * scale);
