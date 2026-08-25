@@ -30,6 +30,10 @@
 //                               (tokens ride the
 //                                 message; the host chunks)
 //   addHUDText(text), playVideo(name), playSound(id)
+//   playSong(name)              - one MIDI.BSA record name; the
+//                                 PlaySong action has already resolved
+//                                 the SongFiles member (systems/
+//                                 songFiles.js)
 //   the talk seams              - addQuestTopics/dialogLink/addDialog/
 //                                 rumor + scrub family (TalkManager's
 //                                 consumers pend the talk arc; absent
@@ -150,6 +154,7 @@ export function createQuestBridge(ctx) {
     showPrompt: (q, message, respond) => ctx.showPrompt?.(q, message, respond),
     playVideo: (name) => ctx.playVideo?.(name),
     playSound: (id) => ctx.playSound?.(id),
+    playSong: (name) => ctx.playSong?.(name),
     giveItemToPlayer: (item, front) => ctx.giveItemToPlayer?.(item, front),
     removeItemFromPlayer: (item) => ctx.removeItemFromPlayer?.(item),
     playerHasItem: (item) => ctx.playerHasItem?.(item) ?? false,

@@ -37,6 +37,8 @@ import {
 } from '../src/systems/songPlayer.js';
 import { MidiBsaFile } from '../src/formats/hmiFile.js';
 import { srand, rand } from '../src/formats/dfRandom.js';
+import * as songManager from '../src/systems/songManager.js';
+import { SONG_FILES, isSongFileDefined, songFileToRecordName } from '../src/systems/songFiles.js';
 
 const ARENA2 = process.env.ARENA2_PATH;
 const skipReal = !ARENA2 || !existsSync(ARENA2)
@@ -127,6 +129,66 @@ test('A5: dungeonKey is unknown2 XOR (region << 8), verbatim', () => {
   assert.equal(dungeonKey(0x1234, 17), (0x1234 ^ (17 << 8)) >>> 0);
   // The region is masked to a BYTE, as DFU's (byte) cast does.
   assert.equal(dungeonKey(0, 0x101), dungeonKey(0, 1), 'region takes the low byte only');
+});
+
+// --- SongFiles.cs and EnumToFilename -------------------------------------
+
+test('SongFiles: the enum is the SET Enum.IsDefined answers for, song_none included', () => {
+  // PlaySong.cs:47-52 throws behind Enum.IsDefined, so the membership
+  // test IS the law. song_none is a member (the -1 sentinel) and DFU's
+  // Play(SongFiles) never special-cases it, so "play song song_none"
+  // parses in DFU and must parse here.
+  assert.equal(SONG_FILES.length, 133, 'SongFiles.cs:20-154 declares 133 members');
+  assert.equal(isSongFileDefined('song_none'), true);
+  assert.equal(isSongFileDefined('song_dungeon5'), true);
+  assert.equal(isSongFileDefined('song_5strong'), true);
+  assert.equal(isSongFileDefined('song_tavern'), true);
+  assert.equal(isSongFileDefined('song_dungeon4'), false, 'the enum jumps dungeon..dungeon5');
+  assert.equal(isSongFileDefined('song_14'), false, 'the numbered songs are not contiguous');
+  assert.equal(isSongFileDefined('dungeon5'), false, 'the prefix is part of the member name');
+  // Enum.IsDefined compares ORDINALLY. Every member is lower case, so a
+  // shouted name is undefined in C# too.
+  assert.equal(isSongFileDefined('SONG_TAVERN'), false);
+  assert.equal(isSongFileDefined('Song_Tavern'), false);
+  assert.equal(new Set(SONG_FILES).size, SONG_FILES.length, 'no member typed twice');
+});
+
+test('SongFiles: EnumToFilename is strip song_, upper-case, .HMI', () => {
+  // C#: enumName.Remove(0, "song_".Length) + ".mid", against Unity
+  // Resources. The port asks MIDI.BSA, whose records are upper case
+  // with a .HMI extension - same stem, different wrapper.
+  assert.equal(songFileToRecordName('song_gday___d'), 'GDAY___D.HMI', 'underscores survive');
+  assert.equal(songFileToRecordName('song_5strong'), '5STRONG.HMI', 'a digit-leading stem');
+  assert.equal(songFileToRecordName('song_02fm'), '02FM.HMI');
+  assert.equal(songFileToRecordName('song_fm_sqr_2'), 'FM_SQR_2.HMI', 'only the FIRST song_ goes');
+  assert.equal(songFileToRecordName('song_d10'), 'D10.HMI');
+  assert.equal(songFileToRecordName('song_fsnow__b'), 'FSNOW__B.HMI');
+  // The sentinel resolves to a name like any other; the archive is what
+  // says no, exactly as DFU's LoadSong does.
+  assert.equal(songFileToRecordName('song_none'), 'NONE.HMI');
+  assert.equal(new Set(SONG_FILES.map(songFileToRecordName)).size, SONG_FILES.length,
+    'the mapping is injective - no two members claim one record');
+});
+
+test('SongFiles: the enum and the playlists are ONE set under two spellings', () => {
+  // songManager's tables were typed in the ARCHIVE's spelling and
+  // SongFiles in DFU's. If songFileToRecordName is the bridge between
+  // them, every name any playlist carries must be reachable from some
+  // enum member - otherwise one of the two tables has a typo that only
+  // the ARENA2-gated pin below would catch, and only on a machine that
+  // has the data.
+  const reachable = new Set(SONG_FILES.map(songFileToRecordName));
+  const playlists = Object.entries(songManager).filter(([label, v]) => Array.isArray(v) && /_SONGS(_FM)?$/.test(label));
+  // Guard the sweep itself: songManager names every playlist *_SONGS,
+  // and a pin that silently swept nothing would pass forever.
+  assert.ok(playlists.length >= 30, `found ${playlists.length} playlists to sweep`);
+  const unreachable = [];
+  for (const [label, list] of playlists) {
+    for (const name of list) {
+      if (!reachable.has(name)) unreachable.push(`${label}: ${name}`);
+    }
+  }
+  assert.deepEqual(unreachable, [], 'every playlist entry is some SongFiles member');
 });
 
 test('A5: every playlist names songs that EXIST in MIDI.BSA', { skip: skipReal }, () => {

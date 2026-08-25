@@ -46,6 +46,7 @@ function makeMachine(deps = {}) {
     deductGold: (amount) => { m.gold -= amount; calls.push(['deductGold', amount]); },
     playVideo: capture('playVideo'),
     playSound: (soundId) => { calls.push(['playSound', soundId]); return deps.playSoundResult ?? true; },
+    playSong: capture('playSong'),
     dialogLink: capture('dialogLink'),
     addDialog: capture('addDialog'),
     addQuestRumor: capture('addQuestRumor'),
@@ -457,6 +458,85 @@ test('PlayVideo: ANIM + four-digit pad + .VID; five digits pends the line', () =
   schedule(m, [' play video 3']);
   m.tick();
   assert.deepEqual(m.of('playVideo'), [['playVideo', 'ANIM0003.VID']]);
+});
+
+// ---------------------------------------------------------------
+// PlaySong
+// ---------------------------------------------------------------
+
+test('PlaySong: the SongFiles member reaches the hook as a MIDI.BSA record name, ONCE', () => {
+  const m = makeMachine();
+  const q = schedule(m, [' play song song_dungeon5']);
+  m.tick();
+  // DFU hands the enum value to DaggerfallSongPlayer.Play, which does
+  // EnumToFilename at the last moment; the port's song layer keys on
+  // the archive's spelling, so the action converts before the seam.
+  assert.deepEqual(m.of('playSong'), [['playSong', 'DUNGEON5.HMI']]);
+  const action = [...q.tasks.values()][0].actions[0];
+  assert.equal(action.isComplete, true, 'PlaySong completes on its first update');
+  m.tick(); m.tick();
+  assert.equal(m.of('playSong').length, 1, 'a completed action does not play again');
+});
+
+test('PlaySong: the underscore-heavy and digit-leading members survive the trip', () => {
+  const m = makeMachine();
+  schedule(m, [' play song song_gday___d']);
+  m.tick();
+  assert.deepEqual(m.of('playSong'), [['playSong', 'GDAY___D.HMI']]);
+
+  const m2 = makeMachine();
+  schedule(m2, [' play song song_5strong']);
+  m2.tick();
+  assert.deepEqual(m2.of('playSong'), [['playSong', '5STRONG.HMI']]);
+});
+
+test('PlaySong: an unknown song THROWS out of the parse and the quest is dropped whole', () => {
+  // C# has no try/catch here (PlaySong.cs:47-52) - unlike PlaySound
+  // one screen up, whose catch pends the single line - so the throw
+  // leaves ReadTaskLines and takes the quest with it.
+  const m = makeMachine();
+  assert.throws(
+    () => schedule(m, [' play song song_notarealsong']),
+    /PlaySong: Song file song_notarealsong is not a known song from MIDI\.BSA/,
+  );
+  // ParseQuest's own catch is what turns that into a dropped quest
+  // rather than a dropped picker (machine.parseQuestForLists).
+  const m2 = makeMachine();
+  assert.equal(m2.parseQuestForLists([...HEADER, ' play song song_notarealsong'], 0, { rolls: () => 0 }), null);
+
+  // ...and the guard is the ENUM, not the regex: a name the pattern
+  // accepts but the enum does not is what throws.
+  const m3 = makeMachine();
+  assert.throws(() => schedule(m3, [' play song SONG_TAVERN']), /not a known song/,
+    'Enum.IsDefined is ordinal - a shouted member name is undefined');
+});
+
+test('PlaySong: a line the pattern does not match still PENDS, it does not throw', () => {
+  const m = makeMachine();
+  const q = schedule(m, [' play song ']);
+  const startup = [...q.tasks.values()][0];
+  assert.equal(startup.actions.length, 0);
+  assert.equal(startup.pendingActionLines.length, 1, 'no song group, no match, no template');
+});
+
+test('PlaySong: the save envelope carries the ENUM name under C#\'s field name', () => {
+  const m = makeMachine();
+  const q = schedule(m, [' play song song_tavern']);
+  const action = [...q.tasks.values()][0].actions[0];
+  // SaveData_v1 { SongFiles song; } - the SAVED value is the member,
+  // not the resolved record, exactly as C# serialises the enum.
+  assert.deepEqual(action.getSaveData(), { song: 'song_tavern' });
+  assert.equal(action.getActionSaveData().type, 'PlaySong');
+
+  const m2 = makeMachine();
+  m2.restoreSaveData({ siteLinks: [], quests: [q.getSaveData()] });
+  const twin = m2.getQuest(q.uid);
+  const restored = [...twin.tasks.values()][0].actions[0];
+  assert.equal(restored.constructor.typeName, 'PlaySong', 'the type registry resolves it');
+  assert.equal(restored.songFile, 'song_tavern');
+  restored.isComplete = false;
+  restored.update(null);
+  assert.deepEqual(m2.of('playSong'), [['playSong', 'TAVERN.HMI']], 'a restored action still resolves');
 });
 
 // ---------------------------------------------------------------

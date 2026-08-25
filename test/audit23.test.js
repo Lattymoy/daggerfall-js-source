@@ -153,6 +153,11 @@ test('AUDIT 23: both dungeon-mounting hosts pass the spawn applier; the snapshot
   const dc = readFileSync(join(root, 'src/scenes/dungeonContext.js'), 'utf8');
   assert.ok(/droppedLoot: droppedLoot\._piles\.map/.test(dc), 'collectWorld carries the piles');
   assert.ok(/droppedLoot\.restorePiles\(w\.droppedLoot\)/.test(dc), 'applyWorld restores them');
+  // save-load-11: the action-object record is ActionSystem's law (and
+  // pinned by RUNNING it in action.test.js); the host must route
+  // through it rather than grow a second, thinner snapshot shape.
+  assert.ok(/actions: actions\.collectSaveData\(\)/.test(dc), 'collectWorld delegates the action record');
+  assert.ok(/actions\.restoreSaveData\(w\.actions\)/.test(dc), 'applyWorld delegates the restore');
 });
 
 test('AUDIT 23: the sticky region price band rides the envelope', () => {

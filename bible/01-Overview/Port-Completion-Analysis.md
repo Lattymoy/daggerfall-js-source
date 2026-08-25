@@ -33,14 +33,16 @@ exclusions.
 Citation is a WEAK signal - it proves a module claimed the source, not
 that it ported it. The three verified counts below are the strong ones.
 
-**Quest actions: 61 of 82 implemented.** The other 21 are `PendingTrigger`
-guards (`systems/quest/actions.js:2604+`) - the line matches its verbatim
-pattern and PENDS, exactly as DFU sends an unregistered line, and nothing
-runs: `CastEffectDo`, `ChangeFoeInfighting`, `ChangeFoeTeam`, `ClickedFoe`,
-`Climate`, `Enemies`, `JournalNote`, `KillFoe`, `PayMoney`, `PlaySong`,
-`PromptMulti`, `RunQuest`, `Season`, `SetPlayerCrime`, `SpawnCityGuards`,
-`TrainPc`, `UnrestrainFoe`, `Weather`, `WhenAttributeLevel`,
-`WhenSkillLevel`, `WorldUpdate`.
+**Quest actions: ~~61~~ 62 of 82 implemented.** The other ~~21~~ 20 are
+`PendingTrigger` guards (`systems/quest/actions.js`) - the line matches its
+verbatim pattern and PENDS, exactly as DFU sends an unregistered line, and
+nothing runs: `CastEffectDo`, `ChangeFoeInfighting`, `ChangeFoeTeam`,
+`ClickedFoe`, `Climate`, `Enemies`, `JournalNote`, `KillFoe`, `PayMoney`,
+~~`PlaySong`,~~ `PromptMulti`, `RunQuest`, `Season`, `SetPlayerCrime`,
+`SpawnCityGuards`, `TrainPc`, `UnrestrainFoe`, `Weather`,
+`WhenAttributeLevel`, `WhenSkillLevel`, `WorldUpdate`. **PlaySong SHIPPED
+2026-08-25** - a real template over `systems/songFiles.js` (SongFiles.cs +
+EnumToFilename in the archive's spelling); its Ledger row is struck.
 
 **Macros: 83 of MacroHelper's 217 appear anywhere in `src/`; 134 do not.**
 The missing set is dominated by the biography/class-question block

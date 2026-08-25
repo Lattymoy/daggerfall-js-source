@@ -47,6 +47,7 @@ import { QUEST_MESSAGES } from './quest.js';
 import { customParseInt, isPlayerAtBuildingType, isPlayerAtDungeonType, MARKER_PREFERENCE } from './place.js';
 import { getIndividualFactionID, getFactionDataOrThrow } from './person.js';
 import { markerScenePosition } from './sceneMount.js';
+import { isSongFileDefined, songFileToRecordName } from '../songFiles.js';
 
 /** TalkManager.cs:285-291 - the dialog-link resource types. */
 export const QUEST_INFO_RESOURCE_TYPE = Object.freeze({
@@ -720,6 +721,53 @@ export class PlayVideo extends ActionTemplate {
   }
   update(_caller) {
     this.parentQuest.hooks?.playVideo?.(this.videoName);
+    this.setComplete();
+  }
+}
+
+/** PlaySong.cs: "play song <name>" plays ONE song from MIDI.BSA and
+ *  completes. The name is a SongFiles member and the gate is C#'s own
+ *  `Enum.IsDefined` (:47-52) - an unknown song completes the TEMPLATE
+ *  and THROWS. The throw leaves the parse through Task's line loop and
+ *  lands in the machine's per-quest catch (ParseQuest's "Parsing quest
+ *  FAILED!"), so a quest naming a song that does not exist is DROPPED
+ *  WHOLE. That is the loud half of the same choice PlaySound's create
+ *  makes quietly one screen up: its lookup sits in a try/catch and a
+ *  bad sound name pends the single line. Both are verbatim; the two
+ *  actions simply disagree in C#.
+ *
+ *  `SetComplete()` there really is called on the template rather than
+ *  on the action being built (the action does not exist yet on that
+ *  path); templates are never updated, so it changes nothing, and it
+ *  is kept where C# has it. C#'s `source = source.TrimEnd()` two lines
+ *  below is dead - the comment is copied from an action that splits
+ *  the source into symbols and this one never reads `source` again -
+ *  so it is not transcribed.
+ *
+ *  DFU hands the enum value to DaggerfallSongPlayer.Play, which turns
+ *  it into a filename at the last moment. The port's seam is the
+ *  machine's playSong hook and the port's song layer keys on MIDI.BSA
+ *  record names throughout, so songFileToRecordName (systems/
+ *  songFiles.js = EnumToFilename) does that step here. The SAVED field
+ *  is still the enum name, as C#'s SaveData_v1.song is. */
+export class PlaySong extends ActionTemplate {
+  static typeName = 'PlaySong';
+  get saveShape() { return [['songFile', 'raw', 'song']]; }
+  get pattern() { return /play song (?<song>[a-zA-Z0-9_-]+)/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new PlaySong(parentQuest);
+    const song = match.groups.song;
+    if (!isSongFileDefined(song)) {
+      this.setComplete();
+      throw new Error(`PlaySong: Song file ${song} is not a known song from MIDI.BSA`);
+    }
+    action.songFile = song;
+    return action;
+  }
+  update(_caller) {
+    this.parentQuest.hooks?.playSong?.(songFileToRecordName(this.songFile));
     this.setComplete();
   }
 }
@@ -2620,7 +2668,6 @@ const GUARD_PATTERNS = Object.freeze({
   JournalNote: /journal note (\d+)/,
   ChangeFoeInfighting: /change foe ([a-zA-Z0-9_.-]+) infighting ([a-zA-Z]+)/,
   ChangeFoeTeam: /change foe ([a-zA-Z0-9_.-]+) team (\d+)|change foe ([a-zA-Z0-9_.-]+) team (\w+)/,
-  PlaySong: /play song ([a-zA-Z0-9_-]+)/,
   SetPlayerCrime: /setplayercrime ([a-zA-Z_]+)/,
   SpawnCityGuards: /spawncityguards (immediate)?/,
   UnrestrainFoe: /unrestrain foe ([a-zA-Z0-9_.-]+)/,
@@ -2714,7 +2761,7 @@ export function defaultActionTemplates() {
     guard('JournalNote'),
     guard('ChangeFoeInfighting'),
     guard('ChangeFoeTeam'),
-    guard('PlaySong'),
+    new PlaySong(null),
     guard('SetPlayerCrime'),
     guard('SpawnCityGuards'),
     guard('UnrestrainFoe'),

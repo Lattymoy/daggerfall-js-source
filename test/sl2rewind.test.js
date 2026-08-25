@@ -17,7 +17,10 @@ const dc = readFileSync(join(root, 'src/scenes/dungeonContext.js'), 'utf8');
 const applyWorldSrc = () => {
   const i = dc.indexOf('function applyWorld(w)');
   assert.ok(i > 0, 'applyWorld exists');
-  return dc.slice(i, dc.indexOf('\n  }\n', dc.indexOf('w.actions?.forEach', i)));
+  // ...to the end of the function; the action-object half moved to
+  // ActionSystem.restoreSaveData (save-load-11), so anchor on the
+  // last statement applyWorld still owns inline.
+  return dc.slice(i, dc.indexOf('\n  }\n', dc.indexOf('droppedLoot.restorePiles', i)));
 };
 
 test('SL2 save-load-2: a foe killed after the save RESURRECTS on a backward load, corpse freed', () => {
