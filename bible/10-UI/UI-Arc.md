@@ -7,6 +7,59 @@ sheet, inventory, spellbook) that retire the headless interim
 policies one by one.
 
 
+
+## U50 THE ENHANCED WIZARD (2026-08-25, Mac's call, ONE STAGE AT A TIME)
+
+Character creation in the enhanced skin. NINE of DFU's ten journey
+stages have their own screen; REFLEXES and REVIEW are still the classic
+ones, and THE WIZARD IS NOT INTEGRATED - New Game still boots the
+classic flow. It lives at `/chargen.html` beside `/menu.html` and is
+argued with there first.
+
+THE FLOW IS NOT REBUILT. `ui/chargen.js`'s ChargenFlow carries every
+law - the stage order in the enum's own sequence, the pools, the
+biography grammar, the class questions, the custom-class builder, the
+back arms AUDIT 17j spent seven findings on - and exposes `applyHit` as
+a semantic action table. The view reads state and speaks through that
+and `input()`, the same two doors the classic screens use. ~1,900 lines
+of law reused, only the drawing replaced.
+
+THE MAP is `ui/provinceMap.js`: TAMRIEL2.IMG traced at runtime into
+vector outlines, marching pixel edges, holes wound opposite for
+even-odd fill, collinear runs collapsed without one point moving, the
+label hung at the point furthest from any coast. The masks are DFU's
+CLICK REGIONS and not its coastlines - overlaying them on TMAP00I0
+shows blobs running well past the painted shore - and the module says
+so. THE NINTH PROVINCE cannot come from the picker (the eight blobs
+never meet in the middle, so no flood isolates Cyrodiil) nor from the
+painting by colour (parchment and land share indices); it is the
+largest patch claimed by no homeland, painted in no sea colour, that
+TOUCHES NO EDGE, and the edge clause is what discards the parchment
+without recognising parchment. Province names are transcribed from
+TMAP00I0's own painted labels, SUMURSET included.
+
+`ui/bitmapCanvas.js` is what a DOM screen needs and the classic screens
+never did: a palettized DFBitmap into a canvas on the 1-bit cutout law,
+NEAREST, no renderer and nothing to free.
+
+FOUR SEAM BUGS THE WALK FOUND, all the same shape - a law the flow
+reads through a module variable only the CLASSIC art load fills:
+describeRace (an empty description makes DFU accept the homeland
+outright, so the confirm silently vanished), buildBackstory and
+repBoxRows (an empty backstory written once and permanently, and the
+one moment the player is told what twelve answers did). All five text
+sources are injectable now on the terms describeRace already was, and
+`attachChargenText` fills them. The fourth was mine: the reputation box
+is not a stage - DFU pushes it over the questions on one route and over
+the bio-METHOD screen on the other - so keyed to a state it rendered on
+one route and was swallowed on the other, and "let it be written for
+you" appeared to do nothing at all.
+
+Probed in a real browser end to end on a desktop and a Pixel 5, and
+every target measured at 44px by `tools/enhancedTapProbe.mjs`, which
+now walks the wizard as well as the menu. 11 pins; 5 mutations, 5 dead.
+
+
 ## U49 THE ENHANCED FRONT DOOR (2026-08-25, Mac's call)
 
 The port's front door was FOUR screens in a row - `ui/titleScreen.js`,

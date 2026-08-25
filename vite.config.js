@@ -1,11 +1,34 @@
 import { defineConfig } from 'vite';
-import { createReadStream, existsSync } from 'node:fs';
+import { createReadStream, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 // Dev-only: serve ARENA2 game data at /arena2/*. The data is freeware but
 // never committed or bundled (Port-Doctrine); builds contain no game files.
 function arena2DevServer() {
   const root = process.env.ARENA2_PATH || '/home/claude/dfdata/arena2';
+  // ARENA2 FOLDERS IN THE WILD ARE MIXED CASE. The retail data was
+  // written on a filesystem that did not care, and real installs prove
+  // it: the DaggerfallSetup build carries INVE00I0.img beside
+  // INVE04I0.IMG and ANIM0001.vid beside ANIM0002.VID - 76 of its
+  // 1,598 files are lowercase. The port's own data path already knows
+  // this (dataSource.normalizeName uppercases on both ingest and
+  // lookup, so the browser is fine), and THIS server did not: on Linux
+  // a request for INVE00I0.IMG 404'd against a file that was sitting
+  // right there. Production worked and dev did not, which is the worst
+  // way round.
+  //
+  // One directory read, cached, mapping the canonical uppercase name
+  // to whatever the disk actually calls it.
+  let byUpper = null;
+  const onDisk = (name) => {
+    if (!byUpper) {
+      byUpper = new Map();
+      try {
+        for (const f of readdirSync(root)) byUpper.set(f.toUpperCase(), f);
+      } catch { /* no folder yet - the fallbacks below still answer */ }
+    }
+    return byUpper.get(name.toUpperCase()) ?? name;
+  };
   return {
     name: 'arena2-dev-server',
     configureServer(server) {
@@ -13,7 +36,7 @@ function arena2DevServer() {
         const name = decodeURIComponent(req.url.slice(1).split('?')[0]);
         // Flat directory only - no separators, no traversal.
         if (!/^[A-Za-z0-9._-]+$/.test(name)) return next();
-        let path = join(root, name);
+        let path = join(root, onDisk(name));
         // B1: books live in ARENA2/BOOKS/ - a flat BOK*.TXT name falls
         // back to the subfolder (still no separators in the URL name).
         if (!existsSync(path) && /^BOK\d+\.TXT$/i.test(name)) path = join(root, 'BOOKS', name);
