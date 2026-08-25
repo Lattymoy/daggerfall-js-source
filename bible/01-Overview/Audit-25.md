@@ -339,7 +339,7 @@ Shield (35,255), the three Detects (39,0-2), Identify (40,255),
 ComprehendLanguages (44,255). Ten of those 22 are the Mysticism school
 whose laws are already written and unwired (above). Shield is the
 sharpest of the rest: it mitigates ALL health damage in DFU and does
-nothing here.~~ **TWENTY-ONE OF THAT TWENTY-TWO ARE NOW WIRED** (X1-X11b,
+nothing here.~~ **TWENTY-ONE OF THAT TWENTY-TWO ARE NOW WIRED** (X1-X11c,
 2026-08-23..25). What is left of this paragraph's list: MorphSelf
 (29,255) alone, whose only consumer is the unported LycanthropyEffect
 and which no crafting station offers anyway. The live
@@ -398,6 +398,13 @@ Disintegrate, Light, Spell Reflection and Comprehend Languages; X11b
 Create Item, the one that needed a whole new item property. The prediction "mostly host adapters and effect-ladder arms
 over existing modules" held all the way through: Spell Reflection's
 "missing re-target system" was the host seam the port already had.
+X11c then closed the routed half X11b left: three of these effects open
+a WINDOW rather than changing a number, and a window has to mount in
+the slot the CURRENT mode draws. All three (Create Item, Dispel Magic,
+Identify) go through one slot picker now, in all three modes and in
+both window-mounting hosts, and the art they need warms at boot rather
+than at the first door - the last of it was a character who had never
+been indoors getting a refused cast.
 
 **S-C. ENCHANTING (~3,700 LOC, P1).** ~~The 24 payload classes, the
 settings model, `DoItemEnchantmentPayloads` and its eight call sites,

@@ -741,6 +741,21 @@ export async function bootExterior(canvas, renderer, params, status) {
         townTalk.say('You cannot concentrate on that right now.');
       }
     },
+    // X11c: ...and the other two spell windows, which this host had
+    // never routed at all. Both can be cast anywhere; until the slot
+    // picker existed there was nowhere outdoors to put them, so the
+    // seams were simply absent here and the cast went nowhere without
+    // even a line. The streaming host routes all three the same way.
+    onIdentify: (d) => {
+      if (!modes?.openIdentifyWindow?.({ chance: d.chance, refund: d.refund })) {
+        townTalk.say('You cannot concentrate on that right now.');
+      }
+    },
+    onDispelMagic: (d) => {
+      if (!modes?.openDispelPicker?.({ chance: d.chance })) {
+        townTalk.say('You cannot concentrate on that right now.');
+      }
+    },
     renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
     collider: { raycast: (o, d, m) => ((modes?.mode === 'interior' && modes?.interiorCollider) ? modes?.interiorCollider : collider).raycast(o, d, m) },
     playerEntity,
@@ -1247,6 +1262,17 @@ export async function bootExterior(canvas, renderer, params, status) {
     };
     modes.installShotProbes();
     window.__magic = () => JSON.stringify({ mp: playerEntity.magicka, readied: magic.readied()?.name ?? null, armed: magic.spellArmed(), missiles: magic.missileCount(), mode: modes?.mode ?? 'exterior', book: (playerEntity.spells ?? []).map((sp) => ({ name: sp.name, range: sp.rangeType })) });   // M5 cast probe
+    // X11c: the self-cast door, named as the dungeon host names it. A
+    // spell that opens a WINDOW (Identify, Dispel Magic, Create Item)
+    // can only be verified where the window actually mounts, and two
+    // of those three had never been routed by this host at all.
+    window.__combat = { applySpellToPlayer: (sp, lvl) => magic.applySpellToPlayer(sp, lvl ?? playerEntity.level) };
+    // X11c: and the KEY seam into whatever holds the town's overlay
+    // slot - the same surface the dungeon host has had since U26. A
+    // window opened by a spell has to be DRIVEN to be verified, and
+    // half of these windows answer only the keyboard for their
+    // confirmation boxes.
+    window.__overlayKey = (code) => townTalk.keydown({ code, key: code, preventDefault() {}, ctrlKey: false, altKey: false, metaKey: false, shiftKey: false });
     // U42: the classic spellbook's live state - the same surface the
     // world host carries, because tools/spellbookProbe.mjs drives
     // BOTH exterior pages and the window's buttons are hit rects

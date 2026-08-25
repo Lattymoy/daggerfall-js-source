@@ -333,6 +333,50 @@ test('X11b hosts: every host with a cast engine routes the seam, and the dungeon
     'the world host never warms PICK00I0');
 });
 
+test('X11c hosts: every window-opening spell is routed by every host that mounts windows', () => {
+  // The four-hosts divergence, one more time. onCreateItem went out to
+  // all three cast engines in X11b; onIdentify and onDispelMagic had
+  // only ever been routed by the streaming host, because before the
+  // slot picker existed there was nowhere outdoors to put them. All
+  // three seams open a WINDOW, so every host with a window stack owes
+  // all three.
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const s = src(f);
+    for (const seam of ['onCreateItem', 'onIdentify', 'onDispelMagic']) {
+      assert.ok(new RegExp(`^\\s*${seam}:`, 'm').test(s), `${f} does not route ${seam}`);
+    }
+  }
+  // ...and the refusal line is the SAME line in both, because it is
+  // the same law: a window seam that cannot mount says so rather than
+  // swallowing the cast (the magicka is already spent).
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.ok(src(f).includes('You cannot concentrate on that right now.'),
+      `${f} swallows a window cast it cannot mount`);
+  }
+});
+
+test('X11c: the window art warms at BOOT, not at the first door', () => {
+  // The bug the live probe found. Identify is castable by a character
+  // who has never been indoors; tradeArtLoaded() answered false for
+  // that player and openIdentifyWindow refused. preloadTradeArt only
+  // ever ran from ensureShopFont, which only ever ran from interior
+  // entry.
+  const s = src('src/scenes/worldModes.js');
+  const decl = s.indexOf('const ensureInteriorWindowArt = () => {');
+  assert.ok(decl > 0, 'the art warmer is gone');
+  const end = s.indexOf('};', decl);
+  // a call at FACTORY level - after the declaration, outside any
+  // interior-entry function. The boot call is the one that is NOT
+  // indented past two spaces.
+  const after = s.slice(end);
+  assert.ok(/^  ensureInteriorWindowArt\(\);/m.test(after),
+    'ensureInteriorWindowArt is never called at boot - the art still rides the first door');
+  // and interior entry still calls it (idempotent, and a re-entry
+  // after an eviction has to re-warm)
+  assert.ok(/^\s{6,}ensureInteriorWindowArt\(\);/m.test(after),
+    'interior entry no longer warms the art');
+});
+
 test('X11b hosts: a spell window lands in the slot the CURRENT mode draws', () => {
   // The bug this found: worldModes.frame returns at `mode === 'exterior'`
   // before drawing anything, and the dungeon branch draws dungeonCtx's
@@ -351,10 +395,20 @@ test('X11b hosts: a spell window lands in the slot the CURRENT mode draws', () =
     const body = s.slice(s.indexOf(`${opener}(`), s.indexOf(`${opener}(`) + 1600);
     assert.ok(body.includes('return mountSpellWindow(win)'), `${opener} still writes a slot directly`);
   }
-  // Identify is the one arm NOT moved, and it REFUSES rather than
-  // swallowing the cast - an honest refusal the caller can speak
-  const idBody = s.slice(s.indexOf('openIdentifyWindow('), s.indexOf('openIdentifyWindow(') + 1400);
-  assert.ok(idBody.includes("if (mode !== 'interior') return false;"), 'Identify still swallows an outdoor cast');
+  // X11c closed the routed half: Identify goes through the same
+  // slot-picker now, so ALL THREE openers do and none of them writes a
+  // slot directly.
+  const idBody = s.slice(s.indexOf('openIdentifyWindow({'), s.indexOf('openIdentifyWindow({') + 1400);
+  assert.ok(idBody.includes('return mountSpellWindow(win)'), 'Identify still writes a slot directly');
+  assert.ok(!idBody.includes("if (mode !== 'interior') return false;"),
+    'Identify still refuses outdoors - X11c opened it');
+  // ...and the latch that chained it to the interior slot is GONE from
+  // module scope. Its lifetime is the window's now, in the commit
+  // closure openTradeWindow builds per window.
+  assert.ok(!/^\s*let _identifySpell/m.test(s), 'the module-level identify latch is back');
+  assert.ok(s.includes('identifySpell = null } = {}'), 'openTradeWindow does not take the latch');
+  assert.ok(s.includes('commitTrade(shelf, m, staged, price, proceeds, identifySpell)'),
+    'the commit closure does not carry the latch');
 });
 
 // ── the transfer refusal ─────────────────────────────────────────

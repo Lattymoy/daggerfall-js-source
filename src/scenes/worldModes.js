@@ -309,7 +309,6 @@ export function createWorldModes(host) {
   // X7: set while an IDENTIFY SPELL's window is open ({chance, cost}),
   // null for the paid guild service. The trade window is one window
   // serving both, exactly as DFU's is.
-  let _identifySpell = null;
   const { getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, arch, palette } = pipeline;
   // AUDIT 21 (hosts lane, F7): the HUD art for interior mode. A missing file
   // answers null and drawHud no-ops, so this host draws no HUD rather than
@@ -386,6 +385,19 @@ export function createWorldModes(host) {
     preloadSpellbookArt({ renderer, fetchBytes, palette })   // U42: SPBK00I0 (cast) + SPBK01I0 (the guilds' buy mode)
       .catch((e) => console.warn('[spellbook] classic spellbook art unavailable:', e?.message ?? e));
   };
+
+  // X11c: WARM THE WINDOW ART AT BOOT, not only on interior entry.
+  // These windows used to belong to buildings - a shop's trade screen,
+  // a guild's service list - so warming them when the player walked
+  // through a door was exactly right. Then spells started opening
+  // them: Identify's window is a SPELL's, castable in the street or in
+  // a dungeon by a character who has never been indoors, and
+  // `tradeArtLoaded()` answered false for that player and the cast was
+  // refused. Same silently-dead shape the Create Item picker's art was
+  // guarded against one lane earlier, at the other end of the same
+  // seam. The loaders are all idempotent, so interior entry still
+  // calls this and still costs nothing the second time.
+  ensureInteriorWindowArt();
 
   // ---- Q4-v: THE QUEST LAYER'S INTERIOR MOUNT -----------------------
   // Q4-iii's addQuestResourceObjects walk runs over this adapter when a
@@ -663,7 +675,15 @@ export function createWorldModes(host) {
    *  transaction that concludes. `shelf.items` is DFU's remoteItems in
    *  Buy mode and the place sold goods land in Sell mode - the same
    *  shelf either way, which is what makes buy-backs work. */
-  function openTradeWindow(shelf, b, mode, { guildFactionId = null } = {}) {
+  /** X11c: `identifySpell` is the Identify SPELL's per-cast latch
+   *  ({ chance, cost }), or null for the PAID service and for every
+   *  other mode. It used to be MODULE state (`_identifySpell`) cleared
+   *  by four separate `interiorOverlay?.done` drains - which is what
+   *  chained the Identify window to the interior slot and made this
+   *  lane's routed half. The commit closure below is already built per
+   *  window, so the latch simply lives in it: its lifetime IS the
+   *  window's, by construction, and no drain has to remember it. */
+  function openTradeWindow(shelf, b, mode, { guildFactionId = null, identifySpell = null } = {}) {
     const skills = () => ({
       mercantile: skillValue(playerEntity, SKILLS.Mercantile),
       personality: playerEntity.stats?.personality ?? 50,
@@ -701,7 +721,7 @@ export function createWorldModes(host) {
         carriedWeightKg: totalWeight(playerEntity.items ?? []),
         maxEncumbranceKg: maxEncumbrance(liveStat(playerEntity, 'strength')),
       }),
-      commit: (m, staged, price, proceeds) => commitTrade(shelf, m, staged, price, proceeds),
+      commit: (m, staged, price, proceeds) => commitTrade(shelf, m, staged, price, proceeds, identifySpell),
       icons: { getTexture, uploadRecord, textures: renderer.textures },
       entity: playerEntity,   // AUDIT 17f: icons address for the wearer's morphology
       shopName: b.name ?? '',
@@ -711,7 +731,7 @@ export function createWorldModes(host) {
   /** ConfirmTrade_OnButtonClick's Yes arm (:1027-1092), host side.
    *  One Mercantile tally per CONCLUDED DEAL, not per item - DFU
    *  raises OnTrade once and tallies once, however many goods moved. */
-  function commitTrade(shelf, mode, staged, price, proceeds) {
+  function commitTrade(shelf, mode, staged, price, proceeds, identifySpell = null) {
     if (mode === 'Buy') {
       deductGold(playerEntity, price);
       for (const it of staged) {
@@ -747,11 +767,11 @@ export function createWorldModes(host) {
       // SPELL rolls per item against its own chance and spends
       // magicka ONCE for the whole list, whatever the outcome
       // (DaggerfallTradeWindow.cs:966-991).
-      if (_identifySpell) {
-        const pass = identifySpellPass(staged, _identifySpell.chance, Math.random);
+      if (identifySpell) {
+        const pass = identifySpellPass(staged, identifySpell.chance, Math.random);
         for (const it of pass.identified) it.isIdentified = true;
         if (pass.spendMagicka) {
-          playerEntity.magicka = Math.max(0, (playerEntity.magicka ?? 0) - _identifySpell.cost);
+          playerEntity.magicka = Math.max(0, (playerEntity.magicka ?? 0) - identifySpell.cost);
         }
         townTalk?.say?.(identifiedTallyText(pass.successCount, pass.total));
         for (const it of staged) addItem(playerEntity.items, it);
@@ -1432,7 +1452,6 @@ export function createWorldModes(host) {
     // what the window's Buy-side plumbing expects to find and never
     // reads in this mode.
     if (destination === 'guildServiceIdentify' && tradeArtLoaded()) {
-      _identifySpell = null;   // the PAID service - gold, not a per-item roll
       // G4: ...and the guild's OWN faction id, which is what a guild
       // store has to price with.
       flow = openTradeWindow({ items: [] }, b ?? {}, 'Identify', { guildFactionId: guild?.factionId ?? null });
@@ -2863,17 +2882,29 @@ export function createWorldModes(host) {
     // bought a horse, pressed EXIT through here, and reported that the
     // trade window would not close; the window had closed, the hook
     // had not noticed.
+    // X11c: ...and the window is no longer always in the INTERIOR slot.
+    // A shop's trade window still is - you walk into a shop - but the
+    // IDENTIFY SPELL can be cast in a dungeon or in the street, and
+    // since X11c it opens there, in whichever slot that mode draws. A
+    // probe that only knew one slot would report "no window" for a
+    // window that is plainly up.
+    const _liveTrade = () => {
+      const w = mode === 'dungeon' ? dungeonCtx?.overlayWindow?.()
+        : mode === 'interior' ? interiorOverlay
+          : townTalk?.overlay;
+      return w instanceof NativeTradeWindow ? w : null;
+    };
     const _tradeSweep = (r) => {
-      if (interiorOverlay?.done) { interiorOverlay = null; _identifySpell = null; }
+      if (interiorOverlay?.done) interiorOverlay = null;
       return r;
     };
     window.__tradeClick = (key) => {
       const [x, y, w, h] = TRADE_RECTS[key];
-      return _tradeSweep(interiorOverlay?.click?.(x + w / 2, y + h / 2) ?? false);
+      return _tradeSweep(_liveTrade()?.click?.(x + w / 2, y + h / 2) ?? false);
     };
     window.__tradeSlot = (which, slot) => {
       const [x, y] = TRADE_RECTS[which === 'local' ? 'localList' : 'remoteList'];
-      return _tradeSweep(interiorOverlay?.click?.(x + 30, y + 20 + slot * 38) ?? false);
+      return _tradeSweep(_liveTrade()?.click?.(x + 30, y + 20 + slot * 38) ?? false);
     };
     window.__openMerchantSell = () => { openMerchantSell(); return window.__shopOverlay(); };
     // B2: the bank's own surface, for the probe.
@@ -2970,17 +3001,23 @@ export function createWorldModes(host) {
     /** What the trade window is showing, and the price context it is
      *  pricing with - the guildFactionId in particular, which was the
      *  FLAGGED null this slice closed. */
-    window.__tradeOverlay = () => JSON.stringify(interiorOverlay instanceof NativeTradeWindow ? {
-      trade: true,
-      mode: interiorOverlay.mode,
-      remote: interiorOverlay.remoteList().map((i) => ({
-        name: i.name, value: i.value, identified: !!i.isIdentified,
-        soul: i.trappedSoulType === undefined ? undefined : i.trappedSoulType,
-      })),
-      local: interiorOverlay.localList().length,
-      priceCtx: (() => { const c = interiorOverlay.hooks.priceCtx(); return { quality: c.quality, holidayId: c.holidayId, guildFactionId: c.guildFactionId }; })(),
-      cost: interiorOverlay.cost(),
-    } : null);
+    window.__tradeOverlay = () => JSON.stringify(_liveTrade() ? (() => {
+      const w = _liveTrade();
+      return {
+        trade: true,
+        mode: w.mode,
+        remote: w.remoteList().map((i) => ({
+          name: i.name, value: i.value, identified: !!i.isIdentified,
+          soul: i.trappedSoulType === undefined ? undefined : i.trappedSoulType,
+        })),
+        local: w.localList().length,
+        localNames: w.localList().map((i) => i.name),   // X11c: a probe cannot aim at art, and slot 0 is rarely the one it means
+        priceCtx: (() => { const c = w.hooks.priceCtx(); return { quality: c.quality, holidayId: c.holidayId, guildFactionId: c.guildFactionId }; })(),
+        cost: w.cost(),
+        usingIdentifySpell: !!w.hooks.usingIdentifySpell,   // X11c
+        box: w.box ? { buttons: w.box.buttons, rows: w.box.rows?.map((r) => r.text ?? r) } : null,   // X11c: the confirmation the deal raises
+      };
+    })() : null);
     window.__itemMakerOverlay = () => JSON.stringify(interiorOverlay instanceof ItemMakerWindow ? {
       itemMaker: true,
       done: interiorOverlay.done,
@@ -3099,12 +3136,18 @@ export function createWorldModes(host) {
       w._pickRemote(slot);
       return JSON.stringify({ kind: w.constructor.name, local: w._filtered?.().length ?? null, remote: w._remote?.().length ?? null });
     };
-    // One read that answers "is a window up, and which" for the two
-    // modes THIS module owns. The exterior's overlay slot belongs to
-    // world.js (townTalk) - a probe reads that through __talk().
+    // One read that answers "is a window up, and which" - in ALL THREE
+    // modes since X11c. It used to cover only the two this module owns
+    // and send a probe to __talk() for the exterior, on the reasoning
+    // that the exterior slot belongs to world.js. That stopped being
+    // safe the moment spell windows started mounting there: a probe
+    // reading this outdoors got `interiorOverlay`, which is null, and
+    // reported "no window" for a window plainly up.
     window.__overlayKind = () => (mode === 'dungeon'
       ? (dungeonCtx?.overlayWindow?.()?.constructor?.name ?? null)
-      : (interiorOverlay?.constructor?.name ?? null));
+      : mode === 'interior'
+        ? (interiorOverlay?.constructor?.name ?? null)
+        : (townTalk?.overlay?.constructor?.name ?? null));
     // U31: probe-only warp. The dungeon EXIT is a raycast pick against
     // the real exit door (tryExitDungeon), so proving the classic start
     // can get out means standing the player at that door the way a
@@ -3360,7 +3403,7 @@ export function createWorldModes(host) {
       const w = interiorOverlay;
       if (!w) return;
       w.input(code, e);
-      if (w.done && interiorOverlay === w) { interiorOverlay = null; _identifySpell = null; }   // X7: the spell latch dies with its window
+      if (w.done && interiorOverlay === w) interiorOverlay = null;
     },
     togglePause() {
       if (!pauseArtLoaded()) return;
@@ -3504,7 +3547,7 @@ export function createWorldModes(host) {
     if (mode !== 'interior' || !interiorOverlay) return false;
     const v = pointToNative(nativeMetrics(canvas), px, py);
     if (v) interiorOverlay.click?.(v[0], v[1], e.button === 2);   // I4: the remove gesture rides the button
-    if (interiorOverlay?.done) { interiorOverlay = null; _identifySpell = null; }   // X7: the spell latch dies with its window
+    if (interiorOverlay?.done) interiorOverlay = null;
     return true;
   }
 
@@ -3630,29 +3673,30 @@ export function createWorldModes(host) {
       });
       return mountSpellWindow(win);
     },
+    /** X11c CLOSES X11b's ROUTED HALF. Identify can be cast anywhere,
+     *  and until now it mounted its window into `interiorOverlay` -
+     *  which this host draws in INTERIOR mode only. Outdoors or in a
+     *  dungeon the window was never drawn, ticked or clicked, did not
+     *  register as overlayHeld, and the magicka was gone. X11b stopped
+     *  the loss by REFUSING outside the interior; this opens it
+     *  properly, in whatever slot the current mode actually draws.
+     *
+     *  What made it a separate lane was the latch: the per-cast
+     *  { chance, cost } lived in MODULE state and died in four
+     *  different `interiorOverlay?.done` drains. It lives on the
+     *  window's own commit closure now, so its lifetime is the
+     *  window's and no slot has to remember it. */
     openIdentifyWindow({ chance, refund } = {}) {
-      // X11b: the same bug as the two pickers above, and the ONE arm
-      // not fixed the same way. Identify mounts a TRADE window, whose
-      // lifecycle is entangled with `_identifySpell` and with two probe
-      // surfaces (__tradeClick / _tradeSweep) that both read
-      // `interiorOverlay` by name - moving it into another slot is its
-      // own lane. So it REFUSES outside the interior instead, and the
-      // caller speaks. An honest refusal beats a swallowed cast: before
-      // this, casting Identify outdoors mounted a window nothing drew,
-      // ticked, or clicked, and the magicka was simply gone. ROUTED:
-      // the trade window needs the same slot-picker the pickers now use.
-      if (mode !== 'interior') return false;
-      if (!tradeArtLoaded() || interiorOverlay) return false;
+      if (!tradeArtLoaded()) return false;
       // The magicka the window will charge on the Identify click IS
       // the cost the effect just refunded (Identify.cs:74's
       // IdentifySpellCost = cost.spellPointCost) - the refund and the
       // charge are the same number, which is what makes the round trip
       // free when the player closes the window without identifying.
-      _identifySpell = { chance: chance ?? 0, cost: refund ?? 0 };
-      const win = openTradeWindow({ items: [] }, interiorBuilding ?? {}, 'Identify');
+      const win = openTradeWindow({ items: [] }, interiorBuilding ?? {}, 'Identify',
+        { identifySpell: { chance: chance ?? 0, cost: refund ?? 0 } });
       win.hooks.usingIdentifySpell = true;
-      interiorOverlay = win;
-      return true;
+      return mountSpellWindow(win);
     },
     startInDungeon,
     /** B1: CreateFoe's TryPlacement, this host's two INSIDE arms
