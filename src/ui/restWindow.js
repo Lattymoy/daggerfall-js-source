@@ -10,7 +10,10 @@
 // the end page is click/key-to-close.
 
 import { drawText, measureText } from './text.js';
-import { RestSession, REST_PROMPT, LOITER_PROMPT, loiterLimitHours, cannotLoiterLines } from '../systems/restSession.js';
+import {
+  RestSession, REST_PROMPT, LOITER_PROMPT, loiterLimitHours, cannotLoiterLines,
+  canRest, illegalRestWarning, ILLEGAL_REST_WARNING, CITY_CAMPING_ILLEGAL_ID,
+} from '../systems/restSession.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 
@@ -20,20 +23,95 @@ const DIM = [0.55, 0.52, 0.45, 1];
 
 export class RestWindow {
   /** deps: the RestSession deps + endLines(textId) -> string[] (the
-   *  scene's TEXT.RSC lookup for the finish message). */
-  constructor(deps) {
+   *  scene's TEXT.RSC lookup for the finish message).
+   *
+   *  S40 adds the LODGING deps, all optional so the dungeon host -
+   *  where CanRest's third arm is the only reachable one - keeps
+   *  passing what it always passed:
+   *    restPlace()          the canRest() argument bag for HERE
+   *    commitCrime(c, sg)   PlayerEntity.CrimeCommitted + SpawnCityGuards
+   *    moveToBed(marker)    PlayerMotor.transform.position = allocatedBed
+   *    ignoreAllocatedBed   the ctor flag (:115-118); true suppresses
+   *                         the move, which is how the quest/loading
+   *                         rest windows keep the player where they are
+   */
+  constructor(deps, ignoreAllocatedBed = false) {
     this.deps = deps;
-    this.state = 'selection';   // selection | hours | resting | ended
+    // selection | confirm | hours | resting | ended | refused
+    this.state = 'selection';
     this.mode = null;
     this.value = '';
     this.session = null;
     this.endLines = null;
     this.notice = null;         // the cannot-loiter refusal lines
+    this.refusalLines = null;   // CanRest's own message box
     this.done = false;
     this.isRestWindow = true;   // the scene's tick tag
+    this.ignoreAllocatedBed = ignoreAllocatedBed;
+    this._pending = null;       // the button waiting behind the confirm
+    this._allocatedBed = null;  // CanRest's out-parameter
+  }
+
+  /** CanRest(alreadyWarned) (:542-599) with DFU's side effects
+   *  attached: the crime lands on BOTH the refused and the confirmed
+   *  path, and the refusal closes the window under its message box.
+   *  Answers true when the caller may proceed. */
+  _canRest(alreadyWarned) {
+    const place = this.deps.restPlace?.();
+    // No place seam at all (the dungeon host): CanRest's `return true`
+    // tail. canRest()'s own defaults answer the same thing, but going
+    // through it would ask the host for deps it never had.
+    if (!place) { this._allocatedBed = null; return true; }
+    const d = canRest({ ...place, alreadyWarned });
+    this._allocatedBed = d.allocatedBed ?? null;
+    if (d.crime) this.deps.commitCrime?.(d.crime, d.spawnGuards);
+    if (d.ok) return true;
+    // CloseWindow() then MessageBox: the rest window is GONE and the
+    // text stands alone. Here the window becomes the text and then
+    // goes - and crucially NOT through the 'ended' state, which is
+    // the RaiseSkills moment (:729-732). A refusal raises nothing.
+    this.refusalLines = (d.text ? [d.text] : this.deps.endLines?.(d.textId ?? CITY_CAMPING_ILLEGAL_ID)) ?? null;
+    if (!this.refusalLines) { this.done = true; return false; }
+    this.state = 'refused';
+    return false;
+  }
+
+  /** MoveToBed (:601-609). Vector3.zero is DFU's "no bed"; null is
+   *  ours, and `ignoreAllocatedBed` suppresses the move either way. */
+  _moveToBed() {
+    if (this._allocatedBed && !this.ignoreAllocatedBed) this.deps.moveToBed?.(this._allocatedBed);
+  }
+
+  /** WhileButton / HealedButton (:641-690). The IllegalRestWarning
+   *  box comes FIRST and does not touch CanRest; its Yes arm is what
+   *  supplies `alreadyWarned`. LoiterButton (:693-706) is deliberately
+   *  absent from this path - loitering in town is never gated and
+   *  never moves the player to a bed. */
+  _restButton(which, alreadyWarned) {
+    if (!alreadyWarned && illegalRestWarning() && this.deps.restPlace?.()?.inTownStrict) {
+      this._pending = which;
+      this.state = 'confirm';
+      return;
+    }
+    if (!this._canRest(alreadyWarned)) return;
+    if (which === 'while') {
+      this.state = 'hours'; this.mode = 'timed'; this.value = ''; this.notice = null;
+    } else {
+      this._start('full', 0);
+      this._moveToBed();
+    }
   }
 
   input(action) {
+    if (this.state === 'refused') { this.done = true; return; }
+    if (this.state === 'confirm') {
+      // ConfirmIllegalRest*_OnButtonClick (:659-666, :685-692): the box
+      // closes either way, and only Yes carries on - No leaves the
+      // rest window standing on its selection page.
+      if (action === 'char:y' || action === 'confirm') { const w = this._pending; this._pending = null; this._restButton(w, true); }
+      else if (action === 'char:n' || action === 'back') { this._pending = null; this.state = 'selection'; }
+      return;
+    }
     if (this.state === 'ended') {
       this.done = true;
       // AUDIT 23 (entity-1) - DaggerfallRestWindow.cs:729-732: closing
@@ -49,8 +127,8 @@ export class RestWindow {
     if (this.state === 'selection') {
       if (action === 'back') { audio.playOneShot(SOUND.ButtonClick, 1); this.done = true; return; }
       // the while/healed/loiter buttons all assign ButtonClick (:644-718)
-      if (action === 'char:1' || action === 'char:r') { audio.playOneShot(SOUND.ButtonClick, 1); this.state = 'hours'; this.mode = 'timed'; this.value = ''; this.notice = null; }
-      else if (action === 'char:2' || action === 'char:h') { audio.playOneShot(SOUND.ButtonClick, 1); this._start('full', 0); }
+      if (action === 'char:1' || action === 'char:r') { audio.playOneShot(SOUND.ButtonClick, 1); this._restButton('while', false); }
+      else if (action === 'char:2' || action === 'char:h') { audio.playOneShot(SOUND.ButtonClick, 1); this._restButton('healed', false); }
       else if (action === 'char:3' || action === 'char:l') { audio.playOneShot(SOUND.ButtonClick, 1); this.state = 'hours'; this.mode = 'loiter'; this.value = ''; this.notice = null; }
       return;
     }
@@ -69,6 +147,9 @@ export class RestWindow {
       const hours = Number(this.value);
       if (this.mode === 'loiter' && hours > loiterLimitHours()) { this.notice = cannotLoiterLines(); this.value = ''; return; }
       this._start(this.mode, hours);
+      // TimedRestPrompt_OnGotUserInput (:762) ends on MoveToBed; the
+      // loiter prompt (:788) sets IsLoitering and does NOT move.
+      if (this.mode === 'timed') this._moveToBed();
       return;
     }
     const m = /^char:(\d)$/.exec(action);
@@ -87,17 +168,33 @@ export class RestWindow {
     this.state = 'ended';
   }
 
-  /** Called from the scene frame while resting (dt = real seconds). */
-  tickRest(dt) {
+  /** DaggerfallRestWindow.Update (:183-227), which runs every frame the
+   *  window is topmost and reads Time.realtimeSinceStartup - so
+   *  PauseWhileOpen's timeScale = 0 does not stop it.
+   *
+   *  S40: this is named `tick` because that is the seam ALL FOUR hosts
+   *  already drive (townTalk.frame:572, worldModes:2502,
+   *  dungeonContext.tickOverlay). It was `tickRest`, which exactly one
+   *  host knew to call - so the moment rest reached the other three
+   *  their rest windows would have sat on "Hours passed: 0" until
+   *  Escape, which is the same defect AUDIT D-C1 and the dungeon's own
+   *  tickOverlay comment each record for a different clock. `tickRest`
+   *  stays as the old name for callers that still use it; it must not
+   *  be called IN ADDITION to tick, or the rest runs at double speed. */
+  tick(dt) {
     if (this.state !== 'resting') return;
     const r = this.session.tick(dt);
     if (r) this._end(r);
   }
 
+  tickRest(dt) { this.tick(dt); }
+
   draw(renderer, canvas, font, s) {
     let lines;
     if (this.state === 'selection') {
       lines = ['How would you like to rest?', '', '1. Rest for a while', '2. Rest until healed', '3. Loiter', '', 'Esc - never mind'];
+    } else if (this.state === 'confirm') {
+      lines = [ILLEGAL_REST_WARNING, '', 'Y - yes', 'N - no'];
     } else if (this.state === 'hours') {
       lines = [(this.mode === 'loiter' ? LOITER_PROMPT : REST_PROMPT) + this.value + '_'];
       if (this.notice) lines = [...this.notice, '', ...lines];
@@ -106,6 +203,8 @@ export class RestWindow {
       lines = [this.mode === 'loiter' ? 'Loitering...' : 'Resting...', `Hours passed: ${this.session.totalHours}`];
       if (v) lines.push(`Health ${v.health}/${v.maxHealth}  Fatigue ${v.fatigue}  Magicka ${v.magicka}`);
       lines.push('', 'Esc - stop');
+    } else if (this.state === 'refused') {
+      lines = this.refusalLines ?? [''];
     } else {
       lines = this.endLines ?? [''];
     }

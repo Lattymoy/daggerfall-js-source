@@ -46,6 +46,7 @@ const HOMONYMS = new Map([
   ['firstName', 'a talk-session getter vs the name-bank generator'],
   ['_resetForTests', 'each settings store resets its own'],
   ['orderOf', 'a settings-page order vs a guild-variant order'],
+  ['canRest', 'Guild.CanRest (may I sleep in this hall) vs DaggerfallRestWindow.CanRest (may I sleep HERE) - two DFU members, and the second calls the first'],
 ]);
 
 test('audit24 wave24: no symbol is DECLARED in two modules without a reason', async () => {
@@ -154,8 +155,8 @@ test('audit24 wave24: the duplicate-declaration count does not grow', () => {
     }
   }
   const dupes = [...decl.entries()].filter(([, v]) => v.size > 1);
-  assert.ok(dupes.length <= 26,
-    `${dupes.length} symbols are declared in more than one module (the ratchet is 26):\n  `
+  assert.ok(dupes.length <= 27,
+    `${dupes.length} symbols are declared in more than one module (the ratchet is 27):\n  `
     + dupes.map(([n, v]) => `${n}  ${[...v].join(' ')}`).join('\n  '));
 });
 

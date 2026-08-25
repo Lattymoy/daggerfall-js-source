@@ -27,7 +27,7 @@ import { pickActivatable, worldAabb, activationTargets } from '../player/activat
 import { transferAll, removeOne, addItem, isEnchanted, totalWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
-import { createPlayerTicker , wireInfectionVideos, endRunToTitleMenu, exitToTitleMenu, doorSpellFor, consumeDoorSpell, wireDoorSpells, createDetectFeed} from './shared.js';   // AUDIT 18: the interior host's world clock
+import { createPlayerTicker , wireInfectionVideos, endRunToTitleMenu, exitToTitleMenu, doorSpellFor, consumeDoorSpell, wireDoorSpells, createDetectFeed, createRestDeps} from './shared.js';   // AUDIT 18: the interior host's world clock; S40: its rest deps
 import { triggerExteriorOpen, DOOR_SPELL_TEXT } from '../systems/mysticism.js';   // X3: the Open spell's EXTERIOR-door arm
 import { buildInteriorContext } from './interiorContext.js';
 import { buildDungeonContext } from './dungeonContext.js';
@@ -129,8 +129,13 @@ import { createBankAccounts, BANK_REGION_COUNT } from '../systems/banking.js';
 // P1: the scene cache - what an interior remembers across a visit.
 import {
   createSceneCache, cacheScene, restoreCachedScene,
-  interiorSceneName, LOOT_CONTAINER_TYPES,
+  interiorSceneName, LOOT_CONTAINER_TYPES, containsPermanentScene,
 } from '../systems/sceneCache.js';
+// S40: resting where the player has a claim - the rented-room finder
+// the tavern rents through, and FightersGuild.CanRest.
+import { findRentedRoom } from '../systems/tavern.js';
+import { canRest as guildCanRest } from '../systems/guildServices.js';
+import { RestWindow } from '../ui/restWindow.js';
 import { orderOf } from '../systems/guildVariants.js';
 import { joinedGuildOfGroup } from '../systems/guilds.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js';
@@ -2907,6 +2912,78 @@ export function createWorldModes(host) {
    *  contexts), and the pause window's SAVE button already answers
    *  DFU's cannot-save line rather than pretending. */
   const mountInterior = (w) => { if (w) interiorOverlay = w; };
+
+  // S40: CanRest's argument bag for INSIDE A BUILDING. `inTownStrict`
+  // is a constant false here and that is the law, not a shortcut:
+  // IsPlayerInTown(true, true) passes `mustBeOutside`, and the player
+  // is by definition not. `inTown` is the bare IsPlayerInTown() -
+  // location TYPE only, no rect test and no inside test, because both
+  // of its optional flags default off (PlayerGPS.cs:504-527).
+  const interiorRestPlace = () => {
+    const b = interiorBuilding;
+    const mapId = questSceneCtx?.()?.mapId ?? 0;
+    const buildingKey = b?.buildingKey ?? 0;
+    const now = Math.floor(worldMinutes());
+    const memberships = (playerEntity.guildMemberships ??= {});
+    const dict = townTalk?.factionDict ?? null;
+    const guild = b?.factionId ? guildOfFaction(b.factionId, resolveVariantGuild(dict), dict) : null;
+    return {
+      inTownStrict: false,
+      inTown: host.inTownLocation?.() ?? false,
+      insideBuilding: true,
+      buildingType: b?.buildingType ?? BUILDING_TYPES.None,
+      buildingKey,
+      mapId,
+      isPermanentScene: (name) => containsPermanentScene(sceneCache(), name),
+      // DaggerfallBankManager.IsHouseOwned - the bank's house ledger
+      // is unported, so this reads DFU's own default for a player who
+      // has bought nothing. FLAGGED with the bank slice.
+      isHouseOwned: () => false,
+      // GetRentedRoom(mapId, buildingKey), through the SAME finder the
+      // tavern window rents with - so the bed this answers is the bed
+      // that was sold (tavern.js's own flag, retired here).
+      rentedRoom: () => findRentedRoom(playerEntity.rentedRooms ?? [], mapId, buildingKey),
+      nowMinutes: now,
+      // Interior.FindMarkers(InteriorMarkerTypes.Rest) - the same read
+      // rentRoom's bedCount makes, so the stored index lines up with
+      // the list it indexes.
+      restMarkers: (interiorCtx?.markers ?? []).filter((m) => m.type === INTERIOR_MARKER.REST),
+      // GuildManager.GetGuild(factionID).CanRest() - THIS building's
+      // faction, not the player's chosen guild. canRest() applies the
+      // tavern exclusion itself.
+      guildCanRest: () => !!guild && guildCanRest(guild, membershipOf(memberships, guild)),
+    };
+  };
+
+  // The interior host's RestWindow deps: the shared composition plus
+  // what only this host knows. MoveToBed lands the player on the bed
+  // marker CanRest picked (PlayerMotor.transform.position +
+  // FixStanding; the port's spawn does the standing fix).
+  const interiorRestDeps = createRestDeps(playerEntity, {
+    advanceMinutes: (n) => interiorTicker.advance(n),
+    enemiesNearby: () => false,   // this host mounts no foe pool
+    place: interiorRestPlace,
+    // MoveToBed (:601-609) is `transform.position = allocatedBed` and
+    // then FixStanding(0.4, 0.4) - the snap is NOT optional. floorLanding
+    // is this port's FixStanding, and skipping it is the exact failure
+    // the dungeon's own start-marker comment records: a marker in tight
+    // geometry leaves the capsule inside the collider and the player
+    // wedges. The +1.08 lifts the marker point to the capsule centre,
+    // the same offset startSpawn uses.
+    moveToBed: (m) => {
+      if (!interiorCtx) return;
+      const f = floorLanding(interiorCtx.collider, [m.x, m.y + 1.08, m.z]);
+      player.spawn(f[0], f[1], f[2]);
+    },
+    endLines: (id) => townTalk?.lines?.(id) ?? null,
+    say,
+    onLevelUp: () => {
+      say('You have gained a level!');
+      if (!interiorOverlay) interiorOverlay = new LevelUpScreen(playerEntity);
+    },
+    day: () => false, inside: () => true,   // a building interior, always
+  });
+
   const interiorKeyCtx = {
     get uiOverlayActive() { return !!interiorOverlay; },
     // AUDIT 21 (hosts lane, F3): a ChoiceWindow wants the raw CODE and
@@ -2939,6 +3016,13 @@ export function createWorldModes(host) {
     toggleSpellbook() { if (magic) mountInterior(makeSpellbookWindow()); },
     toggleLogbook() { mountInterior(host.makeJournal?.('activeQuests')); },
     toggleNotebook() { mountInterior(host.makeJournal?.('notebook')); },
+    // S40: THE REST KEY, INSIDE. Before this the R binding died at
+    // the interior host - a rented room could be bought and never
+    // slept in. The pre-gates the dungeon applies (enemies nearby,
+    // swimming, airborne) have no interior analogue: this host mounts
+    // no foes and its floor is the block's, so the window opens and
+    // CanRest inside it does the deciding.
+    toggleRest() { mountInterior(new RestWindow(interiorRestDeps)); },
   };
 
   addEventListener('keydown', (e) => {

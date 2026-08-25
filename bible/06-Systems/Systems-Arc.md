@@ -2543,3 +2543,142 @@ recipe key names nothing. The cast SOUND is DrinkPotion's
 `GetCastSoundID(ElementTypes.Magic)`; DFU gates it on
 `IsPlayerEntity`, and the port's engine is the player's, so the gate
 is structural rather than written.
+
+## S40 - A BED YOU CAN SLEEP IN (2026-08-25)
+
+`src/systems/restSession.js` (CanRest, the illegal-rest confirm) +
+`src/ui/restWindow.js` (the gate on the buttons that own it, MoveToBed)
++ `src/scenes/shared.js` (`restVitals`/`restFullyHealed`/`createRestDeps`
+- the rested hour, one home) + `src/formats/mapsFile.js`
+(`isTownLocationType`) + all four hosts. `test/restlodging.test.js`
+(new, 21).
+
+**Rest was a dungeon feature.** `toggleRest` existed in exactly one
+host. Outside a dungeon the R key did nothing, so a character above
+ground could not heal, could not pass an hour, and could not sleep off
+a disease - and the tavern, which has sold rooms since U39, sold a bed
+`tavern.js` itself described as "stored here and read by nobody". The
+window and the session machine were both already built and correct.
+What was missing was the arm that decides WHERE.
+
+**`alreadyWarned` does not mean what it looks like.** `CanRest(bool
+alreadyWarned)` (`:542-599`) returns `alreadyWarned` from its
+in-town-outdoors branch, which reads like "the second press works".
+It is not. The producer is `Settings.IllegalRestWarning`: with it on
+(its shipped value) the WHILE and HEALED buttons raise a Yes/No box
+**before** calling `CanRest` at all (`:645-657`, `:671-683`), and only
+that Yes arm passes `true`. With it off, `DoRestForAWhile(false)` runs
+straight into the refusal - so camping in a town is not merely
+discouraged, it is **impossible**, and pressing R again changes
+nothing. The first draft of this slice wrote the "second press rests"
+reading into the source comment and the test; reading the two button
+handlers is what corrected it.
+
+What does not depend on the setting: `CrimeCommitted = Vagrancy` and
+`SpawnCityGuards(true)` fire on **both** paths (`:559-561`). Being
+turned away still puts the watch on the street. That is the quirk
+worth keeping, and it is pinned on both branches.
+
+**LOITER is not rest.** `LoiterButton_OnMouseClick` (`:693-706`) never
+calls `CanRest` and never calls `MoveToBed`. Loitering three hours in
+the middle of a city is free and legal. Only the two REST buttons
+carry the gate, so the gate lives on them and not on the window's
+open, which is where a "tidier" port would put it and would then have
+made loitering a crime.
+
+**The claim ladder, inside.** A building is somewhere the player may
+sleep only through one of three claims, tested in DFU's order. First,
+is the interior a **permanent scene** - the set the port built at P1
+and which `rentRoom` has been naming since U39. If it is: a Ship or a
+`DaggerfallBankManager.IsHouseOwned` house rests outright, and
+otherwise the rental record decides, with the bed relinked **by
+index** into `FindMarkers(Rest)` because "building positions are not
+stable" (DFU's own comment - a terrain mod moves them). Second, guild
+hall privileges - `GetGuild(factionID).CanRest()`, **excluding
+taverns**, and that exclusion is load-bearing rather than cosmetic:
+every tavern in the data carries the fighters-guild faction, so
+without it one Fighters Guild membership sleeps free in every inn in
+the Bay. Third, `haveNotRentedRoom`.
+
+Two guards in the port's `canRest` are **ours** and are named as
+deviations rather than smoothed over: DFU dereferences `room` without
+a null check and indexes `restMarkers[bedIndex]` without a length
+check, and would throw on a permanent scene with no rental or an
+interior with no Rest marker. Neither shape is reachable in DFU's own
+data - only `RentRoom` adds a non-owned permanent scene - so this is a
+crash the port declines to reproduce, not a rule it bends.
+
+**"In town" was wrong everywhere.** `PlayerGPS.IsPlayerInTown`
+(`:504-527`) counts **seven** location types. The port's one
+implementation read `locationType <= 2`, which is City / Hamlet /
+Village and silently drops HomeFarms, HomeWealthy, the standalone
+Tavern and ReligionTemple - and it never tested `mustBeOutside` at
+all, so "in town, outdoors" was true while standing in a shop. That
+predicate is not S40's: the quest machine reads it too
+(`machine.cs:134`), and every rule keyed on it exempted those four
+settlement types. The type list now has one home
+(`isTownLocationType`), and the strict variant has one closure per
+outdoor host that the quest bridge shares.
+
+The two flags of `IsPlayerInTown` are also two different questions,
+and CanRest asks both: `IsPlayerInTown(true, true)` for the camping
+arm and the bare `IsPlayerInTown()` - type only, no rect, no inside
+test - for the building arm. The interior host cannot answer the
+second (it does not know the location), so it asks its outer host
+through an `inTownLocation` seam, which both outdoor hosts supply.
+
+**One home for the rested hour.** `TickRest`'s vitals half and
+`IsPlayerFullyHealed` lived inside the dungeon host, privately,
+because it was the only host that could rest. Three hosts needed them
+the moment this slice landed, so they moved to `shared.js` as
+`restVitals` / `restFullyHealed`, with `createRestDeps` composing the
+five closures every host owes the window. The dungeon keeps its own
+`advanceMinutes` - `IntermittentEnemySpawn`'s catch-up loop is a
+dungeon law and belongs there. `CalculateHealthRecoveryRate`'s
+`day`/`inside` flags are now LIVE outdoors rather than the fixed
+`false, true` the dungeon hard-codes, which is the one place
+RapidHealing InLight differs.
+
+Pins: 23 in `restlodging.test.js`. 34 mutations, 34 dead. The first
+pass left four alive and all four were the same failure of nerve: a
+pin that named a thing instead of exercising it. The host pins matched
+`act === 'Rest'`, which survives `if (false && act === 'Rest')`, so
+they now match the whole guard including its body; the bed-index range
+was pinned at 9-of-4 and not at 4-of-4, so `<` and `<=` were
+indistinguishable; and `restFullyHealed` was only ever asked about a
+character with everything full, so dropping the fatigue clause changed
+no answer. The town-type set is pinned against the seven names and the
+nine non-towns, and both outdoor hosts are pinned to read the law
+rather than a literal.
+
+**The clock had one caller.** `RestWindow`'s per-frame method was
+`tickRest`, and `dungeonContext.tickOverlay` was the only thing in the
+tree that called it - because the dungeon was the only host that could
+open the window. Every host drives `tick(dt)` on whatever is in its
+overlay slot (`townTalk.frame:572` for the two outdoor hosts,
+`worldModes:2502` for the interior one), so the moment rest reached
+them their windows would have sat on "Hours passed: 0" until Escape.
+That is the same defect AUDIT D-C1 records for the interior death
+sequence and the dungeon's own `tickOverlay` comment records for the
+rest clock's earlier home - a clock wired to one seam in a
+four-seam tree. `tick` is now the method, `tickRest` an alias, and the
+dungeon's special case is gone because calling both would rest at
+double speed.
+
+**MoveToBed is two statements, not one.** `:601-609` sets
+`transform.position` and then calls `FixStanding(0.4f, 0.4f)`. The
+first draft here wrote the spawn and dropped the snap, which is
+exactly the failure the dungeon host's start-marker comment already
+records - a marker in tight geometry leaves the capsule inside the
+collider and the player wedges, feet reading below the marker while
+the numbers jitter and net travel stays zero. `floorLanding` is this
+port's FixStanding; the bed goes through it like every other marker
+landing in the tree.
+
+FLAGGED: `DaggerfallBankManager.IsHouseOwned` reads DFU's default for
+a player who has bought nothing, because the bank's house ledger is
+unported - so the owned-house arm is correct and unreachable until the
+bank slice buys one. The **live probe** for this slice is owed with
+U41/U42's: no ARENA2 data on this machine, so the rented-room round
+trip (rent a room, walk out, walk back, sleep in the bed the rental
+minted) has been driven only in node.

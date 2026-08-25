@@ -71,7 +71,7 @@ import { applyLevelUp } from '../systems/advancement.js';
 import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
 import { spendPoolLowest } from '../systems/chargen.js';
 import { ClassFile } from '../formats/classFile.js';
-import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, raiseAtRestEnd, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord} from './shared.js';
+import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, raiseAtRestEnd, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord, restVitals, restFullyHealed} from './shared.js';
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
@@ -86,7 +86,7 @@ import { FATIGUE_LOSS, liveStat, killIfAnyLiveStatZero } from '../systems/statMo
 import { breathStep } from '../systems/breath.js';
 import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
 import { inflictPoison } from '../systems/poisons.js';
-import { exhaustionOutcome, EXHAUSTED_IN_WATER, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate, hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
+import { exhaustionOutcome, EXHAUSTED_IN_WATER, hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
 import { REST_TEXT } from '../systems/restSession.js';
 import { intermittentEnemySpawn, setEnemyAlert } from '../systems/encounters.js';   // E-slice
 import { RestWindow } from '../ui/restWindow.js';
@@ -881,10 +881,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // spawn-band range, an unaware one only within the 12-unit resting
   // distance; fullyHealed follows IsPlayerFullyHealed (magicka full
   // OR a NoRegenSpellPoints career).
-  const _restFullyHealed = () =>
-    playerEntity.health === playerEntity.maxHealth &&
-    (playerEntity.fatigue ?? 0) === maxFatigue(playerEntity) &&
-    ((playerEntity.magicka ?? 0) === (playerEntity.maxMagicka ?? 0) || hasSpecialAbility(playerEntity.career, SPECIAL_ABILITY.NoRegenSpellPoints));
+  // S40: IsPlayerFullyHealed and the rested hour moved to shared.js -
+  // this host was the only one that could rest, so it owned the
+  // composition; three hosts now need the same two facts.
+  const _restFullyHealed = () => restFullyHealed(playerEntity);
   // U3: the level-up screen replaces the headless auto-apply (shared
   // by the rest-end raise and any future travel arm).
   const _onLevelUp = () => {
@@ -958,14 +958,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     onRestFinished: () => raiseAtRestEnd(playerEntity, {
       say: (msg) => hudText.add(msg), onLevelUp: _onLevelUp,
     }),
-    tickVitals: () => {
-      playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + healthRecoveryRate(playerEntity, { day: false, inside: true }));
-      playerEntity.fatigue = Math.min(maxFatigue(playerEntity), (playerEntity.fatigue ?? 0) + fatigueRecoveryRate(maxFatigue(playerEntity)));
-      playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity, (playerEntity.magicka ?? 0) + spellPointRecoveryRate(playerEntity));
-      tallySkill(playerEntity, SKILLS.Medical);
-      surfacePlayer();
-      return _restFullyHealed();
-    },
+    // A dungeon is inside and never in daylight, so both of
+    // CalculateHealthRecoveryRate's flags are fixed here.
+    tickVitals: () => restVitals(playerEntity, { day: false, inside: true }),
     fullyHealed: _restFullyHealed,
     enemiesNearby: () => foes.some((f) => {
       if (f.dead) return false;
@@ -2761,8 +2756,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     },
     tickOverlay(dt) {
       if (!activeOverlay) return;
-      activeOverlay.tick?.(dt);   // D1: the death sequence's clock
-      if (activeOverlay.isRestWindow) activeOverlay.tickRest(dt);
+      // D1: the death sequence's clock, and S40 the rest clock too -
+      // RestWindow.tick IS its Update, so the special case that used
+      // to sit here would now tick the rest TWICE a frame and rest at
+      // double speed. One seam, four hosts.
+      activeOverlay.tick?.(dt);
       // ui-chargen-4: backing out of the race screen cancels the
       // wizard - DFU unwinds the UI stack to the start screen
       // (RaceSelectWindow_OnClose :299-302). The port's front door is

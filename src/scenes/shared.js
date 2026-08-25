@@ -21,7 +21,7 @@ import { findFactions } from '../systems/talk.js';   // V1: GetRegionFaction's F
 import { FACTION_TYPES } from '../formats/factionFile.js';
 import { killIfAnyLiveStatZero } from '../systems/statMods.js';   // AUDIT 24 (wave 32): the per-entity laws a foe pool owes
 import { decayEnemyAlert } from '../systems/encounters.js';   // AUDIT 24 (wave 36): PlayerEntity.Update's 8-hour decay, in every context
-import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
+import { hasSpecialAbility, SPECIAL_ABILITY, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate } from '../systems/rest.js';   // S40: the rest hour, one home
 import { createNearbyScan, updateNearbyObjects, detectedMarkers, hasLiveDetector } from '../systems/nearbyObjects.js';   // X4: the Detect scan
 import { liveStat, maxFatigue } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
@@ -996,3 +996,69 @@ export function routeMouseDrag({ walkMode, buttons, mode = 'exterior' }) {
   return mode === 'exterior' ? 'swing' : 'modal';
 }
 
+
+// --- S40: the rested HOUR, one home for all four hosts ---------------
+
+/** DaggerfallRestWindow.TickRest's vitals half (:229-299) and the
+ *  FullRest completion test (:520-536), which are the same two facts
+ *  every host needs and which three of the four did not have at all -
+ *  rest lived only in the dungeon. `day`/`inside` are
+ *  CalculateHealthRecoveryRate's, and they matter: RapidHealing
+ *  InLight heals a vampire-hunter faster outdoors by daylight and
+ *  InDarkness heals everywhere else. */
+export function restVitals(entity, { day = false, inside = true } = {}) {
+  entity.health = Math.min(entity.maxHealth, entity.health + healthRecoveryRate(entity, { day, inside }));
+  entity.fatigue = Math.min(maxFatigue(entity), (entity.fatigue ?? 0) + fatigueRecoveryRate(maxFatigue(entity)));
+  entity.magicka = Math.min(entity.maxMagicka ?? Infinity, (entity.magicka ?? 0) + spellPointRecoveryRate(entity));
+  tallySkill(entity, SKILLS.Medical);
+  surfacePlayer();
+  return restFullyHealed(entity);
+}
+
+/** IsPlayerFullyHealed (:520-536) - health AND fatigue at max, and
+ *  magicka at max UNLESS the career cannot regenerate it at all. */
+export const restFullyHealed = (entity) =>
+  entity.health === entity.maxHealth
+  && (entity.fatigue ?? 0) === maxFatigue(entity)
+  && ((entity.magicka ?? 0) === (entity.maxMagicka ?? 0)
+    || hasSpecialAbility(entity.career, SPECIAL_ABILITY.NoRegenSpellPoints));
+
+/**
+ * The RestWindow deps every host shares, so a host adds rest with one
+ * call and the ones that already had it stop hand-rolling the same
+ * five closures. THE FOUR HOSTS RULE: before S40 exactly one host
+ * (the dungeon) could rest, and it owned this composition privately.
+ *
+ * The host still supplies what only it knows:
+ *   advanceMinutes(n)  its clock jump - the dungeon's also runs
+ *                      IntermittentEnemySpawn's catch-up, which is a
+ *                      dungeon law and stays there
+ *   enemiesNearby()    the RESTING variant over ITS foe list
+ *   place()            canRest()'s argument bag for where it stands
+ *   commitCrime(c,sg)  CrimeCommitted + SpawnCityGuards
+ *   moveToBed(marker)  PlayerMotor.transform.position
+ *   endLines(id)       its TEXT.RSC reader
+ *   say / onLevelUp    its presenters
+ */
+export function createRestDeps(entity, {
+  advanceMinutes, enemiesNearby = () => false, place = null,
+  commitCrime = null, moveToBed = null, endLines = () => null,
+  say = () => {}, onLevelUp = null, day = () => false, inside = () => true,
+} = {}) {
+  return {
+    advanceMinutes,
+    enemiesNearby,
+    onRestFinished: () => raiseAtRestEnd(entity, { say, onLevelUp }),
+    tickVitals: () => restVitals(entity, { day: day(), inside: inside() }),
+    fullyHealed: () => restFullyHealed(entity),
+    dead: () => entity.health <= 0,
+    vitals: () => ({
+      health: entity.health, maxHealth: entity.maxHealth,
+      fatigue: Math.round((entity.fatigue ?? 0) / 64), magicka: entity.magicka ?? 0,
+    }),
+    endLines,
+    restPlace: place ?? undefined,
+    commitCrime: commitCrime ?? undefined,
+    moveToBed: moveToBed ?? undefined,
+  };
+}

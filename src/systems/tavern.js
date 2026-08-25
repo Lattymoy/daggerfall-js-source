@@ -198,5 +198,6 @@ export function eatOrDrink(index, { gold = 0, gameMinutes = 0 } = {}) {
 //  - (RETIRED by P1: AddPermanentScene (:246) keeps a rented room's
 //    interior loaded across a save. The port now has a permanent-scene
 //    set, and rentRoom names the scene it should hold.)
-//  - the rest window's bed-marker arm (allocatedBedIndex) is stored
-//    here and read by nobody until resting in a rented room lands.
+//  - (RETIRED by S40: the bed-marker arm. allocatedBedIndex is read
+//    by DaggerfallRestWindow.CanRest, which the port now has - the
+//    index rentRoom mints below is the index MoveToBed lands on.)

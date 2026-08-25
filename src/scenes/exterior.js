@@ -10,7 +10,7 @@ import { requestLook, makeLookGate } from '../player/pointerLock.js';
 import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
-import { MapsFile, longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
+import { MapsFile, longitudeLatitudeToMapPixel, isTownLocationType } from '../formats/mapsFile.js';   // S40: PlayerGPS's town-type set
 import { convertTilemap } from '../world/terrainSurface.js';
 import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
 import { PlayerMotor } from '../player/motor.js';
@@ -45,6 +45,7 @@ import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C2): the ONE clock
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice } from './hostCombat.js';   // AUDIT 23 (C14)
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
+import { RestWindow } from '../ui/restWindow.js';   // S40: rest above ground
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5): the collapse box
 import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
@@ -79,7 +80,7 @@ import { ChoiceWindow } from '../ui/talkWindow.js';   // V1: the infection popup
 import { startInfection, liveInfection } from '../systems/infection.js';   // V1 probe surface: the bite and the lifecycle
 import { diseaseCount } from '../systems/diseases.js';
 import { MINUTES_PER_DAY } from '../systems/gameDate.js';
-import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
+import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag, createRestDeps } from './shared.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -614,6 +615,37 @@ export async function bootExterior(canvas, renderer, params, status) {
     const fwd = [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)];
     cityGuards.spawnCityGuards(true, { playerFeet: [...feet], playerFwd: fwd, pool: _guardPool() }).catch((e) => console.error('[guards]', e));
   }
+  /** S40: THE REST KEY, OUTDOORS - world.js's twin (THE FOUR HOSTS
+   *  RULE). This host stands in ONE location and never leaves its
+   *  rect, so IsPlayerInTown(true, true) is the type test plus "not
+   *  inside". No foe pool here but the city watch, which counts. */
+  const _isPlayerInTownStrict = () => _musicInLocationRect()
+    && isTownLocationType(_musicLocationType())
+    && (modes?.mode ?? 'exterior') === 'exterior';
+  const outdoorRestDeps = createRestDeps(playerEntity, {
+    advanceMinutes: (n) => playerTicker.advance(n),
+    enemiesNearby: () => (cityGuards?.activeCount?.() ?? 0) > 0,
+    place: () => ({
+      inTownStrict: _isPlayerInTownStrict(),
+      inTown: isTownLocationType(_musicLocationType()),
+      insideBuilding: false,
+    }),
+    commitCrime: (crime, spawnGuards) => {
+      playerEntity.crimeCommitted = crime;
+      if (spawnGuards) _crimeResponse();
+    },
+    endLines: (id) => townTalk.lines(id),
+    say: (msg) => townTalk.say(msg),
+    onLevelUp: () => {
+      townTalk.say('You have gained a level!');
+      townTalk.showOverlay(new LevelUpScreen(playerEntity));
+    },
+    day: () => !isNight(minuteNow()), inside: () => false,
+  });
+  const toggleRest = () => {
+    if (townTalk.overlayActive) return;
+    townTalk.showOverlay(new RestWindow(outdoorRestDeps));
+  };
   // G2: arrest + court through the townTalk overlay seam.
   //
   // AUDIT 21 F8 RETIRED THE OPEN FLAG THAT STOOD HERE. It said the prison
@@ -849,6 +881,14 @@ export async function bootExterior(canvas, renderer, params, status) {
       });
       return;
     }
+    // S40: Rest (R). The dungeon host has answered this key since U7;
+    // above ground it did nothing at all, so a character outside a
+    // dungeon could neither heal nor pass an hour.
+    if (act === 'Rest' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
+      e.preventDefault();
+      toggleRest();
+      return;
+    }
     // A2: the exterior automap (Actions.AutoMap outdoors,
     // DaggerfallUI.cs:633-650); this host always stands on a location.
     // I2: through the registry, so M is rebindable like every other
@@ -945,6 +985,10 @@ export async function bootExterior(canvas, renderer, params, status) {
   // what test/audit24_wave37.test.js asserts, both ways.
   var modes = createWorldModes({
     canvas, renderer, player, cam, keys, latch, blocks,
+    // S40: IsPlayerInTown() with both flags at their defaults - the
+    // location TYPE alone (PlayerGPS.cs:504-527), which is what
+    // CanRest's inside-a-building arm asks.
+    inTownLocation: () => isTownLocationType(_musicLocationType()),
     // G6: the knightly smith's gift needs THIS host's inventory
     // window in choose-one mode - one builder, one dependency list.
     makeInventory: (extra) => (inventoryArtLoaded() ? makeInventoryWindow(extra) : null),

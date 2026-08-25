@@ -3482,9 +3482,9 @@ it.
 FLAGGED: the TALK button routes to `TalkToStaticNPC`, which the talk
 arc owns; `AddPermanentScene` keeps a rented room's interior loaded
 across a save and the port has no permanent-scene set, so a rented
-room's CONTENTS are not preserved (the rental is); and the stored
-`allocatedBedIndex` is read by nobody until resting in a rented room
-lands.
+room's CONTENTS are not preserved (the rental is). (RETIRED by S40:
+the stored `allocatedBedIndex` is read by `CanRest`, and MoveToBed
+lands the sleeper on the marker this rental minted.)
 
 ## U40 - THE TRADE WINDOW'S MODE FLOW (2026-08-24)
 

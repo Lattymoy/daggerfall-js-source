@@ -12,7 +12,7 @@ import { requestLook, makeLookGate } from '../player/pointerLock.js';
 import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
-import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES } from '../formats/mapsFile.js';
+import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, isTownLocationType } from '../formats/mapsFile.js';   // S40: PlayerGPS's town-type set
 import { WoodsFile } from '../formats/woodsFile.js';
 import { buildTerrainGrid, buildTerrainIndices, convertTilemap, TERRAIN_TILE_DIM } from '../world/terrainSurface.js';
 import { windowEmissionRGB } from '../render/windowEmission.js';
@@ -37,6 +37,7 @@ import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AU
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice } from './hostCombat.js';
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 46): the arrow owes the flash too   // AUDIT 23 (C14)
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
+import { RestWindow } from '../ui/restWindow.js';   // S40: rest above ground
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
 import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 import { TravelMapWindow, preloadTravelMapArt, travelMapArtLoaded } from '../ui/travelMapWindow.js';   // W1: the classic art window (retires the F-slice's keyed stand-in)
@@ -88,7 +89,7 @@ import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, 
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
-import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
+import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag, createRestDeps } from './shared.js';
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
 import { PlayerMotor } from '../player/motor.js';
@@ -1258,6 +1259,55 @@ export async function bootWorld(canvas, renderer, params, status) {
       mode,
     });
   };
+  /** S40: THE REST KEY, OUTDOORS. CanRest's FIRST arm - the one that
+   *  makes camping in a city a crime - was unreachable until now,
+   *  because rest existed only in the dungeon host. `place` answers
+   *  the strict IsPlayerInTown and nothing else: outdoors there is no
+   *  building, so the second arm cannot fire and the third (rest
+   *  freely) is the wilderness.
+   *
+   *  IsPlayerInTown(true, true) itself gets ONE home below - the quest
+   *  bridge's `isPlayerInTown` reads the same closure. It used to test
+   *  `locationType <= 2`, which is City/Hamlet/Village and drops the
+   *  four types PlayerGPS also counts (HomeFarms, HomeWealthy, the
+   *  standalone Tavern and ReligionTemple), and it never tested
+   *  `mustBeOutside` at all - so "in town" was true in a shop. */
+  const _isPlayerInTownStrict = () => _musicInLocationRect()
+    && isTownLocationType(_musicLocationType())
+    && (modes?.mode ?? 'exterior') === 'exterior';
+  const outdoorRestDeps = createRestDeps(playerEntity, {
+    advanceMinutes: (n) => playerTicker.advance(n),
+    // AreEnemiesNearby's RESTING variant, over the two exterior pools
+    // (the city watch counts - guards on your trail wake you).
+    enemiesNearby: () => (cityGuards?.activeCount?.() ?? 0) > 0
+      || exteriorFoes.foes.some((f) => !f.dead
+        && ((f.ai?.detected && f.ai?.inSight) || (f.ai?._dist ?? Infinity) <= 12)),
+    place: () => ({
+      inTownStrict: _isPlayerInTownStrict(),
+      inTown: isTownLocationType(_musicLocationType()),
+      insideBuilding: false,
+    }),
+    // PlayerEntity.CrimeCommitted = Vagrancy + SpawnCityGuards(true),
+    // on BOTH the refused and the confirmed path (:559-561). The
+    // crime is a STRING key here, the shape arrestFlow already reads.
+    commitCrime: (crime, spawnGuards) => {
+      playerEntity.crimeCommitted = crime;
+      if (spawnGuards) _crimeResponse();
+    },
+    endLines: (id) => townTalk.lines(id),
+    say: (msg) => townTalk.say(msg),
+    onLevelUp: () => {
+      townTalk.say('You have gained a level!');
+      townTalk.showOverlay(new LevelUpScreen(playerEntity));
+    },
+    // CalculateHealthRecoveryRate's flags, live: outdoors, and day by
+    // the clock - which is the ONE place RapidHealing InLight differs.
+    day: () => !isNight(minuteNow()), inside: () => false,
+  });
+  const toggleRest = () => {
+    if (townTalk.overlayActive) return;
+    townTalk.showOverlay(new RestWindow(outdoorRestDeps));
+  };
   const arrows = new ArrowFlight({ getGpuMesh, collider: () => collider });   // C13
   let playerSpawned = false;
   // F-slice: FAST TRAVEL. The window collects the popup's choices;
@@ -1665,6 +1715,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (act === 'QuickLoad' && (modes?.mode ?? 'exterior') === 'exterior') {
       e.preventDefault();
       worldQuickLoad();
+      return;
+    }
+    // S40: Rest (R - InputManager.SetupDefaults). GameManager's
+    // dispatch has no scene gate; this host's hand-rolled chain does,
+    // which is the U43 flag still standing over these lines.
+    if (act === 'Rest' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
+      e.preventDefault();
+      toggleRest();
       return;
     }
     // F-slice: the travel map (V - InputManager.SetupDefaults:1028).
@@ -2389,9 +2447,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       townTalk.say(`You have been given ${dfItem.name ?? 'an item'}.`);
       surfacePlayer();
     },
-    // IsPlayerInTown(true, true): inside the rect of a City/Hamlet/
-    // Village location (LocationTypes 0/1/2).
-    isPlayerInTown: () => _musicInLocationRect() && _musicLocationType() <= 2,
+    // IsPlayerInTown(true, true), through the one closure S40 gave it.
+    isPlayerInTown: () => _isPlayerInTownStrict(),
     getGuild: (fid) => {
       const dict = townTalk.factionDict ?? null;
       const g = guildOfFaction(fid, resolveVariantGuild(dict), dict);
@@ -2426,6 +2483,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     canvas, renderer, player, cam, keys, latch, blocks,
     // Q4-v: the quest bridge + the scene context the NPC-data law needs
     questBridge,
+    // S40: IsPlayerInTown() with BOTH flags at their defaults - the
+    // location TYPE alone, no rect test, no inside test. That is what
+    // CanRest's second arm asks (:562), and it is a different question
+    // from isPlayerInTown above.
+    inTownLocation: () => isTownLocationType(_musicLocationType()),
     questSceneCtx: () => ({ mapId: _questLoc()?.mapTableData?.mapId ?? 0, locationIndex: _questLoc()?.locationIndex ?? 0 }),
     npcSession,   // TK-iv: the questor door on a static-NPC click
     // B4: the dungeon context quicksaves through the same composer
