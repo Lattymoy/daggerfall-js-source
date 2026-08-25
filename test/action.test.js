@@ -241,3 +241,159 @@ test('action: activation picking - reach, nearest, occlusion', () => {
   const blocked = { raycast: () => 1.0 };
   assert.equal(pickActivatable([0.5, 0.5, 0], [0, 0, 1], targets, blocked), null);
 });
+
+// ---------------------------------------------------------------------------
+// AUDIT 23 (save-load-11): the action-object save record.
+// ---------------------------------------------------------------------------
+
+// A collider stub that remembers WHERE each bucket sits, so a restored
+// pose can be checked on the collision side too.
+function poseCollider() {
+  const buckets = new Map();
+  return {
+    buckets,
+    addMesh: (key, _p, _i, m) => buckets.set(key, m),
+    removeBucket: (key) => buckets.delete(key),
+    raycast: () => Infinity,
+  };
+}
+
+// A portcullis: an action DOOR whose OWN record is Translation-flagged
+// (+y 3.2 over ActionDuration 54 / 20 = 2.7 s), the S0000004 Mantellan
+// Crux shape, plus a lock so the P10 field rides along.
+const buildPortcullis = () => {
+  const collider = poseCollider();
+  const a = new ActionSystem(collider);
+  const door = a.addDoor(CUBE, I, {
+    ns: 0,
+    positionKey: 26742,
+    startingLockValue: 6,
+    action: {
+      duration: 54, magnitude: 0, index: 0, axisRaw: 0,
+      rotation: { x: 0, y: 0, z: 0 }, translation: { x: 0, y: 3.2, z: 0 },
+      nextObject: -1, actionFlag: ACTION_FLAGS.Translation, triggerFlag: 0x02,   // TRIGGER_FLAGS.Direct
+    },
+  });
+  return { a, door, collider };
+};
+// Exact frame count, so the tween fraction under test is not at the
+// mercy of float accumulation in the loop guard.
+const run = (a, seconds, step = 1 / 60) => {
+  const n = Math.round(seconds / step);
+  for (let i = 0; i < n; i++) a.update(step);
+};
+
+test('action save-load-11: a door saved MID-RISE restores mid-rise and keeps rising', () => {
+  // DFU puts TWO serializable components on the one door GameObject -
+  // SerializableActionDoor for the swing (:73-89) and, via RDBLayout's
+  // AddActionModelHelper -> AddAction (:258, :970-973), a
+  // SerializableActionObject for the record's Move (:61-76). Both save
+  // their state plus the live tween's Percentage and hand the REMAINING
+  // fraction back on restore (RestartTween(1 - percentage)). Before
+  // this row the port's record carried only the swing, so a portcullis
+  // saved half-risen slammed back to the floor on load.
+  const { a, door } = buildPortcullis();
+  const baseY = door.base[13];
+  a.receive(door, 'Direct');
+  assert.equal(door.moveState, 'forward');
+  // 0.9 of 2.7 s - deliberately NOT halfway, so an inverted or
+  // re-derived fraction cannot pass for the saved one.
+  run(a, 0.9);
+  approx(door.moveT, 1 / 3, 1e-2);
+  approx(door.matrix[13] - baseY, 3.2 / 3, 2e-2);
+
+  const snap = a.collectSaveData();
+  assert.equal(snap.length, 1);
+  assert.equal(snap[0].key, 'act:0:26742');
+  assert.equal(snap[0].moveState, 'forward');
+  approx(snap[0].moveT, 1 / 3, 1e-2);
+  assert.equal(snap[0].lock, 6);                    // P10 still rides
+
+  // The load path: DFU REBUILDS the location, so restore onto a fresh
+  // graph whose door sits at its untouched base pose.
+  const fresh = buildPortcullis();
+  approx(fresh.door.matrix[13] - baseY, 0, 1e-9);
+  assert.equal(fresh.door.activationCount, 0, 'the fresh graph really has not been activated');
+  fresh.a.restoreSaveData(snap);
+  assert.equal(fresh.door.moveState, 'forward', 'the Move tween survives the round trip');
+  // BOTH reviewers of this slice found the same hole: the RESTORE of
+  // activationCount was unpinned, and deleting that line left the whole
+  // suite green while Testing.md claimed the field round-tripped. It is
+  // load-bearing - DoorText's first-activation hold reads
+  // `activationCount === 0 && byPlayer` and the Hurt21 relay reads
+  // `activationCount % 20`, so a lost counter re-shows a door's text
+  // after every load. Discriminating here because `receive` left the
+  // saved door at 1 while the fresh one is 0.
+  assert.equal(fresh.door.activationCount, 1, "Receive's counter rides the record");
+  approx(fresh.door.moveT, 1 / 3, 1e-2);
+  // restored mid-rise, not snapped back to the floor
+  approx(fresh.door.matrix[13] - baseY, 3.2 / 3, 2e-2);
+  // The door never SWUNG, so it is still solid - and its bucket rides
+  // the restored pose, not the base.
+  approx(fresh.collider.buckets.get(fresh.door.key)[13] - baseY, 3.2 / 3, 2e-2);
+
+  // ...and update() carries it the REMAINING 1.8 s on its own
+  // (RestartTween(1 - percentage)) - no more, no less.
+  run(fresh.a, 1.7);
+  assert.equal(fresh.door.moveState, 'forward', 'still rising at 1.7 s of the 1.8 s left');
+  run(fresh.a, 0.2);
+  assert.equal(fresh.door.moveState, 'end');
+  assert.equal(fresh.door.moveT, 1);
+  approx(fresh.door.matrix[13] - baseY, 3.2, 1e-5);
+});
+
+test('action save-load-11: the Move pair is PRESENCE-GATED - a pre-fix snapshot restores unchanged', () => {
+  // Every field past {state, t, activationCount} is additive: a
+  // snapshot written before the pair existed must leave the live Move
+  // state alone rather than zero it.
+  const { a, door } = buildPortcullis();
+  a.receive(door, 'Direct');
+  run(a, 0.9);
+  const baseY = door.base[13];
+  const legacy = a.collectSaveData().map(({ moveState, moveT, ...rest }) => rest);
+  assert.equal('moveState' in legacy[0], false);
+
+  // Restored onto a door that is itself mid-rise: the live tween holds.
+  const live = buildPortcullis();
+  live.a.receive(live.door, 'Direct');
+  run(live.a, 0.9);
+  live.a.restoreSaveData(legacy);
+  assert.equal(live.door.moveState, 'forward');
+  approx(live.door.moveT, 1 / 3, 1e-2);
+  approx(live.door.matrix[13] - baseY, 3.2 / 3, 2e-2);
+
+  // ...and onto a door that never moved: it stays put, no NaN pose.
+  const fresh = buildPortcullis();
+  fresh.a.restoreSaveData(legacy);
+  assert.equal(fresh.door.moveState, 'start');
+  assert.equal(fresh.door.moveT, 0);
+  approx(fresh.door.matrix[13] - baseY, 0, 1e-9);
+});
+
+test('action save-load-11: the SWING half of the record still round-trips through the same law', () => {
+  // The refactor moved {state, t, activationCount, lock} out of the
+  // dungeon host and into ActionSystem - the swing must land exactly
+  // where it did (a mid-swing door resumes and stays passable, an
+  // unlocked door stays unlocked).
+  const { a, door } = buildPortcullis();
+  door.currentLockValue = 0;
+  a.toggleDoor(door);
+  run(a, 0.5);                                      // a THIRD of OPEN_DURATION 1.5
+  approx(door.t, 1 / 3, 1e-2);
+  const snap = a.collectSaveData();
+  assert.equal(snap[0].state, 'forward');
+  assert.equal(snap[0].lock, 0);
+  assert.equal(snap[0].activationCount, 0);         // toggleDoor is not Receive
+
+  const fresh = buildPortcullis();
+  assert.equal(fresh.collider.buckets.has(fresh.door.key), true, 'a closed door starts solid');
+  fresh.a.restoreSaveData(snap);
+  assert.equal(fresh.door.state, 'forward');
+  approx(fresh.door.t, 1 / 3, 1e-2);
+  assert.equal(fresh.door.currentLockValue, 0, 'the lock restores from the save');
+  assert.equal(fresh.collider.buckets.has(fresh.door.key), false, 'a mid-swing door is passable');
+  run(fresh.a, 0.9);
+  assert.equal(fresh.door.state, 'forward', 'still swinging at 0.9 s of the 1.0 s left');
+  run(fresh.a, 0.2);
+  assert.equal(fresh.door.state, 'end');
+});

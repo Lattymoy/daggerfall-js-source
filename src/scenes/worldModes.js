@@ -2706,6 +2706,10 @@ export function createWorldModes(host) {
     renderer.setPointLights(
       withPlayerLights(nearestLights(interiorCtx.lights, cam.pos, 16, interiorCtx.lights.map((l) => l.range)),
         magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw)),   // per-light range (DaggerfallInterior.AddLight); a scalar drops the per-record switch   // X11 candle; T1 torch
+      // Each light also CARRIES its own intensity and colour from that
+      // same switch (interiorLightProperties), but setPointLights has
+      // one shared colour uniform, so the prefab white goes up for all
+      // of them - see interiorLights.js's RENDERER GAP note.
       new Float32Array(INTERIOR_LIGHT_COLOR));
     interiorCtx.actions.update(dt);
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);

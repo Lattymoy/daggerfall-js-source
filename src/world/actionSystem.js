@@ -82,14 +82,17 @@ export const DOOR_VERB_FLAGS = new Set([
   ACTION_FLAGS.OpenDoor, ACTION_FLAGS.CloseDoor,
 ]);
 
-// Delegated relays (P10/U6): Teleport and the text actions run
-// through scene seams inside _runRelay. Activate (0x1e) is a VERBATIM
-// no-op - DFU's delegate body is `return;` - and so are Dialogue and
-// the Unknowns, which have no delegate at all; for those the cascade
-// IS the behavior. SetGlobalVar (0x1f) is NOT one of them: DFU's
-// delegate calls PlayerEntity.GlobalVars.SetGlobalVar(ActionAxisRawValue,
-// true), and it is UNPORTED here pending a quest-system global-var
-// store (Port-Ledger C). Its cascade still runs.
+// Delegated relays (P10/U6): Teleport, the text actions and
+// SetGlobalVar run through scene seams inside _runRelay. Activate
+// (0x1e) is a VERBATIM no-op - DFU's delegate body is `return;` - and
+// so are Dialogue and the Unknowns, which have no delegate at all;
+// for those the cascade IS the behavior. SetGlobalVar (0x1f) is NOT
+// one of them (DaggerfallAction.cs:822-827): it sets quest global
+// #ActionAxisRawValue to TRUE - the record's raw axis byte is the
+// global's index, not a vector - and the port runs it through the
+// setGlobalVar seam onto the machine's 64-global store
+// (systems/quest/machine.js globalVars, the same store a
+// GlobalVarLink task reads). Its cascade runs either way.
 
 /** Verbatim RDBLayout AddActionModelHelper classification for a placed
  *  model with an action record. C# precedence kept exactly:
@@ -197,7 +200,7 @@ const DOOR_TEXT_REMAP = Object.freeze({ 7701: 7705, 7702: 7705, 7703: 7705, 7704
 const DOOR_TEXT_SKIP = new Set([7700, 7706, 7711, 7712, 7715, 7717, 7719]);
 
 export class ActionSystem {
-  constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = null, playerLevel = () => 1, lockpickSkill = () => 0, rolls = Math.random } = {}) {
+  constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = null, setGlobalVar = null, playerLevel = () => 1, lockpickSkill = () => 0, rolls = Math.random } = {}) {
     this.collider = collider;
     this.objects = new Map(); // key -> runtime object
     this._links = new Map();  // `${ns}:${position}` -> object (the chain graph)
@@ -205,6 +208,12 @@ export class ActionSystem {
     this._damagePlayer = damagePlayer;
     this._drainMagicka = drainMagicka;
     this._castSpell = castSpell;
+    // SetGlobalVar (0x1f): DFU reaches the 64 classic globals through
+    // the ambient GameManager.Instance.PlayerEntity.GlobalVars; the
+    // port hands the store in, exactly as it does the damage/magicka
+    // sinks. Absent (an interior host, a bare pin) the action is inert
+    // beyond its cascade, which is the pre-wiring shape.
+    this._setGlobalVar = setGlobalVar;
     this._playerLevel = playerLevel;
     this._lockpickSkill = lockpickSkill;   // R1: GetLiveSkillValue(Lockpicking), the scene's live read
     this._rolls = rolls;
@@ -217,6 +226,8 @@ export class ActionSystem {
     //   onActionSound(o)             - Play's soundIndex (Index > 0)
     //   onShowText(textId) / onShowTextInput(textId, submit)
     //   onDoorText(textId) / onTrespass()
+    //   setGlobalVar(index, value) rides the constructor options
+    //     beside damagePlayer (it is a sink, not a scene event)
     //   onDoorState(o, opening) / onDoorBash(o) - the A1 audio seams
     this.resolvePosition = null;
     this.onTeleport = null;
@@ -308,9 +319,10 @@ export class ActionSystem {
     // Poison: verbatim DFU no-op stub (preserved).
   }
 
-  /** The delegated-relay delegates (P10/U6): Teleport + the text
-   *  actions, routed through the scene seams. Every OTHER relay flag
-   *  is a verbatim no-op whose cascade is the behavior. */
+  /** The delegated-relay delegates (P10/U6): Teleport, the text
+   *  actions and SetGlobalVar, routed through the scene seams. Every
+   *  OTHER relay flag is a verbatim no-op whose cascade is the
+   *  behavior. */
   _runRelay(o) {
     const F = ACTION_FLAGS;
     if (o.actionFlag === F.Teleport) {
@@ -345,6 +357,16 @@ export class ActionSystem {
       });
       return;
     }
+    if (o.actionFlag === F.SetGlobalVar) {
+      // DaggerfallAction.SetGlobalVar (:822-827), verbatim: "Global
+      // variable index stored in action axis value" -
+      // GlobalVars.SetGlobalVar(ActionAxisRawValue, true). The store
+      // is PersistentGlobalVars.cs:53-59 (key -> bool), which the port
+      // homes on the quest machine. DFU's trailing Debug.LogFormat is
+      // the delegate's only other statement.
+      this._setGlobalVar?.(o.axisRaw, true);
+      return;
+    }
     if (o.actionFlag === F.DoorText) this._runDoorText(o);
   }
 
@@ -366,9 +388,8 @@ export class ActionSystem {
   }
 
   /** Register a chain RELAY: an acting object whose delegate is
-   *  routed through a scene seam (Teleport, the text actions), is a
-   *  verbatim no-op (Activate, the Unknowns...), or is UNPORTED
-   *  (SetGlobalVar - see the flag note at the top of this file).
+   *  routed through a scene seam (Teleport, the text actions,
+   *  SetGlobalVar) or is a verbatim no-op (Activate, the Unknowns...).
    *  DFU's Play() cascades ActivateNext for (almost) EVERY flag
    *  before the delegate runs, so these must live in the chain or
    *  every link through them dies (audit 2026-08-16). aabb (when
@@ -438,9 +459,11 @@ export class ActionSystem {
       currentLockValue: opts.startingLockValue ?? 0,
       // R1: AttemptLockpicking's retry gate (DaggerfallActionDoor.cs:36
       // FailedSkillLevel) - the skill the player FAILED at; a retry
-      // waits for the live skill to differ. DFU's own comment marks it
-      // "TODO: persist across save and load" and it is not serialized
-      // there; the port mirrors that (the S12 snapshot skips it).
+      // waits for the live skill to differ. DFU's own field comment
+      // there marks it "TODO: persist across save and load", but that
+      // TODO is stale: SerializableActionDoor DOES round-trip it
+      // (:78 save, :101 restore). The S12 snapshot still skips it -
+      // FLAGGED, a live gap, not parity.
       failedSkillLevel: 0,
       matrix: baseMatrix,
     };
@@ -782,6 +805,64 @@ export class ActionSystem {
     o.currentLockValue = 0;   // :176
     this.toggleDoor(o, true);   // :184 - a successful pick opens the door
     return true;
+  }
+
+  /** GetSaveData for the whole action graph (S12): one record per
+   *  object, keyed by the chain key.
+   *
+   *  A door that also carries a record is ONE GameObject with TWO
+   *  serializable components in DFU, and therefore TWO save records:
+   *  the door prefab's SerializableActionDoor persists the SWING
+   *  (currentState + the live tween's Percentage + currentLockValue,
+   *  SerializableActionDoor.cs:73-89) and RDBLayout attaches a
+   *  SerializableActionObject to that same GameObject through
+   *  AddActionModelHelper -> AddAction (RDBLayout.cs:258, :970-973),
+   *  which persists the record's own MOVE (currentState + its tween's
+   *  Percentage, SerializableActionObject.cs:61-76). One port object,
+   *  so one record with both halves: {state, t} is the swing,
+   *  {moveState, moveT} the record's Move. Without the second pair a
+   *  Move-flagged door saved mid-rise snapped back to its base pose on
+   *  load (AUDIT 18 / AUDIT 23 save-load-11).
+   *
+   *  NOT carried: failedSkillLevel (see addDoor - a live gap, FLAGGED,
+   *  not this slice). */
+  collectSaveData() {
+    return [...this.objects.values()].map((o) => ({
+      key: o.key, state: o.state, t: o.t ?? 0,
+      activationCount: o.activationCount ?? 0,
+      ...(o.kind === 'door'
+        ? { lock: o.currentLockValue, moveState: o.moveState, moveT: o.moveT ?? 0 }   // P10 lock; the Move pair
+        : {}),
+    }));
+  }
+
+  /** RestoreSaveData for the whole action graph: set the saved state,
+   *  then settle. Both DFU halves restore the state and then restart
+   *  the tween over what is LEFT of it - RestartTween(1 - percentage)
+   *  scales Duration by the unplayed remainder
+   *  (SerializableActionDoor.cs:99-100, SerializableActionObject.cs
+   *  :86-87, resolving to DaggerfallAction.cs:353-359 and
+   *  DaggerfallActionDoor.cs:243-251). The port's t/moveT are that same
+   *  progress read the other way round, and update() advances them by
+   *  dt/duration, so restoring the pair IS the restarted tween - the
+   *  remaining (1 - t) * duration plays out and no more.
+   *
+   *  Every field past {state, t, activationCount} is presence-gated:
+   *  snapshots written before a field existed leave the live value, the
+   *  additive shape this save layer uses everywhere. */
+  restoreSaveData(list) {
+    list?.forEach((sa) => {
+      const o = this.objects.get(sa.key);
+      if (!o) return;
+      o.state = sa.state;
+      o.t = sa.t;
+      o.activationCount = sa.activationCount;
+      if (o.kind === 'door') {
+        if (sa.lock != null) o.currentLockValue = sa.lock;   // P10: door locks persist
+        if (sa.moveState != null) { o.moveState = sa.moveState; o.moveT = sa.moveT ?? 0; }
+      }
+      this.syncRestored(o);
+    });
   }
 
   /** S12 restore reconciliation (P10): recompute a restored object's

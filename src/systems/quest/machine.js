@@ -107,6 +107,12 @@
 //                                (C# skips while the source is busy,
 //                                and only a real play re-stamps
 //                                PlaySound's lastTimePlayed)
+//   playSong(name)             - "DUNGEON5.HMI", a MIDI.BSA RECORD
+//                                name: PlaySong resolves the SongFiles
+//                                member through songFiles.js before it
+//                                reaches the hook, because the port's
+//                                whole song layer keys on the archive's
+//                                spelling (DaggerfallSongPlayer.Play)
 //   dialogLink(uid, name, type[, name2, type2]) - TalkManager
 //                                DialogLinkForQuestInfoResource
 //   addDialog(uid, name, type, isSpecial) - AddDialogForQuestInfoResource
@@ -301,6 +307,7 @@ export class QuestMachine {
       addHUDText: (text) => this.deps.addHUDText?.(text),
       playVideo: (name) => this.deps.playVideo?.(name),
       playSound: (soundId) => this.deps.playSound?.(soundId),
+      playSong: (name) => this.deps.playSong?.(name),
       dialogLink: (...args) => this.deps.dialogLink?.(...args),
       addDialog: (...args) => this.deps.addDialog?.(...args),
       addQuestRumor: (uid, message) => this.deps.addQuestRumor?.(uid, message),

@@ -41,7 +41,7 @@ import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../sy
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
 import { CityNavigation } from '../world/cityNavigation.js';   // T1 towns
 import { TownPopulation } from '../systems/townPopulation.js';
-import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES } from '../characters/mobilePerson.js';
+import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES, personWantsToStop } from '../characters/mobilePerson.js';
 import { createTownTalk } from './townTalk.js';   // T3b
 import { createPlayerMagic } from './hostMagic.js';   // M2: spellcasting above ground
 import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in)
@@ -49,7 +49,7 @@ import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AU
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice } from './hostCombat.js';   // AUDIT 23 (C14)
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
 import { RestWindow } from '../ui/restWindow.js';   // S40: rest above ground
-import { setEnemyAlert, areEnemiesNearby } from '../systems/encounters.js';   // the enemy arm RAISES the alert before refusing; the RESTING variant asks the pool
+import { setEnemyAlert, areEnemiesNearby } from '../systems/encounters.js';   // the enemy arm RAISES the alert before refusing; the RESTING variant asks the pool, the STRICT one gates the townsfolk idle
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5): the collapse box
 import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
@@ -1712,9 +1712,11 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer.drawBillboards(billboardBatches, camRight, new Float32Array([0, 1, 0]));
     if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, new Float32Array([0, 1, 0]));   // M2: spell missiles in flight
     // T1: the wandering townsfolk - population ticks at 10Hz, the
-    // politeness idle gate (still + near + SHEATHED + visible; no
-    // exterior foes), daytime only; live persons render as C11-style
-    // mobile batches on the flats' axis.
+    // politeness idle gate whole (mobilePerson.personWantsToStop),
+    // daytime only; live persons render as C11-style mobile batches
+    // on the flats' axis. The gate's AreEnemiesNearby() term reads
+    // this host's one live pool, the city watch - so a townsperson
+    // keeps walking while a guard is on you.
     if (walkMode) {
       _playerStill = _lastPlayerPos !== null &&
         Math.hypot(cam.pos[0] - _lastPlayerPos[0], cam.pos[2] - _lastPlayerPos[2]) < 0.001;
@@ -1723,10 +1725,13 @@ export async function bootExterior(canvas, renderer, params, status) {
       // population freezes (dt 0 still returns frames for drawing)
       // while the talk overlay is up, so nobody walks away mid-talk.
       const popDt = townTalk.overlayActive ? 0 : dt;
-      const live = !population ? [] : population.update(popDt, cam.pos, cam.yaw, eye, !isNight(minute), (person) => {
-        const pd = Math.hypot(person.pos[0] - cam.pos[0], person.pos[2] - cam.pos[2]);
-        return _playerStill && pd < 2.5 && !!weaponRig.playerWeapon.sheathed && !isInvisible(playerEntity);
-      });
+      const live = !population ? [] : population.update(popDt, cam.pos, cam.yaw, eye, !isNight(minute), (person) => personWantsToStop({
+        playerStandingStill: _playerStill,
+        distanceToPlayer: Math.hypot(person.pos[0] - cam.pos[0], person.pos[2] - cam.pos[2]),
+        sheathed: weaponRig.playerWeapon.sheathed,
+        invisible: isInvisible(playerEntity),
+        enemiesNearby: () => areEnemiesNearby(cityGuards.guards),
+      }));
       _livePersons = live.map(({ person }) => ({ person, pos: person.pos }));   // T3b: the activation ray's targets
       const personBatches = [];
       for (const { person, out } of live) {

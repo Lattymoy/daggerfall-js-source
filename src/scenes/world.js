@@ -26,7 +26,7 @@ import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
 import { CityNavigation } from '../world/cityNavigation.js';   // T2 towns
 import { TownPopulation } from '../systems/townPopulation.js';
-import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES } from '../characters/mobilePerson.js';
+import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES, personWantsToStop } from '../characters/mobilePerson.js';
 import { createTownTalk } from './townTalk.js';
 import { createPlayerMagic } from './hostMagic.js';   // M2: spellcasting above ground
 import { setDefaultEnchantCtx } from '../systems/enchantments.js';   // E2: the host's enchantCtx mount
@@ -58,7 +58,7 @@ import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: Create
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1
 import { SITE_TYPES } from '../systems/quest/place.js';   // B3: the respawn dispatch reads the site type
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
-import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert, areEnemiesNearby } from '../systems/encounters.js';   // X-slice; the rest refusal raises the alert and asks the RESTING variant
+import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert, areEnemiesNearby } from '../systems/encounters.js';   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
@@ -100,6 +100,7 @@ import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
+import { music } from '../systems/music.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
 import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
@@ -2664,6 +2665,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     // only a real play re-stamps PlaySound's timer; the port's one-shot
     // engine has no busy state, so every call reports played.
     playSound: (id) => { audio.playOneShot(id); return true; },
+    // PlaySong hands a MIDI.BSA record name; the SongFiles member was
+    // resolved in the action (systems/songFiles.js), which is where
+    // DaggerfallSongPlayer.Play does it. DFU's quest song plays ONCE
+    // and SongManager's `!songPlayer.IsPlaying` arm then restores the
+    // context track; the port's songs LOOP (Ledger A, "THE SONG
+    // SCHEDULER"), so a quest song holds until the music context
+    // changes instead. That is the loop row's consequence, not a
+    // second departure.
+    playSong: (name) => music.playSong(name),
     giveItemToPlayer: (dfItem) => { playerEntity.items = playerEntity.items || []; addItem(playerEntity.items, dfItem); surfacePlayer(); },
     removeItemFromPlayer: (dfItem) => {
       const items = playerEntity.items ?? [];
@@ -3335,9 +3345,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // (PopulationManager is per-location); the pool sees the player in
     // the pixel's LOCATION frame, and live persons draw through the
     // current translation on the flats' axis (the billboard-axis
-    // doctrine). The politeness gate is the exterior host's verbatim:
-    // player still + within 2.5 + weapon SHEATHED + visible + no
-    // enemies (this host's exterior has none).
+    // doctrine). The politeness gate is the law both exterior hosts
+    // share (mobilePerson.personWantsToStop); this host hands its
+    // AreEnemiesNearby() term BOTH live pools, the city watch and the
+    // encounter foes.
     syncTopics();   // T3d: the Where-is directory follows the location pixel
     _playerStill = _lastPlayerPos &&
       Math.hypot(cam.pos[0] - _lastPlayerPos[0], cam.pos[2] - _lastPlayerPos[2]) < 0.001;
@@ -3351,10 +3362,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       const local = [cam.pos[0] - t[0] - p.locOrigin[0], cam.pos[1] - t[1], cam.pos[2] - t[2] - p.locOrigin[2]];
       // audit 2026-08-17: the population freezes under the talk
       // overlay (DFU pauses the sim under UI windows)
-      const live = p.population.update(townTalk.overlayActive ? 0 : dt, local, cam.yaw, local, isDay, (person) => {
-        const pd = Math.hypot(person.pos[0] - local[0], person.pos[2] - local[2]);
-        return _playerStill && pd < 2.5 && !!weaponRig.playerWeapon.sheathed && !isInvisible(playerEntity);
-      });
+      const live = p.population.update(townTalk.overlayActive ? 0 : dt, local, cam.yaw, local, isDay, (person) => personWantsToStop({
+        playerStandingStill: _playerStill,
+        distanceToPlayer: Math.hypot(person.pos[0] - local[0], person.pos[2] - local[2]),
+        sheathed: weaponRig.playerWeapon.sheathed,
+        invisible: isInvisible(playerEntity),
+        enemiesNearby: () => areEnemiesNearby(enchantFoes()),
+      }));
       for (const { person, out } of live) {
         const batch = p.personBatches.get(person);
         batch.archive = person.archive;   // audit 2026-08-17: identity re-rolls per spawn - re-point the batch

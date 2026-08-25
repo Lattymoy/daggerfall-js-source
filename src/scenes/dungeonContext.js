@@ -168,6 +168,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       playerEntity.magicka = Math.max(0, (playerEntity.magicka ?? 0) - n);
       surfacePlayer();
     },
+    // SetGlobalVar (0x1f): DFU's delegate writes
+    // PlayerEntity.GlobalVars; the port's 64-global store lives on the
+    // quest machine (systems/quest/machine.js globalVars - the same
+    // Map a GlobalVarLink task reads), so the sink is the bridge's
+    // machine. No bridge (a headless boot) leaves the action inert
+    // beyond its cascade.
+    setGlobalVar: (index, value) => { opts.questBridge?.machine?.globalVars?.set(index, value); },
     playerLevel: () => playerEntity.level,
     lockpickSkill: () => skillValue(playerEntity, SKILLS.Lockpicking),   // R1: GetLiveSkillValue at attempt time
   });
@@ -1728,9 +1735,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
 
   // S12: the dungeon world snapshot. Foes persist by SPAWN ORDER
   // (marker order is deterministic per location rebuild); piles by
-  // index; action objects by their stable keys. Movers recompute
-  // their matrix from {state, t} on the next tick, so those two plus
-  // activationCount ARE the mover.
+  // index; action objects by their stable keys. The action-object
+  // record itself is ActionSystem's law (collectSaveData /
+  // restoreSaveData) - a mover's pose IS its {state, t}, and a door
+  // carries a second pair for the record's Move tween.
   const _locationKey = `dungeon:${dfLocation?.dungeon?.recordElement?.header?.locationId ?? 'probe'}`;
   function collectWorld() {
     return {
@@ -1753,11 +1761,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       droppedLoot: droppedLoot._piles.map((p) => ({
         pos: [...p.pos], record: p.record, items: p.items.map((it) => ({ ...it })),
       })),
-      actions: [...actions.objects.values()].map((o) => ({
-        key: o.key, state: o.state, t: o.t ?? 0,
-        activationCount: o.activationCount ?? 0,
-        ...(o.kind === 'door' ? { lock: o.currentLockValue } : {}),   // P10: door locks persist
-      })),
+      actions: actions.collectSaveData(),
     };
   }
   function applyWorld(w) {
@@ -1813,15 +1817,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       }
     });
     droppedLoot.restorePiles(w.droppedLoot);   // AUDIT 23: absent list clears, per rebuild-from-save
-    w.actions?.forEach((sa) => {
-      const o = actions.objects.get(sa.key);
-      if (!o) return;
-      o.state = sa.state;
-      o.t = sa.t;
-      o.activationCount = sa.activationCount;
-      if (o.kind === 'door' && sa.lock != null) o.currentLockValue = sa.lock;   // P10
-      actions.syncRestored(o);   // P10: matrix + collider bucket settle (an open door no longer restores solid-and-closed)
-    });
+    // P10 + AUDIT 23 (save-load-11): state, lock and BOTH tweens
+    // restore, then each object settles its matrix and collider bucket
+    // (an open door no longer restores solid-and-closed, and a door
+    // saved mid-rise keeps rising).
+    actions.restoreSaveData(w.actions);
   }
 
   // Shared foe-damage path: melee and spells kill through the same

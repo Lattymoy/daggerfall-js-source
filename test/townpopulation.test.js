@@ -2,8 +2,10 @@
 // CityNavigation / MobilePersonMotor / PopulationManager, verbatim).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { CityNavigation, NAV_CELL, NAV_CELLS_PER_BLOCK, tileWeight } from '../src/world/cityNavigation.js';
-import { MobilePerson, PERSON_TEXTURES, GUARD_TEXTURE, PERSON_MOVE_SPEED } from '../src/characters/mobilePerson.js';
+import { MobilePerson, PERSON_TEXTURES, GUARD_TEXTURE, PERSON_MOVE_SPEED, PERSON_IDLE_DISTANCE, PERSON_IDLE_RECORD, personWantsToStop } from '../src/characters/mobilePerson.js';
+import { areEnemiesNearby } from '../src/systems/encounters.js';   // the ONE home for GameManager.AreEnemiesNearby
 import { TownPopulation, maxPopulationFor, POP_RECYCLE_DISTANCE, POP_SPAWN_RANGE_OUTSIDE_RECT } from '../src/systems/townPopulation.js';
 
 const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
@@ -185,4 +187,91 @@ test('mobilePerson audit pins: the self-target place + the N/S/E-only best scan'
   q.update(1 / 60, [0, 0, 0]);
   assert.equal(q.state, 'move');
   assert.notEqual(q.tx, 7, 'west is never chosen as a best direction (DFU Range(0,3))');
+});
+
+// ---- The POLITENESS GATE (MobilePersonMotor.cs:216-230) -------------
+// AUDIT 18's row: the port built the gate out of four terms in two
+// untestable hosts and dropped DFU's AreEnemiesNearby() clause, so a
+// townsperson idled beside a hostile guard where DFU keeps it
+// walking. The law is personWantsToStop now and these run it.
+
+const openGate = { playerStandingStill: true, distanceToPlayer: 1, sheathed: true, invisible: false, inBeastForm: false };
+
+test('politeness gate: all six terms of wantsToStop, each one flipped alone', () => {
+  assert.equal(personWantsToStop(openGate), true, 'five terms hold, no foes -> the person stops');
+  // :224, term by term
+  assert.equal(personWantsToStop({ ...openGate, playerStandingStill: false }), false, 'a walking player');
+  assert.equal(personWantsToStop({ ...openGate, sheathed: false }), false, 'a drawn weapon');
+  assert.equal(personWantsToStop({ ...openGate, invisible: true }), false, 'an invisible player');
+  assert.equal(personWantsToStop({ ...openGate, inBeastForm: true }), false, 'a were-creature');
+  // withinIdleDistance is STRICT `<` against idleDistance (:32, :218)
+  assert.equal(PERSON_IDLE_DISTANCE, 2.5);
+  assert.equal(personWantsToStop({ ...openGate, distanceToPlayer: 2.4999 }), true);
+  assert.equal(personWantsToStop({ ...openGate, distanceToPlayer: 2.5 }), false, 'exactly idleDistance is NOT within it');
+  assert.equal(personWantsToStop({ ...openGate, distanceToPlayer: undefined }), false, 'no measurement is not "near"');
+  // THE TERM AUDIT 18 FOUND MISSING (:226-230)
+  assert.equal(personWantsToStop({ ...openGate, enemiesNearby: () => true }), false, 'a hostile in range keeps it walking');
+  assert.equal(personWantsToStop({ ...openGate, enemiesNearby: () => false }), true);
+  // and the whole thing answers a boolean, never a stray falsy input
+  assert.equal(personWantsToStop({ ...openGate, playerStandingStill: null }), false);
+  assert.equal(personWantsToStop(), false, 'an empty bag is not an open gate');
+});
+
+test('politeness gate: AreEnemiesNearby is asked ONLY when the other five hold (:226-230)', () => {
+  // DFU's own comment on that if/else: "greatly reduce # of calls to
+  // AreEnemiesNearby() by short-circuit evaluation".
+  let calls = 0;
+  const spy = () => { calls++; return false; };
+  assert.equal(personWantsToStop({ ...openGate, enemiesNearby: spy }), true);
+  assert.equal(calls, 1, 'exactly one call when the gate is otherwise open');
+  for (const shut of [{ playerStandingStill: false }, { distanceToPlayer: 9 }, { sheathed: false }, { invisible: true }, { inBeastForm: true }]) {
+    calls = 0;
+    assert.equal(personWantsToStop({ ...openGate, ...shut, enemiesNearby: spy }), false);
+    assert.equal(calls, 0, `no scan with ${Object.keys(shut)[0]} shut`);
+  }
+});
+
+test('politeness gate: the enemies term is the STRICT AreEnemiesNearby, over the host pool', () => {
+  const gate = (foes) => personWantsToStop({ ...openGate, enemiesNearby: () => areEnemiesNearby(foes) });
+  // An UNAWARE foe far away but inside the classic spawn band.
+  // MobilePersonMotor calls AreEnemiesNearby() with NO arguments, so
+  // `resting` takes its false default (GameManager.cs:684) and this
+  // foe counts - the townsperson keeps walking.
+  const unaware = [{ dead: false, ai: { detected: false, inSight: false, wouldBeSpawned: true, _dist: 900 } }];
+  assert.equal(areEnemiesNearby(unaware), true, 'the strict variant counts it');
+  assert.equal(areEnemiesNearby(unaware, { resting: true }), false, 'the RESTING variant skips it - a different question');
+  assert.equal(gate(unaware), false, 'the gate asks the STRICT one');
+  // A foe that can see you counts at any distance.
+  assert.equal(gate([{ dead: false, ai: { detected: true, inSight: true, _dist: 40 } }]), false);
+  // Half-seen is not seen, and a corpse is not a hostile.
+  assert.equal(gate([{ dead: false, ai: { detected: true, inSight: false, _dist: 40 } }]), true);
+  assert.equal(gate([{ dead: true, ai: { detected: true, inSight: true, _dist: 0 } }]), true);
+  assert.equal(gate([]), true, 'an empty watch is a quiet street');
+});
+
+test('politeness gate: the motor obeys it, and both exterior hosts feed it their pool', () => {
+  const nav = new CityNavigation(1, 1);
+  nav.setBlockData(0, 0, new Uint8Array(64 * 64), () => 2);   // all grass
+  const person = new MobilePerson(nav, { archive: 385, frameCount: () => 4, groundY: () => 0, rand: seq(0.9) });
+  person.place(30, 30);
+  const watch = [];
+  const stop = () => personWantsToStop({ ...openGate, enemiesNearby: () => areEnemiesNearby(watch) });
+  const quiet = person.update(1 / 60, [0, 0, 0], stop());
+  assert.equal(person.state, 'idle', 'a quiet street with the player still and sheathed -> the person stops');
+  assert.equal(quiet.record, PERSON_IDLE_RECORD, 'and it draws the idle record');
+  watch.push({ dead: false, ai: { detected: true, inSight: true, _dist: 3 } });
+  const alarmed = person.update(1 / 60, [0, 0, 0], stop());
+  assert.notEqual(person.state, 'idle', 'a hostile in range puts it back on its feet');
+  assert.ok(alarmed.record >= 0 && alarmed.record <= 4, `and back on the move wheel (got ${alarmed.record})`);
+  // The wiring, which lives in two hosts a test cannot boot: each
+  // must call the law and hand it its OWN live pool, and neither may
+  // keep a hand-rolled four-term gate.
+  const src = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
+  for (const f of ['src/scenes/exterior.js', 'src/scenes/world.js']) {
+    assert.match(src(f), /personWantsToStop\(\{/, f);
+    assert.match(src(f), /enemiesNearby: \(\) => areEnemiesNearby\(/, f);
+    assert.doesNotMatch(src(f), /_playerStill && pd < 2\.5/, `${f} still hand-rolls the gate`);
+  }
+  assert.match(src('src/scenes/exterior.js'), /enemiesNearby: \(\) => areEnemiesNearby\(cityGuards\.guards\)/);
+  assert.match(src('src/scenes/world.js'), /enemiesNearby: \(\) => areEnemiesNearby\(enchantFoes\(\)\)/);
 });

@@ -5,15 +5,12 @@
 // weight-0/blocked targets, an 80% chance to leave a downgrade for
 // the best neighbor - "mobiles generally follow roads"), MovingForward
 // pushes at 1.3 u/s to the cell center, and the person idles ONLY
-// while the scene's politeness gate holds. FLAGGED (AUDIT 18):
-// MobilePersonMotor.cs:216-230 builds that gate as player-still +
-// within 2.5 + weapon SHEATHED + not invisible + not in beast form,
-// and then forces it false unless !GameManager.AreEnemiesNearby()
-// (GameManager.cs:684-718). The exterior hosts supply only the first
-// four terms - the AreEnemiesNearby() term is NOT applied anywhere,
-// so a townsperson still idles beside a hostile city guard where DFU
-// keeps it walking. (!inBeastForm is legitimately absent:
-// lycanthropy is a routed Ledger C item.)
+// while the POLITENESS GATE holds - `personWantsToStop` below, which
+// is MobilePersonMotor.cs:216-230 whole. AUDIT 18 flagged that gate
+// as four terms with the AreEnemiesNearby() clause dropped, so a
+// townsperson idled beside a hostile city guard where DFU keeps it
+// walking; the clause is carried now, and both exterior hosts pass
+// their own live foe pool through it.
 // The billboard: MoveAnims records 0-4 over the same mirrored
 // 8-orientation wheel as the monsters (4 fps), idle record 5 (guards
 // 15, 1 fps). Race/gender texture tables verbatim; guards ride 399.
@@ -42,6 +39,56 @@ export const PERSON_TEXTURES = Object.freeze({
   Breton: { male: [385, 386, 391, 394], female: [453, 454, 455, 456] },
 });
 export const GUARD_TEXTURE = 399;
+
+// ---- MobilePersonMotor.Update's POLITENESS GATE (:216-230) ----------
+
+/**
+ * `wantsToStop`, whole and in DFU's order (:218-224):
+ *
+ *   playerStandingStill && withinIdleDistance && sheathed
+ *     && !invisible && !inBeastForm
+ *
+ * and then the term AUDIT 18 found missing (:226-230), which DFU
+ * writes as an if/else rather than a fifth `&&` and explains in its
+ * own comment - "greatly reduce # of calls to AreEnemiesNearby() by
+ * short-circuit evaluation". JS `&&` short-circuits identically, so
+ * the thunk is called on exactly the frames DFU calls it: only once
+ * the five terms above already hold.
+ *
+ * THE FOUR HOSTS RULE is why this is a law and not a host
+ * expression. Both exterior hosts evaluate it once per live person
+ * per frame and neither can be tested; they differ only in the pool
+ * they hand `enemiesNearby` - the city watch alone in the
+ * single-location page, the watch plus the encounter foes in the
+ * streaming world.
+ *
+ * `enemiesNearby` is systems/encounters.js' areEnemiesNearby, the ONE
+ * home for GameManager.AreEnemiesNearby (GameManager.cs:684-732), and
+ * the STRICT variant of it: MobilePersonMotor passes no arguments, so
+ * `resting` takes its false default (GameManager.cs:684) and an
+ * unaware foe inside the classic spawn band counts. (PlayerGPS's
+ * nearby-objects scan is a different DFU member and is NOT a second
+ * home for this one.)
+ *
+ * @param distanceToPlayer PlayerMotor.DistanceToPlayer (:217, and
+ *        PlayerMotor.cs:452-455) - the host measures it.
+ * @param inBeastForm carried because it is a term of the law; the
+ *        hosts leave it at the default, since lycanthropy is a routed
+ *        Ledger C item and nothing above ground can raise it yet.
+ */
+export function personWantsToStop({
+  playerStandingStill = false,
+  distanceToPlayer = Infinity,
+  sheathed = false,
+  invisible = false,
+  inBeastForm = false,
+  enemiesNearby = () => false,
+} = {}) {
+  const withinIdleDistance = distanceToPlayer < PERSON_IDLE_DISTANCE;
+  const wantsToStop = !!playerStandingStill && withinIdleDistance
+    && !!sheathed && !invisible && !inBeastForm;
+  return wantsToStop && !enemiesNearby();
+}
 
 // MobileDirection order (N, S, E, W) with our world axes (+z north).
 const DIRS = [[0, 1], [0, -1], [1, 0], [-1, 0]];
@@ -170,10 +217,9 @@ export class MobilePerson {
   }
 
   /**
-   * @param wantsToStop the scene's politeness gate (player still +
-   *        near + sheathed + visible; the AreEnemiesNearby() term of
-   *        MobilePersonMotor.cs:227 is missing from both hosts - see
-   *        the FLAGGED note in this file's header)
+   * @param wantsToStop the politeness gate - `personWantsToStop`
+   *        below, which the host evaluates per person per frame
+   *        (MobilePersonMotor.cs:224-230)
    * @returns {record, frame, flip} for the billboard
    */
   update(dt, cameraPos, wantsToStop = false) {

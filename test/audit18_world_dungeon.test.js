@@ -9,6 +9,8 @@ import {
 import { layoutRdbBlock, ACTION_FLAGS, TRIGGER_FLAGS } from '../src/world/rdbLayout.js';
 import { collectInteriorLights, INTERIOR_LIGHT_RANGE } from '../src/world/interiorLights.js';
 import { attachInteriorDoorSounds } from '../src/scenes/interiorContext.js';
+import { QuestMachine } from '../src/systems/quest/machine.js';
+import { Task } from '../src/systems/quest/task.js';
 import { SOUND } from '../src/systems/soundClips.js';
 import { multiply, trs } from '../src/world/mat4.js';
 import { dfMeshToModel } from '../src/world/meshReader.js';
@@ -380,19 +382,81 @@ test('audit18 world-dungeon: interior light ranges are AddLight\'s second switch
 });
 
 // ---------------------------------------------------------------------------
-// 9. SetGlobalVar is a gap, not a no-op.
+// 9. SetGlobalVar RUNS. It was a gap, not a no-op - AUDIT 18 caught the
+//    comment that filed it beside Activate, and this closes the gap the
+//    comment had been hiding.
 // ---------------------------------------------------------------------------
 
-test('audit18 world-dungeon: SetGlobalVar is recorded as UNPORTED, not filed as a verbatim no-op', () => {
+/** A relay record shaped like RDBLayout's AddAction output. */
+const relayRecord = (actionFlag, axisRaw, nextObject = -1, triggerFlag = TRIGGER_FLAGS.None) =>
+  ({ actionFlag, index: 0, axisRaw, nextObject, triggerFlag });
+
+test('audit18 world-dungeon: SetGlobalVar (0x1f) sets global #ActionAxisRawValue TRUE, and still cascades', () => {
   // DaggerfallAction.cs:813-816 Activate really is `{ return; }`;
-  // :822-827 SetGlobalVar is not - it sets a quest global from
-  // ActionAxisRawValue. The comment that filed them together made a
-  // real gap invisible (the AUDIT 17m shape).
+  // :822-827 SetGlobalVar is not - "Global variable index stored in
+  // action axis value", then GlobalVars.SetGlobalVar(axisRaw, true).
+  const globals = new Map();
+  const a = new ActionSystem(stubCollider(), { setGlobalVar: (i, v) => globals.set(i, v) });
+  // Chain: the 0x1f relay at position 0 points at an Activate relay at
+  // position 1, so Play's cascade is visible as the next object's
+  // activationCount. Direct trigger flag = the player's click.
+  const next = a.addRelay(0, 1, relayRecord(ACTION_FLAGS.Activate, 0));
+  const o = a.addRelay(0, 0, relayRecord(ACTION_FLAGS.SetGlobalVar, 11, 1, TRIGGER_FLAGS.Direct));
+  a.receive(o, 'Direct');
+  assert.deepEqual([...globals], [[11, true]], 'the axis byte is the global INDEX and the value is TRUE');
+  assert.equal(next.activationCount, 1, 'Play cascades to the next object before the delegate');
+  // A second record with a different axis byte moves a DIFFERENT global
+  // (the byte is an index, never a value), and re-firing is idempotent.
+  const other = a.addRelay(0, 2, relayRecord(ACTION_FLAGS.SetGlobalVar, 3));
+  a.receive(other);
+  a.receive(o, 'Direct');
+  assert.deepEqual([...globals].sort((x, y) => x[0] - y[0]), [[3, true], [11, true]]);
+  assert.equal(next.activationCount, 2, 'and the cascade fires on every activation');
+  // The wrong trigger type still gets nothing: Receive's gate is upstream
+  // of the delegate (Direct-flagged, walked into).
+  const gated = new ActionSystem(stubCollider(), { setGlobalVar: (i, v) => globals.set(i, v) });
+  const g = gated.addRelay(0, 0, relayRecord(ACTION_FLAGS.SetGlobalVar, 44, -1, TRIGGER_FLAGS.Direct));
+  gated.receive(g, 'WalkInto');
+  assert.equal(globals.has(44), false);
+  // No sink wired (the interior host, a headless boot): inert, never a
+  // throw, and the cascade is untouched.
+  const bare = new ActionSystem(stubCollider());
+  const bareNext = bare.addRelay(0, 1, relayRecord(ACTION_FLAGS.Activate, 0));
+  bare.receive(bare.addRelay(0, 0, relayRecord(ACTION_FLAGS.SetGlobalVar, 11, 1)));
+  assert.equal(bareNext.activationCount, 1);
+});
+
+test('audit18 world-dungeon: the SetGlobalVar sink is the quest machine\'s ONE global store', () => {
+  // ONE DFU MEMBER, ONE EXPORT: PersistentGlobalVars.cs:53-59 is the
+  // port's QuestMachine.globalVars Map - the store a GlobalVarLink task
+  // reads (Task.GetTriggerValue) and the store AUDIT 24 put in the save
+  // envelope. The action writes THAT store, not a second one.
+  const machine = new QuestMachine();
+  const a = new ActionSystem(stubCollider(), {
+    // dungeonContext's wiring, verbatim.
+    setGlobalVar: (index, value) => { machine.globalVars.set(index, value); },
+  });
+  a.receive(a.addRelay(0, 0, relayRecord(ACTION_FLAGS.SetGlobalVar, 11)));
+  const linked = (link) => {
+    const t = new Task({ hooks: { globalVars: machine.globalVars } });
+    t.globalVarLink = link;
+    return t.getTriggerValue();
+  };
+  assert.equal(linked(11), true, 'a task linked to global #11 is now triggered');
+  assert.equal(linked(12), false, 'and only that one moved');
+  assert.deepEqual(machine.getSaveData().globalVars, [[11, true]], 'it rides the save envelope');
+});
+
+test('audit18 world-dungeon: the dungeon host wires the SetGlobalVar sink to the machine store', () => {
+  // The law above runs; this is the WIRING half, which no node test can
+  // run (buildDungeonContext needs ARENA2). dungeonContext is the only
+  // host that registers relays at all - interiorContext builds doors and
+  // nothing else - so this one seam is the whole surface.
   const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const src = readFileSync(join(root, 'src/world/actionSystem.js'), 'utf8');
-  assert.doesNotMatch(src, /SetGlobalVar[^\n]*no-op|no-op[^\n]*SetGlobalVar/);
-  assert.match(src, /SetGlobalVar[^\n]*\n?[^\n]*UNPORTED/i);
+  const host = readFileSync(join(root, 'src/scenes/dungeonContext.js'), 'utf8');
+  assert.match(host, /setGlobalVar: \(index, value\) => \{ opts\.questBridge\?\.machine\?\.globalVars\?\.set\(index, value\); \}/);
+  // ...and the Ledger row that called it unported is struck.
   const ledger = readFileSync(join(root, 'bible/01-Overview/Port-Ledger.md'), 'utf8');
   const sectionC = ledger.slice(ledger.indexOf('## C. DFU features not yet ported'));
-  assert.match(sectionC, /^\| SetGlobalVar \(0x1f\) action delegate/m);
+  assert.match(sectionC, /^\| ~~SetGlobalVar \(0x1f\) action delegate~~ SHIPPED/m);
 });

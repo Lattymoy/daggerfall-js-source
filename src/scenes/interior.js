@@ -133,6 +133,8 @@ export async function bootInterior(canvas, renderer, params, status) {
 
     renderer.setPointLights(
       nearestLights(ctx.lights, cam.pos, 16, ctx.lights.map((l) => l.range)),   // per-light range (DaggerfallInterior.AddLight); a scalar drops the per-record switch
+      // l.intensity / l.color (AddLight's same switch) are carried but
+      // not uploadable - one shared colour uniform; see interiorLights.js.
       new Float32Array(INTERIOR_LIGHT_COLOR));
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
     for (const d of ctx.drawList) renderer.drawMesh(d.mesh, d.matrix, ctx.texRemap);

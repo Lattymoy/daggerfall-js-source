@@ -292,7 +292,7 @@ work, which makes a naive item ratio misleading).
 | Enemies, NPCs, entity model | ~85% | 3,123 | 10,680 |
 | Effects: Destruction/Restoration/Alteration | ~83% | 690 | 3,976 |
 | Item model | ~80% | 1,283 | 7,155 |
-| Quest actions | 74% (61 of 82) | 1,830 | 10,012 |
+| Quest actions | 76% (62 of 82) | 1,830 | 10,012 |
 | Player motor + input | ~70% | 1,983 | 10,030 |
 | Magic core | ~60-65% | 1,966 | 5,930 |
 | UI toolkit + HUD | ~60% | 3,890 | 16,404 |
@@ -314,17 +314,19 @@ work, which makes a naive item ratio misleading).
 Where a system has a countable surface, the audit counted it rather
 than estimating.
 
-**Quest actions: 61 of 82.** `defaultActionTemplates()`
-(`actions.js:2604-2724`) mirrors `QuestMachine.cs:345-428`
-slot-for-slot, and 21 of those slots are `PendingTrigger` guards
-carrying the C# pattern verbatim so the line pends rather than being
-mis-parsed by a later template. The 21: WhenSkillLevel,
-WhenAttributeLevel, Season, Weather, Climate, RunQuest, CastEffectDo,
-WorldUpdate, Enemies, ClickedFoe, KillFoe, PayMoney, JournalNote,
-ChangeFoeInfighting, ChangeFoeTeam, PlaySong, SetPlayerCrime,
-SpawnCityGuards, UnrestrainFoe, TrainPc, PromptMulti. The guard design
-is right and should be kept; what it means is that a quest using any
-of them silently does less than it says.
+**Quest actions: ~~61~~ 62 of 82.** `defaultActionTemplates()`
+mirrors `QuestMachine.cs:345-428` slot-for-slot, and ~~21~~ 20 of those
+slots are `PendingTrigger` guards carrying the C# pattern verbatim so the
+line pends rather than being mis-parsed by a later template. The ~~21~~ 20:
+WhenSkillLevel, WhenAttributeLevel, Season, Weather, Climate, RunQuest,
+CastEffectDo, WorldUpdate, Enemies, ClickedFoe, KillFoe, PayMoney,
+JournalNote, ChangeFoeInfighting, ChangeFoeTeam, ~~PlaySong,~~
+SetPlayerCrime, SpawnCityGuards, UnrestrainFoe, TrainPc, PromptMulti. The
+guard design is right and should be kept; what it means is that a quest
+using any of them silently does less than it says. **PLAYSONG LEFT THE
+GUARD SET 2026-08-25**, and its Ledger row's stated blocker ("the quest
+system is not ported") had been false since this audit was written - the
+guard was doing the row's job for it.
 
 **The classic effect library: 60 of 82 keys land.** DFU carries 82
 classic-keyed effect classes (153 effect classes in total; the other
