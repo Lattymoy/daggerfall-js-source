@@ -227,11 +227,34 @@ check('a new character starts at full health', born.health === born.maxHealth, `
 // left it up, which is what the first run's dungeon screenshot
 // shows. A window the player never opened is the symptom; the cause
 // is two keydown listeners and no modal ownership.
+//
+// NOT "no window at all", which is what this asked for first and is
+// no longer true: U43 gave showQuestOverlay a dungeon arm, so the
+// classic start's _TUTOR__ now speaks where it always should have,
+// and the first frame of a new game legitimately carries a quest
+// popup. The claim is narrower and always was - nothing a KEYBINDING
+// opens should be up, because nobody pressed a key.
+const KEYBOUND_WINDOWS = /Automap|CharSheet|Inventory|Spellbook|Rest|Journal|Notebook|Pause|TravelMap/i;
 const stray = await overlayKind();
-check('finishing chargen leaves no window the player never opened', stray === null, `overlay: ${stray ?? 'none'}`);
+check('finishing chargen leaves no window a KEYBINDING would have opened',
+  !KEYBOUND_WINDOWS.test(stray ?? ''), `overlay: ${stray ?? 'none'}`);
 // The first frame of the character's life, whatever is on it. On the
 // build before the fix this picture is the dungeon AUTOMAP.
 await shot('04b-the-first-frame');
+
+// ...and then READ IT AND PUT IT AWAY, the way a player does. This is
+// not tidying: a modal holds the motor and the host returns at its
+// overlay gate before the frame body, so while that popup is up the
+// dungeon does not tick AT ALL. The run that found this reported the
+// foe "never moved and never swung" and the corpse refusing to open -
+// three failures, one cause, and none of them the game's.
+const opening = await overlayKind();
+if (opening) {
+  for (let i = 0; i < 12 && await overlayKind(); i++) await key('Enter', 2);
+  for (let i = 0; i < 6 && await overlayKind(); i++) await key('Escape', 2);
+  check(`the opening ${opening} can be dismissed`, (await overlayKind()) === null,
+    `still up: ${await overlayKind()}`);
+}
 
 // ONLY_CHARGEN=1 stops here. Used to RED-PROOF the modal-ownership
 // fix: on the build without the guard this stage's stray-window check
