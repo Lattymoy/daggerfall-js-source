@@ -226,6 +226,32 @@ test('the FOUR HOSTS are each named at the seam', () => {
     'the host that cannot reach the fork must be FLAGGED by name, not omitted');
 });
 
+// ── A MODAL OVERLAY OWNS ITS INPUT ───────────────────────────────
+// Mac, playing the deployed build: the wizard came up over a live
+// dungeon, the map ignored every click, and the mouse still swung the
+// view. Both halves are the same fact - the host was reading input
+// underneath a screen that had it.
+test('the wizard drops the pointer lock, and keeps dropping it', () => {
+  const src = readFileSync(new URL('../src/ui/enhancedChargen.js', import.meta.url), 'utf8');
+  assert.match(src, /document\.exitPointerLock\(\)/,
+    'a LOCKED pointer never reaches the DOM - every mouse event goes to the '
+    + 'locked element as a delta, so a fixed div is invisible to it at any z-index');
+  assert.match(src, /addEventListener\('pointerlockchange'/,
+    'the hosts only gate RE-taking the lock; a host that takes it anyway must lose it');
+  const un = src.slice(src.indexOf('unmount()'));
+  assert.match(un, /removeEventListener\('pointerlockchange'/, 'and the listener has an owner');
+});
+
+test('keys are captured, so the host never sees one the wizard used', () => {
+  const src = readFileSync(new URL('../src/ui/enhancedChargen.js', import.meta.url), 'utf8');
+  assert.match(src, /addEventListener\('keydown', keyHandler, \{ capture: true \}\)/,
+    'the host walks the player and routes dungeon keys off its own window keydown');
+  const fn = src.slice(src.indexOf('function onKey'), src.indexOf('\n}', src.indexOf('function onKey')));
+  assert.match(fn, /e\.stopPropagation\(\)/);
+  assert.ok(fn.indexOf('if (!action) return;') < fn.indexOf('stopPropagation'),
+    'a key the wizard did NOT use must still reach the page');
+});
+
 // ── THE REAL CORPUS ──────────────────────────────────────────────
 test('the real TAMRIEL2 traces to nine regions', { skip: skipReal }, () => {
   const data = new Uint8Array(readFileSync(join(arena2, 'TAMRIEL2.IMG')));
