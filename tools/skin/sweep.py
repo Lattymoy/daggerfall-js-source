@@ -21,7 +21,8 @@ crops=[]
 for sp in SPANS:
     r=subprocess.run(['python3',BAKE,str(FACE)], env=dict(os.environ,SPAN=sp),
                      capture_output=True, text=True, timeout=1200)
-    if f'span {float(sp):.2f}' not in r.stdout:
+    _want = f"span {float(sp.split(':')[0]):.2f}:{float(sp.split(':')[1]):.2f}" if ':' in sp else f'span {float(sp):.2f}'
+    if _want not in r.stdout and f'span 0.00:{float(sp):.2f}' not in r.stdout:
         sys.exit(f'ABORT: {BAKE} did not honour SPAN={sp}\n{r.stdout[-400:]}{r.stderr[-400:]}')
     c=Image.open(f'{DIR}/cell_{FACE}.png').convert('RGB')
     w,h=c.size

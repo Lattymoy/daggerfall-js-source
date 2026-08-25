@@ -18,6 +18,9 @@ import { ensureArena2, getBytes } from '../scenes/dataSource.js';
 import { ImgFile } from '../formats/imgFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { TextRsc } from '../formats/textRsc.js';
+import { CifRciFile } from '../formats/cifRciFile.js';
+import { raceArt, FACES_PER_RACE } from '../systems/races.js';
+import { bitmapCanvas } from '../ui/bitmapCanvas.js';
 
 const app = document.getElementById('app');
 
@@ -39,16 +42,37 @@ async function loadMap() {
     const pal = new DFPalette();
     pal.load(await getBytes('ART_PAL.COL'), 'ART_PAL.COL');
     const [picker, picture] = await Promise.all([one('TAMRIEL2.IMG'), one('TMAP00I0.IMG')]);
-    return { picker, picture, palette: (i) => { const c = pal.get(i); return [c.r, c.g, c.b]; } };
+    return {
+      picker, picture,
+      palette: (i) => { const c = pal.get(i); return [c.r, c.g, c.b]; },
+      loadFaces: makeFaceLoader(pal),
+    };
   } catch (e) {
     console.warn('[chargen prototype] the map files are unavailable', e);
-    return { picker: null, picture: null, palette: null };
+    return { picker: null, picture: null, palette: null, loadFaces: null };
   }
 }
 
 async function loadText() {
   try { return new TextRsc().load(await getBytes('TEXT.RSC')); }
   catch (e) { console.warn('[chargen prototype] TEXT.RSC unavailable', e); return null; }
+}
+
+/** The ten head records for one identity, as canvases. The CIF reader
+ *  and the palette are the game's own; only the canvas is ours. */
+function makeFaceLoader(pal) {
+  if (!pal) return null;
+  const rgb = (i) => { const c = pal.get(i); return [c.r, c.g, c.b]; };
+  return async (raceKey, gender) => {
+    const name = raceArt(raceKey, gender).heads;
+    const cif = new CifRciFile();
+    cif.load(await getBytes(name), name, pal);
+    const out = [];
+    for (let i = 0; i < FACES_PER_RACE; i++) {
+      out.push(bitmapCanvas(cif.getDFBitmap(i, 0), rgb, { scale: 2 }));
+    }
+    return out;
+  };
 }
 
 await ensureArena2();

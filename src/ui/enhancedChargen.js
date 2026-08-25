@@ -42,6 +42,12 @@
 
 import { RACE_TEMPLATES } from '../systems/races.js';
 import { CLASS_DESCRIPTION_TEXT_ID } from './chargenArt.js';   // ONE DFU MEMBER, ONE EXPORT
+import { generateBackstory } from '../systems/biography.js';
+import { FACES_PER_RACE } from '../systems/races.js';
+import { bitmapCanvas } from './bitmapCanvas.js';
+import { STAT_KEYS_ORDER } from '../systems/chargen.js';
+import { SKILL_NAMES } from '../systems/skills.js';
+import { NAME_MAX_CHARACTERS as NAME_MAX } from './chargen.js';
 import { traceProvinces, MAP_W, MAP_H, PROVINCE_NAMES } from './provinceMap.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 
@@ -79,6 +85,8 @@ const svg = (t, attrs = {}) => {
 
 let host = null;
 let flow = null;
+let faces = null;       // { key, canvases[] } for the current identity
+let loadFaces = null;   // (raceKey, gender) => Promise<DFBitmap[]>
 let provinces = [];
 let hover = null;      // the race key under the cursor, for the readout
 let onExit = () => {};
@@ -306,6 +314,323 @@ function classStage() {
   return pane;
 }
 
+// ── HOW YOUR HISTORY IS WRITTEN ──────────────────────────────────
+// WizardStages.SelectBiographyMethod. Same two-button shape as the
+// class method, and the same law: both handlers close, so a press
+// chooses and goes. The GENERATE arm is not a skip - it answers every
+// question at rand.Next(0, Count) and lands every effect, which is why
+// it says so rather than reading as "none of this".
+function bioMethodStage() {
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'choose');
+  wrap.append(el('h2', null, 'Where have you been?'));
+  const row = el('div', 'bigchoice tall');
+  const ask = el('button', 'bigbtn');
+  ask.append(el('span', 'bigk', 'Answer twelve questions'));
+  ask.append(el('span', 'bign', 'Your answers move skills, gold, gear and how people take to you.'));
+  ask.onclick = () => { flow.applyHit({ bioMethod: 'questions' }); paint(); };
+  const auto = el('button', 'bigbtn');
+  auto.append(el('span', 'bigk', 'Let it be written for you'));
+  auto.append(el('span', 'bign', 'Answered at random, and every answer still counts.'));
+  auto.onclick = () => { flow.applyHit({ bioMethod: 'generate' }); paint(); };
+  row.append(ask, auto);
+  wrap.append(row);
+  pane.append(wrap);
+  return pane;
+}
+
+// ── THE TWELVE QUESTIONS ─────────────────────────────────────────
+// One question, its answers, and nothing else - DFU's screen shows the
+// question above ten answer buttons in two columns, and the reason to
+// keep it to one column here is that the answers are SENTENCES, not
+// labels. The last answer composes the backstory and pops the
+// reputation box (TEXT.RSC 35), which is a ClickAnywhereToClose in
+// DFU and a single button here.
+function biographyStage() {
+  const pane = el('div', 'stagebody solo');
+  const q = flow.biogQuestion();
+  if (!q) return pendingStage(STAGE_RAIL[stageOf(flow.state)]);
+  const wrap = el('div', 'question');
+  const total = flow.biogFor?.(flow.classIndex)?.questions?.length ?? 0;
+  wrap.append(el('div', 'qcount', total ? `Question ${flow.biogQuestionIndex + 1} of ${total}` : ''));
+  // BiogFile parses a question as TWO lines (q.text is [l0, l1]) and
+  // the second is often empty - a question is one sentence here, so
+  // the pair joins rather than the first winning.
+  wrap.append(el('h2', null, (Array.isArray(q.text) ? q.text : [q.text])
+    .filter((l) => l && l.trim()).join(' ')));
+  const answers = el('div', 'answers');
+  (q.answers ?? []).forEach((a, i) => {
+    const b = el('button', 'answer', a.text ?? String(a));
+    b.onclick = () => { flow.answerBiography(i); paint(); };
+    answers.append(b);
+  });
+  wrap.append(answers);
+  pane.append(wrap);
+  return pane;
+}
+
+/**
+ * THE REPUTATION BOX IS NOT A STAGE, it is a box over one - and over
+ * EITHER of two, which is why it sits here and not inside a stage
+ * renderer. DFU pushes it over the biography questions when the last
+ * answer lands and over the bio-METHOD screen when the generate arm
+ * runs (:444), so the state underneath is 'biography' one way and
+ * 'bioMethod' the other. Keying it to a state rendered it in one case
+ * and swallowed it in the other, which is exactly what the walk found:
+ * the generate arm appeared to do nothing at all.
+ *
+ * ClickAnywhereToClose in DFU; one button here, through the flow's own
+ * key arm so the close and the advance stay its decision.
+ */
+function repBoxPane() {
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'choose');
+  wrap.append(el('h2', null, 'Word gets around'));
+  const card = el('div', 'card repbox');
+  for (const row of flow.biogRepBox) {
+    const text = typeof row === 'string' ? row : row.text;
+    if (text?.trim()) card.append(el('p', null, text));
+  }
+  const a = el('div', 'acts');
+  const ok = el('button', 'act primary', 'Go on');
+  ok.onclick = () => { flow.input('confirm'); paint(); };
+  a.append(ok);
+  card.append(a);
+  wrap.append(card);
+  pane.append(wrap);
+  return pane;
+}
+
+// ── YOUR NAME ────────────────────────────────────────────────────
+// A text box and the RANDOM button, which is not a garnish: DFU
+// disables it until a race template exists (which is what forced U15's
+// reorder) and reseeds DFRandom on every push of the screen, because
+// without that every character of a race and gender got the same
+// suggestion on every boot (AUDIT 17j F1). The reseed already happened
+// in _enterName; this only has to press the button.
+//
+// An EMPTY name does not advance - AcceptName's own law - so the
+// primary is disabled rather than silently inert.
+function nameStage() {
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'choose');
+  wrap.append(el('h2', null, 'What are you called?'));
+
+  const box = el('input', 'namebox');
+  box.type = 'text';
+  box.value = flow.name;
+  box.maxLength = NAME_MAX;
+  box.autocomplete = 'off';
+  box.spellcheck = false;
+  // The FLOW owns the text, so typing is fed through its own char /
+  // backspace actions rather than assigned: NAME_MAX_CHARACTERS is
+  // TextBox's 31 (AUDIT 17j F5 - the port had capped it at 16, short
+  // enough to cut real names and to mint a random name you could not
+  // retype), and the cap belongs to the flow, not to this input.
+  box.oninput = () => {
+    const next = box.value;
+    while (flow.name.length) flow.input('backspace');
+    for (const ch of next) flow.input(`char:${ch}`);
+    box.value = flow.name;
+    ok.disabled = !flow.name.length;
+  };
+  box.onkeydown = (e) => { if (e.key === 'Enter' && flow.name.length) { flow.input('confirm'); paint(); } };
+  wrap.append(box);
+
+  const a = el('div', 'acts');
+  const ok = el('button', 'act primary', 'Continue');
+  ok.disabled = !flow.name.length;
+  ok.onclick = () => { flow.input('confirm'); paint(); };
+  const dice = el('button', 'act', 'Suggest one');
+  dice.onclick = () => { flow.applyHit({ randomName: true }); paint(); };
+  a.append(ok, dice);
+  wrap.append(a);
+  pane.append(wrap);
+  requestAnimationFrame(() => box.focus());
+  return pane;
+}
+
+// ── YOUR FACE ────────────────────────────────────────────────────
+// Ten head records in the race-and-gender FACE CIF. DFU shows ONE with
+// a previous/next pair, because it has 320x200; ten portraits fit here
+// side by side, and a picker you can see all of is a picker you make
+// one decision in rather than ten.
+//
+// The picker's value is the SCREEN's, not the document's (AUDIT 18:
+// SetFaceTextures runs `facePicker.FaceIndex = 0` on every push, so
+// re-entering always shows face 0, while the cancel arm writes nothing
+// back and the previously accepted face survives an Escape). So this
+// reads and writes flow.facePick and lets the flow's own confirm
+// commit it.
+function faceStage() {
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'choose');
+  wrap.append(el('h2', null, 'Which face is yours?'));
+
+  if (!faces?.canvases?.length) {
+    // NEVER TRAPS: no CIF, no portraits, and the wizard still walks.
+    wrap.append(el('p', 'mapnote', 'The portraits need this race\u2019s FACE CIF. Any of the ten will do.'));
+  }
+  const grid = el('div', 'facegrid');
+  for (let i = 0; i < FACES_PER_RACE; i++) {
+    const b = el('button', `facecell${i === flow.facePick ? ' on' : ''}`);
+    const art = faces?.canvases?.[i];
+    // NOT cloneNode: cloning a canvas copies its size and NOT its
+    // pixels, which is a blank portrait that looks exactly like a
+    // portrait that failed to load. The nodes are cached per identity
+    // and simply move into the fresh DOM on each repaint.
+    if (art) b.append(art);
+    else b.append(el('span', 'facenum', String(i + 1)));
+    b.onclick = () => { flow.facePick = i; paint(); };
+    grid.append(b);
+  }
+  wrap.append(grid);
+
+  const a = el('div', 'acts');
+  const ok = el('button', 'act primary', 'This one');
+  ok.onclick = () => { flow.input('confirm'); paint(); };
+  a.append(ok);
+  wrap.append(a);
+  pane.append(wrap);
+  ensureFaces();
+  return pane;
+}
+
+/** Load the identity's ten heads, once, and repaint when they land.
+ *  Coalesces the way chargenArt's own loader does - a race change
+ *  mid-load must not leave a Khajiit wearing Breton heads. */
+function ensureFaces() {
+  if (!loadFaces) return;
+  const want = `${flow.race.key}|${flow.gender}`;
+  if (faces?.key === want || faces?.pending === want) return;
+  faces = { key: null, pending: want, canvases: [] };
+  loadFaces(flow.race.key, flow.gender).then((set) => {
+    if (faces?.pending !== want) return;
+    faces = { key: want, canvases: set ?? [] };
+    if (flow.state === 'face') paint();
+  }).catch((e) => {
+    console.warn('[chargen] the FACE CIF would not load', e);
+    faces = { key: want, canvases: [] };
+  });
+}
+
+// ── ATTRIBUTES ───────────────────────────────────────────────────
+// StatsRollout: eight values rolled for the career, a bonus pool to
+// spend, and the seven DERIVED figures that move as you spend - which
+// belong to CreateCharAddBonusStats' own panel and not to the rollout
+// (U16 found them drawn across the summary's skill panels for exactly
+// that reason).
+//
+// The pool is the gate: DFU will not leave this screen until it is
+// spent, so the primary says how many are left rather than refusing
+// silently.
+function statsStage() {
+  const pane = el('div', 'stagebody');
+
+  const list = el('div', 'list');
+  list.append(poolBar('points to spend', flow.statPool));
+  STAT_KEYS_ORDER.forEach((key, i) => {
+    const row = el('div', `row${i === flow.statCursor ? ' on' : ''}`);
+    const main = el('button', 'row-main');
+    main.append(el('div', 'row-name', key[0].toUpperCase() + key.slice(1)));
+    main.onclick = () => { flow.applyHit({ setStatCursor: i }); paint(); };
+    row.append(main);
+    row.append(stepper(flow.stats?.[key] ?? 0, (dir) => {
+      flow.applyHit({ setStatCursor: i });
+      flow.applyHit({ statStep: dir });
+      paint();
+    }));
+    list.append(row);
+  });
+  pane.append(list);
+
+  const detail = el('div', 'detail');
+  const d = el('div', 'dcard');
+  d.append(el('h3', null, 'What these buy you'));
+  const dl = el('dl', 'stats');
+  const derived = flow.derived() ?? {};
+  for (const [k, label] of [['damage', 'Damage'], ['encumbrance', 'Carry weight'],
+    ['spellPoints', 'Spell points'], ['magicResist', 'Magic resistance'],
+    ['toHit', 'To hit'], ['hitPoints', 'Hit points'], ['healingRate', 'Healing rate']]) {
+    if (derived[k] == null) continue;
+    dl.append(el('dt', null, label), el('dd', null, derived[k]));
+  }
+  d.append(dl);
+  const a = el('div', 'acts');
+  const ok = el('button', 'act primary', flow.statPool > 0 ? `${flow.statPool} left to spend` : 'Continue');
+  ok.disabled = flow.statPool > 0;
+  ok.onclick = () => { flow.input('confirm'); paint(); };
+  const again = el('button', 'act', 'Roll again');
+  again.onclick = () => { flow.reroll(); paint(); };
+  a.append(ok, again);
+  d.append(a);
+  detail.append(d);
+  pane.append(detail);
+  return pane;
+}
+
+// ── SKILLS ───────────────────────────────────────────────────────
+// SkillsRollout has THREE spinners, one per group, each with its own
+// selected skill and its OWN pool (U17 shipped that after the port had
+// drawn one spinner on a shared row and left two pools invisible). So
+// the groups are three sections with three pools, and a skill's own
+// group is where its points come from.
+function skillsStage() {
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'skillpane');
+  let cursor = 0;
+  for (const [group, ids] of flow.skillRows()) {
+    const sec = el('div', 'skillgroup');
+    const head = el('div', 'skillhead');
+    head.append(el('span', 'skillk', group[0].toUpperCase() + group.slice(1)));
+    head.append(el('span', 'skillpool', `${flow.pools?.[group] ?? 0} to spend`));
+    sec.append(head);
+    for (const id of ids) {
+      const at = cursor++;
+      const row = el('div', `row${at === flow.skillCursor ? ' on' : ''}`);
+      const main = el('button', 'row-main');
+      main.append(el('div', 'row-name', SKILL_NAMES[id] ?? `Skill ${id}`));
+      main.onclick = () => { flow.applyHit({ setSkillCursor: at }); paint(); };
+      row.append(main);
+      row.append(stepper(flow.skills?.[id] ?? 0, (dir) => {
+        flow.applyHit({ setSkillCursor: at });
+        flow.applyHit({ skillStep: dir, group });
+        paint();
+      }));
+      sec.append(row);
+    }
+    wrap.append(sec);
+  }
+  const left = Object.values(flow.pools ?? {}).reduce((n, v) => n + v, 0);
+  const a = el('div', 'acts');
+  const ok = el('button', 'act primary', left > 0 ? `${left} left to spend` : 'Continue');
+  ok.disabled = left > 0;
+  ok.onclick = () => { flow.input('confirm'); paint(); };
+  a.append(ok);
+  wrap.append(a);
+  pane.append(wrap);
+  return pane;
+}
+
+function poolBar(label, n) {
+  const row = el('div', 'poolbar');
+  row.append(el('span', 'poolk', label));
+  row.append(el('span', 'poolv', String(n ?? 0)));
+  return row;
+}
+
+function stepper(value, step) {
+  const ctl = el('div', 'ctl');
+  ctl.append(el('span', 'val', String(value)));
+  for (const [dir, glyph] of [[-1, '\u2039'], [1, '\u203a']]) {
+    const b = el('button', 'step', glyph);
+    b.setAttribute('aria-label', dir < 0 ? 'less' : 'more');
+    b.onclick = () => step(dir);
+    ctl.append(b);
+  }
+  return ctl;
+}
+
 // ── THE STAGES NOT YET REDESIGNED ────────────────────────────────
 // Named, with the classic screen that still owns them. An empty pane
 // would read as a bug and a half-built one would read as the design.
@@ -363,8 +688,12 @@ function paint() {
   const STAGES = {
     race: raceStage, gender: genderStage,
     classMethod: classMethodStage, class: classStage,
+    bioMethod: bioMethodStage, biography: biographyStage, name: nameStage,
+    face: faceStage, stats: statsStage, skills: skillsStage,
   };
-  pane.append((STAGES[flow.state] ?? (() => pendingStage(STAGE_RAIL[here])))());
+  pane.append(flow.biogRepBox?.length
+    ? repBoxPane()
+    : (STAGES[flow.state] ?? (() => pendingStage(STAGE_RAIL[here])))());
 
   // THE ACTION BAR. Back is always here, because AUDIT 17j found the
   // wizard's back arms wrong on every screen it checked and the fix
@@ -403,6 +732,22 @@ export function attachChargenText(f, textRsc) {
   f.describeRace = (race) => (race ? textRsc.linesById(race.descriptionId) : []);
   f.describeClass = (i) => textRsc.linesById(CLASS_DESCRIPTION_TEXT_ID + i);
   f.describeText = (id) => textRsc.linesById(id);
+  // THE BIOGRAPHY'S TWO TEXT SOURCES, and they are not decoration. The
+  // BACKSTORY is what U13 built and what the character sheet's History
+  // page reads for the rest of the game, and the REPUTATION BOX is
+  // TEXT.RSC 35 with %r1..%r5 filled from DigestRepChanges - the one
+  // moment the player is told what their answers did. Both hang off
+  // chargenArt's _art.textRsc, so a DOM view got an empty backstory
+  // and no box at all, and the flow's own arm reads a missing box as
+  // "nothing to show" and walks straight past it. Silent, and
+  // permanent: the backstory is written once.
+  f.buildBackstory = (backstoryId, effects) =>
+    generateBackstory(textRsc, backstoryId, effects).map((r) => r.text);
+  f.repBoxRows = (changed) => (changed
+    ? textRsc.linesById(35).map((r) => ({
+      ...r, text: r.text.replace(/%r([1-5])/g, (_, n) => String(changed[Number(n) - 1] ?? 0)),
+    }))
+    : null);
   return f;
 }
 
@@ -412,13 +757,16 @@ export function attachChargenText(f, textRsc) {
  * runs on regardless.
  */
 export function mountEnhancedChargen(hostEl, {
-  flow: f, picker = null, picture = null, palette = null, onExit: exit = () => {},
+  flow: f, picker = null, picture = null, palette = null,
+  loadFaces: faceLoader = null, onExit: exit = () => {},
 } = {}) {
   injectEnhancedStyle();
   injectEnhancedFonts();
   host = hostEl;
   flow = f;
   onExit = exit;
+  loadFaces = faceLoader;
+  faces = null;
   hover = null;
   try {
     provinces = picker ? traceProvinces(picker, { picture, palette }) : [];
