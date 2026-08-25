@@ -25,7 +25,7 @@ import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, ext
 import { startRestGroundedCheck } from '../player/motor.js';   // S40: the rest gate's grounded input
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { pickActivatable, worldAabb, activationTargets } from '../player/activate.js';
-import { transferAll, removeOne, addItem, isEnchanted, totalWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
+import { transferAll, removeOne, addItem, isEnchanted, totalWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE, spendArrow } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { createPlayerTicker , wireInfectionVideos, endRunToTitleMenu, exitToTitleMenu, doorSpellFor, consumeDoorSpell, wireDoorSpells, createDetectFeed, createRestDeps} from './shared.js';   // AUDIT 18: the interior host's world clock; S40: its rest deps
@@ -72,6 +72,7 @@ import { isShop, isRepairShop, stockShopShelf, calculateCost, calculateTradePric
 import { identifySpellPass, identifiedTallyText } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll
 import { liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // X10: the Dispel Magic picker
 import { ListPickerWindow, listPickerArtLoaded } from '../ui/listPicker.js';   // X10
+import { createItemLabels, grantCreatedItem } from '../systems/createItem.js';   // X11b
 import { LevelUpScreen } from '../ui/charsheet.js';   // AUDIT 21 hosts F3: levelling in a building
 import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded, TRADE_RECTS } from '../ui/nativeTrade.js';   // U8c
 // U23: the static-NPC seam and the guild service popup.
@@ -177,6 +178,12 @@ let _charAnimMode = 'idle'; // in-engine character animation: idle | walk | off 
 // Dungeon water surface (R11 values, mirroring the dungeon scene).
 const DUNGEON_WATER_COLOR = [1, 1, 1, 0.82];
 const DUNGEON_WATER_SCROLL = 0.05;
+
+/** CreateItem.lastSelectedIndex (CreateItem.cs:35) - a STATIC, so the
+ *  picker reopens on the row the player took last time. Module scope
+ *  here is that static: it outlives the window, the cast and the
+ *  scene, exactly as DFU's does. */
+let _lastCreateItemIndex = 0;
 
 export function createWorldModes(host) {
   const _footsteps = new FootstepMachine();   // FS-slice: the modal stride (interior wood / dungeon stone + water)
@@ -328,6 +335,31 @@ export function createWorldModes(host) {
   // E2: the entered building's identity + the shop browse overlay.
   let interiorBuilding = null;
   let interiorOverlay = null;
+  /** X11b: mount a modal into whichever slot the CURRENT mode draws.
+   *  See the note on openCreateItemPicker for what this fixed. */
+  function mountSpellWindow(win) {
+    if (mode === 'dungeon') return dungeonCtx?.showOverlay ? dungeonCtx.showOverlay(win) : false;
+    if (mode === 'interior') {
+      if (interiorOverlay) return false;
+      interiorOverlay = win;
+      return true;
+    }
+    if (townTalk?.overlayActive) return false;
+    townTalk?.showOverlay?.(win);
+    return true;
+  }
+  /** ...and clear whichever slot that window went into. A window's own
+   *  onPick/onCancel calls this rather than nulling interiorOverlay,
+   *  which was only ever right in one of the three modes.
+   *
+   *  The DUNGEON arm is deliberately a no-op: that context drains its
+   *  own slot when a window raises `done` (dungeonContext.tickOverlay),
+   *  and ListPickerWindow raises it inside _pick - so clearing here as
+   *  well would only race its own drain. */
+  function closeSpellWindow(win) {
+    if (interiorOverlay === win) { interiorOverlay = null; return; }
+    if (mode !== 'dungeon') townTalk?.closeOverlay?.(win);
+  }
   let _shopFont = null;
   const ensureShopFont = () => {
     preloadTradeArt({ renderer, fetchBytes, palette });   // U8c: the trade screen art rides shop entry too
@@ -1655,10 +1687,15 @@ export function createWorldModes(host) {
         },
         takeOne: (templateIndex, where) => {
           const list = where === 'pack' ? playerEntity.items : (playerEntity.wagonItems ?? []);
-          const i = list.findIndex((it) => it.templateIndex === templateIndex);
-          if (i < 0) return false;
-          removeOne(list, list[i]);
-          return true;
+          // X11b: this passed `list[i]` - the ITEM - where removeOne
+          // takes a TEMPLATE INDEX, so its own findIndex compared a
+          // number against an object, matched nothing and returned
+          // false. The potion maker's ingredients were never actually
+          // consumed: brew a potion, keep the reagents, brew again.
+          // The `i` computed above was only ever used to answer
+          // "is one present", which it still does.
+          if (!list.some((it) => it.templateIndex === templateIndex)) return false;
+          return removeOne(list, templateIndex);
         },
         icons: { getTexture, uploadRecord, textures: renderer.textures },
         entity: playerEntity,
@@ -2690,7 +2727,7 @@ export function createWorldModes(host) {
       if (ev === 'bowSound') { audio.playOneShot(SOUND.ArrowShoot, 1.1); continue; }
       if (ev !== 'hit') continue;
       if (weaponTypeForItem(interiorWeapon.playerWeapon.weapon) === WEAPON_TYPES.Bow) {
-        if (removeOne(playerEntity.items, 131)) {
+        if (spendArrow(playerEntity.items)) {
           drainInteriorFatigue(SWING_WEAPON_FATIGUE_LOSS);
           tallySwingSkills(playerEntity, interiorWeapon.playerWeapon.weapon);
           interiorArrows.fire(player.eye, eyeDir());
@@ -3519,10 +3556,11 @@ export function createWorldModes(host) {
      *  The port's ListPickerWindow is the same widget the guild flows
      *  and the item maker already use. */
     openDispelPicker({ chance } = {}) {
-      if (!listPickerArtLoaded() || interiorOverlay) return false;
+      if (!listPickerArtLoaded()) return false;
       const bundles = dispellableBundles(liveBundles(playerEntity));
       if (!bundles.length) { townTalk?.say?.('You have no magic to dispel.'); return true; }
-      const win = new ListPickerWindow({
+      let win = null;
+      win = new ListPickerWindow({
         items: bundles.map((b) => b.name || '(unnamed)'),
         onPick: (i) => {
           const b = bundles[i];
@@ -3535,14 +3573,72 @@ export function createWorldModes(host) {
             });
             if (r.alert) townTalk?.say?.(DISPEL_MAGIC_TEXT[r.alert]);
           }
-          interiorOverlay = null;
+          closeSpellWindow(win);
         },
-        onCancel: () => { interiorOverlay = null; },
+        onCancel: () => closeSpellWindow(win),
       });
-      interiorOverlay = win;
-      return true;
+      return mountSpellWindow(win);
+    },
+    /** X11b, AND A BUG IT FOUND. A SPELL WINDOW has to land in the
+     *  slot the CURRENT mode actually draws, and the three openers
+     *  below all wrote straight into `interiorOverlay` - which this
+     *  host draws in INTERIOR mode only (the frame returns at
+     *  `mode === 'exterior'` before any of it, and the dungeon branch
+     *  draws dungeonCtx's slot instead). So Identify and Dispel Magic,
+     *  cast outdoors or in a dungeon through the world host, mounted a
+     *  window nothing ever drew: `overlayHeld` did not even see it
+     *  (`mode === 'interior' && !!interiorOverlay`), so the game did
+     *  not pause, the player got no picker, and the magicka was gone.
+     *  Both spells can be cast anywhere, which is the whole point of
+     *  carrying them.
+     *
+     *  One slot-picker for all three, per mode:
+     *    interior -> interiorOverlay (this host draws it)
+     *    dungeon  -> dungeonCtx.showOverlay (that context draws its own)
+     *    exterior -> townTalk.showOverlay (the outer host's slot, which
+     *                is the one it draws and holds above ground)
+     *  Answers false when no slot is free, so the caller can say so. */
+    /** X11b: THE CREATE ITEM PICKER. DFU's CreateItem constructs a
+     *  DaggerfallListPickerWindow in its own ctor, fills it with the
+     *  29 CreateItemSelection rows, sets AllowCancel FALSE and selects
+     *  the STATIC lastSelectedIndex, then pushes it from Start
+     *  (:64-77, :96-110). The picker is the whole effect.
+     *
+     *  lastSelectedIndex lives at module scope in this host for the
+     *  same reason it is static in DFU: it survives between casts. */
+    openCreateItemPicker({ rounds } = {}) {
+      if (!listPickerArtLoaded()) return false;
+      let win = null;
+      win = new ListPickerWindow({
+        items: createItemLabels(),
+        allowCancel: false,           // CreateItem.cs:70 - the magicka is already spent
+        selectedIndex: _lastCreateItemIndex,
+        onPick: (i) => {
+          _lastCreateItemIndex = i;   // the static, updated in ItemPicker_OnItemPicked (:113)
+          const made = grantCreatedItem(playerEntity, i, {
+            gender: playerEntity.gender ?? 'male',
+            nowMinutes: Math.floor(worldMinutes()),
+            rounds: rounds ?? 0,
+          });
+          if (made) townTalk?.say?.(`${made.name}${made.stackCount > 1 ? ` (${made.stackCount})` : ''} conjured.`);
+          closeSpellWindow(win);
+        },
+        onCancel: () => closeSpellWindow(win),   // only reachable when the art is missing
+      });
+      return mountSpellWindow(win);
     },
     openIdentifyWindow({ chance, refund } = {}) {
+      // X11b: the same bug as the two pickers above, and the ONE arm
+      // not fixed the same way. Identify mounts a TRADE window, whose
+      // lifecycle is entangled with `_identifySpell` and with two probe
+      // surfaces (__tradeClick / _tradeSweep) that both read
+      // `interiorOverlay` by name - moving it into another slot is its
+      // own lane. So it REFUSES outside the interior instead, and the
+      // caller speaks. An honest refusal beats a swallowed cast: before
+      // this, casting Identify outdoors mounted a window nothing drew,
+      // ticked, or clicked, and the magicka was simply gone. ROUTED:
+      // the trade window needs the same slot-picker the pickers now use.
+      if (mode !== 'interior') return false;
       if (!tradeArtLoaded() || interiorOverlay) return false;
       // The magicka the window will charge on the Identify click IS
       // the cost the effect just refunded (Identify.cs:74's

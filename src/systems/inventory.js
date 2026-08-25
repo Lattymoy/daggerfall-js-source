@@ -70,6 +70,14 @@ export const letterOfCredit = (value = 0) => ({
 export const ARROW_TEMPLATE = 131;
 export const OIL_TEMPLATE = 252;
 
+// ---- X11b: SUMMONED ITEMS (the Create Item spell's conjured gear) --
+/** DaggerfallUnityItem.IsSummoned (:416-419), verbatim: "Summoned
+ *  items have a specific future game time they expire. Non-summoned
+ *  items have 0 in this field." So the FIELD is the flag - there is no
+ *  separate bool - and an item that has never been conjured carries
+ *  no field at all, which reads the same as 0 here. */
+export const isSummoned = (item) => (item?.timeForItemToDisappear ?? 0) !== 0;
+
 /** FormulaHelper.IsItemStackable (:2096-2110) behind
  *  DaggerfallUnityItem.IsStackable's three never-stack clauses.
  *
@@ -87,6 +95,14 @@ export const OIL_TEMPLATE = 252;
  *  - the per-book id the port does not model - so stacking books here
  *  would merge two DIFFERENT books, which DFU never does. */
 export function isStackable(item) {
+  // X11b: DFU's FIRST clause, ahead of the three below
+  // (DaggerfallUnityItem.cs:682-689): a summoned item does not stack
+  // AT ALL unless it is an arrow - "Only allowing summoned arrows to
+  // stack at this time. But they should only stack with other summoned
+  // arrows", which is the second half of the rule and lives in
+  // stacksWith. Without this a conjured Steel Longsword would merge
+  // with a real one and take its expiry with it.
+  if (isSummoned(item) && !(item.group === 'Weapons' && item.templateIndex === ARROW_TEMPLATE)) return false;
   // AUDIT 17e C2: `item.equipped` was never written either - the port
   // marks worn items with equipSlot (equip.js) - so all three clauses
   // of DFU's rule were no-ops.
@@ -100,11 +116,19 @@ export function isStackable(item) {
 }
 
 /** Two records stack when the rule allows and they are the same
- *  thing: group + templateIndex (+ material where it exists). */
+ *  thing: group + templateIndex (+ material where it exists).
+ *
+ *  X11b: and the same EXPIRY. ItemCollection.FindExistingStack
+ *  (:706-713) compares `checkItem.TimeForItemToDisappear ==
+ *  item.TimeForItemToDisappear` alongside the group and index, so two
+ *  conjured arrow stacks with different lifetimes stay apart - and a
+ *  conjured stack never merges into a real one, which would hand the
+ *  real arrows an expiry or (worse) let the conjured ones outlive it. */
 export function stacksWith(a, b) {
   return isStackable(a) && isStackable(b) &&
     a.group === b.group && a.templateIndex === b.templateIndex &&
-    (a.material ?? null) === (b.material ?? null);
+    (a.material ?? null) === (b.material ?? null) &&
+    (a.timeForItemToDisappear ?? 0) === (b.timeForItemToDisappear ?? 0);
 }
 
 /** ItemCollection.AddItem: merge into an existing stack or append. */
@@ -119,18 +143,82 @@ export function addItem(list, item) {
   return item;
 }
 
+/**
+ * ItemCollection.GetItem(group, templateIndex, ...) (:370-405) - the
+ * FIRST item of a kind, or null.
+ *
+ * X11b: `priorityToConjured` is the arm that matters here. With it
+ * set, a SUMMONED item wins over a real one and, among summoned ones,
+ * the SHORTEST-LIVED wins (:390-394, "pick conjured items with
+ * shortest life"). WeaponManager and the HUD's arrow counter both pass
+ * it: the bow spends the arrows that are about to vanish anyway, and
+ * the counter reads the same stack the bow will spend.
+ */
+export function getItem(list, group, templateIndex, {
+  allowEnchantedItem = true, allowQuestItem = true, priorityToConjured = false,
+} = {}) {
+  let selected = null;
+  for (const item of list ?? []) {
+    if (item.group !== group || item.templateIndex !== templateIndex) continue;
+    if (!allowEnchantedItem && isEnchanted(item)) continue;
+    if (!allowQuestItem && item.questItem) continue;
+    if (!priorityToConjured) return item;
+    if (isSummoned(item)) {
+      if (selected == null || !isSummoned(selected)
+        || selected.timeForItemToDisappear > item.timeForItemToDisappear) selected = item;
+    } else if (selected == null) {
+      selected = item;
+    }
+  }
+  return selected;
+}
+
 /** Remove ONE item by templateIndex: decrements a stack, splices a
  *  single. Returns true when one was removed (parity audit 2026-08-17:
  *  the player's bow never consumed an Arrow - WeaponManager removes
- *  one per loose). */
-export function removeOne(list, templateIndex) {
-  const i = list.findIndex((it) => it.templateIndex === templateIndex);
+ *  one per loose).
+ *
+ *  X11b: this is `GetItem(...) + RemoveOne(item)` folded into one
+ *  call, and the fold is what made the conjured-arrow priority
+ *  unreachable: findIndex takes the FIRST arrow in the bag, which is
+ *  the REAL one when the player has both. `opts` reopens DFU's own
+ *  two-step - the pick and the removal - without every caller having
+ *  to write it out. */
+export function removeOne(list, templateIndex, opts = null) {
+  let i;
+  if (opts) {
+    const picked = getItem(list, opts.group ?? 'Weapons', templateIndex, opts);
+    i = picked ? list.indexOf(picked) : -1;
+  } else {
+    i = list.findIndex((it) => it.templateIndex === templateIndex);
+  }
   if (i < 0) return false;
   const it = list[i];
   if ((it.stackCount ?? 1) > 1) it.stackCount--;
   else list.splice(i, 1);
   return true;
 }
+
+/** WeaponManager.cs:404-407, verbatim and in one place:
+ *
+ *      var arrow = playerItems.GetItem(Weapons, Arrow,
+ *                    allowQuestItem: false, priorityToConjured: true);
+ *      bool isArrowSummoned = arrow.IsSummoned;
+ *      playerItems.RemoveOne(arrow);
+ *
+ *  Two laws the port's bare `removeOne(items, 131)` had neither of: a
+ *  QUEST arrow is never loosed, and a CONJURED one is spent FIRST -
+ *  shortest life first - so the arrows that are about to vanish are the
+ *  ones that get used. Four hosts fire bows; this is the one home.
+ *
+ *  ROUTED, deliberately: DFU also carries `isArrowSummoned` out to the
+ *  missile, where its ONLY use is to skip adding the arrow to the
+ *  target's inventory on a hit (WeaponManager.cs:554-559). The port has
+ *  no arrow-recovery rule at all yet - a real arrow does not land in a
+ *  corpse either - so the flag would have nothing to suppress. It lands
+ *  with the recovery rule it exists to qualify. */
+export const spendArrow = (list) => removeOne(list, ARROW_TEMPLATE,
+  { group: 'Weapons', allowQuestItem: false, priorityToConjured: true });
 
 export function transferAll(fromList, toList) {
   let n = 0;

@@ -24,7 +24,7 @@ import { TextRsc } from '../formats/textRsc.js';
 import { openPauseFlow, preloadPauseFlowArt, pauseArtLoaded } from '../ui/pauseWindow.js';
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, setDeathPresenter } from '../characters/playerEntity.js';
-import { addItem, removeOne } from '../systems/inventory.js';
+import { addItem, spendArrow } from '../systems/inventory.js';
 import { worldAabb } from '../player/activate.js';
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface
 // U26: this host's own equip hook is retired - the native inventory
@@ -76,6 +76,8 @@ import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, rais
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
+import { ListPickerWindow, listPickerArtLoaded, preloadListPickerArt } from '../ui/listPicker.js';   // X11b: the Create Item picker
+import { createItemLabels, grantCreatedItem } from '../systems/createItem.js';   // X11b
 import {
   missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS,
   MISSILE_LIFESPAN_S,
@@ -130,6 +132,10 @@ import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39
  * @param blocks BlocksFile
  * @param climateBaseType ClimateBases value for the table remap
  */
+/** CreateItem.lastSelectedIndex (:35) - a STATIC. Module scope IS that
+ *  static: the picker reopens where the player left it, across casts. */
+let _lastCreateItemIndex = 0;
+
 export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseType, opts = {}) {
   const { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, palette } = deps;
 
@@ -725,6 +731,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // only ever asked for SCBG04I0, so the constant existed with no
   // caller until now.
   preloadBookArt({ renderer, fetchBytes, palette });   // B1: BOOK00I0 warms at boot
+  preloadListPickerArt({ renderer, fetchBytes, palette });   // X11b: PICK00I0 for the Create Item picker - without this the seam is silently dead
   preloadPaperDollForEntity({ renderer, fetchBytes, palette, getTexture }, playerEntity, 'dungeon')
     .catch(() => console.warn('[paperdoll] art unavailable in this dungeon'));
 
@@ -1114,6 +1121,28 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // dispelNearby carries the roll and DFU's warning that this can
     // break quests, which is why the quest resource is uncoupled by
     // the same call.
+    // X11b: THE CREATE ITEM PICKER, in the host whose overlay stack the
+    // effect probes drive. DFU's picker cannot be cancelled and reopens
+    // on the row taken last time; both live in the window.
+    onCreateItem: ({ rounds }) => {
+      if (!listPickerArtLoaded() || activeOverlay) { hudText.add('You cannot concentrate on that right now.'); return; }
+      activeOverlay = new ListPickerWindow({
+        items: createItemLabels(),
+        allowCancel: false,                    // CreateItem.cs:70
+        selectedIndex: _lastCreateItemIndex,   // the static (:35)
+        onPick: (i) => {
+          _lastCreateItemIndex = i;
+          const made = grantCreatedItem(playerEntity, i, {
+            gender: playerEntity.gender ?? 'male',
+            nowMinutes: Math.floor(classicMinutesRef.value),
+            rounds: rounds ?? 0,
+          });
+          if (made) hudText.add(`${made.name}${made.stackCount > 1 ? ` (${made.stackCount})` : ''} conjured.`);
+          activeOverlay = null;
+        },
+        onCancel: () => { activeOverlay = null; },
+      });
+    },
     onDispel: ({ group, chance }) => {
       const list = getNearbyObjects(detectFeed.scanNow(), group) ?? [];
       const gone = dispelNearby(list.map((no) => no.ref), () => Math.floor(Math.random() * 100) < chance);
@@ -2147,7 +2176,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // look instead of the melee arc (WeaponManager verbatim
           // shape).
           const lookDir = [-view[2], -view[6], -view[10]];   // the view-matrix forward this file already uses for the viewmodel
-          if (!removeOne(playerEntity.items, 131)) continue;   // one Arrow per loose, verbatim (the arrow guard normally pre-sheathes at zero)
+          if (!spendArrow(playerEntity.items)) continue;   // one Arrow per loose, verbatim (the arrow guard normally pre-sheathes at zero)
           fireArrow(eye, lookDir, playerWeapon.weapon, true);
           // WeaponManager.cs:419-436, in DFU's order: the swing costs
           // fatigue whatever it hits, and a BOW always takes the tally

@@ -18,7 +18,7 @@ import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // t
 import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible exterior arrows
-import { removeOne } from '../systems/inventory.js';
+import { spendArrow } from '../systems/inventory.js';
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -732,6 +732,14 @@ export async function bootExterior(canvas, renderer, params, status) {
   });
   const magic = createPlayerMagic({
     onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+    // X11b: the Create Item picker, through the same worldModes opener
+    // the streaming host uses - which mounts into whichever slot the
+    // current mode actually draws.
+    onCreateItem: (d) => {
+      if (!modes?.openCreateItemPicker?.({ rounds: d.rounds })) {
+        townTalk.say('You cannot concentrate on that right now.');
+      }
+    },
     renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
     collider: { raycast: (o, d, m) => ((modes?.mode === 'interior' && modes?.interiorCollider) ? modes?.interiorCollider : collider).raycast(o, d, m) },
     playerEntity,
@@ -1739,7 +1747,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         if (ev === 'bowSound') { audio.playOneShot(SOUND.ArrowShoot, 1.1); continue; }
         if (ev !== 'hit') continue;
         if (weaponTypeForItem(weaponRig.playerWeapon.weapon) === WEAPON_TYPES.Bow) {
-          if (removeOne(playerEntity.items, 131)) {
+          if (spendArrow(playerEntity.items)) {
             // AUDIT 23 (C14: hosts-4 = combat-5) - WeaponManager.cs
             // :419-436: the swing costs its fatigue whatever it hits,
             // and a BOW always takes the FULL tally arm (Archery AND

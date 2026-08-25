@@ -130,6 +130,7 @@ export const PORTED_KEYS = new Set([
   '16,255', '17,255',                                               // Lock / Open (X1 - armed at cast, fired by the door)
   '18,255',                                                         // Regenerate
   '19,255',                                                         // Silence
+  '2,255',                                                          // Create Item (X11b - the picker seam + the conjured lifetime)
   '5,255',                                                          // Disintegrate (X11 - chance, then the no-magnitude save, then the kill)
   '15,255',                                                         // Light (X11 - BUFF_KINDS; the candle is scenes/magicCandle.js)
   '20,255', '21,255', '22,255',                                     // Spell Absorption / Reflection (X11) / Resistance (X1)

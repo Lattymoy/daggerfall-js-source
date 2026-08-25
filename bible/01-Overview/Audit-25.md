@@ -339,11 +339,10 @@ Shield (35,255), the three Detects (39,0-2), Identify (40,255),
 ComprehendLanguages (44,255). Ten of those 22 are the Mysticism school
 whose laws are already written and unwired (above). Shield is the
 sharpest of the rest: it mitigates ALL health damage in DFU and does
-nothing here.~~ **TWENTY OF THAT TWENTY-TWO ARE NOW WIRED** (X1-X11a,
-2026-08-23..25). What is left of this paragraph's list: CreateItem
-(2,255), which needs the summoned-item lifetime the port has never had,
-and MorphSelf (29,255), whose only consumer is the unported
-LycanthropyEffect and which no crafting station offers anyway. The live
+nothing here.~~ **TWENTY-ONE OF THAT TWENTY-TWO ARE NOW WIRED** (X1-X11b,
+2026-08-23..25). What is left of this paragraph's list: MorphSelf
+(29,255) alone, whose only consumer is the unported LycanthropyEffect
+and which no crafting station offers anyway. The live
 figure is GATED rather than restated here - see the Derived figures
 block in Port-Ledger.md, which `test/ledger.test.js` checks against
 `SPELL_MAKER_EFFECTS` itself.
@@ -391,12 +390,12 @@ Do this first; nothing else changes as much per line.
 effects to the cast engine (Open/Lock/Dispel/Soul Trap/Create
 Item/Recall/Comprehend Languages), Shield, Elemental Resistance, the
 three Detects, Identify, Spell Reflection/Resistance. Mostly host
-adapters and effect-ladder arms over existing modules.~~ **DONE BUT FOR
-CREATE ITEM** - X1/X2/X3 took Open, Lock, Climbing, Jumping, Shield,
-Elemental Resistance, Absorption and Resistance; X4 the three Detects;
-X5/X6 Soul Trap; X7 Identify; X8 Pacify and Charm; X9/X10 the three
-Dispels; X11a Disintegrate, Light, Spell Reflection and Comprehend
-Languages. The prediction "mostly host adapters and effect-ladder arms
+adapters and effect-ladder arms over existing modules.~~ **DONE** -
+X1/X2/X3 took Open, Lock, Climbing, Jumping, Shield, Elemental
+Resistance, Absorption and Resistance; X4 the three Detects; X5/X6 Soul
+Trap; X7 Identify; X8 Pacify and Charm; X9/X10 the three Dispels; X11a
+Disintegrate, Light, Spell Reflection and Comprehend Languages; X11b
+Create Item, the one that needed a whole new item property. The prediction "mostly host adapters and effect-ladder arms
 over existing modules" held all the way through: Spell Reflection's
 "missing re-target system" was the host seam the port already had.
 

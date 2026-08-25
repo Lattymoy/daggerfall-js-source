@@ -223,6 +223,58 @@ const kinds = () => page.evaluate(() => (window.__playerEntity.activeEffects ?? 
 const BENIGN_404 = /\/arena2\/CURSOR\.IMG|Failed to load resource/;
 const realErrors = pageErrors.filter((e) => !BENIGN_404.test(e));
 if (pageErrors.length !== realErrors.length) console.log('  [note] CURSOR.IMG is absent from this ARENA2 set; the OS cursor stands in (handled)');
+// ---- X11b: Create Item, end to end in a live dungeon ---------------
+{
+  const spell = await mkSpell([{ type: 2, subType: 255, settings: { durationBase: 30 } }], 0);
+  const before = await page.evaluate(() => (window.__playerEntity.items ?? []).length);
+  await page.evaluate((sp) => window.__combat.applySpellToPlayer(sp, 5), spell);
+  await frames(4);
+  await shot('03-create-item-picker');
+  const overlay = await page.evaluate(() => window.__overlay());
+  check('casting Create Item opens the picker', /ListPicker/i.test(overlay ?? ''), { overlay: overlay?.slice(0, 90) });
+  // AllowCancel is false: the magicka is spent, so Escape must not work
+  await page.evaluate(() => window.__overlayKey('Escape'));
+  await frames(2);
+  const afterEsc = await page.evaluate(() => window.__overlay());
+  check('and the picker refuses to be cancelled', /ListPicker/i.test(afterEsc ?? ''), { overlay: afterEsc?.slice(0, 90) });
+  // pick the Steel Longsword (row 23)
+  const made = await page.evaluate(async () => {
+    const o = window.__overlayWindow();
+    o.selectedIndex = 23;
+    window.__overlayKey('Enter');
+    const items = window.__playerEntity.items ?? [];
+    const it = items[items.length - 1];
+    return { overlay: window.__overlay(), n: items.length, name: it?.name, exp: it?.timeForItemToDisappear };
+  });
+  check('picking a row closes the picker and bags the item',
+    made.overlay === null && made.n === before + 1 && made.name === 'Longsword', { ...made, before });
+  check('and it carries a lifetime, so it reads as conjured', made.exp > 0, { exp: made.exp });
+
+  // AND IT VANISHES. The live per-minute tick is what removes it, so
+  // this runs the REAL clock forward rather than calling the sweep.
+  const vanished = await page.evaluate(async ([expiry]) => {
+    const wt = await import('/src/systems/worldTick.js');
+    const before2 = (window.__playerEntity.items ?? []).length;
+    const clock0 = wt.worldMinutes();
+    // Push the world clock past the item's expiry, the way a rest or a
+    // journey does. The sweep still needs the host's own tick to cross
+    // a MINUTE afterwards - it lives inside DFU's `lastGameMinutes !=
+    // gameMinutes` block - and at 12x that takes up to five real
+    // seconds, so this polls rather than guessing a delay.
+    wt.setWorldMinutes(expiry + 5);
+    const t0 = performance.now();
+    let after = before2;
+    while (performance.now() - t0 < 20000) {
+      await new Promise((r) => requestAnimationFrame(r));
+      after = (window.__playerEntity.items ?? []).length;
+      if (after < before2) break;
+    }
+    return { before2, after, clock0, clockNow: Math.floor(wt.worldMinutes()), waited: Math.round(performance.now() - t0) };
+  }, [made.exp]);
+  check('and the per-minute tick sweeps it away when its time is up',
+    vanished.after === vanished.before2 - 1, vanished);
+}
+
 check('zero page errors', realErrors.length === 0, { errors: realErrors.slice(0, 4) });
 
 console.log('\n=================================================');

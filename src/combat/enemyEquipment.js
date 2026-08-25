@@ -14,10 +14,11 @@
 //   swing, exactly as GetBaseDamageMin/Max do.
 // Unity Random slots stay uniform rolls, as in DFU itself.
 
-import { mintCondition } from '../systems/itemTemplates.js';   // AUDIT 23 (items-5)
+import { mintCondition, templateByIndex } from '../systems/itemTemplates.js';   // AUDIT 23 (items-5)
 import { WEAPON_MIN_DAMAGE, WEAPON_MAX_DAMAGE, dice100 } from './formulas.js';
 import { materialArmorValue } from '../systems/armorMaterials.js';
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';   // AUDIT 24 (wave 41): one home
+import { ARROW_TEMPLATE } from '../systems/inventory.js';   // X11b: CreateWeapon's one special case
 
 export { materialArmorValue };
 
@@ -107,7 +108,30 @@ export function randomArmorMaterial(playerLevel, rolls = Math.random) {
  *  FormulaHelper.cs:742-744 - DFU halves EVERY weapon's damage against
  *  a Skeletal Warrior, and the port halved only blunt ones. Reproduced
  *  bug-for-bug: no port site mints the bit. */
-export function createWeapon(templateIndex, material) {
+export function createWeapon(templateIndex, material, rolls = Math.random) {
+  // X11b: THE ARROW BRANCH MOVES IN. ItemBuilder.CreateWeapon
+  // (:353-370) is ONE function with two arms, and the port had it in
+  // two places: this one (the melee/bow arm) and an inline copy of the
+  // arrow arm in loot.createRandomWeapon. A third copy was about to be
+  // written for the Create Item spell, which is exactly the drift the
+  // ONE DFU MEMBER, ONE EXPORT rule exists to stop (and exactly how
+  // armorArchive came to have two incompatible definitions).
+  //
+  // The arm makes THREE writes and runs NO ApplyWeaponMaterial
+  // (:359-364): the stack Range(1, 21), `currentCondition = 0` - "not
+  // sure if this is necessary, but classic does it" - and
+  // nativeMaterialValue = 0, whatever material the caller asked for.
+  // maxCondition stays the template's hitPoints because the material
+  // pass never runs.
+  if (templateIndex === ARROW_TEMPLATE) {
+    return {
+      group: 'Weapons', name: templateByIndex(ARROW_TEMPLATE)?.name ?? 'Arrow',
+      templateIndex: ARROW_TEMPLATE, material: 0, flags: 0,
+      stackCount: 1 + Math.floor(rolls() * 20),
+      maxCondition: templateByIndex(ARROW_TEMPLATE)?.hitPoints ?? 0,
+      currentCondition: 0,
+    };
+  }
   const name = WEAPON_BY_INDEX[templateIndex];
   return mintCondition({
     name, templateIndex, group: 'Weapons', material,
@@ -115,6 +139,12 @@ export function createWeapon(templateIndex, material) {
     minDamage: WEAPON_MIN_DAMAGE[name], maxDamage: WEAPON_MAX_DAMAGE[name],
   });   // AUDIT 23 (items-5): the condition mints with the item
 }
+
+/** Weapons.Arrow's template index - ItemBuilder.CreateWeapon's one
+ *  special case, and IsItemStackable's. systems/inventory.js declares
+ *  it; re-exported here because this is the module that branches on
+ *  it, and a second literal 131 is how the first drift starts. */
+export { ARROW_TEMPLATE };
 
 /**
  * AssignEnemyStartingEquipment + SetEnemyEquipment, verbatim: rolls

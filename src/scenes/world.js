@@ -109,7 +109,7 @@ import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter } from '../c
 import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible exterior arrows
-import { removeOne, addItem } from '../systems/inventory.js';
+import { addItem, spendArrow } from '../systems/inventory.js';
 import { calculateAttackDamage } from '../combat/formulas.js';   // X2-slice: enemy-arrow impacts
 import { inflictPoison } from '../systems/poisons.js';   // X2-slice: poisoned enemy arrows
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
@@ -1111,6 +1111,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     onIdentify: (d) => {
       if (!modes?.openIdentifyWindow?.({ chance: d.chance, refund: d.refund })) {
+        townTalk.say('You cannot concentrate on that right now.');
+      }
+    },
+    // X11b: the Create Item picker, routed like the two above.
+    onCreateItem: (d) => {
+      if (!modes?.openCreateItemPicker?.({ rounds: d.rounds })) {
         townTalk.say('You cannot concentrate on that right now.');
       }
     },
@@ -3443,7 +3449,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (ev === 'bowSound') { audio.playOneShot(SOUND.ArrowShoot, 1.1); continue; }
         if (ev !== 'hit') continue;
         if (weaponTypeForItem(weaponRig.playerWeapon.weapon) === WEAPON_TYPES.Bow) {
-          if (removeOne(playerEntity.items, 131)) {
+          if (spendArrow(playerEntity.items)) {
             // AUDIT 23 (C14): the swing fatigue + the FULL bow tally
             // arm (Archery AND CriticalStrike) - see exterior.js.
             drainExteriorFatigue(SWING_WEAPON_FATIGUE_LOSS);

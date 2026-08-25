@@ -51,7 +51,8 @@ import { useItem, isLightSource } from '../systems/useItem.js';   // U25
 import { itemInfoRows, INFO_TEXT } from '../systems/itemInfo.js';   // U25
 import { goldAmount, deductGold } from '../systems/court.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
-import { addItem, isEnchanted, goldStack, canHoldAmount, effectiveUnitWeightInKg, totalWeight, GOLD_PIECE_WEIGHT_KG } from '../systems/inventory.js';   // L-slice (items-9)
+import { addItem, isEnchanted, goldStack, canHoldAmount, effectiveUnitWeightInKg, totalWeight, GOLD_PIECE_WEIGHT_KG, isSummoned } from '../systems/inventory.js';   // L-slice (items-9); X11b: isSummoned
+import { CANNOT_REMOVE_ITEM_TEXT } from '../systems/createItem.js';   // X11b: TransferItem's refusal
 import { maxEncumbrance } from '../combat/formulas.js';   // L-slice (items-9)
 import { liveStat } from '../systems/statMods.js';   // L-slice (items-9)
 import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, isBrokenItem, FORBIDDEN_EQUIPMENT_TEXT_ID, ITEM_BROKEN_TEXT_ID } from '../systems/equip.js';   // S23
@@ -461,6 +462,14 @@ export class NativeInventoryWindow {
       // the bag, so dropping the cart into its own wagon locked the
       // player out of the wagon now holding it.
       if (it.group === 'Transportation') return;
+      // X11b: TransferItem's SECOND guard (:1464-1469), one statement
+      // after that one - a SUMMONED item cannot leave the pack at all.
+      // It speaks where the transport guard is silent, because DFU's
+      // does: "You cannot remove this item." Without it a conjured
+      // Steel Cuirass could be sold to a shopkeeper an hour before it
+      // vanished from their stock, or dropped in a pile that would
+      // quietly empty itself.
+      if (this._refuseSummoned(it)) return;
       // G6 (:1994): nothing goes INTO a choose-one pile.
       if (this.chooseOne && !this.usingWagon) return;
       // LocalItemListScroller_OnItemClick Remove: transfer to the
@@ -516,6 +525,18 @@ export class NativeInventoryWindow {
    *  (prose ours - the string ships in Unity-side localization, not
    *  TEXT.RSC). No entity on the hooks = no capacity to read, so the
    *  gate stands open (the loot-window tests mount without one). */
+  /** TransferItem's summoned guard (:1464-1469), in its own member
+   *  because DFU's is ONE function with two callers - the local list's
+   *  Remove click and the remote list's. The remote arm cannot fire
+   *  today (nothing can get a summoned item out of the pack to put it
+   *  there), and it is written anyway rather than left to a future
+   *  transfer path to rediscover. */
+  _refuseSummoned(it) {
+    if (!isSummoned(it)) return false;
+    this.boxes = [{ rows: [{ text: CANNOT_REMOVE_ITEM_TEXT, center: true }] }];
+    return true;
+  }
+
   _canCarryAmount(it) {
     const e = this.hooks.entity;
     if (!e) return it.stackCount ?? 1;
@@ -536,6 +557,7 @@ export class NativeInventoryWindow {
       // RemoteItemListScroller_OnItemClick: both modes transfer to
       // the player; Equip mode also EQUIPS the taken item (verbatim
       // TransferItem(..., equip: true))
+      if (this._refuseSummoned(it)) return;   // X11b: TransferItem's guard, both callers
       const canCarry = this._canCarryAmount(it);   // items-9
       if (canCarry <= 0) return;
       // DoTransferItem: gold rides its own clink (:1569), everything

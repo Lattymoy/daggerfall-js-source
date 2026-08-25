@@ -58,6 +58,7 @@ export function createPlayerMagic({
   onIdentify = null,   // X7: the Identify effect's window seam ({chance, refund}) - same shape as onTeleport
   onDispel = null,     // X9: the creature-dispel sweep seam ({group, chance}) - the host owns the scan and the pool
   onDispelMagic = null,// X10: the bundle-picker seam ({chance}) - the host owns the window
+  onCreateItem = null, // X11b: the conjured-item picker seam ({rounds}) - the host owns the window
   rolls = Math.random,   // ENGINE-PRNG RULE: the saving-throw/magnitude roll slot (uniform; sequence-free)
 }) {
   const playerCaster = () => ({ entity: playerEntity, sinks: playerSinks });
@@ -176,6 +177,12 @@ export function createPlayerMagic({
       surfacePlayer();
       onIdentify?.(r.identify);
     }
+    // X11b: CREATE ITEM opens a list picker and mints from the pick.
+    // Like Dispel Magic and unlike Identify, there is NO refund: the
+    // effect has no cost of its own to give back, and DFU's picker
+    // cannot be cancelled anyway (AllowCancel = false), so the cast is
+    // always spent on something.
+    if (r.createItem) onCreateItem?.(r.createItem);
     // X11: the PLAYER is the reflector, so the line IS spoken here -
     // and the bundle goes back at the caster's own manager, which
     // re-runs their absorb/reflect/resist chain on arrival. The caster

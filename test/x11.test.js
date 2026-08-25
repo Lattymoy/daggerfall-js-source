@@ -336,13 +336,12 @@ test('X11 catalog: four rows leave the inert set, and MORPH SELF stays with its 
   // really does save as Fire. Asserted so nobody "tidies" it in.
   for (const k of ['15,255', '21,255', '44,255']) assert.ok(MAGIC_ONLY_KEYS.has(k), `${k} always saves as MAGIC`);
   assert.ok(!MAGIC_ONLY_KEYS.has('5,255'), 'Disintegrate saves as the bundle\'s own element');
-  // Create Item is X11b's. Morph Self is nobody's until lycanthropy is:
-  // its only consumer is LycanthropyEffect.MorphSelf (:479, :492), a
-  // racial override the port has not built, and its
+  // X11b took Create Item (2,255). Morph Self is nobody's until
+  // lycanthropy is: its only consumer is LycanthropyEffect.MorphSelf
+  // (:479, :492), a racial override the port has not built, and its
   // AllowedCraftingStations is None so no spell maker offers it.
-  const inert = ['2,255', '29,255'];
-  assert.deepEqual(SPELL_MAKER_EFFECTS.filter((e) => !e.ported).map((e) => e.key).sort(),
-    [...inert].sort(), 'exactly these two remain inert');
+  assert.deepEqual(SPELL_MAKER_EFFECTS.filter((e) => !e.ported).map((e) => e.key),
+    ['29,255'], 'exactly one row remains inert');
   assert.equal(effectByKey('29,255').craftable, false);
   assert.ok(!src('src/systems/effects.js').includes("'29,255': "), 'no BUFF_KINDS row pretends otherwise');
 });

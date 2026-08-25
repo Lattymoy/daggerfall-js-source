@@ -361,6 +361,15 @@ export function comprehendLanguagesChance(target) {
 // DFU - chance-only, TargetFlags_Other, and a MagicRound that does one
 // thing: `entityBehaviour.Entity.SetHealth(0)` (Disintegrate.cs:44-53).
 export const isDisintegrate = (e) => e.type === 5 && classicSub(e) === 255;
+
+// X11b: CREATE ITEM (Mysticism 2,255). Duration-only, CasterOnly, and
+// a payload that is entirely a WINDOW: Start pushes a list picker and
+// the picked row mints an item with a lifetime (CreateItem.cs:96-128).
+// Nothing lands on the entity at all - the effect Ends the moment the
+// player chooses, because "conjured item reports own lifetime". So this
+// arm hands the host the two numbers the picker needs and no entry is
+// pushed, the same shape as Identify and Dispel Magic.
+export const isCreateItem = (e) => e.type === 2 && classicSub(e) === 255;
 // S19: Paralyze (0, 255) - duration + CHANCE, no magnitude. The
 // entity is paralyzed while a 'paralyze' entry is live
 // (ConstantEffect sets IsParalyzed every frame; presence = paralyzed
@@ -1224,6 +1233,17 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     //
     // The window itself is the host's - this arm hands over the two
     // numbers it needs and the refund it owes.
+    // X11b: CREATE ITEM. `rounds` is the FULL rolled duration, which is
+    // the conjured item's lifetime in classic minutes: SetDuration runs
+    // inside Start (EntityEffect.cs:528-534), the picker is modal so no
+    // clock advances while it is up, and the initial magic round has
+    // not happened yet. Reading the post-initial-round value here would
+    // shorten every conjured item by exactly one minute.
+    if (isCreateItem(e)) {
+      if (target?.mobileType != null) continue;   // "Target must be player - no effect on other entities" (:104-106)
+      out.createItem = { rounds: rollDuration(e, casterLevel) };
+      continue;
+    }
     if (isIdentifyEffect(e)) {
       if (target?.mobileType != null) continue;   // "target must be player"
       out.identify = {
