@@ -1053,3 +1053,79 @@ test('S40 END TO END: camping in a city - confirm, crime, guards, and a full nig
   assert.deepEqual(w2.refusalLines, [`RSC${CITY_CAMPING_ILLEGAL_ID}`]);
   assert.deepEqual(crimes2, [['Vagrancy', true]]);
 });
+
+
+test('S40 IsResting: raised on OPEN, cleared on EVERY exit, and the enchant rate reads it', () => {
+  // OnPush (:266-268) with DFU's own comment: "Raise player resting
+  // flag when UI opens. This is used for random enemy spawning and
+  // influences CastWhenHeld durability loss." The port HAS that
+  // consumer - enchantments.js picks HELD_DEGRADE_RATE_RESTING (60)
+  // over HELD_DEGRADE_RATE (4), a 15x difference - and nothing fed it,
+  // because rest lived in the one host whose enchant ctx is unmounted.
+  const e = { isPlayer: true, level: 1, health: 5, maxHealth: 10, magicka: 0,
+    maxMagicka: 8, fatigue: 0, stats: { strength: 50, endurance: 50, willpower: 50 },
+    skills: 20, career: {}, skillUses: { [SKILLS.Medical]: 0 } };
+  const mk = () => new RestWindow(createRestDeps(e, {
+    advanceMinutes() {}, endLines: (id) => [`RSC${id}`],
+  }));
+
+  // OPEN raises it - before any hour is rested, before a mode is even
+  // picked. Standing in the window already costs a held enchantment.
+  const w = mk();
+  assert.equal(e.isResting, true);
+
+  // ...and EVERY exit clears it. Five doors reach `done`, and a flag
+  // cleared on four of them would leave the player permanently
+  // resting and burn held enchantments 15x for the session.
+  w.input('back');                       // the selection page's Esc
+  assert.equal(w.done, true);
+  assert.equal(e.isResting, false);
+
+  const w2 = mk();                       // the finished-popup close
+  w2.input('char:1'); w2.input('char:1'); w2.input('confirm');
+  for (let i = 0; i < 5000 && w2.state === 'resting'; i++) w2.tick(REST_WAIT_PER_HOUR / 10 + 1e-9);
+  assert.equal(e.isResting, true, 'still resting while the end page is up');
+  w2.input('confirm');
+  assert.equal(e.isResting, false);
+
+  const w3 = mk();                       // dispose(), the host's door
+  assert.equal(e.isResting, true);
+  w3.dispose();
+  assert.equal(e.isResting, false);
+  assert.equal(w3.done, true);
+
+  const w4 = mk();                       // a refusal
+  Object.assign(w4.deps, { restPlace: () => ({ inTownStrict: true }) });
+  _resetForTests();
+  setValue('GUI', 'IllegalRestWarning', 'False');
+  w4.input('char:1');
+  assert.equal(w4.state, 'refused');
+  w4.input('confirm');
+  assert.equal(e.isResting, false);
+
+  // The loiter prompt raises IsLoitering (:789); OnPop clears it
+  // (:285). DFU has no consumer for it either - it is carried so a
+  // later reader finds it right, not because anything reads it here.
+  const w5 = mk();
+  w5.input('char:3'); w5.input('char:1'); w5.input('confirm');
+  assert.equal(e.isLoitering, true);
+  w5.dispose();
+  assert.equal(e.isLoitering, false);
+  // ...and a plain rest does NOT set it.
+  const w6 = mk();
+  w6.input('char:1'); w6.input('char:1'); w6.input('confirm');
+  assert.equal(e.isLoitering, false);
+
+  // The consumer is wired: world.js' enchant ctx (which the INTERIOR
+  // mode shares) reads the flag, and the false comment that said it
+  // "stays absent above ground" is gone.
+  const wj = src('src/scenes/world.js');
+  assert.match(wj, /isResting: \(\) => !!playerEntity\.isResting,/);
+  assert.doesNotMatch(wj, /isResting stays absent/);
+  // ...and the flags are written by the ONE composition, not by four
+  // hosts that each have to remember.
+  assert.match(src('src/scenes/shared.js'), /setResting: \(b\) => \{ entity\.isResting = !!b; \},/);
+  assert.match(src('src/scenes/shared.js'), /setLoitering: \(b\) => \{ entity\.isLoitering = !!b; \},/);
+  // The window has exactly ONE door that sets `done`.
+  assert.equal((src('src/ui/restWindow.js').match(/this\.done = true/g) ?? []).length, 1);
+});

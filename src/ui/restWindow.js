@@ -33,6 +33,14 @@ export class RestWindow {
    *    moveToBed(marker)    PlayerMotor.transform.position = allocatedBed
    *    onRentExpired()      RemoveExpiredRentedRooms, which DFU calls
    *                         as it prints the expired line (:485)
+   *    setResting(b)        PlayerEntity.IsResting - OnPush raises it
+   *                         (:268), OnPop clears it (:284); its one
+   *                         consumer is CastWhenHeld's degrade rate
+   *    setLoitering(b)      PlayerEntity.IsLoitering - the loiter
+   *                         prompt raises it (:789), OnPop clears it
+   *                         (:285). No consumer in DFU's own tree
+   *                         either; carried because the window writes
+   *                         it and a later reader should find it right
    *    ignoreAllocatedBed   the ctor flag (:115-118); true suppresses
    *                         the move. DFU's own call site passes FALSE
    *                         (DaggerfallUI.cs:686 is the only
@@ -57,7 +65,32 @@ export class RestWindow {
     this._pending = null;       // the button waiting behind the confirm
     this._allocatedBed = null;  // CanRest's out-parameters, both of
     this._remainingHoursRented = -1;   // them, carried to the session
+    // OnPush (:266-268): "Raise player resting flag when UI opens.
+    // This is used for random enemy spawning and influences
+    // CastWhenHeld durability loss" - DFU's own comment. The port HAS
+    // that consumer (enchantments.js' HELD_DEGRADE_RATE_RESTING, 60
+    // against 4) and nothing fed it, because rest lived in the one
+    // host whose enchant ctx was FLAGGED unmounted. The flag is raised
+    // on OPEN, not on the first rested hour: standing in the window
+    // deciding already costs a held enchantment.
+    this.deps.setResting?.(true);
   }
+
+  /** OnPop (:271-285) clears both flags. Every exit from this window
+   *  runs through here, and dispose() runs it again, because a flag
+   *  raised on open and cleared on ONE of five exits is worse than no
+   *  flag at all - it would leave the player permanently "resting"
+   *  and burn held enchantments 15x for the rest of the session.
+   *  Deliberately NOT guarded on `done`: clearing a boolean twice is
+   *  the same as clearing it once, so the guard would be a branch no
+   *  test could kill, and this file has already retired one of those. */
+  _close() {
+    this.done = true;
+    this.deps.setResting?.(false);
+    this.deps.setLoitering?.(false);
+  }
+
+  dispose() { this._close(); }
 
   /** CanRest(alreadyWarned) (:542-599) with DFU's side effects
    *  attached: the crime lands on BOTH the refused and the confirmed
@@ -84,7 +117,7 @@ export class RestWindow {
     // goes - and crucially NOT through the 'ended' state, which is
     // the RaiseSkills moment (:729-732). A refusal raises nothing.
     this.refusalLines = (d.text ? [d.text] : this.deps.endLines?.(d.textId ?? CITY_CAMPING_ILLEGAL_ID)) ?? null;
-    if (!this.refusalLines) { this.done = true; return false; }
+    if (!this.refusalLines) { this._close(); return false; }
     this.state = 'refused';
     return false;
   }
@@ -121,7 +154,7 @@ export class RestWindow {
   }
 
   input(action) {
-    if (this.state === 'refused') { this.done = true; return; }
+    if (this.state === 'refused') { this._close(); return; }
     if (this.state === 'confirm') {
       // ConfirmIllegalRest*_OnButtonClick (:659-666, :684-691): the box
       // closes either way, and only Yes carries on - No leaves the
@@ -131,7 +164,7 @@ export class RestWindow {
       return;
     }
     if (this.state === 'ended') {
-      this.done = true;
+      this._close();
       // AUDIT 23 (entity-1) - DaggerfallRestWindow.cs:729-732: closing
       // the finished popup is THE advancement moment (RaiseSkills).
       this.deps.onRestFinished?.();
@@ -146,7 +179,7 @@ export class RestWindow {
       return;
     }
     if (this.state === 'selection') {
-      if (action === 'back') { audio.playOneShot(SOUND.ButtonClick, 1); this.done = true; return; }
+      if (action === 'back') { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return; }
       // every button assigns ButtonClick: While :644, Healed :670,
       // Loiter :695, Stop :711
       if (action === 'char:1' || action === 'char:r') { audio.playOneShot(SOUND.ButtonClick, 1); this._restButton('while', false); }
@@ -170,8 +203,9 @@ export class RestWindow {
       if (this.mode === 'loiter' && hours > loiterLimitHours()) { this.notice = cannotLoiterLines(); this.value = ''; return; }
       this._start(this.mode, hours);
       // TimedRestPrompt_OnGotUserInput (:762) ends on MoveToBed; the
-      // loiter prompt (:789) sets IsLoitering and does NOT move.
+      // loiter prompt sets IsLoitering (:789) and does NOT move.
       if (this.mode === 'timed') this._moveToBed();
+      else if (this.mode === 'loiter') this.deps.setLoitering?.(true);
       return;
     }
     const m = /^char:(\d)$/.exec(action);
@@ -194,7 +228,7 @@ export class RestWindow {
     if (result.rentExpired) this.deps.onRentExpired?.();
     this.endLines = result.died ? null
       : (result.text ? [result.text] : (this.deps.endLines?.(result.textId) ?? null));
-    if (result.died || !this.endLines) { this.done = true; return; }   // death: the death screen owns the flow
+    if (result.died || !this.endLines) { this._close(); return; }   // death: the death screen owns the flow
     this.state = 'ended';
   }
 

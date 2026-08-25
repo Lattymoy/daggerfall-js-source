@@ -1102,9 +1102,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   // pools; spawnFoe is SoulBound's break release. The interior mode
   // shares this mount (its foes list is empty, so the scan arms answer
   // none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
-  // there with the rest of its enchant wiring. isResting stays absent
-  // above ground (no rest window here yet), and inSunlight/inHolyPlace
-  // stay the E1 FLAGGED seams no host computes.
+  // there with the rest of its enchant wiring. S40 filled isResting
+  // in - the sentence that stood here said it "stays absent above
+  // ground (no rest window here yet)", and this slice put one here -
+  // while inSunlight/inHolyPlace stay the E1 FLAGGED seams no host
+  // computes.
   // X4: hoisted out of the enchant block below - the Detect feed and
   // the frame body need the same two live reads the enchant ctx does
   // (the player's feet, and exterior mode's foe pool), and one
@@ -1124,6 +1126,13 @@ export async function bootWorld(canvas, renderer, params, status) {
         heal: (n) => { if (n > 0) { playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n); surfacePlayer(); } },
       },
       say: (l) => townTalk.say(l),
+      // S40: CastWhenHeld.cs:135 - a held enchantment degrades at 60
+      // per round while the player is resting and 4 otherwise, and the
+      // port's consumer (enchantments.js:317) had NO feed because rest
+      // lived in the one host whose enchant ctx is unmounted. The
+      // window raises the flag on OPEN, so it is live here the moment
+      // the rest page is up.
+      isResting: () => !!playerEntity.isResting,
       applySpellToSelf: (record) => magic.castByItemSelf(record),
       setReadySpell: (record) => magic.readySpell(record, { free: true }),
       applySpellToTarget: (record, attacker, target) => {

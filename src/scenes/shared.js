@@ -1038,6 +1038,8 @@ export const restFullyHealed = (entity) =>
  *                      dungeon law and stays there
  *   onRentExpired()    RemoveExpiredRentedRooms, for the host that can
  *                      actually be standing in a rented room
+ * (setResting/setLoitering are written HERE, not by the hosts: they
+ *  are entity flags with one meaning everywhere.)
  *   enemiesNearby()    the RESTING variant over ITS foe list
  *   place()            canRest()'s argument bag for where it stands
  *   commitCrime(c,sg)  CrimeCommitted + SpawnCityGuards
@@ -1051,6 +1053,13 @@ export function createRestDeps(entity, opts = {}) {
     place = null, ...rest
   } = opts;
   return {
+    // PlayerEntity.IsResting / IsLoitering (:268, :284, :789, :285).
+    // Every host owes these identically - they are entity flags, not
+    // host state - so the composition writes them rather than asking
+    // four hosts to remember. A host may still override via the
+    // spread if it needs to observe the edge.
+    setResting: (b) => { entity.isResting = !!b; },
+    setLoitering: (b) => { entity.isLoitering = !!b; },
     // THE PASS-THROUGH IS LOAD BEARING, and it is here because a review
     // round caught the shape without it: worldModes handed this
     // function an `onRentExpired` closure and the closed destructure

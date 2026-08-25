@@ -2766,7 +2766,29 @@ and close on a non-blank line. The lesson holds either way - one grep
 per range beats one careful reader, and the grep has to cover whole
 files, not just the diff.
 
-Pins: 39 in `restlodging.test.js`, the last two END TO END - every law
+**The entity flag nobody was writing.** `OnPush` raises
+`playerEntity.IsResting` (`:266-268`) and DFU's own comment says what
+for: "used for random enemy spawning and influences CastWhenHeld
+durability loss". The port HAS that consumer - `enchantments.js` picks
+`HELD_DEGRADE_RATE_RESTING` (60) over `HELD_DEGRADE_RATE` (4), a 15x
+difference in how fast a held enchantment eats its item - and nothing
+had ever fed it, because rest lived in the one host whose enchant ctx
+is FLAGGED unmounted. `world.js` said so out loud: "isResting stays
+absent above ground (no rest window here yet)". This slice put one
+there, which made the sentence false and the gap reachable in the same
+commit.
+
+The flag is raised on OPEN, not on the first rested hour - standing in
+the window deciding already costs a held enchantment - and cleared on
+every one of the window's five exits plus `dispose()`, through a
+single `_close()`. That door is the point: a flag raised on open and
+cleared on four of five exits is worse than no flag, because it leaves
+the player permanently "resting" and burning items 15x for the rest of
+the session. `IsLoitering` rides the same lifecycle (`:789` / `:285`);
+DFU has no consumer for it either, and it is carried so a later reader
+finds it right rather than because anything reads it now.
+
+Pins: 40 in `restlodging.test.js`, two of them END TO END - every law
 in this slice driven together through one host-shaped deps bag, from
 the key press to the wake. That is the closest thing to a live probe a
 machine with no ARENA2 data can run, and it is here because a slice
