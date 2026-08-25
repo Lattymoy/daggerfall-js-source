@@ -651,3 +651,33 @@ export class PlayerMotor {
     if (r.hitCeiling && this.velY > 0) this.velY = -this.velY;
   }
 }
+
+
+/**
+ * PlayerMotor.StartRestGroundedCheck (:184-194), the rest gate's
+ * grounded input and NOT the same question as `grounded`:
+ *
+ *   if (grounded) return true;
+ *   Ray ray = new Ray(transform.position, Vector3.down);
+ *   return Physics.Raycast(ray, controller.height / 2 + 0.2f);
+ *
+ * DFU's own comment says why the ray is there - "Collision fix for
+ * when player is levitating but feet are 'close enough' to ground to
+ * rest", because controller physics only reports grounded after a
+ * move that gravity drove. A levitating character hovering an inch
+ * off the floor reads `grounded === false` and DFU lets them sleep.
+ *
+ * S40 gave it a home. The dungeon host had it written out (rest was a
+ * dungeon feature) and the three hosts that gained rest passed the
+ * raw motor flag, so the same levitating character could rest below
+ * ground and was refused TEXT.RSC 355 in a shop, a street and a
+ * field. `feet` is the capsule's foot point; the ray starts at its
+ * CENTRE, which is DFU's transform.position at this port's
+ * feet-origin convention.
+ */
+export function startRestGroundedCheck(grounded, feet, collider) {
+  if (grounded) return true;
+  if (!feet || !collider?.raycast) return false;
+  return Number.isFinite(collider.raycast(
+    [feet[0], feet[1] + CAPSULE_HEIGHT / 2, feet[2]], [0, -1, 0], CAPSULE_HEIGHT / 2 + 0.2));
+}

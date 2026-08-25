@@ -73,7 +73,10 @@ export class RestWindow {
     this._allocatedBed = d.allocatedBed ?? null;
     // CheckRent counts this down every rested hour, so the rental has
     // to reach the session. Before S40 it was computed and dropped.
-    this._remainingHoursRented = d.remainingHoursRented ?? -1;
+    // No `?? -1` here: canRest returns the field on every one of its
+    // exits, so a fallback would be unreachable - and unreachable
+    // code no pin can kill is a place for a wrong answer to hide.
+    this._remainingHoursRented = d.remainingHoursRented;
     if (d.crime) this.deps.commitCrime?.(d.crime, d.spawnGuards);
     if (d.ok) return true;
     // CloseWindow() then MessageBox: the rest window is GONE and the

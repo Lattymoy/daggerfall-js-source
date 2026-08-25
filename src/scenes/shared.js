@@ -1025,14 +1025,17 @@ export const restFullyHealed = (entity) =>
 
 /**
  * The RestWindow deps every host shares, so a host adds rest with one
- * call and the ones that already had it stop hand-rolling the same
- * five closures. THE FOUR HOSTS RULE: before S40 exactly one host
- * (the dungeon) could rest, and it owned this composition privately.
+ * call and the dungeon - which owned this composition privately,
+ * being the only host that could rest - reads it too rather than
+ * keeping a second body of the same five closures. THE FOUR HOSTS
+ * RULE, which is exactly the drift a second body invites.
  *
  * The host still supplies what only it knows:
  *   advanceMinutes(n)  its clock jump - the dungeon's also runs
  *                      IntermittentEnemySpawn's catch-up, which is a
  *                      dungeon law and stays there
+ *   onRentExpired()    RemoveExpiredRentedRooms, for the host that can
+ *                      actually be standing in a rented room
  *   enemiesNearby()    the RESTING variant over ITS foe list
  *   place()            canRest()'s argument bag for where it stands
  *   commitCrime(c,sg)  CrimeCommitted + SpawnCityGuards
@@ -1040,14 +1043,26 @@ export const restFullyHealed = (entity) =>
  *   endLines(id)       its TEXT.RSC reader
  *   say / onLevelUp    its presenters
  */
-export function createRestDeps(entity, {
-  advanceMinutes, enemiesNearby = () => false, place = null,
-  commitCrime = null, moveToBed = null, endLines = () => null,
-  say = () => {}, onLevelUp = null, day = () => false, inside = () => true,
-} = {}) {
+export function createRestDeps(entity, opts = {}) {
+  const {
+    say = () => {}, onLevelUp = null, day = () => false, inside = () => true,
+    place = null, ...rest
+  } = opts;
   return {
-    advanceMinutes,
-    enemiesNearby,
+    // THE PASS-THROUGH IS LOAD BEARING, and it is here because a review
+    // round caught the shape without it: worldModes handed this
+    // function an `onRentExpired` closure and the closed destructure
+    // silently dropped it on the floor, so RemoveExpiredRentedRooms
+    // never ran and the source-text pin beside it still passed. Any
+    // dep a host supplies reaches the window; only the five this
+    // function COMPOSES are written below, and they win over a
+    // same-named key so a host cannot half-override the composition.
+    ...rest,
+    // U39's rental record is named `restPlace` on the window and
+    // `place` here, which is the one rename - so it cannot ride the
+    // spread.
+    restPlace: place ?? rest.restPlace ?? undefined,
+    enemiesNearby: rest.enemiesNearby ?? (() => false),
     onRestFinished: () => raiseAtRestEnd(entity, { say, onLevelUp }),
     tickVitals: () => restVitals(entity, { day: day(), inside: inside() }),
     fullyHealed: () => restFullyHealed(entity),
@@ -1056,9 +1071,6 @@ export function createRestDeps(entity, {
       health: entity.health, maxHealth: entity.maxHealth,
       fatigue: Math.round((entity.fatigue ?? 0) / 64), magicka: entity.magicka ?? 0,
     }),
-    endLines,
-    restPlace: place ?? undefined,
-    commitCrime: commitCrime ?? undefined,
-    moveToBed: moveToBed ?? undefined,
+    endLines: rest.endLines ?? (() => null),
   };
 }

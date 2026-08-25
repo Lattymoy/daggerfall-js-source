@@ -2679,13 +2679,47 @@ RESTING form, SKIPS an unaware one past 12 units entirely. That is the
 whole point of the flag, and it now has a home in `encounters.js` that
 all three foe-bearing hosts read.
 
-The fourth: `raiseOnEncounterEvent`'s comment said "dungeon mode is
-the only mode with a rest window", which this slice made false in the
-same commit. In DFU the OnEncounter subscription is on the WINDOW
-(`OnPush :264`, `OnPop :275`), so it follows the window; the interior
-arm answers it now too.
+**AND A SECOND ROUND FOUND FIVE MORE**, of which the worst was a wire
+this slice cut with its own hand. `createRestDeps` destructured a
+CLOSED option list and returned a CLOSED literal, so the
+`onRentExpired` closure the interior host handed it was dropped on the
+floor and `RemoveExpiredRentedRooms` never ran - while the pin beside
+it, which matched the SOURCE TEXT of the host, passed. That is the
+whole lesson of the round: a wire is pinned by running current through
+it, not by reading the label. The composition spreads what it does not
+name now, and the pin builds its deps THROUGH `createRestDeps` and
+drives a refusal end to end.
 
-Pins: 32 in `restlodging.test.js`. 51 mutations, 51 dead. The first
+The same round retired the last of the dungeon's private
+composition: it kept a second body of the five closures
+`createRestDeps` produces, semantically identical today and free to
+drift tomorrow. It reads the shared one now and keeps only
+`advanceMinutes`.
+
+**`grounded` is not StartRestGroundedCheck.** `PlayerMotor.cs:184-194`
+returns true when grounded, and OTHERWISE casts a ray of
+`height / 2 + 0.2` - DFU's own comment says why: "Collision fix for
+when player is levitating but feet are 'close enough' to ground to
+rest". The dungeon host had that ray written out and the three new
+hosts passed the raw motor flag, so the same levitating character
+could sleep below ground and was refused TEXT.RSC 355 in a shop, a
+street and a field. It lives in `motor.js` beside the constant it
+derives from.
+
+**Two routing seams.** `AbortRestForEnemySpawn` reached the two slots
+`worldModes` owns and not the OUTER host's, which is where an outdoor
+rest window lives - and outdoors is exactly where a quest `CreateFoe`
+wave lands beside a sleeping player. In DFU the subscription is on the
+WINDOW (`OnPush :264`, `OnPop :275`), so it follows the window; the
+comment claiming so was written before the third slot was routed.
+And `worldModes.pointerdown` routed the large HUD's panels in EVERY
+mode, `interiorKeyCtx` included, while `mode` starts at 'exterior' and
+both outdoor hosts call it FIRST - so a REST panel click above ground
+mounted the interior window into a slot the frame never draws. That
+one predates S40 and was invisible only because `interiorKeyCtx` had
+no `toggleRest` for `routeAction`'s `?.()` to find.
+
+Pins: 37 in `restlodging.test.js`. 58 mutations, 58 dead. The first
 pass left four alive and all four were the same failure of nerve: a
 pin that named a thing instead of exercising it. The host pins matched
 `act === 'Rest'`, which survives `if (false && act === 'Rest')`, so

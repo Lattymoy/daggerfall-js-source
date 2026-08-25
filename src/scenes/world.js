@@ -95,7 +95,7 @@ import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../sy
 import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag, createRestDeps } from './shared.js';
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
-import { PlayerMotor } from '../player/motor.js';
+import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // S40: the rest gate's grounded input
 import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -1319,7 +1319,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     const gate = restOpenGate({
       enemiesNearby: outdoorRestDeps.enemiesNearby(),
       swimming: !!player.swimming,
-      grounded: !!player.grounded,
+      // StartRestGroundedCheck, not the raw flag: a levitating player
+      // an inch off the floor reads grounded === false and DFU lets
+      // them sleep anyway (PlayerMotor.cs:190-193's own comment).
+      grounded: startRestGroundedCheck(!!player.grounded, player.pos, collider),
     });
     if (!gate.ok) {
       // DFU raises the enemy alert on the enemies arm (:655).
@@ -2554,6 +2557,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     // G6: the knightly smith's gift needs THIS host's inventory
     // window in choose-one mode - one builder, one dependency list.
     makeInventory: (extra) => (inventoryArtLoaded() ? makeInventoryWindow(extra) : null),
+    // S40: AbortRestForEnemySpawn (:301-304) reaches the rest window
+    // in THIS host's overlay slot. In DFU the OnEncounter subscription
+    // is on the WINDOW (OnPush :264, OnPop :275), so it follows the
+    // window wherever it is mounted - and an outdoor rest is exactly
+    // where a quest CreateFoe wave lands beside a sleeping player.
+    abortRestForEnemySpawn: () => {
+      if (townTalk.overlay?.isRestWindow) townTalk.overlay.session?.abortForEnemySpawn?.();
+    },
     // U43: and the other two windows the INTERIOR host answers keys
     // for. Same rule as makeInventory - this host owns the builder and
     // its dependency list; worldModes only chooses the slot.

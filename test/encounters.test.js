@@ -114,12 +114,14 @@ test('encounters: the enemy alert - raise stamps the time, the 8-hour decay clea
 
 test('encounters: the dungeon host arm - the rest loop, the sight raise, the kill clear, the closed leg', () => {
   const src = readFileSync(join(root, 'src/scenes/dungeonContext.js'), 'utf8');
-  const i = src.indexOf('advanceMinutes: (n) => {');
+  const i = src.indexOf('const _restAdvance = (n) => {');
   // The window ends at the NEXT rest dep, not at a character count: wave 30
   // grew this arm by thirty lines and a fixed 900-char slice stopped reaching
   // the spawn loop, so the pin failed for the one reason a pin must not -
   // the code moved, not changed.
-  const fn = src.slice(i, src.indexOf('onRestFinished:', i));
+  // S40 pulled the OTHER five rest deps out to shared.js' one
+  // composition, so the window ends at this function's own close.
+  const fn = src.slice(i, src.indexOf('\n  };', i));
   assert.ok(i > 0 && fn.length > 200 && fn.length < 3000, 'the rest advance arm was found whole');
   assert.ok(fn.includes('intermittentEnemySpawn({'), 'the rest advance runs the catch-up loop');
   assert.ok(fn.includes('enemyAlertActive: !!playerEntity.enemyAlertActive'), 'gated on the alert');

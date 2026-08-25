@@ -11,7 +11,7 @@ import {
   restOpenGate, REST_TEXT, RestSession, EXPIRED_RENTED_ROOM,
 } from '../src/systems/restSession.js';
 import { RestWindow } from '../src/ui/restWindow.js';
-import { restVitals, restFullyHealed } from '../src/scenes/shared.js';
+import { restVitals, restFullyHealed, createRestDeps } from '../src/scenes/shared.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 import { isTownLocationType, TOWN_LOCATION_TYPES, LOCATION_TYPES } from '../src/formats/mapsFile.js';
 import { interiorSceneName } from '../src/systems/sceneCache.js';
@@ -19,6 +19,7 @@ import { setValue, _resetForTests } from '../src/systems/settings.js';
 import { maxFatigue } from '../src/systems/statMods.js';
 import { REST_WAIT_PER_HOUR } from '../src/systems/restSession.js';
 import { SKILLS } from '../src/systems/skills.js';
+import { startRestGroundedCheck, CAPSULE_HEIGHT } from '../src/player/motor.js';
 import { areEnemiesNearby } from '../src/systems/encounters.js';
 
 const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -428,10 +429,17 @@ test('S40 restVitals: one home for the rested hour, and the dungeon host uses it
   const nr = { ...e, magicka: 0, career: { abilityFlagsAndSpellPointsBitfield: 8 } };
   assert.equal(restFullyHealed(nr), true);
 
-  // The dungeon host stopped hand-rolling this composition.
+  // The dungeon host stopped hand-rolling this composition - all of
+  // it, not just the rested hour. It reads createRestDeps like every
+  // other host and keeps only advanceMinutes, which is a dungeon law.
   const dc = src('src/scenes/dungeonContext.js');
-  assert.match(dc, /restVitals\(playerEntity, \{ day: false, inside: true \}\)/);
+  assert.match(dc, /const _restDeps = createRestDeps\(playerEntity, \{/);
+  assert.match(dc, /advanceMinutes: \(n\) => _restAdvance\(n\),/);
   assert.doesNotMatch(dc, /fatigueRecoveryRate\(maxFatigue/);
+  for (const gone of ['fullyHealed: _restFullyHealed', 'dead: () => playerEntity.health <= 0',
+    'onRestFinished: () => raiseAtRestEnd']) {
+    assert.ok(!dc.includes(gone), `the dungeon still hand-rolls ${gone}`);
+  }
 });
 
 // ---- the WIRING ------------------------------------------------------
@@ -558,10 +566,23 @@ test('S40 restOpenGate: it is SCENE-FREE - all four hosts run it before opening'
   // is live indoors, since a levitating player cannot lie down in a
   // shop any more than in a dungeon.
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.match(src(f), /swimming: !!player\.swimming,\n\s+grounded: !!player\.grounded,/, f);
+    assert.match(src(f), /swimming: !!player\.swimming,/, f);
   }
-  assert.match(wm, /enemiesNearby: false,[^}]*swimming: false,[^}]*grounded: !!player\.grounded,/s);
+  assert.match(wm, /enemiesNearby: false,[^}]*swimming: false,/s);
   assert.match(src('src/scenes/dungeonContext.js'), /swimming: _activity\.swimming, grounded: nearFloor,/);
+  // ...and EVERY host asks StartRestGroundedCheck rather than the raw
+  // motor flag. The raw flag reads false for a levitating player an
+  // inch off the floor, whom DFU lets sleep (PlayerMotor.cs:190-193).
+  for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/world.js',
+    'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
+    const h = src(f);
+    assert.match(h, /startRestGroundedCheck\(/, f);
+    // Scoped to the GATE call, because `grounded: !!player.grounded`
+    // is also a legitimate debug readout elsewhere in world.js.
+    const g = h.slice(h.indexOf('restOpenGate({'), h.indexOf('restOpenGate({') + 400);
+    assert.doesNotMatch(g, /grounded: !!player\.grounded/, `${f}: the raw flag is not the check`);
+    assert.match(g, /grounded: (startRestGroundedCheck\(|nearFloor)/, f);
+  }
 });
 
 // ---- CheckRent -------------------------------------------------------
@@ -707,4 +728,126 @@ test('S40 areEnemiesNearby: the RESTING variant, and it is the one the hosts ask
     const deps = src(f).slice(src(f).indexOf('const outdoorRestDeps'), src(f).indexOf('const toggleRest'));
     assert.doesNotMatch(deps, /activeCount\?\.\(\) \?\? 0\) > 0/, `${f}: the rest deps must not ask the coarse question`);
   }
+});
+
+
+test('S40 createRestDeps: a host dep the composition does not name still REACHES the window', () => {
+  // The defect this pin exists for: createRestDeps destructured a
+  // CLOSED option list and returned a CLOSED literal, so worldModes'
+  // `onRentExpired` was handed in and dropped on the floor -
+  // RemoveExpiredRentedRooms never ran from rest. The pin beside it
+  // matched the SOURCE TEXT of the host and passed anyway, which is
+  // the whole lesson: a wire is pinned by running current through it.
+  const e = {
+    isPlayer: true, level: 1, health: 5, maxHealth: 10, magicka: 0, maxMagicka: 8,
+    fatigue: 0, stats: { strength: 50, endurance: 50, willpower: 50 }, skills: 20,
+    career: {}, skillUses: { [SKILLS.Medical]: 0 },
+  };
+  const seen = [];
+  const d = createRestDeps(e, {
+    advanceMinutes: () => {},
+    onRentExpired: () => seen.push('swept'),
+    commitCrime: (c) => seen.push(c),
+    moveToBed: () => seen.push('bed'),
+    place: () => ({ inTownStrict: true }),
+    endLines: (id) => [`t${id}`],
+  });
+  for (const k of ['onRentExpired', 'commitCrime', 'moveToBed', 'restPlace', 'endLines']) {
+    assert.ok(k in d, `createRestDeps dropped ${k}`);
+  }
+  // ...and it reaches the window, not just the object: a refused
+  // in-town rest must commit the crime through the host's closure.
+  _resetForTests();
+  setValue('GUI', 'IllegalRestWarning', 'False');
+  const w = new RestWindow(d);
+  w.input('char:1');
+  assert.equal(w.state, 'refused');
+  assert.deepEqual(seen, ['Vagrancy']);
+  // The five the composition OWNS win over a same-named key, so a host
+  // cannot half-override it.
+  const forced = createRestDeps(e, { advanceMinutes: () => {}, dead: () => 'nope', vitals: () => 'nope' });
+  assert.equal(forced.dead(), false);
+  assert.equal(typeof forced.vitals(), 'object');
+});
+
+test('S40: the expired-room sweep runs THROUGH the host composition, not around it', () => {
+  // worldModes hands onRentExpired to createRestDeps; the window calls
+  // it on EndRest's expired arm. Both halves, end to end.
+  const wm = src('src/scenes/worldModes.js');
+  const deps = wm.slice(wm.indexOf('const interiorRestDeps = createRestDeps'), wm.indexOf('const interiorKeyCtx'));
+  assert.match(deps, /onRentExpired: \(\) => \{/, 'the interior host supplies the sweep');
+  assert.match(src('src/ui/restWindow.js'), /if \(result\.rentExpired\) this\.deps\.onRentExpired\?\.\(\);/);
+  assert.match(src('src/scenes/shared.js'), /\.\.\.rest,/, 'and the composition passes it through');
+});
+
+
+test('S40: the OnEncounter abort reaches the rest window in EVERY slot', () => {
+  // AbortRestForEnemySpawn (:301-304) is subscribed on the WINDOW
+  // (OnPush :264, OnPop :275), so it follows the window wherever it is
+  // mounted. The first S40 pass routed the two slots worldModes owns
+  // and wrote a comment claiming it followed the window - which was
+  // two thirds true, and outdoors is exactly where a quest CreateFoe
+  // wave lands beside a sleeping player.
+  const wm = src('src/scenes/worldModes.js');
+  const arm = wm.slice(wm.indexOf('raiseOnEncounterEvent()'), wm.indexOf('raiseOnEncounterEvent()') + 900);
+  assert.match(arm, /dungeonCtx\?\.abortRestForEnemySpawn\?\.\(\)/);
+  assert.match(arm, /interiorOverlay\?\.isRestWindow/);
+  assert.match(arm, /host\.abortRestForEnemySpawn\?\.\(\)/, 'and the OUTER host slot');
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.match(src(f), /abortRestForEnemySpawn: \(\) => \{\n\s+if \(townTalk\.overlay\?\.isRestWindow\)/, f);
+  }
+  // The latch itself: it is a LATCH, answered on the next tick.
+  const s2 = new RestSession('timed', 5, {
+    advanceMinutes() {}, tickVitals: () => false, fullyHealed: () => false,
+    enemiesNearby: () => false, dead: () => false,
+  });
+  s2.abortForEnemySpawn();
+  const r = s2.tick(0);
+  assert.equal(r.enemyBroke, true);
+  assert.equal(r.textId, REST_TEXT.enemiesNearby);
+});
+
+test('S40: worldModes only routes the large HUD in a mode it DRAWS', () => {
+  // `mode` starts at 'exterior' and both outdoor hosts call
+  // modes.pointerdown BEFORE their own routeLargeHudClick, so without
+  // this gate every panel click above ground reached interiorKeyCtx
+  // and mounted a window into `interiorOverlay` - a slot the frame
+  // never draws and the keydown arm never feeds. It looked harmless
+  // until S40 gave interiorKeyCtx a toggleRest for it to call.
+  const wm = src('src/scenes/worldModes.js');
+  assert.match(wm,
+    /if \(mode === 'dungeon' \|\| mode === 'interior'\) \{\n\s+if \(routeLargeHudClick\(px, py, e\.button,/);
+  // ...and the bar's REST panel is a real destination now, in the
+  // hosts that own it.
+  assert.match(src('src/ui/hudLarge.js'), /key: 'rest',[^}]*action: 'Rest'/);
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.match(src(f), /toggleRest: \(\) => toggleRest\(\),/, f);
+  }
+});
+
+
+test('S40 startRestGroundedCheck: grounded short-circuits, else a ray of height/2 + 0.2', () => {
+  // PlayerMotor.cs:184-194. The ray is DFU's own levitation fix - its
+  // comment: "player is levitating but feet are 'close enough' to
+  // ground to rest" - so the tolerance and the origin both matter.
+  const calls = [];
+  const hit = (d) => ({ raycast: (o, dir, max) => { calls.push([o.slice(), dir, max]); return d; } });
+  // Grounded returns before the ray is ever cast.
+  assert.equal(startRestGroundedCheck(true, [0, 0, 0], hit(Infinity)), true);
+  assert.deepEqual(calls, [], 'a grounded player is never raycast');
+  // Airborne with floor in reach -> true, and the ray starts at the
+  // capsule CENTRE (feet + height/2) pointing down, reaching
+  // height/2 + 0.2.
+  const c = hit(0.5);
+  assert.equal(startRestGroundedCheck(false, [3, 10, -4], c), true);
+  assert.deepEqual(calls[0], [[3, 10 + CAPSULE_HEIGHT / 2, -4], [0, -1, 0], CAPSULE_HEIGHT / 2 + 0.2]);
+  // Nothing within reach -> false (the raycast's own miss sentinel).
+  assert.equal(startRestGroundedCheck(false, [0, 0, 0], hit(Infinity)), false);
+  assert.equal(startRestGroundedCheck(false, [0, 0, 0], hit(NaN)), false);
+  // No collider or no feet: the honest answer is "not grounded",
+  // never a throw - the interior host can be asked before its context
+  // is mounted.
+  assert.equal(startRestGroundedCheck(false, [0, 0, 0], null), false);
+  assert.equal(startRestGroundedCheck(false, null, hit(0.1)), false);
+  assert.equal(startRestGroundedCheck(true, null, null), true);
 });

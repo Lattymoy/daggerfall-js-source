@@ -67,12 +67,12 @@ import { preloadPaperDollForEntity } from '../ui/paperDoll.js';   // U26: the do
 import { createDroppedLoot } from './droppedLoot.js';   // U8e, mounted here at U26
 import { createPlayerMagic } from './hostMagic.js';   // M3: the ONE cast engine
 import { tallySkill, skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.js';
-import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';
+import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT, startRestGroundedCheck } from '../player/motor.js';   // S40: the rest gate's grounded input
 import { applyLevelUp } from '../systems/advancement.js';
 import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
 import { spendPoolLowest } from '../systems/chargen.js';
 import { ClassFile } from '../formats/classFile.js';
-import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, raiseAtRestEnd, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord, restVitals, restFullyHealed} from './shared.js';
+import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, raiseAtRestEnd, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord, restVitals, restFullyHealed, createRestDeps} from './shared.js';
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
@@ -912,69 +912,74 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       return;
     }
   }
-  const _restDeps = {
-    advanceMinutes: (n) => {
-      // E-slice: IntermittentEnemySpawn's catch-up loop across the
-      // advanced minutes (PlayerEntity.Update:486-492) - resting in
-      // a dungeon under an active enemy alert can spawn ONE foe; the
-      // hourly enemy check then breaks the rest, DFU's own flow.
-      const start = Math.floor(classicMinutesRef.value);
-      classicMinutesRef.value += n;
-      // AUDIT 24 (wave 30) - THE BROKER RUNS UNDER THE REST WINDOW.
-      // The old line here said "the round loop catches the magic
-      // rounds up", and it does not: dungeon.js returns at the
-      // overlay gate (:385-396) before this host's frame body, so
-      // through a whole rested night nothing ticked a disease, a
-      // poison or an active effect - and the marker then fired the
-      // entire backlog in ONE burst on the first frame after the
-      // window closed, after tickVitals had already healed every
-      // hour of it. In DFU the broker's Update runs under
-      // Time.timeScale = 0 and interleaves, minute by minute, with
-      // TickRest's hourly heal; a poison can kill you in your sleep
-      // and the rest ends "You never awaken."
-      const _w = claimMagicRounds(start, classicMinutesRef.value);
-      runMagicRoundsFor(playerEntity, _w.from, _w.to, { sinks: playerSinks, say: (msg) => hudText.add(msg) });
-      // ...and the FOE half of the same broker event. OnNewMagicRound
-      // is global - every EntityEffectManager in the scene subscribes
-      // - so a foe's poisons and effects age through the rest too.
-      // The frame body's own foe loop anchors on the clock at the top
-      // of THIS frame, so these minutes were not merely late for the
-      // foes, they were lost.
-      for (const f of foes) {
-        if (f.dead) continue;
-        runMagicRoundsFor(f.entity, _w.from, _w.to, { sinks: foeSinks(f) });
-      }
-      for (let l = 0; l < n; l++) {
-        const hit = intermittentEnemySpawn({
-          gameMinutes: start + l + 1, inside: true, inDungeon: true, isResting: true,
-          enemyAlertActive: !!playerEntity.enemyAlertActive,
-          dungeonType: dfLocation.mapTableData.dungeonType,
-          playerLevel: playerEntity.level,
-        });
-        if (hit) { _spawnEncounter(hit); break; }
-      }
-    },
-    // AUDIT 23 (entity-1): the rest-finished close raises skills - the
-    // per-minute tick no longer does (DaggerfallRestWindow.cs:731).
-    onRestFinished: () => raiseAtRestEnd(playerEntity, {
-      say: (msg) => hudText.add(msg), onLevelUp: _onLevelUp,
-    }),
-    // A dungeon is inside and never in daylight, so both of
-    // CalculateHealthRecoveryRate's flags are fixed here.
-    tickVitals: () => restVitals(playerEntity, { day: false, inside: true }),
-    fullyHealed: _restFullyHealed,
-    // S40: AreEnemiesNearby's RESTING variant moved to
-    // systems/encounters.js. It was written out here because rest was
-    // a dungeon feature; three more hosts ask it now, and two of them
-    // were asking a much coarser question before this slice.
-    enemiesNearby: () => areEnemiesNearby(foes, { resting: true }),
-    dead: () => playerEntity.health <= 0,
-    vitals: () => ({
-      health: playerEntity.health, maxHealth: playerEntity.maxHealth,
-      fatigue: Math.round((playerEntity.fatigue ?? 0) / 64), magicka: playerEntity.magicka ?? 0,
-    }),
-    endLines: (id) => rscLines(id),
+  /** The rest window's clock jump for THIS host: the world minutes
+   *  plus IntermittentEnemySpawn's catch-up loop, which is a dungeon
+   *  law and is the one rest dep createRestDeps cannot supply. */
+  const _restAdvance = (n) => {
+    // E-slice: IntermittentEnemySpawn's catch-up loop across the
+    // advanced minutes (PlayerEntity.Update:486-492) - resting in
+    // a dungeon under an active enemy alert can spawn ONE foe; the
+    // hourly enemy check then breaks the rest, DFU's own flow.
+    const start = Math.floor(classicMinutesRef.value);
+    classicMinutesRef.value += n;
+    // AUDIT 24 (wave 30) - THE BROKER RUNS UNDER THE REST WINDOW.
+    // The old line here said "the round loop catches the magic
+    // rounds up", and it does not: dungeon.js returns at the
+    // overlay gate (:385-396) before this host's frame body, so
+    // through a whole rested night nothing ticked a disease, a
+    // poison or an active effect - and the marker then fired the
+    // entire backlog in ONE burst on the first frame after the
+    // window closed, after tickVitals had already healed every
+    // hour of it. In DFU the broker's Update runs under
+    // Time.timeScale = 0 and interleaves, minute by minute, with
+    // TickRest's hourly heal; a poison can kill you in your sleep
+    // and the rest ends "You never awaken."
+    const _w = claimMagicRounds(start, classicMinutesRef.value);
+    runMagicRoundsFor(playerEntity, _w.from, _w.to, { sinks: playerSinks, say: (msg) => hudText.add(msg) });
+    // ...and the FOE half of the same broker event. OnNewMagicRound
+    // is global - every EntityEffectManager in the scene subscribes
+    // - so a foe's poisons and effects age through the rest too.
+    // The frame body's own foe loop anchors on the clock at the top
+    // of THIS frame, so these minutes were not merely late for the
+    // foes, they were lost.
+    for (const f of foes) {
+      if (f.dead) continue;
+      runMagicRoundsFor(f.entity, _w.from, _w.to, { sinks: foeSinks(f) });
+    }
+    for (let l = 0; l < n; l++) {
+    const hit = intermittentEnemySpawn({
+      gameMinutes: start + l + 1, inside: true, inDungeon: true, isResting: true,
+      enemyAlertActive: !!playerEntity.enemyAlertActive,
+      dungeonType: dfLocation.mapTableData.dungeonType,
+      playerLevel: playerEntity.level,
+    });
+    if (hit) { _spawnEncounter(hit); break; }
+    }
   };
+  // S40: and the five closures every host owes the window, from the
+  // ONE composition. This host wrote them out because it was the only
+  // host that could rest; leaving them written out would have left the
+  // shared version with two bodies, which is the drift THE FOUR HOSTS
+  // RULE exists to stop. Only `advanceMinutes` stays here, because
+  // IntermittentEnemySpawn's catch-up loop is a dungeon law.
+  //
+  // AUDIT 23 (entity-1): the rest-finished close raises skills - the
+  // per-minute tick no longer does (DaggerfallRestWindow.cs:731).
+  //
+  // A dungeon is inside and never in daylight, so both of
+  // CalculateHealthRecoveryRate's flags are fixed here.
+  //
+  // AreEnemiesNearby's RESTING variant is systems/encounters.js' now
+  // too - three more hosts ask it, and two were asking a much coarser
+  // question before this slice.
+  const _restDeps = createRestDeps(playerEntity, {
+    advanceMinutes: (n) => _restAdvance(n),
+    enemiesNearby: () => areEnemiesNearby(foes, { resting: true }),
+    endLines: (id) => rscLines(id),
+    say: (msg) => hudText.add(msg),
+    onLevelUp: _onLevelUp,
+    day: () => false, inside: () => true,
+  });
   // U4: the ONE player-damage door - every source (traps, melee,
   // arrows, spell missiles) lands here; death opens the overlay.
   function healPlayer(n) {
@@ -2595,15 +2600,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // and refused rest with any unaware foe in the whole 1024-unit
       // spawn band.
       //
-      // StartRestGroundedCheck verbatim: grounded passes at once;
-      // otherwise a short downward ray from the controller center,
-      // height/2 + 0.2 (= floor within 0.2 below the feet) lets a
-      // near-ground levitator rest. Derived from CAPSULE_HEIGHT so
-      // the geometry cannot drift from the motor's (review 16f).
-      const feet = lastPlayerFeet;
-      const nearFloor = _grounded || !!(feet
-        && Number.isFinite(collider.raycast(
-          [feet[0], feet[1] + CAPSULE_HEIGHT / 2, feet[2]], [0, -1, 0], CAPSULE_HEIGHT / 2 + 0.2)));
+      // StartRestGroundedCheck moved to player/motor.js beside the
+      // constant it derives from - three more hosts ask it now, and
+      // they were passing the raw `grounded` flag, which refuses a
+      // near-ground levitator DFU lets sleep (review 16f found the
+      // drift risk; the S40 review found the divergence).
+      const nearFloor = startRestGroundedCheck(_grounded, lastPlayerFeet, collider);
       const gate = restOpenGate({
         enemiesNearby: _restDeps.enemiesNearby(),
         swimming: _activity.swimming, grounded: nearFloor,

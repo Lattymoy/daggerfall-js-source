@@ -22,6 +22,7 @@
 //   baseCollider() - the collider to restore on exit.
 
 import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding } from '../player/enterExit.js';
+import { startRestGroundedCheck } from '../player/motor.js';   // S40: the rest gate's grounded input
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { pickActivatable, worldAabb, activationTargets } from '../player/activate.js';
 import { transferAll, removeOne, addItem, isEnchanted, totalWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
@@ -3063,7 +3064,9 @@ export function createWorldModes(host) {
       const gate = restOpenGate({
         enemiesNearby: false,   // no foe pool in a building interior
         swimming: false,        // nor water
-        grounded: !!player.grounded,
+        // StartRestGroundedCheck, not the raw flag - the near-ground
+        // ray is DFU's own levitation fix and applies indoors too.
+        grounded: startRestGroundedCheck(!!player.grounded, player.pos, interiorCtx?.collider),
       });
       if (!gate.ok) {
         const lines = townTalk?.lines?.(gate.textId);
@@ -3141,9 +3144,21 @@ export function createWorldModes(host) {
     // one U43's dispatch already built - dungeonCtx below ground,
     // interiorKeyCtx inside a building - so a panel and a key reach
     // the same door here too, and there is no third object.
-    if (routeLargeHudClick(px, py, e.button,
-      mode === 'dungeon' ? dungeonCtx : interiorKeyCtx,
-      { windowUp: mode === 'dungeon' ? !!dungeonCtx?.uiOverlayActive : !!interiorOverlay })) return true;
+    // ...but ONLY in a mode this host actually draws. `mode` starts
+    // at 'exterior' and the outer host calls this before its own
+    // routeLargeHudClick, so without the gate every panel click above
+    // ground reached interiorKeyCtx and mounted a window into
+    // `interiorOverlay` - a slot the frame never draws and the
+    // keydown arm (`if (mode === 'interior')`) never feeds. The
+    // orphan then sat there until the player walked through a door.
+    // Harmless-looking before S40 only because interiorKeyCtx had no
+    // toggleRest and routeAction's `?.()` no-opped; the S40 review
+    // found it the moment it did.
+    if (mode === 'dungeon' || mode === 'interior') {
+      if (routeLargeHudClick(px, py, e.button,
+        mode === 'dungeon' ? dungeonCtx : interiorKeyCtx,
+        { windowUp: mode === 'dungeon' ? !!dungeonCtx?.uiOverlayActive : !!interiorOverlay })) return true;
+    }
     if (mode !== 'interior' || !interiorOverlay) return false;
     const v = pointToNative(nativeMetrics(canvas), px, py);
     if (v) interiorOverlay.click?.(v[0], v[1], e.button === 2);   // I4: the remove gesture rides the button
@@ -3289,7 +3304,14 @@ export function createWorldModes(host) {
      *  rest window was true until this slice and is not now. */
     raiseOnEncounterEvent() {
       if (mode === 'dungeon') { dungeonCtx?.abortRestForEnemySpawn?.(); return; }
-      if (interiorOverlay?.isRestWindow) interiorOverlay.session?.abortForEnemySpawn?.();
+      if (interiorOverlay?.isRestWindow) { interiorOverlay.session?.abortForEnemySpawn?.(); return; }
+      // ...and the OUTER host's slot, which is where an outdoor rest
+      // window lives (townTalk's). The first S40 pass routed the two
+      // slots this module owns and wrote a comment saying the
+      // subscription follows the window - which was only two thirds
+      // true, and outdoors is exactly where a quest CreateFoe wave
+      // lands next to a sleeping player.
+      host.abortRestForEnemySpawn?.();
     },
     /** B3: TeleportPc's marker landing (:120-135) - the marker's
      *  scene position in whichever frame the mounted mode speaks
