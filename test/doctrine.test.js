@@ -42,6 +42,7 @@ const PUBLIC_ALLOWLIST = new Map([
   ['public/skin/skin-intensity.png', 'OURS - intensity baked from our own generated turnaround'],
   ['public/skin/skin-uv.json', "OURS - UVs over our own rig's geometry, no pixels at all"],
   ['public/skin/skin-layout.json', 'OURS - atlas cell rectangles, no pixels at all'],
+  ['public/skin/skin-intensity-beast.png', 'OURS - the same map, smoothed for fur and scales'],
   ['public/skin/breton-skin-ramps.json', 'OURS - ramps derived from our own generated heads'],
   ['public/skin/redguard-skin-ramps.json', 'OURS - ramps derived from our own generated heads'],
   ['public/skin/nord-skin-ramps.json', 'OURS - ramps derived from our own generated heads'],
