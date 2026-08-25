@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 3309 tests across 343 files.
+Node 22). Suite: 3315 tests across 343 files.
 
 **THE ARENA2-GATED PINS ARE HALF-BLIND, AND THAT IS A KNOWN COST.** A
 pin behind `{ skip: skipReal }` never runs on CI, so a law change that
@@ -263,7 +263,7 @@ because the suite has never had non-English data.
 | enterexit.test.js | 6 | verbatim landing offsets, door transforms, landing selection, dungeon exit, ladder climb, FixStanding floor snap |
 | interior.test.js | 8 | ModelDoor extraction, static doors, interior layout, 6832-interior corpus, R8 light offsets + MAGEAA00 pins |
 | interiorlights.test.js | 4 | DaggerfallInterior.AddLight's SECOND per-record switch (interiorLightProperties): the WHOLE range/intensity/colour table for records 0-29 against a second transcription of the C# literals, the prefab base (range 15 / intensity 1 / white) standing in for every "todo" arm AND for records the switch never names (there is NO default arm), the frozen table, and collectInteriorLights hanging range+intensity+colour on every light it places |
-| people.test.js | 2 | AddPeople position/data verbatim, 14174-people corpus (6724/6832 interiors, archives 176-184) |
+| people.test.js | 8 | AddPeople position/data verbatim, 14174-people corpus (6724/6832 interiors, archives 176-184) P1 ADDS THE VISIBILITY TAIL C1 ROUTED (AddPeople :1206-1226), which had been waiting on banking until H1 shipped house ownership. The gate reads the same primitives as the door ladder in `systems/buildingLocks.js` and combines them differently, INVERTING one: a house you own is always unlocked to you and always empty of its previous occupants, and both are right. The shop arm reads an entry-time LATCH rather than the clock (PlayerActivate.cs:1120), so a shopkeeper does not blink out around a player still standing there at closing time. The non-shop arm stops at House4, which is not "residences only" - Temple, Tavern and Palace are all under it, so a Palace keeps its 10-16 hours while a House5 or a Ship is never gated. Also pinned: the quest hook is DFU's ELSE branch, so a person the gate removed is not handed to the quest machine, and the host resolves the building identity BEFORE the interior stands (it used to come after, which is why the gate had nothing to read). The House2 hours in the first draft of these tests were a guess - 18-23 - and the gate corrected them to 6-18. |
 | poses.test.js | 1 | Static pose table (POSES): melee1H well-formed, sagittal angles within joint ranges |
 | weapons.test.js | 2 | Verbatim DFU weapon data pins (enums, damage table, material mods/dyes, ApplyWeaponMaterial math incl. half-to-even weight round); Longsword piece well-formed on the armR fist |
 | names.test.js | 5 | Region->bank verbatim, deterministic name composition on DFRandom, Redguard female stream parity, 76-NPC exterior corpus (SENT7 lamp quirk); S17 MonsterName (the engine-PRNG bank pick vs the forced bankType on one DFRandom stream, Monster2-female D set, both Monster3 branches, seed determinism) |

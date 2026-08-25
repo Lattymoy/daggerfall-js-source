@@ -96,9 +96,10 @@ import { preloadListPickerArt } from '../ui/listPicker.js';
 import { getTitle } from '../systems/guilds.js';
 import { getDivine, DIVINES } from '../systems/guildVariants.js';
 import { BUILDING_TYPES, isResidence } from '../world/buildingNames.js';
-import { getInteractionMode } from '../player/interactionMode.js';   // R1: PlayerActivate.currentMode, the one home
+import { getInteractionMode, setInteractionMode } from '../player/interactionMode.js';   // R1: PlayerActivate.currentMode, the one home
 import { bindCursorToggle } from '../player/pointerLock.js';   // U45: PlayerMouseLook.cursorActive
-import { buildingIsUnlocked, buildingLockValue, LOCKED_EXTERIOR_DOOR_TEXT } from '../systems/buildingLocks.js';   // R1: opening hours + the unlocked ladder
+import { buildingIsUnlocked, buildingLockValue, isBuildingOpen, LOCKED_EXTERIOR_DOOR_TEXT } from '../systems/buildingLocks.js';   // R1: opening hours + the unlocked ladder   // P1: the people gate reads the same hours
+import { peopleAreVisible } from '../characters/interiorPeople.js';   // P1: AddPeople's visibility tail
 import { exteriorLockpickingChance, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT } from '../world/actionSystem.js';
 import { discoverBuilding, getLastLockpickAttempt, setLastLockpickAttempt } from '../systems/discovery.js';
 import { getHolidayId } from '../systems/holidays.js';
@@ -2141,6 +2142,33 @@ export function createWorldModes(host) {
     }
     transitioning = true;
     try {
+      // E2/P1: the building's identity, resolved BEFORE the interior
+      // stands. DFU's transition does the same three things in this
+      // order (PlayerActivate.cs:1119-1121): take the discovered
+      // building, latch IsPlayerInsideOpenShop from it, and only then
+      // call TransitionInterior - which is what reaches AddPeople with
+      // a `buildingData` already in hand. The port used to resolve the
+      // identity AFTER buildInteriorContext, which is why the people
+      // gate had nothing to read.
+      interiorBuilding = buildingDataForDoor?.(hit) ?? null;
+      // PlayerActivate.cs:1120 verbatim - computed once, at the door,
+      // and then left alone. A shop entered while open keeps its
+      // people even if the player is still inside at closing time.
+      const _bt = interiorBuilding?.buildingType;
+      const _hour = Math.floor((Math.floor(worldMinutes()) % 1440) / 60);
+      const insideOpenShop = _bt != null && isShop(_bt) && isBuildingOpen(_bt, _hour);
+      const _dict = townTalk?.factionDict ?? null;
+      const peopleVisible = !interiorBuilding ? true : peopleAreVisible(interiorBuilding, {
+        hour: _hour,
+        insideOpenShop,
+        isHouseOwned: (key) => isHouseOwned(playerEntity.houses ?? [], interiorBuilding?.regionIndex ?? 0, key),
+        guildForBuilding: (factionId) => {
+          const g = guildOfFaction(factionId, resolveVariantGuild(_dict), _dict);
+          if (!g) return null;
+          const m = membershipOf((playerEntity.guildMemberships ??= {}), g);
+          return { hallAccessAnytime: hallAccessAnytime(g, m), isMember: isMember(m) };
+        },
+      });
       // P8: parent the interior at the entered building's world matrix
       // (verbatim ownerPosition + buildingMatrix) - context coordinates
       // come back world-frame, landings run in one frame, and the walk
@@ -2154,7 +2182,7 @@ export function createWorldModes(host) {
         // a building was entered from ?world / ?exterior - the same
         // building reached through ?interior=NAME:REC omitted it.
         hit.dfBlock, hit.dfBlock.index, hit.recordIndex, hit.climateBase, hit.season,
-        hit.door.matrix, { voxelfolk, piece, paint, setupStaticNpc });
+        hit.door.matrix, { voxelfolk, piece, paint, setupStaticNpc, peopleVisible });
       const siblings = entries.filter((e) =>
         e.dfBlock === hit.dfBlock && e.recordIndex === hit.recordIndex);
       const landing = interiorLanding(
@@ -2165,9 +2193,8 @@ export function createWorldModes(host) {
       // X1: an armed Open/Lock spell fires on this interior's doors
       // too - the same law the dungeon context wires for its own.
       wireDoorSpells(ctx.actions, playerEntity, (t) => townTalk?.say?.(t));
-      // E2: the building's identity (type/quality/key/name) rides the
-      // host's merge closure; shops warm the browse font.
-      interiorBuilding = buildingDataForDoor?.(hit) ?? null;
+      // (interiorBuilding was resolved above, before the context was
+      // built - P1 needs it to gate the people.)
       ensureInteriorWindowArt();   // U23: every interior can open a window now
       // P1: RestoreCachedScene (:804) - after the identity is known,
       // because the scene NAME is built from the building key.
@@ -2936,6 +2963,30 @@ export function createWorldModes(host) {
      *  by waiting). */
     window.__closeOverlay = () => { interiorOverlay = null; return true; };
     window.__setWorldMinutes = (m) => setWorldMinutes(m);
+    // P1: write the deed directly, so a probe can walk into a house it
+    // owns without also having to walk the bank's purchase window (H2
+    // probes that separately). AllocateHouseToPlayer is H1's own door.
+    // P1: PlayerActivate.currentMode, set directly. The R1 door ladder
+    // only offers a lockpick in STEAL mode, and the closed-shop arm of
+    // the people gate lives behind that pick - so a probe that cannot
+    // reach the mode cannot reach the law.
+    window.__setInteractionMode = (m) => setInteractionMode(m);
+    window.__ownHouse = (buildingKey, regionIndex = null) => {
+      // The region has to be the BUILDING's, not "whatever the host
+      // last looked at". The deed is filed per region and the gate
+      // reads it back with the entered building's own regionIndex, so
+      // a deed written into the wrong slot self-confirms and then does
+      // nothing - which is precisely what the first live run showed.
+      const region = regionIndex ?? interiorBuilding?.regionIndex ?? gps?.()?.regionIndex ?? 0;
+      // the registry is BANK_REGION_COUNT slots, not a bare array -
+      // allocateHouseToPlayer writes into houses[regionIndex] and an
+      // empty [] has no slot to write
+      if (!playerEntity.houses?.length) playerEntity.houses = createHouses(BANK_REGION_COUNT);
+      allocateHouseToPlayer(playerEntity.houses, region,
+        { buildingKey, mapId: 0, location: '' },
+        { ...houseSideEffects(), playerName: playerEntity.name ?? '', regionName: '' });
+      return isHouseOwned(playerEntity.houses, region, buildingKey);
+    };
     /** G4: open ANY guild-service destination through the real
      *  dispatcher, at the Mages Guild by default - the four store
      *  arms all price off the guild's own faction id, so a probe that
@@ -3183,6 +3234,20 @@ export function createWorldModes(host) {
     window.__markers = () => interiorCtx ? JSON.stringify(interiorCtx.markers.filter((m) => m.type === 21 || m.type === 22).map((m) => ({ t: m.type, x: +m.x.toFixed(2), y: +m.y.toFixed(2), z: +m.z.toFixed(2) }))) : null;
     window.__ladders = () => interiorCtx ? JSON.stringify(interiorCtx.ladders.map((l) => ({ x: +l.matrix[12].toFixed(2), y: +l.matrix[13].toFixed(2), z: +l.matrix[14].toFixed(2) }))) : null;
     window.__people = () => interiorCtx ? interiorCtx.people.length : null;
+    // P1: the visibility gate's live answer. `__people` counts the
+    // people the block DECLARES; this says how many of them AddPeople
+    // actually stood, and names the inputs the gate read - a probe
+    // that only saw the count could not tell a closed shop from an
+    // empty one.
+    window.__peopleGate = () => (interiorCtx ? JSON.stringify({
+      declared: interiorCtx.people.length,
+      standing: interiorCtx.people.filter((pn) => pn.active).length,
+      questWired: interiorCtx.people.filter((pn) => pn.questBehaviour).length,
+      buildingType: interiorBuilding?.buildingType ?? null,
+      factionId: interiorBuilding?.factionId ?? null,
+      buildingKey: interiorBuilding?.buildingKey ?? null,
+      hour: Math.floor((Math.floor(worldMinutes()) % 1440) / 60),
+    }) : null);
     window.__peopleList = () => interiorCtx ? JSON.stringify(interiorCtx.people.map((pn) => ({ a: pn.textureArchive, r: pn.textureRecord, x: +pn.x.toFixed(1), y: +pn.y.toFixed(1), z: +pn.z.toFixed(1) }))) : null;
     // U23: the static-NPC seam, probe-side. __staticNpcs surfaces the
     // faction id and the resolved billboard extent (no extent, no

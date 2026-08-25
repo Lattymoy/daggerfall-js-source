@@ -111,7 +111,11 @@ test('audit24 wave20: SetupIndividualStaticNPC is wired at AddPeople, not merely
   const wm = rd('src/scenes/worldModes.js');
   assert.match(wm, /const setupStaticNpc = \(pn, host\) =>\s*\n\s*questBridge\?\.machine\.setupIndividualStaticNPC\(host, pn\.factionID\) \?\? true;/,
     'worldModes mints the hook');
-  assert.match(wm, /\{ voxelfolk, piece, paint, setupStaticNpc \}\)/,
+  // P1 added `peopleVisible` beside it, so the pin is on the HOOK
+  // being handed over rather than on the exact shape of the literal -
+  // what this gate is for is that setupStaticNpc reaches the context,
+  // not that nothing else ever travels with it.
+  assert.match(wm, /\{ voxelfolk, piece, paint, setupStaticNpc[,}][^)]*\)/,
     'and hands it to buildInteriorContext');
 
   const ic = rd('src/scenes/interiorContext.js');

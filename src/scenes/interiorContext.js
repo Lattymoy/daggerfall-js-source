@@ -187,9 +187,18 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   // People (C1): AddPeople's data layer - base positions batch through
   // the same billboard path as flats; the StaticNPC inputs ride on the
   // returned people list (parent-frame, like everything else here).
+  //
+  // P1: ...and AddPeople's VISIBILITY TAIL (:1206-1226), which C1
+  // routed because it needed banking. `opts.peopleVisible` is the
+  // host's already-evaluated answer - the host owns the clock, the
+  // guild dictionary, the deed store and the entry latch, and DFU
+  // likewise hands AddPeople a resolved `buildingData` rather than
+  // making it look anything up. A host that does not pass it (the
+  // standalone ?interior route) gets C1's behaviour: everyone stands.
+  const visible = opts.peopleVisible ?? true;
   const people = collectInteriorPeople(recordData).map((pn) => {
     const [x, y, z] = parentPt(pn.x, pn.y, pn.z);
-    return { ...pn, x, y, z, active: true, questBehaviour: null };
+    return { ...pn, x, y, z, active: visible, questBehaviour: null };
   });
   // AUDIT 24 (wave 20): AddPeople's LAST act on every person it stands
   // is `QuestMachine.Instance.SetupIndividualStaticNPC(go, obj.FactionID)`
@@ -207,6 +216,12 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       setActive(active) { pn.active = !!active; },
       destroy() { pn.active = false; },
     };
+    // P1: the quest hook is DFU's ELSE branch (:1224) - a person the
+    // visibility gate took out is NOT handed to the quest machine.
+    // Wiring a hidden individual would put a clickable quest NPC
+    // inside a shuttered shop, and would let an away-arm SetActive
+    // put back someone the building rules had removed.
+    if (!visible) continue;
     const setup = opts.setupStaticNpc?.(pn, pn.host);
     if (setup && setup !== true) pn.questBehaviour = setup;
   }
