@@ -131,6 +131,7 @@ import { guildOfFaction, membershipOf, guildFactionIdOfGroup } from '../systems/
 import { resolveVariantGuild } from '../systems/guildVariants.js';
 // TK-i: THE RUMOR MILL - the quest machine's rumor seams stop being silent.
 import { RumorMill, tokensToString } from '../systems/rumorMill.js';
+import { isFaction2RelatedToFaction1 } from '../systems/factionRelations.js';   // S44: the member this host used to stub as false
 import { expandQuestMessage } from '../systems/quest/questMacros.js';
 // TK-ii: THE TOPIC TREE - the quest topic/dialog-link seams land.
 import { TopicTree, QUEST_INFO_RESOURCE_TYPE } from '../systems/topicTree.js';
@@ -2568,7 +2569,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     discoverBuilding: (buildingKey) => discoverBuilding(
       `${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`,
       (topicTree.listBuildings ?? []).find((b) => b.buildingKey === buildingKey) ?? { buildingKey }),
-    isFaction2RelatedToFaction1: () => false,   // the faction-relation walk rides TK-v
+    // S44: the real member (PersistentFactionData.cs:675-689). This hook
+    // answered a hardcoded `false` from the talk arc onward, so
+    // answerPipeline's faction-relation gate could never fire once.
+    isFaction2RelatedToFaction1: (id1, id2) => {
+      const d = _questStore()?.dict;
+      return d ? isFaction2RelatedToFaction1(d, id1, id2) : false;
+    },
     setRandomQuestor: () => npcSession.setRandomQuestor(),
     // TK-v: THE TONE GATE's two seams. C# recomputes the reaction tier
     // inside GetAnswerText when the tone CHANGED (:1994-1995), so the

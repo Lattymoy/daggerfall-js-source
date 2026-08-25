@@ -3486,3 +3486,76 @@ alliance mutators (`GetNumberOfCommonAlliesAndEnemies`,
 the port has, and it writes into S42's store. `StartRacialOverrideQuest`
 rides the same two arms and is unported with it, as is
 `InitializeRegionData`'s twelve-pass bootstrap.
+
+## S44 - THE FACTION RELATION MUTATORS (2026-08-25)
+
+`src/systems/factionRelations.js` (new: the border table, the four
+relation questions, the four mutators, the war predicate, the two ruler
+members) + `src/scenes/world.js` (a stub retired).
+`test/factionrelations.test.js` (new, 14).
+
+**The set S43 had to flag.** `RegionPowerAndConditionsUpdate`'s
+conditions body ends and starts alliances and rivalries and decides who
+may go to war with whom, entirely through
+`PersistentFactionData.cs:530-880`. Twelve of those fourteen members had
+no port at all. This slice is them, and nothing else - the state machine
+that calls them is still to come.
+
+**A stub retired on the way.** `isFaction2RelatedToFaction1` has been a
+hook in `world.js` answering a hardcoded `false` since the talk arc
+(`// the faction-relation walk rides TK-v`), so `answerPipeline`'s
+faction-relation gate could never fire once. The real member is here and
+the hook calls it. That is the fourth law this session found ported or
+declared and then unreachable, after `CheckOverdueLoans`,
+`RefreshRumorMill` and the day block.
+
+**THE ZERO QUIRK.** `GetNumberOfCommonAlliesAndEnemies` compares three
+ally slots against three, and three enemy slots against three, with no
+`!= 0` guard - and an empty slot is 0. So two factions with no allies
+and no enemies at all score EIGHTEEN, not zero. It is not a rounding
+detail: the count feeds `(powerSum + count * 3) / 5 + 70` in the
+alliance-ending roll, so eighteen moves that chance about ten points
+against nothing. DFU counts them; the port counts them.
+
+DFU's own comment on that member is worth keeping too - classic compared
+faction2's allies against faction1's ALLIES' allies, DFU calls that
+"contradictory" and rewrote it as the plainer shared-count. The port
+takes DFU's version, because DFU's version is what the game runs.
+
+**The border table was not typed.** 62 rows of 11 - 682 bytes - pulled
+out of the C# by a script and then diffed against it cell for cell. A
+table with one wrong cell is worse than no table, and 682 hand-typed
+bytes is exactly where a wrong cell hides. Its padding zeros compare
+like any other entry, so region 0 reads as a neighbour of every
+short-rowed region; pinned as the quirk it is rather than guarded away.
+
+**The struct write-back is load-bearing in one reachable case.** C#
+reads two struct COPIES, mutates them, and writes both back. The port's
+dictionary holds OBJECTS, so an in-place mutation would differ in
+exactly one place: `id1 === id2`, where C# has two independent copies
+and the second write-back clobbers the first. `startFactionAllies(d, 1,
+2, 1)` sets `ally3` on one copy and `ally1` on the other, and C# keeps
+only `ally1`. Reproduced with a copy-and-write-back helper, and pinned.
+
+**Two pins that could not see their own law.** `SetNewRulerData`'s bonus
+was asserted as `>= 20 && <= 70`, which cannot see the `+ 20` go missing
+because 0..50 lands inside it; and its name seed was compared against
+another run of itself, which cannot see the two `rand()` draws swap.
+Both mutations survived the first round. They are pinned to exact values
+off a seeded DFRandom now.
+
+Pins: `test/factionrelations.test.js` (14). 15 mutations, 14 killed and
+one RECORDED EQUIVALENT rather than waved through: the shared-ancestor
+arm's two `id !=` guards only ever block a case the ancestor and
+descendant arms have already answered, because reaching that state needs
+a walk step that returns 1 or 3 first. Ported because it is in the C#,
+and the argument is written into the test beside it. All 14 citations
+content-verified, clean on the first pass.
+
+FLAGGED: still no caller. These are the conditions body's tools and the
+conditions body is not ported - the war state machine, famine, plague,
+persecuted temple, crime wave, witch burnings and the new-ruler roll.
+`setNewRulerData`, `setRulerType`, the four mutators and the war
+predicate are exercised by their pins and by nothing in `src/` yet,
+which is a gap this arc closes in its next slice and not a defect to be
+discovered later.
