@@ -1,0 +1,68 @@
+{
+ "group": "player-motor",
+ "lens": "PlayerMotor/Speed/Heights/Climbing/Levitate laws: speeds, gravity, capsule heights, fall damage, swim.",
+ "files": [
+  {
+   "file": "src/player/activate.js",
+   "lines": 131,
+   "cs": [
+    "PlayerActivate.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/player/cameraView.js",
+   "lines": 24,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/player/climbing.js",
+   "lines": 171,
+   "cs": [
+    "ClimbingMotor.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/player/collider.js",
+   "lines": 618,
+   "cs": [
+    "CreateFoe.cs",
+    "EnemyMotor.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/player/enterExit.js",
+   "lines": 214,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/player/interactionMode.js",
+   "lines": 26,
+   "cs": [
+    "PlayerActivate.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/player/motor.js",
+   "lines": 691,
+   "cs": [
+    "LevitateMotor.cs",
+    "PlayerHeightChanger.cs",
+    "PlayerMotor.cs",
+    "PlayerSpeedChanger.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/player/pointerLock.js",
+   "lines": 103,
+   "cs": [],
+   "csUnresolved": []
+  }
+ ]
+}

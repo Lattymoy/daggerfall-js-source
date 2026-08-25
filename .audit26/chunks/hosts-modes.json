@@ -1,0 +1,48 @@
+{
+ "group": "hosts-modes",
+ "lens": "HOST LAYER (worldModes = interior+dungeon modal hosts; interiorContext). Same wiring lenses as hosts-world, plus the modal contract: every exit of a frame-gating function must return the same type. Check the FOUR HOSTS rule: seams wired here but missing in exterior/world/dungeonContext or vice versa.",
+ "files": [
+  {
+   "file": "src/scenes/interiorContext.js",
+   "lines": 365,
+   "cs": [
+    "Billboard.cs",
+    "DaggerfallInterior.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "lines": 4028,
+   "cs": [
+    "CreateFoe.cs",
+    "CreateItem.cs",
+    "DaggerfallBankingWindow.cs",
+    "DaggerfallEntity.cs",
+    "DaggerfallGuildServicePopupWindow.cs",
+    "DaggerfallInterior.cs",
+    "DaggerfallMerchantRepairPopupWindow.cs",
+    "DaggerfallQuestOfferWindow.cs",
+    "DaggerfallTradeWindow.cs",
+    "DaggerfallUI.cs",
+    "GameManager.cs",
+    "GameObjectHelper.cs",
+    "Identify.cs",
+    "Levitate.cs",
+    "Open.cs",
+    "Place.cs",
+    "PlayerActivate.cs",
+    "PlayerAmbientLight.cs",
+    "PlayerEnterExit.cs",
+    "PlayerGPS.cs",
+    "RMBLayout.cs",
+    "SaveLoadManager.cs",
+    "StaticNPC.cs",
+    "TalkManager.cs",
+    "Teleport.cs",
+    "WeaponManager.cs"
+   ],
+   "csUnresolved": []
+  }
+ ]
+}

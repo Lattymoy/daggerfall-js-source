@@ -1,0 +1,52 @@
+{
+ "group": "save-session",
+ "lens": "SaveLoadManager envelope completeness, sceneCache, notebook, automap discovery state.",
+ "files": [
+  {
+   "file": "src/systems/automap.js",
+   "lines": 258,
+   "cs": [
+    "Automap.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/discovery.js",
+   "lines": 138,
+   "cs": [
+    "PlayerGPS.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/notebook.js",
+   "lines": 267,
+   "cs": [
+    "DaggerfallQuestJournalWindow.cs",
+    "PlayerNotebook.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/save.js",
+   "lines": 505,
+   "cs": [
+    "PlayerEntity.cs",
+    "SaveLoadManager.cs",
+    "SerializablePlayer.cs",
+    "TalkManager.cs",
+    "Teleport.cs",
+    "WeatherManager.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/sceneCache.js",
+   "lines": 158,
+   "cs": [
+    "DaggerfallUnityEnums.cs"
+   ],
+   "csUnresolved": []
+  }
+ ]
+}

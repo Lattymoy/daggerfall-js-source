@@ -1,0 +1,95 @@
+{
+ "group": "guilds-factions",
+ "lens": "Guild rank laws, services, faction data/relations, summoning.",
+ "files": [
+  {
+   "file": "src/systems/daedraSummoning.js",
+   "lines": 174,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/factionRelations.js",
+   "lines": 315,
+   "cs": [
+    "PersistentFactionData.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/factionRep.js",
+   "lines": 265,
+   "cs": [
+    "BiogFile.cs",
+    "PersistentFactionData.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/guilds.js",
+   "lines": 580,
+   "cs": [
+    "DaggerfallGuildServicePopupWindow.cs",
+    "DarkBrotherhood.cs",
+    "FightersGuild.cs",
+    "Guild.cs",
+    "GuildManager.cs",
+    "KnightlyOrder.cs",
+    "MagesGuild.cs",
+    "Temple.cs",
+    "ThievesGuild.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/guildServiceActions.js",
+   "lines": 257,
+   "cs": [
+    "DaggerfallGuildServiceCureDisease.cs",
+    "DaggerfallGuildServiceDonation.cs",
+    "DaggerfallGuildServiceTraining.cs",
+    "Guild.cs",
+    "MacroHelper.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/guildServiceFlow.js",
+   "lines": 269,
+   "cs": [
+    "DaggerfallGuildServicePopupWindow.cs",
+    "PlayerActivate.cs",
+    "Services.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/guildServices.js",
+   "lines": 350,
+   "cs": [
+    "DarkBrotherhood.cs",
+    "Guild.cs",
+    "KnightlyOrder.cs",
+    "MagesGuild.cs",
+    "Services.cs",
+    "ThievesGuild.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/guildVariants.js",
+   "lines": 279,
+   "cs": [
+    "KnightlyOrder.cs",
+    "Temple.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/knightlyGifts.js",
+   "lines": 149,
+   "cs": [],
+   "csUnresolved": []
+  }
+ ]
+}

@@ -1,0 +1,89 @@
+{
+ "group": "ui-misc-2",
+ "lens": "Mixed UI. Apply the native-window lens to anything drawing classic art; check wiring (who opens this window, does anything?).",
+ "files": [
+  {
+   "file": "src/ui/nativePanel.js",
+   "lines": 100,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/playerHistory.js",
+   "lines": 139,
+   "cs": [
+    "DaggerfallPlayerHistoryWindow.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/provinceMap.js",
+   "lines": 310,
+   "cs": [
+    "CreateCharRaceSelect.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/restWindow.js",
+   "lines": 412,
+   "cs": [
+    "CastWhenHeld.cs",
+    "DaggerfallRestWindow.cs",
+    "DaggerfallUI.cs",
+    "PlayerEntity.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/startWindow.js",
+   "lines": 96,
+   "cs": [
+    "DaggerfallStartWindow.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/talkWindow.js",
+   "lines": 93,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/tavernWindow.js",
+   "lines": 265,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/teleportPopUp.js",
+   "lines": 137,
+   "cs": [
+    "DaggerfallTeleportPopUp.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/titleScreen.js",
+   "lines": 147,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/toolTip.js",
+   "lines": 135,
+   "cs": [
+    "ToolTip.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/touch.js",
+   "lines": 200,
+   "cs": [
+    "GameManager.cs"
+   ],
+   "csUnresolved": []
+  }
+ ]
+}

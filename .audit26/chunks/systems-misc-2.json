@@ -1,0 +1,64 @@
+{
+ "group": "systems-misc-2",
+ "lens": "Mixed systems; audit each against its cited C#.",
+ "files": [
+  {
+   "file": "src/systems/startingGear.js",
+   "lines": 138,
+   "cs": [
+    "ItemBuilder.cs",
+    "ItemCollection.cs",
+    "ItemHelper.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/statMods.js",
+   "lines": 135,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/textureReplacement.js",
+   "lines": 216,
+   "cs": [
+    "TextureReplacement.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/townPopulation.js",
+   "lines": 162,
+   "cs": [
+    "MobilePersonNPC.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/uiPrefs.js",
+   "lines": 53,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/uiSkin.js",
+   "lines": 69,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/worldTick.js",
+   "lines": 617,
+   "cs": [
+    "DaggerfallRestWindow.cs",
+    "DaggerfallTravelPopUp.cs",
+    "EntityEffectBroker.cs",
+    "EntityEffectManager.cs",
+    "LoanChecker.cs",
+    "PlayerEntity.cs",
+    "SerializablePlayer.cs"
+   ],
+   "csUnresolved": []
+  }
+ ]
+}

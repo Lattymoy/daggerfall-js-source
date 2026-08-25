@@ -1,0 +1,130 @@
+{
+ "group": "formats-binary",
+ "lens": "Byte-exact territory. Compare each reader against its DFU API class end to end: offsets, widths, signedness, palette handling, RLE quirks, record iteration order, error arms. DFU quirks are LAW (the port keeps them).",
+ "files": [
+  {
+   "file": "src/formats/arch3dFile.js",
+   "lines": 575,
+   "cs": [
+    "Arch3dFile.cs",
+    "DFMesh.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/formats/arch3dPatch.js",
+   "lines": 966,
+   "cs": [
+    "Arch3dPatch.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/formats/baseImageFile.js",
+   "lines": 218,
+   "cs": [
+    "BaseImageFile.cs",
+    "TextureReader.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/formats/blocksFile.js",
+   "lines": 964,
+   "cs": [
+    "BlocksFile.cs",
+    "DFBlock.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/formats/bsaFile.js",
+   "lines": 146,
+   "cs": [
+    "BsaFile.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/formats/bssFile.js",
+   "lines": 146,
+   "cs": [
+    "BssFile.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/formats/cifRciFile.js",
+   "lines": 310,
+   "cs": [
+    "CifRciFile.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/formats/flcFile.js",
+   "lines": 409,
+   "cs": [
+    "FlcFile.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/formats/fntFile.js",
+   "lines": 58,
+   "cs": [
+    "FntFile.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/formats/gfxFile.js",
+   "lines": 77,
+   "cs": [
+    "GfxFile.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/formats/imgFile.js",
+   "lines": 220,
+   "cs": [
+    "ImgFile.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/formats/mapsFile.js",
+   "lines": 805,
+   "cs": [
+    "MapsFile.cs",
+    "PlayerGPS.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/formats/pakFile.js",
+   "lines": 75,
+   "cs": [
+    "PakFile.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/formats/skyFile.js",
+   "lines": 124,
+   "cs": [
+    "SkyFile.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/formats/textureFile.js",
+   "lines": 368,
+   "cs": [
+    "TextureFile.cs"
+   ],
+   "csUnresolved": []
+  }
+ ]
+}

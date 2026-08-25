@@ -1,0 +1,98 @@
+{
+ "group": "entity-career",
+ "lens": "PlayerEntity/DFCareer laws: skills, leveling, death, infection, biography, advantages.",
+ "files": [
+  {
+   "file": "src/systems/biography.js",
+   "lines": 265,
+   "cs": [
+    "BiogFile.cs",
+    "BiogFileMCP.cs",
+    "CreateCharAddBonusSkills.cs",
+    "ItemBuilder.cs",
+    "ItemEnums.cs",
+    "SkillsRollout.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/chargen.js",
+   "lines": 248,
+   "cs": [
+    "DaggerfallSkills.cs",
+    "DaggerfallStats.cs",
+    "FormulaHelper.cs",
+    "PlayerEntity.cs",
+    "SkillsRollout.cs",
+    "StatsRollout.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/chargenSession.js",
+   "lines": 460,
+   "cs": [
+    "BiogFile.cs",
+    "CharacterDocument.cs",
+    "PlayerEntity.cs",
+    "StartGameBehaviour.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/diseases.js",
+   "lines": 322,
+   "cs": [
+    "DiseaseEffect.cs",
+    "FormulaHelper.cs",
+    "VampirismInfection.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/infection.js",
+   "lines": 326,
+   "cs": [
+    "CharacterRecord.cs",
+    "LycanthropyInfection.cs",
+    "VampirismInfection.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/playerDeath.js",
+   "lines": 123,
+   "cs": [
+    "PlayerDeath.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/poisons.js",
+   "lines": 240,
+   "cs": [
+    "DaggerfallTravelPopUp.cs",
+    "PoisonEffect.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/races.js",
+   "lines": 127,
+   "cs": [
+    "DFCareer.cs",
+    "ItemBuilder.cs",
+    "RaceTemplate.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/skills.js",
+   "lines": 108,
+   "cs": [
+    "AcrobatMotor.cs"
+   ],
+   "csUnresolved": []
+  }
+ ]
+}

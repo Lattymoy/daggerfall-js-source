@@ -1,0 +1,194 @@
+{
+ "group": "hosts-support",
+ "lens": "Scene support modules. Check seams they export are actually consumed by hosts, teardown ownership, and parity of any cited C#.",
+ "files": [
+  {
+   "file": "src/scenes/arrestFlow.js",
+   "lines": 245,
+   "cs": [
+    "DaggerfallCourtWindow.cs",
+    "DaggerfallMessageBox.cs",
+    "PlayerEntity.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/scenes/cityGuards.js",
+   "lines": 610,
+   "cs": [
+    "EnemyAttack.cs",
+    "EnemyBasics.cs",
+    "EnemyEntity.cs",
+    "EnemyMotor.cs",
+    "EnemySenses.cs",
+    "EnemySounds.cs",
+    "FormulaHelper.cs",
+    "LootTables.cs",
+    "PlayerEntity.cs",
+    "WeaponManager.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/scenes/corpseMarker.js",
+   "lines": 172,
+   "cs": [
+    "EnemyDeath.cs",
+    "PlayerActivate.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/scenes/dataPipeline.js",
+   "lines": 142,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/scenes/dataSource.js",
+   "lines": 560,
+   "cs": [
+    "DaggerfallStartNewGameWizard.cs",
+    "DaggerfallUI.cs",
+    "LycanthropyInfection.cs",
+    "VampirismInfection.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/scenes/droppedLoot.js",
+   "lines": 191,
+   "cs": [
+    "DaggerfallInventoryWindow.cs",
+    "SerializableGameObject.cs",
+    "StreamingWorld.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/scenes/exteriorFoes.js",
+   "lines": 510,
+   "cs": [
+    "EnemyAttack.cs",
+    "EnemyEntity.cs",
+    "EnemyMotor.cs",
+    "EnemySenses.cs",
+    "EnemySounds.cs",
+    "FormulaHelper.cs",
+    "WeaponManager.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/scenes/hitEffects.js",
+   "lines": 177,
+   "cs": [
+    "DaggerfallEntityBehaviour.cs",
+    "EnemyAttack.cs",
+    "EnemyBlood.cs",
+    "EnemyHealth.cs",
+    "EntityEffectManager.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/scenes/hostCombat.js",
+   "lines": 384,
+   "cs": [
+    "DaggerfallAction.cs",
+    "DaggerfallUnityItem.cs",
+    "EnemyAttack.cs",
+    "EnemyEntity.cs",
+    "EnemyMotor.cs",
+    "EnemySenses.cs",
+    "FormulaHelper.cs",
+    "ItemEnums.cs",
+    "PlayerActivate.cs",
+    "PlayerHealth.cs",
+    "WeaponManager.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/scenes/hostMagic.js",
+   "lines": 551,
+   "cs": [
+    "CastWhenUsed.cs",
+    "DaggerfallMissile.cs",
+    "EntityEffectManager.cs",
+    "Identify.cs",
+    "Lock.cs",
+    "Open.cs",
+    "SoulTrap.cs",
+    "Teleport.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/scenes/interior.js",
+   "lines": 154,
+   "cs": [
+    "PlayerAmbientLight.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/scenes/launcherScene.js",
+   "lines": 117,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/scenes/magicCandle.js",
+   "lines": 215,
+   "cs": [
+    "LightNormal.cs",
+    "MagicCandleBehaviour.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/scenes/menu.js",
+   "lines": 160,
+   "cs": [
+    "DaggerfallStartWindow.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/scenes/paintOverlay.js",
+   "lines": 154,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/scenes/questBridge.js",
+   "lines": 353,
+   "cs": [
+    "Guild.cs",
+    "KnightlyOrder.cs",
+    "MagesGuild.cs",
+    "QuestMachine.cs",
+    "StartGameBehaviour.cs",
+    "StaticNPC.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/scenes/questData.js",
+   "lines": 48,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/scenes/questFoeHost.js",
+   "lines": 162,
+   "cs": [
+    "Foe.cs",
+    "GameObjectHelper.cs",
+    "QuestResourceBehaviour.cs"
+   ],
+   "csUnresolved": []
+  }
+ ]
+}

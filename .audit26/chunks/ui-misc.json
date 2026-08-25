@@ -1,0 +1,185 @@
+{
+ "group": "ui-misc",
+ "lens": "Mixed UI. Apply the native-window lens to anything drawing classic art; check wiring (who opens this window, does anything?).",
+ "files": [
+  {
+   "file": "src/ui/actionText.js",
+   "lines": 96,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/bankPurchaseWindow.js",
+   "lines": 204,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/bankWindow.js",
+   "lines": 308,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/bitmapCanvas.js",
+   "lines": 59,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/chargen.js",
+   "lines": 1919,
+   "cs": [
+    "BaseScreenComponent.cs",
+    "ClassFile.cs",
+    "CreateCharAddBonusSkills.cs",
+    "CreateCharAddBonusStats.cs",
+    "CreateCharBiography.cs",
+    "CreateCharCustomClass.cs",
+    "CreateCharGenderSelect.cs",
+    "CreateCharNameSelect.cs",
+    "CreateCharSpecialAdvantageWindow.cs",
+    "CreateCharSummary.cs",
+    "DaggerfallMessageBox.cs",
+    "DaggerfallPopupWindow.cs",
+    "DaggerfallStartNewGameWizard.cs",
+    "FacePicker.cs",
+    "ItemHelper.cs",
+    "ListBox.cs",
+    "ReflexPicker.cs",
+    "SkillsRollout.cs",
+    "StartGameBehaviour.cs",
+    "StatsRollout.cs",
+    "TextBox.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/chargenArt.js",
+   "lines": 1437,
+   "cs": [
+    "BaseScreenComponent.cs",
+    "CreateCharAddBonusSkills.cs",
+    "CreateCharAddBonusStats.cs",
+    "CreateCharBiography.cs",
+    "CreateCharChooseBio.cs",
+    "CreateCharChooseClassGen.cs",
+    "CreateCharClassQuestions.cs",
+    "CreateCharClassSelect.cs",
+    "CreateCharCustomClass.cs",
+    "CreateCharFaceSelect.cs",
+    "CreateCharGenderSelect.cs",
+    "CreateCharNameSelect.cs",
+    "CreateCharRaceSelect.cs",
+    "CreateCharReflexSelect.cs",
+    "CreateCharReputationWindow.cs",
+    "CreateCharSummary.cs",
+    "DaggerfallBaseWindow.cs",
+    "DaggerfallListPickerWindow.cs",
+    "DaggerfallStartNewGameWizard.cs",
+    "DaggerfallUI.cs",
+    "FacePicker.cs",
+    "LeftRightSpinner.cs",
+    "ListBox.cs",
+    "ReflexPicker.cs",
+    "SkillsRollout.cs",
+    "StatsRollout.cs",
+    "UpDownSpinner.cs",
+    "VerticalScrollBar.cs"
+   ],
+   "csUnresolved": [
+    "Window.cs"
+   ]
+  },
+  {
+   "file": "src/ui/crashText.js",
+   "lines": 36,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/cursor.js",
+   "lines": 39,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/domRepaint.js",
+   "lines": 65,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/guildServiceWindow.js",
+   "lines": 195,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/guildServiceWindows.js",
+   "lines": 284,
+   "cs": [
+    "DaggerfallGuildServiceCureDisease.cs",
+    "DaggerfallGuildServiceDonation.cs",
+    "DaggerfallGuildServiceTraining.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/input.js",
+   "lines": 177,
+   "cs": [
+    "DaggerfallUI.cs",
+    "EntityEffectManager.cs",
+    "GameManager.cs",
+    "InputManager.cs",
+    "PlayerActivate.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/itemScroller.js",
+   "lines": 124,
+   "cs": [
+    "DaggerfallUI.cs",
+    "ItemListScroller.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/listPicker.js",
+   "lines": 223,
+   "cs": [
+    "CreateItem.cs",
+    "DaggerfallUI.cs",
+    "ListBox.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/lookSettings.js",
+   "lines": 26,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/messageBox.js",
+   "lines": 219,
+   "cs": [
+    "DaggerfallMessageBox.cs",
+    "DaggerfallUI.cs",
+    "MultiFormatTextLabel.cs",
+    "Panel.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/nameplateLayout.js",
+   "lines": 110,
+   "cs": [
+    "ExteriorAutomap.cs"
+   ],
+   "csUnresolved": []
+  }
+ ]
+}

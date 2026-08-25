@@ -1,0 +1,99 @@
+{
+ "group": "effects-magic",
+ "lens": "EntityEffectBroker/EffectManager laws: rounds, stacking, resist rolls, concealment, dispel, absorption ordering. Compare effect-by-effect vs Effects tree.",
+ "files": [
+  {
+   "file": "src/systems/absorption.js",
+   "lines": 99,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/concealment.js",
+   "lines": 53,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/createItem.js",
+   "lines": 235,
+   "cs": [
+    "CreateItem.cs",
+    "DaggerfallInventoryWindow.cs",
+    "DaggerfallUnityItem.cs",
+    "EntityEffect.cs",
+    "ItemCollection.cs",
+    "ItemEnums.cs",
+    "PlayerEntity.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/effects.js",
+   "lines": 1514,
+   "cs": [
+    "CastWhenHeld.cs",
+    "ComprehendLanguages.cs",
+    "CreateItem.cs",
+    "DaggerfallEntity.cs",
+    "DetectMagic.cs",
+    "Disintegrate.cs",
+    "DispelDaedra.cs",
+    "DispelUndead.cs",
+    "ElementalResistance.cs",
+    "EntityEffect.cs",
+    "EntityEffectManager.cs",
+    "FormulaHelper.cs",
+    "FreeAction.cs",
+    "HealSpellPoints.cs",
+    "Identify.cs",
+    "LightNormal.cs",
+    "Lock.cs",
+    "Open.cs",
+    "Shield.cs",
+    "Silence.cs",
+    "SoulTrap.cs",
+    "SpellAbsorption.cs",
+    "SpellReflection.cs",
+    "Teleport.cs",
+    "VampirismEffect.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/mysticism.js",
+   "lines": 443,
+   "cs": [
+    "DispelMagic.cs",
+    "DispelUndead.cs",
+    "EnemyEntity.cs",
+    "EntityEffectManager.cs",
+    "Lock.cs",
+    "Open.cs",
+    "PlayerActivate.cs",
+    "Silence.cs",
+    "SoulTrap.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/spellcast.js",
+   "lines": 230,
+   "cs": [
+    "DaggerfallMissile.cs",
+    "FormulaHelper.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/spellEffects.js",
+   "lines": 194,
+   "cs": [
+    "CharmEffect.cs",
+    "DaggerfallSpellBookWindow.cs",
+    "MorphSelf.cs"
+   ],
+   "csUnresolved": []
+  }
+ ]
+}

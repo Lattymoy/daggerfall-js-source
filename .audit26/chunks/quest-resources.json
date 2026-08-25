@@ -1,0 +1,122 @@
+{
+ "group": "quest-resources",
+ "lens": "Questing resources (Person/Place/Item/Foe), sceneMount, offers. Check placement laws, alignment, lifecycle, click routing.",
+ "files": [
+  {
+   "file": "src/systems/quest/foe.js",
+   "lines": 223,
+   "cs": [
+    "Foe.cs",
+    "ItemCollection.cs",
+    "QuestMacroHelper.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/quest/item.js",
+   "lines": 320,
+   "cs": [
+    "DaggerfallUnityItem.cs",
+    "Item.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/quest/message.js",
+   "lines": 161,
+   "cs": [
+    "Message.cs",
+    "QuestMacroHelper.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/quest/offerFlow.js",
+   "lines": 314,
+   "cs": [
+    "DaggerfallGuildServicePopupWindow.cs",
+    "DaggerfallQuestOfferWindow.cs",
+    "DaggerfallQuestPopupWindow.cs",
+    "Quest.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/quest/person.js",
+   "lines": 648,
+   "cs": [
+    "FactionFile.cs",
+    "KnightlyOrder.cs",
+    "Person.cs",
+    "Quest.cs",
+    "RaceTemplate.cs",
+    "WhenNpcIsAvailable.cs",
+    "WhenReputeWith.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/quest/place.js",
+   "lines": 838,
+   "cs": [
+    "DFLocation.cs",
+    "DFRegion.cs",
+    "DaggerfallUnityEnums.cs",
+    "FactionFile.cs",
+    "Foe.cs",
+    "Person.cs",
+    "Place.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/quest/questLists.js",
+   "lines": 235,
+   "cs": [
+    "Parser.cs",
+    "QuestListsManager.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/quest/questMacros.js",
+   "lines": 563,
+   "cs": [
+    "AddDialog.cs",
+    "FactionFile.cs",
+    "MacroHelper.cs",
+    "PlayerGPS.cs",
+    "QuestMCP.cs",
+    "QuestMacroHelper.cs",
+    "TalkManager.cs",
+    "Temple.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/quest/questResource.js",
+   "lines": 225,
+   "cs": [
+    "QuestResource.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/quest/resourceBehaviour.js",
+   "lines": 278,
+   "cs": [
+    "QuestResourceBehaviour.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/quest/sceneMount.js",
+   "lines": 271,
+   "cs": [
+    "CreateFoe.cs",
+    "GameObjectHelper.cs"
+   ],
+   "csUnresolved": []
+  }
+ ]
+}

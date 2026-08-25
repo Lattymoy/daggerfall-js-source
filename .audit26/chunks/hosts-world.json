@@ -1,0 +1,66 @@
+{
+ "group": "hosts-world",
+ "lens": "HOST LAYER. Beyond line-parity: check the WIRING - laws computed and thrown away, seams passed in one host and not another, frame-order divergence vs GameManager/PlayerEnterExit, magic/poison/disease rounds, senses context, corpse/loot/blood/flash seams, save envelope completeness.",
+ "files": [
+  {
+   "file": "src/scenes/exterior.js",
+   "lines": 1857,
+   "cs": [
+    "DaggerfallInventoryWindow.cs",
+    "DaggerfallSky.cs",
+    "DaggerfallUI.cs",
+    "GameManager.cs",
+    "Levitate.cs",
+    "MeshReader.cs",
+    "MobilePersonNPC.cs",
+    "PlayerEntity.cs",
+    "PlayerGPS.cs",
+    "PlayerMotor.cs",
+    "PopulationManager.cs",
+    "RMBLayout.cs",
+    "SongManager.cs",
+    "StreamingWorld.cs",
+    "WeaponManager.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/scenes/world.js",
+   "lines": 3565,
+   "cs": [
+    "CastWhenHeld.cs",
+    "CreateFoe.cs",
+    "DFLocation.cs",
+    "DaggerfallBankingWindow.cs",
+    "DaggerfallInventoryWindow.cs",
+    "DaggerfallSky.cs",
+    "DaggerfallTeleportPopUp.cs",
+    "DaggerfallTravelPopUp.cs",
+    "DaggerfallUI.cs",
+    "DarkBrotherhood.cs",
+    "ExtraSpellPts.cs",
+    "GameManager.cs",
+    "ItemCollection.cs",
+    "Levitate.cs",
+    "MobilePersonNPC.cs",
+    "PersistentFactionData.cs",
+    "PlayerEntity.cs",
+    "PlayerGPS.cs",
+    "PlayerMotor.cs",
+    "Quest.cs",
+    "QuestMachine.cs",
+    "QuestMacroHelper.cs",
+    "RMBLayout.cs",
+    "SettingsManager.cs",
+    "SongManager.cs",
+    "StreamingWorld.cs",
+    "TalkManager.cs",
+    "Teleport.cs",
+    "TeleportPc.cs",
+    "ThievesGuild.cs",
+    "WeatherManager.cs"
+   ],
+   "csUnresolved": []
+  }
+ ]
+}

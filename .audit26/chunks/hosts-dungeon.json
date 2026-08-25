@@ -1,0 +1,46 @@
+{
+ "group": "hosts-dungeon",
+ "lens": "HOST LAYER (dungeonContext + standalone dungeon). Same wiring lenses; compare foe round, saves, traps, action system hookup vs the other hosts and vs DFU.",
+ "files": [
+  {
+   "file": "src/scenes/dungeon.js",
+   "lines": 487,
+   "cs": [
+    "SongManager.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/scenes/dungeonContext.js",
+   "lines": 3073,
+   "cs": [
+    "AmbientEffectsPlayer.cs",
+    "Automap.cs",
+    "CreateFoe.cs",
+    "CreateItem.cs",
+    "DaggerfallActionDoor.cs",
+    "DaggerfallBillboard.cs",
+    "DaggerfallInventoryWindow.cs",
+    "DaggerfallMissile.cs",
+    "DaggerfallRestWindow.cs",
+    "DaggerfallUI.cs",
+    "EnemyAttack.cs",
+    "EnemyEntity.cs",
+    "EnemyMotor.cs",
+    "EnemySenses.cs",
+    "EnemySounds.cs",
+    "FormulaHelper.cs",
+    "GameManager.cs",
+    "LootTables.cs",
+    "PlayerActivate.cs",
+    "PlayerEnterExit.cs",
+    "PlayerEntity.cs",
+    "SaveLoadManager.cs",
+    "SerializableEnemy.cs",
+    "SongManager.cs",
+    "WeaponManager.cs"
+   ],
+   "csUnresolved": []
+  }
+ ]
+}

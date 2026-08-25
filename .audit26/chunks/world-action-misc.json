@@ -1,0 +1,82 @@
+{
+ "group": "world-action-misc",
+ "lens": "Action system (ActionObject laws), doors, triggers, misc world glue.",
+ "files": [
+  {
+   "file": "src/world/actionSystem.js",
+   "lines": 976,
+   "cs": [
+    "DaggerfallAction.cs",
+    "DaggerfallActionDoor.cs",
+    "FormulaHelper.cs",
+    "Lock.cs",
+    "Open.cs",
+    "PersistentGlobalVars.cs",
+    "PlayerActivate.cs",
+    "RDBLayout.cs",
+    "SerializableActionDoor.cs",
+    "SerializableActionObject.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/world/cityLights.js",
+   "lines": 92,
+   "cs": [
+    "DaggerfallInterior.cs",
+    "MeshReader.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/world/dungeonLights.js",
+   "lines": 41,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/world/interiorLights.js",
+   "lines": 144,
+   "cs": [
+    "DaggerfallInterior.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/world/mat4.js",
+   "lines": 145,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/world/meshReader.js",
+   "lines": 182,
+   "cs": [
+    "MeshReader.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/world/perlin.js",
+   "lines": 72,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/world/weather.js",
+   "lines": 188,
+   "cs": [
+    "DaggerfallSky.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/world/worldClock.js",
+   "lines": 208,
+   "cs": [
+    "PlayerAmbientLight.cs"
+   ],
+   "csUnresolved": []
+  }
+ ]
+}

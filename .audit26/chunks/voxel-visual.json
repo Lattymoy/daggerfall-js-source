@@ -1,0 +1,187 @@
+{
+ "group": "voxel-visual",
+ "lens": "DEPARTURE GROUP: characters are rebuilt on the voxel system by doctrine. Do NOT compare visual construction to DFU billboards/paperdoll art. DO check every DFU-derived DATA claim these files carry (enemy tables, sizes, colors said to come from C#, equip mapping laws) and any gameplay-visible law (anchoring, orientation, hit geometry). Light pass; prioritize files citing C#.",
+ "files": [
+  {
+   "file": "src/characters/animate.js",
+   "lines": 108,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/anims.js",
+   "lines": 405,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/armorSet.js",
+   "lines": 38,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/atronachs.js",
+   "lines": 165,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/beastAttack.js",
+   "lines": 110,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/beasts.js",
+   "lines": 513,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/clothing.js",
+   "lines": 65,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/clothSim.js",
+   "lines": 163,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/daedra.js",
+   "lines": 186,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/dungeonEnemies.js",
+   "lines": 140,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/dyes.js",
+   "lines": 254,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/encounterTables.js",
+   "lines": 8,
+   "cs": [
+    "RandomEncounters.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/engineRig.js",
+   "lines": 111,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/equipRules.js",
+   "lines": 388,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/equipTable.js",
+   "lines": 84,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/humanClasses.js",
+   "lines": 468,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/mobileTypes.js",
+   "lines": 80,
+   "cs": [
+    "DaggerfallUnityEnums.cs",
+    "EnemyEntity.cs",
+    "EnemySounds.cs",
+    "WeaponManager.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/nameHelper.js",
+   "lines": 146,
+   "cs": [
+    "MacroHelper.cs",
+    "NameHelper.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/neutralBody.js",
+   "lines": 436,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/orcBody.js",
+   "lines": 162,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/palettes.js",
+   "lines": 42,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/paperdoll.js",
+   "lines": 50,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/paperdollArt.js",
+   "lines": 97,
+   "cs": [
+    "DaggerfallUnityItem.cs",
+    "ItemBuilder.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/paperdollPayload.js",
+   "lines": 569,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/pieceFromSprite.js",
+   "lines": 104,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/pieces/arachnid.js",
+   "lines": 222,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/pieces/beastBody.js",
+   "lines": 213,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/pieces/beastHead.js",
+   "lines": 186,
+   "cs": [],
+   "csUnresolved": []
+  }
+ ]
+}

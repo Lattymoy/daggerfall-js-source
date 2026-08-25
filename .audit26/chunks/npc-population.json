@@ -1,0 +1,47 @@
+{
+ "group": "npc-population",
+ "lens": "PopulationManager laws, static NPC data, name banks.",
+ "files": [
+  {
+   "file": "src/characters/exteriorNpcs.js",
+   "lines": 15,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/interiorPeople.js",
+   "lines": 106,
+   "cs": [
+    "DaggerfallInterior.cs",
+    "PlayerActivate.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/mobilePerson.js",
+   "lines": 259,
+   "cs": [
+    "GameManager.cs",
+    "MobilePersonMotor.cs",
+    "PlayerMotor.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/staticNpc.js",
+   "lines": 234,
+   "cs": [
+    "FactionFile.cs",
+    "Quest.cs",
+    "StaticNPC.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/villagerDesigns.js",
+   "lines": 362,
+   "cs": [],
+   "csUnresolved": []
+  }
+ ]
+}

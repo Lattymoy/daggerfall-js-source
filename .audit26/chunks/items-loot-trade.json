@@ -1,0 +1,85 @@
+{
+ "group": "items-loot-trade",
+ "lens": "DaggerfallUnityItem laws, loot tables, shop stock, trade pricing/haggle, repair/identify costs.",
+ "files": [
+  {
+   "file": "src/systems/equip.js",
+   "lines": 343,
+   "cs": [
+    "DaggerfallEntity.cs",
+    "DaggerfallInventoryWindow.cs",
+    "DaggerfallUnityItem.cs",
+    "ItemEquipTable.cs",
+    "SerializablePlayer.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/itemInfo.js",
+   "lines": 214,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/itemTemplates.js",
+   "lines": 154,
+   "cs": [
+    "DaggerfallUnityItem.cs",
+    "ItemBuilder.cs",
+    "ItemHelper.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/itemTemplatesData.js",
+   "lines": 52,
+   "cs": [
+    "ItemEnums.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/loot.js",
+   "lines": 427,
+   "cs": [
+    "DaggerfallLoot.cs",
+    "DaggerfallUnityItem.cs",
+    "EnemyEntity.cs",
+    "EntityEffectBroker.cs",
+    "Item.cs",
+    "ItemBuilder.cs",
+    "ItemEnums.cs",
+    "ItemHelper.cs",
+    "LootTables.cs",
+    "PotionRecipe.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/repairService.js",
+   "lines": 164,
+   "cs": [
+    "ItemRepairData.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/shopStock.js",
+   "lines": 531,
+   "cs": [
+    "DaggerfallGuildServicePopupWindow.cs",
+    "DaggerfallLoot.cs",
+    "FormulaHelper.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/systems/tradeModes.js",
+   "lines": 386,
+   "cs": [
+    "DaggerfallTradeWindow.cs"
+   ],
+   "csUnresolved": []
+  }
+ ]
+}

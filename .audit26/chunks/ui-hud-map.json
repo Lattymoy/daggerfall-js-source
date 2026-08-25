@@ -1,0 +1,102 @@
+{
+ "group": "ui-hud-map",
+ "lens": "HUD + automaps. Compare against HUD components and Automap/ExteriorAutomap laws (discovery, reveal, beacons, zoom/clamp).",
+ "files": [
+  {
+   "file": "src/ui/automapWindow.js",
+   "lines": 312,
+   "cs": [
+    "Automap.cs",
+    "DaggerfallAutomapWindow.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/damageFlash.js",
+   "lines": 85,
+   "cs": [
+    "DaggerfallAction.cs",
+    "EnemyAttack.cs",
+    "PlayerHealth.cs",
+    "ShowPlayerDamage.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/exteriorAutomapWindow.js",
+   "lines": 267,
+   "cs": [
+    "BlocksFile.cs",
+    "DaggerfallExteriorAutomapWindow.cs",
+    "DaggerfallUI.cs",
+    "ExteriorAutomap.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/hud.js",
+   "lines": 377,
+   "cs": [
+    "DaggerfallHUD.cs",
+    "DetectMagic.cs",
+    "HUDBreathBar.cs",
+    "HUDCompass.cs",
+    "HUDVitals.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/hudActiveSpells.js",
+   "lines": 273,
+   "cs": [
+    "HUDActiveSpells.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/hudCrosshair.js",
+   "lines": 149,
+   "cs": [
+    "DaggerfallHUD.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/hudLarge.js",
+   "lines": 457,
+   "cs": [
+    "DaggerfallHUD.cs",
+    "GameManager.cs",
+    "HUDLarge.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/hudText.js",
+   "lines": 85,
+   "cs": [
+    "DaggerfallHUD.cs",
+    "PopupText.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/travelMapWindow.js",
+   "lines": 1274,
+   "cs": [
+    "DaggerfallTravelMapWindow.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/travelPopUp.js",
+   "lines": 340,
+   "cs": [
+    "DaggerfallTravelPopUp.cs",
+    "PlayerEntity.cs",
+    "TextLabel.cs"
+   ],
+   "csUnresolved": []
+  }
+ ]
+}

@@ -1,0 +1,71 @@
+{
+ "group": "ui-native-core",
+ "lens": "NATIVE-WINDOW RULE: every rect/font/color/scale cites DFU. Compare window geometry, modes, click flows, message ids against the DFU window classes line by line.",
+ "files": [
+  {
+   "file": "src/ui/charsheet.js",
+   "lines": 327,
+   "cs": [
+    "DaggerfallBaseWindow.cs",
+    "DaggerfallCharacterSheetWindow.cs",
+    "StatsRollout.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/charSheetNav.js",
+   "lines": 54,
+   "cs": [],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/nativeInventory.js",
+   "lines": 814,
+   "cs": [
+    "DaggerfallBaseWindow.cs",
+    "DaggerfallInventoryWindow.cs",
+    "PaperDoll.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/nativeTalk.js",
+   "lines": 349,
+   "cs": [
+    "DaggerfallBaseWindow.cs",
+    "DaggerfallTalkWindow.cs",
+    "ListBox.cs",
+    "VerticalScrollBar.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/nativeTrade.js",
+   "lines": 375,
+   "cs": [
+    "DaggerfallBaseWindow.cs",
+    "DaggerfallTradeWindow.cs",
+    "UserInterfaceWindow.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/paperDoll.js",
+   "lines": 302,
+   "cs": [
+    "PaperDollRenderer.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/ui/questJournal.js",
+   "lines": 307,
+   "cs": [
+    "DaggerfallQuestJournalWindow.cs",
+    "DaggerfallUI.cs",
+    "MultiFormatTextLabel.cs"
+   ],
+   "csUnresolved": []
+  }
+ ]
+}

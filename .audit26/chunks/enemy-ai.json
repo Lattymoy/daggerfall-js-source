@@ -1,0 +1,83 @@
+{
+ "group": "enemy-ai",
+ "lens": "EnemyMotor/Senses/Attack/Sounds/MobileUnit: tick order, RNG draw order, bands, timers, latches - the classic AI stance (EnhancedCombatAI=false paths).",
+ "files": [
+  {
+   "file": "src/characters/enemyAttack.js",
+   "lines": 172,
+   "cs": [
+    "EnemyAttack.cs",
+    "EnemySenses.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/enemyBasics.js",
+   "lines": 3153,
+   "cs": [
+    "EnemyBasics.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/enemyCasting.js",
+   "lines": 193,
+   "cs": [
+    "EnemyAttack.cs",
+    "EnemyMotor.cs",
+    "EnemySenses.cs",
+    "EntityEffectManager.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/enemyEntity.js",
+   "lines": 139,
+   "cs": [
+    "EnemyEntity.cs",
+    "FormulaHelper.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/enemyMotor.js",
+   "lines": 1226,
+   "cs": [
+    "EnemyAttack.cs",
+    "EnemyMotor.cs",
+    "EnemySenses.cs",
+    "GameManager.cs",
+    "RDBLayout.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/enemySounds.js",
+   "lines": 128,
+   "cs": [
+    "EnemySounds.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/mobileUnit.js",
+   "lines": 328,
+   "cs": [
+    "DaggerfallMobileUnit.cs",
+    "EnemyAttack.cs"
+   ],
+   "csUnresolved": []
+  },
+  {
+   "file": "src/characters/weaponStates.js",
+   "lines": 163,
+   "cs": [
+    "FPSWeapon.cs",
+    "FormulaHelper.cs",
+    "WeaponBasics.cs",
+    "WeaponManager.cs"
+   ],
+   "csUnresolved": []
+  }
+ ]
+}
