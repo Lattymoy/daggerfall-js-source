@@ -19,6 +19,7 @@
 // under-generates by that category.
 
 import { randomMaterial, randomArmorMaterial, createWeapon, WEAPONS_ENUM, ARMOR_ENUM } from '../combat/enemyEquipment.js';
+import { ARROW_TEMPLATE } from './inventory.js';   // X11b: CreateWeapon's arrow arm keys on it
 import { dice100 } from '../combat/formulas.js';
 import { goldStack } from './inventory.js';
 import { ITEM_TEMPLATES, mintCondition, GROUP_TEMPLATE_INDICES, templateByIndex } from './itemTemplates.js';
@@ -85,21 +86,20 @@ const ARMOR_PIECES = Object.values(ARMOR_ENUM);   // 11 pieces incl shields
  *  slot 18 is arrows - stack Range(1, 21), material 0. */
 export function createRandomWeapon(playerLevel, rolls = Math.random) {
   const groupIndex = Math.floor(rolls() * 19);
-  if (groupIndex === 18) {
-    // AUDIT 24 systems: the arrow branch makes THREE writes
-    // (ItemBuilder.cs:395-398) - the stack, `currentCondition = 0`
-    // ("not sure if this is necessary, but classic does it") and
-    // `nativeMaterialValue = 0`. maxCondition stays the template's
-    // hitPoints, since the arrow branch never runs
-    // ApplyWeaponMaterial. The port dropped the zero and then let
-    // mintCondition fill the stack in at 100%.
-    return {
-      group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0,
-      stackCount: 1 + Math.floor(rolls() * 20),
-      maxCondition: templateByIndex(131)?.hitPoints ?? 0,
-      currentCondition: 0,
-    };
-  }
+  // AUDIT 24 systems: the arrow branch makes THREE writes
+  // (ItemBuilder.cs:395-398) - the stack, `currentCondition = 0`
+  // ("not sure if this is necessary, but classic does it") and
+  // `nativeMaterialValue = 0`. maxCondition stays the template's
+  // hitPoints, since the arrow branch never runs ApplyWeaponMaterial.
+  // The port dropped the zero and then let mintCondition fill the
+  // stack in at 100%.
+  //
+  // X11b: that arm was WRITTEN OUT HERE, inline, while the other arm
+  // of the same DFU function lived in combat/enemyEquipment.js. Both
+  // arms are CreateWeapon's, so both live there now and this call
+  // reaches the whole function - which is what let Create Item mint
+  // conjured arrows without a third copy of these four lines.
+  if (groupIndex === 18) return createWeapon(ARROW_TEMPLATE, 0, rolls);
   const name = WEAPON_NAMES[groupIndex];
   return { group: 'Weapons', ...createWeapon(WEAPONS_ENUM[name], randomMaterial(playerLevel, rolls)) };
 }

@@ -18,7 +18,7 @@ import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // t
 import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible exterior arrows
-import { removeOne } from '../systems/inventory.js';
+import { spendArrow } from '../systems/inventory.js';
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -28,6 +28,7 @@ import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
+import { withCandleLight } from './magicCandle.js';   // X11: the Light effect's candle
 import { applyClimate, getGroundArchive, getNatureArchive } from '../world/climateSwaps.js';
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, mirrorProjectionX, transformPoint, trs } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
@@ -731,6 +732,14 @@ export async function bootExterior(canvas, renderer, params, status) {
   });
   const magic = createPlayerMagic({
     onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+    // X11b: the Create Item picker, through the same worldModes opener
+    // the streaming host uses - which mounts into whichever slot the
+    // current mode actually draws.
+    onCreateItem: (d) => {
+      if (!modes?.openCreateItemPicker?.({ rounds: d.rounds })) {
+        townTalk.say('You cannot concentrate on that right now.');
+      }
+    },
     renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
     collider: { raycast: (o, d, m) => ((modes?.mode === 'interior' && modes?.interiorCollider) ? modes?.interiorCollider : collider).raycast(o, d, m) },
     playerEntity,
@@ -1598,9 +1607,9 @@ export async function bootExterior(canvas, renderer, params, status) {
     const lightsOn = lightsOnAt(minute);
     if (lightsOn) lightAnimator.tick(dt);
     renderer.setPointLights(
-      lightsOn
+      withCandleLight(lightsOn
         ? nearestLights(cityLights, eye, 16, lightAnimator.ranges)
-        : new Float32Array(0),
+        : new Float32Array(0), magic?.candleLight()),   // X11: the candle burns by day too - the effect has no time gate
       CITY_LIGHT_COLOR_F32
     );
     renderer.beginFrame(proj, view, sunDirection(minute));
@@ -1729,7 +1738,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       if ((modes?.mode ?? 'exterior') === 'exterior') {
         const _mfwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
         magic.firePending([...cam.pos], _mfwd);
-        magic.update(dt, player.pos);
+        magic.update(dt, player.pos, _mfwd, player.height);   // X11: the candle hangs off the look direction
       }
       // U8h/AUDIT 17e F17: the worn-weapon bind moved INTO createWeaponRig
       // so all four hosts inherit it (the interior host was missing it).
@@ -1738,7 +1747,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         if (ev === 'bowSound') { audio.playOneShot(SOUND.ArrowShoot, 1.1); continue; }
         if (ev !== 'hit') continue;
         if (weaponTypeForItem(weaponRig.playerWeapon.weapon) === WEAPON_TYPES.Bow) {
-          if (removeOne(playerEntity.items, 131)) {
+          if (spendArrow(playerEntity.items)) {
             // AUDIT 23 (C14: hosts-4 = combat-5) - WeaponManager.cs
             // :419-436: the swing costs its fatigue whatever it hits,
             // and a BOW always takes the FULL tally arm (Archery AND

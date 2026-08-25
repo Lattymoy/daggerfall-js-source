@@ -9,10 +9,12 @@ out={}
 for f in range(1,11):
     c=np.array(Image.open(f'heads/cell_{f}.png').convert('RGB')).astype(float)
     W=c.shape[1]
-    front=c[:, int(W*0.40):int(W*0.60)]
-    lum=0.3*front[:,:,0]+0.59*front[:,:,1]+0.11*front[:,:,2]
-    warm=(front[:,:,0]-front[:,:,2]>30)&(lum>70)
-    px=front[warm]; pl=lum[warm]
+    H=c.shape[0]
+    face=c[int(H*0.26):int(H*0.52), int(W*0.455):int(W*0.545)]
+    lum=0.3*face[:,:,0]+0.59*face[:,:,1]+0.11*face[:,:,2]
+    ref=np.median(lum)
+    sel=(lum>ref*0.45)&(lum<ref*1.75)      # drop the odd eye/nostril outlier
+    px=face[sel]; pl=lum[sel]
     if len(px)<200: continue
     order=np.argsort(pl); px=px[order]; pl=pl[order]
     # a ramp is skin sampled across its own tonal range, dark end to light end

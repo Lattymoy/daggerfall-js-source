@@ -217,7 +217,12 @@ test('FA1: every host that MOUNTS a missile arms it and drops its clock on retir
   }
   // hostMagic is shared by three hosts, so its clock rides its OWN
   // update rather than each host's frame.
-  assert.match(read('scenes/hostMagic.js'), /function update\(dt, playerFeet\) \{\n(?:.*\n)*?\s*flatAnims\.tick\(dt\);/,
+  // X11 added two arguments (the look direction and the capsule height,
+  // for the Light effect's candle), which this pin's exact signature
+  // caught. Relaxed to `function update(dt, playerFeet` - the part that
+  // matters is that the tick lives in the module's OWN update, not that
+  // nothing may ever be added after playerFeet.
+  assert.match(read('scenes/hostMagic.js'), /function update\(dt, playerFeet[,)][^\n]*\{\n(?:.*\n)*?\s*flatAnims\.tick\(dt\);/,
     'the shared magic module ticks its own flats');
 });
 

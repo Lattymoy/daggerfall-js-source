@@ -330,7 +330,7 @@ of them silently does less than it says.
 classic-keyed effect classes (153 effect classes in total; the other
 71 are the diseases, the enchantment payloads and the Special folder,
 which have no classic key). `applySpell` (`effects.js:416-763`) lands
-60 and falls to `out.skipped++` for 22: CreateItem (2,255),
+60 and falls to `out.skipped++` for 22: ~~CreateItem (2,255),
 Disintegrate (5,255), the three Dispels (6,0-2), SoulTrap (12,255),
 Light (15,255), Lock (16,255), Open (17,255), SpellAbsorption
 (20,255), SpellReflection (21,255), SpellResistance (22,255), Jumping
@@ -339,7 +339,13 @@ Shield (35,255), the three Detects (39,0-2), Identify (40,255),
 ComprehendLanguages (44,255). Ten of those 22 are the Mysticism school
 whose laws are already written and unwired (above). Shield is the
 sharpest of the rest: it mitigates ALL health damage in DFU and does
-nothing here.
+nothing here.~~ **TWENTY-ONE OF THAT TWENTY-TWO ARE NOW WIRED** (X1-X11b,
+2026-08-23..25). What is left of this paragraph's list: MorphSelf
+(29,255) alone, whose only consumer is the unported LycanthropyEffect
+and which no crafting station offers anyway. The live
+figure is GATED rather than restated here - see the Derived figures
+block in Port-Ledger.md, which `test/ledger.test.js` checks against
+`SPELL_MAKER_EFFECTS` itself.
 
 **FormulaHelper: ~80 of 97 public statics.** The 17 absent are not
 scattered - they name the unbuilt services exactly:
@@ -380,11 +386,18 @@ the quest corpus, which is the largest already-built asset in the
 repo, and it is small because in every case the law is already ported.
 Do this first; nothing else changes as much per line.
 
-**S-B. WIRE THE WRITTEN LAWS (~1,600 LOC, P1).** Mysticism's ten
+**S-B. WIRE THE WRITTEN LAWS (~1,600 LOC, P1).** ~~Mysticism's ten
 effects to the cast engine (Open/Lock/Dispel/Soul Trap/Create
 Item/Recall/Comprehend Languages), Shield, Elemental Resistance, the
 three Detects, Identify, Spell Reflection/Resistance. Mostly host
-adapters and effect-ladder arms over existing modules.
+adapters and effect-ladder arms over existing modules.~~ **DONE** -
+X1/X2/X3 took Open, Lock, Climbing, Jumping, Shield, Elemental
+Resistance, Absorption and Resistance; X4 the three Detects; X5/X6 Soul
+Trap; X7 Identify; X8 Pacify and Charm; X9/X10 the three Dispels; X11a
+Disintegrate, Light, Spell Reflection and Comprehend Languages; X11b
+Create Item, the one that needed a whole new item property. The prediction "mostly host adapters and effect-ladder arms
+over existing modules" held all the way through: Spell Reflection's
+"missing re-target system" was the host seam the port already had.
 
 **S-C. ENCHANTING (~3,700 LOC, P1).** ~~The 24 payload classes, the
 settings model, `DoItemEnchantmentPayloads` and its eight call sites,

@@ -15,6 +15,14 @@
 
 const DB_NAME = 'project-dagger';
 const STORE = 'arena2';
+/** M-EXT: user-supplied music lives in its OWN store, and that is not
+ *  tidiness. The ARENA2 store is filtered by KEEP - the download diet -
+ *  which rejects every audio extension by design and is guarded by a
+ *  pin that fails if the filter moves without a MANIFEST_V bump. Music
+ *  replacements are not game data, have their own lifecycle (re-pick
+ *  the pack without re-picking the game), and must not be swept by
+ *  clearStoredData's recovery wipe. */
+const MUSIC_STORE = 'music';
 const mem = new Map(); // NAME -> Uint8Array
 
 // Ingest DIET (2026-08-14, the mobile storage fix): ARENA2 is 517MB
@@ -94,8 +102,17 @@ export function normalizeName(name) {
 
 function openDb() {
   return new Promise((res, rej) => {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = () => req.result.createObjectStore(STORE);
+    // M-EXT bumped this to 2 for the music store. The handler creates
+    // whatever is MISSING rather than assuming a fresh database: an
+    // existing player arrives here at version 1 holding a full ARENA2
+    // ingest, and re-creating `arena2` would throw and take their data
+    // with it.
+    const req = indexedDB.open(DB_NAME, 2);
+    req.onupgradeneeded = () => {
+      const d = req.result;
+      if (!d.objectStoreNames.contains(STORE)) d.createObjectStore(STORE);
+      if (!d.objectStoreNames.contains(MUSIC_STORE)) d.createObjectStore(MUSIC_STORE);
+    };
     req.onsuccess = () => res(req.result);
     req.onerror = () => rej(req.error);
   });
@@ -197,6 +214,129 @@ export async function clearStoredData() {
   await new Promise((res, rej) => {
     const tx = d.transaction(STORE, 'readwrite');
     tx.objectStore(STORE).clear();
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
+}
+
+// ---- M-EXT: the user's own music folder -----------------------------
+//
+// DFU keeps replacement songs as loose files in StreamingAssets/Sound
+// and asks for one by name before playing a built-in song. There is no
+// such folder in a browser, so the "folder" is a pick, stored the way
+// ARENA2 is, and the lookup runs over the stored names.
+//
+// NOTHING SHIPS WITH THE GAME. This reads a directory the player
+// chooses and stores it in their own browser; the repo carries no
+// audio and the deploy serves none.
+
+/** Store a picked FileList as music replacements. Non-audio files are
+ *  ignored rather than rejected, so pointing at a pack folder with its
+ *  readme and cover art in it just works. Returns the count kept. */
+export async function storeMusicFiles(files) {
+  const { replacementEntry } = await import('../systems/musicReplacement.js');
+  const d = await getDb();
+  let kept = 0;
+  for (const f of files) {
+    const base = f.name.slice(f.name.lastIndexOf('/') + 1);
+    if (!replacementEntry(base)) continue;
+    const buf = await f.arrayBuffer();
+    await new Promise((res, rej) => {
+      const tx = d.transaction(MUSIC_STORE, 'readwrite');
+      tx.objectStore(MUSIC_STORE).put(buf, base);
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+    });
+    kept++;
+  }
+  return kept;
+}
+
+/** Every stored replacement filename. */
+export async function storedMusicNames() {
+  try {
+    const d = await getDb();
+    return await new Promise((res, rej) => {
+      const tx = d.transaction(MUSIC_STORE, 'readonly');
+      const req = tx.objectStore(MUSIC_STORE).getAllKeys();
+      req.onsuccess = () => res(req.result ?? []);
+      req.onerror = () => rej(req.error);
+    });
+  } catch {
+    return [];   // no IDB (private mode): no replacements, built-in music plays
+  }
+}
+
+/** Bytes for one stored replacement, or null. */
+export async function loadMusicFile(fileName) {
+  const d = await getDb();
+  const stored = await new Promise((res, rej) => {
+    const tx = d.transaction(MUSIC_STORE, 'readonly');
+    const req = tx.objectStore(MUSIC_STORE).get(fileName);
+    req.onsuccess = () => res(req.result ?? null);
+    req.onerror = () => rej(req.error);
+  });
+  return stored ? new Uint8Array(stored) : null;
+}
+
+/**
+ * The music folder pick, in the shape of the ARENA2 one.
+ *
+ * DFU's equivalent is "put files in StreamingAssets/Sound"; a browser
+ * has no such folder, so the player points at one and it is stored
+ * here. Resolves to the number of songs the pick can replace.
+ *
+ * CANCELLING IS NOT AN ERROR. The overlay has its own way out and
+ * resolves 0 - a player who opens this to see what it is and closes it
+ * has not broken anything, and the built-in music was already playing.
+ */
+export async function pickMusicFolder() {
+  const { setMusicReplacements } = await import('../systems/musicReplacement.js');
+  return new Promise((resolve) => {
+    const ui = document.createElement('div');
+    ui.style.cssText = 'position:fixed;inset:0;background:#111;color:#ddd;font:14px monospace;display:flex;align-items:center;justify-content:center;z-index:11';
+    ui.innerHTML = `
+      <div style="max-width:460px;text-align:center;border:1px solid #444;padding:24px">
+        <h2 style="margin-top:0">Your own music</h2>
+        <p>Pick a folder of audio files to play instead of Daggerfall's
+        built-in songs. Nothing is uploaded - it is stored in this
+        browser.</p>
+        <p style="color:#999">Name each file after the song it replaces:
+        <b>GDAY___D.ogg</b>, <b>FPALAC.mp3</b>. Anything you do not
+        supply keeps playing the original.</p>
+        <input type="file" id="pickmusic" webkitdirectory multiple style="margin:8px">
+        <p id="mmsg" style="color:#8a8"></p>
+        <button id="mdone" style="margin-top:8px">Close</button>
+      </div>`;
+    document.body.appendChild(ui);
+    const msg = ui.querySelector('#mmsg');
+    let count = 0;
+    ui.querySelector('#pickmusic').addEventListener('change', async (e) => {
+      const files = [...e.target.files];
+      msg.textContent = `reading ${files.length} files...`;
+      try {
+        await storeMusicFiles(files);
+        count = setMusicReplacements(await storedMusicNames(), loadMusicFile);
+        msg.textContent = count
+          ? `${count} songs will use your files`
+          : 'no usable audio in that folder (need .ogg .mp3 .m4a .flac .wav)';
+      } catch (err) {
+        // NEVER TRAPS: a storage failure costs the pack, not the game.
+        msg.textContent = `could not store that: ${err?.message ?? err}`;
+      }
+    });
+    ui.querySelector('#mdone').addEventListener('click', () => { ui.remove(); resolve(count); });
+  });
+}
+
+/** Drop the whole music pick. Deliberately NOT part of
+ *  clearStoredData: that is ARENA2 recovery, and a player re-picking
+ *  the game files has not asked to lose their music. */
+export async function clearStoredMusic() {
+  const d = await getDb();
+  await new Promise((res, rej) => {
+    const tx = d.transaction(MUSIC_STORE, 'readwrite');
+    tx.objectStore(MUSIC_STORE).clear();
     tx.oncomplete = () => res();
     tx.onerror = () => rej(tx.error);
   });

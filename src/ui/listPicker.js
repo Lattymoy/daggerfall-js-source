@@ -62,23 +62,44 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + PICKER_X && y >= ry + PICKE
   && x < rx + PICKER_X + rw && y < ry + PICKER_Y + rh;
 
 /** hooks = { items: string[], onPick(index, label), onCancel(),
- *  backdrop }. BACKDROP: DFU's picker is a DaggerfallPopupWindow over
- *  a previousWindow, and DaggerfallPopupWindow paints Color.clear
- *  behind itself (ScreenDimColor, nativePanel.js's note), so the
- *  window underneath stays VISIBLE - which is what 'none' does. The
- *  default stays the opaque menu fill because the port's box-chain
- *  callers (guildServiceWindows) draw nothing of their own while a
- *  picker is up and would otherwise float over the live world. */
+ *  backdrop, allowCancel, selectedIndex }. BACKDROP: DFU's picker is a
+ *  DaggerfallPopupWindow over a previousWindow, and
+ *  DaggerfallPopupWindow paints Color.clear behind itself
+ *  (ScreenDimColor, nativePanel.js's note), so the window underneath
+ *  stays VISIBLE - which is what 'none' does. The default stays the
+ *  opaque menu fill because the port's box-chain callers
+ *  (guildServiceWindows) draw nothing of their own while a picker is
+ *  up and would otherwise float over the live world.
+ *
+ *  X11b: `allowCancel` is DaggerfallPopupWindow.AllowCancel (:36-40),
+ *  which gates the BACK button in Update (:69-73). Create Item sets it
+ *  false (CreateItem.cs:70) because the magicka is already spent - the
+ *  player must choose. `selectedIndex` is ListBox.SelectIndex +
+ *  ScrollToSelected, which that same constructor calls with a STATIC
+ *  lastSelectedIndex so the picker reopens where you left it. */
 export class ListPickerWindow {
-  constructor({ items = [], onPick = null, onCancel = null, backdrop = 'menu' } = {}) {
+  constructor({
+    items = [], onPick = null, onCancel = null, backdrop = 'menu',
+    allowCancel = true, selectedIndex = 0,
+  } = {}) {
     this.items = items;
     this.onPick = onPick;
     this.onCancel = onCancel;
     this.backdrop = backdrop;
+    this.allowCancel = allowCancel;
     this.done = false;
     this.isChoiceWindow = true;
     this.scrollIndex = 0;
-    this.selectedIndex = 0;
+    this.selectedIndex = Math.min(Math.max(0, selectedIndex | 0), Math.max(0, items.length - 1));
+    this.scrollToSelected();
+  }
+
+  /** ListBox.ScrollToSelected: put the selection on screen without
+   *  moving it. Called by the constructor and by the arrow keys. */
+  scrollToSelected() {
+    if (this.selectedIndex < this.scrollIndex) this.scrollIndex = this.selectedIndex;
+    if (this.selectedIndex >= this.scrollIndex + ROWS_DISPLAYED) this.scrollIndex = this.selectedIndex - ROWS_DISPLAYED + 1;
+    this._clampScroll();
   }
 
   /** ListBox.ScrollIndex's own bound: [0, Count - RowsDisplayed], and
@@ -88,9 +109,25 @@ export class ListPickerWindow {
     this.scrollIndex = Math.min(Math.max(0, this.scrollIndex), max);
   }
 
-  /** The paging buttons move by a WHOLE PAGE (:102-115 ScrollToNext /
-   *  ScrollToPrevious call listBox.ScrollDown/Up by RowsDisplayed). */
-  _page(dir) { this.scrollIndex += dir * ROWS_DISPLAYED; this._clampScroll(); }
+  /** X11b CORRECTION. This used to page by RowsDisplayed, citing
+   *  ScrollToNext/ScrollToPrevious - which belong to a DIFFERENT
+   *  window. DaggerfallListPickerWindow's own two buttons call
+   *  `listBox.SelectPrevious()` / `SelectNext()` (:121-129), which move
+   *  the SELECTION by ONE and scroll only far enough to keep it visible
+   *  (ListBox.cs:709-741). So the buttons were skipping nine rows where
+   *  DFU steps one, and left the selection where it was - on a 29-row
+   *  list that is the difference between choosing an item and hunting
+   *  for it. Found while reading this window for Create Item, whose
+   *  picker is the longest one in the game. */
+  _select(dir) {
+    const next = this.selectedIndex + dir;
+    if (next < 0 || next >= this.items.length) return;   // SelectPrevious/SelectNext both refuse at the ends
+    this.selectedIndex = next;
+    // EntryWise scrolling: only enough to keep the selection on screen
+    if (dir < 0 && this.selectedIndex < this.scrollIndex) this.scrollIndex = this.selectedIndex;
+    if (dir > 0 && this.selectedIndex > this.scrollIndex + ROWS_DISPLAYED - 1) this.scrollIndex++;
+    this._clampScroll();
+  }
 
   _pick(index) {
     if (index < 0 || index >= this.items.length) return;
@@ -98,7 +135,11 @@ export class ListPickerWindow {
     this.onPick?.(index, this.items[index]);
   }
 
-  _cancel() { this.done = true; this.onCancel?.(); }
+  _cancel() {
+    if (!this.allowCancel) return;   // AllowCancel gates the back button (DaggerfallPopupWindow :69-73)
+    this.done = true;
+    this.onCancel?.();
+  }
 
   input(code) {
     if (code === 'Escape') { this._cancel(); return; }
@@ -127,8 +168,8 @@ export class ListPickerWindow {
   rowHeight(font) { return (font?.fnt?.fixedHeight ?? 6) + ROW_SPACING; }
 
   click(vx, vy, font = null) {
-    if (inRect(PICKER_RECTS.previous, vx, vy)) { this._page(-1); return true; }
-    if (inRect(PICKER_RECTS.next, vx, vy)) { this._page(1); return true; }
+    if (inRect(PICKER_RECTS.previous, vx, vy)) { this._select(-1); return true; }
+    if (inRect(PICKER_RECTS.next, vx, vy)) { this._select(1); return true; }
     if (inRect(PICKER_RECTS.list, vx, vy)) {
       const rh = this.rowHeight(font ?? this._font);
       const row = Math.floor((vy - PICKER_Y - PICKER_RECTS.list[1]) / rh);
@@ -151,7 +192,10 @@ export class ListPickerWindow {
   }
 
   draw(renderer, canvas, font) {
-    if (!_art) { this._cancel(); return; }
+    // No art, no window. A picker that cannot be cancelled still has to
+    // go away here or it would hold the host for ever showing nothing -
+    // so this bypasses AllowCancel deliberately, and says so.
+    if (!_art) { this.done = true; this.onCancel?.(); return; }
     this._font = font;
     const m = nativeMetrics(canvas);
     if (this.backdrop !== 'none') drawMenuBackdrop(renderer, canvas);

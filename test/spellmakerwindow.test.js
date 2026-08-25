@@ -92,10 +92,16 @@ test('S1 catalog: the pickers de-duplicate and sort, and the port marks its iner
   assert.equal(effectByKey('4,0').ported, true, 'Damage Health casts');
   // The standing inert example, walked forward as the arms land: Lock
   // lived here until X1, Identify until X7 gave it unidentified-item
-  // state. Spell Reflection is the one left that needs a whole missing
-  // system (the re-target path), so it is the durable choice.
+  // state, Spell Reflection until X11a found that its "whole missing
+  // system" was the host seam the port already had. MORPH SELF is the
+  // durable choice now, and durable for a reason no lane will casually
+  // close: its only consumer is LycanthropyEffect, a racial override
+  // the port has not built, and its AllowedCraftingStations is None -
+  // so no player can even make a spell that carries it.
   assert.equal(effectByKey('40,255').ported, true, 'Identify casts since X7');
-  assert.equal(effectByKey('21,255').ported, false, 'Spell Reflection still pends its re-target path');
+  assert.equal(effectByKey('21,255').ported, true, 'Spell Reflection re-targets since X11a');
+  assert.equal(effectByKey('29,255').ported, false, 'Morph Self still pends the lycanthropy racial override');
+  assert.equal(effectByKey('29,255').craftable, false, 'and no station offers it');
   assert.equal(PORTED_KEYS.size, SPELL_MAKER_EFFECTS.filter((e) => e.ported).length);
   assert.ok(PORTED_KEYS.size > 0 && PORTED_KEYS.size < SPELL_MAKER_EFFECTS.length, 'a real subset, not all-or-nothing');
 });

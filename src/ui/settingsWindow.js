@@ -27,6 +27,8 @@ import { labelOf, helpOf, TIER_TEXT, INSTEAD } from './settingsCopy.js';
 import { widgetFor, formatValue, stepValue, blockedReason } from './settingsLaw.js';
 import { effectiveSettings, setValue, saveSettings, resetToDefaults, tierOf, DEFAULTS } from '../systems/settings.js';
 import { getPref, setPref, isOpen, setOpen } from '../systems/uiPrefs.js';
+import { replacementCount } from '../systems/musicReplacement.js';   // M-EXT: the row reports what the pick covers
+import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES } from '../systems/uiSkin.js';
 import { measureText, drawText } from './text.js';
 import { drawRect, shadowText } from './nativePanel.js';
 import { wrapText } from './talkWindow.js';
@@ -57,8 +59,15 @@ const GROUPS = [
 const inRect = ([x, y, w, h], px, py) => px >= x && py >= y && px < x + w && py < y + h;
 
 export class SettingsWindow {
-  constructor({ onLaunch = () => {}, dataSourceLabel = '' } = {}) {
+  constructor({ onLaunch = () => {}, dataSourceLabel = '', onPickMusic = null } = {}) {
     this.onLaunch = onLaunch;
+    // M-EXT: the music-pack picker. A HOOK and not an import,
+    // because the picker lives in scenes/dataSource.js and a ui/
+    // module reaching into scenes/ is the layering the rest of this
+    // directory does not do. Null means the row still explains the
+    // feature and simply offers no button - which is what a host
+    // that cannot pick files (a test, a headless harness) should get.
+    this.onPickMusic = onPickMusic;
     this.dataSourceLabel = dataSourceLabel;
     this.done = false;
     this.isChoiceWindow = true;
@@ -92,7 +101,16 @@ export class SettingsWindow {
     const ROW_BASE = Math.max(18, TAP);
     const GROUP_H = Math.max(13, TAP);
     const CAT_H = Math.max(14, TAP);
-    const FOOT_H = TAP + 2;
+    // THE WAY BACK needs a fourth footer button, and four do not fit
+    // one row at MIN_PAGE_W (156). AUDIT 24's own pin caught the first
+    // attempt - a titlebar button is TITLE_H tall, which is 18px where
+    // a finger is 44 - so the footer WRAPS instead of shrinking: two
+    // rows when they are needed, one when they are not.
+    const skinLabel = SKIN_NAMES[otherSkin(uiSkin())];
+    const skinW = Math.max(40, (font ? measureText(font.fnt, skinLabel) : skinLabel.length * 5) + 8);
+    const ROW_H = TAP + 2;
+    const oneRow = P >= 3 + 26 + 3 + 44 + 3 + skinW + 6 + 40 + 3;
+    const FOOT_H = oneRow ? ROW_H : ROW_H * 2;
     const HELP_LINES = wide ? 3 : 4;
     const HELP_H = (HELP_LINES + 1) * LINE_H + 3;
 
@@ -214,12 +232,20 @@ export class SettingsWindow {
     if (font) status = wrapText(font.fnt, status, P - 8)[0] ?? status;
 
     // --- footer ---
-    const playW = Math.max(40, Math.min(78, P - 84));
+    // Row one is the three tools; PLAY is right-aligned beside them
+    // where there is room and takes a row of its own where there is
+    // not. Every button keeps the full row height, so the 44px finger
+    // target survives both arms.
+    const r1 = footY;
+    const r2 = oneRow ? footY : footY + ROW_H;
+    const playW = oneRow ? Math.max(40, Math.min(78, P - 92 - skinW)) : P - 6;
     const footer = {
       rect: [0, footY, P, FOOT_H],
-      help: push('btn:help', [3, footY + 1, 26, FOOT_H - 2], 'button'),
-      reset: push('btn:reset', [32, footY + 1, 44, FOOT_H - 2], 'button'),
-      play: push('btn:play', [P - 3 - playW, footY + 1, playW, FOOT_H - 2], 'button'),
+      help: push('btn:help', [3, r1 + 1, 26, ROW_H - 2], 'button'),
+      reset: push('btn:reset', [32, r1 + 1, 44, ROW_H - 2], 'button'),
+      skin: push('btn:skin', [79, r1 + 1, skinW, ROW_H - 2], 'button'),
+      play: push('btn:play', [oneRow ? P - 3 - playW : 3, r2 + 1, playW, ROW_H - 2], 'button'),
+      skinLabel,
     };
 
     const t = this.tally();
@@ -278,6 +304,22 @@ export class SettingsWindow {
     this._commit(it.key, stepValue(it.key, it.value, dir, coarse));
   }
 
+  /** Swap skins. The two skins are two HOSTS - this one is a WebGL
+   *  window, the other is a DOM page - so there is nothing to hand
+   *  over in place: the choice is stored and the boot flow is re-run
+   *  from its front door, which is U27's own unwind. A ?skin override
+   *  is dropped on the way out, or the reload would land back here
+   *  having apparently ignored the press. */
+  _switchSkin() {
+    const next = otherSkin(uiSkin());
+    setUiSkin(next);
+    this._click();
+    const url = new URL(globalThis.location?.href ?? 'http://localhost/');
+    url.searchParams.delete('skin');
+    url.searchParams.delete('launcher');
+    globalThis.location?.replace?.(url.toString());
+  }
+
   _toggleGroup(id) {
     const cur = isOpenOr(this.category, id, id === 'live' || (this.category === 'mods' && id === 'na'));
     setOpen(this.category, id, !cur);
@@ -314,6 +356,22 @@ export class SettingsWindow {
       if (inst) lines.push(inst);
     }
     lines.push(`Saved as [${sec}] ${k}`);
+    // M-EXT: the one row with somewhere to go. AssetInjection is DFU's
+    // own gate on replacement assets and the port implements its SOUND
+    // half, so this is where a player picks the folder - a feature
+    // reachable only by typing ?music is a feature nobody finds, which
+    // is the exact gap this project keeps re-discovering.
+    if (key === 'Enhancements/AssetInjection' && this.onPickMusic) {
+      lines.push('');
+      lines.push(`Music files supplied: ${replacementCount()}`);
+      lines.push('Name each file after the song it replaces, e.g.');
+      lines.push('GDAY___D.ogg. Anything you skip keeps the original.');
+      return {
+        title: labelOf(key), key, lines,
+        buttons: [{ id: 'pick', label: 'Choose Folder' }, { id: 'close', label: 'Close' }],
+        onYes: () => this.onPickMusic(),
+      };
+    }
     return { title: labelOf(key), key, lines, buttons: [{ id: 'close', label: 'Close' }] };
   }
 
@@ -340,7 +398,14 @@ export class SettingsWindow {
       if (code === 'Escape' || code === 'Enter' || code === 'Space') {
         const d = this.dialog;
         this.dialog = null;
-        if (code !== 'Escape' && d.buttons?.[0]?.id === 'yes') this._commit(d.key, 'False');
+        // M-EXT: `onYes` is the house idiom five other windows use, and
+        // the MOUSE path here has honoured it all along while this one
+        // did not. Nothing set it on a settings dialog until now, so it
+        // was a latent divergence rather than a live bug - the first
+        // dialog to carry an action would have worked on click and done
+        // nothing on Enter. Escape is still a refusal on both paths.
+        if (code !== 'Escape' && d.onYes) d.onYes();
+        else if (code !== 'Escape' && d.buttons?.[0]?.id === 'yes') this._commit(d.key, 'False');
         this._click();
       }
       return;
@@ -409,6 +474,7 @@ export class SettingsWindow {
       return true;
     }
     if (kind === 'btn') {
+      if (arg === 'skin') { this._switchSkin(); return true; }
       if (arg === 'play') this._launch();
       else if (arg === 'reset') this.input('KeyR', { key: 'r' }, canvas);
       else if (arg === 'help') {
@@ -528,6 +594,7 @@ export class SettingsWindow {
     };
     btn(L.footer.help, '?', false);
     btn(L.footer.reset, 'Reset', false);
+    btn(L.footer.skin, L.footer.skinLabel, false);
     btn(L.footer.play, 'PLAY', true);
 
     if (this.dialog) this._drawDialog(renderer, m, font, L);

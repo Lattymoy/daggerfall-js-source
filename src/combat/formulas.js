@@ -571,10 +571,19 @@ export function enemyLanguageSkill(entity) {
  *  skill/10 + personality/5 (C# INT divisions); a monster tongue
  *  reads the FULL skill + personality/10 - fluency in Orcish counts
  *  for far more than manners. A sheathed weapon adds 10, a drawn one
- *  costs 25. Roll Random.Range(0, 200) < chance. The
- *  ComprehendLanguages effect bonus rides the effect arc (no
- *  incumbent exists yet). */
-export function calculateEnemyPacification(player, languageSkill, sheathed, roll01 = Math.random()) {
+ *  costs 25. Roll Random.Range(0, 200) < chance.
+ *
+ *  X11: the LAST term is the Comprehend Languages effect's ChanceValue
+ *  (:377-380), and this doc comment carried "rides the effect arc (no
+ *  incumbent exists yet)" until that effect went live. It arrives as
+ *  an ARGUMENT rather than a global read for the same reason
+ *  `sheathed` does - DFU reads WeaponManager.Sheathed inside the
+ *  formula and this port passes it in - and here there is a second
+ *  reason: reading it here would mean importing systems/effects.js,
+ *  and effects -> spellcast -> formulas is the cycle this file's
+ *  concealment leaf exists to avoid. scenes/hostCombat.js supplies
+ *  it, at the one seam all three enemy pools already share. */
+export function calculateEnemyPacification(player, languageSkill, sheathed, roll01 = Math.random(), comprehendBonus = 0) {
   let chance = 0;
   if (languageSkill === SKILLS.Etiquette || languageSkill === SKILLS.Streetwise) {
     chance += Math.trunc(skillValue(player, languageSkill) / 10);
@@ -584,6 +593,7 @@ export function calculateEnemyPacification(player, languageSkill, sheathed, roll
     chance += Math.trunc(liveStat(player, 'personality') / 10);
   }
   chance += sheathed ? 10 : -25;
+  chance += comprehendBonus;
   return Math.floor(roll01 * 200) < chance;
 }
 

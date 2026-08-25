@@ -47,10 +47,16 @@ test('spellcast: magnitude + damage-family resolution', () => {
   assert.equal(missileArchive(0), 375);
   assert.equal(missileArchive(4), 379);
   // full apply, GetMagnitude order (S15): magnitude rolls 0,0 -> 9,
-  // THEN the save (0.99 -> lands full). Create Item (2,255) is
-  // still outside the library -> skipped (loud); type -1 just drops.
-  // (The S19c cures took (3,0) INTO the library - the old fixture.)
-  const spell = { element: 0, rangeType: 2, effects: [e, { type: 2, subType: 255 }, { type: -1, subType: -1 }] };
+  // THEN the save (0.99 -> lands full). The second slot is an effect
+  // OUTSIDE the library -> skipped (loud); type -1 just drops.
+  //
+  // THE STAND-IN WALKS FORWARD as the arms land: (3,0) was the cure
+  // fixture until S19c took it, Create Item (2,255) until X11b did.
+  // MORPH SELF (29,255) is the durable choice and stays durable for a
+  // reason no lane will casually close - its only consumer is
+  // LycanthropyEffect, a racial override the port has not built, and
+  // AllowedCraftingStations = None means no spell maker even offers it.
+  const spell = { element: 0, rangeType: 2, effects: [e, { type: 29, subType: 255 }, { type: -1, subType: -1 }] };
   const T = { stats: { willpower: 50 }, career: {} };
   let hurt = 0;
   const r = applySpell(spell, 7, T, { hurt: (n) => { hurt += n; } }, seq(0, 0, 0.99));

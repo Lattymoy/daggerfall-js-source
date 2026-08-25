@@ -17,6 +17,7 @@ import { WoodsFile } from '../formats/woodsFile.js';
 import { buildTerrainGrid, buildTerrainIndices, convertTilemap, TERRAIN_TILE_DIM } from '../world/terrainSurface.js';
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
+import { withCandleLight } from './magicCandle.js';   // X11: the Light effect's candle
 import { applyClimate, getGroundArchive, getNatureArchive, SEASON } from '../world/climateSwaps.js';
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, mirrorProjectionX, trs } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
@@ -108,7 +109,7 @@ import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter } from '../c
 import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible exterior arrows
-import { removeOne, addItem } from '../systems/inventory.js';
+import { addItem, spendArrow } from '../systems/inventory.js';
 import { calculateAttackDamage } from '../combat/formulas.js';   // X2-slice: enemy-arrow impacts
 import { inflictPoison } from '../systems/poisons.js';   // X2-slice: poisoned enemy arrows
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
@@ -1053,19 +1054,28 @@ export async function bootWorld(canvas, renderer, params, status) {
     drainFatigue: (n) => { if (n > 0) g.entity.fatigue = Math.max(0, (g.entity.fatigue ?? 0) - n); },
     restoreFatigue: (n) => { if (n > 0) g.entity.fatigue = Math.min(maxFatigue(g.entity), (g.entity.fatigue ?? 0) + n); },
   });
+  // X11: hoisted out of the createPlayerMagic literal it used to be
+  // written inline in. The enchantment door below needs the SAME set:
+  // a caster reaches applySpell as `{ entity, sinks }` and the sinks
+  // are what a Transfer effect heals the caster through (effects.js
+  // :828/:842). That door passed `{ entity: attacker }` bare, so a
+  // player-cast Transfer Health riding an enchantment drained the
+  // target and healed nobody - found while wiring reflection, which
+  // needs the caster's sinks for the same reason.
+  const playerSpellSinks = {
+    hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n); },
+    heal: (n) => { if (n > 0) { playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n); surfacePlayer(); } },
+    drainMagicka: (n) => { if (n > 0) { playerEntity.magicka = Math.max(0, (playerEntity.magicka ?? 0) - n); surfacePlayer(); } },
+    restoreMagicka: (n) => { if (n > 0) { playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity, (playerEntity.magicka ?? 0) + n); surfacePlayer(); } },
+    drainFatigue: (n) => drainExteriorFatigue(n),
+    restoreFatigue: (n) => { if (n > 0) { playerEntity.fatigue = Math.min(maxFatigue(playerEntity), (playerEntity.fatigue ?? 0) + n); surfacePlayer(); } },
+    say: (l) => townTalk.say(l),
+  };
   const magic = createPlayerMagic({
     renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
     collider: { raycast: (o, d, m) => ((modes?.mode === 'interior' && modes?.interiorCollider) ? modes?.interiorCollider : collider).raycast(o, d, m) },
     playerEntity,
-    playerSinks: {
-      hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n); },
-      heal: (n) => { if (n > 0) { playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n); surfacePlayer(); } },
-      drainMagicka: (n) => { if (n > 0) { playerEntity.magicka = Math.max(0, (playerEntity.magicka ?? 0) - n); surfacePlayer(); } },
-      restoreMagicka: (n) => { if (n > 0) { playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity, (playerEntity.magicka ?? 0) + n); surfacePlayer(); } },
-      drainFatigue: (n) => drainExteriorFatigue(n),
-      restoreFatigue: (n) => { if (n > 0) { playerEntity.fatigue = Math.min(maxFatigue(playerEntity), (playerEntity.fatigue ?? 0) + n); surfacePlayer(); } },
-      say: (l) => townTalk.say(l),
-    },
+    playerSinks: playerSpellSinks,
     say: (l) => townTalk.say(l),
     surfacePlayer,
     foes: () => (modes?.mode ?? 'exterior') === 'exterior' ? [...cityGuards.guards, ...exteriorFoes.foes] : [],   // X-slice: encounter foes are spell targets too
@@ -1101,6 +1111,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     onIdentify: (d) => {
       if (!modes?.openIdentifyWindow?.({ chance: d.chance, refund: d.refund })) {
+        townTalk.say('You cannot concentrate on that right now.');
+      }
+    },
+    // X11b: the Create Item picker, routed like the two above.
+    onCreateItem: (d) => {
+      if (!modes?.openCreateItemPicker?.({ rounds: d.rounds })) {
         townTalk.say('You cannot concentrate on that right now.');
       }
     },
@@ -1181,9 +1197,30 @@ export async function bootWorld(canvas, renderer, params, status) {
       applySpellToSelf: (record) => magic.castByItemSelf(record),
       setReadySpell: (record) => magic.readySpell(record, { free: true }),
       applySpellToTarget: (record, attacker, target) => {
-        if (target === playerEntity) { magic.applySpellToPlayer(record, attacker?.level ?? 1, attacker ? { entity: attacker } : null); return; }
+        // X11: the caster now travels WITH ITS SINKS. Spell Reflection
+        // sends the bundle back at whoever cast it, and a caster with
+        // no sinks would have the reflected damage land nowhere -
+        // silently, which is the worst way for it to be wrong. The
+        // attacker here is either the player or one of the pool's
+        // foes, and both have sinks a few lines up.
+        const af = attacker && attacker !== playerEntity
+          ? enchantFoes().find((x) => x.entity === attacker) : null;
+        const casterOf = () => {
+          if (!attacker) return null;
+          if (attacker === playerEntity) return { entity: playerEntity, sinks: playerSpellSinks };
+          return af ? { entity: attacker, sinks: foeSinks(af) } : { entity: attacker };
+        };
+        if (target === playerEntity) { magic.applySpellToPlayer(record, attacker?.level ?? 1, casterOf()); return; }
         const f = enchantFoes().find((x) => !x.dead && x.entity === target);
-        if (f) applySpell(record, attacker?.level ?? 1, target, foeSinks(f), Math.random, attacker ? { entity: attacker } : null);
+        if (!f) return;
+        const caster = casterOf();
+        const r = applySpell(record, attacker?.level ?? 1, target, foeSinks(f), Math.random, caster);
+        // The same re-target hostMagic does for the cast paths - this
+        // door is the enchantment path's equivalent seam.
+        if (r.reflected && caster?.entity) {
+          if (caster.entity === playerEntity) magic.applySpellToPlayer(record, attacker?.level ?? 1, caster, { reflectedCount: 1 });
+          else applySpell(record, attacker?.level ?? 1, caster.entity, caster.sinks ?? {}, Math.random, caster, { reflectedCount: 1 });
+        }
       },
       nearbyFoes: (range) => {
         const pf = enchantFeet();
@@ -3259,11 +3296,15 @@ export async function bootWorld(canvas, renderer, params, status) {
         }
       }
       renderer.setPointLights(
-        nearestLights(sceneLights, cam.pos, 16, worldLightAnimator.ranges),
+        withCandleLight(nearestLights(sceneLights, cam.pos, 16, worldLightAnimator.ranges), magic?.candleLight()),   // X11
         CITY_LIGHT_COLOR_F32
       );
     } else {
-      renderer.setPointLights(new Float32Array(0));
+      // X11: the candle burns by day too - StartLight has no time gate
+      // (the lantern one is DaggerfallLight's, not the effect's), and
+      // this branch used to send the renderer an empty array, so a
+      // daylight Light cast would have lit nothing at all.
+      renderer.setPointLights(withCandleLight(new Float32Array(0), magic?.candleLight()), CITY_LIGHT_COLOR_F32);
     }
     renderer.beginFrame(proj, view, sunDirection(minute));
     sky.draw(cam.yaw, cam.pitch, fieldOfView(), canvas.clientWidth / canvas.clientHeight);
@@ -3399,7 +3440,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if ((modes?.mode ?? 'exterior') === 'exterior') {
         const _mfwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
         magic.firePending([...cam.pos], _mfwd);
-        magic.update(dt, player.pos);
+        magic.update(dt, player.pos, _mfwd, player.height);   // X11: the candle hangs off the look direction
       }
       // U8h/AUDIT 17e F17: the worn-weapon bind moved INTO createWeaponRig
       // so all four hosts inherit it (the interior host was missing it).
@@ -3408,7 +3449,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (ev === 'bowSound') { audio.playOneShot(SOUND.ArrowShoot, 1.1); continue; }
         if (ev !== 'hit') continue;
         if (weaponTypeForItem(weaponRig.playerWeapon.weapon) === WEAPON_TYPES.Bow) {
-          if (removeOne(playerEntity.items, 131)) {
+          if (spendArrow(playerEntity.items)) {
             // AUDIT 23 (C14): the swing fatigue + the FULL bow tally
             // arm (Archery AND CriticalStrike) - see exterior.js.
             drainExteriorFatigue(SWING_WEAPON_FATIGUE_LOSS);

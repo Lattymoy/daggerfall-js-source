@@ -71,8 +71,15 @@ test('pacification: the host runs it on the FIRST-encounter edge and a pacified 
   // equivalent rewrite to `!ai || !ai.justEncountered` and called it
   // a kill, which is the opposite of what a campaign is for.
   assert.ok(arm.includes('justEncountered'), 'the edge drives the check');
-  assert.ok(arm.includes('calculateEnemyPacification(playerEntity, lang, sheathed)'),
+  // X11 added a fifth argument (the Comprehend Languages bonus), which
+  // this pin's exact-call spelling flagged at once - correctly. It is
+  // relaxed to the SHAPE rather than re-frozen to the new spelling, for
+  // the reason written three lines above about `justEncountered`.
+  assert.ok(/calculateEnemyPacification\(playerEntity, lang, sheathed[,)]/.test(arm),
     'the sheathed state feeds the roll');
+  assert.ok(arm.includes('comprehendLanguagesChance(playerEntity)')
+    && /calculateEnemyPacification\([^)]*comprehend\)/.test(arm),
+  'and so does the Comprehend Languages bonus (X11 - DFU reads it inside the formula, FormulaHelper.cs:377-380)');
   assert.ok(arm.includes('ai.isHostile = false'), 'success stands the foe down');
   assert.ok(arm.includes('tallySkill(playerEntity, lang, 3)'), 'success tallies 3 (DFU BCHG)');
   assert.ok(arm.includes('lang !== SKILLS.Etiquette && lang !== SKILLS.Streetwise'), 'a failed tongue still tallies 1');

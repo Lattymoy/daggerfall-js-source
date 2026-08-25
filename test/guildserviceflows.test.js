@@ -54,27 +54,48 @@ test('U24: the picker\'s child rects and ListBox defaults are DFU literals', () 
   assert.deepEqual(SELECTED_TEXT_COLOR.slice(0, 3).map((c) => Math.round(c * 255)), [162, 36, 12]);
 });
 
-test('U24: the paging buttons move a WHOLE PAGE and clamp', () => {
+test('U24 (X11b CORRECTED): the two buttons move the SELECTION by ONE, not a page', () => {
+  // THIS GATE USED TO ASSERT THE OPPOSITE, and it was wrong. It cited
+  // ScrollToNext/ScrollToPrevious, which belong to a different window.
+  // DaggerfallListPickerWindow's own buttons call
+  // `listBox.SelectPrevious()` / `SelectNext()` (:121-129): the
+  // SELECTION moves one row and the list scrolls only far enough to
+  // keep it visible (ListBox.cs:709-741, VerticalScrollModes.EntryWise).
+  // On a 29-row list - Create Item's picker, the longest in the game -
+  // paging by nine is the difference between choosing an item and
+  // hunting for it. A green gate that pins the wrong law is worse than
+  // no gate, which is why this one is rewritten rather than deleted.
   const items = Array.from({ length: 25 }, (_, i) => `item${i}`);
   const w = new ListPickerWindow({ items });
   const at = (rect, dx = 1, dy = 1) => [PICKER_X + rect[0] + dx, PICKER_Y + rect[1] + dy];
   assert.equal(w.scrollIndex, 0);
+  assert.equal(w.selectedIndex, 0);
+  // stepping DOWN inside the visible window moves the selection and
+  // nothing else
+  for (let i = 0; i < ROWS_DISPLAYED - 1; i++) w.click(...at(PICKER_RECTS.next));
+  assert.equal(w.selectedIndex, ROWS_DISPLAYED - 1);
+  assert.equal(w.scrollIndex, 0, 'the list has not moved - the selection is still on screen');
+  // the next step pushes the selection past the last visible row, so
+  // the list scrolls by exactly ONE
   w.click(...at(PICKER_RECTS.next));
-  assert.equal(w.scrollIndex, ROWS_DISPLAYED);
-  w.click(...at(PICKER_RECTS.next));
-  // 9 + 9 = 18, but the bound is Count - RowsDisplayed = 16, so the
-  // second page already lands on the last row rather than past it
-  assert.equal(w.scrollIndex, 25 - ROWS_DISPLAYED);
-  w.click(...at(PICKER_RECTS.next));
-  assert.equal(w.scrollIndex, 25 - ROWS_DISPLAYED, 'and stays there');
+  assert.equal(w.selectedIndex, ROWS_DISPLAYED);
+  assert.equal(w.scrollIndex, 1);
+  // ...all the way to the end, where SelectNext simply refuses
+  for (let i = 0; i < 40; i++) w.click(...at(PICKER_RECTS.next));
+  assert.equal(w.selectedIndex, 24, 'SelectNext refuses at the last row');
+  assert.equal(w.scrollIndex, 25 - ROWS_DISPLAYED, 'and the scroll bound holds');
+  // and back up the same way
   w.click(...at(PICKER_RECTS.previous));
-  assert.equal(w.scrollIndex, 16 - ROWS_DISPLAYED);
-  for (let i = 0; i < 5; i++) w.click(...at(PICKER_RECTS.previous));
+  assert.equal(w.selectedIndex, 23);
+  assert.equal(w.scrollIndex, 25 - ROWS_DISPLAYED, 'still visible, so still no scroll');
+  for (let i = 0; i < 40; i++) w.click(...at(PICKER_RECTS.previous));
+  assert.equal(w.selectedIndex, 0, 'SelectPrevious refuses at the first row');
   assert.equal(w.scrollIndex, 0, 'never below zero');
   // a list shorter than the window does not scroll at all
   const small = new ListPickerWindow({ items: ['a', 'b'] });
   small.click(...at(PICKER_RECTS.next));
   assert.equal(small.scrollIndex, 0);
+  assert.equal(small.selectedIndex, 1);
 });
 
 test('U24: a click in the list picks the SCROLLED row, not the visible one', () => {

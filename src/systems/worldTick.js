@@ -39,6 +39,7 @@ import { enchantmentMagicRound } from './enchantments.js';   // E1: the per-roun
 import { updateRegionalPrices } from './shopStock.js';            // FormulaHelper.UpdateRegionalPrices (:2053)
 import { rollClimateWeathersForDay } from './weatherSim.js';      // WeatherManager.SetClimateWeathers (:419)
 import { removeExpiredRooms } from './tavern.js';                 // PlayerEntity.RemoveExpiredRentedRooms (:257)
+import { removeExpiredItems } from './createItem.js';             // X11b: ItemCollection.RemoveExpiredItems (:125), the per-minute sweep
 import { checkOverdueLoans, settleOverdueLoan } from './banking.js';   // LoanChecker.CheckOverdueLoans (:17)
 import { lowerRepForCrime } from './court.js';                    // OverdueLoan's LowerRepForCrime (:70)
 import { REGION_NAMES } from '../formats/mapsFile.js';            // loanReminder2's %s
@@ -409,6 +410,18 @@ export function tickPlayerMinutes({
     // (its rest advance never routes through this tick); the three
     // hosts S40 gave rest to were not.
     if (!entity.isResting) sinks.drainFatigue?.(Math.trunc(loss * fatigueMultiplier));
+
+    // X11b - PlayerEntity.cs:420-421, the very next statement after
+    // that fatigue drain and inside the same per-minute block:
+    // "Make magically-created items that have expired disappear".
+    // It sits HERE and not in the magic-round loop for the reason
+    // DFU's does: a conjured item's lifetime is wall-clock game
+    // minutes, not effect rounds - the effect that made it ended the
+    // moment the player picked, and the ITEM carries the clock.
+    // It runs even while resting (DFU's !isResting gate covers only
+    // the fatigue line above), which is the point: sleeping through
+    // your conjured armour's expiry has to lose you the armour.
+    removeExpiredItems(entity, Math.floor(next));
   }
 
   // S41 - THE DAY CHANGE (PlayerEntity.cs:441-450). It sits AFTER the

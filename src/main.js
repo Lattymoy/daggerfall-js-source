@@ -22,6 +22,7 @@ import { bootWorld } from './scenes/world.js';
 import { ensureArena2, getBytes } from './scenes/dataSource.js';
 import { installCursor } from './ui/cursor.js';
 import { getBool } from './systems/settings.js';   // SETT: the launcher gate
+import { isEnhanced } from './systems/uiSkin.js';   // THE SKIN: which front door
 
 async function boot() {
   const canvas = document.getElementById('c');
@@ -33,15 +34,38 @@ async function boot() {
   // Data gate: readers load user-supplied ARENA2 at runtime
   // (Port-Doctrine) - dev serves it via middleware, production asks
   // for the folder once and persists it in IndexedDB.
-  await ensureArena2();
-  // The classic pointer for every surface (fire-and-forget; never traps).
-  installCursor(getBytes);
+  //
+  // IT IS A FUNCTION NOW, and idempotent, because THE ENHANCED FRONT
+  // DOOR RUNS BEFORE IT. That screen needs no game data at all, so a
+  // player who opens the page to change a setting, read the build or
+  // check whether their save is still there is never asked for a
+  // folder - which on a phone is a zip upload. The classic menu cannot
+  // do this: it needs PICK03I0, a palette and FONT0003 before it can
+  // draw one word, which is why the pick has always sat in front of
+  // it. Every other path still gates first, exactly as before.
+  let _data = null;
+  const ensureData = () => (_data ??= (async () => {
+    await ensureArena2();
+    // The classic pointer for every surface (fire-and-forget; never traps).
+    installCursor(getBytes);
+  })());
+  // M-EXT: ?music opens the replacement-music pick. It goes through
+  // ensureData() FIRST and not around it: the picker needs the same
+  // IndexedDB the ingest opens, and dropping a player who has never
+  // chosen a game folder straight into a music picker would be asking
+  // for the second thing before the first. Idempotent, so a path that
+  // gates again below costs nothing.
+  if (params.has('music')) {
+    await ensureData();
+    const { pickMusicFolder } = await import('./scenes/dataSource.js');
+    await pickMusicFolder();
+  }
   // Window emission style for every scene. DFU's GetMaterial default is Day.
   renderer.setWindowEmission(windowEmissionRGB(params.get('window') || 'day'));
-  if (params.has('interior')) return bootInterior(canvas, renderer, params, status);
-  if (params.has('dungeon')) return bootDungeon(canvas, renderer, params, status);
-  if (params.has('world')) return bootWorld(canvas, renderer, params, status);
-  if (params.has('exterior') || params.has('region') || params.has('loc')) return bootExterior(canvas, renderer, params, status);
+  if (params.has('interior')) { await ensureData(); return bootInterior(canvas, renderer, params, status); }
+  if (params.has('dungeon')) { await ensureData(); return bootDungeon(canvas, renderer, params, status); }
+  if (params.has('world')) { await ensureData(); return bootWorld(canvas, renderer, params, status); }
+  if (params.has('exterior') || params.has('region') || params.has('loc')) { await ensureData(); return bootExterior(canvas, renderer, params, status); }
   // U21: the bare URL is THE MAIN MENU, and the menu hands off to the
   // classic start (Privateer's Hold + chargen) that used to run here
   // directly. Dev scenes stay one param away (?exterior/?world/etc).
@@ -50,7 +74,41 @@ async function boot() {
   // tools/screenshot.mjs and the 25 probes in tools/ drive, and a menu
   // in front of it would block every one of them. ?nomenu is the same
   // escape hatch for a human.
-  if (params.has('shot') || params.has('nomenu')) return bootDungeon(canvas, renderer, params, status);
+  if (params.has('shot') || params.has('nomenu')) { await ensureData(); return bootDungeon(canvas, renderer, params, status); }
+
+  // ── THE FRONT DOOR ─────────────────────────────────────────────
+  // ENHANCED IS THE DEFAULT (systems/uiSkin.js; ?skin=classic or the
+  // toggle in either screen chooses otherwise). One screen carrying
+  // continue, new game, load, settings, mods and about - which is the
+  // classic path's title, launcher, splash and start window collapsed
+  // into a single place with a way back to it from inside the game.
+  //
+  // The three the enhanced door deliberately does NOT run, each
+  // because the enhanced screen already answers what it was for:
+  //   - the LAUNCHER (ShowOptionsAtStart). DFU shows its wizard every
+  //     launch because settings are otherwise unreachable; here they
+  //     are one press away, so a screen in front of the menu would be
+  //     a screen in front of the menu.
+  //   - the TITLE and the SPLASH. Both read ARENA2, and the whole
+  //     point of this door is that it opens before the folder pick.
+  //     Recorded as a real loss rather than dropped quietly: ?skin=
+  //     classic still plays both, and giving the enhanced door its own
+  //     title moment is its own slice.
+  if (isEnhanced()) {
+    const { runEnhancedMenu } = await import('./ui/enhancedMenu.js');
+    status('main menu');
+    const choice = await runEnhancedMenu();
+    await ensureData();
+    // AUDIT 19 F12's law, and it matters more here: SET on load,
+    // DELETE on anything else. A URL that already carries ?load would
+    // otherwise make New Game restore the save - the one action whose
+    // whole point is not to.
+    if (choice === 'continue' || choice === 'load') params.set('load', '1');
+    else params.delete('load');
+    params.set('classic', '1');
+    return bootWorld(canvas, renderer, params, status);
+  }
+  await ensureData();
   // SETT: THE LAUNCHER, before everything - DFU's setup wizard is the
   // first screen of a DFU session, and its gate is verbatim here:
   // SceneControl.cs:46 shows the wizard when the path is unvalidated
