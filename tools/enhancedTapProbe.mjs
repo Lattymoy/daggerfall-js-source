@@ -30,7 +30,7 @@ const FLOOR = 44;
 const MEASURE = (floor) => {
   const bad = [];
   const seen = new Set();
-  for (const el of document.querySelectorAll('#enhanced-menu button, #app button')) {
+  for (const el of document.querySelectorAll('#enhanced-menu button, #app button, #app input')) {
     const r = el.getBoundingClientRect();
     if (!r.width || !r.height) continue;          // not displayed
     let w = r.width;
@@ -97,6 +97,68 @@ for (const [label, opts] of [
     const bad = await page.evaluate(MEASURE, FLOOR);
     check(`${label}: Settings / ${name.trim()}`, bad.length === 0, JSON.stringify(bad));
   }
+  await ctx.close();
+}
+
+// ── AND THE WIZARD, which inherited the menu's controls and its hole.
+// The chargen steppers are the same `.step` class and measured 34x34
+// on a Pixel 5 the first time this probe was pointed at them, which is
+// exactly why the walk lives here rather than in a second probe: one
+// floor, one measurement, every enhanced surface.
+for (const [label, opts] of [['phone', { ...devices['Pixel 5'] }]]) {
+  const ctx = await browser.newContext(opts);
+  const page = await ctx.newPage();
+  await page.goto(`${BASE}/chargen.html`, { waitUntil: 'networkidle' });
+  await page.waitForSelector('.prov', { timeout: 20000 });
+  const at = async (name) => {
+    const bad = await page.evaluate(MEASURE, FLOOR);
+    check(`${label}: chargen / ${name}`, bad.length === 0, JSON.stringify(bad));
+  };
+  const primary = () => page.locator('.act.primary');
+  await at('homeland');
+  await page.evaluate(() => [...document.querySelectorAll('.prov:not(.inert)')][1]
+    .dispatchEvent(new MouseEvent('click', { bubbles: true })));
+  await page.waitForTimeout(150);
+  await at('homeland sheet');
+  await primary().click();
+  await at('sex');
+  await page.locator('.bigbtn', { hasText: 'Woman' }).click();
+  await at('class method');
+  await page.locator('.bigbtn', { hasText: 'Choose from a list' }).click();
+  await at('class list');
+  await page.locator('.row-main').nth(1).click();
+  await primary().click();
+  await page.waitForTimeout(150);
+  await at('class description');
+  await primary().click();
+  await at('history method');
+  await page.locator('.bigbtn', { hasText: 'Answer twelve' }).click();
+  await at('biography');
+  for (let i = 0; i < 14; i++) {
+    if (!(await page.locator('.answer').count())) break;
+    await page.locator('.answer').first().click();
+    await page.waitForTimeout(40);
+  }
+  await at('reputation box');
+  if (await page.locator('.repbox').count()) await primary().click();
+  await page.waitForTimeout(150);
+  await at('name');
+  await page.locator('.act', { hasText: 'Suggest one' }).click();
+  await primary().click();
+  await page.waitForTimeout(800);
+  await at('face');
+  await primary().click();
+  await page.waitForTimeout(200);
+  await at('attributes');
+  // spend the pool so the screen advances, then measure the skills
+  // steppers - three groups, three pools, and the same control
+  for (let i = 0; i < 40; i++) {
+    if (!(await primary().isDisabled())) break;
+    await page.locator('.row .step').last().click();
+  }
+  await primary().click();
+  await page.waitForTimeout(200);
+  await at('skills');
   await ctx.close();
 }
 
