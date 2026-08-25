@@ -12,6 +12,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   runDayChange, tickPlayerMinutes, CLASSIC_MINUTES_PER_SECOND, MINUTES_PER_DAY,
+  worldMinutes, setWorldMinutes,
 } from '../src/systems/worldTick.js';
 import {
   updateRegionalPrices, regionPriceAdjustment, REGION_COUNT,
@@ -441,4 +442,86 @@ test('S41 restore: a load re-anchors lastGameMinutes, so no day block runs over 
   });
   assert.deepEqual(live.rentedRooms, [], 'collected on the next day change');
   assert.equal(hasDefaulted(live.bankAccounts, 0), true, 'and the loan defaulted there');
+});
+
+// ── the marker must be MONOTONIC, or one midnight fires twice ──────
+
+test('S41 re-entrancy: the exhaustion collapse re-enters the tick, and one midnight must still fire ONCE', () => {
+  // DFU makes this impossible by construction: PlayerEntity.cs:368-371
+  // THROWS when gameMinutes < lastGameMinutes, so the marker can never
+  // end a frame ahead of the clock and a calendar boundary is crossed
+  // exactly once. Its exhaustion collapse is a bare RaiseTime(1 hour)
+  // at :2429 that never re-enters Update.
+  //
+  // The port's hosts implement that RaiseTime as playerTicker.advance(60)
+  // fired from inside sinks.drainFatigue (shared.js:682 ->
+  // exterior.js:407, world.js:626), which re-enters tickPlayerMinutes
+  // from inside its own fatigue band. With the marker assigned
+  // unconditionally the nested tick left it an hour AHEAD, the outer
+  // frame's own setWorldMinutes then reset the clock BELOW it, and the
+  // next frame pulled the marker back - so the same midnight was crossed
+  // and processed TWICE. Measured before the fix: the price drifted
+  // 1000 -> 980 -> 960 for one day change, the six climate zones rolled
+  // twice, and the room sweep and loan check both ran twice.
+  //
+  // The write-back is the load-bearing half of the repro, so this pin
+  // drives the host's real shape - module world clock and all - rather
+  // than calling tickPlayerMinutes twice by hand.
+  const saved = worldMinutes();
+  resetWeatherSim();
+  try {
+    const start = 100 * MINUTES_PER_DAY + 1410 + 0.5;   // 23:30 on day 100, mid-minute
+    setWorldMinutes(start);
+    const e = {
+      raceId: 0, health: 20, maxHealth: 20, fatigue: 11, stats: {},
+      skills: [30], skillUses: [], items: [], activeEffects: [],
+      regionPrices: { 0: 1000 }, factionRep: { dict: dict() }, legalRep: {},
+      lastGameMinutes: Math.floor(start),
+    };
+    let collapses = 0;
+    let ticker;
+    const onExhausted = () => {                    // the hosts' _inExhaustion latch
+      if (onExhausted.busy) return;
+      onExhausted.busy = true;
+      try { collapses++; ticker.advance(60); e.fatigue = 1e9; }
+      finally { onExhausted.busy = false; }
+    };
+    const sinks = {                                 // shared.js:675-683
+      drainFatigue: (n) => {
+        if (n <= 0) return;
+        e.fatigue = Math.max(0, (e.fatigue ?? 0) - n);
+        if (e.fatigue <= 0 && (e.health ?? 0) > 0) onExhausted();
+      },
+    };
+    ticker = {
+      tick(dt) {
+        const r = tickPlayerMinutes({
+          entity: e, classicMinutes: worldMinutes(), dt, sinks,
+          rolls: () => 0.99, say: () => {},
+        });
+        setWorldMinutes(r.classicMinutes);          // shared.js:716 - the write-back
+        return r;
+      },
+      advance(m) { return m > 0 ? this.tick(m / CLASSIC_MINUTES_PER_SECOND) : null; },
+    };
+
+    const drifts = [];
+    let prev = 1000;
+    // The clock runs at one classic minute per five real seconds, so
+    // covering 23:30 -> past midnight needs 150+ real seconds of frames;
+    // a one-second frame keeps that cheap without changing the shape.
+    for (let f = 0; f < 250; f++) {                 // 250s = 50 classic minutes
+      ticker.tick(1);
+      if (e.regionPrices[0] !== prev) { drifts.push([prev, e.regionPrices[0]]); prev = e.regionPrices[0]; }
+    }
+
+    assert.equal(collapses, 1, 'the fixture collapsed exactly once');
+    assert.ok(worldMinutes() > 101 * MINUTES_PER_DAY, 'the run really did cross midnight');
+    assert.equal(drifts.length, 1,
+      `ONE day change must drift the price ONCE; got ${JSON.stringify(drifts)}`);
+    assert.equal(e.regionPrices[0], 980, '1000 -> 980, not 1000 -> 980 -> 960');
+  } finally {
+    setWorldMinutes(saved);
+    resetWeatherSim();
+  }
 });

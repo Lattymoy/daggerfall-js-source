@@ -2972,6 +2972,16 @@ items at 60 a round instead of 4. `mountInterior` disposes what it
 replaces now - the shape `townTalk.showOverlay` has always had - and
 the quest box goes through it rather than assigning the slot raw.
 
+FLAGGED, the other half of the same C#: `TickRest` also re-checks
+`GameManager.GetPreventedRestMessage()` TWICE mid-rest - once before
+the sub-tick (`:357-360`) and again at the hour boundary (`:409-412`)
+- and each returns true, ending the rest with that message. The port
+asks the registry only at the OPEN gate (`restDecision`), so something
+that STARTS preventing rest while the player sleeps does not wake
+them: they sleep through to the mode's own finish line. No lane had
+this. It needs a `preventedMessage()` dep on the session and a feed
+from each host, so it is named here rather than smuggled in.
+
 Pins: 52 in `restlodging.test.js`, two of them END TO END - every law
 in this slice driven together through one host-shaped deps bag, from
 the key press to the wake. That is the closest thing to a live probe a
@@ -3163,7 +3173,40 @@ This is the second time in this file a comment has been found citing a
 C# line the port does not contain, and both times the comment read as
 proof that the work was done.
 
-Pins: `test/daychange.test.js` (19) covers each member against its
+**And the re-entrancy this slice made reachable.** DFU crosses a
+calendar boundary exactly once because it cannot do otherwise:
+`PlayerEntity.cs:368-371` THROWS when `gameMinutes < lastGameMinutes`,
+so the marker can never end a frame ahead of the clock. Its exhaustion
+collapse is a bare `RaiseTime(1 * SecondsPerHour)` (`:2429`) that
+returns; `Update` is not re-entered.
+
+The port's hosts implement that same RaiseTime as
+`playerTicker.advance(60)` (`exterior.js:407`, `world.js:626`), fired
+from inside `sinks.drainFatigue` - so it re-enters `tickPlayerMinutes`
+from inside that function's own fatigue band. The nested tick wrote the
+marker an hour ahead, the outer frame's own `setWorldMinutes` then
+reset the world clock BELOW it, and the next frame pulled the marker
+back down - so the same midnight was crossed, and processed, TWICE.
+Measured: one collapse at 23:30 drifted the region price 1000 -> 980 ->
+960 for a single day change, rolled the six climate zones twice, and
+ran the room sweep and the loan check twice each.
+
+Nothing was exposed to this before S41. The only reader of that marker
+was the 112-day reputation-normalise loop, where a repeat is invisible,
+and the one day-change law the port did have - the weather roll -
+carried its own monotonic module marker, which is exactly the
+`_lastDay` this slice deleted. Hanging all four members off the shared
+marker is what turned a latent host quirk into four wrong laws.
+
+The marker is monotonic now. That is DFU's invariant restated, not a
+liberty: DFU asserts it with a throw, and the port cannot, because it
+has a caller DFU does not. The genuine backward move - a load - does
+not come through here at all, because `save.js` re-anchors explicitly.
+FOUND AND NOT FIXED, because it is the host's and not this slice's: the
+outer frame's write-back also DISCARDS the collapse's hour, so the port
+recovers the vitals of a rested hour without spending it.
+
+Pins: `test/daychange.test.js` (20) covers each member against its
 C# and, separately, the wiring - a year-long jump through
 `tickPlayerMinutes` that drifts the prices, collects an expired
 rental and defaults a loan in one tick.

@@ -329,7 +329,37 @@ export function tickPlayerMinutes({
       normalizeReputations(entity, entity.factionRep ?? null);
     }
   }
-  entity.lastGameMinutes = nowMinutes;   // :521, the tail of the same update
+  // :521, the tail of the same update - but MONOTONIC, which is DFU's
+  // own hard invariant rather than a liberty: PlayerEntity.cs:368-371
+  // THROWS when `gameMinutes < lastGameMinutes`, so in DFU this marker
+  // can never end a frame ahead of the clock and a calendar boundary is
+  // therefore crossed exactly once.
+  //
+  // The port cannot make that a throw, because it has a caller DFU does
+  // not: the exhaustion collapse. DFU's is PlayerEntity.cs:2429, a bare
+  // `RaiseTime(1 hour)` that returns - the port's hosts implement it as
+  // `playerTicker.advance(60)` (exterior.js:407, world.js:626), fired
+  // from inside sinks.drainFatigue, which re-enters THIS FUNCTION from
+  // inside its own fatigue band. The nested tick wrote the marker an
+  // hour ahead, the outer frame then reset the world clock to its own
+  // smaller value, and the marker was pulled BACK on the next frame -
+  // so the same midnight was crossed, and processed, twice.
+  //
+  // S41 is what made that reachable: before it, the only reader of this
+  // marker was the 112-day reputation-normalise loop, and the weather
+  // member - the one day-change law the port had - carried its own
+  // monotonic module marker that was immune. Hanging all four day-change
+  // members off this one exposed it. Measured: one collapse at 23:30
+  // drifted the region price twice (1000 -> 980 -> 960), rolled the six
+  // climate zones twice, and ran the room sweep and the loan check twice.
+  //
+  // Clamping restores DFU's invariant at the one seam that can break it.
+  // A genuine BACKWARD move of the clock is a load, and that no longer
+  // arrives here at all: save.js re-anchors the marker explicitly, which
+  // is SerializablePlayer.cs:338-339.
+  if (!Number.isFinite(entity.lastGameMinutes) || nowMinutes > entity.lastGameMinutes) {
+    entity.lastGameMinutes = nowMinutes;
+  }
 
   // PlayerEntity.cs:528-530, the tail of the SAME update: the flag is
   // a ONE-JUMP shield, cleared the moment the jump it covered is over.
