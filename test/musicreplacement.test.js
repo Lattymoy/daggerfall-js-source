@@ -3,7 +3,9 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { MidiBsaFile } from '../src/formats/hmiFile.js';
 import {
   MUSIC_EXTENSIONS, replacementKey, replacementEntry, indexReplacements,
   replacementFor, hasReplacement, setMusicReplacements, clearMusicReplacements,
@@ -14,6 +16,11 @@ import * as SM from '../src/systems/songManager.js';
 import { CONTEXT } from '../tools/musicNames.mjs';
 
 const src = (rel) => readFileSync(new URL(`../src/${rel}`, import.meta.url), 'utf8');
+
+const ARENA2 = process.env.ARENA2_PATH;
+const skipReal = !ARENA2 || !existsSync(ARENA2)
+  ? 'ARENA2_PATH not set or missing - real-data validation skipped'
+  : false;
 const on = () => setValue('Enhancements', 'AssetInjection', 'True');
 const off = () => setValue('Enhancements', 'AssetInjection', 'False');
 
@@ -43,6 +50,35 @@ test('music: only audio files are candidates, and a dotfile is not one', () => {
   // `.ogg` alone is a DOTFILE, not a song called nothing - dot at 0
   assert.equal(replacementEntry('.ogg'), null);
   assert.equal(replacementEntry(''), null);
+});
+
+test('music: DFU\'s `song_` prefix is accepted, so a DFU pack drops in unrenamed', () => {
+  // THE SETUP WIN. SoundReplacement asks for `song.ToString()` where
+  // `song` is a SongFiles enum value, and those members are named
+  // `song_` + the archive record, lowercased (SongFiles.cs) - so every
+  // music pack built for Daggerfall Unity is ALREADY named correctly
+  // and merely wears that prefix. Rejecting it would mean hand-renaming
+  // a hundred files for nothing.
+  assert.deepEqual(replacementEntry('song_gday___d.ogg'), { key: 'GDAY___D', ext: 'ogg' });
+  assert.deepEqual(replacementEntry('GDAY___D.ogg'), { key: 'GDAY___D', ext: 'ogg' },
+    'the bare record name still works - both conventions land on one key');
+  assert.deepEqual(replacementEntry('SONG_TAVERN.mp3'), { key: 'TAVERN', ext: 'mp3' },
+    'case-insensitive, like every other part of the match');
+  // a record whose own name starts with a digit survives the strip
+  assert.deepEqual(replacementEntry('song_5strong.ogg'), { key: '5STRONG', ext: 'ogg' });
+
+  // ONLY THE LEADING PREFIX, and only one: this is a strip, not a
+  // substring purge, or a record with `song_` inside it would be cut.
+  assert.equal(replacementEntry('song_song_x.ogg').key, 'SONG_X');
+  assert.equal(replacementEntry('a_song_b.ogg').key, 'A_SONG_B');
+
+  // SAFE BECAUSE THE ARCHIVE SAYS SO: swept over all 131 retail
+  // records, none begins with SONG_, so the strip cannot shorten a
+  // real name by accident. Pinned as the claim rather than the sweep,
+  // which needs ARENA2 - the corpus gate below is the sweep.
+  const bothForms = indexReplacements(['song_tavern.ogg', 'TAVERN.mp3']);
+  assert.equal(bothForms.size, 1, 'the two spellings are ONE song, not two');
+  assert.equal(bothForms.get('TAVERN').ext, 'ogg', 'and preference still decides which wins');
 });
 
 test('music: format preference is FIXED, not whichever file was listed last', () => {
@@ -222,4 +258,28 @@ test('music: every playlist has a human label, or the song table hides songs', (
   assert.ok(names.length >= 19, `expected the full playlist set, saw ${names.length}`);
   const unlabelled = [...new Set(names)].filter((n) => !CONTEXT[n]);
   assert.deepEqual(unlabelled, [], 'these playlists have no label in tools/musicNames.mjs');
+});
+
+test('music: NO retail record collides with the `song_` strip', { skip: skipReal }, () => {
+  // The safety claim behind accepting DFU's prefix, swept rather than
+  // asserted. If any record were named SONG_something, stripping the
+  // prefix would silently point its replacement at a DIFFERENT song -
+  // and the failure would be a wrong track playing, which no unit
+  // fixture can notice.
+  const archive = new MidiBsaFile();
+  assert.equal(archive.load(new Uint8Array(readFileSync(join(ARENA2, 'MIDI.BSA')))), true);
+  assert.equal(archive.count, 131);
+
+  const names = [];
+  for (let i = 0; i < archive.count; i++) names.push(archive.getSongName(i));
+  assert.deepEqual(names.filter((n) => /^song_/i.test(n)), [],
+    'a record starting with SONG_ would be shortened by the strip');
+
+  // ...and every record round-trips through the matcher BOTH ways -
+  // bare, and wearing DFU's prefix - onto its own key.
+  for (const record of names) {
+    const key = replacementKey(record);
+    assert.equal(replacementEntry(`${record.replace(/\.HMI$/i, '')}.ogg`)?.key, key, record);
+    assert.equal(replacementEntry(`song_${key.toLowerCase()}.ogg`)?.key, key, `song_ form of ${record}`);
+  }
 });

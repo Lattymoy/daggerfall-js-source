@@ -72,7 +72,15 @@ export function replacementEntry(fileName) {
   if (dot <= 0) return null;                     // no extension, or a dotfile
   const ext = base.slice(dot + 1).toLowerCase();
   if (!MUSIC_EXTENSIONS.includes(ext)) return null;
-  return { key: base.slice(0, dot).toUpperCase(), ext };
+  // THE `song_` PREFIX IS DFU'S OWN, and accepting it is what lets an
+  // existing music pack drop in unrenamed. SoundReplacement asks for
+  // `song.ToString()` where `song` is a SongFiles enum value, and those
+  // members are named `song_` + the archive record, lowercased
+  // (SongFiles.cs) - so every pack built for Daggerfall Unity is
+  // already named correctly and only wears that prefix. Stripping it is
+  // unambiguous: swept over the retail archive, NO record name begins
+  // with SONG_, so nothing real is shortened by accident.
+  return { key: base.slice(0, dot).replace(/^song_/i, '').toUpperCase(), ext };
 }
 
 /**

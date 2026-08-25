@@ -87,7 +87,8 @@ function main() {
 
   if (dirArg < 0) {
     console.log(`${rows.length} songs, from songManager.js's own playlists.`);
-    console.log('Name a replacement after the record, e.g. GDAY___D.ogg\n');
+    console.log('A Daggerfall Unity music pack works as-is: its song_*.ogg names');
+  console.log('are already these records. Otherwise name files GDAY___D.ogg.\n');
     console.log('RECORD        SET  PLAYS FOR');
     for (const [song, e] of rows) {
       const set = e.fm && e.gm ? 'both' : (e.fm ? 'FM' : 'GM');
