@@ -9,14 +9,33 @@ YAWS=[0,45,90,135,180,225,270,315]
 # for the same head - a 55% spread - so the same rig height sampled the brow in
 # one view and the mouth in another and the blend averaged them: mush at 45,
 # two faces at 90. The views share a frame now, so the landmark transfers.
-_f=np.array(Image.open(f'heads/f{FACE}_000.png').convert('RGBA'))[:,:,3]>0
-_H=_f.shape[0]; _w=[int(_f[r].sum()) for r in range(_H)]
-_top=next(r for r in range(_H) if _w[r]>0)
-_lo=int(_H*0.55)
-SH_FRAC=max(((_w[r+1]-_w[r], r) for r in range(_lo,_H-2)))[1]/_H
+import glob as _glob
+_fr=[]
+for _p in sorted(_glob.glob('heads/f*_000.png')):
+    _m=np.array(Image.open(_p).convert('RGBA'))[:,:,3]>0
+    _h=_m.shape[0]
+    if _h<200: continue                      # skip the body sheet
+    _ww=[int(_m[r].sum()) for r in range(_h)]
+    _lo=int(_h*0.55)
+    _fr.append(max(((_ww[r+1]-_ww[r], r) for r in range(_lo,_h-2)))[1]/_h)
+SH_FRAC=float(np.median(_fr)) if _fr else 0.83
+print(f'shoulder fraction: median {SH_FRAC:.3f} across {len(_fr)} heads '
+      f'(per-face range {min(_fr):.3f}..{max(_fr):.3f})')
+def _skinSide(Y):
+    A=np.array(Image.open(f'heads/f{FACE}_{Y:03d}.png').convert('RGBA'))
+    m=A[:,:,3]>0; rgb=A[:,:,:3].astype(int); H=m.shape[0]
+    r0,r1=int(H*0.849*0.28),int(H*0.849*0.60)
+    sub=rgb[r0:r1]; ms=m[r0:r1]
+    warm=(sub[:,:,0]-sub[:,:,2]>34)&(sub[:,:,0]>90)&ms
+    xs=np.where(ms.any(axis=0))[0]; c=(xs.min()+xs.max())//2
+    return 'LEFT' if int(warm[:,:c].sum())>int(warm[:,c:].sum()) else 'RIGHT'
+_flip = _skinSide(90)=='LEFT'
+SRC = {Y:(( -Y) % 360 if _flip else Y) for Y in YAWS}
+print(f'rotation: {"REFLECTED" if _flip else "as-labelled"}'
+      + (f'  (90<->270, 45<->315, 135<->225)' if _flip else ''))
 V={}
 for Y in YAWS:
-    im=Image.open(f'heads/f{FACE}_{Y:03d}.png').convert('RGBA'); A=np.array(im)
+    im=Image.open(f'heads/f{FACE}_{SRC[Y]:03d}.png').convert('RGBA'); A=np.array(im)
     m=A[:,:,3]>0; H,W=m.shape
     w=[int(m[r].sum()) for r in range(H)]
     top=next(r for r in range(H) if w[r]>0)
