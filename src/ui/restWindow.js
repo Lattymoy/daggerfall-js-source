@@ -88,6 +88,17 @@ export class RestWindow {
   }
 
   /** Called from the scene frame while resting (dt = real seconds). */
+  /** V5 - THE GENERIC TICK, so no host has to remember this window is
+   *  special. Every host already drives `overlay.tick?.(dt)` (townTalk
+   *  :572, worldModes' interior arm, dungeonContext.tickOverlay); only
+   *  the dungeon ALSO carried an `if (isRestWindow) tickRest(dt)` line,
+   *  which is precisely the kind of per-host branch that made resting
+   *  a dungeon-only feature in the first place. That line goes with
+   *  this: with both present the dungeon would rest at double speed.
+   *  tickRest stays the real method - the tests and the session drive
+   *  it by name. */
+  tick(dt) { this.tickRest(dt); }
+
   tickRest(dt) {
     if (this.state !== 'resting') return;
     const r = this.session.tick(dt);

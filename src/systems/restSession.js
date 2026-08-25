@@ -26,7 +26,9 @@
 // Pre-rest gates (the scene owns them, constants here): enemies
 // nearby -> 354; swimming or airborne -> 355 "You cannot rest now.";
 // loiter requests above the classic 3-hour cap are refused with the
-// cannot-loiter lines. Building trespass/rent rules pend towns.
+// cannot-loiter lines. V5 retires the line that stood here for four
+// audits - "Building trespass/rent rules pend towns" - by porting
+// CanRest (:542-600) whole; see canRest() below.
 
 import { getInt } from './settings.js';   // SETT: LoiterLimitInHours
 
@@ -42,7 +44,112 @@ export const loiterLimitHours = () => getInt('Enhancements', 'LoiterLimitInHours
 
 export const REST_TEXT = Object.freeze({
   loiterDone: 349, healed: 350, wakeUp: 353, enemiesNearby: 354, cannotRestNow: 355,
+  cityCampingIllegal: 17,   // V5: DaggerfallRestWindow.cs:69
 });
+/** Internal_Strings.csv:357 / :871 - the two lines CanRest speaks. */
+export const HAVE_NOT_RENTED_ROOM = 'You have not rented a room here.';
+export const ILLEGAL_REST_WARNING = 'It is illegal to camp in or near a city. Continue?';
+/** DFLocation.BuildingTypes.Tavern - the one type the guild-hall arm
+ *  excludes, because the data marks EVERY tavern a Fighters Guild. */
+export const BUILDING_TAVERN = 15;
+
+/** PlayerEntity.GetRemainingHours: the hours a rental still has to
+ *  run, -1 for no room. The C# cast to int truncates toward zero, so
+ *  an expired room answers a NEGATIVE number rather than 0 - and
+ *  CanRest tests `> 0`, so that distinction never shows. Kept
+ *  faithful anyway; a caller that tested `>= 0` would need it. */
+export const remainingHoursRented = (room, nowMinutes) =>
+  (room ? Math.trunc((room.expiryMinutes - nowMinutes) / 60) : -1);
+
+/**
+ * DaggerfallRestWindow.CanRest (:542-600), verbatim in shape.
+ *
+ * THE WHOLE TOWN HALF OF RESTING WAS UNPORTED until V5, and the
+ * first-hour probe made it concrete: a character rented a room in
+ * Burgley for five gold - the gold left the purse, the rental record
+ * landed - and then could not go to sleep in it.
+ *
+ * Answers a verdict rather than a bool, because DFU's own return is
+ * only half the story: the town arm ALSO registers a crime and calls
+ * the watch, and the caller has to know the allocated bed to move the
+ * player to it.
+ *
+ *   { allowed, textId?, line?, crime?, spawnGuards?, hoursRented, bedIndex }
+ *
+ * THE TWO-STEP CAMPING FLOW, verbatim and easy to misread. Inside a
+ * town's rect the answer is `alreadyWarned` ITSELF:
+ *   - first press (alreadyWarned false) -> refused, and the
+ *     cityCampingIllegal box shows;
+ *   - the buttons re-ask through the illegalRestWarning Yes/No box
+ *     (:648-664, gated on the GUI/IllegalRestWarning setting) and a
+ *     Yes calls back with true -> ALLOWED.
+ * Either way Vagrancy is registered and the watch is spawned - so a
+ * player who tries to camp in town and then backs out has still
+ * committed the crime, and with the warning setting OFF they commit
+ * it on every press while never being allowed to rest. Verbatim.
+ *
+ * LOITER DOES NOT COME THROUGH HERE AT ALL (:693-706) - the loiter
+ * button opens its hours prompt directly, so loitering in a town is
+ * free of both the refusal and the crime. Also verbatim.
+ *
+ * A DFU DEFECT THE PORT'S SHAPE AVOIDS: inside the permanent-scene
+ * arm DFU reads `room.allocatedBedIndex` with no null check (:582),
+ * having just called GetRemainingHours which explicitly handles a
+ * null room. A permanent scene whose rental record is gone - an
+ * expired room the sweep has not yet collected - is a
+ * NullReferenceException there. Here the room is tested before it is
+ * read, and a missing one simply fails the `hoursRented > 0` gate.
+ */
+export function canRest({
+  // PlayerGPS.IsPlayerInTown(mustBeInLocationRect: true, mustBeOutside: true)
+  // - TRUE only standing in the OPEN inside a town's rect. Read the
+  // second flag backwards and every inn refuses to let you sleep.
+  inTownOutside = false,
+  inTownLocation = false,    // PlayerGPS.IsPlayerInTown() - the location type alone
+  insideBuilding = false,
+  buildingType = null,
+  permanentScene = false,    // StateManager.ContainsPermanentScene(sceneName)
+  isShip = false,
+  houseOwned = false,        // DaggerfallBankManager.IsHouseOwned(buildingKey)
+  room = null,               // the rental record for THIS inn, or null
+  nowMinutes = 0,
+  restMarkers = 0,           // Interior.FindMarkers(InteriorMarkerTypes.Rest).length
+  guildCanRest = false,      // GuildManager.GetGuild(factionID).CanRest()
+  alreadyWarned = false,
+} = {}) {
+  if (inTownOutside) {
+    return {
+      allowed: alreadyWarned,
+      textId: alreadyWarned ? null : REST_TEXT.cityCampingIllegal,
+      crime: 'Vagrancy', spawnGuards: true,
+      hoursRented: -1, bedIndex: -1,
+    };
+  }
+  if (inTownLocation && insideBuilding) {
+    if (permanentScene) {
+      // A ship or a house you own needs no rental and no bed marker.
+      if (isShip || houseOwned) return { allowed: true, hoursRented: -1, bedIndex: -1 };
+      const hoursRented = remainingHoursRented(room, nowMinutes);
+      // The bed index is stored rather than a position because
+      // "building positions are not stable" (DFU's own comment);
+      // out of range falls to 0, as :582.
+      const idx = (room && room.allocatedBedIndex >= 0 && room.allocatedBedIndex < restMarkers)
+        ? room.allocatedBedIndex : 0;
+      if (hoursRented > 0) return { allowed: true, hoursRented, bedIndex: restMarkers > 0 ? idx : -1 };
+    }
+    // The guild-hall privilege, and the tavern exclusion that has to
+    // come with it: the data marks every tavern a Fighters Guild, so
+    // without this every innkeeper's common room would be a free bed.
+    if (buildingType !== BUILDING_TAVERN && guildCanRest) {
+      return { allowed: true, hoursRented: -1, bedIndex: restMarkers > 0 ? 0 : -1 };
+    }
+    return { allowed: false, line: HAVE_NOT_RENTED_ROOM, hoursRented: -1, bedIndex: -1 };
+  }
+  // The wilderness, a dungeon, a town you are not standing in the
+  // rect of: rest freely. This is the arm the dungeon host has always
+  // taken, which is why resting there worked and nowhere else did.
+  return { allowed: true, hoursRented: -1, bedIndex: -1 };
+}
 export const REST_PROMPT = 'Rest how many hours : ';
 export const LOITER_PROMPT = 'Loiter how many hours : ';
 export const cannotLoiterLines = () => Object.freeze([

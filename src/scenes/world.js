@@ -33,12 +33,19 @@ import { ChoiceWindow } from '../ui/talkWindow.js';   // TP-slice: the anchor/te
 import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in)
 import { calculateCastCost } from '../systems/spellcost.js';   // M2   // T3b
 import { rangedDamageSpells } from '../systems/spellcast.js';   // U42: the flight probe's picker
-import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C2): the ONE clock
+import { worldMinutes, setWorldMinutes, MINUTES_PER_DAY } from '../systems/worldTick.js';   // AUDIT 23 (C2): the ONE clock   // V5: the day/night term healthRecoveryRate reads
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice } from './hostCombat.js';
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 46): the arrow owes the flash too   // AUDIT 23 (C14)
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
 import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
+// V5: resting above ground. RestWindow and RestSession have been
+// finished since U7; what was missing was a host outside the dungeon
+// that opens one, and CanRest's whole town half.
+import { RestWindow } from '../ui/restWindow.js';
+import { canRest, REST_TEXT, ILLEGAL_REST_WARNING } from '../systems/restSession.js';
+import { isPlayerInTown } from '../systems/nearbyObjects.js';
+import { CRIMES } from '../systems/court.js';
 import { TravelMapWindow, preloadTravelMapArt, travelMapArtLoaded } from '../ui/travelMapWindow.js';   // W1: the classic art window (retires the F-slice's keyed stand-in)
 import { buildMapDict } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict
 import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
@@ -90,7 +97,7 @@ import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, 
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
-import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
+import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
 import { PlayerMotor } from '../player/motor.js';
@@ -931,6 +938,38 @@ export async function bootWorld(canvas, renderer, params, status) {
       },
     },
   });
+
+  // V5 - DECLARED HERE, BELOW BOTH FOE POOLS, and the wave-37 gate is
+  // why. Its enemiesNearby closure reads cityGuards and exteriorFoes;
+  // placing it up beside the ticker put those reads 400 lines above
+  // their own declarations, and while a closure makes that legal, this
+  // host's boot has been bitten by that shape three times (U45 is the
+  // one that stopped the game booting at all). Below the pools it is
+  // not a question anyone has to answer.
+  // V5: this host's rest, from the ONE factory (shared.createRestDeps).
+  // Only the two halves a host can uniquely answer are written here.
+  // Both are closures, so reading playerTicker from beside its own
+  // declaration is deferred and legal - the distinction
+  // test/tdz.test.js exists to keep honest.
+  const exteriorRestDeps = createRestDeps(playerEntity, {
+    say: (msg) => console.log('[player]', msg),
+    onLevelUp: () => townTalk.showOverlay(new LevelUpScreen(playerEntity)),
+    textLines: (id) => townTalk.lines(id),
+    // healthRecoveryRate reads both: a Nightfall/Daylight career heals
+    // differently under the open sky than it does indoors.
+    inside: () => (modes?.mode ?? 'exterior') !== 'exterior',
+    day: () => { const h = Math.floor((worldMinutes() % MINUTES_PER_DAY) / 60); return h >= 6 && h < 18; },
+    // AreEnemiesNearby, the RESTING variant: the exterior's live
+    // hostiles are the encounter pool and the city watch. X4's nearby
+    // scan is the producer for the first; the guards answer for
+    // themselves.
+    // The city watch answers for itself (the same read the exhaustion
+    // outcome already uses at :617) and the encounter pool is the
+    // wilderness half. Both are closures over pools declared below.
+    enemiesNearby: () => (cityGuards?.activeCount?.() ?? 0) > 0
+      || exteriorFoes.foes.some((f) => !f.dead && (f.ai?.detected || (f.ai?._dist ?? Infinity) <= 12)),
+    advanceMinutes: (n) => { playerTicker.advance(n); },
+  });
   // The classic catch-up loop (PlayerEntity.Update:486-492): per
   // elapsed game minute, one intermittent roll; break on a spawn.
   // Fast travel resets the anchor (PreventEnemySpawns parity - DFU
@@ -1619,6 +1658,68 @@ export async function bootWorld(canvas, renderer, params, status) {
   // object the keydown ladder below calls and the large HUD's panels
   // reach through routeLargeHudClick. Every member is an arrow, so
   // nothing here runs before the helper it names exists.
+  /**
+   * V5 - RESTING OUT IN THE WORLD, and the crime that comes with
+   * trying it in a town. `ctx.toggleRest` (ui/input.js:106) had one
+   * implementation in the whole tree - dungeonContext's - so KeyR was
+   * dead everywhere above ground, and CanRest's town half (:542-600)
+   * was unported entirely: no camping refusal, no Vagrancy, no watch.
+   *
+   * DaggerfallRestWindow's own two-step, verbatim (:640-691):
+   * the buttons check the IllegalRestWarning setting and, in a town's
+   * rect, ask "It is illegal to camp in or near a city. Continue?"
+   * BEFORE calling through with alreadyWarned = true. CanRest then
+   * answers `alreadyWarned` itself - so the first ask refuses and the
+   * confirmed one allows - while registering Vagrancy and calling the
+   * watch EITHER WAY. A player who backs out has still committed the
+   * crime; with the warning setting off they commit it on every press
+   * and can never actually camp. Both are DFU's.
+   */
+  function exteriorRestVerdict(alreadyWarned) {
+    return canRest({
+      inTownOutside: isPlayerInTown(_musicLocationType(), {
+        mustBeInLocationRect: true, mustBeOutside: true,
+        inLocationRect: _musicInLocationRect(),
+        inside: (modes?.mode ?? 'exterior') !== 'exterior',
+      }),
+      // Outdoors, the second arm cannot apply - it needs
+      // IsPlayerInsideBuilding - so the law falls to its free case.
+      inTownLocation: false,
+      alreadyWarned,
+    });
+  }
+  function doExteriorRest(alreadyWarned) {
+    const v = exteriorRestVerdict(alreadyWarned);
+    if (v.crime) {
+      // PlayerEntity.CrimeCommitted = Crimes.Vagrancy, then
+      // SpawnCityGuards(true) - the same door the pickpocket and the
+      // assault take, so the watch behaves identically.
+      playerEntity.crimeCommitted = CRIMES.Vagrancy;
+      if (v.spawnGuards) _crimeResponse();
+    }
+    if (!v.allowed) {
+      const lines = v.textId != null ? townTalk.lines(v.textId) : null;
+      if (lines) townTalk.showOverlay(new ChoiceWindow({ lines }));
+      return;
+    }
+    townTalk.showOverlay(new RestWindow(exteriorRestDeps));
+  }
+  function toggleExteriorRest() {
+    if (townTalk.overlayActive) return;
+    if (getBool('GUI', 'IllegalRestWarning') && exteriorRestVerdict(false).crime) {
+      townTalk.showOverlay(new ChoiceWindow({
+        lines: [ILLEGAL_REST_WARNING],
+        options: [
+          { code: 'KeyY', label: 'Y - yes', action: () => doExteriorRest(true) },
+          { code: 'KeyN', label: 'N - no', action: () => {} },
+          { code: 'Escape', label: 'Esc - no', action: () => {} },
+        ],
+      }));
+      return;
+    }
+    doExteriorRest(false);
+  }
+
   const hudCtx = {
     // U43 factored the window builders out for the interior arm to
     // mount; this reads the same ones rather than a third copy.
@@ -1640,6 +1741,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         textLines: (id) => townTalk.lines(id),
       });
     },
+    toggleRest: () => toggleExteriorRest(),   // V5
     cycleMode: (dir) => townTalk.setMode(dir > 0 ? hudLargeNextMode(getInteractionMode()) : hudLargePrevMode(getInteractionMode())),
   };
   addEventListener('keydown', (e) => {
@@ -1672,6 +1774,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       // M2/I2: the CastSpell action opens the spellbook
       // (GameManager.cs:550-553); the cast is the attack click.
       if (act === 'CastSpell') { e.preventDefault(); hudCtx.toggleSpellbook(); return; }
+      // V5: Rest, the last dead binding above ground. It was routed in
+      // the DUNGEON's chain and nowhere else, so KeyR outdoors did
+      // nothing at all - and with it comes CanRest's town half: the
+      // camping refusal, the Vagrancy charge and the watch.
+      if (act === 'Rest') { e.preventDefault(); hudCtx.toggleRest(); return; }
       // P-slice: the classic quicksave bindings (F9 save, F11 load -
       // InputManager.SetupDefaults), above ground at last.
       if (act === 'QuickSave') { e.preventDefault(); hudCtx.quickSave(); return; }
@@ -2438,6 +2545,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // what test/audit24_wave37.test.js asserts, both ways.
   var modes = createWorldModes({
     canvas, renderer, player, cam, keys, latch, blocks,
+    // V5: PlayerGPS, for CanRest. Only this host knows what kind of
+    // place the player is standing in, and the rest law's first two
+    // tests are both IsPlayerInTown reads.
+    gps: { locationType: () => _musicLocationType(), inLocationRect: () => _musicInLocationRect() },
     // Q4-v: the quest bridge + the scene context the NPC-data law needs
     questBridge,
     questSceneCtx: () => ({ mapId: _questLoc()?.mapTableData?.mapId ?? 0, locationIndex: _questLoc()?.locationIndex ?? 0 }),

@@ -46,6 +46,12 @@ const HOMONYMS = new Map([
   ['firstName', 'a talk-session getter vs the name-bank generator'],
   ['_resetForTests', 'each settings store resets its own'],
   ['orderOf', 'a settings-page order vs a guild-variant order'],
+  // V5: two different DFU members that share a name. FightersGuild.CanRest()
+  // asks whether a MEMBER may sleep in the hall; DaggerfallRestWindow.CanRest()
+  // is the whole pre-rest gate (town camping, rented room, guild privilege) and
+  // CALLS the first one through its guildCanRest dep. Renaming either would put
+  // the port's name further from DFU's than the collision costs.
+  ['canRest', 'FightersGuild.CanRest (may this member sleep here) vs DaggerfallRestWindow.CanRest (the whole pre-rest gate, which consumes it)'],
 ]);
 
 test('audit24 wave24: no symbol is DECLARED in two modules without a reason', async () => {
@@ -143,7 +149,13 @@ test('audit24 wave24: the duplicate-declaration count does not grow', () => {
   // audit should do in one motion. This number is the ratchet: it may
   // go DOWN freely, and going up needs a deliberate edit here.
   // 43 when the scan was written; 26 after waves 23-24 collapsed the
-  // seventeen that were one DFU member with two homes.
+  // seventeen that were one DFU member with two homes. 27 at V5, the
+  // deliberate edit this comment asks for: DFU has TWO CanRest members
+  // and the port needs both - FightersGuild.CanRest (may this member
+  // sleep in the hall) and DaggerfallRestWindow.CanRest (the whole
+  // pre-rest gate, which consumes the first through its guildCanRest
+  // dep). Renaming either would put the port's name further from DFU's
+  // than the collision costs; recorded in HOMONYMS above.
   const files = walk('src/');
   const decl = new Map();
   for (const f of files) {
@@ -154,8 +166,8 @@ test('audit24 wave24: the duplicate-declaration count does not grow', () => {
     }
   }
   const dupes = [...decl.entries()].filter(([, v]) => v.size > 1);
-  assert.ok(dupes.length <= 26,
-    `${dupes.length} symbols are declared in more than one module (the ratchet is 26):\n  `
+  assert.ok(dupes.length <= 27,
+    `${dupes.length} symbols are declared in more than one module (the ratchet is 27):\n  `
     + dupes.map(([n, v]) => `${n}  ${[...v].join(' ')}`).join('\n  '));
 });
 

@@ -97,6 +97,16 @@ import { exteriorLockpickingChance, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LO
 import { discoverBuilding, getLastLockpickAttempt, setLastLockpickAttempt } from '../systems/discovery.js';
 import { getHolidayId } from '../systems/holidays.js';
 import { guildOfFaction, isMember } from '../systems/guilds.js';
+// V5: rest above ground. The window and the session have been finished
+// since U7; what was missing was a host outside the dungeon that opens
+// one, and CanRest's whole town half.
+import { RestWindow } from '../ui/restWindow.js';
+import { canRest, HAVE_NOT_RENTED_ROOM, REST_TEXT } from '../systems/restSession.js';
+import { isPlayerInTown } from '../systems/nearbyObjects.js';
+import { findRentedRoom } from '../systems/tavern.js';
+import { canRest as guildCanRest } from '../systems/guildServices.js';
+import { containsPermanentScene } from '../systems/sceneCache.js';
+import { createRestDeps } from './shared.js';
 import { hallAccessAnytime } from '../systems/guildServices.js';
 import { resolveVariantGuild } from '../systems/guildVariants.js';
 import { getBool } from '../systems/settings.js';   // R1: InstantRepairs / AllowMagicRepairs go LIVE
@@ -232,7 +242,7 @@ export function createWorldModes(host) {
   // The host destructure moves with it, because `say` closes over
   // `townTalk`. It reads only the function's own argument, so it is
   // safe anywhere inside the body.
-  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null, discoveryLocationId = null } = host;   // R1: the discovery store's location key (the anti-grind record's namespace)   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
+  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null, discoveryLocationId = null, gps = null } = host;   // V5: gps = PlayerGPS's location reads, for CanRest   // R1: the discovery store's location key (the anti-grind record's namespace)   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
   // U43-ii: the interior HUD-text layer is the OUTER host's, and
   // always was - townTalk's hud draws above the modal render. The
   // "pends its arc" flag was a line of plumbing: a broken weapon, a
@@ -248,6 +258,24 @@ export function createWorldModes(host) {
   // own parseAst and reports any const or let read in the SAME
   // execution scope as, and before, its declaration.
   const say = (l) => { if (townTalk?.say) townTalk.say(l); else console.warn('[interior]', l); };
+  // V5: this host's rest, from the ONE factory (shared.createRestDeps).
+  // Only the two halves a host can uniquely answer are written here.
+  // Both are closures, so reading interiorTicker and interiorOverlay
+  // from above their own declarations is deferred and legal - the
+  // distinction test/tdz.test.js exists to keep honest.
+  const interiorRestDeps = createRestDeps(playerEntity, {
+    say,
+    onLevelUp: () => { if (!interiorOverlay) interiorOverlay = new LevelUpScreen(playerEntity); },
+    textLines: (id) => townTalk?.lines?.(id) ?? null,
+    inside: () => true,
+    // AreEnemiesNearby, the RESTING variant. A BUILDING HAS NO FOE
+    // POOL in this port - the Q4-v flag on interior enemies is still
+    // open - so this answers false and says so rather than pretending
+    // to scan. The moment an interior grows a pool, this is the line
+    // that makes a rest breakable in one. FLAGGED.
+    enemiesNearby: () => false,
+    advanceMinutes: (n) => { interiorTicker.advance(n); },
+  });
   const interiorTicker = createPlayerTicker(playerEntity, {
     onExhausted: onExhaustedInterior,   // AUDIT 23 (C5)
     say,
@@ -1072,6 +1100,62 @@ export function createWorldModes(host) {
       carriedWeightKg: () => totalWeight(playerEntity.items ?? []),
       maxEncumbranceKg: () => maxEncumbrance(liveStat(playerEntity, 'strength')),
     };
+  }
+
+  /**
+   * V5 - RESTING INSIDE A BUILDING. Until this, `ctx.toggleRest` (the
+   * only consumer of the Rest binding, ui/input.js:106) existed in
+   * exactly one of the four hosts, so KeyR did nothing anywhere but a
+   * dungeon. The first-hour probe put a number on it: a character
+   * rented a room in Burgley for five gold - the gold left the purse,
+   * the rental record landed - and then could not sleep in it.
+   *
+   * DaggerfallRestWindow's own order: CanRest first, then MoveToBed
+   * (:601-609), then the window.
+   */
+  function toggleInteriorRest() {
+    if (interiorOverlay) return;
+    const b = interiorBuilding;
+    const mapId = questSceneCtx?.()?.mapId ?? 0;
+    const scene = currentInteriorScene();
+    const dict = townTalk?.factionDict ?? null;
+    const guild = b?.factionId ? guildOfFaction(b.factionId, resolveVariantGuild(dict), dict) : null;
+    const restMarkers = (interiorCtx?.markers ?? []).filter((m) => m.type === INTERIOR_MARKER.REST);
+    const verdict = canRest({
+      // Inside a building IsPlayerInTown(true, true) is false by its
+      // own mustBeOutside gate - the camping arm cannot fire in here.
+      inTownOutside: false,
+      inTownLocation: isPlayerInTown(gps?.locationType?.() ?? 0xffff),
+      insideBuilding: true,
+      buildingType: b?.buildingType ?? null,
+      permanentScene: !!scene && containsPermanentScene(sceneCache(), scene),
+      isShip: b?.buildingType === BUILDING_TYPES.Ship,
+      // DaggerfallBankManager.IsHouseOwned - the port has no house
+      // purchase yet (ReceiveHouse is one of the two unbuilt guild
+      // services), so this is FALSE rather than absent: the moment a
+      // house can be bought, this is the line that lets you sleep in
+      // it. FLAGGED.
+      houseOwned: false,
+      room: findRentedRoom(playerEntity.rentedRooms ?? [], mapId, b?.buildingKey ?? 0),
+      nowMinutes: Math.floor(worldMinutes()),
+      restMarkers: restMarkers.length,
+      guildCanRest: guild ? guildCanRest(guild, membershipOf((playerEntity.guildMemberships ??= {}), guild)) : false,
+    });
+    if (!verdict.allowed) {
+      const lines = verdict.line ? [verdict.line] : (townTalk?.lines?.(verdict.textId) ?? null);
+      if (lines) interiorOverlay = new ActionTextBox(lines);
+      return;
+    }
+    // MoveToBed (:601-609): the allocated marker, then FixStanding.
+    // The index is stored rather than a position because building
+    // positions are not stable (DFU's own comment) - which is exactly
+    // why this resolves the marker LIST here and not at rental time.
+    const bed = verdict.bedIndex >= 0 ? restMarkers[verdict.bedIndex] : null;
+    if (bed) {
+      player.spawn(bed.x, bed.y, bed.z);
+      cam.pos = [...player.eye];
+    }
+    interiorOverlay = new RestWindow(interiorRestDeps);
   }
 
   /** U39: the innkeeper's four-button panel. Answers whether it
@@ -2966,6 +3050,12 @@ export function createWorldModes(host) {
     toggleSpellbook() { if (magic) mountInterior(makeSpellbookWindow()); },
     toggleLogbook() { mountInterior(host.makeJournal?.('activeQuests')); },
     toggleNotebook() { mountInterior(host.makeJournal?.('notebook')); },
+    // V5: the last dead arm of this ctx. U43 routed the Rest action in
+    // here, and `ctx.toggleRest?.()` (ui/input.js:106) then optional-
+    // chained into nothing, because no host outside dungeonContext had
+    // ever built one. That is what the first-hour probe hit: a room
+    // rented in Burgley for five gold, and R opening nothing in it.
+    toggleRest() { toggleInteriorRest(); },
   };
 
   addEventListener('keydown', (e) => {

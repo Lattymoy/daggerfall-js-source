@@ -21,7 +21,7 @@ import { findFactions } from '../systems/talk.js';   // V1: GetRegionFaction's F
 import { FACTION_TYPES } from '../formats/factionFile.js';
 import { killIfAnyLiveStatZero } from '../systems/statMods.js';   // AUDIT 24 (wave 32): the per-entity laws a foe pool owes
 import { decayEnemyAlert } from '../systems/encounters.js';   // AUDIT 24 (wave 36): PlayerEntity.Update's 8-hour decay, in every context
-import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
+import { hasSpecialAbility, SPECIAL_ABILITY, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate } from '../systems/rest.js';   // V5: the three per-hour rates a rest ticks, in one place for all three hosts
 import { createNearbyScan, updateNearbyObjects, detectedMarkers, hasLiveDetector } from '../systems/nearbyObjects.js';   // X4: the Detect scan
 import { liveStat, maxFatigue } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
@@ -624,6 +624,63 @@ export function raiseAtRestEnd(entity, { say = () => {}, onLevelUp = null, rolls
   const raised = raiseSkills(entity, Math.floor(worldMinutes()), rolls, onLevelUp) ?? [];
   for (const id of raised) say(`Your ${SKILL_NAMES[id]} skill has improved.`);
   return raised;
+}
+
+/**
+ * V5 - THE REST DEPS, BUILT ONCE FOR EVERY HOST.
+ *
+ * Resting worked in a dungeon and nowhere else, and the reason was
+ * not the law: RestWindow and RestSession have been finished since
+ * U7. It was that dungeonContext built the deps object by hand
+ * (:903-968) and no other host had a copy, so `ctx.toggleRest` - the
+ * ONLY consumer of the Rest binding (ui/input.js:106) - existed in
+ * exactly one of the four hosts. The first-hour probe found what that
+ * costs: a character rents a room in a tavern, gold leaves the purse,
+ * the rental record lands, and pressing Rest in it opens nothing.
+ *
+ * So the COMMON half lives here and every host gets the same rest.
+ * What a host still owns is what only it can know:
+ *   advanceMinutes(n)  - moving its own clock, and whatever its own
+ *                        world has to catch up (the dungeon spawns
+ *                        into an advanced hour; a town does not)
+ *   enemiesNearby()    - the RESTING variant over ITS pool
+ * Everything else - the three per-hour rates, the Medical tally, the
+ * fully-healed test, the vitals read, the death test, the rest-end
+ * skill raise - is one law and is now written once.
+ *
+ * `inside` and `day` ride in because healthRecoveryRate reads both
+ * (a Nightfall/Daylight career heals differently under the sun), and
+ * only the host knows which of its modes it is in.
+ */
+export function createRestDeps(entity, {
+  advanceMinutes, enemiesNearby, say = () => {}, onLevelUp = null,
+  textLines = () => null, inside = () => true, day = () => false,
+} = {}) {
+  const fullyHealed = () => entity.health >= entity.maxHealth
+    && (entity.fatigue ?? 0) >= maxFatigue(entity)
+    && (entity.magicka ?? 0) >= (entity.maxMagicka ?? 0);
+  return {
+    advanceMinutes,
+    enemiesNearby,
+    fullyHealed,
+    // DaggerfallRestWindow.cs:729-732 - the FINISHED popup's close is
+    // the advancement moment, not the per-minute tick.
+    onRestFinished: () => raiseAtRestEnd(entity, { say, onLevelUp }),
+    tickVitals: () => {
+      entity.health = Math.min(entity.maxHealth, entity.health + healthRecoveryRate(entity, { day: day(), inside: inside() }));
+      entity.fatigue = Math.min(maxFatigue(entity), (entity.fatigue ?? 0) + fatigueRecoveryRate(maxFatigue(entity)));
+      entity.magicka = Math.min(entity.maxMagicka ?? Infinity, (entity.magicka ?? 0) + spellPointRecoveryRate(entity));
+      tallySkill(entity, SKILLS.Medical);
+      surfacePlayer();
+      return fullyHealed();
+    },
+    dead: () => entity.health <= 0,
+    vitals: () => ({
+      health: entity.health, maxHealth: entity.maxHealth,
+      fatigue: Math.round((entity.fatigue ?? 0) / 64), magicka: entity.magicka ?? 0,
+    }),
+    endLines: (id) => textLines(id),
+  };
 }
 
 export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, onExhausted = null } = {}) {

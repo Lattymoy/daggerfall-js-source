@@ -142,6 +142,7 @@ export const LIVE = Object.freeze({
   'GUI/LargeHUDUndockedScale': 'src/ui/hudLarge.js',
   'GUI/LargeHUDUndockedAlignment': 'src/ui/hudLarge.js',
   'GUI/Crosshair': 'src/ui/hudCrosshair.js',
+  'GUI/IllegalRestWarning': 'src/scenes/world.js',   // V5: the "it is illegal to camp" Yes/No before a town rest
   'GUI/InteractionModeIcon': 'src/ui/hudCrosshair.js',
   // U41: the classic travel map. Stored-tier since the settings
   // screen shipped - the outline it offers is drawn by a window the

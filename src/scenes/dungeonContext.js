@@ -2763,8 +2763,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     },
     tickOverlay(dt) {
       if (!activeOverlay) return;
-      activeOverlay.tick?.(dt);   // D1: the death sequence's clock
-      if (activeOverlay.isRestWindow) activeOverlay.tickRest(dt);
+      // D1: the death sequence's clock - and, since V5, the rest
+      // window's too. RestWindow.tick forwards to tickRest, so the
+      // explicit `if (isRestWindow) tickRest(dt)` that used to sit
+      // here would now drive it TWICE and rest at double speed. The
+      // generic call is the point: a host cannot forget a branch it
+      // does not have to write.
+      activeOverlay.tick?.(dt);
       // ui-chargen-4: backing out of the race screen cancels the
       // wizard - DFU unwinds the UI stack to the start screen
       // (RaceSelectWindow_OnClose :299-302). The port's front door is
