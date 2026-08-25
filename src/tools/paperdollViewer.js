@@ -266,6 +266,27 @@ function setBodyColors(Carr) {
 // NEVER TRAPS: if either file is absent, skinTex stays null and setBodySkin
 // falls through to setBodyRamp, exactly as the title screen falls back.
 let skinI = null, skinTexCanvas = null, skinTex = null, skinLayout = null;
+// THE BAKED HEADS. public/skin/heads/ carries one cell per face, baked from our
+// own generated turnarounds (tools/skin/head_bake.py) - no ARENA2, so they
+// ship. Each face also implies its own body ramp, because the ten are not one
+// skin tone (lit skin R 161..209), and the head is the authority on that.
+let headCells = null, skinRamps = null, headPick = 0;
+async function loadHeads() {
+  try {
+    skinRamps = await fetch('./skin/breton-skin-ramps.json').then((r) => r.ok ? r.json() : null);
+  } catch { skinRamps = null; }
+  headCells = [];
+  for (let i = 0; i < 10; i++) {
+    try {
+      headCells.push(await new Promise((res, rej) => {
+        const im = new Image(); im.onload = () => res(im); im.onerror = rej;
+        im.src = `./skin/heads/breton-${i}.png`;
+      }));
+    } catch { break; }
+  }
+  if (!headCells.length) headCells = null;
+  applyTone();
+}
 async function loadSkin() {
   try {
     const [uv, lay, img] = await Promise.all([
@@ -352,6 +373,9 @@ function paintFace(ctx) {
 }
 function setBodySkin(ramp) {
   if (!skinI || !skinTex) { setBodyRamp(ramp); return; }
+  // each face's own head implies its own body tone, so the neck matches the jaw
+  const rr = (skinRamps && skinRamps[headPick]) ? skinRamps[headPick] : ramp;
+  ramp = rr;
   const src = skinI.data;
   const out = skinTexCanvas.getContext('2d').createImageData(skinI.width, skinI.height);
   for (let i = 0; i < src.length; i += 4) {
@@ -360,7 +384,14 @@ function setBodySkin(ramp) {
   }
   const ctx = skinTexCanvas.getContext('2d');
   ctx.putImageData(out, 0, 0);
-  paintFace(ctx);            // the sprite layers OVER the ramped skull
+  // the baked head REPLACES the head cell's geometry shading
+  const hc = skinLayout && skinLayout.head;
+  if (hc && headCells && headCells[headPick]) {
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(headCells[headPick], hc.x, hc.y, hc.w, hc.h);
+  } else {
+    paintFace(ctx);          // no baked head: fall back to the CIF sprite
+  }
   skinTex.needsUpdate = true;
   if (mat.map !== skinTex) { mat.map = skinTex; mat.vertexColors = false; mat.needsUpdate = true; }
 }
@@ -731,10 +762,12 @@ function applyTone() {
 }
 const syncHair = () => { const R = RACES[raceIx]; applyTone(); loadFaceSet(); for (const rr of RACES) { const h = raceHair[rr]; if (h) for (const st of h.styles) h.meshes[st].visible = false; } const m = curHair(); if (m) m.visible = !helmOn(); if (tailMesh) tailMesh.visible = (RACES[raceIx] === 'Argonian'); if (tailCatMesh) tailCatMesh.visible = (RACES[raceIx] === 'Khajiit'); if (bodyScalesMesh) bodyScalesMesh.visible = (RACES[raceIx] === 'Argonian'); if (bodyFurCoat) bodyFurCoat.visible = (RACES[raceIx] === 'Khajiit'); if (bodyFurBelly) bodyFurBelly.visible = (RACES[raceIx] === 'Khajiit'); }; // per-race body detail
 window.__face = (i) => { facePick = ((i % 10) + 10) % 10; applyTone(); };
+window.__head = (i) => { headPick = ((i % 10) + 10) % 10; applyTone(); };
 window.__gender = (g) => { gender = (g === 'female') ? 'female' : 'male'; facePick = 0; loadFaceSet(); };
 syncHair();
 loadSkin();
-loadFaceSet();   // async; re-runs applyTone once the texture is up
+loadFaceSet();
+loadHeads();   // async; re-runs applyTone once the texture is up
 scene.add(pivot);
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0x40404a, 0.9));

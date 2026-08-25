@@ -43,6 +43,16 @@ const PUBLIC_ALLOWLIST = new Map([
   ['public/skin/skin-uv.json', "OURS - UVs over our own rig's geometry, no pixels at all"],
   ['public/skin/skin-layout.json', 'OURS - atlas cell rectangles, no pixels at all'],
   ['public/skin/breton-skin-ramps.json', 'OURS - ramps derived from our own generated heads'],
+  ['public/skin/heads/breton-0.png', 'OURS - baked from our own generated head turnaround'],
+  ['public/skin/heads/breton-1.png', 'OURS - baked from our own generated head turnaround'],
+  ['public/skin/heads/breton-2.png', 'OURS - baked from our own generated head turnaround'],
+  ['public/skin/heads/breton-3.png', 'OURS - baked from our own generated head turnaround'],
+  ['public/skin/heads/breton-4.png', 'OURS - baked from our own generated head turnaround'],
+  ['public/skin/heads/breton-5.png', 'OURS - baked from our own generated head turnaround'],
+  ['public/skin/heads/breton-6.png', 'OURS - baked from our own generated head turnaround'],
+  ['public/skin/heads/breton-7.png', 'OURS - baked from our own generated head turnaround'],
+  ['public/skin/heads/breton-8.png', 'OURS - baked from our own generated head turnaround'],
+  ['public/skin/heads/breton-9.png', 'OURS - baked from our own generated head turnaround'],
 ]);
 
 test('doctrine: nothing ships out of public/ that is not provably ours', () => {
