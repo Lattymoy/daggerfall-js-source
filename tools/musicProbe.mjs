@@ -81,5 +81,26 @@ const result = await page.evaluate(async () => {
   };
 });
 console.log(JSON.stringify(result, null, 2));
+
+// T3: the question in this file's own header is "does the music layer
+// actually make a sound?", and the answer was sitting in peakRms and
+// audibleFrames while the probe exited 0 either way - so a silent
+// audio graph, which is the entire thing it was built to catch, read
+// as a pass. `> 0.001` is the same audibility floor the sampler above
+// already uses for audibleFrames; a MAJORITY of the forty frames must
+// clear it, because a single click at the start is not music.
+const verdict = [];
+if (result.error) verdict.push(result.error);
+else {
+  if (!result.playing) verdict.push('the player is not playing');
+  if (!(result.peakRms > 0.001)) verdict.push(`silence: peakRms ${result.peakRms}`);
+  if (!(result.audibleFrames > result.frames / 2)) {
+    verdict.push(`mostly silent: ${result.audibleFrames}/${result.frames} frames above the floor`);
+  }
+}
+if (verdict.length) for (const v of verdict) console.log(`FAIL: ${v}`);
+else console.log(`MUSIC AUDIBLE: peak ${result.peakRms.toFixed(4)}, ${result.audibleFrames}/${result.frames} frames`);
+
 await browser.close();
 await server.close();
+process.exit(verdict.length ? 1 : 0);

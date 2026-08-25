@@ -38,13 +38,52 @@ const waitFrames = async (n) => {
   await page.waitForFunction(([f0, k]) => window.__frame > f0 + k, [f, n], { timeout: 60000 });
 };
 const press = async (code) => { await page.keyboard.down(code); await waitFrames(3); await page.keyboard.up(code); await waitFrames(2); };
+// T3: everything below this line used to be printed and none of it
+// judged. The probe walked the whole court flow - surrender, plea,
+// sentence, the crime clearing, the reputation moving - and exited 0
+// whether or not any of it happened. A court that never opened looked
+// the same as a conviction.
+const die = (why, detail) => {
+  console.log(`FAIL: ${why}${detail !== undefined ? ` - ${detail}` : ''}`);
+  process.exitCode = 1;
+};
+const talk = async () => JSON.parse(await page.evaluate(() => window.__talk()));
+
 await press('KeyY');   // surrender
-console.log('after Y (court):', await page.evaluate(() => window.__talk()), 'hp:', await page.evaluate(() => window.__playerEntity.health));
+const court = await talk();
+console.log('after Y (court):', JSON.stringify(court), 'hp:', await page.evaluate(() => window.__playerEntity.health));
 await page.screenshot({ path: '/home/claude/arrest-court.png' });
+// Surrendering puts the player in front of the court, which STATES the
+// charge and offers the two pleas. Both are in the panel's own text.
+if (!court.overlay) die('surrendering opened no court panel', JSON.stringify(court));
+if (!/accused of the crime/i.test(court.overlayText ?? '')) {
+  die('the panel is not the court - it never states the charge', JSON.stringify(court.overlayText));
+}
+const pleas = (court.overlayOptions ?? []).join(' ');
+if (!/guilty/i.test(pleas)) die('the court offered no plea', JSON.stringify(court.overlayOptions));
+
 await press('KeyG');   // plead guilty
-console.log('after G:', await page.evaluate(() => window.__talk()));
+const sentence = await talk();
+console.log('after G:', JSON.stringify(sentence));
+// A guilty plea invokes the court's mercy and passes a SENTENCE - the
+// number of days is the dice's business, that a sentence was passed at
+// all is not.
+if (!/prison|free to go|banish|execut/i.test(sentence.overlayText ?? '')) {
+  die('pleading guilty produced no sentence', JSON.stringify(sentence.overlayText));
+}
+
 await press('KeyE');   // close the outcome panel
-console.log('final: crime =', await page.evaluate(() => window.__playerEntity.crimeCommitted),
-  'legalRep =', await page.evaluate(() => JSON.stringify(window.__playerEntity.legalRep ?? {})),
-  'guards =', await page.evaluate(() => window.__guards()));
+const crime = await page.evaluate(() => window.__playerEntity.crimeCommitted);
+const legalRep = JSON.parse(await page.evaluate(() => JSON.stringify(window.__playerEntity.legalRep ?? {})));
+const guards = JSON.parse(await page.evaluate(() => window.__guards()));
+console.log('final: crime =', crime, 'legalRep =', JSON.stringify(legalRep), 'guards =', JSON.stringify(guards));
+// Serving the sentence DISCHARGES the crime - a player who has been
+// tried and sentenced is no longer wanted for it...
+if (crime) die('the crime survived the sentence', crime);
+// ...and it costs legal reputation in the region it happened in.
+const reps = Object.values(legalRep);
+if (!reps.length) die('the conviction moved no legal reputation', JSON.stringify(legalRep));
+else if (!reps.some((v) => v < 0)) die('the conviction did not COST reputation', JSON.stringify(legalRep));
+
+if (!process.exitCode) console.log('\nARREST OK: surrender opens the court, a guilty plea is sentenced, and the crime is discharged at a price');
 await browser.close(); await server.close();

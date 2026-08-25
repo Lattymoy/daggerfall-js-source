@@ -18,11 +18,24 @@ const browser = await chromium.launch({
   args: ['--use-gl=angle', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'],
 });
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
-const errors = [];
-page.on('pageerror', (e) => errors.push(String(e.message)));
+// T3: TWO lists, not one. This probe exists to answer "does a dungeon
+// actually BOOT" - and it collected page errors and then exited 0
+// whatever they said, so the crash it was written to catch would have
+// been reported as a successful run.
+//
+// It cannot simply fail on everything it collects, and the first draft
+// of this fix did, which the very first run disproved: the list
+// deliberately greps for INFORMATIONAL music lines, and the browser
+// logs a console error for any 404 - including CURSOR.IMG, which this
+// port HANDLES ("the OS cursor stands in"). A handled 404 is not a
+// crash. So `pageerror` - an uncaught exception - is the only console
+// signal that decides the exit code; everything else is a note.
+const crashes = [];
+const notes = [];
+page.on('pageerror', (e) => crashes.push(String(e.message)));
 page.on('console', (m) => {
   const t = m.text();
-  if (m.type() === 'error' || /music|MIDI|unavailable/i.test(t)) errors.push(`[${m.type()}] ${t}`);
+  if (m.type() === 'error' || /music|MIDI|unavailable/i.test(t)) notes.push(`[${m.type()}] ${t}`);
 });
 
 await page.goto(`http://localhost:5208/?${query}`);
@@ -56,11 +69,36 @@ const state = await page.evaluate(async () => {
   const { fetchBytes: fb } = await import('/src/scenes/shared.js');
   await mod.music.ensure(fb);
   const afterAwait = { enabled: mod.music.enabled, pending: mod.music._pending ?? null, bootError: mod.music.bootError ?? null };
+  // T3: the crash overlay the header promised to report. main.js
+  // stands a `#crash` <pre> on any uncaught error or rejection, and it
+  // is the ONE boot-failure signal that does not depend on the query.
+  const crashEl = document.getElementById('crash');
   return { title: document.title, ready: window.__shotReady === true,
+           crashOverlay: crashEl ? crashEl.textContent.slice(0, 300) : null,
            music: mod.music.current, playing: !!mod.music.player?.playing,
            enabled: mod.music.enabled, pending: mod.music._pending ?? null,
            ctx: aud.audio.ctx ? aud.audio.ctx.state : 'none', probe, afterAwait };
 });
-console.log(JSON.stringify({ ...state, errors: errors.slice(0, 6) }, null, 2));
+console.log(JSON.stringify({ ...state, crashes: crashes.slice(0, 6), notes: notes.slice(0, 6) }, null, 2));
+
+// ...and what "it booted" actually means. THE READY FLAG IS NOT IT:
+// `__shotReady` is set only in shot mode (exterior.js:1847 and its
+// siblings all gate on `shotMode`), and this probe's default query is
+// `nomenu&class=1&novideo` - so the first draft of this check failed a
+// dungeon that had plainly booted, titled "Privateer's Hold - 5
+// blocks, 303 draws" with music playing. Ask for it only when the
+// query asked for a shot.
+const verdict = [];
+if (state.crashOverlay) verdict.push(`the crash overlay is up: ${state.crashOverlay.split('\n')[1] ?? ''}`);
+if (crashes.length) verdict.push(`${crashes.length} uncaught error(s): ${JSON.stringify(crashes.slice(0, 3))}`);
+if (state.afterAwait?.bootError) verdict.push(`music boot error: ${state.afterAwait.bootError}`);
+// The title is the scene's own receipt - main.js writes the status
+// line into it, and a host that died half-way never gets that far.
+if (!/ - .+/.test(state.title ?? '')) verdict.push(`the scene set no status title: ${JSON.stringify(state.title)}`);
+if (/shot/.test(query) && !state.ready) verdict.push('shot mode was asked for and __shotReady never came');
+if (verdict.length) for (const v of verdict) console.log(`FAIL: ${v}`);
+else console.log(`BOOT OK: ${query}`);
+
 await browser.close();
 await server.close();
+process.exit(verdict.length ? 1 : 0);

@@ -97,3 +97,95 @@ test('T2: tradeModeProbe walks BOTH proceeds arms, not just the one its purse al
   assert.ok(/the LETTER arm is unreachable/.test(src), 'the overloaded sale does not check that it IS the letter arm');
   assert.ok(src.includes('minted in silence'), 'the probe does not check the letter is ANNOUNCED');
 });
+
+// ── T3: THE PROBES THAT CANNOT FAIL ──────────────────────────────
+//
+// T2 caught guildServiceProbe printing "OK" and exiting 0 on a run
+// where its character had been turned away at the Mages Guild door and
+// no service ran at all. That is the same disease as a probe that
+// lies, one step further along: a probe whose exit code has nothing to
+// do with whether its subject worked.
+//
+// THE SURVEY THAT FOUND THE REST WAS WRONG THREE TIMES FIRST, always
+// in the same direction - accusing working code by missing an idiom.
+// It is worth writing the vocabulary down, because the next sweep will
+// reach for the same regex:
+//   1st: counted only `assert` and `process.exit(1)`, and so accused
+//        every probe using the local `die()` / `fail()` helpers.
+//   2nd: added those, and still accused the `check()` harness probes.
+//   3rd: added check(), and accused castProbe and firstHourProbe -
+//        45 judgements between them - because they accumulate and end
+//        on `process.exit(ok ? 0 : 1)`, which is not `exit(1)`.
+// Below is the fourth version, and it is checked against the corpus
+// rather than trusted.
+const JUDGES = [
+  /\b(die|fail|check)\s*\(/,              // the three locally-defined helpers
+  /process\.exit\(\s*(?!0\s*\))/,         // exit with anything but a literal 0
+  /process\.exitCode\s*=\s*(?!0)/,
+  /throw new \w*Error/,
+  /\bassert[.(]/,
+];
+/** A helper's own DEFINITION is not a judgement. */
+const isHelperDef = (l) => /^\s*(const|function)\s+(die|fail|check)\b/.test(l);
+const judges = (l) => !isHelperDef(l) && JUDGES.some((re) => re.test(l));
+
+/** Tools whose output is an IMAGE or a WAV for a human to look at or
+ *  listen to. They have no machine-checkable subject, so "judges
+ *  nothing" is correct for them, not a defect - screenshot.mjs is the
+ *  clearest case: it exists to produce a PNG. */
+const EYEBALL_TOOLS = new Set([
+  'screenshot.mjs',      // "Headless screenshot proof for the current milestone scene"
+  'musicRender.mjs',     // "render a song to a WAV so a human can HEAR it"
+  'splashProbe.mjs',     // shoots ANIM0001.VID mid-play for a human to compare
+  'titleProbe.mjs',      // the title screen, captured
+  'townProbe.mjs',       // close-up screenshot (doctrine)
+  'monsterProbe.mjs',    // "compare the crop against the RAW record art"
+]);
+
+const browserProbes = readdirSync(TOOLS).filter((n) => n.endsWith('.mjs'))
+  .map((f) => ({ f, src: readFileSync(`${TOOLS}/${f}`, 'utf8') }))
+  .filter(({ src }) => /page\.goto\(/.test(src));
+
+test('T3: every browser probe judges its subject', () => {
+  const mute = [];
+  for (const { f, src } of browserProbes) {
+    if (EYEBALL_TOOLS.has(f)) continue;
+    if (!src.split('\n').some(judges)) mute.push(f);
+  }
+  assert.deepEqual(mute, [],
+    'these probes run the game and never decide whether it worked - their exit code is 0 whatever happens');
+});
+
+test('T3: a probe does not keep printing after its last judgement', () => {
+  // guildServiceProbe had THREE judgements and still could not fail:
+  // all three were setup guards (no guild door, no billboard, no
+  // popup), and past them it printed ten states and judged none of
+  // them. Counting judgements alone would have cleared it. A healthy
+  // probe's tail is its one-or-two-line summary; ten is a subject
+  // nobody looked at.
+  const offenders = [];
+  for (const { f, src } of browserProbes) {
+    if (EYEBALL_TOOLS.has(f)) continue;
+    const lines = src.split('\n');
+    let last = -1;
+    lines.forEach((l, i) => { if (judges(l)) last = i; });
+    const tail = lines.slice(last + 1).filter((l) => /console\.log\(/.test(l)).length;
+    if (tail >= 3) offenders.push(`${f} (${tail} states printed after the last judgement)`);
+  }
+  assert.deepEqual(offenders, [],
+    'these probes exercise their subject and then stop judging - the tail is unchecked');
+});
+
+test('T3: the eyeball-tool allowlist is honest on both sides', () => {
+  // The failure mode of any allowlist is a probe parked on it to
+  // silence the rule. A tool is only exempt because its output is a
+  // FILE for a human - so it has to actually write one, and it must
+  // not have grown judgements in the meantime (if it has, it is a
+  // probe now and belongs under the rule).
+  for (const f of EYEBALL_TOOLS) {
+    const p = browserProbes.find((x) => x.f === f);
+    if (!p) continue;               // deleted is fine; a stale name is not a failure
+    assert.match(p.src, /page\.screenshot\(|writeFileSync\(/,
+      `${f} is exempt as an eyeball tool but writes no file for anyone to look at`);
+  }
+});

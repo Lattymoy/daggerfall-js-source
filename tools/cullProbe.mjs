@@ -38,7 +38,12 @@ const result = await page.evaluate(async () => {
   return { centerPixel: [...px], state: skyOk, CW: gl.CW, CCW: gl.CCW };
 });
 console.log(JSON.stringify(result));
-console.log(result.centerPixel[0] > 200 ? 'QUAD DREW (pass survives)' : 'QUAD CULLED (the bug)');
+// T3: this probe COMPUTED its own verdict and then exited 0 either way.
+// It is a repro for a real bug - a culled screen-quad pass - and it
+// would have reported that bug as a success every time it ran. The
+// verdict was already on the line above; it just had nowhere to go.
+const drew = result.centerPixel[0] > 200;
+console.log(drew ? 'QUAD DREW (pass survives)' : 'QUAD CULLED (the bug)');
 await browser.close();
 await server.close();
-process.exit(0);
+process.exit(drew ? 0 : 1);

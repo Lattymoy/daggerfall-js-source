@@ -44,11 +44,27 @@ const aimAndUse = async () => {
   await page.keyboard.up('KeyE');
   return true;
 };
+// T3: this probe judged NOTHING past the "no walker" guard above, and
+// the worst of it was the catch below - it swallowed its own 30-second
+// timeout, printed `'overlay did not open; talk:', ''` (an empty
+// string, not the state), and walked on to exit 0. A talk window that
+// never opened read exactly like one that did.
+const die = (why, detail) => {
+  console.log(`FAIL: ${why}${detail !== undefined ? ` - ${detail}` : ''}`);
+  process.exitCode = 1;
+};
 console.log('talk state before:', await page.evaluate(() => window.__talk()));
 await aimAndUse();
+let opened = true;
 await page.waitForFunction(() => JSON.parse(window.__talk()).overlay === true, null, { timeout: 30000 })
-  .catch(() => console.log('overlay did not open; talk:', ''));
-console.log('talk state after E:', await page.evaluate(() => window.__talk()));
+  .catch(() => { opened = false; });
+const after = JSON.parse(await page.evaluate(() => window.__talk()));
+console.log('talk state after E:', JSON.stringify(after));
+if (!opened) die('E on a townsperson opened no talk window', JSON.stringify(after));
+// B7 stands the NATIVE talk window and names the person it belongs to -
+// a nameless overlay is the interim text panel, not the ported window
+if (opened && !after.native) die('the overlay is not the native talk window', JSON.stringify(after));
+if (opened && !after.npcName) die('the talk window names nobody', JSON.stringify(after));
 const f1 = await page.evaluate(() => window.__frame);
 await page.waitForFunction((n) => window.__frame > n + 3, f1, { timeout: 60000 });
 await page.screenshot({ path: '/home/claude/talk-window.png' });
@@ -57,11 +73,23 @@ await page.keyboard.press('Escape');
 await waitFrames(2);
 await page.keyboard.press('F1');
 await waitFrames(2);
+// ...and the STEAL half, which also judged nothing. Two things are
+// checkable without asserting on someone else's dice: F1 must actually
+// reach STEAL mode, and E in that mode must NOT open a conversation.
+// `crimeCommitted` is REPORTED rather than asserted - whether a
+// pickpocket is noticed is a roll, and pinning it here would be
+// pinning the dice.
+const mode = JSON.parse(await page.evaluate(() => window.__talk())).mode;
+if (mode !== 'steal') die('F1 did not reach STEAL mode', mode);
 if (await aimAndUse()) {
   await waitFrames(3);
   await page.screenshot({ path: '/home/claude/talk-pickpocket.png' });
-  console.log('after pickpocket:', await page.evaluate(() => window.__talk()),
-    'gold:', await page.evaluate(() => JSON.stringify(window.__playerEntity?.items ?? [])),
-    'crime:', await page.evaluate(() => window.__playerEntity?.crimeCommitted ?? null));
+  const t = JSON.parse(await page.evaluate(() => window.__talk()));
+  const crime = await page.evaluate(() => window.__playerEntity?.crimeCommitted ?? null);
+  console.log('after pickpocket:', JSON.stringify({ mode: t.mode, overlay: t.overlay, crime }));
+  if (t.overlay && t.native) die('E in STEAL mode opened a CONVERSATION', JSON.stringify(t));
+} else {
+  die('no walker to pickpocket - the steal half never ran');
 }
+if (!process.exitCode) console.log('\nTALK OK: E converses, F1+E steals, and both were checked');
 await browser.close(); await server.close();
