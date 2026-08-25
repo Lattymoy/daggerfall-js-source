@@ -263,12 +263,12 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:1942` - (FLAGGED); swallowing the browser reload is not optional.
 - `src/scenes/world.js:2218` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
 - `src/scenes/world.js:2388` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
-- `src/scenes/world.js:2465` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:2707` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:2734` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:3130` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:3450` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/world.js:3523` - (FLAGGED: exterior corpse containers are the loot arc's), so
+- `src/scenes/world.js:2472` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:2714` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:2741` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:3137` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:3457` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:3530` - (FLAGGED: exterior corpse containers are the loot arc's), so
 - `src/scenes/worldModes.js:287` - rather than pretending to scan. FLAGGED.
 - `src/scenes/worldModes.js:412` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:560` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
@@ -350,6 +350,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/potions.js:241` - FLAGGED, with the slice it waits on:
 - `src/systems/races.js:6` - port had only ever instantiated for Breton (the loud INTERIM the
 - `src/systems/regionConditions.js:25` - consequences are FLAGGED in court.js).
+- `src/systems/regionPower.js:17` - siblings), which the port does not have. FLAGGED in the Port-Ledger.
 - `src/systems/save.js:107` - (playerEntity's INTERIM skills: 30) - spreading it threw.
 - `src/systems/sceneCache.js:154` - FLAGGED, with the slice it waits on:
 - `src/systems/settings.js:39` - INTERIM doctrine - named, not silently ignored)
@@ -366,6 +367,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/tradeModes.js:127` - *  destination has been a FLAGGED null, so the mode could not be
 - `src/systems/tradeModes.js:376` - FLAGGED, with the slices they wait on:
 - `src/systems/useItem.js:275` - lantern's and refuses when it would overflow. FLAGGED: DFU
+- `src/systems/worldTick.js:499` - conditions body, which is FLAGGED (it needs
 - `src/ui/automapWindow.js:20` - portals stay FLAGGED (systems/automap.js keeps the list); A2
 - `src/ui/bankPurchaseWindow.js:17` - FLAGGED, and it is presentation rather than function: the 104x91
 - `src/ui/bankPurchaseWindow.js:49` - display: [117, 12, 104, 91],   // FLAGGED: the 3D preview
