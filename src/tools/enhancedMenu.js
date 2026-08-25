@@ -64,6 +64,7 @@ import {
   effectiveSettings, setValue, saveSettings, resetToDefaults, tierOf, DEFAULTS,
 } from '../systems/settings.js';
 import { readQuicksave } from '../systems/save.js';
+import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES } from '../systems/uiSkin.js';
 import { dateFromClassicMinutes, dateString } from '../systems/gameDate.js';
 import { BUILD_TAG } from '../buildTag.js';
 
@@ -236,6 +237,11 @@ function paneSettings(pane) {
     legend.append(s2);
   }
   list.append(legend);
+  // THE SKIN LIVES UNDER INTERFACE, which is what it is: a choice
+  // about what the game's screens look like. It is not a DFU key and
+  // never will be (DFU has no enhanced screens), so it is drawn as a
+  // row rather than fetched from keysOf - see systems/uiSkin.js.
+  if (category === 'interface') list.append(skinRow());
   if (!keys.length) list.append(empty('Nothing here yet', 'This category has no keys.'));
   for (const key of keys) list.append(settingRow(key));
 
@@ -248,6 +254,30 @@ function paneSettings(pane) {
 
   panes.append(rail, list, detail);
   pane.append(panes);
+}
+
+/** The one control that is not a DFU setting. It reads and writes
+ *  through uiSkin, and switching to classic reloads: the two skins are
+ *  two hosts and there is nothing to hand over in place. */
+function skinRow() {
+  const row = el('div', 'row');
+  const main = el('button', 'row-main');
+  main.append(el('div', 'row-name', 'Interface Style'));
+  main.onclick = () => { pickedKey = 'ui:skin'; sheetOpen = true; render(); };
+  row.append(main);
+  const ctl = el('div', 'ctl');
+  const b = el('button', 'act primary', SKIN_NAMES[uiSkin()]);
+  b.style.minHeight = '38px';
+  b.style.padding = '8px 16px';
+  b.onclick = () => {
+    setUiSkin(otherSkin(uiSkin()));
+    const url = new URL(location.href);
+    url.searchParams.delete('skin');
+    location.replace(url.toString());
+  };
+  ctl.append(b, el('span', 'tier live'));
+  row.append(ctl);
+  return row;
 }
 
 function categoryCard() {
@@ -266,6 +296,13 @@ function categoryCard() {
  *  `[Section] Key` - which appears in exactly ONE place in the whole
  *  interface, for the player who wants it. */
 function helpCard(key) {
+  if (key === 'ui:skin') {
+    const d = el('div', 'dcard');
+    d.append(el('h3', null, 'Interface Style'));
+    d.append(el('p', null, 'Enhanced is these screens. Classic is Daggerfall\u2019s own, pixel for pixel, on the art it shipped with.'));
+    d.append(el('p', 'status', 'This works now. Switching reloads the game.'));
+    return d;
+  }
   const tier = tierOf(key);
   const d = el('div', 'dcard');
   d.append(el('h3', null, labelOf(key)));
@@ -377,6 +414,7 @@ function paneAbout(body) {
   c.append(el('p', 'meta', 'A 1:1 JavaScript port of Daggerfall.'));
   c.append(stats([
     ['Build', BUILD_TAG],
+    ['Interface', SKIN_NAMES[uiSkin()]],
     ['Settings', `${Object.values(DEFAULTS).reduce((n, s2) => n + Object.keys(s2).length, 0)} keys`],
   ]));
   body.append(c);
