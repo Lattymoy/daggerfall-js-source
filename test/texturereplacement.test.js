@@ -159,6 +159,23 @@ test('texture: the pipeline decodes AHEAD and overrides SYNCHRONOUSLY', () => {
     'the spectral path must return before the override');
 });
 
+test('texture: BOTH packs have a URL door, and one trip can set up both', () => {
+  // ?music shipped first and ?textures did not follow it, which left
+  // the texture pick reachable only from the settings row - the same
+  // asymmetry that makes a feature look absent. Both doors now, and a
+  // player setting up for the first time can ask for both at once
+  // rather than making two trips.
+  const m = src('main.js');
+  assert.match(m, /params\.has\('music'\) \|\| params\.has\('textures'\)/);
+  assert.match(m, /if \(params\.has\('music'\)\) await ds\.pickMusicFolder\(\);/);
+  assert.match(m, /if \(params\.has\('textures'\)\) await ds\.pickTextureFolder\(\);/);
+  // ...and BEHIND the data gate, not around it: the picker needs the
+  // same IndexedDB the ingest opens.
+  const block = m.slice(m.indexOf("params.has('music') || params.has('textures')"));
+  assert.ok(block.indexOf('await ensureData();') < block.indexOf('pickMusicFolder'),
+    'the data gate runs first');
+});
+
 test('texture: registration rides the ONE bootstrap, and the row reports it', () => {
   assert.match(src('scenes/shared.js'), /setTextureReplacements\(names, loadTextureFile\)/);
   assert.match(src('scenes/shared.js'), /Promise\.all\(\[sound, songs, replacements, textures\]\)/);
