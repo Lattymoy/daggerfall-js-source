@@ -85,7 +85,7 @@ import { npcServiceKind, freeHealing, freeMagickaRecharge } from '../systems/gui
 import { createGuildForGroup, ORDERS } from '../systems/guildVariants.js';
 import { membershipOf, joinGuild, joinDecision } from '../systems/guilds.js';
 import { ensureFactionRep } from '../systems/factionRep.js';
-import { dateFromClassicMinutes, dateString, MINUTES_PER_DAY, DAYS_PER_MONTH } from '../systems/gameDate.js';   // B2: the loan due date   // H1: the month the houses-for-sale list turns over on
+import { dateFromClassicMinutes, dateString, dayOfYearFromMinutes, MINUTES_PER_DAY, DAYS_PER_MONTH } from '../systems/gameDate.js';   // B2: the loan due date   // H1: the month the houses-for-sale list turns over on
 import { serviceDestination } from '../systems/guildServiceFlow.js';
 import { buildTrainingFlow, buildDonationFlow, buildCureDiseaseFlow } from '../ui/guildServiceWindows.js';
 import { preloadListPickerArt } from '../ui/listPicker.js';
@@ -128,7 +128,11 @@ import { goldAmount, deductGold, addGold } from '../systems/court.js';
 // is created by the outer host (world.js) and rides in; this machine owns
 // the interior half - the click stamp, the Quests service arm, the scene
 // mount adapter and the modal tick.
-import { getReputation } from '../systems/factionRep.js';
+import { getReputation, getFlag, setFlag, FACTION_FLAGS } from '../systems/factionRep.js';
+// G7: the last unbuilt guild service - the summoning calendar, the
+// cost, Sheogorath's hijack and the roll.
+import { daedraForSummoner, attemptSummoning, SUMMON_TEXT } from '../systems/daedraSummoning.js';
+import { currentWeatherEnum, WEATHER_ENUM } from '../systems/weatherSim.js';
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 // U39: the tavern - the window, the knightly free-room perk and the
 // two guild readers that recover the player's own order.
@@ -1566,6 +1570,75 @@ export function createWorldModes(host) {
       if (!win) return null;
       interiorOverlay = win;
       return win;
+    }
+    if (destination === 'guildServiceDaedraSummoning') {
+      // G7 - the last of the twenty destinations. Two boxes: "is it a
+      // summoning day" and, if it is, "are you REALLY sure" - and the
+      // answer to the second spends two hundred thousand gold before
+      // anything is rolled.
+      const dict = townTalk?.factionDict ?? null;
+      const summonerId = b?.factionId ?? 0;
+      const summoner = dict?.get(summonerId) ?? null;
+      const store = ensureFactionRep(playerEntity, dict);
+      const daedra = daedraForSummoner({
+        factionId: summonerId,
+        factionType: summoner?.type ?? null,
+        dayOfYear: dayOfYearFromMinutes(Math.floor(worldMinutes())),
+        // The coven's remembered roll lives on the player, as DFU's
+        // PlayerEntity.DaedraSummonIndex/Day do.
+        state: playerEntity,
+      });
+      if (!daedra) return { rows: rows?.(SUMMON_TEXT.notToday) ?? [{ text: 'This is not a summoning day.', center: true }] };
+      // WeatherManager.IsRaining / IsStorming - thunder is a STORM
+      // and not rain, which is what makes Sheogorath's day distinct
+      // from Sanguine's four.
+      const sky = currentWeatherEnum();
+      const weather = { raining: sky === WEATHER_ENUM.rain, storming: sky === WEATHER_ENUM.thunder };
+      return {
+        rows: rows?.(SUMMON_TEXT.areYouSure) ?? [{ text: 'Are you sure you wish to attempt this?', center: true }],
+        buttons: 'YesNo',
+        onYes: () => {
+          const r = attemptSummoning({
+            daedra,
+            summonerRep: getReputation(store, summonerId),
+            summonerGuildGroup: summoner?.ggroup ?? null,
+            gold: goldAmount(playerEntity),
+            daedraRep: (fid) => getReputation(store, fid),
+            hasSummoned: (fid) => getFlag(store, fid, FACTION_FLAGS.Summoned),
+            ...weather,
+          });
+          if (r.kind === 'poor') {
+            return { rows: [{ text: `The summoning would cost ${r.cost} gold.`, center: true }] };
+          }
+          // The gold goes BEFORE the roll and is not refunded: you paid
+          // for the summoning, not for the prince turning up.
+          deductGold(playerEntity, r.cost);
+          surfacePlayer();
+          if (r.kind === 'failed') {
+            // FLAGGED: a coven's failure spawns daedric foes ON YOU
+            // (CreateFoeSpawner, 1-3 of one type at 4..64 units). The
+            // spawner is an EXTERIOR seam and this arm runs inside a
+            // building, so the summons is recorded and not yet loosed.
+            if (r.spawnFoes) console.warn('[summon] a coven failure owes you daedra; the interior has no foe pool (FLAGGED)');
+            return { rows: rows?.(SUMMON_TEXT.failed) ?? [{ text: 'The daedra does not answer.', center: true }] };
+          }
+          if (r.kind === 'greeting') {
+            return { rows: rows?.(r.textId) ?? [{ text: `${r.daedra.name} has met you before.`, center: true }] };
+          }
+          setFlag(store, r.daedra.factionId, r.flag);
+          const offered = questBridge?.offerDaedricQuest?.(r.quest, summonerId) ?? null;
+          const boxes = offered ? questBridge.offerBoxes(offered, (id) => townTalk?.lines?.(id) ?? []) : [];
+          if (boxes.length && guildServiceArtLoaded() && _shopFont) {
+            let offerWin = null;
+            offerWin = new ServiceFlowWindow(boxes, {
+              onClose: () => { if (interiorOverlay === offerWin) interiorOverlay = null; },
+            });
+            interiorOverlay = offerWin;
+            return null;
+          }
+          return { rows: [{ text: `${r.daedra.name} answers your summons.`, center: true }] };
+        },
+      };
     }
     if (destination === 'guildServiceReceiveHouse') {
       const region = b?.regionIndex ?? 0;

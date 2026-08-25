@@ -119,6 +119,26 @@ export class QuestOfferFlow {
   /** GetQuest (:546-593). guild is the DFU Guild surface (contract in
    *  the header); buildingFactionId homes the reputation change for
    *  the holy/knightly orders. */
+  /**
+   * G7 - the daedric summoning's own offer:
+   * `QuestListsManager.GetQuest(daedraToSummon.quest, summonerFactionData.id)`
+   * (DaggerfallQuestPopupWindow:272). A named quest with the SUMMONER's
+   * faction as its context, not the prince's - the temple that called
+   * is who the quest is for.
+   */
+  offerNamedQuest(questName, factionId = 0) {
+    this.offeredQuest = null;
+    this.menu = false;
+    this._guild = null;
+    this._guildCtx = { guildGroup: null, buildingFactionId: factionId };
+    this.offeredQuest = this.questLists.getQuest(questName, factionId);
+    // GetQuest answers null for a quest the reader has no source for,
+    // and DFU simply does not offer one (:273-279) - the prince has
+    // still been summoned and recorded either way.
+    if (!this.offeredQuest) return { kind: 'close' };
+    return this._offerQuest();
+  }
+
   offerGuildQuest({ guildGroup, guild, buildingFactionId = 0 }) {
     this.offeredQuest = null;
     this.menu = false;

@@ -256,7 +256,7 @@ export const SERVICE_DESTINATION = Object.freeze({
   SellMagicItems: 'guildServiceSellMagicItems',   // G4: the trade window in SellMagic mode
   BuySoulgems: 'guildServiceBuySoulgems',   // X6: the trade window in Buy mode over the daily soul-gem shelf
   Teleport: 'guildServiceTeleport',   // G5: the travel map, armed for teleportation
-  DaedraSummoning: null,   // FLAGGED: the daedra summoning flow
+  DaedraSummoning: 'guildServiceDaedraSummoning',   // G7: the summoning calendar, the cost and the roll
   Spymaster: 'guildServiceSpymaster',   // G6: the 402 greeting, then the NPC's own talk
   ReceiveArmor: 'guildServiceReceiveArmor',   // G6: KnightlyOrder.ReceiveArmor
   ReceiveHouse: 'guildServiceReceiveHouse',   // H1: KnightlyOrder.ReceiveHouse, over the live house registry
