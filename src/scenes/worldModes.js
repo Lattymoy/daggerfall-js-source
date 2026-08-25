@@ -139,7 +139,7 @@ import {
 import { findRentedRoom, removeExpiredRooms } from '../systems/tavern.js';
 import { canRest as guildCanRest } from '../systems/guildServices.js';
 import { RestWindow } from '../ui/restWindow.js';
-import { restOpenGate } from '../systems/restSession.js';   // S40: the scene-free open gate
+import { restOpenGate, interiorRestPlace } from '../systems/restSession.js';   // S40: the scene-free open gate + CanRest's inside-a-building bag, both testable laws
 import { orderOf } from '../systems/guildVariants.js';
 import { joinedGuildOfGroup } from '../systems/guilds.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js';
@@ -2955,40 +2955,35 @@ export function createWorldModes(host) {
   // is by definition not. `inTown` is the bare IsPlayerInTown() -
   // location TYPE only, no rect test and no inside test, because both
   // of its optional flags default off (PlayerGPS.cs:504-527).
-  const interiorRestPlace = () => {
+  const interiorRestPlaceHere = () => {
     const b = interiorBuilding;
     const mapId = questSceneCtx?.()?.mapId ?? 0;
     const buildingKey = b?.buildingKey ?? 0;
-    const now = Math.floor(worldMinutes());
     const memberships = (playerEntity.guildMemberships ??= {});
     const dict = townTalk?.factionDict ?? null;
     const guild = b?.factionId ? guildOfFaction(b.factionId, resolveVariantGuild(dict), dict) : null;
-    return {
-      inTownStrict: false,
+    // The SHAPE is systems/restSession.js' (a review round showed a bag
+    // built in a closure can only be pinned by a regex over its own
+    // source, and proved that hollow); this reads the live values.
+    return interiorRestPlace({
       inTown: host.inTownLocation?.() ?? false,
-      insideBuilding: true,
-      buildingType: b?.buildingType ?? BUILDING_TYPES.None,
-      buildingKey,
+      building: b,
       mapId,
-      isPermanentScene: (name) => containsPermanentScene(sceneCache(), name),
-      // DaggerfallBankManager.IsHouseOwned - the bank's house ledger
-      // is unported, so this reads DFU's own default for a player who
-      // has bought nothing. FLAGGED with the bank slice.
-      isHouseOwned: () => false,
-      // GetRentedRoom(mapId, buildingKey), through the SAME finder the
-      // tavern window rents with - so the bed this answers is the bed
-      // that was sold (tavern.js's own flag, retired here).
-      rentedRoom: () => findRentedRoom(playerEntity.rentedRooms ?? [], mapId, buildingKey),
-      nowMinutes: now,
+      nowMinutes: Math.floor(worldMinutes()),
       // Interior.FindMarkers(InteriorMarkerTypes.Rest) - the same read
       // rentRoom's bedCount makes, so the stored index lines up with
       // the list it indexes.
       restMarkers: (interiorCtx?.markers ?? []).filter((m) => m.type === INTERIOR_MARKER.REST),
+      isPermanentScene: (name) => containsPermanentScene(sceneCache(), name),
+      // GetRentedRoom(mapId, buildingKey), through the SAME finder the
+      // tavern window rents with - so the bed this answers is the bed
+      // that was sold (tavern.js's own flag, retired here).
+      rentedRoom: () => findRentedRoom(playerEntity.rentedRooms ?? [], mapId, buildingKey),
       // GuildManager.GetGuild(factionID).CanRest() - THIS building's
       // faction, not the player's chosen guild. canRest() applies the
       // tavern exclusion itself.
       guildCanRest: () => !!guild && guildCanRest(guild, membershipOf(memberships, guild)),
-    };
+    });
   };
 
   // The interior host's RestWindow deps: the shared composition plus
@@ -2998,7 +2993,7 @@ export function createWorldModes(host) {
   const interiorRestDeps = createRestDeps(playerEntity, {
     advanceMinutes: (n) => interiorTicker.advance(n),
     enemiesNearby: () => false,   // this host mounts no foe pool
-    place: interiorRestPlace,
+    place: interiorRestPlaceHere,
     // MoveToBed (:601-609) is `transform.position = allocatedBed` and
     // then FixStanding(0.4, 0.4) - the snap is NOT optional. floorLanding
     // is this port's FixStanding, and skipping it is the exact failure

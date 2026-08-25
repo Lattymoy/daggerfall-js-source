@@ -117,6 +117,46 @@ export function restOpenGate({ enemiesNearby = false, swimming = false, grounded
 }
 
 /**
+ * CanRest's argument bag for INSIDE A BUILDING, as a pure function of
+ * what the host reads (`:563-597`). It lives here rather than inside
+ * the interior host because a bag built in a closure can only be
+ * pinned by a regex over its own source - and a review round proved
+ * that hollow: flipping `insideBuilding` to false there bypassed the
+ * ENTIRE lodging economy (every interior rests free, no room, no bed,
+ * no rent) with the whole suite still green, because nothing ran it.
+ *
+ * `inTownStrict` is a constant false and that IS the law:
+ * IsPlayerInTown(true, true) passes `mustBeOutside`, and the player
+ * inside a building is not. `inTown` is the BARE IsPlayerInTown() -
+ * location type only, no rect test, no inside test, both optional
+ * flags defaulting off (PlayerGPS.cs:504-527).
+ */
+export function interiorRestPlace({
+  inTown = false, building = null, mapId = 0, nowMinutes = 0,
+  restMarkers = [], isPermanentScene = () => false,
+  isHouseOwned = () => false, rentedRoom = () => null,
+  guildCanRest = () => false,
+} = {}) {
+  return {
+    inTownStrict: false,
+    inTown,
+    insideBuilding: true,
+    buildingType: building?.buildingType ?? BUILDING_TYPES.None,
+    buildingKey: building?.buildingKey ?? 0,
+    mapId,
+    isPermanentScene,
+    // DaggerfallBankManager.IsHouseOwned - the bank's house ledger is
+    // unported, so a host with no bank passes DFU's own default for a
+    // player who has bought nothing. FLAGGED with the bank slice.
+    isHouseOwned,
+    rentedRoom,
+    nowMinutes,
+    restMarkers,
+    guildCanRest,
+  };
+}
+
+/**
  * DaggerfallRestWindow.CanRest (:542-599), the whole gate - and until
  * S40 the port had none of it, because rest existed only in the
  * dungeon host where the answer is always yes. Outdoors and in a

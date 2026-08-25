@@ -2857,12 +2857,40 @@ outside the per-minute block and ungated, and the Swimming tally at
 licensed the omission, which is the argument for the rule that
 comments must be true stated about as plainly as it gets.
 
-Pins: 47 in `restlodging.test.js`, two of them END TO END - every law
+**The last lens ran its own mutations, and found nine.** Not against
+the code - against the PINS. Every one was this slice's testing at
+fault, and the pattern is the one that has recurred all the way
+through: a pin that reads a thing instead of running it. The worst
+was the interior host's place bag, pinned entirely by regexes over its
+own source inside a closure - so flipping `insideBuilding` to false
+there bypassed the whole lodging economy (every interior rests free,
+no room, no bed, no rent countdown) with the full suite green. The bag
+is a law in `restSession.js` now, `interiorRestPlace`, and the pin
+runs it; the host reads the law instead of rebuilding the shape.
+
+The other eight: `restVitals`' three `Math.min` clamps, exercised by
+no fixture - and dropping them is not cosmetic, because
+`restFullyHealed` uses `===`, so one point of overshoot makes the
+equality unreachable and a Rest-Until-Healed NEVER TERMINATES;
+`_isPlayerInTownStrict`, the input the whole camping-crime arm keys
+on, unpinned in both outdoor hosts with an anti-regression guard that
+was CASE-MISMATCHED (`locationType()` against the real
+`_musicLocationType()`) and so could never fire; `exterior.js`'s foe
+POOL unpinned, where the watch is the ONLY pool, so an empty one means
+sleeping through a beating; the fatigue rate pinned only `> 0`, so any
+constant passed; the loiter fixture typing 2 against a 3-hour cap,
+leaving the refusal branch inert; the empty-entry no-op and the
+2-digit/99-hour field cap with no test in the repo at all; the gate's
+refusal MESSAGE pinned leaving `restOpenGate` and never arriving at a
+host; and `areEnemiesNearby`'s `_dist ?? Infinity` fallback never
+taken.
+
+Pins: 49 in `restlodging.test.js`, two of them END TO END - every law
 in this slice driven together through one host-shaped deps bag, from
 the key press to the wake. That is the closest thing to a live probe a
 machine with no ARENA2 data can run, and it is here because a slice
 whose parts each pass and whose whole was never run is exactly what a
-probe catches. 82 mutations, 82 dead. The first
+probe catches. 95 mutations, 95 dead. The first
 pass left four alive and all four were the same failure of nerve: a
 pin that named a thing instead of exercising it. The host pins matched
 `act === 'Rest'`, which survives `if (false && act === 'Rest')`, so

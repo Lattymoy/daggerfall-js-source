@@ -8,7 +8,8 @@ import { readFileSync } from 'node:fs';
 import {
   canRest, CITY_CAMPING_ILLEGAL_ID, HAVE_NOT_RENTED_ROOM,
   ILLEGAL_REST_WARNING, illegalRestWarning,
-  restOpenGate, REST_TEXT, RestSession, EXPIRED_RENTED_ROOM,
+  restOpenGate, REST_TEXT, RestSession, EXPIRED_RENTED_ROOM, interiorRestPlace,
+  cannotLoiterLines, loiterLimitHours,
 } from '../src/systems/restSession.js';
 import { RestWindow } from '../src/ui/restWindow.js';
 import { restVitals, restFullyHealed, createRestDeps } from '../src/scenes/shared.js';
@@ -17,7 +18,7 @@ import { isTownLocationType, TOWN_LOCATION_TYPES, LOCATION_TYPES } from '../src/
 import { interiorSceneName } from '../src/systems/sceneCache.js';
 import { setValue, _resetForTests } from '../src/systems/settings.js';
 import { maxFatigue } from '../src/systems/statMods.js';
-import { RAPID_HEALING, healthRecoveryRate } from '../src/systems/rest.js';
+import { RAPID_HEALING, healthRecoveryRate, fatigueRecoveryRate } from '../src/systems/rest.js';
 import { REST_WAIT_PER_HOUR, LOITER_WAIT_PER_HOUR } from '../src/systems/restSession.js';
 import { SKILLS } from '../src/systems/skills.js';
 import { startRestGroundedCheck, CAPSULE_HEIGHT } from '../src/player/motor.js';
@@ -238,7 +239,16 @@ test('S40: PlayerGPS.IsPlayerInTown counts SEVEN location types, not three', () 
     assert.match(src(f), /isTownLocationType/, f);
   }
   assert.match(src('src/scenes/worldModes.js'), /inTown: host\.inTownLocation\?\.\(\) \?\? false/);
-  assert.doesNotMatch(src('src/scenes/world.js'), /locationType\(\)\s*<=\s*2/);
+  // The old anti-regression guard was CASE-MISMATCHED and could never
+  // fire: the identifier in both hosts is `_musicLocationType()`, with
+  // a capital L, so /locationType\(\)/ matched nothing mutated or not.
+  // Pin the strict predicate's three clauses instead, in both hosts -
+  // it is the input the whole camping-crime arm keys on.
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.match(src(f),
+      /_isPlayerInTownStrict = \(\) => _musicInLocationRect\(\)\n\s+&& isTownLocationType\(_musicLocationType\(\)\)\n\s+&& \(modes\?\.mode \?\? 'exterior'\) === 'exterior';/, f);
+    assert.doesNotMatch(src(f), /_musicLocationType\(\)\s*<=\s*2/, f);
+  }
 });
 
 // ---- the WINDOW ------------------------------------------------------
@@ -330,6 +340,13 @@ test('S40 RestWindow: LOITER is never gated and never moves the player', () => {
   w.input('char:3');
   assert.equal(w.state, 'hours');   // straight to the prompt, no confirm
   assert.equal(w.mode, 'loiter');
+  // OVER the cap first: loiterLimitHours ships 3, and the old fixture
+  // typed 2 - under the boundary, so the refusal branch was inert and
+  // a mutant raising the cap to 999 passed the whole suite.
+  w.input('char:9'); w.input('confirm');
+  assert.equal(w.state, 'hours', 'a 9-hour loiter is refused, not started');
+  assert.deepEqual(w.notice, cannotLoiterLines());
+  assert.equal(w.value, '', 'and the field is cleared for another try');
   w.input('char:2'); w.input('confirm');
   assert.equal(w.state, 'resting');
   assert.deepEqual(crimes, []);
@@ -411,9 +428,34 @@ test('S40 restVitals: one home for the rested hour, and the dungeon host uses it
   const healed = restVitals(e, { day: false, inside: true });
   assert.equal(e.health, 14);        // healthRecoveryRate 4
   assert.equal(e.magicka, 5);        // floor(40/8)
-  assert.ok(e.fatigue > 0);
+  // Fatigue tied to the FORMULA, not just asserted positive: the old
+  // `> 0` let the rate be any constant, and a mutant restoring 1 point
+  // an hour instead of maxFatigue/8 passed the whole suite.
+  assert.equal(e.fatigue, fatigueRecoveryRate(maxFatigue(e)));
+  assert.ok(e.fatigue > 100, 'and that is real stored units, not 1');
   assert.equal(healed, false);
   assert.equal(restFullyHealed(e), false);
+
+  // THE THREE CLAMPS. DaggerfallEntity's Current* setters clamp to
+  // their maxima, so `CurrentHealth += rate` cannot overshoot. Every
+  // fixture in this file rested far below max, so deleting all three
+  // Math.min wrappers passed the suite - and the consequence is not
+  // cosmetic: restFullyHealed uses `===` (matching C#'s `==`), so one
+  // point of overshoot means the equality is never reachable again and
+  // a Rest-Until-Healed NEVER TERMINATES.
+  const brim = {
+    isPlayer: true, level: 5, maxHealth: 50, maxMagicka: 40,
+    health: 49, magicka: 39,
+    stats: { strength: 50, endurance: 50, willpower: 50 }, skills: 30, career: {},
+    skillUses: { [SKILLS.Medical]: 0 },
+  };
+  brim.fatigue = maxFatigue(brim) - 1;
+  const full = restVitals(brim, { day: false, inside: true });
+  assert.equal(brim.health, brim.maxHealth, 'health clamps at max, never past it');
+  assert.equal(brim.magicka, brim.maxMagicka, 'magicka clamps');
+  assert.equal(brim.fatigue, maxFatigue(brim), 'fatigue clamps');
+  assert.equal(full, true, 'and the clamp is what lets the === completion fire');
+  assert.equal(restFullyHealed(brim), true);
   // TickRest tallies MEDICAL every rested hour - the one skill rest
   // itself advances (and the reason a long convalescence trains it).
   assert.ok((e.skillUses?.[SKILLS.Medical] ?? 0) > 0, 'the rested hour tallies Medical');
@@ -489,8 +531,36 @@ test('S40 hosts: all four can now rest, and each supplies its own place', () => 
   // The interior host: the key arm, the place bag, and the deps.
   const wm = src('src/scenes/worldModes.js');
   assert.match(wm, /mountInterior\(new RestWindow\(interiorRestDeps\)\);/);
-  assert.match(wm, /interiorRestPlace = \(\) => \{/);
-  assert.match(wm, /inTownStrict: false/);                       // inside, by definition
+  // The bag is a LAW now, so this RUNS it. It used to be pinned by
+  // regexes over its own source inside the host closure, and a review
+  // round proved that hollow: flipping `insideBuilding` to false there
+  // bypassed the entire lodging economy - every interior rests free,
+  // no room, no bed, no rent countdown - with the whole suite green.
+  const bag = interiorRestPlace({
+    inTown: true,
+    building: { buildingType: BUILDING_TYPES.Tavern, buildingKey: 77 },
+    mapId: 5, nowMinutes: 600, restMarkers: ['a', 'b'],
+  });
+  assert.equal(bag.insideBuilding, true, 'CanRest arm 2 needs BOTH halves of its &&');
+  assert.equal(bag.inTownStrict, false, 'inside, mustBeOutside cannot pass');
+  assert.equal(bag.inTown, true);
+  assert.equal(bag.buildingType, BUILDING_TYPES.Tavern);
+  assert.equal(bag.buildingKey, 77);
+  assert.equal(bag.mapId, 5);
+  assert.equal(bag.nowMinutes, 600);
+  assert.deepEqual(bag.restMarkers, ['a', 'b']);
+  assert.equal(bag.isHouseOwned(), false, 'the bank ledger is unported; DFU default');
+  // A bag with no building at all still answers, and answers None -
+  // the host can be asked before a door is walked through.
+  const empty = interiorRestPlace();
+  assert.equal(empty.buildingType, BUILDING_TYPES.None);
+  assert.equal(empty.buildingKey, 0);
+  assert.equal(empty.insideBuilding, true);
+  // ...and the whole bag drives canRest to the lodging arms.
+  assert.equal(canRest({ ...bag, isPermanentScene: () => false }).text, HAVE_NOT_RENTED_ROOM);
+
+  // The host reads the law rather than rebuilding its shape.
+  assert.match(wm, /return interiorRestPlace\(\{/);
   assert.match(wm, /rentedRoom: \(\) => findRentedRoom\(playerEntity\.rentedRooms/);
   assert.match(wm, /guildCanRest\(guild, membershipOf/);
   assert.match(wm, /m\.type === INTERIOR_MARKER\.REST/);
@@ -762,6 +832,12 @@ test('S40 areEnemiesNearby: the RESTING variant, and it is the one the hosts ask
   // The dead and the shapeless are skipped, and an empty pool is quiet.
   assert.equal(areEnemiesNearby([{ dead: true, ai: { detected: true, inSight: true, _dist: 0 } }], { resting: true }), false);
   assert.equal(areEnemiesNearby([null, {}], { resting: true }), false);
+  // A foe with NO distance yet: the fallback is Infinity ("skip an
+  // unaware foe of unknown range"), not 0 ("count it"). Real foes are
+  // safe - EnemyMotor mints _dist Infinity - but the direction is the
+  // load-bearing half and no fixture had ever taken it.
+  assert.equal(areEnemiesNearby([foe({ _dist: undefined, wouldBeSpawned: true })], { resting: true }), false);
+  assert.equal(areEnemiesNearby([foe({ _dist: undefined, detected: true, inSight: true })], { resting: true }), true);
   assert.equal(areEnemiesNearby([], { resting: true }), false);
   assert.equal(areEnemiesNearby(undefined, { resting: true }), false);
 
@@ -773,6 +849,11 @@ test('S40 areEnemiesNearby: the RESTING variant, and it is the one the hosts ask
     assert.match(src(f), /areEnemiesNearby\([^)]*\{ resting: true \}\)/, f);
   }
   assert.match(src('src/scenes/world.js'), /\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\], \{ resting: true \}/);
+  // exterior.js's POOL, not just its call: `[^)]*` happily matches an
+  // empty array, and in that host the city watch is the ONLY pool - so
+  // an empty one means you sleep through a watch that is beating you.
+  assert.match(src('src/scenes/exterior.js'), /areEnemiesNearby\(cityGuards\.guards, \{ resting: true \}\)/);
+  assert.match(src('src/scenes/dungeonContext.js'), /areEnemiesNearby\(foes, \{ resting: true \}\)/);
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const deps = src(f).slice(src(f).indexOf('const outdoorRestDeps'), src(f).indexOf('const toggleRest'));
     assert.doesNotMatch(deps, /activeCount\?\.\(\) \?\? 0\) > 0/, `${f}: the rest deps must not ask the coarse question`);
@@ -1357,4 +1438,63 @@ test('S40 IsResting: the THIRD consumer - no per-minute fatigue drain while rest
   assert.equal(e.isResting, true);
   w.dispose();
   assert.equal(e.isResting, false);
+});
+
+
+test('S40 RestWindow: the hours page - an empty entry is a NO-OP, and the field caps at 2 digits', () => {
+  // Two laws with no test in the repo at all. TimedRestPrompt_
+  // OnGotUserInput opens `bool result = int.TryParse(input, out time);
+  // if (!result) return;` - an unparseable entry does NOTHING, and
+  // `Number('')` is 0, so without the guard a bare Enter starts a
+  // 0-hour rest. And the 2-digit field is what enforces the 99-hour
+  // cap by construction, DFU's cannotRestMoreThan99Hours arm having
+  // no port equivalent: a third digit would let a 100-hour rest through.
+  _resetForTests();
+  const w = new RestWindow(winDeps());
+  w.input('char:1');
+  assert.equal(w.state, 'hours');
+  w.input('confirm');
+  assert.equal(w.state, 'hours', 'a bare Enter does nothing at all');
+  assert.equal(w.session, null, 'and starts no session');
+
+  // Two digits go in; a third does not.
+  w.input('char:9'); w.input('char:9'); w.input('char:9');
+  assert.equal(w.value, '99', 'the field caps at two digits - the 99-hour cap');
+  w.input('backspace');
+  assert.equal(w.value, '9');
+  w.input('confirm');
+  assert.equal(w.session.hoursRemaining, 9);
+
+  // A 0-hour rest IS accepted when typed, and ends at once with no
+  // world time passing (AUDIT 23 corrected the old reading).
+  let minutes = 0;
+  const z = new RestWindow(winDeps({ advanceMinutes: (n) => { minutes += n; } }));
+  z.input('char:1'); z.input('char:0'); z.input('confirm');
+  const r = z.session.tick(1);
+  assert.equal(r.textId, REST_TEXT.wakeUp);
+  assert.equal(minutes, 0, 'no world time at all');
+});
+
+test('S40: a refused OPEN GATE actually shows its record, in every host', () => {
+  // The gate's textId was pinned on the way OUT of restOpenGate and
+  // never on the way INTO a host: deleting the two lines that look the
+  // record up and mount it left `return;` alone, and the player got
+  // SILENCE instead of TEXT.RSC 355 while swimming or 354 with foes.
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const h = src(f);
+    const arm = h.slice(h.indexOf('const gate = restOpenGate({'), h.indexOf('const gate = restOpenGate({') + 1400);
+    assert.match(arm, /const lines = townTalk\.lines\(gate\.textId\);/, f);
+    assert.match(arm, /if \(lines\) townTalk\.showOverlay\(new ActionTextBox\(lines\)\);/, f);
+  }
+  const wm = src('src/scenes/worldModes.js');
+  const iarm = wm.slice(wm.indexOf('const gate = restOpenGate({'), wm.indexOf('const gate = restOpenGate({') + 1400);
+  assert.match(iarm, /const lines = townTalk\?\.lines\?\.\(gate\.textId\);/);
+  assert.match(iarm, /if \(lines\) mountInterior\(new ActionTextBox\(lines\)\);/);
+  const dc = src('src/scenes/dungeonContext.js');
+  const darm = dc.slice(dc.indexOf('const gate = restOpenGate({'), dc.indexOf('const gate = restOpenGate({') + 1400);
+  assert.match(darm, /const lines = rscLines\(gate\.textId\);/);
+  assert.match(darm, /if \(lines\) activeOverlay = new ActionTextBox\(lines\);/);
+  // ...and the two records the gate can name are the right two.
+  assert.equal(restOpenGate({ enemiesNearby: true }).textId, 354);
+  assert.equal(restOpenGate({ swimming: true }).textId, 355);
 });

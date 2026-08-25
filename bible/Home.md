@@ -292,8 +292,7 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:2504` - too. FLAGGED: interior loot containers are the loot arc's -
 - `src/scenes/worldModes.js:2618` - string is the seam that was a FLAGGED null until this slice,
 - `src/scenes/worldModes.js:2693` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:2976` - has bought nothing. FLAGGED with the bank slice.
-- `src/scenes/worldModes.js:3272` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
+- `src/scenes/worldModes.js:3267` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
@@ -346,6 +345,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/potions.js:241` - FLAGGED, with the slice it waits on:
 - `src/systems/races.js:6` - port had only ever instantiated for Breton (the loud INTERIM the
 - `src/systems/restSession.js:107` - *     CheckStartRest, which are FLAGGED: the vampire's "not sated"
+- `src/systems/restSession.js:150` - player who has bought nothing. FLAGGED with the bank slice.
 - `src/systems/save.js:106` - (playerEntity's INTERIM skills: 30) - spreading it threw.
 - `src/systems/sceneCache.js:154` - FLAGGED, with the slice it waits on:
 - `src/systems/settings.js:39` - INTERIM doctrine - named, not silently ignored)
