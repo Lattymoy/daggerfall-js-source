@@ -90,9 +90,6 @@
       .railbtn:hover { color: var(--bone); }
       .railbtn.on { color: var(--brass); border-left-color: var(--brass); background: #12161b; }
       .railbtn .rk { display: block; font-size: 15px; }
-      .railbtn .rn { display: block; font-size: 11px; color: var(--dim); margin-top: 3px; letter-spacing: 0.06em; }
-      .railbtn.on .rn { color: #6f6a60; }
-      .railbtn.quiet .rk { color: #5f5b53; }
 
       .foot {
         padding: 14px 22px max(18px, env(safe-area-inset-bottom));
@@ -101,14 +98,12 @@
       }
       .foot span { color: var(--dim); }
 
-      /* ── PANE HEAD ─────────────────────────────────────────────── */
-      .head { padding: 34px 30px 20px; border-bottom: 1px solid var(--iron); }
-      .kicker {
-        color: var(--brass); font-size: 11px; letter-spacing: 0.2em;
-        text-transform: uppercase; margin: 0 0 10px;
-      }
-      .head h2 { font-family: var(--display); font-weight: 300; font-size: 32px; margin: 0 0 8px; }
-      .head p { color: var(--dim); margin: 0; max-width: 62ch; font-size: 14px; }
+      /* ── PANE HEAD ─────────────────────────────────────────────
+         ONE LINE. It carried a kicker, a title and a blurb, which is
+         the rail's own word said three times before the player reaches
+         anything they can press. */
+      .head { padding: 28px 30px 18px; border-bottom: 1px solid var(--iron); }
+      .head h2 { font-family: var(--display); font-weight: 300; font-size: 30px; margin: 0; }
 
       .body { padding: 24px 30px 40px; }
       .body.flush { padding: 0; }
@@ -165,13 +160,12 @@
 
       .row {
         display: flex; align-items: center; gap: 14px; width: 100%;
-        padding: 13px 18px; min-height: 56px; border-bottom: 1px solid #20262e;
+        padding: 11px 18px; min-height: 52px; border-bottom: 1px solid #20262e;
       }
       .row:hover { background: #12161b; }
       .row.on { background: #12161b; box-shadow: inset 2px 0 0 var(--brass); }
       .row-main { flex: 1; min-width: 0; }
       .row-name { font-size: 14px; }
-      .row-sub { font-size: 11px; color: #5f5b53; letter-spacing: 0.06em; margin-top: 3px; }
       .row.blocked .row-name { color: var(--dim); }
 
       /* THE CONTROL IS THE VALUE. A row shows the word a player reads,
@@ -194,15 +188,27 @@
       .step::after { content: ''; position: absolute; }
       .swatch { width: 26px; height: 20px; border: 1px solid var(--iron); }
 
+      /* THE TIER IS A DOT. The word was correct and it was also
+         twenty-one repetitions of STORED down one column - the state
+         still shows, and the sentence explaining it is one press away
+         in the help panel where it is read once. */
       .tier {
-        font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
-        color: #5f5b53; border: 1px solid var(--iron); padding: 2px 6px; margin-left: 10px;
+        width: 6px; height: 6px; border-radius: 50%; flex: 0 0 auto;
+        margin-left: 12px; background: #2f3742;
       }
-      .tier.live { color: var(--verdigris); border-color: #2c4a43; }
-      .tier.unavailable { color: var(--blood); border-color: #4a2b27; }
+      .tier.live { background: var(--verdigris); }
+      .tier.unavailable { background: var(--blood); }
+      .legend {
+        display: flex; gap: 16px; padding: 12px 18px; color: #5f5b53;
+        font-size: 11px; letter-spacing: 0.08em; border-bottom: 1px solid #20262e;
+        position: sticky; top: 0; background: var(--slate); z-index: 2;
+      }
+      .legend span { display: flex; align-items: center; gap: 7px; }
+      .legend i { width: 6px; height: 6px; border-radius: 50%; background: #2f3742; }
+      .legend i.live { background: var(--verdigris); }
+      .legend i.unavailable { background: var(--blood); }
 
       .dcard { padding: 24px 20px 32px; }
-      .dcard .kicker { margin-bottom: 8px; }
       .dcard h3 { font-family: var(--display); font-weight: 400; font-size: 22px; margin: 0 0 10px; }
       .dcard p { color: var(--dim); font-size: 13px; margin: 0 0 14px; }
       .dcard .status { color: var(--bone); font-size: 13px; }

@@ -72,14 +72,8 @@ import { BUILD_TAG } from '../buildTag.js';
 // the thing behind them is not built, so a section that has no engine
 // yet still has a home and says what it is waiting on. A rail with a
 // hole in it teaches the player the hole is permanent.
-const SECTIONS = [
-  { id: 'continue', label: 'Continue', note: 'Your last save' },
-  { id: 'new', label: 'New Game', note: 'Begin a character' },
-  { id: 'load', label: 'Load Game', note: 'Saved games' },
-  { id: 'settings', label: 'Settings', note: '171 options' },
-  { id: 'mods', label: 'Mods', note: 'Add-ons' },
-  { id: 'about', label: 'About', note: 'Build and data' },
-];
+const SECTIONS = ['Continue', 'New Game', 'Load Game', 'Settings', 'Mods', 'About'];
+const idOf = (label) => label.toLowerCase().split(' ')[0];
 
 let section = 'continue';
 let category = CATEGORIES[0].id;
@@ -138,21 +132,20 @@ function acts(list) {
 }
 
 /** A section that is set up but not yet backed. Shown, never hidden. */
-function empty(tag, title, lines) {
+function empty(title, line) {
   const e = el('div', 'empty');
-  e.append(el('span', 'tag grey', tag));
   e.append(el('h3', null, title));
-  for (const l of lines) e.append(el('p', null, l));
+  e.append(el('p', null, line));
   return e;
 }
 
-function head(kicker, title, blurb) {
+/** ONE LINE. It carried a kicker, a title and a blurb - the rail's own
+ *  word said three times before the player reaches anything pressable. */
+const head = (title) => {
   const h = el('div', 'head');
-  h.append(el('p', 'kicker', kicker));
   h.append(el('h2', null, title));
-  if (blurb) h.append(el('p', null, blurb));
   return h;
-}
+};
 
 // ── CONTINUE ─────────────────────────────────────────────────────
 // The first entry, and the one classic does not have at all: classic
@@ -163,26 +156,19 @@ function head(kicker, title, blurb) {
 function paneContinue(body) {
   const save = savedGame();
   if (!save) {
-    body.append(empty('Nothing saved', 'No game in progress', [
-      'Quicksave with F9 while you play and it appears here.',
-      'Saves live in this browser, so this is the same machine or nothing.',
-    ]));
+    body.append(empty('No game in progress', 'Quicksave with F9 and it appears here.'));
     body.append(acts([{ label: 'Start a new game', primary: true, onClick: () => go('new') }]));
     return;
   }
   const c = el('div', 'card');
   c.append(el('h3', null, save.name));
-  c.append(el('p', 'meta', [save.career, save.level ? `level ${save.level}` : null].filter(Boolean).join(' · ') || 'Character'));
+  c.append(el('p', 'meta', [save.career, save.level ? `level ${save.level}` : null,
+    save.when, save.hour].filter(Boolean).join(' · ')));
   c.append(stats([
-    ['Date', save.when],
-    ['Time', save.hour],
     ['Health', save.maxHealth ? `${save.health} / ${save.maxHealth}` : save.health],
     ['Gold', save.gold != null ? save.gold.toLocaleString() : null],
   ]));
-  c.append(acts([
-    { label: 'Continue', primary: true, onClick: () => console.log('[menu proto] continue') },
-    { label: 'Load a different game', onClick: () => go('load') },
-  ]));
+  c.append(acts([{ label: 'Continue', primary: true, onClick: () => console.log('[menu proto] continue') }]));
   body.append(c);
 }
 
@@ -195,13 +181,12 @@ function paneContinue(body) {
 function paneNew(body) {
   const c = el('div', 'card');
   c.append(el('h3', null, 'A new character'));
-  c.append(el('p', 'meta', 'Race, class, biography, face and skills - the classic wizard, in its own screens.'));
+  c.append(el('p', 'meta', 'Race, class, biography, face, skills.'));
   c.append(acts([{ label: 'Begin', primary: true, onClick: () => console.log('[menu proto] new game') }]));
   body.append(c);
 
   const opts = el('div', 'card');
   opts.append(el('h3', null, 'Where you wake up'));
-  opts.append(el('p', 'meta', "StartGameBehaviour's own three values, asked here because they are new-game questions."));
   for (const key of ['Startup/StartInDungeon', 'Startup/StartCellX', 'Startup/StartCellY']) {
     opts.append(settingRow(key, { compact: true }));
   }
@@ -222,10 +207,7 @@ function paneLoad(body) {
     ]));
     body.append(c);
   }
-  body.append(empty('Not built', 'Named save slots', [
-    'One quicksave slot exists today, at F9 / F12 (systems/save.js:27).',
-    'Named and dated slots, and reading a classic .SAV, are their own slices. The list they fill lives here.',
-  ]));
+  body.append(empty('Named slots', 'One quicksave slot today. Named saves and the classic .SAV are their own slices.'));
 }
 
 // ── SETTINGS ─────────────────────────────────────────────────────
@@ -246,7 +228,15 @@ function paneSettings(pane) {
 
   const list = el('div', 'list');
   const keys = keysOf(category);
-  if (!keys.length) list.append(empty('Empty', 'Nothing here yet', ['This category has no keys.']));
+  // The dot legend, once at the top, instead of a word on every row.
+  const legend = el('div', 'legend');
+  for (const [cls, word] of [['live', 'works now'], ['stored', 'saved, unread'], ['unavailable', 'fixed here']]) {
+    const s2 = el('span');
+    s2.append(el('i', cls), document.createTextNode(word));
+    legend.append(s2);
+  }
+  list.append(legend);
+  if (!keys.length) list.append(empty('Nothing here yet', 'This category has no keys.'));
   for (const key of keys) list.append(settingRow(key));
 
   const detail = el('div', 'detail');
@@ -263,7 +253,6 @@ function paneSettings(pane) {
 function categoryCard() {
   const cat = CATEGORIES.find((c) => c.id === category);
   const d = el('div', 'dcard');
-  d.append(el('p', 'kicker', 'Settings'));
   d.append(el('h3', null, cat.title));
   d.append(el('p', null, cat.blurb));
   const b = el('button', 'act', 'Reset everything to defaults');
@@ -279,7 +268,6 @@ function categoryCard() {
 function helpCard(key) {
   const tier = tierOf(key);
   const d = el('div', 'dcard');
-  d.append(el('p', 'kicker', CATEGORIES.find((c) => c.id === category)?.title ?? 'Setting'));
   d.append(el('h3', null, labelOf(key)));
   const help = helpOf(key);
   if (help) d.append(el('p', null, help));
@@ -311,13 +299,11 @@ function settingRow(key, { compact = false } = {}) {
 
   const row = el('div', `row${key === pickedKey ? ' on' : ''}${blocked ? ' blocked' : ''}`);
 
+  // The raw `Section/Key` used to sit under every label. It appears in
+  // exactly ONE place now - the help panel - which is where it was
+  // always meant to be and where the player who wants it will look.
   const main = el('button', 'row-main');
   main.append(el('div', 'row-name', labelOf(key)));
-  if (!compact) {
-    const sub = el('div', 'row-sub');
-    sub.textContent = key;
-    main.append(sub);
-  }
   main.onclick = () => { pickedKey = key; sheetOpen = true; render(); };
   row.append(main);
 
@@ -352,7 +338,7 @@ function settingRow(key, { compact = false } = {}) {
     }
   }
 
-  if (!compact) ctl.append(el('span', `tier ${tier}`, tier));
+  if (!compact) ctl.append(el('span', `tier ${tier}`));
   row.append(ctl);
   return row;
 }
@@ -374,13 +360,9 @@ function write(key, next) {
 // because Mac's call was to set the menus up now, and because a rail
 // that quietly omits mods teaches the player they are impossible.
 function paneMods(body) {
-  body.append(empty('Not built', 'No add-ons installed', [
-    'Nothing to load yet: this port has no mod system, so there is no loader for a mod to be loaded by.',
-    'The four DFU settings that would drive one are here and say the same thing, rather than sitting in the store pretending.',
-  ]));
+  body.append(empty('No add-ons installed', 'This port has no mod system, so there is no loader for a mod to load into.'));
   const c = el('div', 'card');
-  c.append(el('h3', null, "What DFU's mod keys say here"));
-  c.append(el('p', 'meta', 'Blocked with the reason, never shown working.'));
+  c.append(el('h3', null, "DFU's mod switches"));
   for (const key of ['Enhancements/LypyL_ModSystem', 'Enhancements/AssetInjection',
     'Enhancements/CompressModdedTextures', 'Experimental/CustomBooksImport']) {
     c.append(settingRow(key));
@@ -392,17 +374,13 @@ function paneMods(body) {
 function paneAbout(body) {
   const c = el('div', 'card');
   c.append(el('h3', null, 'project-dagger'));
-  c.append(el('p', 'meta', 'A 1:1 JavaScript port of Daggerfall. Hand-rolled WebGL2, no framework.'));
+  c.append(el('p', 'meta', 'A 1:1 JavaScript port of Daggerfall.'));
   c.append(stats([
     ['Build', BUILD_TAG],
-    ['Settings', `${Object.values(DEFAULTS).reduce((n, s) => n + Object.keys(s).length, 0)} keys`],
-    ['Colour keys', COLOUR_KEYS.length],
+    ['Settings', `${Object.values(DEFAULTS).reduce((n, s2) => n + Object.keys(s2).length, 0)} keys`],
   ]));
   body.append(c);
-  body.append(empty('Ledger A', 'Exit', [
-    'Classic quits to DOS. A browser tab cannot close itself unless a script opened it, so there is no Exit here.',
-    'Closing the tab is the exit, and your quicksave survives it.',
-  ]));
+  body.append(empty('Exit', 'A browser tab cannot close itself. Close it yourself; the quicksave survives.'));
 }
 
 // ── SHELL ────────────────────────────────────────────────────────
@@ -419,11 +397,11 @@ function render() {
   side.append(brand);
 
   const rail = el('nav', 'rail');
-  for (const s of SECTIONS) {
-    const b = el('button', `railbtn${s.id === section ? ' on' : ''}`);
-    b.append(el('span', 'rk', s.label));
-    b.append(el('span', 'rn', s.note));
-    b.onclick = () => go(s.id);
+  for (const label of SECTIONS) {
+    const id = idOf(label);
+    const b = el('button', `railbtn${id === section ? ' on' : ''}`);
+    b.append(el('span', 'rk', label));
+    b.onclick = () => go(id);
     rail.append(b);
   }
   side.append(rail);
@@ -441,14 +419,7 @@ function render() {
     pane.style.overflow = 'hidden';
     paneSettings(pane);
   } else {
-    const meta = {
-      continue: ['Continue', 'Where you left off', 'One quicksave slot, read straight from the game\u2019s own envelope.'],
-      new: ['New Game', 'A new character', 'The classic wizard follows: race, gender, class, biography, name, face, stats, skills, reflexes.'],
-      load: ['Load Game', 'Saved games', 'Everything this port can restore today, and honestly what it cannot.'],
-      mods: ['Mods', 'Community add-ons', 'Set up now, backed by nothing yet.'],
-      about: ['About', 'Build and data', 'What is running, and what it is running on.'],
-    }[section];
-    pane.append(head(meta[0], meta[1], meta[2]));
+    pane.append(head(SECTIONS.find((l) => idOf(l) === section)));
     const body = el('div', 'body');
     ({ continue: paneContinue, new: paneNew, load: paneLoad, mods: paneMods, about: paneAbout })[section](body);
     pane.append(body);
@@ -464,6 +435,6 @@ render();
 // browser check should read the SAME layout a finger taps.
 window.__menu = () => JSON.stringify({
   section, category, pickedKey,
-  sections: SECTIONS.map((s) => s.id),
+  sections: SECTIONS.map(idOf),
   rows: [...document.querySelectorAll('.row')].length,
 });
