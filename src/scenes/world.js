@@ -2432,6 +2432,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     expandRandomTextRecord: (id) => townTalk.lines(id).map((r) => r.text ?? r).join(' '),
     rolls: Math.random,
   });
+  // S43: the entity carries the mill so the ENTITY TICK can reach it.
+  // RegionPowerAndConditionsUpdate opens with RefreshRumorMill()
+  // (PlayerEntity.cs:1630) and that call had no caller anywhere in src/
+  // - the mill never dropped an expired rumor. Parked here the same way
+  // the day block's other inputs are (sceneCache, bankAccounts), which
+  // is what keeps the tick free of host wiring.
+  playerEntity.rumorMill = rumorMill;
   // TK-ii: THE TOPIC TREE beside the mill. The quest topic/dialog-link
   // seams land here; the tree's WINDOW consumers (the Tell-me-about
   // page, the quest Where-is entries) mount with TK-v; the position

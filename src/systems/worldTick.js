@@ -26,6 +26,12 @@ import { skillValue, tallySkill, SKILLS } from './skills.js';
 import { FATIGUE_LOSS, killIfAnyLiveStatZero } from './statMods.js';
 import { dice100 } from '../combat/formulas.js';
 import { normalizeReputations, NORMALIZE_INTERVAL_MINUTES } from './court.js';   // AUDIT 23 (C4)
+// S43: the entity update's 7-day and 38-day arms (PlayerEntity.cs:460-472).
+import { regionPowerUpdate } from './regionPower.js';
+/** :462 - `% 10080`, seven days of game minutes. */
+export const FACTION_POWER_INTERVAL_MINUTES = 10080;
+/** :469 - `% 54720`, thirty-eight days. */
+export const REGION_CONDITIONS_INTERVAL_MINUTES = 54720;
 import { CLASSIC_GAME_START_TIME } from './gameDate.js';
 import { RACES } from './races.js';
 
@@ -475,6 +481,32 @@ export function tickPlayerMinutes({
   for (let i = lastMinutes; i < nowMinutes; i++) {
     if (i % NORMALIZE_INTERVAL_MINUTES === 0 && !entity.preventNormalizingReputations) {
       normalizeReputations(entity, entity.factionRep ?? null);
+    }
+    // S43 - :461-462, the SECOND arm of the :453-477 loop: every 7 days the
+    // faction powers move. Until now nothing in the port ever changed a
+    // faction's power, so S41's price walk - which tilts a region's
+    // prices by The Merchants' power against the region's own - had a
+    // constant for its whole tug-of-war term.
+    if (i % FACTION_POWER_INTERVAL_MINUTES === 0) {
+      regionPowerUpdate(entity.factionRep ?? null, { rumorMill: entity.rumorMill ?? null, rolls });
+    }
+    // :468-472, the THIRD arm: every 38 days DFU calls the SAME member
+    // with updateConditions true, which runs this power half AND the
+    // conditions half. The power half therefore fires on both cadences,
+    // and on the 266-day minute where the two align it fires TWICE -
+    // two separate ifs, both calling a member that always walks the
+    // powers. That is reproduced here; what is missing is the
+    // conditions body, which is FLAGGED (it needs
+    // PersistentFactionData's alliance mutators, unported).
+    //
+    // DFU's own note on this arm is worth keeping: classic ran the
+    // conditions version only on a minute divisible by BOTH 10080 and
+    // 54720 - every 266 days - and DFU says "I'm pretty sure it was
+    // supposed to be every 38 days" and made it so. A DFU deviation
+    // from classic, inherited deliberately.
+    if (i % REGION_CONDITIONS_INTERVAL_MINUTES === 0) {
+      regionPowerUpdate(entity.factionRep ?? null, { rumorMill: entity.rumorMill ?? null, rolls });
+      // StartRacialOverrideQuest(false) rides this arm too - unported.
     }
   }
 

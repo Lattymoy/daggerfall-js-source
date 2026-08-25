@@ -3410,3 +3410,79 @@ war, famine, plague, witch burning or crime wave into it - that is
 siblings), none of which the port has. `InitializeRegionData`'s twelve
 bootstrap update passes (`:2214-2217`) are deliberately absent for the
 same reason: they call the member this slice does not port.
+
+## S43 - THE FACTION POWERS START MOVING (2026-08-25)
+
+`src/systems/regionPower.js` (new: `isFactionValidForRumorMill`,
+`factionPowerStep`, `regionPowerUpdate`) + `src/systems/worldTick.js`
+(the 7-day and 38-day arms of the entity update's minute loop) +
+`src/scenes/world.js` (the rumour mill parked on the entity).
+`test/regionpower.test.js` (new, 10).
+
+**Nothing in the port had ever changed a faction's power.** Every
+faction sat at its FACTION.TXT value for the life of the character.
+That is not a cosmetic gap: S41's `UpdateRegionalPrices` tilts a
+region's prices by The Merchants' power against that region's own
+Province faction, so its entire tug-of-war term - the reason the
+formula exists - was a constant. The merchants could never gain ground
+on anybody, and no region's economy could drift for any reason but its
+own dice.
+
+**And `RefreshRumorMill` had no caller either.** It is the member's
+first line (`:1630`), it drops rumours past their `timeLimit`, and
+`grep` found it in `rumorMill.js` and `rumormill.test.js` and nowhere
+else in `src/`. That is the third law this month found ported, tested
+and unreachable - after `CheckOverdueLoans` and the day block itself.
+The mill is parked on the entity now (`playerEntity.rumorMill`), the
+way `sceneCache` and `bankAccounts` already are, which is what lets the
+tick reach it without a line of host wiring.
+
+**The walk.** For every Province, Group or Subgroup that is not one of
+DFU's thirteen exclusions:
+
+    chance = parentPower/10 + alliesPower/10 + rulerPowerBonus
+             - enemiesPower/10
+
+A FAILED roll costs a point of power, a passed one gains it, and then -
+separately - a faction any of whose CHILDREN outrank it gains one more.
+Three details that are easy to lose, and all three needed a pin that
+could actually see them:
+
+  - the `parent != 0` gate is a REAL gate. Dropping it survives a
+    dictionary with no faction 0, because the lookup misses and
+    contributes 0 either way; it only stops being equivalent when
+    something IS keyed at 0. The pin puts a faction there.
+  - the parent lookup at `:1664` discards its success flag - no `if` -
+    so a parent id the dictionary does not hold yields C#'s zero struct
+    and a mod of 0, rather than skipping the term.
+  - the children comparison reads `power` AFTER the roll has landed,
+    and it is STRICTLY greater. A child exactly level with the
+    post-roll power earns nothing, which every fixture but the last one
+    straddled.
+
+**The two cadences, and the minute they collide.** DFU calls this
+member from two arms of the same loop: `:462` every 7 days with
+`updateConditions` false, and `:469` every 38 days with it true - and
+the true call runs the power half TOO. So the powers move on both
+cadences, and on the 266-day minute divisible by both (lcm(10080,
+54720) = 383040) two separate `if`s each call a member that always
+walks the powers, so it fires twice. Reproduced, and pinned.
+
+DFU's own note on that second arm is worth keeping: classic ran the
+conditions version only when BOTH intervals aligned - every 266 days -
+and DFU says "I'm pretty sure it was supposed to be every 38 days" and
+changed it. A DFU deviation from classic, inherited deliberately
+because this port is 1:1 with DFU and DFU says why.
+
+Pins: `test/regionpower.test.js` (10). 15 mutations, 15 killed - the
+first round left the parent gate and the children comparison alive.
+All 12 C# citations content-verified; six were wrong on the first pass.
+
+FLAGGED: the CONDITIONS half of this member is still unported - the war
+state machine, famine, plague, persecuted temple, crime wave, witch
+burnings and the new-ruler roll. It needs `PersistentFactionData`'s
+alliance mutators (`GetNumberOfCommonAlliesAndEnemies`,
+`EndFactionAllies`, `EndFactionRivalries` and siblings), none of which
+the port has, and it writes into S42's store. `StartRacialOverrideQuest`
+rides the same two arms and is unported with it, as is
+`InitializeRegionData`'s twelve-pass bootstrap.
