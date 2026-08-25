@@ -46,6 +46,8 @@ import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AU
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice } from './hostCombat.js';   // AUDIT 23 (C14)
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
 import { RestWindow } from '../ui/restWindow.js';   // S40: rest above ground
+import { restOpenGate } from '../systems/restSession.js';   // S40: the scene-free open gate
+import { setEnemyAlert, areEnemiesNearby } from '../systems/encounters.js';   // S40: the open gate's alert + the resting test
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5): the collapse box
 import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
@@ -626,7 +628,11 @@ export async function bootExterior(canvas, renderer, params, status) {
     && (modes?.mode ?? 'exterior') === 'exterior';
   const outdoorRestDeps = createRestDeps(playerEntity, {
     advanceMinutes: (n) => playerTicker.advance(n),
-    enemiesNearby: () => (cityGuards?.activeCount?.() ?? 0) > 0,
+    // AreEnemiesNearby's RESTING variant. This host mounts no foe pool
+    // but the city watch, and `activeCount() > 0` - which the first
+    // draft borrowed from the exhaustion arm - would block sleep for
+    // good the moment one guard spawned anywhere in town.
+    enemiesNearby: () => areEnemiesNearby(cityGuards.guards, { resting: true }),
     place: () => ({
       inTownStrict: _isPlayerInTownStrict(),
       inTown: isTownLocationType(_musicLocationType()),
@@ -646,6 +652,22 @@ export async function bootExterior(canvas, renderer, params, status) {
   });
   const toggleRest = () => {
     if (townTalk.overlayActive) return;
+    // THE OPEN GATE (DaggerfallUI.cs:651-687), which is scene-free -
+    // this host had none of it, because rest was a dungeon feature.
+    // Outdoors all three inputs are live: real foes, real water, and a
+    // levitating or falling player who cannot lie down.
+    const gate = restOpenGate({
+      enemiesNearby: outdoorRestDeps.enemiesNearby(),
+      swimming: !!player.swimming,
+      grounded: !!player.grounded,
+    });
+    if (!gate.ok) {
+      // DFU raises the enemy alert on the enemies arm (:655).
+      if (gate.alert) setEnemyAlert(playerEntity, true, Math.floor(worldMinutes()));
+      const lines = townTalk.lines(gate.textId);
+      if (lines) townTalk.showOverlay(new ActionTextBox(lines));
+      return;
+    }
     townTalk.showOverlay(new RestWindow(outdoorRestDeps));
   };
   // G2: arrest + court through the townTalk overlay seam.

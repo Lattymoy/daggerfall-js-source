@@ -31,9 +31,15 @@ export class RestWindow {
    *    restPlace()          the canRest() argument bag for HERE
    *    commitCrime(c, sg)   PlayerEntity.CrimeCommitted + SpawnCityGuards
    *    moveToBed(marker)    PlayerMotor.transform.position = allocatedBed
+   *    onRentExpired()      RemoveExpiredRentedRooms, which DFU calls
+   *                         as it prints the expired line (:485)
    *    ignoreAllocatedBed   the ctor flag (:115-118); true suppresses
-   *                         the move, which is how the quest/loading
-   *                         rest windows keep the player where they are
+   *                         the move. DFU's own call site passes FALSE
+   *                         (DaggerfallUI.cs:686 is the only
+   *                         construction in the tree), so this is a
+   *                         mod hook with no core caller - carried
+   *                         because the ctor has it, not because
+   *                         anything here uses it
    */
   constructor(deps, ignoreAllocatedBed = false) {
     this.deps = deps;
@@ -49,7 +55,8 @@ export class RestWindow {
     this.isRestWindow = true;   // the scene's tick tag
     this.ignoreAllocatedBed = ignoreAllocatedBed;
     this._pending = null;       // the button waiting behind the confirm
-    this._allocatedBed = null;  // CanRest's out-parameter
+    this._allocatedBed = null;  // CanRest's out-parameters, both of
+    this._remainingHoursRented = -1;   // them, carried to the session
   }
 
   /** CanRest(alreadyWarned) (:542-599) with DFU's side effects
@@ -61,9 +68,12 @@ export class RestWindow {
     // No place seam at all (the dungeon host): CanRest's `return true`
     // tail. canRest()'s own defaults answer the same thing, but going
     // through it would ask the host for deps it never had.
-    if (!place) { this._allocatedBed = null; return true; }
+    if (!place) { this._allocatedBed = null; this._remainingHoursRented = -1; return true; }
     const d = canRest({ ...place, alreadyWarned });
     this._allocatedBed = d.allocatedBed ?? null;
+    // CheckRent counts this down every rested hour, so the rental has
+    // to reach the session. Before S40 it was computed and dropped.
+    this._remainingHoursRented = d.remainingHoursRented ?? -1;
     if (d.crime) this.deps.commitCrime?.(d.crime, d.spawnGuards);
     if (d.ok) return true;
     // CloseWindow() then MessageBox: the rest window is GONE and the
@@ -89,6 +99,11 @@ export class RestWindow {
    *  never moves the player to a bed. */
   _restButton(which, alreadyWarned) {
     if (!alreadyWarned && illegalRestWarning() && this.deps.restPlace?.()?.inTownStrict) {
+      // VERBATIM, and a quirk: WhileButton plays ButtonClick a SECOND
+      // time before raising the box (:644 then :647). HealedButton
+      // takes the same branch and plays it once (:670). Nobody would
+      // write that on purpose, so it is preserved rather than tidied.
+      if (which === 'while') audio.playOneShot(SOUND.ButtonClick, 1);
       this._pending = which;
       this.state = 'confirm';
       return;
@@ -108,8 +123,8 @@ export class RestWindow {
       // ConfirmIllegalRest*_OnButtonClick (:659-666, :685-692): the box
       // closes either way, and only Yes carries on - No leaves the
       // rest window standing on its selection page.
-      if (action === 'char:y' || action === 'confirm') { const w = this._pending; this._pending = null; this._restButton(w, true); }
-      else if (action === 'char:n' || action === 'back') { this._pending = null; this.state = 'selection'; }
+      if (action === 'char:y' || action === 'char:Y' || action === 'confirm') { const w = this._pending; this._pending = null; this._restButton(w, true); }
+      else if (action === 'char:n' || action === 'char:N' || action === 'back') { this._pending = null; this.state = 'selection'; }
       return;
     }
     if (this.state === 'ended') {
@@ -158,12 +173,19 @@ export class RestWindow {
 
   _start(mode, hours) {
     this.mode = mode;
-    this.session = new RestSession(mode, hours, this.deps);
+    this.session = new RestSession(mode, hours, this.deps, this._remainingHoursRented);
     this.state = 'resting';
   }
 
   _end(result) {
-    this.endLines = result.died ? null : (this.deps.endLines?.(result.textId) ?? null);
+    // EndRest's FIRST arm (:480-486): the expired-room line outranks
+    // "You wake up." and "You are healed." both. It carries a STRING
+    // rather than a record id (Internal_Strings :358 has it, TEXT.RSC
+    // does not), and DFU calls RemoveExpiredRentedRooms right there -
+    // the landlord clears the room as the player wakes.
+    if (result.rentExpired) this.deps.onRentExpired?.();
+    this.endLines = result.died ? null
+      : (result.text ? [result.text] : (this.deps.endLines?.(result.textId) ?? null));
     if (result.died || !this.endLines) { this.done = true; return; }   // death: the death screen owns the flow
     this.state = 'ended';
   }

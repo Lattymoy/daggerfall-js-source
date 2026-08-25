@@ -8,6 +8,7 @@ import { readFileSync } from 'node:fs';
 import {
   canRest, CITY_CAMPING_ILLEGAL_ID, HAVE_NOT_RENTED_ROOM,
   ILLEGAL_REST_WARNING, illegalRestWarning,
+  restOpenGate, REST_TEXT, RestSession, EXPIRED_RENTED_ROOM,
 } from '../src/systems/restSession.js';
 import { RestWindow } from '../src/ui/restWindow.js';
 import { restVitals, restFullyHealed } from '../src/scenes/shared.js';
@@ -16,7 +17,9 @@ import { isTownLocationType, TOWN_LOCATION_TYPES, LOCATION_TYPES } from '../src/
 import { interiorSceneName } from '../src/systems/sceneCache.js';
 import { setValue, _resetForTests } from '../src/systems/settings.js';
 import { maxFatigue } from '../src/systems/statMods.js';
+import { REST_WAIT_PER_HOUR } from '../src/systems/restSession.js';
 import { SKILLS } from '../src/systems/skills.js';
+import { areEnemiesNearby } from '../src/systems/encounters.js';
 
 const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
@@ -436,7 +439,7 @@ test('S40 restVitals: one home for the rested hour, and the dungeon host uses it
 test('S40 hosts: all four can now rest, and each supplies its own place', () => {
   // The interior host: the key arm, the place bag, and the deps.
   const wm = src('src/scenes/worldModes.js');
-  assert.match(wm, /toggleRest\(\) \{ mountInterior\(new RestWindow\(interiorRestDeps\)\); \}/);
+  assert.match(wm, /mountInterior\(new RestWindow\(interiorRestDeps\)\);/);
   assert.match(wm, /interiorRestPlace = \(\) => \{/);
   assert.match(wm, /inTownStrict: false/);                       // inside, by definition
   assert.match(wm, /rentedRoom: \(\) => findRentedRoom\(playerEntity\.rentedRooms/);
@@ -447,6 +450,9 @@ test('S40 hosts: all four can now rest, and each supplies its own place', () => 
   // port's FixStanding - a raw spawn wedges the capsule in tight
   // geometry, which is the dungeon start-marker bug already on record.
   assert.match(wm, /const f = floorLanding\(interiorCtx\.collider, \[m\.x, m\.y \+ 1\.08, m\.z\]\);\n\s+player\.spawn\(f\[0\], f\[1\], f\[2\]\);/);
+  // The interior host is the one that can actually be IN a rented room,
+  // so it is the one that owes the sweep.
+  assert.match(wm, /onRentExpired: \(\) => \{\n\s+playerEntity\.rentedRooms = removeExpiredRooms\(/);
 
   // Both outdoor hosts answer the Rest action and commit the crime.
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
@@ -509,4 +515,196 @@ test('S40: the tavern sells a bed that is now READ', () => {
   // The bed the rental mints and the bed CanRest hands back are the
   // same index into the same marker list.
   assert.match(src('src/systems/restSession.js'), /room\.allocatedBedIndex/);
+});
+
+
+// ---- THE OPEN GATE ---------------------------------------------------
+
+test('S40 restOpenGate: three refusals, in DFU\'s order, and the enemy alert rides the first', () => {
+  // DaggerfallUI.cs:651-687. Enemies FIRST, and only that arm raises
+  // the alert - which is what arms the dungeon rest-encounter roll.
+  const foes = restOpenGate({ enemiesNearby: true, swimming: true, grounded: false });
+  assert.deepEqual(foes, { ok: false, textId: REST_TEXT.enemiesNearby, alert: true });
+  // Then swimming or not grounded, sharing one record and raising no
+  // alert. StartRestGroundedCheck is the `grounded` input's law.
+  assert.deepEqual(restOpenGate({ swimming: true }),
+    { ok: false, textId: REST_TEXT.cannotRestNow, alert: false });
+  assert.deepEqual(restOpenGate({ grounded: false }),
+    { ok: false, textId: REST_TEXT.cannotRestNow, alert: false });
+  // Clear on all three: the window opens.
+  assert.deepEqual(restOpenGate({ enemiesNearby: false, swimming: false, grounded: true }),
+    { ok: true, textId: null, alert: false });
+  assert.deepEqual(restOpenGate(), { ok: true, textId: null, alert: false });
+});
+
+test('S40 restOpenGate: it is SCENE-FREE - all four hosts run it before opening', () => {
+  const wm = src('src/scenes/worldModes.js');
+  // The gate lived written-out in dungeonContext because rest was a
+  // dungeon feature. DFU raises it from ONE message handler with no
+  // scene test at all, so every host that can rest owes it.
+  for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/world.js',
+    'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
+    const h = src(f);
+    assert.match(h, /const gate = restOpenGate\(\{/, f);
+    assert.match(h, /if \(!gate\.ok\) \{/, f);
+    // ...and the window is only built AFTER the gate passes.
+    assert.ok(h.indexOf('restOpenGate({') < h.indexOf('new RestWindow('), `${f}: the gate must precede the window`);
+  }
+  // The dungeon stopped keeping its own copy.
+  assert.doesNotMatch(src('src/scenes/dungeonContext.js'), /if \(_restDeps\.enemiesNearby\(\)\) \{/);
+  // Every host that HAS motor state feeds it LIVE, not as a constant.
+  // The interior one included: it mounts no foe pool and has no water,
+  // so those two are honestly false there - but StartRestGroundedCheck
+  // is live indoors, since a levitating player cannot lie down in a
+  // shop any more than in a dungeon.
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.match(src(f), /swimming: !!player\.swimming,\n\s+grounded: !!player\.grounded,/, f);
+  }
+  assert.match(wm, /enemiesNearby: false,[^}]*swimming: false,[^}]*grounded: !!player\.grounded,/s);
+  assert.match(src('src/scenes/dungeonContext.js'), /swimming: _activity\.swimming, grounded: nearFloor,/);
+});
+
+// ---- CheckRent -------------------------------------------------------
+
+const rentDeps = (over = {}) => ({
+  advanceMinutes() {}, tickVitals: () => false, fullyHealed: () => false,
+  enemiesNearby: () => false, dead: () => false, ...over,
+});
+/** Run a session forward whole hours (6 sub-ticks of 10 minutes). */
+const restHours = (sess, n) => {
+  for (let i = 0; i < n * 6; i++) {
+    const r = sess.tick(REST_WAIT_PER_HOUR / 10 + 1e-9);
+    if (r) return r;
+  }
+  return null;
+};
+
+test('S40 CheckRent: the rental counts DOWN every rested hour and ends the rest at zero', () => {
+  // CheckRent (:441-448) run from TickRest (:435-436). Three hours
+  // left, a twelve-hour rest: the room, not the clock, wakes you.
+  const s2 = new RestSession('timed', 12, rentDeps(), 3);
+  const r = restHours(s2, 5);
+  assert.ok(r, 'the session ended');
+  assert.equal(r.rentExpired, true);
+  assert.equal(r.text, EXPIRED_RENTED_ROOM);
+  assert.equal(r.textId, null);        // a STRING, not a TEXT.RSC record
+  assert.equal(s2.totalHours, 3);      // exactly when the counter hit 0
+  assert.ok(s2.hoursRemaining > 0);    // the timed rest had hours left
+});
+
+test('S40 CheckRent: -1 never counts down, so an unrented rest is not billed', () => {
+  const s2 = new RestSession('timed', 4, rentDeps(), -1);
+  const r = restHours(s2, 4);
+  assert.equal(r.textId, REST_TEXT.wakeUp);
+  assert.equal(r.rentExpired, undefined);
+  assert.equal(s2.remainingHoursRented, -1);   // untouched
+  // The predicate itself: -1 returns BEFORE the decrement.
+  const s3 = new RestSession('timed', 1, rentDeps(), -1);
+  assert.equal(s3.checkRent(), false);
+  assert.equal(s3.remainingHoursRented, -1);
+  // ...and it fires exactly ONCE, on the hour it reaches zero.
+  const s4 = new RestSession('timed', 9, rentDeps(), 2);
+  assert.equal(s4.checkRent(), false);
+  assert.equal(s4.checkRent(), true);
+  assert.equal(s4.checkRent(), false);   // -1 now, and quiet
+});
+
+test('S40 CheckRent: the expired line OUTRANKS the mode\'s own', () => {
+  // EndRest's first arm (:480-486) beats "You wake up." and "You are
+  // healed." both - and CheckRent runs even when the mode has already
+  // finished, because DFU ORs the two rather than short-circuiting.
+  const timed = new RestSession('timed', 2, rentDeps(), 2);
+  const t = restHours(timed, 3);
+  assert.equal(t.text, EXPIRED_RENTED_ROOM);
+  const full = new RestSession('full', 0, rentDeps({ tickVitals: () => true }), 1);
+  const f = restHours(full, 2);
+  assert.equal(f.text, EXPIRED_RENTED_ROOM);
+  // Stopping early on the SAME hour reports it too (endEarly goes
+  // through the same precedence).
+  const early = new RestSession('timed', 9, rentDeps(), 1);
+  restHours(early, 1);
+  assert.equal(early.remainingHoursRented, 0);
+  assert.equal(early.endEarly().text, EXPIRED_RENTED_ROOM);
+});
+
+test('S40 CheckRent: CanRest\'s hour count REACHES the session, and the sweep runs on expiry', () => {
+  _resetForTests();
+  const swept = [];
+  const w = new RestWindow(winDeps({
+    onRentExpired: () => swept.push(1),
+    restPlace: () => ({
+      inTown: true, insideBuilding: true, mapId: 1, buildingKey: 2,
+      isPermanentScene: () => true, nowMinutes: 0,
+      rentedRoom: () => ({ allocatedBedIndex: 0, expiryMinutes: 120 }),   // 2 hours
+      restMarkers: [{ x: 0, y: 0, z: 0 }],
+    }),
+  }));
+  w.input('char:1');
+  w.input('char:9'); w.input('confirm');            // a 9-hour rest
+  assert.equal(w.session.remainingHoursRented, 2);  // the room, carried
+  const r = restHours(w.session, 3);
+  assert.equal(r.text, EXPIRED_RENTED_ROOM);
+  w._end(r);
+  assert.deepEqual(w.endLines, [EXPIRED_RENTED_ROOM]);
+  assert.deepEqual(swept, [1], 'RemoveExpiredRentedRooms runs as the line prints (:485)');
+  // ...and a rest with no room seam at all carries the -1 sentinel.
+  const free = new RestWindow(winDeps());
+  free.input('char:1'); free.input('char:1'); free.input('confirm');
+  assert.equal(free.session.remainingHoursRented, -1);
+});
+
+test('S40 RestWindow: the confirm box answers a CAPSED keyboard too', () => {
+  _resetForTests();
+  setValue('GUI', 'IllegalRestWarning', 'True');
+  const mk = () => new RestWindow(winDeps({ restPlace: () => ({ inTownStrict: true }) }));
+  const y = mk(); y.input('char:1'); y.input('char:Y');
+  assert.equal(y.state, 'hours');
+  const n = mk(); n.input('char:1'); n.input('char:N');
+  assert.equal(n.state, 'selection');
+});
+
+test('S40 RestWindow: WhileButton plays the click TWICE on the illegal arm (verbatim)', () => {
+  // :644 then :647 - HealedButton takes the same branch and plays it
+  // once (:670). A quirk nobody would write on purpose, preserved.
+  const w = src('src/ui/restWindow.js');
+  assert.match(w, /if \(which === 'while'\) audio\.playOneShot\(SOUND\.ButtonClick, 1\);/);
+  const arm = w.slice(w.indexOf('_restButton(which, alreadyWarned)'));
+  assert.ok(arm.indexOf("which === 'while'") < arm.indexOf('this._pending = which;'),
+    'the second shot lands before the box goes up');
+});
+
+
+test('S40 areEnemiesNearby: the RESTING variant, and it is the one the hosts ask', () => {
+  const foe = (over) => ({ dead: false, ai: { detected: false, inSight: false, wouldBeSpawned: false, _dist: 100, ...over } });
+  // Can see you -> nearby at ANY distance.
+  assert.equal(areEnemiesNearby([foe({ detected: true, inSight: true, _dist: 900 })], { resting: true }), true);
+  // Cannot see you and further than 12 -> SKIPPED ENTIRELY while
+  // resting, even though it would have spawned in classic. That skip
+  // IS the resting variant; without it any unaware foe in the whole
+  // 1024-unit spawn band refuses rest.
+  assert.equal(areEnemiesNearby([foe({ wouldBeSpawned: true, _dist: 13 })], { resting: true }), false);
+  assert.equal(areEnemiesNearby([foe({ wouldBeSpawned: true, _dist: 13 })], { resting: false }), true);
+  // Cannot see you but within 12 -> counts only if it would spawn.
+  assert.equal(areEnemiesNearby([foe({ wouldBeSpawned: true, _dist: 12 })], { resting: true }), true);
+  assert.equal(areEnemiesNearby([foe({ wouldBeSpawned: false, _dist: 1 })], { resting: true }), false);
+  // Half-seen is not seen: DFU ANDs Target-is-player with TargetInSight.
+  assert.equal(areEnemiesNearby([foe({ detected: true, _dist: 900 })], { resting: true }), false);
+  // The dead and the shapeless are skipped, and an empty pool is quiet.
+  assert.equal(areEnemiesNearby([{ dead: true, ai: { detected: true, inSight: true, _dist: 0 } }], { resting: true }), false);
+  assert.equal(areEnemiesNearby([null, {}], { resting: true }), false);
+  assert.equal(areEnemiesNearby([], { resting: true }), false);
+  assert.equal(areEnemiesNearby(undefined, { resting: true }), false);
+
+  // ALL THREE foe-bearing hosts ask through the law, and the two above
+  // ground stopped asking "is any guard alive" - which for rest is a
+  // different rule, not a rough one: guards persist until the crime
+  // clears, so one spawned across town blocks sleep forever.
+  for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.match(src(f), /areEnemiesNearby\([^)]*\{ resting: true \}\)/, f);
+  }
+  assert.match(src('src/scenes/world.js'), /\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\], \{ resting: true \}/);
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const deps = src(f).slice(src(f).indexOf('const outdoorRestDeps'), src(f).indexOf('const toggleRest'));
+    assert.doesNotMatch(deps, /activeCount\?\.\(\) \?\? 0\) > 0/, `${f}: the rest deps must not ask the coarse question`);
+  }
 });

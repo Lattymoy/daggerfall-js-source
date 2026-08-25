@@ -2639,7 +2639,53 @@ dungeon law and belongs there. `CalculateHealthRecoveryRate`'s
 `false, true` the dungeon hard-codes, which is the one place
 RapidHealing InLight differs.
 
-Pins: 23 in `restlodging.test.js`. 34 mutations, 34 dead. The first
+**THE REVIEW ROUND FOUND THE HALF THIS SLICE HAD SKIPPED.** Five
+adversarial readers over the C# and the diff, each finding refuted by
+default; four survived, and two were whole behaviours rather than
+details.
+
+**The OPEN GATE is scene-free.** `DaggerfallUI.cs:651-687` is the
+`dfuiOpenRestWindow` handler, and three refusals stand between the
+Rest action and the window ever being pushed: `AreEnemiesNearby(true)`
+raises the enemy alert and shows TEXT.RSC 354; swimming or a failed
+`StartRestGroundedCheck` shows 355; and then the prevented-rest /
+offer / racial-override chain, which is FLAGGED. DFU raises all of it
+from ONE message handler with no scene test at all. The port had it
+written out inside `dungeonContext.toggleRest`, because that is where
+rest lived - so the three hosts this slice gave a Rest key would have
+let the player lie down with a foe at their back, swimming, or
+mid-levitation. It is `restOpenGate` now, and all four hosts run it
+before they build a window.
+
+**`remainingHoursRented` was a dead output.** `CanRest` computes it
+and the port carried it back and then read it nowhere. What that drops
+is `CheckRent` (`:441-448`), run from `TickRest` every rested hour:
+the rental counts DOWN, and the hour it reaches zero ends the rest -
+with `EndRest`'s own first arm (`:480-486`), which outranks both "You
+wake up." and "You are healed.", says "Your time for this room has
+expired." (a STRING, `Internal_Strings :358`, with no TEXT.RSC record),
+and calls `RemoveExpiredRentedRooms` as it prints. Two details are
+easy to lose: `-1` returns BEFORE the decrement, so an unrented rest is
+never billed; and DFU writes `finished |= CheckRent()`, so the
+decrement runs even on the hour the mode itself finishes.
+
+**"Is any guard alive" is not AreEnemiesNearby.** Both outdoor hosts'
+first-draft `enemiesNearby` asked `cityGuards.activeCount() > 0`,
+copied from this host's exhaustion arm. For exhaustion that is rough;
+for rest it is a different rule, because guards persist until the
+crime clears - one spawned across town would block sleep forever.
+`GameManager.AreEnemiesNearby` (`:684-730`) walks the foes and, in its
+RESTING form, SKIPS an unaware one past 12 units entirely. That is the
+whole point of the flag, and it now has a home in `encounters.js` that
+all three foe-bearing hosts read.
+
+The fourth: `raiseOnEncounterEvent`'s comment said "dungeon mode is
+the only mode with a rest window", which this slice made false in the
+same commit. In DFU the OnEncounter subscription is on the WINDOW
+(`OnPush :264`, `OnPop :275`), so it follows the window; the interior
+arm answers it now too.
+
+Pins: 32 in `restlodging.test.js`. 51 mutations, 51 dead. The first
 pass left four alive and all four were the same failure of nerve: a
 pin that named a thing instead of exercising it. The host pins matched
 `act === 'Rest'`, which survives `if (false && act === 'Rest')`, so

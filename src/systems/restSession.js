@@ -77,10 +77,42 @@ export const HAVE_NOT_RENTED_ROOM = 'You have not rented a room here.';
  *  outdoors (:645-657, :671-683). Its Yes arm is the ONLY producer of
  *  CanRest's `alreadyWarned`. */
 export const ILLEGAL_REST_WARNING = 'It is illegal to camp in or near a city. Continue?';
+/** Internal_Strings.csv :358, verbatim - EndRest's FIRST arm, which
+ *  outranks "You wake up." and "You are healed." both (:480-486). */
+export const EXPIRED_RENTED_ROOM = 'Your time for this room has expired.';
 /** Settings/GUI/IllegalRestWarning, read at point of use (ships True).
  *  DFU reads it fresh on every button click, so a launcher flip lands
  *  without reopening the window. */
 export const illegalRestWarning = () => getBool('GUI', 'IllegalRestWarning');
+
+/**
+ * THE OPEN GATE - DaggerfallUI.cs:651-687, the `dfuiOpenRestWindow`
+ * message handler. Three refusals stand between the Rest action and
+ * the window ever being pushed, and they are SCENE-FREE: DFU raises
+ * this from one handler, so a foe at your back stops you resting in a
+ * dungeon, a shop and a field alike. The port had them written out
+ * inline in the dungeon host, which is where rest lived; S40 gave
+ * three more hosts a rest key, so the gate needs one home too.
+ *
+ *  1. AreEnemiesNearby(TRUE) - the RESTING variant, the same one the
+ *     hourly break uses. DFU raises the enemy alert HERE (:655), which
+ *     is what arms the dungeon's rest-encounter roll, and then shows
+ *     TEXT.RSC 354.
+ *  2. Swimming, or failing StartRestGroundedCheck (PlayerMotor.cs:
+ *     184-194: grounded passes at once, else a ray of height/2 + 0.2
+ *     lets a near-ground levitator rest) - TEXT.RSC 355.
+ *  3. GetPreventedRestMessage / GiveOffer / the racial override's
+ *     CheckStartRest, which are FLAGGED: the vampire's "not sated"
+ *     block and the quest offer-on-rest both pend their own arcs.
+ *
+ * Answers { ok, textId, alert } - the host raises the alert and shows
+ * the record, because only it owns those.
+ */
+export function restOpenGate({ enemiesNearby = false, swimming = false, grounded = true } = {}) {
+  if (enemiesNearby) return { ok: false, textId: REST_TEXT.enemiesNearby, alert: true };
+  if (swimming || !grounded) return { ok: false, textId: REST_TEXT.cannotRestNow, alert: false };
+  return { ok: true, textId: null, alert: false };
+}
 
 /**
  * DaggerfallRestWindow.CanRest (:542-599), the whole gate - and until
@@ -182,10 +214,15 @@ export function canRest({
 }
 
 export class RestSession {
-  constructor(mode, hours, deps) {
+  constructor(mode, hours, deps, remainingHoursRented = -1) {
     this.mode = mode;
     this.hoursRemaining = hours ?? 0;
     this.deps = deps;
+    // S40: CanRest's out-parameter, carried into the session because
+    // TickRest counts it DOWN (see checkRent below). -1 is DFU's "not
+    // a rented room" sentinel and the reason a dungeon rest is not
+    // billed by the hour.
+    this.remainingHoursRented = remainingHoursRented;
     this.totalHours = 0;
     this._minutesOfHour = 0;
     this._timer = 0;
@@ -198,13 +235,35 @@ export class RestSession {
   /** End the session early (the toggle key / Escape): the mode's own
    *  finish text, exactly as DFU's EndRest on the rest binding. */
   endEarly() {
-    return { textId: this.mode === 'loiter' ? REST_TEXT.loiterDone : REST_TEXT.wakeUp, enemyBroke: false, died: false };
+    return this._finish(this.mode === 'loiter' ? REST_TEXT.loiterDone : REST_TEXT.wakeUp);
   }
 
   /** GameManager.OnEncounter -> DaggerfallRestWindow.
    *  AbortRestForEnemySpawn (:301-304): latch only; the next tick
    *  answers the enemies-nearby break. */
   abortForEnemySpawn() { this._abortEnemySpawn = true; }
+
+  /** CheckRent (:441-448), run at the END of every rested hour
+   *  (:435-436) after the mode's own completion test. Verbatim, and
+   *  the shape is easy to get wrong: it fires exactly ONCE, on the
+   *  hour the counter reaches zero - not while it is negative, and not
+   *  when there was never a room (-1 returns before the decrement, so
+   *  an unrented rest never counts down at all). */
+  checkRent() {
+    if (this.remainingHoursRented === -1) return false;
+    this.remainingHoursRented--;
+    return this.remainingHoursRented === 0;
+  }
+
+  /** EndRest's FIRST arm (:480-486). It outranks the mode's own line:
+   *  a timed rest whose room expires on the last hour says "Your time
+   *  for this room has expired.", not "You wake up." - and DFU calls
+   *  RemoveExpiredRentedRooms right there, so the landlord clears the
+   *  room as the player wakes. */
+  _finish(textId) {
+    if (this.remainingHoursRented === 0) return { textId: null, text: EXPIRED_RENTED_ROOM, rentExpired: true, enemyBroke: false, died: false };
+    return { textId, enemyBroke: false, died: false };
+  }
 
   tick(dt) {
     // The per-frame checks, in DFU's Update order (:215-227): death
@@ -217,9 +276,9 @@ export class RestSession {
     // vitals. The `hoursRemaining < 1` test inside TickRest is the
     // SECOND one, not the only one.
     if (this.deps.dead()) return { textId: null, enemyBroke: false, died: true };
-    if (this.mode === 'full' && this.deps.fullyHealed?.()) return { textId: REST_TEXT.healed, enemyBroke: false, died: false };
+    if (this.mode === 'full' && this.deps.fullyHealed?.()) return this._finish(REST_TEXT.healed);
     if (this.mode !== 'full' && this.hoursRemaining < 1) {
-      return { textId: this.mode === 'loiter' ? REST_TEXT.loiterDone : REST_TEXT.wakeUp, enemyBroke: false, died: false };
+      return this._finish(this.mode === 'loiter' ? REST_TEXT.loiterDone : REST_TEXT.wakeUp);
     }
 
     // B1: AbortRestForEnemySpawn (DaggerfallRestWindow.cs:301-304, read
@@ -241,14 +300,23 @@ export class RestSession {
       this.totalHours++;
       // A full hour: the enemy break first, then vitals/completion.
       if (this.deps.enemiesNearby()) return { textId: REST_TEXT.enemiesNearby, enemyBroke: true, died: false };
+      // TickRest's own order (:405-438): the mode's completion is
+      // decided FIRST and CheckRent runs after it, so a rest that
+      // finishes on the very hour the room expires answers the
+      // EXPIRED line - _finish is where that precedence lives.
+      let done = null;
       if (this.mode === 'timed') {
         this.deps.tickVitals();
-        if (--this.hoursRemaining < 1) return { textId: REST_TEXT.wakeUp, enemyBroke: false, died: false };
+        if (--this.hoursRemaining < 1) done = REST_TEXT.wakeUp;
       } else if (this.mode === 'full') {
-        if (this.deps.tickVitals()) return { textId: REST_TEXT.healed, enemyBroke: false, died: false };
+        if (this.deps.tickVitals()) done = REST_TEXT.healed;
       } else {
-        if (--this.hoursRemaining < 1) return { textId: REST_TEXT.loiterDone, enemyBroke: false, died: false };
+        if (--this.hoursRemaining < 1) done = REST_TEXT.loiterDone;
       }
+      // `finished |= CheckRent()` - the decrement runs EVERY hour, so
+      // it must not be short-circuited by the mode already finishing.
+      const rentUp = this.checkRent();
+      if (done !== null || rentUp) return this._finish(done ?? REST_TEXT.wakeUp);
     }
     return null;
   }

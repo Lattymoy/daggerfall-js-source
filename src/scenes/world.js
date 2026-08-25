@@ -38,6 +38,7 @@ import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlaye
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 46): the arrow owes the flash too   // AUDIT 23 (C14)
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
 import { RestWindow } from '../ui/restWindow.js';   // S40: rest above ground
+import { restOpenGate } from '../systems/restSession.js';   // S40: the scene-free open gate
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
 import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 import { TravelMapWindow, preloadTravelMapArt, travelMapArtLoaded } from '../ui/travelMapWindow.js';   // W1: the classic art window (retires the F-slice's keyed stand-in)
@@ -49,7 +50,7 @@ import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: Create
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1
 import { SITE_TYPES } from '../systems/quest/place.js';   // B3: the respawn dispatch reads the site type
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
-import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE } from '../systems/encounters.js';   // X-slice
+import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert, areEnemiesNearby } from '../systems/encounters.js';   // X-slice; S40: the open gate raises the alert and asks the resting test
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
@@ -1279,11 +1280,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     && (modes?.mode ?? 'exterior') === 'exterior';
   const outdoorRestDeps = createRestDeps(playerEntity, {
     advanceMinutes: (n) => playerTicker.advance(n),
-    // AreEnemiesNearby's RESTING variant, over the two exterior pools
-    // (the city watch counts - guards on your trail wake you).
-    enemiesNearby: () => (cityGuards?.activeCount?.() ?? 0) > 0
-      || exteriorFoes.foes.some((f) => !f.dead
-        && ((f.ai?.detected && f.ai?.inSight) || (f.ai?._dist ?? Infinity) <= 12)),
+    // AreEnemiesNearby's RESTING variant, over BOTH exterior pools -
+    // the city watch counts, since guards on your trail wake you. The
+    // first draft asked `activeCount() > 0`, copying this host's
+    // exhaustion arm, and for REST that is a different rule rather
+    // than a rough one: a guard spawned anywhere in town blocks sleep
+    // FOREVER, because guards persist until the crime clears.
+    enemiesNearby: () => areEnemiesNearby(
+      [...cityGuards.guards, ...exteriorFoes.foes], { resting: true }),
     place: () => ({
       inTownStrict: _isPlayerInTownStrict(),
       inTown: isTownLocationType(_musicLocationType()),
@@ -1308,6 +1312,22 @@ export async function bootWorld(canvas, renderer, params, status) {
   });
   const toggleRest = () => {
     if (townTalk.overlayActive) return;
+    // THE OPEN GATE (DaggerfallUI.cs:651-687), which is scene-free -
+    // this host had none of it, because rest was a dungeon feature.
+    // Outdoors all three inputs are live: real foes, real water, and a
+    // levitating or falling player who cannot lie down.
+    const gate = restOpenGate({
+      enemiesNearby: outdoorRestDeps.enemiesNearby(),
+      swimming: !!player.swimming,
+      grounded: !!player.grounded,
+    });
+    if (!gate.ok) {
+      // DFU raises the enemy alert on the enemies arm (:655).
+      if (gate.alert) setEnemyAlert(playerEntity, true, Math.floor(worldMinutes()));
+      const lines = townTalk.lines(gate.textId);
+      if (lines) townTalk.showOverlay(new ActionTextBox(lines));
+      return;
+    }
     townTalk.showOverlay(new RestWindow(outdoorRestDeps));
   };
   const arrows = new ArrowFlight({ getGpuMesh, collider: () => collider });   // C13

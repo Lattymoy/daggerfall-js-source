@@ -135,9 +135,10 @@ import {
 } from '../systems/sceneCache.js';
 // S40: resting where the player has a claim - the rented-room finder
 // the tavern rents through, and FightersGuild.CanRest.
-import { findRentedRoom } from '../systems/tavern.js';
+import { findRentedRoom, removeExpiredRooms } from '../systems/tavern.js';
 import { canRest as guildCanRest } from '../systems/guildServices.js';
 import { RestWindow } from '../ui/restWindow.js';
+import { restOpenGate } from '../systems/restSession.js';   // S40: the scene-free open gate
 import { orderOf } from '../systems/guildVariants.js';
 import { joinedGuildOfGroup } from '../systems/guilds.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js';
@@ -3003,6 +3004,14 @@ export function createWorldModes(host) {
       player.spawn(f[0], f[1], f[2]);
     },
     endLines: (id) => townTalk?.lines?.(id) ?? null,
+    // EndRest's expired arm calls RemoveExpiredRentedRooms as it prints
+    // the line (:485) - the SAME sweep the tavern runs before a rental,
+    // so a room slept to the last hour is gone by the time the
+    // innkeeper is asked again, and its held scene goes with it.
+    onRentExpired: () => {
+      playerEntity.rentedRooms = removeExpiredRooms(
+        playerEntity.rentedRooms ?? [], Math.floor(worldMinutes()), sceneCache());
+    },
     say,
     onLevelUp: () => {
       say('You have gained a level!');
@@ -3045,11 +3054,24 @@ export function createWorldModes(host) {
     toggleNotebook() { mountInterior(host.makeJournal?.('notebook')); },
     // S40: THE REST KEY, INSIDE. Before this the R binding died at
     // the interior host - a rented room could be bought and never
-    // slept in. The pre-gates the dungeon applies (enemies nearby,
-    // swimming, airborne) have no interior analogue: this host mounts
-    // no foes and its floor is the block's, so the window opens and
-    // CanRest inside it does the deciding.
-    toggleRest() { mountInterior(new RestWindow(interiorRestDeps)); },
+    // slept in. THE OPEN GATE runs here too: DFU raises it from one
+    // scene-free message handler (DaggerfallUI.cs:651-687), and while
+    // this host mounts no foe pool, StartRestGroundedCheck is very
+    // much live indoors - a levitating player cannot lie down in a
+    // shop any more than in a dungeon.
+    toggleRest() {
+      const gate = restOpenGate({
+        enemiesNearby: false,   // no foe pool in a building interior
+        swimming: false,        // nor water
+        grounded: !!player.grounded,
+      });
+      if (!gate.ok) {
+        const lines = townTalk?.lines?.(gate.textId);
+        if (lines) mountInterior(new ActionTextBox(lines));
+        return;
+      }
+      mountInterior(new RestWindow(interiorRestDeps));
+    },
   };
 
   addEventListener('keydown', (e) => {
@@ -3260,9 +3282,14 @@ export function createWorldModes(host) {
     /** B1: GameManager.RaiseOnEncounterEvent's one core consumer is
      *  the rest window's AbortRestForEnemySpawn - the machine raises
      *  it per pending CreateFoe tick and this routes it to the live
-     *  rest overlay (dungeon mode is the only mode with one). */
+     *  rest overlay. S40: in DFU the subscription is on the WINDOW
+     *  (OnPush at :264, OnPop at :275), not on a scene, so it follows
+     *  the window into whichever slot holds it - the parenthetical
+     *  that stood here saying dungeon mode is the only mode with a
+     *  rest window was true until this slice and is not now. */
     raiseOnEncounterEvent() {
-      if (mode === 'dungeon') dungeonCtx?.abortRestForEnemySpawn?.();
+      if (mode === 'dungeon') { dungeonCtx?.abortRestForEnemySpawn?.(); return; }
+      if (interiorOverlay?.isRestWindow) interiorOverlay.session?.abortForEnemySpawn?.();
     },
     /** B3: TeleportPc's marker landing (:120-135) - the marker's
      *  scene position in whichever frame the mounted mode speaks

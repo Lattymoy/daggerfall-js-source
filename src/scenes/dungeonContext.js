@@ -88,8 +88,8 @@ import { breathStep } from '../systems/breath.js';
 import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
 import { inflictPoison } from '../systems/poisons.js';
 import { exhaustionOutcome, EXHAUSTED_IN_WATER, hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
-import { REST_TEXT } from '../systems/restSession.js';
-import { intermittentEnemySpawn, setEnemyAlert } from '../systems/encounters.js';   // E-slice
+import { restOpenGate } from '../systems/restSession.js';   // S40: the open gate, one home
+import { intermittentEnemySpawn, setEnemyAlert, areEnemiesNearby } from '../systems/encounters.js';   // E-slice; S40: the resting test, one home
 import { RestWindow } from '../ui/restWindow.js';
 import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects.js';
 import { dice100, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies, KB_UNIT } from '../combat/formulas.js';   // C15: + knockback
@@ -963,11 +963,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // CalculateHealthRecoveryRate's flags are fixed here.
     tickVitals: () => restVitals(playerEntity, { day: false, inside: true }),
     fullyHealed: _restFullyHealed,
-    enemiesNearby: () => foes.some((f) => {
-      if (f.dead) return false;
-      const seen = f.ai.detected && f.ai.inSight;
-      return seen || (f.ai.wouldBeSpawned && f.ai._dist <= 12);
-    }),
+    // S40: AreEnemiesNearby's RESTING variant moved to
+    // systems/encounters.js. It was written out here because rest was
+    // a dungeon feature; three more hosts ask it now, and two of them
+    // were asking a much coarser question before this slice.
+    enemiesNearby: () => areEnemiesNearby(foes, { resting: true }),
     dead: () => playerEntity.health <= 0,
     vitals: () => ({
       health: playerEntity.health, maxHealth: playerEntity.maxHealth,
@@ -2583,32 +2583,37 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // routes through the overlay as 'back' (ends a running rest).
     toggleRest() {
       if (activeOverlay) return;
-      // Audit 2026-08-16f: the PRE-gate uses AreEnemiesNearby(true) -
-      // the RESTING variant (an unaware foe blocks only within 12
-      // units), same as the hourly break check. The first cut used
-      // the strict variant and refused rest with any unaware foe in
-      // the whole 1024-unit spawn band. E-slice: the alert state
-      // exists now and IS raised below - the old routed leg closed.
-      if (_restDeps.enemiesNearby()) {
-        // E-slice: the ROUTED leg closes - DFU raises the alert here
-        // (DaggerfallUI:650-655), which is what arms the dungeon
-        // rest-encounter roll.
-        setEnemyAlert(playerEntity, true, classicMinutesRef.value);
-        const lines = rscLines(REST_TEXT.enemiesNearby);
-        if (lines) activeOverlay = new ActionTextBox(lines);
-        return;
-      }
+      // S40: the gate itself moved to systems/restSession.js. It was
+      // written out here because this was the only host that could
+      // rest; three more can now, and DFU raises it from ONE
+      // message handler (DaggerfallUI.cs:651-687) with no scene test
+      // at all. What stays here is what only this host knows.
+      //
+      // Audit 2026-08-16f: AreEnemiesNearby(true) is the RESTING
+      // variant (an unaware foe blocks only within 12 units), same as
+      // the hourly break check. The first cut used the strict variant
+      // and refused rest with any unaware foe in the whole 1024-unit
+      // spawn band.
+      //
       // StartRestGroundedCheck verbatim: grounded passes at once;
       // otherwise a short downward ray from the controller center,
       // height/2 + 0.2 (= floor within 0.2 below the feet) lets a
       // near-ground levitator rest. Derived from CAPSULE_HEIGHT so
       // the geometry cannot drift from the motor's (review 16f).
       const feet = lastPlayerFeet;
-      const nearFloor = _grounded || (feet
+      const nearFloor = _grounded || !!(feet
         && Number.isFinite(collider.raycast(
           [feet[0], feet[1] + CAPSULE_HEIGHT / 2, feet[2]], [0, -1, 0], CAPSULE_HEIGHT / 2 + 0.2)));
-      if (_activity.swimming || !nearFloor) {
-        const lines = rscLines(REST_TEXT.cannotRestNow);
+      const gate = restOpenGate({
+        enemiesNearby: _restDeps.enemiesNearby(),
+        swimming: _activity.swimming, grounded: nearFloor,
+      });
+      if (!gate.ok) {
+        // E-slice: the ROUTED leg closes - DFU raises the alert on the
+        // enemies arm (:655), which is what arms this host's
+        // rest-encounter roll.
+        if (gate.alert) setEnemyAlert(playerEntity, true, classicMinutesRef.value);
+        const lines = rscLines(gate.textId);
         if (lines) activeOverlay = new ActionTextBox(lines);
         return;
       }

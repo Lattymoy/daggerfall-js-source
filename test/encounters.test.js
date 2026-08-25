@@ -126,8 +126,22 @@ test('encounters: the dungeon host arm - the rest loop, the sight raise, the kil
   assert.ok(fn.includes('_spawnEncounter(hit); break;'), 'one spawn per advance, as the C# break');
   assert.ok(src.includes('if (f.ai.inSight && f.ai.detected && !f.dead) setEnemyAlert(playerEntity, true'), 'sight raises');
   assert.ok(src.includes("if (foe.ai?.detected) setEnemyAlert(playerEntity, false)"), 'the targeting kill clears');
-  assert.ok(src.includes('setEnemyAlert(playerEntity, true, classicMinutesRef.value);\n        const lines = rscLines(REST_TEXT.enemiesNearby)'),
+  // S40 moved the rest OPEN GATE to systems/restSession.js - DFU raises
+  // it from one scene-free handler and three more hosts can rest now -
+  // so this pin follows it: the gate must still say `alert` on the
+  // enemies arm, and this host must still act on it. Pinned in BOTH
+  // places, because a gate that reports the alert and a host that
+  // ignores it is the same closed leg reopening.
+  const rest = readFileSync(join(root, 'src/systems/restSession.js'), 'utf8');
+  assert.ok(rest.includes('if (enemiesNearby) return { ok: false, textId: REST_TEXT.enemiesNearby, alert: true }'),
+    'the open gate refuses on enemies and flags the alert');
+  assert.ok(src.includes('if (gate.alert) setEnemyAlert(playerEntity, true, classicMinutesRef.value);'),
     'the rest refusal raises (the old routed leg closed)');
+  // ...and so do the three hosts S40 gave rest to.
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const h = readFileSync(join(root, f), 'utf8');
+    assert.ok(h.includes('if (gate.alert) setEnemyAlert(playerEntity, true, Math.floor(worldMinutes()));'), f);
+  }
   // AUDIT 24 (wave 36): the 8-hour decay MOVED. PlayerEntity.Update
   // :380-384 runs it in every context, and the dungeon frame body was
   // its only caller - so an alert raised above ground (exteriorFoes has
