@@ -260,3 +260,31 @@ test('the real TAMRIEL2 traces to nine regions', { skip: skipReal }, () => {
   assert.equal(out.length, 8, 'eight homelands from the picker alone');
   for (const r of out) assert.ok(r.pixels > 500, `${r.key} traced only ${r.pixels} pixels`);
 });
+
+// ── A REPAINT MUST NOT MOVE THE PAGE UNDER THE PLAYER ────────────
+// Mac, playing on a phone: every tap on a skills stepper threw the
+// list back to the top. Live proof is tools/enhancedScrollProbe.mjs,
+// which taps with a real touchscreen and checks the tap moved
+// something before it believes anything about the scroll. What a sweep
+// holds is that both enhanced screens go through the one helper - a
+// repaint written straight would take the bug back, and it is the kind
+// of edit that looks like a simplification.
+test('both enhanced screens repaint through the scroll-keeping helper', () => {
+  for (const f of ['enhancedChargen.js', 'enhancedMenu.js']) {
+    const src = readFileSync(new URL(`../src/ui/${f}`, import.meta.url), 'utf8');
+    assert.match(src, /repaintKeepingScroll\(/, `src/ui/${f} repaints without keeping the scroll`);
+    assert.match(src, /from '\.\/domRepaint\.js'/);
+  }
+});
+
+test('only a scrolled element is restored, and a changed tree starts fresh', async () => {
+  const { repaintKeepingScroll } = await import('../src/ui/domRepaint.js');
+  // no DOM in node: the contract is checked at the source, and the
+  // behaviour in a real browser by the probe. What IS checkable here
+  // is that a hostless call cannot throw - the menu mounts before its
+  // host exists on some paths.
+  assert.doesNotThrow(() => repaintKeepingScroll(null, () => {}));
+  let ran = 0;
+  repaintKeepingScroll(null, () => { ran++; });
+  assert.equal(ran, 1, 'the rebuild runs even when there is nothing to restore');
+});

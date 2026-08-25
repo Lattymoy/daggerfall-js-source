@@ -51,6 +51,7 @@ import { SKILL_NAMES } from '../systems/skills.js';
 import { NAME_MAX_CHARACTERS as NAME_MAX } from './chargen.js';
 import { traceProvinces, MAP_W, MAP_H, PROVINCE_NAMES } from './provinceMap.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
+import { repaintKeepingScroll } from './domRepaint.js';
 
 /** DFU's WizardStages, in the order the flow walks them, with the
  *  words a player reads. The flow's own state names are the keys.
@@ -850,6 +851,13 @@ function pendingStage(stage) {
 // ── SHELL ────────────────────────────────────────────────────────
 
 function paint() {
+  repaintKeepingScroll(host, () => paintInto());
+}
+
+/** The rebuild itself. Wrapped rather than rewritten, so a tap on a
+ *  stepper does not throw the skills list back to the top - see
+ *  ui/domRepaint.js for why every repaint needs that. */
+function paintInto() {
   host.innerHTML = '';
   const shell = el('div', 'shell wizard');
 

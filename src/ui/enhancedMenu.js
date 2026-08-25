@@ -79,6 +79,7 @@ import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES } from '../systems/uiSkin.js';
 import { dateFromClassicMinutes, dateString } from '../systems/gameDate.js';
 import { BUILD_TAG } from '../buildTag.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
+import { repaintKeepingScroll } from './domRepaint.js';
 
 // ── THE RAIL ─────────────────────────────────────────────────────
 // Six destinations. Mac's call: the menus get set up now even where
@@ -524,6 +525,13 @@ function paneAbout(body) {
 function go(id) { section = id; pickedKey = null; sheetOpen = false; confirming = null; render(); }
 
 function render() {
+  repaintKeepingScroll(app, () => renderInto());
+}
+
+/** The rebuild. Wrapped for the reason the wizard's is: the settings
+ *  list carries the same steppers, and a repaint that forgets the
+ *  scroll throws the player back to the top of 66 Video rows. */
+function renderInto() {
   app.innerHTML = '';
   const shell = el('div', 'shell');
 
