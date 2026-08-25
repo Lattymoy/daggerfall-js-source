@@ -61,6 +61,16 @@ body is, then the face is layered per race at runtime from `FACE*.CIF`.
   its image linearly across that arc - two silhouette edges, no axis, no scale,
   and every view's content lands in its own sector BY CONSTRUCTION. Chord
   mapping put the moustache on the EAR.
+- **Check which way each turnaround ROTATES.** Nine of the ten Breton sheets
+  turn one way and one turns the other - and the odd one out was the head this
+  pipeline was tuned on, so every other head had its side views mirrored, which
+  shows as a doubled brow and mouth at 45 degrees. Detect it (which side the skin
+  sits on at "90") and reflect the labels about 0/180 rather than trusting the
+  grid order.
+- **A shoulder line belongs to the SET, not the face.** Detecting it per face let
+  flared hair beat the shoulders on the max-step test (0.669 against a 0.826
+  median), scaling those heads 25% short so they overran the skull and clipped.
+  One consistently framed set shares one landmark.
 - **A metric that improves while the picture degrades is the wrong metric.** An
   axis correction took mean centring offset from 0.0146 to 0.0055 and made every
   one of the ten faces visibly worse - shifting the mapping centre per row
