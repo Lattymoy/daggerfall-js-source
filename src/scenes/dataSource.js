@@ -301,9 +301,12 @@ export async function pickMusicFolder() {
         <p>Pick a folder of audio files to play instead of Daggerfall's
         built-in songs. Nothing is uploaded - it is stored in this
         browser.</p>
-        <p style="color:#999">Name each file after the song it replaces:
-        <b>GDAY___D.ogg</b>, <b>FPALAC.mp3</b>. Anything you do not
-        supply keeps playing the original.</p>
+        <p style="color:#999">A <b>Daggerfall Unity music pack works
+        as-is</b> - its <b>song_*.ogg</b> filenames are already the ones
+        this looks for, so there is nothing to rename.</p>
+        <p style="color:#999">Otherwise, name each file after the song it
+        replaces: <b>GDAY___D.ogg</b>, <b>FPALAC.mp3</b>. Anything you do
+        not supply keeps playing the original.</p>
         <input type="file" id="pickmusic" webkitdirectory multiple style="margin:8px">
         <p id="mmsg" style="color:#8a8"></p>
         <button id="mdone" style="margin-top:8px">Close</button>
