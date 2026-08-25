@@ -9,6 +9,7 @@ import { FlatsFile } from '../formats/flatsFile.js';   // NPC1: captions + portr
 import { isExteriorWindow } from '../world/climateSwaps.js';
 import { dfMeshToModel } from '../world/meshReader.js';
 import { fetchBytes, texName } from './shared.js';
+import { decodedTexture, preloadTextureArchive } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones
 
 /** @param deps {{renderer, arch: Arch3dFile, palette: DFPalette}} */
 export function createDataPipeline({ renderer, arch, palette }) {
@@ -41,6 +42,14 @@ export function createDataPipeline({ renderer, arch, palette }) {
       texturePromises.set(archive, (async () => {
         const t = new TextureFile();
         t.load(await fetchBytes(texName(archive)), texName(archive), palette);
+        // M-TEX: the replacement PNGs for this archive decode HERE,
+        // where there is already an await and the result is already
+        // cached per archive. uploadRecord is synchronous and runs off
+        // the draw path, so a texture that arrived late would be a
+        // visible pop or a missing wall - by the time anything uploads
+        // a record its replacement is decoded and waiting, or genuinely
+        // absent. Never throws: one bad PNG costs that texture.
+        await preloadTextureArchive(archive).catch(() => {});
         textureFiles.set(archive, t);
         return t;
       })());
@@ -68,7 +77,13 @@ export function createDataPipeline({ renderer, arch, palette }) {
         t.getSpectralEmissionColors32(spec, albedo, 0, TextureFile.SPECTRAL_EYES_PATCHED, [255, 0, 0], [0, 0, 0]));
       return;
     }
-    renderer.uploadTexture(archive, record, t.getColor32(bitmap, 0));
+    // M-TEX: a user-supplied texture overrides the classic one, the
+    // same override-or-fall-back shape the music path uses. Deliberately
+    // BELOW the spectral arm: that path builds its albedo AND an
+    // emission mask together from one remap, and replacing half of it
+    // would leave a ghost lit by a texture it no longer wears.
+    const swap = decodedTexture(archive, record, 0);
+    renderer.uploadTexture(archive, record, swap ?? t.getColor32(bitmap, 0));
     // Exterior windows also get their emission mask (R2, MaterialReader
     // semantics: glass texels glow with the active window style).
     if (isExteriorWindow(archive, record)) {
@@ -94,7 +109,13 @@ export function createDataPipeline({ renderer, arch, palette }) {
         t.getSpectralEmissionColors32(spec, albedo, 0, TextureFile.SPECTRAL_EYES_PATCHED, [255, 0, 0], [0, 0, 0]));
       return;
     }
-    renderer.uploadTexture(archive, key, t.getColor32(bitmap, 0));
+    // M-TEX: the per-FRAME override. DFU imports animated flats frame
+    // by frame too, so the frame is part of the lookup key rather than
+    // a whole-record swap - replacing frame 0 of a torch and nothing
+    // else leaves the remaining frames classic, which is what a
+    // partial pack should do.
+    const swapFrame = decodedTexture(archive, record, frame);
+    renderer.uploadTexture(archive, key, swapFrame ?? t.getColor32(bitmap, 0));
   };
   const gpuMeshes = new Map(); // shared across pixels, never destroyed
   const cpuModels = new Map(); // id -> {positions, indices} for the collider

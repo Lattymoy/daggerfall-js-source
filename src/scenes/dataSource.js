@@ -23,6 +23,11 @@ const STORE = 'arena2';
  *  the pack without re-picking the game), and must not be swept by
  *  clearStoredData's recovery wipe. */
 const MUSIC_STORE = 'music';
+/** M-TEX: the same reasoning as the music store, one domain over. */
+const TEXTURE_STORE = 'textures';
+/** Every injected-asset store, so the upgrade and the helpers below
+ *  cannot drift from each other - adding a third domain is one entry. */
+const ASSET_STORES = [MUSIC_STORE, TEXTURE_STORE];
 const mem = new Map(); // NAME -> Uint8Array
 
 // Ingest DIET (2026-08-14, the mobile storage fix): ARENA2 is 517MB
@@ -107,11 +112,13 @@ function openDb() {
     // existing player arrives here at version 1 holding a full ARENA2
     // ingest, and re-creating `arena2` would throw and take their data
     // with it.
-    const req = indexedDB.open(DB_NAME, 2);
+    const req = indexedDB.open(DB_NAME, 3);
     req.onupgradeneeded = () => {
       const d = req.result;
       if (!d.objectStoreNames.contains(STORE)) d.createObjectStore(STORE);
-      if (!d.objectStoreNames.contains(MUSIC_STORE)) d.createObjectStore(MUSIC_STORE);
+      for (const name of ASSET_STORES) {
+        if (!d.objectStoreNames.contains(name)) d.createObjectStore(name);
+      }
     };
     req.onsuccess = () => res(req.result);
     req.onerror = () => rej(req.error);
@@ -230,20 +237,23 @@ export async function clearStoredData() {
 // chooses and stores it in their own browser; the repo carries no
 // audio and the deploy serves none.
 
-/** Store a picked FileList as music replacements. Non-audio files are
- *  ignored rather than rejected, so pointing at a pack folder with its
- *  readme and cover art in it just works. Returns the count kept. */
-export async function storeMusicFiles(files) {
-  const { replacementEntry } = await import('../systems/musicReplacement.js');
+// ONE implementation, two domains. The music and texture ingests are
+// the same four operations over different stores and different
+// accept-filters, and writing them twice is how the second one drifts.
+
+/** Put the accepted files from a pick into `store`. `accept(name)`
+ *  answers whether a file belongs to this domain, so a pack folder
+ *  with its readme and cover art in it just works. Returns the count. */
+async function storeAssets(store, files, accept) {
   const d = await getDb();
   let kept = 0;
   for (const f of files) {
     const base = f.name.slice(f.name.lastIndexOf('/') + 1);
-    if (!replacementEntry(base)) continue;
+    if (!accept(base)) continue;
     const buf = await f.arrayBuffer();
     await new Promise((res, rej) => {
-      const tx = d.transaction(MUSIC_STORE, 'readwrite');
-      tx.objectStore(MUSIC_STORE).put(buf, base);
+      const tx = d.transaction(store, 'readwrite');
+      tx.objectStore(store).put(buf, base);
       tx.oncomplete = () => res();
       tx.onerror = () => rej(tx.error);
     });
@@ -252,96 +262,134 @@ export async function storeMusicFiles(files) {
   return kept;
 }
 
-/** Every stored replacement filename. */
-export async function storedMusicNames() {
+/** Every stored filename in `store`. Empty when there is no IndexedDB
+ *  (private mode), which reads as "no pack" and plays the classics. */
+async function assetNames(store) {
   try {
     const d = await getDb();
     return await new Promise((res, rej) => {
-      const tx = d.transaction(MUSIC_STORE, 'readonly');
-      const req = tx.objectStore(MUSIC_STORE).getAllKeys();
+      const tx = d.transaction(store, 'readonly');
+      const req = tx.objectStore(store).getAllKeys();
       req.onsuccess = () => res(req.result ?? []);
       req.onerror = () => rej(req.error);
     });
   } catch {
-    return [];   // no IDB (private mode): no replacements, built-in music plays
+    return [];
   }
 }
 
-/** Bytes for one stored replacement, or null. */
-export async function loadMusicFile(fileName) {
+/** Bytes for one stored asset, or null. */
+async function assetBytes(store, fileName) {
   const d = await getDb();
   const stored = await new Promise((res, rej) => {
-    const tx = d.transaction(MUSIC_STORE, 'readonly');
-    const req = tx.objectStore(MUSIC_STORE).get(fileName);
+    const tx = d.transaction(store, 'readonly');
+    const req = tx.objectStore(store).get(fileName);
     req.onsuccess = () => res(req.result ?? null);
     req.onerror = () => rej(req.error);
   });
   return stored ? new Uint8Array(stored) : null;
 }
 
+/** Drop a whole domain. Deliberately NOT part of clearStoredData: that
+ *  is ARENA2 recovery, and re-picking the game files is not asking to
+ *  lose the packs. */
+async function clearAssets(store) {
+  const d = await getDb();
+  await new Promise((res, rej) => {
+    const tx = d.transaction(store, 'readwrite');
+    tx.objectStore(store).clear();
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
+}
+
+export async function storeMusicFiles(files) {
+  const { replacementEntry } = await import('../systems/musicReplacement.js');
+  return storeAssets(MUSIC_STORE, files, (n) => !!replacementEntry(n));
+}
+export const storedMusicNames = () => assetNames(MUSIC_STORE);
+export const loadMusicFile = (fileName) => assetBytes(MUSIC_STORE, fileName);
+export const clearStoredMusic = () => clearAssets(MUSIC_STORE);
+
+export async function storeTextureFiles(files) {
+  const { textureEntry } = await import('../systems/textureReplacement.js');
+  return storeAssets(TEXTURE_STORE, files, (n) => !!textureEntry(n));
+}
+export const storedTextureNames = () => assetNames(TEXTURE_STORE);
+export const loadTextureFile = (fileName) => assetBytes(TEXTURE_STORE, fileName);
+export const clearStoredTextures = () => clearAssets(TEXTURE_STORE);
+
 /**
- * The music folder pick, in the shape of the ARENA2 one.
+ * The asset-pack pick, in the shape of the ARENA2 one. ONE overlay,
+ * parameterised - the music and texture picks differ only in their
+ * words and their store.
  *
- * DFU's equivalent is "put files in StreamingAssets/Sound"; a browser
- * has no such folder, so the player points at one and it is stored
- * here. Resolves to the number of songs the pick can replace.
+ * DFU's equivalent is "put files in StreamingAssets/<domain>"; a
+ * browser has no such folder, so the player points at one and it is
+ * stored here. Resolves to the number of assets the pick can replace.
  *
  * CANCELLING IS NOT AN ERROR. The overlay has its own way out and
  * resolves 0 - a player who opens this to see what it is and closes it
- * has not broken anything, and the built-in music was already playing.
+ * has not broken anything, and the classic assets were already there.
  */
-export async function pickMusicFolder() {
-  const { setMusicReplacements } = await import('../systems/musicReplacement.js');
+async function pickAssetFolder({ title, blurb, store, register }) {
   return new Promise((resolve) => {
     const ui = document.createElement('div');
     ui.style.cssText = 'position:fixed;inset:0;background:#111;color:#ddd;font:14px monospace;display:flex;align-items:center;justify-content:center;z-index:11';
     ui.innerHTML = `
       <div style="max-width:460px;text-align:center;border:1px solid #444;padding:24px">
-        <h2 style="margin-top:0">Your own music</h2>
-        <p>Pick a folder of audio files to play instead of Daggerfall's
-        built-in songs. Nothing is uploaded - it is stored in this
-        browser.</p>
-        <p style="color:#999">A <b>Daggerfall Unity music pack works
-        as-is</b> - its <b>song_*.ogg</b> filenames are already the ones
-        this looks for, so there is nothing to rename.</p>
-        <p style="color:#999">Otherwise, name each file after the song it
-        replaces: <b>GDAY___D.ogg</b>, <b>FPALAC.mp3</b>. Anything you do
-        not supply keeps playing the original.</p>
-        <input type="file" id="pickmusic" webkitdirectory multiple style="margin:8px">
-        <p id="mmsg" style="color:#8a8"></p>
-        <button id="mdone" style="margin-top:8px">Close</button>
+        <h2 style="margin-top:0">${title}</h2>
+        ${blurb}
+        <input type="file" id="pickassets" webkitdirectory multiple style="margin:8px">
+        <p id="amsg" style="color:#8a8"></p>
+        <button id="adone" style="margin-top:8px">Close</button>
       </div>`;
     document.body.appendChild(ui);
-    const msg = ui.querySelector('#mmsg');
+    const msg = ui.querySelector('#amsg');
     let count = 0;
-    ui.querySelector('#pickmusic').addEventListener('change', async (e) => {
+    ui.querySelector('#pickassets').addEventListener('change', async (e) => {
       const files = [...e.target.files];
       msg.textContent = `reading ${files.length} files...`;
       try {
-        await storeMusicFiles(files);
-        count = setMusicReplacements(await storedMusicNames(), loadMusicFile);
-        msg.textContent = count
-          ? `${count} songs will use your files`
-          : 'no usable audio in that folder (need .ogg .mp3 .m4a .flac .wav)';
+        await store(files);
+        count = await register();
+        msg.textContent = count ? `${count} files will be used` : 'nothing usable in that folder';
       } catch (err) {
         // NEVER TRAPS: a storage failure costs the pack, not the game.
         msg.textContent = `could not store that: ${err?.message ?? err}`;
       }
     });
-    ui.querySelector('#mdone').addEventListener('click', () => { ui.remove(); resolve(count); });
+    ui.querySelector('#adone').addEventListener('click', () => { ui.remove(); resolve(count); });
   });
 }
 
-/** Drop the whole music pick. Deliberately NOT part of
- *  clearStoredData: that is ARENA2 recovery, and a player re-picking
- *  the game files has not asked to lose their music. */
-export async function clearStoredMusic() {
-  const d = await getDb();
-  await new Promise((res, rej) => {
-    const tx = d.transaction(MUSIC_STORE, 'readwrite');
-    tx.objectStore(MUSIC_STORE).clear();
-    tx.oncomplete = () => res();
-    tx.onerror = () => rej(tx.error);
+export async function pickMusicFolder() {
+  const { setMusicReplacements } = await import('../systems/musicReplacement.js');
+  return pickAssetFolder({
+    title: 'Your own music',
+    blurb: `<p>Pick a folder of audio to play instead of Daggerfall's
+      built-in songs. Nothing is uploaded - it is stored in this
+      browser.</p>
+      <p style="color:#999">A <b>Daggerfall Unity music pack works
+      as-is</b> - its <b>song_*.ogg</b> names are already the ones this
+      looks for.</p>`,
+    store: storeMusicFiles,
+    register: async () => setMusicReplacements(await storedMusicNames(), loadMusicFile),
+  });
+}
+
+export async function pickTextureFolder() {
+  const { setTextureReplacements } = await import('../systems/textureReplacement.js');
+  return pickAssetFolder({
+    title: 'Your own textures',
+    blurb: `<p>Pick a folder of PNGs to draw instead of Daggerfall's
+      built-in textures. Nothing is uploaded - it is stored in this
+      browser.</p>
+      <p style="color:#999">A <b>Daggerfall Unity texture pack works
+      as-is</b>: its <b>003_5-0.png</b> names are already the ones this
+      looks for. Anything you skip keeps the classic art.</p>`,
+    store: storeTextureFiles,
+    register: async () => setTextureReplacements(await storedTextureNames(), loadTextureFile),
   });
 }
 

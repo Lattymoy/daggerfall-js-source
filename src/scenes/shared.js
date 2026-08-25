@@ -33,11 +33,12 @@ import { readMagicDef } from '../formats/magicDef.js';
 import { setMagicItemTemplates, setSpellRecordsByIndex } from '../systems/loot.js';
 import { music } from '../systems/music.js';
 import { setMusicReplacements } from '../systems/musicReplacement.js';   // M-EXT: SoundReplacement's registry
+import { setTextureReplacements } from '../systems/textureReplacement.js';   // M-TEX: TextureReplacement's registry
 import { getBool } from '../systems/settings.js';   // M-FM: Audio/AlternateMusic, read once for all three hosts
 import { SongManager, musicEnvironment, holdEnvironment } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
 
-import { getBytes, storedMusicNames, loadMusicFile } from './dataSource.js';   // M-EXT: the player's own music pack
+import { getBytes, storedMusicNames, loadMusicFile, storedTextureNames, loadTextureFile } from './dataSource.js';   // M-EXT/M-TEX: the player's own packs
 
 
 /** The data seam every scene uses - delegates to the ARENA2 data
@@ -585,7 +586,13 @@ export function ensureAudio(fetch = fetchBytes) {
   const replacements = storedMusicNames()
     .then((names) => setMusicReplacements(names, loadMusicFile))
     .catch(() => 0);
-  return Promise.all([sound, songs, replacements]);
+  // M-TEX: textures register on the SAME seam, for the same reason.
+  // Registration is a name list and a loader - no PNG is read until an
+  // archive that has replacements is actually loaded.
+  const textures = storedTextureNames()
+    .then((names) => setTextureReplacements(names, loadTextureFile))
+    .catch(() => 0);
+  return Promise.all([sound, songs, replacements, textures]);
 }
 
 // --- The outdoor fog COLOUR (DaggerfallSky.SetSkyFogColor) -----------
