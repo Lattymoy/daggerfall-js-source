@@ -246,6 +246,86 @@ export function sellHouse(accounts, houses, regionIndex, { meshRadius = 0 } = {}
 }
 
 /**
+ * H3 - SHIP OWNERSHIP. DaggerfallBankManager keeps the owned ship in a
+ * STATIC (`ownedShip`, :112), which is what makes it the odd one out
+ * in a save-shaped port: a house is a per-region record and a ship is
+ * a single global. It rides the player entity here for the same reason
+ * the houses registry does - the entity IS the port's save envelope.
+ *
+ * ShipType.None is -1 deliberately: every table lookup is guarded by
+ * `ship >= 0` (:118-124) so None indexes nothing.
+ */
+/** shipInteriorSceneNames' two mapIds (:103-106). Both interiors are
+ *  keyed with BuildingDirectory.buildingKey0, which already has a home
+ *  in systems/talkTopics.js - a ship is not in any building directory,
+ *  so it takes the no-key key. */
+export const SHIP_INTERIOR_MAP_IDS = Object.freeze([1050578, 2102157]);
+
+export const ownedShipType = (player) => player?.ownedShip ?? SHIP_TYPES.None;
+/** OwnsShip (:114) - the property, not a table read. */
+export const ownsShip = (player) => ownedShipType(player) !== SHIP_TYPES.None;
+
+/** GetShipCoords (:126) - the map pixel the owned ship sits on, or
+ *  null when there is no ship. DFU returns `null` for None rather than
+ *  coords[-1], and the port keeps that shape. */
+export const shipCoords = (player) => (ownsShip(player) ? SHIP_COORDS[ownedShipType(player)] : null);
+/** GetShipModelId (:122) - guarded by `ship >= 0`, so None is 0. */
+export const shipModelId = (ship) => (ship >= 0 ? SHIP_MODEL_IDS[ship] : 0);
+
+/**
+ * AssignShipToPlayer (:488-497): set the ship and add BOTH of its
+ * scenes - exterior and interior - to the permanent list, so what the
+ * player leaves aboard is still there when the world moves on. The
+ * scene names are the ONLY reason this needs a host: the exterior name
+ * is keyed by the ship's map pixel and the interior by a fixed
+ * mapId/buildingKey0 pair (:103-110).
+ */
+export function assignShipToPlayer(player, shipType, { addPermanentScene = null } = {}) {
+  player.ownedShip = shipType;
+  if (shipType !== SHIP_TYPES.None) addPermanentScene?.(shipType);
+  return shipType;
+}
+
+/**
+ * PurchaseShip (:467-486). The ladder is PurchaseHouse's, with one
+ * difference worth keeping in view: the ship price is a FLAT table
+ * read (100000 / 200000), where a house is measured off its own mesh.
+ * Gold comes from the purse FIRST and the account covers the rest -
+ * DeductGoldAmount answers what it could not take, and that remainder
+ * is what the account pays (:481-482).
+ */
+export function purchaseShip(accounts, regionIndex, shipType, player, purse, hooks = {}) {
+  if (shipType === SHIP_TYPES.None) return { kind: 'none', result: TRANSACTION_RESULT.NONE };
+  const amount = shipPrice(shipType);
+  const accountGold = accounts[regionIndex].accountGold;
+  if (amount > purse.gold() + accountGold) {
+    return { kind: 'refuse', result: TRANSACTION_RESULT.NOT_ENOUGH_GOLD };
+  }
+  const shortfall = purse.deductGold(amount);
+  accounts[regionIndex].accountGold -= shortfall;
+  assignShipToPlayer(player, shipType, hooks);
+  return { kind: 'purchased', result: TRANSACTION_RESULT.PURCHASED_SHIP, price: amount };
+}
+
+/**
+ * SellShip (:499-507), the mirror of SellHouse: the ACCOUNT is
+ * credited, both permanent scenes are dropped, and the ship goes back
+ * to None. DFU answers TransactionResult.NONE either way - selling a
+ * ship you do not own credits `GetShipSellPrice(None)`, which is 0 by
+ * the `ship >= 0` guard, so the arithmetic is harmless; the port
+ * refuses it outright instead, which is Ledger A.
+ */
+export function sellShip(accounts, regionIndex, player, { removePermanentScene = null } = {}) {
+  const ship = ownedShipType(player);
+  if (ship === SHIP_TYPES.None) return { kind: 'none' };
+  const price = shipSellPrice(ship);
+  accounts[regionIndex].accountGold += price;
+  removePermanentScene?.(ship);
+  player.ownedShip = SHIP_TYPES.None;
+  return { kind: 'sold', price };
+}
+
+/**
  * BuildingDirectory.GetHousesForSale (:156-184).
  *
  * Every HouseForSale building is on the market outright; the list is

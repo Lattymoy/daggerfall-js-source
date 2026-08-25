@@ -2776,6 +2776,12 @@ export async function bootWorld(canvas, renderer, params, status) {
         regionIndex: loc.regionIndex ?? 0,
         locationName: loc.name ?? '',
         regionName: maps.getRegionName(loc.regionIndex ?? 0) ?? '',
+        // H3: DFLocation.Exterior.ExteriorData.PortTownAndUnknown
+        // (DFLocation.cs:578), read in exactly one place in DFU -
+        // DaggerfallBankingWindow.cs:460, which refuses to sell a ship
+        // outside a port town. formats/mapsFile.js has parsed the byte
+        // since the map reader landed; nothing had ever asked for it.
+        portTownAndUnknown: loc.exterior?.exteriorData?.portTownAndUnknown ?? 0,
       };
     },
     // Q4-v: the quest bridge + the scene context the NPC-data law needs

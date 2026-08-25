@@ -101,7 +101,8 @@ import { bindCursorToggle } from '../player/pointerLock.js';   // U45: PlayerMou
 import { buildingIsUnlocked, buildingLockValue, isBuildingOpen, LOCKED_EXTERIOR_DOOR_TEXT } from '../systems/buildingLocks.js';   // R1: opening hours + the unlocked ladder   // P1: the people gate reads the same hours
 import { peopleAreVisible } from '../characters/interiorPeople.js';   // P1: AddPeople's visibility tail
 import { exteriorLockpickingChance, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT } from '../world/actionSystem.js';
-import { discoverBuilding, getLastLockpickAttempt, setLastLockpickAttempt } from '../systems/discovery.js';
+import { discoverBuilding, undiscoverBuilding, getLastLockpickAttempt, setLastLockpickAttempt } from '../systems/discovery.js';   // H3: selling a house takes its name back off the map
+import { BUILDING_KEY_0 } from '../systems/talkTopics.js';   // H3: the no-key key both ship interiors are filed under
 import { getHolidayId } from '../systems/holidays.js';
 import { guildOfFaction, isMember } from '../systems/guilds.js';
 // V5: rest above ground. The window and the session have been finished
@@ -146,11 +147,11 @@ import { freeTavernRooms } from '../systems/guildServices.js';
 // B2: the bank - the window, the per-region accounts and the purse seam.
 import { BankWindow, preloadBankArt, bankArtLoaded, BANK_RECTS, BANK_PANEL_X, BANK_PANEL_Y } from '../ui/bankWindow.js';
 import { BankPurchaseWindow, preloadPurchaseArt, purchaseArtLoaded } from '../ui/bankPurchaseWindow.js';   // H2
-import { createBankAccounts, createHouses, BANK_REGION_COUNT, TRANSACTION_RESULT, ownsHouse, isHouseOwned, housesForSale, allocateHouseToPlayer, purchaseHouse } from '../systems/banking.js';   // H1/H2
+import { createBankAccounts, createHouses, BANK_REGION_COUNT, TRANSACTION_RESULT, ownsHouse, isHouseOwned, ownedHouseKey, houseSellPrice, housesForSale, allocateHouseToPlayer, purchaseHouse, ownsShip, ownedShipType, purchaseShip, sellShip, sellHouse, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS } from '../systems/banking.js';   // H1/H2   // H3: the two leaves - the sell price and the ship
 // P1: the scene cache - what an interior remembers across a visit.
 import {
   createSceneCache, cacheScene, restoreCachedScene,
-  interiorSceneName, LOOT_CONTAINER_TYPES, containsPermanentScene, addPermanentScene,
+  interiorSceneName, worldSceneName, LOOT_CONTAINER_TYPES, containsPermanentScene, addPermanentScene, removePermanentScene,
 } from '../systems/sceneCache.js';
 // S40: resting where the player has a claim - the rented-room finder
 // the tavern rents through, and FightersGuild.CanRest.
@@ -1166,10 +1167,18 @@ export function createWorldModes(host) {
     // `entity.houses` all along, over an array nothing ever made.
     playerEntity.houses ??= createHouses(regions);
     const b = interiorBuilding;
+    const bankRegion = () => b?.regionIndex ?? buildingDirectory?.()?.regionIndex ?? 0;
     let win = null;
     win = new BankWindow({
       accounts: () => playerEntity.bankAccounts,
-      regionIndex: () => b?.regionIndex ?? 0,
+      // H3: ONE region for the whole window. The bank building's own
+      // regionIndex is the right answer and stays first, but the
+      // LOCATION directory is the same region and answers when the
+      // window is opened without a building in hand. Before this,
+      // `ownsHouse` read the building's region and the new sell price
+      // read the directory's, and the two could disagree - the live
+      // probe caught it as a house that had a price and no owner.
+      regionIndex: () => bankRegion(),
       level: () => playerEntity.level ?? 1,
       now: () => Math.floor(worldMinutes()),
       player: bankPurse(),
@@ -1181,7 +1190,7 @@ export function createWorldModes(host) {
       // H1: house ownership is live. SHIP ownership still needs the two
       // fixed ship scenes and stays FLAGGED, so those buttons keep
       // refusing through the law's own decisions.
-      ownsHouse: () => ownsHouse(playerEntity.houses ?? [], b?.regionIndex ?? 0),
+      ownsHouse: () => ownsHouse(playerEntity.houses ?? [], bankRegion()),
       housesForSale: () => currentHousesForSale().length,
       // H2: BUY HOUSE reaches the purchase window. The U24 identity
       // guard again - a window that dispatches to another must not be
@@ -1206,15 +1215,54 @@ export function createWorldModes(host) {
         interiorOverlay = pw;
         return true;
       },
-      // FLAGGED, and now at the RIGHT thing: the sell PRICE needs the
-      // owned building's mesh radius, which means resolving the model
-      // behind a buildingKey - the same reader DaggerfallBankPurchase-
-      // PopUp needs for its 3D preview. Zero until that lands, so the
-      // sell offer quotes nothing rather than a wrong number.
-      houseSellPrice: () => 0,
-      ownsShip: () => false,
-      ownedShip: () => -1,
-      isPortTown: () => false,
+      // H3: the sell price, which was FLAGGED at zero because it needs
+      // the OWNED building's mesh radius and nothing resolved a model
+      // behind a buildingKey. Nothing new had to be built in the end:
+      // `houseMeshRadius` already reads exactly that for the market
+      // list, and the location directory already carries `modelIdNum`
+      // on every building - the owned one just had to be found in it.
+      houseSellPrice: () => {
+        const dir = buildingDirectory?.();
+        const key = ownedHouseKey(playerEntity.houses ?? [], bankRegion());
+        if (!key || !dir?.buildings?.length) return 0;
+        const owned = dir.buildings.find((b) => b.buildingKey === key);
+        return owned ? houseSellPrice(houseMeshRadius(owned)) : 0;
+      },
+      ownsShip: () => ownsShip(playerEntity),
+      ownedShip: () => ownedShipType(playerEntity),
+      // The two SALES themselves. Both credit the bank ACCOUNT rather
+      // than the purse - DFU pays a deed into the account - and both
+      // drop what they made permanent.
+      sellHouse: () => {
+        const dir = buildingDirectory?.();
+        const region = bankRegion();
+        const key = ownedHouseKey(playerEntity.houses ?? [], region);
+        const owned = dir?.buildings?.find((b) => b.buildingKey === key) ?? null;
+        return sellHouse(playerEntity.bankAccounts, playerEntity.houses, region,
+          { meshRadius: owned ? houseMeshRadius(owned) : 0 }, {
+            removePermanentScene: (mapId, k) => removePermanentScene(sceneCache(), interiorSceneName(mapId, k)),
+            // the deed named the building "<player>'s residence"; selling
+            // takes that name back off the map
+            undiscoverBuilding: (k) => {
+              const locId = discoveryLocationId?.();
+              if (locId) undiscoverBuilding(locId, k);
+            },
+          });
+      },
+      // AssignShipToPlayer/SellShip add and drop BOTH of the ship's
+      // scenes (:494-495, :502-503) - the exterior is keyed by the
+      // ship's map pixel and the interior by a fixed mapId with
+      // buildingKey0. sceneCache.js already names both kinds, so the
+      // pair is exact rather than half a port.
+      sellShip: () => sellShip(playerEntity.bankAccounts, bankRegion(), playerEntity, {
+        removePermanentScene: (ship) => {
+          removePermanentScene(sceneCache(), worldSceneName(SHIP_COORDS[ship].x, SHIP_COORDS[ship].y));
+          removePermanentScene(sceneCache(), interiorSceneName(SHIP_INTERIOR_MAP_IDS[ship], BUILDING_KEY_0));
+        },
+      }),
+      // DaggerfallBankingWindow.cs:460 - the ONE read of
+      // PortTownAndUnknown in all of DFU. Non-zero is a port.
+      isPortTown: () => (buildingDirectory?.()?.portTownAndUnknown ?? 0) !== 0,
       onClose: () => { if (interiorOverlay === win) interiorOverlay = null; },
     });
     interiorOverlay = win;
@@ -2977,7 +3025,7 @@ export function createWorldModes(host) {
       // reads it back with the entered building's own regionIndex, so
       // a deed written into the wrong slot self-confirms and then does
       // nothing - which is precisely what the first live run showed.
-      const region = regionIndex ?? interiorBuilding?.regionIndex ?? gps?.()?.regionIndex ?? 0;
+      const region = regionIndex ?? interiorBuilding?.regionIndex ?? buildingDirectory?.()?.regionIndex ?? 0;
       // the registry is BANK_REGION_COUNT slots, not a bare array -
       // allocateHouseToPlayer writes into houses[regionIndex] and an
       // empty [] has no slot to write
@@ -3130,6 +3178,14 @@ export function createWorldModes(host) {
       if (interiorOverlay.picker?.done) interiorOverlay.picker = null;
       return window.__itemMakerOverlay();
     };
+    // H3: the market the purchase window lists, priced. A probe that
+    // wants to OWN a house has to take a key the directory actually
+    // knows, or the sell price it later reads has nothing to measure.
+    window.__housesForSale = () => pricedHousesForSale().map((h) => ({
+      buildingKey: h.buildingKey,
+      regionIndex: buildingDirectory?.()?.regionIndex ?? 0,
+      meshRadius: +(h.meshRadius ?? 0).toFixed(3),
+    }));
     window.__openBank = () => { openBank(); return window.__bankOverlay(); };
     window.__bankOverlay = () => JSON.stringify(interiorOverlay instanceof BankWindow ? {
       bank: true,
@@ -3144,7 +3200,24 @@ export function createWorldModes(host) {
       } : null,
       enabled: Object.fromEntries(['depositGold', 'withdrawGold', 'loanRepay', 'loanBorrow']
         .map((k) => [k, interiorOverlay.enabled(k)])),
+      // H3: what the two DEED buttons can see. A probe that could only
+      // read the box could not tell an offer of the right price from
+      // an offer of zero, which is what the sell arm used to quote.
+      deeds: {
+        ownsHouse: !!interiorOverlay.hooks.ownsHouse?.(),
+        houseSellPrice: interiorOverlay.hooks.houseSellPrice?.() ?? 0,
+        ownsShip: !!interiorOverlay.hooks.ownsShip?.(),
+        ownedShip: interiorOverlay.hooks.ownedShip?.() ?? -1,
+        isPortTown: !!interiorOverlay.hooks.isPortTown?.(),
+        accountGold: playerEntity.bankAccounts?.[interiorOverlay.region]?.accountGold ?? 0,
+      },
     } : null);
+    // H3: the window's own keyboard. `__bankClick` drives the panel's
+    // hit rects, but a Yes/No box answers KEYS - and the world host
+    // does not route a real keypress into interiorOverlay unless the
+    // player is inside a building, so a probe that opened the bank
+    // through __openBank could click the offer up and never accept it.
+    window.__bankKey = (code) => { interiorOverlay?.input?.(code, null); return window.__bankOverlay(); };
     window.__bankClick = (key) => {
       const [x, y, w, h] = BANK_RECTS[key];
       return interiorOverlay?.click?.(BANK_PANEL_X + x + w / 2, BANK_PANEL_Y + y + h / 2) ?? false;

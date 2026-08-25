@@ -137,13 +137,24 @@ export class BankWindow {
     const rows = result === TRANSACTION_RESULT.TOO_HEAVY
       ? [{ text: CANNOT_CARRY_GOLD, center: true }]
       : this.hooks.rows?.(result) ?? [];
-    // DEPOSIT_LOC is the only one that asks rather than tells (:313-319)
-    const yesNo = result === TRANSACTION_RESULT.DEPOSIT_LOC;
+    // THREE results ask rather than tell (:313-334), not one: the
+    // letter deposit and BOTH sell offers. H3 - the two sell arms
+    // raised a click-anywhere box and no sale, so a player could
+    // accept an offer and keep the house.
+    const ASKS = {
+      [TRANSACTION_RESULT.DEPOSIT_LOC]: () => depositAllLetters(this.accounts, this.region, this.hooks.player),
+      // MakeTransaction(Sell_house / Sell_ship, 0, regionIndex)
+      // (:355, :364) - the amount is IGNORED on both, because the
+      // price is the deed's, not the player's to name.
+      [TRANSACTION_RESULT.SELL_HOUSE_OFFER]: () => this.hooks.sellHouse?.(),
+      [TRANSACTION_RESULT.SELL_SHIP_OFFER]: () => this.hooks.sellShip?.(),
+    };
+    const onYes = ASKS[result] ?? null;
     this.box = {
       rows: rows.length ? rows : [{ text: String(result), center: true }],
-      buttons: yesNo ? 'YesNo' : null,
+      buttons: onYes ? 'YesNo' : null,
       amount,
-      onYes: yesNo ? () => { depositAllLetters(this.accounts, this.region, this.hooks.player); } : null,
+      onYes,
     };
   }
 

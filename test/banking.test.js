@@ -2,11 +2,14 @@
 // and FormulaHelper's two loan formulas.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   TRANSACTION_RESULT, TRANSACTION_TYPE, SHIP_TYPES, SHIP_PRICES,
   DEED_SELL_MULT, HOUSE_PRICE_MULT, LOAN_REPAY_MINUTES, LOAN_MAX_PER_LEVEL,
   LOC_COMMISSION, LOC_MINIMUM, LOAN_MINIMUM, MINUTES_PER_MONTH, LOAN_REMINDER_MONTHS,
   shipPrice, shipSellPrice, housePrice, houseSellPrice,
+  shipModelId, shipCoords, ownsShip, ownedShipType, purchaseShip, sellShip, assignShipToPlayer,
   createBankAccounts, createHouses, validateRegion,
   accountTotal, loanedTotal, loanDueDate, hasLoan, hasDefaulted, setDefaulted,
   calculateMaxBankLoan, calculateBankLoanRepayment,
@@ -423,4 +426,141 @@ test('B1: the accounts and the loan SURVIVE a save (SerializablePlayer)', async 
   const fresh = { stats: {}, items: [] };
   restorePlayer(fresh, old);
   assert.deepEqual(fresh.bankAccounts, []);
+});
+
+// ── H3: SHIP OWNERSHIP + the two SELL arms ───────────────────────
+//
+// The tables, prices and decisions all shipped with B1/H1/H2; what
+// was missing was the ownership STATE and the transactions that move
+// it, plus the two sell offers actually selling anything.
+
+test('H3: ShipType.None is -1 so it indexes NOTHING, and every table read is guarded', () => {
+  // DFU guards each accessor with `ship >= 0` (:118-124) because None
+  // would otherwise index shipPrices[-1] and throw. IN JS THAT GUARD
+  // IS NOT OBSERVABLE - `arr[-1]` is already undefined - so what these
+  // lines pin is the ANSWER (0 / null), not the guard. Removing the
+  // guard entirely still passes; making None fall through to Small's
+  // row does not, which is the failure that matters.
+  assert.equal(SHIP_TYPES.None, -1);
+  assert.equal(shipPrice(SHIP_TYPES.None), 0);
+  assert.equal(shipSellPrice(SHIP_TYPES.None), 0);
+  assert.equal(shipModelId(SHIP_TYPES.None), 0);
+  // ...and a player with no ship has no coords at all - DFU returns
+  // null rather than coords[-1] (:126)
+  assert.equal(shipCoords({}), null);
+  assert.equal(ownsShip({}), false);
+  assert.equal(ownedShipType({}), SHIP_TYPES.None);
+});
+
+test('H3: a deed sells for 85% of its price, TRUNCATED', () => {
+  // deedSellMult (:93) through a C# (int) cast (:120, :173). BOTH SHIP
+  // PRICES ARE EXACT MULTIPLES of 0.85, so the ship rows cannot show
+  // the truncation at all - the house line at the bottom is the one
+  // that does, and it is the one that fails when the cast is dropped.
+  assert.equal(shipSellPrice(SHIP_TYPES.Small), Math.trunc(100000 * DEED_SELL_MULT));
+  assert.equal(shipSellPrice(SHIP_TYPES.Large), Math.trunc(200000 * DEED_SELL_MULT));
+  assert.equal(shipSellPrice(SHIP_TYPES.Small), 85000);
+  // the truncation is observable on a radius that does not divide
+  const radius = 7.77;
+  assert.equal(houseSellPrice(radius), Math.trunc(Math.trunc(radius * HOUSE_PRICE_MULT) * DEED_SELL_MULT));
+});
+
+test('H3: buying a ship takes the PURSE first and the account covers the rest (:481-482)', () => {
+  const accounts = createBankAccounts(3);
+  accounts[1].accountGold = 60000;
+  const player = {};
+  let purseGold = 50000;
+  // DeductGoldAmount answers what it could NOT take - that remainder
+  // is what the account pays.
+  const purse = {
+    gold: () => purseGold,
+    deductGold: (n) => { const took = Math.min(purseGold, n); purseGold -= took; return n - took; },
+  };
+  const r = purchaseShip(accounts, 1, SHIP_TYPES.Small, player, purse);
+  assert.equal(r.kind, 'purchased');
+  assert.equal(r.price, 100000);
+  assert.equal(purseGold, 0, 'the purse was not emptied first');
+  assert.equal(accounts[1].accountGold, 10000, 'the account did not cover exactly the shortfall');
+  assert.equal(ownedShipType(player), SHIP_TYPES.Small);
+  assert.equal(ownsShip(player), true);
+});
+
+test('H3: a ship you cannot afford between purse AND account is refused, and nothing moves', () => {
+  const accounts = createBankAccounts(3);
+  accounts[0].accountGold = 1000;
+  const player = {};
+  const purse = { gold: () => 500, deductGold: () => { throw new Error('must not deduct on a refusal'); } };
+  const r = purchaseShip(accounts, 0, SHIP_TYPES.Large, player, purse);
+  assert.equal(r.kind, 'refuse');
+  assert.equal(r.result, TRANSACTION_RESULT.NOT_ENOUGH_GOLD);
+  assert.equal(accounts[0].accountGold, 1000, 'the account moved on a refusal');
+  assert.equal(ownsShip(player), false);
+});
+
+test('H3: buying a ship makes BOTH its scenes permanent, selling drops both', () => {
+  // AssignShipToPlayer (:488-497) and SellShip (:499-507). The port
+  // hands the ship type to one hook and lets the host name the pair,
+  // because only the host knows how it spells a scene.
+  const accounts = createBankAccounts(2);
+  accounts[0].accountGold = 200000;
+  const player = {};
+  const added = [];
+  const dropped = [];
+  purchaseShip(accounts, 0, SHIP_TYPES.Large, player,
+    { gold: () => 0, deductGold: (n) => n },
+    { addPermanentScene: (ship) => added.push(ship) });
+  assert.deepEqual(added, [SHIP_TYPES.Large], 'the purchase made no scene permanent');
+  const r = sellShip(accounts, 0, player, { removePermanentScene: (ship) => dropped.push(ship) });
+  assert.equal(r.kind, 'sold');
+  assert.deepEqual(dropped, [SHIP_TYPES.Large], 'the sale dropped no scene');
+  assert.equal(ownsShip(player), false, 'the ship survived its own sale');
+});
+
+test('H3: a ship sale credits the ACCOUNT, not the purse - a deed is paid into the bank', () => {
+  const accounts = createBankAccounts(2);
+  const player = { ownedShip: SHIP_TYPES.Small };
+  const r = sellShip(accounts, 1, player);
+  assert.equal(r.price, 85000);
+  assert.equal(accounts[1].accountGold, 85000, 'the sale did not reach the account');
+  assert.equal(ownedShipType(player), SHIP_TYPES.None);
+});
+
+test('H3 DEPARTURE: selling a ship you do not own is REFUSED, where DFU credits zero', () => {
+  // SellShip has no ownership guard (:499): with ShipType.None it
+  // credits GetShipSellPrice(None), which the `ship >= 0` guard makes
+  // 0, so DFU's arithmetic is harmless but it still clears the scenes
+  // and re-assigns None. The port refuses outright - recorded in
+  // Ledger A rather than silently matched.
+  const accounts = createBankAccounts(2);
+  let dropped = 0;
+  const r = sellShip(accounts, 0, {}, { removePermanentScene: () => { dropped++; } });
+  assert.equal(r.kind, 'none');
+  assert.equal(accounts[0].accountGold, 0);
+  assert.equal(dropped, 0, 'a sale that never happened dropped a scene');
+});
+
+test('H3 hosts: the three stubbed producers are producing', () => {
+  const wm = readFileSync(join(process.cwd(), 'src/scenes/worldModes.js'), 'utf8');
+  // These three shipped as literals - `() => 0`, `() => false`,
+  // `() => -1` - so the bank window drew a Sell button that quoted
+  // nothing and a Buy Ship that could never be in a port.
+  for (const stub of ['houseSellPrice: () => 0', 'ownsShip: () => false', 'ownedShip: () => -1', 'isPortTown: () => false']) {
+    assert.ok(!wm.includes(stub), `the ${stub.split(':')[0]} producer is stubbed again`);
+  }
+  // the sell price is measured off the OWNED building's mesh, the same
+  // reader the market list uses
+  assert.match(wm, /houseSellPrice\(houseMeshRadius\(owned\)\)/, 'the sell price is not measured off the owned house');
+  // ...and PortTownAndUnknown reaches it from the location directory
+  assert.match(wm, /portTownAndUnknown \?\? 0\) !== 0/, 'the port-town test is not the PortTownAndUnknown byte');
+  const w = readFileSync(join(process.cwd(), 'src/scenes/world.js'), 'utf8');
+  assert.match(w, /portTownAndUnknown: loc\.exterior\?\.exteriorData\?\.portTownAndUnknown/,
+    'the host never reads the byte off the location');
+
+  const bw = readFileSync(join(process.cwd(), 'src/ui/bankWindow.js'), 'utf8');
+  // BOTH sell offers ask, not just the letter deposit (:313-334) -
+  // and a Yes has to actually sell
+  assert.match(bw, /\[TRANSACTION_RESULT\.SELL_HOUSE_OFFER\]: \(\) => this\.hooks\.sellHouse/,
+    'accepting the house offer does not sell the house');
+  assert.match(bw, /\[TRANSACTION_RESULT\.SELL_SHIP_OFFER\]: \(\) => this\.hooks\.sellShip/,
+    'accepting the ship offer does not sell the ship');
 });
