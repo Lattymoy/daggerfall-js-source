@@ -627,6 +627,25 @@ export function raiseAtRestEnd(entity, { say = () => {}, onLevelUp = null, rolls
 }
 
 /**
+ * V5 - TEXT.RSC ROWS ARE NOT STRINGS, and the two shapes are easy to
+ * hand to the wrong window. `textRsc.linesById` (:216-247) answers
+ * `{ text, center }` records, because the record's own bytes carry
+ * justification; dungeonContext's local `rscLines` (:851) flattens
+ * them to plain strings, which is what RestWindow, ActionTextBox and
+ * ChoiceWindow all iterate.
+ *
+ * V5's first cut handed `townTalk.lines(id)` straight to a RestWindow
+ * and the rested night ended in `TypeError: text is not iterable` from
+ * drawText - a real page error, in a draw path no unit test walks, and
+ * the first-hour probe's own zero-page-errors gate is what caught it.
+ * So the flattening is a shared function now rather than a habit one
+ * host happens to have.
+ */
+export const plainLines = (rows) => (rows?.length
+  ? rows.map((r) => (typeof r === 'string' ? r : (r?.text ?? ''))).filter((l) => l !== null)
+  : null);
+
+/**
  * V5 - THE REST DEPS, BUILT ONCE FOR EVERY HOST.
  *
  * Resting worked in a dungeon and nowhere else, and the reason was
@@ -679,7 +698,7 @@ export function createRestDeps(entity, {
       health: entity.health, maxHealth: entity.maxHealth,
       fatigue: Math.round((entity.fatigue ?? 0) / 64), magicka: entity.magicka ?? 0,
     }),
-    endLines: (id) => textLines(id),
+    endLines: (id) => plainLines(textLines(id)),
   };
 }
 
@@ -955,7 +974,18 @@ export function wireInfectionVideos(renderer, { textAt = null, showText = null, 
     // draws an ActionTextBox where the town hosts draw a
     // ChoiceWindow and neither is the other's overlay.
     messageBox: (id) => {
-      const lines = textAt?.(id);
+      // V5: plainLines, and it is a FIX rather than tidying. Three of
+      // the four textAt providers hand back TEXT.RSC ROWS - world.js,
+      // exterior.js and worldModes.js all pass `townTalk.lines(id)`,
+      // which answers { text, center } records - while dungeonContext
+      // passes `textRsc.plainText(id)`, which answers strings. Both
+      // windows this reaches iterate the STRING (ChoiceWindow
+      // talkWindow.js:58-59, ActionTextBox likewise), so "Death is not
+      // eternal" threw `TypeError: text is not iterable` on draw
+      // everywhere above ground and worked only in a dungeon: the
+      // four-hosts divergence this project keeps meeting. Flattened
+      // HERE, at the one consumer, so no provider has to be right.
+      const lines = plainLines(textAt?.(id));
       if (lines?.length) showText?.(lines);
     },
     // GetVampireClan's region read (:400-427), assembled from the

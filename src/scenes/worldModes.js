@@ -107,7 +107,7 @@ import { isPlayerInTown } from '../systems/nearbyObjects.js';
 import { findRentedRoom } from '../systems/tavern.js';
 import { canRest as guildCanRest } from '../systems/guildServices.js';
 import { containsPermanentScene } from '../systems/sceneCache.js';
-import { createRestDeps } from './shared.js';
+import { createRestDeps, plainLines } from './shared.js';
 import { hallAccessAnytime } from '../systems/guildServices.js';
 import { resolveVariantGuild } from '../systems/guildVariants.js';
 import { getBool } from '../systems/settings.js';   // R1: InstantRepairs / AllowMagicRepairs go LIVE
@@ -1143,7 +1143,9 @@ export function createWorldModes(host) {
       guildCanRest: guild ? guildCanRest(guild, membershipOf((playerEntity.guildMemberships ??= {}), guild)) : false,
     });
     if (!verdict.allowed) {
-      const lines = verdict.line ? [verdict.line] : (townTalk?.lines?.(verdict.textId) ?? null);
+      // plainLines: TEXT.RSC answers { text, center } rows and
+      // ActionTextBox iterates STRINGS (shared.js's note).
+      const lines = verdict.line ? [verdict.line] : plainLines(townTalk?.lines?.(verdict.textId));
       if (lines) interiorOverlay = new ActionTextBox(lines);
       return;
     }

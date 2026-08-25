@@ -31,6 +31,7 @@ import {
   canRest, remainingHoursRented, REST_TEXT, HAVE_NOT_RENTED_ROOM, BUILDING_TAVERN,
 } from '../src/systems/restSession.js';
 import { isPlayerInTown, TOWN_LOCATION_TYPES } from '../src/systems/nearbyObjects.js';
+import { plainLines } from '../src/scenes/shared.js';
 import { LOCATION_TYPES } from '../src/formats/mapsFile.js';
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
@@ -188,4 +189,65 @@ test('V5: ONE generic tick drives the rest window, so no host can forget it', ()
   assert.match(code('scenes/dungeonContext.js'), /activeOverlay\.tick\?\.\(dt\)/, 'the generic call stays');
   assert.match(code('scenes/worldModes.js'), /interiorOverlay\.tick\?\.\(dt\)/);
   assert.match(code('scenes/townTalk.js'), /overlay\?\.tick\?\.\(dt\)/);
+});
+
+test('V5: TEXT.RSC rows are not strings, and the windows that draw them iterate strings', () => {
+  // THE PAGE ERROR V5's FIRST CUT SHIPPED. textRsc.linesById (:216-247)
+  // answers { text, center } records - the record's own bytes carry
+  // justification - while RestWindow, ActionTextBox and ChoiceWindow
+  // all `for (const l of lines) drawText(..., l)`, and drawText
+  // iterates the string. Handing townTalk.lines(id) straight to a
+  // RestWindow ended the rested night in
+  //     TypeError: text is not iterable
+  // from a draw path no unit test walks. The first-hour probe's own
+  // zero-page-errors gate is what caught it, at the very last stage.
+  assert.deepEqual(plainLines([{ text: 'You wake up.', center: false }]), ['You wake up.']);
+  assert.deepEqual(plainLines(['already a string']), ['already a string'], 'idempotent');
+  assert.deepEqual(plainLines([{ text: 'a' }, 'b', { text: '' }]), ['a', 'b', '']);
+  assert.equal(plainLines([]), null, 'nothing to say is null, which is what _end tests');
+  assert.equal(plainLines(null), null);
+  assert.equal(plainLines(undefined), null);
+
+  // Every site that hands rows to one of those windows must flatten.
+  // A source rule, because the failure is a DRAW and the suite draws
+  // nothing.
+  // TWO DRAFTS OF THIS RULE WERE WRONG, in opposite directions, and
+  // the red-proof caught both. The first spelled `townTalk?.lines?.(`
+  // with optional dots, consumed the separator before `.lines`,
+  // matched nothing and passed on the very build it was written to
+  // reject. The second flagged by PROXIMITY - any TEXT.RSC read within
+  // two lines of a window name - and then flagged the infection seam's
+  // `textAt:` provider, which is safe precisely because the flatten
+  // moved to its one consumer.
+  //
+  // So: the sites that BUILD the line list. `const lines = ...lines(...)`
+  // is the shape both new rest arms use and the shape that broke.
+  for (const h of ['scenes/world.js', 'scenes/worldModes.js']) {
+    const offenders = code(h).split('\n')
+      .map((l, i) => [l, i])
+      .filter(([l]) => /^\s*const lines = .*\.lines\??\.?\(/.test(l) && !/plainLines/.test(l))
+      .map(([l, i]) => `${h}:${i + 1}  ${l.trim()}`);
+    assert.deepEqual(offenders, [],
+      'a line list is built from TEXT.RSC ROWS and handed to a window that iterates STRINGS:\n'
+      + offenders.join('\n'));
+  }
+
+  // THIS RULE CAUGHT A BUG THAT WAS NOT V5's, which is the best thing
+  // that can happen to a rule written for one's own mistake. The
+  // vampire message box - "Death is not eternal", TEXT.RSC 401 - takes
+  // whatever `textAt` answers and hands it to a ChoiceWindow. Three of
+  // the four hosts provide `townTalk.lines(id)`, which answers ROWS;
+  // only dungeonContext provides `textRsc.plainText(id)`, which
+  // answers strings. So that popup threw on draw everywhere above
+  // ground and worked in a dungeon. Flattened at the ONE consumer, so
+  // no provider has to be right.
+  assert.match(code('scenes/shared.js'), /const lines = plainLines\(textAt\?\.\(id\)\);/,
+    'wireInfectionVideos must flatten - three of its four providers answer TEXT.RSC rows');
+  const providers = ['scenes/world.js', 'scenes/exterior.js', 'scenes/worldModes.js']
+    .filter((h) => /textAt: \(id\) => townTalk\??\.?\??\.?lines/.test(code(h)));
+  assert.equal(providers.length, 3,
+    'the three town hosts still hand back ROWS - if that changes, the flatten above is why it is safe either way');
+  // ...and the shared factory flattens for every host at once, so a
+  // new host cannot get this wrong by omission.
+  assert.match(code('scenes/shared.js'), /endLines: \(id\) => plainLines\(textLines\(id\)\)/);
 });
