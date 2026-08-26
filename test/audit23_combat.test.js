@@ -6,13 +6,29 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PlayerWeapon } from '../src/combat/playerWeapon.js';
 import { CLASSIC_UPDATE_INTERVAL, BOW_SOUND_FRAME, HIT_FRAME_BOW, getBowCooldownTime } from '../src/characters/weaponStates.js';
-import { SOUND } from '../src/systems/soundClips.js';
+import { SOUND, swingSoundFor } from '../src/systems/soundClips.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = (f) => readFileSync(join(root, f), 'utf8');
 
 const SHORT_BOW = { name: 'Short Bow', templateIndex: 129 };
 const SABER = { name: 'Saber', templateIndex: 117 };
+
+// AUDIT 26: the frame-4 bow loose is single-sourced onto swingSoundFor
+// (FPSWeapon.PlaySwingSound plays SwingWeaponSound, which SetWeapon fills
+// from the wielded weapon's GetSwingSound). The pin is the CLIP AND VOLUME
+// a host's own bow arm sounds with a bow in hand, not the spelling of the
+// call: it runs the arm and listens.
+const bowLooseSound = (text, weapon = { name: 'Short Bow', templateIndex: 129 }) => {
+  const arm = /if \(ev === 'bowSound'\) \{([^}]*)\}/.exec(text);
+  assert.ok(arm, 'the frame-4 bow arm is wired');
+  const played = [];
+  const rig = { playerWeapon: { weapon } };
+  new Function('ev', 'audio', 'SOUND', 'swingSoundFor', 'weaponRig', 'interiorWeapon', 'playerWeapon',
+    arm[1].replace('continue;', ''))('bowSound',
+    { playOneShot: (c, v) => played.push([c, v]) }, SOUND, swingSoundFor, rig, rig, rig.playerWeapon);
+  return played;
+};
 
 test('AUDIT 23 combat-2: a wielded bow engages the bow machine - forced direction, 0.0625 clock, sound@4, loose@5, cooldown', () => {
   const pw = new PlayerWeapon({ weapon: SHORT_BOW, liveSpeed: 50 });
@@ -91,13 +107,13 @@ test('AUDIT 23 C9/combat-2: the hosts own the swing sounds - whiff whoosh at hit
   assert.equal(/startsWith\('Strike'\)\) audio\.playOneShot\(swingSoundFor/.test(rig), false,
     'the rig strike-entry whoosh is gone');
   const dc = src('src/scenes/dungeonContext.js');
-  assert.ok(dc.includes("if (ev === 'bowSound') { audio.playOneShot(SOUND.ArrowShoot, 1.1); continue; }"),
-    'dungeon: bow frame-4 sound');
+  assert.deepEqual(bowLooseSound(dc), [[SOUND.ArrowShoot, 1.1]],
+    'dungeon: the bow frame-4 loose sounds ArrowShoot at 1.1');
   assert.ok(dc.includes('else audio.playOneShot(swingSoundFor(playerWeapon.weapon), 1.1);'),
     'dungeon: no-enemy swing sound at the hit frame');
   const wm = src('src/scenes/worldModes.js');
-  assert.ok(wm.includes("if (ev === 'bowSound') { audio.playOneShot(SOUND.ArrowShoot, 1.1); continue; }"),
-    'interior: bow frame-4 sound');
+  assert.deepEqual(bowLooseSound(wm), [[SOUND.ArrowShoot, 1.1]],
+    'interior: the bow frame-4 loose sounds ArrowShoot at 1.1');
   assert.ok(wm.includes('audio.playOneShot(swingSoundFor(interiorWeapon.playerWeapon.weapon), 1.1);'),
     'interior: the no-enemy swing sound');
 });

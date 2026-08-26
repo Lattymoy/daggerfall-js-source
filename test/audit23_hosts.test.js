@@ -17,6 +17,7 @@ import { BANK_TYPES } from '../src/characters/nameHelper.js';
 import { NORMALIZE_INTERVAL_MINUTES } from '../src/systems/court.js';
 import { SKILLS } from '../src/systems/skills.js';
 import { maxFatigue } from '../src/systems/statMods.js';
+import { SOUND, swingSoundFor } from '../src/systems/soundClips.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = (f) => readFileSync(join(root, f), 'utf8');
@@ -24,6 +25,22 @@ const EXTERIOR = src('src/scenes/exterior.js');
 const WORLD = src('src/scenes/world.js');
 const WM = src('src/scenes/worldModes.js');
 const DUNGEON = src('src/scenes/dungeon.js');
+
+// AUDIT 26: the frame-4 bow loose is single-sourced onto swingSoundFor
+// (FPSWeapon.PlaySwingSound plays SwingWeaponSound, which SetWeapon fills
+// from the wielded weapon's GetSwingSound). The pin is the CLIP AND VOLUME
+// a host's own bow arm sounds with a bow in hand, not the spelling of the
+// call: it runs the arm and listens.
+const bowLooseSound = (text, weapon = { name: 'Short Bow', templateIndex: 129 }) => {
+  const arm = /if \(ev === 'bowSound'\) \{([^}]*)\}/.exec(text);
+  assert.ok(arm, 'the frame-4 bow arm is wired');
+  const played = [];
+  const rig = { playerWeapon: { weapon } };
+  new Function('ev', 'audio', 'SOUND', 'swingSoundFor', 'weaponRig', 'interiorWeapon', 'playerWeapon',
+    arm[1].replace('continue;', ''))('bowSound',
+    { playOneShot: (c, v) => played.push([c, v]) }, SOUND, swingSoundFor, rig, rig, rig.playerWeapon);
+  return played;
+};
 
 const tickEntity = () => ({
   chargenDone: true, skillUses: new Array(35).fill(0), stats: { strength: 50, endurance: 50 },
@@ -112,7 +129,8 @@ test('AUDIT 23 C14 + combat-4: the exterior swing arms drain, tally fully, and n
       `${name}: the bow arm and the melee arm both drain`);
     assert.ok(text.includes('tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon)'), `${name}: the full bow tally arm`);
     assert.equal(/WEAPON_SKILL\[/.test(text), false, `${name}: the display-name double tally is gone`);
-    assert.ok(text.includes("if (ev === 'bowSound') { audio.playOneShot(SOUND.ArrowShoot, 1.1); continue; }"), `${name}: the bow frame-4 sound`);
+    assert.deepEqual(bowLooseSound(text), [[SOUND.ArrowShoot, 1.1]],
+      `${name}: the bow frame-4 loose sounds the wielded bow's swing clip at 1.1`);
   }
 });
 

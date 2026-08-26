@@ -242,13 +242,13 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:683` - effects FLAGGED to the effect-library slice.
 - `src/scenes/dungeonContext.js:693` - "database FLAGGED" narrows to the skill/loot message ids).
 - `src/scenes/dungeonContext.js:1168` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/dungeonContext.js:2833` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
-- `src/scenes/exterior.js:550` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/exterior.js:556` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:798` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:1035` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:1327` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:1504` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/dungeonContext.js:2836` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
+- `src/scenes/exterior.js:549` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/exterior.js:555` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/exterior.js:797` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/exterior.js:1034` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/exterior.js:1326` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:1503` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/shared.js:242` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:259` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:364` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
@@ -293,11 +293,11 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:2372` - first (owned houses and quest buildings FLAGGED/seamed per
 - `src/scenes/worldModes.js:2380` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
 - `src/scenes/worldModes.js:2695` - FLAGGED, unchanged by this: DFU then raises the private-
-- `src/scenes/worldModes.js:3200` - too. FLAGGED: interior loot containers are the loot arc's -
-- `src/scenes/worldModes.js:3342` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:3441` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:3779` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
-- `src/scenes/worldModes.js:4200` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
+- `src/scenes/worldModes.js:3204` - too. FLAGGED: interior loot containers are the loot arc's -
+- `src/scenes/worldModes.js:3346` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:3445` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:3783` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
+- `src/scenes/worldModes.js:4204` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
