@@ -1,0 +1,1764 @@
+{
+  "summary": "Batched refute-by-default verification of the 190 pending AUDIT 26 findings on Sonnet",
+  "agentCount": 33,
+  "logs": [
+    "parallel[11] failed: agent({schema}): StructuredOutput retry cap (5) exceeded — 5 failed calls with no valid output",
+    "parallel[13] failed: agent({schema}): StructuredOutput retry cap (5) exceeded — 5 failed calls with no valid output",
+    "parallel[14] failed: agent({schema}): StructuredOutput retry cap (5) exceeded — 5 failed calls with no valid output",
+    "parallel[23] failed: agent({schema}): StructuredOutput retry cap (5) exceeded — 5 failed calls with no valid output",
+    "verify done: 166 verdicts, 164 confirmed, 2 refuted"
+  ],
+  "result": {
+    "stats": {
+      "verdicts": 166,
+      "confirmed": 164,
+      "refuted": 2
+    },
+    "verdicts": [
+      {
+        "id": "F009",
+        "verdict": "confirmed",
+        "reason": "C#: EnemyMotor.cs:594-597 picks RangedAttack2 when HasRangedAttack2; DaggerfallMobileUnit.cs:840-841 maps it to EnemyBasics.RangedAttack2Anims (records 25-29, EnemyBasics.cs:103-109), distinct from RangedAttack1Anims (20-24). JS: mobileUnit.js:120 always returns RANGED_ATTACK1_ANIMS for state 'ranged'; no RANGED_ATTACK2_ANIMS exists in src/. enemyBasics.js rows '130'/'133' (Battlemage/Nightblade, lines 2094-2103/2288-2293) have hasRangedAttack2+hasSpellAnimation=true, so bow shot renders same records as spell cast. No pin covers this.",
+        "confidence": "high"
+      },
+      {
+        "id": "F010",
+        "verdict": "confirmed",
+        "reason": "C#: KnockbackMovement sets CanAct=false whenever KnockbackSpeed>0 (EnemyMotor.cs:272-317); TakeAction (incl. DoRangedAttack:469/DoTouchSpell:473) runs only `if(CanAct)` (:171-172). JS: enemyAttack.js:127-136 rolls bow shot with no knockbackSpeed check; enemyCasting.js update (103-132) likewise none. Hosts dungeonContext.js:2290/2312 and exteriorFoes.js:294/299 gate calls only on paralysis/hostility, never knockbackSpeed. No contradicting pin (checked audit24_characters/wave32/wave33, which only pin the paralysis half).",
+        "confidence": "high"
+      },
+      {
+        "id": "F011",
+        "verdict": "confirmed",
+        "reason": "C#: TakeAction calls DoRangedAttack(:469)/DoTouchSpell(:473), both return-early on success, BEFORE the detour arm at :481-484. JS: `_classicTick` checks `if(detouring)` first (enemyMotor.js:943, returns 944-951) then `_doRangedAttack` (:956) - reversed order; the port's own comment (940-941) misdescribes this as DFU's 'FIRST branch'. test/audit24_wave35.test.js:113-114 only string-matches the port's own source order ('detour override first of all'), never checking real C# line order - so it's confirming evidence, not a refutation.",
+        "confidence": "high"
+      },
+      {
+        "id": "F012",
+        "verdict": "confirmed",
+        "reason": "C#: HandleNoAction (EnemyMotor.cs:357-366) resets searchMult=0 on all 3 arms (target null, GiveUpTimer<=0, sentinel), every FixedUpdate. JS: enemyMotor.js:931 (gave-up arm) does not reset searchMult; only line 935 (sentinel arm) and line 869 (clear-path in _getDestination) do. `_classicTick` (holding both arms) only runs `if(!paralyzed&&!knocked&&isHostile)` (line 1039), so a pacified/knocked foe skips both. Stale searchMult is consumed as an offset in the search branch (878-884), matching the claimed consequence.",
+        "confidence": "high"
+      },
+      {
+        "id": "F013",
+        "verdict": "confirmed",
+        "reason": "C#: DoTouchSpell (EnemyMotor.cs:621-623) has no one-shot term; TakeAction's only one-shot gate (:465, OneShotPauseActionsWhilePlaying) is SeducerTransform-only (MobileUnit.cs:174-183); ChangeEnemyState (MobileUnit.cs:137-147) switches unconditionally, interrupting a swing. ResetMeleeTimer (EnemyAttack.cs:114-131) floors to 0 at level ~22+(low reflexes)/~40(avg), matching claim's math. JS: enemyCasting.js:107,110 adds `idle=attack.machine.state==='Idle'` as an extra required term DFU lacks. No contradicting pin found.",
+        "confidence": "high"
+      },
+      {
+        "id": "F014",
+        "verdict": "confirmed",
+        "reason": "C#: FixedUpdate calls UpdateTimers unconditionally (EnemyMotor.cs:170) before `if(CanAct) TakeActionHandler()` (:171-172); UpdateTimers (:389-425) refills/decrements GiveUpTimer with no paralysis/knockback/CanAct check. JS: the refill/decrement (enemyMotor.js:929-930) lives inside `_classicTick`, gated `if(!paralyzed&&!knocked&&isHostile)` (line 1039) - frozen during paralysis/knockback. No other giveUpTimer writer exists besides `_classicTick` and the unrelated hostility-seed at line 563. No contradicting pin found.",
+        "confidence": "high"
+      },
+      {
+        "id": "F015",
+        "verdict": "confirmed",
+        "reason": "DFU FactionFile.cs:537-538: Subgroup=3, Individual=4; StaticNPC.cs:319 tests type==(int)Individual(4). Port's staticNpc.js:220 sets FACTION_TYPE_INDIVIDUAL=3, used at :209 - checks Subgroup not Individual. Port's own faction dict and quest code (questMacros.js:321,365; actions.js:2340,2412) correctly use 4 elsewhere, confirming staticNpc.js is the outlier. Both cited test pins mock type:3 as 'individual', restating the bug.",
+        "confidence": "high"
+      },
+      {
+        "id": "F016",
+        "verdict": "confirmed",
+        "reason": "DFU StaticNPC.cs:309 always sets npcData.nameBank = GetNameBankOfCurrentRegion() before GetDisplayName (:325-326) uses it - region-based, never race-based. Port's staticNpcName (staticNpc.js:206,211) defaults to bankForRace(data.race); its only two callers (worldModes.js:976,1364) never pass nameBank. Port already has getNameBankOfRegion wired for mobile NPCs (world.js:506) but never for static NPCs - an unported gap, not a departure.",
+        "confidence": "high"
+      },
+      {
+        "id": "F017",
+        "verdict": "confirmed",
+        "reason": "worldModes.js:1363 calls staticNpcData(pn, {...questSceneCtx(), buildingKey}) with no getFaction/raceOfCurrentRegion, so raceFromFaction's fallback (staticNpc.js:139-141) always yields Nord. The direct-click seam (worldModes.js:890) instead uses questBridge.clickNpc, which adds npcRaceLookups() (questBridge.js:237-239,256-259) with real lookups off ctx.world - matching DFU's single unconditional GetRaceFromFaction (StaticNPC.cs:357-369). No test pin covers this omission.",
+        "confidence": "high"
+      },
+      {
+        "id": "F018",
+        "verdict": "confirmed",
+        "reason": "worldModes.js:979/1366 pass targetNPC={data:pn,...} where pn (from interiorPeople.js:30-48) has no nameSeed field; the real derived nameSeed is computed separately and used only for displayName. npcSession.js:467 reads targetNPC?.data?.nameSeed??0, always 0, so isCastleNpcOfferingQuest keys castleNPCsSpokenTo by 0 (npcSession.js:564-573) vs DFU's per-NPC targetNPC.Data.nameSeed (TalkManager.cs:769). audit24_onehome.test.js:225 pins the exact buggy shape.",
+        "confidence": "high"
+      },
+      {
+        "id": "F019",
+        "verdict": "confirmed",
+        "reason": "collectExteriorNpcs (exteriorNpcs.js:12-14) correctly ports RMBLayout.cs:365-378's non-zero-FactionID rule, but grep of exterior.js/world.js for 'factionID' returns zero hits; only test/names.test.js imports it. test/audit18_bible_docs.test.js:337-338 pins the Port-Ledger.md line documenting this exact known no-caller gap, confirming it, not refuting.",
+        "confidence": "high"
+      },
+      {
+        "id": "F020",
+        "verdict": "confirmed",
+        "reason": "DFU gates both questor arms on IsChildNPC (TalkManager.cs:755,769 -> StaticNPC.cs:342-350: texture table or factionID==514). Port reads isChildNPC/isChild at worldModes.js:979,1366 and npcSession.js:466,653 but writes it nowhere - pn never carries it, staticNpc.js has neither the 514 constant nor a child-texture table, so it's always false and the !isChildNPC guards (npcSession.js:468,472) never exclude a child. audit24_onehome.test.js:225 pins the always-false `!!pn.isChildNPC` shape verbatim.",
+        "confidence": "high"
+      },
+      {
+        "id": "F021",
+        "verdict": "confirmed",
+        "reason": "DFU MobilePersonBillboard.SetIdle (MobilePersonBillboard.cs:291-313) resets currentFrame=0/animTimer=1 on every idle<->move transition, gated by MobilePersonMotor.Update's IsIdle checks (:232,238). Port's MobilePerson.update (mobilePerson.js:225-256) keeps one monotonic this.frame/this._timer across the same transition logic (line 226-227), only applying frame % n (251,256), never resetting. Visible animation-phase divergence confirmed.",
+        "confidence": "high"
+      },
+      {
+        "id": "F022",
+        "verdict": "confirmed",
+        "reason": "DFU never flags spawn tile Occupied: InitMotor (MobilePersonMotor.cs:274-283) sets currentNavPosition=(-1,-1), InitNavPosition (:475-486) only recomputes position, Occupied is set only on the TARGET in SetTargetPosition (:438-439). GetNextNavPositionWeight treats Occupied as weight 0 (:528-529, mirrored at mobilePerson.js:152-155). Port's place() (mobilePerson.js:127-141, called from townPopulation.js:112) calls nav.setOccupied(gx,gy) on the spawn cell - an extra flag DFU never sets.",
+        "confidence": "medium"
+      },
+      {
+        "id": "F023",
+        "verdict": "confirmed",
+        "reason": "WeaponManager.SetWeapon (WeaponManager.cs:769-781) sets DrawWeaponSound=weapon.GetEquipSound() for any real weapon (SetMelee, fists-only, is the sole path keeping the default). GetEquipSound (DaggerfallUnityItem.cs:820-869) returns per-type clips absent from the port's SOUND enum. Port's toggleSheath (weaponRig.js:102-105) unconditionally plays SOUND.DrawWeapon(78). test/weaponrig.test.js:31-37 pins this exact wrong behavior with no C# citation.",
+        "confidence": "high"
+      },
+      {
+        "id": "F024",
+        "verdict": "confirmed",
+        "reason": "WeaponManager.Update does `if (Time.time < cooldownTime) return;` (WeaponManager.cs:227-230) before any ShowWeapons call, so the prior shown=true state persists through bow cooldown. Port's shown() explicitly returns false during cooldown (weaponRig.js:75, `m.isBow && m.now < m.cooldownUntil`), and draw() gates on shown() (weaponRig.js:131-136). Confirmed blink-out divergence.",
+        "confidence": "high"
+      },
+      {
+        "id": "F025",
+        "verdict": "confirmed",
+        "reason": "WeaponManager.Update hides weapons during equip countdown: `if (EquipCountdown...!=0) { ShowWeapons(false); return; }` (WeaponManager.cs:272-278). Port's shown() (weaponRig.js:71-77) never checks entity.equipCountdown, while attackInput/clickAttack (96,100) and frame()'s drain (116-119, dt*980 matching :688) do. equip.js:56 confirms equipCountdown is set on every equip, so draw() renders the weapon through the silent-block pause.",
+        "confidence": "medium"
+      },
+      {
+        "id": "F026",
+        "verdict": "confirmed",
+        "reason": "AcrobatMotor.HandleJumpInput:76 bypasses the grounded-time gate via `!climbingMotor.WasClimbing`, WasClimbing set true the frame climbing ends (ClimbingMotor.cs:92-95,390). Port's motor.js:649 gate has no such bypass, and groundedTime resets to 0 whenever ungrounded (motor.js:508), so it's 0 right after landing from a climb. climbing.js:119 writes this.wasClimbing every step; grep of src/ and test/ finds zero readers - a ported field with no consumer.",
+        "confidence": "high"
+      },
+      {
+        "id": "F027",
+        "verdict": "confirmed",
+        "reason": "LevitateMotor.cs:83-89 computes overEncumbered=(CarriedWeight*4>250)&&!levitating&&!GodMode and, when swimming+overEncumbered+not climbing+not water-walking, forces upDownVector=down (replacing the Jump/Crouch arms via if/else-if). motor.js:520-531 (_step) computes my purely from input.up/input.down with no encumbrance term at all, and no host or system file (grepped src/ for CarriedWeight/encumb) feeds carried weight into the swim path. An over-encumbered swimmer in the port floats/surfaces freely; DFU forces them down and blocks the float keys.",
+        "confidence": "high"
+      },
+      {
+        "id": "F028",
+        "verdict": "confirmed",
+        "reason": "PlayerHeightChanger.DecideHeightAction:137-145 forces DoStanding and returns when levitating+crouching, and the crouch-press arm is gated by `else if (!riding && !onWater && !levitating)` at :171, so Crouch does nothing while levitating in DFU. motor.js's _heightAction (352-368) has exactly three arms (crouch-press, swim-force, swim-unforce) with no `levitating` term anywhere in the file (grep confirms `this.levitating` is only read in _step's movement branch, never in _heightAction), so the crouch toggle fires unconditionally while levitating and a crouched levitator is never forced to stand.",
+        "confidence": "high"
+      },
+      {
+        "id": "F029",
+        "verdict": "confirmed",
+        "reason": "PlayerHeightChanger.DecideHeightAction:184-191 has an `else if (climbing) { ... if (crouching) heightAction = DoStanding; ... }` arm that forces a crouched climber to stand. motor.js's _heightAction (352-368) has no climbing check at all (grep for `this.crouching =` shows only the crouch-press/swim/collider-fit sites), and _climbStep (motor.js ~480-501) never reads or clears `this.crouching`. A crouched climber in the port stays crouched through and after the climb.",
+        "confidence": "high"
+      },
+      {
+        "id": "F030",
+        "verdict": "confirmed",
+        "reason": "LevitateMotor.Update:71-91 moves via camera pitch, reading Jump/FloatUp and Crouch/FloatDown for vertical. motor.js's levitate branch needs up/down plus pitch. exterior.js:1482-1489 and world.js:3135-3142 call player.update(dt,{...,crouch}, cam.yaw): no up/down keys, no pitch (defaults 0). shared.js:379-384 applyMotorEffectFlags, called by both outdoor hosts, sets player.levitating from the active effect each frame regardless of location. With pitch=0 and up/down undefined, vertical velocity is always 0 outdoors.",
+        "confidence": "high"
+      },
+      {
+        "id": "F031",
+        "verdict": "confirmed",
+        "reason": "LevitateMotor.Update:86-89 sets the down arm from HasAction(Crouch)||HasAction(FloatDown). Both hosts that wire up/down (dungeon.js:401, worldModes.js:2661) use only `down: held(keys,'FloatDown')`, never Crouch, while their up arms correctly OR jumpHeld/FloatUp. Outdoor hosts pass no down key at all (F030). Holding Crouch alone never dives/descends in any port host, though DFU's Crouch key does.",
+        "confidence": "high"
+      },
+      {
+        "id": "F032",
+        "verdict": "confirmed",
+        "reason": "AcrobatMotor.ApplyGravity:187 assigns moveDirection.y=-105*Time.deltaTime, then PlayerGroundMotor.cs:86 applies controller.Move(moveDirection*Time.deltaTime), giving real displacement 105*dt^2/step = 105*dt m/s = 2.1 m/s at DFU's Fixed Timestep 0.02 (TimeManager.asset:6). motor.js reproduces the same double-dt shape (velY=-SLOWFALL_SPEED*dt at ~670, then dy=velY*dt) but FIXED_DT=1/60 (motor.js:73) yields 105/60=1.75 m/s. The pin motorStairs.test.js:295 asserts exactly -SLOWFALL_SPEED/60, restating the port's own rate rather than refuting the gap.",
+        "confidence": "medium"
+      },
+      {
+        "id": "F033",
+        "verdict": "confirmed",
+        "reason": "DFU DaggerfallMissile.DoCollision (DaggerfallMissile.cs:365-369) plays UseSpellBillboardAnims(1,true) at 15fps for any non-touch elemental missile hit. JS defines IMPACT_FPS=15 (flatAnimation.js:33) but retireMissile in both hosts (hostMagic.js:363-371 called :404/421/432; dungeonContext.js:1592-1604 called :1618/1630/1706/1721) destroys the billboard immediately on collision, never spawning record-1. test/flatanim.test.js:182-199 only asserts the constant/precedence math, not spawn behavior.",
+        "confidence": "high"
+      },
+      {
+        "id": "F034",
+        "verdict": "confirmed",
+        "reason": "renderer.js:751 sets gl.clearColor(0,0,0,0) in renderCharacterSprite and never restores it; the only other call is the constructor's one-time (0.53,0.7,0.92,1.0) at :618, and beginFrame's gl.clear (:1099ish) never sets clearColor. Context is {antialias:false} only (:445) so alpha defaults true, and index.html:8 sets body #000. After the first character-sprite frame, every later clear paints transparent. Genuine unrestored GL state leak.",
+        "confidence": "high"
+      },
+      {
+        "id": "F035",
+        "verdict": "confirmed",
+        "reason": "cityGuards.js's fall arm (:356-363) calls damageGuard, whose death branch (:274) unconditionally sets crimeCommitted=MURDER. DFU EnemyMotor.ApplyFallDamage (:1384-1401) calls DecreaseHealth directly, bypassing DamageHealthFromSource/HandleAttackFromSource entirely; the Knight_CityWatch Murder assignment (DaggerfallEntityBehaviour.cs:262-268) sits inside the sourceEntityBehaviour==Player gate (:203) fall damage never enters. Pin test/audit24_wave36.test.js:142 asserts 'so death and crime fire' citing only the crime-free path - restates the bug.",
+        "confidence": "high"
+      },
+      {
+        "id": "F036",
+        "verdict": "confirmed",
+        "reason": "cityGuards.js:196-238 (witness arm) runs only with immediate=false; both hosts pass true only (world.js:1030, exterior.js:625), sole false-caller is test/cityguards.test.js:81. In DFU, SpawnCityGuards(false) (PlayerEntity.cs:621) is reached ONLY from the periodic rolls at :500-510 (LegalRep<-10 5%/min, banished-flag 10%/min); every other DFU crime site calls true directly. Grep of src/ finds no port implementation of that periodic roll; arrestFlow.js:159-160 flags it pending. So the port's only match for DFU's false-callers is absent, leaving the witness code dead.",
+        "confidence": "medium"
+      },
+      {
+        "id": "F037",
+        "verdict": "confirmed",
+        "reason": "world.js exteriorFoes' onPlayerHurt (:919-923) calls only hurtPlayer+sound+surfacePlayer, no playPlayerVoice; cityGuards' onPlayerHurt (:903-905) and the arrow arm (:3454-3461) both call it. hurtPlayer (characters/playerEntity.js:96) is a pure health/shield door, confirmed no voice side effect. DFU EnemyAttack.SendDamageToPlayer (:404) does SendMessage('RemoveHealth') to PlayerObject unconditionally for any attacker, reaching PlayerFootsteps.RemoveHealth (:347-364)'s 40% pain-cry roll. exteriorFoes is the live shipped encounter pool, so its melee hits silently skip the cry DFU always rolls.",
+        "confidence": "high"
+      },
+      {
+        "id": "F038",
+        "verdict": "confirmed",
+        "reason": "arrestFlow.js verdict() free arm (:142-149) calls only clearArrest(), never release(); release() (:238-241), which floors health at 1, is explicitly excluded from the acquittal arm by its own comment (:235-237). DFU DaggerfallCourtWindow.cs's not-guilty branch (:412-427) calls FillVitalSigns() at :424 right after a stale contradicting comment, setting currentHealth=MaxHealth (DaggerfallEntity.cs:442-447). Surrender forces health to 1 first (PlayerEntity.cs:2321, ported arrestFlow.js:69/77), so an acquitted surrendering player is left at 1 HP instead of fully healed.",
+        "confidence": "high"
+      },
+      {
+        "id": "F039",
+        "verdict": "confirmed",
+        "reason": "paintOverlay.js:9 mountPaintOverlay has zero importers project-wide. worldModes.js:2233 forwards `paint` into buildInteriorContext's opts, but interiorContext.js never reads opts.paint (only peopleVisible :198, setupStaticNpc :225, voxelfolk :239). Confirmed dead code.",
+        "confidence": "high"
+      },
+      {
+        "id": "F040",
+        "verdict": "confirmed",
+        "reason": "DFU EnemyMotor.cs:1403-1406 calls ShowBloodSplash(0,pos) in ApplyFallDamage. cityGuards.js:356-364 fall arm plays FallDamage sound + damages but never calls hitEffects (module does use hitEffects at :485,542 elsewhere). Sibling exteriorFoes.js:275 calls hitEffects?.showBloodSplash(0,...) in its equivalent fall arm - confirmed asymmetry.",
+        "confidence": "high"
+      },
+      {
+        "id": "F041",
+        "verdict": "confirmed",
+        "reason": "DFU ApplyFallDamage (EnemyMotor.cs:1384-1419) only calls DecreaseHealth; hostility flips only in HandleAttackFromSource under `sourceEntityBehaviour==PlayerEntityBehaviour` (DEB.cs:203). Port's exteriorFoes.js damageFoe (:181-182) unconditionally sets isHostile=true on every call incl. the fall arm (:264-277, no player source). tryLanguagePacification sets isHostile=false (hostCombat.js:373) - so fall damage re-hostiles a pacified foe, confirmed divergence.",
+        "confidence": "high"
+      },
+      {
+        "id": "F042",
+        "verdict": "confirmed",
+        "reason": "TalkManager.cs:664-667/691-724 indexes questionTypeReactionMods{5,0,0,0,5,0,0,0} by GetClassicQuestionIndex(qt). townTalk.js:435 `void questionType;` + :440 hardcodes questionIndex:0, always applying +5. Port has the mapper (talkTopics.js:115-135) used correctly elsewhere (answerPipeline.js:411) but not wired here, despite world.js:2585/answerPipeline.js:259 passing real questionType into this exact seam. No test pin covers computeTier.",
+        "confidence": "high"
+      },
+      {
+        "id": "F043",
+        "verdict": "confirmed",
+        "reason": "TalkManager.cs:669-673 seeds DFRandom by lastTargetMobileNPC/lastTargetStaticNPC hashcode (per-partner). reactionTier012 uses npcSeed to seed the roll (talkTopics.js:314-315, load-bearing). townTalk.js:439 seeds via `_talkNpc?._talkSeed??0`, but _talkNpc is set only on the mobile path (:301); worldModes.js:1021/1370 pass static NPCs' real nameSeed into openTalkWindow, which never threads it into computeTier - static NPCs share seed 0 or a stale mobile seed.",
+        "confidence": "high"
+      },
+      {
+        "id": "F044",
+        "verdict": "confirmed",
+        "reason": "PlayerEntity.cs:397-399 uses ImprovedAthleticism (bool, DaggerfallEntity.cs:95, set by ImprovesTalents.cs:83) to pick 0.8 vs 0.9. shared.js:844-846 fatigueLossMultiplierFor only returns 0.9/1.0, ignoring it. enchantments.js:437 sets mods.improvedAthleticism=true and :646 defaults it false, but project-wide grep shows it is never read anywhere in src/ - computed and discarded. No test pin exists.",
+        "confidence": "medium"
+      },
+      {
+        "id": "F045",
+        "verdict": "confirmed",
+        "confidence": "high",
+        "reason": "shared.js:136-149 night-branch buildPanorama has no try/catch on its two fetchBytes calls, unlike the day branch (:150-163) which catches and degrades. use() (:171-195) sets pending=key (:178) then `buildPanorama(...).then(apply)` (:194) with no .catch; pending is only cleared inside apply() (:191/:181), which never runs on rejection. Grep confirms no other writer resets pending. No test covers createSkyController. DFU's LoadVanillaNightSky (DaggerfallSky.cs:565-604) is a sync local file read, no async failure path - matches claim DFU has no equivalent wedge."
+      },
+      {
+        "id": "F046",
+        "verdict": "confirmed",
+        "confidence": "high",
+        "reason": "townTalk.js:282 calls `randomVariant(FOUND_NOTHING_VALUABLE_TEXT_ID,...)`, a SubrecordSeparator-variant picker (:171-174). C# Pickpocket() (PlayerActivate.cs:1641-1645) calls GetRandomText(8999); TextProvider.cs:250-268 shows GetRandomText flattens ALL Text tokens across the whole record and picks one - a different pool than the variant picker. The port's own randomTextById (textRsc.js:127-141) is documented as matching GetRandomText and is wired elsewhere (world.js:2303/2531) but not at this site."
+      },
+      {
+        "id": "F047",
+        "verdict": "confirmed",
+        "confidence": "high",
+        "reason": "townTalk.js:168 and :554 compute oath via randomVariant (variant-stream picker). C# TalkManagerMCP.cs:133-141 Oath() calls GetRandomText(201+oathId), the flat per-token pool (TextProvider.cs:250-268) that the port's own randomTextById/randomText accessor is built to match (textRsc.js:135, wired at world.js:2303/2531) but these two local sites bypass. Confirmed exterior.js:470-486 passes no talkEngine to createTownTalk, and expandRecord/answerText (townTalk.js:525-526,552) run unconditionally, so this is live in ?exterior for any %oth text."
+      },
+      {
+        "id": "F048",
+        "verdict": "confirmed",
+        "confidence": "high",
+        "reason": "townTalk.js tryActivate (:268-269) gates steal-mode distance BEFORE calling activate(), printing 'too far away' regardless of pickpocketAttempted; that check only happens later inside activate() (:278), unreachable once tryActivate returns. C# ActivateMobileNPC Steal case (PlayerActivate.cs:783-795) nests the distance check INSIDE `if (!mobileNpc.PickpocketByPlayerAttempted)`, so an already-attempted NPC gets no message at any distance. The port's pre-gate fires the message for an already-pickpocketed NPC too."
+      },
+      {
+        "id": "F049",
+        "verdict": "confirmed",
+        "confidence": "high",
+        "reason": "dungeonContext.js:26 imports the real 3-arg hurtPlayer as hurtEntity, but :1030-1032 locally redefines hurtPlayer(dmg) (1 arg), shadowing it file-wide. The drowned arm (:2045) calls hurtPlayer(playerEntity, playerEntity.health, {bypassShield:true}) against this 1-arg wrapper, so dmg=playerEntity (object). playerEntity.js:97's guard `if (!(dmg>0)) return false` sees NaN comparison -> false -> returns doing nothing. test/breath.test.js only pins systems/breath.js, not this host call. Confirmed: dungeon drowning to 0 breath deals zero damage."
+      },
+      {
+        "id": "F050",
+        "verdict": "confirmed",
+        "confidence": "high",
+        "reason": "dungeonContext.js:691-696 assigns spells/casters in a ONE-TIME loop over `foes` run once during setup, after the load loop (:623); buildFoeAt itself (:479-622, read in full) never calls assignEnemySpells or mints EnemyCaster. spawnQuestFoe (:630-636) and _spawnEncounter (:913-928) push new records via buildFoeAt AFTER that one-time loop, so late-spawned foes never get spells; frame loop's cast check (:2312, f.caster&&...) is always false for them. DFU's SetEnemyCareer (EnemyEntity.cs:248-386,453-461) runs the spell/magicka assignment on every entity construction, i.e. every spawn."
+      },
+      {
+        "id": "F051",
+        "verdict": "confirmed",
+        "confidence": "high",
+        "reason": "dungeon.js:33 imports `held` as a function; at :427 the fly-cam branch is gated `} else if (!held) {` where `held` is that function reference (always truthy), so `!held` is always false and the fly-cam body (:428-432) never runs. Sibling host exterior.js:1545 uses a bare `} else {` for the identical block, confirming intended shape. Port-internal dead code."
+      },
+      {
+        "id": "F052",
+        "verdict": "confirmed",
+        "confidence": "high",
+        "reason": "dungeonContext.js:1665-1670 (fromPlayer arrow) on dmg>0 plays only pain voice + damageFoe, no hit sound/blood. Melee arm (:1538,:1544) plays both. C# WeaponManager.cs:491/562-573 WeaponDamage's damage>0 arm plays PlayHitSound+ShowBloodSplash BEFORE knockback/voice; DaggerfallMissile.cs:678-688 routes a player arrow through the same call with arrowHit=true. Port's arrow arm skips both, matching the claim."
+      },
+      {
+        "id": "F053",
+        "verdict": "confirmed",
+        "confidence": "high",
+        "reason": "dungeonContext.js:1699-1703 gates hit sound/flash/cry on dmg>0 with no else; melee arm (:1934-1937) has the mirrored else. C# EnemyAttack.cs:297-298 `else sounds.PlayMissSound(weapon)` inside ApplyDamageToPlayer (called by BowDamage :141). Arrow arm lacks this else -> failed-roll enemy arrow is silent in the port. Correctly nit."
+      },
+      {
+        "id": "F054",
+        "verdict": "confirmed",
+        "confidence": "medium",
+        "reason": "destroy() (:3048-3070) frees billboardBatches/foe/corpse/missiles/piles but never calls into `magic` (hostMagic.js engine, created :1117). hostMagic.js's own missiles/batches arrays (:78,80) are freed only per-retire (:363-368); its return API (:455+) exposes no destroy. worldModes.js reuses the same GL context across dungeon exit (:2557,:3944), so an in-flight player spell missile at exit leaks its batch. No test pins this path; audit24_lifetimes.test.js covers only the sibling missiles-list prune-on-retire shape."
+      },
+      {
+        "id": "F055",
+        "verdict": "confirmed",
+        "confidence": "high",
+        "reason": "world.js:1907-1934 hudCtx defines toggleRest twice (:1922 toggleRest(), :1932 toggleExteriorRest()) - later key wins in JS object literals - identically in exterior.js:1016/1027. Live path opens RestWindow(exteriorRestDeps) (:960-984, no tickQuests/commitCrime/endLines/onClose) instead of the dead outdoorRestDeps bag (:1377-1422) that has them. restlodging.test.js:576/589 and restwhere.test.js:170/173 are source-text assert.match regexes that both find their literal string present regardless of which line actually wins at runtime, so both suites pass despite pinning contradictory wirings."
+      },
+      {
+        "id": "F056",
+        "verdict": "confirmed",
+        "confidence": "high",
+        "reason": "Follows from F055: exteriorRestDeps (world.js:960-984) has no tickQuests key. restSession.js:404 `this.deps.tickQuests?.()` inside the sub-tick loop (:386-404) silently no-ops when missing. C# DaggerfallRestWindow.cs:348-379 TickRest calls QuestMachine.Instance.Tick() (:379) every sub-tick unconditionally. Only the dead outdoorRestDeps bag (:1384) carries tickQuests, and it's unreachable per F055, so outdoor rest via the live path never ticks quests."
+      },
+      {
+        "id": "F057",
+        "verdict": "confirmed",
+        "confidence": "high",
+        "reason": "hudCtx.toggleRest is a duplicate object key (world.js:1922 then 1932; exterior.js:1016 then 1027) - the second assignment wins, so the LIVE keybinding is toggleExteriorRest -> exteriorRestDeps.enemiesNearby (world.js:975-976, exterior.js:936) = cityGuards.activeCount()>0 with no sight/distance test (cityGuards.js:113). The correct resting-variant (world.js:1391/exterior.js:647) sits on the shadowed dead toggleRest path. DFU's AreEnemiesNearby(true) (GameManager.cs:684-718) requires TargetInSight or WouldBeSpawnedInClassic; distance alone never admits an undetected guard."
+      },
+      {
+        "id": "F058",
+        "verdict": "confirmed",
+        "confidence": "high",
+        "reason": "Live exteriorRestDeps (world.js:963) supplies `textLines`, but createRestDeps only reads `rest.endLines` via its spread (shared.js:1177), so rest.endLines is undefined and plainLines(undefined)=null (shared.js:667-669). restWindow.js:311-313: `if (result.died || !this.endLines) { this._close(); ...return; }` silently closes with no box, every arm. DFU's EndRest (DaggerfallRestWindow.cs:448-502) shows a MessageBox on every arm. Confirmed by direct read of both sides."
+      },
+      {
+        "id": "F059",
+        "verdict": "confirmed",
+        "confidence": "high",
+        "reason": "world.js:623 and exterior.js:401 pass `enemiesNearby: (cityGuards?.activeCount?.() ?? 0) > 0` into exhaustionOutcome - only guards, exteriorFoes never consulted. DFU's CollapseFromExhaustion (PlayerEntity.cs:2397,2426,2440-2441) uses AreEnemiesNearby() (no resting narrowing), scanning ALL active enemy behaviours incl. encounter foes, then SetHealth(0). exteriorFoes exists in the same file (used correctly at 975-976) but is skipped here."
+      },
+      {
+        "id": "F060",
+        "verdict": "confirmed",
+        "confidence": "medium",
+        "reason": "exterior.js:955-959 hardcodes canRest({inTownOutside:true,...}) unconditionally, but the page loads arbitrary locations via ?region/?loc (exterior.js:110-111) whose type may not be one of PlayerGPS.IsPlayerInTown's 7 town types (PlayerGPS.cs:504-527). For a non-town type DFU's CanRest (DaggerfallRestWindow.cs:549-598) falls to `return true`, no crime. The host's own correct test _isPlayerInTownStrict (exterior.js:631-635) is unused by exteriorRestVerdict; restwhere.test.js:179-182 only pins the hardcoded literal, restating the bug."
+      },
+      {
+        "id": "F061",
+        "verdict": "confirmed",
+        "confidence": "high",
+        "reason": "world.js:837-849 syncTopics derives `key` from which built MAP-PIXEL tile contains cam.pos and clears crime on any pixel-key change (court.js:391-395). DFU clears CrimeCommitted only in PlayerGPS_OnExitLocationRect (PlayerEntity.cs:2449-2452), fired by the widened world-rect test extended 4096 units (PlayerGPS.cs:668-695) - which the port's own AUDIT-24 note at world.js:679-688 says a map pixel can be up to 7x wider than, already fixed for _musicInLocationRect's other consumers but not this crime clear."
+      },
+      {
+        "id": "F062",
+        "verdict": "confirmed",
+        "confidence": "high",
+        "reason": "world.js:995-998 passes `inLocationRect: locationIndex.has(key)` (key=map-pixel) i.e. 'pixel has a location record', not the widened-rect test. DFU's IntermittentEnemySpawn branches on PlayerGPS.IsPlayerInLocationRect (PlayerEntity.cs:566-594), the same widened-rect flag world.js's own AUDIT-24 note (679-688) says a pixel can be up to 7x wider than. The correct rect answer _musicInLocationRect() (world.js:689-694) exists in the same file but is unused here; encounters.js:104-119 mirrors the C# branch structure exactly, confirming the flag alone is the defect."
+      },
+      {
+        "id": "F063",
+        "verdict": "confirmed",
+        "confidence": "high",
+        "reason": "packItems (worldModes.js:698) returns a NEW filtered array each call; nativeTrade.js _move (:150-154,195) splices that throwaway copy, never touching playerEntity.items. commitTrade's Sell/SellMagic arm (worldModes.js:744-754) only pays and pushes to shelf.items - no splice from playerEntity.items anywhere. DFU: DaggerfallTradeWindow.cs:389/743 `localItems = PlayerEntity.Items` is the LIVE array, and TransferItem(item, localItems, remoteItems) (:795/817/824) removes it at the click. Port's own doSell (:803-816) correctly splices, confirming native-trade Sell is the outlier."
+      },
+      {
+        "id": "F064",
+        "verdict": "confirmed",
+        "confidence": "high",
+        "reason": "forceExitToExterior (worldModes.js:3937-3948) destroys interiorCtx with no cacheInteriorScene() call, unlike tryExit (:2434). DFU always caches on exit: PlayerEnterExit.cs:860 CacheScene(interior.name) inside BuildingTransitionExteriorLogic (:818-884). Two of three reachable callers match DFU functions that cache: anchor recall (world.js:1143)=Teleport.cs:148-149; guild service (world.js:1522)=DaggerfallTeleportPopUp.cs:142 TransitionExterior(). Third citation (TeleportPc via RespawnPlayer) has no CacheScene in DFU either, but the other two independently support the claim."
+      },
+      {
+        "id": "F065",
+        "verdict": "confirmed",
+        "confidence": "medium",
+        "reason": "worldModes.js:2654 calls player.update(dt,...) every frame regardless of overlayHeld, only zeroing move/jump inputs - gravity/velocity still integrate. dungeon.js:353-394 gates the whole block behind `walkMode && !overlayHeld`, so player.update never runs there when an overlay is open. DFU: UserInterfaceManager.cs:179-184 AddWindow calls PauseGame(true) for PauseWhileOpen windows; GameManager.cs:600-607 sets Time.timeScale=0, fully freezing the motor - matching the standalone host, not worldModes' zeroed-input-but-still-ticking behavior."
+      },
+      {
+        "id": "F066",
+        "verdict": "confirmed",
+        "confidence": "medium",
+        "reason": "openShelf (worldModes.js:634-647) checks only isShop(b.buildingType), always opens the Buy window. insideOpenShop is computed at the door (worldModes.js:2205-2207, matching PlayerActivate.cs:1120) but fed only to peopleAreVisible (:2209-2219), never stored for openShelf. DFU: PlayerActivate.cs:887-899 ActivateLootContainer's ShopShelves case opens Buy DaggerfallTradeWindow only `if IsPlayerInsideOpenShop`, else calls InventoryWindow.SetShopShelfStealing(). Port has no equivalent branch - a closed shop still sells at full price."
+      },
+      {
+        "id": "F067",
+        "verdict": "confirmed",
+        "confidence": "high",
+        "reason": "commitTrade (worldModes.js:736-787) runs tallySkill(Mercantile,1) unconditionally at :785, incl. the identifySpell arm (:772-779), and clamps magicka via Math.max(0,...) with no sufficiency gate (checked tradeCost/tradeDecision in tradeModes.js:210-302 and nativeTrade.js _modeAction:222-234 - neither reads magicka). DFU: DoModeAction (DaggerfallTradeWindow.cs:956-963) refuses the pass early when cost>magicka&&!GodMode and returns before reaching ShowTradePopup/ConfirmTrade, never hitting TallySkill at :1088."
+      },
+      {
+        "id": "F068",
+        "verdict": "confirmed",
+        "confidence": "high",
+        "reason": "standQuestFlatIn (worldModes.js:457-469) applies one path to every flat: dungeon anchor `y-size.h/2` then an unconditional ground raycast overwriting y. standItem (:508-513) routes through the same call as standNPC (:506-507), no distinction. DFU: GameObjectHelper.cs AddQuestNPC:995-1066 calls AlignBillboardToGround(...,4) at :1040; AddQuestItem:1116-1160 never calls it - only a fixed offset (dim=40 per Internal/DaggerfallLoot.cs:33, at :1136/1139), no ray. Port's items get ray-snapped to a floor below an elevated marker where DFU leaves them in place."
+      },
+      {
+        "id": "F069",
+        "verdict": "confirmed",
+        "reason": "GameObjectHelper.cs:1032-1036 shifts position by +Size.y/2 only if(!inDungeon) BEFORE AlignBillboardToGround(:340) rays from position+0.2 = CENTRE+0.2 (interior) or marker+0.2 (dungeon). worldModes.js:464 sets by=inDungeon?y-h/2:y (correct bottom-anchor translation) but rays from by+0.2 (line 465) = (pre-ray-centre - h/2)+0.2, h/2 lower than DFU in BOTH cases. Landing formula (0.02h lift) matches DFU exactly, only the origin differs. test/questflatanchor.test.js pins the drop-shift fix and landing formula but not this origin subtlety.",
+        "confidence": "medium"
+      },
+      {
+        "id": "F070",
+        "verdict": "confirmed",
+        "reason": "Grep confirms every openTradeWindow() call passes Buy/Sell/Identify/SellMagic only; no caller uses 'Repair', so commitTrade's Repair arm at 755-765 is dead. DaggerfallTradeWindow.cs:1060-1069 Repair->UpdateRepairTimes(true)(:514-568) applies longest-job averaging + never-decrease clamp; the dead arm's bare calculateItemRepairTime/leaveForRepair skips both, unlike the port's own LIVE repair path (1975-1984) which correctly queues via updateRepairTimes. InstantRepairs branch also addItem()s staged items never removed from playerEntity.items. Consequence correctly hedged as unreachable today.",
+        "confidence": "high"
+      },
+      {
+        "id": "F071",
+        "verdict": "confirmed",
+        "reason": "EEM.cs:565-568 gates only the no-magnitude full-effect save on bypassSavingThrows; EntityEffect.cs:804-806 GetMagnitude calls ModifyEffectAmount unconditionally for non-CasterOnly, and FormulaHelper.cs:1575-1583 never checks the flag. effects.js:577 `saveScaled = spell.rangeType!==0 && !ctx.bypassSavingThrows` wrongly folds bypass into effectMagnitude's (line 439) per-application scaling. questFoeHost.js:91 passes bypassSavingThrows:true, so quest casts land unscaled where DFU still scales by target save. No test pins this against EntityEffect.cs:804-806.",
+        "confidence": "medium"
+      },
+      {
+        "id": "F072",
+        "verdict": "confirmed",
+        "reason": "SoulTrap.cs:33-38: SupportDuration/SupportChance only, no SupportMagnitude, TargetFlags_Other, never sets BypassSavingThrows (default false). EEM.cs:561-580 rolls SavingThrow for any non-CasterOnly no-magnitude non-bypass effect, dropping it whole on a full save. effects.js soul-trap arm (1278-1296) checks target.mobileType and rolls duration/stacks only - no savingThrow() call, unlike sibling arms (elemental resistance :1076-1084, absorption family :1037-1043) which gate on saveScaled && savingThrow()===0. ChanceSuccess hardcoded true matches SoulTrap.cs:47-52.",
+        "confidence": "high"
+      },
+      {
+        "id": "F073",
+        "verdict": "confirmed",
+        "reason": "PacifyEffect.cs:59-66 and CharmEffect.cs:31-41 set SupportChance only, no SupportMagnitude, TargetFlags_Other, never set BypassSavingThrows. EEM.cs:561-580's no-magnitude save applies to both after the OnCast chance gate. effects.js pacify/charm arm (1207-1217) does group/class match and dice100 chance roll only, never calling savingThrow - unlike sibling arms in the same loop (elemental resistance :1076-1084, absorption family :1037-1043, buff kind family :1316) which all include the saveScaled && savingThrow()===0 gate. Omission is real, asymmetric with surrounding code.",
+        "confidence": "high"
+      },
+      {
+        "id": "F074",
+        "verdict": "confirmed",
+        "reason": "EEM.cs:495-499 drops an incoming Paralyze on a hard-immune entity via continue before ParentBundle is set, before the caster-gated reflection(:521)/resistance(:525) block at :504-527. effects.js runs reflection (672-679) and resistance (685-691) gates unconditionally whenever caster is set, before per-type dispatch; isEntityImmuneToParalysis is only checked at line 935 inside isParalyze, after those gates in the same loop. A hard-immune target with Reflection up can thus reflect a pure-Paralyze bundle where DFU discards it silently first. No test pins this ordering.",
+        "confidence": "medium"
+      },
+      {
+        "id": "F081",
+        "verdict": "confirmed",
+        "reason": "DFU BuildingTypes (DFLocation.cs:106-133): Library=10, GuildHall=11, Temple=14, Palace=16, matching port's own buildingNames.js:18-24. But encounters.js:36 BUILDING_TABLE maps {10:40,11:41,15:42,17:42,18:43,19:44}, shifting Library->GuildHall's slot, GuildHall->Temple's slot, Tavern(15)->Palace's slot, dropping Temple/Palace entirely and the else->39 default (RandomEncounters.cs:1351-1364). Port's own test at test/encounters.test.js:52-53 calls buildingType:10 'a guildhall' - the mistake is baked into the comment, table, and test alike.",
+        "confidence": "high"
+      },
+      {
+        "id": "F082",
+        "verdict": "confirmed",
+        "reason": "ControlsConfigManager.cs:521 `return SDFFontRendering ? text : text.ToUpper()` for the classic-font arm the port claims (controlsConfig.js:23-24,113-117); LeftArrow maps to 'Left' (:474-478) then uppercases to 'LEFT'. Port's buttonText (controlsConfig.js:132-146) never uppercases and returns 'Left Arrow' for ArrowLeft; no caller applies case elsewhere (grep of controlsWindow.js). test/controlswindow.test.js:173 pins the wrong 'Left Arrow' string, confirming the port's actual (wrong) behavior.",
+        "confidence": "high"
+      },
+      {
+        "id": "F083",
+        "verdict": "confirmed",
+        "reason": "PlayerEntity.cs:405-409 checks climbing (ClimbingFatigueLoss=22, :110) before running/swimming. worldTick.js:392-393 has `if (activity.running) ... else if (activity.swimming)` with no climbing arm. No host feeds a climbing flag: world.js:3122-3124 and dungeonContext.js:2701-2707 build activity objects without `climbing`, even though `player.climb.isClimbing` exists and is read elsewhere (world.js:2102). FATIGUE_LOSS.Climbing (statMods.js:133) has zero consumers.",
+        "confidence": "high"
+      },
+      {
+        "id": "F084",
+        "verdict": "confirmed",
+        "reason": "EntityEffectBroker.cs:818-822 InitMagicRoundTimer resets lastGameMinute to the current clock on load, so DFU fires zero catch-up rounds on load. worldTick.js's resetMagicRoundMarker (:608) has no src/ caller (grep: test-only). claimMagicRounds (:110-123) only re-anchors on a BACKWARD jump (here < marker); worldQuickLoad (world.js:1654) advances the clock forward via setWorldMinutes without resetting the marker, and the next tick reads worldMinutes() (shared.js:735) into claimMagicRounds, yielding up to MAX_CATCHUP_ROUNDS=2880 (worldTick.js:586) spurious rounds on a forward load.",
+        "confidence": "high"
+      },
+      {
+        "id": "F085",
+        "verdict": "confirmed",
+        "reason": "PlayerEntity.cs:381-384 decays the alert 8h after raise unconditionally in Update. decayEnemyAlert has exactly one call site, shared.js:746 inside createPlayerTicker.tick, pinned by test/audit24_wave36.test.js:118-124 asserting one caller across all hosts. Both dungeon hosts (worldModes.js:2764, dungeon.js:475) call dungeonCtx.drawFoes -> tickPlayerMinutes directly (dungeonContext.js:2054-2100), never through createPlayerTicker; grep of dungeonContext.js for decayEnemyAlert returns nothing, and the alert only clears there via a detecting foe's death (dungeonContext.js:1846-1847).",
+        "confidence": "high"
+      },
+      {
+        "id": "F086",
+        "verdict": "confirmed",
+        "reason": "PlayerEntity.cs:498-504: inside the per-minute catch-up loop, `if (regionData[region].LegalRep < -10 && Dice100.SuccessRoll(5)) { crimeCommitted = Criminal_Conspiracy; SpawnCityGuards(false); }`. Port's runEncounterTick (world.js:991-1017) runs only intermittentEnemySpawn with no such arm; grep of src/ finds no 'LegalRep < -10' logic tied to SpawnCityGuards. Unlike the sibling banished arm (SeverePunishmentFlags), which is explicitly `// FLAGGED` at arrestFlow.js:159, this arm carries no pending-flag anywhere.",
+        "confidence": "high"
+      },
+      {
+        "id": "F099",
+        "verdict": "confirmed",
+        "reason": "PlayerGPS.UndiscoverBuilding (Internal/PlayerGPS.cs:986-1016) guards on onlyIfResidence/faction(TG,DB)/matchName; both quest callers pass onlyIfResidence=true + buildingName. Port's undiscoverBuilding (discovery.js:66-68) is an unconditional Map.delete, and world.js:2462 wires the dep as `(buildingKey)=>...` dropping topicTree.js:432's buildingName arg entirely. No guard exists anywhere in src/.",
+        "confidence": "high"
+      },
+      {
+        "id": "F100",
+        "verdict": "confirmed",
+        "reason": "SerializablePlayer.cs:164-165/:332-333 persists DaedraSummonDay/Index. daedraSummoning.js:109-111 mutates them on playerEntity (worldModes.js:1635), but save.js's ENTITY_FIELDS (save.js:30-58) has no daedraSummon* entry and 'daedra' does not appear elsewhere in save.js. A reload undefineds both, triggering daedraSummoning.js:109's re-roll guard.",
+        "confidence": "high"
+      },
+      {
+        "id": "F101",
+        "verdict": "confirmed",
+        "reason": "SerializablePlayer.cs:175-176/:212-214 persist weaponDrawn/yaw/pitch/isCrouching, restored :420-421/:476-477. save.js has zero matches for these; world.js's worldQuickSave envelope (:1620-1638) is only {pixel,nativeX,nativeZ,y,piles}, and worldQuickLoad (:1663-1670) sets cam.pos but never cam.yaw/pitch or weaponRig.sheathed. Correctly scoped nit.",
+        "confidence": "high"
+      },
+      {
+        "id": "F102",
+        "verdict": "confirmed",
+        "reason": "SaveLoadManager.cs:1451-1456 restores notebook only when notebookDataJson is non-empty; else the live notebook stands. save.js's restoreSessionState calls `questBridge?.restore(extras?.quest ?? null)` (save.js:445), guarded only on the whole quest envelope, not a notebook sub-key; inside, questBridge.js:348 does `notebook.restoreSaveData(data.notebook ?? {notebookEntries:[],finishedQuestEntries:[]})`, wiping notes whenever data.notebook is absent even though data itself is present. Matches claim, correctly scoped nit/medium.",
+        "confidence": "high"
+      },
+      {
+        "id": "F103",
+        "verdict": "confirmed",
+        "reason": "DaggerfallCourtWindow.cs:169 clamps the fine with GetGoldAmount() (coins+letters). court.js:284 clamps with `goldAmount(player)`, coins-stack-only (court.js:150-152), leaving the port's own totalGoldAmount (court.js:163, the exact mirror) unused here, while pleaGuilty (court.js:344) pays via deductGold which does spend letters - gate and payment disagree exactly as claimed. No test pins the letters case.",
+        "confidence": "high"
+      },
+      {
+        "id": "F104",
+        "verdict": "confirmed",
+        "reason": "DaggerfallBankManager.cs uses GetGoldAmount() (coins+letters) at RepayLoan:516/PurchaseHouse:415/PurchaseShip:474. banking.js's repayLoan/purchaseHouse/purchaseShip gate on player.gold()/purse.gold(), and worldModes.js's bankPurse() (:1275-1279) wires gold() to coins-only goldAmount(playerEntity), not totalGoldAmount. bankWindow.js:178 confirms repayLoan runs with hooks.player = bankPurse(). deductGold past the gate spends letters, so gate and payment disagree as claimed.",
+        "confidence": "high"
+      },
+      {
+        "id": "F105",
+        "verdict": "confirmed",
+        "reason": "DaggerfallTavernWindow.cs:218,324 gate on GetGoldAmount() (PlayerEntity.cs:1313-1316 = goldPieces+letters), but tavernWindow.js:194,223 gate on court.js goldAmount() (coins-only Currency stack, :151-153), while payment uses deductGold which correctly spends letters. court.js even defines totalGoldAmount (:161-165) mirroring GetGoldAmount but the gates never call it. No test exercises a letter-of-credit gate here.",
+        "confidence": "high"
+      },
+      {
+        "id": "F106",
+        "verdict": "confirmed",
+        "reason": "StartGameBehaviour.cs:433 calls InitializeRegionData() at new-game, minting regionData and writing PricesHigh/Low (PlayerEntity.cs:2189-2218). chargenSession.js never assigns entity.regionConditions; its only writer, restoreRegionConditions, runs solely from save.js:395 on load. worldTick.js:253 passes entity.regionConditions ?? null, and shopStock.js:309 `if (!conditions) continue;` skips the price-flag writes on null - verified directly. A fresh never-loaded character never gets the store or its flags.",
+        "confidence": "high"
+      },
+      {
+        "id": "F107",
+        "verdict": "confirmed",
+        "reason": "PlayerEntity.cs:2213-2217 runs the power walk 12x2 inside InitializeRegionData (new-game, StartGameBehaviour.cs:433). regionPowerUpdate's only two callers are worldTick.js:491,508 (periodic ticks); attachFactionRep (factionRep.js:204-223) only builds the store and drains biography deltas, never calls it. regionConditions.js:92-95's own comment defers this bootstrap to 'the next slice' but regionPower.js's FLAGGED note (13-17) covers only the unported CONDITIONS half. No chargen/bootstrap pin in test/regionpower.test.js.",
+        "confidence": "medium"
+      },
+      {
+        "id": "F108",
+        "verdict": "confirmed",
+        "reason": "BiogFile.cs:276 TryParse(\"-500\")=-500; the '-' branch (:285-289) does GoldPieces -= (-500), i.e. ADDS 500 - DFU's own double-negative bug, clamp never firing. biography.js:111-122 instead does Math.max(0, stackCount - Math.abs(v)) - a genuine subtract-and-floor. test/biography.test.js:85-87 pins exactly this (750->0 on 'GP -5000'), where DFU would have reached 5750. The pin restates the port, not DFU.",
+        "confidence": "high"
+      },
+      {
+        "id": "F109",
+        "verdict": "confirmed",
+        "reason": "EntityEffectManager.cs DoMagicRound (:1708-1734) calls MagicRound()->UpdateDisease()->ProgressDisease() on every live bundle each round independently (DiseaseEffect.cs:79-83). BecomeIncumbent cancels only fire on an existing RacialOverrideEffect (post-turn), so dormant vampirism+lycanthropy can coexist. Port's infectionAccepted (infection.js:169-175) likewise allows both (pinned test/infection.test.js:119-121), but liveInfection (:195-196) is a .find() and runInfections (:298-314, sole caller worldTick.js:151) steps only the first live entry - only the earlier infection progresses.",
+        "confidence": "high"
+      },
+      {
+        "id": "F110",
+        "verdict": "confirmed",
+        "reason": "Guild.cs:124 reads GetPermanentSkillValue (DaggerfallSkills.cs:163-176, no mods), distinct from GetLiveSkillValue (:135-143, adds mods). Port's numHighLowSkills (guilds.js:199-207) calls skillValue (skills.js:60-71), which adds entity._enchantMods.skillMods[skillId] - populated by computeEnchantmentMods (enchantments.js:641-655) from worn EnhancesSkill items, DFU's live channel. guilds.js's own header (22-24) claims permanent reads, contradicting the code. No test pins _enchantMods against numHighLowSkills.",
+        "confidence": "high"
+      },
+      {
+        "id": "F111",
+        "verdict": "confirmed",
+        "reason": "DFU training (DaggerfallGuildServiceTraining.cs:101) gates on GetPermanentSkillValue, distinct from GetLiveSkillValue=permanent+mod (DaggerfallSkills.cs:135-138). Port's tooSkilledToTrain (guildServiceActions.js:104-108) calls skillValue() (skills.js:60-71) which always folds entity._enchantMods.skillMods -- the live value. Wired via ui/guildServiceWindows.js:216. No test covers the enchant-mod case.",
+        "confidence": "high"
+      },
+      {
+        "id": "F112",
+        "verdict": "confirmed",
+        "reason": "FactionFile.cs:542 WitchesCoven=8, :593 Witches=22; port's own formats/factionFile.js:18,34 agrees. daedraSummoning.js:70-71 independently redefines WITCHES_COVEN_TYPE=6, WITCHES_GUILD_GROUP=8 (both wrong). worldModes.js:1631/1650 pass the raw record's real type/ggroup (8/22), so a real coven never matches. Service is live-wired (worldModes.js:1620-1669), not dead. Tests use only the symbolic (wrong) constants, so they don't catch it.",
+        "confidence": "high"
+      },
+      {
+        "id": "F113",
+        "verdict": "confirmed",
+        "reason": "FormulaHelper.CalculateCost (FormulaHelper.cs:1884-1899) unconditionally applies ApplyRegionalPriceAdjustment (line 1895, reads live region 2026-2044) regardless of arg count. DaggerfallGuildServiceCureDisease.cs:85 calls it 2-arg but region still applies live. Port's cureDiseaseOffer (guildServiceActions.js:210-215) calls shopStock.js calculateCost(base, quality) leaving its priceAdjustment param at default neutral 1000 (shopStock.js:325-332); guildServiceWindows.js:253-257 never threads a real region value in. Port models real regional pricing elsewhere (tradeModes.js:193-242).",
+        "confidence": "high"
+      },
+      {
+        "id": "F114",
+        "verdict": "confirmed",
+        "reason": "KnightlyOrder.cs:144-145 returns OwnsHouse?5241:5240, OwnsHouse is per-region (DaggerfallBankManager.cs:136). Port's guildVariants.js:200 hardcodes promotionByRank[9]=5240 behind a stale 'banking does not exist' comment -- but banking.js:167 ownsHouse() now exists and is consumed in the same host file (worldModes.js:1691-1694). guilds.js:280-298 promotionTextId has no ownsHouse seam, and worldModes.js:1398's onPushEffects call never threads it in, so rank-9 promotion always shows 5240.",
+        "confidence": "high"
+      },
+      {
+        "id": "F115",
+        "verdict": "confirmed",
+        "reason": "GuildManager.cs:237-246 routes a non-matching-order visitor to guildNotMember, base CanAccessService false for ReceiveHouse (Guild.cs:265-286), triggering 'serviceMembersOnly' (popup :314-326). Port's createGuildForGroup (guildVariants.js:262-278) builds the real order from the building alone, ignoring membership; knightlyCanAccessService (guildServices.js:264-271) returns true for ReceiveHouse unconditionally. worldModes.js:1430 serviceAccess() wrongly allows a non-member; knightlyGifts.js:116-120 refuses with 460 instead. Untested path.",
+        "confidence": "high"
+      },
+      {
+        "id": "F116",
+        "verdict": "confirmed",
+        "reason": "KnightlyOrder.cs:230 shows GetLocalizedText('serviceReceiveHouseAlready') = 'You have already received your house.' (Internal_Strings.csv:135). Port's ALREADY_GIVEN_HOUSE (knightlyGifts.js:93) reads 'You have already been given a house.', shown via worldModes.js:1699-1702. Verified text-only divergence, correctly scored nit.",
+        "confidence": "high"
+      },
+      {
+        "id": "F117",
+        "verdict": "confirmed",
+        "reason": "Temple.cs:450-458 (Stendarr, !submerged, Random(0,50)<rank) feeds PlayerEntity.SetHealth:1205-1213 (AvoidDeath->10% MaxHealth) via GuildManager.AvoidDeath:396-402. Port's one damage door, characters/playerEntity.js hurtPlayer:96-131, clamps to 0 and fires death presenter on any 0-transition with no guild check anywhere; grep for AvoidDeath in src/test is empty. guildServices.js has every sibling Temple benefit but no avoidDeath.",
+        "confidence": "high"
+      },
+      {
+        "id": "F118",
+        "verdict": "confirmed",
+        "reason": "ItemDeteriorates.cs:112-117 enum AllTheTime=0/InSunlight=1/InHolyPlaces=2; only InSunlight/InHolyPlaces gate the return (:83-85), param 0 always degrades. Port enchantments.js:462-469 gates param===0 on inSunlight and param===1 on inHolyPlace, so param 2 falls through both and always degrades - shifted exactly as claimed. Catalogue (enchantmentCatalogue.js:80, SoulBound forcings :259/272/276/286) uses correct DFU order, disagreeing with the runtime handler. No test pin exists.",
+        "confidence": "high"
+      },
+      {
+        "id": "F119",
+        "verdict": "confirmed",
+        "reason": "HealthLeech.cs:132-136 enum WheneverUsed=0/Daily=1/Weekly=2; bill fires at type==WheneverUsed (:84-89), idle drain keys 1/2 (:106-113). Port enchantments.js:496-513 bills used/strikes at param===2 and treats magicRound param 0 as daily/1 as weekly - reversed as claimed. Catalogue (:77, DaedraSeducer param2 :253) uses correct order. test/enchantments.test.js:62,103 pin the port's wrong mapping while citing HealthLeech.cs - a pin restating the port.",
+        "confidence": "high"
+      },
+      {
+        "id": "F120",
+        "verdict": "confirmed",
+        "reason": "DaggerfallUnityItem.cs SetEnchantments:1298-1299 dispatches EnchantmentPayloadCallback(Enchanted,...) per flagged enchantment and :1330 force-unequips first. Port's applyEnchantments (enchanting.js:200-206) only copies the list; sole caller ui/itemMakerWindow.js:285 has no dispatch, no unequip. Grep of src/ for PAYLOAD.Enchanted shows only registry definitions (enchantments.js:424,425,457,497) and the internal flag-check (:607) - no caller ever passes PAYLOAD.Enchanted, so those arms are dead.",
+        "confidence": "high"
+      },
+      {
+        "id": "F121",
+        "verdict": "confirmed",
+        "reason": "DaggerfallPotionMakerWindow.cs AddRecipeToCauldron:296-304: any unmatched ingredient shows 'reqIngredients' and moves nothing; full match only -> ClearCauldron() then add. Port gatherRecipe (potions.js:224-236) returns found/missing subsets and its comment misstates the C# behavior. Caller ui/potionMakerWindow.js _fillFrom:183-192 adds only `found` onto existing cauldron, no clear/no message. test/potions.test.js:178-188 pins this exact wrong behavior citing the true C# lines.",
+        "confidence": "high"
+      },
+      {
+        "id": "F122",
+        "verdict": "confirmed",
+        "reason": "WeakensArmor.cs:24,58-63 calls SetDecreasedArmorValueModifier(5). DaggerfallEntity.cs:410-416 only assigns `if (amount < DecreasedArmorValueModifier)`, reset to 0 each pass by ClearConstantEffects:842, so 5<0 never true - DFU's WeakensArmor is inert (confirmed by contrast with BadReactionsFrom.cs:26,86 passing -5 which does apply). Port enchantments.js:429 (`mods.armorMod += WEAKENS_ARMOR_VALUE`=5, :91) applies unconditionally, folded into to-hit at combat/formulas.js:290-292 - real divergence.",
+        "confidence": "high"
+      },
+      {
+        "id": "F123",
+        "verdict": "confirmed",
+        "reason": "DaggerfallEntity.cs:400-416: SetIncreasedArmorValueModifier/SetDecreasedArmorValueModifier are independent min-set (non-stacking) channels; StrengthensArmor.cs:63 and BadReactionsFrom.cs:86/WeakensArmor.cs:63 each pass -5, so N items of the same effect still cap that channel at -5. Port enchantments.js:428-429,527 does `mods.armorMod += -5` per item into one shared field (consumed at combat/formulas.js:292), so 2 StrengthensArmor items give -10. Port correctly uses Math.max non-stacking for IncreasedWeightAllowance elsewhere (:392), confirming this is a real inconsistency.",
+        "confidence": "high"
+      },
+      {
+        "id": "F124",
+        "verdict": "confirmed",
+        "reason": "DaggerfallUnityItem.cs SetEnchantments (1271-1327): loop adds each enchantment to the list BEFORE `if (++count > maxEnchantments) break;`, so the 11th element is added before the break -> 11 kept. Port enchanting.js:204 `enchantments.slice(0, MAX_ENCHANTMENTS)` (10, :48) truncates to 10. Genuine off-by-one.",
+        "confidence": "high"
+      },
+      {
+        "id": "F125",
+        "verdict": "confirmed",
+        "reason": "DaggerfallInventoryWindow.cs:1712: `item.ItemGroup == ItemGroups.Books && !item.IsArtifact`. Port's isBook (useItem.js:80) is `it?.group==='Books'` only, used unguarded at useItem.js:198. loot.js createArtifact (267-295) gives Oghma Infinium `.group='Books'`, `.artifact=true`, with no isArtifact concept in src/systems, so the book arm fires for it (DaggerfallUnityItem.cs:1746 comment confirms Oghma's base template is Books).",
+        "confidence": "high"
+      },
+      {
+        "id": "F126",
+        "verdict": "confirmed",
+        "reason": "EntityEffectManager.cs DoMagicRound: activeMagicItemsInRound (feeds DoItemEnchantmentPayloads(MagicRound) :1767 -> CastWhenHeld.cs:117-121) populated only `if (IsPlayerEntity)` (:1744-1748); RegensHealth/ItemDeteriorates/HealthLeech instead override plain MagicRound() ticked unconditionally (:1728-1734). Port enchantmentMagicRound (enchantments.js:672-680) calls doItemEnchantmentPayloads(PAYLOAD.MagicRound) for every entity, no isPlayer gate; comment :598-605 admits the merge. Test enchantments.test.js:92-96 pins CastWhenHeld degrading on a non-player wearer(), confirming.",
+        "confidence": "high"
+      },
+      {
+        "id": "F127",
+        "verdict": "confirmed",
+        "reason": "DaggerfallUnityItem.cs SetArtifact:617 `flags = artifactMask | identifiedMask` - artifacts born identified; DaggerfallTradeWindow.cs:823-826 Identify only transfers `if (!item.IsIdentified)`. Port's createArtifact (loot.js:266-296) never sets isIdentified; grep confirms only shopStock.js:484 and worldModes.js:774/782 do. tradeModes.js:130 itemIsIdentified requires isIdentified===true for enchanted items, so artifacts read unidentified; tradeModes.js:236-251/362-365 stage/charge them, itemInfo.js:186-189 drops their name.",
+        "confidence": "high"
+      },
+      {
+        "id": "F128",
+        "verdict": "confirmed",
+        "reason": "DaggerfallInventoryWindow.cs SetEquipDelayTime (1154-1200): OnPush snapshots last*HandItem, OnPop bills only the NET diff vs current item once per hand for the whole visit; mid-session swaps invisible. Port's billEquipDelay (equip.js:52-58) fires unconditionally inside every unequipSlot(:67)/equipItem(:190) call, so dagger->katana from empty hands bills dagger-in+dagger-out+katana-in, and re-equip bills twice where DFU bills zero. Test ch3.test.js:67-90 pins the accumulating totals with no citation of the net-session law.",
+        "confidence": "high"
+      },
+      {
+        "id": "F129",
+        "verdict": "confirmed",
+        "reason": "DFU's Alchemist arm calls RandomlyAddPotionRecipe(25,items) (DaggerfallLoot.cs:163-166). Port stub: shopStock.js:150-152 is a bare comment, no call. randomlyAddPotionRecipe IS ported and live elsewhere (loot.js:383-389, called from loot.js:404,423), proving this is an unwired seam not a missing helper. Alchemist shelves never stock the recipe.",
+        "confidence": "high"
+      },
+      {
+        "id": "F130",
+        "verdict": "confirmed",
+        "reason": "DaggerfallLoot.cs:240-243 mints CreateRandomMagicItem for MagicItems; itemGroupsPawnShop (DaggerfallLootDataTables.cs:59) drives pawn shops there. shopStock.js:166 hard-skips `if (group==='MagicItems') continue`. createRegularMagicItem/getMagicItemTemplates are ported and already wired to the guild shelf (shopStock.js:108,483), confirming the shelf-loop arm is deliberately skipped. Pawn shops never stock a random magic item.",
+        "confidence": "high"
+      },
+      {
+        "id": "F131",
+        "verdict": "refuted",
+        "reason": "repairService.js:110-138 updateRepairTimes(commit:true) rewrites repairData.repairTime for EVERY queued job (stretch+clamp) each call, mirroring DFU's commit pass. worldModes.js:1975-1981 runs this commit immediately per item left for repair over the full live queue, so an in-repair item's committed time is already re-stretched correctly before showRepairJobs (worldModes.js:1991-1999) displays it. The port has no staging/basket window where a stale pre-stretch value could be shown, so the claimed divergence does not occur.",
+        "confidence": "medium"
+      },
+      {
+        "id": "F132",
+        "verdict": "confirmed",
+        "reason": "offerFlow.js:132 offerNamedQuest sets this._guild=null, then on a real quest (vendor/dfu-quests/Quests/X0C00Y00.txt exists; questLists.js:111-112 returns it) calls _offerQuest() (line 139), which at line 199 does `if (this._guild.isMember())` with no null guard - TypeError. Live path: worldModes.js:1675 offerDaedricQuest, after gold deducted (:1660) and Summoned flag set (:1672), no surrounding try/catch. No test exercises the real-quest branch.",
+        "confidence": "high"
+      },
+      {
+        "id": "F133",
+        "verdict": "confirmed",
+        "reason": "questMacros.js:492 expandLetterSignoff has zero callers in src/ (only test/questoffers.test.js uses it). worldModes.js:633 _itemLabel = name ?? template name never routes letters through it. The auditor's own cited counter-evidence, item.js:86-92, actually confirms the gap: it documents 'name ?? template name' as the current accepted convention, not a refutation. Quest letters show only the generic template name.",
+        "confidence": "medium"
+      },
+      {
+        "id": "F134",
+        "verdict": "confirmed",
+        "reason": "paperdollViewer.js:361 RACES=['Breton','Redguard','Nord','High Elf','Wood Elf','Dark Elf','Khajiit','Argonian'] has no 'Human' entry. applyVillagerTone (:442) sets raceIx=RACES.indexOf('Human')=-1 when a villager's tone matches the human palette (reachable per PALETTES.human/RACE_TONE wiring). syncRace (:623) calls applyTone (:603-604): RACES[-1]=undefined -> pal undefined -> `if(!pal) return` bails, discarding the design's tone; loadFaceSet/loadHeads run off the same undefined race.",
+        "confidence": "high"
+      },
+      {
+        "id": "F135",
+        "verdict": "confirmed",
+        "reason": "paperdollViewer.js:1189 gates on Math.hypot(gest.x,gest.y)/longest (net vector) and resets the whole gesture on the 1s boundary (line 1186) - the pre-AUDIT-24 logic. DFU's WeaponManager.cs:808 uses TravelDist/_longestDim, a rolling-window path-length sum (TrimOld :111-122), explicitly not equal to summed-vector magnitude (:99-101). The game path already fixed this in AUDIT 24 (src/combat/playerWeapon.js:118-160, comment describes the same defect) - only the dev viewer retains the stale version.",
+        "confidence": "high"
+      },
+      {
+        "id": "F136",
+        "verdict": "confirmed",
+        "reason": "DaggerfallGuildServicePopupWindow.cs:99 sets `ParentPanel.BackgroundColor = Color.clear;` in its own constructor, overriding DaggerfallBaseWindow's black default. guildServiceWindow.js:172 calls drawMenuBackdrop (opaque black, chargenArt.js:58/93) unconditionally, citing only the base-class rule. test/startwindow.test.js:483-525's CLEAR_PANEL list (the AUDIT-24 fix for this defect class) omits guildServiceWindow.js, and no test pins the backdrop for this window.",
+        "confidence": "high"
+      },
+      {
+        "id": "F137",
+        "verdict": "confirmed",
+        "reason": "bankPurchaseWindow.js:41 sets PURCHASE_PANEL_Y=50, used for drawing (:190) and all hit-rects (:74-75,158). BaseScreenComponent.cs:1234-1236 shows Middle alignment computes y from parentRect only, ignoring position.y; DaggerfallBankPurchasePopUp.cs:122-125 sets Middle+Position(0,50) on the 320x200 NativePanel, so true y is (200-129)/2=35.5. The port's own guildServiceWindow.js:10-16 documents this exact law elsewhere, showing bankPurchaseWindow.js missed applying it.",
+        "confidence": "high"
+      },
+      {
+        "id": "F138",
+        "verdict": "confirmed",
+        "reason": "DaggerfallBankPurchasePopUp.cs:380-391 plays ButtonClick then guards SelectedIndex<0 (silent no-op), then calls CloseWindow() unconditionally (:386) BEFORE GeneratePurchaseHousePopup - the list closes regardless of result. bankPurchaseWindow.js's _buy (:122-135) shows the result box over the still-open window; _dismissBox (:137-143) closes only `if (b?.bought)`, so a refused purchase leaves the list open where DFU already closed it.",
+        "confidence": "high"
+      },
+      {
+        "id": "F139",
+        "verdict": "confirmed",
+        "reason": "ExteriorAutomap.cs:1230-1240 places `first` alone once its own check passes, regardless of second; nameplateLayout.js:81 conjoins both checks with `&&`, so p-clear/q-not-clear places neither where DFU places p alone. Also :1190 vs :1277 show DFU's entangled branch is gated `else if (count>1)`, excluding count==0 (producible via the :1274-1275 mid-loop decrement), while nameplateLayout.js:88's unconditional `else` runs for q.count===0 too. test/automap_ext.test.js:89-110 covers only symmetric cases, not either asymmetric arm.",
+        "confidence": "high"
+      },
+      {
+        "id": "F140",
+        "verdict": "confirmed",
+        "reason": "DaggerfallBankingWindow.cs:473-478 guards `if (!transactionInput.Enabled) CloseWindow();`, and Enabled tracks transactionType!=None (:277) - EXIT is inert during a transaction. bankWindow.js click() (:261) closes unconditionally with no transactionType check, while its own keyboard path (:243-244) correctly gates Escape first. test/bankwindow.test.js pins Escape (:122-127) but not click-exit-during-transaction.",
+        "confidence": "high"
+      },
+      {
+        "id": "F141",
+        "verdict": "confirmed",
+        "reason": "DaggerfallGuildServicePopupWindow.cs plays PlayOneShot(ButtonClick) in TalkButton (:293), ServiceButton (:462), ExitButton (:479), JoinButton (:499). JS guildServiceWindow.js imports no audio module; click()/input() (lines 134-166) call no sound API, nor does the host at worldModes.js:1393. Silent panel confirmed vs DFU's audible clicks.",
+        "confidence": "high"
+      },
+      {
+        "id": "F142",
+        "verdict": "confirmed",
+        "reason": "DFU ListBox.cs Draw()/click use TextHeight+rowSpacing (line 327, 434); rowSpacing defaults 1 (line 37), never overridden by DaggerfallBankPurchasePopUp.cs:284-291, giving pitch glyph(7)+1=8. bankPurchaseWindow.js:55-56 sets LIST_ROW_H=7 from '78/10 rows' math, used consistently in draw (:193) and hit-test (:158). No pin asserts 8px. Rows sit tighter than DFU.",
+        "confidence": "high"
+      },
+      {
+        "id": "F143",
+        "verdict": "confirmed",
+        "reason": "RoomButton_OnMouseClick (:152-171) never calls CloseWindow; the input box self-closes first (InputMessageBox.cs:296-301); UserInterfaceWindow.CloseWindow() (:127-130) is uiManager.PopWindow(), popping current TOP not a specific instance. ConfirmRenting_OnButtonClick's CloseWindow() (:212) thus pops the just-pushed confirm box (which doesn't self-close, :478-484), leaving tavern topmost. tavernWindow.js's chain (:137-159) always closes the tavern on completion; test/tavernwindow.test.js:147-160 and restSession.js:235 explicitly pin/restate this exact misread of :212.",
+        "confidence": "high"
+      },
+      {
+        "id": "F144",
+        "verdict": "confirmed",
+        "reason": "TimedRestPrompt_OnGotUserInput fires after the input box already self-closed (InputMessageBox.cs:296-301); on time>99 it shows a notice over the SELECTION page and returns (RestWindow.cs:753-757). restWindow.js:262-266 stays in state 'hours' with a reset live prompt; a retry calls _start directly, bypassing _canRest (only fires from 'selection', :192-203), skipping DFU's repeat CanRest/Vagrancy gate (:558). restSession.js:234-236 (mis)states 'the prompt STAYS UP' citing :753-757.",
+        "confidence": "high"
+      },
+      {
+        "id": "F145",
+        "verdict": "confirmed",
+        "reason": "DaggerfallTavernWindow.cs plays PlayOneShot(ButtonClick) in Exit(:135), Room(:155), Talk(:264), Food(:339), food-pick(:307) - all grep-verified. tavernWindow.js imports no audio module at all; its input()/click() handlers (lines 235-250) call no sound API (ButtonClick appears only in comments). Siblings (playerHistory.js:83, restWindow.js:198+) do port the sound - an omission not a convention.",
+        "confidence": "high"
+      },
+      {
+        "id": "F146",
+        "verdict": "confirmed",
+        "reason": "DaggerfallTeleportPopUp.cs's NoButton_OnMouseClick(:114-117) and YesButton->TeleportAway(:151-154,:134-150) call no PlayOneShot; Button.cs:95-98 plays clickSound only if set, and DaggerfallUI.AddButton(Rect,Panel) (:981-998, the overload used here) never sets ClickSound - silent in DFU. teleportPopUp.js:87 _click() plays SOUND.ButtonClick, called from both _no()(:92) and _yes()(:99-100), an added sound DFU lacks.",
+        "confidence": "high"
+      },
+      {
+        "id": "F153",
+        "verdict": "confirmed",
+        "reason": "DFU TransferItem quest arm (DaggerfallInventoryWindow.cs:1480-1505) refuses removal without AllowDrop/CanDropQuestItems and sets PlayerDropped true/false. nativeInventory.js Remove arm (453-501) and _pickRemote (549-594) have zero questItem checks - grep confirms. Grepped src/ for `.playerDropped =`: only item.js:78/315 (default/save-load) - no writer ever sets true, so actions.js:1871's DroppedItemAtPlace trigger can never fire. No test pin.",
+        "confidence": "high"
+      },
+      {
+        "id": "F154",
+        "verdict": "confirmed",
+        "reason": "DFU RemoteItemListScroller_OnItemClick (:2027-2037) calls questItem.SetPlayerClicked() unconditionally before the mode switch. Port's _pickRemote (nativeInventory.js:549-594, read in full) never touches questItem/setPlayerClicked. Grepped src/ for setPlayerClicked callers: only world-floor doClick (resourceBehaviour.js:145-151) and NPC sweep (machine.js:499-514) - neither covers taking an item from a loot list. actions.js:484 gates ClickedItem on hasPlayerClicked, which stays false. No test pin.",
+        "confidence": "high"
+      },
+      {
+        "id": "F155",
+        "verdict": "confirmed",
+        "reason": "DFU DaggerfallTradeWindow.LocalItemListScroller_OnItemClick (777-834) routes Sell/SellMagic through the loaded-cart check (789-794) then TransferItem(item,localItems,remoteItems) (795), inheriting summoned/quest/map/light-source guards. Port's tradeModes.js localClickDecision (350-371) returns {kind:'stage'} unconditionally for Sell/SellMagic; grepped tradeModes.js for Transportation/cart/questItem/summoned/lightSource/Map - zero matches. nativeTrade.js's _move (150-154) is a bare splice/push.",
+        "confidence": "high"
+      },
+      {
+        "id": "F156",
+        "verdict": "confirmed",
+        "reason": "DFU TransferItem's map arm (:1471-1478) is unconditional for either direction: a MiscItems.Map calls RecordLocationFromMap and is removed, never landing in the destination. Port wires revealMap only into Use-mode (nativeInventory.js:441 -> useItem.js:221-236); Remove arm (453-501) and _pickRemote (549-594) have no Map special case, so a map transfers like any item. No test pin covers Map via Remove/pickRemote.",
+        "confidence": "high"
+      },
+      {
+        "id": "F157",
+        "verdict": "confirmed",
+        "reason": "DFU TransferItem (:1506-1508) clears playerEntity.LightSource on transfer out of localItems, hit by Sell too (routes through TransferItem). Port only clears entity.lightSource on Use-mode toggle-off or condition-zero (useItem.js:263-267, playerTorch.js:132-135); Remove arm (482-501) and nativeTrade.js (grepped whole file, zero 'lightSource' hits) never clear it on drop/sale. Existing test only covers the Use-mode toggle, not Remove/sell.",
+        "confidence": "high"
+      },
+      {
+        "id": "F158",
+        "verdict": "confirmed",
+        "reason": "DFU DaggerfallTradeWindow (:842) stages Buy clicks via TransferItem(...,CanCarryAmount(item),...); CanCarryAmount (:1414-1423) gates on GetCarriedWeight() which the trade window overrides (:630-633) to include basketItems.GetWeight(), so the gate tightens as the basket fills. Port's _pickRemote (nativeTrade.js:204-209) moves the whole item with no capacity check, and commitTrade's Buy branch (worldModes.js:736-743) also has no encumbrance check - the gap is total, not merely deferred. No test pin exercises capacity in Buy staging.",
+        "confidence": "medium"
+      },
+      {
+        "id": "F159",
+        "verdict": "confirmed",
+        "reason": "TalkWindow.cs:226-227/798-804 wire conversation up/down arrows to +/-5 ScrollIndex handlers (:1442-1452); UpdateScrollBarConversation pins to bottom only on OnPush and after adding Q&A (:1282), not every frame. Port TALK_RECTS (nativeTalk.js:40-57) has no such arrows, and draw() (nativeTalk.js:338) calls conversationScroll=max(0,contentH-panelH) every frame with no persisted conversation scroll state. test/audit18_ui_native.test.js:218-227 pins this always-bottom behavior, confirming no fix exists.",
+        "confidence": "high"
+      },
+      {
+        "id": "F160",
+        "verdict": "confirmed",
+        "reason": "QuestJournalWindow.cs:322-330 wires questLogLabel clicks to HandleClick (:385-436): travel jump via FindPlace_OnButtonClick (:353-363) on active quests, move/remove/add-note on notebook/finished pages, TitlePanel click opens EnterNote (:297-300). Port click() (questJournal.js:182-191) treats log/title rects as plain consumed no-ops; grep of src/ finds no FindPlace/GotoPlace/move/remove/EnterNote logic anywhere. No test pins these click flows.",
+        "confidence": "high"
+      },
+      {
+        "id": "F161",
+        "verdict": "confirmed",
+        "reason": "CheckWagonAccess's proximity-only branch (DaggerfallInventoryWindow.cs:1089-1096, plain F6 near exit) only calls ShowWagon(true), never SelectActionMode(Remove) - Remove is forced only in the separate already-granted branch (:1084-1088) reached via PlayerActivate.cs:1141's exit-door prompt. Port constructor (nativeInventory.js:218-219) merges both: proximity alone sets usingWagon=true AND mode='remove'. test/wagon.test.js:48-56 pins this merged behavior, which per doctrine confirms rather than refutes.",
+        "confidence": "high"
+      },
+      {
+        "id": "F162",
+        "verdict": "confirmed",
+        "reason": "LocalItemListScroller_OnItemClick's Remove arm (DaggerfallInventoryWindow.cs:1991-2003) gates on `remoteItems != null && !chooseOne` (:1994) - chooseOne alone blocks ALL local transfers regardless of wagon state. Port's guard (nativeInventory.js:474) is `chooseOne && !usingWagon`, so usingWagon=true bypasses the block and the wagon transfer path (:482-496) runs; _wagon() (:381-393) has no chooseOne gate. No test covers chooseOne+wagon interaction.",
+        "confidence": "high"
+      },
+      {
+        "id": "F163",
+        "verdict": "confirmed",
+        "reason": "DaggerfallQuestJournalWindow.cs:152 sets `questLogLabel.HighlightColor = Color.white`, overriding MultiFormatTextLabel's default highlightColor (DaggerfallHighlightTextColor, MultiFormatTextLabel.cs:36); SetText's TextHighlight case (:362-364) applies HighlightColor. Port's JOURNAL_COLORS.highlight (questJournal.js:77) hardcodes the generic orange with no window override; pageLines() (:221-222) applies it directly. test/audit24_ui.test.js:62,72 pins the orange value, confirming rather than refuting.",
+        "confidence": "high"
+      },
+      {
+        "id": "F164",
+        "verdict": "confirmed",
+        "reason": "UpdatePlayerValues (DaggerfallCharacterSheetWindow.cs:414-420) colors each stat label Drained/Increased/default by comparing live vs permanent stat value. Port draw() (charsheet.js:289-290) renders all eight stats via label(liveStat(e,k),...) with no color option, defaulting to shadowText's normal color. grep of src/ finds zero drained/increased stat-color references anywhere; no test exercises this comparison for display.",
+        "confidence": "high"
+      },
+      {
+        "id": "F165",
+        "verdict": "confirmed",
+        "reason": "DFU DaggerfallTalkWindow.cs:1259 sets question label HorizontalAlignment=Right after AddItem; BaseScreenComponent.cs:1214-1215 computes x=parentRect.xMax-margin-width for Right, genuinely right-aligning it. Answers stay Left (cs:1270). nativeTalk.js:339-345 draws every line (question or answer) at fixed x=R.conversation[0], no kind-based offset, though kind:'question' entries are reachably created (nativeTalk.js:185,210). Visual distinction is lost; nit as claimed.",
+        "confidence": "high"
+      },
+      {
+        "id": "F166",
+        "verdict": "confirmed",
+        "reason": "EnchantmentListPicker.cs:266-271 only removes a panel when ParentEnchantment==0. itemMakerWindow.js:338-344 click() hit-tests any row and calls _removeRow(hit.entry) with no guard; removeEnchantment (enchantmentCatalogue.js:360-361) filters by e.key!==key, removing the clicked entry regardless of whether it's itself a forced child. No test pin covers this path. A player can click a forced soul-bound side effect away and keep the power without its drawback.",
+        "confidence": "high"
+      },
+      {
+        "id": "F167",
+        "verdict": "confirmed",
+        "reason": "DaggerfallItemMakerWindow.cs:750-754 splits one item off a stack before SetEnchantments runs. itemMakerWindow.js _enchant (277-294) calls applyEnchantments(this.selected,...) directly; grep confirms no SplitStack logic anywhere in itemMakerWindow.js/enchanting.js. inventory.js:110 confirms ingredients (gems) stack, so an enchant applies to the whole merged stackCount at once instead of one split item.",
+        "confidence": "high"
+      },
+      {
+        "id": "F168",
+        "verdict": "confirmed",
+        "reason": "PlayerEntity.cs:1313-1316 GetGoldAmount()=goldPieces+GetCreditAmount(), used for both the gold label and EnchantButton_OnMouseClick's check (cs:734). itemMakerWindow.js:189 gold() calls goldAmount() (court.js:151-152), coins-only. The port even has a correct totalGoldAmount() mirroring GetGoldAmount exactly (court.js:161-164, used elsewhere e.g. travelmap.test.js:263) but itemMakerWindow.js never calls it.",
+        "confidence": "high"
+      },
+      {
+        "id": "F169",
+        "verdict": "confirmed",
+        "reason": "CastWhenUsed.cs:67 stores SecondaryDisplayName per-setting via GetLocalizedSpellName(id), the sparse classic spell ID, printed as-is by EnchantmentListPicker.cs:333-334. itemMakerWindow.js:390-393 instead does names[row.entry.param], where names is the dense list-order array and entry.param is the classic ID. Verified: catalogue.js:104 has 'Resist Fire' at index 9 and 'Fireball' at index 12, so names[12]='Fireball' for param 12 (Resist Fire), matching the claim exactly. Param 94 (Recall) exceeds the 34-entry array and prints blank.",
+        "confidence": "high"
+      },
+      {
+        "id": "F170",
+        "verdict": "confirmed",
+        "reason": "EnchantmentListPicker.cs:23 visiblePanels=7; ShowScroller (cs:245-247) plus MouseScrollUp/Down (cs:180-196) activate past 7 panels. itemMakerWindow.js rowLayout (145-154) always starts at fixed y with no scroll offset; the draw loop computes scrolled (383) then discards it (void scrolled; 395) and breaks past the rect (385); click (338-344) hit-tests with no offset either; no wheel/scroll handling exists for these lists anywhere in the file. 12px+5px rows fill exactly 7 of the 120px rect, so an 8th+ enchantment (reachable, MAX_ENCHANTMENTS=10) is unreachable to view or remove.",
+        "confidence": "high"
+      },
+      {
+        "id": "F171",
+        "verdict": "confirmed",
+        "reason": "DFU's NameItemButon_OnMouseClick (DaggerfallItemMakerWindow.cs:797-806) opens `new DaggerfallInputMessageBox(uiManager, this)` - the 2-arg ctor - which never sets textBox.MaxCharacters, so it stays at TextBox.cs:26's field default of 31. The port's rename input (itemMakerWindow.js:316) gates with `this.itemName.length < 26`. No test pin exists. Confirmed nit: legal 27-31 char DFU names cannot be typed.",
+        "confidence": "high"
+      },
+      {
+        "id": "F172",
+        "verdict": "confirmed",
+        "reason": "DFU's AddRecipeToCauldron checks `recipeIngreds.ContainsValue(null)`: if true it MessageBoxes 'reqIngredients' and adds NOTHING; else ClearCauldron() then adds every ingredient. The port's _fillFrom (potionMakerWindow.js:185-194) unconditionally adds whatever gatherRecipe finds, no clear, no message. test/potionmakerwindow.test.js:178-190 pins exactly this partial-fill while citing the same C# - per doctrine this confirms the finding since my own read shows DFU refuses entirely on any missing ingredient.",
+        "confidence": "high"
+      },
+      {
+        "id": "F173",
+        "verdict": "confirmed",
+        "reason": "DFU's MixButton_OnMouseClick only calls MixCauldron() inside `if (cauldron.Count > 0)`. The port's _mix (potionMakerWindow.js:151-169), wired from click():209 and input() Enter/KeyM:200, has no such guard: mixCauldron([]) returns {kind:'failed'} (potionRecipeKey([]) returns 0 early, no recipe is empty) so this.box is set to POTION_FAILED. No test covers the empty-cauldron path. Confirmed.",
+        "confidence": "high"
+      },
+      {
+        "id": "F174",
+        "verdict": "confirmed",
+        "reason": "DFU's Refresh filters ingredients with `item.IsIngredient && !item.IsEnchanted`. The port's ingredients() (potionMakerWindow.js:125-133) filters with only isIngredient(it) (template flag), never calling the port's own isEnchantedItem helper (enchantments.js:112) that other systems like repairService.js:404 do use. Gems (ingredient-flagged, e.g. Diamond id3/Turquoise id5 in potions.js's own table) are enchantable via the port's item maker. No test pin. Confirmed.",
+        "confidence": "high"
+      },
+      {
+        "id": "F175",
+        "verdict": "confirmed",
+        "reason": "DFU's ingredientsListScroller is built with scroll=true (a real VerticalScrollBar, ItemListScroller.cs:239-263), vs the cauldron's false. Grepping potionMakerWindow.js for `.scroll` gives exactly 3 hits: init at :113, reads at :216 and :234 - no writer in click() or input(). Confirmed dead state: ingredient stacks beyond the first 12 are permanently unreachable.",
+        "confidence": "high"
+      },
+      {
+        "id": "F176",
+        "verdict": "confirmed",
+        "reason": "DFU's AddToCauldron does `if (item.IsAStack()) item = ingredients.SplitStack(item, 1);` before adding, leaving the remainder visible. The port's _addToCauldron (potionMakerWindow.js:137-141) pushes the item reference directly with no split; ingredients() (:125-133) removes it from the pack list by identity, hiding the WHOLE stack. Confirmed via inventory.js's isStackable (ingredients stack) and equip.js's own SplitStack-equivalent pattern, unused here. No test exercises stackCount>1 (test helper ing() defaults n=1).",
+        "confidence": "high"
+      },
+      {
+        "id": "F177",
+        "verdict": "confirmed",
+        "reason": "DFU: MixCauldron (cs:311-360) never touches nameLabel; only AddRecipeToCauldron sets nameLabel.Text=recipeName on fill (cs:307); Add/RemoveFromCauldron clear it (cs:255,268). Port inverts: potionMakerWindow.js:158 sets nameLabel in _mix() (MixCauldron's port); _fillFrom (:184-194, AddRecipeToCauldron's port) never sets it, only clears via _addToCauldron. test:136 pins the port's mix-time label, confirming the divergence.",
+        "confidence": "high"
+      },
+      {
+        "id": "F178",
+        "verdict": "confirmed",
+        "reason": "DFU goldLabel reads GetGoldAmount() (cs:138) = goldPieces + GetCreditAmount() (PlayerEntity.cs:1313-1316). Port already has a matching totalGoldAmount() in court.js:161-165 (commented as the GetGoldAmount port), but worldModes.js:1741 wires the potion maker's gold hook to coin-only goldAmount() (court.js:151-152), which potionMakerWindow.js:246 prints. Display-only, as stated.",
+        "confidence": "high"
+      },
+      {
+        "id": "F179",
+        "verdict": "confirmed",
+        "reason": "DaggerfallEntity.cs:741-752 SortSpellsPointCost sorts by raw CalculateTotalEffectCosts, no lycanthropy check; the free-cast zeroing lives only in PopulateSpellsList (cs:264-267, display). Port's confirmSort (spellbookWindow.js:505-513) reuses spellPointCost() (:212-215), which zeroes for LYCANTHROPY_SPELL_TAG, for its cost-sort pass too. No test pins this sort-specific interaction.",
+        "confidence": "medium"
+      },
+      {
+        "id": "F180",
+        "verdict": "confirmed",
+        "reason": "VerticalScrollBar.cs:101-150 supports thumb drag (Update) and click-paging (MouseClick). Port draws SPELLBOOK_RECTS.scrollBar (:785-789) but click() (:649-705) has no branch testing it and no drag handling anywhere in the file - falls through to plain `return true`. test:118 only pins the rect's geometry, not interactivity.",
+        "confidence": "high"
+      },
+      {
+        "id": "F181",
+        "verdict": "confirmed",
+        "reason": "SetSpellTarget/SetSpellElement (cs:488-530) early-return outside allowedTargets/allowedElements; UpdateAllowedButtons (cs:561-660) intersects each effect's AllowedTargets/AllowedElements and resets the selection. Port's spellMakerWindow.js:187-190 cycles rangeType/element by plain modulo with no restriction; grep confirms no such state exists in src/, and spellMaker.js buildCustomSpell/validateSpellPurchase (:113-170) apply no check at purchase either.",
+        "confidence": "high"
+      },
+      {
+        "id": "F182",
+        "verdict": "confirmed",
+        "reason": "WeaponManager.cs:457-472: action.Receive(player,Attack) fires unconditionally on any DaggerfallAction (:460-464), then AttemptBash runs separately if DaggerfallActionDoor is also present (:467-471); both can coexist on one door. Port's envAttack (weaponRig.js:159-162): doors get attemptBash+return, skipping receive('Attack'). attemptBash's fire path gates on 'Door' trigger (actionSystem.js:692-699) while Attack/MultiTrigger map to Attack/Direct/WalkInto, not Door (:117-119), so such records never fire either way. test/weaponrig.test.js:80-89 pins this skip.",
+        "confidence": "high"
+      },
+      {
+        "id": "F183",
+        "verdict": "confirmed",
+        "reason": "PlayerAmbientLight.UpdateAmbientLight (PlayerAmbientLight.cs:84-92) picks CastleAmbientLight/SpecialAreaLight (0.58) vs DungeonAmbientLight (0.12) via IsPlayerInsideDungeonCastle/SpecialArea. Port's DUNGEON_AMBIENT (dungeonLights.js:14) is applied unconditionally in worldModes.js:2745 and dungeon.js:247; the live castleBlockAt/inCastle predicate (dungeonContext.js:2012,2078,2524) feeds only music/ambientEffects, never lighting.",
+        "confidence": "high"
+      },
+      {
+        "id": "F184",
+        "verdict": "confirmed",
+        "reason": "DaggerfallActionDoor.Close (:311-332) plays no sound; CloseSound plays in OnCompleteClose (:339-346) after the tween. Port's _closeDoor (actionSystem.js:653-660) fires onDoorState(o,false) at close START; both hosts (dungeonContext.js:199-202, interiorContext.js:51-54) play the clip immediately. No completion callback plays sound (checked _tickDoor's settle branch, actionSystem.js:964-973 - collider only).",
+        "confidence": "high"
+      },
+      {
+        "id": "F185",
+        "verdict": "confirmed",
+        "reason": "Neither SerializableActionObject (:55-88) nor SerializableActionDoor (:67-101) save/restore DaggerfallAction.activationCount (DaggerfallAction.cs:44, gates DoorText@1 :870 and Hurt21 %20 :725), so a reloaded scene resets it to 0. Port persists+restores it (actionSystem.js:830-832,858-859); test/action.test.js:316-327 pins this as deliberate but cites no DFU serializer carrying the field - restates the divergence, doesn't refute it.",
+        "confidence": "medium"
+      },
+      {
+        "id": "F186",
+        "verdict": "confirmed",
+        "reason": "AmbientEffectsPlayer.PlayLightningEffects (:359-368): skipped flash = 1 WaitForEndOfFrame, lit flash = 2; StartWaiting() re-arms immediately after launching the coroutine (:146-152, strike time). Port's LightningPlayer.tick (weather.js:166-179) always spends 2 frames/slot and re-arms only when the whole sequence ends (line 176-179). test/weather.test.js:106-110 pins the always-2-frame design, restating rather than refuting.",
+        "confidence": "high"
+      },
+      {
+        "id": "F187",
+        "verdict": "confirmed",
+        "reason": "SerializableActionDoor.cs:77,99-101 save/restore FailedSkillLevel, preserving DFU's lockpick retry gate (:157) across load. Port's collectSaveData/restoreSaveData (actionSystem.js:825-864) omit failedSkillLevel; the port's own addDoor comment (:460-467) already flags this as a live gap - confirmed accurate by reading both sides.",
+        "confidence": "high"
+      },
+      {
+        "id": "F188",
+        "verdict": "confirmed",
+        "reason": "TerrainNature.cs:60-66: rect.xMin/xMax +-= clearance mutates the underlying x/y fields (Unity Rect semantics); the tile-loop reject at :124 re-tests rect.x>0&&rect.y>0 against the EXPANDED value, so a pre-expansion min in (0,4] disables containment. Port (terrainNature.js:72-79) gates rect-building on PRE-expansion mins only, then at :112 tests mere truthiness of rect with no re-check - always excludes where DFU sometimes wouldn't.",
+        "confidence": "low"
+      },
+      {
+        "id": "F189",
+        "verdict": "confirmed",
+        "reason": "DFU sets questItem.UseClicked=true at DaggerfallInventoryWindow.cs:1683 (!UseClicked && ActionWatching); ItemUsedDo.cs:65 polls it, ported at actions.js:1027-1037. grep 'useClicked' src/ shows only quest/item.js:74/312 (init/deserialize) - no production write ever sets it true. nativeInventory.js:333-375 _useResult never reads useItem.js:295's questItem rider, so pop-to-HUD/UseClicked never fires. test/questactions.test.js:631 manually sets useClicked=true to bypass the gap, confirming no end-to-end pin exists. isParchment/isClothing also zero callers.",
+        "confidence": "high"
+      },
+      {
+        "id": "F190",
+        "verdict": "confirmed",
+        "reason": "RMBLayout.cs:366-378/442-454 adds StaticNPC+SetupIndividualStaticNPC when FactionID!=0. collectExteriorNpcs' only caller anywhere is test/names.test.js - zero production callers. world.js:455-456 and exterior.js:312 route all flats through addFlat/flatGroups as plain billboards, no factionID branch. worldModes.js:844-867 explicitly says the click seam is interior-only ('the only host that builds a building interior, so it is the only one with StaticNPCs to click'); openStaticNpc is driven solely by collectInteriorPeople (interiorContext.js:199), never collectExteriorNpcs.",
+        "confidence": "high"
+      },
+      {
+        "id": "F191",
+        "verdict": "confirmed",
+        "reason": "PlayerEntity.cs:469-472 calls RegionPowerAndConditionsUpdate(true) on the 38-day tick; its conditions body (:1687-1930) calls the alliance/war/ruler mutators. factionRelations.js:221/235/247/259/299 and regionConditions.js:162 port them faithfully, but grep for actual calls (not defs) across src/ returns nothing - only unit tests call them. worldTick.js:507-510's 38-day arm calls only regionPowerUpdate; its own comment (:499-500) says the conditions half 'needs the alliance mutators, unported' - stale since they exist. Wars/alliances/rulers stay frozen either way.",
+        "confidence": "high"
+      },
+      {
+        "id": "F192",
+        "verdict": "confirmed",
+        "reason": "TravelPopUp.cs:219: hasShip = OwnsShip || FreeShipTravel(). banking.js:266 ownsShip() is live at worldModes.js:1231/3209, but guildServices.js:336 freeShipTravel() has zero callers anywhere. world.js:1728 passes hasShip:false literally into buildTravelMapWindow with a stale comment ('A SHIP still has no ownership state'); neither call site overrides it. travel.js:86: `if(oceanPixels>0 && !hasShip && travelShip) totalCost+=25*...` always charges. test/travel.test.js:63 only unit-tests calculateTripCost with hasShip passed explicitly - no wiring pin.",
+        "confidence": "high"
+      },
+      {
+        "id": "F193",
+        "verdict": "confirmed",
+        "reason": "DaggerfallEntity.cs:501-506: GetMaxEncumbrance adds amount*IncreasedWeightAllowanceMultiplier when >0. enchantments.js:390-392 computes _enchantMods.weightAllowanceMult and :734 exposes enchantWeightAllowanceMult(entity) as the reader, but grep 'enchantWeightAllowanceMult(' across the whole repo returns zero call sites. Every maxEncumbrance() consumer (worldModes.js:724/1294, charsheet.js:288, chargen.js:400, nativeInventory.js:544) calls formulas.js:46 raw floor(strength*1.5) with no enchant term added anywhere.",
+        "confidence": "high"
+      },
+      {
+        "id": "F194",
+        "verdict": "confirmed",
+        "reason": "QuestPopupWindow.cs:252-257: a failed coven summoning spawns 1-3 daedra via CreateFoeSpawner. daedraSummoning.js:80-82 ports the DAEDRIC_FOES table and attemptSummoning (:166) correctly answers spawnFoes:true, but grep shows DAEDRIC_FOES is referenced nowhere in src/ (only test/daedrasummoning.test.js:147 checks its length). worldModes.js:1663-1669's failure arm only does `console.warn(...'the interior has no foe pool (FLAGGED)')` when spawnFoes is true - no foes are ever created. The port's own comment self-documents the gap.",
+        "confidence": "high"
+      },
+      {
+        "id": "F195",
+        "verdict": "confirmed",
+        "reason": "DFU HandleClick (JournalWindow.cs:401)->HandleQuestClicks(:439-466) resolves GetMessageResources(:471-485) and offers a find-place dialog wired to GotoPlace(:360). Port's getMessageResources (questMacros.js:549) has zero src/ callers; QuestJournalWindow.click (ui/questJournal.js) only handles exit/dialog/arrow rects and otherwise consumes clicks in log/title rects with no line-to-entry mapping or resource lookup, in any mode. No host wraps extra logic around it. Confirmed dead.",
+        "confidence": "high"
+      },
+      {
+        "id": "F196",
+        "verdict": "confirmed",
+        "reason": "ItemHelper.ResolveItemLongName (ItemHelper.cs:335-348) special-cases quest Parchment via QuestMacroHelper.ExpandLetterSignoff. Port's expandLetterSignoff (questMacros.js:492) has zero src/ callers (only test file); 'Letter: ' prefix never reaches item.name anywhere; labels come from worldModes.js:633 _itemLabel = it.name ?? template.name, i.e. plain 'Parchment' for any quest letter since items are minted generically (systems/quest/item.js). Confirmed: letters indistinguishable.",
+        "confidence": "high"
+      },
+      {
+        "id": "F197",
+        "verdict": "refuted",
+        "reason": "C# split (GuildManager.cs:105-111 keyed on HasVampirism()) and unwired store (guilds.js:444-459) are real, but the port never shipped the vampirism racial-override effect (V2): infection.js flags it explicitly, deployInfection (infection.js:255-270) only sets racialOverridePending never racialOverride, and grep shows racialOverride is never assigned and no hasVampirism()-equivalent is computed anywhere in src/. A player cannot mechanically become vampire at all yet, so cannot hit this guild bug - disclosed staged WIP, not a live divergence.",
+        "confidence": "medium"
+      },
+      {
+        "id": "F198",
+        "verdict": "confirmed",
+        "reason": "DaggerfallUI.CreateHealthStatusBox (:1630-1667) shows each disease's ContractedMessageTokens (record 100+type, e.g. Leprosy.cs:28) once incubation is over, opened via Actions.Status (GameManager.cs:559). Port's contractedMessageRecord (diseases.js:90) has zero src/ callers; input.js:162's 'Status' case requires ctx.showStatus, which no host anywhere in src/ provides (grep finds no showStatus/healthStatus/statusBox implementation). Confirmed: no in-game way to identify which disease is carried beyond the generic daily alert.",
+        "confidence": "high"
+      }
+    ],
+    "critic": {
+      "gaps": [
+        {
+          "area": "Quest action system (src/systems/quest/actions.js) — zero findings on the audit's largest file",
+          "why": "actions.js is 2772 lines implementing ~50 DFU quest action classes; the owning chunk quest-core (10 files, 5376 lines total) reported 0 confirmed findings — the single largest zero-yield block in the audit against historically the buggiest DFU subsystem. Top candidate for a dedicated re-pass by a fresh surveyor."
+        },
+        {
+          "area": "formats-defs — 15 data-file parsers (Biog/Book/Class/Faction/MagicItems/Rumor/Spell/Text/etc), zero findings",
+          "why": "2244 lines across 15 parsers, 0 findings. Two concrete unresolved edge cases were explicitly dropped rather than confirmed safe: MAGIC.DEF NUL-truncation vs C# TrimEnd('\\0') keep-tail behavior, and TEXT.RSC empty-token-stream vs empty-ROWS variant handling. Both judged 'unobservable without ARENA2' — worth reopening once real game data exists."
+        },
+        {
+          "area": "formats-binary — 15 binary readers, zero findings across 5461 lines",
+          "why": "BSA/BSS/FNT/GFX/PAK/SKY/IMG/CIF-RCI/texture/FLC/Arch3d/Blocks/Maps readers all report clean. Candidates found and dropped as 'no reachable consequence' (truncated BSS error-arm timing, RDB modelIdNum regex vs UInt32.TryParse, arch3d degenerate corner-buffer path) were asserted unproven, not actually tested — no ARENA2 corpus existed to exercise them."
+        },
+        {
+          "area": "hostMagic.js — never read in full by any chunk",
+          "why": "Explicitly cited as unread by 3 different chunks: effects-magic ('host seams ... beyond targeted consumer checks'), hosts-dungeon ('hostMagic.js in full'), hosts-world ('hostMagic.js'). sweep-four-hosts read only its single interceptAttack function. No chunk claims ownership of this file, which mediates in-world magic effects across all four hosts."
+        },
+        {
+          "area": "Day-change simulation trio unread: shopStock.js, weatherSim.js, regionPower.js",
+          "why": "systems-misc-2 names all three together as unread 'day-change member bodies'. regionPower.js's RegionPowerAndConditionsUpdate body is separately flagged unread by region-law-money AND guilds-factions (3 citations total). shopStock.js daily restock is separately flagged unread by hosts-modes and ui-misc-2. Three independent day-tick economic/political systems with effectively zero real audit."
+        },
+        {
+          "area": "equip.js — condition/decay logic, unread in three separate chunks",
+          "why": "combat ('equip.js lowerCondition'), enchant-potions ('equip.js internals'), and ui-native-core ('equip.js ... in full') each independently defer it to 'another chunk', but no chunk claims to have actually read it. This sits in the brief's top priority tier ('formulas, laws, tables > glue')."
+        },
+        {
+          "area": "nameGen.json vs DFU NameGen.txt — declined by both plausible owners",
+          "why": "voxel-visual ('NOT verified: nameGen.json vs DFU NameGen.txt') and npc-population ('NOT read: nameGen.json vs DFU NameGen.txt data') both explicitly skip this exact comparison even though both chunks otherwise audit name-generation code around it."
+        },
+        {
+          "area": "Save-state fields marked 'no port-side feature' were never confirmed intentional",
+          "why": "save-session lists SerializablePlayer fields (skillsRecentlyRaised, TG/DB recruitment tallies + letter times, vampire fields, transportMode/boardShipPosition, advancedClimbingState) as absent and defers to 'other lanes' — but guilds-factions, entity-career, and player-motor never actually confirm these are deliberate omissions rather than unreported missing-feature parity gaps."
+        },
+        {
+          "area": "Advanced climbing / Rappel-Hanging excluded by a surveyor's own doctrine call, not brief.md's list",
+          "why": "player-motor labels Rappel/Hanging/advanced climbing 'doctrine' and skips it, but brief.md's approved-departures list (renderer, voxel characters, runtime, audio synthesis, mod tree, EnhancedCombatAI) does not include climbing. A self-authorized scope-out that may be hiding a real unported subsystem."
+        },
+        {
+          "area": "Ship travel / vessel purchase subsystem never formally evaluated",
+          "why": "region-law-money notes BankPurchasePopUp's buy-ship stub and unbuilt 'ship scenes' as a recorded departure, but this is absent from brief.md's doctrine list. If ships are genuinely unported, that is itself a parity finding (a missing subsystem) no chunk ever filed as one."
+        },
+        {
+          "area": "Shared UI widgets itemScroller.js, messageBox.js, listPicker.js — unowned",
+          "why": "ui-crafting and ui-native-core both list these three as unread, each implicitly assuming another chunk owns them. Unlike toolTip.js (confirmed fully read by ui-misc-2), no chunk claims a real pass on these three, which back inventory, trade, and dialog windows."
+        },
+        {
+          "area": "Brief-named BUG-lens patterns with no dedicated codebase sweep",
+          "why": "brief.md names: optional-chaining dereference on a possibly-undefined object, NaN arithmetic paths, frame-gating functions with inconsistent undefined-vs-value returns, and listeners registered before their handler exists. 5 sweeps exist; sweep-lifecycle covers listener teardown but not registration-order, and none greps the other 3 patterns codebase-wide."
+        },
+        {
+          "area": "SENSES_INTERVAL_UNITS cadence — flagged unverified, never closed",
+          "why": "sweep-wiring's notes end with 'SENSES_INTERVAL_UNITS cadence unverified' as a loose thread with no follow-up chunk; enemy-ai read EnemySenses.cs fully but never confirmed this specific constant against DFU."
+        },
+        {
+          "area": "dfPalette.js — orphaned reader",
+          "why": "formats-binary explicitly states it did not read dfPalette.js ('readEmbedded/headerLength assumed - not in chunk'); no other chunk mentions it at all. A palette-format reader with zero verified reads anywhere in the 43-chunk audit."
+        },
+        {
+          "area": "itemTemplates.json and SKILLS enum order — named unread, no other claimant",
+          "why": "systems-misc lists both explicitly as not read. items-loot-trade covers ItemBuilder/ItemHelper logic extensively but never the underlying itemTemplates.json data table, and no chunk claims the SKILLS enum ordering was diffed against DaggerfallUnityEnums.cs."
+        },
+        {
+          "area": "getMapPixelID — single citation, no owner elsewhere",
+          "why": "systems-misc names getMapPixelID among files not read; it does not appear as read or verified in any other chunk's coverage notes, leaving this map-coordinate helper effectively unchecked."
+        },
+        {
+          "area": "voxel-visual-2 and world-assembly — near-zero findings (1 each) despite very large surface",
+          "why": "voxel-visual-2 covers 33 files / 4724 lines with only 1 confirmed finding; world-assembly covers 16 files / 2581 lines with only 1. Both claim thorough C# cross-checks, but ratios this low relative to size are worth a light second pass, especially world-assembly's terrain math, which the port itself calls untestable without ARENA2."
+        }
+      ],
+      "assessment": "The 43-chunk + 5-sweep survey is broad and mostly self-consistent, but three failure modes emerge when cross-referencing coverage.json against chunklist.json (file/line counts) and raw findings-by-group counts (223 raw -> 194 confirmed).\n\n(1) Implausible zero/near-zero groups: quest-core (10 files, 5376 lines, incl. the audit's largest file actions.js at 2772 lines / ~50 DFU quest actions) produced 0 findings — the most suspicious result given quest actions are DFU's historically buggiest layer. formats-binary (15 files/5461 lines) and formats-defs (15 files/2244 lines) also landed at 0, each with named edge cases dropped as 'unobservable' rather than resolved.\n\n(2) 'Everybody's problem, nobody's job' files: several files are cited as unread by 2-3 *different* chunks, each assuming another covers it, and none does — hostMagic.js, equip.js, the day-change trio (shopStock/weatherSim/regionPower), nameGen.json, shared UI widgets. Genuine coordination gaps, not deliberate scope.\n\n(3) Unilateral scope decisions (advanced climbing, ship travel) absent from brief.md's approved-departures list, plus four brief-named BUG-lens patterns (optional-chaining dereference, NaN paths, inconsistent frame-gate returns, listener-registration-order) with no dedicated sweep despite five sweeps existing.\n\nRanked by audit weight × citation concreteness, with quest-core's zero and the hostMagic.js/equip.js orphans at the top."
+    }
+  },
+  "workflowProgress": [
+    {
+      "type": "workflow_phase",
+      "index": 1,
+      "title": "Verify"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 2,
+      "title": "Critic"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 1,
+      "label": "verify:batch-01",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "adae21810df016545",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787736753977,
+      "queuedAt": 1787736752251,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787737032698,
+      "tokens": 106918,
+      "toolCalls": 50,
+      "durationMs": 277883,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F009\",\"verdict\":\"confirmed\",\"reason\":\"C#: EnemyMotor.cs:594-597 picks RangedAttack2 when HasRangedAttack2; DaggerfallMobileUnit.cs:840-841 maps it to EnemyBasics.RangedAttack2Anims (records 25-29, EnemyBasics.cs:103-109), distinct from RangedAttack1Anims (20-24). JS: mobileUnit.js:120 always returns RANGED_ATTACK1_ANIMS for state 'ranged'; no RANGED_ATTACK2_ANIMS exists in src/…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 2,
+      "label": "verify:batch-02",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "a5d8f8e9af8c0c9a5",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787736753799,
+      "queuedAt": 1787736752251,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787736979600,
+      "tokens": 94528,
+      "toolCalls": 57,
+      "durationMs": 225800,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F015\",\"verdict\":\"confirmed\",\"reason\":\"DFU FactionFile.cs:537-538: Subgroup=3, Individual=4; StaticNPC.cs:319 tests type==(int)Individual(4). Port's staticNpc.js:220 sets FACTION_TYPE_INDIVIDUAL=3, used at :209 - checks Subgroup not Individual. Port's own faction dict and quest code (questMacros.js:321,365; actions.js:2340,2412) correctly use 4 elsewhere, confirming staticNpc.js…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 3,
+      "label": "verify:batch-03",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "a6a50711a489124d5",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787736982655,
+      "queuedAt": 1787736752251,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787737136336,
+      "tokens": 81813,
+      "toolCalls": 40,
+      "durationMs": 153679,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F021\",\"verdict\":\"confirmed\",\"reason\":\"DFU MobilePersonBillboard.SetIdle (MobilePersonBillboard.cs:291-313) resets currentFrame=0/animTimer=1 on every idle<->move transition, gated by MobilePersonMotor.Update's IsIdle checks (:232,238). Port's MobilePerson.update (mobilePerson.js:225-256) keeps one monotonic this.frame/this._timer across the same transition logic (line 226-227),…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 4,
+      "label": "verify:batch-04",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "a28ff7e77aaa2f2b7",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787737035585,
+      "queuedAt": 1787736752251,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787737219602,
+      "tokens": 83418,
+      "toolCalls": 37,
+      "durationMs": 184016,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F027\",\"verdict\":\"confirmed\",\"reason\":\"LevitateMotor.cs:83-89 computes overEncumbered=(CarriedWeight*4>250)&&!levitating&&!GodMode and, when swimming+overEncumbered+not climbing+not water-walking, forces upDownVector=down (replacing the Jump/Crouch arms via if/else-if). motor.js:520-531 (_step) computes my purely from input.up/input.down with no encumbrance term at all, and no h…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 5,
+      "label": "verify:batch-05",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "a583b6a874a3c1795",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787737141080,
+      "queuedAt": 1787736752251,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787737372946,
+      "tokens": 109144,
+      "toolCalls": 48,
+      "durationMs": 231866,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F033\",\"verdict\":\"confirmed\",\"reason\":\"DFU DaggerfallMissile.DoCollision (DaggerfallMissile.cs:365-369) plays UseSpellBillboardAnims(1,true) at 15fps for any non-touch elemental missile hit. JS defines IMPACT_FPS=15 (flatAnimation.js:33) but retireMissile in both hosts (hostMagic.js:363-371 called :404/421/432; dungeonContext.js:1592-1604 called :1618/1630/1706/1721) destroys th…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 6,
+      "label": "verify:batch-06",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "ae7fd9e2b76713758",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787737222831,
+      "queuedAt": 1787736752251,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787737399180,
+      "tokens": 87058,
+      "toolCalls": 50,
+      "durationMs": 176349,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F039\",\"verdict\":\"confirmed\",\"reason\":\"paintOverlay.js:9 mountPaintOverlay has zero importers project-wide. worldModes.js:2233 forwards `paint` into buildInteriorContext's opts, but interiorContext.js never reads opts.paint (only peopleVisible :198, setupStaticNpc :225, voxelfolk :239). Confirmed dead code.\",\"confidence\":\"high\"},{\"id\":\"F040\",\"verdict\":\"confirmed\",\"reason\":\"DFU E…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 7,
+      "label": "verify:batch-07",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "aad43028fc55fd812",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787737376191,
+      "queuedAt": 1787736752251,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787737613160,
+      "tokens": 96862,
+      "toolCalls": 54,
+      "durationMs": 236968,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F045\",\"verdict\":\"confirmed\",\"confidence\":\"high\",\"reason\":\"shared.js:136-149 night-branch buildPanorama has no try/catch on its two fetchBytes calls, unlike the day branch (:150-163) which catches and degrades. use() (:171-195) sets pending=key (:178) then `buildPanorama(...).then(apply)` (:194) with no .catch; pending is only cleared inside apply() (:191/:181), which never runs…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 8,
+      "label": "verify:batch-08",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "a13fdb38a96519303",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787737402587,
+      "queuedAt": 1787736752251,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787737561286,
+      "tokens": 91892,
+      "toolCalls": 39,
+      "durationMs": 158698,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F051\",\"verdict\":\"confirmed\",\"confidence\":\"high\",\"reason\":\"dungeon.js:33 imports `held` as a function; at :427 the fly-cam branch is gated `} else if (!held) {` where `held` is that function reference (always truthy), so `!held` is always false and the fly-cam body (:428-432) never runs. Sibling host exterior.js:1545 uses a bare `} else {` for the identical block, confirming int…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 9,
+      "label": "verify:batch-09",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "a2a3447c47ae5433c",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787737564411,
+      "queuedAt": 1787736752252,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787737794093,
+      "tokens": 95172,
+      "toolCalls": 48,
+      "durationMs": 229681,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F057\",\"verdict\":\"confirmed\",\"confidence\":\"high\",\"reason\":\"hudCtx.toggleRest is a duplicate object key (world.js:1922 then 1932; exterior.js:1016 then 1027) - the second assignment wins, so the LIVE keybinding is toggleExteriorRest -> exteriorRestDeps.enemiesNearby (world.js:975-976, exterior.js:936) = cityGuards.activeCount()>0 with no sight/distance test (cityGuards.js:113). T…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 10,
+      "label": "verify:batch-10",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "af68393e8ec99b8c4",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787737616497,
+      "queuedAt": 1787736752252,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787737984145,
+      "tokens": 124744,
+      "toolCalls": 58,
+      "durationMs": 367646,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F063\",\"verdict\":\"confirmed\",\"confidence\":\"high\",\"reason\":\"packItems (worldModes.js:698) returns a NEW filtered array each call; nativeTrade.js _move (:150-154,195) splices that throwaway copy, never touching playerEntity.items. commitTrade's Sell/SellMagic arm (worldModes.js:744-754) only pays and pushes to shelf.items - no splice from playerEntity.items anywhere. DFU: Daggerfa…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 11,
+      "label": "verify:batch-11",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "adcec2e2273a654e4",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787737797453,
+      "queuedAt": 1787736752252,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787738130978,
+      "tokens": 118861,
+      "toolCalls": 43,
+      "durationMs": 333524,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F069\",\"verdict\":\"confirmed\",\"reason\":\"GameObjectHelper.cs:1032-1036 shifts position by +Size.y/2 only if(!inDungeon) BEFORE AlignBillboardToGround(:340) rays from position+0.2 = CENTRE+0.2 (interior) or marker+0.2 (dungeon). worldModes.js:464 sets by=inDungeon?y-h/2:y (correct bottom-anchor translation) but rays from by+0.2 (line 465) = (pre-ray-centre - h/2)+0.2, h/2 lower tha…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 12,
+      "label": "verify:batch-12",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "a52bb2f94d9a25fe8",
+      "model": "claude-sonnet-5",
+      "state": "error",
+      "startedAt": 1787737987461,
+      "queuedAt": 1787736752252,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787738458640,
+      "error": "agent({schema}): StructuredOutput retry cap (5) exceeded — 5 failed calls with no valid output",
+      "tokens": 142652,
+      "toolCalls": 90,
+      "durationMs": 471177
+    },
+    {
+      "type": "workflow_agent",
+      "index": 13,
+      "label": "verify:batch-13",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "a23708f954cdfbb47",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787738134330,
+      "queuedAt": 1787736752252,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787738393786,
+      "tokens": 116914,
+      "toolCalls": 68,
+      "durationMs": 259453,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F081\",\"verdict\":\"confirmed\",\"reason\":\"DFU BuildingTypes (DFLocation.cs:106-133): Library=10, GuildHall=11, Temple=14, Palace=16, matching port's own buildingNames.js:18-24. But encounters.js:36 BUILDING_TABLE maps {10:40,11:41,15:42,17:42,18:43,19:44}, shifting Library->GuildHall's slot, GuildHall->Temple's slot, Tavern(15)->Palace's slot, dropping Temple/Palace entirely and th…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 14,
+      "label": "verify:batch-14",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "a77995c3c7602b630",
+      "model": "claude-sonnet-5",
+      "state": "error",
+      "startedAt": 1787738397660,
+      "queuedAt": 1787736752252,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787738728643,
+      "error": "agent({schema}): StructuredOutput retry cap (5) exceeded — 5 failed calls with no valid output",
+      "tokens": 123638,
+      "toolCalls": 50,
+      "durationMs": 330982
+    },
+    {
+      "type": "workflow_agent",
+      "index": 15,
+      "label": "verify:batch-15",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "abffb8488c678ed51",
+      "model": "claude-sonnet-5",
+      "state": "error",
+      "startedAt": 1787738460555,
+      "queuedAt": 1787736752252,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787738936977,
+      "error": "agent({schema}): StructuredOutput retry cap (5) exceeded — 5 failed calls with no valid output",
+      "tokens": 138895,
+      "toolCalls": 68,
+      "durationMs": 476421
+    },
+    {
+      "type": "workflow_agent",
+      "index": 16,
+      "label": "verify:batch-16",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "ae653adc539559835",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787738730410,
+      "queuedAt": 1787736752252,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787738891052,
+      "tokens": 91179,
+      "toolCalls": 49,
+      "durationMs": 160641,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F099\",\"verdict\":\"confirmed\",\"reason\":\"PlayerGPS.UndiscoverBuilding (Internal/PlayerGPS.cs:986-1016) guards on onlyIfResidence/faction(TG,DB)/matchName; both quest callers pass onlyIfResidence=true + buildingName. Port's undiscoverBuilding (discovery.js:66-68) is an unconditional Map.delete, and world.js:2462 wires the dep as `(buildingKey)=>...` dropping topicTree.js:432's buil…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 17,
+      "label": "verify:batch-17",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "ab6a7160330c4e10c",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787738893939,
+      "queuedAt": 1787736752252,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787739146592,
+      "tokens": 112494,
+      "toolCalls": 66,
+      "durationMs": 252652,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F105\",\"verdict\":\"confirmed\",\"reason\":\"DaggerfallTavernWindow.cs:218,324 gate on GetGoldAmount() (PlayerEntity.cs:1313-1316 = goldPieces+letters), but tavernWindow.js:194,223 gate on court.js goldAmount() (coins-only Currency stack, :151-153), while payment uses deductGold which correctly spends letters. court.js even defines totalGoldAmount (:161-165) mirroring GetGoldAmount bu…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 18,
+      "label": "verify:batch-18",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "ab5be0591b1c7b2d2",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787738938592,
+      "queuedAt": 1787736752253,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787739292718,
+      "tokens": 108698,
+      "toolCalls": 81,
+      "durationMs": 354125,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F111\",\"verdict\":\"confirmed\",\"reason\":\"DFU training (DaggerfallGuildServiceTraining.cs:101) gates on GetPermanentSkillValue, distinct from GetLiveSkillValue=permanent+mod (DaggerfallSkills.cs:135-138). Port's tooSkilledToTrain (guildServiceActions.js:104-108) calls skillValue() (skills.js:60-71) which always folds entity._enchantMods.skillMods -- the live value. Wired via ui/gui…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 19,
+      "label": "verify:batch-19",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "aacf9a2babfc41c20",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787739149497,
+      "queuedAt": 1787736752253,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787739342541,
+      "tokens": 91884,
+      "toolCalls": 51,
+      "durationMs": 193043,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F117\",\"verdict\":\"confirmed\",\"reason\":\"Temple.cs:450-458 (Stendarr, !submerged, Random(0,50)<rank) feeds PlayerEntity.SetHealth:1205-1213 (AvoidDeath->10% MaxHealth) via GuildManager.AvoidDeath:396-402. Port's one damage door, characters/playerEntity.js hurtPlayer:96-131, clamps to 0 and fires death presenter on any 0-transition with no guild check anywhere; grep for AvoidDeath …"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 20,
+      "label": "verify:batch-20",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "a9a9e5f3c5606a1cf",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787739296054,
+      "queuedAt": 1787736752253,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787739627406,
+      "tokens": 115328,
+      "toolCalls": 59,
+      "durationMs": 331351,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F123\",\"verdict\":\"confirmed\",\"reason\":\"DaggerfallEntity.cs:400-416: SetIncreasedArmorValueModifier/SetDecreasedArmorValueModifier are independent min-set (non-stacking) channels; StrengthensArmor.cs:63 and BadReactionsFrom.cs:86/WeakensArmor.cs:63 each pass -5, so N items of the same effect still cap that channel at -5. Port enchantments.js:428-429,527 does `mods.armorMod += -5`…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 21,
+      "label": "verify:batch-21",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "a859134cb06945345",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787739345717,
+      "queuedAt": 1787736752253,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787739663808,
+      "tokens": 105380,
+      "toolCalls": 45,
+      "durationMs": 318090,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F129\",\"verdict\":\"confirmed\",\"reason\":\"DFU's Alchemist arm calls RandomlyAddPotionRecipe(25,items) (DaggerfallLoot.cs:163-166). Port stub: shopStock.js:150-152 is a bare comment, no call. randomlyAddPotionRecipe IS ported and live elsewhere (loot.js:383-389, called from loot.js:404,423), proving this is an unwired seam not a missing helper. Alchemist shelves never stock the reci…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 22,
+      "label": "verify:batch-22",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "a4b0ca836df569749",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787739631776,
+      "queuedAt": 1787736752253,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787739783788,
+      "tokens": 81394,
+      "toolCalls": 37,
+      "durationMs": 152011,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F135\",\"verdict\":\"confirmed\",\"reason\":\"paperdollViewer.js:1189 gates on Math.hypot(gest.x,gest.y)/longest (net vector) and resets the whole gesture on the 1s boundary (line 1186) - the pre-AUDIT-24 logic. DFU's WeaponManager.cs:808 uses TravelDist/_longestDim, a rolling-window path-length sum (TrimOld :111-122), explicitly not equal to summed-vector magnitude (:99-101). The game…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 23,
+      "label": "verify:batch-23",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "ac38337c15970e223",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787739667576,
+      "queuedAt": 1787736752253,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787739947181,
+      "tokens": 107159,
+      "toolCalls": 50,
+      "durationMs": 279603,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F141\",\"verdict\":\"confirmed\",\"reason\":\"DaggerfallGuildServicePopupWindow.cs plays PlayOneShot(ButtonClick) in TalkButton (:293), ServiceButton (:462), ExitButton (:479), JoinButton (:499). JS guildServiceWindow.js imports no audio module; click()/input() (lines 134-166) call no sound API, nor does the host at worldModes.js:1393. Silent panel confirmed vs DFU's audible clicks.\",\"…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 24,
+      "label": "verify:batch-24",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "ae5c690c601f87617",
+      "model": "claude-sonnet-5",
+      "state": "error",
+      "startedAt": 1787739787442,
+      "queuedAt": 1787736752253,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787740219886,
+      "error": "agent({schema}): StructuredOutput retry cap (5) exceeded — 5 failed calls with no valid output",
+      "tokens": 127725,
+      "toolCalls": 51,
+      "durationMs": 432443
+    },
+    {
+      "type": "workflow_agent",
+      "index": 25,
+      "label": "verify:batch-25",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "a4a73bcdac03c582f",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787739950507,
+      "queuedAt": 1787736752253,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787740177322,
+      "tokens": 99477,
+      "toolCalls": 56,
+      "durationMs": 226814,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F153\",\"verdict\":\"confirmed\",\"reason\":\"DFU TransferItem quest arm (DaggerfallInventoryWindow.cs:1480-1505) refuses removal without AllowDrop/CanDropQuestItems and sets PlayerDropped true/false. nativeInventory.js Remove arm (453-501) and _pickRemote (549-594) have zero questItem checks - grep confirms. Grepped src/ for `.playerDropped =`: only item.js:78/315 (default/save-load) …"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 26,
+      "label": "verify:batch-26",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "aaaea2857b80ea603",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787740180284,
+      "queuedAt": 1787736752253,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787740405604,
+      "tokens": 106294,
+      "toolCalls": 52,
+      "durationMs": 225319,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F159\",\"verdict\":\"confirmed\",\"reason\":\"TalkWindow.cs:226-227/798-804 wire conversation up/down arrows to +/-5 ScrollIndex handlers (:1442-1452); UpdateScrollBarConversation pins to bottom only on OnPush and after adding Q&A (:1282), not every frame. Port TALK_RECTS (nativeTalk.js:40-57) has no such arrows, and draw() (nativeTalk.js:338) calls conversationScroll=max(0,contentH-pa…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 27,
+      "label": "verify:batch-27",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "a07e1d5193d39f68e",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787740222125,
+      "queuedAt": 1787736752253,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787740439167,
+      "tokens": 92730,
+      "toolCalls": 48,
+      "durationMs": 217041,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F165\",\"verdict\":\"confirmed\",\"reason\":\"DFU DaggerfallTalkWindow.cs:1259 sets question label HorizontalAlignment=Right after AddItem; BaseScreenComponent.cs:1214-1215 computes x=parentRect.xMax-margin-width for Right, genuinely right-aligning it. Answers stay Left (cs:1270). nativeTalk.js:339-345 draws every line (question or answer) at fixed x=R.conversation[0], no kind-based of…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 28,
+      "label": "verify:batch-28",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "a4466ef39c42b9d0a",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787740409304,
+      "queuedAt": 1787736752253,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787740623848,
+      "tokens": 90140,
+      "toolCalls": 42,
+      "durationMs": 214543,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F171\",\"verdict\":\"confirmed\",\"reason\":\"DFU's NameItemButon_OnMouseClick (DaggerfallItemMakerWindow.cs:797-806) opens `new DaggerfallInputMessageBox(uiManager, this)` - the 2-arg ctor - which never sets textBox.MaxCharacters, so it stays at TextBox.cs:26's field default of 31. The port's rename input (itemMakerWindow.js:316) gates with `this.itemName.length < 26`. No test pin exi…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 29,
+      "label": "verify:batch-29",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "aa814116f1c8275c8",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787740442999,
+      "queuedAt": 1787736752253,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787740650129,
+      "tokens": 94427,
+      "toolCalls": 55,
+      "durationMs": 207129,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F177\",\"verdict\":\"confirmed\",\"reason\":\"DFU: MixCauldron (cs:311-360) never touches nameLabel; only AddRecipeToCauldron sets nameLabel.Text=recipeName on fill (cs:307); Add/RemoveFromCauldron clear it (cs:255,268). Port inverts: potionMakerWindow.js:158 sets nameLabel in _mix() (MixCauldron's port); _fillFrom (:184-194, AddRecipeToCauldron's port) never sets it, only clears via _…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 30,
+      "label": "verify:batch-30",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "acf80f143fb9a8f79",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787740627026,
+      "queuedAt": 1787736752253,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787740863655,
+      "tokens": 100222,
+      "toolCalls": 56,
+      "durationMs": 236627,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F183\",\"verdict\":\"confirmed\",\"reason\":\"PlayerAmbientLight.UpdateAmbientLight (PlayerAmbientLight.cs:84-92) picks CastleAmbientLight/SpecialAreaLight (0.58) vs DungeonAmbientLight (0.12) via IsPlayerInsideDungeonCastle/SpecialArea. Port's DUNGEON_AMBIENT (dungeonLights.js:14) is applied unconditionally in worldModes.js:2745 and dungeon.js:247; the live castleBlockAt/inCastle pred…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 31,
+      "label": "verify:batch-31",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "a1a58eb3231a92569",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787740653181,
+      "queuedAt": 1787736752254,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787740915350,
+      "tokens": 126658,
+      "toolCalls": 65,
+      "durationMs": 262168,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F189\",\"verdict\":\"confirmed\",\"reason\":\"DFU sets questItem.UseClicked=true at DaggerfallInventoryWindow.cs:1683 (!UseClicked && ActionWatching); ItemUsedDo.cs:65 polls it, ported at actions.js:1027-1037. grep 'useClicked' src/ shows only quest/item.js:74/312 (init/deserialize) - no production write ever sets it true. nativeInventory.js:333-375 _useResult never reads useItem.js:29…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 32,
+      "label": "verify:batch-32",
+      "phaseIndex": 1,
+      "phaseTitle": "Verify",
+      "agentId": "ae6408a7d04221765",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787740866645,
+      "queuedAt": 1787736752254,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You are an adversarial verifier in AUDIT 26, a parity audit of the 1:1 JS Daggerfall port at /home/user/project-dagger against Daggerfall Unity at /home/user/interkarma/daggerfall-unity/Assets/Scripts (commit 81e89e9). First read the audit brief at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/brief.md - its doctrine (what is a deliberate departure…",
+      "lastProgressAt": 1787741069694,
+      "tokens": 101771,
+      "toolCalls": 58,
+      "durationMs": 203047,
+      "resultPreview": "{\"verdicts\":[{\"id\":\"F195\",\"verdict\":\"confirmed\",\"reason\":\"DFU HandleClick (JournalWindow.cs:401)->HandleQuestClicks(:439-466) resolves GetMessageResources(:471-485) and offers a find-place dialog wired to GotoPlace(:360). Port's getMessageResources (questMacros.js:549) has zero src/ callers; QuestJournalWindow.click (ui/questJournal.js) only handles exit/dialog/arrow rects and otherwise consumes c…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 33,
+      "label": "critic",
+      "phaseIndex": 2,
+      "phaseTitle": "Critic",
+      "agentId": "a126100264e8165dc",
+      "model": "claude-sonnet-5",
+      "state": "done",
+      "startedAt": 1787741072656,
+      "queuedAt": 1787741071157,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "The 43-chunk + 5-sweep survey is broad and mostly self-cons…",
+      "promptPreview": "You are the completeness critic of AUDIT 26 (parity audit of /home/user/project-dagger vs Daggerfall Unity). Read the surveyors' coverage notes at /tmp/claude-0/-home-user-project-dagger/f208e17c-50cf-5d2e-84cb-04bd749381c9/scratchpad/audit26/verify/coverage.json. Name what the audit structurally MISSED: chunks whose notes admit unread files (list them concretely), implausible zero-finding groups …",
+      "lastProgressAt": 1787741387101,
+      "tokens": 107348,
+      "toolCalls": 14,
+      "durationMs": 314444,
+      "resultPreview": "{\"gaps\":[{\"area\":\"Quest action system (src/systems/quest/actions.js) — zero findings on the audit's largest file\",\"why\":\"actions.js is 2772 lines implementing ~50 DFU quest action classes; the owning chunk quest-core (10 files, 5376 lines total) reported 0 confirmed findings — the single largest zero-yield block in the audit against historically the buggiest DFU subsystem. Top candidate for a dedi…"
+    }
+  ],
+  "totalTokens": 3472817,
+  "totalToolCalls": 1735
+}
