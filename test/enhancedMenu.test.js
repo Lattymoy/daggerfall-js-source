@@ -147,6 +147,68 @@ test('the destructive actions ask first', () => {
     'and it must actually delete - a button that does nothing is the lie the anti-lie law forbids');
 });
 
+// ── U51: THE PHONE RAIL WRAPS RATHER THAN SCROLLS ────────────────
+// Found by looking at the pause door on a Pixel 5. The rail is a flex
+// ROW on a phone with overflow-x: auto and its scrollbar hidden, so
+// everything past the fold was off-screen with no affordance at all -
+// four of seven destinations, Settings and Exit among them. That is
+// the AUDIT 24 shape exactly: a control that is drawn, exists, and
+// cannot be reached on the device that needs it most. Six did not fit
+// either, so the front door carried the same bug and nobody had
+// noticed, because the entry it hid was About rather than Exit.
+//
+// The live killer is tools/enhancedPauseProbe.mjs, which measures
+// every rail button against the viewport and names the ones outside
+// it. This holds the rule so it cannot be deleted as dead CSS.
+test('U51: the phone rail wraps, and the wizard rail does not', () => {
+  const css = read('src/ui/enhancedStyle.js');
+  const phone = css.slice(css.indexOf('@media (max-width: 860px)'),
+    css.indexOf('@media (prefers-reduced-motion'));
+  assert.ok(phone.length > 0, 'the phone media query is gone');
+  assert.match(phone, /\.rail \{ flex-wrap: wrap; overflow-x: visible; \}/,
+    'every destination must be ON the screen, not merely in the DOM');
+  // The wizard borrows this rail whole, and its rail is a WALK through
+  // ten stages in order - it shows where you ARE, not where you may
+  // go, and a walk that wraps stops reading as a line.
+  assert.match(phone, /\.wizard \.rail \{ flex-wrap: nowrap; overflow-x: auto; \}/,
+    'the wizard keeps its scroller');
+  assert.ok(phone.indexOf('.wizard .rail') > phone.indexOf('.rail { flex-wrap: wrap'),
+    'the wizard override has to come after the rule it overrides');
+});
+
+// ── U51: A READING COLUMN ────────────────────────────────────────
+// The body had no width, so a card carrying three lines stretched the
+// full width of a desktop pane and every screen but Settings - which
+// owns its own three columns - read as mostly empty.
+test('U51: the body is a column, and the flush body is not', () => {
+  const css = read('src/ui/enhancedStyle.js');
+  assert.match(css, /\.body \{ padding: [^}]*max-width: 720px; \}/);
+  assert.match(css, /\.body\.flush \{ padding: 0; max-width: none; \}/,
+    'the settings pane owns its own columns and must not be capped');
+});
+
+// ── U51: ONE SLOT, DRAWN ONE WAY ─────────────────────────────────
+// Four panes now render the same single quicksave - Continue, Load,
+// Save and Exit. Four hand-rolled copies of "career, level, date,
+// time" is how they come to disagree about which of those a player is
+// shown before overwriting or discarding a game.
+test('U51: the saved game is rendered from one place', () => {
+  const src = read('src/ui/enhancedMenu.js');
+  assert.match(src, /^const saveLine = \(save\) =>/m);
+  assert.match(src, /^const saveStats = \(save\) =>/m);
+  const joins = [...src.matchAll(/level \$\{save\.level\}/g)];
+  assert.equal(joins.length, 1, 'the character line is written once');
+  const health = [...src.matchAll(/save\.maxHealth \? /g)];
+  assert.equal(health.length, 1, 'and so are the numbers');
+  // ...and the panes that need it read through them
+  for (const pane of ['paneContinue', 'paneSave']) {
+    const at = src.indexOf(`function ${pane}(body)`);
+    const body = src.slice(at, src.indexOf('\n}', at));
+    assert.match(body, /saveLine\(save\)/, `${pane} must draw the shared line`);
+    assert.match(body, /saveStats\(save\)/, `${pane} must draw the shared numbers`);
+  }
+});
+
 // AUDIT F8, found by the live check rather than by reading: on a PHONE
 // the detail pane is a sheet that only rises when a ROW is tapped, so
 // the category card - and the Reset button inside it - could not be

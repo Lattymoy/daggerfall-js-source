@@ -89,11 +89,42 @@ and kept dropped, because mouselook is the port's resting state so this
 screen always mounts over a locked pointer, and a locked pointer never
 reaches the DOM at any z-index.
 
-PROVED IN A REAL BROWSER by `tools/enhancedPauseProbe.mjs` - 45/45 on a
-desktop and a Pixel 5, zero page errors, with no ARENA2 on disk. What
-it does NOT prove is stated in its own header: that the four hosts call
-it, which needs a living game and therefore game data. That half is
-held by source pins. 17 pins; 12 mutations, 12 dead - and TWO of those
+THREE THINGS LOOKING AT IT ON A PIXEL 5 FOUND, and two of them were
+U49's bugs rather than this slice's. THE PHONE RAIL WRAPS now: it is a
+flex row with `overflow-x: auto` and its scrollbar hidden, so four of
+the seven destinations sat off the end of the screen with no affordance
+of any kind - SETTINGS and EXIT among them, which is to say the door's
+entire reason for existing and the way out of it. That is the AUDIT 24
+shape exactly: a control that is drawn, exists, and cannot be reached on
+the device that needs it most. SIX never fitted either, so the front
+door has carried this since U49 and nobody saw it, because the entry it
+hid was About. The WIZARD's rail is exempt and pinned as exempt - that
+one is a walk through ten stages in order, and a walk that wraps stops
+reading as a line. Second, `.body` had no width at all, so a card of
+three lines stretched the full width of a desktop pane and every screen
+but Settings read as mostly empty; it is a 720px reading column now,
+with the settings pane's own `flush` body pinned UNcapped. Third, the
+Save card draws the game it is about to overwrite - the same name, line
+and numbers the Continue card shows - because that is precisely what
+the press replaces, and the Exit card stopped repeating its own confirm
+(both were titled "Leave this game", so the press between them looked
+like a screen that had not responded; the heading says where you go,
+the button says what you do, and the confirm echoes the button).
+
+FOUR PANES NOW DRAW ONE SLOT - Continue, Load, Save and Exit - so the
+character line and the health/gold numbers are written once and the pin
+counts the literals to prove no second copy grew back.
+
+PROVED IN A REAL BROWSER by `tools/enhancedPauseProbe.mjs` - 51/51 on a
+desktop and a Pixel 5, zero page errors, with no ARENA2 on disk - and
+it seeds a quicksave, because four of these panes are built FROM the
+save and with an empty slot every claim about what a player is shown
+before overwriting a game is vacuously true. It MEASURES every rail
+button against the viewport, since reachable and VISIBLE are different
+claims and the 44px target check passes either way. What it does NOT
+prove is stated in its own header: that the four hosts call it, which
+needs a living game and therefore game data. That half is held by
+source pins. 20 pins; 20 mutations, 20 dead - and TWO of those
 only after the pins they exposed were rewritten. The first draft of the
 fork test passed for the wrong reason: the second clause is `typeof
 document !== 'undefined'`, node has none, so both skins fell to the

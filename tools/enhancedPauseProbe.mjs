@@ -43,9 +43,26 @@ const check = (name, ok, detail = '') => {
 
 const browser = await chromium.launch();
 
+// A SAVE IN THE SLOT, because the empty state is not the interesting
+// one. Four of this screen's panes are built FROM the quicksave, and
+// with none in storage they all draw their "nothing here yet" arm and
+// every claim about what a player is shown before overwriting a game
+// is vacuously true. save.js validates the envelope version, so this
+// is what restorableQuicksave will actually accept (v === 1).
+const SAVE = {
+  v: 1, name: 'Aelwyn', chargenDone: true,
+  career: { name: 'Spellsword' }, level: 4,
+  health: 41, maxHealth: 58,
+  classicMinutes: 396_000_000 + 60 * 17 + 34,
+  items: [{ name: 'Gold Pieces', stackCount: 1287 }],
+};
+
 /** Drive the front door to the moment a game starts, so the boot menu
  *  unmounts through runEnhancedMenu's own resolve. */
 async function toGamePage(page, skin) {
+  await page.addInitScript((snap) => {
+    try { localStorage.setItem('dagger.quicksave', JSON.stringify(snap)); } catch { /* storage off */ }
+  }, SAVE);
   await page.goto(`${BASE}/?skin=${skin}`, { waitUntil: 'networkidle' });
   if (skin === 'enhanced') {
     await page.waitForSelector('#enhanced-menu .railbtn', { timeout: 15000 });
@@ -110,6 +127,26 @@ async function run(label, opts) {
   check(`${label}: it opens on Save Game`,
     (await page.locator('#enhanced-pause .head h2').textContent()) === 'Save Game');
 
+  // EVERY DESTINATION IS ON THE SCREEN, not merely in the DOM. The
+  // phone rail scrolls horizontally with its scrollbar hidden, so a
+  // seventh entry went off the end with no affordance at all - and the
+  // one pushed off was EXIT. The 44px check below passes either way,
+  // which is the point: reachable and VISIBLE are different claims.
+  const offscreen = await page.$$eval('#enhanced-pause .railbtn', (ns) => ns
+    .map((n) => ({ t: (n.textContent ?? '').trim(), r: n.getBoundingClientRect() }))
+    .filter(({ r }) => r.right > innerWidth + 1 || r.bottom > innerHeight + 1
+      || r.left < -1 || r.top < -1)
+    .map(({ t }) => t));
+  check(`${label}: every rail destination is ON the screen`,
+    offscreen.length === 0, offscreen.join(', '));
+
+  // THE CARD IS THE GAME BEING OVERWRITTEN, not a label for the button
+  const saveCard = await page.locator('#enhanced-pause .card').first().textContent();
+  check(`${label}: the Save card names what the press replaces`,
+    saveCard.includes('Overwrites') && saveCard.includes('Aelwyn')
+    && /Health/i.test(saveCard) && /Gold/i.test(saveCard),
+    saveCard.replace(/\s+/g, ' ').slice(0, 90));
+
   // ── 3. THE REASON THIS DOOR EXISTS ─────────────────────────────
   // U49's own record: settings were "reachable only at boot: once you
   // were playing there was no door back that was not a reload".
@@ -149,10 +186,15 @@ async function run(label, opts) {
 
   // ── 7. EXIT ASKS FIRST ─────────────────────────────────────────
   await page.locator('#enhanced-pause .railbtn', { hasText: 'Exit' }).click();
-  await page.locator('#enhanced-pause .acts button', { hasText: 'Exit to the main menu' }).click();
+  await page.locator('#enhanced-pause .acts button', { hasText: 'Leave this game' }).click();
   check(`${label}: leaving a game asks before it throws it away`,
     (await page.locator('#enhanced-pause .card p.meta').first().textContent()).length > 0
     && (await page.locator('#enhanced-pause').textContent()).includes('Cancel'));
+  // A CONFIRM THAT REPEATS THE CARD IT REPLACED reads as a screen that
+  // did not respond: both were titled "Leave this game" at first.
+  check(`${label}: ...and the confirm does not repeat the heading it replaced`,
+    (await page.locator('#enhanced-pause .card h3').first().textContent()) === 'Leave this game',
+    'the confirm echoes the BUTTON, and the card heading says where you go');
   check(`${label}: ...and Cancel means cancel`,
     await page.locator('#enhanced-pause .acts button', { hasText: 'Cancel' }).count() === 1);
   await page.locator('#enhanced-pause .acts button', { hasText: 'Cancel' }).click();
@@ -163,7 +205,7 @@ async function run(label, opts) {
   // The back stack first: a confirm card is closed by the same key
   // before the screen is, or the press meaning "not that" quits.
   await page.locator('#enhanced-pause .railbtn', { hasText: 'Exit' }).click();
-  await page.locator('#enhanced-pause .acts button', { hasText: 'Exit to the main menu' }).click();
+  await page.locator('#enhanced-pause .acts button', { hasText: 'Leave this game' }).click();
   await page.keyboard.press('Escape');
   check(`${label}: Escape cancels the confirm before it closes the screen`,
     (await page.locator('#enhanced-pause').count()) === 1

@@ -176,6 +176,20 @@ function savedGame() {
   };
 }
 
+// THE SAVED GAME'S OWN LINE AND ITS NUMBERS, written once. FOUR
+// panes now draw the same single slot - Continue, Load, Save and Exit
+// - and four hand-rolled copies of "career, level, date, time" is how
+// they come to disagree about which of those a player is shown. Both
+// helpers are lifted verbatim out of paneContinue, so that pane draws
+// exactly what it drew before.
+const saveLine = (save) => [save.career, save.level ? `level ${save.level}` : null,
+  save.when, save.hour].filter(Boolean).join(' · ');
+
+const saveStats = (save) => [
+  ['Health', save.maxHealth ? `${save.health} / ${save.maxHealth}` : save.health],
+  ['Gold', save.gold != null ? save.gold.toLocaleString() : null],
+];
+
 function stats(pairs) {
   const dl = el('dl', 'stats');
   for (const [k, v] of pairs) {
@@ -250,12 +264,8 @@ function paneContinue(body) {
   }
   const c = el('div', 'card');
   c.append(el('h3', null, save.name));
-  c.append(el('p', 'meta', [save.career, save.level ? `level ${save.level}` : null,
-    save.when, save.hour].filter(Boolean).join(' · ')));
-  c.append(stats([
-    ['Health', save.maxHealth ? `${save.health} / ${save.maxHealth}` : save.health],
-    ['Gold', save.gold != null ? save.gold.toLocaleString() : null],
-  ]));
+  c.append(el('p', 'meta', saveLine(save)));
+  c.append(stats(saveStats(save)));
   c.append(acts([{ label: 'Continue', primary: true, onClick: () => onAction('continue') }]));
   body.append(c);
 }
@@ -341,15 +351,20 @@ function paneSave(body) {
       'This part of the game holds no save door. Step back outside and the quicksave returns.'));
     return;
   }
+  // THE CARD IS THE GAME BEING OVERWRITTEN, not a label for the
+  // button. It draws the same name, line and numbers the Continue card
+  // does, because that is precisely what the press replaces - and a
+  // player who can read it has been told, which is the part classic
+  // never does at any size.
   const save = savedGame();
   const c = el('div', 'card');
-  c.append(el('h3', null, 'Quicksave'));
-  c.append(el('p', 'meta', save
-    ? `Overwrites ${save.name}${save.when ? ` · ${save.when}` : ''}${save.hour ? ` · ${save.hour}` : ''}`
-    : 'The first save in this slot.'));
+  if (save) c.append(el('span', 'tag', 'Overwrites'));
+  c.append(el('h3', null, save ? save.name : 'Quicksave'));
+  c.append(el('p', 'meta', save ? saveLine(save) : 'The first save in this slot.'));
+  if (save) c.append(stats(saveStats(save)));
   c.append(acts([{ label: 'Save', primary: true, onClick: () => onAction('save') }]));
   body.append(c);
-  body.append(empty('One slot', 'Every save writes the same quicksave. Named slots are their own slice.'));
+  body.append(empty('One slot', 'Every save writes the same quicksave, replacing whatever is above. Named slots are their own slice.'));
 }
 
 // ── EXIT (pause only) ────────────────────────────────────────────
@@ -362,14 +377,20 @@ function paneSave(body) {
 // premise of the enhanced skin - it opens before the ARENA2 pick and
 // cannot read TEXT.RSC to ask a question - and it is recorded here
 // rather than left to look like an oversight.
+// THE HEADING SAYS WHERE YOU GO; THE BUTTON SAYS WHAT YOU DO; THE
+// CONFIRM ECHOES THE BUTTON. The first draft titled the card AND the
+// confirm "Leave this game", so the one press between them appeared to
+// change nothing - a confirm that repeats the card it replaced reads
+// as a screen that did not respond.
 function paneExit(body) {
   const save = savedGame();
   const c = el('div', 'card');
-  c.append(el('h3', null, 'Leave this game'));
-  c.append(el('p', 'meta', 'You go back to the main menu. A browser tab cannot close itself.'));
-  c.append(stats([['Last save', save?.when ? `${save.when}${save.hour ? ` · ${save.hour}` : ''}` : 'none']]));
+  c.append(el('h3', null, 'Back to the main menu'));
+  c.append(el('p', 'meta', "A browser tab cannot close itself, so the port's door out is the "
+    + 'front door - the same unwind the death sequence uses.'));
+  c.append(stats([['Last save', save ? saveLine(save) : 'none']]));
   c.append(acts([{
-    label: 'Exit to the main menu',
+    label: 'Leave this game',
     primary: true,
     onClick: () => ask(
       'Leave this game',

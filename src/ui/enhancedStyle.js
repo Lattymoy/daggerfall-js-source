@@ -114,8 +114,16 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .head { padding: 28px 30px 18px; border-bottom: 1px solid var(--iron); }
 .head h2 { font-family: var(--display); font-weight: 300; font-size: 30px; margin: 0; }
 
-.body { padding: 24px 30px 40px; }
-.body.flush { padding: 0; }
+/* U51: A READING COLUMN. The body had no width at all, so a card
+   carrying three lines stretched the full 1500px of a desktop pane and
+   every screen but Settings - which owns its own three columns - read
+   as mostly empty. The cap is the measure the .empty paragraph already
+   uses one rule down (58ch), rounded to a pixel the cards can share,
+   and it is
+   LEFT rather than centred so the column starts on the same x as the
+   heading above it. */
+.body { padding: 24px 30px 40px; max-width: 720px; }
+.body.flush { padding: 0; max-width: none; }
 
 /* ── CARDS + ACTIONS ───────────────────────────────────────── */
 .card { border: 1px solid var(--iron); padding: 20px; margin-bottom: 16px; background: #12161b; }
@@ -286,6 +294,20 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   }
   .railbtn.on { border-left: 0; border-top-color: var(--brass); background: none; }
   .railbtn .rn { display: none; }
+  /* U51: IT WRAPS RATHER THAN SCROLLS. Seven destinations do not fit
+     one phone row, the scrollbar is hidden two rules up, and an
+     off-screen destination with no affordance is a destination that
+     does not exist - which is the AUDIT 24 shape exactly: a control
+     that is drawn, exists, and cannot be reached on the device that
+     needs it most. SIX did not fit either, so this is the front door's
+     bug as much as the pause door's; it only became visible when the
+     rail grew a seventh entry and the one pushed off the end was EXIT.
+     NOT THE WIZARD'S RAIL: that one is a WALK through ten stages in
+     order, it shows where you ARE rather than where you may go, and a
+     walk that wraps stops reading as a line. */
+  .rail { flex-wrap: wrap; overflow-x: visible; }
+  .railbtn { flex: 1 1 auto; }
+  .wizard .rail { flex-wrap: nowrap; overflow-x: auto; }
   .foot { display: none; }
   .pane { order: 2; }
   .head { padding: 22px 20px 16px; }
