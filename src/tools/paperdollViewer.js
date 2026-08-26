@@ -254,13 +254,17 @@ function applyVillager(v) {
 
 /** Show or hide the toggleable armour, and keep the buttons honest. */
 function setLoosePieces(on) {
-  for (const name of ['pauldrons', 'helm']) {
-    const m = pieceMesh[name];
-    if (!m) continue;
-    m.visible = on;
-    const btn = document.getElementById(name);
-    if (btn) btn.classList.toggle('on', on);
+  if (!on) {
+    armorOn.clear();
+    for (const byFamily of Object.values(armorPieceMeshes))
+      for (const m of Object.values(byFamily)) if (m) m.visible = false;
+    for (const id of Object.keys(ARMOR_BUTTONS)) {
+      const btn = document.getElementById(id);
+      if (btn) btn.classList.remove('on');
+    }
+    return;
   }
+  syncArmorPieceVisibility();
 }
 function setBodyColors(Carr) {
   if (!Carr) Carr = D.C;
@@ -332,8 +336,87 @@ function buildPiece(cp) {
 
 // Animated targets: body + every piece mesh (same FK moves armour with the body).
 const animTargets = [{ pos, base: basePos, vgrp, geo }];
+// Legacy combined meshes remain in the payload for compatibility, but the
+// dress-up UI below is item-slot driven and owns separate left/right pauldrons.
 const pieceMesh = {};
-for (const name of ['pauldrons','helm']) if (D[name]) pieceMesh[name] = buildPiece(D[name]);
+for (const name of ['pauldrons','helm']) if (D[name]) {
+  pieceMesh[name] = buildPiece(D[name]);
+  pieceMesh[name].visible = false;
+}
+
+const ARMOR_BUTTONS = Object.freeze({
+  'armor-cuirass': 'cuirass',
+  'armor-gauntlets': 'gauntlets',
+  'armor-greaves': 'greaves',
+  'armor-pauldronL': 'pauldronL',
+  'armor-pauldronR': 'pauldronR',
+  'armor-helm': 'helm',
+  'armor-boots': 'boots',
+});
+const ARMOR_FAMILY_NAMES = ['Leather', 'Chain', 'Plate'];
+let armorFamily = D.armorFamilies?.Plate ?? 2;
+const armorOn = new Set();
+const armorBySlot = Object.fromEntries((D.armor || []).map((a) => [a.slot, a]));
+const armorPieceMeshes = {};
+for (const a of (D.armor || [])) {
+  if (a.kind !== 'piece') continue;
+  armorPieceMeshes[a.slot] = {};
+  for (const family of [0, 1, 2]) {
+    const pack = a.families?.[family];
+    const m = pack ? buildPiece(pack) : null;
+    if (m) m.visible = false;
+    armorPieceMeshes[a.slot][family] = m;
+  }
+}
+
+function armorPack(slot) {
+  return armorBySlot[slot]?.families?.[armorFamily] || null;
+}
+function applyArmorBodyDelta(d) {
+  if (!d?.idx) return;
+  for (let k = 0; k < d.idx.length; k++) {
+    const f = d.idx[k], pb = k * 12, cb = k * 3;
+    if ((D.G ? D.G[f] : 0) === 1) continue;
+    const r = d.C[cb] / 255, g = d.C[cb + 1] / 255, b = d.C[cb + 2] / 255;
+    let oo = f * 18;
+    for (const vi of TRI) {
+      pos[oo] = d.P[pb + vi * 3] / 1000;
+      pos[oo + 1] = d.P[pb + vi * 3 + 1] / 1000;
+      pos[oo + 2] = d.P[pb + vi * 3 + 2] / 1000;
+      col[oo] = r; col[oo + 1] = g; col[oo + 2] = b;
+      oo += 3;
+    }
+  }
+}
+function applySelectedBodyArmor() {
+  // Stable inner->outer order. Greaves own their hip fauld; cuirass wins the
+  // tiny 1.12..1.14 overlap, matching their higher classic draw order.
+  for (const slot of ['boots', 'greaves', 'gauntlets', 'cuirass']) {
+    if (!armorOn.has(slot)) continue;
+    applyArmorBodyDelta(armorPack(slot));
+  }
+}
+function syncArmorPieceVisibility() {
+  for (const [slot, byFamily] of Object.entries(armorPieceMeshes)) {
+    for (const [family, m] of Object.entries(byFamily))
+      if (m) m.visible = armorOn.has(slot) && Number(family) === armorFamily;
+  }
+}
+function syncArmorButtons() {
+  for (const [id, slot] of Object.entries(ARMOR_BUTTONS)) {
+    const btn = document.getElementById(id);
+    if (btn) btn.classList.toggle('on', armorOn.has(slot));
+  }
+  const matBtn = document.getElementById('armormat');
+  if (matBtn) matBtn.textContent = 'armor: ' + (ARMOR_FAMILY_NAMES[armorFamily] || 'Plate');
+}
+async function rebuildArmorWardrobe() {
+  const c = classicClothingOn;
+  applyClassicClothing(c);
+  syncArmorPieceVisibility();
+  syncArmorButtons();
+  if (c) await syncClassicClothingTexture(c);
+}
 // ORC PIECES: one tusk pair and one brow per design, all built up front
 // and hidden. Building them lazily on selection would drop a new mesh
 // into animTargets mid-animation, and the animator holds a base-pose
@@ -756,9 +839,14 @@ function applyClassicClothing(c) {
       }
     }
   }
+  // Clothing is the under-layer; selected body armour is then written over
+  // the same exact rig faces. The skin compositor sees those final face colours
+  // as isolated atlas overrides, so armour never disables the skin texture.
+  applySelectedBodyArmor();
   basePos.set(pos);
   geo.getAttribute('position').needsUpdate = true;
   geo.getAttribute('color').needsUpdate = true;
+  syncArmorPieceVisibility();
 
   for (const nm in drapedMeshes) drapedMeshes[nm].visible = false;
   if (c && c.kind === 'drape' && c.drape) {
@@ -1547,7 +1635,22 @@ document.getElementById('wire').onclick = (e) => { mat.wireframe = !mat.wirefram
 let bgi = 0; const bgs = [0x14141a, 0x000000, 0x808088, 0xf0f0f0];
 postMat.uniforms.bg.value = new THREE.Color(bgs[0]);
 
-for (const name of ['pauldrons','helm']) { const btn = document.getElementById(name); if (btn) btn.onclick = (e) => { const m = pieceMesh[name]; if (m) { m.visible = !m.visible; e.target.classList.toggle('on', m.visible); if (name === 'helm') syncRace(); } }; }
+for (const [id, slot] of Object.entries(ARMOR_BUTTONS)) {
+  const btn = document.getElementById(id);
+  if (!btn) continue;
+  btn.onclick = async () => {
+    if (armorOn.has(slot)) armorOn.delete(slot); else armorOn.add(slot);
+    await rebuildArmorWardrobe();
+  };
+}
+{
+  const btn = document.getElementById('armormat');
+  if (btn) btn.onclick = async () => {
+    armorFamily = (armorFamily + 1) % 3;
+    await rebuildArmorWardrobe();
+  };
+}
+syncArmorButtons();
 document.getElementById('race').onclick = async (e) => { raceIx = (raceIx+1)%RACES.length; syncRace(); if (classicClothingOn) await syncClassicClothingTexture(classicClothingOn); e.target.textContent = 'race: '+RACES[raceIx]; const pal=(D.PALETTES||{})[PKEY[RACES[raceIx]]]; if(pal) document.getElementById('tone').textContent='tone: '+pal[toneIx[RACES[raceIx]]%pal.length].name;  };
 document.getElementById('tone').onclick = (e) => { const R=RACES[raceIx], pal=(D.PALETTES||{})[PKEY[R]]; if(!pal)return; toneIx[R]=(toneIx[R]+1)%pal.length; applyTone(); e.target.textContent='tone: '+pal[toneIx[R]%pal.length].name; };
 document.getElementById('walk').onclick = (e) => { gaitIx = (gaitIx+1)%3; e.target.textContent = ['idle','walk','run'][gaitIx]; e.target.classList.toggle('on', gaitIx>0); };

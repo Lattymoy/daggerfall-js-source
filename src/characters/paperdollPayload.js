@@ -30,7 +30,7 @@ import { buildCuirass, STEEL_RAMP } from './pieces/cuirass.js';
 import { buildGreaves } from './pieces/greaves.js';
 import { CLOTH_RAMP, MAIL_RAMP, LEATHER_RAMP } from './pieces/pieceLoft.js';
 import { clothingZones, CLOTHING_CATALOG } from './clothing.js';
-import { armorZones } from './armorSet.js';
+import { armorZones, ARMOR_CATALOG, MATERIAL_FAMILY } from './armorSet.js';
 import { buildPauldrons } from './pieces/pauldrons.js';
 import { buildHelm } from './pieces/helm.js';
 import { buildTail } from './pieces/tail.js';
@@ -568,6 +568,38 @@ export function buildPaperdollPayload(pal, img, cif) {
     return { ...item, drape: null, ...clothingSurfaceDelta(faces, cf) };
   });
 
+  // ── COMPLETE WEARABLE ARMOUR CATALOG ───────────────────────────
+  // Armour material is an item-instance axis in Daggerfall, not a different
+  // template. Ship each of the seven wearable templates in all three art/shape
+  // families so the viewer can independently equip every slot. Body-fitted
+  // pieces reuse the rig and therefore ship only moved faces; pauldrons/helm
+  // remain true standoff meshes. Shields are held equipment and intentionally
+  // stay out of this wearable catalog until the hand-mounted shield mesh lands.
+  const armorMats = { steel: STEEL_RAMP, mail: MAIL_RAMP, leather: LEATHER_RAMP };
+  const armorRamp = (family) => family === MATERIAL_FAMILY.Leather ? LEATHER_RAMP
+    : family === MATERIAL_FAMILY.Chain ? MAIL_RAMP : STEEL_RAMP;
+  const armorFamilies = [MATERIAL_FAMILY.Leather, MATERIAL_FAMILY.Chain, MATERIAL_FAMILY.Plate];
+  const armorPacks = ARMOR_CATALOG.map((item) => {
+    const families = {};
+    for (const family of armorFamilies) {
+      const ramp = armorRamp(family);
+      if (item.kind === 'body') {
+        const af = buildNeutralBody(
+          { ...ramps, ...armorMats },
+          { face, armorZones: armorZones(item.index, family), mats: armorMats },
+        );
+        families[family] = clothingSurfaceDelta(faces, af);
+      } else if (item.index === 105) {
+        families[family] = packPiece(buildPauldrons(ramp, 'left'));
+      } else if (item.index === 106) {
+        families[family] = packPiece(buildPauldrons(ramp, 'right'));
+      } else if (item.index === 107) {
+        families[family] = packPiece(buildHelm(ramp));
+      }
+    }
+    return { ...item, families };
+  });
+
   // Per-race body colours: same geometry, re-shaded with the race hide/fur.
   const colorsOf = (fs) => { const c=[]; for (const f of fs) c.push(f.c[0], f.c[1], f.c[2]); return c; };
   const Ck = colorsOf(buildNeutralBody({ skin: KHAJIIT_FUR, boot: ramps.boot }, { face }));
@@ -607,7 +639,7 @@ export function buildPaperdollPayload(pal, img, cif) {
       return list;
     })(),
     swordRamps: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, weaponMaterialRamp(v, (i) => pal.get(i))])),
-    swordItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)])), cloth: CLOTH_D, clothing: clothingPacks, drapedNames: DRAPED_NAMES, villagers: villagerPacks, orcs: orcPacks, undead: undeadPacks, classes: classPacks, atronachs: atronachPacks, beasts: beastPacks, daedra: daedraPacks, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), tail: packPiece(buildTail(ramps.skin,'argonian')), tailCat: packPiece(buildTail(KHAJIIT_FUR,'khajiit')), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
+    swordItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)])), cloth: CLOTH_D, clothing: clothingPacks, armor: armorPacks, armorFamilies: MATERIAL_FAMILY, drapedNames: DRAPED_NAMES, villagers: villagerPacks, orcs: orcPacks, undead: undeadPacks, classes: classPacks, atronachs: atronachPacks, beasts: beastPacks, daedra: daedraPacks, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), tail: packPiece(buildTail(ramps.skin,'argonian')), tailCat: packPiece(buildTail(KHAJIIT_FUR,'khajiit')), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
 
   return payload;
 }
