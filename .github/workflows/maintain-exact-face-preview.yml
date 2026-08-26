@@ -42,3 +42,5 @@ jobs:
             git commit -m "FIX: close voxel shoulders and preserve outfit textures"
             git push origin HEAD:chatgpt/exact-face-atlas
           fi
+
+# Triggered after registration.
