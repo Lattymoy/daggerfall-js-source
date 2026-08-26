@@ -1,0 +1,38 @@
+name: patch drape eight-way wraps
+
+on:
+  push:
+    branches: [chatgpt/exact-face-atlas]
+    paths:
+      - .github/workflows/patch-drape-8way.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/exact-face-atlas
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply seam-safe drape wrap patch
+        run: python tools/patch_drape_8way.py
+      - run: npm ci
+      - name: Verify drape eight-way wraps
+        run: |
+          node --check src/tools/paperdoll/clothingTexture.js
+          node --check src/tools/paperdollViewer.js
+          npm run build
+          git diff --check
+      - name: Commit verified drape wrap pass
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add src/tools/paperdoll/clothingTexture.js src/tools/paperdollViewer.js
+          git commit -m "CLOTHING: give draped garments seam-safe eight-way wraps"
+          git push origin HEAD:chatgpt/exact-face-atlas
