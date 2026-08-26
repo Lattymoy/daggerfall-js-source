@@ -37,6 +37,13 @@ texel is evaluated on the same two triangles the viewer renders
 four UV corners are therefore the four rendered corners. There is no inverse
 projection to solve and no geometry approximation between the bake and viewer.
 
+`mvB2.py` likewise measures the rig only at the **real authored vertex-ring
+heights**. The retired version made 300 global Y bins and nearest-copied the
+empty bins into a staircase. The head pipeline had already proven that failure
+mode; the body now follows the same law. Its floor, knee, crotch and torso-top
+anchors are derived from the same `neutral.json`, so there is no `lm_rig.json`
+sidecar that can describe yesterday's sculpt.
+
 The gutters are duplicated edge texels, not body area. `skin_ramps.py` excludes
 them from its histogram and `beast_skin.py` smooths each face tile independently
 so unrelated packed faces can never bleed into one another.
@@ -45,12 +52,21 @@ so unrelated packed faces can never bleed into one another.
 body UV in pixel space and renormalizes for the new texture dimensions. It must
 never rebuild body UVs.
 
+`skin-uv.json` also carries a geometry fingerprint over the same millimetre-
+packed positions and group ids used by the viewer payload. A regenerated atlas
+therefore refuses to mount if the rig changes while the face count happens to
+stay the same. Old skin files without the hash keep the historical count-only
+fallback until they are regenerated.
+
 ## Regeneration stages
 
+0. `node export_rig.mjs` - dump `neutral.json` directly from the live
+   `buildNeutralBody()` module. No manual geometry dump and no landmark sidecar.
 1. `seg9.py` - cut the turnaround into eight views and segment each into limb
    regions per row (torso / two arms / two legs).
 2. `mvB2.py` - reference-view correspondence: every surface point takes the
    view that sees it most face-on, blended across neighbours by surface normal.
+   Rig normalization interpolates only between real mesh ring heights.
 3. `bake_atlas.py` - sample that correspondence ON THE ACTUAL BODY QUADS. It
    writes `skin-intensity.png`, the RGB diagnostic `skin-atlas.png`,
    `skin-layout.json`, `skin-uv.json`, and a preview.
@@ -96,6 +112,10 @@ Face-atlas gutters are excluded from this distribution.
   the body as an ellipse/cylinder and then try to invert that approximation.
   The old `0.7 * radius` depth assumption was not the torso, shoulder, hand, or
   foot geometry.
+- **THE GEOMETRY SNAPSHOT MUST COME FROM THE LIVE BUILDER.** A hand-dumped
+  `neutral.json` can be stale while keeping the same face count. Export it from
+  `buildNeutralBody()` every bake, and fingerprint the packed positions in the
+  output so the runtime can reject drift.
 - **One packed face may not contaminate another.** Per-face gutters are
   duplicated edge texels. Any filter or histogram that treats gutters as new
   body area or crosses tile boundaries is wrong.
@@ -103,7 +123,8 @@ Face-atlas gutters are excluded from this distribution.
   loft rings, so its vertices sit at seven heights. Binning its profile into 140
   gave 133 EMPTY bins, nearest-copied into a staircase, and interpolating across
   that staircase swung the sampled column 27px between adjacent rows. Build
-  profiles from the rings that exist.
+  profiles from the rings that exist. The body used to repeat the same mistake
+  with 300 global bins; it now measures its actual ring heights too.
 - **A median filter is edge-preserving.** It is built to KEEP steps, so it is the
   wrong tool for smoothing a ragged silhouette profile. Gaussian.
 - **Never map outside the silhouette.** A smoothed centre or half-width can put
@@ -189,7 +210,18 @@ starts running in CI. Recorded here rather than left to be discovered.
 
 ## Regenerating
 
-Needs the turnaround cut into `view_000.png` .. `view_315.png` alongside the
-scripts, plus `neutral.json` (dump `buildNeutralBody` faces with their `g`
-stamps). Run the current stages above in order, inspect the actual rig render,
-then copy the outputs into `public/skin/`.
+Run from `tools/skin/`. The local turnaround must provide
+`view_000.png` .. `view_315.png`. Then:
+
+```text
+node export_rig.mjs
+python seg9.py
+python mvB2.py
+python bake_atlas.py
+python head_cell.py
+```
+
+Continue with the relevant `head_bake*.py`, `skin_ramps.py` and
+`beast_skin.py` stages, inspect the actual rig render, then copy the reviewed
+outputs into `public/skin/`. `neutral.json`, `seg.json` and the view images are
+regenerated scratch and are gitignored; `public/skin/` is the shipping output.
