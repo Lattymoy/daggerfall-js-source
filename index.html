@@ -71,7 +71,9 @@
     .foot a { color: var(--dim); text-decoration: none; }
     .foot a:hover { color: var(--bone); }
     .build::before { content: 'build '; }
-    .build:empty { display: none; }
+    .build:empty, .stat:empty { display: none; }
+    .stat[data-stat="tests"]::after { content: ' tests'; }
+    .stat[data-stat="lines"]::after { content: ' lines of JS'; }
 
     /* ── HERO ── */
     .hero { padding: clamp(48px, 10vh, 120px) clamp(24px, 5vw, 72px) clamp(40px, 6vh, 64px); max-width: 980px; }
@@ -125,6 +127,16 @@
     .col { background: var(--slate); padding: 22px 20px 24px; }
     .col h3 { font-size: 24px; line-height: 1.1; margin: 0 0 10px; }
     .col p { font-size: 15px; }
+
+    /* ── PICTURES ── the enhanced screens with no game files loaded, the
+       only pictures the doctrine lets this site show. Taken by
+       tools/siteShots.mjs, which refuses to run with game data present. */
+    .shots { display: grid; grid-template-columns: 1fr; gap: 1px; background: var(--iron); border: 1px solid var(--iron); }
+    .shots .pair { display: grid; grid-template-columns: minmax(180px, 1fr) 2.4fr; gap: 1px; background: var(--iron); }
+    .shot { margin: 0; background: var(--slate); padding: 14px; min-width: 0; }
+    .shot img { display: block; width: 100%; height: auto; border: 1px solid var(--iron); }
+    .shot figcaption { color: var(--dim); font-size: 13px; margin-top: 10px; }
+    .shot figcaption b { color: var(--bone); font-weight: 500; }
 
     /* THE ANTI-LIE BOX, borrowed from the menu: a thing that does not
        work yet is shown and says so, never quietly absent. */
@@ -201,7 +213,7 @@
       .gate { grid-template-columns: 1fr; padding: 20px; }
       .gate .act { display: none; }
       .sec h2 { font-size: 32px; }
-      .cols, .keys { grid-template-columns: 1fr; }
+      .cols, .keys, .shots .pair { grid-template-columns: 1fr; }
       .step { grid-template-columns: 40px 1fr; }
       .step::before { font-size: 32px; }
       .faq, .credits { grid-template-columns: 1fr; gap: 4px 0; }
@@ -229,6 +241,7 @@
       </a>
       <nav class="rail" aria-label="Sections">
         <a class="railbtn" href="#what">What it is</a>
+        <a class="railbtn" href="#look">What it looks like</a>
         <a class="railbtn" href="#inside">What's in it</a>
         <a class="railbtn" href="#how">How to play</a>
         <a class="railbtn" href="#keys">Controls</a>
@@ -238,6 +251,8 @@
       <div class="foot">
         <a href="https://github.com/Lattymoy/project-dagger">Source on GitHub</a>
         <a class="build" data-build="" href="https://github.com/Lattymoy/project-dagger/commit/"></a>
+        <span class="stat" data-stat="tests"></span>
+        <span class="stat" data-stat="lines"></span>
       </div>
     </aside>
 
@@ -245,7 +260,7 @@
       <section class="hero" aria-labelledby="title">
         <p class="eyebrow">A 1:1 port of The Elder Scrolls II: Daggerfall</p>
         <h1 id="title">Daggerfall, in your browser.</h1>
-        <p class="dek">The 1996 game with its rules intact: the formulas, the quests, the calendar, the crimes, translated line by line from Daggerfall Unity and drawn on a renderer built from scratch. Desktop or phone. Nothing to install.</p>
+        <p class="dek">The 1996 game with its rules intact, on a renderer built from scratch. Desktop or phone. Nothing to install.</p>
 
         <div class="gate">
           <div class="fit">
@@ -260,19 +275,39 @@
 
       <section class="sec" id="what" aria-labelledby="what-h">
         <h2 id="what-h">What it is</h2>
-        <p class="lede">Three things at once, and the split is deliberate.</p>
         <div class="cols">
           <div class="col">
             <h3>Ported 1:1</h3>
-            <p>The rules are Daggerfall's. The file formats, the world assembly, the combat and skill math, quests, items, magic, guilds, the calendar and the courts, each translated from Daggerfall Unity's C# with its constants kept byte-exact, quirks and all.</p>
+            <p>The rules are Daggerfall's: the file formats, the world assembly, the combat and skill math, quests, items, magic, guilds, the calendar and the courts, translated line by line from Daggerfall Unity's C# with the constants kept byte-exact, quirks and all.</p>
           </div>
           <div class="col">
             <h3>Rebuilt</h3>
-            <p>The presentation is new: a hand-rolled WebGL2 renderer with no engine underneath it, a touch layer so it plays on a phone, and two interfaces. The classic screens, laid out from the original art to the pixel, or an enhanced one built as type and layout instead of painted bitmaps. Same game, one toggle.</p>
+            <p>The presentation is new: a hand-rolled WebGL2 renderer with no engine underneath it, a touch layer for phones, and two interfaces. The classic screens, laid out from the original art to the pixel, or an enhanced one built as type and layout instead of painted bitmaps. Same game, one toggle.</p>
           </div>
           <div class="col">
             <h3>In progress</h3>
             <p>Daggerfall Unity is a decade of work and this is a port of it, arc by arc. What has landed and what hasn't is written down. <a href="https://github.com/Lattymoy/project-dagger/blob/main/bible/01-Overview/Port-Ledger.md">Read the ledger</a> before you expect a finished game.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec" id="look" aria-labelledby="look-h">
+        <h2 id="look-h">What it looks like</h2>
+        <p class="lede">The enhanced screens with no game files loaded: the only pictures this site can show, because the classic screens are the original art, which you bring.</p>
+        <div class="shots">
+          <figure class="shot">
+            <img src="./site/menu-settings.png" width="1280" height="800" alt="The enhanced menu on a desktop: a rail of six destinations on the left, the Settings pane open on the Game category, a column of settings with their values." loading="lazy" />
+            <figcaption><b>Settings.</b> Daggerfall Unity's 171 keys, every one a real setting, with what each one does beside it.</figcaption>
+          </figure>
+          <div class="pair">
+            <figure class="shot">
+              <img src="./site/menu-phone.png" width="786" height="1702" alt="The enhanced menu on a phone: the New Game pane, with the rail of destinations along the bottom of the screen." loading="lazy" />
+              <figcaption><b>On a phone.</b> The rail moves to the bottom, into the thumb's arc.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="./site/pack-sample.png" width="1280" height="800" alt="The enhanced pack: a worn list of twenty-seven named slots, the weapons tab, the ground beside it, and a Longsword's detail panel with Take off and Use." loading="lazy" />
+              <figcaption><b>The pack,</b> with a sample character. No game files means no doll and no item pictures; everything else is the real screen.</figcaption>
+            </figure>
           </div>
         </div>
       </section>
@@ -345,7 +380,7 @@
           <li class="step">
             <div>
               <h3>Press Play and pick it.</h3>
-              <p>On a desktop, choose the folder or drop it on the page. On a phone, choose the zip. The files are read into your browser's storage once and never uploaded; the next visit skips this step.</p>
+              <p>On a desktop, choose the folder or drop it on the page. On a phone, choose the zip. That is the last time you are asked.</p>
             </div>
           </li>
           <li class="step">
@@ -409,16 +444,16 @@
           <dd>Any current one with WebGL2: Chrome, Edge, Firefox, Safari. On a phone, Safari on iOS or Chrome on Android; the touch controls appear on their own.</dd>
 
           <dt>Where do my files and saves go?</dt>
-          <dd>Into your browser's storage for this site, on your device. There is no account and no server: nothing is uploaded. Clearing the site's data removes the game files and your saves together, so you would pick the folder again.</dd>
+          <dd>Into your browser's storage for this site, on your device; there is no account and no server. Clearing the site's data removes the game files and your saves together, so you would pick the folder again.</dd>
 
           <dt>Classic or enhanced?</dt>
           <dd>Enhanced by default: the same game with its menus, wizard, character sheet and inventory rebuilt as type and layout. The classic screens are all there too. Switch in either menu, or add <code>?skin=classic</code> to the address.</dd>
 
           <dt>Is this Daggerfall Unity?</dt>
-          <dd>No, it is a port of it. Daggerfall Unity is the reference: its C# is what was translated, formula by formula. It has years more polish, a mod scene and a community. This is the same rules in a browser tab, on a phone if you like.</dd>
+          <dd>No, a port of it. Daggerfall Unity is the reference, and it has years more polish, a mod scene and a community. This is the same rules in a browser tab, on a phone if you like.</dd>
 
           <dt>Does it work offline?</dt>
-          <dd>The page has to load from the network. After that the game reads everything from your device; it never fetches game data from this site, because there is none here to fetch.</dd>
+          <dd>The page has to load from the network. After that the game reads everything from your device.</dd>
 
           <dt>Something's wrong.</dt>
           <dd>Reload first: the site is rebuilt several times a day and a page held open across a rebuild can lose its footing. If it is a real bug, the <a href="https://github.com/Lattymoy/project-dagger/issues">issue tracker</a> wants it, with what you did and what happened.</dd>
@@ -429,10 +464,10 @@
         <h2 id="credits-h">Credits</h2>
         <dl class="credits">
           <dt><a href="https://github.com/Interkarma/daggerfall-unity">Daggerfall Unity</a></dt>
-          <dd>Interkarma and contributors, MIT licence. Every format reader and every formula here is a translation of Daggerfall Unity's C#, and the quest scripts are its own; without it there would be nothing to port.</dd>
+          <dd>Interkarma and contributors, MIT licence. The C# this port was translated from, and the quest scripts are its own; without it there would be nothing to port.</dd>
 
           <dt>The Elder Scrolls II: Daggerfall</dt>
-          <dd>Bethesda Softworks, 1996. Daggerfall JavaScript is a fan project, not affiliated with or endorsed by Bethesda or ZeniMax. The game's data stays theirs and yours; none of it is served from this site.</dd>
+          <dd>Bethesda Softworks, 1996. Daggerfall JavaScript is a fan project, not affiliated with or endorsed by Bethesda or ZeniMax.</dd>
 
           <dt><a href="https://www.dfworkshop.net/">Daggerfall Workshop</a> and <a href="https://en.uesp.net/wiki/Daggerfall:Daggerfall"><span class="cap">UESP</span></a></dt>
           <dd>The documentation of Daggerfall's file formats that the readers were checked against.</dd>
@@ -445,6 +480,8 @@
       <footer class="end">
         <span>Daggerfall JavaScript</span>
         <a class="build" data-build="" href="https://github.com/Lattymoy/project-dagger/commit/"></a>
+        <span class="stat" data-stat="tests"></span>
+        <span class="stat" data-stat="lines"></span>
         <a href="https://github.com/Lattymoy/project-dagger">Source</a>
       </footer>
     </main>

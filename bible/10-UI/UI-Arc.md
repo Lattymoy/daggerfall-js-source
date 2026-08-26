@@ -74,6 +74,77 @@ None of these blocks anything; all three are real.
                         will be, because this repo holds no game data.
 
 
+## U60c THE LEDGER STRIP, THE PICTURES, AND THE CUT (2026-08-26, Mac's call)
+
+While the js.org request waits, Mac asked for organising, debloat and
+detail that makes the site stand out, and picked three of four offers:
+a live ledger strip, real screenshots of the enhanced screens, and the
+copy cut for repeats. Not picked: moving the prototype pages under
+/lab/, so menu.html, enhanced.html, chargen.html and viewer.html stay
+at the site root as they were.
+
+DEBLOAT, the unasked half: `probe2.mjs` (empty) and `repro.mjs` (a
+one-off reproduction script left at the repo root by a play-report
+fix, and driving the root URL - a landing page now) are deleted. The
+tab icon is the section fitting - a brass diamond on ink - as an SVG
+data URI drawn from the tokens by the plugin, on the landing and on
+the game page; no file, so nothing for the doctrine list to weigh.
+
+THE LEDGER STRIP. Beside the sha, two figures the page could not be
+trusted to type: the size of the suite and the size of the port,
+COUNTED at serve and build from the tree the build is made of. The
+test count uses the manifest gate's own definition (top-of-line
+`test(` calls in test/*.test.js), which that gate pins equal to
+Testing.md - so the strip, the doc and the runner agree or the suite
+is red, and the landing suite pins the strip to the doc from its own
+side. The line count is tracked `.js` under src/ by `git ls-files`
+(122,323 today; the "~63,400" in Audit 25 was that audit's estimate of
+REMAINING work, not the port's size - the js.org PR body, which had
+repeated it, was corrected). Grouped digits, filled into every
+`data-stat` element - the rail foot and the page's end - and an empty
+figure is invisible, as an empty stamp is.
+
+THE PICTURES, AND WHAT THEY COULD NOT BE. Mac asked for the menu, the
+wizard on a phone, and the pack. The doctrine allows exactly one kind
+of picture: a screen drawn with NO game data. The menu qualifies
+outright (U49's claim). THE WIZARD DOES NOT - its stages read
+CLASS*.CFG, the biographies and the faces out of ARENA2, and
+chargen.html asks for the folder before it draws a word - so the phone
+picture is the MENU on a phone, which is the picture that proves the
+phone claim anyway (the rail in the thumb's arc). THE PACK is
+reachable with no data only through the test seam enhancedDollProbe
+uses - `_setPaperDollPixelsForTests(null)` and a hand-built entity -
+so it is shown with a SAMPLE character, dressed through the pack's
+own controls, and the caption says so: "with a sample character. No
+game files means no doll and no item pictures." A labelled sample is
+not a silent mock. `tools/siteShots.mjs` is the only way the files are
+made: it boots its own vite with ARENA2_PATH unset, PROVES the game's
+data fetch 404s before it takes anything, and throws if the folder
+pick is on screen in a shot; the doctrine allow-list carries one OURS
+row per file naming the tool, and the landing suite pins that every
+<img> on the page is under ./site/, tracked, allow-listed, produced by
+the tool, sized and described. 54, 59 and 51 KB.
+
+FOUND ON THE WAY, NOT FIXED: in the no-art pack the SCHEMATIC does not
+show. U59 says it is the fallback and the doll probe counts its 25
+nodes, but at 1280x800 the character column shows the worn list and
+a strip of ink above it - the SVG is either collapsed or drawn in
+strokes too close to the ground to read. The picture on the site is
+honest about it; the pack is U59's to look at.
+
+THE CUT. Four things were said three and four times each - that the
+port is translated from DFU's C#, that the renderer is from scratch,
+that nothing is uploaded, that no game data is served - and each is
+now said once, where it belongs: the translation in Ported 1:1, the
+renderer in the hero, the upload and the data in the gate. The "three
+things at once" lede went; a lede that describes the structure below
+it is the rail's own word said again.
+
+Pins: the U60 suite grew its pictures, strip and icon assertions
+(still 8 tests; doctrine.test.js's list grew three rows and stays at
+5). Probe: 36/36 - the three pictures paint at their declared size,
+the strip carries two figures, the fittings and the face as before.
+
 ## U60b THE BRAND FACE, AND THE DETAIL (2026-08-26, Mac's call)
 
 Mac's verdict on U60 was "simple and perfect", with two asks: a

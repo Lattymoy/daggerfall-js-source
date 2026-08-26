@@ -23,8 +23,9 @@ import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { Writable } from 'node:stream';
+import { execFileSync } from 'node:child_process';
 import { ENHANCED_TOKENS, ENHANCED_FONTS_URL, ENHANCED_CSS, FONT_BRAND, FONT_DATA, FONT_DISPLAY, fontsUrl } from '../src/ui/enhancedStyle.js';
-import { transformLanding, LANDING_PATH, LANDING_FONTS_URL } from '../scripts/landingHtml.mjs';
+import { transformLanding, LANDING_PATH, LANDING_FONTS_URL, countTests, countSrcLines, figure } from '../scripts/landingHtml.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
@@ -37,8 +38,29 @@ test('U60: the root document is a page about the game, and the game is at /play/
   // reference into src/ - and no game file named (the data folder is
   // named, which is the point of the page; its files are not).
   assert.doesNotMatch(landing, /<script/i, 'the landing page runs no script');
-  assert.doesNotMatch(landing, /<canvas|<img|<video|<picture|url\(/i, 'the landing page draws no raster');
-  assert.doesNotMatch(landing, /\.(png|jpe?g|gif|webp|svg|bmp)\b/i, 'the landing page references no image file');
+  assert.doesNotMatch(landing, /<canvas|<video|<picture|url\(/i, 'the landing page draws nothing but its pictures');
+  // U60c: THE PICTURES. Every image on the page is one the doctrine
+  // allow-list admits by name, tracked under public/site/, and made by
+  // tools/siteShots.mjs - the tool that refuses to run with game data.
+  const imgs = [...landing.matchAll(/<img\s[^>]*src="([^"]+)"[^>]*>/g)];
+  assert.ok(imgs.length >= 3, 'the site shows its pictures');
+  const allow = read('test/doctrine.test.js');
+  const shots = read('tools/siteShots.mjs');
+  const tracked = execFileSync('git', ['ls-files', 'public/site'], { cwd: root, encoding: 'utf8' }).split('\n').filter(Boolean);
+  for (const [tag, src] of imgs) {
+    assert.match(src, /^\.\/site\/[\w-]+\.png$/, `${src}: pictures live under ./site/ and nowhere else`);
+    const file = `public/${src.slice(2)}`;
+    assert.ok(tracked.includes(file), `${file} is tracked`);
+    assert.ok(allow.includes(`['${file}', 'OURS - `), `${file} has an OURS row on the doctrine allow-list`);
+    assert.ok(shots.includes(`'${src.match(/([\w-]+)\.png$/)[1]}'`), `${file} is made by tools/siteShots.mjs`);
+    assert.match(tag, /\swidth="\d+"\s+height="\d+"/, `${src} declares its size (no layout shift)`);
+    assert.match(tag, /\salt="[^"]{20,}"/, `${src} is described`);
+  }
+  // And the tool's guard is what makes the rows true.
+  assert.match(shots, /delete process\.env\.ARENA2_PATH/, 'the tool drops the data folder');
+  assert.match(shots, /probe\.status !== 404[\s\S]*process\.exit\(2\)/, 'the tool aborts if the dev server can serve one game file');
+  assert.match(shots, /locator\('#pick'\)\.count\(\)\)[\s\S]*throw new Error/, 'the tool aborts if the folder pick is on screen');
+  assert.doesNotMatch(landing, /\.(jpe?g|gif|webp|svg|bmp)\b/i, 'no other image file is referenced');
   assert.doesNotMatch(landing, /\/src\//, 'the landing page reaches into no game code');
   assert.doesNotMatch(landing, /\.(BSA|IMG|CIF|COL|RSC|VID|DAT|PAK|SND|XMI|HMI)\b/, 'no ARENA2 file is named');
   // The door: one Play in the gate, one in the phone bar, both to ./play/.
@@ -96,6 +118,12 @@ test('U60: the injected block IS the skin\'s token block, and the skin still wea
   const ink = ENHANCED_TOKENS.match(/--ink:\s*(#[0-9a-f]{6})/)?.[1];
   const theme = out.tags.find((t) => t.tag === 'meta' && t.attrs.name === 'theme-color');
   assert.equal(theme?.attrs.content, ink, 'the phone\'s address bar reads the ink token');
+  // The tab icon is the section fitting, drawn from the same two tokens.
+  const icon = out.tags.find((t) => t.tag === 'link' && t.attrs.rel === 'icon');
+  const svg = decodeURIComponent(icon?.attrs.href.replace(/^data:image\/svg\+xml,/, '') ?? '');
+  const brass = ENHANCED_TOKENS.match(/--brass:\s*(#[0-9a-f]{6})/)?.[1];
+  assert.ok(svg.includes(`fill="${ink}"`) && svg.includes(`fill="${brass}"`), 'the icon is ink and brass, from the tokens');
+  assert.match(svg, /<path d="M16 5l11 11-11 11L5 16z"/, 'a diamond');
 });
 
 test('U60: the build stamp fills every stamp on the page, links the commit, and stays empty unstamped', () => {
@@ -109,7 +137,24 @@ test('U60: the build stamp fills every stamp on the page, links the commit, and 
   }
   const bare = transformLanding(landing, { sha: '' });
   assert.equal(bare.html, landing, 'no sha, no stamp - the page is left as written');
-  assert.match(landing, /\.build:empty \{ display: none; \}/, 'and an empty stamp is invisible');
+  assert.match(landing, /\.build:empty, \.stat:empty \{ display: none; \}/, 'and an empty stamp or figure is invisible');
+
+  // U60c: THE LEDGER STRIP. Two figures beside the sha, COUNTED from the
+  // tree: the suite by the manifest gate's own definition, the port by
+  // tracked lines of JS under src/. Filled in every data-stat element
+  // (the rail foot and the page end), grouped digits.
+  const tests = countTests(join(root, 'test'));
+  const suite = read('bible/09-Testing/Testing.md').match(/Suite: (\d+) tests across/)?.[1];
+  assert.equal(String(tests), suite, 'the strip counts what Testing.md pins (test/manifest.test.js holds the other half)');
+  const lines = countSrcLines((p) => read(p));
+  assert.ok(lines > 100000, `tracked src/ JS is ${lines} lines`);
+  const shown = transformLanding(landing, { stats: { tests, lines } }).html;
+  const cells = [...shown.matchAll(/<span class="stat" data-stat="(\w+)">([^<]*)<\/span>/g)].map((m) => [m[1], m[2]]);
+  assert.deepEqual(cells, [['tests', figure(tests)], ['lines', figure(lines)], ['tests', figure(tests)], ['lines', figure(lines)]],
+    'both strips carry both figures');
+  assert.equal(figure(122323), '122,323');
+  assert.match(landing, /\.stat\[data-stat="tests"\]::after \{ content: ' tests'; \}/);
+  assert.match(landing, /\.stat\[data-stat="lines"\]::after \{ content: ' lines of JS'; \}/);
 });
 
 test('U60: the plugin is wired, touches only the root document, and stamps only a build', async () => {
@@ -117,11 +162,16 @@ test('U60: the plugin is wired, touches only the root document, and stamps only 
   const plugin = viteConfig.plugins.find((p) => p?.name === 'landing-html');
   assert.ok(plugin, 'vite.config.js must carry the landing-html plugin');
   const handler = plugin.transformIndexHtml.handler;
-  assert.equal(handler('<html>game</html>', { path: '/play/index.html' }), '<html>game</html>',
-    'the game page gets nothing from this plugin');
+  const gamePage = handler('<html>game</html>', { path: '/play/index.html' });
+  assert.equal(gamePage.html, '<html>game</html>', 'the game page\'s markup is untouched');
+  assert.deepEqual(gamePage.tags.map((t) => [t.tag, t.attrs.rel]), [['link', 'icon']],
+    'the game page gets the tab icon from this plugin and nothing else');
+  assert.equal(handler('<html>proto</html>', { path: '/menu.html' }), '<html>proto</html>',
+    'a prototype page gets nothing');
   const dev = handler(landing, { path: LANDING_PATH, server: {} });
   assert.ok(dev.tags.some((t) => t.tag === 'style'), 'the dev serve gets the tokens');
-  assert.equal(dev.html, landing, 'the dev serve gets NO stamp - src/buildTag.js is whatever the last build left');
+  assert.doesNotMatch(dev.html, /data-build="[0-9a-f]+"/, 'the dev serve gets NO stamp - src/buildTag.js is whatever the last build left');
+  assert.match(dev.html, /data-stat="tests">[\d,]+</, 'but it gets the figures, which are true whenever counted');
   const sha = readFileSync(join(root, 'src/buildTag.js'), 'utf8').match(/'([^']*)'/)?.[1];
   const built = handler(landing, { path: LANDING_PATH });
   assert.ok(built.html.includes(`data-build="${sha}"`), 'a build is stamped with the sha scripts/buildTag.mjs wrote');
