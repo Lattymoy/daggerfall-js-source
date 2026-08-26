@@ -29,7 +29,7 @@ const check = (ok, label) => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}`); 
 
 // ?world+?shot reaches the world host WITH the probe surface; ?classic is
 // the new start path; ?class=1 is the headless chargen skip.
-await page.goto('http://localhost:5219/?world&shot&classic&class=1&novideo&nofoes');
+await page.goto('http://localhost:5219/play/?world&shot&classic&class=1&novideo&nofoes');
 
 const until = Date.now() + 240000;
 let mode = null;

@@ -38,7 +38,7 @@ page.on('console', (m) => {
   if (m.type() === 'error' || /music|MIDI|unavailable/i.test(t)) notes.push(`[${m.type()}] ${t}`);
 });
 
-await page.goto(`http://localhost:5208/?${query}`);
+await page.goto(`http://localhost:5208/play/?${query}`);
 await page.waitForTimeout(Number(process.env.BOOT_WAIT ?? 12000));
 await page.mouse.click(640, 400);
 await page.waitForTimeout(3000);

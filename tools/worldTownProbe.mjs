@@ -11,7 +11,7 @@ const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=sw
 const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 page.on('console', (m) => { if (m.type() === 'error') console.log('[console]', m.text().slice(0, 200)); });
-await page.goto('http://localhost:5199/?shot&world&tod=12:00');
+await page.goto('http://localhost:5199/play/?shot&world&tod=12:00');
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 300000 });
 console.log('stream idle, pixels:', await page.evaluate(() => window.__builtCount()));
 console.log('townDebug:', await page.evaluate(() => window.__townDebug()));

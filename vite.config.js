@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
-import { createReadStream, existsSync, readdirSync, readFileSync } from 'node:fs';
+import { createReadStream, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { landingHtml, readBuildSha } from './scripts/landingHtml.mjs';
 
 // Dev-only: serve ARENA2 game data at /arena2/*. The data is freeware but
 // never committed or bundled (Port-Doctrine); builds contain no game files.
@@ -29,10 +30,15 @@ function arena2DevServer() {
     }
     return byUpper.get(name.toUpperCase()) ?? name;
   };
+  // MOUNTED TWICE (U60). dataSource fetches `./arena2/*` RELATIVE to its
+  // document, so with the game at /play/ the browser asks for
+  // /play/arena2/*; the probes' direct imports still fetch /arena2/*.
+  // Same handler, both doors - a dev server that answered one and not
+  // the other is the mixed-case bug above in a new coat.
   return {
     name: 'arena2-dev-server',
     configureServer(server) {
-      server.middlewares.use('/arena2', (req, res, next) => {
+      for (const mount of ['/arena2', '/play/arena2']) server.middlewares.use(mount, (req, res, next) => {
         const name = decodeURIComponent(req.url.slice(1).split('?')[0]);
         // Flat directory only - no separators, no traversal.
         if (!/^[A-Za-z0-9._-]+$/.test(name)) return next();
@@ -73,10 +79,7 @@ function buildTagMeta() {
     name: 'build-tag-meta',
     apply: 'build',
     transformIndexHtml() {
-      let sha = '';
-      try {
-        sha = readFileSync('src/buildTag.js', 'utf8').match(/'([^']*)'/)?.[1] ?? '';
-      } catch { /* no stamp yet - the tag is simply absent, not wrong */ }
+      const sha = readBuildSha();   // '' before prebuild - the tag is simply absent, not wrong
       if (!sha) return [];
       return [{
         tag: 'meta',
@@ -99,7 +102,13 @@ export default defineConfig({
     // src/tools/paperdollViewer.js.
     rollupOptions: {
       input: {
-        main: 'index.html',
+        // THE SITE, THEN THE GAME (U60). The root document is the landing
+        // page - what this is, how to play, credits, Play - and the game
+        // is one directory down at /play/. The `main` key stays on the
+        // game so its entry chunk keeps its name (staleChunk.js and
+        // verify-deploy read `main-*.js`).
+        landing: 'index.html',
+        main: 'play/index.html',
         viewer: 'viewer.html',
         // A PROTOTYPE, and deployed on purpose: a design that claims to
         // adapt to a phone has to be opened on one.
@@ -112,5 +121,5 @@ export default defineConfig({
       },
     },
   },
-  plugins: [arena2DevServer(), buildTagMeta()],
+  plugins: [arena2DevServer(), buildTagMeta(), landingHtml()],
 });

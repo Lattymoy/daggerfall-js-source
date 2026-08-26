@@ -46,7 +46,7 @@ const errors = [];
 page.on('pageerror', (e) => errors.push(String(e.message)));
 page.on('console', (m) => { if (m.type() === 'error') errors.push(`[console] ${m.text()}`); });
 
-await page.goto(`http://localhost:5213/?${QUERIES[which]}`);
+await page.goto(`http://localhost:5213/play/?${QUERIES[which]}`);
 await page.waitForTimeout(Number(process.env.BOOT_WAIT ?? 12000));
 await page.mouse.click(640, 400);
 await page.waitForTimeout(800);

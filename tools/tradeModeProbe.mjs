@@ -26,7 +26,7 @@ page.on('pageerror', (e) => { errors.push(e.message); console.log('[pageerror]',
 // broken: staging passed, the offer box appeared, and the Yes never
 // arrived. The same trap cost X11c an afternoon at the other end of
 // the same seam.
-await page.goto('http://localhost:5212/?shot&play&exterior&time=12:00&class=16');
+await page.goto('http://localhost:5212/play/?shot&play&exterior&time=12:00&class=16');
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 180000 });
 
 const waitFrames = async (n) => {

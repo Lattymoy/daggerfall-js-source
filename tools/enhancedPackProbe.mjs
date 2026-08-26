@@ -47,7 +47,7 @@ async function bootSettled(page) {
 
 
 async function toGamePage(page, skin = 'enhanced') {
-  await page.goto(`${BASE}/?skin=${skin}`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/play/?skin=${skin}`, { waitUntil: 'networkidle' });
   if (skin !== 'enhanced') return;
   await page.waitForSelector('#enhanced-menu .railbtn', { timeout: 20000 });
   await page.locator('#enhanced-menu .railbtn', { hasText: 'New Game' }).first().click();
@@ -335,7 +335,7 @@ await run('phone', devices['Pixel 5']);
   check('boundary: and the pane really mounted', kind.dom === 1, `${kind.dom} mounted`);
   check('boundary: no page errors', errors.length === 0, errors.join(' | '));
 
-  await page.goto(`${BASE}/?skin=classic`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${BASE}/play/?skin=classic`, { waitUntil: 'domcontentloaded' });
   const classic = await page.evaluate(async () => {
     const { createInventoryWindow } = await import('/src/ui/inventoryDoor.js');
     const w = createInventoryWindow({ entity: { items: [], stats: {} }, items: () => [], wagonItems: () => [] });

@@ -14,7 +14,7 @@ await server.listen();
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
-await page.goto('http://localhost:5202/?shot&class=0');
+await page.goto('http://localhost:5202/play/?shot&class=0');
 await page.waitForFunction(() => window.__frame > 10, null, { timeout: 180000 });
 const waitFrames = async (n) => {
   const f = await page.evaluate(() => window.__frame);

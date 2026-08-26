@@ -19,13 +19,19 @@
 // right for a cold empty north and wrong for the Iliac Bay, which is a
 // place with weather in it.
 
-export const ENHANCED_CSS = `
 /* ── TOKENS ────────────────────────────────────────────────
    Identical to enhanced.html on purpose. The menu and the in-game
    screens are ONE interface seen at two moments, and the moment a
    front door owns its own palette it stops being the same
-   product as the rooms behind it. */
-:root {
+   product as the rooms behind it.
+
+   EXPORTED ON THEIR OWN (U60) because the site's landing page - the
+   door in front of this door - is a static index.html that cannot
+   mount this module, and a second copy of eight hex values is the
+   drift this file exists to prevent. scripts/landingHtml.mjs injects
+   this block into that page at build; the rest of the skin stays a
+   string the game pays for only when a screen is mounted. */
+export const ENHANCED_TOKENS = `:root {
   --ink: #0e1013;
   --slate: #171b21;
   --iron: #2b323b;
@@ -37,10 +43,38 @@ export const ENHANCED_CSS = `
 
   --display: 'Cormorant', Georgia, serif;
   --data: 'Barlow Semi Condensed', system-ui, sans-serif;
+  --brand: 'Grenze Gotisch', 'Cormorant', Georgia, serif;
 
   --side: 264px;
   --gap: 1px;
-}
+}`;
+
+/* ── THE FACES ──────────────────────────────────────────────
+   Three families, each one string, each a Google Fonts css2 `family=`
+   argument, so a URL is composed and never typed. The skin loads
+   DISPLAY + DATA. The site's landing page (U60b, Mac's call: a
+   Daggerfall-esque face) loads BRAND + DATA - Grenze Gotisch, a
+   gothic-roman hybrid chosen off a rendered sheet of a dozen free
+   faces for being the one that reads as the classic title without
+   turning a headline into a fraktur puzzle. --brand is declared in
+   the tokens above so the menu can take the same wordmark in one
+   line if that is ever wanted; nothing in-game uses it today, and
+   nothing in-game loads it. */
+export const FONT_DISPLAY = 'Cormorant:wght@300;400;600';
+export const FONT_DATA = 'Barlow+Semi+Condensed:wght@400;500;600';
+export const FONT_BRAND = 'Grenze+Gotisch:wght@300;400;500';
+export const fontsUrl = (families) =>
+  `https://fonts.googleapis.com/css2?${families.map((f) => `family=${f}`).join('&')}&display=swap`;
+
+/** The one Google Fonts request the enhanced skin makes (Port-Ledger:
+ *  the port's only third-party request, non-blocking, `?nofonts` skips
+ *  it). A named export rather than a literal so nothing else can hold
+ *  a second copy of it. */
+export const ENHANCED_FONTS_URL = fontsUrl([FONT_DISPLAY, FONT_DATA]);
+
+export const ENHANCED_CSS = `
+/* ── TOKENS ── see ENHANCED_TOKENS above */
+${ENHANCED_TOKENS}
 
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
@@ -919,6 +953,6 @@ export function injectEnhancedFonts(doc = document, search = globalThis.location
   const link = doc.createElement('link');
   link.id = 'dagger-enhanced-fonts';
   link.rel = 'stylesheet';
-  link.href = 'https://fonts.googleapis.com/css2?family=Cormorant:wght@300;400;600&family=Barlow+Semi+Condensed:wght@400;500;600&display=swap';
+  link.href = ENHANCED_FONTS_URL;
   doc.head.append(link);
 }

@@ -27,7 +27,7 @@ async function openScreen(ctx, label) {
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e.message)));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(`[console] ${m.text()}`); });
-  await page.goto('http://localhost:5217/?launcher&novideo');
+  await page.goto('http://localhost:5217/play/?launcher&novideo');
   const until = Date.now() + 90000;
   let st = null;
   while (Date.now() < until) {

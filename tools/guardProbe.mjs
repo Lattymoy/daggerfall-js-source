@@ -10,7 +10,7 @@ const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=sw
 const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 page.on('console', (m) => { if (m.type() === 'error') console.log('[console]', m.text().slice(0, 200)); });
-await page.goto('http://localhost:5199/?shot&play&exterior&time=12:00');
+await page.goto('http://localhost:5199/play/?shot&play&exterior&time=12:00');
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 180000 });
 // Let the population breathe so the pool has convert candidates
 await new Promise((r) => setTimeout(r, 15000));

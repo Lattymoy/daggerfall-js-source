@@ -31,7 +31,7 @@ const shoot = async (label, { click = false } = {}) => {
   const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   page.on('console', (m) => console.log(`[${label}]`, m.text()));
   page.on('pageerror', (e) => console.log(`[${label} pageerror]`, e.message));
-  await page.goto(`http://localhost:5203/${process.env.PROBE_QUERY ?? ''}`);
+  await page.goto(`http://localhost:5203/play/${process.env.PROBE_QUERY ?? ''}`);
   await page.waitForTimeout(Number(process.env.PROBE_WAIT ?? 2500));
   const status = await page.evaluate(() => document.title);
   if (click) {

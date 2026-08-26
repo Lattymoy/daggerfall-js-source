@@ -19,7 +19,7 @@ const browser = await chromium.launch({
 });
 const page = await browser.newPage({ viewport: { width: 1024, height: 640 } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
-await page.goto('http://localhost:5211/?shot&play&exterior&novideo&time=12:00');
+await page.goto('http://localhost:5211/play/?shot&play&exterior&novideo&time=12:00');
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 120000 });
 await page.mouse.click(500, 320);                       // a gesture, so audio may run
 await page.waitForTimeout(2500);

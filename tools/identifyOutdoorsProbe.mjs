@@ -50,7 +50,7 @@ const shot = async (name) => {
 // this probe reported "no window" for that reason, not for the one it
 // was written to catch. A probe that cannot tell those apart is worse
 // than none.
-await page.goto(`http://localhost:${PORT}/?shot&play&exterior&time=12:00&class=16`);
+await page.goto(`http://localhost:${PORT}/play/?shot&play&exterior&time=12:00&class=16`);
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 240000 });
 
 const kind = () => page.evaluate(() => window.__overlayKind());

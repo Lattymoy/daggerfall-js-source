@@ -11,7 +11,7 @@ const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 960, height: 600 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e.message)));
-await page.goto('http://localhost:5209/?nomenu&class=0&novideo&shot&play');
+await page.goto('http://localhost:5209/play/?nomenu&class=0&novideo&shot&play');
 await page.waitForFunction(() => window.__frame > 5, { timeout: 120000 });
 const frames = async (n) => {
   const f0 = await page.evaluate(() => window.__frame ?? 0);

@@ -5,8 +5,9 @@
 // module` on the deployed site. The build was not broken - a fresh one
 // loads every chunk - and this is what actually happens:
 //
-//   1. index.html hard-references SEVENTEEN hashed chunk URLs (the
-//      entry script plus its modulepreload list).
+//   1. The game's page (play/index.html, served at /play/ - U60)
+//      hard-references SEVENTEEN hashed chunk URLs (the entry script
+//      plus its modulepreload list).
 //   2. Every deploy renames chunks. Changing NOTHING but the build sha
 //      renames eight of them, `main` and the four enhanced screens
 //      among them, because scripts/buildTag.mjs stamps the sha into a
@@ -15,7 +16,7 @@
 //      are DELETED, not kept beside the new ones.
 //   4. `main` is redeployed several times a day.
 //
-// So a returning player whose browser still holds index.html from an
+// So a returning player whose browser still holds that page from an
 // earlier deploy starts the page from cache and then asks for a chunk
 // that no longer exists. The LAZY chunks are the exposed ones, because
 // they are the chunks a first visit never fetched - and four of the

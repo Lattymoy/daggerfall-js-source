@@ -25,7 +25,7 @@ page.on('console', (m) => {
   if (m.type() === 'error' && !/status of 404/.test(m.text())) errors.push(`[console] ${m.text()}`);
 });
 
-await page.goto('http://localhost:5217/?world&nomenu&class=0&novideo&shot&play');
+await page.goto('http://localhost:5217/play/?world&nomenu&class=0&novideo&shot&play');
 await page.waitForTimeout(Number(process.env.BOOT_WAIT ?? 14000));
 await page.mouse.click(640, 400);
 await page.waitForTimeout(800);

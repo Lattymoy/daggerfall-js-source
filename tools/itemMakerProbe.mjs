@@ -15,7 +15,7 @@ const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=sw
 const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 const errors = [];
 page.on('pageerror', (e) => { errors.push(e.message); console.log('[pageerror]', e.message); });
-await page.goto('http://localhost:5215/?shot&play&exterior&time=12:00');
+await page.goto('http://localhost:5215/play/?shot&play&exterior&time=12:00');
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 180000 });
 
 const waitFrames = async (n) => {

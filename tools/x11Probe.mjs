@@ -47,7 +47,7 @@ const frames = (n = 2) => page.evaluate((k) => new Promise((r) => {
   requestAnimationFrame(step);
 }), n);
 
-await page.goto(`http://localhost:${PORT}/?shot&class=0`);
+await page.goto(`http://localhost:${PORT}/play/?shot&class=0`);
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 240000 });
 
 // The shipped maker builds every record, in the page, so the probe

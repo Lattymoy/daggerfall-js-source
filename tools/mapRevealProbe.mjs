@@ -11,7 +11,7 @@ const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 // ?class=16 (Warrior) is the headless chargen skip - without it the
 // U-wave chargen wizard owns the overlay and eats every keypress.
-await page.goto('http://localhost:5199/?shot&play&exterior&class=16&time=12:00');
+await page.goto('http://localhost:5199/play/?shot&play&exterior&class=16&time=12:00');
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 180000 });
 // T4 needs an INTERLOCUTOR, not a walker: a person parked by the
 // politeness idle answers Where-is exactly the same, so any visible,

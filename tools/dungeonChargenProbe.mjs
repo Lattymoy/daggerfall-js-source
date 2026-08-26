@@ -13,7 +13,7 @@ const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 // no ?class -> the real flow, not the headless skip
 page.on('console', (m) => { const t = m.text(); if (/chargen|error|Error/.test(t)) console.log('[console]', t.slice(0, 160)); });
-await page.goto('http://localhost:5199/?shot');
+await page.goto('http://localhost:5199/play/?shot');
 // the flow is what this probe is about; the scene's shot gate can
 // wait behind it (the dungeon builds the flow during its own setup)
 await page.waitForFunction(() => window.__chargenFlow?.() != null, null, { timeout: 240000 });

@@ -21,7 +21,7 @@ async function boot(query) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
   const errors = [];
   page.on('pageerror', (e) => { errors.push(e.message); console.log('[pageerror]', e.message); });
-  await page.goto(`http://localhost:5223/${query}`);
+  await page.goto(`http://localhost:5223/play/${query}`);
   await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 180000 });
   const waitFrames = async (n) => {
     const f = await page.evaluate(() => window.__frame);

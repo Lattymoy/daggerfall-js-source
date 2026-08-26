@@ -33,7 +33,7 @@ async function boot() {
   const renderer = new Renderer(canvas);
   const params = new URLSearchParams(location.search);
   const status = (msg) => {
-    document.title = `project-dagger - ${msg}`;
+    document.title = `Daggerfall JavaScript - ${msg}`;
   };
   // Data gate: readers load user-supplied ARENA2 at runtime
   // (Port-Doctrine) - dev serves it via middleware, production asks

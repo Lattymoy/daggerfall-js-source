@@ -132,8 +132,8 @@ const shot = async (url, label) => {
   return probe.lit;
 };
 
-const world = await shot('http://localhost:5202/?shot&play&class=0&time=12:00', 'world');
-const ext = await shot('http://localhost:5202/?shot&play&exterior&class=0&time=12:00', 'exterior');
+const world = await shot('http://localhost:5202/play/?shot&play&class=0&time=12:00', 'world');
+const ext = await shot('http://localhost:5202/play/?shot&play&exterior&class=0&time=12:00', 'exterior');
 
 const ok = world > 0 && ext > 0;   // shot() returns 0 unless the bars beat the control 2:1
 console.log(ok ? 'HUD OK - both exterior hosts draw a status bar'

@@ -30,7 +30,7 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 const pageErrors = [];
 page.on('pageerror', (e) => pageErrors.push(e.message));
 
-await page.goto(`http://localhost:${PORT}/?shot&class=0`);
+await page.goto(`http://localhost:${PORT}/play/?shot&class=0`);
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 240000 });
 
 const out = { steps: {}, failures: [] };
