@@ -12,7 +12,7 @@ the SPELLBOOK with its icons and the guilds' buy mode, ONE
 DISPATCH so those windows work in a building and not only outdoors,
 and the classic LARGE HUD with its eleven clickable panels, and the
 BANK'S HOUSE MARKET).
-71 modules
+72 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.
@@ -30,7 +30,10 @@ the spellbook, the travel map, the journal, the HUD - are classic, and
 the sheet PUSHES three of them as canvas children under its own DOM,
 which is the contract every screen after it inherits. The pack's own
 boundary is narrower and stated: loot piles, the wagon and the guild
-reward picker keep the classic window. `enhanced.html` + `src/tools/enhancedUI.js` is the prototype
+reward picker keep the classic window. U54 gave the DOM its own door to
+the TEXTURE archives (`ui/textureCanvas.js`), so the pack draws real
+item icons - the middle link between the reader and `ui/bitmapCanvas.js`
+that the port had been missing since U50. `enhanced.html` + `src/tools/enhancedUI.js` is the prototype
 for those and is not mounted by anything.
 
 AUDIT 18 rewrote this page: its opening paragraph declared the arc

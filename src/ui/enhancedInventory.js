@@ -58,7 +58,8 @@
 
 import { TABS, filterByTab } from './nativeInventory.js';
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
-import { getTemplate } from '../characters/paperdoll.js';
+import { inventoryItemImage, templateByIndex } from '../systems/itemTemplates.js';
+import { requestIcon } from './textureCanvas.js';
 import {
   equipItem, unequipSlot, equipTableOf, isEquipped,
   isForbiddenEquip, isBrokenItem,
@@ -153,11 +154,32 @@ export function packModel(deps = {}) {
   };
 }
 
-/** One item's line, from the modules that own each part of it. */
-export function itemLine(item) {
-  const t = getTemplate(item.templateIndex);
-  const archive = t?.playerTextureArchive ?? t?.worldTextureArchive;
-  const record = t?.playerTextureRecord ?? t?.worldTextureRecord;
+/**
+ * One item's line, from the modules that own each part of it.
+ *
+ * THE ICON ADDRESS IS `inventoryItemImage`'s, AND U53 GOT THIS WRONG.
+ * It read `playerTextureArchive ?? worldTextureArchive` off the
+ * template, which looks like the same thing and is not: that one
+ * expression is four ported laws, two of them with audits behind
+ * them. GetItemImage draws the WORLD texture for UselessItems1,
+ * ingredients, arrows, ReligiousItems and MiscItems - 111 of 288
+ * templates differ (AUDIT 17e F9). The player archive is offset by the
+ * WEARER's body morphology, or every list draws the morphology-0
+ * Argonian row (AUDIT 17f). Variants index off the record, with cloaks
+ * skipping their interior-first one and armour riding SetVariant's
+ * material-family clamps (AUDIT 23 items-6). And katanas take +1 on
+ * the inventory branch alone.
+ *
+ * `identity` is the wearer, and it matters for exactly the morphology
+ * reason above - the classic drawer passes `hooks.entity` for it.
+ */
+export function itemLine(item, identity = undefined) {
+  const img = inventoryItemImage(item, identity);
+  // The TEMPLATE's name is the fallback, not 'Unknown'. A stack minted
+  // by a loot roll or a quest can arrive with no name of its own, and
+  // this dropped that fallback for one commit when the template read
+  // it replaced went away with it.
+  const t = templateByIndex(item.templateIndex);
   return {
     name: item.name ?? t?.name ?? 'Unknown',
     weight: itemWeight(item),
@@ -167,9 +189,9 @@ export function itemLine(item) {
     stack: (item.stackCount ?? 1) > 1 ? item.stackCount : null,
     equipped: isEquipped(item),
     broken: isBrokenItem(item),
-    // The real icon lives at TEXTURE.{archive} record {record}. It is
-    // recorded here so the wiring point is visible rather than lost.
-    icon: archive != null ? `TEXTURE.${archive} record ${record}` : null,
+    // The address only. Fetching is the view's business, because a
+    // model has no repaint to schedule.
+    image: img,
   };
 }
 
@@ -184,6 +206,13 @@ let notice = null;
 let onExit = () => {};
 let keyHandler = null;
 let lockHandler = null;
+// U54: how many times this screen has rebuilt itself. Every cold icon
+// repaints when it lands, which is what makes the letters give way to
+// the picture - so the count should be ROUGHLY the number of distinct
+// icons and no more. A cache that forgot its in-flight records decodes
+// each one once per repaint until the first lands, and the count
+// doubles; the probe measures it, which is the only way that shows.
+let repaints = 0;
 
 const el = (t, cls, txt) => {
   const n = document.createElement(t);
@@ -261,12 +290,43 @@ function slotMap() {
 // decoration that cannot render is the same lie as a button that does
 // nothing. Worn items live on the SLOT MAP, which is the whole
 // argument this screen makes.
-function itemRow(item) {
-  const line = itemLine(item);
-  const row = el('button', `itemrow${picked === item ? ' on' : ''}`);
+/**
+ * The item's own icon, or its initials.
+ *
+ * THE INITIALS ARE THE FALLBACK NOW, not the answer. A screen with no
+ * ARENA2 behind it - a test page, a failed archive, a record past the
+ * end - still tells a Longsword from a Lockpick in a list you are
+ * scanning, which is what the prototype's tile was for. When the real
+ * record lands the whole screen repaints and the letters give way.
+ */
+function itemTile(line) {
+  const src = line.image
+    ? requestIcon(line.image.archive, line.image.record, { scale: 2, onReady: render })
+    : null;
+  if (src) {
+    const tile = el('span', 'tile has-icon');
+    const img = el('img');
+    img.src = src;
+    img.alt = '';
+    // NO WIDTH ATTRIBUTE. These sprites are not square - a dagger is
+    // tall and narrow, a cuirass wide - and forcing 30 across squashes
+    // every one of them. The CSS caps both axes instead, which scales
+    // to fit and keeps the shape.
+    tile.append(img);
+    tile.title = line.name;
+    return tile;
+  }
   const tile = el('span', 'tile', line.name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase());
-  if (line.icon) tile.title = `${line.name} — ${line.icon}`;
-  row.append(tile);
+  tile.title = line.image
+    ? `${line.name} — TEXTURE.${line.image.archive} record ${line.image.record}`
+    : line.name;
+  return tile;
+}
+
+function itemRow(item) {
+  const line = itemLine(item, deps.entity);
+  const row = el('button', `itemrow${picked === item ? ' on' : ''}`);
+  row.append(itemTile(line));
   const mid = el('span', 'itemname');
   mid.append(el('span', null, line.name + (line.stack ? ` ×${line.stack}` : '')));
   const sub = [line.material, line.word].filter(Boolean).join(' · ');
@@ -318,8 +378,21 @@ function detailCol() {
     col.append(el('p', 'packempty', 'Pick something to read it.'));
     return col;
   }
-  const line = itemLine(picked);
+  const line = itemLine(picked, deps.entity);
   const c = el('div', 'card');
+  // The detail draws it BIGGER - this is the one place there is room
+  // to see what the thing actually looks like.
+  const big = line.image
+    ? requestIcon(line.image.archive, line.image.record, { scale: 4, onReady: render })
+    : null;
+  if (big) {
+    const fig = el('div', 'bigicon');
+    const img = el('img');
+    img.src = big;
+    img.alt = '';
+    fig.append(img);
+    c.append(fig);
+  }
   c.append(el('h3', null, line.name));
   const meta = [line.material, line.stack ? `${line.stack} of them` : null].filter(Boolean).join(' · ');
   if (meta) c.append(el('p', 'meta', meta));
@@ -345,13 +418,19 @@ function detailCol() {
   }
   c.append(acts);
   col.append(c);
-  if (line.icon) {
-    col.append(el('p', 'iconnote', `Icon: ${line.icon} — not drawn yet; the DOM has no path to the texture archives.`));
+  // The address, for the player who wants it and the developer who
+  // needs it - the same place the classic window's own info panel
+  // would never put it. Shown only when the picture is NOT here, so it
+  // reads as an explanation rather than as clutter.
+  if (line.image && !big) {
+    col.append(el('p', 'iconnote',
+      `No picture for this one yet — TEXTURE.${line.image.archive} record ${line.image.record}.`));
   }
   return col;
 }
 
 function render() {
+  repaints++;
   repaintKeepingScroll(host, () => {
     host.innerHTML = '';
     const shell = el('div', 'pack-shell');
@@ -402,6 +481,7 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   tab = TABS[0];
   picked = null;
   notice = null;
+  repaints = 0;
   refresh();
   render();
   keyHandler = onKey;
@@ -410,7 +490,7 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   releaseLock();
   if (typeof document !== 'undefined') document.addEventListener('pointerlockchange', lockHandler);
   globalThis.__pack = () => JSON.stringify({
-    tab, count: model.count, worn: model.worn.size,
+    tab, repaints, count: model.count, worn: model.worn.size,
     rows: [...hostEl.querySelectorAll('.itemrow')].length,
     nodes: [...hostEl.querySelectorAll('.node')].length,
     filled: [...hostEl.querySelectorAll('.node.filled')].length,

@@ -17,7 +17,8 @@ import {
   createInventoryWindow, inventoryDoorReady, needsClassicInventory, CLASSIC_ONLY_MODES,
 } from '../src/ui/inventoryDoor.js';
 import { TABS, filterByTab } from '../src/ui/nativeInventory.js';
-import { EQUIP_SLOTS, ITEM_TEMPLATES } from '../src/characters/paperdoll.js';
+import { EQUIP_SLOTS, ITEM_TEMPLATES, getTemplate } from '../src/characters/paperdoll.js';
+import { inventoryItemImage } from '../src/systems/itemTemplates.js';
 import { equipItem, unequipSlot, isEquipped } from '../src/systems/equip.js';
 import { maxEncumbrance } from '../src/combat/formulas.js';
 import { liveStat } from '../src/systems/statMods.js';
@@ -179,15 +180,74 @@ test('U53: DFU’s two unnamed slots are hidden until something is in them', () 
 
 test('U53: an item line is the other modules’ own strings', () => {
   const e = hero();
-  const line = itemLine(e.items[0]);
+  const line = itemLine(e.items[0], e);
   assert.equal(line.name, 'Longsword');
   assert.ok(line.weight > 0);
   assert.equal(typeof line.word, 'string', 'conditionWord, from systems/itemInfo.js');
   assert.equal(line.condition, 100);
   assert.equal(line.equipped, false);
-  // the real icon is recorded even though it is not drawn, so the
-  // wiring point stays visible instead of being lost
-  assert.match(line.icon, /^TEXTURE\.\d+ record \d+$/);
+});
+
+// U54: THE ICON ADDRESS IS inventoryItemImage'S, AND U53 GOT IT WRONG.
+// It read `playerTextureArchive ?? worldTextureArchive` off the
+// template, which looks like the same thing and is four ported laws
+// short of it - two of them with audits behind them. This is the pin
+// that would have caught it.
+test('U54: the icon address is inventoryItemImage’s, not a template read', () => {
+  const e = hero();
+  for (const it of e.items) {
+    assert.deepEqual(itemLine(it, e).image, inventoryItemImage(it, e),
+      `${it.name}: the line must not resolve its own address`);
+  }
+  // AUDIT 17e F9: GetItemImage draws the WORLD texture for ingredients
+  // and the other four groups, and the PLAYER texture for everything
+  // else - 111 of 288 templates differ, so a naive template read is
+  // wrong for more than a third of the catalogue.
+  const shield = e.items.find((i) => i.name === 'Buckler');
+  const naive = getTemplate(shield.templateIndex);
+  const real = itemLine(shield, e).image;
+  assert.ok(Number.isInteger(real.archive) && Number.isInteger(real.record));
+  assert.equal(real.archive, inventoryItemImage(shield, e).archive);
+  assert.ok(naive, 'the template exists - the point is that reading it directly is not the law');
+});
+
+test('U54: the WEARER changes the address - AUDIT 17f’s morphology offset', () => {
+  // SetRace offsets clothing/armour archives by body morphology, and
+  // GetInventoryTextureArchive reads that offset back. Without an
+  // identity every list drew the morphology-0 Argonian row, so the
+  // line has to PASS the wearer through rather than drop it.
+  const e = hero();
+  const armour = e.items.find((i) => i.group === 'Armor');
+  const withWearer = itemLine(armour, e).image;
+  const without = itemLine(armour, undefined).image;
+  assert.deepEqual(withWearer, inventoryItemImage(armour, e));
+  assert.deepEqual(without, inventoryItemImage(armour, undefined));
+  // and the view passes it - a model that takes the argument and a
+  // caller that forgets it is the same bug one layer up
+  const src = read('src/ui/enhancedInventory.js');
+  assert.match(src, /itemLine\(item, deps\.entity\)/, 'the row passes the wearer');
+  assert.match(src, /itemLine\(picked, deps\.entity\)/, 'and so does the detail');
+});
+
+test('U54: a nameless item falls back to its template, not to "Unknown"', () => {
+  // A stack minted by a loot roll or a quest can arrive with no name
+  // of its own. The template read this replaced carried that fallback
+  // and the first draft of the replacement dropped it.
+  const e = hero();
+  const bare = { ...e.items[0] };
+  delete bare.name;
+  assert.equal(itemLine(bare, e).name, 'Longsword');
+  assert.equal(itemLine({ templateIndex: -1 }, e).name, 'Unknown', 'and a real unknown still says so');
+});
+
+test('U54: the tile sets no width attribute - these sprites are not square', () => {
+  // A dagger is tall and narrow and a cuirass is wide; forcing them
+  // all to one width squashes every one. The CSS caps both axes.
+  const src = read('src/ui/enhancedInventory.js');
+  const tile = src.slice(src.indexOf('function itemTile(line)'), src.indexOf('function itemRow(item)'));
+  assert.doesNotMatch(tile, /img\.width\s*=/, 'no width attribute on the icon');
+  const css = read('src/ui/enhancedStyle.js');
+  assert.match(css, /\.tile img \{ image-rendering: pixelated; max-width: 30px; max-height: 30px; \}/);
 });
 
 test('U53: a broken item says so, and the chain refuses it', () => {

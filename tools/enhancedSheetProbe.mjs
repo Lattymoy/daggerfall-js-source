@@ -32,6 +32,26 @@ const check = (name, ok, detail = '') => {
 };
 const browser = await chromium.launch();
 
+/** THE BOOT MUST SETTLE BEFORE AN IN-GAME SCREEN OPENS.
+ *
+ *  main.js's top-level catch does `document.body.textContent = ...` on
+ *  a failed boot, and assigning textContent REMOVES EVERY CHILD OF
+ *  BODY - including an enhanced overlay opened a moment earlier. With
+ *  no ARENA2 on disk the world boot always fails here, so a probe that
+ *  opens a screen before that lands is racing a page wipe. It won that
+ *  race often enough to look reliable, which is the worst kind: this
+ *  repo has a commit called "the verifier said TIMEOUT four times
+ *  against good deploys". So: wait for it.
+ *
+ *  A boot that SUCCEEDS never writes that text, so the wait times out
+ *  and that is the correct outcome - hence the swallowed rejection. */
+async function bootSettled(page) {
+  await page.waitForFunction(
+    () => document.body.textContent.includes('boot failed'), null, { timeout: 15000 },
+  ).catch(() => { /* a successful boot never says it - nothing to wait for */ });
+}
+
+
 /** Drive the front door to the moment a game starts, so the boot menu
  *  unmounts through runEnhancedMenu's own resolve and what is left is
  *  the game's real page. */
@@ -41,6 +61,7 @@ async function toGamePage(page) {
   await page.getByRole('button', { name: 'New Game', exact: true }).click();
   await page.getByRole('button', { name: 'Begin', exact: true }).click();
   await page.waitForSelector('#enhanced-menu', { state: 'detached', timeout: 20000 });
+  await bootSettled(page);
 }
 
 /** Open the sheet with a chosen set of hooks. `withChild` names the

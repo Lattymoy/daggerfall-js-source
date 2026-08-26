@@ -485,6 +485,15 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   flex: 0 0 auto; width: 30px; height: 30px; display: grid; place-items: center;
   border: 1px solid var(--iron); color: var(--dim); font-size: 11px; letter-spacing: 0.06em;
 }
+/* THE REAL ICON, when the archive is here. No border: the sprite is a
+   1-bit cutout on nothing, and a box round it makes it look like a
+   placeholder, which is what it replaced. */
+.tile.has-icon { border-color: transparent; }
+.tile img { image-rendering: pixelated; max-width: 30px; max-height: 30px; }
+.bigicon {
+  display: grid; place-items: center; padding: 6px 0 14px; min-height: 72px;
+}
+.bigicon img { image-rendering: pixelated; max-width: 100%; max-height: 120px; }
 .itemname { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
 .itemname small { color: var(--dim); font-size: 11.5px; }
 .itemwt { flex: 0 0 auto; color: var(--dim); font-size: 12px; font-variant-numeric: tabular-nums; }

@@ -8,6 +8,110 @@ policies one by one.
 
 
 
+## U54 THE ITEM ICONS, and the middle link the port never had (2026-08-26)
+
+The pack draws real item pictures. `ui/textureCanvas.js` is the piece
+that was missing, and it is the DOM's own door to the TEXTURE archives.
+
+THE PORT HAD TWO THIRDS OF THIS SINCE U50. `formats/textureFile.js`
+reads TEXTURE.### into DFBitmaps and is corpus-gated;
+`ui/bitmapCanvas.js` turns a DFBitmap into a canvas and has drawn the
+chargen faces since U50. What was missing is the middle - fetch an
+archive, keep it, hand a screen the one record it asked for - which is
+why U53's pack drew two-letter initials where the classic window draws
+the icon.
+
+IT HANDS OUT A DATA URL, NOT A CANVAS. A canvas is a NODE and a node
+lives in one place; these screens rebuild their whole DOM on every
+repaint and the same icon can appear in several rows at once, so one
+canvas would move from row to row and leave the others blank. A data
+URL is a VALUE: any number of `<img>` elements carry it and the browser
+decodes it once.
+
+U53 GOT THE ICON ADDRESS WRONG AND THIS SLICE FIXES IT. `itemLine` read
+`playerTextureArchive ?? worldTextureArchive` off the template, which
+looks like the same thing as `inventoryItemImage` and is FOUR PORTED
+LAWS short of it, two with audits behind them: GetItemImage draws the
+WORLD texture for UselessItems1, ingredients, arrows, ReligiousItems
+and MiscItems - 111 of 288 templates differ (AUDIT 17e F9); the player
+archive is offset by the WEARER's body morphology, or every list draws
+the morphology-0 Argonian row (AUDIT 17f); variants index off the
+record with cloaks skipping their interior-first one and armour riding
+SetVariant's material-family clamps (AUDIT 23 items-6); and katanas
+take +1 on the inventory branch alone. U53's own module header warned
+against building a second icon pipeline and then contained a piece of
+one. The line takes the WEARER now and both call sites pass it.
+
+`texName` GOT ONE HOME in the same motion. It was declared in
+`scenes/shared.js`, and this module cannot import that - 33 imports
+including the sky renderer, which a DOM screen must not drag in - so
+the first draft restated it and the `audit24_onehome` ratchet caught it
+inside the slice. It lives in `formats/textureFile.js` now, beside the
+reader, and shared.js re-exports it for its thirty callers.
+
+EVERY FAILURE IS A CACHED MISS. No ARENA2, a missing archive, a record
+past the end, a palette that would not load: the caller gets null, the
+screen keeps its initials, and the archive is not fetched again on the
+next repaint. A screen asking forty times a second for a file that does
+not exist is the shape this guards against.
+
+PROVED IN A REAL BROWSER by `tools/enhancedIconProbe.mjs` - 18/18, all
+five links, WITH NO GAME DATA. The archive is SYNTHETIC: a valid
+minimal uncompressed TEXTURE file built to the reader's own format and
+served by intercepting the fetch, which is the device the chargen tests
+use ("synthetic pickers so it is provable with no game data"). The
+probe reads the PIXELS back out of the resulting `<img>` and finds the
+palette colour on the painted half and ALPHA 0 on the other, which is
+the port's 1-bit cutout law surviving the whole trip. It also proves
+eight records from one archive cost one fetch, a record past the end
+answers null rather than throwing, and - with everything 404ing - the
+tile falls back to initials, still names the record it wants, and the
+detail explains the absence instead of showing a gap.
+
+WHAT IT DOES NOT PROVE, stated rather than implied: that a REAL ARENA2
+record decodes to the right picture. That needs a run with ARENA2_PATH
+and eyes on the screen. Both halves either side of the new link are
+already proven - the reader against the real corpus, bitmapCanvas by
+the chargen faces - and the new link is thirty lines.
+
+THE REPAINT COUNT IS PINNED, and it is what killed the one mutation the
+probe could not otherwise see. Every cold icon repaints the screen when
+it lands, which is what makes the letters give way to the picture; a
+cache that forgot its IN-FLIGHT records decodes each icon once per
+repaint until the first lands, and the count DOUBLES - four to eight
+for a three-item pack. It does not loop forever, because the first
+decode to land caches the answer, and the first draft of that comment
+claimed a loop it cannot cause. Bounded waste, said precisely.
+
+TWO MORE CAME OUT OF READING THE DIFF BEFORE PUSHING IT, and both
+were real. The TEMPLATE-NAME FALLBACK went away with the template read
+it replaced, so an item minted with no name of its own - a loot roll, a
+quest reward - said "Unknown" where it used to say "Longsword". And the
+icon carried a width ATTRIBUTE, which forces every sprite to 30 across
+when a dagger is tall and narrow and a cuirass is wide; the CSS caps
+both axes instead, which scales to fit and keeps the shape.
+
+AND THE PROBES STOPPED RACING THE BOOT. `main.js`'s top-level catch
+does `document.body.textContent = ...` on a failed boot, and assigning
+textContent REMOVES EVERY CHILD OF BODY - including an enhanced overlay
+opened a moment earlier. With no ARENA2 the world boot always fails in
+a probe container, so every in-game probe since U51 has been opening
+its screen in a race with a page wipe, and winning it often enough to
+look reliable. That is the shape behind this repo's own "the verifier
+said TIMEOUT four times against good deploys". All four wait for the
+boot to settle now. The behaviour itself is correct - a boot that
+failed has nothing to show - so nothing in `src/` changed; it took an
+hour to find because the div vanished with no `.remove()` and no
+`removeChild` in the trace, which is exactly what assigning
+`textContent` looks like from the outside.
+
+ONE RECORDED SURVIVOR: deleting the explicit `record >= recordCount`
+check changes nothing observable, because `getDFBitmap` already answers
+an out-of-range record with an empty bitmap and `bitmapCanvas` answers
+an empty bitmap with null. The check earns only its warning line, which
+names the archive and record a screen asked for. Kept, and recorded as
+redundant rather than left looking load-bearing.
+
 ## U53 THE ENHANCED PACK, AND THE SLOT MAP (2026-08-26)
 
 The overhaul's signature, and the second in-game screen. F6 opens it,

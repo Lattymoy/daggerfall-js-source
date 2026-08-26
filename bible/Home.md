@@ -250,9 +250,9 @@ combat line numbers below are refreshed with it.
 - `src/scenes/exterior.js:1349` - (FLAGGED: the climate People table pends; the test city is
 - `src/scenes/exterior.js:1501` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/exterior.js:1839` - ground (FLAGGED with world.js's same gap), so Detect Treasure
-- `src/scenes/shared.js:221` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
-- `src/scenes/shared.js:238` - *  mirrors motorStats (the INTERIM entity carries no stats). */
-- `src/scenes/shared.js:343` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
+- `src/scenes/shared.js:223` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
+- `src/scenes/shared.js:240` - *  mirrors motorStats (the INTERIM entity carries no stats). */
+- `src/scenes/shared.js:345` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
 - `src/scenes/world.js:708` - FLAGGED loud: the People faction rides the START location's
 - `src/scenes/world.js:743` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
