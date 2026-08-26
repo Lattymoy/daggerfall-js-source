@@ -102,6 +102,7 @@ export function paperdollItemImage(item, { gender = 'male', race = 'Breton' } = 
 
 let _art = null;      // indexed bitmaps + palette
 let _live = null;     // { tex } - the current composite
+let _pixels = null;   // U59: the same composite as RGBA, for the DOM
 let _layout = [];     // blitted item layers, draw order (backwards hit test)
 let _deps = null;
 let _version = 0;
@@ -147,6 +148,7 @@ export async function preloadPaperDollArt(deps, { race = 'Breton', gender = 'mal
     // reaches this path on every identity change.
     if (_live) { deps.renderer?.releaseTexture?.('img', _live.key); }
     _live = null;   // the composite is stale: recompose on the next draw
+    _pixels = null;   // U59: and the DOM's copy of it, or a Khajiit draws the Breton doll
     _layout = [];   // and its click mask with it
   } catch { console.warn('[paperdoll] BODY/FACE/SCBG art unavailable; the panel stays bare'); }
 }
@@ -252,6 +254,13 @@ export async function refreshPaperDoll(entity) {
     }
     const key = `paperdoll_v${++_version}`;
     const prevKey = _live?.key ?? null;
+    // U59: the composite is KEPT, not just uploaded. `out` is already
+    // the finished doll in RGBA - the GL upload below is one consumer
+    // of it, and a DOM screen is the other. Holding the 81 KB buffer
+    // that was about to be discarded is what let the enhanced pack
+    // draw the same avatar the classic window draws, without a second
+    // compositor reading the same laws again.
+    _pixels = { width: PAPERDOLL_W, height: PAPERDOLL_H, rgba: out, version: _version };
     _live = { key, tex: _deps.renderer.uploadTexture('img', key, { width: PAPERDOLL_W, height: PAPERDOLL_H, colors: new Uint32Array(out.buffer) }) };
     // AUDIT 17e F27 / EVERY ALLOCATION HAS AN OWNER: each refresh mints
     // a NEW versioned key, so the previous composite leaked (~81 KB per
@@ -297,5 +306,33 @@ export function slotAtPaperDoll(px, py) {
   return null;
 }
 
+/**
+ * U59: THE COMPOSITE, FOR A SCREEN THAT IS NOT A CANVAS.
+ *
+ * The enhanced pack draws the avatar as an `<img>`, and the doll is
+ * already built CPU-side - `refreshPaperDoll` composites into an RGBA
+ * buffer and then uploads it. This hands out that buffer rather than
+ * letting a DOM screen re-read PaperDollRenderer's layer order, dye
+ * bands and offsets for itself, which is how a port ends up with two
+ * dolls that disagree.
+ *
+ * `version` bumps on every recompose, so a view can cache by it and
+ * repaint only when the avatar actually changed.
+ *
+ * Null until a host has preloaded the art AND a compose has finished:
+ * with no ARENA2 there is no doll, and the caller shows whatever it
+ * shows without one.
+ */
+export const paperDollPixels = () => _pixels;
+
 /** Test seam. */
 export const _debugPaperDoll = () => ({ live: !!_live, layers: _layout.map((l) => l.slot), version: _version });
+
+/** Test seam: a composite with no ARENA2 behind it. The DOM path -
+ *  buffer to data URL to `<img>` - is provable without game data, and
+ *  this is what tools/enhancedDollProbe.mjs stands one up with. It
+ *  does NOT fake the compositor: the layer laws above are pinned
+ *  against real records in paperdoll.test.js under ARENA2_PATH. */
+export function _setPaperDollPixelsForTests(rgba, w = PAPERDOLL_W, h = PAPERDOLL_H) {
+  _pixels = rgba ? { width: w, height: h, rgba, version: ++_version } : null;
+}

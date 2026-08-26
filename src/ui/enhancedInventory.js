@@ -60,7 +60,13 @@ import { TABS, filterByTab, USE_PENDING } from './nativeInventory.js';
 import { useItem } from '../systems/useItem.js';
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { inventoryItemImage, templateByIndex } from '../systems/itemTemplates.js';
-import { requestIcon } from './textureCanvas.js';
+import { requestIcon, paperDollDataUrl } from './textureCanvas.js';
+// U59: the AVATAR. The compositor is ui/paperDoll.js - the same one
+// the classic window draws - and this reads its finished pixels rather
+// than re-deriving PaperDollRenderer's layer order for a second time.
+import {
+  refreshPaperDoll, paperDollPixels, slotAtPaperDoll, PAPERDOLL_W, PAPERDOLL_H,
+} from './paperDoll.js';
 import {
   equipItem, unequipSlot, equipTableOf, isEquipped,
   isForbiddenEquip, isBrokenItem,
@@ -162,6 +168,43 @@ export function packModel(deps = {}) {
     // expression the character sheet and the classic window use.
     encumbrance: { now: Math.trunc(carried), max: entityMaxEncumbrance(entity) },
     count: items.length,
+  };
+}
+
+/**
+ * U59: WHAT YOU ARE WEARING, as a list rather than as dots.
+ *
+ * The slot map put every worn item behind a 7px circle. That is a
+ * fine PICTURE of a kit and a poor READING of one: you cannot see
+ * what a filled node holds without hovering it, and the one action it
+ * offers - take it off - is a click on a target the size of a full
+ * stop. So the same twenty-seven slots also come out as rows, named,
+ * with what is in them.
+ *
+ * THE ORDER IS THE BODY'S, and it is read off SLOT_MAP's own
+ * positions rather than from a second table: head to feet, then left
+ * to right. EQUIP_SLOTS' numbering is DFU's enum order, which starts
+ * at the jewellery and would put a ring above a helm.
+ *
+ * EMPTY SLOTS ARE ROWS TOO. A list of only what you wear cannot
+ * answer "what could I still put on", which is half of what the
+ * schematic was for - and DFU's two unnamed slots stay hidden until
+ * something is in them, for the reason SLOT_MAP gives.
+ */
+export function equippedModel(entity = {}) {
+  const table = equipTableOf(entity) ?? [];
+  const rows = Object.entries(SLOT_MAP).map(([id, at]) => ({
+    slot: Number(id),
+    label: at.label,
+    item: table[Number(id)] ?? null,
+    hidden: !!at.hidden,
+    x: at.x,
+    y: at.y,
+  })).sort((a, b) => a.y - b.y || a.x - b.x);
+  return {
+    rows: rows.filter((r) => r.item || !r.hidden),
+    filled: rows.filter((r) => r.item).length,
+    total: rows.length,
   };
 }
 
@@ -313,6 +356,7 @@ export function useResultAction(r, { openBook = null, openSpellbook = null } = {
 let host = null;
 let deps = {};
 let model = null;
+let worn = { rows: [], filled: 0, total: 0 };   // U59: the slots, as rows
 let tab = TABS[0];
 let picked = null;      // the selected item object
 let side = 'local';     // which list `picked` came out of
@@ -357,7 +401,19 @@ const sessionState = () => ({ ...session, dropped, wagonLocal });
 const refresh = () => {
   model = packModel(deps);
   remote = remoteModel(deps, sessionState());
+  worn = equippedModel(deps.entity);
 };
+
+/** U59: recompose the avatar and repaint when it lands. The
+ *  compositor coalesces overlapping requests itself (AUDIT 17e F16),
+ *  so an equip during a compose is not dropped - which is why this can
+ *  be fired at every change without a guard of its own. A build with
+ *  no doll art returns immediately and the panel keeps the schematic. */
+function refreshFigure() {
+  Promise.resolve(refreshPaperDoll(deps.entity))
+    .then(() => { if (host) render(); })
+    .catch(() => { /* no art, no doll - the schematic is the answer */ });
+}
 
 /** Wearing something, through the ONE chain. A refusal is REPORTED -
  *  the classic window pops TEXT.RSC for the same two cases, and a
@@ -371,6 +427,7 @@ function wear(item) {
   }
   if (equipItem(deps.entity, item) === null) { notice = `${item.name} cannot be worn.`; return render(); }
   refresh();
+  refreshFigure();   // U59: the avatar is wearing it now
   return render();
 }
 
@@ -429,6 +486,7 @@ function takeOff(slot) {
   notice = null;
   unequipSlot(deps.entity, slot);
   refresh();
+  refreshFigure();
   render();
 }
 
@@ -539,6 +597,95 @@ function dropGold(text) {
   }
   refresh();
   render();
+}
+
+// ── THE CHARACTER PANEL ──────────────────────────────────────────
+// The screen's one picture of the player, and the place the VOXEL
+// character render lands when it is ready: this panel owns the space
+// and the sizing, and what fills it is one decision in `figurePanel`.
+// Today that is the paperdoll when its art is loaded and the
+// schematic when it is not - which is also why the schematic stays.
+// It is the only one of the two that needs no ARENA2, so it is what a
+// player with no game data still sees.
+
+/** The avatar, at whatever scale the column gives it. */
+function dollPanel(url) {
+  const wrap = el('div', 'figure-doll');
+  const img = el('img');
+  img.src = url;
+  img.alt = 'Your character, wearing what is equipped';
+  // GetEquipIndex, through the compositor's own click mask
+  // (PaperDollRenderer's itemLayout walked backwards). The panel is
+  // drawn at a whole-number scale, so a click maps back by division -
+  // and the mask is in PANEL pixels, which is what slotAtPaperDoll
+  // wants.
+  img.onclick = (e) => {
+    const r = img.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    const slot = slotAtPaperDoll(
+      Math.floor((e.clientX - r.left) * PAPERDOLL_W / r.width),
+      Math.floor((e.clientY - r.top) * PAPERDOLL_H / r.height),
+    );
+    if (slot != null) takeOff(slot);
+  };
+  wrap.append(img);
+  return wrap;
+}
+
+/** Whichever picture of the player this build can draw. */
+function figurePanel() {
+  const url = paperDollDataUrl(paperDollPixels(), { scale: 3 });
+  return url ? dollPanel(url) : slotMap();
+}
+
+/** The twenty-seven slots, named, with what is in them. */
+function equippedList() {
+  const wrap = el('section', 'equipped');
+  const head = el('div', 'equippedhead');
+  head.append(el('h3', null, 'Worn'));
+  head.append(el('p', 'meta', `${worn.filled} of ${worn.total} slots filled`));
+  wrap.append(head);
+  for (const row of worn.rows) {
+    // AN EMPTY SLOT IS NOT A CONTROL, so it is not a BUTTON. The first
+    // draft made every row a button and disabled the empty ones, which
+    // the pack probe's 44px touch-target rule caught immediately - a
+    // disabled button is still a button, and twenty-two 24px ones is
+    // exactly the "control that can only do nothing" this arc keeps
+    // deleting. `wornempty`, not `empty`: the stylesheet already has an
+    // `.empty` COMPONENT (a dashed placeholder card), and reusing the
+    // bare word drew every unfilled slot as one. Third collision of
+    // this shape in the arc, after `.detail` and `.packcol`.
+    if (!row.item) {
+      const d = el('div', 'wornrow wornempty');
+      d.append(el('span', 'wornslot', row.label), el('span', 'wornname wornempty', '\u2014'));
+      wrap.append(d);
+      continue;
+    }
+    const b = el('button', `wornrow${row.item === picked ? ' on' : ''}`);
+    const line = itemLine(row.item, deps.entity);
+    b.append(el('span', 'wornslot', row.label));
+    b.append(el('span', 'wornname', line.name));
+    b.append(el('span', 'itemwt', `${line.weight.toFixed(2)} kg`));
+    // SELECTS, rather than unequipping on the spot. The slot map's node
+    // took the item straight off, which is right for a control whose
+    // only meaning is "this one" - a named row has a detail panel
+    // behind it, and Take off is a button in there next to Use. A row
+    // that undressed you on a mis-click would be the small-target
+    // problem again with a bigger target.
+    b.onclick = () => { picked = row.item; side = 'local'; notice = null; render(); };
+    wrap.append(b);
+  }
+  return wrap;
+}
+
+function characterCol() {
+  // NOT `.packcol`. That class means "one of the item lists" to the
+  // stylesheet AND to every probe selector, and borrowing it for the
+  // character column made `.packcol:not(.packremote)` match the doll -
+  // the same collision U53 hit by naming the detail column `.detail`.
+  const col = el('section', 'charcol');
+  col.append(figurePanel(), equippedList());
+  return col;
 }
 
 function slotMap() {
@@ -794,7 +941,11 @@ function detailCol() {
     // The verb names the DESTINATION, and the destination is whichever
     // list is showing. Drawn only when the law would either move
     // something or say something (`canStow`).
-    if (canStow(picked)) {
+    // WORN ITEMS HAVE NO STOW. filterByTab IS FilterLocalItems, so an
+    // equipped item is never in the list a Remove click can reach -
+    // the classic window cannot transfer one and neither can this. The
+    // way out is Take off, which is the button beside it.
+    if (!line.equipped && canStow(picked)) {
       const t = el('button', 'act', STOW_LABEL[remote.kind]);
       t.onclick = () => stow(picked);
       acts.append(t);
@@ -864,7 +1015,7 @@ function render() {
     const first = remote.kind === 'container' || remote.kind === 'reward';
     const lists = el('div', `packlists${first ? ' remotefirst' : ''}`);
     lists.append(listCol(), remoteCol());
-    grid.append(slotMap(), lists, detailCol());
+    grid.append(characterCol(), lists, detailCol());
     shell.append(grid);
     if (notice) shell.append(el('p', 'sheet-notice', notice));
     host.append(shell);
@@ -918,6 +1069,9 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   wagonLocal = [];
   refresh();
   render();
+  // The classic window composes on construction; so does this. Without
+  // it the panel shows the schematic until the first equip.
+  refreshFigure();
   keyHandler = onKey;
   globalThis.addEventListener('keydown', keyHandler, { capture: true });
   lockHandler = releaseLock;
@@ -926,6 +1080,10 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   globalThis.__pack = () => JSON.stringify({
     tab, repaints, count: model.count, worn: model.worn.size,
     side, remoteKind: remote.kind, remoteCount: remote.count,
+    figure: hostEl.querySelector('.figure-doll img') ? 'doll' : 'schematic',
+    wornRows: [...hostEl.querySelectorAll('.wornrow')].length,
+    wornFilled: [...hostEl.querySelectorAll('.wornrow:not(.wornempty)')].length,
+    wornNames: [...hostEl.querySelectorAll('.wornrow:not(.wornempty) .wornname')].map((n) => n.textContent),
     remoteRows: [...hostEl.querySelectorAll('.packremote .itemrow')].length,
     dropped: dropped.length, gold: model.gold, goldOpen: goldEntry != null,
     usingWagon: session.usingWagon,

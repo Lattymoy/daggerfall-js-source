@@ -145,4 +145,60 @@ export function _resetIconsForTests() {
   archives.clear();
   icons.clear();
   palettePromise = null;
+  dollCache = null;
+}
+
+// ── U59: THE PAPERDOLL, FOR A SCREEN MADE OF NODES ───────────────
+//
+// The same problem the icons had, one layer up. `ui/paperDoll.js`
+// composites the avatar CPU-side into an RGBA buffer and uploads it as
+// a GL texture; a DOM screen cannot use a GL texture, and re-reading
+// PaperDollRenderer's layer order, dye bands and offsets to build a
+// second doll is how a port ends up with two that disagree. So the
+// compositor keeps its buffer and this turns it into a value.
+//
+// CACHED BY VERSION, not by identity: `refreshPaperDoll` bumps the
+// version on every recompose, so wearing a helm invalidates this and
+// nothing else does. A repaint with the same version is free.
+
+let dollCache = null;   // { version, scale, url }
+
+/**
+ * The live paperdoll as a data URL, or null when there is no doll -
+ * no ARENA2, or a compose that has not finished.
+ *
+ * Synchronous for `requestIcon`'s reason: a screen that rebuilds its
+ * DOM cannot await inside a render. Unlike an icon there is nothing to
+ * fetch, so there is no `onReady` and no in-flight marker - the pixels
+ * are either composed or they are not, and the caller asks again on
+ * its next repaint.
+ */
+export function paperDollDataUrl(pixels, { scale = 3 } = {}) {
+  if (!pixels?.rgba) return null;
+  if (dollCache && dollCache.version === pixels.version && dollCache.scale === scale) return dollCache.url;
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = pixels.width * scale;
+    canvas.height = pixels.height * scale;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    // The buffer is ALREADY RGBA at the panel's own 110x184, so this
+    // is a blit and a nearest-neighbour scale rather than a redraw -
+    // and the scale must not smooth, or a 1-bit Daggerfall sprite
+    // turns to soup.
+    const src = document.createElement('canvas');
+    src.width = pixels.width;
+    src.height = pixels.height;
+    const sctx = src.getContext('2d');
+    if (!sctx) return null;
+    sctx.putImageData(new ImageData(new Uint8ClampedArray(pixels.rgba), pixels.width, pixels.height), 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(src, 0, 0, canvas.width, canvas.height);
+    const url = canvas.toDataURL('image/png');
+    dollCache = { version: pixels.version, scale, url };
+    return url;
+  } catch (e) {
+    console.warn('[paperdoll] the composite would not draw', e);
+    return null;
+  }
 }
