@@ -1145,6 +1145,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
     say: (l) => townTalk.say(l),
     spellArmed: () => magic.spellArmed(),   // M2
+    climbing: () => !!player.climb?.isClimbing,   // WeaponManager.cs:236-239: ClimbingMotor.IsClimbing hides the weapon (exterior.js's twin)
   });
   // M2: SPELLCASTING ABOVE GROUND - exterior.js's twin note applies.
   /** The per-foe doors, hoisted (AUDIT 24 wave 32): the cast engine takes

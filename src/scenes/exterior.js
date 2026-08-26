@@ -770,6 +770,11 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
     say: (l) => townTalk.say(l),
     spellArmed: () => magic.spellArmed(),   // M2: HasReadySpell hides the weapon
+    // WeaponManager.cs:236-239: `PlayerEntity.IsParalyzed ||
+    // ClimbingMotor.IsClimbing` -> ShowWeapons(false). One
+    // WeaponManager reads one ClimbingMotor, so the flag is this
+    // host's own motor - the same read the fatigue band takes.
+    climbing: () => !!player.climb?.isClimbing,
   });
   // M2 (the AUDIT 23 hosts-2 priority row): SPELLCASTING ABOVE GROUND.
   // One engine per page, mode-aware deps - exterior mode targets the

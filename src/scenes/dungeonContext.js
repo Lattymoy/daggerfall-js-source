@@ -1481,6 +1481,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     bindWorn: opts.playerWeapon !== 'bow',   // AUDIT 17e F17: the ?weapon=bow debug flag keeps its scripted weapon
     say: (l) => hudText.add(l),
     spellArmed: () => magic.spellArmed(),
+    // WeaponManager.cs:236-239: `PlayerEntity.IsParalyzed ||
+    // ClimbingMotor.IsClimbing` -> ShowWeapons(false). This context
+    // holds no motor; the hosts' per-frame reportActivity already
+    // carries ClimbingMotor.IsClimbing here for the fatigue band, so
+    // the rig reads that one flag rather than a second channel.
+    climbing: () => _activity.climbing,
   });
   const playerWeapon = weaponRig.playerWeapon;   // the dungeon-side combat consumers read it
   if (opts.playerWeapon === 'bow') {

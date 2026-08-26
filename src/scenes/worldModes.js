@@ -370,6 +370,10 @@ export function createWorldModes(host) {
   // own audited copy; the host rule wants the weapon in every mode).
   const interiorWeapon = createWeaponRig({
     spellArmed: () => magic?.spellArmed() ?? false,   // M2
+    // WeaponManager.cs:236-239: ClimbingMotor.IsClimbing hides the
+    // weapon. The host's motor rides in on `player` (the same read
+    // the dungeon arm's reportActivity takes below).
+    climbing: () => !!player.climb?.isClimbing,
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
     say,
   });
