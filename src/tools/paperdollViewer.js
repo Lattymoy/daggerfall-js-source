@@ -526,6 +526,67 @@ function applyVillagerDrape(v) {
   const btn = document.getElementById('drape');
   if (btn) btn.textContent = 'drape: ' + DRAPES[drapeIx];
 }
+// ── CLASSIC DAGGERFALL CLOTHING ──────────────────────────────────
+// These are item-template garments, not editor-only villager designs.
+// Body clothing owns existing body quads; hanging garments own a drape mesh.
+let classicClothingOn = null;
+function applyClassicClothing(c) {
+  for (const t of Object.values(pieceTables)) hidePieces(t);
+  pos.set(pristinePos);
+  col.set(pristineCol);
+  basePos.set(pos);
+  geo.getAttribute('position').needsUpdate = true;
+  geo.getAttribute('color').needsUpdate = true;
+  shownLine = null; shownIdx = -1; shownDesign = null; beastAtk = null;
+  villagerOn = null;
+
+  // Clear spectral/fire state left by an inspected enemy. Piece materials
+  // mirror effect state only; their texture ownership stays independent.
+  mat.transparent = false;
+  mat.opacity = 1;
+  mat.depthWrite = true;
+  mat.blending = THREE.NormalBlending;
+  mat.needsUpdate = true;
+  syncPieceEffectState();
+
+  // Current race/tone is the skin compositor baseline. Garment faces written
+  // after this become authored clothing overrides in their isolated tiles.
+  applyTone();
+
+  if (c && c.kind === 'body') {
+    for (let k = 0; k < c.idx.length; k++) {
+      const f = c.idx[k], pb = k * 12, cb = k * 3;
+      const r = c.C[cb] / 255, g = c.C[cb + 1] / 255, b = c.C[cb + 2] / 255;
+      let o = f * 18;
+      for (const vi of TRI) {
+        pos[o] = c.P[pb + vi * 3] / 1000;
+        pos[o + 1] = c.P[pb + vi * 3 + 1] / 1000;
+        pos[o + 2] = c.P[pb + vi * 3 + 2] / 1000;
+        col[o] = r; col[o + 1] = g; col[o + 2] = b;
+        o += 3;
+      }
+    }
+  }
+  basePos.set(pos);
+  geo.getAttribute('position').needsUpdate = true;
+  geo.getAttribute('color').needsUpdate = true;
+
+  for (const nm in drapedMeshes) drapedMeshes[nm].visible = false;
+  if (c && c.kind === 'drape' && c.drape) {
+    const di = DRAPES.indexOf(c.drape.name);
+    drapeIx = di >= 0 ? di : 0;
+    setDrape();
+    fitDrape(c);
+  } else {
+    drapeIx = 0;
+    setDrape();
+    fitDrape(null);
+  }
+  classicClothingOn = c || null;
+  const db = document.getElementById('drape');
+  if (db) db.textContent = 'drape: ' + DRAPES[drapeIx];
+}
+
 // step the visible simulated cloth from the animation state
 // Articulated collider (bent legs + swinging arms) for the current gait,
 // using the rig's real joint heights + measured limb radii.
@@ -669,6 +730,40 @@ const fill = new THREE.DirectionalLight(0xffffff, 0.35); fill.position.set(-1, 0
 // consumes the same module. The template binds a context and keeps a
 // THREE adapter so every existing call site (and probe) is unchanged.
 const ACTX = createAnimContext({ basePos, vgrp, armX: D.armX, wristY: D.wristY, neckY: D.neckY });
+
+// Classic Daggerfall clothing picker: item DB roster -> 3D garment pack.
+{
+  const sel = document.getElementById('clothing');
+  if (sel) {
+    const none = document.createElement('option');
+    none.value = '';
+    none.textContent = 'clothing: none';
+    sel.appendChild(none);
+    const groups = { body: document.createElement('optgroup'), drape: document.createElement('optgroup') };
+    groups.body.label = 'body clothing';
+    groups.drape.label = 'draped clothing';
+    for (const c of (D.clothing || [])) {
+      const opt = document.createElement('option');
+      opt.value = String(c.index);
+      opt.textContent = c.name + '  #' + c.index + (c.variants > 1 ? '  (' + c.variants + ' variants)' : '');
+      groups[c.kind]?.appendChild(opt);
+    }
+    if (groups.body.children.length) sel.appendChild(groups.body);
+    if (groups.drape.children.length) sel.appendChild(groups.drape);
+    sel.onchange = () => {
+      const c = (D.clothing || []).find((x) => String(x.index) === sel.value) || null;
+      for (const other of ['villager', 'orc', 'undead', 'classes', 'atronach', 'beast', 'daedra']) {
+        const o = document.getElementById(other);
+        if (o) o.value = '';
+      }
+      applyClassicClothing(c);
+      const hud = document.getElementById('hud');
+      if (hud) hud.textContent = c
+        ? c.name + ' · classic template ' + c.index + ' · ' + c.kind + ' · TEXTURE.' + String(c.playerTextureArchive).padStart(3, '0') + ' record ' + c.playerTextureRecord
+        : 'NEUTRAL POSE prototype · drag to rotate · pinch to zoom';
+    };
+  }
+}
 
 // ── ORC LINE picker (editor only) ────────────────────────────────
 // An orc is the SAME delta mechanism as a villager (build girth moves

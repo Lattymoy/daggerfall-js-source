@@ -29,7 +29,7 @@ import { ATTACKS_1H, ATTACKS_2H, ATTACKS_RANGED, ATTACKS_FP, REACTIONS, DIRECTIO
 import { buildCuirass, STEEL_RAMP } from './pieces/cuirass.js';
 import { buildGreaves } from './pieces/greaves.js';
 import { CLOTH_RAMP, MAIL_RAMP, LEATHER_RAMP } from './pieces/pieceLoft.js';
-import { clothingZones } from './clothing.js';
+import { clothingZones, CLOTHING_CATALOG } from './clothing.js';
 import { armorZones } from './armorSet.js';
 import { buildPauldrons } from './pieces/pauldrons.js';
 import { buildHelm } from './pieces/helm.js';
@@ -523,6 +523,26 @@ export function buildPaperdollPayload(pal, img, cif) {
     };
   });
 
+  // ── CLASSIC DAGGERFALL CLOTHING ────────────────────────────────
+  // The item DB owns the roster. Body-hugging garments use the exact same
+  // face list as the neutral body and ship as deltas; skirts/robes/cloaks
+  // keep their standoff drape identity. Classic archive/record addressing
+  // travels with each pack for the texture stage that follows this one.
+  const clothingPacks = CLOTHING_CATALOG.map((item) => {
+    if (item.kind === 'drape') {
+      return {
+        ...item,
+        drape: { name: item.drape, fit: measureDrapeFit(faces, item.drape) },
+        idx: [], P: [], C: [],
+      };
+    }
+    const cf = buildNeutralBody(
+      { ...ramps, cloth: CLOTH_RAMP },
+      { face, clothZones: clothingZones(item.index), cloth: CLOTH_RAMP },
+    );
+    return { ...item, drape: null, ...villagerDelta(faces, cf) };
+  });
+
   // Per-race body colours: same geometry, re-shaded with the race hide/fur.
   const colorsOf = (fs) => { const c=[]; for (const f of fs) c.push(f.c[0], f.c[1], f.c[2]); return c; };
   const Ck = colorsOf(buildNeutralBody({ skin: KHAJIIT_FUR, boot: ramps.boot }, { face }));
@@ -562,7 +582,7 @@ export function buildPaperdollPayload(pal, img, cif) {
       return list;
     })(),
     swordRamps: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, weaponMaterialRamp(v, (i) => pal.get(i))])),
-    swordItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)])), cloth: CLOTH_D, drapedNames: DRAPED_NAMES, villagers: villagerPacks, orcs: orcPacks, undead: undeadPacks, classes: classPacks, atronachs: atronachPacks, beasts: beastPacks, daedra: daedraPacks, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), tail: packPiece(buildTail(ramps.skin,'argonian')), tailCat: packPiece(buildTail(KHAJIIT_FUR,'khajiit')), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
+    swordItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)])), cloth: CLOTH_D, clothing: clothingPacks, drapedNames: DRAPED_NAMES, villagers: villagerPacks, orcs: orcPacks, undead: undeadPacks, classes: classPacks, atronachs: atronachPacks, beasts: beastPacks, daedra: daedraPacks, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), tail: packPiece(buildTail(ramps.skin,'argonian')), tailCat: packPiece(buildTail(KHAJIIT_FUR,'khajiit')), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
 
   return payload;
 }
