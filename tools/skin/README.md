@@ -8,8 +8,9 @@ when the reference art changes; the game reads the baked files.
 The neutral rig had no texture at all - `buildNeutralBody` bakes one intensity
 byte per face into `D.Ib`, and `setBodyRamp` snaps it onto a per-race ramp. On a
 2,136-face body that is the entire skin. This pipeline replaces the per-FACE
-intensity with a per-TEXEL one without changing the race mechanism: the atlas is
-reduced to `skin-intensity.png`, and `snapRamp(ramp, i)` still supplies the race.
+intensity with a per-TEXEL one without changing the race mechanism:
+`skin-intensity.png` carries detail, and `snapRamp(ramp, i)` still supplies the
+race.
 
 ## Doctrine
 
@@ -18,16 +19,51 @@ the output ships in the repo like `public/logo.png` and needs no data door. This
 is the first character texture in the project that is free of that constraint -
 see `01-Overview/Port-Doctrine.md`.
 
-## Stages
+## Current body bake: THE MESH OWNS THE UVS
+
+The old body atlas treated each limb group as an approximate cylinder. It
+invented a surface with `pz = sin(theta) * radius * 0.7`, baked into that
+surface, then `head_cell.py` independently rebuilt the body's UVs with the same
+approximation.
+
+That was backwards. `neutral.json` already contains the exact quad that the
+viewer renders. The torso changes superellipse power and depth by row, shoulders
+and hands are not cylinders, and one group can contain multiple authored forms.
+An approximate group cylinder can only make those surfaces agree by accident.
+
+`bake_atlas.py` now gives every non-head quad its own small padded tile. Every
+texel is a bilinear point on the real four corners and is sampled from the
+multi-view correspondence there. The four UV corners are therefore the four
+rendered corners. There is no inverse projection to solve and no geometry
+approximation between the bake and the viewer.
+
+The gutters are duplicated edge texels, not body area. `skin_ramps.py` excludes
+them from its histogram and `beast_skin.py` smooths each face tile independently
+so unrelated packed faces can never bleed into one another.
+
+`head_cell.py` owns only the head. When it grows the atlas it preserves every
+body UV in pixel space and renormalizes for the new texture dimensions. It must
+never rebuild body UVs.
+
+## Regeneration stages
 
 1. `seg9.py` - cut the turnaround into eight views and segment each into limb
    regions per row (torso / two arms / two legs).
-2. `mvB2.py` - per-limb multi-view sampling: every surface takes the view that
-   sees it most face-on, blended across neighbours by surface normal.
-3. `bake_atlas.py` - bake that map into one flat atlas plus `skin-layout.json`.
-4. `clean2.py` - repair the atlas: strip dark caps where the rig reaches above
-   what the reference supplies, fill holes down each column, and kill horizontal
-   streaks with a selective vertical median.
+2. `mvB2.py` - reference-view correspondence: every surface point takes the
+   view that sees it most face-on, blended across neighbours by surface normal.
+3. `bake_atlas.py` - sample that correspondence ON THE ACTUAL BODY QUADS. It
+   writes `skin-intensity.png`, the RGB diagnostic `skin-atlas.png`,
+   `skin-layout.json`, `skin-uv.json`, and a preview.
+4. `head_cell.py` - append the geometry-shaded head cell and preserve/renormalize
+   the body UVs.
+5. `head_bake*.py` + `skin_ramps.py` - bake the race head turnarounds and derive
+   the head-authoritative body ramps.
+6. `beast_skin.py` - optional beast body map: remove human fine anatomy per quad
+   while keeping the face-to-face form shading.
+
+`clean2.py` belongs to the retired group-cylinder body atlas. It repaired holes
+and horizontal streaks caused by that projection. The face atlas resolves each
+quad directly and does not use that repair stage.
 
 `skin-uv.json` carries per-corner UVs in `buildNeutralBody`'s own face order, so
 the viewer applies them index-for-index and no projection logic is duplicated in
@@ -35,8 +71,10 @@ the browser.
 
 ## The head (head_cell.py, head_bake.py)
 
-The head cell is baked from an eight-direction head turnaround the same way the
-body is, then the face is layered per race at runtime from `FACE*.CIF`.
+The head cell is baked from an eight-direction head turnaround, then the face is
+layered per race at runtime from `FACE*.CIF`. The head still uses an arc because
+its source art and runtime face overlay are intentionally cylindrical around the
+skull; this is separate from the body face-atlas decision.
 
 ## Skin tone (skin_ramps.py)
 
@@ -49,15 +87,23 @@ The ramp is HISTOGRAM-MATCHED to the body atlas, not evenly sampled across the
 face's tonal range: the body averages ~192 of 255, so an even ramp puts the
 whole torso on its bright end and the body comes out pale against the face.
 `ramp[i]` is the face's skin at the percentile body-intensity `i` occupies.
+Face-atlas gutters are excluded from this distribution.
 
 ## Laws learned building it (do not relearn these)
 
+- **THE MESH OWNS THE UVS.** If the rendered quad already exists, sample the
+  reference on that quad and map that same quad to the atlas. Do not reconstruct
+  the body as an ellipse/cylinder and then try to invert that approximation.
+  The old `0.7 * radius` depth assumption was not the torso, shoulder, hand, or
+  foot geometry.
+- **One packed face may not contaminate another.** Per-face gutters are
+  duplicated edge texels. Any filter or histogram that treats gutters as new
+  body area or crosses tile boundaries is wrong.
 - **Bin count must not exceed the data.** The head is 168 faces built from SEVEN
   loft rings, so its vertices sit at seven heights. Binning its profile into 140
   gave 133 EMPTY bins, nearest-copied into a staircase, and interpolating across
   that staircase swung the sampled column 27px between adjacent rows. Build
-  profiles from the rings that exist. The same bug lived on in the UV generator
-  after the bake was fixed - fix both.
+  profiles from the rings that exist.
 - **A median filter is edge-preserving.** It is built to KEEP steps, so it is the
   wrong tool for smoothing a ragged silhouette profile. Gaussian.
 - **Never map outside the silhouette.** A smoothed centre or half-width can put
@@ -112,7 +158,6 @@ whole torso on its bright end and the body comes out pale against the face.
 - **Instrument the loop, do not reason about the picture.** Every one of the
   above took one dump of actual sampled rows and columns to find, and several
   rounds of theorising before that dump to get around to.
-
 - **A front view does not contain a body.** Half of a closed surface is
   unreachable from one projection; that is why the reference is a turnaround.
 - **Normalise in the frame you sampled in.** Rotating a point into a view and
@@ -120,7 +165,7 @@ whole torso on its bright end and the body comes out pale against the face.
   84px disagreements between views and a checkerboard across the whole torso.
 - **Per limb, never whole figure.** Fitting the chest into the FULL figure's
   extent makes chest sampling depend on arm placement, which differs between rig
-  and reference. This was the single largest source of error.
+  and reference. This was the single largest source of error in correspondence.
 - **The arms hang past the hip.** Below the crotch the reference still reads
   arm | legs | arm for ~56 rows. Taking the outermost runs as legs steals the
   arms and leaves the hands with no region at all.
@@ -137,14 +182,14 @@ whole torso on its bright end and the body comes out pale against the face.
 
 ## Note on language
 
-These four scripts are the only Python in the tree, which is a deliberate
-deviation from the Node-ESM convention: they are a one-shot asset pipeline that
-never runs at build or at runtime, and they lean on PIL and numpy. Porting them
-to Node buys nothing unless the pipeline starts running in CI. Recorded here
-rather than left to be discovered.
+These Python scripts are a deliberate deviation from the Node-ESM convention:
+they are a one-shot asset pipeline that never runs at build or at runtime, and
+they lean on PIL and numpy. Porting them to Node buys nothing unless the pipeline
+starts running in CI. Recorded here rather than left to be discovered.
 
 ## Regenerating
 
 Needs the turnaround cut into `view_000.png` .. `view_315.png` alongside the
 scripts, plus `neutral.json` (dump `buildNeutralBody` faces with their `g`
-stamps). Run the four stages in order, then copy the outputs into `public/skin/`.
+stamps). Run the current stages above in order, inspect the actual rig render,
+then copy the outputs into `public/skin/`.
