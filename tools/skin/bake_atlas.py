@@ -1,53 +1,140 @@
-"""Bake the per-limb multi-view map into ONE flat PNG.
-Every texel is resolved now, so the rig just reads the file and nothing is
-recomputed per frame. Paint over anything you don't like."""
-exec(open('mvB2.py').read().split('# ---------- render ----------')[0])
+"""Bake the body texture onto the ACTUAL paperdoll quads.
+
+The old atlas first collapsed each body group onto an approximate cylinder
+(`pz = sin(theta) * radius * 0.7`) and then rebuilt UVs with the same
+approximation. That was the wrong direction: neutral.json already contains the
+exact quad that will be rendered.
+
+This baker gives every non-head quad its own tiny texture tile. Each texel is
+sampled at a bilinear point ON THAT QUAD, so superellipse power, changing
+rx/rz, depth offsets, shoulders, hands and feet cannot distort the mapping.
+Padding is edge-replicated so nearest filtering never bleeds from a neighbour.
+
+Outputs:
+  skin-intensity.png  runtime's recolourable one-channel body texture
+  skin-atlas.png      RGB diagnostic of the sampled turnaround
+  skin-layout.json    face-atlas metadata (head_cell.py appends the head)
+  skin-uv.json        exact per-corner UVs in neutral.json face order
+"""
+# mvB2 is still the reference-view correspondence layer. Do not execute its
+# diagnostic render when importing it as a library.
+exec(open('mvB2.py').read().split('def render(yaw,CW,CH,sc):')[0])
+
 import math
+import numpy as np
 from PIL import Image, ImageDraw
 
-CELLS={}
-for g in ('body','armL','armR','legL','legR'):
-    ys=[f2['p'][i*3+1] for f2 in F if f2['g']==g for i in range(4)]
-    y0,y1=min(ys),max(ys)
-    rows=abs(ymap(y0)-ymap(y1))
-    E=EXT[(g,0)]
-    circ=2*math.pi*max(h for h in E[1] if h)
-    px_per_unit=rows/max(1e-6,(y1-y0))
-    CELLS[g]=(max(24,int(circ*px_per_unit*0.5)), max(24,int(rows)), y0, y1)
-pad=8
-AW=sum(c[0] for c in CELLS.values())+pad*(len(CELLS)+1)
-AH=max(c[1] for c in CELLS.values())+pad*2
-atlas=Image.new('RGBA',(AW,AH),(0,0,0,0))
-layout={}; x=pad
-for g,(cw,ch,y0,y1) in CELLS.items():
-    layout[g]={'x':x,'y':pad,'w':cw,'h':ch,'y0':y0,'y1':y1}
-    for ax in range(cw):
-        th=(ax+0.5)/cw*2*math.pi           # around the limb
-        for ay in range(ch):
-            yy=y1-(ay+0.5)/ch*(y1-y0)      # down the limb
-            E=EXT[(g,0)]
-            fb=(yy-Y0)/(Y1-Y0+1e-9)*NB-0.5
-            b0=min(NB-1,max(0,int(math.floor(fb)))); b1=min(NB-1,b0+1); ft=fb-math.floor(fb)
-            cc,hh=E
-            rc=cc[b0]+(cc[b1]-cc[b0])*ft
-            rh=max(1e-4,hh[b0]+(hh[b1]-hh[b0])*ft)
-            px=rc+math.cos(th)*rh
-            pz=math.sin(th)*rh*0.7
-            c=sample(g,px,yy,pz,math.cos(th),math.sin(th))
-            if c is not None:
-                atlas.putpixel((x+ax,pad+ay),(int(c[0]),int(c[1]),int(c[2]),255))
-    x+=cw+pad
-json.dump(layout,open('/mnt/user-data/outputs/skin-layout.json','w'),indent=1)
-atlas.save('/mnt/user-data/outputs/skin-atlas.png')
-filled=sum(1 for p in atlas.convert('RGBA').getdata() if p[3]>0)
-print(f'atlas {AW}x{AH}  cells: ' + ', '.join(f'{g} {c[0]}x{c[1]}' for g,c in CELLS.items()))
-print(f'{filled} texels resolved')
-S=3
-pv=atlas.resize((AW*S,AH*S),Image.NEAREST)
-out=Image.new('RGB',(pv.width+20,pv.height+40),(20,20,23)); out.paste(pv,(10,10),pv)
-d=ImageDraw.Draw(out)
-lx=10
-for g,c in CELLS.items():
-    d.text((lx+2,pv.height+16),g,fill=(150,150,158)); lx+=(c[0]+pad)*S
+BODY_GROUPS = {'body', 'armL', 'armR', 'legL', 'legR'}
+TEX = 8                       # useful samples per quad
+PAD = 1                       # edge-replicated gutter
+STRIDE = TEX + PAD * 2
+
+face_ids = [i for i, f2 in enumerate(F) if f2['g'] in BODY_GROUPS]
+cols = max(1, int(math.ceil(math.sqrt(len(face_ids)))))
+rows = int(math.ceil(len(face_ids) / cols))
+AW, AH = cols * STRIDE, rows * STRIDE
+
+rgb = np.zeros((AH, AW, 4), dtype=np.uint8)
+intensity = np.zeros((AH, AW), dtype=np.uint8)
+uv = [0.0] * (len(F) * 8)
+
+def bilerp(a, b, c, d, s, t):
+    """Quad order is p0,p1,p2,p3; t runs p0/p1 -> p3/p2."""
+    top = a * (1.0 - s) + b * s
+    bot = d * (1.0 - s) + c * s
+    return top * (1.0 - t) + bot * t
+
+def fallback_rgb(f2):
+    c = f2.get('c')
+    if c and len(c) >= 3:
+        return np.asarray(c[:3], dtype=float)
+    return np.asarray((153.0, 153.0, 153.0))
+
+unresolved = 0
+for tile_i, fi in enumerate(face_ids):
+    f2 = F[fi]
+    g = f2['g']
+    P = np.asarray(f2['p'], dtype=float).reshape(4, 3)
+    VN = np.asarray(f2.get('vn') or [f2['n']] * 4, dtype=float).reshape(4, 3)
+    tile_rgb = np.zeros((TEX, TEX, 3), dtype=np.uint8)
+
+    for iy in range(TEX):
+        t = (iy + 0.5) / TEX
+        for ix in range(TEX):
+            s = (ix + 0.5) / TEX
+            p = bilerp(P[0], P[1], P[2], P[3], s, t)
+            n = bilerp(VN[0], VN[1], VN[2], VN[3], s, t)
+            nl = float(np.linalg.norm(n)) or 1.0
+            n /= nl
+
+            c = sample(g, float(p[0]), float(p[1]), float(p[2]),
+                       float(n[0]), float(n[2]))
+            if c is None:
+                c = fallback_rgb(f2)
+                unresolved += 1
+            tile_rgb[iy, ix] = np.clip(np.rint(c), 0, 255).astype(np.uint8)
+
+    # One-texel duplicated gutter: the GPU can hit a tile edge without ever
+    # sampling the unrelated face packed beside it.
+    padded = np.pad(tile_rgb, ((PAD, PAD), (PAD, PAD), (0, 0)), mode='edge')
+    tx = (tile_i % cols) * STRIDE
+    ty = (tile_i // cols) * STRIDE
+    rgb[ty:ty + STRIDE, tx:tx + STRIDE, :3] = padded
+    rgb[ty:ty + STRIDE, tx:tx + STRIDE, 3] = 255
+
+    lum = np.rint(
+        0.299 * padded[:, :, 0] +
+        0.587 * padded[:, :, 1] +
+        0.114 * padded[:, :, 2]
+    ).astype(np.uint8)
+    intensity[ty:ty + STRIDE, tx:tx + STRIDE] = lum
+
+    # UVs point at INTERIOR texel centres, never at the gutter or atlas edge.
+    x0 = tx + PAD + 0.5
+    x1 = tx + PAD + TEX - 0.5
+    y0 = ty + PAD + 0.5
+    y1 = ty + PAD + TEX - 0.5
+    corners = (
+        (x0 / AW, 1.0 - y0 / AH),  # p0
+        (x1 / AW, 1.0 - y0 / AH),  # p1
+        (x1 / AW, 1.0 - y1 / AH),  # p2
+        (x0 / AW, 1.0 - y1 / AH),  # p3
+    )
+    for vi, (u, v) in enumerate(corners):
+        off = fi * 8 + vi * 2
+        uv[off] = round(float(u), 7)
+        uv[off + 1] = round(float(v), 7)
+
+layout = {
+    'body': {
+        'x': 0, 'y': 0, 'w': AW, 'h': AH,
+        'mode': 'face-atlas',
+        'tile': TEX,
+        'pad': PAD,
+        'stride': STRIDE,
+        'columns': cols,
+        'faceCount': len(face_ids),
+        'note': 'one exact bilinear tile per rendered body quad',
+    },
+}
+
+Image.fromarray(rgb, 'RGBA').save('/mnt/user-data/outputs/skin-atlas.png')
+Image.fromarray(intensity, 'L').save('/mnt/user-data/outputs/skin-intensity.png')
+json.dump(layout, open('/mnt/user-data/outputs/skin-layout.json', 'w'), indent=1)
+json.dump({'n': len(F), 'w': AW, 'h': AH, 'uv': uv},
+          open('/mnt/user-data/outputs/skin-uv.json', 'w'))
+
+S = 2
+pv = Image.fromarray(rgb, 'RGBA').resize((AW * S, AH * S), Image.NEAREST)
+out = Image.new('RGB', (pv.width + 20, pv.height + 42), (20, 20, 23))
+out.paste(pv, (10, 10), pv)
+d = ImageDraw.Draw(out)
+d.text((10, pv.height + 18),
+       f'exact face atlas · {len(face_ids)} quads · {TEX}x{TEX} each · '
+       f'{unresolved}/{len(face_ids) * TEX * TEX} fallback texels',
+       fill=(150, 150, 158))
 out.save('/mnt/user-data/outputs/skin-atlas-preview.png')
-print('preview',out.size)
+
+print(f'exact face atlas {AW}x{AH}: {len(face_ids)} quads, {TEX}x{TEX} each')
+print(f'fallback texels: {unresolved}/{len(face_ids) * TEX * TEX}')
+print('wrote skin-intensity.png, skin-atlas.png, skin-layout.json, skin-uv.json')
