@@ -6,7 +6,7 @@ approximation. That was the wrong direction: neutral.json already contains the
 exact quad that will be rendered.
 
 This baker gives every non-head quad its own tiny texture tile. Each texel is
-sampled at a bilinear point ON THAT QUAD, so superellipse power, changing
+sampled on the exact two triangles of THAT QUAD, so superellipse power, changing
 rx/rz, depth offsets, shoulders, hands and feet cannot distort the mapping.
 Padding is edge-replicated so nearest filtering never bleeds from a neighbour.
 
@@ -38,11 +38,16 @@ rgb = np.zeros((AH, AW, 4), dtype=np.uint8)
 intensity = np.zeros((AH, AW), dtype=np.uint8)
 uv = [0.0] * (len(F) * 8)
 
-def bilerp(a, b, c, d, s, t):
-    """Quad order is p0,p1,p2,p3; t runs p0/p1 -> p3/p2."""
-    top = a * (1.0 - s) + b * s
-    bot = d * (1.0 - s) + c * s
-    return top * (1.0 - t) + bot * t
+def rendered_point(q, s, t):
+    """Match TRI=[0,1,2,0,2,3] exactly, not a bilinear patch.
+
+    UV square corners are p0=(0,0), p1=(1,0), p2=(1,1), p3=(0,1).
+    The viewer splits that square on p0->p2, so the surface position and
+    interpolated normal must use the same two affine triangles.
+    """
+    if s >= t:
+        return q[0] * (1.0 - s) + q[1] * (s - t) + q[2] * t
+    return q[0] * (1.0 - t) + q[2] * s + q[3] * (t - s)
 
 def fallback_rgb(f2):
     c = f2.get('c')
@@ -64,8 +69,8 @@ for tile_i, fi in enumerate(face_ids):
         t = iy / (TEX - 1)
         for ix in range(TEX):
             s = ix / (TEX - 1)
-            p = bilerp(P[0], P[1], P[2], P[3], s, t)
-            n = bilerp(VN[0], VN[1], VN[2], VN[3], s, t)
+            p = rendered_point(P, s, t)
+            n = rendered_point(VN, s, t)
             nl = float(np.linalg.norm(n)) or 1.0
             n /= nl
 
@@ -116,7 +121,7 @@ layout = {
         'stride': STRIDE,
         'columns': cols,
         'faceCount': len(face_ids),
-        'note': 'one exact bilinear tile per rendered body quad',
+        'note': 'one triangle-exact tile per rendered body quad',
     },
 }
 
