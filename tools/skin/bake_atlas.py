@@ -58,10 +58,12 @@ for tile_i, fi in enumerate(face_ids):
     VN = np.asarray(f2.get('vn') or [f2['n']] * 4, dtype=float).reshape(4, 3)
     tile_rgb = np.zeros((TEX, TEX, 3), dtype=np.uint8)
 
+    # Include the exact quad EDGES. Adjacent faces then agree at their shared
+    # boundary instead of each edge texel representing a half-texel inward.
     for iy in range(TEX):
-        t = (iy + 0.5) / TEX
+        t = iy / (TEX - 1)
         for ix in range(TEX):
-            s = (ix + 0.5) / TEX
+            s = ix / (TEX - 1)
             p = bilerp(P[0], P[1], P[2], P[3], s, t)
             n = bilerp(VN[0], VN[1], VN[2], VN[3], s, t)
             nl = float(np.linalg.norm(n)) or 1.0
