@@ -44,3 +44,5 @@ jobs:
           git diff --cached --quiet && exit 0
           git commit -m "FIX: close voxel shoulders and preserve outfit textures"
           git push origin HEAD:chatgpt/exact-face-atlas
+
+# One-shot verifier for the shoulder-hole + classic-outfit texture regression.
