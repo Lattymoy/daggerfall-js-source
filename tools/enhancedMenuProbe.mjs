@@ -32,7 +32,7 @@ async function run(label, opts) {
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
 
-  await page.goto(`${BASE}/`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/play/`, { waitUntil: 'networkidle' });
   await page.waitForSelector('#enhanced-menu .railbtn', { timeout: 15000 });
 
   // 1. THE DOOR OPENED WITHOUT DATA. ensureArena2's picker is a fixed
@@ -85,7 +85,7 @@ await run('phone', { ...devices['Pixel 5'] });
 {
   const ctx = await browser.newContext({ viewport: { width: 1400, height: 900 } });
   const page = await ctx.newPage();
-  await page.goto(`${BASE}/?skin=classic`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${BASE}/play/?skin=classic`, { waitUntil: 'domcontentloaded' });
   const picked = await page.waitForSelector('#pick', { timeout: 15000 }).then(() => true, () => false);
   check('classic: gates the data before its menu', picked);
   check('classic: no enhanced menu mounted', (await page.locator('#enhanced-menu').count()) === 0);

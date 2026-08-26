@@ -25,7 +25,7 @@ const errors = [];
 page.on('pageerror', (e) => errors.push(String(e.message)));
 page.on('console', (m) => { if (m.type() === 'error') errors.push(`[console] ${m.text()}`); });
 
-await page.goto('http://localhost:5214/?world&nomenu&class=0&novideo&shot&play');
+await page.goto('http://localhost:5214/play/?world&nomenu&class=0&novideo&shot&play');
 await page.waitForTimeout(Number(process.env.BOOT_WAIT ?? 15000));
 
 const frame = () => page.evaluate(() => window.__frame ?? 0);

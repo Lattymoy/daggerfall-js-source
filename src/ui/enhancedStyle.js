@@ -19,13 +19,19 @@
 // right for a cold empty north and wrong for the Iliac Bay, which is a
 // place with weather in it.
 
-export const ENHANCED_CSS = `
 /* ── TOKENS ────────────────────────────────────────────────
    Identical to enhanced.html on purpose. The menu and the in-game
    screens are ONE interface seen at two moments, and the moment a
    front door owns its own palette it stops being the same
-   product as the rooms behind it. */
-:root {
+   product as the rooms behind it.
+
+   EXPORTED ON THEIR OWN (U60) because the site's landing page - the
+   door in front of this door - is a static index.html that cannot
+   mount this module, and a second copy of eight hex values is the
+   drift this file exists to prevent. scripts/landingHtml.mjs injects
+   this block into that page at build; the rest of the skin stays a
+   string the game pays for only when a screen is mounted. */
+export const ENHANCED_TOKENS = `:root {
   --ink: #0e1013;
   --slate: #171b21;
   --iron: #2b323b;
@@ -40,7 +46,18 @@ export const ENHANCED_CSS = `
 
   --side: 264px;
   --gap: 1px;
-}
+}`;
+
+/** The one Google Fonts request the enhanced skin makes (Port-Ledger:
+ *  the port's only third-party request, non-blocking, `?nofonts` skips
+ *  it). The landing page asks for the SAME URL so the two share a cache
+ *  entry - which is why the string is a named export and not typed
+ *  twice. */
+export const ENHANCED_FONTS_URL = 'https://fonts.googleapis.com/css2?family=Cormorant:wght@300;400;600&family=Barlow+Semi+Condensed:wght@400;500;600&display=swap';
+
+export const ENHANCED_CSS = `
+/* ── TOKENS ── see ENHANCED_TOKENS above */
+${ENHANCED_TOKENS}
 
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
@@ -919,6 +936,6 @@ export function injectEnhancedFonts(doc = document, search = globalThis.location
   const link = doc.createElement('link');
   link.id = 'dagger-enhanced-fonts';
   link.rel = 'stylesheet';
-  link.href = 'https://fonts.googleapis.com/css2?family=Cormorant:wght@300;400;600&family=Barlow+Semi+Condensed:wght@400;500;600&display=swap';
+  link.href = ENHANCED_FONTS_URL;
   doc.head.append(link);
 }

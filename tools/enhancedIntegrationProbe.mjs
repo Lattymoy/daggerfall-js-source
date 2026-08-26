@@ -34,7 +34,7 @@ for (const [label, opts] of [
   const page = await ctx.newPage();
   const errs = [];
   page.on('pageerror', (e) => errs.push(e.message));
-  await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${BASE}/play/`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('#enhanced-menu .railbtn', { timeout: 30000 });
   await page.locator('#enhanced-menu .railbtn', { hasText: 'New Game' }).click();
   await page.locator('#enhanced-menu .act.primary', { hasText: 'Begin' }).click();
@@ -58,7 +58,7 @@ for (const [label, opts] of [
 {
   const ctx = await browser.newContext({ viewport: { width: 1400, height: 900 } });
   const page = await ctx.newPage();
-  await page.goto(`${BASE}/?skin=classic`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${BASE}/play/?skin=classic`, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(20000);
   const dom = await page.evaluate(() => !!document.querySelector('#enhanced-chargen'));
   check('classic: the DOM wizard never mounts', !dom);

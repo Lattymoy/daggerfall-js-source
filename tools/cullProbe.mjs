@@ -14,7 +14,7 @@ const browser = await chromium.launch({
 });
 const page = await browser.newPage({ viewport: { width: 640, height: 400 } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
-await page.goto('http://localhost:5211/?nomenu&novideo');
+await page.goto('http://localhost:5211/play/?nomenu&novideo');
 await page.waitForTimeout(4000);
 
 const result = await page.evaluate(async () => {

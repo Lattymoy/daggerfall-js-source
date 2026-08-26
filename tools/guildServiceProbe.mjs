@@ -26,7 +26,7 @@ page.on('console', (m) => { if (/guild|interior|static/i.test(m.text())) console
 // and a Warrior is turned away at the door ("I am sad to say that you
 // are ineligible") - which the de-trapped run reported the moment the
 // join keypress started arriving at all.
-await page.goto('http://localhost:5201/?shot&play&exterior&time=12:00&class=0');
+await page.goto('http://localhost:5201/play/?shot&play&exterior&time=12:00&class=0');
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 180000 });
 
 const waitFrames = async (n) => {

@@ -31,7 +31,9 @@ import { pathToFileURL } from 'node:url';
  *  what it is called. Only the entry is wanted, so the FIRST script
  *  element wins - the modulepreload links that follow are <link>. */
 export function entryBundle(html) {
-  return String(html ?? '').match(/<script[^>]+src="\.?\/?(assets\/[\w.-]+\.js)"/)?.[1] ?? null;
+  // `../assets/` too: the game page sits at /play/ (U60) and a relative
+  // base writes its chunk refs one directory up.
+  return String(html ?? '').match(/<script[^>]+src="(?:\.{0,2}\/)?(assets\/[\w.-]+\.js)"/)?.[1] ?? null;
 }
 
 /** The commit a built page was stamped with, or null on a page built
@@ -48,7 +50,7 @@ export function buildTagOf(html) {
  *  tell - an unknown object is NOT a "no". */
 export function deployVerdict({ localHtml, liveHtml, contains = () => null }) {
   const bundle = entryBundle(localHtml);
-  if (!bundle) return { kind: 'nolocal', message: 'no entry script ref in local dist/index.html' };
+  if (!bundle) return { kind: 'nolocal', message: 'no entry script ref in local dist/play/index.html' };
   if (String(liveHtml ?? '').includes(bundle)) {
     return { kind: 'exact', bundle, message: `serves ${bundle}` };
   }
@@ -101,10 +103,10 @@ export function gitContains(a, d) {
 }
 
 async function main() {
-  const url = process.argv[2] || 'https://lattymoy.github.io/project-dagger/';
-  const localHtml = await readFile('dist/index.html', 'utf8');
+  const url = process.argv[2] || 'https://lattymoy.github.io/project-dagger/play/';
+  const localHtml = await readFile('dist/play/index.html', 'utf8');
   const bundle = entryBundle(localHtml);
-  if (!bundle) { console.error('no entry script ref in local dist/index.html'); process.exit(1); }
+  if (!bundle) { console.error('no entry script ref in local dist/play/index.html'); process.exit(1); }
   console.log('local bundle:', bundle, buildTagOf(localHtml) ? `(${buildTagOf(localHtml)})` : '(unstamped)');
 
   const deadline = Date.now() + 8 * 60 * 1000;

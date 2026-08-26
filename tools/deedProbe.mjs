@@ -35,7 +35,7 @@ const waitFrames = async (n) => {
 };
 
 // class=16 skips the chargen wizard (T2's rule).
-await page.goto(`http://localhost:${PORT}/?world&shot&play&class=16&novideo`);
+await page.goto(`http://localhost:${PORT}/play/?world&shot&play&class=16&novideo`);
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 300000 });
 await waitFrames(4);
 

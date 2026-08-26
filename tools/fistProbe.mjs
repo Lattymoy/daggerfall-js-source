@@ -18,7 +18,7 @@ const errors = [];
 page.on('pageerror', (e) => { errors.push(e.message); console.log('[pageerror]', (e.stack ?? e.message).split('\n').slice(0, 3).join(' | ')); });
 // nofoes: the strike-frame site fires with nothing in reach, which is
 // exactly where the deref lived
-await page.goto('http://localhost:5199/?shot&class=16&nofoes');
+await page.goto('http://localhost:5199/play/?shot&class=16&nofoes');
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 240000 });
 const waitFrames = async (n) => {
   const f = await page.evaluate(() => window.__frame);

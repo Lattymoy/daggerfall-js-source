@@ -13,7 +13,7 @@ const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=sw
 const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 page.on('console', (m) => console.log('[page]', m.text().slice(0, 200)));
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
-await page.goto('http://localhost:5199/?shot&class=0');
+await page.goto('http://localhost:5199/play/?shot&class=0');
 await page.waitForFunction(() => window.__frame > 10, null, { timeout: 120000 });
 const foes = JSON.parse(await page.evaluate(() => window.__foes()));
 const monsters = foes.filter((f) => f.type <= 42 && !f.dead && f.pos);

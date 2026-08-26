@@ -656,7 +656,7 @@ function paneMods(body) {
 // ── ABOUT ────────────────────────────────────────────────────────
 function paneAbout(body) {
   const c = el('div', 'card');
-  c.append(el('h3', null, 'project-dagger'));
+  c.append(el('h3', null, 'Daggerfall JavaScript'));   // the public name (U60); project-dagger is the repo
   c.append(el('p', 'meta', 'A 1:1 JavaScript port of Daggerfall.'));
   c.append(stats([
     ['Build', BUILD_TAG],

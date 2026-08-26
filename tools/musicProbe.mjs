@@ -31,7 +31,7 @@ await page.route('**/', (route) => route.fulfill({
   contentType: 'text/html',
   body: '<!doctype html><meta charset="utf-8"><title>music probe</title><body><canvas id="c"></canvas>',
 }));
-await page.goto('http://localhost:5206/');
+await page.goto('http://localhost:5206/play/');
 await page.mouse.click(200, 200);          // the gesture that allows audio
 
 const result = await page.evaluate(async () => {

@@ -23,7 +23,7 @@
 //     node tools/staleChunkProbe.mjs
 import { chromium } from 'playwright';
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync, cpSync, rmSync, mkdtempSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, cpSync, rmSync, mkdtempSync, existsSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createServer } from 'node:http';
@@ -51,7 +51,10 @@ function buildAs(sha, out) {
 function serve(root, port) {
   const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json' };
   const server = createServer((req, res) => {
-    const path = join(root, decodeURIComponent(req.url.split('?')[0]).replace(/^\/+/, '') || 'index.html');
+    // A directory serves its index - the game is /play/ now (U60), and
+    // GitHub Pages answers a trailing slash the same way.
+    let path = join(root, decodeURIComponent(req.url.split('?')[0]).replace(/^\/+/, '') || 'index.html');
+    if (existsSync(path) && statSync(path).isDirectory()) path = join(path, 'index.html');
     if (!path.startsWith(root) || !existsSync(path)) { res.statusCode = 404; return res.end('not found'); }
     const ext = path.slice(path.lastIndexOf('.'));
     res.setHeader('Content-Type', types[ext] ?? 'application/octet-stream');
@@ -75,8 +78,8 @@ try {
   // does NOT have is deploy N's LAZY chunks: never fetched on a first
   // visit, so never cached, and renamed by the newer deploy.
   cpSync(dN1, site, { recursive: true });
-  const staleIndex = readFileSync(join(dN, 'index.html'), 'utf8');
-  const freshIndex = readFileSync(join(dN1, 'index.html'), 'utf8');
+  const staleIndex = readFileSync(join(dN, 'play', 'index.html'), 'utf8');
+  const freshIndex = readFileSync(join(dN1, 'play', 'index.html'), 'utf8');
   const named = [...new Set(staleIndex.match(/assets\/[A-Za-z0-9_-]+\.js/g) ?? [])];
   for (const f of named) if (!existsSync(join(site, f))) cpSync(join(dN, f), join(site, f));
 
@@ -85,7 +88,7 @@ try {
     named.every((f) => existsSync(join(site, f))), `${named.length} chunks`);
 
   server = await serve(site, 5299);
-  const base = 'http://127.0.0.1:5299/';
+  const base = 'http://127.0.0.1:5299/play/';
 
   /** One visit. `recovers` says whether the page under test carries
    *  the reload; the control run proves the pin is not vacuous. */
@@ -146,7 +149,7 @@ try {
     // itself 404s, the page never boots at all, and the check passes
     // for the wrong reason. That is what the first run of this probe
     // did: an empty body, and a control proving nothing.
-    const controlIndex = readFileSync(join(dOld, 'index.html'), 'utf8');
+    const controlIndex = readFileSync(join(dOld, 'play', 'index.html'), 'utf8');
     for (const f of new Set(controlIndex.match(/assets\/[A-Za-z0-9_-]+\.js/g) ?? [])) {
       if (!existsSync(join(site, f))) cpSync(join(dOld, f), join(site, f));
     }

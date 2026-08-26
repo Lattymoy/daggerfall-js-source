@@ -26,7 +26,7 @@ page.on('pageerror', (e) => errors.push(String(e.message)));
 page.on('console', (m) => { if (m.type() === 'error') errors.push(`[console] ${m.text()}`); });
 page.on('response', (r) => { if (r.status() === 404) errors.push(`[404] ${r.url()}`); });
 
-await page.goto('http://localhost:5213/?world&nomenu&class=0&novideo&shot&play');
+await page.goto('http://localhost:5213/play/?world&nomenu&class=0&novideo&shot&play');
 await page.waitForTimeout(Number(process.env.BOOT_WAIT ?? 15000));
 
 const frame = () => page.evaluate(() => window.__frame ?? 0);

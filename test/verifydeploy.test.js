@@ -38,6 +38,18 @@ test('V-DEPLOY: the entry bundle is the SCRIPT, never a modulepreload link', () 
   assert.equal(entryBundle('<html><head></head><body></body></html>'), null);
 });
 
+test('V-DEPLOY: the entry ref is read one directory up, where the game page writes it (U60)', () => {
+  // The game sits at /play/ and vite's relative base writes its chunk
+  // refs as ../assets/...; the matcher accepting "./" and "/" only read
+  // a perfectly good dist/play/index.html as having no entry at all.
+  const nested = page().replace('src="./assets/main-AAAA1111.js"', 'src="../assets/main-AAAA1111.js"');
+  assert.match(nested, /src="\.\.\/assets\/main-AAAA1111\.js"/, 'the fixture is the nested shape');
+  assert.equal(entryBundle(nested), 'assets/main-AAAA1111.js');
+  // A build that writes chunk refs from the root keeps working too, so
+  // the two kept shapes stay as they were.
+  assert.equal(entryBundle(page().replace('src="./assets/', 'src="/assets/')), 'assets/main-AAAA1111.js');
+});
+
 test('V-DEPLOY: the build tag is read off the meta, whatever the attribute order', () => {
   assert.equal(buildTagOf(page({ tag: 'c65eb4f' })), 'c65eb4f');
   assert.equal(buildTagOf('<meta content="abc1234" name="build-tag">'), 'abc1234');

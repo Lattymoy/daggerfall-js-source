@@ -56,7 +56,7 @@ async function bootSettled(page) {
  *  unmounts through runEnhancedMenu's own resolve and what is left is
  *  the game's real page. */
 async function toGamePage(page) {
-  await page.goto(`${BASE}/?skin=enhanced`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/play/?skin=enhanced`, { waitUntil: 'networkidle' });
   await page.waitForSelector('#enhanced-menu .railbtn', { timeout: 20000 });
   await page.getByRole('button', { name: 'New Game', exact: true }).click();
   await page.getByRole('button', { name: 'Begin', exact: true }).click();
@@ -242,7 +242,7 @@ await run('phone', devices['Pixel 5']);
   // a page loaded with ?skin=enhanced changes nothing - which is the
   // property that keeps the 25 classic-geometry probes in tools/
   // honest, and it caught this probe writing the test wrong.
-  await page.goto(`${BASE}/?skin=classic`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${BASE}/play/?skin=classic`, { waitUntil: 'domcontentloaded' });
   const kind = await page.evaluate(async () => {
     const { createCharSheetWindow } = await import('/src/ui/charSheetDoor.js');
     const w = createCharSheetWindow({ entity: { name: 'x', stats: {} } });

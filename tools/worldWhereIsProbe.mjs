@@ -15,7 +15,7 @@ page.on('console', (m) => { if (m.type() === 'error') console.log('[console]', m
 // keydown ladder (exterior.js:1046-1047) - swallows every
 // page.keyboard.press below, so this probe pressed its keys into a
 // character-creation screen it never knew was up.
-await page.goto('http://localhost:5199/?shot&world&play&tod=12:00&class=16');
+await page.goto('http://localhost:5199/play/?shot&world&play&tod=12:00&class=16');
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 300000 });
 const dbg = JSON.parse(await page.evaluate(() => window.__townDebug()));
 if (!dbg.pixels.length) { console.log('NO POPULATED PIXELS'); process.exit(1); }

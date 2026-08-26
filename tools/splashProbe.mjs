@@ -25,7 +25,7 @@ const shoot = async (label, { query = '', wait = 3000 } = {}) => {
   const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   page.on('pageerror', (e) => console.log(`[${label} pageerror]`, e.message));
   page.on('console', (m) => { const t = m.text(); if (/splash|VID|error|warn/i.test(t)) console.log(`[${label}]`, t); });
-  await page.goto(`http://localhost:5204/${query}`);
+  await page.goto(`http://localhost:5204/play/${query}`);
   await page.waitForTimeout(wait);
   const title = await page.evaluate(() => document.title);
   // Report the context state AND how many audio blocks the player has

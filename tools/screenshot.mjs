@@ -27,7 +27,7 @@ const browser = await chromium.launch({
 const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 page.on('console', (m) => console.log('[page]', m.text()));
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
-await page.goto(`http://localhost:5199/?${query}`);
+await page.goto(`http://localhost:5199/play/?${query}`);
 const readyTimeout = Number(process.env.SHOT_TIMEOUT || 30000);
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: readyTimeout });
 // Optional post-ready action for streaming scenes: evaluate an expression

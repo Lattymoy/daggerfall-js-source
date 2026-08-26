@@ -25,7 +25,7 @@ const page = await browser.newPage();
 page.on('console', (m) => { const t = m.text(); if (/music|MIDI|error/i.test(t)) console.log('[page]', t); });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 await page.route('**/', (r) => r.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><meta charset="utf-8"><body>' }));
-await page.goto('http://localhost:5207/');
+await page.goto('http://localhost:5207/play/');
 
 const out = await page.evaluate(async ({ SONG, SECONDS, RATE }) => {
   const { MidiBsaFile } = await import('/src/formats/hmiFile.js');

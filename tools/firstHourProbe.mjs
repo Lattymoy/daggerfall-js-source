@@ -170,7 +170,7 @@ const alive = async (where) => {
 // (StartCellX/Y = Privateer's Hold) with the real chargen wizard, not
 // the ?class= headless skip every other probe uses.
 begin('1 chargen');
-await page.goto('http://localhost:5222/?world&shot&classic&novideo&play');
+await page.goto('http://localhost:5222/play/?world&shot&classic&novideo&play');
 // NOT __shotReady: that flag waits for the EXTERIOR stream queue to
 // drain (world.js:3089), and the classic start spends its first
 // minutes inside a dungeon with the world still building behind it -

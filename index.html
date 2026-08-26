@@ -2,15 +2,293 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-  <title>project-dagger</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Daggerfall JavaScript</title>
+  <meta name="description" content="A 1:1 port of The Elder Scrolls II: Daggerfall to the browser. Bring your own ARENA2 folder; nothing is uploaded." />
+  <meta property="og:title" content="Daggerfall JavaScript" />
+  <meta property="og:description" content="Daggerfall, in your browser. The 1996 game with its rules intact, drawn from your own game files. Desktop or phone, no install." />
+  <meta property="og:type" content="website" />
+  <!--
+    THE DOOR IN FRONT OF THE DOOR (U60). The game lives at ./play/. This
+    page mounts none of it: no module, no canvas, no game data, no
+    image. Its palette and fonts are NOT here either - scripts/
+    landingHtml.mjs injects the enhanced skin's own tokens at serve and
+    build, so the page you land on and the menu you play in are one
+    interface. Every colour below is a var(); test/landing.test.js
+    holds it to that.
+  -->
   <style>
-    html, body { margin: 0; padding: 0; background: #000; height: 100%; overflow: hidden; overscroll-behavior: none; }
-    #c { display: block; width: 100vw; height: 100vh; touch-action: none; -webkit-user-select: none; user-select: none; }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; min-height: 100dvh;
+      background: var(--ink); color: var(--bone);
+      font-family: var(--data); font-size: 15px; line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--bone); text-decoration: underline; text-decoration-color: var(--brass); text-underline-offset: 3px; }
+    a:hover { color: var(--brass); }
+    :focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+    .skip {
+      position: absolute; left: 12px; top: -60px; padding: 10px 14px;
+      background: var(--brass); color: var(--ink); text-decoration: none; z-index: 10;
+    }
+    .skip:focus { top: 12px; }
+
+    /* ── SHELL ── the menu's own two columns: a rail of words, and the
+       pane that answers them. Here the pane scrolls and the rail stays. */
+    .shell {
+      display: grid; grid-template-columns: var(--side) 1fr; gap: var(--gap);
+      background: var(--iron); min-height: 100dvh;
+    }
+    .side { background: var(--ink); position: sticky; top: 0; height: 100dvh; display: flex; flex-direction: column; }
+    .pane { background: var(--slate); min-width: 0; }
+
+    /* ── BRAND ── the same block the menu draws, one word swapped. */
+    .brand { display: block; padding: 30px 22px 24px; color: inherit; text-decoration: none; }
+    .brand .mark { display: block; font-family: var(--display); font-weight: 300; font-size: 34px; letter-spacing: 0.03em; line-height: 1; }
+    .brand .sub { display: block; color: var(--brass); font-size: 11px; letter-spacing: 0.26em; text-transform: uppercase; margin-top: 9px; }
+
+    .rail { padding: 6px 0 20px; flex: 1; }
+    .railbtn {
+      display: block; padding: 13px 22px; min-height: 48px;
+      border-left: 2px solid transparent; color: var(--dim);
+      letter-spacing: 0.05em; text-decoration: none;
+    }
+    .railbtn:hover { color: var(--bone); }
+
+    .foot {
+      padding: 14px 22px max(18px, env(safe-area-inset-bottom));
+      border-top: 1px solid var(--iron); color: var(--dim); font-size: 11px; letter-spacing: 0.08em;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .foot a { color: var(--dim); text-decoration: none; }
+    .foot a:hover { color: var(--bone); }
+    .build::before { content: 'build '; }
+    .build:empty { display: none; }
+
+    /* ── HERO ── */
+    .hero { padding: clamp(48px, 10vh, 120px) clamp(24px, 5vw, 72px) clamp(40px, 6vh, 64px); max-width: 960px; }
+    .eyebrow { color: var(--brass); font-size: 11px; letter-spacing: 0.26em; text-transform: uppercase; margin: 0; }
+    .hero h1 {
+      font-family: var(--display); font-weight: 300; font-size: clamp(44px, 7vw, 86px);
+      line-height: 1.02; letter-spacing: 0.005em; margin: 18px 0 22px;
+    }
+    .dek { font-size: 18px; line-height: 1.5; max-width: 60ch; margin: 0; }
+
+    /* ── THE GATE ── the first thing the game asks for, said here
+       first. The one panel on the page with a brass edge. */
+    .gate {
+      margin-top: 44px; max-width: 760px; background: var(--ink); border: 1px solid var(--brass);
+      display: grid; grid-template-columns: 1fr auto; gap: 22px 32px; align-items: center; padding: 24px 26px;
+    }
+    .gate .eyebrow { margin-bottom: 8px; }
+    .gate h2 { font-family: var(--display); font-weight: 300; font-size: 26px; line-height: 1.1; margin: 0 0 8px; }
+    .gate p { margin: 0; color: var(--dim); font-size: 14px; max-width: 52ch; }
+    .gate .more { display: block; margin-top: 10px; font-size: 13px; }
+
+    .act {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 14px 36px; min-height: 52px; border: 1px solid var(--iron);
+      color: var(--dim); letter-spacing: 0.06em; font-size: 16px; font-weight: 500; text-decoration: none;
+      transition: background 0.12s ease, color 0.12s ease;
+    }
+    .act.primary { border-color: var(--brass); color: var(--brass); }
+    .act.primary:hover { background: var(--brass); color: var(--ink); }
+
+    /* ── SECTIONS ── one line of heading, as the pane heads are. */
+    .sec { margin: 0 clamp(24px, 5vw, 72px); padding: 44px 0 52px; max-width: 960px; border-top: 1px solid var(--iron); }
+    .sec h2 { font-family: var(--display); font-weight: 300; font-size: 30px; line-height: 1.1; margin: 0 0 22px; }
+    .sec p { margin: 0 0 12px; max-width: 62ch; }
+    .sec p:last-child { margin-bottom: 0; }
+
+    .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--iron); border: 1px solid var(--iron); }
+    .col { background: var(--slate); padding: 22px 20px 24px; }
+    .col h3 { font-family: var(--display); font-weight: 400; font-size: 22px; line-height: 1.1; margin: 0 0 10px; }
+    .col p { font-size: 15px; }
+
+    /* Steps are a real sequence - the numbers carry order. */
+    .steps { list-style: none; margin: 0; padding: 0; counter-reset: step; }
+    .step { display: grid; grid-template-columns: 56px 1fr; gap: 0 18px; padding: 22px 0; border-top: 1px solid var(--iron); }
+    .step:first-child { border-top: 0; padding-top: 0; }
+    .step::before {
+      counter-increment: step; content: counter(step);
+      font-family: var(--display); font-weight: 300; font-size: 36px; line-height: 1; color: var(--brass);
+    }
+    .step h3 { font-family: var(--display); font-weight: 400; font-size: 21px; line-height: 1.1; margin: 4px 0 8px; }
+    .step p { font-size: 15px; }
+    .step code { font-family: var(--data); font-weight: 600; letter-spacing: 0.04em; }
+    .sources { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 14px; }
+
+    .credits { display: grid; grid-template-columns: 220px 1fr; gap: 18px 28px; margin: 0; }
+    .credits dt { font-family: var(--display); font-weight: 400; font-size: 20px; line-height: 1.15; }
+    .credits dt a { text-decoration-thickness: 1px; }
+    .credits dd { margin: 0; }
+    .credits dd .meta { display: block; color: var(--dim); font-size: 13px; margin-top: 4px; }
+
+    .end {
+      margin: 0 clamp(24px, 5vw, 72px); padding: 24px 0 64px; border-top: 1px solid var(--iron);
+      color: var(--dim); font-size: 11px; letter-spacing: 0.08em;
+      display: flex; flex-wrap: wrap; gap: 8px 24px;
+    }
+    .end a { color: var(--dim); text-decoration: none; }
+    .end a:hover { color: var(--bone); }
+
+    .thumb { display: none; }
+
+    /* ── PHONE ── the rail goes to the bottom, in the thumb's arc, as
+       the menu's does; on a page that scrolls it carries the one door. */
+    @media (max-width: 860px) {
+      .shell { grid-template-columns: 1fr; }
+      .side { position: static; height: auto; }
+      .brand { padding: 22px 20px 16px; }
+      .brand .mark { font-size: 27px; }
+      .rail { display: flex; flex-wrap: wrap; gap: 2px; padding: 0 12px 12px; flex: 0 0 auto; }
+      .railbtn {
+        flex: 1 1 auto; text-align: center; white-space: nowrap;
+        border-left: 0; border-top: 2px solid var(--iron); padding: 12px 14px; min-height: 50px;
+      }
+      .foot { display: none; }
+      .pane { padding-bottom: 92px; }
+      .hero { padding-top: 40px; }
+      .hero h1 { font-size: clamp(40px, 11vw, 56px); }
+      .dek { font-size: 17px; }
+      /* The gate keeps its words; the door itself is the bar below,
+         once, in the thumb's arc. */
+      .gate { grid-template-columns: 1fr; padding: 20px; }
+      .gate .act { display: none; }
+      .step { grid-template-columns: 40px 1fr; }
+      .step::before { font-size: 30px; }
+      .cols { grid-template-columns: 1fr; }
+      .credits { grid-template-columns: 1fr; gap: 4px 0; }
+      .credits dd { margin-bottom: 14px; }
+      .thumb {
+        display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+        padding: 12px 16px max(12px, env(safe-area-inset-bottom));
+        background: var(--ink); border-top: 1px solid var(--iron);
+      }
+      .thumb .act { display: flex; width: 100%; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      * { transition: none !important; }
+    }
   </style>
 </head>
 <body>
-  <canvas id="c"></canvas>
-  <script type="module" src="/src/main.js"></script>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="shell">
+    <aside class="side">
+      <a class="brand" href="./" aria-label="Daggerfall JavaScript">
+        <span class="mark">Daggerfall</span>
+        <span class="sub">JavaScript</span>
+      </a>
+      <nav class="rail" aria-label="Sections">
+        <a class="railbtn" href="#what">What it is</a>
+        <a class="railbtn" href="#how">How to play</a>
+        <a class="railbtn" href="#credits">Credits</a>
+      </nav>
+      <div class="foot">
+        <a href="https://github.com/Lattymoy/project-dagger">Source on GitHub</a>
+        <a class="build" data-build="" href="https://github.com/Lattymoy/project-dagger/commit/"></a>
+      </div>
+    </aside>
+
+    <main class="pane" id="main">
+      <section class="hero" aria-labelledby="title">
+        <p class="eyebrow">A 1:1 port of The Elder Scrolls II: Daggerfall</p>
+        <h1 id="title">Daggerfall, in your browser.</h1>
+        <p class="dek">The 1996 game with its rules intact: the formulas, the quests, the calendar, the crimes, translated line by line from Daggerfall Unity and drawn on a renderer built from scratch. Desktop or phone. Nothing to install.</p>
+
+        <div class="gate">
+          <div>
+            <p class="eyebrow">Before the door opens</p>
+            <h2>Bring your own ARENA2 folder.</h2>
+            <p>This site carries no game data. Daggerfall is free, but its files aren't ours to hand out, so the first thing the game asks for is the folder. Pick it once; it stays in your browser and never leaves your device.</p>
+            <a class="more" href="#how">Don't have it yet? Getting it takes a minute.</a>
+          </div>
+          <a class="act primary" href="./play/">Play</a>
+        </div>
+      </section>
+
+      <section class="sec" id="what" aria-labelledby="what-h">
+        <h2 id="what-h">What it is</h2>
+        <div class="cols">
+          <div class="col">
+            <h3>Ported 1:1</h3>
+            <p>The rules are Daggerfall's. The file formats, the world assembly, the combat and skill math, quests, items, magic, guilds, the calendar and the courts, each translated from Daggerfall Unity's C# with its constants kept byte-exact, quirks and all.</p>
+          </div>
+          <div class="col">
+            <h3>Rebuilt</h3>
+            <p>The presentation is new: a hand-rolled WebGL2 renderer with no engine underneath it, a touch layer so it plays on a phone, and two interfaces. The classic screens, laid out from the original art to the pixel, or an enhanced one built as type and layout instead of painted bitmaps. Same game, one toggle.</p>
+          </div>
+          <div class="col">
+            <h3>In progress</h3>
+            <p>Daggerfall Unity is a decade of work and this is a port of it, arc by arc. What has landed and what hasn't is written down. <a href="https://github.com/Lattymoy/project-dagger/blob/main/bible/01-Overview/Port-Ledger.md">Read the ledger</a> before you expect a finished game.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec" id="how" aria-labelledby="how-h">
+        <h2 id="how-h">How to play</h2>
+        <ol class="steps">
+          <li class="step">
+            <div>
+              <h3>Get Daggerfall.</h3>
+              <p>It has been free since 2009. Any of these gives you the files; the zip is the same patched set Daggerfall Unity uses.</p>
+              <ul class="sources">
+                <li><a href="https://store.steampowered.com/app/1812390/">Steam</a></li>
+                <li><a href="https://www.gog.com/game/the_elder_scrolls_chapter_ii_daggerfall">GOG</a></li>
+                <li><a href="https://forums.dfworkshop.net/viewtopic.php?t=2360">DaggerfallGameFiles.zip</a></li>
+              </ul>
+            </div>
+          </li>
+          <li class="step">
+            <div>
+              <h3>Find the ARENA2 folder.</h3>
+              <p>It's inside the game folder. From Steam, look under <code>DF/DAGGER/ARENA2</code>. In DaggerfallGameFiles.zip it's <code>arena2/</code>, and on a phone you can hand the game the whole zip instead.</p>
+            </div>
+          </li>
+          <li class="step">
+            <div>
+              <h3>Press Play and pick it.</h3>
+              <p>On a desktop, choose the folder or drop it on the page. On a phone, choose the zip. The files are read into your browser's storage once and never uploaded; the next visit skips this step. Saves stay in your browser too, so clearing the site's data clears them.</p>
+            </div>
+          </li>
+          <li class="step">
+            <div>
+              <h3>Then play.</h3>
+              <p>W, A, S and D to move, the mouse to look, Shift to run. Click the game to take the pointer; Escape gives it back and opens the pause menu. On a phone a stick, a look pad and the buttons appear on their own.</p>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <section class="sec" id="credits" aria-labelledby="credits-h">
+        <h2 id="credits-h">Credits</h2>
+        <dl class="credits">
+          <dt><a href="https://github.com/Interkarma/daggerfall-unity">Daggerfall Unity</a></dt>
+          <dd>Interkarma and contributors, MIT licence. Every format reader and every formula here is a translation of Daggerfall Unity's C#; without it there would be nothing to port.</dd>
+
+          <dt>The Elder Scrolls II: Daggerfall</dt>
+          <dd>Bethesda Softworks, 1996. Daggerfall JavaScript is a fan project, not affiliated with or endorsed by Bethesda or ZeniMax. The game's data stays theirs and yours; none of it is served from this site.</dd>
+
+          <dt><a href="https://www.dfworkshop.net/">Daggerfall Workshop</a> and <a href="https://en.uesp.net/wiki/Daggerfall:Daggerfall">UESP</a></dt>
+          <dd>The documentation of Daggerfall's file formats that the readers were checked against.</dd>
+
+          <dt><a href="https://github.com/Lattymoy">Lattymoy</a></dt>
+          <dd>Built the port. Source, docs and the ledger are on <a href="https://github.com/Lattymoy/project-dagger">GitHub</a>.<span class="meta">Set in Cormorant and Barlow Semi Condensed, loaded from Google Fonts: the one request this site makes to anyone else.</span></dd>
+        </dl>
+      </section>
+
+      <footer class="end">
+        <span>Daggerfall JavaScript</span>
+        <a class="build" data-build="" href="https://github.com/Lattymoy/project-dagger/commit/"></a>
+        <a href="https://github.com/Lattymoy/project-dagger">Source</a>
+      </footer>
+    </main>
+  </div>
+
+  <div class="thumb"><a class="act primary" href="./play/">Play</a></div>
 </body>
 </html>

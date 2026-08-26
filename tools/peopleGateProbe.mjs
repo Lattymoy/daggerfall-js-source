@@ -43,7 +43,7 @@ const waitFrames = async (n) => {
 
 // class=16 skips the chargen wizard (T2's rule - the wizard would hold
 // the town's overlay slot and swallow everything below).
-await page.goto(`http://localhost:${PORT}/?shot&play&exterior&time=12:00&class=16`);
+await page.goto(`http://localhost:${PORT}/play/?shot&play&exterior&time=12:00&class=16`);
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 240000 });
 
 const gate = async () => JSON.parse(await page.evaluate(() => window.__peopleGate()) ?? 'null');

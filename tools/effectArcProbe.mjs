@@ -31,7 +31,7 @@ page.on('console', (m) => { if (m.type() === 'error') pageErrors.push(m.text());
 
 // ?shot&class=0 is the standalone-dungeon route the monster and
 // inventory probes already use - Privateer's Hold with a real party.
-await page.goto(`http://localhost:${PORT}/?shot&class=0`);
+await page.goto(`http://localhost:${PORT}/play/?shot&class=0`);
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 240000 });
 
 const out = { steps: {}, failures: [] };
