@@ -8,6 +8,73 @@ policies one by one.
 
 
 
+## U56 TransferItem comes out of the window (2026-08-26)
+
+The enhanced pack has a local list and no REMOTE one. Building that
+pane means running DFU's transfer law - the wagon, the loot pile, the
+reward picker, drop-gold - and the port had that law as METHODS ON THE
+CLASSIC WINDOW, which was fine while exactly one screen did transfers
+and stopped being fine the moment a second one needed the same rungs.
+
+The choice at that point is EXTRACT OR COPY, and this port does not
+copy law: Port-Doctrine's translation rule allows simplification in
+structure and never in behaviour, and `audit24_onehome` is a standing
+gate against exactly the other outcome. So `systems/itemTransfer.js`
+now holds DaggerfallInventoryWindow.TransferItem, and the classic
+window calls it.
+
+THE SPLIT IS DECISIONS HERE, PRESENTATION THERE. `planStore` and
+`planTake` are PURE - they read the lists and answer what should
+happen - and `applyTransfer` performs the one part that is still law
+rather than presentation: the split itself. What a screen does with a
+refusal (a parchment box, a DOM notice) and which sound it plays is
+the screen's, so the classic window kept a four-line `_refuse` and
+lost forty lines of ladder.
+
+THE ORDER WAS THE THING WORTH MOVING. A second reading would have got
+the rungs subtly wrong, and the file's pins hold each one with an item
+that would refuse at TWO of them:
+
+    TRANSPORT   first, and SILENT - above DoTransferItem's click
+                (:1460-1462). A SUMMONED CART refuses as `transport`,
+                which is how we know this rung is above the next.
+    SUMMONED    second, and it SPEAKS (:1464-1469, X11b). A summoned
+                item offered into a reward pile refuses for being
+                summoned, not for the pile.
+    PILE        third - nothing goes INTO a choose-one list (G6
+                :1994) - but the WAGON is not that pile, so a reward
+                window with a cart open can still stow.
+    CAPACITY    last: WagonCanHoldAmount going out (:1425-1434),
+                CanCarryAmount coming in (:1414-1422).
+
+AND A VACUOUS PIN FELL OUT OF PROVING IT. The mutation run rewrote
+`CANNOT_HOLD_TEXT` to 'Nope.' and the whole suite stayed green - the
+wagon tests had been comparing the constant to itself since the
+W-slice, because both the assertion and the source read it through the
+same import. Two lines now hold the literal prose, the only place
+either refusal string is actually held. This is the second shape of
+vacuous pin this arc has found (after the fork pins that ran where
+`document` did not exist), and it is the more insidious one: it looks
+like a value assertion.
+
+THE PROOF THE CLASSIC WINDOW DID NOT MOVE is that its OWN suites did
+not move. wagon, littlelaws, nativeinventory, knightlygifts,
+droppedloot and x11b pin that window's behaviour and none of them was
+edited; 23 mutations across both files confirm they bind through the
+NEW path, including four that break only the window's half - dropping
+the refusal box, faking the plan - and die in the old suites. The one
+test that did change is x11b's summoned pin, which followed the law it
+pins into the new module and gained the half the extraction is for:
+the window carries no second reading of `isSummoned`.
+
+One behaviour did unify, deliberately. The window's carry gate went
+SILENT when it had no entity to read and SPOKE when it did; there is
+one answer now, because the only way to reach it without an entity is
+a stack of zero, which nothing in the port can mint (Ledger A).
+
+Next: the enhanced remote pane on top of this, which is what retires
+`CLASSIC_ONLY_MODES`.
+
 ## U55 USE, in the enhanced pack (2026-08-26)
 
 The pack can USE things. `systems/useItem.js` owns the law - which item
