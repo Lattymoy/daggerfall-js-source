@@ -1,4 +1,4 @@
-name: patch piece materials
+name: patch classic clothing viewer
 
 on:
   push:
@@ -22,47 +22,24 @@ jobs:
         with:
           node-version: 22
 
-      - name: Isolate body skin material from clothing and piece materials
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          p = Path('src/tools/paperdollViewer.js')
-          s = p.read_text()
-
-          replacements = [
-            (
-              "const mat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }); // shading is baked into vertex colours\nconst mesh = new THREE.Mesh(geo, mat);",
-              """const mat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }); // BODY ONLY: skin.js owns this material\n// Every loose polygon pack gets its OWN material. skin.js is allowed to swap\n// the body's map/vertexColors, but a helm, robe, weapon, tail or creature piece\n// must never inherit the body's skin atlas just because it shares a renderer.\n// We still mirror the body's EFFECT state (ghost opacity / fire blend) so the\n// split changes texture ownership without changing authored spectral behavior.\nconst pieceMaterials = new Set();\nfunction copyBodyEffectState(pm) {\n  pm.transparent = mat.transparent;\n  pm.opacity = mat.opacity;\n  pm.depthWrite = mat.depthWrite;\n  pm.blending = mat.blending;\n  pm.needsUpdate = true;\n}\nfunction makePieceMaterial() {\n  const pm = mat.clone();\n  pm.map = null;\n  pm.vertexColors = true;\n  copyBodyEffectState(pm);\n  pieceMaterials.add(pm);\n  return pm;\n}\nfunction syncPieceEffectState() { for (const pm of pieceMaterials) copyBodyEffectState(pm); }\nconst mesh = new THREE.Mesh(geo, mat);"""
-            ),
-            (
-              "  const m = new THREE.Mesh(geo, mat); m.position.y = -D.cy; m.visible = true; pivot.add(m);",
-              "  const m = new THREE.Mesh(geo, makePieceMaterial()); m.position.y = -D.cy; m.visible = true; pivot.add(m);"
-            ),
-            (
-              "  mat.blending = THREE.NormalBlending; // or the fire's blend outlives the fire\n  mat.needsUpdate = true;\n  applyVillagerDrape(v);",
-              "  mat.blending = THREE.NormalBlending; // or the fire's blend outlives the fire\n  mat.needsUpdate = true;\n  syncPieceEffectState();\n  applyVillagerDrape(v);"
-            ),
-            (
-              "  mat.blending = spec && spec.additive ? THREE.AdditiveBlending : THREE.NormalBlending;\n  mat.needsUpdate = true;\n\n  // Whichever line this design came from, show ITS pieces.",
-              "  mat.blending = spec && spec.additive ? THREE.AdditiveBlending : THREE.NormalBlending;\n  mat.needsUpdate = true;\n  syncPieceEffectState();\n\n  // Whichever line this design came from, show ITS pieces."
-            ),
-            (
-              "  const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }));\n  m.position.y = -D.cy; m.visible = false; pivot.add(m);",
-              "  const clothRenderMat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide });\n  pieceMaterials.add(clothRenderMat); copyBodyEffectState(clothRenderMat);\n  const m = new THREE.Mesh(geo, clothRenderMat);\n  m.position.y = -D.cy; m.visible = false; pivot.add(m);"
-            ),
-          ]
-
-          for old, new in replacements:
-              n = s.count(old)
-              if n != 1:
-                  raise SystemExit(f'expected exactly one match, found {n}: {old[:90]!r}')
-              s = s.replace(old, new)
-
-          p.write_text(s)
-          PY
+      - name: Apply classic clothing patch
+        run: python tools/patch_classic_clothing.py
 
       - run: npm ci
+
+      - name: Verify classic clothing catalog
+        run: |
+          node --input-type=module - <<'NODE'
+          import { CLOTHING_CATALOG, clothingZones } from './src/characters/clothing.js';
+          if (!CLOTHING_CATALOG.length) throw new Error('empty clothing catalog');
+          const body = CLOTHING_CATALOG.filter(x => x.kind === 'body');
+          const drape = CLOTHING_CATALOG.filter(x => x.kind === 'drape');
+          if (!body.length || !drape.length) throw new Error('both clothing render kinds must exist');
+          for (const c of body) if (!clothingZones(c.index).length) throw new Error('body clothing has no zones: ' + c.index + ' ' + c.name);
+          for (const c of drape) if (!c.drape) throw new Error('draped clothing has no drape: ' + c.index + ' ' + c.name);
+          console.log('classic clothing:', CLOTHING_CATALOG.length, 'templates;', body.length, 'body;', drape.length, 'draped');
+          NODE
+
       - name: Verify viewer build
         run: |
           node --check src/tools/paperdollViewer.js
@@ -73,6 +50,6 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add src/tools/paperdollViewer.js
-          git commit -m "FIX: isolate clothing and piece materials from body skin atlas"
+          git add src/characters/clothing.js src/characters/paperdollPayload.js src/tools/paperdollViewer.js viewer.html
+          git commit -m "CLOTHING: wire classic Daggerfall garments into 3D viewer"
           git push origin HEAD:chatgpt/exact-face-atlas
