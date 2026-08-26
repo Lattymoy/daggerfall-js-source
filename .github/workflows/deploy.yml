@@ -4,13 +4,18 @@
 # The exact-face-atlas experiment is built separately and mounted beneath
 # /preview/exact-face-atlas/ so it can be opened on a phone without merging
 # experimental rendering code into production.
+#
+# IMPORTANT: only main is allowed to publish Pages. A preview-branch push used
+# to start a second Pages run in the same concurrency group, cancel the main
+# build, then fail the protected github-pages environment before any steps ran.
+# Main still checks out the preview branch below, so every main deploy carries
+# the latest preview without letting the preview branch deploy by itself.
 name: deploy
 
 on:
   push:
     branches:
       - main
-      - chatgpt/exact-face-atlas
   workflow_dispatch:
 
 permissions:
