@@ -28,11 +28,15 @@ test('audio: SoundClips indices verbatim from SoundClips.cs', () => {
 });
 
 test('audio: GetSwingSound pitch table + PlayHitSound families verbatim', () => {
-  assert.equal(swingSoundFor({ name: 'Warhammer' }), SOUND.SwingLowPitch);
-  assert.equal(swingSoundFor({ name: 'Dai-Katana' }), SOUND.SwingLowPitch);
-  assert.equal(swingSoundFor({ name: 'Longsword' }), SOUND.SwingMediumPitch);
-  assert.equal(swingSoundFor({ name: 'Wakazashi' }), SOUND.SwingMediumPitch);   // MEDIUM in the source
-  assert.equal(swingSoundFor({ name: 'Dagger' }), SOUND.SwingHighPitch);
+  // DaggerfallUnityItem.cs:878-906 switches on TEMPLATE INDEX, not the
+  // display name - the full table is pinned in audit26_swingsound.
+  assert.equal(swingSoundFor({ templateIndex: 126 }), SOUND.SwingLowPitch);      // Warhammer
+  assert.equal(swingSoundFor({ templateIndex: 123 }), SOUND.SwingLowPitch);      // Dai_Katana
+  assert.equal(swingSoundFor({ templateIndex: 120 }), SOUND.SwingMediumPitch);   // Longsword
+  assert.equal(swingSoundFor({ templateIndex: 117 }), SOUND.SwingMediumPitch);   // Wakazashi - MEDIUM in the source
+  assert.equal(swingSoundFor({ templateIndex: 113 }), SOUND.SwingHighPitch);     // Dagger
+  assert.equal(swingSoundFor({ templateIndex: 130 }), SOUND.ArrowShoot);         // Long_Bow
+  assert.equal(swingSoundFor({ name: 'Dagger' }), SOUND.None);                   // the name is not the key
   assert.equal(swingSoundFor(null), SOUND.SwingHighPitch);                      // barehanded (SetMelee)
   // weapon: Hit1 + [0,5) - boundaries
   assert.equal(hitSoundFor({ name: 'Dagger' }, seq(0)), 108);

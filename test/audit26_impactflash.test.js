@@ -11,6 +11,13 @@
 // a COLLISION flashes and holds; the LIFESPAN EXPIRY (:294-295) does
 // neither; and the :363 gate (elementType != None && targetType !=
 // ByTouch) keeps arrows and touch casts flashless.
+//
+// F033b is the fourth: the flash and the hold END SEPARATELY. The flash
+// billboard is a CHILD of the missile (:601) armed ONE SHOT, so
+// DaggerfallBillboard.cs:127-131 destroys THAT object at the animation's
+// wrap while the missile object goes on to 0.6s. The port stopped the
+// clock at the wrap but kept the batch drawn, freezing the last frame
+// for the third of a second DFU shows nothing.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -201,6 +208,48 @@ test('F033: a ByTouch payload lands on the player and flashes NOTHING', async ()
   assert.deepEqual(world.made.map((b) => b.record), [0], 'no record-1 flash');
 });
 
+test('F033b ONE SHOT ends the FLASH at its WRAP, not at the 0.6s hold (DaggerfallBillboard.cs:127-131)', async () => {
+  // The flash billboard is a CHILD of the missile (DaggerfallMissile.cs
+  // :601) and is armed OneShot, so AnimateBillboard destroys THAT object
+  // the tick its animation wraps:
+  //     if (CurrentFrame >= frameCount) { CurrentFrame = 0;
+  //         if (OneShot) GameObject.Destroy(gameObject); }
+  // The MISSILE object is not touched by that line - it lives out
+  // PostImpactLifespanInSeconds (:313-320). Two ends, two moments. The
+  // port used to keep the flash batch drawn on its frozen last frame
+  // until the 0.6s timer fired.
+  const { magic, world } = rig({ raycast: () => 0.4 });
+  magic.setReadied(spellOf(2));
+  magic.castInput([0, 0.9, 0], [0, 0, 1]);
+  magic.update(0.05, [0, 0, 0]);   // into the wall on the first frame
+  await flush();
+  const flash = world.made[0];
+  assert.deepEqual([flash.archive, flash.record], [FIRE_ARCHIVE, 1]);
+  assert.deepEqual(world.freed, [], 'nothing torn down yet');
+
+  // The coroutine's first pass runs before its first wait, so frame 0 is
+  // already showing; IMPACT_FRAMES ticks of 1/IMPACT_FPS reach the wrap.
+  const drawn = [];
+  for (let i = 0; i < IMPACT_FRAMES; i++) {
+    magic.update(1 / IMPACT_FPS, [0, 0, 0]);
+    drawn.push(world.freed.includes(flash) ? null : flash.frame);
+  }
+  assert.deepEqual(drawn, [1, 2, 3, null], 'frames 1..3, then GONE at the wrap - no frozen last frame');
+  assert.deepEqual(world.freed.map((b) => [b.archive, b.record]), [[FIRE_ARCHIVE, 1]]);
+
+  // ...and the HOLD is not shortened by that: Destroy(gameObject) at
+  // :131 is the billboard's own, and the missile keeps its 0.6s.
+  const wrapAt = IMPACT_FRAMES / IMPACT_FPS;   // 4/15s - the flash's whole run
+  assert.ok(wrapAt < POST_IMPACT_LIFESPAN_S, 'the flash ends INSIDE the hold, which is the whole point');
+  assert.equal(magic.missileCount(), 1, 'the missile object survives its own flash');
+  magic.update(POST_IMPACT_LIFESPAN_S - wrapAt - 0.01, [0, 0, 0]);
+  assert.equal(magic.missileCount(), 1, 'still held a hundredth of a second short of 0.6');
+  magic.update(0.02, [0, 0, 0]);
+  assert.equal(magic.missileCount(), 0, 'destroyed at PostImpactLifespanInSeconds, unchanged');
+  assert.deepEqual(world.freed.map((b) => [b.archive, b.record]), [[FIRE_ARCHIVE, 1]],
+    'and the flash batch was freed exactly ONCE');
+});
+
 test('F033 THE FOUR HOSTS: the dungeon\'s own enemy/trap missile pool runs the SAME law, from the one export', () => {
   // exterior.js / world.js / worldModes.js hold no missile pool of
   // their own - they fly every spell missile through the engine, so
@@ -208,14 +257,16 @@ test('F033 THE FOUR HOSTS: the dungeon\'s own enemy/trap missile pool runs the S
   // host with a SECOND pool (enemy spells, trap casts, arrows) and it
   // must import the law rather than restate it.
   const dc = src('dungeonContext.js');
-  assert.ok(/import \{ createPlayerMagic, POST_IMPACT_LIFESPAN_S, missileFlashesOnImpact, armImpactFlash \} from '\.\/hostMagic\.js';/.test(dc),
-    'ONE DFU MEMBER ONE EXPORT: the dungeon imports the impact law');
+  assert.ok(/import \{ createPlayerMagic, POST_IMPACT_LIFESPAN_S, missileFlashesOnImpact, armImpactFlash, dropImpactFlashAtWrap \} from '\.\/hostMagic\.js';/.test(dc),
+    'ONE DFU MEMBER ONE EXPORT: the dungeon imports the impact law - arming AND the one-shot self-destroy');
   assert.ok(!/0\.6.*[Pp]ostImpact|PostImpactLifespanInSeconds\s*=/.test(dc),
     'and holds no second 0.6 literal of its own');
   assert.ok(dc.includes('if (impactAt && missileFlashesOnImpact(m)) {'), 'the dungeon retire runs the :363 gate');
   assert.ok(dc.includes('armImpactFlash(m, { renderer, getTexture, uploadRecord, uploadRecordFrame, flatAnims, batches: billboardBatches });'),
     'and arms the record-1 one-shot on its own batch list');
   assert.ok(/if \(m\.impact > POST_IMPACT_LIFESPAN_S\) retireMissile\(m\);/.test(dc), 'the 0.6s hold, then destroy');
+  assert.ok(dc.includes('dropImpactFlashAtWrap(m, { renderer, flatAnims, batches: billboardBatches });'),
+    'and the ONE SHOT self-destroy (DaggerfallBillboard.cs:127-131) on its own batch list');
   assert.ok(dc.includes('retireMissile(m, impact);'), 'the wall COLLISION passes the impact point');
   assert.ok(dc.includes('retireMissile(m, m.pos);'), 'and so does the enemy missile reaching the player');
   assert.ok(/if \(m\.age > MISSILE_LIFESPAN_S\) \{ retireMissile\(m\); continue; \}/.test(dc),

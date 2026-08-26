@@ -65,7 +65,7 @@ import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/
 import { NativeInventoryWindow, preloadInventoryArt, WAGON_ACCESS_DISTANCE } from '../ui/nativeInventory.js';
 import { preloadPaperDollForEntity } from '../ui/paperDoll.js';   // U26: the doll the keyed window never had
 import { createDroppedLoot } from './droppedLoot.js';   // U8e, mounted here at U26
-import { createPlayerMagic, POST_IMPACT_LIFESPAN_S, missileFlashesOnImpact, armImpactFlash } from './hostMagic.js';   // M3: the ONE cast engine; the impact-flash law it also owns (DaggerfallMissile.cs DoCollision :357-370)
+import { createPlayerMagic, POST_IMPACT_LIFESPAN_S, missileFlashesOnImpact, armImpactFlash, dropImpactFlashAtWrap } from './hostMagic.js';   // M3: the ONE cast engine; the impact-flash law it also owns (DaggerfallMissile.cs DoCollision :357-370, and the ONE SHOT self-destroy at DaggerfallBillboard.cs:127-131)
 import { tallySkill, skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
 import { applyLevelUp } from '../systems/advancement.js';
@@ -1667,9 +1667,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     for (const m of missiles) {
       if (m.dead) continue;
       // An IMPACTED missile no longer flies, ages or collides
-      // (Update :299-320, FixedUpdate :329-330): it holds the one-shot
-      // flash for PostImpactLifespanInSeconds and is then destroyed.
+      // (Update :299-320, FixedUpdate :329-330): it holds for
+      // PostImpactLifespanInSeconds and is then destroyed. The FLASH
+      // ends sooner - the one-shot billboard destroys itself at its own
+      // wrap (DaggerfallBillboard.cs:127-131), so the last frame is not
+      // left standing for the rest of the hold.
       if (m.impact != null) {
+        dropImpactFlashAtWrap(m, { renderer, flatAnims, batches: billboardBatches });
         m.impact += dt;
         if (m.impact > POST_IMPACT_LIFESPAN_S) retireMissile(m);
         continue;

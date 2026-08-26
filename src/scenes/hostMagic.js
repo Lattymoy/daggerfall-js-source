@@ -59,7 +59,12 @@ import { CAPSULE_HEIGHT } from '../player/motor.js';   // PlayerController.heigh
 // dead (Update :290 branches on impactDetected, FixedUpdate returns at
 // :329-330) and sits at the collision point (:292) until
 // PostImpactLifespanInSeconds have passed (:313-320), and only then is
-// destroyed - the flash gets its whole run.
+// destroyed. The flash is a SEPARATE object with a SEPARATE end: the
+// billboard is parented to the missile (:601) and, being ONE SHOT,
+// destroys itself the moment its animation wraps
+// (DaggerfallBillboard.cs:127-131). Two ends, at two moments - the
+// flash plays out its four-odd frames at 15 FPS and vanishes, and the
+// missile goes on holding the point until 0.6s.
 //
 // Two things this is NOT. It is not the LIFESPAN expiry: a missile that
 // runs out of life having hit nothing is destroyed on the spot
@@ -117,6 +122,35 @@ export async function armImpactFlash(m, { renderer, getTexture, uploadRecord, up
   m.batch = renderer.createBillboardBatch(archive, IMPACT_RECORD, size, [[m.firePos[0], m.firePos[1], m.firePos[2]]]);
   armFlatAnim(m.batch, t, archive, IMPACT_RECORD, flatAnims, uploadRecordFrame, { oneShot: true, fps: IMPACT_FPS });
   batches.push(m.batch);
+}
+
+/**
+ * The other half of ONE SHOT, and the half the flash's own object owns
+ * rather than the missile's: DaggerfallBillboard.cs:127-131 -
+ *     if (CurrentFrame >= frameCount) { CurrentFrame = 0;
+ *         if (OneShot) GameObject.Destroy(gameObject); }
+ * The flash billboard is a CHILD of the missile (:601 parents it to
+ * `transform`), so it destroys ITSELF at the wrap while the MISSILE
+ * goes on living out PostImpactLifespanInSeconds (:313-320) - the hold
+ * is the missile's, the animation's end is the billboard's, and DFU
+ * ends them at two different moments. Dropping the visual here does
+ * NOT shorten the hold: `m.impact` keeps accumulating and retireMissile
+ * still fires at 0.6.
+ *
+ * Both missile pools call this, for the same reason both call
+ * armImpactFlash.
+ *
+ * @param {object} m the missile record holding the flash batch
+ * @returns {boolean} true if the flash was dropped this tick
+ */
+export function dropImpactFlashAtWrap(m, { renderer, flatAnims, batches }) {
+  if (!m.batch || !flatAnims.done(m.batch)) return false;
+  flatAnims.remove(m.batch);
+  const bi = batches.indexOf(m.batch);
+  if (bi >= 0) batches.splice(bi, 1);
+  renderer.destroyBillboardBatch(m.batch);
+  m.batch = null;
+  return true;
 }
 
 export function createPlayerMagic({
@@ -474,9 +508,13 @@ export function createPlayerMagic({
     for (const m of missiles) {
       if (m.dead) continue;
       // An IMPACTED missile no longer flies, ages or collides
-      // (Update :299-320, FixedUpdate :329-330): it holds the one-shot
-      // flash for PostImpactLifespanInSeconds and is then destroyed.
+      // (Update :299-320, FixedUpdate :329-330): it holds for
+      // PostImpactLifespanInSeconds and is then destroyed. The FLASH
+      // ends sooner - the one-shot billboard destroys itself at its own
+      // wrap (DaggerfallBillboard.cs:127-131), so the last frame is not
+      // left standing for the rest of the hold.
       if (m.impact != null) {
+        dropImpactFlashAtWrap(m, { renderer, flatAnims, batches });
         m.impact += dt;
         if (m.impact > POST_IMPACT_LIFESPAN_S) retireMissile(m);
         continue;

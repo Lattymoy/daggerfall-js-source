@@ -100,15 +100,34 @@ export const ANIMAL_MAX_DISTANCE = 768 * 0.025;   // animalSoundMaxDistance (19.
  *  DFRandom.rand() <= 100 plays (~0.3% per 16Hz tick). */
 export const AMBIENT_RANDOM_PLAY_MAX = 100;
 
-/** GetSwingSound verbatim (DaggerfallUnityItem): pitch by weapon
- *  name; barehanded swings ride SwingHighPitch (WeaponManager). */
-const SWING_LOW = new Set(['Warhammer', 'Battle Axe', 'Katana', 'Claymore', 'Dai-Katana', 'Flail']);
-const SWING_HIGH = new Set(['Dagger', 'Tanto', 'Shortsword']);   // Wakazashi rides MEDIUM in DFU
+/** DaggerfallUnityItem.GetSwingSound (DaggerfallUnityItem.cs:878-906)
+ *  verbatim: the switch is on TEMPLATE INDEX, the two bows answer
+ *  SoundClips.ArrowShoot, and anything that is not one of the eighteen
+ *  weapons - an Arrow, a non-weapon - answers SoundClips.None, which
+ *  PlayOneShot's null-clip guard (DaggerfallAudioSource.cs:188-198)
+ *  sounds as nothing; sndFile.isValidIndex refuses -1 the same way, so
+ *  the hosts' playOneShot/play3d are already silent on it.
+ *
+ *  The null arm is not this member's: it is the barehanded default its
+ *  two callers write themselves - WeaponManager.SetMelee (:765) sets
+ *  FPSWeapon.SwingWeaponSound = SwingHighPitch and
+ *  EnemySounds.PlayMissSound's else arm (:151-154) plays SwingHighPitch.
+ *
+ *  A name is not immutable and cannot key this: loot's
+ *  createRegularMagicItem renames every magic weapon to its MAGIC.DEF
+ *  name, and itemTemplates.json spells 117/123 "Wakizashi"/"Dai-katana"
+ *  against the display strings the port matched ("Wakazashi",
+ *  "Dai-Katana"). GetWeaponSkillUsed, the sibling switch over the same
+ *  eighteen templates, is keyed the same way in characters/weapons.js. */
+const SWING_SOUND = new Map([
+  [[W.Warhammer, W.Battle_Axe, W.Katana, W.Claymore, W.Dai_Katana, W.Flail], SOUND.SwingLowPitch],
+  [[W.Broadsword, W.Longsword, W.Saber, W.Wakazashi, W.War_Axe, W.Staff, W.Mace], SOUND.SwingMediumPitch],
+  [[W.Dagger, W.Tanto, W.Shortsword], SOUND.SwingHighPitch],
+  [[W.Short_Bow, W.Long_Bow], SOUND.ArrowShoot],
+].flatMap(([ws, v]) => ws.map((w) => [w, v])));
 export function swingSoundFor(weapon) {
   if (!weapon) return SOUND.SwingHighPitch;
-  if (SWING_LOW.has(weapon.name)) return SOUND.SwingLowPitch;
-  if (SWING_HIGH.has(weapon.name)) return SOUND.SwingHighPitch;
-  return SOUND.SwingMediumPitch;
+  return SWING_SOUND.get(weapon.templateIndex) ?? SOUND.None;
 }
 
 /** DaggerfallUnityItem.GetEquipSound's ItemGroups.Weapons arm

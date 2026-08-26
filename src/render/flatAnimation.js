@@ -140,6 +140,22 @@ export class FlatAnimator {
     }
   }
 
+  /**
+   * Has this batch's ONE SHOT finished? DaggerfallBillboard.cs:127-131:
+   *   if (CurrentFrame >= frameCount) { CurrentFrame = 0;
+   *       if (OneShot) GameObject.Destroy(gameObject); }
+   * A one-shot billboard does not merely stop at the wrap - it DESTROYS
+   * ITSELF there, so the host that mounted it must stop drawing it on
+   * the same tick `done` turns true. A batch this animator never took
+   * (a single-frame record, DFU's !AnimatedMaterial: the coroutine never
+   * runs and nothing ever destroys it) answers false, and its owner
+   * keeps it for as long as it would have.
+   */
+  done(batch) {
+    for (const e of this.entries) if (e.batch === batch) return e.anim.done;
+    return false;
+  }
+
   clear() { this.entries.length = 0; }
 
   tick(dt) {

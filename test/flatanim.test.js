@@ -126,6 +126,30 @@ test('FA1: the animator drives the batch the renderer reads', () => {
   assert.equal(anim.entries.length, 0);
 });
 
+test('FA1: the animator answers `done` per BATCH - DaggerfallBillboard.cs:127-131', () => {
+  // A one-shot billboard does not just stop at the wrap, it DESTROYS its
+  // own GameObject there; the owner of a batch needs to be able to see
+  // that moment, so the animator reads it per batch.
+  const anim = new FlatAnimator();
+  const flash = { frame: null };
+  const fire = { frame: null };
+  anim.add(flash, 375, 4, true, 15);   // the impact flash: ONE SHOT
+  anim.add(fire, 375, 4, false, 15);   // a looping flat of the same shape
+  assert.deepEqual([anim.done(flash), anim.done(fire)], [false, false]);
+  anim.tick(1 / 15); anim.tick(1 / 15); anim.tick(1 / 15);
+  assert.deepEqual([anim.done(flash), anim.done(fire)], [false, false], 'three frames in, neither has wrapped');
+  anim.tick(1 / 15);
+  assert.deepEqual([anim.done(flash), anim.done(fire)], [true, false],
+    'the wrap ends the ONE SHOT and only the one shot');
+  // A batch the animator never took - DFU's !AnimatedMaterial, whose
+  // coroutine never runs and so never destroys anything - is not done.
+  const still = { frame: null };
+  assert.equal(anim.add(still, 375, 1, true, 15), null);
+  assert.equal(anim.done(still), false);
+  anim.remove(flash);
+  assert.equal(anim.done(flash), false, 'and a dropped batch answers for nothing');
+});
+
 test('FA1: the arming seam uploads EVERY frame and only for animated records', () => {
   const uploads = [];
   const anim = new FlatAnimator();
