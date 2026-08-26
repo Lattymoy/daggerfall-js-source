@@ -8,9 +8,11 @@ exact quad that will be rendered.
 This baker gives every non-head quad its own tiny texture tile. Each texel is
 sampled on the exact two triangles of THAT QUAD, so superellipse power, changing
 rx/rz, depth offsets, shoulders, hands and feet cannot distort the mapping.
-The reference correspondence also measures the rig from its REAL vertex-ring
-heights; there is no synthetic 300-bin profile or nearest-filled staircase.
 Padding is edge-replicated so nearest filtering never bleeds from a neighbour.
+
+The reference correspondence comes from mvB2.py, which measures rig extents
+only at real authored ring heights. The baker therefore contains no second
+geometry model of its own.
 
 Outputs:
   skin-intensity.png  runtime's recolourable one-channel body texture
@@ -18,9 +20,9 @@ Outputs:
   skin-layout.json    face-atlas metadata (head_cell.py appends the head)
   skin-uv.json        exact per-corner UVs in neutral.json face order
 """
-# mvB2 still owns segmentation, landmarks, normals and reference images. Do not
-# execute its diagnostic render when importing those definitions as a library.
-exec(open('mvB2.py').read().split('def render(yaw,CW,CH,sc):')[0])
+# mvB2 owns the reference correspondence. Do not execute its diagnostic render
+# when importing it as a library.
+exec(open('mvB2.py').read().split('def render(yaw, CW, CH, sc):')[0])
 
 import math, json
 import numpy as np
@@ -40,147 +42,6 @@ rgb = np.zeros((AH, AW, 4), dtype=np.uint8)
 intensity = np.zeros((AH, AW), dtype=np.uint8)
 uv = [0.0] * (len(F) * 8)
 
-# ---------------------------------------------------------------------------
-# EXACT RIG PROFILES FOR REFERENCE CORRESPONDENCE
-# ---------------------------------------------------------------------------
-# mvB2's historical sampler measured each group in 300 global Y bins and copied
-# the nearest non-empty bin into every hole. That is the same empty-bin failure
-# already diagnosed on the head: the mesh only exists at authored ring heights,
-# so invented bins create staircases that move the sampled source column.
-#
-# The reference art still needs a normalized lateral coordinate because it does
-# not carry the rig's camera scale. Build that coordinate from the ACTUAL
-# projected vertices at each real group ring, then interpolate only between
-# rings that really exist.
-RING_EXT = {}
-for g in BODY_GROUPS:
-    for Yd in YAWS:
-        ca = math.cos(math.radians(Yd))
-        sa = math.sin(math.radians(Yd))
-        per = {}
-        for f2 in F:
-            if f2['g'] != g:
-                continue
-            for vi in range(4):
-                x = float(f2['p'][vi * 3])
-                y = float(f2['p'][vi * 3 + 1])
-                z = float(f2['p'][vi * 3 + 2])
-                # Geometry is quantized before this pipeline; rounding only
-                # merges vertices that are the same authored ring.
-                ky = round(y, 6)
-                per.setdefault(ky, []).append(x * ca + z * sa)
-
-        if not per:
-            RING_EXT[(g, Yd)] = None
-            continue
-
-        kys = sorted(per)
-        ys = np.asarray(kys, dtype=float)
-        centres = np.asarray(
-            [(min(per[y]) + max(per[y])) * 0.5 for y in kys], dtype=float
-        )
-        half = np.asarray(
-            [max(1e-4, (max(per[y]) - min(per[y])) * 0.5) for y in kys],
-            dtype=float,
-        )
-        RING_EXT[(g, Yd)] = (ys, centres, half)
-
-print(
-    'exact ring profiles: ' +
-    ', '.join(
-        f'{g}/{Yd}:{len(RING_EXT[(g, Yd)][0])}'
-        for g in sorted(BODY_GROUPS)
-        for Yd in YAWS
-        if RING_EXT[(g, Yd)] is not None
-    )
-)
-
-def rig_extent(g, Yd, y):
-    """Projected centre + half-width at y, interpolated between real rings."""
-    E = RING_EXT.get((g, Yd))
-    if E is None:
-        return None
-    ys, centres, half = E
-    if y <= ys[0]:
-        return float(centres[0]), float(half[0])
-    if y >= ys[-1]:
-        return float(centres[-1]), float(half[-1])
-
-    j = int(np.searchsorted(ys, y, side='right'))
-    i = j - 1
-    dy = float(ys[j] - ys[i])
-    t = 0.0 if abs(dy) < 1e-12 else (float(y) - float(ys[i])) / dy
-    rc = float(centres[i] + (centres[j] - centres[i]) * t)
-    rh = float(half[i] + (half[j] - half[i]) * t)
-    return rc, max(1e-4, rh)
-
-def sample_exact(g, px, py, pz, nx, nz):
-    """mvB2 reference lookup with exact ring geometry instead of 300 bins."""
-    row = ymap(py)
-    phi = math.degrees(math.atan2(-nx, nz)) % 360
-    colour = np.zeros(3)
-    wsum = 0.0
-
-    for Yd in YAWS:
-        facing = math.cos(math.radians(((Yd - phi + 180) % 360) - 180))
-        if facing <= 0:
-            continue
-        w = facing ** 6
-        if w < 1e-4:
-            continue
-
-        ext = rig_extent(g, Yd, py)
-        if ext is None:
-            continue
-
-        pn = part_for(g, Yd)
-        pd = V[Yd]['parts'].get(pn)
-        if not pd:
-            continue
-
-        ri = int(round(row))
-        if ri not in pd:
-            near = [
-                r for r in (ri - 1, ri + 1, ri - 2, ri + 2, ri - 3, ri + 3)
-                if r in pd
-            ]
-            if not near:
-                continue
-            ri = near[0]
-
-        c0, c1 = pd[ri]
-        sc = (c0 + c1) * 0.5
-        sr = max(0.5, (c1 - c0) * 0.5)
-        rc, rh = ext
-        ca = math.cos(math.radians(Yd))
-        sa = math.sin(math.radians(Yd))
-        xr = px * ca + pz * sa
-        col = int(round(sc + ((xr - rc) / rh) * sr))
-        col = (
-            min(max(col, c0 + 1), c1 - 1)
-            if c1 - c0 > 3 else
-            min(max(col, c0), c1)
-        )
-
-        vv = V[Yd]
-        if not vv['a'][ri, col]:
-            hit = False
-            for d in range(1, 7):
-                if col + d <= c1 and vv['a'][ri, col + d]:
-                    col += d
-                    hit = True
-                    break
-                if col - d >= c0 and vv['a'][ri, col - d]:
-                    col -= d
-                    hit = True
-                    break
-            if not hit:
-                continue
-
-        colour += vv['rgb'][ri, col] * w
-        wsum += w
-
-    return (colour / wsum) if wsum > 0 else None
 
 def rendered_point(q, s, t):
     """Match TRI=[0,1,2,0,2,3] exactly, not a bilinear patch.
@@ -193,11 +54,13 @@ def rendered_point(q, s, t):
         return q[0] * (1.0 - s) + q[1] * (s - t) + q[2] * t
     return q[0] * (1.0 - t) + q[2] * s + q[3] * (t - s)
 
+
 def fallback_rgb(f2):
     c = f2.get('c')
     if c and len(c) >= 3:
         return np.asarray(c[:3], dtype=float)
     return np.asarray((153.0, 153.0, 153.0))
+
 
 unresolved = 0
 for tile_i, fi in enumerate(face_ids):
@@ -218,8 +81,11 @@ for tile_i, fi in enumerate(face_ids):
             nl = float(np.linalg.norm(n)) or 1.0
             n /= nl
 
-            c = sample_exact(g, float(p[0]), float(p[1]), float(p[2]),
-                             float(n[0]), float(n[2]))
+            c = sample(
+                g,
+                float(p[0]), float(p[1]), float(p[2]),
+                float(n[0]), float(n[2]),
+            )
             if c is None:
                 c = fallback_rgb(f2)
                 unresolved += 1
@@ -234,9 +100,9 @@ for tile_i, fi in enumerate(face_ids):
     rgb[ty:ty + STRIDE, tx:tx + STRIDE, 3] = 255
 
     lum = np.rint(
-        0.299 * padded[:, :, 0] +
-        0.587 * padded[:, :, 1] +
-        0.114 * padded[:, :, 2]
+        0.299 * padded[:, :, 0]
+        + 0.587 * padded[:, :, 1]
+        + 0.114 * padded[:, :, 2]
     ).astype(np.uint8)
     intensity[ty:ty + STRIDE, tx:tx + STRIDE] = lum
 
@@ -273,18 +139,22 @@ layout = {
 Image.fromarray(rgb, 'RGBA').save('/mnt/user-data/outputs/skin-atlas.png')
 Image.fromarray(intensity, 'L').save('/mnt/user-data/outputs/skin-intensity.png')
 json.dump(layout, open('/mnt/user-data/outputs/skin-layout.json', 'w'), indent=1)
-json.dump({'n': len(F), 'w': AW, 'h': AH, 'uv': uv},
-          open('/mnt/user-data/outputs/skin-uv.json', 'w'))
+json.dump(
+    {'n': len(F), 'w': AW, 'h': AH, 'uv': uv},
+    open('/mnt/user-data/outputs/skin-uv.json', 'w'),
+)
 
 S = 2
 pv = Image.fromarray(rgb, 'RGBA').resize((AW * S, AH * S), Image.NEAREST)
 out = Image.new('RGB', (pv.width + 20, pv.height + 42), (20, 20, 23))
 out.paste(pv, (10, 10), pv)
 d = ImageDraw.Draw(out)
-d.text((10, pv.height + 18),
-       f'exact face atlas · {len(face_ids)} quads · {TEX}x{TEX} each · '
-       f'{unresolved}/{len(face_ids) * TEX * TEX} fallback texels',
-       fill=(150, 150, 158))
+d.text(
+    (10, pv.height + 18),
+    f'exact face atlas · {len(face_ids)} quads · {TEX}x{TEX} each · '
+    f'{unresolved}/{len(face_ids) * TEX * TEX} fallback texels',
+    fill=(150, 150, 158),
+)
 out.save('/mnt/user-data/outputs/skin-atlas-preview.png')
 
 print(f'exact face atlas {AW}x{AH}: {len(face_ids)} quads, {TEX}x{TEX} each')
