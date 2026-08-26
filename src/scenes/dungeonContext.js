@@ -21,7 +21,7 @@ import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE } from '../world/rdbLayout.js';
 import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, DOOR_VERB_FLAGS, classifyPlacementAction, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT } from '../world/actionSystem.js';
 import { TextRsc } from '../formats/textRsc.js';
-import { openPauseFlow, preloadPauseFlowArt, pauseArtLoaded } from '../ui/pauseWindow.js';
+import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // U51 picks the skin
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, setDeathPresenter } from '../characters/playerEntity.js';
 import { addItem, spendArrow } from '../systems/inventory.js';
@@ -2567,12 +2567,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       automapEntranceTick(automapRec, sm ? [sm.x, sm.y, sm.z] : null, eye, collider);
     },
     automapRecord: () => automapRec,   // probe surface + the window's live view
-    /** I3: the Escape window, same one-slot idiom. Art-gated: with no
-     *  OPTN00I0 loaded the window would close itself on first draw,
-     *  so an art-less boot simply has no pause menu (stated, not
-     *  silent - preloadPauseArt logs its own failure). */
+    /** I3: the Escape window, same one-slot idiom. GATED ON THE DOOR,
+     *  not on the art (U51): the CLASSIC window would close itself on
+     *  first draw with no OPTN00I0 loaded, so an art-less classic boot
+     *  still has no pause menu (stated, not silent - preloadPauseArt
+     *  logs its own failure), but the ENHANCED screen reads no game
+     *  data at all and opens either way. ui/pauseDoor.js owns which. */
     togglePause(setPlayerPos = null) {
-      if (activeOverlay || !pauseArtLoaded()) return;
+      if (activeOverlay || !pauseDoorReady()) return;
       const ctx = this;   // the sibling save verbs on this same context
       openPauseFlow((w) => { activeOverlay = w; }, {
         quickSave: () => ctx.quickSave?.(),

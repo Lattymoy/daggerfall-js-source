@@ -5,11 +5,29 @@
 // DEFAULT (systems/uiSkin.js). One screen: continue, new game, load,
 // settings, mods, about.
 //
-// ONE IMPLEMENTATION, TWO HOSTS. This module is mounted by the game
-// (src/main.js) and by the prototype page (/menu.html, via
-// src/tools/enhancedMenu.js) and there is no second copy of any of it.
-// The prototype exists to be argued with and must therefore be the
+// ONE IMPLEMENTATION, THREE HOSTS. This module is mounted by the game
+// at boot (src/main.js), by the prototype page (/menu.html, via
+// src/tools/enhancedMenu.js), and by the PAUSE DOOR once the game is
+// running (ui/pauseDoor.js) - and there is no second copy of any of
+// it. The prototype exists to be argued with and must therefore be the
 // same screen that ships, or the argument is with something else.
+//
+// ── TWO MODES, ONE SCREEN (U51) ──────────────────────────────────
+//
+// `mode: 'boot'` is the front door. `mode: 'pause'` is the same screen
+// mounted over a running game by Escape, and the difference is the
+// RAIL and nothing else: Continue and New Game are boot questions and
+// go, Resume / Save Game / Exit are in-game ones and arrive. Settings,
+// Mods and About are identical in both, which is the entire point -
+// the reason this door exists is that settings were reachable only at
+// boot, and a pause screen carrying its OWN settings view would have
+// recreated the divergence it was built to close.
+//
+// A SECOND ENHANCED SCREEN WAS THE OBVIOUS BUILD AND IS THE WRONG ONE.
+// The classic pause window is a separate window because classic has no
+// choice - OPTN00I0 is a different .IMG from PICK03I0. Here the two
+// are one module with a rail that changes, so a setting added to the
+// front door is in the pause screen the same afternoon.
 //
 // ── WHAT IT REPLACES ─────────────────────────────────────────────
 //
@@ -80,14 +98,33 @@ import { dateFromClassicMinutes, dateString } from '../systems/gameDate.js';
 import { BUILD_TAG } from '../buildTag.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { repaintKeepingScroll } from './domRepaint.js';
+import { overlayAction } from './input.js';   // U51: Escape, through the shared table
 
 // ── THE RAIL ─────────────────────────────────────────────────────
 // Six destinations. Mac's call: the menus get set up now even where
 // the thing behind them is not built, so a section that has no engine
 // yet still has a home and says what it is waiting on. A rail with a
 // hole in it teaches the player the hole is permanent.
-const SECTIONS = ['Continue', 'New Game', 'Load Game', 'Settings', 'Mods', 'About'];
+const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Settings', 'Mods', 'About'];
+
+// U51: the same rail with the boot-only questions swapped for the
+// in-game ones. Continue and New Game answer "which game", which is
+// settled by the time this mounts over a running one; Resume, Save and
+// Exit answer "what now", which is the only thing left to ask.
+//
+// SAVE AND LOAD STAY ON THE RAIL EVEN WHERE THE HOST REFUSES THEM.
+// Two of the four hosts hand `savingPrevented: () => true` and no save
+// hook at all (exterior, worldModes), and the pane says so in words. A
+// rail that drops the row instead teaches the player the door was
+// never there - the same argument the Mods section is built on.
+const SECTIONS_PAUSE = ['Resume', 'Save Game', 'Load Game', 'Settings', 'Mods', 'About', 'Exit'];
+
 const idOf = (label) => label.toLowerCase().split(' ')[0];
+
+/** Rail entries that ACT rather than navigate. Resume has no pane to
+ *  show - a screen whose only content is a button repeating the word
+ *  you just pressed is a screen that wasted a press. */
+const RAIL_ACTS = Object.freeze({ resume: 'resume' });
 
 // PER-MOUNT STATE. It was module-scope while this was a page that
 // could only be opened once; the game mounts and unmounts it, so a
@@ -98,6 +135,14 @@ let pickedKey = null;
 let sheetOpen = false;   // the help pane is a sheet on a phone
 let app = null;
 let onAction = () => {};
+// U51: 'boot' (the front door) or 'pause' (Escape, over a running
+// game). `hooks` is the host's own save/load/exit trio, handed down by
+// ui/pauseDoor.js and empty at boot.
+let mode = 'boot';
+let sections = SECTIONS_BOOT;
+let hooks = {};
+let keyHandler = null;
+let lockHandler = null;
 
 const el = (t, cls, txt) => {
   const n = document.createElement(t);
@@ -244,8 +289,18 @@ function paneLoad(body) {
     c.append(el('span', 'tag', 'Quicksave'));
     c.append(el('h3', null, save.name));
     c.append(el('p', 'meta', [save.when, save.hour].filter(Boolean).join(' · ')));
+    // U51: in pause mode the LOAD arm is the HOST's, and two of the
+    // four hand no quickLoad at all. No hook, no button - and the line
+    // below says which it is rather than dimming a control with no
+    // explanation attached to it.
+    const canLoad = mode !== 'pause' || typeof hooks.quickLoad === 'function';
     c.append(acts([
-      { label: 'Load', primary: true, onClick: () => onAction('load') },
+      // NO CONFIRM ON LOAD, in either mode. It discards unsaved play,
+      // which is the shape AUDIT F3/F4 made confirm - but classic's
+      // own pause window loads on one press (pauseWindow.js:198) and
+      // so does F11, and inventing a prompt on exactly one of the
+      // port's three load doors is a divergence, not a safety net.
+      { label: 'Load', primary: true, disabled: !canLoad, onClick: canLoad ? () => onAction('load') : null },
       { label: 'Delete', onClick: () => ask(
         'Delete this game',
         `${save.name} is the only saved game, and deleting it cannot be undone.`,
@@ -255,7 +310,77 @@ function paneLoad(body) {
     ]));
     body.append(c);
   }
+  if (mode === 'pause' && typeof hooks.quickLoad !== 'function') {
+    body.append(empty('Not from here',
+      'This part of the game has no load door. Reach a saved game from the main menu instead.'));
+  }
   body.append(empty('Named slots', 'One quicksave slot today. Named saves and the classic .SAV are their own slices.'));
+}
+
+// ── SAVE GAME (pause only) ───────────────────────────────────────
+// U51. Classic's SAVE button closes the window and then writes
+// (pauseWindow.js:195, `this._closeWith(); this.hooks.quickSave?.()`),
+// and this does the same for a reason that is not only parity: the
+// port answers a write with a HUD LINE, and this screen is a fixed
+// opaque div over the whole canvas, so a save that left the door open
+// would put its own confirmation underneath itself.
+//
+// THE CARD SHOWS WHAT IS ABOUT TO BE OVERWRITTEN. There is ONE slot
+// (systems/save.js, `dagger.quicksave`), so every save is an
+// overwrite. Classic does not confirm one and neither does F9, so
+// neither does this - but a player who can read the name and the date
+// they are writing over has been told, which is the part classic
+// never does.
+function paneSave(body) {
+  // IsSavingPrevented, the classic gate, verbatim - and the same
+  // recovered string, because it is the game's own answer and not a
+  // thing this screen gets to reword.
+  const prevented = hooks.savingPrevented?.() || typeof hooks.quickSave !== 'function';
+  if (prevented) {
+    body.append(empty('You cannot save now.',
+      'This part of the game holds no save door. Step back outside and the quicksave returns.'));
+    return;
+  }
+  const save = savedGame();
+  const c = el('div', 'card');
+  c.append(el('h3', null, 'Quicksave'));
+  c.append(el('p', 'meta', save
+    ? `Overwrites ${save.name}${save.when ? ` · ${save.when}` : ''}${save.hour ? ` · ${save.hour}` : ''}`
+    : 'The first save in this slot.'));
+  c.append(acts([{ label: 'Save', primary: true, onClick: () => onAction('save') }]));
+  body.append(c);
+  body.append(empty('One slot', 'Every save writes the same quicksave. Named slots are their own slice.'));
+}
+
+// ── EXIT (pause only) ────────────────────────────────────────────
+// U51. Classic confirms on TEXT.RSC 1069 and then posts dfuiExitGame
+// (pauseWindow.js:161); in a browser Application.Quit means nothing,
+// so the port's door out has always been the front door - the same
+// unwind chargen's cancel and the death sequence use (Ledger A).
+//
+// THE WORDS ARE THIS SCREEN'S OWN, not record 1069. That is the whole
+// premise of the enhanced skin - it opens before the ARENA2 pick and
+// cannot read TEXT.RSC to ask a question - and it is recorded here
+// rather than left to look like an oversight.
+function paneExit(body) {
+  const save = savedGame();
+  const c = el('div', 'card');
+  c.append(el('h3', null, 'Leave this game'));
+  c.append(el('p', 'meta', 'You go back to the main menu. A browser tab cannot close itself.'));
+  c.append(stats([['Last save', save?.when ? `${save.when}${save.hour ? ` · ${save.hour}` : ''}` : 'none']]));
+  c.append(acts([{
+    label: 'Exit to the main menu',
+    primary: true,
+    onClick: () => ask(
+      'Leave this game',
+      save
+        ? `Anything since ${save.when ?? 'the last save'} is lost. The quicksave itself is untouched.`
+        : 'Nothing has been saved in this game, so all of it is lost.',
+      'Exit',
+      () => onAction('exit'),
+    ),
+  }]));
+  body.append(c);
 }
 
 // ── SETTINGS ─────────────────────────────────────────────────────
@@ -542,11 +667,13 @@ function renderInto() {
   side.append(brand);
 
   const rail = el('nav', 'rail');
-  for (const label of SECTIONS) {
+  for (const label of sections) {
     const id = idOf(label);
     const b = el('button', `railbtn${id === section ? ' on' : ''}`);
     b.append(el('span', 'rk', label));
-    b.onclick = () => go(id);
+    // RAIL_ACTS: Resume resolves on the rail rather than opening a
+    // pane. Every other entry is a destination.
+    b.onclick = RAIL_ACTS[id] ? () => onAction(RAIL_ACTS[id]) : () => go(id);
     rail.append(b);
   }
   side.append(rail);
@@ -564,10 +691,16 @@ function renderInto() {
     pane.style.overflow = 'hidden';
     paneSettings(pane);
   } else {
-    pane.append(head(SECTIONS.find((l) => idOf(l) === section)));
+    pane.append(head(sections.find((l) => idOf(l) === section)));
     const body = el('div', 'body');
     if (confirming) body.append(confirmCard());
-    else ({ continue: paneContinue, new: paneNew, load: paneLoad, mods: paneMods, about: paneAbout })[section](body);
+    else {
+      ({
+        continue: paneContinue, new: paneNew, load: paneLoad,
+        save: paneSave, exit: paneExit,
+        mods: paneMods, about: paneAbout,
+      })[section](body);
+    }
     pane.append(body);
   }
 
@@ -575,37 +708,129 @@ function renderInto() {
   app.append(shell);
 }
 
+// ── THE KEYBOARD, AND WHAT IT IS NOT ─────────────────────────────
+// U51 ships ESCAPE AND NOTHING ELSE, and says so rather than leaving
+// the gap looking like an oversight. Escape is the door's own key -
+// it is what opened this screen - and a pause screen you cannot get
+// out of with the key that got you in is the trap the never-traps law
+// is about.
+//
+// FLAGGED: the rest of the keyboard. The wizard walks to `done` with
+// no pointer at all (U50, tools/enhancedChargenProbe.mjs) because a
+// wizard is a LINE - up, down, confirm, back. This screen is three
+// panes wide with a rail, a list and a help sheet, and arrow keys over
+// it is a real design question about focus order, not a table lookup.
+// Half of it would be worse than none: a rail that answers Down while
+// the settings list does not teaches a player the list is broken.
+//
+// It routes through overlayAction - the SHARED table ui/input.js owns
+// and every other window in the port answers through - so Escape here
+// is the same Escape, rebound the same way, as Escape anywhere else.
+function onKey(e) {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const t = e.target;
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+  if (overlayAction(e) !== 'back') return;
+  // THE BACK STACK, innermost first. A confirm card and a phone's help
+  // sheet are both things Escape should close before it closes the
+  // screen, or the one press that means "not that" quits the game. At
+  // boot, with neither open, there is nothing behind the front door to
+  // go back to - and a key this screen did not USE has to stay the
+  // page's, which is the wizard's own rule (ui/enhancedChargen.js: do
+  // not preventDefault a key you did not take, or Tab stops moving
+  // focus and the screen becomes unreachable to anyone driving it that
+  // way).
+  const back = confirming ? () => { confirming = null; render(); }
+    : sheetOpen ? () => { sheetOpen = false; render(); }
+      : mode === 'pause' ? () => onAction('resume')
+        : null;
+  if (!back) return;
+  e.preventDefault();
+  // A MODAL OVERLAY OWNS ITS INPUT (the wizard's own law, U50). On
+  // CAPTURE and stopped here, so the host's window keydown - which
+  // walks the player and would re-toggle this very screen - never sees
+  // a key this screen used.
+  e.stopPropagation();
+  back();
+}
+
+/**
+ * AND THE POINTER LOCK - the wizard's other half of the same report
+ * (see ui/enhancedChargen.js). A locked pointer does not travel
+ * through the DOM at all: every mouse event goes to the locked element
+ * as a movement delta, so a fixed div over the canvas is invisible to
+ * it however high its z-index. At boot there is no lock to drop; in
+ * pause there always is, because mouselook is the port's resting
+ * state. Dropped on mount and kept dropped, so a host that re-takes it
+ * gets it taken back once rather than this screen fighting for clicks
+ * it cannot receive.
+ */
+function releaseLock() {
+  try {
+    if (typeof document !== 'undefined' && document.pointerLockElement) document.exitPointerLock();
+  } catch { /* a browser that refuses is a browser with no lock to drop */ }
+}
+
 /**
  * Mount the menu into a host element. Returns { unmount }.
+ *
+ * `mode` is 'boot' (the front door) or 'pause' (Escape, over a running
+ * game); `hooks` is the host's own { quickSave, quickLoad, exitToMenu,
+ * savingPrevented } and is read by the pause panes only.
  *
  * The style goes in here rather than at import time: a module that
  * writes to the document when it is merely IMPORTED cannot be imported
  * by a test, and the classic skin imports nothing of this at all.
  */
-export function mountEnhancedMenu(host, { onAction: handler = () => {} } = {}) {
+export function mountEnhancedMenu(host, {
+  onAction: handler = () => {}, mode: m = 'boot', hooks: h = {},
+} = {}) {
   injectEnhancedStyle();
   injectEnhancedFonts();
   app = host;
   onAction = handler;
-  section = 'continue';
+  mode = m === 'pause' ? 'pause' : 'boot';
+  hooks = h ?? {};
+  sections = mode === 'pause' ? SECTIONS_PAUSE : SECTIONS_BOOT;
+  // WHICH PANE OPENS. Boot opens on Continue - the one save a
+  // returning player wants. Pause opens on SAVE GAME, which is what a
+  // player most often pressed Escape for, and Settings - the reason
+  // this door exists at all - is one press away and permanently
+  // visible on the rail, which is the thing classic could not do.
+  section = mode === 'pause' ? 'save' : 'continue';
   category = CATEGORIES[0].id;
   pickedKey = null;
   sheetOpen = false;
   confirming = null;
   _eff = null;
   render();
+  keyHandler = onKey;
+  globalThis.addEventListener('keydown', keyHandler, { capture: true });
+  lockHandler = releaseLock;
+  releaseLock();
+  if (typeof document !== 'undefined') document.addEventListener('pointerlockchange', lockHandler);
   // The probe surface, the same shape settingsProbe.mjs drives: a real
   // browser check should read the SAME layout a finger taps.
   globalThis.__menu = () => JSON.stringify({
-    section, category, pickedKey,
-    sections: SECTIONS.map(idOf),
+    mode, section, category, pickedKey,
+    sections: sections.map(idOf),
     rows: [...host.querySelectorAll('.row')].length,
   });
   return {
     unmount() {
+      // EVERY LISTENER HAS AN OWNER (the wizard's law, U50). A
+      // window-level keydown outlives the DOM it was mounted for, so a
+      // menu torn down without this eats Escape for the whole session
+      // - which on the pause door means the game can never be paused
+      // again.
+      if (keyHandler) globalThis.removeEventListener('keydown', keyHandler, { capture: true });
+      if (lockHandler && typeof document !== 'undefined') document.removeEventListener('pointerlockchange', lockHandler);
+      keyHandler = null;
+      lockHandler = null;
       host.innerHTML = '';
       app = null;
       onAction = () => {};
+      hooks = {};
       delete globalThis.__menu;
     },
   };

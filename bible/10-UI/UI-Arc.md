@@ -8,6 +8,114 @@ policies one by one.
 
 
 
+## U51 THE PAUSE DOOR (2026-08-26)
+
+Escape opens the ENHANCED screen. `ui/pauseDoor.js` picks between it
+and the classic OPTN00I0 panel, the four hosts call what they always
+called, and the screen it mounts is the FRONT DOOR - `ui/enhancedMenu.js`
+in pause mode - not a second design.
+
+U49'S OWN COMPLAINT WAS STILL TRUE. Its record says the port's settings
+were "reachable only at boot: once you were playing there was no door
+back that was not a reload", and that is the sentence that justified
+collapsing four boot screens into one. It described the CLASSIC front
+door. It went on describing the enhanced one, because `runEnhancedMenu`
+is called from exactly one place - `main.js`, before the world boots -
+and Escape inside the game went on opening a 320x200 panel with five
+hand-placed controls. A player on the default skin met the enhanced
+design once, at the door, and then played a classic game.
+
+THE FORK IS IN FRONT OF `openPauseFlow` AND THE HOSTS DID NOT MOVE. It
+is THE ONE CONSTRUCTION SEAM for the third time: AUDIT 17i split
+`createChargenWindow` out after three bugs came from hosts wiring
+chargen by hand, U50 put the skin fork inside it and cost its two
+callers no edit at all, and the four pause hosts already funnelled
+through one function. What they did change is the GATE - `pauseArtLoaded()`
+became `pauseDoorReady()`, one predicate, for the reason `uiSkin.js`
+gives for being one: a port that spells the test out at six call sites
+is a port where the sixth spells it differently.
+
+THE ART GATE MOVED THE WAY THE DATA GATE DID. The classic window cannot
+draw one pixel without OPTN00I0.IMG, so the hosts gated Escape on it.
+The enhanced screen reads no game data at all - that is the whole
+premise of U49's door - and gating it on classic art would have left a
+player whose art load failed holding a game with no pause menu, no
+settings and no way out, on a screen that would have rendered
+perfectly. `pauseDoorReady` is `isEnhanced() || pauseArtLoaded()`.
+
+A SECOND ENHANCED SCREEN WAS THE OBVIOUS BUILD AND IS THE WRONG ONE.
+Classic needs two windows because PICK03I0 and OPTN00I0 are two
+different .IMGs; here they would be two copies of a settings view, and
+the divergence U49 collapsed four screens to avoid would have grown
+back inside the skin that closed it. So the rail changes and nothing
+else does: Continue and New Game ask WHICH GAME, which is settled by
+the time this mounts over a running one; Resume, Save Game and Exit ask
+WHAT NOW. Load, Settings, Mods and About are identical in both. It
+opens on Save Game, and Settings - the reason the door exists - is one
+press away and permanently on the rail, which is the thing classic
+could not do at any price.
+
+THE PANES ANSWER THE HOST, NOT THE RAIL. Two of the four hosts hand
+`savingPrevented: () => true` and no save or load hook at all (exterior,
+worldModes), so the Save pane draws no button and answers with the
+game's own recovered string - "You cannot save now." - rather than a
+dimmed control with no explanation attached. The rows STAY on the rail
+where they are refused, which is the argument the Mods section is built
+on: a rail that drops a row teaches the player the door was never
+there. And every exit closes the door BEFORE it fires the hook, which
+is classic's own order (`_closeWith()` then the hook) and matters more
+here - the port answers a save with a HUD line, and this screen is an
+opaque div over the whole canvas, so a hook fired under a live door
+hides its own answer. The probe checks that by asking the HOOK whether
+the door was still up when it ran.
+
+ESCAPE, AND ONLY ESCAPE, and it says so rather than leaving the gap
+looking like an oversight. Escape is the key that opened the screen and
+a pause screen you cannot leave by it is the trap the never-traps law
+is about; it routes through `overlayAction`, the shared table, so it is
+the same Escape rebound the same way as everywhere else, and its back
+stack is innermost-first - a confirm card, then a phone's help sheet,
+then the screen - or the one press meaning "not that" quits the game.
+FLAGGED: the rest of the keyboard. The wizard walks to `done` with no
+pointer because a wizard is a LINE; this is three panes with a rail, a
+list and a sheet, and arrows over it is a real question about focus
+order rather than a table lookup. Half of it would be worse than none.
+
+THE TWO LAWS THE WIZARD PAID FOR ALREADY, inherited whole: the
+window-level keydown is on CAPTURE and is REMOVED on unmount (here that
+is not a leak but a game that can never be paused again - the dead
+listener keeps eating Escape), and the POINTER LOCK is dropped on mount
+and kept dropped, because mouselook is the port's resting state so this
+screen always mounts over a locked pointer, and a locked pointer never
+reaches the DOM at any z-index.
+
+PROVED IN A REAL BROWSER by `tools/enhancedPauseProbe.mjs` - 45/45 on a
+desktop and a Pixel 5, zero page errors, with no ARENA2 on disk. What
+it does NOT prove is stated in its own header: that the four hosts call
+it, which needs a living game and therefore game data. That half is
+held by source pins. 17 pins; 12 mutations, 12 dead - and TWO of those
+only after the pins they exposed were rewritten. The first draft of the
+fork test passed for the wrong reason: the second clause is `typeof
+document !== 'undefined'`, node has none, so both skins fell to the
+classic branch and deleting `isEnhanced()` survived. It runs under a
+four-property fake document now.
+
+ONE EXPORT, ONE HOME. `ui/pauseWindow.js`'s factory is
+`openClassicPauseFlow` now; the plain name belongs to the door. Two
+modules exporting one name is the drift the `audit24_onehome` ratchet
+exists to catch, and it caught this one during the slice rather than in
+an audit.
+
+NOT DONE HERE, recorded as real gaps rather than dropped quietly: the
+`?dungeon` dev scene's own Escape is wired like the others, but that
+host still holds the RAW chargen flow (U50's FLAGGED row) and nothing
+about that changed; the CONTROLS grid stays classic-only - the enhanced
+settings pane renders all 171 DFU keys, and key REBINDING is not one of
+them; and the in-game screens behind this door - inventory, the sheet,
+the spellbook, the travel map, the journal - are all still classic. The
+prototype for those is `enhanced.html` + `src/tools/enhancedUI.js` and
+it is the next frontier, not this slice.
+
 ## U50 THE ENHANCED WIZARD (2026-08-25, Mac's call, ONE STAGE AT A TIME)
 
 Character creation in the enhanced skin. ALL TEN journey stages have

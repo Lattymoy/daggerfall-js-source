@@ -102,7 +102,7 @@ import { addGold, CRIMES } from '../systems/court.js';   // U10 probe surface; U
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';   // I2: the rebindable registry
-import { openPauseFlow, preloadPauseFlowArt, pauseArtLoaded } from '../ui/pauseWindow.js';   // I3/I4
+import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
 import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
 import { discoveredBuildings } from '../systems/discovery.js';   // A2: the nameplates' gate
 
@@ -1015,7 +1015,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // S40: the Rest door - world.js's twin (THE FOUR HOSTS RULE).
     toggleRest: () => toggleRest(),
     togglePause: () => {
-      if (!pauseArtLoaded()) return;
+      if (!pauseDoorReady()) return;
       openPauseFlow((w) => townTalk.showOverlay(w), {
         savingPrevented: () => true,
         exitToMenu: exitToTitleMenu,
@@ -1071,10 +1071,13 @@ export async function bootExterior(canvas, renderer, params, status) {
       // a dungeon could neither heal nor pass an hour.
       if (act === 'Rest') { e.preventDefault(); hudCtx.toggleRest(); return; }
       // I3: the Escape window. This dev host has no save path (the
-      // quicksave lives in ?world and the dungeon contexts), so the
-      // SAVE button answers with DFU's own cannot-save line and LOAD
-      // has nothing to load - both stated by the hooks, not invented.
-      if (act === 'Escape' && pauseArtLoaded()) { hudCtx.togglePause(); return; }
+      // quicksave lives in ?world and the dungeon contexts), so SAVE
+      // answers with DFU's own cannot-save line and LOAD has nothing
+      // to load - both stated by the hooks, not invented. U51: the
+      // enhanced screen reads the same hooks and draws no button at
+      // all where they refuse, which is the anti-lie law one step
+      // further on than a dimmed control.
+      if (act === 'Escape' && pauseDoorReady()) { hudCtx.togglePause(); return; }
       // A2: the exterior automap (Actions.AutoMap outdoors,
       // DaggerfallUI.cs:633-650); this host always stands on a
       // location. I2: through the registry, so M is rebindable like

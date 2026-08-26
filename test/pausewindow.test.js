@@ -130,7 +130,12 @@ test('I3: the wiring - four hosts, one Escape door each, art preloaded', () => {
     const src = code(rel);
     const gate = src.indexOf("if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {");
     assert.ok(gate > 0, `${rel} gates its ladder on the overlay AND the mode`);
-    const arm = src.indexOf("if (act === 'Escape' && pauseArtLoaded()) { hudCtx.togglePause(); return; }");
+    // U51 re-aimed this: the gate is `pauseDoorReady`, which is
+    // classic's art test OR the enhanced skin - whose screen needs no
+    // ARENA2 at all, so gating it on OPTN00I0 would have left a player
+    // with a failed art load holding a game with no pause menu, no
+    // settings and no way out.
+    const arm = src.indexOf("if (act === 'Escape' && pauseDoorReady()) { hudCtx.togglePause(); return; }");
     assert.ok(arm > gate, `${rel} opens on Escape, inside that gate`);
     assert.match(src, /togglePause: \(\) => \{/, `${rel} has exactly one pause door`);
     assert.match(src, /preloadPauseFlowArt\(/, `${rel} warms the art`);

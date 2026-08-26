@@ -298,12 +298,19 @@ export class PauseOptionsWindow {
  *
  *  The U24 dispatch law applies at both ends: a window that opens
  *  another marks itself done FIRST and the host's slot assignment
- *  replaces it - never an onClose that nulls its own successor. */
-export function openPauseFlow(show, hooks = {}) {
+ *  replaces it - never an onClose that nulls its own successor.
+ *
+ *  IT WAS `openPauseFlow` UNTIL U51, and the hosts still call that
+ *  name - it now belongs to ui/pauseDoor.js, which picks between this
+ *  flow and the enhanced screen and hands the four hosts one door.
+ *  Renamed rather than shadowed: two modules exporting one name is the
+ *  drift the audit24_onehome ratchet exists to catch, and the classic
+ *  flow is what this module is. */
+export function openClassicPauseFlow(show, hooks = {}) {
   const win = new PauseOptionsWindow({
     ...hooks,
     openControls: controlsArtLoaded()
-      ? () => show(new ControlsWindow({ onBack: () => openPauseFlow(show, hooks) }))
+      ? () => show(new ControlsWindow({ onBack: () => openClassicPauseFlow(show, hooks) }))
       : null,
   });
   show(win);

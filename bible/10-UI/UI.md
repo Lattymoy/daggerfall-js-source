@@ -12,10 +12,22 @@ the SPELLBOOK with its icons and the guilds' buy mode, ONE
 DISPATCH so those windows work in a building and not only outdoors,
 and the classic LARGE HUD with its eleven clickable panels, and the
 BANK'S HOUSE MARKET).
-66 modules
+67 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.
+
+THE ENHANCED SKIN is the second lane on this page and its own thing:
+`systems/uiSkin.js` chooses, ENHANCED BY DEFAULT, and `?skin=classic`
+overrides for one page load without persisting (the 25 probes in
+`tools/` pin classic geometry). Three surfaces wear it - U49 the front
+door, U50 the character-creation wizard, U51 the PAUSE DOOR - and each
+is the same `ui/enhancedMenu.js` or `ui/enhancedChargen.js` mounted by
+the game and by its prototype page, never a second copy of the design.
+It stops at the pause screen: the windows behind it - inventory, the
+sheet, the spellbook, the travel map, the journal, the HUD - are all
+classic. `enhanced.html` + `src/tools/enhancedUI.js` is the prototype
+for those and is not mounted by anything.
 
 AUDIT 18 rewrote this page: its opening paragraph declared the arc
 unstarted through the whole U arc. See the note on

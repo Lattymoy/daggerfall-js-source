@@ -180,7 +180,10 @@ test('U43: ONE dispatch - the interior host routes the same table as the dungeon
   ];
   for (const [hook, re] of MOUNTS) assert.match(modes, re, `the interior ctx MOUNTS a window for ${hook}`);
   // ...and Escape really opens the pause flow rather than returning
-  assert.match(modes, /togglePause\(\) \{\n      if \(!pauseArtLoaded\(\)\) return;\n      \/\/ I3[^]*?openPauseFlow\(/,
+  // U51: the gate became pauseDoorReady (art OR the enhanced skin,
+  // which needs none) and the call goes through ui/pauseDoor.js. The
+  // door being opened is the same door.
+  assert.match(modes, /togglePause\(\) \{\n      if \(!pauseDoorReady\(\)\) return;\n      \/\/ I3[^]*?openPauseFlow\(/,
     'the interior Escape door opens the pause flow');
   assert.match(src('scenes/world.js'), /makeCharSheet: \(\) =>/, 'world.js hands its builder down');
   assert.match(src('scenes/world.js'), /makeJournal: \(mode\) =>/);

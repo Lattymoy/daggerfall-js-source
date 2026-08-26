@@ -87,11 +87,47 @@ test('the classic door still gates its data first', () => {
 });
 
 // ── WHAT DOES AND DOES NOT LEAVE THE MENU ────────────────────────
-test('only the three game actions resolve the door', () => {
+// The law here has never been the COUNT; it is that the three shared
+// destinations - settings, mods, about - are places inside this screen
+// and not exits from it. U51 added the three in-game exits (resume,
+// save, exit) and the pin now states both halves rather than a number
+// that has to be edited every time the rail grows.
+test('only game actions resolve the door - never a destination', () => {
   const src = read('src/ui/enhancedMenu.js');
-  const calls = [...src.matchAll(/onAction\('([a-z]+)'\)/g)].map((m) => m[1]).sort();
-  assert.deepEqual([...new Set(calls)], ['continue', 'load', 'new'],
-    'settings, mods and about are destinations INSIDE this screen, not exits from it');
+  const calls = [...new Set([...src.matchAll(/onAction\('([a-z]+)'\)/g)].map((m) => m[1]))].sort();
+  assert.deepEqual(calls, ['continue', 'exit', 'load', 'new', 'resume', 'save'],
+    'boot resolves continue/new/load; pause resolves resume/save/exit');
+  for (const dest of ['settings', 'mods', 'about']) {
+    assert.ok(!calls.includes(dest),
+      `${dest} is a destination INSIDE this screen, not an exit from it`);
+  }
+});
+
+// U51: and the two rails carry the two questions. Continue and New
+// Game ask "which game", which is settled by the time the pause door
+// mounts; Resume, Save and Exit ask "what now", which is the only
+// thing a running game has left to ask.
+test('the two rails differ only where the question does', () => {
+  const src = read('src/ui/enhancedMenu.js');
+  const list = (name) => {
+    const m = new RegExp(`const ${name} = \\[([^\\]]*)\\]`).exec(src);
+    assert.ok(m, `${name} is gone`);
+    return m[1].split(',').map((s2) => s2.trim().replace(/^'|'$/g, '')).filter(Boolean);
+  };
+  const boot = list('SECTIONS_BOOT');
+  const pause = list('SECTIONS_PAUSE');
+  const shared = ['Load Game', 'Settings', 'Mods', 'About'];
+  for (const s2 of shared) {
+    assert.ok(boot.includes(s2), `${s2} must stay on the front door`);
+    assert.ok(pause.includes(s2), `${s2} must reach the pause door too`);
+  }
+  assert.deepEqual(boot.filter((x) => !shared.includes(x)), ['Continue', 'New Game']);
+  assert.deepEqual(pause.filter((x) => !shared.includes(x)), ['Resume', 'Save Game', 'Exit']);
+  // SETTINGS IS THE POINT. U49's own record says settings were
+  // reachable only at boot; a pause rail without them would have left
+  // that true on the skin built to fix it.
+  assert.ok(pause.includes('Settings'),
+    'the whole reason this door exists is that settings were reachable only at boot');
 });
 
 // AUDIT F3/F4: two destructive actions shipped without a confirm -

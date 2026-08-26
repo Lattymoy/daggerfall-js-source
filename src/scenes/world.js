@@ -160,7 +160,7 @@ import { setWeather, currentWeather, tickWeather, weatherRespawn, applyClimateWe
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';   // I2: the rebindable registry
-import { openPauseFlow, preloadPauseFlowArt, pauseArtLoaded } from '../ui/pauseWindow.js';   // I3/I4
+import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -1921,7 +1921,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // this ladder nor the large HUD's rest panel had anything to open.
     toggleRest: () => toggleRest(),
     togglePause: () => {
-      if (!pauseArtLoaded()) return;
+      if (!pauseDoorReady()) return;
       openPauseFlow((w) => townTalk.showOverlay(w), {
         quickSave: worldQuickSave,
         quickLoad: worldQuickLoad,
@@ -1981,9 +1981,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       // dispatch has no scene gate at all; this ladder's is the U43
       // flag still standing over these lines.
       if (act === 'Rest') { e.preventDefault(); hudCtx.toggleRest(); return; }
-      // I3: Escape with no overlay opens the pause options window; the
-      // window closes itself on the same key.
-      if (act === 'Escape' && pauseArtLoaded()) { hudCtx.togglePause(); return; }
+      // I3: Escape with no overlay opens the pause screen; it closes
+      // itself on the same key. U51: WHICH screen is ui/pauseDoor.js's
+      // decision - the classic OPTN00I0 panel, or the enhanced menu in
+      // pause mode - and pauseDoorReady is that fork's own gate, since
+      // only one of the two needs art before it can draw a word.
+      if (act === 'Escape' && pauseDoorReady()) { hudCtx.togglePause(); return; }
     }
     if (act === 'QuickLoad' && (modes?.mode ?? 'exterior') === 'exterior') {
       e.preventDefault();
