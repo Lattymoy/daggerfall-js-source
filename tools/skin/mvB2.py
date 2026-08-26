@@ -33,6 +33,11 @@ for Y in YAWS:
         'r1': s['r1'],
     }
 
+# The geometry snapshot is the other source input. Landmark anchors are derived
+# FROM THIS SAME MESH below; there is no separate lm_rig.json that can silently
+# describe yesterday's body.
+F = json.load(open('neutral.json'))
+
 # --- which view-side does a rig arm land on? probe it, do not assume ---
 # The rig's armL sits at NEGATIVE x. A view at yaw Y rotates the figure, and
 # the arm's screen-x is x*cos(Y)+z*sin(Y); with z~0 for a hanging arm that is
@@ -98,16 +103,59 @@ knee = min(
     ),
     key=legw,
 )
-LR = json.load(open('lm_rig.json'))
 
-# ONLY unambiguous anchors. waist/shoulder/neck were fitted to width profiles
-# that include the arms, so they were flat and arbitrary, and the crotch->waist
-# pair squashed the hips to 100 rows/unit against 379 in the shins. Dropping
-# them takes the spread from 3.8x to 1.48x.
+# ONLY unambiguous anchors. They are derived from the SAME neutral.json the
+# baker will sample, so changing the rig cannot leave a stale landmark sidecar
+# behind. This removes lm_rig.json entirely.
 #
+# bottom   = actual lowest non-head vertex
+# crotch   = highest authored leg vertex (the thigh/pelvis join)
+# knee     = narrowest front-view leg ring in the same 25..60% vertical band
+#            used to find the reference knee
+# torsoTop = highest body-group vertex (the cropped neck/trap source boundary)
+non_head_y = [
+    float(f2['p'][i * 3 + 1])
+    for f2 in F if f2['g'] != 'head'
+    for i in range(4)
+]
+RIGbottom = min(non_head_y)
+RIGcrotch = max(
+    float(f2['p'][i * 3 + 1])
+    for f2 in F if f2['g'] in ('legL', 'legR')
+    for i in range(4)
+)
+RIGtorsoTop = max(
+    float(f2['p'][i * 3 + 1])
+    for f2 in F if f2['g'] == 'body'
+    for i in range(4)
+)
+
+# Measure one leg; the pair is symmetric in the neutral rig. Restrict the walk
+# to the same fraction of leg height as the reference finder so the ankle/foot
+# cannot win merely because they are narrow.
+leg_per = {}
+for f2 in F:
+    if f2['g'] != 'legL':
+        continue
+    for i in range(4):
+        x = float(f2['p'][i * 3])
+        y = round(float(f2['p'][i * 3 + 1]), 6)
+        leg_per.setdefault(y, []).append(x)
+
+leg_span = RIGcrotch - RIGbottom
+knee_hi = RIGcrotch - leg_span * 0.25
+knee_lo = RIGcrotch - leg_span * 0.60
+knee_rows = []
+for y, xs in leg_per.items():
+    if knee_lo <= y <= knee_hi and len(xs) >= 2:
+        knee_rows.append((max(xs) - min(xs), y))
+if not knee_rows:
+    raise RuntimeError('neutral.json has no leg rings in the knee search band')
+RIGknee = min(knee_rows)[1]
+
 # The reference is cropped at the neck, and its stump runs to the row where
-# torso width steps outward. Anchoring the rig's torso top at row 0 points the
-# upper-trap band at a thin sliver and stretches it across the shoulders.
+# torso width steps outward. Anchoring torsoTop at row 0 points the upper-trap
+# band at a thin sliver and stretches it across the shoulders.
 bodyw = {
     int(r): (v[1] - v[0] + 1)
     for r, v in SEG['0']['parts']['body'].items()
@@ -119,17 +167,20 @@ STUMP = max(
 )[1]
 print('stump ends at ref row', STUMP)
 ANCH = [
-    (LR['bottom'], REFr1),
-    (LR['knee'], knee),
-    (LR['crotch'], REFcr),
-    (1.557, STUMP),
+    (RIGbottom, REFr1),
+    (RIGknee, knee),
+    (RIGcrotch, REFcr),
+    (RIGtorsoTop, STUMP),
 ]
-for nm, y in (('shoulder', LR['shoulder']), ('torsoTop', 1.557)):
-    r = REFcr + (STUMP - REFcr) * (y - LR['crotch']) / (1.557 - LR['crotch'])
-    print(
-        f'  rig {nm:9s} -> ref row {r:5.1f}'
-        f'  torso width {bodyw.get(int(round(r)), 0)}'
-    )
+print(
+    'rig anchors from neutral.json:',
+    {
+        'bottom': round(RIGbottom, 4),
+        'knee': round(RIGknee, 4),
+        'crotch': round(RIGcrotch, 4),
+        'torsoTop': round(RIGtorsoTop, 4),
+    },
+)
 print('anchors', [(round(a, 3), b) for a, b in ANCH])
 
 
@@ -146,7 +197,6 @@ def ymap(y):
 
 
 # --- rig geometry + smooth vertex normals ---
-F = json.load(open('neutral.json'))
 acc = {}
 
 
