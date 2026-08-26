@@ -348,9 +348,13 @@ keys ({state, t, activationCount} - movers recompute their matrix
 from state+t on the next tick, so those two ARE the mover). The
 envelope gains world + locationKey (additive, v1 stands); restore
 applies the world ONLY when the snapshot's locationKey matches the
-live dungeon (dungeon:<locationId>) - a different dungeon loads the
-player and says so (cross-location travel-on-load pends). Restored
-dead foes spawn their corpses. Doors ride the action list (their
+live dungeon (dungeon:<locationId>) - and S1 makes the keys match by
+the time it runs: the restore seam (world.js restorePositionHelper,
+the port of PlayerEnterExit.RestorePositionHelper :592-655) respawns
+the player INTO the saved dungeon at its map pixel BEFORE the world
+half is applied (SaveLoadManager.cs:1476 < :1497). Only an envelope
+with no pixel (pre-S1) or a location with no entrance falls to DFU's
+own "start outside" arm. Restored dead foes spawn their corpses. Doors ride the action list (their
 state/t IS the door).
 
 ## S13 (effect library III - the SpellPoints/magicka family): SHIPPED
@@ -1869,9 +1873,11 @@ let the mutation live). The load teleports through the travel
 core (_teleportToPixel, the F-slice extraction shared) and lands on
 the exact native spot; the encounter anchor resets across a load
 (DFU's LoadInProgress parity - no spawn catch-up for time that never
-passed). One classic slot, the dungeon's key: a save from the other
-side restores the CHARACTER and says where it was; travel-on-load
-pends on both sides with the dungeon's own note.
+passed). One classic slot, and since S1 it restores BOTH sides: a dungeon
+envelope respawns into its dungeon and a world envelope leaves any
+dungeon first, through the one seam shared by boot ?load and
+in-session F11 from either host. Interior saving remains unbuilt
+(S2 / F221).
 
 Probed live: F9 at (409.6, 379.1, 818.2), a 60-unit warp across a
 pixel boundary, F11 - the exact position, pixel, clock and gold
