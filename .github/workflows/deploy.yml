@@ -10,7 +10,7 @@
 # build, then fail the protected github-pages environment before any steps ran.
 # Main still checks out the preview branch below, so every main deploy carries
 # the latest preview without letting the preview branch deploy by itself.
-# Preview refresh: full clothing/armor variant matrix + front-registered armor detail.
+# Preview refresh: full wardrobe matrix + gender archive axis + armor texture QA.
 name: deploy
 
 on:
