@@ -137,27 +137,18 @@ export const copyEffectEntry = (a) => {
   return c;
 };
 
-/** The port's stand-in for one ulong of
- *  ItemEquipTable.SerializeEquipTable (:333-345) - the RightHand
- *  slot, the only equip link an enemy entity carries here. DFU writes
- *  the equipped item's UID and DeserializeEquipTable (:353-373)
- *  re-links the table to the item of that UID inside the RESTORED
- *  collection, which is why a loaded foe swings the weapon its save
- *  recorded instead of the one its respawn rolled. The port has no
- *  item UID; the index into the foe's own item list is the same link,
- *  and it is a plain indexOf because AssignEnemyStartingEquipment
- *  equips the SAME item it adds to Items (ItemHelper.cs:1366-1460,
- *  ItemEquipTable.cs:140-141) - the identity the whole UID scheme
- *  rests on, which equipmentItems keeps.
- *  Returns -1 for a bare-handed foe, which is what an empty RightHand
- *  slot serializes to.
- *
- *  Exported from here rather than from a scene: BOTH foe hosts write
- *  it (world.js's exterior pool and dungeonContext's), and it is the
- *  same DFU member for both. (ArmorValues are RE-DERIVED by the
- *  spawn's own SetEnemyEquipment pass, EnemyEntity.cs:409-419, so DFU
- *  does not save them and neither does either host.) */
-export const equippedWeaponIndex = (weapon, items) => (weapon ? items.indexOf(weapon) : -1);
+/** ItemEquipTable.SerializeEquipTable/DeserializeEquipTable
+ *  (:333-373) needs NO field of its own here. DFU writes each slot's
+ *  item UID and re-links the table to the items of those UIDs inside
+ *  the RESTORED collection; the port's items carry `equipSlot`
+ *  themselves, so the link rides inside the item list every host
+ *  already writes and equip.js's deserializeEquipTable relinks the
+ *  whole table off it. This once exported `equippedWeaponIndex`, a
+ *  RightHand-only stand-in - one slot of a 27-slot member, which was
+ *  invisible only while an enemy's table was empty. (ArmorValues are
+ *  RE-DERIVED by the spawn's own SetEnemyEquipment pass,
+ *  EnemyEntity.cs:409-427, so DFU does not save them and neither does
+ *  any host - and the restore must not re-derive them either.) */
 
 /** A plain-object snapshot of the player + scene extras. */
 export function snapshotPlayer(entity, { position = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null, quest = null, talk = null, weaponDrawn = null, yaw = null, pitch = null, isCrouching = null } = {}) {

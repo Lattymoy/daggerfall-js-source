@@ -98,7 +98,8 @@ import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects
 import { dice100, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies, KB_UNIT } from '../combat/formulas.js';   // C15: + knockback
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost, effectSchool, EFFECT_COST_TABLE } from '../systems/spellcost.js';
-import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState, copyEffectEntry, equippedWeaponIndex, dungeonLocationKey } from '../systems/save.js';   // S1: the context stamp's ONE builder - the seam that reads it back lives beside it   // B4: the ONE quest+talk composer; copyEffectEntry: SerializableEnemy's bundles ride the player envelope's body; equippedWeaponIndex: its equip table, the same member the exterior pool writes
+import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState, copyEffectEntry, dungeonLocationKey } from '../systems/save.js';   // S1: the context stamp's ONE builder - the seam that reads it back lives beside it   // B4: the ONE quest+talk composer; copyEffectEntry: SerializableEnemy's bundles ride the player envelope's body
+import { deserializeEquipTable, equipTableOf, EQUIP_SLOTS } from '../systems/equip.js';   // AUDIT 26: SerializableEnemy restores the WHOLE equip table (:174), the same member the exterior pool restores
 import { bindQuestFoeHost } from './questFoeHost.js';   // B1: quest foes ride this pool
 import { dungeonKey } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
@@ -1899,20 +1900,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // (restartHeldEnchantments); nothing re-instantiates a foe's.
         activeEffects: (f.entity.activeEffects ?? []).map(copyEffectEntry),
         // AUDIT 26: :119 data.equipTable =
-        // entity.ItemEquipTable.SerializeEquipTable(). The foe's
-        // equipped weapon was NOT in this record, and applyWorld
-        // replaced entity.items without touching entity.weapon - so a
-        // cold boot into a saved dungeon left every armed foe swinging
-        // the REBUILD's fresh equipEnemy roll (:531/:596), with the
-        // rebuild's material, condition and poison, while its corpse
-        // dropped the save's items. equippedWeaponIndex is the port's
-        // stand-in for the RightHand UID: an index into the foe's own
-        // item list, which is a plain indexOf because the swung weapon
-        // IS one of those items (ItemHelper.cs:1366-1460 equips the
-        // same object it adds to Items). ArmorValues stay out: DFU
-        // re-derives them in SetEnemyEquipment (EnemyEntity.cs:409-419)
+        // entity.ItemEquipTable.SerializeEquipTable() - the WHOLE
+        // table, all 27 slots, not just the swung weapon. The port
+        // needs no separate field for it: SerializeEquipTable writes
+        // each slot's item UID and DeserializeEquipTable looks that
+        // UID up in the restored collection, where the port's items
+        // carry `equipSlot` themselves and ride out inside `items`
+        // above. So the table travels with the items it links, and
+        // applyWorld relinks it off them. ArmorValues stay out: DFU
+        // re-derives them in SetEnemyEquipment (EnemyEntity.cs:409-427)
         // and saves no such field.
-        equipRight: equippedWeaponIndex(f.entity.weapon, f.entity.items ?? []),
       })),
       piles: lootPiles.map((p) => ({ items: p.items.map((it) => ({ ...it })) })),
       // AUDIT 23 (save-load-4): player-dropped piles are containers in
@@ -1937,11 +1934,25 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       f.entity.items = sf.items.map((it) => ({ ...it }));
       // AUDIT 26: DeserializeEquipTable(data.equipTable, entity.Items)
       // runs on the line AFTER DeserializeItems (:173-174) and re-links
-      // the table INTO the restored collection - the order is the law,
-      // because the table can only find an item the collection already
-      // holds. The restored foe then swings the very object its corpse
-      // will drop, so condition, poison and material are one thing.
-      if (sf.equipRight != null) f.entity.weapon = sf.equipRight >= 0 ? (f.entity.items[sf.equipRight] ?? null) : null;
+      // the WHOLE table INTO the restored collection - the order is the
+      // law, because the table can only find an item the collection
+      // already holds. Only the right hand was relinked here, which was
+      // invisible while the table was empty and is not any more: a foe's
+      // shield and armour ARE equipped now (ItemHelper.cs:1366-1460),
+      // and DamageEquipment bills the struck slot out of that table
+      // (FormulaHelper.cs:1080-1117) - so the leftover respawn roll took
+      // the condition loss while the shield in the foe's own inventory,
+      // the one its corpse drops, never wore down again. The restored
+      // foe now wears the very objects its corpse will drop, so
+      // condition, poison and material are one thing on every slot.
+      // No armour re-derive: that block is SerializablePlayer's
+      // (:355-368), and this foe's values came from its spawn's
+      // SetEnemyEquipment pass, clamps and all.
+      deserializeEquipTable(f.entity);
+      // entity.weapon is the port's cached RightHand slot - what DFU
+      // reads live as ItemEquipTable.GetItem(EquipSlots.RightHand)
+      // (EnemyAttack.cs:141/:143/:192/:409). It follows the table.
+      f.entity.weapon = equipTableOf(f.entity)[EQUIP_SLOTS.RightHand] ?? null;
       f.ai.feet[0] = sf.feet[0]; f.ai.feet[1] = sf.feet[1]; f.ai.feet[2] = sf.feet[2];
       f.ai.yaw = sf.yaw;
       // CH4: the senses/resource halves restore when the save carries

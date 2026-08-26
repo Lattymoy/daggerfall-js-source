@@ -242,7 +242,7 @@ function exteriorSave({ sheathed = false, yaw = 0.5, pitch = -0.25, crouching = 
     cam: { yaw, pitch, pos: [10, 2, 20] },
     weaponRig: { playerWeapon: { sheathed } },
     state: { worldCoords: () => ({ x: 100, z: 200 }), compensation: [0, 0, 0] },
-    snapshotPlayer, composeSessionState, equippedWeaponIndex: () => -1, copyEffectEntry: (a) => ({ ...a }),
+    snapshotPlayer, composeSessionState, copyEffectEntry: (a) => ({ ...a }),
     writeQuicksave: (sn) => writeQuicksaveTo(sn, storage),
     playerEntity: bare(),
     playerTicker: { classicMinutes: 4242 },

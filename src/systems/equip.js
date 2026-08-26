@@ -253,26 +253,57 @@ export function equipItem(entity, item) {
 
 export const isEquipped = (item) => item.equipSlot != null;
 
-/** AUDIT 17e C1 - SerializablePlayer.RestoreItems verbatim
- *  (SerializablePlayer.cs:301, :355-368): after items are restored,
- *  the equip TABLE is rebuilt by re-linking each worn item into its
- *  slot, then the armor values are wiped to 100 and re-applied from
- *  the rebuilt table. DFU relinks by item UID; our items carry the
- *  slot itself (item.equipSlot), which survives the JSON round trip,
- *  so the slot IS the link.
- *  Without this, a load left the table empty (every worn item
- *  unreachable - filterByTab hides equipped items, so they vanished
- *  from all four tabs AND the paperdoll, with no way to take them
- *  off) while a same-session load left the table pointing at the
- *  PRE-load item objects and kept the old armor bonus forever. */
-export function rebuildEquipState(entity) {
+/** ItemEquipTable.DeserializeEquipTable (:353-373), verbatim: Clear()
+ *  the table, then re-link each restored item into the slot it
+ *  records. DFU links by item UID against the RESTORED collection
+ *  (`items.Contains(uid)` then `items.GetItem(uid)`, and it re-stamps
+ *  `item.EquipSlot` on the way); the port's items carry the slot
+ *  itself, which survives both the `{...it}` copy a restore makes and
+ *  a JSON round trip - so the slot IS the link, and the entity's own
+ *  items ARE the collection. Nothing is equipped or unequipped: DFU
+ *  writes straight into `equipTable[i]`, so none of EquipItem's
+ *  prohibitions, unequip lists or hooks run.
+ *
+ *  ARMOUR VALUES STAY OUT, and that is the whole reason this is its
+ *  own member. The wipe-to-100-and-re-apply block belongs to
+ *  SerializablePlayer.RestoreItems (:355-368), not to
+ *  DeserializeEquipTable: SerializableEnemy.RestoreSaveData
+ *  (:173-174) calls DeserializeItems then DeserializeEquipTable and
+ *  NOTHING else, because a foe's values were already re-derived by
+ *  its spawn's SetEnemyEquipment pass, clamps and all
+ *  (EnemyEntity.cs:409-427). Re-deriving them on a foe's restore
+ *  would refill to 100, re-count the boots that pass deliberately
+ *  skips, and drop the >60 class clamp (and a monster's own
+ *  armorValue bound) - a restored foe would come back markedly
+ *  easier to hit than the one that was saved. */
+export function deserializeEquipTable(entity) {
   const slots = equipTableOf(entity);
-  slots.fill(null);
+  slots.fill(null);   // Clear()
   for (const it of entity.items ?? []) {
     if (it.equipSlot == null) continue;
     if (slots[it.equipSlot]) { delete it.equipSlot; continue; }   // two items claiming one slot: the first wins
     slots[it.equipSlot] = it;
   }
+  return slots;
+}
+
+/** AUDIT 17e C1 - SerializablePlayer.RestoreItems verbatim
+ *  (SerializablePlayer.cs:301, :355-368): after items are restored,
+ *  the equip TABLE is rebuilt by re-linking each worn item into its
+ *  slot, then the armor values are wiped to 100 and re-applied from
+ *  the rebuilt table.
+ *  Without this, a load left the table empty (every worn item
+ *  unreachable - filterByTab hides equipped items, so they vanished
+ *  from all four tabs AND the paperdoll, with no way to take them
+ *  off) while a same-session load left the table pointing at the
+ *  PRE-load item objects and kept the old armor bonus forever.
+ *  THE PLAYER'S restore path only: the re-derive is :355-368's own
+ *  block, which sits BESIDE the :301 DeserializeEquipTable call and
+ *  has no counterpart in SerializableEnemy. A foe restores through
+ *  deserializeEquipTable above and keeps the values it was saved
+ *  with. */
+export function rebuildEquipState(entity) {
+  const slots = deserializeEquipTable(entity);   // :301
   const av = armorValuesOf(entity);
   av.fill(100);   // "Initialize body part armor values to 100 (no armor)"
   for (const it of slots) if (it) updateEquippedArmorValues(entity, it, true);

@@ -60,7 +60,7 @@ import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender } from '
 import { SITE_TYPES } from '../systems/quest/place.js';   // B3: the respawn dispatch reads the site type
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert, areEnemiesNearby, passiveGuardSpawns } from '../systems/encounters.js';   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
-import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState, copyEffectEntry, equippedWeaponIndex, savedInsideDungeon } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer; AUDIT 26: SerializableEnemy's bundles ride the player envelope's body, and equippedWeaponIndex is the equip link both foe hosts write
+import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState, copyEffectEntry, savedInsideDungeon } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer; AUDIT 26: SerializableEnemy's bundles ride the player envelope's body
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it
@@ -125,7 +125,7 @@ import { createQuestBridge, tokensToRows } from './questBridge.js';
 import { loadQuestPack } from './questData.js';
 import { ensureFactionRep, getReputation, changeReputation } from '../systems/factionRep.js';
 import { changeLegalRep, legalRepOf, CRIMES } from '../systems/court.js';   // PlayerEntity.Update:498-511 reads the region's LegalRep and levies Criminal_Conspiracy
-import { isEquipped, unequipSlot } from '../systems/equip.js';
+import { isEquipped, unequipSlot, deserializeEquipTable, equipTableOf } from '../systems/equip.js';   // AUDIT 26: SerializableEnemy restores the WHOLE equip table (:174), the same member the dungeon pool restores
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { makeItemPermanent } from '../systems/quest/item.js';
 import { guildOfFaction, membershipOf, guildFactionIdOfGroup, joinedGuildOfGroup } from '../systems/guilds.js';
@@ -1858,20 +1858,14 @@ export async function bootWorld(canvas, renderer, params, status) {
             // re-instantiates a foe's.
             activeEffects: (f.entity.activeEffects ?? []).map(copyEffectEntry),
             // AUDIT 26: ItemEquipTable.SerializeEquipTable (:333-345)
-            // writes the equipped item's UID and DeserializeEquipTable
-            // (:353-373) re-links the table to the item of that UID in
-            // the RESTORED collection (:174, after DeserializeItems at
-            // :173), so a loaded foe swings the weapon the save
-            // recorded. Nothing linked here: the restore replaced
-            // entity.items and left entity.weapon holding the respawn's
-            // fresh roll, so a foe swung one weapon and its corpse
-            // dropped another. The port has no item UID - the index
-            // into the foe's own item list is the same link, read off
-            // the LIVE list: the swung weapon IS one of its entries
-            // (equipmentItems shares the one reference DFU's
-            // Items.AddItem shares), and foeItems is a positional copy
-            // of that list, so the index carries over to it.
-            equipRight: equippedWeaponIndex(f.entity.weapon, f.entity.items ?? []),
+            // writes EVERY slot's item UID and DeserializeEquipTable
+            // (:353-373) re-links the whole table to the items of those
+            // UIDs in the RESTORED collection (:174, after
+            // DeserializeItems at :173), so a loaded foe wears the gear
+            // the save recorded. The port needs no separate field for
+            // it: its items carry `equipSlot` themselves and ride out
+            // inside the item list above, so the table travels with the
+            // items it links and the restore relinks it off them.
           };
         }),
       },
@@ -2049,11 +2043,25 @@ export async function bootWorld(canvas, renderer, params, status) {
           if (sf.fatigue != null) f.entity.fatigue = sf.fatigue;   // :177 SetFatigue
           f.entity.magicka = sf.magicka ?? f.entity.magicka;
           f.entity.items = (sf.items ?? []).map((it) => ({ ...it }));
-          // DeserializeEquipTable relinks the table to the RESTORED
-          // items (:174, after DeserializeItems at :173) - the foe
-          // swings the weapon in its own restored inventory, the same
-          // object the corpse drops, not the respawn's fresh roll.
-          if (sf.equipRight != null) f.entity.weapon = sf.equipRight >= 0 ? (f.entity.items[sf.equipRight] ?? null) : null;
+          // DeserializeEquipTable relinks the WHOLE table to the
+          // RESTORED items (:174, after DeserializeItems at :173) - the
+          // foe wears the gear in its own restored inventory, the same
+          // objects the corpse drops, not the respawn's fresh roll.
+          // Only the right hand was relinked here, which was invisible
+          // while the table was empty and is not any more: a foe's
+          // shield and armour ARE equipped now (ItemHelper.cs:1366-1460)
+          // and DamageEquipment bills the struck slot out of that table
+          // (FormulaHelper.cs:1080-1117), so the leftover respawn roll
+          // took the condition loss while the shield in the foe's own
+          // inventory never wore down again. No armour re-derive: that
+          // block is SerializablePlayer's (:355-368), and this foe's
+          // values came from its spawn's SetEnemyEquipment pass.
+          deserializeEquipTable(f.entity);
+          // entity.weapon is the port's cached RightHand slot - what
+          // DFU reads live as ItemEquipTable.GetItem(EquipSlots
+          // .RightHand) (EnemyAttack.cs:141/:143/:192/:409). It follows
+          // the table.
+          f.entity.weapon = equipTableOf(f.entity)[EQUIP_SLOTS.RightHand] ?? null;
           f.ai.isHostile = sf.hostile !== false;
           f.ai.hasEncounteredPlayer = !!sf.encountered;
           // RestoreInstancedBundleSaveData (:222): the saved set

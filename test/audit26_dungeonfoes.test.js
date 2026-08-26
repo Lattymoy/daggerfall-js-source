@@ -28,7 +28,10 @@ import {
 import { playerDamageFlash, FLASH_ALPHA } from '../src/ui/damageFlash.js';
 import { SOUND } from '../src/systems/soundClips.js';
 import { SPECIAL_ABILITY } from '../src/systems/rest.js';
-import { copyEffectEntry, equippedWeaponIndex } from '../src/systems/save.js';   // AUDIT 26 (save wave 4): the equip link, one home for both foe hosts
+import { copyEffectEntry } from '../src/systems/save.js';
+// AUDIT 26 (relink wave): DeserializeEquipTable is the equip link, one
+// home for both foe hosts, beside the table it fills.
+import { deserializeEquipTable, equipTableOf, armorValuesOf, EQUIP_SLOTS } from '../src/systems/equip.js';
 import { equipEnemy } from '../src/scenes/hostCombat.js';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 
@@ -510,46 +513,58 @@ test('F217+F220: the dungeon foe record carries bundles, MaxHealth and fatigue (
 // AUDIT 26 (save wave 4) - the dungeon foe's EQUIP TABLE relinks on load
 // =====================================================================
 
-test('the dungeon foe record carries the equip table and applyWorld relinks it to the RESTORED items (SerializableEnemy.cs:119, 173-174)', () => {
+test('applyWorld relinks the WHOLE equip table to the RESTORED items (SerializableEnemy.cs:119, 173-174)', () => {
   // SerializableEnemy.GetEnemyData:119
   //     data.equipTable = entity.ItemEquipTable.SerializeEquipTable();
   // RestoreEnemyData:173-174, in this order
   //     entity.Items.DeserializeItems(data.items);
   //     entity.ItemEquipTable.DeserializeEquipTable(data.equipTable, entity.Items);
-  // The port's record replaced entity.items and never touched
-  // entity.weapon, and buildFoeAt equips from a FRESH equipEnemy roll
-  // (dungeonContext.js:531/:596) - so a cold boot into a saved dungeon
-  // handed every armed foe the rebuild's dice for weapon, material,
-  // condition and poison while its corpse dropped the save's items.
+  // The port relinked only the RIGHT HAND, which was invisible while an
+  // enemy's equip table was empty and is not any more: commit 24be79b
+  // made a foe's shield and armour really worn (ItemHelper.cs:1366-1460),
+  // and DamageEquipment bills the struck slot out of that table
+  // (FormulaHelper.cs:1080-1117). So after a load the shield and armour
+  // slots still held the REBUILD's throwaway roll - objects that are not
+  // in entity.items and will never drop - and a knight's shield hacked
+  // to pieces came back pristine, with every further blow billed to a
+  // ghost.
   const c = DUNGEON_CTX.indexOf('function collectWorld()');
   const rec = DUNGEON_CTX.slice(c, DUNGEON_CTX.indexOf('piles: lootPiles.map', c));
-  assert.ok(rec.includes('equipRight: equippedWeaponIndex(f.entity.weapon, f.entity.items ?? []),'), ':119 SerializeEquipTable');
 
   const a = DUNGEON_CTX.indexOf('function applyWorld(w)');
   const fn = DUNGEON_CTX.slice(a, DUNGEON_CTX.indexOf('w.piles?.forEach', a));
-  assert.ok(fn.includes('if (sf.equipRight != null) f.entity.weapon = sf.equipRight >= 0 ? (f.entity.items[sf.equipRight] ?? null) : null;'),
-    ':174 DeserializeEquipTable(data.equipTable, entity.Items) - guarded, so a pre-wave snapshot restores as it always did');
+  assert.ok(fn.includes('deserializeEquipTable(f.entity);'),
+    ':174 DeserializeEquipTable(data.equipTable, entity.Items) - the whole table');
+  assert.ok(fn.includes('f.entity.weapon = equipTableOf(f.entity)[EQUIP_SLOTS.RightHand] ?? null;'),
+    'entity.weapon follows the table - the port\'s cached RightHand slot (EnemyAttack.cs:141/:143/:192/:409), not a second mechanism');
   // THE ORDER IS THE LAW: the table can only relink to an item the
   // collection already holds, so :173 lands before :174.
-  assert.ok(fn.indexOf('f.entity.items = sf.items.map((it) => ({ ...it }));') < fn.indexOf('sf.equipRight'),
+  assert.ok(fn.indexOf('f.entity.items = sf.items.map((it) => ({ ...it }));') < fn.indexOf('deserializeEquipTable(f.entity);'),
     'the items deserialize first (:173), then the table relinks to them (:174)');
+  assert.ok(fn.indexOf('deserializeEquipTable(f.entity);') < fn.indexOf('f.entity.weapon = equipTableOf(f.entity)'),
+    'and the cached right hand is read off the table the line above filled');
   // DFU saves no ArmorValues: SetEnemyEquipment re-derives them from
-  // the spawn's own loadout (EnemyEntity.cs:409-419). A field DFU
+  // the spawn's own loadout (EnemyEntity.cs:409-427). A field DFU
   // re-derives must not be persisted - the same negative pin the
-  // exterior pool carries.
+  // exterior pool carries - and the restore must not re-derive it.
   assert.equal(rec.includes('armorValues'), false, 'armorValues are RE-DERIVED, never saved');
+  assert.equal(fn.includes('rebuildEquipState'), false,
+    'the foe restore must NOT run the player\'s :355-368 armour re-derive');
 
-  // and the law itself, on real objects: the index is a plain indexOf
-  // because the swung weapon IS one of the foe's items, and the
-  // restored foe swings the object its corpse will drop.
+  // and the law itself, on real objects: every restored slot points at
+  // an object that IS in entity.items - identity, not a field match.
   const entity = { isClass: true, careerIndex: 4, armor: 0, items: [{ group: 'Weapons', templateIndex: 113, material: 0 }] };
   equipEnemy(entity, 132, 6);
-  const i = equippedWeaponIndex(entity.weapon, entity.items);
-  assert.equal(entity.items[i], entity.weapon, 'the equip link is identity, not a field match');
-  const restoredItems = entity.items.map((it) => ({ ...it }));
-  const foe = { entity: { items: restoredItems, weapon: { templateIndex: 999, material: 9 } } };   // the rebuild's fresh roll
-  foe.entity.weapon = i >= 0 ? (foe.entity.items[i] ?? null) : null;
-  assert.equal(foe.entity.weapon, foe.entity.items[i], 'one object again after the relink');
+  const worn = equipTableOf(entity).filter(Boolean);
+  const savedAV = [...armorValuesOf(entity)];
+  const foe = { entity: { items: entity.items.map((it) => ({ ...it })), weapon: { templateIndex: 999, material: 9 }, armorValues: [...savedAV] } };
+  deserializeEquipTable(foe.entity);
+  foe.entity.weapon = equipTableOf(foe.entity)[EQUIP_SLOTS.RightHand] ?? null;
+  const rworn = equipTableOf(foe.entity).filter(Boolean);
+  assert.equal(rworn.length, worn.length, 'the whole table comes back, slot for slot');
+  for (const it of rworn) assert.ok(foe.entity.items.includes(it), 'every restored slot IS an object in entity.items');
+  assert.equal(foe.entity.weapon, equipTableOf(foe.entity)[EQUIP_SLOTS.RightHand], 'one object again after the relink');
+  assert.deepEqual(armorValuesOf(foe.entity), savedAV, 'and the relink leaves armorValues exactly as the spawn derived them');
   assert.deepEqual(
     { templateIndex: foe.entity.weapon.templateIndex, material: foe.entity.weapon.material },
     { templateIndex: entity.weapon.templateIndex, material: entity.weapon.material },

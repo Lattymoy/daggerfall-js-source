@@ -237,12 +237,12 @@ combat line numbers below are refreshed with it.
 - `src/scenes/cityGuards.js:27` - FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
 - `src/scenes/cityGuards.js:284` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
 - `src/scenes/cityGuards.js:540` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
-- `src/scenes/dungeonContext.js:236` - the chain lives, the motion is INTERIM (loud) until flats can tween.
-- `src/scenes/dungeonContext.js:678` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:684` - effects FLAGGED to the effect-library slice.
-- `src/scenes/dungeonContext.js:694` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:1169` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/dungeonContext.js:2887` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
+- `src/scenes/dungeonContext.js:237` - the chain lives, the motion is INTERIM (loud) until flats can tween.
+- `src/scenes/dungeonContext.js:679` - index into the 18 careers) or the INTERIM default Warrior (16,
+- `src/scenes/dungeonContext.js:685` - effects FLAGGED to the effect-library slice.
+- `src/scenes/dungeonContext.js:695` - "database FLAGGED" narrows to the skill/loot message ids).
+- `src/scenes/dungeonContext.js:1170` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/dungeonContext.js:2898` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
 - `src/scenes/exterior.js:549` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:555` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:797` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
@@ -260,14 +260,14 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:1274` - while inSunlight/inHolyPlace stay the E1 FLAGGED seams no host
 - `src/scenes/world.js:1684` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
 - `src/scenes/world.js:1812` - from data. FLAGGED.
-- `src/scenes/world.js:2313` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:2585` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:2758` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
-- `src/scenes/world.js:2857` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:3122` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:3149` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:3597` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:3941` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:2321` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:2593` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:2766` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
+- `src/scenes/world.js:2865` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:3130` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:3157` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:3605` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:3949` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:334` - rather than pretending to scan. FLAGGED.
 - `src/scenes/worldModes.js:515` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:668` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
@@ -328,7 +328,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/enchantments.js:655` - a MagicRound-FLAGGED row's is the payload callback :1767
 - `src/systems/encounters.js:208` - * FLAGGED, both from the tail of the C#: the pacified/team test
 - `src/systems/equip.js:17` - hooks below. FLAGGED: equip sounds.
-- `src/systems/equip.js:282` - /** INTERIM starting equipment (chargen's starting-gear roll
+- `src/systems/equip.js:313` - /** INTERIM starting equipment (chargen's starting-gear roll
 - `src/systems/factionRep.js:229` - *  pre-chargen INTERIM entity (characters/playerEntity.js) has no
 - `src/systems/gameDate.js:23` - FLAGGED, deliberately: the two LUNAR PHASE getters (:134-150,
 - `src/systems/guildServiceActions.js:195` - *  turning into a vampire or werebeast - FLAGGED: the port has no
@@ -353,7 +353,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/potions.js:247` - FLAGGED, with the slice it waits on:
 - `src/systems/races.js:6` - port had only ever instantiated for Breton (the loud INTERIM the
 - `src/systems/regionConditions.js:25` - consequences are FLAGGED in court.js).
-- `src/systems/save.js:216` - (playerEntity's INTERIM skills: 30) - spreading it threw.
+- `src/systems/save.js:207` - (playerEntity's INTERIM skills: 30) - spreading it threw.
 - `src/systems/sceneCache.js:205` - FLAGGED, with the slice it waits on:
 - `src/systems/settings.js:39` - INTERIM doctrine - named, not silently ignored)
 - `src/systems/shopStock.js:30` - INTERIM (loud): book items carry the template price (classic prices
