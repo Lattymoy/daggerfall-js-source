@@ -72,6 +72,10 @@ export function typedChar(code, e = null) {
   return d ? d[1] : null;
 }
 
+/** The actions a HOST polls per frame rather than dispatching from a
+ *  key event, so routeKey leaves them alone (see its tail). */
+const POLLED_ACTIONS = new Set(['ReadyWeapon']);
+
 /** Route one keydown against a dungeon context. Returns true when
  *  consumed (the host preventDefaults and stops). Cases carry DFU's
  *  action names; each cites its DFU consumer. */
@@ -93,7 +97,18 @@ export function routeKey(e, ctx, setPlayerPos = null) {
   // Diagnostics, not a DFU action: DFU's F8 is PrintScreen, which has
   // no consumer here yet, and the debug HUD is the port's own.
   if (e.code === 'F8') { ctx.toggleDebugHud?.(); return true; }
-  return routeAction(actionOf(e), ctx, setPlayerPos);
+  const act = actionOf(e);
+  // THE POLLED ACTIONS. Actions.ReadyWeapon is not in DFU's key
+  // dispatch chain at all: WeaponManager.Update reads it as a
+  // per-frame ActionStarted poll (WeaponManager.cs:249, :268) and
+  // GameManager/DaggerfallUI never PostMessage it. The hosts own that
+  // rising edge, so the KEY must fall through here - routeAction's
+  // arm below exists for HUDLarge's sheath panel CLICK
+  // (HUDLarge.cs:477-482), which calls ToggleSheath directly. Routing
+  // the key here too ran both doors on one press and the weapon
+  // never moved.
+  if (POLLED_ACTIONS.has(act)) return false;
+  return routeAction(act, ctx, setPlayerPos);
 }
 
 /**

@@ -393,8 +393,8 @@ const ZERO_ORIGIN = [0, 0, 0];
 
 /** THE CHARACTER PIXELIZE STANDARD (Mac): characters and everything
  *  character-side render at this pixel size; the WORLD is excluded.
- *  9 -> 7 per Mac (2026-07-06). Single source - the engine character
- *  pass and the viewer default both read this value. */
+ *  9 -> 7 (2026-07-06), then 12, then back to 9 (2026-08-18). Single
+ *  source - engine character pass and viewer default read this value. */
 import { TextureFile } from '../formats/textureFile.js';
 const isSpectralArchive = TextureFile.isSpectralArchive;   // single source (the formats layer owns the archive list)
 

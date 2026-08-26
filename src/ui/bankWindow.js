@@ -25,11 +25,11 @@
 //
 // H2 opened the HOUSE half of this: BUY HOUSE reaches
 // ui/bankPurchaseWindow.js now, and the refusals above it are the
-// law's. The SHIP popup is still FLAGGED - it needs the two fixed
-// ship scenes at map pixels (2,2) and (5,5), which is a streaming-
-// world seam and not a banking one. DFU binds each button to a
-// DaggerfallShortcut hotkey; the accelerators here are the port's own
-// (Ledger A).
+// law's. BUY SHIP opens the SAME window with no houses behind it,
+// which is DFU's own ship mode (:462-463), and the picked row's
+// index is the ShipType PurchaseShip is handed (:229-232). DFU binds
+// each button to a DaggerfallShortcut hotkey; the accelerators here
+// are the port's own (Ledger A).
 
 import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
@@ -43,7 +43,7 @@ import {
   borrowDecision, buyHouseDecision, buyShipDecision, sellDecision,
   accountTotal, loanedTotal, loanDueDate,
   depositGold, withdrawGold, depositAllLetters, withdrawLetter,
-  repayLoan, borrowLoan, shipSellPrice,
+  repayLoan, borrowLoan, shipSellPrice, purchaseShip,
 } from '../systems/banking.js';
 
 /** mainPanel.Size (:77) - and the size BANK00I0.IMG ships. */
@@ -107,6 +107,10 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + BANK_PANEL_X && y >= ry + B
  *   dueDateText(minutes) -> GetLoanDueDateString
  *   ownsHouse(), ownsShip(), housesForSale(), isPortTown(), houseSellPrice()
  *   openPurchase()  -> H2: mounts the purchase window; false if it cannot
+ *   openShipPurchase(buy) -> mounts that same window in SHIP mode with
+ *                    `buy` as its BUY arm; false if it cannot
+ *   shipOwner()     -> the entity AssignShipToPlayer writes the ship on
+ *   addShipScene(shipType) -> the permanent-scene pair, sellShip's mirror
  *   onClose()
  */
 export class BankWindow {
@@ -208,7 +212,18 @@ export class BankWindow {
     }
     if (name === 'buyShip') {
       const d = buyShipDecision({ ownsShip: this.hooks.ownsShip?.(), isPortTown: this.hooks.isPortTown?.() });
-      this._popup(d.kind === 'refuse' ? d.result : TRANSACTION_RESULT.NOT_PORT_TOWN);
+      if (d.kind === 'refuse') { this._popup(d.result); return; }
+      // 'pick' is the arm a real port town reaches: DFU pushes the
+      // BankPurchasePopup with its houses argument NULL (:462-463),
+      // which is that window's SHIP mode - the two ship prices, and
+      // the picked row's index IS the ShipType (BankPurchasePopUp
+      // :186-190, :387-388). buyShip below is its BUY arm.
+      if (this.hooks.openShipPurchase?.((ship) => this.buyShip(ship))) return;
+      // FLAGGED: the host mounts the HOUSE list only (worldModes.js's
+      // openPurchase), so nothing has asked WHICH ship yet. DFU has no
+      // refusal to fall back on here - :463 pushes unconditionally -
+      // so the button says nothing rather than claiming a port town is
+      // not one.
       return;
     }
     if (name === 'sellHouse') {
@@ -221,6 +236,23 @@ export class BankWindow {
       const d = sellDecision('ship', { owns: ship >= 0, price: shipSellPrice(ship) });
       if (d.kind === 'offer') this._popup(d.result, d.price);
     }
+  }
+
+  /** GeneratePurchaseShipPopup (:229-232): the chooser closes and the
+   *  BANK window generates the popup, so PurchaseShip's result IS the
+   *  message and there is no Yes/No - the same shape the house arm
+   *  has. GeneratePopup takes no amount here (:231), so the ship's
+   *  price is not substituted into the record. */
+  buyShip(shipType) {
+    // A host that cannot name the ship's owner cannot deliver the
+    // ship, and no gold moves for one that never arrives.
+    const owner = this.hooks.shipOwner?.();
+    if (!owner) return { kind: 'none', result: TRANSACTION_RESULT.NONE };
+    const r = purchaseShip(this.accounts, this.region, shipType, owner, this.hooks.player, {
+      addPermanentScene: (ship) => this.hooks.addShipScene?.(ship),
+    });
+    this._popup(r.result);
+    return r;
   }
 
   _dismissBox(button = null) {

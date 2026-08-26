@@ -9,7 +9,9 @@ lived under `public/visual-changes/`, twelve of them carrying classic
 `WEAPON*.CIF` sprites upscaled onto the probe's magenta clear, and because
 Vite serves this directory verbatim every one of them shipped to GitHub
 Pages. A RENDER OF GAME DATA IS GAME DATA: the galleries are generated
-locally by `tools/fpProbe.mjs`, are gitignored, and do not live here.
+locally by `tools/fpsWeaponProbe.mjs` - the probe that draws the real
+`WEAPON*.CIF` overlay, silver and steel frames included - and they are
+gitignored, so they do not live here.
 `test/doctrine.test.js` fails the suite if a tracked file under `public/`
 is not on the allow-list below.
 

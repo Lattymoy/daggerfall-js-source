@@ -47,8 +47,8 @@
 //   (Ledger); the setting still writes.
 // - HEAD BOBBING toggles Controls/HeadBobbing (:327-337) -
 //   stored-tier until the HeadBobber motor lands.
-// - CONTROLS pends I4 (the rebinding grid); the button says so in a
-//   box rather than doing nothing.
+// - CONTROLS opens I4's rebinding grid (ui/controlsWindow.js) through
+//   the openControls hook; a note box only where its art is absent.
 // - the saveSettings LATCH (:73, :212-215): nothing persists until a
 //   control was actually touched, then the whole store saves on close.
 // - closing: CONTINUE (:276-280), or the same Escape that opened it

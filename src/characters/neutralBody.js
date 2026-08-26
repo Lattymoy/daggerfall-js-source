@@ -356,10 +356,10 @@ export function buildNeutralBody(ramps, opts = {}) {
     // A cloth zone may name its OWN material, exactly as an armour zone
     // does below - without it an entire outfit resolves to one colour,
     // so a tunic and its hose could never differ. Defaults to 'cloth',
-    // which is what every caller got before, and no caller in src/
-    // passes clothZones at all (raceCharacter and engineRig both call
-    // buildNeutralBody(ramps) with no opts), so this loop does not run
-    // on any game path.
+    // which is what every caller got before. Six design builders
+    // (humanClasses/beasts/orcBody/undeadBody/atronachs/daedra) pass
+    // clothZones through paperdollPayload, so this loop runs on the
+    // VIEWER path; raceCharacter and engineRig still call with no opts.
     displace(z.groups, z.yLo, z.yHi, z.th ?? 0.008, cxFor, 1, z.mat || 'cloth', z.zLo ?? -Infinity, z.zHi ?? Infinity);
   }
 

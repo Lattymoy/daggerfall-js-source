@@ -69,7 +69,7 @@ import { ChoiceWindow } from '../ui/talkWindow.js';
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from '../ui/text.js';
 import { hudScale } from '../ui/hud.js';
-import { isShop, isRepairShop, stockShopShelf, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves
+import { isShop, isRepairShop, restockShopShelfIfDue, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves
 import { identifySpellPass, identifiedTallyText } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll
 import { liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // X10: the Dispel Magic picker
 import { ListPickerWindow, listPickerArtLoaded } from '../ui/listPicker.js';   // X10
@@ -628,20 +628,47 @@ export function createWorldModes(host) {
 
   // E2: the shelf browse/buy chain (DFU's trade window collapsed to
   // our keyed-window idiom; haggling is the fixed CalculateTradePrice
-  // buy price - the offer/counteroffer UI pends). Stock is lazy per
-  // shelf (StockShopShelf on first activation); buying deducts gold
-  // and moves the item into the player entity.
+  // buy price - the offer/counteroffer UI pends). Stock is per GAME
+  // DAY (the restock arm below); buying deducts gold and moves the
+  // item into the player entity.
   // ItemHelper.ResolveItemLongName (:335-348): a quest Parchment reads
   // as its used-message signoff, not as "Parchment" - two letters from
   // two quests are otherwise the same word in every list.
   const _itemLabel = (it) => questLetterName(it, (uid) => questBridge?.machine.getQuest(uid) ?? null)
     ?? it.name ?? templateByIndex(it.templateIndex)?.name ?? it.group;
+  /** THE RESTOCK LAW, at the container arm that owns it
+   *  (PlayerActivate.ActivateLootContainer, ShopShelves :880-886):
+   *
+   *      if (loot.stockedDate < DaggerfallLoot.CreateStockedDate(Now))
+   *          loot.StockShopShelf(BuildingDiscoveryData);
+   *
+   *  and StockShopShelf (DaggerfallLoot.cs:150-153) stamps
+   *  `stockedDate` and CLEARS the collection before it refills it. So
+   *  a shelf regenerates once per GAME DAY, not once per game: the
+   *  port stocked it lazily with `items ??=` and nothing ever refilled
+   *  it, which is why a shop emptied of its stock stayed empty forever.
+   *  The stamp rides the scene cache beside the items
+   *  (SerializableLootContainer.cs:72/:151), so re-entering the
+   *  building does not re-roll the shelf either.
+   *
+   *  FLAGGED: DFU takes the OTHER arm here when the shop is shut -
+   *  `IsPlayerInsideOpenShop` (PlayerActivate.cs:888-899) routes an
+   *  open shop to the trade window and a closed one to the inventory
+   *  window in SHOP-SHELF STEALING mode, which takes for free and
+   *  tallies the crime on close (DaggerfallInventoryWindow.cs:266-269,
+   *  :681-687). The port has no stealing mode on its inventory window,
+   *  so every shelf goes through the trade window and is PAID for -
+   *  wrong, but on the safe side of wrong. The open-shop latch itself
+   *  is already computed at the door (:2327). */
+  const stockShelfIfDue = (shelf, b) => restockShopShelfIfDue(
+    shelf, { buildingType: b.buildingType, quality: b.quality },
+    dateFromClassicMinutes(Math.floor(worldMinutes())), playerEntity);
   function openShelf(i) {
     const b = interiorBuilding;
     const shelf = interiorCtx?.shelves[i];
     if (!b || !shelf) return;
     if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
-    shelf.items ??= stockShopShelf({ buildingType: b.buildingType, quality: b.quality }, playerEntity);
+    stockShelfIfDue(shelf, b);
     // U8c: the native trade screen when the art is up (the E2/E3
     // loop on INVE00I0 + TRAD00I0 + SHOP00I0; keyed fallback stays)
     if (tradeArtLoaded()) {
@@ -661,9 +688,7 @@ export function createWorldModes(host) {
     if (!b || !tradeArtLoaded() || !_shopFont) return false;
     const shelf = (interiorCtx?.shelves ?? [])[0] ?? (interiorCtx ? (interiorCtx.shelves ??= [])[0] : null);
     const target = shelf ?? { items: null };
-    target.items ??= isShop(b.buildingType)
-      ? stockShopShelf({ buildingType: b.buildingType, quality: b.quality }, playerEntity)
-      : [];
+    stockShelfIfDue(target, b);
     let win = null;
     win = openTradeWindow(target, b, 'Sell');
     // NOTE (found wiring X6): this assignment is INERT. NativeTradeWindow
@@ -1200,7 +1225,10 @@ export function createWorldModes(host) {
     if (!ctx) return { lootContainers: [], actionDoors: [] };
     const lootContainers = [
       ...(ctx.shelves ?? []).map((sh, i) => ({
-        containerType: LOOT_CONTAINER_TYPES.ShopShelves, key: `shelf:${i}`, items: sh.items ?? null,
+        // SerializableLootContainer.cs:72 - the stocked-date stamp
+        // round-trips WITH the items, or a shelf would re-roll on
+        // every entry instead of once a day.
+        containerType: LOOT_CONTAINER_TYPES.ShopShelves, key: `shelf:${i}`, items: sh.items ?? null, stockedDate: sh.stockedDate ?? 0,
       })),
       ...(ctx.containers ?? []).map((c, i) => ({
         containerType: LOOT_CONTAINER_TYPES.HouseContainers, key: `container:${i}`, items: c.items ?? null,
@@ -1233,6 +1261,7 @@ export function createWorldModes(host) {
       // as null keeps the LAZY stock, which is what makes a first
       // browse still roll fresh goods after an uneventful visit.
       if (target && c.items !== null) target.items = c.items;
+      if (target) target.stockedDate = c.stockedDate ?? 0;   // SerializableLootContainer.cs:151
     }
     for (const d of data.actionDoors) {
       const o = interiorCtx.actions?.objects?.get?.(d.key);

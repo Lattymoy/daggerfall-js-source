@@ -633,18 +633,6 @@ export function sellDecision(kind, { owns = false, price = 0 } = {}) {
   };
 }
 
-// FLAGGED, with the slices they wait on:
-//  - H1 RETIRED THE HOUSE HALF OF THIS. The building directory and
-//    the permanent-scene set both exist now, so housesForSale,
-//    allocateHouseToPlayer and sellHouse are above and live. What is
-//    still out is the BUY UI, and it is a specific thing rather than
-//    a missing system: DaggerfallBankPurchasePopUp is a 436-line
-//    window that renders the house's own 3D MODEL on a dedicated
-//    camera and layer beside a price list. Until that lands the bank's
-//    BUY HOUSE button refuses - which is also DFU's own answer when
-//    the directory is missing (:433-434) - and the one path that
-//    grants a house without it, KnightlyOrder.ReceiveHouse, is live.
-//  - PurchaseShip/SellShip (:464-506) need the two fixed ship scenes
-//    at map pixels (2,2) and (5,5), which is a streaming-world seam.
+// FLAGGED, with the slice it waits on:
 //  - ReadNativeBankData (:580+) reads a classic .SAV BankAccount
 //    record; the classic save reader is its own unported system.

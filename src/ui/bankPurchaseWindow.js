@@ -2,6 +2,14 @@
 // Daggerfall Workshop): the list of houses on the market, and the one
 // button that buys one.
 //
+// IT IS TWO WINDOWS IN ONE, and the discriminator is a NULL: the
+// constructor takes `List<BuildingSummary> housesForSale = null`
+// (:92-95) and every method asks `housesForSale == null` (:186-190,
+// :244-247, :387-388). With no houses behind it the list is the two
+// SHIP prices, the picked row's index IS the ShipType, and BUY hands
+// it to the banking window's GeneratePurchaseShipPopup. The port
+// spells that null as an ABSENT `houses` hook.
+//
 // H1 made a house ownable and left this as the only thing between a
 // player and a deed - four consumers behind it (the rest law, the lock
 // ladder, the quest residence filter, the bank's own buttons) all live
@@ -32,7 +40,7 @@ import { drawScreenDimBackdrop } from './chargenArt.js';
 import { layoutMessageBox, drawMessageBox } from './messageBox.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
-import { TRANSACTION_RESULT, housePrice } from '../systems/banking.js';
+import { TRANSACTION_RESULT, housePrice, shipPrice, SHIP_PRICES } from '../systems/banking.js';
 
 /** mainPanel.Size (:125) - and the size BANK01I0.IMG ships. */
 export const PURCHASE_PANEL_W = 225, PURCHASE_PANEL_H = 129;
@@ -76,8 +84,10 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + PURCHASE_PANEL_X && y >= ry
 
 /**
  * hooks:
- *   houses()        -> [{ buildingKey, meshRadius, ... }] on the market
- *   buy(house)      -> { result, amount } (systems/banking.purchaseHouse)
+ *   houses()        -> [{ buildingKey, meshRadius, ... }] on the market.
+ *                      ABSENT is DFU's `housesForSale == null`: SHIP mode
+ *   buy(house)      -> { result, amount } (systems/banking.purchaseHouse);
+ *                      in SHIP mode it takes the ShipType instead
  *   rows(textId)    -> the host's TEXT.RSC reader
  *   onClose()
  */
@@ -93,14 +103,23 @@ export class BankPurchaseWindow {
   }
 
   get houses() { return this.hooks.houses?.() ?? []; }
+  /** `housesForSale == null` (:186) - the whole mode switch. */
+  get ships() { return this.hooks.houses == null; }
+  /** The list's length either way; the ship list is DFU's `i < 2`. */
+  get count() { return this.ships ? SHIP_PRICES.length : this.houses.length; }
   _close() { this.done = true; this.hooks.onClose?.(); }
 
   /** The visible slice, and the scroll clamp that keeps it whole. */
   rows() {
-    const all = this.houses;
-    const maxScroll = Math.max(0, all.length - LIST_ROWS);
+    const maxScroll = Math.max(0, this.count - LIST_ROWS);
     if (this.scroll > maxScroll) this.scroll = maxScroll;
-    return all.slice(this.scroll, this.scroll + LIST_ROWS)
+    // PopulatePriceList (:186-197): two rows of GetShipPrice(i) with
+    // no houses behind the window, and the market's own prices with.
+    if (this.ships) {
+      return SHIP_PRICES.map((_, i) => ({ house: null, index: i, text: priceRow(shipPrice(i)) }))
+        .slice(this.scroll, this.scroll + LIST_ROWS);
+    }
+    return this.houses.slice(this.scroll, this.scroll + LIST_ROWS)
       .map((h, i) => ({ house: h, index: this.scroll + i, text: priceRow(housePrice(h.meshRadius ?? 0)) }));
   }
 
@@ -108,11 +127,11 @@ export class BankPurchaseWindow {
    *  while there is somewhere to go, which is what the port draws
    *  instead of the two arrow textures DFU swaps. */
   canScrollUp() { return this.scroll > 0; }
-  canScrollDown() { return this.scroll < Math.max(0, this.houses.length - LIST_ROWS); }
+  canScrollDown() { return this.scroll < Math.max(0, this.count - LIST_ROWS); }
 
   _scroll(by) {
     const next = this.scroll + by * SCROLL_NUM;
-    this.scroll = Math.max(0, Math.min(next, Math.max(0, this.houses.length - LIST_ROWS)));
+    this.scroll = Math.max(0, Math.min(next, Math.max(0, this.count - LIST_ROWS)));
   }
 
   /** BuyButton_OnMouseClick (:380-392). SelectedIndex < 0 does
@@ -121,6 +140,16 @@ export class BankPurchaseWindow {
    *  dead until a row is picked. */
   _buy() {
     if (this.selected < 0) return;
+    // In SHIP mode DFU CLOSES this window first and the BANKING window
+    // generates the popup (:385-388 -> DaggerfallBankingWindow.cs
+    // :229-232), so the result of a ship purchase is the bank's
+    // message and not this window's. The picked INDEX is the ShipType.
+    if (this.ships) {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      this._close();
+      this.hooks.buy?.(this.selected);
+      return;
+    }
     const house = this.houses[this.selected];
     if (!house) return;
     audio.playOneShot(SOUND.ButtonClick, 1);
@@ -158,7 +187,7 @@ export class BankPurchaseWindow {
       const row = Math.floor((vy - (ly + PURCHASE_PANEL_Y)) / LIST_ROW_H);
       if (row >= 0 && row < LIST_ROWS) {
         const pick = this.scroll + row;
-        if (pick < this.houses.length) { this.selected = pick; audio.playOneShot(SOUND.ButtonClick, 1); }
+        if (pick < this.count) { this.selected = pick; audio.playOneShot(SOUND.ButtonClick, 1); }
         return true;
       }
     }
@@ -174,7 +203,7 @@ export class BankPurchaseWindow {
       return;
     }
     if (code === 'ArrowDown') {
-      if (this.selected < this.houses.length - 1) this.selected++;
+      if (this.selected < this.count - 1) this.selected++;
       if (this.selected >= this.scroll + LIST_ROWS) this.scroll = this.selected - LIST_ROWS + 1;
       return;
     }

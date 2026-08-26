@@ -19,11 +19,18 @@
 //   worldTick.js drives. The condition-flag half of that member
 //   (PricesHigh/PricesLow) pends the region-conditions arc.
 //
+// - THE RESTOCK LAW (verbatim): a container carries a stockedDate
+//   stamp, `(Year * 1000) + DayOfYear` (DaggerfallLoot.CreateStockedDate
+//   :68-71), written by StockShopShelf (:152) and StockHouseContainer
+//   (:293). Activation restocks when `stockedDate < CreateStockedDate(
+//   Now)` (PlayerActivate.cs:882 for shelves, :911 for house
+//   containers) - so a shop's shelf regenerates once per GAME DAY, and
+//   an emptied shelf is bare until the next day rolls over.
+//
 // INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);
 // the Alchemist's 25% potion recipe pends potion recipes; book items
 // carry the template price (classic prices each BOOK FILE - pends
-// the books arc); shelf restocking rides CreateStockedDate (pends
-// the shared calendar - stock is fresh per build for now).
+// the books arc).
 
 import { dice100 } from '../combat/formulas.js';
 import { randomMaterial, randomArmorMaterial, createWeapon } from '../combat/enemyEquipment.js';
@@ -32,7 +39,7 @@ import { getRandomBookID } from './books.js';   // B1
 import { isLeather, isPlate } from './armorMaterials.js';
 import { CLOTHING_DYES } from '../characters/dyes.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
-import { MINUTES_PER_DAY } from './gameDate.js';   // X6: the soul-gem stock's daily seed
+import { MINUTES_PER_DAY, dayOfYear } from './gameDate.js';   // X6: the soul-gem stock's daily seed   // the restock stamp's DayOfYear, one home
 import { SOUL_TRAP_TEMPLATE } from './mysticism.js';   // X6: one home for the template id (X5 put it there with fillEmptyTrap)
 import { FACTION_TYPES } from '../formats/factionFile.js';        // S41: UpdateRegionalPrices' type-7 region walk
 import { findFactionByTypeAndRegion } from './talk.js';           // S41: PersistentFactionData.FindFactionByTypeAndRegion, one home
@@ -403,6 +410,50 @@ export function dailyStockRolls(dayIndex) {
 
 /** The classic day number DFU seeds from: whole days of game time. */
 export const stockDayIndex = (gameMinutes) => Math.floor((gameMinutes ?? 0) / MINUTES_PER_DAY);
+
+/** DaggerfallLoot.CreateStockedDate (:68-71), verbatim:
+ *  `(date.Year * 1000) + date.DayOfYear`. One packed integer per game
+ *  day, which is what makes the restock test a plain `<`. */
+export const createStockedDate = (date) => (date.year * 1000) + dayOfYear(date);
+
+/** The restock condition PlayerActivate writes inline at both of its
+ *  container arms - `loot.stockedDate < DaggerfallLoot.CreateStockedDate(
+ *  DaggerfallUnity.Instance.WorldTime.Now)` (PlayerActivate.cs:882 for
+ *  ShopShelves, :911 for HouseContainers). A never-stocked container
+ *  carries 0 (DaggerfallLoot.cs:45) and so always stocks on first
+ *  access; after that the stamp holds until the day of year moves on.
+ *  ONE home for both arms, because two copies of a `<` is how a shelf
+ *  and a cupboard end up restocking on different schedules. */
+export const needsRestock = (stockedDate, date) => (stockedDate ?? 0) < createStockedDate(date);
+
+/** The ShopShelves arm of PlayerActivate.ActivateLootContainer
+ *  (:879-886), whole:
+ *
+ *      if (loot.stockedDate < DaggerfallLoot.CreateStockedDate(Now))
+ *          loot.StockShopShelf(playerEnterExit.BuildingDiscoveryData);
+ *
+ *  with StockShopShelf's own first two lines (DaggerfallLoot.cs:152-153)
+ *  - stamp the date, CLEAR the collection - folded in, because they are
+ *  what makes this a RESTOCK rather than a top-up: yesterday's leftovers
+ *  do not survive into today's shelf, and an emptied shelf comes back
+ *  full when the day rolls over.
+ *
+ *  It lives here rather than in the interior host so the host has one
+ *  call and this law has one home; the host owns only the shelf object
+ *  and the clock it reads `date` off.
+ *
+ *  A non-shop building answers an EMPTY shelf and still takes the
+ *  stamp - DFU never reaches this arm for one (the shelf models only
+ *  mount in shops), and stamping keeps a sold-into collection from
+ *  being re-cleared on every activation. */
+export function restockShopShelfIfDue(shelf, { buildingType, quality }, date, playerEntity = {}, { rolls = Math.random } = {}) {
+  if (!needsRestock(shelf.stockedDate ?? 0, date)) return false;
+  shelf.stockedDate = createStockedDate(date);
+  shelf.items = isShop(buildingType)
+    ? stockShopShelf({ buildingType, quality }, playerEntity, { rolls })
+    : [];
+  return true;
+}
 
 /** ItemBuilder.CreateRandomlyFilledSoulTrap (:285-306).
  *

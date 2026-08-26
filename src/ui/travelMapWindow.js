@@ -72,13 +72,13 @@
 // - DFU's Update() polls the mouse every frame; the port's windows
 //   are told (hover/click), so the same work happens on the move.
 //
-// FLAGGED, idling loudly: the guild TELEPORT mode
-// (ActivateTeleportationTravel + DaggerfallTeleportPopUp, :1705-1730),
-// which waits on the guild arc's teleport service. (TravelMapSaveData
-// is NOT flagged: it ships through systems/travelMapState.js and the
-// session envelope.) The journal's click-through travel (GotoPlace,
-// :214-217 and its Update consumer :443-455) is LIVE - ui/questJournal.js
-// offers the find dialog and the host hands the place here.
+// The guild TELEPORT mode is LIVE (G5): ActivateTeleportationTravel +
+// DaggerfallTeleportPopUp (:1705-1730) are the one-shot
+// teleportationTravel arm and ui/teleportPopUp.js, armed by the guild
+// service before the map is pushed. (TravelMapSaveData ships through
+// systems/travelMapState.js and the session envelope.) The journal's
+// click-through travel (GotoPlace, :214-217 and its Update consumer
+// :443-455) is LIVE - ui/questJournal.js offers the find dialog.
 
 import { loadImg, nativeMetrics, drawImg, drawImgCrop, drawRect, shadowText, NATIVE_W } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded } from './messageBox.js';

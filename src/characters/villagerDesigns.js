@@ -50,8 +50,8 @@
 //     displace(z.groups, z.yLo, z.yHi, z.th ?? 0.008, cxFor, 1, 'cloth')
 // so a whole outfit resolved to ONE colour. It now passes
 // `z.mat || 'cloth'`, matching the armour loop directly above it. That
-// is the only engine change these designs needed, and it is inert for
-// the game: no src/ caller passes clothZones at all.
+// is the only engine change these designs needed, and its reach is the
+// viewer: six src/ builders pass clothZones, none of them a game host.
 
 /** ART_PAL ramps as [firstIndex, lastIndex], light -> dark. The palette
  *  is laid out in 16 blocks of 16 and MOST blocks are a clean ramp, so

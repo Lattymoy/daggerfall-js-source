@@ -16,14 +16,14 @@
 // duplicates song_10 into the night list. Those are DFU's arrays, so
 // they are ours.
 //
-// TWO SELECTION ARMS ARE NOT PORTABLE AS WRITTEN and say so at their
-// site: SneakingSongs/MagesGuildSongs use UnityEngine.Random, which is
-// unseeded frame-to-frame state we do not have and would not want (the
-// slot-0 reroll departure already covers this shape); and the dungeon
-// arm needs the dungeon block's Unknown2 header field, which the port
-// reads but does not thread to a music layer yet. Both fall back to the
-// day-seeded arm, which is DFU's own "most other places" branch, and
-// both are flagged rather than invented.
+// THE TWO ODD SELECTION ARMS BOTH SHIP, and each records its departure
+// at its site. SneakingSongs/MagesGuildSongs take UnityEngine.Random
+// (SongManager.cs:392-395) - unseeded, a fresh roll per entry: Unity's
+// generator is not reproducible outside Unity, so selectSong's
+// `unseeded` arm holds the observable law (uniform, fresh each call)
+// on an injectable `random`. The dungeon arm takes the block's Unknown2
+// header field through dungeonKey(unknown2, region), which
+// dungeonContext threads to the music layer as musicSeed.
 
 import { srand, rand } from '../formats/dfRandom.js';
 

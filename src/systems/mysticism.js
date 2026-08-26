@@ -33,32 +33,36 @@
 // dungeonContext.js with readFileSync and matched /silenceBlocksCast\(...\)/.
 // A source regex cannot see that the value the gate reads is never produced.
 //
-// The gates, in the one host that can cast:
-//   - scenes/dungeonContext.js  WIRED. It owns readiedSpell and
-//     playerCastInput, and now refuses at READY and at CAST, clearing
-//     the readied spell each time.
-//   - scenes/exterior.js        no cast path at all.
-//   - scenes/world.js           no cast path at all.
-//   - scenes/worldModes.js      no cast path of its own; it MOUNTS
-//     interiorContext and dungeonContext, so a dungeon cast reaches
-//     the wired gate through it.
+// The gates, in the ONE cast engine the hosts mount:
+//   - scenes/hostMagic.js       WIRED. createPlayerMagic owns
+//     readiedSpell and the cast input, and refuses at READY and at
+//     CAST, clearing the readied spell each time.
+//   - scenes/exterior.js, scenes/world.js and scenes/dungeonContext.js
+//     each mount createPlayerMagic, so all three cast through the one
+//     pair of gates.
+//   - scenes/worldModes.js      no cast path of its own; it readies
+//     and casts through the engine it mounts, and routes the dungeon
+//     context.
 //
-// That is not three hosts forgetting to wire something. SPELLCASTING
-// IN THIS PORT IS DUNGEON-ONLY: readiedSpell, applySpell and the
-// spellbook all live in dungeonContext and nowhere else, so there is
-// no exterior or interior cast for a silence to block. Wiring the
-// other three is the casting arc's job, not this slice's, and the
-// gate is ready for them.
+// Spellcasting is no longer dungeon-only: the M slice took it above
+// ground THROUGH the shared engine, so there is one implementation of
+// the gate and every host stands behind it.
 //
-// OPEN AND LOCK ARE NOT WIRED, and the reason is specific rather than
-// an oversight. Their payload is an ARMED effect that has to survive
-// between the cast and the next door the player touches, which needs a
-// slot on the entity's active effects; the door end then hangs off
-// world/actionSystem.js's `activate(key)` - the single activation
-// point, where `toggleDoor(o, true)` already runs - in the two
-// contexts that own an ActionSystem, dungeonContext.js and
-// interiorContext.js. Neither exterior host owns doors. That is the
-// next slice, and those are its seams.
+// OPEN AND LOCK ARE WIRED. Their payload is an ARMED effect that has
+// to survive between the cast and the next door the player touches:
+// the cast lands an `openArmed`/`lockArmed` entry on the entity's
+// active effects (systems/effects.js), scenes/shared.js's doorSpellFor
+// reads it - taking the HOLDER's level live, at the door - and each
+// host hands the result to world/actionSystem.js's
+// `activate(key, { doorSpell })`, the single activation point, where
+// the two triggers below run BEFORE the steal/toggle ladder, exactly
+// as DFU's ActivateActionDoor runs HandleLockEffect/HandleOpenEffect
+// ahead of its own (PlayerActivate.cs:691-704). wireDoorSpells speaks
+// the outcome line and drops the entry (CancelEffect on the trigger).
+// The exterior arm is a different rule and a different seam: a
+// building has no door record, so worldModes.js calls
+// triggerExteriorOpen itself, and DFU gives Lock no exterior arm at
+// all.
 import { EFFECT_FLAGS } from './spellcast.js';
 import { isSilencedEffect } from './effects.js';
 

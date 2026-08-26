@@ -5,15 +5,17 @@
 // than a number.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   MYSTICISM_EFFECTS, SUPPORTS_MAGNITUDE, isMysticism,
   triggerOpen, triggerLock, triggerExteriorOpen, dispelNearby, SOUL_TRAP_TEMPLATE,
   dispellableBundles, DISPELLABLE_BUNDLE_TYPES, fillEmptyTrap,
-  isSilenced, silenceBlocksCast,
+  isSilenced, silenceBlocksCast, DOOR_SPELL_TEXT,
 } from '../src/systems/mysticism.js';
+import { ActionSystem } from '../src/world/actionSystem.js';
+import { doorSpellFor, wireDoorSpells } from '../src/scenes/shared.js';
 
 const door = (lock = 0, state = 'start') => ({ currentLockValue: lock, state });
 
@@ -222,18 +224,142 @@ test('S27: THE FOUR HOSTS - every host mounts the ONE cast engine', () => {
   assert.ok(/buildDungeonContext/.test(wm), 'worldModes mounts the dungeon context');
 });
 
-test('S27: Open and Lock are NOT wired, and the seams are named', () => {
-  // Flagged deliberately: their payload is an ARMED effect that must
-  // survive between the cast and the next door touched. This pin holds
-  // the claim honest - it fails the moment someone wires one without
-  // updating the record.
-  const my = read('src/systems/mysticism.js');
-  assert.ok(/OPEN AND LOCK ARE NOT WIRED/.test(my), 'the module says so');
-  assert.ok(/actionSystem\.js's `activate\(key\)`/.test(my), 'and names the door seam');
-  assert.ok(/interiorContext\.js/.test(my), 'and both ActionSystem owners');
+// ── X1/S30: the Open/Lock door seam, driven end to end ───────────
+// The hosts above have no execution coverage in node, but the DOOR
+// path does: ActionSystem is plain JS and shared.js's doorSpellFor /
+// wireDoorSpells are the very helpers the hosts mount, so the law can
+// be reached the way the player reaches it instead of being grepped for.
+const stubCollider = () => ({ addMesh() {}, removeMesh() {}, removeBucket() {} });
+const CPU = { positions: new Float32Array([0, 0, 0, 1, 0, 0, 1, 1, 0]), indices: new Uint32Array([0, 1, 2]) };
+const IDENTITY = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
 
-  for (const host of ['src/scenes/dungeonContext.js', 'src/scenes/interiorContext.js']) {
-    assert.ok(!/triggerOpen\(|triggerLock\(/.test(read(host)),
-      `${host} does not call the door payload yet - update the record when it does`);
+/** An entity holding an armed Open/Lock entry, exactly as applySpell
+ *  lands it (kind + permanent, never expiring on its own). */
+const armed = (kind, level) => ({
+  level, activeEffects: kind ? [{ kind, permanent: true }] : [],
+});
+
+/** One ActionSystem with one door, wired the way a host wires it. */
+function doorHost(entity, opts = {}) {
+  const actions = new ActionSystem(stubCollider());
+  const o = actions.addDoor(CPU, IDENTITY, opts);
+  const said = [];
+  wireDoorSpells(actions, entity, (t) => said.push(t));
+  return { actions, o, said };
+}
+
+/** Every .js under a directory, so a sweep names no file itself. */
+function sourceFiles(dir) {
+  const out = [];
+  for (const ent of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, ent.name);
+    if (ent.isDirectory()) out.push(...sourceFiles(full));
+    else if (ent.name.endsWith('.js')) out.push(full);
+  }
+  return out;
+}
+
+test('X1: Open and Lock ARE wired - the armed spell fires through actions.activate', () => {
+  // This pin replaces an S27 guard that could not fire. That guard
+  // grepped two named hosts for the spelling `triggerOpen(` and
+  // asserted the module still said OPEN AND LOCK ARE NOT WIRED; X1
+  // wired the laws into world/actionSystem.js's `activate(key,
+  // { doorSpell })` instead, which neither named file spells, so the
+  // guard passed through the very change it existed to catch - and
+  // its second half held a now-false header in place. A grep for a
+  // name proves the name is there; this drives the real seam:
+  //   cast -> `openArmed`/`lockArmed` on activeEffects (effects.js)
+  //   -> doorSpellFor (scenes/shared.js) -> actions.activate
+  //   -> triggerOpen/triggerLock -> ToggleDoor + onDoorSpell
+  //   -> consumeDoorSpell (CancelEffect).
+  // It is DFU's ActivateActionDoor (PlayerActivate.cs:691-704), whose
+  // HandleLockEffect/HandleOpenEffect run BEFORE the steal/toggle
+  // ladder and swallow the activation.
+
+  // a caster of level 7 with an Open armed, meeting a lock of 5
+  const e = armed('openArmed', 7);
+  const { actions, o, said } = doorHost(e, { startingLockValue: 5 });
+  assert.equal(actions.activate(o.key, { doorSpell: doorSpellFor(e) }), true);
+  assert.equal(o.currentLockValue, 0, 'CurrentLockValue = 0 (Open.cs:118-121)');
+  assert.equal(o.state, 'forward', 'and the unlocked, closed door is swung (Open.cs:128-132)');
+  assert.deepEqual(said, [], 'a lock that yields says nothing');
+  assert.equal(doorSpellFor(e), null, 'CancelEffect on the trigger (Open.cs:135)');
+
+  // the SAME door, the SAME lock, with nothing armed: the activation
+  // falls through to ToggleDoor, which refuses a locked door. This is
+  // the control - it is what the seam does when the law is not reached.
+  const bare = doorHost(armed(null, 7), { startingLockValue: 5 });
+  bare.actions.activate(bare.o.key, { doorSpell: null });
+  assert.equal(bare.o.currentLockValue, 5, 'no spell, no unlock');
+  assert.equal(bare.o.state, 'start', 'and the door stays shut');
+
+  // a lock BEYOND the holder's level spends the cast and speaks
+  const weak = armed('openArmed', 3);
+  const w = doorHost(weak, { startingLockValue: 20 });
+  w.actions.activate(w.o.key, { doorSpell: doorSpellFor(weak) });
+  assert.equal(w.o.currentLockValue, 20, 'the lock is untouched');
+  assert.equal(w.o.state, 'start');
+  assert.deepEqual(w.said, [DOOR_SPELL_TEXT.openFailed], 'openFailed (Open.cs:124)');
+  assert.equal(doorSpellFor(weak), null, 'and the cast is spent anyway (:135)');
+
+  // the level travels LIVE: the same entity, levelled between the cast
+  // and the door, now beats the lock (Open.cs:118 reads the HOLDER's
+  // Entity.Level at the trigger)
+  const grown = armed('openArmed', 3);
+  const g = doorHost(grown, { startingLockValue: 20 });
+  grown.level = 20;
+  g.actions.activate(g.o.key, { doorSpell: doorSpellFor(grown) });
+  assert.equal(g.o.currentLockValue, 0, 'the level read at the door is the one that counts');
+
+  // LOCK: no level test at all, and it swings an OPEN door shut
+  const locker = armed('lockArmed', 9);
+  const l = doorHost(locker, { startingLockValue: 0 });
+  l.actions.activate(l.o.key, { doorSpell: null });          // open it first
+  assert.equal(l.o.state, 'forward');
+  for (let i = 0; i < 100; i++) l.actions.update(1.5 / 90);  // let the swing finish
+  assert.equal(l.o.state, 'end');
+  l.actions.activate(l.o.key, { doorSpell: doorSpellFor(locker) });
+  assert.equal(l.o.currentLockValue, 9, "the holder's own level becomes the lock (Lock.cs:116)");
+  assert.equal(l.o.state, 'reverse', 'and an open door is closed (Lock.cs:122-126)');
+  assert.deepEqual(l.said, [DOOR_SPELL_TEXT.doorLocked]);
+  assert.equal(doorSpellFor(locker), null);
+
+  // an ALREADY-locked door refuses the Lock, and still spends it
+  const again = armed('lockArmed', 9);
+  const a = doorHost(again, { startingLockValue: 3 });
+  a.actions.activate(a.o.key, { doorSpell: doorSpellFor(again) });
+  assert.equal(a.o.currentLockValue, 3, 'refused, not re-locked harder');
+  assert.deepEqual(a.said, [DOOR_SPELL_TEXT.doorAlreadyLocked]);
+  assert.equal(doorSpellFor(again), null);
+
+  // a SPECIAL door has no DaggerfallActionDoor component, so no
+  // Lock/Open effect reaches it ("player cannot open, bash, pick, or
+  // cast their way through this type of door")
+  const sk = armed('openArmed', 99);
+  const s = doorHost(sk, { startingLockValue: 5 });
+  s.o.special = true;
+  s.actions.activate(s.o.key, { doorSpell: doorSpellFor(sk) });
+  assert.equal(s.o.currentLockValue, 5, 'a special door is not cast through');
+  assert.deepEqual(doorSpellFor(sk), { kind: 'open', holderLevel: 99, skeletonKey: false },
+    'and the spell is still armed, waiting for a real door');
+});
+
+test('X1: every player activation seam in src/ hands the armed spell down', () => {
+  // The seam, not a file list: whichever host owns the activation ray
+  // routes the interaction MODE into actions.activate, and the armed
+  // door spell has to ride the same call (DFU runs HandleLockEffect/
+  // HandleOpenEffect inside ActivateActionDoor itself, so there is no
+  // host that can activate a door and miss them). Found by reading
+  // src/, so a host that moves or is added is swept too.
+  const sites = [];
+  for (const f of sourceFiles(join(root, 'src'))) {
+    for (const line of readFileSync(f, 'utf8').split('\n')) {
+      if (/\.activate\(/.test(line) && /steal:/.test(line)) sites.push([f, line]);
+    }
+  }
+  assert.ok(sites.length >= 2, `expected the interior and dungeon activation seams, found ${sites.length}`);
+  for (const [f, line] of sites) {
+    assert.ok(/doorSpell:/.test(line),
+      `${f.slice(root.length + 1)} activates doors without handing down the armed Open/Lock spell: ${line.trim()}`);
   }
 });

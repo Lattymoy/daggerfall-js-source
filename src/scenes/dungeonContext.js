@@ -2123,7 +2123,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   }
   // A3: the dungeon scene ambience (the scene's Dungeon object runs
   // 5/28) - the 14 one-shots "somewhere around" + the classic-cadence
-  // water sounds. Castle-block detection (doNotPlayInCastle) pends.
+  // water sounds. doNotPlayInCastle is fed live from castleBlockAt.
   const sceneAmbience = new AmbientEffects(DUNGEON_AMBIENT_WAITS);
   sceneAmbience.setPreset('dungeon');
   function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false, playerHeight = CAPSULE_HEIGHT) {

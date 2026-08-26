@@ -243,7 +243,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     // (AO + snapped-ARM_PAL-ramp shading, the blocky look), ramps
     // taken from the loaded sprite so the palette matches. The old
     // old sprite-trace rig + 1:1 silhouette pin are retired/removed.
-    // Pieces will re-seat on this rig later - &piece is inert here.
+    // C5's pieces re-seat through buildRaceCharacter (hair/tail/scales); &piece is unread here.
     const bodyImg = new ImgFile();
     bodyImg.load(await fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
     const bodyBmp = bodyImg.getDFBitmap();

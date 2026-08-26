@@ -245,8 +245,9 @@ export class NativeTradeWindow {
     else this._move(item, this.staged, this.hooks.packItems());
   }
 
-  /** ClearButton_OnMouseClick (:1020-1025) - everything staged goes
-   *  back where it came from. */
+  /** ClearSelectedItems (:589-599, :613-625) - everything staged goes
+   *  back where it came from. The Clear button is one caller
+   *  (ClearButton_OnMouseClick :1020-1025); OnPop is the other. */
   _clear() {
     if (this.mode === 'Buy') {
       while (this.basket.length) this._move(this.basket[0], this.basket, this.hooks.shelfItems());
@@ -254,6 +255,30 @@ export class NativeTradeWindow {
       while (this.staged.length) this._move(this.staged[0], this.staged, this.hooks.packItems());
     }
   }
+
+  /** OnPop (:404-407): `ClearSelectedItems()`, unconditionally,
+   *  whenever this window is popped - NOT only when the Clear button
+   *  is pressed. In Buy mode that returns the whole basket to the
+   *  merchant (:589-599), so items picked off a shelf and then walked
+   *  away from go BACK on the shelf; in the staging modes it returns
+   *  the staged lot to the pack (:613-625), which is DFU's own
+   *  "priority is to not lose any items".
+   *
+   *  Without this the port DESTROYED whatever had been clicked: the
+   *  basket left the shelf array at the click (_pickRemote) and the
+   *  window was simply dropped by the host's done-drain, so a player
+   *  could empty a shop's shelf by clicking and closing. */
+  onPop() { this._clear(); }
+
+  /** The host frees a finished overlay through `dispose?.()` (the
+   *  done-drain), which is where this port pops. Idempotent - _clear
+   *  over an already-empty basket moves nothing - so the explicit
+   *  close paths below can pop too without double-returning. */
+  dispose() { this.onPop(); }
+
+  /** Every path that closes this window pops it (DFU's CloseWindow ->
+   *  OnPop), so the staging is returned before the window goes. */
+  _close() { this.onPop(); this.done = true; }
 
   /** DoModeAction -> ShowTradePopup (:954-998, :1100-1134). */
   _modeAction() {
@@ -316,7 +341,7 @@ export class NativeTradeWindow {
       } else this._dismissBox();
       return;
     }
-    if (code === 'Escape' || code === 'KeyE') { this.done = true; return; }
+    if (code === 'Escape' || code === 'KeyE') { this._close(); return; }
     // The port's own accelerators (Ledger A - DFU reads DaggerfallShortcut):
     // Enter commits the deal rather than closing, which is what the
     // mode-action button is for and what a keyboard player expects.
@@ -342,7 +367,7 @@ export class NativeTradeWindow {
       return true;
     }
     const R = TRADE_RECTS;
-    if (inRect(R.exit, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.done = true; return true; }   // every trade button clicks (:887-1022)
+    if (inRect(R.exit, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return true; }   // every trade button clicks (:887-1022)
     if (inRect(R.modeAction, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._modeAction(); return true; }
     if (inRect(R.clear, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._clear(); return true; }
     for (const [rect, which, items, pick] of [
@@ -363,7 +388,7 @@ export class NativeTradeWindow {
   _drawIcon(renderer, m, it, rect, slot) { return this._icon(renderer, m, it, rect, slot); }
 
   draw(renderer, canvas, font) {
-    if (!_art) { this.done = true; return; }
+    if (!_art) { this._close(); return; }
     const m = nativeMetrics(canvas);
     // AUDIT 19 F2: OPAQUE BLACK, not a dim. DaggerfallBaseWindow's
     // constructor sets `parentPanel.BackgroundColor = Color.black`

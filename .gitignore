@@ -33,7 +33,7 @@ dagger-viewer.html
 # GAME. A frame of the port's framebuffer with a WEAPON*.CIF sprite drawn into
 # it is ARENA2 art, upscaled - and public/ is Vite's static root, so anything
 # under it was copied into dist/ and uploaded to GitHub Pages by deploy.yml.
-# Regenerate galleries locally with tools/fpProbe.mjs; they do not ship.
+# Regenerate galleries locally with tools/fpsWeaponProbe.mjs; they do not ship.
 public/visual-changes/
 
 # transient audit scratch dropped in the repo root by tooling runs
