@@ -10,7 +10,7 @@
 # build, then fail the protected github-pages environment before any steps ran.
 # Main still checks out the preview branch below, so every main deploy carries
 # the latest preview without letting the preview branch deploy by itself.
-# Preview refresh: classic Daggerfall clothing catalog + 3D garment silhouettes.
+# Preview refresh: classic Daggerfall source clothing pixels on exact body atlas.
 name: deploy
 
 on:
