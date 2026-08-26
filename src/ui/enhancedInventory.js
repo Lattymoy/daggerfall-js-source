@@ -56,7 +56,8 @@
 // inventory slice's first job.
 // ═══════════════════════════════════════════════════════════════════
 
-import { TABS, filterByTab } from './nativeInventory.js';
+import { TABS, filterByTab, USE_PENDING } from './nativeInventory.js';
+import { useItem } from '../systems/useItem.js';
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { inventoryItemImage, templateByIndex } from '../systems/itemTemplates.js';
 import { requestIcon } from './textureCanvas.js';
@@ -64,7 +65,7 @@ import {
   equipItem, unequipSlot, equipTableOf, isEquipped,
   isForbiddenEquip, isBrokenItem,
 } from '../systems/equip.js';
-import { itemWeight } from '../systems/inventory.js';
+import { itemWeight, isEnchanted } from '../systems/inventory.js';
 import { maxEncumbrance } from '../combat/formulas.js';
 import { liveStat } from '../systems/statMods.js';
 import { conditionWord, conditionPercentage, materialName } from '../systems/itemInfo.js';
@@ -195,6 +196,64 @@ export function itemLine(item, identity = undefined) {
   };
 }
 
+/**
+ * WHAT TO DO WITH A `useItem` RESULT - decided once, performed by the
+ * view.
+ *
+ * `systems/useItem.js` owns the LAW (which item does what); what the
+ * classic window adds on top is presentation plus ONE ordering rule
+ * that is not presentation at all, and this exists so that rule is
+ * written down and testable rather than retyped from memory:
+ *
+ * THE TWO HAND-OFFS RUN IN OPPOSITE ORDERS, and that is deliberate in
+ * the classic window rather than an accident to copy carelessly. Both
+ * exist because DFU PUSHES those windows over the inventory - a window
+ * stack - while the port's hosts hold ONE overlay slot, so the
+ * inventory must run its own close law or the pile it was about to
+ * drop never mints (AUDIT B-C1). But:
+ *
+ *   BOOK:      hand over, THEN close. The reader takes a failure
+ *              callback, and "a failed open still reports on this
+ *              window - it is the live overlay until the reader
+ *              actually shows".
+ *   SPELLBOOK: close, THEN hand over. There is no callback, so the
+ *              slot is freed first.
+ *
+ * The first draft of this module gave both `closeFirst: true` and its
+ * pin asserted the same thing, because the code and the pin were
+ * written from one wrong reading. The browser found it: closing first
+ * also cleared the deps the hook was about to be read from, so the
+ * book arm threw `deps.openBook is not a function`.
+ *
+ * A host that handed no hook keeps its window and SAYS SO, which is
+ * why `pending` exists and why the classic window's own USE_PENDING
+ * strings are reused here rather than reworded.
+ */
+export function useResultAction(r, { openBook = null, openSpellbook = null } = {}) {
+  if (!r) return { kind: 'nothing' };
+  if (r.kind === 'book') {
+    return openBook
+      ? { kind: 'openBook', item: r.item, failText: r.failText, closeFirst: false }
+      : { kind: 'message', text: USE_PENDING.book };
+  }
+  if (r.kind === 'spellbook') {
+    return openSpellbook
+      ? { kind: 'openSpellbook', closeFirst: true }
+      : { kind: 'message', text: USE_PENDING.spellbook };
+  }
+  // The classic window's own ladder, in its own order: an explicit
+  // text, then a TEXT.RSC id, then the pending stand-in. AUDIT 22 F9:
+  // `enchanted` is a RIDER on the arm's result, not a kind that
+  // replaced it, so it only speaks when the arm itself said nothing.
+  const out = { kind: 'message', text: null, textId: null,
+    repaint: r.kind === 'variant', closesWindow: !!r.closesWindow };
+  if (r.text) out.text = r.text;
+  else if (r.textId) out.textId = r.textId;
+  else if (r.pending) out.text = USE_PENDING[r.kind] ?? 'Nothing happens.';
+  if (r.enchanted && !r.text && !r.textId) out.text = USE_PENDING.enchanted;
+  return out;
+}
+
 // ── THE VIEW ─────────────────────────────────────────────────────
 
 let host = null;
@@ -241,6 +300,52 @@ function wear(item) {
   if (equipItem(deps.entity, item) === null) { notice = `${item.name} cannot be worn.`; return render(); }
   refresh();
   return render();
+}
+
+/** USING something, through the ONE law. The deps are the classic
+ *  window's own, hook for hook - a host that hands none leaves the arm
+ *  silent in exactly the way it leaves the classic window's silent. */
+function use(item) {
+  notice = null;
+  const r = useItem(item, deps.items?.() ?? [], {
+    entity: deps.entity,
+    // AUDIT 22 F4: the oil arm looks for its lantern in the LOCAL pack
+    // whatever list the click came from, so the bag travels separately.
+    localItems: deps.items?.() ?? [],
+    spellCount: () => deps.entity?.spells?.length ?? 0,
+    isEnchanted,
+    nowMinute: deps.nowMinute?.() ?? 0,
+    revealMap: deps.revealMap ?? null,
+    drinkPotion: deps.drinkPotion ?? null,
+  });
+  const act = useResultAction(r, { openBook: deps.openBook, openSpellbook: deps.openSpellbook });
+  // THE HOOKS ARE READ BEFORE ANYTHING CLOSES. `onExit` unmounts, and
+  // unmounting clears `deps` - so a hook read after it is undefined.
+  // That is not hypothetical: the first draft closed first and threw
+  // `deps.openBook is not a function` on the first real press.
+  if (act.kind === 'openBook') {
+    const open = deps.openBook, fail = act.failText;
+    // HAND OVER, THEN CLOSE - the reader's failure callback reports on
+    // this window while it is still the live overlay.
+    open(act.item, () => { notice = fail; render(); });
+    onExit();
+    return;
+  }
+  if (act.kind === 'openSpellbook') {
+    const open = deps.openSpellbook;
+    onExit();   // CLOSE, THEN HAND OVER - no callback, so free the slot
+    open();
+    return;
+  }
+  if (act.textId && deps.rows) {
+    const rows = deps.rows(act.textId) ?? [];
+    notice = rows.map((row) => (typeof row === 'string' ? row : row?.text ?? '')).join(' ').trim() || null;
+  } else if (act.text) {
+    notice = act.text;
+  }
+  refresh();
+  if (act.closesWindow) { onExit(); return; }
+  render();
 }
 
 function takeOff(slot) {
@@ -416,6 +521,14 @@ function detailCol() {
     b.onclick = () => wear(picked);
     acts.append(b);
   }
+  // USE is offered for EVERYTHING, exactly as the classic window's Use
+  // mode is: `useItem` has an arm for every group and the honest answer
+  // for a thing with no use is its own "Nothing happens." A button that
+  // appeared only for items this screen believed were usable would be
+  // this screen making a judgement the law already makes.
+  const u = el('button', 'act', 'Use');
+  u.onclick = () => use(picked);
+  acts.append(u);
   c.append(acts);
   col.append(c);
   // The address, for the player who wants it and the developer who

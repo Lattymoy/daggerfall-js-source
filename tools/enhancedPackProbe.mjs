@@ -213,6 +213,78 @@ async function run(label, opts) {
     (await page.locator('#enhanced-inventory .packempty').count()) >= 1);
   await page.locator('#enhanced-inventory .packtab', { hasText: 'Weapons' }).click();
 
+  // ── 8b. USE ────────────────────────────────────────────────────
+  // The law is systems/useItem.js's and is pinned there; what a
+  // browser proves is that the button reaches it, that a host's hook
+  // is actually called, and that the window is OUT of the host's one
+  // overlay slot before the hook takes it (AUDIT B-C1).
+  await page.evaluate(() => globalThis.__slot.dispose());
+  const openUsePack = (kind) => page.evaluate(async (k) => {
+    const { createInventoryWindow } = await import('/src/ui/inventoryDoor.js');
+    const { ITEM_TEMPLATES } = await import('/src/characters/paperdoll.js');
+    const { TEMPLATES } = await import('/src/systems/useItem.js');
+    const t = (n) => ITEM_TEMPLATES.find((x) => x.name === n);
+    const book = t('Book') ?? ITEM_TEMPLATES.find((x) => x.name?.includes('Book'));
+    const e = { name: 'Aelwyn', career: { name: 'Spellsword' }, stats: { strength: 50, endurance: 48 }, items: [] };
+    // A SPELLBOOK WITH NO SPELLS IN IT DOES NOT OPEN - useItem's
+    // `noSpells` arm answers TEXT.RSC 12 instead, which is DFU's own
+    // law and is what this probe hit first. To exercise the OPEN, the
+    // character has to know something.
+    if (k === 'spellbook') e.spells = [{ name: 'Fireball' }];
+    e.items = k === 'spellbook'
+      ? [{ name: 'Spellbook', templateIndex: TEMPLATES.Spellbook, group: 'MiscItems',
+        stackCount: 1, currentCondition: 50, maxCondition: 50 }]
+      : [{ name: book?.name ?? 'Book', templateIndex: book?.index ?? 0, group: 'Books',
+        stackCount: 1, currentCondition: 50, maxCondition: 50, message: 1 }];
+    globalThis.__log = [];
+    globalThis.__ent = e;
+    const where = (n) => `${n}:${document.getElementById('enhanced-inventory') ? 'window-up' : 'window-down'}`;
+    globalThis.__slot = createInventoryWindow({
+      entity: e, items: () => e.items, wagonItems: () => [],
+      rows: () => [{ text: 'the rows the host reads' }],
+      openBook: () => globalThis.__log.push(where('openBook')),
+      openSpellbook: () => globalThis.__log.push(where('openSpellbook')),
+    });
+  }, kind);
+  await openUsePack('book');
+  // A BOOK IS NOT A WEAPON. filterByTab's default branch is the
+  // CLOTHING page - DFU's fourth bucket is everything that is not a
+  // weapon, not enchanted and not an ingredient - so the pack opens on
+  // Weapons with nothing on it, correctly, and the probe goes to the
+  // page the book is actually on.
+  await page.waitForSelector('#enhanced-inventory .packtab', { timeout: 20000 });
+  await page.locator('#enhanced-inventory .packtab', { hasText: 'Clothing' }).click();
+  await page.waitForSelector('#enhanced-inventory .itemrow', { timeout: 20000 });
+  await page.locator('#enhanced-inventory .itemrow').first().click();
+  check(`${label}: every item offers Use, as the classic window's Use mode does`,
+    (await page.locator('#enhanced-inventory .acts button', { hasText: 'Use' }).count()) === 1);
+  await page.locator('#enhanced-inventory .acts button', { hasText: 'Use' }).click();
+  const bookLog = await page.evaluate(() => globalThis.__log);
+  check(`${label}: Use reached the host's own hook`, bookLog.some((l) => l.startsWith('openBook')),
+    bookLog.join(',') || 'nothing');
+  // THE TWO HAND-OFFS RUN IN OPPOSITE ORDERS, and this is where that
+  // gets proven rather than asserted from a reading. The READER takes a
+  // failure callback and reports on this window while it is still the
+  // live overlay, so the book hands over with the window UP...
+  check(`${label}: the book hands over while this window is still up`,
+    bookLog.includes('openBook:window-up'), bookLog.join(','));
+  check(`${label}: ...and the window is gone once the reader has it`,
+    (await page.locator('#enhanced-inventory').count()) === 0);
+
+  // ...and the SPELLBOOK has no callback, so it frees the slot first.
+  await openUsePack('spellbook');
+  await page.waitForSelector('#enhanced-inventory .packtab', { timeout: 20000 });
+  await page.locator('#enhanced-inventory .packtab', { hasText: 'Magic' }).click();
+  await page.locator('#enhanced-inventory .itemrow').first().click();
+  await page.locator('#enhanced-inventory .acts button', { hasText: 'Use' }).click();
+  const spellLog = await page.evaluate(() => globalThis.__log);
+  check(`${label}: the spellbook frees the slot BEFORE the host takes it`,
+    spellLog.includes('openSpellbook:window-down'), spellLog.join(',') || 'nothing');
+
+  // put the ordinary pack back for the checks below
+  await page.evaluate(() => globalThis.__slot?.dispose?.());
+  await openPack(page);
+
   // ── 9. TARGETS AND REACH ───────────────────────────────────────
   const small = await page.$$eval('#enhanced-inventory button', (ns) => ns
     .map((n) => ({ t: (n.textContent ?? '').trim().slice(0, 18), r: n.getBoundingClientRect() }))

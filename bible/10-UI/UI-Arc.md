@@ -8,6 +8,75 @@ policies one by one.
 
 
 
+## U55 USE, in the enhanced pack (2026-08-26)
+
+The pack can USE things. `systems/useItem.js` owns the law - which item
+does what - and this is the branching the classic window does on top of
+a result, which is presentation except for the two hand-offs, which are
+not.
+
+USE IS OFFERED FOR EVERYTHING, exactly as the classic window's Use mode
+is. `useItem` has an arm for every group and the honest answer for a
+thing with no use is its own "Nothing happens."; a button drawn only
+for items this screen BELIEVED were usable would be the screen making a
+judgement the law already makes.
+
+THE TWO HAND-OFFS RUN IN OPPOSITE ORDERS, AND THE FIRST DRAFT GOT IT
+BACKWARDS. Both exist for AUDIT B-C1's reason - DFU PUSHES the reader
+and the spellbook over the inventory, a window stack, while the port's
+hosts hold ONE overlay slot, so the inventory must run its own close
+law or the pile it was about to drop never mints. But:
+
+    BOOK       hand over, THEN close. The reader takes a FAILURE
+               CALLBACK, and "a failed open still reports on this
+               window - it is the live overlay until the reader
+               actually shows".
+    SPELLBOOK  close, THEN hand over. No callback, so free the slot.
+
+This module gave both `closeFirst: true` and its pin asserted the same
+thing, because the code and the pin were written from one wrong
+reading of the classic window - which is exactly what a pin written
+beside the code it pins is worth. THE BROWSER CAUGHT IT, and twice
+over: closing first also cleared the deps the hook was about to be read
+from, so the book arm threw `deps.openBook is not a function` on the
+first real press. The hooks are read before anything closes now, the
+pin holds the ASYMMETRY against both windows, and the probe proves each
+order by asking the hook itself whether the window was still up when it
+ran.
+
+`useResultAction` IS PURE AND SEPARATE so that ordering is testable
+rather than retyped from memory. It also carries the classic window's
+message ladder in the classic window's order - an explicit text, then a
+TEXT.RSC id read through the host's `rows`, then the pending stand-in -
+and AUDIT 22 F9's `enchanted` RIDER, which only speaks when the arm
+itself said nothing rather than replacing what the arm produced.
+
+EVERY DEP TRAVELS, and a pin counts them. A dep quietly dropped here is
+an arm that silently does nothing, which is the shape U44 found when
+the potion hook had reached three of five construction sites.
+
+PROVED IN A REAL BROWSER by `tools/enhancedPackProbe.mjs` - 54/54, up
+from 44. The probe found two of its own wrong expectations before it
+found anything else: a BOOK is not a weapon, so it sits on the CLOTHING
+page (filterByTab's default branch is DFU's fourth bucket - everything
+not a weapon, not enchanted, not an ingredient) and the pack correctly
+opened on an empty Weapons page; and a SPELLBOOK WITH NO SPELLS IN IT
+does not open at all - useItem's `noSpells` arm answers TEXT.RSC 12,
+which is DFU's own law, so the character had to be taught a spell
+before the OPEN arm could be exercised.
+
+STILL CLASSIC, and the door still says so: the WAGON, LOOT PILES, the
+guild REWARD PICKER and DROP-GOLD. Those four share one thing this
+slice did not need - DFU's TRANSFER LADDER, which lives inside
+`ui/nativeInventory.js` as window methods rather than as anything
+callable: the summoned-item refusal, the choose-one one-way rule, the
+750kg cart limit with its partial split-take, the carry gate and gold's
+own arithmetic. An enhanced remote pane needs that ladder, and there
+are only two honest ways to get it - extract it into a module both
+windows call, or copy it, and this port does not copy law. The
+extraction is its own decision because it edits the proven window every
+host uses.
+
 ## U54 THE ITEM ICONS, and the middle link the port never had (2026-08-26)
 
 The pack draws real item pictures. `ui/textureCanvas.js` is the piece

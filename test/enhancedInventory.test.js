@@ -12,7 +12,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { packModel, itemLine, SLOT_MAP } from '../src/ui/enhancedInventory.js';
+import { packModel, itemLine, SLOT_MAP, useResultAction } from '../src/ui/enhancedInventory.js';
+import { USE_PENDING } from '../src/ui/nativeInventory.js';
 import {
   createInventoryWindow, inventoryDoorReady, needsClassicInventory, CLASSIC_ONLY_MODES,
 } from '../src/ui/inventoryDoor.js';
@@ -394,4 +395,116 @@ test('U53: no library - the schematic is inline SVG', () => {
   assert.doesNotMatch(code('src/ui/enhancedInventory.js'), /THREE|three\.js|cdn/i);
   assert.match(read('src/ui/enhancedInventory.js'),
     /createElementNS\('http:\/\/www\.w3\.org\/2000\/svg'/);
+});
+
+// ── U55: USE ─────────────────────────────────────────────────────
+// systems/useItem.js owns the LAW - which item does what - and it is
+// pinned in its own file. What lives here is the branching the classic
+// window does on TOP of a result, which is presentation except for the
+// two hand-offs, which are not.
+
+test('U55: a book hands the reader over and closes AFTER', () => {
+  // THE TWO HAND-OFFS RUN IN OPPOSITE ORDERS and the classic window
+  // means it. Both exist because DFU PUSHES those windows over the
+  // inventory while the port's hosts hold ONE overlay slot (AUDIT
+  // B-C1) - but the reader takes a FAILURE CALLBACK, and "a failed
+  // open still reports on this window - it is the live overlay until
+  // the reader actually shows", so the book hands over first.
+  //
+  // The first draft of this pin asserted closeFirst: true for BOTH,
+  // matching a module written from the same wrong reading - which is
+  // what a pin written beside the code it pins is worth. The browser
+  // caught it, with `deps.openBook is not a function`.
+  const item = { name: 'A Tract' };
+  const a = useResultAction({ kind: 'book', item, failText: 'ruined' }, { openBook: () => {} });
+  assert.equal(a.kind, 'openBook');
+  assert.equal(a.closeFirst, false, 'the reader is handed the item while this window is still up');
+  assert.equal(a.item, item);
+  assert.equal(a.failText, 'ruined', 'a failed open still has somewhere to report');
+});
+
+test('U55: a host with no reader keeps its window and says so', () => {
+  const a = useResultAction({ kind: 'book', item: {} }, {});
+  assert.equal(a.kind, 'message');
+  assert.equal(a.text, USE_PENDING.book, "the classic window's own words, not a rewording");
+});
+
+test('U55: the Spellbook ITEM closes first, then opens', () => {
+  const a = useResultAction({ kind: 'spellbook' }, { openSpellbook: () => {} });
+  assert.equal(a.kind, 'openSpellbook');
+  assert.equal(a.closeFirst, true);
+  assert.equal(useResultAction({ kind: 'spellbook' }, {}).text, USE_PENDING.spellbook);
+});
+
+test('U55: the message ladder is the classic window’s, in its order', () => {
+  // an explicit text wins...
+  assert.equal(useResultAction({ kind: 'map', text: 'You study the map.', textId: 499 }, {}).text,
+    'You study the map.');
+  // ...then a TEXT.RSC id...
+  const byId = useResultAction({ kind: 'map', textId: 499 }, {});
+  assert.equal(byId.textId, 499);
+  assert.equal(byId.text, null, 'an id is not also a text - the host reads the rows');
+  // ...then the pending stand-in
+  assert.equal(useResultAction({ kind: 'potion', pending: true }, {}).text, USE_PENDING.potion);
+  assert.equal(useResultAction({ kind: 'nonesuch', pending: true }, {}).text, 'Nothing happens.');
+});
+
+test('U55: AUDIT 22 F9 - `enchanted` is a RIDER, not a replacement', () => {
+  // It used to be a kind that REPLACED the arm's own result, so the
+  // message the arm produced vanished. It only speaks when the arm
+  // said nothing.
+  const spoke = useResultAction({ kind: 'map', text: 'You study the map.', enchanted: true }, {});
+  assert.equal(spoke.text, 'You study the map.', "the arm's own message survives");
+  const silent = useResultAction({ kind: 'clothing', enchanted: true }, {});
+  assert.equal(silent.text, USE_PENDING.enchanted);
+});
+
+test('U55: a variant change repaints, and closesWindow travels', () => {
+  assert.equal(useResultAction({ kind: 'variant' }, {}).repaint, true,
+    'the slot map is drawn FROM the worn set, so a changed variant must redraw');
+  assert.equal(useResultAction({ kind: 'potion', closesWindow: true }, {}).closesWindow, true);
+  assert.equal(useResultAction({ kind: 'potion' }, {}).closesWindow, false);
+  assert.equal(useResultAction(null, {}).kind, 'nothing', 'no result is not a crash');
+});
+
+test('U55: the two hand-offs run in OPPOSITE orders, in both windows', () => {
+  // The rule here that is not presentation, and the one the first
+  // draft got backwards. Pinned against BOTH windows so they cannot
+  // drift apart, and stated as the asymmetry it actually is.
+  const classic = read('src/ui/nativeInventory.js');
+  const enhanced = read('src/ui/enhancedInventory.js');
+
+  const cBook = classic.slice(classic.indexOf("if (r.kind === 'book')"),
+    classic.indexOf('// U42: USING the Spellbook'));
+  assert.ok(cBook.indexOf('this.hooks.openBook(') < cBook.indexOf('this._closeSilently()'),
+    'classic book: hand over, THEN close');
+  const cSpell = classic.slice(classic.indexOf("if (r.kind === 'spellbook')"), classic.indexOf('if (r.text)'));
+  assert.ok(cSpell.indexOf('_closeSilently()') < cSpell.indexOf('this.hooks.openSpellbook()'),
+    'classic spellbook: close, THEN hand over');
+
+  const eUse = enhanced.slice(enhanced.indexOf('function use(item)'), enhanced.indexOf('function takeOff(slot)'));
+  const eBook = eUse.slice(eUse.indexOf("if (act.kind === 'openBook')"),
+    eUse.indexOf("if (act.kind === 'openSpellbook')"));
+  assert.ok(eBook.indexOf('open(act.item') < eBook.indexOf('onExit()'),
+    'enhanced book: hand over, THEN close');
+  const eSpell = eUse.slice(eUse.indexOf("if (act.kind === 'openSpellbook')"));
+  assert.ok(eSpell.indexOf('onExit()') < eSpell.indexOf('open()'),
+    'enhanced spellbook: close, THEN hand over');
+
+  // AND THE HOOK IS READ BEFORE ANYTHING CLOSES. Unmounting clears
+  // `deps`, so a hook read after onExit is undefined - which is
+  // precisely how the browser found the ordering wrong.
+  assert.ok(eBook.indexOf('const open = deps.openBook') < eBook.indexOf('onExit()'));
+  assert.ok(eSpell.indexOf('const open = deps.openSpellbook') < eSpell.indexOf('onExit()'));
+});
+
+test('U55: the pack passes useItem the same deps the classic window does', () => {
+  // A dep quietly dropped here is an arm that silently does nothing -
+  // the shape U44 found when the potion hook reached three of five
+  // sites.
+  const enhanced = read('src/ui/enhancedInventory.js');
+  const useArm = enhanced.slice(enhanced.indexOf('const r = useItem('), enhanced.indexOf('const act = useResultAction'));
+  for (const dep of ['entity:', 'localItems:', 'spellCount:', 'isEnchanted', 'nowMinute:', 'revealMap:', 'drinkPotion:']) {
+    assert.ok(useArm.includes(dep), `the pack drops ${dep}`);
+  }
 });
