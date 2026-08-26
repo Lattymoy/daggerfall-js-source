@@ -93,6 +93,11 @@ export const SHIP_TYPES = Object.freeze({ None: -1, Small: 0, Large: 1 });
 /** shipPrices (:95) and the model ids that stand them in the world. */
 export const SHIP_PRICES = Object.freeze([100000, 200000]);
 export const SHIP_MODEL_IDS = Object.freeze([910, 909]);
+/** shipCameraDist (:101) - how far back the purchase window's camera
+ *  stands to frame each ship. It is the ONLY thing about that panel
+ *  that varies with which ship is picked; a house is framed from a
+ *  fixed stand whatever it is. */
+export const SHIP_CAMERA_DIST = Object.freeze([-30, -50]);
 export const SHIP_COORDS = Object.freeze([{ x: 2, y: 2 }, { x: 5, y: 5 }]);
 /** deedSellMult (:93) - a deed sells back for 85% of its price. */
 export const DEED_SELL_MULT = 0.85;
@@ -289,6 +294,9 @@ export const ownsShip = (player) => ownedShipType(player) !== SHIP_TYPES.None;
 export const shipCoords = (player) => (ownsShip(player) ? SHIP_COORDS[ownedShipType(player)] : null);
 /** GetShipModelId (:122) - guarded by `ship >= 0`, so None is 0. */
 export const shipModelId = (ship) => (ship >= 0 ? SHIP_MODEL_IDS[ship] : 0);
+/** GetShipCameraDist (:124) - the same `ship >= 0` guard, so None
+ *  stands the camera at 0 rather than reading dist[-1]. */
+export const shipCameraDist = (ship) => (ship >= 0 ? SHIP_CAMERA_DIST[ship] : 0);
 
 /**
  * AssignShipToPlayer (:488-497): set the ship and add BOTH of its

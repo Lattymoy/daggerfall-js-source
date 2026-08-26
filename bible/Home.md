@@ -301,7 +301,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
-- `src/systems/banking.js:657` - FLAGGED, with the slice it waits on:
+- `src/systems/banking.js:665` - FLAGGED, with the slice it waits on:
 - `src/systems/biography.js:14` - FLAGGED, exactly as DFU flags them: AE, AF and AO are parsed and
 - `src/systems/biography.js:81` - INTERIM, loud and the same one shopStock.js:115 carries: message
 - `src/systems/buildingLocks.js:48` - *                                   (FLAGGED: banking is a ledger row -
@@ -372,9 +372,8 @@ combat line numbers below are refreshed with it.
 - `src/systems/tradeModes.js:394` - FLAGGED, with the slices they wait on:
 - `src/systems/useItem.js:311` - lantern's and refuses when it would overflow. FLAGGED: DFU
 - `src/ui/automapWindow.js:20` - portals stay FLAGGED (systems/automap.js keeps the list); A2
-- `src/ui/bankPurchaseWindow.js:25` - FLAGGED, and it is presentation rather than function: the 104x91
-- `src/ui/bankPurchaseWindow.js:62` - display: [117, 12, 104, 91],   // FLAGGED: the 3D preview
-- `src/ui/bankPurchaseWindow.js:180` - FLAGGED, and it is ownership rather than function: in DFU the
+- `src/ui/bankPurchaseWindow.js:44` - FLAGGED, and left undrawn on purpose: the camera CLEARS to a solid
+- `src/ui/bankPurchaseWindow.js:321` - FLAGGED, and it is ownership rather than function: in DFU the
 - `src/ui/bankWindow.js:222` - FLAGGED: the host mounts the HOUSE list only (worldModes.js's
 - `src/ui/bookReader.js:25` - INTERIM, loud: lines draw in the host font at a fixed 10px row -
 - `src/ui/chargenArt.js:718` - *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry

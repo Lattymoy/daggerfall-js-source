@@ -22,14 +22,30 @@
 // `GeneratePopup(PurchaseHouse(house, regionIndex))` (:234-237) - the
 // transaction runs and its RESULT is the message. There is no Yes/No.
 //
-// FLAGGED, and it is presentation rather than function: the 104x91
-// panel at (117,12) is a live 3D render of the selected building's own
-// model, rotating one degree per 0.02s on a dedicated Unity camera and
-// layer (:163-178, :202-260). The port draws the panel and leaves it
-// empty. Everything the window is FOR - choosing a house, seeing its
-// price, paying - is here; what is missing is a picture of it. Doing
-// that properly means rendering an ARCH3D model to a texture inside a
-// UI panel, which is a rendering slice and not a banking one.
+// THE 104x91 PANEL AT (117,12) IS A LIVE 3D RENDER of the SELECTED
+// row's own model, turning one degree per 0.02 real seconds on a
+// camera and layer of its own (:163-178, :200-280). The whole of that
+// law - which model, from what stand, how fast it turns, and that a
+// new pick starts the turn again from zero - lives here as
+// `previewSpec`/`update`, and `drawDisplayPanel` composites the result
+// into DFU's own rect. What this file cannot supply is the PIXELS: the
+// port's renderer draws an ARCH3D mesh only into the frame's own
+// framebuffer through `beginFrame` (renderer.js:1095-1104), which
+// resets the viewport to the whole canvas and clears it, and its one
+// offscreen path (`renderCharacterSprite`, renderer.js:746) runs the
+// CHARACTER program, whose vertex stream carries no UVs. A 104x91
+// panel therefore cannot receive a world mesh without a new renderer
+// member, and the model behind a modelId comes from the data pipeline
+// the host owns (`getGpuMesh`). Both are outside this window, so the
+// render arrives through the `previewTexture` hook; with no host
+// behind it the rect stays empty, exactly as it stands in DFU before
+// a row is picked.
+//
+// FLAGGED, and left undrawn on purpose: the camera CLEARS to a solid
+// colour (:211) that DFU never assigns - it is whatever Unity gives a
+// Camera component by default, a value that is nowhere in the source
+// tree. The port paints no background in the display rect; only the
+// model.
 //
 // The port's own departure (Ledger A, the bank window's rule): DFU
 // binds each button to a DaggerfallShortcut hotkey; the accelerators
@@ -40,7 +56,9 @@ import { drawScreenDimBackdrop } from './chargenArt.js';
 import { layoutMessageBox, drawMessageBox } from './messageBox.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
-import { TRANSACTION_RESULT, housePrice, shipPrice, SHIP_PRICES } from '../systems/banking.js';
+import {
+  TRANSACTION_RESULT, housePrice, shipPrice, SHIP_PRICES, shipModelId, shipCameraDist,
+} from '../systems/banking.js';
 
 /** mainPanel.Size (:125) - and the size BANK01I0.IMG ships. */
 export const PURCHASE_PANEL_W = 225, PURCHASE_PANEL_H = 129;
@@ -59,7 +77,7 @@ export const PURCHASE_RECTS = Object.freeze({
   upArrow: [105, 23, 9, 16],
   downArrow: [105, 87, 9, 16],
   scrollBar: [106, 39, 7, 48],
-  display: [117, 12, 104, 91],   // FLAGGED: the 3D preview
+  display: [117, 12, 104, 91],   // displayPanelRect (:23) - the 3D preview
   buy: [38, 106, 40, 19],
   exit: [150, 106, 40, 19],
 });
@@ -69,6 +87,25 @@ export const LIST_ROWS = 10;
 export const LIST_ROW_H = 7;
 /** scrollNum (:66) - one item per scroll tick. */
 export const SCROLL_NUM = 1;
+
+/** rotSpeed (:68) and `goModel.transform.Rotate(Vector3.up, -1)`
+ *  (:175): one degree NEGATIVE about up, once every 0.02 seconds. The
+ *  clock is Time.realtimeSinceStartup (:167) - REAL seconds, so the
+ *  model turns at the same rate whatever the world clock is doing. */
+export const PREVIEW_ROT_SPEED = 0.02;
+export const PREVIEW_ROT_STEP = -1;
+/** Display3dModelSelection's two camera stands. A HOUSE is framed
+ *  from (0, 3, -20) whatever house it is (:251); a SHIP from
+ *  (0, 12, GetShipCameraDist(type)) (:246). */
+export const HOUSE_CAMERA_POS = Object.freeze([0, 3, -20]);
+export const SHIP_CAMERA_Y = 12;
+/** nearClipPlane / farClipPlane (:214-215). */
+export const PREVIEW_NEAR_CLIP = 0.7;
+export const PREVIEW_FAR_CLIP = 100;
+/** The one light (:218-228): DIRECTIONAL, standing at (0, 50, -50),
+ *  intensity `brightness` (:69), hard shadows. */
+export const PREVIEW_LIGHT_POS = Object.freeze([0, 50, -50]);
+export const PREVIEW_LIGHT_INTENSITY = 0.4;
 
 /** Internal_Strings `bankPurchasePrice`, verbatim. */
 export const priceRow = (price) => `Price : ${price} gold`;
@@ -94,6 +131,13 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + PURCHASE_PANEL_X && y >= ry
  *   buy(house)      -> { result, amount } (systems/banking.purchaseHouse);
  *                      in SHIP mode it takes the ShipType instead
  *   rows(textId)    -> the host's TEXT.RSC reader
+ *   previewTexture(spec) -> a texture handle for the 3D panel, or a
+ *                      falsy value while the model is not resolved.
+ *                      `spec` carries everything DFU's own camera and
+ *                      model are set from - see `previewSpec` - plus
+ *                      the render's pixel size (:203-204). ABSENT is
+ *                      the port's standing gap: nothing renders and
+ *                      the rect is left as the base art drew it.
  *   onClose()
  */
 export class BankPurchaseWindow {
@@ -105,6 +149,11 @@ export class BankPurchaseWindow {
     this.scroll = 0;
     this.box = null;
     this._boxLayout = null;
+    // The 3D panel's model, rebuilt whenever the pick changes (:236-240
+    // destroys goModel and makes a new one, so the turn starts over).
+    this._preview = null;
+    this._previewIndex = -1;
+    this.lastRotTime = 0;
   }
 
   get houses() { return this.hooks.houses?.() ?? []; }
@@ -137,6 +186,98 @@ export class BankPurchaseWindow {
   _scroll(by) {
     const next = this.scroll + by * SCROLL_NUM;
     this.scroll = Math.max(0, Math.min(next, Math.max(0, this.count - LIST_ROWS)));
+  }
+
+  /**
+   * Display3dModelSelection (:234-254) as a VALUE: which model the
+   * display panel shows, and where the camera stands to see it. The
+   * mode switch is the same null as everywhere else in this window -
+   * a ship takes GetShipModelId and its own camera distance
+   * (:246-247), a house takes the BuildingSummary's own ModelID from a
+   * fixed stand (:251-253).
+   *
+   * A NEW PICK IS A NEW MODEL: DFU destroys goModel and builds another
+   * (:236-240, :257-259), so the turn starts again from zero. Answers
+   * null for a row that resolves no model at all - the port's building
+   * record carries `modelIdNum: null` where the subrecord has no 3D
+   * object (talkTopics.js:229-236), which is a house DFU's
+   * CreateDaggerfallMeshGameObject would have had nothing to build
+   * either.
+   *
+   * The climate the model is dressed in (:263-267 -
+   * ClimateSwaps.FromAPIClimateBase of PlayerGPS's climate, Winter or
+   * Summer by the world clock, WindowStyle.Day) is a PlayerGPS read
+   * and a texture remap; it belongs to whoever owns the renderer's
+   * remap, not to this window.
+   */
+  previewSpec() {
+    if (this.selected !== this._previewIndex) {
+      this._previewIndex = this.selected;
+      this._preview = this._buildPreview(this.selected);
+    }
+    return this._preview;
+  }
+
+  _buildPreview(index) {
+    if (index < 0 || index >= this.count) return null;
+    let modelId, camera;
+    if (this.ships) {
+      modelId = shipModelId(index);
+      camera = [0, SHIP_CAMERA_Y, shipCameraDist(index)];
+    } else {
+      modelId = this.houses[index]?.modelIdNum;
+      camera = [...HOUSE_CAMERA_POS];
+    }
+    if (modelId == null) return null;
+    return {
+      modelId,
+      camera,
+      angle: 0,
+      near: PREVIEW_NEAR_CLIP,
+      far: PREVIEW_FAR_CLIP,
+      light: [...PREVIEW_LIGHT_POS],
+      intensity: PREVIEW_LIGHT_INTENSITY,
+    };
+  }
+
+  /** Update (:163-178): past `lastRotTime + rotSpeed` the panel
+   *  renders and THEN the model turns one degree, which is why the
+   *  frame right after a pick shows it unrotated. lastRotTime moves on
+   *  whether there is a model or not - :169 sits ABOVE the
+   *  `if (goModel)`. `now` is REAL seconds, DFU's
+   *  Time.realtimeSinceStartup; answers whether the model turned. */
+  update(now = performance.now() / 1000) {
+    if (!(now > this.lastRotTime + PREVIEW_ROT_SPEED)) return false;
+    this.lastRotTime = now;
+    const pv = this.previewSpec();
+    if (!pv) return false;
+    // The port keeps the angle in degrees where DFU accumulates it in
+    // the transform's quaternion; 360 is the same pose as 0.
+    pv.angle = (pv.angle + PREVIEW_ROT_STEP) % 360;
+    return true;
+  }
+
+  /**
+   * RenderModel (:270-280): the camera's render becomes the display
+   * panel's BackgroundTexture, so it covers displayPanelRect exactly.
+   * The texture is that rect at the UI's own scale (:203-204 - DFU
+   * multiplies by NativePanel.LocalScale, which the port's integer
+   * scale IS).
+   * @returns {boolean} whether anything was drawn into the rect.
+   */
+  drawDisplayPanel(renderer, m) {
+    const pv = this.previewSpec();
+    if (!pv) return false;
+    const [dx, dy, dw, dh] = PURCHASE_RECTS.display;
+    const tex = this.hooks.previewTexture?.({ ...pv, width: dw * m.s, height: dh * m.s });
+    if (!tex) return false;
+    renderer.drawScreenQuad(tex, {
+      x: m.ox + (PURCHASE_PANEL_X + dx) * m.s,
+      y: m.oy + (PURCHASE_PANEL_Y + dy) * m.s,
+      w: dw * m.s,
+      h: dh * m.s,
+    });
+    return true;
   }
 
   /** BuyButton_OnMouseClick (:380-391). The ButtonClick is played
@@ -235,6 +376,10 @@ export class BankPurchaseWindow {
     const m = nativeMetrics(canvas);
     drawScreenDimBackdrop(renderer, canvas);
     drawImg(renderer, _art, m, PURCHASE_PANEL_X, PURCHASE_PANEL_Y);
+    // Update's own order (:173-175): the panel RENDERS, and then the
+    // model turns the degree that the next render will show.
+    this.drawDisplayPanel(renderer, m);
+    this.update();
     const [lx, ly] = PURCHASE_RECTS.priceList;
     for (const r of this.rows()) {
       const y = ly + (r.index - this.scroll) * LIST_ROW_H;
