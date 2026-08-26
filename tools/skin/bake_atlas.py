@@ -20,7 +20,7 @@ Outputs:
 # diagnostic render when importing it as a library.
 exec(open('mvB2.py').read().split('def render(yaw,CW,CH,sc):')[0])
 
-import math
+import math, json
 import numpy as np
 from PIL import Image, ImageDraw
 
