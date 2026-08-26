@@ -16,9 +16,11 @@ enemy-rigs arc; full records live in 04-Characters/Characters-Arc.md):
   (src/world/actionSystem.js EFFECT_ACTION_FLAGS): Hurt21 fires every
   20th activation with the verbatim exclusive Range * level; Hurt22-25
   every activation (IsFlat ? Magnitude : AxisRaw) * level; Poison is
-  DFU's OWN empty delegate, preserved; DrainMagicka is an INTERIM
-  no-op until the magicka stat (Systems). Traps damage the shared
-  player entity with or without ?foes.
+  DFU's OWN empty delegate, preserved; DrainMagicka is REAL since
+  Systems S4a gave the player a rolled magicka pool - the verbatim
+  max(1, IsFlat ? Magnitude : AxisRaw) off CURRENT magicka, floored
+  at 0 (actionSystem.js:312-317, pinned in magicka.test.js). Traps
+  damage the shared player entity with or without ?foes.
 
 **Remaining (queue):**
 - CastSpell action flag: SHIPPED via Systems S4b (trap-spell missiles
@@ -27,12 +29,16 @@ enemy-rigs arc; full records live in 04-Characters/Characters-Arc.md):
 - Bows in-world: SHIPPED. Arrows ride the S5 missile system as
   weapon-carrying missiles (element None) rendered as the oriented
   99800 model through dynamicDraws; the player's bow (?weapon=bow,
-  Short Bow template 129 - the equip UI pends) looses on the strike
-  frame along the view-matrix forward and tallies Archery; enemy
-  archers (equipped-bow foes) attack from SIGHT (the melee-distance
-  gate is melee's) and loose at the player; hits resolve through
-  calculateAttackDamage with the bow BOTH directions, and a landed
-  arrow adds ONE recoverable Arrow to the TARGET'S items (BowDamage's
+  Short Bow template 129, or equipped through the inventory window's
+  Equip mode since U8g) looses on the strike frame along the
+  view-matrix forward and tallies Archery; enemy archers hold the
+  STRICT 6..51.2m band since CH-C - DoRangedAttack returns ahead of
+  the advance/retreat decision, so an in-band shooter stops, turns to
+  within 22.5deg and rolls 1/32 per classic update, while outside the
+  band the same foe is a melee fighter under the reach gate and each
+  swing keys its records and damage by WHICH decision fired it; hits
+  resolve through calculateAttackDamage with the bow BOTH directions,
+  and a landed arrow adds ONE recoverable Arrow to the TARGET'S items (BowDamage's
   classic charm). Crouch pass-over pends.
 - Trigger-on-collision: SHIPPED. DaggerfallAction.Receive's verbatim
   trigger gate lands in the action system (TRIGGER_GATE: each RDB
@@ -44,11 +50,25 @@ enemy-rigs arc; full records live in 04-Characters/Characters-Arc.md):
   the player actively moves HORIZONTALLY (classic ignores up/down/
   jump), contact beneath -> WalkOn; movers carry their AT-REST bounds and
   trigger only while parked (audit 06f closed the step-on-platform
-  gap). The Combat build queue is EMPTY;
-  remaining Combat-adjacent work lives in Systems (effect library)
-  and UI.
-- Systems-shared interims tracked in the Home ledger: TallySkill,
-  proficiency/racial mods, poisoned weapons, stealth checks.
+  gap). The Combat build queue is NOT empty: AUDIT 26 (2026-08-26)
+  routed five unstruck Combat-arc rows into the Ledger - F023 (every
+  unsheathe plays clip 78 where DFU plays the weapon's own equip
+  sound), F024/F025 (the bow blinks out over its cooldown, and an
+  equip countdown never calls ShowWeapons(false)), F128 (the equip
+  delay bills per transition, not per inventory visit), F182
+  (envAttack skips Receive(Attack) on doors) and F052/F053 (the arrow
+  impact's missing sound and blood halves). The rest of the
+  Combat-adjacent work lives in Systems (effect library) and UI.
+- Systems-shared interims tracked in the Home ledger: TallySkill
+  SHIPPED at S3 (systems/skills.js:94), stealth checks SHIPPED with
+  shared.js's StealthCheck seam, poisoned weapons SHIPPED at S19b
+  (systems/poisons.js) with the player's own blade dosing its victim
+  through calculateAttackDamage (C2-slice), and the RACIAL half of
+  the swing mods is verbatim (formulas.js:199-207). TWO INTERIMS
+  LEFT: CalculateProficiencyModifiers reads 0 until the career
+  "Expertise In" flags land (formulas.js:449-450), and the enemy's
+  poisoned-weapon assignment roll is still unrolled
+  (enemyEquipment.js:183) now that the system it waited on ships.
 
 ## The FP weapon: the TRUE classic method (design pivot 2026-08-17, Mac-directed)
 
@@ -69,12 +89,22 @@ drawFirstPersonViewmodel, anims' ATTACKS_FP sweeps, PlayerWeapon's
 pose() with its units pins, and tools/fpProbe.mjs - each annotated ON
 ICE at the site. tools/fpsWeaponProbe.mjs is the live path's standing
 probe (real ARENA2 CIFs headless; zero coverage in any state is the
-failure class the voxel path shipped for six weeks). Gallery:
-visual-changes/combat-fp/classic-weapon/ (generated locally, gitignored -
-AUDIT 21 doctrine F1 took it out of public/, which publishes). Departures at the
-module head: no FlipHorizontal (right-hand only until a settings
-surface), weaponOffsetHeight 0 (no large HUD yet). Follow-up rollout:
-the exterior/interior hosts (the voxel path was dungeon-only too).
+failure class the voxel path shipped for six weeks). Gallery: generated
+locally, never committed - the ignore rule is `public/visual-changes/`
+(.gitignore:37), the published root AUDIT 21 doctrine F1 took the
+fourteen frames out of; the standing probe writes its own shots outside
+the repo. Departures at the module head, both now with EXPIRED
+conditions: no FlipHorizontal, whose "until a settings surface" ran out
+when the settings screen shipped - Controls/Handedness sits on it
+(settingsMap.js:72) at STORED tier, a switch the player can flip that
+reaches nothing, which is the same shape U45 found GUI/LargeHUD in; and
+weaponOffsetHeight 0 (fpsWeapon.js:22, :266), whose "no large HUD yet"
+ran out AT U45 - the classic bottom bar ships, so the screen weapon now
+sits at the wrong height behind it. That second one is a REAL
+undocumented gap, not a moot departure: it is the one place in this
+page where the staleness understates the WORK, not the port.
+Follow-up rollout: the exterior/interior hosts (the voxel path was
+dungeon-only too).
 
 ## 2026-08-17 - the classic-FP-weapon parity audit (Mac-directed)
 
@@ -114,7 +144,9 @@ SIX findings, all rooted and pinned:
    auto-sheathes with the classic "You have no arrows." line
    (FPSWeapon.UpdateWeapon's guard, verbatim).
 6. The standing probe gained silver/steel dye-parity evidence shots
-   (gallery: regenerate locally with tools/fpProbe.mjs; it is not committed).
+   (tools/fpsWeaponProbe.mjs:91-92 - fpProbe.mjs is the ICED voxel
+   path's probe and shoots none of these; regenerate locally, they are
+   not committed).
 
 ## C9 (2026-08-16): the FP-weapon HOST ROLLOUT - SHIPPED
 
@@ -217,27 +249,42 @@ The laws (all pinned in mobileunit.test.js, 6 tests):
   sequences; enemyBasics.js regenerated (C3 parity asserted, all 42
   monsters carry sequences).
 
-THE BILLBOARD-AXIS DOCTRINE (ground-truthed, engine-wide): our
-right-handed lookAt puts world +x on screen-right where Unity puts
-it on screen-LEFT - for identical world data and camera pose our
-frame is the horizontal mirror of DFU's (the A/D strafe comment in
-every host records the same fact: Unity's (cos,-sin) right vector
-moved screen-left here). The hosts' static-flat axis
-`camRight = (cos yaw, 0, -sin yaw)` = the NEGATED view row 0 bakes
-the compensating mirror into every billboard, so the engine is
-self-consistently mirrored - and DFU's verbatim FlipLeftRight
-booleans are correct ONLY under that axis. Any new billboard pass
-MUST use the flats' axis, never the raw view row. Proven by the
-sprite-orientation doctrine: skeletal warrior 270/17 raw art faces
-image-left; with the raw view row the o=6 flip rendered it
-moonwalking (facing against its own yaw); with the flats' axis it
-faces its walk direction, matching the raw art. (The scratchpad
-record dumper + tools/monsterProbe.mjs are the standing check.)
-Corollary for the ledger: the whole render is chirality-flipped vs
-classic per-frame (texture text would read backwards); un-mirroring
-is a candidate slice (negate the view x row + frontFace swap +
-strafe/gesture audit), Mac's call - within-engine consistency holds
-either way.
+THE BILLBOARD-AXIS DOCTRINE (ground-truthed, engine-wide): the world
+DATA is DFU's, left-handed (x east, y up, z north), and the
+right-handed lookAt put world +x on screen-LEFT where Unity puts it
+on screen-RIGHT - so for identical world data and camera pose our
+frame was the horizontal MIRROR of DFU's, from M1 until 2026-08-23.
+The hosts' static-flat axis `camRight = (cos yaw, 0, -sin yaw)` =
+the NEGATED view row 0 is Unity's OWN right vector, and DFU's
+verbatim FlipLeftRight booleans are correct only under it: while the
+mesh pass ran mirrored, that axis was the one surface already
+drawing classic's way. Any new billboard pass MUST use the flats'
+axis, never the raw view row. Proven by the sprite-orientation
+doctrine: skeletal warrior 270/17 raw art faces image-left; with the
+raw view row the o=6 flip rendered it moonwalking (facing against
+its own yaw); with the flats' axis it faces its walk direction,
+matching the raw art. (The scratchpad record dumper +
+tools/monsterProbe.mjs are the standing check.)
+
+THE UN-MIRRORING SHIPPED (2026-08-23, off Mac's playtest "signage is
+inverted") - it is the HANDEDNESS LAW at mat4.js:86-110, not a
+candidate slice. Every input sign had been tuned against the mirror,
+so the port PLAYED correctly and only text could tell; the motor even
+carried a comment PROVING the old screen side from the projection and
+reverting a prior fix - the proof was true and the convention it
+proved was the mirror (motor.js:625-631). The fix is ONE mirror at
+the projection: `mirrorProjectionX` negates the NDC x row, so screen
+x flips for meshes, billboards, missiles and precipitation at once
+and world +x lands screen-RIGHT. Consequences, each at its site:
+triangle winding flips, so renderer init sets `frontFace(CW)`
+(renderer.js:617); the input signs go back to Unity's (yaw += dx,
+strafe/fly right = (cos, -sin), motor.js:636-637); the billboard
+camRight above and the sky's screen ray were ALREADY written to this
+convention and simply stopped mismatching. The FP viewmodel keeps its
+own UNMIRRORED perspective - its pass never culls - and the automap's
+2D lens takes the mirror because its mesh pass does
+(automapWindow.js:216). test/handedness.test.js pins the math and
+greps every host for the mirrored projection.
 
 Rendering: one live batch per foe (unit quad; renderer `record`
 takes the composite `${record}#${frame}` key; negative size.w =

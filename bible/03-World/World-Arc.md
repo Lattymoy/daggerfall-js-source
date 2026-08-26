@@ -41,9 +41,10 @@ equal to DFU's cast-then-divide (both truncate toward zero). A
 five invariants per step: post-recenter |y| <= 500, the current pixel
 frame at the origin, the camera inside the pixel frame, exact native
 round-trips, and the loaded set exactly the 7x7. A live Playwright
-flight probe (test-harness/stream-flight-probe.mjs) round-trips a
-4-crossing path: built count returns to exactly 49 (GPU destroy /
-release cycle verified live), zero page errors. Perf note: under
+flight probe (ad-hoc, never committed - the standing probes all live
+in tools/) round-trips a 4-crossing path: built count returns to
+exactly 49 (GPU destroy / release cycle verified live), zero page
+errors. Perf note: under
 SwiftShader the 49-pixel scene renders at seconds per frame (software
 raster; the desktop-GPU target is unaffected) - live-frame probes must
 frame-sync on the shot-mode __frame counter rather than sleep.
@@ -343,8 +344,11 @@ CityNavigation / MobilePersonMotor / MobilePersonBillboard, verbatim:
   180-degree view; a spawn stays HIDDEN until its first completed
   tile move (anti-skate). Race/gender/variant from the verbatim
   texture tables (Redguard/Nord/Breton x male/female x 4 + guard
-  399); the region race is Breton (FLAGGED: the climate People
-  table pends - correct for the test city).
+  399); the wandering race is the CLIMATE's People
+  (PopulationManager.cs:94 - Redguard deserts, Nord mountains), read
+  off ClimateSettings.People in both hosts since AUDIT 23
+  (characters-4); AUDIT 23 (characters-5) split the NAME bank off it
+  (MobilePersonNPC.cs:214 - the bank is the REGION's).
 - RENDER: C11-style live batches per person (record#frame uploads,
   the flats' billboard axis - the doctrine). DOCTRINE PROOF: the
   probed townsman (386) crops IDENTICAL to raw 386/5 (teal tunic,
@@ -356,9 +360,7 @@ CityNavigation / MobilePersonMotor / MobilePersonBillboard, verbatim:
   half-scale grid clustered spawns in-view and nothing could pop
   in).
 
-Residuals (LOUD): talk/activation pends dialog; guards pend the
-crime system (the table ships); the streaming world (?world) mounts
-in T2; interior population unchanged (C1).
+Residuals (LOUD): interior population unchanged (C1).
 
 ## T2 (2026-08-17): TOWNS - the streaming-world mount SHIPPED
 
@@ -401,11 +403,11 @@ rule: every scene-side seam ships in every motor host). world.js:
   exterior.js had the same ordering silently right). __pose in walk
   mode moves the PLAYER here too (the T1 lesson, host parity).
 
-Residuals (LOUD): unchanged from T1 (talk/dialog, guards/crime,
-climate People race table); night-time streets empty by law
-(daytime-only townsfolk); the pool ticks for every built location
-pixel (up to ~4 with populations in range) - idle cost is one
-failed spawn probe per tick per far pixel, negligible.
+Residuals (LOUD): interior population unchanged (T1's, and the only
+one left standing); night-time streets empty by law (daytime-only
+townsfolk); the pool ticks for every built location pixel (up to ~4
+with populations in range) - idle cost is one failed spawn probe per
+tick per far pixel, negligible.
 
 ## T3a (2026-08-17): TALK - the faction foundation SHIPPED
 
@@ -442,12 +444,12 @@ Node-pure (the window UI and the scene activation wiring are T3b):
   crimeCommitted='Pickpocketing' verbatim. Constants: mobile/static
   NPC activation 256 units = 6.4, pickpocket 128 = 3.2.
 
-FLAGGED (LOUD): guard spawning on the failed pickpocket pends the
-crime slice (the crime STATE lands now); TallyCrimeGuildRequirements
-pends the guilds arc; enemy pickpocketing pends the same wiring;
-biographyReactionMod is 0 until chargen's biography quiz ships; rep
-deltas (quests/crimes) pend the save-side faction clone - the live
-FactionFile dict IS the state until then.
+FLAGGED (LOUD): TallyCrimeGuildRequirements(true, 1) pends the
+thieves-guild quest/invitation slice that consumes the tally (guild
+MEMBERSHIP itself shipped at G2 - AUDIT 23 reflagged the real
+blocker); enemy pickpocketing pends the targetLevel wiring
+(calculatePickpocketingChance carries the vs-enemy arm, nothing calls
+it with a level).
 
 T3b next: the talk window (TALK01I0.IMG shell, greetings by
 reaction, Where-is building directions) + the scene activation modes
@@ -468,8 +470,11 @@ motor hosts (the standing host rule; one shared seam module):
   greeting-set macros: %pcf (first name token) and %oth (an oath,
   TEXT.RSC 201 + FactionRace - DFU's deliberate fix of the classic
   region-race oath bug; the oath variant is drawn only when the
-  greeting carries %oth). Unknown macros pass through LOUD (the
-  full MacroHelper pends).
+  greeting carries %oth). Unknown macros pass through LOUD in this
+  seam; the WHOLE MacroHelper landed with the Talk-Arc's TK-v/TK-vi
+  MCP (systems/talkMacros.js), which the ?world host's talk engine
+  runs every record through - the pre-engine ?exterior dev host still
+  expands only the list above.
 - THE SEAM (scenes/townTalk.js, shared): interaction modes on the
   classic F1-F4 (Steal/Grab/Info/Talk, default GRAB, "Interaction
   is now in %s mode.", no-op on the same mode); the activation ray
@@ -489,8 +494,9 @@ motor hosts (the standing host rule; one shared seam module):
   rig's say() lines (C9's console flag) now land on screen.
   surfacePlayer() at boot (the probe surface).
 - UI (ui/talkWindow.js): the U-arc text panel (the rest window's
-  shape - TALK01I0.IMG art pends the shared background note) with
-  greedy word-wrap; Esc/Enter = goodbye.
+  shape) with greedy word-wrap; Esc/Enter = goodbye. U8b then built
+  the NATIVE window on the real TALK01I0.IMG (ui/nativeTalk.js); this
+  text panel is the art-less fallback.
 - PROBE PROOF (tools/talkProbe.mjs): live in the test city - E on a
   politeness-idled townsman opened the panel reading "Yes?" (a real
   7207 variant through the real TEXT.RSC); Esc + F1 flipped to
@@ -500,12 +506,10 @@ motor hosts (the standing host rule; one shared seam module):
   press() falls between rAFs - hold keys across frame-synced waits
   (keyboard.down + N frames + up).
 
-FLAGGED (LOUD): topics (Where-is/Tell-me-about), tones, the
-portrait, and TALK01I0.IMG all pend T3c; guards on the failed
-pickpocket pend crime; the streaming host's People faction rides
-the START region until travel wiring; touch has no mode keys yet
-(the mobile input arc). [RESOLVED same-day: the T3-touch addendum
-below.]
+FLAGGED (LOUD): the TFAC portrait art pends (nativeTalk holds the
+64x64 frame at 119,65 empty); the streaming host's People faction and
+its greetings ride the START region until travel wiring - only the
+directory names follow the pixel's own region (T3d).
 
 ### T3-touch addendum (2026-08-17): the phone interaction path
 
@@ -546,17 +550,24 @@ hosts (scenes/cityGuards.js, one shared module):
   watch marches on the crime scene before ever seeing the player.
   Probed: a ring guard walked 30+ units to the player, flipped
   detected, and entered StrikeRight. Dungeon foes inherit the same
-  law (they used to stop the instant detection dropped). FLAGGED:
-  blind pursuit aims at the LIVE position until target prediction
-  (PredictedTargetPos) ships.
+  law (they used to stop the instant detection dropped). AUDIT 24
+  (wave 36) seeded the remembered position at
+  MakeEnemyHostileToAttacker (:186-211), so blind pursuit walks to
+  where the attack came from rather than the live player - and there
+  is no lead prediction owed: in the CLASSIC path PredictedTargetPos
+  simply IS lastKnownTargetPos, PredictNextTargetPos sitting inside
+  EnemySenses' EnhancedCombatAI guard (:496-501).
 - COMBAT BOTH WAYS: the guard's -1 hit frame resolves
   CalculateAttackDamage vs the player (the C16 gate: 0.25/
   MeleeDistance + 35.156 deg) through the host's onPlayerHurt (the
   same entity the fall-damage path bills); the player's melee swings
   resolve via playerWeapon.resolveHit (reach + LOS + swing mods)
   with the C15 knockback on landed damage and the weapon-skill
-  tally. Death drops the classic corpse (380/1). HALT: the barkSound
-  (456) fires 3D at the detection rising edge.
+  tally. Death drops the classic corpse (380/1). The barkSound (456)
+  runs EnemySounds' 3-9 second ATTRACT cadence within 16m - the watch
+  is the one class enemy the human mute spares - not the "rising
+  edge" this record used to claim, which AUDIT 24 (wave 41) found was
+  an invention with no counterpart in DFU.
 - THE CRIME TRIGGER: townTalk's failed pickpocket calls the host's
   onCrime -> SpawnCityGuards(true) with the live person pool
   (facing yaws ride MobilePerson.facingYaw; conversion recycles the
@@ -566,13 +577,7 @@ DOCTRINE PROOF: the close-up crops the classic plate-armored watch
 knight (399) mid-swing, battle axe in hand. Gates: 431/95, the
 verbatim law pinned over real CLASS18.CFG (cityguards.test.js).
 
-FLAGGED (LOUD): arrest/court pends (guards fight to the death);
-guard archers forced melee (exterior foe arrows pend); assault
-crimes pend (pickpocket is the only trigger); corpse loot pickup
-pends the exterior activation seam; LowerRepForCrime + the crime
-rep deltas pend the save-side faction clone; enemy-vs-enemy pends
-(C15 residual); the player death screen in exteriors pends (health
-hits 0 with no fanfare).
+FLAGGED (LOUD): enemy-vs-enemy pends (C15 residual).
 
 ## G2 (2026-08-17): ARREST + COURT - the crime loop completes SHIPPED
 
@@ -609,11 +614,13 @@ both hosts):
   sim at ~1/3 speed - probes POSE into reach rather than wait out
   pursuit.
 
-FLAGGED (LOUD): guild rescues pend the guilds arc; execution is
-classic-unreachable; the prison day-skip is a no-op until the shared
-calendar; banishment's SeverePunishmentFlags consequences pend;
-FillVitalSigns is a floor-at-1 until vitals wiring; the People
-faction rep half-delta pends the save-side clone.
+FLAGGED (LOUD): guild rescues (Thieves/Dark Brotherhood) pend the
+guilds arc; execution is classic-unreachable; the prison SCREEN
+pends; banishment's SeverePunishmentFlags consequences pend;
+FillVitalSigns is a floor-at-1 until vitals wiring. (The prison
+DAY-SKIP is real: AUDIT 21 F2 gave the port one clock and F8 pointed
+createArrestFlow's advanceDays at it, plus ReleaseFromPrison's four
+hours on EVERY court exit.)
 
 ## T3c (2026-08-17): WHERE IS - building names + directions SHIPPED
 
@@ -650,13 +657,7 @@ The talk window answers "Where is...?" in the test-city host:
   "Doctor Rodynak's Herbs" under Alchemists, and a genuine tier-0
   answer ("Its none of yer damn business.").
 
-FLAGGED (LOUD): the NPC knowledge roll pends (every NPC knows - the
-doesn't-know half of the table is wired but unreached); the tone
-buttons (Polite/Blunt) pend; the 35% map-reveal path SHIPPED at T4
-(the discovery store pends only the map that will draw it); %hnr/%ra
-SHIPPED at T4 off the entity; the STREAMING host's
-per-pixel directory pends (a host-rule debt, the immediate
-follow-up); the person-seed stands in for DFU's NPC hashcode
+FLAGGED (LOUD): the person-seed stands in for DFU's NPC hashcode
 (Ledger A); identically-seeded repeats in pool-exhausted cities
 mirror DFU's own fallback.
 
@@ -727,9 +728,14 @@ corpse - "Longsword + 5 armor pieces" into the player entity, a
 second E takes nothing.
 
 Suite 442/97 (the walk-away/kill/take-once pin + the Items.AddItem
-mirror pin). FLAGGED: loot pickup as an inventory WINDOW (take-all
-is the interim, as the dungeon's), murder/assault crimes for
-killing the watch pend the crime-table wiring.
+mirror pin). FLAGGED: loot pickup as an inventory WINDOW pends in
+the EXTERIOR hosts only - U26 gave the dungeon PlayerActivate's real
+shape (the container becomes the inventory window's remote target),
+so takeCorpseLoot's vacuum is now this seam's alone. AUDIT 24 (wave
+38) folded it into the shared scenes/corpseMarker.js beside
+exteriorFoes' corpses and corrected two laws there: an EMPTY body is
+still a target (:942-947 - this skipped it silently) and a body
+holding nothing but arrows is collected whole (:948-952).
 
 ## T3e (2026-08-17): THE KNOWLEDGE ROLL - NPCs can not know SHIPPED
 
@@ -799,7 +805,12 @@ branch + DaggerfallEntityBehaviour.HandleAttackFromSource, verbatim):
   motor disables - no health roll, no damage formula), levies
   Crimes.Murder and fires SpawnCityGuards(true) through the host's
   crime response. TallyCrimeGuildRequirements(false, 5) FLAGGED to
-  the thieves-guild arc; DFU's blood splash pends a blood system.
+  the thieves-guild arc. The blood splash is LIVE since AUDIT 24
+  (wave 39, scenes/hitEffects.js): a murdered civilian splashes
+  record 0 - not a BloodIndex, because a MobilePersonNPC has no
+  MobileEnemy to read one from - and this is the one port site that
+  has DFU's actual impactPosition, the activation ray having already
+  found the person.
 - A strike on a wandering GUARD NPC levies Crimes.Assault and
   converts the NPC to a live Knight_CityWatch foe ON THE SPOT
   (SpawnCityGuard at its position/facing, source disabled) - and
@@ -857,7 +868,8 @@ seen-by-guard MASS conversion (DFU converts every REMAINING pool
 NPC once any guard sees - the `if (seenByGuard)` sits outside the
 range/LOS gate), and the court %pcn/%cri/%pen macro expansion (the
 records rendered raw on screen; %pcn's appositive collapses while
-the player is nameless pre-chargen - chargen wiring FLAGGED).
+the player is nameless, which AUDIT 23 made unreachable in play -
+chargen runs in every host and writes the name).
 Verbatim re-confirmed clean: the court math line by line (plea
 rolls, thresholds, the never-charged verdict quirk, execution
 unreachable), the fatal-blow interception, the spawn constants and
@@ -890,8 +902,12 @@ discovery no-dupe all mutation-checked (three planted mutants caught).
   store (the worldTick one-clock precedent): locationId ->
   buildingKey -> the DiscoveredBuilding columns this port has sources
   for ({ buildingKey, displayName, factionId, quality, buildingType }
-  of PlayerGPS.cs:92-103; the quest name-override arms,
-  UndiscoverBuilding and lastLockpickAttempt pend quests/automap).
+  of PlayerGPS.cs:92-103; the quest NAME-OVERRIDE arms (:947-971)
+  and customUserDisplayName still pend quests and the automap UI,
+  but UndiscoverBuilding's store half landed with TK-ii, which
+  undiscovers a quest RESIDENCE at topic-add - H3 spends the same
+  call when a house is sold - and lastLockpickAttempt went live at R1
+  as the exterior anti-grind record, :1099-1126).
   Already-discovered is a no-op (:926-928). DFU namespaces locations
   by MapPixelID (:936); the talk seam carries no pixel yet, so the id
   is `region:location` - the automap arc swaps it when there is a map

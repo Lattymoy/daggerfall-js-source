@@ -166,8 +166,9 @@ window, textured (0.5 alpha cut) or solid color; depth off, NEAREST.
 src/ui/hud.js is the verbatim DFU-fullscreen HUD: vitals
 bottom-left from the classic bar art (MAIN03I0 health / MAIN04I0
 fatigue / MAIN05I0 magicka), each cropped BOTTOM-ANCHORED by
-current/max (the VerticalProgress shape; fatigue draws FULL,
-FLAGGED - the stat pends); the compass bottom-right - COMPBOX frame
+current/max (the VerticalProgress shape; fatigue reads the LIVE stat
+since S15 - entity.fatigue over the (Str+End) x 64 ceiling,
+hud.js:326); the compass bottom-right - COMPBOX frame
 over a 64px window into COMPASS.IMG scrolled by trunc(258 x
 heading01) (nonWrappedPart; the strip's tail duplicates its head so
 scroll 257 + 64 = 321 < 322, no runtime wrap - pinned). Integer
@@ -483,12 +484,16 @@ lays the foundation and retrofits the FIRST window.
   (isChoiceWindow = raw codes); the dungeon keeps toggleCharSheet
   with a lazy preload; both hosts warm INFO00I0 at boot.
 
-FLAGGED loud: the PORTRAIT (200,8) pends chargen faces; the
-level-up screen + every other window stay on the text idiom (one
-window per U8 slice: trade/inventory/talk/rest/chargen queue); the
-classic buttons draw from the ART (no click/touch rects yet -
-pointToNative is ready for them); interior-mode F5 pends worldModes
-key routing.
+FLAGGED loud, and only one clause of this is still open: the LEVEL-UP
+SCREEN stays on the text idiom (`charsheet.js:65` LevelUpScreen draws
+its own lines over a dimmed frame). The rest closed - the PORTRAIT
+(200,8) draws the shared paperdoll, refreshed on open like the
+inventory's; every other window in the U8 queue (trade, inventory,
+talk, rest, chargen) is native art now; the classic buttons took their
+click rects at AUDIT 18, which gave the sheet a `click()` at all - the
+four skill rects open the pages keys 1-4 do and every remaining DFU
+button rect is answered or consumed so a click never escapes to
+requestLook; and interior-mode F5 landed at U43's one dispatch.
 
 Probed live + EYEBALLED (the doctrine): the real stone page renders
 with every label in its engraved field - "RACE: Breton, LEVEL: 1,
@@ -523,11 +528,17 @@ exterior hosts (art-less sessions keep the chain - never trap).
   fallback chain), the T3e knowledge roll, the T3f toned tiers -
   answers append to the conversation history as classic does.
 
-FLAGGED loud: the TFAC portrait pends faces (the art's frame
-shows); the TALK02/03 tone-highlight art pends (an interim yellow
-mark fills the active radio); People/Things/Work + Tell me about
-are hit-consumed no-ops pending their topic sources; the scroll
-arrows ride their rects (no INVE06/07 arrow art yet).
+FLAGGED loud: the TFAC portrait pends faces (the art's frame shows),
+and the topic scroll arrows still ride bare rects (no INVE06/07 arrow
+art). The other two are retired. People/Things/Work and Tell me about
+are LIVE PAGES over the engine's own lists at B5-6 (listTopicTellMeAbout
+/ Person / Thing plus the Work question; each stays a consumed no-op
+only on a host with no engine mounted). And the tone highlight was
+never art to wait for: DFU's marker is `panelTone`, a flat 6x6
+toggleColor (162,36,12) fill that UpdateCheckboxes (:916-930) moves
+between the three radio positions - the port draws exactly that
+(TALK_TOGGLE_COLOR, nativeTalk.js:79), so the flag's premise was
+refuted rather than satisfied.
 
 Probed live + EYEBALLED: the full classic screen - every baked
 button label under its rect, the NORMAL radio marked, the three
@@ -3365,9 +3376,13 @@ the store saves on close - and the probe's first draft "proved" the
 bar wrote by reading the DEFAULT back (0.5 IS the ini default and the
 sparse store drops default-equal writes); it clicks 0.25 now.
 
-Pending, stated in-window or at the site: the CONTROLS button answers
-with a note until I4's rebinding grid; the multi-slot save window;
-PauseOptionsDropdown (a DFU-era addition, with the settings arc).
+Pending, stated in-window or at the site: the multi-slot save window
+(still a Ledger C row - the port has one `dagger.quicksave` key where
+DFU has indexed folders, SaveInfo, rename, delete and screenshots); and
+PauseOptionsDropdown (a DFU-era addition, with the settings arc). The
+CONTROLS button no longer answers with a note - U36/I4 shipped the
+rebinding grid the same day and ControlsButton (:311-315) dispatches to
+it (pauseWindow.js:231-239).
 
 Pins: 7 in `pausewindow.test.js` (geometry literal-for-literal, the
 bar and detail laws, the confirm/save/load flows, the four-host
@@ -3731,21 +3746,35 @@ the window's own weighing rather than recomputing it. The same trap
 was found in FOURTEEN other probes and is gated in
 `test/probehygiene.test.js`.
 
-FLAGGED: the Identify SPELL arm (it pays in magicka and rolls per
-item) waits on the magic arc; the letter of credit is minted and
-carried but there is nowhere to cash one until banking lands (T2
-2026-08-25 closed the OTHER half of that clause - the letter was
-minted in SILENCE, where DFU announces it: `DaggerfallUI.MessageBox`
-on Internal_Strings' `letterOfCredit` at :1092-1093. Without the line
-the only signal reaching a player who sold something valuable while
-overloaded was gold that did not move, which reads as a sale that
-failed. The window raises it as a click-anywhere box over the still-
-open trade screen, which is DFU's own order: a bare `CloseWindow()`
-in a message-box handler pops the TOP window - the CONFIRM box, not
-the trade window, UserInterfaceWindow.cs:127-132); the
-wagon/info/select/steal buttons remain consumed no-ops; and a
-guild-run shop passes `guildFactionId: null`, so Tales and Tallow
-cannot yet fire - the guild-store arm is its own slice.
+FLAGGED: the wagon/info/select/steal buttons remain consumed no-ops,
+each waiting on its own slice (nativeTrade.js:358-360). The other three
+clauses of this list closed in the week after it was written.
+
+The Identify SPELL arm SHIPPED at X7: it opens this same window in
+`Identify` mode with `usingIdentifySpell` true, so staging an
+already-known item is legal and the charge is the effect's own refunded
+spell-point cost rather than the (25 * value) >> 8 fee
+(worldModes.js:3985-3992).
+
+The LETTER OF CREDIT can be cashed: B1/B2 built the bank, and
+`depositAllLetters` (banking.js:454) is DepositAll_LOC verbatim - every
+letter in the pack, at face value, in one go, with no partial deposit.
+T2 2026-08-25 had already closed the other half of that clause, the
+letter being minted in SILENCE where DFU announces it:
+`DaggerfallUI.MessageBox` on Internal_Strings' `letterOfCredit` at
+:1092-1093. Without the line the only signal reaching a player who sold
+something valuable while overloaded was gold that did not move, which
+reads as a sale that failed. The window raises it as a click-anywhere
+box over the still-open trade screen, which is DFU's own order: a bare
+`CloseWindow()` in a message-box handler pops the TOP window - the
+CONFIRM box, not the trade window (UserInterfaceWindow.cs:127-132).
+
+And `guildFactionId: null` was G4's opening move: a guild service
+opening this window now passes the guild's own faction id
+(worldModes.js:1603-1666), so Tales and Tallow halves what is bought AT
+the Mages Guild. A high-street shop still passes null, because a shop
+belongs to no guild - and the mirror clause, Merchants Festival halving
+*outside* a guild, reads the same field from the other side.
 
 ## B2 - THE BANKING WINDOW (2026-08-24)
 
@@ -3777,10 +3806,12 @@ supplies its own line only for the weight refusal.
 `1000 (+5000)` when the cart holds gold, because the deposit arm can
 reach into it and a player needs to see that at a glance.
 
-The house and ship PURCHASE popups are flagged, not built: they need
-the building directory and the permanent-scene set. Both buttons refuse
-through the law's own decisions, which is also what DFU answers when
-the directory is missing.
+The HOUSE purchase popup landed at H2 the next day and the ship's SELL
+side at H3 - see the H1-H3 record below. What is still unbuilt here is
+the ship PICKER: `buyShipDecision` reaches its `pick` arm in a real port
+town and `bankWindow.js:209-212` answers NOT_PORT_TOWN anyway, so BUY
+SHIP refuses even where it should open, while `purchaseShip` sits ported
+and pinned in `systems/banking.js` with no caller outside the tests.
 
 Pins: 11 in `bankwindow.test.js`. 15 mutations, 15 dead. Live:
 `tools/bankProbe.mjs` mints 62 regional accounts in a real interior,
@@ -3788,6 +3819,75 @@ deposits 20,000 off the entity, withdraws it back, borrows 10,000 at
 11,000 owed with a rendered due date ("Middas the 4th of Morning
 Star"), and reads the real refusal record back when it asks for a
 second loan.
+
+## H1-H3 - THE BANK'S PROPERTY WINDOWS (2026-08-25)
+
+B2 left the bank drawing four buttons over nothing: BUY HOUSE, SELL
+HOUSE, BUY SHIP, SELL SHIP, each refusing through a producer that was a
+literal - `ownsHouse: () => false`, `houseSellPrice: () => 0`,
+`ownsShip: () => false`, `isPortTown: () => false`. H1 made a house
+ownable, H2 built the window that sells one, H3 took the two leaves.
+The UI half is `ui/bankPurchaseWindow.js` and the bank's own dispatch.
+
+**THE FLOW IS SHORTER THAN ITS SOURCE LOOKS.** BUY does not ask twice:
+`BuyButton_OnMouseClick` calls `GeneratePurchaseHousePopup(house)`,
+which is `GeneratePopup(PurchaseHouse(house, regionIndex))` (:234-237)
+- the transaction RUNS and its result IS the message. There is no
+Yes/No, and a completed purchase closes the window with the box,
+because the list behind it is a market this player has just left.
+`SelectedIndex < 0` does nothing at all - no beep, no line - which is
+DFU's own `if (SelectedIndex < 0) return;` and is why the button feels
+dead until a row is picked.
+
+**THE PANEL IS BANK01I0 AT ITS OWN SIZE.** 225x129, centred on the
+320x200 native panel at x48, with `mainPanel.Position`'s y of 50
+(:124). Ten rows of 7 in a 78-tall list (`listDisplayUnits` = 10),
+one item per scroll tick, and the arrows draw GREEN only while there
+is somewhere to go - the port's answer to the two arrow textures DFU
+swaps. Every row is `Price : N gold` off Internal_Strings
+`bankPurchasePrice`, the price derived from the building's own mesh
+radius.
+
+**THE ONE THING STILL MISSING IS A PICTURE.** `display: [117, 12, 104,
+91]` is FLAGGED: DFU renders the selected building's own 3D model into
+that panel, rotating a degree per 0.02s on a dedicated camera and layer
+(:163-178, :202-260). The port draws the panel empty. Everything the
+window is FOR - choosing a house, seeing its price, paying - is here.
+Doing the preview properly means rendering an ARCH3D model to a texture
+inside a UI panel, which is a rendering slice and not a banking one,
+and it stands at the head of the Ledger's board.
+
+**H3 CLOSED THE TWO LEAVES WITHOUT A NEW READER.** The house sell price
+needed the OWNED building's mesh radius, and `houseMeshRadius` already
+measured exactly that for the market list while the location directory
+already carried `modelIdNum` on every building - the owned one just had
+to be found in it. `PortTownAndUnknown` (DFLocation.cs:578) had been
+parsed by `formats/mapsFile.js` since the map reader landed and read by
+nobody; it now reaches the one place DFU reads it
+(DaggerfallBankingWindow.cs:460). Both sell offers became Yes/No boxes
+that SELL on Yes, where they had been click-anywhere boxes that sold
+nothing, and both credit the ACCOUNT rather than the purse - a deed is
+paid into the bank.
+
+**THE SHIP'S BUY SIDE IS THE REMAINDER.** `purchaseShip`,
+`assignShipToPlayer`, SHIP_COORDS and the two permanent scenes are all
+ported and pinned, and SELL SHIP is wired through the host; the PICKER
+is not built, so `bankWindow.js:209-212` answers NOT_PORT_TOWN even on
+the `pick` arm and `purchaseShip` has no caller outside `banking.test.js`.
+
+The window is a `isChoiceWindow`, so it takes raw codes through the
+overlay seam, and the U24 identity guard applies again: a window that
+dispatches to another must not be nulled by its OWN onClose, so the
+bank is restored when the purchase window closes - DFU's PushWindow/
+PopWindow.
+
+Pins: 14 in `houses.test.js` (H1's registry, allocation, the sale, the
+market list and its month turnover, ReceiveHouse's four refusals; H2's
+purse-then-account spend, the window listing/scrolling/selecting/
+buying, a refused purchase leaving the window open, and the bank's
+routing) plus the H3 rows in `banking.test.js`. Live:
+`npm run deeds` (`tools/deedProbe.mjs`) sold a house for 461,316 and a
+ship for 170,000, both into the account.
 
 ## M2 - THE POTION MAKER (2026-08-24)
 
@@ -4120,13 +4220,16 @@ both arrow directions, the pageless refusal, the popup's
 assign-not-toggle click, and the map dict's first-wins collision arm
 - and each is now its own pin.
 
-FLAGGED: the guild TELEPORT mode (`ActivateTeleportationTravel` +
-`DaggerfallTeleportPopUp`) still waits on the guild arc's teleport
-service, and `guildServiceFlow`'s `Teleport: null` still points here;
-the quest journal's click-through travel (`GotoPlace`) has no journal
-door yet; TextureReplacement's custom region maps and region
-overlays have no door; and the HUD smash-to-black around the trip
-waits on a fade layer the port does not have.
+FLAGGED: TextureReplacement's custom region maps and region overlays
+(:648-660, :821-833) have no door at this window - M-TEX built the
+texture store, and the travel map does not read it - and the HUD
+smash-to-black around the trip still waits on a fade layer the port
+does not have. The two flags this list opened are both closed: G5
+(2026-08-24) built the teleport mode and `DaggerfallTeleportPopUp` on
+TELE00I0, retiring `guildServiceFlow`'s `Teleport: null` with it, and
+`GotoPlace` is LIVE - `ui/questJournal.js:343-378` offers the find
+dialog and both exterior hosts hand the place straight to
+`toggleTravelMap` (world.js:1419, :1437).
 
 ## U42 - THE SPELLBOOK (2026-08-24)
 
@@ -4713,15 +4816,13 @@ answering AutoMap on the left and TravelMap on the right; and a
 synthesised `pointerdown` on the INVENTORY panel opens the real
 inventory window in the exterior host.
 
-**FLAGGED, by name:** `HUDActiveSpells` (the buff/debuff icon rows)
-and `HUDEscortingNPCFaces` (quest-gated) are the rest of that Ledger
-row. `LargeHUDOffsetHorse` and `LargeHUDUndockedOffsetWeapon` move the
-bar for a horse sprite this port does not draw and a viewmodel with no
-such offset seam, so both settings stay read by nothing and are
-recorded that way rather than silently tiered live. The interior
-host's char-sheet and inventory panels swallow their click and do
-nothing, because F5 and F6 do not reach interiors either — the same
-arc, named in the same place.
+**FLAGGED, by name:** `HUDEscortingNPCFaces` (quest-gated) is what is
+left of that Ledger row - `HUDActiveSpells`, the buff/debuff icon rows,
+shipped at U46 the next day. `LargeHUDOffsetHorse` and
+`LargeHUDUndockedOffsetWeapon` move the bar for a horse sprite this port
+does not draw and a viewmodel with no such offset seam, so both settings
+stay read by nothing and are recorded that way rather than silently
+tiered live.
 
 **AND THE MERGE FOUND A LIVE CRASH ON MAIN.** Re-running the probe
 after taking `origin/main` timed out at boot, and the console said

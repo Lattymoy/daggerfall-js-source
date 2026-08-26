@@ -551,14 +551,21 @@ EnemyEntity.cs + EnemyMotor.cs (classic AI) + EntityEffectManager:
   Enemy missiles carry casterLevel + the caster pair, so an enemy
   Transfer heals the FOE and magnitudes ride the foe's level; trap
   missiles stay casterless on the S4b shape.
-- **RESIDUAL (honest)**: live casters today are CLASS enemies
-  (monsters 0-42 still spawn as billboards - their lists ship and go
-  live with them); enemy missiles resolve against the player only
-  (foe-vs-foe friendly fire pends the missile target sweep); DFU's
-  stand-off/strafe movement for casters pends the motor (ours keeps
-  the C8 pursuit - the foe casts while closing); enemy magicka/spells
-  re-derive on world-snapshot load (spent magicka not persisted -
-  the save.js world FLAGGED class).
+- **RESIDUAL (honest)**: enemy missiles resolve against the player
+  only - foe-vs-foe friendly fire pends the missile target sweep, and
+  the same residual is written at `enemyCasting.js:162` and
+  `hostMagic.js:412`. The other three closed elsewhere: C11 pivoted
+  monsters 0-42 to REAL foes (`dungeonContext.js:569-607` - the same
+  entity, senses, spell lists and loot as a class enemy, rendered as
+  an animated sprite mobile), so every caster in the tables is live;
+  AUDIT 24's wave 35 gave the motor DoRangedAttack's stand-off band
+  (`enemyMotor.js:913-921`, EnemyMotor.cs:468-470/:610 - inside
+  240..2048 classic units with the target in sight a shooter turns to
+  face and does NOT advance) and it gates on `canCastRangedSpell`, so
+  a caster stands off rather than casting while closing; and CH4 put
+  currentMagicka in the foe snapshot (`dungeonContext.js:1804`,
+  SerializableEnemy :112/:178) - a discharged caster no longer refills
+  on load.
 
 5 tests (enemyspells.test.js). Suite 306/75, ARENA2 corpus 306/306
 green pre-commit.
@@ -739,13 +746,25 @@ This closes the S19 group (Paralyze + poisons + cures) - the S15
 349/349 green pre-commit.
 
 ## Queue
-- Magic remainder: enchantment economy/value; FreeAction /
-  Create Item / the rest of the classic library (grows one family
-  at a time).
+- ~~Magic remainder~~ SHIPPED, family by family: FreeAction at S22,
+  the concealments at S21, absorption at S24, mysticism at S26/S27,
+  the enchantment economy at the item-maker slices
+  (`systems/enchanting.js`'s `totalEnchantmentCost` /
+  `itemEnchantmentPower` behind `ui/itemMakerWindow.js`), Create Item
+  at X11b (`systems/createItem.js` + the list picker both hosts open).
+  What still falls through to `applySpell`'s `out.skipped++` is a
+  short list of keys each needing a subsystem the port has not got,
+  and the Ledger's X-slice row is where it is counted.
 - ~~Fatigue consumers~~ SHIPPED (P11 drains, S20 collapse + the
-  per-hour rates); the rest UI itself pends (shares the S20 rates).
-- Later: quests, guilds, shops, dialog, calendar deep-wiring,
-  save format.
+  per-hour rates); ~~the rest UI~~ SHIPPED too - U7 built the window
+  on these rates, U48 gave the other three hosts the dispatch above
+  it, and S40 the arm that decides WHERE.
+- ~~Later: quests, guilds, shops, dialog, calendar deep-wiring,
+  save format~~ ALL SHIPPED: the quest machine Q1-Q4-v + B1-B7
+  (Quest-Arc), the guilds G1-G8, the shops E1-E3, dialog TK-i-TK-vi
+  (Talk-Arc), the calendar S28 with the day change S41, and the
+  port's own save format S11/S12/S33/S36. The one piece still at
+  zero is the CLASSIC `.SAV` reader, which is its own slice.
 
 ## S20 (exhaustion collapse + rest recovery rates): SHIPPED
 
@@ -1056,11 +1075,19 @@ full magicka absorbs nothing and takes the spell like anyone else, and
 the probe shows exactly that.
 
 Then the sources in order: the Spell Absorption EFFECT, the CAREER
-flag, and a persistent absorb state. The port has neither the effect
-nor the state yet; the STATE alone is injectable (ctx-threaded) - the
-effect-based source has no hook in tryAbsorption at all (AUDIT 23
-magic-16 corrected the 'both are injectable' claim). The career
-branch is the live one.
+flag, and a persistent absorb state - and all three answer today. X2
+landed the effect arm FIRST, where DFU puts it: `spellAbsorptionChance`
+(`absorption.js:90`) reads the first incumbent entry that
+`effects.js:1046-1062` mints, and recomputes
+base + mod x floor(level / perLevel) from the TARGET's level at absorb
+TIME (TryEffectBasedAbsorption
+:1287-1292, the one place DFU rolls the target rather than the caster),
+so a target who levels up mid-buff really does absorb better; a failed
+roll falls THROUGH to the career branch and then to the persistent
+flag, which is DFU's own order rather than classic's override. E1's
+`entityAbsorbsSpells` fold feeds that flag from the item enchantments
+(`effects.js:648`), with `ctx.absorbing` still injectable over it for
+the probe surface.
 
 The career branches read `inside` and `day` - darkness is
 inside-OR-night, light is outside-AND-day - which is the same law
@@ -1391,18 +1418,26 @@ guards with `!noSpellPointCost && SilenceCheck()`, so an item cast or a
 free effect fires through a silence. DFU checks it in two places, at
 READY and at CAST, and both clear the readied spell.
 
-FLAGGED, by name, per THE FOUR HOSTS RULE: nothing here is wired into
-a host. Silence needs the readied-spell gate and Open/Lock need the
-door-activation path in ALL FOUR of scenes/exterior.js, scenes/world.js,
-scenes/worldModes.js and scenes/dungeonContext.js. The predicates are
-the shape those hosts will call; none is called today.
+EVERY LAW HERE HAS A HOST NOW, which took four slices and one
+inversion. S27 wired Silence and S30 folded all four hosts onto the ONE
+cast engine, so the readied-spell gate is `hostMagic.js:247/:323` and
+the foe side is `enemyCasting.js:125/:171`. The X-slice closed the
+rest: Open/Lock ride `actionSystem.js`'s door path (X1/X3), the soul
+trap rides the kill intercept in both foe damage doors
+(`dungeonContext.js:1913`, `exteriorFoes.js:195` - X5), dispelNearby
+the creature-dispel sweep (`dungeonContext.js:1204`, `world.js:1169` -
+X9), and dispellableBundles the Dispel Magic picker
+(`worldModes.js:3899` - X10). `armOpen` is the one member that did not
+survive: X3 found it a second copy of a law `effects.js` already
+inlined, and deleted it.
 
 Three effects also own a WINDOW in DFU - Dispel Magic picks a bundle,
 Create Item picks an item, Teleport picks and recalls an anchor - and
-those are the UI arc's. Where the law stands without its window it is
-stated: Dispel Magic's validity rule is a pure predicate over the
-caster's live bundles (a Spell or a HeldMagicItem, showing an icon -
-never a disease or a poison).
+all three were routed to the UI arc and have since landed there (X10's
+picker, X11b's list picker, S38's anchor box with G5's teleport popup).
+The law under Dispel Magic's window stayed here: its validity rule is a
+pure predicate over the caster's live bundles (a Spell or a
+HeldMagicItem, showing an icon - never a disease or a poison).
 
 12 mutations run, 12 killed.
 
@@ -1442,20 +1477,31 @@ cast path, the author was sent here, and the sweep was inverted:
 it now pins every host onto the ONE engine, whose two gates carry
 this record's silence law for all four.)
 
-**Open and Lock are still not wired, and the record now names their
-seams** rather than saying "pending". Their payload is an ARMED effect
-that has to survive between the cast and the next door the player
-touches, which needs a slot on the entity's active effects; the door
-end hangs off world/actionSystem.js's `activate(key)` - the single
-activation point, where `toggleDoor(o, true)` already runs - in the
-two contexts that own an ActionSystem, dungeonContext.js and
-interiorContext.js. Neither exterior host owns doors. A pin holds that
-claim honest: it fails the moment either context calls triggerOpen or
-triggerLock without the record being updated.
+**Open and Lock reached a host at X1** (2026-08-24), through the seam
+this record named. Their payload is an ARMED effect that survives
+between the cast and the next door the player touches, and the door end
+hangs off world/actionSystem.js's `activate(key)` - the single
+activation point, where `toggleDoor(o, true)` already runs. The armed
+spell arrives as an OPTION on that call (`activate(key, { doorSpell })`,
+`actionSystem.js:740-761`), which is why the wiring landed in the
+ActionSystem itself rather than in the two contexts that own one: the
+callers are `worldModes.js:2540` (interior), `:2671` (dungeon) and
+`dungeon.js:142`, each handing `doorSpellFor(playerEntity)` to the one
+door path. X3 took the auto-close swing through `toggleDoor(o, true)`
+as well - Lock's own `activatedByPlayer: false` suppressed the door's
+action record, so a door wired to fire a trap stayed silent when a Lock
+spell shut it.
 
 These hosts have no execution coverage in node - AUDIT 19 found a
 crash that 990 tests could not see - so the seam is pinned by READING
 them, the same idiom audit17e uses for its four-host rules.
+
+FLAGGED, against the PIN rather than the port: `mysticism.test.js`'s
+S27 pin greps dungeonContext.js and interiorContext.js for triggerOpen/
+triggerLock, and the wiring landed in actionSystem.js - so it passed
+through X1 unchanged and `mysticism.js:53`'s own header still reads
+"OPEN AND LOCK ARE NOT WIRED". A pin that cannot fail is not a pin;
+both are a follow-up slice's, and neither is this doc's to edit.
 
 4 mutations run, 4 killed.
 
@@ -1568,7 +1614,7 @@ FACTION.TXT rather than pretending the reputation is zero.
 
 `src/systems/holidays.js` from FormulaHelper.GetHolidayId (:1819-1852)
 and DFLocation.Holidays; `src/systems/guildServiceActions.js` from the
-three guild-service window classes. `test/holidays.test.js` (6) and
+three guild-service window classes. `test/holidays.test.js` (7) and
 `test/guildserviceactions.test.js` (16).
 
 **Holidays landed because the temple charges for them.** Three of the
@@ -2546,18 +2592,19 @@ is structural rather than written.
 
 ## S40 - A BED YOU CAN SLEEP IN (2026-08-25)
 
-`src/systems/restSession.js` (CanRest, `restOpenGate`,
+`src/systems/restSession.js` (CanRest, `restDecision`,
 `interiorRestPlace`, CheckRent, the illegal-rest confirm) +
 `src/ui/restWindow.js` (the gate on the buttons that own it, MoveToBed,
 the IsResting lifecycle) + `src/scenes/shared.js`
 (`restVitals`/`restFullyHealed`/`createRestDeps` - the rested hour, one
-home) + `src/formats/mapsFile.js` (`isTownLocationType`) +
+home) + `src/systems/nearbyObjects.js` (`TOWN_LOCATION_TYPES` +
+`isPlayerInTown`, both flags) +
 `src/systems/encounters.js` (`areEnemiesNearby`) + `src/player/motor.js`
 (`startRestGroundedCheck`) + `src/systems/worldTick.js` (the
 `!isResting` fatigue gate) + `src/scenes/townTalk.js` (`closeOverlay`)
 + `src/systems/settings.js` (IllegalRestWarning goes live) +
 `src/systems/tavern.js` (a flag retired) + all four hosts.
-`test/restlodging.test.js` (new, 51).
+`test/restlodging.test.js` (new, 52 - AUDIT 26 added the last one).
 
 **Rest was a dungeon feature.** `toggleRest` existed in exactly one
 host. Outside a dungeon the R key did nothing, so a character above
@@ -2623,8 +2670,10 @@ all, so "in town, outdoors" was true while standing in a shop. That
 predicate is not S40's: the quest machine reads it too
 (`machine.cs:134`), and every rule keyed on it exempted those four
 settlement types. The type list now has one home
-(`isTownLocationType`), and the strict variant has one closure per
-outdoor host that the quest bridge shares.
+(`systems/nearbyObjects.js`'s `TOWN_LOCATION_TYPES`, read by the
+`isPlayerInTown` that carries both optional flags), and the strict
+variant has one closure per outdoor host that the quest bridge
+shares.
 
 The two flags of `IsPlayerInTown` are also two different questions,
 and CanRest asks both: `IsPlayerInTown(true, true)` for the camping
@@ -2660,8 +2709,9 @@ from ONE message handler with no scene test at all. The port had it
 written out inside `dungeonContext.toggleRest`, because that is where
 rest lived - so the three hosts this slice gave a Rest key would have
 let the player lie down with a foe at their back, swimming, or
-mid-levitation. It is `restOpenGate` now, and all four hosts run it
-before they build a window.
+mid-levitation. It is `restDecision` now - three lanes ported rest in
+parallel and the merge kept ONE name, this one - and all four hosts run
+it before they build a window.
 
 **`remainingHoursRented` was a dead output.** `CanRest` computes it
 and the port carried it back and then read it nowhere. What that drops
@@ -2887,7 +2937,7 @@ sleeping through a beating; the fatigue rate pinned only `> 0`, so any
 constant passed; the loiter fixture typing 2 against a 3-hour cap,
 leaving the refusal branch inert; the empty-entry no-op and the
 2-digit/99-hour field cap with no test in the repo at all; the gate's
-refusal MESSAGE pinned leaving `restOpenGate` and never arriving at a
+refusal MESSAGE pinned leaving `restDecision` and never arriving at a
 host; and `areEnemiesNearby`'s `_dist ?? Infinity` fallback never
 taken.
 
@@ -3033,11 +3083,14 @@ host: it had been posting an action nothing above ground answered.
 `routeAction`'s own `case 'Rest': ctx.toggleRest?.()` already carried
 the interior host.
 
-FLAGGED: `DaggerfallBankManager.IsHouseOwned` reads DFU's default for
-a player who has bought nothing, because the bank's house ledger is
-unported - so the owned-house arm is correct and unreachable until the
-bank slice buys one. The **live probe** for this slice is owed with
-U41/U42's: no ARENA2 data on this machine, so the rented-room round
+`DaggerfallBankManager.IsHouseOwned` was FLAGGED here reading DFU's
+default for a player who has bought nothing - the owned-house arm
+correct and unreachable until a bank slice bought one. H1 closed it in
+the same merge: `banking.js:169 isHouseOwned` answers over the region's
+own registry slot and `worldModes.js:3620` feeds the rest place bag
+with it, so sleeping in a house you own returns before the room lookup
+ever runs. The **live probe** for this slice is owed with U41/U42's:
+no ARENA2 data on this machine, so the rented-room round
 trip (rent a room, walk out, walk back, sleep in the bed the rental
 minted) has been driven only in node.
 
@@ -3051,7 +3104,7 @@ the two clamp bounds, a flag retired) + `src/systems/weatherSim.js`
 `_lastDay` deleted) + `src/systems/save.js` (the restore stamp moved
 into `restoreWeather`, and `lastGameMinutes` re-anchored) +
 `src/scenes/world.js` + `src/scenes/exterior.js` (comments only - the
-mechanism under them changed). `test/daychange.test.js` (new, 19);
+mechanism under them changed). `test/daychange.test.js` (new, 21);
 `test/weathersim.test.js` grew one.
 
 **Four members, and the port ran one of them.** DFU's

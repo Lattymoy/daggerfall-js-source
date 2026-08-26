@@ -1,4 +1,9 @@
-# Player-Arc (COMPLETE)
+# Player-Arc (ACTIVE)
+
+The P1-P9 build queue closed on 2026-07-06 and the arc REOPENED:
+P10-P18, M3 CLIMBING and U31 all shipped after it, and Home.md's index
+carries the arc ACTIVE again. Home.md is the index; this page must
+agree with it (the AUDIT 18 law, recurred here).
 
 ## Post-arc fixes (Mac playtest, 2026-07-06)
 
@@ -301,7 +306,11 @@ Queue (items 1-6 shipped):
    in one frame (P8).
 9. DONE (P7) - the mode machines extracted to scenes/worldModes.js
    and the lazy texture/mesh caches to scenes/dataPipeline.js;
-   world.js is 531 lines against the 900 ceiling (P7 audit).
+   world.js came out of that audit at 531 lines against the 900
+   ceiling. The ceiling did not hold: the streaming host is over
+   3,500 lines today and worldModes.js over 4,000, both grown by the
+   seams every later arc mounts in them (the standing host rule puts
+   each one in every motor host).
 
 ---
 
@@ -501,9 +510,14 @@ PlayerActivate.LookAtInteriorLock + RDBLayout's lock table:
   (all five tiers: magicLock at >= 20; chance = clamp(5*(level -
   lockValue) + LIVE lockpicking, 5, 95) picks lockpickChance1/2/3 or
   the 10-entry array). Opening clears the lock (Open() tail). Locks
-  persist in the S12 world snapshot. RESIDUAL (honest): lockpicking
-  (steal-mode activation) and bashing (attack trigger, chance
-  20 - lockValue) pend the interaction-mode UI; routed in Ledger C.
+  persist in the S12 world snapshot. Both consumers landed since:
+  the STEAL-mode pick attempt at R1 (activate's `steal` arm ->
+  attemptLockpicking, the Lockpicking tally at
+  DaggerfallActionDoor.cs:165, the attempt line and the
+  ActivateLockUnlock sound), and AttemptBash with the 08-16 attack
+  trigger (an open door bash-toggles, a closed one rolls
+  20 - lockValue and fires the door's own record, PlayerDoorBash
+  through A2's engine).
 - **The delegates**: Teleport (0x0e) - player position/rotation = the
   NEXT object's transform (destinations resolve through a per-block
   position index because they are usually ACTIONLESS editor flats;
@@ -555,9 +569,9 @@ LevitateMotor / PlayerSpeedChanger / PlayerEnterExit / PlayerEntity:
   (LiveSwimming / 200) + base / 4 (GetSwimSpeed); swimming zeroes the
   look's vertical - the float keys drive it (Space/PageUp up,
   PageDown down; DFU's Crouch=C alternative collides with our
-  castSpell binding, crouch itself pends) - and rising clamps where
-  the controller center + 50*GlobalScale - 0.93 reaches the water
-  surface ("he would immediately be pulled back in"). The S8
+  castSpell binding, and crouch itself lands at P12) - and rising
+  clamps where the controller center + 50*GlobalScale - 0.93 reaches
+  the water surface ("he would immediately be pulled back in"). The S8
   waterWalking flag lands its consumer: normal walk/run speed in
   water.
 - **The swim toggle** (PlayerEnterExit verbatim): swimming when the
@@ -573,9 +587,13 @@ LevitateMotor / PlayerSpeedChanger / PlayerEnterExit / PlayerEntity:
   LIVE Swimming skill (success stays default) with the Swimming tally
   every swimming minute; jumping 11 + the Jumping tally once per jump
   (the motor's per-frame jumped flag). RAW fatigue units - the x64 is
-  spell-magnitude-only. Athleticism (x0.9/x0.8) pends the career
-  advantage flags; the Argonian swim exemption SHIPPED at P18 (the
-  race gate short-circuits before the roll); breath/drowning
+  spell-magnitude-only. Athleticism's x0.9 is LIVE - U20b's
+  specialAdvantages.js decodes the career bitfield and shared.js's
+  fatigueLossMultiplierFor feeds the drain
+  (PlayerEntity.cs:388-400); the x0.8 arm needs the Improved
+  Athleticism ENCHANTMENT, which this port has no source for. The
+  Argonian swim exemption SHIPPED at P18 (the race gate
+  short-circuits before the roll); breath/drowning
   (isPlayerSubmerged at +76*GlobalScale) shipped at P12, its residue
   at P18.
 - **PARITY FIX**: PlayerMotor.limitDiagonalSpeed (.7071 when both
@@ -647,8 +665,12 @@ PlayerHeightChanger/PlayerSpeedChanger + HUDBreathBar:
   swallowed every press that landed on a sub-1/60 s frame); the FP
   viewmodel rides the LIVE eye offset so the weapon lowers with the
   camera. RESIDUAL
-  (honest): crouch-based stealth pends the enemyMotor stealth row
-  (foes still target the standing height); jump-while-crouched stays
+  (honest): foes still sight the STANDING capsule - canSeeTarget
+  takes targetHeight and every caller lets it default to
+  CAPSULE_HEIGHT. There is no crouch-based stealth to owe, though:
+  P13 landed the stealth row and CalculateStealthChance
+  (FormulaHelper.cs:282-290) is distance x live Stealth, with no
+  crouch term anywhere in EnemySenses. jump-while-crouched stays
   allowed (DFU's AcrobatMotor has no crouch gate).
 
 2 tests (player.test.js 10). Suite 351/80, ARENA2 corpus 351/351
@@ -685,23 +707,25 @@ IsMovingLessThanHalfSpeed:
   update): 13 enemies see through everything (extractor-regenerated
   seesThroughInvisibility - Imp/Skeletal Warrior/Ghost/Mummy/Wraith/
   both Daedra/Daedroth/both vampires/Seducer/Daedra Lord/Lich, NOT
-  Ancient Lich, verbatim); an invisible target always blocks
-  (Invisibility pends - inert); blending (chameleonNormal) gives an
-  8% see-through, a shade 4% (Shade pends); NO roll for unconcealed
+  Ancient Lich, verbatim); an invisible target always blocks;
+  blending (chameleonNormal) gives an 8% see-through, a shade 4% -
+  the invisible and shade branches were inert here until S21 put
+  all four ConcealmentEffect keys in BUFF_KINDS (13,0 / 13,1 / 24,0 /
+  24,1, normal and true FOLDING for detection exactly as DFU's
+  IsInvisible / IsAShade OR both powers); NO roll for unconcealed
   targets (sequences match). This RETIRES the S8 half-sight interim
   - which the audit trail shows was DEAD post-merge anyway
   (canSeeTarget.sightScale was never assigned; the third update arg
   was ignored): chameleon concealment now works, verbatim.
 - **The motor side**: IsMovingLessThanHalfSpeed (standing true;
   otherwise half the walk speed vs the applied speed - both DFU
-  branches collapse to walk/2; with no Sneak input yet the live
-  gate is standing still, exactly classic-without-Sneak), reported
-  through reportActivity by BOTH dungeon hosts (standing rule).
-- **RESIDUAL (honest)**: the Sneak input binding pends (until then
-  only a still player is "moving less than half speed"); hearing's
-  ray sees closed action doors as blockers (DFU's static-only mask
-  lets sound pass them) - documented departure; Invisibility/Shade
-  effects pend the library; the castle gate pends castle detection.
+  branches collapse to walk/2; the live gate was standing still
+  until P15 bound Sneak, which is exactly classic-without-Sneak),
+  reported through reportActivity by BOTH dungeon hosts (standing
+  rule).
+- **RESIDUAL (honest)**: hearing's ray sees closed action doors as
+  blockers (DFU's static-only mask lets sound pass them) -
+  documented departure; the castle gate pends castle detection.
 
 4 tests (enemymotor 8) + the motor pin (player.test.js). Suite
 361/81, ARENA2 corpus 361/361 green pre-commit.
@@ -731,9 +755,14 @@ AcrobatMotor/PlayerMotor/FrictionMotor/PlayerHealth read end to end:
   climbs, 78-deg blocks - pinned).
 - **The verbatim jump laws** (AcrobatMotor.HandleJumpInput):
   velY = 4.5 x jumpSpeedMultiplier (1 + Jumping x 0.5 / 100 -
-  systems/skills owns it; athleticism +0.1/+0.1 and the Jump spell
-  +0.6 are INTERIM 0, loud), gated on PlayerMotor.GroundedTime >=
-  0.1 s (the bunny-hop gate; jump input is now HELD in all four
+  systems/skills owns it; AUDIT 18 landed the career Athleticism
+  +0.1, whose INTERIM 0 had blamed a bitfield decode that shipped at
+  U20b - CLASS09's 0x1406 means a VANILLA Acrobat jumped 10% short -
+  and X1 landed the Jump SPELL's +0.6, AcrobatMotor's own
+  jumpSpellMultiplier :16 read off the live 'jumping' effect; the
+  remaining +0.1 is the Improved Athleticism ENCHANTMENT), gated on
+  PlayerMotor.GroundedTime >= 0.1 s (the bunny-hop gate; jump input
+  is now HELD in all four
   hosts - DFU re-fires past the gate, intended), crouched jumps x0.8
   (crouchingJumpDelta), a MOVING jump adds forward x jumpSpeed x
   0.05 momentum (DFU's classic-momentum hack), slowfall cancels the
@@ -759,15 +788,18 @@ AcrobatMotor/PlayerMotor/FrictionMotor/PlayerHealth read end to end:
   standalone dungeon host.
 - **RESIDUAL (honest)**: the outdoor-water landing exemption
   (StreamingWorld.PlayerTileMapIndex == 0) is FLAGGED in both
-  exterior walk hosts - no tile-under-player lookup yet; the
-  interior mode has no fall-damage seam (single-story shells cannot
-  fall 2.5+; joins interiorCtx with its arc); the ShowPlayerDamage
-  screen flash pends the HUD arc; the DFU deep-water quirk is
-  PRESERVED bug-for-bug (falling into deep water keeps the fall
-  live - swimming never grounds - so wading OUT can bill the whole
-  drop; nothing in DFU clears it); anti-bump gravity
+  exterior walk hosts - no tile-under-player lookup yet; the DFU
+  deep-water quirk is PRESERVED bug-for-bug (falling into deep water
+  keeps the fall live - swimming never grounds - so wading OUT can
+  bill the whole drop; nothing in DFU clears it); anti-bump gravity
   (PlayerMoveScanner StepHitDistance) is engine-side N/A - our
-  ground snap owns descent adhesion.
+  ground snap owns descent adhesion. AUDIT 18 took the interior
+  mode's "no fall-damage seam" off this list by REFUTING it:
+  interiors carry ladder markers well past the BadFallDetected
+  alert, and CheckFallingDamage has exactly one exemption - the
+  outdoor water tile, never an interior - so worldModes now runs
+  applyFallLanding like the other three hosts. The ShowPlayerDamage
+  flash left with AUDIT 24 (wave 39, ui/damageFlash.js).
 
 test/motorStairs.test.js restores the reverted 7-pin harness and
 grows it to 9 (crouch/boost/air-freeze + fall/slowfall traces).
@@ -831,10 +863,9 @@ motor at 60 fps AND 10 fps, both code versions):
   "time compression" - retired (large dts now clamp, as live jank
   does); one update(1/60) = one step. NEW pin: a 10 fps jump reaches
   the SAME apex as 60 fps.
-- RESIDUAL (honest): foe AI still integrates on render dt (no jump
-  integrator, low risk - queued); the motor updates at 60 Hz on
-  120 Hz displays (DFU has the same shape via FixedUpdate + camera
-  smoothing; our camera follows raw - noted).
+- RESIDUAL (honest): the motor updates at 60 Hz on 120 Hz displays
+  (DFU has the same shape via FixedUpdate + camera smoothing; our
+  camera follows raw - noted).
 
 ## P17 (2026-08-17): FOE-AI FIXED STEPPING - the P16 law, foe-side SHIPPED
 
@@ -867,8 +898,10 @@ DFU's EnemyMotor is a FixedUpdate body; ours wasn't.
   and yaw as a 60 fps foe (both drives decompose into the same 1/60
   steps), and a 10-second hitch integrates at most 0.25s.
 - RESIDUAL (carried): the 60 Hz-on-120 Hz-display note from P16
-  applies to foes the same way; foe knockback motion still pends
-  (C11 audit item 6).
+  applies to foes the same way. (Foe knockback motion, C11 audit
+  item 6, landed at C15 - KnockbackMovement with the store/hurt/
+  motion caps and the per-classic-tick decay, CanAct false while it
+  runs.)
 
 Suite 403/88 (the parity pin rides enemymotor.test.js).
 

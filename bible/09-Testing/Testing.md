@@ -415,18 +415,22 @@ because the suite has never had non-English data.
 
 Two tiers per module:
 1. **Synthetic fixtures** - in-memory data built inside the test. Always run;
-   CI stays green with no game data (88 pass, 49 skip).
+   CI stays green with no game data.
 2. **Real-data validation** - gated on `ARENA2_PATH`; skip cleanly when
    absent. Pin observed counts, names, ids, checksums, and structural
    closure invariants.
 
-Without game data the suite runs 805 pass / 120 skip (AUDIT 18 corrected
-the long-stale "88 pass, 49 skip", which described a 137-test suite that
-has not existed for many milestones). Those 75 skipped pins DO NOT RUN
-IN THE DEPLOY GATE - CI has no ARENA2 - so a real-data pin is a local
-gate only. (Measured on main at the AUDIT 18 merge; recount by hand
-when the split moves.) `manifest.test.js` guards the totals above but not this line;
-recount it by hand when the split moves.
+Without game data the suite runs 3,284 pass / 188 skip: 175 ARENA2 corpus
+gates and 13 audit24 pins that rebuild a table from a DFU C# checkout and
+need one on disk. Those 188 skipped pins DO NOT RUN IN THE DEPLOY GATE -
+CI has neither - so a real-data pin is a local gate only. (Measured on
+this tree at AUDIT 26, 2026-08-26.) `manifest.test.js` guards the total
+and the table above but NOT this line; recount it by hand when the split
+moves - and REPLACE the figures rather than adding to them. Three stale
+counts had accumulated in this paragraph before the 2026-08-26 pass, one
+of them still standing above the note that retired it, because each
+correction was appended instead of substituted. An ungated count rots by
+ACCUMULATION.
 
 Sourcing data in a fresh session: `sh tools/fetch-data.sh`, then
 `ARENA2_PATH=/home/claude/dfdata/arena2 npm test`.
@@ -459,7 +463,9 @@ needs game data and about twenty-five minutes of SwiftShader. Run it when a
 host, a window or the boot path changes - `tools/nativeTradeProbe.mjs` sat
 red for months because nothing did.
 
-Pre-push gate: `npm run check` (test + build).
+Pre-push gate: `npm run check` - `npx eslint src/`, then `npm test`, then
+`npm run build`, in that order, so a lint error stops the run before the
+suite does (package.json).
 
 Drift guard: `test/manifest.test.js` pins the total line and every row of
 the table above against the real suite. Recalculate this doc in the same

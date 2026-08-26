@@ -70,8 +70,11 @@ ramps, returns faces with baked colour):
   the SAME module (`build-viewer.mjs`, ramps from the sprite). The
   in-chat iteration tool.
 
-Open: pieces (armor) re-seat on the new rig; hands/face detail (face
-declined); engine-shader vs baked-shading interaction to confirm.
+Open: hands/face detail (face declined by Mac); engine-shader vs
+baked-shading interaction to confirm. Pieces (armor) re-seated at C5 -
+`armorSet.js`'s body-as-displacement zones plus the standoff lofts in
+`pieces/pieceLoft.js`, with `clothing.js` resolving every body-hugging
+garment 1:1 with the item DB.
 
 ## Combat layer: CURRENT STATE (integrated + audited 2026-07-06)
 
@@ -187,15 +190,19 @@ four). FREE-CLIP path: reactions run wall-clock outside the weapon
 machine (its idle u-mapping would null them) and may interrupt a
 swing visually. hurt button cycles; __hurt(name) hook.
 
-**RENDER STANDARD (Mac 2026-07-06; revised 9 -> 7 by Mac): CHAR_PIXEL
-= 7 pixelize** for the character and everything character-side; the
-WORLD is excluded. Single source: `CHAR_PIXEL` exported from
-renderer.js - the engine character pass divides by it and the viewer
-defaults to it. (History: shipped at 9; the 9px scanline verification
-and slice-4 texel numbers in the log are of the 9 era.) The engine
-slices render the CHARACTER PASS at CHAR_PIXEL and leave the world
-pass untouched. Live re-verification of the 7x texel grid: open
-(needs ARENA2 in the environment).
+**RENDER STANDARD (Mac 2026-07-06): CHAR_PIXEL = 9 pixelize** for the
+character and everything character-side; the WORLD is excluded. Single
+source: `CHAR_PIXEL` exported from `renderer.js:401` - the engine
+character pass divides by it and the viewer defaults to it - and the
+single source says NINE. (Full history, kept at
+`src/tools/paperdollViewer.js:138` because the viewer must pixelate
+exactly as the game does: shipped at 9, revised 9 -> 7 by Mac the same day,
+raised to 12, then tried at 9 again on 2026-08-18 and left there. The
+9px scanline verification and the slice-4 texel numbers in the log
+below are of the FIRST 9 era.) The engine slices render the CHARACTER
+PASS at CHAR_PIXEL and leave the world pass untouched. Live
+re-verification of the 9x texel grid: open (needs ARENA2 in the
+environment).
 
 **Engine-world integration (ACTIVE arc, opened 2026-07-06).** The
 world side: bootExterior(canvas, renderer, ...) with pointer-lock,
@@ -429,7 +436,10 @@ rig is the authoring bench for monster morphologies. Slices:
   the STRUCK part when equipped; enemy attacks route through
   chooseEnemyWeapon (weaponless when its average is higher, the DFU
   port of classic's rule). The class-armor interim is GONE; the
-  poisoned-weapon chance pends the poison system (Systems). 3
+  poisoned-weapon chance is still unrolled (enemyEquipment.js:183) -
+  the poison system it waited on SHIPPED at S19b
+  (systems/poisons.js), so what is left here is the assignment roll
+  alone. 3
   deterministic tests incl the full material walk to Daedric.
 - **Spectral emission: SHIPPED (classic-visuals direction).** The two
   owed BaseImageFile helpers ported verbatim (TextureReader.cs):
@@ -450,15 +460,19 @@ rig is the authoring bench for monster morphologies. Slices:
 **Audit 2026-07-06 (Mac, engine included):** the shared pixelize pass
 survives N foes now - the renderer's character-sprite RT was keyed on
 exact (pw, ph) and REALLOCATED per character per frame once sizes
-diverged; fixed to ONE CHAR_SPRITE_RT_SIZE (256) target with viewport
+diverged; fixed to ONE CHAR_SPRITE_RT_SIZE target with viewport
 sub-rect rendering and UV-extent sampling (full-clear keeps
 out-of-rect transparent; NEAREST boundary bleed discards).
 Single-source catches: CLASSIC_UPDATE_INTERVAL (weaponStates is the
 source, enemyMotor re-exports), enemy capsule height (CAPSULE_HEIGHT
 from the motor), a dead `ortho` import in exterior. The Open flags
 ledger (Home.md) pins all 15 documented interims from the code.
-- **E4+:** authored monster morphologies (rewrite/ bench), spectral
-  emission unblock, perf pass (per-enemy mesh updates).
+- **E4+:** the spectral emission unblock SHIPPED under the
+  classic-visuals direction (the verbatim SetSpectral /
+  GetSpectralEmissionColors32 path, on billboards);
+  authored monster morphologies are E4c, DEFERRED by pivot 3 with the
+  rewrite/ bench left vendored; the per-enemy mesh-update perf pass is
+  still unmeasured.
 
 **Verification doctrine pins.** Stations over nearest-verts; numeric
 batteries over eyeballs; PIXEL-COUNTING screenshots for render-level
@@ -2027,7 +2041,11 @@ behind ?voxelfolk (C4c) - DECIDE-C1 goes live there.
 variations as DATA the editor consumes. Mac's call, twice over -
 FULLY REDESIGNED (the classic sprites are inspiration, not a trace,
 per tools/neutral's retired 1:1 silhouette pin) and delivered as a
-data spec rather than as engine wiring. Nothing in src/ reads them.
+data spec rather than as engine wiring. That has since stopped being
+true: `characters/paperdollPayload.js:47` imports VILLAGER_DESIGNS,
+designOpts, designDrape, villagerDelta and RACE_TONE, and the vocabulary
+the designs established is what `orcBody.js`, `undeadBody.js` and the
+rest of the class bodies are written in.
 
 The ROSTER is not ours to choose. mobilePerson.js's PERSON_TEXTURES is
 3 races x 2 genders x 4 archives plus the city guard, and SetPerson
@@ -2052,10 +2070,15 @@ every existing caller) and a hood became two zones - temples-back,
 plus the crown above the brow. The guard's closed helm still covers
 the face, on purpose.
 
-Two engine seams, both additive and both inert for the game: the cloth
-loop passes `z.mat || 'cloth'` (it hardcoded one colour, so a whole
-outfit resolved to a single dye), and createAnimContext returns the
-`ankleY` it already measured. No src/ caller passes clothZones at all.
+Two engine seams, both additive and INERT FOR THE GAME AT THE TIME: the
+cloth loop passes `z.mat || 'cloth'` (it hardcoded one colour, so a
+whole outfit resolved to a single dye), and createAnimContext returns
+the `ankleY` it already measured. The second half of that sentence - "no
+src/ caller passes clothZones at all" - expired when the class bodies
+landed: `humanClasses.js:464`, `beasts.js:508`, `orcBody.js:152`,
+`undeadBody.js:516`, `atronachs.js:161` and `daedra.js:182` all pass
+`clothZones: design.zones`, and `villagerDesigns.js:316` returns them.
+(`villagerDesigns.js:54` still carries the retired claim in a comment.)
 
 **Two dead viewer paths found while wiring the editor.** `ZERO_ARM`
 was declared by BOTH the template and the injected animate.js - two
@@ -2106,16 +2129,19 @@ verbatim, so the number has been struck from the E2a sentence; the constant
 itself (enemyMotor.js CLASSIC_TURN_DEG) is routed to the Enemies lane of
 this audit. Whichever value ships, "verbatim DFU" means 20.
 
-**C2's exterior NPCs.** The C2 record says "collectExteriorNpcs filters the
-registry", and the function does exactly that - but NOTHING IN `src/` CALLS
-IT. Its only importer is test/names.test.js, so no scene ever builds the
-exterior NPC registry and no exterior static NPC is a talk or activation
-target in the running game. The interior twin IS live
-(interiorContext.js:131 -> collectInteriorPeople), which is what made the
-gap invisible: the feature demonstrably works on one side. The corpus pin
-(76 NPCs across 16 RMB blocks) pins the FUNCTION, not the game. Recorded as
-a Port-Ledger C row (static-NPC activation, exterior side) so the gap stops
-living only inside a SHIPPED heading.
+**C2's exterior NPCs - CLOSED at AUDIT 26 (F019/F190, 2026-08-26).** The
+C2 record says "collectExteriorNpcs filters the registry", and the function
+did exactly that - with NOTHING IN `src/` CALLING IT. Its only importer was
+test/names.test.js, so no scene ever built the exterior NPC registry and no
+exterior static NPC was a talk or activation target in the running game,
+while the interior twin was live (interiorContext.js:199 ->
+collectInteriorPeople) and made the gap invisible: the feature demonstrably
+worked on one side. The corpus pin (76 NPCs across 16 RMB blocks) pinned the
+FUNCTION, not the game. AUDIT 26 wired it in both hosts that own RMB blocks
+- `exterior.js:330` and `world.js:463` collect off the same flats list their
+billboard batches are built from, and `worldModes.tryEnter` pushes the
+results into the door ray at StaticNPCActivationDistance - and struck the
+Port-Ledger C row this section was written to open.
 
 ## CH-C (2026-08-20): the C-slice's three characters rows - SHIPPED
 

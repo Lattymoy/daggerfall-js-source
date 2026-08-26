@@ -207,32 +207,66 @@ tested, and unreachable.
 
 ## The systems at zero
 
-Six named systems have no port at all. Together they are ~21,000 C#
-lines and about a third of the remaining estimate.
+~~Six named systems have no port at all.~~ **FIVE OF THE SIX SHIPPED
+2026-08-23..25**: enchanting (E1/E2), both automaps (A1/A2), the magic
+crafting windows (S1/M2/M4/U42), banking (B1/B2/H1-H3/S41) and the
+pause menu with the keybinding registry (I1-I4). Only the classic
+`.SAV` reader is still at zero. Each entry below is struck at its own
+head with the slice that took it; the C# sizes stand as measured -
+together they are ~21,000 C# lines, and they were about a third of the
+remaining estimate on the day this page was written.
 
-**ENCHANTING - 0% (`Effects/Enchanting`, 24 files, 3,498 C# LOC).**
-The single largest never-started system. Nothing ships: 0 of 24
-payload classes, 0 of the 9 payload contexts, no
-`EnchantmentSettings`/`EnchantmentParam` model, no
-`DoItemEnchantmentPayloads` dispatcher, no CastWhenUsed (36 classic
+**~~ENCHANTING - 0%~~ THE RUNTIME SHIPPED, E1+E2 2026-08-23
+(`Effects/Enchanting`, 24 files, 3,498 C# LOC).** ~~The single largest
+never-started system. Nothing ships: 0 of 24 payload classes, 0 of the
+9 payload contexts, no `EnchantmentSettings`/`EnchantmentParam` model,
+no `DoItemEnchantmentPayloads` dispatcher, no CastWhenUsed (36 classic
 spells), CastWhenHeld (25), or CastWhenStrikes (12), no
 `SetEnchantments`, no item maker. `formats/magicDef.js` reads
 MAGIC.DEF and `systems/loot.js` mints magic items carrying raw
 `{type, param}` pairs that nothing ever fires. A magic item in this
 port is a label. FormulaHelper agrees: `GetItemEnchantmentPower`,
 `GetSpellEnchantPtCost` and both material enchantment multipliers are
-among the methods with no trace in `src/`. (~3,700 LOC with the
-core-side dispatcher.)
+among the methods with no trace in `src/`.~~ `systems/enchantments.js`
+(818 lines) is the 24-type registry, `DoItemEnchantmentPayloads` with
+its unknown-key abort, the constant fold into `entity._enchantMods`
+and the per-round pump; E2 took the cast seams the same day - the
+item-pinned held bundles, the classic casting cost, and the
+equip/use/strike/break/save doors. `SetEnchantments` runs verbatim at
+`enchanting.js:238`, and all four FormulaHelper methods land:
+`GetItemEnchantmentPower` and both material multipliers in
+`systems/enchanting.js`, `GetSpellEnchantPtCost` at
+`enchantments.js:181`. The item maker over them is M4
+(`ui/itemMakerWindow.js` + `systems/enchantmentCatalogue.js`). A magic
+item is no longer a label. RESIDUE, carried on the Port-Ledger row:
+the dungeon host's ctx mount, the inSunlight/inHolyPlace/moonPhase
+seams that no host computes, held INSTANT effects firing once per
+equip rather than per round, and the artifact `SpecialArtifactEffect`
+classes. (~3,700 LOC with the core-side dispatcher.)
 
-**BOTH AUTOMAPS - ~2% (`Automap.cs` 2,733 + `ExteriorAutomap.cs`
-1,848 + the two windows 4,092, 8,779 C# LOC).** The dungeon automap
-(a real 3D copy of the level revealed mesh-by-mesh by raycast, sliced
-by a shader plane, with beacons, user note markers and teleporter
-portals) and the town map (built from each RMB block's 64x64
+**~~BOTH AUTOMAPS - ~2%~~ BOTH SHIPPED, A1 2026-08-23 + A2 2026-08-24
+(`Automap.cs` 2,733 + `ExteriorAutomap.cs` 1,848 + the two windows
+4,092, 8,779 C# LOC).** The dungeon automap (a real 3D copy of the
+level revealed mesh-by-mesh by raycast, sliced by a shader plane, with
+beacons, user note markers and teleporter portals) and the town map
+(built from each RMB block's 64x64
 AutoMapData bitmap, coloured by building type, with discovery-gated
-nameplates and a collision solver). Neither exists; "automap" appears
-in `src/` only in settings text and topic trees. The word does not
-appear in Port-Ledger.md at all. (~4,800 LOC.)
+nameplates and a collision solver). ~~Neither exists; "automap"
+appears in `src/` only in settings text and topic trees. The word does
+not appear in Port-Ledger.md at all.~~ Both exist. `systems/automap.js`
+is the 5 Hz probe set with the two-tier discovery record riding every
+save (hit-point-vs-AABB is the recorded substitution for DFU's
+duplicate-geometry triple raycast); `ui/automapWindow.js` is the
+sliced top-down dungeon window on M, with the player arrow, the
+discovery-gated entrance beacon and the micro-map law; A2 added the
+grayscale prior-run presentation and `ui/exteriorAutomapWindow.js`,
+the town map on M outdoors - the byte-to-colour-group law over the
+four LIVE Map colours, three view modes, and discovery-gated
+nameplates through `ui/nameplateLayout.js`'s port of DFU's collision
+solver. The Port-Ledger row now carries the residue: the native
+AMAP/TOWN art windows, the 3D view and render modes, drag/rotation,
+HUDCompass, note markers, teleporter portals, beacon focus cycling,
+plate renaming and the interior-building arm. (~4,800 LOC.)
 
 **THE MAGIC CRAFTING WINDOWS - ~12% (7 windows, 4,581 C# LOC).** ~~Six
 of seven unbuilt: spell maker, effect settings editor, item maker,
@@ -247,36 +281,64 @@ mode on SPBK01I0. Behind all of them sat a shared unbuilt dependency:
 no window could enumerate what a player may make - that is what
 `systems/spellEffects.js` became at S1. (~4,500 LOC.)
 
-**BANKING - 0% (`DaggerfallBankManager` 690 + `LoanChecker` 73 + two
-windows 1,017).** No accounts, no deposits, no loans, no letters of
+**~~BANKING - 0%~~ SHIPPED WHOLE, B1/B2 2026-08-24 + H1-H3/S41
+2026-08-25 (`DaggerfallBankManager` 690 + `LoanChecker` 73 + two
+windows 1,017).** ~~No accounts, no deposits, no loans, no letters of
 credit, no house or ship ownership. The only trace in `src/` is the
 constant `goldPieceWeightInKg`. `CalculateMaxBankLoan` and
-`CalculateBankLoanRepayment` have no port. This also blocks the
-Knightly Orders' ReceiveHouse service and the guild-promotion text
-that branches on `OwnsHouse` (`guildVariants.js:189` already carries
-the dead branch). (~1,600 LOC with the windows.)
+`CalculateBankLoanRepayment` have no port.~~ `systems/banking.js` (650
+lines) carries the accounts, deposits, withdrawals, letters of credit
+and loans - `checkOverdueLoans` got its first caller at S41, so before
+that no loan in the port could come due - plus house ownership (H1/H2)
+and ship ownership with both sell prices (H3), and both formulas this
+paragraph says have no port (`:406`, `:410`). `ui/bankWindow.js` is
+the teller's screen and `ui/bankPurchaseWindow.js` the deed/ship
+popup. The Knightly Orders' ReceiveHouse service is wired
+(`guildServiceFlow.js:262`); what is still open is the promotion text
+itself - `guildVariants.js:200` maps rank 9 to 5240 unconditionally
+because `promotionTextId` has no `ownsHouse` seam (AUDIT 26 F114).
+(~1,600 LOC with the windows.)
 
 **THE CLASSIC `.SAV` READER - 0% (`API/Save`, 13 files, 3,104 C#
 LOC).** SAVETREE.DAT, SAVEVARS.DAT, CharacterRecord, ItemRecord,
 DiseaseOrPoisonRecord, GuildMembershipRecord, TrappedSoulRecord,
 SaveImage. Nothing loads an original Daggerfall save. This is the
 fourteenth format reader the port owes, and the one gated system whose
-absence a Daggerfall player notices immediately. (~1,330 LOC.)
+absence a Daggerfall player notices immediately. **STANDS - re-checked
+2026-08-26, nothing in `src/formats/` reads SAVETREE.DAT or
+SAVEVARS.DAT, and this is the only entry in this section still at
+zero.** (~1,330 LOC.)
 
-**THE PAUSE MENU AND KEY REBINDING - 0%.**
-`DaggerfallPauseOptionsWindow` (341) is the only in-game door to
-settings/save/load/controls, and there is no `pause` anything in
-`src/`. `DaggerfallControlsWindow`'s 38-action grid and the keybinding
-registry behind it (`ControlsConfigManager`, 572) have no port
-either - so keys cannot be rebound, and the launcher is the only way
-to reach any setting. Already a Ledger row (AUDIT 24 F5) for the
-pause half; the keybinding half is new. (~770 LOC.)
+**~~THE PAUSE MENU AND KEY REBINDING - 0%~~ BOTH SHIPPED, I1-I4
+(U33-U36) 2026-08-23.** `DaggerfallPauseOptionsWindow` (341) is the
+only in-game door to settings/save/load/controls, ~~and there is no
+`pause` anything in `src/`. `DaggerfallControlsWindow`'s 38-action
+grid and the keybinding registry behind it (`ControlsConfigManager`,
+572) have no port either - so keys cannot be rebound, and the launcher
+is the only way to reach any setting. Already a Ledger row (AUDIT 24
+F5) for the pause half; the keybinding half is new.~~ and
+`ui/pauseWindow.js` is that window on the real OPTN00I0.IMG, opened by
+Escape in all four hosts (I3) - so the AUDIT 24 F5 trap is closed and
+settings are reachable in play whatever ShowOptionsAtStart says.
+`systems/inputActions.js` is InputManager's binding law (I1: the
+Actions enum, the 44-row default table, both key-to-action dicts,
+KeyBindData_v1's save shape) and every host reads keys through it
+(I2); `systems/controlsConfig.js` is ControlsConfigManager's staging
+law and `ui/controlsWindow.js` the 38-action grid on CNFG00I0, behind
+the pause window's CONTROLS button (I4). STILL PENDING at those two
+Ledger rows: the multi-slot save window behind Save/Load,
+PauseOptionsDropdown, the mouse/joystick sub-windows (there is no
+gamepad layer) and key combos. (~770 LOC.)
 
 ## Coverage by subsystem
 
 Weighted by behaviour, as judged by the surveyor who read that group's
 C# (not by item count - gaps get filed at a finer grain than shipped
-work, which makes a naive item ratio misleading).
+work, which makes a naive item ratio misleading). **These are the
+sweep's 2026-08-23 figures and are NOT re-baselined**: four rows were
+overtaken by the 08-23..25 sprint and are read at the narrowed section
+above rather than here - magic crafting windows, automaps, enchanting,
+and the banking half of guilds/banking/transport.
 
 | Subsystem | Ported | Gaps (est. JS LOC) | DFU LOC in scope |
 |---|---:|---:|---:|
@@ -349,7 +411,7 @@ figure is GATED rather than restated here - see the Derived figures
 block in Port-Ledger.md, which `test/ledger.test.js` checks against
 `SPELL_MAKER_EFFECTS` itself.
 
-**FormulaHelper: ~80 of 97 public statics.** The 17 absent are not
+**FormulaHelper: ~80 of 97 public statics.** ~~The 17 absent are not
 scattered - they name the unbuilt services exactly:
 `CalculateMaxBankLoan`, `CalculateBankLoanRepayment` (banking);
 `CalculateItemRepairCost`, `CalculateItemRepairTime`,
@@ -360,7 +422,21 @@ modes); `CalculateRoomCost` (the tavern); `CalculateShopliftingChance`,
 `GetItemEnchantmentPower`, `GetSpellEnchantPtCost`,
 `GetArmorEnchantmentMultiplier`, `GetWeaponEnchantmentMultiplier`
 (enchanting); `AdjustWeaponHitChanceMod` and `GetResistanceModifier`
-(whose home, `DaggerfallResistances.cs`, is likewise unported).
+(whose home, `DaggerfallResistances.cs`, is likewise unported).~~
+**THIRTEEN OF THE SEVENTEEN LANDED WITH THE SERVICES THEY NAMED
+(re-checked 2026-08-26).** The paragraph's own claim held - the list
+named the unbuilt services exactly, and building the service brought
+its formula with it: banking's two at `banking.js:406`/`:410` (B1),
+repair cost and time in `systems/repairService.js` and identify cost
+at `tradeModes.js:132` (U40), `CalculateRoomCost` at `tavern.js:50`
+(U39), `CalculateExteriorLockpickingChance` at
+`world/actionSystem.js:161` (R1), both Daedra summoning methods in
+`systems/daedraSummoning.js` (G7), and all four enchanting methods
+with E1/E2 (above). FOUR ARE STILL ABSENT:
+`CalculateShopliftingChance` (crime - the steal mode has no chance
+roll), `CalculateTempleBlessing`, `AdjustWeaponHitChanceMod`, and
+`GetResistanceModifier`, whose home `DaggerfallResistances.cs` is
+likewise still unported.
 
 ## What the Port-Ledger did not know
 

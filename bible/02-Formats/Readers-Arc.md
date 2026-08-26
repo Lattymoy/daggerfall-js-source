@@ -15,10 +15,24 @@ Reference source: Daggerfall Unity `DaggerfallConnect` namespace (C#), plus dfwo
 | 5 | ARCH3D | 3D model records | **complete** (`src/formats/arch3dFile.js`, `faceUVTool.js`, `arch3dPatch.js`) |
 | 6 | BLOCKS | RMB (exterior) + RDB (dungeon) blocks | **complete** (`src/formats/blocksFile.js`) |
 | 7 | MAPS | regions, locations | **complete** (`src/formats/mapsFile.js`, `pakFile.js`) |
-| 8 | SND / music | audio containers | **complete** for SFX (`src/formats/sndFile.js`); music (HMI/XMI) routed to Audio arc (approved, Port-Ledger A) |
+| 8 | SND | DAGGER.SND, the sound effect container | **complete** (`src/formats/sndFile.js`); music left this row for the Audio arc and landed there at A5 - see #25 below |
 
 Post-close additions, each with a gate of its own (the arc is COMPLETE for
-the eight it was scoped to; a slice that needs a new format adds it here):
+the eight it was scoped to; a slice that needs a new format adds it here).
+
+**THE # IS THIS TABLE'S REGISTRATION ORDER, AND IT IS THE ONLY READER
+NUMBERING THE BIBLE HAS.** Rows 1-12 are cited by number elsewhere and do
+not move. Rows 13 on are the readers that shipped inside OTHER arcs and
+were never registered here at all - this table stopped being the registry
+it claims to be, which is how the bible came to carry three numberings at
+once: Home.md calls VID "the tenth format reader" while #10 here is GFX,
+Testing.md calls FLIC the eleventh (which #11 agrees with), and the Ledger
+and Testing.md both call BSS "the twelfth image reader", counting image
+formats only. Their # is the order this table took them
+(2026-08-26) and NOT ship order; the arc or slice that landed each is in
+its Status cell, and that slice's own record is where its story lives.
+Anything anywhere in the bible calling a reader "the Nth" means this
+column.
 
 | # | Reader | Source files | Status |
 |---|---|---|---|
@@ -26,10 +40,34 @@ the eight it was scoped to; a slice that needs a new format adds it here):
 | 10 | GFX | the chargen scroll frames | **complete** (`src/formats/gfxFile.js`, U18) |
 | 11 | FLIC | .CEL/.FLC animations - Daggerfall's flats are Autodesk FLICs, a different format from the .VID movies | **complete** (`src/formats/flcFile.js`, F1) |
 | 12 | FLATS.CFG | per-billboard caption + TFAC00I0.RCI face index | **complete** (`src/formats/flatsFile.js`, NPC1) |
+| 13 | WOODS.WLD | the 1000x500 world heightmap + the 5x5 per-pixel large map | **complete** (`src/formats/woodsFile.js`, World-Arc Milestone 6) |
+| 14 | FACTION.TXT | the faction tree under talk, guilds, temples, courts and quests | **complete** (`src/formats/factionFile.js`, T3a) |
+| 15 | SPELLS.STD | the 89-byte classic spell records | **complete** (`src/formats/spellsStd.js`, S4a) |
+| 16 | MAGIC.DEF | magic item + artifact records (62 bytes each) | **complete** (`src/formats/magicDef.js`, S4c) |
+| 17 | CLASS*.CFG | the 74-byte career record | **complete** (`src/formats/classFile.js`, E3a) |
+| 18 | FNT | the classic bitmap fonts | **complete** (`src/formats/fntFile.js`, U2a) |
+| 19 | TEXT.RSC | the game's text records + the byte-token stream every window reads | **complete** (`src/formats/textRsc.js`, the TEXT.RSC slice; live from U6) |
+| 20 | BIOG*.TXT | the chargen biography questions and their effects | **complete** (`src/formats/biogFile.js`, S3e/U12) |
+| 21 | BOK*.TXT | books (BOOKS/BOK%05d.TXT), pages through the TEXT.RSC token reader | **complete** (`src/formats/bookFile.js`, B1) |
+| 22 | VID | ANIM*.VID, the interleaved audio+video stream | **complete** (`src/formats/vidFile.js`, U22) |
+| 23 | RUMOR.DAT | the classic save's rumor records, which seed the mill on a new game | **complete** (`src/formats/rumorFile.js`, TK-i) - GAME DATA, so the reader is fixture-pinned and the mill idles headless without it |
+| 24 | BSS | CMPA0*I0.BSS, the compass needle strips | **complete** (`src/formats/bssFile.js`, U45) |
+| 25 | MIDI.BSA (HMI) | the song archive, 131 HMI Sound Operating System songs | **complete** (`src/formats/hmiFile.js`, A5) - NO DFU SOURCE EXISTS: DFU never reads this archive, so the reader was written against the shipped bytes and is a Port-Ledger A departure, not a translation |
+| 26 | PAINT.DAT | the four 10-byte TEXT.RSC offset slots behind a painting's name | **complete** (`src/formats/paintFile.js`, AUDIT 26 F208) |
+
+`src/formats/` is 33 files: these 26 rows over 31 of them (a row can own
+more than one file - #3 carries `baseImageFile.js`, #5 `faceUVTool.js` and
+`arch3dPatch.js`, #7 `pakFile.js`), plus `dfRandom.js` and `umRandom.js`,
+which are RNG ports rather than format readers.
+
+NOT BUILT: `CfaFile` (the horse/cart first-person sprites) is the one
+DaggerfallConnect reader with no port at all - there is no `cfaFile.js` -
+and it carries an ingest-diet arm in `src/scenes/dataSource.js` with it
+when it lands. See 01-Overview/Port-Completion-Analysis.md.
 
 ## Validation gate (every reader)
 
-- Node test file per reader in `test/`, run against real ARENA2 data via a local uncommitted `data/` path (env var `ARENA2_PATH`).
+- A node pin per reader, run against real ARENA2 data via a local uncommitted `data/` path (env var `ARENA2_PATH`). Most rows own a test file named for the reader (bsa, palette, texture, imgcif, arch3d, blocks, maps, snd, sky, flc, flats, fnt, textrsc, books, vid, bss, hmi, faction); the rest are pinned inside the slice that needed them, which is where their laws are exercised - GFX in classquestions.test.js, `woodsFile` in terrain.test.js, `spellsStd` in magicka.test.js, `magicDef` in magicitems.test.js, `classFile` in enemyentity.test.js, `biogFile` in biography.test.js, `rumorFile` in rumormill.test.js, `paintFile` in audit26_systems.test.js.
 - Assert record counts, known-record byte signatures, and round-trip of at least one full record against documented values.
 - Tests skip cleanly (not fail) when `ARENA2_PATH` is absent, so CI stays green without game data.
 - Synthetic in-memory fixtures exercise parsing logic even without game data.
@@ -51,7 +89,7 @@ the eight it was scoped to; a slice that needs a new format adds it here):
 - ARCH3D: 1:1 Arch3dFile.cs + FaceUVTool.cs + mechanically-extracted Arch3dPatch table (905 byte fixes, model comments preserved). Full corpus: all 10251 records decompose, zero failures, ~0.9s. Pinned totals: 797433 verts, 388475 tris, 31922 submeshes. Model 456 pinned to the point level. Quirks kept: bounding min/max seeded at 0 so Size spans origin, UVunpack only for first 3 points of records with id < 905, v2.5 offset x3, fixed decomposition buffer sizes throw-on-overflow exactly where C# would. Patch applies to a working copy, never the caller's buffer. Numeric departure documented in faceUVTool.js: JS doubles replace the C# float/double mix, (Int32) casts preserved as Math.trunc; corpus pins guard the output.
 - BLOCKS: 1:1 BlocksFile.cs + DFBlock structures. Full corpus: 920 RMB + 187 RDB + 187 RDI decompose, junk FOO record rejected as unknown type, zero failures, ~0.3s. Resource closure: 39468 RDB objects = 22962 models + 12238 flats + 4268 lights exactly; 423 linked action chains. All 8 FixRdbData dungeon repairs (994, 945/946, 958, 975, 1025, 1034, 1036) ported verbatim and pinned - W0000009's wall lands at model slot 0 because the raw file holds non-numeric "REF_CUBE" there, and `UInt32.TryParse` yields 0. (Exactness note: C#'s no-style overload is NumberStyles.Integer, so it would also accept surrounding whitespace and a leading sign; no classic record exercises that, measured over all 140,250 modelId fields, so the port's /^\d+$/ is corpus-equivalent rather than semantics-equivalent.). 179 RDBs carry the DAGR signature, 8 carry 0xff padding (which the fixed-length `FileProxy.ReadCString` UTF-8-decodes to four U+FFFD - that variant skips the terminator scan and only TrimEnd('\0')s, so embedded NULs survive in `fldHeader.name`/`otherNames`). DFU's WorldDataReplacement mod-injection hooks not ported (Unity AssetInjection, no equivalent runtime).
 - MAPS: 1:1 MapsFile.cs + PakFile.cs (CLIMATE.PAK/POLITIC.PAK RLE expansion) + FALL.EXE tables (62 region names/races/temples, 45 block prefixes). Full corpus: 62 regions, exactly the 17 empty regions rejected (45 populated, matching classic), 15251 locations all decode, 4232 dungeons. Quirks verified live: both 32-byte-no-terminator names truncate where DFU documents them (Porcupine Hostel/Bhoriane, Feather and Barbarian/Kambria); letter2 (byte)(2*char)>>6 truncation pinned; map-table uint wraparound decode; Orsinium 50015 Z=-2 hack. Daggerfall city pinned (8x8, 316 buildings, politic 145, WALLAA02.RMB) and Privateer's Hold (5 blocks, S0000999.RDB start). Not ported: WorldDataReplacement hooks, smaller-dungeon generation and PatchRegionIndex (quest/save systems - Systems arcs). GetNameBankOfRegion SHIPPED with the Characters arc (C2) as `characters/nameHelper.js` getNameBankOfRegion over the REGION_RACES table exported here, and is live in `scenes/townTalk.js`.
-- SND: 1:1 SndFile.cs. DAGGER.SND is a number-record BSA of raw unsigned 8-bit mono PCM at 11025 Hz with a synthesized 44-byte RIFF header, byte-exact against the reference. Corpus: 459 sounds, 7658090 PCM bytes, header consistency everywhere, record index 5 ships zero-length (real quirk, pinned). Music (MIDI.BSA HMI/XMI) is NOT part of DFU's DaggerfallConnect readers - DFU plays music through Unity-side synthesis. Routed to the Audio arc (approved, see Port-Ledger A) where the playback strategy gets decided.
+- SND: 1:1 SndFile.cs. DAGGER.SND is a number-record BSA of raw unsigned 8-bit mono PCM at 11025 Hz with a synthesized 44-byte RIFF header, byte-exact against the reference. Corpus: 459 sounds, 7658090 PCM bytes, header consistency everywhere, record index 5 ships zero-length (real quirk, pinned). Music (MIDI.BSA) is NOT part of DFU's DaggerfallConnect readers - DFU plays music through Unity-side synthesis. It was routed to the Audio arc (approved, see Port-Ledger A) and shipped there at A5 as row #25 above; the bytes turned out to be HMI, not XMI.
 
 ## Arc close-out
 

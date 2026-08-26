@@ -1,8 +1,14 @@
 # SPEC — `SETTINGS`: the port's settings screen
 
-> **AS BUILT (2026-08-21).** This document is the DESIGN, kept as the
-> record of how the screen was decided. Two deviations were made while
-> implementing it, both deliberate:
+> **ORIGINAL DESIGN (2026-08-21), re-baselined 2026-08-26.** This
+> document is the DESIGN, kept as the record of how the screen was
+> decided. **Sections 1.1 onward describe the screen as it was SPECIFIED,
+> not as it stands.** `src/ui/settingsWindow.js` + `settingsLaw.js` +
+> `settingsMetrics.js` + `settingsMap.js` + `settingsCopy.js` are the
+> as-built record; where they and this page disagree, THEY are right.
+> Only section 0 below is maintained against the tree.
+>
+> Three deviations were recorded when the screen shipped, all deliberate:
 >
 > - `src/ui/settingsWidgets.js` - DELETED from the plan, never built.
 > - `src/ui/settingsDialog.js` - DELETED from the plan, never built. Their
@@ -16,6 +22,35 @@
 >   map is pinned total and disjoint over the 171 STORE keys, and a
 >   172nd entry would break it. Text Size lives in `systems/uiPrefs.js`
 >   on its own shelf and reaches the screen through the metric.
+>
+> The 2026-08-26 read of the tree found the interaction contract
+> diverges further than those three, so the design is labelled as design
+> rather than patched to match. What SHIPPED, by name:
+>
+> - **Enums WRAP.** §3.4 says "there is no wrap" and draws the end
+>   triangles inert; `settingsLaw.js:122-134` steps `(cur + dir + n) % n`
+>   in both encodings, so Right at the last value returns to the first.
+> - **`TEXT_LAW`, `parseColour` and `BLOCKED_REASON` were never built.**
+>   `settingsLaw.js` exports `ENUM_LAW`, `NUMBER_LAW`, `COLOUR_KEYS`,
+>   `widgetFor`, `blockedReason`, `formatValue` and `stepValue` and
+>   nothing else; `widgetFor` still ANSWERS `text` and `colour`, and
+>   `settingsWindow.js:320` sends both straight to the detail dialog.
+> - **There is no numeric prompt and no colour editor.** §3.4's
+>   `window.prompt` route and the colour dialog do not exist - the word
+>   `prompt` does not appear in `settingsWindow.js`.
+> - **No `Backspace` per-row revert, no `Digit1..Digit7` category jumps,
+>   no `F1`/`Slash`, no `Home`/`End`.** The keyboard is Arrows, PageUp/
+>   PageDown, Tab, Enter, Escape, `[`/`]` and `R`
+>   (`settingsWindow.js:461-490`).
+> - **There are no focus ZONES.** §7.3 cycles NAV -> LIST -> FOOTER on
+>   Tab; the built window has one focus index over the list and Tab
+>   STEPS THE CATEGORY (`_stepCategory`).
+> - **Neither "required companion change" was made.**
+>   `settings.js:320-323` `resetToDefaults()` calls `saveSettings()` and
+>   returns nothing, so §6's save-failure surfacing cannot see a reset
+>   fail; and `scenes/dataSource.js` exports no `dataSourceLabel()`, so
+>   the Mods info row's label arrives empty from the constructor default
+>   (`settingsWindow.js:64`).
 
 **Base:** *Configure Daggerfall — the Stone Hall* (category rail + list pane + permanent help + honest tiers).
 **Grafted:** the Deck's *value‑is‑a‑word* rule, ASCII‑33 glyph law, range‑equals‑clamp pin, drag‑suppresses‑tap, per‑row revert, save‑failure surfacing, INFO rows. The Five Pages' *unavailable readout* ("what you get instead"), permanent help panel, computed tally, reserved MODS panel, DFU's own words kept verbatim in a detail dialog.
@@ -27,13 +62,19 @@
 
 ## 0. Verified ground truth (do not re‑derive)
 
+Re-baselined 2026-08-26 against the tree. The FACTS below are current;
+the LINE numbers in the `Where` column are of 2026-08-21 unless a row
+says otherwise, and several have drifted with their files - read the
+named symbol, not the named line.
+
 | Fact | Where |
 |---|---|
 | 171 keys / 13 sections, all raw strings | `src/systems/settingsDefaults.js`, pinned `test/settings.test.js:34‑35` |
-| Tier counts today: **8 live, 18 unavailable, 145 stored** | `src/systems/settings.js:64‑101` |
-| `canvas.width = canvas.clientWidth` — CSS px, **DPR 1** | `src/render/renderer.js:1060‑1064` |
+| Tier counts, 2026-08-26: **47 live, 17 unavailable, 107 stored** of the 171. DERIVED, never restated - `test/settings.test.js:148‑162` re-derives the live set from the modules that read the store, so a tier that lies fails the suite. Re-read it, do not trust this row's age | `src/systems/settings.js` `LIVE` / `UNAVAILABLE` / `tierOf` |
+| The `(L)` / `(NA)` marks in section 1 are the DESIGN-TIME tiers and **40 rows have moved since**: 38 stored→live (the tooltip four, the crosshair pair, the automap and micro-map rows, the four large-HUD keys, the icon scheme, `TerrainDistance`, `FieldOfView`, `AlternateMusic`, the two start cells, `InstantRepairs`, `AllowMagicRepairs`, `GuildQuestListBox`, `PlayerNudity`, `CanDropQuestItems`, `StartInDungeon`, `IllegalRestWarning`, `ShowQuestJournalClocksAsCountdown`, `TravelMapLocationsOutline`, the two exterior-map zoom keys), `Enhancements/AssetInjection` NA→live at M-EXT, and `Video/Fullscreen` stored→NA | `tierOf(key)` |
+| `canvas.width = canvas.clientWidth` — CSS px, **DPR 1** | `src/render/renderer.js:1097‑1100` |
 | `nativeMetrics` floors to **s=1 on every phone in both orientations** | `src/ui/nativePanel.js:28‑31` |
-| Today's launcher draws at a **hardcoded `s=2`** | `src/scenes/launcherScene.js:62`, `:82` |
+| ~~Today's launcher draws at a hardcoded `s=2`~~ **RETIRED with the launcher.** `src/ui/launcher.js` is deleted and `launcherScene.js` is 116 lines that mount `SettingsWindow`, which takes its scale from `settingsMetrics(canvas)` | `src/scenes/launcherScene.js` |
 | FONT0003: `fixedWidth 5`, `fixedHeight 7`, space glyph 4 | pinned `test/audit18_ui_native.test.js:66‑70` |
 | `FNT_ASCII_START = 33`; codes < 33 draw as a space; **no arrow / ellipsis / degree / middle‑dot glyph exists** | `src/formats/fntFile.js:15`, `src/ui/text.js:80‑86` |
 | `measureText` takes `font.fnt`, returns virtual px at scale 1 | `src/ui/text.js:60‑67` |
@@ -44,8 +85,8 @@
 | `ensureAudio(fetch)` is exported from `src/scenes/shared.js:383`, is safe un‑awaited, and `audio.ensure` attaches its own gesture‑resume (`src/systems/audio.js:69‑87`) | — |
 | `audio._out()` re‑reads `Controls/SoundVolume` on every connection (`audio.js:48`) — so a `DungeonDoorOpen` preview really demonstrates the slider | — |
 | `lookSettings.js:20` clamps `MouseLookSensitivity` to **0.1..4.0** while DFU's slider runs to 16.0 | — |
-| `saveSettings()`'s boolean is discarded at `launcher.js:100, :122, :193` **and inside `settings.js:234`** | — |
-| `SETTINGS_LABELS` (140 entries) / `SETTINGS_INFO` (78) are keyed by **DFU UI control names**, not ini keys; **no production file imports them** | `src/systems/settingsText.js:9`, `:152` |
+| `saveSettings()` answers `false` on a storage failure (`src/systems/settings.js:228‑236`). The screen's debounced save READS it (`settingsWindow.js:306` sets `saveFailed`); the three remaining sites discard it - `settingsWindow.js:423`, `enhancedMenu.js:489` and `settings.js:322` inside `resetToDefaults` | — |
+| `SETTINGS_LABELS` (140 entries) / `SETTINGS_INFO` (78) are keyed by **DFU UI control names**, not ini keys. The "no production file imports them" half is retired: `src/ui/settingsCopy.js:17` imports `SETTINGS_INFO`, the first production consumer §7.2 predicted | `src/systems/settingsText.js:9`, `:152` |
 | `wrapText(fnt, text, maxWidth)` exists | `src/ui/talkWindow.js:15` |
 | `SOUND.ButtonClick = 360`, `SOUND.DungeonDoorOpen = 25` | `src/systems/soundClips.js:32`, `:9` |
 | `index.html` sets `user-scalable=no`, `touch-action:none`, `viewport-fit=cover`, no safe‑area insets | — |

@@ -716,7 +716,7 @@ Ignoring') - permanent by parity, recorded in the coverage pin.
   faction-listener slot (addFactionListener first-claim-wins /
   removeFactionListener at dispose; PlayerActivate.StaticNPCClick
   reads the map - :1534, the only consumer in the DFU tree, and
-  wired at src/scenes/worldModes.js:451). activeFactionPersons walks NON-COMPLETE quests only -
+  wired at src/scenes/worldModes.js:981). activeFactionPersons walks NON-COMPLETE quests only -
   completed quests must not lock an NPC out (QuestMachine.cs:1085).
   The non-individual parse throw carries the TEMPLATE-SetComplete
   quirk; its sibling's does not.
@@ -794,15 +794,18 @@ charter CLOSES.
   [a-zA-Z0-9.]+ has no underscore - `_one_day_` truncates to
   `_one_` and misses its resource, the raw text stands.
 - THE ERROR SHAPES are C#'s own GetValue ladder: table miss ->
-  %x[undefined] (the corpus's 14 %G3 + 1 %G1 REALLY render that way
-  in DFU - only %G has a capitalized handler), null entry ->
+  %x[undefined] - which NOTHING in the corpus reaches, null entry ->
   [unhandled], null answer -> [nullMCP], a NotImplemented source
   falling past the second provider -> [srcDataUnknown]. Headless the
   world-backed handlers answer null and the shapes surface LOUDLY.
 - THE QUEST DATA SOURCE (QuestMCP): UID-seeded %n/%fn/%mn (the
   +3457 male offset), %kno's The-trim, the pronoun family off
-  lastResourceReferenced (Male default; %G capitalizes; %G2/%G3
-  uppercase DO NOT EXIST in DFU's table), %vcn by the person's home
+  lastResourceReferenced (Male default; MacroHelper.cs:240-245
+  registers ALL SIX capitalized forms - %G %G1 %G2 %G2self %G3 %G4 -
+  each CapFirst over the same source method as its lowercase twin;
+  this slice shipped %G alone and AUDIT 24 systems landed the other
+  five, which is where the corpus's fourteen %G3 lines and its one
+  %G1 stopped rendering raw), %vcn by the person's home
   region, %qdt off the journal's currentLogMessageId (falling to
   quest start), %oth by the questor's FACTION race over TEXT.RSC
   201+id, %god's temple arm and the Range(0,9) divine switch on the
@@ -1344,17 +1347,31 @@ The HOST wiring (browser-side, the probe half):
   fire notifyExteriorTransition.
 
 RECORDED (the pending seams - each idles LOUDLY, the headless
-charter): quest FOES in interiors (standFoe absent - the walk skips
-the stand) and the dungeon context's own mount; dungeon-mode popups
-(the dungeon overlay slot is not pluggable yet - logged, never lost
-silently); the talk seams (rumor/dialog-link/topics - the talk arc);
-playVideo; the HUD faces panel; the disease seams; the QuestComplete
-loot window (offerReward lands the item directly with a HUD line);
-playSound's busy-skip (the one-shot engine has no busy state - every
-call reports played); isPlayerInsideCastle false (this host never
-stands inside a palace interior). AND THE STANDING CAVEAT: this
-environment has no ARENA2, so the browser half is build-verified
-(vite clean, the quest chunks emit) but NOT probe-verified - the live
+charter), NARROWED by B1-B7 and the slices after them. CLOSED since:
+the dungeon context's own mount (B2 - `dungeonQuestAdapter` at
+`worldModes.js:571-592`, stands and teardown both, with B1's
+`spawnQuestFoe` under its standFoe); quest FOES outside a building
+(B1's `scenes/questFoeHost.js` - mintQuestFoeWave/bindQuestFoeHost/
+placeFoeEnv over both exterior pools, and `dungeonContext.js:653`);
+dungeon-mode popups (U43-ii: `modes.showQuestOverlay` answers for
+interior AND dungeon, and the CLASSIC START runs _TUTOR__ and
+_BRISIEN inside Privateer's Hold, so the first ten minutes of a new
+game had been silent); the talk seams (TK-i-TK-vi -
+`world.js:2658-2661` wires addQuestTopics/dialogLink/addDialog/
+removeQuestInfoTopics to the live topic tree, and the six rumour seams
+to the mill); and the disease seams (`world.js:2686-2692`,
+makePcDiseased/cureDisease over S18). STILL PENDING: quest foes
+INSIDE a building (the interior adapter's standFoe stays absent -
+`worldModes.js:515` - because there is no interior enemy host to
+stand them in); playVideo (`world.js:2713` warns and drops the name);
+the HUD faces panel (addFace/dropFace reach the bridge and no host
+supplies them); the QuestComplete loot window (offerReward lands the
+item directly with a HUD line); playSound's busy-skip (the one-shot
+engine has no busy state - every call reports played);
+isPlayerInsideCastle false (this host never stands inside a palace
+interior). AND THE STANDING CAVEAT: this environment has no ARENA2,
+so the browser half is build-verified (vite clean, the quest chunks
+emit) but NOT probe-verified - the live
 geometry pass (stand positions, the click ray, the offer window over
 real art) needs a machine with game data, recorded as the arc's one
 open verification.
@@ -1945,11 +1962,12 @@ Only a missing FILE throws.
 **TELEPORTPC WITHHELD ITS SITELINK.** C#'s order is: respawning check,
 resume, CreateSiteLink, GetPlace, marker pick, respawn. The port's
 transport-seam guard sat at the TOP, above the SiteLink write - so on a
-host that has not mounted `respawnPlayerAtSite` (which is today's port,
-a declared pending) the link was never created, where C# writes it every
-tick regardless of what the transport does. The SiteLink is machine
-state other actions read; it is not the transport's to withhold. And the
-marker-array read lost its `?? 0`: C# reads
+host that has not mounted `respawnPlayerAtSite` the link was never
+created, where C# writes it every tick regardless of what the transport
+does. (The world host mounts it now, at `world.js:2397`; a host that
+does not still keeps trying, which is the point of the ordering.) The
+SiteLink is machine state other actions read; it is not the
+transport's to withhold. And the marker-array read lost its `?? 0`: C# reads
 `place.SiteDetails.questSpawnMarkers.Length` unguarded, so a null array
 NREs before any respawn - the port's guard sent it down the
 usingMarker=false path, respawned the player, and only then threw on
@@ -2378,12 +2396,15 @@ from bare strings into `{ text, color }` made `!lines.some((l) => l)`
 unreachable on the same day the colours landed. An object is always
 truthy.
 
-**Still open, unchanged by this wave:** the port stands every interior
-person, where DFU disables them for an owned house, a closed shop, or
-a TG/DB house the player is not a member of - and calls
-`SetupIndividualStaticNPC` only on the ones that survive those gates.
-The gates are a pending of their own; when they land, the hook moves
-inside them.
+**Closed since, by P1:** the gates this wave left open -
+`characters/interiorPeople.js`'s `peopleAreVisible`, AddPeople's
+visibility tail (DaggerfallInterior.cs:1206-1226) over the owned
+house, the entry-time open-shop latch and the TG/DB membership arm -
+land in the interior host at `worldModes.js:2329`, and the hook moved
+inside them exactly as this note said it would:
+`interiorContext.js:220` is DFU's ELSE branch, `if (!visible)
+continue`, so a person the gate took out is not handed to the quest
+machine.
 
 
 ### Wave 21
@@ -2758,10 +2779,20 @@ effect) the enemy stat blocks, whose second copy was a generator's
 output drifting from a generator nobody ran. *IF A TABLE IS WORTH
 WRITING ONCE, THE SECOND COPY IS A BUG THAT HAS NOT HAPPENED YET.*
 
-FLAGGED: none of the eight new columns has a port consumer yet -
-there is no blood splash, no enemy point light, no Seducer transform,
-and no `CreateRandomSoulTrap` mint. They are data now, so the gate can
-see them and the slice that needs them will find them already correct.
+FLAGGED, and since NARROWED: two of the nine columns found their
+consumer. `BloodIndex` picks the TEXTURE.380 record for the splash
+AUDIT 24's wave 39 landed (`scenes/hitEffects.js:142`, read at all
+three damage doors - `dungeonContext.js:1593`, `exteriorFoes.js:447`,
+`cityGuards.js:496`); `SoulPts` scores a filled trap through
+`enchantments.js:202`'s soul-value fold, threaded from
+`worldModes.js:1623/:1664`, and the mint the flag said was missing is
+`shopStock.js:424 createRandomlyFilledSoulTrap` -
+ItemBuilder.CreateRandomlyFilledSoulTrap whole, exclusions included.
+Still unconsumed: `NoShadow`/`GlowColor` (no enemy point light),
+`HasSeducerTransform1/2` (the Lamia plays no transform),
+`PrefersRanged`/`PrefersNoise`. They are data, so the gate
+can see them and the slice that needs them will find them already
+correct.
 
 
 ### Wave 24
@@ -2901,7 +2932,7 @@ has never allowed. Expanding in place now. (The caller-side
 `PlayerActivate.StaticNPCClick:1534`. `TalkManager.cs` does not
 contain the word `Listener`. Three port comments named TalkManager as
 the reader and marked the wiring `(Q4 wires)` - over a reader the port
-already ships, at `worldModes.js:451`. A pending marker over shipped
+already ships, at `worldModes.js:981`. A pending marker over shipped
 work is worse than no marker at all: it sends the next reader looking
 for work that is done, in a file that never had it. Four sites
 corrected, the bible's copy included.
@@ -5020,13 +5051,17 @@ slices, in dependency order.
   it is law and RECORDED where it pends (the section lists both).
 
 THE ARC'S REMAINDER (after Q4-v, all recorded in its SHIPPED
-section): the LIVE PROBE PASS on a machine with ARENA2 (stand
-geometry, the click ray, the offer window over real art - this
-environment has no game data, so the browser half is build-verified
-only); quest foes in interiors + the dungeon host's own mount over
-createFoeGameObjects/tryPlaceFoe/hostCombat's enemy handle;
-dungeon-mode popups; the talk seams (the talk arc's charter);
-playVideo, the HUD faces panel, the disease seams, the QuestComplete
-loot window; WhenPcEntersExits' interior-transition feed beyond the
-polled rect. Each is a seam the law modules already speak - absent
-members idle loudly, never silently.
+section), re-swept after B1-B7: the LIVE PROBE PASS on a machine with
+ARENA2 (stand geometry, the click ray, the offer window over real art
+- this environment has no game data, so the browser half is
+build-verified only); quest foes INSIDE a building, the one arm B1/B2
+left (both exterior pools and the dungeon host answer
+createFoeGameObjects/tryPlaceFoe now, and B2 mounts the dungeon
+scene); playVideo, the HUD faces panel, the QuestComplete loot
+window; WhenPcEntersExits' interior-transition feed beyond the polled
+rect. CLOSED by those slices: dungeon-mode popups (U43-ii's
+showQuestOverlay), the talk seams (TK-i-TK-vi delivered the talk
+arc's charter and world.js wires all of them), the disease seams
+(makePcDiseased/cureDisease over S18). Each of the rest is a seam the
+law modules already speak - absent members idle loudly, never
+silently.

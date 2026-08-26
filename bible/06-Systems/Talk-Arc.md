@@ -148,15 +148,22 @@ removeProgressRumors / removeQuestorPostMessage / removeQuestRumors
 - all 1:1 method routes), and threads the talk envelope through
 F9/F11 as save.js's third opaque slot beside `world` and `quest`.
 
-RECORDED pending: the mill's CONSUMERS (Any news? in the talk
-window, bulletin boards on building signs, the questor-post
-greeting) mount with TK-iii/TK-v; ExpandRandomTextRecord's full
-macro pass is TK-iii's (the interim joins the record's rows
-plainly); AddNonQuestRumor's PRODUCER is the regional faction sim
-(PlayerEntity.RegionPowerAndConditionsUpdate - the Systems lane),
-and the live REFRESH CULL rides with it; the classic-rumor import
-waits on a RUMOR.DAT fetch in the host (game data, loaded when
-present).
+RECORDED pending, and mostly closed since: the mill's consumers
+mounted where this said they would - Any news? through the answer
+pipeline (`answerPipeline.js:428`) at TK-iii and the questor-post
+greeting through the session (`npcSession.js:686`) at TK-iv - and
+TK-v landed ExpandRandomTextRecord's full macro pass
+(`talkMacros.js`, over the whole MacroHelper table with TalkManager
+as the context, not the interim row-join). AddNonQuestRumor's
+PRODUCER arrived with the regional faction sim at S43:
+`regionPower.js:564` runs the REFRESH CULL as
+RegionPowerAndConditionsUpdate's first line and `:581` adds the seven
+always-available rumors, driven from `worldTick.js:505/:524` on DFU's
+7-day and 38-day cadences over the mill the world host hangs on the
+entity. STILL PENDING: bulletin boards on building signs, which have
+no consumer at all; and the classic-rumor import, which has its
+reader (`formats/rumorFile.js`) and waits on a RUMOR.DAT fetch in the
+host (game data, loaded when present).
 
 ## TK-ii - THE TOPIC TREE (SHIPPED 2026-08-21)
 
@@ -170,7 +177,7 @@ dictQuestInfo half of SaveDataConversation (:2426-2549). Five more
 of the bridge's silent seams land: addQuestTopics, dialogLink,
 addDialog, removeQuestInfoTopics, forceTopicListsUpdate.
 
-The law, pinned (topictree.test.js, 27):
+The law, pinned (topictree.test.js, 32):
 
 - **The tables, verbatim**: the 34-entry infoFactionIDs, the 30-row
   FactionsAndBuildings with its matching localized caption list and
@@ -589,12 +596,14 @@ the greeting, the tone gate, the mill's news, the tree's knowledge
 reset, the questor door and the envelope. All six passed on the first
 run, which is the answer to whether the mount is sound.
 
-RECORDED pending: the talk WINDOW still draws its Where-is list from
-T3c's building directory rather than from the tree's assembled
-`listTopicLocation`, and %loc and %key are MacroHelper globals rather
-than MCP overrides, so they remain the host's. The browser half is
-probe-verified only where a machine with game data exists - this one
-has none, and the quest arc's standing caveat applies.
+RECORDED pending: the browser half is probe-verified only where a
+machine with game data exists - this one has none, and the quest arc's
+standing caveat applies. (The two other pendings recorded here - the
+talk window drawing its Where-is list from T3c's building directory
+instead of the tree's assembled `listTopicLocation`, and %loc/%key
+being MacroHelper globals rather than MCP overrides - are TK-vi, two
+sections down: both were the same fault, a law the engine owns being
+done by hand in the host.)
 
 ## TALK AUDIT V (2026-08-21, the TK-v verify pass)
 
