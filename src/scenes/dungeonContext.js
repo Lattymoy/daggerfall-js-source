@@ -13,7 +13,7 @@ import { layoutDungeon } from '../world/dungeonLayout.js';
 import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, automapRevealTick, automapEntranceTick, automapDungeonKey, SCAN_INTERVAL_S } from '../systems/automap.js';   // A1
 import { AutomapWindow } from '../ui/automapWindow.js';   // A1: the M window
 import { applyTextureTable } from '../world/dungeonTextures.js';
-import { collectDungeonLights } from '../world/dungeonLights.js';
+import { collectDungeonLights, isSpecialAreaBlock } from '../world/dungeonLights.js';   // F183: SpecialAreaCheck's one block
 import { CityLightAnimator, MINUTES_PER_DAY } from '../world/worldClock.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { MobileUnit } from '../characters/mobileUnit.js';   // C11: classic sprite monsters
@@ -927,7 +927,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let _motorYaw = 0;   // A1: the automap window's player-arrow heading
   let _mouseState = 'no events';
   let _inputState = '';
-  const _activity = { running: false, swimming: false, jumped: false, movingLessThanHalfSpeed: true };   // P11 fatigue state; P13 sneak state; C6 jump edge
+  const _activity = { climbing: false, running: false, swimming: false, jumped: false, movingLessThanHalfSpeed: true };   // P11 fatigue state (climbing leads the band, PlayerEntity.cs:405-407); P13 sneak state; C6 jump edge
   let _grounded = true;   // U7: the rest gate reads the motor's live grounded flag
   // U7: the rest session's scene seams. tickVitals = one rested hour
   // (the S20 rates + the Medical tally, clamped); enemiesNearby is
@@ -2138,6 +2138,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
     return false;
   }
+  /** PlayerEnterExit.SpecialAreaCheck (:1221-1237): isPlayerInsideSpecialArea
+   *  is a switch on playerDungeonBlockData.BlockName with ONE case - the
+   *  Daggerfall treasure room. Same block lookup again, because it is the
+   *  same question the two above ask. */
+  function specialAreaBlockAt(x, z) {
+    for (const b of dungeon.blocks) {
+      if (x >= b.originX && x < b.originX + RDB_SIDE && z >= b.originZ && z < b.originZ + RDB_SIDE) {
+        return isSpecialAreaBlock(b.name);
+      }
+    }
+    return false;
+  }
   // P12/P18: breath/drowning (PlayerEntity.FixedUpdate on the classic
   // update cadence). Submerged = the controller CENTER (feet + 0.9)
   // + 76*GlobalScale - 0.95 below the block water surface (the head-
@@ -2200,6 +2212,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // and nothing in src/ ever WROTE it, so the suppression was inert and
         // a castle kept dripping and moaning. Same block lookup as the water.
         inCastle: castleBlockAt(playerFeet[0], playerFeet[2]),
+        // PlayerEnterExit.IsPlayerInside is TRUE underground
+        // (EnableDungeonParent, :1106), and it is the cemetery layer's
+        // gate (AmbientEffectsPlayer.cs:154). This instance is the
+        // Dungeon object's player, whose OnEnterLocationRect handler
+        // keeps running while its object is inactive - the guard is
+        // what keeps it silent under a graveyard, so it is stated
+        // rather than left to "nothing ever arms this one".
+        inside: true,
       });
     }
     magic.firePending(eye, [-view[2], -view[6], -view[10]]);   // classic: the readied spell fires on the click
@@ -2646,6 +2666,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  block the player is standing in - the Castle playlist and
      *  doNotPlayInCastle both had it hardcoded false. */
     get inCastle() { return lastPlayerFeet ? castleBlockAt(lastPlayerFeet[0], lastPlayerFeet[2]) : false; },
+    /** F183: IsPlayerInsideSpecialArea, the second predicate
+     *  PlayerAmbientLight.UpdateAmbientLight's dungeon arm reads
+     *  (:84-92) - the treasure room lights at SpecialAreaLight. */
+    get inSpecialArea() { return lastPlayerFeet ? specialAreaBlockAt(lastPlayerFeet[0], lastPlayerFeet[2]) : false; },
     musicSeed: dungeonKey(
       (dfLocation?.dungeon?.recordElement?.header?.unknown2 ?? 0) & 0xffff,
       dfLocation?.regionIndex ?? 0),
@@ -2823,8 +2847,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // jump fatigue/tally (PlayerEntity: 11 x multiplier + Jumping
     // tally once per jump), and the state the per-minute fatigue
     // drain reads.
-    reportActivity({ running = false, swimming = false, jumped = false, movingLessThanHalfSpeed = true, fell = 0 } = {}) {
+    reportActivity({ climbing = false, running = false, swimming = false, jumped = false, movingLessThanHalfSpeed = true, fell = 0 } = {}) {
       if (swimming && !_activity.swimming) audio.playOneShot(SOUND.SplashLarge);   // PlayLargeSplash on entry
+      // PlayerEntity.cs:405-407: ClimbingMotor.IsClimbing leads the
+      // per-minute fatigue band at 22 and short-circuits both the
+      // running arm and the Swimming roll.
+      _activity.climbing = climbing;
       _activity.running = running;
       _activity.swimming = swimming;
       _activity.movingLessThanHalfSpeed = movingLessThanHalfSpeed;   // P13: IsMovingLessThanHalfSpeed (the motor computes it)

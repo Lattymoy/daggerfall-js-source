@@ -381,3 +381,56 @@ test('U40: the offer box expands %cpn, %cn and %a - the LIVE PROBE read all thre
   assert.equal(price, w.box.price);
   assert.notEqual(price, w.box.cost, 'the haggle really did move it');
 });
+
+test('AUDIT 26: staging a MAP reads it and eats it - TransferItem\'s map arm (DaggerfallInventoryWindow.cs:1471-1478)', () => {
+  // DaggerfallTradeWindow's staging clicks are TransferItem itself
+  // (:795, :817, :823, :826) with `from` = localItems, so the map arm
+  // between the summoned guard and the quest one runs here exactly as
+  // it does on an inventory drop: RecordLocationFromMap, then
+  // from.RemoveItem - the map never reaches the merchant's side.
+  const h = hooks('Sell');
+  const map = { group: 'MiscItems', templateIndex: 287, name: 'Map', value: 25 };
+  h.bag.length = 0;
+  h.bag.push(map);
+  let revealed = 0;
+  h.revealMap = () => { revealed++; return { name: 'Daggerfall' }; };
+  // `from` is PlayerEntity.Items (:389) - the LIVE collection, not the
+  // window's filtered packItems() view
+  h.entity = { items: h.bag };
+  const w = new NativeTradeWindow(h);
+
+  assert.ok(w.click(...LOCAL_SLOT0));
+  assert.equal(revealed, 1, 'the map was READ');
+  assert.equal(h.bag.length, 0, 'from.RemoveItem ate it');
+  assert.deepEqual(w.remoteList(), [], 'and nothing was staged for sale');
+  assert.equal(w.cost().cost, 0, 'there is nothing to price');
+  // RecordLocationFromMap shows record 499 on a successful reveal
+  // (:1836-1839); the port's rows hook stands in for TEXT.RSC
+  assert.deepEqual(w.box.rows, [{ text: '#499', center: true }]);
+
+  // a host with NO reveal seam leaves the map unread and uneaten -
+  // useItem.js's own recorded answer, not a second one written here
+  const h2 = hooks('Sell');
+  const map2 = { group: 'Maps', templateIndex: 287, name: 'Map', value: 25 };
+  h2.bag.length = 0;
+  h2.bag.push(map2);
+  const w2 = new NativeTradeWindow(h2);
+  w2.click(...LOCAL_SLOT0);
+  assert.equal(h2.bag.length, 1, 'no reveal seam, no consumption');
+  assert.deepEqual(w2.remoteList(), [], 'and still nothing staged');
+  assert.equal(w2.box.rows[0].text, 'You study the map.');
+
+  // ...and the map arm stands ABOVE the quest guard (:1471 vs :1480):
+  // a quest map is read and eaten rather than refused
+  const h3 = hooks('Sell');
+  const qmap = { group: 'MiscItems', templateIndex: 287, name: 'Map', value: 25, questItem: true };
+  h3.bag.length = 0;
+  h3.bag.push(qmap);
+  h3.entity = { items: h3.bag };
+  let revealed3 = 0;
+  h3.revealMap = () => { revealed3++; return { name: 'Wayrest' }; };
+  const w3 = new NativeTradeWindow(h3);
+  w3.click(...LOCAL_SLOT0);
+  assert.equal(revealed3, 1, 'the map arm runs before the quest guard');
+  assert.equal(h3.bag.length, 0);
+});

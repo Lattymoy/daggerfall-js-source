@@ -132,9 +132,17 @@ test('audit18 ui-native F2/F3/F4: drawHud lays out verbatim HUDVitals/HUDCompass
   const r = recorder();
   drawHud(r, canvas, hudArt(), { ...vitalsFull, currentBreath: 12 }, 0);
   const q = r.quads;
-  // three vitals bars first, in classic order
-  const bars = q.slice(0, 3);
-  assert.deepEqual(bars.map((b) => b.tex), ['tex:MAIN03I0', 'tex:MAIN04I0', 'tex:MAIN05I0']);
+  // the three vitals bars, in classic order. AUDIT 26 F148: the six
+  // EnableVitalsIndicators bars (HUDVitals.cs:106-117) are drawn
+  // BEFORE them, at the same rects, so the art bars are picked out by
+  // their texture rather than by being the first three quads.
+  const bars = ['tex:MAIN03I0', 'tex:MAIN04I0', 'tex:MAIN05I0'].map((t) => {
+    const found = q.find((x) => x.tex === t);
+    assert.ok(found, `${t} drew`);
+    return found;
+  });
+  assert.deepEqual(q.filter((x) => String(x.tex).startsWith('tex:MAIN')).map((x) => x.tex),
+    ['tex:MAIN03I0', 'tex:MAIN04I0', 'tex:MAIN05I0'], 'and still in classic order');
   // PositionIndicators: barWidth = nativeBarWidth * Scale.x, offsets
   // 0 / barWidth*2 / barWidth*4 -> a stride of 8 native px.
   assert.equal(HUD_NATIVE_BAR_WIDTH, 4);

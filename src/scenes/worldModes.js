@@ -34,7 +34,7 @@ import { buildInteriorContext } from './interiorContext.js';
 import { buildDungeonContext } from './dungeonContext.js';
 import { DOOR_TYPE, GLOBAL_SCALE } from '../world/meshReader.js';   // AUDIT 26 (hosts-modal F068): AddQuestItem's dungeon shift
 import { getGroundArchive } from '../world/climateSwaps.js';
-import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js';
+import { dungeonAmbient, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js';
 import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 (hosts-modal F001): the interior's WindowStyle.Disabled
@@ -841,6 +841,16 @@ export function createWorldModes(host) {
       icons: { getTexture, uploadRecord, textures: renderer.textures },
       entity: playerEntity,   // AUDIT 17f: icons address for the wearer's morphology
       shopName: b.name ?? '',
+      // TransferItem's MAP arm (DaggerfallTradeWindow.cs:1471-1478):
+      // staging a map RecordLocationFromMap's it and consumes it - it
+      // never reaches the other side. The window took the same seam the
+      // inventory window does, and this host is the only one that mounts
+      // it. Through the host's ONE reveal door (G8/U44's revealLocation,
+      // note key `readMap`), not a second copy - and NULL where the host
+      // has no region index to walk, because useItem's map arm answers a
+      // missing seam by leaving the map unread AND uneaten rather than
+      // claiming a reveal it did not make.
+      revealMap: host.revealLocation ? () => host.revealLocation('readMap') : null,
     });
   }
 
@@ -2976,7 +2986,10 @@ export function createWorldModes(host) {
       // by the update that sets them, so their readers ride the motor's
       // own gate: a jump taken the instant before a window opened would
       // otherwise be re-reported on every paused frame.
-      if (!overlayHeld) dungeonCtx.reportActivity?.({ running: held(keys, 'Run') && moving, swimming: player.swimming, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing
+      // PlayerEntity.cs:405-407: the CLIMBING arm leads the per-minute
+      // fatigue band and short-circuits running and the Swimming roll
+      // (ClimbingFatigueLoss = 22, :110). No host fed it.
+      if (!overlayHeld) dungeonCtx.reportActivity?.({ climbing: !!player.climb?.isClimbing, running: held(keys, 'Run') && moving, swimming: player.swimming, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing
       // PlayerMotor.StartRestGroundedCheck (:184-194) reads the LIVE
       // grounded state; dungeonContext's `_grounded` is host-fed and
       // only dungeon.js:270 fed it, so in a world-hosted dungeon the
@@ -3004,6 +3017,10 @@ export function createWorldModes(host) {
       // and dungeon hosts run - inside a building, effects, diseases,
       // poisons, fatigue and skill advancement had all stopped.
       if (!overlayHeld) interiorTicker.tick(dt, {
+        // PlayerEntity.cs:405-407: ClimbingMotor is a component on the
+        // player, not on the dungeon - an interior's ladders and walls
+        // are climbed by the same motor and bill the same 22.
+        climbing: !!player.climb?.isClimbing,
         running: player.isRunning && !player.standing,   // AUDIT 23 (entity-2)
         swimming: false,
         jumped: player.jumped,   // C6
@@ -3038,7 +3055,14 @@ export function createWorldModes(host) {
       if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:219's `if (!held)` - a paused game advances no movers
       if (!overlayHeld) dungeonCtx.automapTick?.(dt, cam.pos, fwd);   // A1: the 5 Hz reveal probes ride the same gate
       dungeonCtx.flicker.tick(dt);
-      renderer.setLighting(new Float32Array(DUNGEON_AMBIENT), 0);
+      // PlayerAmbientLight.UpdateAmbientLight's dungeon arm (:84-92): a
+      // castle block takes CastleAmbientLight and the treasure room
+      // SpecialAreaLight (0.58 each), and only what is neither takes
+      // DungeonAmbientLight - Wayrest's castle is meant to brighten as
+      // the player walks into it. The host applied the floor value alone.
+      renderer.setLighting(new Float32Array(dungeonAmbient({
+        insideDungeonCastle: dungeonCtx.inCastle, insideSpecialArea: dungeonCtx.inSpecialArea,
+      })), 0);
       renderer.setFog('exp', 0.005, 0, 0, new Float32Array([0, 0, 0]));
       renderer.setPointLights(
         withPlayerLights(nearestLights(dungeonCtx.lights, cam.pos, 16, dungeonCtx.flicker.ranges),

@@ -1363,6 +1363,13 @@ export async function bootExterior(canvas, renderer, params, status) {
 
   let frames = 0;
   const ambience = new AmbientEffects(EXTERIOR_AMBIENT_WAITS);   // A3
+  // PlayerGPS_OnEnterLocationRect (AmbientEffectsPlayer.cs:518-529)
+  // arms the cemetery layer for a Graveyard entered from outside. This
+  // host loads ONE location and the player stands in its rect from the
+  // first frame (_musicInLocationRect is constant true), so the entry
+  // event is raised once, here - the world host raises it off the real
+  // rect crossing.
+  ambience.onEnterLocationRect(_musicLocationType(), { inside: false });
   let last = performance.now();
   const lookGate = makeLookGate(canvas);
   function frame(now) {
@@ -1410,6 +1417,15 @@ export async function bootExterior(canvas, renderer, params, status) {
       // rig's `say` was a console.warn and the interior ticker's was a
       // console.log. Drawn ABOVE the modal render, which is where
       // townTalk always draws.
+      // WeatherAmbientEffects is a CHILD of the scene's `Exterior`
+      // object, and every transition indoors runs DisableAllParents,
+      // whose ExteriorParent.SetActive(false) (PlayerEnterExit.cs:1048)
+      // switches the component off: its Update stops, its AudioSources
+      // stop, and OnDisable nulls the rain/crickets handles. The port
+      // simply stopped calling update() and left the loops playing, so
+      // rain and crickets followed the player into every building and
+      // dungeon.
+      ambience.setActive(false);
       townTalk.frame(dt);
       requestAnimationFrame(frame);
       return;
@@ -1438,6 +1454,10 @@ export async function bootExterior(canvas, renderer, params, status) {
         // AUDIT 23 (entity-2): playerMotor.IsRunning && !IsStandingStill
         // (PlayerEntity.cs:408) - `player.running` never existed, so the
         // 88/min running drain was dead above ground. C6: the jump edge.
+        // PlayerEntity.cs:405-407: the CLIMBING arm leads the band and
+        // short-circuits running and the Swimming roll (ClimbingFatigueLoss
+        // = 22, :110). No host fed it, so it could never fire.
+        climbing: !!player.climb?.isClimbing,
         running: player.isRunning && !player.standing,
         swimming: player.swimming,
         jumped: player.jumped,
@@ -1562,8 +1582,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     }
     // A3: the exterior ambience (WeatherAmbientEffects 5/25).
     audio.setListener(eye, [target[0] - eye[0], target[1] - eye[1], target[2] - eye[2]]);
+    ambience.setActive(true);   // EnableExteriorParent (:1056-1071) switches the component back on
     ambience.setPreset(presetForExterior(weather, isNight(minute)));
-    ambience.update(dt, { playerPos: eye });
+    // `inside` is PlayerEnterExit.IsPlayerInside, the cemetery layer's
+    // own gate (AmbientEffectsPlayer.cs:154) - false on every frame
+    // that reaches here, which is what the modal return above means.
+    ambience.update(dt, { playerPos: eye, inside: false });
     animalAmbience.update(dt, eye);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
     // Storm lightning: verbatim frame-strobe multiplier on the sun (2x
     // during a flash frame); ?flashtest pins it on for shots.

@@ -19,15 +19,18 @@ import {
 } from '../src/ui/bankPurchaseWindow.js';
 import { TRANSACTION_RESULT, housePrice } from '../src/systems/banking.js';
 import { resolveNameplates } from '../src/ui/nameplateLayout.js';
-import { VideoPlayer } from '../src/ui/videoPlayer.js';
+import { VideoPlayer, playVideo } from '../src/ui/videoPlayer.js';
+import { VID_BLOCK_TYPES as VT } from '../src/formats/vidFile.js';
 import {
-  VitalsIndicators, VerticalProgressSmoother, SMOOTHER_TIMER_MAX,
+  VitalsIndicators, VerticalProgressSmoother, SMOOTHER_TIMER_MAX, indicatorColors, _resetVitalsIndicators,
+  drawHud, hudScale, HUD_BORDER, HUD_BAR_STRIDE, loadHud,
   HEALTH_LOSS_COLOR, FATIGUE_LOSS_COLOR, MAGICKA_LOSS_COLOR,
   HEALTH_GAIN_COLOR, FATIGUE_GAIN_COLOR, MAGICKA_GAIN_COLOR,
 } from '../src/ui/hud.js';
 import { LETTER_OF_CREDIT_TEMPLATE } from '../src/systems/inventory.js';
 import { totalGoldAmount, goldAmount } from '../src/systems/court.js';
 import { TAVERN_PRICES, NOT_ENOUGH_GOLD_ID } from '../src/systems/tavern.js';
+import { setValue, _resetForTests as _resetSettings } from '../src/systems/settings.js';
 import { audio } from '../src/systems/audio.js';
 import { SOUND } from '../src/systems/soundClips.js';
 
@@ -311,6 +314,28 @@ test('AUDIT 26 F139: the 2x fallback places FIRST alone when SECOND cannot follo
   // The conjoined form placed neither of the second pair, hopped P1 a
   // whole height to 34 and then had nowhere left to put P2 at all:
   // it printed a "*" where DFU shows a name.
+
+  // A second board where the sequential arm is the ONLY thing that
+  // decides the answer - the mirror arm cannot rescue this one.
+  //   P0 has no collisions and is placed at 7. P1/P2 collide and P2 is
+  //   entangled with P3 too, so the `> 1` arm shoves P1 up to 36 and
+  //   pays P2 a collision (:1307-1308), leaving P2 on 1.
+  //   P2/P3 are then the easy pair (dy 2, bias 4). Arm 1 fails on P1
+  //   at 36; arm 2's 2x check on P2 PASSES (26 clears P1 at exactly
+  //   ySize), so P2 is placed alone at -8 - and P3 at its original 36
+  //   is NOT clear of P1, so only the decrement reaches it and the
+  //   zero pass puts it down where it already stood.
+  assert.deepEqual(resolveNameplates([
+    { x: 0, y: 7, w: 40, h: 10 },
+    { x: 0, y: 26, w: 40, h: 10 },
+    { x: 0, y: 34, w: 40, h: 10 },
+    { x: 0, y: 36, w: 40, h: 10 },
+  ]), [
+    { offY: 0, replaced: false },
+    { offY: 10, replaced: false },
+    { offY: -8, replaced: false },
+    { offY: 0, replaced: false },
+  ]);
 });
 
 test('AUDIT 26 F139: a stale count of 1 is PLACED where it stands, not starred (:1179-1185)', () => {
@@ -382,12 +407,88 @@ test('AUDIT 26 F151: GetBackButtonDown sits OUTSIDE the endOnAnyKey gate (:140-1
   assert.equal(p.shouldClose(true, false, true), true);
 });
 
-test('AUDIT 26 F151: the loop watches Escape separately from any key', () => {
+// The smallest VID that opens: header, palette, one audio block, EOF.
+// (The full grammar lives in test/vid.test.js's fixtures; this needs
+// only enough for playVideo to enter its frame loop.)
+const u16 = (n) => [n & 0xff, (n >> 8) & 0xff];
+const tinyVid = () => {
+  const out = [];
+  for (const c of 'VID') out.push(c.charCodeAt(0));
+  out.push(...u16(512), ...u16(1), ...u16(4), ...u16(2), ...u16(4), ...u16(14));
+  out.push(VT.Palette);
+  for (let i = 0; i < 256; i++) out.push(i, i, i);
+  const audio = new Array(740).fill(128);
+  out.push(VT.Audio_StartFrame, ...u16(0), 166, ...u16(audio.length), ...audio);
+  out.push(VT.EndOfFile);
+  return new Uint8Array(out);
+};
+
+const vidRenderer = () => ({
+  beginFrame: () => {},
+  drawScreenQuad: () => {},
+  uploadTexture: () => 'TEX',
+  releaseTexture: () => true,
+  screenOffset: [0, 0],
+});
+
+test('AUDIT 26 F151: ESCAPE alone closes an EndOnAnyKey=false video', async () => {
+  // scenes/shared.js passes `endOnAnyKey: false` for the infection
+  // videos, which is right (VampirismInfection.cs:126). What was
+  // wrong was concluding they cannot be skipped: GetBackButtonDown is
+  // the SECOND arm of :140-142 and never sees that flag.
+  const canvas = { width: 640, height: 400 };
+  let clock = 0;
+  let frames = 0;
+  let onAny = null, onBack = null;
+  let detached = 0;
+  const opts = {
+    endOnAnyKey: false,
+    now: () => clock,
+    audioContext: () => null,
+    listen: (a, b) => { onAny = a; onBack = b; return () => { detached++; }; },
+  };
+
+  // Any key does nothing at all while the gate is shut...
+  let pressed = false;
+  const spun = await playVideo(canvas, vidRenderer(), tinyVid(), {
+    ...opts,
+    raf: (fn) => {
+      clock += 1 / 60;
+      assert.ok(++frames < 500, 'the loop never ended');
+      if (!pressed) { pressed = true; onAny(); }
+      queueMicrotask(fn);
+    },
+  });
+  assert.equal(spun, true);
+  assert.ok(frames > 1, 'the any-key press did NOT end it - the video ran to EOF');
+
+  // ...but Escape ends it on the very next frame.
+  frames = 0; clock = 0; pressed = false;
+  const escaped = await playVideo(canvas, vidRenderer(), tinyVid(), {
+    ...opts,
+    raf: (fn) => {
+      clock += 1 / 60;
+      assert.ok(++frames < 500, 'Escape never closed the video');
+      if (!pressed) { pressed = true; onBack(); }
+      queueMicrotask(fn);
+    },
+  });
+  assert.equal(escaped, true);
+  assert.equal(frames, 1, 'closed on the frame after the Escape');
+  assert.equal(detached, 2, 'and both watches were released');
+});
+
+test('AUDIT 26 F151: the real listener watches Escape, and lets it go again', () => {
+  // The injected `listen` seam is what the pins above drive; this is
+  // the browser one the game actually runs, and it must carry the
+  // same two watches - a leaked keydown handler outlives the video.
   const src = code('ui/videoPlayer.js');
-  assert.match(src, /shouldClose\(anyKey, endOnAnyKey, backButton\)/,
-    'the frame loop passes the back button through');
   assert.match(src, /e\.key === 'Escape' \|\| e\.code === 'Escape'/,
-    'and GetBackButtonDown is Escape alone, not any key');
+    'InputManager.cs:1065-1067 is Input.GetKeyDown(KeyCode.Escape)');
+  assert.match(src, /window\.addEventListener\('keydown', back, \{ passive: true \}\);/,
+    'the back-button watch is registered');
+  assert.match(src, /window\.removeEventListener\('keydown', back\);/,
+    '...and detached with the rest - ASYNC NEVER DROPS');
 });
 
 // ---------------------------------------------------------------
@@ -454,6 +555,30 @@ test('AUDIT 26 F148: HEALING jumps the trail up and walks the plain bar to meet 
   assert.ok(Math.abs(v.amounts('health').bar - 0.9) < 1e-9, 'it walks up to meet it');
 });
 
+test('AUDIT 26 F148: Amount CLAMPS on write, and the lerp starts from the clamped value', () => {
+  // VerticalProgress.cs:27-31 - `set { amount = Mathf.Clamp01(value); }`.
+  // `healthBarLoss.Amount += HealthGainPercent` on a big heal
+  // saturates at 1, and BeginSmoothChange's `prevPercent = Amount`
+  // (:31) then reads 1, not the 1.6 the addition wanted.
+  const s2 = new VerticalProgressSmoother();
+  s2.amount = 1;
+  s2.amount += 0.6;
+  assert.equal(s2.amount, 1, 'saturated, not 1.6');
+  s2.beginSmoothChange(0.5);
+  assert.equal(s2.prevPercent, 1, 'and the lerp starts from a height the bar really had');
+  s2.amount = -2;
+  assert.equal(s2.amount, 0, 'and the floor is 0');
+
+  const v = new VitalsIndicators();
+  v.tick(vitalsOf(10), 0.016);
+  v.tick(vitalsOf(90), 0.016);          // +80/100 on a bar already at 0.1
+  assert.ok(Math.abs(v.amounts('health').loss - 0.9) < 1e-9, '0.1 + 0.8 lands inside the range');
+  const v2 = new VitalsIndicators();
+  v2.tick(vitalsOf(60), 0.016);
+  v2.tick(vitalsOf(100), 0.016);        // 0.6 + 0.4 = exactly 1
+  assert.equal(v2.amounts('health').loss, 1);
+});
+
 test('AUDIT 26 F148: a changed MAX resets instead of painting a trail (:71-77)', () => {
   // "the current relative vital lost calculation is not valid when Max
   // Vital changes" - a level-up must not read as damage.
@@ -479,13 +604,126 @@ test('AUDIT 26 F148/F149: the six indicator colours, and which pair the swap tra
   // LoadAssets (:179-198): under the swap the two bars trade ART and
   // their indicator colours travel with them; magicka is untouched
   // in BOTH arms (:199-201).
+  // ...and the swap trades exactly the health/fatigue pair, both
+  // directions, leaving magicka alone (:199-201).
+  assert.deepEqual(indicatorColors(false), {
+    loss: [HEALTH_LOSS_COLOR, FATIGUE_LOSS_COLOR, MAGICKA_LOSS_COLOR],
+    gain: [HEALTH_GAIN_COLOR, FATIGUE_GAIN_COLOR, MAGICKA_GAIN_COLOR],
+  });
+  assert.deepEqual(indicatorColors(true), {
+    loss: [FATIGUE_LOSS_COLOR, HEALTH_LOSS_COLOR, MAGICKA_LOSS_COLOR],
+    gain: [FATIGUE_GAIN_COLOR, HEALTH_GAIN_COLOR, MAGICKA_GAIN_COLOR],
+  });
+  assert.deepEqual(indicatorColors(), indicatorColors(false),
+    'an art object that recorded no swap is DFU\'s else-arm');
+
   const src = code('ui/hud.js');
   assert.match(src, /const swap = getBool\('GUI', 'SwapHealthAndFatigueColors'\)/);
   assert.match(src, /const health = swap \? main04 : main03;/,
     'healthBar takes fatigueBarFilename when the setting is on');
-  assert.match(src, /const fatigue = swap \? main03 : main04;/);
-  assert.match(src, /MAGICKA_LOSS_COLOR\]\n\s*: \[HEALTH_LOSS_COLOR, FATIGUE_LOSS_COLOR, MAGICKA_LOSS_COLOR\]/,
-    'magicka keeps its own colour in both arms');
+  assert.match(src, /const fatigue = swap \? main03 : main04;/,
+    '...and fatigueBar takes healthBarFilename');
   // and the setting the port had surfaced but never read is read now
   assert.match(src, /getBool\('GUI', 'EnableVitalsIndicators'\)/);
+});
+
+test('AUDIT 26 F149: the swap really trades the two IMGs, and records that it did', async () => {
+  // LoadAssets (:181-190): healthBar.ProgressTexture =
+  // GetTextureFromImg(fatigueBarFilename) and vice versa - MAIN05I0
+  // is never touched (:199).
+  const deps = () => ({
+    fetchBytes: async (name) => name,
+    ImgFile: class {
+      load(bytes, name) { this.name = name; }
+      getDFBitmap() { return { width: 4, height: 32, data: new Uint8Array(4 * 32) }; }
+    },
+    palette: { get: () => ({ r: 0, g: 0, b: 0 }) },
+    renderer: { uploadTexture: (kind, name) => `tex:${name}` },
+  });
+  _resetSettings();
+  try {
+    const plain = await loadHud(deps());
+    assert.equal(plain.health.tex, 'tex:MAIN03I0.IMG');
+    assert.equal(plain.fatigue.tex, 'tex:MAIN04I0.IMG');
+    assert.equal(plain.magicka.tex, 'tex:MAIN05I0.IMG');
+    assert.equal(plain.swapped, false, 'and the art records which arm it took');
+
+    setValue('GUI', 'SwapHealthAndFatigueColors', 'True');
+    const swapped = await loadHud(deps());
+    assert.equal(swapped.health.tex, 'tex:MAIN04I0.IMG', 'healthBar takes the fatigue IMG');
+    assert.equal(swapped.fatigue.tex, 'tex:MAIN03I0.IMG', '...and fatigueBar the health IMG');
+    assert.equal(swapped.magicka.tex, 'tex:MAIN05I0.IMG', 'magicka is untouched in both arms');
+    assert.equal(swapped.swapped, true,
+      'so the indicator colours downstream can follow it - and hudLarge, which reuses this art');
+  } finally {
+    _resetSettings();
+  }
+});
+
+test('AUDIT 26 F148: the six indicator bars are drawn behind the three, at the same rects', () => {
+  // Components.Add order (:106-117): the three LOSS bars, then the
+  // three GAIN bars, then the plain three - "to make bar appear
+  // behind other bars, add it first". PositionIndicators (:236-256)
+  // gives every one of them the plain bar's own Position and Size.
+  const bar = (n) => ({ tex: `tex:${n}`, w: 4, h: 32 });
+  const art = {
+    health: bar('MAIN03I0'), fatigue: bar('MAIN04I0'), magicka: bar('MAIN05I0'),
+    compass: { tex: 'tex:COMPASS', w: 258 + 64, h: 17 },
+    compassBox: { tex: 'tex:COMPBOX', w: 69, h: 17 },
+    breathNormal: { tex: 'tex:b1', w: 1, h: 1 },
+    breathShort: { tex: 'tex:b2', w: 1, h: 1 },
+  };
+  const vitals = {
+    health: 50, maxHealth: 50, magicka: 20, maxMagicka: 20, fatigue: 6400,
+    stats: { strength: 50, endurance: 50 },
+  };
+  const canvas = { width: 1280, height: 800 };
+  const s = hudScale(canvas.width, canvas.height);
+  const quads = [];
+  const r = { uploadTexture: () => 'tex', drawScreenQuad: (tex, rect, uv, color) => quads.push({ tex, ...rect, color }) };
+
+  drawHud(r, canvas, art, vitals, 0, 0.016);
+  // Nine bar-shaped quads before anything else: six untextured
+  // indicators, then the three art bars.
+  const nine = quads.slice(0, 9);
+  const { loss, gain } = indicatorColors(false);
+  assert.deepEqual(nine.slice(0, 6).map((q) => q.tex), [null, null, null, null, null, null],
+    'the indicators are VerticalProgress with a Color, not a ProgressTexture');
+  assert.deepEqual(nine.slice(0, 3).map((q) => q.color),
+    loss.map((c) => [c[0], c[1], c[2], 1]), 'the three LOSS bars first, behind everything');
+  assert.deepEqual(nine.slice(3, 6).map((q) => q.color),
+    gain.map((c) => [c[0], c[1], c[2], 1]), 'then the three GAIN bars');
+  assert.deepEqual(nine.slice(6).map((q) => q.tex),
+    ['tex:MAIN03I0', 'tex:MAIN04I0', 'tex:MAIN05I0'], 'and the art bars over both');
+  // every one of the nine sits on its vital's own rect
+  const xs = [0, 1, 2].map((i) => HUD_BORDER + i * HUD_BAR_STRIDE * s);
+  assert.deepEqual(nine.map((q) => q.x), [...xs, ...xs, ...xs]);
+  assert.deepEqual(nine.map((q) => q.w), new Array(9).fill(4 * s));
+  assert.deepEqual(nine.map((q) => q.y + q.h), new Array(9).fill(canvas.height - HUD_BORDER));
+
+  // The PLAIN bar draws the SMOOTHED amount, not the live ratio
+  // (:283-285) - that is the whole point of the trail. A heal leaves
+  // healthBar.Amount at the OLD reading while the loss bar has
+  // already jumped to the new one (:296-300), so the two disagree and
+  // the art bar must follow the smoother.
+  _resetVitalsIndicators();
+  drawHud(r, canvas, art, { ...vitals, health: 10 }, 0, 0.016);   // ResetVitals at 10/50
+  quads.length = 0;
+  drawHud(r, canvas, art, { ...vitals, health: 40 }, 0, 0.016);   // +30 health
+  const full = 32 * s;
+  assert.equal(quads[6].tex, 'tex:MAIN03I0');
+  assert.ok(Math.abs(quads[6].h - full * 0.2) < 1e-9,
+    `the art bar is still on the pre-heal 10/50, walking up: ${quads[6].h}`);
+  assert.ok(Math.abs(quads[0].h - full * 0.8) < 1e-9,
+    `...while the LOSS bar behind it already shows 40/50: ${quads[0].h}`);
+
+  // ...and the swap the art recorded is what the indicator colours
+  // follow (LoadAssets :179-198) - not a fixed table.
+  _resetVitalsIndicators();
+  quads.length = 0;
+  drawHud(r, canvas, { ...art, swapped: true }, vitals, 0, 0.016);
+  const swapped = indicatorColors(true);
+  assert.deepEqual(quads.slice(0, 3).map((q) => q.color),
+    swapped.loss.map((c) => [c[0], c[1], c[2], 1]),
+    'health and fatigue trade indicator colours with their art');
 });

@@ -92,20 +92,50 @@ export const HEALTH_GAIN_COLOR = [0.60, 1, 0.60];
 export const FATIGUE_GAIN_COLOR = [1, 0.50, 0.50];
 export const MAGICKA_GAIN_COLOR = [0.70, 0.70, 1];
 
+/** LoadAssets (:179-198) again, its OTHER half: the swap trades the
+ *  health and fatigue INDICATOR colours along with their art, and
+ *  magicka keeps its own in both arms (:199-201). Indexed the way
+ *  PositionIndicators lays the bars out (:225-233). An art object
+ *  that never recorded a swap answers DFU's else-arm, which is the
+ *  unswapped set. */
+export const indicatorColors = (swapped = false) => (swapped
+  ? {
+    loss: [FATIGUE_LOSS_COLOR, HEALTH_LOSS_COLOR, MAGICKA_LOSS_COLOR],
+    gain: [FATIGUE_GAIN_COLOR, HEALTH_GAIN_COLOR, MAGICKA_GAIN_COLOR],
+  }
+  : {
+    loss: [HEALTH_LOSS_COLOR, FATIGUE_LOSS_COLOR, MAGICKA_LOSS_COLOR],
+    gain: [HEALTH_GAIN_COLOR, FATIGUE_GAIN_COLOR, MAGICKA_GAIN_COLOR],
+  });
+
 /** VerticalProgressSmoother.timerMax (:14). */
 export const SMOOTHER_TIMER_MAX = 0.4;
 
-/** VerticalProgressSmoother (:9-51) verbatim. `Amount` is the field a
+/** VerticalProgress.Amount's setter is `Mathf.Clamp01(value)`
+ *  (VerticalProgress.cs:27-31), and every write in HUDVitals goes
+ *  through it - `healthBarLoss.Amount += HealthGainPercent` on a big
+ *  heal saturates at 1 rather than storing 1.6, and the
+ *  BeginSmoothChange that follows reads the CLAMPED value as its
+ *  starting point. Clamping only at draw time would start the lerp
+ *  from a height the bar never had. */
+export const clamp01 = (v) => Math.max(0, Math.min(1, v));
+
+/** VerticalProgressSmoother (:9-51) verbatim. `amount` is the field a
  *  VerticalProgress draws from, so it is the whole state a caller
- *  needs; `cycle` takes dt where DFU reads Time.deltaTime. */
+ *  needs, and it clamps on write exactly as its base class does;
+ *  `cycle` takes dt where DFU reads Time.deltaTime. */
 export class VerticalProgressSmoother {
   constructor(amount = 0) {
-    this.amount = amount;
+    this._amount = clamp01(amount);
     this.prevPercent = 0;
     this.targetPercent = 0;
     this.timer = 0;
     this.cycleTimer = false;
   }
+
+  get amount() { return this._amount; }
+
+  set amount(v) { this._amount = clamp01(v); }
 
   /** BeginSmoothChange (:21-33): a NEGATIVE timer is the delay before
    *  the lerp starts - half a second for a change that starts from
@@ -170,7 +200,7 @@ export class VitalsIndicators {
       const cur = currentOf(vitals, key), max = maxOf(vitals, key);
       this.prev[key] = { cur, max };
       const b = this.bars.get(key);
-      b.gain = cur / max;
+      b.gain = clamp01(cur / max);
       b.bar.amount = b.gain;
       b.loss.amount = b.gain;
       b.bar.cycleTimer = false;
@@ -196,13 +226,13 @@ export class VitalsIndicators {
       // The handler (:290-312). It runs only on a real change, and
       // note it reads the SIGN of `lost`, not of `lostPercent`.
       if (lost !== 0) {
-        b.gain = cur / max;
+        b.gain = clamp01(cur / max);
         if (lost > 0) b.bar.amount -= lostPercent;        // damage: the plain bar drops at once
         else b.loss.amount += -lostPercent;               // healing: the trail jumps up to meet it
         b.bar.beginSmoothChange(b.gain);
         b.loss.beginSmoothChange(b.gain);
       } else {
-        b.gain = cur / max;                               // UpdateAllVitals (:277-279), every frame
+        b.gain = clamp01(cur / max);                      // UpdateAllVitals (:277-279), every frame
       }
       this.prev[key] = { cur, max };
     }
@@ -373,12 +403,6 @@ export async function loadHud({ fetchBytes, ImgFile, palette, renderer }) {
     };
     return {
       health, fatigue, magicka, compass, compassBox, swapped: swap,
-      lossColors: swap
-        ? [FATIGUE_LOSS_COLOR, HEALTH_LOSS_COLOR, MAGICKA_LOSS_COLOR]
-        : [HEALTH_LOSS_COLOR, FATIGUE_LOSS_COLOR, MAGICKA_LOSS_COLOR],
-      gainColors: swap
-        ? [FATIGUE_GAIN_COLOR, HEALTH_GAIN_COLOR, MAGICKA_GAIN_COLOR]
-        : [HEALTH_GAIN_COLOR, FATIGUE_GAIN_COLOR, MAGICKA_GAIN_COLOR],
       breathNormal: solid(BREATH_COLOR_NORMAL, 'hud-breath-normal'),
       breathShort: solid(BREATH_COLOR_SHORT, 'hud-breath-short'),
     };
@@ -528,8 +552,9 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
           undefined, [color[0], color[1], color[2], 1]);
       }
     };
-    for (let i = 0; i < bars.length; i++) solidBar(i, _vitalsIndicators.amounts(VITAL_KEYS[i]).loss, art.lossColors[i]);
-    for (let i = 0; i < bars.length; i++) solidBar(i, _vitalsIndicators.amounts(VITAL_KEYS[i]).gain, art.gainColors[i]);
+    const colors = indicatorColors(art.swapped);
+    for (let i = 0; i < bars.length; i++) solidBar(i, _vitalsIndicators.amounts(VITAL_KEYS[i]).loss, colors.loss[i]);
+    for (let i = 0; i < bars.length; i++) solidBar(i, _vitalsIndicators.amounts(VITAL_KEYS[i]).gain, colors.gain[i]);
   } else {
     // A host that turned the setting off gets the frozen smoothers
     // back in step the moment it turns it on again - DFU's

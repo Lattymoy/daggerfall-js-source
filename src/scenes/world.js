@@ -946,6 +946,16 @@ export async function bootWorld(canvas, renderer, params, status) {
   function syncLocationRectCrime() {
     const inRect = _musicInLocationRect() ? _topicsKey : null;
     if (_crimeRectKey && !inRect) clearCrimeOnLocationExit(playerEntity, _crimeRectKey, inRect);
+    // The SAME crossing raises PlayerGPS's two rect events
+    // (:701-715), and AmbientEffectsPlayer subscribes to both: entering
+    // arms IsCemeteryNearby for a Graveyard reached from outside
+    // (:518-529) and leaving clears it (:531-534). Nothing armed the
+    // cemetery layer, so its three howl/bird one-shots never played.
+    if (!_crimeRectKey && inRect) {
+      ambience.onEnterLocationRect(_musicLocationType(), { inside: (modes?.mode ?? 'exterior') !== 'exterior' });
+    } else if (_crimeRectKey && !inRect) {
+      ambience.onExitLocationRect();
+    }
     _crimeRectKey = inRect;
   }
   /** GetBuildingCompassDirection (TalkManager.cs:1203-1236) - %di's
@@ -2561,7 +2571,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     exteriorBuildings: () => _questLoc()?.exterior?.buildings ?? null,
     factionName: (id) => townTalk.factionDict?.get(id)?.name ?? '',
     addOrReplaceQuestProgressRumor: (uid, m) => rumorMill.addOrReplaceQuestProgressRumor(uid, m),
-    undiscoverBuilding: (buildingKey) => undiscoverBuilding(`${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`, buildingKey),
+    // PlayerGPS.UndiscoverBuilding (:986-1019) takes THREE arguments, and
+    // the two quest callers - TalkManager.cs:2958 and Quest.cs:655 - both
+    // pass (buildingKey, true, place.SiteDetails.buildingName): only a
+    // residence is hidden (:1005-1007), and only if the stored displayName
+    // is the name THIS quest gave it (:1014-1016), so the quest that did
+    // not name a shared residence cannot take it off the map. The dep took
+    // the key alone and dropped the name topicTree already hands it.
+    undiscoverBuilding: (buildingKey, buildingName) => undiscoverBuilding(`${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`, buildingKey, true, buildingName),
     talkPartner: () => npcSession.lastTargetStaticNPC ?? npcSession.lastTargetMobileNPC ?? null,
     onTopicListsUpdated: () => {},   // the talk window's refresh is TK-v's
   });
@@ -3213,6 +3230,15 @@ export async function bootWorld(canvas, renderer, params, status) {
       // rig's `say` was a console.warn and the interior ticker's was a
       // console.log. Drawn ABOVE the modal render, which is where
       // townTalk always draws.
+      // WeatherAmbientEffects is a CHILD of the scene's `Exterior`
+      // object, and every transition indoors runs DisableAllParents,
+      // whose ExteriorParent.SetActive(false) (PlayerEnterExit.cs:1048)
+      // switches the component off: its Update stops, its AudioSources
+      // stop, and OnDisable nulls the rain/crickets handles. The port
+      // simply stopped calling update() and left the loops playing, so
+      // rain and crickets followed the player into every building and
+      // dungeon.
+      ambience.setActive(false);
       townTalk.frame(dt);
       requestAnimationFrame(frame);
       return;
@@ -3251,6 +3277,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       // motor already held here - the clock did not, so a disease
       // aged while the game was paused.
       if (!_overlayHeld) playerTicker.tick(dt * timeScaleMult, {
+        // PlayerEntity.cs:405-407: the CLIMBING arm leads the per-minute
+        // fatigue band - `if (climbingMotor != null && climbingMotor
+        // .IsClimbing) amount = ClimbingFatigueLoss` - and short-circuits
+        // running and the Swimming roll. No host fed it, so the arm could
+        // never fire and a climb billed 11 (or 88 with Run held).
+        climbing: !!player.climb?.isClimbing,
         running: player.isRunning && !player.standing,   // AUDIT 23 (entity-2): PlayerEntity.cs:408
         swimming: player.swimming,
         jumped: player.jumped,   // C6: the per-jump drain+tally ride the tick
@@ -3433,8 +3465,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     // A3: the exterior ambience (WeatherAmbientEffects 5/25) - the
     // weather/time preset per WeatherManager.SetAmbientEffects.
     audio.setListener(cam.pos, fwd);
+    ambience.setActive(true);   // EnableExteriorParent (:1056-1071) switches the component back on
     ambience.setPreset(presetForExterior(weather, isNight(minute)));
-    ambience.update(dt, { playerPos: cam.pos });
+    // `inside` is PlayerEnterExit.IsPlayerInside, the cemetery layer's
+    // own gate (AmbientEffectsPlayer.cs:154) - false on every frame
+    // that reaches here, which is what the modal return above means.
+    ambience.update(dt, { playerPos: cam.pos, inside: false });
     animalAmbience.update(dt, cam.pos);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
     const flash = params.has('flashtest') ? 2 : (lightning ? lightning.tick(dt) : 1);
     renderer.setLighting(

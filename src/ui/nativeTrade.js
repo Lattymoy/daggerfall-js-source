@@ -43,7 +43,8 @@ import {
 import { CANNOT_BE_REPAIRED_TEXT } from '../systems/repairService.js';
 import { isSummoned } from '../systems/inventory.js';   // TransferItem's summoned guard
 import { CANNOT_REMOVE_ITEM_TEXT } from '../systems/createItem.js';   // both TransferItem refusals speak it
-import { questTransferRefused, SMALL_CART_TEMPLATE, extinguishTransferred, CANNOT_CARRY_TEXT } from './nativeInventory.js';   // DaggerfallTradeWindow EXTENDS the inventory window
+import { questTransferRefused, SMALL_CART_TEMPLATE, extinguishTransferred, CANNOT_CARRY_TEXT, USE_PENDING } from './nativeInventory.js';   // DaggerfallTradeWindow EXTENDS the inventory window
+import { useItem, isMap } from '../systems/useItem.js';   // TransferItem's map arm reads the reveal through UseItem's own
 import { canHoldAmount, effectiveUnitWeightInKg, totalWeight } from '../systems/inventory.js';   // ComputeCanHoldAmount (:1447-1457), the one member CanCarryAmount weighs with
 import { expandGuildMacros } from '../systems/guildServiceActions.js';
 
@@ -104,6 +105,13 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && 
  *   gold(), rows(textId), weight() -> { carriedWeightKg, maxEncumbranceKg }
  *   commit(mode, staged, price, proceeds) - the host's transaction
  *   icons, entity, shopName
+ *   revealMap()    -> PlayerGPS.DiscoverRandomLocation, for
+ *                     TransferItem's MAP arm (:1471-1478) - the same
+ *                     seam the inventory window takes. UNWIRED: no
+ *                     host passes one to this window yet, and useItem's
+ *                     map arm leaves the map UNREAD and uneaten
+ *                     without it rather than claiming a reveal it did
+ *                     not make.
  *   getQuest(uid)  -> QuestMachine.GetQuest, for TransferItem's quest
  *                     arm. UNWIRED: no host passes one yet, and DFU
  *                     refuses a quest item it cannot resolve (:1489),
@@ -201,14 +209,54 @@ export class NativeTradeWindow {
    *  and neither can a quest item the player is not allowed to drop.
    *  Both refusals raise the one "You cannot remove this item." box.
    *  `from` is localItems at every one of those calls and the remote
-   *  side is the staged lot, never the wagon. */
-  _refuseTransfer(item) {
-    const refused = isSummoned(item) || questTransferRefused(item, {
-      fromLocal: true, toWagon: false, getQuest: this.hooks.getQuest ?? null,
-    });
-    if (!refused) return false;
+   *  side is the staged lot, never the wagon.
+   *
+   *  The two guards are SEPARATE members because TransferItem's MAP
+   *  arm (:1471-1478) stands BETWEEN them: a summoned map is refused,
+   *  but a QUEST map is read and eaten before the quest guard is ever
+   *  reached. */
+  _refuseSummoned(item) {
+    if (!isSummoned(item)) return false;
     this.box = { rows: [{ text: CANNOT_REMOVE_ITEM_TEXT, center: true }], buttons: null };
     return true;
+  }
+
+  _refuseQuestItem(item) {
+    if (!questTransferRefused(item, {
+      fromLocal: true, toWagon: false, getQuest: this.hooks.getQuest ?? null,
+    })) return false;
+    this.box = { rows: [{ text: CANNOT_REMOVE_ITEM_TEXT, center: true }], buttons: null };
+    return true;
+  }
+
+  /** TransferItem's MAP arm (:1471-1478): `RecordLocationFromMap(item);
+   *  from.RemoveItem(item); Refresh(false); return`. Staging a map for
+   *  sale, repair or identification goes through that same
+   *  TransferItem, so the map is READ and CONSUMED off the pack - it
+   *  never reaches the merchant's side of the counter, and there is
+   *  nothing left to price.
+   *
+   *  The reveal is read through UseItem's own map arm (:1740-1746 -
+   *  the same two statements over the same collection), which is the
+   *  member that owns it, rather than a second copy of
+   *  RecordLocationFromMap written here. A host with no reveal seam
+   *  leaves the map unread, which is that member's recorded answer
+   *  and not a new one. No click sound: the arm returns before
+   *  DoTransferItem. */
+  _transferMap(item) {
+    // `from` is localItems = PlayerEntity.Items (DaggerfallTradeWindow
+    // .cs:389), the LIVE collection - read straight off the entity as
+    // this method's own wagon check does (:789-793), because the
+    // port's packItems() is a filtered VIEW of the pack and a view
+    // cannot be spliced (the recorded departure at that hook).
+    const from = this.hooks.entity?.items ?? this.hooks.packItems();
+    const r = useItem(item, from, {
+      entity: this.hooks.entity,
+      revealMap: this.hooks.revealMap ?? null,
+    });
+    if (r.text) this.box = { rows: [{ text: r.text, center: true }], buttons: null };
+    else if (r.textId) this.box = { rows: this._rows(r.textId), buttons: null };
+    else if (r.pending) this.box = { rows: [{ text: USE_PENDING.map, center: true }], buttons: null };
   }
 
   /** LocalItemListScroller_OnItemClick (:788-826), through the law. */
@@ -227,7 +275,12 @@ export class NativeTradeWindow {
         (i) => i.group === 'Transportation' && i.templateIndex === SMALL_CART_TEMPLATE) ?? null,
     });
     if (d.kind === 'stage') {
-      if (this._refuseTransfer(item)) return;
+      // TransferItem's guards in its own statement order: the summoned
+      // one first (:1464-1469), then the MAP arm (:1471-1478), then
+      // the quest one (:1480-1505).
+      if (this._refuseSummoned(item)) return;
+      if (isMap(item)) { this._transferMap(item); return; }
+      if (this._refuseQuestItem(item)) return;
       // TransferItem's LIGHT arm (DaggerfallInventoryWindow.cs:1506-
       // 1508). `from` is localItems at every staging call here
       // (:795, :817, :823, :826), so staging a LIT torch or lantern

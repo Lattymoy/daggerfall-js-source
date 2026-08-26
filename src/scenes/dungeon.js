@@ -18,7 +18,7 @@ import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile } from '../formats/mapsFile.js';
-import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js';
+import { dungeonAmbient, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js';
 import { INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1
@@ -242,9 +242,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
     `start ${JSON.stringify(ctx.startMarker)}, ${ctx.lights.length} lights, ${ctx.waterQuads.length} water, ${ctx.enemies.length} enemies`
   );
 
-  // Verbatim dungeon lighting: PlayerAmbientLight.DungeonAmbientLight,
-  // no sun; every light flickers (DaggerfallLight Animate).
-  renderer.setLighting(new Float32Array(DUNGEON_AMBIENT), 0);
+  // Verbatim dungeon lighting: PlayerAmbientLight's dungeon arm, no
+  // sun; every light flickers (DaggerfallLight Animate). The ambient
+  // VALUE is re-chosen every frame in the loop below, because
+  // UpdateAmbientLight is LateUpdate's (:60-63) and its answer moves
+  // with the block the player is standing in.
   // Verbatim DungeonFogSettings: exponential 0.005, fog color black.
   renderer.setFog('exp', 0.005, 0, 0, new Float32Array([0, 0, 0]));
 
@@ -420,7 +422,10 @@ export async function bootDungeon(canvas, renderer, params, status) {
         if (_step) audio.playOneShot(_step.clip, _step.volume);
       }
       cam.pos = player.eye;
-      ctx.reportActivity?.({ running: held(keys, 'Run') && moving, swimming: player.swimming, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing
+      // PlayerEntity.cs:405-407: the CLIMBING arm leads the per-minute
+      // fatigue band and short-circuits running and the Swimming roll
+      // (ClimbingFatigueLoss = 22, :110). No host fed it.
+      ctx.reportActivity?.({ climbing: !!player.climb?.isClimbing, running: held(keys, 'Run') && moving, swimming: player.swimming, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing
       ctx.reportMotor(player.grounded, player.velY, cam.yaw);
       ctx.reportInput?.([...keys].join('+') || 'none', cam.pitch);
       const useHeld = keys.has('KeyE');   // I2 departure: DFU activates on Mouse0 and E is AbortSpell - the pointer-parity slice owns the move
@@ -448,6 +453,14 @@ export async function bootDungeon(canvas, renderer, params, status) {
     const view = lookAt(cam.pos, target, [0, 1, 0]);
 
     ctx.flicker.tick(dt);
+    // PlayerAmbientLight.UpdateAmbientLight's dungeon arm (:84-92): a
+    // castle block takes CastleAmbientLight and the treasure room
+    // SpecialAreaLight (0.58 each), and only what is neither takes
+    // DungeonAmbientLight. Applied once at load, the host could only
+    // ever show the floor value.
+    renderer.setLighting(new Float32Array(dungeonAmbient({
+      insideDungeonCastle: ctx.inCastle, insideSpecialArea: ctx.inSpecialArea,
+    })), 0);
     renderer.setPointLights(
       withPlayerLights(nearestLights(ctx.lights, cam.pos, 16, ctx.flicker.ranges),
         ctx.candleLight?.(), playerTorchLight(playerEntity, player.pos, cam.yaw)),   // X11 candle; T1 torch

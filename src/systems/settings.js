@@ -151,6 +151,14 @@ export const LIVE = Object.freeze({
   // U46: the eight buff/debuff icon layouts. Another key the settings
   // screen offered with nothing on the other end.
   'GUI/IconsPositioningScheme': 'src/ui/hudActiveSpells.js',
+  // AUDIT 26 F148/F149: both are HUDVitals' own, and both were stored
+  // rather than live - the port drew three instant bars and one fixed
+  // art pairing while DFU reads these every draw. EnableVitalsIndicators
+  // (HUDVitals.cs:99-115, :211-214, :276-312) adds the six loss/gain
+  // indicator bars and ships True; SwapHealthAndFatigueColors (:181-198)
+  // trades MAIN03I0 and MAIN04I0 and the indicator colours with them.
+  'GUI/EnableVitalsIndicators': 'src/ui/hud.js',
+  'GUI/SwapHealthAndFatigueColors': 'src/ui/hud.js',
   'GUI/Crosshair': 'src/ui/hudCrosshair.js',
   'Enhancements/AssetInjection': 'src/systems/musicReplacement.js',   // M-EXT: DFU's own gate on SoundReplacement, now real for MUSIC
   'Audio/AlternateMusic': 'src/scenes/shared.js',   // M-FM: read once in createMusicDirector, for all three hosts

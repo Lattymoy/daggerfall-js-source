@@ -84,7 +84,7 @@ export function resolveNameplates(input) {
         if (clearOfPlaced(p, dp * bias, plates, q) && clearOfPlaced(q, dq * bias, plates, p)) {
           p.offY += dp * bias; q.offY += dq * bias;
           p.placed = q.placed = true;
-        } else if (clearOfPlaced(p, dp * bias * 2, plates, null) && clearOfPlaced(q, 0, plates, p)) {
+        } else if (clearOfPlaced(p, dp * bias * 2, plates, null)) {
           // :1230-1240. The two checks are SEQUENTIAL, not conjoined:
           // first is placed on its own 2x check alone, and only THEN
           // is second asked whether its ORIGINAL spot is still clear -
