@@ -106,9 +106,17 @@ test('TV: the law has ONE home, and the world still writes on entry', () => {
   const tm = readFileSync(new URL('../src/ui/travelMapWindow.js', import.meta.url), 'utf8');
   assert.ok(tm.includes('hasDiscoveredLocationId(summary.id) || !!summary.discovered'),
     'checkLocationDiscovered is the store OR the baked flag, no type arm');
-  // every gate goes through the one method, never through the flag
-  const gates = tm.match(/this\.checkLocationDiscovered\(/g) ?? [];
-  assert.ok(gates.length >= 4, `four surfaces ask the one test (found ${gates.length})`);
+  // Every gate goes through the one member, never through the flag.
+  // AUDIT 26 F195: checkLocationDiscovered and CanFindPlace are MODULE
+  // members now with the instance methods delegating, because the
+  // journal's find-place gate (DaggerfallQuestJournalWindow.cs:452) asks
+  // CanFindPlace from a host that has no map window open. So the call
+  // sites no longer all spell `this.` - what "one home" means here is
+  // that the STORE is read in exactly one place.
+  const gates = tm.match(/checkLocationDiscovered\(/g) ?? [];
+  assert.ok(gates.length >= 6, `four surfaces plus the two doors ask the one test (found ${gates.length})`);
+  assert.equal((tm.match(/hasDiscoveredLocationId\(/g) ?? []).length, 1,
+    'the discovery store is read in exactly ONE member');
   const md = readFileSync(new URL('../src/systems/mapDirectory.js', import.meta.url), 'utf8');
   assert.ok(md.includes('discovered: !!mapTable.discovered'),
     'the summary carries the BAKED flag off the map TABLE');

@@ -64,6 +64,16 @@ export const ENCHANTMENT_TYPES = Object.freeze({
   ExtraWeight: 23, WeakensArmor: 24, BadRepWith: 25, SpecialArtifactEffect: 26,
 });
 
+/** EnchantmentSettings.ClassicType (DaggerfallUnityItem.cs:1316-1320).
+ *  A settings row names its effect by KEY - DFU's EffectKey is the
+ *  enum member's NAME, which is exactly what
+ *  enchantmentCatalogue.js keys its cost tables by - and what
+ *  SetEnchantments stores on the item is the classic TYPE, the
+ *  number. A legacy row minted from MAGIC.DEF already carries the
+ *  number and passes straight through. */
+export const classicEnchantmentType = (type) =>
+  (typeof type === 'string' ? ENCHANTMENT_TYPES[type] ?? ENCHANTMENT_TYPES.None : type);
+
 /** EnchantmentPayloadFlags (MagicAndEffectsEnums.cs:158-177), verbatim. */
 export const PAYLOAD = Object.freeze({
   None: 0, Enchanted: 1, Used: 2, Equipped: 4, Unequipped: 8, Held: 16,
@@ -457,14 +467,21 @@ const REGISTRY = new Map([
     flags: PAYLOAD.Enchanted | PAYLOAD.Breaks,
     breaks({ param, ctx }) { if (param >= 0) ctx?.spawnFoe?.(param); },
   }],
-  /** ItemDeteriorates.cs - MagicRound: -1 condition every 4 rounds
-   *  while in sunlight / a holy place (param 0/1). */
+  /** ItemDeteriorates.cs - MagicRound: -1 condition every 4 rounds.
+   *  Params (:112-117) are AllTheTime = 0, InSunlight = 1,
+   *  InHolyPlaces = 2, and only the two CONDITIONAL ones gate the
+   *  early return (:87-89) - AllTheTime carries no condition at all,
+   *  so it degrades every fourth round wherever the wearer is. The
+   *  order is the catalogue's own ('all the time', 'in sunlight',
+   *  'in holy places' - enchantmentCatalogue.js:80) and the one the
+   *  soul-forced sets speak (Daedroth/FrostDaedra/Ghost/Wraith all
+   *  force param 2 = InHolyPlaces). */
   [T.ItemDeteriorates, {
     flags: PAYLOAD.Held,   // ItemDeteriorates.cs:38
     magicRound({ param, round, entity, item, ctx }) {
       if (round % CONDITION_PER_ROUNDS !== 0) return;
-      if (param === 0 && !(ctx?.inSunlight?.() ?? false)) return;
-      if (param === 1 && !(ctx?.inHolyPlace?.() ?? false)) return;
+      if (param === 1 && !(ctx?.inSunlight?.() ?? false)) return;
+      if (param === 2 && !(ctx?.inHolyPlace?.() ?? false)) return;
       enchantLowerCondition(item, 1, entity, ctx);
     },
   }],
@@ -489,26 +506,36 @@ const REGISTRY = new Map([
     },
   }],
   /** HealthLeech.cs - the stamp fires on Strikes/Used/Enchanted
-   *  (:its first gate, before any param logic); WheneverUsed (2)
-   *  bills the wearer 8 on a strike / 16 on a use; UnlessUsedDaily(0)
-   *  /Weekly(1) leech 1 health every 4 rounds once the item has gone
-   *  unused past a day / a week of classic time. */
+   *  (:78-79, its first gate, before any param logic). Params
+   *  (:132-136) are WheneverUsed = 0, UnlessUsedDaily = 1,
+   *  UnlessUsedWeekly = 2 - the catalogue's own order
+   *  (enchantmentCatalogue.js:77 'Whenever used' / 'Unless used
+   *  daily' / 'Unless used weekly'), and the one DaedraSeducer's
+   *  forced set speaks (param 2 = UnlessUsedWeekly).
+   *  WheneverUsed (0) bills the wearer 8 on a strike / 16 on a use
+   *  (:84-89); UnlessUsedDaily (1) / UnlessUsedWeekly (2) leech 1
+   *  health every 4 rounds once the item has gone unused past a day /
+   *  a week of classic time (:106-113). */
   [T.HealthLeech, {
     flags: PAYLOAD.Held | PAYLOAD.Used | PAYLOAD.Strikes | PAYLOAD.Enchanted,
+    /** The Enchanted stamp (SetEnchantments' created-payload callback,
+     *  DaggerfallUnityItem.cs:1298-1299): a freshly made item starts
+     *  its day/week clock at the moment of enchanting, not at 0. */
+    enchanted({ item, nowMinutes }) { if (item) item.timeHealthLeechLastUsed = nowMinutes ?? 0; },
     used({ param, item, ctx, nowMinutes }) {
       if (item) item.timeHealthLeechLastUsed = nowMinutes ?? 0;
-      if (param === 2) ctx?.hurtSelf?.(LEECH_CAST_AMOUNT);
+      if (param === 0) ctx?.hurtSelf?.(LEECH_CAST_AMOUNT);
       return null;
     },
     strikes({ param, item, ctx, nowMinutes }) {
       if (item) item.timeHealthLeechLastUsed = nowMinutes ?? 0;
-      if (param === 2) ctx?.hurtSelf?.(LEECH_WEAPON_AMOUNT);
+      if (param === 0) ctx?.hurtSelf?.(LEECH_WEAPON_AMOUNT);
       return null;
     },
     magicRound({ param, round, item, ctx, nowMinutes }) {
-      if (param !== 0 && param !== 1) return;
+      if (param !== 1 && param !== 2) return;
       const since = (nowMinutes ?? 0) - (item?.timeHealthLeechLastUsed ?? 0);
-      const active = param === 0 ? since > MINUTES_PER_DAY : since > MINUTES_PER_DAY * 7;
+      const active = param === 1 ? since > MINUTES_PER_DAY : since > MINUTES_PER_DAY * 7;
       if (active && round % TIME_LEECH_PER_ROUNDS === 0) ctx?.hurtSelf?.(1);
     },
   }],
@@ -608,6 +635,30 @@ export function doItemEnchantmentPayloads(flags, item, { entity = null, target =
     }
   }
   return Math.max(0, damageOut);
+}
+
+/** SetEnchantments' CREATED-PAYLOAD callback (DaggerfallUnityItem.cs
+ *  :1289-1300): as the item maker builds the enchantment lists it
+ *  fires EnchantmentPayloadCallback(Enchanted, param, null, null,
+ *  this) for every settings row whose effect template carries the
+ *  flag. This is NOT DoItemEnchantmentPayloads and must not be
+ *  routed through it: SetEnchantments' loop SKIPS a row whose effect
+ *  key the broker cannot resolve (`if (effectTemplate != null)`,
+ *  :1290) instead of aborting the walk, so the unknown-key quirk
+ *  above never reaches the maker. `enchantments` is the settings list
+ *  being applied, which the item does not carry yet at the DFU call
+ *  site - hence the separate argument. */
+export function doEnchantedPayloads(item, enchantments, { entity = null, ctx = null, nowMinutes = null, collection = null } = {}) {
+  ctx = mergeCtx(ctx);
+  nowMinutes ??= ctx?.now?.() ?? 0;   // E2: the mounted classic-minute clock, as restartHeldEnchantments reads it
+  for (const e of enchantments ?? []) {
+    // GetEffectTemplate(settings.EffectKey) (:1289) - the row is
+    // found by KEY here, so a maker settings list resolves before
+    // SetEnchantments has stored anything numeric.
+    const row = REGISTRY.get(classicEnchantmentType(e.type));
+    if (!row || !(row.flags & PAYLOAD.Enchanted)) continue;
+    row.enchanted?.({ param: e.param, entity, target: null, item, damage: 0, round: 0, nowMinutes, ctx, collection });
+  }
 }
 
 /** UseItem's result contract (:1088-1101): removeItem wins over

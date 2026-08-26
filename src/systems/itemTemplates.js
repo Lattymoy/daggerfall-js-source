@@ -107,6 +107,17 @@ export function usesWorldTexture(item, template = templateByIndex(item.templateI
  *  minted none, so every torch/lantern/candle read as empty and no
  *  looted weapon carried a condition. Idempotent - an item that
  *  already has a condition (magic uses, a save round-trip) keeps it. */
+/** The OTHER SetItem law with a draw in it (DaggerfallUnityItem.cs
+ *  :571): `message = (itemGroup == ItemGroups.Paintings) ?
+ *  UnityEngine.Random.Range(0, 65536) : 0`. A painting's message is
+ *  its whole identity - InitPaintingInfo (itemInfo.js) seeds DFRandom
+ *  with it and regenerates the picture, the four description records
+ *  and the artist from there - so a painting minted without one is a
+ *  painting with no picture. It lives beside mintCondition because
+ *  every template-backed mint owes both. */
+export const PAINTING_MESSAGE_RANGE = 65536;
+export const rollPaintingMessage = (rolls = Math.random) => Math.floor(rolls() * PAINTING_MESSAGE_RANGE);
+
 export function mintCondition(item) {
   if (item.maxCondition != null) return item;
   if (!Object.isExtensible(item)) return item;   // C-slice: the frozen pre-chargen stand-ins (INTERIM_WEAPON) carry no condition

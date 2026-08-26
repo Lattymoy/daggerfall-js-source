@@ -15,7 +15,7 @@
 import { MELEE_DISTANCE } from '../characters/enemyMotor.js';   // single source (EnemyAttack.cs:30)
 import { CLASSIC_TO_UNITY_RATIO } from '../player/motor.js';   // C15 knockback units
 import { rand } from '../formats/dfRandom.js';
-import { enchantArmorMod, enchantChanceToHitMod, doItemEnchantmentPayloads, PAYLOAD, isEnchantedItem } from '../systems/enchantments.js';   // E1: the enchantment channels + the Strikes payload   // the monster multi-attack reflex gate (F2)
+import { enchantArmorMod, enchantChanceToHitMod, enchantWeightAllowanceMult, doItemEnchantmentPayloads, PAYLOAD, isEnchantedItem } from '../systems/enchantments.js';   // E1: the enchantment channels + the Strikes payload   // the monster multi-attack reflex gate (F2)
 import { liveStat } from '../systems/statMods.js';   // S14: fortify-aware stat reads
 import { skillValue, SKILLS } from '../systems/skills.js';   // S3: real skills (enemies stay flat, verbatim)
 import { RACES } from '../systems/races.js';   // CalculateRacialModifiers reads the DFU-numbered race id
@@ -44,6 +44,23 @@ export const damageModifier = (strength) => Math.floor((strength - 50) / 5);
 // entirely. They live here, beside DamageModifier, and the old sites
 // import them.
 export const maxEncumbrance = (strength) => Math.floor(strength * 1.5);
+/** DaggerfallEntity.GetMaxEncumbrance (:501-507) and the
+ *  `MaxEncumbrance` property that is its one reader (:272). The
+ *  ENTITY's ceiling is the formula above over live strength PLUS the
+ *  IncreasedWeightAllowance multiplier the enchantment fold holds
+ *  (`amount += (int)(amount * multiplier)` - the cast truncates, and
+ *  the multiplier is only added when > 0).
+ *
+ *  Which of the two a call site wants is DFU's own split: everything
+ *  reading a LIVE entity (inventory, character sheet, the bank's gold
+ *  weight gate, the trade window's proceeds) reads this; the chargen
+ *  bonus-stats screen reads the raw formula off working stats
+ *  (CreateCharAddBonusStats.cs:157), because there is no entity yet. */
+export const entityMaxEncumbrance = (entity) => {
+  const amount = maxEncumbrance(liveStat(entity, 'strength'));
+  const mult = enchantWeightAllowanceMult(entity);
+  return mult > 0 ? amount + Math.trunc(amount * mult) : amount;
+};
 /** L-slice (combat-16): the HUD line for a weapon whose material
  *  cannot bite the target (key "materialIneffective"; prose ours). */
 export const MATERIAL_INEFFECTIVE_TEXT = 'Your weapon is ineffective against this creature.';

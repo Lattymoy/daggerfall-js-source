@@ -27,7 +27,7 @@
 
 import { statUp, statDown } from './chargen.js';
 import { itemWeight } from '../systems/inventory.js';   // AUDIT 17e F30
-import { maxEncumbrance } from '../combat/formulas.js';   // U10
+import { entityMaxEncumbrance } from '../combat/formulas.js';   // U10
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { SKILL_NAMES } from '../systems/skills.js';
 import { applyLevelUp, LEVELUP_BONUS_POOL_MIN, LEVELUP_BONUS_POOL_MAX } from '../systems/advancement.js';
@@ -288,7 +288,7 @@ export class CharSheet {
     label(e.items?.find((it) => it.group === 'Currency')?.stackCount ?? 0, 39, 44);
     label(`${Math.trunc((e.fatigue ?? maxFatigue(e)) / FATIGUE_MULTIPLIER)}/${Math.trunc(maxFatigue(e) / FATIGUE_MULTIPLIER)}`, 57, 54);
     label(`${e.health}/${e.maxHealth}`, 52, 64);
-    label(`${Math.trunc(carriedWeight(e))}/${maxEncumbrance(liveStat(e, 'strength'))}`, 90, 74);   // U10: the FormulaHelper home
+    label(`${Math.trunc(carriedWeight(e))}/${entityMaxEncumbrance(e)}`, 90, 74);   // DaggerfallCharacterSheetWindow.cs:404 reads PlayerEntity.MaxEncumbrance
     STAT_KEYS_ORDER.forEach((k, i) =>
       label(liveStat(e, k), 141, 17 + i * 24, { align: 'center', w: 28 }));
     drawPaperDoll(renderer, m, e, PAPERDOLL_ORIGIN[0], PAPERDOLL_ORIGIN[1]);

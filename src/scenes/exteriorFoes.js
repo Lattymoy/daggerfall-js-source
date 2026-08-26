@@ -55,6 +55,14 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   spellsByIndex = null,   // X3-slice: () => the SPELLS.STD map (null until loaded) - casters need it
   hitEffects = null,   // AUDIT 24 (wave 39): the host's one blood/effect pool
   playerWeaponSheathed = () => false,   // AUDIT 24 (wave 42): CalculateEnemyPacification's -25 / +10 arm
+  // GameObjectHelper.CreateEnemyCorpseMarker (:836-839): a corpse
+  // dropped OUTSIDE is handed to StreamingWorld.TrackLooseObject,
+  // which stamps it with the streamer's CURRENT map pixel (:462-476)
+  // so CollectLooseObjects can find it again. A host with no streamed
+  // pixels (exterior.js stands in one location that never leaves
+  // range) passes nothing and its corpses are never collected, which
+  // is what DFU does with a pixel that stays in range.
+  currentPixelKey = () => null,
   magicHooks = null }) {  // X3-slice: { explodeAt, fireMissile } - the host's spell release seams
   const foes = [];        // { mobile, ai, attack, entity, batch, tex, archive, mobileType, dead, _encounter: true }
   const corpseBatches = [];
@@ -202,6 +210,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // flying encounter foe left its corpse hanging in the air where
       // it died, where DFU drops it at FindGroundPosition (:817) - and
       // nothing ever played BodyFall (:126-129).
+      // TrackLooseObject runs INSIDE CreateEnemyCorpseMarker, so the
+      // pixel is read at the death, not when the texture lands.
+      const _corpsePixel = currentPixelKey();
       mintCorpseMarker({
         renderer, getTexture, uploadRecordFrame, collider,
         corpseTexture: ENEMY_BASICS[f.mobileType]?.corpseTexture,
@@ -211,6 +222,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       }).then((c) => {
         if (!c) return;
         f.corpseMarker = c;   // the loot seam reads the GROUND position from here
+        // TrackLooseObject's stamp: the streamer's pixel at the death,
+        // not the corpse's own position.
+        c.pixelKey = f.corpsePixelKey = _corpsePixel;
         corpseBatches.push(c);
         playBodyFall(audio, c.pos);
       }).catch(() => {});
@@ -486,6 +500,32 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     return [...out, ...corpseBatches.map((c) => c.batch)];
   }
 
+  /** CollectLooseObjects (StreamingWorld.cs:1040-1052), the corpse
+   *  half: a tracked loose object whose map pixel leaves the streamed
+   *  range is DESTROYED - object and record both - and ClearStreaming-
+   *  World (:993, from InitWorld :584) collects ALL of them, which is
+   *  every teleport and fast travel. Corpse markers are loose objects
+   *  (GameObjectHelper.cs:836-839); the port had ported this law for
+   *  player-dropped piles (droppedLoot.collectPixel) and not for
+   *  corpses, so every kill left a VAO, two GL buffers and an array
+   *  entry drawn every frame for the rest of the session.
+   *
+   *  Clearing `corpse` is the Destroy: batches() stops drawing it,
+   *  lootTargets stops probing it, and update()'s tail splice - which
+   *  spares corpses - finally prunes the record. */
+  function collectPixel(pixelKey) {
+    for (let i = corpseBatches.length - 1; i >= 0; i--) {
+      if (corpseBatches[i].pixelKey !== pixelKey) continue;
+      renderer.destroyBillboardBatch(corpseBatches[i].batch);
+      corpseBatches.splice(i, 1);
+    }
+    for (const f of foes) {
+      if (!f.corpse || f.corpsePixelKey !== pixelKey) continue;
+      f.corpse = false;
+      f.corpseMarker = null;
+    }
+  }
+
   /** AUDIT 17e F23: the floating-origin recenter shifts everything. */
   function offsetAll(offset) {
     for (const f of foes) {
@@ -505,5 +545,5 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   // gone with no corpse, no loot and no death, which is exactly
   // what DFU's dispel does and why it can break quests.
   return { foes, spawnFoe, damageFoe, update, resolvePlayerHit, batches, offsetAll, activeCount, lootTargets, takeLoot,
-    removeFoe: questPoolOps.removeFoe };
+    collectPixel, removeFoe: questPoolOps.removeFoe };
 }

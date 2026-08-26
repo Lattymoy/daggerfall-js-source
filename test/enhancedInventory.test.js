@@ -677,3 +677,68 @@ test('U58: the door reads the drop pile OUT of the view before tearing it down',
   const view = read('src/ui/enhancedInventory.js');
   assert.match(view, /dropped: \(\) => dropped,/, 'the view has no pile to hand over');
 });
+
+// ── AUDIT 26, IN THE ENHANCED PANE ───────────────────────────────
+// Three laws that landed on main while this arc was building the
+// pane, all of which the pane would have SILENTLY dropped: the
+// transfer ladder's quest arm, the remote list's quest click, and
+// UseItem's PopToHUD. None of them is visible on screen when it is
+// missing, which is exactly why each gets a pin.
+
+test('U58 + AUDIT 26: the pane runs the quest arm, and canStow does NOT', () => {
+  const src = read('src/ui/enhancedInventory.js');
+  // both transfer arms hand the ladder the quest seam...
+  for (const fn of ['function stow(item)', 'function take(item)']) {
+    const from = src.indexOf(fn);
+    assert.ok(from > 0, `${fn} is gone`);
+    const body = src.slice(from, src.indexOf('\nfunction ', from + fn.length));
+    assert.match(body, /getQuest: deps\.getQuest \?\? null/, `${fn} drops the quest seam`);
+    assert.ok(!/dryRun/.test(body), `${fn} must not skip the rung that writes`);
+  }
+  // ...and canStow, which runs on every repaint, does the opposite.
+  // A live quest arm there would mark a quest item dropped each time
+  // the screen redrew - the worst kind of bug, because nothing on
+  // screen looks wrong.
+  const cs = src.slice(src.indexOf('function canStow(item)'), src.indexOf('function stow(item)'));
+  assert.match(cs, /dryRun: true/, 'canStow writes to quest state on every repaint');
+  assert.ok(!/getQuest/.test(cs), 'canStow hands the ladder a live quest seam');
+});
+
+test('U58 + AUDIT 26: only the REMOTE list sends the click to the quest system', () => {
+  // ":2027-2037" - the FIRST act of RemoteItemListScroller_OnItemClick,
+  // ahead of the action-mode branch, so LOOKING at a quest item in a
+  // pile counts as well as taking it. LocalItemListScroller_OnItemClick
+  // (:1974-2007) has no such call, and the pane draws BOTH lists with
+  // one row builder - so the guard has to be on the side, not the row.
+  const src = read('src/ui/enhancedInventory.js');
+  const from = src.indexOf('function itemRow(item, from');
+  assert.ok(from > 0, 'the row builder is gone');
+  const body = src.slice(from, src.indexOf('\nfunction ', from + 20));
+  assert.match(body, /setPlayerClicked\(\)/, 'the pane never tells the quest system');
+  assert.match(body, /from === 'remote' && item\.questItem/,
+    'the local list is sending clicks the classic window does not send');
+  // and it happens on the CLICK, before the pick - a player who looks
+  // and does not take has still clicked
+  assert.ok(body.indexOf('setPlayerClicked()') < body.indexOf('picked = item'),
+    'the click reaches the quest system only after the selection changes');
+});
+
+test('U58 + AUDIT 26: PopToHUD closes the pane and says NOTHING', () => {
+  // DaggerfallUI.PopToHUD() + return (:1687-1688). A watched quest item
+  // that is neither parchment nor clothing closes the window stack so
+  // the quest system gets first shot at the click in the world.
+  // Nothing else on the ladder runs and no message shows.
+  assert.deepEqual(useResultAction({ kind: 'questItem', questItem: true, popToHUD: true }),
+    { kind: 'close' });
+  // ...and it is decided FIRST, above every other arm - DFU returns
+  // before all of them. A book that somehow carried the flag would
+  // still close rather than open the reader.
+  assert.deepEqual(useResultAction({ kind: 'book', item: {}, popToHUD: true }, { openBook: () => {} }),
+    { kind: 'close' }, 'the popToHUD arm is running below the book arm');
+  // without the flag, nothing changes
+  assert.equal(useResultAction({ kind: 'questItem', pending: true }).kind, 'message');
+  // and the view acts on it
+  const src = read('src/ui/enhancedInventory.js');
+  assert.match(src, /if \(act\.kind === 'close'\) \{ onExit\(\); return; \}/);
+  assert.match(src, /getQuest: deps\.getQuest \?\? null/, 'useItem never gets the quest seam');
+});

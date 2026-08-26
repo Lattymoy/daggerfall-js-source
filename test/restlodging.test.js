@@ -574,6 +574,18 @@ test('S40 hosts: all four can now rest, and each supplies its own place', () => 
     // `false &&` in front of it, which leaves the key dead.
     assert.match(s, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return; \}/, f);
     assert.match(s, /toggleRest: \(\) => toggleRest\(\),/, f);
+    // ...and the door is DECLARED ONCE. A match is not enough here and
+    // AUDIT 26 F055/F202/F203 is why: both hosts declared `toggleRest`
+    // TWICE in this one literal, the later key silently won, and a
+    // crippled inline twin - its own CanRest, its own Vagrancy charge,
+    // its own warning box - ran the rest key while this line went on
+    // matching the DEAD first one. A shadowed key is invisible to a
+    // regex, so COUNT it. (test/restwhere.test.js reads the literal's
+    // keys properly; this is the same claim where this pin makes it.)
+    assert.equal((s.match(/(?<![\w.])toggleRest:/g) ?? []).length, 1,
+      `${f}: hudCtx must declare toggleRest exactly once`);
+    assert.equal((s.match(/new RestWindow\(/g) ?? []).length, 1,
+      `${f}: one rest window path, not a twin's second one`);
     // ...and it sits INSIDE the overlay/mode guard the ladder opens
     // with, not after it. Both indices are asserted FOUND first: the
     // first version compared them raw, so an arm hoisted ABOVE the

@@ -76,7 +76,7 @@ import {
 import {
   openState, remoteTarget, planWagonToggle, hasCart,
 } from '../systems/inventorySession.js';
-import { maxEncumbrance } from '../combat/formulas.js';
+import { entityMaxEncumbrance } from '../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all
 import { liveStat } from '../systems/statMods.js';
 import { conditionWord, conditionPercentage, materialName } from '../systems/itemInfo.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
@@ -160,7 +160,7 @@ export function packModel(deps = {}) {
     gold: items.find((it) => it.group === 'Currency')?.stackCount ?? 0,
     // FormulaHelper.MaxEncumbrance over LIVE strength, the same
     // expression the character sheet and the classic window use.
-    encumbrance: { now: Math.trunc(carried), max: maxEncumbrance(liveStat(entity, 'strength')) },
+    encumbrance: { now: Math.trunc(carried), max: entityMaxEncumbrance(entity) },
     count: items.length,
   };
 }
@@ -278,6 +278,13 @@ export function itemLine(item, identity = undefined) {
  */
 export function useResultAction(r, { openBook = null, openSpellbook = null } = {}) {
   if (!r) return { kind: 'nothing' };
+  // AUDIT 26: DaggerfallUI.PopToHUD() + return (:1687-1688). A watched
+  // quest item that is neither parchment nor clothing closes the whole
+  // window stack so the quest system gets first shot at the click in
+  // the game world. NOTHING else on the ladder runs and NO message
+  // shows - and PopToHUD is not the exit button, so no click plays.
+  // First, because DFU returns before every arm below.
+  if (r.popToHUD) return { kind: 'close' };
   if (r.kind === 'book') {
     return openBook
       ? { kind: 'openBook', item: r.item, failText: r.failText, closeFirst: false }
@@ -382,8 +389,13 @@ function use(item, collection = deps.items?.() ?? []) {
     nowMinute: deps.nowMinute?.() ?? 0,
     revealMap: deps.revealMap ?? null,
     drinkPotion: deps.drinkPotion ?? null,
+    // AUDIT 26: QuestMachine.GetQuest (:1673) - the use-click block's
+    // reach. The same seam the transfer ladder's quest arm reads.
+    getQuest: deps.getQuest ?? null,
   });
   const act = useResultAction(r, { openBook: deps.openBook, openSpellbook: deps.openSpellbook });
+  // AUDIT 26's PopToHUD: the window stack goes, nothing is said.
+  if (act.kind === 'close') { onExit(); return; }
   // THE HOOKS ARE READ BEFORE ANYTHING CLOSES. `onExit` unmounts, and
   // unmounting clears `deps` - so a hook read after it is undefined.
   // That is not hypothetical: the first draft closed first and threw
@@ -437,7 +449,15 @@ function refuse(refusal) {
  *  exactly that. A refusal that SPEAKS still gets its button - the
  *  full wagon has something to say. */
 function canStow(item) {
-  const plan = planStore(item, { remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne });
+  // DRY RUN, and it has to be: AUDIT 26's quest rung WRITES as it
+  // passes (playerDropped, and re-permanenting a clone), which is
+  // right for a click and catastrophic for a render - every repaint
+  // would mark a quest item as dropped. The dry run cannot change the
+  // answer, because that rung's refusal speaks.
+  const plan = planStore(item, {
+    remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne,
+    dryRun: true,
+  });
   return plan.ok || !!plan.refusal.text;
 }
 
@@ -445,7 +465,10 @@ function canStow(item) {
 function stow(item) {
   notice = null;
   const to = remoteTarget(deps, sessionState());
-  const plan = planStore(item, { remote: to, usingWagon: session.usingWagon, chooseOne: session.chooseOne });
+  const plan = planStore(item, {
+    remote: to, usingWagon: session.usingWagon, chooseOne: session.chooseOne,
+    getQuest: deps.getQuest ?? null,
+  });
   if (!plan.ok) return refuse(plan.refusal);
   // The item that ARRIVES stays picked - a split leaves the remainder
   // behind and mints a new record, and following the one that moved is
@@ -464,6 +487,7 @@ function take(item) {
   const plan = planTake(item, {
     bag, entity: deps.entity, mode: 'remove',
     chooseOne: session.chooseOne, usingWagon: session.usingWagon,
+    getQuest: deps.getQuest ?? null,
   });
   if (!plan.ok) return refuse(plan.refusal);
   const taken = applyTransfer(item, plan, from, bag);
@@ -600,7 +624,20 @@ function itemRow(item, from = 'local') {
   if (sub) mid.append(el('small', null, sub));
   row.append(mid);
   row.append(el('span', 'itemwt', `${line.weight.toFixed(2)} kg`));
-  row.onclick = () => { picked = item; side = from; notice = null; render(); };
+  row.onclick = () => {
+    // AUDIT 26: "Send click to quest system" (:2027-2037) - the FIRST
+    // act of RemoteItemListScroller_OnItemClick, ahead of the
+    // action-mode branch, so LOOKING at a quest item in a pile counts
+    // as well as taking it. The ClickedItem trigger polls
+    // hasPlayerClicked. Only the REMOTE list does this;
+    // LocalItemListScroller_OnItemClick (:1974-2007) has no such call,
+    // which is why this sits behind `from === 'remote'` rather than in
+    // the pick itself.
+    if (from === 'remote' && item.questItem) {
+      deps.getQuest?.(item.questUID)?.getItem?.(item.questSymbol)?.setPlayerClicked();
+    }
+    picked = item; side = from; notice = null; render();
+  };
   return row;
 }
 

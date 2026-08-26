@@ -284,6 +284,16 @@ export function createArtifact(templates, artifactIndex) {
     name: magicItem.name,
     magic: true,
     artifact: true,
+    // SetArtifact's flags word (:617) - `artifactMask | identifiedMask`,
+    // and DFU's own comment on the line is "Set as artifact &
+    // identified." An artifact is BORN identified, which is why the
+    // trade window's Identify service only ever stages `if
+    // (!item.IsIdentified)` (DaggerfallTradeWindow.cs:823-826) and
+    // never charges for one. Without this every artifact read
+    // unidentified through itemIsIdentified (tradeModes.js), so its
+    // info panel showed the base template name instead of the artifact
+    // name and the Identify service billed (25 * value) >> 8 for it.
+    isIdentified: true,
     artifactIndexBitfield: (artifactIndex << 1) | 1,
     material,
     enchantments: magicItem.enchantments.filter((e) => e.type !== -1),

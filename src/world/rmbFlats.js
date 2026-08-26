@@ -72,6 +72,12 @@ export function collectBlockFlats(dfBlock, natureArchive) {
       // C2: StaticNPC inputs ride every flat (a non-zero factionID IS
       // an exterior NPC - RMBLayout verbatim); scenery carries zeros.
       factionID: obj.factionID, flags: obj.flags, recordPosition: obj.position,
+      // ...and the RAW record triple, which is the other half of those
+      // inputs: StaticNPC.SetLayoutData hashes the UNSCALED XPos/YPos/
+      // ZPos (StaticNPC.cs:210/:333-336), never the scaled position.
+      // Same field names collectInteriorPeople writes, so both people
+      // paths hand the layout one record shape.
+      rawX: obj.xPos, rawY: obj.yPos, rawZ: obj.zPos,
     });
   }
 
@@ -94,7 +100,7 @@ export function collectBlockFlats(dfBlock, natureArchive) {
         z = NATURE_FLATS_OFFSET_Y;
       }
 
-      flats.push({ archive, record: obj.textureRecord, x, y, z, factionID: obj.factionID, flags: obj.flags, recordPosition: obj.position });
+      flats.push({ archive, record: obj.textureRecord, x, y, z, factionID: obj.factionID, flags: obj.flags, recordPosition: obj.position, rawX: obj.xPos, rawY: obj.yPos, rawZ: obj.zPos });
     }
   }
 

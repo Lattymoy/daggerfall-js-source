@@ -35,6 +35,7 @@ import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, mirrorProjectionX, transformPoint, trs } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { drawCharacterSprite } from '../render/characterSprite.js';
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
+import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
@@ -64,8 +65,7 @@ import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
 import { LevelUpScreen, preloadCharSheetArt } from '../ui/charsheet.js';
 import { createCharSheetWindow, charSheetDoorReady } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
-import { canRest, restDecision, ILLEGAL_REST_WARNING } from '../systems/restSession.js';   // U48: the dispatch + V5's CanRest
-import { getBool } from '../systems/settings.js';   // U48: GUI/IllegalRestWarning gates the two-step
+import { restDecision } from '../systems/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
@@ -99,7 +99,7 @@ import {
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { setWeather, currentWeather, tickWeather } from '../systems/weatherSim.js';   // W1: the live weather state
 import { SEASON } from '../world/climateSwaps.js';
-import { addGold, CRIMES } from '../systems/court.js';   // U10 probe surface; U48: camping in a town is Vagrancy
+import { addGold } from '../systems/court.js';   // U10 probe surface
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';   // I2: the rebindable registry
@@ -262,6 +262,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const buildingDoors = []; // {door, dfBlock, recordIndex, climateBase, season, dfLocation, group}
   const flatGroups = new Map(); // "archive_record" -> [centers]
   const ambientAnimals = [];    // A4: archive-201 town animals as audio sources
+  const exteriorNpcFlats = [];  // AUDIT 26 (F019): the flats RMBLayout stands as StaticNPCs
   const animalAmbience = createAnimalAmbience(audio, () => ambientAnimals);
   const cityNav = new CityNavigation(loc.width, loc.height);   // T1 towns
   for (const b of loc.blocks) {
@@ -310,7 +311,8 @@ export async function bootExterior(canvas, renderer, params, status) {
       }
     }
 
-    for (const flat of collectBlockFlats(b.dfBlock, natureArchive)) {
+    const blockFlats = collectBlockFlats(b.dfBlock, natureArchive);
+    for (const flat of blockFlats) {
       const key = `${flat.archive}_${flat.record}`;
       if (!flatGroups.has(key)) flatGroups.set(key, []);
       flatGroups.get(key).push([flat.x + b.originX, flat.y, flat.z + b.originZ]);
@@ -319,6 +321,15 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (flat.archive === ANIMALS_ARCHIVE && ANIMAL_SOUND_BY_RECORD[flat.record] != null) {
         ambientAnimals.push({ pos: [flat.x + b.originX, flat.y, flat.z + b.originZ], sound: ANIMAL_SOUND_BY_RECORD[flat.record] });
       }
+    }
+    // AUDIT 26 (F019): ...and the same flats' STATIC NPCs. RMBLayout
+    // adds the StaticNPC behaviour to a billboard it has just stood
+    // (RMBLayout.cs:366-378 / :442-454), so the collection runs off the
+    // very list the batches above were built from. Location frame, like
+    // every flat here; the identity and the billboard extent are
+    // resolved once the archives are loaded, below.
+    for (const npc of collectExteriorNpcs(blockFlats)) {
+      exteriorNpcFlats.push({ ...npc, x: npc.x + b.originX, z: npc.z + b.originZ });
     }
     // T1: the navgrid - the automap carves (raw bytes, verbatim: a
     // tree flat BLOCKS its cell), tile weights from the same ground
@@ -375,6 +386,25 @@ export async function bootExterior(canvas, renderer, params, status) {
     flatCount += centers.length;
   }
 
+  // AUDIT 26 (F019): the street StaticNPCs' identity + extent, once
+  // their archives are loaded (they are flats, so the batch pass above
+  // already fetched every one).
+  //   - FLATS.CFG is awaited because SetLayoutData's exterior overload
+  //     reads it for the gender (StaticNPC.cs:185-194); loadFlats never
+  //     throws (dataPipeline catches) and is warmed with the scene, so
+  //     this is a coalesced wait, not a second load.
+  //   - the AABB is the swept billboard box, exactly as the interior
+  //     host's static NPCs take it (interiorContext.js:298-316).
+  await pipeline.loadFlats();
+  const exteriorNpcs = [];
+  for (const flat of exteriorNpcFlats) {
+    const t = textureFiles.get(flat.archive) ?? await getTexture(flat.archive);
+    if (!t || flat.record >= t.recordCount) continue;
+    const size = scaledBillboardSize(t.getSize(flat.record), t.getScale(flat.record));
+    const pn = exteriorNpcRecord(flat, pipeline.flatsFile()?.getFlatData(flat.archive, flat.record) ?? null);
+    exteriorNpcs.push({ ...pn, width: size.w, height: size.h });
+  }
+
   // Camera.
   const shotMode = params.has('shot');
   // P1: grounded first-person is the default; ?fly restores the fly cam.
@@ -399,7 +429,13 @@ export async function bootExterior(canvas, renderer, params, status) {
     _inExhaustion = true;
     try {
       const out = exhaustionOutcome({
-        enemiesNearby: (cityGuards?.activeCount?.() ?? 0) > 0,
+        // CollapseFromExhaustion (PlayerEntity.cs:2397) asks
+        // GameManager.AreEnemiesNearby() - the STRICT variant (no
+        // resting narrowing), over EVERY active enemy behaviour: one
+        // that can see the player or would have spawned in classic.
+        // `activeCount() > 0` was a different question - one unaware
+        // guard alive anywhere in town killed the collapse.
+        enemiesNearby: areEnemiesNearby(cityGuards?.guards ?? []),
         swimming: !!player.swimming, entity: playerEntity,
         day: !isNight(minuteNow()), inside: false,
       });
@@ -819,6 +855,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     // omitted, so the construction sweep sees a DECISION.
     revealMap: null,
     drinkPotion: (key) => magic.drinkPotion(key),   // U44: DrinkPotion through the ONE cast engine
+    // NULL on purpose, the same DECISION revealMap above is. This page
+    // mounts no quest bridge at all, so there is no QuestMachine to
+    // ask: the use-click block finds nothing watching and falls
+    // through (DaggerfallInventoryWindow.cs:1681), and a quest
+    // letter keeps its plain template name. Named, not omitted.
+    getQuest: null,
     nowMinute: () => Math.floor(playerTicker.classicMinutes),
     onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),   // U8e: OnPop mints the world pile
     ...extra,
@@ -917,93 +959,6 @@ export async function bootExterior(canvas, renderer, params, status) {
   // reads it, the ladder below calls it, and routeLargeHudClick hands
   // it a click. Every member is an arrow, so nothing here is evaluated
   // before the helpers it names exist.
-  // U48 - THE FOURTH HOST. V5 wired the world, interior and dungeon
-  // hosts to CanRest and its own pin says "every host that can hold a
-  // player now has a rest arm" - this page holds one and had none, so
-  // KeyR in the single-location ?town view still did nothing at all.
-  // The deps come from the ONE factory; only the two halves a host can
-  // uniquely answer are written here. This page is always ON a
-  // location and always outdoors, so CanRest's town arm is the only
-  // one it can ever take, and a Rapid Healing career heals under the
-  // open sky.
-  const exteriorRestDeps = createRestDeps(playerEntity, {
-    say: (msg) => townTalk.say(msg),
-    onLevelUp: () => { townTalk.say('You have gained a level!'); townTalk.showOverlay(new LevelUpScreen(playerEntity)); },
-    textLines: (id) => townTalk.lines(id),
-    inside: () => false,
-    day: () => !isNight(minuteNow()),
-    // AreEnemiesNearby, the resting variant. This page has one live
-    // hostile pool: the city watch, which answers for itself.
-    enemiesNearby: () => (cityGuards?.activeCount?.() ?? 0) > 0,
-    advanceMinutes: (n) => { playerTicker.advance(n); },
-  });
-  /** U48 - the DISPATCH (DaggerfallUI.cs:651-688), which asks about
-   *  enemies, water and the ground and about nothing else. The enemy
-   *  arm RAISES THE ALERT before refusing (:654-655) - it is what arms
-   *  the rest-encounter roll, so the attempt costs something even when
-   *  it fails. */
-  function exteriorRestDispatch() {
-    return restDecision({
-      enemiesNearby: exteriorRestDeps.enemiesNearby(),
-      swimming: !!player.swimming,
-      // StartRestGroundedCheck, not the raw flag: the fallback ray is
-      // what lets a near-ground levitator rest, and on a page whose
-      // motor is never stepped it is what lets anyone rest at all -
-      // `grounded` sits at its initialiser `false` there.
-      grounded: startRestGroundedCheck(player.grounded, player.pos, collider),
-    });
-  }
-  function exteriorRestVerdict(alreadyWarned) {
-    // This page IS a location and its player is always outdoors, so
-    // IsPlayerInTown(true, true) is a constant here - there is no
-    // wilderness to step into and no building to step inside.
-    return canRest({ inTownOutside: true, inTownLocation: false, alreadyWarned });
-  }
-  function doExteriorRest(alreadyWarned) {
-    const v = exteriorRestVerdict(alreadyWarned);
-    if (v.crime) {
-      // The same door the pickpocket and the assault take.
-      playerEntity.crimeCommitted = CRIMES.Vagrancy;
-      if (v.spawnGuards) _crimeResponse();
-    }
-    if (!v.allowed) {
-      // plainLines: TEXT.RSC answers { text, center } rows and
-      // ChoiceWindow iterates STRINGS.
-      const lines = v.textId != null ? plainLines(townTalk.lines(v.textId)) : null;
-      if (lines) townTalk.showOverlay(new ChoiceWindow({ lines }));
-      return;
-    }
-    townTalk.showOverlay(new RestWindow(exteriorRestDeps));
-  }
-  function toggleExteriorRest() {
-    if (townTalk.overlayActive) return;
-    const d = exteriorRestDispatch();
-    if (d.kind !== 'rest') {
-      if (d.kind === 'enemies') setEnemyAlert(playerEntity, true, worldMinutes());
-      if (d.kind === 'blocked') return;   // a racial override says nothing at all
-      const lines = d.message ? [d.message] : plainLines(townTalk.lines(d.textId));
-      if (lines) townTalk.showOverlay(new ChoiceWindow({ lines }));
-      return;
-    }
-    // DaggerfallRestWindow's own two-step (:640-691): in a town's rect
-    // the buttons ask "It is illegal to camp in or near a city.
-    // Continue?" before calling through with alreadyWarned = true, and
-    // CanRest answers `alreadyWarned` itself - while registering
-    // Vagrancy and calling the watch EITHER WAY.
-    if (getBool('GUI', 'IllegalRestWarning') && exteriorRestVerdict(false).crime) {
-      townTalk.showOverlay(new ChoiceWindow({
-        lines: [ILLEGAL_REST_WARNING],
-        options: [
-          { code: 'KeyY', label: 'Y - yes', action: () => doExteriorRest(true) },
-          { code: 'KeyN', label: 'N - no', action: () => {} },
-          { code: 'Escape', label: 'Esc - no', action: () => {} },
-        ],
-      }));
-      return;
-    }
-    doExteriorRest(false);
-  }
-
   const hudCtx = {
     // U52: THE HOST'S OWN FACTORY, not a second copy of it. This arm
     // hand-rolled the sheet while `makeCharSheetWindow` sat twenty
@@ -1026,7 +981,6 @@ export async function bootExterior(canvas, renderer, params, status) {
     },
     // A2: the exterior automap (Actions.AutoMap outdoors,
     // DaggerfallUI.cs:633-650); this host always stands on a location.
-    toggleRest: () => toggleExteriorRest(),   // U48
     toggleAutomap: () => {
       const locId = `${dfLocation.regionIndex}:${dfLocation.name ?? locationName}`;
       townTalk.showOverlay(new ExteriorAutomapWindow({
@@ -1085,8 +1039,6 @@ export async function bootExterior(canvas, renderer, params, status) {
       // location. I2: through the registry, so M is rebindable like
       // every other action rather than a second hardcoded literal.
       if (act === 'AutoMap') { hudCtx.toggleAutomap(); return; }
-      // U48: Actions.Rest (KeyR), bound since I1 and read by one host
-      if (act === 'Rest') { hudCtx.toggleRest(); return; }
     }
     // A2: the exterior automap (Actions.AutoMap outdoors,
     // DaggerfallUI.cs:633-650); this host always stands on a location.
@@ -1244,6 +1196,10 @@ export async function bootExterior(canvas, renderer, params, status) {
     playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined,
     playerWeapon: params.get('weapon') ?? undefined,
     doorTargets: () => buildingDoors,
+    // AUDIT 26 (F019): RMBLayout's exterior StaticNPCs, world-frame -
+    // the same list the activation ray reads for a building's people,
+    // one mode up (PlayerActivate.ActivateStaticNPC :741-767).
+    npcTargets: () => exteriorNpcs,
     baseCollider: () => collider,
     // E2: one entered door -> its merged building identity (the T3c
     // pool merge) + the directory name by buildingKey.
@@ -1490,8 +1446,13 @@ export async function bootExterior(canvas, renderer, params, status) {
         run: held(keys, 'Run'),
         sneak: held(keys, 'Sneak'),   // P15: DFU's default Sneak binding (LeftAlt), held
         jump: jumpHeld,   // P14: HELD, verbatim (the 0.1 s grounded gate owns re-fire)
+        // LevitateMotor.Update (:71-91) reads Jump/FloatUp for up and
+        // Crouch/FloatDown for down, and moves along the camera LOOK
+        // (pitch included) - everywhere, not just underground.
+        up: jumpHeld || held(keys, 'FloatUp'),
+        down: held(keys, 'FloatDown'),
         crouch: crouchHeld && !latch.crouch,
-      }, cam.yaw);
+      }, cam.yaw, cam.pitch);
       latch.crouch = crouchHeld;
       // C9: ReadyWeapon (Z) - the sheathe toggle, host parity.
       const zNowW = held(keys, 'ReadyWeapon');

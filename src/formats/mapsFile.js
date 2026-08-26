@@ -14,8 +14,10 @@
 //   - Orsinium (dungeon location id 50015) has a border block moved to Z=-2,
 //     reverse engineered from classic.
 // Not ported (documented): WorldDataReplacement mod hooks (Unity
-// AssetInjection), smaller-dungeon generation and PatchRegionIndex (both
-// depend on quest/save systems - they belong to the Systems arcs).
+// AssetInjection) and smaller-dungeon generation (it depends on the
+// quest/save systems - it belongs to the Systems arcs). PatchRegionIndex
+// shipped with the journal's click-through travel, which is its one
+// consumer; it is below REGION_NAMES, the table it reads.
 // GetNameBankOfRegion SHIPPED with the Characters arc (C2): it lives at
 // characters/nameHelper.js getNameBankOfRegion over the REGION_RACES table
 // exported from here, and scenes/townTalk.js calls it on every directory
@@ -45,6 +47,25 @@ export const REGION_NAMES = Object.freeze([
   'Tigonus', 'Kozanset', 'Satakalaam', 'Totambu', 'Mournoth', 'Ephesus', 'Santaki', 'Antiphyllos',
   'Bergama', 'Gavaudon', 'Tulune', 'Glenumbra Moors', 'Ilessan Hills', 'Cybiades',
 ]);
+
+/**
+ * PatchRegionIndex (MapsFile.cs:550-569), verbatim - the workaround for
+ * saves written before SiteDetails carried a regionIndex.
+ *
+ * An uninitialised index reads as 0, which is Alik'r Desert, so every
+ * journal goto click from a legacy save searched Alik'r. DFU only
+ * re-scans when the index IS 0 and the stored canonical region name
+ * disagrees with REGION_NAMES[0] - a player genuinely in Alik'r has
+ * matching names and is left alone - and a name that is in no row falls
+ * back to 0 rather than to -1.
+ */
+export function patchRegionIndex(regionIndex, canonicalRegionName) {
+  if (regionIndex === 0 && canonicalRegionName !== REGION_NAMES[regionIndex]) {
+    regionIndex = REGION_NAMES.indexOf(canonicalRegionName);
+    if (regionIndex === -1) regionIndex = 0;
+  }
+  return regionIndex;
+}
 
 /** Region races from FALL.EXE (0 = Breton, 1 = Redguard). Used for townsfolk names. */
 export const REGION_RACES = Object.freeze([

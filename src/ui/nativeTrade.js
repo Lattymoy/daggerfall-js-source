@@ -41,6 +41,9 @@ import {
   MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID, DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID,
 } from '../systems/tradeModes.js';
 import { CANNOT_BE_REPAIRED_TEXT } from '../systems/repairService.js';
+import { isSummoned } from '../systems/inventory.js';   // TransferItem's summoned guard
+import { CANNOT_REMOVE_ITEM_TEXT } from '../systems/createItem.js';   // both TransferItem refusals speak it
+import { questTransferRefused, SMALL_CART_TEMPLATE } from './nativeInventory.js';   // DaggerfallTradeWindow EXTENDS the inventory window
 import { expandGuildMacros } from '../systems/guildServiceActions.js';
 
 // re-exported so the composed window keeps one import surface
@@ -100,6 +103,12 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && 
  *   gold(), rows(textId), weight() -> { carriedWeightKg, maxEncumbranceKg }
  *   commit(mode, staged, price, proceeds) - the host's transaction
  *   icons, entity, shopName
+ *   getQuest(uid)  -> QuestMachine.GetQuest, for TransferItem's quest
+ *                     arm. UNWIRED: no host passes one yet, and DFU
+ *                     refuses a quest item it cannot resolve (:1489),
+ *                     so the missing seam lands on the safe side - no
+ *                     quest item can be sold at all until a host
+ *                     supplies it.
  */
 export class NativeTradeWindow {
   constructor(hooks) {
@@ -183,6 +192,24 @@ export class NativeTradeWindow {
     this.box = { rows: text.length ? text : [{ text: '...', center: true }], buttons: null };
   }
 
+  /** TransferItem's own guards (DaggerfallInventoryWindow.cs:1464-
+   *  1494). DaggerfallTradeWindow EXTENDS the inventory window and
+   *  every staging arm reaches the list by calling TransferItem
+   *  (:795, :817, :823, :826), so a staged item passes exactly the
+   *  gates a dropped one does: a SUMMONED item cannot leave the pack,
+   *  and neither can a quest item the player is not allowed to drop.
+   *  Both refusals raise the one "You cannot remove this item." box.
+   *  `from` is localItems at every one of those calls and the remote
+   *  side is the staged lot, never the wagon. */
+  _refuseTransfer(item) {
+    const refused = isSummoned(item) || questTransferRefused(item, {
+      fromLocal: true, toWagon: false, getQuest: this.hooks.getQuest ?? null,
+    });
+    if (!refused) return false;
+    this.box = { rows: [{ text: CANNOT_REMOVE_ITEM_TEXT, center: true }], buttons: null };
+    return true;
+  }
+
   /** LocalItemListScroller_OnItemClick (:788-826), through the law. */
   _pickLocal(slot) {
     const item = this.localList()[this.localScroll + slot];
@@ -191,8 +218,18 @@ export class NativeTradeWindow {
       inBasket: (i) => this.basket.includes(i),
       allowMagicRepairs: this.hooks.allowMagicRepairs ?? false,
       usingIdentifySpell: this.hooks.usingIdentifySpell ?? false,
+      // PlayerEntity.WagonItems / PlayerEntity.Items.GetItem (:789-793)
+      // are read straight off the entity here, as DFU reads them off
+      // the singleton - they are not the window's collections.
+      wagonLoaded: (this.hooks.entity?.wagonItems ?? []).length > 0,
+      usedWagon: (this.hooks.entity?.items ?? []).find(
+        (i) => i.group === 'Transportation' && i.templateIndex === SMALL_CART_TEMPLATE) ?? null,
     });
-    if (d.kind === 'stage') { this._move(item, this.hooks.packItems(), this.staged); return; }
+    if (d.kind === 'stage') {
+      if (this._refuseTransfer(item)) return;
+      this._move(item, this.hooks.packItems(), this.staged);
+      return;
+    }
     // Buy: a basket item clicks back OUT to the shelf (:800-801)
     if (d.kind === 'unstage') { this._move(item, this.basket, this.hooks.shelfItems()); return; }
     if (d.kind === 'refuse') this._refuse(d.refusal);

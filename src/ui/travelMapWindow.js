@@ -72,12 +72,13 @@
 // - DFU's Update() polls the mouse every frame; the port's windows
 //   are told (hover/click), so the same work happens on the move.
 //
-// FLAGGED, idling loudly: the journal's click-through travel
-// (GotoPlace, :432-446) and the guild TELEPORT mode
+// FLAGGED, idling loudly: the guild TELEPORT mode
 // (ActivateTeleportationTravel + DaggerfallTeleportPopUp, :1705-1730),
 // which waits on the guild arc's teleport service. (TravelMapSaveData
 // is NOT flagged: it ships through systems/travelMapState.js and the
-// session envelope.)
+// session envelope.) The journal's click-through travel (GotoPlace,
+// :214-217 and its Update consumer :443-455) is LIVE - ui/questJournal.js
+// offers the find dialog and the host hands the place here.
 
 import { loadImg, nativeMetrics, drawImg, drawImgCrop, drawRect, shadowText, NATIVE_W } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded } from './messageBox.js';
@@ -90,7 +91,7 @@ import { actionForCode } from '../systems/inputActions.js';
 import { ImgFile } from '../formats/imgFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { TextRsc } from '../formats/textRsc.js';
-import { REGION_NAMES, LOCATION_TYPES, longitudeLatitudeToMapPixel, getPixelFromPixelID } from '../formats/mapsFile.js';
+import { REGION_NAMES, LOCATION_TYPES, longitudeLatitudeToMapPixel, getPixelFromPixelID, patchRegionIndex } from '../formats/mapsFile.js';
 import { locationSummaryAt } from '../systems/mapDirectory.js';
 import { getDaggerfallDistance, MatchesCutOff } from '../systems/editDistance.js';
 import { hasDiscoveredLocationId } from '../systems/discovery.js';
@@ -315,6 +316,27 @@ async function loadRegionMap(name) {
   return img;
 }
 
+/** checkLocationDiscovered (:1121-1131) - the ONE visibility test: the
+ *  runtime store, the BAKED flag, or the reveal cheat. */
+export function checkLocationDiscovered(summary) {
+  if (!summary) return false;
+  return hasDiscoveredLocationId(summary.id) || !!summary.discovered || _revealUndiscoveredLocations;
+}
+
+/** CanFindPlace (:1134-1146) - the same test through a NAME, which is
+ *  why the journal's find-place gate can ask it: a location the player
+ *  has not discovered cannot be found on the map, so the dialog is
+ *  never offered for one. */
+export function canFindPlace(maps, mapDict, regionName, name) {
+  const region = maps?.getRegionByName?.(regionName);
+  const index = region?.mapNameLookup?.get(name);
+  if (index === undefined || index === null) return false;
+  const row = region.mapTable[index];
+  const pixel = longitudeLatitudeToMapPixel(row.longitude, row.latitude);
+  const summary = locationSummaryAt(mapDict, pixel.x, pixel.y);
+  return summary ? checkLocationDiscovered(summary) : false;
+}
+
 export class TravelMapWindow {
   /** deps: { maps, mapDict, getPlayerPixel, getClimateIndex, gold,
    *  goldPieces, hasHorse, hasCart, hasShip, diseaseCount,
@@ -364,6 +386,11 @@ export class TravelMapWindow {
     // closing the map without picking loses it, and the next M press
     // is an ordinary travel map again.
     this.teleportationTravel = false;
+    // gotoPlace (:70, :214-217) - the journal's click-through. The
+    // place is PENDING, not acted on where it is set: DFU's Update
+    // consumes it (:443-455) and DFU's OnPop clears it (:370), so it
+    // lasts exactly one visit the way teleportationTravel above does.
+    this._gotoPlace = null;
     this.findText = '';
     this._box = null;
     // the generated textures
@@ -417,24 +444,14 @@ export class TravelMapWindow {
     return this.currentDFRegion?.mapNames?.[this.locationSummary?.mapIndex] ?? '';
   }
 
-  /** checkLocationDiscovered (:1121-1131) - the ONE visibility test:
-   *  the runtime store, the BAKED flag, or the reveal cheat. */
-  checkLocationDiscovered(summary) {
-    if (!summary) return false;
-    return hasDiscoveredLocationId(summary.id) || !!summary.discovered || _revealUndiscoveredLocations;
-  }
+  /** checkLocationDiscovered (:1121-1131) - the instance door onto the
+   *  module member below, which is where the law lives. */
+  checkLocationDiscovered(summary) { return checkLocationDiscovered(summary); }
 
-  /** CanFindPlace (:1134-1146) - the same test through a name. */
-  canFindPlace(regionName, name) {
-    const maps = this.deps.maps;
-    const region = maps?.getRegionByName?.(regionName);
-    const index = region?.mapNameLookup?.get(name);
-    if (index === undefined || index === null) return false;
-    const row = region.mapTable[index];
-    const pixel = longitudeLatitudeToMapPixel(row.longitude, row.latitude);
-    const summary = locationSummaryAt(this.deps.mapDict, pixel.x, pixel.y);
-    return summary ? this.checkLocationDiscovered(summary) : false;
-  }
+  /** CanFindPlace (:1134-1146) - likewise. The journal's click-through
+   *  asks this question from a host that has no map window open yet, so
+   *  the member cannot live only on an instance. */
+  canFindPlace(regionName, name) { return canFindPlace(this.deps.maps, this.deps.mapDict, regionName, name); }
 
   // --- the region page (:651-809) ---
 
@@ -1113,7 +1130,25 @@ export class TravelMapWindow {
     this.picker?.wheel?.(dir);
   }
 
+  /** GotoPlace (:214-217). The journal hands the map a quest Place and
+   *  posts the open message; the map opens ALREADY on that region with
+   *  the find already run, which is what makes the click-through feel
+   *  like one action rather than two. */
+  gotoPlace(place) { this._gotoPlace = place ?? null; }
+
   tick(dt) {
+    // :443-455 - DFU runs this at the tail of Update, unconditionally.
+    // The only setter is GotoPlace, which fires before this window is
+    // ever shown, so it is consumed on the first tick either way.
+    if (this._gotoPlace) {
+      const site = this._gotoPlace.siteDetails ?? {};
+      this._gotoPlace = null;
+      // The legacy-save workaround, and it is the map's as much as the
+      // journal's - both call it on the same SiteDetails (:450).
+      this.mouseOverRegion = patchRegionIndex(site.regionIndex ?? 0, site.regionName ?? '');
+      this._openRegionPanel(this.mouseOverRegion);
+      this._handleLocationFindEvent(site.locationName ?? '');
+    }
     if (this.popUp) {
       this.popUp.tick(dt);
       if (this.popUp?.done) this.popUp = null;

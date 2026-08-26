@@ -59,7 +59,7 @@ test('E1 strikes: VampiricEffect WhenStrikes heals the wearer by the damage deal
   doItemEnchantmentPayloads(PAYLOAD.Strikes, item(T.VampiricEffect, 1), { entity: w, target: { mobileType: 3 }, damage: 7 });
   assert.equal(w.health, 27);
   const hurt = [];
-  const leech = item(T.HealthLeech, 2);   // WheneverUsed
+  const leech = item(T.HealthLeech, 0);   // WheneverUsed (HealthLeech.cs:132-136 - Params.WheneverUsed is 0)
   doItemEnchantmentPayloads(PAYLOAD.Strikes, leech, { entity: w, target: { mobileType: 3 }, damage: 1, nowMinutes: 555, ctx: { hurtSelf: (n) => hurt.push(n) } });
   assert.equal(leech.timeHealthLeechLastUsed, 555, 'the stamp fires on Strikes (HealthLeech.cs first gate)');
   assert.deepEqual(hurt, [8], 'leechWeaponAmount');
@@ -100,7 +100,7 @@ test('E1 pump: CastWhenHeld wear (4 normal / 60 resting), HealthLeech\'s daily l
   assert.equal(resting.currentCondition, 98, '1 per 60 while resting');
   // HealthLeech UnlessUsedDaily: silent inside a day of the stamp, 1/4 rounds past it
   const hurt = [];
-  const leech = item(T.HealthLeech, 0, { timeHealthLeechLastUsed: 0 });
+  const leech = item(T.HealthLeech, 1, { timeHealthLeechLastUsed: 0 });   // UnlessUsedDaily = 1
   const w3 = wearer([leech]);
   enchantmentMagicRound(w3, 4, { nowMinutes: MINUTES_PER_DAY - 1, ctx: { hurtSelf: (n) => hurt.push(n) } });
   assert.deepEqual(hurt, [], 'used within the day - no leech');

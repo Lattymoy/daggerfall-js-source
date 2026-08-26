@@ -92,7 +92,7 @@ import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../syste
 import { inflictPoison } from '../systems/poisons.js';
 import { exhaustionOutcome, EXHAUSTED_IN_WATER, hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
 import { restDecision } from '../systems/restSession.js';   // the scene-free open gate, one home
-import { intermittentEnemySpawn, setEnemyAlert, areEnemiesNearby } from '../systems/encounters.js';   // E-slice; S40: the resting test, one home
+import { intermittentEnemySpawn, setEnemyAlert, decayEnemyAlert, areEnemiesNearby } from '../systems/encounters.js';   // E-slice; S40: the resting test, one home
 import { RestWindow } from '../ui/restWindow.js';
 import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects.js';
 import { dice100, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies, KB_UNIT } from '../combat/formulas.js';   // C15: + knockback
@@ -413,6 +413,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // verbatim, untouched.
   const foes = [];
   let foeDeps = null;
+  // S16: the SPELLS.STD map SetEnemyCareer resolves its lists against.
+  // It loads after the marker foes are built (the `const spellsByIndex`
+  // below), so the load loop runs with this still null and the one-time
+  // pass at the load site fills it in; every foe minted AFTER that -
+  // a rest interruption, a quest CreateFoe - assigns at BUILD time,
+  // which is where DFU does it (EnemyEntity.cs:350-386, inside
+  // SetEnemyCareer, i.e. on every construction).
+  let foeSpellTable = null;
   if (opts.foes && palette) {
    try {
     // One import + one BODY00I0 fetch for the whole context; every
@@ -477,6 +485,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const o = actions?.objects.get(key);
     return !!o && DOOR_VERB_FLAGS.has(o.actionFlag);
   };
+  /** EnemyEntity.cs:350-386 + SetEnemySpells (:453-461), the tail of
+   *  SetEnemyCareer: a monster takes its per-career list, a CastsMagic
+   *  class enemy takes EnemyClassSpells[min(6, level/3)], and either
+   *  pins MaxMagicka = 10*level + 100 with the six magic skills at 80.
+   *  DFU runs it on EVERY construction, so the port runs it on every
+   *  build - the load loop, the rest interruption and the quest
+   *  spawner alike. A caster foe then gets the EnemyCaster the frame
+   *  loop's `f.caster` arm reads. */
+  function assignFoeSpells(rec) {
+    if (!foeSpellTable || !foeDeps || !rec?.entity) return;
+    assignEnemySpells(rec.entity, foeSpellTable);
+    if (rec.entity.spells?.length) rec.caster = new foeDeps.EnemyCaster(rec.entity);
+  }
   async function buildFoeAt(e, fallbackFlat = true) {
     const basics = ENEMY_BASICS[e.mobileType];
     if (!basics) return;
@@ -532,6 +553,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const mobile = new MobileUnit(e.mobileType, basics, (rec) => t.getFrameCount(rec), Math.random, e.gender);
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
       const rec = { mobile, mobileArchive: archive, mobileTex: t, batch, ai, attack, entity, mobileType: e.mobileType, gender: e.gender };
+      assignFoeSpells(rec);   // SetEnemyCareer's tail, on every spawn
       foes.push(rec);
       return rec;   // B1: the quest spawner binds its behaviour to the stood record
      } catch (err) {
@@ -600,6 +622,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // uniform, origin a live translation - zero rebuilds).
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
       const rec = { mobile, mobileArchive: archive, mobileTex: t, batch, ai, attack, entity, mobileType: e.mobileType, gender: e.gender };
+      assignFoeSpells(rec);   // SetEnemyCareer's tail, on every spawn
       foes.push(rec);
       return rec;   // B1: the quest spawner binds its behaviour to the stood record
      } catch (err) {
@@ -689,12 +712,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // level/3)] (monsters' fixed lists ship in the same table and go
   // live when monsters leave their billboards). A caster foe gets an
   // EnemyCaster driving the classic decide-and-release shape.
-  if (spellsByIndex && foeDeps) {
-    for (const f of foes) {
-      assignEnemySpells(f.entity, spellsByIndex);
-      if (f.entity.spells?.length) f.caster = new foeDeps.EnemyCaster(f.entity);
-    }
-  }
+  //
+  // Publishing the table is what makes assignFoeSpells live: the
+  // marker foes above were built before SPELLS.STD landed and are
+  // caught up here, and every LATER build - _spawnEncounter's rest
+  // interruption, spawnQuestFoe's CreateFoe - assigns inside
+  // buildFoeAt, as DFU assigns inside SetEnemyCareer. This loop was
+  // the only assignment site, so a runtime-spawned Imp, Orc Shaman,
+  // Vampire or Lich had no spells and no caster at all.
+  foeSpellTable = spellsByIndex ?? null;
+  for (const f of foes) assignFoeSpells(f);
 
   let chargenFlow = null;
   let activeOverlay = null;
@@ -771,6 +798,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
 
   /** The quest bridge's two reads, or NEITHER - charSheetHooks turns
    *  the absence into the sheet's refusal rather than an empty book. */
+  //
+  // HandleQuestClicks' find-place seam (DaggerfallQuestJournalWindow.cs
+  // :439-466) is deliberately NOT here: this context owns no travel map
+  // - openTeleportMap is read off the outer host for the same reason -
+  // so there is nowhere to send the player and the journal leaves the
+  // dialog unoffered rather than raising one that goes nowhere.
   const questJournalHooks = () => (opts.questBridge ? {
     questMessages: () => opts.questBridge.machine.getAllQuestLogMessages() ?? [],
     notebook: () => opts.questBridge.notebook ?? null,
@@ -800,6 +833,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // just run its own close law, so the slot is free.
       openSpellbook: () => { const b = makeSpellbookWindow(); if (b) activeOverlay = b; },
       drinkPotion: (key) => magic.drinkPotion(key),   // U44: DrinkPotion through the ONE cast engine
+      // QuestMachine.GetQuest - the use-click block
+      // (DaggerfallInventoryWindow.cs:1673) and ResolveItemLongName's
+      // quest-letter arm (ItemHelper.cs:338). The standalone `?dungeon`
+      // page mounts no bridge and answers null, which is the same
+      // fall-through DFU takes with nothing watching.
+      getQuest: (uid) => opts.questBridge?.machine?.getQuest?.(uid) ?? null,
       // U44: no reveal seam - this context has no region index to walk
       revealMap: null,
       nowMinute: () => Math.floor(worldMinutes()),   // AUDIT 21 F2: the one clock
@@ -963,6 +1002,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (f.dead) continue;
       runMagicRoundsFor(f.entity, _w.from, _w.to, { sinks: foeSinks(f) });
     }
+    // PlayerEntity.Update:380-384 runs BEFORE the catch-up loop below,
+    // every frame - and in DFU a rest is frames, so an alert that turns
+    // eight hours old mid-sleep goes out and the rest of the night
+    // rolls unarmed. This window jumps the clock WITHOUT the player
+    // tick (the tick's own call is in systems/worldTick.js), so the
+    // decay has to be run here or the roll this loop gates on the flag
+    // would stay armed for the whole rest.
+    decayEnemyAlert(playerEntity, Math.floor(classicMinutesRef.value));
     for (let l = 0; l < n; l++) {
     const hit = intermittentEnemySpawn({
       gameMinutes: start + l + 1, inside: true, inDungeon: true, isResting: true,
@@ -1069,7 +1116,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  collapse KILLS. The text box is click-anywhere-to-close and
    *  holds the motor like every overlay. */
   function onExhausted() {
-    const enemiesNearby = foes.some((f) => !f.dead && ((f.ai.detected && f.ai.inSight) || f.ai.wouldBeSpawned));
+    // GameManager.AreEnemiesNearby() (PlayerEntity.cs:2397) - the
+    // STRICT variant, through the ONE home the three hosts ask.
+    const enemiesNearby = areEnemiesNearby(foes);
     const out = exhaustionOutcome({
       enemiesNearby, swimming: _activity.swimming, entity: playerEntity,
       day: false, inside: true,   // a dungeon rest: inside, no daylight (the InLight case pends exteriors with the rest UI)
@@ -1797,6 +1846,29 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         }
       }
     });
+    // SL2 / SerializableStateManager.RestoreEnemyData (:404-425): a
+    // DFU load REBUILDS the scene and then instantiates exactly the
+    // saved enemy set, so an enemy BORN AFTER the save - a quest
+    // CreateFoe wave, a rest interruption - simply does not exist
+    // afterwards. The port patches the live scene in place and every
+    // late spawn APPENDS, so the live tail past the snapshot's length
+    // is precisely that post-save population and has to be destroyed
+    // by hand. Without this a backward load kept the wave alive AND
+    // let the rewound CreateFoe counter (quest/actions.js saveShape)
+    // mint it a second time.
+    for (let i = foes.length - 1; i >= (w.foes?.length ?? 0); i--) {
+      const f = foes[i];
+      if (f.batch) { renderer.destroyBillboardBatch(f.batch); f.batch = null; }
+      if (f.corpseBatch) {
+        const ci = corpses.indexOf(f.corpseBatch); if (ci >= 0) corpses.splice(ci, 1);
+        const bi = billboardBatches.indexOf(f.corpseBatch); if (bi >= 0) billboardBatches.splice(bi, 1);
+        renderer.destroyBillboardBatch(f.corpseBatch);
+        f.corpseBatch = null;
+      }
+      f.dead = true;
+      f.questBehaviour?.notifyDestroyed();   // Destroy(gameObject): the resource uncouples
+      foes.splice(i, 1);
+    }
     // SL2: pile items rewind BOTH ways and the flat FOLLOWS the
     // items, exactly where a rebuild-then-restore lands: an
     // emptied-in-save pile loses its flat (SerializableLootContainer
@@ -2039,11 +2111,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const surf = waterSurfaceYAt(playerFeet[0], playerFeet[2]);
       const submerged = surf != null && playerFeet[1] + playerHeight / 2 + 76 * 0.025 - 0.95 < surf;
       if (breathStep(playerEntity, submerged, _breathState) === 'drowned') {
-        // REVIEW FIX: this lost its ENTITY argument, so health went in
-        // as `entity` and the damage was undefined - the guard at the top
-        // of hurtPlayer returned at once and DUNGEON DROWNING never dealt
-        // a point. Pre-dates X1; found reviewing the shield's door.
-        hurtPlayer(playerEntity, playerEntity.health, { bypassShield: true });   // SetHealth(0): drowned
+        // PlayerEntity.cs:339-340 - `if (currentBreath <= 0) SetHealth(0)`.
+        // The three-argument door is the IMPORT (hurtEntity, :26), not
+        // this file's one-argument hurtPlayer wrapper (:1030) that
+        // shadows its name: called through the wrapper the entity
+        // arrived as `dmg`, playerEntity.js:97's `!(dmg > 0)` guard read
+        // NaN and returned, and dungeon drowning never dealt a point.
+        // bypassShield because SetHealth(0) is a kill, not damage.
+        hurtEntity(playerEntity, playerEntity.health, { bypassShield: true });   // SetHealth(0): drowned
       }
     }
   }

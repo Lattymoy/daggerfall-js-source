@@ -343,16 +343,38 @@ test('X1 REVIEW: SetHealth(0) bypasses the shield - drowning and the collapse st
   assert.ok(a2.shieldRemaining < a2.startingShield);
 });
 
-test('X1 REVIEW: the four SetHealth(0) callers all say bypassShield, and dungeon drowning passes its ENTITY', () => {
+test('X1 REVIEW: the four SetHealth(0) callers all say bypassShield, and each names the 3-argument door', () => {
   // The dungeon drown call had lost its entity argument entirely -
   // health went in as `entity`, damage was undefined, and the guard
   // at the top of hurtPlayer returned at once: dungeon drowning never
   // dealt a point. Pre-dates X1; found reviewing the shield's door.
+  //
+  // AUDIT 26 (F049) CORRECTS WHAT THIS PIN THEN ASKED. It demanded the
+  // literal `hurtPlayer(playerEntity, playerEntity.health, ...)` in all
+  // four hosts - and in dungeonContext that NAME is not the import: the
+  // file aliases the import to hurtEntity (:26) and declares its own
+  // one-argument hurtPlayer(dmg) (:1030), which shadows it. So the pin
+  // passed on a call that still handed the entity in as `dmg` and did
+  // nothing at all. What matters is the DOOR each host names, not the
+  // spelling, so each host is checked against the binding it imported.
   const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
-  for (const p of ['src/scenes/worldModes.js', 'src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js']) {
-    assert.match(rd(p), /hurtPlayer\(playerEntity, playerEntity\.health, \{ bypassShield: true \}\)/, `${p} kills rather than damages`);
+  const DOOR = {
+    'src/scenes/worldModes.js': 'hurtPlayer',
+    'src/scenes/world.js': 'hurtPlayer',
+    'src/scenes/exterior.js': 'hurtPlayer',
+    // aliased at import, because a one-argument wrapper owns the name here
+    'src/scenes/dungeonContext.js': 'hurtEntity',
+  };
+  for (const [p, door] of Object.entries(DOOR)) {
+    const src = rd(p);
+    assert.match(src, new RegExp(`import \\{[^}]*\\b(hurtPlayer as ${door}|${door})\\b[^}]*\\} from '\\.\\./characters/playerEntity\\.js'`),
+      `${p} imports the shared damage door as ${door}`);
+    assert.match(src, new RegExp(`${door}\\(playerEntity, playerEntity\\.health, \\{ bypassShield: true \\}\\)`),
+      `${p} kills rather than damages, through the 3-argument door it imported`);
   }
   assert.doesNotMatch(rd('src/scenes/dungeonContext.js'), /hurtPlayer\(playerEntity\.health\)/, 'the entity-less call is gone');
+  assert.doesNotMatch(rd('src/scenes/dungeonContext.js'), /hurtPlayer\(playerEntity,/,
+    'and nothing calls the one-argument wrapper with the world hosts\' argument list');
 });
 
 // ── X2: the defence parity gaps ───────────────────────────────────

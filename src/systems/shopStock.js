@@ -27,7 +27,7 @@
 
 import { dice100 } from '../combat/formulas.js';
 import { randomMaterial, randomArmorMaterial, createWeapon } from '../combat/enemyEquipment.js';
-import { groupTemplates, GROUP_TEMPLATE_INDICES, itemBaseValue, ITEM_TEMPLATES, mintCondition } from './itemTemplates.js';
+import { groupTemplates, GROUP_TEMPLATE_INDICES, itemBaseValue, ITEM_TEMPLATES, mintCondition, rollPaintingMessage } from './itemTemplates.js';
 import { getRandomBookID } from './books.js';   // B1
 import { isLeather, isPlate } from './armorMaterials.js';
 import { CLOTHING_DYES } from '../characters/dyes.js';
@@ -144,7 +144,14 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
   // plain item; AUDIT 18: the shelf minted rows with none, so the
   // dungeon-style item list labelled a bought Oil "UselessItems2".
   const add = (item) => {
-    items.push(mintCondition({ ...item, name: item.name ?? ITEM_TEMPLATES[item.templateIndex]?.name, value: item.value ?? itemBaseValue(item) }));   // AUDIT 23 (items-5)
+    const it = mintCondition({ ...item, name: item.name ?? ITEM_TEMPLATES[item.templateIndex]?.name, value: item.value ?? itemBaseValue(item) });   // AUDIT 23 (items-5)
+    // SetItem's other draw (DaggerfallUnityItem.cs:571) - a Paintings
+    // item is born with its message, and a pawn shop is where the
+    // player meets one (group 13 rides the PawnShop pair table). The
+    // shelf minted them with none, so every painting seeded
+    // InitPaintingInfo from 0 and they were all the same picture.
+    if (it.group === 'Paintings' && it.message == null) it.message = rollPaintingMessage(rolls);
+    items.push(it);
   };
   const pairs = SHOP_ITEM_GROUPS[buildingType] ?? [0];
   if (buildingType === BUILDING_TYPES.Alchemist) {

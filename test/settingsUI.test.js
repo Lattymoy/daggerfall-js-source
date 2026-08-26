@@ -305,11 +305,30 @@ test('M-EXT: the music-pack row is reachable, and BOTH input paths run its actio
   assert.ok(d.buttons.some((b) => b.id === 'pick'), 'the row offers a Choose Folder button');
   assert.equal(typeof d.onYes, 'function');
 
-  // THE MOUSE PATH has honoured `onYes` all along...
+  // THE MOUSE PATH honours `onYes` - but only on the AFFIRMATIVE
+  // BUTTON. AUDIT 26 F152: this used to run the action for a click
+  // ANYWHERE, which is what made the drawn Cancel on Reset Everything
+  // wipe every override. A drawn button is a real button, so the
+  // click is hit-tested against the rects _drawDialog paints.
+  const dlgCanvas = { width: 1280, height: 800 };
   win.dialog = win._detail('Enhancements/AssetInjection');
-  win.click(0, 0, { width: 1280, height: 800 });
-  assert.equal(picked, 1, 'a click runs the action');
+  const yesRect = win.layout(dlgCanvas).dialog.buttons[0].rect;
+  win.click(yesRect[0] + 1, yesRect[1] + 1, dlgCanvas);
+  assert.equal(picked, 1, 'a click on the affirmative button runs the action');
   assert.equal(win.dialog, null, 'and closes the dialog');
+
+  // The LAST button is Close, and it is not the affirmative.
+  win.dialog = win._detail('Enhancements/AssetInjection');
+  const closeRect = win.layout(dlgCanvas).dialog.buttons.at(-1).rect;
+  win.click(closeRect[0] + 1, closeRect[1] + 1, dlgCanvas);
+  assert.equal(picked, 1, 'Close declines');
+  assert.equal(win.dialog, null);
+
+  // ...and so does a click that lands on no button at all.
+  win.dialog = win._detail('Enhancements/AssetInjection');
+  win.click(0, 0, dlgCanvas);
+  assert.equal(picked, 1, 'a click outside the buttons declines');
+  assert.equal(win.dialog, null);
 
   // ...and THE KEYBOARD PATH did NOT, which is the divergence this
   // fixes. Nothing set onYes on a settings dialog before, so it was

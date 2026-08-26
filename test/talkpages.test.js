@@ -107,7 +107,11 @@ test('B7 seam gate: the static-NPC conversation opens the window instead of "You
   const modes = read('src/scenes/worldModes.js');
   const town = read('src/scenes/townTalk.js');
   // the click fall-through pushes the window with the engine's greeting
-  assert.match(modes, /if \(talk\?\.kind === 'talk' && townTalk\?\.openTalkWindow\) \{\s*\n\s*townTalk\.openTalkWindow\(talk\.greeting, \{ npcSeed: pn\.nameSeed \?\? 0, npcName: displayName \}\);/);
+  // AUDIT 26 (hosts-modal): the seed is StaticNPC.Data's derived
+  // nameSeed, which is what the answer PRNG is seeded with in DFU - the
+  // block-person record has no such field, so `pn.nameSeed ?? 0` gave
+  // every static NPC in the game the same conversation randomization
+  assert.match(modes, /if \(talk\?\.kind === 'talk' && townTalk\?\.openTalkWindow\) \{\s*\n\s*townTalk\.openTalkWindow\(talk\.greeting, \{ npcSeed: npcData\.nameSeed, npcName: displayName \}\);/);
   // the guild popup's TALK button routes TalkToStaticNPC with menu TRUE
   // (DaggerfallGuildServicePopupWindow.cs:294) and yields to the window
   // G6 gave that door a SECOND caller, so the pin follows the law

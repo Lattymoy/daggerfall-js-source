@@ -70,6 +70,20 @@ export function unequipSlot(entity, slot) {
   return item;
 }
 
+/** DaggerfallUnityItem.UnequipItem(owner) (:1183-1196) - take THIS
+ *  item off whichever slot holds it, without the caller having to
+ *  know which. A null owner is a no-op (:1185-1186); DFU walks every
+ *  EquipSlots value and unequips each slot holding this item (the
+ *  armour give-back its UpdateEquippedArmorValues line makes explicit
+ *  is unequipSlot's own). */
+export function unequipItem(entity, item) {
+  if (!entity || !item) return;
+  const slots = equipTableOf(entity);
+  for (let slot = 0; slot < slots.length; slot++) {
+    if (slots[slot] === item) unequipSlot(entity, slot);
+  }
+}
+
 /** S23: THE CAREER EQUIP RESTRICTIONS
  *  (DaggerfallInventoryWindow.EquipItem :1343-1381, verbatim).
  *

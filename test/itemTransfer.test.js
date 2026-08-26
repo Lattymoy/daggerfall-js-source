@@ -164,3 +164,76 @@ test('U56 applyTransfer: the split leaves a remainder, the whole move keeps its 
   applyTransfer(book(3), { amount: 3 }, from3, []);
   assert.deepEqual(from3, [keep], 'splice(-1, 1) ate the wrong item');
 });
+
+// ── AUDIT 26's QUEST ARM, ON THE LADDER ──────────────────────────
+// The arm's own law is pinned in test/audit26_uicore.test.js, which
+// is where AUDIT 26 wrote it and where it belongs. What is pinned
+// HERE is the part that only exists because the ladder was extracted:
+// which RUNG the arm sits on, and the dry run that lets a view ask
+// the ladder a question without the arm writing anything.
+const questResource = (over = {}) => ({
+  allowDrop: false, playerDropped: false, madePermanent: false, ...over,
+});
+const questItemOf = (over = {}) => ({
+  group: 'MiscItems', templateIndex: 132, name: 'Ruby',
+  questItem: true, questUID: 7, questSymbol: { name: '_ruby_' }, ...over,
+});
+const questHook = (res) => (uid) => (uid === 7 ? { getItem: () => res } : null);
+
+test('U56 + AUDIT 26: the quest arm is a RUNG, and it sits where DFU puts it', () => {
+  const res = questResource();
+  const q = questItemOf();
+  // BELOW the summoned guard: a SUMMONED quest item refuses as
+  // summoned, which is how we know the quest arm is not running first.
+  assert.equal(planStore(summon(questItemOf()), { remote: [], getQuest: questHook(res) }).refusal,
+    REFUSAL.summoned, 'the quest arm is running above the summoned guard');
+  // ...and it refuses with DFU's own words for the same reason the
+  // summoned one does - DFU pops the same string.
+  const r = planStore(q, { remote: [], getQuest: questHook(res) });
+  assert.equal(r.refusal, REFUSAL.questItem);
+  assert.equal(r.refusal.text, CANNOT_REMOVE_ITEM_TEXT);
+  // ABOVE the choose-one pile...
+  assert.equal(planStore(questItemOf(), { remote: [], chooseOne: { items: [] }, getQuest: questHook(questResource()) })
+    .refusal, REFUSAL.questItem, 'the pile guard is running above the quest arm');
+  // ...and ABOVE every capacity gate, which MATTERS: a droppable quest
+  // item stopped by a full wagon has still had its playerDropped
+  // written, exactly as DFU leaves it.
+  const dropRes = questResource({ allowDrop: true });
+  const full = planStore(questItemOf({ stackCount: 1 }), {
+    remote: [{ group: 'Books', templateIndex: 277, name: 'Book', stackCount: 375 }],
+    usingWagon: true, getQuest: questHook(dropRes),
+  });
+  assert.equal(full.refusal, REFUSAL.wagonFull, 'the wagon gate is running above the quest arm');
+  // the WAGON is not the ground, so the cart is not a drop (:1496-1500)
+  assert.equal(dropRes.playerDropped, false, 'stowing in the cart counted as dropping');
+  // ...while the GROUND is
+  const groundRes = questResource({ allowDrop: true });
+  planStore(questItemOf(), { remote: [], getQuest: questHook(groundRes) });
+  assert.equal(groundRes.playerDropped, true);
+  // and the OTHER caller clears it again (:1499-1500)
+  planTake(questItemOf(), { bag: [], getQuest: questHook(groundRes) });
+  assert.equal(groundRes.playerDropped, false, 'picking it back up did not clear PlayerDropped');
+});
+
+test('U56: a DRY RUN asks the ladder without the one rung that writes', () => {
+  // THE VIEW PROBLEM. `canStow` calls planStore on every repaint to
+  // decide whether to draw a button; the quest arm WRITES as it passes
+  // (playerDropped, and re-permanenting a clone), so a live run there
+  // would mark a quest item dropped every time the screen redrew.
+  const res = questResource({ allowDrop: true });
+  const q = questItemOf();
+  assert.equal(planStore(q, { remote: [], getQuest: questHook(res), dryRun: true }).ok, true);
+  assert.equal(res.playerDropped, false, 'a dry run wrote to the quest resource');
+  // ...and the same for the other direction
+  const back = questResource({ allowDrop: true, playerDropped: true });
+  planTake(questItemOf(), { bag: [], getQuest: questHook(back), dryRun: true });
+  assert.equal(back.playerDropped, true, 'a dry take wrote to the quest resource');
+  // A LIVE run does write - which is what makes the dry one worth having
+  planStore(q, { remote: [], getQuest: questHook(res) });
+  assert.equal(res.playerDropped, true);
+  // AND THE DRY RUN CANNOT CHANGE A CALLER'S ANSWER, which is the
+  // whole argument for skipping the rung: the quest refusal SPEAKS, so
+  // a view asking "would this say something" gets the same yes either
+  // way.
+  assert.equal(REFUSAL.questItem.text != null, true, 'a silent quest refusal would make dryRun a lie');
+});

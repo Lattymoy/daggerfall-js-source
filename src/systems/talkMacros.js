@@ -19,6 +19,7 @@
 import { tokensToString } from './rumorMill.js';
 import { QUESTION_TYPE } from './topicTree.js';
 import { TALK_STRINGS } from './answerPipeline.js';
+import { firstName, raceDisplayName } from './talkSession.js';
 
 /** The %-macro tokens MacroHelper resolves through the talk MCP, in
  *  the order GetMacro's alternation reaches them. */
@@ -36,6 +37,18 @@ export const TALK_MACROS = Object.freeze([
   // name from every direction and map-reveal answer and dropped %loc's
   // map-marking SIDE EFFECT with it.
   '%key', '%loc', '%fcn',
+  // The MacroHelper GLOBALS a TALK record carries. Same reason as the
+  // three above: ExpandMacros runs the WHOLE table (MacroHelper.cs:
+  // 419-494) and GetValue (:503-528) answers a symbol the table does
+  // not carry with symbolStr + "[undefined]" - never with the value
+  // the record wanted. %1com is the PC's own opening line
+  // (GreetingOrFollowUpText :44, :957-960 -> TalkManager.
+  // GetPCGreetingOrFollowUpText :1149-1156), which EVERY question
+  // record 7225/7212/7231 + tone opens with; %pcf (:151), %pcn (:152),
+  // %cn (:67 -> CityName :566-573), %hnr (:111 -> GetHonoric
+  // :1826-1832) and %ra (:210 -> PlayerRace :942-945) are the four the
+  // greeting and where-is answer sets carry.
+  '%1com', '%pcf', '%pcn', '%cn', '%hnr', '%ra',
 ]);
 
 /** MacroHelper's oath base (:201 + the faction race id), the same
@@ -54,6 +67,12 @@ export const OATH_BASE_TEXT_ID = 201;
  *    raceOfCurrentRegion()     - PlayerGPS
  *    factionRaceId(race)       - RaceTemplate.GetFactionRaceFromRace
  *    bumpSeed(delta)           - DFRandom.Seed += / -= (MaleName's quirk)
+ *    toneIndex()               - TalkManager.currentTalkTone, through
+ *                                DaggerfallTalkWindow.TalkToneToIndex
+ *    cityName()                - PlayerGPS, MacroHelper.CityName's fork
+ *    playerName()              - PlayerEntity.Name
+ *    playerGender()            - PlayerEntity.Gender
+ *    playerRace()              - PlayerEntity.BirthRaceTemplate
  */
 export function talkMacroHandlers(ctx) {
   const text = (key) => ctx.localizedText?.(key) ?? TALK_STRINGS[key] ?? '';
@@ -190,6 +209,36 @@ export function talkMacroHandlers(ctx) {
      *  unresolved. */
     '%pqn': () => ctx.session?.getQuestorName() ?? '',
     '%pqp': () => ctx.session?.getQuestorLocation() ?? '',
+
+    /** GreetingOrFollowUpText (:957-960) - %1com, THE PLAYER'S OWN
+     *  OPENING. GetPCGreetingOrFollowUpText (TalkManager.cs:1149-1156)
+     *  reads TalkManager's three live fields with no arguments at all:
+     *  the current talk tone, the reaction (the greeting addresses the
+     *  NPC by name only above 0, else by 7221+tone) and nameNPC. The
+     *  port keeps those on the host and the session, so they come in
+     *  through the seams - the method itself is the pipeline's. */
+    '%1com': () => ctx.pipeline?.getPCGreetingOrFollowUpText(
+      ctx.toneIndex?.() ?? 1,
+      ctx.session?.reactionToPlayer ?? 0,
+      ctx.session?.nameNPC ?? '',
+    ) ?? '',
+
+    /** PlayerFirstname (:784-787) / PlayerName (:779-782) - %pcf is
+     *  GetFirstname over PlayerEntity.Name, %pcn the whole of it. */
+    '%pcf': () => firstName(ctx.playerName?.() ?? ''),
+    '%pcn': () => ctx.playerName?.() ?? '',
+
+    /** CityName (:566-573) - %cn: the current LOCATION's name, and the
+     *  region's name when the player stands on no location at all. */
+    '%cn': () => ctx.cityName?.() ?? '',
+
+    /** Honorific (:890-893) - %hnr, TalkManager.GetHonoric
+     *  (:1826-1832) by the PLAYER's gender. */
+    '%hnr': () => ctx.pipeline?.getHonoric(ctx.playerGender?.() ?? '') ?? '',
+
+    /** PlayerRace (:942-945) - %ra, the BIRTH race template's display
+     *  name (a transformed vampire or werewolf keeps it). */
+    '%ra': () => raceDisplayName(ctx.playerRace?.() ?? ''),
   };
 }
 
@@ -216,9 +265,13 @@ export const MACRO_TERMINATORS = Object.freeze([
  *  terminator is left in the text.
  *
  *  Unknown macros resolve through the same path and answer whatever
- *  the handler table has for them - here, nothing, which leaves the
- *  symbol replaced by the empty string exactly as MacroHelper's own
- *  missing-handler path does.
+ *  the handler table has for them - here, the empty string. FLAGGED:
+ *  GetValue (:503-528) answers symbolStr + "[undefined]" for a symbol
+ *  the table does not carry and symbolStr + "[unhandled]" for one it
+ *  carries with a null handler, and the port cannot tell those two
+ *  apart until the whole ~300-entry table is named. Every macro a
+ *  talk record ACTUALLY carries belongs in TALK_MACROS above instead
+ *  of relying on this arm.
  *
  *  The tokens are rewritten IN PLACE, as C#'s `ref` array is. */
 export function expandTalkMacros(tokens, handlers) {

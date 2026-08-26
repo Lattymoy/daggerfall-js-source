@@ -51,7 +51,7 @@
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { SKILL_NAMES } from '../systems/skills.js';
 import { liveStat, maxFatigue, FATIGUE_MULTIPLIER } from '../systems/statMods.js';
-import { maxEncumbrance } from '../combat/formulas.js';
+import { entityMaxEncumbrance } from '../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all
 import { carriedWeight, NAV_BUTTONS } from './charsheet.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { repaintKeepingScroll } from './domRepaint.js';
@@ -98,7 +98,7 @@ export function sheetModel(entity) {
       now: Math.trunc((e.fatigue ?? maxFatigue(e)) / FATIGUE_MULTIPLIER),
       max: Math.trunc(maxFatigue(e) / FATIGUE_MULTIPLIER),
     },
-    encumbrance: { now: Math.trunc(carriedWeight(e)), max: maxEncumbrance(strength) },
+    encumbrance: { now: Math.trunc(carriedWeight(e)), max: entityMaxEncumbrance(e) },
     attributes: STAT_KEYS_ORDER.map((key) => ({ key, value: liveStat(e, key) })),
     groups: SKILL_GROUPS.map((name, i) => ({
       name,

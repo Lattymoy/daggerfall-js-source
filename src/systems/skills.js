@@ -51,23 +51,39 @@ export const WEAPON_SKILL = Object.freeze({
   'Short Bow': SKILLS.Archery, 'Long Bow': SKILLS.Archery,
 });
 
-/** Skill read across both entity shapes: enemies carry the
+/** DaggerfallSkills.GetPermanentSkillValue (:163-186) - the STORED
+ *  value, and DFU's own comment on it is "does not include effect
+ *  mods". Read across both entity shapes: enemies carry the
  *  SetEnemyCareer FLAT number (every skill equal, verbatim); the
  *  player carries the rolled 35-array after chargen (and the flat
  *  interim before it). Per-skill PINS (SetPermanentSkillValue on
  *  specific ids - S16 forces spellcasting enemies' six magic skills
- *  to 80) ride entity.skillOverrides over either base shape. */
-export function skillValue(entity, skillId) {
+ *  to 80) ride entity.skillOverrides over either base shape.
+ *
+ *  DFU keeps the two getters apart on purpose and the laws that read
+ *  them CHOSE: guild rank (Guild.CalculateNumHighLowSkills :124) and
+ *  the training cap (DaggerfallGuildServiceTraining.cs:101) read this
+ *  one, so a worn Fortify/EnhancesSkill item cannot buy a promotion
+ *  or move the 50-cap. */
+export function permanentSkillValue(entity, skillId) {
   const o = entity.skillOverrides;
   if (o && o[skillId] != null) return o[skillId];
   const s = entity.skills;
+  if (typeof s === 'number') return s;
+  return s?.[skillId] ?? 0;
+}
+
+/** DaggerfallSkills.GetLiveSkillValue (:135-143): the permanent value
+ *  PLUS the effect mod. */
+export function skillValue(entity, skillId) {
+  const o = entity.skillOverrides;
+  if (o && o[skillId] != null) return o[skillId];
   // E1: SetSkillMod's channel (EnhancesSkill +15) - DFU's
   // Skills.GetLiveSkillValue adds the mod to every read, cleared and
   // re-applied per round by the constant-effect pass. The fold is
   // entity._enchantMods; a host that never pumps reads +0.
   const mod = entity._enchantMods?.skillMods?.[skillId] ?? 0;
-  if (typeof s === 'number') return s + mod;
-  return (s?.[skillId] ?? 0) + mod;
+  return permanentSkillValue(entity, skillId) + mod;
 }
 
 /** TallySkill (the E3c flag clears): count a use toward advancement.

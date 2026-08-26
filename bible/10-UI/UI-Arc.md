@@ -8,6 +8,75 @@ policies one by one.
 
 
 
+## U56-U58 meet AUDIT 26 (2026-08-26)
+
+The audit campaign landed on main while this arc was building the
+pack's remote side, and the two changed the same window. The merge is
+worth recording, because it is the argument for the extraction making
+itself.
+
+AUDIT 26 ADDED A RUNG TO THE LADDER. TransferItem's QUEST arm
+(:1480-1505) - the refusal for an undroppable quest item, and the only
+writer of the `playerDropped` flag the DroppedItemAtPlace trigger
+polls - went into the classic window as a guard between the summoned
+one and the choose-one pile, on both callers. The merge had a choice:
+resolve it back into a window that no longer holds that law, or put it
+on the ladder where the rest of TransferItem now lives. It went on the
+ladder, and the enhanced pane runs it as a result - a rung it would
+otherwise never have had, silently.
+
+It had to move for a second reason: `nativeTrade.js` imports the arm
+because DaggerfallTradeWindow INHERITS TransferItem, and leaving it in
+the window would have meant `systems/` importing from `ui/`.
+
+THE DRY RUN IS THE MERGE'S OWN FINDING. That arm WRITES as it passes,
+and `canStow` calls `planStore` on every repaint to decide whether to
+draw a button. Merged naively, opening the pack with a quest item in
+it would have marked that item DROPPED on the first render, and again
+on every render after - with nothing on screen looking wrong, and a
+quest trigger firing somewhere else entirely. So the two plans take a
+`dryRun` that skips the one rung that writes, and it is safe precisely
+because the quest refusal SPEAKS: a view asking "would this say
+something" gets the same answer either way. Both halves are pinned,
+including the fact that the refusal has words - a silent one would
+make the dry run a lie.
+
+TWO MORE LAWS THE PANE WOULD HAVE DROPPED IN SILENCE, and one it was
+carrying wrong:
+
+    THE REMOTE CLICK   ":2027-2037" is the FIRST act of
+                       RemoteItemListScroller_OnItemClick, so LOOKING
+                       at a quest item in a pile counts as a click.
+                       LocalItemListScroller has no such call - and
+                       this pane draws BOTH lists with one row
+                       builder, so the guard sits on the SIDE, not
+                       the row.
+    POPTOHUD           UseItem's :1687-1688 closes the whole window
+                       stack and says nothing. Decided above every
+                       other arm, because DFU returns before all of
+                       them.
+    MAXENCUMBRANCE     AUDIT 26 corrected the carry gate and the
+                       character sheet to `entityMaxEncumbrance` -
+                       PlayerEntity.MaxEncumbrance, enchantment
+                       allowance and all. U52 and U53 had mirrored the
+                       PRE-audit expression, so the enhanced sheet and
+                       the enhanced pack were both reading the bare
+                       strength formula. Both corrected, and AUDIT
+                       26's own sweep now covers them.
+
+TWO PINS FOLLOWED THEIR LAW rather than being resolved away. AUDIT
+26's `entityMaxEncumbrance(e)` sweep of `nativeInventory.js` now reads
+`itemTransfer.js`, where the carry gate went - the same move X11b's
+summoned pin made in U56. And the settings ledger's reader for
+`GUI/CanDropQuestItems` moved with the arm that reads it.
+
+Everything else in the merge was the U53 collapse paying off: main's
+loot arms still hand-rolled eleven hooks each, and the resolution was
+to keep the host factory and let `getQuest` arrive through it.
+
+Gate on the merge: eslint clean, 3570 tests / 0 fail / 188 skipped,
+build clean, and all five browser probes green.
+
 ## U58 THE REMOTE PANE, and the boundary comes down (2026-08-26)
 
 The pack had a local list and no remote one, and that single absence

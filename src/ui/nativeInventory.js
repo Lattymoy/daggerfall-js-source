@@ -48,11 +48,14 @@
 import { loadImg, nativeMetrics, drawImg, drawImgSub, drawImgCrop, shadowText, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';   // U25
 import { useItem, isLightSource } from '../systems/useItem.js';   // U25
-import { itemInfoRows, INFO_TEXT } from '../systems/itemInfo.js';   // U25
+import { itemInfoRows, questLetterName, INFO_TEXT } from '../systems/itemInfo.js';   // U25
 import { goldAmount, deductGold } from '../systems/court.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { addItem, isEnchanted, goldStack, canHoldAmount, totalWeight, GOLD_PIECE_WEIGHT_KG } from '../systems/inventory.js';   // L-slice (items-9)
 // U56: TransferItem's ladder - the guards, their order, and the split.
+// AUDIT 26's quest arm is a rung of it and travelled with it, so the
+// window no longer carries the settings or quest-resource imports it
+// needed to run that rung itself.
 import { planStore, planTake, applyTransfer, planDropGold } from '../systems/itemTransfer.js';
 // U57: which list is the remote one, and what opening and closing
 // this window decide.
@@ -121,12 +124,15 @@ export const USE_PENDING = Object.freeze({
 
 /** TEXT.RSC 25 - the drop-gold prompt (:1272). */
 export const GOLD_TO_DROP_TEXT_ID = 25;
-// W-slice: the wagon goes live. U56: the three strings the TRANSFER
-// LADDER owns live with it now (systems/itemTransfer.js) and are
-// re-exported here, because a caller reaching for the wagon's limit
-// is usually already holding this window.
+// W-slice: the wagon goes live. U56: the strings the TRANSFER LADDER
+// owns live with it now (systems/itemTransfer.js) and are re-exported
+// here, because a caller reaching for the wagon's limit is usually
+// already holding this window. AUDIT 26's `questTransferRefused` rides
+// the same road: DaggerfallTradeWindow INHERITS TransferItem and
+// imports it from here, and the ladder's home is where it belongs.
 export {
   WAGON_KG_LIMIT, CANNOT_HOLD_TEXT, CANNOT_CARRY_TEXT, wagonFullGoldText,
+  questTransferRefused,
 } from '../systems/itemTransfer.js';
 // U57: and the remote side's, for the same reason.
 export {
@@ -316,14 +322,28 @@ export class NativeInventoryWindow {
       this.boxes = [{ rows: [{ text: 'No item description available.', center: true }] }];
       return;
     }
-    this.boxes = [{ rows: itemInfoRows(it, rows) }];
+    // %it is the item's LONG name (ItemHelper.ResolveItemLongName
+    // :296-349), and its quest-letter arm is what makes one quest
+    // letter tell apart from another. `getQuest` is the host's
+    // QuestMachine.GetQuest; a host with none leaves the plain name.
+    this.boxes = [{ rows: itemInfoRows(it, rows, { name: this._longName(it) }) }];
     if (isEnchanted(it)) this.boxes.push({ rows: rows(INFO_TEXT_POWERS) ?? [] });
     this.infoItem = it;
   }
 
+  /** ResolveItemLongName over this window's quest seam. Null keeps
+   *  expandItemInfo's own `item.name ?? template.name` fallback. */
+  _longName(it) { return questLetterName(it, this.hooks.getQuest ?? null); }
+
   /** UseItem's outcome as a box, or nothing when the arm is silent
    *  (NextVariant on a garment repaints the doll and says nothing). */
   _useResult(r) {
+    // DaggerfallUI.PopToHUD() + return (:1687-1688): a watched quest
+    // item that is neither parchment nor clothing closes the window
+    // stack so the quest system gets first shot at the click in the
+    // game world. Nothing else on the ladder runs, and no box shows -
+    // and PopToHUD is not the exit BUTTON, so it plays no click.
+    if (r.popToHUD) { this._closeSilently(); return; }
     // B1: a book opens the reader through the host's hook; failure
     // (no id, missing/ruined file) shows the bookUnavailable box, and
     // a host with no hook keeps the pending text.
@@ -427,6 +447,9 @@ export class NativeInventoryWindow {
       // U44: DrinkPotion. The host's cast engine owns it - assigning a
       // bundle needs the player's effect sinks.
       drinkPotion: this.hooks.drinkPotion ?? null,
+      // QuestMachine.GetQuest (:1673) - the use-click block's reach.
+      // The same seam the info panel's long name reads.
+      getQuest: this.hooks.getQuest ?? null,
     }));
   }
 
@@ -440,11 +463,16 @@ export class NativeInventoryWindow {
       // `TransferItem(item, localItems, remoteItems, canHold, true)`
       // (DaggerfallInventoryWindow.cs:1999). U56: the guards, their
       // ORDER, and the split are systems/itemTransfer.js now - one
-      // reading of TransferItem for every screen that transfers. What
-      // is still this window's is what a CLASSIC window does with the
-      // answer: a parchment box, or the click.
+      // reading of TransferItem for every screen that transfers, and
+      // AUDIT 26's QUEST ARM is one of those guards, sitting where DFU
+      // puts it (:1480-1505, below the summoned one and above every
+      // capacity gate). What is still this window's is what a CLASSIC
+      // window does with the answer: a parchment box, or the click.
       const to = this._remote();
-      const plan = planStore(it, { remote: to, usingWagon: this.usingWagon, chooseOne: this.chooseOne });
+      const plan = planStore(it, {
+        remote: to, usingWagon: this.usingWagon, chooseOne: this.chooseOne,
+        getQuest: this.hooks.getQuest ?? null,
+      });
       if (!plan.ok) { this._refuse(plan.refusal); return; }
       audio.playOneShot(SOUND.ButtonClick, 1);   // DoTransferItem (:1583)
       applyTransfer(it, plan, this.hooks.items(), to);
@@ -483,18 +511,26 @@ export class NativeInventoryWindow {
     const remote = this._remote();
     const it = remote[this.remoteScroll + slot];
     if (!it) return;
+    // "Send click to quest system" (:2027-2037) - the FIRST act of
+    // RemoteItemListScroller_OnItemClick, ahead of the action-mode
+    // branch, so an Info or Use click on a quest item counts as well
+    // as taking it. The ClickedItem trigger polls hasPlayerClicked.
+    // Only the REMOTE list does this; LocalItemListScroller_OnItemClick
+    // (:1974-2007) has no such call.
+    if (it.questItem) this.hooks.getQuest?.(it.questUID)?.getItem?.(it.questSymbol)?.setPlayerClicked();
     if (this.mode === 'info') { this._info(it); return; }
     if (this.mode === 'use') { this._use(it, remote); return; }   // U25 (:2048-2051)
     if (this.mode === 'remove' || this.mode === 'equip') {
       // RemoteItemListScroller_OnItemClick: both modes transfer to
       // the player; Equip mode also EQUIPS the taken item (verbatim
       // TransferItem(..., equip: true)). U56: same ladder, other
-      // direction - including X11b's summoned guard, which DFU has
-      // once and both callers run.
+      // direction - X11b's summoned guard and AUDIT 26's quest arm
+      // included, which DFU has once and both callers run.
       const bag = this.hooks.items();
       const plan = planTake(it, {
         bag, entity: this.hooks.entity, mode: this.mode,
         chooseOne: this.chooseOne, usingWagon: this.usingWagon,
+        getQuest: this.hooks.getQuest ?? null,
       });
       if (!plan.ok) { this._refuse(plan.refusal); return; }
       // DoTransferItem: gold rides its own clink (:1569), everything
@@ -716,7 +752,7 @@ export class NativeInventoryWindow {
         ? goldAmount(this.hooks.entity ?? { items: this.hooks.items() }) : 0;
       const panelRows = this.infoGold
         ? goldPanelRows(carriedGold, carriedGold * GOLD_PIECE_WEIGHT_KG)
-        : ((this.infoItem && this.hooks.rows) ? itemInfoRows(this.infoItem, this.hooks.rows) : null);
+        : ((this.infoItem && this.hooks.rows) ? itemInfoRows(this.infoItem, this.hooks.rows, { name: this._longName(this.infoItem) }) : null);
       if (panelRows) {
         const [px, py, , ph] = INV_RECTS.itemInfoPanel;
         const rows = panelRows;
