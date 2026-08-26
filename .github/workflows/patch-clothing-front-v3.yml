@@ -1,0 +1,42 @@
+name: patch clothing torso front v3
+
+on:
+  push:
+    branches: [chatgpt/exact-face-atlas]
+    paths:
+      - .github/workflows/patch-clothing-front-v3.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/exact-face-atlas
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply torso front reconstruction
+        run: python tools/patch_clothing_front_v3.py
+      - run: npm ci
+      - name: Verify torso front reconstruction
+        run: |
+          node --check src/characters/paperdollArt.js
+          node --check src/ui/paperDoll.js
+          node --check src/tools/paperdoll/clothingTexture.js
+          node tools/clothingCanonicalProbe.mjs
+          grep -q "paperdoll-axis-front-reconstruct" src/tools/paperdoll/clothingTexture.js
+          grep -q "paperdollRecordOffset" src/ui/paperDoll.js
+          npm run build
+          git diff --check
+      - name: Commit verified torso reconstruction
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add src/characters/paperdollArt.js src/ui/paperDoll.js src/tools/paperdoll/clothingTexture.js tools/clothingCanonicalProbe.mjs
+          git commit -m "CLOTHING: reconstruct shirt fronts from paperdoll placement"
+          git push origin HEAD:chatgpt/exact-face-atlas
