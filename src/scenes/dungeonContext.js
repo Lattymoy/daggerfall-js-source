@@ -65,7 +65,7 @@ import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/
 import { NativeInventoryWindow, preloadInventoryArt, WAGON_ACCESS_DISTANCE } from '../ui/nativeInventory.js';
 import { preloadPaperDollForEntity } from '../ui/paperDoll.js';   // U26: the doll the keyed window never had
 import { createDroppedLoot } from './droppedLoot.js';   // U8e, mounted here at U26
-import { createPlayerMagic } from './hostMagic.js';   // M3: the ONE cast engine
+import { createPlayerMagic, POST_IMPACT_LIFESPAN_S, missileFlashesOnImpact, armImpactFlash } from './hostMagic.js';   // M3: the ONE cast engine; the impact-flash law it also owns (DaggerfallMissile.cs DoCollision :357-370)
 import { tallySkill, skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
 import { applyLevelUp } from '../systems/advancement.js';
@@ -1622,6 +1622,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // nothing ever removes, drawn at its fire position for the rest of
     // the scene. Check before publishing.
     if (m.dead) { m.batch = null; return; }
+    // The same race from the other side: a missile that COLLIDED while
+    // its flight texture warmed has already claimed m.batch for the
+    // impact flash, and publishing the flier now would orphan it.
+    if (m.impact != null) return;
     uploadRecord(archive, 0);
     const size = scaledBillboardSize(t.getSize(0), t.getScale(0));
     m.firePos = [...m.pos];
@@ -1633,7 +1637,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     armFlatAnim(m.batch, t, archive, 0, flatAnims, uploadRecordFrame, { fps: MISSILE_FPS });
     billboardBatches.push(m.batch);
   }
-  function retireMissile(m) {
+  /** @param {number[]|null} impactAt the COLLISION point, or null for the
+   *  lifespan expiry - hostMagic.js carries the impact-flash law this
+   *  enemy/trap pool shares with the engine's. */
+  function retireMissile(m, impactAt = null) {
     if (m.draw && m.draw.object) {
       const di = dynamicDraws.indexOf(m.draw);
       if (di >= 0) dynamicDraws.splice(di, 1);
@@ -1644,6 +1651,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (bi >= 0) billboardBatches.splice(bi, 1);
       renderer.destroyBillboardBatch(m.batch);
     }
+    if (impactAt && missileFlashesOnImpact(m)) {
+      m.pos = [...impactAt];   // Update :292 - the struck missile sits at the collision point
+      m.impact = 0;            // postImpactLifespan (:85)
+      m.batch = null;
+      armImpactFlash(m, { renderer, getTexture, uploadRecord, uploadRecordFrame, flatAnims, batches: billboardBatches });
+      return;
+    }
     m.dead = true;
   }
   function updateMissiles(dt, playerFeet) {
@@ -1652,6 +1666,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const target = [playerFeet[0], playerFeet[1] + 0.9, playerFeet[2]];   // mid-capsule, as enemy melee aims
     for (const m of missiles) {
       if (m.dead) continue;
+      // An IMPACTED missile no longer flies, ages or collides
+      // (Update :299-320, FixedUpdate :329-330): it holds the one-shot
+      // flash for PostImpactLifespanInSeconds and is then destroyed.
+      if (m.impact != null) {
+        m.impact += dt;
+        if (m.impact > POST_IMPACT_LIFESPAN_S) retireMissile(m);
+        continue;
+      }
       if (!m.arrow) ensureMissileBatch(m);   // arrows render as the 99800 model, not an element billboard
       if (!m.dir) {   // verbatim: normalized (player - object), locked at fire time
         const d = [target[0] - m.pos[0], target[1] - m.pos[1], target[2] - m.pos[2]];
@@ -1659,6 +1681,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         m.dir = [d[0] / l, d[1] / l, d[2] / l];
       }
       m.age += dt;
+      // :294-295 - the lifespan expiry is a plain Destroy: no flash, no hold.
       if (m.age > MISSILE_LIFESPAN_S) { retireMissile(m); continue; }
       const step = MISSILE_SPEED * dt;
       const hitWall = collider.raycast(m.pos, m.dir, step + MISSILE_COLLIDER_RADIUS);
@@ -1666,12 +1689,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // AUDIT 23 (magic-2) - DaggerfallMissile.cs:399-402 DoCollision:
         // an AreaAtRange payload explodes AT THE IMPACT POINT whatever
         // was struck; the port retired wall hits with no payload.
+        // DoCollision's stop point: colliderPosition + direction * hitInfo.distance (:346).
+        const impact = [m.pos[0] + m.dir[0] * hitWall, m.pos[1] + m.dir[1] * hitWall, m.pos[2] + m.dir[2] * hitWall];
         if (m.spell?.rangeType === 4) {
-          const impact = [m.pos[0] + m.dir[0] * hitWall, m.pos[1] + m.dir[1] * hitWall, m.pos[2] + m.dir[2] * hitWall];
           const wCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
           magic.explodeAt(impact, m.spell, m.casterLevel ?? playerEntity.level, playerFeet, wCaster);
         }
-        retireMissile(m);
+        retireMissile(m, impact);
         continue;
       }
       m.pos[0] += m.dir[0] * step; m.pos[1] += m.dir[1] * step; m.pos[2] += m.dir[2] * step;
@@ -1779,7 +1803,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         const mCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
         if (m.spell.rangeType === 4) magic.explodeAt(m.pos, m.spell, m.casterLevel ?? playerEntity.level, playerFeet, mCaster);
         else magic.applySpellToPlayer(m.spell, m.casterLevel ?? playerEntity.level, mCaster);
-        retireMissile(m);
+        retireMissile(m, m.pos);
       }
     }
     // AUDIT 24 (the seven-slice sweep): EVERY ALLOCATION HAS AN OWNER,

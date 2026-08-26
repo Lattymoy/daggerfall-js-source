@@ -1994,17 +1994,21 @@ export function createWorldModes(host) {
           addItem(playerEntity.items, bottle);
           surfacePlayer();
         },
-        takeOne: (templateIndex, where) => {
+        // MixCauldron's removal, verbatim (:337-350):
+        //   playerItem = Items.GetItem(item.ItemGroup, item.TemplateIndex,
+        //                              allowEnchantedItem: false);
+        //   if (playerItem != null) Items.RemoveOne(playerItem);
+        // The pick matches the ingredient's GROUP as well as its
+        // template index, and it SKIPS enchanted items
+        // (ItemCollection.GetItem:370-405) - so mixing never burns an
+        // enchanted item as a reagent. Refresh keeps them out of the
+        // ingredient list (:145-149); this walk is the other half of
+        // the same law, and it is the half a wagon fallback or a
+        // recipe fill can still reach.
+        takeOne: (ingredient, where) => {
           const list = where === 'pack' ? playerEntity.items : (playerEntity.wagonItems ?? []);
-          // X11b: this passed `list[i]` - the ITEM - where removeOne
-          // takes a TEMPLATE INDEX, so its own findIndex compared a
-          // number against an object, matched nothing and returned
-          // false. The potion maker's ingredients were never actually
-          // consumed: brew a potion, keep the reagents, brew again.
-          // The `i` computed above was only ever used to answer
-          // "is one present", which it still does.
-          if (!list.some((it) => it.templateIndex === templateIndex)) return false;
-          return removeOne(list, templateIndex);
+          return removeOne(list, ingredient.templateIndex,
+            { group: ingredient.group, allowEnchantedItem: false });
         },
         icons: { getTexture, uploadRecord, textures: renderer.textures },
         entity: playerEntity,

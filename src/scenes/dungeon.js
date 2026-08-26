@@ -25,6 +25,7 @@ import { withPlayerLights } from './magicCandle.js';   // X11/T1
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
 import { lookAt, perspective, mirrorProjectionX } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { PlayerMotor } from '../player/motor.js';
+import { totalWeight } from '../systems/inventory.js';   // PlayerEntity.CarriedWeight for the motor's encumbrance sink
 import { jumpSpeedMultiplier } from '../systems/skills.js';
 import {
   pickActivatable, activationTargets,
@@ -103,7 +104,14 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // P2: grounded walking is the default (?fly restores the fly cam);
   // spawn drops onto the start-marker floor.
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
-  const player = new PlayerMotor(ctx.collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), climbing: climbingDeps(playerEntity) });   // AcrobatMotor skill jump (P14) + M3 climbing (no HUD seam in the standalone host); motorStats = the LIVE entity
+  // LevitateMotor.cs:83 reads PlayerEntity.CarriedWeight LIVE each
+  // Update - the over-encumbered swimmer's forced sink (the motor owns
+  // the 250 quarter-kg law). CarriedWeight is PlayerEntity.cs:184's
+  // `Items.GetWeight() + goldPieces x goldPieceWeightInKg`, and gold is
+  // a Currency stack INSIDE items in this port (court.js's goldAmount
+  // reads it there), so totalWeight over items IS both of those terms,
+  // with the coins counted exactly once.
+  const player = new PlayerMotor(ctx.collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), climbing: climbingDeps(playerEntity), carriedWeight: () => totalWeight(playerEntity.items ?? []) });   // AcrobatMotor skill jump (P14) + M3 climbing (no HUD seam in the standalone host); motorStats = the LIVE entity
     const _footsteps = new FootstepMachine();   // FS-slice
   player.spawn(spawn[0], spawn[1], spawn[2]);
   console.log(`[spawn] marker ${JSON.stringify(ctx.startMarker)} -> feet [${spawn.map((v) => v.toFixed(3)).join(', ')}] (startSpawn build)`);

@@ -22,6 +22,17 @@
 //  - Charm (34) is CHANCE ONLY here: SupportDuration is commented out
 //    in this build of CharmEffect.cs. Kept as the build has it.
 //
+// The ALLOWED TARGETS column is the same kind of per-class datum:
+// properties.AllowedTargets, set beside the support flags in each
+// effect class's SetProperties, and the set the Spell Maker window
+// intersects to decide which of the five target buttons live
+// (DaggerfallSpellMakerWindow.cs:586). Every class in the tree names
+// one of three of EntityEffectBroker's sets - TargetFlags_All (43
+// keys), TargetFlags_Other (32), TargetFlags_Self (16, of which six
+// classes - Levitate, Slowfall, Identify and the three Detects -
+// spell the same value as the bare TargetTypes.CasterOnly it is
+// defined as). No class carries any other combination.
+//
 // THE INERT RESIDUE (recorded departure). The port's effect library
 // (systems/effects.js) implements a subset of the classic effects;
 // the rest already cast as no-ops for the STOCK spells that use them.
@@ -36,49 +47,60 @@
 export const STAT_SUBGROUPS = Object.freeze(
   ['Strength', 'Intelligence', 'Willpower', 'Agility', 'Endurance', 'Personality', 'Speed', 'Luck']);
 
+/** TargetTypes as FLAGS (MagicAndEffectsEnums.cs:21-29) - CasterOnly
+ *  1, ByTouch 2, SingleTargetAtRange 4, AreaAroundCaster 8,
+ *  AreaAtRange 16, which is 1 << the rangeType index the record
+ *  stores, and EntityEffectBroker's three target sets (:42-44).
+ *  TargetFlags_Self IS TargetTypes.CasterOnly (:42). */
+export const targetFlag = (index) => 1 << index;
+export const TARGET_FLAGS_SELF = targetFlag(0);
+export const TARGET_FLAGS_OTHER = targetFlag(1) | targetFlag(2) | targetFlag(3) | targetFlag(4);
+export const TARGET_FLAGS_ALL = TARGET_FLAGS_SELF | TARGET_FLAGS_OTHER;
+
 const D = 'duration', C = 'chance', M = 'magnitude';
-// [type, subType, group, subgroup, supports]
+const S = TARGET_FLAGS_SELF, O = TARGET_FLAGS_OTHER, A = TARGET_FLAGS_ALL;
+// [type, subType, group, subgroup, supports, allowedTargets]
 const ROWS = [
-  [0, 255, 'Paralyze', '', [D, C]],
-  [1, 0, 'Continuous Damage', 'Health', [D, M]],
-  [1, 1, 'Continuous Damage', 'Fatigue', [D, M]],
-  [1, 2, 'Continuous Damage', 'Spell Points', [D, M]],
-  [2, 255, 'Create Item', '', [D]],
-  [3, 0, 'Cure', 'Disease', [C]],
-  [3, 1, 'Cure', 'Poison', [C]],
-  [3, 2, 'Cure', 'Paralyzation', [C]],
-  [4, 0, 'Damage', 'Health', [M]],
-  [4, 1, 'Damage', 'Fatigue', [M]],
-  [4, 2, 'Damage', 'Spell Points', [M]],
-  [5, 255, 'Disintegrate', '', [C]],
-  [6, 0, 'Dispel', 'Magic', [C]],
-  [6, 1, 'Dispel', 'Undead', [C]],
-  [6, 2, 'Dispel', 'Daedra', [C]],
-  [8, 0, 'Elemental Resistance', 'Fire', [D, C]],
-  [8, 1, 'Elemental Resistance', 'Frost', [D, C]],
-  [8, 2, 'Elemental Resistance', 'Poison', [D, C]],
-  [8, 3, 'Elemental Resistance', 'Shock', [D, C]],
-  [8, 4, 'Elemental Resistance', 'Magicka', [D, C]],
-  [12, 255, 'Soul Trap', '', [D, C]],
-  [13, 0, 'Invisibility', 'Normal', [D]],
-  [13, 1, 'Invisibility', 'True', [D]],
-  [14, 255, 'Levitate', '', [D]],
-  [15, 255, 'Light', '', [D]],
-  [16, 255, 'Lock', '', [C]],
-  [17, 255, 'Open', '', [C]],
-  [18, 255, 'Regenerate', '', [D, M]],
-  [19, 255, 'Silence', '', [D, C]],
-  [20, 255, 'Spell Absorption', '', [D, C]],
-  [21, 255, 'Spell Reflection', '', [D, C]],
-  [22, 255, 'Spell Resistance', '', [D, C]],
-  [23, 0, 'Chameleon', 'Normal', [D]],
-  [23, 1, 'Chameleon', 'True', [D]],
-  [24, 0, 'Shadow', 'Normal', [D]],
-  [24, 1, 'Shadow', 'True', [D]],
-  [25, 255, 'Slowfall', '', [D]],
-  [26, 255, 'Free Action', '', [D]],
-  [27, 255, 'Jumping', '', [D]],
-  [28, 255, 'Climbing', '', [D]],
+  [0, 255, 'Paralyze', '', [D, C], O],
+  [1, 0, 'Continuous Damage', 'Health', [D, M], O],
+  [1, 1, 'Continuous Damage', 'Fatigue', [D, M], O],
+  [1, 2, 'Continuous Damage', 'Spell Points', [D, M], O],
+  [2, 255, 'Create Item', '', [D], S],
+  [3, 0, 'Cure', 'Disease', [C], A],
+  [3, 1, 'Cure', 'Poison', [C], A],
+  [3, 2, 'Cure', 'Paralyzation', [C], A],
+  [4, 0, 'Damage', 'Health', [M], O],
+  [4, 1, 'Damage', 'Fatigue', [M], O],
+  [4, 2, 'Damage', 'Spell Points', [M], O],
+  [5, 255, 'Disintegrate', '', [C], O],
+  [6, 0, 'Dispel', 'Magic', [C], S],
+  [6, 1, 'Dispel', 'Undead', [C], S],
+  [6, 2, 'Dispel', 'Daedra', [C], S],
+  [8, 0, 'Elemental Resistance', 'Fire', [D, C], A],
+  [8, 1, 'Elemental Resistance', 'Frost', [D, C], A],
+  [8, 2, 'Elemental Resistance', 'Poison', [D, C], A],
+  [8, 3, 'Elemental Resistance', 'Shock', [D, C], A],
+  [8, 4, 'Elemental Resistance', 'Magicka', [D, C], A],
+  [12, 255, 'Soul Trap', '', [D, C], O],
+  [13, 0, 'Invisibility', 'Normal', [D], A],
+  [13, 1, 'Invisibility', 'True', [D], A],
+  [14, 255, 'Levitate', '', [D], S],
+  [15, 255, 'Light', '', [D], S],
+  [16, 255, 'Lock', '', [C], S],
+  [17, 255, 'Open', '', [C], S],
+  [18, 255, 'Regenerate', '', [D, M], A],
+  [19, 255, 'Silence', '', [D, C], A],
+  [20, 255, 'Spell Absorption', '', [D, C], A],
+  [21, 255, 'Spell Reflection', '', [D, C], A],
+  [22, 255, 'Spell Resistance', '', [D, C], A],
+  [23, 0, 'Chameleon', 'Normal', [D], A],
+  [23, 1, 'Chameleon', 'True', [D], A],
+  [24, 0, 'Shadow', 'Normal', [D], A],
+  [24, 1, 'Shadow', 'True', [D], A],
+  [25, 255, 'Slowfall', '', [D], S],
+  [26, 255, 'Free Action', '', [D], A],
+  [27, 255, 'Jumping', '', [D], A],
+  [28, 255, 'Climbing', '', [D], A],
   // U42: MorphSelf is a REGISTRY row that the maker never offers -
   // see the exclusions note above. It is here because
   // SetEffectLabels reads EntityEffectBroker.GetEffectTemplate
@@ -87,28 +109,28 @@ const ROWS = [
   // "<effect not found>" while it was absent. `craftable: false`
   // keeps it out of the two picker lists, which is what
   // AllowedCraftingStations = None means (MorphSelf.cs:30).
-  [29, 255, 'Morph Self', '', [D], false],
-  [30, 255, 'Water Breathing', '', [D]],
-  [31, 255, 'Water Walking', '', [D]],
-  [33, 0, 'Pacify', 'Animal', [C]],
-  [33, 1, 'Pacify', 'Undead', [C]],
-  [33, 2, 'Pacify', 'Humanoid', [C]],
-  [33, 3, 'Pacify', 'Daedra', [C]],
-  [34, 255, 'Charm', '', [C]],
-  [35, 255, 'Shield', '', [D, M]],
-  [39, 0, 'Detect', 'Magic', [D]],
-  [39, 1, 'Detect', 'Enemy', [D]],
-  [39, 2, 'Detect', 'Treasure', [D]],
-  [40, 255, 'Identify', '', [C]],
-  [43, 255, 'Teleport', '', []],
-  [44, 255, 'Comprehend Languages', '', [D, C]],
+  [29, 255, 'Morph Self', '', [D], S, false],
+  [30, 255, 'Water Breathing', '', [D], A],
+  [31, 255, 'Water Walking', '', [D], A],
+  [33, 0, 'Pacify', 'Animal', [C], O],
+  [33, 1, 'Pacify', 'Undead', [C], O],
+  [33, 2, 'Pacify', 'Humanoid', [C], O],
+  [33, 3, 'Pacify', 'Daedra', [C], O],
+  [34, 255, 'Charm', '', [C], O],
+  [35, 255, 'Shield', '', [D, M], A],
+  [39, 0, 'Detect', 'Magic', [D], S],
+  [39, 1, 'Detect', 'Enemy', [D], S],
+  [39, 2, 'Detect', 'Treasure', [D], S],
+  [40, 255, 'Identify', '', [C], S],
+  [43, 255, 'Teleport', '', [], S],
+  [44, 255, 'Comprehend Languages', '', [D, C], S],
 ];
 // the stat/vital families, expanded exactly as DFU's per-stat classes are
 const FAMILIES = [
-  [7, 'Drain', STAT_SUBGROUPS, [M]],                                  // Drain{Attribute}, 0..7
-  [9, 'Fortify Attribute', STAT_SUBGROUPS, [D, M]],                   // Fortify{Attribute}, 0..7
-  [10, 'Heal', [...STAT_SUBGROUPS, 'Health', 'Fatigue'], [M]],        // Heal{Attribute} + Health 8 / Fatigue 9
-  [11, 'Transfer', [...STAT_SUBGROUPS, 'Health', 'Fatigue'], [M]],    // Transfer{...}, same 0..9
+  [7, 'Drain', STAT_SUBGROUPS, [M], O],                               // Drain{Attribute}, 0..7
+  [9, 'Fortify Attribute', STAT_SUBGROUPS, [D, M], A],                // Fortify{Attribute}, 0..7
+  [10, 'Heal', [...STAT_SUBGROUPS, 'Health', 'Fatigue'], [M], A],     // Heal{Attribute} + Health 8 / Fatigue 9
+  [11, 'Transfer', [...STAT_SUBGROUPS, 'Health', 'Fatigue'], [M], O], // Transfer{...}, same 0..9
 ];
 
 /** The keys systems/effects.js really acts on (its predicate arms +
@@ -154,21 +176,24 @@ export const PORTED_KEYS = new Set([
 ]);
 
 /** Every effect the Spell Maker offers: { key, type, subType, group,
- *  subgroup, name, duration, chance, magnitude, ported }. */
+ *  subgroup, name, duration, chance, magnitude, ported, targets }. */
 export const SPELL_MAKER_EFFECTS = Object.freeze((() => {
   const out = [];
-  const push = (type, subType, group, subgroup, supports, craftable = true) => out.push(Object.freeze({
+  const push = (type, subType, group, subgroup, supports, targets, craftable = true) => out.push(Object.freeze({
     key: `${type},${subType}`, type, subType, group, subgroup,
     name: subgroup ? `${group} ${subgroup}` : group,     // DisplayName = "{GroupName} {SubGroupName}"
     duration: supports.includes(D), chance: supports.includes(C), magnitude: supports.includes(M),
     ported: PORTED_KEYS.has(`${type},${subType}`),
+    // properties.AllowedTargets - what the maker's five target
+    // buttons intersect down to (DaggerfallSpellMakerWindow.cs:586).
+    targets,
     // AllowedCraftingStations != None. A false row is in the REGISTRY
     // (so the spellbook can name the effect) and out of the maker's
     // two picker lists.
     craftable,
   }));
-  for (const [t, s, g, sub, sup, craft] of ROWS) push(t, s, g, sub, sup, craft);
-  for (const [t, g, subs, sup] of FAMILIES) subs.forEach((sub, i) => push(t, i, g, sub, sup));
+  for (const [t, sT, g, sub, sup, tgt, craft] of ROWS) push(t, sT, g, sub, sup, tgt, craft);
+  for (const [t, g, subs, sup, tgt] of FAMILIES) subs.forEach((sub, i) => push(t, i, g, sub, sup, tgt));
   return out.sort((a, b) => (a.group === b.group ? a.subType - b.subType : a.group.localeCompare(b.group)));
 })());
 

@@ -18,7 +18,7 @@ import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // t
 import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible exterior arrows
-import { spendArrow } from '../systems/inventory.js';
+import { spendArrow, totalWeight } from '../systems/inventory.js';   // totalWeight: PlayerEntity.CarriedWeight for the motor's encumbrance sink
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -408,7 +408,14 @@ export async function bootExterior(canvas, renderer, params, status) {
   const shotMode = params.has('shot');
   // P1: grounded first-person is the default; ?fly restores the fly cam.
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
-  const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), climbing: climbingDeps(playerEntity, (l) => townTalk?.say(l)) });   // AcrobatMotor skill jump (P14) + M3 climbing; motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
+  // LevitateMotor.cs:83 reads PlayerEntity.CarriedWeight LIVE each
+  // Update - the over-encumbered swimmer's forced sink (the motor owns
+  // the 250 quarter-kg law). CarriedWeight is PlayerEntity.cs:184's
+  // `Items.GetWeight() + goldPieces x goldPieceWeightInKg`, and gold is
+  // a Currency stack INSIDE items in this port (court.js's goldAmount
+  // reads it there), so totalWeight over items IS both of those terms,
+  // with the coins counted exactly once.
+  const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), climbing: climbingDeps(playerEntity, (l) => townTalk?.say(l)), carriedWeight: () => totalWeight(playerEntity.items ?? []) });   // AcrobatMotor skill jump (P14) + M3 climbing; motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
   // AUDIT 21 (hosts lane, F3): onLevelUp. Without it advancement.js takes its
   // HEADLESS arm - `spendPoolLowest`, which dumps every point into your LOWEST
   // stats with no message and no choice. Cross a level threshold walking a

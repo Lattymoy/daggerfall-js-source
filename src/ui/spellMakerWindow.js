@@ -24,7 +24,8 @@
 import { drawText } from './text.js';
 import { typedChar } from './input.js';
 import {
-  SPELL_MAKER_EFFECTS, spellMakerGroups, spellMakerSubgroups,
+  SPELL_MAKER_EFFECTS, spellMakerGroups, spellMakerSubgroups, effectByKey,
+  targetFlag, TARGET_FLAGS_ALL,
 } from '../systems/spellEffects.js';
 import {
   MAX_EFFECTS_PER_SPELL, MAX_SPELL_NAME, DEFAULT_SPELL_ICON,
@@ -55,21 +56,27 @@ export const ELEMENT_FLAGS_ALL = 0b11111;
  *  ElementFlags_All, and which is which is the set systems/effects.js
  *  already reads off those classes (MAGIC_ONLY_KEYS) - imported, not
  *  restated. With no effect chosen the defaults arm (:565-570) leaves
- *  the same ElementFlags_MagicOnly.
- *
- *  FLAGGED - AUDIT 26 F181, the TARGET half of this same law is NOT
- *  here: allowedTargets is the LEAST permissive intersection of each
- *  effect's Properties.AllowedTargets (:586), and the port has no
- *  per-effect target-flag data to intersect - the four sets
- *  (TargetFlags_All / _Other / _Self / CasterOnly, one per effect
- *  class) belong beside the support flags in systems/spellEffects.js,
- *  which this wave does not own. Until that column exists the target
- *  buttons still offer all five. */
+ *  the same ElementFlags_MagicOnly. */
 export const allowedElementsFor = (slots) => (slots ?? []).reduce(
   (allowed, slot) => (slot?.key
     ? allowed | (MAGIC_ONLY_KEYS.has(slot.key) ? ELEMENT_FLAGS_MAGIC_ONLY : ELEMENT_FLAGS_ALL)
     : allowed),
   ELEMENT_FLAGS_MAGIC_ONLY);
+
+/** UpdateAllowedButtons' TARGET half (:575-586), which runs the OTHER
+ *  WAY from the element half beside it: allowedTargets starts at
+ *  TargetFlags_All and takes the LEAST permissive INTERSECTION of
+ *  every chosen effect's own Properties.AllowedTargets, so each added
+ *  effect can only narrow the five buttons - "least permissive result
+ *  set from combined target flags". Which set each effect class
+ *  carries is the `targets` column of systems/spellEffects.js, read
+ *  off those classes' SetProperties. With no effect chosen the
+ *  defaults arm (:565-570) leaves defaultTargetFlags, which IS
+ *  TargetFlags_All (:133). */
+export const allowedTargetsFor = (slots) => (slots ?? []).reduce(
+  (allowed, slot) => (slot?.key ? allowed & (effectByKey(slot.key)?.targets ?? TARGET_FLAGS_ALL) : allowed),
+  TARGET_FLAGS_ALL);
+
 const SPINNER_ROWS = {
   duration: [['durationBase', 'Base'], ['durationMod', 'Plus'], ['durationPerLevel', 'Per level']],
   chance: [['chanceBase', 'Base'], ['chanceMod', 'Plus'], ['chancePerLevel', 'Per level']],
@@ -115,6 +122,14 @@ export class SpellMakerWindow {
     this.editCursor = 0;
   }
 
+  /** SetSpellTarget (:488-492): a target the chosen effects do not
+   *  allow is simply NOT TAKEN - DFU's button does nothing at all,
+   *  rather than stepping past it. */
+  _setTarget(index) {
+    if ((allowedTargetsFor(this.slots) & targetFlag(index)) === 0) return;
+    this.rangeType = index;
+  }
+
   /** SetSpellElement (:525-530): an element the chosen effects do not
    *  allow is simply NOT TAKEN - DFU's button does nothing at all,
    *  rather than stepping past it. */
@@ -127,9 +142,18 @@ export class SpellMakerWindow {
    *  (:226 SetDefaults, :338 Setup, :396 ClearPendingDeleteEffectSlot,
    *  :462 AddAndEditSlot), through EnforceSelectedButtons (:597-603):
    *  a selection the new allowed set no longer holds falls back to
-   *  SelectFirstAllowedElementType (:635-660), which walks Fire,
-   *  Cold, Poison, Shock, Magic in that order. */
+   *  SelectFirstAllowedTargetType (:606-633), which walks CasterOnly,
+   *  ByTouch, SingleTargetAtRange, AreaAroundCaster, AreaAtRange in
+   *  that order, and to SelectFirstAllowedElementType (:635-660),
+   *  which walks Fire, Cold, Poison, Shock, Magic. Both halves run,
+   *  target first, as EnforceSelectedButtons does. */
   _updateAllowedButtons() {
+    const targets = allowedTargetsFor(this.slots);
+    if ((targets & targetFlag(this.rangeType)) === 0) {
+      for (let i = 0; i < TARGET_LABELS.length; i++) {
+        if ((targets & targetFlag(i)) !== 0) { this.rangeType = i; break; }
+      }
+    }
     const allowed = allowedElementsFor(this.slots);
     if ((allowed & elementFlag(this.element)) !== 0) return;
     for (let i = 0; i < ELEMENT_LABELS.length; i++) {
@@ -242,7 +266,7 @@ export class SpellMakerWindow {
       else if (this.slots.filter(Boolean).length >= MAX_EFFECTS_PER_SPELL) this.notice = 'This spell already has three effects.';
       else { this.editSlot = row.i; this.mode = 'group'; this.pickCursor = 0; }
     } else if (row.kind === 'target') {
-      this.rangeType = (this.rangeType + dir + TARGET_LABELS.length) % TARGET_LABELS.length;
+      this._setTarget((this.rangeType + dir + TARGET_LABELS.length) % TARGET_LABELS.length);
     } else if (row.kind === 'element') {
       this._setElement((this.element + dir + ELEMENT_LABELS.length) % ELEMENT_LABELS.length);
     } else if (row.kind === 'name') {

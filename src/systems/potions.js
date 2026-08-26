@@ -208,13 +208,20 @@ export const cauldronAccepts = (cauldron) => cauldron.length < CAULDRON_CAPACITY
  *  It is a partial spend that bails mid-loop, and it is verbatim.
  *
  *  Answers { kind: 'spent' } or { kind: 'broke', at } so a caller can
- *  tell the difference; `take(templateIndex, where)` is the host's
- *  removal, answering whether it found one. */
+ *  tell the difference; `take(ingredient, where)` is the host's
+ *  removal, answering whether it found one.
+ *
+ *  THE WHOLE INGREDIENT goes to the host, not its template index,
+ *  because DFU's pick is
+ *  GetItem(item.ItemGroup, item.TemplateIndex, allowEnchantedItem: false)
+ *  (:338, :345): the item's GROUP is half the match
+ *  (ItemCollection.GetItem, :370-405) and an ENCHANTED item is never
+ *  the one taken - a template index alone can ask for neither. */
 export function consumeCauldron(cauldron, { takeFromPack, takeFromWagon }) {
   for (let i = 0; i < cauldron.length; i++) {
-    const templateIndex = cauldron[i].templateIndex;
-    if (takeFromPack(templateIndex)) continue;
-    if (takeFromWagon(templateIndex)) continue;
+    const ingredient = cauldron[i];
+    if (takeFromPack(ingredient)) continue;
+    if (takeFromWagon(ingredient)) continue;
     return { kind: 'broke', at: i };
   }
   return { kind: 'spent' };

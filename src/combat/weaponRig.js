@@ -11,7 +11,7 @@
 // recorded residual (Combat.md), not an accident.
 //
 // Hosts without foes still get the full classic feel: ready/sheathe
-// on Z (DrawWeapon 78 on unsheathing a real weapon), RMB drag or
+// on Z (the weapon's OWN GetEquipSound clip on unsheathing), RMB drag or
 // click to swing with the pitch-matched swing sound, bows consuming
 // an Arrow per loose with the zero-arrow auto-sheathe, and the
 // optional environment-attack ray (interiors: bash/Receive on action
@@ -21,7 +21,7 @@ import { PlayerWeapon, WEAPON_REACH } from './playerWeapon.js';
 import { EQUIP_SLOTS } from '../systems/equip.js';   // AUDIT 17e F17
 import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES } from './fpsWeapon.js';
 import { worldAabb, rayAabb } from '../player/activate.js';
-import { SOUND } from '../systems/soundClips.js';
+import { SOUND, equipSoundFor } from '../systems/soundClips.js';
 
 /**
  * @param deps {
@@ -34,9 +34,13 @@ import { SOUND } from '../systems/soundClips.js';
  *                     (FLAGGED at the call sites - their HUD pends),
  *   spellArmed()    - optional: WeaponManager's HasReadySpell leg
  *                     (hosts without casting omit it),
+ *   climbing()      - optional: ClimbingMotor.IsClimbing, the other
+ *                     half of WeaponManager.cs:236's hide leg (hosts
+ *                     that own a PlayerMotor pass
+ *                     () => !!player.climb?.isClimbing),
  * }
  */
-export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, say = () => {}, spellArmed = () => false, bindWorn = true }) {
+export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, say = () => {}, spellArmed = () => false, climbing = () => false, bindWorn = true }) {
   const playerWeapon = new PlayerWeapon({});
   // AUDIT 17e F17 / THE FOUR HOSTS RULE: U8h bound the worn weapon in
   // the two EXTERIOR hosts by hand, so the interior host (which owns
@@ -67,17 +71,23 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     return cache.get(key);
   }
 
-  /** WeaponManager.Update's ShowWeapons legs, verbatim order.
+  /** WeaponManager.Update's ShowWeapons legs, verbatim order
+   *  (WeaponManager.cs:236-290) - each is a `ShowWeapons(false);
+   *  return;` and the only `ShowWeapons(true)` is the last line.
    *  The bow COOLDOWN is not one of them: `if (Time.time <
    *  cooldownTime) return;` (:229-232) sits ABOVE every ShowWeapons
    *  call, so the early return leaves ScreenWeapon.ShowWeapon at the
    *  true it was set to at :290 and the idle bow stays on screen for
    *  the whole cooldown. Nothing in DFU hides a weapon for it - the
    *  cooldown only blocks the next attack, which machineAttack
-   *  (weaponStates.js:96) already refuses. */
+   *  (weaponStates.js:96) already refuses.
+   *  PARALYSIS shares :236-239's leg with climbing but rides the
+   *  hosts' per-frame `paralyzed` flag into draw() instead. */
   function shown() {
-    if (playerWeapon.sheathed) return false;
-    if (spellArmed()) return false;                            // HasReadySpell / IsPlayingAnim
+    if (climbing()) return false;                              // ClimbingMotor.IsClimbing (:236-239)
+    if (spellArmed()) return false;                            // HasReadySpell / IsPlayingAnim (:247-262)
+    if ((entity?.equipCountdown ?? 0) > 0) return false;       // the used hand's EquipCountdown (:276-280)
+    if (playerWeapon.sheathed) return false;                   // Sheathed (:284-287)
     return true;
   }
 
@@ -107,10 +117,17 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     },
     /** ClickToAttack for the touch button. */
     clickAttack() { if (!playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0) playerWeapon.clickAttack(); },
-    /** ToggleSheath + the draw sound (78) on unsheathing a real weapon. */
+    /** ToggleSheath (WeaponManager.cs:1115-1128): unsheathing a
+     *  non-Melee/non-None weapon calls FPSWeapon.PlayActivateSound,
+     *  which plays DrawWeaponSound - and SetWeapon (:780) has written
+     *  THAT WEAPON's GetEquipSound there, so every weapon family has
+     *  its own unsheathe clip. The 78 default only ever survives the
+     *  fists path, which the Melee gate refuses to sound. */
     toggleSheath() {
       syncWorn();
-      if (playerWeapon.toggleSheath()) audio.playOneShot(SOUND.DrawWeapon);
+      if (!playerWeapon.toggleSheath()) return;
+      const clip = equipSoundFor(playerWeapon.weapon);
+      if (clip !== SOUND.None) audio.playOneShot(clip);   // PlayOneShot's `if (clip)` null guard (DaggerfallAudioSource.cs:188-198)
     },
     /**
      * Per-frame: gesture consume, the swing-sound edge, machine step.

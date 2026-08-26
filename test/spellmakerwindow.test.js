@@ -12,10 +12,12 @@ import { fileURLToPath } from 'node:url';
 import {
   SPELL_MAKER_EFFECTS, STAT_SUBGROUPS, PORTED_KEYS,
   spellMakerGroups, spellMakerSubgroups, effectByKey,
+  targetFlag, TARGET_FLAGS_SELF, TARGET_FLAGS_OTHER, TARGET_FLAGS_ALL,
 } from '../src/systems/spellEffects.js';
 import {
   SpellMakerWindow, TARGET_LABELS, ELEMENT_LABELS,
-  allowedElementsFor, elementFlag, ELEMENT_FLAGS_MAGIC_ONLY, ELEMENT_FLAGS_ALL,
+  allowedElementsFor, allowedTargetsFor, elementFlag,
+  ELEMENT_FLAGS_MAGIC_ONLY, ELEMENT_FLAGS_ALL,
 } from '../src/ui/spellMakerWindow.js';
 import { MAGIC_ONLY_KEYS } from '../src/systems/effects.js';
 import { SPELLBOOK_TEMPLATE_INDEX, _resetCustomIndexForTests, blankEffectSettings } from '../src/systems/spellMaker.js';
@@ -306,4 +308,79 @@ test('F181: allowedElements is the UNION of the chosen effects, magic always in 
   // the window imports it rather than carrying a second list
   assert.ok(MAGIC_ONLY_KEYS.has('10,8') && !MAGIC_ONLY_KEYS.has('4,0'));
   assert.equal(src('src/ui/spellMakerWindow.js').includes('MAGIC_ONLY_KEYS'), true);
+});
+
+
+test('F181: allowedTargets is the INTERSECTION of the chosen effects, and an unallowed target is refused (DaggerfallSpellMakerWindow.cs:488-492, :575-586, :606-633)', () => {
+  // TargetTypes as flags (MagicAndEffectsEnums.cs:21-29): CasterOnly
+  // 1, ByTouch 2, SingleTargetAtRange 4, AreaAroundCaster 8,
+  // AreaAtRange 16 - 1 << the record's rangeType index
+  assert.deepEqual(TARGET_LABELS.map((_, i) => targetFlag(i)), [1, 2, 4, 8, 16]);
+  // EntityEffectBroker.cs:42-44
+  assert.equal(TARGET_FLAGS_SELF, 1, 'TargetFlags_Self IS TargetTypes.CasterOnly');
+  assert.equal(TARGET_FLAGS_OTHER, 2 | 4 | 8 | 16);
+  assert.equal(TARGET_FLAGS_ALL, 1 | 2 | 4 | 8 | 16);
+
+  // the per-effect column, read off each class's SetProperties:
+  // Levitate is bare TargetTypes.CasterOnly (Levitate.cs:33), Damage
+  // Health is TargetFlags_Other (DamageHealth.cs:31), Heal Health is
+  // TargetFlags_All (HealHealth.cs)
+  assert.equal(effectByKey('14,255').targets, TARGET_FLAGS_SELF);
+  assert.equal(effectByKey('4,0').targets, TARGET_FLAGS_OTHER);
+  assert.equal(effectByKey('10,8').targets, TARGET_FLAGS_ALL);
+  // no class in the tree carries any other combination
+  assert.deepEqual(
+    [...new Set(SPELL_MAKER_EFFECTS.map((e) => e.targets))].sort((a, b) => a - b),
+    [TARGET_FLAGS_SELF, TARGET_FLAGS_OTHER, TARGET_FLAGS_ALL].sort((a, b) => a - b));
+  // 43 / 32 / 16 keys, counted off the effect classes (multi-variant
+  // classes - ElementalResistance 8,0-4 and PacifyEffect 33,0-3 -
+  // spread one class's flags over their variant keys)
+  const count = (flags) => SPELL_MAKER_EFFECTS.filter((e) => e.targets === flags).length;
+  assert.equal(count(TARGET_FLAGS_ALL), 43);
+  assert.equal(count(TARGET_FLAGS_OTHER), 32);
+  assert.equal(count(TARGET_FLAGS_SELF), 16);
+
+  const slot = (key) => ({ key, settings: blankEffectSettings() });
+  // no effects: the defaults arm (:565-570) leaves defaultTargetFlags = TargetFlags_All
+  assert.equal(allowedTargetsFor([]), TARGET_FLAGS_ALL);
+  assert.equal(allowedTargetsFor([null, null, null]), TARGET_FLAGS_ALL);
+  assert.equal(allowedTargetsFor([slot('10,8')]), TARGET_FLAGS_ALL);
+  // "least permissive result set" - the INTERSECTION, not the union
+  // the element half beside it takes: a Self-only effect plus an ALL
+  // effect leaves Self alone, and Self plus Other leaves NOTHING
+  assert.equal(allowedTargetsFor([slot('14,255'), slot('10,8')]), TARGET_FLAGS_SELF);
+  assert.equal(allowedTargetsFor([slot('4,0'), slot('10,8')]), TARGET_FLAGS_OTHER);
+  assert.equal(allowedTargetsFor([slot('14,255'), slot('4,0')]), 0);
+
+  // SetSpellTarget (:488-492) refuses a target outside the set, and
+  // EnforceSelectedButtons (:599-600) falls back through
+  // SelectFirstAllowedTargetType (:606-633) - CasterOnly first
+  const w = win();
+  toRow(w, 'target');
+  w.input('confirm');
+  assert.equal(w.rangeType, 1, 'an empty sheet allows all five');
+  w.input('confirm');
+  assert.equal(w.rangeType, 2, 'Single Target at Range');
+  // adding Levitate (CasterOnly only) drags the selection back to CasterOnly
+  w.slots[0] = { type: 14, subType: 255, key: '14,255', settings: blankEffectSettings() };
+  w._updateAllowedButtons();
+  assert.equal(w.rangeType, 0, 'SelectFirstAllowedTargetType walks to CasterOnly');
+  // and the four ranged buttons are now dead
+  w.input('confirm');
+  assert.equal(w.rangeType, 0, 'By Touch is not allowed with Levitate chosen');
+  w.input('minus');
+  assert.equal(w.rangeType, 0, 'nor is Area at Range');
+  // a Damage Health beside it would leave NO target at all, so the
+  // fallback finds none and the selection stands where it was
+  w.slots[1] = { type: 4, subType: 0, key: '4,0', settings: blankEffectSettings() };
+  w._updateAllowedButtons();
+  assert.equal(w.rangeType, 0);
+  // clearing back to the Other-only effect opens ByTouch first
+  w.slots[0] = null;
+  w._updateAllowedButtons();
+  assert.equal(w.rangeType, 1, 'ByTouch is SelectFirstAllowedTargetType\'s second rung');
+
+  // ONE DFU MEMBER, ONE EXPORT: the per-effect sets live in the
+  // catalog beside the support flags, not in a second table
+  assert.equal(src('src/ui/spellMakerWindow.js').includes('TargetFlags_Other ='), false);
 });

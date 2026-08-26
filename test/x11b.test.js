@@ -463,9 +463,11 @@ test('X11b: the potion maker really consumes its ingredients now', () => {
   // INDEX. Its findIndex compared a number against an object, matched
   // nothing, and returned false, so brewing never spent a reagent.
   const s = src('src/scenes/worldModes.js');
-  const hook = s.slice(s.indexOf('takeOne: (templateIndex, where)'), s.indexOf('takeOne: (templateIndex, where)') + 1100);
+  const at = s.indexOf('takeOne: (ingredient, where)');
+  const hook = s.slice(at, at + 1100);
+  assert.ok(at > 0, 'the hook takes the cauldron ingredient (:337 passes item.ItemGroup AND item.TemplateIndex)');
   assert.ok(!/removeOne\(list, list\[i\]\)/.test(hook), 'the item is still passed where an index goes');
-  assert.ok(hook.includes('removeOne(list, templateIndex)'), 'the index is not passed');
+  assert.ok(hook.includes('removeOne(list, ingredient.templateIndex'), 'the index is not passed');
 });
 
 // ── the catalog ──────────────────────────────────────────────────

@@ -139,24 +139,36 @@ test('M1: the cauldron holds EIGHT, and purification needs all of them (:253)', 
 });
 
 test('M1: the consume walk falls back to the WAGON, and BREAKS mid-loop (:335-356)', () => {
-  const cauldron = [{ templateIndex: 59 }, { templateIndex: 26 }, { templateIndex: 24 }];
+  const cauldron = [
+    { group: 'MiscellaneousIngredients1', templateIndex: 59 },
+    { group: 'PlantIngredients1', templateIndex: 26 },
+    { group: 'PlantIngredients1', templateIndex: 24 },
+  ];
   // everything in the pack
   const pack = new Set([59, 26, 24]);
   const taken = [];
   let r = consumeCauldron(cauldron, {
-    takeFromPack: (i) => (pack.delete(i) ? (taken.push(['pack', i]), true) : false),
+    takeFromPack: (it) => (pack.delete(it.templateIndex) ? (taken.push(['pack', it]), true) : false),
     takeFromWagon: () => false,
   });
   assert.equal(r.kind, 'spent');
-  assert.deepEqual(taken.map((t) => t[1]), [59, 26, 24]);
+  assert.deepEqual(taken.map((t) => t[1]), cauldron);
+
+  // and what the walk hands the host is the INGREDIENT ITSELF, group
+  // and all: DFU's pick is
+  //   GetItem(item.ItemGroup, item.TemplateIndex, allowEnchantedItem: false)
+  // (:338, :345), which matches on the group as well as the template
+  // index - a bare index could not ask for it.
+  assert.deepEqual(taken.map((t) => t[1].group),
+    ['MiscellaneousIngredients1', 'PlantIngredients1', 'PlantIngredients1']);
 
   // the middle one only in the CART
   const pack2 = new Set([59, 24]);
   const wagon = new Set([26]);
   const from = [];
   r = consumeCauldron(cauldron, {
-    takeFromPack: (i) => (pack2.delete(i) ? (from.push('pack'), true) : false),
-    takeFromWagon: (i) => (wagon.delete(i) ? (from.push('wagon'), true) : false),
+    takeFromPack: (it) => (pack2.delete(it.templateIndex) ? (from.push('pack'), true) : false),
+    takeFromWagon: (it) => (wagon.delete(it.templateIndex) ? (from.push('wagon'), true) : false),
   });
   assert.equal(r.kind, 'spent');
   assert.deepEqual(from, ['pack', 'wagon', 'pack'], 'the cart covers what the pack lacks');
@@ -167,13 +179,34 @@ test('M1: the consume walk falls back to the WAGON, and BREAKS mid-loop (:335-35
   const pack3 = new Set([59, 24]);
   const spent = [];
   r = consumeCauldron(cauldron, {
-    takeFromPack: (i) => (pack3.delete(i) ? (spent.push(i), true) : false),
+    takeFromPack: (it) => (pack3.delete(it.templateIndex) ? (spent.push(it.templateIndex), true) : false),
     takeFromWagon: () => false,
   });
   assert.equal(r.kind, 'broke');
   assert.equal(r.at, 1, 'it broke on the second ingredient');
   assert.deepEqual(spent, [59], 'the FIRST was spent and the third was not reached');
   assert.equal(pack3.has(24), true, 'the third really is still in the pack');
+});
+
+test('F175: the host removal the walk drives is GetItem(group, index, allowEnchantedItem: false) (:337-350)', () => {
+  // MixCauldron:
+  //   playerItem = Items.GetItem(item.ItemGroup, item.TemplateIndex,
+  //                              allowEnchantedItem: false);
+  //   if (playerItem != null) Items.RemoveOne(playerItem);
+  //   else { wagonItem = WagonItems.GetItem(... same ...); }
+  // The port's one home for that pick-and-remove is inventory's
+  // removeOne with the same options, and the potion maker's host hook
+  // (worldModes.js) is the caller.
+  const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..',
+    'src/scenes/worldModes.js'), 'utf8');
+  const hook = src.slice(src.indexOf('takeOne: (ingredient, where)'),
+    src.indexOf('takeOne: (ingredient, where)') + 400);
+  assert.ok(hook.includes('removeOne(list, ingredient.templateIndex'),
+    'the host still removes by template index');
+  assert.ok(/group:\s*ingredient\.group/.test(hook),
+    'the ingredient GROUP is half of GetItem\'s match and must be passed');
+  assert.ok(/allowEnchantedItem:\s*false/.test(hook),
+    'an ENCHANTED item is never the one taken (ItemCollection.cs:370-405)');
 });
 
 test('M1: the recipe match answers found AND missing - a miss refuses the whole fill (:283-301)', () => {

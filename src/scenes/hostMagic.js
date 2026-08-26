@@ -35,7 +35,7 @@
 //                               so exteriors answer day/night live
 //                               where the dungeon answers a constant.
 
-import { FlatAnimator, armFlatAnim, MISSILE_FPS } from '../render/flatAnimation.js';   // FA1
+import { FlatAnimator, armFlatAnim, MISSILE_FPS, IMPACT_FPS } from '../render/flatAnimation.js';   // FA1
 import {
   missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS,
   MISSILE_LIFESPAN_S, EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
@@ -49,6 +49,75 @@ import { tallySkill } from '../systems/skills.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { createMagicCandle, CANDLE } from './magicCandle.js';   // X11: the Light effect's candle
 import { CAPSULE_HEIGHT } from '../player/motor.js';   // PlayerController.height, the candle's y term
+
+// ---- THE IMPACT FLASH (DaggerfallMissile.cs DoCollision :357-370) ----
+// A missile that COLLIDES throws its flying flat away and puts the
+// element's impact animation in its place - `UseSpellBillboardAnims(1,
+// true)` (:365), i.e. RECORD 1 of the same element archive, ONE SHOT -
+// then overrides the flight speed that helper just set (:605) with
+// ImpactBillboardFramesPerSecond (15, :45). The struck missile stops
+// dead (Update :290 branches on impactDetected, FixedUpdate returns at
+// :329-330) and sits at the collision point (:292) until
+// PostImpactLifespanInSeconds have passed (:313-320), and only then is
+// destroyed - the flash gets its whole run.
+//
+// Two things this is NOT. It is not the LIFESPAN expiry: a missile that
+// runs out of life having hit nothing is destroyed on the spot
+// (:294-295), with no flash and no post-impact hold. And it is not
+// unconditional: :363 gates it on `elementType != ElementTypes.None &&
+// targetType != TargetTypes.ByTouch`, so an arrow (which carries no
+// element) and a touch cast flash nothing.
+//
+// This half lives at module scope because BOTH missile pools need it -
+// the engine's, and the dungeon's own enemy/trap loop.
+
+/** PostImpactLifespanInSeconds (DaggerfallMissile.cs:47). DFU also
+ *  holds the object past this while an ImpactSound is still audible
+ *  (:318); the port's missiles carry no audio source, so the timer is
+ *  the whole condition. */
+export const POST_IMPACT_LIFESPAN_S = 0.6;
+
+/** The impact animation's record - UseSpellBillboardAnims(1, ...) at
+ *  :365, against the same GetMissileTextureArchive the flight flat
+ *  uses (record 0). */
+const IMPACT_RECORD = 1;
+
+/** DoCollision's gate (:363) over the port's missile record. `element`
+ *  is the classic element index (ELEMENTS, 0-4) that a SPELL carries,
+ *  so a missile with no spell - an arrow - is DFU's ElementTypes.None;
+ *  rangeType 1 is TargetTypes.ByTouch. */
+export function missileFlashesOnImpact(m) {
+  return Number.isInteger(m?.spell?.element) && m.spell.rangeType !== 1;
+}
+
+/**
+ * UseSpellBillboardAnims(1, true) (:591-607) in the port's batch world:
+ * the caller has already torn the flying record-0 batch down (DFU
+ * destroys it at :594-598), and this puts the record-1 flash on the
+ * same missile, armed ONE SHOT at IMPACT_FPS.
+ *
+ * Async because the archive's TextureFile is. ASYNC NEVER DROPS: the
+ * hold is only 0.6s, so this await can outlive the missile - a flash
+ * published for a destroyed missile would be a batch nothing owns,
+ * drawn at the impact point for the rest of the scene, so the same
+ * dead-guard the flight batch carries applies here.
+ *
+ * @param {object} m       the missile record (already positioned at the impact point)
+ * @param {object} deps    the host's batch world
+ */
+export async function armImpactFlash(m, { renderer, getTexture, uploadRecord, uploadRecordFrame, flatAnims, batches }) {
+  m.batch = false;   // in-flight guard, as the flight batch uses
+  const archive = missileArchive(m.spell.element);
+  const t = await getTexture(archive);
+  if (!t) { m.batch = null; return; }
+  if (m.dead) { m.batch = null; return; }
+  uploadRecord(archive, IMPACT_RECORD);
+  const size = scaledBillboardSize(t.getSize(IMPACT_RECORD), t.getScale(IMPACT_RECORD));
+  m.firePos = [...m.pos];
+  m.batch = renderer.createBillboardBatch(archive, IMPACT_RECORD, size, [[m.firePos[0], m.firePos[1], m.firePos[2]]]);
+  armFlatAnim(m.batch, t, archive, IMPACT_RECORD, flatAnims, uploadRecordFrame, { oneShot: true, fps: IMPACT_FPS });
+  batches.push(m.batch);
+}
 
 export function createPlayerMagic({
   renderer, audio, getTexture, uploadRecord, uploadRecordFrame = null, collider,
@@ -348,6 +417,10 @@ export function createPlayerMagic({
     // nothing ever removes, drawn at its fire position for the rest of
     // the scene. Check before publishing.
     if (m.dead) { m.batch = null; return; }
+    // The same race from the other side: a missile that COLLIDED while
+    // its flight texture warmed has already claimed m.batch for the
+    // impact flash, and publishing the flier now would orphan it.
+    if (m.impact != null) return;
     uploadRecord(archive, 0);
     const size = scaledBillboardSize(t.getSize(0), t.getScale(0));
     m.firePos = [...m.pos];
@@ -360,12 +433,21 @@ export function createPlayerMagic({
     batches.push(m.batch);
   }
 
-  function retireMissile(m) {
+  /** @param {number[]|null} impactAt the COLLISION point, or null for
+   *  the lifespan expiry - see the impact-flash law above. */
+  function retireMissile(m, impactAt = null) {
     if (m.batch) {
       flatAnims.remove(m.batch);   // FA1
       const bi = batches.indexOf(m.batch);
       if (bi >= 0) batches.splice(bi, 1);
       renderer.destroyBillboardBatch(m.batch);
+    }
+    if (impactAt && missileFlashesOnImpact(m)) {
+      m.pos = [...impactAt];   // Update :292 - the struck missile sits at the collision point
+      m.impact = 0;            // postImpactLifespan (:85)
+      m.batch = null;
+      armImpactFlash(m, { renderer, getTexture, uploadRecord, uploadRecordFrame, flatAnims, batches });
+      return;
     }
     m.dead = true;
   }
@@ -391,17 +473,27 @@ export function createPlayerMagic({
     });
     for (const m of missiles) {
       if (m.dead) continue;
+      // An IMPACTED missile no longer flies, ages or collides
+      // (Update :299-320, FixedUpdate :329-330): it holds the one-shot
+      // flash for PostImpactLifespanInSeconds and is then destroyed.
+      if (m.impact != null) {
+        m.impact += dt;
+        if (m.impact > POST_IMPACT_LIFESPAN_S) retireMissile(m);
+        continue;
+      }
       ensureMissileBatch(m);
       m.age += dt;
+      // :294-295 - the lifespan expiry is a plain Destroy: no flash, no hold.
       if (m.age > MISSILE_LIFESPAN_S) { retireMissile(m); continue; }
       const step = MISSILE_SPEED * dt;
       const hitWall = collider.raycast(m.pos, m.dir, step + MISSILE_COLLIDER_RADIUS);
       if (Number.isFinite(hitWall) && hitWall <= step + MISSILE_COLLIDER_RADIUS) {
+        // DoCollision's stop point: colliderPosition + direction * hitInfo.distance (:346).
+        const impact = [m.pos[0] + m.dir[0] * hitWall, m.pos[1] + m.dir[1] * hitWall, m.pos[2] + m.dir[2] * hitWall];
         if (m.spell.rangeType === 4) {
-          const impact = [m.pos[0] + m.dir[0] * hitWall, m.pos[1] + m.dir[1] * hitWall, m.pos[2] + m.dir[2] * hitWall];
           explodeAt(impact, m.spell, playerEntity.level, playerFeet, playerCaster());
         }
-        retireMissile(m);
+        retireMissile(m, impact);
         continue;
       }
       m.pos[0] += m.dir[0] * step; m.pos[1] += m.dir[1] * step; m.pos[2] += m.dir[2] * step;
@@ -418,7 +510,7 @@ export function createPlayerMagic({
             const mCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
             if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, m.casterLevel ?? 1, playerFeet, mCaster);
             else applySpellToPlayer(m.spell, m.casterLevel ?? 1, mCaster);
-            retireMissile(m);
+            retireMissile(m, m.pos);
           }
         }
         continue;
@@ -429,7 +521,7 @@ export function createPlayerMagic({
         if (Math.hypot(fx, fy, fz) <= MISSILE_COLLIDER_RADIUS + 0.45) {
           if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, playerEntity.level, playerFeet, playerCaster());
           else applySpellToFoe(m.spell, playerEntity.level, f, playerCaster());
-          retireMissile(m);
+          retireMissile(m, m.pos);
           break;
         }
       }

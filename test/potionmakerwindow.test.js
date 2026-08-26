@@ -10,9 +10,16 @@ import {
 import {
   POTION_RECIPES, potionRecipeKey, CAULDRON_CAPACITY,
 } from '../src/systems/potions.js';
+import { removeOne } from '../src/systems/inventory.js';
+import { GROUP_TEMPLATE_INDICES } from '../src/systems/itemTemplates.js';
 
 const byName = (n) => POTION_RECIPES.find((r) => r.name === n);
-const ing = (t, n = 1) => ({ templateIndex: t, stackCount: n });
+// Every DFU item carries an ItemGroup, and MixCauldron's pick matches
+// on it (GetItem(item.ItemGroup, item.TemplateIndex, ...), :338/:345),
+// so a test ingredient carries the group its template belongs to.
+const groupOf = (t) => Object.keys(GROUP_TEMPLATE_INDICES)
+  .find((g) => GROUP_TEMPLATE_INDICES[g].includes(t));
+const ing = (t, n = 1) => ({ group: groupOf(t), templateIndex: t, stackCount: n });
 
 const recorder = () => ({ quads: [], uploadTexture: () => 'tex', drawScreenQuad() {} });
 const plainFont = () => ({ fnt: { fixedHeight: 6, fixedWidth: 4, glyphWidth: () => 4 } });
@@ -28,13 +35,12 @@ function win(over = {}) {
     gold: () => 1234,
     recipeKeys: () => over.recipeKeys ?? [],
     addPotion: (recipe, key) => minted.push({ name: recipe.name, key }),
-    takeOne: (t, where) => {
-      const list = where === 'pack' ? pack : wagon;
-      const i = list.findIndex((x) => x.templateIndex === t);
-      if (i < 0) return false;
-      list.splice(i, 1);
-      return true;
-    },
+    // the host's own removal (worldModes.js), so these tests walk the
+    // real law rather than a stand-in: MixCauldron takes
+    // GetItem(item.ItemGroup, item.TemplateIndex, allowEnchantedItem: false)
+    // and RemoveOne's it (:337-350).
+    takeOne: (ingredient, where) => removeOne(where === 'pack' ? pack : wagon,
+      ingredient.templateIndex, { group: ingredient.group, allowEnchantedItem: false }),
     icons: { getTexture: async () => ({ recordCount: 0 }), uploadRecord: () => {}, textures: new Map() },
     entity: {},
     onClose: () => { closed++; },
@@ -305,6 +311,50 @@ test('F174: an ENCHANTED ingredient is not in the list at all (Refresh, :145-149
   assert.deepEqual(w.cauldron, []);
   clickSlot(w, 'ingredients', 0);
   assert.equal(w.cauldron[0].templateIndex, 59);
+});
+
+test('F175: the consume walk never BURNS an enchanted item (:338, :345)', () => {
+  // MixCauldron picks each reagent with
+  //   GetItem(item.ItemGroup, item.TemplateIndex, allowEnchantedItem: false)
+  // and ItemCollection.GetItem (:370-405) matches the GROUP as well as
+  // the template index and SKIPS an enchanted item outright, so the
+  // walk can never reach for one. F174 fixed Refresh's half of this
+  // (an enchanted item is not listed); this is the removal's half -
+  // the pack can still hold one of the same template as the reagent.
+  const enchanted = {
+    group: 'Gems', templateIndex: 3, stackCount: 1, name: 'Diamond',
+    enchantments: [{ type: 11, param: -1 }],
+  };
+  const plain = { group: 'Gems', templateIndex: 3, stackCount: 1, name: 'Diamond' };
+  // the ENCHANTED one is first in the bag - a walk that matched on the
+  // template index alone would take it and leave the plain one
+  const pack = [enchanted, plain];
+  const { w } = win({ pack });
+  assert.deepEqual(w.ingredients(), [plain], 'only the plain gem is offered (F174)');
+
+  clickSlot(w, 'ingredients', 0);
+  assert.equal(w.cauldron[0], plain);
+  clickRect(w, 'mix');
+
+  assert.equal(w.cauldron.length, 0, 'the pot emptied - the walk found its reagent');
+  assert.deepEqual(pack, [enchanted], 'the PLAIN gem was burnt and the enchanted one kept');
+  assert.deepEqual(pack[0].enchantments, [{ type: 11, param: -1 }],
+    'the enchanted gem is untouched, enchantments and all');
+});
+
+test('F175: the WAGON half of the walk skips an enchanted item too (:345)', () => {
+  // the fallback arm is the same GetItem call on WagonItems
+  const enchanted = {
+    group: 'Gems', templateIndex: 3, stackCount: 1,
+    customEnchantments: [{ key: 'CastWhenUsed' }],
+  };
+  const plain = { group: 'Gems', templateIndex: 3, stackCount: 1 };
+  const wagon = [enchanted, plain];
+  const { w } = win({ pack: [], wagon });
+  w.cauldron = [{ group: 'Gems', templateIndex: 3, stackCount: 1 }];
+  clickRect(w, 'mix');
+  assert.equal(w.cauldron.length, 0, 'the cart covered it');
+  assert.deepEqual(wagon, [enchanted], 'and it spent the plain gem, not the enchanted one');
 });
 
 test('F176: adding from a STACK splits ONE unit off - the remainder stays listed (:256-257)', () => {

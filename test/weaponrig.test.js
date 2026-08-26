@@ -1,7 +1,7 @@
 // C9: the FP-weapon host rig - the surface every non-dungeon host
 // mounts (interior mode + both exterior walk hosts). Pins mirror the
-// AUDITED dungeon laws: classic starts sheathed, DrawWeapon 78 only
-// on unsheathing a real weapon, no attack processing while sheathed,
+// AUDITED dungeon laws: classic starts sheathed, the weapon's own
+// GetEquipSound clip on unsheathing, no attack processing while sheathed,
 // the drag-to-swing strike (soundless at entry - AUDIT 23 C9 moved
 // the whoosh to the hosts' no-enemy hit frame, WeaponManager.cs:423),
 // the zero-arrow
@@ -28,13 +28,27 @@ const rig = (over = {}) => {
   return r;
 };
 
-test('weaponRig: classic starts sheathed; DrawWeapon 78 on unsheathing a real weapon only', () => {
+test('weaponRig: classic starts sheathed; unsheathing plays THAT WEAPON\'s equip clip', () => {
+  // AUDIT 26 (parity F023). The pin that stood here asserted the port's
+  // single DrawWeapon 78 for every weapon. DFU never plays 78 off a
+  // sheathe toggle: WeaponManager.SetWeapon (:780) overwrites
+  // FPSWeapon.DrawWeaponSound with weapon.GetEquipSound() for whatever
+  // is in hand, and ToggleSheath (:1115-1128) -> PlayActivateSound
+  // (FPSWeapon.cs:290-297) plays that field. 78 is only the field's
+  // initializer (FPSWeapon.cs:62) and the fists-only SetMelee path
+  // (:764) sets SoundClips.None over it anyway - and that path is
+  // exactly the one ToggleSheath's Melee/None gate refuses to sound.
   const r = rig();
   assert.equal(r.playerWeapon.sheathed, true, 'classic starts sheathed');
-  r.toggleSheath();   // unsheathe the INTERIM dagger (a real weapon)
-  assert.deepEqual(r._audio.played, [SOUND.DrawWeapon]);
+  r.toggleSheath();   // unsheathe the INTERIM dagger (Weapons.Dagger, 113)
+  assert.deepEqual(r._audio.played, [SOUND.EquipShortBlade]);
+  assert.equal(SOUND.EquipShortBlade, 377);
   r.toggleSheath();   // sheathing back is silent
-  assert.deepEqual(r._audio.played, [SOUND.DrawWeapon]);
+  assert.deepEqual(r._audio.played, [SOUND.EquipShortBlade]);
+  // A different family = a different clip, off the same toggle.
+  r.playerWeapon.weapon = { name: 'Warhammer', templateIndex: 126, material: 0 };
+  r.toggleSheath();
+  assert.deepEqual(r._audio.played, [SOUND.EquipShortBlade, SOUND.EquipMaceOrHammer]);
 });
 
 test('weaponRig: sheathed = no attack processing; a drag swings SILENTLY and reaches the hit frame', () => {
@@ -51,7 +65,7 @@ test('weaponRig: sheathed = no attack processing; a drag swings SILENTLY and rea
   r.attackInput(900, 0, true);
   r.frame(1 / 60);
   assert.ok(r.playerWeapon.machine.state.startsWith('Strike'), `state ${r.playerWeapon.machine.state}`);
-  assert.equal(r._audio.played.length, 1, 'DrawWeapon only - no strike-entry whoosh');
+  assert.equal(r._audio.played.length, 1, 'the equip clip only - no strike-entry whoosh');
   // The machine reaches its hit frame within the strike.
   let hit = false;
   for (let f = 0; f < 120 && !hit; f++) hit = r.frame(1 / 60).includes('hit');

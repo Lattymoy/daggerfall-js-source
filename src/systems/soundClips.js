@@ -1,3 +1,5 @@
+import { WEAPONS as W } from '../characters/weapons.js';   // GetEquipSound switches on the Weapons template index
+
 // SoundClips: enum values = DAGGER.SND record indices, verbatim from
 // DFU SoundClips.cs. Only the consumed subset lives here; grow it
 // with the consumers (the full 400+ enum stays in the source).
@@ -8,7 +10,17 @@ export const SOUND = {
   BodyFall: 15,             // AUDIT 24 wave 38: EnemyDeath plays it at the corpse, every death
   PlayerDoorBash: 7,
   ActivateLockUnlock: 316,  // R1: the picked-lock chime (AttemptLockpicking + exterior success)
-  DrawWeapon: 78,     // ToggleSheath's unsheathe sound (FPSWeapon.DrawWeaponSound default)
+  None: -1,           // SoundClips.None (SoundClips.cs:24): GetAudioClip answers null and PlayOneShot plays nothing (DaggerfallAudioSource.cs:188-198)
+  DrawWeapon: 78,     // FPSWeapon.DrawWeaponSound's FIELD INITIALIZER (FPSWeapon.cs:62) - ApplyWeapon overwrites it per weapon, see equipSoundFor
+  // ---- GetEquipSound's ItemGroups.Weapons arm (SoundClips.cs:466-469, :512-515) ----
+  EquipShortBlade: 377,
+  EquipLongBlade: 378,
+  EquipTwoHandedBlade: 379,
+  EquipStaff: 380,
+  EquipMaceOrHammer: 413,
+  EquipFlail: 414,
+  EquipAxe: 415,
+  EquipBow: 416,
   DungeonDoorClose: 24,
   DungeonDoorOpen: 25,
   NormalDoorClose: 93,
@@ -97,6 +109,31 @@ export function swingSoundFor(weapon) {
   if (SWING_LOW.has(weapon.name)) return SOUND.SwingLowPitch;
   if (SWING_HIGH.has(weapon.name)) return SOUND.SwingHighPitch;
   return SOUND.SwingMediumPitch;
+}
+
+/** DaggerfallUnityItem.GetEquipSound's ItemGroups.Weapons arm
+ *  (DaggerfallUnityItem.cs:820-869) verbatim: the switch is on TEMPLATE
+ *  INDEX, and anything that is not one of the eighteen weapons answers
+ *  SoundClips.None. WeaponManager.SetWeapon (:780) writes the result
+ *  into FPSWeapon.DrawWeaponSound for the weapon actually in hand, so
+ *  ToggleSheath's PlayActivateSound (:1115-1128 -> FPSWeapon.cs:290-297)
+ *  sounds the weapon's OWN equip clip - the 78 default survives only the
+ *  fists-only SetMelee path (:764), which sets SoundClips.None anyway and
+ *  which ToggleSheath's Melee/None gate never sounds. The member's other
+ *  item-group arms (clothing/jewellery/armor) grow here with their
+ *  consumers, as the enum above does. */
+const EQUIP_SOUND = new Map([
+  [[W.Battle_Axe, W.War_Axe], SOUND.EquipAxe],
+  [[W.Broadsword, W.Longsword, W.Saber, W.Katana], SOUND.EquipLongBlade],
+  [[W.Claymore, W.Dai_Katana], SOUND.EquipTwoHandedBlade],
+  [[W.Dagger, W.Tanto, W.Wakazashi, W.Shortsword], SOUND.EquipShortBlade],
+  [[W.Flail], SOUND.EquipFlail],
+  [[W.Mace, W.Warhammer], SOUND.EquipMaceOrHammer],
+  [[W.Staff], SOUND.EquipStaff],
+  [[W.Short_Bow, W.Long_Bow], SOUND.EquipBow],
+].flatMap(([ws, v]) => ws.map((w) => [w, v])));
+export function equipSoundFor(weapon) {
+  return EQUIP_SOUND.get(weapon?.templateIndex) ?? SOUND.None;
 }
 
 /** PlayHitSound verbatim (EnemySounds.cs): weapon -> Hit1 + [0,5),
