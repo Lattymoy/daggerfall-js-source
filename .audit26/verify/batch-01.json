@@ -1,0 +1,80 @@
+[
+ {
+  "jsFile": "src/characters/mobileUnit.js",
+  "jsLine": 120,
+  "csFile": "Game/EnemyMotor.cs",
+  "csLine": "594-597",
+  "title": "Bow shots always use RangedAttack1 records; HasRangedAttack2 mobiles should use records 25-29",
+  "claim": "DFU picks the bow state: RangedAttack1 only if (HasRangedAttack1 && !HasRangedAttack2), else RangedAttack2 (EnemyMotor.cs:594-597); GetStateAnims maps RangedAttack2 to RangedAttack2Anims records 25-29 (DaggerfallMobileUnit.cs:840-841; EnemyBasics.cs:103-113). The port has a single 'ranged' state always returning RANGED_ATTACK1_ANIMS records 20-24 (mobileUnit.js:120), and hosts key one rangedStriking flag. Rows 130 (Battlemage) and 133 (Nightblade) carry hasRangedAttack2:true plus castsMagic (enemyBasics.js:2103, :2293), so hasBowAttack is true and their bow shots draw records 20-24 - which for these hasSpellAnimation rows are the SPELL-casting records.",
+  "consequence": "A Battlemage or Nightblade shooting its bow renders its spell-casting sprite animation instead of its bow animation (archive 489/490 records 20-24 vs 25-29); the arrow still fires on the -1 marker.",
+  "severity": "parity",
+  "confidence": "high",
+  "group": "enemy-ai",
+  "id": "F009"
+ },
+ {
+  "jsFile": "src/characters/enemyAttack.js",
+  "jsLine": 127,
+  "csFile": "Game/EnemyMotor.cs",
+  "csLine": "317, 171-172, 469-473",
+  "title": "Bow-band shots and spell casts not suppressed during knockback (CanAct chain incomplete)",
+  "claim": "DFU KnockbackMovement sets CanAct=false while KnockbackSpeed>0 (EnemyMotor.cs:317) and TakeAction runs only under `if (CanAct)` (:171-172), so DoRangedAttack (:469 - the 1/32 bow and 1/40 spell rolls) and DoTouchSpell (:473) never run mid-knockback; the Hurt state also counts as IsPlayingOneShot (Base/MobileUnit.cs:153-168), blocking the rolls at :587. The port models only the giveUpTimer part of CanAct: the band arm (enemyAttack.js:127-134) and both EnemyCaster branches (enemyCasting.js:110-130) keep running while ai.knockbackSpeed>0; hosts gate only paralysis/hostility (dungeonContext.js:2290/2312, exteriorFoes.js:294/299). Melee correctly keeps running (CanAct-independent in DFU).",
+  "consequence": "For the ~0.2-0.5s knockback window after each solid player hit, a port archer can loose its 1/32 bow shot and a caster can cast touch/ranged spells; DFU enemies cannot act at all during knockback - ranged foes fight back through hit-stun.",
+  "severity": "parity",
+  "confidence": "high",
+  "group": "enemy-ai",
+  "id": "F010"
+ },
+ {
+  "jsFile": "src/characters/enemyMotor.js",
+  "jsLine": 943,
+  "csFile": "Game/EnemyMotor.cs",
+  "csLine": "469-484",
+  "title": "Detour override reordered ahead of DoRangedAttack in the decision chain",
+  "claim": "DFU TakeAction calls DoRangedAttack at :469 and DoTouchSpell at :473 BEFORE the `if (avoidObstaclesTimer > 0) AttemptMove(...)` detour arm at :481-484, so an in-band shooter with sight+detection stands off and shoots even while a detour timer runs (the timer just decays). The port's _classicTick takes the detour arm first (enemyMotor.js:943-951) and only then calls _doRangedAttack (:956); its comment miscites :480-484 as \"TakeAction's FIRST branch\". test/audit24_wave35.test.js:113-114 pins this ordering (\"the detour override first of all\") - the pin restates the port, not the C#, which puts the detour after both attack calls.",
+  "consequence": "For up to 0.75s after an obstacle/fall probe fires, an archer or ranged caster inside the 6-51.2 band with the target in sight keeps walking its detour instead of standing off as DFU does; shots still roll from the attack component, so it shoots on the move.",
+  "severity": "parity",
+  "confidence": "high",
+  "group": "enemy-ai",
+  "id": "F011"
+ },
+ {
+  "jsFile": "src/characters/enemyMotor.js",
+  "jsLine": 931,
+  "csFile": "Game/EnemyMotor.cs",
+  "csLine": "357-366",
+  "title": "searchMult not reset when GiveUpTimer expires (or while pacified)",
+  "claim": "DFU HandleNoAction resets searchMult=0 on ANY of its three arms - target null, GiveUpTimer <= 0, or PredictedTargetPos sentinel (EnemyMotor.cs:357-366, searchMult=0 at :362) - every FixedUpdate. The port resets it only on the predictedTargetPos===null arm (enemyMotor.js:935); the gave-up arm at :931 (`!detected && giveUpTimer <= 0`) returns without touching searchMult, and a pacified foe skips _classicTick entirely (:1039) so no arm runs. The stale ramp is only cleared later by _getDestination's clear-path arm (:869).",
+  "consequence": "A foe that ramped its search (searchMult up to 10) then gave up resumes a later non-clear-path pursuit aiming up to 10 units past the last-known position instead of at it, walking somewhere DFU's freshly-reset foe would not.",
+  "severity": "parity",
+  "confidence": "high",
+  "group": "enemy-ai",
+  "id": "F012"
+ },
+ {
+  "jsFile": "src/characters/enemyCasting.js",
+  "jsLine": 110,
+  "csFile": "Game/EnemyMotor.cs",
+  "csLine": "619-633",
+  "title": "Touch casts gated on the attack machine being Idle; DFU DoTouchSpell has no one-shot gate",
+  "claim": "DFU's DoTouchSpell condition (EnemyMotor.cs:621-623) has no isPlayingOneShot term; the only one-shot early-out above it in TakeAction is OneShotPauseActionsWhilePlaying (:465), true only for SeducerTransform states (Base/MobileUnit.cs:174-184). So a DFU foe whose melee timer is 0 mid-swing casts the touch spell, ChangeEnemyState(Spell) cutting the swing. The port adds `idle` (attack.machine.state === 'Idle') to the touch arm (enemyCasting.js:107, :110), skipping the cast until the swing ends. Reachable when ResetMeleeTimer floors to 0: 1500 - 50*(level-10) + 450*(reflexes-2) <= 0, i.e. player level ~22+ at low reflexes, ~40 at average.",
+  "consequence": "Against high-level players, a touch-caster in melee range delays its cast by up to a full swing (~0.5-1s) and its interrupted melee blow lands where DFU would have cancelled it into the spell.",
+  "severity": "nit",
+  "confidence": "medium",
+  "group": "enemy-ai",
+  "id": "F013"
+ },
+ {
+  "jsFile": "src/characters/enemyMotor.js",
+  "jsLine": 1039,
+  "csFile": "Game/EnemyMotor.cs",
+  "csLine": "389-425",
+  "title": "GiveUpTimer frozen during paralysis/knockback; DFU UpdateTimers runs before the CanAct gate",
+  "claim": "DFU UpdateTimers runs unconditionally every FixedUpdate, before `if (CanAct) TakeAction` (EnemyMotor.cs:170-172): detection refills GiveUpTimer to 200 (:419-420) and it decrements per classic tick while undetected (:423-424) even for a paralyzed or knocked-back foe (HandleParalysis/KnockbackMovement only clear CanAct). The port's refill/decrement lives inside _classicTick (enemyMotor.js:929-930), which is skipped while paralyzed or knocked (:1039 `if (!paralyzed && !knocked && this.isHostile)`), so the timer freezes for the whole paralysis.",
+  "consequence": "A paralyzed foe whose player hides does not run down its 12.5s give-up window during the paralysis; when it wakes it resumes blind pursuit where DFU's foe would already have given up and stopped.",
+  "severity": "nit",
+  "confidence": "high",
+  "group": "enemy-ai",
+  "id": "F014"
+ }
+]

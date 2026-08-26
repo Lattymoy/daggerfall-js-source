@@ -1,0 +1,76 @@
+[
+ {
+  "jsFile": "src/scenes/dungeon.js",
+  "jsLine": 427,
+  "title": "Standalone dungeon fly-cam is dead code: `else if (!held)` tests the imported input helper",
+  "claim": "dungeon.js:427 gates the fly-cam WASD block with `} else if (!held) {`, but `held` there is the FUNCTION imported from ui/input.js (:33, used as held(keys,'Jump') at :367) - always truthy, so !held is always false and the branch never runs. Sibling hosts use a bare `} else {` (exterior.js:1545, world.js:3215). worldModes.js:2744's comment shows the drift: an old dungeon.js line used a local boolean `held` later renamed overlayHeld (:353), leaving this stale reference resolving to the import. Port-internal bug, no C# counterpart; no test pins it.",
+  "consequence": "With ?dungeon&fly (the file's own documented mode, :103-105) or ?shot without probe pokes, WASD/Shift never moves the camera - the fly-cam is frozen at spawn; look still works. Shot-mode probes (__move/__pose) still function.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "hosts-dungeon",
+  "id": "F051"
+ },
+ {
+  "jsFile": "src/scenes/dungeonContext.js",
+  "jsLine": 1665,
+  "csFile": "Game/WeaponManager.cs",
+  "csLine": "561-573",
+  "title": "Player arrow hits play no hit sound and show no blood splash",
+  "claim": "The fromPlayer arrow-impact arm (:1641-1674) on dmg>0 plays only enemyPainVoice and calls damageFoe with the knock direction. DFU routes a player arrow through WeaponManager.WeaponDamage with arrowHit=true (DaggerfallMissile.cs:681-687), whose damage>0 arm plays the enemy-side hit sound (:562-567) and ShowBloodSplash at the impact (:569-573) before knockback and the 40% voice - the same arm the port's own MELEE path mirrors at :1538 (hitSoundFor) and :1544 (showBloodSplash). The port fixed the mirror direction (enemy arrow -> player: sound+flash+cry, wave 46 at :1699-1703) but left the player->foe direction without its two counterparts. No test pins arrow sound/blood.",
+  "consequence": "Every landed player arrow in a dungeon is silent and bloodless while every melee hit thuds and splashes - an audible/visible divergence from DFU on the primary ranged weapon.",
+  "severity": "parity",
+  "confidence": "high",
+  "group": "hosts-dungeon",
+  "id": "F052"
+ },
+ {
+  "jsFile": "src/scenes/dungeonContext.js",
+  "jsLine": 1699,
+  "csFile": "Game/EnemyAttack.cs",
+  "csLine": "297-298",
+  "title": "Enemy arrow that reaches the player with a failed damage roll is silent",
+  "claim": "The enemy-arrow-at-player arm (:1676-1707) plays hit sound/flash/cry only under `if (dmg > 0)` (:1699-1703) and nothing otherwise. DFU's BowDamage (:141) goes through ApplyDamageToPlayer, whose else arm plays sounds.PlayMissSound(weapon) on damage <= 0 (EnemyAttack.cs:297-298). The port's own MELEE arm has this else (:1937 enemyMissSound); the arrow arm does not.",
+  "consequence": "A dodged enemy arrow (contact but failed to-hit roll) makes no sound; DFU rings the miss whoosh from the shooter. Small audible divergence.",
+  "severity": "nit",
+  "confidence": "high",
+  "group": "hosts-dungeon",
+  "id": "F053"
+ },
+ {
+  "jsFile": "src/scenes/dungeonContext.js",
+  "jsLine": 3048,
+  "title": "destroy() never frees the magic engine's in-flight spell-missile batches",
+  "claim": "dungeonContext.destroy() (:3048-3070) frees billboardBatches, foe batches, corpses, the host missiles list (:3064) and dropped piles, but the player-magic engine minted at :1117 keeps its own missiles/batches lists (hostMagic.js:78-93), freed only on per-missile retire (:360-368), and exposes no destroy surface; nothing in destroy() reaches them. Port-internal teardown gap under the 17e-F29 'every allocation has an owner' rule this same function cites.",
+  "consequence": "Exiting a dungeon (worldModes calls dungeonCtx.destroy() at :2557/:3944) while a player spell missile is still flying leaks that missile's VAO+buffers, repeatable per enter/cast/exit cycle. Narrow window (8s missile lifespan); no visible symptom short of long-session GPU growth.",
+  "severity": "nit",
+  "confidence": "medium",
+  "group": "hosts-dungeon",
+  "id": "F054"
+ },
+ {
+  "jsFile": "src/scenes/world.js",
+  "jsLine": 1932,
+  "title": "Duplicate hudCtx.toggleRest key makes the S40 outdoor-rest wiring dead code in both hosts",
+  "claim": "hudCtx defines toggleRest twice (world.js:1922 '() => toggleRest()' and :1932 '() => toggleExteriorRest()'; identically exterior.js:1016/:1027). The later key wins, so every Rest route (ladder :1969/:1983, large-HUD panel) reaches toggleExteriorRest, and the S40 path - toggleRest (world.js:1423, exterior.js:669) with its outdoorRestDeps bag (world.js:1377-1422, exterior.js:636-668) carrying tickQuests, the resting-variant areEnemiesNearby, endLines, onClose - never runs. Neither bag is a superset (only the live bag has the encounter catch-up, world.js:983). Conflicting pins: restlodging.test.js:576/:589/:845-847 pin the dead wiring; restwhere.test.js:170/:173 pin the live one.",
+  "consequence": "A generation of rest fixes (quest ticking, the resting enemy law, rest-end text) is silently disabled in both above-ground hosts; two test files pin contradictory wirings and both pass.",
+  "severity": "bug",
+  "confidence": "high",
+  "csFile": "DaggerfallRestWindow.cs",
+  "csLine": "348-438",
+  "group": "hosts-world",
+  "id": "F055"
+ },
+ {
+  "jsFile": "src/scenes/world.js",
+  "jsLine": 1861,
+  "title": "Outdoor rest never ticks the quest machine - DFU ticks it every 10-minute sub-tick",
+  "claim": "DFU TickRest (DaggerfallRestWindow.cs:376-379) calls QuestMachine.Instance.Tick() inside every RaiseTime sub-tick. The port's RestSession does the same through deps.tickQuests (restSession.js:389-404), but the live path opens RestWindow with exteriorRestDeps (world.js:1861) whose bag (world.js:960-984) has no tickQuests - only the dead outdoorRestDeps (world.js:1384) carries it. The frame-level quest tick is gated on !townTalk.overlayActive (world.js:3097) and the rest window occupies that overlay (townTalk.js:700), so a rested night runs zero quest ticks.",
+  "consequence": "Quest clocks, popups and CreateFoe ambush waves never fire during an outdoor rest - the wired abortRestForEnemySpawn seam (world.js:2845) cannot trigger from a quest wave, and all quest events land in one burst after waking.",
+  "severity": "bug",
+  "confidence": "high",
+  "csFile": "DaggerfallRestWindow.cs",
+  "csLine": "376-379",
+  "group": "hosts-world",
+  "id": "F056"
+ }
+]

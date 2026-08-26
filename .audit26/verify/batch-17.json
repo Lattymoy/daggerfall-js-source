@@ -1,0 +1,80 @@
+[
+ {
+  "jsFile": "src/ui/tavernWindow.js",
+  "jsLine": 194,
+  "csFile": "DaggerfallTavernWindow.cs",
+  "csLine": "218, 324",
+  "title": "Tavern room and food gold gates are coins-only; DFU accepts letters of credit",
+  "claim": "_confirm refuses the room when `goldAmount(h.entity) < d.price` (tavernWindow.js:194; goldAmount from court.js counts coins only), and _food passes `gold: goldAmount(h.entity)` into eatOrDrink's poor-check (:223, tavern.js:191). DFU gates both on GetGoldAmount() - coins plus letters of credit - at DaggerfallTavernWindow.cs:218 and :324, then deducts via DeductGoldAmount, which spends letters. The port also pays via deductGold (:195, :226), which spends letters, so only the gate diverges.",
+  "consequence": "A player holding letters of credit but few coins is refused a room rental or a meal that DFU sells them (and that the port itself could charge once past the gate).",
+  "severity": "parity",
+  "confidence": "high",
+  "group": "region-law-money",
+  "id": "F105"
+ },
+ {
+  "jsFile": "src/systems/regionConditions.js",
+  "jsLine": 96,
+  "csFile": "PlayerEntity.cs",
+  "csLine": "2189-2211",
+  "title": "Region-condition store never minted at new game - PricesHigh/Low arms dead until first load",
+  "claim": "createRegionConditions' only caller is restoreRegionConditions (regionConditions.js:188), reached only from save restore (save.js:395); no new-game path assigns entity.regionConditions (no other assignment exists in src/). worldTick passes `entity.regionConditions ?? null` (worldTick.js:253) and updateRegionalPrices skips the flag half on null (shopStock.js:309). DFU mints regionData at every new game (StartGameBehaviour.cs:433 -> InitializeRegionData, PlayerEntity.cs:2189-2211), so FormulaHelper.cs:2075-2087 writes PricesHigh/PricesLow from day one. save.js:392-394 even assumes a blank store 'is what InitializeRegionData mints at a new game anyway' - but nothing mints it.",
+  "consequence": "In a session started fresh (no load), the shipped PricesHigh/PricesLow condition writes never execute and the first save records a blank condition store, diverging from DFU's save-relevant regionData flag state.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "region-law-money",
+  "id": "F106"
+ },
+ {
+  "jsFile": "src/systems/regionPower.js",
+  "jsLine": 134,
+  "csFile": "PlayerEntity.cs",
+  "csLine": "2213-2217",
+  "title": "New-game 12-pass faction power bootstrap has no caller",
+  "claim": "DFU's InitializeRegionData ends with 12 iterations of RegionPowerAndConditionsUpdate(false) then (true) (PlayerEntity.cs:2213-2217), giving every rumor-mill faction 24 power-walk steps (plus child bonuses) before play begins. The port's regionPowerUpdate has exactly two callers, worldTick.js:491 and :508 (the 7- and 38-day arms); nothing runs it at character creation (attachFactionRep, factionRep.js:204-220, only builds the store and applies biography rep). regionConditions.js:92-95 defers the bootstrap to 'the update itself, which is the next slice', but that slice (S43, regionPower.js) shipped without it; its FLAGGED note covers only the unported conditions half, not the power bootstrap.",
+  "consequence": "A fresh character starts with raw FACTION.TXT powers instead of DFU's 24-step-walked start state, shifting the merchants-vs-region term of every UpdateRegionalPrices day and all later power reads for the whole save.",
+  "severity": "parity",
+  "confidence": "medium",
+  "group": "region-law-money",
+  "id": "F107"
+ },
+ {
+  "jsFile": "src/systems/biography.js",
+  "jsLine": 121,
+  "csFile": "Assets/Scripts/API/BiogFile.cs",
+  "csLine": "285-289",
+  "title": "Biography 'GP -N' subtracts gold where DFU's signed parse makes it ADD",
+  "claim": "In BiogFile.ApplyPlayerEffect, int.TryParse(tokens[1]) on \"-500\" yields parseResult = -500, and the '-' branch runs `playerEntity.GoldPieces -= parseResult;` (BiogFile.cs:287) - a double negative that INCREASES gold by 500 (the :289 clamp never fires). The port at biography.js:121 does `stack.stackCount = Math.max(0, stack.stackCount - Math.abs(v))` - it actually subtracts and floors at 0. test/biography.test.js:85-87 pins the port's subtract-and-clamp while citing the C# clamp comment - the pin restates the port, not DFU.",
+  "consequence": "A BIOG answer with a GP - effect leaves the player poorer than DFU (port removes N, DFU adds N). No shipping BIOG file carries a '-' GP line (all 55 are '+'), so only custom/modified biographies hit it.",
+  "severity": "nit",
+  "confidence": "high",
+  "group": "entity-career",
+  "id": "F108"
+ },
+ {
+  "jsFile": "src/systems/infection.js",
+  "jsLine": 299,
+  "csFile": "Assets/Scripts/Game/MagicAndEffects/EntityEffectManager.cs",
+  "csLine": "1724-1734",
+  "title": "runInfections advances only the FIRST live infection; DFU ticks every infection bundle each round",
+  "claim": "runInfections (infection.js:298-314) calls liveInfection (infection.js:195-196), a `.find(...)` returning only the first non-ended infection, and steps only that entry per round. The port allows vampirism and lycanthropy infections live at once (infectionAccepted, infection.js:169-175, blocks only same-key and the opposing strain; test/infection.test.js:119-121 pins 'four days from two different fates at once'). In DFU, DoMagicRound iterates ALL instanced bundles and calls MagicRound() on every live effect (EntityEffectManager.cs:1724-1734), so VampirismInfection.ProgressDisease (:99-103) and LycanthropyInfection.ProgressDisease (:82-86) each run every round independently.",
+  "consequence": "A player carrying both infections sees only the earlier one progress: the second's warning dream and 3-day turn stall until the first deploys or is cured, then fire late - DFU runs both lifecycles on schedule in parallel.",
+  "severity": "parity",
+  "confidence": "high",
+  "group": "entity-career",
+  "id": "F109"
+ },
+ {
+  "jsFile": "src/systems/guilds.js",
+  "jsLine": 202,
+  "csFile": "Game/Guilds/Guild.cs",
+  "csLine": "118-130",
+  "title": "Guild rank law reads live (enchant-modded) skill, DFU reads GetPermanentSkillValue",
+  "claim": "Guild.CalculateNumHighLowSkills (Guild.cs:124) reads GetPermanentSkillValue, which excludes effect mods (DaggerfallSkills.cs:135-143 vs 176). The port's numHighLowSkills (guilds.js:202) calls skillValue (skills.js:60-71), which adds entity._enchantMods.skillMods[skillId] (skills.js:68) - the port's live mods channel, populated when the player equips an EnhancesSkill item (enchantments.js:655; DFU EnhancesSkill.cs:78 writes SetSkillMod, live-only). The file's own header (guilds.js:22-24) claims permanent reads. Feeds calculateNewRank, updateRank and isEligibleToJoin.",
+  "consequence": "A player wearing an EnhancesSkill (+15) item on a guild skill can join or be promoted on skills their permanent values don't earn (and demoted on unequip); in DFU worn enchantments never move guild rank.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "guilds-factions",
+  "id": "F110"
+ }
+]

@@ -1,0 +1,80 @@
+[
+ {
+  "jsFile": "src/ui/guildServiceWindow.js",
+  "jsLine": 161,
+  "csFile": "Game/UserInterfaceWindows/DaggerfallGuildServicePopupWindow.cs",
+  "csLine": "293, 457, 477, 501",
+  "title": "Guild popup buttons play no ButtonClick sound",
+  "claim": "DFU plays SoundClips.ButtonClick at the top of every button handler on this window: Talk (:293), Service (:457), Exit (:477), Join (:501). The port's GuildServiceWindow imports no audio; its click()/input() paths (guildServiceWindow.js:151-166, 134-149) fire the hooks silently. Message-box button hits do click (messageBox.js:213), but the four panel buttons never do. The bank windows in the same chunk play the sound, so this is an omission, not a convention.",
+  "consequence": "Join/Talk/Service/Exit on the guild popup are silent where DFU clicks audibly.",
+  "severity": "nit",
+  "confidence": "high",
+  "group": "ui-misc",
+  "id": "F141"
+ },
+ {
+  "jsFile": "src/ui/bankPurchaseWindow.js",
+  "jsLine": 56,
+  "csFile": "Game/UserInterface/ListBox.cs",
+  "csLine": "326, 434",
+  "title": "Purchase price list uses 7px row pitch; DFU ListBox pitch is glyphHeight+rowSpacing = 8",
+  "claim": "The port derives LIST_ROW_H = 7 from 'the list is 78 tall, so a row is 7 with the remainder as padding' (bankPurchaseWindow.js:53-56), used for draw (:193) and click mapping (:158). DFU's ListBox never derives row height from list height: Draw advances y += TextHeight + rowSpacing (ListBox.cs:326) and click row = y / (GlyphHeight + rowSpacing) (:434); with default FONT0003 (glyph height 7) and rowSpacing 1 the pitch is 8. The port is internally consistent (draw and hit agree), but rows sit progressively higher than DFU's - 9px drift by row 10.",
+  "consequence": "House price rows render more tightly packed than DFU/classic; purely visual since the port's hit test uses the same pitch.",
+  "severity": "nit",
+  "confidence": "high",
+  "group": "ui-misc",
+  "id": "F142"
+ },
+ {
+  "jsFile": "src/ui/tavernWindow.js",
+  "jsLine": 142,
+  "csFile": "Game/UserInterfaceWindows/DaggerfallTavernWindow.cs",
+  "csLine": "153-226",
+  "title": "Room-rental flow closes the tavern window; DFU always returns to the four-button panel",
+  "claim": "DFU's ROOM button never closes the tavern: :153-171 pushes an input box over it; the box closes ITSELF before OnGotUserInput (DaggerfallInputMessageBox.cs:298-304); invalid input (:176-178) and the 350-day refusal (:188-191) leave the tavern topmost; ConfirmRenting's CloseWindow() (:214) pops the TOP window - the price box pushed at :208 (UserInterfaceWindow.cs:127-132 pops top; DaggerfallMessageBox does not self-close, :479-484). So every room-flow ending returns to the panel. The port runs the chain in a ServiceFlowWindow whose onClose closes the tavern (:140-143); the header :33-35 and test/tavernwindow.test.js:147-160 pin the port while misreading :212's pop-top semantics.",
+  "consequence": "After renting, declining, a too-many-days refusal, or a typo, the innkeeper panel is gone and the player must re-activate the NPC; in DFU they land back on the four-button panel.",
+  "severity": "parity",
+  "confidence": "high",
+  "group": "ui-misc-2",
+  "id": "F143"
+ },
+ {
+  "jsFile": "src/ui/restWindow.js",
+  "jsLine": 265,
+  "csFile": "Game/UserInterfaceWindows/DaggerfallRestWindow.cs",
+  "csLine": "753-757, 778-783",
+  "title": "Over-limit hours refusal keeps the prompt up; DFU's input box has already closed itself",
+  "claim": "DFU's TimedRestPrompt_OnGotUserInput runs only after the input box closed itself (DaggerfallInputMessageBox.cs:298-304), so time>99 shows TEXT.RSC 26 over the rest window's SELECTION page; retrying needs a fresh While/Loiter press, which re-runs the gate (:642-657 warning box -> CanRest, with its Vagrancy side effect in town). The port stays in the 'hours' state with the notice above a still-live prompt reset to '0' (restWindow.js:265-270), and a retry re-enters _start without re-running _canRest. restSession.js:235-237 claims 'the prompt STAYS UP' in DFU citing :753-757 - the same misread; those lines show a box and return with no new prompt.",
+  "consequence": "Different landing page after the 99-hour/loiter-cap refusal, and a retry skips DFU's repeated CanRest gate (e.g. the second Vagrancy registration when camping in town).",
+  "severity": "nit",
+  "confidence": "high",
+  "group": "ui-misc-2",
+  "id": "F144"
+ },
+ {
+  "jsFile": "src/ui/tavernWindow.js",
+  "jsLine": 244,
+  "csFile": "Game/UserInterfaceWindows/DaggerfallTavernWindow.cs",
+  "csLine": "135, 155, 264, 339, 307",
+  "title": "Tavern buttons play no ButtonClick sound",
+  "claim": "DFU plays SoundClips.ButtonClick on all four tavern buttons (Exit :135, Room :155, Talk :264, Food :339) and on the food picker's pick (:307). The port's TavernWindow imports no audio module and its click()/input() handlers (tavernWindow.js:235-251) play nothing - unlike sibling native windows (playerHistory.js:83, restWindow.js:238) which do port their ButtonClick one-shots.",
+  "consequence": "The innkeeper panel is silent where DFU clicks on every button press.",
+  "severity": "nit",
+  "confidence": "high",
+  "group": "ui-misc-2",
+  "id": "F145"
+ },
+ {
+  "jsFile": "src/ui/teleportPopUp.js",
+  "jsLine": 87,
+  "csFile": "Game/UserInterfaceWindows/DaggerfallTeleportPopUp.cs",
+  "csLine": "116-119, 153-156",
+  "title": "Teleport Yes/No play a ButtonClick DFU does not",
+  "claim": "DaggerfallTeleportPopUp's Yes/No handlers play no sound (No :116-119 just CloseWindow; Yes :153-156 just TeleportAway) and the window never sets Button.ClickSound - Button.ClickHandler plays only when clickSound != null (Button.cs:95-98) and DaggerfallUI.AddButton sets none (DaggerfallUI.cs:981-998). The port's _click() (teleportPopUp.js:87) plays SOUND.ButtonClick in both _yes (:99) and _no (:92).",
+  "consequence": "An added click sound on the teleport confirmation that DFU does not make.",
+  "severity": "nit",
+  "confidence": "high",
+  "group": "ui-misc-2",
+  "id": "F146"
+ }
+]

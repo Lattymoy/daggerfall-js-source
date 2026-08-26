@@ -1,0 +1,80 @@
+[
+ {
+  "jsFile": "src/tools/paperdollViewer.js",
+  "jsLine": 1189,
+  "title": "Viewer gesture gate uses net displacement + full reset, not DFU's TravelDist rolling window",
+  "claim": "The viewer's local drag-to-swing (lines 1184-1194), commented 'verbatim mechanics' (1168), gates on Math.hypot(gest.x, gest.y)/longest >= ATTACK_THRESHOLD (net summed vector) and zeroes the whole gesture once its start exceeds MAX_GESTURE_SECONDS (1186). DFU gates on Gesture.TravelDist/_longestDim (WeaponManager.cs:808), the summed per-delta path length, documented as not equal to the sum's magnitude 'because the trail may bend' (WeaponManager.cs:99-101), and TrimOld (111-122) is a rolling per-point 1s window, not a reset. The port's game path already does this right after AUDIT 24 (src/combat/playerWeapon.js:118-160); only the viewer retains the collapsed version.",
+  "consequence": "On the dev viewer page, curved/zig-zag drags need far more motion to fire a strike than in DFU or the port's own game, and a drag crossing 1s loses all accumulated travel at once — the bench misrepresents the swing feel it exists to demonstrate. Dev-tool only; no player-facing effect.",
+  "severity": "nit",
+  "confidence": "high",
+  "csFile": "Assets/Scripts/Game/WeaponManager.cs",
+  "csLine": "99-122, 808",
+  "group": "dev-tools",
+  "id": "F135"
+ },
+ {
+  "jsFile": "src/ui/guildServiceWindow.js",
+  "jsLine": 172,
+  "csFile": "Game/UserInterfaceWindows/DaggerfallGuildServicePopupWindow.cs",
+  "csLine": "99",
+  "title": "Guild service popup paints opaque black backdrop; DFU sets ParentPanel to Color.clear",
+  "claim": "guildServiceWindow.js:172 calls drawMenuBackdrop (MENU_BACKDROP = [0,0,0,1], chargenArt.js:58) citing DaggerfallBaseWindow's black default, but this window's own constructor overrides it: 'ParentPanel.BackgroundColor = Color.clear;' (DaggerfallGuildServicePopupWindow.cs:99; ScreenDimColor is also hardwired clear, DaggerfallPopupWindow.cs:27,34) - in DFU the scene stays visible around the 130x51 popup. Same defect class AUDIT 24 fixed for 5 other windows (test/startwindow.test.js:483-525 lists charsheet/talk/trade/inventory/journal); the guild popup was missed and no test pins the black.",
+  "consequence": "Clicking a guild/temple service NPC blacks out the whole screen behind the small panel; in DFU the room stays visible behind it.",
+  "severity": "parity",
+  "confidence": "high",
+  "group": "ui-misc",
+  "id": "F136"
+ },
+ {
+  "jsFile": "src/ui/bankPurchaseWindow.js",
+  "jsLine": 41,
+  "csFile": "Game/UserInterface/BaseScreenComponent.cs",
+  "csLine": "1234-1236",
+  "title": "Bank purchase panel drawn at y=50; DFU's Middle alignment overrides Position to y=35.5",
+  "claim": "The port sets PURCHASE_PANEL_Y = 50 from 'mainPanel.Position (:124) is (0, 50) under a MIDDLE alignment' (bankPurchaseWindow.js:40-41). In DFU, VerticalAlignment.Middle ignores position.y: BaseScreenComponent.cs:1234-1236 centers the rect, so the 225x129 panel (DaggerfallBankPurchasePopUp.cs:122-126 sets Center/Middle AND Position(0,50)) sits at y=35.5. The port's own guildServiceWindow.js:10-16 documents this exact law ('BOTH alignments ignore Position'); bankPurchaseWindow missed it. Hits shift with the panel so the window is self-consistent, just placed low.",
+  "consequence": "The house-purchase window renders ~15 native pixels lower on screen than DFU/classic.",
+  "severity": "parity",
+  "confidence": "high",
+  "group": "ui-misc",
+  "id": "F137"
+ },
+ {
+  "jsFile": "src/ui/bankPurchaseWindow.js",
+  "jsLine": 133,
+  "csFile": "Game/UserInterfaceWindows/DaggerfallBankPurchasePopUp.cs",
+  "csLine": "380-391",
+  "title": "BUY keeps the purchase list open on a failed purchase; DFU closes it unconditionally",
+  "claim": "DFU's BuyButton_OnMouseClick calls CloseWindow() BEFORE GeneratePurchaseHousePopup (DaggerfallBankPurchasePopUp.cs:386-390): the list closes regardless of result and the result box shows over the banking window. The port's _buy (bankPurchaseWindow.js:122-135) shows the box over the still-open purchase window and _dismissBox (:137-143) closes only on PURCHASED_HOUSE. Also DFU plays ButtonClick before the SelectedIndex<0 guard (:382-383); the port after it (:123-126).",
+  "consequence": "After a refused purchase (e.g. not enough gold) the port leaves the player in the purchase list; DFU returns them to the bank window.",
+  "severity": "parity",
+  "confidence": "high",
+  "group": "ui-misc",
+  "id": "F138"
+ },
+ {
+  "jsFile": "src/ui/nameplateLayout.js",
+  "jsLine": 81,
+  "csFile": "Game/ExteriorAutomap.cs",
+  "csLine": "1229-1252, 1274-1275",
+  "title": "Nameplate pair-fallback arms conjoin checks DFU applies sequentially, skipping DFU's place-one-alone path",
+  "claim": "DFU's easy-pair fallback shifts FIRST by 2x bias and places it whenever first's own check passes, then places second only if clear at zero (ExteriorAutomap.cs:1230-1240; symmetric :1242-1252); whenever first is placed, second.numCollisionsDetected-- (:1274-1275), which can drop second to 0 so the next zero pass (:1317-1318) places second at its ORIGINAL spot. The port (nameplateLayout.js:81-87) conjoins clearOfPlaced(p,2x) AND clearOfPlaced(q,0) and places BOTH together; when first clears but second does not, the port does nothing. Its else arm (:88-95) also runs for q.count===0 where DFU's 'else if (>1)' does nothing. Pins (test/automap_ext.test.js:89-110) do not cover these arms.",
+  "consequence": "In crowded town automaps the port computes different plate offsets than DFU and can print '*' where DFU shows a name (or vice versa).",
+  "severity": "parity",
+  "confidence": "high",
+  "group": "ui-misc",
+  "id": "F139"
+ },
+ {
+  "jsFile": "src/ui/bankWindow.js",
+  "jsLine": 261,
+  "csFile": "Game/UserInterfaceWindows/DaggerfallBankingWindow.cs",
+  "csLine": "473-478",
+  "title": "EXIT click closes bank window while an amount is being typed; DFU's exit is inert then",
+  "claim": "DFU's ExitButton_OnMouseClick guards with 'if (!transactionInput.Enabled) CloseWindow();' (DaggerfallBankingWindow.cs:476-477) - while a deposit/withdraw/repay amount field is open, EXIT does nothing. The port's click path (bankWindow.js:261) closes unconditionally on the exit rect with no transactionType check (the keyboard path :243-250 does gate Escape to cancel-input-first).",
+  "consequence": "Clicking EXIT mid-transaction closes the whole bank window instead of being ignored; the typed amount is silently discarded.",
+  "severity": "nit",
+  "confidence": "high",
+  "group": "ui-misc",
+  "id": "F140"
+ }
+]

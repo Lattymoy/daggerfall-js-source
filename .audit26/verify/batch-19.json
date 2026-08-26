@@ -1,0 +1,80 @@
+[
+ {
+  "jsFile": "src/systems/guildServices.js",
+  "jsLine": 294,
+  "csFile": "Game/Guilds/Temple.cs",
+  "csLine": "450-460",
+  "title": "Stendarr AvoidDeath benefit missing entirely - no port counterpart, no flag",
+  "claim": "Temple.AvoidDeath (Temple.cs:450-460) gives a Stendarr member a Random.Range(0,50) < rank chance, when not submerged, to survive a killing blow; PlayerEntity.SetHealth (PlayerEntity.cs:1205-1211) then restores 10% MaxHealth instead of raising OnDeath, via GuildManager.AvoidDeath (GuildManager.cs:396-402). guildServices.js carries every other benefit override (canRest, hallAccessAnytime, freeHealing, freeMagickaRecharge, freeTavernRooms, freeShipTravel, reduced costs; DeepBreath in breath.js) but has no avoidDeath, and grep of src/, test/ and bible/ finds no equivalent or FLAG anywhere, including the death path (systems/playerDeath.js, statMods.js kill seams).",
+  "consequence": "A Stendarr temple member dies outright on any killing blow; in DFU a rank-r member survives at 10% health with probability r/50 - a whole guild benefit a player can hit is absent.",
+  "severity": "parity",
+  "confidence": "high",
+  "group": "guilds-factions",
+  "id": "F117"
+ },
+ {
+  "jsFile": "src/systems/enchantments.js",
+  "jsLine": 466,
+  "csFile": "Game/MagicAndEffects/Effects/Enchanting/ItemDeteriorates.cs",
+  "csLine": "88-89, 112-116",
+  "title": "ItemDeteriorates params shifted: DFU 0=AllTheTime/1=Sunlight/2=Holy, port 0=sunlight/1=holy/2=always",
+  "claim": "DFU's Params enum is AllTheTime=0, InSunlight=1, InHolyPlaces=2, and MagicRound returns early only when (param==InSunlight && !inSunlight) || (param==InHolyPlaces && !inHolyPlace) — param 0 degrades unconditionally. The port's magicRound gates `param === 0` on ctx.inSunlight and `param === 1` on ctx.inHolyPlace, so param 2 falls through both ifs and degrades unconditionally. The port's own catalogue (enchantmentCatalogue.js:80,251,259) uses the correct DFU order (labels 0='all the time', 1='in sunlight', 2='in holy places'; Daedroth/FrostDaedra/Ghost/Wraith souls force param 2 = InHolyPlaces), so the two port modules disagree with each other as well as with the C#.",
+  "consequence": "A soul-bound item carrying ItemDeteriorates InHolyPlaces (param 2) loses 1 condition every 4 magic rounds everywhere and is eventually consumed; an all-the-time (param 0) drawback never fires; sunlight (param 1) items idle on the holy-place seam.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "enchant-potions",
+  "id": "F118"
+ },
+ {
+  "jsFile": "src/systems/enchantments.js",
+  "jsLine": 500,
+  "csFile": "Game/MagicAndEffects/Effects/Enchanting/HealthLeech.cs",
+  "csLine": "86, 113-116, 139-144",
+  "title": "HealthLeech params shifted: DFU 0=WheneverUsed/1=Daily/2=Weekly, port 2=WheneverUsed/0=Daily/1=Weekly",
+  "claim": "DFU's Params enum is WheneverUsed=0, UnlessUsedDaily=1, UnlessUsedWeekly=2: the use/strike bill (16/8 hp) fires at param 0 (:86), the idle drain at params 1 (day) and 2 (week). The port's used/strikes handlers bill at `param === 2` and its magicRound treats 0 as daily and 1 as weekly. The catalogue (enchantmentCatalogue.js:77,253: labels 0='Whenever used', DaedraSeducer forces param 2 = UnlessUsedWeekly) uses the correct DFU order, so port modules also disagree with each other. test/enchantments.test.js:62 (`item(T.HealthLeech, 2) // WheneverUsed`) and :103 (param 0 as daily) pin the port's wrong mapping while citing HealthLeech.cs — the pin restates the port.",
+  "consequence": "A Daedra-Seducer-bound item (weekly leech in DFU) bills the wearer 16 hp per use / 8 per strike; a classic WheneverUsed (param 0) item instead drains 1 hp per 4 rounds after a day idle and never bills on use.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "enchant-potions",
+  "id": "F119"
+ },
+ {
+  "jsFile": "src/systems/enchanting.js",
+  "jsLine": 200,
+  "csFile": "Game/Items/DaggerfallUnityItem.cs",
+  "csLine": "1298-1300, 1341",
+  "title": "Enchanted payload never dispatched: FeatherWeight/ExtraWeight/HealthLeech maker arms are dead code",
+  "claim": "DFU's SetEnchantments fires EnchantmentPayloadCallback(Enchanted) per enchantment carrying the flag (:1298-1300) and unequips the item (:1341). The port's applyEnchantments (enchanting.js:200-206) only copies the list, ui/itemMakerWindow.js:285 calls it with no payload dispatch, and no caller anywhere in src/ passes PAYLOAD.Enchanted to doItemEnchantmentPayloads — the registry's enchanted() handlers (enchantments.js:424-425) and HealthLeech's Enchanted stamp arm can never run, and SoulBound's trap consumption has no path either.",
+  "consequence": "Feather Weight leaves the item's weight unchanged (DFU sets 0.25kg); Extra Weight never quadruples it; a fresh daily/weekly HealthLeech item starts at stamp 0 and leeches immediately; the item stays equipped where DFU force-unequips.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "enchant-potions",
+  "id": "F120"
+ },
+ {
+  "jsFile": "src/systems/potions.js",
+  "jsLine": 229,
+  "csFile": "Game/UserInterfaceWindows/DaggerfallPotionMakerWindow.cs",
+  "csLine": "283-309",
+  "title": "Recipe picker part-fills the cauldron; DFU refuses on any missing ingredient and clears first",
+  "claim": "DFU's AddRecipeToCauldron builds a dict of required ingredients and, if ANY is unmatched, shows 'reqIngredients' and moves NOTHING (:298-300); only with all present does it ClearCauldron() (:304) then add the full set. The port's gatherRecipe comment claims DFU 'fills what it can... does not refuse the whole recipe for one missing herb', and the caller (ui/potionMakerWindow.js:184-194) adds the found subset on top of existing cauldron contents with no message and no clear. test/potions.test.js:179-188 pins the partial fill while citing the same C# lines — the pin restates the port, not the C#.",
+  "consequence": "Picking a known recipe while missing one herb silently loads a partial cauldron; Mix then fails and consumes the herbs where DFU would have refused with a message and consumed nothing. Residual cauldron contents also pollute a fill instead of being cleared.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "enchant-potions",
+  "id": "F121"
+ },
+ {
+  "jsFile": "src/systems/enchantments.js",
+  "jsLine": 429,
+  "csFile": "Game/MagicAndEffects/Effects/Enchanting/WeakensArmor.cs",
+  "csLine": "25, 63",
+  "title": "WeakensArmor applies +5 armor in port but is a no-op in DFU (setter guard refuses positive values)",
+  "claim": "WeakensArmor's ConstantEffect calls SetDecreasedArmorValueModifier(5), but that setter (DaggerfallEntity.cs:410-416) assigns only when `amount < DecreasedArmorValueModifier`, and the modifier is cleared to 0 every DoConstantEffects pass (ClearConstantEffects, DaggerfallEntity.cs:842) — 5 < 0 is never true, so the +5 never lands and the enchantment is inert in DFU. The port's row adds WEAKENS_ARMOR_VALUE (+5) into mods.armorMod each round, which combat/formulas.js:292 adds to the wearer's armor value in the attacker's hit chance.",
+  "consequence": "In the port a WeakensArmor side effect makes the wearer 5 points easier to hit; in DFU it does nothing — the drawback the player took for -700 budget costs defense only in the port.",
+  "severity": "parity",
+  "confidence": "high",
+  "group": "enchant-potions",
+  "id": "F122"
+ }
+]

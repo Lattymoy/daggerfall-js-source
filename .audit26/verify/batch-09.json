@@ -1,0 +1,80 @@
+[
+ {
+  "jsFile": "src/scenes/world.js",
+  "jsLine": 975,
+  "title": "Live rest path asks 'any guard alive?' instead of AreEnemiesNearby(resting) in both hosts",
+  "claim": "DFU gates rest OPEN (DaggerfallUI.cs:652) and the hourly break (RestWindow.cs:403) on AreEnemiesNearby(true), which skips enemies that cannot see the player and are >12 units away, else requires canSee || WouldBeSpawnedInClassic (GameManager.cs:698-705). The port has this law (encounters.js:177-185) but the live deps bypass it: world.js:975-976 answers cityGuards.activeCount()>0 (all non-dead guards, no distance/sight test - cityGuards.js:113) OR foe detected/dist<=12; exterior.js:936 answers activeCount()>0 alone. Only the dead bags (world.js:1391, exterior.js:647) call the resting variant; the dead bag's own comment (world.js:1386-1390) names the live behavior 'a different rule'.",
+  "consequence": "Once guards exist anywhere in town, every R press answers TEXT.RSC 354 and raises the enemy alert, and an in-progress rest breaks at the next hour - even when every guard is unaware and across the city; DFU allows the rest.",
+  "severity": "bug",
+  "confidence": "high",
+  "csFile": "GameManager.cs",
+  "csLine": "684-705",
+  "group": "hosts-world",
+  "id": "F057"
+ },
+ {
+  "jsFile": "src/scenes/world.js",
+  "jsLine": 963,
+  "title": "Rest deps pass 'textLines' where the factory reads 'endLines' - every rest ends silently",
+  "claim": "createRestDeps composes the window's text lookup only from rest.endLines (shared.js:1177), and plainLines(undefined) is null (shared.js:667-669). The live bags supply the lookup under the wrong key - 'textLines: (id) => townTalk.lines(id)' at world.js:963 and exterior.js:931 - which nothing reads, so deps.endLines(id) is null for every id. RestWindow._end then takes the null-text branch and closes silently (restWindow.js:311-327), and the >99-hours notice (restWindow.js:267) is null too. DFU EndRest shows a box on every arm: 353/350/349/354 (RestWindow.cs:450-505). The dead outdoorRestDeps used the correct key (world.js:1409, exterior.js:657).",
+  "consequence": "Outdoor rests end with no 'You wake up.'/'You are healed.' box, a rest broken by enemies closes without the 354 warning, and entering >99 hours silently resets the field instead of showing TEXT.RSC 26.",
+  "severity": "bug",
+  "confidence": "high",
+  "csFile": "DaggerfallRestWindow.cs",
+  "csLine": "450-505",
+  "group": "hosts-world",
+  "id": "F058"
+ },
+ {
+  "jsFile": "src/scenes/world.js",
+  "jsLine": 623,
+  "title": "Exhaustion collapse asks only guard activeCount - encounter foes ignored, sight law bypassed",
+  "claim": "DFU decides rest-vs-death on GameManager.AreEnemiesNearby() (PlayerEntity.cs:2397) - hostile enemies that see the player or would spawn in classic - and SetHealth(0) when true (PlayerEntity.cs:2440-2441). world.js:623 passes enemiesNearby: (cityGuards?.activeCount?.() ?? 0) > 0 into exhaustionOutcome - the exteriorFoes pool is not consulted at all (the same file's rest deps consult both pools, world.js:975-976), and activeCount has no sight/distance test. exterior.js:401 has the same coarse guard-only read. systems/rest.js:83-93 confirms enemiesNearby:true is the death arm.",
+  "consequence": "Collapsing beside a detected encounter wolf yields the safe one-hour sleep instead of DFU's death; collapsing in town while one unaware guard is active anywhere kills the player where DFU grants the hour of rest.",
+  "severity": "bug",
+  "confidence": "high",
+  "csFile": "PlayerEntity.cs",
+  "csLine": "2397-2441",
+  "group": "hosts-world",
+  "id": "F059"
+ },
+ {
+  "jsFile": "src/scenes/exterior.js",
+  "jsLine": 959,
+  "title": "?exterior rest verdict hardcodes inTownOutside:true - non-town locations criminalize camping",
+  "claim": "exterior.js:955-960 answers canRest({ inTownOutside: true, inTownLocation: false }) on the grounds the page 'IS a location'. But IsPlayerInTown(true,true) is a location-TYPE test over seven types (PlayerGPS.cs:507-513); for a Graveyard, DungeonRuin, Coven or HomePoor exterior - loadable via ?region/?loc, as the host's populatesWanderingNpcs gate (exterior.js:1353) acknowledges - CanRest falls to its free tail (RestWindow.cs:598). The host holds the correct test (_isPlayerInTownStrict, exterior.js:631) but only the dead deps use it. restwhere.test.js:179-182 pins the hardcoded literal with the same mistaken rationale (pin restates the port).",
+  "consequence": "Resting at any non-town location on the ?exterior page charges Vagrancy, shows the illegal-camping warning and spawns guards, where DFU opens the rest window freely.",
+  "severity": "parity",
+  "confidence": "medium",
+  "csFile": "PlayerGPS.cs",
+  "csLine": "504-527",
+  "group": "hosts-world",
+  "id": "F060"
+ },
+ {
+  "jsFile": "src/scenes/world.js",
+  "jsLine": 848,
+  "title": "Crime clears on map-pixel exit, not on location-rect exit",
+  "claim": "DFU clears CrimeCommitted in PlayerGPS_OnExitLocationRect (PlayerEntity.cs:2449-2452), raised on leaving the location's world rect widened by 4096 units (PlayerGPS.cs:677-679, 687-695 - whose comment says a player can be in a location's pixel yet outside the rect). The port's syncTopics clears via clearCrimeOnLocationExit on any change of the current PIXEL key (world.js:846-849; court.js:391-395 clears whenever the key changes), claiming 'this crossing IS DFU's OnExitLocationRect'. The same file's AUDIT-24 note (world.js:679-694) corrected exactly this rect-vs-pixel conflation for _musicInLocationRect's consumers, but the crime clear was not converted.",
+  "consequence": "After a town crime, walking beyond the city rect but staying in the same 32768-unit pixel keeps crimeCommitted set - guards keep responding - until a pixel border, where DFU clears it at the widened town edge.",
+  "severity": "parity",
+  "confidence": "high",
+  "csFile": "PlayerEntity.cs",
+  "csLine": "2449-2452",
+  "group": "hosts-world",
+  "id": "F061"
+ },
+ {
+  "jsFile": "src/scenes/world.js",
+  "jsLine": 998,
+  "title": "Encounter roll's inLocationRect is 'pixel has a location', not IsPlayerInLocationRect",
+  "claim": "DFU's IntermittentEnemySpawn branches on PlayerGPS.IsPlayerInLocationRect (PlayerEntity.cs:567) - the widened world-coordinate rect - location-at-night arm inside it, wilderness day/night arms outside (PlayerEntity.cs:564-596). runEncounterTick passes inLocationRect: locationIndex.has(key) (world.js:995-998), i.e. 'the player's map pixel carries a location', which the file's own AUDIT-24 note (world.js:679-688) establishes is a different, up-to-7x-wider predicate. The true rect answer (_musicInLocationRect, world.js:689-694) exists and is unused here; encounters.js:107-118 consumes the flag exactly as the C# branches.",
+  "consequence": "In the wilderness ring of any location-bearing pixel, daytime encounters never roll (the location arm rolls only at night) and night rolls use the location table/distance instead of the wilderness ones.",
+  "severity": "parity",
+  "confidence": "high",
+  "csFile": "PlayerEntity.cs",
+  "csLine": "564-596",
+  "group": "hosts-world",
+  "id": "F062"
+ }
+]

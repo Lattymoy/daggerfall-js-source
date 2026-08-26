@@ -1,0 +1,80 @@
+[
+ {
+  "jsFile": "src/player/motor.js",
+  "jsLine": 530,
+  "csFile": "Game/LevitateMotor.cs",
+  "csLine": "83-85",
+  "title": "Over-encumbered swimmer forced sink missing from the swim path",
+  "claim": "LevitateMotor.Update:83-85: `overEncumbered = (CarriedWeight * 4 > 250) && !playerLevitating && !GodMode; if (playerSwimming && overEncumbered && !climbingMotor.IsClimbing && !IsWaterWalking) upDownVector += Vector3.down; else if (Jump/FloatUp)...` - the sink REPLACES the float keys, so an over-encumbered swimmer is pushed down every frame and cannot float up. The port's swim path (motor.js:530-531) reads only `input.up`/`input.down` from the host's keys; no host or motor code computes carried weight for the swim path (grep for encumb/CarriedWeight in src/scenes and src/player finds none feeding the motor).",
+  "consequence": "Carrying more than 62.5 kg while swimming: DFU drags the player to the bottom and blocks surfacing; the port swims and surfaces freely regardless of load.",
+  "severity": "parity",
+  "confidence": "high",
+  "group": "player-motor",
+  "id": "F027"
+ },
+ {
+  "jsFile": "src/player/motor.js",
+  "jsLine": 358,
+  "csFile": "Game/Player/PlayerHeightChanger.cs",
+  "csLine": "137-145, 171",
+  "title": "Crouch stays live while levitating; no forced stand for a crouched levitator",
+  "claim": "DFU DecideHeightAction: while levitating a crouched player is forced to DoStanding (PlayerHeightChanger.cs:137-145), and the crouch-press block is nested under `else if (!riding && !onWater && !levitating)` (:171), so the Crouch press does nothing while levitating. The port's _heightAction first arm (motor.js:358) is `input.crouch && (!this.swimming || this.grounded)` with no levitating term and no forced-stand arm, so the crouch toggle fires while levitating and a crouched player who starts levitating stays crouched.",
+  "consequence": "In the port a levitating player can toggle the 0.9 crouch capsule mid-air (fitting through gaps DFU forbids) and a crouched levitator keeps crouch speed/eye; DFU forces standing and ignores the key.",
+  "severity": "parity",
+  "confidence": "high",
+  "group": "player-motor",
+  "id": "F028"
+ },
+ {
+  "jsFile": "src/player/motor.js",
+  "jsLine": 352,
+  "csFile": "Game/Player/PlayerHeightChanger.cs",
+  "csLine": "184-191",
+  "title": "Climbing does not force a crouched player to stand",
+  "claim": "DFU DecideHeightAction's second arm in the on-foot block: `else if (climbing) { timerMax = timerMedium; if (crouching) heightAction = DoStanding; forcedSwimCrouch = false; }` (PlayerHeightChanger.cs:184-191) - climbing forces the standing capsule every frame. The port's _heightAction (motor.js:352-368) has only the crouch-press, swim-force, and swim-unforce arms; nothing reads the climb state, and ClimbingState.step/_climbStep have no crouch gate, so a crouched player climbs crouched and remains crouched after topping out.",
+  "consequence": "A crouched climber in the port keeps the 0.9 capsule and crouched eye through and after the climb (and can climb under 0.9-1.8 clearances); DFU stands the player up on the medium (0.25 s) clock as the climb starts.",
+  "severity": "parity",
+  "confidence": "high",
+  "group": "player-motor",
+  "id": "F029"
+ },
+ {
+  "jsFile": "src/scenes/exterior.js",
+  "jsLine": 1482,
+  "csFile": "Game/LevitateMotor.cs",
+  "csLine": "71-91",
+  "title": "Outdoor hosts pass no pitch and no up/down: levitation above ground cannot change height",
+  "claim": "LevitateMotor.Update:71-91 moves along the camera look (pitch included) and reads Jump/FloatUp for up, Crouch/FloatDown for down - everywhere. The motor implements this (motor.js:520-531; contract at :299-301) and the dungeon hosts wire it (dungeon.js:400-403 and worldModes.js:2660-2663 pass up/down and cam.pitch). But both outdoor hosts call player.update with only {forward, strafe, run, sneak, jump, crouch} and cam.yaw - no up/down, no pitch (exterior.js:1482-1489; world.js:3135-3142) - while shared.js:382 sets player.levitating outdoors each frame. With pitch defaulting 0 and up/down undefined, my is always 0 in the levitate branch and velY is forced 0.",
+  "consequence": "Cast Levitate outdoors (spell 14,255 exists in the port): the player hovers frozen at current height - no key and no look direction can ascend or descend until the effect expires. In DFU levitation works identically indoors and out.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "player-motor",
+  "id": "F030"
+ },
+ {
+  "jsFile": "src/scenes/dungeon.js",
+  "jsLine": 401,
+  "csFile": "Game/LevitateMotor.cs",
+  "csLine": "86-89",
+  "title": "Crouch key does not drive float-down while swimming/levitating in any host",
+  "claim": "LevitateMotor.Update:86-89: `else if (HasAction(Jump) || HasAction(FloatUp)) up; else if (HasAction(Crouch) || HasAction(FloatDown)) down;` - the held Crouch key dives a swimmer and descends a levitator. The motor's own contract states this (motor.js:300: 'up/down: the Jump/FloatUp and Crouch/FloatDown keys, HELD'), but every host maps only FloatDown: dungeon.js:401 and worldModes.js:2661 both pass `down: held(keys, 'FloatDown')`, and the outdoor hosts pass nothing. The hosts' up arm does match (jumpHeld || FloatUp).",
+  "consequence": "Holding Crouch (C) while swimming does nothing in the port (only PageDown dives); in DFU it dives. Combined with the missing levitate gate in _heightAction, Crouch while levitating toggles the stance instead of descending.",
+  "severity": "parity",
+  "confidence": "high",
+  "group": "player-motor",
+  "id": "F031"
+ },
+ {
+  "jsFile": "src/player/motor.js",
+  "jsLine": 670,
+  "csFile": "Game/Player/AcrobatMotor.cs",
+  "csLine": "187",
+  "title": "Slowfall constant velocity is fixed-rate-coupled: 1.75 m/s vs DFU's 2.1 m/s",
+  "claim": "AcrobatMotor.ApplyGravity:187 sets `moveDirection.y = -slowFallSpeed * Time.deltaTime` in FixedUpdate, i.e. a fall VELOCITY of 105 * fixedDeltaTime; DFU's ProjectSettings/TimeManager.asset:6 pins Fixed Timestep 0.02, so DFU slowfalls at 2.1 m/s. The port copies the shape verbatim (motor.js:670 `velY = -SLOWFALL_SPEED * dt`) but steps at FIXED_DT = 1/60 (motor.js:73), giving 1.75 m/s. The 60 Hz step is a documented port choice, but slowfall is the one law whose observable magnitude changes with that rate, and the pin motorStairs.test.js:295 asserts -105/60, restating the port without noting DFU's 0.02.",
+  "consequence": "Slow Falling descents are ~17% slower than DFU (2.1 -> 1.75 m/s); timing-sensitive drops under the buff take 20% longer. Fall damage is unaffected (slowfall re-anchors fallStart each tick in both).",
+  "severity": "nit",
+  "confidence": "medium",
+  "group": "player-motor",
+  "id": "F032"
+ }
+]

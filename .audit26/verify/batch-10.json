@@ -1,0 +1,80 @@
+[
+ {
+  "jsFile": "src/scenes/worldModes.js",
+  "jsLine": 698,
+  "title": "Native trade never removes sold/staged items from the player's pack - sell pays while the item stays",
+  "claim": "packItems returns a filtered COPY (worldModes.js:698), so NativeTradeWindow._move (nativeTrade.js:150-154, staging at :195) splices a transient array and the item never leaves playerEntity.items; commitTrade's Sell/SellMagic arm (worldModes.js:744-754) pays and pushes staged items to the shelf WITHOUT removing them from the pack, and the Identify arms (:766-783) re-addItem items still held. DFU moves the item out of PlayerEntity.Items at the click (DaggerfallTradeWindow.cs:795/:824 TransferItem) and Sell's confirm clears remoteItems (:1051). The port's keyed doSell (:809-811) DOES splice the pack - the two sell paths disagree; test/nativetrade.test.js:24 shows the live-array contract.",
+  "consequence": "Sell an item through the native trade screen: paid full price, item stays in the pack - repeatable unlimited gold. Identify pushes a second aliased reference into the pack (inventory.js:135-143). Staged items show in both lists at once.",
+  "severity": "bug",
+  "confidence": "high",
+  "csFile": "Game/UserInterfaceWindows/DaggerfallTradeWindow.cs",
+  "csLine": "795, 1036-1051",
+  "group": "hosts-modes",
+  "id": "F063"
+ },
+ {
+  "jsFile": "src/scenes/worldModes.js",
+  "jsLine": 3937,
+  "title": "forceExitToExterior skips cacheInteriorScene - recall/teleport out of a building discards interior state",
+  "claim": "tryExit calls cacheInteriorScene() before teardown (worldModes.js:2434, matching PlayerEnterExit.cs:860); forceExitToExterior (:3937-3948) destroys the interior context with no cache write. DFU's Teleport caches the interior scene before departing (Teleport.cs:148-149, SaveLoadManager.CacheScene(playerEnterExit.Interior.name) when inside a building). Reachable via anchor recall (world.js:1143), the guild Teleportation service (world.js:1522), and quest TeleportPc respawn (world.js:1550).",
+  "consequence": "Recalling/teleporting out of a building loses all interior changes since entry: next visit restores the stale pre-entry cache (bought goods reappear on the shelf as the same object references the player carries) or fresh block state; opened doors re-close.",
+  "severity": "bug",
+  "confidence": "high",
+  "csFile": "Game/MagicAndEffects/Effects/Mysticism/Teleport.cs",
+  "csLine": "145-151",
+  "group": "hosts-modes",
+  "id": "F064"
+ },
+ {
+  "jsFile": "src/scenes/worldModes.js",
+  "jsLine": 2654,
+  "title": "worldModes runs the player motor under an open window; the standalone dungeon host freezes it",
+  "claim": "frame() calls player.update every modal frame, with zeroed inputs when overlayHeld (worldModes.js:2654) - gravity, velocity and the crouch input (`crouch: crouchHeld && !latch.crouch` in the held arm) keep running under a window. dungeon.js gates the whole motor behind `if (walkMode && !overlayHeld)` (dungeon.js:353-357, 'no movers, no motor'). DFU pauses the game for any PauseWhileOpen window (UserInterfaceManager.cs:179-184 AddWindow -> PauseGame(true)), which worldModes' own comment (:2631-2634) cites as the law. Zeroed inputs are right for paralysis only.",
+  "consequence": "Open a window mid-fall in a world-hosted interior/dungeon: the fall completes under the paused menu and fall damage lands (applyFallLanding :2708); a swimmer keeps sinking; the crouch key toggles crouch under a window. The standalone host and DFU both freeze.",
+  "severity": "bug",
+  "confidence": "medium",
+  "csFile": "Game/UserInterface/UserInterfaceManager.cs",
+  "csLine": "179-184",
+  "group": "hosts-modes",
+  "id": "F065"
+ },
+ {
+  "jsFile": "src/scenes/worldModes.js",
+  "jsLine": 638,
+  "title": "Shelves in a broken-into CLOSED shop open the Buy trade window; DFU opens the stealing inventory",
+  "claim": "DFU gates shelf activation on IsPlayerInsideOpenShop (PlayerActivate.cs:887-899): open -> Buy trade window; closed -> InventoryWindow.SetShopShelfStealing. The port computes insideOpenShop at the door (worldModes.js:2205-2207, PlayerActivate.cs:1120 verbatim) but feeds it only to the people gate and drops it; openShelf (:634-647) checks only isShop and always stocks + opens the Buy window. A closed shop is enterable via the steal-mode lockpick ladder (:2167-2188). The shoplifting FORMULA is a recorded pending (crime arc), but DFU never opens a paying trade window in a closed shop regardless.",
+  "consequence": "Break into a shop at night in Steal mode and the empty shop SELLS to you at full price where DFU gives the shoplifting inventory; the computed open-shop latch is dead after entry.",
+  "severity": "parity",
+  "confidence": "medium",
+  "csFile": "Game/PlayerActivate.cs",
+  "csLine": "887-899",
+  "group": "hosts-modes",
+  "id": "F066"
+ },
+ {
+  "jsFile": "src/scenes/worldModes.js",
+  "jsLine": 785,
+  "title": "Identify-SPELL commit tallies Mercantile and skips DFU's not-enough-magicka refusal",
+  "claim": "commitTrade runs tallySkill(Mercantile, 1) unconditionally after every mode (worldModes.js:785), including the identifySpell arm (:772-779). DFU's identify-spell pass runs inside DoModeAction (DaggerfallTradeWindow.cs:957-995) and never reaches ConfirmTrade's TallySkill at :1088 - no tally for the spell (the paid service does tally, and the port matches there). DFU also refuses the whole pass when IdentifySpellCost > CurrentMagicka (:960-963); the port has no gate anywhere in the chain - commitTrade clamps Math.max(0, magicka - cost) (:775-777) and identifies everything anyway.",
+  "consequence": "Every Identify cast trains Mercantile (accumulating skill-progress divergence), and a cast concluded with insufficient magicka still identifies all staged items where DFU refuses.",
+  "severity": "parity",
+  "confidence": "high",
+  "csFile": "Game/UserInterfaceWindows/DaggerfallTradeWindow.cs",
+  "csLine": "957-995, 1088",
+  "group": "hosts-modes",
+  "id": "F067"
+ },
+ {
+  "jsFile": "src/scenes/worldModes.js",
+  "jsLine": 464,
+  "title": "Quest ITEM stands take the NPC placement law; DFU's AddQuestItem never ground-rays",
+  "claim": "standQuestFlatIn applies one law to NPCs and items: dungeon anchor `y - size.h/2` (the ITEM's own half-height) plus the AlignBillboardToGround raycast (worldModes.js:464-466); its comment asserts AddQuestNPC/AddQuestItem 'both call' the align (:457-459). AddQuestItem (GameObjectHelper.cs:1116-1160) never calls AlignBillboardToGround: its dungeon shift is the CONSTANT -randomTreasureMarkerDim/2 * GlobalScale = -0.5 (:1135-1136; DaggerfallLoot.cs:33, dim=40), then +Size.y/2, and the position stands with no ray. Only AddQuestNPC rays (:1040). standItem routes items through the same path with no distinction (worldModes.js:508-513, :576-580).",
+  "consequence": "A dungeon quest item whose world-sprite height differs from 1.0 unit sits at a different height than DFU, and an item on an elevated marker (table, cage, ledge) is ray-snapped down to the surface below where DFU leaves it at the marker.",
+  "severity": "parity",
+  "confidence": "high",
+  "csFile": "Utility/GameObjectHelper.cs",
+  "csLine": "1116-1160",
+  "group": "hosts-modes",
+  "id": "F068"
+ }
+]

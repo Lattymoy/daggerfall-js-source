@@ -1,0 +1,80 @@
+[
+ {
+  "jsFile": "src/systems/guildServiceActions.js",
+  "jsLine": 108,
+  "csFile": "UserInterfaceWindows/DaggerfallGuildServiceTraining.cs",
+  "csLine": "101",
+  "title": "Training 'too skilled' gate compares live skill, DFU compares permanent",
+  "claim": "TrainingSkill_OnItemPicked refuses training when GetPermanentSkillValue(skillToTrain) > GetTrainingMax (DaggerfallGuildServiceTraining.cs:101). The port's tooSkilledToTrain (guildServiceActions.js:108) uses skillValue(entity, skill), which folds entity._enchantMods.skillMods (skills.js:68), i.e. the live value including worn EnhancesSkill enchantments.",
+  "consequence": "A player with permanent skill 40-50 wearing a +15 EnhancesSkill item is refused with 4022 ('too skilled') where DFU trains them; the 50-cap check moves with equipment.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "guilds-factions",
+  "id": "F111"
+ },
+ {
+  "jsFile": "src/systems/daedraSummoning.js",
+  "jsLine": 70,
+  "csFile": "API/FactionFile.cs",
+  "csLine": "542, 593",
+  "title": "Witches coven constants wrong: type 6 should be 8, guild group 8 should be 22",
+  "claim": "daedraSummoning.js:70-71 defines WITCHES_COVEN_TYPE = 6 and WITCHES_GUILD_GROUP = 8, commented as DFU's WitchesCoven/Witches. FactionFile.cs has WitchesCoven = 8 (6 is VampireClan) and Witches = 22 (8 is GGroup8); the port's own factionFile.js:18,34 agrees. The caller (worldModes.js:1631,1650) passes the raw record's type/ggroup, so a real coven fails both tests: daedraForSummoner:104 skips the coven random-prince branch (DaggerfallQuestPopupWindow.cs:180-189) and attemptSummoning:166 never sets spawnFoes (cs:256). The pins use the constants symbolically, restating the port.",
+  "consequence": "When the coven service lands (route currently flagged to talk), covens summon only on the 16 calendar days instead of a daily random non-Hircine prince, and failed coven summonings never mark the daedric-foe reprisal.",
+  "severity": "parity",
+  "confidence": "high",
+  "group": "guilds-factions",
+  "id": "F112"
+ },
+ {
+  "jsFile": "src/systems/guildServiceActions.js",
+  "jsLine": 215,
+  "csFile": "UserInterfaceWindows/DaggerfallGuildServiceCureDisease.cs",
+  "csLine": "85",
+  "title": "Cure-disease price skips the regional price adjustment DFU always applies",
+  "claim": "DFU computes costBeforeBargaining = FormulaHelper.CalculateCost(baseCost, quality) (cs:85), and CalculateCost unconditionally runs ApplyRegionalPriceAdjustment (FormulaHelper.cs:1895, 2026-2044), scaling by the region's PriceAdjustment (750-1250). The port calls calculateCost(baseCost, quality) (guildServiceActions.js:215) whose third priceAdjustment parameter defaults to neutral 1000 (shopStock.js:325-328); the comment misreads the two-arg C# call - the omitted third parameter is conditionPercentage, not the regional term. The port models regional prices elsewhere (tradeModes.js:242) but never passes them here.",
+  "consequence": "Temple curing costs the same in every province; in DFU the quote varies up to about +/-25% with the region's price adjustment.",
+  "severity": "parity",
+  "confidence": "high",
+  "group": "guilds-factions",
+  "id": "F113"
+ },
+ {
+  "jsFile": "src/systems/guildVariants.js",
+  "jsLine": 200,
+  "csFile": "Game/Guilds/KnightlyOrder.cs",
+  "csLine": "144-145",
+  "title": "Knightly rank-9 promotion never consults house ownership; blocking flag is stale",
+  "claim": "KnightlyOrder.GetPromotionMsgId rank 9 returns DaggerfallBankManager.OwnsHouse ? 5241 : 5240 (KnightlyOrder.cs:144-145; OwnsHouse is per-current-region, DaggerfallBankManager.cs:136). The port's static promotionByRank maps 9 -> 5240 unconditionally (guildVariants.js:200) behind a comment saying 'Banking does not exist yet' - but banking's ownsHouse landed (systems/banking.js:167) and is consumed in the same host that shows promotions (worldModes.js:1694); promotionTextId (guilds.js:280-298) has no ownsHouse seam.",
+  "consequence": "A knight promoted to rank 9 while owning a house in the region is shown record 5240 instead of DFU's 5241 - the wrong promotion speech.",
+  "severity": "nit",
+  "confidence": "high",
+  "group": "guilds-factions",
+  "id": "F114"
+ },
+ {
+  "jsFile": "src/systems/guildServices.js",
+  "jsLine": 268,
+  "csFile": "Game/Guilds/NonMemberGuild.cs",
+  "csLine": "52-58",
+  "title": "Non-member at knightly seneschal gets rank refusal 460 instead of members-only line",
+  "claim": "In DFU a non-member (or member of a different order) at a knightly hall gets guildNotMember (GuildManager.cs:246), whose CanAccessService(ReceiveHouse) falls to Guild.cs's base default false, so DoGuildService shows 'My services are reserved for members only.' (GuildServicePopupWindow.cs:314-326). The port applies the order's own switch to everyone: knightlyCanAccessService answers ReceiveHouse -> true unconditionally (guildServices.js:268), serviceAccess allows it (worldModes.js:1430), and receiveHouseDecision then refuses with TEXT.RSC 460 (knightlyGifts.js:120) - the record DFU reserves for members below rank 9.",
+  "consequence": "Any non-member clicking a knightly order seneschal sees the rank-9 refusal text instead of DFU's members-only line - reachable, player-visible wrong message.",
+  "severity": "nit",
+  "confidence": "high",
+  "group": "guilds-factions",
+  "id": "F115"
+ },
+ {
+  "jsFile": "src/systems/knightlyGifts.js",
+  "jsLine": 93,
+  "csFile": "Game/Guilds/KnightlyOrder.cs",
+  "csLine": "230",
+  "title": "Already-given-house line diverges from DFU's localized string",
+  "claim": "KnightlyOrder.ReceiveHouse shows GetLocalizedText(\"serviceReceiveHouseAlready\") (KnightlyOrder.cs:230), which the clone's Internal_Strings_en table renders as 'You have already received your house.' The port's ALREADY_GIVEN_HOUSE (knightlyGifts.js:93, shown via worldModes.js:1700-1702) is 'You have already been given a house.'",
+  "consequence": "A rank-9 knight reclaiming the house gift reads a different sentence than DFU shows; text-only divergence.",
+  "severity": "nit",
+  "confidence": "high",
+  "group": "guilds-factions",
+  "id": "F116"
+ }
+]

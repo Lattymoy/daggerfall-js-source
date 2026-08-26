@@ -1,0 +1,54 @@
+[
+ {
+  "jsFile": "src/systems/quest/questMacros.js",
+  "jsLine": 549,
+  "csFile": "Game/UserInterfaceWindows/DaggerfallQuestJournalWindow.cs",
+  "csLine": "401, 439-485",
+  "title": "Journal click-to-find-place dead - getMessageResources has no caller",
+  "claim": "DFU's quest journal handles a click on an active quest entry (JournalWindow.cs:401 -> HandleQuestClicks :439-466) by calling GetMessageResources (:471-485) to find the last Place mentioned, then offers 'Find <location> in <region>?' and sends the travel map there (GotoPlace :360). The port translated getMessageResources (questMacros.js:549-565, zero callers), and questJournal.click (ui/questJournal.js:182-191) merely consumes clicks inside the log rect without inspecting the entry.",
+  "consequence": "Players cannot click a journal quest entry to locate its destination on the travel map - a core classic navigation aid is missing.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "sweep-wiring",
+  "id": "F195"
+ },
+ {
+  "jsFile": "src/systems/quest/questMacros.js",
+  "jsLine": 492,
+  "csFile": "Game/Items/ItemHelper.cs",
+  "csLine": "335-349",
+  "title": "expandLetterSignoff never called - every quest letter reads as bare Parchment",
+  "claim": "DFU ResolveItemLongName returns 'Letter: <signoff line>' for quest parchment by calling QuestMacroHelper.ExpandLetterSignoff (ItemHelper.cs:335-348). The port carries a documented verbatim translation (questMacros.js:492-537 incl. the one-line bug-for-bug walk and 'Letter: ' prefix) with zero callers: item labels come from worldModes._itemLabel (:633, plain name??template name), and quest/item.js:89-93's own comment concedes the long-name maker is not built.",
+  "consequence": "Quest letters all display as 'Parchment' in the inventory - with two letters from two quests there is no way to tell them apart without using each one.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "sweep-wiring",
+  "id": "F196"
+ },
+ {
+  "jsFile": "src/systems/guilds.js",
+  "jsLine": 444,
+  "csFile": "Game/Guilds/GuildManager.cs",
+  "csLine": "107-111",
+  "title": "Vampire/mortal dual membership book ported but hosts use a plain object",
+  "claim": "DFU GuildManager keeps separate membership dictionaries and swaps them by HasVampirism() (GuildManager.cs:107-111, vampMemberships). The port translated the dual-book store - newMembershipStore/membershipsFor(store, hasVampirism)/clearMembershipData (guilds.js:444-459), zero callers - while every host reads `playerEntity.guildMemberships ??= {}` directly (worldModes.js:1319/:1379/:3046/:3062), one book regardless of vampirism, even though the vampirism infection arc is live (infection.js V1).",
+  "consequence": "A player turned vampire keeps all mortal guild ranks and services (and vice versa on cure) instead of DFU's separate vampire ledger.",
+  "severity": "parity",
+  "confidence": "high",
+  "group": "sweep-wiring",
+  "id": "F197"
+ },
+ {
+  "jsFile": "src/systems/diseases.js",
+  "jsLine": 90,
+  "csFile": "Game/DaggerfallUI.cs",
+  "csLine": "1655-1667",
+  "title": "Disease contracted message (TEXT.RSC 100+type) has no consumer - Status action is dead",
+  "claim": "DFU's health status box shows each active disease's ContractedMessageTokens (DaggerfallUI.cs:1662-1666; DiseaseEffect.GetClassicContractedMessageTokens :201 reads record 100+diseaseType). The port carries contractedMessageRecord (diseases.js:90, zero callers, its own comment says 'that UI pends'), and the Status input action requires ctx.showStatus (ui/input.js:162) which no host anywhere in src/ provides.",
+  "consequence": "After incubation a player has no way to learn WHICH disease they carry - only the generic daily 'You feel somewhat bad.' - so choosing the right temple cure or gauging urgency is guesswork.",
+  "severity": "parity",
+  "confidence": "medium",
+  "group": "sweep-wiring",
+  "id": "F198"
+ }
+]

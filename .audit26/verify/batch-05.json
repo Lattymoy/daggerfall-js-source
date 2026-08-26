@@ -1,0 +1,78 @@
+[
+ {
+  "jsFile": "src/render/flatAnimation.js",
+  "jsLine": 33,
+  "title": "Missile impact flash (record 1, one-shot, 15fps) is ported as a constant but never spawned",
+  "claim": "DFU DoCollision (DaggerfallMissile.cs:365-369) swaps the missile billboard to the impact anim - UseSpellBillboardAnims(1, true) = record 1, OneShot, fps 15 (:45) - and the missile persists 0.6s (:47) so it plays. The port defines IMPACT_FPS = 15 (flatAnimation.js:33) and states the law in its header (:29-33), but nothing in src/ consumes it: both missile hosts destroy the billboard at impact with no record-1 spawn (hostMagic.js:363-371 retireMissile, called :404/:421/:432; dungeonContext.js:1592-1604, called :1618/:1630). explodeAt (hostMagic.js:208-217) is damage-only. Pin test/flatanim.test.js:182-199 asserts constants only.",
+  "consequence": "Every spell missile (player and enemy, all scenes) vanishes on impact with no contact flash; DFU plays the 0.6s record-1 animation at 15fps on every hit.",
+  "severity": "parity",
+  "confidence": "high",
+  "csFile": "Assets/Scripts/Game/DaggerfallMissile.cs",
+  "csLine": "365-369, 44-47, 591-607",
+  "group": "render",
+  "id": "F033"
+ },
+ {
+  "jsFile": "src/render/renderer.js",
+  "jsLine": 751,
+  "title": "renderCharacterSprite leaks gl.clearColor(0,0,0,0) into every subsequent frame",
+  "claim": "renderCharacterSprite (renderer.js:746-761) sets gl.clearColor(0,0,0,0) at :751 for the sprite FBO and restores framebuffer, viewport and proj/view - but not the clear color. The only other clearColor call is the constructor's one-time (0.53,0.7,0.92,1.0) at :618; beginFrame (:1095-1104) clears without setting it. After the first frame that renders a rig sprite (exterior.js:1685; dungeon foes via dungeonContext.js:1396), every later beginFrame clears the canvas transparent; with default alpha:true (:445 passes only {antialias:false}) uncovered pixels show the page background (#000, index.html:8).",
+  "consequence": "Uncovered pixels render page-black instead of the intended clear color after the first character-sprite frame - visible only before the sky panorama loads and in skyless scenes; negligible but a genuine unrestored-GL-state leak.",
+  "severity": "nit",
+  "confidence": "high",
+  "group": "render",
+  "id": "F034"
+ },
+ {
+  "jsFile": "src/scenes/cityGuards.js",
+  "jsLine": 361,
+  "title": "Guard killed by fall damage brands the player a murderer",
+  "claim": "The fall arm (cityGuards.js:356-363) routes through damageGuard, whose death branch unconditionally sets playerEntity.crimeCommitted = CRIME_MURDER (:274). DFU's EnemyMotor.ApplyFallDamage (EnemyMotor.cs:1398-1401) calls DecreaseHealth directly; Murder is assigned only in DaggerfallEntityBehaviour.HandleAttackFromSource (:263-269) inside the sourceEntityBehaviour == PlayerEntityBehaviour gate (:203), so a fall death never sets a crime. The pin test/audit24_wave36.test.js:142 asserts the port's line with 'so death and crime fire' while citing only ApplyFallDamage, which carries no crime - the pin restates the port.",
+  "consequence": "A watchman who dies falling while chasing the player escalates the active crime to Murder without the player striking, inflating the court's penalty rolls for a kill the player never made.",
+  "severity": "parity",
+  "confidence": "high",
+  "csFile": "Game/EnemyMotor.cs",
+  "csLine": "1398-1401; DEB.cs:203,263-269",
+  "group": "hosts-support",
+  "id": "F035"
+ },
+ {
+  "jsFile": "src/scenes/cityGuards.js",
+  "jsLine": 196,
+  "title": "Witness/countdown half of spawnCityGuards has no production caller",
+  "claim": "The non-immediate arm (cityGuards.js:196-238; countdown consumed :325-328) is called with immediate=false only by test/cityguards.test.js:81. Both hosts pass true only (world.js:1030, exterior.js:625) and the quest SpawnCityGuards action is a pended guard pattern (systems/quest/actions.js:2672). DFU's false-mode callers are PlayerEntity.cs:500-503 (LegalRep < -10, 5% per game-hour, Criminal_Conspiracy) and :507-510 (banished flag, 10%); grep of src/ finds no port counterpart of either arm.",
+  "consequence": "The witness law - civilians seeing a crime, guard NPCs converting on sight, guards arriving after a 5-10s countdown - and passive guard responses to low-legal-rep/banished characters never run in the shipped game.",
+  "severity": "bug",
+  "confidence": "medium",
+  "csFile": "Game/Entities/PlayerEntity.cs",
+  "csLine": "500-510",
+  "group": "hosts-support",
+  "id": "F036"
+ },
+ {
+  "jsFile": "src/scenes/world.js",
+  "jsLine": 919,
+  "title": "Encounter-foe melee hits skip the player pain voice in ?world",
+  "claim": "world.js gives cityGuards.onPlayerHurt playPlayerVoice(playerPainVoice(...)) (:903) and the enemy-arrow arm likewise (:3461), but exteriorFoes' onPlayerHurt (world.js:919-924) does only hurtPlayer + hit sound + surfacePlayer - no pain voice. In DFU every enemy melee hit goes through EnemyAttack.SendDamageToPlayer (EnemyAttack.cs:404-406) whose SendMessage(\"RemoveHealth\") reaches PlayerFootsteps.RemoveHealth (PlayerFootsteps.cs:348-364), the 40% pain cry, regardless of attacker type. dungeonContext plays it on both melee arms (:1702, :1946); the gap is exactly the main host's encounter pool.",
+  "consequence": "In the shipped game path (menu boots bootWorld), a bandit's or monster's blow never makes the player cry out while a guard blow and an enemy arrow do - an audible inconsistency DFU does not have.",
+  "severity": "bug",
+  "confidence": "high",
+  "csFile": "Game/EnemyAttack.cs",
+  "csLine": "404-406; PlayerFootsteps:348-364",
+  "group": "hosts-support",
+  "id": "F037"
+ },
+ {
+  "jsFile": "src/scenes/arrestFlow.js",
+  "jsLine": 142,
+  "title": "Acquittal applies no vitals restore - player leaves court at 1 HP",
+  "claim": "The verdict 'free' arm (arrestFlow.js:142-149) calls clearArrest() only; the comment at :235-237 asserts acquittal takes clearArrest alone because the floor 'belongs to release'. DFU's acquittal arm calls FillVitalSigns explicitly (DaggerfallCourtWindow.cs:423-425). Surrender forces health to 1 first (PlayerEntity.cs:2321; the port's setHealth1 hook at arrestFlow.js:69/77), so the acquitted player holds exactly 1 HP. The 'full refill pends vitals wiring' note covers only release() (:240); the acquittal arm is excluded from even that by its own comment, so the debt stays unpaid when vitals wiring lands.",
+  "consequence": "A player who surrenders and wins the case steps outside at 1 HP where DFU restores full vitals - and unlike the other court arms this gap is asserted correct, not tracked as pending.",
+  "severity": "parity",
+  "confidence": "medium",
+  "csFile": "Game/UserInterfaceWindows/DaggerfallCourtWindow.cs",
+  "csLine": "423-426",
+  "group": "hosts-support",
+  "id": "F038"
+ }
+]

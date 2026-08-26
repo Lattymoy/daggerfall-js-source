@@ -1,0 +1,80 @@
+[
+ {
+  "jsFile": "src/scenes/worldModes.js",
+  "jsLine": 465,
+  "title": "Quest-NPC ground ray originates at the BOTTOM anchor + 0.2; DFU rays from the CENTRE + 0.2",
+  "claim": "AlignBillboardToGround casts from go.transform.position + 0.2 (GameObjectHelper.cs:340), and at that moment the position is the billboard CENTRE (interior: marker + Size.y/2 per :1034-1037; dungeon: the marker itself). The port rays from its bottom anchor `by + 0.2` (worldModes.js:465), half a sprite height LOWER in both site types. The on-hit landing formula agrees (bottom = hit + 0.02h), but the origin difference changes which floors the 4-unit ray finds: in a dungeon the port's origin (marker - h/2 + 0.2) can start at or below the floor for tall sprites.",
+  "consequence": "Edge geometry only: a tall-sprite dungeon quest NPC can miss the floor snap DFU performs and stand embedded; floors near the 4-unit limit are found by one side and not the other.",
+  "severity": "nit",
+  "confidence": "medium",
+  "csFile": "Utility/GameObjectHelper.cs",
+  "csLine": "336-346, 1034-1040",
+  "group": "hosts-modes",
+  "id": "F069"
+ },
+ {
+  "jsFile": "src/scenes/worldModes.js",
+  "jsLine": 755,
+  "title": "commitTrade's 'Repair' arm has no caller and skips the UpdateRepairTimes queue law",
+  "claim": "No call site opens the native trade window in 'Repair' mode (openTradeWindow is called with Buy/Sell/Identify/SellMagic only; openRepairService uses the keyed ChoiceWindow flow) - the arm at worldModes.js:755-765 is dead. If wired it diverges from DFU's ConfirmTrade Repair arm (DaggerfallTradeWindow.cs:1060-1072 -> UpdateRepairTimes(true) :514-568): it calls leaveForRepair with a bare per-item calculateItemRepairTime - no longest-job stretch, no never-decrease clamp - which the port's own keyed repairItem applies via updateRepairTimes (worldModes.js:1975-1984); its InstantRepairs branch also addItem()s an item never removed from the pack.",
+  "consequence": "None reachable today (dead arm); a future wiring of the INVE12 native repair mode would silently skip the repair-queue law and duplicate instantly-repaired items.",
+  "severity": "nit",
+  "confidence": "high",
+  "csFile": "Game/UserInterfaceWindows/DaggerfallTradeWindow.cs",
+  "csLine": "514-568, 1060-1072",
+  "group": "hosts-modes",
+  "id": "F070"
+ },
+ {
+  "jsFile": "src/systems/effects.js",
+  "jsLine": 577,
+  "csFile": "Assets/Scripts/Game/MagicAndEffects/EntityEffect.cs",
+  "csLine": "804-806; also EEM 565-568",
+  "title": "bypassSavingThrows wrongly suppresses the magnitude-scaling saving throw",
+  "claim": "Port: `saveScaled = spell.rangeType !== 0 && !ctx.bypassSavingThrows` gates effectMagnitude's savingThrow scaling (effects.js:437-441,577). DFU: AssignBundleFlags.BypassSavingThrows gates only the assign-time no-magnitude save (EntityEffectManager.cs:565-568) and reflection/resistance (:521,:525); GetMagnitude's ModifyEffectAmount runs for every non-CasterOnly bundle regardless of the flag (EntityEffect.cs:804-806), so bypassed casts of magnitude effects are still save-scaled per application in DFU. Reachable: quest spell-queue casts on foes - QuestResourceBehaviour.cs:346 assigns with BypassSavingThrows and the port mirrors it at questFoeHost.js:91 with bypassSavingThrows:true.",
+  "consequence": "A quest-queued magnitude spell (Damage Health, Continuous Damage) lands at full magnitude every round in the port where DFU scales it by the foe's saving throw - quest foes take measurably more damage.",
+  "severity": "parity",
+  "confidence": "medium",
+  "group": "effects-magic",
+  "id": "F071"
+ },
+ {
+  "jsFile": "src/systems/effects.js",
+  "jsLine": 1283,
+  "csFile": "Assets/Scripts/Game/MagicAndEffects/EntityEffectManager.cs",
+  "csLine": "561-580",
+  "title": "Soul Trap never rolls the target's no-magnitude saving throw",
+  "claim": "DFU AssignBundle rolls FormulaHelper.SavingThrow for any effect with SupportMagnitude=false on a non-CasterOnly cast, dropping the whole effect on a full save (EEM:565-579). SoulTrap has SupportChance+SupportDuration, no magnitude, TargetFlags_Other, and does not set bypassSavingThrows (SoulTrap.cs:30-41; the bypass field's only writers are vampirism/lycanthropy/special effects). The port's soul-trap arm (effects.js:1278-1295) checks mobileType and rounds, then pushes/stacks with no savingThrow call - only the cast chance is forced true, which matches ChanceSuccess.",
+  "consequence": "A monster with high willpower or Magic tolerance can never shrug off Soul Trap in the port; in DFU a full save drops the trap entirely - traps land strictly more often.",
+  "severity": "parity",
+  "confidence": "high",
+  "group": "effects-magic",
+  "id": "F072"
+ },
+ {
+  "jsFile": "src/systems/effects.js",
+  "jsLine": 1214,
+  "csFile": "Assets/Scripts/Game/MagicAndEffects/EntityEffectManager.cs",
+  "csLine": "561-580",
+  "title": "Pacify and Charm skip the no-magnitude saving throw",
+  "claim": "PacifyEffect (SupportChance, no magnitude, TargetFlags_Other, PacifyEffect.cs:60-63) and CharmEffect (CharmEffect.cs:33-44) go through DFU's AssignBundle no-magnitude save (EEM:565-579) after the OnCast chance gate - the target can fully save and drop the effect. The port's arm (effects.js:1207-1216) does the group/class match and the dice100 chance roll only; no savingThrow is ever rolled for these kinds.",
+  "consequence": "Pacify/Charm succeed more often in the port than in DFU against targets with Magic tolerance or high willpower - chance is the only gate instead of chance AND save.",
+  "severity": "parity",
+  "confidence": "high",
+  "group": "effects-magic",
+  "id": "F073"
+ },
+ {
+  "jsFile": "src/systems/effects.js",
+  "jsLine": 935,
+  "csFile": "Assets/Scripts/Game/MagicAndEffects/EntityEffectManager.cs",
+  "csLine": "493-499 vs 504-527",
+  "title": "Paralyze hard-immunity gate runs after reflection instead of before it",
+  "claim": "DFU drops an incoming Paralyze for a hard-immune entity BEFORE the absorption/reflection/resistance chain (EEM:495-498 continue precedes the caster block at :504-527). The port tests isEntityImmuneToParalysis inside the isParalyze arm (effects.js:935), which runs AFTER the reflection gate (:672-679) and resistance gate (:685-691), so a hard-immune target with live Spell Reflection reflects a pure-Paralyze bundle back at the caster (out.reflected, re-applied by hosts at hostMagic.js:124-131 and world.js:1223-1225) where DFU silently discards the effect.",
+  "consequence": "A player under Free Action (or a paralysis-immune career/race) with Spell Reflection up bounces a spider/wraith paralyze back at its caster; in DFU nothing happens. The resistance gate can also print 'Spell was resisted.' where DFU is silent.",
+  "severity": "parity",
+  "confidence": "medium",
+  "group": "effects-magic",
+  "id": "F074"
+ }
+]

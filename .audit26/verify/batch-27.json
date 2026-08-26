@@ -1,0 +1,80 @@
+[
+ {
+  "jsFile": "src/ui/nativeTalk.js",
+  "jsLine": 344,
+  "title": "Conversation questions left-aligned; DFU right-aligns question rows",
+  "claim": "DFU SetQuestionAnswerPairInConversationListbox sets the question label's HorizontalAlignment to Right (DaggerfallTalkWindow.cs:1259) while answers are Left (:1270). The port draws every conversation line at the panel's left edge R.conversation[0] (nativeTalk.js:344-345) regardless of kind.",
+  "consequence": "The classic visual distinction (player questions hugging the right margin, NPC answers the left) is lost in the conversation log.",
+  "csFile": "Game/UserInterfaceWindows/DaggerfallTalkWindow.cs",
+  "csLine": "1259, 1270",
+  "severity": "nit",
+  "confidence": "high",
+  "group": "ui-native-core",
+  "id": "F165"
+ },
+ {
+  "jsFile": "src/ui/itemMakerWindow.js",
+  "jsLine": 341,
+  "csFile": "Game/UserInterface/EnchantmentListPicker.cs",
+  "csLine": "262-276",
+  "title": "Forced (child) enchantment rows can be removed by clicking them",
+  "claim": "DFU's EnchantmentPanel_OnMouseClick only removes a panel when panel.Enchantment.ParentEnchantment == 0 ('child panels are removed by clicking on parent', EnchantmentListPicker.cs:268-271). The port's click handler (itemMakerWindow.js:338-344) hit-tests any visible row and calls _removeRow(hit.entry) with no parentEnchantment guard; removeEnchantment (enchantmentCatalogue.js:360-362) then filters the clicked entry out by its own key, so a forced child (which carries parentEnchantment = parent key and its own key) is removed on its own. The catalogue's comment even codifies 'a child removed on its own takes nothing', which contradicts DFU where a child cannot be removed at all.",
+  "consequence": "A player soul-binding a Daedra Lord can click away the forced Extra Weight / User Takes Damage side effects and keep the soul-bound power without its drawbacks, which DFU forbids.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "ui-crafting",
+  "id": "F166"
+ },
+ {
+  "jsFile": "src/ui/itemMakerWindow.js",
+  "jsLine": 285,
+  "csFile": "Game/UserInterfaceWindows/DaggerfallItemMakerWindow.cs",
+  "csLine": "752-754",
+  "title": "Enchanting a stacked item enchants the whole stack (no SplitStack)",
+  "claim": "DFU's EnchantButton_OnMouseClick splits one item off a stack before enchanting: 'if (selectedItem.IsAStack()) selectedItem = ...Items.SplitStack(selectedItem, 1)' (cs:752-754). The port's _enchant (itemMakerWindow.js:277-294) calls applyEnchantments(this.selected, ...) directly, and applyEnchantments (enchanting.js:200-206) just sets item.enchantments on the object - no stack split anywhere. Gems (Ingredients tab, itemMakerFilter line 120) are stackable in the port (inventory.js isStackable:110 - ingredients stack), so a merged stack of N gems is a single selectable item.",
+  "consequence": "Enchanting a stack of e.g. 5 rubies produces 5 enchanted rubies for one gold payment and one enchantment-point budget; DFU enchants exactly one split-off gem.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "ui-crafting",
+  "id": "F167"
+ },
+ {
+  "jsFile": "src/ui/itemMakerWindow.js",
+  "jsLine": 189,
+  "csFile": "Game/Entities/PlayerEntity.cs",
+  "csLine": "1313-1316",
+  "title": "Item maker gold check and label use coins only, excluding letters of credit",
+  "claim": "DFU's item maker reads PlayerEntity.GetGoldAmount() for the available-gold label (DaggerfallItemMakerWindow.cs:193) and the enchant affordability check (cs:734-739); GetGoldAmount returns goldPieces + items.GetCreditAmount() (PlayerEntity.cs:1313-1316). The port's gold() (itemMakerWindow.js:189) calls goldAmount(), the coin purse alone (court.js:151-152); enchantDecision's gold test (enchanting.js:188) and the label both ride it. The port's own comment at :282-284 says the deduction seam spends letters of credit - but the gating check never counts them.",
+  "consequence": "A player whose wealth sits in letters of credit is refused ('You do not have the gold to properly pay the enchanter') where DFU lets the enchant proceed, and the shown gold figure is understated.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "ui-crafting",
+  "id": "F168"
+ },
+ {
+  "jsFile": "src/ui/itemMakerWindow.js",
+  "jsLine": 392,
+  "csFile": "Game/UserInterface/EnchantmentListPicker.cs",
+  "csLine": "330-334",
+  "title": "Cast When Used/Held/Strikes list rows print the wrong spell name",
+  "claim": "DFU's EnchantmentPanel prints enchantment.SecondaryDisplayName - the actual spell name stored in the settings (EnchantmentListPicker.cs:333-334). The port draws the secondary row as names[row.entry.param] (itemMakerWindow.js:390-393), where names = enchantmentParams(type) is a DENSE list-ordered array (enchantmentCatalogue.js:193-201) but entry.param for the three CastWhen* effects is the sparse classic SPELL ID (catalogue :171, stored at :233). E.g. CastWhenUsed param 12 is Resist Fire, but names[12] is 'Fireball'; param 94 (Recall) indexes past the array and prints blank. The picker itself is correct (labels[i] aligned by index, catalogue :493-495) - only the list rows mis-index.",
+  "consequence": "After picking 'Cast when used - Resist Fire' the powers list shows 'Fireball' (or a blank) under Cast When Used; nearly every CastWhen* row names the wrong spell.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "ui-crafting",
+  "id": "F169"
+ },
+ {
+  "jsFile": "src/ui/itemMakerWindow.js",
+  "jsLine": 385,
+  "csFile": "Game/UserInterface/EnchantmentListPicker.cs",
+  "csLine": "202-247",
+  "title": "Enchantment lists cannot scroll; overflowing rows are invisible and unremovable",
+  "claim": "DFU's EnchantmentListPicker shows a slim scrollbar when enchantmentPanels.Count > 7 (ShowScroller, cs:244-247), narrows rows to 71 wide, and scrolls via wheel (MouseScrollUp/Down cs:180-196) and the scroller. The port's draw loop breaks at 'if (row.y + row.h > rect[3]) break' (itemMakerWindow.js:385), computes 'scrolled' and voids it (:383, :395), and neither click() (:338-344) nor input() offers any scroll path for the two lists. With rows carrying secondary names (12px + 5 gap), only 7 rows fit in the 120px rect, so an 8th+ row (reachable: up to 10 enchantments, e.g. eight Cast When Used spells) is off-panel.",
+  "consequence": "Enchantments past the seventh two-line row can be neither seen nor clicked off; DFU scrolls to them.",
+  "severity": "parity",
+  "confidence": "high",
+  "group": "ui-crafting",
+  "id": "F170"
+ }
+]
