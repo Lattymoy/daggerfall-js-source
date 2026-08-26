@@ -55,6 +55,7 @@ export const MAX_POWER = 100;
 export const FACTION_FLAGS = Object.freeze({ RulerImmune: 0x10, Summoned: 0x40 });
 
 /** The faction ids the law names by hand (FactionFile.FactionIDs). */
+export const THE_THIEVES_GUILD = 42;   // FactionFile.cs:91
 export const THE_DARK_BROTHERHOOD = 108;
 export const GENERIC_TEMPLE = 450;
 export const GENERIC_KNIGHTLY_ORDER = 844;

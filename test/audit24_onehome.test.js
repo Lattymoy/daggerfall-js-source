@@ -193,7 +193,8 @@ test('audit24 wave24: SetLayoutData has ONE implementation, and it is the correc
 test('audit24 wave24: GetDisplayName names the NPC from the seed, and the click uses it', () => {
   // StaticNPC.cs:315-328 - an Individual faction answers its own name;
   // everybody else is srand(nameSeed) + FullName(nameBank, gender).
-  const individual = () => ({ type: 3, name: 'King Gothryd' });
+  // FactionTypes.Individual is 4 (FactionFile.cs:538); 3 is Subgroup.
+  const individual = () => ({ type: 4, name: 'King Gothryd' });
   const ordinary = () => ({ type: 1, name: 'The Merchants' });
   const d = staticNpcData({ flags: 0, factionID: 88, position: 1234 }, { buildingKey: 7 });
   assert.equal(staticNpcName(d, { getFaction: individual }), 'King Gothryd');

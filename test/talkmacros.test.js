@@ -45,15 +45,21 @@ function makeCtx(over = {}) {
   };
 }
 
-test('the macro token set: the MCP-s thirteen overrides plus the three TalkManager globals', () => {
+test('the macro token set: the MCP-s thirteen overrides plus the TalkManager globals', () => {
   // TK-vi: %key, %loc and %fcn are MacroHelper's own static handlers
   // (DialogKeySubject :1059, MarkLocationOnMap :1085,
   // LocationOfRegionalBuilding :1097), not the MCP's - but they read
   // TalkManager's fields, and ExpandRandomTextRecord runs the whole
   // table over a talk record, so they belong to this expansion.
+  // AUDIT 26 (talk): the same argument reaches SIX more globals the
+  // talk records actually carry - %1com (GreetingOrFollowUpText
+  // MacroHelper.cs:44), %pcf (:151), %pcn (:152), %cn (:67),
+  // %hnr (:111) and %ra (:210). This pin asserted the port's short
+  // table, not MacroHelper's, so it never saw them missing.
   assert.deepEqual([...TALK_MACROS].sort(), [
     '%di', '%fcn', '%fn', '%g', '%g2', '%g3', '%g4', '%hnt', '%hnt2',
     '%key', '%loc', '%mn', '%n', '%oth', '%pqn', '%pqp',
+    '%1com', '%pcf', '%pcn', '%cn', '%hnr', '%ra',
   ].sort());
   assert.equal(OATH_BASE_TEXT_ID, 201);
 });

@@ -53,7 +53,9 @@ import { goldAmount, deductGold } from '../systems/court.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { addItem, isEnchanted, goldStack, canHoldAmount, effectiveUnitWeightInKg, totalWeight, GOLD_PIECE_WEIGHT_KG, isSummoned } from '../systems/inventory.js';   // L-slice (items-9); X11b: isSummoned
 import { CANNOT_REMOVE_ITEM_TEXT } from '../systems/createItem.js';   // X11b: TransferItem's refusal
-import { maxEncumbrance } from '../combat/formulas.js';   // L-slice (items-9)
+import { makeItemPermanent } from '../systems/quest/item.js';   // TransferItem's MakePermanent arm (:1502-1504)
+import { getBool } from '../systems/settings.js';   // GUI/CanDropQuestItems
+import { entityMaxEncumbrance } from '../combat/formulas.js';   // L-slice (items-9); DaggerfallEntity.MaxEncumbrance, enchantment allowance and all
 import { liveStat } from '../systems/statMods.js';   // L-slice (items-9)
 import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, isBrokenItem, FORBIDDEN_EQUIPMENT_TEXT_ID, ITEM_BROKEN_TEXT_ID } from '../systems/equip.js';   // S23
 import { drawPaperDoll, refreshPaperDoll, slotAtPaperDoll, ARMOR_LABEL_POS } from './paperDoll.js';
@@ -122,6 +124,46 @@ export const NO_WAGON_TEXT = "You don't own a wagon.";
 // W-slice: the wagon goes live.
 export const WAGON_KG_LIMIT = 750;      // ItemHelper.WagonKgLimit (:56)
 export const SMALL_CART_TEMPLATE = 93;  // ItemGroups.Transportation.Small_cart's template
+
+/** TransferItem's QUEST arm (DaggerfallInventoryWindow.cs:1480-1505)
+ *  as ONE export, because DFU's is one member with three callers -
+ *  the local list's Remove click, the remote list's, and every
+ *  staging click in DaggerfallTradeWindow, which INHERITS TransferItem
+ *  and calls it at :795. `fromLocal` is DFU's `from == localItems`;
+ *  `toWagon` is `remoteTargetType == RemoteTargetTypes.Wagon`.
+ *
+ *  Answers TRUE when the transfer is REFUSED. A legal transfer writes
+ *  the resource's playerDropped - the only writer of the flag the
+ *  DroppedItemAtPlace trigger polls - and re-permanents a cloned item
+ *  that had been made permanent.
+ *
+ *  GetQuestItem (:1642-1656) THROWS on a missing quest or symbol; the
+ *  port answers null, the same call useItem.js's quest arm makes,
+ *  because a host with no machine has no quest to find and a stale
+ *  questUID is not worth a crash. DFU refuses an unresolvable quest
+ *  item too (:1489), so the null lands on the same side. */
+export function questTransferRefused(item, { fromLocal, toWagon = false, getQuest = null } = {}) {
+  if (!item?.questItem) return false;
+  const questItem = getQuest?.(item.questUID)?.getItem?.(item.questSymbol) ?? null;
+  // "Player cannot drop most quest items unless enabled" (:1486-1494).
+  // GUI/CanDropQuestItems ships False in both codebases.
+  if (!getBool('GUI', 'CanDropQuestItems')) {
+    if (questItem === null || (!questItem.allowDrop && fromLocal)) return true;
+  }
+  // Past the gate with no resource to write, C# would NRE on the next
+  // line; the port lets the transfer stand and writes nothing.
+  if (!questItem) return false;
+  // "Dropping or picking up quest item" (:1496-1500) - and the WAGON
+  // is not the ground, so stashing a droppable quest item in the cart
+  // is not a drop.
+  if (questItem.allowDrop && fromLocal && !toWagon) questItem.playerDropped = true;
+  else if (!fromLocal) questItem.playerDropped = false;
+  // :1502-1504 - a cloned quest item that should be permanent gets its
+  // permanent status back.
+  if (questItem.madePermanent) makeItemPermanent(item);
+  return false;
+}
+
 /** key "exitTooFar" (:1239) - prose ours pending a string source. */
 export const EXIT_TOO_FAR_TEXT = 'You are too far from the exit.';
 /** key "cannotHoldAnymore" (WagonCanHoldAmount :1431). */
@@ -487,6 +529,10 @@ export class NativeInventoryWindow {
       // vanished from their stock, or dropped in a pile that would
       // quietly empty itself.
       if (this._refuseSummoned(it)) return;
+      // TransferItem's QUEST arm (:1480-1505), the guard one statement
+      // further down: `from` is localItems here, so an undroppable
+      // quest item cannot leave the pack at all.
+      if (this._refuseQuestItem(it, true)) return;
       // G6 (:1994): nothing goes INTO a choose-one pile.
       if (this.chooseOne && !this.usingWagon) return;
       // LocalItemListScroller_OnItemClick Remove: transfer to the
@@ -554,11 +600,21 @@ export class NativeInventoryWindow {
     return true;
   }
 
+  /** TransferItem's QUEST arm, the box half - the same shape
+   *  _refuseSummoned has, over the law below. */
+  _refuseQuestItem(it, fromLocal) {
+    if (!questTransferRefused(it, {
+      fromLocal, toWagon: this.usingWagon, getQuest: this.hooks.getQuest ?? null,
+    })) return false;
+    this.boxes = [{ rows: [{ text: CANNOT_REMOVE_ITEM_TEXT, center: true }] }];
+    return true;
+  }
+
   _canCarryAmount(it) {
     const e = this.hooks.entity;
     if (!e) return it.stackCount ?? 1;
     const canCarry = canHoldAmount(it.stackCount ?? 1, effectiveUnitWeightInKg(it),
-      maxEncumbrance(liveStat(e, 'strength')), totalWeight(this.hooks.items()));
+      entityMaxEncumbrance(e), totalWeight(this.hooks.items()));   // DaggerfallInventoryWindow.cs:1417 reads playerEntity.MaxEncumbrance
     if (canCarry <= 0) this.boxes = [{ rows: [{ text: CANNOT_CARRY_TEXT, center: true }] }];
     return canCarry;
   }
@@ -568,6 +624,13 @@ export class NativeInventoryWindow {
     const remote = this._remote();
     const it = remote[this.remoteScroll + slot];
     if (!it) return;
+    // "Send click to quest system" (:2027-2037) - the FIRST act of
+    // RemoteItemListScroller_OnItemClick, ahead of the action-mode
+    // branch, so an Info or Use click on a quest item counts as well
+    // as taking it. The ClickedItem trigger polls hasPlayerClicked.
+    // Only the REMOTE list does this; LocalItemListScroller_OnItemClick
+    // (:1974-2007) has no such call.
+    if (it.questItem) this.hooks.getQuest?.(it.questUID)?.getItem?.(it.questSymbol)?.setPlayerClicked();
     if (this.mode === 'info') { this._info(it); return; }
     if (this.mode === 'use') { this._use(it, remote); return; }   // U25 (:2048-2051)
     if (this.mode === 'remove' || this.mode === 'equip') {
@@ -575,6 +638,11 @@ export class NativeInventoryWindow {
       // the player; Equip mode also EQUIPS the taken item (verbatim
       // TransferItem(..., equip: true))
       if (this._refuseSummoned(it)) return;   // X11b: TransferItem's guard, both callers
+      // TransferItem's quest arm, the OTHER caller: `from` is
+      // remoteItems, so the refusal cannot fire without
+      // CanDropQuestItems, and picking the item back up clears
+      // PlayerDropped (:1499-1500).
+      if (this._refuseQuestItem(it, false)) return;
       const canCarry = this._canCarryAmount(it);   // items-9
       if (canCarry <= 0) return;
       // DoTransferItem: gold rides its own clink (:1569), everything

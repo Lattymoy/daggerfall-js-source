@@ -14,6 +14,9 @@
 import { srand } from '../formats/dfRandom.js';
 import { fullName, getNameBank, getNameBankOfRegion, GENDERS } from './nameHelper.js';
 import { RACES } from '../systems/races.js';
+// ONE HOME for FactionFile.FactionTypes (FactionFile.cs:530-546) - the
+// enum the parser already mints. Individual is 4; 3 is Subgroup.
+import { FACTION_TYPES } from '../formats/factionFile.js';
 
 /** StaticNPC.Context (:113-118). */
 export const NPC_CONTEXT = Object.freeze({ Custom: 0, Dungeon: 1, Building: 2 });
@@ -205,8 +208,8 @@ export function raceFromFactionRace(factionRace) {
  */
 export function staticNpcName(data, { getFaction = null, nameBank = null } = {}) {
   const fd = getFaction?.(data.factionID) ?? null;
-  // FactionFile.FactionTypes.Individual is 3.
-  if (fd && fd.type === FACTION_TYPE_INDIVIDUAL) return fd.name;
+  // GetDisplayName (:319) tests `factionData.type == (int)FactionTypes.Individual`.
+  if (fd && fd.type === FACTION_TYPES.Individual) return fd.name;
   srand(data.nameSeed);
   const bank = nameBank ?? bankForRace(data.race);
   // AUDIT 24 (wave 24): `data.gender` is the Genders enum, which is
@@ -216,8 +219,6 @@ export function staticNpcName(data, { getFaction = null, nameBank = null } = {})
   // and this is the C# line.
   return fullName(bank, data.gender);
 }
-
-export const FACTION_TYPE_INDIVIDUAL = 3;
 
 /** The name bank a race draws from; a race the bank table does not
  *  know falls to Breton exactly as getNameBank does. */

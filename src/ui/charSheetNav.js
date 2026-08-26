@@ -24,7 +24,14 @@ import { PlayerHistoryWindow, preloadPlayerHistoryArt } from './playerHistory.js
  *   artDeps           - {renderer, fetchBytes, palette} to warm LGBK00I0
  * @returns the hook bag CharSheet's constructor takes.
  */
-export function charSheetHooks({ entity, inventory = null, spellbook = null, questMessages = null, notebook = null, artDeps = null } = {}) {
+export function charSheetHooks({
+  entity, inventory = null, spellbook = null, questMessages = null, notebook = null, artDeps = null,
+  // HandleQuestClicks' find-place seam (DaggerfallQuestJournalWindow.cs
+  // :439-466), host-specific like inventory and spellbook: only a host
+  // that owns a travel map can answer it, and one that does not leaves
+  // all three unset so the journal simply never offers the dialog.
+  currentLocationName = null, canFindPlace = null, gotoPlace = null,
+} = {}) {
   // Both new windows share LGBK00I0.IMG, so one warm covers both. Fire
   // and forget, exactly as preloadCharSheetArt does: art that has not
   // arrived leaves the window on its text fallback rather than trapping.
@@ -46,6 +53,9 @@ export function charSheetHooks({ entity, inventory = null, spellbook = null, que
       ? () => new QuestJournalWindow({
         questMessages: questMessages ?? (() => []),
         notebook: notebook ?? (() => null),
+        currentLocationName: currentLocationName ?? undefined,
+        canFindPlace: canFindPlace ?? undefined,
+        gotoPlace: gotoPlace ?? undefined,
       })
       : undefined,
     history: () => new PlayerHistoryWindow(entity),

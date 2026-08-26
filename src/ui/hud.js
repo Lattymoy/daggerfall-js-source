@@ -260,6 +260,25 @@ function drawSpellIconRows(renderer, canvas, vitals, dt, { font, cursorActive, l
   if (cursorActive) spellTip().draw(renderer, m, font);
 }
 
+/** P12: the breath bar (HUDBreathBar verbatim geometry) - only while
+ *  holding breath. Its own member because DaggerfallHUD.Update
+ *  (:203, :214-220) has TWO callers for it: the breath bar's Enabled
+ *  is set from ShowBreathBar every frame and the large-HUD force-off
+ *  block below it turns off only the vitals, the compass and the
+ *  interaction-mode icon, so the bar draws under BOTH huds. */
+function drawBreathBar(renderer, canvas, art, vitals, s) {
+  const breath = vitals.currentBreath ?? 0;
+  if (!(breath > 0) || !art.breathNormal) return;
+  const liveEnd = liveStat(vitals, 'endurance');
+  const mb = maxBreath(vitals) || 1;
+  const bh = liveEnd * s;
+  const fill = Math.max(0, Math.min(1, breath / mb)) * bh;
+  const bx2 = HUD_BORDER + BREATH_BAR_LEFT * s;
+  const bBottom = canvas.height + HUD_BORDER - BREATH_BAR_BOTTOM * s;
+  const img = breathShortThreshold(liveEnd) > breath ? art.breathShort : art.breathNormal;
+  if (fill > 0) renderer.drawScreenQuad(img.tex, { x: bx2, y: bBottom - fill, w: BREATH_BAR_WIDTH * s, h: fill });
+}
+
 /** Draw the HUD. vitals = { health, maxHealth, magicka, maxMagicka };
  *  heading01 = camera yaw / 2pi with 0 facing +z. */
 export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
@@ -288,6 +307,11 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
     });
     drawCrosshairAndModeIcon(renderer, canvas, font,
       { cursorActive, scale: s2, border: HUD_BORDER, barWidth: HUD_NATIVE_BAR_WIDTH, showModeIcon: false });
+    // DaggerfallHUD.cs:203 sets breathBar.Enabled from ShowBreathBar
+    // every frame and the force-off block (:214-220) does NOT include
+    // it, so the bar survives the large HUD - drawn here after the
+    // crosshair, the order the components are added in (:158-160).
+    drawBreathBar(renderer, canvas, art, vitals, s2);
     drawSpellIconRows(renderer, canvas, vitals, dt, { font, cursorActive, largeHudRect: lastLargeHudBar, hover });
     return;
   }
@@ -308,19 +332,7 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
     if (h > 0) renderer.drawScreenQuad(img.tex, { x, y: bottom - h, w, h }, { u0: 0, v0, u1: 1, v1 });
     x += HUD_BAR_STRIDE * s;
   }
-  // P12: the breath bar (HUDBreathBar verbatim geometry) - only
-  // while holding breath.
-  const breath = vitals.currentBreath ?? 0;
-  if (breath > 0 && art.breathNormal) {
-    const liveEnd = liveStat(vitals, 'endurance');
-    const mb = maxBreath(vitals) || 1;
-    const bh = liveEnd * s;
-    const fill = Math.max(0, Math.min(1, breath / mb)) * bh;
-    const bx2 = HUD_BORDER + BREATH_BAR_LEFT * s;
-    const bBottom = canvas.height + HUD_BORDER - BREATH_BAR_BOTTOM * s;
-    const img = breathShortThreshold(liveEnd) > breath ? art.breathShort : art.breathNormal;
-    if (fill > 0) renderer.drawScreenQuad(img.tex, { x: bx2, y: bBottom - fill, w: BREATH_BAR_WIDTH * s, h: fill });
-  }
+  drawBreathBar(renderer, canvas, art, vitals, s);
   // Compass, bottom-right: strip window first, frame over it.
   // DaggerfallHUD.cs:254-257 sets compass.Position to
   // (screenRect.xMax - Size.x, screenRect.yMax - Size.y) and HUDCompass

@@ -797,6 +797,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
 
   /** The quest bridge's two reads, or NEITHER - charSheetHooks turns
    *  the absence into the sheet's refusal rather than an empty book. */
+  //
+  // HandleQuestClicks' find-place seam (DaggerfallQuestJournalWindow.cs
+  // :439-466) is deliberately NOT here: this context owns no travel map
+  // - openTeleportMap is read off the outer host for the same reason -
+  // so there is nowhere to send the player and the journal leaves the
+  // dialog unoffered rather than raising one that goes nowhere.
   const questJournalHooks = () => (opts.questBridge ? {
     questMessages: () => opts.questBridge.machine.getAllQuestLogMessages() ?? [],
     notebook: () => opts.questBridge.notebook ?? null,
@@ -1109,7 +1115,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  collapse KILLS. The text box is click-anywhere-to-close and
    *  holds the motor like every overlay. */
   function onExhausted() {
-    const enemiesNearby = foes.some((f) => !f.dead && ((f.ai.detected && f.ai.inSight) || f.ai.wouldBeSpawned));
+    // GameManager.AreEnemiesNearby() (PlayerEntity.cs:2397) - the
+    // STRICT variant, through the ONE home the three hosts ask.
+    const enemiesNearby = areEnemiesNearby(foes);
     const out = exhaustionOutcome({
       enemiesNearby, swimming: _activity.swimming, entity: playerEntity,
       day: false, inside: true,   // a dungeon rest: inside, no daylight (the InLight case pends exteriors with the rest UI)

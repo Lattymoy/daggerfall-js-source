@@ -397,7 +397,13 @@ export async function bootExterior(canvas, renderer, params, status) {
     _inExhaustion = true;
     try {
       const out = exhaustionOutcome({
-        enemiesNearby: (cityGuards?.activeCount?.() ?? 0) > 0,
+        // CollapseFromExhaustion (PlayerEntity.cs:2397) asks
+        // GameManager.AreEnemiesNearby() - the STRICT variant (no
+        // resting narrowing), over EVERY active enemy behaviour: one
+        // that can see the player or would have spawned in classic.
+        // `activeCount() > 0` was a different question - one unaware
+        // guard alive anywhere in town killed the collapse.
+        enemiesNearby: areEnemiesNearby(cityGuards?.guards ?? []),
         swimming: !!player.swimming, entity: playerEntity,
         day: !isNight(minuteNow()), inside: false,
       });

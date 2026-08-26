@@ -21,6 +21,7 @@ import { snapshotDiscovery, restoreDiscovery } from './discovery.js';   // T4
 import { snapshotAutomap, restoreAutomap } from './automap.js';   // A1: dictAutomapDungeonsDiscoveryState rides SaveData_v1
 import { createSceneCache, snapshotSceneCache, restoreSceneCache } from './sceneCache.js';   // P1
 import { seedCustomSpellIndex } from './spellMaker.js';   // S1: made spells carry their own record
+import { seedBundleSeq } from './effects.js';   // X10: the live-bundle counter's restore half
 import { SOCIAL_GROUPS } from '../formats/factionFile.js';   // AUDIT 24
 import { travelMapSaveData, restoreTravelMapSaveData } from './travelMapState.js';   // U41: TravelMapSaveData
 import { resetMagicRoundMarker } from './worldTick.js';   // EntityEffectBroker.InitMagicRoundTimer, on the LOAD arm (:230-233)
@@ -302,6 +303,15 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   const li = snap.lightSourceIndex ?? -1;
   entity.lightSource = li >= 0 ? (entity.items[li] ?? null) : null;
   entity.activeEffects = (snap.activeEffects ?? []).filter((a) => !a.heldItem).map(copyEffectEntry);   // E2: a stale pin in an old snapshot cannot re-link - drop it (DFU :2312)
+  // X10: bundleId is a MODULE-scope monotonic counter, not saved
+  // state - DFU has no counter to collide because its bundles are
+  // object references re-instanced on load. A fresh process starts
+  // ours at 0, so the first cast after "start the app, load a save"
+  // would hand out an id the restored entries already carry: the HUD
+  // merges the two casts into one icon row and Dispel Magic on it
+  // strips both. Lift the counter past the save's high water mark
+  // before anything can cast - restartHeldEnchantments below does.
+  seedBundleSeq((snap.activeEffects ?? []).reduce((m, a) => Math.max(m, a.bundleId ?? 0), 0));
   // E2: re-instantiate the held enchantments from the worn set the
   // equip table just rebuilt - a recast, so no durability is billed.
   restartHeldEnchantments(entity);

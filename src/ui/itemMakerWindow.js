@@ -294,7 +294,11 @@ export class ItemMakerWindow {
       const items = (this.hooks.player ?? this.hooks.entity)?.items ?? [];
       this.selected = splitStack(items, this.selected, 1) ?? this.selected;
     }
-    applyEnchantments(this.selected, [...this.powers, ...this.sideEffects]);
+    // SetEnchantments(combined, GameManager.Instance.PlayerEntity)
+    // (:760) - the owner is passed, so the created payloads run and
+    // the item comes OFF the paperdoll (DaggerfallUnityItem.cs:1338).
+    applyEnchantments(this.selected, [...this.powers, ...this.sideEffects],
+      { owner: this.hooks.player ?? this.hooks.entity });
     if (this.itemName) this.selected.name = this.itemName;
     audio.playOneShot(SOUND.MakeItem, 1);
     this._say(d.text);

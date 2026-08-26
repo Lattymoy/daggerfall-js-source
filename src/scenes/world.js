@@ -46,9 +46,10 @@ import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 // finished since U7; what was missing was a host outside the dungeon
 // that opens one, and CanRest's whole town half.
 import { restDecision } from '../systems/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window
-import { isHouseOwned } from '../systems/banking.js';   // H1: the quest residence filter
+import { isHouseOwned, shipCoords, ownsShip } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup
+import { clearSceneCache } from '../systems/sceneCache.js';   // P1: SaveLoadManager.ClearSceneCache, at PlayerGPS's map-pixel seam
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
-import { TravelMapWindow, preloadTravelMapArt, travelMapArtLoaded } from '../ui/travelMapWindow.js';   // W1: the classic art window (retires the F-slice's keyed stand-in)
+import { TravelMapWindow, preloadTravelMapArt, travelMapArtLoaded, canFindPlace } from '../ui/travelMapWindow.js';   // W1: the classic art window (retires the F-slice's keyed stand-in)
 import { buildMapDict } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict
 import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
@@ -61,7 +62,7 @@ import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert, a
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
-import { locationCompassDirection, findFactionByTypeAndRegion } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search
+import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it
 import { seasonValue, SEASONS, dateFromClassicMinutes, dateTimeString, midDateTimeString } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes
 import { regionPriceAdjustment, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from '../systems/shopStock.js';   // Q4-v: CreateGold's regional term (the shops' own producer); U41: Items.Contains(Transportation, ...)
 import { getNameBankOfRegion } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5)
@@ -126,8 +127,10 @@ import { changeLegalRep, legalRepOf, CRIMES } from '../systems/court.js';   // P
 import { isEquipped, unequipSlot } from '../systems/equip.js';
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { makeItemPermanent } from '../systems/quest/item.js';
-import { guildOfFaction, membershipOf, guildFactionIdOfGroup } from '../systems/guilds.js';
-import { resolveVariantGuild } from '../systems/guildVariants.js';
+import { guildOfFaction, membershipOf, guildFactionIdOfGroup, joinedGuildOfGroup } from '../systems/guilds.js';
+import { GUILD_GROUPS } from '../formats/factionFile.js';   // the membership book's key - the travel popup's free-ship read
+import { freeShipTravel } from '../systems/guildServices.js';   // KnightlyOrder.FreeShipTravel, the second half of hasShip
+import { resolveVariantGuild, orderOf } from '../systems/guildVariants.js';
 // TK-i: THE RUMOR MILL - the quest machine's rumor seams stop being silent.
 import { RumorMill, tokensToString } from '../systems/rumorMill.js';
 import { isFaction2RelatedToFaction1 } from '../systems/factionRelations.js';   // S44: the member this host used to stub as false
@@ -628,7 +631,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     _inExhaustion = true;
     try {
       const out = exhaustionOutcome({
-        enemiesNearby: (cityGuards?.activeCount?.() ?? 0) > 0,
+        // CollapseFromExhaustion (PlayerEntity.cs:2397) asks
+        // GameManager.AreEnemiesNearby() - the STRICT variant (no
+        // resting narrowing), over EVERY active enemy behaviour: one
+        // that can see the player or would have spawned in classic.
+        // Both of this host's pools answer it, the watch and the
+        // encounter foes, exactly as the rest deps ask them.
+        enemiesNearby: areEnemiesNearby([...(cityGuards?.guards ?? []), ...(exteriorFoes?.foes ?? [])]),
         swimming: !!player.swimming, entity: playerEntity,
         day: !isNight(minuteNow()), inside: false,
       });
@@ -842,6 +851,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   // the pixel's OWN region; the People faction stays on the boot
   // region (the recorded cross-region flag).
   let _topicsKey = false;   // false = never synced (null topics is a real state)
+  /** The player in the LOCATION frame the building directory is built
+   *  in - syncTopics owns that frame, so it hands the same closure to
+   *  the talk topics and to the compass reads below (one writer, one
+   *  space). Null outside a location, which is the wilderness. */
+  let _talkPlayerPos = () => null;
   function syncTopics() {
     let cur = null;
     for (const p of built.values()) {
@@ -866,9 +880,14 @@ export async function bootWorld(canvas, renderer, params, status) {
         regionName: maps.getRegionName(dfLocation.regionIndex), locationName: dfLocation.name,
       });
     }
-    if (!cur || !dfLocation || !cur.locBlocks) { townTalk.setTopics(null); return; }
+    if (!cur || !dfLocation || !cur.locBlocks) { _talkPlayerPos = () => null; townTalk.setTopics(null); return; }
     const { px, py } = cur;
     const lo = cur.locOrigin;
+    _talkPlayerPos = () => {
+      const t = state.pixelTranslation(px, py);
+      const pos = walkMode && playerSpawned ? player.pos : cam.pos;
+      return [pos[0] - t[0] - lo[0], pos[1] - t[1] - lo[1], pos[2] - t[2] - lo[2]];
+    };
     townTalk.setTopics({
       exteriorBuildings: dfLocation.exterior.buildings,
       blocks: cur.locBlocks,
@@ -879,13 +898,20 @@ export async function bootWorld(canvas, renderer, params, status) {
       locationName: dfLocation.name,
       regionName: maps.getRegionName(dfLocation.regionIndex),
       regionIndex: dfLocation.regionIndex,
-      playerPos: () => {
-        const t = state.pixelTranslation(px, py);
-        const pos = walkMode && playerSpawned ? player.pos : cam.pos;
-        return [pos[0] - t[0] - lo[0], pos[1] - t[1] - lo[1], pos[2] - t[2] - lo[2]];
-      },
+      playerPos: () => _talkPlayerPos(),
     });
   }
+  /** GetBuildingCompassDirection (TalkManager.cs:1203-1236) - %di's
+   *  LOCAL arm, the one both consumers ask for by that name: the
+   *  answer pipeline's GetKeySubjectLocationCompassDirection and
+   *  questMacros' %di over a Place's building. ONE closure, because
+   *  the frame and the directory are this host's to hand over. */
+  const talkBuildingCompassDirection = (buildingKey) => buildingCompassDirection({
+    listBuildings: townTalk.directory,
+    playerPos: _talkPlayerPos(),
+    isPlayerInside: (modes?.mode ?? 'exterior') !== 'exterior',
+    currentBuildingKey: modes?.interiorBuilding?.buildingKey ?? 0,
+  }, buildingKey);
   surfacePlayer();   // the probe surface exists from boot (T3b: pickpocket gold reads)
   let _livePersons = [];
   // G1: the city watch (SpawnCityGuards verbatim) - the streaming
@@ -1353,6 +1379,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Q4-v: the live machine's log walk and the player's notebook
     questMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
     notebook: () => questBridge?.notebook ?? null,
+    // ...and the sheet's LOGBOOK button opens the same journal the HUD
+    // key does, so it gets the same find-place seam (THE FOUR HOSTS).
+    currentLocationName: () => _questLoc()?.name ?? '',
+    canFindPlace: (regionName, name) => canFindPlace(maps, mapDict, regionName, name),
+    gotoPlace: (place) => toggleTravelMap(place),
   }));
   /** U43: the two journal doors (GameManager.cs:541-548), ONE window
    *  either way - LogBook opens it as it stands, NoteBook on the
@@ -1363,6 +1394,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       questMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
       notebook: () => questBridge?.notebook ?? null,
       mode,
+      // HandleQuestClicks' three world questions (:439-466). This is the
+      // host that owns the travel map, so this is the host that answers
+      // them - the dungeon context and the standalone town page have no
+      // map to be sent to and leave gotoPlace unset, which is the same
+      // nothing a CanFindPlace miss produces.
+      currentLocationName: () => _questLoc()?.name ?? '',
+      canFindPlace: (regionName, name) => canFindPlace(maps, mapDict, regionName, name),
+      gotoPlace: (place) => toggleTravelMap(place),
     });
   };
   /** S40: THE REST KEY, OUTDOORS. CanRest's FIRST arm - the one that
@@ -1697,14 +1736,20 @@ export async function bootWorld(canvas, renderer, params, status) {
       _loading = false;
     }
   }
-  const toggleTravelMap = () => {
-    if (townTalk.overlayActive) return;
+  const toggleTravelMap = (gotoPlace = null) => {
+    // FindPlace_OnButtonClick (DaggerfallQuestJournalWindow.cs:353-363)
+    // closes the journal and posts dfuiOpenTravelMapWindow in the same
+    // breath, so the journal is still the mounted overlay when the map
+    // is asked for - a goto opens past the "an overlay is up" guard the
+    // M key answers to.
+    if (!gotoPlace && townTalk.overlayActive) return;
     // W1: the classic window needs its art. Without it there is no
     // map to click, so the door says so rather than opening a blank
     // one (the HUD/pause law: a missing IMG closes a door, never the
     // game).
     if (!travelMapArtLoaded()) { townTalk.say('(the travel map art is unavailable)'); return; }
     _travelMap = buildTravelMapWindow({ onTravel: (pick, opts, computed) => { fastTravelTo(pick, opts, computed); } });
+    if (gotoPlace) _travelMap.gotoPlace(gotoPlace);   // GotoPlace (:214-217), consumed on the map's first tick
     townTalk.showOverlay(_travelMap);
   };
   /** G5: the map the guild's TELEPORT service opens - the same
@@ -1736,11 +1781,23 @@ export async function bootWorld(canvas, renderer, params, status) {
       goldPieces: () => goldAmount(playerEntity),
       // Items.Contains(Transportation, Horse / Small_cart)
       // (DaggerfallTravelPopUp.cs:216-217) - the general store sells
-      // both, so the calculator's transport modifier is real. A SHIP
-      // still has no ownership state (the transport arc's row).
+      // both, so the calculator's transport modifier is real.
       hasHorse: () => hasTransport(TRANSPORT_HORSE),
       hasCart: () => hasTransport(TRANSPORT_SMALL_CART),
-      hasShip: false,
+      // `DaggerfallBankManager.OwnsShip || GuildManager.FreeShipTravel()`
+      // (DaggerfallTravelPopUp.cs:219), read at OnPush like the two
+      // above. FreeShipTravel is base-false everywhere and overridden
+      // only by the knightly orders (KnightlyOrder.cs:167-170: rank 6),
+      // so the order slot of the membership book is the only one that
+      // can answer yes; the record keys by GROUP and carries the
+      // guild's name, so the order is recoverable from it (the tavern
+      // window's free-rooms read does the same).
+      hasShip: () => {
+        if (ownsShip(playerEntity)) return true;
+        const km = joinedGuildOfGroup(playerEntity.guildMemberships ?? {}, GUILD_GROUPS.KnightlyOrder);
+        const order = km?.guild?.startsWith('Order:') ? orderOf(km.guild.slice('Order:'.length)) : null;
+        return !!order && freeShipTravel(order, km);
+      },
       diseaseCount: () => diseaseCount(playerEntity),
       poisonCount: () => poisonCount(playerEntity),
       ...extra,
@@ -2246,6 +2303,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       { playerMapPixel: playerTravelPixel, maps },
       place?.siteDetails?.locationName ?? '',
     ),
+    /** GetBuildingCompassDirection (TalkManager.cs:1203-1236) - %di's
+     *  LOCAL arm, over the SAME closure the answer pipeline is given. */
+    buildingCompassDirection: (buildingKey) => talkBuildingCompassDirection(buildingKey),
     changeLegalRep: (amount) => changeLegalRep(playerEntity, _questLoc()?.regionIndex ?? 0, amount),
     mountCurrentSiteQuestResources: () => modes?.mountQuestResources?.(),
     // ---- B1 (AUDIT 25 blocker 1): THE FOE SPAWN SEAMS. The machine
@@ -2411,7 +2471,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     guildOfBuildingFaction: () => null,   // TK-v wires the guild MCP
     sgroupReputation: (sgroup) => playerEntity.sGroupReputations?.[sgroup] ?? 0,
     reactionToPlayer: (faction) => (faction ? getReactionToPlayer(faction, playerEntity) : 0),
-    expandRandomTextRecord: (id) => townTalk.lines(id).map((r) => r.text ?? r).join(' '),
+    // TalkToNpc (TalkManager.cs:2649) expands the GREETING through
+    // ExpandRandomTextRecord (:3580-3587) - one random variant, the
+    // full macro pass, TokensToString with no separator. The same
+    // seam the pipeline below is given: the greeting ladder (7206-7209)
+    // and the guild table (8550-8571) carry %pcf/%pcn/%cn/%oth, and a
+    // line-join printed those raw. `talkMcp` is the next statement's
+    // closure and only runs at talk time.
+    expandRandomTextRecord: (id) => expandTalkRecord(id, talkMcp()),
     randomTokens: (id) => townTalk.variantTokens(id),
     questorPostMessages: () => rumorMill.dictQuestorPostQuestMessage,
     getQuest: (questID) => questBridge?.machine.getQuest(questID) ?? null,
@@ -2508,6 +2575,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       const d = _questStore()?.dict;
       return d ? isFaction2RelatedToFaction1(d, id1, id2) : false;
     },
+    // GetKeySubjectLocationCompassDirection (TalkManager.cs:1189-1201)
+    // ends in GetBuildingCompassDirection; unwired, every directional
+    // where-is answer expanded %di to '...never mind...'.
+    buildingCompassDirection: (buildingKey) => talkBuildingCompassDirection(buildingKey),
     setRandomQuestor: () => npcSession.setRandomQuestor(),
     // TK-v: THE TONE GATE's two seams. C# recomputes the reaction tier
     // inside GetAnswerText when the tone CHANGED (:1994-1995), so the
@@ -3159,6 +3230,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
 
     // Streaming step: recentre, enqueue new pixels, drop far ones.
+    const wasMapPixel = { x: state.current.x, y: state.current.y };   // state.update overwrites it; PlayerGPS's lastMapPixelX/Y
     const r = state.update(cam.pos);
     if (r.offset) {
       // FloatingOrigin.OffsetPlayerController (:176-181) adjusts the
@@ -3186,6 +3258,23 @@ export async function bootWorld(canvas, renderer, params, status) {
       magic.offsetAll(r.offset);
     }
     if (r.pixelChanged) {
+      // P1: PlayerGPS.Update (:329-339). The map pixel changed, so
+      // the world has moved on - "Clear non-permanent scenes from
+      // cache, unless going to/from owned ship". Everything the
+      // player rearranged in an ordinary interior (emptied shelves,
+      // dropped loot, opened doors) is forgotten here; a PERMANENT
+      // scene - a rented room, a bought house, the ship - keeps its
+      // loot across the clear, minus its corpse markers. The ship
+      // exception is the one place a non-permanent scene survives:
+      // DFU skips the clear entirely when either end of the move is
+      // the ship's own pixel (GetShipCoords answers null with no
+      // ship, and the whole test collapses to "always clear").
+      const ship = shipCoords(playerEntity);
+      const toOrFromShip = !!ship && ((r.current.x === ship.x && r.current.y === ship.y)
+        || (wasMapPixel.x === ship.x && wasMapPixel.y === ship.y));
+      if (!toOrFromShip && playerEntity.sceneCache) {
+        clearSceneCache(playerEntity.sceneCache, { start: false });
+      }
       queue.push(...r.load);
       for (const u of r.unload) {
         destroyPixel(u.px, u.py);

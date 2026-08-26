@@ -159,6 +159,10 @@ export const LIVE = Object.freeze({
   // screen shipped - the outline it offers is drawn by a window the
   // port did not have until the region pages landed.
   'GUI/TravelMapLocationsOutline': 'src/ui/travelMapWindow.js',
+  // TransferItem's quest arm (DaggerfallInventoryWindow.cs:1487) - the
+  // gate on moving a quest item out of the pack, read by the one law
+  // both the inventory window and the shop's Sell staging call.
+  'GUI/CanDropQuestItems': 'src/ui/nativeInventory.js',
 });
 /** unavailable: meaningless in a browser, or the port implements only
  *  ONE side of the branch. The launcher shows these disabled WITH the

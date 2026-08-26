@@ -24,6 +24,11 @@ import { CLASSIC_UPDATE_INTERVAL } from './weaponStates.js';
 import { MELEE_DISTANCE, withinYaw } from './enemyMotor.js';
 import { resetMeleeTimer } from './enemyAttack.js';
 import { effectsAlreadyOnTarget } from '../systems/effects.js';
+// SetReadySpell's silence refusal (EntityEffectManager.cs:314-316):
+// `if ((!noSpellPointCost && SilenceCheck()) || castInProgress) return false`.
+// DoTouchSpell reads that answer as the last term of its condition, so the
+// gate belongs to the DECISION, not only to the executor below.
+import { silenceBlocksCast } from '../systems/mysticism.js';
 
 // AUDIT 24 (wave 24): EnemyAttack.cs's two ranged bounds have one
 // home; this module declared them again. Wave 35 MOVED that home to
@@ -110,7 +115,14 @@ export class EnemyCaster {
     if (idle && ai.inSight && ai.detected && ai.giveUpTimer > 0
         && attack.meleeTimer === 0 && dist <= MELEE_DISTANCE) {
       const sp = pickTouchSpell(ent, playerEntity, this.rolls);
-      if (sp) {
+      // EnemyMotor.cs:619-628: SetReadySpell is the LAST term of
+      // DoTouchSpell's `&&` chain and ResetMeleeTimer runs INSIDE the
+      // body, after it. CanCastTouchSpell (the pick, and its roll) has
+      // already run by then - so a silenced foe still draws the pick,
+      // then SetReadySpell refuses, DoTouchSpell answers false, and the
+      // SHARED melee timer is left alone for EnemyAttack's ordinary
+      // swing.
+      if (sp && !silenceBlocksCast(ent)) {
         attack.meleeTimer = resetMeleeTimer(attack.playerLevel, attack.reflexes, this.rolls());
         return { spell: sp, touch: true };
       }

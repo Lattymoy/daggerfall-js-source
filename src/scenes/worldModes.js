@@ -41,7 +41,7 @@ import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AU
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
 import { maxFatigue, liveStat } from '../systems/statMods.js';   // AUDIT 23 (C5); U40: strength for MaxEncumbrance
-import { maxEncumbrance } from '../combat/formulas.js';   // U40: the letter-of-credit gate
+import { entityMaxEncumbrance } from '../combat/formulas.js';   // U40: the letter-of-credit gate
 import { nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries ride every host's light array
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
@@ -735,7 +735,7 @@ export function createWorldModes(host) {
       cityName: () => townTalk?.cityName?.() ?? (interiorBuilding?.name ?? ''),
       weight: () => ({
         carriedWeightKg: totalWeight(playerEntity.items ?? []),
-        maxEncumbranceKg: maxEncumbrance(liveStat(playerEntity, 'strength')),
+        maxEncumbranceKg: entityMaxEncumbrance(playerEntity),   // DaggerfallTradeWindow.cs:1039 reads PlayerEntity.MaxEncumbrance
       }),
       commit: (m, staged, price, proceeds) => commitTrade(shelf, m, staged, price, proceeds, identifySpell),
       icons: { getTexture, uploadRecord, textures: renderer.textures },
@@ -1335,7 +1335,7 @@ export function createWorldModes(host) {
       },
       addLetter: (loc) => { (playerEntity.items ??= []).unshift(loc); },
       carriedWeightKg: () => totalWeight(playerEntity.items ?? []),
-      maxEncumbranceKg: () => maxEncumbrance(liveStat(playerEntity, 'strength')),
+      maxEncumbranceKg: () => entityMaxEncumbrance(playerEntity),   // DaggerfallBankManager.cs:370 reads PlayerEntity.MaxEncumbrance
     };
   }
 

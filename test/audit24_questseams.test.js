@@ -48,18 +48,14 @@ const PENDING = new Map([
   ['currentRegionVampireClan', 'GetCurrentRegionVampireClan - the vampirism arc'],
   ['playerVampireClan', 'the vampirism racial effect - the vampirism arc'],
   ['playerVampireClanName', 'rides the vampirism arc above'],
-  // AUDIT 24 (wave 26): found by closing the alias hole above. The
-  // other two the alias hid - findFactionByTypeAndRegion and
-  // locationCompassDirection - were MOUNTED in the same wave; this one
-  // cannot be. GetBuildingCompassDirection (TalkManager.cs:1203-1236)
-  // compares the target building's position against the PLAYER's,
-  // transformed into the exterior automap's layout space
-  // (ExteriorAutomap.blockSizeWidth * numMaxBlocksX * LayoutMultiplier,
-  // recentred on the block grid). The port has listBuildings and their
-  // positions but no automap layout to transform the player into, and
-  // a direction computed in the wrong space is a plausible WRONG
-  // answer where the miss arm is a loud '...never mind...'.
-  ['buildingCompassDirection', "%di's LOCAL arm - needs the player's position in the exterior automap's layout space"],
+  // AUDIT 26 (F092) MOUNTED buildingCompassDirection, the third seam
+  // the wave-26 alias hole hid. The excuse that stood here - "no
+  // automap layout to transform the player into" - measured the wrong
+  // thing: DFU's map transform is a translate+scale of the location's
+  // own plane, so only the PAIR has to share a frame, and the building
+  // directory and the player already share the location frame that
+  // GetAnswerWhereIs' compass has used since T3c. Unmounted, every
+  // directional answer expanded %di to '...never mind...'.
 ]);
 
 /** Bridge-ctx seams the HOST cannot answer yet. Same rule as PENDING

@@ -39,6 +39,8 @@
 // whenever basePower is not a multiple of four. That is a real,
 // observable off-by-one in the player's favour nowhere.
 
+import { doEnchantedPayloads, classicEnchantmentType } from './enchantments.js';   // SetEnchantments' created-payload callback (:1289-1300) and its ClassicType store (:1316-1320)
+import { unequipItem } from './equip.js';   // DaggerfallUnityItem.UnequipItem (:1183-1196)
 import { templateByIndex } from './itemTemplates.js';
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { WEAPON_MATERIALS } from '../characters/weapons.js';
@@ -194,14 +196,41 @@ export function enchantDecision(item, powers = [], sideEffects = [], { gold = 0 
   return { kind: 'enchant', text: ITEM_ENCHANTED, goldCost, cost, power };
 }
 
-/** SetEnchantments' truncation (:1271-1280). Ten is a CAP, not a
- *  refusal: DFU applies the first ten and drops the rest silently.
- *  An empty list THROWS there rather than making a plain item. */
-export function applyEnchantments(item, enchantments) {
+/** SetEnchantments (DaggerfallUnityItem.cs:1271-1341). Ten is a CAP,
+ *  not a refusal: DFU applies the first ten and drops the rest
+ *  silently. An empty list THROWS there rather than making a plain
+ *  item.
+ *
+ *  AND IT IS NOT JUST A COPY. Three things ride the same call:
+ *
+ *  1. THE CREATED PAYLOAD (:1289-1300). Every settings row whose
+ *     effect carries EnchantmentPayloadFlags.Enchanted fires its
+ *     callback here, with this item as sourceItem. That flag is the
+ *     ONLY way FeatherWeight (weight -> 0.25kg) and ExtraWeight
+ *     (weight x4) ever write anything, and it is where HealthLeech
+ *     starts its day/week clock so a fresh daily item does not leech
+ *     from its first round.
+ *
+ *  2. THE UNEQUIP (:1338-1341). "Unequip item - entity must equip
+ *     again. This ensures 'on equip' effect payloads execute
+ *     correctly" - DFU's own comment. `owner` is SetEnchantments'
+ *     second parameter and its default is null (no owner, nothing to
+ *     unequip). */
+export function applyEnchantments(item, enchantments, { owner = null, ctx = null, nowMinutes = null } = {}) {
   if (!enchantments || enchantments.length === 0) {
     throw new Error('applyEnchantments: enchantments cannot be null or empty');
   }
-  item.enchantments = enchantments.slice(0, MAX_ENCHANTMENTS).map((e) => ({ ...e }));
+  const applied = enchantments.slice(0, MAX_ENCHANTMENTS).map((e) => ({ ...e }));
+  doEnchantedPayloads(item, applied, { entity: owner, ctx, nowMinutes });
+  unequipItem(owner, item);
+  // 3. AND WHAT IS STORED IS THE CLASSIC TYPE (:1316-1320). The
+  //    settings rows name their effect by key (the catalogue's own
+  //    'FeatherWeight'); `legacyEnchantment.type = settings
+  //    .ClassicType` writes the NUMBER, which is the form every
+  //    runtime reader - the payload dispatcher, the value sum, the
+  //    held fold - looks the effect up by. A made item whose rows
+  //    kept their keys is an item whose enchantments do nothing.
+  item.enchantments = applied.map((e) => ({ ...e, type: classicEnchantmentType(e.type) }));
   return item;
 }
 

@@ -223,7 +223,17 @@ test('settings AUDIT: turning ShowOptionsAtStart off asks first', async () => {
   assert.ok(w.dialog, 'a confirm opens rather than the value silently flipping');
   assert.match(w.dialog.lines.join(' '), /\?launcher/, 'and it names the way back');
   assert.equal(getBool('GUI', 'ShowOptionsAtStart'), true, 'nothing changed yet');
-  w.click(0, 0, canvas);   // any click resolves the dialog's default (Turn Off)
+  // AUDIT 26 F152: the confirm is resolved by CLICKING ITS BUTTON.
+  // This used to click (0,0) and pass, because any click ran the
+  // affirmative - which is what made the drawn "Keep It" turn the
+  // screen off anyway.
+  const keepIt = w.layout(canvas).dialog.buttons[1].rect;
+  w.click(keepIt[0] + 1, keepIt[1] + 1, canvas);
+  assert.equal(getBool('GUI', 'ShowOptionsAtStart'), true, 'Keep It declines');
+  w.focus = idx;
+  w.input('ArrowLeft', {}, canvas);
+  const turnOff = w.layout(canvas).dialog.buttons[0].rect;
+  w.click(turnOff[0] + 1, turnOff[1] + 1, canvas);
   assert.equal(getBool('GUI', 'ShowOptionsAtStart'), false, 'confirming turns it off');
   _resetForTests();
 });

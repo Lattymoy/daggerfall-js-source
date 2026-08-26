@@ -339,20 +339,32 @@ export function localListAccepts(mode, item, { accepts = () => true, enchanted =
 /** LocalItemListScroller_OnItemClick as a decision (:788-826). A click
  *  on the player's own item either STAGES it or is REFUSED with a
  *  box, and which of the two is entirely mode-dependent:
- *    Sell/SellMagic - always stages (the list is already filtered)
+ *    Sell/SellMagic - the LOADED CART is refused, silently; anything
+ *                     else stages (the list is already filtered)
  *    Repair         - the three refusals, in DFU's own click order
  *    Identify       - refused when the item is already identified,
  *                     UNLESS the spell is in use ("matches classic")
  *    Buy            - a BASKET item clicks back out to the shelf;
  *                     anything else is the equip path, not a trade
  *  Answers { kind: 'stage' } | { kind: 'unstage' } | { kind: 'refuse',
- *  textId | text } | { kind: 'ignore' }. */
+ *  textId | text } | { kind: 'ignore' }. Every 'stage' is a
+ *  TransferItem call in DFU (:795, :817, :823, :826), so the window
+ *  owes it TransferItem's own guards on top of this. */
 export function localClickDecision(mode, item, {
   inBasket = () => false, allowMagicRepairs = false, usingIdentifySpell = false,
+  wagonLoaded = false, usedWagon = null,
 } = {}) {
   switch (mode) {
     case 'Sell':
     case 'SellMagic':
+      // "Are we trying to sell the non empty wagon?" (:789-794).
+      // PlayerEntity.Items.GetItem(Transportation, Small_cart) is the
+      // cart the player actually owns, and the click is dropped
+      // SILENTLY while WagonItems.Count > 0 - selling the cart out
+      // from under a loaded wagon would strand everything in it. A
+      // HORSE is Transportation too and is not that record, so it
+      // still sells, loaded cart or not.
+      if (item.group === 'Transportation' && wagonLoaded && usedWagon === item) return { kind: 'ignore' };
       return { kind: 'stage' };
     case 'Repair': {
       const refusal = repairRefusal(item, { allowMagicRepairs });

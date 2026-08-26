@@ -509,9 +509,11 @@ export function tickPlayerMinutes({
     // conditions half. The power half therefore fires on both cadences,
     // and on the 266-day minute where the two align it fires TWICE -
     // two separate ifs, both calling a member that always walks the
-    // powers. That is reproduced here; what is missing is the
-    // conditions body, which is FLAGGED (it needs
-    // PersistentFactionData's alliance mutators, unported).
+    // powers. That is reproduced here, and so is the conditions body:
+    // the alliances that end and start, the rivalries, the wars, the
+    // famines and plagues and crime waves, and the new-ruler roll all
+    // land through this one call (regionPower.js:factionConditionsStep),
+    // over the S42 region store the player carries.
     //
     // DFU's own note on this arm is worth keeping: classic ran the
     // conditions version only on a minute divisible by BOTH 10080 and
@@ -519,7 +521,10 @@ export function tickPlayerMinutes({
     // supposed to be every 38 days" and made it so. A DFU deviation
     // from classic, inherited deliberately.
     if (i % REGION_CONDITIONS_INTERVAL_MINUTES === 0) {
-      regionPowerUpdate(entity.factionRep ?? null, { rumorMill: entity.rumorMill ?? null, rolls });
+      regionPowerUpdate(entity.factionRep ?? null, {
+        rumorMill: entity.rumorMill ?? null, rolls,
+        updateConditions: true, regionConditions: entity.regionConditions ?? null,
+      });
       // StartRacialOverrideQuest(false) rides this arm too - unported.
     }
   }
