@@ -189,10 +189,17 @@ test('audit26p F216: the world envelope carries the live encounter foes, in NATI
   const s = src('src/scenes/world.js');
   const i = s.indexOf('function worldQuickSave');
   const fn = s.slice(i, s.indexOf('let _loading = false;', i));
-  assert.ok(fn.includes('foes: exteriorFoes.foes.filter((f) => !f.dead && f.ai && !f.questBehaviour)'),
-    'every live non-quest foe rides the save');
-  assert.ok(fn.includes('const fwc = state.worldCoords(f.ai.feet);'), 'positions are NATIVES, not scene coords');
-  assert.ok(fn.includes('y: f.ai.feet[1] - state.compensation[1]'), 'and the height sheds the compensation');
+  // AUDIT 26: this pin used to assert the `!f.dead &&` filter - the
+  // port's answer, not the C#. SerializableEnemy SAVES the dead
+  // (:115 isDead) and the restore disables the restored enemy
+  // (:200-203); EnemyDeath.cs:76-77 keeps the object alive for exactly
+  // that reason. Dropping corpses from the envelope while the load's
+  // teardown could not remove them either duplicated their loot
+  // through the save key.
+  assert.ok(fn.includes('foes: exteriorFoes.foes.filter((f) => f.ai && !f.questBehaviour && (!f.dead || f.corpse))'),
+    'every non-quest foe rides the save, a body on the ground included');
+  assert.ok(fn.includes('const fwc = state.worldCoords(fpos);'), 'positions are NATIVES, not scene coords');
+  assert.ok(fn.includes('y: fpos[1] - state.compensation[1]'), 'and the height sheds the compensation');
   // SerializableEnemy's own fields (:110-118)
   for (const k of ['mobileType', 'gender', 'yaw', 'health', 'magicka', 'items', 'hostile', 'encountered']) {
     assert.ok(new RegExp(`${k}:`).test(fn), `the record carries ${k}`);
@@ -203,8 +210,11 @@ test('audit26p F216: the load re-mints exactly the saved enemy set', () => {
   const s = src('src/scenes/world.js');
   const i = s.indexOf('async function worldQuickLoad');
   const fn = s.slice(i, s.indexOf('const toggleTravelMap', i));
-  assert.ok(fn.includes('for (const f of [...exteriorFoes.foes]) { if (!f.questBehaviour) exteriorFoes.removeFoe(f); }'),
-    'the live pool is destroyed first - a foe born after the save does not survive the load');
+  // AUDIT 26: and this half pinned a teardown that could not tear a
+  // corpse down. removeFoe's first line returns on a dead foe, so the
+  // destroy is TWO doors - the disabled enemy and its loot container.
+  assert.ok(fn.includes('exteriorFoes.removeFoe(f);') && fn.includes('exteriorFoes.removeCorpse(f);'),
+    'the live pool AND its bodies are destroyed first - nothing born or killed after the save survives the load');
   assert.ok(fn.includes('const [fx, fz] = state.localFromWorld(sf.nativeX, sf.nativeZ);'),
     'and the saved ones land at their native spots under the NEW origin');
   assert.ok(fn.includes('await exteriorFoes.spawnFoe(sf.mobileType,'), 'ASYNC NEVER DROPS: the re-mint is awaited');

@@ -11,6 +11,18 @@ import { StreamingWorldState } from '../src/world/streamingWorld.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
+/** The `{ ... }` block containing index `i`, matched rather than
+ *  guessed at by character count. */
+function braceBlock(text, i) {
+  const open = text.indexOf('{', i);
+  let depth = 0;
+  for (let k = open; k < text.length; k++) {
+    if (text[k] === '{') depth++;
+    else if (text[k] === '}' && --depth === 0) return text.slice(open, k + 1);
+  }
+  return text.slice(open);
+}
+
 test('worldsave: the envelope round-trips the world half and the streamer inverts natives exactly', () => {
   const entity = {
     name: 'T', level: 3, health: 20, maxHealth: 30, fatigue: 100, magicka: 10, maxMagicka: 40,
@@ -59,7 +71,12 @@ test('worldsave: the world host wires F9/F11 with the native envelope and the lo
   // host must still ride it, with the live bridge and the full trio
   assert.ok(fn.includes('...composeSessionState({ questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession } })'), 'Q4-v/TK-iv via B4: quest + SaveDataConversation ride the quicksave through the composer');
   const j = s.indexOf('async function worldQuickLoad');
-  const lf = s.slice(j, j + 4200);   // Q4-v widened the function (the quest envelope restore); TK-iv widened it again (the conversation halves); AUDIT 26 F216 again (the enemy set the load re-mints)
+  // AUDIT 26: brace-MATCHED, not a fixed character count. Every wave
+  // that touched this restore arm (Q4-v's quest envelope, TK-iv's
+  // conversation halves, F216's enemy set, this wave's maxHealth/
+  // fatigue/bundles/equip-link) pushed the tail asserts out of a
+  // window that was a guess rather than a block.
+  const lf = braceBlock(s, j);
   assert.ok(lf.includes('restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession } })'), 'Q4-v via B4: the quest envelope restores through the composer');
   assert.ok(lf.includes('_questStarted = true'), 'a restored quest latches the start guard - initAtGameStart must not re-run over it');
   assert.ok(lf.includes('await _teleportToPixel(w.pixel.x, w.pixel.y)'), 'the load teleports through the travel core');

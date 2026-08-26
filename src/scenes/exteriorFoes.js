@@ -46,7 +46,31 @@ import { bindQuestFoeHost } from './questFoeHost.js';   // B1: quest foes ride t
 // The port's allocation-owner guards (classic self-limits through the
 // 144-minute cadence; these keep a long session bounded).
 export const MAX_ACTIVE_ENCOUNTER_FOES = 8;
+
 export const ENCOUNTER_CULL_DISTANCE = 120;
+
+/** AUDIT 26: the port's stand-in for one ulong of
+ *  ItemEquipTable.SerializeEquipTable (:333-345) - the RightHand slot,
+ *  the only equip link an enemy entity carries here. (ArmorValues are
+ *  RE-DERIVED by the spawn's own SetEnemyEquipment pass, so DFU does
+ *  not save them and neither does this.) DeserializeEquipTable
+ *  (:353-373) re-links the table to the item of that UID inside the
+ *  RESTORED collection, which is why a loaded foe swings the weapon
+ *  its save recorded instead of the one its respawn rolled.
+ *
+ *  DFU can write a UID because AssignEnemyStartingEquipment equips the
+ *  SAME DaggerfallUnityItem it adds to entity.Items. The port mints two
+ *  objects - hostCombat.equipEnemy sets `entity.weapon = eq.rightHand`
+ *  and pushes `{ group: 'Weapons', ...eq.rightHand }` into entity.items
+ *  - so the link falls back to the item's own fields where the
+ *  reference is not shared. FLAGGED: sharing that one reference at the
+ *  spawn is the equip table's real shape and would make this a plain
+ *  indexOf. Returns -1 for a bare-handed foe, which is what an empty
+ *  RightHand slot serializes to. */
+export const equippedWeaponIndex = (weapon, items) => (weapon
+  ? items.findIndex((it) => it === weapon
+    || (it.group === 'Weapons' && it.templateIndex === weapon.templateIndex && it.material === weapon.material))
+  : -1);
 
 export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame,
   playerEntity, audio, onPlayerHurt, currentMinute, say = null, rolls = Math.random,
@@ -77,9 +101,14 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  QuestResourceBehaviour host at the stand. A quest foe is exempt
    *  from the encounter self-limit: DFU's CreateFoe spawns
    *  unconditionally, and the cap is the port's own encounter bound,
-   *  not a law. */
-  async function spawnFoe(mobileType, pos, { gender: forcedGender = null, yaw = null, questBehaviour = null } = {}) {
-    if (!questBehaviour && activeCount() >= MAX_ACTIVE_ENCOUNTER_FOES) return null;
+   *  not a law. `ignoreEncounterLimit` is the same exemption for the
+   *  same reason: SerializableStateManager.RestoreEnemyData
+   *  (:404-425) instantiates EXACTLY the saved enemy set, one prefab
+   *  per record and no cap in sight, so a load that had to re-mint
+   *  eight live foes plus their corpses cannot be turned away by the
+   *  port's own encounter bound. */
+  async function spawnFoe(mobileType, pos, { gender: forcedGender = null, yaw = null, questBehaviour = null, ignoreEncounterLimit = false } = {}) {
+    if (!questBehaviour && !ignoreEncounterLimit && activeCount() >= MAX_ACTIVE_ENCOUNTER_FOES) return null;
     const basics = ENEMY_BASICS[mobileType];
     if (!basics || !basics.maleTexture) return null;
     try {
@@ -186,6 +215,74 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     f.batch = null;
   }
 
+  /** EnemyDeath.CompleteDeath's corpse half (:85-127), lifted out of
+   *  damageFoe because a LOAD mints one too: SerializableEnemy writes
+   *  `isDead` (:115) and the restore re-instantiates the enemy and
+   *  disables it (:200-203), so a body that was on the ground when the
+   *  save was written is on the ground again after the load - it is
+   *  not a thing only a kill can make.
+   *
+   *  AUDIT 24 (wave 38): the marker lands at FindGroundPosition (:817),
+   *  not at f.ai.feet - a flying foe's body is metres below where it
+   *  died - and BodyFall rings with it (:126-129). TrackLooseObject
+   *  runs INSIDE CreateEnemyCorpseMarker, so the pixel is read now, not
+   *  when the texture warms. */
+  function spawnCorpse(f) {
+    f.corpse = true;
+    // the LIVE batch is finished the moment the foe is - batches()
+    // skips every dead foe, and the corpse draws from its own batch
+    // below. AUDIT 24: this one was never freed either, and unlike
+    // the cull the record STAYS in `foes` (the tail splice spares
+    // corpses), so the batch was unreachable and undead at once.
+    releaseFoeBatch(f);
+    const _corpsePixel = currentPixelKey();
+    return mintCorpseMarker({
+      renderer, getTexture, uploadRecordFrame, collider,
+      corpseTexture: ENEMY_BASICS[f.mobileType]?.corpseTexture,
+      feet: f.ai.feet,
+      fallbackSize: scaledBillboardSize(f.tex.getSize(0), f.tex.getScale(0)),
+      // the SL2 guard, widened: the body must still be a body when the
+      // texture lands. A backward load resurrects a foe inside this
+      // await (f.dead), and removeCorpse/collectPixel destroy the
+      // corpse inside it (f.corpse) - either way nothing may push a
+      // batch nothing will ever free.
+      stillDead: () => f.dead && f.corpse,
+    }).then((c) => {
+      if (!c) return;
+      f.corpseMarker = c;   // the loot seam reads the GROUND position from here
+      // TrackLooseObject's stamp: the streamer's pixel at the death,
+      // not the corpse's own position.
+      c.pixelKey = f.corpsePixelKey = _corpsePixel;
+      corpseBatches.push(c);
+      playBodyFall(audio, c.pos);
+    }).catch(() => {});
+  }
+
+  /** The corpse half of a load's teardown. RestoreEnemyData (:404-425)
+   *  re-instantiates the whole saved enemy set over a rebuilt scene, and
+   *  a corpse in DFU is TWO destroyed things: the disabled enemy object
+   *  (EnemyDeath.cs:77 - "do not destroy as we must still save enemy
+   *  state when dead") and its loot container, a loose object that goes
+   *  with ClearStreamingWorld. removeFoe is only the LIVE half - its
+   *  first line returns on a dead foe, because a dispel cannot re-kill
+   *  a body - so without this door a quickload left every corpse of the
+   *  session standing WITH its loot while the save's own copy of the
+   *  same foe respawned alive carrying a duplicate.
+   *
+   *  Clearing `corpse` is the Destroy, exactly as collectPixel's is:
+   *  batches() stops drawing it, lootTargets stops probing it, and
+   *  update()'s tail splice finally prunes the record. */
+  function removeCorpse(f) {
+    if (!f.corpse) return;
+    const i = corpseBatches.indexOf(f.corpseMarker);
+    if (i >= 0) {
+      renderer.destroyBillboardBatch(corpseBatches[i].batch);
+      corpseBatches.splice(i, 1);
+    }
+    f.corpse = false;
+    f.corpseMarker = null;
+  }
+
   function damageFoe(f, damage, playerFeet, knockDir = null) {
     if (f.ai && !f.ai.isHostile) { f.ai.isHostile = true; f.ai.makeHostileToPlayer?.(undefined, playerFeet ?? null); }   // wave 36: seeded with where the attack came from
     f.entity.health -= damage;
@@ -196,38 +293,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       if (trap.alert) say?.(SOUL_TRAP_TEXT[trap.alert]);
       if (!trap.allowDeath) { f.entity.health = 1; return; }
       f.dead = true;
-      f.corpse = true;
-      // the LIVE batch is finished the moment the foe is - batches()
-      // skips every dead foe, and the corpse draws from its own batch
-      // below. AUDIT 24: this one was never freed either, and unlike
-      // the cull the record STAYS in `foes` (the tail splice spares
-      // corpses), so the batch was unreachable and undead at once.
-      releaseFoeBatch(f);
       if (f.ai?.detected) setEnemyAlert(playerEntity, false);   // EnemyDeath:132-136
       sayEnemyDied(say, f.mobileType);   // EnemyDeath:79-83, the kill notice
-      // AUDIT 24 (wave 38): EnemyDeath.CompleteDeath, through the one
-      // home. This pool minted the marker inline at f.ai.feet - so a
-      // flying encounter foe left its corpse hanging in the air where
-      // it died, where DFU drops it at FindGroundPosition (:817) - and
-      // nothing ever played BodyFall (:126-129).
-      // TrackLooseObject runs INSIDE CreateEnemyCorpseMarker, so the
-      // pixel is read at the death, not when the texture lands.
-      const _corpsePixel = currentPixelKey();
-      mintCorpseMarker({
-        renderer, getTexture, uploadRecordFrame, collider,
-        corpseTexture: ENEMY_BASICS[f.mobileType]?.corpseTexture,
-        feet: f.ai.feet,
-        fallbackSize: scaledBillboardSize(f.tex.getSize(0), f.tex.getScale(0)),
-        stillDead: () => f.dead,
-      }).then((c) => {
-        if (!c) return;
-        f.corpseMarker = c;   // the loot seam reads the GROUND position from here
-        // TrackLooseObject's stamp: the streamer's pixel at the death,
-        // not the corpse's own position.
-        c.pixelKey = f.corpsePixelKey = _corpsePixel;
-        corpseBatches.push(c);
-        playBodyFall(audio, c.pos);
-      }).catch(() => {});
+      spawnCorpse(f);
       return;
     }
     // C15 knockback, WeaponManager.cs:578-581. AUDIT 24 (wave 38): this
@@ -544,6 +612,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   // same Destroy(gameObject) the cull and the quest teardown use -
   // gone with no corpse, no loot and no death, which is exactly
   // what DFU's dispel does and why it can break quests.
+  // AUDIT 26: spawnCorpse and removeCorpse are the save's two halves -
+  // the load re-mints the bodies the envelope carries (isDead,
+  // SerializableEnemy.cs:115/:200-203) and destroys the ones the live
+  // scene had, which removeFoe alone cannot do.
   return { foes, spawnFoe, damageFoe, update, resolvePlayerHit, batches, offsetAll, activeCount, lootTargets, takeLoot,
-    collectPixel, removeFoe: questPoolOps.removeFoe };
+    collectPixel, removeFoe: questPoolOps.removeFoe, spawnCorpse, removeCorpse };
 }

@@ -54,13 +54,13 @@ import { TravelMapWindow, preloadTravelMapArt, travelMapArtLoaded, canFindPlace 
 import { buildMapDict } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict
 import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
-import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
+import { createExteriorFoes, equippedWeaponIndex } from './exteriorFoes.js';   // X-slice; AUDIT 26: the pool's one equip-table link
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1
 import { SITE_TYPES } from '../systems/quest/place.js';   // B3: the respawn dispatch reads the site type
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert, areEnemiesNearby, passiveGuardSpawns } from '../systems/encounters.js';   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
-import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
+import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState, copyEffectEntry } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer; AUDIT 26: SerializableEnemy's bundles ride the player envelope's body
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it
@@ -92,7 +92,7 @@ import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { buildingDataForDoor, locationBuildings } from '../systems/talkTopics.js';   // E2: the shop identity   // H2: every building, with its key
 import { hitSoundFor, swingSoundFor } from '../systems/soundClips.js';
-import { isInvisible } from '../systems/effects.js';
+import { isInvisible, seedBundleSeq } from '../systems/effects.js';   // AUDIT 26: the restored foe bundles lift the live-bundle counter, as the player's do
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
 import { StreamingWorldState, worldCoordToMapPixel, locationWorldRect, isInLocationRect } from '../world/streamingWorld.js';
 import { getBool, getInt } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
@@ -1798,14 +1798,64 @@ export async function bootWorld(canvas, renderer, params, status) {
         // this envelope at all - cityGuards mints a guard only through
         // SpawnCityGuards and exposes no way to re-instantiate one
         // from data. FLAGGED.
-        foes: exteriorFoes.foes.filter((f) => !f.dead && f.ai && !f.questBehaviour).map((f) => {
-          const fwc = state.worldCoords(f.ai.feet);
+        //
+        // AUDIT 26: the DEAD ride it too. `isDead` is a saved field
+        // (:115) and the restore re-instantiates the enemy and disables
+        // it (:200-203) - DFU keeps the object alive precisely so it
+        // can be saved dead ("do not destroy as we must still save
+        // enemy state when dead", EnemyDeath.cs:76-77). This arm
+        // FILTERED corpses out while the load's teardown could not
+        // remove them either, so a kill made after the save left the
+        // body and its loot standing while the envelope's own copy of
+        // that foe respawned alive with a duplicate set - free
+        // duplication through the save key - and a cold boot lost body
+        // and loot both. A dead foe whose corpse is already destroyed
+        // (culled, dispelled, collected with its pixel) is NOT saved:
+        // in DFU that object is Destroy()ed, not disabled.
+        foes: exteriorFoes.foes.filter((f) => f.ai && !f.questBehaviour && (!f.dead || f.corpse)).map((f) => {
+          // a corpse stands where its MARKER landed (FindGroundPosition),
+          // not where the foe's feet stopped - lootTargets' own law.
+          const fpos = f.corpseMarker?.pos ?? f.ai.feet;
+          const fwc = state.worldCoords(fpos);
+          const foeItems = (f.entity.items ?? []).map((it) => ({ ...it }));
           return {
             mobileType: f.mobileType, gender: f.gender, yaw: f.ai.yaw,
-            nativeX: fwc.x, nativeZ: fwc.z, y: f.ai.feet[1] - state.compensation[1],
+            nativeX: fwc.x, nativeZ: fwc.z, y: fpos[1] - state.compensation[1],
             health: f.entity.health, magicka: f.entity.magicka ?? 0,
-            items: (f.entity.items ?? []).map((it) => ({ ...it })),
+            items: foeItems,
             hostile: f.ai.isHostile !== false, encountered: !!f.ai.hasEncounteredPlayer,
+            dead: !!f.dead,
+            // AUDIT 26: startingHealth = entity.MaxHealth (:109) and
+            // currentFatigue (:111), restored at :175 and :177.
+            // makeEnemyEntity RE-ROLLS maxHealth on every spawn
+            // (enemyEntity.js:80/:85) and the load re-mints this whole
+            // pool, so without the first a restored foe could come back
+            // with health ABOVE its new maximum; without the second a
+            // fatigue-drained bandit reloaded fresh.
+            maxHealth: f.entity.maxHealth,
+            fatigue: f.entity.fatigue ?? 0,
+            // AUDIT 26: instancedEffectBundles (:120, restored at :222).
+            // subscribeFoePools runs the magic rounds over THIS pool
+            // (scenes/shared.js), so an exterior foe really does carry
+            // live effects - and every one of them (paralysis, a burn,
+            // a soul-trap mark) ended silently on load. copyEffectEntry
+            // is the player envelope's own body: the nested
+            // effect/statMods objects must detach. No heldItem filter -
+            // that split is the PLAYER's, whose held bundles are
+            // re-instantiated from the worn set at restore; nothing
+            // re-instantiates a foe's.
+            activeEffects: (f.entity.activeEffects ?? []).map(copyEffectEntry),
+            // AUDIT 26: ItemEquipTable.SerializeEquipTable (:333-345)
+            // writes the equipped item's UID and DeserializeEquipTable
+            // (:353-373) re-links the table to the item of that UID in
+            // the RESTORED collection (:174, after DeserializeItems at
+            // :173), so a loaded foe swings the weapon the save
+            // recorded. Nothing linked here: the restore replaced
+            // entity.items and left entity.weapon holding the respawn's
+            // fresh roll, so a foe swung one weapon and its corpse
+            // dropped another. The port has no item UID - the index
+            // into the foe's own item list is the same link.
+            equipRight: equippedWeaponIndex(f.entity.weapon, foeItems),
           };
         }),
       },
@@ -1848,17 +1898,54 @@ export async function bootWorld(canvas, renderer, params, status) {
         // after it stands again. The live encounter pool is destroyed
         // and re-minted from the envelope; quest foes are spared, as
         // the save arm leaves them out.
-        for (const f of [...exteriorFoes.foes]) { if (!f.questBehaviour) exteriorFoes.removeFoe(f); }
+        // AUDIT 26: the teardown is TWO destroys, because a corpse in
+        // DFU is two objects - the disabled enemy and its loot
+        // container - and removeFoe is only the live half (its first
+        // line returns on a dead foe: a dispel cannot re-kill a body).
+        // Without removeCorpse every corpse of the session survived
+        // the load with its loot, beside the same foe respawned alive
+        // carrying a duplicate.
+        for (const f of [...exteriorFoes.foes]) {
+          if (f.questBehaviour) continue;
+          exteriorFoes.removeFoe(f);
+          exteriorFoes.removeCorpse(f);
+        }
         for (const sf of w.foes ?? []) {
           const [fx, fz] = state.localFromWorld(sf.nativeX, sf.nativeZ);
+          // RestoreEnemyData instantiates one prefab per saved record
+          // with no cap of any kind (:404-425) - the pool's own
+          // encounter bound is not a law and must not turn a saved foe
+          // (or a saved body) away.
           const f = await exteriorFoes.spawnFoe(sf.mobileType, [fx, (sf.y ?? 0) + state.compensation[1], fz],
-            { gender: sf.gender, yaw: sf.yaw });
+            { gender: sf.gender, yaw: sf.yaw, ignoreEncounterLimit: true });
           if (!f) continue;   // a type this build cannot mint: DFU's own missing-prefab case is a foe that does not come back
+          // MaxHealth lands BEFORE the health it bounds (:175-176, in
+          // that order); a save older than this field leaves the
+          // respawn's own roll, as the halves below do.
+          if (sf.maxHealth != null) f.entity.maxHealth = sf.maxHealth;
           f.entity.health = sf.health;
+          if (sf.fatigue != null) f.entity.fatigue = sf.fatigue;   // :177 SetFatigue
           f.entity.magicka = sf.magicka ?? f.entity.magicka;
           f.entity.items = (sf.items ?? []).map((it) => ({ ...it }));
+          // DeserializeEquipTable relinks the table to the RESTORED
+          // items (:174, after DeserializeItems at :173) - the foe
+          // swings the weapon in its own restored inventory, the same
+          // object the corpse drops, not the respawn's fresh roll.
+          if (sf.equipRight != null) f.entity.weapon = sf.equipRight >= 0 ? (f.entity.items[sf.equipRight] ?? null) : null;
           f.ai.isHostile = sf.hostile !== false;
           f.ai.hasEncounteredPlayer = !!sf.encountered;
+          // RestoreInstancedBundleSaveData (:222): the saved set
+          // REPLACES the live one. bundleId is a module-scope counter,
+          // not saved state (save.js X10) - lift it past the restored
+          // high-water mark or the next cast on this foe reuses an id a
+          // restored entry already holds, and one Dispel strips both.
+          if (sf.activeEffects != null) {
+            f.entity.activeEffects = sf.activeEffects.map(copyEffectEntry);
+            seedBundleSeq(sf.activeEffects.reduce((m, a) => Math.max(m, a.bundleId ?? 0), 0));
+          }
+          // :200-203 - a saved-dead enemy comes back disabled, which is
+          // this pool's corpse: no live sprite, no AI, a lootable body.
+          if (sf.dead) { f.dead = true; exteriorFoes.spawnCorpse(f); }
         }
       } else if (extras.locationKey && extras.locationKey !== 'world') {
         townTalk.say('(saved elsewhere - character restored; travel there yourself)');
