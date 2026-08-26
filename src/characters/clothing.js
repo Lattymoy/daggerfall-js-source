@@ -22,14 +22,21 @@ const legs = (yLo, yHi = 1.00, th = TH) => ({ groups: [LL, LR], yLo, yHi, th, le
 const pelvis = (yLo = 0.90, yHi = 1.14, th = TH) => ({ groups: [B], yLo, yHi, th });
 const feet = (yLo = 0.00, yHi = 0.16, th = TH) => ({ groups: [LL, LR], yLo, yHi, th, leg: true });
 
+// Closed shirts/tunics must reach the rig's trap shelf and lower neck. The
+// old 1.62 cutoff stopped below the 1.64 trap row and 1.63..1.68 neck segment,
+// leaving a conspicuous bare horseshoe around the shoulders. Geometry owns the
+// neckline, so this belongs in coverage rather than in texture alpha repair.
+const closedTorso = (yLo, th = TH) => torso(yLo, 1.665, th);
+const closedSleeves = (yLo, th = TH) => sleeves(yLo, 1.645, th);
+
 // Garment TYPE -> zones. Distinct body-hugging silhouettes by coverage.
 const TYPES = {
-  'Short Shirt':      [torso(1.20), sleeves(1.36)],
-  'Long Shirt':       [torso(1.02), sleeves(1.16)],
-  'Short Tunic':      [torso(1.06), sleeves(1.40)],
-  'Formal Tunic':     [torso(1.02), sleeves(1.20)],
-  'Reversible Tunic': [torso(1.04), sleeves(1.22)],
-  'Open Tunic':       [torso(1.10), sleeves(1.40)],
+  'Short Shirt':      [closedTorso(1.20), closedSleeves(1.36)],
+  'Long Shirt':       [closedTorso(1.02), closedSleeves(1.16)],
+  'Short Tunic':      [closedTorso(1.06), closedSleeves(1.40)],
+  'Formal Tunic':     [closedTorso(1.02), closedSleeves(1.20)],
+  'Reversible Tunic': [closedTorso(1.04), closedSleeves(1.22)],
+  'Open Tunic':       [torso(1.10, 1.635), sleeves(1.40, 1.625)],
   'Vest':             [torso(1.16, 1.58)],
   'Straps':           [torso(1.30, 1.56, 0.006)],
   'Challenger Straps':[torso(1.30, 1.56, 0.006)],
@@ -38,11 +45,11 @@ const TYPES = {
   'Fancy Armbands':   [sleeves(1.24, 1.50)],
   'Brassiere':        [torso(1.40, 1.56)],
   'Formal Brassiere': [torso(1.40, 1.56)],
-  'Eodoric':          [torso(1.10, 1.60)],
-  'Formal Eodoric':   [torso(1.10, 1.60)],
+  'Eodoric':          [closedTorso(1.10)],
+  'Formal Eodoric':   [closedTorso(1.10)],
   'Casual Pants':     [legs(0.40), pelvis()],
   'Loincloth':        [pelvis(0.72, 1.08), legs(0.72, 0.92)],
-  'Khajiit Suit':     [torso(1.02), sleeves(1.16), legs(0.16), pelvis(0.90, 1.14)],
+  'Khajiit Suit':     [closedTorso(1.02), closedSleeves(1.16), legs(0.16), pelvis(0.90, 1.14)],
   'Shoes':            [feet(0.00, 0.10)],
   'Sandals':          [feet(0.00, 0.08)],
   'Boots':            [feet(0.00, 0.16)],
