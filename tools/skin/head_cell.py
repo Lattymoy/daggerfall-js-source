@@ -140,6 +140,10 @@ for fi, f2 in enumerate(F):
 
         UV += [round(ax / NW, 7), round(1.0 - ay / NH, 7)]
 
-json.dump({'n': len(F), 'w': NW, 'h': NH, 'uv': UV},
-          open(f'{OUT}/skin-uv.json', 'w'))
-print('body UVs preserved; head UVs baked; all UVs renormalized for grown atlas')
+new_uv = {'n': len(F), 'w': NW, 'h': NH, 'uv': UV}
+# The head changes only atlas dimensions. It MUST NOT strip the body baker's
+# geometry fingerprint, or the stale-rig guard disappears at the next stage.
+if old_uv.get('rigHash'):
+    new_uv['rigHash'] = old_uv['rigHash']
+json.dump(new_uv, open(f'{OUT}/skin-uv.json', 'w'))
+print('body UVs + rig hash preserved; head UVs baked; all UVs renormalized')
