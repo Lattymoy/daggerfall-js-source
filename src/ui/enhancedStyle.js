@@ -428,6 +428,94 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   .sheet-nav { padding: 12px 16px; padding-bottom: max(12px, env(safe-area-inset-bottom)); }
 }
 
+/* ── THE PACK + THE SLOT MAP (U53) ─────────────────────────
+   Three columns: what you are wearing, what you are carrying, and
+   what one of them is. The schematic gets a column of its own because
+   it is the screen's whole argument - twenty-seven slots read at a
+   glance rather than hunted for on a picture of a person. */
+.pack-shell { height: 100%; display: flex; flex-direction: column; min-height: 0; }
+.pack-id {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  padding: 26px 30px 18px; border-bottom: 1px solid var(--iron); background: var(--ink);
+}
+.pack-id h2 { font-family: var(--display); font-weight: 300; font-size: 30px; margin: 0; }
+.pack-id .meta { color: var(--dim); font-size: 13px; margin: 6px 0 0; font-variant-numeric: tabular-nums; }
+
+.pack {
+  flex: 1; min-height: 0; display: grid; gap: var(--gap);
+  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr) minmax(240px, 320px);
+  background: var(--iron);
+}
+.packcol { background: var(--slate); overflow: auto; padding: 18px 20px 26px; min-height: 0; }
+
+/* THE SLOT MAP. The figure is a schematic in --iron so it reads as
+   scaffolding; the NODES carry the information, and a filled one is
+   brass and twice the radius of an empty one - the difference has to
+   survive being glanced at on a phone. */
+.slotmap { background: var(--ink); padding: 14px 10px 10px; height: 100%; overflow: auto; }
+.slotmap svg { width: 100%; height: auto; max-height: 62vh; display: block; }
+.slotmap .figure path { fill: none; stroke: #232a33; stroke-width: 1.5; }
+.slotmap .node circle { fill: #171b21; stroke: var(--iron); stroke-width: 1.5; transition: none; }
+.slotmap .node.off circle { stroke: #232a33; }
+.slotmap .node.filled circle { fill: var(--brass); stroke: var(--brass); }
+.slotmap .node.filled { cursor: pointer; }
+.slotmap .node.filled:hover circle { fill: var(--bone); stroke: var(--bone); }
+.slotmap .node:focus-visible circle { stroke: var(--bone); stroke-width: 2.5; outline: none; }
+.slotcount {
+  color: var(--dim); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  text-align: center; margin: 8px 0 0;
+}
+
+/* THE TABS are DFU's four pages (nativeInventory.js TABS), counted. */
+.packtabs { display: flex; gap: 2px; margin: 0 0 14px; flex-wrap: wrap; }
+.packtab {
+  flex: 1 1 auto; padding: 10px 12px; min-height: 44px; text-align: center;
+  border-bottom: 2px solid transparent; color: var(--dim); font-size: 13px;
+}
+.packtab.on { color: var(--brass); border-bottom-color: var(--brass); }
+.packtab .count { display: block; font-size: 10px; color: var(--dim); font-variant-numeric: tabular-nums; }
+
+.itemrow {
+  display: flex; align-items: center; gap: 11px; width: 100%;
+  padding: 9px 8px; min-height: 48px; border-bottom: 1px solid #1b2027; text-align: left;
+}
+.itemrow:hover { background: #12161b; }
+.itemrow.on { background: #12161b; box-shadow: inset 2px 0 0 var(--brass); }
+.tile {
+  flex: 0 0 auto; width: 30px; height: 30px; display: grid; place-items: center;
+  border: 1px solid var(--iron); color: var(--dim); font-size: 11px; letter-spacing: 0.06em;
+}
+.itemname { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.itemname small { color: var(--dim); font-size: 11.5px; }
+.itemwt { flex: 0 0 auto; color: var(--dim); font-size: 12px; font-variant-numeric: tabular-nums; }
+.packempty { color: var(--dim); font-size: 14px; margin: 10px 2px; }
+.packdetail .sheet-close { display: none; }
+.iconnote { color: var(--dim); font-size: 11.5px; margin: 12px 2px 0; line-height: 1.5; }
+
+@media (max-width: 860px) {
+  .pack { grid-template-columns: 1fr; grid-auto-rows: min-content; overflow: auto; }
+  .packcol { overflow: visible; }
+  .slotmap svg { max-height: 46vh; }
+  .pack-id { padding: 20px; }
+  .pack-id h2 { font-size: 25px; }
+  /* THE DETAIL IS A SHEET, the same answer the settings pane gives to
+     the same problem: three columns do not fit one phone, and a third
+     column below the fold is a control the player cannot reach. It
+     rises when an item is picked. */
+  .packdetail {
+    position: fixed; left: 0; right: 0; bottom: 0; max-height: 70dvh; z-index: 20;
+    overflow: auto; transform: translateY(101%); transition: transform 0.22s ease;
+    border-top: 1px solid var(--brass);
+    padding-bottom: max(24px, calc(env(safe-area-inset-bottom) + 24px));
+  }
+  .packdetail.open { transform: translateY(0); }
+  .packdetail .sheet-close {
+    display: block; width: 100%; padding: 14px; min-height: 48px;
+    color: var(--dim); font-size: 12px; letter-spacing: 0.16em;
+    text-transform: uppercase; border-bottom: 1px solid var(--iron); text-align: center;
+  }
+}
+
 /* ── THE WIZARD ─────────────────────────────────────────────
    Character creation borrows the menu's shell whole - same rail, same
    panes, same phone laws - because it is the same interface one press

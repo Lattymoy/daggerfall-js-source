@@ -62,7 +62,8 @@ import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/
 // hosts have had since U8d - tabs, paperdoll, the real info panel and
 // point-and-click Use. The keyed InventoryWindow it used until now is
 // retired from this host.
-import { NativeInventoryWindow, preloadInventoryArt, WAGON_ACCESS_DISTANCE } from '../ui/nativeInventory.js';
+import { preloadInventoryArt, WAGON_ACCESS_DISTANCE } from '../ui/nativeInventory.js';
+import { createInventoryWindow } from '../ui/inventoryDoor.js';   // U53: the pack's ONE seam, and the skin fork in front of it
 import { preloadPaperDollForEntity } from '../ui/paperDoll.js';   // U26: the doll the keyed window never had
 import { createDroppedLoot } from './droppedLoot.js';   // U8e, mounted here at U26
 import { createPlayerMagic } from './hostMagic.js';   // M3: the ONE cast engine
@@ -776,7 +777,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   } : {});
 
   function openInventory(lootItems, onEmptied = null) {
-    return new NativeInventoryWindow({
+    return createInventoryWindow({
       openBook: openBookHook,   // B1: the use-mode book arm
       items: () => (playerEntity.items ??= []),
       wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice

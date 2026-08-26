@@ -82,7 +82,8 @@ import { largeHudOptions, routeLargeHudClick, hudLargeNextMode, hudLargePrevMode
 import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { getInteractionMode } from '../player/interactionMode.js';   // U45: the mode panel's cycle reads it
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
-import { NativeInventoryWindow, preloadInventoryArt, inventoryArtLoaded } from '../ui/nativeInventory.js';   // U8d: the native inventory
+import { preloadInventoryArt } from '../ui/nativeInventory.js';   // U8d: the native inventory
+import { createInventoryWindow, inventoryDoorReady, inventoryArtLoaded } from '../ui/inventoryDoor.js';   // U53: the pack's ONE seam, and the skin fork in front of it (inventoryArtLoaded re-exported: the LOOT arm still gates on the classic art)
 import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
 import { seedStartingEquipment, EQUIP_SLOTS } from '../systems/equip.js';   // U8h: the worn-weapon binding
@@ -1269,7 +1270,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // later service needs). One builder per host, still - the
   // service asks the host for its own window rather than
   // assembling a second one from a different dependency list.
-  const makeInventoryWindow = (extra = {}) => new NativeInventoryWindow({
+  const makeInventoryWindow = (extra = {}) => createInventoryWindow({
     openBook: openBookHook,   // B1: the use-mode book arm
     items: () => (playerEntity.items ??= []),
     wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
@@ -1339,7 +1340,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const makeCharSheetWindow = () => createCharSheetWindow({
     entity: playerEntity,
     artDeps: { renderer, fetchBytes, palette },
-    inventory: () => (inventoryArtLoaded() ? makeInventoryWindow() : null),
+    inventory: () => (inventoryDoorReady() ? makeInventoryWindow() : null),
     spellbook: makeSpellbookWindow,
     // Q4-v: the live machine's log walk and the player's notebook
     questMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
@@ -1910,7 +1911,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     toggleCharSheet: () => townTalk.showOverlay(makeCharSheetWindow()),
     toggleLogbook: () => townTalk.showOverlay(makeJournalWindow('activeQuests')),
     toggleNotebook: () => townTalk.showOverlay(makeJournalWindow('notebook')),
-    toggleInventory: () => { if (inventoryArtLoaded()) townTalk.showOverlay(makeInventoryWindow()); },
+    toggleInventory: () => { if (inventoryDoorReady()) townTalk.showOverlay(makeInventoryWindow()); },
     toggleSpellbook: () => toggleSpellbook(),
     toggleAutomap: () => toggleExteriorAutomap(),
     openTravelMap: () => toggleTravelMap(),
@@ -1958,7 +1959,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (act === 'NoteBook') { e.preventDefault(); hudCtx.toggleNotebook(); return; }
       // U8d: F6 opens the classic inventory (DFU's default Inventory
       // binding; same host rule as F5).
-      if (act === 'Inventory' && inventoryArtLoaded()) { hudCtx.toggleInventory(); return; }
+      if (act === 'Inventory' && inventoryDoorReady()) { hudCtx.toggleInventory(); return; }
       // M2/I2: the CastSpell action opens the spellbook
       // (GameManager.cs:550-553); the cast is the attack click.
       if (act === 'CastSpell') { e.preventDefault(); hudCtx.toggleSpellbook(); return; }
@@ -2839,7 +2840,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     openTeleportMap,
     // G6: the knightly smith's gift needs THIS host's inventory
     // window in choose-one mode - one builder, one dependency list.
-    makeInventory: (extra) => (inventoryArtLoaded() ? makeInventoryWindow(extra) : null),
+    makeInventory: (extra) => (inventoryDoorReady() ? makeInventoryWindow(extra) : null),
     // S40: AbortRestForEnemySpawn (:301-304) reaches the rest window
     // in THIS host's overlay slot. In DFU the OnEncounter subscription
     // is on the WINDOW (OnPush :264, OnPop :275), so it follows the
@@ -3190,24 +3191,20 @@ export async function bootWorld(canvas, renderer, params, status) {
               pool.takeLoot(lootKey, (l) => townTalk.say(l));
               surfacePlayer();
             }
-            else if (dropKey && inventoryArtLoaded()) {
+            // U53: THE ART, not the door. A pile is a LOOT target, and
+          // ui/inventoryDoor.js hands every loot call the CLASSIC window -
+          // so this arm needs INVE00I0 loaded whatever skin is on.
+          else if (dropKey && inventoryArtLoaded()) {
               // U8e: a pile under the ray opens the inventory WITH the
               // pile as the remote target (Remove defaults - the OnPush law)
               const pile = droppedLoot.pileFor(dropKey);
-              townTalk.showOverlay(new NativeInventoryWindow({
-                openBook: openBookHook,   // B1: the use-mode book arm
-                items: () => (playerEntity.items ??= []),
-        wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
+              townTalk.showOverlay(makeInventoryWindow({
+                // U53: THE HOST'S OWN FACTORY, not a twelfth copy of it.
+                // This arm hand-rolled the window with the SAME eleven hooks
+                // makeInventoryWindow already passes, plus the two below -
+                // which is precisely what its `extra` parameter is for.
                 onClose: () => droppedLoot.releaseEmptied(),   // AUDIT 17e F28: DFU frees the container on window close
-        entity: playerEntity,
                 loot: { items: () => pile.items },
-                icons: { getTexture, uploadRecord, textures: renderer.textures },
-                rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
-                openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },   // U42: the Spellbook item's own door, on the LOOT-pile window too
-                revealMap: () => revealLocation('readMap'),   // U44: the map item's reveal, on the loot-pile window too
-                drinkPotion: (key) => magic.drinkPotion(key),   // U44: DrinkPotion through the ONE cast engine
-                nowMinute: () => Math.floor(playerTicker.classicMinutes),
-                onDrop: (items) => droppedLoot.dropPile(items, dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`),   // P2: stamped
               }));
             }
             else modes.tryEnter().catch((e) => console.error(e));

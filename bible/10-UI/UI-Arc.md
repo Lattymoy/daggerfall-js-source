@@ -8,6 +8,107 @@ policies one by one.
 
 
 
+## U53 THE ENHANCED PACK, AND THE SLOT MAP (2026-08-26)
+
+The overhaul's signature, and the second in-game screen. F6 opens it,
+`ui/inventoryDoor.js` chooses, and the classic INVE00I0 window is one
+`?skin=classic` away.
+
+THE SEAM, AND THE SAME FINDING TWICE MORE. FIVE sites constructed
+`new NativeInventoryWindow({ ... })`: three host factories and TWO
+hand-rolled copies of a factory that was already in the same file and
+already took the extra keys they needed. The copies were VERBATIM -
+eleven identical hooks each, plus `loot` and `onClose`, which is
+precisely what `...extra` is for - and their indentation had drifted,
+which is what a copy-paste looks like a month later. This one had
+already cost something: the pin guarding it records that U42 put
+`openSpellbook:` on three of the five sites and the two loot-pile
+windows went on printing "You cannot open your spellbook here." over a
+Spellbook the player was holding. Both copies are deleted; each host
+has one builder and the loot arm calls it.
+
+THE FORK IS NARROW AND SAYS WHERE IT STOPS. The classic window is not
+one screen - it is the pack, the LOOT pile, the WAGON, the guild
+REWARD picker, drop-gold and the whole USE chain - so the door hands
+the classic window every call carrying a `loot` target or a
+`chooseOne` list. That is a boundary, not a gap: a player who opens a
+corpse gets the window that has always opened it, and what would break
+the never-traps law is an enhanced pack that silently dropped the
+wagon on the floor.
+
+ONE GATE DID NOT MOVE, and it is the subtle part. Every inventory gate
+became `inventoryDoorReady()` except the two PILE arms, which keep
+asking `inventoryArtLoaded()` - because the door hands those calls the
+CLASSIC window, and a classic window with no INVE00I0 draws nothing.
+
+THE SLOT MAP IS THE POINT. Twenty-seven equip slots, TWO amulets, TWO
+bracelets, TWO marks, TWO crystals, and chest armour and chest clothes
+as separate layers; the classic paperdoll draws that as a picture of a
+person and the player hunts for the slots by clicking at them. Here
+every slot is a node on a body schematic, filled nodes are lit and
+twice the radius, and the whole state of a kit reads at a glance. A
+picture of a person tells you how they look; this tells you what you
+are carrying, which is what the screen is for.
+
+IT IS INLINE SVG, NOT THE PROTOTYPE'S THREE.JS. `mountFigure` in
+`src/tools/enhancedVisuals.js` builds a small three.js scene and
+`enhanced.html` loads that library from a CDN - and the port already
+carries exactly one third-party request (Ledger A, the web fonts),
+which is one more than it wants. Twenty-seven positioned nodes need no
+library, and an SVG scales to a phone where a fixed WebGL canvas does
+not.
+
+NOTHING ABOUT ITEMS IS DECIDED HERE. Equipping is `equipItem`, which
+carries DFU's whole chain - the two-hander clearing both hands, a
+shield bumping a held two-hander, the forbidden and broken refusals,
+the swap delay billed per transition, the armour table and the
+enchantment hooks. The four tab pages are `TABS`/`filterByTab`. Weight,
+condition, material and damage strings are `systems/itemInfo.js`'s.
+This module positions nodes and prints rows, and the node tests prove
+it by wearing a Claymore and watching both hands empty.
+
+A "WORN" BADGE WAS WRITTEN AND DELETED. `filterByTab` IS
+FilterLocalItems, and its first line drops every equipped item - worn
+kit leaves the list. So a badge on a row could never render, and a
+decoration that cannot render is the same lie as a button that does
+nothing. Worn items live on the MAP, which is the argument the screen
+makes.
+
+THE BUG ONLY A BROWSER COULD SEE. The detail column was given the
+class `detail` - which the SETTINGS pane's phone sheet already owns in
+the same stylesheet, as `position: fixed; transform: translateY(101%)`.
+On a desktop the screen was perfect; on every phone the third column,
+with the Wear button in it, sat 101% below the fold. The source read
+correctly and the node pins all passed. It is `packdetail` now, and
+because three columns do not fit one phone anyway, the sheet behaviour
+is written DELIBERATELY - the detail rises when an item is picked and
+closes back down - rather than inherited by accident.
+
+PROVED IN A REAL BROWSER by `tools/enhancedPackProbe.mjs` - 44/44 on a
+desktop and a Pixel 5 with no ARENA2, measuring the nodes' real
+on-screen radii and spacing, wearing five things, taking one off by
+clicking its node, and watching a broken item refuse. The items are
+built from the port's OWN `ITEM_TEMPLATES`, which is ported data in
+the repo rather than game data on disk, so the weights and conditions
+on screen are the game's numbers. 24 pins; 12 mutations, 12 dead.
+
+TWO SWEEPS NEEDED THEIR COMMENTS STRIPPED. "This file contains no icon
+pipeline" and "this file uses no three.js" both failed their first run
+against the file's own header EXPLAINING why it contains neither -
+a sweep reading prose as code, which would have let a real second
+pipeline through as long as nobody wrote about it.
+
+NOT DRAWN, recorded rather than dropped: THE ITEM ICONS. The classic
+window draws them from the TEXTURE archives through GL textures the
+host hands it, which a DOM list cannot use, and the path a DOM screen
+would need - archive record to canvas through `ui/bitmapCanvas.js` -
+does not exist yet. Inventing a second icon pipeline in this file is
+how the port ends up with two. The PROTOTYPE hit the same wall and
+answered it the same way, with two initials and the real
+archive/record in the tile's title, which is what this does. It is the
+next inventory slice's first job, along with the wagon, the loot
+piles, the reward picker, drop-gold and USE.
+
 ## U52 THE ENHANCED CHARACTER SHEET (2026-08-26)
 
 The first of the port's IN-GAME screens to grow an enhanced twin. F5
