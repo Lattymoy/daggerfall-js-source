@@ -212,6 +212,21 @@ function viewToCanvas(img) {
   return canvas;
 }
 
+function viewsToAtlasCanvas(views, columns = 4) {
+  if (!views?.length) return null;
+  const w = views[0].width, h = views[0].height;
+  const rows = Math.ceil(views.length / columns);
+  const canvas = document.createElement('canvas');
+  canvas.width = w * columns; canvas.height = h * rows;
+  const ctx = canvas.getContext('2d');
+  for (let i = 0; i < views.length; i++) {
+    const cell = ctx.createImageData(w, h);
+    cell.data.set(views[i].data);
+    ctx.putImageData(cell, (i % columns) * w, Math.floor(i / columns) * h);
+  }
+  return canvas;
+}
+
 function projectionX(x, z, radians) {
   // Camera at (sin(yaw), 0, cos(yaw)): this is its screen-right axis.
   return x * Math.cos(radians) - z * Math.sin(radians);
@@ -319,11 +334,10 @@ export async function buildClassicBodyClothingSampler({
 }
 
 /**
- * Draped garments still use their continuous cloth UVs for this pass, but the
- * same eight generated views are produced now and carried with the result. The
- * viewer mounts the authored 000/front view until the drape render mesh is split
- * at directional seams; doing that separately avoids corrupting the working
- * verlet topology merely to force an atlas across shared seam vertices.
+ * Draped garments use the same eight generated views, packed into a 4x2 runtime
+ * atlas. paperdollViewer gives every render triangle independent UVs, so a robe
+ * seam can cross from 315 back to 000 without interpolating through the other
+ * six views. The physics mesh remains untouched; only the render copy is split.
  */
 export async function buildClassicDrapeTextureCanvas({
   item, race = 'Breton', variant = 0, dye = DYE_COLORS.Blue,
@@ -332,12 +346,19 @@ export async function buildClassicDrapeTextureCanvas({
   const art = await loadIndexedArt({ item, race, variant, dye });
   if (!art) return null;
   const views = generateDirectionalViews(decodedCrop(art));
+  const layout = Object.freeze({
+    columns: 4,
+    rows: 2,
+    viewWidth: views[0].width,
+    viewHeight: views[0].height,
+  });
   return {
-    canvas: viewToCanvas(views[0]),
+    canvas: viewsToAtlasCanvas(views, layout.columns),
     views,
+    layout,
     meta: Object.freeze({
       ...art.meta,
-      wrapMode: 'generated-8-way-pending-drape-seams',
+      wrapMode: 'generated-8-way',
       directions: CLOTHING_WRAP_DEGREES,
     }),
   };

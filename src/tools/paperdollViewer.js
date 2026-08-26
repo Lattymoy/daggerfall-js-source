@@ -323,6 +323,9 @@ function buildPiece(cp) {
   geo.setAttribute('normal', new THREE.BufferAttribute(pn, 3));
   const m = new THREE.Mesh(geo, makePieceMaterial()); m.position.y = -D.cy; m.visible = true; pivot.add(m);
   animTargets.push({ pos: pp, base: pp.slice(), vgrp: pg, geo }); // moves with the body
+  // Directional clothing UVs are authored from REST geometry, never the posed
+  // frame. Otherwise a sleeve texture would swim as the arm swings.
+  m.userData.wrapRest = pp.slice();
   m.userData.recolor = (ramp) => { if (!cp.I) return; let oo = 0; for (let f = 0; f < ncf; f++) { const c = snapRamp(ramp, cp.I[f]); const r=c[0]/255,g=c[1]/255,b=c[2]/255; for (let k=0;k<6;k++){ pc[oo]=r; pc[oo+1]=g; pc[oo+2]=b; oo+=3; } } geo.getAttribute('color').needsUpdate = true; };
   return m;
 }
@@ -441,6 +444,56 @@ function setPlanarDrapeUV(g, positions = null) {
   }
   g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
 }
+// Eight generated clothing views live in a 4x2 atlas. A drape triangle picks
+// the view facing its REST normal, then projects its own vertices into that view.
+// Render triangles are non-indexed below, so every face owns this UV choice and
+// the 315->000 seam cannot interpolate through unrelated atlas cells.
+const clampWrap01 = (v) => Math.max(0, Math.min(1, v));
+const wrapProjectionX = (x, z, r) => x * Math.cos(r) - z * Math.sin(r);
+function drapeWrapBounds(p, r) {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (let i = 0; i < p.length; i += 3) {
+    const sx = wrapProjectionX(p[i], p[i + 2], r), y = p[i + 1];
+    x0 = Math.min(x0, sx); x1 = Math.max(x1, sx); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+  }
+  return { x0, y0, x1, y1 };
+}
+function drapeTriangleDirection(p, i) {
+  const ax=p[i], ay=p[i+1], az=p[i+2], bx=p[i+3], by=p[i+4], bz=p[i+5], cx=p[i+6], cy=p[i+7], cz=p[i+8];
+  const ux=bx-ax, uy=by-ay, uz=bz-az, vx=cx-ax, vy=cy-ay, vz=cz-az;
+  let nx=uy*vz-uz*vy, nz=ux*vy-uy*vx;
+  const mx=(ax+bx+cx)/3, mz=(az+bz+cz)/3;
+  // Ring grids can be wound inward. Texture direction is geometric outside, so
+  // flip a horizontal normal that points through the character centre.
+  if (nx*mx + nz*mz < 0) { nx = -nx; nz = -nz; }
+  if (Math.hypot(nx, nz) < 1e-6) { nx = mx; nz = mz; }
+  const a = Math.atan2(nx, nz);
+  return ((Math.round(a / (Math.PI / 4)) % 8) + 8) % 8;
+}
+function setEightWayDrapeUV(g, positions, layout) {
+  const p = positions || g?.getAttribute('position')?.array;
+  if (!g || !p || p.length < 9 || !layout?.columns || !layout?.rows) { setPlanarDrapeUV(g, p); return; }
+  // Exact per-triangle UV ownership requires non-indexed render geometry.
+  if (g.index) { setPlanarDrapeUV(g, p); return; }
+  const bounds = Array.from({ length: 8 }, (_, d) => drapeWrapBounds(p, d * Math.PI / 4));
+  const uv = new Float32Array((p.length / 3) * 2);
+  const eu = 0.5 / Math.max(1, layout.viewWidth || 1), ev = 0.5 / Math.max(1, layout.viewHeight || 1);
+  for (let i = 0; i < p.length; i += 9) {
+    const d = drapeTriangleDirection(p, i), r = d * Math.PI / 4, b = bounds[d];
+    const col = d % layout.columns, row = Math.floor(d / layout.columns);
+    for (let k = 0; k < 3; k++) {
+      const q = i + k*3;
+      let u = (wrapProjectionX(p[q], p[q+2], r) - b.x0) / Math.max(1e-6, b.x1 - b.x0);
+      let v = 1 - (p[q+1] - b.y0) / Math.max(1e-6, b.y1 - b.y0);
+      u = eu + clampWrap01(u) * (1 - 2*eu);
+      v = ev + clampWrap01(v) * (1 - 2*ev);
+      const o = (q / 3) * 2;
+      uv[o] = (col + u) / layout.columns;
+      uv[o+1] = ((layout.rows - 1 - row) + v) / layout.rows;
+    }
+  }
+  g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+}
 let classicDrapeTextureState = null;
 function clearClassicDrapeTexture() {
   const st = classicDrapeTextureState;
@@ -459,7 +512,7 @@ function mountClassicDrapeTexture(c, art) {
   if (!c?.drape?.name || !art?.canvas) return;
   const mesh = drapedMeshes[c.drape.name];
   if (!mesh) return;
-  setPlanarDrapeUV(mesh.geometry);
+  setEightWayDrapeUV(mesh.geometry, mesh.userData.wrapRest, art.layout);
   const texture = new THREE.CanvasTexture(art.canvas);
   texture.magFilter = THREE.NearestFilter;
   texture.minFilter = THREE.NearestFilter;
@@ -479,22 +532,31 @@ function mountClassicDrapeTexture(c, art) {
 }
 
 // Simulated (grid) drapes: real verlet cloth, pinned at the top row.
+// Physics keeps its shared grid. Rendering gets an independent non-indexed copy
+// so every triangle can own one of the eight directional texture cells without
+// a shared seam vertex forcing two incompatible UVs.
 for (const nm in (D.drapeGrids||{})) {
   const g = D.drapeGrids[nm]; g.pos = Float32Array.from(g.pos);
   const cloth = buildCloth(g, nm.indexOf('Cloak') >= 0 ? 2 : 1);
-  const tris = []; for (const f of g.faces) { tris.push(f[0],f[1],f[2], f[0],f[2],f[3]); }
+  const renderIndex = [];
+  for (const f of g.faces) renderIndex.push(f[0],f[1],f[2], f[0],f[2],f[3]);
+  const posArr = new Float32Array(renderIndex.length * 3);
+  for (let i = 0; i < renderIndex.length; i++) {
+    const a = renderIndex[i] * 3, o = i * 3;
+    posArr[o] = cloth.pos[a]; posArr[o+1] = cloth.pos[a+1]; posArr[o+2] = cloth.pos[a+2];
+  }
   const geo = new THREE.BufferGeometry();
-  const posArr = new Float32Array(cloth.pos);
   geo.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
-  setPlanarDrapeUV(geo, posArr); // REST pose: UVs do not swim while verlet cloth deforms
-  geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(cloth.V*3), 3));
+  setPlanarDrapeUV(geo, posArr); // fallback UV before a classic 8-way atlas mounts
+  geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(posArr.length), 3));
   const mat = (D.drapeMaterials||{})[nm] || { ramp: CLOTH_RAMP, sheen: 0, rim: 0 };
-  geo.setIndex(tris); geo.computeVertexNormals(); shadeClothGeo(geo, mat);
+  geo.computeVertexNormals(); shadeClothGeo(geo, mat);
   const clothRenderMat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide });
   pieceMaterials.add(clothRenderMat); copyBodyEffectState(clothRenderMat);
   const m = new THREE.Mesh(geo, clothRenderMat);
+  m.userData.wrapRest = posArr.slice();
   m.position.y = -D.cy; m.visible = false; pivot.add(m);
-  drapedMeshes[nm] = m; clothSims[nm] = { cloth, geo, posArr, mat };
+  drapedMeshes[nm] = m; clothSims[nm] = { cloth, geo, posArr, mat, renderIndex };
 }
 // Static drapes (surcoat/toga/sash/wrap): simple panels, bob with the body.
 for (const nm in (D.draped||{})) { const m = buildPiece(D.draped[nm]); m.visible = false; drapedMeshes[nm] = m; }
@@ -719,7 +781,11 @@ function stepDrapeCloth(phase, motion, bob, L) {
     capsules: shoulderDrape ? (motion > 0.5 ? col.caps : null) : col.caps, bones: shoulderDrape ? null : col.bones };
   stepCloth(cs.cloth, 1/60, opts, coreFn);
   stepCloth(cs.cloth, 1/60, opts, coreFn); // 2 substeps for stability
-  cs.posArr.set(cs.cloth.pos); cs.geo.attributes.position.needsUpdate = true;
+  for (let i = 0; i < cs.renderIndex.length; i++) {
+    const a = cs.renderIndex[i] * 3, o = i * 3;
+    cs.posArr[o] = cs.cloth.pos[a]; cs.posArr[o+1] = cs.cloth.pos[a+1]; cs.posArr[o+2] = cs.cloth.pos[a+2];
+  }
+  cs.geo.attributes.position.needsUpdate = true;
   cs.geo.computeVertexNormals(); shadeClothGeo(cs.geo, cs.mat);
 }
 const bodyFurCoat = D.bodyFurCoat ? buildPiece(D.bodyFurCoat) : null;
