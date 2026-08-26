@@ -40,7 +40,7 @@ jobs:
         run: |
           git config user.name "Lattymoy"
           git config user.email "98724681+Lattymoy@users.noreply.github.com"
-          git add src/characters/paperdollPayload.js src/tools/paperdollViewer.js viewer.html
+          git add src/characters/paperdollPayload.js src/tools/paperdoll/weaponTexture.js src/tools/paperdollViewer.js viewer.html
           git diff --cached --quiet && exit 0
           git commit -m "WEAPONS: wrap classic art onto full held-item set"
           git push origin HEAD:chatgpt/exact-face-atlas
