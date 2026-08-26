@@ -290,6 +290,25 @@ test('F089: world.js arms the cemetery layer off the location-rect crossing', ()
   assert.equal(t.ambience.isCemeteryNearby, false, 'a town is not a graveyard');
 });
 
+test('F089: exterior.js arms the layer too - its one location IS the rect', () => {
+  // This host loads a single location and _musicInLocationRect is constant
+  // true, so PlayerGPS's enter-rect event (:701-709) has already happened
+  // by the first frame - the arming is raised once at mount instead.
+  const src = host('exterior.js');
+  const i = src.indexOf('ambience.onEnterLocationRect(');
+  assert.ok(i >= 0, 'exterior.js never arms the cemetery layer');
+  const stmt = src.slice(i, src.indexOf('\n', i));
+
+  const arm = (locationType) => {
+    const rec = stubEngine();
+    const ambience = new AmbientEffects(EXTERIOR_AMBIENT_WAITS, rec.engine, () => 0);
+    runStmts(stmt, { ambience, _musicLocationType: () => locationType });
+    return ambience;
+  };
+  assert.equal(arm(LOCATION_TYPES.Graveyard).isCemeteryNearby, true, 'a graveyard arms it');
+  assert.equal(arm(LOCATION_TYPES.TownCity).isCemeteryNearby, false, 'a town does not');
+});
+
 test('F089: an armed cemetery layer actually plays its three clips outside', () => {
   // End to end through the real component: the wired arming plus the
   // exterior frame's `inside: false` is what lets the 1/80-second cemetery
