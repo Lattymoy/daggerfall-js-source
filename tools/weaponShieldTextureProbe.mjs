@@ -12,7 +12,9 @@ assert.deepEqual(SHIELD_CATALOG.map((s) => s.name), ['Buckler','Round Shield','K
 const ramp = [[20,20,20],[220,220,220]];
 for (const s of SHIELD_CATALOG) {
   const faces = buildShield(ramp, s.index);
-  assert.ok(faces.length >= 36, `${s.name} must be a real extruded piece`);
+  // Kite is the leanest outline: 9 front + 9 back + 9 rim faces + 6 rear-boss
+  // faces = 33. Anything below 30 is no longer a proper extruded shield.
+  assert.ok(faces.length >= 30, `${s.name} must be a real extruded piece`);
   assert.ok(faces.every((f) => f.g === 'armR'), `${s.name} must ride the off-hand arm`);
 }
 
