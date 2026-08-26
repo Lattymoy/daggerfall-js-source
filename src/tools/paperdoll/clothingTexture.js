@@ -306,7 +306,16 @@ export function canonicalizePaperdollTexture(src, profile = 'generic') {
   const weak = Math.max(1, Math.min(leftOpaque, rightOpaque));
   const sideBias = Math.max(leftOpaque, rightOpaque) / weak;
   const dominantSide = rightOpaque >= leftOpaque ? 'right' : 'left';
-  const mirrorDominantHalf = sideBias >= 1.65;
+
+  // V5: perspective correction is continuous, not a binary threshold. Many
+  // shirts contain enough far-side pixels to miss V4's 1.65 cutoff but still
+  // visibly read as the oblique paperdoll layer. Closed torso garments begin
+  // recovering early; open tunics/vests preserve more intentional asymmetry.
+  const openTorso = profile === 'open-torso';
+  const recoveryLo = openTorso ? 1.28 : 1.08;
+  const recoveryHi = openTorso ? 1.95 : 1.55;
+  const frontRecovery = clamp01((sideBias - recoveryLo) / Math.max(1e-6, recoveryHi - recoveryLo));
+  const mirrorDominantHalf = frontRecovery >= 0.985;
   const halfL = Math.max(1, canonicalCentre);
   const halfR = Math.max(1, (out.width - 1) - canonicalCentre);
 
@@ -317,23 +326,16 @@ export function canonicalizePaperdollTexture(src, profile = 'generic') {
     const rowCentre = (x0 + x1) * 0.5;
     const rowAxis = Math.max(x0, Math.min(x1, rowCentre + axisShift));
     for (let x = 0; x < out.width; x++) {
-      let sxUnclamped;
-      if (mirrorDominantHalf) {
-        // A strongly one-sided paperdoll presentation has too little far-side
-        // information to call both halves "front". Use the authored near half
-        // as material evidence for BOTH front halves. Geometry restores the
-        // silhouette; this reconstruction restores orientation.
-        const d = Math.abs(x - canonicalCentre) / (x <= canonicalCentre ? halfL : halfR);
-        sxUnclamped = dominantSide === 'right'
-          ? rowAxis + d * rightExtent
-          : rowAxis - d * leftExtent;
-      } else if (x <= canonicalCentre) {
-        const d = (canonicalCentre - x) / halfL;
-        sxUnclamped = rowAxis - d * leftExtent;
-      } else {
-        const d = (x - canonicalCentre) / halfR;
-        sxUnclamped = rowAxis + d * rightExtent;
-      }
+      const d = Math.abs(x - canonicalCentre) / (x <= canonicalCentre ? halfL : halfR);
+      const dominantSample = dominantSide === 'right'
+        ? rowAxis + d * rightExtent
+        : rowAxis - d * leftExtent;
+      const splitSample = x <= canonicalCentre
+        ? rowAxis - d * leftExtent
+        : rowAxis + d * rightExtent;
+      // Mildly oblique records get a mild correction; strongly one-sided records
+      // converge on the proven dominant-half reconstruction used by V3/V4.
+      const sxUnclamped = splitSample * (1 - frontRecovery) + dominantSample * frontRecovery;
       const sx = Math.max(x0, Math.min(x1, sxUnclamped));
       if (sx !== sxUnclamped) edgePaddedPixels++;
       const raw = pixel(src, sx, sy);
@@ -347,9 +349,13 @@ export function canonicalizePaperdollTexture(src, profile = 'generic') {
     }
   }
   out.canonicalMeta = Object.freeze({
-    mode: 'paperdoll-surface-v4',
-    registration: 'paperdoll-axis-chest-weighted-front-reconstruct',
-    frontReconstruction: mirrorDominantHalf ? 'dominant-half-mirror' : 'split-perspective-rectify',
+    mode: 'paperdoll-surface-v5',
+    registration: 'paperdoll-axis-adaptive-front-reconstruct',
+    frontReconstruction: mirrorDominantHalf
+      ? 'dominant-half-mirror'
+      : frontRecovery > 0.015 ? 'adaptive-perspective-blend' : 'split-perspective-rectify',
+    frontRecovery,
+    recoveryRange: [recoveryLo, recoveryHi],
     sourceAxis: axisFromPaperdoll ? 'paperdoll-offset' : 'silhouette-median',
     anatomicalAxis,
     analysisSourceCentre,
