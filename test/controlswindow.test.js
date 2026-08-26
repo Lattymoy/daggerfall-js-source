@@ -179,9 +179,18 @@ test('I4: GetButtonText\'s classic table and FormatButtonText (:322-410, :561-56
 
 test('I4: the window wiring - one flow factory, the right-click seam, both panels warm', () => {
   const code = (rel) => readFileSync(join(root, 'src', rel), 'utf8');
-  // ONE construction seam for the pause -> controls -> pause trip
-  assert.match(code('ui/pauseWindow.js'), /export function openPauseFlow\(show, hooks = \{\}\)/);
-  assert.match(code('ui/pauseWindow.js'), /new ControlsWindow\(\{ onBack: \(\) => openPauseFlow\(show, hooks\) \}\)/);
+  // ONE construction seam for the pause -> controls -> pause trip.
+  // U51 re-aimed this pair: the seam is unchanged and so is the round
+  // trip, but the CLASSIC flow is now `openClassicPauseFlow` - the
+  // plain name belongs to ui/pauseDoor.js, which picks the skin in
+  // front of it. Two modules exporting one name is what the
+  // audit24_onehome ratchet is for.
+  assert.match(code('ui/pauseWindow.js'), /export function openClassicPauseFlow\(show, hooks = \{\}\)/);
+  assert.match(code('ui/pauseWindow.js'), /new ControlsWindow\(\{ onBack: \(\) => openClassicPauseFlow\(show, hooks\) \}\)/);
+  // ...and the door in front of it reaches the classic flow on the
+  // classic skin, or the fork is a wall.
+  assert.match(code('ui/pauseDoor.js'), /return openClassicPauseFlow\(show, hooks\);/,
+    'the classic skin must still get the classic window');
   for (const rel of ['scenes/world.js', 'scenes/exterior.js', 'scenes/worldModes.js', 'scenes/dungeonContext.js']) {
     assert.match(code(rel), /openPauseFlow\(/, `${rel} mounts through the factory`);
     assert.match(code(rel), /preloadPauseFlowArt\(/, `${rel} warms BOTH panels`);

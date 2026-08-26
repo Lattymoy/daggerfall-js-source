@@ -28,6 +28,7 @@ import { ListPickerWindow, ROWS_DISPLAYED } from '../src/ui/listPicker.js';
 import { createWeapon } from '../src/combat/enemyEquipment.js';
 import { createRandomWeapon } from '../src/systems/loot.js';
 import { tickPlayerMinutes } from '../src/systems/worldTick.js';
+import { REFUSAL } from '../src/systems/itemTransfer.js';   // U56
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -414,17 +415,29 @@ test('X11b hosts: a spell window lands in the slot the CURRENT mode draws', () =
 // ── the transfer refusal ─────────────────────────────────────────
 test('X11b transfer: a summoned item cannot leave the pack, and it says so', () => {
   assert.equal(CANNOT_REMOVE_ITEM_TEXT, 'You cannot remove this item.');
-  const ui = src('src/ui/nativeInventory.js');
-  assert.ok(ui.includes('_refuseSummoned('), 'no refusal exists');
+  // U56 moved TransferItem's ladder OUT of the classic window and
+  // into systems/itemTransfer.js so a second screen could run it.
+  // The law this pin holds did not move with it: ONE guard, BOTH
+  // callers, sitting where DFU puts it.
+  assert.equal(REFUSAL.summoned.text, CANNOT_REMOVE_ITEM_TEXT, 'the refusal lost its words');
+  const tx = src('src/systems/itemTransfer.js');
   // DFU's TransferItem is ONE function with two callers, so both the
   // local Remove click and the remote one go through it
-  assert.equal((ui.match(/this\._refuseSummoned\(it\)/g) || []).length, 2,
+  assert.equal((tx.match(/refusal: REFUSAL\.summoned/g) || []).length, 2,
     'the guard is on one side only - DFU has one function and two callers');
   // and it sits where DFU puts it: right after the transport block
-  const i = ui.indexOf("if (it.group === 'Transportation') return;");
-  const j = ui.indexOf('this._refuseSummoned(it)', i);
-  assert.ok(j > i && j - i < 700, 'the summoned guard is not beside the transport one');
+  const i = tx.indexOf("item.group === 'Transportation'");
+  assert.ok(i > 0, 'the transport block is gone');
+  const j = tx.indexOf('isSummoned(item)', i);
+  assert.ok(j > i && j - i < 300, 'the summoned guard is not beside the transport one');
+  // and the window it came out of does not carry a second reading of
+  // it - the point of the extraction
+  const ui = src('src/ui/nativeInventory.js');
+  assert.ok(!ui.includes('isSummoned('), 'the classic window kept its own summoned guard');
+  assert.ok(ui.includes('planStore(it,') && ui.includes('planTake(it,'),
+    'the classic window does not run the extracted ladder');
 });
+
 
 // ── the unified CreateWeapon, and what it fixed on the way ───────
 test('X11b: ItemBuilder.CreateWeapon has ONE home again, both arms', () => {

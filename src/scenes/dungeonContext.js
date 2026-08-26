@@ -21,7 +21,7 @@ import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE } from '../world/rdbLayout.js';
 import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, DOOR_VERB_FLAGS, classifyPlacementAction, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT } from '../world/actionSystem.js';
 import { TextRsc } from '../formats/textRsc.js';
-import { openPauseFlow, preloadPauseFlowArt, pauseArtLoaded } from '../ui/pauseWindow.js';
+import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // U51 picks the skin
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, setDeathPresenter } from '../characters/playerEntity.js';
 import { addItem, spendArrow } from '../systems/inventory.js';
@@ -53,16 +53,17 @@ import { createChargenFlow, finishChargen, applyHeadlessChargen, applyCreationEx
 import { preloadChargenArt, stopConstellationAnim } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { ChargenFlow } from '../ui/chargen.js';
-import { LevelUpScreen, CharSheet, preloadCharSheetArt } from '../ui/charsheet.js';
+import { LevelUpScreen, preloadCharSheetArt } from '../ui/charsheet.js';
+import { createCharSheetWindow } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
-import { charSheetHooks } from '../ui/charSheetNav.js';   // U32: the sheet's four navigation buttons
 import { DeathScreen } from '../ui/deathScreen.js';
 import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in)
 // U26: the dungeon finally gets the SAME inventory window the exterior
 // hosts have had since U8d - tabs, paperdoll, the real info panel and
 // point-and-click Use. The keyed InventoryWindow it used until now is
 // retired from this host.
-import { NativeInventoryWindow, preloadInventoryArt, WAGON_ACCESS_DISTANCE } from '../ui/nativeInventory.js';
+import { preloadInventoryArt, WAGON_ACCESS_DISTANCE } from '../ui/nativeInventory.js';
+import { createInventoryWindow } from '../ui/inventoryDoor.js';   // U53: the pack's ONE seam, and the skin fork in front of it
 import { preloadPaperDollForEntity } from '../ui/paperDoll.js';   // U26: the doll the keyed window never had
 import { createDroppedLoot } from './droppedLoot.js';   // U8e, mounted here at U26
 import { createPlayerMagic } from './hostMagic.js';   // M3: the ONE cast engine
@@ -809,7 +810,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   } : {});
 
   function openInventory(lootItems, onEmptied = null) {
-    return new NativeInventoryWindow({
+    return createInventoryWindow({
       openBook: openBookHook,   // B1: the use-mode book arm
       items: () => (playerEntity.items ??= []),
       wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice
@@ -2642,12 +2643,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       automapEntranceTick(automapRec, sm ? [sm.x, sm.y, sm.z] : null, eye, collider);
     },
     automapRecord: () => automapRec,   // probe surface + the window's live view
-    /** I3: the Escape window, same one-slot idiom. Art-gated: with no
-     *  OPTN00I0 loaded the window would close itself on first draw,
-     *  so an art-less boot simply has no pause menu (stated, not
-     *  silent - preloadPauseArt logs its own failure). */
+    /** I3: the Escape window, same one-slot idiom. GATED ON THE DOOR,
+     *  not on the art (U51): the CLASSIC window would close itself on
+     *  first draw with no OPTN00I0 loaded, so an art-less classic boot
+     *  still has no pause menu (stated, not silent - preloadPauseArt
+     *  logs its own failure), but the ENHANCED screen reads no game
+     *  data at all and opens either way. ui/pauseDoor.js owns which. */
     togglePause(setPlayerPos = null) {
-      if (activeOverlay || !pauseArtLoaded()) return;
+      if (activeOverlay || !pauseDoorReady()) return;
       const ctx = this;   // the sibling save verbs on this same context
       openPauseFlow((w) => { activeOverlay = w; }, {
         quickSave: () => ctx.quickSave?.(),
@@ -3030,13 +3033,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // charSheetHooks' refusal is still the honest answer, which is
       // why this passes the bridge's own null through rather than
       // substituting an empty list.
-      activeOverlay = new CharSheet(playerEntity, charSheetHooks({
+      activeOverlay = createCharSheetWindow({
         entity: playerEntity,
         artDeps: { renderer, fetchBytes, palette },
         inventory: () => openInventory(null),
         spellbook: makeSpellbookWindow,
         ...questJournalHooks(),
-      }));
+      });
     },
     /** U43: the two journal doors (GameManager.cs:541-548). ONE window
      *  either way - LogBook opens it as it stands, NoteBook on the

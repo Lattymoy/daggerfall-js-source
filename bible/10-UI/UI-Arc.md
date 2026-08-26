@@ -8,6 +8,767 @@ policies one by one.
 
 
 
+## U56-U58 meet AUDIT 26 (2026-08-26)
+
+The audit campaign landed on main while this arc was building the
+pack's remote side, and the two changed the same window. The merge is
+worth recording, because it is the argument for the extraction making
+itself.
+
+AUDIT 26 ADDED A RUNG TO THE LADDER. TransferItem's QUEST arm
+(:1480-1505) - the refusal for an undroppable quest item, and the only
+writer of the `playerDropped` flag the DroppedItemAtPlace trigger
+polls - went into the classic window as a guard between the summoned
+one and the choose-one pile, on both callers. The merge had a choice:
+resolve it back into a window that no longer holds that law, or put it
+on the ladder where the rest of TransferItem now lives. It went on the
+ladder, and the enhanced pane runs it as a result - a rung it would
+otherwise never have had, silently.
+
+It had to move for a second reason: `nativeTrade.js` imports the arm
+because DaggerfallTradeWindow INHERITS TransferItem, and leaving it in
+the window would have meant `systems/` importing from `ui/`.
+
+THE DRY RUN IS THE MERGE'S OWN FINDING. That arm WRITES as it passes,
+and `canStow` calls `planStore` on every repaint to decide whether to
+draw a button. Merged naively, opening the pack with a quest item in
+it would have marked that item DROPPED on the first render, and again
+on every render after - with nothing on screen looking wrong, and a
+quest trigger firing somewhere else entirely. So the two plans take a
+`dryRun` that skips the one rung that writes, and it is safe precisely
+because the quest refusal SPEAKS: a view asking "would this say
+something" gets the same answer either way. Both halves are pinned,
+including the fact that the refusal has words - a silent one would
+make the dry run a lie.
+
+TWO MORE LAWS THE PANE WOULD HAVE DROPPED IN SILENCE, and one it was
+carrying wrong:
+
+    THE REMOTE CLICK   ":2027-2037" is the FIRST act of
+                       RemoteItemListScroller_OnItemClick, so LOOKING
+                       at a quest item in a pile counts as a click.
+                       LocalItemListScroller has no such call - and
+                       this pane draws BOTH lists with one row
+                       builder, so the guard sits on the SIDE, not
+                       the row.
+    POPTOHUD           UseItem's :1687-1688 closes the whole window
+                       stack and says nothing. Decided above every
+                       other arm, because DFU returns before all of
+                       them.
+    MAXENCUMBRANCE     AUDIT 26 corrected the carry gate and the
+                       character sheet to `entityMaxEncumbrance` -
+                       PlayerEntity.MaxEncumbrance, enchantment
+                       allowance and all. U52 and U53 had mirrored the
+                       PRE-audit expression, so the enhanced sheet and
+                       the enhanced pack were both reading the bare
+                       strength formula. Both corrected, and AUDIT
+                       26's own sweep now covers them.
+
+TWO PINS FOLLOWED THEIR LAW rather than being resolved away. AUDIT
+26's `entityMaxEncumbrance(e)` sweep of `nativeInventory.js` now reads
+`itemTransfer.js`, where the carry gate went - the same move X11b's
+summoned pin made in U56. And the settings ledger's reader for
+`GUI/CanDropQuestItems` moved with the arm that reads it.
+
+Everything else in the merge was the U53 collapse paying off: main's
+loot arms still hand-rolled eleven hooks each, and the resolution was
+to keep the host factory and let `getQuest` arrive through it.
+
+Gate on the merge: eslint clean, 3570 tests / 0 fail / 188 skipped,
+build clean, and all five browser probes green.
+
+## U58 THE REMOTE PANE, and the boundary comes down (2026-08-26)
+
+The pack had a local list and no remote one, and that single absence
+WAS every flow the enhanced screen could not answer: the wagon, a
+corpse, a guild's reward tray, and dropping anything at all. U53 named
+that a boundary rather than a gap and handed those calls to the
+classic window. U56 and U57 moved the law they needed, so the boundary
+had nothing left to protect. `CLASSIC_ONLY_MODES` is gone, and the
+inventory fork is now the plain skin question every other door asks.
+
+TWO LISTS, AS PEERS. DFU's window is local beside remote, so these
+share one grid cell and split it - which leaves the outer
+three-column shape, and every phone rule written against it, exactly
+as it was. The verb on the button names the DESTINATION, because
+"Transfer" tells the player nothing about where: Drop, Stow in wagon,
+Put back, and - for a reward tray - "Take this one", which says that
+taking IS the choice before the player discovers it by pressing.
+
+WHAT THE PANE DECIDES AND WHAT IT ASKS. It decides the shape: which
+column, which verb, whether the wagon button is drawn at all (only
+with a cart in the bag - DFU draws it always and answers "You don't
+own a wagon.", which is a control whose whole purpose is to refuse).
+Everything else it ASKS: `planStore`, `planTake`, `applyTransfer`,
+`planDropGold`, `planWagonToggle`, `remoteTarget`, `openState`. The
+file carries no 750, no Transportation check, no summoned guard and no
+cart check of its own, and a sweep says so.
+
+`canStow` IS THE INTERESTING ONE. It asks the LADDER whether to draw
+the button, not whether to allow the press: DFU's transport block and
+its choose-one bar are SILENT refusals, so a Stow button there could
+only ever do nothing - U53's deleted "worn" badge again, one control
+up. A refusal that SPEAKS still gets its button, because the full
+wagon has something to say.
+
+TWO BUGS, FROM THE TWO PLACES THAT FIND THEM.
+
+The node pins found a live-list bug before it shipped:
+`remoteModel.items` is a filtered COPY, and `useItem` consumes out of
+whatever collection it is handed, so a potion drunk from a corpse
+through that copy would have vanished from the screen and stayed in
+the pile. Every arm reads the live list now. The pin then SURVIVED its
+own mutation - a 900-character slice from `stow` ran on into `take`'s
+body and passed on ITS call - which is the byte-count slice being a
+worse boundary than the next `function`.
+
+The BROWSER found the other, and it is the shape this arc keeps
+finding: stacked on a Pixel 5, the remote list started at y=781 in a
+727px viewport, under 46vh of slot-map schematic. Perfect at 1440px,
+invisible in source. The schematic goes last on a phone now - a player
+opening their pack came for their items, and the doll is what they
+scroll to - and a CONTAINER or a reward tray puts its own list first,
+because being shown your own pack when you opened a corpse is the
+screen answering a question nobody asked.
+
+A THIRD, from looking at the screen. "1 items" - a count printed into
+a template literal, right eleven times out of twelve and wrong on the
+twelfth, which is the one the player is reading when they drop one
+thing. The pack's own header had said it since U53. Both use a helper
+now, and its pin caught the VACUOUS SHAPE one more time on the way in:
+the first draft re-derived the helper inside the test file and
+compared the copy to itself, so it is exported and the pin imports the
+real one.
+
+PROVED IN A REAL BROWSER by `tools/enhancedRemoteProbe.mjs` - 60/60
+across a desktop, a Pixel 5, and three separate mounts for the flows
+that only exist once: the drop pile MINTING when the window closes
+(AUDIT B-C1, and no screenshot shows a missing mint), a corpse
+shrinking the HOST's pile rather than a copy, and a reward tray
+closing and firing its callback on the one take. The four existing
+probes are still green.
+
+## U57 The remote side comes out too (2026-08-26)
+
+U56 moved the transfer LADDER. A transfer needs somewhere to transfer
+TO, and choosing that is its own small pile of window members -
+OnPush's default target, SetChooseOne, CheckWagonAccess, ShowWagon,
+WagonButton_OnMouseClick, OnPop - every one of which the enhanced
+pack's remote pane needs and none of which it should read twice. So
+`systems/inventorySession.js` now holds them, and the classic window
+opens, targets, toggles and closes through it.
+
+THREE ORDERS AND ONE INVISIBLE EFFECT. The orders are what a second
+reading would have got subtly wrong, so each is pinned by a case where
+the lower rungs are also present:
+
+    THE REMOTE TARGET  the wagon outranks everything while it is
+                       showing (that is what the toggle means), a
+                       reward list outranks a container, a container
+                       outranks the ground.
+    THE WAGON BUTTON   no cart first, THEN the exit rule - so a player
+                       with no cart in a dungeon far from the door is
+                       told about the cart and never about the door.
+    ON OPEN            access needs the cart AND the door AND being
+                       inside; with access and no container the window
+                       lands ON the cart in Remove, but a LOOT target
+                       outranks that, because the corpse you just
+                       opened is the one you meant.
+
+The invisible effect is `closeSession` - AUDIT B-C1's drop-pile mint.
+It is a function rather than two lines at the end of a close handler
+because it has to run on a HAND-OFF too, where the window is being
+replaced rather than closed, and the port once skipped it there: items
+gone from the bag and never on the ground. A screen that forgets this
+does not look broken. It looks like the player misremembered picking
+something up. It is pinned from both sides, because an EMPTY session
+must mint nothing - a world flat with no items in it is litter that
+cannot be picked up.
+
+The classic window's own suites were not edited again, and 22
+mutations confirm they bind through the new module - four of them
+break only the window's half (faking the toggle, closing without the
+mint) and die in wagon and droppedloot.
+
+Next: the pane itself, which is what retires `CLASSIC_ONLY_MODES`.
+
+## U56 TransferItem comes out of the window (2026-08-26)
+
+The enhanced pack has a local list and no REMOTE one. Building that
+pane means running DFU's transfer law - the wagon, the loot pile, the
+reward picker, drop-gold - and the port had that law as METHODS ON THE
+CLASSIC WINDOW, which was fine while exactly one screen did transfers
+and stopped being fine the moment a second one needed the same rungs.
+
+The choice at that point is EXTRACT OR COPY, and this port does not
+copy law: Port-Doctrine's translation rule allows simplification in
+structure and never in behaviour, and `audit24_onehome` is a standing
+gate against exactly the other outcome. So `systems/itemTransfer.js`
+now holds DaggerfallInventoryWindow.TransferItem, and the classic
+window calls it.
+
+THE SPLIT IS DECISIONS HERE, PRESENTATION THERE. `planStore` and
+`planTake` are PURE - they read the lists and answer what should
+happen - and `applyTransfer` performs the one part that is still law
+rather than presentation: the split itself. What a screen does with a
+refusal (a parchment box, a DOM notice) and which sound it plays is
+the screen's, so the classic window kept a four-line `_refuse` and
+lost forty lines of ladder.
+
+THE ORDER WAS THE THING WORTH MOVING. A second reading would have got
+the rungs subtly wrong, and the file's pins hold each one with an item
+that would refuse at TWO of them:
+
+    TRANSPORT   first, and SILENT - above DoTransferItem's click
+                (:1460-1462). A SUMMONED CART refuses as `transport`,
+                which is how we know this rung is above the next.
+    SUMMONED    second, and it SPEAKS (:1464-1469, X11b). A summoned
+                item offered into a reward pile refuses for being
+                summoned, not for the pile.
+    PILE        third - nothing goes INTO a choose-one list (G6
+                :1994) - but the WAGON is not that pile, so a reward
+                window with a cart open can still stow.
+    CAPACITY    last: WagonCanHoldAmount going out (:1425-1434),
+                CanCarryAmount coming in (:1414-1422).
+
+AND A VACUOUS PIN FELL OUT OF PROVING IT. The mutation run rewrote
+`CANNOT_HOLD_TEXT` to 'Nope.' and the whole suite stayed green - the
+wagon tests had been comparing the constant to itself since the
+W-slice, because both the assertion and the source read it through the
+same import. Two lines now hold the literal prose, the only place
+either refusal string is actually held. This is the second shape of
+vacuous pin this arc has found (after the fork pins that ran where
+`document` did not exist), and it is the more insidious one: it looks
+like a value assertion.
+
+THE PROOF THE CLASSIC WINDOW DID NOT MOVE is that its OWN suites did
+not move. wagon, littlelaws, nativeinventory, knightlygifts,
+droppedloot and x11b pin that window's behaviour and none of them was
+edited; 23 mutations across both files confirm they bind through the
+NEW path, including four that break only the window's half - dropping
+the refusal box, faking the plan - and die in the old suites. The one
+test that did change is x11b's summoned pin, which followed the law it
+pins into the new module and gained the half the extraction is for:
+the window carries no second reading of `isSummoned`.
+
+One behaviour did unify, deliberately. The window's carry gate went
+SILENT when it had no entity to read and SPOKE when it did; there is
+one answer now, because the only way to reach it without an entity is
+a stack of zero, which nothing in the port can mint (Ledger A).
+
+Next: the enhanced remote pane on top of this, which is what retires
+`CLASSIC_ONLY_MODES`.
+
+## U55 USE, in the enhanced pack (2026-08-26)
+
+The pack can USE things. `systems/useItem.js` owns the law - which item
+does what - and this is the branching the classic window does on top of
+a result, which is presentation except for the two hand-offs, which are
+not.
+
+USE IS OFFERED FOR EVERYTHING, exactly as the classic window's Use mode
+is. `useItem` has an arm for every group and the honest answer for a
+thing with no use is its own "Nothing happens."; a button drawn only
+for items this screen BELIEVED were usable would be the screen making a
+judgement the law already makes.
+
+THE TWO HAND-OFFS RUN IN OPPOSITE ORDERS, AND THE FIRST DRAFT GOT IT
+BACKWARDS. Both exist for AUDIT B-C1's reason - DFU PUSHES the reader
+and the spellbook over the inventory, a window stack, while the port's
+hosts hold ONE overlay slot, so the inventory must run its own close
+law or the pile it was about to drop never mints. But:
+
+    BOOK       hand over, THEN close. The reader takes a FAILURE
+               CALLBACK, and "a failed open still reports on this
+               window - it is the live overlay until the reader
+               actually shows".
+    SPELLBOOK  close, THEN hand over. No callback, so free the slot.
+
+This module gave both `closeFirst: true` and its pin asserted the same
+thing, because the code and the pin were written from one wrong
+reading of the classic window - which is exactly what a pin written
+beside the code it pins is worth. THE BROWSER CAUGHT IT, and twice
+over: closing first also cleared the deps the hook was about to be read
+from, so the book arm threw `deps.openBook is not a function` on the
+first real press. The hooks are read before anything closes now, the
+pin holds the ASYMMETRY against both windows, and the probe proves each
+order by asking the hook itself whether the window was still up when it
+ran.
+
+`useResultAction` IS PURE AND SEPARATE so that ordering is testable
+rather than retyped from memory. It also carries the classic window's
+message ladder in the classic window's order - an explicit text, then a
+TEXT.RSC id read through the host's `rows`, then the pending stand-in -
+and AUDIT 22 F9's `enchanted` RIDER, which only speaks when the arm
+itself said nothing rather than replacing what the arm produced.
+
+EVERY DEP TRAVELS, and a pin counts them. A dep quietly dropped here is
+an arm that silently does nothing, which is the shape U44 found when
+the potion hook had reached three of five construction sites.
+
+PROVED IN A REAL BROWSER by `tools/enhancedPackProbe.mjs` - 54/54, up
+from 44. The probe found two of its own wrong expectations before it
+found anything else: a BOOK is not a weapon, so it sits on the CLOTHING
+page (filterByTab's default branch is DFU's fourth bucket - everything
+not a weapon, not enchanted, not an ingredient) and the pack correctly
+opened on an empty Weapons page; and a SPELLBOOK WITH NO SPELLS IN IT
+does not open at all - useItem's `noSpells` arm answers TEXT.RSC 12,
+which is DFU's own law, so the character had to be taught a spell
+before the OPEN arm could be exercised.
+
+STILL CLASSIC, and the door still says so: the WAGON, LOOT PILES, the
+guild REWARD PICKER and DROP-GOLD. Those four share one thing this
+slice did not need - DFU's TRANSFER LADDER, which lives inside
+`ui/nativeInventory.js` as window methods rather than as anything
+callable: the summoned-item refusal, the choose-one one-way rule, the
+750kg cart limit with its partial split-take, the carry gate and gold's
+own arithmetic. An enhanced remote pane needs that ladder, and there
+are only two honest ways to get it - extract it into a module both
+windows call, or copy it, and this port does not copy law. The
+extraction is its own decision because it edits the proven window every
+host uses.
+
+## U54 THE ITEM ICONS, and the middle link the port never had (2026-08-26)
+
+The pack draws real item pictures. `ui/textureCanvas.js` is the piece
+that was missing, and it is the DOM's own door to the TEXTURE archives.
+
+THE PORT HAD TWO THIRDS OF THIS SINCE U50. `formats/textureFile.js`
+reads TEXTURE.### into DFBitmaps and is corpus-gated;
+`ui/bitmapCanvas.js` turns a DFBitmap into a canvas and has drawn the
+chargen faces since U50. What was missing is the middle - fetch an
+archive, keep it, hand a screen the one record it asked for - which is
+why U53's pack drew two-letter initials where the classic window draws
+the icon.
+
+IT HANDS OUT A DATA URL, NOT A CANVAS. A canvas is a NODE and a node
+lives in one place; these screens rebuild their whole DOM on every
+repaint and the same icon can appear in several rows at once, so one
+canvas would move from row to row and leave the others blank. A data
+URL is a VALUE: any number of `<img>` elements carry it and the browser
+decodes it once.
+
+U53 GOT THE ICON ADDRESS WRONG AND THIS SLICE FIXES IT. `itemLine` read
+`playerTextureArchive ?? worldTextureArchive` off the template, which
+looks like the same thing as `inventoryItemImage` and is FOUR PORTED
+LAWS short of it, two with audits behind them: GetItemImage draws the
+WORLD texture for UselessItems1, ingredients, arrows, ReligiousItems
+and MiscItems - 111 of 288 templates differ (AUDIT 17e F9); the player
+archive is offset by the WEARER's body morphology, or every list draws
+the morphology-0 Argonian row (AUDIT 17f); variants index off the
+record with cloaks skipping their interior-first one and armour riding
+SetVariant's material-family clamps (AUDIT 23 items-6); and katanas
+take +1 on the inventory branch alone. U53's own module header warned
+against building a second icon pipeline and then contained a piece of
+one. The line takes the WEARER now and both call sites pass it.
+
+`texName` GOT ONE HOME in the same motion. It was declared in
+`scenes/shared.js`, and this module cannot import that - 33 imports
+including the sky renderer, which a DOM screen must not drag in - so
+the first draft restated it and the `audit24_onehome` ratchet caught it
+inside the slice. It lives in `formats/textureFile.js` now, beside the
+reader, and shared.js re-exports it for its thirty callers.
+
+EVERY FAILURE IS A CACHED MISS. No ARENA2, a missing archive, a record
+past the end, a palette that would not load: the caller gets null, the
+screen keeps its initials, and the archive is not fetched again on the
+next repaint. A screen asking forty times a second for a file that does
+not exist is the shape this guards against.
+
+PROVED IN A REAL BROWSER by `tools/enhancedIconProbe.mjs` - 18/18, all
+five links, WITH NO GAME DATA. The archive is SYNTHETIC: a valid
+minimal uncompressed TEXTURE file built to the reader's own format and
+served by intercepting the fetch, which is the device the chargen tests
+use ("synthetic pickers so it is provable with no game data"). The
+probe reads the PIXELS back out of the resulting `<img>` and finds the
+palette colour on the painted half and ALPHA 0 on the other, which is
+the port's 1-bit cutout law surviving the whole trip. It also proves
+eight records from one archive cost one fetch, a record past the end
+answers null rather than throwing, and - with everything 404ing - the
+tile falls back to initials, still names the record it wants, and the
+detail explains the absence instead of showing a gap.
+
+WHAT IT DOES NOT PROVE, stated rather than implied: that a REAL ARENA2
+record decodes to the right picture. That needs a run with ARENA2_PATH
+and eyes on the screen. Both halves either side of the new link are
+already proven - the reader against the real corpus, bitmapCanvas by
+the chargen faces - and the new link is thirty lines.
+
+THE REPAINT COUNT IS PINNED, and it is what killed the one mutation the
+probe could not otherwise see. Every cold icon repaints the screen when
+it lands, which is what makes the letters give way to the picture; a
+cache that forgot its IN-FLIGHT records decodes each icon once per
+repaint until the first lands, and the count DOUBLES - four to eight
+for a three-item pack. It does not loop forever, because the first
+decode to land caches the answer, and the first draft of that comment
+claimed a loop it cannot cause. Bounded waste, said precisely.
+
+TWO MORE CAME OUT OF READING THE DIFF BEFORE PUSHING IT, and both
+were real. The TEMPLATE-NAME FALLBACK went away with the template read
+it replaced, so an item minted with no name of its own - a loot roll, a
+quest reward - said "Unknown" where it used to say "Longsword". And the
+icon carried a width ATTRIBUTE, which forces every sprite to 30 across
+when a dagger is tall and narrow and a cuirass is wide; the CSS caps
+both axes instead, which scales to fit and keeps the shape.
+
+AND THE PROBES STOPPED RACING THE BOOT. `main.js`'s top-level catch
+does `document.body.textContent = ...` on a failed boot, and assigning
+textContent REMOVES EVERY CHILD OF BODY - including an enhanced overlay
+opened a moment earlier. With no ARENA2 the world boot always fails in
+a probe container, so every in-game probe since U51 has been opening
+its screen in a race with a page wipe, and winning it often enough to
+look reliable. That is the shape behind this repo's own "the verifier
+said TIMEOUT four times against good deploys". All four wait for the
+boot to settle now. The behaviour itself is correct - a boot that
+failed has nothing to show - so nothing in `src/` changed; it took an
+hour to find because the div vanished with no `.remove()` and no
+`removeChild` in the trace, which is exactly what assigning
+`textContent` looks like from the outside.
+
+ONE RECORDED SURVIVOR: deleting the explicit `record >= recordCount`
+check changes nothing observable, because `getDFBitmap` already answers
+an out-of-range record with an empty bitmap and `bitmapCanvas` answers
+an empty bitmap with null. The check earns only its warning line, which
+names the archive and record a screen asked for. Kept, and recorded as
+redundant rather than left looking load-bearing.
+
+## U53 THE ENHANCED PACK, AND THE SLOT MAP (2026-08-26)
+
+The overhaul's signature, and the second in-game screen. F6 opens it,
+`ui/inventoryDoor.js` chooses, and the classic INVE00I0 window is one
+`?skin=classic` away.
+
+THE SEAM, AND THE SAME FINDING TWICE MORE. FIVE sites constructed
+`new NativeInventoryWindow({ ... })`: three host factories and TWO
+hand-rolled copies of a factory that was already in the same file and
+already took the extra keys they needed. The copies were VERBATIM -
+eleven identical hooks each, plus `loot` and `onClose`, which is
+precisely what `...extra` is for - and their indentation had drifted,
+which is what a copy-paste looks like a month later. This one had
+already cost something: the pin guarding it records that U42 put
+`openSpellbook:` on three of the five sites and the two loot-pile
+windows went on printing "You cannot open your spellbook here." over a
+Spellbook the player was holding. Both copies are deleted; each host
+has one builder and the loot arm calls it.
+
+THE FORK IS NARROW AND SAYS WHERE IT STOPS. The classic window is not
+one screen - it is the pack, the LOOT pile, the WAGON, the guild
+REWARD picker, drop-gold and the whole USE chain - so the door hands
+the classic window every call carrying a `loot` target or a
+`chooseOne` list. That is a boundary, not a gap: a player who opens a
+corpse gets the window that has always opened it, and what would break
+the never-traps law is an enhanced pack that silently dropped the
+wagon on the floor.
+
+ONE GATE DID NOT MOVE, and it is the subtle part. Every inventory gate
+became `inventoryDoorReady()` except the two PILE arms, which keep
+asking `inventoryArtLoaded()` - because the door hands those calls the
+CLASSIC window, and a classic window with no INVE00I0 draws nothing.
+
+THE SLOT MAP IS THE POINT. Twenty-seven equip slots, TWO amulets, TWO
+bracelets, TWO marks, TWO crystals, and chest armour and chest clothes
+as separate layers; the classic paperdoll draws that as a picture of a
+person and the player hunts for the slots by clicking at them. Here
+every slot is a node on a body schematic, filled nodes are lit and
+twice the radius, and the whole state of a kit reads at a glance. A
+picture of a person tells you how they look; this tells you what you
+are carrying, which is what the screen is for.
+
+IT IS INLINE SVG, NOT THE PROTOTYPE'S THREE.JS. `mountFigure` in
+`src/tools/enhancedVisuals.js` builds a small three.js scene and
+`enhanced.html` loads that library from a CDN - and the port already
+carries exactly one third-party request (Ledger A, the web fonts),
+which is one more than it wants. Twenty-seven positioned nodes need no
+library, and an SVG scales to a phone where a fixed WebGL canvas does
+not.
+
+NOTHING ABOUT ITEMS IS DECIDED HERE. Equipping is `equipItem`, which
+carries DFU's whole chain - the two-hander clearing both hands, a
+shield bumping a held two-hander, the forbidden and broken refusals,
+the swap delay billed per transition, the armour table and the
+enchantment hooks. The four tab pages are `TABS`/`filterByTab`. Weight,
+condition, material and damage strings are `systems/itemInfo.js`'s.
+This module positions nodes and prints rows, and the node tests prove
+it by wearing a Claymore and watching both hands empty.
+
+A "WORN" BADGE WAS WRITTEN AND DELETED. `filterByTab` IS
+FilterLocalItems, and its first line drops every equipped item - worn
+kit leaves the list. So a badge on a row could never render, and a
+decoration that cannot render is the same lie as a button that does
+nothing. Worn items live on the MAP, which is the argument the screen
+makes.
+
+THE BUG ONLY A BROWSER COULD SEE. The detail column was given the
+class `detail` - which the SETTINGS pane's phone sheet already owns in
+the same stylesheet, as `position: fixed; transform: translateY(101%)`.
+On a desktop the screen was perfect; on every phone the third column,
+with the Wear button in it, sat 101% below the fold. The source read
+correctly and the node pins all passed. It is `packdetail` now, and
+because three columns do not fit one phone anyway, the sheet behaviour
+is written DELIBERATELY - the detail rises when an item is picked and
+closes back down - rather than inherited by accident.
+
+PROVED IN A REAL BROWSER by `tools/enhancedPackProbe.mjs` - 44/44 on a
+desktop and a Pixel 5 with no ARENA2, measuring the nodes' real
+on-screen radii and spacing, wearing five things, taking one off by
+clicking its node, and watching a broken item refuse. The items are
+built from the port's OWN `ITEM_TEMPLATES`, which is ported data in
+the repo rather than game data on disk, so the weights and conditions
+on screen are the game's numbers. 24 pins; 12 mutations, 12 dead.
+
+TWO SWEEPS NEEDED THEIR COMMENTS STRIPPED. "This file contains no icon
+pipeline" and "this file uses no three.js" both failed their first run
+against the file's own header EXPLAINING why it contains neither -
+a sweep reading prose as code, which would have let a real second
+pipeline through as long as nobody wrote about it.
+
+NOT DRAWN, recorded rather than dropped: THE ITEM ICONS. The classic
+window draws them from the TEXTURE archives through GL textures the
+host hands it, which a DOM list cannot use, and the path a DOM screen
+would need - archive record to canvas through `ui/bitmapCanvas.js` -
+does not exist yet. Inventing a second icon pipeline in this file is
+how the port ends up with two. The PROTOTYPE hit the same wall and
+answered it the same way, with two initials and the real
+archive/record in the tile's title, which is what this does. It is the
+next inventory slice's first job, along with the wagon, the loot
+piles, the reward picker, drop-gold and USE.
+
+## U52 THE ENHANCED CHARACTER SHEET (2026-08-26)
+
+The first of the port's IN-GAME screens to grow an enhanced twin. F5
+opens it, `ui/charSheetDoor.js` chooses, and the classic INFO00I0 sheet
+is one `?skin=classic` away as always.
+
+THE SEAM HAD TO BE MADE, not found. U50's fork went inside
+`createChargenWindow` and U51's in front of `openPauseFlow`, both of
+which already existed; nothing funnelled the sheet. Three hosts each
+wrote `new CharSheet(playerEntity, charSheetHooks({ ... }))` by hand -
+and `exterior.js` wrote it TWICE, once as `makeCharSheetWindow` for the
+interior host to borrow and once inline in its own F5 arm, the second
+copy having already lost the first's note about the deliberately
+withheld quest hooks. They agreed. That is what drift looks like the
+day before it stops being true, and it is AUDIT 17i's finding one
+window over. The hosts hand their DEPS to the door now and never see
+which sheet that adds up to; the door is the only caller of
+`charSheetHooks` left.
+
+THE DENSITY ARGUMENT IS THIS SCREEN'S WHOLE POINT. Daggerfall has 35
+skills where Skyrim has 18, and the classic sheet answers that by
+showing NINE - keys 1-4 pop a text panel over the art and
+`_drawSkillPage` slices to `ids.slice(0, 9)`, because a 320x200 panel
+has nowhere else to put them, so comparing a Major against a
+Miscellaneous means pressing two keys and remembering the first number.
+This shows every skill the character has a career for, in DFU's own
+three groups, with the twenty-odd Miscellaneous ones one press away.
+Disclosure, not deletion - the prototype's rule, and the reason this is
+not "Skyrim's sheet with Daggerfall's words in it".
+
+THE NUMBERS ARE THE CLASSIC SHEET'S, and `sheetModel` is pure and
+separate so a node test can prove it: it evaluates ui/charsheet.js's
+own expressions beside the model over an entity carrying a DRAIN, which
+is where the trap is. The eight attributes and the encumbrance ceiling
+both read `liveStat`, so a sheet showing the raw base makes a poisoned
+player read a lie, and both mutations die. `carriedWeight` was
+module-private in charsheet.js and is EXPORTED rather than re-reduced
+here. Writing the /64 divisor as a new constant was caught in the
+slice - `FATIGUE_MULTIPLIER` is statMods.js's own export and
+charsheet.js's two inline copies are collapsed onto it in the same
+motion.
+
+THE CHILD WINDOWS ARE THE HARD PART, and they are what makes this
+screen unlike the two before it. The sheet is not a leaf: its four
+navigation buttons PUSH a window, the hosts hold ONE overlay slot so
+the sheet owns its child and delegates (CharSheet's own note since
+U32), and those children are CANVAS windows - drawn on the canvas
+underneath an opaque DOM div. So the enhanced overlay HIDES ITSELF on
+push, restores on pop, disposes the popped child and re-reads the model
+(gold and encumbrance come FROM the pack the inventory just changed),
+and forwards ALL SIX arms. U42 is why that list is exhaustive rather
+than obvious: the classic sheet forwarded tick, wheel, input and click
+and NOT hover, and the spellbook silently lost its list highlight and
+all three of its icon tooltips on exactly the route three of the four
+hosts take.
+
+THE ART GATE MOVED, as it did at U51: `charSheetDoorReady()` is
+`isEnhanced() || charSheetArtLoaded()`, since the enhanced sheet reads
+no ARENA2 at all.
+
+ESCAPE AND F5, the two keys the classic sheet closes on. Keys 1-4 have
+nothing to do here - all four groups are on the screen at once, so an
+arm for them would be a key that appears to do nothing. F5 is NOT in
+`overlayAction` (that table is the shared overlay vocabulary and F5 is
+a host BINDING) so it is read from the event and CLAIMED: an unclaimed
+F5 is a browser reload that destroys the session, which is AUDIT 17e
+F41's finding one window over.
+
+PROVED IN A REAL BROWSER by `tools/enhancedSheetProbe.mjs` - 64/64 on a
+desktop and a Pixel 5 with no ARENA2, driving a real push with a fake
+child, which is where the child contract is actually exercised. It
+caught two of its OWN wrong expectations first: History is drawn
+whatever the host hands (charSheetNav's host-agnostic half needs only
+the entity), and `setUiSkin('classic')` on a page loaded with
+`?skin=enhanced` changes nothing, because the URL override outranks the
+stored choice - the very property that keeps the 25 classic-geometry
+probes honest. 20 pins; 12 mutations, 12 dead.
+
+THE VACUOUS-FORK LESSON WAS NEEDED TWICE. The classic-skin pin ran
+headless, where `typeof document` is undefined, so BOTH skins fell to
+the classic branch and deleting `isEnhanced()` from the condition
+survived - the identical defect the first draft of
+`test/enhancedPause.test.js` shipped one slice earlier. It runs under
+the same four-property fake document now. Worth recording because it
+was not learned the first time.
+
+NOT DRAWN HERE, recorded rather than dropped quietly: THE PAPERDOLL.
+The classic sheet composes it at DFU's (200,8) and the prototype
+answers the same slot with the 28-node body schematic - but that
+schematic is the INVENTORY's signature, it wants
+`src/tools/enhancedVisuals.js` and the three.js tag `enhanced.html` loads
+from a CDN, and the port's doctrine already carries exactly one
+third-party request (Ledger A, the web fonts). It belongs to the
+inventory slice with the equip map it explains. The LEVEL-UP screen
+stays classic too: a different window, pushed by the hosts themselves,
+which mutates stats through chargen's verbatim clamps.
+
+## U51 THE PAUSE DOOR (2026-08-26)
+
+Escape opens the ENHANCED screen. `ui/pauseDoor.js` picks between it
+and the classic OPTN00I0 panel, the four hosts call what they always
+called, and the screen it mounts is the FRONT DOOR - `ui/enhancedMenu.js`
+in pause mode - not a second design.
+
+U49'S OWN COMPLAINT WAS STILL TRUE. Its record says the port's settings
+were "reachable only at boot: once you were playing there was no door
+back that was not a reload", and that is the sentence that justified
+collapsing four boot screens into one. It described the CLASSIC front
+door. It went on describing the enhanced one, because `runEnhancedMenu`
+is called from exactly one place - `main.js`, before the world boots -
+and Escape inside the game went on opening a 320x200 panel with five
+hand-placed controls. A player on the default skin met the enhanced
+design once, at the door, and then played a classic game.
+
+THE FORK IS IN FRONT OF `openPauseFlow` AND THE HOSTS DID NOT MOVE. It
+is THE ONE CONSTRUCTION SEAM for the third time: AUDIT 17i split
+`createChargenWindow` out after three bugs came from hosts wiring
+chargen by hand, U50 put the skin fork inside it and cost its two
+callers no edit at all, and the four pause hosts already funnelled
+through one function. What they did change is the GATE - `pauseArtLoaded()`
+became `pauseDoorReady()`, one predicate, for the reason `uiSkin.js`
+gives for being one: a port that spells the test out at six call sites
+is a port where the sixth spells it differently.
+
+THE ART GATE MOVED THE WAY THE DATA GATE DID. The classic window cannot
+draw one pixel without OPTN00I0.IMG, so the hosts gated Escape on it.
+The enhanced screen reads no game data at all - that is the whole
+premise of U49's door - and gating it on classic art would have left a
+player whose art load failed holding a game with no pause menu, no
+settings and no way out, on a screen that would have rendered
+perfectly. `pauseDoorReady` is `isEnhanced() || pauseArtLoaded()`.
+
+A SECOND ENHANCED SCREEN WAS THE OBVIOUS BUILD AND IS THE WRONG ONE.
+Classic needs two windows because PICK03I0 and OPTN00I0 are two
+different .IMGs; here they would be two copies of a settings view, and
+the divergence U49 collapsed four screens to avoid would have grown
+back inside the skin that closed it. So the rail changes and nothing
+else does: Continue and New Game ask WHICH GAME, which is settled by
+the time this mounts over a running one; Resume, Save Game and Exit ask
+WHAT NOW. Load, Settings, Mods and About are identical in both. It
+opens on Save Game, and Settings - the reason the door exists - is one
+press away and permanently on the rail, which is the thing classic
+could not do at any price.
+
+THE PANES ANSWER THE HOST, NOT THE RAIL. Two of the four hosts hand
+`savingPrevented: () => true` and no save or load hook at all (exterior,
+worldModes), so the Save pane draws no button and answers with the
+game's own recovered string - "You cannot save now." - rather than a
+dimmed control with no explanation attached. The rows STAY on the rail
+where they are refused, which is the argument the Mods section is built
+on: a rail that drops a row teaches the player the door was never
+there. And every exit closes the door BEFORE it fires the hook, which
+is classic's own order (`_closeWith()` then the hook) and matters more
+here - the port answers a save with a HUD line, and this screen is an
+opaque div over the whole canvas, so a hook fired under a live door
+hides its own answer. The probe checks that by asking the HOOK whether
+the door was still up when it ran.
+
+ESCAPE, AND ONLY ESCAPE, and it says so rather than leaving the gap
+looking like an oversight. Escape is the key that opened the screen and
+a pause screen you cannot leave by it is the trap the never-traps law
+is about; it routes through `overlayAction`, the shared table, so it is
+the same Escape rebound the same way as everywhere else, and its back
+stack is innermost-first - a confirm card, then a phone's help sheet,
+then the screen - or the one press meaning "not that" quits the game.
+FLAGGED: the rest of the keyboard. The wizard walks to `done` with no
+pointer because a wizard is a LINE; this is three panes with a rail, a
+list and a sheet, and arrows over it is a real question about focus
+order rather than a table lookup. Half of it would be worse than none.
+
+THE TWO LAWS THE WIZARD PAID FOR ALREADY, inherited whole: the
+window-level keydown is on CAPTURE and is REMOVED on unmount (here that
+is not a leak but a game that can never be paused again - the dead
+listener keeps eating Escape), and the POINTER LOCK is dropped on mount
+and kept dropped, because mouselook is the port's resting state so this
+screen always mounts over a locked pointer, and a locked pointer never
+reaches the DOM at any z-index.
+
+THREE THINGS LOOKING AT IT ON A PIXEL 5 FOUND, and two of them were
+U49's bugs rather than this slice's. THE PHONE RAIL WRAPS now: it is a
+flex row with `overflow-x: auto` and its scrollbar hidden, so four of
+the seven destinations sat off the end of the screen with no affordance
+of any kind - SETTINGS and EXIT among them, which is to say the door's
+entire reason for existing and the way out of it. That is the AUDIT 24
+shape exactly: a control that is drawn, exists, and cannot be reached on
+the device that needs it most. SIX never fitted either, so the front
+door has carried this since U49 and nobody saw it, because the entry it
+hid was About. The WIZARD's rail is exempt and pinned as exempt - that
+one is a walk through ten stages in order, and a walk that wraps stops
+reading as a line. Second, `.body` had no width at all, so a card of
+three lines stretched the full width of a desktop pane and every screen
+but Settings read as mostly empty; it is a 720px reading column now,
+with the settings pane's own `flush` body pinned UNcapped. Third, the
+Save card draws the game it is about to overwrite - the same name, line
+and numbers the Continue card shows - because that is precisely what
+the press replaces, and the Exit card stopped repeating its own confirm
+(both were titled "Leave this game", so the press between them looked
+like a screen that had not responded; the heading says where you go,
+the button says what you do, and the confirm echoes the button).
+
+FOUR PANES NOW DRAW ONE SLOT - Continue, Load, Save and Exit - so the
+character line and the health/gold numbers are written once and the pin
+counts the literals to prove no second copy grew back.
+
+PROVED IN A REAL BROWSER by `tools/enhancedPauseProbe.mjs` - 51/51 on a
+desktop and a Pixel 5, zero page errors, with no ARENA2 on disk - and
+it seeds a quicksave, because four of these panes are built FROM the
+save and with an empty slot every claim about what a player is shown
+before overwriting a game is vacuously true. It MEASURES every rail
+button against the viewport, since reachable and VISIBLE are different
+claims and the 44px target check passes either way. What it does NOT
+prove is stated in its own header: that the four hosts call it, which
+needs a living game and therefore game data. That half is held by
+source pins. 20 pins; 20 mutations, 20 dead - and TWO of those
+only after the pins they exposed were rewritten. The first draft of the
+fork test passed for the wrong reason: the second clause is `typeof
+document !== 'undefined'`, node has none, so both skins fell to the
+classic branch and deleting `isEnhanced()` survived. It runs under a
+four-property fake document now.
+
+ONE EXPORT, ONE HOME. `ui/pauseWindow.js`'s factory is
+`openClassicPauseFlow` now; the plain name belongs to the door. Two
+modules exporting one name is the drift the `audit24_onehome` ratchet
+exists to catch, and it caught this one during the slice rather than in
+an audit.
+
+NOT DONE HERE, recorded as real gaps rather than dropped quietly: the
+`?dungeon` dev scene's own Escape is wired like the others, but that
+host still holds the RAW chargen flow (U50's FLAGGED row) and nothing
+about that changed; the CONTROLS grid stays classic-only - the enhanced
+settings pane renders all 171 DFU keys, and key REBINDING is not one of
+them; and the in-game screens behind this door - inventory, the sheet,
+the spellbook, the travel map, the journal - are all still classic. The
+prototype for those is `enhanced.html` + `src/tools/enhancedUI.js` and
+it is the next frontier, not this slice.
+
 ## U50 THE ENHANCED WIZARD (2026-08-25, Mac's call, ONE STAGE AT A TIME)
 
 Character creation in the enhanced skin. ALL TEN journey stages have

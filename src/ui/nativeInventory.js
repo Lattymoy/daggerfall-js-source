@@ -51,12 +51,17 @@ import { useItem, isLightSource } from '../systems/useItem.js';   // U25
 import { itemInfoRows, questLetterName, INFO_TEXT } from '../systems/itemInfo.js';   // U25
 import { goldAmount, deductGold } from '../systems/court.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
-import { addItem, isEnchanted, goldStack, canHoldAmount, effectiveUnitWeightInKg, totalWeight, GOLD_PIECE_WEIGHT_KG, isSummoned } from '../systems/inventory.js';   // L-slice (items-9); X11b: isSummoned
-import { CANNOT_REMOVE_ITEM_TEXT } from '../systems/createItem.js';   // X11b: TransferItem's refusal
-import { makeItemPermanent } from '../systems/quest/item.js';   // TransferItem's MakePermanent arm (:1502-1504)
-import { getBool } from '../systems/settings.js';   // GUI/CanDropQuestItems
-import { entityMaxEncumbrance } from '../combat/formulas.js';   // L-slice (items-9); DaggerfallEntity.MaxEncumbrance, enchantment allowance and all
-import { liveStat } from '../systems/statMods.js';   // L-slice (items-9)
+import { addItem, isEnchanted, goldStack, canHoldAmount, totalWeight, GOLD_PIECE_WEIGHT_KG } from '../systems/inventory.js';   // L-slice (items-9)
+// U56: TransferItem's ladder - the guards, their order, and the split.
+// AUDIT 26's quest arm is a rung of it and travelled with it, so the
+// window no longer carries the settings or quest-resource imports it
+// needed to run that rung itself.
+import { planStore, planTake, applyTransfer, planDropGold } from '../systems/itemTransfer.js';
+// U57: which list is the remote one, and what opening and closing
+// this window decide.
+import {
+  openState, remoteTarget, planWagonToggle, closeSession,
+} from '../systems/inventorySession.js';
 import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, isBrokenItem, FORBIDDEN_EQUIPMENT_TEXT_ID, ITEM_BROKEN_TEXT_ID } from '../systems/equip.js';   // S23
 import { drawPaperDoll, refreshPaperDoll, slotAtPaperDoll, ARMOR_LABEL_POS } from './paperDoll.js';
 import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel, safeScrollIndex } from './itemScroller.js';
@@ -119,63 +124,20 @@ export const USE_PENDING = Object.freeze({
 
 /** TEXT.RSC 25 - the drop-gold prompt (:1272). */
 export const GOLD_TO_DROP_TEXT_ID = 25;
-/** Internal_Strings "noWagon" (:1237). */
-export const NO_WAGON_TEXT = "You don't own a wagon.";
-// W-slice: the wagon goes live.
-export const WAGON_KG_LIMIT = 750;      // ItemHelper.WagonKgLimit (:56)
-export const SMALL_CART_TEMPLATE = 93;  // ItemGroups.Transportation.Small_cart's template
-
-/** TransferItem's QUEST arm (DaggerfallInventoryWindow.cs:1480-1505)
- *  as ONE export, because DFU's is one member with three callers -
- *  the local list's Remove click, the remote list's, and every
- *  staging click in DaggerfallTradeWindow, which INHERITS TransferItem
- *  and calls it at :795. `fromLocal` is DFU's `from == localItems`;
- *  `toWagon` is `remoteTargetType == RemoteTargetTypes.Wagon`.
- *
- *  Answers TRUE when the transfer is REFUSED. A legal transfer writes
- *  the resource's playerDropped - the only writer of the flag the
- *  DroppedItemAtPlace trigger polls - and re-permanents a cloned item
- *  that had been made permanent.
- *
- *  GetQuestItem (:1642-1656) THROWS on a missing quest or symbol; the
- *  port answers null, the same call useItem.js's quest arm makes,
- *  because a host with no machine has no quest to find and a stale
- *  questUID is not worth a crash. DFU refuses an unresolvable quest
- *  item too (:1489), so the null lands on the same side. */
-export function questTransferRefused(item, { fromLocal, toWagon = false, getQuest = null } = {}) {
-  if (!item?.questItem) return false;
-  const questItem = getQuest?.(item.questUID)?.getItem?.(item.questSymbol) ?? null;
-  // "Player cannot drop most quest items unless enabled" (:1486-1494).
-  // GUI/CanDropQuestItems ships False in both codebases.
-  if (!getBool('GUI', 'CanDropQuestItems')) {
-    if (questItem === null || (!questItem.allowDrop && fromLocal)) return true;
-  }
-  // Past the gate with no resource to write, C# would NRE on the next
-  // line; the port lets the transfer stand and writes nothing.
-  if (!questItem) return false;
-  // "Dropping or picking up quest item" (:1496-1500) - and the WAGON
-  // is not the ground, so stashing a droppable quest item in the cart
-  // is not a drop.
-  if (questItem.allowDrop && fromLocal && !toWagon) questItem.playerDropped = true;
-  else if (!fromLocal) questItem.playerDropped = false;
-  // :1502-1504 - a cloned quest item that should be permanent gets its
-  // permanent status back.
-  if (questItem.madePermanent) makeItemPermanent(item);
-  return false;
-}
-
-/** key "exitTooFar" (:1239) - prose ours pending a string source. */
-export const EXIT_TOO_FAR_TEXT = 'You are too far from the exit.';
-/** key "cannotHoldAnymore" (WagonCanHoldAmount :1431). */
-export const CANNOT_HOLD_TEXT = 'Your wagon cannot hold any more.';
-/** key "wagonFullGold" (:1303) - the drop-gold clamp's box. */
-export const wagonFullGoldText = (n) => `Your wagon can only hold ${n} more gold.`;
-/** DungeonWagonAccessProximityCheck's radius (:1102). */
-export const WAGON_ACCESS_DISTANCE = 5;
-/** L-slice (items-9): the CanCarryAmount refusal - DFU key
- *  "cannotCarryAnymore" (Unity-side localization; prose ours until a
- *  string source is decided). */
-export const CANNOT_CARRY_TEXT = 'You cannot carry any more.';
+// W-slice: the wagon goes live. U56: the strings the TRANSFER LADDER
+// owns live with it now (systems/itemTransfer.js) and are re-exported
+// here, because a caller reaching for the wagon's limit is usually
+// already holding this window. AUDIT 26's `questTransferRefused` rides
+// the same road: DaggerfallTradeWindow INHERITS TransferItem and
+// imports it from here, and the ladder's home is where it belongs.
+export {
+  WAGON_KG_LIMIT, CANNOT_HOLD_TEXT, CANNOT_CARRY_TEXT, wagonFullGoldText,
+  questTransferRefused,
+} from '../systems/itemTransfer.js';
+// U57: and the remote side's, for the same reason.
+export {
+  SMALL_CART_TEMPLATE, NO_WAGON_TEXT, EXIT_TOO_FAR_TEXT, WAGON_ACCESS_DISTANCE,
+} from '../systems/inventorySession.js';
 export const TABS = ['weapons', 'magic', 'clothing', 'ingredients'];
 const TAB_RECT = { weapons: INV_RECTS.tabWeapons, magic: INV_RECTS.tabMagic, clothing: INV_RECTS.tabClothing, ingredients: INV_RECTS.tabIngredients };
 const MODES = ['wagon', 'info', 'equip', 'remove', 'use', 'gold'];
@@ -233,8 +195,11 @@ export class NativeInventoryWindow {
     this.done = false;
     this.isChoiceWindow = true;    // raw codes through the overlay seam
     this.tab = 'weapons';          // SelectTabPage(TabPages.WeaponsAndArmor) on setup
-    // selectedActionMode: Remove for loot targets, Equip otherwise
-    this.mode = hooks.loot ? 'remove' : 'equip';
+    // U57: selectedActionMode, CheckWagonAccess and SetChooseOne are
+    // one read now (systems/inventorySession.js) - the enhanced pack
+    // opens on the same three answers.
+    const open = openState(hooks);
+    this.mode = open.mode;
     this.scroll = 0;
     this.remoteScroll = 0;
     this.infoGold = false;   // U47: the gold button's hover fills the panel instead of an item
@@ -243,29 +208,17 @@ export class NativeInventoryWindow {
     this.infoItem = null;
     this.goldEntry = null;         // the drop-gold field's live text
     // W-slice: the wagon as the remote target. usingWagon mirrors
-    // ShowWagon's flag; the dungeon access is decided ON OPEN -
-    // CheckWagonAccess (:1082-1097) allows it only with the cart in
-    // the bag and the player within 5 units of an exit door, and
-    // DFU's no-loot arm opens STRAIGHT onto the wagon in Remove mode
-    // (the classic leave-the-haul-at-the-entrance flow).
-    this.usingWagon = false;
+    // ShowWagon's flag.
+    this.usingWagon = open.usingWagon;
     // G6: SetChooseOne (:259-264). The reward list becomes the REMOTE
     // side and taking ONE item closes the window and fires the
     // callback (:1585-1591); the local Remove transfer is barred
-    // while it is on (:1994), so nothing of the player's can be
-    // dumped into a pile they are only choosing from. DFU clears the
-    // mode in OnPop, so closing WITHOUT taking claims nothing.
-    this.chooseOne = hooks.chooseOne ?? null;
-    if (this.chooseOne) this.mode = 'remove';
-    this.allowDungeonWagonAccess = !!(hooks.dungeon?.inside && this._hasCart() && hooks.dungeon?.nearExit?.());
-    if (this.allowDungeonWagonAccess && !hooks.loot) { this.usingWagon = true; this.mode = 'remove'; }
+    // while it is on (:1994). DFU clears the mode in OnPop, so
+    // closing WITHOUT taking claims nothing.
+    this.chooseOne = open.chooseOne;
+    this.allowDungeonWagonAccess = open.allowDungeonWagonAccess;
     this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);   // AUDIT 17f: icons follow the wearer's morphology
     if (hooks.entity) refreshPaperDoll(hooks.entity);   // U8g: the doll composes fresh on open
-  }
-
-  /** Items.Contains(Transportation, Small_cart) (:1236). */
-  _hasCart() {
-    return (this.hooks.items() ?? []).some((it) => it.templateIndex === SMALL_CART_TEMPLATE);
   }
 
   /** ShowWagon (:1047-1080): the flag flips and the remote scroll
@@ -286,9 +239,14 @@ export class NativeInventoryWindow {
   }
   _filtered() { return filterByTab(this.hooks.items(), this.tab); }
   _remote() {
-    if (this.usingWagon) return this.hooks.wagonItems?.() ?? (this._wagonLocal ??= []);
-    if (this.chooseOne) return this.chooseOne.items;
-    return this.hooks.loot ? this.hooks.loot.items() : this.dropped;
+    return remoteTarget(this.hooks, {
+      usingWagon: this.usingWagon,
+      chooseOne: this.chooseOne,
+      dropped: this.dropped,
+      // A host with no wagon hook still needs somewhere for the
+      // toggle to point, and it must be the SAME array every read.
+      wagonLocal: (this._wagonLocal ??= []),
+    });
   }
   _setTab(t) {
     audio.playOneShot(SOUND.ButtonClick, 1);
@@ -317,8 +275,7 @@ export class NativeInventoryWindow {
    *  skipped and a session drop was silently LOST. */
   _closeSilently() {
     this.done = true;
-    if (this.dropped.length) this.hooks.onDrop?.(this.dropped);   // the world pile mints on close (OnPop)
-    this.hooks.onClose?.();
+    closeSession(this.hooks, this);   // the world pile mints on close (OnPop)
   }
 
   /** S23: the career equip gate (DaggerfallInventoryWindow :1343-1381).
@@ -440,12 +397,9 @@ export class NativeInventoryWindow {
     // method used to play a second one of its own, so the wagon button
     // fired two overlapping ButtonClicks where every other button
     // fires one.
-    if (!this._hasCart()) { this.boxes = [{ rows: [{ text: NO_WAGON_TEXT, center: true }] }]; return; }
-    if (this.hooks.dungeon?.inside && !this.allowDungeonWagonAccess) {
-      this.boxes = [{ rows: [{ text: EXIT_TOO_FAR_TEXT, center: true }] }];
-      return;
-    }
-    this._showWagon(!this.usingWagon);
+    const plan = planWagonToggle(this.hooks, this);
+    if (!plan.ok) { this._refuse(plan.refusal); return; }
+    this._showWagon(plan.usingWagon);
   }
 
   /** GoldButton_OnMouseClick + DropGoldPopup_OnGotUserInput
@@ -459,23 +413,18 @@ export class NativeInventoryWindow {
       rows: this.hooks.rows?.(GOLD_TO_DROP_TEXT_ID) ?? [{ text: 'How much gold?', center: true }],
       field: true,
       onInput: (text) => {
-        const carried = goldAmount(this.hooks.entity ?? { items: this.hooks.items() });
-        let n = /^[0-9]+$/.test(text) ? Number(text) : 0;
-        if (n < 1 || n > carried) return;
-        // W-slice: gold INTO the wagon clamps to the 750kg headroom
-        // with the wagonFullGold box (:1296-1303); a full wagon's
-        // clamp-to-zero adds nothing (DFU would mint a 0 stack -
-        // guarded, Ledger A).
-        if (this.usingWagon) {
-          const canHold = canHoldAmount(carried, GOLD_PIECE_WEIGHT_KG, WAGON_KG_LIMIT, totalWeight(this._remote()));
-          if (n > canHold) {
-            n = canHold;
-            this.boxes = [{ rows: [{ text: wagonFullGoldText(canHold), center: true }] }];
-          }
-          if (n < 1) return;
-        }
-        deductGold(this.hooks.entity ?? { items: this.hooks.items() }, n);
-        addItem(this._remote(), goldStack(n));
+        const player = this.hooks.entity ?? { items: this.hooks.items() };
+        // U57: the range refusal and the wagon clamp are
+        // systems/itemTransfer.js; the BOX is this window's.
+        const plan = planDropGold(text, {
+          carried: goldAmount(player),
+          usingWagon: this.usingWagon,
+          remote: this._remote(),
+        });
+        if (plan.notice) this.boxes = [{ rows: [{ text: plan.notice, center: true }] }];
+        if (!plan.ok) return;
+        deductGold(player, plan.amount);
+        addItem(this._remote(), goldStack(plan.amount));
       },
     }];
   }
@@ -510,57 +459,23 @@ export class NativeInventoryWindow {
     if (!it) return;
     if (this.mode === 'info') { this._info(it); return; }
     if (this.mode === 'remove') {
-      // AUDIT 24 ui: the Remove arm's call is
+      // LocalItemListScroller_OnItemClick Remove's
       // `TransferItem(item, localItems, remoteItems, canHold, true)`
-      // (DaggerfallInventoryWindow.cs:1999) - the 5th positional is
-      // blockTransport, and TransferItem's FIRST statement is
-      // `if (blockTransport && item.ItemGroup == Transportation)
-      // return;` (:1460-1462). Silently: above the click sound, which
-      // DoTransferItem plays further down. A horse or cart can never
-      // leave the pack this way - and the port's own _hasCart() reads
-      // the bag, so dropping the cart into its own wagon locked the
-      // player out of the wagon now holding it.
-      if (it.group === 'Transportation') return;
-      // X11b: TransferItem's SECOND guard (:1464-1469), one statement
-      // after that one - a SUMMONED item cannot leave the pack at all.
-      // It speaks where the transport guard is silent, because DFU's
-      // does: "You cannot remove this item." Without it a conjured
-      // Steel Cuirass could be sold to a shopkeeper an hour before it
-      // vanished from their stock, or dropped in a pile that would
-      // quietly empty itself.
-      if (this._refuseSummoned(it)) return;
-      // TransferItem's QUEST arm (:1480-1505), the guard one statement
-      // further down: `from` is localItems here, so an undroppable
-      // quest item cannot leave the pack at all.
-      if (this._refuseQuestItem(it, true)) return;
-      // G6 (:1994): nothing goes INTO a choose-one pile.
-      if (this.chooseOne && !this.usingWagon) return;
-      // LocalItemListScroller_OnItemClick Remove: transfer to the
-      // remote items (whole stacks - the split popup pends).
-      // W-slice: INTO THE WAGON the 750kg cart limit gates first
-      // (:1996-1999 -> WagonCanHoldAmount :1425-1434) - zero fit
-      // refuses with cannotHoldAnymore and NO click sound (like the
-      // carry gate, the refused transfer stays silent), a partial
-      // fit split-takes exactly what fits.
-      if (this.usingWagon) {
-        const canHold = canHoldAmount(it.stackCount ?? 1, effectiveUnitWeightInKg(it),
-          WAGON_KG_LIMIT, totalWeight(this._remote()));
-        if (canHold <= 0) { this.boxes = [{ rows: [{ text: CANNOT_HOLD_TEXT, center: true }] }]; return; }
-        audio.playOneShot(SOUND.ButtonClick, 1);
-        if (canHold < (it.stackCount ?? 1)) {
-          it.stackCount -= canHold;
-          addItem(this._remote(), { ...it, stackCount: canHold });
-          return;
-        }
-        const bag0 = this.hooks.items();
-        bag0.splice(bag0.indexOf(it), 1);
-        addItem(this._remote(), it);
-        return;
-      }
+      // (DaggerfallInventoryWindow.cs:1999). U56: the guards, their
+      // ORDER, and the split are systems/itemTransfer.js now - one
+      // reading of TransferItem for every screen that transfers, and
+      // AUDIT 26's QUEST ARM is one of those guards, sitting where DFU
+      // puts it (:1480-1505, below the summoned one and above every
+      // capacity gate). What is still this window's is what a CLASSIC
+      // window does with the answer: a parchment box, or the click.
+      const to = this._remote();
+      const plan = planStore(it, {
+        remote: to, usingWagon: this.usingWagon, chooseOne: this.chooseOne,
+        getQuest: this.hooks.getQuest ?? null,
+      });
+      if (!plan.ok) { this._refuse(plan.refusal); return; }
       audio.playOneShot(SOUND.ButtonClick, 1);   // DoTransferItem (:1583)
-      const bag = this.hooks.items();
-      bag.splice(bag.indexOf(it), 1);
-      addItem(this._remote(), it);
+      applyTransfer(it, plan, this.hooks.items(), to);
       return;
     }
     if (this.mode === 'use') { this._use(it, this.hooks.items()); return; }   // U25
@@ -581,42 +496,14 @@ export class NativeInventoryWindow {
     }
   }
 
-  /** CanCarryAmount (DaggerfallInventoryWindow.cs:1414-1422, L-slice
-   *  AUDIT 23 items-9): how many units of the clicked item fit under
-   *  MaxEncumbrance given the current carried load; zero or less
-   *  shows the refusal box. The key is DFU's "cannotCarryAnymore"
-   *  (prose ours - the string ships in Unity-side localization, not
-   *  TEXT.RSC). No entity on the hooks = no capacity to read, so the
-   *  gate stands open (the loot-window tests mount without one). */
-  /** TransferItem's summoned guard (:1464-1469), in its own member
-   *  because DFU's is ONE function with two callers - the local list's
-   *  Remove click and the remote list's. The remote arm cannot fire
-   *  today (nothing can get a summoned item out of the pack to put it
-   *  there), and it is written anyway rather than left to a future
-   *  transfer path to rediscover. */
-  _refuseSummoned(it) {
-    if (!isSummoned(it)) return false;
-    this.boxes = [{ rows: [{ text: CANNOT_REMOVE_ITEM_TEXT, center: true }] }];
-    return true;
-  }
-
-  /** TransferItem's QUEST arm, the box half - the same shape
-   *  _refuseSummoned has, over the law below. */
-  _refuseQuestItem(it, fromLocal) {
-    if (!questTransferRefused(it, {
-      fromLocal, toWagon: this.usingWagon, getQuest: this.hooks.getQuest ?? null,
-    })) return false;
-    this.boxes = [{ rows: [{ text: CANNOT_REMOVE_ITEM_TEXT, center: true }] }];
-    return true;
-  }
-
-  _canCarryAmount(it) {
-    const e = this.hooks.entity;
-    if (!e) return it.stackCount ?? 1;
-    const canCarry = canHoldAmount(it.stackCount ?? 1, effectiveUnitWeightInKg(it),
-      entityMaxEncumbrance(e), totalWeight(this.hooks.items()));   // DaggerfallInventoryWindow.cs:1417 reads playerEntity.MaxEncumbrance
-    if (canCarry <= 0) this.boxes = [{ rows: [{ text: CANNOT_CARRY_TEXT, center: true }] }];
-    return canCarry;
+  /** U56: the port's half of a refusal. The LADDER decides whether a
+   *  transfer happens and whether the player is told; this decides
+   *  what being told LOOKS like in the classic window, which is the
+   *  one part the enhanced pack does differently. A refusal with no
+   *  text - DFU's transport block, the choose-one pile - shows
+   *  nothing, and none of them ever reaches the click sound. */
+  _refuse(refusal) {
+    if (refusal.text) this.boxes = [{ rows: [{ text: refusal.text, center: true }] }];
   }
 
   _pickRemote(slot) {
@@ -636,32 +523,22 @@ export class NativeInventoryWindow {
     if (this.mode === 'remove' || this.mode === 'equip') {
       // RemoteItemListScroller_OnItemClick: both modes transfer to
       // the player; Equip mode also EQUIPS the taken item (verbatim
-      // TransferItem(..., equip: true))
-      if (this._refuseSummoned(it)) return;   // X11b: TransferItem's guard, both callers
-      // TransferItem's quest arm, the OTHER caller: `from` is
-      // remoteItems, so the refusal cannot fire without
-      // CanDropQuestItems, and picking the item back up clears
-      // PlayerDropped (:1499-1500).
-      if (this._refuseQuestItem(it, false)) return;
-      const canCarry = this._canCarryAmount(it);   // items-9
-      if (canCarry <= 0) return;
+      // TransferItem(..., equip: true)). U56: same ladder, other
+      // direction - X11b's summoned guard and AUDIT 26's quest arm
+      // included, which DFU has once and both callers run.
+      const bag = this.hooks.items();
+      const plan = planTake(it, {
+        bag, entity: this.hooks.entity, mode: this.mode,
+        chooseOne: this.chooseOne, usingWagon: this.usingWagon,
+        getQuest: this.hooks.getQuest ?? null,
+      });
+      if (!plan.ok) { this._refuse(plan.refusal); return; }
       // DoTransferItem: gold rides its own clink (:1569), everything
       // else the button click (:1583) - after the carry gate, so a
       // refused transfer stays silent.
-      audio.playOneShot(it.group === 'Currency' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);
-      let taken = it;
-      if (canCarry < (it.stackCount ?? 1)) {
-        // TransferItem splits when maxAmount < stackCount (:1515),
-        // opening the how-many popup DEFAULTED to maxAmount - Enter
-        // takes exactly what fits, which is this arm; the free-entry
-        // field is INTERIM-pending with the local Remove split.
-        it.stackCount -= canCarry;
-        taken = { ...it, stackCount: canCarry };
-      } else {
-        remote.splice(remote.indexOf(it), 1);
-      }
-      addItem(this.hooks.items(), taken);
-      if (this.mode === 'equip' && this.hooks.entity) {
+      audio.playOneShot(plan.sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);
+      const taken = applyTransfer(it, plan, remote, bag);
+      if (plan.equip && this.hooks.entity) {
         // S23: the taken item still has to pass the career gate
         if (this._refuseForbidden(taken)) return;
         if (equipItem(this.hooks.entity, taken) !== null) refreshPaperDoll(this.hooks.entity);
@@ -669,7 +546,7 @@ export class NativeInventoryWindow {
       // G6 (:1585-1591): ONE is the whole gift. The window closes and
       // the callback runs - which is where the rank's flag is set, so
       // the claim and the taking are the same event.
-      if (this.chooseOne && !this.usingWagon) {
+      if (plan.claimsChoice) {
         const cb = this.chooseOne.onChoose;
         this.chooseOne = null;
         this._closeSilently();

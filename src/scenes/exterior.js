@@ -63,10 +63,10 @@ import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';   // G2
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
-import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';
+import { LevelUpScreen, preloadCharSheetArt } from '../ui/charsheet.js';
+import { createCharSheetWindow, charSheetDoorReady } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
 import { restDecision } from '../systems/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
-import { charSheetHooks } from '../ui/charSheetNav.js';   // U32: the sheet's four navigation buttons
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw
@@ -74,7 +74,8 @@ import { largeHudOptions, routeLargeHudClick, hudLargeNextMode, hudLargePrevMode
 import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { getInteractionMode } from '../player/interactionMode.js';   // U45: the mode panel's cycle reads it
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
-import { NativeInventoryWindow, preloadInventoryArt, inventoryArtLoaded } from '../ui/nativeInventory.js';   // U8d: the native inventory
+import { preloadInventoryArt } from '../ui/nativeInventory.js';   // U8d: the native inventory
+import { createInventoryWindow, inventoryDoorReady } from '../ui/inventoryDoor.js';   // U53: the pack's ONE seam, and the skin fork in front of it
 import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
 import { seedStartingEquipment, EQUIP_SLOTS } from '../systems/equip.js';   // U8h: the worn-weapon binding
@@ -102,7 +103,7 @@ import { addGold } from '../systems/court.js';   // U10 probe surface
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';   // I2: the rebindable registry
-import { openPauseFlow, preloadPauseFlowArt, pauseArtLoaded } from '../ui/pauseWindow.js';   // I3/I4
+import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
 import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
 import { discoveredBuildings } from '../systems/discovery.js';   // A2: the nameplates' gate
 
@@ -834,7 +835,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // later service needs). One builder per host, still - the
   // service asks the host for its own window rather than
   // assembling a second one from a different dependency list.
-  const makeInventoryWindow = (extra = {}) => new NativeInventoryWindow({
+  const makeInventoryWindow = (extra = {}) => createInventoryWindow({
     openBook: openBookHook,   // B1: the use-mode book arm
     items: () => (playerEntity.items ??= []),
     wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
@@ -887,10 +888,10 @@ export async function bootExterior(canvas, renderer, params, status) {
   // inline in this host's keydown, which meant the INTERIOR host -
   // which mounts this host's windows rather than building its own -
   // had no way to reach it, and F5 in a shop did nothing.
-  const makeCharSheetWindow = () => new CharSheet(playerEntity, charSheetHooks({
+  const makeCharSheetWindow = () => createCharSheetWindow({
     entity: playerEntity,
     artDeps: { renderer, fetchBytes, palette },
-    inventory: () => (inventoryArtLoaded() ? makeInventoryWindow() : null),
+    inventory: () => (inventoryDoorReady() ? makeInventoryWindow() : null),
     spellbook: makeSpellbookWindow,
     // U43: NO quest hooks here, on purpose. `?town` mounts no quest
     // bridge, so charSheetHooks withholds the LOGBOOK button and the
@@ -898,7 +899,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // `?dungeon` page gets. An empty journal would tell a player they
     // have no quests when the truth is this page cannot see them, and
     // for the same reason this host answers neither L nor N.
-  }));
+  });
   const arrows = new ArrowFlight({ getGpuMesh, collider: () => collider });   // C13
   let zPrevW = false;   // the ReadyWeapon (Z) edge
   const modeNow = () => modes?.mode ?? 'exterior';   // lazy - modes binds below (boot-time mouse events)
@@ -959,18 +960,19 @@ export async function bootExterior(canvas, renderer, params, status) {
   // it a click. Every member is an arrow, so nothing here is evaluated
   // before the helpers it names exist.
   const hudCtx = {
-    toggleCharSheet: () => townTalk.showOverlay(new CharSheet(playerEntity, charSheetHooks({
-      entity: playerEntity,
-      artDeps: { renderer, fetchBytes, palette },
-      inventory: () => (inventoryArtLoaded() ? makeInventoryWindow() : null),
-      spellbook: makeSpellbookWindow,
-    }))),
-    toggleInventory: () => { if (inventoryArtLoaded()) townTalk.showOverlay(makeInventoryWindow()); },
+    // U52: THE HOST'S OWN FACTORY, not a second copy of it. This arm
+    // hand-rolled the sheet while `makeCharSheetWindow` sat twenty
+    // lines up being handed to the interior host - two builders for one
+    // window in one file, and the inline one had already lost the
+    // other's note about the deliberately withheld quest hooks. They
+    // agreed. That is what drift looks like the day before it stops.
+    toggleCharSheet: () => townTalk.showOverlay(makeCharSheetWindow()),
+    toggleInventory: () => { if (inventoryDoorReady()) townTalk.showOverlay(makeInventoryWindow()); },
     toggleSpellbook: () => toggleSpellbook(),
     // S40: the Rest door - world.js's twin (THE FOUR HOSTS RULE).
     toggleRest: () => toggleRest(),
     togglePause: () => {
-      if (!pauseArtLoaded()) return;
+      if (!pauseDoorReady()) return;
       openPauseFlow((w) => townTalk.showOverlay(w), {
         savingPrevented: () => true,
         exitToMenu: exitToTitleMenu,
@@ -1015,7 +1017,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (act === 'CharacterSheet') { hudCtx.toggleCharSheet(); return; }
       // U8d: F6 opens the classic inventory (DFU's default Inventory
       // binding; same host rule as F5).
-      if (act === 'Inventory' && inventoryArtLoaded()) { hudCtx.toggleInventory(); return; }
+      if (act === 'Inventory' && inventoryDoorReady()) { hudCtx.toggleInventory(); return; }
       // M2/I2: the CastSpell action opens the spellbook
       // (GameManager.cs:550-553); the cast is the attack click. The
       // C-cast key retired with I2.
@@ -1025,10 +1027,13 @@ export async function bootExterior(canvas, renderer, params, status) {
       // a dungeon could neither heal nor pass an hour.
       if (act === 'Rest') { e.preventDefault(); hudCtx.toggleRest(); return; }
       // I3: the Escape window. This dev host has no save path (the
-      // quicksave lives in ?world and the dungeon contexts), so the
-      // SAVE button answers with DFU's own cannot-save line and LOAD
-      // has nothing to load - both stated by the hooks, not invented.
-      if (act === 'Escape' && pauseArtLoaded()) { hudCtx.togglePause(); return; }
+      // quicksave lives in ?world and the dungeon contexts), so SAVE
+      // answers with DFU's own cannot-save line and LOAD has nothing
+      // to load - both stated by the hooks, not invented. U51: the
+      // enhanced screen reads the same hooks and draws no button at
+      // all where they refuse, which is the anti-lie law one step
+      // further on than a dimmed control.
+      if (act === 'Escape' && pauseDoorReady()) { hudCtx.togglePause(); return; }
       // A2: the exterior automap (Actions.AutoMap outdoors,
       // DaggerfallUI.cs:633-650); this host always stands on a
       // location. I2: through the registry, so M is rebindable like
@@ -1145,7 +1150,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     inTownLocation: () => isPlayerInTown(_musicLocationType()),
     // G6: the knightly smith's gift needs THIS host's inventory
     // window in choose-one mode - one builder, one dependency list.
-    makeInventory: (extra) => (inventoryArtLoaded() ? makeInventoryWindow(extra) : null),
+    makeInventory: (extra) => (inventoryDoorReady() ? makeInventoryWindow(extra) : null),
     // S40: AbortRestForEnemySpawn (:301-304) reaches the rest window
     // in THIS host's overlay slot. In DFU the OnEncounter subscription
     // is on the WINDOW (OnPush :264, OnPop :275), so it follows the
@@ -1157,7 +1162,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // U43: and the other two windows the INTERIOR host answers keys
     // for. Same rule as makeInventory - this host owns the builder and
     // its dependency list; worldModes only chooses the slot.
-    makeCharSheet: () => (charSheetArtLoaded() ? makeCharSheetWindow() : null),
+    makeCharSheet: () => (charSheetDoorReady() ? makeCharSheetWindow() : null),
     magic, spellsByIndex: () => spellsByIndex,   // M2: the one cast engine + SPELLS.STD ride into the interior arm
     townTalk,   // U23: the interior host borrows FACTION.TXT/TEXT.RSC + the talk seam
     // R1: without this the exterior-lock anti-grind record and
@@ -1286,7 +1291,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     window.__droppedLoot = () => JSON.stringify(droppedLoot._piles.map((pl) => ({ n: pl.items.length, pos: pl.pos.map((v) => +v.toFixed(1)), record: pl.record, flat: !!pl.batch })));   // U8e probe surface
     window.__crime = () => _crimeResponse();   // G1: force the response without pickpocket RNG
     window.__guardDamage = (i, dmg) => cityGuards._damage(i, dmg);   // G3: the real death path for loot probes
-    window.__uiArt = () => JSON.stringify({ charsheet: charSheetArtLoaded() });   // U8a probe surface
+    window.__uiArt = () => JSON.stringify({ charsheet: charSheetDoorReady() });   // U8a probe surface; U52: the door, not the art alone
     window.__attack = () => weaponRig.clickAttack();   // G4: ClickToAttack for swing probes
     window.__townDebug = () => JSON.stringify({
       night: isNight(minuteNow()), pool: population?.pool.length ?? 0, max: population?.maxPopulation ?? 0, populated,
@@ -1476,25 +1481,23 @@ export async function bootExterior(canvas, renderer, params, status) {
           const lootKey = pickActivatable(cam.pos, useFwd, cityGuards.lootTargets(), collider);
           const dropKey = lootKey ? null : pickActivatable(cam.pos, useFwd, droppedLoot.lootTargets(), collider);
           if (lootKey) { cityGuards.takeLoot(lootKey, (l) => townTalk.say(l)); surfacePlayer(); }
-          else if (dropKey && inventoryArtLoaded()) {
+          // U58: THE DOOR AGAIN. U53 pinned this arm to the ART
+          // because the door handed every LOOT call the classic window,
+          // which cannot draw without INVE00I0. The enhanced pane runs
+          // the pile itself now, so the gate is the skin question every
+          // other pack arm asks - and on the classic skin it still comes
+          // down to the same art.
+          else if (dropKey && inventoryDoorReady()) {
             // U8e: a pile under the ray opens the inventory WITH the
             // pile as the remote target (Remove defaults - the OnPush law)
             const pile = droppedLoot.pileFor(dropKey);
-            townTalk.showOverlay(new NativeInventoryWindow({
-              openBook: openBookHook,   // B1: the use-mode book arm
-              items: () => (playerEntity.items ??= []),
-        wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
+            townTalk.showOverlay(makeInventoryWindow({
+              // U53: THE HOST'S OWN FACTORY, not a twelfth copy of it.
+              // This arm hand-rolled the window with the SAME eleven hooks
+              // makeInventoryWindow already passes, plus the two below -
+              // which is precisely what its `extra` parameter is for.
               onClose: () => droppedLoot.releaseEmptied(),   // AUDIT 17e F28: DFU frees the container on window close
-        entity: playerEntity,
               loot: { items: () => pile.items },
-              icons: { getTexture, uploadRecord, textures: renderer.textures },
-              rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
-              openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },   // U42: the Spellbook item's own door, on the LOOT-pile window too
-              revealMap: null,   // U44: no region index on this page - see the bare window's note
-              drinkPotion: (key) => magic.drinkPotion(key),   // U44: DrinkPotion through the ONE cast engine
-              getQuest: null,   // no quest bridge on this page - see the bare window's note
-              nowMinute: () => Math.floor(playerTicker.classicMinutes),
-              onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),
             }));
           }
           else modes.tryEnter().catch((e) => console.error(e));

@@ -122,7 +122,7 @@ import {
   MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID, DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID, CANNOT_BE_REPAIRED_TEXT,
 } from '../systems/repairService.js';
 import { GuildServiceWindow, preloadGuildServiceArt, guildServiceArtLoaded } from '../ui/guildServiceWindow.js';
-import { openPauseFlow, preloadPauseFlowArt, pauseArtLoaded } from '../ui/pauseWindow.js';   // I3/I4
+import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
 import { preloadMessageBoxArt } from '../ui/messageBox.js';
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
@@ -3699,8 +3699,10 @@ export function createWorldModes(host) {
       if (w.done && interiorOverlay === w) interiorOverlay = null;
     },
     togglePause() {
-      if (!pauseArtLoaded()) return;
-      // I3: the SAVE button answers DFU's cannot-save line here.
+      if (!pauseDoorReady()) return;
+      // I3: SAVE answers DFU's cannot-save line here - the classic
+      // window through its button, the enhanced screen (U51) by
+      // drawing no button and saying the line instead.
       openPauseFlow((w) => { interiorOverlay = w; }, {
         savingPrevented: () => true,
         exitToMenu: exitToTitleMenu,

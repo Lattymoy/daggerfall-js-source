@@ -28,6 +28,17 @@ export const UNSUPPORTED_FILENAMES = Object.freeze([
   'TEXTURE.436',
 ]);
 
+/** TEXTURE.### - the archive's filename from its number.
+ *
+ *  It lives HERE, with the reader, because both callers need it and
+ *  neither can import the other: scenes/shared.js pulls in the sky
+ *  renderer and half the scene layer, which a DOM screen must not
+ *  drag in, and ui/textureCanvas.js is imported BY a DOM screen. U54
+ *  restated it in the second one and the audit24_onehome ratchet
+ *  caught it in the same slice - two modules exporting one name is
+ *  the drift that gate exists for. */
+export const texName = (archive) => `TEXTURE.${String(archive).padStart(3, '0')}`;
+
 export class TextureFile extends BaseImageFile {
   constructor() {
     super();

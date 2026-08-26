@@ -35,7 +35,7 @@ import { drawText, measureText } from './text.js';
 import { loadImg, nativeMetrics, drawImg, drawRect, shadowText } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { drawPaperDoll, refreshPaperDoll, PAPERDOLL_ORIGIN } from './paperDoll.js';
-import { maxFatigue, liveStat } from '../systems/statMods.js';
+import { maxFatigue, liveStat, FATIGUE_MULTIPLIER } from '../systems/statMods.js';   // U52: the /64 display divisor has a name and one home
 import { templateByIndex } from '../systems/itemTemplates.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -60,7 +60,10 @@ export const charSheetArtLoaded = () => !!_art;
 // the port's gold stack carried no template index. It carries
 // Currency.Gold_pieces (276) now, whose baseWeight IS 0.0025, so
 // itemWeight serves it like every other stack.
-const carriedWeight = (e) => (e.items ?? []).reduce((kg, it) => kg + itemWeight(it), 0);
+// U52: EXPORTED. The enhanced sheet shows the same encumbrance the
+// classic one draws, and a second reduce over e.items in that module
+// would be this comment's own warning happening again one file over.
+export const carriedWeight = (e) => (e.items ?? []).reduce((kg, it) => kg + itemWeight(it), 0);
 
 export class LevelUpScreen {
   constructor(entity, rolls = Math.random) {
@@ -283,7 +286,7 @@ export class CharSheet {
     label(e.career?.name ?? '', 46, 24);
     label(e.level ?? 1, 45, 34);
     label(e.items?.find((it) => it.group === 'Currency')?.stackCount ?? 0, 39, 44);
-    label(`${Math.trunc((e.fatigue ?? maxFatigue(e)) / 64)}/${Math.trunc(maxFatigue(e) / 64)}`, 57, 54);
+    label(`${Math.trunc((e.fatigue ?? maxFatigue(e)) / FATIGUE_MULTIPLIER)}/${Math.trunc(maxFatigue(e) / FATIGUE_MULTIPLIER)}`, 57, 54);
     label(`${e.health}/${e.maxHealth}`, 52, 64);
     label(`${Math.trunc(carriedWeight(e))}/${entityMaxEncumbrance(e)}`, 90, 74);   // DaggerfallCharacterSheetWindow.cs:404 reads PlayerEntity.MaxEncumbrance
     STAT_KEYS_ORDER.forEach((k, i) =>

@@ -183,7 +183,20 @@ test('audit26 magic-save: GetMaxEncumbrance adds the IncreasedWeightAllowance mu
   // bonus screen reads the raw formula off working stats
   // (CreateCharAddBonusStats.cs:157) because there is no entity yet.
   assert.match(rd('src/ui/charsheet.js'), /entityMaxEncumbrance\(e\)/);
-  assert.match(rd('src/ui/nativeInventory.js'), /entityMaxEncumbrance\(e\)/);
+  // U56 moved TransferItem's ladder out of the classic window, so the
+  // CARRY GATE this pin was sweeping for went with it - and so did
+  // this line, to the file that now holds it. The enhanced pack and
+  // the enhanced sheet mirror the two windows above and read the same
+  // ceiling; they were written against the pre-audit formula and are
+  // swept here so they cannot drift back to it.
+  assert.match(rd('src/systems/itemTransfer.js'), /entityMaxEncumbrance\(entity\)/);
+  assert.ok(!/maxEncumbrance\(liveStat\(/.test(rd('src/systems/itemTransfer.js')),
+    'the bare strength formula is back in the carry gate');
+  for (const f of ['src/ui/enhancedInventory.js', 'src/ui/enhancedCharSheet.js']) {
+    assert.match(rd(f), /entityMaxEncumbrance\(/, `${f} reads the bare formula`);
+    assert.ok(!/maxEncumbrance\(liveStat\(|maxEncumbrance\(strength\)/.test(rd(f)),
+      `${f} still has the pre-audit formula in it`);
+  }
   const wm = rd('src/scenes/worldModes.js');
   assert.equal((wm.match(/entityMaxEncumbrance\(playerEntity\)/g) ?? []).length, 2,
     'the trade weight seam and the letter-of-credit gate both read the entity ceiling');

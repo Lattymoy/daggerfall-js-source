@@ -130,8 +130,12 @@ test('U43: the dungeon host opens the journal only when it can SEE quests', () =
   // scoped to the SHEET's own hook bag - questJournalHooks() also
   // appears in _openJournal, so an unscoped match passes with the
   // sheet's spread deleted and the logbook button dark again
-  const sheetBag = dc.slice(dc.indexOf('activeOverlay = new CharSheet(playerEntity, charSheetHooks({'),
-    dc.indexOf('toggleLogbook()'));
+  // U52 re-aimed the slice, not the law: the bag is the same bag, it
+  // is handed to ui/charSheetDoor.js now instead of to CharSheet's
+  // constructor, and the door passes it to charSheetHooks unchanged.
+  const bagAt = dc.indexOf('activeOverlay = createCharSheetWindow({');
+  assert.ok(bagAt > 0, 'the dungeon host builds its sheet through the door');
+  const sheetBag = dc.slice(bagAt, dc.indexOf('toggleLogbook()'));
   assert.match(sheetBag, /\.\.\.questJournalHooks\(\),/, 'and the SHEET gets them');
   assert.match(dc, /toggleLogbook\(\) \{ this\._openJournal\('activeQuests'\); \}/);
   assert.match(dc, /toggleNotebook\(\) \{ this\._openJournal\('notebook'\); \}/);
@@ -184,13 +188,25 @@ test('U32: the spellbook is the ONE that already existed - no second implementat
   const files = ['ui/spellbookWindow.js', 'ui/deathScreen.js', 'ui/charsheet.js', 'ui/charSheetNav.js', 'ui/questJournal.js', 'ui/playerHistory.js'];
   const declarers = files.filter((f) => /export class SpellbookWindow/.test(src(f)));
   assert.deepEqual(declarers, ['ui/spellbookWindow.js'], 'SpellbookWindow must be declared exactly once, where it now lives');
-  // and the hosts hand the sheet THAT window
+  // and the hosts hand the sheet THAT window. U52 re-aimed the address
+  // and the law got STRONGER: the hosts no longer call charSheetHooks
+  // at all - they hand their deps to ui/charSheetDoor.js, which is the
+  // only caller left, so a host cannot build a sheet with a hook bag of
+  // its own devising even by accident. What is pinned is the chain:
+  // host -> door -> charSheetNav.
   for (const host of ['scenes/exterior.js', 'scenes/world.js', 'scenes/dungeonContext.js']) {
     const s = src(host);
-    assert.match(s, /charSheetHooks\(\{/, `${host}: the sheet must be given its navigation hooks`);
+    assert.match(s, /createCharSheetWindow\(\{/, `${host}: the sheet must be built through the ONE seam`);
     assert.match(s, /spellbook:/, `${host}: including a spellbook hook`);
-    assert.match(s, /from '\.\.\/ui\/charSheetNav\.js'/, `${host}: through the one shared factory`);
+    assert.match(s, /from '\.\.\/ui\/charSheetDoor\.js'/, `${host}: through the one shared factory`);
+    assert.doesNotMatch(s, /charSheetHooks\(\{/,
+      `${host}: must not build its own hook bag past the seam`);
   }
+  // ...and the seam itself reaches the shared factory, or the chain is
+  // broken one link further along than the loop above can see.
+  assert.match(src('ui/charSheetDoor.js'), /from '\.\/charSheetNav\.js'/);
+  assert.match(src('ui/charSheetDoor.js'), /const hooks = charSheetHooks\(deps\);/,
+    'the door is the ONE caller of charSheetHooks now');
 });
 
 test('U32: the journal is DFU verbatim - rects, the four modes, and stepping by ONE ENTRY', () => {

@@ -87,11 +87,47 @@ test('the classic door still gates its data first', () => {
 });
 
 // ── WHAT DOES AND DOES NOT LEAVE THE MENU ────────────────────────
-test('only the three game actions resolve the door', () => {
+// The law here has never been the COUNT; it is that the three shared
+// destinations - settings, mods, about - are places inside this screen
+// and not exits from it. U51 added the three in-game exits (resume,
+// save, exit) and the pin now states both halves rather than a number
+// that has to be edited every time the rail grows.
+test('only game actions resolve the door - never a destination', () => {
   const src = read('src/ui/enhancedMenu.js');
-  const calls = [...src.matchAll(/onAction\('([a-z]+)'\)/g)].map((m) => m[1]).sort();
-  assert.deepEqual([...new Set(calls)], ['continue', 'load', 'new'],
-    'settings, mods and about are destinations INSIDE this screen, not exits from it');
+  const calls = [...new Set([...src.matchAll(/onAction\('([a-z]+)'\)/g)].map((m) => m[1]))].sort();
+  assert.deepEqual(calls, ['continue', 'exit', 'load', 'new', 'resume', 'save'],
+    'boot resolves continue/new/load; pause resolves resume/save/exit');
+  for (const dest of ['settings', 'mods', 'about']) {
+    assert.ok(!calls.includes(dest),
+      `${dest} is a destination INSIDE this screen, not an exit from it`);
+  }
+});
+
+// U51: and the two rails carry the two questions. Continue and New
+// Game ask "which game", which is settled by the time the pause door
+// mounts; Resume, Save and Exit ask "what now", which is the only
+// thing a running game has left to ask.
+test('the two rails differ only where the question does', () => {
+  const src = read('src/ui/enhancedMenu.js');
+  const list = (name) => {
+    const m = new RegExp(`const ${name} = \\[([^\\]]*)\\]`).exec(src);
+    assert.ok(m, `${name} is gone`);
+    return m[1].split(',').map((s2) => s2.trim().replace(/^'|'$/g, '')).filter(Boolean);
+  };
+  const boot = list('SECTIONS_BOOT');
+  const pause = list('SECTIONS_PAUSE');
+  const shared = ['Load Game', 'Settings', 'Mods', 'About'];
+  for (const s2 of shared) {
+    assert.ok(boot.includes(s2), `${s2} must stay on the front door`);
+    assert.ok(pause.includes(s2), `${s2} must reach the pause door too`);
+  }
+  assert.deepEqual(boot.filter((x) => !shared.includes(x)), ['Continue', 'New Game']);
+  assert.deepEqual(pause.filter((x) => !shared.includes(x)), ['Resume', 'Save Game', 'Exit']);
+  // SETTINGS IS THE POINT. U49's own record says settings were
+  // reachable only at boot; a pause rail without them would have left
+  // that true on the skin built to fix it.
+  assert.ok(pause.includes('Settings'),
+    'the whole reason this door exists is that settings were reachable only at boot');
 });
 
 // AUDIT F3/F4: two destructive actions shipped without a confirm -
@@ -109,6 +145,68 @@ test('the destructive actions ask first', () => {
     'Delete must ask');
   assert.match(src.slice(delAt, delAt + 500), /removeItem\(QUICKSAVE_KEY\)/,
     'and it must actually delete - a button that does nothing is the lie the anti-lie law forbids');
+});
+
+// ── U51: THE PHONE RAIL WRAPS RATHER THAN SCROLLS ────────────────
+// Found by looking at the pause door on a Pixel 5. The rail is a flex
+// ROW on a phone with overflow-x: auto and its scrollbar hidden, so
+// everything past the fold was off-screen with no affordance at all -
+// four of seven destinations, Settings and Exit among them. That is
+// the AUDIT 24 shape exactly: a control that is drawn, exists, and
+// cannot be reached on the device that needs it most. Six did not fit
+// either, so the front door carried the same bug and nobody had
+// noticed, because the entry it hid was About rather than Exit.
+//
+// The live killer is tools/enhancedPauseProbe.mjs, which measures
+// every rail button against the viewport and names the ones outside
+// it. This holds the rule so it cannot be deleted as dead CSS.
+test('U51: the phone rail wraps, and the wizard rail does not', () => {
+  const css = read('src/ui/enhancedStyle.js');
+  const phone = css.slice(css.indexOf('@media (max-width: 860px)'),
+    css.indexOf('@media (prefers-reduced-motion'));
+  assert.ok(phone.length > 0, 'the phone media query is gone');
+  assert.match(phone, /\.rail \{ flex-wrap: wrap; overflow-x: visible; \}/,
+    'every destination must be ON the screen, not merely in the DOM');
+  // The wizard borrows this rail whole, and its rail is a WALK through
+  // ten stages in order - it shows where you ARE, not where you may
+  // go, and a walk that wraps stops reading as a line.
+  assert.match(phone, /\.wizard \.rail \{ flex-wrap: nowrap; overflow-x: auto; \}/,
+    'the wizard keeps its scroller');
+  assert.ok(phone.indexOf('.wizard .rail') > phone.indexOf('.rail { flex-wrap: wrap'),
+    'the wizard override has to come after the rule it overrides');
+});
+
+// ── U51: A READING COLUMN ────────────────────────────────────────
+// The body had no width, so a card carrying three lines stretched the
+// full width of a desktop pane and every screen but Settings - which
+// owns its own three columns - read as mostly empty.
+test('U51: the body is a column, and the flush body is not', () => {
+  const css = read('src/ui/enhancedStyle.js');
+  assert.match(css, /\.body \{ padding: [^}]*max-width: 720px; \}/);
+  assert.match(css, /\.body\.flush \{ padding: 0; max-width: none; \}/,
+    'the settings pane owns its own columns and must not be capped');
+});
+
+// ── U51: ONE SLOT, DRAWN ONE WAY ─────────────────────────────────
+// Four panes now render the same single quicksave - Continue, Load,
+// Save and Exit. Four hand-rolled copies of "career, level, date,
+// time" is how they come to disagree about which of those a player is
+// shown before overwriting or discarding a game.
+test('U51: the saved game is rendered from one place', () => {
+  const src = read('src/ui/enhancedMenu.js');
+  assert.match(src, /^const saveLine = \(save\) =>/m);
+  assert.match(src, /^const saveStats = \(save\) =>/m);
+  const joins = [...src.matchAll(/level \$\{save\.level\}/g)];
+  assert.equal(joins.length, 1, 'the character line is written once');
+  const health = [...src.matchAll(/save\.maxHealth \? /g)];
+  assert.equal(health.length, 1, 'and so are the numbers');
+  // ...and the panes that need it read through them
+  for (const pane of ['paneContinue', 'paneSave']) {
+    const at = src.indexOf(`function ${pane}(body)`);
+    const body = src.slice(at, src.indexOf('\n}', at));
+    assert.match(body, /saveLine\(save\)/, `${pane} must draw the shared line`);
+    assert.match(body, /saveStats\(save\)/, `${pane} must draw the shared numbers`);
+  }
 });
 
 // AUDIT F8, found by the live check rather than by reading: on a PHONE

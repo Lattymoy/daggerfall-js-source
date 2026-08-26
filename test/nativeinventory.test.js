@@ -153,36 +153,49 @@ test('U25: the gold button drops gold into the remote pile, refusing bad amounts
   assert.equal(w._remote().find((it) => it.group === 'Currency')?.stackCount, 120);
 });
 
-test('U25 / THE ONE CONSTRUCTION SEAM: all four inventory sites pass the same hooks', () => {
-  // Four call sites build this window - both exterior hosts, each
-  // twice (bare, and over a loot pile) - and a hook added to three of
-  // them is exactly the failure this rule exists for. The window has
-  // no execution coverage in node, so the seam is read.
+test('U25 / THE ONE CONSTRUCTION SEAM: ONE inventory builder per host', () => {
+  // THE RULE IS THE SAME; THE SHAPE IT GUARDS CHANGED. This pin used
+  // to walk FOUR construction sites and check each carried the same
+  // eight hooks, because two of the four were hand-rolled copies of a
+  // factory sitting in the same file - and the bug it was written for
+  // is worth keeping: U42 put `openSpellbook:` on three of the five
+  // sites, and the two loot-pile windows went on printing "You cannot
+  // open your spellbook here." over a Spellbook the player was
+  // holding.
+  //
+  // U53 DELETED THE COPIES. Both were the factory's eleven hooks
+  // verbatim plus `loot` and `onClose`, which is exactly what its
+  // `extra` parameter is for, so each host has ONE builder and the
+  // loot arm calls it. A hook added to a host now reaches every window
+  // that host opens because there is only one place to add it - the
+  // failure this rule exists for is structurally impossible rather
+  // than swept for.
   const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  // U42 is the proof this rule was written for: `openSpellbook:` went
-  // onto three of the FIVE sites (the bare window in each of the two
-  // exterior hosts and the dungeon's), and the two loot-pile windows
-  // were left printing "You cannot open your spellbook here." over a
-  // Spellbook the player was holding. The list only catches a hook it
-  // NAMES, so every hook this window's hosts share belongs in it.
   const REQUIRED = ['items:', 'entity:', 'icons:', 'rows:', 'nowMinute:', 'openSpellbook:',
     'revealMap:', 'drinkPotion:'];
-  let sites = 0;
   for (const f of ['src/scenes/exterior.js', 'src/scenes/world.js']) {
     const src = readFileSync(join(root, f), 'utf8');
-    let i = 0;
-    for (;;) {
-      const j = src.indexOf('new NativeInventoryWindow({', i);
-      if (j < 0) break;
-      sites++;
-      const block = src.slice(j, src.indexOf('}));', j));
-      for (const hook of REQUIRED) {
-        assert.ok(block.includes(hook), `${f} site ${sites} is missing ${hook}`);
-      }
-      i = j + 1;
+    const builders = (src.match(/createInventoryWindow\(\{/g) ?? []).length;
+    assert.equal(builders, 1, `${f}: ONE builder, not ${builders}`);
+    assert.doesNotMatch(src, /new NativeInventoryWindow\(/,
+      `${f} must not construct the window past the door`);
+    // the one builder carries every shared hook...
+    const j = src.indexOf('createInventoryWindow({');
+    const block = src.slice(j, src.indexOf('\n  });', j));
+    for (const hook of REQUIRED) {
+      assert.ok(block.includes(hook), `${f}'s builder is missing ${hook}`);
     }
+    // ...and the loot arm goes THROUGH it, carrying only what differs
+    assert.match(src, /townTalk\.showOverlay\(makeInventoryWindow\(\{/,
+      `${f}: the loot pile must reach the same builder`);
+    const loot = src.slice(src.indexOf('townTalk.showOverlay(makeInventoryWindow({'));
+    assert.match(loot.slice(0, 700), /loot: \{ items: \(\) => pile\.items \}/);
+    assert.match(loot.slice(0, 700), /onClose: \(\) => droppedLoot\.releaseEmptied\(\)/);
   }
-  assert.equal(sites, 4, 'the number of construction sites changed - re-read this rule');
+  // the dungeon host has one too, and it is the door's
+  const dc = readFileSync(join(root, 'src/scenes/dungeonContext.js'), 'utf8');
+  assert.doesNotMatch(dc, /new NativeInventoryWindow\(/);
+  assert.match(dc, /createInventoryWindow\(\{/);
 });
 
 test('U44: the window FORWARDS its item-use hooks into the law', () => {
@@ -234,10 +247,16 @@ test('U26 / THE FOUR HOSTS: every host that opens an inventory opens the NATIVE 
   const root = join(dirname(fileURLToPath(import.meta.url)), '..');
   const dungeon = readFileSync(join(root, 'src/scenes/dungeonContext.js'), 'utf8');
   assert.equal(dungeon.includes('new InventoryWindow('), false, 'the keyed window is retired here');
-  assert.ok(dungeon.includes('new NativeInventoryWindow('));
+  // U53: through the DOOR, which is the one thing that constructs
+  // NativeInventoryWindow now. The law this pin holds - the keyed
+  // window is retired and the native one is what every host opens -
+  // is unchanged; the address moved one module out.
+  assert.ok(dungeon.includes('createInventoryWindow({'));
+  assert.equal(dungeon.includes('new NativeInventoryWindow('), false,
+    'the dungeon must not construct the window past the door');
   // ...and the dungeon builds it in ONE place, so its loot targets and
   // its F6 press cannot drift apart
-  assert.equal((dungeon.match(/new NativeInventoryWindow\(/g) ?? []).length, 1);
+  assert.equal((dungeon.match(/createInventoryWindow\(\{/g) ?? []).length, 1);
   for (const hook of ['items:', 'entity:', 'icons:', 'rows:', 'nowMinute:', 'onDrop:', 'onClose:']) {
     assert.ok(dungeon.includes(hook), `the dungeon builder is missing ${hook}`);
   }
@@ -245,6 +264,7 @@ test('U26 / THE FOUR HOSTS: every host that opens an inventory opens the NATIVE 
   // two, so a click inside a building reaches theirs.
   const modes = readFileSync(join(root, 'src/scenes/worldModes.js'), 'utf8');
   assert.equal(modes.includes('NativeInventoryWindow'), false, 'the interior host opens none');
+  assert.equal(modes.includes('createInventoryWindow'), false, '...and builds none either');
   // ...and the keyed window is DELETED, not merely unimported. Its one
   // law lives in systems/equip.js, which every host reaches.
   const keyed = readFileSync(join(root, 'src/ui/deathScreen.js'), 'utf8');

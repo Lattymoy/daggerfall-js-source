@@ -86,9 +86,11 @@ export function parseSeason(params) {
   return SEASON.Summer;
 }
 
-export function texName(archive) {
-  return `TEXTURE.${String(archive).padStart(3, '0')}`;
-}
+// U54: ONE HOME - it moved to formats/textureFile.js, beside the
+// reader, so ui/textureCanvas.js can have it without importing this
+// module and everything it drags along. Re-exported because thirty
+// call sites read it from here.
+export { texName } from '../formats/textureFile.js';
 
 /** DaggerfallSky.ApplyTimeAndSpace (:363-388) + LoadCurrentSky
  *  (:389-394), verbatim: "Disable clear night sky for bad weather" -

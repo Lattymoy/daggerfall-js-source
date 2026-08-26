@@ -114,8 +114,16 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .head { padding: 28px 30px 18px; border-bottom: 1px solid var(--iron); }
 .head h2 { font-family: var(--display); font-weight: 300; font-size: 30px; margin: 0; }
 
-.body { padding: 24px 30px 40px; }
-.body.flush { padding: 0; }
+/* U51: A READING COLUMN. The body had no width at all, so a card
+   carrying three lines stretched the full 1500px of a desktop pane and
+   every screen but Settings - which owns its own three columns - read
+   as mostly empty. The cap is the measure the .empty paragraph already
+   uses one rule down (58ch), rounded to a pixel the cards can share,
+   and it is
+   LEFT rather than centred so the column starts on the same x as the
+   heading above it. */
+.body { padding: 24px 30px 40px; max-width: 720px; }
+.body.flush { padding: 0; max-width: none; }
 
 /* ── CARDS + ACTIONS ───────────────────────────────────────── */
 .card { border: 1px solid var(--iron); padding: 20px; margin-bottom: 16px; background: #12161b; }
@@ -286,6 +294,20 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   }
   .railbtn.on { border-left: 0; border-top-color: var(--brass); background: none; }
   .railbtn .rn { display: none; }
+  /* U51: IT WRAPS RATHER THAN SCROLLS. Seven destinations do not fit
+     one phone row, the scrollbar is hidden two rules up, and an
+     off-screen destination with no affordance is a destination that
+     does not exist - which is the AUDIT 24 shape exactly: a control
+     that is drawn, exists, and cannot be reached on the device that
+     needs it most. SIX did not fit either, so this is the front door's
+     bug as much as the pause door's; it only became visible when the
+     rail grew a seventh entry and the one pushed off the end was EXIT.
+     NOT THE WIZARD'S RAIL: that one is a WALK through ten stages in
+     order, it shows where you ARE rather than where you may go, and a
+     walk that wraps stops reading as a line. */
+  .rail { flex-wrap: wrap; overflow-x: visible; }
+  .railbtn { flex: 1 1 auto; }
+  .wizard .rail { flex-wrap: nowrap; overflow-x: auto; }
   .foot { display: none; }
   .pane { order: 2; }
   .head { padding: 22px 20px 16px; }
@@ -326,6 +348,243 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* ── THE CHARACTER SHEET (U52) ──────────────────────────────
+   The first IN-GAME screen in this language. Three columns because
+   the sheet answers three questions - what you are, what you can do,
+   what state you are in - and the classic sheet answers all three in
+   one 320x200 panel by showing nine skills at a time.
+
+   It borrows the menu's card, act and stats rules whole rather than
+   restating them: one design language, one home. What is new here is
+   the METER, which the eight attributes and the four vitals share -
+   they are the same shape at two scales, so they are one rule. */
+.sheet-shell { height: 100%; display: flex; flex-direction: column; min-height: 0; }
+
+.sheet-id {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  padding: 26px 30px 18px; border-bottom: 1px solid var(--iron); background: var(--ink);
+}
+.sheet-id h2 { font-family: var(--display); font-weight: 300; font-size: 30px; margin: 0; }
+.sheet-id .meta { color: var(--dim); font-size: 13px; margin: 6px 0 0; }
+
+.sheet {
+  flex: 1; min-height: 0; display: grid; gap: var(--gap);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  background: var(--iron);
+}
+.sheetcol { background: var(--slate); overflow: auto; padding: 20px 22px 26px; min-height: 0; }
+.colhead {
+  font-family: var(--data); font-weight: 500; font-size: 11px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--dim); margin: 0 0 16px;
+}
+
+/* THE METER. A label, its numbers, and a track - and the track is the
+   thing the classic sheet has no room for at all: eight attributes as
+   bare integers make you do the comparing. */
+.meter { margin-bottom: 13px; }
+.meter-k { font-size: 14px; }
+.meter-v { float: right; color: var(--dim); font-size: 13px; font-variant-numeric: tabular-nums; }
+.meter-track { clear: both; height: 4px; background: #0b0e12; margin-top: 6px; }
+.meter-fill { height: 100%; }
+.meter-fill.brass { background: var(--brass); }
+.meter-fill.blood { background: var(--blood); }
+.meter-fill.verdigris { background: var(--verdigris); }
+.meter-fill.iron { background: var(--dim); }
+
+/* SKILLS. The career groups are the character's chosen shape and are
+   headed; the miscellaneous remainder is one press away. A career row
+   is brighter than a miscellaneous one because that difference IS the
+   character - it is what the three groups mean. */
+.skillgroup {
+  font-family: var(--data); font-weight: 500; font-size: 10px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--brass); margin: 18px 0 8px;
+}
+.skillgroup:first-of-type { margin-top: 0; }
+.skillrow {
+  display: flex; justify-content: space-between; gap: 12px;
+  padding: 7px 0; border-bottom: 1px solid #1b2027; color: var(--dim); font-size: 14px;
+}
+.skillrow.career { color: var(--bone); }
+.skill-v { font-variant-numeric: tabular-nums; }
+.act.more { width: 100%; margin-top: 18px; text-align: center; }
+
+/* THE FOUR NAVIGATION BUTTONS, in the thumb's arc on a phone and along
+   the foot of the sheet everywhere. A button is drawn only where the
+   host handed a factory - see ui/enhancedCharSheet.js's nav(). */
+.sheet-nav {
+  display: flex; gap: 8px; flex-wrap: wrap; padding: 16px 30px;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--iron); background: var(--ink);
+}
+.sheet-nav .act { flex: 1 1 auto; text-align: center; }
+.sheet-notice { color: #d98074; font-size: 13px; margin: 0; padding: 12px 30px 0; }
+
+@media (max-width: 860px) {
+  .sheet { grid-template-columns: 1fr; grid-auto-rows: min-content; overflow: auto; }
+  .sheetcol { overflow: visible; }
+  .sheet-id { padding: 20px; }
+  .sheet-id h2 { font-size: 25px; }
+  .sheet-nav { padding: 12px 16px; padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+}
+
+/* ── THE PACK + THE SLOT MAP (U53) ─────────────────────────
+   Three columns: what you are wearing, what you are carrying, and
+   what one of them is. The schematic gets a column of its own because
+   it is the screen's whole argument - twenty-seven slots read at a
+   glance rather than hunted for on a picture of a person. */
+.pack-shell { height: 100%; display: flex; flex-direction: column; min-height: 0; }
+.pack-id {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  padding: 26px 30px 18px; border-bottom: 1px solid var(--iron); background: var(--ink);
+}
+.pack-id h2 { font-family: var(--display); font-weight: 300; font-size: 30px; margin: 0; }
+.pack-id .meta { color: var(--dim); font-size: 13px; margin: 6px 0 0; font-variant-numeric: tabular-nums; }
+
+.pack {
+  flex: 1; min-height: 0; display: grid; gap: var(--gap);
+  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr) minmax(240px, 320px);
+  background: var(--iron);
+}
+.packcol { background: var(--slate); overflow: auto; padding: 18px 20px 26px; min-height: 0; }
+
+/* THE SLOT MAP. The figure is a schematic in --iron so it reads as
+   scaffolding; the NODES carry the information, and a filled one is
+   brass and twice the radius of an empty one - the difference has to
+   survive being glanced at on a phone. */
+.slotmap { background: var(--ink); padding: 14px 10px 10px; height: 100%; overflow: auto; }
+.slotmap svg { width: 100%; height: auto; max-height: 62vh; display: block; }
+.slotmap .figure path { fill: none; stroke: #232a33; stroke-width: 1.5; }
+.slotmap .node circle { fill: #171b21; stroke: var(--iron); stroke-width: 1.5; transition: none; }
+.slotmap .node.off circle { stroke: #232a33; }
+.slotmap .node.filled circle { fill: var(--brass); stroke: var(--brass); }
+.slotmap .node.filled { cursor: pointer; }
+.slotmap .node.filled:hover circle { fill: var(--bone); stroke: var(--bone); }
+.slotmap .node:focus-visible circle { stroke: var(--bone); stroke-width: 2.5; outline: none; }
+.slotcount {
+  color: var(--dim); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  text-align: center; margin: 8px 0 0;
+}
+
+/* THE TABS are DFU's four pages (nativeInventory.js TABS), counted. */
+.packtabs { display: flex; gap: 2px; margin: 0 0 14px; flex-wrap: wrap; }
+.packtab {
+  flex: 1 1 auto; padding: 10px 12px; min-height: 44px; text-align: center;
+  border-bottom: 2px solid transparent; color: var(--dim); font-size: 13px;
+}
+.packtab.on { color: var(--brass); border-bottom-color: var(--brass); }
+.packtab .count { display: block; font-size: 10px; color: var(--dim); font-variant-numeric: tabular-nums; }
+
+.itemrow {
+  display: flex; align-items: center; gap: 11px; width: 100%;
+  padding: 9px 8px; min-height: 48px; border-bottom: 1px solid #1b2027; text-align: left;
+}
+.itemrow:hover { background: #12161b; }
+.itemrow.on { background: #12161b; box-shadow: inset 2px 0 0 var(--brass); }
+.tile {
+  flex: 0 0 auto; width: 30px; height: 30px; display: grid; place-items: center;
+  border: 1px solid var(--iron); color: var(--dim); font-size: 11px; letter-spacing: 0.06em;
+}
+/* THE REAL ICON, when the archive is here. No border: the sprite is a
+   1-bit cutout on nothing, and a box round it makes it look like a
+   placeholder, which is what it replaced. */
+.tile.has-icon { border-color: transparent; }
+.tile img { image-rendering: pixelated; max-width: 30px; max-height: 30px; }
+.bigicon {
+  display: grid; place-items: center; padding: 6px 0 14px; min-height: 72px;
+}
+.bigicon img { image-rendering: pixelated; max-width: 100%; max-height: 120px; }
+.itemname { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.itemname small { color: var(--dim); font-size: 11.5px; }
+.itemwt { flex: 0 0 auto; color: var(--dim); font-size: 12px; font-variant-numeric: tabular-nums; }
+.packempty { color: var(--dim); font-size: 14px; margin: 10px 2px; }
+.packdetail .sheet-close { display: none; }
+
+/* ── THE REMOTE SIDE ────────────────────────────────────────
+   DFU's window is TWO lists side by side, so these are PEERS sharing
+   one grid cell rather than a panel hung off the pack. Splitting the
+   middle column keeps the outer three-column shape - and every phone
+   rule written against it - exactly as it was. */
+.packlists {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--gap); min-height: 0; background: var(--iron);
+}
+.packremote { background: #10141a; }
+.remotehead {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 10px; flex-wrap: wrap; margin: 0 0 14px;
+}
+.remotewho h3 {
+  font-family: var(--display); font-weight: 300; font-size: 19px; margin: 0;
+}
+.remotewho .meta {
+  color: var(--dim); font-size: 12px; margin: 5px 0 0; font-variant-numeric: tabular-nums;
+}
+.remoteacts { display: flex; gap: 6px; flex-wrap: wrap; }
+.goldfield {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 12px; margin: 0 0 14px; background: var(--ink); border: 1px solid var(--iron);
+}
+.goldfield input {
+  flex: 1 1 90px; min-width: 0; min-height: 44px; padding: 0 12px;
+  background: #0b0e12; border: 1px solid var(--iron); color: var(--bone);
+  font: inherit; font-size: 15px; font-variant-numeric: tabular-nums;
+}
+.goldfield input:focus-visible { outline: none; border-color: var(--brass); }
+.goldfield .meta { flex: 1 0 100%; color: var(--dim); font-size: 11.5px; margin: 0; }
+
+/* THE LISTS STACK BELOW THE PACK'S OWN BREAKPOINT, not at it: two
+   half-width lists are still readable at 1100px, and one of them
+   sitting under the doll is not. */
+@media (max-width: 1100px) {
+  /* The PAIR scrolls as one when it stacks - two independently
+     scrolling half-height lists in one column is a scroll trap. */
+  .packlists { grid-template-columns: 1fr; grid-auto-rows: min-content; overflow: auto; }
+  .packlists .packcol { overflow: visible; }
+  /* THE LIST YOU CAME FOR GOES FIRST. Opening a corpse and being shown
+     your own pack is the screen answering a question nobody asked; the
+     ground and the wagon are the other way round, because there you
+     came to put something down. */
+  .packlists.remotefirst .packremote { order: 0; }
+  .packlists.remotefirst > .packcol:not(.packremote) { order: 1; }
+}
+
+/* THE SCHEMATIC GOES LAST ON A PHONE. Stacked, it is 46vh of figure
+   above everything, so the LISTS started below the fold - the remote
+   one at y=781 in a 727px viewport, which is a browser-only finding
+   and exactly the shape AUDIT 24 keeps turning up. A player opening
+   their pack came for their items; the doll is what they scroll to. */
+@media (max-width: 860px) {
+  .pack .slotmap { order: 2; }
+  .pack .packlists { order: 1; }
+  .pack .packdetail { order: 3; }
+}
+
+.iconnote { color: var(--dim); font-size: 11.5px; margin: 12px 2px 0; line-height: 1.5; }
+
+@media (max-width: 860px) {
+  .pack { grid-template-columns: 1fr; grid-auto-rows: min-content; overflow: auto; }
+  .packcol { overflow: visible; }
+  .slotmap svg { max-height: 46vh; }
+  .pack-id { padding: 20px; }
+  .pack-id h2 { font-size: 25px; }
+  /* THE DETAIL IS A SHEET, the same answer the settings pane gives to
+     the same problem: three columns do not fit one phone, and a third
+     column below the fold is a control the player cannot reach. It
+     rises when an item is picked. */
+  .packdetail {
+    position: fixed; left: 0; right: 0; bottom: 0; max-height: 70dvh; z-index: 20;
+    overflow: auto; transform: translateY(101%); transition: transform 0.22s ease;
+    border-top: 1px solid var(--brass);
+    padding-bottom: max(24px, calc(env(safe-area-inset-bottom) + 24px));
+  }
+  .packdetail.open { transform: translateY(0); }
+  .packdetail .sheet-close {
+    display: block; width: 100%; padding: 14px; min-height: 48px;
+    color: var(--dim); font-size: 12px; letter-spacing: 0.16em;
+    text-transform: uppercase; border-bottom: 1px solid var(--iron); text-align: center;
+  }
+}
 
 /* ── THE WIZARD ─────────────────────────────────────────────
    Character creation borrows the menu's shell whole - same rail, same

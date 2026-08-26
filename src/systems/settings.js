@@ -162,7 +162,7 @@ export const LIVE = Object.freeze({
   // TransferItem's quest arm (DaggerfallInventoryWindow.cs:1487) - the
   // gate on moving a quest item out of the pack, read by the one law
   // both the inventory window and the shop's Sell staging call.
-  'GUI/CanDropQuestItems': 'src/ui/nativeInventory.js',
+  'GUI/CanDropQuestItems': 'src/systems/itemTransfer.js',   // U56: TransferItem's quest arm moved with the ladder
 });
 /** unavailable: meaningless in a browser, or the port implements only
  *  ONE side of the branch. The launcher shows these disabled WITH the
