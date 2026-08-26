@@ -102,6 +102,28 @@ export const copyEffectEntry = (a) => {
   return c;
 };
 
+/** The port's stand-in for one ulong of
+ *  ItemEquipTable.SerializeEquipTable (:333-345) - the RightHand
+ *  slot, the only equip link an enemy entity carries here. DFU writes
+ *  the equipped item's UID and DeserializeEquipTable (:353-373)
+ *  re-links the table to the item of that UID inside the RESTORED
+ *  collection, which is why a loaded foe swings the weapon its save
+ *  recorded instead of the one its respawn rolled. The port has no
+ *  item UID; the index into the foe's own item list is the same link,
+ *  and it is a plain indexOf because AssignEnemyStartingEquipment
+ *  equips the SAME item it adds to Items (ItemHelper.cs:1366-1460,
+ *  ItemEquipTable.cs:140-141) - the identity the whole UID scheme
+ *  rests on, which equipmentItems keeps.
+ *  Returns -1 for a bare-handed foe, which is what an empty RightHand
+ *  slot serializes to.
+ *
+ *  Exported from here rather than from a scene: BOTH foe hosts write
+ *  it (world.js's exterior pool and dungeonContext's), and it is the
+ *  same DFU member for both. (ArmorValues are RE-DERIVED by the
+ *  spawn's own SetEnemyEquipment pass, EnemyEntity.cs:409-419, so DFU
+ *  does not save them and neither does either host.) */
+export const equippedWeaponIndex = (weapon, items) => (weapon ? items.indexOf(weapon) : -1);
+
 /** A plain-object snapshot of the player + scene extras. */
 export function snapshotPlayer(entity, { position = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null, quest = null, talk = null } = {}) {
   // Q4-v: `quest` is the bridge's whole envelope (machine + notebook +

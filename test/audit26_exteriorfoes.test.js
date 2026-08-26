@@ -22,9 +22,11 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { createExteriorFoes, equippedWeaponIndex, MAX_ACTIVE_ENCOUNTER_FOES } from '../src/scenes/exteriorFoes.js';
+import { createExteriorFoes, MAX_ACTIVE_ENCOUNTER_FOES } from '../src/scenes/exteriorFoes.js';
 import { equipEnemy } from '../src/scenes/hostCombat.js';
-import { copyEffectEntry } from '../src/systems/save.js';
+// AUDIT 26 (save wave 4): equippedWeaponIndex is a save law both foe
+// hosts write, so it lives beside copyEffectEntry, not in a scene.
+import { copyEffectEntry, equippedWeaponIndex } from '../src/systems/save.js';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -237,8 +239,14 @@ test('1.3: equippedWeaponIndex is the RightHand slot of SerializeEquipTable (:33
 
   const i = equippedWeaponIndex(entity.weapon, entity.items);
   assert.ok(i >= 0, 'the equipped weapon is found inside the foe\'s own item list');
-  assert.equal(entity.items[i].templateIndex, entity.weapon.templateIndex);
-  assert.equal(entity.items[i].material, entity.weapon.material);
+  // AUDIT 26 (save wave 4): a plain indexOf, because the entry IS the
+  // weapon. AssignEnemyStartingEquipment hands ONE DaggerfallUnityItem
+  // to both EquipItem and Items.AddItem (ItemHelper.cs:1379-1381), and
+  // the UID equip table only works because of that identity. This pin
+  // used to match on templateIndex+material - a field match, which is
+  // what the port needed while equipEnemy minted the weapon twice.
+  assert.equal(entity.items[i], entity.weapon, 'the swung weapon IS the item on the corpse');
+  assert.equal(entity.items.filter((it) => it === entity.weapon).length, 1, 'and it is in the list exactly once');
   // ...and an empty slot serializes to nothing to relink
   assert.equal(equippedWeaponIndex(null, entity.items), -1, 'a bare-handed foe has no RightHand entry');
 
@@ -258,8 +266,8 @@ test('1.3: equippedWeaponIndex is the RightHand slot of SerializeEquipTable (:33
 });
 
 test('1.3: the envelope writes the equip link and the load relinks it (:119 / :173-174)', () => {
-  assert.ok(saveArm().includes('equipRight: equippedWeaponIndex(f.entity.weapon, foeItems),'),
-    ':119 data.equipTable = entity.ItemEquipTable.SerializeEquipTable()');
+  assert.ok(saveArm().includes('equipRight: equippedWeaponIndex(f.entity.weapon, f.entity.items ?? []),'),
+    ':119 data.equipTable = entity.ItemEquipTable.SerializeEquipTable() - read off the LIVE list, which is the one the weapon is in');
   const fn = loadArm();
   assert.ok(fn.includes('if (sf.equipRight != null) f.entity.weapon = sf.equipRight >= 0 ? (f.entity.items[sf.equipRight] ?? null) : null;'),
     ':174 DeserializeEquipTable(data.equipTable, entity.Items) - relinked to the RESTORED items');
@@ -269,4 +277,9 @@ test('1.3: the envelope writes the equip link and the load relinks it (:119 / :1
   // re-runs them on the respawn's own loadout (EnemyEntity.cs:409-419),
   // and a field DFU re-derives must not be persisted.
   assert.equal(saveArm().includes('armorValues'), false, 'armorValues are RE-DERIVED, never saved');
+  // ONE DFU MEMBER, ONE EXPORT: the equip link is the same law on both
+  // foe hosts, so it has one home in systems/save.js and the scene file
+  // no longer keeps a copy.
+  assert.doesNotMatch(readFileSync(join(root, 'src/scenes/exteriorFoes.js'), 'utf8'), /equippedWeaponIndex/,
+    'the equip link left the scene file for systems/save.js');
 });

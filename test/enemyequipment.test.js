@@ -95,3 +95,32 @@ test('equipment G3: every equipped piece is a droppable item (DFU Items.AddItem)
   assert.equal(items[1].group, 'Armor');
   assert.equal(items[1].templateIndex, ARMOR_ENUM.Buckler);
 });
+
+// AUDIT 26: THE EQUIPPED WEAPON AND THE DROPPED ITEM ARE ONE OBJECT.
+// MUTATION: restore `items.push({ group: 'Weapons', ...eq.rightHand })`
+// -> the identity assertions fail and the condition loss stops
+// reaching the corpse's copy.
+test('equipment G3: AssignEnemyStartingEquipment equips the SAME item it adds to Items (ItemHelper.cs:1366-1460)', () => {
+  // ItemHelper.cs:1379-1381:
+  //     DaggerfallUnityItem weapon = ItemBuilder.CreateWeapon(...);
+  //     enemyEntity.ItemEquipTable.EquipItem(weapon, true, false);
+  //     enemyEntity.Items.AddItem(weapon);
+  // EquipItem stores the reference in the slot (ItemEquipTable.cs:140-141),
+  // so the swung weapon and the looted weapon are the same
+  // DaggerfallUnityItem - which is the only reason the equip table can
+  // serialize as a UID at all (:333-373).
+  const entity = { isClass: true, mobileType: 128, careerIndex: 0, armor: 0 };
+  // variant 0: Broadsword right hand, the shield roll MISSES (0.99 vs
+  // chance 50) and the left-hand WEAPON roll hits -> a Dagger.
+  const eq = assignEnemyEquipment(entity, 0, 1, seq(0, 0, 0, 0.99, 0, 0, 0, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99));
+  assert.equal(eq.leftHand?.name, 'Dagger', 'the left hand holds a weapon, not a shield');
+  const items = equipmentItems(eq);
+  assert.equal(items[0], eq.rightHand, 'the right hand IS the item, not a copy of it');
+  assert.equal(items[1], eq.leftHand, 'and so is the left');
+  // the consequence, before any save is involved: condition damage
+  // billed to the swung weapon reaches what the corpse drops.
+  const before = eq.rightHand.currentCondition;
+  assert.ok(before > 0, 'createWeapon mints the condition with the item');
+  eq.rightHand.currentCondition -= 5;
+  assert.equal(items[0].currentCondition, before - 5, 'a degraded blade drops degraded');
+});

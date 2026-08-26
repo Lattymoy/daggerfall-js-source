@@ -46,31 +46,7 @@ import { bindQuestFoeHost } from './questFoeHost.js';   // B1: quest foes ride t
 // The port's allocation-owner guards (classic self-limits through the
 // 144-minute cadence; these keep a long session bounded).
 export const MAX_ACTIVE_ENCOUNTER_FOES = 8;
-
 export const ENCOUNTER_CULL_DISTANCE = 120;
-
-/** AUDIT 26: the port's stand-in for one ulong of
- *  ItemEquipTable.SerializeEquipTable (:333-345) - the RightHand slot,
- *  the only equip link an enemy entity carries here. (ArmorValues are
- *  RE-DERIVED by the spawn's own SetEnemyEquipment pass, so DFU does
- *  not save them and neither does this.) DeserializeEquipTable
- *  (:353-373) re-links the table to the item of that UID inside the
- *  RESTORED collection, which is why a loaded foe swings the weapon
- *  its save recorded instead of the one its respawn rolled.
- *
- *  DFU can write a UID because AssignEnemyStartingEquipment equips the
- *  SAME DaggerfallUnityItem it adds to entity.Items. The port mints two
- *  objects - hostCombat.equipEnemy sets `entity.weapon = eq.rightHand`
- *  and pushes `{ group: 'Weapons', ...eq.rightHand }` into entity.items
- *  - so the link falls back to the item's own fields where the
- *  reference is not shared. FLAGGED: sharing that one reference at the
- *  spawn is the equip table's real shape and would make this a plain
- *  indexOf. Returns -1 for a bare-handed foe, which is what an empty
- *  RightHand slot serializes to. */
-export const equippedWeaponIndex = (weapon, items) => (weapon
-  ? items.findIndex((it) => it === weapon
-    || (it.group === 'Weapons' && it.templateIndex === weapon.templateIndex && it.material === weapon.material))
-  : -1);
 
 export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame,
   playerEntity, audio, onPlayerHurt, currentMinute, say = null, rolls = Math.random,

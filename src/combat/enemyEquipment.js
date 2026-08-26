@@ -215,11 +215,32 @@ export function assignEnemyEquipment(entity, variant, playerLevel, rolls = Math.
  *  (AssignEnemyStartingEquipment's Items.AddItem after each
  *  EquipItem) - that inventory is the corpse's droppable loot. The
  *  shield rides armorPieces (its armor item), so a shield leftHand
- *  marker is skipped; a leftHand WEAPON is its own item. */
+ *  marker is skipped; a leftHand WEAPON is its own item.
+ *
+ *  THE EQUIPPED WEAPON AND THE ITEM ARE ONE OBJECT.
+ *  AssignEnemyStartingEquipment (ItemHelper.cs:1366-1460) mints ONE
+ *  DaggerfallUnityItem per piece and hands that same reference to
+ *  both `ItemEquipTable.EquipItem(weapon, ...)` - which stores the
+ *  reference in the slot (ItemEquipTable.cs:140-141) - and
+ *  `enemyEntity.Items.AddItem(weapon)`. The whole UID equip-table
+ *  scheme (Serialize/DeserializeEquipTable, :333-373) only works
+ *  because of that identity - so the weapon goes in by reference and
+ *  not as a spread copy. A copy makes the swung item and the looted
+ *  item two objects, and DamageEquipment's condition loss
+ *  (FormulaHelper.cs:1080-1118) and the swing's poison discharge
+ *  (:692-695, `weapon.poisonType = Poisons.None`) are billed to
+ *  entity.weapon alone - a bandit whose blade is nearly broken drops
+ *  it pristine.
+ *
+ *  The ARMOR pieces below are already one object each: armorPieces
+ *  carries the {piece, material} ROLL, not an item, and the only item
+ *  object minted from it is the one appended here - nothing equips an
+ *  enemy's armour into a live slot (the entity keeps the derived
+ *  armorValues instead), so there is no second reference to share. */
 export function equipmentItems(eq) {
   const items = [];
-  if (eq.rightHand) items.push({ group: 'Weapons', ...eq.rightHand });
-  if (eq.leftHand && !eq.leftHand.shield) items.push({ group: 'Weapons', ...eq.leftHand });
+  if (eq.rightHand) items.push(eq.rightHand);
+  if (eq.leftHand && !eq.leftHand.shield) items.push(eq.leftHand);
   for (const a of eq.armorPieces) items.push({ group: 'Armor', templateIndex: a.piece, material: a.material });
   return items;
 }

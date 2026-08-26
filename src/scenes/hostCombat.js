@@ -100,7 +100,12 @@ export function equipEnemy(entity, mobileType, playerLevel) {
     if (pt != null) entity.weapon.poisonType = pt;
   }
   // AssignEnemyStartingEquipment adds every equipped piece to the
-  // entity's items - the corpse's droppable loot.
+  // entity's items - the corpse's droppable loot - and it adds the
+  // SAME object it equipped (ItemHelper.cs:1379-1381: one
+  // ItemBuilder.CreateWeapon, handed to both EquipItem and
+  // Items.AddItem). So `entity.weapon` below is one of these entries,
+  // not a twin of one: the condition DamageEquipment bills and the
+  // poison the swing discharges land on the item the corpse drops.
   entity.items = entity.items ?? [];
   entity.items.push(...equipmentItems(eq));
   return eq;

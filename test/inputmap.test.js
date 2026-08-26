@@ -173,7 +173,13 @@ test('U43: ONE dispatch - the interior host routes the same table as the dungeon
   // interior host only picks the slot.
   const MOUNTS = [
     ['toggleCharSheet', /toggleCharSheet\(\) \{ mountInterior\(host\.makeCharSheet\?\.\(\)\); \}/],
-    ['toggleInventory', /toggleInventory\(\) \{ mountInterior\(host\.makeInventory\?\.\(\)\); \}/],
+    // The save campaign's interior-pile fix put ONE construction seam
+    // over the outer host's builder - makeInteriorInventory overrides
+    // onDrop so a sword dropped in a shop lands in the SHOP's pool
+    // (SerializableStateManager.cs:90) rather than the exterior one.
+    // This pin guards that the hook MOUNTS a window, which is the law;
+    // the builder's NAME is not, and pinning it was what broke here.
+    ['toggleInventory', /toggleInventory\(\) \{ mountInterior\(makeInteriorInventory\(\)\); \}/],
     ['toggleSpellbook', /toggleSpellbook\(\) \{ if \(magic\) mountInterior\(makeSpellbookWindow\(\)\); \}/],
     ['toggleLogbook', /toggleLogbook\(\) \{ mountInterior\(host\.makeJournal\?\.\('activeQuests'\)\); \}/],
     ['toggleNotebook', /toggleNotebook\(\) \{ mountInterior\(host\.makeJournal\?\.\('notebook'\)\); \}/],

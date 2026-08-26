@@ -54,13 +54,13 @@ import { TravelMapWindow, preloadTravelMapArt, travelMapArtLoaded, canFindPlace 
 import { buildMapDict } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict
 import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
-import { createExteriorFoes, equippedWeaponIndex } from './exteriorFoes.js';   // X-slice; AUDIT 26: the pool's one equip-table link
+import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1
 import { SITE_TYPES } from '../systems/quest/place.js';   // B3: the respawn dispatch reads the site type
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert, areEnemiesNearby, passiveGuardSpawns } from '../systems/encounters.js';   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
-import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState, copyEffectEntry } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer; AUDIT 26: SerializableEnemy's bundles ride the player envelope's body
+import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState, copyEffectEntry, equippedWeaponIndex } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer; AUDIT 26: SerializableEnemy's bundles ride the player envelope's body, and equippedWeaponIndex is the equip link both foe hosts write
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it
@@ -1854,8 +1854,12 @@ export async function bootWorld(canvas, renderer, params, status) {
             // entity.items and left entity.weapon holding the respawn's
             // fresh roll, so a foe swung one weapon and its corpse
             // dropped another. The port has no item UID - the index
-            // into the foe's own item list is the same link.
-            equipRight: equippedWeaponIndex(f.entity.weapon, foeItems),
+            // into the foe's own item list is the same link, read off
+            // the LIVE list: the swung weapon IS one of its entries
+            // (equipmentItems shares the one reference DFU's
+            // Items.AddItem shares), and foeItems is a positional copy
+            // of that list, so the index carries over to it.
+            equipRight: equippedWeaponIndex(f.entity.weapon, f.entity.items ?? []),
           };
         }),
       },

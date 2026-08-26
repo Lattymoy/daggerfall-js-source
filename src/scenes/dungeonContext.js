@@ -97,7 +97,7 @@ import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects
 import { dice100, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies, KB_UNIT } from '../combat/formulas.js';   // C15: + knockback
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost, effectSchool, EFFECT_COST_TABLE } from '../systems/spellcost.js';
-import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState, copyEffectEntry } from '../systems/save.js';   // B4: the ONE quest+talk composer; copyEffectEntry: SerializableEnemy's bundles ride the player envelope's body
+import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState, copyEffectEntry, equippedWeaponIndex } from '../systems/save.js';   // B4: the ONE quest+talk composer; copyEffectEntry: SerializableEnemy's bundles ride the player envelope's body; equippedWeaponIndex: its equip table, the same member the exterior pool writes
 import { bindQuestFoeHost } from './questFoeHost.js';   // B1: quest foes ride this pool
 import { dungeonKey } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
@@ -1869,6 +1869,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // held bundles are re-instantiated from the worn set at restore
         // (restartHeldEnchantments); nothing re-instantiates a foe's.
         activeEffects: (f.entity.activeEffects ?? []).map(copyEffectEntry),
+        // AUDIT 26: :119 data.equipTable =
+        // entity.ItemEquipTable.SerializeEquipTable(). The foe's
+        // equipped weapon was NOT in this record, and applyWorld
+        // replaced entity.items without touching entity.weapon - so a
+        // cold boot into a saved dungeon left every armed foe swinging
+        // the REBUILD's fresh equipEnemy roll (:531/:596), with the
+        // rebuild's material, condition and poison, while its corpse
+        // dropped the save's items. equippedWeaponIndex is the port's
+        // stand-in for the RightHand UID: an index into the foe's own
+        // item list, which is a plain indexOf because the swung weapon
+        // IS one of those items (ItemHelper.cs:1366-1460 equips the
+        // same object it adds to Items). ArmorValues stay out: DFU
+        // re-derives them in SetEnemyEquipment (EnemyEntity.cs:409-419)
+        // and saves no such field.
+        equipRight: equippedWeaponIndex(f.entity.weapon, f.entity.items ?? []),
       })),
       piles: lootPiles.map((p) => ({ items: p.items.map((it) => ({ ...it })) })),
       // AUDIT 23 (save-load-4): player-dropped piles are containers in
@@ -1891,6 +1906,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       f.entity.health = sf.health;
       if (sf.fatigue != null) f.entity.fatigue = sf.fatigue;   // :177 SetFatigue
       f.entity.items = sf.items.map((it) => ({ ...it }));
+      // AUDIT 26: DeserializeEquipTable(data.equipTable, entity.Items)
+      // runs on the line AFTER DeserializeItems (:173-174) and re-links
+      // the table INTO the restored collection - the order is the law,
+      // because the table can only find an item the collection already
+      // holds. The restored foe then swings the very object its corpse
+      // will drop, so condition, poison and material are one thing.
+      if (sf.equipRight != null) f.entity.weapon = sf.equipRight >= 0 ? (f.entity.items[sf.equipRight] ?? null) : null;
       f.ai.feet[0] = sf.feet[0]; f.ai.feet[1] = sf.feet[1]; f.ai.feet[2] = sf.feet[2];
       f.ai.yaw = sf.yaw;
       // CH4: the senses/resource halves restore when the save carries

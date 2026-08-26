@@ -28,7 +28,8 @@ import {
 import { playerDamageFlash, FLASH_ALPHA } from '../src/ui/damageFlash.js';
 import { SOUND } from '../src/systems/soundClips.js';
 import { SPECIAL_ABILITY } from '../src/systems/rest.js';
-import { copyEffectEntry } from '../src/systems/save.js';
+import { copyEffectEntry, equippedWeaponIndex } from '../src/systems/save.js';   // AUDIT 26 (save wave 4): the equip link, one home for both foe hosts
+import { equipEnemy } from '../src/scenes/hostCombat.js';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -503,6 +504,57 @@ test('F217+F220: the dungeon foe record carries bundles, MaxHealth and fatigue (
   assert.equal(copy.effect.magnitude, 3);
   assert.deepEqual(copy.statMods, { 0: -5 });
   assert.equal('caster' in copy, false, 'the live scene reference never enters the envelope (DFU re-resolves it)');
+});
+
+// =====================================================================
+// AUDIT 26 (save wave 4) - the dungeon foe's EQUIP TABLE relinks on load
+// =====================================================================
+
+test('the dungeon foe record carries the equip table and applyWorld relinks it to the RESTORED items (SerializableEnemy.cs:119, 173-174)', () => {
+  // SerializableEnemy.GetEnemyData:119
+  //     data.equipTable = entity.ItemEquipTable.SerializeEquipTable();
+  // RestoreEnemyData:173-174, in this order
+  //     entity.Items.DeserializeItems(data.items);
+  //     entity.ItemEquipTable.DeserializeEquipTable(data.equipTable, entity.Items);
+  // The port's record replaced entity.items and never touched
+  // entity.weapon, and buildFoeAt equips from a FRESH equipEnemy roll
+  // (dungeonContext.js:531/:596) - so a cold boot into a saved dungeon
+  // handed every armed foe the rebuild's dice for weapon, material,
+  // condition and poison while its corpse dropped the save's items.
+  const c = DUNGEON_CTX.indexOf('function collectWorld()');
+  const rec = DUNGEON_CTX.slice(c, DUNGEON_CTX.indexOf('piles: lootPiles.map', c));
+  assert.ok(rec.includes('equipRight: equippedWeaponIndex(f.entity.weapon, f.entity.items ?? []),'), ':119 SerializeEquipTable');
+
+  const a = DUNGEON_CTX.indexOf('function applyWorld(w)');
+  const fn = DUNGEON_CTX.slice(a, DUNGEON_CTX.indexOf('w.piles?.forEach', a));
+  assert.ok(fn.includes('if (sf.equipRight != null) f.entity.weapon = sf.equipRight >= 0 ? (f.entity.items[sf.equipRight] ?? null) : null;'),
+    ':174 DeserializeEquipTable(data.equipTable, entity.Items) - guarded, so a pre-wave snapshot restores as it always did');
+  // THE ORDER IS THE LAW: the table can only relink to an item the
+  // collection already holds, so :173 lands before :174.
+  assert.ok(fn.indexOf('f.entity.items = sf.items.map((it) => ({ ...it }));') < fn.indexOf('sf.equipRight'),
+    'the items deserialize first (:173), then the table relinks to them (:174)');
+  // DFU saves no ArmorValues: SetEnemyEquipment re-derives them from
+  // the spawn's own loadout (EnemyEntity.cs:409-419). A field DFU
+  // re-derives must not be persisted - the same negative pin the
+  // exterior pool carries.
+  assert.equal(rec.includes('armorValues'), false, 'armorValues are RE-DERIVED, never saved');
+
+  // and the law itself, on real objects: the index is a plain indexOf
+  // because the swung weapon IS one of the foe's items, and the
+  // restored foe swings the object its corpse will drop.
+  const entity = { isClass: true, careerIndex: 4, armor: 0, items: [{ group: 'Weapons', templateIndex: 113, material: 0 }] };
+  equipEnemy(entity, 132, 6);
+  const i = equippedWeaponIndex(entity.weapon, entity.items);
+  assert.equal(entity.items[i], entity.weapon, 'the equip link is identity, not a field match');
+  const restoredItems = entity.items.map((it) => ({ ...it }));
+  const foe = { entity: { items: restoredItems, weapon: { templateIndex: 999, material: 9 } } };   // the rebuild's fresh roll
+  foe.entity.weapon = i >= 0 ? (foe.entity.items[i] ?? null) : null;
+  assert.equal(foe.entity.weapon, foe.entity.items[i], 'one object again after the relink');
+  assert.deepEqual(
+    { templateIndex: foe.entity.weapon.templateIndex, material: foe.entity.weapon.material },
+    { templateIndex: entity.weapon.templateIndex, material: entity.weapon.material },
+    'and it is the weapon the SAVE recorded, not the one the rebuild rolled',
+  );
 });
 
 // =====================================================================
