@@ -13,6 +13,7 @@ import { ENEMY_GROUPS, dice100 } from '../combat/formulas.js';
 import { combatVoicesEnabled, ATTACK_VOICE_CHANCE, PAIN_VOICE_CHANCE, combatVoice, playerVoice, rollVoiceRace, isHeavyDamage } from '../combat/combatVoices.js';   // C2-slice; playerVoice AUDIT 24 (wave 46)
 import { RACES } from '../systems/races.js';   // C2-slice: the player grunt's race
 import { assignEnemyEquipment, equipmentVariantFor, equipmentItems } from '../combat/enemyEquipment.js';
+import { equipTableOf, unequipSlot, EQUIP_SLOTS } from '../systems/equip.js';   // AUDIT 26: EnemyDeath's unequip-before-loot
 import { rollEnemyWeaponPoison } from '../systems/poisons.js';
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { swingSoundFor } from '../systems/soundClips.js';
@@ -106,9 +107,44 @@ export function equipEnemy(entity, mobileType, playerLevel) {
   // Items.AddItem). So `entity.weapon` below is one of these entries,
   // not a twin of one: the condition DamageEquipment bills and the
   // poison the swing discharges land on the item the corpse drops.
+  // AUDIT 26: the same is now true of every ARMOUR piece and the
+  // shield - assignEnemyEquipment equips them into the entity's own
+  // table, which is the table DamageEquipment reads for the struck
+  // side, so they wear down on the body they are worn on.
   entity.items = entity.items ?? [];
   entity.items.push(...equipmentItems(eq));
   return eq;
+}
+
+/** EnemyDeath.CompleteDeath (:107-117), verbatim - and DFU's own
+ *  comment is the whole reason it exists:
+ *
+ *      // This is still required so enemy equipment is not marked as
+ *      // equipped
+ *      // This item collection is transferred to loot container below
+ *      for (int i = (int)EquipSlots.Head; i <= (int)EquipSlots.Feet; i++)
+ *          if (ItemEquipTable.GetItem((EquipSlots)i) != null)
+ *              enemyEntity.ItemEquipTable.UnequipItem((EquipSlots)i);
+ *
+ *  An item carries the slot it is worn in (DaggerfallUnityItem.
+ *  IsEquipped is `equipSlot != None`, :260), and the inventory window
+ *  drops every equipped item from the local list (FilterLocalItems,
+ *  DaggerfallInventoryWindow.cs:908 - the port's own
+ *  nativeInventory.js:216). So a corpse's gear that reached the
+ *  player's pack still wearing the DEAD enemy's slot would be
+ *  invisible in every tab and unusable: looting an armoured bandit
+ *  would swallow his cuirass whole. Head..Feet is INCLUSIVE here (it
+ *  is a `<=`), unlike SetEnemyEquipment's armor-value loop - this one
+ *  must reach the boots, and it covers both hands on the way.
+ *
+ *  Bare-handed foes and foes that never carried equipment pass
+ *  through untouched (an empty table costs one walk of 15 slots). */
+export function unequipEnemyOnDeath(entity) {
+  if (!entity) return;
+  const slots = equipTableOf(entity);
+  for (let slot = EQUIP_SLOTS.Head; slot <= EQUIP_SLOTS.Feet; slot++) {
+    if (slots[slot]) unequipSlot(entity, slot);
+  }
 }
 
 // ---- WeaponManager.cs:72 / :419-436 ----

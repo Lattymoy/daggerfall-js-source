@@ -259,15 +259,15 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:1270` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
 - `src/scenes/world.js:1274` - while inSunlight/inHolyPlace stay the E1 FLAGGED seams no host
 - `src/scenes/world.js:1684` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
-- `src/scenes/world.js:1801` - from data. FLAGGED.
-- `src/scenes/world.js:2266` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:2538` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:2711` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
-- `src/scenes/world.js:2810` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:3075` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:3102` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:3550` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:3894` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:1812` - from data. FLAGGED.
+- `src/scenes/world.js:2313` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:2585` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:2758` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
+- `src/scenes/world.js:2857` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:3122` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:3149` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:3597` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:3941` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:334` - rather than pretending to scan. FLAGGED.
 - `src/scenes/worldModes.js:515` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:668` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
@@ -293,11 +293,11 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:2471` - first (owned houses and quest buildings FLAGGED/seamed per
 - `src/scenes/worldModes.js:2479` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
 - `src/scenes/worldModes.js:2804` - FLAGGED, unchanged by this: DFU then raises the private-
-- `src/scenes/worldModes.js:3331` - too. FLAGGED: interior loot containers are the loot arc's -
-- `src/scenes/worldModes.js:3473` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:3572` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:3916` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
-- `src/scenes/worldModes.js:4357` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
+- `src/scenes/worldModes.js:3345` - too. FLAGGED: interior loot containers are the loot arc's -
+- `src/scenes/worldModes.js:3487` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:3586` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:3930` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
+- `src/scenes/worldModes.js:4371` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
@@ -353,7 +353,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/potions.js:247` - FLAGGED, with the slice it waits on:
 - `src/systems/races.js:6` - port had only ever instantiated for Breton (the loud INTERIM the
 - `src/systems/regionConditions.js:25` - consequences are FLAGGED in court.js).
-- `src/systems/save.js:178` - (playerEntity's INTERIM skills: 30) - spreading it threw.
+- `src/systems/save.js:216` - (playerEntity's INTERIM skills: 30) - spreading it threw.
 - `src/systems/sceneCache.js:205` - FLAGGED, with the slice it waits on:
 - `src/systems/settings.js:39` - INTERIM doctrine - named, not silently ignored)
 - `src/systems/shopStock.js:30` - INTERIM (loud): book items carry the template price (classic prices

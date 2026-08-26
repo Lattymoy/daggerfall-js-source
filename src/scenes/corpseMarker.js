@@ -39,6 +39,7 @@ import { addItem } from '../systems/inventory.js';
 import { SOUND } from '../systems/soundClips.js';
 import { CORPSE_ACTIVATION_DISTANCE } from '../player/activate.js';
 import { enemyDisplayName } from '../characters/enemyBasics.js';
+import { unequipEnemyOnDeath } from './hostCombat.js';   // AUDIT 26: EnemyDeath.cs:107-117, the strip that precedes TransferAll
 
 /** ItemTemplates Arrow - the auto-pickup arm keys on it. */
 export const ARROW_TEMPLATE_INDEX = 131;
@@ -149,6 +150,15 @@ export function takeCorpseLoot(entry, playerEntity, say = () => {}) {
     say('The body has no treasure.');   // theBodyHasNoTreasure
     return 0;
   }
+  // EnemyDeath.CompleteDeath (:107-117) strips the dead enemy's equip
+  // table BEFORE `loot.Items.TransferAll(entity.Items)` (:123),
+  // "so enemy equipment is not marked as equipped" - an item that
+  // still carries a slot is hidden from every inventory tab by
+  // FilterLocalItems. The port has no separate loot container; this
+  // IS the transfer, so the strip happens on its edge. (DFU runs it
+  // at the kill; the two are indistinguishable from the pack, and a
+  // corpse minted by a LOAD gets it here too.)
+  unequipEnemyOnDeath(entry.entity);
   // :948-952 - one item and it is arrows: taken whole, no window.
   // NOTE both taking arms leave the container ENABLED. DFU disables a
   // corpse only on the activation that FINDS it empty (:946), which is

@@ -1,10 +1,10 @@
 // Enemy equipment (C8 E4b). Verbatim ports from DFU ItemHelper.cs
 // (AssignEnemyStartingEquipment), ItemBuilder.cs (materialsByModifier),
 // FormulaHelper.cs (RandomMaterial/RandomArmorMaterial),
-// DaggerfallUnityItem.cs (material/shield armor values, slot -> body
-// part), DaggerfallEntity.cs (UpdateEquippedArmorValues) and
-// EnemyEntity.cs (SetEnemyEquipment clamps + the variant table) -
-// MIT, Daggerfall Workshop.
+// ItemBuilder.cs (CreateWeapon/CreateArmor), DaggerfallEntity.cs
+// (UpdateEquippedArmorValues, through systems/equip.js) and
+// EnemyEntity.cs (SetEnemyEquipment's table walk + clamps, and the
+// variant table) - MIT, Daggerfall Workshop.
 //
 // Body parts (ArmorValues indices, = the struck-body-part range):
 //   0 Head, 1 RightArm, 2 LeftArm, 3 Chest, 4 Hands, 5 Legs, 6 Feet
@@ -16,7 +16,8 @@
 
 import { mintCondition, templateByIndex } from '../systems/itemTemplates.js';   // AUDIT 23 (items-5)
 import { WEAPON_MIN_DAMAGE, WEAPON_MAX_DAMAGE, dice100 } from './formulas.js';
-import { materialArmorValue } from '../systems/armorMaterials.js';
+import { materialArmorValue, SHIELD_PARTS } from '../systems/armorMaterials.js';
+import { equipItem, updateEquippedArmorValues, armorValuesOf, equipTableOf, EQUIP_SLOTS } from '../systems/equip.js';   // AUDIT 26: the equip table AssignEnemyStartingEquipment fills
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';   // AUDIT 24 (wave 41): one home
 import { ARROW_TEMPLATE } from '../systems/inventory.js';   // X11b: CreateWeapon's one special case
 
@@ -39,30 +40,20 @@ export const ARMOR_ENUM = Object.freeze({
 // AUDIT 24 (wave 24): ItemEnums.BodyParts has one home in
 // systems/armorMaterials.js.
 export { BODY_PARTS } from '../systems/armorMaterials.js';
-// GetBodyPartForEquipSlot, expressed piece -> part (each piece owns one slot)
-const PIECE_BODY_PART = Object.freeze({
-  107: 0,   // Helm -> Head
-  106: 1,   // Right pauldron -> RightArm
-  105: 2,   // Left pauldron -> LeftArm
-  102: 3,   // Cuirass -> Chest
-  103: 4,   // Gauntlets -> Hands
-  104: 5,   // Greaves -> Legs
-  108: 6,   // Boots -> Feet
-});
-const SHIELD_VALUE = Object.freeze({ 109: 1, 110: 2, 111: 3, 112: 4 });
-const SHIELD_PARTS = Object.freeze({
-  109: [2, 4],          // Buckler: LeftArm, Hands
-  110: [2, 4, 5],       // Round: + Legs
-  111: [2, 4, 5],       // Kite: same
-  112: [0, 2, 4, 5],    // Tower: + Head
-});
-
 /** DaggerfallUnityItem.GetShieldProtectedBodyParts (:1082-1095), verbatim:
  *  Buckler LeftArm+Hands, Round and Kite add Legs, Tower adds Head.
  *  Anything that is not a shield protects nothing. Exported so the table
  *  can be pinned against the C# - AUDIT 18's re-measurement found the
- *  only assertion in the suite that pinned it was vacuous. */
-export const shieldProtectedBodyParts = (templateIndex) => SHIELD_PARTS[templateIndex] ?? [];
+ *  only assertion in the suite that pinned it was vacuous.
+ *
+ *  AUDIT 26 / ONE DFU MEMBER, ONE EXPORT: the table itself (and the
+ *  shield armor VALUES, and GetBodyPartForEquipSlot) lived here a
+ *  SECOND time beside systems/armorMaterials.js's - the module whose
+ *  own header records that these constants had already been ported
+ *  twice and drifted. The armor-value pass below now reads the equip
+ *  table through UpdateEquippedArmorValues, which consumes the one
+ *  home, so the copies are gone rather than merely agreeing today. */
+export const shieldProtectedBodyParts = (templateIndex) => SHIELD_PARTS.get(templateIndex) ?? [];
 
 // ---- ItemBuilder.materialsByModifier + FormulaHelper.RandomMaterial ----
 export const MATERIALS_BY_MODIFIER = Object.freeze([64, 128, 10, 21, 13, 8, 5, 3, 2, 5]);
@@ -140,6 +131,36 @@ export function createWeapon(templateIndex, material, rolls = Math.random) {
   });   // AUDIT 23 (items-5): the condition mints with the item
 }
 
+/** ItemBuilder.CreateArmor (:428-437) -> ApplyArmorSettings (:466-485).
+ *  The item is born from its template, so it carries the template's
+ *  NAME and - through the DaggerfallUnityItem constructor, and
+ *  ApplyArmorMaterial's plate pass - its CONDITION. AUDIT 26: the
+ *  enemy path minted armour as a bare {group, templateIndex, material}
+ *  row with no condition at all, so DamageEquipment had nothing to
+ *  lower and a looted piece had no hit points to show.
+ *
+ *  ApplyArmorSettings' other three arms are art and price, which the
+ *  port resolves at draw/valuation time from (templateIndex, material)
+ *  rather than baking in: PlayerTextureArchive/SetRace ride
+ *  armorMaterials.armorArchive, the leather/chain/plate weight and
+ *  value adjustments ride itemTemplates.itemBaseValue, and dyeColor
+ *  rides ItemHelper.GetArmorDyeColor at blit time.
+ *
+ *  RESIDUE (honest, and NOT fixed here): CreateArmor's default
+ *  `variant = -1` takes RandomizeArmorVariant (:813-844), which draws
+ *  from the shared LCG for a plate cuirass, greaves, plate pauldrons,
+ *  plate boots and every helm. The port's enemy path has never taken
+ *  those draws, so every enemy piece is variant 0; adding them now
+ *  would shift every later draw in AssignEnemyStartingEquipment's
+ *  fixed sequence, which this wave is forbidden to do. The roll itself
+ *  already has one home (shopStock.randomizeArmorVariant). */
+export function createArmor(templateIndex, material) {
+  return mintCondition({
+    group: 'Armor', name: templateByIndex(templateIndex)?.name,
+    templateIndex, material,
+  });
+}
+
 /** Weapons.Arrow's template index - ItemBuilder.CreateWeapon's one
  *  special case, and IsItemStackable's. systems/inventory.js declares
  *  it; re-exported here because this is the module that branches on
@@ -148,74 +169,104 @@ export { ARROW_TEMPLATE };
 
 /**
  * AssignEnemyStartingEquipment + SetEnemyEquipment, verbatim: rolls
- * the loadout, then the armor-value pass (init 100 = no armor; each
- * piece SUBTRACTS materialValue*5 on its body part; shields subtract
- * shieldValue*5 on their protected parts, material-blind; class
- * clamp >60 -> 60; monsters keep the BETTER of equipment vs their
- * definition's armorValue*5 - the DFU rule).
+ * the loadout, EQUIPS every piece, then the armor-value pass (init
+ * 100 = no armor; each piece SUBTRACTS materialValue*5 on its body
+ * part; shields subtract shieldValue*5 on their protected parts,
+ * material-blind; class clamp >60 -> 60; monsters keep the BETTER of
+ * equipment vs their definition's armorValue*5 - the DFU rule).
+ *
+ * AUDIT 26 - THE ARMOUR AND THE SHIELD ARE REALLY WORN.
+ * AssignEnemyStartingEquipment (ItemHelper.cs:1366-1460) makes the
+ * SAME pair of calls for every arm - the right-hand weapon, the
+ * left-hand shield, the left-hand weapon, and each of Helm /
+ * Right_Pauldron / Left_Pauldron / Cuirass / Greaves / Boots:
+ *
+ *     enemyEntity.ItemEquipTable.EquipItem(x, true, false);
+ *     enemyEntity.Items.AddItem(x);
+ *
+ * The port equipped NOTHING: armour stayed a {piece, material} roll
+ * record and the entity's equip table was empty for every enemy in
+ * the game. FormulaHelper.DamageEquipment (:1080-1117) reads exactly
+ * that table for the struck side, so its whole target half was dead
+ * code against enemies - you could hack at an armoured knight for a
+ * whole fight and neither its shield nor its armour lost a point of
+ * condition, and the shield-covers-the-body-part branch (DFU's own
+ * departure from classic, :1088-1090) had never once fired.
+ *
+ * The pieces go into the SAME table equipTableOf reads - one member,
+ * one export - through systems/equip.js's EquipItem, so a shield
+ * lands in LeftHand next to the weapon in RightHand exactly as
+ * ItemEquipTable.GetEquipSlot puts them. Each `equip(...)` returns
+ * the item it equipped, so armorPieces/leftHand/rightHand hold the
+ * one object Items.AddItem shares (equipmentItems below).
+ *
+ * No draw moves: EquipItem takes no roll.
  * @returns { rightHand, leftHand, armorPieces, armorValues }
  */
 export function assignEnemyEquipment(entity, variant, playerLevel, rolls = Math.random) {
   const range = (lo, hi) => lo + Math.floor(rolls() * (hi + 1 - lo));   // Range(lo, hi+1)
+  const equip = (item) => { equipItem(entity, item); return item; };    // EquipItem(x, alwaysEquip: true, playEquipSounds: false)
   let itemLevel = playerLevel;
   if (entity.isClass && entity.mobileType === KNIGHT_CITY_WATCH) itemLevel = 1;   // city watch: iron/steel only
   let rightHand = null, leftHand = null;
   const armorPieces = [];
   let chance = 0;
   if (variant === 0) {
-    rightHand = createWeapon(range(WEAPONS_ENUM.Broadsword, WEAPONS_ENUM.Longsword), randomMaterial(itemLevel, rolls));
+    rightHand = equip(createWeapon(range(WEAPONS_ENUM.Broadsword, WEAPONS_ENUM.Longsword), randomMaterial(itemLevel, rolls)));
     chance = 50;
     const shield = range(ARMOR_ENUM.Buckler, ARMOR_ENUM.Round_Shield);
     if (dice100(chance, rolls())) {
-      leftHand = { templateIndex: shield, shield: true };
-      armorPieces.push({ piece: shield, material: randomArmorMaterial(itemLevel, rolls), shield: true });
+      const material = randomArmorMaterial(itemLevel, rolls);
+      leftHand = equip(createArmor(shield, material));
+      armorPieces.push({ piece: shield, material, shield: true, item: leftHand });
     } else if (dice100(chance, rolls())) {
-      leftHand = createWeapon(range(WEAPONS_ENUM.Dagger, WEAPONS_ENUM.Shortsword), randomMaterial(itemLevel, rolls));
+      leftHand = equip(createWeapon(range(WEAPONS_ENUM.Dagger, WEAPONS_ENUM.Shortsword), randomMaterial(itemLevel, rolls)));
     }
   } else {
-    rightHand = createWeapon(range(WEAPONS_ENUM.Claymore, WEAPONS_ENUM['Battle Axe']), randomMaterial(itemLevel, rolls));
+    rightHand = equip(createWeapon(range(WEAPONS_ENUM.Claymore, WEAPONS_ENUM['Battle Axe']), randomMaterial(itemLevel, rolls)));
     if (variant === 1) chance = 75;
     else if (variant === 2) chance = 90;
   }
   for (const piece of [ARMOR_ENUM.Helm, ARMOR_ENUM.Right_Pauldron, ARMOR_ENUM.Left_Pauldron, ARMOR_ENUM.Cuirass, ARMOR_ENUM.Greaves, ARMOR_ENUM.Boots]) {
-    if (dice100(chance, rolls())) armorPieces.push({ piece, material: randomArmorMaterial(itemLevel, rolls) });
+    if (dice100(chance, rolls())) {
+      const material = randomArmorMaterial(itemLevel, rolls);
+      armorPieces.push({ piece, material, item: equip(createArmor(piece, material)) });
+    }
   }
   // poisoned-weapon chance pends the poison system (Systems arc)
 
-  // SetEnemyEquipment armor-value pass
-  const armorValues = new Array(7).fill(100);
-  for (const a of armorPieces) {
-    if (a.shield) {
-      const bonus = SHIELD_VALUE[a.piece] ?? 0;
-      for (const part of SHIELD_PARTS[a.piece] ?? []) armorValues[part] -= bonus * 5;
-    } else {
-      // EnemyEntity.cs:414 `for (i = EquipSlots.Head (12); i <
-      // EquipSlots.Feet (26); i++)` - Feet is the EXCLUSIVE bound, so
-      // the boots AssignEnemyStartingEquipment just equipped never
-      // reach UpdateEquippedArmorValues. AUDIT 18: the port ran them
-      // through the same loop as every other piece, so a well-armoured
-      // class enemy's Feet came out below the 60 clamp. They stay in
-      // armorPieces - the corpse still drops them, as DFU's
-      // Items.AddItem gives it.
-      if (a.piece === ARMOR_ENUM.Boots) continue;
-      const part = PIECE_BODY_PART[a.piece];
-      if (part != null) armorValues[part] -= materialArmorValue(a.material) * 5;
-    }
+  // SetEnemyEquipment's armor-value pass (EnemyEntity.cs:409-427),
+  // read off the equip table the rolls above just filled - which is
+  // where DFU reads it from, `ItemEquipTable.GetItem(slot)` per slot.
+  const armorValues = armorValuesOf(entity);
+  armorValues.fill(100);                                      // "Initialize armor values to 100 (no armor)"
+  const slots = equipTableOf(entity);
+  // EnemyEntity.cs:414 `for (i = EquipSlots.Head (12); i <
+  // EquipSlots.Feet (26); i++)` - Feet is the EXCLUSIVE bound, so the
+  // boots AssignEnemyStartingEquipment just equipped never reach
+  // UpdateEquippedArmorValues. AUDIT 18: the port counted them like
+  // every other piece, so a well-armoured class enemy's Feet came out
+  // below the 60 clamp. The bound is now the loop's, not a special
+  // case for one template - and it is also why the LeftHand shield
+  // (21) DOES count while the RightHand weapon (19) is skipped by the
+  // ItemGroup test. The boots stay in armorPieces: the corpse still
+  // drops them, as DFU's Items.AddItem gives it.
+  for (let slot = EQUIP_SLOTS.Head; slot < EQUIP_SLOTS.Feet; slot++) {
+    const item = slots[slot];
+    if (item && item.group === 'Armor') updateEquippedArmorValues(entity, item, true);
   }
   if (entity.isClass) {
-    for (let i = 0; i < 7; i++) if (armorValues[i] > 60) armorValues[i] = 60;
+    for (let i = 0; i < armorValues.length; i++) if (armorValues[i] > 60) armorValues[i] = 60;
   } else {
     const def = (entity.armor ?? 0);                          // already armorValue*5
-    for (let i = 0; i < 7; i++) if (armorValues[i] > def) armorValues[i] = def;
+    for (let i = 0; i < armorValues.length; i++) if (armorValues[i] > def) armorValues[i] = def;
   }
   return { rightHand, leftHand, armorPieces, armorValues };
 }
 
 /** G3: DFU adds EVERY equipped piece to enemyEntity.Items
  *  (AssignEnemyStartingEquipment's Items.AddItem after each
- *  EquipItem) - that inventory is the corpse's droppable loot. The
- *  shield rides armorPieces (its armor item), so a shield leftHand
- *  marker is skipped; a leftHand WEAPON is its own item.
+ *  EquipItem) - that inventory is the corpse's droppable loot.
  *
  *  THE EQUIPPED WEAPON AND THE ITEM ARE ONE OBJECT.
  *  AssignEnemyStartingEquipment (ItemHelper.cs:1366-1460) mints ONE
@@ -232,16 +283,21 @@ export function assignEnemyEquipment(entity, variant, playerLevel, rolls = Math.
  *  entity.weapon alone - a bandit whose blade is nearly broken drops
  *  it pristine.
  *
- *  The ARMOR pieces below are already one object each: armorPieces
- *  carries the {piece, material} ROLL, not an item, and the only item
- *  object minted from it is the one appended here - nothing equips an
- *  enemy's armour into a live slot (the entity keeps the derived
- *  armorValues instead), so there is no second reference to share. */
+ *  AUDIT 26: THE SAME NOW HOLDS FOR EVERY ARMOUR PIECE. armorPieces
+ *  carries the roll AND the one item minted from it (`a.item`), the
+ *  object assignEnemyEquipment equipped - so a cuirass worn down by
+ *  DamageEquipment drops worn down, for the same reason and by the
+ *  same rule as the blade. This used to mint a FRESH bare row per
+ *  piece on every call, which made the equipped piece and the dropped
+ *  piece two objects (and two different objects on two calls).
+ *  A shield is one item in two places - eq.leftHand and its
+ *  armorPieces entry - so it is added once. */
 export function equipmentItems(eq) {
   const items = [];
-  if (eq.rightHand) items.push(eq.rightHand);
-  if (eq.leftHand && !eq.leftHand.shield) items.push(eq.leftHand);
-  for (const a of eq.armorPieces) items.push({ group: 'Armor', templateIndex: a.piece, material: a.material });
+  const add = (it) => { if (it && !items.includes(it)) items.push(it); };
+  add(eq.rightHand);
+  add(eq.leftHand);
+  for (const a of eq.armorPieces) add(a.item);
   return items;
 }
 

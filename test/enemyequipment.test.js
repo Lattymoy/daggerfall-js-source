@@ -7,6 +7,7 @@ import {
   materialArmorValue, ARMOR_MATERIAL, WEAPONS_ENUM, ARMOR_ENUM,
   createWeapon, assignEnemyEquipment, equipmentVariantFor, equipmentItems, shieldProtectedBodyParts } from '../src/combat/enemyEquipment.js';
 import { chooseEnemyWeapon } from '../src/combat/formulas.js';
+import { equipTableOf, EQUIP_SLOTS } from '../src/systems/equip.js';
 
 const seq = (...vals) => { let i = 0; return () => vals[i++ % vals.length]; };
 
@@ -38,7 +39,16 @@ test('equipment: variant 0 loadout + the armor-value pass (class clamp)', () => 
   // flags 0 - no DFU path mints the 0x10 "edged" bit, and the port's
   // minting of it inverted the Skeletal Warrior halving.
   assert.equal(eq.rightHand.flags, 0);
-  assert.equal(eq.leftHand.shield, true);
+  // AUDIT 26: this line used to read `eq.leftHand.shield === true`,
+  // which pinned the PORT's invention - a bare {templateIndex, shield}
+  // marker standing in for a shield that was never equipped anywhere.
+  // ItemHelper.cs:1387-1391 mints a real armour item and equips it,
+  // and ItemEquipTable.GetEquipSlot puts a shield in LeftHand (the
+  // slot FormulaHelper.DamageEquipment reads at :1087).
+  assert.equal(eq.leftHand.group, 'Armor');
+  assert.equal(eq.leftHand.templateIndex, ARMOR_ENUM.Buckler);
+  assert.equal(equipTableOf(entity)[EQUIP_SLOTS.LeftHand], eq.leftHand, 'the shield is WORN, in the left hand');
+  assert.equal(equipTableOf(entity)[EQUIP_SLOTS.RightHand], eq.rightHand, 'and the weapon in the right');
   // KNOWN-VACUOUS UNTIL NOW, flagged by AUDIT 18 and again by its
   // re-measurement: this line used to be
   //   deepEqual(eq.armorValues, [60,60, 95>60?60:95, 60,60,60,60]
