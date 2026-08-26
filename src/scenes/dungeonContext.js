@@ -2338,9 +2338,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // C10: the rig owns the gesture consume, the swing-sound edge,
       // and the machine step (paralysis holds all three, S19).
       for (const ev of weaponRig.frame(dt, { paralyzed: _pParalyzed })) {
-        // AUDIT 23 (combat-2) - WeaponManager.cs:376-380: the bow's
-        // swing sound is ArrowShoot at frame 4 of the release.
-        if (ev === 'bowSound') { audio.playOneShot(SOUND.ArrowShoot, 1.1); continue; }
+        // AUDIT 23 (combat-2) - WeaponManager.cs:376-379: the bow's
+        // frame-4 arm calls PlaySwingSound, which sounds FPSWeapon's
+        // SwingWeaponSound at 1.1 (FPSWeapon.cs:299-305) - and SetWeapon
+        // (:781) fills that from the WIELDED weapon's own GetSwingSound,
+        // ArrowShoot for the two bow templates.
+        if (ev === 'bowSound') { audio.playOneShot(swingSoundFor(playerWeapon.weapon), 1.1); continue; }
         if (ev !== 'hit' || !playerFeet) continue;
         // AUDIT 17k / Mac's report: null weapon = fists, never a bow
         // (the ?. is load-bearing - this raw deref threw on EVERY

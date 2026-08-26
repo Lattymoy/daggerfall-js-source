@@ -3683,8 +3683,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       // U8h/AUDIT 17e F17: the worn-weapon bind moved INTO createWeaponRig
       // so all four hosts inherit it (the interior host was missing it).
       for (const ev of weaponRig.frame(dt)) {
-        // AUDIT 23 (combat-2): the bow machine's frame-4 loose sound.
-        if (ev === 'bowSound') { audio.playOneShot(SOUND.ArrowShoot, 1.1); continue; }
+        // AUDIT 23 (combat-2) - WeaponManager.cs:376-379: the bow's
+        // frame-4 arm calls PlaySwingSound, which sounds FPSWeapon's
+        // SwingWeaponSound at 1.1 (FPSWeapon.cs:299-305) - and SetWeapon
+        // (:781) fills that from the WIELDED weapon's own GetSwingSound,
+        // ArrowShoot for the two bow templates.
+        if (ev === 'bowSound') { audio.playOneShot(swingSoundFor(weaponRig.playerWeapon.weapon), 1.1); continue; }
         if (ev !== 'hit') continue;
         if (weaponTypeForItem(weaponRig.playerWeapon.weapon) === WEAPON_TYPES.Bow) {
           if (spendArrow(playerEntity.items)) {

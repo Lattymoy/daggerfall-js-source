@@ -57,8 +57,20 @@ real game data** - the readings rest on the C# and on `src/`.
 
 **The engine is sound and the laws are mostly right. What this audit
 found is a tree where the LAW is ported and the WIRE is missing** - and
-a test suite that had, four separate times, pinned the port instead of
-the source.
+a test suite that had pinned the port instead of the source.
+
+~~four separate times~~ **That count was four when this page was
+written and it did not stop there.** Every wave of the fix campaign
+that corrected a law seemed to find the pin that had been guarding it,
+and by the end the tally ran to several times four - source-text
+regexes that died on a rename and proved nothing, one that matched a
+COMMENT, one that had gone quietly FALSE by searching for a string the
+code no longer contained, several that asserted the buggy value
+outright, and one that selected HUD bars by quad index and would have
+broken silently the moment a bar was added. The number is left
+uncorrected above rather than restated, because a page that keeps
+score of its own lesson is more useful than a page with a tidy figure
+in it.
 
 The single sharpest finding is the oldest shape in this project's
 history. `collectExteriorNpcs` ports RMBLayout's non-zero-FactionID rule
@@ -146,12 +158,29 @@ asked for and worth recording as a thing that worked.
 
 ## What is NOT fixed, and where it lives
 
-The 89 parity and 62 nit findings are **117 new rows in Port-Ledger
-section C**, every finding id greppable. They are not a work queue - the
-nit rows say so on their face - but nothing is lost. Five findings got no
+**~~The 89 parity and 62 nit findings are 117 new rows in Port-Ledger
+section C.~~ THE 89 PARITY FINDINGS WERE FIXED TOO (2026-08-26), in nine
+waves after this page was first written; only the 62 nits remain as
+rows.** This paragraph is corrected rather than rewritten because the
+page is the audit's record and the change of plan is part of it: the
+parity tier was recorded as a standing gap list, then closed, and the
+rows were struck centrally afterwards - 46 struck outright, 18 NARROWED
+with what remains stated, 2 kept with corrected wording.
+
+Every finding id is still greppable in section C. Five findings got no
 new row because an existing row already claimed them; those rows were
 updated instead. One row was struck on arrival (a parallel commit fixed
 it four minutes after the list was cut).
+
+**THREE CLOSURE NOTES WERE REFUSED WHEN THE ROWS WERE STRUCK**, and two
+of them were false against the tree - a wave reporting its own area as
+still open when a sibling wave had closed it, and a wave reporting a
+host seam unwired that every host had carried since I4. Both rows now
+record the stale claim so it cannot be re-filed. A third refusal was a
+wave that could not see a concurrent wave had already closed the same
+gates. The lesson is the one this page opens with, turned on the audit
+itself: **a finding is a claim about a tree that keeps moving, and it
+has to be re-read against the tree before it is acted on.**
 
 **One AUDIT 26 finding refuted an existing Ledger row.** The row claiming
 the outdoor rain loop keeps playing indoors "because it is DFU" is wrong:

@@ -3159,8 +3159,12 @@ export function createWorldModes(host) {
     // tally arm in DFU (`!hitEnemy && WeaponType != Bow` is false for a bow),
     // so it is tallySwingSkills - Archery AND CriticalStrike - not one skill.
     for (const ev of interiorWeapon.frame(dt)) {
-      // AUDIT 23 (combat-2): the bow machine's frame-4 loose sound.
-      if (ev === 'bowSound') { audio.playOneShot(SOUND.ArrowShoot, 1.1); continue; }
+      // AUDIT 23 (combat-2) - WeaponManager.cs:376-379: the bow's
+      // frame-4 arm calls PlaySwingSound, which sounds FPSWeapon's
+      // SwingWeaponSound at 1.1 (FPSWeapon.cs:299-305) - and SetWeapon
+      // (:781) fills that from the WIELDED weapon's own GetSwingSound,
+      // ArrowShoot for the two bow templates.
+      if (ev === 'bowSound') { audio.playOneShot(swingSoundFor(interiorWeapon.playerWeapon.weapon), 1.1); continue; }
       if (ev !== 'hit') continue;
       if (weaponTypeForItem(interiorWeapon.playerWeapon.weapon) === WEAPON_TYPES.Bow) {
         if (spendArrow(playerEntity.items)) {
