@@ -19,7 +19,7 @@ jobs:
         with:
           node-version: 22
       - name: Apply weapon/shield integration
-        run: python tools/patch_weapon_shield_textures.py
+        run: python tools/run_weapon_shield_patch_v2.py
       - name: Install dependencies
         run: npm ci
       - name: Verify weapon/shield pipeline
