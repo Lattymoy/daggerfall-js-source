@@ -143,6 +143,21 @@ export function addItem(list, item) {
   return item;
 }
 
+/** ItemCollection.SplitStack (:261-272). Picking the WHOLE stack
+ *  answers the stack itself; picking fewer mints a new record for the
+ *  picked count (added to the collection unstacked, `noStack: true`)
+ *  and leaves the rest on the original. Null on a non-stack, a bad
+ *  count, or a stack this collection does not hold. */
+export function splitStack(list, stack, numberToPick) {
+  const count = stack?.stackCount ?? 1;
+  if (count <= 1 || numberToPick < 1 || numberToPick > count || !list.includes(stack)) return null;
+  if (numberToPick === count) return stack;
+  const picked = { ...stack, stackCount: numberToPick };
+  list.push(picked);
+  stack.stackCount = count - numberToPick;
+  return picked;
+}
+
 /**
  * ItemCollection.GetItem(group, templateIndex, ...) (:370-405) - the
  * FIRST item of a kind, or null.

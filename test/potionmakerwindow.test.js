@@ -3,7 +3,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   POTION_RECTS, POTION_LABELS, INGREDIENT_BUTTONS, CAULDRON_BUTTONS,
-  INGREDIENT_LIST_X, POTION_MIXED, POTION_FAILED, NO_RECIPES,
+  INGREDIENT_LIST_X, INGREDIENT_SCROLL_UP, INGREDIENT_SCROLL_DOWN, INGREDIENT_COLS,
+  POTION_MIXED, POTION_FAILED, NO_RECIPES, REQ_INGREDIENTS,
   slotAt, PotionMakerWindow,
 } from '../src/ui/potionMakerWindow.js';
 import {
@@ -177,17 +178,55 @@ test('M2: the RECIPES button - an empty list is a MESSAGE, not an empty picker (
   assert.equal(some.w.box, null);
 });
 
-test('M2: picking a recipe fills the pot with what the player HAS (:283-309)', () => {
+test('M2: a recipe pick REFUSES on any missing ingredient, else CLEARS and fills (:283-309)', () => {
   const slowKey = potionRecipeKey(byName('slowFalling').ingredients);
-  // all three present
+  // all three present: the pot fills and the label names the recipe (:302-308)
   const all = win({ recipeKeys: [slowKey] });
   all.w._fillFrom(byName('slowFalling'));
   assert.deepEqual(all.w.cauldron.map((i) => i.templateIndex).sort((a, b) => a - b), [24, 26, 59]);
+  assert.equal(all.w.nameLabel, 'slowFalling', 'nameLabel = recipeName (:307)');
+  assert.equal(all.w.box, null);
 
-  // only two present: it fills what it can rather than refusing
+  // only two present: "reqIngredients" and NOTHING is added (:297-301)
   const part = win({ recipeKeys: [slowKey], pack: [ing(59), ing(24)] });
   part.w._fillFrom(byName('slowFalling'));
-  assert.deepEqual(part.w.cauldron.map((i) => i.templateIndex).sort((a, b) => a - b), [24, 59]);
+  assert.deepEqual(part.w.cauldron, [], 'no partial fill - DFU refuses the whole recipe');
+  assert.equal(part.w.box.rows[0].text, REQ_INGREDIENTS);
+  assert.equal(part.w.nameLabel, '');
+
+  // leftovers in the pot are CLEARED first, not mixed in (:304)
+  const left = win({ recipeKeys: [slowKey], pack: [ing(59), ing(26), ing(24), ing(8)] });
+  clickSlot(left.w, 'ingredients', 3);   // the stray herb goes in the pot first
+  assert.equal(left.w.cauldron[0].templateIndex, 8);
+  left.w._fillFrom(byName('slowFalling'));
+  assert.deepEqual(left.w.cauldron.map((i) => i.templateIndex).sort((a, b) => a - b), [24, 26, 59],
+    'the stray herb went back to the list, not under the recipe');
+  assert.equal(left.w.ingredients().some((i) => i.templateIndex === 8), true);
+});
+
+test('M2: the ingredient list SCROLLS - the arrows step by ROW, clamped (ItemListScroller.cs:588-604)', () => {
+  // the two arrows sit in the scroller's left column, verbatim:
+  // (0,0,9,16) and (0, height-16, 9, 16) of (5,30,151,142)
+  assert.deepEqual([...INGREDIENT_SCROLL_UP], [5, 30, 9, 16]);
+  assert.deepEqual([...INGREDIENT_SCROLL_DOWN], [5, 156, 9, 16]);
+  const clickArrow = (w, [x, y, aw, ah]) => w.click(x + aw / 2, y + ah / 2);
+
+  const pack = Array.from({ length: 15 }, (_, i) => ing(8 + i));   // five rows of three
+  const { w } = win({ pack });
+  // up at the top holds (the scroll bar floors at 0)
+  clickArrow(w, INGREDIENT_SCROLL_UP);
+  assert.equal(w.scroll, 0);
+  // down steps ONE ROW, and a slot click reads scrollIndex * listWidth (:419, :599)
+  clickArrow(w, INGREDIENT_SCROLL_DOWN);
+  assert.equal(w.scroll, 1);
+  clickSlot(w, 'ingredients', 0);
+  assert.equal(w.cauldron[0].templateIndex, 8 + INGREDIENT_COLS,
+    'slot 0 of the scrolled list is the fourth ingredient - 13+ are reachable');
+  // ...and GetSafeScrollIndex clamps at rows - 4 (:477-481)
+  for (let i = 0; i < 9; i++) clickArrow(w, INGREDIENT_SCROLL_DOWN);
+  assert.equal(w.scroll, 1, 'five rows of three leave exactly one row below the fold');
+  clickArrow(w, INGREDIENT_SCROLL_UP);
+  assert.equal(w.scroll, 0);
 });
 
 test('M2: the box and the picker swallow input before the window does', () => {

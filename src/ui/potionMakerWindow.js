@@ -66,12 +66,22 @@ export const INGREDIENT_BUTTONS = Object.freeze(GRID(3).map(Object.freeze));
 export const CAULDRON_BUTTONS = Object.freeze(GRID(2).map(Object.freeze));
 /** ingredientsListRect's x offset inside the scroller (:29). */
 export const INGREDIENT_LIST_X = 11;
+/** The ingredient scroller is a REAL scroller (ItemListScroller with
+ *  scroll=true, :226-232), 4 rows of 3, and its left column - the
+ *  11px ingredientsListRect leaves free - carries the two arrows:
+ *  up at (0,0,9,16) and down at (0, height-16, 9, 16) of the
+ *  scroller's own rect (ItemListScroller.cs:27-28, :293-309). The
+ *  cauldron's is scroll=false and has none. */
+export const INGREDIENT_ROWS = 4, INGREDIENT_COLS = 3;
+export const INGREDIENT_SCROLL_UP = Object.freeze([5, 30, 9, 16]);
+export const INGREDIENT_SCROLL_DOWN = Object.freeze([5, 30 + 142 - 16, 9, 16]);
 
-/** "potionMixed" / "potionFailed" / "noRecipes" - Internal_Strings,
- *  recovered. */
+/** "potionMixed" / "potionFailed" / "noRecipes" / "reqIngredients" -
+ *  Internal_Strings, recovered. */
 export const POTION_MIXED = 'You have successfully mixed a potion.';
 export const POTION_FAILED = 'The ingredients you have combined are useless.';
 export const NO_RECIPES = 'You do not know any potion recipes.';
+export const REQ_INGREDIENTS = 'You do not have the ingredients required.';
 
 let _art = null;
 export async function preloadPotionArt(deps) {
@@ -140,6 +150,15 @@ export class PotionMakerWindow {
     this.cauldron.push(item);
   }
 
+  /** ItemsUpButton/ItemsDownButton_OnMouseClick (ItemListScroller.cs:
+   *  588-604): the index steps by ROW, with a click sound, and
+   *  GetSafeScrollIndex (:469-484) clamps it to [0, rows - 4]. */
+  _scrollIngredients(dir) {
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    const rows = Math.ceil(this.ingredients().length / INGREDIENT_COLS);
+    this.scroll = Math.max(0, Math.min(Math.max(0, rows - INGREDIENT_ROWS), this.scroll + dir));
+  }
+
   /** RemoveFromCauldron (:266-274). */
   _removeFromCauldron(slot) {
     if (slot >= this.cauldron.length) return;
@@ -181,16 +200,28 @@ export class PotionMakerWindow {
     });
   }
 
-  /** AddRecipeToCauldron (:283-309) - fills what it CAN. */
+  /** AddRecipeToCauldron (:283-309). ANY missing ingredient refuses
+   *  the WHOLE recipe with "reqIngredients" and adds nothing
+   *  (:297-301); otherwise the cauldron is CLEARED first, every
+   *  ingredient goes in, and the name label takes the recipe's name
+   *  (:302-308). */
   _fillFrom(recipe) {
     const avail = this.ingredients();
-    const { found } = gatherRecipe(recipe, avail.map((it) => it.templateIndex));
+    const { found, missing } = gatherRecipe(recipe, avail.map((it) => it.templateIndex));
+    if (missing.length > 0) {
+      this.box = { rows: [{ text: REQ_INGREDIENTS, center: true }] };
+      return;
+    }
+    // ClearCauldron() (:304) - leftovers go back to the list, they
+    // are not mixed in under the recipe
+    this.cauldron = [];
     const pool = [...avail];
     for (const id of found) {
       const at = pool.findIndex((it) => it.templateIndex === id);
       if (at < 0) continue;
       this._addToCauldron(pool.splice(at, 1)[0]);
     }
+    this.nameLabel = recipe.name;
   }
 
   input(code) {
@@ -209,11 +240,15 @@ export class PotionMakerWindow {
     if (inRect(R.mix, vx, vy)) { this._mix(); return true; }
     if (inRect(R.recipes, vx, vy)) { this._recipes(); return true; }
 
+    if (inRect(INGREDIENT_SCROLL_UP, vx, vy)) { this._scrollIngredients(-1); return true; }
+    if (inRect(INGREDIENT_SCROLL_DOWN, vx, vy)) { this._scrollIngredients(1); return true; }
     const cs = slotAt(R.cauldronList, CAULDRON_BUTTONS, vx, vy);
     if (cs !== null) { this._removeFromCauldron(cs); return true; }
     const is = slotAt(R.ingredientsList, INGREDIENT_BUTTONS, vx, vy, INGREDIENT_LIST_X);
     if (is !== null) {
-      const item = this.ingredients()[this.scroll + is];
+      // "Convert scroller index to item based scroll index"
+      // (ItemListScroller.cs:419): the row index times the width
+      const item = this.ingredients()[this.scroll * INGREDIENT_COLS + is];
       if (item) this._addToCauldron(item);
       return true;
     }
@@ -231,7 +266,8 @@ export class PotionMakerWindow {
     if (this.picker && listPickerArtLoaded()) { this.picker.draw(renderer, canvas, font); return; }
 
     const R = POTION_RECTS;
-    this.ingredients().slice(this.scroll, this.scroll + INGREDIENT_BUTTONS.length)
+    this.ingredients()
+      .slice(this.scroll * INGREDIENT_COLS, this.scroll * INGREDIENT_COLS + INGREDIENT_BUTTONS.length)
       .forEach((it, i) => {
         const [bx, by] = INGREDIENT_BUTTONS[i];
         const rect = [R.ingredientsList[0] + INGREDIENT_LIST_X + bx, R.ingredientsList[1] + by, 28, 28];

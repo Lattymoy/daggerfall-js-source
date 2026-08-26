@@ -221,11 +221,12 @@ export function consumeCauldron(cauldron, { takeFromPack, takeFromWagon }) {
   return { kind: 'spent' };
 }
 
-/** AddRecipeToCauldron (:283-309): the RECIPES picker fills the
- *  cauldron from a known recipe, but only with what the player
- *  actually HAS. Answers the ingredients it could find and the ones
- *  it could not, because DFU fills what it can and leaves the rest -
- *  it does not refuse the whole recipe for one missing herb. */
+/** AddRecipeToCauldron's ingredient MATCH (:283-296): each recipe
+ *  ingredient claims at most one held item, spending the pool down as
+ *  it goes. Answers the ingredients found and the ones missing - and
+ *  DFU refuses the WHOLE recipe with "reqIngredients" when anything
+ *  is missing (:297-301); only an empty `missing` fills the pot. The
+ *  window makes that call. */
 export function gatherRecipe(recipe, availableTemplateIndices) {
   const pool = [...availableTemplateIndices];
   const found = [], missing = [];

@@ -176,13 +176,14 @@ test('M1: the consume walk falls back to the WAGON, and BREAKS mid-loop (:335-35
   assert.equal(pack3.has(24), true, 'the third really is still in the pack');
 });
 
-test('M1: the recipe picker fills what it CAN and leaves the rest (:283-309)', () => {
+test('M1: the recipe match answers found AND missing - a miss refuses the whole fill (:283-301)', () => {
   const heal = byName('healing');   // 16, 42, 62, 65
   const all = gatherRecipe(heal, [16, 42, 62, 65, 99]);
   assert.deepEqual(all.found, heal.ingredients);
   assert.deepEqual(all.missing, []);
 
-  // one missing herb does not refuse the whole recipe
+  // a missing herb is REPORTED - the window refuses the whole recipe
+  // with "reqIngredients" whenever `missing` is non-empty (:297-301)
   const partial = gatherRecipe(heal, [16, 62]);
   assert.deepEqual(partial.found, [16, 62]);
   assert.deepEqual(partial.missing, [42, 65]);

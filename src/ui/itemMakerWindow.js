@@ -64,10 +64,11 @@ import {
   totalEnchantmentCost, itemEnchantmentPower, openPickerDecision,
 } from '../systems/enchanting.js';
 import {
-  enchantmentName, enchantmentParams, primaryPickerList, primaryPick,
+  enchantmentName, enchantmentParams, enchantmentParamName, primaryPickerList, primaryPick,
   pickEnchantment, removeEnchantment, PARAM_NONE,
 } from '../systems/enchantmentCatalogue.js';
-import { deductGold, goldAmount } from '../systems/court.js';
+import { deductGold, totalGoldAmount } from '../systems/court.js';
+import { splitStack } from '../systems/inventory.js';
 
 /** DaggerfallInventoryWindow.TabPages, in the order the four buttons
  *  sit in (:29-32). */
@@ -186,7 +187,10 @@ export class ItemMakerWindow {
     return (this.hooks.packItems?.() ?? []).filter((it) => itemMakerFilter(it, this.tab, this.selected));
   }
 
-  gold() { return goldAmount(this.hooks.player ?? this.hooks.entity ?? {}); }
+  /** PlayerEntity.GetGoldAmount (:1313-1316) - coins PLUS letters of
+   *  credit - which is what both the label (:193) and the enchant
+   *  check (:734) read; the deduction seam spends the letters too. */
+  gold() { return totalGoldAmount(this.hooks.player ?? this.hooks.entity ?? {}); }
 
   _selectTab(tab) {
     audio.playOneShot(SOUND.ButtonClick, 1);
@@ -282,6 +286,13 @@ export class ItemMakerWindow {
     // DeductGoldAmount, which spends letters of credit as well as the
     // purse - the one deduction seam (court.js).
     deductGold(this.hooks.player ?? this.hooks.entity, d.goldCost);
+    // "Only enchant one item from stack" (:751-754): SplitStack(
+    // selectedItem, 1) - the enchantment lands on a split-off single,
+    // and the rest of the stack stays plain.
+    if ((this.selected.stackCount ?? 1) > 1) {
+      const items = (this.hooks.player ?? this.hooks.entity)?.items ?? [];
+      this.selected = splitStack(items, this.selected, 1) ?? this.selected;
+    }
     applyEnchantments(this.selected, [...this.powers, ...this.sideEffects]);
     if (this.itemName) this.selected.name = this.itemName;
     audio.playOneShot(SOUND.MakeItem, 1);
@@ -339,7 +350,10 @@ export class ItemMakerWindow {
       [ITEM_RECTS.sideEffectsList, this.sideEffects]]) {
       if (!inRect(rect, vx, vy)) continue;
       const hit = rowLayout(list).find((r) => vy >= rect[1] + r.y && vy < rect[1] + r.y + r.h);
-      if (hit) this._removeRow(hit.entry);
+      // "Can only click to remove parent panels, child panels are
+      // removed by clicking on parent" (EnchantmentListPicker.cs:
+      // 266-271) - a forced child is not the player's to take off.
+      if (hit && (hit.entry.parentEnchantment ?? 0) === 0) this._removeRow(hit.entry);
       return true;
     }
 
@@ -387,9 +401,13 @@ export class ItemMakerWindow {
         // differently - it is how you can tell a row you did not pick
         const opts = row.entry.parentEnchantment !== 0 ? { color: FORCED_TEXT_COLOR } : undefined;
         shadowText(renderer, font, enchantmentName(row.entry.type), m, rect[0], rect[1] + row.y + 2, opts);
+        // SecondaryDisplayName (EnchantmentListPicker.cs:333-334) -
+        // the label for the row's PARAM VALUE, matched through the
+        // mint order: a CastWhen* param is a sparse classic SPELL id,
+        // not an index into the dense label list.
         const names = enchantmentParams(row.entry.type);
         if (names.length > 0 && row.entry.param !== PARAM_NONE) {
-          shadowText(renderer, font, SECONDARY_INDENT + (names[row.entry.param] ?? ''),
+          shadowText(renderer, font, SECONDARY_INDENT + enchantmentParamName(row.entry.type, row.entry.param),
             m, rect[0], rect[1] + row.y + 8, opts);
         }
         void scrolled;

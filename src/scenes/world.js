@@ -35,7 +35,7 @@ import { ChoiceWindow } from '../ui/talkWindow.js';   // TP-slice: the anchor/te
 import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in)
 import { calculateCastCost } from '../systems/spellcost.js';   // M2   // T3b
 import { rangedDamageSpells } from '../systems/spellcast.js';   // U42: the flight probe's picker
-import { worldMinutes, setWorldMinutes, MINUTES_PER_DAY } from '../systems/worldTick.js';   // AUDIT 23 (C2): the ONE clock   // V5: the day/night term healthRecoveryRate reads
+import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C2): the ONE clock
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice } from './hostCombat.js';
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 46): the arrow owes the flash too   // AUDIT 23 (C14)
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
@@ -45,10 +45,9 @@ import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 // V5: resting above ground. RestWindow and RestSession have been
 // finished since U7; what was missing was a host outside the dungeon
 // that opens one, and CanRest's whole town half.
-import { canRest, restDecision, REST_TEXT, ILLEGAL_REST_WARNING } from '../systems/restSession.js';   // U48: the DISPATCH above CanRest
+import { restDecision } from '../systems/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window
 import { isHouseOwned } from '../systems/banking.js';   // H1: the quest residence filter
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
-import { CRIMES } from '../systems/court.js';
 import { TravelMapWindow, preloadTravelMapArt, travelMapArtLoaded } from '../ui/travelMapWindow.js';   // W1: the classic art window (retires the F-slice's keyed stand-in)
 import { buildMapDict } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict
 import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
@@ -920,6 +919,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (dmg <= 0) return;
       hurtPlayer(playerEntity, dmg);
       audio.playOneShot(hitSoundFor(wpn), 1.1);
+      // EnemyAttack.SendDamageToPlayer (:404-406) SendMessages
+      // "RemoveHealth" for EVERY attacker, and PlayerFootsteps
+      // .RemoveHealth (:348-364) answers with the 40% pain cry.
+      playPlayerVoice(audio, playerPainVoice(playerEntity, dmg));
       surfacePlayer();
     },
     // X2-slice: the shoot frame looses a REAL arrow through the C13
@@ -945,43 +948,6 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
   });
 
-  // V5 - DECLARED HERE, BELOW BOTH FOE POOLS, and the wave-37 gate is
-  // why. Its enemiesNearby closure reads cityGuards and exteriorFoes;
-  // placing it up beside the ticker put those reads 400 lines above
-  // their own declarations, and while a closure makes that legal, this
-  // host's boot has been bitten by that shape three times (U45 is the
-  // one that stopped the game booting at all). Below the pools it is
-  // not a question anyone has to answer.
-  // V5: this host's rest, from the ONE factory (shared.createRestDeps).
-  // Only the two halves a host can uniquely answer are written here.
-  // Both are closures, so reading playerTicker from beside its own
-  // declaration is deferred and legal - the distinction
-  // test/tdz.test.js exists to keep honest.
-  const exteriorRestDeps = createRestDeps(playerEntity, {
-    say: (msg) => console.log('[player]', msg),
-    onLevelUp: () => townTalk.showOverlay(new LevelUpScreen(playerEntity)),
-    textLines: (id) => townTalk.lines(id),
-    // healthRecoveryRate reads both: a Nightfall/Daylight career heals
-    // differently under the open sky than it does indoors.
-    inside: () => (modes?.mode ?? 'exterior') !== 'exterior',
-    day: () => { const h = Math.floor((worldMinutes() % MINUTES_PER_DAY) / 60); return h >= 6 && h < 18; },
-    // AreEnemiesNearby, the RESTING variant: the exterior's live
-    // hostiles are the encounter pool and the city watch. X4's nearby
-    // scan is the producer for the first; the guards answer for
-    // themselves.
-    // The city watch answers for itself (the same read the exhaustion
-    // outcome already uses at :617) and the encounter pool is the
-    // wilderness half. Both are closures over pools declared below.
-    enemiesNearby: () => (cityGuards?.activeCount?.() ?? 0) > 0
-      || exteriorFoes.foes.some((f) => !f.dead && (f.ai?.detected || (f.ai?._dist ?? Infinity) <= 12)),
-    // U48: the ENCOUNTER catch-up rides INSIDE the advance. This host
-    // is the only one with a mobile foe pool to spawn into, and its
-    // frame body returns at the overlay gate - so left to the frame, a
-    // whole rested night's rolls fire in one burst the moment the
-    // window closes, which is AUDIT 24 wave 30's finding about the
-    // magic rounds, one system over.
-    advanceMinutes: (n) => { playerTicker.advance(n); runEncounterTick(walkMode && playerSpawned ? player.pos : cam.pos); },
-  });
   // The classic catch-up loop (PlayerEntity.Update:486-492): per
   // elapsed game minute, one intermittent roll; break on a spawn.
   // Fast travel resets the anchor (PreventEnemySpawns parity - DFU
@@ -1375,7 +1341,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       inLocationRect: true, inside: (modes?.mode ?? 'exterior') !== 'exterior',
     });
   const outdoorRestDeps = createRestDeps(playerEntity, {
-    advanceMinutes: (n) => playerTicker.advance(n),
+    // U48: the ENCOUNTER catch-up rides INSIDE the advance. This host
+    // is the only one with a mobile foe pool to spawn into, and its
+    // frame body returns at the overlay gate - so left to the frame, a
+    // whole rested night's rolls fire in one burst the moment the
+    // window closes, which is AUDIT 24 wave 30's finding about the
+    // magic rounds, one system over.
+    advanceMinutes: (n) => { playerTicker.advance(n); runEncounterTick(walkMode && playerSpawned ? player.pos : cam.pos); },
     // TickRest :379 - QuestMachine.Instance.Tick() rides the same
     // sub-tick as the clock, UNPACED (DFU calls the machine directly,
     // not through QuestMachine.Update's ticksPerSecond timer). This
@@ -1812,98 +1784,6 @@ export async function bootWorld(canvas, renderer, params, status) {
   // object the keydown ladder below calls and the large HUD's panels
   // reach through routeLargeHudClick. Every member is an arrow, so
   // nothing here runs before the helper it names exists.
-  /**
-   * V5 - RESTING OUT IN THE WORLD, and the crime that comes with
-   * trying it in a town. `ctx.toggleRest` (ui/input.js:106) had one
-   * implementation in the whole tree - dungeonContext's - so KeyR was
-   * dead everywhere above ground, and CanRest's town half (:542-600)
-   * was unported entirely: no camping refusal, no Vagrancy, no watch.
-   *
-   * DaggerfallRestWindow's own two-step, verbatim (:640-691):
-   * the buttons check the IllegalRestWarning setting and, in a town's
-   * rect, ask "It is illegal to camp in or near a city. Continue?"
-   * BEFORE calling through with alreadyWarned = true. CanRest then
-   * answers `alreadyWarned` itself - so the first ask refuses and the
-   * confirmed one allows - while registering Vagrancy and calling the
-   * watch EITHER WAY. A player who backs out has still committed the
-   * crime; with the warning setting off they commit it on every press
-   * and can never actually camp. Both are DFU's.
-   */
-  function exteriorRestVerdict(alreadyWarned) {
-    return canRest({
-      inTownOutside: isPlayerInTown(_musicLocationType(), {
-        mustBeInLocationRect: true, mustBeOutside: true,
-        inLocationRect: _musicInLocationRect(),
-        inside: (modes?.mode ?? 'exterior') !== 'exterior',
-      }),
-      // Outdoors, the second arm cannot apply - it needs
-      // IsPlayerInsideBuilding - so the law falls to its free case.
-      inTownLocation: false,
-      alreadyWarned,
-    });
-  }
-  function doExteriorRest(alreadyWarned) {
-    const v = exteriorRestVerdict(alreadyWarned);
-    if (v.crime) {
-      // PlayerEntity.CrimeCommitted = Crimes.Vagrancy, then
-      // SpawnCityGuards(true) - the same door the pickpocket and the
-      // assault take, so the watch behaves identically.
-      playerEntity.crimeCommitted = CRIMES.Vagrancy;
-      if (v.spawnGuards) _crimeResponse();
-    }
-    if (!v.allowed) {
-      // plainLines: TEXT.RSC answers { text, center } rows and
-      // ChoiceWindow iterates STRINGS (shared.js's note).
-      const lines = v.textId != null ? plainLines(townTalk.lines(v.textId)) : null;
-      if (lines) townTalk.showOverlay(new ChoiceWindow({ lines }));
-      return;
-    }
-    townTalk.showOverlay(new RestWindow(exteriorRestDeps));
-  }
-  /**
-   * U48 - THE DISPATCH ABOVE CANREST (DaggerfallUI.cs:651-688). V5
-   * ported CanRest and wired this host to it, but the ladder that
-   * runs BEFORE it still lived inline in dungeonContext alone - so up
-   * here the rest window opened while swimming, while falling, and
-   * with a foe in the street. Note the arm order: enemies outrank the
-   * water, and only the enemy arm RAISES THE ALERT, which is what
-   * arms the rest-encounter roll.
-   */
-  function exteriorRestDispatch() {
-    return restDecision({
-      enemiesNearby: exteriorRestDeps.enemiesNearby(),
-      swimming: !!player.swimming,
-      // StartRestGroundedCheck, not the raw flag: DFU's fallback ray
-      // is what lets a near-ground levitator rest, and up here it is
-      // also what lets a page whose motor is never stepped rest at
-      // all - `grounded` sits at its initialiser `false` there.
-      grounded: startRestGroundedCheck(player.grounded, player.pos, collider),
-    });
-  }
-  function toggleExteriorRest() {
-    if (townTalk.overlayActive) return;
-    const d = exteriorRestDispatch();
-    if (d.kind !== 'rest') {
-      if (d.kind === 'enemies') setEnemyAlert(playerEntity, true, worldMinutes());   // raised BEFORE the refusal (:654-655)
-      if (d.kind === 'blocked') return;   // a racial override says nothing at all
-      const lines = d.message ? [d.message] : plainLines(townTalk.lines(d.textId));
-      if (lines) townTalk.showOverlay(new ChoiceWindow({ lines }));
-      return;
-    }
-    if (getBool('GUI', 'IllegalRestWarning') && exteriorRestVerdict(false).crime) {
-      townTalk.showOverlay(new ChoiceWindow({
-        lines: [ILLEGAL_REST_WARNING],
-        options: [
-          { code: 'KeyY', label: 'Y - yes', action: () => doExteriorRest(true) },
-          { code: 'KeyN', label: 'N - no', action: () => {} },
-          { code: 'Escape', label: 'Esc - no', action: () => {} },
-        ],
-      }));
-      return;
-    }
-    doExteriorRest(false);
-  }
-
   const hudCtx = {
     // U43 factored the window builders out for the interior arm to
     // mount; this reads the same ones rather than a third copy.
@@ -1929,7 +1809,6 @@ export async function bootWorld(canvas, renderer, params, status) {
         textLines: (id) => townTalk.lines(id),
       });
     },
-    toggleRest: () => toggleExteriorRest(),   // V5
     cycleMode: (dir) => townTalk.setMode(dir > 0 ? hudLargeNextMode(getInteractionMode()) : hudLargePrevMode(getInteractionMode())),
   };
   addEventListener('keydown', (e) => {
@@ -1977,10 +1856,6 @@ export async function bootWorld(canvas, renderer, params, status) {
       // I2: through the registry, so M is rebindable like every other
       // action rather than a second hardcoded literal.
       if (act === 'AutoMap') { hudCtx.toggleAutomap(); return; }
-      // S40: Rest (R - InputManager.SetupDefaults). GameManager's
-      // dispatch has no scene gate at all; this ladder's is the U43
-      // flag still standing over these lines.
-      if (act === 'Rest') { e.preventDefault(); hudCtx.toggleRest(); return; }
       // I3: Escape with no overlay opens the pause options window; the
       // window closes itself on the same key.
       if (act === 'Escape' && pauseArtLoaded()) { hudCtx.togglePause(); return; }
@@ -3138,8 +3013,13 @@ export async function bootWorld(canvas, renderer, params, status) {
           run: held(keys, 'Run'),
           sneak: held(keys, 'Sneak'),   // P15: DFU's default Sneak binding (LeftAlt), held
           jump: jumpHeld,   // P14: HELD, verbatim (the 0.1 s grounded gate owns re-fire)
+          // LevitateMotor.Update (:71-91) reads Jump/FloatUp for up and
+          // Crouch/FloatDown for down, and moves along the camera LOOK
+          // (pitch included) - everywhere, not just underground.
+          up: jumpHeld || held(keys, 'FloatUp'),
+          down: held(keys, 'FloatDown'),
           crouch: crouchHeld && !latch.crouch,
-        }, cam.yaw);
+        }, cam.yaw, cam.pitch);
         latch.crouch = crouchHeld;
         // C9: ReadyWeapon (Z) - the sheathe toggle, host parity.
         const zNowW = held(keys, 'ReadyWeapon');
