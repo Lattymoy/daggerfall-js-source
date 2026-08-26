@@ -659,10 +659,33 @@ function applyVillagerDrape(v) {
 // Body clothing owns existing body quads; hanging garments own a drape mesh.
 let classicClothingOn = null;
 let classicTextureToken = 0;
+let classicTextureDebug = null;
+function drawClassicTextureQA(debug) {
+  classicTextureDebug = debug || null;
+  const panel = document.getElementById('clothqapanel');
+  const status = document.getElementById('clothqastatus');
+  const copy = (id, src) => {
+    const dst = document.getElementById(id);
+    if (!dst) return;
+    const g = dst.getContext('2d');
+    if (!src) { dst.width = 1; dst.height = 1; g.clearRect(0,0,1,1); return; }
+    dst.width = src.width; dst.height = src.height;
+    g.imageSmoothingEnabled = false;
+    g.clearRect(0, 0, dst.width, dst.height);
+    g.drawImage(src, 0, 0);
+  };
+  copy('clothqa-source', debug?.source);
+  copy('clothqa-canonical', debug?.canonical);
+  copy('clothqa-atlas', debug?.atlas);
+  if (status) status.textContent = debug ? 'raw paperdoll → registered surface → 8-way atlas' : 'select classic clothing with ARENA2 data';
+  if (panel && !debug) panel.classList.remove('ready');
+  if (panel && debug) panel.classList.add('ready');
+}
 async function syncClassicClothingTexture(c = classicClothingOn) {
   const token = ++classicTextureToken;
   setBodyOverlaySampler(null);
   clearClassicDrapeTexture();
+  drawClassicTextureQA(null);
   if (!c) return null;
   try {
     if (c.kind === 'body') {
@@ -671,12 +694,14 @@ async function syncClassicClothingTexture(c = classicClothingOn) {
       // finish after the user has already selected something else.
       if (token !== classicTextureToken || classicClothingOn !== c) return null;
       setBodyOverlaySampler(sampler);
+      drawClassicTextureQA(sampler?.debug);
       return sampler?.meta || null;
     }
     if (c.kind === 'drape') {
       const art = await buildClassicDrapeTextureCanvas({ item: c, race: RACES[raceIx] });
       if (token !== classicTextureToken || classicClothingOn !== c) return null;
       mountClassicDrapeTexture(c, art);
+      drawClassicTextureQA(art?.debug);
       return art?.meta || null;
     }
   } catch {

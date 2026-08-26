@@ -19,6 +19,12 @@
   #tunerbody { display: flex; flex-direction: column; gap: 8px; align-items: center; width: 100%; max-height: 0; overflow: hidden; transition: max-height .25s ease; }
   #pxrow.open #tunerbody { max-height: 55vh; overflow-y: auto; pointer-events: auto; touch-action: pan-y; }
   button.on { background: #3a3a48; color: #fff; }
+  #clothqapanel { position:fixed; z-index:5; top:48px; right:12px; width:min(94vw,520px); max-height:calc(100vh - 140px); overflow:auto; display:none; gap:10px; padding:12px; background:rgba(20,20,26,.96); border:1px solid #34343f; border-radius:12px; color:#b8b8c8; font-size:11px; pointer-events:auto; touch-action:pan-y; }
+  #clothqapanel.open { display:grid; }
+  #clothqapanel .qaimgs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; align-items:start; }
+  #clothqapanel figure { min-width:0; }
+  #clothqapanel figcaption { margin-bottom:4px; color:#8a8a99; }
+  #clothqapanel canvas { width:100%; height:auto; min-height:48px; background:#0d0d11; image-rendering:pixelated; border:1px solid #2e2e38; }
 </style>
 </head>
 <body>
@@ -46,6 +52,7 @@
   <button id="drape">drape: None</button>
   <select id="clothing" title="classic Daggerfall clothing"></select>
   <button id="wrapdir" title="snap through the eight generated clothing wrap directions">wrap: free</button>
+  <button id="clothtexqa" title="compare raw Daggerfall paperdoll art, registered material surface, and generated wraps">texture QA</button>
   <select id="villager" title="villager design (editor only - no game wiring)"></select>
   <select id="orc" title="orc line (editor only - no game wiring)"></select>
   <select id="undead" title="undead line (editor only - no game wiring)"></select>
@@ -53,6 +60,14 @@
   <select id="atronach" title="atronachs (editor only - no game wiring)"></select>
   <select id="beast" title="beasts (editor only - no game wiring)"></select>
   <select id="daedra" title="daedra (editor only - no game wiring)"></select>
+</div>
+<div id="clothqapanel">
+  <div id="clothqastatus">select classic clothing with ARENA2 data</div>
+  <div class="qaimgs">
+    <figure><figcaption>raw paperdoll</figcaption><canvas id="clothqa-source"></canvas></figure>
+    <figure><figcaption>registered surface</figcaption><canvas id="clothqa-canonical"></canvas></figure>
+    <figure><figcaption>8-way atlas</figcaption><canvas id="clothqa-atlas"></canvas></figure>
+  </div>
 </div>
 <div id="pxrow" style="position:fixed; bottom:calc(env(safe-area-inset-bottom,0) + 72px); left:0; right:0; display:flex; flex-direction:column; gap:8px; align-items:center; color:#8a8a99; font-size:12px; pointer-events:none;">
   <button id="tunertab">tuners &#9650;</button>
@@ -90,6 +105,9 @@
   };
   btn.addEventListener('click', () => { show(dirs[next]); next = (next + 1) % dirs.length; });
   window.__setWrapDirection = show;
+  const qa = document.getElementById('clothtexqa');
+  const qap = document.getElementById('clothqapanel');
+  qa.addEventListener('click', () => { qap.classList.toggle('open'); qa.classList.toggle('on', qap.classList.contains('open')); });
 })();
 </script>
 </body>

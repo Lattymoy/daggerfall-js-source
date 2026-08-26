@@ -132,28 +132,48 @@ function nearestOpaqueInRow(img, y, x, x0, x1) {
 
 // PAPERDOLL ART IS A PRESENTATION LAYER, NOT A SURFACE MAP.
 //
-// One source row can be shifted several pixels relative to the next because the
-// classic doll is drawn on a slant. More importantly, transparent runs inside a
-// shirt/robe often mean "show the 2D body sprite here", not "cut a hole in the
-// cloth". The 3D garment already has exact face ownership, so carrying either
-// artifact forward creates diagonal texture drift and literal paperdoll-shaped
-// holes in the polygon mesh.
+// V1 removed the skew by stretching every occupied row to the full canonical
+// width. That fixed diagonal drift but also changed the artwork's horizontal
+// proportions row-by-row: narrow straps became broad bands and local details
+// expanded whenever the classic silhouette narrowed.
 //
-// Canonical space intentionally ignores the source silhouette. Every non-empty
-// source row is stretched from its own [firstOpaque,lastOpaque] span into 0..1.
-// This simultaneously removes row shear and foreshortening. Transparent samples
-// inside that span are repaired from the nearest authored cloth pixel. Empty rows
-// borrow the nearest non-empty row. The result is an OPAQUE material field; the
-// mesh is the only authority for silhouette/openings from this point onward.
-export function canonicalizePaperdollTexture(src) {
+// V2 removes ONLY the paperdoll registration error. We measure the centre of
+// every occupied row, translate that row onto one common centreline, preserve
+// its original pixel scale, then edge-pad the material field. Interior alpha is
+// repaired from nearby authored cloth. The result is still opaque because the
+// 3D geometry owns openings/silhouette, but authored widths and motifs survive.
+const SOURCE_PROFILE_PATTERNS = Object.freeze([
+  [/cloak/i, 'cloak'],
+  [/(robe|dress|skirt|toga|surcoat|kimono|mummy|wrap|sash)/i, 'drape'],
+  [/(strap|armband|brassiere|loincloth|sandal)/i, 'sparse'],
+  [/(boot|shoe)/i, 'foot'],
+  [/pants/i, 'legs'],
+  [/(open tunic|vest)/i, 'open-torso'],
+]);
+
+export function clothingSourceProfile(item) {
+  const name = item?.name || '';
+  for (const [re, profile] of SOURCE_PROFILE_PATTERNS) if (re.test(name)) return profile;
+  return 'torso';
+}
+
+export function canonicalizePaperdollTexture(src, profile = 'generic') {
   if (!src?.width || !src?.height || !src.data?.length) return src;
   const spans = new Array(src.height);
   const occupied = [];
+  const centres = [];
   for (let y = 0; y < src.height; y++) {
     spans[y] = rowSpan(src, y);
-    if (spans[y]) occupied.push(y);
+    if (!spans[y]) continue;
+    occupied.push(y);
+    centres.push((spans[y][0] + spans[y][1]) * 0.5);
   }
   if (!occupied.length) return src;
+
+  const sorted = centres.slice().sort((a, b) => a - b);
+  const sourceCentre = sorted[Math.floor(sorted.length * 0.5)];
+  const canonicalCentre = (src.width - 1) * 0.5;
+  const shearPx = Math.max(...centres) - Math.min(...centres);
 
   const nearestOccupiedRow = (y) => {
     if (spans[y]) return y;
@@ -171,20 +191,22 @@ export function canonicalizePaperdollTexture(src) {
   };
   let repairedPixels = 0;
   let borrowedRows = 0;
+  let edgePaddedPixels = 0;
   for (let y = 0; y < out.height; y++) {
     const sy = nearestOccupiedRow(y);
     if (sy !== y) borrowedRows++;
     const [x0, x1] = spans[sy];
-    const sw = Math.max(1, x1 - x0);
+    const rowCentre = (x0 + x1) * 0.5;
+    // Translate the authored row onto the canonical centreline. Do not rescale.
+    const rowOffset = rowCentre - canonicalCentre;
     for (let x = 0; x < out.width; x++) {
-      const u = out.width <= 1 ? 0.5 : x / (out.width - 1);
-      const sx = x0 + u * sw;
+      const sxUnclamped = x + rowOffset;
+      const sx = Math.max(x0, Math.min(x1, sxUnclamped));
+      if (sx !== sxUnclamped) edgePaddedPixels++;
       const raw = pixel(src, sx, sy);
       const c = raw[3] ? raw : nearestOpaqueInRow(src, sy, Math.round(sx), x0, x1);
       const o = (y * out.width + x) * 4;
       if (!raw[3]) repairedPixels++;
-      // A pathological source row should not punch a runtime hole. If its local
-      // repair still found nothing, use black cloth; geometry still owns alpha.
       out.data[o] = c[3] ? c[0] : 0;
       out.data[o + 1] = c[3] ? c[1] : 0;
       out.data[o + 2] = c[3] ? c[2] : 0;
@@ -192,18 +214,32 @@ export function canonicalizePaperdollTexture(src) {
     }
   }
   out.canonicalMeta = Object.freeze({
-    mode: 'paperdoll-surface-v1',
-    rowUnwrap: true,
+    mode: 'paperdoll-surface-v2',
+    registration: 'row-centre-translate',
+    widthPreserved: true,
+    sourceCentre,
+    canonicalCentre,
+    shearPx,
+    profile,
     alphaOwner: 'geometry',
     repairedPixels,
     borrowedRows,
+    edgePaddedPixels,
   });
   return out;
 }
 
-function buildCanonicalWrapSet(art) {
-  const canonical = canonicalizePaperdollTexture(decodedCrop(art));
-  return { canonical, views: generateDirectionalViews(canonical) };
+function buildCanonicalWrapSet(art, item) {
+  const source = decodedCrop(art);
+  const profile = clothingSourceProfile(item);
+  const canonical = canonicalizePaperdollTexture(source, profile);
+  const views = generateDirectionalViews(canonical);
+  const debug = {
+    source: viewToCanvas(source),
+    canonical: viewToCanvas(canonical),
+    atlas: viewsToAtlasCanvas(views, 4),
+  };
+  return { source, canonical, views, debug };
 }
 
 function makeSideView(front, side) {
@@ -389,7 +425,7 @@ export async function buildClassicBodyClothingSampler({
   if (!item || item.kind !== 'body' || !Array.isArray(item.idx) || !item.idx.length) return null;
   const art = await loadIndexedArt({ item, race, variant, dye });
   if (!art) return null;
-  const { canonical, views } = buildCanonicalWrapSet(art);
+  const { canonical, views, debug } = buildCanonicalWrapSet(art, item);
   const bounds = WRAP_RADIANS.map((r) => projectionBounds(D, item.idx, r));
   if (bounds.some((b) => !b)) return null;
 
@@ -409,6 +445,7 @@ export async function buildClassicBodyClothingSampler({
   };
   sampler.ownsFace = (f) => owned.has(f);
   sampler.wrapIndexForFace = (f) => owned.has(f) ? faceDir[f] : -1;
+  sampler.debug = debug;
   sampler.meta = Object.freeze({
     ...art.meta,
     wrapMode: 'generated-8-way',
@@ -431,7 +468,7 @@ export async function buildClassicDrapeTextureCanvas({
   if (!item || item.kind !== 'drape') return null;
   const art = await loadIndexedArt({ item, race, variant, dye });
   if (!art) return null;
-  const { canonical, views } = buildCanonicalWrapSet(art);
+  const { canonical, views, debug } = buildCanonicalWrapSet(art, item);
   const layout = Object.freeze({
     columns: 4,
     rows: 2,
@@ -442,6 +479,7 @@ export async function buildClassicDrapeTextureCanvas({
     canvas: viewsToAtlasCanvas(views, layout.columns),
     views,
     layout,
+    debug,
     meta: Object.freeze({
       ...art.meta,
       wrapMode: 'generated-8-way',
