@@ -154,6 +154,7 @@ import { createBankAccounts, createHouses, BANK_REGION_COUNT, TRANSACTION_RESULT
 import {
   createSceneCache, cacheScene, restoreCachedScene,
   interiorSceneName, worldSceneName, LOOT_CONTAINER_TYPES, containsPermanentScene, addPermanentScene, removePermanentScene,
+  droppedLootRecord, droppedLootPile,
 } from '../systems/sceneCache.js';
 // S40: resting where the player has a claim - the rented-room finder
 // the tavern rents through, and FightersGuild.CanRest.
@@ -168,6 +169,7 @@ import { SpellMakerWindow } from '../ui/spellMakerWindow.js';   // S1: the Mages
 import { PotionMakerWindow, preloadPotionArt, potionArtLoaded } from '../ui/potionMakerWindow.js';
 import { ItemMakerWindow, preloadItemMakerArt, itemMakerArtLoaded, ITEM_RECTS, rowLayout as itemMakerRowLayout } from '../ui/itemMakerWindow.js';
 import { createPotion, getMagicItemTemplates, RANDOM_TREASURE_MARKER_DIM } from '../systems/loot.js';   // M2: ItemBuilder.CreatePotion, one minter; G4: the MAGIC.DEF registry
+import { createDroppedLoot } from './droppedLoot.js';   // P1: this host's INTERIOR ground piles (GameObjectHelper.CreateDroppedLootContainer)
 import { SITE_TYPES } from '../systems/quest/place.js';
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring, finally called
 import { placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1 (PlaceFoeFreely reads the fieldOfView import below)
@@ -381,6 +383,49 @@ export function createWorldModes(host) {
   // building brings its own).
   const interiorArrows = new ArrowFlight({ getGpuMesh: pipeline.getGpuMesh, collider: () => interiorCtx?.collider });
   let _arrowsCtx = null;
+  /** P1: THE INTERIOR'S OWN GROUND PILES.
+   *
+   *  SerializableStateManager.CacheScene (:88-90) caches
+   *  GetLootContainerData(), which serialises EVERY registered
+   *  container whose ShouldSave is true - and SerializableLootContainer
+   *  .HasChanged (:223-226) excludes only un-stocked shop shelves and
+   *  house containers. So a DROPPED PILE inside a building is cached
+   *  and rides the save, and RestoreLootContainerData (:445-453) mints
+   *  the customDrop ones back into the rebuilt scene.
+   *
+   *  The port had no interior pool at all: this host borrows the OUTER
+   *  host's inventory window (host.makeInventory), whose onDrop
+   *  (world.js) mints into the EXTERIOR droppedLoot pool at
+   *  dropFeet() - the shared `player.pos`, which inside a building is
+   *  the interior's world-frame feet (P8 parents the interior at the
+   *  building matrix). So a sword dropped in a shop left the pack,
+   *  never appeared on the shop floor, and turned up OUTDOORS on the
+   *  building's footprint when the player stepped out. This pool plus
+   *  the makeInteriorInventory seam below is the fix; the pile is
+   *  drawn, activatable and cached with the rest of the scene.
+   *
+   *  NOT here, and not an omission: CORPSE markers. ClearSceneCache's
+   *  "sans corpses" filter (:136-140) only exists because corpses ARE
+   *  cached - but this host mounts no foes indoors at all (:266, "a
+   *  building interior: no foes"), so there is no corpse for an
+   *  interior to carry. The filter in sceneCache.js stands ready for
+   *  the day one appears. */
+  const interiorLoot = createDroppedLoot({ renderer, getTexture, uploadRecordFrame });
+  /** THE ONE CONSTRUCTION SEAM for this host's inventory window. The
+   *  BUILDER is still the outer host's (one dependency list, as U43
+   *  says); what this adds is the two hooks that must be THIS mode's -
+   *  the drop lands on the floor the player is standing on, and the
+   *  emptied container is freed when the window closes
+   *  (DaggerfallInventoryWindow.cs:697-722, the same law
+   *  droppedLoot.releaseEmptied ports). `player.pos` is the feet in
+   *  the interior's world frame, which is where DFU's own
+   *  CreateDroppedLootContainer mints - the player's position.
+   *  `extra` still wins, so a caller with its own onClose keeps it. */
+  const makeInteriorInventory = (extra = {}) => host.makeInventory?.({
+    onDrop: (items) => interiorLoot.dropPile(items, [...player.pos]),
+    onClose: () => interiorLoot.releaseEmptied(),
+    ...extra,
+  });
   let interiorCtx = null;
   // E2: the entered building's identity + the shop browse overlay.
   let interiorBuilding = null;
@@ -744,7 +789,7 @@ export function createWorldModes(host) {
     // rather than buys - and DFU never opens a paying trade window in
     // one, whatever the shoplifting tally does afterwards.
     if (!interiorOpenShop) {
-      const win = host.makeInventory?.({ loot: { items: () => (shelf.items ??= []) } });
+      const win = makeInteriorInventory({ loot: { items: () => (shelf.items ??= []) } });
       if (win) mountInterior(win);
       return;
     }
@@ -1328,9 +1373,10 @@ export function createWorldModes(host) {
   }
 
   /** What this interior currently holds that the player could have
-   *  changed. Shelves are the port's ShopShelves containers and carry
-   *  their stocked items; the action system's objects carry the door
-   *  and switch states. */
+   *  changed - CacheScene's two arrays (:88-96), and only those two.
+   *  Shelves and furniture are the port's ShopShelves/HouseContainers
+   *  and carry their stocked items; the ground piles are its
+   *  DroppedLoot; the action graph's doors carry the swing. */
   function currentSceneState() {
     const ctx = interiorCtx;
     if (!ctx) return { lootContainers: [], actionDoors: [] };
@@ -1349,9 +1395,47 @@ export function createWorldModes(host) {
         // instead of once a game day.
         containerType: LOOT_CONTAINER_TYPES.HouseContainers, key: `container:${i}`, items: c.items ?? null, stockedDate: c.stockedDate ?? 0,
       })),
+      // P1: AND THE DROPPED PILES. GetLootContainerData
+      // (SerializableStateManager.cs:343-354) walks EVERY registered
+      // container whose ShouldSave is true, and HasChanged
+      // (SerializableLootContainer.cs:223-226) excludes only shelves
+      // and house containers that were never stocked - a customDrop
+      // pile is never excluded. The fields are the ones
+      // RestoreLootContainerData's custom-drop arm reads back
+      // (:445-453 - loadID, textureArchive, textureRecord) plus the
+      // position and items every container carries
+      // (SerializableGameObject.cs:396-416); an emptied pile is
+      // already gone by here (releaseEmptied), and the filter keeps
+      // the port's own snapshotWorld rule that an item-less pile is
+      // not a container.
+      ...interiorLoot._piles.filter((p) => p.items.length).map(droppedLootRecord),
     ];
-    const actionDoors = [...(ctx.actions?.objects?.values?.() ?? [])]
-      .map((o) => ({ key: o.key, state: o.state }));
+    // CacheScene's second array is GetActionDoorData (:91), i.e.
+    // ActionDoorData_v1 - loadID, currentLockValue, currentState,
+    // actionPercentage (SerializableGameObject.cs:329-337) - not a
+    // key and a state. The port's ONE writer of that record is the
+    // action graph's own collectSaveData (world/actionSystem.js),
+    // where {key, state, t} is loadID/currentState/actionPercentage
+    // and {lock} is currentLockValue; the cache takes it whole rather
+    // than minting a second shape of the same DFU member. Without the
+    // percentage a door caught mid-swing re-entered snapped.
+    //
+    // DOORS ONLY: CacheScene writes `new object[0]` into the
+    // ActionObject slot (:94), so a non-door node's state is
+    // deliberately NOT cached. An interior graph is doors anyway -
+    // interiorContext.js:188 is its only registrar - but the filter
+    // is the law, not the count.
+    //
+    // ONE ActionDoorData_v1 FIELD HAS NO PORT COUNTERPART, recorded
+    // rather than invented: currentRotation, which DFU stores because
+    // its tween owns the transform, and which the port RE-DERIVES from
+    // state + t through syncRestored's _applyMatrix. Persisting a pose
+    // the restore recomputes is the mistake the other way round.
+    // lockpickFailedSkillLevel does have one and rides in the record
+    // (actionSystem.js's failedSkillLevel).
+    const doorKeys = new Set([...(ctx.actions?.objects?.values?.() ?? [])]
+      .filter((o) => o.kind === 'door').map((o) => o.key));
+    const actionDoors = (ctx.actions?.collectSaveData?.() ?? []).filter((r) => doorKeys.has(r.key));
     return { lootContainers, actionDoors };
   }
 
@@ -1370,7 +1454,18 @@ export function createWorldModes(host) {
     if (!name || !interiorCtx) return;
     const data = restoreCachedScene(sceneCache(), name);
     if (!data) return;
+    // RestoreLootContainerData (:427-460) splits on the same question
+    // twice: a container the rebuilt scene already owns is RESTORED
+    // in place, and a customDrop one is MINTED back into the scene.
+    const drops = [];
     for (const c of data.lootContainers) {
+      if (c.containerType === LOOT_CONTAINER_TYPES.DroppedLoot) {
+        // CreateDroppedLootContainer with the SAVED archive/record
+        // (:450) - a restore must not reroll the icon, which is the
+        // rule restorePiles was written to.
+        drops.push(droppedLootPile(c));
+        continue;
+      }
       const [kind, i] = c.key.split(':');
       const target = kind === 'shelf' ? interiorCtx.shelves?.[+i] : interiorCtx.containers?.[+i];
       // `items: null` is a shelf that was never opened - restoring it
@@ -1379,10 +1474,14 @@ export function createWorldModes(host) {
       if (target && c.items !== null) target.items = c.items;
       if (target) target.stockedDate = c.stockedDate ?? 0;   // SerializableLootContainer.cs:151
     }
-    for (const d of data.actionDoors) {
-      const o = interiorCtx.actions?.objects?.get?.(d.key);
-      if (o) o.state = d.state;
-    }
+    if (drops.length) interiorLoot.restorePiles(drops);
+    // RestoreActionDoorData (:374-387): keyed by loadID into the
+    // rebuilt scene's own doors. The port's restoreSaveData IS that
+    // loop, and it also runs syncRestored - the matrix and the
+    // collider bucket follow the restored pose, which a bare
+    // `o.state = d.state` left stale (a door restored OPEN stayed
+    // solid).
+    interiorCtx.actions?.restoreSaveData?.(data.actionDoors);
   }
 
   /** B2: the bank. Accounts are PER REGION and live on the entity, so
@@ -1851,7 +1950,7 @@ export function createWorldModes(host) {
         const refusal = rows?.(decision.textId) ?? [];
         return { rows: refusal.length ? refusal : [{ text: 'You have already received your armor for your current rank.', center: true }] };
       }
-      const win = host.makeInventory?.({
+      const win = makeInteriorInventory({
         chooseOne: {
           items: decision.pieces,
           onChoose: () => { claimArmor(membership, decision.mask); surfacePlayer(); },
@@ -2577,6 +2676,7 @@ export function createWorldModes(host) {
     interiorCtx.ladders.forEach((l, i) => {
       targets.push({ key: `ladder:${i}`, aabb: objAabb(l) });
     });
+    targets.push(...interiorLoot.lootTargets());   // P1: the player's own drops, indoors
     // U23: the StaticNPCs. Their reach is DFU's own 256 classic units
     // (PlayerActivate.cs:87), twice a door's, and a person with no
     // billboard size resolved is not a target at all.
@@ -2629,6 +2729,15 @@ export function createWorldModes(host) {
     if (!key.startsWith('exit:')) {
       if (key.startsWith('shelf:')) {
         openShelf(Number(key.split(':')[1]));   // E2: the browse/buy window (no-op outside shops)
+        return true;
+      }
+      if (key.startsWith('droppedLoot:')) {
+        // PlayerActivate's default loot handling (:959-961):
+        // `InventoryWindow.LootTarget = loot; PushWindow(...)` - the
+        // ordinary inventory over the pile as its remote target, which
+        // is how the sword comes back out of the shop floor.
+        const pile = interiorLoot.pileFor(key);
+        if (pile) mountInterior(makeInteriorInventory({ loot: { items: () => pile.items } }));
         return true;
       }
       if (key.startsWith('person:')) {
@@ -2728,6 +2837,11 @@ export function createWorldModes(host) {
     // P1: CacheScene (:860) - BEFORE the teardown, while the shelves
     // and the action objects are still alive to be read.
     cacheInteriorScene();
+    // EVERY ALLOCATION HAS AN OWNER: the ground piles leave with the
+    // building they were dropped in - AFTER cacheInteriorScene has
+    // read them, and before the batch teardown. Their state now lives
+    // in the cache, which is what hands them back on re-entry.
+    interiorLoot.restorePiles([]);
     teardownQuestFlats();   // Q4-v: OnDestroy for the quest stands, before the batch teardown
     interiorCtx.destroy();
     interiorCtx = null;
@@ -3132,6 +3246,12 @@ export function createWorldModes(host) {
     interiorArrows.draw(renderer, interiorCtx.texRemap);
     interiorCtx.flatAnims.tick(dt);   // FA1
     renderer.drawBillboards(interiorCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
+    // P1: the interior's ground piles draw with the rest of the flats
+    // (FA1 slice 3 keeps the tick separate from the getter - one tick
+    // per frame, whatever asks for the batches).
+    interiorLoot.tickFlats(dt);
+    const _interiorPiles = interiorLoot.batches();
+    if (_interiorPiles.length) renderer.drawBillboards(_interiorPiles, camRight, new Float32Array([0, 1, 0]));
     if (magic) {
       // M2: the armed click's cast + missile flight, on the interior's
       // own collider (the engine's mode-aware raycast reads it).
@@ -3594,6 +3714,12 @@ export function createWorldModes(host) {
     window.__piles = () => (dungeonCtx
       ? JSON.stringify((dungeonCtx.dropped?.() ?? []).map((p) => ({ n: p.items.length, flat: !!p.batch })))
       : null);
+    // P1: the same read for the INTERIOR pool - the live check that a
+    // sword dropped in a shop lands on the shop floor and not on the
+    // street outside it.
+    window.__interiorPiles = () => (interiorCtx
+      ? JSON.stringify(interiorLoot._piles.map((p) => ({ n: p.items.length, record: p.record, pos: p.pos.map((v) => +v.toFixed(1)), flat: !!p.batch })))
+      : null);
     // ...and the OTHER loot door, which is the one a kill uses. An
     // enemy's loot rides its OWN entity (GenerateItems(lootTableKey) at
     // spawn) and its CORPSE becomes the container; nothing is ever
@@ -3912,7 +4038,7 @@ export function createWorldModes(host) {
       });
     },
     toggleCharSheet() { mountInterior(host.makeCharSheet?.()); },
-    toggleInventory() { mountInterior(host.makeInventory?.()); },
+    toggleInventory() { mountInterior(makeInteriorInventory()); },
     // M2/I2: the CastSpell action opens the spellbook
     // (GameManager.cs:550-553); the cast itself is the attack click.
     toggleSpellbook() { if (magic) mountInterior(makeSpellbookWindow()); },
@@ -4294,6 +4420,7 @@ export function createWorldModes(host) {
         // pre-entry cache. (The dungeon arm has no counterpart: DFU
         // takes TransitionDungeonExteriorImmediate there, :151.)
         cacheInteriorScene();
+        interiorLoot.restorePiles([]);   // P1: the ground piles leave with the building, AFTER the cache has read them (tryExit's :2846)
         // OnPop runs on every window the manager removes
         // (UserInterfaceManager.cs:189-196). A door that drops the slot
         // RAW skips it, and RestWindow raises IsResting on open and

@@ -330,8 +330,13 @@ test('AUDIT 26 F066: a shut shop opens the stealing inventory, never the Buy win
   const gateAt = open.indexOf('if (!interiorOpenShop)');
   assert.ok(stockAt > 0 && gateAt > stockAt,
     'PlayerActivate stocks the shelf (:881-885) BEFORE it asks whether the shop is open');
-  // the shut arm is the inventory with the shelf as remote loot target...
-  assert.match(open, /if \(!interiorOpenShop\) \{[\s\S]*?host\.makeInventory\?\.\(\{ loot: \{ items: \(\) => \(shelf\.items \?\?= \[\]\) \} \}\)/,
+  // the shut arm is the inventory with the shelf as remote loot target.
+  // The BUILDER is makeInteriorInventory, this host's ONE construction
+  // seam over the outer host's window (P1 routed every interior arm
+  // through it so a Remove-mode drop lands on the floor the player is
+  // standing on); what is pinned here is the LootTarget, which is the
+  // DFU law - `InventoryWindow.LootTarget = loot` (:959-961).
+  assert.match(open, /if \(!interiorOpenShop\) \{[\s\S]*?makeInteriorInventory\(\{ loot: \{ items: \(\) => \(shelf\.items \?\?= \[\]\) \} \}\)/,
     'a shut shop takes InventoryWindow.LootTarget, not a trade window');
   // ...and it RETURNS, so neither trade path below can run
   const shutArm = open.slice(gateAt, open.indexOf('// U8c: the native trade screen'));

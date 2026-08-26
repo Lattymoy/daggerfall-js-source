@@ -43,6 +43,10 @@
 //    disappears when the world moves on while the chest beside it does
 //    not. DFU's own comment on the line says "sans corpses".
 
+// ONE DFU MEMBER, ONE EXPORT: DaggerfallLootDataTables
+// .randomTreasureArchive already lives in systems/loot.js.
+import { RANDOM_TREASURE_ARCHIVE } from './loot.js';
+
 /** DaggerfallInterior.GetSceneName (:79-82) and
  *  StreamingWorld.GetSceneName (:133-136), verbatim - the exact
  *  strings are the cache KEY, so a reformatting is a silent cache
@@ -60,6 +64,53 @@ export const LOOT_CONTAINER_TYPES = Object.freeze({
   Nothing: 0, RandomTreasure: 1, CorpseMarker: 2,
   DroppedLoot: 3, ShopShelves: 4, HouseContainers: 5,
 });
+
+/** THE DROPPED PILE, both ways.
+ *
+ *  GetLootContainerData (:343-354) walks EVERY registered container
+ *  whose ShouldSave is true, and SerializableLootContainer.HasChanged
+ *  (:223-226) excludes only shop shelves and house containers that
+ *  were never stocked - so a pile the player dropped, and a corpse,
+ *  are cached with the shelves and ride the save. (That is the whole
+ *  reason the permanent-scene clear below has to strip corpses
+ *  specifically: they are in there.)
+ *
+ *  These two are GetSaveData's custom-drop half
+ *  (SerializableLootContainer.cs:55-81) and the arm
+ *  RestoreLootContainerData takes for a container the rebuilt scene
+ *  does NOT own (:445-453): `CreateDroppedLootContainer(player,
+ *  loadID, textureArchive, textureRecord)` and then the position and
+ *  items off the record. The fields carried are exactly the ones
+ *  those two lines read; a host's pile shape ({id, pos, record,
+ *  items}) is droppedLoot.js's.
+ *
+ *  ONE thing DFU keeps that the port does not: the loadID survives
+ *  the round trip there, because CreateDroppedLootContainer is handed
+ *  the saved key. droppedLoot.restorePiles mints a fresh id, so the
+ *  restored pile answers a new activation key - session-local
+ *  identity, never persisted or compared, so nothing reads the
+ *  difference. */
+export function droppedLootRecord(pile) {
+  return {
+    containerType: LOOT_CONTAINER_TYPES.DroppedLoot,
+    key: `droppedLoot:${pile.id}`,
+    customDrop: true,
+    currentPosition: [pile.pos[0], pile.pos[1], pile.pos[2]],
+    textureArchive: RANDOM_TREASURE_ARCHIVE,
+    textureRecord: pile.record,
+    items: (pile.items ?? []).map((it) => ({ ...it })),
+    stockedDate: 0,
+  };
+}
+export function droppedLootPile(rec) {
+  return {
+    items: (rec.items ?? []).map((it) => ({ ...it })),
+    pos: [...(rec.currentPosition ?? [0, 0, 0])],
+    // "a restore must not reroll the icon" - the SAVED record, which
+    // is what DFU hands CreateDroppedLootContainer (:450).
+    record: rec.textureRecord,
+  };
+}
 
 /** A fresh manager. `scenes` is DFU's sceneDataCache and `permanent`
  *  its permanentScenes; a Set rather than a List because every
