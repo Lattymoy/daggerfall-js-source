@@ -276,13 +276,20 @@ export function canonicalizePaperdollTexture(src, profile = 'generic') {
   }
   if (crossing < Math.max(2, Math.floor(occupied.length * 0.20))) anatomicalAxis = sourceCentre;
 
-  // Preserve each row's local lean correction, but hold the anatomical axis at
-  // one constant displacement from the silhouette centre. This separates
-  // "paperdoll pose shear" from "which half of the torso is actually front".
-  const axisShift = anatomicalAxis - sourceCentre;
+  // V4: estimate perspective from the CHEST, not the whole sprite. The top
+  // shoulder/neck cutout and the lower hem are presentation-heavy and were
+  // polluting the side-bias decision. Use the central vertical band to decide
+  // which authored half is trustworthy, while still applying the correction to
+  // every row so belts/trim keep their original Y placement.
+  const bandLoIndex = Math.floor((occupied.length - 1) * 0.18);
+  const bandHiIndex = Math.ceil((occupied.length - 1) * 0.82);
+  const analysisRows = occupied.slice(bandLoIndex, bandHiIndex + 1);
+  const analysisCentres = analysisRows.map((y) => (spans[y][0] + spans[y][1]) * 0.5).sort((a, b) => a - b);
+  const analysisSourceCentre = analysisCentres[Math.floor(analysisCentres.length * 0.5)] ?? sourceCentre;
+  const axisShift = anatomicalAxis - analysisSourceCentre;
   const leftExtents = [], rightExtents = [];
   let leftOpaque = 0, rightOpaque = 0;
-  for (const y of occupied) {
+  for (const y of analysisRows) {
     const [x0, x1] = spans[y];
     const rowCentre = (x0 + x1) * 0.5;
     const rowAxis = Math.max(x0, Math.min(x1, rowCentre + axisShift));
@@ -340,11 +347,14 @@ export function canonicalizePaperdollTexture(src, profile = 'generic') {
     }
   }
   out.canonicalMeta = Object.freeze({
-    mode: 'paperdoll-surface-v3',
-    registration: 'paperdoll-axis-front-reconstruct',
+    mode: 'paperdoll-surface-v4',
+    registration: 'paperdoll-axis-chest-weighted-front-reconstruct',
     frontReconstruction: mirrorDominantHalf ? 'dominant-half-mirror' : 'split-perspective-rectify',
     sourceAxis: axisFromPaperdoll ? 'paperdoll-offset' : 'silhouette-median',
     anatomicalAxis,
+    analysisSourceCentre,
+    analysisBand: [analysisRows[0], analysisRows[analysisRows.length - 1]],
+    analysisRowCount: analysisRows.length,
     axisShift,
     leftExtent,
     rightExtent,

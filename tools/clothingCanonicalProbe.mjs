@@ -94,8 +94,10 @@ const torso = canonicalizePaperdollTexture({
   width: tw, height: th, data: td,
   paperdollMeta: { axisX: 8 },
 }, 'torso');
-assert.equal(torso.canonicalMeta.mode, 'paperdoll-surface-v3');
+assert.equal(torso.canonicalMeta.mode, 'paperdoll-surface-v4');
 assert.equal(torso.canonicalMeta.sourceAxis, 'paperdoll-offset');
+assert.equal(torso.canonicalMeta.registration, 'paperdoll-axis-chest-weighted-front-reconstruct');
+assert.ok(torso.canonicalMeta.analysisRowCount < th, 'torso orientation must ignore noisy top/bottom rows');
 assert.equal(torso.canonicalMeta.frontReconstruction, 'dominant-half-mirror');
 assert.equal(torso.canonicalMeta.dominantSide, 'right');
 assert.ok(torso.canonicalMeta.sideBias > 1.65);
