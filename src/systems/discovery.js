@@ -14,6 +14,9 @@
 // pixel id when there is a map to draw, and the save shape below
 // already keys by that one string.
 
+import { isResidence } from '../world/buildingNames.js';   // RMBLayout.IsResidence, UndiscoverBuilding's onlyIfResidence gate
+import { THE_THIEVES_GUILD, THE_DARK_BROTHERHOOD } from './factionRep.js';   // the two hideout factions UndiscoverBuilding refuses
+
 let _discovered = new Map();   // locationId -> Map(buildingKey -> record)
 
 /** DiscoverBuilding (:917-975): a no-op when already discovered
@@ -59,12 +62,30 @@ export function hasDiscoveredBuilding(locationId, buildingKey) {
   return _discovered.get(locationId)?.has(buildingKey) ?? false;
 }
 
-/** PlayerGPS.UndiscoverBuilding (:980-1010)'s store half: drop one
- *  building from a location's discovered set. TK-ii undiscovers quest
- *  RESIDENCES at topic-add so a previously discovered house does not
- *  pre-reveal on the automap when a quest names it. */
-export function undiscoverBuilding(locationId, buildingKey) {
-  _discovered.get(locationId)?.delete(buildingKey);
+/** PlayerGPS.UndiscoverBuilding (:986-1019): drop one building from a
+ *  location's discovered set, behind DFU's THREE refusals - it is not
+ *  an unconditional delete.
+ *
+ *    - onlyIfResidence and the building is not a residence (:1005-1007);
+ *    - the building's faction is the Thieves Guild or the Dark
+ *      Brotherhood (:1009-1012) - a hideout never loses its cover,
+ *      whatever the caller asked for;
+ *    - matchName was given and differs from the stored displayName
+ *      (:1014-1016) - two quests may "occupy" the same residence under
+ *      different names, and the one that did not name it may not hide it.
+ *
+ *  The defaults are C#'s own (onlyIfResidence = false, matchName = null),
+ *  which is what DaggerfallBankManager.cs:460 passes when a sold house
+ *  comes off the map; the quest callers (TalkManager.cs:2958,
+ *  Quest.cs:655) pass (buildingKey, true, buildingName). */
+export function undiscoverBuilding(locationId, buildingKey, onlyIfResidence = false, matchName = null) {
+  const loc = _discovered.get(locationId);
+  const rec = loc?.get(buildingKey);
+  if (!rec) return;
+  if (onlyIfResidence && !isResidence(rec.buildingType)) return;
+  if (rec.factionId === THE_THIEVES_GUILD || rec.factionId === THE_DARK_BROTHERHOOD) return;
+  if (matchName != null && matchName !== rec.displayName) return;
+  loc.delete(buildingKey);
 }
 
 /** The location's discovered records, for the map that will draw them. */

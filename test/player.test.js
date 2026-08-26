@@ -434,3 +434,173 @@ test('player: P12 breath - MaxBreath law, the short threshold, WaterBreathing ke
   restorePlayer(fresh, snap);
   assert.equal(fresh.currentBreath, 7);
 });
+
+// ---------------------------------------------------------------
+// AUDIT 26 (parity, player-motor): four laws the motor computed,
+// ported or skipped and then never applied.
+// ---------------------------------------------------------------
+
+/** A mock world for the CLASSIC climb: a wall the capsule cannot pass
+ *  through horizontally (so the start check's 0.12 horizontal
+ *  tolerance holds, exactly as a player pressed against a wall), a
+ *  floor whose grounded answer the test drives, and clear headroom.
+ *  `wall` off = the hand comes off the wall. */
+function climbWorld() {
+  const w = { wall: true, grounded: false };
+  w.collider = {
+    penetrationAt: () => 0,
+    raycast: () => Infinity,          // never "too close to ground" (:318-320)
+    raycastHit: () => (w.wall ? { dist: 0.3, normal: [0, 0, -1] } : { dist: Infinity }),
+    move(pos, dx, dy, dz) {
+      if (!w.wall) { pos[0] += dx; pos[2] += dz; }
+      pos[1] += dy;
+      return { grounded: w.grounded };
+    },
+  };
+  // ClimbingSkillCheck's deps with a roll that always passes.
+  w.climbing = { inputs: () => ({ climbing: 100, luck: 50 }), tally: () => {}, rolls: () => 0 };
+  return w;
+}
+
+const IDLE = { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false };
+
+test('player: AcrobatMotor.cs:76 - WasClimbing bypasses the 0.1 s grounded-time jump gate', async () => {
+  const { GROUNDED_JUMP_GATE_S } = await import('../src/player/motor.js');
+  // `if (!climbingMotor.WasClimbing && playerMotor.GroundedTime < 0.1f)
+  //      return;`
+  // WasClimbing is latched from IsClimbing at ClimbingMotor.cs:390,
+  // BEFORE the abort ladder clears it, so it is true on the very frame
+  // a climb ends - and GroundedTime is 0 there, because the flag reset
+  // to 0 for every ungrounded frame of the climb. The port had no
+  // bypass at all and refused the jump for a further 0.1 s; climbing.js
+  // wrote wasClimbing every step and nothing in src/ ever read it.
+  const w = climbWorld();
+  const m = new PlayerMotor(w.collider, { speed: 50, running: 30, swimming: 30 }, { climbing: w.climbing });
+  m.spawn(0, 0, 0);
+  const fwd = { ...IDLE, forward: 1 };
+  for (let i = 0; i < 120 && !m.climb.isClimbing; i++) m.update(1 / 60, fwd, 0);
+  assert.equal(m.climb.isClimbing, true, 'the classic climb started');
+  assert.equal(m.groundedTime, 0, 'a climbing player banks no grounded time');
+  // Top out: the last climbing move puts the feet on solid ground.
+  w.grounded = true;
+  m.update(1 / 60, fwd, 0);
+  assert.equal(m.grounded, true);
+  // Now release the wall and press Jump on the same frame the climb
+  // ends. One tick of grounded time - a fifth of the gate.
+  w.wall = false;
+  m.update(1 / 60, { ...IDLE, jump: true }, 0);
+  assert.equal(m.climb.wasClimbing, true, 'ClimbingMotor.cs:390 latched it for this frame');
+  assert.equal(m.jumped, true, 'DFU jumps instantly off a climb');
+  assert.equal(m.velY, JUMP_SPEED - GRAVITY * (1 / 60), 'jumpSpeed 4.5, less this step\'s gravity');
+  // The gate itself is untouched: the same one-tick-old grounded time
+  // with no climb behind it still refuses.
+  const plain = new PlayerMotor({
+    penetrationAt: () => 0,
+    move(pos, dx, dy, dz) { pos[0] += dx; pos[1] += dy; pos[2] += dz; return { grounded: true }; },
+  });
+  plain.spawn(0, 0, 0);
+  plain.update(1 / 60, IDLE, 0);
+  plain.update(1 / 60, { ...IDLE, jump: true }, 0);
+  assert.ok(plain.groundedTime < GROUNDED_JUMP_GATE_S, `groundedTime ${plain.groundedTime}`);
+  assert.equal(plain.jumped, false, 'the bunny-hop gate still stands without a climb');
+});
+
+test('player: LevitateMotor.cs:83-89 - the over-encumbered swimmer is forced down and cannot float', async () => {
+  const { isOverEncumbered, OVER_ENCUMBERED_QUARTER_KG } = await import('../src/player/motor.js');
+  // `overEncumbered = (CarriedWeight * 4 > 250) && !playerLevitating
+  //   && !GodMode;
+  //  if (playerSwimming && overEncumbered && !climbingMotor.IsClimbing
+  //      && !IsWaterWalking) upDownVector += Vector3.down;
+  //  else if (Jump/FloatUp) ... else if (Crouch/FloatDown) ...`
+  // The sink REPLACES the float keys - it is one if/else-if ladder.
+  assert.equal(OVER_ENCUMBERED_QUARTER_KG, 250);
+  assert.equal(isOverEncumbered(62.5), false, 'exactly 250 quarter-kg is not over (strict >)');
+  assert.equal(isOverEncumbered(62.51), true);
+  assert.equal(isOverEncumbered(100, true), false, 'levitation exempts (:83)');
+  const moves = [];
+  const rec = {
+    penetrationAt: () => 0,
+    move(pos, dx, dy, dz) { pos[0] += dx; pos[1] += dy; pos[2] += dz; moves.push(dy); return { grounded: false }; },
+  };
+  let kg = 70;                                  // 280 > 250: over the line
+  const m = new PlayerMotor(rec, undefined, { carriedWeight: () => kg });
+  m.spawn(0, 0, 0);
+  m.swimming = true;
+  const floatUp = { ...IDLE, up: true };
+  m.update(1 / 60, floatUp, 0, 0);
+  assert.ok(moves.at(-1) < 0, `FloatUp cannot lift him; dy ${moves.at(-1)}`);
+  const sink = moves.at(-1);
+  moves.length = 0;
+  m.update(1 / 60, { ...IDLE, down: true }, 0, 0);
+  assert.equal(moves.at(-1), sink, 'FloatDown lands on the same forced sink');
+  // The two exclusions: water walking, and climbing.
+  moves.length = 0;
+  m.waterWalking = true;
+  m.update(1 / 60, floatUp, 0, 0);
+  assert.ok(moves.at(-1) > 0, 'a water-walking swimmer floats (:84)');
+  m.waterWalking = false;
+  // Under the line he floats normally again.
+  kg = 62.5;
+  moves.length = 0;
+  m.update(1 / 60, floatUp, 0, 0);
+  assert.ok(moves.at(-1) > 0, 'at 250 quarter-kg exactly he still floats');
+});
+
+test('player: PlayerHeightChanger.cs:136-145 - levitating stands the player up and kills the Crouch key', async () => {
+  const { CAPSULE_HEIGHT, CROUCH_HEIGHT } = await import('../src/player/motor.js');
+  // `if (levitating) { if (crouching) { heightAction = DoStanding;
+  //    return; } onWater = false; }` and every arm below is nested
+  // under `else if (!riding && !onWater && !levitating)` (:171).
+  const col = {
+    penetrationAt: () => 0,
+    move(pos, dx, dy, dz) { pos[0] += dx; pos[1] += dy; pos[2] += dz; return { grounded: true }; },
+  };
+  const m = new PlayerMotor(col);
+  m.spawn(0, 0, 0);
+  const press = { ...IDLE, crouch: true };
+  m.update(0.05, press, 0);
+  m.update(0.06, IDLE, 0);            // past timerFast: DoCrouch completes
+  assert.equal(m.crouching, true);
+  assert.equal(m.height, CROUCH_HEIGHT);
+  // Start levitating: DFU forces DoStanding, whatever the keys say.
+  m.levitating = true;
+  m.update(0.05, IDLE, 0);
+  assert.equal(m.crouching, false, 'a crouched levitator is stood up');
+  assert.equal(m.height, CAPSULE_HEIGHT);
+  // ...and the Crouch key does nothing at all while levitating.
+  for (let i = 0; i < 20; i++) m.update(0.05, press, 0);
+  assert.equal(m.crouching, false, 'the crouch toggle is dead while levitating');
+  assert.equal(m.height, CAPSULE_HEIGHT);
+  // Landing (levitation off) hands the key back.
+  m.levitating = false;
+  m.update(0.05, press, 0);
+  m.update(0.06, IDLE, 0);
+  assert.equal(m.crouching, true);
+});
+
+test('player: PlayerHeightChanger.cs:183-191 - climbing forces a crouched player to stand, on the medium clock', async () => {
+  const { CAPSULE_HEIGHT, HEIGHT_TIMER_MEDIUM } = await import('../src/player/motor.js');
+  // `else if (climbing) { timerMax = timerMedium;
+  //    if (crouching) heightAction = DoStanding; forcedSwimCrouch =
+  //    false; }` - the arm sits between the crouch press and the swim
+  // arms, and timerMax is set before the crouch test, unconditionally.
+  assert.equal(HEIGHT_TIMER_MEDIUM, 0.25);
+  const w = climbWorld();
+  w.grounded = true;
+  const m = new PlayerMotor(w.collider, { speed: 50, running: 30, swimming: 30 }, { climbing: w.climbing });
+  m.spawn(0, 0, 0);
+  w.wall = false;                     // crouch on open ground first
+  m.update(0.05, { ...IDLE, crouch: true }, 0);
+  m.update(0.06, IDLE, 0);
+  assert.equal(m.crouching, true, 'crouched before the wall');
+  // Grab the wall and hold Forward until the classic start check passes.
+  w.wall = true;
+  w.grounded = false;
+  const fwd = { ...IDLE, forward: 1 };
+  for (let i = 0; i < 120 && !m.climb.isClimbing; i++) m.update(1 / 60, fwd, 0);
+  assert.equal(m.climb.isClimbing, true, 'the classic climb started');
+  m.update(1 / 60, fwd, 0);           // the first DecideHeightAction with climbing true
+  assert.equal(m.heightTimerMax, HEIGHT_TIMER_MEDIUM, 'the climb arm sets the medium clock');
+  assert.equal(m.crouching, false, 'DFU stands the climber up');
+  assert.equal(m.height, CAPSULE_HEIGHT);
+});

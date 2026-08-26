@@ -8,6 +8,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   ItemMakerWindow, ITEM_RECTS, rowLayout, _setItemMakerArtForTests,
+  showEnchantmentScroller, enchantmentScrollUnits, clampEnchantmentScroll,
+  enchantmentScrollerRect, enchantmentThumbRect,
 } from '../src/ui/itemMakerWindow.js';
 import {
   enchantmentParamName, enchantmentSettings, PARAM_NONE,
@@ -185,5 +187,92 @@ test('F169 draw: the LIST ROW paints that name - not names[param] (EnchantmentLi
     // effect reads the same either way
     assert.ok(painted.includes('CastWhenUsed'), 'PrimaryDisplayName');
     assert.ok(painted.includes('insunlight'), "ItemDeteriorates' own label");
+  } finally { unmountArt(); }
+});
+
+test('F170: past SEVEN rows the enchantment list SCROLLS - wheel, rail and rows (EnchantmentListPicker.cs:180-247, :283-290)', () => {
+  // ten Cast When Used powers: each has a secondary name, so each
+  // panel is twelve tall (:301-302) on the five-pixel spacing (:22)
+  const params = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+  const spells = params.map((p) => enchantmentParamName('CastWhenUsed', p).replace(/ /g, ''));
+  const powers = params.map((p) => enchantmentSettings('CastWhenUsed', p));
+  const [px, py, pw, ph] = ITEM_RECTS.powersList;
+
+  // ShowScroller is a COUNT: seven fit, the eighth brings the bar up
+  // (:244-247), and FitToScroller narrows every row to 71 (:227, :369)
+  assert.equal(showEnchantmentScroller(powers.slice(0, 7)), false);
+  assert.equal(showEnchantmentScroller(powers.slice(0, 8)), true);
+  assert.equal(rowLayout(powers.slice(0, 7))[0].w, 75);
+  assert.equal(rowLayout(powers)[0].w, 71);
+  // TotalUnits is height + spacing per panel, in PIXELS (:229-232)
+  assert.equal(enchantmentScrollUnits(powers), 10 * (12 + 5));
+  assert.deepEqual([...enchantmentScrollerRect(ITEM_RECTS.powersList)], [px + pw - 4, py, 4, ph]);
+  // ...and the index is clamped to TotalUnits - DisplayUnits
+  // (VerticalScrollBar.cs:187-198), which is 170 - 120 here
+  assert.equal(clampEnchantmentScroll(999, powers, ph), 50);
+  assert.equal(clampEnchantmentScroll(-4, powers, ph), 0);
+
+  mountArt();
+  try {
+    const { w } = makeWin([]);
+    w.selected = ruby();
+    w.powers = powers.slice();
+    const painted = () => { const f = spyFont(); w.draw(recorder(), canvas, f); return f.drawn; };
+
+    // unscrolled, the eighth row is off the panel entirely
+    const first = painted();
+    assert.ok(first.includes(spells[6]), 'the seventh row is on the panel');
+    assert.equal(first.includes(spells[7]), false, 'the eighth is below it');
+
+    // the wheel over the LIST steps by scrollerStep (:189-196)
+    w.hover(px + 10, py + 10);
+    w.wheel(1);
+    assert.equal(w.powersScroll, 8);
+    w.wheel(1);
+    assert.equal(w.powersScroll, 16);
+    // over the BAR it is VerticalScrollBar's own arm, stepping ONE
+    // (VerticalScrollBar.cs:152-161)
+    w.hover(px + pw - 2, py + 10);
+    w.wheel(1);
+    assert.equal(w.powersScroll, 17);
+    w.wheel(-1);
+    assert.equal(w.powersScroll, 16);
+
+    // ...and now the eighth row is both DRAWN and clickable off
+    const scrolled = painted();
+    assert.ok(scrolled.includes(spells[7]), 'the eighth row scrolled into view');
+    const row8 = rowLayout(w.powers, w.powersScroll)[7];
+    w.click(px + 2, py + row8.y + 1);
+    assert.equal(w.powers.length, 9, 'the eighth row came off the list');
+    assert.equal(w.powers.some((e) => e.param === 11), false);
+    // RemoveEnchantment puts the scroller back to the top (:253)
+    assert.equal(w.powersScroll, 0);
+
+    // the rail pages by DisplayUnits either side of the thumb
+    // (VerticalScrollBar.cs:142-150)
+    w.powers = powers.slice();
+    w.powersScroll = 0;
+    const thumb = enchantmentThumbRect(w.powers, 0, ITEM_RECTS.powersList);
+    w.click(px + pw - 2, py + thumb[3] + 2);   // below the thumb
+    assert.equal(w.powersScroll, 50, 'one page down, clamped to the end');
+    w.click(px + pw - 2, py + 1);              // above it
+    assert.equal(w.powersScroll, 0);
+
+    // a list that does NOT show the scroller ignores the wheel
+    // entirely - MouseScrollUp/Down return early (:180-196)
+    w.powers = powers.slice(0, 7);
+    w.powersScroll = 0;
+    w.hover(px + 10, py + 10);
+    w.wheel(1);
+    assert.equal(w.powersScroll, 0);
+    // and the two lists scroll independently
+    w.powers = powers.slice();
+    w.sideEffects = powers.slice();
+    w.hover(px + 10, py + 10);
+    w.wheel(1);
+    assert.deepEqual([w.powersScroll, w.sideEffectsScroll], [8, 0]);
+    w.hover(ITEM_RECTS.sideEffectsList[0] + 10, ITEM_RECTS.sideEffectsList[1] + 10);
+    w.wheel(1);
+    assert.deepEqual([w.powersScroll, w.sideEffectsScroll], [8, 8]);
   } finally { unmountArt(); }
 });

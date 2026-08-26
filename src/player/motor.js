@@ -147,6 +147,18 @@ export function swimSpeed(baseSpeed, swimmingSkill) {
   return baseSpeed * (swimmingSkill / 200) + baseSpeed / 4;
 }
 
+/** LevitateMotor.cs:83, verbatim - `(PlayerEntity.CarriedWeight * 4 >
+ *  250) && !playerLevitating && !GodMode`. The weight is in kg
+ *  (PlayerEntity.cs:184 = Items.GetWeight() + goldPieces x 0.0025), so
+ *  the line is 62.5 kg. There is no GodMode in this port (the standing
+ *  note worldModes.js carries for the Identify gate), so that half has
+ *  nothing to read and the weight test with the levitation exclusion is
+ *  the whole law. */
+export const OVER_ENCUMBERED_QUARTER_KG = 250;
+export function isOverEncumbered(carriedWeightKg, levitating = false) {
+  return carriedWeightKg * 4 > OVER_ENCUMBERED_QUARTER_KG && !levitating;
+}
+
 /**
  * U48 - PlayerMotor.StartRestGroundedCheck (:184-194), verbatim, and
  * the ONE HOME for it.
@@ -187,10 +199,15 @@ export function startRestGroundedCheck(grounded, feet, collider) {
  * and integrates AcrobatMotor-style vertical motion.
  */
 export class PlayerMotor {
-  constructor(collider, stats = { speed: 50, running: 30, swimming: 30 }, { jumpBoost = null, climbing = null } = {}) {
+  constructor(collider, stats = { speed: 50, running: 30, swimming: 30 }, { jumpBoost = null, climbing = null, carriedWeight = null } = {}) {
     this.collider = collider;
     this.stats = stats;
     this.jumpBoost = jumpBoost;    // () => AcrobatMotor jumpSpeedMultiplier (systems/skills owns the formula)
+    // () => PlayerEntity.CarriedWeight in kg, read LIVE at the move
+    // exactly as LevitateMotor.Update reads it (:83) - the swimmer's
+    // forced sink is the only consumer. A host that passes none has no
+    // inventory to weigh and never sinks.
+    this.carriedWeight = carriedWeight;
     // M3 CLIMBING (ClimbingMotor, classic path): the check machine -
     // mounted ONLY when the host passes deps, exactly as the
     // component is a mount in DFU (headless/test motors stay
@@ -355,9 +372,26 @@ export class PlayerMotor {
     // ((!swimming || IsGrounded) && pressedCrouch), and a free swim
     // FORCES the crouched capsule on the medium clock - DFU always
     // shrinks a swimmer; surfacing un-forces it the same way.
-    if (input.crouch && (!this.swimming || this.grounded)) {
+    // ":136-145 - a LEVITATING player is forced out of the crouch and
+    // the method returns; every arm below is nested under `else if
+    // (!riding && !onWater && !levitating)` (:171), so the Crouch key
+    // does nothing at all while levitating. (The return is DFU's -
+    // DecideHeightAction only decides; PlayerHeightChanger.Update
+    // still applies the pending action, which is the timer tick
+    // below.) No timerMax assignment here: DFU leaves the field at
+    // whatever the last arm set, and this arm sets nothing.
+    if (this.levitating) {
+      if (this.crouching) this.heightAction = 'stand';
+    } else if (input.crouch && (!this.swimming || this.grounded)) {
       this.heightAction = this.crouching ? 'stand' : 'crouch';
       this.heightTimerMax = HEIGHT_TIMER_FAST;
+      this.forcedSwimCrouch = false;
+    } else if (this.climb?.isClimbing) {
+      // ":183-191 - "if climbing, force into standing"; timerMax is
+      // set to the MEDIUM clock unconditionally, before the crouch
+      // test, and forcedSwimCrouch is cleared either way.
+      this.heightTimerMax = HEIGHT_TIMER_MEDIUM;
+      if (this.crouching) this.heightAction = 'stand';
       this.forcedSwimCrouch = false;
     } else if (this.swimming && !this.forcedSwimCrouch && !this.grounded) {
       if (!this.crouching) { this.heightAction = 'crouch'; this.heightTimerMax = HEIGHT_TIMER_MEDIUM; }
@@ -527,7 +561,16 @@ export class PlayerMotor {
       // Swimming without levitation: no vertical from the look
       // (AddMovement zeroes y unless a float key drives it).
       if (this.swimming && !this.levitating) my = 0;
-      if (input.up) my += 1;
+      // LevitateMotor.cs:83-89, verbatim ladder: an OVER-ENCUMBERED
+      // swimmer is pushed down every frame - `upDownVector +=
+      // Vector3.down` - and the arm REPLACES the Jump/FloatUp and
+      // Crouch/FloatDown arms (one if / else-if chain), so he cannot
+      // float or surface at all. Climbing and water-walking are the
+      // two exclusions.
+      if (this.swimming && !this.climb?.isClimbing && !this.waterWalking
+          && isOverEncumbered(this.carriedWeight?.() ?? 0, this.levitating)) {
+        my -= 1;
+      } else if (input.up) my += 1;
       else if (input.down) my -= 1;
       // AddMovement's THREE arms, in DFU's own order (LevitateMotor.cs
       // :116-140). AUDIT 24 player: the port had a different ladder -
@@ -646,7 +689,14 @@ export class PlayerMotor {
     // the scene's jumpSpeedMultiplier (Jumping skill; athleticism +
     // jump spell pend); crouched jumps scale by crouchingJumpDelta;
     // a MOVING jump adds forward * jumpSpeed * 0.05 of momentum.
-    if (this.grounded && input.jump && this.groundedTime >= GROUNDED_JUMP_GATE_S && !this.slowFalling) {
+    // AcrobatMotor.cs:76 - `if (!climbingMotor.WasClimbing &&
+    // playerMotor.GroundedTime < 0.1f) return;`: the bunny-hop gate is
+    // BYPASSED for a player who was climbing at this frame's check
+    // (ClimbingMotor.cs:390 latches wasClimbing = isClimbing before
+    // the abort ladder clears it), so topping out or letting go onto
+    // ground jumps immediately - groundedTime is 0 there.
+    if (this.grounded && input.jump && !this.slowFalling
+        && (this.climb?.wasClimbing || this.groundedTime >= GROUNDED_JUMP_GATE_S)) {
       this.velY = JUMP_SPEED * (this.jumpBoost ? this.jumpBoost() : 1);
       if (this.crouching) this.velY *= CROUCH_JUMP_DELTA;
       if (input.forward !== 0 || input.strafe !== 0) {

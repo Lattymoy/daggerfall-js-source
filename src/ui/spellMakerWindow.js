@@ -33,11 +33,43 @@ import {
   SPELLMAKER_NOT_ENOUGH_GOLD_ID, MUST_CHOOSE_NAME_ID,
 } from '../systems/spellMaker.js';
 import { goldAmount } from '../systems/court.js';
+import { MAGIC_ONLY_KEYS } from '../systems/effects.js';
 
 // TargetTypes / ElementTypes in DFU's declaration order, which IS the
 // classic rangeType / element index order the record stores.
 export const TARGET_LABELS = ['Caster Only', 'By Touch', 'Single Target at Range', 'Area Around Caster', 'Area at Range'];
 export const ELEMENT_LABELS = ['Fire', 'Frost', 'Poison', 'Shock', 'Magic'];
+
+/** ElementTypes as FLAGS (MagicAndEffectsEnums.cs:36-44) - Fire 1,
+ *  Cold 2, Poison 4, Shock 8, Magic 16, which is 1 << the index the
+ *  record stores, and EntityEffectBroker's two element sets
+ *  (:46-48). */
+export const elementFlag = (index) => 1 << index;
+export const ELEMENT_FLAGS_MAGIC_ONLY = elementFlag(4);
+export const ELEMENT_FLAGS_ALL = 0b11111;
+
+/** UpdateAllowedButtons' ELEMENT half (:575-590): allowedElements
+ *  starts at ElementFlags_MagicOnly and takes the MOST permissive
+ *  union of every chosen effect's own AllowedElements - "magic always
+ *  allowed". Each effect class is either ElementFlags_MagicOnly or
+ *  ElementFlags_All, and which is which is the set systems/effects.js
+ *  already reads off those classes (MAGIC_ONLY_KEYS) - imported, not
+ *  restated. With no effect chosen the defaults arm (:565-570) leaves
+ *  the same ElementFlags_MagicOnly.
+ *
+ *  FLAGGED - AUDIT 26 F181, the TARGET half of this same law is NOT
+ *  here: allowedTargets is the LEAST permissive intersection of each
+ *  effect's Properties.AllowedTargets (:586), and the port has no
+ *  per-effect target-flag data to intersect - the four sets
+ *  (TargetFlags_All / _Other / _Self / CasterOnly, one per effect
+ *  class) belong beside the support flags in systems/spellEffects.js,
+ *  which this wave does not own. Until that column exists the target
+ *  buttons still offer all five. */
+export const allowedElementsFor = (slots) => (slots ?? []).reduce(
+  (allowed, slot) => (slot?.key
+    ? allowed | (MAGIC_ONLY_KEYS.has(slot.key) ? ELEMENT_FLAGS_MAGIC_ONLY : ELEMENT_FLAGS_ALL)
+    : allowed),
+  ELEMENT_FLAGS_MAGIC_ONLY);
 const SPINNER_ROWS = {
   duration: [['durationBase', 'Base'], ['durationMod', 'Plus'], ['durationPerLevel', 'Per level']],
   chance: [['chanceBase', 'Base'], ['chanceMod', 'Plus'], ['chancePerLevel', 'Per level']],
@@ -81,6 +113,28 @@ export class SpellMakerWindow {
     this.pickCursor = 0;
     this.editSlot = -1;
     this.editCursor = 0;
+  }
+
+  /** SetSpellElement (:525-530): an element the chosen effects do not
+   *  allow is simply NOT TAKEN - DFU's button does nothing at all,
+   *  rather than stepping past it. */
+  _setElement(index) {
+    if ((allowedElementsFor(this.slots) & elementFlag(index)) === 0) return;
+    this.element = index;
+  }
+
+  /** UpdateAllowedButtons (:561-596) at each of DFU's four call sites
+   *  (:226 SetDefaults, :338 Setup, :396 ClearPendingDeleteEffectSlot,
+   *  :462 AddAndEditSlot), through EnforceSelectedButtons (:597-603):
+   *  a selection the new allowed set no longer holds falls back to
+   *  SelectFirstAllowedElementType (:635-660), which walks Fire,
+   *  Cold, Poison, Shock, Magic in that order. */
+  _updateAllowedButtons() {
+    const allowed = allowedElementsFor(this.slots);
+    if ((allowed & elementFlag(this.element)) !== 0) return;
+    for (let i = 0; i < ELEMENT_LABELS.length; i++) {
+      if ((allowed & elementFlag(i)) !== 0) { this.element = i; return; }
+    }
   }
 
   /** The live record for pricing and, on buy, for keeping. */
@@ -127,6 +181,7 @@ export class SpellMakerWindow {
     const slot = this.editSlot >= 0 ? this.editSlot : this.slots.findIndex((s) => !s);
     if (slot < 0) { this.mode = 'main'; this.notice = 'This spell already has three effects.'; return; }
     this.slots[slot] = { type: effect.type, subType: effect.subType, key: effect.key, settings: blankEffectSettings() };
+    this._updateAllowedButtons();   // AddAndEditSlot (:462)
     this.editSlot = slot;
     this.editCursor = 0;
     this.mode = 'edit';
@@ -175,7 +230,9 @@ export class SpellMakerWindow {
     const row = rows[this.cursor];
     if (action === 'char:n' || action === 'char:N') { const keep = this.onClose; this.reset(); this.onClose = keep; return; }
     if (action === 'char:d' || action === 'char:D') {
-      if (row.kind === 'slot') this.slots[row.i] = null;   // DeleteSlot
+      // ClearPendingDeleteEffectSlot (:388-397) - emptying a slot can
+      // narrow the allowed sets back down
+      if (row.kind === 'slot') { this.slots[row.i] = null; this._updateAllowedButtons(); }
       return;
     }
     if (action !== 'confirm' && action !== 'plus' && action !== 'minus') return;
@@ -187,7 +244,7 @@ export class SpellMakerWindow {
     } else if (row.kind === 'target') {
       this.rangeType = (this.rangeType + dir + TARGET_LABELS.length) % TARGET_LABELS.length;
     } else if (row.kind === 'element') {
-      this.element = (this.element + dir + ELEMENT_LABELS.length) % ELEMENT_LABELS.length;
+      this._setElement((this.element + dir + ELEMENT_LABELS.length) % ELEMENT_LABELS.length);
     } else if (row.kind === 'name') {
       this.mode = 'name';
     } else if (row.kind === 'buy') {

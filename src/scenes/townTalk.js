@@ -44,6 +44,7 @@ import { FACTION_TYPES } from '../formats/factionFile.js';
 import { skillValue, tallySkill, SKILLS } from '../systems/skills.js';
 import { NativeTalkWindow, preloadTalkArt, talkArtLoaded } from '../ui/nativeTalk.js';   // U8b
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U8b: pointer routing
+import { getClassicQuestionIndex } from '../systems/answerPipeline.js';   // GetClassicQuestionIndex (TalkManager.cs:691-724)
 
 export const TONE_NAMES = ['Polite', 'Normal', 'Blunt'];   // T3f: TalkTone -> index (DFU TalkToneToIndex)
 
@@ -366,6 +367,15 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  talkToStaticNPC runs the C# ones inside the engine. Art-less or
    *  building-less sessions keep the keyed greeting chain. */
   function openTalkWindow(greeting, { npcSeed = 0, npcName = '' } = {}) {
+    // GetReactionToPlayer_0_1_2 seeds its roll by the CURRENT talk
+    // partner - lastTargetMobileNPC or lastTargetStaticNPC by
+    // currentNPCType (TalkManager.cs:669-673) - so the band is stable
+    // per NPC. This is the port's one window opener and both kinds
+    // arrive here with their seed, so it is where the partner is
+    // recorded; the static path (worldModes' click, the guild popup's
+    // TALK) never set one before and every static NPC shared seed 0 or
+    // whichever mobile townsperson was talked to last.
+    _talkPartnerSeed = npcSeed;
     const eng = engine();
     if (talkArtLoaded() && directory.length) {
       showOverlay(new NativeTalkWindow(greeting, {
@@ -454,6 +464,10 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   }
 
   let _talkNpc = null;
+  /** DFU's lastTargetMobileNPC/lastTargetStaticNPC, as the reaction
+   *  roll uses them: the seed of whoever the player is talking to
+   *  right now, set by openTalkWindow for BOTH kinds. */
+  let _talkPartnerSeed = 0;
 
   /** GetReactionToPlayer_0_1_2 (:632-690) for the CURRENT tone and
    *  question. TK-iii's pipeline owns the gate that decides WHEN this
@@ -461,12 +475,17 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  cache it fills - so this is the tier computation alone, handed
    *  to the pipeline as its `reactionTier` seam. */
   function computeTier(questionType, socialGroup) {
-    void questionType;
     return reactionTier012({
       personality: playerEntity.stats?.personality ?? 50,
-      npcSeed: _talkNpc?._talkSeed ?? 0,
+      npcSeed: _talkPartnerSeed,
       socialGroup: socialGroup ?? 0,
-      questionIndex: 0, toneIndex: tone,
+      // :664-666 - questionTypeReactionMods[GetClassicQuestionIndex(qt)],
+      // {5,0,0,0,5,0,0,0}: the +5 belongs to Where-is-a-building/Regional
+      // (index 0) and Tell-me-about-a-location/OrganizationInfo (index 4)
+      // ALONE. Hardcoding 0 handed it to Person, Thing, Work and every
+      // quest question too, and the inflated value is then cached in
+      // toneReactionForTalkSession for the rest of the session.
+      questionIndex: getClassicQuestionIndex(questionType), toneIndex: tone,
       skillValue: tone === 0 ? skillValue(playerEntity, SKILLS.Etiquette)
         : tone === 2 ? skillValue(playerEntity, SKILLS.Streetwise) : 0,
       session: engine()?.session?.toneReactionForTalkSession ?? toneSession,

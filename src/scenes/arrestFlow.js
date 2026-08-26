@@ -26,6 +26,19 @@ import {
   pleaNotGuilty, resolveGuiltyVerdict, raiseRepForSentence, TEXT_EXECUTED,
 } from '../systems/court.js';
 import { advanceWorldMinutes, MINUTES_PER_DAY } from '../systems/worldTick.js';
+import { maxFatigue } from '../systems/statMods.js';   // DaggerfallEntity.MaxFatigue, FillVitalSigns' fatigue half
+
+/** DaggerfallEntity.FillVitalSigns (DaggerfallEntity.cs:442-447):
+ *  all three vitals back to their live maxima, nothing else. The court
+ *  calls it on EVERY exit that lets the player walk - the guilty plea
+ *  (:347), the state-2 release (:249), banishment (:276), the served
+ *  sentence (:478) and the acquittal (:425) alike - which matters
+ *  because SurrenderToCityGuards forced health to 1 on the way in. */
+export function fillVitalSigns(entity) {
+  entity.health = entity.maxHealth;
+  entity.fatigue = maxFatigue(entity);
+  entity.magicka = entity.maxMagicka;
+}
 
 /** ReleaseFromPrison (DaggerfallCourtWindow.cs:482-491) opens with
  *      DaggerfallUnity.WorldTime.DaggerfallDateTime.RaiseTime(240 * 60);
@@ -140,7 +153,12 @@ export function createArrestFlow({
   function verdict(court, useDebate) {
     const r = pleaNotGuilty(court, playerEntity, useDebate, { rolls });
     if (r.outcome === 'free') {
-      clearArrest();                   // AUDIT 21 F2: including `arrested`
+      // The acquittal arm is state 6 (DaggerfallCourtWindow.cs:412-427)
+      // and it is NOT bare: FillVitalSigns (:425) runs before
+      // RaiseReputationForDoingSentence (:426). Without it the player
+      // who surrendered - SurrenderToCityGuards set health to 1
+      // (PlayerEntity.cs:2321) - won the case and walked out at 1 HP.
+      release();                       // AUDIT 21 F2: including `arrested`
       // AUDIT 17e F22: DFU raises reputation on a successful defense
       // (DaggerfallCourtWindow.cs:426) - and says so against classic
       // in its own comment two lines up ("Also does not repair
@@ -232,12 +250,13 @@ export function createArrestFlow({
     playerEntity.haveShownSurrenderDialogue = false;
   }
 
-  /** Leaving CUSTODY - the court exit plus the prison vitals floor. An
-   *  acquitted player never went to prison, so they take clearArrest
-   *  alone: the floor is FillVitalSigns' and belongs to release. */
+  /** Leaving CUSTODY - ReleaseFromPrison's clock and flags plus
+   *  FillVitalSigns. DFU pairs the two on every walking exit, the
+   *  acquittal included, so there is one door out of the court and it
+   *  refills the player. */
   function release() {
     clearArrest();
-    playerEntity.health = Math.max(1, playerEntity.health);   // FillVitalSigns' floor (full refill pends vitals wiring)
+    fillVitalSigns(playerEntity);
   }
 
   return { onGuardHit, startCourtFlow };

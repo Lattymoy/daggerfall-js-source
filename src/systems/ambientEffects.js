@@ -29,12 +29,21 @@
 // the player (x/z +- Range(-3, 3), min dist 8); submerged, rand() <
 // 100 adds AmbientWaterBubbles flat. doNotPlayInCastle gates the
 // dungeon one-shots (deps.inCastle - LIVE since AUDIT 21 music F3, fed from
-// the block the player stands in; it was read here and written by nobody);
-// the cemetery howl/bird layer pends locations (routed).
+// the block the player stands in; it was read here and written by nobody).
+//
+// The CEMETERY layer is a SECOND channel on the same player, on its own
+// clock: cemeteryAmbientSounds = {AmbientDistantHowl, AmbientCreepyBirdCall
+// x2} (:45-50 - the bird call is listed TWICE, so it is two thirds of the
+// draw), armed by OnEnterLocationRect when the location is a Graveyard and
+// the player is outside (:518-529), ticked on its own scene-serialized
+// 1/80-second window (:154-162) and played PlaySomewhereAround, min
+// distance 13, with NO doNotPlayInCastle gate (:308-320). It shares the
+// one ambient one-shot source, so it takes the same busy skip.
 
 import { audio as defaultAudio } from './audio.js';
 import { rand } from '../formats/dfRandom.js';
 import { CLASSIC_UPDATE_INTERVAL } from '../characters/weaponStates.js';
+import { LOCATION_TYPES } from '../formats/mapsFile.js';   // OnEnterLocationRect's Graveyard test
 
 // ---- SoundClips indices, verbatim ----
 export const AMBIENT_SOUNDS = Object.freeze({
@@ -51,9 +60,17 @@ export const AMBIENT_CRICKETS_LOOP = 6;    // AmbientCrickets
 export const WATER_GENTLE = 439;
 export const AMBIENT_WATER_BUBBLES = 114;
 
+// cemeteryAmbientSounds (:45-50). AmbientDistantHowl = 113 and
+// AmbientCreepyBirdCall = 14 (SoundClips.cs:169, :43) - and the bird
+// call is listed TWICE, which is the whole of its 2-in-3 weight.
+export const CEMETERY_AMBIENT_SOUNDS = Object.freeze([113, 14, 14]);
+
 // The scene-serialized wait windows (DaggerfallUnityGame.unity)
 export const DUNGEON_AMBIENT_WAITS = Object.freeze({ minWait: 5, maxWait: 28 });
 export const EXTERIOR_AMBIENT_WAITS = Object.freeze({ minWait: 5, maxWait: 25 });
+// CemeteryMinWaitTime/CemeteryMaxWaitTime, serialized on the same
+// WeatherAmbientEffects object (1/80; the script defaults are 1/80 too).
+export const CEMETERY_AMBIENT_WAITS = Object.freeze({ minWait: 1, maxWait: 80 });
 
 /** WeatherManager.SetAmbientEffects, verbatim mapping. */
 export function presetForExterior(weather, night) {
@@ -74,6 +91,12 @@ export class AmbientEffects {
     this._waterCounter = 0;
     this._rainLoop = null;
     this._cricketsLoop = null;
+    // The component's own enabled state - see setActive.
+    this.active = true;
+    // IsCemeteryNearby + its own counter/window (:56-58).
+    this.isCemeteryNearby = false;
+    this._cemeteryCounter = 0;
+    this._cemeteryWait = 0;
     this._startWaiting();
   }
 
@@ -83,23 +106,74 @@ export class AmbientEffects {
     this._counter = 0;
   }
 
-  /** VERBATIM QUIRK, checked at AUDIT 21 and NOT changed.
+  /** StartCemeteryWaiting (:406-411) - the same Next(min, max) over
+   *  the cemetery window. */
+  _startCemeteryWaiting() {
+    this._cemeteryWait = CEMETERY_AMBIENT_WAITS.minWait
+      + Math.floor(this.rng() * (CEMETERY_AMBIENT_WAITS.maxWait - CEMETERY_AMBIENT_WAITS.minWait));
+    this._cemeteryCounter = 0;
+  }
+
+  /** PlayerGPS_OnEnterLocationRect (:518-529), verbatim: the flag is
+   *  cleared first, then set only for a Graveyard reached from
+   *  OUTSIDE, and setting it starts the cemetery countdown. Walking
+   *  into a location rect while already indoors arms nothing. */
+  onEnterLocationRect(locationType, { inside = false } = {}) {
+    this.isCemeteryNearby = false;
+    if (inside) return;
+    this.isCemeteryNearby = locationType === LOCATION_TYPES.Graveyard;
+    if (this.isCemeteryNearby) this._startCemeteryWaiting();
+  }
+
+  /** PlayerGPS_OnExitLocationRect (:531-534). */
+  onExitLocationRect() {
+    this.isCemeteryNearby = false;
+  }
+
+  /** The exterior ambient player is a CHILD of the scene's Exterior
+   *  object - WeatherAmbientEffects' m_Father is the GameObject named
+   *  "Exterior" (DaggerfallUnityGame.unity:483/1792-1822), which is
+   *  the object PlayerEnterExit.ExteriorParent points at (:796-798 of
+   *  the scene, PlayerEnterExit.cs:60). So EVERY transition indoors
+   *  deactivates it: EnableInteriorParent (:1077-1084) and
+   *  EnableDungeonParent (:1094-1106) both call DisableAllParents,
+   *  whose ExteriorParent.SetActive(false) (:1048) stops the object's
+   *  AudioSources and fires OnDisable, which nulls the rain and
+   *  crickets handles (AmbientEffectsPlayer.cs:96-100). Update stops
+   *  running with it; EnableExteriorParent (:1056-1071) turns it back
+   *  on and Update's lazy branch restarts whichever loop the frozen
+   *  Presets still names.
    *
-   *  The outdoor rain/crickets loop keeps playing when you walk into a
-   *  building, and layers under the dungeon ambience underground. The hosts
-   *  lane filed that as a bug. It is DFU's behaviour:
+   *  This module used to carry the opposite note - "VERBATIM QUIRK,
+   *  the outdoor rain keeps playing indoors" - resting on
+   *  WeatherManager.Update returning early while inside and on the
+   *  cemetery tick's `!IsPlayerInside` guard supposedly being dead
+   *  code otherwise. Both halves were misread: the Presets field does
+   *  freeze, but the component holding it is switched off, and the
+   *  cemetery guard is live for the DUNGEON instance of this same
+   *  component, whose OnEnterLocationRect handler keeps running while
+   *  its object is inactive.
    *
-   *    - WeatherManager.Update (:146-155) opens with "Do nothing if player
-   *      inside" and RETURNS, so SetAmbientEffects is never called and
-   *      `Presets` stays frozen at Rain.
-   *    - AmbientEffectsPlayer.Update (:134-137) then keeps the loop alive for
-   *      as long as Presets says Rain or Storm.
-   *    - The component is still RUNNING indoors, which its own
-   *      `IsCemeteryNearby && !playerEnterExit.IsPlayerInside` guard at :154
-   *      proves - that line would be dead code otherwise.
+   *  The wait counters are plain fields and survive the round trip. */
+  setActive(active) {
+    active = !!active;
+    if (active === this.active) return;
+    this.active = active;
+    // OnDisable/OnEnable both clear the loop handles; deactivation
+    // silences the sources the loops were playing on.
+    if (this._rainLoop) { this._rainLoop.stop(); this._rainLoop = null; }
+    if (this._cricketsLoop) { this._cricketsLoop.stop(); this._cricketsLoop = null; }
+  }
+
+  /** Update's preset-change block (:134-152): the change clears the
+   *  loop handles, stops the loop source and re-arms the wait.
    *
-   *  So a setPreset('none') on the interior transition would be a DEPARTURE,
-   *  not a fix, and this port is bug-for-bug. Recorded in Port-Ledger B. */
+   *  WeatherManager.Update (:146-155) opens with "Do nothing if player
+   *  inside" and RETURNS, so SetAmbientEffects is never called indoors
+   *  and `Presets` stays frozen at whatever the last outdoor frame set
+   *  - the preset is not what goes silent on the way in, setActive is.
+   *  A setPreset('none') on the interior transition WOULD be a
+   *  departure; setActive(false) is the source's own mechanism. */
   setPreset(preset) {
     if (preset === this.preset) return;
     this.preset = preset;
@@ -151,6 +225,15 @@ export class AmbientEffects {
     this._spatialized(index, [playerPos[0] + x, playerPos[1] + 0.34, playerPos[2] + zz], 3000);
   }
 
+  /** PlayCemeteryEffects (:308-320): a uniform Next(0, 3) over the
+   *  three-entry table, played somewhere around the player. No
+   *  doNotPlayInCastle gate and no preset test - the layer is
+   *  independent of whichever sound set Presets names. */
+  _playCemeteryEffects(deps) {
+    const index = Math.floor(this.rng() * CEMETERY_AMBIENT_SOUNDS.length);
+    this._playSomewhereAround(CEMETERY_AMBIENT_SOUNDS[index], deps.playerPos ?? [0, 0, 0]);
+  }
+
   _playEffects(deps) {
     const sounds = AMBIENT_SOUNDS[this.preset];
     if (!sounds) return;   // rain/clearNight/none: loops only
@@ -164,11 +247,14 @@ export class AmbientEffects {
   }
 
   /**
-   * Per-frame update. deps: { playerPos, inCastle,
+   * Per-frame update. deps: { playerPos, inside (PlayerEnterExit
+   * .IsPlayerInside - the cemetery layer's own gate), inCastle,
    * waterSurfaceY (the block water level - null when dry),
    * submerged (the P12 head-under flag) }.
    */
   update(dt, deps = {}) {
+    // An inactive GameObject's Update does not run (see setActive).
+    if (!this.active) return;
     // loops start lazily for their presets (Update, verbatim)
     if ((this.preset === 'rain' || this.preset === 'storm') && !this._rainLoop) {
       this._rainLoop = this.engine.loop(AMBIENT_RAIN_LOOP, 1);
@@ -182,6 +268,17 @@ export class AmbientEffects {
     if (this._counter > this._wait) {
       this._playEffects(deps);
       this._startWaiting();
+    }
+    // The cemetery layer (:154-162). Its counter only advances while
+    // the flag is armed AND the player is outside: the guard is what
+    // keeps the DUNGEON instance of this component silent when its own
+    // OnEnterLocationRect armed it from a graveyard above.
+    if (this.isCemeteryNearby && !deps.inside) {
+      this._cemeteryCounter += dt;
+      if (this._cemeteryCounter > this._cemeteryWait) {
+        this._playCemeteryEffects(deps);
+        this._startCemeteryWaiting();
+      }
     }
     // Water sound effects - "timing based on classic"
     if (this._waterCounter > CLASSIC_UPDATE_INTERVAL) {

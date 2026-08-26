@@ -316,15 +316,20 @@ test('action save-load-11: a door saved MID-RISE restores mid-rise and keeps ris
   assert.equal(fresh.door.activationCount, 0, 'the fresh graph really has not been activated');
   fresh.a.restoreSaveData(snap);
   assert.equal(fresh.door.moveState, 'forward', 'the Move tween survives the round trip');
-  // BOTH reviewers of this slice found the same hole: the RESTORE of
-  // activationCount was unpinned, and deleting that line left the whole
-  // suite green while Testing.md claimed the field round-tripped. It is
-  // load-bearing - DoorText's first-activation hold reads
-  // `activationCount === 0 && byPlayer` and the Hurt21 relay reads
-  // `activationCount % 20`, so a lost counter re-shows a door's text
-  // after every load. Discriminating here because `receive` left the
-  // saved door at 1 while the fresh one is 0.
-  assert.equal(fresh.door.activationCount, 1, "Receive's counter rides the record");
+  // AUDIT 26 (parity F185): this used to assert the counter RIDES the
+  // record. It does not in DFU. ActionObjectData_v1 is
+  // loadID/position/rotation/currentState/actionPercentage
+  // (SerializableGameObject.cs:344-351) and ActionDoorData_v1 adds only
+  // currentLockValue and lockpickFailedSkillLevel (:329-337) - neither
+  // serializer carries DaggerfallAction.activationCount (:44), and the
+  // load rebuilds the location, so every counter restarts at 0. That is
+  // load-bearing the OTHER way: a reloaded DoorText door shows its text
+  // and holds shut on the first click again (DaggerfallAction.cs:870)
+  // and a Hurt21 relay restarts its every-20th phase (:725).
+  // Discriminating because `receive` left the SAVED door at 1.
+  assert.equal(door.activationCount, 1, 'the saved door really was activated once');
+  assert.equal('activationCount' in snap[0], false, 'DFU serializes no activation counter');
+  assert.equal(fresh.door.activationCount, 0, "the rebuilt scene's counter starts at 0");
   approx(fresh.door.moveT, 1 / 3, 1e-2);
   // restored mid-rise, not snapped back to the floor
   approx(fresh.door.matrix[13] - baseY, 3.2 / 3, 2e-2);
@@ -343,9 +348,9 @@ test('action save-load-11: a door saved MID-RISE restores mid-rise and keeps ris
 });
 
 test('action save-load-11: the Move pair is PRESENCE-GATED - a pre-fix snapshot restores unchanged', () => {
-  // Every field past {state, t, activationCount} is additive: a
-  // snapshot written before the pair existed must leave the live Move
-  // state alone rather than zero it.
+  // Every field past {state, t} is additive: a snapshot written before
+  // the pair existed must leave the live Move state alone rather than
+  // zero it.
   const { a, door } = buildPortcullis();
   a.receive(door, 'Direct');
   run(a, 0.9);
@@ -371,10 +376,10 @@ test('action save-load-11: the Move pair is PRESENCE-GATED - a pre-fix snapshot 
 });
 
 test('action save-load-11: the SWING half of the record still round-trips through the same law', () => {
-  // The refactor moved {state, t, activationCount, lock} out of the
-  // dungeon host and into ActionSystem - the swing must land exactly
-  // where it did (a mid-swing door resumes and stays passable, an
-  // unlocked door stays unlocked).
+  // The refactor moved {state, t, lock} out of the dungeon host and
+  // into ActionSystem - the swing must land exactly where it did (a
+  // mid-swing door resumes and stays passable, an unlocked door stays
+  // unlocked).
   const { a, door } = buildPortcullis();
   door.currentLockValue = 0;
   a.toggleDoor(door);
@@ -383,7 +388,6 @@ test('action save-load-11: the SWING half of the record still round-trips throug
   const snap = a.collectSaveData();
   assert.equal(snap[0].state, 'forward');
   assert.equal(snap[0].lock, 0);
-  assert.equal(snap[0].activationCount, 0);         // toggleDoor is not Receive
 
   const fresh = buildPortcullis();
   assert.equal(fresh.collider.buckets.has(fresh.door.key), true, 'a closed door starts solid');

@@ -45,8 +45,10 @@ const countAll = (plates) => {
 };
 
 /** A candidate offset is legal when it clears every already-PLACED
- *  plate, the partner excepted - DFU checks exactly that set in the
- *  pair arms (:1201-1305). */
+ *  plate (`onlyCheckPlaced: true`, :1061-1062). `skip` is DFU's
+ *  optional `skipNameplate`, which ONLY the half-shift arm passes
+ *  (:1201) - every later arm omits it, so a partner placed a line
+ *  earlier is counted against the plate still looking for a spot. */
 const clearOfPlaced = (p, tryOff, plates, skip) => {
   const probe = { x: p.x, y: p.y, w: p.w, h: p.h, offY: p.offY + tryOff };
   return plates.every((q) => q === p || q === skip || !q.placed || !nameplatesIntersect(probe, q));
@@ -68,31 +70,52 @@ export function resolveNameplates(input) {
     for (const p of plates) {
       if (p.placed || p.count !== 1) continue;
       const q = plates.find((o) => o !== p && !o.placed && nameplatesIntersect(p, o));
-      if (!q) continue;
+      // `j >= buildingNameplates.Length` (:1179-1185): a count of 1
+      // with no unplaced collider left to find is a stale count, and
+      // DFU zeroes it and PLACES the plate where it stands rather
+      // than carrying it into the last-resort hop.
+      if (!q) { p.count = 0; p.placed = true; continue; }
       const dy = Math.abs((p.y + p.offY) - (q.y + q.offY));
       const ySize = p.h / 2 + q.h / 2;
       const [dp, dq] = dirsOf(p, q);
       if (q.count === 1) {
-        // the pair fix (:1192-1252): half-shift both, else 2x one alone
+        // the pair fix (:1192-1272): half-shift both, else ONE alone
         const bias = (ySize - dy) * 0.5;
         if (clearOfPlaced(p, dp * bias, plates, q) && clearOfPlaced(q, dq * bias, plates, p)) {
           p.offY += dp * bias; q.offY += dq * bias;
           p.placed = q.placed = true;
-        } else if (clearOfPlaced(p, dp * bias * 2, plates, q) && clearOfPlaced(q, 0, plates, p)) {
-          p.offY += dp * bias * 2;
-          p.placed = q.placed = true;
-        } else if (clearOfPlaced(q, dq * bias * 2, plates, p) && clearOfPlaced(p, 0, plates, q)) {
-          q.offY += dq * bias * 2;
-          p.placed = q.placed = true;
+        } else if (clearOfPlaced(p, dp * bias * 2, plates, null) && clearOfPlaced(q, 0, plates, p)) {
+          // :1230-1240. The two checks are SEQUENTIAL, not conjoined:
+          // first is placed on its own 2x check alone, and only THEN
+          // is second asked whether its ORIGINAL spot is still clear -
+          // a question that now includes first at its new offset
+          // (`buildingNameplates[i] = first;` :1233, and no
+          // skipNameplate on either call). So p can be placed while q
+          // is not, which the conjoined form could never do.
+          p.offY += dp * bias * 2; p.placed = true;
+          if (clearOfPlaced(q, 0, plates, null)) q.placed = true;
+        } else if (clearOfPlaced(q, dq * bias * 2, plates, null)) {
+          // :1242-1252, the mirror.
+          q.offY += dq * bias * 2; q.placed = true;
+          if (clearOfPlaced(p, 0, plates, null)) p.placed = true;
         }
-      } else {
-        // the collider is entangled elsewhere: shift THIS plate a
-        // full ySize, trying away-from then toward (:1277-1308)
-        if (clearOfPlaced(p, dp * ySize, plates, q)) {
-          p.offY += dp * ySize; p.placed = true; q.count--;
-        } else if (clearOfPlaced(p, -dp * ySize, plates, q)) {
-          p.offY += -dp * ySize; p.placed = true; q.count--;
+        // :1274-1275: placing FIRST costs second one collision,
+        // whether or not second was placed with it. An unplaced
+        // second dropped to 0 this way is picked up by the zero pass
+        // below (:1317-1318) at its ORIGINAL spot.
+        if (p.placed) q.count--;
+      } else if (q.count > 1) {
+        // `else if (second.numCollisionsDetected > 1)` (:1277-1305):
+        // the collider is entangled elsewhere, so shift THIS plate a
+        // full ySize, away-from then toward. A collider at count 0 -
+        // reachable mid-loop through the decrement above - matches
+        // NEITHER arm, and DFU leaves both plates alone.
+        if (clearOfPlaced(p, dp * ySize, plates, null)) {
+          p.offY += dp * ySize; p.placed = true;
+        } else if (clearOfPlaced(p, -dp * ySize, plates, null)) {
+          p.offY += -dp * ySize; p.placed = true;
         }
+        if (p.placed) q.count--;   // :1307-1308, the same decrement
       }
     }
     for (const p of plates) if (!p.placed && p.count === 0) p.placed = true;   // re-place, no recompute (:1317-1318)

@@ -52,21 +52,32 @@ test('X8: Pacify lands on a MATCHING group and is silent on any other', () => {
     'a mismatch is not a failed roll, it is no roll at all');
 });
 
-test('X8: the Humanoid/Charm SPLIT - neither reaches the other\'s targets', () => {
-  // "Pacify Humanoid only operates on humanoid monsters (not enemy
-  // classes)" + "Charm only works on enemy classes (not monstrous
-  // humanoids)". Between them they cover every humanoid, and the
-  // reason is the career table: a class enemy is absent from
-  // GetEnemyEntityEnemyGroup, so its group is None.
+test('X8: CHARM is enemy classes only, and a class enemy still carries its CAREER group', () => {
+  // AUDIT 26: this pin used to assert `enemyGroupOf(128) === None` and
+  // called the Humanoid/Charm split airtight on the strength of
+  // PacifyEffect's note that Pacify Humanoid "only operates on
+  // humanoid monsters (not enemy classes)". That note is intent; the
+  // code is GetEnemyEntityEnemyGroup switching on CareerIndex, and an
+  // EnemyClass's CareerIndex is `ID - 128` (EnemyEntity.cs:293), which
+  // collides straight back into the MonsterCareers cases. Neither
+  // IsGroupMatch (:126-133) nor GetEntityFlags (:783-802) gates on
+  // entity type, so the collision is what the game does.
   const orc = foe(7);            // a humanoid MONSTER
-  const bandit = foe(128);       // an enemy CLASS
+  const mage = foe(128);         // an enemy CLASS: career 0 = Rat = ANIMAL
+  const knight = foe(145);       // an enemy CLASS: career 17 = Zombie = UNDEAD
   assert.equal(enemyGroupOf(7), NEARBY.Humanoid);
-  assert.equal(enemyGroupOf(128), NEARBY.None, 'a class enemy has no group at all');
+  assert.equal(enemyGroupOf(128), NEARBY.Animal, 'Mage collides onto MonsterCareers.Rat');
+  assert.equal(enemyGroupOf(145), NEARBY.Undead, 'Knight collides onto MonsterCareers.Zombie');
   assert.equal(cast(orc, 33, 2).pacify, true, 'Pacify Humanoid takes the orc');
-  assert.equal(cast(bandit, 33, 2).pacify, undefined, 'and cannot touch the bandit');
-  assert.equal(cast(bandit, 34, 255).pacify, true, 'Charm takes the bandit');
+  assert.equal(cast(mage, 33, 2).pacify, undefined, 'the class Mage is not Humanoid - it is Animal');
+  assert.equal(cast(mage, 33, 0).pacify, true, 'Pacify ANIMAL calms a class Mage');
+  assert.equal(cast(knight, 33, 1).pacify, true, 'Pacify UNDEAD calms a class Knight');
+  // Charm's own gate is IsClassEnemyId, and it is unchanged - the two
+  // effects OVERLAP on a class enemy rather than partitioning it.
+  assert.equal(cast(mage, 34, 255).pacify, true, 'Charm takes the class Mage');
   assert.equal(cast(orc, 34, 255).pacify, undefined, 'and cannot touch the orc');
-  // the four atronachs have no group either, so nothing pacifies them
+  // the four atronachs are an EXPLICIT EnemyGroups.None, so nothing
+  // pacifies them - and no class id reaches the atronach band
   for (const at of [35, 36, 37, 38]) {
     for (const v of [0, 1, 2, 3]) assert.equal(cast(foe(at), 33, v).pacify, undefined, `atronach ${at}`);
   }

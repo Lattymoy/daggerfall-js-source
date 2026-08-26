@@ -57,62 +57,82 @@ export const bookArtLoaded = () => !!_art;
 
 /** Token stream -> layout lines, LocalizedBook.ConvertTokensToString +
  *  CreateBookLabels' law (AUDIT B-P1, which corrected this):
- *   - a row is closed by NewLine ALONE. Justify tokens do NOT break
- *     the row; they set STICKY alignment that holds until the next
- *     justify token, so a centred passage stays centred across lines.
+ *   - a LINE is closed by NewLine alone: ConvertTokensToString writes
+ *     '\n' for NewLine and nothing else breaks the string, and
+ *     CreateBookLabels splits Content on '\n' (:218).
+ *   - a LINE IS NOT A ROW. Every Text token in a line becomes its OWN
+ *     word-wrapping label (the switch's default arm, :253-254) and
+ *     LayoutBookLabels stacks them one under the other (y +=
+ *     label.Size.y, :326). Adjacent Text tokens are merged back into
+ *     one token by the string round trip - ConvertStringToRSCTokens
+ *     only cuts a text run where MARKUP appears
+ *     (DaggerfallStringTableImporter.cs:183-210) - so a row is a RUN
+ *     of Text tokens uninterrupted by a justify or font token, and a
+ *     justify token mid-line starts a new row.
+ *   - alignment and font are STICKY state (:210-211) applied to the
+ *     labels created AFTER the token sets them (:240-245, :253-254):
+ *     a justify token at the END of a line centres the NEXT row, not
+ *     the row it closes, and the stickiness holds across newlines.
  *   - PAGES CONCATENATE: DFU appends every page's converted text into
  *     one Content string, so a page not ending in NewLine merges with
  *     the next page's first line rather than closing a row.
- *   - PositionPrefix and SameLineOffset are "Unused" for books in
- *     DFU's own converter - dropped here too, bug-for-bug.
+ *   - PositionPrefix and SameLineOffset are "Unused" in DFU's own
+ *     converter (LocalizedBook.cs:305-310) - they put NOTHING in the
+ *     string, so they neither split a text run nor keep a line from
+ *     counting as empty.
  *   - FontPrefix is sticky font state in DFU (currentFont); the port
  *     has one book face, so it is recorded and not yet applied (the
  *     loud interim in this file's header). */
 export function layoutBookLines(bookFile) {
   const lines = [];
-  let current = { text: '', center: false, font: 0 };
-  let alignCenter = false, font = 0, lineTokens = 0;
-  // AUDIT 24 ui: the stickiness holds only until an EMPTY LINE.
-  // CreateBookLabels splits Content on '\n' and runs
-  // ConvertStringToRSCTokens per line; an empty string converts to null
-  // (DaggerfallStringTableImporter.cs:180-181), and that arm adds a
-  // Left-aligned empty label and then resets alignment, colour and
-  // scale - DFU's own comment says so
-  // (DaggerfallBookReaderWindow.cs:221-228). A line that produced NO
-  // tokens at all is that line; one carrying only a justify token is
-  // not. Without the reset a centred heading followed by a blank line
-  // centred the whole rest of the book.
-  const flush = () => {
+  let alignCenter = false, font = 0;
+  let row = null;         // the label being accumulated, or none
+  let lineTokens = 0;     // tokens this line put IN the string
+  // A row closes when the state that made it changes, and at the end
+  // of its line - each label is created with the state standing when
+  // its first Text token arrived.
+  const closeRow = () => { if (row) { lines.push(row); row = null; } };
+  // AUDIT 24 ui: an empty line - one that converted to no tokens at
+  // all (DaggerfallStringTableImporter.cs:180-181) - adds a Left,
+  // DEFAULT-FONT empty label and then resets alignment, colour and
+  // scale; DFU's own comment says so (:221-228). currentFont is NOT
+  // reset. Without the reset a centred heading followed by a blank
+  // line centred the whole rest of the book.
+  const endLine = () => {
+    closeRow();
     if (lineTokens === 0) {
-      current.center = false; current.font = 0;
-      alignCenter = false; font = 0;
+      lines.push({ text: '', center: false, font: 0 });
+      alignCenter = false;
     }
-    lines.push(current);
-    current = { text: '', center: alignCenter, font };
     lineTokens = 0;
   };
   for (let page = 0; page < bookFile.pageCount; page++) {
     for (const token of bookFile.getPageTokens(page) ?? []) {
-      if (token.formatting !== RSC.NewLine) lineTokens++;
-      if (token.formatting === TOKEN_TEXT) {
-        current.text += token.text;
-      } else if (token.formatting === RSC.NewLine) {
-        flush();
+      if (token.formatting === RSC.NewLine) {
+        endLine();
+      } else if (token.formatting === TOKEN_TEXT) {
+        lineTokens++;
+        if (!row) row = { text: '', center: alignCenter, font };
+        row.text += token.text;
       } else if (token.formatting === RSC.JustifyCenter) {
+        lineTokens++;
+        closeRow();
         alignCenter = true;
-        current.center = true;
       } else if (token.formatting === RSC.JustifyLeft) {
+        lineTokens++;
+        closeRow();
         alignCenter = false;
-        current.center = false;
       } else if (token.formatting === RSC.FontPrefix) {
+        lineTokens++;
+        closeRow();
         font = token.x ?? 0;
-        current.font = font;
       }
-      // PositionPrefix / SameLineOffset: unused for books (DFU)
+      // PositionPrefix / SameLineOffset: unused for books (DFU) - they
+      // are not counted, because they write nothing into the string
     }
   }
   // The trailing partial line closes the book (DFU's final split entry)
-  if (current.text) lines.push(current);
+  closeRow();
   return lines;
 }
 

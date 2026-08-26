@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   NEARBY, REFRESH_NEARBY_OBJECTS_INTERVAL, NEARBY_DEFAULT_MAX_RANGE,
-  entityFlags, lootFlags, updateNearbyObjects, getNearbyObjects, createNearbyScan,
+  entityFlags, lootFlags, updateNearbyObjects, getNearbyObjects, createNearbyScan, careerIndexOf,
 } from '../src/systems/nearbyObjects.js';
 
 test('X4 nearby: the flag bits are the classic powers of two, and the two constants are DFU\'s', () => {
@@ -36,9 +36,24 @@ test('X4 nearby: the group bit is the CAREER switch, not the port\'s affinity fi
   assert.equal(g(40), NEARBY.Enemy | NEARBY.Animal, 'Dragonling_Alternate is ANIMAL (classic grouped it as undead)');
   // the four atronachs are an EXPLICIT None - Enemy, no group bit
   for (const at of [35, 36, 37, 38]) assert.equal(g(at), NEARBY.Enemy, `atronach ${at} takes no group bit`);
-  // and a CLASS enemy is absent from the switch entirely
-  assert.equal(g(128), NEARBY.Enemy, 'a human bandit is invisible to a Humanoid scan');
-  assert.equal(g(146), NEARBY.Enemy);
+  // AUDIT 26: a CLASS enemy is classified by its CAREER INDEX
+  // (mobile id - 128, EnemyEntity.cs:293), which collides straight
+  // back into the MonsterCareers switch - GetEntityFlags hands
+  // EnemyClass and EnemyMonster to the same GetEnemyGroup() call.
+  // This block used to assert the opposite (bare Enemy for both ends
+  // of the class band), which restated the port instead of the C#.
+  assert.equal(g(128), NEARBY.Enemy | NEARBY.Animal, 'Mage -> career 0 Rat -> ANIMAL');
+  assert.equal(g(135), NEARBY.Enemy | NEARBY.Humanoid, 'Burglar -> career 7 Orc -> HUMANOID');
+  assert.equal(g(143), NEARBY.Enemy | NEARBY.Undead, 'Barbarian -> career 15 SkeletalWarrior -> UNDEAD');
+  assert.equal(g(145), NEARBY.Enemy | NEARBY.Undead, 'Knight -> career 17 Zombie -> UNDEAD');
+  assert.equal(g(146), NEARBY.Enemy | NEARBY.Undead, 'Knight_CityWatch -> career 18 Ghost -> UNDEAD');
+  // careerIndexOf is the whole of the fold, and it leaves monsters alone
+  assert.deepEqual([0, 42, 128, 146].map(careerIndexOf), [0, 42, 0, 18]);
+  // the daedra band has no class collision (careers stop at 18), so
+  // the Daedra bit stays monsters-only
+  for (let mt = 128; mt <= 146; mt++) {
+    assert.notEqual(g(mt) & NEARBY.Daedra, NEARBY.Daedra, `class ${mt} is never Daedra`);
+  }
 });
 
 test('X4 nearby: a civilian is Humanoid and NEVER Enemy; the Magic bit is any live effect', () => {

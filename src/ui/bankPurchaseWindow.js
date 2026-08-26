@@ -45,8 +45,13 @@ import { TRANSACTION_RESULT, housePrice, shipPrice, SHIP_PRICES } from '../syste
 /** mainPanel.Size (:125) - and the size BANK01I0.IMG ships. */
 export const PURCHASE_PANEL_W = 225, PURCHASE_PANEL_H = 129;
 export const PURCHASE_PANEL_X = Math.round((320 - PURCHASE_PANEL_W) / 2);   // 48
-/** mainPanel.Position (:124) is (0, 50) under a MIDDLE alignment. */
-export const PURCHASE_PANEL_Y = 50;
+/** Center/Middle on the 320x200 NativePanel (:122-123). BaseScreenComponent
+ *  :1217/:1234 make BOTH alignments compute the rect from the parent
+ *  alone, so the declared `Position = new Vector2(0, 50)` (:124) never
+ *  applies - the panel sits at ((200-129)/2) = 35.5, not 50. The half
+ *  pixel is real in DFU too (its rect is float); the port rounds it the
+ *  way the guild popup's 74.5 is rounded. */
+export const PURCHASE_PANEL_Y = Math.round((200 - PURCHASE_PANEL_H) / 2);   // 36
 
 /** The window's rects, verbatim (:23-28, :287-288, :320-334). */
 export const PURCHASE_RECTS = Object.freeze({
@@ -134,41 +139,54 @@ export class BankPurchaseWindow {
     this.scroll = Math.max(0, Math.min(next, Math.max(0, this.count - LIST_ROWS)));
   }
 
-  /** BuyButton_OnMouseClick (:380-392). SelectedIndex < 0 does
-   *  NOTHING AT ALL - no beep, no message - which is DFU's own
-   *  `if (SelectedIndex < 0) return;` and is why the button feels
-   *  dead until a row is picked. */
+  /** BuyButton_OnMouseClick (:380-391). The ButtonClick is played
+   *  FIRST, ABOVE the guard (:381-382), so the button beeps even on a
+   *  dead press; then `if (SelectedIndex < 0) return;` does NOTHING
+   *  ELSE - no message - which is why it feels dead until a row is
+   *  picked. Then CloseWindow() runs UNCONDITIONALLY (:386), before
+   *  either GeneratePurchase*Popup: the list is gone whatever the
+   *  transaction answers, and the result box belongs to the BANKING
+   *  window behind it. */
   _buy() {
+    audio.playOneShot(SOUND.ButtonClick, 1);
     if (this.selected < 0) return;
     // In SHIP mode DFU CLOSES this window first and the BANKING window
-    // generates the popup (:385-388 -> DaggerfallBankingWindow.cs
+    // generates the popup (:387-388 -> DaggerfallBankingWindow.cs
     // :229-232), so the result of a ship purchase is the bank's
     // message and not this window's. The picked INDEX is the ShipType.
     if (this.ships) {
-      audio.playOneShot(SOUND.ButtonClick, 1);
       this._close();
       this.hooks.buy?.(this.selected);
       return;
     }
     const house = this.houses[this.selected];
     if (!house) return;
-    audio.playOneShot(SOUND.ButtonClick, 1);
     const r = this.hooks.buy?.(house) ?? { result: TRANSACTION_RESULT.NONE };
     if (r.result === TRANSACTION_RESULT.NONE) return;   // GeneratePopup says nothing on NONE
     const rows = this.hooks.rows?.(r.result) ?? [];
     this.box = {
       rows: rows.length ? rows : [{ text: String(r.result), center: true }],
       amount: r.amount ?? 0,
-      bought: r.result === TRANSACTION_RESULT.PURCHASED_HOUSE,
+      result: r.result,
     };
   }
 
   _dismissBox() {
-    const b = this.box;
     this.box = null;
-    // A completed purchase closes the window with it: the list it was
-    // showing is a market this player has just left.
-    if (b?.bought) this._close();
+    // CloseWindow() at :386 is above the popup and takes no result
+    // with it: the list is gone after ANY press of BUY, bought or
+    // refused, and the player is back at the banking window.
+    //
+    // FLAGGED, and it is ownership rather than function: in DFU the
+    // result box is GeneratePurchaseHousePopup's, raised BY the
+    // banking window (DaggerfallBankingWindow.cs:234-237) over a
+    // purchase list that has already closed. The port's host wires
+    // `buy` straight to systems/banking.purchaseHouse instead of
+    // through the banking window's own arm, so this window still
+    // carries the box - it is drawn over a list DFU had already
+    // dismissed. Routing it needs a `buyHouse` on the banking window
+    // and the host hook re-pointed at it; both are outside this file.
+    this._close();
   }
 
   click(vx, vy) {

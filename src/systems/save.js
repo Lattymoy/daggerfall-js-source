@@ -57,6 +57,13 @@ const ENTITY_FIELDS = [
   // dropped it would let a player eat every four in-game hours OR
   // every reload, whichever came first.
   'lastTimePlayerAteOrDrankAtTavern',
+  // The witch coven's daedra-of-the-day, which DFU persists one for
+  // one (SerializablePlayer.cs:164-165, :332-333). The roll lives on
+  // the entity (daedraForSummoner MUTATES it, as DFU writes it onto
+  // PlayerEntity) and the re-roll gate is `day !== today || !index`,
+  // so a save that dropped the pair let a player reload until the
+  // prince they wanted answered.
+  'daedraSummonDay', 'daedraSummonIndex',
 ];
 
 /** AUDIT 17h F1: the ELEVEN social-group reputations DFU writes out

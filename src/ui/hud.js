@@ -23,6 +23,7 @@ import { drawActiveSpells, activeSpellAt, createBlinkClock, hudPointer } from '.
 import { preloadSpellIcons } from './spellIcons.js';   // U46: the sheet the rows draw from
 import { nativeMetrics } from './nativePanel.js';
 import { ToolTip } from './toolTip.js';
+import { getBool } from '../systems/settings.js';   // GUI/SwapHealthAndFatigueColors, GUI/EnableVitalsIndicators
 
 export const COMPASS_BOX_OUTLINE = 2;
 export const COMPASS_BOX_INTERIOR = 64;
@@ -61,6 +62,168 @@ export const BREATH_BAR_BOTTOM = 92;
 export const BREATH_COLOR_NORMAL = [247, 239, 41];
 export const BREATH_COLOR_SHORT = [148, 12, 0];
 export const breathShortThreshold = (liveEndurance) => (liveEndurance >> 3) + 4;
+
+// AUDIT 26 - THE VITALS INDICATORS (HUDVitals.cs:99-115, :211-214,
+// :276-312). Settings.EnableVitalsIndicators defaults to True
+// (settingsDefaults.js:106, DFU's own default), and when it is on
+// HUDVitals adds SIX more bars behind the three plain ones: a
+// smoothed LOSS trail per vital and an instant GAIN bar per vital,
+// all at the SAME rect as the bar they sit under (PositionIndicators
+// :236-256). Only when the setting is OFF does Update take
+// SynchronizeImmediately (:211-214), which is the single plain bar
+// per vital the port used to draw unconditionally.
+//
+// The three components of the law, each verbatim below:
+//   - VitalsChangeDetector (Player/VitalsChangeDetector.cs) measures
+//     the per-frame delta and raises one event per vital that moved;
+//     a change in ANY max resets it instead (a level-up or a load).
+//   - VerticalProgressSmoother (:1-52) is the delayed lerp: a first
+//     change waits 0.5s, a change while one is running waits 0.25s,
+//     then lerps over 0.4s.
+//   - the handlers (:290-312 and its two twins) decide WHICH bar
+//     jumps and which one trails: on a LOSS the plain bar drops at
+//     once and the loss bar smooths down after it, on a GAIN the loss
+//     bar jumps up and the plain bar smooths up to meet it.
+// The colours are HUDVitals.cs:41-46, as Unity floats.
+export const HEALTH_LOSS_COLOR = [0, 0.22, 0];
+export const FATIGUE_LOSS_COLOR = [0.44, 0, 0];
+export const MAGICKA_LOSS_COLOR = [0, 0, 0.44];
+export const HEALTH_GAIN_COLOR = [0.60, 1, 0.60];
+export const FATIGUE_GAIN_COLOR = [1, 0.50, 0.50];
+export const MAGICKA_GAIN_COLOR = [0.70, 0.70, 1];
+
+/** VerticalProgressSmoother.timerMax (:14). */
+export const SMOOTHER_TIMER_MAX = 0.4;
+
+/** VerticalProgressSmoother (:9-51) verbatim. `Amount` is the field a
+ *  VerticalProgress draws from, so it is the whole state a caller
+ *  needs; `cycle` takes dt where DFU reads Time.deltaTime. */
+export class VerticalProgressSmoother {
+  constructor(amount = 0) {
+    this.amount = amount;
+    this.prevPercent = 0;
+    this.targetPercent = 0;
+    this.timer = 0;
+    this.cycleTimer = false;
+  }
+
+  /** BeginSmoothChange (:21-33): a NEGATIVE timer is the delay before
+   *  the lerp starts - half a second for a change that starts from
+   *  rest, a quarter for one that interrupts a running change. */
+  beginSmoothChange(target) {
+    if (this.cycleTimer === false) { this.cycleTimer = true; this.timer = -0.5; }
+    else this.timer = -0.25;
+    this.prevPercent = this.amount;
+    this.targetPercent = target;
+  }
+
+  /** Cycle (:35-50). Mathf.Lerp clamps t, and the bar is left exactly
+   *  on target by the frame the timer reaches timerMax. */
+  cycle(dt) {
+    if (!this.cycleTimer) return;
+    this.timer += dt;
+    if (this.timer >= 0) {
+      const t = Math.max(0, Math.min(1, this.timer / SMOOTHER_TIMER_MAX));
+      this.amount = this.prevPercent + (this.targetPercent - this.prevPercent) * t;
+      if (this.timer >= SMOOTHER_TIMER_MAX) this.cycleTimer = false;
+    }
+  }
+}
+
+/** The three vitals the detector and the six bars are indexed by, in
+ *  the order PositionIndicators lays them out (:225-233). */
+const VITAL_KEYS = ['health', 'fatigue', 'magicka'];
+const currentOf = (v, key) => (key === 'health' ? (v.health ?? 0)
+  : key === 'fatigue' ? (v.fatigue ?? 0) : (v.magicka ?? 0));
+const maxOf = (v, key) => (key === 'health' ? (v.maxHealth ?? 1)
+  : key === 'fatigue' ? (maxFatigue(v) || 1) : (v.maxMagicka ?? 1));
+
+/**
+ * VitalsChangeDetector (:64-135) folded together with the HUDVitals
+ * handlers it drives (:276-312), because the port has one draw call
+ * where DFU has two MonoBehaviours and an event.
+ *
+ * DFU's edge cases (:57-63) - a new world, a load, the court screen,
+ * a large-HUD toggle - all call the same ResetVitals, which is
+ * `reset()` here; the max-changed guard in Update (:72-77) covers a
+ * level-up on its own, and is why a raised MaxHealth does not paint
+ * a loss trail.
+ */
+export class VitalsIndicators {
+  constructor() {
+    this.bars = new Map();
+    for (const key of VITAL_KEYS) {
+      this.bars.set(key, {
+        bar: new VerticalProgressSmoother(),
+        loss: new VerticalProgressSmoother(),
+        gain: 0,                    // VerticalProgress, never smoothed (:277)
+      });
+    }
+    this.prev = null;
+  }
+
+  /** ResetVitals (:122-133): take the current readings as the
+   *  previous ones, so this frame's deltas are all zero. */
+  reset(vitals) {
+    this.prev = {};
+    for (const key of VITAL_KEYS) {
+      const cur = currentOf(vitals, key), max = maxOf(vitals, key);
+      this.prev[key] = { cur, max };
+      const b = this.bars.get(key);
+      b.gain = cur / max;
+      b.bar.amount = b.gain;
+      b.loss.amount = b.gain;
+      b.bar.cycleTimer = false;
+      b.loss.cycleTimer = false;
+    }
+  }
+
+  /** Update (:65-79) then UpdateAllVitals (:275-287): the deltas and
+   *  their events first, the cycles after. */
+  tick(vitals, dt) {
+    if (!this.prev) { this.reset(vitals); return; }
+    // "Check max vitals hasn't changed... Just reset values and exit
+    // for this frame as the current relative vital lost calculation
+    // is not valid when Max Vital changes." (:71-77)
+    for (const key of VITAL_KEYS) {
+      if (maxOf(vitals, key) !== this.prev[key].max) { this.reset(vitals); return; }
+    }
+    for (const key of VITAL_KEYS) {
+      const cur = currentOf(vitals, key), max = maxOf(vitals, key);
+      const lost = this.prev[key].cur - cur;              // UpdateDeltas (:90-99)
+      const lostPercent = lost / max;
+      const b = this.bars.get(key);
+      // The handler (:290-312). It runs only on a real change, and
+      // note it reads the SIGN of `lost`, not of `lostPercent`.
+      if (lost !== 0) {
+        b.gain = cur / max;
+        if (lost > 0) b.bar.amount -= lostPercent;        // damage: the plain bar drops at once
+        else b.loss.amount += -lostPercent;               // healing: the trail jumps up to meet it
+        b.bar.beginSmoothChange(b.gain);
+        b.loss.beginSmoothChange(b.gain);
+      } else {
+        b.gain = cur / max;                               // UpdateAllVitals (:277-279), every frame
+      }
+      this.prev[key] = { cur, max };
+    }
+    for (const key of VITAL_KEYS) {                       // :280-286
+      const b = this.bars.get(key);
+      b.loss.cycle(dt);
+      b.bar.cycle(dt);
+    }
+  }
+
+  /** SynchronizeImmediately's indicator half (:263-272) - what the
+   *  drawn amounts are when nothing is moving. */
+  amounts(key) {
+    const b = this.bars.get(key);
+    return { bar: b.bar.amount, loss: b.loss.amount, gain: b.gain };
+  }
+}
+
+const _vitalsIndicators = new VitalsIndicators();
+export const vitalsIndicators = () => _vitalsIndicators;
+export function _resetVitalsIndicators() { _vitalsIndicators.prev = null; }
 
 // X4: the DETECT MARKER (HUDCompass.cs:219-257). The three Detect
 // effects do not draw anything themselves - each registers with the
@@ -185,10 +348,21 @@ export async function loadHud({ fetchBytes, ImgFile, palette, renderer }) {
     return { tex: renderer.uploadTexture('img', name, bitmapToColor32(bmp, palette)), w: bmp.width, h: bmp.height };
   };
   try {
-    const [health, fatigue, magicka, compass, compassBox] = await Promise.all([
+    const [main03, main04, magicka, compass, compassBox] = await Promise.all([
       load('MAIN03I0.IMG'), load('MAIN04I0.IMG'), load('MAIN05I0.IMG'),
       load('COMPASS.IMG'), load('COMPBOX.IMG'),
     ]);
+    // LoadAssets (HUDVitals.cs:179-198): under
+    // Settings.SwapHealthAndFatigueColors the two bars TRADE ART -
+    // healthBar takes fatigueBarFilename and fatigueBar takes
+    // healthBarFilename - and their loss/gain indicator colours trade
+    // with them. Magicka is untouched either way (:199-201). Read
+    // here, once, so hudLarge's `barArt` gets the same swap: DFU has
+    // ONE HUDVitals and the large HUD re-parents it (:161-177) rather
+    // than loading a second copy.
+    const swap = getBool('GUI', 'SwapHealthAndFatigueColors');
+    const health = swap ? main04 : main03;
+    const fatigue = swap ? main03 : main04;
     // P12: the breath bar is SOLID color (VerticalProgress), no art -
     // two generated 1x1 textures.
     const solid = ([r, g, b], name) => {
@@ -198,7 +372,13 @@ export async function loadHud({ fetchBytes, ImgFile, palette, renderer }) {
       return { tex: renderer.uploadTexture('img', name, { width: 1, height: 1, colors }), w: 1, h: 1 };
     };
     return {
-      health, fatigue, magicka, compass, compassBox,
+      health, fatigue, magicka, compass, compassBox, swapped: swap,
+      lossColors: swap
+        ? [FATIGUE_LOSS_COLOR, HEALTH_LOSS_COLOR, MAGICKA_LOSS_COLOR]
+        : [HEALTH_LOSS_COLOR, FATIGUE_LOSS_COLOR, MAGICKA_LOSS_COLOR],
+      gainColors: swap
+        ? [FATIGUE_GAIN_COLOR, HEALTH_GAIN_COLOR, MAGICKA_GAIN_COLOR]
+        : [HEALTH_GAIN_COLOR, FATIGUE_GAIN_COLOR, MAGICKA_GAIN_COLOR],
       breathNormal: solid(BREATH_COLOR_NORMAL, 'hud-breath-normal'),
       breathShort: solid(BREATH_COLOR_SHORT, 'hud-breath-short'),
     };
@@ -301,6 +481,12 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // and the one thing that outlives it - the crosshair - is drawn
   // here with the mode icon suppressed.
   if (largeHud?.art) {
+    // DaggerfallHUD.cs:216 turns HUDVitals OFF entirely under the
+    // large HUD, so no indicator runs; and the toggle itself raises
+    // OnLargeHUDToggle, whose handler is ResetVitals
+    // (VitalsChangeDetector.cs:63, :161-165) - so the trail does not
+    // resume mid-flight when the player switches back.
+    _vitalsIndicators.prev = null;
     const s2 = hudScale(canvas.width, canvas.height);
     lastLargeHudBar = drawHudLarge(renderer, canvas, largeHud.art, vitals, heading01, {
       ...largeHud, barFill, maxFatigueOf: maxFatigue, barArt: art,
@@ -320,17 +506,45 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   const bottom = canvas.height - HUD_BORDER;
   // Vitals, left to right: health, fatigue, magicka (classic order),
   // strided by barWidth * 2 = 8 native px (PositionIndicators).
-  let x = HUD_BORDER;
   const bars = [
     [art.health, vitals.health, vitals.maxHealth],
     [art.fatigue, vitals.fatigue ?? 0, maxFatigue(vitals) || 1],   // S15: the live fatigue stat ((Str+End) x 64 ceiling)
     [art.magicka, vitals.magicka ?? 0, vitals.maxMagicka ?? 1],
   ];
-  for (const [img, cur, max] of bars) {
-    const { ratio, v0, v1 } = barFill(cur, max);
+  const barX = (i) => HUD_BORDER + i * HUD_BAR_STRIDE * s;
+  // HUDVitals.Update (:206-210): the indicators run OR
+  // SynchronizeImmediately does, never both.
+  const indicators = getBool('GUI', 'EnableVitalsIndicators');
+  if (indicators) {
+    _vitalsIndicators.tick(vitals, dt);
+    // Components.Add order (:106-117): the three LOSS bars first so
+    // they sit behind, then the three GAIN bars, then the three plain
+    // bars over both - all nine on the same rect.
+    const solidBar = (i, amount, color) => {
+      const [img] = bars[i];
+      const h = img.h * s * Math.max(0, Math.min(1, amount));
+      if (h > 0) {
+        renderer.drawScreenQuad(null, { x: barX(i), y: bottom - h, w: img.w * s, h },
+          undefined, [color[0], color[1], color[2], 1]);
+      }
+    };
+    for (let i = 0; i < bars.length; i++) solidBar(i, _vitalsIndicators.amounts(VITAL_KEYS[i]).loss, art.lossColors[i]);
+    for (let i = 0; i < bars.length; i++) solidBar(i, _vitalsIndicators.amounts(VITAL_KEYS[i]).gain, art.gainColors[i]);
+  } else {
+    // A host that turned the setting off gets the frozen smoothers
+    // back in step the moment it turns it on again - DFU's
+    // ResetVitals is what every re-enable path lands on (:57-63).
+    _vitalsIndicators.prev = null;
+  }
+  for (let i = 0; i < bars.length; i++) {
+    const [img, cur, max] = bars[i];
+    // SynchronizeImmediately (:257-262) is `Current / (float)Max`;
+    // with the indicators on the plain bar is the SMOOTHED amount
+    // instead (:283-285), which is the whole point of the trail.
+    const amount = indicators ? _vitalsIndicators.amounts(VITAL_KEYS[i]).bar : barFill(cur, max).ratio;
+    const { ratio, v0, v1 } = barFill(amount, 1);
     const w = img.w * s, hFull = img.h * s, h = hFull * ratio;
-    if (h > 0) renderer.drawScreenQuad(img.tex, { x, y: bottom - h, w, h }, { u0: 0, v0, u1: 1, v1 });
-    x += HUD_BAR_STRIDE * s;
+    if (h > 0) renderer.drawScreenQuad(img.tex, { x: barX(i), y: bottom - h, w, h }, { u0: 0, v0, u1: 1, v1 });
   }
   drawBreathBar(renderer, canvas, art, vitals, s);
   // Compass, bottom-right: strip window first, frame over it.

@@ -90,8 +90,11 @@ export const NEARBY_DEFAULT_MAX_RANGE = 14;
 // Reaching for `affinity` here would misgroup half the bestiary -
 // every Darkness/Daylight/Golem/Water enemy would silently take no
 // group bit, and the four careers DFU deliberately regroups below
-// would take the wrong one. Monster mobileType IS MonsterCareers
-// (EntityEnums.cs:120-166), so these are the indexes verbatim.
+// would take the wrong one. The table is keyed by CAREER INDEX, the
+// switch's own subject; a monster's career index IS its mobile id
+// (EntityEnums.cs:120-166), so these are the MonsterCareers indexes
+// verbatim - and careerIndexOf below folds a class enemy's id onto
+// the same keys the way SetEnemyCareer does.
 //
 // The trailing comments are DFU's own, marking the five careers
 // where DFU DEPARTS from classic's grouping - kept because they are
@@ -146,12 +149,34 @@ const ENEMY_GROUP_BIT = Object.freeze({
   // 37 FleshAtronach, 38 IceAtronach: no group bit.
 });
 
+/** EnemyEntity.CareerIndex (EnemyEntity.cs:87-90), the number
+ *  GetEnemyEntityEnemyGroup actually switches on (:2752). It is NOT
+ *  the mobile id: SetEnemyCareer stores `mobileEnemy.ID` for an
+ *  EnemyMonster (:280) but `mobileEnemy.ID - 128` for an EnemyClass
+ *  (:293), so a class enemy's career index lands back in the 0..18
+ *  band the MonsterCareers switch covers. */
+export const careerIndexOf = (mobileType) => (mobileType >= 128 ? mobileType - 128 : mobileType);
+
 /** FormulaHelper.GetEnemyEntityEnemyGroup as a plain lookup - the
- *  group BIT for a mobile id, or NEARBY.None for a class enemy and
- *  the four atronachs. X8's Pacify family reads this rather than
- *  re-transcribing the career switch: DFU's PacifyEffect matches on
- *  exactly this enum (PacifyEffect.cs:131-132), so the two must not
- *  be allowed to drift apart. */
+ *  group BIT for an enemy, or NEARBY.None for the four atronachs.
+ *  X8's Pacify family reads this rather than re-transcribing the
+ *  career switch: DFU's PacifyEffect matches on exactly this enum
+ *  (PacifyEffect.cs:131-132), so the two must not be allowed to
+ *  drift apart.
+ *
+ *  THE COLLISION IS THE LAW. The switch has no EnemyClass arm and no
+ *  class gate, so every class enemy is classified by the MONSTER
+ *  career its `ID - 128` collides with: Mage(128) -> 0 Rat ->
+ *  ANIMAL, Burglar(135) -> 7 Orc -> HUMANOID, Barbarian(143) -> 15
+ *  SkeletalWarrior -> UNDEAD, Knight(145) -> 17 Zombie -> UNDEAD,
+ *  Knight_CityWatch(146) -> 18 Ghost -> UNDEAD. PlayerGPS
+ *  .GetEntityFlags (:783-802) hands EnemyClass and EnemyMonster to
+ *  the same GetEnemyGroup() call, and PacifyEffect.IsGroupMatch
+ *  (:126-133) and DispelUndead (:50-58) consume the answer with no
+ *  class test either - so Pacify Animal calms a class Mage and
+ *  Dispel Undead destroys a City Watch knight. PacifyEffect's own
+ *  note that Pacify Humanoid "only operates on humanoid monsters
+ *  (not enemy classes)" describes intent, not the code above it. */
 /**
  * V5 - PlayerGPS.IsPlayerInTown (:504-527), verbatim including its
  * two optional gates, because getting them backwards inverts the
@@ -183,7 +208,7 @@ export function isPlayerInTown(locationType, {
   return true;
 }
 
-export const enemyGroupOf = (mobileType) => ENEMY_GROUP_BIT[mobileType] ?? NEARBY.None;
+export const enemyGroupOf = (mobileType) => ENEMY_GROUP_BIT[careerIndexOf(mobileType)] ?? NEARBY.None;
 
 /** GetEntityFlags (:779-819).
  *  rec = { mobileType, civilian?, effectCount? }.
@@ -191,11 +216,10 @@ export const enemyGroupOf = (mobileType) => ENEMY_GROUP_BIT[mobileType] ?? NEARB
  *  bit (DFU's civilian branch is an `else if` that skips the
  *  enemy-group switch entirely).
  *
- *  A CLASS enemy (mobileType >= 128 - bandits, mages, every human
- *  career) is absent from the group switch, so it falls to the
- *  default and takes the Enemy bit with NO group bit. That is DFU
- *  behaviour, not an omission: a human bandit is invisible to a
- *  Humanoid scan while a Nymph is not. */
+ *  An EnemyClass takes the Enemy bit and the group bit its CAREER
+ *  INDEX earns - see enemyGroupOf: DFU hands both entity types to
+ *  the same GetEnemyGroup() (:786-788), so a class Knight carries
+ *  Undead in the nearby flags and answers a Detect/Near-X scan. */
 export function entityFlags(rec) {
   if (!rec) return NEARBY.None;
   let result = NEARBY.None;
@@ -203,7 +227,7 @@ export function entityFlags(rec) {
     result |= NEARBY.Humanoid;
   } else {
     result |= NEARBY.Enemy;
-    result |= ENEMY_GROUP_BIT[rec.mobileType] ?? 0;
+    result |= enemyGroupOf(rec.mobileType);
   }
   // The Magic bit: DFU's acknowledged approximation - ANY live effect.
   if ((rec.effectCount ?? 0) > 0) result |= NEARBY.Magic;

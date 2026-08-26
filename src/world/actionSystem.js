@@ -648,13 +648,15 @@ export class ActionSystem {
     return true;
   }
 
-  /** Verbatim DaggerfallActionDoor.Close: PlayingReverse, then the
-   *  door's own record. The collider stays a trigger until the close
-   *  COMPLETES (OnCompleteClose's MakeTrigger(false)). */
+  /** Verbatim DaggerfallActionDoor.Close (:311-332): PlayingReverse,
+   *  then the door's own record - and NO SOUND. Close plays nothing;
+   *  CloseSound is OnCompleteClose's (:339-346), after the 1.5 s swing
+   *  and just before the collider re-solidifies, so the shut is heard
+   *  when the door LANDS. The collider likewise stays a trigger until
+   *  the close COMPLETES (OnCompleteClose's MakeTrigger(false)). */
   _closeDoor(o, byPlayer = false) {
     if (o.state === 'start') return false;   // IsClosed
     o.state = 'reverse';
-    this.onDoorState?.(o, false);   // A1: the audio seam (close)
     if (byPlayer) this._execOwnAction(o);
     return true;
   }
@@ -825,11 +827,18 @@ export class ActionSystem {
    *  load (AUDIT 18 / AUDIT 23 save-load-11).
    *
    *  NOT carried: failedSkillLevel (see addDoor - a live gap, FLAGGED,
-   *  not this slice). */
+   *  not this slice), and activationCount - DFU serializes NEITHER
+   *  half of it (ActionObjectData_v1 is loadID/position/rotation/
+   *  currentState/actionPercentage, SerializableGameObject.cs:344-351;
+   *  ActionDoorData_v1 adds only the lock and the failed skill level,
+   *  :329-337). DaggerfallAction.activationCount (:44) is plain scene
+   *  state, and the load REBUILDS the location, so every counter
+   *  restarts at 0: a reloaded DoorText door shows its text and holds
+   *  shut on the first click again (:870) and a Hurt21 relay restarts
+   *  its every-20th phase (:725). */
   collectSaveData() {
     return [...this.objects.values()].map((o) => ({
       key: o.key, state: o.state, t: o.t ?? 0,
-      activationCount: o.activationCount ?? 0,
       ...(o.kind === 'door'
         ? { lock: o.currentLockValue, moveState: o.moveState, moveT: o.moveT ?? 0 }   // P10 lock; the Move pair
         : {}),
@@ -847,16 +856,17 @@ export class ActionSystem {
    *  dt/duration, so restoring the pair IS the restarted tween - the
    *  remaining (1 - t) * duration plays out and no more.
    *
-   *  Every field past {state, t, activationCount} is presence-gated:
-   *  snapshots written before a field existed leave the live value, the
-   *  additive shape this save layer uses everywhere. */
+   *  Every field past {state, t} is presence-gated: snapshots written
+   *  before a field existed leave the live value, the additive shape
+   *  this save layer uses everywhere. An OLD snapshot's
+   *  activationCount is ignored on purpose - DFU's rebuilt scene
+   *  starts every counter at 0 (see collectSaveData). */
   restoreSaveData(list) {
     list?.forEach((sa) => {
       const o = this.objects.get(sa.key);
       if (!o) return;
       o.state = sa.state;
       o.t = sa.t;
-      o.activationCount = sa.activationCount;
       if (o.kind === 'door') {
         if (sa.lock != null) o.currentLockValue = sa.lock;   // P10: door locks persist
         if (sa.moveState != null) { o.moveState = sa.moveState; o.moveT = sa.moveT ?? 0; }
@@ -964,6 +974,10 @@ export class ActionSystem {
     this._applyMatrix(o);
     if (swinging && (o.state === 'forward' ? o.t >= 1 : o.t <= 0)) {
       o.state = o.state === 'forward' ? 'end' : 'start';
+      // OnCompleteClose (:339-346): the CLOSE sound fires HERE, at the
+      // end of the swing - the open sound is Open's (:296-302), at the
+      // start of its own. A1's audio seam carries both.
+      if (o.state === 'start') this.onDoorState?.(o, false);
     }
     if (moving && (o.moveState === 'forward' ? o.moveT >= 1 : o.moveT <= 0)) {
       o.moveState = o.moveState === 'forward' ? 'end' : 'start';

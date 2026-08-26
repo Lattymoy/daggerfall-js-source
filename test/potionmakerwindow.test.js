@@ -266,3 +266,81 @@ test('M2: the box and the picker swallow input before the window does', () => {
   w.input('Escape');
   assert.equal(w.done, true);
 });
+
+test('F173: MIX on an EMPTY cauldron does nothing at all - no failure box (:393-398)', () => {
+  // MixButton_OnMouseClick plays the click and only calls MixCauldron
+  // `if (cauldron.Count > 0)`, so an empty pot never reaches the
+  // recipe hash and never shows "potionFailed"
+  const { w, pack, minted } = win();
+  assert.deepEqual(w.cauldron, []);
+  clickRect(w, 'mix');
+  assert.equal(w.box, null, 'DFU shows no message for mixing nothing');
+  assert.equal(minted.length, 0);
+  assert.equal(pack.length, 3, 'and nothing was spent');
+  assert.equal(w.nameLabel, '');
+  // the keyed arms are the same button
+  w.input('Enter');
+  assert.equal(w.box, null);
+  w.input('KeyM');
+  assert.equal(w.box, null);
+  // ...and a pot with something in it still mixes
+  clickSlot(w, 'ingredients', 0);
+  clickRect(w, 'mix');
+  assert.equal(w.box.rows[0].text, POTION_FAILED, 'one useless herb still fails aloud');
+});
+
+test('F174: an ENCHANTED ingredient is not in the list at all (Refresh, :145-149)', () => {
+  // "item.IsIngredient && !item.IsEnchanted" - IsEnchanted is derived
+  // from the enchantment arrays (DaggerfallUnityItem.cs:266-269), and
+  // the consume walk agrees (allowEnchantedItem: false, :338/:345)
+  const plain = ing(59);
+  const enchanted = { templateIndex: 26, stackCount: 1, enchantments: [{ type: 11, param: -1 }] };
+  const custom = { templateIndex: 24, stackCount: 1, customEnchantments: [{ key: 'CastWhenUsed' }] };
+  const { w } = win({ pack: [plain, enchanted, custom] });
+  assert.deepEqual(w.ingredients().map((i) => i.templateIndex), [59],
+    'an enchanted gem is not an ingredient the pot will take');
+  // and it cannot be clicked into the cauldron either - slot 1 is
+  // empty now, so the click lands on nothing
+  clickSlot(w, 'ingredients', 1);
+  assert.deepEqual(w.cauldron, []);
+  clickSlot(w, 'ingredients', 0);
+  assert.equal(w.cauldron[0].templateIndex, 59);
+});
+
+test('F176: adding from a STACK splits ONE unit off - the remainder stays listed (:256-257)', () => {
+  // "if (item.IsAStack()) item = ingredients.SplitStack(item, 1)"
+  const stack = ing(59, 3);
+  const { w, pack } = win({ pack: [stack] });
+  assert.equal(w.ingredients().length, 1);
+  assert.equal(w.ingredients()[0].stackCount, 3);
+
+  clickSlot(w, 'ingredients', 0);
+  assert.equal(w.cauldron.length, 1);
+  assert.equal(w.cauldron[0].stackCount, 1, 'exactly one unit went in the pot');
+  assert.equal(w.cauldron[0].templateIndex, 59);
+  assert.equal(w.ingredients().length, 1, 'the rest of the stack is STILL in the list');
+  assert.equal(w.ingredients()[0].stackCount, 2);
+  assert.equal(stack.stackCount, 3,
+    'DFU splits inside its own clone collection (:148) - the pack stack is untouched until the mix');
+
+  // ...and the remainder is addable, unit by unit, until it is gone
+  clickSlot(w, 'ingredients', 0);
+  assert.equal(w.cauldron.length, 2);
+  assert.equal(w.ingredients()[0].stackCount, 1);
+  clickSlot(w, 'ingredients', 0);
+  assert.equal(w.cauldron.length, 3);
+  assert.deepEqual(w.ingredients(), [], 'the whole stack is in the pot now');
+  assert.deepEqual(w.cauldron.map((i) => i.templateIndex), [59, 59, 59]);
+  assert.equal(pack.length, 1);
+
+  // the GRID draws the remainder's own count, not the pack stack's
+  _setPotionArtForTests({ tex: 'mask00', w: 320, h: 200 });
+  try {
+    const g = win({ pack: [ing(59, 4)] }).w;
+    clickSlot(g, 'ingredients', 0);
+    const seen = [];
+    g._icon = (r, m, it) => { seen.push(it.stackCount); return true; };
+    g.draw(recorder(), { width: 320, height: 200 }, plainFont());
+    assert.deepEqual(seen.slice(0, 1), [3], 'three left of the four');
+  } finally { _setPotionArtForTests(null); }
+});

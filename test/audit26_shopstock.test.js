@@ -21,6 +21,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   createStockedDate, needsRestock, restockShopShelfIfDue, stockShopShelf,
+  MAGIC_ITEMS_GROUP_TEMPLATE, SHOP_ITEM_GROUPS,
 } from '../src/systems/shopStock.js';
 import { dayOfYear, minuteOfDay, dateFromClassicMinutes, CLASSIC_GAME_START_TIME, MINUTES_PER_DAY } from '../src/systems/gameDate.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
@@ -205,4 +206,51 @@ test('AUDIT 26 shopstock: the interior host wires the restock arm and rides it t
   // on every entry instead of once a day.
   assert.match(wm, /key: `shelf:\$\{i\}`, items: sh\.items \?\? null, stockedDate: sh\.stockedDate \?\? 0/);
   assert.match(wm, /target\.stockedDate = c\.stockedDate \?\? 0/);
+});
+
+// AUDIT 26 (parity F130): the shelf loop's MagicItems arm
+// (DaggerfallLoot.cs:240-243). The port hard-skipped the group with an
+// `if (group === 'MagicItems') continue`, so a pawn shop - the ONE
+// storefront whose pair table carries (0x04, 0x0A),
+// DaggerfallLootDataTables.cs:61 - never showed a purchasable
+// enchanted item, while the same file already minted real ones for
+// the guild shelf.
+const MAGIC_DEF = Object.freeze([
+  // one RegularMagicItem (type 0); group 1 picks from {2,3,6,12,25} and
+  // a leading roll of 0 lands on 2 = Armor, so the mint is deterministic
+  Object.freeze({ type: 0, group: 1, name: 'Wyrd', enchantments: [], uses: 100, value: 500 }),
+]);
+const magicRows = (buildingType, quality, roll, templates = MAGIC_DEF) => stockShopShelf(
+  { buildingType, quality }, { level: 1, gender: 'male' },
+  { rolls: () => roll, magicItemTemplates: templates },
+).filter((it) => it.magic);
+
+test('AUDIT 26 shopstock: MagicItems is ONE roll against ItemTemplates[0], and pawn shops stock it', () => {
+  // GetEnumArray(MagicItems) is MagicItemSubTypes, whose single member
+  // MagicItem = 0 is "not mapped to a specific item template index"
+  // (ItemEnums.cs:233-236) - so GetItemTemplate(MagicItems, 0) resolves
+  // ItemTemplates[0], the Ruby, and ITS rarity is the whole gate.
+  assert.equal(MAGIC_ITEMS_GROUP_TEMPLATE, 0);
+  assert.equal(ITEM_TEMPLATES[MAGIC_ITEMS_GROUP_TEMPLATE].name, 'Ruby');
+  assert.equal(ITEM_TEMPLATES[MAGIC_ITEMS_GROUP_TEMPLATE].rarity, 10);
+  // the pawn shop's pair is (0x04, 0x0A) - the only table in the game
+  // that pays a non-zero chanceMod for the group
+  assert.deepEqual([...SHOP_ITEM_GROUPS[BUILDING_TYPES.PawnShop]],
+    [0x02, 0x0A, 0x03, 0x0A, 0x04, 0x0A, 0x07, 0x0A, 0x09, 0x14, 0x0D, 0x05, 0x0E, 0x0A, 0x19, 0x0A, 0x0A, 0x0A]);
+  // rarity 10 <= quality, then Dice100 under 10*5*(21-10)/100 = 5
+  assert.equal(magicRows(BUILDING_TYPES.PawnShop, 10, 0.04).length, 1, 'a 4 passes the 5% roll');
+  assert.equal(magicRows(BUILDING_TYPES.PawnShop, 10, 0.05).length, 0, 'a 5 does not');
+  // and the rarity gate is strict `rarity <= shopQuality`
+  assert.equal(magicRows(BUILDING_TYPES.PawnShop, 9, 0.04).length, 0, 'quality 9 is under the Ruby rarity');
+  // the general store carries (0x04, 0x00): stockChance 0, never stocks
+  assert.equal(magicRows(BUILDING_TYPES.GeneralStore, 20, 0).length, 0);
+  // the minted row is a real magic item, finished through stockedItem
+  // like every other stocked row (the magic NAME replaces the base one)
+  const [it] = magicRows(BUILDING_TYPES.PawnShop, 20, 0.04);
+  assert.equal(it.name, 'Wyrd');
+  assert.equal(it.group, 'Armor');
+  assert.equal(it.currentCondition, 100);
+  // FLAGGED half: with no MAGIC.DEF registered the roll is still spent
+  // and nothing is minted - StockHouseContainer's arm behaves the same.
+  assert.equal(magicRows(BUILDING_TYPES.PawnShop, 20, 0.04, null).length, 0);
 });

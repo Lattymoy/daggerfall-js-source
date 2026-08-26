@@ -229,10 +229,19 @@ export class VideoPlayer {
     return true;
   }
 
-  /** DaggerfallVidPlayerWindow.Update: end on any key, or on end of file
-   *  while playing. Returns true when the window should close. */
-  shouldClose(anyKeyDown = false, endOnAnyKey = true) {
-    return (endOnAnyKey && anyKeyDown) || (this.endOfFile && this.playing);
+  /** DaggerfallVidPlayerWindow.Update (:140-142). THREE arms, and only
+   *  the FIRST is gated on endOnAnyKey:
+   *    endOnAnyKey && AnyKeyDownIgnoreAxisBinds
+   *    || GetBackButtonDown()
+   *    || VidFile.EndOfFile && Playing
+   *  GetBackButtonDown is Escape keydown (InputManager.cs:1065-1067)
+   *  and sits OUTSIDE that gate, so the EndOnAnyKey=false videos - a
+   *  quest's PlayVideo (PlayVideo.cs:78) and the vampirism /
+   *  lycanthropy dream and turning clips (VampirismInfection.cs:126,
+   *  :136; LycanthropyInfection.cs:114) - are still skippable with
+   *  Escape. Returns true when the window should close. */
+  shouldClose(anyKeyDown = false, endOnAnyKey = true, backButtonDown = false) {
+    return (endOnAnyKey && anyKeyDown) || backButtonDown || (this.endOfFile && this.playing);
   }
 
   /** DFU Dispose(): stop playback and drop the frame texture. */
@@ -248,12 +257,20 @@ export class VideoPlayer {
 const IDENTITY = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
 const LIGHT = new Float32Array([0, 1, 0]);
 
-/** Any-key watch for playVideo. Returns its own detach. */
-function defaultListen(onAnyKey) {
+/** Any-key watch for playVideo, plus the separate BACK BUTTON watch
+ *  the second arm of Update (:141) needs: GetBackButtonDown is Escape
+ *  keydown alone, not any key, and it fires whatever endOnAnyKey says.
+ *  Returns its own detach. */
+function defaultListen(onAnyKey, onBackButton = () => {}) {
   if (typeof window === 'undefined') return () => {};
   const events = ['pointerdown', 'keydown', 'touchstart'];
+  const back = (e) => { if (e.key === 'Escape' || e.code === 'Escape') onBackButton(); };
   for (const ev of events) window.addEventListener(ev, onAnyKey, { passive: true });
-  return () => { for (const ev of events) window.removeEventListener(ev, onAnyKey); };
+  window.addEventListener('keydown', back, { passive: true });
+  return () => {
+    for (const ev of events) window.removeEventListener(ev, onAnyKey);
+    window.removeEventListener('keydown', back);
+  };
 }
 
 /**
@@ -273,8 +290,9 @@ export function playVideo(canvas, renderer, bytes, {
     if (!player.play(bytes)) { resolve(false); return; }
 
     let anyKey = false;
+    let backButton = false;
     let settled = false;
-    const detach = listen(() => { anyKey = true; });
+    const detach = listen(() => { anyKey = true; }, () => { backButton = true; });
     const finish = (played) => {
       if (settled) return;
       settled = true;
@@ -307,7 +325,7 @@ export function playVideo(canvas, renderer, bytes, {
         finish(false);
         return;
       }
-      if (player.shouldClose(anyKey, endOnAnyKey)) {
+      if (player.shouldClose(anyKey, endOnAnyKey, backButton)) {
         finish(true);
         return;
       }

@@ -36,7 +36,7 @@
 // are the port's own (Ledger A) and are named as such.
 
 import { loadImg, nativeMetrics, drawImg, shadowText, DEFAULT_TEXT_COLOR } from './nativePanel.js';
-import { drawMenuBackdrop } from './chargenArt.js';
+import { drawScreenDimBackdrop } from './chargenArt.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
 import { drawText, measureText } from './text.js';
 import { serviceLabel } from '../systems/guildServiceFlow.js';
@@ -168,8 +168,13 @@ export class GuildServiceWindow {
   draw(renderer, canvas, font) {
     if (!_art) { this._close(); return; }
     const m = nativeMetrics(canvas);
-    // AUDIT 19 F2: DaggerfallBaseWindow's parentPanel is opaque BLACK.
-    drawMenuBackdrop(renderer, canvas);
+    // This window's OWN constructor overrides DaggerfallBaseWindow's
+    // black parent panel: `ParentPanel.BackgroundColor = Color.clear;`
+    // (DaggerfallGuildServicePopupWindow.cs:99), and ScreenDimColor is
+    // hardwired clear besides (DaggerfallPopupWindow.cs:27, :34). The
+    // room behind the 130x51 panel stays visible - the same law
+    // AUDIT 24 read off the five windows in chargenArt's list.
+    drawScreenDimBackdrop(renderer, canvas);
     const member = this.hooks.member();
     drawImg(renderer, member ? _art.member : _art.base, m, PANEL_X, PANEL_Y);
     // The service label: centred in the service button, +1 down, and

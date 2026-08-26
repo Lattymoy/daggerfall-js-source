@@ -13,7 +13,11 @@ import {
   SPELL_MAKER_EFFECTS, STAT_SUBGROUPS, PORTED_KEYS,
   spellMakerGroups, spellMakerSubgroups, effectByKey,
 } from '../src/systems/spellEffects.js';
-import { SpellMakerWindow, TARGET_LABELS, ELEMENT_LABELS } from '../src/ui/spellMakerWindow.js';
+import {
+  SpellMakerWindow, TARGET_LABELS, ELEMENT_LABELS,
+  allowedElementsFor, elementFlag, ELEMENT_FLAGS_MAGIC_ONLY, ELEMENT_FLAGS_ALL,
+} from '../src/ui/spellMakerWindow.js';
+import { MAGIC_ONLY_KEYS } from '../src/systems/effects.js';
 import { SPELLBOOK_TEMPLATE_INDEX, _resetCustomIndexForTests, blankEffectSettings } from '../src/systems/spellMaker.js';
 import { goldStack } from '../src/systems/inventory.js';
 
@@ -170,11 +174,28 @@ test('S1 window: target and element cycle both ways, name types, d clears a slot
   assert.equal(w.rangeType, 0);
   w.input('minus');
   assert.equal(w.rangeType, TARGET_LABELS.length - 1, 'wraps backwards');
+  // AUDIT 26 F181: the ELEMENT is gated by what the chosen effects
+  // allow. SetSpellElement (:525-530) simply DOES NOT TAKE an element
+  // outside allowedElements, and with no effect at all the defaults
+  // arm (:565-570) leaves ElementFlags_MagicOnly - so an empty sheet
+  // is stuck on Magic, exactly as DFU's four other buttons are dead.
   toRow(w, 'element');
   assert.equal(w.element, 4, 'the default is Magic');
+  assert.equal(ELEMENT_LABELS[0], 'Fire');
+  w.input('confirm');
+  assert.equal(w.element, 4, 'Fire is not allowed with no effects chosen');
+  // an ElementFlags_All effect (Damage Health) opens the four
+  // elemental buttons - allowedElements is the UNION (:589)
+  w.slots[0] = { type: 4, subType: 0, key: '4,0', settings: blankEffectSettings() };
+  w.input('confirm');
+  assert.equal(w.element, 0, 'Fire is allowed once the spell damages health');
+  // ...and a MAGIC-ONLY effect alongside it does not narrow that
+  // union back down
+  w.slots[1] = { type: 10, subType: 8, key: '10,8', settings: blankEffectSettings() };
+  w.input('minus');
+  assert.equal(w.element, 4, 'Magic is in every allowed set');
   w.input('confirm');
   assert.equal(w.element, 0);
-  assert.equal(ELEMENT_LABELS[0], 'Fire');
   // the name field
   toRow(w, 'name').input('confirm');
   assert.equal(w.mode, 'name');
@@ -187,10 +208,16 @@ test('S1 window: target and element cycle both ways, name types, d clears a slot
   w.input('backspace');
   assert.equal(w.name, 'Za');
   w.input('back');
-  // d clears the slot under the cursor
-  w.slots[1] = { type: 4, subType: 0, key: '4,0', settings: {} };
+  // d clears the slot under the cursor - and that runs
+  // UpdateAllowedButtons (:396), whose EnforceSelectedButtons puts a
+  // now-forbidden selection back to the first allowed element
+  // (:597-603, :635-660)
   toRow(w, 'slot', 1).input('char:d');
   assert.equal(w.slots[1], null);
+  assert.equal(w.element, 0, 'Damage Health still allows Fire');
+  toRow(w, 'slot', 0).input('char:d');
+  assert.equal(w.slots[0], null);
+  assert.equal(w.element, 4, 'with nothing left the element falls back to Magic');
 });
 
 test('S1 window: buying inscribes the spell, spends the gold and resets the sheet for another', () => {
@@ -254,4 +281,29 @@ test('S1 wiring pin: the guild destination is live and the interior host mounts 
   // the Mages Guild gate is membership; Kynareth's is rank 6 - both
   // already live, so the destination is all that was missing
   assert.match(src('src/systems/guildServices.js'), /case 'MakeSpells':/);
+});
+
+test('F181: allowedElements is the UNION of the chosen effects, magic always in it (DaggerfallSpellMakerWindow.cs:575-590)', () => {
+  // ElementTypes as flags (MagicAndEffectsEnums.cs:36-44): Fire 1,
+  // Cold 2, Poison 4, Shock 8, Magic 16 - 1 << the record's index
+  assert.deepEqual(ELEMENT_LABELS.map((_, i) => elementFlag(i)), [1, 2, 4, 8, 16]);
+  assert.equal(ELEMENT_FLAGS_MAGIC_ONLY, 16, 'EntityEffectBroker.ElementFlags_MagicOnly');
+  assert.equal(ELEMENT_FLAGS_ALL, 31, 'EntityEffectBroker.ElementFlags_All');
+
+  const slot = (key) => ({ key, settings: blankEffectSettings() });
+  // no effects: the defaults arm leaves ElementFlags_MagicOnly (:565-570)
+  assert.equal(allowedElementsFor([]), ELEMENT_FLAGS_MAGIC_ONLY);
+  assert.equal(allowedElementsFor([null, null, null]), ELEMENT_FLAGS_MAGIC_ONLY);
+  // Heal Health is ElementFlags_MagicOnly (HealHealth.cs), Damage
+  // Health is ElementFlags_All (DamageHealth.cs)
+  assert.equal(allowedElementsFor([slot('10,8')]), ELEMENT_FLAGS_MAGIC_ONLY);
+  assert.equal(allowedElementsFor([slot('4,0')]), ELEMENT_FLAGS_ALL);
+  // "most permissive result set" - one ALL effect opens all five
+  assert.equal(allowedElementsFor([slot('10,8'), slot('4,0')]), ELEMENT_FLAGS_ALL);
+
+  // ONE DFU MEMBER, ONE EXPORT: which effect classes are magic-only
+  // is systems/effects.js's MAGIC_ONLY_KEYS, read off those classes -
+  // the window imports it rather than carrying a second list
+  assert.ok(MAGIC_ONLY_KEYS.has('10,8') && !MAGIC_ONLY_KEYS.has('4,0'));
+  assert.equal(src('src/ui/spellMakerWindow.js').includes('MAGIC_ONLY_KEYS'), true);
 });

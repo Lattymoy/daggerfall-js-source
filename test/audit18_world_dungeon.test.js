@@ -338,6 +338,13 @@ test('audit18 world-dungeon: interior doors take DaggerfallActionDoor\'s NormalD
   assert.equal(SOUND.NormalDoorOpen, 94);
   tick(actions, 1.6);
   actions.activate(door.key);
+  // AUDIT 26 (parity F184): Close (:311-332) plays NOTHING. CloseSound
+  // is OnCompleteClose's (:339-346), after the 1.5 s swing - the shut
+  // is heard when the door LANDS, not when it starts moving.
+  assert.equal(played.length, 1, 'the close sound does not fire at the start of the swing');
+  tick(actions, 1.4);
+  assert.equal(played.length, 1, 'still swinging at 1.4 s of 1.5');
+  tick(actions, 0.2);
   assert.equal(played.length, 2);
   assert.equal(played[1][0], 93);                          // NormalDoorClose
   assert.equal(SOUND.NormalDoorClose, 93);

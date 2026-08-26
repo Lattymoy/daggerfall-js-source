@@ -67,12 +67,17 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     return cache.get(key);
   }
 
-  /** WeaponManager.Update's ShowWeapons legs, verbatim order. */
+  /** WeaponManager.Update's ShowWeapons legs, verbatim order.
+   *  The bow COOLDOWN is not one of them: `if (Time.time <
+   *  cooldownTime) return;` (:229-232) sits ABOVE every ShowWeapons
+   *  call, so the early return leaves ScreenWeapon.ShowWeapon at the
+   *  true it was set to at :290 and the idle bow stays on screen for
+   *  the whole cooldown. Nothing in DFU hides a weapon for it - the
+   *  cooldown only blocks the next attack, which machineAttack
+   *  (weaponStates.js:96) already refuses. */
   function shown() {
     if (playerWeapon.sheathed) return false;
     if (spellArmed()) return false;                            // HasReadySpell / IsPlayingAnim
-    const m = playerWeapon.machine;
-    if (m.isBow && m.now < m.cooldownUntil) return false;      // bow cooldown hide
     return true;
   }
 
@@ -88,6 +93,10 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
 
   return {
     playerWeapon,
+    /** FPSWeapon.ShowWeapon, the public field WeaponManager's
+     *  ShowWeapons legs write and OnGUI reads (`if (!ShowWeapon)
+     *  return`) - the draw below is its only consumer here. */
+    shown,
     /** Host mouse events buffer here (sheathed = no attack processing).
      *  CH3 (characters-13): a running SWAP PAUSE blocks the attack
      *  the same way (WeaponManager.cs:276-278 returns before the
@@ -157,7 +166,15 @@ export function envAttack(actions, collider, eye, lookDir, rolls = Math.random) 
     best = o; bestD = d;
   }
   if (!best) return false;
-  if (best.kind === 'door') { actions.attemptBash(best, rolls()); return true; }
+  // WeaponManager.WeaponEnvDamage (:457-471): the DaggerfallAction
+  // check and the DaggerfallActionDoor check are two SEPARATE ifs with
+  // no else between them, and an action door is ONE GameObject
+  // carrying BOTH components - so Receive(Attack) fires FIRST on every
+  // hit object with a record, the door included, and the bash follows.
+  // The gate table filters: only Attack/MultiTrigger records answer an
+  // Attack, which is exactly what the Castle Wayrest doors carry and
+  // what the bash path's own 'Door' trigger rejects.
   actions.receive(best, 'Attack');
+  if (best.kind === 'door') { actions.attemptBash(best, rolls()); return true; }
   return false;
 }

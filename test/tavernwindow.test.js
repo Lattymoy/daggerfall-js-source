@@ -144,10 +144,16 @@ test('U39: renting - offer, confirm, gold, and the record it mints', () => {
   assert.equal(room.name, 'The Dancing Dagger');
   assert.equal(room.allocatedBedIndex, 2, 'the bed comes from the rest-marker COUNT');
   assert.equal(room.expiryMinutes, now + 3 * MINUTES_PER_DAY);
-  assert.equal(w.done, true, 'ConfirmRenting closes the tavern either way (:212)');
+  // AUDIT 26 F143: ConfirmRenting_OnButtonClick's CloseWindow() (:214)
+  // is uiManager.PopWindow() (UserInterfaceWindow.cs:127-130), which
+  // pops the TOP window - and the top window is the price box pushed
+  // at :208, since DaggerfallMessageBox does not close itself on a
+  // button (:479-484). The tavern is what it uncovers.
+  assert.equal(w.done, false, 'renting hands the four-button panel back');
+  assert.equal(w.flow, null, 'and the chain is gone');
 });
 
-test('U39: declining the price closes the tavern - it does NOT return to the panel (:212)', () => {
+test('AUDIT 26 F143: declining the price returns to the four-button panel (:214)', () => {
   const { w, entity } = win();
   clickRect(w, 'room');
   type(w, '2');
@@ -156,7 +162,11 @@ test('U39: declining the price closes the tavern - it does NOT return to the pan
   w.flow.input('KeyN');
   assert.equal(entity.items[0].stackCount, before, 'nothing paid');
   assert.equal(entity.rentedRooms.length, 0, 'nothing rented');
-  assert.equal(w.done, true, 'CloseWindow runs BEFORE the button is even looked at');
+  assert.equal(w.done, false, 'the CloseWindow at :214 pops the price box, not the tavern');
+  assert.equal(w.flow, null);
+  // ...and the panel is live again: the innkeeper takes another click.
+  clickRect(w, 'exit');
+  assert.equal(w.done, true);
 });
 
 test('U39: the gold test is at the YES, so the game offers a price you cannot pay (:214-222)', () => {
@@ -222,7 +232,11 @@ test('U39: an unparsable day count does NOTHING AT ALL, as int.TryParse does (:1
     clickRect(w, 'room');
     type(w, bad);
     w.flow.input('Enter');
-    assert.equal(w.done, true, `"${bad}" closes with no message`);
+    // AUDIT 26 F143: the input box closed ITSELF before OnGotUserInput
+    // ran (DaggerfallInputMessageBox.cs:298-301), so int.TryParse's
+    // bare `return` leaves the TAVERN as the top window.
+    assert.equal(w.done, false, `"${bad}" says nothing and hands the panel back`);
+    assert.equal(w.flow, null);
     assert.equal(entity.rentedRooms.length, 0);
   }
 });

@@ -27,9 +27,11 @@
 //   containers) - so a shop's shelf regenerates once per GAME DAY, and
 //   an emptied shelf is bare until the next day rolls over.
 //
-// INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);
-// book items carry the template price (classic prices each BOOK FILE
-// - pends the books arc).
+// INTERIM (loud): book items carry the template price (classic prices
+// each BOOK FILE - pends the books arc). The MagicItems arm mints
+// through loot.createRegularMagicItem and so is real wherever the host
+// has registered MAGIC.DEF; with no ARENA2 it rolls and yields nothing,
+// the same interim StockHouseContainer's arm carries.
 
 import { dice100 } from '../combat/formulas.js';
 import { rand } from '../formats/dfRandom.js';   // AUDIT 26: StockHouseContainer's continue-chance draw is DaggerfallLoot's ONE DFRandom use
@@ -111,10 +113,16 @@ export const TRANSPORT_HORSE = 94;        // Transportation.Horse (template)
 export const TRANSPORT_SMALL_CART = 93;   // Transportation.Small_cart
 // AUDIT 24 (wave 24): Books.Book0..Book3 all resolve to 277 - one
 // constant, declared here and in loot.js.
-import { BOOK_TEMPLATE, createRandomBook, createRandomWeapon, createRandomArmor, createRandomClothing, createRegularMagicItem, createRandomPotion, randomlyAddPotionRecipe } from './loot.js';   // G4: the guild shelves' two minters   // AUDIT 26: StockHouseContainer's five ItemBuilder minters
+import { BOOK_TEMPLATE, createRandomBook, createRandomWeapon, createRandomArmor, createRandomClothing, createRegularMagicItem, createRandomPotion, randomlyAddPotionRecipe, getMagicItemTemplates } from './loot.js';   // G4: the guild shelves' two minters   // AUDIT 26: StockHouseContainer's five ItemBuilder minters   // the MAGIC.DEF registry, one home
 import { SPELLBOOK_TEMPLATE_INDEX } from './spellMaker.js';   // G4: one home for MiscItems 132
 
 export { BOOK_TEMPLATE };
+
+// ItemHelper.GetItemTemplate(ItemGroups.MagicItems, MagicItemSubTypes
+// .MagicItem) - the group's one enum member is 0 and is "not mapped to
+// a specific item template index" (ItemEnums.cs:233-236), so the shelf
+// loop rolls the MagicItems group against ItemTemplates[0]'s rarity.
+export const MAGIC_ITEMS_GROUP_TEMPLATE = 0;
 
 /** ItemBuilder.RandomizeArmorVariant (:813-844) - the branch
  *  ApplyArmorSettings takes when CreateArmor is called with its
@@ -166,7 +174,8 @@ function stockedItem(item, rolls) {
 
 /** StockShopShelf, verbatim. Returns the item list; every item
  *  carries value = its DaggerfallUnityItem base value. */
-export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { rolls = Math.random } = {}) {
+export function stockShopShelf({ buildingType, quality }, playerEntity = {},
+  { rolls = Math.random, magicItemTemplates = getMagicItemTemplates() } = {}) {
   const items = [];
   // DaggerfallUnityItem.ItemName is the TEMPLATE's name for every
   // plain item; AUDIT 18: the shelf minted rows with none, so the
@@ -198,7 +207,36 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
     if (group === 'MensClothing' && female) group = 'WomensClothing';
     if (group === 'WomensClothing' && !female) group = 'MensClothing';
     if (group === 'Furniture' || group === 'UselessItems1') continue;
-    if (group === 'MagicItems') continue;   // INTERIM loud (the loot MI interim)
+    if (group === 'MagicItems') {
+      // The MagicItems arm of the group loop (DaggerfallLoot.cs:240-243).
+      // Its enum walk is one iteration long: GetEnumArray(MagicItems)
+      // is MagicItemSubTypes, whose single member MagicItem = 0 is
+      // "not mapped to a specific item template index"
+      // (ItemEnums.cs:233-236), so GetItemTemplate(MagicItems, 0)
+      // resolves ItemTemplates[0] - the Ruby, rarity 10 - and the whole
+      // group gets ONE rarity test and ONE Dice100 at the pair's
+      // chanceMod. The pawn shop's pair is (0x04, 0x0A), so a shelf of
+      // quality >= 10 stocks a random magic item on a 5% roll; the
+      // general store's is (0x04, 0x00), a stockChance of 0, which is
+      // why only pawn shops ever show one.
+      //
+      // CreateRandomMagicItem (ItemBuilder.cs:517-520) is
+      // CreateRegularMagicItem with chosenItem = -1, which is the
+      // default loot.js's minter already takes - one home, the same
+      // one the guild shelf and StockHouseContainer use.
+      const t = ITEM_TEMPLATES[MAGIC_ITEMS_GROUP_TEMPLATE];
+      if (t.rarity > quality) continue;
+      const stockChance = Math.trunc(chanceMod * 5 * (21 - t.rarity) / 100);
+      if (!dice100(stockChance, rolls())) continue;
+      // FLAGGED: the mint needs MAGIC.DEF - `magicItemTemplates`,
+      // defaulted from loot.js's registry - and yields nothing without
+      // it, the same interim StockHouseContainer's arm carries. The
+      // roll above is spent either way, exactly as in DFU.
+      if (magicItemTemplates) {
+        add(createRegularMagicItem(magicItemTemplates, level, female ? 'female' : 'male', rolls));
+      }
+      continue;
+    }
     if (group === 'Books') {
       let qualityMod = Math.trunc((quality + 3) / 5);
       if (qualityMod >= 4) --qualityMod;

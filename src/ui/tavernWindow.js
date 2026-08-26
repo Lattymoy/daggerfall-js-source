@@ -26,16 +26,25 @@
 // is picker -> message, which is exactly what that window already is.
 //
 // THE ORDER-OF-CLOSING QUIRKS, which are the reason the chain is not
-// just "open a box":
-// - DoFoodAndDrink (:283) calls CloseWindow FIRST and only THEN tests
-//   the hunger gate, so "You are not hungry." appears with the tavern
+// just "open a box". CloseWindow() is uiManager.PopWindow()
+// (UserInterfaceWindow.cs:127-130) - it pops whatever is on TOP, not
+// the instance that called it, and that is what decides each ending:
+// - DoFoodAndDrink (:283) calls CloseWindow FIRST, while the tavern
+//   IS the top window, and only THEN tests the hunger gate - so "You
+//   are not hungry." and the whole food chain run with the tavern
 //   panel already gone. Verbatim.
-// - ConfirmRenting_OnButtonClick (:212) likewise closes the tavern
-//   window before it looks at the button, so declining the price
-//   closes the tavern too rather than returning to the panel.
+// - the ROOM chain never closes the tavern at all. RoomButton
+//   (:153-171) only pushes the input box; that box CLOSES ITSELF
+//   before it raises OnGotUserInput (DaggerfallInputMessageBox.cs
+//   :298-301), so the refusals at :176-178 and :188-191 land with the
+//   tavern topmost. ConfirmRenting_OnButtonClick's CloseWindow()
+//   (:214) pops the price box pushed at :208 - DaggerfallMessageBox
+//   does NOT self-close, it only raises the event (:479-484) - so it
+//   too leaves the tavern standing. Rent, decline, over-rent or
+//   mistype, the player lands back on the four-button panel.
 // - the gold test happens at the YES, not at the offer: DFU shows you
 //   a price you cannot afford and tells you so only after you agree
-//   to it (:214-222).
+//   to it (:216-224).
 //
 // FLAGGED, with the slices they wait on:
 // - the TALK button routes to TalkManager.TalkToStaticNPC (:263); the
@@ -49,9 +58,9 @@
 //   room's CONTENTS are not preserved - the rental is.
 
 import { loadImg, nativeMetrics, drawImg } from './nativePanel.js';
-import { drawMenuBackdrop } from './chargenArt.js';
+import { drawScreenDimBackdrop } from './chargenArt.js';
 import { ServiceFlowWindow, macroRows } from './guildServiceWindows.js';
-import { goldAmount, deductGold } from '../systems/court.js';
+import { goldAmount, totalGoldAmount, deductGold } from '../systems/court.js';
 import { dayOfYearFromMinutes } from '../systems/gameDate.js';
 import { raceDisplayName, honorificOf } from '../systems/talkSession.js';
 import {
@@ -115,6 +124,7 @@ export class TavernWindow {
     this.done = false;
     this.isChoiceWindow = true;   // raw codes through the overlay seam
     this.flow = null;             // the box chain, when one is up
+    this._flowOverPanel = false;  // ...and whether the panel is still under it
   }
 
   _close() { this.done = true; this.hooks.onClose?.(); }
@@ -134,12 +144,20 @@ export class TavernWindow {
     });
   }
 
-  /** Every chain the two buttons raise runs in ONE ServiceFlowWindow
-   *  whose close closes the tavern with it - which is DFU's shape,
-   *  since both buttons call CloseWindow before the chain starts. */
-  _chain(boxes) {
-    if (!boxes?.length) { this._close(); return; }
-    this.flow = new ServiceFlowWindow(boxes, { onClose: () => { this.flow = null; this._close(); } });
+  /** Every chain the two buttons raise runs in ONE ServiceFlowWindow.
+   *  WHICH WINDOW OUTLIVES IT is the button's, not the chain's:
+   *  DoFoodAndDrink popped the tavern before its first box existed
+   *  (:283), so the FOOD chain's end is the end of the tavern; the
+   *  ROOM chain was only ever pushed OVER the tavern, so its end
+   *  hands the four-button panel back (see the header). */
+  _chain(boxes, { closesTavern = true } = {}) {
+    if (!boxes?.length) { if (closesTavern) this._close(); return; }
+    // A chain the tavern outlives is a chain pushed OVER it, so the
+    // panel is what its boxes are drawn on top of.
+    this._flowOverPanel = !closesTavern;
+    this.flow = new ServiceFlowWindow(boxes, {
+      onClose: () => { this.flow = null; if (closesTavern) this._close(); },
+    });
   }
 
   /** RoomButton_OnMouseClick (:153-171). The expiry sweep runs FIRST,
@@ -156,7 +174,7 @@ export class TavernWindow {
       rows: this._rows(room ? HOW_MANY_ADDITIONAL_DAYS_ID : HOW_MANY_DAYS_ID, { room, now }),
       field: DAYS_FIELD,
       onInput: (text) => this._decide(text, room, now),
-    }]);
+    }], { closesTavern: false });
   }
 
   /** InputMessageBox_OnGotUserInput (:173-208), through the law. */
@@ -183,7 +201,7 @@ export class TavernWindow {
       rows: this._rows(OFFER_PRICE_ID, { amount: d.price, room, now }),
       buttons: 'YesNo',
       onYes: () => this._confirm(room, d),
-      onNo: () => null,      // the chain empties, which closes the tavern (:212)
+      onNo: () => null,      // the chain empties back onto the panel (:214)
     };
     return d.heartsDay ? [{ rows: line(ROOM_FREE_HEARTS_DAY) }, offer] : [offer];
   }
@@ -191,7 +209,11 @@ export class TavernWindow {
   /** ConfirmRenting_OnButtonClick's Yes arm (:213-223). */
   _confirm(room, d) {
     const h = this.hooks;
-    if (goldAmount(h.entity) < d.price) return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID, { amount: d.price }) }];
+    // GetGoldAmount (:218) - coins PLUS letters of credit
+    // (PlayerEntity.cs:1313-1316), not GoldPieces. DeductGoldAmount
+    // on the next line spends letters, so a coins-only gate refuses a
+    // room the very next line could pay for.
+    if (totalGoldAmount(h.entity) < d.price) return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID, { amount: d.price }) }];
     deductGold(h.entity, d.price);
     this._rent(room, d.days);
     return null;
@@ -220,7 +242,9 @@ export class TavernWindow {
     this._chain([{
       picker: [...TAVERN_MENU],
       onPick: (i) => {
-        const r = eatOrDrink(i, { gold: goldAmount(h.entity), gameMinutes: now });
+        // FoodAndDrink_OnItemPicked's gate is GetGoldAmount too (:324),
+        // and its DeductGoldAmount (:331) spends the same letters.
+        const r = eatOrDrink(i, { gold: totalGoldAmount(h.entity), gameMinutes: now });
         if (r.kind === 'ignore') return null;
         if (r.kind === 'poor') return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID) }];
         if (r.spend) deductGold(h.entity, r.spend);
@@ -253,12 +277,20 @@ export class TavernWindow {
   draw(renderer, canvas, font) {
     if (!_art) { this._close(); return; }
     const m = nativeMetrics(canvas);
-    // AUDIT 19 F2: DaggerfallBaseWindow's parentPanel is opaque BLACK.
-    drawMenuBackdrop(renderer, canvas);
-    // Both buttons close the tavern before their chain runs, so the
-    // panel is NOT drawn under a live box - DFU's CloseWindow has
-    // already taken it off the stack.
-    if (this.flow) { this.flow.draw(renderer, canvas, font); return; }
+    // This window's OWN constructor overrides DaggerfallBaseWindow's
+    // black parent panel: `ParentPanel.BackgroundColor = Color.clear;`
+    // (:84). The inn behind the 130x44 panel stays visible.
+    drawScreenDimBackdrop(renderer, canvas);
+    // The FOOD chain's boxes stand alone - DoFoodAndDrink popped the
+    // tavern before the first of them existed (:283). The ROOM
+    // chain's are pushed OVER the tavern, and DaggerfallPopupWindow
+    // .Draw (:77-84) draws its previousWindow first, so the panel is
+    // still there underneath.
+    if (this.flow) {
+      if (this._flowOverPanel) drawImg(renderer, _art, m, TAVERN_PANEL_X, TAVERN_PANEL_Y);
+      this.flow.draw(renderer, canvas, font);
+      return;
+    }
     drawImg(renderer, _art, m, TAVERN_PANEL_X, TAVERN_PANEL_Y);
   }
 }

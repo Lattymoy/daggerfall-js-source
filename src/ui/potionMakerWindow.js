@@ -37,6 +37,7 @@ import {
   CAULDRON_CAPACITY, cauldronAccepts, mixCauldron, consumeCauldron,
   isIngredient, knownRecipes, gatherRecipe,
 } from '../systems/potions.js';
+import { isEnchanted } from '../systems/inventory.js';
 
 /** MASK00I0 is a full-screen background (:75-76), so the rects are
  *  screen-absolute rather than panel-relative. */
@@ -95,6 +96,12 @@ export function _setPotionArtForTests(art) { _art = art; }
 
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
 
+/** The port's stand-in for ItemCollection.SplitStack's second record
+ *  (ItemCollection.cs:261-272): the one-unit record the cauldron holds
+ *  points back at the pack stack it was split off, which is how the
+ *  ingredient list knows how many units of that stack are left. */
+const SPLIT_FROM = Symbol('splitFrom');
+
 /** Which slot of a list a point lands in, or null. `origin` is the
  *  list's screen rect and `buttons` its panel-relative grid. */
 export function slotAt(origin, buttons, x, y, offsetX = 0) {
@@ -132,23 +139,50 @@ export class PotionMakerWindow {
 
   /** The pack's ingredients, minus what is already in the cauldron.
    *  DFU moves the item OUT of its ingredients collection when it goes
-   *  in the pot, which is the same thing seen from the other side. */
+   *  in the pot, which is the same thing seen from the other side.
+   *
+   *  Refresh (:145-149) takes `item.IsIngredient && !item.IsEnchanted`
+   *  - an enchanted item never reaches the list, and the consume walk
+   *  agrees (GetItem(..., allowEnchantedItem: false), :338/:345).
+   *
+   *  A STACK stays in the list while only some of its units are in the
+   *  pot: DFU splits one unit off (:256-257) and the remainder record
+   *  keeps its place, so the count here is the stack's minus the units
+   *  the cauldron holds off it. */
   ingredients() {
-    const inPot = [...this.cauldron];
-    return (this.hooks.packItems?.() ?? []).filter((it) => {
-      if (!isIngredient(it)) return false;
-      const at = inPot.findIndex((c) => c === it);
-      if (at >= 0) { inPot.splice(at, 1); return false; }
-      return true;
-    });
+    const inPot = new Map();
+    for (const c of this.cauldron) {
+      const src = c[SPLIT_FROM] ?? c;
+      inPot.set(src, (inPot.get(src) ?? 0) + 1);
+    }
+    const out = [];
+    for (const it of this.hooks.packItems?.() ?? []) {
+      if (!isIngredient(it) || isEnchanted(it)) continue;
+      const used = inPot.get(it) ?? 0;
+      if (used === 0) { out.push(it); continue; }
+      const left = (it.stackCount ?? 1) - used;
+      if (left > 0) out.push({ ...it, stackCount: left, [SPLIT_FROM]: it });
+    }
+    return out;
   }
 
   /** AddToCauldron (:251-264) - a full pot simply refuses, with no
-   *  message, and the name label clears on every change. */
+   *  message, and the name label clears on every change.
+   *
+   *  "if (item.IsAStack()) item = ingredients.SplitStack(item, 1)"
+   *  (:256-257): exactly ONE unit leaves the stack for the pot. DFU
+   *  splits inside the window's own CLONE collection (Refresh clones
+   *  every ingredient, :148), so the player's stack is untouched until
+   *  MixCauldron's RemoveOne walk; the port's list is derived from the
+   *  pack instead, so the split unit is a record of its own that
+   *  carries SPLIT_FROM back to the stack it came off. */
   _addToCauldron(item) {
     if (!cauldronAccepts(this.cauldron)) return;
     this.nameLabel = '';
-    this.cauldron.push(item);
+    const src = item[SPLIT_FROM] ?? item;
+    this.cauldron.push((src.stackCount ?? 1) > 1
+      ? { ...src, stackCount: 1, [SPLIT_FROM]: src }
+      : src);
   }
 
   /** ItemsUpButton/ItemsDownButton_OnMouseClick (ItemListScroller.cs:
@@ -167,9 +201,13 @@ export class PotionMakerWindow {
     this.cauldron.splice(slot, 1);
   }
 
-  /** MixCauldron (:311-345), through the law. */
+  /** MixButton_OnMouseClick (:393-398) then MixCauldron (:311-345),
+   *  through the law. The click sound plays either way and an EMPTY
+   *  pot never reaches MixCauldron - `if (cauldron.Count > 0)` (:396)
+   *  - so there is no failure message for mixing nothing. */
   _mix() {
     audio.playOneShot(SOUND.ButtonClick, 1);
+    if (this.cauldron.length === 0) return;
     const result = mixCauldron(this.cauldron.map((it) => it.templateIndex));
     if (result.kind === 'failed') {
       this.box = { rows: [{ text: POTION_FAILED, center: true }] };

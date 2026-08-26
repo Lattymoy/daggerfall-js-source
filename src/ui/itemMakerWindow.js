@@ -101,6 +101,10 @@ export const ROW_W = 75, ROW_W_SCROLLED = 71;
 export const ROW_H_PLAIN = 7, ROW_H_SECONDARY = 12;
 export const ROW_GAP = 5, ROW_START_Y = 2, ROWS_VISIBLE = 7;
 export const SECONDARY_INDENT = '  ';
+/** The list's own scroller (:24-25): FOUR pixels wide, stepping EIGHT
+ *  to the wheel. VerticalScrollBar's thumb never shrinks past ten
+ *  (VerticalScrollBar.cs:208). */
+export const SCROLLER_WIDTH = 4, SCROLLER_STEP = 8, SCROLL_THUMB_MIN_H = 10;
 /** DaggerfallUI.DaggerfallForcedEnchantmentTextColor (:64). */
 export const FORCED_TEXT_COLOR = [186 / 255, 207 / 255, 125 / 255, 1];
 
@@ -143,16 +147,67 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && 
 /** Where each row of a list sits and how tall it is - the layout
  *  RefreshPanelLayout walks (:222-231). A row is twelve tall when its
  *  effect has a parameter name to print underneath and seven when it
- *  does not, so the stride is not uniform. */
-export function rowLayout(list) {
+ *  does not, so the stride is not uniform.
+ *
+ *  Scroller_OnScroll (:283-290) lays the same rows out from
+ *  `panelPosVerticalStartingOffset - scroller.ScrollIndex`, so the
+ *  scroll index is a PIXEL offset subtracted from the starting y - it
+ *  is not a row count. A row is `w` wide: FitToScroller (:227, :369)
+ *  narrows every row to 71 to clear the slim scroller once the list
+ *  shows one. */
+export function rowLayout(list, scrollIndex = 0) {
   const out = [];
-  let y = ROW_START_Y;
+  const w = showEnchantmentScroller(list) ? ROW_W_SCROLLED : ROW_W;
+  let y = ROW_START_Y - scrollIndex;
   for (const e of list) {
     const h = enchantmentParams(e.type).length > 0 ? ROW_H_SECONDARY : ROW_H_PLAIN;
-    out.push({ y, h, entry: e });
+    out.push({ y, h, w, entry: e });
     y += h + ROW_GAP;
   }
   return out;
+}
+
+/** ShowScroller (:244-247): the slim scroller is up once the list
+ *  holds MORE than visiblePanels rows - a COUNT of panels, not a
+ *  measurement of how many happen to fit. */
+export const showEnchantmentScroller = (list) => list.length > ROWS_VISIBLE;
+
+/** scroller.TotalUnits (:229, :232): every row's height PLUS the
+ *  five-pixel gap, in pixels. DisplayUnits is the list's own height
+ *  (:213), which is why both are pixels rather than rows. */
+export const enchantmentScrollUnits = (list) =>
+  list.reduce((sum, e) => sum
+    + (enchantmentParams(e.type).length > 0 ? ROW_H_SECONDARY : ROW_H_PLAIN) + ROW_GAP, 0);
+
+/** VerticalScrollBar.SetScrollIndex (:187-198) - clamped to
+ *  [0, TotalUnits - DisplayUnits], with a negative maximum floored. */
+export function clampEnchantmentScroll(value, list, displayUnits) {
+  const max = Math.max(0, enchantmentScrollUnits(list) - displayUnits);
+  return Math.max(0, Math.min(max, value));
+}
+
+/** The scroller's own rect (:211-212): the last FOUR pixels of the
+ *  list's width, full height - "Enchantment UI has no dedicated area
+ *  for a scroller" (:206-207), so it eats into the rows instead. */
+export const enchantmentScrollerRect = (rect) =>
+  [rect[0] + rect[2] - SCROLLER_WIDTH, rect[1], SCROLLER_WIDTH, rect[3]];
+
+/** DrawScrollBar's thumb geometry, verbatim (VerticalScrollBar.cs:
+ *  204-211), which the rail's paging arm hit-tests against; null when
+ *  Draw() would return early because the list fits (:136-137).
+ *
+ *  FLAGGED: the thumb is three Resources texture slices (:212-222)
+ *  this port has no reader for, so it is NOT DRAWN - inventing a
+ *  colour would break the NATIVE-WINDOW RULE, the same flag that
+ *  stands over chargenArt's list picker. The geometry is here because
+ *  the click law is written against it. */
+export function enchantmentThumbRect(list, scrollIndex, rect) {
+  const total = enchantmentScrollUnits(list), display = rect[3];
+  if (total <= display) return null;
+  const [sx, sy, sw, sh] = enchantmentScrollerRect(rect);
+  let th = sh * (display / total);
+  if (th < SCROLL_THUMB_MIN_H) th = SCROLL_THUMB_MIN_H;
+  return [sx, sy + scrollIndex * (sh - th) / (total - display), sw, th];
 }
 
 /**
@@ -173,6 +228,11 @@ export class ItemMakerWindow {
     this.sideEffects = [];
     this.selectingPowers = true;
     this.scroll = 0;
+    // Each picker carries its OWN scroller index, in pixels
+    // (EnchantmentListPicker.cs:284).
+    this.powersScroll = 0;
+    this.sideEffectsScroll = 0;
+    this._pointer = [-1, -1];
     this.itemName = '';
     this.renaming = false;
     this.box = null;
@@ -183,6 +243,24 @@ export class ItemMakerWindow {
 
   _close() { this.done = true; this.hooks.onClose?.(); }
   _say(text) { this.box = { rows: [{ text, center: true }] }; }
+
+  /** The two EnchantmentListPickers, each with the field its own
+   *  scroller index lives in. */
+  _pickers() {
+    return [
+      { rect: ITEM_RECTS.powersList, list: this.powers, key: 'powersScroll' },
+      { rect: ITEM_RECTS.sideEffectsList, list: this.sideEffects, key: 'sideEffectsScroll' },
+    ];
+  }
+
+  /** ClearEnchantments (:94-103) - emptying a list puts its scroller
+   *  back to the top. */
+  _clearLists() {
+    this.powers = [];
+    this.sideEffects = [];
+    this.powersScroll = 0;
+    this.sideEffectsScroll = 0;
+  }
 
   items() {
     return (this.hooks.packItems?.() ?? []).filter((it) => itemMakerFilter(it, this.tab, this.selected));
@@ -204,16 +282,14 @@ export class ItemMakerWindow {
   _deselect() {
     audio.playOneShot(SOUND.ButtonClick, 1);
     this.selected = null;
-    this.powers = [];
-    this.sideEffects = [];
+    this._clearLists();
     this.itemName = '';
   }
 
   _selectItem(item) {
     audio.playOneShot(SOUND.ButtonClick, 1);
     this.selected = item;
-    this.powers = [];
-    this.sideEffects = [];
+    this._clearLists();
     this.itemName = item?.name ?? '';
   }
 
@@ -277,6 +353,11 @@ export class ItemMakerWindow {
     audio.playOneShot(SOUND.ButtonClick, 1);
     this.powers = removeEnchantment(this.powers, entry.key);
     this.sideEffects = removeEnchantment(this.sideEffects, entry.key);
+    // RemoveEnchantment (:249-256) puts the scroller back to the top -
+    // and a forced child leaving the OTHER list (RemoveForcedEnchantments,
+    // :153-168) goes through the same call.
+    this.powersScroll = 0;
+    this.sideEffectsScroll = 0;
   }
 
   /** EnchantButton_OnMouseClick (:705-770). */
@@ -303,8 +384,7 @@ export class ItemMakerWindow {
     audio.playOneShot(SOUND.MakeItem, 1);
     this._say(d.text);
     this.selected = null;
-    this.powers = [];
-    this.sideEffects = [];
+    this._clearLists();
     this.itemName = '';
     this.hooks.onEnchanted?.();
   }
@@ -351,10 +431,22 @@ export class ItemMakerWindow {
     if (inRect(ITEM_RECTS.selectedItem, vx, vy)) { if (this.selected) this._deselect(); return true; }
     if (inRect(ITEM_RECTS.nameItem, vx, vy)) { if (this.selected) this.renaming = true; return true; }
 
-    for (const [rect, list] of [[ITEM_RECTS.powersList, this.powers],
-      [ITEM_RECTS.sideEffectsList, this.sideEffects]]) {
+    for (const { rect, list, key } of this._pickers()) {
       if (!inRect(rect, vx, vy)) continue;
-      const hit = rowLayout(list).find((r) => vy >= rect[1] + r.y && vy < rect[1] + r.y + r.h);
+      // The slim scroller owns the list's last four pixels once it is
+      // up, so a click there is the BAR's, not a row's.
+      if (showEnchantmentScroller(list) && inRect(enchantmentScrollerRect(rect), vx, vy)) {
+        // VerticalScrollBar.MouseClick (:142-150): above the thumb
+        // pages back by DisplayUnits, below it pages forward.
+        const thumb = enchantmentThumbRect(list, this[key], rect);
+        if (thumb) {
+          const page = vy < thumb[1] ? -rect[3] : (vy > thumb[1] + thumb[3] ? rect[3] : 0);
+          this[key] = clampEnchantmentScroll(this[key] + page, list, rect[3]);
+        }
+        return true;
+      }
+      const hit = rowLayout(list, this[key]).find((r) => vx < rect[0] + r.w
+        && vy >= rect[1] + r.y && vy < rect[1] + r.y + r.h);
       // "Can only click to remove parent panels, child panels are
       // removed by clicking on parent" (EnchantmentListPicker.cs:
       // 266-271) - a forced child is not the player's to take off.
@@ -372,6 +464,27 @@ export class ItemMakerWindow {
       return true;
     }
     return true;   // the background is the whole screen
+  }
+
+  /** U37's hover seam, which both hosts already carry: the wheel arm
+   *  needs to know WHICH picker the pointer is over, because DFU's
+   *  MouseScrollUp/Down (:180-196) are the picker panel's own. */
+  hover(vx, vy) { this._pointer = [vx, vy]; }
+
+  /** EnchantmentListPicker.MouseScrollUp/MouseScrollDown (:180-196):
+   *  nothing happens unless the scroller is up, and then the index
+   *  moves by scrollerStep. Over the BAR itself it is
+   *  VerticalScrollBar's own wheel arm instead, which steps by ONE
+   *  (VerticalScrollBar.cs:152-161). */
+  wheel(dir) {
+    const [vx, vy] = this._pointer;
+    for (const { rect, list, key } of this._pickers()) {
+      if (!inRect(rect, vx, vy)) continue;
+      if (!showEnchantmentScroller(list)) return;
+      const step = inRect(enchantmentScrollerRect(rect), vx, vy) ? 1 : SCROLLER_STEP;
+      this[key] = clampEnchantmentScroll(this[key] + Math.sign(dir) * step, list, rect[3]);
+      return;
+    }
   }
 
   draw(renderer, canvas, font) {
@@ -397,10 +510,14 @@ export class ItemMakerWindow {
     }
 
     // the two enchantment lists
-    for (const [rect, list] of [[ITEM_RECTS.powersList, this.powers],
-      [ITEM_RECTS.sideEffectsList, this.sideEffects]]) {
-      const scrolled = list.length > ROWS_VISIBLE;
-      for (const row of rowLayout(list)) {
+    for (const { rect, list, key } of this._pickers()) {
+      for (const row of rowLayout(list, this[key])) {
+        // Enabled = myRect.Overlaps(panel.Rectangle) (:230, :289): a
+        // row scrolled off either edge is not drawn. INTERIM, this
+        // file's whole-row idiom: DFU clips a row straddling an edge
+        // through its restricted render area, the port draws only
+        // rows that fit whole.
+        if (row.y < 0) continue;
         if (row.y + row.h > rect[3]) break;
         // a FORCED row is the one thing this window colours
         // differently - it is how you can tell a row you did not pick
@@ -415,7 +532,6 @@ export class ItemMakerWindow {
           shadowText(renderer, font, SECONDARY_INDENT + enchantmentParamName(row.entry.type, row.entry.param),
             m, rect[0], rect[1] + row.y + 8, opts);
         }
-        void scrolled;
       }
     }
 
