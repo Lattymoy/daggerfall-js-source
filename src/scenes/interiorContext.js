@@ -125,8 +125,12 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   const drawList = [];
   const ladders = []; // {cpu, matrix} - verbatim id 41409
   // S2b: house containers - the verbatim predicate lives in
-  // systems/containers.js (pure, tested); private furniture starts
-  // EMPTY, opened through the shared pickup.
+  // systems/containers.js (pure, tested). They start empty and stock
+  // LAZILY, like the shelves below: StockHouseContainer runs at the
+  // first activation of the game day (PlayerActivate.cs:910-915), off
+  // the container's own TextureRecord, which is why `record` rides
+  // here. AUDIT 26 (hosts-modal F209) - "private furniture starts
+  // EMPTY" used to be the whole story and nothing ever filled it.
   const containers = [];
   // E2: shop shelves. DFU's AddFurnitureAction chain checks the
   // SHELF set FIRST - a shelf-set model in a plain house is NOTHING

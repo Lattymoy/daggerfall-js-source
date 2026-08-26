@@ -391,7 +391,7 @@ test('audit24 wave34: every pool inherits the probe, because it lives in the AI'
   // The whole point of putting it in EnemyAI: the three pools construct
   // one and get the law without a line each.
   const enemy = rd('src/characters/enemyMotor.js');
-  for (const m of ['_obstacleCheck(dir)', '_fallCheck(dir)', '_findDetour(dir2d', '_updateDetourTimers(dt, canAct)']) {
+  for (const m of ['_obstacleCheck(dir)', '_fallCheck(dir)', '_findDetour(dir2d', '_updateDetourTimers(dt, acting)']) {
     assert.ok(enemy.includes(m), `${m} is on the AI`);
   }
   // ...and each of the three movement branches probes before it moves

@@ -28,7 +28,7 @@ import {
   EnemyAI, SEARCH_MULT_MAX, GIVE_UP_TICKS, CLASSIC_UPDATE_INTERVAL,
 } from '../src/characters/enemyMotor.js';
 import { BANK_TYPES, nameBankOfRegionRace, fullName } from '../src/characters/nameHelper.js';
-import { srand } from '../src/formats/dfRandom.js';
+import { srand, rand } from '../src/formats/dfRandom.js';
 import { FACTION_TYPES } from '../src/formats/factionFile.js';
 import { RACES } from '../src/systems/races.js';
 
@@ -406,4 +406,54 @@ test('audit26 F012: HandleNoAction resets the search ramp on EVERY arm', () => {
   stunned.searchMult = SEARCH_MULT_MAX;
   stunned.update(CLASSIC_UPDATE_INTERVAL, [0, 0, 20], { gameMinutes: 0, playerStealth: 0, rolls: () => 0.5 }, false);
   assert.equal(stunned.searchMult, 0, 'and so does one mid-knockback');
+});
+
+test('audit26 F010: the CanAct gate rides the SHOT, never EnemyAttack\'s per-tick DFRandom byte', () => {
+  // THE TWO COMPONENTS ARE SEPARATE. CanAct is declared, written and
+  // read entirely inside EnemyMotor.cs (:97, :161, :171, :256, :317,
+  // :344, :364, :382, :398) and gates one thing: `if (CanAct)
+  // TakeActionHandler()` at :171-172, which is what owns DoRangedAttack
+  // (:469) and DoTouchSpell (:473). EnemyAttack.FixedUpdate reads no
+  // CanAct anywhere - its only read of the motor at all is
+  // `motor.Bashing` (EnemyAttack.cs:208) - so its
+  // `DFRandom.rand() % speed >= (speed >> 3) + 6` draw at :81 runs on
+  // every classic update whatever the motor decided. DFRandom is ONE
+  // shared global LCG: a skipped draw shifts every later consumer in
+  // the session (AUDIT 24, "The DFRandom byte stopped drawing
+  // mid-swing").
+  const bandFoe = (knockbackSpeed) => ({
+    _dist: 20, inSight: true, detected: true, giveUpTimer: 200,
+    yaw: 0, feet: [0, 0, 0], knockbackSpeed,
+  });
+  const oneTick = (knockbackSpeed) => {
+    const a = new EnemyAttack({ liveSpeed: 50, rolls: () => 0 });
+    a.rangedAttack = true;
+    srand(4242);
+    a.update(CLASSIC_UPDATE_INTERVAL, bandFoe(knockbackSpeed), [0, 0, 20]);
+    return a;
+  };
+  // the stream from the same seed: the byte a single draw consumes,
+  // then the one the NEXT consumer must see
+  srand(4242);
+  rand();
+  const second = rand();
+
+  const shooting = oneTick(0);
+  assert.equal(rand(), second, 'the acting foe drew exactly one byte');
+  assert.equal(shooting.firedRanged, true, 'and it took its shot');
+
+  const stunned = oneTick(3);
+  assert.equal(rand(), second,
+    'and so did the knocked-back one - the shot is suppressed, the byte is NOT');
+  assert.equal(stunned.firedRanged, false, 'while the 1/32 bow roll never ran');
+  assert.equal(stunned.meleeTimer, 0,
+    'and falling past the band arm reaches no melee decision either - an in-band foe is beyond MeleeDistance');
+
+  // the same for a foe the OTHER CanAct arm stopped (GiveUpTimer spent)
+  const givenUp = new EnemyAttack({ liveSpeed: 50, rolls: () => 0 });
+  givenUp.rangedAttack = true;
+  srand(4242);
+  givenUp.update(CLASSIC_UPDATE_INTERVAL, { ...bandFoe(0), giveUpTimer: 0 }, [0, 0, 20]);
+  assert.equal(rand(), second, 'every CanAct arm leaves the draw alone');
+  assert.equal(givenUp.firedRanged, false);
 });

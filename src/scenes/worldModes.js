@@ -190,6 +190,48 @@ const DUNGEON_WATER_SCROLL = 0.05;
  *  scene, exactly as DFU's does. */
 let _lastCreateItemIndex = 0;
 
+/** THE TWO QUEST-FLAT PLACEMENT LAWS, as one pure member.
+ *
+ *  GameObjectHelper stands a quest Person and a quest Item by two
+ *  different rules, and the port ran one for both until AUDIT 26.
+ *  Both are written here so neither can drift, and so a test can drive
+ *  the law instead of reading the caller's source.
+ *
+ *  AddQuestNPC (:1030-1040): the CENTRE lands on the marker and is
+ *  raised by half a height `if (!inDungeon)`; then
+ *  AlignBillboardToGround(go, Size, 4) (:336-346) rays from 0.2 above
+ *  the position and, on a hit, puts the centre at
+ *  `hit.y + size.y * 0.52`. No floor within 4 and C# returns without
+ *  moving anything.
+ *
+ *  AddQuestItem (:1116-1160) never calls the align at all. Its dungeon
+ *  shift is the CONSTANT `-randomTreasureMarkerDim / 2 * GlobalScale`
+ *  (:1135-1136; DaggerfallLoot.cs:33 dim = 40, so -0.5) - the
+ *  centre-origin correction dungeon flats need, NOT the sprite's own
+ *  half-height - and the `+Size.y/2` that follows it is only the
+ *  base-to-centre conversion.
+ *
+ *  THE ANCHOR DIFFERENCE is why the two shifts land on opposite sides:
+ *  DFU's billboard is CENTRE-anchored and this port's shader is
+ *  BOTTOM-anchored (position = base, the C11 law at
+ *  dungeonContext.js:1325). So DFU's `raise the centre in a BUILDING`
+ *  is this port's `drop the base in a DUNGEON`, which is exactly the
+ *  shift the dungeon's own RDB flats already take; and DFU's centre at
+ *  `hit + size.y * 0.52` is this port's base at `hit + size.y * 0.02`.
+ *
+ *  Returns the y the billboard's BASE stands at. `raycast` is the
+ *  scene collider's, or null where there is none - a scene with no
+ *  collider is C#'s "no floor within 4".
+ */
+export function questFlatStandY({ x = 0, y = 0, z = 0, sizeH = 0, inDungeon = false, isItem = false, raycast = null } = {}) {
+  // AddQuestItem: the constant, and nothing else - no ray.
+  if (isItem) return inDungeon ? y - (RANDOM_TREASURE_MARKER_DIM / 2) * GLOBAL_SCALE : y;
+  // AddQuestNPC: the half-height anchor, then the ground align.
+  const by = inDungeon ? y - sizeH / 2 : y;
+  const drop = raycast?.([x, by + 0.2, z], [0, -1, 0], 4);
+  return Number.isFinite(drop) ? (by + 0.2 - drop) + sizeH * 0.02 : by;
+}
+
 export function createWorldModes(host) {
   const _footsteps = new FootstepMachine();   // FS-slice: the modal stride (interior wood / dungeon stone + water)
   // AUDIT 18: the interior host's share of the player world clock.
@@ -471,34 +513,15 @@ export function createWorldModes(host) {
       uploadRecord(archive, record);
       const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
       stand.width = size.w; stand.height = size.h;
-      // THE TWO PLACEMENT LAWS - and they are NOT one law.
-      //
-      // AddQuestNPC (GameObjectHelper.cs:1030-1040): the centre lands on
-      // the marker, raised by half a height `if (!inDungeon)`, then
-      // AlignBillboardToGround(go, Size, 4) (:336-346) rays from 0.2
-      // above and on a hit puts the CENTRE at hit + size.y * 0.52 - so
-      // a bottom-anchored base sits size.y * 0.02 off the floor, the 2%
-      // lift that keeps it out of the ground plane. No floor within 4
-      // and the marker position stands (C# returns without moving).
-      //
-      // AddQuestItem (:1116-1160) NEVER calls the align. Its dungeon
-      // shift is the CONSTANT -randomTreasureMarkerDim / 2 *
-      // MeshReader.GlobalScale (:1135-1136; DaggerfallLoot.cs:33 dim =
-      // 40, so -0.5) - the centre-origin correction dungeon flats need,
-      // not the sprite's own half-height - and the +Size.y/2 that
-      // follows is only the base-to-centre conversion this port's
-      // bottom-anchored billboards do not need. So an item's base IS
-      // the marker, less that 0.5 in a dungeon, and an item standing on
-      // a table, a shelf or a cage marker stays where the quest put it
-      // instead of being snapped to the floor underneath.
-      let by;
-      if (isItem) {
-        by = inDungeon ? y - (RANDOM_TREASURE_MARKER_DIM / 2) * GLOBAL_SCALE : y;
-      } else {
-        by = inDungeon ? y - size.h / 2 : y;
-        const drop = ctx.collider?.raycast?.([x, by + 0.2, z], [0, -1, 0], 4);
-        if (Number.isFinite(drop)) by = (by + 0.2 - drop) + size.h * 0.02;
-      }
+      // The two placement laws live in questFlatStandY (module scope,
+      // above): AddQuestNPC's half-height anchor plus
+      // AlignBillboardToGround, AddQuestItem's fixed marker-dim shift
+      // and no ray at all. `isItem` picks which one this stand takes.
+      const by = questFlatStandY({
+        x, y, z, sizeH: size.h, inDungeon, isItem,
+        // bound, so the collider is still the receiver of its own method
+        raycast: (o, d, dist) => ctx.collider?.raycast?.(o, d, dist),
+      });
       stand.y = by;
       stand.batch = renderer.createBillboardBatch(archive, record, size, [[x, by, z]]);
       if (stand.active) ctx.billboardBatches.push(stand.batch);

@@ -36,38 +36,127 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { NativeTalkWindow, TALK_RECTS } from '../src/ui/nativeTalk.js';
+import { questFlatStandY } from '../src/scenes/worldModes.js';
+import { RANDOM_TREASURE_MARKER_DIM } from '../src/systems/loot.js';
+import { GLOBAL_SCALE } from '../src/world/meshReader.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const rd = (p) => readFileSync(join(root, p), 'utf8');
 
 test('questflatanchor: a DUNGEON quest flat drops half a height, a BUILDING one does not', () => {
-  const s = rd('src/scenes/worldModes.js');
-  // The anchor rides a parameter, so the two curried stands cannot
-  // drift apart or silently share the wrong one.
-  assert.match(s, /function standQuestFlatIn\(list, getCtx, toScene, inDungeon, /);
-  assert.match(s, /let by = inDungeon \? y - size\.h \/ 2 : y;/,
-    'the dungeon arm takes the half-height shift the building arm must not');
-  assert.match(s, /standQuestFlatIn\(questFlats, \(\) => interiorCtx, \(ctx, p\) => ctx\.parentPt\(p\.x, p\.y, p\.z\), false,/,
-    'the interior stand is NOT in a dungeon');
-  assert.match(s, /standQuestFlatIn\(dungeonQuestFlats, \(\) => dungeonCtx, \(_ctx, p\) => \[p\.x, p\.y, p\.z\], true,/,
-    'and the dungeon stand is');
-  // The shift is the same one the scene's own static flats take.
+  // Driven, not grepped. AddQuestNPC raises the CENTRE by half a height
+  // `if (!inDungeon)` (GameObjectHelper.cs:1032-1036); this port's
+  // shader is BOTTOM-anchored, so the same picture is the BASE dropping
+  // by half a height in a dungeon and standing on the marker in a
+  // building. With no collider there is no align to confuse it - C#'s
+  // "no floor within 4" leaves the anchor exactly as placed.
+  const MARKER_Y = 10;
+  for (const sizeH of [0.4, 1.6, 3.25]) {
+    const building = questFlatStandY({ y: MARKER_Y, sizeH, inDungeon: false });
+    const dungeon = questFlatStandY({ y: MARKER_Y, sizeH, inDungeon: true });
+    assert.equal(building, MARKER_Y,
+      'a building quest NPC stands ON the marker - interiorContext passes its centers through');
+    assert.equal(dungeon, MARKER_Y - sizeH / 2,
+      'the dungeon arm takes the half-height shift the building arm must not');
+    assert.equal(+(building - dungeon).toFixed(10), +(sizeH / 2).toFixed(10),
+      'the two arms differ by EXACTLY half a sprite, whatever the sprite is');
+  }
+  // The shift is the same one the scene's own static flats take - a
+  // quest flat in the same dungeon block cannot differ from the RDB
+  // flats standing beside it (dungeonContext.js:1243).
   const d = rd('src/scenes/dungeonContext.js');
-  assert.match(d, /const based = centers\.map\(\(\[x, y, z\]\) => \[x, y - size\.h \/ 2, z\]\);/,
-    "the dungeon's RDB flats shift by the same half height - a quest flat in the same scene cannot differ");
+  assert.match(d, /centers\.map\(\(\[x, y, z\]\) => \[x, y - size\.h \/ 2, z\]\)/,
+    "the dungeon's RDB flats shift by the same half height");
+  // And the anchor rides a PARAMETER, so the two curried stands cannot
+  // silently share the wrong one. STRUCTURE, not spelling: find the
+  // `inDungeon` slot in the shared body's parameter list, then read
+  // what each wrapper passes into that slot.
+  const s = rd('src/scenes/worldModes.js');
+  const params = s.slice(s.indexOf('function standQuestFlatIn('))
+    .match(/^function standQuestFlatIn\(([^)]*)\)/)[1]
+    .split(',').map((t) => t.trim().split('=')[0].trim());
+  const slot = params.indexOf('inDungeon');
+  assert.ok(slot >= 0, `the anchor must ride a parameter; standQuestFlatIn takes ${params.join(', ')}`);
+  const argsOf = (list) => {
+    const m = s.match(new RegExp(`standQuestFlatIn\\(${list},([^\\n]*)\\)`));
+    assert.ok(m, `no standQuestFlatIn call for ${list}`);
+    // split on top-level commas only - the toScene arrows carry their own
+    let depth = 0;
+    const out = [list];
+    let cur = '';
+    for (const ch of m[1]) {
+      if ('([{'.includes(ch)) depth++;
+      else if (')]}'.includes(ch)) depth--;
+      if (ch === ',' && depth === 0) { out.push(cur.trim()); cur = ''; continue; }
+      cur += ch;
+    }
+    out.push(cur.trim());
+    return out;
+  };
+  assert.equal(argsOf('questFlats')[slot], 'false', 'the interior stand is NOT in a dungeon');
+  assert.equal(argsOf('dungeonQuestFlats')[slot], 'true', 'and the dungeon stand is');
 });
 
 test('questflatanchor: AlignBillboardToGround runs on the stand, distance 4, with the 2% lift', () => {
-  const s = rd('src/scenes/worldModes.js');
-  // Ray from 0.2 above (:340), distance 4 as AddQuestNPC passes it.
-  assert.match(s, /collider\?\.raycast\?\.\(\[x, by \+ 0\.2, z\], \[0, -1, 0\], 4\)/);
+  const sizeH = 1.6;
+  const rays = [];
+  const hitAt = (groundY) => (origin, dir, distance) => {
+    rays.push({ origin: [...origin], dir: [...dir], distance });
+    return origin[1] - groundY;          // the collider answers a DISTANCE
+  };
+  // A building stand: anchor 10, floor at 9.4.
+  const aligned = questFlatStandY({ x: 3, y: 10, z: -7, sizeH, raycast: hitAt(9.4) });
+  // The ray is AddQuestNPC's: from 0.2 above the position, straight
+  // down, distance 4 (GameObjectHelper.cs:340, and :1040 passes 4).
+  assert.equal(rays.length, 1, 'the NPC arm rays exactly once');
+  assert.deepEqual(rays[0], { origin: [3, 10.2, -7], dir: [0, -1, 0], distance: 4 });
   // On a hit the CENTRE goes to hit.y + size.y * 0.52 (:345), so a
   // bottom-anchored base sits size.y * 0.02 above the floor.
-  assert.match(s, /if \(Number\.isFinite\(drop\)\) by = \(by \+ 0\.2 - drop\) \+ size\.h \* 0\.02;/);
-  // No floor within 4 -> C# returns without moving anything. The
-  // guard, not a fallback, is what expresses that.
-  assert.doesNotMatch(s, /Number\.isFinite\(drop\) \?[^\n]*:\s*0/,
-    'a miss leaves the marker position standing, it does not zero the height');
+  assert.equal(+aligned.toFixed(10), +(9.4 + sizeH * 0.02).toFixed(10),
+    'the align puts the base 2% of a height clear of the floor it found');
+  // The DUNGEON arm rays from its own shifted anchor, and lands on the
+  // same floor - the align is what makes the two agree once there IS one.
+  rays.length = 0;
+  const alignedInDungeon = questFlatStandY({ x: 3, y: 10, z: -7, sizeH, inDungeon: true, raycast: hitAt(9.4) });
+  assert.deepEqual(rays[0].origin, [3, 10 - sizeH / 2 + 0.2, -7]);
+  assert.equal(+alignedInDungeon.toFixed(10), +aligned.toFixed(10));
+
+  // No floor within 4 -> C# returns without moving anything. A miss is
+  // the marker position standing, NOT a zeroed height.
+  const miss = questFlatStandY({ y: 10, sizeH, inDungeon: true, raycast: () => Infinity });
+  assert.equal(miss, 10 - sizeH / 2, 'a miss leaves the anchor exactly where it was');
+  assert.equal(questFlatStandY({ y: 10, sizeH, raycast: () => null }), 10);
+  // ...and a scene with no collider at all is the same "no floor".
+  assert.equal(questFlatStandY({ y: 10, sizeH, inDungeon: true, raycast: null }), 10 - sizeH / 2);
+});
+
+test('questflatanchor: a quest ITEM takes AddQuestItem\'s law - the marker dim, and no align at all', () => {
+  // AddQuestItem (:1116-1160) never calls AlignBillboardToGround, and
+  // its dungeon shift is the CONSTANT -randomTreasureMarkerDim / 2 *
+  // MeshReader.GlobalScale (:1135-1136) - not the sprite's own half
+  // height. DaggerfallLoot.cs:33 dim = 40, GlobalScale 0.025.
+  assert.equal(RANDOM_TREASURE_MARKER_DIM, 40);
+  assert.equal(GLOBAL_SCALE, 0.025);
+  const SHIFT = (RANDOM_TREASURE_MARKER_DIM / 2) * GLOBAL_SCALE;
+  assert.equal(SHIFT, 0.5);
+  for (const sizeH of [0.4, 1.6, 3.25]) {
+    assert.equal(questFlatStandY({ y: 10, sizeH, isItem: true, inDungeon: false }), 10,
+      'a building quest item stands ON its marker');
+    assert.equal(questFlatStandY({ y: 10, sizeH, isItem: true, inDungeon: true }), 10 - SHIFT,
+      'and a dungeon one drops by the fixed marker dim, never by its own height');
+  }
+  // The item arm must not ray: an item on a table, a shelf or a cage
+  // marker stays where the quest put it instead of being snapped to
+  // the floor beneath.
+  let rayed = 0;
+  const spy = () => { rayed++; return 5; };
+  assert.equal(questFlatStandY({ y: 10, sizeH: 1.6, isItem: true, raycast: spy }), 10);
+  assert.equal(questFlatStandY({ y: 10, sizeH: 1.6, isItem: true, inDungeon: true, raycast: spy }), 10 - SHIFT);
+  assert.equal(rayed, 0, 'AddQuestItem never calls AlignBillboardToGround');
+  // The NPC arm on the same inputs DOES ray - which is the whole
+  // difference between the two members.
+  questFlatStandY({ y: 10, sizeH: 1.6, raycast: spy });
+  assert.equal(rayed, 1);
 });
 
 /** A window over recording hooks; clicks are in native 320x200 space. */

@@ -18,6 +18,7 @@ import { windowEmissionRGB } from '../src/render/windowEmission.js';
 import { NOT_ENOUGH_SPELL_POINTS_TEXT } from '../src/systems/tradeModes.js';
 import { RANDOM_TREASURE_MARKER_DIM } from '../src/systems/loot.js';
 import { GLOBAL_SCALE } from '../src/world/meshReader.js';
+import { questFlatStandY } from '../src/scenes/worldModes.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 import {
   PRIVATE_PROPERTY_ITEMS_MODELS_0_TO_1, PRIVATE_PROPERTY_ITEMS_MODELS_2_TO_3,
@@ -387,24 +388,37 @@ test('AUDIT 26 F068: a quest ITEM takes AddQuestItem\'s law - a fixed dungeon sh
   assert.equal((RANDOM_TREASURE_MARKER_DIM / 2) * GLOBAL_SCALE, 0.5,
     'AddQuestItem:1135-1136 shifts a dungeon item by exactly -0.5 world units');
 
-  const stand = bodyOf(WM, 'function standQuestFlatIn(list, getCtx, toScene, inDungeon, isItem, archive, record, position, behaviour, staticNpcFactionId = null, hashPosition = null) {');
-  // the ITEM arm: the constant, and NOTHING else
-  const itemArm = stand.slice(stand.indexOf('if (isItem) {'), stand.indexOf('} else {', stand.indexOf('if (isItem) {')));
-  assert.match(itemArm, /by = inDungeon \? y - \(RANDOM_TREASURE_MARKER_DIM \/ 2\) \* GLOBAL_SCALE : y;/);
-  assert.doesNotMatch(itemArm, /raycast/, 'AddQuestItem never calls AlignBillboardToGround');
-  assert.doesNotMatch(itemArm, /size\.h/, 'the item shift is a constant, not its own half-height');
-  // the NPC arm keeps both halves of AddQuestNPC
-  const npcArm = stand.slice(stand.indexOf('} else {', stand.indexOf('if (isItem) {')));
-  assert.match(npcArm, /by = inDungeon \? y - size\.h \/ 2 : y;/);
-  assert.match(npcArm, /raycast\?\.\(\[x, by \+ 0\.2, z\], \[0, -1, 0\], 4\)/,
-    'AlignBillboardToGround(go, Size, 4), from 0.2 above');
-  assert.match(npcArm, /size\.h \* 0\.02/, 'hit + size.y * 0.52 as a centre = size.y * 0.02 as a base');
+  // The law, driven. An ITEM's dungeon shift is that constant and does
+  // NOT depend on the sprite; an NPC's is the sprite's own half height.
+  const rays = [];
+  const floorAt = (groundY) => (origin, dir, distance) => {
+    rays.push({ origin: [...origin], dir: [...dir], distance });
+    return origin[1] - groundY;
+  };
+  for (const sizeH of [0.4, 1.6, 3.25]) {
+    assert.equal(questFlatStandY({ y: 10, sizeH, isItem: true, inDungeon: true }), 9.5);
+    assert.equal(questFlatStandY({ y: 10, sizeH, isItem: true, inDungeon: false }), 10);
+    assert.equal(questFlatStandY({ y: 10, sizeH, isItem: false, inDungeon: true }), 10 - sizeH / 2);
+  }
+  // ...and an item is never snapped to a floor, which is what keeps one
+  // on a table, a shelf or a cage marker where the quest put it.
+  rays.length = 0;
+  assert.equal(questFlatStandY({ y: 10, sizeH: 1.6, isItem: true, inDungeon: true, raycast: floorAt(2) }), 9.5,
+    'a floor 7 units below must not move a quest item at all');
+  assert.equal(rays.length, 0, 'AddQuestItem never calls AlignBillboardToGround');
+  // the NPC arm on the very same inputs DOES align, from 0.2 above,
+  // distance 4, landing 2% of a height clear of the floor (:336-346)
+  const npc = questFlatStandY({ x: 1, y: 10, z: 2, sizeH: 1.6, isItem: false, inDungeon: true, raycast: floorAt(8.5) });
+  assert.deepEqual(rays[0], { origin: [1, 10 - 0.8 + 0.2, 2], dir: [0, -1, 0], distance: 4 });
+  assert.equal(+npc.toFixed(10), +(8.5 + 1.6 * 0.02).toFixed(10));
 
   // both adapters route items and NPCs through the right arm
   assert.match(WM, /standQuestFlat\(false, flatData\.archive/);
   assert.match(WM, /standQuestFlat\(true, t\.worldTextureArchive/);
   assert.match(WM, /standDungeonQuestFlat\(false, flatData\.archive/);
   assert.match(WM, /standDungeonQuestFlat\(true, t\.worldTextureArchive/);
+  // and the stand body reads the law rather than repeating it
+  assert.match(WM, /const by = questFlatStandY\(\{/);
 });
 
 // ---------------------------------------------------------------------

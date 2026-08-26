@@ -94,7 +94,13 @@ test('c2combat combat-12: the enemy melee DFRandom byte draws on every idle clas
   const tick = s.indexOf('this._classicTimer -= CLASSIC_UPDATE_INTERVAL;');
   const draw = s.indexOf('const meleePass = attackRollPasses(this.liveSpeed) && this.meleeTimer === 0;');
   const oneShot = s.indexOf("const oneShot = this.machine.state !== 'Idle';");
-  const band = s.indexOf('if (this.rangedAttack && ai.inSight && ai.detected && ai.giveUpTimer > 0');
+  // AUDIT 26 (F010): the anchor stops BEFORE the gate expression on
+  // purpose. EnemyAttack.FixedUpdate reads no CanAct at all (the field
+  // is written and read only inside EnemyMotor.cs; EnemyAttack.cs's one
+  // motor read is `motor.Bashing` at :208), so the band arm's gate is
+  // free to grow the rest of the CanAct chain - what this pin protects
+  // is that the DRAW happens above it either way.
+  const band = s.indexOf('if (this.rangedAttack && ai.inSight && ai.detected');
   const gate = s.indexOf('if (!meleePass) continue;');
   assert.ok(draw > 0, 'the draw is the LEFT operand of the && (FixedUpdate :81)');
   assert.ok(band > draw, 'the draw precedes the band arm - the attack component ticks even for a banded bow foe');

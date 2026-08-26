@@ -95,12 +95,41 @@ test('audit24 wave22: the quest NPC hash reads marker.flatPosition, not the stan
   // dungeon, which is a different hash, a different nameSeed fallback
   // and therefore a different generated name than DFU's.
   const s = rd('src/scenes/worldModes.js');
-  // B2 widened the stand to serve both scenes; the hash law rides the
-  // shared body and the interior wrapper keeps the original argument
-  // order, so the two reads below are the pin that matters.
-  assert.match(s, /function standQuestFlatIn\(list, getCtx, toScene, inDungeon, archive, record, position, behaviour, staticNpcFactionId = null, hashPosition = null\)/);
+  // B2 widened the stand to serve both scenes, and AUDIT 26 widened it
+  // again for AddQuestItem's own placement law - so this pins the
+  // STRUCTURE the hash law needs, not a signature spelling. What
+  // matters is that the shared body takes BOTH a stand `position` and a
+  // separate `hashPosition`, and that `hashPosition` is the optional
+  // tail the wrappers may omit.
+  const params = s.slice(s.indexOf('function standQuestFlatIn('))
+    .match(/^function standQuestFlatIn\(([^)]*)\)/)[1]
+    .split(',').map((t) => t.trim().split('=')[0].trim());
+  for (const need of ['position', 'hashPosition', 'inDungeon']) {
+    assert.ok(params.includes(need), `standQuestFlatIn must still take \`${need}\`; it takes ${params.join(', ')}`);
+  }
+  assert.equal(params[params.length - 1], 'hashPosition',
+    'the hash position is the optional tail - a wrapper that omits it falls back to the stand position');
+  assert.ok(params.indexOf('position') < params.indexOf('hashPosition'),
+    'the stand position and the hash position are two different arguments');
+
+  // THE LAW ITSELF, as a data-flow expression rather than a signature:
+  // the record hashed for the name is `marker.flatPosition` when the
+  // caller supplies one, and only falls back to the stand position when
+  // it does not.
   assert.match(s, /marker: hashPosition \?\? position,/);
-  assert.match(s, /standNPC: \(\{ marker, person, flatData, position, behaviour \}\) =>\s*\n\s*standQuestFlat\(flatData\.archive, flatData\.record, position, behaviour, person\?\.factionId \?\? null, marker\?\.flatPosition \?\? null\),/);
+
+  // ...and both scene adapters DO supply it. The dungeon one is the
+  // case that mattered: its stand position is `dungeonX/Z * RDBSide +
+  // flatPosition`, a whole block away from the hash.
+  const npcArms = [...s.matchAll(
+    /standNPC: \(\{ marker, person, flatData, position, behaviour \}\) =>\s*\n\s*stand(?:Dungeon)?QuestFlat\(([^\n]*)\),/g)];
+  assert.equal(npcArms.length, 2, 'the interior adapter and the dungeon adapter');
+  for (const [, args] of npcArms) {
+    assert.ok(args.trimEnd().endsWith('marker?.flatPosition ?? null'),
+      `the LAST argument of a standNPC call is marker.flatPosition, not the stand position: ${args}`);
+    assert.ok(args.includes('position, behaviour'),
+      'and the stand position is still passed separately');
+  }
 });
 
 test('audit24 wave22: StaticNPCClick talks with menu:false and carries the spymaster flag', () => {
