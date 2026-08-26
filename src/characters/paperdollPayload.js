@@ -44,6 +44,7 @@ import { buildClaymore } from './pieces/claymore.js';
 import { buildLongBow, buildShortBow, buildNockedArrow } from './pieces/bow.js';
 import { buildBladeWeapon, BLADE_SPECS } from './pieces/blades.js';
 import { buildHaftedWeapon, HAFTED_SPECS } from './pieces/hafted.js';
+import { buildShield, SHIELD_CATALOG } from './shields.js';
 import { VILLAGER_DESIGNS, designOpts, designDrape, villagerDelta, RACE_TONE } from './villagerDesigns.js';
 import { ORC_DESIGNS, orcOpts } from './orcBody.js';
 import { UNDEAD_DESIGNS, undeadOpts } from './undeadBody.js';
@@ -625,19 +626,20 @@ export function buildPaperdollPayload(pal, img, cif) {
       const steel = weaponMaterialRamp(WEAPON_MATERIALS.Steel, (i) => pal.get(i));
       const items = (id) => Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(id, v)]));
       const list = [
-        { name: 'Longsword', hands: '1h', pack: packPiece(buildSword(steel)), items: items(WEAPONS.Longsword) },
-        { name: 'Claymore', hands: '2h', pack: packPiece(buildClaymore(steel)), items: items(WEAPONS.Claymore) },
-        { name: 'Long Bow', hands: 'bow', pack: packPiece(buildLongBow(steel)), items: items(WEAPONS.Long_Bow) },
-        { name: 'Short Bow', hands: 'bow', pack: packPiece(buildShortBow(steel)), items: items(WEAPONS.Short_Bow) },
+        { name: 'Longsword', templateIndex: WEAPONS.Longsword, hands: '1h', pack: packPiece(buildSword(steel)), items: items(WEAPONS.Longsword) },
+        { name: 'Claymore', templateIndex: WEAPONS.Claymore, hands: '2h', pack: packPiece(buildClaymore(steel)), items: items(WEAPONS.Claymore) },
+        { name: 'Long Bow', templateIndex: WEAPONS.Long_Bow, hands: 'bow', pack: packPiece(buildLongBow(steel)), items: items(WEAPONS.Long_Bow) },
+        { name: 'Short Bow', templateIndex: WEAPONS.Short_Bow, hands: 'bow', pack: packPiece(buildShortBow(steel)), items: items(WEAPONS.Short_Bow) },
       ];
       for (const nm of Object.keys(BLADE_SPECS)) {
-        list.push({ name: nm.replace('_', '-'), hands: BLADE_SPECS[nm].twoHand ? '2h' : '1h', pack: packPiece(buildBladeWeapon(steel, nm)), items: items(WEAPONS[nm]) });
+        list.push({ name: nm.replace('_', '-'), templateIndex: WEAPONS[nm], hands: BLADE_SPECS[nm].twoHand ? '2h' : '1h', pack: packPiece(buildBladeWeapon(steel, nm)), items: items(WEAPONS[nm]) });
       }
       for (const nm of Object.keys(HAFTED_SPECS)) {
-        list.push({ name: nm.replace('_', ' '), hands: HAFTED_SPECS[nm].twoHand ? '2h' : '1h', pack: packPiece(buildHaftedWeapon(steel, nm)), items: items(WEAPONS[nm]) });
+        list.push({ name: nm.replace('_', ' '), templateIndex: WEAPONS[nm], hands: HAFTED_SPECS[nm].twoHand ? '2h' : '1h', pack: packPiece(buildHaftedWeapon(steel, nm)), items: items(WEAPONS[nm]) });
       }
       return list;
     })(),
+    shieldPacks: SHIELD_CATALOG.map((s) => ({ ...s, pack: packPiece(buildShield(STEEL_RAMP, s.index)) })),
     swordRamps: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, weaponMaterialRamp(v, (i) => pal.get(i))])),
     swordItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)])), cloth: CLOTH_D, clothing: clothingPacks, armor: armorPacks, armorFamilies: MATERIAL_FAMILY, drapedNames: DRAPED_NAMES, villagers: villagerPacks, orcs: orcPacks, undead: undeadPacks, classes: classPacks, atronachs: atronachPacks, beasts: beastPacks, daedra: daedraPacks, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), tail: packPiece(buildTail(ramps.skin,'argonian')), tailCat: packPiece(buildTail(KHAJIIT_FUR,'khajiit')), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
 

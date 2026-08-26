@@ -26,6 +26,7 @@ import { MISSILE_SPEED } from '../systems/spellcast.js';   // AUDIT 23: the arro
 import { createSkin } from './paperdoll/skin.js';
 import { buildClassicBodyClothingSampler, buildClassicDrapeTextureCanvas } from './paperdoll/clothingTexture.js';
 import { buildClassicBodyArmorSampler, buildClassicArmorPieceTexture } from './paperdoll/armorTexture.js';
+import { buildClassicWeaponPieceTexture, buildClassicShieldPieceTexture } from './paperdoll/weaponTexture.js';
 import { ARMOR_MATERIAL, armorFamilyOfMaterial } from '../systems/armorMaterials.js';
 import { CLOTHING_DYES } from '../characters/dyes.js';
 import { buildPaperdollPayload } from '../characters/paperdollPayload.js';
@@ -544,6 +545,7 @@ async function rebuildArmorWardrobe() {
   await Promise.all([
     c ? syncClassicClothingTexture(c) : Promise.resolve(null),
     syncSelectedArmorTextures(),
+    syncShieldTexture(),
   ]);
   setDrape();
 }
@@ -1085,6 +1087,88 @@ for (const w of WEAPON_DEFS) {
 }
 let wpnIx = 0;
 const activeWpn = () => WEAPON_DEFS[wpnIx];
+let weaponTextureToken = 0;
+let weaponTextureState = null;
+function clearWeaponTexture() {
+  const st = weaponTextureState;
+  if (!st) return;
+  st.mesh.material.map = null;
+  st.mesh.material.vertexColors = true;
+  st.mesh.material.needsUpdate = true;
+  st.texture?.dispose?.();
+  weaponTextureState = null;
+}
+function mountWeaponTexture(w, art) {
+  clearWeaponTexture();
+  if (!w?.mesh || !art?.canvas || !art?.uv) return;
+  w.mesh.geometry.setAttribute('uv', new THREE.BufferAttribute(art.uv, 2));
+  const texture = new THREE.CanvasTexture(art.canvas);
+  texture.magFilter = THREE.NearestFilter;
+  texture.minFilter = THREE.NearestFilter;
+  texture.generateMipmaps = false;
+  w.mesh.material.map = texture;
+  w.mesh.material.vertexColors = false;
+  w.mesh.material.needsUpdate = true;
+  weaponTextureState = { mesh: w.mesh, texture };
+}
+function drawHeldTextureQA(kind, name, art) {
+  if (!art?.debug) return;
+  drawClassicTextureQA(art.debug);
+  const status = document.getElementById('clothqastatus');
+  if (status) status.textContent = kind + ' · ' + name + ' · ' + art.meta.source + ' record ' + art.meta.record
+    + ' · traced source → canonical 3D surface → 8-way voxel wrap';
+}
+async function syncActiveWeaponTexture() {
+  const token = ++weaponTextureToken;
+  clearWeaponTexture();
+  if (swordIx < 0) return null;
+  const w = activeWpn(), matName = SWORD_MATS[swordIx], item = w?.items?.[matName];
+  if (!w?.pack || !item) return null;
+  try {
+    const art = await buildClassicWeaponPieceTexture({
+      templateIndex: w.templateIndex, pack: w.pack, material: item.nativeMaterialValue, gender,
+    });
+    if (token !== weaponTextureToken || w !== activeWpn() || swordIx < 0 || SWORD_MATS[swordIx] !== matName) return null;
+    if (art) { mountWeaponTexture(w, art); drawHeldTextureQA('weapon', w.name + ' · ' + matName, art); }
+    return art?.meta || null;
+  } catch { return null; }
+}
+
+const SHIELD_DEFS = D.shieldPacks || [];
+const shieldMeshes = SHIELD_DEFS.map((s) => { const m = s.pack ? buildPiece(s.pack) : null; if (m) m.visible = false; return m; });
+let shieldIx = -1, shieldTextureToken = 0, shieldTextureState = null;
+function clearShieldTexture() {
+  const st = shieldTextureState;
+  if (!st) return;
+  st.mesh.material.map = null; st.mesh.material.vertexColors = true; st.mesh.material.needsUpdate = true;
+  st.texture?.dispose?.(); shieldTextureState = null;
+}
+function mountShieldTexture(mesh, art) {
+  clearShieldTexture();
+  if (!mesh || !art?.canvas || !art?.uv) return;
+  mesh.geometry.setAttribute('uv', new THREE.BufferAttribute(art.uv, 2));
+  const texture = new THREE.CanvasTexture(art.canvas); texture.magFilter = THREE.NearestFilter; texture.minFilter = THREE.NearestFilter; texture.generateMipmaps = false;
+  mesh.material.map = texture; mesh.material.vertexColors = false; mesh.material.needsUpdate = true; shieldTextureState = { mesh, texture };
+}
+async function syncShieldTexture() {
+  const token = ++shieldTextureToken; clearShieldTexture();
+  if (shieldIx < 0) return null;
+  const s = SHIELD_DEFS[shieldIx], mesh = shieldMeshes[shieldIx]; if (!s?.pack || !mesh) return null;
+  try {
+    const art = await buildClassicShieldPieceTexture({ templateIndex: s.index, pack: s.pack, material: armorMaterial, gender, race: RACES[raceIx] });
+    if (token !== shieldTextureToken || SHIELD_DEFS[shieldIx] !== s) return null;
+    if (art) { mountShieldTexture(mesh, art); drawHeldTextureQA('shield', s.name, art); }
+    return art?.meta || null;
+  } catch { return null; }
+}
+function setShield(i) {
+  shieldIx = i;
+  shieldMeshes.forEach((m, k) => { if (m) m.visible = k === shieldIx; });
+  clearShieldTexture();
+  const sel = document.getElementById('shield'); if (sel) sel.value = String(i);
+  if (shieldIx >= 0) syncShieldTexture();
+}
+
 const swordMesh = WEAPON_DEFS[0].mesh;   // legacy alias
 // THE ARROW: its own held target - nocked it rides the chain like
 // the bow; on the verbatim bow HIT frame it looses into straight
@@ -1163,6 +1247,8 @@ async function setGender(g) {
   const b = document.getElementById('gender');
   if (b) b.textContent = 'gender: ' + gender;
   if (armorOn.size) await syncSelectedArmorTextures();
+  if (swordIx >= 0) await syncActiveWeaponTexture();
+  if (shieldIx >= 0) await syncShieldTexture();
 }
 window.__gender = (g) => setGender(g);
 syncRace();
@@ -1879,7 +1965,7 @@ const setSword = (i) => {
   for (const w of WEAPON_DEFS) if (w.mesh) w.mesh.visible = false;
   const aw = activeWpn();
   if (aw.mesh) aw.mesh.visible = on;
-  document.getElementById('sword').textContent = 'sword: ' + (on ? name : 'off');
+  document.getElementById('sword').textContent = 'weapon: ' + (on ? name : 'off');
   document.getElementById('sword').classList.toggle('on', on);
   if (on) {
     const aw2 = activeWpn();
@@ -1887,7 +1973,8 @@ const setSword = (i) => {
     const it = aw2.items[name];
     const mod = it.materialModifier >= 0 ? '+' + it.materialModifier : String(it.materialModifier);
     swordInfo.textContent = `${name} ${it.name} \u00b7 dmg ${it.minDamage}\u2013${it.maxDamage} \u00b7 mat ${mod} \u00b7 hit ${it.toHitModifier >= 0 ? '+' : ''}${it.toHitModifier} \u00b7 ${it.weightInKg.toFixed(2)}kg \u00b7 ${it.value}g \u00b7 cond ${it.maxCondition}`;
-  } else swordInfo.textContent = '';
+    syncActiveWeaponTexture();
+  } else { clearWeaponTexture(); swordInfo.textContent = ''; }
 };
 document.getElementById('sword').onclick = () => setSword(swordIx + 2 > SWORD_MATS.length ? -1 : swordIx + 1);
 window.__setSword = setSword;
@@ -1895,6 +1982,12 @@ window.__setSword = setSword;
   for (let i = 0; i < WEAPON_DEFS.length; i++) { const o = document.createElement('option'); o.value = i; o.textContent = WEAPON_DEFS[i].name; sel.appendChild(o); }
   sel.onchange = (e) => { wpnIx = +e.target.value; applySwordFit(); setSword(swordIx); arrowVisible(); }; }
 window.__setWeapon = (i) => { wpnIx = i % WEAPON_DEFS.length; document.getElementById('wpn').value = wpnIx; setSword(swordIx); arrowVisible(); };
+{ const sel = document.getElementById('shield');
+  const none = document.createElement('option'); none.value = '-1'; none.textContent = 'shield: none'; sel.appendChild(none);
+  SHIELD_DEFS.forEach((s, i) => { const o = document.createElement('option'); o.value = String(i); o.textContent = s.name + ' #' + s.index; sel.appendChild(o); });
+  sel.value = '-1'; sel.onchange = (e) => setShield(+e.target.value);
+}
+window.__setShield = setShield;
 // Attacks: cycle the classic directions; strike fires the mapped clip
 // (Up/UpLeft/UpRight all thrust, per the verbatim DFU mapping).
 const ATK_DIRS = ['Down', 'DownLeft', 'DownRight', 'Left', 'Right', 'Up'];

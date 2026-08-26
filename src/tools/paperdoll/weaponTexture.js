@@ -264,9 +264,11 @@ function orientedWeaponFrame(pack, canonical) {
   // UV v=0 is source TOP and axis MAX. Match the broader authored end to the
   // broader geometry end (guard/head vs tip) so swords, axes and flails do not
   // silently arrive upside-down. Symmetric bows/staves are unaffected.
-  const defaultCost=Math.abs(top-ends.max)+Math.abs(bottom-ends.min);
-  const flippedCost=Math.abs(top-ends.min)+Math.abs(bottom-ends.max);
-  if(flippedCost+1e-6<defaultCost){axis=mul(axis,-1);basis=radialBasis(axis);ends=meshEndWidths(pts,center,axis,basis.right);}
+  const sourceBias=top-bottom, meshBias=ends.max-ends.min;
+  // Source spans are pixels; mesh spans are world units. Only the wider-end sign
+  // is comparable across those spaces. If the source's broad end and the mesh's
+  // broad end disagree, reverse the length axis.
+  if(Math.abs(sourceBias)>0.5 && Math.abs(meshBias)>1e-4 && sourceBias*meshBias<0){axis=mul(axis,-1);basis=radialBasis(axis);ends=meshEndWidths(pts,center,axis,basis.right);}
   return {axis,center,pts,...basis,endWidths:ends};
 }
 
