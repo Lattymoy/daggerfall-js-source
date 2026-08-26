@@ -11,7 +11,7 @@ the face is a classic sprite and may not be published. Runtime paints the face
 into the cell's front arc from the user's own FACE*.CIF.
 """
 # Import the sampling/rig definitions, not mvB2's diagnostic preview.
-exec(open('mvB2.py').read().split('def render(yaw,CW,CH,sc):')[0])
+exec(open('mvB2.py').read().split('# ---------- render ----------')[0])
 
 import math, json
 from PIL import Image
