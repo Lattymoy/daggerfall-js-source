@@ -90,6 +90,10 @@ export const armorArchive = (gender = 'male', morphology = HUMAN_MORPHOLOGY) =>
  *  live here; paperdollArt re-exports the family-keyed adapter for
  *  the C6a callers that already speak families. */
 export const MATERIAL_FAMILY = Object.freeze({ Leather: 0, Chain: 1, Plate: 2 });
+export const armorFamilyOfMaterial = (material) =>
+  isLeather(material) ? MATERIAL_FAMILY.Leather
+  : isChain(material) ? MATERIAL_FAMILY.Chain
+  : MATERIAL_FAMILY.Plate;
 const MATERIAL_OF_FAMILY = [ARMOR_MATERIAL.Leather, ARMOR_MATERIAL.Chain, ARMOR_MATERIAL.Iron];
 export const armorVariant = (templateIndex, family, requested = 0) =>
   clampArmorVariant(templateIndex, MATERIAL_OF_FAMILY[family] ?? ARMOR_MATERIAL.Iron, requested);

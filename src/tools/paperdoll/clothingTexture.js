@@ -214,7 +214,8 @@ export function canonicalizePaperdollTexture(src, profile = 'generic') {
   let borrowedRows = 0;
   let edgePaddedPixels = 0;
 
-  const torsoFront = profile === 'torso' || profile === 'open-torso';
+  const armorFront = profile === 'armor-front';
+  const torsoFront = profile === 'torso' || profile === 'open-torso' || armorFront;
   if (!torsoFront) {
     // V2 remains the right rule for drapes, legs, boots and sparse accessories:
     // remove row shear by translation only; never invent bilateral torso data.
@@ -312,10 +313,15 @@ export function canonicalizePaperdollTexture(src, profile = 'generic') {
   // visibly read as the oblique paperdoll layer. Closed torso garments begin
   // recovering early; open tunics/vests preserve more intentional asymmetry.
   const openTorso = profile === 'open-torso';
-  const recoveryLo = openTorso ? 1.28 : 1.08;
-  const recoveryHi = openTorso ? 1.95 : 1.55;
-  const frontRecovery = clamp01((sideBias - recoveryLo) / Math.max(1e-6, recoveryHi - recoveryLo));
-  const mirrorDominantHalf = frontRecovery >= 0.985;
+  const recoveryLo = armorFront ? 1.04 : openTorso ? 1.28 : 1.08;
+  const recoveryHi = armorFront ? 1.42 : openTorso ? 1.95 : 1.55;
+  const rawFrontRecovery = clamp01((sideBias - recoveryLo) / Math.max(1e-6, recoveryHi - recoveryLo));
+  // Armor is full of buckles, rivets, crests and trim. Rectify the paperdoll
+  // perspective aggressively, but never throw one authored half away and mirror
+  // the other as clothing may do for an almost side-on shirt. This keeps detail
+  // genuinely left/right while moving it into a front-facing material field.
+  const frontRecovery = armorFront ? Math.min(rawFrontRecovery, 0.58) : rawFrontRecovery;
+  const mirrorDominantHalf = !armorFront && frontRecovery >= 0.985;
   const halfL = Math.max(1, canonicalCentre);
   const halfR = Math.max(1, (out.width - 1) - canonicalCentre);
 

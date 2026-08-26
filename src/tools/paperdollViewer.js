@@ -26,6 +26,8 @@ import { MISSILE_SPEED } from '../systems/spellcast.js';   // AUDIT 23: the arro
 import { createSkin } from './paperdoll/skin.js';
 import { buildClassicBodyClothingSampler, buildClassicDrapeTextureCanvas } from './paperdoll/clothingTexture.js';
 import { buildClassicBodyArmorSampler, buildClassicArmorPieceTexture } from './paperdoll/armorTexture.js';
+import { ARMOR_MATERIAL, armorFamilyOfMaterial } from '../systems/armorMaterials.js';
+import { CLOTHING_DYES } from '../characters/dyes.js';
 import { buildPaperdollPayload } from '../characters/paperdollPayload.js';
 import { makeCoreFn, buildCloth, stepCloth, articulatedCapsules } from '../characters/clothSim.js';
 import { beastAttackPose, hitPointOf } from '../characters/beastAttack.js';
@@ -360,8 +362,12 @@ const ARMOR_BUTTONS = Object.freeze({
   'armor-helm': 'helm',
   'armor-boots': 'boots',
 });
-const ARMOR_FAMILY_NAMES = ['Leather', 'Chain', 'Plate'];
-let armorFamily = D.armorFamilies?.Plate ?? 2;
+const ARMOR_MATERIAL_OPTIONS = Object.freeze(Object.entries(ARMOR_MATERIAL).filter(([, value]) => value >= 0));
+let armorMaterialIx = Math.max(0, ARMOR_MATERIAL_OPTIONS.findIndex(([name]) => name === 'Steel'));
+let armorMaterial = ARMOR_MATERIAL_OPTIONS[armorMaterialIx][1];
+let armorFamily = armorFamilyOfMaterial(armorMaterial);
+let armorVariant = 0;
+const armorVariantMax = Math.max(0, ...(D.armor || []).map((a) => Math.max(0, (a.variants || 1) - 1)));
 const armorOn = new Set();
 const armorBySlot = Object.fromEntries((D.armor || []).map((a) => [a.slot, a]));
 const armorPieceMeshes = {};
@@ -446,7 +452,7 @@ function mountArmorPieceTexture(slot, family, art) {
 }
 async function syncSelectedArmorTextures() {
   const token = ++classicArmorTextureToken;
-  const family = armorFamily, race = RACES[raceIx], useGender = gender;
+  const family = armorFamily, material = armorMaterial, variant = armorVariant, race = RACES[raceIx], useGender = gender;
   classicArmorBodySamplers.clear();
   clearAllArmorPieceTextures();
   syncBodySurfaceSampler();
@@ -457,8 +463,8 @@ async function syncSelectedArmorTextures() {
     if (item.kind === 'body') {
       tasks.push((async () => {
         try {
-          const sampler = await buildClassicBodyArmorSampler({ item, delta: pack, D, race, gender: useGender, family });
-          if (token !== classicArmorTextureToken || armorFamily !== family || !armorOn.has(slot)) return;
+          const sampler = await buildClassicBodyArmorSampler({ item, delta: pack, D, race, gender: useGender, material, variant });
+          if (token !== classicArmorTextureToken || armorFamily !== family || armorMaterial !== material || armorVariant !== variant || !armorOn.has(slot)) return;
           if (sampler) classicArmorBodySamplers.set(slot, sampler);
           syncBodySurfaceSampler();
         } catch { /* no ARENA2: flat procedural armour remains */ }
@@ -466,8 +472,8 @@ async function syncSelectedArmorTextures() {
     } else {
       tasks.push((async () => {
         try {
-          const art = await buildClassicArmorPieceTexture({ item, pack, race, gender: useGender, family });
-          if (token !== classicArmorTextureToken || armorFamily !== family || !armorOn.has(slot)) return;
+          const art = await buildClassicArmorPieceTexture({ item, pack, race, gender: useGender, material, variant });
+          if (token !== classicArmorTextureToken || armorFamily !== family || armorMaterial !== material || armorVariant !== variant || !armorOn.has(slot)) return;
           if (art) mountArmorPieceTexture(slot, family, art);
         } catch { /* no ARENA2: flat procedural armour remains */ }
       })());
@@ -515,7 +521,9 @@ function syncArmorButtons() {
     if (btn) btn.classList.toggle('on', armorOn.has(slot));
   }
   const matBtn = document.getElementById('armormat');
-  if (matBtn) matBtn.textContent = 'armor: ' + (ARMOR_FAMILY_NAMES[armorFamily] || 'Plate');
+  if (matBtn) matBtn.textContent = 'armor: ' + (ARMOR_MATERIAL_OPTIONS[armorMaterialIx]?.[0] || 'Steel');
+  const variantBtn = document.getElementById('armorvariant');
+  if (variantBtn) variantBtn.textContent = 'armor variant: ' + armorVariant;
 }
 async function rebuildArmorWardrobe() {
   const c = classicClothingOn;
@@ -861,6 +869,18 @@ function applyVillagerDrape(v) {
 // These are item-template garments, not editor-only villager designs.
 // Body clothing owns existing body quads; hanging garments own a drape mesh.
 let classicClothingOn = null;
+let classicClothingVariant = 0;
+let classicClothingDyeIx = 0;
+const CLOTHING_DYE_NAMES = Object.freeze(['Blue','Grey','Red','Dark Brown','Purple','Light Brown','White','Aquamarine','Yellow','Green']);
+function syncClassicClothingControls() {
+  const c = classicClothingOn;
+  const vb = document.getElementById('clothvariant');
+  const db = document.getElementById('clothdye');
+  if (vb) vb.textContent = c
+    ? 'cloth variant: ' + classicClothingVariant + '/' + Math.max(0, (c.variants || 1) - 1)
+    : 'cloth variant: -';
+  if (db) db.textContent = 'cloth dye: ' + CLOTHING_DYE_NAMES[classicClothingDyeIx];
+}
 let classicTextureToken = 0;
 let classicTextureDebug = null;
 function drawClassicTextureQA(debug) {
@@ -893,7 +913,7 @@ async function syncClassicClothingTexture(c = classicClothingOn) {
   if (!c) return null;
   try {
     if (c.kind === 'body') {
-      const sampler = await buildClassicBodyClothingSampler({ item: c, D, race: RACES[raceIx] });
+      const sampler = await buildClassicBodyClothingSampler({ item: c, D, race: RACES[raceIx], variant: classicClothingVariant, dye: CLOTHING_DYES[classicClothingDyeIx] });
       // Async never wins late: a slow archive from a previous item/race may
       // finish after the user has already selected something else.
       if (token !== classicTextureToken || classicClothingOn !== c) return null;
@@ -903,7 +923,7 @@ async function syncClassicClothingTexture(c = classicClothingOn) {
       return sampler?.meta || null;
     }
     if (c.kind === 'drape') {
-      const art = await buildClassicDrapeTextureCanvas({ item: c, race: RACES[raceIx] });
+      const art = await buildClassicDrapeTextureCanvas({ item: c, race: RACES[raceIx], variant: classicClothingVariant, dye: CLOTHING_DYES[classicClothingDyeIx] });
       if (token !== classicTextureToken || classicClothingOn !== c) return null;
       mountClassicDrapeTexture(c, art);
       drawClassicTextureQA(art?.debug);
@@ -1157,11 +1177,13 @@ const ACTX = createAnimContext({ basePos, vgrp, armX: D.armX, wristY: D.wristY, 
     if (groups.drape.children.length) sel.appendChild(groups.drape);
     sel.onchange = async () => {
       const c = (D.clothing || []).find((x) => String(x.index) === sel.value) || null;
+      classicClothingVariant = 0;
       for (const other of ['villager', 'orc', 'undead', 'classes', 'atronach', 'beast', 'daedra']) {
         const o = document.getElementById(other);
         if (o) o.value = '';
       }
       applyClassicClothing(c);
+      syncClassicClothingControls();
       const hud = document.getElementById('hud');
       if (hud) hud.textContent = c ? c.name + ' · loading classic texture…' : 'NEUTRAL POSE prototype · drag to rotate · pinch to zoom';
       const meta = await syncClassicClothingTexture(c);
@@ -1174,6 +1196,26 @@ const ACTX = createAnimContext({ basePos, vgrp, armX: D.armX, wristY: D.wristY, 
         : 'NEUTRAL POSE prototype · drag to rotate · pinch to zoom';
     };
   }
+}
+syncClassicClothingControls();
+{
+  const btn = document.getElementById('clothvariant');
+  if (btn) btn.onclick = async () => {
+    const c = classicClothingOn;
+    if (!c) return;
+    const count = Math.max(1, c.variants || 1);
+    classicClothingVariant = (classicClothingVariant + 1) % count;
+    syncClassicClothingControls();
+    await syncClassicClothingTexture(c);
+  };
+}
+{
+  const btn = document.getElementById('clothdye');
+  if (btn) btn.onclick = async () => {
+    classicClothingDyeIx = (classicClothingDyeIx + 1) % CLOTHING_DYES.length;
+    syncClassicClothingControls();
+    if (classicClothingOn) await syncClassicClothingTexture(classicClothingOn);
+  };
 }
 
 // ── ORC LINE picker (editor only) ────────────────────────────────
@@ -1770,7 +1812,16 @@ for (const [id, slot] of Object.entries(ARMOR_BUTTONS)) {
 {
   const btn = document.getElementById('armormat');
   if (btn) btn.onclick = async () => {
-    armorFamily = (armorFamily + 1) % 3;
+    armorMaterialIx = (armorMaterialIx + 1) % ARMOR_MATERIAL_OPTIONS.length;
+    armorMaterial = ARMOR_MATERIAL_OPTIONS[armorMaterialIx][1];
+    armorFamily = armorFamilyOfMaterial(armorMaterial);
+    await rebuildArmorWardrobe();
+  };
+}
+{
+  const btn = document.getElementById('armorvariant');
+  if (btn) btn.onclick = async () => {
+    armorVariant = armorVariantMax ? (armorVariant + 1) % (armorVariantMax + 1) : 0;
     await rebuildArmorWardrobe();
   };
 }

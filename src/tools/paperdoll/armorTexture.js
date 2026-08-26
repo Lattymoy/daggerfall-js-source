@@ -9,12 +9,8 @@ import { TextureFile } from '../../formats/textureFile.js';
 import { DFPalette } from '../../formats/dfPalette.js';
 import { getBytes } from '../../scenes/dataSource.js';
 import { applyDyeToIndex, DYE_COLORS, DYE_TARGETS } from '../../characters/dyes.js';
-import {
-  armorArchive,
-  armorVariant,
-  MATERIAL_FAMILY,
-  paperdollRecordOffset,
-} from '../../characters/paperdollArt.js';
+import { armorArchive, paperdollRecordOffset } from '../../characters/paperdollArt.js';
+import { ARMOR_MATERIAL, armorFamilyOfMaterial, clampArmorVariant } from '../../systems/armorMaterials.js';
 import { PAPERDOLL_W, PAPERDOLL_ORIGIN } from '../../ui/paperDoll.js';
 import {
   canonicalizePaperdollTexture,
@@ -63,25 +59,31 @@ function sourceBounds(bitmap) {
   return x1 >= x0 && y1 >= y0 ? { x0, y0, x1, y1 } : null;
 }
 
-function dyeForFamily(family) {
-  // Leather + chain use the classic identity metal table. The viewer's Plate
-  // family is surfaced as Steel, matching its existing steel procedural ramp.
-  return family === MATERIAL_FAMILY.Plate ? DYE_COLORS.Steel : DYE_COLORS.Unchanged;
-}
+const ARMOR_DYE = new Map([
+  [ARMOR_MATERIAL.Iron, DYE_COLORS.Iron],
+  [ARMOR_MATERIAL.Steel, DYE_COLORS.Steel],
+  [ARMOR_MATERIAL.Silver, DYE_COLORS.Silver],
+  [ARMOR_MATERIAL.Elven, DYE_COLORS.Elven],
+  [ARMOR_MATERIAL.Dwarven, DYE_COLORS.Dwarven],
+  [ARMOR_MATERIAL.Mithril, DYE_COLORS.Mithril],
+  [ARMOR_MATERIAL.Adamantium, DYE_COLORS.Adamantium],
+  [ARMOR_MATERIAL.Ebony, DYE_COLORS.Ebony],
+  [ARMOR_MATERIAL.Orcish, DYE_COLORS.Orcish],
+  [ARMOR_MATERIAL.Daedric, DYE_COLORS.Daedric],
+]);
+function dyeForMaterial(material) { return ARMOR_DYE.get(material) ?? DYE_COLORS.Unchanged; }
 
-function profileForArmor(item) {
-  switch (item?.slot) {
-    case 'cuirass': return 'torso';
-    case 'greaves': return 'legs';
-    case 'boots': return 'foot';
-    default: return 'sparse';
-  }
-}
+// Every armor record was authored on the oblique paperdoll. Even boots and
+// pauldrons need anatomical-axis registration before their detail can be trusted
+// as a 3D surface. armor-front uses V5's split-perspective rectification while
+// deliberately preserving both authored halves (rivets/crests must not mirror).
+function profileForArmor() { return 'armor-front'; }
 
-async function loadIndexedArmorArt({ item, race = 'Breton', gender = 'male', family = MATERIAL_FAMILY.Plate, variant = 0 }) {
+async function loadIndexedArmorArt({ item, race = 'Breton', gender = 'male', material = ARMOR_MATERIAL.Steel, variant = 0 }) {
   if (!item) return null;
   const archive = armorArchive(gender, race);
-  const useVariant = item.variants > 0 ? armorVariant(item.index, family, variant | 0) : 0;
+  const family = armorFamilyOfMaterial(material);
+  const useVariant = item.variants > 0 ? clampArmorVariant(item.index, material, variant | 0) : 0;
   const record = (item.playerTextureRecord || 0) + useVariant;
   const { tex, pal, name } = await classicArchive(archive);
   const bitmap = tex.getDFBitmap(record, 0);
@@ -89,10 +91,10 @@ async function loadIndexedArmorArt({ item, race = 'Breton', gender = 'male', fam
   const src = sourceBounds(bitmap);
   if (!src) return null;
   const offset = paperdollRecordOffset(tex, archive, record);
-  const dye = dyeForFamily(family);
+  const dye = dyeForMaterial(material);
   return {
     bitmap, pal, src, offset, dye,
-    meta: Object.freeze({ archive, record, variant: useVariant, family, dye, source: name, offset: { ...offset } }),
+    meta: Object.freeze({ archive, record, variant: useVariant, material, family, dye, source: name, offset: { ...offset } }),
   };
 }
 
@@ -206,9 +208,9 @@ function bodyFaceDirection(D, f) {
   return ((Math.round(angle / (Math.PI / 4)) % 8) + 8) % 8;
 }
 
-export async function buildClassicBodyArmorSampler({ item, delta, D, race = 'Breton', gender = 'male', family = MATERIAL_FAMILY.Plate, variant = 0 }) {
+export async function buildClassicBodyArmorSampler({ item, delta, D, race = 'Breton', gender = 'male', material = ARMOR_MATERIAL.Steel, variant = 0 }) {
   if (!item || item.kind !== 'body' || !delta?.idx?.length) return null;
-  const wrap = await buildArmorWrapSet({ item, race, gender, family, variant });
+  const wrap = await buildArmorWrapSet({ item, race, gender, material, variant });
   if (!wrap) return null;
   const faces = delta.idx;
   const bounds = WRAP_RADIANS.map((r) => bodyProjectionBounds(D, faces, r));
@@ -282,9 +284,9 @@ function packEightWayUV(pack, layout) {
   return uv;
 }
 
-export async function buildClassicArmorPieceTexture({ item, pack, race = 'Breton', gender = 'male', family = MATERIAL_FAMILY.Plate, variant = 0 }) {
+export async function buildClassicArmorPieceTexture({ item, pack, race = 'Breton', gender = 'male', material = ARMOR_MATERIAL.Steel, variant = 0 }) {
   if (!item || item.kind !== 'piece' || !pack?.P?.length) return null;
-  const wrap = await buildArmorWrapSet({ item, race, gender, family, variant });
+  const wrap = await buildArmorWrapSet({ item, race, gender, material, variant });
   if (!wrap) return null;
   const layout = Object.freeze({ columns: 4, rows: 2, viewWidth: wrap.views[0].width, viewHeight: wrap.views[0].height });
   return {
