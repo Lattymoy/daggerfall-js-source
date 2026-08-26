@@ -1,0 +1,211 @@
+name: one-shot classic clothing
+
+on:
+  push:
+    branches: [chatgpt/exact-face-atlas]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/exact-face-atlas
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Wire classic Daggerfall clothing
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('src/characters/paperdollPayload.js')
+          s = p.read_text()
+          old = "import { clothingZones } from './clothing.js';"
+          new = "import { clothingZones, CLOTHING_CATALOG } from './clothing.js';"
+          assert old in s
+          s = s.replace(old, new, 1)
+
+          marker = "  // Per-race body colours: same geometry, re-shaded with the race hide/fur."
+          assert marker in s
+          block = r'''  // ── CLASSIC DAGGERFALL CLOTHING ────────────────────────────────
+  // The item DB is the owner of the roster. Body-hugging garments use the
+  // exact same face list as the neutral body and ship as deltas, while
+  // skirts/robes/cloaks keep their standoff drape identity. This is the 3D
+  // counterpart of the classic paperdoll records; archive/record/variant
+  // addressing travels with each pack so the original indexed artwork can
+  // be sampled by the texture stage without inventing another item table.
+  const clothingPacks = CLOTHING_CATALOG.map((item) => {
+    if (item.kind === 'drape') {
+      return {
+        ...item,
+        drape: { name: item.drape, fit: measureDrapeFit(faces, item.drape) },
+        idx: [], P: [], C: [],
+      };
+    }
+    const cf = buildNeutralBody(
+      { ...ramps, cloth: CLOTH_RAMP },
+      { face, clothZones: clothingZones(item.index), cloth: CLOTH_RAMP },
+    );
+    return { ...item, drape: null, ...villagerDelta(faces, cf) };
+  });
+
+'''
+          s = s.replace(marker, block + marker, 1)
+          old = "cloth: CLOTH_D, drapedNames: DRAPED_NAMES"
+          new = "cloth: CLOTH_D, clothing: clothingPacks, drapedNames: DRAPED_NAMES"
+          assert old in s
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+
+          p = Path('viewer.html')
+          s = p.read_text()
+          old = '  <button id="drape">drape: None</button>\n  <select id="villager"'
+          new = '  <button id="drape">drape: None</button>\n  <select id="clothing" title="classic Daggerfall clothing"></select>\n  <select id="villager"'
+          assert old in s
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+
+          p = Path('src/tools/paperdollViewer.js')
+          s = p.read_text()
+          marker = "// step the visible simulated cloth from the animation state"
+          assert marker in s
+          block = r'''// ── CLASSIC DAGGERFALL CLOTHING ──────────────────────────────────
+// These are ITEM-TEMPLATE garments, not the editor-only villager designs.
+// Body clothing owns the body's existing quads (same exact-face atlas law as
+// skin); hanging garments own a drape mesh. No clothing mesh shares `mat` —
+// buildPiece() now gives every loose piece its own material.
+let classicClothingOn = null;
+function applyClassicClothing(c) {
+  // A classic item selection is a standalone inspection state. Remove any
+  // enemy/design pieces first, then restore the neutral geometry and current
+  // race skin before laying the garment delta over it.
+  for (const t of Object.values(pieceTables)) hidePieces(t);
+  pos.set(pristinePos);
+  col.set(pristineCol);
+  basePos.set(pos);
+  geo.getAttribute('position').needsUpdate = true;
+  geo.getAttribute('color').needsUpdate = true;
+  shownLine = null; shownIdx = -1; shownDesign = null; beastAtk = null;
+  villagerOn = null;
+
+  // Clear spectral/fire state left by an inspected enemy. Loose materials
+  // mirror EFFECT state only; texture ownership remains independent.
+  mat.transparent = false;
+  mat.opacity = 1;
+  mat.depthWrite = true;
+  mat.blending = THREE.NormalBlending;
+  mat.needsUpdate = true;
+  syncPieceEffectState();
+
+  // Current race/tone becomes the baseline captured by skin.js. Garment
+  // faces written after this are the compositor's authored overrides.
+  applyTone();
+
+  if (c && c.kind === 'body') {
+    for (let k = 0; k < c.idx.length; k++) {
+      const f = c.idx[k], pb = k * 12, cb = k * 3;
+      const r = c.C[cb] / 255, g = c.C[cb + 1] / 255, b = c.C[cb + 2] / 255;
+      let o = f * 18;
+      for (const vi of TRI) {
+        pos[o] = c.P[pb + vi * 3] / 1000;
+        pos[o + 1] = c.P[pb + vi * 3 + 1] / 1000;
+        pos[o + 2] = c.P[pb + vi * 3 + 2] / 1000;
+        col[o] = r; col[o + 1] = g; col[o + 2] = b;
+        o += 3;
+      }
+    }
+  }
+  basePos.set(pos);
+  geo.getAttribute('position').needsUpdate = true;
+  geo.getAttribute('color').needsUpdate = true;
+
+  // Daggerfall's hanging garments already have authored standoff geometry.
+  // An item owns the drape by NAME; the payload carries a measured fit for
+  // this exact neutral body so the viewer never guesses its width.
+  for (const nm in drapedMeshes) drapedMeshes[nm].visible = false;
+  if (c && c.kind === 'drape' && c.drape) {
+    const di = DRAPES.indexOf(c.drape.name);
+    drapeIx = di >= 0 ? di : 0;
+    setDrape();
+    fitDrape(c);
+  } else {
+    drapeIx = 0;
+    setDrape();
+    fitDrape(null);
+  }
+  classicClothingOn = c || null;
+  const db = document.getElementById('drape');
+  if (db) db.textContent = 'drape: ' + DRAPES[drapeIx];
+}
+
+'''
+          s = s.replace(marker, block + marker, 1)
+
+          marker = "// ── ORC LINE picker (editor only) ────────────────────────────────"
+          assert marker in s
+          setup = r'''// Classic Daggerfall clothing picker: item DB roster -> 3D garment pack.
+{
+  const sel = document.getElementById('clothing');
+  if (sel) {
+    const none = document.createElement('option');
+    none.value = '';
+    none.textContent = 'clothing: none';
+    sel.appendChild(none);
+    const groups = { body: document.createElement('optgroup'), drape: document.createElement('optgroup') };
+    groups.body.label = 'body clothing';
+    groups.drape.label = 'draped clothing';
+    for (const c of (D.clothing || [])) {
+      const opt = document.createElement('option');
+      opt.value = String(c.index);
+      opt.textContent = c.name + '  #' + c.index + (c.variants > 1 ? '  (' + c.variants + ' variants)' : '');
+      groups[c.kind]?.appendChild(opt);
+    }
+    if (groups.body.children.length) sel.appendChild(groups.body);
+    if (groups.drape.children.length) sel.appendChild(groups.drape);
+    sel.onchange = () => {
+      const c = (D.clothing || []).find((x) => String(x.index) === sel.value) || null;
+      for (const other of ['villager', 'orc', 'undead', 'classes', 'atronach', 'beast', 'daedra']) {
+        const o = document.getElementById(other);
+        if (o) o.value = '';
+      }
+      applyClassicClothing(c);
+      const hud = document.getElementById('hud');
+      if (hud) hud.textContent = c
+        ? c.name + ' · classic template ' + c.index + ' · ' + c.kind + ' · TEXTURE.' + String(c.playerTextureArchive).padStart(3, '0') + ' record ' + c.playerTextureRecord
+        : 'NEUTRAL POSE prototype · drag to rotate · pinch to zoom';
+    };
+  }
+}
+
+'''
+          s = s.replace(marker, setup + marker, 1)
+          p.write_text(s)
+          PY
+      - run: npm ci
+      - name: Verify classic clothing catalog
+        run: |
+          node --input-type=module - <<'NODE'
+          import { CLOTHING_CATALOG, clothingZones } from './src/characters/clothing.js';
+          if (!CLOTHING_CATALOG.length) throw new Error('empty clothing catalog');
+          const body = CLOTHING_CATALOG.filter(x => x.kind === 'body');
+          const drape = CLOTHING_CATALOG.filter(x => x.kind === 'drape');
+          if (!body.length || !drape.length) throw new Error('both clothing render kinds must exist');
+          for (const c of body) if (!clothingZones(c.index).length) throw new Error(`body clothing has no zones: ${c.index} ${c.name}`);
+          for (const c of drape) if (!c.drape) throw new Error(`draped clothing has no drape: ${c.index} ${c.name}`);
+          console.log(`classic clothing: ${CLOTHING_CATALOG.length} templates (${body.length} body, ${drape.length} draped)`);
+          NODE
+      - name: Verify viewer build
+        run: npm run build
+      - name: Commit verified clothing viewer
+        run: |
+          git rm .github/workflows/one-shot-classic-clothing.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/characters/clothing.js src/characters/paperdollPayload.js src/tools/paperdollViewer.js viewer.html
+          git commit -m "CLOTHING: wire classic Daggerfall garments into 3D viewer"
+          git push origin HEAD:chatgpt/exact-face-atlas
