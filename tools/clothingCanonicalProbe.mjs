@@ -74,7 +74,6 @@ const frontMid = rgb(views[0], Math.floor(width / 2), 6);
 const backMid = rgb(views[4], Math.floor(width / 2), 6);
 assert.notDeepEqual(backMid, frontMid, 'front-only detail must not stamp onto the back');
 
-
 // A shirt whose crop is heavily right-biased around the REAL paperdoll body
 // axis. This is the case row-centering alone cannot solve: it removes shear but
 // still presents the near side as if it were a frontal texture.
@@ -94,13 +93,14 @@ const torso = canonicalizePaperdollTexture({
   width: tw, height: th, data: td,
   paperdollMeta: { axisX: 8 },
 }, 'torso');
-assert.equal(torso.canonicalMeta.mode, 'paperdoll-surface-v4');
+assert.equal(torso.canonicalMeta.mode, 'paperdoll-surface-v5');
 assert.equal(torso.canonicalMeta.sourceAxis, 'paperdoll-offset');
-assert.equal(torso.canonicalMeta.registration, 'paperdoll-axis-chest-weighted-front-reconstruct');
+assert.equal(torso.canonicalMeta.registration, 'paperdoll-axis-adaptive-front-reconstruct');
 assert.ok(torso.canonicalMeta.analysisRowCount < th, 'torso orientation must ignore noisy top/bottom rows');
 assert.equal(torso.canonicalMeta.frontReconstruction, 'dominant-half-mirror');
 assert.equal(torso.canonicalMeta.dominantSide, 'right');
 assert.ok(torso.canonicalMeta.sideBias > 1.65);
+assert.ok(torso.canonicalMeta.frontRecovery > 0.985, 'strongly oblique torso must fully recover to a frontal surface');
 // Equal distances from the reconstructed front centre must now see the same
 // material progression instead of one side of the classic paperdoll sprite.
 assert.deepEqual(rgb(torso, 3, 3), rgb(torso, tw - 1 - 3, 3));
@@ -110,5 +110,31 @@ for (let x = 0; x < tw; x++) {
   const [r,g,b] = rgb(torso, x, 6);
   assert.ok(r > 180 && g < 80 && b < 80, 'belt row must remain a frontal horizontal band');
 }
+
+// V5 regression: moderately oblique shirts must no longer remain in the old
+// sideways split-perspective state until a hard threshold is crossed.
+const mw = 24, mh = 10, md = new Uint8ClampedArray(mw * mh * 4);
+for (let y = 0; y < mh; y++) for (let x = 5; x <= 19; x++) {
+  const o = (y * mw + x) * 4;
+  md[o] = 45 + x * 4; md[o+1] = 70 + x * 2; md[o+2] = 175 - x * 3; md[o+3] = 255;
+}
+const moderate = canonicalizePaperdollTexture({
+  width: mw, height: mh, data: md,
+  paperdollMeta: { axisX: 11 },
+}, 'torso');
+assert.equal(moderate.canonicalMeta.mode, 'paperdoll-surface-v5');
+assert.equal(moderate.canonicalMeta.frontReconstruction, 'adaptive-perspective-blend');
+assert.ok(moderate.canonicalMeta.frontRecovery > 0 && moderate.canonicalMeta.frontRecovery < 0.985,
+  'moderately oblique torso must receive a graded frontal correction');
+
+// Open torso garments deliberately keep more original asymmetry than closed
+// shirts at the same paperdoll bias so an actual open-front design is not
+// flattened into bilateral cloth too early.
+const moderateOpen = canonicalizePaperdollTexture({
+  width: mw, height: mh, data: md,
+  paperdollMeta: { axisX: 11 },
+}, 'open-torso');
+assert.ok(moderateOpen.canonicalMeta.frontRecovery < moderate.canonicalMeta.frontRecovery,
+  'open torso profile must preserve more authored asymmetry than a closed shirt');
 
 console.log('clothing canonical probe: PASS');
