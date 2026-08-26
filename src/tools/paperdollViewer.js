@@ -926,7 +926,9 @@ const ACTX = createAnimContext({ basePos, vgrp, armX: D.armX, wristY: D.wristY, 
       const meta = await syncClassicClothingTexture(c);
       if (hud) hud.textContent = c
         ? c.name + ' · classic template ' + c.index + ' · ' + c.kind + (meta
-          ? ' · ' + meta.source + ' record ' + meta.record + (meta.wrapMode === 'generated-8-way' ? ' · 8-way generated wrap' : ' · source pixels')
+          ? ' · ' + meta.source + ' record ' + meta.record
+            + (meta.wrapMode === 'generated-8-way' ? ' · 8-way generated wrap' : ' · source pixels')
+            + (meta.sourceMode === 'canonical-paperdoll-surface' ? ' · de-skewed · paperdoll openings repaired' : '')
           : ' · procedural fallback (ARENA2 texture unavailable)')
         : 'NEUTRAL POSE prototype · drag to rotate · pinch to zoom';
     };
