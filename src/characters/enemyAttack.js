@@ -34,7 +34,7 @@ import {
   MELEE_NUM_FRAMES, CLASSIC_UPDATE_INTERVAL,
 } from './weaponStates.js';
 import { STRIKES, ATTACKS_1H, sampleClip } from './anims.js';
-import { MELEE_DISTANCE, withinYaw, MIN_RANGED_DISTANCE, MAX_RANGED_DISTANCE } from './enemyMotor.js';
+import { MELEE_DISTANCE, withinYaw, canAct, MIN_RANGED_DISTANCE, MAX_RANGED_DISTANCE } from './enemyMotor.js';
 
 export const ATTACK_SPEED_FLOOR = 8;               // EnemyAttack.cs speedFloor
 export const ATTACK_YAW_DEG = 22.5;                // MeleeAnimation yaw gate
@@ -120,11 +120,14 @@ export class EnemyAttack {
       // AUDIT 24 characters-3: the band arm carries DoRangedAttack's
       // FULL gate - `inRange && TargetInSight && DetectedTarget`
       // (:573) - plus the CanAct chain that owns the call at all
-      // (FixedUpdate :171 `if (CanAct) TakeAction()` -> HandleNoAction
-      // :357-364 drops CanAct the moment GiveUpTimer hits 0). Sight
-      // alone let a Chameleoned player be shot at, and let a foe that
-      // had given up keep firing.
-      if (this.rangedAttack && ai.inSight && ai.detected && ai.giveUpTimer > 0
+      // (FixedUpdate :171 `if (CanAct) TakeAction()`). Sight alone let
+      // a Chameleoned player be shot at, and let a foe that had given
+      // up keep firing. The chain's OTHER arm is KnockbackMovement
+      // (:317): while KnockbackSpeed > 0 the foe cannot act at all, so
+      // the band shot is held for the knockback window after each solid
+      // hit - and the Hurt state that rides that window is itself an
+      // IsPlayingOneShot, which holds the :587 roll a second time.
+      if (this.rangedAttack && ai.inSight && ai.detected && canAct(ai)
           && dist > MIN_RANGED_DISTANCE && dist < MAX_RANGED_DISTANCE) {
         // ...and the 1/32 roll itself sits behind `if (!isPlayingOneShot)`
         // (:587), so a swing in flight DOES hold the bow roll.

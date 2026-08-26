@@ -10,6 +10,13 @@ export const WINDOW_STYLES = Object.freeze({
   night: { color: [255, 182, 56], intensity: 0.8 },
   fog: { color: [117, 117, 117], intensity: 0.5 },
   custom: { color: [200, 0, 200], intensity: 1.0 },
+  // WindowStyle.Disabled is the one arm that is not a colour times an
+  // intensity: ChangeWindowEmissionColor (MaterialReader.cs:934-936)
+  // sets EmissionColor to Color.black outright. It is what every
+  // BUILDING INTERIOR is laid out with (DaggerfallInterior.cs:473,
+  // :517, :1270 - SetClimate(..., WindowStyle.Disabled)), so interior
+  // glass never glows whatever the exterior sky is doing.
+  disabled: { color: [0, 0, 0], intensity: 0 },
 });
 
 /** Style name -> normalized RGB emission (color/255 * intensity). */

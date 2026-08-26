@@ -72,8 +72,13 @@ const REP_ARRAYS = ['sGroupReputations', 'reactionMods'];
 /** Deep-copy one activeEffects entry: permanent drain entries carry
  *  no effect record (S15); disease entries carry the accumulating
  *  per-stat statMods map (S18) - both nested objects must detach or
- *  the snapshot mutates with the live entity. */
-const copyEffectEntry = (a) => {
+ *  the snapshot mutates with the live entity.
+ *
+ *  Exported because it is not the PLAYER's law: SerializableEnemy
+ *  writes each enemy's instancedEffectBundles too (:120, restored at
+ *  :222), so the dungeon host's per-foe record copies its entries with
+ *  this one body. */
+export const copyEffectEntry = (a) => {
   const c = { ...a };
   if (a.effect) c.effect = { ...a.effect };
   if (a.statMods) c.statMods = { ...a.statMods };

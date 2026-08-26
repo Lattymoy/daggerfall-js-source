@@ -859,9 +859,29 @@ export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = t
   };
 }
 
-/** PlayerEntity.cs:388-400 - Athleticism loses fatigue 10% slower. */
+/** PlayerEntity.cs:388-400, verbatim:
+ *
+ *      const float atleticismMultiplier = 0.9f;
+ *      const float improvedAtleticismMultiplier = 0.8f;
+ *      float fatigueLossMultiplier = 1.0f;
+ *      if (career.Athleticism)
+ *          fatigueLossMultiplier = (ImprovedAthleticism) ? improvedAtleticismMultiplier : atleticismMultiplier;
+ *
+ *  Athleticism loses fatigue 10% slower, and 20% slower while an
+ *  ImprovesTalents(param 1) item is worn. DaggerfallEntity
+ *  .ImprovedAthleticism (:95) is the port's
+ *  `_enchantMods.improvedAthleticism`, which enchantments.js:447 has
+ *  set since E1 with nothing anywhere reading it - the whole
+ *  enchantment's fatigue half was computed and thrown away. Read
+ *  straight off the fold, exactly as skills.js reads skillMods: a host
+ *  that never pumps the fold reads false, which is the 0.9 arm. */
+export const ATHLETICISM_FATIGUE_MULT = 0.9;            // :390
+export const IMPROVED_ATHLETICISM_FATIGUE_MULT = 0.8;   // :391
 export function fatigueLossMultiplierFor(entity) {
-  return hasSpecialAbility(entity?.career, SPECIAL_ABILITY.Athleticism) ? 0.9 : 1.0;
+  if (!hasSpecialAbility(entity?.career, SPECIAL_ABILITY.Athleticism)) return 1.0;
+  return entity?._enchantMods?.improvedAthleticism
+    ? IMPROVED_ATHLETICISM_FATIGUE_MULT
+    : ATHLETICISM_FATIGUE_MULT;
 }
 
 // --- THE MUSIC DIRECTOR (AUDIT 19's 1:1 pass) ------------------------

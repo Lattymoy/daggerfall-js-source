@@ -19,6 +19,7 @@ import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { isShop } from '../systems/shopStock.js';
 import { isBuildingOpen } from '../systems/buildingLocks.js';
+import { personIsChildNPC } from './staticNpc.js';
 
 /**
  * Collect the people of one building interior.
@@ -42,6 +43,12 @@ export function collectInteriorPeople(recordData) {
       // Q4-v: the record's stream position - DFU's obj.Position, the
       // StaticNPC nameSeed's identity component.
       position: obj.position,
+      // StaticNPC.IsChildNPC (StaticNPC.cs:67-70), the property
+      // TalkManager reads before either questor arm (:755, :769):
+      // IsChildNPCData over this record's archive/record/faction
+      // (:342-350). It is DERIVED, so the record carries it exactly as
+      // the component's property answers it.
+      isChildNPC: personIsChildNPC(obj),
     });
   }
   return out;

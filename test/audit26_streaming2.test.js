@@ -295,7 +295,13 @@ test('audit26 F030: no host drops the up/down keys or the pitch argument', () =>
         `${f} passes the camera LOOK, pitch included`);
       const body = s.slice(i, tail);
       assert.match(body, /up: jumpHeld \|\| held\(keys, 'FloatUp'\)/, `${f} reads Jump/FloatUp for up`);
-      assert.match(body, /down: held\(keys, 'FloatDown'\)/, `${f} reads FloatDown for down`);
+      // AUDIT 26 (F031): LevitateMotor.Update:88-89's down arm is
+      // `HasAction(Crouch) || HasAction(FloatDown)`, the mirror of the
+      // up arm above. dungeon.js carries both halves now; the other
+      // three hosts still read FloatDown alone, so this accepts the
+      // Crouch prefix rather than forbidding it - a pin that demanded
+      // FloatDown ALONE would be pinning the missing half in place.
+      assert.match(body, /down: (crouchHeld \|\| )?held\(keys, 'FloatDown'\)/, `${f} reads FloatDown for down`);
     }
   }
 });

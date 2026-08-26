@@ -68,7 +68,7 @@ test('audit24 lifetimes: an encounter foe frees its billboard batch on BOTH ends
 test('audit24 lifetimes: a city guard frees its batch on both death paths, and the array is NOT pruned', () => {
   const src = read('src/scenes/cityGuards.js');
   assert.match(src, /function releaseGuardBatch\(g\) \{[\s\S]*?destroyBillboardBatch\(g\.batch\)/);
-  assert.match(bodyOf(src, 'function damageGuard(g, damage, playerFeet, knockDir)'),
+  assert.match(bodyOf(src, 'function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true } = {})'),
     /health <= 0[\s\S]{0,300}releaseGuardBatch\(g\)/, 'the killed path');
   assert.match(src, /if \(!g\.dead\) \{ g\.dead = true; releaseGuardBatch\(g\); \}/,
     'and the walk-away path when the crime clears');

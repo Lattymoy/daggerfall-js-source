@@ -144,7 +144,15 @@ test('audit24 wave36: the watch raises and lowers the alert, and takes fall dama
   // ApplyFallDamage runs for EVERY enemy (:173) - the motor has always
   // produced landedFall for guards, and nobody read it.
   assert.ok(cg.includes('if (g.ai.landedFall > 0 && !g.dead) {'), 'the watch bills its own falls');
-  assert.ok(cg.includes('damageGuard(g, gdmg, null, null);'), 'through the pool damage door, so death and crime fire');
+  // AUDIT 26 (F035): this line used to read `damageGuard(g, gdmg, null,
+  // null)` and this assertion used to end "so death and crime fire".
+  // The crime does NOT fire: ApplyFallDamage (:1384-1401) calls
+  // DecreaseHealth directly, and the Knight_CityWatch Murder assignment
+  // (DaggerfallEntityBehaviour.cs:262-268) sits inside the
+  // `sourceEntityBehaviour == PlayerEntityBehaviour` gate (:203) that a
+  // fall never enters. The pin restated the port instead of the source.
+  assert.ok(cg.includes('damageGuard(g, gdmg, null, null, { fromPlayer: false });'),
+    'through the pool damage door, so the death fires - but with no player behind it, no crime');
 });
 
 test('audit24 wave36: hostility SEEDS the remembered position - the freeze wave 35 could have shipped', () => {

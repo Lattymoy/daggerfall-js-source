@@ -72,7 +72,7 @@ import { applyLevelUp } from '../systems/advancement.js';
 import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
 import { spendPoolLowest } from '../systems/chargen.js';
 import { ClassFile } from '../formats/classFile.js';
-import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, raiseAtRestEnd, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord, restVitals, restFullyHealed, createRestDeps} from './shared.js';
+import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, raiseAtRestEnd, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord, restVitals, restFullyHealed, createRestDeps, applyFallLanding, fatigueLossMultiplierFor} from './shared.js';
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
@@ -84,12 +84,12 @@ import {
   EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
 } from '../systems/spellcast.js';
 import { silenceBlocksCast, SILENCED_TEXT, attemptSoulTrap, SOUL_TRAP_TEXT, dispelNearby } from '../systems/mysticism.js';   // S27; X5 the soul trap's kill intercept
-import { applySpell, hasActiveEffect, entityIsParalyzed, maxFatigue } from '../systems/effects.js';
+import { applySpell, hasActiveEffect, entityIsParalyzed, maxFatigue, seedBundleSeq } from '../systems/effects.js';   // AUDIT 26: the foe bundles' restore lifts the counter, as the player's does
 import { FATIGUE_LOSS, liveStat, killIfAnyLiveStatZero } from '../systems/statMods.js';
 import { breathStep } from '../systems/breath.js';
 import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
 import { inflictPoison } from '../systems/poisons.js';
-import { exhaustionOutcome, EXHAUSTED_IN_WATER, hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
+import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';
 import { restDecision } from '../systems/restSession.js';   // the scene-free open gate, one home
 import { intermittentEnemySpawn, setEnemyAlert, decayEnemyAlert, areEnemiesNearby } from '../systems/encounters.js';   // E-slice; S40: the resting test, one home
 import { RestWindow } from '../ui/restWindow.js';
@@ -97,7 +97,7 @@ import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects
 import { dice100, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies, KB_UNIT } from '../combat/formulas.js';   // C15: + knockback
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost, effectSchool, EFFECT_COST_TABLE } from '../systems/spellcost.js';
-import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState } from '../systems/save.js';   // B4: the ONE quest+talk composer
+import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState, copyEffectEntry } from '../systems/save.js';   // B4: the ONE quest+talk composer; copyEffectEntry: SerializableEnemy's bundles ride the player envelope's body
 import { bindQuestFoeHost } from './questFoeHost.js';   // B1: quest foes ride this pool
 import { dungeonKey } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
@@ -1096,11 +1096,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // displayingExhaustedPopup so rapid drains - the Somnalius case -
   // never stack collapses).
   let _exhaustedShowing = false;
-  /** PlayerEntity.cs:396-400: 1.0, or 0.9 with the Athleticism career
-   *  advantage (0.8 needs the Improved Athleticism enchantment, which
-   *  the port has no source for). */
-  const fatigueLossMultiplier = () =>
-    (hasSpecialAbility(playerEntity.career, SPECIAL_ABILITY.Athleticism) ? 0.9 : 1.0);
   function drainFatigue(n) {
     if (n <= 0) return;
     playerEntity.fatigue = Math.max(0, (playerEntity.fatigue ?? 0) - n);
@@ -1712,6 +1707,23 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
                 say: (l) => hudText.add(l),   // C-slice: equipment breaks speak
               }) : 0;
               if (dmg > 0) {
+                // AUDIT 26: a PLAYER arrow reaches its mark through
+                // WeaponManager.WeaponDamage with arrowHit=true
+                // (DaggerfallMissile.cs:678-687), so the damage>0 arm
+                // owes the same two things the melee swing pays at
+                // :562-573 and in the same order - the enemy-side hit
+                // sound, then ShowBloodSplash - BEFORE the knockback and
+                // the 40% voice. This site paid neither: every landed
+                // arrow was silent and bloodless while every melee hit
+                // thudded and splashed. The striking weapon is the BOW
+                // (LastBowUsed), so it is PlayHitSound's family.
+                audio.play3d(hitSoundFor(m.weapon), f.ai.feet, 1.1, { maxDistance: 16 });
+                // :569-573 - the struck foe's OWN BloodIndex. DFU's
+                // impactPosition here is the target transform, not a
+                // raycast point, so the body centre stands in exactly as
+                // it does for melee.
+                hitEffects?.showBloodSplash(ENEMY_BASICS[f.mobileType]?.bloodIndex ?? 0,
+                  bloodCentre(f.ai.feet, f.ai.height));
                 // C2-slice (combat-17): the arrow-struck class foe cries out too
                 const pain = enemyPainVoice(f, dmg);
                 if (pain && pain.clip >= 0) audio.play3d(pain.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
@@ -1802,6 +1814,27 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         hostile: f.ai.isHostile !== false,
         encountered: !!f.ai.hasEncounteredPlayer,
         magicka: f.entity.magicka ?? 0,
+        // AUDIT 26: SerializableEnemy carries startingHealth
+        // (entity.MaxHealth, :109) and currentFatigue (:111) beside
+        // the health it already had, and restores both (:175 MaxHealth,
+        // :177 SetFatigue). Neither rode this record: makeEnemyEntity
+        // RE-ROLLS maxHealth on every rebuild (enemyEntity.js:80/:85),
+        // so a rebuild-then-restore load handed each monster a
+        // different toughness and could leave restored health above the
+        // new max, and a fatigue-drained foe kept its live drain.
+        maxHealth: f.entity.maxHealth,
+        fatigue: f.entity.fatigue ?? 0,
+        // AUDIT 26: instancedEffectBundles (:120 /
+        // RestoreInstancedBundleSaveData :222). The port's foes ARE
+        // effect targets - applySpell pushes onto entity.activeEffects -
+        // so without this every timed effect on every dungeon enemy
+        // (paralysis, continuous damage, a soul-trap mark) ended
+        // silently on load. copyEffectEntry is the player envelope's
+        // own body: the nested effect/statMods objects must detach.
+        // No heldItem filter here - that split is the PLAYER's, whose
+        // held bundles are re-instantiated from the worn set at restore
+        // (restartHeldEnchantments); nothing re-instantiates a foe's.
+        activeEffects: (f.entity.activeEffects ?? []).map(copyEffectEntry),
       })),
       piles: lootPiles.map((p) => ({ items: p.items.map((it) => ({ ...it })) })),
       // AUDIT 23 (save-load-4): player-dropped piles are containers in
@@ -1817,7 +1850,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     w.foes?.forEach((sf, i) => {
       const f = foes[i];
       if (!f) return;
+      // MaxHealth lands BEFORE the health it bounds (RestoreSaveData
+      // :175-176 in that order); a save older than this field leaves
+      // the rebuild's own roll, as the CH4 halves below do.
+      if (sf.maxHealth != null) f.entity.maxHealth = sf.maxHealth;
       f.entity.health = sf.health;
+      if (sf.fatigue != null) f.entity.fatigue = sf.fatigue;   // :177 SetFatigue
       f.entity.items = sf.items.map((it) => ({ ...it }));
       f.ai.feet[0] = sf.feet[0]; f.ai.feet[1] = sf.feet[1]; f.ai.feet[2] = sf.feet[2];
       f.ai.yaw = sf.yaw;
@@ -1827,6 +1865,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (sf.hostile != null) f.ai.isHostile = !!sf.hostile;
       if (sf.encountered != null) f.ai.hasEncounteredPlayer = !!sf.encountered;
       if (sf.magicka != null) f.entity.magicka = sf.magicka;
+      // RestoreInstancedBundleSaveData (:222): the foe's live bundles
+      // are REPLACED by the saved set, so an effect landed after the
+      // save is gone and one that ended is back. bundleId is a
+      // module-scope counter, not saved state (save.js X10) - lift it
+      // past the restored high-water mark or the next cast on this foe
+      // reuses an id a restored entry already holds, and one Dispel
+      // strips both.
+      if (sf.activeEffects != null) {
+        f.entity.activeEffects = sf.activeEffects.map(copyEffectEntry);
+        seedBundleSeq(sf.activeEffects.reduce((m, a) => Math.max(m, a.bundleId ?? 0), 0));
+      }
       if (sf.dead && !f.dead) { f.dead = true; spawnCorpse(f); }
       // SL2 (AUDIT 23 save-load-2): the BACKWARD rewind. DFU's load
       // REBUILDS the location and RestoreSaveData SETS the saved
@@ -2178,7 +2227,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       dt,
       sinks: playerSinks,
       activity: _activity,
-      fatigueMultiplier: fatigueLossMultiplier(),
+      fatigueMultiplier: fatigueLossMultiplierFor(playerEntity),   // PlayerEntity.cs:388-400, ONE body (this host carried a second copy, stuck on the 0.9 arm)
       rolls: Math.random,
       say: (msg) => hudText.add(msg),
     });
@@ -2788,14 +2837,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // fall-damage sound; a 2.5..5 drop is the hard-fall alert only.
       // No water exemption HERE - DFU's is outdoor-tile-only
       // (StreamingWorld.PlayerTileMapIndex == 0), so a dungeon-water
-      // landing that grounds bills like ground, bug-for-bug. The
-      // ShowPlayerDamage screen flash pends the HUD arc (flagged).
-      if (fell > FALL_DAMAGE_THRESHOLD) {
-        hurtPlayer(Math.trunc(FALL_HP_PER_METRE * (fell - FALL_DAMAGE_THRESHOLD)));
-        audio.playOneShot(SOUND.FallDamage);
-      } else if (fell > FALL_DAMAGE_THRESHOLD / 2) {
-        audio.playOneShot(SOUND.FallHard);
-      }
+      // landing that grounds bills like ground, bug-for-bug.
+      //
+      // Through shared.applyFallLanding, which the other three hosts
+      // already ride: PlayerHealth.ApplyPlayerFallDamage (:49-58) bills
+      // RemoveHealth, and RemoveHealth's FIRST act is
+      // ShowPlayerDamage.Flash (:36-38) - so a damaging fall flashes the
+      // screen underground exactly as it does outdoors. The copy that
+      // stood here billed and rang and never flashed. `hurt` is this
+      // host's one-argument wrapper (the death screen rides it).
+      applyFallLanding(playerEntity, fell, { hurt: hurtPlayer, sound: (id) => audio.playOneShot(id) });
     },
     reportMouse(dx, dy, locked) { _mouseState = `dx:${dx} dy:${dy} lock:${locked ? 'Y' : 'N'}`; },
     reportInput(keys, pitch) { _inputState = `keys:${keys} pitch:${pitch.toFixed(2)}`; },

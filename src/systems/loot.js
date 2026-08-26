@@ -24,6 +24,7 @@ import { dice100 } from '../combat/formulas.js';
 import { goldStack } from './inventory.js';
 import { ITEM_TEMPLATES, mintCondition, GROUP_TEMPLATE_INDICES, templateByIndex } from './itemTemplates.js';
 import { CLOTHING_DYES } from '../characters/dyes.js';
+import { getRandomBookID } from './books.js';   // B1: ItemBuilder.CreateRandomBook's message draw
 import { legacyEnchantmentValue } from './enchantments.js';   // G4: ItemBuilder's closing value sum
 
 // LootChanceMatrix rows, verbatim (22 keys, '-' included).
@@ -75,6 +76,13 @@ export const BOOK_TEMPLATE = 277;
 // scene file is no home for source tables):
 export const RANDOM_TREASURE_ARCHIVE = 216;                    // randomTreasureArchive
 export const RANDOM_TREASURE_MARKER_RECORD = 19;               // RDBLayout randomTreasureFlatIndex (editor 199.19)
+/** DaggerfallLoot.randomTreasureMarkerDim (:33) - "dimension of random
+ *  treasure marker in Daggerfall Units, used to align random icon to
+ *  surface marker is placed on". AddQuestItem shifts a DUNGEON item by
+ *  `-randomTreasureMarkerDim / 2 * MeshReader.GlobalScale`
+ *  (GameObjectHelper.cs:1135-1136) because dungeon flats are centre-
+ *  origin where every other flat is base-origin. */
+export const RANDOM_TREASURE_MARKER_DIM = 40;
 export const RANDOM_TREASURE_ICONS = Object.freeze([0, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 37, 43, 44, 45, 46, 47]);
 /** GenerateLoot's dungeon-type -> key rows (19 types, in order). */
 export const DUNGEON_LOOT_KEYS = Object.freeze(['K', 'N', 'N', 'N', 'K', 'M', 'M', 'Q', 'K', 'U', 'D', 'N', 'L', 'F', 'S', 'N', 'M', 'L', 'N']);   // Book0..3 all template 277; CreateRandomBook rolls Range(0, TotalVariants) = Range(0, 2) - the 4 is the Books ENUM NAME count, not a variant count
@@ -112,6 +120,25 @@ export function createRandomArmor(playerLevel, rolls = Math.random) {
 }
 
 const pick = (list, rolls) => list[Math.floor(rolls() * list.length)];
+
+/** ItemBuilder.CreateRandomBook (:257-270), whole. The item is always
+ *  Books/Book0 (all four Books enum names resolve to template 277); the
+ *  MESSAGE is drawn first (GetRandomBookID) and the VARIANT second,
+ *  Range(0, TotalVariants) over the TEMPLATE's variant count - the 4 is
+ *  the enum's name count, not a variant count.
+ *
+ *  FLAGGED, as at every other book seam: DFU then prices the book from
+ *  its BOOK FILE (bookFile.Price), which pends the books arc, so the
+ *  template price stands. */
+export function createRandomBook(rolls = Math.random) {
+  const message = getRandomBookID(rolls);
+  return {
+    group: 'Books',
+    templateIndex: BOOK_TEMPLATE,
+    message,
+    variant: Math.floor(rolls() * (ITEM_TEMPLATES[BOOK_TEMPLATE]?.variants ?? 0)),
+  };
+}
 
 /** DaggerfallUnityItem.ItemName is the TEMPLATE's name for every
  *  plain item (only magic items and weapons carry their own).

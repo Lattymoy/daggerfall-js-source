@@ -12,7 +12,9 @@
 // differ between one building and the next.
 
 import { srand } from '../formats/dfRandom.js';
-import { fullName, getNameBank, getNameBankOfRegion, GENDERS } from './nameHelper.js';
+import {
+  fullName, getNameBankOfRegion, nameBankOfRegionRace, BANK_TYPES, GENDERS,
+} from './nameHelper.js';
 import { RACES } from '../systems/races.js';
 // ONE HOME for FactionFile.FactionTypes (FactionFile.cs:530-546) - the
 // enum the parser already mints. Individual is 4; 3 is Subgroup.
@@ -58,7 +60,7 @@ export const positionHash = (x, y, z) => ((x ^ (y << 2) ^ (z >> 2)) | 0);
  *  block person record + the scene context. */
 export function staticNpcData(pn, {
   mapId = 0, locationIndex = 0, buildingKey = 0,
-  getFaction = null, raceOfCurrentRegion = null,
+  getFaction = null, raceOfCurrentRegion = null, nameBankOfCurrentRegion = null,
   // StaticNPC.cs:165-179 - the RMB (building) overload stamps
   // Context.Building; the RDB one two above it stamps Dungeon. This
   // helper serves the building path, so that is the default, and a
@@ -66,6 +68,7 @@ export function staticNpcData(pn, {
   context = NPC_CONTEXT.Building,
 } = {}) {
   const factionID = pn.factionID ?? 0;
+  const regionRace = raceOfCurrentRegion ?? (() => 0);
   return {
     // AUDIT 24 (the seven-slice sweep): over the ZERO STRUCT, because
     // that is what C# starts from - the layout overload writes nine of
@@ -83,13 +86,22 @@ export function staticNpcData(pn, {
     // off entirely, so QuestMCP.Oath's clicked-NPC arm - the one the
     // main quests lean on before a questor is set - read undefined and
     // fell through to the region every time.
-    race: raceFromFaction(factionID, getFaction, raceOfCurrentRegion ?? (() => 0)),
+    race: raceFromFaction(factionID, getFaction, regionRace),
     // AUDIT 24: the port left every mint at the struct's 0 (Custom),
     // and topicTree's castle-questor test - the only reader - compared
     // it against the STRING 'dungeon', so both halves were dead.
     context,
     buildingKey,
     mapID: mapId,
+    // SetRuntimeData (StaticNPC.cs:290-309), which Start() runs for
+    // EVERY placed StaticNPC: the name bank is the REGION's
+    // (:309 -> PlayerGPS.GetNameBankOfCurrentRegion, always
+    // Breton/Redguard), and GetDisplayName generates from that field
+    // alone (:325-326). The NPC's own race never picks a bank - a Nord
+    // shopkeeper in Sentinel answers to a Redguard name.
+    nameBank: nameBankOfCurrentRegion
+      ? nameBankOfCurrentRegion()
+      : nameBankOfRegionRace(regionRace()),
   };
 }
 
@@ -230,14 +242,20 @@ export function raceFromFactionRace(factionRace) {
  *  @param {object} data      staticNpcData's result
  *  @param {object} [deps]
  *  @param {function(number):object|null} [deps.getFaction]
- *  @param {number} [deps.nameBank]  BankTypes; defaults from the race
+ *  @param {number} [deps.nameBank]  BankTypes; defaults to the record's
+ *                                   own (the region bank SetRuntimeData
+ *                                   stamped)
  */
 export function staticNpcName(data, { getFaction = null, nameBank = null } = {}) {
   const fd = getFaction?.(data.factionID) ?? null;
   // GetDisplayName (:319) tests `factionData.type == (int)FactionTypes.Individual`.
   if (fd && fd.type === FACTION_TYPES.Individual) return fd.name;
   srand(data.nameSeed);
-  const bank = nameBank ?? bankForRace(data.race);
+  // FullName(npcData.nameBank, npcData.gender) (:326). The bank is the
+  // one SetRuntimeData stamped - the REGION's (:309) - never a bank
+  // derived from the NPC's race; nothing in DFU assigns a race bank to
+  // a static NPC. An unstamped struct reads its zero, BankTypes.Breton.
+  const bank = nameBank ?? data.nameBank ?? BANK_TYPES.Breton;
   // AUDIT 24 (wave 24): `data.gender` is the Genders enum, which is
   // what FullName takes - C# passes `npcData.gender` straight through
   // (:328). The string compare here was propping up the stale
@@ -246,15 +264,45 @@ export function staticNpcName(data, { getFaction = null, nameBank = null } = {})
   return fullName(bank, data.gender);
 }
 
-/** The name bank a race draws from; a race the bank table does not
- *  know falls to Breton exactly as getNameBank does. */
-export const bankForRace = (race) => getNameBank(raceKeyOf(race));
+/** TextureReader.IsChildNPCTexture (TextureReader.cs:1076-1136),
+ *  verbatim: the archives that hold child NPC billboards, and for each
+ *  one the records that are children. */
+const CHILD_NPC_TEXTURES = Object.freeze(new Map([
+  [181, [3]],                                                        // templePeople
+  [182, [4, 5, 6, 18, 36, 37, 38, 42, 43, 52, 53]],                  // mediumCommonPeople
+  [184, [15]],                                                       // flatPeople2
+  [186, [4, 5, 6, 7, 19, 37, 38, 39, 43, 44, 53, 54]],               // testBigFlats
+  [197, [3]],                                                        // kludgeTown
+  [334, [2, 3, 6, 9, 12]],                                           // daggerfallPeople
+  [346, [2, 3, 12, 15, 16, 18]],                                     // wayrestPeople
+  [357, [5, 6, 7, 8]],                                               // sentinelPeople
+]));
 
-/** The port's RACES enum is 1-based (Breton = 1); the bank table is
- *  keyed by the race's NAME. */
-function raceKeyOf(race) {
-  for (const [key, value] of Object.entries(RACES)) if (value === race) return key;
-  return 'Breton';
+export function isChildNPCTexture(archive, record) {
+  return (CHILD_NPC_TEXTURES.get(archive) ?? []).includes(record);
 }
+
+/** FactionFile "Children" - IsChildNPCData's own local (:344). */
+export const CHILDREN_FACTION_ID = 514;
+
+/** StaticNPC.IsChildNPCData (:342-350): a child is a known child
+ *  BILLBOARD or a member of the Children faction. TalkManager gates
+ *  both questor arms on it (:755, :769) and drops children from the
+ *  work pool (:2842). */
+export function isChildNPCData(data) {
+  const isChildTexture = isChildNPCTexture(data?.billboardArchiveIndex ?? 0, data?.billboardRecordIndex ?? 0);
+  const isChildrenFaction = (data?.factionID ?? 0) === CHILDREN_FACTION_ID;
+  return isChildTexture || isChildrenFaction;
+}
+
+/** IsChildNPCData over a PERSON RECORD - the block-record field names
+ *  the two people paths mint (interiorPeople, exteriorNpcs), which are
+ *  SetLayoutData's billboardArchiveIndex/billboardRecordIndex/factionID
+ *  inputs (:212-213, :216). */
+export const personIsChildNPC = (pn) => isChildNPCData({
+  billboardArchiveIndex: pn?.textureArchive ?? 0,
+  billboardRecordIndex: pn?.textureRecord ?? 0,
+  factionID: pn?.factionID ?? 0,
+});
 
 export { getNameBankOfRegion };

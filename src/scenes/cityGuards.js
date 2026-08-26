@@ -266,7 +266,13 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     g.batch = null;
   }
 
-  function damageGuard(g, damage, playerFeet, knockDir) {
+  /** `fromPlayer` is DFU's `sourceEntityBehaviour == PlayerEntityBehaviour`
+   *  gate (DaggerfallEntityBehaviour.cs:203): every damage door the
+   *  PLAYER drives passes through HandleAttackFromSource, and only that
+   *  gate's inside carries the Murder assignment. EnemyMotor
+   *  .ApplyFallDamage (:1384-1401) calls DecreaseHealth directly and
+   *  never enters it, so a watchman who dies falling is nobody's kill. */
+  function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true } = {}) {
     g.entity.health -= damage;
     if (g.entity.health <= 0) {
       g.dead = true;
@@ -276,8 +282,9 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       sayEnemyDied(say, GUARD_MOBILE_TYPE);   // EnemyDeath:79-83, the kill notice
       // G4 (HandleAttackFromSource, verbatim): killing the city watch
       // IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
-      // the thieves-guild arc.
-      playerEntity.crimeCommitted = CRIME_MURDER;
+      // the thieves-guild arc. Inside the player-source gate (:203) in
+      // DFU, so a death the player did not deal assigns no crime.
+      if (fromPlayer) playerEntity.crimeCommitted = CRIME_MURDER;
       // AUDIT 24 (wave 38): EnemyDeath.CompleteDeath, through the one
       // home (this was the second copy of exteriorFoes' mint, to the
       // line). It gains FindGroundPosition (:817) - the watch walks, so
@@ -369,7 +376,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         g.ai.landedFall = 0;
         if (gdmg > 0) {
           audio?.play3d?.(SOUND.FallDamage, [g.ai.feet[0], g.ai.feet[1], g.ai.feet[2]], 1, { maxDistance: 16 });
-          damageGuard(g, gdmg, null, null);
+          damageGuard(g, gdmg, null, null, { fromPlayer: false });
           if (g.dead) continue;
         }
       }

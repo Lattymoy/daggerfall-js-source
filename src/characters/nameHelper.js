@@ -56,6 +56,16 @@ export function getNameBankOfRegion(regionIndex) {
   return BANK_TYPES.Breton;
 }
 
+/** PlayerGPS.GetNameBankOfCurrentRegion (PlayerGPS.cs:421-427) and
+ *  GetRaceOfCurrentRegion (:430-434) read the SAME MapsFile.RegionRaces
+ *  entry: the bank IS that value, the race is that value + 1. So the
+ *  region's bank falls out of the region's race, which is the seam the
+ *  hosts already answer, and a race outside the table takes
+ *  GetNameBankOfCurrentRegion's own no-region answer, Breton. */
+export const nameBankOfRegionRace = (race) => (
+  race >= BANK_TYPES.Breton + 1 && race <= BANK_TYPES.Imperial + 1
+    ? race - 1 : BANK_TYPES.Breton);
+
 export function firstName(type, gender) {
   const bank = bankOf(type);
   switch (type) {

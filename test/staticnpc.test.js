@@ -6,11 +6,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   positionHash, staticNpcData, raceFromFaction, raceFromFactionRace,
-  staticNpcName, bankForRace,
+  staticNpcName,
 } from '../src/characters/staticNpc.js';
 import { FACTION_TYPES } from '../src/formats/factionFile.js';
 import { RACES } from '../src/systems/races.js';
-import { GENDERS } from '../src/characters/nameHelper.js';
+import { GENDERS, BANK_TYPES } from '../src/characters/nameHelper.js';
 
 test('StaticNPC: the position hash is x ^ y<<2 ^ z>>2', () => {
   // GetPositionHash (:333-336). Shift binds tighter than xor in both
@@ -129,11 +129,19 @@ test('StaticNPC: an INDIVIDUAL faction answers its own name; everyone else is se
   assert.ok(staticNpcName(d).length > 1);
 });
 
-test('StaticNPC: the name bank follows the race, and an unknown race falls to Breton', () => {
-  assert.equal(bankForRace(RACES.Redguard), bankForRace(RACES.Redguard));
-  assert.equal(bankForRace(9999), bankForRace(RACES.Breton), 'getNameBank\'s own fallback');
-  // a female Nord and a male Nord draw from the same bank
-  assert.equal(bankForRace(RACES.Nord), bankForRace(RACES.Nord));
+test('StaticNPC: the name bank is the REGION\'s, and a record with none falls to Breton', () => {
+  // AUDIT 26 (F016): SetRuntimeData (:309) stamps
+  // GetNameBankOfCurrentRegion on every StaticNPC and GetDisplayName
+  // (:325-326) generates from THAT - the NPC's own race never picks a
+  // bank. This test used to assert the opposite through a bankForRace
+  // helper that has no counterpart in DFU.
+  const inSentinel = staticNpcData({ position: 5 }, { raceOfCurrentRegion: () => RACES.Redguard });
+  assert.equal(inSentinel.nameBank, BANK_TYPES.Redguard);
+  const inDaggerfall = staticNpcData({ position: 5 }, { raceOfCurrentRegion: () => RACES.Breton });
+  assert.equal(inDaggerfall.nameBank, BANK_TYPES.Breton);
+  // the struct zero is BankTypes.Breton, GetNameBankOfCurrentRegion's
+  // own no-region answer
+  assert.equal(staticNpcData({ position: 5 }).nameBank, BANK_TYPES.Breton);
 });
 
 test('StaticNPC: the layout record carries what the billboard needs', () => {

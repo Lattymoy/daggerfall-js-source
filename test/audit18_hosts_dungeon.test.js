@@ -523,7 +523,14 @@ test('audit18 sweep: the swing fatigue and the tally arm are wired into the dung
 
 test('audit18 sweep: the Athleticism fatigue multiplier is applied and truncated AFTER the multiply', () => {
   const src = hostSrc('dungeonContext.js');
-  assert.ok(/hasSpecialAbility\(playerEntity\.career, SPECIAL_ABILITY\.Athleticism\) \? 0\.9 : 1\.0/.test(src));
+  // AUDIT 26 (F044): this used to grep the host for its OWN copy of the
+  // multiplier - `hasSpecialAbility(career, Athleticism) ? 0.9 : 1.0`,
+  // a second body that was missing PlayerEntity.cs:399's
+  // ImprovedAthleticism 0.8 arm and whose comment claimed the port had
+  // no source for it. The law has one home now (shared
+  // .fatigueLossMultiplierFor); pinning the copy pinned the divergence.
+  assert.equal(/SPECIAL_ABILITY\.Athleticism\) \? 0\.9 : 1\.0/.test(src), false,
+    'no second copy of the multiplier lives in the host');
   // AUDIT 23 (C6): the jump drain moved INTO tickPlayerMinutes
   // (PlayerEntity.cs:425-430 is the entity update); the host now only
   // forwards the motor's frame edge on the activity.
@@ -531,7 +538,7 @@ test('audit18 sweep: the Athleticism fatigue multiplier is applied and truncated
   // The PER-MINUTE loss moved to systems/worldTick.js at AUDIT 18 so every
   // host runs it. That made it testable for the first time, so it is pinned
   // BEHAVIOURALLY here rather than by grepping the host it used to live in.
-  assert.ok(/fatigueMultiplier: fatigueLossMultiplier\(\)/.test(src),
+  assert.ok(/fatigueMultiplier: fatigueLossMultiplierFor\(playerEntity\)/.test(src),
     'the host must still hand its multiplier to the shared tick');
   const runTick = (mult, activity) => {
     let drained = 0;

@@ -32,11 +32,12 @@ import { createPlayerTicker , wireInfectionVideos, endRunToTitleMenu, exitToTitl
 import { triggerExteriorOpen, DOOR_SPELL_TEXT } from '../systems/mysticism.js';   // X3: the Open spell's EXTERIOR-door arm
 import { buildInteriorContext } from './interiorContext.js';
 import { buildDungeonContext } from './dungeonContext.js';
-import { DOOR_TYPE } from '../world/meshReader.js';
+import { DOOR_TYPE, GLOBAL_SCALE } from '../world/meshReader.js';   // AUDIT 26 (hosts-modal F068): AddQuestItem's dungeon shift
 import { getGroundArchive } from '../world/climateSwaps.js';
 import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js';
 import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
+import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 (hosts-modal F001): the interior's WindowStyle.Disabled
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C12): the one clock; G4's probe moves it
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
@@ -69,8 +70,8 @@ import { ChoiceWindow } from '../ui/talkWindow.js';
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from '../ui/text.js';
 import { hudScale } from '../ui/hud.js';
-import { isShop, isRepairShop, restockShopShelfIfDue, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves
-import { identifySpellPass, identifiedTallyText } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll
+import { isShop, isRepairShop, restockShopShelfIfDue, restockHouseContainerIfDue, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves
+import { identifySpellPass, identifiedTallyText, NOT_ENOUGH_SPELL_POINTS_TEXT } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll
 import { liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // X10: the Dispel Magic picker
 import { ListPickerWindow, listPickerArtLoaded } from '../ui/listPicker.js';   // X10
 import { createItemLabels, grantCreatedItem } from '../systems/createItem.js';   // X11b
@@ -166,7 +167,7 @@ import { SpellMakerWindow } from '../ui/spellMakerWindow.js';   // S1: the Mages
 // M2: the potion maker - the other half of the guild's magic economy.
 import { PotionMakerWindow, preloadPotionArt, potionArtLoaded } from '../ui/potionMakerWindow.js';
 import { ItemMakerWindow, preloadItemMakerArt, itemMakerArtLoaded, ITEM_RECTS, rowLayout as itemMakerRowLayout } from '../ui/itemMakerWindow.js';
-import { createPotion, getMagicItemTemplates } from '../systems/loot.js';   // M2: ItemBuilder.CreatePotion, one minter; G4: the MAGIC.DEF registry
+import { createPotion, getMagicItemTemplates, RANDOM_TREASURE_MARKER_DIM } from '../systems/loot.js';   // M2: ItemBuilder.CreatePotion, one minter; G4: the MAGIC.DEF registry
 import { SITE_TYPES } from '../systems/quest/place.js';
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring, finally called
 import { placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1 (PlaceFoeFreely reads the fieldOfView import below)
@@ -337,6 +338,15 @@ export function createWorldModes(host) {
   let interiorCtx = null;
   // E2: the entered building's identity + the shop browse overlay.
   let interiorBuilding = null;
+  /** AUDIT 26 (hosts-modal F066): PlayerEnterExit.IsPlayerInsideOpenShop,
+   *  LATCHED. PlayerActivate.cs:1120 computes it at the door, once, and
+   *  every arm that needs "is this shop trading" reads the latch rather
+   *  than the clock - so a shop entered while open stays open to the
+   *  player already inside it at closing time. The port computed it at
+   *  the door and then dropped it into the people gate alone, which is
+   *  why the shelf arm below had nothing to branch on. Leaves with the
+   *  interior, like the identity and the overlay. */
+  let interiorOpenShop = false;
   let interiorOverlay = null;
   /** X11b: mount a modal into whichever slot the CURRENT mode draws.
    *  See the note on openCreateItemPicker for what this fixed. */
@@ -430,10 +440,16 @@ export function createWorldModes(host) {
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
-   *  Without it every quest NPC and item in a dungeon hangs half a
-   *  sprite too high - and a distant screenshot passes that, exactly
-   *  as it passed a vertically flipped billboard for six milestones. */
-  function standQuestFlatIn(list, getCtx, toScene, inDungeon, archive, record, position, behaviour, staticNpcFactionId = null, hashPosition = null) {
+   *  Without it every quest NPC in a dungeon hangs half a sprite too
+   *  high - and a distant screenshot passes that, exactly as it passed
+   *  a vertically flipped billboard for six milestones.
+   *
+   *  `isItem` picks WHICH of the two placement laws runs; see the body,
+   *  where AddQuestNPC's and AddQuestItem's are written out side by
+   *  side. One shape served both until AUDIT 26, which gave items the
+   *  NPC's half-height anchor and the NPC's ground ray - neither of
+   *  which AddQuestItem has. */
+  function standQuestFlatIn(list, getCtx, toScene, inDungeon, isItem, archive, record, position, behaviour, staticNpcFactionId = null, hashPosition = null) {
     const ctx = getCtx();   // capture: an async fill must not cross scenes
     if (!ctx) return null;
     // flatPosition is already scene units with -y (the Place marker
@@ -455,16 +471,34 @@ export function createWorldModes(host) {
       uploadRecord(archive, record);
       const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
       stand.width = size.w; stand.height = size.h;
-      // The anchor (see the header), then AlignBillboardToGround
-      // (GameObjectHelper.cs:336-346), which AddQuestNPC/AddQuestItem
-      // both call with distance 4: a ray from 0.2 above, and on a hit
-      // the CENTRE goes to hit + size.y * 0.52 - so a bottom-anchored
-      // base sits size.y * 0.02 off the floor, the 2% lift that keeps
-      // it out of the ground plane. No floor within 4 and the marker
-      // position stands as-is, verbatim (C# returns without moving).
-      let by = inDungeon ? y - size.h / 2 : y;
-      const drop = ctx.collider?.raycast?.([x, by + 0.2, z], [0, -1, 0], 4);
-      if (Number.isFinite(drop)) by = (by + 0.2 - drop) + size.h * 0.02;
+      // THE TWO PLACEMENT LAWS - and they are NOT one law.
+      //
+      // AddQuestNPC (GameObjectHelper.cs:1030-1040): the centre lands on
+      // the marker, raised by half a height `if (!inDungeon)`, then
+      // AlignBillboardToGround(go, Size, 4) (:336-346) rays from 0.2
+      // above and on a hit puts the CENTRE at hit + size.y * 0.52 - so
+      // a bottom-anchored base sits size.y * 0.02 off the floor, the 2%
+      // lift that keeps it out of the ground plane. No floor within 4
+      // and the marker position stands (C# returns without moving).
+      //
+      // AddQuestItem (:1116-1160) NEVER calls the align. Its dungeon
+      // shift is the CONSTANT -randomTreasureMarkerDim / 2 *
+      // MeshReader.GlobalScale (:1135-1136; DaggerfallLoot.cs:33 dim =
+      // 40, so -0.5) - the centre-origin correction dungeon flats need,
+      // not the sprite's own half-height - and the +Size.y/2 that
+      // follows is only the base-to-centre conversion this port's
+      // bottom-anchored billboards do not need. So an item's base IS
+      // the marker, less that 0.5 in a dungeon, and an item standing on
+      // a table, a shelf or a cage marker stays where the quest put it
+      // instead of being snapped to the floor underneath.
+      let by;
+      if (isItem) {
+        by = inDungeon ? y - (RANDOM_TREASURE_MARKER_DIM / 2) * GLOBAL_SCALE : y;
+      } else {
+        by = inDungeon ? y - size.h / 2 : y;
+        const drop = ctx.collider?.raycast?.([x, by + 0.2, z], [0, -1, 0], 4);
+        if (Number.isFinite(drop)) by = (by + 0.2 - drop) + size.h * 0.02;
+      }
       stand.y = by;
       stand.batch = renderer.createBillboardBatch(archive, record, size, [[x, by, z]]);
       if (stand.active) ctx.billboardBatches.push(stand.batch);
@@ -495,22 +529,22 @@ export function createWorldModes(host) {
     list.push(stand);
     return stand.host;
   }
-  const standQuestFlat = (...args) =>
-    standQuestFlatIn(questFlats, () => interiorCtx, (ctx, p) => ctx.parentPt(p.x, p.y, p.z), false, ...args);
-  const standDungeonQuestFlat = (...args) =>
-    standQuestFlatIn(dungeonQuestFlats, () => dungeonCtx, (_ctx, p) => [p.x, p.y, p.z], true, ...args);
+  const standQuestFlat = (isItem, ...args) =>
+    standQuestFlatIn(questFlats, () => interiorCtx, (ctx, p) => ctx.parentPt(p.x, p.y, p.z), false, isItem, ...args);
+  const standDungeonQuestFlat = (isItem, ...args) =>
+    standQuestFlatIn(dungeonQuestFlats, () => dungeonCtx, (_ctx, p) => [p.x, p.y, p.z], true, isItem, ...args);
   const questAdapter = {
     // PlayerGPS.CurrentMapID through the host's scene-context closure.
     currentMapId: () => questSceneCtx?.()?.mapId ?? 0,
     findBehaviours: () => sceneBehaviours(),
     loadInProgress: () => false,   // the modal host builds after a restore completes
     standNPC: ({ marker, person, flatData, position, behaviour }) =>
-      standQuestFlat(flatData.archive, flatData.record, position, behaviour, person?.factionId ?? null, marker?.flatPosition ?? null),
+      standQuestFlat(false, flatData.archive, flatData.record, position, behaviour, person?.factionId ?? null, marker?.flatPosition ?? null),
     standItem: ({ item, position, behaviour }) => {
       // AddQuestItem draws the item's WORLD texture (the ground sprite).
       const t = templateByIndex(item.daggerfallUnityItem?.templateIndex);
       if (!t) return null;
-      return standQuestFlat(t.worldTextureArchive, t.worldTextureRecord, position, behaviour);
+      return standQuestFlat(true, t.worldTextureArchive, t.worldTextureRecord, position, behaviour);
     },
     // standFoe absent - see the FLAG above.
   };
@@ -573,11 +607,11 @@ export function createWorldModes(host) {
     findBehaviours: () => dungeonSceneBehaviours(),
     loadInProgress: () => false,
     standNPC: ({ marker, person, flatData, position, behaviour }) =>
-      standDungeonQuestFlat(flatData.archive, flatData.record, position, behaviour, person?.factionId ?? null, marker?.flatPosition ?? null),
+      standDungeonQuestFlat(false, flatData.archive, flatData.record, position, behaviour, person?.factionId ?? null, marker?.flatPosition ?? null),
     standItem: ({ item, position, behaviour }) => {
       const t = templateByIndex(item.daggerfallUnityItem?.templateIndex);
       if (!t) return null;
-      return standDungeonQuestFlat(t.worldTextureArchive, t.worldTextureRecord, position, behaviour);
+      return standDungeonQuestFlat(true, t.worldTextureArchive, t.worldTextureRecord, position, behaviour);
     },
     standFoe: ({ foe, gender, position, behaviour }) => {
       if (!dungeonCtx) return null;
@@ -651,15 +685,23 @@ export function createWorldModes(host) {
    *  (SerializableLootContainer.cs:72/:151), so re-entering the
    *  building does not re-roll the shelf either.
    *
-   *  FLAGGED: DFU takes the OTHER arm here when the shop is shut -
-   *  `IsPlayerInsideOpenShop` (PlayerActivate.cs:888-899) routes an
-   *  open shop to the trade window and a closed one to the inventory
-   *  window in SHOP-SHELF STEALING mode, which takes for free and
-   *  tallies the crime on close (DaggerfallInventoryWindow.cs:266-269,
-   *  :681-687). The port has no stealing mode on its inventory window,
-   *  so every shelf goes through the trade window and is PAID for -
-   *  wrong, but on the safe side of wrong. The open-shop latch itself
-   *  is already computed at the door (:2327). */
+   *  AUDIT 26 (hosts-modal F066) CLOSED the other arm.
+   *  PlayerActivate.cs:887-899 stocks the shelf either way and THEN
+   *  branches on `IsPlayerInsideOpenShop`: an open shop pushes the Buy
+   *  DaggerfallTradeWindow; a shut one calls
+   *  `InventoryWindow.SetShopShelfStealing()` and BREAKS, falling
+   *  through to :959-961 - `InventoryWindow.LootTarget = loot;
+   *  PushWindow(InventoryWindow)`, the ordinary inventory over the
+   *  shelf as its remote target, where the goods are simply taken.
+   *  Until now every shelf went through the trade window, so a shop
+   *  broken into at night in Steal mode SOLD to the burglar at full
+   *  price.
+   *
+   *  FLAGGED, and narrowed to what it always was: the SHOPLIFTING
+   *  FORMULA is the pending half (the crime arc). DFU's stealing flag
+   *  tallies Shoplifting/Pickpocket on close
+   *  (DaggerfallInventoryWindow.cs:266-269, :681-687); this port takes
+   *  the goods and raises no crime yet. */
   const stockShelfIfDue = (shelf, b) => restockShopShelfIfDue(
     shelf, { buildingType: b.buildingType, quality: b.quality },
     dateFromClassicMinutes(Math.floor(worldMinutes())), playerEntity);
@@ -669,6 +711,16 @@ export function createWorldModes(host) {
     if (!b || !shelf) return;
     if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
     stockShelfIfDue(shelf, b);
+    // F066: the stock happens either way (:881-885); the WINDOW is what
+    // IsPlayerInsideOpenShop decides. A shut shop is the stealing arm -
+    // the inventory window with the shelf as LootTarget, which takes
+    // rather than buys - and DFU never opens a paying trade window in
+    // one, whatever the shoplifting tally does afterwards.
+    if (!interiorOpenShop) {
+      const win = host.makeInventory?.({ loot: { items: () => (shelf.items ??= []) } });
+      if (win) mountInterior(win);
+      return;
+    }
     // U8c: the native trade screen when the art is up (the E2/E3
     // loop on INVE00I0 + TRAD00I0 + SHOP00I0; keyed fallback stays)
     if (tradeArtLoaded()) {
@@ -822,6 +874,23 @@ export function createWorldModes(host) {
       // magicka ONCE for the whole list, whatever the outcome
       // (DaggerfallTradeWindow.cs:966-991).
       if (identifySpell) {
+        // AUDIT 26 (hosts-modal F067) - DoModeAction's OWN gate
+        // (DaggerfallTradeWindow.cs:958-963), which stands in front of
+        // the whole spell pass:
+        //
+        //     if (IdentifySpellCost > PlayerEntity.CurrentMagicka
+        //         && !PlayerEntity.GodMode) { MessageBox(...); return; }
+        //
+        // and it returns, so nothing is identified and no magicka is
+        // spent. The port had no gate anywhere in the chain: the clamp
+        // below (Math.max(0, ...)) let a caster with 3 magicka left run
+        // a 40-point Identify over the whole staged lot for free. There
+        // is no GodMode in this port, so the `&& !GodMode` half has
+        // nothing to read and the cost test is the whole gate.
+        if (identifySpell.cost > (playerEntity.magicka ?? 0)) {
+          say(NOT_ENOUGH_SPELL_POINTS_TEXT);
+          return;
+        }
         const pass = identifySpellPass(staged, identifySpell.chance, Math.random);
         for (const it of pass.identified) it.isIdentified = true;
         if (pass.spendMagicka) {
@@ -839,7 +908,12 @@ export function createWorldModes(host) {
       // that stood for that return aliased each item into it a second
       // time - and doubled the count of anything stackable.
     }
-    tallySkill(playerEntity, SKILLS.Mercantile, 1);
+    // AUDIT 26 (hosts-modal F067): the tally is CONFIRM TRADE's
+    // (DaggerfallTradeWindow.cs:1088), and the Identify SPELL never
+    // reaches it - DoModeAction runs its pass and returns (:957-995),
+    // so only the paid arms of this function are a "trade" at all. The
+    // unconditional tally trained Mercantile on every Identify cast.
+    if (!identifySpell) tallySkill(playerEntity, SKILLS.Mercantile, 1);
     surfacePlayer();
   }
 
@@ -1231,7 +1305,12 @@ export function createWorldModes(host) {
         containerType: LOOT_CONTAINER_TYPES.ShopShelves, key: `shelf:${i}`, items: sh.items ?? null, stockedDate: sh.stockedDate ?? 0,
       })),
       ...(ctx.containers ?? []).map((c, i) => ({
-        containerType: LOOT_CONTAINER_TYPES.HouseContainers, key: `container:${i}`, items: c.items ?? null,
+        // AUDIT 26 (hosts-modal F209): the stamp rides the HOUSE
+        // containers too now that they stock. SerializableLootContainer
+        // .cs:72 caches it for every LootContainerTypes, and without it
+        // a cupboard re-rolled its private property on every re-entry
+        // instead of once a game day.
+        containerType: LOOT_CONTAINER_TYPES.HouseContainers, key: `container:${i}`, items: c.items ?? null, stockedDate: c.stockedDate ?? 0,
       })),
     ];
     const actionDoors = [...(ctx.actions?.objects?.values?.() ?? [])]
@@ -2354,6 +2433,7 @@ export function createWorldModes(host) {
       const _bt = interiorBuilding?.buildingType;
       const _hour = Math.floor((Math.floor(worldMinutes()) % 1440) / 60);
       const insideOpenShop = _bt != null && isShop(_bt) && isBuildingOpen(_bt, _hour);
+      interiorOpenShop = insideOpenShop;   // F066: the latch the shelf arm reads
       const _dict = townTalk?.factionDict ?? null;
       const peopleVisible = !interiorBuilding ? true : peopleAreVisible(interiorBuilding, {
         hour: _hour,
@@ -2556,13 +2636,37 @@ export function createWorldModes(host) {
         return true;
       }
       if (key.startsWith('container:')) {
-        // S2b: open the house container - synchronous transfer through
-        // the shared inventory (private furniture starts EMPTY; shops/
-        // quests fill these later; open-feedback pends the UI arc).
+        // S2b + AUDIT 26 (hosts-modal F209): the HouseContainers arm of
+        // PlayerActivate.ActivateLootContainer (:900-923), in its own
+        // order. The port declared private furniture "starts EMPTY" and
+        // nothing ever filled it, so burgling any house in Daggerfall
+        // yielded nothing from any container, ever.
+        //
+        //   - a house (or ship) the PLAYER owns takes the arm above the
+        //     stock (:903-908): stockedDate = 1, no roll - the
+        //     furniture is the player's own storage;
+        //   - otherwise stock on first access of the game day
+        //     (:910-915), the same `needsRestock` law the shelf takes;
+        //   - "If no contents, do nothing" (:917-918).
+        //
+        // FLAGGED, unchanged by this: DFU then raises the private-
+        // property Yes/No box and opens the inventory with the
+        // container as LootTarget. The port still transfers the lot
+        // synchronously (the open-feedback UI arc), and the LEGAL
+        // half - `loot.houseOwned = true`, which is what makes taking
+        // it a crime - pends with the crime arc.
         const c = interiorCtx.containers[Number(key.split(':')[1])];
         if (c) {
+          const b = interiorBuilding;
+          restockHouseContainerIfDue(c, {
+            buildingType: b?.buildingType,
+            playerOwned: (b?.buildingType === BUILDING_TYPES.Ship && ownsShip(playerEntity))
+              || isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, b?.buildingKey ?? 0),
+          }, dateFromClassicMinutes(Math.floor(worldMinutes())), playerEntity,
+          { magicItemTemplates: getMagicItemTemplates() });
+          if (!c.items.length) return true;
           transferAll(c.items, playerEntity.items);
-            surfacePlayer();
+          surfacePlayer();
         }
         return true;
       }
@@ -2585,6 +2689,7 @@ export function createWorldModes(host) {
     interiorCtx.destroy();
     interiorCtx = null;
     interiorBuilding = null;   // E2: the identity + overlay leave with the interior
+    interiorOpenShop = false;
     interiorOverlay = null;
     player.collider = baseCollider();
     player.spawn(landing[0], landing[1], landing[2]);
@@ -2941,6 +3046,15 @@ export function createWorldModes(host) {
     // AUDIT 23 (C12: cross-6 = wts-3) - PlayerAmbientLight.cs:75-80: a
     // night interior takes the darker purple-tinted ambient.
     renderer.setLighting(new Float32Array(isNight(worldMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT), 0);
+    // DaggerfallInterior.cs:473/:517/:1270 - every interior model, the
+    // combined one and every action door, is laid out with
+    // SetClimate(climateBase, climateSeason, WindowStyle.Disabled), and
+    // Disabled sets EmissionColor to Color.black
+    // (MaterialReader.ChangeWindowEmissionColor :934-936). The emission
+    // uniform is GLOBAL and only the exterior frames ever wrote it, so
+    // an interior kept the town's day/night glass and every shop window
+    // lit up from the inside.
+    renderer.setWindowEmission(windowEmissionRGB('disabled'));
     renderer.setFog('exp', 0.001, 0, 0, new Float32Array([0, 0, 0]));
     renderer.setPointLights(
       withPlayerLights(nearestLights(interiorCtx.lights, cam.pos, 16, interiorCtx.lights.map((l) => l.range)),
@@ -4129,7 +4243,7 @@ export function createWorldModes(host) {
         interiorOverlay?.dispose?.();
         teardownQuestFlats();
         interiorCtx.destroy();
-        interiorCtx = null; interiorBuilding = null; interiorOverlay = null;
+        interiorCtx = null; interiorBuilding = null; interiorOpenShop = false; interiorOverlay = null;
       }
       if (dungeonCtx) {
         teardownDungeonQuestFlats();

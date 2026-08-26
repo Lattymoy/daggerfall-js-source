@@ -86,6 +86,16 @@ export const RANGED_ATTACK1_ANIMS = Object.freeze([
   A(20, RANGED_ATTACK1_ANIM_SPEED, false), A(21, RANGED_ATTACK1_ANIM_SPEED, false), A(22, RANGED_ATTACK1_ANIM_SPEED, false), A(23, RANGED_ATTACK1_ANIM_SPEED, false),
   A(24, RANGED_ATTACK1_ANIM_SPEED, false), A(23, RANGED_ATTACK1_ANIM_SPEED, true), A(22, RANGED_ATTACK1_ANIM_SPEED, true), A(21, RANGED_ATTACK1_ANIM_SPEED, true),
 ]);
+// RangedAttack2Anims (EnemyBasics.cs:103-113, RangedAttack2AnimSpeed 10)
+// - records 25-29, "475, 489, 490 humanoid mobiles only". The mobiles
+// that carry HasRangedAttack2 (Battlemage 130, Nightblade 133) also
+// carry HasSpellAnimation, so records 20-24 are their SPELL sprites:
+// their bow draw is this table and nothing else.
+export const RANGED_ATTACK2_ANIM_SPEED = 10;
+export const RANGED_ATTACK2_ANIMS = Object.freeze([
+  A(25, RANGED_ATTACK2_ANIM_SPEED, false), A(26, RANGED_ATTACK2_ANIM_SPEED, false), A(27, RANGED_ATTACK2_ANIM_SPEED, false), A(28, RANGED_ATTACK2_ANIM_SPEED, false),
+  A(29, RANGED_ATTACK2_ANIM_SPEED, false), A(28, RANGED_ATTACK2_ANIM_SPEED, true), A(27, RANGED_ATTACK2_ANIM_SPEED, true), A(26, RANGED_ATTACK2_ANIM_SPEED, true),
+]);
 
 // C17: the female-thief idle (FemaleTexture 483) - record 11 rides
 // the front diagonals, verbatim quirk.
@@ -93,6 +103,18 @@ export const FEMALE_THIEF_IDLE_ANIMS = Object.freeze([
   A(15, IDLE_ANIM_SPEED, false), A(11, IDLE_ANIM_SPEED, false), A(17, IDLE_ANIM_SPEED, false), A(18, IDLE_ANIM_SPEED, false),
   A(19, IDLE_ANIM_SPEED, false), A(18, IDLE_ANIM_SPEED, true), A(17, IDLE_ANIM_SPEED, true), A(11, IDLE_ANIM_SPEED, true),
 ]);
+
+/** EnemyMotor's BOW-STATE PICK (EnemyMotor.cs:594-597): RangedAttack1
+ *  is only for a mobile that has 1 and NOT 2 - a mobile with
+ *  HasRangedAttack2 shoots from RangedAttack2 instead. hasBowAttack
+ *  (:137) already requires HasRangedAttack1, so these two arms cover
+ *  every shooter that reaches the roll. */
+export const bowState = (basics) => (basics?.hasRangedAttack2 ? 'ranged2' : 'ranged');
+
+/** The two states AnimateEnemy counts as an attack animation beside
+ *  PrimaryAttack (DaggerfallMobileUnit.cs:536-538), and which
+ *  ApplyEnemyState seeds from RangedAttackAnimFrames (:250-252). */
+export const isRangedState = (state) => (state === 'ranged' || state === 'ranged2');
 
 export const MOBILE_RAT = 0;
 export const MOBILE_SLAUGHTERFISH = 11;
@@ -118,6 +140,7 @@ export function stateAnims(state, mobileType, hasIdle, hasSpellAnimation = false
   }
   if (state === 'spell') return hasSpellAnimation ? RANGED_ATTACK1_ANIMS : PRIMARY_ATTACK_ANIMS;
   if (state === 'ranged') return RANGED_ATTACK1_ANIMS;   // C17: HasRangedAttack1 archers (records 20-24)
+  if (state === 'ranged2') return RANGED_ATTACK2_ANIMS;  // GetStateAnims' RangedAttack2 case (records 25-29)
   if (state === 'hurt') return HURT_ANIMS;
   // idle (branch order verbatim: ghost/wraith, seducer N/A, the
   // female thief 483, rat, slaughterfish, !hasIdle, idle)
@@ -222,9 +245,10 @@ export class MobileUnit {
       this._iter = 1;
       this._reversed = false;
     }
-    // C17: the RangedAttack1 one-shot (ApplyEnemyState's ranged
-    // branch) - the -1 marker is the shootArrow moment.
-    if (state === 'ranged') {
+    // C17: the RangedAttack one-shot (ApplyEnemyState's ranged branch,
+    // :250-252 - BOTH ranged states seed from RangedAttackAnimFrames)
+    // - the -1 marker is the shootArrow moment.
+    if (isRangedState(state)) {
       this._attackFrames = this.basics.rangedAttackAnimFrames ?? [0];
       this.frame = Math.max(0, this._attackFrames[0]);
       this._iter = 1;
@@ -247,7 +271,7 @@ export class MobileUnit {
     // interrupt a Spell mid-cast, verbatim). C14: casting is an edge
     // like striking (the cast decision fires ChangeEnemyState once).
     if (striking && this.state !== 'attack') this._change('attack');
-    else if (rangedStriking && this.state !== 'ranged' && this.state !== 'attack') this._change('ranged');
+    else if (rangedStriking && !isRangedState(this.state) && this.state !== 'attack') this._change(bowState(this.basics));
     else if (casting && this.state !== 'spell' && this.state !== 'attack') this._change('spell');
     else if (hurting && this.state !== 'hurt' && this.state !== 'attack') this._change('hurt');
     else if (this.state === 'idle' || this.state === 'move') {
@@ -297,11 +321,11 @@ export class MobileUnit {
     const n = Math.max(1, this.frameCount(a.record));
     // doingAttackAnimation (AnimateEnemy): PrimaryAttack and the two
     // RangedAttack states only - Spell is deliberately NOT in it.
-    if (this.state === 'attack' || this.state === 'ranged') {
+    if (this.state === 'attack' || isRangedState(this.state)) {
       if (this._iter >= this._attackFrames.length) { this._change('idle'); return; }
       let f = this._attackFrames[this._iter++];
       if (f === -1) {
-        if (this.state === 'ranged') this.shootArrow = true;   // AnimateEnemy
+        if (isRangedState(this.state)) this.shootArrow = true;   // AnimateEnemy
         else this.doMeleeDamage = true;   // C16: the scene resolves on it, then clears it
         if (this._iter < this._attackFrames.length) f = this._attackFrames[this._iter++];
         else { this._change('idle'); return; }

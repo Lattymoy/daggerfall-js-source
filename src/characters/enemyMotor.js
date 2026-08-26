@@ -51,6 +51,18 @@ export const KNOCKBACK_MOTION_CAP = 25;
 export const KNOCKBACK_HURT_THRESHOLD = 5;
 export const KNOCKBACK_DECAY_PER_CLASSIC = 5;
 
+/** EnemyMotor's CanAct chain, as the ATTACK and CASTING components see
+ *  it. FixedUpdate (:160-172) starts CanAct true, then
+ *  KnockbackMovement drops it for as long as KnockbackSpeed > 0 (:317)
+ *  and HandleNoAction drops it once GiveUpTimer is spent (:359-364);
+ *  TakeAction - which owns DoRangedAttack's 1/32 bow roll and 1/40
+ *  spell roll (:469) and DoTouchSpell (:473) - runs ONLY under it. So
+ *  neither the band shot nor a spell happens during the knockback
+ *  window after a solid hit; MELEE is not gated (EnemyAttack.FixedUpdate
+ *  is its own component and never reads CanAct). HandleParalysis' arm
+ *  (:236-245) is the hosts' - they skip the components outright. */
+export const canAct = (ai) => (ai.giveUpTimer > 0 && !(ai.knockbackSpeed > 0));
+
 export const SIGHT_RADIUS = 4096 * GLOBAL_SCALE;
 export const HEARING_RADIUS = 25;
 export const FIELD_OF_VIEW = 180;                    // deg
@@ -787,9 +799,9 @@ export class EnemyAI {
   /** EnemyMotor.UpdateTimers (:389-410), the detour half: the timer
    *  decays, and is CUT SHORT the moment the foe is within 0.3 of the
    *  detour destination measured in the horizontal plane only. */
-  _updateDetourTimers(dt, canAct) {
+  _updateDetourTimers(dt, acting) {
     if (this.avoidObstaclesTimer > 0) this.avoidObstaclesTimer -= dt;
-    if (this.avoidObstaclesTimer > 0 && canAct) {
+    if (this.avoidObstaclesTimer > 0 && acting) {
       const c = this._centre();
       const dx = this.detourDestination[0] - c[0];
       const dz = this.detourDestination[2] - c[2];
@@ -920,6 +932,28 @@ export class EnemyAI {
     return true;
   }
 
+  /**
+   * HandleNoAction (EnemyMotor.cs:354-366): "do nothing if no target or
+   * after giving up finding the target or if target position hasn't been
+   * acquired yet". All three arms share ONE body - SetChangeStateTimer
+   * (EnhancedCombatAI only, N/A), searchMult = 0, CanAct = false - and it
+   * runs EVERY FixedUpdate, ahead of the `if (CanAct)` gate at :171, so a
+   * foe that cannot act at all still clears its search ramp.
+   *
+   * The target is never null in this port (single target), and `detected`
+   * refills GiveUpTimer above, so `giveUpTimer <= 0` is C#'s second arm
+   * exactly.
+   *
+   * @returns true when the foe takes no action this tick
+   */
+  _handleNoAction() {
+    if (this.giveUpTimer <= 0 || this.predictedTargetPos === null) {
+      this.searchMult = 0;
+      return true;
+    }
+    return false;
+  }
+
   _classicTick(playerFeet) {
     // G1 (EnemyMotor verbatim): detection refills GiveUpTimer to 200
     // classic ticks; while undetected it counts down and the foe KEEPS
@@ -928,18 +962,25 @@ export class EnemyAI {
     // FLAGGED, until target prediction ships). At zero the foe stops.
     if (this.detected) this.giveUpTimer = GIVE_UP_TICKS;
     else if (this.giveUpTimer > 0) this.giveUpTimer--;
-    if (!this.detected && this.giveUpTimer <= 0) { this.moving = false; return; }
-    // HandleNoAction (:357-366): no target, the give-up timer spent, or a
-    // position never seen, and the foe takes NO action - CanAct goes
-    // false and the search ramp resets. Wave 35 adds the third arm.
-    if (this.predictedTargetPos === null) { this.moving = false; this.searchMult = 0; return; }
+    // HandleNoAction (:354-366): no target, the give-up timer spent, or
+    // a position never seen, and the foe takes NO action - CanAct goes
+    // false and, on EVERY one of those arms, the search ramp resets.
+    if (this._handleNoAction()) { this.moving = false; return; }
     // GetDestination (:528-565), all three arms since wave 35.
     const detouring = this.avoidObstaclesTimer > 0;
     this._getDestination(playerFeet);
     const dx = this.destination[0] - this.feet[0], dz = this.destination[2] - this.feet[2];
-    // "If detouring, always attempt to move" (:480-484) - TakeAction's
-    // FIRST branch, ahead of the stop-distance test entirely, which is
-    // why a detouring foe walks past its own melee range to get round.
+    // Ranged attacks (:468-470), then touch spells (:472-474) - both
+    // BEFORE the detour arm below, and both return on true, so an
+    // in-band shooter with sight and detection stands off and shoots
+    // even while a detour timer is running (the timer just decays).
+    // (DoRangedAttack reads senses.DistanceToTarget itself, never the
+    // `distance` below - :571. The touch half is the caster
+    // component's; the motor owes the stand-off and the turn.)
+    if (this._doRangedAttack(dx, dz)) return;
+    // "If detouring, always attempt to move" (:480-484) - ahead of the
+    // stop-distance test, which is why a detouring foe walks past its
+    // own melee range to get round.
     if (detouring) {
       if (!withinYaw(this.yaw, dx, dz, MOVE_YAW_GATE_DEG)) {
         this.yaw = turnTowards(this.yaw, dx, dz);
@@ -949,11 +990,6 @@ export class EnemyAI {
       this.moving = true;
       return;
     }
-    // Ranged attacks (:468-470) - AHEAD of the advance/retreat decision,
-    // and its `return true` is what keeps a shooter at its distance.
-    // (DoRangedAttack reads senses.DistanceToTarget itself, never the
-    // `distance` below - :571.)
-    if (this._doRangedAttack(dx, dz)) return;
     // :479-482 - THE DISTANCE THE STOP TEST USES. It is the distance to
     // the TARGET only while the target is in sight and no detour is
     // running; otherwise it is the distance to the DESTINATION, which
@@ -1033,6 +1069,11 @@ export class EnemyAI {
     // "a classic tick happened this step" as the same thing, and says so.
     this._targetPosPredict = classicTicks > 0;
     this._senses(playerFeet, senses);
+    // HandleNoAction runs EVERY FixedUpdate at :168, ahead of the
+    // `if (CanAct)` gate at :171 - so a foe that cannot act at all
+    // still clears its search ramp. The acting path takes the same
+    // body from inside _classicTick.
+    if (paralyzed || knocked || !this.isHostile) this._handleNoAction();
     for (let i = 0; i < classicTicks; i++) {
       // C-slice: a pacified foe (IsHostile false) keeps its senses
       // but takes no action - DFU's motor only pursues hostiles.

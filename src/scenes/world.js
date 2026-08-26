@@ -103,7 +103,7 @@ import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_
 import { audio } from '../systems/audio.js';
 import { music } from '../systems/music.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
-import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
+import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
 import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // StartRestGroundedCheck's ONE home
@@ -898,9 +898,6 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     const key = cur ? `${cur.px},${cur.py}` : null;
     if (key === _topicsKey) return;
-    // AUDIT 17e F6: this crossing IS DFU's OnExitLocationRect - the
-    // active crime clears when the player leaves the location.
-    clearCrimeOnLocationExit(playerEntity, _topicsKey, key);
     _topicsKey = key;
     const dfLocation = key ? locationIndex.get(key) : null;
     _musicLoc = dfLocation ?? null;   // AUDIT 19: the music context's location half
@@ -933,6 +930,23 @@ export async function bootWorld(canvas, renderer, params, status) {
       regionIndex: dfLocation.regionIndex,
       playerPos: () => _talkPlayerPos(),
     });
+  }
+  /** PlayerGPS.PlayerLocationRectCheck (:668-715), the half the crime
+   *  clear rides. The event is raised on the WIDENED world rect, not
+   *  on the map pixel: :687 says so in as many words ("Player can be
+   *  inside a map pixel with location but not inside location rect"),
+   *  and only the true -> false crossing (:709-714) raises
+   *  OnExitLocationRect, which PlayerEntity answers by clearing the
+   *  active crime (PlayerEntity.cs:2449-2452). syncTopics' pixel
+   *  crossing is a different, up-to-seven-times-wider event and used
+   *  to stand in for this one, so a thief who left town but not the
+   *  pixel stayed wanted. Entering a rect is not an exit, and neither
+   *  is standing still. */
+  let _crimeRectKey = null;   // the rect the player is standing in, null outside every rect
+  function syncLocationRectCrime() {
+    const inRect = _musicInLocationRect() ? _topicsKey : null;
+    if (_crimeRectKey && !inRect) clearCrimeOnLocationExit(playerEntity, _crimeRectKey, inRect);
+    _crimeRectKey = inRect;
   }
   /** GetBuildingCompassDirection (TalkManager.cs:1203-1236) - %di's
    *  LOCAL arm, the one both consumers ask for by that name: the
@@ -1028,10 +1042,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (_lastEncMinutes == null) _lastEncMinutes = now;
     const span = Math.min(now - _lastEncMinutes, 1440);
     for (let l = 0; l < span; l++) {
-      const key = `${playerTravelPixel().x},${playerTravelPixel().y}`;
       const hit = intermittentEnemySpawn({
         gameMinutes: _lastEncMinutes + l + 1, inside: false,
-        inLocationRect: locationIndex.has(key),
+        // IntermittentEnemySpawn branches on PlayerGPS
+        // .IsPlayerInLocationRect (PlayerEntity.cs:566) - the WIDENED
+        // world rect, which is the location arm's night-only table and
+        // its 10-unit distance. "This map pixel carries a location" is
+        // the other, up-to-seven-times-wider predicate (PlayerGPS.cs
+        // :687), and standing it in here made the wilderness ring of
+        // every town roll no daytime encounter at all.
+        inLocationRect: _musicInLocationRect(),
         climateIndex: maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y),
         playerLevel: playerEntity.level,
       });
@@ -1241,8 +1261,25 @@ export async function bootWorld(canvas, renderer, params, status) {
   // definition beats two that can drift.
   const enchantFeet = () => (walkMode && playerSpawned ? player.pos : cam.pos);
   const enchantFoes = () => ((modes?.mode ?? 'exterior') === 'exterior' ? [...cityGuards.guards, ...exteriorFoes.foes] : []);
+  /** The LOOT half of PlayerGPS.UpdateNearbyObjects (:765-775): every
+   *  active DaggerfallLoot, with no scene test of any kind, and
+   *  GetLootFlags (:822-836) filters only on emptiness - a slain
+   *  body's container included, which the C# asks about and leaves in
+   *  ("Should corspes loot container be filtered out?"). Above ground
+   *  that pool is the player's own dropped piles plus every corpse
+   *  this host has left, so Detect Treasure answers out here exactly
+   *  as it does in a dungeon. It reads the same corpse test the
+   *  activation targets do, so a body the player can open is a body
+   *  the scan can see. */
+  const detectLoot = () => ((modes?.mode ?? 'exterior') !== 'exterior' ? [] : [
+    ...droppedLoot._piles,
+    ...[...cityGuards.guards, ...exteriorFoes.foes]
+      .filter((f) => f.corpse && f.entity && !f.corpseDisabled)
+      .map((f) => ({ pos: f.corpseMarker?.pos ?? f.ai?.feet ?? null, items: f.entity.items ?? [] })),
+  ]);
   const detectFeed = createDetectFeed(playerEntity, {
     entities: () => enchantFoes().filter((f) => !f.dead && f.ai).map(foeNearbyRecord),
+    loot: () => detectLoot().map(lootNearbyRecord),
     feet: () => enchantFeet(),
   });
   {
@@ -1725,6 +1762,34 @@ export async function bootWorld(canvas, renderer, params, status) {
         // NATIVES with the compensation-free height, the player
         // half's exact law.
         piles: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos)).map((sp) => ({ ...sp, y: sp.y - state.compensation[1] })),
+        // SaveData_v1 carries enemyData for every registered live
+        // enemy WHEREVER the player stands (SaveLoadManager.cs:865,
+        // read back at :1006), and an exterior enemy is registered
+        // like any other (SerializableEnemy.cs:189-191) - so a
+        // wilderness ambush round-tripped a save in DFU and simply
+        // vanished here. Each foe carries what SerializableEnemy
+        // writes: its type and gender (the prefab), its position and
+        // yaw, currentHealth/currentMagicka (:110-112 - a discharged
+        // caster must not refill on load), its loot items, and the
+        // isHostile/hasEncounteredPlayer pair (:113-114). Position in
+        // NATIVES with the compensation-free height, the pile half's
+        // law, because a load rebuilds the world at a new origin.
+        // The two carve-outs, recorded: a QUEST foe is left alone (its
+        // QuestResourceBehaviour, SerializableEnemy.cs:129-132, has no
+        // restore seam in this pool), and the CITY WATCH cannot ride
+        // this envelope at all - cityGuards mints a guard only through
+        // SpawnCityGuards and exposes no way to re-instantiate one
+        // from data. FLAGGED.
+        foes: exteriorFoes.foes.filter((f) => !f.dead && f.ai && !f.questBehaviour).map((f) => {
+          const fwc = state.worldCoords(f.ai.feet);
+          return {
+            mobileType: f.mobileType, gender: f.gender, yaw: f.ai.yaw,
+            nativeX: fwc.x, nativeZ: fwc.z, y: f.ai.feet[1] - state.compensation[1],
+            health: f.entity.health, magicka: f.entity.magicka ?? 0,
+            items: (f.entity.items ?? []).map((it) => ({ ...it })),
+            hostile: f.ai.isHostile !== false, encountered: !!f.ai.hasEncounteredPlayer,
+          };
+        }),
       },
     });
     townTalk.say(writeQuicksave(snap) ? 'Game saved.' : 'Save failed (storage full or disabled).');
@@ -1759,6 +1824,24 @@ export async function bootWorld(canvas, renderer, params, status) {
         // live pile (the reference's sweep); the envelope re-mints the
         // saved ones at their native spots.
         droppedLoot.restoreWorld(w.piles, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
+        // SerializableStateManager.RestoreEnemyData (:404-425): the
+        // load instantiates EXACTLY the saved enemy set, so a foe born
+        // after the save does not exist afterwards and one killed
+        // after it stands again. The live encounter pool is destroyed
+        // and re-minted from the envelope; quest foes are spared, as
+        // the save arm leaves them out.
+        for (const f of [...exteriorFoes.foes]) { if (!f.questBehaviour) exteriorFoes.removeFoe(f); }
+        for (const sf of w.foes ?? []) {
+          const [fx, fz] = state.localFromWorld(sf.nativeX, sf.nativeZ);
+          const f = await exteriorFoes.spawnFoe(sf.mobileType, [fx, (sf.y ?? 0) + state.compensation[1], fz],
+            { gender: sf.gender, yaw: sf.yaw });
+          if (!f) continue;   // a type this build cannot mint: DFU's own missing-prefab case is a foe that does not come back
+          f.entity.health = sf.health;
+          f.entity.magicka = sf.magicka ?? f.entity.magicka;
+          f.entity.items = (sf.items ?? []).map((it) => ({ ...it }));
+          f.ai.isHostile = sf.hostile !== false;
+          f.ai.hasEncounteredPlayer = !!sf.encountered;
+        }
       } else if (extras.locationKey && extras.locationKey !== 'world') {
         townTalk.say('(saved elsewhere - character restored; travel there yourself)');
       }
@@ -3443,6 +3526,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AreEnemiesNearby() term BOTH live pools, the city watch and the
     // encounter foes.
     syncTopics();   // T3d: the Where-is directory follows the location pixel
+    syncLocationRectCrime();   // PlayerGPS.Update's PlayerLocationRectCheck - AFTER the topic sync, which owns _musicLoc
     _playerStill = _lastPlayerPos &&
       Math.hypot(cam.pos[0] - _lastPlayerPos[0], cam.pos[2] - _lastPlayerPos[2]) < 0.001;
     _lastPlayerPos = [cam.pos[0], cam.pos[1], cam.pos[2]];
@@ -3612,10 +3696,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       const _hfw = [-view[2], -view[10]];
       // X4: the Detect markers. Exterior mode's nearby pool is the
       // guards plus the encounter foes - the same list the spell
-      // engine already targets. There are no loot PILES above ground
-      // (FLAGGED: exterior corpse containers are the loot arc's), so
-      // Detect Treasure is live but finds nothing out here, which is
-      // its own honest answer rather than a missing feature.
+      // engine already targets - plus the LOOT half UpdateNearbyObjects
+      // carries with no scene gate of its own (PlayerGPS.cs:765-775):
+      // the player's dropped piles and the corpse containers.
       const _detected = detectFeed.tick(dt);
       drawHud(renderer, canvas, hudArt, playerEntity,
         ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt,

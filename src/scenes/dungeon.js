@@ -398,7 +398,12 @@ export async function bootDungeon(canvas, renderer, params, status) {
         sneak: held(keys, 'Sneak'),   // P15: DFU's default Sneak binding (LeftAlt), held
         jump: jumpHeld,   // P14: HELD, verbatim (AcrobatMotor re-fires past the 0.1 s grounded gate - intended bunny-hopping)
         up: jumpHeld || held(keys, 'FloatUp'),
-        down: held(keys, 'FloatDown'),
+        // LevitateMotor.Update:86-89 - the down arm is
+        // `HasAction(Crouch) || HasAction(FloatDown)`, exactly as the
+        // up arm above is Jump||FloatUp. The held Crouch key dives a
+        // swimmer and descends a levitator; only FloatDown was mapped,
+        // so C did nothing but toggle the stance.
+        down: crouchHeld || held(keys, 'FloatDown'),
         crouch: crouchHeld && !prevCrouch,
       }, cam.yaw, cam.pitch);
       prevCrouch = crouchHeld;

@@ -110,8 +110,13 @@ test('audit24 wave35: the stand-off turns to face, and comes BEFORE the melee st
   const body = src.slice(src.indexOf('  _classicTick(playerFeet) {'));
   assert.ok(body.indexOf('_doRangedAttack(dx, dz)') < body.indexOf('distance <= MELEE_DISTANCE'),
     'ranged first, melee stop second');
-  assert.ok(body.indexOf('if (detouring)') < body.indexOf('_doRangedAttack(dx, dz)'),
-    'and the detour override first of all');
+  // AUDIT 26 (F011): ...and ahead of the DETOUR arm too. TakeAction
+  // calls DoRangedAttack (:469) and DoTouchSpell (:473) before
+  // `if (avoidObstaclesTimer > 0) AttemptMove(...)` (:481-484), so a
+  // shooter stands off even while a detour timer runs. This pin used to
+  // assert the port's own reversed order.
+  assert.ok(body.indexOf('_doRangedAttack(dx, dz)') < body.indexOf('if (detouring)'),
+    'and the ranged stand-off ahead of the detour override');
 });
 
 test('audit24 wave35: ClearPathToPosition is the two probes plus a cast, and it is a GATE', () => {

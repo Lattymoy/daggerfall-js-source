@@ -33,9 +33,9 @@
 // the books arc).
 
 import { dice100 } from '../combat/formulas.js';
+import { rand } from '../formats/dfRandom.js';   // AUDIT 26: StockHouseContainer's continue-chance draw is DaggerfallLoot's ONE DFRandom use
 import { randomMaterial, randomArmorMaterial, createWeapon } from '../combat/enemyEquipment.js';
 import { groupTemplates, GROUP_TEMPLATE_INDICES, itemBaseValue, ITEM_TEMPLATES, mintCondition, rollPaintingMessage } from './itemTemplates.js';
-import { getRandomBookID } from './books.js';   // B1
 import { isLeather, isPlate } from './armorMaterials.js';
 import { CLOTHING_DYES } from '../characters/dyes.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
@@ -112,7 +112,7 @@ export const TRANSPORT_HORSE = 94;        // Transportation.Horse (template)
 export const TRANSPORT_SMALL_CART = 93;   // Transportation.Small_cart
 // AUDIT 24 (wave 24): Books.Book0..Book3 all resolve to 277 - one
 // constant, declared here and in loot.js.
-import { BOOK_TEMPLATE, createRegularMagicItem, createRandomPotion } from './loot.js';   // G4: the guild shelves' two minters
+import { BOOK_TEMPLATE, createRandomBook, createRandomWeapon, createRandomArmor, createRandomClothing, createRegularMagicItem, createRandomPotion } from './loot.js';   // G4: the guild shelves' two minters   // AUDIT 26: StockHouseContainer's five ItemBuilder minters
 import { SPELLBOOK_TEMPLATE_INDEX } from './spellMaker.js';   // G4: one home for MiscItems 132
 
 export { BOOK_TEMPLATE };
@@ -143,6 +143,28 @@ export function randomizeArmorVariant(templateIndex, material, rolls = Math.rand
   return 0;
 }
 
+/** One stocked item, finished the way DaggerfallUnityItem's own
+ *  constructor finishes it: the TEMPLATE's name for every plain item
+ *  (only magic items and weapons carry their own) - AUDIT 18 found the
+ *  shelf minting rows with none, so the item list labelled a bought Oil
+ *  "UselessItems2" - the template base value (AUDIT 23 items-5), and
+ *  mintCondition's hit points.
+ *
+ *  SetItem's other draw (DaggerfallUnityItem.cs:571) rides here too: a
+ *  Paintings item is born with its message, and both the pawn shop's
+ *  shelf (group 13 on the PawnShop pair table) and a private house
+ *  container (0x0D on four of the five private-property tables) can
+ *  mint one. Minted with none, every painting seeds InitPaintingInfo
+ *  from 0 and they are all the same picture.
+ *
+ *  ONE home for the two stock arms (AUDIT 26): a second copy is how a
+ *  cupboard's painting ends up nameless while a shelf's is not. */
+function stockedItem(item, rolls) {
+  const it = mintCondition({ ...item, name: item.name ?? ITEM_TEMPLATES[item.templateIndex]?.name, value: item.value ?? itemBaseValue(item) });
+  if (it.group === 'Paintings' && it.message == null) it.message = rollPaintingMessage(rolls);
+  return it;
+}
+
 /** StockShopShelf, verbatim. Returns the item list; every item
  *  carries value = its DaggerfallUnityItem base value. */
 export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { rolls = Math.random } = {}) {
@@ -150,16 +172,7 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
   // DaggerfallUnityItem.ItemName is the TEMPLATE's name for every
   // plain item; AUDIT 18: the shelf minted rows with none, so the
   // dungeon-style item list labelled a bought Oil "UselessItems2".
-  const add = (item) => {
-    const it = mintCondition({ ...item, name: item.name ?? ITEM_TEMPLATES[item.templateIndex]?.name, value: item.value ?? itemBaseValue(item) });   // AUDIT 23 (items-5)
-    // SetItem's other draw (DaggerfallUnityItem.cs:571) - a Paintings
-    // item is born with its message, and a pawn shop is where the
-    // player meets one (group 13 rides the PawnShop pair table). The
-    // shelf minted them with none, so every painting seeded
-    // InitPaintingInfo from 0 and they were all the same picture.
-    if (it.group === 'Paintings' && it.message == null) it.message = rollPaintingMessage(rolls);
-    items.push(it);
-  };
+  const add = (item) => { items.push(stockedItem(item, rolls)); };
   const pairs = SHOP_ITEM_GROUPS[buildingType] ?? [0];
   if (buildingType === BUILDING_TYPES.Alchemist) {
     // RandomlyAddPotionRecipe(25, items) - potion recipes pend (loud)
@@ -185,7 +198,9 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
       for (let j = 0; j <= qualityMod; ++j) {
         // CreateRandomBook: Range(0, book.TotalVariants) = the
         // template's variant count (2), NOT the 4 Books enum names.
-        add({ group: 'Books', templateIndex: BOOK_TEMPLATE, variant: Math.floor(rolls() * (ITEM_TEMPLATES[BOOK_TEMPLATE]?.variants ?? 0)), message: getRandomBookID(rolls) });   // B1: message = the book id (CreateRandomBook); book-file pricing pends (loud)
+        // ONE home for that member since AUDIT 26 (StockHouseContainer
+        // below is its second caller): loot.createRandomBook.
+        add(createRandomBook(rolls));   // B1: message = the book id (CreateRandomBook); book-file pricing pends (loud)
       }
       continue;
     }
@@ -452,6 +467,256 @@ export function restockShopShelfIfDue(shelf, { buildingType, quality }, date, pl
   shelf.items = isShop(buildingType)
     ? stockShopShelf({ buildingType, quality }, playerEntity, { rolls })
     : [];
+  return true;
+}
+
+// ---------------------------------------------------------------------
+// S2b: THE PRIVATE PROPERTY TABLES + StockHouseContainer.
+// DaggerfallLootDataTables.privatePropertyItems* - five (groupId) byte
+// rows per DFLocation.BuildingTypes, 24 rows each (Alchemist 0 ..
+// Town23 23), picked by the container model's TextureRecord band.
+// ---------------------------------------------------------------------
+
+export const PRIVATE_PROPERTY_ITEMS_MODELS_0_TO_1 = Object.freeze([
+  Object.freeze([0x06, 0x0C]),
+  Object.freeze([0x06, 0x0C]),
+  Object.freeze([0x02, 0x06, 0x0C]),
+  Object.freeze([0x06, 0x0C]),
+  Object.freeze([0x02, 0x06, 0x0C]),
+  Object.freeze([0x06, 0x0C]),
+  Object.freeze([0x06, 0x0C]),
+  Object.freeze([0x06, 0x0C]),
+  Object.freeze([0x06, 0x0C]),
+  Object.freeze([0x06, 0x0C]),
+  Object.freeze([0x06, 0x0C]),
+  Object.freeze([0x02, 0x06, 0x0C]),
+  Object.freeze([0x02, 0x06, 0x0C]),
+  Object.freeze([0x02, 0x06, 0x0C]),
+  Object.freeze([0x06, 0x0C]),
+  Object.freeze([0x06, 0x0C]),
+  Object.freeze([0x02, 0x06, 0x0C]),
+  Object.freeze([0x02, 0x06, 0x0C]),
+  Object.freeze([0x06, 0x0C]),
+  Object.freeze([0x06, 0x0C]),
+  Object.freeze([0x06, 0x0C]),
+  Object.freeze([0x06, 0x0C]),
+  Object.freeze([0x06, 0x0C]),
+  Object.freeze([0x06, 0x0C]),
+]);
+
+export const PRIVATE_PROPERTY_ITEMS_MODELS_2_TO_3 = Object.freeze([
+  Object.freeze([0x06, 0x09, 0x0C]),
+  Object.freeze([0x06, 0x09, 0x0C]),
+  Object.freeze([0x03, 0x06, 0x09, 0x0C]),
+  Object.freeze([0x07, 0x09, 0x0B]),
+  Object.freeze([0x09, 0x0A, 0x0B, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x19]),
+  Object.freeze([0x07, 0x09, 0x0B]),
+  Object.freeze([0x06, 0x09, 0x0C]),
+  Object.freeze([0x06, 0x09, 0x0C]),
+  Object.freeze([0x09, 0x0B, 0x0E, 0x19]),
+  Object.freeze([0x09, 0x0A]),
+  Object.freeze([0x09, 0x0B]),
+  Object.freeze([0x03, 0x09, 0x0A, 0x0B]),
+  Object.freeze([0x03, 0x09, 0x0B]),
+  Object.freeze([0x03, 0x09]),
+  Object.freeze([0x07, 0x09, 0x0A, 0x0B, 0x0E]),
+  Object.freeze([0x03, 0x09, 0x0A]),
+  Object.freeze([0x03, 0x09, 0x0A, 0x0B, 0x19]),
+  Object.freeze([0x03, 0x09, 0x0A, 0x0B]),
+  Object.freeze([0x06, 0x09, 0x0C]),
+  Object.freeze([0x06, 0x09, 0x0C]),
+  Object.freeze([0x06, 0x09, 0x0C]),
+  Object.freeze([0x06, 0x09, 0x0C]),
+  Object.freeze([0x06, 0x09, 0x0C]),
+  Object.freeze([0x06, 0x09, 0x0C]),
+]);
+
+export const PRIVATE_PROPERTY_ITEMS_MODELS_4_TO_10 = Object.freeze([
+  Object.freeze([0x07, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x15]),
+  Object.freeze([0x09, 0x15]),
+  Object.freeze([0x09, 0x15]),
+  Object.freeze([0x07, 0x19]),
+  Object.freeze([0x09, 0x0A, 0x0B, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14]),
+  Object.freeze([0x07, 0x09, 0x0A, 0x0B]),
+  Object.freeze([0x06, 0x09, 0x0A, 0x0C, 0x0F, 0x10]),
+  Object.freeze([0x09]),
+  Object.freeze([0x07, 0x09, 0x0A, 0x15]),
+  Object.freeze([0x09]),
+  Object.freeze([0x09, 0x0D]),
+  Object.freeze([0x09, 0x0A, 0x0D]),
+  Object.freeze([0x09, 0x0A]),
+  Object.freeze([0x09, 0x0A, 0x15]),
+  Object.freeze([0x04, 0x09, 0x0A, 0x14]),
+  Object.freeze([0x09, 0x0F, 0x10]),
+  Object.freeze([0x07, 0x09, 0x0D, 0x14]),
+  Object.freeze([0x07, 0x09, 0x0D, 0x14]),
+  Object.freeze([0x09, 0x0A]),
+  Object.freeze([0x09, 0x0A]),
+  Object.freeze([0x09, 0x0A]),
+  Object.freeze([0x09, 0x0A]),
+  Object.freeze([0x09, 0x0A]),
+  Object.freeze([0x09, 0x0A]),
+]);
+
+export const PRIVATE_PROPERTY_ITEMS_MODELS_11_TO_14 = Object.freeze([
+  Object.freeze([0x07, 0x09, 0x14]),
+  Object.freeze([0x07, 0x09, 0x14]),
+  Object.freeze([0x03, 0x06, 0x09, 0x0C]),
+  Object.freeze([0x09, 0x0D, 0x0E]),
+  Object.freeze([0x02, 0x03, 0x09]),
+  Object.freeze([0x07, 0x09]),
+  Object.freeze([0x06, 0x09, 0x0C]),
+  Object.freeze([0x09]),
+  Object.freeze([0x03, 0x09, 0x15, 0x0E]),
+  Object.freeze([0x09, 0x0A]),
+  Object.freeze([0x09]),
+  Object.freeze([0x09, 0x03, 0x0E]),
+  Object.freeze([0x09, 0x0D, 0x19]),
+  Object.freeze([0x03, 0x09, 0x0A, 0x15]),
+  Object.freeze([0x07, 0x09, 0x0A]),
+  Object.freeze([0x06, 0x09, 0x0C]),
+  Object.freeze([0x04, 0x07, 0x09, 0x0D, 0x19]),
+  Object.freeze([0x07, 0x09, 0x0D, 0x19]),
+  Object.freeze([0x03, 0x09]),
+  Object.freeze([0x03, 0x09]),
+  Object.freeze([0x03, 0x09]),
+  Object.freeze([0x03, 0x09]),
+  Object.freeze([0x03, 0x09]),
+  Object.freeze([0x03, 0x09]),
+]);
+
+export const PRIVATE_PROPERTY_ITEMS_MODELS_15_AND_UP = Object.freeze([
+  Object.freeze([0x0F, 0x10, 0x11, 0x12, 0x13, 0x15]),
+  Object.freeze([0x02, 0x15]),
+  Object.freeze([0x02, 0x15]),
+  Object.freeze([0x0D, 0x19]),
+  Object.freeze([0x02, 0x03, 0x04, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x15]),
+  Object.freeze([0x07, 0x0D]),
+  Object.freeze([0x06, 0x09, 0x0C, 0x0F, 0x10]),
+  Object.freeze([0x09, 0x0D]),
+  Object.freeze([0x09, 0x15]),
+  Object.freeze([0x09]),
+  Object.freeze([0x09, 0x0D]),
+  Object.freeze([0x02, 0x09, 0x0D]),
+  Object.freeze([0x02, 0x03, 0x09]),
+  Object.freeze([0x03, 0x09, 0x15]),
+  Object.freeze([0x09, 0x0A, 0x0D]),
+  Object.freeze([0x09, 0x0F, 0x10]),
+  Object.freeze([0x09, 0x0D, 0x19]),
+  Object.freeze([0x09, 0x0D, 0x19]),
+  Object.freeze([0x06, 0x09, 0x0C]),
+  Object.freeze([0x06, 0x09, 0x0C]),
+  Object.freeze([0x06, 0x09, 0x0C]),
+  Object.freeze([0x06, 0x09, 0x0C]),
+  Object.freeze([0x06, 0x09, 0x0C]),
+  Object.freeze([0x06, 0x09, 0x0C]),
+]);
+
+/** The band ladder of StockHouseContainer (DaggerfallLoot.cs:303-334),
+ *  verbatim, including its `<= Town23` gate: a Ship, a Special or any
+ *  of DaggerfallUnity's own wildcards has no private-property row at
+ *  all and stocks nothing. `modelIndex` is the container's
+ *  TextureRecord, which is `modelId % 100` (systems/containers.js). */
+export function privatePropertyItemList(buildingType, modelIndex) {
+  if (!(buildingType <= BUILDING_TYPES.Town23)) return null;
+  let table;
+  if (modelIndex >= 2) {
+    if (modelIndex >= 4) {
+      if (modelIndex >= 11) {
+        table = modelIndex >= 15
+          ? PRIVATE_PROPERTY_ITEMS_MODELS_15_AND_UP
+          : PRIVATE_PROPERTY_ITEMS_MODELS_11_TO_14;
+      } else table = PRIVATE_PROPERTY_ITEMS_MODELS_4_TO_10;
+    } else table = PRIVATE_PROPERTY_ITEMS_MODELS_2_TO_3;
+  } else table = PRIVATE_PROPERTY_ITEMS_MODELS_0_TO_1;
+  return table[buildingType] ?? null;
+}
+
+/** StockHouseContainer (DaggerfallLoot.cs:291-375), verbatim.
+ *
+ *  ONE group is drawn for the whole container - Range(0, list.Length)
+ *  over that row - and then items of that group are minted in a loop
+ *  whose HALVING continue chance is DaggerfallLoot's only DFRandom
+ *  draw:
+ *
+ *      continueChance >>= 1;
+ *      if (DFRandom.rand() % 100 > continueChance) keepGoing = false;
+ *      items.AddItem(item);
+ *
+ *  The add comes AFTER the test, so a container is never empty: the
+ *  first item is always minted, then 50% for a second, 25% for a third,
+ *  and so on. `rolls` is the engine PRNG (Random.Range) and `dfRand` is
+ *  the classic LCG - two different streams, as in DFU.
+ *
+ *  Note what this does NOT do that the shop shelf does: no gender swap
+ *  on the clothing groups. Both 0x06 and 0x0C route to
+ *  CreateRandomClothing, which picks the group off the PLAYER's gender
+ *  (ItemBuilder.cs:184-208), so the row's men/women split has no effect
+ *  here at all.
+ *
+ *  FLAGGED: the MagicItems arm (0x04, on three of the five tables)
+ *  needs MAGIC.DEF - `magicItemTemplates` - and mints nothing without
+ *  it, the same interim the shop shelf's MagicItems arm carries. */
+export function stockHouseContainer({ buildingType, textureRecord } = {}, playerEntity = {},
+  { rolls = Math.random, dfRand = rand, magicItemTemplates = null } = {}) {
+  const items = [];
+  const list = privatePropertyItemList(buildingType, textureRecord >>> 0);
+  if (!list) return items;
+  const group = GROUP_NAMES[list[Math.floor(rolls() * list.length)]];
+  const level = playerEntity.level ?? 1;
+  const gender = playerEntity.gender ?? 'male';
+  let continueChance = 100;
+  let keepGoing = true;
+  while (keepGoing) {
+    let item = null;
+    if (group !== 'MensClothing' && group !== 'WomensClothing') {
+      if (group === 'MagicItems') {
+        item = magicItemTemplates ? createRegularMagicItem(magicItemTemplates, level, gender, rolls) : null;
+      } else if (group === 'Books') {
+        item = createRandomBook(rolls);
+      } else if (group === 'Weapons') {
+        item = createRandomWeapon(level, rolls);
+      } else if (group === 'Armor') {
+        item = createRandomArmor(level, rolls);
+      } else {
+        // `new DaggerfallUnityItem(itemGroup, Random.Range(0,
+        // enumArray.Length))` - a uniform pick over the GROUP's enum,
+        // which is exactly GROUP_TEMPLATE_INDICES' row.
+        const indices = GROUP_TEMPLATE_INDICES[group] ?? [];
+        if (indices.length) item = { group, templateIndex: indices[Math.floor(rolls() * indices.length)] };
+      }
+    } else {
+      item = createRandomClothing(gender, rolls);
+    }
+    continueChance >>= 1;
+    if (dfRand() % 100 > continueChance) keepGoing = false;
+    if (item) items.push(stockedItem(item, rolls));
+  }
+  return items;
+}
+
+/** The HouseContainers arm of PlayerActivate.ActivateLootContainer
+ *  (:900-923), the restock half - the same shape restockShopShelfIfDue
+ *  gives the ShopShelves arm, over the same `needsRestock` law:
+ *
+ *      if (loot.stockedDate < DaggerfallLoot.CreateStockedDate(Now))
+ *          loot.StockHouseContainer(BuildingDiscoveryData);
+ *
+ *  with StockHouseContainer's own first two lines (:293-294) - stamp
+ *  the date, CLEAR the collection - folded in.
+ *
+ *  `playerOwned` is the arm ABOVE it (:903-908): a house the player has
+ *  bought (or their own ship) sets `stockedDate = 1` and BREAKS without
+ *  stocking, which is what makes an owned house's furniture the
+ *  player's own storage instead of a fresh pile of someone else's
+ *  clothes every game day. */
+export function restockHouseContainerIfDue(container, { buildingType, playerOwned = false } = {},
+  date, playerEntity = {}, opts = {}) {
+  if (playerOwned) { container.stockedDate = 1; return false; }
+  if (!needsRestock(container.stockedDate ?? 0, date)) return false;
+  container.stockedDate = createStockedDate(date);
+  container.items = stockHouseContainer(
+    { buildingType, textureRecord: container.record ?? 0 }, playerEntity, opts);
   return true;
 }
 

@@ -172,6 +172,12 @@ export function identifySpellPass(items, chance, rolls = Math.random) {
   return { successCount, total: list.length, identified, spendMagicka: list.length > 0 };
 }
 
+/** Internal_Strings.csv:1052 - `notEnoughSpellpointsLeft,You do not
+ *  have enough spell points left.` DoModeAction's refusal when the
+ *  Identify SPELL costs more magicka than the caster has left
+ *  (DaggerfallTradeWindow.cs:958-963). */
+export const NOT_ENOUGH_SPELL_POINTS_TEXT = 'You do not have enough spell points left.';
+
 /** Internal_Strings.csv:1053 - `totalIdentified,{0} out of {1} identified.` */
 export const identifiedTallyText = (successCount, total) =>
   `${successCount} out of ${total} identified.`;

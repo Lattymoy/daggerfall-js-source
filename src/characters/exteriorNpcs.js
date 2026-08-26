@@ -8,7 +8,7 @@
 // archive/record, factionID, flags, and the raw record position that
 // feeds DFU's NPC hash).
 
-import { exteriorNpcFlags, NPC_CONTEXT } from './staticNpc.js';
+import { exteriorNpcFlags, NPC_CONTEXT, personIsChildNPC } from './staticNpc.js';
 
 /** @param flats - output of collectBlockFlats (C2 passthrough fields) */
 export function collectExteriorNpcs(flats) {
@@ -54,5 +54,10 @@ export function exteriorNpcRecord(flat, flatData = null) {
     // derivation reads it off the record, so a street NPC and a
     // building person go through the one staticNpcData door.
     context: NPC_CONTEXT.Custom,
+    // StaticNPC.IsChildNPC (:67-70) over IsChildNPCData (:342-350) -
+    // the same derived property the interior people path carries.
+    isChildNPC: personIsChildNPC({
+      textureArchive: flat.archive, textureRecord: flat.record, factionID: flat.factionID,
+    }),
   };
 }

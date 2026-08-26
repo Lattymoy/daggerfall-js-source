@@ -21,7 +21,14 @@ import {
 import { hurtPlayer } from '../src/characters/playerEntity.js';
 import { createExteriorFoes } from '../src/scenes/exteriorFoes.js';
 import { createCityGuards, GUARD_MOBILE_TYPE } from '../src/scenes/cityGuards.js';
-import { createSkyController } from '../src/scenes/shared.js';
+import {
+  createSkyController, applyFallLanding, fatigueLossMultiplierFor,
+  ATHLETICISM_FATIGUE_MULT, IMPROVED_ATHLETICISM_FATIGUE_MULT,
+} from '../src/scenes/shared.js';
+import { playerDamageFlash, FLASH_ALPHA } from '../src/ui/damageFlash.js';
+import { SOUND } from '../src/systems/soundClips.js';
+import { SPECIAL_ABILITY } from '../src/systems/rest.js';
+import { copyEffectEntry } from '../src/systems/save.js';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -409,4 +416,216 @@ test('F045: a night sky that cannot load degrades to the gradient instead of fre
     'and the night branch degrades exactly as its day sibling does');
   assert.ok(night.indexOf('try {') < night.indexOf('await fetchBytes(name)'),
     'both of its awaits are inside the guard, which is what the day branch has had all along');
+});
+
+// =====================================================================
+// AUDIT 26, wave hosts-dungeon - the parity findings below join this
+// area file rather than minting a second one for the same subject.
+// =====================================================================
+
+// =====================================================================
+// F206 - a damaging fall FLASHES the screen underground too
+// =====================================================================
+
+test('F206: the dungeon fall arm rides shared.applyFallLanding, so it flashes (PlayerHealth.cs:36-38, 49-58)', () => {
+  // ApplyPlayerFallDamage (:49-58) bills RemoveHealth, and RemoveHealth's
+  // FIRST statement is GetComponent<ShowPlayerDamage>().Flash() (:36-38).
+  // Every damaging fall in DFU flashes, in every context. The dungeon
+  // host carried its own copy of the formula that hurt and rang and
+  // never flashed, so an identical fall outdoors flashed and one
+  // underground did not - a per-scene difference DFU does not have.
+  const i = DUNGEON_CTX.indexOf('reportActivity({');
+  assert.ok(i > 0, 'the fall arm\'s owner was found');
+  const arm = DUNGEON_CTX.slice(i, DUNGEON_CTX.indexOf('reportMouse(dx, dy, locked)', i));
+  assert.ok(arm.includes('applyFallLanding(playerEntity, fell, { hurt: hurtPlayer, sound: (id) => audio.playOneShot(id) });'),
+    'the one body the other three hosts already ride, with this host\'s damage door injected');
+  assert.equal(/FALL_HP_PER_METRE \* \(fell - FALL_DAMAGE_THRESHOLD\)/.test(DUNGEON_CTX), false,
+    'and no second copy of the player fall formula is left in the host');
+
+  // ...and the arm itself, run in the dungeon's exact shape (an injected
+  // `hurt`, which is the branch that was never flashing).
+  playerDamageFlash.tick(10);                       // drain any earlier flash
+  assert.equal(playerDamageFlash.fading, false);
+  const rung = [];
+  const billed = [];
+  applyFallLanding({ health: 50, maxHealth: 50 }, 11, { hurt: (n) => billed.push(n), sound: (id) => rung.push(id) });
+  assert.deepEqual(billed, [30], 'trunc(5 * (11 - 5)), through the injected door');
+  assert.deepEqual(rung, [SOUND.FallDamage]);
+  assert.equal(playerDamageFlash.alpha, FLASH_ALPHA, 'ShowPlayerDamage.Flash(), 0.4 alpha');
+
+  // the sub-threshold arm is the BadFallDetected alert only - no damage,
+  // no flash (RemoveHealth is never reached)
+  playerDamageFlash.tick(10);
+  const rung2 = [];
+  applyFallLanding({ health: 50, maxHealth: 50 }, 4, { hurt: () => assert.fail('no damage under the threshold'), sound: (id) => rung2.push(id) });
+  assert.deepEqual(rung2, [SOUND.FallHard]);
+  assert.equal(playerDamageFlash.fading, false, 'a hard landing that costs nothing flashes nothing');
+});
+
+// =====================================================================
+// F217 / F220 - the foe snapshot's missing halves
+// =====================================================================
+
+test('F217+F220: the dungeon foe record carries bundles, MaxHealth and fatigue (SerializableEnemy.cs:109-120, 175-177, 222)', () => {
+  const c = DUNGEON_CTX.indexOf('function collectWorld()');
+  const rec = DUNGEON_CTX.slice(c, DUNGEON_CTX.indexOf('piles: lootPiles.map', c));
+  assert.ok(c > 0 && rec.length > 200, 'the per-foe record was found');
+  // :109 startingHealth = entity.MaxHealth, :111 currentFatigue,
+  // :120 instancedEffectBundles - beside the health/magicka the port had.
+  assert.ok(rec.includes('maxHealth: f.entity.maxHealth,'), ':109 startingHealth');
+  assert.ok(rec.includes('fatigue: f.entity.fatigue ?? 0,'), ':111 currentFatigue');
+  assert.ok(rec.includes('activeEffects: (f.entity.activeEffects ?? []).map(copyEffectEntry),'),
+    ':120 instancedEffectBundles, deep-copied by the player envelope\'s own body');
+
+  const a = DUNGEON_CTX.indexOf('function applyWorld(w)');
+  const fn = DUNGEON_CTX.slice(a, DUNGEON_CTX.indexOf('w.piles?.forEach', a));
+  assert.ok(a > 0, 'applyWorld was found');
+  // :175 MaxHealth, :176 SetHealth, :177 SetFatigue - and MaxHealth
+  // lands before the health it bounds.
+  assert.ok(fn.indexOf('f.entity.maxHealth = sf.maxHealth;') < fn.indexOf('f.entity.health = sf.health;'),
+    'MaxHealth is restored before CurrentHealth, as :175-176 do it');
+  assert.ok(fn.includes('if (sf.fatigue != null) f.entity.fatigue = sf.fatigue;'), ':177 SetFatigue');
+  assert.ok(fn.includes('f.entity.activeEffects = sf.activeEffects.map(copyEffectEntry);'),
+    ':222 RestoreInstancedBundleSaveData - the saved set REPLACES the live one');
+  assert.ok(fn.includes('seedBundleSeq(sf.activeEffects.reduce((m, a) => Math.max(m, a.bundleId ?? 0), 0));'),
+    'and the module bundle counter lifts past the restored ids, as save.js:314 does for the player');
+  // every added half is guarded, so a pre-AUDIT-26 snapshot restores as
+  // it always did (the CH4 halves' own rule)
+  for (const k of ['maxHealth', 'fatigue', 'activeEffects']) {
+    assert.ok(fn.includes(`if (sf.${k} != null)`), `${k} tolerates an older snapshot`);
+  }
+
+  // the copy is a DEEP one: a bundle's nested effect/statMods must
+  // detach, or the "snapshot" is the live entity.
+  const live = { kind: 'paralyze', roundsRemaining: 4, bundleId: 7, effect: { magnitude: 3 }, statMods: { 0: -5 }, caster: { entity: {} } };
+  const copy = copyEffectEntry(live);
+  live.effect.magnitude = 99; live.statMods[0] = -99;
+  assert.equal(copy.effect.magnitude, 3);
+  assert.deepEqual(copy.statMods, { 0: -5 });
+  assert.equal('caster' in copy, false, 'the live scene reference never enters the envelope (DFU re-resolves it)');
+});
+
+// =====================================================================
+// F031 - the held Crouch key is the FloatDown key
+// =====================================================================
+
+test('F031: Crouch drives the motor\'s down arm in the standalone dungeon host (LevitateMotor.cs:86-89)', () => {
+  // else if (HasAction(Jump) || HasAction(FloatUp))   upDownVector += up;
+  // else if (HasAction(Crouch) || HasAction(FloatDown)) upDownVector += down;
+  // The up arm was ported as jumpHeld||FloatUp; the down arm dropped
+  // Crouch, so holding C while swimming did nothing but toggle the
+  // stance and only PageDown could dive.
+  assert.ok(DUNGEON.includes("down: crouchHeld || held(keys, 'FloatDown'),"),
+    'the down arm is Crouch OR FloatDown, mirroring the up arm above it');
+  assert.equal(DUNGEON.includes("down: held(keys, 'FloatDown'),"), false, 'never FloatDown alone');
+  assert.ok(DUNGEON.includes("up: jumpHeld || held(keys, 'FloatUp'),"), 'and the up arm is unchanged');
+  // the same key still edges the stance toggle - the two readings of C
+  // are DFU's own (DecideHeightAction has its own Crouch handling)
+  assert.ok(DUNGEON.includes('crouch: crouchHeld && !prevCrouch,'));
+});
+
+// =====================================================================
+// F035 - a fall is nobody's kill
+// =====================================================================
+
+test('F035: a guard killed by FALL DAMAGE commits no crime (EnemyMotor.cs:1384-1401 vs DEB.cs:203, 262-268)', async () => {
+  // ApplyFallDamage calls enemyEntity.DecreaseHealth(damage) directly.
+  // The Knight_CityWatch Murder assignment lives in
+  // HandleAttackFromSource, INSIDE `sourceEntityBehaviour ==
+  // PlayerEntityBehaviour` - which a fall never reaches. The port routed
+  // the fall through damageGuard, whose death branch set Murder
+  // unconditionally, so a watchman who fell while chasing branded the
+  // player a murderer.
+  const CRIME_ASSAULT = 2, CRIME_MURDER = 5;
+  const freed = { n: 0 };
+  const deps = { ...poolDeps(freed), currentPixelKey: () => '3,4' };
+  deps.playerEntity.crimeCommitted = CRIME_ASSAULT;   // an active crime, or the watch despawns
+  const pool = createCityGuards(deps);
+
+  const fell = standFoe(GUARD_MOBILE_TYPE, [5, 0, 5]);
+  fell.ai.update = () => {};
+  fell.ai.landedFall = 10;                            // trunc(5 * (10 - 5)) = 25, fatal at 10 HP
+  pool.guards.push(fell);
+  pool.update(0.016, [0, 0, 0], [0, 1.7, 0], {});
+  await settle();
+  assert.equal(fell.dead, true, 'the fall still kills - ApplyFallDamage runs for every enemy');
+  assert.equal(fell.entity.health, -15, 'and bills the same 5 HP per metre past 5');
+  assert.equal(deps.playerEntity.crimeCommitted, CRIME_ASSAULT,
+    'the active crime is untouched: no player behind the blow, no HandleAttackFromSource');
+
+  // ...and the player's OWN kill still is Murder - the gate narrowed,
+  // it did not close.
+  const struck = standFoe(GUARD_MOBILE_TYPE, [6, 0, 6]);
+  struck.ai.update = () => {};
+  pool.guards.push(struck);
+  pool.hurtGuard(struck, 99, [0, 0, 0]);
+  await settle();
+  assert.equal(struck.dead, true);
+  assert.equal(deps.playerEntity.crimeCommitted, CRIME_MURDER, 'DEB.cs:262-268, inside the player gate');
+});
+
+// =====================================================================
+// F044 - the Improved Athleticism fatigue arm
+// =====================================================================
+
+test('F044: fatigueLossMultiplierFor carries the 0.8 ImprovedAthleticism arm (PlayerEntity.cs:388-400)', () => {
+  //   const float atleticismMultiplier = 0.9f;
+  //   const float improvedAtleticismMultiplier = 0.8f;
+  //   float fatigueLossMultiplier = 1.0f;
+  //   if (career.Athleticism)
+  //       fatigueLossMultiplier = (ImprovedAthleticism) ? improvedAtleticismMultiplier : atleticismMultiplier;
+  assert.equal(ATHLETICISM_FATIGUE_MULT, 0.9);
+  assert.equal(IMPROVED_ATHLETICISM_FATIGUE_MULT, 0.8);
+  const athlete = { career: { abilityFlagsAndSpellPointsBitfield: SPECIAL_ABILITY.Athleticism } };
+  const plain = { career: { abilityFlagsAndSpellPointsBitfield: 0 } };
+  assert.equal(fatigueLossMultiplierFor(plain), 1.0, 'no career advantage, no discount');
+  assert.equal(fatigueLossMultiplierFor(athlete), 0.9, 'career.Athleticism alone');
+  // DaggerfallEntity.ImprovedAthleticism (:95) is set by
+  // ImprovesTalents.cs:83 (param 1) - the port's
+  // _enchantMods.improvedAthleticism, which enchantments.js:447 has
+  // written since E1 with no reader anywhere: a law computed and thrown
+  // away, so the enchantment's fatigue half did nothing.
+  athlete._enchantMods = { improvedAthleticism: true };
+  assert.equal(fatigueLossMultiplierFor(athlete), 0.8, 'the worn ImprovesTalents item');
+  // it is an AND, not an OR - the enchantment alone is not the advantage
+  plain._enchantMods = { improvedAthleticism: true };
+  assert.equal(fatigueLossMultiplierFor(plain), 1.0, 'the C# reads it only inside `if (career.Athleticism)`');
+
+  // ONE BODY: the dungeon host carried a second copy stuck on 0.9 whose
+  // own comment claimed the port had no source for the 0.8 arm.
+  assert.ok(DUNGEON_CTX.includes('fatigueMultiplier: fatigueLossMultiplierFor(playerEntity),'),
+    'the dungeon host reads the shared body');
+  assert.equal(/SPECIAL_ABILITY\.Athleticism\) \? 0\.9 : 1\.0/.test(DUNGEON_CTX), false,
+    'and holds no second copy of the multiplier');
+  assert.equal((SHARED.match(/0\.9 : 1\.0/g) ?? []).length, 0, 'nor does the shared file keep the old two-arm form');
+});
+
+// =====================================================================
+// F052 - a landed player arrow thuds and splashes
+// =====================================================================
+
+test('F052: a player arrow pays the hit sound and blood splash the melee swing pays (WeaponManager.cs:561-573)', () => {
+  // DaggerfallMissile.cs:678-687 routes a PLAYER arrow into
+  // WeaponManager.WeaponDamage(LastBowUsed, arrowHit: true, ...), and
+  // that method's damage > 0 arm is one block: PlayHitSound, then
+  // ShowBloodSplash at the impact, THEN the knockback and the 40% voice.
+  // The port's arrow arm played the voice and knocked, and paid neither
+  // of the first two - every landed arrow was silent and bloodless while
+  // every melee hit thudded and splashed.
+  const i = DUNGEON_CTX.indexOf('if (m.fromPlayer) {');
+  assert.ok(i > 0, 'the player-arrow impact arm was found');
+  const arm = DUNGEON_CTX.slice(i, DUNGEON_CTX.indexOf('} else if (playerFeet) {', i));
+  const sound = arm.indexOf('audio.play3d(hitSoundFor(m.weapon), f.ai.feet, 1.1, { maxDistance: 16 });');
+  const blood = arm.indexOf('hitEffects?.showBloodSplash(ENEMY_BASICS[f.mobileType]?.bloodIndex ?? 0,');
+  const voice = arm.indexOf('const pain = enemyPainVoice(f, dmg);');
+  const knock = arm.indexOf('damageFoe(f, dmg, null, m.dir);');
+  assert.ok(sound > 0, 'PlayHitSound at the struck foe, with the BOW (LastBowUsed)');
+  assert.ok(blood > sound, 'ShowBloodSplash beside it, with the target\'s own BloodIndex');
+  assert.ok(voice > blood && knock > blood, 'both before the knockback and the voice, as :562-580 order them');
+  assert.ok(arm.includes('bloodCentre(f.ai.feet, f.ai.height));'),
+    'the same body-centre stand-in the melee arm uses for the impact point');
+  // the melee arm is unchanged, and is where those two lines came from
+  const melee = DUNGEON_CTX.slice(DUNGEON_CTX.indexOf('function resolvePlayerHit(eye'), i);
+  assert.ok(melee.includes('audio.play3d(hitSoundFor(playerWeapon.weapon), foe.ai.feet, 1.1, { maxDistance: 16 });'));
+  assert.ok(melee.includes('bloodCentre(foe.ai.feet, foe.ai.height));'));
 });

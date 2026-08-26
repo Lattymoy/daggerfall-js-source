@@ -20,7 +20,7 @@ import { collectExteriorNpcs, exteriorNpcRecord } from '../src/characters/exteri
 import {
   exteriorNpcFlags, staticNpcData, NPC_CONTEXT, ZERO_NPC_DATA,
 } from '../src/characters/staticNpc.js';
-import { GENDERS } from '../src/characters/nameHelper.js';
+import { GENDERS, BANK_TYPES } from '../src/characters/nameHelper.js';
 import { RACES } from '../src/systems/races.js';
 
 const src = (f) => readFileSync(join(process.cwd(), f), 'utf8');
@@ -114,6 +114,9 @@ test('AUDIT 26 F019: one collected flat derives the exterior NPCData (StaticNPC.
     context: NPC_CONTEXT.Custom,
     buildingKey: 0,
     mapID: 999,
+    // AUDIT 26 (F016): SetRuntimeData's own line (:309) - the REGION's
+    // bank, not the NPC's Redguard race's, and not the struct zero.
+    nameBank: BANK_TYPES.Nord,
   });
   // ...and the record itself stamps Context.Custom (:206), which is
   // what the click reads to pick the overload.

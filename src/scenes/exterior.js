@@ -89,7 +89,7 @@ import { ChoiceWindow } from '../ui/talkWindow.js';   // V1: the infection popup
 import { startInfection, liveInfection } from '../systems/infection.js';   // V1 probe surface: the bite and the lifecycle
 import { diseaseCount } from '../systems/diseases.js';
 import { MINUTES_PER_DAY } from '../systems/gameDate.js';
-import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
+import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -619,9 +619,24 @@ export async function bootExterior(canvas, renderer, params, status) {
   // X4: the Detect scan - declared before cityGuards so the frame body
   // and the feed share one definition; the thunks are lazy.
   const detectFeet = () => (walkMode ? player.pos : cam.pos);
+  /** The LOOT half of PlayerGPS.UpdateNearbyObjects (:765-775) - the
+   *  world host's twin (THE FOUR HOSTS RULE). Every active
+   *  DaggerfallLoot goes in the list with no scene test, and
+   *  GetLootFlags (:822-836) filters only on emptiness - a slain
+   *  body's container included, which the C# asks about and leaves in
+   *  ("Should corspes loot container be filtered out?"). This page's
+   *  pool is the player's dropped piles plus the watch's corpses, read
+   *  through the same corpse test the activation targets use. */
+  const detectLoot = () => ((modes?.mode ?? 'exterior') !== 'exterior' ? [] : [
+    ...droppedLoot._piles,
+    ...cityGuards.guards
+      .filter((f) => f.corpse && f.entity && !f.corpseDisabled)
+      .map((f) => ({ pos: f.corpseMarker?.pos ?? f.ai?.feet ?? null, items: f.entity.items ?? [] })),
+  ]);
   const detectFeed = createDetectFeed(playerEntity, {
     entities: () => ((modes?.mode ?? 'exterior') === 'exterior' ? cityGuards.guards : [])
       .filter((f) => !f.dead && f.ai).map(foeNearbyRecord),
+    loot: () => detectLoot().map(lootNearbyRecord),
     feet: detectFeet,
   });
   const cityGuards = createCityGuards({
@@ -1796,9 +1811,10 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (hudArt) {
       const _hfw = [-view[2], -view[10]];
       // X4: the Detect markers. This host's nearby pool is the city
-      // guards - the only entities it spawns. No loot piles above
-      // ground (FLAGGED with world.js's same gap), so Detect Treasure
-      // is live and finds nothing here.
+      // guards - the only entities it spawns - plus the LOOT half
+      // UpdateNearbyObjects carries with no scene gate of its own
+      // (PlayerGPS.cs:765-775): the player's dropped piles and the
+      // watch's corpse containers.
       const _dFeet = detectFeet();
       const _detected = detectFeed.tick(dt);
       drawHud(renderer, canvas, hudArt, playerEntity,

@@ -11,8 +11,11 @@
 // instantly once queued" - the decision IS the cast; the scene owns
 // the spend + release. AUDIT 18: both branches also require
 // DetectedTarget (EnemyMotor.cs:573 and :620), and both live inside
-// TakeAction, which HandleNoAction (:359-365) skips once GiveUpTimer
-// hits 0 - so a concealed target stops the casting entirely. The
+// TakeAction, which runs only under CanAct (:171): HandleNoAction
+// (:359-365) drops it once GiveUpTimer hits 0 - so a concealed target
+// stops the casting entirely - and KnockbackMovement (:317) drops it
+// for the whole knockback window, so neither branch casts through
+// hit-stun. The
 // melee reach is a FLAT MeleeDistance: DFU's
 // `+ senses.TargetRateOfApproach` term is only ever non-zero under
 // EnhancedCombatAI (EnemySenses.cs:354-363). DFU's clear-path probe
@@ -21,7 +24,7 @@
 // everywhere in this port.
 
 import { CLASSIC_UPDATE_INTERVAL } from './weaponStates.js';
-import { MELEE_DISTANCE, withinYaw } from './enemyMotor.js';
+import { MELEE_DISTANCE, withinYaw, canAct } from './enemyMotor.js';
 import { resetMeleeTimer } from './enemyAttack.js';
 import { effectsAlreadyOnTarget } from '../systems/effects.js';
 // SetReadySpell's silence refusal (EntityEffectManager.cs:314-316):
@@ -112,7 +115,7 @@ export class EnemyCaster {
     const idle = attack.machine.state === 'Idle';
     // DoTouchSpell: sight + melee reach + the melee timer at 0; a
     // touch cast RESETS the melee timer (ResetMeleeTimer, verbatim).
-    if (idle && ai.inSight && ai.detected && ai.giveUpTimer > 0
+    if (idle && ai.inSight && ai.detected && canAct(ai)
         && attack.meleeTimer === 0 && dist <= MELEE_DISTANCE) {
       const sp = pickTouchSpell(ent, playerEntity, this.rolls);
       // EnemyMotor.cs:619-628: SetReadySpell is the LAST term of
@@ -133,7 +136,7 @@ export class EnemyCaster {
     let decision = null;
     while (this._classicTimer >= CLASSIC_UPDATE_INTERVAL) {
       this._classicTimer -= CLASSIC_UPDATE_INTERVAL;
-      if (decision || attack.rangedAttack || !idle || ai.giveUpTimer <= 0) continue;
+      if (decision || attack.rangedAttack || !idle || !canAct(ai)) continue;
       if (dist <= MIN_RANGED_DISTANCE || dist >= MAX_RANGED_DISTANCE) continue;
       if (!ai.inSight || !ai.detected || !withinYaw(ai.yaw, dx, dz, SPELL_YAW_DEG)) continue;
       if (this.rolls() >= RANGED_SPELL_CHANCE) continue;

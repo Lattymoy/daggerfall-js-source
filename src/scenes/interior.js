@@ -12,6 +12,7 @@ import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
+import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 (hosts-modal F001): the interior's WindowStyle.Disabled
 import { worldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C12)
 import { nearestLights } from '../world/cityLights.js';
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
@@ -27,7 +28,7 @@ export async function bootInterior(canvas, renderer, params, status) {
   const [blockName, recordStr] = params.get('interior').split(':');
   const recordIndex = Number(recordStr || 0);
   // DFU interiors climate-swap their models (SetClimate with
-  // WindowStyle.Disabled - emission stays dark here by default). A
+  // WindowStyle.Disabled - the window emission the frame sets below). A
   // standalone block has no location, so ClimateBases.Temperate is the
   // verbatim field default; ?climate= overrides, ?season= applies.
   const CLIMATE_PARAM = { desert: 0, mountain: 100, temperate: 300, swamp: 400 };
@@ -65,6 +66,13 @@ export async function bootInterior(canvas, renderer, params, status) {
   // R8: verbatim interior ambient; verbatim InteriorFogSettings
   // (exponential 0.001, fog color black).
   renderer.setLighting(new Float32Array(isNight(worldMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT), 0);   // AUDIT 23 (C12): PlayerAmbientLight.cs:75-80
+  // DaggerfallInterior.cs:473/:517/:1270 - SetClimate(..., WindowStyle
+  // .Disabled), and Disabled is EmissionColor = Color.black
+  // (MaterialReader.cs:934-936). "Dark by default" was not true: the
+  // boot sets the global emission to Day for every scene (main.js:67),
+  // so this host has to state the interior's own style like the modal
+  // host does.
+  renderer.setWindowEmission(windowEmissionRGB('disabled'));
   renderer.setFog('exp', 0.001, 0, 0, new Float32Array([0, 0, 0]));
 
   // Camera at the Enter marker when present, else the first placement,

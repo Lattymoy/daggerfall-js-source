@@ -14,10 +14,24 @@ import { fileURLToPath } from 'node:url';
 import { staticNpcData, staticNpcName } from '../src/characters/staticNpc.js';
 import { RACES } from '../src/systems/races.js';
 import { NPCSession, SOCIAL_GROUP } from '../src/systems/npcSession.js';
+import { windowEmissionRGB } from '../src/render/windowEmission.js';
+import { NOT_ENOUGH_SPELL_POINTS_TEXT } from '../src/systems/tradeModes.js';
+import { RANDOM_TREASURE_MARKER_DIM } from '../src/systems/loot.js';
+import { GLOBAL_SCALE } from '../src/world/meshReader.js';
+import { BUILDING_TYPES } from '../src/world/buildingNames.js';
+import {
+  PRIVATE_PROPERTY_ITEMS_MODELS_0_TO_1, PRIVATE_PROPERTY_ITEMS_MODELS_2_TO_3,
+  PRIVATE_PROPERTY_ITEMS_MODELS_4_TO_10, PRIVATE_PROPERTY_ITEMS_MODELS_11_TO_14,
+  PRIVATE_PROPERTY_ITEMS_MODELS_15_AND_UP,
+  privatePropertyItemList, stockHouseContainer, restockHouseContainerIfDue,
+} from '../src/systems/shopStock.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = (f) => readFileSync(join(ROOT, f), 'utf8');
 const WM = src('src/scenes/worldModes.js');
+const INT = src('src/scenes/interior.js');
+const WORLD = src('src/scenes/world.js');
+const EXT = src('src/scenes/exterior.js');
 
 /** The brace-matched body of a function/method, from its header. */
 function bodyOf(text, header) {
@@ -256,4 +270,246 @@ test('AUDIT 26 F063: a native-mode sale takes the goods out of the pack, and the
   assert.doesNotMatch(commit, /it\.isIdentified = true; addItem\(playerEntity\.items, it\);/);
   // and the collection the window is handed is named for what it is
   assert.match(WM, /packItems: \(\) => \(playerEntity\.items \?\?= \[\]\)\.filter\(\(it\) => !isEquipped\(it\)\),/);
+});
+
+// ---------------------------------------------------------------------
+// AUDIT 26 hosts-modal - the five parity findings below. Each is a DFU
+// law the modal host had lost, and each pin is written against the C#
+// rather than against the port.
+// ---------------------------------------------------------------------
+
+// ---------------------------------------------------------------------
+// F001 - a building interior is laid out with WindowStyle.Disabled
+// (DaggerfallInterior.cs:473, :517, :1270), and Disabled is
+// EmissionColor = Color.black (MaterialReader.cs:934-936). The port's
+// emission uniform is global and only the two EXTERIOR frames ever wrote
+// it, so inside every shop the glass kept the town's day/night glow.
+// ---------------------------------------------------------------------
+
+test('AUDIT 26 F001: WindowStyle.Disabled is black, and both interior hosts state it every frame', () => {
+  // ChangeWindowEmissionColor's five arms, verbatim, as the renderer
+  // uploads them (color/255 * intensity).
+  assert.deepEqual([...windowEmissionRGB('disabled')], [0, 0, 0],
+    'WindowStyle.Disabled sets EmissionColor to Color.black outright');
+  // ...and the four LIT arms are untouched by that addition
+  assert.deepEqual([...windowEmissionRGB('day')].map((v) => +v.toFixed(6)),
+    [(89 / 255) * 0.5, (154 / 255) * 0.5, (178 / 255) * 0.5].map((v) => +v.toFixed(6)));
+  assert.deepEqual([...windowEmissionRGB('night')].map((v) => +v.toFixed(6)),
+    [(255 / 255) * 0.8, (182 / 255) * 0.8, (56 / 255) * 0.8].map((v) => +v.toFixed(6)));
+  // an unknown style still falls back to Day (GetMaterial's default)
+  assert.deepEqual([...windowEmissionRGB('nonesuch')], [...windowEmissionRGB('day')]);
+
+  // THE FOUR HOSTS: the modal host's interior arm and the standalone
+  // ?interior scene both say it; the exterior arms keep the day/night/fog
+  // read, which is DaggerfallLocation.WindowTextureStyle (:143-145).
+  assert.match(WM, /renderer\.setWindowEmission\(windowEmissionRGB\('disabled'\)\);/,
+    'the modal interior frame must set the interior window style');
+  assert.match(INT, /renderer\.setWindowEmission\(windowEmissionRGB\('disabled'\)\);/,
+    'the standalone ?interior host must set it too - main.js boots the global to Day');
+  for (const [name, text] of [['world.js', WORLD], ['exterior.js', EXT]]) {
+    assert.match(text, /windowStyleForWeather\(weather\) \?\? windowStyleForTime\(minute\)/,
+      `${name} keeps the exterior day/night/fog read`);
+    assert.doesNotMatch(text, /windowEmissionRGB\('disabled'\)/,
+      `${name} is an exterior frame - Disabled is not its style`);
+  }
+});
+
+// ---------------------------------------------------------------------
+// F066 - PlayerActivate.cs:887-899: a shelf stocks either way, and then
+// IsPlayerInsideOpenShop decides the WINDOW - the Buy trade window when
+// the shop is open, SetShopShelfStealing + the inventory over the shelf
+// as LootTarget (:959-961) when it is shut. The port computed the latch
+// at the door (:1120) and fed it only to the people gate.
+// ---------------------------------------------------------------------
+
+test('AUDIT 26 F066: a shut shop opens the stealing inventory, never the Buy window', () => {
+  const open = bodyOf(WM, 'function openShelf(i) {');
+  // the stock is unconditional - DFU stocks before it branches
+  const stockAt = open.indexOf('stockShelfIfDue(shelf, b);');
+  const gateAt = open.indexOf('if (!interiorOpenShop)');
+  assert.ok(stockAt > 0 && gateAt > stockAt,
+    'PlayerActivate stocks the shelf (:881-885) BEFORE it asks whether the shop is open');
+  // the shut arm is the inventory with the shelf as remote loot target...
+  assert.match(open, /if \(!interiorOpenShop\) \{[\s\S]*?host\.makeInventory\?\.\(\{ loot: \{ items: \(\) => \(shelf\.items \?\?= \[\]\) \} \}\)/,
+    'a shut shop takes InventoryWindow.LootTarget, not a trade window');
+  // ...and it RETURNS, so neither trade path below can run
+  const shutArm = open.slice(gateAt, open.indexOf('// U8c: the native trade screen'));
+  assert.match(shutArm, /return;/, 'the stealing arm must end the activation');
+  assert.ok(open.indexOf('openTradeWindow(shelf, b, \'Buy\')') > gateAt,
+    'the Buy window is only reachable past the open-shop gate');
+
+  // the latch is PlayerActivate.cs:1120's, computed once at the door...
+  assert.match(WM, /const insideOpenShop = _bt != null && isShop\(_bt\) && isBuildingOpen\(_bt, _hour\);\s*\n\s*interiorOpenShop = insideOpenShop;/,
+    'the door computes it and the latch keeps it - a shop entered open stays open');
+  // ...and it leaves with the interior, like the identity and the overlay
+  assert.equal((WM.match(/interiorOpenShop = false;/g) ?? []).length, 3,
+    'declared false and cleared on both exit paths (the door and the forced teardown)');
+});
+
+// ---------------------------------------------------------------------
+// F067 - DaggerfallTradeWindow.DoModeAction (:956-995): the Identify
+// SPELL refuses the whole pass when it costs more than CurrentMagicka,
+// and it never reaches ConfirmTrade, so it never reaches the
+// TallySkill(Mercantile, 1) at :1088. The port tallied every cast and
+// clamped the magicka to zero instead of refusing.
+// ---------------------------------------------------------------------
+
+test('AUDIT 26 F067: the Identify SPELL refuses on low magicka and never tallies Mercantile', () => {
+  const commit = bodyOf(WM, 'function commitTrade(shelf, mode, staged, price, proceeds, identifySpell = null) {');
+  // the refusal, in front of the pass
+  const gateAt = commit.indexOf('if (identifySpell.cost > (playerEntity.magicka ?? 0))');
+  const passAt = commit.indexOf('identifySpellPass(');
+  assert.ok(gateAt > 0 && passAt > gateAt,
+    'IdentifySpellCost > CurrentMagicka refuses BEFORE anything is identified');
+  assert.match(commit.slice(gateAt, passAt), /say\(NOT_ENOUGH_SPELL_POINTS_TEXT\);\s*\n\s*return;/,
+    'DFU shows notEnoughSpellpointsLeft and returns');
+  // Internal_Strings.csv:1052, verbatim
+  assert.equal(NOT_ENOUGH_SPELL_POINTS_TEXT, 'You do not have enough spell points left.');
+  // the tally belongs to ConfirmTrade, which the spell pass never reaches
+  assert.match(commit, /if \(!identifySpell\) tallySkill\(playerEntity, SKILLS\.Mercantile, 1\);/,
+    'ConfirmTrade_OnButtonClick:1088 is the only TallySkill, and DoModeAction returns before it');
+  assert.equal((commit.match(/tallySkill\(/g) ?? []).length, 1,
+    'one tally per concluded deal, and the spell concludes no deal');
+});
+
+// ---------------------------------------------------------------------
+// F068 - AddQuestNPC rays the ground (GameObjectHelper.cs:1040) and
+// AddQuestItem (:1116-1160) never does: an item's dungeon shift is the
+// CONSTANT -randomTreasureMarkerDim / 2 * GlobalScale, not its own
+// half-height, and nothing snaps it to the floor. The port ran one law
+// for both, so an item on a table was pulled down to the floor.
+// ---------------------------------------------------------------------
+
+test('AUDIT 26 F068: a quest ITEM takes AddQuestItem\'s law - a fixed dungeon shift and no ground ray', () => {
+  // DaggerfallLoot.cs:33 dim = 40, MeshReader.GlobalScale = 0.025
+  assert.equal(RANDOM_TREASURE_MARKER_DIM, 40);
+  assert.equal(GLOBAL_SCALE, 0.025);
+  assert.equal((RANDOM_TREASURE_MARKER_DIM / 2) * GLOBAL_SCALE, 0.5,
+    'AddQuestItem:1135-1136 shifts a dungeon item by exactly -0.5 world units');
+
+  const stand = bodyOf(WM, 'function standQuestFlatIn(list, getCtx, toScene, inDungeon, isItem, archive, record, position, behaviour, staticNpcFactionId = null, hashPosition = null) {');
+  // the ITEM arm: the constant, and NOTHING else
+  const itemArm = stand.slice(stand.indexOf('if (isItem) {'), stand.indexOf('} else {', stand.indexOf('if (isItem) {')));
+  assert.match(itemArm, /by = inDungeon \? y - \(RANDOM_TREASURE_MARKER_DIM \/ 2\) \* GLOBAL_SCALE : y;/);
+  assert.doesNotMatch(itemArm, /raycast/, 'AddQuestItem never calls AlignBillboardToGround');
+  assert.doesNotMatch(itemArm, /size\.h/, 'the item shift is a constant, not its own half-height');
+  // the NPC arm keeps both halves of AddQuestNPC
+  const npcArm = stand.slice(stand.indexOf('} else {', stand.indexOf('if (isItem) {')));
+  assert.match(npcArm, /by = inDungeon \? y - size\.h \/ 2 : y;/);
+  assert.match(npcArm, /raycast\?\.\(\[x, by \+ 0\.2, z\], \[0, -1, 0\], 4\)/,
+    'AlignBillboardToGround(go, Size, 4), from 0.2 above');
+  assert.match(npcArm, /size\.h \* 0\.02/, 'hit + size.y * 0.52 as a centre = size.y * 0.02 as a base');
+
+  // both adapters route items and NPCs through the right arm
+  assert.match(WM, /standQuestFlat\(false, flatData\.archive/);
+  assert.match(WM, /standQuestFlat\(true, t\.worldTextureArchive/);
+  assert.match(WM, /standDungeonQuestFlat\(false, flatData\.archive/);
+  assert.match(WM, /standDungeonQuestFlat\(true, t\.worldTextureArchive/);
+});
+
+// ---------------------------------------------------------------------
+// F209 - StockHouseContainer (DaggerfallLoot.cs:291-375) was unported:
+// private furniture "starts EMPTY" and nothing ever filled it, so no
+// house container in the game ever held anything.
+// ---------------------------------------------------------------------
+
+test('AUDIT 26 F209: the private-property tables are DaggerfallLootDataTables, verbatim', () => {
+  for (const t of [PRIVATE_PROPERTY_ITEMS_MODELS_0_TO_1, PRIVATE_PROPERTY_ITEMS_MODELS_2_TO_3,
+    PRIVATE_PROPERTY_ITEMS_MODELS_4_TO_10, PRIVATE_PROPERTY_ITEMS_MODELS_11_TO_14,
+    PRIVATE_PROPERTY_ITEMS_MODELS_15_AND_UP]) {
+    assert.equal(t.length, 24, 'one row per BuildingTypes Alchemist(0)..Town23(23)');
+  }
+  // spot rows, straight off DaggerfallLootDataTables.cs:63-198
+  assert.deepEqual([...PRIVATE_PROPERTY_ITEMS_MODELS_0_TO_1[0]], [0x06, 0x0C]);
+  assert.deepEqual([...PRIVATE_PROPERTY_ITEMS_MODELS_0_TO_1[2]], [0x02, 0x06, 0x0C]);
+  assert.deepEqual([...PRIVATE_PROPERTY_ITEMS_MODELS_2_TO_3[4]],
+    [0x09, 0x0A, 0x0B, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x19]);
+  assert.deepEqual([...PRIVATE_PROPERTY_ITEMS_MODELS_4_TO_10[0]],
+    [0x07, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x15]);
+  assert.deepEqual([...PRIVATE_PROPERTY_ITEMS_MODELS_11_TO_14[16]], [0x04, 0x07, 0x09, 0x0D, 0x19]);
+  assert.deepEqual([...PRIVATE_PROPERTY_ITEMS_MODELS_15_AND_UP[4]],
+    [0x02, 0x03, 0x04, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x15]);
+
+  // the band ladder (:305-334) and its `<= Town23` gate (:303)
+  assert.deepEqual([...privatePropertyItemList(17, 0)], [...PRIVATE_PROPERTY_ITEMS_MODELS_0_TO_1[17]]);
+  assert.deepEqual([...privatePropertyItemList(17, 1)], [...PRIVATE_PROPERTY_ITEMS_MODELS_0_TO_1[17]]);
+  assert.deepEqual([...privatePropertyItemList(17, 2)], [...PRIVATE_PROPERTY_ITEMS_MODELS_2_TO_3[17]]);
+  assert.deepEqual([...privatePropertyItemList(17, 3)], [...PRIVATE_PROPERTY_ITEMS_MODELS_2_TO_3[17]]);
+  assert.deepEqual([...privatePropertyItemList(17, 4)], [...PRIVATE_PROPERTY_ITEMS_MODELS_4_TO_10[17]]);
+  assert.deepEqual([...privatePropertyItemList(17, 10)], [...PRIVATE_PROPERTY_ITEMS_MODELS_4_TO_10[17]]);
+  assert.deepEqual([...privatePropertyItemList(17, 11)], [...PRIVATE_PROPERTY_ITEMS_MODELS_11_TO_14[17]]);
+  assert.deepEqual([...privatePropertyItemList(17, 14)], [...PRIVATE_PROPERTY_ITEMS_MODELS_11_TO_14[17]]);
+  assert.deepEqual([...privatePropertyItemList(17, 15)], [...PRIVATE_PROPERTY_ITEMS_MODELS_15_AND_UP[17]]);
+  assert.deepEqual([...privatePropertyItemList(17, 99)], [...PRIVATE_PROPERTY_ITEMS_MODELS_15_AND_UP[17]]);
+  assert.equal(privatePropertyItemList(BUILDING_TYPES.Ship, 0), null, 'buildingType > Town23 has no row');
+  assert.equal(privatePropertyItemList(BUILDING_TYPES.AllValid, 0), null);
+});
+
+test('AUDIT 26 F209: StockHouseContainer mints on the halving DFRandom continue chance', () => {
+  // ONE group for the whole container, then the loop of
+  // DaggerfallLoot.cs:369-371 - the add comes AFTER the test, so the
+  // FIRST item is unconditional and the chance halves 50, 25, 12, ...
+  const drawsFor = (dfSeq) => {
+    let i = 0;
+    return stockHouseContainer({ buildingType: BUILDING_TYPES.House1, textureRecord: 0 },
+      { level: 1, gender: 'male' }, { rolls: () => 0.5, dfRand: () => dfSeq[i++] ?? 99 });
+  };
+  // rand()%100 = 99 > 50 on the first test: exactly one item, never zero
+  assert.equal(drawsFor([99]).length, 1, 'the add is after the test - a stocked container is never empty');
+  // 10 <= 50 continues; 30 > 25 stops
+  assert.equal(drawsFor([10, 30]).length, 2);
+  // 10 <= 50, 20 <= 25, 20 > 12 stops
+  assert.equal(drawsFor([10, 20, 20]).length, 3);
+  // House1 row 17 of the 0-to-1 table is {Armor, MensClothing, WomensClothing};
+  // 0.5 * 3 = index 1 = MensClothing (0x06)
+  assert.deepEqual([...PRIVATE_PROPERTY_ITEMS_MODELS_0_TO_1[BUILDING_TYPES.House1]], [0x02, 0x06, 0x0C]);
+  assert.equal(drawsFor([99])[0].group, 'MensClothing',
+    'the group is drawn once for the whole container, not per item');
+  // every item is finished the way a shelf item is - name and value
+  const it = drawsFor([99])[0];
+  assert.ok(it.name && typeof it.value === 'number' && it.maxCondition > 0);
+  // ...and there is no gender swap here: BOTH clothing ids route to
+  // CreateRandomClothing, which picks the group off the PLAYER's gender
+  const female = stockHouseContainer({ buildingType: BUILDING_TYPES.House1, textureRecord: 0 },
+    { level: 1, gender: 'female' }, { rolls: () => 0.5, dfRand: () => 99 });
+  assert.equal(female[0].group, 'WomensClothing');
+
+  // a building past Town23 stocks nothing at all
+  assert.deepEqual(stockHouseContainer({ buildingType: BUILDING_TYPES.Ship, textureRecord: 0 },
+    { level: 1 }, { rolls: () => 0.5, dfRand: () => 99 }), []);
+});
+
+test('AUDIT 26 F209: the container arm restocks per game day, skips a house the player owns, and the host calls it', () => {
+  const date = { year: 405, month: 3, day: 3 };            // the 4th of the 4th month
+  const c = { items: [], record: 0, stockedDate: 0 };
+  const opts = { rolls: () => 0.5, dfRand: () => 99 };
+  assert.equal(restockHouseContainerIfDue(c, { buildingType: BUILDING_TYPES.House1 }, date, {}, opts), true);
+  assert.equal(c.items.length, 1);
+  // same game day: PlayerActivate.cs:911's `<` is false, nothing re-rolls
+  c.items = [];
+  assert.equal(restockHouseContainerIfDue(c, { buildingType: BUILDING_TYPES.House1 }, date, {}, opts), false);
+  assert.deepEqual(c.items, [], 'an emptied cupboard stays empty until the day rolls over');
+  // ...and the next day it does
+  assert.equal(restockHouseContainerIfDue(c, { buildingType: BUILDING_TYPES.House1 },
+    { year: 405, month: 3, day: 4 }, {}, opts), true);
+  assert.equal(c.items.length, 1);
+
+  // the playerOwned arm (:903-908): stockedDate = 1, and NOTHING is rolled
+  const mine = { items: [{ group: 'Weapons', templateIndex: 1 }], record: 0, stockedDate: 0 };
+  assert.equal(restockHouseContainerIfDue(mine, { buildingType: BUILDING_TYPES.House1, playerOwned: true }, date, {}, opts), false);
+  assert.equal(mine.stockedDate, 1, 'DFU stamps it 1 "to ensure it gets serialized"');
+  assert.deepEqual(mine.items, [{ group: 'Weapons', templateIndex: 1 }],
+    'an owned house\'s furniture is the player\'s own storage - it is never re-stocked');
+
+  // and the host's HouseContainers arm runs it, with the empty-container
+  // early-out (:917-918) in front of the transfer
+  const arm = WM.slice(WM.indexOf("if (key.startsWith('container:')) {"));
+  const stockAt = arm.indexOf('restockHouseContainerIfDue(c, {');
+  const emptyAt = arm.indexOf('if (!c.items.length) return true;');
+  const takeAt = arm.indexOf('transferAll(c.items, playerEntity.items);');
+  assert.ok(stockAt > 0 && emptyAt > stockAt && takeAt > emptyAt,
+    'stock on first access, then "if no contents, do nothing", then open');
+  assert.match(arm, /playerOwned: \(b\?\.buildingType === BUILDING_TYPES\.Ship && ownsShip\(playerEntity\)\)/);
+  // the stamp rides the scene cache with the items (SerializableLootContainer.cs:72)
+  assert.match(WM, /containerType: LOOT_CONTAINER_TYPES\.HouseContainers, key: `container:\$\{i\}`, items: c\.items \?\? null, stockedDate: c\.stockedDate \?\? 0,/);
 });

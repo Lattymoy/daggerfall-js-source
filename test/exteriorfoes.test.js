@@ -52,7 +52,14 @@ test('exteriorfoes: the world host - the cadence loop, the travel reset, the fac
   assert.ok(i > 0);
   const fn = s.slice(i, i + 1400);
   assert.ok(fn.includes('intermittentEnemySpawn({'), 'the classic catch-up loop rolls per elapsed minute');
-  assert.ok(fn.includes('inLocationRect: locationIndex.has(key)'), 'the town rect reads the location index');
+  // AUDIT 26 F062: this line used to read `locationIndex.has(key)` -
+  // "the player's MAP PIXEL carries a location" - and called that
+  // IsPlayerInLocationRect. PlayerEntity.cs:566 branches on the real
+  // flag, the world rect widened by one city block, which a pixel is
+  // up to seven times the area of (PlayerGPS.cs:687). The pin now
+  // asserts the rect, and the pixel spelling is gone from the loop.
+  assert.ok(fn.includes('inLocationRect: _musicInLocationRect()'), 'the town arm reads IsPlayerInLocationRect, not the pixel');
+  assert.equal(fn.includes('locationIndex.has('), false, 'the pixel predicate is not the rect');
   assert.ok(fn.includes('maps.getClimateIndex('), 'the climate feeds the table pick');
   assert.ok(fn.includes('Math.min(now - _lastEncMinutes, 1440)'), 'the catch-up is bounded');
   assert.ok(s.includes('_lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // X-slice: PreventEnemySpawns parity'),
