@@ -492,6 +492,29 @@ nothing; the classic path is byte-for-byte untouched; every control is
 a real `<button>` so tab focus and Enter work with the browser's own
 focus ring.
 
+**2026-08-26 - AUDIT 26, THE FULL-TREE PARITY AND BUG AUDIT.**
+`01-Overview/Audit-26.md`. Mac asked for a comprehensive bug/parity
+audit of the entire codebase against DFU. The first one run with the
+DFU source actually in the container (`81e89e9`, 928 non-Editor `.cs`):
+38 chunk surveyors over all 379 modules and 119,105 lines, plus five
+cross-cutting sweeps (uncalled laws, four-hosts seams, shared-LCG draw
+order, allocation lifecycle, the save envelope). 223 claims, 218
+confirmed, 5 refuted - 67 bug, 89 parity, 62 nit. Verification ran in
+TWO TIERS and the page says so: 33 claims took two full-strength
+refuters each, the other 190 were batch-verified on a cheaper model,
+and eight of those confirmations were re-refuted at full strength (8 of
+8 upheld). All 67 bugs are fixed and pinned - 3,472 tests, 0 fail; the
+151 parity/nit findings are 117 new Port-Ledger section C rows. THE
+HEADLINE IS THE OLDEST SHAPE WE HAVE: `collectExteriorNpcs` ports
+RMBLayout's rule faithfully, is corpus-pinned, and had ZERO production
+callers - no street NPC in the game could be talked to or activated,
+and the Ledger had carried the row admitting it since AUDIT 18. Four
+more pins were found restating the port instead of the source, one of
+them matching a COMMENT; and the structural cause of the worst defect
+(a duplicate object key silently killing the complete outdoor-rest
+path in both hosts) was that `no-dupe-keys` was OFF in the lint config.
+It is on now, and it found two more live sites.
+
 **2026-08-23 - AUDIT 25, THE COMPLETENESS AUDIT.** `01-Overview/Audit-25.md`.
 Mac asked what we need to complete the 1:1 port. AUDIT 23 and 24 were
 PARITY audits - they read `src/` against its C# originals and asked
