@@ -462,8 +462,9 @@ export class ActionSystem {
       // waits for the live skill to differ. DFU's own field comment
       // there marks it "TODO: persist across save and load", but that
       // TODO is stale: SerializableActionDoor DOES round-trip it
-      // (:78 save, :101 restore). The S12 snapshot still skips it -
-      // FLAGGED, a live gap, not parity.
+      // (:78 save, :101 restore, the lockpickFailedSkillLevel member of
+      // ActionDoorData_v1, SerializableGameObject.cs:336) - and so does
+      // the S12 snapshot now (collectSaveData/restoreSaveData below).
       failedSkillLevel: 0,
       matrix: baseMatrix,
     };
@@ -826,8 +827,15 @@ export class ActionSystem {
    *  Move-flagged door saved mid-rise snapped back to its base pose on
    *  load (AUDIT 18 / AUDIT 23 save-load-11).
    *
-   *  NOT carried: failedSkillLevel (see addDoor - a live gap, FLAGGED,
-   *  not this slice), and activationCount - DFU serializes NEITHER
+   *  The door record also carries failedSkillLevel, the
+   *  lockpickFailedSkillLevel of ActionDoorData_v1
+   *  (SerializableGameObject.cs:336), which SerializableActionDoor
+   *  saves at :78 and restores at :101. AttemptLockpicking's gate is an
+   *  exact compare against it (DaggerfallActionDoor.cs:157), so without
+   *  it in the record a failed pick was retried immediately by loading
+   *  the save - where DFU makes you wait for the live skill to move.
+   *
+   *  NOT carried: activationCount - DFU serializes NEITHER
    *  half of it (ActionObjectData_v1 is loadID/position/rotation/
    *  currentState/actionPercentage, SerializableGameObject.cs:344-351;
    *  ActionDoorData_v1 adds only the lock and the failed skill level,
@@ -840,7 +848,10 @@ export class ActionSystem {
     return [...this.objects.values()].map((o) => ({
       key: o.key, state: o.state, t: o.t ?? 0,
       ...(o.kind === 'door'
-        ? { lock: o.currentLockValue, moveState: o.moveState, moveT: o.moveT ?? 0 }   // P10 lock; the Move pair
+        ? {
+          lock: o.currentLockValue, moveState: o.moveState, moveT: o.moveT ?? 0,   // P10 lock; the Move pair
+          failedSkillLevel: o.failedSkillLevel ?? 0,   // SerializableActionDoor.cs:78
+        }
         : {}),
     }));
   }
@@ -870,6 +881,7 @@ export class ActionSystem {
       if (o.kind === 'door') {
         if (sa.lock != null) o.currentLockValue = sa.lock;   // P10: door locks persist
         if (sa.moveState != null) { o.moveState = sa.moveState; o.moveT = sa.moveT ?? 0; }
+        if (sa.failedSkillLevel != null) o.failedSkillLevel = sa.failedSkillLevel;   // SerializableActionDoor.cs:101
       }
       this.syncRestored(o);
     });

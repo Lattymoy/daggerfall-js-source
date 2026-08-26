@@ -160,3 +160,57 @@ test('R1 mode: ONE global interaction mode - the singleton, the wrap, and townTa
     assert.equal(getInteractionMode(), 'steal');
   } finally { setInteractionMode(before); }
 });
+
+test('R1 save: the FAILED skill level rides the door record (SerializableActionDoor.cs:78/:101) - a load cannot retry the pick', () => {
+  // ActionDoorData_v1 carries lockpickFailedSkillLevel
+  // (SerializableGameObject.cs:329-337); SerializableActionDoor writes
+  // it at :78 and restores it at :101. Without it in the port's record
+  // a failed pick was retried immediately by loading the save, where
+  // DFU makes you wait for the live skill to move.
+  const skill = 30;
+  const tallies = [], results = [];
+  const mk = () => {
+    const a = new ActionSystem(stubCollider(), { playerLevel: () => 5, lockpickSkill: () => skill, rolls: () => 0.99 });
+    a.onLockpickTally = () => tallies.push(1);
+    a.onLockpickResult = (o, ok) => results.push(ok);
+    return { a, door: a.addDoor(CUBE, I, { startingLockValue: 4 }) };   // chance 35, roll 99 -> fail
+  };
+
+  const { a, door } = mk();
+  assert.equal(a.attemptLockpicking(door), false);
+  assert.equal(door.failedSkillLevel, 30);
+
+  // the door record, field for field: the swing pair, the P10 lock,
+  // the Move pair, and the failed skill level
+  const snap = a.collectSaveData();
+  assert.deepEqual(snap, [{
+    key: door.key, state: 'start', t: 0,
+    lock: 4, moveState: 'start', moveT: 0, failedSkillLevel: 30,
+  }]);
+
+  // the load REBUILDS the location, so restore onto a fresh graph
+  const fresh = mk();
+  assert.equal(fresh.door.failedSkillLevel, 0, 'the rebuilt door really starts clean');
+  fresh.a.restoreSaveData(snap);
+  assert.equal(fresh.door.failedSkillLevel, 30);
+  // ...and the gate at :157 is silent again: no tally, no roll, no message
+  const talliesBefore = tallies.length, resultsBefore = results.length;
+  assert.equal(fresh.a.attemptLockpicking(fresh.door), false);
+  assert.equal(tallies.length, talliesBefore, 'save-scumming the load does not buy a second attempt');
+  assert.equal(results.length, resultsBefore);
+  assert.equal(fresh.door.currentLockValue, 4);
+});
+
+test('R1 save: failedSkillLevel is PRESENCE-GATED - a pre-fix snapshot leaves the live record alone', () => {
+  // Every field past {state, t} is additive, the shape this save layer
+  // uses everywhere: a snapshot written before the field existed must
+  // not zero a live failure record and hand back a free retry.
+  const a = new ActionSystem(stubCollider(), { playerLevel: () => 5, lockpickSkill: () => 30, rolls: () => 0.99 });
+  const door = a.addDoor(CUBE, I, { startingLockValue: 4 });
+  a.attemptLockpicking(door);
+  assert.equal(door.failedSkillLevel, 30);
+  const legacy = a.collectSaveData().map(({ failedSkillLevel, ...rest }) => rest);
+  assert.equal('failedSkillLevel' in legacy[0], false);
+  a.restoreSaveData(legacy);
+  assert.equal(door.failedSkillLevel, 30, 'the live record stands');
+});

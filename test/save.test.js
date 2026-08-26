@@ -24,7 +24,14 @@ test('save: round-trip restores everything; extras carried; deep copies', () => 
   const dst = {};
   const byIndex = new Map([[97, { index: 97, name: 'Balyna\'s Balm' }]]);
   const extras = restorePlayer(dst, snap, byIndex);
-  assert.deepEqual(extras, { position: [1, 2, 3], classicMinutes: 77.5, readiedSpellIndex: 97, world, locationKey: 'dungeon:42', quest: null, talk: null });   // S12: the world rides the envelope; Q4-v/TK-i: the quest + talk slots (null when the host passed none)
+  // S12: the world rides the envelope; Q4-v/TK-i: the quest + talk
+  // slots (null when the host passed none). `entity` is the restored
+  // entity itself: SaveLoadManager's last load step is the orphaned-
+  // item sweep (:1518 -> :1556-1570), which reaches the player through
+  // GameManager.Instance.PlayerEntity - the port has no such singleton,
+  // so the entity rides the extras to restoreSessionState, where that
+  // step lives.
+  assert.deepEqual(extras, { entity: dst, position: [1, 2, 3], classicMinutes: 77.5, readiedSpellIndex: 97, world, locationKey: 'dungeon:42', quest: null, talk: null });
   assert.equal(dst.name, 'Mac');
   assert.equal(dst.stats.luck, 60);
   assert.equal(dst.items[0].name, 'Short Bow');

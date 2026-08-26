@@ -14,7 +14,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { composeSessionState, restoreSessionState } from '../src/systems/save.js';
+import {
+  composeSessionState, restoreSessionState, removeAllOrphanedItems, removeOrphanedItems,
+  snapshotPlayer, restorePlayer,
+} from '../src/systems/save.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -86,4 +89,74 @@ test('B4 seam gate: both quicksaving hosts run the composer, and the dungeon con
   assert.match(modes, /questBridge, talkSave,\s*\n\s*onQuestRestored: \(\) => \{ onQuestRestored\?\.\(\); mountQuestResources\(\); \},/);
   assert.match(world, /talkSave: \{ mill: rumorMill, tree: topicTree, session: npcSession \}/);
   assert.match(world, /onQuestRestored: \(\) => \{ _questStarted = true; \}/);
+});
+
+// --- The orphaned-item sweep (SaveLoadManager.cs:1518 -> :1556-1570 ->
+// ItemCollection.RemoveOrphanedItems, Items/ItemCollection.cs:661-688).
+
+const questItem = (uid, symbol) => ({ group: 'MiscItems', templateIndex: 1, questItem: true, questUID: uid, questSymbol: symbol });
+
+test('RemoveOrphanedItems (ItemCollection.cs:661-688): a null OR tombstoned quest drops the item, across Items/WagonItems/OtherItems', () => {
+  const quests = new Map([
+    [11, { questTombstoned: false }],
+    [22, { questTombstoned: true }],
+  ]);
+  const getQuest = (uid) => quests.get(uid) ?? null;
+  const plain = { group: 'Weapons', templateIndex: 129, name: 'Short Bow' };
+  const live = questItem(11, '_gem_');
+  const entity = {
+    items: [plain, live, questItem(22, '_urn_'), questItem(99, '_gone_')],
+    wagonItems: [questItem(99, '_crate_'), plain],
+    otherItems: [questItem(22, '_blade_')],
+  };
+  // one count over the three collections, C#'s own sum (:1560-1566)
+  assert.equal(removeAllOrphanedItems(entity, getQuest), 4);
+  assert.deepEqual(entity.items, [plain, live], 'the live quest keeps its item; a plain item is never touched');
+  assert.deepEqual(entity.wagonItems, [plain]);
+  assert.deepEqual(entity.otherItems, []);
+  // nothing orphaned -> zero, and nothing moved
+  assert.equal(removeAllOrphanedItems(entity, getQuest), 0);
+  assert.deepEqual(entity.items, [plain, live]);
+
+  // the two passes are C#'s: schedule, then remove. A splice inside
+  // the scan would skip the item after each removal.
+  const run = [questItem(99, 'a'), questItem(99, 'b'), questItem(99, 'c')];
+  assert.equal(removeOrphanedItems(run, () => null), 3);
+  assert.deepEqual(run, []);
+
+  // no quest machine, no question to ask: DFU reaches
+  // GameManager.Instance.QuestMachine, which always exists, so a host
+  // that mounts none must not call every quest item an orphan.
+  const noMachine = { items: [questItem(11, '_gem_')] };
+  assert.equal(removeAllOrphanedItems(noMachine, null), 0);
+  assert.equal(noMachine.items.length, 1);
+});
+
+test('the sweep runs at DFU:1518 - AFTER the quest machine has restored, so a live quest item survives the load', () => {
+  // SaveLoadManager.LoadGame calls RemoveAllOrphanedItems at :1518,
+  // past RestoreSaveData (which is where the quest machine and the
+  // conversation come back, :1433-1449). The port's load is the same
+  // two halves - restorePlayer, then restoreSessionState - so the
+  // sweep is the last line of the second. Run any earlier and it reads
+  // a machine with no quests in it yet and eats the whole pack.
+  const machineQuests = new Map();
+  const bridge = {
+    restore: () => { machineQuests.set(11, { questTombstoned: false }); },   // the quests only exist AFTER this
+    machine: { getQuest: (uid) => machineQuests.get(uid) ?? null },
+  };
+  const src = {
+    stats: {}, items: [questItem(11, '_gem_'), questItem(77, '_lost_')],
+    wagonItems: [], otherItems: [],
+  };
+  const snap = snapshotPlayer(src, { classicMinutes: 0 });
+  const dst = {};
+  const extras = restorePlayer(dst, snap);
+  assert.equal(extras.entity, dst, 'the entity rides the extras - the port has no GameManager singleton (:1559)');
+  assert.equal(dst.items.length, 2, 'restorePlayer itself sweeps nothing');
+
+  restoreSessionState(extras, { questBridge: bridge });
+  // quest 11 restored and is live -> its item stays; quest 77 never
+  // reconstructed (machine.restoreSaveData catches PER QUEST and keeps
+  // going) -> its item is gone.
+  assert.deepEqual(dst.items.map((it) => it.questUID), [11]);
 });

@@ -269,8 +269,8 @@ export function restoreFactionRep(store, snap) {
 }
 
 /** Restore a snapshot onto the live entity. Returns the scene
- *  extras { position, classicMinutes, readiedSpellIndex } or null
- *  on a version mismatch (loud). */
+ *  extras { entity, position, classicMinutes, readiedSpellIndex } or
+ *  null on a version mismatch (loud). */
 export function restorePlayer(entity, snap, spellsByIndex = null) {
   if (!snap || snap.v !== SAVE_VERSION) {
     console.warn(`[save] version mismatch (got ${snap?.v}, want ${SAVE_VERSION}); refusing`);
@@ -441,7 +441,14 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // expiring restored buffs on the spot and bursting a restored
   // continuous-damage effect over a window the saved game never lived.
   resetMagicRoundMarker(Math.floor(snap.classicMinutes ?? 0));
-  return { position: snap.position, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null };
+  // `entity` rides the extras for ONE reason: the load's LAST step is
+  // the orphaned-item sweep, which DFU reaches through
+  // GameManager.Instance.PlayerEntity (SaveLoadManager.cs:1559) and the
+  // port has no such singleton. The extras object is already the
+  // handoff between this half of the load and restoreSessionState,
+  // which is where DFU's :1518 sits - so the entity travels the seam
+  // that is already there rather than a second host argument.
+  return { entity, position: snap.position, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null };
 }
 
 /** AUDIT 25 B4: ONE quest+talk envelope composer, every quicksaving
@@ -468,6 +475,64 @@ export function composeSessionState({ questBridge = null, talk = null } = {}) {
   };
 }
 
+/** ItemCollection.RemoveOrphanedItems (Items/ItemCollection.cs:661-688):
+ *  drop every item that relates to a quest the machine no longer has,
+ *  or to one that has been TOMBSTONED. Returns the number removed, as
+ *  C# does - RemoveAllOrphanedItems sums the three collections and
+ *  logs the total.
+ *
+ *  Two arms in C#, and only the quest one has a port. The other
+ *  (`else if (string.IsNullOrEmpty(item.shortName))`, :675-678) tests
+ *  DaggerfallUnityItem.shortName, the item's OWN stored name, empty
+ *  exactly when its template did not resolve. The port stores no such
+ *  field: an item's name is DERIVED from the template table on demand
+ *  (itemInfo.js), so there is nothing here that is empty when and only
+ *  when the template is invalid, and reading the port's `name` instead
+ *  would sweep every legitimately unnamed item ever minted. Named, not
+ *  half-built.
+ *
+ *  The removal is DFU's RemoveItem (:278-287) - a plain drop from the
+ *  collection. It does not unequip and does not repair the equip
+ *  table, and neither does this.
+ *
+ *  `getQuest` is QuestMachine.GetQuest(uid) (the machine returns null
+ *  for a uid it does not hold, which is C#'s own null arm). */
+export function removeOrphanedItems(list, getQuest) {
+  if (!Array.isArray(list) || !getQuest) return 0;
+  // Schedule first, remove after - C#'s two passes, and a splice
+  // inside the scan would skip the next item.
+  const itemsToRemove = [];
+  for (const item of list) {
+    if (!item?.questItem) continue;
+    const quest = getQuest(item.questUID);
+    if (!quest) itemsToRemove.push(item);
+    else if (quest.questTombstoned) itemsToRemove.push(item);
+  }
+  for (const item of itemsToRemove) {
+    const i = list.indexOf(item);
+    if (i >= 0) list.splice(i, 1);
+  }
+  return itemsToRemove.length;
+}
+
+/** SaveLoadManager.RemoveAllOrphanedItems (:1560-1570): the sweep runs
+ *  over the player's THREE collections - Items, WagonItems and
+ *  OtherItems - and logs the total when anything went.
+ *
+ *  No quest machine, no sweep: DFU reaches
+ *  GameManager.Instance.QuestMachine, which always exists, so a host
+ *  that mounts none (the standalone ?dungeon scene) has no question to
+ *  ask and must not answer "orphaned" to every quest item. */
+export function removeAllOrphanedItems(entity, getQuest) {
+  if (!entity || !getQuest) return 0;
+  let count = 0;
+  count += removeOrphanedItems(entity.items, getQuest);
+  count += removeOrphanedItems(entity.wagonItems, getQuest);
+  count += removeOrphanedItems(entity.otherItems, getQuest);
+  if (count > 0) console.log(`Removed ${count} orphaned items.`);
+  return count;
+}
+
 /** The restore half. Keeps the port's RECORDED null-arm departure: DFU
  *  calls RestoreConversationData(null) on a save with no conversation
  *  block, which RESETS the mill (TalkManager.cs:2440-2443 mints a
@@ -490,6 +555,24 @@ export function restoreSessionState(extras, { questBridge = null, talk = null } 
     // RestoreConversationData's mill-orphan sweep (:2522-2533)
     talk.mill.removeOrphanedQuestRumors((id) => !!questBridge?.machine.getQuest(id));
   }
+  // "Clear any orphaned quest items" - SaveLoadManager.LoadGame:1518.
+  // DFU puts it AFTER RestoreSaveData has finished, which is where the
+  // quest machine and the conversation come back (:1433-1449), and the
+  // port's load is those same two halves: restorePlayer (the entity and
+  // its three item collections) and then this function (quest, then
+  // conversation). So the sweep belongs at the END of this one - the
+  // last line past questBridge.restore, exactly as :1518 is the line
+  // past RestoreSaveData. Running it any earlier would read a machine
+  // that has not restored its quests yet and eat every live quest item
+  // in the pack.
+  //
+  // It matters because machine.restoreSaveData catches PER QUEST
+  // (quest/machine.js) and keeps going: a quest that fails to
+  // reconstruct is simply absent afterwards, and its items are sitting
+  // in the pack weighing something, un-droppable through the quest-item
+  // gate (questTransferRefused).
+  removeAllOrphanedItems(extras?.entity ?? null,
+    questBridge?.machine ? (uid) => questBridge.machine.getQuest(uid) : null);
   return !!extras?.quest;
 }
 
