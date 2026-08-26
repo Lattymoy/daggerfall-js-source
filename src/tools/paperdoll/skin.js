@@ -34,6 +34,7 @@ export function createSkin(ctx) {
   let skinI = null, skinTexCanvas = null, skinTex = null, skinLayout = null;
   let bodyFaceTile = null;
   let lastRamp = null;
+  let bodyOverlaySampler = null; // classic clothing art; exact face -> source pixel
 
   // TEXTURE + PAPERDOLL DELTAS HAVE TO COMPOSE. Villagers, armour-as-body and
   // several enemy lines recolour the rig's existing faces through the geometry
@@ -348,6 +349,9 @@ export function createSkin(ctx) {
     if (!b || b.mode !== 'face-atlas' || !bodyFaceTile) return false;
     for (const [f, c] of colorOverrides) {
       if ((D.G ? D.G[f] : 0) === 1) return false; // wrapped head arc: vertex fallback
+      // Classic clothing now owns these face pixels explicitly. Do not flood
+      // its tile with the old flat garment colour before the source-art pass.
+      if (bodyOverlaySampler?.ownsFace?.(f)) continue;
       const ti = bodyFaceTile[f];
       if (ti < 0) return false;
       const x = b.x + (ti % b.columns) * b.stride;
@@ -356,6 +360,38 @@ export function createSkin(ctx) {
       ctx2.fillRect(x, y, b.stride, b.stride); // gutter included: no skin bleed at tile edge
     }
     return true;
+  }
+
+  function paintBodyOverlay(ctx2) {
+    const sample = bodyOverlaySampler;
+    const b = skinLayout && skinLayout.body;
+    if (!sample || !b || b.mode !== 'face-atlas' || !bodyFaceTile) return;
+
+    // The gutter samples the nearest edge texel, exactly like the body baker's
+    // duplicated gutters. That keeps neighbouring clothing tiles from bleeding
+    // into each other under nearest sampling while the model spins.
+    const pad = b.pad ?? Math.max(0, Math.floor((b.stride - (b.tile || b.stride)) / 2));
+    const tile = b.tile || Math.max(1, b.stride - pad * 2);
+    const image = ctx2.getImageData(0, 0, skinTexCanvas.width, skinTexCanvas.height);
+    const dst = image.data, W = image.width;
+    for (let f = 0; f < nf; f++) {
+      if (!sample.ownsFace?.(f)) continue;
+      const ti = bodyFaceTile[f];
+      if (ti < 0) continue;
+      const x0 = b.x + (ti % b.columns) * b.stride;
+      const y0 = b.y + Math.floor(ti / b.columns) * b.stride;
+      for (let iy = 0; iy < b.stride; iy++) {
+        const t = Math.max(0, Math.min(1, (iy - pad) / Math.max(1, tile - 1)));
+        for (let ix = 0; ix < b.stride; ix++) {
+          const ss = Math.max(0, Math.min(1, (ix - pad) / Math.max(1, tile - 1)));
+          const c = sample(f, ss, t);
+          if (!c || c[3] === 0) continue; // a source hole reveals the already-painted skin
+          const o = ((y0 + iy) * W + (x0 + ix)) * 4;
+          dst[o] = c[0]; dst[o + 1] = c[1]; dst[o + 2] = c[2]; dst[o + 3] = 255;
+        }
+      }
+    }
+    ctx2.putImageData(image, 0, 0);
   }
 
   function paintSkinTexture(ramp) {
@@ -382,6 +418,7 @@ export function createSkin(ctx) {
       paintVertexFallback(ramp);
       return;
     }
+    paintBodyOverlay(ctx2);
 
     skinTex.needsUpdate = true;
     if (mat.map !== skinTex || !vertexFallback) {
@@ -422,7 +459,12 @@ export function createSkin(ctx) {
     if (ca) watchedColorVersion = ca.version;
   }
 
-  return { loadSkin, loadHeads, loadFaceSet, ensureHead, setBodySkin,
+  const setBodyOverlaySampler = (sampler) => {
+    bodyOverlaySampler = sampler || null;
+    if (skinTex && lastRamp) paintSkinTexture(lastRamp);
+  };
+
+  return { loadSkin, loadHeads, loadFaceSet, ensureHead, setBodySkin, setBodyOverlaySampler,
            setHeadPick: (i) => { headPick = ((i % 10) + 10) % 10; },
            setFacePick: (i) => { facePick = ((i % 10) + 10) % 10; },
            getHeadPick: () => headPick };
