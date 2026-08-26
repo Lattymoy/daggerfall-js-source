@@ -59,8 +59,13 @@ async function landing(label, ctxOpts) {
   check(`${label}: the headline is set in the brand face`, /Grenze Gotisch/.test(h1Face), h1Face);
   check(`${label}: ...and the brand face loaded`,
     await page.evaluate(() => document.fonts.check("300 40px 'Grenze Gotisch'")));
-  check(`${label}: no script, no image, no canvas on the landing`,
-    (await page.locator('script:not([src^="/@vite/"]), img, canvas, video').count()) === 0);   // vite's own HMR client is the dev server's, not the page's
+  check(`${label}: no script, no canvas on the landing`,
+    (await page.locator('script:not([src^="/@vite/"]), canvas, video').count()) === 0);   // vite's own HMR client is the dev server's, not the page's
+  // U60c: the three pictures resolve and paint at their declared size.
+  const pics = await page.locator('.shot img').evaluateAll((els) => els.map((i) => [i.getAttribute('src'), i.complete && i.naturalWidth > 0, i.naturalWidth === Number(i.getAttribute('width'))]));
+  check(`${label}: the three pictures load at their declared size`, pics.length === 3 && pics.every(([, ok, sized]) => ok && sized), JSON.stringify(pics));
+  const strip = await page.locator('.end .stat').evaluateAll((els) => els.map((e) => e.textContent));
+  check(`${label}: the ledger strip carries two figures`, strip.length === 2 && strip.every((t) => /^[\d,]{4,}$/.test(t)), strip.join(' / '));
   check(`${label}: the gate wears its four corner fittings`,
     await page.locator('.gate').evaluate((el) => {
       const w = (n, ps) => getComputedStyle(n, ps).borderTopWidth + getComputedStyle(n, ps).borderLeftWidth
