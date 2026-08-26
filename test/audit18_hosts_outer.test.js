@@ -167,7 +167,7 @@ test('audit18 hosts: worldModes overlayHeld covers the DUNGEON overlay, and hold
   const s = src('src/scenes/worldModes.js');
   const line = s.split('\n').find((l) => l.includes('const overlayHeld'));
   assert.ok(line, 'worldModes must compute overlayHeld');
-  const decl = s.slice(s.indexOf('const overlayHeld'), s.indexOf('const inputHeld'));
+  const decl = s.slice(s.indexOf('const overlayHeld'), s.indexOf('const crouchHeld'));
   assert.match(decl, /dungeonCtx/, 'overlayHeld ignores the dungeon overlay - the motor walks under an open window');
   assert.match(decl, /uiOverlayActive/);
   // DFU PauseGame(true) stops the movers too (dungeon.js:219 does).

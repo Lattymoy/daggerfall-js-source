@@ -20,7 +20,6 @@ import { setInfectionHost, vampireClanForFaction } from '../systems/infection.js
 import { findFactions } from '../systems/talk.js';   // V1: GetRegionFaction's FindFactions(Province, region)
 import { FACTION_TYPES } from '../formats/factionFile.js';
 import { killIfAnyLiveStatZero } from '../systems/statMods.js';   // AUDIT 24 (wave 32): the per-entity laws a foe pool owes
-import { decayEnemyAlert } from '../systems/encounters.js';   // AUDIT 24 (wave 36): PlayerEntity.Update's 8-hour decay, in every context
 import { hasSpecialAbility, SPECIAL_ABILITY, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate } from '../systems/rest.js';   // the rested hour's three rates, one home for every host (V5 + S40, same line from two lanes)
 import { createNearbyScan, updateNearbyObjects, detectedMarkers, hasLiveDetector } from '../systems/nearbyObjects.js';   // X4: the Detect scan
 import { liveStat, maxFatigue } from '../systems/statMods.js';
@@ -136,16 +135,27 @@ export function createSkyController(gl, params) {
   async function buildPanorama(skyIndex, frame) {
     if (frame === null) {
       const name = nightSkyImageName(skyIndex);
-      const img = new ImgFile();
-      img.load(await fetchBytes(name), name);
-      const pal = new DFPalette();
-      pal.load(await fetchBytes(img.paletteName), img.paletteName);
-      img.palette = pal;
-      // LoadVanillaNightSky's star pass runs on the palette-INDEX
-      // bitmap, BETWEEN GetDFBitmap and GetColor32 (DaggerfallSky.cs
-      // :586-603) - ShowStars defaults true.
-      return buildNightSkyPanorama(
-        img.getColor32(applyNightStars(img.getDFBitmap(0, 0), starRandom), -1));
+      try {
+        const img = new ImgFile();
+        img.load(await fetchBytes(name), name);
+        const pal = new DFPalette();
+        pal.load(await fetchBytes(img.paletteName), img.paletteName);
+        img.palette = pal;
+        // LoadVanillaNightSky's star pass runs on the palette-INDEX
+        // bitmap, BETWEEN GetDFBitmap and GetColor32 (DaggerfallSky.cs
+        // :586-603) - ShowStars defaults true.
+        return buildNightSkyPanorama(
+          img.getColor32(applyNightStars(img.getDFBitmap(0, 0), starRandom), -1));
+      } catch {
+        // The SAME posture as the day sibling below, which this branch
+        // never had: DaggerfallSky reads local files and cannot fail
+        // this way at all, so a missing or unreadable NITE??I0.IMG
+        // degrades to the gradient. Un-caught it rejected the promise
+        // use() hangs its one-shot `pending` guard on, and the sky
+        // froze on the last day frame for the whole night.
+        console.warn(`${name} unavailable - gradient sky fallback`);
+        return buildFallbackSkyPanorama();
+      }
     }
     if (!skyFiles.has(skyIndex)) {
       const name = SkyFile.indexToFileName(skyIndex);
@@ -191,7 +201,18 @@ export function createSkyController(gl, params) {
         pending = null;
       };
       if (cached) apply(cached);
-      else buildPanorama(skyIndex, frame).then(apply);
+      // `pending` is a ONE-SHOT guard: the early return above refuses
+      // every later use() for the same key, and only apply() clears it.
+      // A rejected build therefore wedged the controller on that key
+      // for good (DFU has no such guard to wedge - DaggerfallSky
+      // rebuilds from local files each frame change). Releasing it here
+      // makes the next frame retry, which is the reference's behaviour.
+      else {
+        buildPanorama(skyIndex, frame).then(apply).catch((e) => {
+          if (pending === key) pending = null;
+          console.warn(`sky ${key} failed to build - retrying next frame:`, e?.message ?? e);
+        });
+      }
     },
     draw(yaw, pitch, fovY, aspect) {
       sky.draw(yaw, pitch, fovY, aspect);
@@ -737,13 +758,11 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
         say,
       });
       setWorldMinutes(r.classicMinutes);
-      // AUDIT 24 (wave 36): PlayerEntity.Update:380-384 lowers the enemy
-      // alert eight hours after it was raised, in EVERY context - it is
-      // the entity update, not a dungeon law. The port called it from
-      // the dungeon frame body alone, so an alert raised above ground
-      // (exteriorFoes has raised one since the X-slice) never decayed,
-      // and permanently armed the dungeon's random-spawn roll.
-      decayEnemyAlert(entity, r.classicMinutes);
+      // PlayerEntity.Update:380-384's 8-hour alert decay used to be
+      // called here. It is part of the player's per-minute update, so
+      // it moved INTO tickPlayerMinutes above - this ticker is only
+      // three of the four hosts, and the dungeon calls that function
+      // directly.
       for (const fn of subscribers) fn(r.magicRoundWindow.from, r.magicRoundWindow.to, dt);
       return r;
     },

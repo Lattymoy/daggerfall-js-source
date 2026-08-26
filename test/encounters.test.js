@@ -147,15 +147,28 @@ test('encounters: the dungeon host arm - the rest loop, the sight raise, the kil
     const h = readFileSync(join(root, f), 'utf8');
     assert.ok(h.includes("if (d.kind === 'enemies') setEnemyAlert(playerEntity, true, Math.floor(worldMinutes()));"), f);
   }
-  // AUDIT 24 (wave 36): the 8-hour decay MOVED. PlayerEntity.Update
-  // :380-384 runs it in every context, and the dungeon frame body was
-  // its only caller - so an alert raised above ground (exteriorFoes has
-  // raised one since the X-slice) never decayed and permanently armed
-  // this very roll. It lives in createPlayerTicker now, which every
-  // host already calls, and the dungeon's own call is gone so it
-  // cannot tick twice.
-  assert.equal(src.includes('decayEnemyAlert('), false, 'the dungeon no longer decays it itself');
+  // AUDIT 26 (F204) CORRECTS THE WAVE-36 PIN THAT STOOD HERE. It read
+  // "it lives in createPlayerTicker now, which every host already
+  // calls, and the dungeon's own call is gone so it cannot tick twice"
+  // - and the premise was false: this host builds NO ticker. It calls
+  // tickPlayerMinutes directly (:2100) and jumps the clock again in
+  // _restAdvance, so the decay reached three hosts and not the one
+  // whose spawn roll the flag gates. The alert only ever went UP
+  // underground, and the roll above stayed armed for ever.
+  //
+  // PlayerEntity.Update:380-384 is part of the player's own per-minute
+  // update, so it lives in that update: systems/worldTick.js, which
+  // every host runs. The rest window is the port's ONE clock jump that
+  // does not run it, which is why this arm carries the second call.
+  const wt = readFileSync(join(root, 'src/systems/worldTick.js'), 'utf8');
+  assert.ok(wt.includes('decayEnemyAlert(entity, nowMinutes);'),
+    'the shared player tick decays it - every host, dungeon included');
+  assert.ok(fn.includes('decayEnemyAlert(playerEntity, Math.floor(classicMinutesRef.value));'),
+    'and the rest advance, which jumps the clock without that tick, runs it before the roll it gates');
+  assert.ok(fn.indexOf('decayEnemyAlert(') < fn.indexOf('intermittentEnemySpawn({'),
+    'decay BEFORE the catch-up loop, as PlayerEntity.Update orders them (:380 before :486)');
   const shared = readFileSync(join(root, 'src/scenes/shared.js'), 'utf8');
-  assert.ok(shared.includes('decayEnemyAlert(entity, r.classicMinutes);'), 'the entity tick does, for every host');
+  assert.equal(shared.includes('decayEnemyAlert('), false,
+    'and the ticker no longer calls it beside the tick that already does');
   assert.ok(src.includes('await buildFoeAt({ mobileType, gender'), 'the spawner mints through the load chain');
 });

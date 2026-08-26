@@ -16,7 +16,7 @@
 // calendar, so these are exact rather than approximated: the cooldown
 // compares classic minutes, and trainSkill RETURNS the minutes the
 // host must advance rather than reaching for a clock it does not own.
-import { SKILLS, skillValue } from './skills.js';
+import { SKILLS, skillValue, permanentSkillValue } from './skills.js';
 import { SKILL_ADVANCEMENT_MULTIPLIER } from './advancement.js';
 import { FATIGUE_LOSS } from './statMods.js';
 import { goldAmount, deductGold } from './court.js';
@@ -105,7 +105,12 @@ export function tooSkilledToTrain(entity, guild, skill) {
   // GetTrainingMax is a virtual NO SUBCLASS OVERRIDES (Guild.cs
   // :294-297) - every guild, temple and order caps training at 50 -
   // so G3's trainingMax takes no arguments and this passes none.
-  return skillValue(entity, skill) > trainingMax();
+  //
+  // PERMANENT, per the doc line above and :101 itself: reading the
+  // live value folded entity._enchantMods.skillMods, so a player at
+  // permanent 40 wearing a +15 EnhancesSkill item was refused with
+  // 4022 where DFU trains them - the cap moved with the equipment.
+  return permanentSkillValue(entity, skill) > trainingMax();
 }
 
 /** TrainSkill (:118-127). Returns what the HOST must apply, because

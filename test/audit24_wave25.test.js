@@ -115,9 +115,9 @@ test('audit24 wave25: a quest rumor is expanded IN PLACE, and so frozen at its f
   // telling's wording. The port cloned first, which re-expanded from
   // source every time - the port being more correct than the game.
   const src = rd('src/scenes/world.js');
-  const i = src.indexOf('expandQuestTokens: (questID, tokens) => {');
+  const i = src.indexOf('const expandQuestTokens = (questID, tokens) => {');
   assert.ok(i > 0);
-  const fn = src.slice(i, src.indexOf('\n    },', i));
+  const fn = src.slice(i, src.indexOf('\n  };', i));
   assert.match(fn, /expandQuestMessage\(questBridge\?\.machine\.getQuest\(questID\) \?\? null, tokens, true\);/);
   assert.match(fn, /return tokensToString\(tokens\);/);
   assert.doesNotMatch(fn, /tokens\.map\(\(t\) => \(\{ \.\.\.t \}\)\)/, 'no defensive clone');

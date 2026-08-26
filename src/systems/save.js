@@ -23,6 +23,7 @@ import { createSceneCache, snapshotSceneCache, restoreSceneCache } from './scene
 import { seedCustomSpellIndex } from './spellMaker.js';   // S1: made spells carry their own record
 import { SOCIAL_GROUPS } from '../formats/factionFile.js';   // AUDIT 24
 import { travelMapSaveData, restoreTravelMapSaveData } from './travelMapState.js';   // U41: TravelMapSaveData
+import { resetMagicRoundMarker } from './worldTick.js';   // EntityEffectBroker.InitMagicRoundTimer, on the LOAD arm (:230-233)
 
 export const SAVE_VERSION = 1;
 export const QUICKSAVE_KEY = 'dagger.quicksave';
@@ -406,6 +407,18 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // load would have run a spurious multi-day price drift and re-run a
   // loan check over a window the saved game had already lived.
   entity.lastGameMinutes = Math.floor(snap.classicMinutes ?? 0);
+  // EntityEffectBroker.SaveLoadManager_OnLoad (:230-233) -> the
+  // InitMagicRoundTimer at :817-822, whose own comment is "Called when
+  // game starts or loaded, after world time has been set/restored":
+  // the BROKER's lastGameMinute re-anchors to the restored clock, so a
+  // load fires ZERO catch-up magic rounds. The entity marker above is
+  // SerializablePlayer's and is a different member; the broker's has
+  // its own home in worldTick.js and its own restore, here. Without
+  // it a load FORWARD of the session clock left the marker behind and
+  // the next tick claimed the gap - up to MAX_CATCHUP_ROUNDS (2880) -
+  // expiring restored buffs on the spot and bursting a restored
+  // continuous-damage effect over a window the saved game never lived.
+  resetMagicRoundMarker(Math.floor(snap.classicMinutes ?? 0));
   return { position: snap.position, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null };
 }
 

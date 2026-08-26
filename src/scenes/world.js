@@ -57,7 +57,7 @@ import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: Create
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1
 import { SITE_TYPES } from '../systems/quest/place.js';   // B3: the respawn dispatch reads the site type
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
-import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert, areEnemiesNearby } from '../systems/encounters.js';   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one
+import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert, areEnemiesNearby, passiveGuardSpawns } from '../systems/encounters.js';   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
@@ -122,7 +122,7 @@ import { createWorldModes } from './worldModes.js';
 import { createQuestBridge, tokensToRows } from './questBridge.js';
 import { loadQuestPack } from './questData.js';
 import { ensureFactionRep, getReputation, changeReputation } from '../systems/factionRep.js';
-import { changeLegalRep } from '../systems/court.js';
+import { changeLegalRep, legalRepOf, CRIMES } from '../systems/court.js';   // PlayerEntity.Update:498-511 reads the region's LegalRep and levies Criminal_Conspiracy
 import { isEquipped, unequipSlot } from '../systems/equip.js';
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { makeItemPermanent } from '../systems/quest/item.js';
@@ -572,6 +572,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     // reference's mid-session collection sweep (CollectLooseObjects);
     // only the F9 envelope brings one back.
     droppedLoot.collectPixel(key);
+    // ...and so does an exterior CORPSE, which is the same kind of
+    // loose object (GameObjectHelper.cs:836-839 tracks the marker) and
+    // was the half of :1040-1052 the port never wired: nothing removed
+    // a corpse batch, so both pools drew every kill of the session for
+    // ever. The teleport core tears down every built pixel through
+    // this function, which is exactly ClearStreamingWorld's
+    // CollectLooseObjects(true).
+    cityGuards.collectPixel(key);
+    exteriorFoes.collectPixel(key);
     built.delete(key);
   }
 
@@ -891,6 +900,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     playerWeaponSheathed: () => !!weaponRig.playerWeapon.sheathed,   // AUDIT 24 (wave 42): pacification's drawn-weapon penalty
     say: (l) => townTalk.say(l),   // C-slice: equipment breaks speak
     currentMinute: () => Math.floor(playerTicker.classicMinutes),   // AUDIT 23 (hosts-3): the poison clock
+    currentPixelKey: () => `${playerTravelPixel().x},${playerTravelPixel().y}`,   // TrackLooseObject's stamp - the pile seam's key, one shape
     onPlayerHurt: (dmg, wpn) => {
       if (dmg <= 0) return;
       const apply = () => {
@@ -913,6 +923,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, hitEffects,
     playerWeaponSheathed: () => !!weaponRig.playerWeapon.sheathed,   // AUDIT 24 (wave 42): pacification's drawn-weapon penalty
     currentMinute: () => Math.floor(playerTicker.classicMinutes),
+    currentPixelKey: () => `${playerTravelPixel().x},${playerTravelPixel().y}`,   // TrackLooseObject's stamp
     playerSinks: playerTicker.sinks,   // AUDIT 24 (wave 30): OnMonsterHit's fatigue rider drains through the host's one set of doors
     say: (l) => townTalk.say(l),
     onPlayerHurt: (dmg, wpn) => {
@@ -978,6 +989,23 @@ export async function bootWorld(canvas, renderer, params, status) {
         }
         break;
       }
+      // PlayerEntity.Update:498-511 - the SAME minute's second arm,
+      // which the port had never called: SpawnCityGuards(FALSE) had no
+      // production caller at all, so the witness law (a civilian sees
+      // the crime, a guard NPC in sight converts, otherwise guards
+      // arrive after 5-10s) and the passive response to a hated or
+      // banished character never ran. The rolls are independent and
+      // each levies Criminal_Conspiracy first, exactly as DFU orders
+      // it - the watch stands down the moment crimeCommitted clears.
+      const _region = _questRegionIndex();   // PlayerGPS.CurrentRegionIndex
+      const _owed = passiveGuardSpawns({
+        legalRep: legalRepOf(playerEntity, _region),
+        severePunishmentFlags: playerEntity.regionConditions?.[_region]?.severePunishmentFlags ?? 0,
+      });
+      for (let s = 0; s < _owed; s++) {
+        playerEntity.crimeCommitted = CRIMES.Criminal_Conspiracy;
+        _witnessResponse();
+      }
     }
     _lastEncMinutes = now;
   }
@@ -990,6 +1018,17 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
     },
   }));
+  /** SpawnCityGuards(FALSE) - the WITNESS arm, the other half of the
+   *  same member: no crime was just seen to be committed, so the pool
+   *  is searched for someone who CAN see the player. A guard NPC that
+   *  can converts on the spot (and takes every later pool entry with
+   *  it, DFU's own quirk); a civilian who can starts the 5-10 second
+   *  arrival countdown the pool's update already consumes. */
+  function _witnessResponse() {
+    const feet = walkMode && playerSpawned ? player.pos : cam.pos;
+    const fwd = [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)];
+    cityGuards.spawnCityGuards(false, { playerFeet: [...feet], playerFwd: fwd, pool: _guardPool() }).catch((e) => console.error('[guards]', e));
+  }
   function _crimeResponse() {
     const feet = walkMode && playerSpawned ? player.pos : cam.pos;
     const fwd = [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)];
@@ -1251,6 +1290,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // map ITEM is `readMap`, the third caller of this one seam.
     revealMap: () => revealLocation('readMap'),
     drinkPotion: (key) => magic.drinkPotion(key),   // U44: DrinkPotion through the ONE cast engine
+    // QuestMachine.GetQuest - the window's quest reach: the use-click
+    // block (DaggerfallInventoryWindow.cs:1673) and ResolveItemLongName's
+    // quest-letter arm (ItemHelper.cs:338) both go through it.
+    getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null,
     nowMinute: () => Math.floor(playerTicker.classicMinutes),
     onDrop: (items) => droppedLoot.dropPile(items, dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`),   // U8e: OnPop mints the world pile; P2: stamped with its map pixel
     ...extra,
@@ -2283,28 +2326,36 @@ export async function bootWorld(canvas, renderer, params, status) {
   // plainly, recorded. AddNonQuestRumor's PRODUCER (the regional
   // faction sim, PlayerEntity.RegionPowerAndConditionsUpdate) pends
   // the Systems lane, and THE REFRESH CULL rides with it.
+  /** ExpandQuestMessage(quest, ref tokens, true) then TokensToString -
+   *  the SAME pass both quest-token consumers in TalkManager run:
+   *  the rumor mill's (:1425-1431) and GetAnswerFromTokensArray's
+   *  (TalkManager.cs:3554-3556). One seam, two callers.
+   *
+   *  AUDIT 24 (wave 25): IN PLACE, over the array it is handed, which
+   *  is what TalkManager.cs:1425-1431 does -
+   *  `ExpandQuestMessage(GetQuest(entry.questID), ref tokens, true)`
+   *  where `tokens` IS `entry.listRumorVariants[variant]`, and
+   *  QuestMacroHelper.cs:158 writes each result back into it. So a
+   *  quest rumor is FROZEN at the wording of its first telling:
+   *  %qdt, the questor's name, a Place that has since been renamed,
+   *  all fixed forever. The port cloned first and re-expanded from
+   *  source every time, which is the port being more correct than
+   *  the game it is a port of. The answer pipeline's caller clones
+   *  BEFORE calling (answerPipeline.js:656, C#'s own `.Clone()` at
+   *  :3552), so the in-place pass is right for both. Also: C# calls
+   *  this whether or not GetQuest found anything - the null-parent arm
+   *  is a DFU forum-bug fix INSIDE ExpandQuestMessage, not a caller
+   *  guard, and expandQuestMessage carries it (questMacros.js:437). */
+  const expandQuestTokens = (questID, tokens) => {
+    expandQuestMessage(questBridge?.machine.getQuest(questID) ?? null, tokens, true);
+    return tokensToString(tokens);
+  };
   const rumorMill = new RumorMill({
     nowClassicMinutes: () => playerTicker.classicMinutes,
     getFactionData: (id) => _questStore()?.dict.get(id) ?? null,
     currentRegionIndex: () => _questRegionIndex(),
     getRandomTokens: (textId) => townTalk.variantTokens(textId),
-    expandQuestTokens: (questID, tokens) => {
-      // AUDIT 24 (wave 25): IN PLACE, over the mill's own stored
-      // variant, which is what TalkManager.cs:1425-1431 does -
-      // `ExpandQuestMessage(GetQuest(entry.questID), ref tokens, true)`
-      // where `tokens` IS `entry.listRumorVariants[variant]`, and
-      // QuestMacroHelper.cs:158 writes each result back into it. So a
-      // quest rumor is FROZEN at the wording of its first telling:
-      // %qdt, the questor's name, a Place that has since been renamed,
-      // all fixed forever. The port cloned first and re-expanded from
-      // source every time, which is the port being more correct than
-      // the game it is a port of. Also: C# calls this whether or not
-      // GetQuest found anything - the null-parent arm is a DFU
-      // forum-bug fix INSIDE ExpandQuestMessage, not a caller guard,
-      // and expandQuestMessage carries it (questMacros.js:437).
-      expandQuestMessage(questBridge?.machine.getQuest(questID) ?? null, tokens, true);
-      return tokensToString(tokens);
-    },
+    expandQuestTokens,
     expandRandomTextRecord: (id) => townTalk.lines(id).map((r) => r.text ?? r).join(' '),
     rolls: Math.random,
   });
@@ -2430,6 +2481,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     // variant as TOKENS, the talk MCP over them, and TokensToString
     // with NO separator. This is what makes %n and the %hnt fork real.
     expandRandomTextRecord: (id) => expandTalkRecord(id, talkMcp()),
+    // GetAnswerFromTokensArray (TalkManager.cs:3554-3556) ALWAYS runs
+    // ExpandQuestMessage(..., reveal: true) over its cloned tokens
+    // before TokensToString - that reveal is what makes asking about a
+    // quest topic mark its dialog-linked resources. Unset, every %hnt
+    // answer printed its macros raw; it is the mill's seam, one home.
+    expandQuestTokens,
     getNewsOrRumors: (session) => rumorMill.getNewsOrRumors(session),
     isPlayerInside: () => (modes?.mode ?? 'exterior') !== 'exterior',
     isPlayerInsideCastle: () => false,
@@ -3083,6 +3140,7 @@ export async function bootWorld(canvas, renderer, params, status) {
                 openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },   // U42: the Spellbook item's own door, on the LOOT-pile window too
                 revealMap: () => revealLocation('readMap'),   // U44: the map item's reveal, on the loot-pile window too
                 drinkPotion: (key) => magic.drinkPotion(key),   // U44: DrinkPotion through the ONE cast engine
+                getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null,   // the use-click block + the letter long name, on the LOOT-pile window too
                 nowMinute: () => Math.floor(playerTicker.classicMinutes),
                 onDrop: (items) => droppedLoot.dropPile(items, dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`),   // P2: stamped
               }));

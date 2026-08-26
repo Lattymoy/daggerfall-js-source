@@ -30,6 +30,7 @@ import { applyBiographyEffects } from './biography.js';   // S3e
 import { customSpellSetIndex } from './customClass.js';   // U20a
 import { SOCIAL_GROUP_COUNT, FactionFile } from '../formats/factionFile.js';   // U20a + S25
 import { attachFactionRep } from './factionRep.js';   // S25
+import { createRegionConditions } from './regionConditions.js';   // PlayerEntity.InitializeRegionData (:2189-2218), at every new game
 
 /** SPELLS.STD as an index -> spell map. AUDIT 17f: the exterior
  *  hosts ran chargen without one and called finishChargen with no
@@ -135,6 +136,9 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
   // A ?class= character had no factionRep at all: crimes moved no
   // faction, and guild rank could not be computed.
   attachFactionRep(playerEntity, await loadFactions(fetchBytes));
+  // StartGameBehaviour.cs:433 InitializeRegionData - the same store the
+  // wizard's path mints, on the second construction copy above.
+  playerEntity.regionConditions = createRegionConditions();
   console.log(`[chargen] ${CLASS_CAREERS[classIndex]}: HP ${playerEntity.maxHealth}, spells ${playerEntity.spells.length}`);
   return playerEntity;
 }
@@ -182,6 +186,16 @@ export function applyCreationExtras(playerEntity, result, spellsByIndex = null, 
     if (!playerEntity.sGroupReputations) playerEntity.sGroupReputations = new Array(SOCIAL_GROUP_COUNT).fill(0);
     for (let i = 0; i < result.customReps.length; i++) playerEntity.sGroupReputations[i] = result.customReps[i];
   }
+  // StartGameBehaviour.cs:432-433 "Initialize region data" ->
+  // PlayerEntity.InitializeRegionData (:2189-2218): every new character
+  // is born with the 62-region condition store, so the writers that
+  // read it work from day one. The store's only other assignment was
+  // the save restore, so a session started FRESH ran with none: the
+  // PricesHigh/PricesLow half of UpdateRegionalPrices (shopStock.js,
+  // `if (!conditions) continue;`) never executed and the first save
+  // recorded a blank store. Nothing in the mint reads the character,
+  // so it sits with the rest of what creation hands out.
+  playerEntity.regionConditions = createRegionConditions();
   return playerEntity;
 }
 

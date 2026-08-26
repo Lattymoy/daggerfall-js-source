@@ -86,6 +86,12 @@ export const GUARD_FALLBACK_MAX_DIST = 51.2;
 
 export function createCityGuards({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, onPlayerHurt, currentMinute, rand = Math.random, say = null,
   hitEffects = null,   // AUDIT 24 (wave 39): the host's one blood/effect pool
+  // GameObjectHelper.CreateEnemyCorpseMarker (:836-839) hands an
+  // OUTSIDE corpse to StreamingWorld.TrackLooseObject, which stamps it
+  // with the streamer's CURRENT map pixel (:462-476). exteriorFoes
+  // carries the same dep and the same default: a host with no streamed
+  // pixels never collects, which is a pixel that never leaves range.
+  currentPixelKey = () => null,
   playerWeaponSheathed = () => false }) {   // AUDIT 24 (wave 42): CalculateEnemyPacification's -25 / +10 arm
   // AUDIT 23 (hosts-3): currentMinute is REQUIRED - the () => 0 default
   // let a guard's poisoned hit anchor at minute 0, and the next world
@@ -278,6 +284,9 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // the ground is usually its feet, but a guard killed on a stair
       // or a rooftop no longer leaves its body on the slope - and
       // BodyFall (:126-129), which no pool in the port ever played.
+      // TrackLooseObject runs INSIDE CreateEnemyCorpseMarker, so the
+      // pixel is read at the death, not when the texture lands.
+      const _corpsePixel = currentPixelKey();
       mintCorpseMarker({
         renderer, getTexture, uploadRecordFrame, collider,
         corpseTexture: ENEMY_BASICS[GUARD_MOBILE_TYPE].corpseTexture,
@@ -287,6 +296,8 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       }).then((c) => {
         if (!c) return;
         g.corpseMarker = c;
+        // TrackLooseObject's stamp: the streamer's pixel at the death.
+        c.pixelKey = g.corpsePixelKey = _corpsePixel;
         corpseBatches.push(c);
         playBodyFall(audio, c.pos);
       }).catch(() => {});
@@ -574,6 +585,32 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     return takeCorpseLoot(guards[Number(key.split(':')[1])], playerEntity, say2);
   }
 
+  /** CollectLooseObjects (StreamingWorld.cs:1040-1052), the corpse
+   *  half - exteriorFoes' twin, and the same law droppedLoot.
+   *  collectPixel already carried for player-dropped piles: a tracked
+   *  loose object whose map pixel leaves the streamed range is
+   *  DESTROYED, and ClearStreamingWorld (:993, from InitWorld :584)
+   *  collects every one of them, which is what a teleport and a fast
+   *  travel do. Nothing removed a corpse batch before, so the watch's
+   *  dead grew a VAO and two GL buffers per kill for the session.
+   *
+   *  The `guards` array itself still cannot be spliced (lootTargets
+   *  keys corpses by array INDEX), so clearing `corpse` IS the
+   *  destroy: batches() stops drawing it and lootTargets stops
+   *  probing it. */
+  function collectPixel(pixelKey) {
+    for (let i = corpseBatches.length - 1; i >= 0; i--) {
+      if (corpseBatches[i].pixelKey !== pixelKey) continue;
+      renderer.destroyBillboardBatch(corpseBatches[i].batch);
+      corpseBatches.splice(i, 1);
+    }
+    for (const g of guards) {
+      if (!g.corpse || g.corpsePixelKey !== pixelKey) continue;
+      g.corpse = false;
+      g.corpseMarker = null;
+    }
+  }
+
   /** AUDIT 17e F23 / THE FOUR HOSTS RULE: the ?world host recenters
    *  the floating origin by shifting the camera and player, but live
    *  guards, their corpse billboards and the corpse loot AABBs are
@@ -599,7 +636,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     }
   }
 
-  return { guards, spawnCityGuards, update, offsetAll, resolvePlayerHit, resolveCivilianHit, activeCount, lootTargets, takeLoot,
+  return { guards, spawnCityGuards, update, offsetAll, collectPixel, resolvePlayerHit, resolveCivilianHit, activeCount, lootTargets, takeLoot,
     // M2 (spellcasting above ground): the player's spell damage rides
     // THE SAME door the melee swing uses - corpse, Murder on the kill,
     // hostility - so a fireball is not a free crime channel.

@@ -817,6 +817,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     // omitted, so the construction sweep sees a DECISION.
     revealMap: null,
     drinkPotion: (key) => magic.drinkPotion(key),   // U44: DrinkPotion through the ONE cast engine
+    // NULL on purpose, the same DECISION revealMap above is. This page
+    // mounts no quest bridge at all, so there is no QuestMachine to
+    // ask: the use-click block finds nothing watching and falls
+    // through (DaggerfallInventoryWindow.cs:1681), and a quest
+    // letter keeps its plain template name. Named, not omitted.
+    getQuest: null,
     nowMinute: () => Math.floor(playerTicker.classicMinutes),
     onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),   // U8e: OnPop mints the world pile
     ...extra,
@@ -1445,6 +1451,7 @@ export async function bootExterior(canvas, renderer, params, status) {
               openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },   // U42: the Spellbook item's own door, on the LOOT-pile window too
               revealMap: null,   // U44: no region index on this page - see the bare window's note
               drinkPotion: (key) => magic.drinkPotion(key),   // U44: DrinkPotion through the ONE cast engine
+              getQuest: null,   // no quest bridge on this page - see the bare window's note
               nowMinute: () => Math.floor(playerTicker.classicMinutes),
               onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),
             }));

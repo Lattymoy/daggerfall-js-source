@@ -48,7 +48,7 @@
 import { loadImg, nativeMetrics, drawImg, drawImgSub, drawImgCrop, shadowText, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';   // U25
 import { useItem, isLightSource } from '../systems/useItem.js';   // U25
-import { itemInfoRows, INFO_TEXT } from '../systems/itemInfo.js';   // U25
+import { itemInfoRows, questLetterName, INFO_TEXT } from '../systems/itemInfo.js';   // U25
 import { goldAmount, deductGold } from '../systems/court.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { addItem, isEnchanted, goldStack, canHoldAmount, effectiveUnitWeightInKg, totalWeight, GOLD_PIECE_WEIGHT_KG, isSummoned } from '../systems/inventory.js';   // L-slice (items-9); X11b: isSummoned
@@ -323,14 +323,28 @@ export class NativeInventoryWindow {
       this.boxes = [{ rows: [{ text: 'No item description available.', center: true }] }];
       return;
     }
-    this.boxes = [{ rows: itemInfoRows(it, rows) }];
+    // %it is the item's LONG name (ItemHelper.ResolveItemLongName
+    // :296-349), and its quest-letter arm is what makes one quest
+    // letter tell apart from another. `getQuest` is the host's
+    // QuestMachine.GetQuest; a host with none leaves the plain name.
+    this.boxes = [{ rows: itemInfoRows(it, rows, { name: this._longName(it) }) }];
     if (isEnchanted(it)) this.boxes.push({ rows: rows(INFO_TEXT_POWERS) ?? [] });
     this.infoItem = it;
   }
 
+  /** ResolveItemLongName over this window's quest seam. Null keeps
+   *  expandItemInfo's own `item.name ?? template.name` fallback. */
+  _longName(it) { return questLetterName(it, this.hooks.getQuest ?? null); }
+
   /** UseItem's outcome as a box, or nothing when the arm is silent
    *  (NextVariant on a garment repaints the doll and says nothing). */
   _useResult(r) {
+    // DaggerfallUI.PopToHUD() + return (:1687-1688): a watched quest
+    // item that is neither parchment nor clothing closes the window
+    // stack so the quest system gets first shot at the click in the
+    // game world. Nothing else on the ladder runs, and no box shows -
+    // and PopToHUD is not the exit BUTTON, so it plays no click.
+    if (r.popToHUD) { this._closeSilently(); return; }
     // B1: a book opens the reader through the host's hook; failure
     // (no id, missing/ruined file) shows the bookUnavailable box, and
     // a host with no hook keeps the pending text.
@@ -442,6 +456,9 @@ export class NativeInventoryWindow {
       // U44: DrinkPotion. The host's cast engine owns it - assigning a
       // bundle needs the player's effect sinks.
       drinkPotion: this.hooks.drinkPotion ?? null,
+      // QuestMachine.GetQuest (:1673) - the use-click block's reach.
+      // The same seam the info panel's long name reads.
+      getQuest: this.hooks.getQuest ?? null,
     }));
   }
 
@@ -790,7 +807,7 @@ export class NativeInventoryWindow {
         ? goldAmount(this.hooks.entity ?? { items: this.hooks.items() }) : 0;
       const panelRows = this.infoGold
         ? goldPanelRows(carriedGold, carriedGold * GOLD_PIECE_WEIGHT_KG)
-        : ((this.infoItem && this.hooks.rows) ? itemInfoRows(this.infoItem, this.hooks.rows) : null);
+        : ((this.infoItem && this.hooks.rows) ? itemInfoRows(this.infoItem, this.hooks.rows, { name: this._longName(this.infoItem) }) : null);
       if (panelRows) {
         const [px, py, , ph] = INV_RECTS.itemInfoPanel;
         const rows = panelRows;

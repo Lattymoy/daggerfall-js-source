@@ -221,8 +221,12 @@ test('audit24 wave24: GetDisplayName names the NPC from the seed, and the click 
   // field collectInteriorPeople does not write, so every static NPC in
   // the game reached TalkManager as ''
   const wm = readFileSync(new URL('../src/scenes/worldModes.js', import.meta.url), 'utf8');
-  assert.match(wm, /const displayName = npcData\s*\n\s*\? staticNpcName\(npcData, \{ getFaction: \(id\) => dict\?\.get\(id\) \?\? null \}\)/);
-  assert.match(wm, /\{ data: pn, isChildNPC: !!pn\.isChildNPC, displayName \},/);
+  assert.match(wm, /const displayName = staticNpcName\(npcData, \{ getFaction: \(id\) => dict\?\.get\(id\) \?\? null \}\);/);
+  // AUDIT 26 (hosts-modal): and the record handed to TalkToStaticNPC is
+  // StaticNPC.Data (TalkManager.cs:752-770 reads .Data.nameSeed,
+  // .Data.factionID, .Data.race), not the block-person record - `pn`
+  // has no nameSeed, so the engine keyed every static NPC by 0
+  assert.match(wm, /\{ data: npcData, isChildNPC: !!pn\.isChildNPC, displayName \},/);
   assert.doesNotMatch(wm, /displayName: pn\.displayName \?\? ''/, 'and not the field nothing writes');
   const ip = readFileSync(new URL('../src/characters/interiorPeople.js', import.meta.url), 'utf8');
   assert.doesNotMatch(ip, /displayName/, 'collectInteriorPeople still does not write one - which is the point');
