@@ -386,6 +386,7 @@ let classicClothingSampler = null;
 let classicArmorTextureToken = 0;
 const classicArmorBodySamplers = new Map();
 const armorPieceTextureState = new Map();
+const armorTextureDebug = new Map();
 
 function armorPack(slot) {
   return armorBySlot[slot]?.families?.[armorFamily] || null;
@@ -454,6 +455,7 @@ async function syncSelectedArmorTextures() {
   const token = ++classicArmorTextureToken;
   const family = armorFamily, material = armorMaterial, variant = armorVariant, race = RACES[raceIx], useGender = gender;
   classicArmorBodySamplers.clear();
+  armorTextureDebug.clear();
   clearAllArmorPieceTextures();
   syncBodySurfaceSampler();
   const tasks = [];
@@ -465,7 +467,10 @@ async function syncSelectedArmorTextures() {
         try {
           const sampler = await buildClassicBodyArmorSampler({ item, delta: pack, D, race, gender: useGender, material, variant });
           if (token !== classicArmorTextureToken || armorFamily !== family || armorMaterial !== material || armorVariant !== variant || !armorOn.has(slot)) return;
-          if (sampler) classicArmorBodySamplers.set(slot, sampler);
+          if (sampler) {
+            classicArmorBodySamplers.set(slot, sampler);
+            armorTextureDebug.set(slot, { debug: sampler.debug, meta: sampler.meta });
+          }
           syncBodySurfaceSampler();
         } catch { /* no ARENA2: flat procedural armour remains */ }
       })());
@@ -474,7 +479,10 @@ async function syncSelectedArmorTextures() {
         try {
           const art = await buildClassicArmorPieceTexture({ item, pack, race, gender: useGender, material, variant });
           if (token !== classicArmorTextureToken || armorFamily !== family || armorMaterial !== material || armorVariant !== variant || !armorOn.has(slot)) return;
-          if (art) mountArmorPieceTexture(slot, family, art);
+          if (art) {
+            mountArmorPieceTexture(slot, family, art);
+            armorTextureDebug.set(slot, { debug: art.debug, meta: art.meta });
+          }
         } catch { /* no ARENA2: flat procedural armour remains */ }
       })());
     }
@@ -483,6 +491,9 @@ async function syncSelectedArmorTextures() {
   if (token === classicArmorTextureToken) {
     syncBodySurfaceSampler();
     syncArmorPieceVisibility();
+    const qaSlot = [...armorOn].at(-1);
+    const qa = qaSlot ? armorTextureDebug.get(qaSlot) : null;
+    if (qa) drawArmorTextureQA(qaSlot, qa);
   }
 }
 function applyArmorBodyDelta(d) {
@@ -904,6 +915,16 @@ function drawClassicTextureQA(debug) {
   if (panel && !debug) panel.classList.remove('ready');
   if (panel && debug) panel.classList.add('ready');
 }
+function drawArmorTextureQA(slot, qa) {
+  drawClassicTextureQA(qa?.debug);
+  const status = document.getElementById('clothqastatus');
+  if (!status || !qa?.meta) return;
+  const materialName = ARMOR_MATERIAL_OPTIONS[armorMaterialIx]?.[0] || 'Steel';
+  status.textContent = slot + ' · ' + materialName
+    + ' · variant ' + qa.meta.variant + (qa.meta.variant !== armorVariant ? ' (requested ' + armorVariant + ')' : '')
+    + ' · ' + qa.meta.source + ' record ' + qa.meta.record
+    + ' · front-registered · 8-way armor wrap';
+}
 async function syncClassicClothingTexture(c = classicClothingOn) {
   const token = ++classicTextureToken;
   classicClothingSampler = null;
@@ -1135,7 +1156,15 @@ const syncRace = () => { applyTone(); loadFaceSet(); loadHeads(); };
 // The picks live in the module now; these go through its accessors.
 window.__face = (i) => { SKIN.setFacePick(i); applyTone(); };
 window.__head = async (i) => { SKIN.setHeadPick(i); await ensureHead(SKIN.getHeadPick()); applyTone(); };
-window.__gender = (g) => { gender = (g === 'female') ? 'female' : 'male'; SKIN.setFacePick(0); loadFaceSet(); };
+async function setGender(g) {
+  gender = (g === 'female') ? 'female' : 'male';
+  SKIN.setFacePick(0);
+  loadFaceSet();
+  const b = document.getElementById('gender');
+  if (b) b.textContent = 'gender: ' + gender;
+  if (armorOn.size) await syncSelectedArmorTextures();
+}
+window.__gender = (g) => setGender(g);
 syncRace();
 loadSkin();
 loadFaceSet();
@@ -1826,6 +1855,7 @@ for (const [id, slot] of Object.entries(ARMOR_BUTTONS)) {
   };
 }
 syncArmorButtons();
+document.getElementById('gender').onclick = async () => { await setGender(gender === 'male' ? 'female' : 'male'); };
 document.getElementById('race').onclick = async (e) => { raceIx = (raceIx+1)%RACES.length; syncRace(); await rebuildArmorWardrobe(); e.target.textContent = 'race: '+RACES[raceIx]; const pal=(D.PALETTES||{})[PKEY[RACES[raceIx]]]; if(pal) document.getElementById('tone').textContent='tone: '+pal[toneIx[RACES[raceIx]]%pal.length].name;  };
 document.getElementById('tone').onclick = async (e) => { const R=RACES[raceIx], pal=(D.PALETTES||{})[PKEY[R]]; if(!pal)return; toneIx[R]=(toneIx[R]+1)%pal.length; applyTone(); if (classicClothingOn || armorOn.size) await rebuildArmorWardrobe(); e.target.textContent='tone: '+pal[toneIx[R]%pal.length].name; };
 document.getElementById('walk').onclick = (e) => { gaitIx = (gaitIx+1)%3; e.target.textContent = ['idle','walk','run'][gaitIx]; e.target.classList.toggle('on', gaitIx>0); };
