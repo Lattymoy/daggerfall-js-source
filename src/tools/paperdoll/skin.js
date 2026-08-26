@@ -1,3 +1,5 @@
+import { repackLegacySkinAtlas } from './legacyAtlas.js';
+
 // The BODY SKIN and the BAKED HEADS: everything that paints the figure's
 // texture, lifted out of paperdollViewer.js whole.
 //
@@ -217,7 +219,7 @@ export function createSkin(ctx) {
 
   async function loadSkin() {
     try {
-      const [uv, lay, img] = await Promise.all([
+      let [uv, lay, img] = await Promise.all([
         fetch('./skin/skin-uv.json').then((r) => r.ok ? r.json() : Promise.reject()),
         fetch('./skin/skin-layout.json').then((r) => r.ok ? r.json() : Promise.reject()),
         new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i);
@@ -229,18 +231,12 @@ export function createSkin(ctx) {
       if (!Array.isArray(uv.uv) || uv.uv.length !== nf * 8) return;
       if (uv.w !== img.width || uv.h !== img.height) return;
       if (uv.rigHash && uv.rigHash !== liveRigHash()) return;
-      skinLayout = lay;
-      bodyFaceTile = buildBodyFaceTiles(lay);
-      const uvs = new Float32Array(nf * 6 * 2);
-      let q = 0;
-      for (let f = 0; f < nf; f++) for (const vi of TRI) {
-        uvs[q++] = uv.uv[f * 8 + vi * 2]; uvs[q++] = uv.uv[f * 8 + vi * 2 + 1];
-      }
-      geo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+
       const c = document.createElement('canvas');
       c.width = img.width; c.height = img.height;
       const g2 = c.getContext('2d'); g2.drawImage(img, 0, 0);
-      skinI = g2.getImageData(0, 0, c.width, c.height);
+      let human = g2.getImageData(0, 0, c.width, c.height);
+      let beast = null;
       try {
         const bi = await new Promise((res, rej) => { const i = new Image();
           i.onload = () => res(i); i.onerror = rej; i.src = './skin/skin-intensity-beast.png'; });
@@ -250,10 +246,37 @@ export function createSkin(ctx) {
         const bc = document.createElement('canvas');
         bc.width = bi.width; bc.height = bi.height;
         bc.getContext('2d').drawImage(bi, 0, 0);
-        skinIBeast = bc.getContext('2d').getImageData(0, 0, bc.width, bc.height);
-      } catch { skinIBeast = null; }   // no beast map: the human one still works
+        beast = bc.getContext('2d').getImageData(0, 0, bc.width, bc.height);
+      } catch { beast = null; }   // no beast map: the human one still works
+
+      // PHONE/NO-TOOLCHAIN PATH. The repo still ships the last legacy group atlas.
+      // If the local Python turnaround is unavailable, repack THOSE COMMITTED
+      // pixels in memory into the same per-face ownership model the new baker
+      // writes. This lets the branch be judged by opening the viewer alone.
+      // It deliberately does not claim to fix correspondence already baked into
+      // the legacy pixels; a future real bake simply bypasses this migration.
+      if ((lay.body || {}).mode !== 'face-atlas') {
+        const migrated = repackLegacySkinAtlas(uv, lay, human, beast, D.G || []);
+        if (migrated) {
+          uv = migrated.uv; lay = migrated.lay;
+          human = migrated.human; beast = migrated.beast;
+        }
+      }
+
+      skinI = human;
+      skinIBeast = beast;
+      skinLayout = lay;
+      bodyFaceTile = buildBodyFaceTiles(lay);
+
+      const uvs = new Float32Array(nf * 6 * 2);
+      let q = 0;
+      for (let f = 0; f < nf; f++) for (const vi of TRI) {
+        uvs[q++] = uv.uv[f * 8 + vi * 2]; uvs[q++] = uv.uv[f * 8 + vi * 2 + 1];
+      }
+      geo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+
       skinTexCanvas = document.createElement('canvas');
-      skinTexCanvas.width = c.width; skinTexCanvas.height = c.height;
+      skinTexCanvas.width = skinI.width; skinTexCanvas.height = skinI.height;
       skinTex = new THREE.CanvasTexture(skinTexCanvas);
       skinTex.magFilter = THREE.NearestFilter; skinTex.minFilter = THREE.NearestFilter;
       skinTex.generateMipmaps = false;
