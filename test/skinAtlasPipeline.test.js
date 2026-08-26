@@ -12,9 +12,9 @@ const beast = readFileSync(new URL('../tools/skin/beast_skin.py', import.meta.ur
 const ramps = readFileSync(new URL('../tools/skin/skin_ramps.py', import.meta.url), 'utf8');
 
 test('body skin is baked on the actual quads, not an approximate cylinder', () => {
-  assert.match(bake, /p = bilerp\(P\[0\], P\[1\], P\[2\], P\[3\], s, t\)/);
+  assert.match(bake, /p = rendered_point\(P, s, t\)/);
   assert.match(bake, /'mode': 'face-atlas'/);
-  assert.match(bake, /one exact bilinear tile per rendered body quad/);
+  assert.match(bake, /one triangle-exact tile per rendered body quad/);
 
   // These were the old distortion vehicles: a synthetic 0.7-depth ellipse
   // and a group-wide angular unwrap. Neither belongs in the body baker.
