@@ -25,6 +25,7 @@
 import { MISSILE_SPEED } from '../systems/spellcast.js';   // AUDIT 23: the arrow speed's one home
 import { createSkin } from './paperdoll/skin.js';
 import { buildClassicBodyClothingSampler, buildClassicDrapeTextureCanvas } from './paperdoll/clothingTexture.js';
+import { buildClassicBodyArmorSampler, buildClassicArmorPieceTexture } from './paperdoll/armorTexture.js';
 import { buildPaperdollPayload } from '../characters/paperdollPayload.js';
 import { makeCoreFn, buildCloth, stepCloth, articulatedCapsules } from '../characters/clothSim.js';
 import { beastAttackPose, hitPointOf } from '../characters/beastAttack.js';
@@ -256,15 +257,21 @@ function applyVillager(v) {
 function setLoosePieces(on) {
   if (!on) {
     armorOn.clear();
+    classicArmorBodySamplers.clear();
+    ++classicArmorTextureToken;
+    clearAllArmorPieceTextures();
+    syncBodySurfaceSampler();
     for (const byFamily of Object.values(armorPieceMeshes))
       for (const m of Object.values(byFamily)) if (m) m.visible = false;
     for (const id of Object.keys(ARMOR_BUTTONS)) {
       const btn = document.getElementById(id);
       if (btn) btn.classList.remove('on');
     }
+    setDrape();
     return;
   }
   syncArmorPieceVisibility();
+  setDrape();
 }
 function setBodyColors(Carr) {
   if (!Carr) Carr = D.C;
@@ -369,8 +376,108 @@ for (const a of (D.armor || [])) {
   }
 }
 
+let classicClothingSampler = null;
+let classicArmorTextureToken = 0;
+const classicArmorBodySamplers = new Map();
+const armorPieceTextureState = new Map();
+
 function armorPack(slot) {
   return armorBySlot[slot]?.families?.[armorFamily] || null;
+}
+function armorBodyOwnerMap() {
+  const owner = new Map();
+  // Same inner->outer order as geometry; a later slot wins overlaps.
+  for (const slot of ['boots', 'greaves', 'gauntlets', 'cuirass']) {
+    if (!armorOn.has(slot)) continue;
+    const d = armorPack(slot);
+    if (!d?.idx) continue;
+    for (const f of d.idx) owner.set(f, slot);
+  }
+  return owner;
+}
+function syncBodySurfaceSampler() {
+  const armorOwner = armorBodyOwnerMap();
+  const clothing = classicClothingSampler;
+  if (!armorOwner.size && !clothing) { setBodyOverlaySampler(null); return; }
+  const sampler = (f, u, v) => {
+    const slot = armorOwner.get(f);
+    if (slot) {
+      const armor = classicArmorBodySamplers.get(slot);
+      return armor?.ownsFace?.(f) ? armor(f, u, v) : null;
+    }
+    return clothing?.ownsFace?.(f) ? clothing(f, u, v) : null;
+  };
+  sampler.ownsFace = (f) => {
+    const slot = armorOwner.get(f);
+    if (slot) return !!classicArmorBodySamplers.get(slot)?.ownsFace?.(f);
+    return !!clothing?.ownsFace?.(f);
+  };
+  setBodyOverlaySampler(sampler);
+}
+function clearArmorPieceTexture(slot, family) {
+  const key = `${slot}:${family}`;
+  const st = armorPieceTextureState.get(key);
+  if (!st) return;
+  st.mesh.material.map = null;
+  st.mesh.material.vertexColors = true;
+  st.mesh.material.needsUpdate = true;
+  st.texture?.dispose?.();
+  armorPieceTextureState.delete(key);
+}
+function clearAllArmorPieceTextures() {
+  for (const key of [...armorPieceTextureState.keys()]) {
+    const [slot, family] = key.split(':');
+    clearArmorPieceTexture(slot, Number(family));
+  }
+}
+function mountArmorPieceTexture(slot, family, art) {
+  const mesh = armorPieceMeshes[slot]?.[family];
+  if (!mesh || !art?.canvas || !art?.uv) return;
+  clearArmorPieceTexture(slot, family);
+  mesh.geometry.setAttribute('uv', new THREE.BufferAttribute(art.uv, 2));
+  const texture = new THREE.CanvasTexture(art.canvas);
+  texture.magFilter = THREE.NearestFilter;
+  texture.minFilter = THREE.NearestFilter;
+  texture.generateMipmaps = false;
+  mesh.material.map = texture;
+  mesh.material.vertexColors = false;
+  mesh.material.needsUpdate = true;
+  armorPieceTextureState.set(`${slot}:${family}`, { mesh, texture });
+}
+async function syncSelectedArmorTextures() {
+  const token = ++classicArmorTextureToken;
+  const family = armorFamily, race = RACES[raceIx], useGender = gender;
+  classicArmorBodySamplers.clear();
+  clearAllArmorPieceTextures();
+  syncBodySurfaceSampler();
+  const tasks = [];
+  for (const slot of armorOn) {
+    const item = armorBySlot[slot], pack = armorPack(slot);
+    if (!item || !pack) continue;
+    if (item.kind === 'body') {
+      tasks.push((async () => {
+        try {
+          const sampler = await buildClassicBodyArmorSampler({ item, delta: pack, D, race, gender: useGender, family });
+          if (token !== classicArmorTextureToken || armorFamily !== family || !armorOn.has(slot)) return;
+          if (sampler) classicArmorBodySamplers.set(slot, sampler);
+          syncBodySurfaceSampler();
+        } catch { /* no ARENA2: flat procedural armour remains */ }
+      })());
+    } else {
+      tasks.push((async () => {
+        try {
+          const art = await buildClassicArmorPieceTexture({ item, pack, race, gender: useGender, family });
+          if (token !== classicArmorTextureToken || armorFamily !== family || !armorOn.has(slot)) return;
+          if (art) mountArmorPieceTexture(slot, family, art);
+        } catch { /* no ARENA2: flat procedural armour remains */ }
+      })());
+    }
+  }
+  await Promise.all(tasks);
+  if (token === classicArmorTextureToken) {
+    syncBodySurfaceSampler();
+    syncArmorPieceVisibility();
+  }
 }
 function applyArmorBodyDelta(d) {
   if (!d?.idx) return;
@@ -415,7 +522,11 @@ async function rebuildArmorWardrobe() {
   applyClassicClothing(c);
   syncArmorPieceVisibility();
   syncArmorButtons();
-  if (c) await syncClassicClothingTexture(c);
+  await Promise.all([
+    c ? syncClassicClothingTexture(c) : Promise.resolve(null),
+    syncSelectedArmorTextures(),
+  ]);
+  setDrape();
 }
 // ORC PIECES: one tusk pair and one brow per design, all built up front
 // and hidden. Building them lazily on selection would drop a new mesh
@@ -507,6 +618,10 @@ const tailMesh = D.tail ? buildPiece(D.tail) : null;
 const tailCatMesh = D.tailCat ? buildPiece(D.tailCat) : null;
 const bodyScalesMesh = D.bodyScales ? buildPiece(D.bodyScales) : null;
 const drapedMeshes = {}, clothSims = {}; const DRAPES = ['None', ...(D.drapedNames||[])];
+// Drapes that are intentionally worn OUTSIDE armour. Dresses, robes, skirts,
+// wraps, sashes and similar body garments disappear as soon as armour is worn;
+// cloaks and heraldic surcoats remain valid outer layers.
+const ARMOR_OUTER_DRAPES = new Set(['Casual Cloak', 'Formal Cloak', 'Dwynnen Surcoat', 'Anticlere Surcoat']);
 // Draped garments are already authored as continuous cloth surfaces, so unlike
 // body clothing they do not need isolated face tiles. Their topology owns one
 // planar UV field derived from the garment's own rest vertices.
@@ -644,7 +759,12 @@ for (const nm in (D.drapeGrids||{})) {
 // Static drapes (surcoat/toga/sash/wrap): simple panels, bob with the body.
 for (const nm in (D.draped||{})) { const m = buildPiece(D.draped[nm]); m.visible = false; drapedMeshes[nm] = m; }
 let drapeIx = 0;
-const setDrape = () => { for (const nm in drapedMeshes) drapedMeshes[nm].visible = false; const cur = DRAPES[drapeIx]; if (cur !== 'None' && drapedMeshes[cur]) drapedMeshes[cur].visible = true; };
+const setDrape = () => {
+  for (const nm in drapedMeshes) drapedMeshes[nm].visible = false;
+  const cur = DRAPES[drapeIx];
+  const armorAllows = !armorOn.size || ARMOR_OUTER_DRAPES.has(cur);
+  if (cur !== 'None' && armorAllows && drapedMeshes[cur]) drapedMeshes[cur].visible = true;
+};
 // ── VILLAGER DYE. A villager's hanging cloth is a drape name plus the
 // design's OWN ART_PAL ramp, so picking one has to repaint the garment
 // rather than leave it in draped.js's built-in DRAPE_MATERIAL colour.
@@ -766,7 +886,8 @@ function drawClassicTextureQA(debug) {
 }
 async function syncClassicClothingTexture(c = classicClothingOn) {
   const token = ++classicTextureToken;
-  setBodyOverlaySampler(null);
+  classicClothingSampler = null;
+  syncBodySurfaceSampler();
   clearClassicDrapeTexture();
   drawClassicTextureQA(null);
   if (!c) return null;
@@ -776,7 +897,8 @@ async function syncClassicClothingTexture(c = classicClothingOn) {
       // Async never wins late: a slow archive from a previous item/race may
       // finish after the user has already selected something else.
       if (token !== classicTextureToken || classicClothingOn !== c) return null;
-      setBodyOverlaySampler(sampler);
+      classicClothingSampler = sampler || null;
+      syncBodySurfaceSampler();
       drawClassicTextureQA(sampler?.debug);
       return sampler?.meta || null;
     }
@@ -789,7 +911,8 @@ async function syncClassicClothingTexture(c = classicClothingOn) {
     }
   } catch {
     if (token === classicTextureToken && classicClothingOn === c) {
-      setBodyOverlaySampler(null);
+      classicClothingSampler = null;
+      syncBodySurfaceSampler();
       clearClassicDrapeTexture();
     }
   }
@@ -797,7 +920,8 @@ async function syncClassicClothingTexture(c = classicClothingOn) {
 }
 function applyClassicClothing(c) {
   ++classicTextureToken;
-  setBodyOverlaySampler(null);
+  classicClothingSampler = null;
+  syncBodySurfaceSampler();
   clearClassicDrapeTexture();
   for (const t of Object.values(pieceTables)) hidePieces(t);
   pos.set(pristinePos);
@@ -1651,8 +1775,8 @@ for (const [id, slot] of Object.entries(ARMOR_BUTTONS)) {
   };
 }
 syncArmorButtons();
-document.getElementById('race').onclick = async (e) => { raceIx = (raceIx+1)%RACES.length; syncRace(); if (classicClothingOn) await syncClassicClothingTexture(classicClothingOn); e.target.textContent = 'race: '+RACES[raceIx]; const pal=(D.PALETTES||{})[PKEY[RACES[raceIx]]]; if(pal) document.getElementById('tone').textContent='tone: '+pal[toneIx[RACES[raceIx]]%pal.length].name;  };
-document.getElementById('tone').onclick = (e) => { const R=RACES[raceIx], pal=(D.PALETTES||{})[PKEY[R]]; if(!pal)return; toneIx[R]=(toneIx[R]+1)%pal.length; applyTone(); e.target.textContent='tone: '+pal[toneIx[R]%pal.length].name; };
+document.getElementById('race').onclick = async (e) => { raceIx = (raceIx+1)%RACES.length; syncRace(); await rebuildArmorWardrobe(); e.target.textContent = 'race: '+RACES[raceIx]; const pal=(D.PALETTES||{})[PKEY[RACES[raceIx]]]; if(pal) document.getElementById('tone').textContent='tone: '+pal[toneIx[RACES[raceIx]]%pal.length].name;  };
+document.getElementById('tone').onclick = async (e) => { const R=RACES[raceIx], pal=(D.PALETTES||{})[PKEY[R]]; if(!pal)return; toneIx[R]=(toneIx[R]+1)%pal.length; applyTone(); if (classicClothingOn || armorOn.size) await rebuildArmorWardrobe(); e.target.textContent='tone: '+pal[toneIx[R]%pal.length].name; };
 document.getElementById('walk').onclick = (e) => { gaitIx = (gaitIx+1)%3; e.target.textContent = ['idle','walk','run'][gaitIx]; e.target.classList.toggle('on', gaitIx>0); };
 const poseBtn = document.getElementById('pose');
 const setPose = (i) => { poseIx = ((i % POSE_NAMES.length) + POSE_NAMES.length) % POSE_NAMES.length; poseBtn.textContent = 'pose: ' + POSE_NAMES[poseIx]; poseBtn.classList.toggle('on', poseIx > 0); atk = null; wm = null; arrowFlight = null; arrowHidden = false; arrowVisible(); swordInfo.textContent = ''; };   // a pose change is a STATE change: clear the clip + the weapon machine (a drawn bow must not persist over a melee stance)
