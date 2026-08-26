@@ -224,6 +224,7 @@ function applyVillager(v) {
   mat.depthWrite = true;
   mat.blending = THREE.NormalBlending; // or the fire's blend outlives the fire
   mat.needsUpdate = true;
+  syncPieceEffectState();
   applyVillagerDrape(v);
   // A VILLAGER WEARS WHAT THEIR DESIGN SAYS AND NOTHING ELSE.
   //
@@ -264,7 +265,29 @@ const geo = new THREE.BufferGeometry();
 geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
 geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
 geo.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
-const mat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }); // shading is baked into vertex colours
+const mat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }); // BODY ONLY: skin.js owns this material
+// Every loose polygon pack gets its OWN material. skin.js is allowed to swap
+// the body's map/vertexColors, but a helm, robe, weapon, tail or creature piece
+// must never inherit the body's skin atlas just because it shares a renderer.
+// We still mirror the body's EFFECT state (ghost opacity / fire blend) so the
+// split changes texture ownership without changing authored spectral behavior.
+const pieceMaterials = new Set();
+function copyBodyEffectState(pm) {
+  pm.transparent = mat.transparent;
+  pm.opacity = mat.opacity;
+  pm.depthWrite = mat.depthWrite;
+  pm.blending = mat.blending;
+  pm.needsUpdate = true;
+}
+function makePieceMaterial() {
+  const pm = mat.clone();
+  pm.map = null;
+  pm.vertexColors = true;
+  copyBodyEffectState(pm);
+  pieceMaterials.add(pm);
+  return pm;
+}
+function syncPieceEffectState() { for (const pm of pieceMaterials) copyBodyEffectState(pm); }
 const mesh = new THREE.Mesh(geo, mat);
 const pivot = new THREE.Group();
 pivot.add(mesh);
@@ -290,7 +313,7 @@ function buildPiece(cp) {
   geo.setAttribute('position', new THREE.BufferAttribute(pp, 3));
   geo.setAttribute('color', new THREE.BufferAttribute(pc, 3));
   geo.setAttribute('normal', new THREE.BufferAttribute(pn, 3));
-  const m = new THREE.Mesh(geo, mat); m.position.y = -D.cy; m.visible = true; pivot.add(m);
+  const m = new THREE.Mesh(geo, makePieceMaterial()); m.position.y = -D.cy; m.visible = true; pivot.add(m);
   animTargets.push({ pos: pp, base: pp.slice(), vgrp: pg, geo }); // moves with the body
   m.userData.recolor = (ramp) => { if (!cp.I) return; let oo = 0; for (let f = 0; f < ncf; f++) { const c = snapRamp(ramp, cp.I[f]); const r=c[0]/255,g=c[1]/255,b=c[2]/255; for (let k=0;k<6;k++){ pc[oo]=r; pc[oo+1]=g; pc[oo+2]=b; oo+=3; } } geo.getAttribute('color').needsUpdate = true; };
   return m;
@@ -401,7 +424,9 @@ for (const nm in (D.drapeGrids||{})) {
   geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(cloth.V*3), 3));
   const mat = (D.drapeMaterials||{})[nm] || { ramp: CLOTH_RAMP, sheen: 0, rim: 0 };
   geo.setIndex(tris); geo.computeVertexNormals(); shadeClothGeo(geo, mat);
-  const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }));
+  const clothRenderMat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide });
+  pieceMaterials.add(clothRenderMat); copyBodyEffectState(clothRenderMat);
+  const m = new THREE.Mesh(geo, clothRenderMat);
   m.position.y = -D.cy; m.visible = false; pivot.add(m);
   drapedMeshes[nm] = m; clothSims[nm] = { cloth, geo, posArr, mat };
 }
@@ -701,6 +726,7 @@ function applyOrc(o) {
   // rather than a burning one.
   mat.blending = spec && spec.additive ? THREE.AdditiveBlending : THREE.NormalBlending;
   mat.needsUpdate = true;
+  syncPieceEffectState();
 
   // Whichever line this design came from, show ITS pieces. The line is
   // carried on the design rather than guessed by searching every table,
