@@ -10,7 +10,7 @@
 # build, then fail the protected github-pages environment before any steps ran.
 # Main still checks out the preview branch below, so every main deploy carries
 # the latest preview without letting the preview branch deploy by itself.
-# Preview refresh: paperdoll-offset shirt front reconstruction + 8-way clothing wraps.
+# Preview refresh: chest-weighted shirt reconstruction + closed shoulder/neck coverage.
 name: deploy
 
 on:
@@ -20,7 +20,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -63,6 +63,32 @@ jobs:
         with:
           ref: chatgpt/exact-face-atlas
           path: exact-face-atlas
+          fetch-depth: 0
+
+      - name: Apply and verify clothing front v4
+        working-directory: exact-face-atlas
+        run: |
+          python tools/patch_clothing_front_v4.py
+          node --check src/tools/paperdoll/clothingTexture.js
+          node tools/clothingCanonicalProbe.mjs
+          node --input-type=module - <<'NODE'
+          import { clothingZones } from './src/characters/clothing.js';
+          const shirt = clothingZones('Short Shirt');
+          const tunic = clothingZones('Formal Tunic');
+          const open = clothingZones('Open Tunic');
+          const torso = (zs) => zs.find((z) => z.groups.includes('body'));
+          const arms = (zs) => zs.find((z) => z.arm);
+          if (!(torso(shirt).yHi >= 1.665 && arms(shirt).yHi >= 1.645)) throw new Error('closed shirt coverage regression');
+          if (!(torso(tunic).yHi >= 1.665 && arms(tunic).yHi >= 1.645)) throw new Error('closed tunic coverage regression');
+          if (!(torso(open).yHi < torso(shirt).yHi)) throw new Error('open tunic must remain looser');
+          console.log('clothing neckline coverage probe: PASS');
+          NODE
+          git diff --check
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add src/tools/paperdoll/clothingTexture.js tools/clothingCanonicalProbe.mjs
+          git commit -m "CLOTHING: weight shirt reconstruction to chest evidence"
+          git push origin HEAD:chatgpt/exact-face-atlas
 
       - name: Install preview dependencies
         run: npm ci
