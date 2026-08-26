@@ -6,6 +6,7 @@
 //
 // Material follows the armour family (paperdollArt MATERIAL_FAMILY):
 // Plate -> steel, Chain -> mail, Leather -> leather.
+import templates from './itemTemplates.json' with { type: 'json' };
 import { MATERIAL_FAMILY } from './paperdollArt.js';
 
 const B = 'body', LL = 'legL', LR = 'legR', AL = 'armL', AR = 'armR';
@@ -20,6 +21,17 @@ const ZONES = {
   108: [{ groups: [LL, LR], yLo: 0.00, yHi: 0.42, th: 0.016, leg: true }],               // Boots
 };
 
+const SLOT_BY_INDEX = Object.freeze({
+  102: 'cuirass',
+  103: 'gauntlets',
+  104: 'greaves',
+  105: 'pauldronL',
+  106: 'pauldronR',
+  107: 'helm',
+  108: 'boots',
+});
+const PIECE_INDEX = new Set([105, 106, 107]);
+
 const materialOf = (family) =>
   family === MATERIAL_FAMILY.Leather ? 'leather'
   : family === MATERIAL_FAMILY.Chain ? 'mail'
@@ -31,7 +43,25 @@ export function armorZones(templateIndex, family = MATERIAL_FAMILY.Plate) {
   const zs = ZONES[templateIndex];
   if (!zs) return [];
   const mat = materialOf(family);
-  return zs.map((z) => ({ ...z, mat }));
+  return zs.map((z) => ({ ...z, groups: [...z.groups], mat }));
 }
 
-export { materialOf };
+/** Every wearable armour template the neutral rig can currently represent.
+ * Shields are intentionally not in this list: they are held equipment and need
+ * a hand-mounted shield mesh rather than pretending to be body armour. */
+export const ARMOR_CATALOG = Object.freeze(
+  templates
+    .filter((t) => SLOT_BY_INDEX[t.index])
+    .map((t) => Object.freeze({
+      index: t.index,
+      name: t.name,
+      slot: SLOT_BY_INDEX[t.index],
+      kind: PIECE_INDEX.has(t.index) ? 'piece' : 'body',
+      variants: t.variants ?? 0,
+      drawOrder: t.drawOrderOrEffect ?? 0,
+      playerTextureArchive: t.playerTextureArchive ?? 0,
+      playerTextureRecord: t.playerTextureRecord ?? 0,
+    })),
+);
+
+export { materialOf, MATERIAL_FAMILY };
