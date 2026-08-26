@@ -1,0 +1,46 @@
+name: patch weapon shield textures
+
+on:
+  push:
+    branches: [chatgpt/exact-face-atlas]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/exact-face-atlas
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply weapon/shield integration
+        run: python tools/patch_weapon_shield_textures.py
+      - name: Install dependencies
+        run: npm ci
+      - name: Verify weapon/shield pipeline
+        run: |
+          node --check src/characters/shields.js
+          node --check src/tools/paperdoll/weaponTexture.js
+          node --check src/characters/paperdollPayload.js
+          node --check src/tools/paperdollViewer.js
+          node tools/weaponShieldTextureProbe.mjs
+          node tools/variantMatrixProbe.mjs
+          node tools/armorTextureLayersProbe.mjs
+          node tools/armorViewerProbe.mjs
+          node tools/voxelClothingRegressionProbe.mjs
+          node tools/clothingCanonicalProbe.mjs
+          npm run build
+          git diff --check
+      - name: Commit verified weapon/shield integration
+        run: |
+          git config user.name "Lattymoy"
+          git config user.email "98724681+Lattymoy@users.noreply.github.com"
+          git add src/characters/paperdollPayload.js src/tools/paperdollViewer.js viewer.html
+          git diff --cached --quiet && exit 0
+          git commit -m "WEAPONS: wrap classic art onto full held-item set"
+          git push origin HEAD:chatgpt/exact-face-atlas
