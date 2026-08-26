@@ -210,10 +210,31 @@ test('G5: the service reaches the map through a HOST DOOR, and a host without on
   const j = world.indexOf('function openTeleportMap()');
   assert.ok(j > 0);
   const door = world.slice(j, world.indexOf('\n  }', j));
-  assert.ok(door.includes('activateTeleportationTravel()'), 'and arms the map before handing it over');
   assert.ok(door.includes('travelMapArtLoaded()'), 'no art, no map - the U8 idiom');
+  // DFU arms the window and only THEN pushes it
+  // (DaggerfallGuildServicePopupWindow.cs:414-418: CloseWindow,
+  // ActivateTeleportationTravel, PushWindow) - a map handed over
+  // unarmed is the ordinary fast-travel map and would charge the
+  // player for the trip.
+  assert.ok(door.includes('activateTeleportationTravel()'), 'and arms the map');
+  assert.ok(door.indexOf('travelMapArtLoaded()') < door.indexOf('activateTeleportationTravel()')
+    && door.indexOf('activateTeleportationTravel()') < door.indexOf('return win'),
+  'art gate, then arm, then hand over');
+
+  // The other hosts have no streaming world to land in - no map
+  // reader, no map dict, no player pixel - so they supply no door,
+  // which is what makes the arm's `?.` real rather than defensive.
+  // They may SAY so (dungeonContext explains beside the journal's
+  // find-place seam why it leaves the map to the outer host); the
+  // scan therefore runs over comment-stripped source, so that prose
+  // about the seam is free and a second implementation of it is not.
+  const stripComments = (src) => src
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+  assert.ok(stripComments(world).includes('openTeleportMap,'),
+    'the stripper reads CODE - the world host\'s own door survives it');
   for (const other of ['exterior.js', 'dungeonContext.js']) {
-    const src = readFileSync(new URL(`../src/scenes/${other}`, import.meta.url), 'utf8');
+    const src = stripComments(readFileSync(new URL(`../src/scenes/${other}`, import.meta.url), 'utf8'));
     assert.equal(/openTeleportMap/.test(src), false, `${other} has no streaming world to land in`);
   }
 });

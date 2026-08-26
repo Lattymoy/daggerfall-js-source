@@ -94,8 +94,15 @@ test('F167: enchanting a STACK splits ONE item off - the rest stay plain (Dagger
   assert.equal(stack.enchantments, undefined, 'and stays plain');
   const single = player.items.find((it) => it !== stack && it.group === 'Gems');
   assert.equal(single.stackCount, 1, 'SplitStack(selectedItem, 1)');
-  assert.deepEqual(single.enchantments.map((e) => e.type), ['FeatherWeight'],
-    'the split single carries the enchantment');
+  // What the item CARRIES is DaggerfallEnchantment { type, param }
+  // (ItemsFile.cs:92-96): SetEnchantments stores settings.ClassicType
+  // - the NUMBER - not the settings row's EffectKey
+  // (DaggerfallUnityItem.cs:1316-1320). EnchantmentTypes.FeatherWeight
+  // is 11 (ItemsFile.cs:125) and FeatherWeight's ClassicParam is -1
+  // (FeatherWeight.cs:47).
+  assert.deepEqual(single.enchantments.map((e) => ({ type: e.type, param: e.param })),
+    [{ type: 11, param: PARAM_NONE }],
+    'the split single carries the enchantment, stored as the classic type');
 
   // ItemCollection.SplitStack itself (:261-272): the whole stack is
   // answered as-is, a bad pick is null
@@ -118,7 +125,8 @@ test('F167: enchanting a STACK splits ONE item off - the rest stay plain (Dagger
   solow.w.selected = solo;
   solow.w.powers = [enchantmentSettings('FeatherWeight', PARAM_NONE)];
   solow.w._enchant();
-  assert.deepEqual(solo.enchantments.map((e) => e.type), ['FeatherWeight']);
+  assert.deepEqual(solo.enchantments.map((e) => ({ type: e.type, param: e.param })),
+    [{ type: 11, param: PARAM_NONE }]);
   assert.equal(solow.player.items.filter((it) => it.group === 'Gems').length, 1,
     'nothing was split off a single');
 });
@@ -136,7 +144,8 @@ test('F168: the gold label and check count LETTERS OF CREDIT (PlayerEntity.cs:13
   w.selected = gem;
   w.powers = [enchantmentSettings('FeatherWeight', PARAM_NONE)];   // 1000 gold
   w._enchant();
-  assert.deepEqual(gem.enchantments.map((e) => e.type), ['FeatherWeight'],
+  assert.deepEqual(gem.enchantments.map((e) => ({ type: e.type, param: e.param })),
+    [{ type: 11, param: PARAM_NONE }],
     'the letters paid the enchanter');
 });
 
