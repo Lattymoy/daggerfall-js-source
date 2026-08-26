@@ -14,6 +14,7 @@ import { readFileSync } from 'node:fs';
 
 import {
   packModel, itemLine, SLOT_MAP, useResultAction, remoteModel, REMOTE_TITLE, STOW_LABEL, plural,
+  equippedModel,
 } from '../src/ui/enhancedInventory.js';
 import { WAGON_KG_LIMIT } from '../src/systems/itemTransfer.js';
 import { USE_PENDING } from '../src/ui/nativeInventory.js';
@@ -621,8 +622,11 @@ test('U58: STOW is drawn only when the law would move something or SAY something
   assert.match(fn, /planStore\(/, 'canStow decides for itself instead of asking the ladder');
   assert.match(fn, /plan\.ok \|\| !!plan\.refusal\.text/,
     'a silent refusal and a speaking one are being treated alike');
-  // and the button is actually gated on it
-  assert.match(src, /if \(canStow\(picked\)\) \{/);
+  // and the button is actually gated on it - U59 added the WORN
+  // clause in front, because filterByTab drops an equipped item from
+  // the list a Remove click can reach, so the transfer DFU offers
+  // does not exist for one.
+  assert.match(src, /if \(!line\.equipped && canStow\(picked\)\) \{/);
 });
 
 test('U58: a USE on the remote side consumes out of the LIVE list', () => {
@@ -741,4 +745,107 @@ test('U58 + AUDIT 26: PopToHUD closes the pane and says NOTHING', () => {
   const src = read('src/ui/enhancedInventory.js');
   assert.match(src, /if \(act\.kind === 'close'\) \{ onExit\(\); return; \}/);
   assert.match(src, /getQuest: deps\.getQuest \?\? null/, 'useItem never gets the quest seam');
+});
+
+
+// ── U59: THE AVATAR, AND WHAT YOU ARE WEARING ────────────────────
+// The slot map put every worn item behind a 7px circle. These pin the
+// list that replaced it, and the seam that lets a DOM screen show the
+// same paperdoll the classic window draws instead of compositing a
+// second one.
+
+test('U59 equippedModel: every slot, in the BODY\'s order and not the enum\'s', () => {
+  const e = hero();
+  const helm = mk('Helm', 'Armor');
+  const boots = mk('Boots', 'Armor');
+  e.items.push(helm, boots);
+  equipItem(e, helm);
+  equipItem(e, boots);
+
+  const m = equippedModel(e);
+  const label = (n) => m.rows.findIndex((r) => r.label === n);
+  // EQUIP_SLOTS numbers the jewellery FIRST (Amulet0 = 0) and Head is
+  // 12, so enum order would put a ring above a helm. The order here is
+  // read off SLOT_MAP's own y/x - one table for where a slot sits and
+  // for what order it reads in.
+  assert.ok(label('Head') >= 0 && label('Feet') >= 0);
+  assert.ok(label('Head') < label('Chest, armour'), 'the head is below the chest');
+  assert.ok(label('Chest, armour') < label('Feet'), 'the feet are above the chest');
+  assert.ok(label('Head') < label('Ring'), 'the enum order leaked through');
+
+  // the ITEMS are the entity's own records, not copies - the row's
+  // click selects into a detail panel that must act on the real one
+  const headRow = m.rows.find((r) => r.label === 'Head');
+  assert.equal(headRow.item, helm);
+  assert.equal(m.filled, 2);
+
+  // EMPTY SLOTS ARE ROWS. A list of only what you wear cannot answer
+  // "what could I still put on", which is half of what the schematic
+  // was for.
+  assert.ok(m.rows.some((r) => !r.item), 'an empty slot has no row');
+  assert.equal(m.rows.find((r) => r.label === 'Left hand').item, null);
+
+  // ...but DFU's two UNNAMED ones stay hidden until something is in
+  // them, for SLOT_MAP's own reason
+  assert.equal(m.rows.filter((r) => r.label === 'Unnamed').length, 0);
+  assert.equal(m.total, Object.keys(SLOT_MAP).length, 'the count is of every slot, shown or not');
+  // a bare character still gets the whole board
+  const bare = equippedModel({ stats: { strength: 40 }, items: [] });
+  assert.equal(bare.filled, 0);
+  assert.equal(bare.rows.length, m.total - 2, 'the two unnamed slots are the only hidden ones');
+  // and a hidden slot APPEARS once it holds something
+  assert.equal(equippedModel().rows.length > 0, true, 'no entity is still a board of empty slots');
+});
+
+test('U59: an empty slot is not a BUTTON, and not `.empty` either', () => {
+  const src = read('src/ui/enhancedInventory.js');
+  const fn = src.slice(src.indexOf('function equippedList()'), src.indexOf('function characterCol()'));
+  assert.ok(fn.length > 200, 'the worn list is gone');
+  // The first draft made every row a button and disabled the empty
+  // ones; the pack probe's 44px touch-target rule caught twenty-two
+  // 24px buttons immediately. A disabled button is still a button.
+  assert.match(fn, /el\('div', 'wornrow wornempty'\)/, 'empty slots are controls again');
+  assert.ok(!/b\.disabled/.test(fn), 'a disabled button is still a button');
+  // and the class is SCOPED. `.empty` is already a component in the
+  // shared stylesheet - a dashed placeholder card - so the bare word
+  // drew every unfilled slot as one. Third collision of this shape in
+  // the arc, after `.detail` and `.packcol`.
+  assert.ok(!/'wornrow empty'|'wornname empty'/.test(fn), 'the bare `.empty` is back');
+  const css = read('src/ui/enhancedStyle.js');
+  assert.match(css, /\.empty \{ border: 1px dashed/, 'the component this collides with is gone - re-check the pin');
+  assert.match(css, /\.wornrow\.wornempty \{/);
+});
+
+test('U59: a WORN item has no way to be dropped, because DFU has none', () => {
+  // filterByTab IS FilterLocalItems, so an equipped item is never in
+  // the list a Remove click can reach. The pane draws the Stow button
+  // off the same fact rather than off a second reading of it.
+  const src = read('src/ui/enhancedInventory.js');
+  assert.match(src, /if \(!line\.equipped && canStow\(picked\)\) \{/);
+  // and the escape hatch is the button beside it
+  assert.match(src, /'Take off'/);
+});
+
+test('U59: the doll is the COMPOSITOR\'s, and the schematic is the fallback', () => {
+  const src = read('src/ui/enhancedInventory.js');
+  // one compositor: the pane reads finished pixels and never blits
+  assert.match(src, /paperDollPixels\(\)/);
+  assert.match(src, /paperDollDataUrl\(paperDollPixels\(\), \{ scale: 3 \}\)/);
+  const code2 = code('src/ui/enhancedInventory.js');
+  for (const law of ['BlitItems', 'applyDyeToIndex', 'paperdollOrder', 'PAPERDOLL_ORIGIN', 'BG_SUBRECT']) {
+    assert.ok(!code2.includes(law), `a second paperdoll compositor is growing here (${law})`);
+  }
+  // the fallback is the SCHEMATIC, which is the only one of the two
+  // that needs no ARENA2 - so a player with no game data still sees
+  // their kit
+  const fp = src.slice(src.indexOf('function figurePanel()'), src.indexOf('function equippedList()'));
+  assert.match(fp, /return url \? dollPanel\(url\) : slotMap\(\);/);
+  // and the compositor is asked to recompose when the kit changes, or
+  // the avatar shows yesterday's armour
+  for (const fn of ['function wear(item)', 'function takeOff(slot)']) {
+    const from = src.indexOf(fn);
+    assert.ok(from > 0, `${fn} is gone`);
+    const body = src.slice(from, src.indexOf('\nfunction ', from + fn.length));
+    assert.match(body, /refreshFigure\(\)/, `${fn} leaves the avatar stale`);
+  }
 });

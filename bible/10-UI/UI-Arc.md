@@ -8,6 +8,88 @@ policies one by one.
 
 
 
+## U59 THE AVATAR, AND WHAT YOU ARE WEARING (2026-08-26)
+
+Two complaints, one gap. The pack showed what you CARRY and turned
+what you WEAR into twenty-seven 7px circles - so you could not see
+your character at all, and you could not read your kit without
+hovering dots one at a time.
+
+THE DOLL WAS ALREADY BUILT. `refreshPaperDoll` composites the avatar
+CPU-side into an RGBA buffer - the cloak interiors, the censor welds,
+the head, the items in ascending drawOrder, every layer at its own
+baked offset, the dye bands - and then uploads it as a GL texture and
+DROPS THE BUFFER. A DOM screen cannot use a GL texture, and building a
+second compositor over the same laws is how a port ends up with two
+dolls that disagree. So the compositor keeps its buffer, and
+`ui/textureCanvas.js` - which already owned "bitmap to data URL" for
+the DOM - turns it into a value. One doll, two consumers, and a sweep
+against this file ever growing a `BlitItems` of its own.
+
+THE SCHEMATIC IS NOW THE FALLBACK, and that is the right shape rather
+than a demotion: it is the only one of the two that needs no ARENA2,
+so a player with no game data still gets a picture of their kit. The
+avatar is STICKY at the top of its column, because the whole point of
+the slice is seeing it AND the list at once - a doll that scrolls away
+when you read past the boots is the small button again.
+
+THE DOTS BECAME ROWS. Every slot, named, with what is in it, in the
+BODY's order - read off SLOT_MAP's own y/x rather than a second table,
+since EQUIP_SLOTS numbers the jewellery first and enum order would put
+a ring above a helm. Empty slots are rows too: a list of only what you
+wear cannot answer "what could I still put on", which was half of what
+the schematic was for. A row SELECTS rather than unequipping on the
+spot - the node's straight-to-unequip is right for a control whose
+only meaning is "this one", and a named row has a detail panel behind
+it where Take off sits next to Use.
+
+AND THE PANEL IS THE SPACE THE VOXEL RENDER LANDS IN. It owns the
+sizing and the sticky behaviour; which picture fills it is one
+decision in `figurePanel`, and today that decision has two branches.
+
+FOUR THINGS WERE WRONG IN THE FIRST DRAFT, and each was caught by a
+different thing:
+
+    THE PROBE      An empty slot was a DISABLED BUTTON, and the pack
+                   probe's 44px touch-target rule failed on twenty-two
+                   24px ones. A disabled button is still a button -
+                   and this arc keeps deleting controls that can only
+                   do nothing. An empty slot is not a control.
+    THE SCREEN     `.empty` is already a COMPONENT in the shared
+                   stylesheet, a dashed 26px-padded placeholder card,
+                   so every unfilled slot drew as one. THIRD collision
+                   of this exact shape after `.detail` in U53 and
+                   `.packcol` twenty minutes earlier in this same
+                   slice. A generic word in a shared stylesheet is a
+                   collision waiting for the next screen, and the port
+                   has now paid for that lesson three times.
+    THE PROBE      Giving the character column `.packcol` broke every
+                   list selector - `.packcol:not(.packremote)` matched
+                   the doll. Same lesson, from the other side: a class
+                   is an interface.
+    READING IT     A WORN item offered "Drop". filterByTab IS
+                   FilterLocalItems, so an equipped item is never in
+                   the list DFU's Remove click can reach; the transfer
+                   does not exist for one.
+
+THE MUTATION RUN FOUND THE LAST GAP. Deleting the line that keeps the
+composite survived every node pin, because composing needs ARENA2 and
+the DOM probe stands up a synthetic buffer through the test seam. The
+real-art assertion is in `equipmechanics.test.js` and skips on CI, so
+a source sweep runs beside it that a machine with no game data can
+still fail - and it holds the thing that matters, that BOTH consumers
+read the same `out`.
+
+PROVED IN A REAL BROWSER by `tools/enhancedDollProbe.mjs` - 45/45 on a
+desktop, a Pixel 5 and a no-art fallback run. The composite is a RED
+half and a GREEN half rather than a picture, on purpose: what has to
+be proven is that the buffer reaches the screen UNSCRAMBLED, and a
+channel swap or a row-stride slip shows up as the wrong colour on the
+wrong side where a pretty test image would hide both. What it does NOT
+prove is stated in the file: the compositor's own layer order, dyes
+and offsets need ARENA2, and clicking the doll to unequip walks the
+real item layers - wired, and unproven here.
+
 ## U56-U58 meet AUDIT 26 (2026-08-26)
 
 The audit campaign landed on main while this arc was building the

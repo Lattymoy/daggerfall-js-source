@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { EQUIP_SLOTS, getEquipSlot, equipItem, unequipSlot, isEquipped, armorValuesOf, BODY_PARTS, seedStartingEquipment } from '../src/systems/equip.js';
 import { filterByTab, armorLabelValue } from '../src/ui/nativeInventory.js';
-import { preloadPaperDollArt, drawPaperDoll, paperDollArtLoaded, refreshPaperDoll, slotAtPaperDoll, paperdollItemImage, clampArmorVariant, _debugPaperDoll, WAIST_HEIGHT, PAPERDOLL_ORIGIN, ARMOR_LABEL_POS } from '../src/ui/paperDoll.js';
+import { preloadPaperDollArt, drawPaperDoll, paperDollArtLoaded, refreshPaperDoll, slotAtPaperDoll, paperdollItemImage, clampArmorVariant, _debugPaperDoll, paperDollPixels, PAPERDOLL_W, PAPERDOLL_H, WAIST_HEIGHT, PAPERDOLL_ORIGIN, ARMOR_LABEL_POS } from '../src/ui/paperDoll.js';
 import { getTemplate } from '../src/characters/paperdoll.js';
 import { TextureFile } from '../src/formats/textureFile.js';
 import { DFPalette } from '../src/formats/dfPalette.js';
@@ -114,6 +114,17 @@ test('equipMechanics: the composite doll - layers, click mask, real art', { skip
   await refreshPaperDoll(e);
   const dbg = _debugPaperDoll();
   assert.ok(dbg.live, 'the composite uploaded');
+  // U59: the SAME composite is kept for the DOM. The enhanced pack
+  // draws the avatar as an `<img>` and cannot use a GL texture, and a
+  // second compositor reading these same layer laws is how a port ends
+  // up with two dolls that disagree.
+  const px = paperDollPixels();
+  assert.ok(px, 'the composite was uploaded and thrown away');
+  assert.equal(px.width, PAPERDOLL_W);
+  assert.equal(px.height, PAPERDOLL_H);
+  assert.equal(px.rgba.length, PAPERDOLL_W * PAPERDOLL_H * 4);
+  assert.ok(px.rgba.some((v, i) => i % 4 === 3 && v === 255), 'every pixel is transparent - that is not a doll');
+  const v0 = px.version;
   assert.deepEqual([...dbg.layers].sort((a, b) => a - b), [EQUIP_SLOTS.ChestArmor, EQUIP_SLOTS.RightHand]);
   assert.equal(uploaded.w, 110);
   assert.equal(uploaded.h, 184);
@@ -130,6 +141,9 @@ test('equipMechanics: the composite doll - layers, click mask, real art', { skip
   unequipSlot(e, EQUIP_SLOTS.RightHand);
   await refreshPaperDoll(e);
   assert.deepEqual(_debugPaperDoll().layers, []);
+  // ...and the DOM's copy follows it, with a NEW version - a view
+  // caching on that number must repaint when the kit changes.
+  assert.ok(paperDollPixels().version > v0, 'the DOM composite went stale');
   assert.ok(PAPERDOLL_ORIGIN[0] === 200 && WAIST_HEIGHT === 40);
   const m = { s: 1, ox: 0, oy: 0 };
   assert.ok(drawPaperDoll(renderer, m, e, 49, 13));
@@ -193,4 +207,27 @@ test('equipMechanics: U8h the starting seed + the worn-weapon binding shape', ()
   assert.equal(e.equip.slots[EQUIP_SLOTS.RightHand] ?? null, worn);
   unequipSlot(e, EQUIP_SLOTS.RightHand);
   assert.equal(e.equip.slots[EQUIP_SLOTS.RightHand] ?? null, null, 'bare hands -> the unarmed path');
+});
+
+
+// U59: the seam, swept where a machine with no ARENA2 can still see
+// it. The assertion above needs real art and skips on CI, so a mutant
+// that deletes the line keeping the composite would ship green - this
+// is the pin that fails instead.
+test('U59: refreshPaperDoll KEEPS the buffer it uploads', () => {
+  const src = readFileSync(new URL('../src/ui/paperDoll.js', import.meta.url), 'utf8');
+  const from = src.indexOf('export async function refreshPaperDoll');
+  assert.ok(from > 0, 'the compositor is gone');
+  const body = src.slice(from, src.indexOf('\n/**', from));
+  // the composite is `out`, and BOTH consumers read that same buffer:
+  // the GL upload the classic window draws, and the RGBA the DOM does
+  assert.match(body, /_pixels = \{ width: PAPERDOLL_W, height: PAPERDOLL_H, rgba: out, version: _version \}/,
+    'the DOM composite is not the buffer that was just composed');
+  assert.match(body, /uploadTexture\('img', key, \{[^}]*colors: new Uint32Array\(out\.buffer\)/,
+    'the GL upload no longer reads the same buffer');
+  assert.ok(body.indexOf('_pixels =') < body.indexOf('uploadTexture'),
+    'the DOM copy is taken after the upload, which is a second chance to diverge');
+  // and a stale identity drops it, or a Khajiit draws the Breton doll
+  const preload = src.slice(src.indexOf('export async function preloadPaperDollArt'), from);
+  assert.match(preload, /_pixels = null;/, 'an identity change leaves the old avatar up');
 });

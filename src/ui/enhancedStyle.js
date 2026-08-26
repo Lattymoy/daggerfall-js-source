@@ -448,6 +448,60 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 }
 .packcol { background: var(--slate); overflow: auto; padding: 18px 20px 26px; min-height: 0; }
 
+/* ── THE CHARACTER COLUMN ───────────────────────────────────
+   U59. The avatar and the worn list, stacked - one picture of the
+   player and one reading of what is on them. The panel is the space
+   the VOXEL render lands in later; only its contents change. */
+.charcol {
+  display: flex; flex-direction: column; gap: 16px; min-height: 0; overflow: auto;
+  padding: 14px 14px 22px; background: var(--ink);
+}
+.figure-doll {
+  display: grid; place-items: center; padding: 4px 0 10px;
+  /* STICKY, because the column scrolls and the whole point of this
+     slice is seeing the avatar AND the worn list at once - a doll that
+     scrolls away the moment you read past the boots is the small
+     button again. */
+  position: sticky; top: 0; z-index: 1; background: var(--ink);
+}
+/* PIXELATED, and capped by HEIGHT rather than width: the panel is
+   110x184, so a width cap on a tall column leaves it swimming. The cap
+   is deliberately well under its 3x natural size - at full height the
+   worn list started below the fold, which is the thing this was
+   supposed to fix. */
+.figure-doll img {
+  image-rendering: pixelated; max-width: 100%; max-height: 32vh;
+  height: auto; cursor: pointer;
+}
+.equipped { display: flex; flex-direction: column; }
+.equippedhead { margin: 0 2px 8px; }
+.equippedhead h3 { font-family: var(--display); font-weight: 300; font-size: 17px; margin: 0; }
+.equippedhead .meta { color: var(--dim); font-size: 11.5px; margin: 4px 0 0; font-variant-numeric: tabular-nums; }
+.wornrow {
+  display: flex; align-items: baseline; gap: 10px; width: 100%;
+  padding: 9px 8px; min-height: 44px; text-align: left;
+  border-bottom: 1px solid #1b2027;
+}
+.wornrow:not(.wornempty):hover { background: #12161b; }
+.wornrow.on { background: #12161b; box-shadow: inset 2px 0 0 var(--brass); }
+/* THE SLOT IS THE CONSTANT and the item is the news, so the label is
+   the quiet half and sits in a fixed gutter the eye can run down. */
+.wornslot {
+  flex: 0 0 88px; color: var(--dim); font-size: 10.5px; letter-spacing: 0.08em;
+  text-transform: uppercase; line-height: 1.35;
+}
+.wornname { flex: 1 1 auto; min-width: 0; font-size: 13.5px; }
+.wornname.wornempty { color: #2b333d; }
+/* An empty row is a SLOT, not a control - it must read as
+   unavailable rather than as a button that does nothing, and it must
+   be cheap: twenty-two of the twenty-seven are empty on a bare
+   character, and at full row height they bury the five that matter. */
+.wornrow.wornempty {
+  min-height: 0; padding: 3px 8px; border-bottom-color: #14181d;
+}
+.wornrow.wornempty .wornslot { font-size: 9.5px; color: #333c47; }
+
+
 /* THE SLOT MAP. The figure is a schematic in --iron so it reads as
    scaffolding; the NODES carry the information, and a filled one is
    brass and twice the radius of an empty one - the difference has to
@@ -555,7 +609,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    and exactly the shape AUDIT 24 keeps turning up. A player opening
    their pack came for their items; the doll is what they scroll to. */
 @media (max-width: 860px) {
-  .pack .slotmap { order: 2; }
+  .pack .charcol { order: 2; }
   .pack .packlists { order: 1; }
   .pack .packdetail { order: 3; }
 }
@@ -564,8 +618,9 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 
 @media (max-width: 860px) {
   .pack { grid-template-columns: 1fr; grid-auto-rows: min-content; overflow: auto; }
-  .packcol { overflow: visible; }
-  .slotmap svg { max-height: 46vh; }
+  .packcol, .charcol { overflow: visible; }
+  .slotmap svg { max-height: 40vh; }
+  .figure-doll img { max-height: 30vh; }
   .pack-id { padding: 20px; }
   .pack-id h2 { font-size: 25px; }
   /* THE DETAIL IS A SHEET, the same answer the settings pane gives to
