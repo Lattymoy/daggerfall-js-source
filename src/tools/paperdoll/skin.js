@@ -30,6 +30,93 @@ export function createSkin(ctx) {
   // NEVER TRAPS: if either file is absent, skinTex stays null and setBodySkin
   // falls through to setBodyRamp, exactly as the title screen falls back.
   let skinI = null, skinTexCanvas = null, skinTex = null, skinLayout = null;
+  let bodyFaceTile = null;
+  let lastRamp = null;
+
+  // TEXTURE + PAPERDOLL DELTAS HAVE TO COMPOSE. Villagers, armour-as-body and
+  // several enemy lines recolour the rig's existing faces through the geometry
+  // colour buffer. The old textured path set `vertexColors = false`, which made
+  // every one of those colours invisible the instant a skin map mounted.
+  //
+  // The exact atlas gives us a better seam: one tile == one rendered body quad.
+  // We watch the colour attribute's THREE version, detect faces changed from the
+  // state present when the skin tone was applied, and paint those face colours
+  // over their OWN atlas tiles. Exposed faces keep the detailed skin. Garment
+  // faces keep the paperdoll's authored colour. No skin colour is multiplied
+  // through a shirt.
+  //
+  // Head faces are the deliberate exception. Their UVs live on a wrapped arc,
+  // not isolated tiles, so a hood/closed-helm delta cannot be safely flood-filled
+  // without painting neighbouring skull sectors. If a design changes a head face
+  // we fall all the way back to the vertex-colour body for that design. It is a
+  // truthful lower-fidelity fallback, not a half-textured broken head.
+  let colorBaseline = null;
+  let colorOverrides = new Map();       // face index -> [r,g,b] bytes
+  let watchedColorVersion = -1;
+  let watcherStarted = false;
+  let internalColorVersion = -1;
+  let vertexFallback = false;
+
+  const colorAttr = () => geo.getAttribute('color');
+  const faceRgb = (arr, f) => {
+    const o = f * 18;
+    return [
+      Math.max(0, Math.min(255, Math.round(arr[o] * 255))),
+      Math.max(0, Math.min(255, Math.round(arr[o + 1] * 255))),
+      Math.max(0, Math.min(255, Math.round(arr[o + 2] * 255))),
+    ];
+  };
+  const sameRgb = (a, b) => a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
+  function matchesPayloadBase(arr) {
+    if (!D.C || D.C.length < nf * 3) return false;
+    for (let f = 0; f < nf; f++) {
+      const c = faceRgb(arr, f), o = f * 3;
+      if (c[0] !== D.C[o] || c[1] !== D.C[o + 1] || c[2] !== D.C[o + 2]) return false;
+    }
+    return true;
+  }
+  function captureColorOverrides() {
+    const a = colorAttr();
+    if (!a || !colorBaseline || colorBaseline.length !== a.array.length) return;
+    const next = new Map();
+    for (let f = 0; f < nf; f++) {
+      const now = faceRgb(a.array, f), base = faceRgb(colorBaseline, f);
+      if (!sameRgb(now, base)) next.set(f, now);
+    }
+    colorOverrides = next;
+  }
+  function snapshotColorBaseline(clearOverrides = false) {
+    const a = colorAttr();
+    if (!a) return;
+    colorBaseline = a.array.slice();
+    if (clearOverrides) colorOverrides.clear();
+    watchedColorVersion = a.version;
+  }
+  function paintVertexFallback(ramp) {
+    // Preserve every authored override exactly. Only faces still at baseline get
+    // the current skin ramp, so a hood keeps its material while the exposed hand
+    // does not revert to whatever race happened to build the payload originally.
+    const a = colorAttr();
+    if (a && ramp) {
+      for (let f = 0; f < nf; f++) {
+        if (colorOverrides.has(f)) continue;
+        const c = snapRamp(ramp, D.Ib ? D.Ib[f] : 150);
+        let o = f * 18;
+        for (let k = 0; k < 6; k++) {
+          a.array[o] = c[0] / 255; a.array[o + 1] = c[1] / 255; a.array[o + 2] = c[2] / 255;
+          o += 3;
+        }
+      }
+      a.needsUpdate = true;
+      internalColorVersion = a.version;
+      watchedColorVersion = a.version;
+    }
+    mat.map = null;
+    mat.vertexColors = true;
+    mat.needsUpdate = true;
+    vertexFallback = true;
+  }
+
   // The body atlas is baked from a HUMAN turnaround, so it carries human anatomy:
   // pectorals, abdominals, navel. Tinting that fur-brown leaves a Khajiit with a
   // six-pack, so the fur and scale races use a smoothed copy - broad form shading
@@ -92,8 +179,42 @@ export function createSkin(ctx) {
     } catch { skinRamps = null; }
     headCells = new Array(10).fill(null);
     await ensureHead(headPick);
-      if (headRace === key) onReady();                           // a later race may have won
+    if (headRace === key) onReady();                             // a later race may have won
   }
+
+  function buildBodyFaceTiles(lay) {
+    const b = lay && lay.body;
+    if (!b || b.mode !== 'face-atlas') return null;
+    const out = new Int32Array(nf); out.fill(-1);
+    let n = 0;
+    for (let f = 0; f < nf; f++) {
+      // buildNeutralBody's group ids: 1 is head; every other group is part of
+      // BODY_GROUPS in bake_atlas.py, in the same face order.
+      if ((D.G ? D.G[f] : 0) === 1) continue;
+      out[f] = n++;
+    }
+    return n === b.faceCount ? out : null;
+  }
+
+  function startColorWatcher() {
+    if (watcherStarted || typeof requestAnimationFrame !== 'function') return;
+    watcherStarted = true;
+    const tick = () => {
+      const a = colorAttr();
+      if (a && a.version !== watchedColorVersion) {
+        // Ignore the one version bump produced by our own vertex fallback.
+        if (a.version !== internalColorVersion) {
+          if (!vertexFallback) captureColorOverrides();
+          if (skinTex && lastRamp) paintSkinTexture(lastRamp);
+        }
+        watchedColorVersion = a.version;
+        internalColorVersion = -1;
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
   async function loadSkin() {
     try {
       const [uv, lay, img] = await Promise.all([
@@ -109,6 +230,7 @@ export function createSkin(ctx) {
       if (uv.w !== img.width || uv.h !== img.height) return;
       if (uv.rigHash && uv.rigHash !== liveRigHash()) return;
       skinLayout = lay;
+      bodyFaceTile = buildBodyFaceTiles(lay);
       const uvs = new Float32Array(nf * 6 * 2);
       let q = 0;
       for (let f = 0; f < nf; f++) for (const vi of TRI) {
@@ -135,9 +257,11 @@ export function createSkin(ctx) {
       skinTex = new THREE.CanvasTexture(skinTexCanvas);
       skinTex.magFilter = THREE.NearestFilter; skinTex.minFilter = THREE.NearestFilter;
       skinTex.generateMipmaps = false;
+      startColorWatcher();
       onReady();
     } catch { /* no skin assets: the ramp path still works */ }
   }
+
   // paint the intensity map through this race's ramp - the same snapRamp the
   // per-face path uses, so a race is still nothing more than a ramp swap
   // THE FACE IS A SPRITE, so it is composited at RUNTIME from the user's own
@@ -180,44 +304,99 @@ export function createSkin(ctx) {
       faceCache.set(name, set); faceSet = set; onReady();
     } catch { /* no ARENA2: the head keeps its ramp, as it always did */ }
   }
-  function paintFace(ctx) {
+  function paintFace(ctx2) {
     const c = (skinLayout || {}).head, set = faceSet;
     if (!c || !set || !set.length) return;
     const f = set[facePick % set.length];
     const [a0, a1] = c.faceArc || [0.25, 0.75];
     const dx = Math.round(c.x + a0 * c.w), dw = Math.max(1, Math.round((a1 - a0) * c.w));
-    const src = ctx.createImageData(f.w, f.h);
+    const src = ctx2.createImageData(f.w, f.h);
     src.data.set(f.rgba);
     const tmp = document.createElement('canvas');
     tmp.width = f.w; tmp.height = f.h;
     tmp.getContext('2d').putImageData(src, 0, 0);
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(tmp, dx, c.y, dw, c.h);
+    ctx2.imageSmoothingEnabled = false;
+    ctx2.drawImage(tmp, dx, c.y, dw, c.h);
   }
-  function setBodySkin(ramp) {
-    if (!skinI || !skinTex) { setBodyRamp(ramp); return; }
-    // each face's own head implies its own body tone, so the neck matches the jaw
-    const rr = (skinRamps && skinRamps[headPick]) ? skinRamps[headPick] : ramp;
-    ramp = rr;
+
+  function paintOverrides(ctx2) {
+    if (!colorOverrides.size) return true;
+    const b = skinLayout && skinLayout.body;
+    if (!b || b.mode !== 'face-atlas' || !bodyFaceTile) return false;
+    for (const [f, c] of colorOverrides) {
+      if ((D.G ? D.G[f] : 0) === 1) return false; // wrapped head arc: vertex fallback
+      const ti = bodyFaceTile[f];
+      if (ti < 0) return false;
+      const x = b.x + (ti % b.columns) * b.stride;
+      const y = b.y + Math.floor(ti / b.columns) * b.stride;
+      ctx2.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`;
+      ctx2.fillRect(x, y, b.stride, b.stride); // gutter included: no skin bleed at tile edge
+    }
+    return true;
+  }
+
+  function paintSkinTexture(ramp) {
+    if (!skinI || !skinTex || !ramp) return;
     const beast = BEAST[RACES[getRaceIx()]] && skinIBeast;
     const src = (beast ? skinIBeast : skinI).data;
-    const out = skinTexCanvas.getContext('2d').createImageData(skinI.width, skinI.height);
+    const ctx2 = skinTexCanvas.getContext('2d');
+    const out = ctx2.createImageData(skinI.width, skinI.height);
     for (let i = 0; i < src.length; i += 4) {
       const c = snapRamp(ramp, src[i]);
       out.data[i] = c[0]; out.data[i + 1] = c[1]; out.data[i + 2] = c[2]; out.data[i + 3] = 255;
     }
-    const ctx = skinTexCanvas.getContext('2d');
-    ctx.putImageData(out, 0, 0);
+    ctx2.putImageData(out, 0, 0);
     // the baked head REPLACES the head cell's geometry shading
     const hc = skinLayout && skinLayout.head;
     if (hc && headCells && headCells[headPick]) {
-      ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(headCells[headPick], hc.x, hc.y, hc.w, hc.h);
+      ctx2.imageSmoothingEnabled = false;
+      ctx2.drawImage(headCells[headPick], hc.x, hc.y, hc.w, hc.h);
     } else {
-      paintFace(ctx);          // no baked head: fall back to the CIF sprite
+      paintFace(ctx2);          // no baked head: fall back to the CIF sprite
     }
+
+    if (!paintOverrides(ctx2)) {
+      paintVertexFallback(ramp);
+      return;
+    }
+
     skinTex.needsUpdate = true;
-    if (mat.map !== skinTex) { mat.map = skinTex; mat.vertexColors = false; mat.needsUpdate = true; }
+    if (mat.map !== skinTex || !vertexFallback) {
+      mat.map = skinTex;
+      mat.vertexColors = false;
+      mat.needsUpdate = true;
+    }
+    vertexFallback = false;
+  }
+
+  function setBodySkin(ramp) {
+    // Before the texture is available the old vertex-colour path remains the
+    // source of truth. Snapshot it so when loadSkin finishes we can distinguish
+    // those legitimate race colours from a later garment delta.
+    if (!skinI || !skinTex) {
+      setBodyRamp(ramp);
+      lastRamp = ramp;
+      snapshotColorBaseline(true);
+      return;
+    }
+
+    // applyVillager() explicitly resets the body to the payload's pristine colour
+    // array BEFORE asking for its skin tone. Recognise that reset and discard the
+    // previous design's overrides. Otherwise preserve the current diff across a
+    // head/tone repaint so changing a face does not undress the character.
+    const a = colorAttr();
+    if (a) {
+      if (matchesPayloadBase(a.array)) snapshotColorBaseline(true);
+      else if (colorBaseline) captureColorOverrides();
+      else snapshotColorBaseline(false);
+    }
+
+    // each face's own head implies its own body tone, so the neck matches the jaw
+    const rr = (skinRamps && skinRamps[headPick]) ? skinRamps[headPick] : ramp;
+    lastRamp = rr;
+    paintSkinTexture(rr);
+    const ca = colorAttr();
+    if (ca) watchedColorVersion = ca.version;
   }
 
   return { loadSkin, loadHeads, loadFaceSet, ensureHead, setBodySkin,
