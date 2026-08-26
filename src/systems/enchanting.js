@@ -45,8 +45,10 @@ import { templateByIndex } from './itemTemplates.js';
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { WEAPON_MATERIALS } from '../characters/weapons.js';
 
-/** SetEnchantments' cap (:1273) - "Maximum of 10 enchantments are
- *  applied", and DFU truncates rather than refusing. */
+/** SetEnchantments' `maxEnchantments` (:1273) - and the same ten the
+ *  two picker buttons test against (DaggerfallItemMakerWindow.cs:629,
+ *  :675). DFU truncates rather than refusing; see applyEnchantments
+ *  for why the truncation keeps eleven rows, not ten. */
 export const MAX_ENCHANTMENTS = 10;
 
 /** GetTotalGoldCost's scale (:236). */
@@ -196,12 +198,19 @@ export function enchantDecision(item, powers = [], sideEffects = [], { gold = 0 
   return { kind: 'enchant', text: ITEM_ENCHANTED, goldCost, cost, power };
 }
 
-/** SetEnchantments (DaggerfallUnityItem.cs:1271-1341). Ten is a CAP,
- *  not a refusal: DFU applies the first ten and drops the rest
- *  silently. An empty list THROWS there rather than making a plain
- *  item.
+/** SetEnchantments (DaggerfallUnityItem.cs:1271-1341). The cap is a
+ *  CAP, not a refusal: DFU truncates and drops the rest silently. An
+ *  empty list THROWS there rather than making a plain item.
  *
- *  AND IT IS NOT JUST A COPY. Three things ride the same call:
+ *  AND THE CAP KEEPS ELEVEN, NOT TEN. The loop ADDS the row first and
+ *  tests afterwards - `if (++count > maxEnchantments) break` (:1324-
+ *  1325) with `maxEnchantments = 10` (:1273). On the tenth pass count
+ *  becomes 10 and `10 > 10` is false, so the loop takes an ELEVENTH
+ *  pass, adds the eleventh row, and only then breaks. DFU's own
+ *  doc-comment says "Maximum of 10 enchantments are applied" (:1270)
+ *  and the code applies eleven; the port follows the code.
+ *
+ *  AND IT IS NOT JUST A COPY. Four things ride the same call:
  *
  *  1. THE CREATED PAYLOAD (:1289-1300). Every settings row whose
  *     effect carries EnchantmentPayloadFlags.Enchanted fires its
@@ -220,7 +229,14 @@ export function applyEnchantments(item, enchantments, { owner = null, ctx = null
   if (!enchantments || enchantments.length === 0) {
     throw new Error('applyEnchantments: enchantments cannot be null or empty');
   }
-  const applied = enchantments.slice(0, MAX_ENCHANTMENTS).map((e) => ({ ...e }));
+  // The cap loop verbatim (:1281-1325) - add, then `if (++count >
+  // maxEnchantments) break`, which is why the eleventh row survives.
+  const applied = [];
+  let count = 0;
+  for (const e of enchantments) {
+    applied.push({ ...e });
+    if (++count > MAX_ENCHANTMENTS) break;
+  }
   doEnchantedPayloads(item, applied, { entity: owner, ctx, nowMinutes });
   unequipItem(owner, item);
   // 3. AND WHAT IS STORED IS THE CLASSIC TYPE (:1316-1320). The
@@ -231,6 +247,11 @@ export function applyEnchantments(item, enchantments, { owner = null, ctx = null
   //    held fold - looks the effect up by. A made item whose rows
   //    kept their keys is an item whose enchantments do nothing.
   item.enchantments = applied.map((e) => ({ ...e, type: classicEnchantmentType(e.type) }));
+  // 4. AND THE ITEM COMES OUT IDENTIFIED (:1341). SetEnchantments
+  //    ends with IdentifyItem(), `flags |= identifiedMask` (:1253-
+  //    1256), so a just-made item never needs the Identify service -
+  //    which is the flag itemIsIdentified (tradeModes.js) reads.
+  item.isIdentified = true;
   return item;
 }
 
