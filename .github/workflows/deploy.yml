@@ -5,9 +5,12 @@
 # /preview/exact-face-atlas/ so it can be opened on a phone without merging
 # experimental rendering code into production.
 #
-# IMPORTANT: only main is allowed to publish Pages. The preview branch is
-# checked out and verified below; its pushes never publish Pages directly.
-# Preview refresh: adaptive shirt-front recovery + closed shoulder/neck coverage.
+# IMPORTANT: only main is allowed to publish Pages. A preview-branch push used
+# to start a second Pages run in the same concurrency group, cancel the main
+# build, then fail the protected github-pages environment before any steps ran.
+# Main still checks out the preview branch below, so every main deploy carries
+# the latest preview without letting the preview branch deploy by itself.
+# Preview refresh: adaptive shirt-front reconstruction + closed shoulder/neck coverage.
 name: deploy
 
 on:
@@ -17,7 +20,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -60,151 +63,6 @@ jobs:
         with:
           ref: chatgpt/exact-face-atlas
           path: exact-face-atlas
-          fetch-depth: 0
-
-      - name: Refine and verify clothing reconstruction
-        working-directory: exact-face-atlas
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          p = Path('src/tools/paperdoll/clothingTexture.js')
-          s = p.read_text()
-          if "mode: 'paperdoll-surface-v5'" not in s:
-              old = """  const sideBias = Math.max(leftOpaque, rightOpaque) / weak;
-              const dominantSide = rightOpaque >= leftOpaque ? 'right' : 'left';
-              const mirrorDominantHalf = sideBias >= 1.65;
-              const halfL = Math.max(1, canonicalCentre);
-              const halfR = Math.max(1, (out.width - 1) - canonicalCentre);
-              """
-              new = """  const sideBias = Math.max(leftOpaque, rightOpaque) / weak;
-              const dominantSide = rightOpaque >= leftOpaque ? 'right' : 'left';
-
-              // V5: recover the paperdoll's oblique torso perspective continuously.
-              // Closed shirts/tunics start correcting early; open garments preserve
-              // more authored asymmetry before converging on the dominant-half rule.
-              const openTorso = profile === 'open-torso';
-              const recoveryLo = openTorso ? 1.28 : 1.08;
-              const recoveryHi = openTorso ? 1.95 : 1.55;
-              const frontRecovery = clamp01((sideBias - recoveryLo) / Math.max(1e-6, recoveryHi - recoveryLo));
-              const mirrorDominantHalf = frontRecovery >= 0.985;
-              const halfL = Math.max(1, canonicalCentre);
-              const halfR = Math.max(1, (out.width - 1) - canonicalCentre);
-              """
-              assert s.count(old) == 1, 'side-bias anchor changed'
-              s = s.replace(old, new, 1)
-
-              old = """      let sxUnclamped;
-                    if (mirrorDominantHalf) {
-                      // A strongly one-sided paperdoll presentation has too little far-side
-                      // information to call both halves \"front\". Use the authored near half
-                      // as material evidence for BOTH front halves. Geometry restores the
-                      // silhouette; this reconstruction restores orientation.
-                      const d = Math.abs(x - canonicalCentre) / (x <= canonicalCentre ? halfL : halfR);
-                      sxUnclamped = dominantSide === 'right'
-                        ? rowAxis + d * rightExtent
-                        : rowAxis - d * leftExtent;
-                    } else if (x <= canonicalCentre) {
-                      const d = (canonicalCentre - x) / halfL;
-                      sxUnclamped = rowAxis - d * leftExtent;
-                    } else {
-                      const d = (x - canonicalCentre) / halfR;
-                      sxUnclamped = rowAxis + d * rightExtent;
-                    }
-              """
-              new = """      const d = Math.abs(x - canonicalCentre) / (x <= canonicalCentre ? halfL : halfR);
-                    const dominantSample = dominantSide === 'right'
-                      ? rowAxis + d * rightExtent
-                      : rowAxis - d * leftExtent;
-                    const splitSample = x <= canonicalCentre
-                      ? rowAxis - d * leftExtent
-                      : rowAxis + d * rightExtent;
-                    // Mildly oblique records get a mild correction instead of waiting
-                    // for a hard threshold; strongly one-sided records converge on the
-                    // proven dominant-half frontal reconstruction.
-                    const sxUnclamped = splitSample * (1 - frontRecovery) + dominantSample * frontRecovery;
-              """
-              assert s.count(old) == 1, 'torso sampling anchor changed'
-              s = s.replace(old, new, 1)
-              s = s.replace("mode: 'paperdoll-surface-v4',", "mode: 'paperdoll-surface-v5',", 1)
-              s = s.replace("registration: 'paperdoll-axis-chest-weighted-front-reconstruct',", "registration: 'paperdoll-axis-adaptive-front-reconstruct',", 1)
-              old = """    frontReconstruction: mirrorDominantHalf ? 'dominant-half-mirror' : 'split-perspective-rectify',
-              """
-              new = """    frontReconstruction: mirrorDominantHalf
-                    ? 'dominant-half-mirror'
-                    : frontRecovery > 0.015 ? 'adaptive-perspective-blend' : 'split-perspective-rectify',
-                  frontRecovery,
-                  recoveryRange: [recoveryLo, recoveryHi],
-              """
-              assert s.count(old) == 1, 'front reconstruction metadata anchor changed'
-              s = s.replace(old, new, 1)
-              p.write_text(s)
-
-          p = Path('tools/clothingCanonicalProbe.mjs')
-          s = p.read_text()
-          if "paperdoll-surface-v5" not in s:
-              assert s.count("assert.equal(torso.canonicalMeta.mode, 'paperdoll-surface-v4');") == 1
-              s = s.replace("assert.equal(torso.canonicalMeta.mode, 'paperdoll-surface-v4');",
-                            "assert.equal(torso.canonicalMeta.mode, 'paperdoll-surface-v5');", 1)
-              assert s.count("assert.equal(torso.canonicalMeta.registration, 'paperdoll-axis-chest-weighted-front-reconstruct');") == 1
-              s = s.replace("assert.equal(torso.canonicalMeta.registration, 'paperdoll-axis-chest-weighted-front-reconstruct');",
-                            "assert.equal(torso.canonicalMeta.registration, 'paperdoll-axis-adaptive-front-reconstruct');", 1)
-              anchor = "assert.ok(torso.canonicalMeta.sideBias > 1.65);\n"
-              assert s.count(anchor) == 1
-              s = s.replace(anchor, anchor + "assert.ok(torso.canonicalMeta.frontRecovery > 0.985, 'strongly oblique torso must fully recover to a frontal surface');\n", 1)
-              end = "console.log('clothing canonical probe: PASS');\n"
-              assert s.count(end) == 1
-              moderate = r'''
-          // V5 regression: moderately oblique shirts must no longer remain in the
-          // old sideways split-perspective state until a hard threshold is crossed.
-          const mw = 24, mh = 10, md = new Uint8ClampedArray(mw * mh * 4);
-          for (let y = 0; y < mh; y++) for (let x = 5; x <= 19; x++) {
-            const o = (y * mw + x) * 4;
-            md[o] = 45 + x * 4; md[o+1] = 70 + x * 2; md[o+2] = 175 - x * 3; md[o+3] = 255;
-          }
-          const moderate = canonicalizePaperdollTexture({
-            width: mw, height: mh, data: md,
-            paperdollMeta: { axisX: 11 },
-          }, 'torso');
-          assert.equal(moderate.canonicalMeta.mode, 'paperdoll-surface-v5');
-          assert.equal(moderate.canonicalMeta.frontReconstruction, 'adaptive-perspective-blend');
-          assert.ok(moderate.canonicalMeta.frontRecovery > 0 && moderate.canonicalMeta.frontRecovery < 0.985,
-            'moderately oblique torso must receive a graded frontal correction');
-
-          '''
-              s = s.replace(end, moderate + end, 1)
-              p.write_text(s)
-          PY
-
-          # The shoulder/neckline fix is geometry ownership, not texture alpha.
-          node --input-type=module - <<'NODE'
-          import { clothingZones } from './src/characters/clothing.js';
-          const shirt = clothingZones('Short Shirt');
-          const tunic = clothingZones('Formal Tunic');
-          const open = clothingZones('Open Tunic');
-          const torso = (zs) => zs.find((z) => z.groups.includes('body'));
-          const arms = (zs) => zs.find((z) => z.arm);
-          if (!(torso(shirt).yHi >= 1.665 && arms(shirt).yHi >= 1.645)) throw new Error('closed shirt coverage regression');
-          if (!(torso(tunic).yHi >= 1.665 && arms(tunic).yHi >= 1.645)) throw new Error('closed tunic coverage regression');
-          if (!(torso(open).yHi < torso(shirt).yHi)) throw new Error('open tunic must remain looser');
-          console.log('clothing neckline coverage probe: PASS');
-          NODE
-
-          node --check src/tools/paperdoll/clothingTexture.js
-          node tools/clothingCanonicalProbe.mjs
-          git diff --check
-
-          # Remove one-shot tooling left by the previous refinement.
-          rm -f tools/patch_clothing_front_v4.py .github/workflows/patch-clothing-front-v4.yml
-
-          if ! git diff --quiet || ! git diff --cached --quiet; then
-            git config user.name github-actions[bot]
-            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-            git add -A
-            git commit -m "CLOTHING: adaptively recover oblique shirt fronts"
-            git push origin HEAD:chatgpt/exact-face-atlas
-          fi
 
       - name: Install preview dependencies
         run: npm ci
