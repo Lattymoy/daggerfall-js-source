@@ -51,6 +51,7 @@ export const WARN = [1.0, 0.55, 0.40, 1];
 
 const LINE_H = 9;
 const TITLE_H = 11;
+const DIALOG_BTN_W = 54;
 const GROUPS = [
   { id: 'live', title: 'WORKS NOW', tier: 'live' },
   { id: 'stored', title: 'SAVED FOR LATER', tier: 'stored' },
@@ -250,6 +251,31 @@ export class SettingsWindow {
       skinLabel,
     };
 
+    // --- the dialog, when one is up ---
+    // THE ONE LAYOUT reaches it too: the buttons _drawDialog paints
+    // are the buttons click() hit-tests, so a drawn "Cancel" declines
+    // instead of confirming. Font-optional, like the help panel above.
+    let dialog = null;
+    if (this.dialog) {
+      const d = this.dialog;
+      const dw = Math.min(P - 16, 260);
+      const dlines = font ? d.lines.flatMap((ln) => wrapText(font.fnt, ln, dw - 12)) : d.lines.slice();
+      const dh = 16 + dlines.length * LINE_H + 16;
+      const dx = Math.floor((P - dw) / 2);
+      const dy = Math.floor((H - dh) / 2);
+      const by = dy + dh - 12;
+      const dbtns = (d.buttons ?? []);
+      dialog = {
+        ...d,
+        rect: [dx, dy, dw, dh],
+        lines: dlines,
+        buttons: dbtns.map((b, i) => ({
+          ...b,
+          rect: [dx + dw - 6 - (dbtns.length - i) * (DIALOG_BTN_W + 4), by, DIALOG_BTN_W, 10],
+        })),
+      };
+    }
+
     const t = this.tally();
     return {
       m, wide, page: [0, 0, P, H], titlebar, rail, catbar,
@@ -261,7 +287,7 @@ export class SettingsWindow {
       tally: t,
       tallyText: `${CATEGORIES.find((c) => c.id === this.category)?.title} - ${t.live} work now, ${t.stored} saved, ${t.unavailable} not here`,
       saveFailed: this.saveFailed,
-      dialog: this.dialog,
+      dialog,
     };
   }
 
@@ -467,10 +493,25 @@ export class SettingsWindow {
   click(vx, vy, canvas = null) {
     const L = this.layout(canvas ?? { width: 1280, height: 800 });
     if (this.dialog) {
-      const d = this.dialog;
+      // A DRAWN BUTTON IS A REAL BUTTON. This used to run the
+      // affirmative for a click ANYWHERE, so the Cancel on Reset
+      // Everything wiped every override and the Keep It on the
+      // ShowOptionsAtStart lock-out turned the screen off anyway -
+      // there was no pointer way to decline. The first button is the
+      // affirmative (the one _drawDialog paints in FOCUS), the second
+      // is the alternate where the dialog carries one (the same
+      // action the T key runs), and everything else - another button
+      // or the field around them - declines, which is what Escape
+      // does on the keyboard path.
+      const d = L.dialog;
+      const i = d.buttons.findIndex((b) => inRect(b.rect, vx, vy));
       this.dialog = null;
-      if (d.onYes) d.onYes();
-      else if (d.buttons?.[0]?.id === 'yes') this._commit(d.key, 'False');
+      if (i === 0) {
+        if (d.onYes) d.onYes();
+        else if (d.buttons[0].id === 'yes') this._commit(d.key, 'False');
+      } else if (i === 1 && d.onAlt) {
+        d.onAlt();
+      }
       this._click();
       return true;
     }
@@ -622,23 +663,16 @@ export class SettingsWindow {
   }
 
   _drawDialog(renderer, m, font, L) {
-    const [, , P, H] = L.page;
-    const d = this.dialog;
-    const w = Math.min(P - 16, 260);
-    const lines = d.lines.flatMap((ln) => wrapText(font.fnt, ln, w - 12));
-    const h = 16 + lines.length * LINE_H + 16;
-    const x = Math.floor((P - w) / 2);
-    const y = Math.floor((H - h) / 2);
+    const d = L.dialog;
+    const [x, y, w, h] = d.rect;
     renderer.drawScreenQuad(null, { x: 0, y: 0, w: 4096, h: 4096 }, undefined, [0, 0, 0, 0.55]);
     drawRect(renderer, m, x, y, w, h, PANEL);
     drawRect(renderer, m, x, y, w, 1, RULE);
     drawRect(renderer, m, x, y + h - 1, w, 1, RULE);
     shadowText(renderer, font, d.title, m, x + 6, y + 4, { color: HEADING });
-    lines.forEach((ln, i) => shadowText(renderer, font, ln, m, x + 6, y + 15 + i * LINE_H, { color: TEXT }));
-    const by = y + h - 12;
-    (d.buttons ?? []).forEach((b, i) => {
-      const bw = 54;
-      const bx = x + w - 6 - (d.buttons.length - i) * (bw + 4);
+    d.lines.forEach((ln, i) => shadowText(renderer, font, ln, m, x + 6, y + 15 + i * LINE_H, { color: TEXT }));
+    d.buttons.forEach((b, i) => {
+      const [bx, by, bw] = b.rect;
       drawRect(renderer, m, bx, by, bw, 10, i === 0 ? FOCUS : PANEL_DEEP);
       const col = i === 0 ? INK : TEXT;
       if (i === 0) drawText(renderer, font, b.label, m.ox + (bx + Math.floor((bw - measureText(font.fnt, b.label)) / 2)) * m.s, m.oy + (by + 2) * m.s, m.s, col);

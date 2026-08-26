@@ -61,7 +61,7 @@
 // and U23 had only found two of the four swaps; the strings were
 // there to be read all along - "Matriarch", "Sister", "Knight
 // Sister", "Dark Sister". Both ship, and the flag is retired.
-import { SKILLS, skillValue } from './skills.js';
+import { SKILLS, permanentSkillValue } from './skills.js';
 import { getReputation } from './factionRep.js';
 import { GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';
 import { dayOfYear } from './gameDate.js';   // S28: DaggerfallDateTime.DayOfYear
@@ -195,11 +195,18 @@ export const daySinceZero = (date) =>
 /** CalculateNumHighLowSkills (:113-130). The `else if` is load-bearing:
  *  a skill that cleared the HIGH bar is not also counted low, so
  *  `low + high >= 2` really means "two skills, at least one of them
- *  high" rather than "one high skill counted twice". */
+ *  high" rather than "one high skill counted twice".
+ *
+ *  The read is GetPermanentSkillValue (:124) - the header's claim, and
+ *  now the code's. It used to read the LIVE value, which folds
+ *  entity._enchantMods.skillMods, so a worn EnhancesSkill (+15) item
+ *  on a guild skill could carry a join or a promotion the permanent
+ *  values did not earn (and take it back on unequip). In DFU a worn
+ *  enchantment never moves guild rank. */
 export function numHighLowSkills(entity, guild, rank) {
   let high = 0, low = 0;
   for (const skill of guild.skills) {
-    const v = skillValue(entity, skill);
+    const v = permanentSkillValue(entity, skill);
     if (v >= RANK_REQ_SKILL_HIGH[rank]) high++;
     else if (v >= RANK_REQ_SKILL_LOW[rank]) low++;
   }

@@ -31,7 +31,7 @@ import {
   createRegularMagicItem, createArtifact, getMagicItemTemplates,
   ITEM_GROUP_NAME_BY_CLASS, BOOK_TEMPLATE,
 } from '../loot.js';
-import { GROUP_TEMPLATE_INDICES, ITEM_TEMPLATES, mintCondition } from '../itemTemplates.js';
+import { GROUP_TEMPLATE_INDICES, ITEM_TEMPLATES, mintCondition, rollPaintingMessage } from '../itemTemplates.js';
 import { goldStack } from '../inventory.js';
 import { alterReward } from '../guilds.js';
 import { CLOTHING_DYES } from '../../characters/dyes.js';
@@ -182,7 +182,7 @@ export class Item extends QuestResource {
       group: groupName, templateIndex,
       name: ITEM_TEMPLATES[templateIndex]?.name,
     });
-    if (groupName === 'Paintings') item.message = Math.floor(rolls() * 65536);
+    if (groupName === 'Paintings') item.message = rollPaintingMessage(rolls);
     return item;
   }
 

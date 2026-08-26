@@ -83,6 +83,61 @@ export function directionHintString(x, y) {
   return DIRECTION_HINTS.resolvingError;
 }
 
+/** GetBuildingCompassDirection (TalkManager.cs:1203-1236): which way a
+ *  named building of the CURRENT location lies.
+ *
+ *  DFU compares two points in one frame and asks
+ *  DirectionVector2DirectionHintString for the word. Outside, the
+ *  player's transform is mapped into the exterior automap's layout
+ *  space (Nystul's own note says he reused the automap's mapping "so
+ *  both building position as well as player position are calculated in
+ *  map coordinates and compared"); inside, the player IS the current
+ *  building's position, and the building you are standing in answers
+ *  "this place" before any angle is taken.
+ *
+ *  THE PORT'S FRAME. The map transform is a translate+scale of the
+ *  location's own plane, so the pair only has to share ONE frame for
+ *  the angle to be the DFU one: this takes both in the LOCATION frame
+ *  the building directory is already built in (positions relative to
+ *  locOrigin), which is the same pair GetAnswerWhereIs' compass has
+ *  used since T3c. `position` is the port's 3-vector, so north is z.
+ *
+ *  TWO C# SHAPES KEPT. `listBuildings.Find` returns the DEFAULT STRUCT
+ *  when nothing matches - buildingKey 0 at position (0,0) - so an
+ *  unknown key measures from the location origin rather than refusing,
+ *  and inside an unknown building that meets an unknown target the
+ *  key test answers "this place". The one JS-shaped guard is a caller
+ *  with NO location frame at all (the wilderness, where DFU always has
+ *  a transform): that answers the resolving error.
+ *
+ *  @param {object} deps
+ *  @param {Array} deps.listBuildings  the location's building directory
+ *  @param {number[]|null} deps.playerPos  location-frame [x, y, z]
+ *  @param {boolean} deps.isPlayerInside
+ *  @param {number} deps.currentBuildingKey  the building being stood in
+ */
+export function buildingCompassDirection({
+  listBuildings = [], playerPos = null, isPlayerInside = false, currentBuildingKey = 0,
+} = {}, buildingKey) {
+  const ZERO = { buildingKey: 0, position: [0, 0, 0] };
+  const list = listBuildings ?? [];
+  const target = list.find((b) => b.buildingKey === buildingKey) ?? ZERO;
+  let px;
+  let pz;
+  if (!isPlayerInside) {
+    if (!playerPos) return DIRECTION_HINTS.resolvingError;
+    px = playerPos[0];
+    pz = playerPos[2];
+  } else {
+    const current = list.find((b) => b.buildingKey === currentBuildingKey) ?? ZERO;
+    px = current.position?.[0] ?? 0;
+    pz = current.position?.[2] ?? 0;
+    if ((current.buildingKey ?? 0) === (target.buildingKey ?? 0)) return DIRECTION_HINTS.thisPlace;
+  }
+  const tp = target.position ?? ZERO.position;
+  return directionHintString(tp[0] - px, tp[2] - pz);
+}
+
 /** GetLocationCompassDirection (TalkManager.cs:1238-1281): which way
  *  the quest's remote Place lies, in MAP PIXELS.
  *

@@ -231,13 +231,19 @@ test('M3: the GOLD is checked FIRST, so the poorer refusal wins (:727-746)', () 
     'spending the last point is allowed - the test is power < cost');
 });
 
-test('M3: ten enchantments is a CAP, not a refusal (:1271-1280)', () => {
+test('M3: the cap is a CAP, not a refusal - and it keeps ELEVEN (:1271-1325)', () => {
   assert.equal(MAX_ENCHANTMENTS, 10);
   const item = {};
   const twelve = Array.from({ length: 12 }, (_, i) => power(i + 1));
   applyEnchantments(item, twelve);
-  assert.equal(item.enchantments.length, 10, 'the first ten are applied');
-  assert.equal(item.enchantments[9].enchantCost, 10, 'and the rest are dropped SILENTLY');
+  // `if (++count > maxEnchantments) break` (:1324-1325) tests AFTER
+  // the row is added, so the eleventh row is in the list before the
+  // break fires: DFU applies eleven, not the ten its doc-comment
+  // promises. Ten here is the port restating itself.
+  assert.equal(item.enchantments.length, 11, 'the first ELEVEN are applied');
+  assert.equal(item.enchantments[10].enchantCost, 11, 'the eleventh row survives the break');
+  assert.equal(item.enchantments[9].enchantCost, 10);
+  assert.equal(item.enchantments[11], undefined, 'and the rest are dropped SILENTLY');
   // the copies are detached
   twelve[0].enchantCost = 999;
   assert.equal(item.enchantments[0].enchantCost, 1);
@@ -310,7 +316,8 @@ test('M4: the picker guard tests == 10, and nothing else caps the lists', () => 
   assert.equal(openPickerDecision(true, { item, powers: filler(11), sideEffects: [] }).kind, 'open',
     'eleven is not ten, so the guard does not match');
   assert.equal(openPickerDecision(true, { item, powers: filler(6), sideEffects: filler(6) }).kind, 'open');
-  // and what an over-loaded item actually keeps is the first ten
+  // and what an over-loaded item actually keeps is the first ELEVEN -
+  // SetEnchantments' break lands one row late (:1324-1325)
   const twelve = Array.from({ length: 12 }, (_, i) => power(i + 1));
-  assert.equal(applyEnchantments({}, twelve).enchantments.length, MAX_ENCHANTMENTS);
+  assert.equal(applyEnchantments({}, twelve).enchantments.length, MAX_ENCHANTMENTS + 1);
 });

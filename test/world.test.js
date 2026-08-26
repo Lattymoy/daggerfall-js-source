@@ -305,7 +305,7 @@ test('world: MAGEAA00 flats pinned', { skip: skipReal }, () => {
   const flats = collectBlockFlats(mage, 504);
   assert.equal(flats.length, 27);
   // C2: StaticNPC inputs ride every flat (factionID/flags/recordPosition).
-  assert.deepEqual(flats[0], { archive: 210, record: 29, x: 84.325, y: -0.05, z: 43.45, factionID: 0, flags: 0, recordPosition: 48535 });
+  assert.deepEqual(flats[0], { archive: 210, record: 29, x: 84.325, y: -0.05, z: 43.45, factionID: 0, flags: 0, recordPosition: 48535, rawX: 3373, rawY: -4, rawZ: -2358 });
   const byArchive = {};
   for (const f of flats) byArchive[f.archive] = (byArchive[f.archive] || 0) + 1;
   assert.deepEqual(byArchive, { 201: 2, 210: 3, 212: 10, 213: 1, 504: 11 });

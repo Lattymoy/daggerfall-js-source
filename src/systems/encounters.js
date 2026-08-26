@@ -12,6 +12,7 @@
 
 import { CLIMATES } from '../formats/mapsFile.js';
 import { ENCOUNTER_TABLES } from '../characters/encounterTables.js';
+import { dice100 } from '../combat/formulas.js';   // Dice100.SuccessRoll, one home
 
 // AUDIT 24 (wave 23): this module used to carry its OWN copy of the
 // 45x20 table, character for character identical to the generated one
@@ -124,6 +125,34 @@ export function intermittentEnemySpawn(ctx, rolls = Math.random) {
     }
   }
   return null;
+}
+
+// ---- THE PASSIVE WATCH ROLLS (PlayerEntity.Update:498-511) ----------
+// The SECOND arm of the very loop intermittentEnemySpawn rides: on
+// every caught-up minute the spawn roll did not break out of, a region
+// the player is hated in or banished from can put the watch on him
+// with no crime just committed. Both successes levy
+// Criminal_Conspiracy and call SpawnCityGuards(FALSE) - the WITNESS
+// arm, whose whole point is that nobody saw anything, so it converts a
+// guard NPC that can see the player and otherwise starts the 5-10s
+// arrival countdown.
+
+/** :500 - `LegalRep < -10`, and :507's `SeverePunishmentFlags & 1` (the
+ *  banishment bit; bit 2 is the execution order). */
+export const PASSIVE_GUARD_LEGAL_REP = -10;
+export const PASSIVE_GUARD_LOW_REP_CHANCE = 5;
+export const PASSIVE_GUARD_BANISHED_CHANCE = 10;
+export const SEVERE_PUNISHMENT_BANISHED = 1;
+
+/** How many SpawnCityGuards(false) calls this ONE catch-up minute
+ *  owes: 0, 1 or - both rolls landing, which DFU permits because the
+ *  two `if`s are independent - 2. */
+export function passiveGuardSpawns({ legalRep = 0, severePunishmentFlags = 0 } = {}, rolls = Math.random) {
+  let spawns = 0;
+  if (legalRep < PASSIVE_GUARD_LEGAL_REP && dice100(PASSIVE_GUARD_LOW_REP_CHANCE, rolls())) spawns++;
+  if ((severePunishmentFlags & SEVERE_PUNISHMENT_BANISHED) !== 0
+    && dice100(PASSIVE_GUARD_BANISHED_CHANCE, rolls())) spawns++;
+  return spawns;
 }
 
 // ---- THE ENEMY ALERT (PlayerEntity.SetEnemyAlert :297-302 + the

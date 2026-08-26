@@ -196,7 +196,18 @@ export class QuestOfferFlow {
       // primary - so the guild has to arrive in that shape or its
       // source is invisible. Normalised here as well as supplied by
       // the host, so a bare guild is still reachable.
-      if (this._guild.isMember()) {
+      //
+      // NO GUILD is a real arm, not a defensive one. The ExternalMCP
+      // assignment exists ONLY inside DaggerfallGuildServicePopupWindow
+      // .OfferQuest (:608), where `guild` is the window's own field and
+      // is never null; the DAEDRIC offer is a different window
+      // entirely (DaggerfallQuestPopupWindow.cs:272-279 loads the
+      // quest, DaggerfallDaedraSummonedWindow.cs:96-121 shows it) and
+      // sets no ExternalMCP at all. The port funnels both through this
+      // one member, and offerNamedQuest sets _guild = null - so a bare
+      // `.isMember()` threw a TypeError on the first successful daedra
+      // summoning, after the gold was spent and the Summoned flag set.
+      if (this._guild?.isMember()) {
         this.offeredQuest.externalMCP = this._guild.source
           ? { quest: this.offeredQuest, source: this._guild.source }
           : this._guild;

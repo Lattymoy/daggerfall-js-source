@@ -19,6 +19,9 @@ import { drawText, measureText, makeFont } from './text.js';
 import { FntFile } from '../formats/fntFile.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { MAX_LINES_QUESTS, MAX_LINES_SMALL } from '../systems/notebook.js';
+import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded } from './messageBox.js';
+import { getMessageResources } from '../systems/quest/questMacros.js';   // QuestMacroHelper.GetMessageResources (:61-83)
+import { REGION_NAMES, patchRegionIndex } from '../formats/mapsFile.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 
@@ -93,6 +96,19 @@ const TITLES = Object.freeze({
 // TextLabel.ShadowColor = new Color(0f, 0.2f, 0.5f) (:207)
 const TITLE_SHADOW = Object.freeze([0, 0.2, 0.5, 1]);
 
+/** CreateDialogBox's three rows for baseKey "confirmFind" (:487-489)
+ *  and the line HandleQuestClicks composes the place with (:478-481),
+ *  verbatim from Internal_Strings.csv :799-801 and :1344. The port has
+ *  no localisation table, so the English literals live here - the same
+ *  call the rest of the port's native windows make. */
+export const FIND_PLACE_TEXT = Object.freeze({
+  head: 'Travel to location',
+  action: 'Do you want to open the world map to travel to:',
+  note: '(Note: you can cancel travel from the world map)',
+  /** locationInRegionProvince, "{0} in {1} province". */
+  locationInRegion: (locationName, regionName) => `${locationName} in ${regionName} province`,
+});
+
 export class QuestJournalWindow {
   /**
    * @param {object} deps
@@ -100,8 +116,17 @@ export class QuestJournalWindow {
    *   notebook()      - the PlayerNotebook
    *   mode            - the DisplayMode the window opens on
    */
-  constructor({ questMessages = () => [], notebook = () => null, mode = 'activeQuests' } = {}) {
-    this.deps = { questMessages, notebook };
+  constructor({
+    questMessages = () => [], notebook = () => null, mode = 'activeQuests',
+    // HandleQuestClicks' three world questions (:439-466). PlayerGPS's
+    // current location name, DfTravelMapWindow.CanFindPlace (:1134-1146)
+    // and GotoPlace (:214-217) - the last is the HOST's, because only a
+    // host that owns a travel map can be sent to one. A host without one
+    // leaves it null and the find dialog is never offered, which is the
+    // same nothing DFU does when CanFindPlace says no.
+    currentLocationName = () => '', canFindPlace = () => false, gotoPlace = null,
+  } = {}) {
+    this.deps = { questMessages, notebook, currentLocationName, canFindPlace, gotoPlace };
     this.done = false;
     this.isChoiceWindow = true;
     // OnPush (:190-200): the page resets to the top every open.
@@ -117,8 +142,20 @@ export class QuestJournalWindow {
     this.currentMessageIndex = 0;
     this.messageCount = 0;
     this.questMessages = questMessages() ?? [];
+    // entryLineMap (:40) - one entry index per DRAWN LINE, rebuilt with
+    // the page, and the whole of what turns a click's y into an entry.
+    this.entryLineMap = [];
+    this.selectedEntry = null;
+    // findPlace (:78) and the dialog it arms (:481-484).
+    this.findPlace = null;
+    this.findBox = null;
+    this._font = null;
     audio.playOneShot(SOUND.OpenBook, 1);
   }
+
+  /** questLogLabel.LineHeight - the pitch the page was last drawn at,
+   *  which is what HandleClick divides by (:391). */
+  get lineHeight() { return Math.trunc((this._font?.fnt?.fixedHeight ?? 0) * this.textScale); }
 
   /** The entries backing the current page, each a token[]. */
   entries() {
@@ -168,6 +205,13 @@ export class QuestJournalWindow {
 
   input(action, e = null) {
     const code = e?.code ?? action;
+    // The find dialog is a pushed window in DFU, so it owns the keys
+    // while it is up - Escape is its No, Enter its Yes.
+    if (this.findBox) {
+      if (action === 'back' || code === 'Escape') return this.answerFindPlace(MB_BUTTONS.No);
+      if (action === 'confirm' || code === 'Enter') return this.answerFindPlace(MB_BUTTONS.Yes);
+      return true;
+    }
     if (action === 'confirm' || action === 'back' || code === 'Escape' || code === 'Enter') { this.close(); return true; }
     if (code === 'ArrowDown' || action === 'ArrowDown') return this.scrollDown();
     if (code === 'ArrowUp' || action === 'ArrowUp') return this.scrollUp();
@@ -181,13 +225,25 @@ export class QuestJournalWindow {
 
   click(vx, vy) {
     const R = JOURNAL_RECTS;
+    if (this.findBox) {
+      // A box the popup art could not draw has no buttons to hit, so a
+      // click dismisses it rather than trapping the window - the same
+      // answer its No button gives.
+      if (!this.findBox.box) return this.answerFindPlace(MB_BUTTONS.No);
+      const hit = messageBoxHit(this.findBox.box, vx, vy);
+      if (hit !== null) return this.answerFindPlace(hit);
+      return true;   // a modal box eats what misses its buttons
+    }
     if (inRect(R.exit, vx, vy)) { this.close(); return true; }
     if (inRect(R.dialog, vx, vy)) { this.nextCategory(); return true; }
     if (inRect(R.upArrow, vx, vy)) { this.scrollUp(); return true; }
     if (inRect(R.downArrow, vx, vy)) { this.scrollDown(); return true; }
+    // QuestLogLabel_OnMouseClick (:322-325) - the log panel's click is
+    // the journal's one navigation aid, and it was consumed and dropped.
+    if (inRect(R.log, vx, vy)) { this.handleClick(vy); return true; }
     // Every other rect on the page is consumed rather than allowed to
     // fall through to the host's pointer-lock request.
-    return inRect(R.log, vx, vy) || inRect(R.title, vx, vy);
+    return inRect(R.title, vx, vy);
   }
 
   /** SetTextActiveQuests / SetTextWithListEntries (:565-676): walk the
@@ -198,6 +254,11 @@ export class QuestJournalWindow {
     const entries = this.entries();
     this.messageCount = entries.length;
     const out = [];
+    // entryLineMap (:574, :594, :603): one push per EMITTED LINE, of the
+    // entry's ABSOLUTE index - not its offset from currentMessageIndex -
+    // and the blank line that closes each entry belongs to that entry
+    // too, so a click on the gap under a quest still selects it.
+    const map = [];
     for (let i = this.currentMessageIndex; i < entries.length; i++) {
       if (out.length >= this.maxLines) break;
       for (const token of entries[i] ?? []) {
@@ -220,12 +281,102 @@ export class QuestJournalWindow {
         // yellow. Rows are { text, color } now; the draw reads it.
         if (f === 'text' || f === 'newline' || f === 'highlight' || f === 'answer' || f === 'question') {
           out.push({ text: String(token.text ?? ''), color: JOURNAL_COLORS[f] ?? DEFAULT_TEXT_COLOR });
+          map.push(i);
         }
       }
       if (out.length >= this.maxLines) break;
       out.push({ text: '', color: DEFAULT_TEXT_COLOR });   // the NewLineToken between entries (:602, :672)
+      map.push(i);
     }
+    this.entryLineMap = map;
     return out;
+  }
+
+  // ── HandleClick (:385-436) and the find-place dialog ───────────────
+
+  /**
+   * HandleClick's line-to-entry half (:385-401). A click past the last
+   * mapped line takes the LAST entry rather than nothing (:393-396) -
+   * DFU's, and it is why clicking the empty space below a short page
+   * still opens the bottom quest.
+   *
+   * Only the ACTIVE QUESTS arm is here: the finished-quest and notebook
+   * arms of HandleClick (:405-435) move, remove and annotate entries,
+   * which is a separate feature the port has not built.
+   */
+  handleClick(vy) {
+    this.pageLines();   // SetTextActiveQuests builds the map with the page
+    if (!this.entryLineMap.length) return false;
+    const pitch = this.lineHeight;
+    if (pitch <= 0) return false;
+    const line = Math.trunc((vy - JOURNAL_RECTS.log[1]) / pitch);
+    this.selectedEntry = line < this.entryLineMap.length
+      ? this.entryLineMap[line]
+      : this.entryLineMap[this.entryLineMap.length - 1];
+    if (this.mode !== 'activeQuests') return false;
+    return this._handleQuestClicks(this.questMessages[this.selectedEntry] ?? null);
+  }
+
+  /** GetLastPlaceMentionedInMessage (:469-485): the LAST Place resource
+   *  any macro in the message names. Not ParentQuest.LastPlaceReferenced -
+   *  DFU's own comment says that sends the player to an unrelated home
+   *  location for the last NPC processed - and a message that names no
+   *  Place at all (the Dark Brotherhood initiation keeps its entry
+   *  secret) answers null. */
+  _lastPlaceMentionedInMessage(message) {
+    const resources = getMessageResources(message);
+    if (!resources || resources.length === 0) return null;
+    let lastPlace = null;
+    for (const resource of resources) if (resource?.isPlace) lastPlace = resource;
+    return lastPlace;
+  }
+
+  /** HandleQuestClicks (:439-466). Three gates before the offer: the
+   *  message names a Place, that Place has a location name, and it is
+   *  not the one the player is standing in - then CanFindPlace decides,
+   *  through the CANONICAL name, whether the map can even show it. */
+  _handleQuestClicks(message) {
+    const place = this._lastPlaceMentionedInMessage(message);
+    const site = place?.siteDetails ?? null;
+    if (!site?.locationName) return false;
+    if (site.locationName === this.deps.currentLocationName()) return false;
+    if (!this.deps.gotoPlace) return false;
+    if (!this.deps.canFindPlace(site.regionName, site.locationName)) return false;
+    this.findPlace = place;
+    // :474-481 - the workaround for saves written before SiteDetails
+    // carried a regionIndex, and the region NAME the dialog shows comes
+    // off the patched index.
+    const regionIndex = patchRegionIndex(site.regionIndex ?? 0, site.regionName ?? '');
+    const entryStr = FIND_PLACE_TEXT.locationInRegion(site.locationName, REGION_NAMES[regionIndex] ?? site.regionName ?? '');
+    // CreateDialogBox (:486-504): heading, the action line, a blank, the
+    // entry in TextHighlight, then the explanation - and Yes/No.
+    this.findBox = {
+      rows: [
+        { text: FIND_PLACE_TEXT.head, center: true },
+        { text: FIND_PLACE_TEXT.action, center: false },
+        { text: '', center: false },
+        { text: entryStr, center: true },
+        { text: FIND_PLACE_TEXT.note, center: false },
+      ],
+      box: null,
+    };
+    return true;
+  }
+
+  /** FindPlace_OnButtonClick (:353-363). The box closes either way; on
+   *  Yes the JOURNAL closes too and the travel map opens already on the
+   *  place - CloseWindow, GotoPlace, then the open message. */
+  answerFindPlace(button) {
+    const place = this.findPlace;
+    this.findBox = null;
+    this.findPlace = null;
+    if (button !== MB_BUTTONS.Yes || !place) return true;
+    // The box's own click already sounded (messageBoxHit); DFU's
+    // CloseWindow here plays nothing, so this does not go through
+    // close().
+    this.done = true;
+    this.deps.gotoPlace?.(place);
+    return true;
   }
 
   // AUDIT 24 (wave 40) - THE LIVE CRASH.
@@ -251,6 +402,7 @@ export class QuestJournalWindow {
   // to the one shape.
   draw(renderer, canvas, font) {
     const m = nativeMetrics(canvas);
+    this._font = font;   // questLogLabel's own font, and its LineHeight
     // AUDIT 24 ui: this window's Setup assigns
     // `ParentPanel.BackgroundColor = ScreenDimColor` (DaggerfallQuestJournalWindow.cs:95),
     // which is Color.clear - the letterbox is NOT painted.
@@ -300,6 +452,14 @@ export class QuestJournalWindow {
     // A page of nothing but empty rows drew a blank book again.
     if (!lines.some((l) => l.text)) {
       shadowText(renderer, font, this.mode === 'activeQuests' ? 'You have no active quests.' : 'Nothing is written here yet.', m, lx, ly);
+    }
+
+    // The find-place dialog, over the page it was raised from. A host
+    // without the popup art keeps the journal drawable and simply never
+    // shows the box, the same refusal the rest of the port's doors give.
+    if (this.findBox && messageBoxArtLoaded()) {
+      this.findBox.box = layoutMessageBox(font, this.findBox.rows, [MB_BUTTONS.Yes, MB_BUTTONS.No]);
+      drawMessageBox(renderer, m, font, this.findBox.box);
     }
     return true;
   }

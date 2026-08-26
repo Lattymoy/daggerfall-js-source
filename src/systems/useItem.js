@@ -166,6 +166,10 @@ export function useItem(item, collection, {
   // and legitimately answer nothing. Returns the revealed name, null
   // when the region is exhausted.
   revealMap = null,
+  // QuestMachine.Instance.GetQuest (:1673) - the quest half of the
+  // use-click block below. A host with no quest machine leaves it
+  // null and DFU's own fall-through arm stands.
+  getQuest = null,
 } = {}) {
   if (!item) return { kind: 'none' };
   const named = (t) => expandItemMacro(USE_TEXT[t], item);
@@ -184,11 +188,43 @@ export function useItem(item, collection, {
   // which is why a quest letter reads and a quest torch lights. The
   // port returned for ALL of them, so a quest torch could not be lit.
   //
+  // THE USE CLICK ITSELF (:1681-1683): `questItem.UseClicked = true`
+  // is the ONLY producer of the flag ItemUsedDo polls every tick
+  // (ItemUsedDo.cs:65) - without it `<item> used do <task>` and
+  // `used saying` can never fire, and a quest that asks the player to
+  // use something stalls forever. IsParchment / IsClothing
+  // (DaggerfallUnityItem.cs:360-371) are the exception DFU spells out
+  // in its own comment: a painting or a bell pops back to the HUD so
+  // the world gets the click, but a LETTER has to stay in the window
+  // to be read, so it falls through to the ladder and to the
+  // used-message popup below.
+  //
   // With no quest machine nothing is watching anything, so
   // ActionWatching is false and DFU's own answer is to fall through.
-  // The flag is carried on the result for the host that will one day
-  // read it; the pop-to-HUD half lands with the quest machine.
   const questItem = !!item.questItem;
+  if (questItem) {
+    // C# throws when the quest is missing (:1675); the port answers
+    // the ladder instead - a host with no machine has no quest to
+    // find and a stale questUID is not worth a crash. Recorded.
+    const quest = getQuest?.(item.questUID);
+    const resource = quest?.getItem?.(item.questSymbol) ?? null;
+    if (resource) {
+      if (!resource.useClicked && resource.actionWatching) {
+        resource.useClicked = true;
+        const dfItem = resource.daggerfallUnityItem ?? item;
+        if (!isParchment(dfItem) && !isClothing(dfItem)) {
+          // DaggerfallUI.PopToHUD() + return (:1687-1688) - the whole
+          // ladder is skipped and so is the used-message popup. The
+          // host owns the window stack, so it rides the result.
+          return { kind: 'questItem', questItem: true, popToHUD: true };
+        }
+      }
+      // :1692-1697 - and the test is `!= 0`, so the ctor's -1 reaches
+      // ShowMessagePopup, where GetMessage(-1) answers null and
+      // nothing shows. DFU's, kept.
+      if (resource.usedMessageID !== 0) quest.showMessagePopup?.(resource.usedMessageID, true);
+    }
+  }
 
   let out = null;
   // B1: the book arm hands the ITEM to the window's openBook hook

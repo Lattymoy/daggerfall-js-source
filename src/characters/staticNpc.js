@@ -14,6 +14,9 @@
 import { srand } from '../formats/dfRandom.js';
 import { fullName, getNameBank, getNameBankOfRegion, GENDERS } from './nameHelper.js';
 import { RACES } from '../systems/races.js';
+// ONE HOME for FactionFile.FactionTypes (FactionFile.cs:530-546) - the
+// enum the parser already mints. Individual is 4; 3 is Subgroup.
+import { FACTION_TYPES } from '../formats/factionFile.js';
 
 /** StaticNPC.Context (:113-118). */
 export const NPC_CONTEXT = Object.freeze({ Custom: 0, Dungeon: 1, Building: 2 });
@@ -88,6 +91,32 @@ export function staticNpcData(pn, {
     buildingKey,
     mapID: mapId,
   };
+}
+
+/** SetLayoutData's EXTERIOR overload (StaticNPC.cs:180-207), the one
+ *  RMBLayout runs for a street NPC. It differs from the building
+ *  overload above in three places, and this is the first: THE GENDER
+ *  FLAG ON AN RMB FLAT RECORD IS INVALID (:185-194). The flat's own
+ *  bit 32 is thrown away and FLATS.CFG's gender column decides -
+ *  `flatCFG.gender.Contains("2")` sets the bit, anything else CLEARS
+ *  it (`flags &= 223`, i.e. ~32 in a byte). A flat FLATS.CFG does not
+ *  carry keeps the record's flags untouched, because C# only enters
+ *  the branch when GetFlatData answered true.
+ *
+ *  The other two differences are the caller's: buildingKey 0 (there is
+ *  no building above ground) and Context.Custom, not Context.Building.
+ *
+ *  Verbatim `Contains("2")`, not the port's flatGender helper: a "?2"
+ *  (a flat classic would censor in ChildGard) contains "2" and is
+ *  female here, and a gender column that is neither reads as MALE
+ *  rather than as "unknown".
+ *
+ *  @param {number} flags     the block record's own flags
+ *  @param {?object} flatData FlatsFile.getFlatData's answer, or null
+ */
+export function exteriorNpcFlags(flags, flatData) {
+  if (!flatData) return flags;
+  return String(flatData.gender ?? '').includes('2') ? (flags | 32) : (flags & 223);
 }
 
 /** SetLayoutData(hash, gender, factionID, nameSeed) (StaticNPC.cs:245-255)
@@ -205,8 +234,8 @@ export function raceFromFactionRace(factionRace) {
  */
 export function staticNpcName(data, { getFaction = null, nameBank = null } = {}) {
   const fd = getFaction?.(data.factionID) ?? null;
-  // FactionFile.FactionTypes.Individual is 3.
-  if (fd && fd.type === FACTION_TYPE_INDIVIDUAL) return fd.name;
+  // GetDisplayName (:319) tests `factionData.type == (int)FactionTypes.Individual`.
+  if (fd && fd.type === FACTION_TYPES.Individual) return fd.name;
   srand(data.nameSeed);
   const bank = nameBank ?? bankForRace(data.race);
   // AUDIT 24 (wave 24): `data.gender` is the Genders enum, which is
@@ -216,8 +245,6 @@ export function staticNpcName(data, { getFaction = null, nameBank = null } = {})
   // and this is the C# line.
   return fullName(bank, data.gender);
 }
-
-export const FACTION_TYPE_INDIVIDUAL = 3;
 
 /** The name bank a race draws from; a race the bank table does not
  *  know falls to Breton exactly as getNameBank does. */

@@ -117,12 +117,17 @@ test('audit24 wave36: the 8-hour alert decay is the ENTITY tick\'s, so every hos
   ticker.tick((ALERT_DECAY_MINUTES + 1) / CLASSIC_MINUTES_PER_SECOND);
   assert.equal(e.enemyAlertActive, false, 'PlayerEntity.Update:380-384, in every context');
 
-  // exactly one caller, so it cannot tick twice
-  const all = ['src/scenes/shared.js', 'src/scenes/dungeonContext.js', 'src/scenes/world.js',
+  // AUDIT 26 (F204): the decay moved INTO tickPlayerMinutes, because
+  // the dungeon host builds no ticker and so never ran it. No scene
+  // may call it beside the tick - with ONE exception, the dungeon rest
+  // window, which is the port's only clock jump that skips the tick.
+  const scenes = ['src/scenes/shared.js', 'src/scenes/dungeonContext.js', 'src/scenes/world.js',
     'src/scenes/exterior.js', 'src/scenes/worldModes.js']
     .map((f) => (rd(f).match(/decayEnemyAlert\(/g) ?? []).length)
     .reduce((a, b) => a + b, 0);
-  assert.equal(all, 1, 'one call site in the whole of src/');
+  assert.equal(scenes, 1, 'the dungeon rest advance, and no other scene call site');
+  assert.equal((rd('src/systems/worldTick.js').match(/decayEnemyAlert\(/g) ?? []).length, 1,
+    'the player tick every host runs is where the law lives');
 });
 
 test('audit24 wave36: the watch raises and lowers the alert, and takes fall damage', () => {

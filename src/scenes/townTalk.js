@@ -287,6 +287,47 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       return;
     }
     // Info / Grab / Talk all talk to a mobile NPC (DFU verbatim)
+    // AUDIT 26 (talk): PlayerActivate.cs:783 hands the click to
+    // TalkManager.TalkToMobileNPC (:726-744), and that arm is not just
+    // a greeting - it rebuilds npcData as a COMMONER of the region's
+    // People faction (SetTargetNPC's mobile overload, :805-831, which
+    // also clears alreadyRejectedOnce), zeroes
+    // numAnswersGivenTellMeAboutOrRumors "so even if NPC is the same
+    // as previous talk session PC will give one correct answer"
+    // (:742), and reaches TalkToNpc's ResetNPCKnowledge (:2652-2654)
+    // for a new target. This host ran the LOCAL greeting ladder only,
+    // so the engine's npcData still carried whatever static NPC last
+    // set it: every walker answered with that NPC's social group and
+    // isSpyMaster, over an answer counter that was already spent.
+    const eng0 = engine();
+    if (eng0?.session) {
+      // T3c: the NPC keeps a stable per-person seed for the
+      // reaction-tier roll (DFU seeds by the NPC object hash -
+      // engine-dependent, so a lazily-assigned uniform seed stands in,
+      // Ledger A).
+      target.person._talkSeed ??= Math.floor(rolls() * 0x7fffffff);
+      const talk = eng0.session.talkToMobileNPC(target.person);
+      // the three doors that close before a conversation (a racial
+      // override, a reaction below -20, a standing rejection) - each
+      // has already said its piece through the session's messageBox
+      if (talk?.kind !== 'talk') return;
+      _talkNpc = target.person;
+      // the local mirrors of the tone half TalkToNpc just reset
+      toneSession = [0, 0, 0];
+      lastToneIndex = -1;
+      // StartNewConversation (:867-878) is the WINDOW's reset, which
+      // DaggerfallTalkWindow.OnPush runs through SetStartConversation
+      // (:654) on every push - the question counter, the deferred
+      // topic-list rebuild and the mill setup.
+      eng0.session.startNewConversation();
+      _questionsAsked = 0;
+      openTalkWindow(talk.greeting, {
+        npcSeed: target.person._talkSeed, npcName: target.person.nameNPC ?? '',
+      });
+      return;
+    }
+    // The pre-engine fallback (a host with no talk engine mounted -
+    // exterior.js): the reaction-threshold greeting ladder alone.
     const reaction = people ? getReactionToPlayer(people, playerEntity) : 0;
     const t = startMobileTalk({
       reaction, textVariants, playerName: playerEntity.name ?? '', npcRace, rolls, cityName: cityName(),
@@ -300,15 +341,8 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     target.person._talkSeed ??= Math.floor(rolls() * 0x7fffffff);
     _talkNpc = target.person;
     // TK-v: TalkToNpc's session reset is the ENGINE's - both halves of
-    // it - so a host cannot clear one and forget the other. Without an
-    // engine the local fallbacks stand in.
-    const eng = engine();
-    if (eng?.session) {
-      eng.session.toneReactionForTalkSession[0] = 0;
-      eng.session.toneReactionForTalkSession[1] = 0;
-      eng.session.toneReactionForTalkSession[2] = 0;
-      eng.pipeline?.resetToneSession();
-    }
+    // it - so a host cannot clear one and forget the other. With no
+    // engine mounted these local mirrors are the whole of it.
     toneSession = [0, 0, 0];   // T3f: per talk session (DFU TalkToNpc)
     lastToneIndex = -1;
     // AUDIT 18 F4 - StartNewConversation (TalkManager.cs:867-871),
@@ -317,11 +351,6 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // reset the counter only ever climbed, so 7215+tone (the greeting
     // opening) was reachable at most ONCE per play session and every
     // later conversation opened on the follow-up (7218+tone).
-    // TK-v: the counter is the PIPELINE's now, and the whole of
-    // StartNewConversation is the SESSION's - the deferred topic-list
-    // rebuild and the mill setup ride with it, which the local
-    // fallback never had.
-    engine()?.session?.startNewConversation();
     _questionsAsked = 0;
     // U8b: the native TALK01I0 window when the art is up (clicks/taps
     // through the verbatim hit rects; the keyed chain is the fallback)

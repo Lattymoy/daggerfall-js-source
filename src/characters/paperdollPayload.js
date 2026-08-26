@@ -535,11 +535,13 @@ export function buildPaperdollPayload(pal, img, cif) {
   const payload = ({ n: faces.length, Ck, Ca, Ib, PALETTES, draped: drapedPacks, drapeGrids: drapeGridsOut, drapeMaterials: DRAPE_MATERIAL, bodyCore: BODY_CORE, poses: POSES, wristY: WRIST_JUNCTION_Y * 0.9, armX: ARM_X, neckY: NECK_PIVOT_Y * 0.9, attacks: ATTACKS_1H, attacks2H: ATTACKS_2H, attacksRanged: ATTACKS_RANGED, attacksFP: ATTACKS_FP, reactions: REACTIONS, strikes: STRIKES, dirToStrike: DIRECTION_TO_STRIKE,
     // WEAPON REGISTRY: [{name, hands, pack, items}] - the viewer's
     // weapon list is data. Steel display mesh; per-material items.
-    // THE TAILS WERE NEVER SHIPPED. buildTail has been imported here since the
-    // race system landed and packed nowhere, so D.tail/D.tailCat were undefined
-    // and the viewer's tailMesh/tailCatMesh were always null - the meshes it
-    // recolours in applyTone could not exist. raceCharacter.js has been building
-    // them all along for the in-engine bake; only the editor payload lacked them.
+    // TAILS RIDE THE RACE, NOT THE SPRITE. `ramps.skin` is sampled from
+    // BODY00I0.IMG, which RaceTemplate.cs:183 assigns to the BRETON paper
+    // doll; the Argonian's body is BODY07I0.IMG (RaceTemplate.cs:336) and
+    // the Khajiit's BODY06I0.IMG (RaceTemplate.cs:315). DFU swaps the body
+    // image per race precisely because one race's body never carries
+    // another's colour, so the tails take the race hide/fur ramps - the
+    // same ones raceCharacter.js:48-49 shades the in-engine bake with.
     faceSet,
     tail: packPiece(buildTail(ARGONIAN_HIDE, 'argonian')),
     tailCat: packPiece(buildTail(KHAJIIT_FUR, 'khajiit')),
@@ -562,7 +564,7 @@ export function buildPaperdollPayload(pal, img, cif) {
       return list;
     })(),
     swordRamps: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, weaponMaterialRamp(v, (i) => pal.get(i))])),
-    swordItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)])), cloth: CLOTH_D, drapedNames: DRAPED_NAMES, villagers: villagerPacks, orcs: orcPacks, undead: undeadPacks, classes: classPacks, atronachs: atronachPacks, beasts: beastPacks, daedra: daedraPacks, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), tail: packPiece(buildTail(ramps.skin,'argonian')), tailCat: packPiece(buildTail(KHAJIIT_FUR,'khajiit')), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
+    swordItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)])), cloth: CLOTH_D, drapedNames: DRAPED_NAMES, villagers: villagerPacks, orcs: orcPacks, undead: undeadPacks, classes: classPacks, atronachs: atronachPacks, beasts: beastPacks, daedra: daedraPacks, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
 
   return payload;
 }

@@ -424,7 +424,13 @@ export async function bootDungeon(canvas, renderer, params, status) {
       zPrev = zNow;
       if (useHeld && !prevUse) tryActivate();
       prevUse = useHeld;
-    } else if (!held) {
+      // `held` here USED to be this frame's local overlay boolean; it was
+      // renamed overlayHeld (:353) and the name then resolved to the
+      // input helper imported at :33 - a function, so `!held` was
+      // permanently false and the dev fly-cam never moved. The gate is
+      // the overlay one it always was: a window up holds the camera
+      // exactly as it holds the motor above.
+    } else if (!overlayHeld) {
       const speed = (keys.has('ShiftLeft') ? 24 : 5) * dt;   // fly-cam (dev): raw keys, not an action
       if (keys.has('KeyW')) for (let a = 0; a < 3; a++) cam.pos[a] += fwd[a] * speed;   // fly-cam (dev)
       if (keys.has('KeyS')) for (let a = 0; a < 3; a++) cam.pos[a] -= fwd[a] * speed;   // fly-cam (dev)

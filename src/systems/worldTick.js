@@ -24,6 +24,7 @@ import { updatePoisons } from './poisons.js';
 import { tickActiveEffects } from './effects.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
 import { FATIGUE_LOSS, killIfAnyLiveStatZero } from './statMods.js';
+import { decayEnemyAlert } from './encounters.js';   // PlayerEntity.Update:380-384, the 8-hour alert decay
 import { dice100 } from '../combat/formulas.js';
 import { normalizeReputations, NORMALIZE_INTERVAL_MINUTES } from './court.js';   // AUDIT 23 (C4)
 // S43: the entity update's 7-day and 38-day arms (PlayerEntity.cs:460-472).
@@ -112,10 +113,13 @@ export function claimMagicRounds(fromMinute, toMinute) {
   const here = Math.floor(fromMinute);
   // Anchor on first use, and RE-anchor whenever the clock has moved BACKWARDS
   // relative to the marker - that is a load, and DFU sits it out through
-  // `SaveLoadManager.Instance.LoadInProgress` (:206-207). Re-anchoring here
-  // rather than trusting callers to call resetMagicRoundMarker keeps the
-  // function total: a restored save cannot fire the cap's worth of rounds
-  // against effects that already expired in the saved game.
+  // `SaveLoadManager.Instance.LoadInProgress` (:206-207). This is a BACKSTOP,
+  // not the load arm: DFU's load arm is InitMagicRoundTimer (:817-822, "after
+  // world time has been set/restored"), which resets the marker WHICHEVER WAY
+  // the clock moved, and restorePlayer (save.js) calls resetMagicRoundMarker
+  // for exactly that. A backward-only re-anchor cannot cover a load FORWARD of
+  // the session clock, which is the direction that fires the cap's worth of
+  // rounds against effects the saved game had already lived through.
   if (_lastMagicRoundMinute === null || here < _lastMagicRoundMinute) _lastMagicRoundMinute = here;
   const from = Math.max(_lastMagicRoundMinute, nextFloor - MAX_CATCHUP_ROUNDS);
   // The broker's own lastGameMinute advance (:237). It never moves BACKWARDS
@@ -352,6 +356,16 @@ export function tickPlayerMinutes({
     entity.lastGameMinutes = nowMinutes;
   }
 
+  // PlayerEntity.cs:380-384, on the same `gameMinutes` the marker above
+  // reads and BEFORE the fatigue band, exactly where DFU puts it: an
+  // enemy alert older than eight hours goes out. It belongs to the
+  // player's own update, so it lives on the tick every host runs -
+  // hung off createPlayerTicker instead, it reached only the three
+  // hosts that build one, and the dungeon (which calls this function
+  // directly) raised the alert on every sighting and never lowered it,
+  // permanently arming its own resting spawn roll.
+  decayEnemyAlert(entity, nowMinutes);
+
   // PlayerEntity.cs:528-530, the tail of the SAME update: the flag is
   // a ONE-JUMP shield, cleared the moment the jump it covered is over.
   // AUDIT 24 (the seven-slice sweep): nothing set it and nothing
@@ -495,9 +509,11 @@ export function tickPlayerMinutes({
     // conditions half. The power half therefore fires on both cadences,
     // and on the 266-day minute where the two align it fires TWICE -
     // two separate ifs, both calling a member that always walks the
-    // powers. That is reproduced here; what is missing is the
-    // conditions body, which is FLAGGED (it needs
-    // PersistentFactionData's alliance mutators, unported).
+    // powers. That is reproduced here, and so is the conditions body:
+    // the alliances that end and start, the rivalries, the wars, the
+    // famines and plagues and crime waves, and the new-ruler roll all
+    // land through this one call (regionPower.js:factionConditionsStep),
+    // over the S42 region store the player carries.
     //
     // DFU's own note on this arm is worth keeping: classic ran the
     // conditions version only on a minute divisible by BOTH 10080 and
@@ -505,7 +521,10 @@ export function tickPlayerMinutes({
     // supposed to be every 38 days" and made it so. A DFU deviation
     // from classic, inherited deliberately.
     if (i % REGION_CONDITIONS_INTERVAL_MINUTES === 0) {
-      regionPowerUpdate(entity.factionRep ?? null, { rumorMill: entity.rumorMill ?? null, rolls });
+      regionPowerUpdate(entity.factionRep ?? null, {
+        rumorMill: entity.rumorMill ?? null, rolls,
+        updateConditions: true, regionConditions: entity.regionConditions ?? null,
+      });
       // StartRacialOverrideQuest(false) rides this arm too - unported.
     }
   }

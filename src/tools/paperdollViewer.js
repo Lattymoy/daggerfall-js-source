@@ -432,17 +432,24 @@ function dyeDrape(nm, ramp) {
 // intensity onto the design's ramp, which is exactly the drape's
 // static path.
 function applyVillagerTone(v) {
-  // The design's RACE picks a skin tone out of the human palette; the
-  // rig race stays Human (Redguard/Nord/Breton all are). Deselecting
-  // restores the viewer's own tone rather than stranding the last
-  // villager's.
+  // The design's RACE is a RIG RACE now - Breton, Redguard and Nord are
+  // separate entries here (the four-family era collapsed them into one
+  // "Human" row, and looking that row up in the eight-race list answers
+  // -1: RACES[-1] is undefined, applyTone's `if (!pal) return` bails and
+  // the design's authored tone is thrown away at the seam). The tone
+  // names an entry of that race's FAMILY palette, which is how applyTone
+  // reads it too. A design whose race is not a rig race (the Guard, who
+  // spawns for any race) keeps the viewer's race and takes only the
+  // tone. Deselecting restores that race's own default tone rather than
+  // stranding the last villager's.
   if (v && v.tone) {
-    const pal = (D.PALETTES || {})[PKEY.Human] || [];
+    const R = RACES.includes(v.race) ? v.race : RACES[raceIx];
+    const pal = (D.PALETTES || {})[PKEY[RACE_FAMILY[R]]] || [];
     const ti = pal.findIndex((e) => e.name === v.tone);
-    if (ti >= 0) { raceIx = RACES.indexOf('Human'); toneIx.Human = ti; }
-  } else if (!v) { toneIx.Human = 0; }
-  { const pal = (D.PALETTES || {})[PKEY[RACES[raceIx]]]; const b = document.getElementById('tone');
-    if (pal && b) b.textContent = 'tone: ' + pal[toneIx[RACES[raceIx]] % pal.length].name; }
+    if (ti >= 0) { raceIx = RACES.indexOf(R); toneIx[R] = ti; }
+  } else if (!v) { const R = RACES[raceIx]; toneIx[R] = RACE_TONE[R] ?? 0; }
+  { const R = RACES[raceIx]; const pal = (D.PALETTES || {})[PKEY[RACE_FAMILY[R]]]; const b = document.getElementById('tone');
+    if (pal && b) b.textContent = 'tone: ' + pal[toneIx[R] % pal.length].name; }
   syncRace();
 }
 
@@ -1228,8 +1235,14 @@ let bgi = 0; const bgs = [0x14141a, 0x000000, 0x808088, 0xf0f0f0];
 postMat.uniforms.bg.value = new THREE.Color(bgs[0]);
 
 for (const name of ['pauldrons','helm']) { const btn = document.getElementById(name); if (btn) btn.onclick = (e) => { const m = pieceMesh[name]; if (m) { m.visible = !m.visible; e.target.classList.toggle('on', m.visible); if (name === 'helm') syncRace(); } }; }
-document.getElementById('race').onclick = (e) => { raceIx = (raceIx+1)%RACES.length; syncRace(); e.target.textContent = 'race: '+RACES[raceIx]; const pal=(D.PALETTES||{})[PKEY[RACES[raceIx]]]; if(pal) document.getElementById('tone').textContent='tone: '+pal[toneIx[RACES[raceIx]]%pal.length].name;  };
-document.getElementById('tone').onclick = (e) => { const R=RACES[raceIx], pal=(D.PALETTES||{})[PKEY[R]]; if(!pal)return; toneIx[R]=(toneIx[R]+1)%pal.length; applyTone(); e.target.textContent='tone: '+pal[toneIx[R]%pal.length].name; };
+// PKEY is keyed by FAMILY, not by race - applyTone reads it through
+// RACE_FAMILY and so must these two. Keyed by the race directly (the
+// four-family era, where the two were the same word) PKEY answers
+// undefined for every one of the eight races: the race button never
+// relabels the tone, and the tone button's `if(!pal)return` makes the
+// whole tone control inert.
+document.getElementById('race').onclick = (e) => { raceIx = (raceIx+1)%RACES.length; syncRace(); e.target.textContent = 'race: '+RACES[raceIx]; const pal=(D.PALETTES||{})[PKEY[RACE_FAMILY[RACES[raceIx]]]]; if(pal) document.getElementById('tone').textContent='tone: '+pal[toneIx[RACES[raceIx]]%pal.length].name;  };
+document.getElementById('tone').onclick = (e) => { const R=RACES[raceIx], pal=(D.PALETTES||{})[PKEY[RACE_FAMILY[R]]]; if(!pal)return; toneIx[R]=(toneIx[R]+1)%pal.length; applyTone(); e.target.textContent='tone: '+pal[toneIx[R]%pal.length].name; };
 document.getElementById('walk').onclick = (e) => { gaitIx = (gaitIx+1)%3; e.target.textContent = ['idle','walk','run'][gaitIx]; e.target.classList.toggle('on', gaitIx>0); };
 const poseBtn = document.getElementById('pose');
 const setPose = (i) => { poseIx = ((i % POSE_NAMES.length) + POSE_NAMES.length) % POSE_NAMES.length; poseBtn.textContent = 'pose: ' + POSE_NAMES[poseIx]; poseBtn.classList.toggle('on', poseIx > 0); atk = null; wm = null; arrowFlight = null; arrowHidden = false; arrowVisible(); swordInfo.textContent = ''; };   // a pose change is a STATE change: clear the clip + the weapon machine (a drawn bow must not persist over a melee stance)

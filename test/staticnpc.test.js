@@ -6,8 +6,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   positionHash, staticNpcData, raceFromFaction, raceFromFactionRace,
-  staticNpcName, bankForRace, FACTION_TYPE_INDIVIDUAL,
+  staticNpcName, bankForRace,
 } from '../src/characters/staticNpc.js';
+import { FACTION_TYPES } from '../src/formats/factionFile.js';
 import { RACES } from '../src/systems/races.js';
 import { GENDERS } from '../src/characters/nameHelper.js';
 
@@ -109,7 +110,10 @@ test('StaticNPC: an INDIVIDUAL faction answers its own name; everyone else is se
   // stable for that position with nothing stored anywhere.
   const d = staticNpcData({ x: 12, y: 34, z: 56, position: 999, buildingKey: 3, locationIndex: 2, factionId: 100 });
   d.race = RACES.Breton;
-  const individual = () => ({ type: FACTION_TYPE_INDIVIDUAL, name: 'King Gothryd' });
+  // FactionFile.cs:534-538 - Group = 2, Subgroup = 3, INDIVIDUAL = 4.
+  assert.equal(FACTION_TYPES.Subgroup, 3);
+  assert.equal(FACTION_TYPES.Individual, 4);
+  const individual = () => ({ type: 4, name: 'King Gothryd' });
   assert.equal(staticNpcName(d, { getFaction: individual }), 'King Gothryd');
 
   const ordinary = () => ({ type: 2, name: 'The Merchants' });

@@ -329,10 +329,13 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
         actionDoors.push({
           modelIdNum,
           matrix,
-          position: obj.position,   // P10: doors join the chain graph (Lock/Unlock/Open/Close ride the door's own action)
+          // The chain key: RDBLayout.cs:888/936 add the door's link under
+          // obj.Position, and LinkActionNodes (RDBLayout.cs:1094) resolves
+          // nextKey/prevKey against those same keys - so doors join the
+          // chain graph (Lock/Unlock/Open/Close ride the door's own action).
+          position: obj.position,
           startingLockValue: LOCK_VALUES[mr.triggerFlagStartingLock >> 4],
           action,
-          position: obj.position,   // the chain key (LinkActionNodes resolves doors by position)
         });
         objectPositions.set(obj.position, positionEntryFromMatrix(matrix, obj));
         if (acts) addModelLink(obj, action);

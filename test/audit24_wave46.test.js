@@ -11,12 +11,59 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { combatVoice, playerVoice, raceGenderPainSound, raceGenderAttackSound, PAIN_VOICE_CHANCE, isHeavyDamage } from '../src/combat/combatVoices.js';
 import { playerPainVoice, playPlayerVoice, playerAttackGrunt } from '../src/scenes/hostCombat.js';
+import { hitSoundFor } from '../src/systems/soundClips.js';
 import { RACES } from '../src/systems/races.js';
 
 const rd = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
 const player = (over = {}) => ({ race: 'HighElf', gender: 'male', maxHealth: 40, ...over });
 /** rolls() queue, then 0 - so the 40% gate passes by default. */
 const scripted = (...v) => { let i = 0; return () => (i < v.length ? v[i++] : 0); };
+/** Prose says "playPlayerVoice" constantly in these hosts; a brace
+ *  counter that reads a sentence would stop on the wrong line. */
+const decomment = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+
+/** Every shipped `onPlayerHurt` property in a host, brace-balanced out
+ *  of the source rather than line-counted - the handlers are
+ *  multi-line and the city watch's nests a whole closure (G2's arrest
+ *  interception hands `apply` to the surrender box). */
+function playerHurtHandlers(file) {
+  const lines = rd(file).split('\n');
+  const out = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (!/^\s*onPlayerHurt: \(/.test(lines[i])) continue;
+    let depth = 0;
+    const body = [];
+    for (let j = i; j < lines.length && (j === i || depth > 0); j++) {
+      body.push(lines[j]);
+      for (const ch of decomment(lines[j])) {
+        if (ch === '(' || ch === '{' || ch === '[') depth++;
+        else if (ch === ')' || ch === '}' || ch === ']') depth--;
+      }
+    }
+    assert.equal(depth, 0, `${file}: unbalanced onPlayerHurt at line ${i + 1}`);
+    out.push(body.join('\n').replace(/,\s*$/, ''));
+  }
+  return out;
+}
+
+/** CALLS one shipped damage door with fakes in place of the host's
+ *  devices, and returns what the player heard. The shipped call site
+ *  hands playerPainVoice a damage and nothing else, so its rolls ARE
+ *  Math.random - pinning that pins the 40% gate and both clip picks. */
+function takeABlow(handlerSrc, dmg, wpn = null) {
+  const heard = [], billed = [];
+  const audio = { playOneShot: (clip, vol) => heard.push([clip, vol]) };
+  const entity = { race: 'Breton', gender: 'female', maxHealth: 40 };
+  const handler = new Function(
+    'hurtPlayer', 'playerEntity', 'audio', 'hitSoundFor', 'playPlayerVoice',
+    'playerPainVoice', 'surfacePlayer', 'arrestFlow',
+    `return ({ ${handlerSrc} }).onPlayerHurt;`,
+  )((_, n) => billed.push(n), entity, audio, hitSoundFor, playPlayerVoice, playerPainVoice,
+    () => {}, { onGuardHit: () => false });   // G2's box declines, so the blow lands
+  const rolls = Math.random;
+  try { Math.random = () => 0; handler(dmg, wpn); } finally { Math.random = rolls; }
+  return { heard, billed };
+}
 
 // Mutation campaign: 20 reintroductions, 20 killed, ZERO equivalents -
 // after two rounds, and the first round found more about the PINS than
@@ -28,9 +75,11 @@ const scripted = (...v) => { let i = 0; return () => (i < v.length ? v[i++] : 0)
 //     heavyDamage read off CURRENT health, both passed. Pinned on a
 //     female now, where the table really does fork.
 //   - "the blow cries" was an `assert.ok(...some(line))`, and world.js
-//     and dungeonContext.js each have TWO cry sites now (the blow and
-//     the arrow). Deleting the blow's line left the arrow's, and the
-//     pin stayed green. COUNTED per file now.
+//     and dungeonContext.js each have more than one cry site (the blow
+//     and the arrow). Deleting the blow's line left the arrow's, and
+//     the pin stayed green. It was COUNTED per file after that, which
+//     had its own defect; the exterior hosts' damage doors are CALLED
+//     one at a time now (see the third test).
 //   - the arrow arms' `if (dmg > 0)` gate had no pin at all.
 //   - `!(damage > 0)` -> `damage <= 0` was filed as an equivalent and
 //     is NOT one: they part company on a NaN, where the first refuses
@@ -153,14 +202,44 @@ test('audit24 wave46: every blow and every ARROW now owes all three', () => {
   // (flash + cry) and then PlayWeaponHitSound / PlayWeaponlessHitSound.
   // BowDamage:140-141 routes an arrow through the very same
   // ApplyDamageToPlayer, so an arrow owes exactly what a blow owes.
-  // COUNTED, not `.some()`. world.js and dungeonContext.js each have
-  // TWO sites now (the blow and the arrow), so a `some` was satisfied
-  // by the arrow after the blow's line was deleted - two mutants
-  // walked through the first campaign on exactly that.
+  //
+  // RUN, not read. This pin used to COUNT the cry lines per host,
+  // because a `.some()` over the file was satisfied by the arrow after
+  // the blow's line was deleted (two mutants walked through the first
+  // campaign on exactly that). But a count is a claim about how many
+  // enemy pools a host happens to hold, not about the law: EVERY
+  // attacker that reaches SendDamageToPlayer sends it, and world.js
+  // holds three doors, not two - the city watch, the encounter foe
+  // pool and the arrow. The count pin failed on a host that had just
+  // become MORE faithful. So every shipped `onPlayerHurt` is lifted
+  // out of its host and CALLED here: a pool wired tomorrow is covered
+  // tomorrow, and an unwired one is a red test the same day.
+  // (The flash is the third of the three and rides in the POOLS for
+  // these two hosts - cityGuards.js:423 and exteriorFoes.js:373 both
+  // flash on the same `dmg > 0` that calls onPlayerHurt - which is why
+  // it is not inside the handlers run below.)
+  const zero = () => 0;
+  const hit = hitSoundFor(null, zero);                                   // PlayWeaponlessHitSound's family
+  const cry = raceGenderPainSound(RACES.Breton, 'female', true, zero);   // 10 >= MaxHealth/4
+  assert.notEqual(hit, cry, 'the hit sound and the cry are different clips');
+  for (const [file, doors] of [['src/scenes/world.js', 2], ['src/scenes/exterior.js', 1]]) {
+    const handlers = playerHurtHandlers(file);
+    assert.equal(handlers.length, doors, `${file}: one damage door per enemy pool`);
+    handlers.forEach((h, i) => {
+      const landed = takeABlow(h, 10);
+      assert.deepEqual(landed.billed, [10], `${file} door ${i + 1}: the blow bills the health`);
+      assert.deepEqual(landed.heard, [[hit, 1.1], [cry, 1]], `${file} door ${i + 1}: the hit sound AND the cry`);
+      // SendDamageToPlayer is only reached from ApplyDamageToPlayer's
+      // `if (damage > 0)` arm, so a blow that bills nothing sends nothing
+      const missed = takeABlow(h, 0);
+      assert.deepEqual(missed.heard, [], `${file} door ${i + 1}: no damage, no noise`);
+      assert.deepEqual(missed.billed, [], `${file} door ${i + 1}: and no health billed`);
+    });
+  }
+  // the dungeon's two sites are inline rather than properties (its
+  // melee resolution and its arrow arm), so they stay counted
   const cries = (f) => rd(f).split('\n').filter((l) => l.trim().startsWith('playPlayerVoice(audio, playerPainVoice(')).length;
-  assert.equal(cries('src/scenes/world.js'), 2, 'world: the blow AND the arrow');
   assert.equal(cries('src/scenes/dungeonContext.js'), 2, 'dungeon: the blow AND the arrow');
-  assert.equal(cries('src/scenes/exterior.js'), 1, 'exterior: the blow (this host has no arrow pool)');
   // the two arrow-on-player sites, which had NONE of this
   const w = rd('src/scenes/world.js');
   const arrow = w.slice(w.indexOf('onPlayerHit: (m) =>'));

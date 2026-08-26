@@ -201,6 +201,18 @@ export const enchantmentParams = (type) => {
 };
 export const enchantmentTypes = () => Object.keys(ENCHANTMENT_COSTS);
 
+/** SecondaryDisplayName for ONE minted param - what the list row
+ *  prints under the primary name (EnchantmentListPicker.cs:333-334,
+ *  stored per-setting by each effect, e.g. CastWhenUsed.cs:67 from
+ *  the classic SPELL id). The param is matched BY VALUE through the
+ *  mint order, never used as an index: a CastWhen* param is a sparse
+ *  spell id, where the label list is dense. Empty when the effect
+ *  mints no label there. */
+export function enchantmentParamName(type, param) {
+  const at = enchantmentParamValues(type).indexOf(param);
+  return at >= 0 ? (enchantmentParams(type)[at] ?? '') : '';
+}
+
 /** A POWER prices positive, a SIDE EFFECT negative - see the header.
  *  Classified off the table itself rather than from a second list,
  *  so the two can never disagree. */
@@ -355,8 +367,10 @@ export function pickEnchantment(type, param, { powers = [], sideEffects = [] } =
 }
 
 /** RemoveForcedEnchantments (:916-917, EnchantmentListPicker:270).
- *  Removing a PARENT takes its children out of both lists with it; a
- *  child removed on its own takes nothing. */
+ *  Removing a PARENT takes its children out of both lists with it. A
+ *  child is never removed on its own - the window's click handler
+ *  only fires on panels whose ParentEnchantment == 0
+ *  (EnchantmentListPicker.cs:266-271). */
 export function removeEnchantment(list, key) {
   return list.filter((e) => e.key !== key && e.parentEnchantment !== key);
 }
