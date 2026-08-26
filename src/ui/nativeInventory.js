@@ -54,6 +54,11 @@ import { drawScreenDimBackdrop } from './chargenArt.js';
 import { addItem, isEnchanted, goldStack, canHoldAmount, totalWeight, GOLD_PIECE_WEIGHT_KG } from '../systems/inventory.js';   // L-slice (items-9)
 // U56: TransferItem's ladder - the guards, their order, and the split.
 import { planStore, planTake, applyTransfer, WAGON_KG_LIMIT } from '../systems/itemTransfer.js';
+// U57: which list is the remote one, and what opening and closing
+// this window decide.
+import {
+  openState, remoteTarget, planWagonToggle, closeSession,
+} from '../systems/inventorySession.js';
 import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, isBrokenItem, FORBIDDEN_EQUIPMENT_TEXT_ID, ITEM_BROKEN_TEXT_ID } from '../systems/equip.js';   // S23
 import { drawPaperDoll, refreshPaperDoll, slotAtPaperDoll, ARMOR_LABEL_POS } from './paperDoll.js';
 import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel, safeScrollIndex } from './itemScroller.js';
@@ -116,20 +121,17 @@ export const USE_PENDING = Object.freeze({
 
 /** TEXT.RSC 25 - the drop-gold prompt (:1272). */
 export const GOLD_TO_DROP_TEXT_ID = 25;
-/** Internal_Strings "noWagon" (:1237). */
-export const NO_WAGON_TEXT = "You don't own a wagon.";
 // W-slice: the wagon goes live. U56: the three strings the TRANSFER
 // LADDER owns live with it now (systems/itemTransfer.js) and are
 // re-exported here, because a caller reaching for the wagon's limit
 // is usually already holding this window.
 export { WAGON_KG_LIMIT, CANNOT_HOLD_TEXT, CANNOT_CARRY_TEXT } from '../systems/itemTransfer.js';
-export const SMALL_CART_TEMPLATE = 93;  // ItemGroups.Transportation.Small_cart's template
-/** key "exitTooFar" (:1239) - prose ours pending a string source. */
-export const EXIT_TOO_FAR_TEXT = 'You are too far from the exit.';
+// U57: and the remote side's, for the same reason.
+export {
+  SMALL_CART_TEMPLATE, NO_WAGON_TEXT, EXIT_TOO_FAR_TEXT, WAGON_ACCESS_DISTANCE,
+} from '../systems/inventorySession.js';
 /** key "wagonFullGold" (:1303) - the drop-gold clamp's box. */
 export const wagonFullGoldText = (n) => `Your wagon can only hold ${n} more gold.`;
-/** DungeonWagonAccessProximityCheck's radius (:1102). */
-export const WAGON_ACCESS_DISTANCE = 5;
 export const TABS = ['weapons', 'magic', 'clothing', 'ingredients'];
 const TAB_RECT = { weapons: INV_RECTS.tabWeapons, magic: INV_RECTS.tabMagic, clothing: INV_RECTS.tabClothing, ingredients: INV_RECTS.tabIngredients };
 const MODES = ['wagon', 'info', 'equip', 'remove', 'use', 'gold'];
@@ -187,8 +189,11 @@ export class NativeInventoryWindow {
     this.done = false;
     this.isChoiceWindow = true;    // raw codes through the overlay seam
     this.tab = 'weapons';          // SelectTabPage(TabPages.WeaponsAndArmor) on setup
-    // selectedActionMode: Remove for loot targets, Equip otherwise
-    this.mode = hooks.loot ? 'remove' : 'equip';
+    // U57: selectedActionMode, CheckWagonAccess and SetChooseOne are
+    // one read now (systems/inventorySession.js) - the enhanced pack
+    // opens on the same three answers.
+    const open = openState(hooks);
+    this.mode = open.mode;
     this.scroll = 0;
     this.remoteScroll = 0;
     this.infoGold = false;   // U47: the gold button's hover fills the panel instead of an item
@@ -197,29 +202,17 @@ export class NativeInventoryWindow {
     this.infoItem = null;
     this.goldEntry = null;         // the drop-gold field's live text
     // W-slice: the wagon as the remote target. usingWagon mirrors
-    // ShowWagon's flag; the dungeon access is decided ON OPEN -
-    // CheckWagonAccess (:1082-1097) allows it only with the cart in
-    // the bag and the player within 5 units of an exit door, and
-    // DFU's no-loot arm opens STRAIGHT onto the wagon in Remove mode
-    // (the classic leave-the-haul-at-the-entrance flow).
-    this.usingWagon = false;
+    // ShowWagon's flag.
+    this.usingWagon = open.usingWagon;
     // G6: SetChooseOne (:259-264). The reward list becomes the REMOTE
     // side and taking ONE item closes the window and fires the
     // callback (:1585-1591); the local Remove transfer is barred
-    // while it is on (:1994), so nothing of the player's can be
-    // dumped into a pile they are only choosing from. DFU clears the
-    // mode in OnPop, so closing WITHOUT taking claims nothing.
-    this.chooseOne = hooks.chooseOne ?? null;
-    if (this.chooseOne) this.mode = 'remove';
-    this.allowDungeonWagonAccess = !!(hooks.dungeon?.inside && this._hasCart() && hooks.dungeon?.nearExit?.());
-    if (this.allowDungeonWagonAccess && !hooks.loot) { this.usingWagon = true; this.mode = 'remove'; }
+    // while it is on (:1994). DFU clears the mode in OnPop, so
+    // closing WITHOUT taking claims nothing.
+    this.chooseOne = open.chooseOne;
+    this.allowDungeonWagonAccess = open.allowDungeonWagonAccess;
     this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);   // AUDIT 17f: icons follow the wearer's morphology
     if (hooks.entity) refreshPaperDoll(hooks.entity);   // U8g: the doll composes fresh on open
-  }
-
-  /** Items.Contains(Transportation, Small_cart) (:1236). */
-  _hasCart() {
-    return (this.hooks.items() ?? []).some((it) => it.templateIndex === SMALL_CART_TEMPLATE);
   }
 
   /** ShowWagon (:1047-1080): the flag flips and the remote scroll
@@ -240,9 +233,14 @@ export class NativeInventoryWindow {
   }
   _filtered() { return filterByTab(this.hooks.items(), this.tab); }
   _remote() {
-    if (this.usingWagon) return this.hooks.wagonItems?.() ?? (this._wagonLocal ??= []);
-    if (this.chooseOne) return this.chooseOne.items;
-    return this.hooks.loot ? this.hooks.loot.items() : this.dropped;
+    return remoteTarget(this.hooks, {
+      usingWagon: this.usingWagon,
+      chooseOne: this.chooseOne,
+      dropped: this.dropped,
+      // A host with no wagon hook still needs somewhere for the
+      // toggle to point, and it must be the SAME array every read.
+      wagonLocal: (this._wagonLocal ??= []),
+    });
   }
   _setTab(t) {
     audio.playOneShot(SOUND.ButtonClick, 1);
@@ -271,8 +269,7 @@ export class NativeInventoryWindow {
    *  skipped and a session drop was silently LOST. */
   _closeSilently() {
     this.done = true;
-    if (this.dropped.length) this.hooks.onDrop?.(this.dropped);   // the world pile mints on close (OnPop)
-    this.hooks.onClose?.();
+    closeSession(this.hooks, this);   // the world pile mints on close (OnPop)
   }
 
   /** S23: the career equip gate (DaggerfallInventoryWindow :1343-1381).
@@ -380,12 +377,9 @@ export class NativeInventoryWindow {
     // method used to play a second one of its own, so the wagon button
     // fired two overlapping ButtonClicks where every other button
     // fires one.
-    if (!this._hasCart()) { this.boxes = [{ rows: [{ text: NO_WAGON_TEXT, center: true }] }]; return; }
-    if (this.hooks.dungeon?.inside && !this.allowDungeonWagonAccess) {
-      this.boxes = [{ rows: [{ text: EXIT_TOO_FAR_TEXT, center: true }] }];
-      return;
-    }
-    this._showWagon(!this.usingWagon);
+    const plan = planWagonToggle(this.hooks, this);
+    if (!plan.ok) { this._refuse(plan.refusal); return; }
+    this._showWagon(plan.usingWagon);
   }
 
   /** GoldButton_OnMouseClick + DropGoldPopup_OnGotUserInput

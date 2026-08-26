@@ -8,6 +8,50 @@ policies one by one.
 
 
 
+## U57 The remote side comes out too (2026-08-26)
+
+U56 moved the transfer LADDER. A transfer needs somewhere to transfer
+TO, and choosing that is its own small pile of window members -
+OnPush's default target, SetChooseOne, CheckWagonAccess, ShowWagon,
+WagonButton_OnMouseClick, OnPop - every one of which the enhanced
+pack's remote pane needs and none of which it should read twice. So
+`systems/inventorySession.js` now holds them, and the classic window
+opens, targets, toggles and closes through it.
+
+THREE ORDERS AND ONE INVISIBLE EFFECT. The orders are what a second
+reading would have got subtly wrong, so each is pinned by a case where
+the lower rungs are also present:
+
+    THE REMOTE TARGET  the wagon outranks everything while it is
+                       showing (that is what the toggle means), a
+                       reward list outranks a container, a container
+                       outranks the ground.
+    THE WAGON BUTTON   no cart first, THEN the exit rule - so a player
+                       with no cart in a dungeon far from the door is
+                       told about the cart and never about the door.
+    ON OPEN            access needs the cart AND the door AND being
+                       inside; with access and no container the window
+                       lands ON the cart in Remove, but a LOOT target
+                       outranks that, because the corpse you just
+                       opened is the one you meant.
+
+The invisible effect is `closeSession` - AUDIT B-C1's drop-pile mint.
+It is a function rather than two lines at the end of a close handler
+because it has to run on a HAND-OFF too, where the window is being
+replaced rather than closed, and the port once skipped it there: items
+gone from the bag and never on the ground. A screen that forgets this
+does not look broken. It looks like the player misremembered picking
+something up. It is pinned from both sides, because an EMPTY session
+must mint nothing - a world flat with no items in it is litter that
+cannot be picked up.
+
+The classic window's own suites were not edited again, and 22
+mutations confirm they bind through the new module - four of them
+break only the window's half (faking the toggle, closing without the
+mint) and die in wagon and droppedloot.
+
+Next: the pane itself, which is what retires `CLASSIC_ONLY_MODES`.
+
 ## U56 TransferItem comes out of the window (2026-08-26)
 
 The enhanced pack has a local list and no REMOTE one. Building that
