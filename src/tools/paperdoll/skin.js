@@ -36,6 +36,31 @@ export function createSkin(ctx) {
   // kept, fine detail (measured amplitude 13-18 per texel) removed.
   let skinIBeast = null;
   const BEAST = { Khajiit: 1, Argonian: 1 };
+
+  // THE RIG FINGERPRINT. Face count is not enough to certify a UV file: a sculpt
+  // can move every vertex while preserving the number/order of quads. New skin
+  // bakes carry an FNV-1a hash over the SAME packed positions and group ids D
+  // carries. Old assets have no hash and keep the historical count-only fallback;
+  // once regenerated, a stale atlas refuses to mount instead of wrapping the
+  // wrong geometry and looking like a texture bug.
+  function liveRigHash() {
+    let h = 2166136261 >>> 0;
+    const mix = (value) => {
+      const u = value >>> 0;
+      for (const shift of [0, 8, 16, 24]) {
+        h ^= (u >>> shift) & 0xff;
+        h = Math.imul(h, 16777619) >>> 0;
+      }
+    };
+    mix(nf);
+    for (let f = 0; f < nf; f++) {
+      mix(D.G ? D.G[f] : 0);
+      const b = f * 12;
+      for (let i = 0; i < 12; i++) mix(D.P[b + i] || 0);
+    }
+    return h.toString(16).padStart(8, '0');
+  }
+
   // THE BAKED HEADS. public/skin/heads/ carries one cell per face, baked from our
   // own generated turnarounds (tools/skin/head_bake.py) - no ARENA2, so they
   // ship. Each face also implies its own body ramp, because the ten are not one
@@ -77,8 +102,13 @@ export function createSkin(ctx) {
         new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i);
           i.onerror = rej; i.src = './skin/skin-intensity.png'; }),
       ]);
+      // Every check happens BEFORE installing UVs. A partially compatible skin
+      // must fall all the way back to per-face ramps, never half-mount.
+      if (uv.n !== nf) return;
+      if (!Array.isArray(uv.uv) || uv.uv.length !== nf * 8) return;
+      if (uv.w !== img.width || uv.h !== img.height) return;
+      if (uv.rigHash && uv.rigHash !== liveRigHash()) return;
       skinLayout = lay;
-      if (uv.n !== nf) return;                       // rig changed: do not guess
       const uvs = new Float32Array(nf * 6 * 2);
       let q = 0;
       for (let f = 0; f < nf; f++) for (const vi of TRI) {
