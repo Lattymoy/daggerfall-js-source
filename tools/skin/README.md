@@ -32,10 +32,10 @@ and hands are not cylinders, and one group can contain multiple authored forms.
 An approximate group cylinder can only make those surfaces agree by accident.
 
 `bake_atlas.py` now gives every non-head quad its own small padded tile. Every
-texel is a bilinear point on the real four corners and is sampled from the
-multi-view correspondence there. The four UV corners are therefore the four
-rendered corners. There is no inverse projection to solve and no geometry
-approximation between the bake and the viewer.
+texel is evaluated on the same two triangles the viewer renders
+(`0,1,2` / `0,2,3`) and sampled from the multi-view correspondence there. The
+four UV corners are therefore the four rendered corners. There is no inverse
+projection to solve and no geometry approximation between the bake and viewer.
 
 The gutters are duplicated edge texels, not body area. `skin_ramps.py` excludes
 them from its histogram and `beast_skin.py` smooths each face tile independently
