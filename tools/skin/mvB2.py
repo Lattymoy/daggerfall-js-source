@@ -317,6 +317,7 @@ def sample(g, px, py, pz, nx, nz):
     return (colour / wsum) if wsum > 0 else None
 
 
+# ---------- render ----------
 def render(yaw, CW, CH, sc):
     ya = math.radians(yaw)
     cy, sy = math.cos(ya), math.sin(ya)
