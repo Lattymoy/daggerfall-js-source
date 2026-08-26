@@ -309,7 +309,7 @@ export function createWorldModes(host) {
   // The host destructure moves with it, because `say` closes over
   // `townTalk`. It reads only the function's own argument, so it is
   // safe anywhere inside the body.
-  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, npcTargets = null, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null, discoveryLocationId = null, gps = null, buildingDirectory = null } = host;   // H1: the location's whole building list, for the houses-for-sale roll   // V5: gps = PlayerGPS's location reads, for CanRest   // R1: the discovery store's location key (the anti-grind record's namespace)   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
+  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, npcTargets = null, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null, hostQuickLoad = null, discoveryLocationId = null, gps = null, buildingDirectory = null } = host;   // H1: the location's whole building list, for the houses-for-sale roll   // V5: gps = PlayerGPS's location reads, for CanRest   // R1: the discovery store's location key (the anti-grind record's namespace)   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
   // U43-ii: the interior HUD-text layer is the OUTER host's, and
   // always was - townTalk's hud draws above the modal render. The
   // "pends its arc" flag was a line of plumbing: a broken weapon, a
@@ -2890,6 +2890,13 @@ export function createWorldModes(host) {
           // restored-Symbol duplicate quirk sceneMount records.
           questBridge, talkSave,
           onQuestRestored: () => { onQuestRestored?.(); mountQuestResources(); },
+          // S1: the outer host's OWN loader, handed down so the F11
+          // pressed underground runs PlayerEnterExit
+          // .RestorePositionHelper (:592-655) - the one seam that can
+          // respawn the player in the context the save was made in -
+          // instead of a second, host-blind copy of the restore that
+          // could only ever say "(different dungeon)".
+          hostQuickLoad,
         });
       dungeonCtx = ctx;
       // P10 host parity (2026-08-16 audit: only the standalone scene
@@ -4322,6 +4329,26 @@ export function createWorldModes(host) {
       return mountSpellWindow(win);
     },
     startInDungeon,
+    /** S1 - SaveLoadManager.cs:1497, the dungeon arm.
+     *
+     *  RestorePositionHelper respawns the player FIRST (:1476) and
+     *  DFU only then restores the saved objects into the world that
+     *  respawn built. The world host owns the respawn (it holds the
+     *  streamer); this host owns the dungeon context the respawn
+     *  produced, so the host reaches the saved scene through here.
+     *
+     *  Answers false when no dungeon context is mounted - the honest
+     *  reading for the arm where startInDungeon found no entrance and
+     *  the seam fell through to DFU's own "all else fails" exterior
+     *  landing (PlayerEnterExit.cs:645-654). */
+    restoreDungeonScene(extras) {
+      if (mode !== 'dungeon' || !dungeonCtx) return false;
+      // The same position applier routeKey hands down (:4123) and the
+      // standalone scene uses: a load clears motion state, P14/AUDIT 23.
+      dungeonCtx.applyLoadedScene(extras, (p) => player.spawn(p[0], p[1], p[2]));
+      cam.pos = player.eye;
+      return true;
+    },
     /** B1: CreateFoe's TryPlacement, this host's two INSIDE arms
      *  (CreateFoe.cs:194-211). The dungeon arm runs PlaceFoeFreely
      *  over the dungeon collider and stands the foe through the

@@ -10,6 +10,7 @@
 
 import { FlatAnimator, armFlatAnim, MISSILE_FPS } from '../render/flatAnimation.js';   // FA1: the flats that move
 import { layoutDungeon } from '../world/dungeonLayout.js';
+import { longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';   // S1: PlayerPositionData_v1.worldPosX/worldPosZ - where in the world this dungeon is
 import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, automapRevealTick, automapEntranceTick, automapDungeonKey, SCAN_INTERVAL_S } from '../systems/automap.js';   // A1
 import { AutomapWindow } from '../ui/automapWindow.js';   // A1: the M window
 import { applyTextureTable } from '../world/dungeonTextures.js';
@@ -97,7 +98,7 @@ import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects
 import { dice100, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies, KB_UNIT } from '../combat/formulas.js';   // C15: + knockback
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost, effectSchool, EFFECT_COST_TABLE } from '../systems/spellcost.js';
-import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState, copyEffectEntry, equippedWeaponIndex } from '../systems/save.js';   // B4: the ONE quest+talk composer; copyEffectEntry: SerializableEnemy's bundles ride the player envelope's body; equippedWeaponIndex: its equip table, the same member the exterior pool writes
+import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState, copyEffectEntry, equippedWeaponIndex, dungeonLocationKey } from '../systems/save.js';   // S1: the context stamp's ONE builder - the seam that reads it back lives beside it   // B4: the ONE quest+talk composer; copyEffectEntry: SerializableEnemy's bundles ride the player envelope's body; equippedWeaponIndex: its equip table, the same member the exterior pool writes
 import { bindQuestFoeHost } from './questFoeHost.js';   // B1: quest foes ride this pool
 import { dungeonKey } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
@@ -1834,9 +1835,37 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // record itself is ActionSystem's law (collectSaveData /
   // restoreSaveData) - a mover's pose IS its {state, t}, and a door
   // carries a second pair for the record's Move tween.
-  const _locationKey = `dungeon:${dfLocation?.dungeon?.recordElement?.header?.locationId ?? 'probe'}`;
+  const _locationKey = dungeonLocationKey(dfLocation?.dungeon?.recordElement?.header?.locationId ?? 'probe');
   function collectWorld() {
     return {
+      // S1 - PlayerPositionData_v1.worldPosX / worldPosZ
+      // (SerializableGameObject.cs:233-234), written from
+      // StreamingWorld.LocalPlayerGPS (SerializablePlayer.cs:216-217)
+      // and read back by RestorePositionHelper's dungeon arm, which
+      // hands them straight to RespawnPlayer -> Respawner's
+      // `MapsFile.WorldCoordToMapPixel(worldX, worldZ)` ->
+      // TeleportToCoordinates -> StartDungeonInterior
+      // (PlayerEnterExit.cs:622-627, :489-497, :527-534).
+      //
+      // WITHOUT IT A DUNGEON SAVE WAS UNRESTORABLE. The envelope
+      // recorded which dungeon (locationKey) and where in it
+      // (position) and never where in the WORLD that dungeon is, so
+      // nothing could put the streamer over its map pixel: a boot
+      // with ?load stood the player on the exterior start pixel with
+      // none of their dungeon, and the next F9 overwrote the only
+      // slot with a world envelope.
+      //
+      // It rides `world` beside the exterior host's own `pixel` (the
+      // same member, the same name, the same shape) rather than a
+      // second top-level field, so the restore seam reads ONE place
+      // for both hosts. The dungeon's coordinates are the LOCATION's,
+      // not the player's: inside a dungeon PlayerGPS holds the
+      // location's world position, and the port derives the same
+      // pixel from the map table row the way every other site read
+      // does (world.js's quest respawn, exterior.js).
+      pixel: dfLocation?.mapTableData
+        ? longitudeLatitudeToMapPixel(dfLocation.mapTableData.longitude, dfLocation.mapTableData.latitude)
+        : null,
       foes: foes.map((f) => ({
         health: f.entity.health, dead: !!f.dead,
         feet: [...f.ai.feet], yaw: f.ai.yaw,
@@ -2956,6 +2985,25 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       else hudText.add('Save failed (storage full or disabled).');   // never silent - the write can fail on real browsers
     },
     quickLoad(setPlayerPos) {
+      // S1 - THE ONE RESTORE SEAM. Only a host with a streaming world
+      // can carry out PlayerEnterExit.RestorePositionHelper
+      // (:592-655): its whole job is to RespawnPlayer at the saved
+      // map pixel, in the saved context, BEFORE any of the scene half
+      // is applied. This context is mounted inside one such host
+      // (worldModes, under world.js) and cannot move the player out of
+      // itself, so when the host hands its own loader down, the host
+      // owns the load - and lands back here through applyLoadedScene
+      // if the save was in a dungeon. Two copies of that law is
+      // exactly how the two halves drifted apart: this one restored
+      // the character in place and said "(different dungeon)", while
+      // the world one said "(saved elsewhere)", and neither ever moved
+      // anybody.
+      //
+      // The standalone ?dungeon scene (scenes/dungeon.js) hands no
+      // loader down because it HAS no world to respawn into - one
+      // location, built at boot - so it keeps the in-place load below,
+      // unchanged.
+      if (opts.hostQuickLoad) { opts.hostQuickLoad(); return; }
       const snap = readQuicksave();
       if (!snap) { hudText.add('No saved game.'); return; }
       const extras = restorePlayer(playerEntity, snap, spellsByIndex);
@@ -2967,8 +3015,33 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // envelope must latch the world host's _questStarted so
       // initAtGameStart never re-runs over the restored machine.
       if (restoreSessionState(extras, { questBridge: opts.questBridge, talk: opts.talkSave })) opts.onQuestRestored?.();
+      this.applyLoadedScene(extras, setPlayerPos);
+    },
+    /** S1 - the SCENE half of a load, split out so the host seam and
+     *  the standalone scene run ONE body.
+     *
+     *  This is SaveLoadManager.cs:1497's `RestoreSaveData(saveData)`:
+     *  the pass that puts the saved world back over the scene the
+     *  player is now standing in. DFU runs it strictly AFTER
+     *  RestorePositionHelper (:1476) and after waiting out
+     *  `playerEnterExit.IsRespawning` (:1487-1493) - the order is the
+     *  law, because the objects it restores do not exist until the
+     *  respawn has built them. The host seam calls it on the dungeon
+     *  context that startInDungeon just built; nothing may call it
+     *  before the host switch.
+     *
+     *  It takes an already-read envelope rather than reading storage:
+     *  the entity, the clock, the quest machine and the conversation
+     *  are the CALLER's half (DFU restores those either side of the
+     *  respawn), and a second read here would be a second load. */
+    applyLoadedScene(extras, setPlayerPos) {
       if (extras.world && extras.locationKey === _locationKey) applyWorld(extras.world);
-      else if (extras.world) hudText.add('(different dungeon - world state left as built)');   // cross-location travel-on-load pends
+      // S1: this reaches only the STANDALONE ?dungeon scene now - one
+      // location built at boot, no world to respawn into, so a save
+      // made in another dungeon really has nowhere to go. Under the
+      // world host the seam has already put the player in the saved
+      // dungeon before this runs, so the keys match.
+      else if (extras.world) hudText.add('(different dungeon - world state left as built)');
       // A1: restorePlayer replaced the automap store, so the live
       // record reference is stale. Re-fetch on the LOAD arm
       // (initFromLoadingSave, Automap.cs:2492-2493): a bare

@@ -60,7 +60,7 @@ import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender } from '
 import { SITE_TYPES } from '../systems/quest/place.js';   // B3: the respawn dispatch reads the site type
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert, areEnemiesNearby, passiveGuardSpawns } from '../systems/encounters.js';   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
-import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState, copyEffectEntry, equippedWeaponIndex } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer; AUDIT 26: SerializableEnemy's bundles ride the player envelope's body, and equippedWeaponIndex is the equip link both foe hosts write
+import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState, copyEffectEntry, equippedWeaponIndex, savedInsideDungeon } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer; AUDIT 26: SerializableEnemy's bundles ride the player envelope's body, and equippedWeaponIndex is the equip link both foe hosts write
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it
@@ -1758,8 +1758,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // coordinates (stable across every floating-origin recenter) with
   // the compensation-free height. One classic slot, shared with the
   // dungeon key: loading a save from the other side restores the
-  // CHARACTER and says so (cross-side travel-on-load pends with the
-  // dungeon's own note).
+  // CHARACTER; S1's restore seam (restorePositionHelper) then puts
+  // them back in the host that envelope was written from, so the one
+  // slot holds a dungeon run and a world run equally well.
   function worldQuickSave() {
     const pf = walkMode && playerSpawned ? player.pos : cam.pos;
     const wc = state.worldCoords(pf);
@@ -1867,6 +1868,92 @@ export async function bootWorld(canvas, renderer, params, status) {
     townTalk.say(writeQuicksave(snap) ? 'Game saved.' : 'Save failed (storage full or disabled).');
   }
   let _loading = false;
+  /**
+   * S1 - PlayerEnterExit.RestorePositionHelper (:592-655). THE ONE
+   * SEAM, and the whole fix: **the player is put in the host the save
+   * was made in BEFORE any of the saved world is applied.**
+   *
+   * DFU's load runs it at SaveLoadManager.cs:1476 - after the faction,
+   * quest, conversation and notebook restores (:1421-:1451) and
+   * strictly BEFORE `RestoreSaveData(saveData)` at :1497, with a wait
+   * on `playerEnterExit.IsRespawning` in between (:1487-1493). That
+   * order is the law: the objects :1497 restores do not exist until
+   * the respawn has built the scene that holds them.
+   *
+   * Three arms, in DFU's own order:
+   *   1. insideDungeon -> RespawnPlayer(worldPosX, worldPosZ, true,
+   *      importEnemies) (:622-627). Note the COMMENTED-OUT
+   *      `&& !repositionPlayer` and its comment, "Do not need to
+   *      reposition outside for dungeons": the dungeon respawn happens
+   *      even when the exterior landing is invalid. The port has no
+   *      terrain-sampler version to invalidate one (no
+   *      terrainSamplerName/Version in the envelope and no equivalent
+   *      to have), so repositionPlayer is a constant false here and
+   *      the arm is unconditional either way.
+   *   2. insideBuilding && hasExteriorDoors && !repositionPlayer ->
+   *      respawn INSIDE the building (:632-643). UNBUILT - see below.
+   *   3. else -> respawn outside (:645-654).
+   *
+   * Respawner (:471-556) is what each arm reaches: destroy the
+   * standing context, move the streamer to
+   * `WorldCoordToMapPixel(worldX, worldZ)`, and re-enter as exterior
+   * or dungeon. The port's three halves are forceExitToExterior,
+   * _teleportToPixel and modes.startInDungeon - the same composition
+   * _respawnAtSite already makes for the quest respawn (B3).
+   *
+   * Returns which host the player now stands in, so the caller knows
+   * which half of the envelope to apply.
+   */
+  async function restorePositionHelper(snap) {
+    // "Mark any existing world data for destruction" + the deregister
+    // (RespawnPlayer :453-464), which is also requirement 3 in reverse:
+    // loading an EXTERIOR save while standing in a dungeon leaves the
+    // dungeon FIRST, so the exterior envelope is never applied over a
+    // player who is still underground.
+    //
+    // Safe unconditionally: an interior cannot be the standing mode
+    // here, because no host offers a load door inside a building (the
+    // world host gates F11 on `mode === 'exterior'` and worldModes
+    // deliberately routes no quickLoad for interiors), so the cache
+    // write in its interior arm can never run over a just-restored
+    // scene cache.
+    modes?.forceExitToExterior();
+    // PlayerPositionData_v1.worldPosX/worldPosZ (:233-234) - the port
+    // exports that member as `world.pixel`, written by BOTH hosts.
+    const pixel = snap?.world?.pixel ?? null;
+    if (savedInsideDungeon(snap) && pixel) {
+      await _teleportToPixel(pixel.x, pixel.y);
+      // Respawner's dungeon arm (:527-534): TeleportToCoordinates and
+      // then StartDungeonInterior - which is exactly what
+      // startInDungeon is (StartGameBehaviour's own call into it).
+      if (await modes?.startInDungeon()) return 'dungeon';
+      // "All else fails teleport to map pixel" (:545-551) - the honest
+      // arm, not a crash and not a pretend-restore. The streamer is
+      // already over the right pixel; the player stands outside it.
+      console.warn('[load] no dungeon entrance at the saved map pixel - exterior landing (the C# fallback arm)');
+      return 'exterior';
+    }
+    // ARM 2, DELIBERATELY UNHANDLED (S2 / Ledger F221). DFU respawns
+    // the player inside the saved building off
+    // playerPosition.exteriorDoors + buildingDiscoveryData
+    // (:632-643, SerializablePlayer.cs:183-187). The port saves
+    // NEITHER - no host can even quicksave from inside a building
+    // (worldModes routes no quickLoad there and the pause window's
+    // SAVE button says so) - so `insideBuilding` is a member no
+    // envelope in this build carries. The arm is written out rather
+    // than left implicit so S2 has one place to fill in, and until it
+    // does the fall-through below is DFU's OWN answer for a building
+    // save it cannot honour: hasExteriorDoors is false, so :632's
+    // guard fails and :645's "start outside" takes it.
+    if (snap?.insideBuilding) console.warn('[load] interior saves are unbuilt (S2) - starting outside, the C# no-doors arm');
+    // ARM 3 - start outside. `TeleportToWorldCoordinates` (:504) is
+    // the port's _teleportToPixel; a snapshot with no pixel at all (a
+    // pre-S1 dungeon envelope, or any pre-world-half save) simply
+    // leaves the streamer where it stands, which is what this host has
+    // always done with one.
+    if (pixel) await _teleportToPixel(pixel.x, pixel.y);
+    return 'exterior';
+  }
   async function worldQuickLoad() {
     if (_loading) return;
     const snap = readQuicksave();
@@ -1885,9 +1972,29 @@ export async function bootWorld(canvas, renderer, params, status) {
       // runs the identical law; the TK-i/TK-ii/TK-iv null-arm
       // recordings moved with it.
       if (restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession } })) _questStarted = true;
-      if (extras.locationKey === 'world' && extras.world?.pixel) {
+      // S1 - SaveLoadManager.cs:1476. THE HOST SWITCH, and everything
+      // below it is :1497's RestoreSaveData: the saved world goes on
+      // TOP of the scene the respawn built, never the other way round.
+      // Nothing between here and there may touch position or scene
+      // state. (restorePlayer above is the port's SerializablePlayer
+      // entity half; it carries neither, and DFU restores the quest
+      // machine and the conversation before the respawn too.)
+      const restoredHost = await restorePositionHelper(snap);
+      if (restoredHost === 'dungeon') {
+        // The dungeon context startInDungeon just built takes its own
+        // half - the foes, the piles, the action states, the door
+        // locks and the saved feet - through the ONE body its
+        // standalone scene runs (dungeonContext.applyLoadedScene).
+        // `modes?.` - the object, not the method: this line sits above
+        // the declaration, and audit24 wave37's rule is that every such
+        // reference is guarded on the OBJECT. It cannot actually be
+        // undefined here (restoredHost is 'dungeon' only if
+        // modes.startInDungeon just answered), but reasoning
+        // case-by-case is what the rule exists to stop. The METHOD
+        // stays unguarded: a missing seam must throw, not no-op.
+        modes?.restoreDungeonScene(extras);
+      } else if (extras.locationKey === 'world' && extras.world?.pixel) {
         const w = extras.world;
-        await _teleportToPixel(w.pixel.x, w.pixel.y);
         const [lx, lz] = state.localFromWorld(w.nativeX, w.nativeZ);
         const ly = (w.y ?? 2) + state.compensation[1];
         if (walkMode) { player.spawn(lx, ly, lz); playerSpawned = true; }
@@ -1952,11 +2059,23 @@ export async function bootWorld(canvas, renderer, params, status) {
           if (sf.dead) { f.dead = true; exteriorFoes.spawnCorpse(f); }
         }
       } else if (extras.locationKey && extras.locationKey !== 'world') {
+        // S1: what is LEFT of the old stranding message. A dungeon
+        // envelope now respawns into its dungeon, so this reaches only
+        // an envelope the seam could not respawn into: one saved
+        // before S1 (no map pixel) or one whose location has no
+        // dungeon entrance to enter by. The character is restored and
+        // the player stands outside - DFU's own "start outside" arm -
+        // and it is said out loud rather than silently pretended.
         townTalk.say('(saved elsewhere - character restored; travel there yourself)');
       }
       _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // no spawn catch-up across a load (DFU LoadInProgress)
       surfacePlayer();
-      townTalk.say('Game loaded.');
+      // S1: a dungeon landing says it on the DUNGEON's HUD, inside
+      // applyLoadedScene - this host's line is drawn by townTalk,
+      // which the dungeon mode does not draw at all, so saying it here
+      // too would be one message the player can see and one they
+      // cannot.
+      if (restoredHost !== 'dungeon') townTalk.say('Game loaded.');
     } finally {
       _loading = false;
     }
@@ -3049,6 +3168,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     // restored machine).
     talkSave: { mill: rumorMill, tree: topicTree, session: npcSession },
     onQuestRestored: () => { _questStarted = true; },
+    // S1: THE ONE RESTORE SEAM, handed down. F11 pressed underground
+    // reaches the dungeon context (worldModes routeKey), and only this
+    // host can carry out RestorePositionHelper - it owns the streamer
+    // the respawn moves. Without this the dungeon arm had its own,
+    // host-blind copy of the load and could never put the player
+    // anywhere but where they already stood.
+    //
+    // ASYNC NEVER DROPS: the key ladder that reaches it is
+    // synchronous (ui/input.js routeAction), so the rejection is
+    // caught here rather than left to the window. worldQuickLoad's own
+    // `_loading` latch is released in its finally, so a reported
+    // failure does not wedge the door shut.
+    hostQuickLoad: () => { worldQuickLoad().catch((err) => { console.error('[load] quickload failed:', err); townTalk.say('Load failed.'); }); },
     // R1: the discovery store's location key - the SAME string the
     // quest bridge's discoverBuilding uses, so the exterior lockpick
     // anti-grind record and the talk reveals share one namespace.

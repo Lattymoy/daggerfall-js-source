@@ -8,8 +8,12 @@
 // envelope takes {world, locationKey} and the dungeon host snapshots
 // foes, piles, dropped loot, action states and door locks (AUDIT 23
 // retired the stale 'pends its slice' flag). Still open: the
-// mid-flight Move-door tween fields (Ledger C) and cross-location
-// travel-on-load. Versioned envelope; a mismatch refuses loudly.
+// mid-flight Move-door tween fields (Ledger C). S1 SHIPPED the
+// restore SEAM: PlayerEnterExit.RestorePositionHelper, ported once in
+// world.js, puts the player back in the HOST the save was made in
+// before any of the world half is applied, so a dungeon save is
+// restorable at last (interior saving is still unbuilt - S2).
+// Versioned envelope; a mismatch refuses loudly.
 
 import { clampLegalReputations } from './court.js';   // AUDIT 23 (C4)
 import { rebuildEquipState } from './equip.js';   // AUDIT 17e C1
@@ -28,6 +32,37 @@ import { resetMagicRoundMarker } from './worldTick.js';   // EntityEffectBroker.
 
 export const SAVE_VERSION = 1;
 export const QUICKSAVE_KEY = 'dagger.quicksave';
+
+/** THE SAVED CONTEXT - PlayerPositionData_v1.insideDungeon
+ *  (Game/Serialization/SerializableGameObject.cs:235), which is the
+ *  first thing PlayerEnterExit.RestorePositionHelper branches on
+ *  (PlayerEnterExit.cs:622: `if (playerPosition.insideDungeon)` ->
+ *  RespawnPlayer(worldPosX, worldPosZ, true, importEnemies)).
+ *
+ *  ONE DFU MEMBER, ONE EXPORT. The port does NOT carry a second
+ *  `insideDungeon` boolean, because `locationKey` - the stamp every
+ *  envelope has carried since S12 - already answers exactly this
+ *  question and answers WHICH dungeon besides (DFU derives that from
+ *  worldPosX/worldPosZ plus the location record). A boolean beside it
+ *  would be a second answer to one question, free to disagree with the
+ *  first. The stamp cannot lie: the world host gates F9 on
+ *  `mode === 'exterior'` (world.js) and worldModes routes the key into
+ *  the dungeon context otherwise, so no host can write the other
+ *  side's key.
+ *
+ *  `worldContext` (:225) is deliberately not carried either. DFU reads
+ *  it in ONE place - SerializablePlayer.RestorePosition:442-450, to
+ *  choose between the exterior position handler and a raw
+ *  transform.position - and in the port that choice is already made by
+ *  WHICH HOST the restore lands in: the exterior arm inverts natives
+ *  through the streamer, the dungeon arm applies feet directly. A
+ *  third answer to the same question.
+ *
+ *  The prefix is a const so the builder and the reader cannot drift. */
+const DUNGEON_LOCATION_PREFIX = 'dungeon:';
+export const dungeonLocationKey = (locationId) => `${DUNGEON_LOCATION_PREFIX}${locationId}`;
+export const savedInsideDungeon = (snap) =>
+  typeof snap?.locationKey === 'string' && snap.locationKey.startsWith(DUNGEON_LOCATION_PREFIX);
 
 const ENTITY_FIELDS = [
   'name', 'gender', 'race', 'raceId', 'faceIndex',   // S3c/U9: the identity rides the save

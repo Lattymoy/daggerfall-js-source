@@ -79,8 +79,25 @@ test('worldsave: the world host wires F9/F11 with the native envelope and the lo
   const lf = braceBlock(s, j);
   assert.ok(lf.includes('restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession } })'), 'Q4-v via B4: the quest envelope restores through the composer');
   assert.ok(lf.includes('_questStarted = true'), 'a restored quest latches the start guard - initAtGameStart must not re-run over it');
-  assert.ok(lf.includes('await _teleportToPixel(w.pixel.x, w.pixel.y)'), 'the load teleports through the travel core');
+  // SAVE WAVE S1 corrected the two below. The teleport moved INTO the
+  // restore seam (world.js:restorePositionHelper, the port of
+  // PlayerEnterExit.RestorePositionHelper), because DFU teleports
+  // inside RespawnPlayer for all three of its arms and the port needs
+  // the same one door for the dungeon arm - so the load's apply half
+  // no longer carries a teleport of its own. The seam's own arms are
+  // pinned, executed, in audit26_s1_restore.test.js.
+  assert.ok(lf.includes('await restorePositionHelper(snap)'), 'the load respawns through the ONE seam (SaveLoadManager.cs:1476)');
   assert.ok(lf.includes('state.localFromWorld(w.nativeX, w.nativeZ)'), 'and lands at the exact native spot');
   assert.ok(lf.includes('_lastEncMinutes = Math.floor(playerTicker.classicMinutes)'), 'no encounter catch-up across a load (LoadInProgress parity)');
-  assert.ok(lf.includes("extras.locationKey !== 'world'"), 'a dungeon-side save restores the character and says so');
+  // ...and this one PINNED THE BUG. It read "a dungeon-side save
+  // restores the character and says so" - which is what the port did
+  // and is not what DFU does: RestorePositionHelper's first arm
+  // (PlayerEnterExit.cs:622-627) respawns the player INSIDE the saved
+  // dungeon. The stranding message survives only for an envelope the
+  // seam cannot respawn into (a pre-S1 save with no map pixel, or a
+  // location with no dungeon entrance), which is DFU's own
+  // "all else fails" arm at :645-654.
+  assert.ok(lf.includes("restoredHost === 'dungeon'") && lf.includes('modes?.restoreDungeonScene(extras)'),
+    'a dungeon-side save respawns INTO its dungeon and the saved scene is applied there');
+  assert.ok(lf.includes("extras.locationKey !== 'world'"), 'and only an unrespawnable envelope is left standing outside, said out loud');
 });
