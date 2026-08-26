@@ -136,6 +136,7 @@ export async function preloadItemMakerArt(deps) {
   } catch { console.warn('[itemmaker] ITEM00I0 unavailable; the item maker stays closed'); }
 }
 export const itemMakerArtLoaded = () => !!_art && !!_tabs;
+export function _setItemMakerArtForTests(art, tabs) { _art = art; _tabs = tabs; }
 
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
 

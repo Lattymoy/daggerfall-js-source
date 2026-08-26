@@ -91,6 +91,7 @@ export async function preloadPotionArt(deps) {
   } catch { console.warn('[potions] MASK00I0 unavailable; the potion maker stays closed'); }
 }
 export const potionArtLoaded = () => !!_art;
+export function _setPotionArtForTests(art) { _art = art; }
 
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
 

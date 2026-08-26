@@ -222,11 +222,10 @@ export function consumeCauldron(cauldron, { takeFromPack, takeFromWagon }) {
 }
 
 /** AddRecipeToCauldron's ingredient MATCH (:283-296): each recipe
- *  ingredient claims at most one held item, spending the pool down as
- *  it goes. Answers the ingredients found and the ones missing - and
- *  DFU refuses the WHOLE recipe with "reqIngredients" when anything
- *  is missing (:297-301); only an empty `missing` fills the pot. The
- *  window makes that call. */
+ *  ingredient claims at most one held item, spending the pool down.
+ *  Answers the ingredients found and the ones missing - DFU refuses
+ *  the WHOLE recipe with "reqIngredients" when anything is missing
+ *  (:297-301); only an empty `missing` fills the pot. */
 export function gatherRecipe(recipe, availableTemplateIndices) {
   const pool = [...availableTemplateIndices];
   const found = [], missing = [];

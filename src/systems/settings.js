@@ -67,7 +67,10 @@ export const LIVE = Object.freeze({
   'Enhancements/LoiterLimitInHours': 'src/systems/restSession.js',
   // S40: the illegal-rest confirm. OFF makes camping in a town simply
   // impossible (CanRest refuses and no time passes); ON turns it into
-  // a Yes/No box. Either way the Vagrancy crime lands.
+  // a Yes/No box. Either way the Vagrancy crime lands. The reader is
+  // restSession's `illegalRestWarning()`; DaggerfallRestWindow's own
+  // two-step (:641-692) is the ONE branch on it, in ui/restWindow.js -
+  // no host reads this key.
   'GUI/IllegalRestWarning': 'src/systems/restSession.js',
   'Controls/SoundVolume': 'src/systems/audio.js',
   'Controls/InstantRepairs': 'src/scenes/worldModes.js',      // R1: the repair flow's instant branch
@@ -149,7 +152,6 @@ export const LIVE = Object.freeze({
   // screen offered with nothing on the other end.
   'GUI/IconsPositioningScheme': 'src/ui/hudActiveSpells.js',
   'GUI/Crosshair': 'src/ui/hudCrosshair.js',
-  'GUI/IllegalRestWarning': 'src/scenes/world.js',   // V5: the "it is illegal to camp" Yes/No before a town rest (U48: and scenes/exterior.js)
   'Enhancements/AssetInjection': 'src/systems/musicReplacement.js',   // M-EXT: DFU's own gate on SoundReplacement, now real for MUSIC
   'Audio/AlternateMusic': 'src/scenes/shared.js',   // M-FM: read once in createMusicDirector, for all three hosts
   'GUI/InteractionModeIcon': 'src/ui/hudCrosshair.js',

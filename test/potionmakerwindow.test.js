@@ -5,7 +5,7 @@ import {
   POTION_RECTS, POTION_LABELS, INGREDIENT_BUTTONS, CAULDRON_BUTTONS,
   INGREDIENT_LIST_X, INGREDIENT_SCROLL_UP, INGREDIENT_SCROLL_DOWN, INGREDIENT_COLS,
   POTION_MIXED, POTION_FAILED, NO_RECIPES, REQ_INGREDIENTS,
-  slotAt, PotionMakerWindow,
+  slotAt, PotionMakerWindow, _setPotionArtForTests,
 } from '../src/ui/potionMakerWindow.js';
 import {
   POTION_RECIPES, potionRecipeKey, CAULDRON_CAPACITY,
@@ -13,6 +13,9 @@ import {
 
 const byName = (n) => POTION_RECIPES.find((r) => r.name === n);
 const ing = (t, n = 1) => ({ templateIndex: t, stackCount: n });
+
+const recorder = () => ({ quads: [], uploadTexture: () => 'tex', drawScreenQuad() {} });
+const plainFont = () => ({ fnt: { fixedHeight: 6, fixedWidth: 4, glyphWidth: () => 4 } });
 
 function win(over = {}) {
   const pack = over.pack ?? [ing(59), ing(26), ing(24)];
@@ -192,6 +195,8 @@ test('M2: a recipe pick REFUSES on any missing ingredient, else CLEARS and fills
   part.w._fillFrom(byName('slowFalling'));
   assert.deepEqual(part.w.cauldron, [], 'no partial fill - DFU refuses the whole recipe');
   assert.equal(part.w.box.rows[0].text, REQ_INGREDIENTS);
+  assert.equal(REQ_INGREDIENTS, 'You do not have the ingredients required.',
+    'Internal_Strings.csv:855 "reqIngredients", verbatim');
   assert.equal(part.w.nameLabel, '');
 
   // leftovers in the pot are CLEARED first, not mixed in (:304)
@@ -227,6 +232,25 @@ test('M2: the ingredient list SCROLLS - the arrows step by ROW, clamped (ItemLis
   assert.equal(w.scroll, 1, 'five rows of three leave exactly one row below the fold');
   clickArrow(w, INGREDIENT_SCROLL_UP);
   assert.equal(w.scroll, 0);
+
+  // ...and the GRID shows the same window it clicks: UpdateItemsDisplay
+  // walks items[scrollIndex * listWidth + i] for the twelve buttons
+  // (:415-425), so 13+ are SEEN as well as reachable
+  _setPotionArtForTests({ tex: 'mask00', w: 320, h: 200 });
+  try {
+    const grid = win({ pack: Array.from({ length: 15 }, (_, i) => ing(8 + i)) }).w;
+    const shown = () => {
+      const seen = [];
+      grid._icon = (r, m, it) => { seen.push(it.templateIndex); return true; };
+      grid.draw(recorder(), { width: 320, height: 200 }, plainFont());
+      return seen;
+    };
+    assert.deepEqual(shown(), [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+      'the unscrolled grid is the first twelve');
+    clickArrow(grid, INGREDIENT_SCROLL_DOWN);
+    assert.deepEqual(shown(), [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22],
+      'one row down shifts the window by listWidth - the last three are visible');
+  } finally { _setPotionArtForTests(null); }
 });
 
 test('M2: the box and the picker swallow input before the window does', () => {
