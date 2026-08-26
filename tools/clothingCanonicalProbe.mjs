@@ -74,4 +74,39 @@ const frontMid = rgb(views[0], Math.floor(width / 2), 6);
 const backMid = rgb(views[4], Math.floor(width / 2), 6);
 assert.notDeepEqual(backMid, frontMid, 'front-only detail must not stamp onto the back');
 
+
+// A shirt whose crop is heavily right-biased around the REAL paperdoll body
+// axis. This is the case row-centering alone cannot solve: it removes shear but
+// still presents the near side as if it were a frontal texture.
+const tw = 24, th = 10, td = new Uint8ClampedArray(tw * th * 4);
+for (let y = 0; y < th; y++) {
+  for (let x = 6; x <= 20; x++) {
+    const o = (y * tw + x) * 4;
+    if (y === 6) { td[o] = 220; td[o+1] = 45; td[o+2] = 35; } // belt band
+    else {
+      const d = Math.abs(x - 8);
+      td[o] = 35 + d * 5; td[o+1] = 80 + d * 4; td[o+2] = 170 - d * 3;
+    }
+    td[o+3] = 255;
+  }
+}
+const torso = canonicalizePaperdollTexture({
+  width: tw, height: th, data: td,
+  paperdollMeta: { axisX: 8 },
+}, 'torso');
+assert.equal(torso.canonicalMeta.mode, 'paperdoll-surface-v3');
+assert.equal(torso.canonicalMeta.sourceAxis, 'paperdoll-offset');
+assert.equal(torso.canonicalMeta.frontReconstruction, 'dominant-half-mirror');
+assert.equal(torso.canonicalMeta.dominantSide, 'right');
+assert.ok(torso.canonicalMeta.sideBias > 1.65);
+// Equal distances from the reconstructed front centre must now see the same
+// material progression instead of one side of the classic paperdoll sprite.
+assert.deepEqual(rgb(torso, 3, 3), rgb(torso, tw - 1 - 3, 3));
+// Horizontal belt evidence stays on its authored Y row and becomes a frontal
+// band rather than a clue that the whole shirt is wrapped around one side.
+for (let x = 0; x < tw; x++) {
+  const [r,g,b] = rgb(torso, x, 6);
+  assert.ok(r > 180 && g < 80 && b < 80, 'belt row must remain a frontal horizontal band');
+}
+
 console.log('clothing canonical probe: PASS');

@@ -40,6 +40,7 @@ import { getTemplate, paperdollOrder } from '../characters/paperdoll.js';
 import { applyDyeToIndex, DYE_TARGETS, DYE_COLORS, CLOTHING_DYES } from '../characters/dyes.js';
 import { clampArmorVariant, armorArchive, HUMAN_MORPHOLOGY, ARMOR_MATERIAL } from '../systems/armorMaterials.js';
 import { raceArt, FACES_PER_RACE, raceByKey } from '../systems/races.js';   // S3c/U9: all eight races
+import { paperdollRecordOffset } from '../characters/paperdollArt.js';
 
 export const PAPERDOLL_W = 110;
 export const PAPERDOLL_H = 184;
@@ -270,7 +271,7 @@ async function loadRecord(archive, record) {
   try {
     const tex = await _deps.getTexture(archive);
     if (!tex || record >= tex.recordCount) return null;
-    const off = (archive === 237 && (record === 52 || record === 54)) ? { x: 237, y: 43 } : tex.getOffset(record);
+    const off = paperdollRecordOffset(tex, archive, record);
     return { bmp: tex.getDFBitmap(record, 0), off };
   } catch { return null; }
 }

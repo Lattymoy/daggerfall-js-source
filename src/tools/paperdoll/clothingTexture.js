@@ -22,7 +22,8 @@ import { TextureFile } from '../../formats/textureFile.js';
 import { DFPalette } from '../../formats/dfPalette.js';
 import { getBytes } from '../../scenes/dataSource.js';
 import { applyDyeToIndex, DYE_COLORS, DYE_TARGETS } from '../../characters/dyes.js';
-import { morphologyOfRace, resolvePaperdollRecord } from '../../characters/paperdollArt.js';
+import { morphologyOfRace, resolvePaperdollRecord, paperdollRecordOffset } from '../../characters/paperdollArt.js';
+import { PAPERDOLL_W, PAPERDOLL_ORIGIN } from '../../ui/paperDoll.js';
 
 export const CLOTHING_WRAP_DEGREES = Object.freeze([0, 45, 90, 135, 180, 225, 270, 315]);
 const WRAP_RADIANS = CLOTHING_WRAP_DEGREES.map((d) => d * Math.PI / 180);
@@ -83,9 +84,10 @@ async function loadIndexedArt({ item, race = 'Breton', variant = 0, dye = DYE_CO
   if (!bitmap || !bitmap.width || !bitmap.height || !bitmap.data?.length) return null;
   const src = sourceBounds(bitmap);
   if (!src) return null;
+  const offset = paperdollRecordOffset(tex, archive, record);
   return {
-    bitmap, pal, src, dye,
-    meta: Object.freeze({ archive, record, variant: useVariant, source: name }),
+    bitmap, pal, src, dye, offset,
+    meta: Object.freeze({ archive, record, variant: useVariant, source: name, offset: { ...offset } }),
   };
 }
 
@@ -101,7 +103,21 @@ function decodedCrop(art) {
     const c = pal.get(index);
     data[o] = c.r; data[o + 1] = c.g; data[o + 2] = c.b; data[o + 3] = 255;
   }
-  return { width, height, data };
+  // Do NOT throw away the classic placement when trimming transparent margins.
+  // Every clothing record was authored against the same 110px paperdoll frame;
+  // its baked offset tells us where the character's anatomical centreline lies
+  // inside this particular crop. That is the missing front/back anchor.
+  const paperdollCentreX = (PAPERDOLL_W - 1) * 0.5;
+  const layerX = (art.offset?.x ?? PAPERDOLL_ORIGIN[0]) - PAPERDOLL_ORIGIN[0] + src.x0;
+  const axisX = paperdollCentreX - layerX;
+  return {
+    width, height, data,
+    paperdollMeta: Object.freeze({
+      axisX, layerX,
+      offsetX: art.offset?.x ?? PAPERDOLL_ORIGIN[0],
+      offsetY: art.offset?.y ?? PAPERDOLL_ORIGIN[1],
+    }),
+  };
 }
 
 function pixel(img, x, y) {
@@ -170,6 +186,11 @@ export function canonicalizePaperdollTexture(src, profile = 'generic') {
   }
   if (!occupied.length) return src;
 
+  const quantile = (values, q) => {
+    if (!values.length) return 0;
+    const a = values.slice().sort((x, y) => x - y);
+    return a[Math.max(0, Math.min(a.length - 1, Math.round((a.length - 1) * q)))];
+  };
   const sorted = centres.slice().sort((a, b) => a - b);
   const sourceCentre = sorted[Math.floor(sorted.length * 0.5)];
   const canonicalCentre = (src.width - 1) * 0.5;
@@ -192,15 +213,120 @@ export function canonicalizePaperdollTexture(src, profile = 'generic') {
   let repairedPixels = 0;
   let borrowedRows = 0;
   let edgePaddedPixels = 0;
+
+  const torsoFront = profile === 'torso' || profile === 'open-torso';
+  if (!torsoFront) {
+    // V2 remains the right rule for drapes, legs, boots and sparse accessories:
+    // remove row shear by translation only; never invent bilateral torso data.
+    for (let y = 0; y < out.height; y++) {
+      const sy = nearestOccupiedRow(y);
+      if (sy !== y) borrowedRows++;
+      const [x0, x1] = spans[sy];
+      const rowCentre = (x0 + x1) * 0.5;
+      const rowOffset = rowCentre - canonicalCentre;
+      for (let x = 0; x < out.width; x++) {
+        const sxUnclamped = x + rowOffset;
+        const sx = Math.max(x0, Math.min(x1, sxUnclamped));
+        if (sx !== sxUnclamped) edgePaddedPixels++;
+        const raw = pixel(src, sx, sy);
+        const c = raw[3] ? raw : nearestOpaqueInRow(src, sy, Math.round(sx), x0, x1);
+        const o = (y * out.width + x) * 4;
+        if (!raw[3]) repairedPixels++;
+        out.data[o] = c[3] ? c[0] : 0;
+        out.data[o + 1] = c[3] ? c[1] : 0;
+        out.data[o + 2] = c[3] ? c[2] : 0;
+        out.data[o + 3] = 255;
+      }
+    }
+    out.canonicalMeta = Object.freeze({
+      mode: 'paperdoll-surface-v2',
+      registration: 'row-centre-translate',
+      widthPreserved: true,
+      sourceCentre,
+      canonicalCentre,
+      shearPx,
+      profile,
+      alphaOwner: 'geometry',
+      repairedPixels,
+      borrowedRows,
+      edgePaddedPixels,
+    });
+    return out;
+  }
+
+  // V3 TORSO FRONT RECONSTRUCTION.
+  //
+  // A shirt record is not a camera-facing photograph: it is a layer positioned
+  // over Daggerfall's angled paperdoll. The record OFFSET tells us where the
+  // doll's real body centreline falls inside the cropped sprite. Use that fixed
+  // anatomical anchor to distinguish near/far halves. Row-centre drift is still
+  // removed, but we no longer mistake the visible near side for "the front".
+  const requestedAxis = src.paperdollMeta?.axisX;
+  const axisFromPaperdoll = Number.isFinite(requestedAxis) &&
+    requestedAxis >= -src.width * 0.25 && requestedAxis <= src.width * 1.25;
+  let anatomicalAxis = axisFromPaperdoll ? requestedAxis : sourceCentre;
+
+  // If the baked axis misses almost the entire authored silhouette (pathological
+  // record/offset), fail soft to V2's robust silhouette centre rather than mirror
+  // nonsense. Normal shirt/tunic records cross the axis on many rows.
+  let crossing = 0;
+  for (const y of occupied) {
+    const [x0, x1] = spans[y];
+    if (anatomicalAxis >= x0 - 1 && anatomicalAxis <= x1 + 1) crossing++;
+  }
+  if (crossing < Math.max(2, Math.floor(occupied.length * 0.20))) anatomicalAxis = sourceCentre;
+
+  // Preserve each row's local lean correction, but hold the anatomical axis at
+  // one constant displacement from the silhouette centre. This separates
+  // "paperdoll pose shear" from "which half of the torso is actually front".
+  const axisShift = anatomicalAxis - sourceCentre;
+  const leftExtents = [], rightExtents = [];
+  let leftOpaque = 0, rightOpaque = 0;
+  for (const y of occupied) {
+    const [x0, x1] = spans[y];
+    const rowCentre = (x0 + x1) * 0.5;
+    const rowAxis = Math.max(x0, Math.min(x1, rowCentre + axisShift));
+    if (rowAxis - x0 > 0.5) leftExtents.push(rowAxis - x0);
+    if (x1 - rowAxis > 0.5) rightExtents.push(x1 - rowAxis);
+    for (let x = x0; x <= x1; x++) {
+      if (!src.data[(y * src.width + x) * 4 + 3]) continue;
+      if (x < rowAxis) leftOpaque++;
+      else if (x > rowAxis) rightOpaque++;
+    }
+  }
+  const leftExtent = Math.max(1, quantile(leftExtents, 0.70));
+  const rightExtent = Math.max(1, quantile(rightExtents, 0.70));
+  const weak = Math.max(1, Math.min(leftOpaque, rightOpaque));
+  const sideBias = Math.max(leftOpaque, rightOpaque) / weak;
+  const dominantSide = rightOpaque >= leftOpaque ? 'right' : 'left';
+  const mirrorDominantHalf = sideBias >= 1.65;
+  const halfL = Math.max(1, canonicalCentre);
+  const halfR = Math.max(1, (out.width - 1) - canonicalCentre);
+
   for (let y = 0; y < out.height; y++) {
     const sy = nearestOccupiedRow(y);
     if (sy !== y) borrowedRows++;
     const [x0, x1] = spans[sy];
     const rowCentre = (x0 + x1) * 0.5;
-    // Translate the authored row onto the canonical centreline. Do not rescale.
-    const rowOffset = rowCentre - canonicalCentre;
+    const rowAxis = Math.max(x0, Math.min(x1, rowCentre + axisShift));
     for (let x = 0; x < out.width; x++) {
-      const sxUnclamped = x + rowOffset;
+      let sxUnclamped;
+      if (mirrorDominantHalf) {
+        // A strongly one-sided paperdoll presentation has too little far-side
+        // information to call both halves "front". Use the authored near half
+        // as material evidence for BOTH front halves. Geometry restores the
+        // silhouette; this reconstruction restores orientation.
+        const d = Math.abs(x - canonicalCentre) / (x <= canonicalCentre ? halfL : halfR);
+        sxUnclamped = dominantSide === 'right'
+          ? rowAxis + d * rightExtent
+          : rowAxis - d * leftExtent;
+      } else if (x <= canonicalCentre) {
+        const d = (canonicalCentre - x) / halfL;
+        sxUnclamped = rowAxis - d * leftExtent;
+      } else {
+        const d = (x - canonicalCentre) / halfR;
+        sxUnclamped = rowAxis + d * rightExtent;
+      }
       const sx = Math.max(x0, Math.min(x1, sxUnclamped));
       if (sx !== sxUnclamped) edgePaddedPixels++;
       const raw = pixel(src, sx, sy);
@@ -214,11 +340,16 @@ export function canonicalizePaperdollTexture(src, profile = 'generic') {
     }
   }
   out.canonicalMeta = Object.freeze({
-    mode: 'paperdoll-surface-v2',
-    registration: 'row-centre-translate',
-    widthPreserved: true,
-    sourceCentre,
-    canonicalCentre,
+    mode: 'paperdoll-surface-v3',
+    registration: 'paperdoll-axis-front-reconstruct',
+    frontReconstruction: mirrorDominantHalf ? 'dominant-half-mirror' : 'split-perspective-rectify',
+    sourceAxis: axisFromPaperdoll ? 'paperdoll-offset' : 'silhouette-median',
+    anatomicalAxis,
+    axisShift,
+    leftExtent,
+    rightExtent,
+    sideBias,
+    dominantSide,
     shearPx,
     profile,
     alphaOwner: 'geometry',
@@ -238,6 +369,7 @@ function buildCanonicalWrapSet(art, item) {
     source: viewToCanvas(source),
     canonical: viewToCanvas(canonical),
     atlas: viewsToAtlasCanvas(views, 4),
+    meta: canonical.canonicalMeta,
   };
   return { source, canonical, views, debug };
 }

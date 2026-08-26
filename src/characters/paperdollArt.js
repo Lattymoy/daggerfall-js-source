@@ -26,6 +26,12 @@ export function resolvePaperdollRecord(template, variant = 0) {
   return template.playerTextureRecord;
 }
 
+/** PaperDollRenderer's baked record offset, including DFU's known TEXTURE.237 fix. */
+export function paperdollRecordOffset(textureFile, archive, record) {
+  if (archive === 237 && (record === 52 || record === 54)) return { x: 237, y: 43 };
+  return textureFile.getOffset(record);
+}
+
 // --- Armor material addressing (ItemBuilder verbatim) ----------------
 // AUDIT 17f / ONE DFU MEMBER, ONE EXPORT: the constants, the
 // GetBodyMorphology table and the SetVariant clamps below were a
