@@ -22,7 +22,7 @@ Outputs:
 """
 # mvB2 owns the reference correspondence. Do not execute its diagnostic render
 # when importing it as a library.
-exec(open('mvB2.py').read().split('def render(yaw, CW, CH, sc):')[0])
+exec(open('mvB2.py').read().split('# ---------- render ----------')[0])
 
 import math, json
 import numpy as np
