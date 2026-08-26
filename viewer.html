@@ -45,6 +45,7 @@
   <button id="hairstyle">hair: short</button>
   <button id="drape">drape: None</button>
   <select id="clothing" title="classic Daggerfall clothing"></select>
+  <button id="wrapdir" title="snap through the eight generated clothing wrap directions">wrap: free</button>
   <select id="villager" title="villager design (editor only - no game wiring)"></select>
   <select id="orc" title="orc line (editor only - no game wiring)"></select>
   <select id="undead" title="undead line (editor only - no game wiring)"></select>
@@ -71,5 +72,25 @@
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module" src="/src/tools/paperdollViewer.js"></script>
+<script>
+(() => {
+  const dirs = [0, 45, 90, 135, 180, 225, 270, 315];
+  let next = 0;
+  const btn = document.getElementById('wrapdir');
+  const show = (deg) => {
+    const d = ((Math.round(deg / 45) * 45) % 360 + 360) % 360;
+    btn.textContent = 'wrap: ' + String(d).padStart(3, '0');
+    btn.classList.add('on');
+    const apply = () => {
+      if (window.__setView) window.__setView(d * Math.PI / 180, 0.08);
+      else requestAnimationFrame(apply);
+    };
+    apply();
+    return d;
+  };
+  btn.addEventListener('click', () => { show(dirs[next]); next = (next + 1) % dirs.length; });
+  window.__setWrapDirection = show;
+})();
+</script>
 </body>
 </html>
