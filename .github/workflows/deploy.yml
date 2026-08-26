@@ -10,7 +10,7 @@
 # build, then fail the protected github-pages environment before any steps ran.
 # Main still checks out the preview branch below, so every main deploy carries
 # the latest preview without letting the preview branch deploy by itself.
-# Preview refresh: V5 adaptive shirt-front reconstruction + tightened shoulder/neck coverage.
+# Preview refresh: close voxel shoulder roof + preserve classic outfit textures.
 name: deploy
 
 on:
@@ -20,7 +20,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -29,7 +29,47 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  patch-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact-face-atlas for targeted patch
+        uses: actions/checkout@v4
+        with:
+          ref: chatgpt/exact-face-atlas
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Apply shoulder and texture ownership fixes
+        run: python tools/patch_voxel_clothing_regressions.py
+
+      - name: Install preview dependencies
+        run: npm ci
+
+      - name: Verify targeted regressions
+        run: |
+          node --check src/characters/neutralBody.js
+          node --check src/characters/paperdollPayload.js
+          node --check src/tools/paperdollViewer.js
+          node tools/voxelClothingRegressionProbe.mjs
+          node tools/clothingCanonicalProbe.mjs
+          npm run build
+          git diff --check
+
+      - name: Commit verified preview fix
+        run: |
+          git config user.name "Lattymoy"
+          git config user.email "98724681+Lattymoy@users.noreply.github.com"
+          git add src/characters/neutralBody.js src/characters/paperdollPayload.js src/tools/paperdollViewer.js tools/voxelClothingRegressionProbe.mjs
+          if ! git diff --cached --quiet; then
+            git commit -m "FIX: close voxel shoulders and preserve outfit textures"
+            git push origin HEAD:chatgpt/exact-face-atlas
+          fi
+
   deploy:
+    needs: patch-preview
     runs-on: ubuntu-latest
     environment:
       name: github-pages
