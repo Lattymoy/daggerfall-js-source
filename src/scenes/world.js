@@ -23,6 +23,7 @@ import { applyClimate, getGroundArchive, getNatureArchive, SEASON } from '../wor
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, mirrorProjectionX, trs } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
+import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
 import { CityNavigation } from '../world/cityNavigation.js';   // T2 towns
 import { TownPopulation } from '../systems/townPopulation.js';
@@ -390,6 +391,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const groups = new Map();
     const pixelLights = []; // archive-210 lanterns, pixel-local (R3)
     const pixelAnimals = []; // A4: archive-201 town animals, pixel-local {pos, sound}
+    const pixelNpcFlats = []; // AUDIT 26 (F019): the flats RMBLayout stands as StaticNPCs, pixel-local
     const light210 = await getTexture(LIGHTS_ARCHIVE);
     const lightSize = (record) =>
       scaledBillboardSize(light210.getSize(record), light210.getScale(record));
@@ -454,7 +456,19 @@ export async function bootWorld(canvas, renderer, params, status) {
           }
         }
         // No RMB ground plane on terrain (addGroundPlane = false).
-        for (const flat of collectBlockFlats(b.dfBlock, natureArchive)) {
+        const blockFlats = collectBlockFlats(b.dfBlock, natureArchive);
+        // AUDIT 26 (F019): ...and the same flats' STATIC NPCs
+        // (RMBLayout.cs:366-378 / :442-454 - the non-zero FactionID
+        // rule), pixel-local like everything else this host builds.
+        for (const npc of collectExteriorNpcs(blockFlats)) {
+          pixelNpcFlats.push({
+            ...npc,
+            x: locLocal[0] + b.originX + npc.x,
+            y: locLocal[1] + npc.y,
+            z: locLocal[2] + b.originZ + npc.z,
+          });
+        }
+        for (const flat of blockFlats) {
           addFlat(flat.archive, flat.record,
             locLocal[0] + b.originX + flat.x, locLocal[1] + flat.y, locLocal[2] + b.originZ + flat.z);
           // A4: every archive-201 town animal is an audio source
@@ -544,9 +558,28 @@ export async function bootWorld(canvas, renderer, params, status) {
       batches.push(batch);
     }
 
+    // AUDIT 26 (F019): the pixel's street StaticNPCs - identity inputs
+    // + the billboard extent the activation ray needs, resolved the
+    // way the interior host resolves its people's
+    // (interiorContext.js:298-316). FLATS.CFG is awaited because
+    // SetLayoutData's exterior overload reads it for the gender
+    // (StaticNPC.cs:185-194); loadFlats never throws and is warmed with
+    // the scene, so this is a coalesced wait. The list rides the pixel,
+    // so destroyPixel takes it away with everything else.
+    await pipeline.loadFlats();
+    const pixelNpcs = [];
+    for (const flat of pixelNpcFlats) {
+      const t = await getTexture(flat.archive);
+      if (!t || flat.record >= t.recordCount) continue;
+      const size = scaledBillboardSize(t.getSize(flat.record), t.getScale(flat.record));
+      const pn = exteriorNpcRecord(flat, pipeline.flatsFile()?.getFlatData(flat.archive, flat.record) ?? null);
+      pixelNpcs.push({ ...pn, width: size.w, height: size.h });
+    }
+
     built.set(key, {
       px, py, terrain, tilemapTex, groundArchive, models, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
       population, locOrigin, personBatches,   // T2 towns
+      npcs: pixelNpcs,   // AUDIT 26 (F019): RMBLayout's street StaticNPCs, pixel-local
       locBlocks,   // T3d: the Where-is directory's block scan
 
       location: dfLocation ? dfLocation.name : null,
@@ -2878,6 +2911,19 @@ export async function bootWorld(canvas, renderer, params, status) {
       ...e, door: shiftedDoor(e),
       dfLocation: locationIndex.get(e.pixelKey), group: e.pixelKey,
     })),
+    // AUDIT 26 (F019): RMBLayout's exterior StaticNPCs, shifted through
+    // the LIVE floating-origin translation exactly as shiftedDoor does
+    // - the activation ray works in world space
+    // (PlayerActivate.ActivateStaticNPC :741-767).
+    npcTargets: () => {
+      const out = [];
+      for (const p of built.values()) {
+        if (!p.npcs?.length) continue;
+        const t = state.pixelTranslation(p.px, p.py);
+        for (const pn of p.npcs) out.push({ ...pn, x: pn.x + t[0], y: pn.y + t[1], z: pn.z + t[2] });
+      }
+      return out;
+    },
     baseCollider: () => collider,
     // E2: one entered door -> its merged building identity. Door
     // positions resolve in the pixel's LOCATION frame (the raw

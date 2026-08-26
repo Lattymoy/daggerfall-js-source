@@ -264,7 +264,7 @@ export function createWorldModes(host) {
   // The host destructure moves with it, because `say` closes over
   // `townTalk`. It reads only the function's own argument, so it is
   // safe anywhere inside the body.
-  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null, discoveryLocationId = null, gps = null, buildingDirectory = null } = host;   // H1: the location's whole building list, for the houses-for-sale roll   // V5: gps = PlayerGPS's location reads, for CanRest   // R1: the discovery store's location key (the anti-grind record's namespace)   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
+  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, npcTargets = null, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null, discoveryLocationId = null, gps = null, buildingDirectory = null } = host;   // H1: the location's whole building list, for the houses-for-sale roll   // V5: gps = PlayerGPS's location reads, for CanRest   // R1: the discovery store's location key (the anti-grind record's namespace)   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
   // U43-ii: the interior HUD-text layer is the OUTER host's, and
   // always was - townTalk's hud draws above the modal render. The
   // "pends its arc" flag was a line of plumbing: a broken weapon, a
@@ -880,19 +880,48 @@ export function createWorldModes(host) {
   // click one. They are activation targets now, at DFU's own
   // StaticNPCActivationDistance (256 classic units, twice a door's).
   //
-  // THE FOUR HOSTS, named. This seam belongs to the INTERIOR host and
-  // to no other:
-  //   - scenes/worldModes.js      WIRED (here). It is the only host
-  //     that builds a building interior, so it is the only one with
-  //     StaticNPCs to click.
-  //   - scenes/exterior.js        no interior of its own; it MOUNTS
-  //     this machine, and a click inside reaches here through it.
-  //   - scenes/world.js           the same - it mounts this machine.
-  //   - scenes/dungeonContext.js  dungeons have no StaticNPC people
-  //     records at all (RDB blocks carry flats and enemies, not
-  //     blockPeopleRecords), so there is nothing here to wire. A quest
-  //     Person placed in a dungeon is the quest machine's, FLAGGED
-  //     with it.
+  // AUDIT 26 (F019/F190): ...and the STREET's static NPCs, which
+  // RMBLayout stands the same way (RMBLayout.cs:366-378 / :442-454 -
+  // any block flat with a non-zero FactionID). The port collected them
+  // through a function nothing called, so above ground the ray met
+  // only doors. Both people paths now reach THIS routing, which is
+  // DFU's shape: StaticNPCClick is one method and it reads
+  // IsPlayerInsideBuilding (:1541-1543) rather than being wired twice.
+  //
+  // THE FOUR HOSTS, named:
+  //   - scenes/worldModes.js      WIRED (here), both modes: the
+  //     interior ray (tryExit) and the exterior one (tryEnter).
+  //   - scenes/exterior.js        WIRED - it owns the location's RMB
+  //     blocks, so it collects their exterior NPCs and hands them over
+  //     as `npcTargets` (world frame).
+  //   - scenes/world.js           WIRED - the same collection per
+  //     streamed pixel, shifted through the live floating origin.
+  //   - scenes/dungeonContext.js  N/A. Dungeons are RDB, and neither
+  //     RMBLayout member runs there: a dungeon's static NPCs come from
+  //     RDB flat resources through StaticNPC.cs's OTHER overload
+  //     (:139-160, Context.Dungeon), and there are no
+  //     blockPeopleRecords either. A quest Person placed in a dungeon
+  //     is the quest machine's, FLAGGED with it.
+  //   - scenes/interior.js / scenes/dungeon.js  N/A - the standalone
+  //     ?interior and ?dungeon scenes lay out ONE building interior /
+  //     one dungeon and never an RMB block's exterior.
+  //
+  // FLAGGED, above ground only, each with the DFU line it owes:
+  //   - QuestMachine.SetupIndividualStaticNPC (RMBLayout.cs:376/:447),
+  //     the third thing layout does to an exterior NPC. The interior
+  //     path runs it at DFU's own moment (interiorContext's people
+  //     walk) because the interior is built long after the quest
+  //     bridge exists; the exterior blocks are laid out BEFORE it in
+  //     both hosts (world.js builds the start pixel first), so there
+  //     is no machine to ask yet and doing it at click time would be
+  //     the wrong moment - the away arm's SetActive(false) has to take
+  //     the billboard out of the batch at layout. The click still
+  //     stamps LastNPCClicked and still honours a faction listener.
+  //   - the GUILD SERVICE popup, if a street NPC ever carries a guild
+  //     service faction: its window and every window it dispatches to
+  //     mount in `interiorOverlay`, which only the interior/dungeon
+  //     frame draws. Talk, the quest offer and the refusals all mount
+  //     where the current mode draws.
   //
   // The routing law is systems/guildServiceFlow.js; this end owns only
   // the geometry, the faction lookups and the window.
@@ -924,7 +953,18 @@ export function createWorldModes(host) {
     // engine keys by, the faction it reads, the race it stamps. A host
     // with no bridge mounted derives the same record itself rather than
     // going without one - C# has no null for the struct.
-    const npcSceneCtx = { ...(questSceneCtx?.() ?? {}), buildingKey: interiorBuilding?.buildingKey ?? 0 };
+    // AUDIT 26 (F019): ...and WHICH overload derived it. A building's
+    // person takes SetLayoutData(obj, buildingKey) (StaticNPC.cs:165-179),
+    // which stamps Context.Building and the entered building's key; a
+    // street NPC takes the exterior overload (:180-207), which stamps
+    // Context.Custom over buildingKey 0 - and outdoors there is no
+    // entered building, so the key below is already 0. The record the
+    // exterior host stood carries its own context; a building person
+    // has none and takes staticNpcData's Building default.
+    const npcSceneCtx = {
+      ...(questSceneCtx?.() ?? {}), buildingKey: interiorBuilding?.buildingKey ?? 0,
+      ...(pn?.context != null ? { context: pn.context } : {}),
+    };
     const npcData = questBridge?.clickNpc(pn, npcSceneCtx) ?? staticNpcData(pn, npcSceneCtx);
     // AUDIT 24 (wave 20): PlayerActivate.cs:1523-1528, the return the
     // port never had. A clicked NPC whose GameObject carries a
@@ -1034,9 +1074,14 @@ export function createWorldModes(host) {
         // must not be nulled by its OWN onClose
         let offerWin = null;
         offerWin = new ServiceFlowWindow(boxes, {
-          onClose: () => { if (interiorOverlay === offerWin) interiorOverlay = null; },
+          // AUDIT 26 (F019): through the pair that mounts into
+          // whichever slot the CURRENT mode draws. A street NPC's
+          // offer is opened from exterior mode, where the interior
+          // overlay slot is never drawn or ticked - the window would
+          // have been set and then never seen.
+          onClose: () => closeSpellWindow(offerWin),
         });
-        interiorOverlay = offerWin;
+        mountSpellWindow(offerWin);
       }
       return;
     }
@@ -2141,8 +2186,31 @@ export function createWorldModes(host) {
     const targets = entries.map((entry, i) => ({
       key: i, aabb: doorWorldAabb(entry.door),
     }));
+    // AUDIT 26 (F019/F190): THE STREET'S STATIC NPCs, in the SAME ray
+    // as the doors. DFU has one activation raycast above ground and
+    // routes by what it hit (PlayerActivate.cs:1229 reads the
+    // StaticNPC off the hit, :741-767 activates it), so an exterior
+    // NPC and a door compete by distance, not by precedence. The reach
+    // is StaticNPCActivationDistance (:87), twice a door's, and the
+    // AABB is the swept billboard box the interior host's people take.
+    // A person whose archive gave no size is not a target at all.
+    //
+    // collectExteriorNpcs (RMBLayout.cs:366-378/:442-454) had NO
+    // production caller before this: no street NPC was ever stood, so
+    // none could be clicked or talked to above ground.
+    const npcs = npcTargets?.() ?? [];
+    npcs.forEach((pn, i) => {
+      if (!pn.width) return;
+      targets.push({ key: `person:${i}`, aabb: personAabb(pn), distance: STATIC_NPC_ACTIVATION_DISTANCE });
+    });
     const key = pickActivatable(eye, dir, targets, baseCollider());
     if (key === null) return false;
+    // ...and the NPC arm ENDS the activation, exactly as the interior
+    // ray's does: an NPC under the ray is not a door.
+    if (typeof key === 'string' && key.startsWith('person:')) {
+      activateStaticNpc(npcs[Number(key.split(':')[1])]);
+      return true;
+    }
     const hit = entries[key];
     // Route by verbatim door type: buildings to interiors, dungeon
     // entrances into the RDB crawl.

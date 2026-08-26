@@ -93,6 +93,32 @@ export function staticNpcData(pn, {
   };
 }
 
+/** SetLayoutData's EXTERIOR overload (StaticNPC.cs:180-207), the one
+ *  RMBLayout runs for a street NPC. It differs from the building
+ *  overload above in three places, and this is the first: THE GENDER
+ *  FLAG ON AN RMB FLAT RECORD IS INVALID (:185-194). The flat's own
+ *  bit 32 is thrown away and FLATS.CFG's gender column decides -
+ *  `flatCFG.gender.Contains("2")` sets the bit, anything else CLEARS
+ *  it (`flags &= 223`, i.e. ~32 in a byte). A flat FLATS.CFG does not
+ *  carry keeps the record's flags untouched, because C# only enters
+ *  the branch when GetFlatData answered true.
+ *
+ *  The other two differences are the caller's: buildingKey 0 (there is
+ *  no building above ground) and Context.Custom, not Context.Building.
+ *
+ *  Verbatim `Contains("2")`, not the port's flatGender helper: a "?2"
+ *  (a flat classic would censor in ChildGard) contains "2" and is
+ *  female here, and a gender column that is neither reads as MALE
+ *  rather than as "unknown".
+ *
+ *  @param {number} flags     the block record's own flags
+ *  @param {?object} flatData FlatsFile.getFlatData's answer, or null
+ */
+export function exteriorNpcFlags(flags, flatData) {
+  if (!flatData) return flags;
+  return String(flatData.gender ?? '').includes('2') ? (flags | 32) : (flags & 223);
+}
+
 /** SetLayoutData(hash, gender, factionID, nameSeed) (StaticNPC.cs:245-255)
  *  - the DIRECT overload, the one a quest Person's click runs through.
  *  Nine fields; note it writes NEITHER buildingKey NOR mapID (the

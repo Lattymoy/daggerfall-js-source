@@ -35,6 +35,7 @@ import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, mirrorProjectionX, transformPoint, trs } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { drawCharacterSprite } from '../render/characterSprite.js';
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
+import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNpcs.js';   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
@@ -260,6 +261,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const buildingDoors = []; // {door, dfBlock, recordIndex, climateBase, season, dfLocation, group}
   const flatGroups = new Map(); // "archive_record" -> [centers]
   const ambientAnimals = [];    // A4: archive-201 town animals as audio sources
+  const exteriorNpcFlats = [];  // AUDIT 26 (F019): the flats RMBLayout stands as StaticNPCs
   const animalAmbience = createAnimalAmbience(audio, () => ambientAnimals);
   const cityNav = new CityNavigation(loc.width, loc.height);   // T1 towns
   for (const b of loc.blocks) {
@@ -308,7 +310,8 @@ export async function bootExterior(canvas, renderer, params, status) {
       }
     }
 
-    for (const flat of collectBlockFlats(b.dfBlock, natureArchive)) {
+    const blockFlats = collectBlockFlats(b.dfBlock, natureArchive);
+    for (const flat of blockFlats) {
       const key = `${flat.archive}_${flat.record}`;
       if (!flatGroups.has(key)) flatGroups.set(key, []);
       flatGroups.get(key).push([flat.x + b.originX, flat.y, flat.z + b.originZ]);
@@ -317,6 +320,15 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (flat.archive === ANIMALS_ARCHIVE && ANIMAL_SOUND_BY_RECORD[flat.record] != null) {
         ambientAnimals.push({ pos: [flat.x + b.originX, flat.y, flat.z + b.originZ], sound: ANIMAL_SOUND_BY_RECORD[flat.record] });
       }
+    }
+    // AUDIT 26 (F019): ...and the same flats' STATIC NPCs. RMBLayout
+    // adds the StaticNPC behaviour to a billboard it has just stood
+    // (RMBLayout.cs:366-378 / :442-454), so the collection runs off the
+    // very list the batches above were built from. Location frame, like
+    // every flat here; the identity and the billboard extent are
+    // resolved once the archives are loaded, below.
+    for (const npc of collectExteriorNpcs(blockFlats)) {
+      exteriorNpcFlats.push({ ...npc, x: npc.x + b.originX, z: npc.z + b.originZ });
     }
     // T1: the navgrid - the automap carves (raw bytes, verbatim: a
     // tree flat BLOCKS its cell), tile weights from the same ground
@@ -371,6 +383,25 @@ export async function bootExterior(canvas, renderer, params, status) {
     armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
     billboardBatches.push(batch);
     flatCount += centers.length;
+  }
+
+  // AUDIT 26 (F019): the street StaticNPCs' identity + extent, once
+  // their archives are loaded (they are flats, so the batch pass above
+  // already fetched every one).
+  //   - FLATS.CFG is awaited because SetLayoutData's exterior overload
+  //     reads it for the gender (StaticNPC.cs:185-194); loadFlats never
+  //     throws (dataPipeline catches) and is warmed with the scene, so
+  //     this is a coalesced wait, not a second load.
+  //   - the AABB is the swept billboard box, exactly as the interior
+  //     host's static NPCs take it (interiorContext.js:298-316).
+  await pipeline.loadFlats();
+  const exteriorNpcs = [];
+  for (const flat of exteriorNpcFlats) {
+    const t = textureFiles.get(flat.archive) ?? await getTexture(flat.archive);
+    if (!t || flat.record >= t.recordCount) continue;
+    const size = scaledBillboardSize(t.getSize(flat.record), t.getScale(flat.record));
+    const pn = exteriorNpcRecord(flat, pipeline.flatsFile()?.getFlatData(flat.archive, flat.record) ?? null);
+    exteriorNpcs.push({ ...pn, width: size.w, height: size.h });
   }
 
   // Camera.
@@ -1160,6 +1191,10 @@ export async function bootExterior(canvas, renderer, params, status) {
     playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined,
     playerWeapon: params.get('weapon') ?? undefined,
     doorTargets: () => buildingDoors,
+    // AUDIT 26 (F019): RMBLayout's exterior StaticNPCs, world-frame -
+    // the same list the activation ray reads for a building's people,
+    // one mode up (PlayerActivate.ActivateStaticNPC :741-767).
+    npcTargets: () => exteriorNpcs,
     baseCollider: () => collider,
     // E2: one entered door -> its merged building identity (the T3c
     // pool merge) + the directory name by buildingKey.
