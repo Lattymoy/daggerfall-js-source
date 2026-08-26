@@ -153,7 +153,7 @@ test('E1 fold: the channels reach their formulas - armour, chance-to-hit, skills
   // the absolute chance
   const attacker = { stats: {}, skills: [], level: 1 };
   const targetBase = { armorValues: new Array(7).fill(60), stats: {}, skills: [], level: 1 };
-  const targetStrong = { ...targetBase, _enchantMods: { armorMod: -5 } };
+  const targetStrong = { ...targetBase, _enchantMods: { increasedArmorMod: -5, decreasedArmorMod: 0 } };   // SetIncreasedArmorValueModifier's own channel
   const threshold = (target) => {
     for (let r = 0; r < 100; r++) {
       if (!calculateSuccessfulHit(attacker, target, 0, 0, () => r / 100)) return r;

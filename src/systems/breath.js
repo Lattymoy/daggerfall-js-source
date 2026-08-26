@@ -44,6 +44,14 @@ export function deepBreath(memberships, duration) {
  *  state = { tally } is breathUpdateTally; roll is Range(0, 2),
  *  max-exclusive, injectable for the pins. */
 export function breathStep(entity, submerged, state, roll = () => Math.floor(Math.random() * 2)) {
+  // PlayerEnterExit.IsPlayerSubmerged, recorded where the host already
+  // hands it over. Temple.AvoidDeath (Temple.cs:452) reads that
+  // property at the killing blow - a Stendarr member is NOT saved from
+  // drowning - and the death door (characters/playerEntity.hurtPlayer)
+  // has no geometry of its own to answer it with. It is refreshed on
+  // every classic update the breath ticks, which is every update the
+  // player is anywhere near water.
+  entity.submerged = submerged;
   if (submerged && !hasActiveEffect(entity, 'waterBreathing')) {
     if (!entity.currentBreath) {
       entity.currentBreath = deepBreath(entity.guildMemberships, maxBreath(entity));

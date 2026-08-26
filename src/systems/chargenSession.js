@@ -31,6 +31,7 @@ import { customSpellSetIndex } from './customClass.js';   // U20a
 import { SOCIAL_GROUP_COUNT, FactionFile } from '../formats/factionFile.js';   // U20a + S25
 import { attachFactionRep } from './factionRep.js';   // S25
 import { createRegionConditions } from './regionConditions.js';   // PlayerEntity.InitializeRegionData (:2189-2218), at every new game
+import { bootstrapRegionPower } from './regionPower.js';          // its tail: the twelve RegionPowerAndConditionsUpdate passes (:2213-2217)
 
 /** SPELLS.STD as an index -> spell map. AUDIT 17f: the exterior
  *  hosts ran chargen without one and called finishChargen with no
@@ -137,8 +138,10 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
   // faction, and guild rank could not be computed.
   attachFactionRep(playerEntity, await loadFactions(fetchBytes));
   // StartGameBehaviour.cs:433 InitializeRegionData - the same store the
-  // wizard's path mints, on the second construction copy above.
+  // wizard's path mints, on the second construction copy above, and the
+  // same twelve bootstrap passes over the faction powers.
   playerEntity.regionConditions = createRegionConditions();
+  bootstrapRegionPower(playerEntity.factionRep, { regionConditions: playerEntity.regionConditions });
   console.log(`[chargen] ${CLASS_CAREERS[classIndex]}: HP ${playerEntity.maxHealth}, spells ${playerEntity.spells.length}`);
   return playerEntity;
 }
@@ -226,6 +229,14 @@ export function finishChargen(playerEntity, result, spellsByIndex = null, { roll
   // (BiogFile.cs:339), before the level-up anchor below, so this is
   // also where the order puts it.
   attachFactionRep(playerEntity, result.factionDict);
+  // InitializeRegionData's TAIL (PlayerEntity.cs:2213-2217), which
+  // StartGameBehaviour runs at :433 - AFTER the biography's reputation
+  // effects above, which is why it sits here and not in
+  // applyCreationExtras beside the store it walks: twelve
+  // RegionPowerAndConditionsUpdate(false)/(true) pairs, so the
+  // character starts on DFU's walked powers rather than the raw
+  // FACTION.TXT ones. A flow with no faction dictionary walks nothing.
+  bootstrapRegionPower(playerEntity.factionRep, { regionConditions: playerEntity.regionConditions, rolls });
   // AUDIT 18: and the LEVEL-UP ANCHOR is taken AFTER them
   // (StartGameBehaviour.cs:424-426 - SetCurrentLevelUpSkillSum, then
   // StartingLevelUpSkillSum = CurrentLevelUpSkillSum), unconditionally.

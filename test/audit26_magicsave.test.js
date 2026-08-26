@@ -8,6 +8,7 @@ import { readFileSync } from 'node:fs';
 import {
   ENCHANTMENT_TYPES as T, PAYLOAD, doItemEnchantmentPayloads, enchantmentMagicRound,
   computeEnchantmentMods, enchantWeightAllowanceMult, classicEnchantmentType,
+  enchantArmorMod, enchantChanceToHitMod,
   LEECH_CAST_AMOUNT, LEECH_WEAPON_AMOUNT,
 } from '../src/systems/enchantments.js';
 import { applyEnchantments } from '../src/systems/enchanting.js';
@@ -245,4 +246,218 @@ test('audit26 magic-save: a restored save lifts the bundle counter past its high
   const minted = dst.activeEffects.filter((a) => a.bundleId !== 7).map((a) => a.bundleId);
   assert.ok(minted.length > 0, 'the cast landed');
   assert.deepEqual([...new Set(minted)], [8], 'the next id is ONE PAST the restored high water mark, never a reuse');
+});
+
+// ===================================================================
+// AUDIT 26 PARITY, wave "magic": the saving-throw and armour-channel
+// laws below are read off EntityEffect.cs / EntityEffectManager.cs /
+// DaggerfallEntity.cs, never off the port's previous shape.
+// ===================================================================
+
+/** A rolls() that plays a fixed script and then answers 0.99 (a
+ *  Dice100 of 100 - the roll that fails every saving throw). */
+const seq = (...rs) => { let i = 0; return () => (i < rs.length ? rs[i++] : 0.99); };
+const blankEffect = {
+  magnitudeBaseLow: 0, magnitudeBaseHigh: 0, magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 1,
+  durationBase: 0, durationMod: 0, durationPerLevel: 1,
+  chanceBase: 0, chanceMod: 0, chancePerLevel: 1,
+};
+const foeTarget = (over = {}) => ({
+  stats: { luck: 50, willpower: 50 }, skills: [], career: {}, activeEffects: [],
+  level: 1, health: 40, maxHealth: 40, mobileType: 0, ...over,
+});
+
+// --------------------------------------------------------------- F071
+test('audit26 magic: BypassSavingThrows never reaches GetMagnitude - a bypassed magnitude cast is still save-scaled', () => {
+  // EntityEffect.cs:804-806 is the WHOLE gate on the magnitude scale:
+  //     if (ParentBundle.targetType != TargetTypes.CasterOnly)
+  //         magnitude = FormulaHelper.ModifyEffectAmount(this, ..., magnitude);
+  // AssignBundleFlags.BypassSavingThrows appears nowhere in it, nor in
+  // ModifyEffectAmount (FormulaHelper.cs:1575-1583). The flag gates the
+  // reflection and resistance rungs (EEM:521,:525) and the ASSIGN-TIME
+  // no-magnitude save (:565-568) - three saves, and the flag reaches
+  // two of them. Quest casts (QuestResourceBehaviour.cs:346) set it, so
+  // a quest-queued Damage Health lands scaled in DFU.
+  const dmg = { ...blankEffect, type: 4, subType: 0, magnitudeBaseLow: 20, magnitudeBaseHigh: 20 };
+  // roll 0.49 -> Dice100 50. saving = 50 + MagicResist(willpower 50) = 55,
+  // and 55-20 <= 50 <= 55, so the prorated percent is 100 - 5*(55-50) = 75.
+  const scaled = Math.trunc(20 * 75 / 100);
+  assert.equal(scaled, 15);
+
+  const bypassed = applySpell({ element: 0, rangeType: 1, effects: [dmg] }, 1, foeTarget(), {}, () => 0.49, null, { bypassSavingThrows: true });
+  assert.equal(bypassed.damage, scaled, 'a BYPASSED non-CasterOnly cast is still scaled by the target save');
+  const plain = applySpell({ element: 0, rangeType: 1, effects: [dmg] }, 1, foeTarget(), {}, () => 0.49, null, {});
+  assert.equal(plain.damage, scaled, 'and an ordinary cast scales identically - the flag changes nothing here');
+  const selfCast = applySpell({ element: 0, rangeType: 0, effects: [dmg] }, 1, foeTarget(), {}, () => 0.49, null, {});
+  assert.equal(selfCast.damage, 20, 'CasterOnly is the one gate GetMagnitude does have');
+});
+
+// --------------------------------------------------------------- F073
+test('audit26 magic: Pacify and Charm take AssignBundle\'s no-magnitude saving throw after the chance gate', () => {
+  // PacifyEffect.cs:59-66 and CharmEffect.cs:33-44: SupportChance only,
+  // no SupportMagnitude, TargetFlags_Other, BypassSavingThrows never
+  // set, and neither is an IncumbentEffect - so EEM:561-579 rolls the
+  // target's save on every non-CasterOnly cast and drops the effect
+  // whole on a full save. Chance first (:531-551), then the save.
+  const pacify = { ...blankEffect, type: 33, subType: 0, chanceBase: 100 };
+  const charm = { ...blankEffect, type: 34, subType: 255, chanceBase: 100 };
+  const spell = (e) => ({ element: 0, rangeType: 1, effects: [e] });
+
+  // chance 0.99 passes; save 0.0 is a Dice100 of 1 - a FULL save
+  const saved = applySpell(spell(pacify), 1, foeTarget(), {}, seq(0.99, 0.0), null, {});
+  assert.equal(saved.pacify, undefined, 'a made save drops Pacify whole');
+  assert.equal(saved.saved, 1, '"Save versus spell made."');
+  assert.equal(saved.chanceFailed, undefined, 'the chance gate passed - these are two independent gates');
+
+  const landed = applySpell(spell(pacify), 1, foeTarget(), {}, seq(0.99, 0.99), null, {});
+  assert.equal(landed.pacify, true, 'a failed save lets it land');
+  assert.equal(landed.saved, undefined);
+
+  const charmSaved = applySpell(spell(charm), 1, foeTarget({ mobileType: 140 }), {}, seq(0.99, 0.0), null, {});
+  assert.equal(charmSaved.pacify, undefined);
+  assert.equal(charmSaved.saved, 1, 'Charm saves on the same law');
+
+  // and the assign-time save IS the one BypassSavingThrows suppresses
+  const bypassed = applySpell(spell(pacify), 1, foeTarget(), {}, seq(0.99, 0.0), null, { bypassSavingThrows: true });
+  assert.equal(bypassed.pacify, true, 'EEM:565 - the no-magnitude save is the flag\'s own gate');
+
+  // a CasterOnly cast is never saved against (:568)
+  const selfCast = applySpell({ element: 0, rangeType: 0, effects: [pacify] }, 1, foeTarget(), {}, seq(0.99, 0.0), null, {});
+  assert.equal(selfCast.pacify, true);
+});
+
+// --------------------------------------------------------------- F072
+test('audit26 magic: Soul Trap rolls the no-magnitude saving throw, and "Trap active." is spoken before it', () => {
+  // SoulTrap.cs:33-38 declares SupportDuration + SupportChance and NO
+  // magnitude, is TargetFlags_Other and never sets BypassSavingThrows,
+  // so EEM:561-579 applies. ChanceSuccess is hardcoded true (:47-52),
+  // which leaves the save as the only gate a monster gets. The message
+  // comes from BecomeIncumbent, which IncumbentEffect.AttachHost runs
+  // inside Start (EEM:529) - BEFORE the save at :565.
+  const trap = { ...blankEffect, type: 12, subType: 255, durationBase: 10, chanceBase: 50 };
+  const spell = { element: 0, rangeType: 1, effects: [trap] };
+
+  const saved = applySpell(spell, 1, foeTarget(), {}, seq(0.0), null, {});
+  assert.equal(saved.saved, 1, 'a full save drops the trap');
+  assert.equal(saved.trapAlert, 'trapActive', 'and "Trap active." was already printed by Start - verbatim quirk');
+  assert.equal(saved.buffs, undefined);
+
+  const target = foeTarget();
+  const landed = applySpell(spell, 1, target, {}, seq(0.99), null, {});
+  assert.equal(landed.saved, undefined);
+  assert.deepEqual(target.activeEffects.map((a) => a.kind), ['soulTrap']);
+
+  // an AddState stack never reaches the save: AssignBundle's :553-559
+  // incumbent gate has already continued past it
+  const stacked = applySpell(spell, 1, target, {}, seq(0.0), null, {});
+  assert.equal(stacked.saved, undefined, 'a stack is not saved against');
+  assert.equal(target.activeEffects.length, 1);
+});
+
+// --------------------------------------------------------------- F074
+test('audit26 magic: a paralysis-immune target discards the effect BEFORE the reflect/resist chain', () => {
+  // EntityEffectManager.cs:495-499 `continue`s on a hard-immune
+  // Paralyze before `effect.ParentBundle = instancedBundle` (:502) and
+  // before the whole caster-gated absorb/reflect/resist block
+  // (:504-527). So Free Action plus Spell Reflection does NOT bounce a
+  // paralyze back at its caster - there is nothing left to bounce.
+  const paralyze = { ...blankEffect, type: 0, subType: 255, durationBase: 5, chanceBase: 100 };
+  const spell = { element: 0, rangeType: 1, effects: [paralyze] };
+  const caster = () => ({ entity: { name: 'Spider', activeEffects: [] }, sinks: {} });
+
+  const immune = foeTarget({ activeEffects: [{ kind: 'freeAction', roundsRemaining: 9 }, { kind: 'spellReflection', chance: 100, roundsRemaining: 9 }] });
+  const out = applySpell(spell, 1, immune, {}, () => 0.0, caster(), {});
+  assert.equal(out.reflected, undefined, 'nothing reflects');
+  assert.equal(out.resisted, undefined, 'and the resistance rung never speaks either');
+  assert.equal(out.paralyzed, undefined);
+  assert.deepEqual(immune.activeEffects.map((a) => a.kind), ['freeAction', 'spellReflection'], 'the target is untouched');
+
+  // the control: drop the immunity and the SAME bundle reflects
+  const mortal = foeTarget({ activeEffects: [{ kind: 'spellReflection', chance: 100, roundsRemaining: 9 }] });
+  const ref = applySpell(spell, 1, mortal, {}, () => 0.0, caster(), {});
+  assert.equal(ref.reflected, 1, 'reflection is live on the same fixture - the immunity is what removed it');
+});
+
+// --------------------------------------------------------------- F075
+test('audit26 magic: PlayerAggro breaks the caster\'s normal-power concealment on transfer, drain, paralyze and silence', () => {
+  // EntityEffect.PlayerAggro (:815-828) -> the target's
+  // HandleAttackFromSource(caster) -> BreakNormalPowerConcealment-
+  // Effects on the caster. Its callers: DrainEffect.Start:57 (and
+  // TransferEffect, which IS-A DrainEffect), Paralyze.cs:48,
+  // Silence.cs:48, TransferHealth.cs:57, TransferFatigue.cs:56.
+  // Transfer Health/Fatigue additionally go through
+  // DamageHealthFromSource / DamageFatigueFromSource, whose own tail
+  // (DaggerfallEntityBehaviour.cs:167-172,151-153) runs for ANY caster.
+  const concealed = (over = {}) => ({
+    entity: {
+      isPlayer: true, name: 'P', stats: { strength: 50, endurance: 50 }, skills: [], career: {}, level: 1,
+      health: 20, maxHealth: 20, activeEffects: [{ kind: 'invisNormal', roundsRemaining: 10 }], ...over,
+    },
+    sinks: { heal: () => {}, restoreFatigue: () => {} },
+  });
+  const cases = {
+    transferHealth: { ...blankEffect, type: 11, subType: 8, magnitudeBaseLow: 4, magnitudeBaseHigh: 4 },
+    transferFatigue: { ...blankEffect, type: 11, subType: 9, magnitudeBaseLow: 4, magnitudeBaseHigh: 4 },
+    drainStrength: { ...blankEffect, type: 7, subType: 0, magnitudeBaseLow: 4, magnitudeBaseHigh: 4 },
+    transferStrength: { ...blankEffect, type: 11, subType: 0, magnitudeBaseLow: 4, magnitudeBaseHigh: 4 },
+    paralyze: { ...blankEffect, type: 0, subType: 255, durationBase: 5, chanceBase: 100 },
+    silence: { ...blankEffect, type: 19, subType: 255, durationBase: 5, chanceBase: 100 },
+  };
+  for (const [name, e] of Object.entries(cases)) {
+    const c = concealed();
+    applySpell({ element: 0, rangeType: 1, effects: [e] }, 1, foeTarget(), { hurt: () => {}, drainFatigue: () => {} }, () => 0.99, c, {});
+    assert.deepEqual(c.entity.activeEffects, [], `${name} breaks the caster's normal-power concealment`);
+  }
+
+  // PlayerAggro's first line is "Caster must be player", so a FOE
+  // caster keeps its concealment on the aggro-only arms...
+  const foeCaster = concealed({ isPlayer: false, mobileType: 10 });
+  applySpell({ element: 0, rangeType: 1, effects: [cases.paralyze] }, 1, foeTarget(), {}, () => 0.99, foeCaster, {});
+  assert.deepEqual(foeCaster.entity.activeEffects.map((a) => a.kind), ['invisNormal'],
+    'Paralyze aggros through PlayerAggro alone - a non-player caster returns at once');
+  // ...but the FromSource damage doors take any source at all
+  const foeTransfer = concealed({ isPlayer: false, mobileType: 10 });
+  applySpell({ element: 0, rangeType: 1, effects: [cases.transferHealth] }, 1, foeTarget(), { hurt: () => {} }, () => 0.99, foeTransfer, {});
+  assert.deepEqual(foeTransfer.entity.activeEffects, [],
+    'DamageHealthFromSource runs HandleAttackFromSource on ANY source');
+});
+
+// --------------------------------------------------------- F122 / F123
+test('audit26 magic: the two armour-value channels are non-stacking min-sets, which makes WeakensArmor inert', () => {
+  // DaggerfallEntity.cs:400-415 - two independent channels, each a
+  // min-set that ClearConstantEffects (:842-843) zeroes every pass:
+  //   SetIncreasedArmorValueModifier(a): if (a < Increased...) assign
+  //   SetDecreasedArmorValueModifier(a): if (a < Decreased...) assign
+  // FormulaHelper.cs:1158 sums both onto ArmorValues[part].
+  // StrengthensArmor.cs:25,63 passes -5 and lands; BadReactionsFrom
+  // .cs:26,86 passes -5 and lands; WeakensArmor.cs:25,63 passes +5 and
+  // 5 < 0 is never true, so the enchantment does NOTHING in DFU.
+  const weak = wearer([it(T.WeakensArmor)]);
+  computeEnchantmentMods(weak);
+  assert.equal(enchantArmorMod(weak), 0, 'WeakensArmor is inert - the setter refuses a positive value');
+
+  const one = wearer([it(T.StrengthensArmor)]);
+  computeEnchantmentMods(one);
+  assert.equal(enchantArmorMod(one), -5);
+
+  const two = wearer([it(T.StrengthensArmor, -1, { equipSlot: 9 }), it(T.StrengthensArmor, -1, { equipSlot: 10 })]);
+  computeEnchantmentMods(two);
+  assert.equal(enchantArmorMod(two), -5, 'a second StrengthensArmor adds nothing - "does not stack"');
+
+  const mixed = wearer([it(T.StrengthensArmor, -1, { equipSlot: 9 }), it(T.WeakensArmor, -1, { equipSlot: 10 })]);
+  computeEnchantmentMods(mixed);
+  assert.equal(enchantArmorMod(mixed), -5, 'and WeakensArmor cannot cancel it either');
+
+  // the two channels are SEPARATE: -5 from each is -10 on the sum
+  const nearby = { nearbyFoes: () => [{ mobileType: 140 }] };
+  const both = wearer([it(T.StrengthensArmor, -1, { equipSlot: 9 }), it(T.BadReactionsFrom, 0, { equipSlot: 10 })]);
+  computeEnchantmentMods(both, nearby);
+  assert.equal(enchantArmorMod(both), -10, 'Increased + Decreased are summed at FormulaHelper.cs:1158');
+
+  // BadReactionsFrom's own halves split: the armour set does not
+  // stack, the ChangeChanceToHitModifier (:417-420) really does
+  const pair = wearer([it(T.BadReactionsFrom, 0, { equipSlot: 9 }), it(T.BadReactionsFrom, 0, { equipSlot: 10 })]);
+  computeEnchantmentMods(pair, nearby);
+  assert.equal(enchantArmorMod(pair), -5, 'two BadReactionsFrom items still floor the channel at -5');
+  assert.equal(enchantChanceToHitMod(pair), -10, 'but ChangeChanceToHitModifier is additive');
 });

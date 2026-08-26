@@ -43,7 +43,8 @@ import {
 import { CANNOT_BE_REPAIRED_TEXT } from '../systems/repairService.js';
 import { isSummoned } from '../systems/inventory.js';   // TransferItem's summoned guard
 import { CANNOT_REMOVE_ITEM_TEXT } from '../systems/createItem.js';   // both TransferItem refusals speak it
-import { questTransferRefused, SMALL_CART_TEMPLATE } from './nativeInventory.js';   // DaggerfallTradeWindow EXTENDS the inventory window
+import { questTransferRefused, SMALL_CART_TEMPLATE, extinguishTransferred, CANNOT_CARRY_TEXT } from './nativeInventory.js';   // DaggerfallTradeWindow EXTENDS the inventory window
+import { canHoldAmount, effectiveUnitWeightInKg, totalWeight } from '../systems/inventory.js';   // ComputeCanHoldAmount (:1447-1457), the one member CanCarryAmount weighs with
 import { expandGuildMacros } from '../systems/guildServiceActions.js';
 
 // re-exported so the composed window keeps one import surface
@@ -227,6 +228,13 @@ export class NativeTradeWindow {
     });
     if (d.kind === 'stage') {
       if (this._refuseTransfer(item)) return;
+      // TransferItem's LIGHT arm (DaggerfallInventoryWindow.cs:1506-
+      // 1508). `from` is localItems at every staging call here
+      // (:795, :817, :823, :826), so staging a LIT torch or lantern
+      // for sale, repair or identification puts it out - the player
+      // does not keep the light, or its burn, from an item now sitting
+      // on the merchant's side of the counter.
+      extinguishTransferred(this.hooks.entity, item);
       this._move(item, this.hooks.packItems(), this.staged);
       return;
     }
@@ -241,8 +249,42 @@ export class NativeTradeWindow {
   _pickRemote(slot) {
     const item = this.remoteList()[this.remoteScroll + slot];
     if (!item) return;
-    if (this.mode === 'Buy') this._move(item, this.hooks.shelfItems(), this.basket);
-    else this._move(item, this.staged, this.hooks.packItems());
+    if (this.mode === 'Buy') {
+      // `TransferItem(item, remoteItems, basketItems, CanCarryAmount(item), ...)`
+      // (DaggerfallTradeWindow.cs:842). The BASKET is weighed like the
+      // pack: CanCarryAmount (DaggerfallInventoryWindow.cs:1414-1423)
+      // measures against GetCarriedWeight(), which THIS window
+      // overrides to `PlayerEntity.CarriedWeight + basketItems
+      // .GetWeight()` (:630-633) - so the gate tightens as the basket
+      // fills, and a lot that would put the player over MaxEncumbrance
+      // cannot be staged at all. Zero fit refuses with the
+      // cannotCarryAnymore box; a partial fit splits (:1514-1538,
+      // the popup defaulted to maxAmount - the port takes exactly
+      // what fits, as the inventory window's remote arm does).
+      const canCarry = this._canCarryAmount(item);
+      if (canCarry <= 0) return;
+      if (canCarry < (item.stackCount ?? 1)) {
+        item.stackCount -= canCarry;
+        this.basket.push({ ...item, stackCount: canCarry });
+        return;
+      }
+      this._move(item, this.hooks.shelfItems(), this.basket);
+      return;
+    }
+    this._move(item, this.staged, this.hooks.packItems());
+  }
+
+  /** CanCarryAmount (DaggerfallInventoryWindow.cs:1414-1423) over this
+   *  window's own GetCarriedWeight (:630-633). No weight seam mounted
+   *  = no capacity to read, so the gate stands open - the same answer
+   *  the inventory window's gives a host with no entity. */
+  _canCarryAmount(item) {
+    const w = this.hooks.weight?.();
+    if (!w) return item.stackCount ?? 1;
+    const canCarry = canHoldAmount(item.stackCount ?? 1, effectiveUnitWeightInKg(item),
+      w.maxEncumbranceKg ?? 0, (w.carriedWeightKg ?? 0) + totalWeight(this.basket));
+    if (canCarry <= 0) this.box = { rows: [{ text: CANNOT_CARRY_TEXT, center: true }], buttons: null };
+    return canCarry;
   }
 
   /** ClearSelectedItems (:589-599, :613-625) - everything staged goes

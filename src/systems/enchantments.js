@@ -99,6 +99,28 @@ export const POTENT_VS_DAMAGE = 5;            // PotentVs.cs:27
 export const LOW_DAMAGE_VS = -5;              // LowDamageVs.cs:27
 export const STRENGTHENS_ARMOR_VALUE = -5;    // StrengthensArmor.cs:25 ("lower armor value equals a stronger rating")
 export const WEAKENS_ARMOR_VALUE = 5;         // WeakensArmor.cs:25
+
+/** DaggerfallEntity.SetIncreasedArmorValueModifier (:400-407) and
+ *  SetDecreasedArmorValueModifier (:409-415). TWO independent channels,
+ *  summed with the struck part's armour value in the to-hit
+ *  (FormulaHelper.cs:1158), and NEITHER STACKS: each setter is a
+ *  min-set - `if (amount < current) current = amount` - so any number
+ *  of items writing the same channel leaves it at the lowest value one
+ *  of them asked for. ClearConstantEffects (:842-843) zeroes both every
+ *  DoConstantEffects pass, which is what makes the comparison against 0
+ *  the real gate.
+ *
+ *  The consequence for WeakensArmor is that the enchantment is INERT in
+ *  DFU: it asks for +5 (WeakensArmor.cs:25,63) and 5 < 0 is never true,
+ *  so the +5 never lands. Its sibling BadReactionsFrom asks for -5
+ *  (BadReactionsFrom.cs:26,86) and does land. Both calls stand below
+ *  verbatim - the guard is the law, not the caller. */
+const setIncreasedArmorValueModifier = (mods, amount) => {
+  if (amount < mods.increasedArmorMod) mods.increasedArmorMod = amount;
+};
+const setDecreasedArmorValueModifier = (mods, amount) => {
+  if (amount < mods.decreasedArmorMod) mods.decreasedArmorMod = amount;
+};
 export const BAD_REACTIONS_RANGE = 8;         // BadReactionsFrom.cs:25
 export const BAD_REACTIONS_ARMOR = -5;        // BadReactionsFrom.cs:26
 export const BAD_REACTIONS_HIT = -5;          // BadReactionsFrom.cs:27
@@ -433,10 +455,11 @@ const REGISTRY = new Map([
    *  weight is untouched, verbatim (the flag never fires on a mint). */
   [T.FeatherWeight, { flags: PAYLOAD.Enchanted, enchanted({ item }) { item.weightInKg = 0.25; } }],
   [T.ExtraWeight, { flags: PAYLOAD.Enchanted, enchanted({ item }) { item.weightInKg = (item.weightInKg ?? 0) * 4; } }],
-  /** StrengthensArmor/WeakensArmor - Held constants on the armour
-   *  channel (FormulaHelper.cs:1158 adds both to ArmorValues[part]). */
-  [T.StrengthensArmor, { flags: PAYLOAD.Held, constant({ mods }) { mods.armorMod += STRENGTHENS_ARMOR_VALUE; } }],
-  [T.WeakensArmor, { flags: PAYLOAD.Held, constant({ mods }) { mods.armorMod += WEAKENS_ARMOR_VALUE; } }],
+  /** StrengthensArmor/WeakensArmor - Held constants on the two armour
+   *  channels (FormulaHelper.cs:1158 adds both to ArmorValues[part]),
+   *  each through its own non-stacking min-set above. */
+  [T.StrengthensArmor, { flags: PAYLOAD.Held, constant({ mods }) { setIncreasedArmorValueModifier(mods, STRENGTHENS_ARMOR_VALUE); } }],
+  [T.WeakensArmor, { flags: PAYLOAD.Held, constant({ mods }) { setDecreasedArmorValueModifier(mods, WEAKENS_ARMOR_VALUE); } }],
   /** ImprovesTalents.cs - Held constant, player only: the three
    *  improved-talent flags. */
   [T.ImprovesTalents, {
@@ -551,7 +574,11 @@ const REGISTRY = new Map([
     constant({ param, ctx, mods }) {
       const affinity = param === 0 ? AFFINITY_PARAM.Humanoid : param === 1 ? AFFINITY_PARAM.Animals : AFFINITY_PARAM.Daedra;
       if (anyNearbyOfAffinity(ctx, affinity, BAD_REACTIONS_RANGE)) {
-        mods.armorMod += BAD_REACTIONS_ARMOR;
+        // The armour half is a non-stacking min-set; the to-hit half is
+        // ChangeChanceToHitModifier, which really is additive
+        // (DaggerfallEntity.cs:417-420) - two items in range are -5
+        // armour but -10 to hit.
+        setDecreasedArmorValueModifier(mods, BAD_REACTIONS_ARMOR);
         mods.chanceToHitMod += BAD_REACTIONS_HIT;
       }
     },
@@ -679,8 +706,11 @@ function applyResults(r, env) {
  *  recompute entity._enchantMods from every EQUIPPED enchanted item.
  *  Channels and their DFU homes:
  *    maxMagicka          - ChangeMaxMagickaModifier (ExtraSpellPts)
- *    armorMod            - Set{Increased,Decreased}ArmorValueModifier
- *                          (Strengthens/WeakensArmor, BadReactionsFrom)
+ *    increasedArmorMod   - SetIncreasedArmorValueModifier
+ *                          (StrengthensArmor) - non-stacking min-set
+ *    decreasedArmorMod   - SetDecreasedArmorValueModifier
+ *                          (WeakensArmor, BadReactionsFrom) - the same
+ *                          min-set, on its own channel
  *    chanceToHitMod      - ChangeChanceToHitModifier (BadReactionsFrom)
  *    absorbsSpells       - IsAbsorbingSpells (AbsorbsSpells)
  *    weightAllowanceMult - SetIncreasedWeightAllowanceMultiplier
@@ -692,7 +722,7 @@ function applyResults(r, env) {
 export function computeEnchantmentMods(entity, ctx = null) {
   ctx = mergeCtx(ctx);
   const mods = {
-    maxMagicka: 0, armorMod: 0, chanceToHitMod: 0, absorbsSpells: false,
+    maxMagicka: 0, increasedArmorMod: 0, decreasedArmorMod: 0, chanceToHitMod: 0, absorbsSpells: false,
     weightAllowanceMult: 0, skillMods: {},
     improvedAcuteHearing: false, improvedAthleticism: false, improvedAdrenalineRush: false,
   };
@@ -779,7 +809,10 @@ function equippedEnchantedItems(entity) {
 /** The read-time consumers - each answers 0/false with no fold
  *  computed yet, so a host that never pumps stays exactly pre-E1. */
 export const enchantChanceToHitMod = (entity) => entity?._enchantMods?.chanceToHitMod ?? 0;
-export const enchantArmorMod = (entity) => entity?._enchantMods?.armorMod ?? 0;
+/** FormulaHelper.cs:1158 - the to-hit reads BOTH channels, summed:
+ *  `target.ArmorValues[part] + IncreasedArmorValueModifier +
+ *  DecreasedArmorValueModifier`. */
+export const enchantArmorMod = (entity) => (entity?._enchantMods?.increasedArmorMod ?? 0) + (entity?._enchantMods?.decreasedArmorMod ?? 0);
 export const enchantSkillMod = (entity, skill) => entity?._enchantMods?.skillMods?.[skill] ?? 0;
 export const entityAbsorbsSpells = (entity) => entity?._enchantMods?.absorbsSpells ?? false;
 export const enchantWeightAllowanceMult = (entity) => entity?._enchantMods?.weightAllowanceMult ?? 0;

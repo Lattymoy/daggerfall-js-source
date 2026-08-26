@@ -49,9 +49,19 @@ test('encounters: ChooseRandomEnemy - the table pick and the level band, verbati
   // roll > 95 above level 5 opens the whole list
   const wild = chooseRandomEnemy({ dungeonType: 0, playerLevel: 6 }, seq(0.96, 0.999));
   assert.equal(wild, ENCOUNTER_TABLES[0][19]);
-  // buildings: a guildhall reads table 40, an unknown type the default 39
-  assert.equal(chooseRandomEnemy({ buildingType: 10, playerLevel: 1 }, seq(0.5, 0)), ENCOUNTER_TABLES[40][0]);
-  assert.equal(chooseRandomEnemy({ buildingType: 0, playerLevel: 1 }, seq(0.5, 0)), ENCOUNTER_TABLES[39][0]);
+  // buildings (RandomEncounters.cs:1348-1364) keyed by DFLocation.BuildingTypes
+  // (DFLocation.cs:106-133): GuildHall 11 -> 40, Temple 14 -> 41, Palace 16 and
+  // House1 17 -> 42, House2 18 -> 43, House3 19 -> 44, everything else -> 39.
+  const wanted = {
+    0: 39, 5: 39, 10: 39, 11: 40, 12: 39, 14: 41,
+    15: 39, 16: 42, 17: 42, 18: 43, 19: 44, 20: 39,
+  };
+  const picked = (b) => chooseRandomEnemy({ buildingType: b, playerLevel: 1 }, seq(0.5, 0.999));
+  assert.deepEqual(
+    Object.fromEntries(Object.keys(wanted).map((b) => [b, picked(Number(b))])),
+    Object.fromEntries(Object.entries(wanted).map(([b, t]) => [b, ENCOUNTER_TABLES[t][5]])),
+    'Library 10 and Tavern 15 are NOT guild hall / palace - they fall to 39',
+  );
   // underwater forces table 19
   assert.equal(chooseRandomEnemy({ underwater: true, dungeonType: 4, playerLevel: 1 }, seq(0.5, 0)), ENCOUNTER_TABLES[19][0]);
 });

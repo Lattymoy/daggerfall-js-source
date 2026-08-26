@@ -36,6 +36,7 @@
 // fits - the same range C# int holds.
 import { SKILLS } from './skills.js';
 import { isMember } from './guilds.js';
+import { templeOf } from './guildVariants.js';
 
 /** Services.GuildServices - the service kinds. */
 export const GUILD_SERVICES = Object.freeze([
@@ -342,6 +343,35 @@ export const alterReward = (guild, m, reward) =>
 /** FightersGuild.ReducedRepairCost - and it shrinks the cost. */
 export const reducedRepairCost = (guild, m, price) =>
   (guild.name === 'FightersGuild' ? scaleByRank(10 - (m?.rank ?? 0), price) : price);
+
+/** Temple.AvoidDeath (Temple.cs:450-460) - STENDARR ONLY, and the one
+ *  benefit that is not a price or a permission: the god of mercy lets
+ *  a member walk away from a killing blow. `Random.Range(0, 50) < rank`
+ *  is max-EXCLUSIVE, so rank 0 never saves anybody and rank 9 saves
+ *  about one death in six; being SUBMERGED disqualifies it outright
+ *  (PlayerEnterExit.IsPlayerSubmerged - drowning is not survivable
+ *  this way). The survivor is left on 10% of MaxHealth by the caller,
+ *  PlayerEntity.SetHealth (:1204-1213). */
+export function avoidDeath(guild, m, { submerged = false, rolls = Math.random } = {}) {
+  if (guild?.divine !== 'Stendarr' || submerged) return false;
+  return Math.floor(rolls() * 50) < (m?.rank ?? -1);
+}
+
+/** GuildManager.AvoidDeath (GuildManager.cs:396-402): the fold over
+ *  every membership, answering at the FIRST guild that says yes. Takes
+ *  the membership map the entity carries, exactly as breath.js's
+ *  DeepBreath fold does - a membership names its guild by name, and
+ *  Stendarr's temple is the only name that can answer true. */
+export function guildAvoidDeath(memberships, { submerged = false, rolls = Math.random } = {}) {
+  // templeOf is resolved HERE, not at module scope: the one damage door
+  // imports this file, so a module-scope call would run inside an
+  // import cycle and read guildVariants' tables before they exist.
+  const stendarr = templeOf('Stendarr');
+  for (const m of Object.values(memberships ?? {})) {
+    if (m?.guild === stendarr.name && avoidDeath(stendarr, m, { submerged, rolls })) return true;
+  }
+  return false;
+}
 
 /** Temple.ReducedCureCost - ARKAY ONLY. The god of burial and the
  *  cycle of life is the one who discounts curing you. */

@@ -198,6 +198,24 @@ export function allocateHouseToPlayer(houses, regionIndex, { buildingKey, mapId,
 }
 
 /**
+ * PlayerEntity.GetGoldAmount (PlayerEntity.cs:1313-1316) - goldPieces
+ * PLUS the value of every letter of credit in the pack - read through
+ * the purse seam.
+ *
+ * WHICH OF DFU'S TWO PURSE QUANTITIES a transaction measures is not
+ * uniform: DepositGold reads GoldPieces (:344) and WithdrawGold pays
+ * into it (:373), but PurchaseHouse (:415), PurchaseShip (:474) and
+ * RepayLoan (:516) all read GetGoldAmount(). Past those three gates
+ * the payment goes through DeductGoldAmount, which SPENDS letters
+ * (court.js:199) - so a coins-only gate refuses a purchase the very
+ * next line could pay for.
+ *
+ * `creditGold()` is the seam's paper half; a host that has none
+ * answers its coins, which is DFU's own answer for an empty pack.
+ */
+const purseGoldAmount = (purse) => purse.gold() + (purse.creditGold?.() ?? 0);
+
+/**
  * PurchaseHouse (:408-427). The one transaction in this module that
  * spends from BOTH pockets: the purse first and the bank account for
  * whatever the purse could not cover.
@@ -218,7 +236,7 @@ export function purchaseHouse(accounts, houses, regionIndex, house, player, {
 } = {}) {
   if (!(house?.buildingKey > 0)) return { result: TRANSACTION_RESULT.NONE };
   const amount = housePrice(meshRadius);
-  const purse = player.gold();
+  const purse = purseGoldAmount(player);   // :415 GetGoldAmount(), coins + letters
   const account = accounts[regionIndex].accountGold;
   if (amount > purse + account) return { result: TRANSACTION_RESULT.NOT_ENOUGH_GOLD, amount };
   accounts[regionIndex].accountGold -= player.deductGold(amount);
@@ -298,7 +316,7 @@ export function purchaseShip(accounts, regionIndex, shipType, player, purse, hoo
   if (shipType === SHIP_TYPES.None) return { kind: 'none', result: TRANSACTION_RESULT.NONE };
   const amount = shipPrice(shipType);
   const accountGold = accounts[regionIndex].accountGold;
-  if (amount > purse.gold() + accountGold) {
+  if (amount > purseGoldAmount(purse) + accountGold) {   // :474 GetGoldAmount(), coins + letters
     return { kind: 'refuse', result: TRANSACTION_RESULT.NOT_ENOUGH_GOLD };
   }
   const shortfall = purse.deductGold(amount);
@@ -413,9 +431,12 @@ export const calculateBankLoanRepayment = (amount) => Math.trunc(amount + amount
 
 // ── the transactions ───────────────────────────────────────────────
 // Each answers a TRANSACTION_RESULT and mutates the account in place.
-// `player` is the host's purse seam: { gold(), deductGold(n),
-// addGold(n), wagonGold(), takeWagonGold(n), letters(), takeLetter(),
-// addLetter(item), carriedWeightKg(), maxEncumbranceKg() }.
+// `player` is the host's purse seam: { gold(), creditGold(),
+// deductGold(n), addGold(n), wagonGold(), takeWagonGold(n),
+// takeLetter(), addLetter(item), carriedWeightKg(),
+// maxEncumbranceKg() }. gold() is DFU's GoldPieces and creditGold()
+// its ItemCollection.GetCreditAmount(); purseGoldAmount above is the
+// GetGoldAmount() the three purchase/repayment gates read.
 
 /** DepositGold (:339-360). The WAGON counts toward what can be
  *  deposited, and is drawn on only for the shortfall after the purse
@@ -485,7 +506,7 @@ export function repayLoan(accounts, regionIndex, amount, player, { accountOnly =
   mustValidate(accounts, regionIndex);
   const account = accounts[regionIndex];
   let available = account.accountGold;
-  if (!accountOnly) available += player.gold();
+  if (!accountOnly) available += purseGoldAmount(player);   // :516 GetGoldAmount(), coins + letters
 
   if (!hasLoan(accounts, regionIndex)) return { result: TRANSACTION_RESULT.NONE, amount };
   if (amount > available) return { result: TRANSACTION_RESULT.NOT_ENOUGH_GOLD, amount };

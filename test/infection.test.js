@@ -259,6 +259,35 @@ test('infection: runInfections pushes each video once and carries the lifecycle 
   assert.equal(diseaseCount(p), 0);
 });
 
+test('infection: the round steps EVERY live infection, not just the first', () => {
+  // EntityEffectManager.DoMagicRound (:1722-1734) runs MagicRound() on
+  // every live effect of every instanced bundle, so a player carrying
+  // vampirism AND lycanthropy has both ProgressDisease clocks running
+  // in parallel - the two are not opposed (infectionAccepted allows it,
+  // pinned above), and neither waits on the other.
+  setInfectionHost(null);
+  const p = P();
+  startInfection(p, INFECTION.Vampirism, { day: 0, regionIndex: 3 });
+  startInfection(p, INFECTION.Werewolf, { day: 0 });
+  assert.equal(p.activeEffects.length, 2);
+  const [vamp, wolf] = p.activeEffects;
+
+  const pushed = [];
+  const opts = { playVideo: (name, onClose) => { pushed.push(name); onClose(); },
+    raiseTime: () => {}, messageBox: () => {} };
+
+  runInfections(p, 1, opts);
+  assert.deepEqual(pushed, [VAMPIRE_DREAM_VIDEO, LYCANTHROPY_DREAM_VIDEO],
+    'both warning dreams on the SAME round - the second does not wait for the first');
+  assert.deepEqual([vamp.dreamPlayed, wolf.dreamPlayed], [true, true]);
+
+  runInfections(p, 4, opts);
+  assert.deepEqual(pushed, [VAMPIRE_DREAM_VIDEO, LYCANTHROPY_DREAM_VIDEO, VAMPIRE_DEATH_VIDEO],
+    'the vampire fake death; lycanthropy turns with no video of its own');
+  assert.deepEqual([vamp.deployed, wolf.deployed], [true, true], 'both turned on schedule');
+  assert.equal(diseaseCount(p), 0, 'and both ended - DeployFullBlown*\'s last line');
+});
+
 test('infection: an unregistered host still runs the lifecycle - the video counts as watched', () => {
   setInfectionHost(null);
   const p = P();

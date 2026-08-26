@@ -6,6 +6,7 @@
 // skills 30 and maxHealth 50. armor 0 until player equipment.
 // LiveSpeed lives in PlayerMotor stats.
 import { SKILL_COUNT } from '../systems/skills.js';
+import { guildAvoidDeath } from '../systems/guildServices.js';   // GuildManager.AvoidDeath, at the zero-health write
 
 export const playerEntity = {
   isPlayer: true,
@@ -120,6 +121,19 @@ export function hurtPlayer(entity, dmg, { bypassShield = false } = {}) {
   // `instanceof DeathScreen` guard in its presenter, which made the guard
   // load-bearing and every future presenter's problem.
   if (wasAlive && entity.health === 0) {
+    // PlayerEntity.SetHealth (:1204-1213): health at zero asks the
+    // GUILDS before it raises OnDeath. GuildManager.AvoidDeath
+    // (GuildManager.cs:396-402) folds over every membership and
+    // Temple.AvoidDeath (Temple.cs:450-458) is the only override -
+    // a Stendarr member who is not submerged survives on
+    // Random.Range(0, 50) < rank and is left on `(int)(MaxHealth *
+    // 0.1f)` instead of dying. `submerged` is the host's
+    // PlayerEnterExit.IsPlayerSubmerged; absent it reads false, which
+    // is the answer everywhere but under water.
+    if (guildAvoidDeath(entity.guildMemberships, { submerged: entity.submerged ?? false })) {
+      entity.health = Math.trunc((entity.maxHealth ?? 0) * 0.1);
+      return false;
+    }
     _deathPresenter?.(entity);
     return true;
   }

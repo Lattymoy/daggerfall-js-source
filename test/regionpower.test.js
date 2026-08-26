@@ -6,7 +6,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   regionPowerUpdate, factionPowerStep, isFactionValidForRumorMill, RUMOR_MILL_EXCLUDED,
+  bootstrapRegionPower, REGION_BOOTSTRAP_PASSES, ALWAYS_AVAILABLE_RUMORS,
 } from '../src/systems/regionPower.js';
+import { createRegionConditions } from '../src/systems/regionConditions.js';
+import { finishChargen } from '../src/systems/chargenSession.js';
+import { SKILLS, SKILL_COUNT } from '../src/systems/skills.js';
 import {
   tickPlayerMinutes, CLASSIC_MINUTES_PER_SECOND,
   FACTION_POWER_INTERVAL_MINUTES, REGION_CONDITIONS_INTERVAL_MINUTES,
@@ -202,4 +206,70 @@ test('S43 wiring: the tick walks the powers every 7 days and again every 38', ()
     sinks: {}, rolls: () => 0, say: () => {},
   });
   assert.equal(solo.power, 48, 'both arms fired on the aligned minute - two points, not one');
+});
+
+// ── the BOOTSTRAP, which is the other half that was missing ─────────
+
+test('AUDIT 26 F107: InitializeRegionData ends with TWELVE (false, true) passes', () => {
+  // PlayerEntity.cs:2213-2217:
+  //     for (int i = 0; i < 12; ++i) {
+  //         RegionPowerAndConditionsUpdate(false);
+  //         RegionPowerAndConditionsUpdate(true);
+  //     }
+  assert.equal(REGION_BOOTSTRAP_PASSES, 12);
+  const me = f({ id: 1, type: FACTION_TYPES.Group, power: 50 });
+  const s = store(me);
+  let refreshed = 0;
+  const rumors = [];
+  const r = bootstrapRegionPower(s, {
+    rumorMill: {
+      refreshRumorMill: () => refreshed++,
+      addNonQuestRumor: (a1, a2, a3, a4, textId) => rumors.push(textId),
+    },
+    regionConditions: createRegionConditions(),
+    rolls: () => 0,
+  });
+  // RefreshRumorMill is the update's first line, so one per CALL: 12 x 2.
+  assert.equal(refreshed, 24, 'twenty-four updates, not twelve');
+  // The seven always-available rumors are re-seeded once per CONDITIONS
+  // pass (:2112-2118), so twelve of the twenty-four ran with the bool on.
+  assert.equal(rumors.length, ALWAYS_AVAILABLE_RUMORS.length * REGION_BOOTSTRAP_PASSES);
+  assert.deepEqual(rumors.slice(0, 7), [...ALWAYS_AVAILABLE_RUMORS]);
+  // and every pass walks the one valid faction, one power step each
+  assert.deepEqual([r.walked, r.changed], [24, 24]);
+  assert.equal(me.power, 50 - 24, 'the walk with a certain FailedRoll costs a point a pass');
+  // no faction store at all is silence, not a throw - a host that
+  // never ran chargen has none
+  assert.deepEqual(bootstrapRegionPower(null, {}), { walked: 0, changed: 0 });
+});
+
+test('AUDIT 26 F107: a NEW CHARACTER is born with the walk already run (StartGameBehaviour.cs:433)', () => {
+  // InitializeRegionData is called at character creation, so a fresh
+  // character never starts from the raw FACTION.TXT powers - the
+  // merchants-vs-region term of UpdateRegionalPrices reads the walked
+  // state from day one. finishChargen is the port's seam for it.
+  const dict = new Map([[1, f({ id: 1, type: FACTION_TYPES.Group, power: 50, rep: 0 })]]);
+  const entity = {
+    isPlayer: true, level: 1, health: 50, maxHealth: 50, items: [],
+    sGroupReputations: [0, 0, 0, 0, 0],
+    stats: { strength: 50, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50 },
+  };
+  finishChargen(entity, {
+    name: 'Pin', gender: 'male', race: 'Breton', raceId: 1, faceIndex: 0,
+    careerIndex: 16,
+    career: {
+      name: 'Pin',
+      primarySkills: [SKILLS.LongBlade, SKILLS.CriticalStrike, SKILLS.Dodging],
+      majorSkills: [SKILLS.Archery, SKILLS.Climbing, SKILLS.Running],
+      minorSkills: [SKILLS.Swimming, SKILLS.Jumping, SKILLS.Medical, SKILLS.Stealth, SKILLS.Backstabbing, SKILLS.Mercantile],
+      hitPointsPerLevel: 10, advancementMultiplier: 0.3, abilityFlagsAndSpellPointsBitfield: 0x1000,
+    },
+    stats: { strength: 50, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50 },
+    skills: new Array(SKILL_COUNT).fill(30),
+    reflexes: 2,
+    factionDict: dict,
+  }, null, { rolls: () => 0 });
+  assert.equal(entity.factionRep.dict.get(1).power, 50 - 24,
+    'twenty-four power steps before the first frame');
+  assert.equal(dict.get(1).power, 50, 'and the reader FACTION.TXT record is untouched');
 });

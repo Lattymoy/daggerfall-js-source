@@ -24,6 +24,8 @@ import {
 } from '../src/systems/shopStock.js';
 import { dayOfYear, minuteOfDay, dateFromClassicMinutes, CLASSIC_GAME_START_TIME, MINUTES_PER_DAY } from '../src/systems/gameDate.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
+import { POTION_RECIPE_TEMPLATE_INDEX, CLASSIC_RECIPE_KEYS } from '../src/systems/loot.js';
+import { ITEM_TEMPLATES } from '../src/systems/itemTemplates.js';
 import { NativeTradeWindow } from '../src/ui/nativeTrade.js';
 
 const WEAPON_SMITH = { buildingType: BUILDING_TYPES.WeaponSmith, quality: 21 };
@@ -33,6 +35,8 @@ const start = dateFromClassicMinutes(CLASSIC_GAME_START_TIME);
 // 5th at 13:30 and would hide a day-length that was wrong by an hour.
 const MIDNIGHT = CLASSIC_GAME_START_TIME - minuteOfDay(start);
 const at = (minutes) => dateFromClassicMinutes(MIDNIGHT + minutes);
+// Exhausted seq HOLDS its last value (the loot.test.js convention).
+const seq = (...vals) => { let i = 0; return () => vals[Math.min(i++, vals.length - 1)]; };
 
 test('AUDIT 26 shopstock: CreateStockedDate is (Year * 1000) + DayOfYear', () => {
   // DaggerfallLoot.cs:68-71, verbatim - the literal is 1000.
@@ -115,6 +119,35 @@ const buyHooks = (shelf) => ({
   rows: () => [],
   weight: () => ({ carriedWeightKg: 0, maxEncumbranceKg: 1e9 }),
   icons: { getTexture: async () => ({ recordCount: 0 }), uploadRecord: () => {}, textures: new Map() },
+});
+
+test('AUDIT 26 shopstock: an Alchemist shelf rolls a potion recipe at 25%', () => {
+  // DaggerfallLoot.cs:163-166 - the Alchemist arm, and ONLY that arm,
+  // calls RandomlyAddPotionRecipe(25, items) before the group loop.
+  // Dice100.SuccessRoll(25) is `Roll(1,100) <= 25` (loot.js's one
+  // copy), so a 0.0 roll takes it and a 0.99 roll misses.
+  const alchemist = { buildingType: BUILDING_TYPES.Alchemist, quality: 20 };
+  const player = { level: 5, gender: 'male' };
+  const recipes = (rows) => rows.filter((r) => r.templateIndex === POTION_RECIPE_TEMPLATE_INDEX);
+
+  const hit = stockShopShelf(alchemist, player, { rolls: seq(0, 0) });
+  assert.equal(recipes(hit).length, 1, 'the roll succeeds and the recipe is stocked FIRST');
+  assert.equal(hit[0].templateIndex, POTION_RECIPE_TEMPLATE_INDEX, 'before the group loop');
+  assert.equal(hit[0].group, 'MiscItems');
+  assert.equal(hit[0].potionRecipeKey, CLASSIC_RECIPE_KEYS[0], 'the pick is the twenty-key classic list');
+  // the shelf's own finishing rides it, like every other stocked row
+  assert.equal(hit[0].name, ITEM_TEMPLATES[POTION_RECIPE_TEMPLATE_INDEX].name);
+  assert.ok(hit[0].value > 0);
+
+  assert.equal(recipes(stockShopShelf(alchemist, player, { rolls: seq(0.99) })).length, 0,
+    'a failed roll stocks none');
+
+  // ...and no other shop type rolls one at all
+  for (const b of [BUILDING_TYPES.GeneralStore, BUILDING_TYPES.PawnShop,
+    BUILDING_TYPES.Bookseller, BUILDING_TYPES.WeaponSmith, BUILDING_TYPES.GemStore]) {
+    assert.deepEqual(recipes(stockShopShelf({ buildingType: b, quality: 20 }, player, { rolls: seq(0, 0) })), [],
+      'only the Alchemist arm calls RandomlyAddPotionRecipe');
+  }
 });
 
 test('AUDIT 26 shopstock: closing the trade window returns the basket to the shelf', () => {

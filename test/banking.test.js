@@ -10,21 +10,22 @@ import {
   LOC_COMMISSION, LOC_MINIMUM, LOAN_MINIMUM, MINUTES_PER_MONTH, LOAN_REMINDER_MONTHS,
   shipPrice, shipSellPrice, housePrice, houseSellPrice,
   shipModelId, shipCoords, ownsShip, ownedShipType, purchaseShip, sellShip, assignShipToPlayer,
-  createBankAccounts, createHouses, validateRegion,
+  createBankAccounts, createHouses, validateRegion, purchaseHouse,
   accountTotal, loanedTotal, loanDueDate, hasLoan, hasDefaulted, setDefaulted,
   calculateMaxBankLoan, calculateBankLoanRepayment,
   depositGold, withdrawGold, depositAllLetters, withdrawLetter,
   repayLoan, borrowLoan, checkOverdueLoans, settleOverdueLoan,
 } from '../src/systems/banking.js';
 import { GOLD_PIECE_WEIGHT_KG, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE } from '../src/systems/inventory.js';
-import { goldAmount, deductGold, addGold, CRIMES } from '../src/systems/court.js';
+import { goldAmount, creditAmount, totalGoldAmount, deductGold, addGold, CRIMES } from '../src/systems/court.js';
 import { DAYS_PER_YEAR, MINUTES_PER_DAY } from '../src/systems/gameDate.js';
 
 const R = TRANSACTION_RESULT;
 
 /** The host's purse seam over a plain entity. */
 const purse = (entity, { maxKg = 1e9, carriedKg = 0, wagon = null } = {}) => ({
-  gold: () => goldAmount(entity),
+  gold: () => goldAmount(entity),                 // DFU's GoldPieces
+  creditGold: () => creditAmount(entity),         // ItemCollection.GetCreditAmount
   deductGold: (n) => deductGold(entity, n),
   addGold: (n) => addGold(entity, n),
   wagonGold: () => wagon?.stackCount ?? 0,
@@ -248,6 +249,66 @@ test('B1: repaying spans purse, letters and account in ONE transaction (:508-540
   assert.equal(goldAmount(e), 0, 'the purse emptied');
   assert.equal(accountTotal(accounts, 0), 10000 - 500, 'and 500 came off the account');
   assert.equal(loanedTotal(accounts, 0), 10000);
+});
+
+test('AUDIT 26 F104: the purchase and repayment gates read GetGoldAmount, not GoldPieces', () => {
+  // DaggerfallBankManager reads playerEntity.GetGoldAmount() - coins
+  // PLUS letters of credit (PlayerEntity.cs:1313-1316) - in
+  // PurchaseHouse (:415), PurchaseShip (:474) and RepayLoan (:516),
+  // while DepositGold (:341) and WithdrawGold (:364) read GoldPieces.
+  // Past the gate the payment is DeductGoldAmount, which SPENDS
+  // letters, so a coins-only gate refused what the next line pays for.
+  const paper = () => ({
+    level: 5,
+    items: [{ group: 'Currency', stackCount: 10 }, letterOfCredit(500000)],
+  });
+
+  // REPAY: 10 coins, a 500000 letter, an empty account, 1100 owed.
+  const accounts = createBankAccounts(62);
+  borrowLoan(accounts, 0, 1000, { level: 5, nowMinutes: 0 });   // owes 1100, account 1000
+  accounts[0].accountGold = 0;
+  const e = paper();
+  assert.equal(goldAmount(e), 10);
+  assert.equal(totalGoldAmount(e), 500010, 'GetGoldAmount: the letter is legal tender');
+  const r = repayLoan(accounts, 0, 1100, purse(e));
+  assert.equal(r.result, R.NONE, 'the letter covers the loan');
+  assert.equal(loanedTotal(accounts, 0), 0);
+  assert.equal(totalGoldAmount(e), 500010 - 1100);
+  assert.equal(accountTotal(accounts, 0), 0, 'the account paid nothing - the purse covered it');
+
+  // BUY SHIP: 100000, the same purse, the same empty account.
+  const shipAccounts = createBankAccounts(62);
+  const sailor = paper();
+  const bought = purchaseShip(shipAccounts, 0, SHIP_TYPES.Small, sailor, purse(sailor));
+  assert.deepEqual([bought.kind, bought.result, bought.price],
+    ['purchased', R.PURCHASED_SHIP, SHIP_PRICES[SHIP_TYPES.Small]]);
+  assert.equal(ownedShipType(sailor), SHIP_TYPES.Small);
+  assert.equal(totalGoldAmount(sailor), 500010 - 100000);
+  assert.equal(accountTotal(shipAccounts, 0), 0, 'the letter paid, so the account is untouched');
+
+  // BUY HOUSE: the third gate, same purse, same empty account.
+  const houses = createHouses(62);
+  const houseAccounts = createBankAccounts(62);
+  const owner = paper();
+  const deed = purchaseHouse(houseAccounts, houses, 0, { buildingKey: 5 }, purse(owner),
+    { meshRadius: 50, mapId: 1, location: 'Burgley' });
+  assert.equal(deed.result, R.PURCHASED_HOUSE);
+  assert.equal(deed.amount, housePrice(50));
+  assert.equal(totalGoldAmount(owner), 500010 - housePrice(50));
+  assert.equal(accountTotal(houseAccounts, 0), 0, 'the letter paid, so the account is untouched');
+
+  // ...and a purse that genuinely cannot cover it is still refused.
+  const broke = { level: 5, items: [{ group: 'Currency', stackCount: 10 }] };
+  assert.equal(purchaseShip(createBankAccounts(62), 0, SHIP_TYPES.Small, broke, purse(broke)).result,
+    R.NOT_ENOUGH_GOLD);
+  assert.equal(ownedShipType(broke), SHIP_TYPES.None);
+
+  // DEPOSIT is the other quantity and must NOT see the letter: DFU
+  // deposits GoldPieces (+ the wagon), and paper goes in through
+  // DepositAll_LOC instead.
+  const depositor = paper();
+  assert.equal(depositGold(createBankAccounts(62), 0, 100, purse(depositor)), R.NOT_ENOUGH_GOLD,
+    'a letter is not a deposit');
 });
 
 test('B1: overpaying CLAMPS to the loan and says so (:526-530)', () => {

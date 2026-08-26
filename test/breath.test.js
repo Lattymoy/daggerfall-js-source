@@ -89,3 +89,16 @@ test('breath: the Argonian coin refund rides the SAME tick as the drain (PlayerE
   assert.equal(drainTick(argonian, () => 0), 'drowned');
   assert.equal(argonian.currentBreath, 0);
 });
+
+test('AUDIT 26 F117: the step records IsPlayerSubmerged, which the death door reads', () => {
+  // Temple.AvoidDeath (Temple.cs:452) reads
+  // PlayerEnterExit.IsPlayerSubmerged at the killing blow, and the
+  // port's one damage door has no geometry to answer it with. The
+  // host already hands the flag to breathStep every classic update, so
+  // it is recorded here rather than computed twice.
+  const e = { health: 20, maxHealth: 20, currentBreath: 10, raceId: RACES.Breton };
+  breathStep(e, true, { tally: 0 });
+  assert.equal(e.submerged, true);
+  breathStep(e, false, { tally: 0 });
+  assert.equal(e.submerged, false, 'and surfacing clears it');
+});

@@ -23,7 +23,7 @@ import { goldAmount, deductGold } from './court.js';
 import { getReputation, changeReputation } from './factionRep.js';
 import { diseaseCount } from './diseases.js';
 import { cureAllDiseases } from './effects.js';
-import { calculateCost, calculateTradePrice } from './shopStock.js';
+import { calculateCost, calculateTradePrice, regionPriceAdjustment } from './shopStock.js';
 import { trainingPrice, trainingMax, trainingSkills, reducedCureCost } from './guildServices.js';
 import { getHolidayId, FREE_CURE_HOLIDAYS, HALF_PRICE_CURE_HOLIDAY } from './holidays.js';
 import { expandMacros } from './talkSession.js';
@@ -214,10 +214,15 @@ export function cureDiseaseOffer(entity, guild, membership, {
 
   let baseCost = CURE_BASE_COST_PER_DISEASE * numberOfDiseases;
   baseCost = reducedCureCost(guild, membership, baseCost);   // Arkay's members only
-  // CalculateCost is called with TWO arguments here (:81), so the
-  // regional price adjustment stays at its neutral 1000 - curing a
-  // disease costs the same in every province, unlike merchandise.
-  let costBeforeBargaining = calculateCost(baseCost, quality);
+  // "Apply temple quality and regional price modifiers" - DFU's own
+  // comment on the two-argument call (:85). The omitted third argument
+  // is conditionPercentage, NOT the region: CalculateCost applies
+  // ApplyRegionalPriceAdjustment unconditionally (FormulaHelper.cs
+  // :1895), and that term reads the LIVE region's PriceAdjustment
+  // (:2026-2044) - the same region this window already asked for the
+  // holiday. So a cure is priced by province exactly as merchandise is.
+  let costBeforeBargaining = calculateCost(baseCost, quality,
+    regionPriceAdjustment(entity, regionIndex));
   // "Halve the price on North Winds Prayer holiday" - DFU's comment
   // names the wrong holiday; the CODE tests North_Winds_Festival, and
   // the code is what ships.

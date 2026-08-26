@@ -9,6 +9,7 @@ import {
   canAccessService, canAccessLibrary,
   canRest, hallAccessAnytime, freeHealing, freeMagickaRecharge,
   freeTavernRooms, freeShipTravel, alterReward, reducedRepairCost, reducedCureCost,
+  avoidDeath, guildAvoidDeath,
 } from '../src/systems/guildServices.js';
 import { GUILDS, MEMBER_TRAINING_COST, NON_MEMBER_TRAINING_COST, DEFAULT_TRAINING_MAX } from '../src/systems/guilds.js';
 import { templeOf, orderOf, TEMPLE_DATA } from '../src/systems/guildVariants.js';
@@ -206,4 +207,96 @@ test('services: temples open their library at their own rank; the Mages Guild at
   assert.equal(canAccessLibrary(GUILDS.MagesGuild, at(1)), false);
   assert.equal(canAccessLibrary(GUILDS.MagesGuild, at(2)), true);
   assert.equal(canAccessLibrary(GUILDS.FightersGuild, at(9)), false, 'no other guild has one');
+});
+
+test('AUDIT 26 F117: Temple.AvoidDeath is STENDARR only, max-exclusive, and no use under water', () => {
+  // Temple.cs:450-458:
+  //   deity == Divines.Stendarr && !IsPlayerSubmerged &&
+  //   UnityEngine.Random.Range(0, 50) < rank
+  const stendarr = templeOf('Stendarr');
+  const roll = (n) => () => n / 50;            // Random.Range(0, 50) -> n
+  // rank 0 is never saved: Range is max-EXCLUSIVE, so the lowest draw
+  // is 0 and `0 < 0` is false.
+  assert.equal(avoidDeath(stendarr, at(0), { rolls: roll(0) }), false);
+  assert.equal(avoidDeath(stendarr, at(1), { rolls: roll(0) }), true);
+  // the boundary at every rank: draw == rank fails, draw == rank-1 saves
+  for (let rank = 1; rank <= 9; rank++) {
+    assert.equal(avoidDeath(stendarr, at(rank), { rolls: roll(rank - 1) }), true, `rank ${rank}`);
+    assert.equal(avoidDeath(stendarr, at(rank), { rolls: roll(rank) }), false, `rank ${rank} boundary`);
+  }
+  // the top of the range never saves anybody - ranks stop at 9
+  assert.equal(avoidDeath(stendarr, at(9), { rolls: roll(49) }), false);
+  // SUBMERGED disqualifies it outright: drowning is not survivable here
+  assert.equal(avoidDeath(stendarr, at(9), { submerged: true, rolls: roll(0) }), false);
+  // and no other guild overrides Guild.AvoidDeath's `return false`
+  for (const divine of ['Arkay', 'Julianos', 'Mara', 'Akatosh', 'Zenithar', 'Kynareth', 'Dibella']) {
+    assert.equal(avoidDeath(templeOf(divine), at(9), { rolls: roll(0) }), false, divine);
+  }
+  assert.equal(avoidDeath(GUILDS.FightersGuild, at(9), { rolls: roll(0) }), false);
+  assert.equal(avoidDeath(orderOf('TheRose'), at(9), { rolls: roll(0) }), false);
+  assert.equal(avoidDeath(null, at(9), { rolls: roll(0) }), false, 'no guild at all');
+
+  // GuildManager.AvoidDeath (GuildManager.cs:396-402) folds over EVERY
+  // membership and answers at the first guild that says yes.
+  const member = (guild, rank) => ({ [guild.guildGroup]: { guild: guild.name, rank, lastRankChange: 0 } });
+  assert.equal(guildAvoidDeath(member(stendarr, 9), { rolls: roll(0) }), true);
+  assert.equal(guildAvoidDeath(member(stendarr, 9), { submerged: true, rolls: roll(0) }), false);
+  assert.equal(guildAvoidDeath(member(templeOf('Arkay'), 9), { rolls: roll(0) }), false);
+  assert.equal(guildAvoidDeath({ ...member(GUILDS.FightersGuild, 9), ...member(stendarr, 4) },
+    { rolls: roll(3) }), true, 'a Stendarr membership among others still answers');
+  assert.equal(guildAvoidDeath({}, { rolls: roll(0) }), false, 'no memberships');
+  assert.equal(guildAvoidDeath(null, { rolls: roll(0) }), false, 'no store at all');
+});
+
+test('AUDIT 26 F117: the killing blow ASKS the guilds, and a saved player keeps 10% of MaxHealth', async () => {
+  // PlayerEntity.SetHealth (:1204-1213): health at zero calls
+  // GuildManager.AvoidDeath first, and a member it saves is set to
+  // `(int)(MaxHealth * 0.1f)` instead of raising OnDeath. The port's
+  // one damage door is characters/playerEntity.hurtPlayer.
+  const { hurtPlayer, setDeathPresenter } = await import('../src/characters/playerEntity.js');
+  const stendarr = templeOf('Stendarr');
+  const faithful = () => ({
+    health: 30, maxHealth: 37,
+    guildMemberships: { [stendarr.guildGroup]: { guild: stendarr.name, rank: 9, lastRankChange: 0 } },
+  });
+  const prevPresenter = setDeathPresenter(null);
+  const prevRandom = Math.random;
+  try {
+    let died = 0;
+    setDeathPresenter(() => { died++; });
+
+    Math.random = () => 0;                   // Random.Range(0, 50) -> 0 < rank 9
+    const saved = faithful();
+    assert.equal(hurtPlayer(saved, 999), false, 'the blow does not kill a member Stendarr saves');
+    assert.equal(saved.health, 3, '(int)(37 * 0.1f)');
+    assert.equal(died, 0, 'and the death screen never comes up');
+
+    Math.random = () => 49 / 50;             // Random.Range(0, 50) -> 49, no save at any rank
+    const doomed = faithful();
+    assert.equal(hurtPlayer(doomed, 999), true);
+    assert.equal(doomed.health, 0);
+    assert.equal(died, 1);
+
+    // AND DROWNING IS STILL FATAL. breathStep records the host's
+    // IsPlayerSubmerged on the entity (breath.js), which is the flag
+    // Temple.cs:452 excludes: the same member, saved above, dies when
+    // the killing blow lands under water.
+    Math.random = () => 0;
+    const drowning = faithful();
+    drowning.submerged = true;
+    assert.equal(hurtPlayer(drowning, drowning.health, { bypassShield: true }), true,
+      'SetHealth(0) while submerged is not survivable');
+    assert.equal(drowning.health, 0);
+    assert.equal(died, 2);
+
+    // a player in no guild at all dies exactly as before
+    Math.random = () => 0;
+    const nobody = { health: 10, maxHealth: 10 };
+    assert.equal(hurtPlayer(nobody, 99), true);
+    assert.equal(nobody.health, 0);
+    assert.equal(died, 3);
+  } finally {
+    Math.random = prevRandom;
+    setDeathPresenter(prevPresenter);
+  }
 });

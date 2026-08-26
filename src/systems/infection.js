@@ -296,21 +296,37 @@ export function setInfectionHost(host) { _host = host ?? null; }
  * test and in a headless probe. Every real host passes the reader.
  */
 export function runInfections(entity, currentDay, opts = {}) {
-  const entry = liveInfection(entity);
-  if (!entry) return { kind: 'idle' };
   const o = { ..._host, ...opts };
   const playVideo = o.playVideo ?? ((name, onClose) => onClose());
-  const step = infectionStep(entry, currentDay);
-  if (step.kind === 'dream') {
-    entry.dreamScheduled = true;                     // set at PUSH (:129)
-    playVideo(step.video, () => markDreamPlayed(entry));
-  } else if (step.kind === 'death') {
-    entry.deathScheduled = true;                     // fakeDeathVideoPlayed (:139), also at PUSH
-    playVideo(step.video, () => deployInfection(entry, entity, o));
-  } else if (step.kind === 'deploy') {
-    deployInfection(entry, entity, o);
+  // EntityEffectManager.DoMagicRound (:1722-1734) walks EVERY instanced
+  // bundle and calls MagicRound() on every live effect in it, so each
+  // infection's ProgressDisease (VampirismInfection.cs:99-103,
+  // LycanthropyInfection.cs:82-86) runs on its own schedule, in
+  // parallel. infectionAccepted opposes only the same key and the
+  // rival lycanthropy strain, so vampirism and lycanthropy CAN be
+  // carried at once, and stepping only the first would stall the
+  // other's dream and turn behind it.
+  //
+  // The walk is over a COPY for DFU's own stated reason (:1724, "use a
+  // copy, as ending an effect can add new bundles (ex: werewolf
+  // infection -> werewolf effect)") - deploying one infection mutates
+  // activeEffects underneath us.
+  const live = (entity?.activeEffects ?? []).filter((a) => a.infection && !a.ended);
+  let reported = null;
+  for (const entry of live) {
+    const step = infectionStep(entry, currentDay);
+    if (step.kind === 'dream') {
+      entry.dreamScheduled = true;                   // set at PUSH (:129)
+      playVideo(step.video, () => markDreamPlayed(entry));
+    } else if (step.kind === 'death') {
+      entry.deathScheduled = true;                   // fakeDeathVideoPlayed (:139), also at PUSH
+      playVideo(step.video, () => deployInfection(entry, entity, o));
+    } else if (step.kind === 'deploy') {
+      deployInfection(entry, entity, o);
+    }
+    if (!reported && step.kind !== 'idle') reported = step;
   }
-  return step;
+  return reported ?? { kind: 'idle' };
 }
 
 /**

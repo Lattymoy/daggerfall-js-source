@@ -281,7 +281,14 @@ export function startCourt(player, regionIndex, crime, { rolls = Math.random, df
     if ((dfRand() & 1) !== 0) fine += 40;
     else daysInPrison += 3;
   }
-  const gold = goldAmount(player);
+  // "If player can't pay fine, limit fine and add to prison sentence"
+  // (DaggerfallCourtWindow.cs:168-174). The purse it measures is
+  // GetGoldAmount() - coins PLUS letters of credit (PlayerEntity.cs
+  // :1313-1316) - not GoldPieces, and pleaGuilty below pays through
+  // deductGold, which spends letters. Measuring only the coin stack
+  // here converted a defendant's paper wealth into prison days the
+  // payment would then have covered.
+  const gold = totalGoldAmount(player);
   if (gold < fine) {
     daysInPrison += Math.trunc((fine - gold) / 40);
     fine = gold;

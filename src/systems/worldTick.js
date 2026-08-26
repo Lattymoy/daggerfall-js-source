@@ -404,7 +404,15 @@ export function tickPlayerMinutes({
   // fatigue (S20) while it costs many magic rounds.
   if (Math.floor(next) !== Math.floor(classicMinutes)) {
     let loss = FATIGUE_LOSS.Default;
-    if (activity.running) loss = FATIGUE_LOSS.Running;
+    // PlayerEntity.cs:405-407: the CLIMBING arm comes first and short-
+    // circuits the rest - `if (climbingMotor != null && climbingMotor
+    // .IsClimbing) amount = ClimbingFatigueLoss` (22, :110). Its order
+    // matters twice over: a player climbing while the Run key is held
+    // pays 22 and not 88, and a climb out of water draws no Swimming
+    // roll at all, so the generator stays in step (the same reason the
+    // Argonian short-circuit below is preserved operand for operand).
+    if (activity.climbing) loss = FATIGUE_LOSS.Climbing;
+    else if (activity.running) loss = FATIGUE_LOSS.Running;
     else if (activity.swimming) {
       // AUDIT 21 F8: THE ARGONIAN EXEMPTION, and its short-circuit.
       //     if (Race != Races.Argonian && Dice100.FailedRoll(...Swimming))

@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { EnemyAI } from '../src/characters/enemyMotor.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../src/player/motor.js';
 import { EQUIP_DELAY_TIMES } from '../src/characters/weaponStates.js';
-import { equipItem, unequipSlot, EQUIP_SLOTS } from '../src/systems/equip.js';
+import { equipItem, unequipSlot, setEquipDelayTime, EQUIP_SLOTS } from '../src/systems/equip.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = (f) => readFileSync(join(root, f), 'utf8');
@@ -64,30 +64,69 @@ test('ch3 characters-8: both pools bill the landing through their damage doors w
   }
 });
 
-test('ch3 characters-13: the swap pause - both halves bill, the table quirk, the rig block and drain', () => {
+test('ch3 characters-13: the swap pause is billed NET, once per inventory session', () => {
+  // DaggerfallInventoryWindow.SetEquipDelayTime (:1154-1200). OnPush
+  // (:667) snapshots both hands with setTime false; OnPop (:729) bills
+  // with setTime true, and ONLY `if (lastXHandItem != currentXHandItem)`
+  // - so the swaps made in between are invisible.
   const e = { items: [], stats: {} };
   const dagger = { group: 'Weapons', templateIndex: 113 };
-  // equipping into an empty hand bills the arriver alone (Dagger = 500)
-  equipItem(e, dagger);
-  assert.equal(e.equipCountdown, EQUIP_DELAY_TIMES[0]);
-  assert.equal(e.equipCountdown, 500);
-  // swapping to a Katana bills the leaver AND the arriver (+= sum)
   const katana = { group: 'Weapons', templateIndex: 123 };
-  equipItem(e, katana);
-  assert.equal(e.equipCountdown, 500 + 500 + EQUIP_DELAY_TIMES[10], 'dagger out + katana in accumulate');
-  // a bare unequip bills the leaver
-  e.equipCountdown = 0;
-  unequipSlot(e, EQUIP_SLOTS.RightHand);
-  assert.equal(e.equipCountdown, EQUIP_DELAY_TIMES[10], 'the katana leaving bills alone');
-  // the verbatim quirk: a shield indexes its ARMOR group index into
-  // the WEAPON delay table (Buckler 109 -> armor index 7 -> 1700)
-  e.equipCountdown = 0;
-  equipItem(e, { group: 'Armor', templateIndex: 109 });
-  assert.equal(e.equipCountdown, EQUIP_DELAY_TIMES[7]);
-  // a non-hand piece bills nothing
-  e.equipCountdown = 0;
-  equipItem(e, { group: 'Armor', templateIndex: 102 });   // cuirass -> chest
-  assert.equal(e.equipCountdown, 0, 'only hand slots pause the swing');
+
+  // equipping alone bills NOTHING - ItemEquipTable.EquipItem never
+  // reaches SetEquipDelayTime, which is why starting gear is free
+  equipItem(e, dagger);
+  assert.equal(e.equipCountdown ?? 0, 0, 'no window, no bill');
+
+  // ONE session, TWO swaps: empty hands -> dagger -> katana. Last is
+  // null and current is the katana, so the katana's delay is the whole
+  // bill; the dagger passed through untouched.
+  const e2 = { items: [], stats: {} };
+  setEquipDelayTime(e2, false);
+  equipItem(e2, { ...dagger });
+  equipItem(e2, { ...katana });
+  setEquipDelayTime(e2, true);
+  assert.equal(e2.equipCountdown, EQUIP_DELAY_TIMES[10]);
+  assert.equal(e2.equipCountdown, 3400, 'the katana alone - NOT 500 + 500 + 3400');
+
+  // a session that puts the SAME item back bills zero: last == current
+  e2.equipCountdown = 0;
+  setEquipDelayTime(e2, false);
+  const worn = unequipSlot(e2, EQUIP_SLOTS.RightHand);
+  equipItem(e2, worn);
+  setEquipDelayTime(e2, true);
+  assert.equal(e2.equipCountdown, 0, 'off and back on is not a change');
+
+  // a real swap bills BOTH sides once: the katana out + the dagger in
+  setEquipDelayTime(e2, false);
+  equipItem(e2, { ...dagger });
+  setEquipDelayTime(e2, true);
+  assert.equal(e2.equipCountdown, EQUIP_DELAY_TIMES[10] + EQUIP_DELAY_TIMES[0]);
+  assert.equal(e2.equipCountdown, 3400 + 500);
+
+  // ...and emptying the hand bills the leaver alone
+  e2.equipCountdown = 0;
+  setEquipDelayTime(e2, false);
+  unequipSlot(e2, EQUIP_SLOTS.RightHand);
+  setEquipDelayTime(e2, true);
+  assert.equal(e2.equipCountdown, EQUIP_DELAY_TIMES[0]);
+
+  // THE TABLE QUIRK, verbatim: GroupIndex is the index within the
+  // item's OWN group, so a Buckler (Armor 109 -> armor index 7) reads
+  // the WEAPON delay table at 7.
+  const e3 = { items: [], stats: {} };
+  setEquipDelayTime(e3, false);
+  equipItem(e3, { group: 'Armor', templateIndex: 109 });
+  setEquipDelayTime(e3, true);
+  assert.equal(e3.equipCountdown, EQUIP_DELAY_TIMES[7]);
+
+  // a non-hand piece bills nothing whatever the session
+  const e4 = { items: [], stats: {} };
+  setEquipDelayTime(e4, false);
+  equipItem(e4, { group: 'Armor', templateIndex: 102 });   // cuirass -> chest
+  setEquipDelayTime(e4, true);
+  assert.equal(e4.equipCountdown, 0, 'only hand slots pause the swing');
+
   // the rig: the block + the classic 980/s drain
   const rig = src('src/combat/weaponRig.js');
   assert.ok(rig.includes("(entity?.equipCountdown ?? 0) > 0) return;"), 'a running pause blocks the attack input');

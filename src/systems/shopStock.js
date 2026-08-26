@@ -28,9 +28,8 @@
 //   an emptied shelf is bare until the next day rolls over.
 //
 // INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);
-// the Alchemist's 25% potion recipe pends potion recipes; book items
-// carry the template price (classic prices each BOOK FILE - pends
-// the books arc).
+// book items carry the template price (classic prices each BOOK FILE
+// - pends the books arc).
 
 import { dice100 } from '../combat/formulas.js';
 import { rand } from '../formats/dfRandom.js';   // AUDIT 26: StockHouseContainer's continue-chance draw is DaggerfallLoot's ONE DFRandom use
@@ -112,7 +111,7 @@ export const TRANSPORT_HORSE = 94;        // Transportation.Horse (template)
 export const TRANSPORT_SMALL_CART = 93;   // Transportation.Small_cart
 // AUDIT 24 (wave 24): Books.Book0..Book3 all resolve to 277 - one
 // constant, declared here and in loot.js.
-import { BOOK_TEMPLATE, createRandomBook, createRandomWeapon, createRandomArmor, createRandomClothing, createRegularMagicItem, createRandomPotion } from './loot.js';   // G4: the guild shelves' two minters   // AUDIT 26: StockHouseContainer's five ItemBuilder minters
+import { BOOK_TEMPLATE, createRandomBook, createRandomWeapon, createRandomArmor, createRandomClothing, createRegularMagicItem, createRandomPotion, randomlyAddPotionRecipe } from './loot.js';   // G4: the guild shelves' two minters   // AUDIT 26: StockHouseContainer's five ItemBuilder minters
 import { SPELLBOOK_TEMPLATE_INDEX } from './spellMaker.js';   // G4: one home for MiscItems 132
 
 export { BOOK_TEMPLATE };
@@ -175,7 +174,16 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
   const add = (item) => { items.push(stockedItem(item, rolls)); };
   const pairs = SHOP_ITEM_GROUPS[buildingType] ?? [0];
   if (buildingType === BUILDING_TYPES.Alchemist) {
-    // RandomlyAddPotionRecipe(25, items) - potion recipes pend (loud)
+    // DaggerfallLoot.cs:163-166 - the Alchemist arm alone rolls a
+    // recipe onto the shelf, before the group loop and at 25%. This is
+    // the only place in the game a recipe can be BOUGHT (the enemy and
+    // pile arms roll 2%). loot.js owns the roll and the twenty-key
+    // pick; the shelf's own finishing - the template name and base
+    // value AUDIT 18 found missing - is stockedItem's, so the recipe
+    // lands through the same door as every other stocked row.
+    const recipes = [];
+    randomlyAddPotionRecipe(25, recipes, rolls);
+    for (const r of recipes) add(r);
   }
   if (buildingType === BUILDING_TYPES.GeneralStore) {
     add({ group: 'Transportation', templateIndex: TRANSPORT_HORSE });

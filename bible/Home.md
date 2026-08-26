@@ -217,9 +217,9 @@ combat line numbers below are refreshed with it.
 - `src/characters/mobileUnit.js:21` - clock). DEFERRED (FLAGGED): the Seducer transform pair.
 - `src/characters/paperdollArt.js:70` - *  needs no new field; FLAGGED: a remote list (shop stock, a corpse)
 - `src/characters/playerEntity.js:5` - chargenSession - AUDIT 23). INTERIM until then, loudly: flat
-- `src/characters/playerEntity.js:20` - maxHealth: 50,    // INTERIM until chargen rolls career HP
-- `src/characters/playerEntity.js:27` - skills: 30,       // INTERIM flat skills until chargen
-- `src/characters/playerEntity.js:29` - fatigue: 3200,    // (Str 50 + End 0) x 64 pre-chargen (INTERIM stats above); applyCharacter re-derives from the rolled stats (S15)
+- `src/characters/playerEntity.js:21` - maxHealth: 50,    // INTERIM until chargen rolls career HP
+- `src/characters/playerEntity.js:28` - skills: 30,       // INTERIM flat skills until chargen
+- `src/characters/playerEntity.js:30` - fatigue: 3200,    // (Str 50 + End 0) x 64 pre-chargen (INTERIM stats above); applyCharacter re-derives from the rolled stats (S15)
 - `src/combat/combatVoices.js:121` - * FLAGGED, both sites: DFU consults the racial override first -
 - `src/combat/formulas.js:10` - FLAGGED interims (all documented at their site): proficiency
 - `src/combat/formulas.js:100` - *  INTERIM_WEAPON ever baked. S3d's assignStartingGear mints its
@@ -302,7 +302,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
-- `src/systems/banking.js:636` - FLAGGED, with the slice it waits on:
+- `src/systems/banking.js:656` - FLAGGED, with the slice it waits on:
 - `src/systems/biography.js:14` - FLAGGED, exactly as DFU flags them: AE, AF and AO are parsed and
 - `src/systems/biography.js:81` - INTERIM, loud and the same one shopStock.js:115 carries: message
 - `src/systems/buildingLocks.js:48` - *                                   (FLAGGED: banking is a ledger row -
@@ -312,24 +312,24 @@ combat line numbers below are refreshed with it.
 - `src/systems/chargen.js:132` - /** INTERIM headless pool policy (loud; the chargen UI replaces it):
 - `src/systems/chargen.js:151` - spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // INTERIM policy (the U2b flow replaces this path)
 - `src/systems/chargenSession.js:7` - played the pre-chargen INTERIM entity (flat skills 30, maxHealth
-- `src/systems/chargenSession.js:306` - *    - scenes/dungeonContext.js  FLAGGED: it holds the RAW flow as its
+- `src/systems/chargenSession.js:317` - *    - scenes/dungeonContext.js  FLAGGED: it holds the RAW flow as its
 - `src/systems/controlsConfig.js:8` - FLAGGED with I1's combo flag: GetDuplicates' second and third
 - `src/systems/court.js:28` - FLAGGED loud: guild rescues (Thieves/Dark Brotherhood) pend the
 - `src/systems/court.js:246` - *  daysInPrison } (guild rescues FLAGGED). */
 - `src/systems/daedraSummoning.js:38` - FLAGGED: the .FLC summoning videos (HIRCINE.FLC and its fifteen
 - `src/systems/effects.js:25` - FLAGGED skipped (the library grows here).
-- `src/systems/effects.js:43` - *  effect (:515). FLAGGED: DFU pulls it from the localised string
-- `src/systems/effects.js:643` - enchantment bundles are FLAGGED to their own arc.
-- `src/systems/effects.js:1331` - out.skipped++;   // FLAGGED: the library grows one family at a time
-- `src/systems/effects.js:1335` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
+- `src/systems/effects.js:57` - *  effect (:515). FLAGGED: DFU pulls it from the localised string
+- `src/systems/effects.js:680` - enchantment bundles are FLAGGED to their own arc.
+- `src/systems/effects.js:1410` - out.skipped++;   // FLAGGED: the library grows one family at a time
+- `src/systems/effects.js:1414` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
 - `src/systems/enchantments.js:39` - FLAGGED: no host computes them yet, so the conditional arms of
 - `src/systems/enchantments.js:41` - moonPhase() (FLAGGED: lunar phases are a Ledger C row),
-- `src/systems/enchantments.js:126` - had been FLAGGED at its own site since S4c - "a magic item still
-- `src/systems/enchantments.js:345` - *  condition holds. Params 0-3 seasons, 4-6 moons (FLAGGED: lunar
-- `src/systems/enchantments.js:628` - a MagicRound-FLAGGED row's is the payload callback :1767
-- `src/systems/encounters.js:201` - * FLAGGED, both from the tail of the C#: the pacified/team test
+- `src/systems/enchantments.js:148` - had been FLAGGED at its own site since S4c - "a magic item still
+- `src/systems/enchantments.js:367` - *  condition holds. Params 0-3 seasons, 4-6 moons (FLAGGED: lunar
+- `src/systems/enchantments.js:655` - a MagicRound-FLAGGED row's is the payload callback :1767
+- `src/systems/encounters.js:208` - * FLAGGED, both from the tail of the C#: the pacified/team test
 - `src/systems/equip.js:17` - hooks below. FLAGGED: equip sounds.
-- `src/systems/equip.js:240` - /** INTERIM starting equipment (chargen's starting-gear roll
+- `src/systems/equip.js:282` - /** INTERIM starting equipment (chargen's starting-gear roll
 - `src/systems/factionRep.js:229` - *  pre-chargen INTERIM entity (characters/playerEntity.js) has no
 - `src/systems/gameDate.js:23` - FLAGGED, deliberately: the two LUNAR PHASE getters (:134-150,
 - `src/systems/guildServiceActions.js:195` - *  turning into a vampire or werebeast - FLAGGED: the port has no
@@ -351,15 +351,15 @@ combat line numbers below are refreshed with it.
 - `src/systems/npcSession.js:628` - FLAGGED: no host calls this. C# populates the pool INSIDE
 - `src/systems/playerTorch.js:12` - arm is FLAGGED here rather than guessed - see the note below.
 - `src/systems/playerTorch.js:51` - FLAGGED (blocked on data this reference tree does not carry): the
-- `src/systems/potions.js:241` - FLAGGED, with the slice it waits on:
+- `src/systems/potions.js:240` - FLAGGED, with the slice it waits on:
 - `src/systems/races.js:6` - port had only ever instantiated for Breton (the loud INTERIM the
 - `src/systems/regionConditions.js:25` - consequences are FLAGGED in court.js).
 - `src/systems/save.js:114` - (playerEntity's INTERIM skills: 30) - spreading it threw.
 - `src/systems/sceneCache.js:154` - FLAGGED, with the slice it waits on:
 - `src/systems/settings.js:39` - INTERIM doctrine - named, not silently ignored)
 - `src/systems/shopStock.js:30` - INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);
-- `src/systems/shopStock.js:193` - if (group === 'MagicItems') continue;   // INTERIM loud (the loot MI interim)
-- `src/systems/shopStock.js:657` - *  FLAGGED: the MagicItems arm (0x04, on three of the five tables)
+- `src/systems/shopStock.js:201` - if (group === 'MagicItems') continue;   // INTERIM loud (the loot MI interim)
+- `src/systems/shopStock.js:665` - *  FLAGGED: the MagicItems arm (0x04, on three of the five tables)
 - `src/systems/skills.js:104` - *  AUDIT 18: the +10% used to be INTERIM 0 behind a flag blaming a
 - `src/systems/startingGear.js:3` - seedStartingEquipment's INTERIM iron dagger: a new character now
 - `src/systems/talk.js:17` - crime/quest slices - FLAGGED there, not here).
@@ -392,15 +392,16 @@ combat line numbers below are refreshed with it.
 - `src/ui/messageBox.js:35` - FLAGGED: the scrolling variant (a label taller than MaxTextHeight
 - `src/ui/messageBox.js:155` - so the strip never rides higher than that. FLAGGED as a
 - `src/ui/nativeInventory.js:41` - still said Equip and equip-after-transfer were FLAGGED after U8g
-- `src/ui/nativeInventory.js:190` - *  is 0 until those effect channels exist (FLAGGED). Exported so the
-- `src/ui/nativeInventory.js:326` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
-- `src/ui/nativeInventory.js:657` - field is INTERIM-pending with the local Remove split.
-- `src/ui/nativeTalk.js:237` - lands with the Tell-me-about slice (FLAGGED).
-- `src/ui/nativeTalk.js:259` - B5-6: the four pages that were INTERIM no-ops. Each falls back
+- `src/ui/nativeInventory.js:206` - *  is 0 until those effect channels exist (FLAGGED). Exported so the
+- `src/ui/nativeInventory.js:358` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
+- `src/ui/nativeInventory.js:731` - field is INTERIM-pending with the local Remove split.
+- `src/ui/nativeTalk.js:279` - lands with the Tell-me-about slice (FLAGGED).
+- `src/ui/nativeTalk.js:303` - B5-6: the four pages that were INTERIM no-ops. Each falls back
 - `src/ui/paperDoll.js:18` - Human +2 - Breton INTERIM), record = playerTextureRecord
 - `src/ui/paperDoll.js:63` - table, the loud INTERIM the U8f/U8g records flagged.
 - `src/ui/pauseWindow.js:58` - FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
 - `src/ui/potionMakerWindow.js:24` - FLAGGED: DFU's ingredient buttons carry a tooltip and a stack-count
+- `src/ui/questJournal.js:647` - FLAGGED - THE ONE VALUE THIS BOX CANNOT SAY. DFU fixes the note
 - `src/ui/restWindow.js:2` - text-panel idiom (backgrounds FLAGGED pending art-name
 - `src/ui/restWindow.js:11` - FLAGGED: DFU's Update also closes on the TOGGLE BINDING - the key
 - `src/ui/restWindow.js:127` - FLAGGED, all three from OnPop/Update and all three belonging to

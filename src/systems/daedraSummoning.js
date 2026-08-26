@@ -41,6 +41,7 @@
 // names so the day that window lands there is nothing to look up.
 
 import { FACTION_FLAGS } from './factionRep.js';
+import { FACTION_TYPES, GUILD_GROUPS } from '../formats/factionFile.js';   // the one mirror of FactionFile's enums
 
 /** The sixteen princes, in DFU's own array order - the order is
  *  load-bearing twice: index 0 is Hircine (Glenmoril's, and excluded
@@ -66,9 +67,13 @@ export const DAEDRA = Object.freeze([
 export const HIRCINE_INDEX = 0;
 export const SHEOGORATH_INDEX = 8;
 export const GLENMORIL_WITCHES = 419;
-/** FactionFile.FactionTypes.WitchesCoven / GuildGroups.Witches. */
-export const WITCHES_COVEN_TYPE = 6;
-export const WITCHES_GUILD_GROUP = 8;
+/** FactionFile.FactionTypes.WitchesCoven (:542) and
+ *  FactionFile.GuildGroups.Witches (:593), from the one mirror of
+ *  those enums - the callers pass a FACTION.TXT record's own type and
+ *  ggroup, so these have to be the real 8 and 22 (6 is VampireClan,
+ *  8 is the placeholder GGroup8). */
+export const WITCHES_COVEN_TYPE = FACTION_TYPES.WitchesCoven;
+export const WITCHES_GUILD_GROUP = GUILD_GROUPS.Witches;
 
 /** The four TEXT.RSC records the summoner speaks (:28-31). */
 export const SUMMON_TEXT = Object.freeze({

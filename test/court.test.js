@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {
   CRIMES, REPUTATION_LOSS_PER_CRIME, lowerRepForCrime, legalRepOf,
   surrenderToCityGuards, startCourt, pleaGuilty, pleaNotGuilty,
-  resolveGuiltyVerdict, raiseRepForSentence, goldAmount,
+  resolveGuiltyVerdict, raiseRepForSentence, goldAmount, totalGoldAmount,
   clampLegalReputations, normalizeReputations, LEGAL_REP_MIN, LEGAL_REP_MAX,
   PENALTY_PER_LEGAL_REP_POINT, BASE_PENALTY, MIN_PENALTY, MAX_PENALTY,
 } from '../src/systems/court.js';
@@ -17,6 +17,7 @@ import { getPeopleOfCurrentRegion } from '../src/systems/talk.js';
 import { changeReputation } from '../src/systems/factionRep.js';
 import { snapshotFactionRep, restoreFactionRep } from '../src/systems/save.js';
 import { GUILDS, joinGuild } from '../src/systems/guilds.js';
+import { letterOfCredit } from '../src/systems/inventory.js';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -100,6 +101,39 @@ test('court: the verbatim penalty math and the guilty plea halving', () => {
   const r = pleaGuilty(court, p);
   assert.deepEqual([r.outcome, r.days], ['prison', 1]);
   assert.equal(goldAmount(p), 50);
+});
+
+test('AUDIT 26 F103: the fine is clamped to GetGoldAmount - coins PLUS letters of credit', () => {
+  // DaggerfallCourtWindow.cs:168-174 measures the purse with
+  // playerEntity.GetGoldAmount(), which is goldPieces + the pack's
+  // letters of credit (PlayerEntity.cs:1313-1316) - not GoldPieces.
+  // Same court as the pin above: Pickpocketing at legalRep -2, every
+  // coin odd -> fine 200 before the clamp.
+  const withPaper = () => ({
+    health: 1,
+    legalRep: { 17: -2 },
+    items: [{ group: 'Currency', name: 'Gold pieces', stackCount: 10 },
+      letterOfCredit(5000)],
+    skills: 30,
+    stats: { personality: 50 },
+  });
+  const p = withPaper();
+  assert.equal(goldAmount(p), 10, 'the coin stack alone');
+  assert.equal(totalGoldAmount(p), 5010, 'GetGoldAmount: coins + the letter');
+  const court = startCourt(p, 17, CRIMES.Pickpocketing, { rolls: seq(0.99, 0.99), dfRand: () => 1 });
+  // 5010 >= 200, so the clamp does not fire at all: the full fine
+  // stands and NO days are added.
+  assert.deepEqual([court.fine, court.daysInPrison], [200, 0]);
+  // ...and the guilty plea then PAYS it out of the letter (fine >>= 1),
+  // which is the half of this the port already had right.
+  const r = pleaGuilty(court, p);
+  assert.equal(r.outcome, 'released');
+  assert.equal(totalGoldAmount(p), 5010 - 100);
+  // The coins-only reading is what the clamp must NOT do: with 10 coins
+  // it would cut the fine to 10 and serve (200-10)/40 = 4 extra days.
+  const coinsOnly = { ...withPaper(), items: [{ group: 'Currency', name: 'Gold pieces', stackCount: 10 }] };
+  const poor = startCourt(coinsOnly, 17, CRIMES.Pickpocketing, { rolls: seq(0.99, 0.99), dfRand: () => 1 });
+  assert.deepEqual([poor.fine, poor.daysInPrison], [10, 4], 'a genuinely empty purse still converts');
 });
 
 test('court: the not-guilty pleas - free, and the never-charged guilty-verdict quirk', () => {

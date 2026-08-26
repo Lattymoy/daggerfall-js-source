@@ -582,3 +582,47 @@ export function regionPowerUpdate(store, {
   }
   return { walked, changed };
 }
+
+/** InitializeRegionData's twelve bootstrap passes (:2213-2217). */
+export const REGION_BOOTSTRAP_PASSES = 12;
+
+/**
+ * The TAIL of PlayerEntity.InitializeRegionData (:2213-2217):
+ *
+ *     for (int i = 0; i < 12; ++i)
+ *     {
+ *         RegionPowerAndConditionsUpdate(false);
+ *         RegionPowerAndConditionsUpdate(true);
+ *     }
+ *
+ * Every new character is born with this already run - twenty-four power
+ * walks (and twelve conditions passes) over the rumor-mill factions
+ * before the first frame - so the game never starts from the raw
+ * FACTION.TXT powers. That start state is what the merchants-vs-region
+ * term of UpdateRegionalPrices reads on day one, and what every later
+ * power question is measured against, so skipping it does not merely
+ * delay the walk: it shifts the whole save.
+ *
+ * DFU calls it from StartGameBehaviour.cs:433, after the biography's
+ * reputation effects and before the world unpauses; the port's
+ * equivalent seam is chargenSession (the same place the condition store
+ * is minted). A caller with no faction store yet - a host that never ran
+ * chargen, or a FACTION.TXT that would not load - walks nothing and says
+ * so through the same {walked, changed} shape one pass answers.
+ *
+ * @returns {{walked: number, changed: number}} the totals over all
+ *   twenty-four passes.
+ */
+export function bootstrapRegionPower(store, {
+  rumorMill = null, rolls = Math.random, regionConditions = null,
+} = {}) {
+  let walked = 0, changed = 0;
+  for (let i = 0; i < REGION_BOOTSTRAP_PASSES; i++) {
+    for (const updateConditions of [false, true]) {
+      const r = regionPowerUpdate(store, { rumorMill, rolls, updateConditions, regionConditions });
+      walked += r.walked;
+      changed += r.changed;
+    }
+  }
+  return { walked, changed };
+}

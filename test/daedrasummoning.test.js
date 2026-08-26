@@ -24,6 +24,7 @@ import {
   summoningCost, summoningChance, daedraForSummoner, weatherBonus, attemptSummoning,
 } from '../src/systems/daedraSummoning.js';
 import { FACTION_FLAGS } from '../src/systems/factionRep.js';
+import { FACTION_TYPES, GUILD_GROUPS } from '../src/formats/factionFile.js';
 import { serviceDestination } from '../src/systems/guildServiceFlow.js';
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
@@ -61,6 +62,29 @@ test('G7: the calendar - one prince a day, nobody on the rest', () => {
   let answering = 0;
   for (let d = 1; d <= 360; d++) if (daedraForSummoner({ dayOfYear: d })) answering++;
   assert.equal(answering, 16);
+});
+
+test('G7: the coven constants are FactionFile\'s own - type 8, guild group 22', () => {
+  // The callers hand daedraForSummoner and attemptSummoning a
+  // FACTION.TXT record's raw type and ggroup, so these have to be the
+  // literals in FactionFile.cs: WitchesCoven = 8 (:542) and
+  // Witches = 22 (:593). 6 is VampireClan and 8 is the placeholder
+  // GGroup8 - a coven matched neither.
+  assert.deepEqual([WITCHES_COVEN_TYPE, WITCHES_GUILD_GROUP], [8, 22]);
+  assert.equal(FACTION_TYPES.WitchesCoven, 8);
+  assert.equal(GUILD_GROUPS.Witches, 22);
+  // and the two branches they gate, driven by the raw numbers
+  const s = {};
+  assert.ok(daedraForSummoner({ factionType: 8, dayOfYear: 100, state: s, rolls: () => 0 }),
+    'type 8 takes the coven\'s daily random draw');
+  assert.equal(s.daedraSummonDay, 100);
+  assert.equal(daedraForSummoner({ factionType: 6, dayOfYear: 100, state: {}, rolls: () => 0 }), null,
+    'a VAMPIRE CLAN is not a coven - day 100 is nobody\'s summoning day');
+  const fail = (guildGroup) => attemptSummoning({
+    daedra: DAEDRA[11], gold: 1e6, summonerGuildGroup: guildGroup, rolls: seq(0.99, 0.99),
+  }).spawnFoes;
+  assert.equal(fail(22), true, 'a coven sets daedra on you');
+  assert.equal(fail(8), false, 'GGroup8 is nobody - it must not');
 });
 
 test('G7: Glenmoril always answers Hircine, and is tested BEFORE the coven branch', () => {

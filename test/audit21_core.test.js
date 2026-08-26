@@ -286,6 +286,38 @@ test('AUDIT 21 F8: an Argonian pays no swimming fatigue, and burns no roll for i
   assert.ok((arg.skillUses?.[SKILLS.Swimming] ?? 0) > 0, 'and still tallies the skill');
 });
 
+test('AUDIT 26: the per-minute fatigue band leads with CLIMBING, 22 a minute', () => {
+  // PlayerEntity.cs:403-413, in source order:
+  //     int amount = (int)(DefaultFatigueLoss * fatigueLossMultiplier);
+  //     if (climbingMotor != null && climbingMotor.IsClimbing)
+  //         amount = (int)(ClimbingFatigueLoss * fatigueLossMultiplier);
+  //     else if (playerMotor.IsRunning && !playerMotor.IsStandingStill) ...
+  //     else if (IsPlayerSwimming) ...
+  // Constants at :109-113: Default 11, Climbing 22, Running 88, Swimming 44.
+  const mk = () => ({ health: 500, maxHealth: 500, fatigue: 100000, magicka: 200,
+    level: 1, raceId: RACES.Breton, skills: { [SKILLS.Swimming]: 20 }, skillUses: {} });
+  const paid = (activity, rolls = () => 0.99) => {
+    const log = {};
+    tickPlayerMinutes({ entity: mk(), classicMinutes: 0, dt: 5, sinks: sinksFor(log), activity, rolls });
+    return log.fatigue ?? 0;
+  };
+  assert.deepEqual([
+    paid({}),
+    paid({ climbing: true }),
+    paid({ running: true }),
+    paid({ swimming: true }),
+  ], [11, 22, 88, 44], 'DefaultFatigueLoss 11, ClimbingFatigueLoss 22, Running 88, Swimming 44');
+
+  // THE ORDER. Climbing wins over a held Run key, and over the water:
+  // it is the FIRST arm, so neither later branch can be reached.
+  assert.equal(paid({ climbing: true, running: true }), FATIGUE_LOSS.Climbing);
+  assert.equal(paid({ climbing: true, swimming: true }), FATIGUE_LOSS.Climbing);
+  // ...and, being the first arm, it draws no Swimming roll at all.
+  let draws = 0;
+  paid({ climbing: true, swimming: true }, () => { draws++; return 0.99; });
+  assert.equal(draws, 0, 'the climbing arm short-circuits the swimming Dice100');
+});
+
 test('AUDIT 21 F7: swimming TALLIES the skill (the shipped line was unpinned)', () => {
   // Deleting `tallySkill(entity, SKILLS.Swimming)` left all 1138 tests green.
   // That is the "a skill that feeds every X could never advance" shape AUDIT

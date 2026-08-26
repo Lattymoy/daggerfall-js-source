@@ -47,7 +47,7 @@
 
 import { loadImg, nativeMetrics, drawImg, drawImgSub, drawImgCrop, shadowText, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';   // U25
-import { useItem, isLightSource } from '../systems/useItem.js';   // U25
+import { useItem, isLightSource, isMap } from '../systems/useItem.js';   // U25; U-parity: TransferItem's map arm reads the same predicate
 import { itemInfoRows, questLetterName, INFO_TEXT } from '../systems/itemInfo.js';   // U25
 import { goldAmount, deductGold } from '../systems/court.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
@@ -57,7 +57,7 @@ import { makeItemPermanent } from '../systems/quest/item.js';   // TransferItem'
 import { getBool } from '../systems/settings.js';   // GUI/CanDropQuestItems
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // L-slice (items-9); DaggerfallEntity.MaxEncumbrance, enchantment allowance and all
 import { liveStat } from '../systems/statMods.js';   // L-slice (items-9)
-import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, isBrokenItem, FORBIDDEN_EQUIPMENT_TEXT_ID, ITEM_BROKEN_TEXT_ID } from '../systems/equip.js';   // S23
+import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, isBrokenItem, setEquipDelayTime, FORBIDDEN_EQUIPMENT_TEXT_ID, ITEM_BROKEN_TEXT_ID } from '../systems/equip.js';   // S23; setEquipDelayTime is the OnPush/OnPop pair below
 import { drawPaperDoll, refreshPaperDoll, slotAtPaperDoll, ARMOR_LABEL_POS } from './paperDoll.js';
 import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel, safeScrollIndex } from './itemScroller.js';
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
@@ -165,6 +165,22 @@ export function questTransferRefused(item, { fromLocal, toWagon = false, getQues
 }
 
 /** key "exitTooFar" (:1239) - prose ours pending a string source. */
+/** TransferItem's LIGHT arm (DaggerfallInventoryWindow.cs:1506-1508),
+ *  verbatim: `if (item.IsLightSource && playerEntity.LightSource ==
+ *  item && from == localItems) playerEntity.LightSource = null`. It
+ *  sits under the quest arm and ABOVE the stack split, so a partial
+ *  transfer douses too.
+ *
+ *  Module-level because DaggerfallTradeWindow EXTENDS this window and
+ *  stages through the SAME TransferItem (DaggerfallTradeWindow.cs:795,
+ *  :817, :823, :826, every one of them `from` = localItems) - selling
+ *  or handing in a lit torch puts it out exactly as dropping one does.
+ *  Only callers whose `from` IS the pack call it: a torch taken off a
+ *  pile was never the player's light. */
+export function extinguishTransferred(entity, item) {
+  if (entity && isLightSource(item) && entity.lightSource === item) entity.lightSource = null;
+}
+
 export const EXIT_TOO_FAR_TEXT = 'You are too far from the exit.';
 /** key "cannotHoldAnymore" (WagonCanHoldAmount :1431). */
 export const CANNOT_HOLD_TEXT = 'Your wagon cannot hold any more.';
@@ -260,6 +276,13 @@ export class NativeInventoryWindow {
     this.allowDungeonWagonAccess = !!(hooks.dungeon?.inside && this._hasCart() && hooks.dungeon?.nearExit?.());
     if (this.allowDungeonWagonAccess && !hooks.loot) { this.usingWagon = true; this.mode = 'remove'; }
     this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);   // AUDIT 17f: icons follow the wearer's morphology
+    // OnPush (:667): "Update tracked weapons for setting equip delay" -
+    // SetEquipDelayTime(false) SNAPSHOTS both hands as they stand when
+    // the window opens. It is the half that makes the bill at OnPop a
+    // NET one, so it has to happen on every open, before any click can
+    // move a weapon. The port mints a window per open, so the
+    // constructor IS OnPush.
+    if (hooks.entity) setEquipDelayTime(hooks.entity, false);
     if (hooks.entity) refreshPaperDoll(hooks.entity);   // U8g: the doll composes fresh on open
   }
 
@@ -316,6 +339,15 @@ export class NativeInventoryWindow {
    *  overlay slot WITHOUT closing this one, so those two effects were
    *  skipped and a session drop was silently LOST. */
   _closeSilently() {
+    // OnPop (:729): "Add equip delay if weapon was changed" -
+    // SetEquipDelayTime(true) bills the NET of the whole session
+    // against the snapshot the constructor took, once, however many
+    // swaps happened in between. Ahead of `done` and guarded by it:
+    // every exit funnels through here, and a second call must not bill
+    // a second time. (DFU's "equipping %s" PopupMessage under it
+    // :731-750 needs the HUD's popup queue - not this window's box -
+    // and PENDS.)
+    if (!this.done && this.hooks.entity) setEquipDelayTime(this.hooks.entity, true);
     this.done = true;
     if (this.dropped.length) this.hooks.onDrop?.(this.dropped);   // the world pile mints on close (OnPop)
     this.hooks.onClose?.();
@@ -510,6 +542,12 @@ export class NativeInventoryWindow {
     if (!it) return;
     if (this.mode === 'info') { this._info(it); return; }
     if (this.mode === 'remove') {
+      // G6 (:1993-1994): nothing goes INTO a choose-one pile. This is
+      // LocalItemListScroller_OnItemClick's own gate, so it stands
+      // AHEAD of every one of TransferItem's guards below - a map
+      // clicked in a choose-one pile is not read, because TransferItem
+      // is never entered.
+      if (this.chooseOne && !this.usingWagon) return;
       // AUDIT 24 ui: the Remove arm's call is
       // `TransferItem(item, localItems, remoteItems, canHold, true)`
       // (DaggerfallInventoryWindow.cs:1999) - the 5th positional is
@@ -529,12 +567,23 @@ export class NativeInventoryWindow {
       // vanished from their stock, or dropped in a pile that would
       // quietly empty itself.
       if (this._refuseSummoned(it)) return;
+      // TransferItem's MAP arm (:1471-1478), the statement between the
+      // summoned guard and the quest one: a map is never TRANSFERRED.
+      // RecordLocationFromMap reads it and `from.RemoveItem(item)`
+      // eats it, in either direction - so dropping a treasure map
+      // reveals a location instead of stashing it.
+      if (isMap(it)) { this._transferMap(it, this.hooks.items()); return; }
       // TransferItem's QUEST arm (:1480-1505), the guard one statement
       // further down: `from` is localItems here, so an undroppable
       // quest item cannot leave the pack at all.
       if (this._refuseQuestItem(it, true)) return;
-      // G6 (:1994): nothing goes INTO a choose-one pile.
-      if (this.chooseOne && !this.usingWagon) return;
+      // TransferItem's LIGHT arm (:1506-1508), the statement under the
+      // quest one: `item.IsLightSource && playerEntity.LightSource ==
+      // item && from == localItems` puts the light out. `from` IS
+      // localItems here, and it happens BEFORE the stack split, so a
+      // partial transfer douses too. Without it the player kept the
+      // light - and its burn - from a torch lying in a pile.
+      extinguishTransferred(this.hooks.entity, it);
       // LocalItemListScroller_OnItemClick Remove: transfer to the
       // remote items (whole stacks - the split popup pends).
       // W-slice: INTO THE WAGON the 750kg cart limit gates first
@@ -610,6 +659,25 @@ export class NativeInventoryWindow {
     return true;
   }
 
+  /** TransferItem's MAP arm (DaggerfallInventoryWindow.cs:1471-1478):
+   *  `RecordLocationFromMap(item); from.RemoveItem(item); Refresh;
+   *  return`. UseItem's own map arm (:1740-1746) is those SAME two
+   *  statements over the same collection, so the reveal is read from
+   *  the one member that owns it (useItem.js) rather than written a
+   *  second time here - and a host with no reveal seam leaves the map
+   *  unread, which is that member's recorded answer, not a new one.
+   *
+   *  No getQuest and no isEnchanted ride along: TransferItem's map arm
+   *  stands ABOVE its quest arm (:1480) and nowhere near UseItem's
+   *  enchantment payload (:1809), so neither can run on this path.
+   *  No click sound either - the arm returns before DoTransferItem. */
+  _transferMap(it, from) {
+    this._useResult(useItem(it, from, {
+      entity: this.hooks.entity,
+      revealMap: this.hooks.revealMap ?? null,
+    }));
+  }
+
   _canCarryAmount(it) {
     const e = this.hooks.entity;
     if (!e) return it.stackCount ?? 1;
@@ -638,6 +706,12 @@ export class NativeInventoryWindow {
       // the player; Equip mode also EQUIPS the taken item (verbatim
       // TransferItem(..., equip: true))
       if (this._refuseSummoned(it)) return;   // X11b: TransferItem's guard, both callers
+      // TransferItem's MAP arm (:1471-1478), the other caller. The arm
+      // is direction-blind - `from.RemoveItem(item)` over whichever
+      // collection the item came from - so a map taken off a loot pile
+      // is read where it lies and never reaches the pack. It stands
+      // above the quest arm here as it does there.
+      if (isMap(it)) { this._transferMap(it, remote); return; }
       // TransferItem's quest arm, the OTHER caller: `from` is
       // remoteItems, so the refusal cannot fire without
       // CanDropQuestItems, and picking the item back up clears

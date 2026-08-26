@@ -187,16 +187,46 @@ test('U24: the cure price is 250 PER DISEASE through quality and bargaining', ()
   assert.equal(CURE_BASE_COST_PER_DISEASE, 250);
   const e = diseased(2);
   assert.equal(diseaseCount(e), 2);
-  const offer = cureDiseaseOffer(e, GUILDS.FightersGuild, null, { quality: 10, nowClassicMinutes: 0 });
+  // AUDIT 26 (F113): this pin used to run CalculateCost with the
+  // NEUTRAL 1000, reading DFU's two-argument call at
+  // DaggerfallGuildServiceCureDisease.cs:85 as "no regional term". The
+  // omitted third argument is conditionPercentage; CalculateCost
+  // applies ApplyRegionalPriceAdjustment unconditionally
+  // (FormulaHelper.cs:1895), off the LIVE region (:2026-2044). Seed the
+  // region's PriceAdjustment so the quote is a DFU literal either way.
+  e.regionPrices = { 0: 1250 };   // the top of RandomizeInitialRegionalPrices' 750..1250
+  const offer = cureDiseaseOffer(e, GUILDS.FightersGuild, null, { quality: 10, regionIndex: 0, nowClassicMinutes: 0 });
   assert.equal(offer.kind, 'offer');
   assert.equal(offer.diseases, 2);
-  // the same arithmetic DFU runs: CalculateCost with the NEUTRAL
-  // regional adjustment (it is called with two arguments), then
-  // CalculateTradePrice buying
-  const expect = calculateTradePrice(calculateCost(500, 10), 10,
-    { mercantile: 20, personality: 50 }, false);
+  const before = calculateCost(500, 10, 1250);
+  assert.equal(before, 1250, 'CalculateCost: 500 * 1250/1000 = 625, then 2 * (625*(10-10)/100 + 625)');
+  const expect = calculateTradePrice(before, 10, { mercantile: 20, personality: 50 }, false);
   assert.equal(offer.cost, expect);
-  assert.equal(offer.textId, TRADE_MESSAGE_BASE_ID + cureOfferMessageOffset(calculateCost(500, 10), offer.cost));
+  assert.equal(offer.textId, TRADE_MESSAGE_BASE_ID + cureOfferMessageOffset(before, offer.cost));
+});
+
+test('AUDIT 26 F113: curing is priced BY PROVINCE - CalculateCost always applies the regional adjustment', () => {
+  // FormulaHelper.CalculateCost (:1884-1899) runs
+  // ApplyRegionalPriceAdjustment (:1895) on every call, whatever its
+  // argument count, and that term is `cost * PriceAdjustment / 1000`
+  // off the region the player stands in (:2026-2044). So the SAME
+  // temple quote differs between a cheap province and an expensive one.
+  const mk = (region, adjustment) => {
+    const e = diseased(1);
+    e.regionPrices = { [region]: adjustment };
+    return cureDiseaseOffer(e, GUILDS.FightersGuild, null,
+      { quality: 10, regionIndex: region, nowClassicMinutes: 0 });
+  };
+  const cheap = mk(3, 750);      // RandomizeInitialRegionalPrices' floor
+  const dear = mk(4, 1250);      // ...and its ceiling
+  const neutral = mk(5, 1000);
+  assert.deepEqual(
+    [cheap.cost, neutral.cost, dear.cost],
+    [calculateTradePrice(calculateCost(250, 10, 750), 10, { mercantile: 20, personality: 50 }, false),
+      calculateTradePrice(calculateCost(250, 10, 1000), 10, { mercantile: 20, personality: 50 }, false),
+      calculateTradePrice(calculateCost(250, 10, 1250), 10, { mercantile: 20, personality: 50 }, false)]);
+  assert.ok(cheap.cost < neutral.cost && neutral.cost < dear.cost,
+    `the region must move the quote: ${cheap.cost} < ${neutral.cost} < ${dear.cost}`);
 });
 
 test('U24: only ARKAY discounts curing, and only for members', () => {

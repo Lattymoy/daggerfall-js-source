@@ -3,8 +3,7 @@
 // plus DaggerfallPotionMakerWindow's mixing half.
 //
 // Audit-25 listed the magic crafting windows among the six systems at
-// or near zero, and shopStock has carried "RandomlyAddPotionRecipe(25,
-// items) - potion recipes pend (loud)" since E1.
+// or near zero.
 //
 // THE RECIPES LIVE IN THE EFFECTS, not in a table. Each potion effect
 // class builds a PotionRecipe in its SetProperties and hands it to

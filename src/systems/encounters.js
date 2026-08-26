@@ -13,6 +13,7 @@
 import { CLIMATES } from '../formats/mapsFile.js';
 import { ENCOUNTER_TABLES } from '../characters/encounterTables.js';
 import { dice100 } from '../combat/formulas.js';   // Dice100.SuccessRoll, one home
+import { BUILDING_TYPES } from '../world/buildingNames.js';   // DFLocation.BuildingTypes, one home
 
 // AUDIT 24 (wave 23): this module used to carry its OWN copy of the
 // 45x20 table, character for character identical to the generated one
@@ -32,9 +33,15 @@ const CLIMATE_TABLE = new Map([
   [CLIMATES.Swamp, [32, 33, 34]], [CLIMATES.MountainWoods, [32, 33, 34]], [CLIMATES.Woodlands, [32, 33, 34]],
   [CLIMATES.HauntedWoodlands, [35, 36, 37]],
 ]);
-// The building-type table indexes (:1348-1364). BuildingTypes:
-// GuildHall 10, Temple 11, House1 17, House2 18, House3 19, Palace 15.
-const BUILDING_TABLE = new Map([[10, 40], [11, 41], [15, 42], [17, 42], [18, 43], [19, 44]]);
+// The building-type table indexes (:1348-1364). Palace and House1
+// share table 42; anything else inside a building is the default 39.
+// The keys are DFLocation.BuildingTypes (DFLocation.cs:106-133) -
+// GuildHall 11, Temple 14, Palace 16, House1 17, House2 18, House3 19.
+const BUILDING_TABLE = new Map([
+  [BUILDING_TYPES.GuildHall, 40], [BUILDING_TYPES.Temple, 41],
+  [BUILDING_TYPES.Palace, 42], [BUILDING_TYPES.House1, 42],
+  [BUILDING_TYPES.House2, 43], [BUILDING_TYPES.House3, 44],
+]);
 
 // PlayerEntity.IntermittentEnemySpawn:549-552 - minimum spawn
 // distances from the player by place.

@@ -17,8 +17,12 @@ const foe = (mobileType) => ({
   stats: { luck: 50, willpower: 50 }, skills: [], activeEffects: [],
   level: 1, health: 20, maxHealth: 20, mobileType,
 });
-// chanceMod 0 so the stored chance is exactly chanceBase
-const cast = (target, type, subType, chanceBase = 100, roll = 0.0) => applySpell(
+// chanceMod 0 so the stored chance is exactly chanceBase.
+// roll 0.99 is a Dice100 of 100, which FAILS the no-magnitude saving
+// throw AssignBundle rolls after the chance gate (EEM:565-579) - so
+// these pins see the chance gate alone, which is what they are for. The
+// save itself is pinned in audit26_magicsave.test.js.
+const cast = (target, type, subType, chanceBase = 100, roll = 0.99) => applySpell(
   buildCustomSpell({ slots: [{ type, subType, settings: { ...blankEffectSettings(), chanceBase, chanceMod: 0 } }], rangeType: 1 }),
   1, target, {}, () => roll, null, {});
 
@@ -69,7 +73,7 @@ test('X8: the Humanoid/Charm SPLIT - neither reaches the other\'s targets', () =
 });
 
 test('X8: the chance gate is the ordinary OnCast roll, and it can fail', () => {
-  assert.equal(cast(foe(0), 33, 0, 100, 0.0).pacify, true);
+  assert.equal(cast(foe(0), 33, 0, 100, 0.99).pacify, true);
   const failed = cast(foe(0), 33, 0, 10, 0.9);
   assert.equal(failed.pacify, undefined);
   assert.equal(failed.chanceFailed, 1, 'a matching target with a failed roll IS a failure');

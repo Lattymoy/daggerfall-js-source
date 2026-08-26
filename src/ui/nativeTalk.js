@@ -54,6 +54,11 @@ export const TALK_RECTS = Object.freeze({
   toneBlunt: [258, 38, 6, 6],
   topicUp: [102, 69, 9, 16],
   topicDown: [102, 161, 9, 16],
+  // rectButtonConversationUp / Down (DaggerfallTalkWindow.cs:226-227),
+  // wired at :798-804. The 5x94 scrollbar between them (:772-774) is
+  // not drawn here, for the same reason the topic one is not.
+  conversationUp: [303, 64, 9, 16],
+  conversationDown: [303, 176, 9, 16],
 });
 // ListBox verbatim (the 17d UI audit): row height = FONT0003's
 // fixedHeight 7 + RowSpacing (topic 0, conversation 4); the NPC
@@ -78,6 +83,10 @@ export const ANSWER_COLOR = [227 / 255, 223 / 255, 0, 1];   // DaggerfallAnswerT
 export const PLAYER_SAYS_RECT = Object.freeze([123, 8, 124, 38]);
 export const TALK_TOGGLE_COLOR = [162 / 255, 36 / 255, 12 / 255, 1];   // DaggerfallTalkWindow.toggleColor
 export const TOPIC_ARROW_SCROLL = 5;   // ButtonTopicUp/Down_OnMouseClick: ScrollIndex -/+= 5
+/** ButtonConversationUp/Down_OnMouseClick (:1442-1452): the SAME
+ *  five pixels off the conversation's own scrollbar - a different
+ *  member of the same window, so it carries its own citation. */
+export const CONVERSATION_ARROW_SCROLL = 5;
 
 /** VerticalScrollBar.SetScrollIndex (VerticalScrollBar.cs:187-198):
  *  clamp to [0, max(0, totalUnits - displayUnits)]. */
@@ -102,7 +111,12 @@ export function layoutPixelRows(heights, scrollPx, panelH, rowSpacing = 0) {
 /** UpdateScrollBarConversation (DaggerfallTalkWindow.cs:820-828):
  *  ScrollIndex = HeightContent() - Size.y, floored at 0 by
  *  SetScrollIndex - so a conversation shorter than the panel sits at
- *  the TOP, and a long one is pinned to its last row. */
+ *  the TOP, and a long one is pinned to its last row.
+ *
+ *  It is called at OnPush (:275-278), at Setup (:629) and after each
+ *  Q&A pair is added (:1282) - NOT every frame. Between those the
+ *  conversation arrows own the index (:1442-1452), which is what lets
+ *  the player read back over earlier directions. */
 export const conversationScroll = (contentH, panelH) => Math.max(0, contentH - panelH);
 
 let _art = null;
@@ -127,6 +141,16 @@ export class NativeTalkWindow {
     this.topics = [];                // current list rows
     this.topicMode = 'none';         // none | categories | buildings | topics | work
     this.scroll = 0;
+    // verticalScrollBarConversation.ScrollIndex (:772-776) - a PIXEL
+    // offset the window KEEPS, so an answer read three questions ago
+    // is still reachable. `_convPinned` is UpdateScrollBarConversation
+    // waiting to run: DFU can re-pin the moment it adds a Q&A because
+    // its labels are already laid out, while the port only learns the
+    // content height when a font reaches draw(), so the pin is carried
+    // to the next draw rather than computed here. The arrows clear it.
+    this.conversationScroll = 0;
+    this._convPinned = true;         // OnPush (:275-278) pins to the last row
+    this._convContentH = 0;          // listboxConversation.HeightContent(), as last drawn
     this._category = null;
     // MERGE (the S-A lane's shape): selectedTalkCategory persists -
     // SetTalkModeWhereIs re-runs SetTalkCategory(selectedTalkCategory)
@@ -182,8 +206,16 @@ export class NativeTalkWindow {
   }
   _askWork() {
     if (this.topicMode !== 'work' || !this.hooks.askWork) return;
-    this.conversation.push({ text: this.question, kind: 'question' });
-    this.conversation.push({ text: this.hooks.askWork(), kind: 'answer' });
+    this._addQuestionAnswerPair(this.question, this.hooks.askWork());
+  }
+  /** SetQuestionAnswerPairInConversationListbox (:1251-1284): the pair
+   *  goes in, the newest row is selected, and UpdateScrollBarConversation
+   *  (:1282) pins the panel to the bottom again - which is the ONLY
+   *  thing that moves the index back after the player has scrolled up. */
+  _addQuestionAnswerPair(question, answer) {
+    this.conversation.push({ text: question, kind: 'question' });
+    this.conversation.push({ text: answer, kind: 'answer' });
+    this._convPinned = true;
   }
   /** The index of the first row ListBox.Draw renders at this pixel
    *  scroll - what the port's digit accelerators address. */
@@ -207,13 +239,39 @@ export class NativeTalkWindow {
       // SAME pair - their rows carry listItems and the hooks already
       // speak them.
       this.question = this.hooks.question?.(it) ?? `Where is ${it.label ?? it.name}?`;
-      this.conversation.push({ text: this.question, kind: 'question' });
-      this.conversation.push({ text: this.hooks.answer(it), kind: 'answer' });
+      this._addQuestionAnswerPair(this.question, this.hooks.answer(it));
     }
   }
   /** VerticalScrollBar.ScrollIndex +/- dPx, clamped. */
   _scrollBy(dPx) {
     this.scroll = clampScrollPixels(this.scroll + dPx, this.topics.length * TOPIC_ROW_H, TALK_RECTS.topicList[3]);
+  }
+
+  /** ButtonConversationUp/Down_OnMouseClick (:1442-1452), over the
+   *  conversation's own scrollbar. Taking the index by hand is what
+   *  releases the bottom pin - DFU's index simply stays where the
+   *  arrow left it until the next Q&A re-pins it. The content height
+   *  is the one the last draw measured, because only a draw has the
+   *  font that wraps the rows. */
+  /** The index the panel draws at, over the height the rows just
+   *  measured. UpdateScrollBarConversation's pin (:820-828) runs ONCE
+   *  per Q&A (:1282) - not once per frame - so it is spent here and
+   *  the kept index stands until an arrow or the next answer moves it.
+   *  Recomputing the pin every frame nailed the panel to its last row
+   *  for the whole conversation, and no arrow could lift it. */
+  _resolveConversationScroll(contentH) {
+    const panelH = TALK_RECTS.conversation[3];
+    this._convContentH = contentH;
+    this.conversationScroll = this._convPinned
+      ? conversationScroll(contentH, panelH)
+      : clampScrollPixels(this.conversationScroll, contentH, panelH);
+    this._convPinned = false;
+    return this.conversationScroll;
+  }
+
+  _scrollConversationBy(dPx) {
+    this._convPinned = false;
+    this.conversationScroll = clampScrollPixels(this.conversationScroll + dPx, this._convContentH, TALK_RECTS.conversation[3]);
   }
   _close() { this.done = true; this.hooks.onClose?.(); }
 
@@ -253,6 +311,8 @@ export class NativeTalkWindow {
     if (inRect(R.toneBlunt, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.hooks.setTone(2); return true; }
     if (inRect(R.topicUp, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollBy(-TOPIC_ARROW_SCROLL); return true; }
     if (inRect(R.topicDown, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollBy(TOPIC_ARROW_SCROLL); return true; }
+    if (inRect(R.conversationUp, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollConversationBy(-CONVERSATION_ARROW_SCROLL); return true; }
+    if (inRect(R.conversationDown, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollConversationBy(CONVERSATION_ARROW_SCROLL); return true; }
     // ListBox.MouseClick's PixelWise branch: the hit row is found at
     // scrollIndex + clickY, not at the visible-row ordinal.
     if (inRect(R.topicList, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._pickIndex(Math.floor((vy - R.topicList[1] + this.scroll) / TOPIC_ROW_H)); return true; }
@@ -335,7 +395,7 @@ export class NativeTalkWindow {
     // its last row. The port anchored every conversation to the bottom.
     const heights = entries.map((e) => e.lines.length * ROW_H);
     const contentH = heights.reduce((a, b) => a + b, 0) + Math.max(0, entries.length - 1) * ROW_SPACING;
-    const scroll = conversationScroll(contentH, R.conversation[3]);
+    const scroll = this._resolveConversationScroll(contentH);
     for (const { index, y } of layoutPixelRows(heights, scroll, R.conversation[3], ROW_SPACING)) {
       const e = entries[index];
       const newest = index === entries.length - 1;
