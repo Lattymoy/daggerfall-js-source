@@ -62,11 +62,11 @@ import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';   // G2
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
-import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';
+import { LevelUpScreen, preloadCharSheetArt } from '../ui/charsheet.js';
+import { createCharSheetWindow, charSheetDoorReady } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
 import { canRest, restDecision, ILLEGAL_REST_WARNING } from '../systems/restSession.js';   // U48: the dispatch + V5's CanRest
 import { getBool } from '../systems/settings.js';   // U48: GUI/IllegalRestWarning gates the two-step
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
-import { charSheetHooks } from '../ui/charSheetNav.js';   // U32: the sheet's four navigation buttons
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw
@@ -845,7 +845,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // inline in this host's keydown, which meant the INTERIOR host -
   // which mounts this host's windows rather than building its own -
   // had no way to reach it, and F5 in a shop did nothing.
-  const makeCharSheetWindow = () => new CharSheet(playerEntity, charSheetHooks({
+  const makeCharSheetWindow = () => createCharSheetWindow({
     entity: playerEntity,
     artDeps: { renderer, fetchBytes, palette },
     inventory: () => (inventoryArtLoaded() ? makeInventoryWindow() : null),
@@ -856,7 +856,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // `?dungeon` page gets. An empty journal would tell a player they
     // have no quests when the truth is this page cannot see them, and
     // for the same reason this host answers neither L nor N.
-  }));
+  });
   const arrows = new ArrowFlight({ getGpuMesh, collider: () => collider });   // C13
   let zPrevW = false;   // the ReadyWeapon (Z) edge
   const modeNow = () => modes?.mode ?? 'exterior';   // lazy - modes binds below (boot-time mouse events)
@@ -1004,12 +1004,13 @@ export async function bootExterior(canvas, renderer, params, status) {
   }
 
   const hudCtx = {
-    toggleCharSheet: () => townTalk.showOverlay(new CharSheet(playerEntity, charSheetHooks({
-      entity: playerEntity,
-      artDeps: { renderer, fetchBytes, palette },
-      inventory: () => (inventoryArtLoaded() ? makeInventoryWindow() : null),
-      spellbook: makeSpellbookWindow,
-    }))),
+    // U52: THE HOST'S OWN FACTORY, not a second copy of it. This arm
+    // hand-rolled the sheet while `makeCharSheetWindow` sat twenty
+    // lines up being handed to the interior host - two builders for one
+    // window in one file, and the inline one had already lost the
+    // other's note about the deliberately withheld quest hooks. They
+    // agreed. That is what drift looks like the day before it stops.
+    toggleCharSheet: () => townTalk.showOverlay(makeCharSheetWindow()),
     toggleInventory: () => { if (inventoryArtLoaded()) townTalk.showOverlay(makeInventoryWindow()); },
     toggleSpellbook: () => toggleSpellbook(),
     // S40: the Rest door - world.js's twin (THE FOUR HOSTS RULE).
@@ -1208,7 +1209,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // U43: and the other two windows the INTERIOR host answers keys
     // for. Same rule as makeInventory - this host owns the builder and
     // its dependency list; worldModes only chooses the slot.
-    makeCharSheet: () => (charSheetArtLoaded() ? makeCharSheetWindow() : null),
+    makeCharSheet: () => (charSheetDoorReady() ? makeCharSheetWindow() : null),
     magic, spellsByIndex: () => spellsByIndex,   // M2: the one cast engine + SPELLS.STD ride into the interior arm
     townTalk,   // U23: the interior host borrows FACTION.TXT/TEXT.RSC + the talk seam
     // R1: without this the exterior-lock anti-grind record and
@@ -1333,7 +1334,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     window.__droppedLoot = () => JSON.stringify(droppedLoot._piles.map((pl) => ({ n: pl.items.length, pos: pl.pos.map((v) => +v.toFixed(1)), record: pl.record, flat: !!pl.batch })));   // U8e probe surface
     window.__crime = () => _crimeResponse();   // G1: force the response without pickpocket RNG
     window.__guardDamage = (i, dmg) => cityGuards._damage(i, dmg);   // G3: the real death path for loot probes
-    window.__uiArt = () => JSON.stringify({ charsheet: charSheetArtLoaded() });   // U8a probe surface
+    window.__uiArt = () => JSON.stringify({ charsheet: charSheetDoorReady() });   // U8a probe surface; U52: the door, not the art alone
     window.__attack = () => weaponRig.clickAttack();   // G4: ClickToAttack for swing probes
     window.__townDebug = () => JSON.stringify({
       night: isNight(minuteNow()), pool: population?.pool.length ?? 0, max: population?.maxPopulation ?? 0, populated,

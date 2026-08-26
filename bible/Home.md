@@ -246,10 +246,10 @@ combat line numbers below are refreshed with it.
 - `src/scenes/exterior.js:507` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:513` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:735` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:1054` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:1347` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:1499` - FLAGGED here exactly as in world.js - no tile lookup yet).
-- `src/scenes/exterior.js:1841` - ground (FLAGGED with world.js's same gap), so Detect Treasure
+- `src/scenes/exterior.js:1055` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/exterior.js:1348` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:1500` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:1842` - ground (FLAGGED with world.js's same gap), so Detect Treasure
 - `src/scenes/shared.js:221` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:238` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:343` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture

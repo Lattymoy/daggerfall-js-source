@@ -12,7 +12,7 @@ the SPELLBOOK with its icons and the guilds' buy mode, ONE
 DISPATCH so those windows work in a building and not only outdoors,
 and the classic LARGE HUD with its eleven clickable panels, and the
 BANK'S HOUSE MARKET).
-67 modules
+69 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.
@@ -24,9 +24,11 @@ overrides for one page load without persisting (the 25 probes in
 door, U50 the character-creation wizard, U51 the PAUSE DOOR - and each
 is the same `ui/enhancedMenu.js` or `ui/enhancedChargen.js` mounted by
 the game and by its prototype page, never a second copy of the design.
-It stops at the pause screen: the windows behind it - inventory, the
-sheet, the spellbook, the travel map, the journal, the HUD - are all
-classic. `enhanced.html` + `src/tools/enhancedUI.js` is the prototype
+U52 opened the first IN-GAME screen: the CHARACTER SHEET. The windows
+still behind it - inventory, the spellbook, the travel map, the
+journal, the HUD - are classic, and the sheet PUSHES three of them as
+canvas children under its own DOM, which is the contract every screen
+after it inherits. `enhanced.html` + `src/tools/enhancedUI.js` is the prototype
 for those and is not mounted by anything.
 
 AUDIT 18 rewrote this page: its opening paragraph declared the arc

@@ -72,9 +72,9 @@ import { createArrestFlow } from './arrestFlow.js';
 import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold, totalGoldAmount, deductGoldPieces } from '../systems/court.js';   // AUDIT 17e F6   // G2   // F-slice: travel gold; U41: GetGoldAmount + the pieces half of DeductFastTravelGold
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
-import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet (LevelUpScreen: AUDIT 21 hosts F3)
+import { LevelUpScreen, preloadCharSheetArt } from '../ui/charsheet.js';   // U8a (LevelUpScreen: AUDIT 21 hosts F3)
+import { createCharSheetWindow, charSheetDoorReady } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
-import { charSheetHooks } from '../ui/charSheetNav.js';   // U32: the sheet's four navigation buttons
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw
@@ -1336,7 +1336,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // inline in this host's keydown, which meant the INTERIOR host -
   // which mounts this host's windows rather than building its own -
   // had no way to reach it, and F5 in a shop did nothing.
-  const makeCharSheetWindow = () => new CharSheet(playerEntity, charSheetHooks({
+  const makeCharSheetWindow = () => createCharSheetWindow({
     entity: playerEntity,
     artDeps: { renderer, fetchBytes, palette },
     inventory: () => (inventoryArtLoaded() ? makeInventoryWindow() : null),
@@ -1344,7 +1344,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Q4-v: the live machine's log walk and the player's notebook
     questMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
     notebook: () => questBridge?.notebook ?? null,
-  }));
+  });
   /** U43: the two journal doors (GameManager.cs:541-548), ONE window
    *  either way - LogBook opens it as it stands, NoteBook on the
    *  Notebook page (DaggerfallUI.cs:704-711). */
@@ -2156,7 +2156,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     window.__droppedLoot = () => JSON.stringify(droppedLoot._piles.map((pl) => ({ n: pl.items.length, pos: pl.pos.map((v) => +v.toFixed(1)), record: pl.record, flat: !!pl.batch })));   // U8e probe surface
     window.__crime = () => _crimeResponse();   // G1: force the response without pickpocket RNG
     window.__guardDamage = (i, dmg) => cityGuards._damage(i, dmg);   // G3: the real death path for loot probes
-    window.__uiArt = () => JSON.stringify({ charsheet: charSheetArtLoaded() });   // U8a probe surface
+    window.__uiArt = () => JSON.stringify({ charsheet: charSheetDoorReady() });   // U8a probe surface; U52: the door, not the art alone
     window.__attack = () => weaponRig.clickAttack();   // G4: ClickToAttack for swing probes
     window.__townDebug = () => {
       const pixels = [];
@@ -2851,7 +2851,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // U43: and the other two windows the INTERIOR host answers keys
     // for. Same rule as makeInventory - this host owns the builder and
     // its dependency list; worldModes only chooses the slot.
-    makeCharSheet: () => (charSheetArtLoaded() ? makeCharSheetWindow() : null),
+    makeCharSheet: () => (charSheetDoorReady() ? makeCharSheetWindow() : null),
     makeJournal: (mode) => makeJournalWindow(mode),
     revealLocation,
     magic, spellsByIndex: () => spellsByIndex,   // M2: the one cast engine + SPELLS.STD ride into the interior arm

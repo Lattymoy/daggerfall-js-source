@@ -53,9 +53,9 @@ import { createChargenFlow, finishChargen, applyHeadlessChargen, applyCreationEx
 import { preloadChargenArt, stopConstellationAnim } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { ChargenFlow } from '../ui/chargen.js';
-import { LevelUpScreen, CharSheet, preloadCharSheetArt } from '../ui/charsheet.js';
+import { LevelUpScreen, preloadCharSheetArt } from '../ui/charsheet.js';
+import { createCharSheetWindow } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
-import { charSheetHooks } from '../ui/charSheetNav.js';   // U32: the sheet's four navigation buttons
 import { DeathScreen } from '../ui/deathScreen.js';
 import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in)
 // U26: the dungeon finally gets the SAME inventory window the exterior
@@ -2957,13 +2957,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // charSheetHooks' refusal is still the honest answer, which is
       // why this passes the bridge's own null through rather than
       // substituting an empty list.
-      activeOverlay = new CharSheet(playerEntity, charSheetHooks({
+      activeOverlay = createCharSheetWindow({
         entity: playerEntity,
         artDeps: { renderer, fetchBytes, palette },
         inventory: () => openInventory(null),
         spellbook: makeSpellbookWindow,
         ...questJournalHooks(),
-      }));
+      });
     },
     /** U43: the two journal doors (GameManager.cs:541-548). ONE window
      *  either way - LogBook opens it as it stands, NoteBook on the

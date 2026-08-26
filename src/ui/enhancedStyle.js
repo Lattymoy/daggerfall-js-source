@@ -349,6 +349,85 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
+/* ── THE CHARACTER SHEET (U52) ──────────────────────────────
+   The first IN-GAME screen in this language. Three columns because
+   the sheet answers three questions - what you are, what you can do,
+   what state you are in - and the classic sheet answers all three in
+   one 320x200 panel by showing nine skills at a time.
+
+   It borrows the menu's card, act and stats rules whole rather than
+   restating them: one design language, one home. What is new here is
+   the METER, which the eight attributes and the four vitals share -
+   they are the same shape at two scales, so they are one rule. */
+.sheet-shell { height: 100%; display: flex; flex-direction: column; min-height: 0; }
+
+.sheet-id {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  padding: 26px 30px 18px; border-bottom: 1px solid var(--iron); background: var(--ink);
+}
+.sheet-id h2 { font-family: var(--display); font-weight: 300; font-size: 30px; margin: 0; }
+.sheet-id .meta { color: var(--dim); font-size: 13px; margin: 6px 0 0; }
+
+.sheet {
+  flex: 1; min-height: 0; display: grid; gap: var(--gap);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  background: var(--iron);
+}
+.sheetcol { background: var(--slate); overflow: auto; padding: 20px 22px 26px; min-height: 0; }
+.colhead {
+  font-family: var(--data); font-weight: 500; font-size: 11px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--dim); margin: 0 0 16px;
+}
+
+/* THE METER. A label, its numbers, and a track - and the track is the
+   thing the classic sheet has no room for at all: eight attributes as
+   bare integers make you do the comparing. */
+.meter { margin-bottom: 13px; }
+.meter-k { font-size: 14px; }
+.meter-v { float: right; color: var(--dim); font-size: 13px; font-variant-numeric: tabular-nums; }
+.meter-track { clear: both; height: 4px; background: #0b0e12; margin-top: 6px; }
+.meter-fill { height: 100%; }
+.meter-fill.brass { background: var(--brass); }
+.meter-fill.blood { background: var(--blood); }
+.meter-fill.verdigris { background: var(--verdigris); }
+.meter-fill.iron { background: var(--dim); }
+
+/* SKILLS. The career groups are the character's chosen shape and are
+   headed; the miscellaneous remainder is one press away. A career row
+   is brighter than a miscellaneous one because that difference IS the
+   character - it is what the three groups mean. */
+.skillgroup {
+  font-family: var(--data); font-weight: 500; font-size: 10px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--brass); margin: 18px 0 8px;
+}
+.skillgroup:first-of-type { margin-top: 0; }
+.skillrow {
+  display: flex; justify-content: space-between; gap: 12px;
+  padding: 7px 0; border-bottom: 1px solid #1b2027; color: var(--dim); font-size: 14px;
+}
+.skillrow.career { color: var(--bone); }
+.skill-v { font-variant-numeric: tabular-nums; }
+.act.more { width: 100%; margin-top: 18px; text-align: center; }
+
+/* THE FOUR NAVIGATION BUTTONS, in the thumb's arc on a phone and along
+   the foot of the sheet everywhere. A button is drawn only where the
+   host handed a factory - see ui/enhancedCharSheet.js's nav(). */
+.sheet-nav {
+  display: flex; gap: 8px; flex-wrap: wrap; padding: 16px 30px;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--iron); background: var(--ink);
+}
+.sheet-nav .act { flex: 1 1 auto; text-align: center; }
+.sheet-notice { color: #d98074; font-size: 13px; margin: 0; padding: 12px 30px 0; }
+
+@media (max-width: 860px) {
+  .sheet { grid-template-columns: 1fr; grid-auto-rows: min-content; overflow: auto; }
+  .sheetcol { overflow: visible; }
+  .sheet-id { padding: 20px; }
+  .sheet-id h2 { font-size: 25px; }
+  .sheet-nav { padding: 12px 16px; padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+}
+
 /* ── THE WIZARD ─────────────────────────────────────────────
    Character creation borrows the menu's shell whole - same rail, same
    panes, same phone laws - because it is the same interface one press

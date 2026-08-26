@@ -8,6 +8,103 @@ policies one by one.
 
 
 
+## U52 THE ENHANCED CHARACTER SHEET (2026-08-26)
+
+The first of the port's IN-GAME screens to grow an enhanced twin. F5
+opens it, `ui/charSheetDoor.js` chooses, and the classic INFO00I0 sheet
+is one `?skin=classic` away as always.
+
+THE SEAM HAD TO BE MADE, not found. U50's fork went inside
+`createChargenWindow` and U51's in front of `openPauseFlow`, both of
+which already existed; nothing funnelled the sheet. Three hosts each
+wrote `new CharSheet(playerEntity, charSheetHooks({ ... }))` by hand -
+and `exterior.js` wrote it TWICE, once as `makeCharSheetWindow` for the
+interior host to borrow and once inline in its own F5 arm, the second
+copy having already lost the first's note about the deliberately
+withheld quest hooks. They agreed. That is what drift looks like the
+day before it stops being true, and it is AUDIT 17i's finding one
+window over. The hosts hand their DEPS to the door now and never see
+which sheet that adds up to; the door is the only caller of
+`charSheetHooks` left.
+
+THE DENSITY ARGUMENT IS THIS SCREEN'S WHOLE POINT. Daggerfall has 35
+skills where Skyrim has 18, and the classic sheet answers that by
+showing NINE - keys 1-4 pop a text panel over the art and
+`_drawSkillPage` slices to `ids.slice(0, 9)`, because a 320x200 panel
+has nowhere else to put them, so comparing a Major against a
+Miscellaneous means pressing two keys and remembering the first number.
+This shows every skill the character has a career for, in DFU's own
+three groups, with the twenty-odd Miscellaneous ones one press away.
+Disclosure, not deletion - the prototype's rule, and the reason this is
+not "Skyrim's sheet with Daggerfall's words in it".
+
+THE NUMBERS ARE THE CLASSIC SHEET'S, and `sheetModel` is pure and
+separate so a node test can prove it: it evaluates ui/charsheet.js's
+own expressions beside the model over an entity carrying a DRAIN, which
+is where the trap is. The eight attributes and the encumbrance ceiling
+both read `liveStat`, so a sheet showing the raw base makes a poisoned
+player read a lie, and both mutations die. `carriedWeight` was
+module-private in charsheet.js and is EXPORTED rather than re-reduced
+here. Writing the /64 divisor as a new constant was caught in the
+slice - `FATIGUE_MULTIPLIER` is statMods.js's own export and
+charsheet.js's two inline copies are collapsed onto it in the same
+motion.
+
+THE CHILD WINDOWS ARE THE HARD PART, and they are what makes this
+screen unlike the two before it. The sheet is not a leaf: its four
+navigation buttons PUSH a window, the hosts hold ONE overlay slot so
+the sheet owns its child and delegates (CharSheet's own note since
+U32), and those children are CANVAS windows - drawn on the canvas
+underneath an opaque DOM div. So the enhanced overlay HIDES ITSELF on
+push, restores on pop, disposes the popped child and re-reads the model
+(gold and encumbrance come FROM the pack the inventory just changed),
+and forwards ALL SIX arms. U42 is why that list is exhaustive rather
+than obvious: the classic sheet forwarded tick, wheel, input and click
+and NOT hover, and the spellbook silently lost its list highlight and
+all three of its icon tooltips on exactly the route three of the four
+hosts take.
+
+THE ART GATE MOVED, as it did at U51: `charSheetDoorReady()` is
+`isEnhanced() || charSheetArtLoaded()`, since the enhanced sheet reads
+no ARENA2 at all.
+
+ESCAPE AND F5, the two keys the classic sheet closes on. Keys 1-4 have
+nothing to do here - all four groups are on the screen at once, so an
+arm for them would be a key that appears to do nothing. F5 is NOT in
+`overlayAction` (that table is the shared overlay vocabulary and F5 is
+a host BINDING) so it is read from the event and CLAIMED: an unclaimed
+F5 is a browser reload that destroys the session, which is AUDIT 17e
+F41's finding one window over.
+
+PROVED IN A REAL BROWSER by `tools/enhancedSheetProbe.mjs` - 64/64 on a
+desktop and a Pixel 5 with no ARENA2, driving a real push with a fake
+child, which is where the child contract is actually exercised. It
+caught two of its OWN wrong expectations first: History is drawn
+whatever the host hands (charSheetNav's host-agnostic half needs only
+the entity), and `setUiSkin('classic')` on a page loaded with
+`?skin=enhanced` changes nothing, because the URL override outranks the
+stored choice - the very property that keeps the 25 classic-geometry
+probes honest. 20 pins; 12 mutations, 12 dead.
+
+THE VACUOUS-FORK LESSON WAS NEEDED TWICE. The classic-skin pin ran
+headless, where `typeof document` is undefined, so BOTH skins fell to
+the classic branch and deleting `isEnhanced()` from the condition
+survived - the identical defect the first draft of
+`test/enhancedPause.test.js` shipped one slice earlier. It runs under
+the same four-property fake document now. Worth recording because it
+was not learned the first time.
+
+NOT DRAWN HERE, recorded rather than dropped quietly: THE PAPERDOLL.
+The classic sheet composes it at DFU's (200,8) and the prototype
+answers the same slot with the 28-node body schematic - but that
+schematic is the INVENTORY's signature, it wants
+`src/tools/enhancedVisuals.js` and the three.js tag `enhanced.html` loads
+from a CDN, and the port's doctrine already carries exactly one
+third-party request (Ledger A, the web fonts). It belongs to the
+inventory slice with the equip map it explains. The LEVEL-UP screen
+stays classic too: a different window, pushed by the hosts themselves,
+which mutates stats through chargen's verbatim clamps.
+
 ## U51 THE PAUSE DOOR (2026-08-26)
 
 Escape opens the ENHANCED screen. `ui/pauseDoor.js` picks between it
