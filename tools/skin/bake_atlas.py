@@ -56,11 +56,50 @@ def rendered_point(q, s, t):
 
 
 def fallback_rgb(f2):
+    # neutral.json is exported without game palette data. Its baked lighting
+    # intensity is enough for a safe unresolved texel and is independent of
+    # whatever dummy ramp the exporter used.
+    iv = f2.get('_i')
+    if isinstance(iv, (int, float)):
+        v = max(0.0, min(1.0, float(iv))) * 255.0
+        return np.asarray((v, v, v), dtype=float)
     c = f2.get('c')
     if c and len(c) >= 3:
         return np.asarray(c[:3], dtype=float)
     return np.asarray((153.0, 153.0, 153.0))
 
+
+# Stable geometry fingerprint. Runtime packs positions with Math.round(x*1000)
+# and one group byte per face; hash exactly those values so a texture baked on
+# yesterday's geometry cannot silently wrap today's rig merely because the face
+# COUNT stayed unchanged.
+GI = {'body': 0, 'head': 1, 'armL': 2, 'armR': 3, 'legL': 4, 'legR': 5}
+
+
+def js_round(v):
+    return math.floor(float(v) + 0.5)
+
+
+def rig_hash():
+    h = 2166136261
+
+    def mix(v):
+        nonlocal h
+        u = int(v) & 0xffffffff
+        for shift in (0, 8, 16, 24):
+            h ^= (u >> shift) & 0xff
+            h = (h * 16777619) & 0xffffffff
+
+    mix(len(F))
+    for f2 in F:
+        mix(GI.get(f2['g'], 0))
+        for v in f2['p']:
+            mix(js_round(float(v) * 1000))
+    return f'{h:08x}'
+
+
+RIG_HASH = rig_hash()
+print('rig hash', RIG_HASH)
 
 unresolved = 0
 for tile_i, fi in enumerate(face_ids):
@@ -140,7 +179,7 @@ Image.fromarray(rgb, 'RGBA').save('/mnt/user-data/outputs/skin-atlas.png')
 Image.fromarray(intensity, 'L').save('/mnt/user-data/outputs/skin-intensity.png')
 json.dump(layout, open('/mnt/user-data/outputs/skin-layout.json', 'w'), indent=1)
 json.dump(
-    {'n': len(F), 'w': AW, 'h': AH, 'uv': uv},
+    {'n': len(F), 'w': AW, 'h': AH, 'rigHash': RIG_HASH, 'uv': uv},
     open('/mnt/user-data/outputs/skin-uv.json', 'w'),
 )
 
