@@ -1,0 +1,51 @@
+name: patch clothing torso front v4
+
+on:
+  push:
+    branches: [chatgpt/exact-face-atlas]
+    paths:
+      - .github/workflows/patch-clothing-front-v4.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/exact-face-atlas
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply chest-weighted front refinement
+        run: python tools/patch_clothing_front_v4.py
+      - run: npm ci
+      - name: Verify clothing front v4 and neckline coverage
+        run: |
+          node --check src/tools/paperdoll/clothingTexture.js
+          node tools/clothingCanonicalProbe.mjs
+          node --input-type=module - <<'NODE'
+          import { clothingZones } from './src/characters/clothing.js';
+          const shirt = clothingZones('Short Shirt');
+          const tunic = clothingZones('Formal Tunic');
+          const open = clothingZones('Open Tunic');
+          const torso = (zs) => zs.find((z) => z.groups.includes('body'));
+          const arms = (zs) => zs.find((z) => z.arm);
+          if (!(torso(shirt).yHi >= 1.665 && arms(shirt).yHi >= 1.645)) throw new Error('closed shirt must cover trap/lower neck and shoulder cap');
+          if (!(torso(tunic).yHi >= 1.665 && arms(tunic).yHi >= 1.645)) throw new Error('closed tunic must cover trap/lower neck and shoulder cap');
+          if (!(torso(open).yHi < torso(shirt).yHi)) throw new Error('open tunic must retain a looser neckline than closed shirts');
+          console.log('clothing neckline coverage probe: PASS');
+          NODE
+          grep -q "paperdoll-surface-v4" src/tools/paperdoll/clothingTexture.js
+          npm run build
+          git diff --check
+      - name: Commit verified refinement
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add src/tools/paperdoll/clothingTexture.js tools/clothingCanonicalProbe.mjs
+          git commit -m "CLOTHING: weight shirt reconstruction to chest evidence"
+          git push origin HEAD:chatgpt/exact-face-atlas
