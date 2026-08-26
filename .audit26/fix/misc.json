@@ -1,0 +1,34 @@
+[
+ {
+  "jsFile": "src/scenes/paintOverlay.js",
+  "jsLine": 9,
+  "title": "paintOverlay.js is dead code; the ?paint flag dead-ends",
+  "claim": "mountPaintOverlay is the module's only export and nothing in src/ or test/ imports it (grep: zero importers). The ?paint URL flag is read at world.js:2864, destructured in worldModes.js:266, forwarded into buildInteriorContext's opts at worldModes.js:2233 - but interiorContext.js reads only opts.peopleVisible/opts.setupStaticNpc/opts.voxelfolk (:198/:225/:239); opts.paint is never consumed.",
+  "consequence": "The C6L body-sheet paint tuner (154 lines) is unreachable: ?paint is accepted, threaded through two hosts, and silently does nothing.",
+  "severity": "bug",
+  "confidence": "high",
+  "csFile": "",
+  "csLine": "",
+  "group": "hosts-support",
+  "id": "F039",
+  "verify": {
+   "tier": "batched",
+   "reason": "paintOverlay.js:9 mountPaintOverlay has zero importers project-wide. worldModes.js:2233 forwards `paint` into buildInteriorContext's opts, but interiorContext.js never reads opts.paint (only peopleVisible :198, setupStaticNpc :225, voxelfolk :239). Confirmed dead code."
+  }
+ },
+ {
+  "jsFile": "src/tools/paperdollViewer.js",
+  "jsLine": 442,
+  "title": "Villager pick sets raceIx = RACES.indexOf('Human') = -1; design skin tone never applies",
+  "claim": "applyVillagerTone (lines 439-447) does raceIx = RACES.indexOf('Human'), but RACES (line 361) is now eight real races with no 'Human' entry (the four-family era it belonged to is described at lines 357-360). PALETTES.human entries do carry names 'Pale'/'Fair'/'Deep' (src/characters/palettes.js:7-12) and every villager ships a tone via RACE_TONE (villagerDesigns.js:296-299, attached at paperdollPayload.js:319), so ti>=0 and raceIx becomes -1 on every villager selection. applyTone (603-604) reads RACES[-1]=undefined and bails at `if (!pal) return`; loadHeads/loadFaceSet get an undefined race and silently drop; toneIx.Human is a key no reader uses (toneIx built from RACES at 602).",
+  "consequence": "Picking any villager in the shipped viewer silently discards the design's authored skin tone (a Redguard renders default-toned instead of 'Deep'), head/face sets stop loading, and the race/tone controls run off raceIx=-1 until the race button is clicked. A shipped law thrown away at the seam.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "dev-tools",
+  "id": "F134",
+  "verify": {
+   "tier": "batched",
+   "reason": "paperdollViewer.js:361 RACES=['Breton','Redguard','Nord','High Elf','Wood Elf','Dark Elf','Khajiit','Argonian'] has no 'Human' entry. applyVillagerTone (:442) sets raceIx=RACES.indexOf('Human')=-1 when a villager's tone matches the human palette (reachable per PALETTES.human/RACE_TONE wiring). syncRace (:623) calls applyTone (:603-604): RACES[-1]=undefined -> pal undefined -> `if(!pal) return` bails, discarding the design's tone; loadFaceSet/loadHeads run off the same undefined race."
+  }
+ }
+]

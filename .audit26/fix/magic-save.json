@@ -1,0 +1,104 @@
+[
+ {
+  "jsFile": "src/systems/enchantments.js",
+  "jsLine": 466,
+  "csFile": "Game/MagicAndEffects/Effects/Enchanting/ItemDeteriorates.cs",
+  "csLine": "88-89, 112-116",
+  "title": "ItemDeteriorates params shifted: DFU 0=AllTheTime/1=Sunlight/2=Holy, port 0=sunlight/1=holy/2=always",
+  "claim": "DFU's Params enum is AllTheTime=0, InSunlight=1, InHolyPlaces=2, and MagicRound returns early only when (param==InSunlight && !inSunlight) || (param==InHolyPlaces && !inHolyPlace) — param 0 degrades unconditionally. The port's magicRound gates `param === 0` on ctx.inSunlight and `param === 1` on ctx.inHolyPlace, so param 2 falls through both ifs and degrades unconditionally. The port's own catalogue (enchantmentCatalogue.js:80,251,259) uses the correct DFU order (labels 0='all the time', 1='in sunlight', 2='in holy places'; Daedroth/FrostDaedra/Ghost/Wraith souls force param 2 = InHolyPlaces), so the two port modules disagree with each other as well as with the C#.",
+  "consequence": "A soul-bound item carrying ItemDeteriorates InHolyPlaces (param 2) loses 1 condition every 4 magic rounds everywhere and is eventually consumed; an all-the-time (param 0) drawback never fires; sunlight (param 1) items idle on the holy-place seam.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "enchant-potions",
+  "id": "F118",
+  "verify": {
+   "tier": "batched",
+   "reason": "ItemDeteriorates.cs:112-117 enum AllTheTime=0/InSunlight=1/InHolyPlaces=2; only InSunlight/InHolyPlaces gate the return (:83-85), param 0 always degrades. Port enchantments.js:462-469 gates param===0 on inSunlight and param===1 on inHolyPlace, so param 2 falls through both and always degrades - shifted exactly as claimed. Catalogue (enchantmentCatalogue.js:80, SoulBound forcings :259/272/276/286) uses correct DFU order, disagreeing with the runtime handler. No test pin exists."
+  }
+ },
+ {
+  "jsFile": "src/systems/enchantments.js",
+  "jsLine": 500,
+  "csFile": "Game/MagicAndEffects/Effects/Enchanting/HealthLeech.cs",
+  "csLine": "86, 113-116, 139-144",
+  "title": "HealthLeech params shifted: DFU 0=WheneverUsed/1=Daily/2=Weekly, port 2=WheneverUsed/0=Daily/1=Weekly",
+  "claim": "DFU's Params enum is WheneverUsed=0, UnlessUsedDaily=1, UnlessUsedWeekly=2: the use/strike bill (16/8 hp) fires at param 0 (:86), the idle drain at params 1 (day) and 2 (week). The port's used/strikes handlers bill at `param === 2` and its magicRound treats 0 as daily and 1 as weekly. The catalogue (enchantmentCatalogue.js:77,253: labels 0='Whenever used', DaedraSeducer forces param 2 = UnlessUsedWeekly) uses the correct DFU order, so port modules also disagree with each other. test/enchantments.test.js:62 (`item(T.HealthLeech, 2) // WheneverUsed`) and :103 (param 0 as daily) pin the port's wrong mapping while citing HealthLeech.cs — the pin restates the port.",
+  "consequence": "A Daedra-Seducer-bound item (weekly leech in DFU) bills the wearer 16 hp per use / 8 per strike; a classic WheneverUsed (param 0) item instead drains 1 hp per 4 rounds after a day idle and never bills on use.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "enchant-potions",
+  "id": "F119",
+  "verify": {
+   "tier": "batched",
+   "reason": "HealthLeech.cs:132-136 enum WheneverUsed=0/Daily=1/Weekly=2; bill fires at type==WheneverUsed (:84-89), idle drain keys 1/2 (:106-113). Port enchantments.js:496-513 bills used/strikes at param===2 and treats magicRound param 0 as daily/1 as weekly - reversed as claimed. Catalogue (:77, DaedraSeducer param2 :253) uses correct order. test/enchantments.test.js:62,103 pin the port's wrong mapping while citing HealthLeech.cs - a pin restating the port."
+  }
+ },
+ {
+  "jsFile": "src/systems/enchanting.js",
+  "jsLine": 200,
+  "csFile": "Game/Items/DaggerfallUnityItem.cs",
+  "csLine": "1298-1300, 1341",
+  "title": "Enchanted payload never dispatched: FeatherWeight/ExtraWeight/HealthLeech maker arms are dead code",
+  "claim": "DFU's SetEnchantments fires EnchantmentPayloadCallback(Enchanted) per enchantment carrying the flag (:1298-1300) and unequips the item (:1341). The port's applyEnchantments (enchanting.js:200-206) only copies the list, ui/itemMakerWindow.js:285 calls it with no payload dispatch, and no caller anywhere in src/ passes PAYLOAD.Enchanted to doItemEnchantmentPayloads — the registry's enchanted() handlers (enchantments.js:424-425) and HealthLeech's Enchanted stamp arm can never run, and SoulBound's trap consumption has no path either.",
+  "consequence": "Feather Weight leaves the item's weight unchanged (DFU sets 0.25kg); Extra Weight never quadruples it; a fresh daily/weekly HealthLeech item starts at stamp 0 and leeches immediately; the item stays equipped where DFU force-unequips.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "enchant-potions",
+  "id": "F120",
+  "verify": {
+   "tier": "batched",
+   "reason": "DaggerfallUnityItem.cs SetEnchantments:1298-1299 dispatches EnchantmentPayloadCallback(Enchanted,...) per flagged enchantment and :1330 force-unequips first. Port's applyEnchantments (enchanting.js:200-206) only copies the list; sole caller ui/itemMakerWindow.js:285 has no dispatch, no unequip. Grep of src/ for PAYLOAD.Enchanted shows only registry definitions (enchantments.js:424,425,457,497) and the internal flag-check (:607) - no caller ever passes PAYLOAD.Enchanted, so those arms are dead."
+  }
+ },
+ {
+  "jsFile": "src/systems/enchantments.js",
+  "jsLine": 734,
+  "csFile": "Game/Entities/DaggerfallEntity.cs",
+  "csLine": "500-508",
+  "title": "IncreasedWeightAllowance enchantment computed but never reaches encumbrance",
+  "claim": "DFU GetMaxEncumbrance adds amount * IncreasedWeightAllowanceMultiplier on top of FormulaHelper.MaxEncumbrance (DaggerfallEntity.cs:500-508). The port folds the enchantment into _enchantMods.weightAllowanceMult (enchantments.js:390-392, +25%/+50% Held constant) and exposes enchantWeightAllowanceMult (:734) - which has zero callers; every maxEncumbrance consumer (nativeInventory.js:544, charsheet.js:288, worldModes.js:724/:1294, chargen.js:400) passes raw strength*1.5 only (formulas.js:46).",
+  "consequence": "Items enchanted with Increased Weight Allowance never raise carry capacity - the enchantment is a no-op for encumbrance display, inventory refusals, and every weight gate.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "sweep-wiring",
+  "id": "F193",
+  "verify": {
+   "tier": "batched",
+   "reason": "DaggerfallEntity.cs:501-506: GetMaxEncumbrance adds amount*IncreasedWeightAllowanceMultiplier when >0. enchantments.js:390-392 computes _enchantMods.weightAllowanceMult and :734 exposes enchantWeightAllowanceMult(entity) as the reader, but grep 'enchantWeightAllowanceMult(' across the whole repo returns zero call sites. Every maxEncumbrance() consumer (worldModes.js:724/1294, charsheet.js:288, chargen.js:400, nativeInventory.js:544) calls formulas.js:46 raw floor(strength*1.5) with no enchant term added anywhere."
+  }
+ },
+ {
+  "jsFile": "src/systems/sceneCache.js",
+  "jsLine": 110,
+  "title": "clearSceneCache is ported but never called - interiors never forget, corpse-strip law dead",
+  "claim": "DFU clears all non-permanent cached scenes on every map-pixel change (PlayerGPS.cs Update :331-339, 'Clear non-permanent scenes from cache, unless going to/from owned ship' -> SaveLoadManager.ClearSceneCache(false)) and on new game (StartGameBehaviour.cs:468). The port carries the whole law - clearSceneCache at sceneCache.js:110-130 including the permanent-scene 'sans corpses' filter (:124-127) - but NO file in src/ calls it (only tests; .audit26/unused.json lists it). worldModes.js only cacheScene (:1129) and restoreCachedScene (:1138); nothing expires entries on world movement.",
+  "consequence": "Looted containers, emptied shelves and door states in every interior persist forever (DFU forgets them once the player leaves the map pixel); the permanent-scene corpse-strip never runs; and entity.sceneCache rides every save (save.js:123), so the quicksave grows with every interior ever exited.",
+  "csFile": "Internal/PlayerGPS.cs",
+  "csLine": "331-339 (+StartGameBehaviour.cs:468)",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "save-session",
+  "id": "F098",
+  "verify": {
+   "tier": "batched",
+   "reason": "PlayerGPS.Update (:330-339) calls SaveLoadManager.ClearSceneCache(false) on every map-pixel change. Port's clearSceneCache (sceneCache.js:110-130) carries the law incl. corpse-strip filter, but grep across src/ shows zero callers - only tests invoke it. worldModes.js uses only cacheScene/restoreCachedScene (:153-155,1129,1138), never clearSceneCache; no map-pixel hook calls it anywhere. entity.sceneCache persists on every save (save.js:123), confirming unbounded growth."
+  }
+ },
+ {
+  "jsFile": "src/systems/effects.js",
+  "jsLine": 195,
+  "csFile": "Assets/Scripts/Game/MagicAndEffects/EntityEffectManager.cs",
+  "csLine": "n/a (DFU re-instances bundles)",
+  "title": "seedBundleSeq has no caller - restored bundleIds collide with new casts",
+  "claim": "effects.js:194-195 exports seedBundleSeq to lift the module-scope _bundleSeq past a restored save's high water mark, but grep of src/ finds zero callers. save.js persists bundleId (copyEffectEntry spreads whole entries, save.js:74-89, snapshot :155) and restores them (:303) without seeding, so after an app restart + load, _bundleSeq is 0 and the next cast reuses bundleId 1, colliding with the restored first cast's entries. liveBundles (mysticism.js:231-248) then merges two casts into one bundle and dispelBundle (mysticism.js:261-270, consumed at worldModes.js:3762) removes both. DFU has no counter to collide - bundles are object references re-instanced on load.",
+  "consequence": "Cast a buff, save, restart the app, load, cast another spell: the HUD spell icons merge into one row and Dispel Magic on it strips both casts at once.",
+  "severity": "bug",
+  "confidence": "medium",
+  "group": "effects-magic",
+  "id": "F076",
+  "verify": {
+   "tier": "direct",
+   "reason": ""
+  }
+ }
+]

@@ -1,0 +1,104 @@
+[
+ {
+  "jsFile": "src/ui/itemMakerWindow.js",
+  "jsLine": 341,
+  "csFile": "Game/UserInterface/EnchantmentListPicker.cs",
+  "csLine": "262-276",
+  "title": "Forced (child) enchantment rows can be removed by clicking them",
+  "claim": "DFU's EnchantmentPanel_OnMouseClick only removes a panel when panel.Enchantment.ParentEnchantment == 0 ('child panels are removed by clicking on parent', EnchantmentListPicker.cs:268-271). The port's click handler (itemMakerWindow.js:338-344) hit-tests any visible row and calls _removeRow(hit.entry) with no parentEnchantment guard; removeEnchantment (enchantmentCatalogue.js:360-362) then filters the clicked entry out by its own key, so a forced child (which carries parentEnchantment = parent key and its own key) is removed on its own. The catalogue's comment even codifies 'a child removed on its own takes nothing', which contradicts DFU where a child cannot be removed at all.",
+  "consequence": "A player soul-binding a Daedra Lord can click away the forced Extra Weight / User Takes Damage side effects and keep the soul-bound power without its drawbacks, which DFU forbids.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "ui-crafting",
+  "id": "F166",
+  "verify": {
+   "tier": "batched",
+   "reason": "EnchantmentListPicker.cs:266-271 only removes a panel when ParentEnchantment==0. itemMakerWindow.js:338-344 click() hit-tests any row and calls _removeRow(hit.entry) with no guard; removeEnchantment (enchantmentCatalogue.js:360-361) filters by e.key!==key, removing the clicked entry regardless of whether it's itself a forced child. No test pin covers this path. A player can click a forced soul-bound side effect away and keep the power without its drawback."
+  }
+ },
+ {
+  "jsFile": "src/ui/itemMakerWindow.js",
+  "jsLine": 285,
+  "csFile": "Game/UserInterfaceWindows/DaggerfallItemMakerWindow.cs",
+  "csLine": "752-754",
+  "title": "Enchanting a stacked item enchants the whole stack (no SplitStack)",
+  "claim": "DFU's EnchantButton_OnMouseClick splits one item off a stack before enchanting: 'if (selectedItem.IsAStack()) selectedItem = ...Items.SplitStack(selectedItem, 1)' (cs:752-754). The port's _enchant (itemMakerWindow.js:277-294) calls applyEnchantments(this.selected, ...) directly, and applyEnchantments (enchanting.js:200-206) just sets item.enchantments on the object - no stack split anywhere. Gems (Ingredients tab, itemMakerFilter line 120) are stackable in the port (inventory.js isStackable:110 - ingredients stack), so a merged stack of N gems is a single selectable item.",
+  "consequence": "Enchanting a stack of e.g. 5 rubies produces 5 enchanted rubies for one gold payment and one enchantment-point budget; DFU enchants exactly one split-off gem.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "ui-crafting",
+  "id": "F167",
+  "verify": {
+   "tier": "batched",
+   "reason": "DaggerfallItemMakerWindow.cs:750-754 splits one item off a stack before SetEnchantments runs. itemMakerWindow.js _enchant (277-294) calls applyEnchantments(this.selected,...) directly; grep confirms no SplitStack logic anywhere in itemMakerWindow.js/enchanting.js. inventory.js:110 confirms ingredients (gems) stack, so an enchant applies to the whole merged stackCount at once instead of one split item."
+  }
+ },
+ {
+  "jsFile": "src/ui/itemMakerWindow.js",
+  "jsLine": 189,
+  "csFile": "Game/Entities/PlayerEntity.cs",
+  "csLine": "1313-1316",
+  "title": "Item maker gold check and label use coins only, excluding letters of credit",
+  "claim": "DFU's item maker reads PlayerEntity.GetGoldAmount() for the available-gold label (DaggerfallItemMakerWindow.cs:193) and the enchant affordability check (cs:734-739); GetGoldAmount returns goldPieces + items.GetCreditAmount() (PlayerEntity.cs:1313-1316). The port's gold() (itemMakerWindow.js:189) calls goldAmount(), the coin purse alone (court.js:151-152); enchantDecision's gold test (enchanting.js:188) and the label both ride it. The port's own comment at :282-284 says the deduction seam spends letters of credit - but the gating check never counts them.",
+  "consequence": "A player whose wealth sits in letters of credit is refused ('You do not have the gold to properly pay the enchanter') where DFU lets the enchant proceed, and the shown gold figure is understated.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "ui-crafting",
+  "id": "F168",
+  "verify": {
+   "tier": "batched",
+   "reason": "PlayerEntity.cs:1313-1316 GetGoldAmount()=goldPieces+GetCreditAmount(), used for both the gold label and EnchantButton_OnMouseClick's check (cs:734). itemMakerWindow.js:189 gold() calls goldAmount() (court.js:151-152), coins-only. The port even has a correct totalGoldAmount() mirroring GetGoldAmount exactly (court.js:161-164, used elsewhere e.g. travelmap.test.js:263) but itemMakerWindow.js never calls it."
+  }
+ },
+ {
+  "jsFile": "src/ui/itemMakerWindow.js",
+  "jsLine": 392,
+  "csFile": "Game/UserInterface/EnchantmentListPicker.cs",
+  "csLine": "330-334",
+  "title": "Cast When Used/Held/Strikes list rows print the wrong spell name",
+  "claim": "DFU's EnchantmentPanel prints enchantment.SecondaryDisplayName - the actual spell name stored in the settings (EnchantmentListPicker.cs:333-334). The port draws the secondary row as names[row.entry.param] (itemMakerWindow.js:390-393), where names = enchantmentParams(type) is a DENSE list-ordered array (enchantmentCatalogue.js:193-201) but entry.param for the three CastWhen* effects is the sparse classic SPELL ID (catalogue :171, stored at :233). E.g. CastWhenUsed param 12 is Resist Fire, but names[12] is 'Fireball'; param 94 (Recall) indexes past the array and prints blank. The picker itself is correct (labels[i] aligned by index, catalogue :493-495) - only the list rows mis-index.",
+  "consequence": "After picking 'Cast when used - Resist Fire' the powers list shows 'Fireball' (or a blank) under Cast When Used; nearly every CastWhen* row names the wrong spell.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "ui-crafting",
+  "id": "F169",
+  "verify": {
+   "tier": "batched",
+   "reason": "CastWhenUsed.cs:67 stores SecondaryDisplayName per-setting via GetLocalizedSpellName(id), the sparse classic spell ID, printed as-is by EnchantmentListPicker.cs:333-334. itemMakerWindow.js:390-393 instead does names[row.entry.param], where names is the dense list-order array and entry.param is the classic ID. Verified: catalogue.js:104 has 'Resist Fire' at index 9 and 'Fireball' at index 12, so names[12]='Fireball' for param 12 (Resist Fire), matching the claim exactly. Param 94 (Recall) exceeds the 34-entry array and prints blank."
+  }
+ },
+ {
+  "jsFile": "src/ui/potionMakerWindow.js",
+  "jsLine": 184,
+  "csFile": "Game/UserInterfaceWindows/DaggerfallPotionMakerWindow.cs",
+  "csLine": "283-309",
+  "title": "Recipe pick partially fills the cauldron instead of refusing when ingredients are missing",
+  "claim": "DFU's AddRecipeToCauldron: if any recipe ingredient is unmatched it shows GetLocalizedText(\"reqIngredients\") and adds NOTHING (cs:297-301); otherwise it ClearCauldron()s first, adds every ingredient, and sets nameLabel = recipeName (cs:302-308). The port's _fillFrom (potionMakerWindow.js:184-194) adds whatever gatherRecipe found (potions.js:229-239) - no missing-ingredient message, no cauldron clear (fills on top of existing contents), no name label. potions.js:224-228's comment claims DFU 'fills what it can... does not refuse', which the C# contradicts; potionmakerwindow.test.js:180-191 pins the port behavior while citing :283-309 - the pin restates the port.",
+  "consequence": "Picking a recipe while missing one herb silently loads an incomplete cauldron; mixing burns the ingredients on a useless potion, where DFU refuses with a message. Picking with leftovers in the pot also mixes them in.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "ui-crafting",
+  "id": "F172",
+  "verify": {
+   "tier": "batched",
+   "reason": "DFU's AddRecipeToCauldron checks `recipeIngreds.ContainsValue(null)`: if true it MessageBoxes 'reqIngredients' and adds NOTHING; else ClearCauldron() then adds every ingredient. The port's _fillFrom (potionMakerWindow.js:185-194) unconditionally adds whatever gatherRecipe finds, no clear, no message. test/potionmakerwindow.test.js:178-190 pins exactly this partial-fill while citing the same C# - per doctrine this confirms the finding since my own read shows DFU refuses entirely on any missing ingredient."
+  }
+ },
+ {
+  "jsFile": "src/ui/potionMakerWindow.js",
+  "jsLine": 113,
+  "csFile": "Game/UserInterfaceWindows/DaggerfallPotionMakerWindow.cs",
+  "csLine": "226-233",
+  "title": "Ingredient list never scrolls: this.scroll has no writer",
+  "claim": "DFU's ingredientsListScroller is a scrolling ItemListScroller (4 rows x 3 cols, cs:226-233) with scroll handling for an arbitrary ingredient count. The port initializes this.scroll = 0 (potionMakerWindow.js:113) and reads it at :216 and :234, but nothing in click() or input() ever modifies it - grep confirms those are the only three references. Only the first 12 ingredient stacks are ever shown or clickable.",
+  "consequence": "A player holding more than 12 distinct ingredient stacks (routine for an alchemist) can never see or use ingredients 13+, and recipes needing them can only be loaded via the RECIPES button.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "ui-crafting",
+  "id": "F175",
+  "verify": {
+   "tier": "batched",
+   "reason": "DFU's ingredientsListScroller is built with scroll=true (a real VerticalScrollBar, ItemListScroller.cs:239-263), vs the cauldron's false. Grepping potionMakerWindow.js for `.scroll` gives exactly 3 hits: init at :113, reads at :216 and :234 - no writer in click() or input(). Confirmed dead state: ingredient stacks beyond the first 12 are permanently unreachable."
+  }
+ }
+]

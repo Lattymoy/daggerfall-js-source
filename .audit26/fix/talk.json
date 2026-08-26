@@ -1,0 +1,53 @@
+[
+ {
+  "jsFile": "src/systems/talkMacros.js",
+  "jsLine": 25,
+  "title": "TALK_MACROS omits %1com and other global talk macros - questions lose the PC greeting",
+  "claim": "expandTalkMacros resolves an unknown macro to '' (talkMacros.js:228) and TALK_MACROS carries only 15 handlers - no %1com, %pcf, %pcn, %cn, %hnr, %ra. C#'s ExpandRandomTextRecord (TalkManager.cs:3580-3587) runs the FULL MacroHelper table: %1com -> GetPCGreetingOrFollowUpText (MacroHelper.cs:44, :957-960), %cn -> CityName (:567-573), %pcf/%pcn/%hnr/%ra all handled; unknown macros render 'sym[undefined]' (:527), not ''. Question records 7225+tone carry %1com and the answer set carries %cn/%pcf/%hnr/%ra (townTalk.js:509-524, talkSession.js:84-104 document both). getPCGreetingOrFollowUpText (answerPipeline.js:348) and getHonoric (:365) consequently have no caller in src/.",
+  "consequence": "Every engine-path question drops the PC's opening greeting sentence (renders '. Where is ...'), the 7215-7223 greeting/follow-up/stranger machinery is dead code, and answer variants with %cn/%pcf/%hnr/%ra print those slots blank ('I'm new to  too.').",
+  "csFile": "Assets/Scripts/Utility/MacroHelper.cs",
+  "csLine": "44, 527, 957-960",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "talk-engine",
+  "id": "F094",
+  "verify": {
+   "tier": "batched",
+   "reason": "MacroHelper.cs registers %1com(:44,957-960), %pcf(:151), %pcn(:152), %cn(:67), %hnr(:111), %ra(:210); GetValue (:503-528) renders any unlisted symbol as symbol+\"[undefined]\". talkMacros.js's handler table (25-193) has none of these six, and expandTalkMacros (224-253) resolves a missing handler to ''. getPCGreetingOrFollowUpText (answerPipeline.js:348) and getHonoric (:365) have zero callers in src/ - only tests call them. C#'s GetQuestionText expands 7225+tone via the full macro table for LocalBuilding/Person, matching the port's getQuestionText through the same limited table."
+  }
+ },
+ {
+  "jsFile": "src/systems/npcSession.js",
+  "jsLine": 439,
+  "csFile": "Game/TalkManager.cs",
+  "csLine": "726-744",
+  "title": "NPCSession's mobile arm has no caller; walker talk never sets the session target",
+  "claim": "TalkManager.TalkToMobileNPC (:726-744) sets the mobile target: npcData rebuilt as Commoners of the region, alreadyRejectedOnce reset, numAnswersGivenTellMeAboutOrRumors zeroed. The port ports the arm (npcSession.js:439-455, :357-383) but nothing calls it: only talkToStaticNPC has callers (worldModes.js:978, :1365); the walker click runs townTalk.js's local path (:300-329) which never sets the session target. answerPipeline._session() (answerPipeline.js:289) reads npcSession.npcData for socialGroup/counters, so a walker conversation serves whatever the LAST static NPC left there.",
+  "consequence": "Talking to a walker after any static NPC reuses that NPC's npcData - reaction tier's social-group modifier and the tell-me-about counter are the previous target's; the ported mobile-arm laws are dead code.",
+  "severity": "bug",
+  "confidence": "medium",
+  "group": "systems-misc-2",
+  "id": "F087",
+  "verify": {
+   "tier": "batched",
+   "reason": "townTalk.js activate() (townTalk.js:274-329), the only mobile-click path (world.js:3175, exterior.js:1514), never calls npcSession.talkToMobileNPC/setTargetMobileNPC (npcSession.js:357-453). answerPipeline's npcSession dep is `()=>npcSession.npcData` (world.js:2551), so a walker reuses whatever static NPC last set it (npcSession.js:387-410, callers worldModes.js:978/1365). C# PlayerActivate.cs:783 calls TalkToMobileNPC (TalkManager.cs:727-745) which resets npcData every click. Test calls to talkToMobileNPC are direct unit/fixture calls, not the real host path."
+  }
+ },
+ {
+  "jsFile": "src/systems/npcSession.js",
+  "jsLine": 439,
+  "title": "Mobile street clicks bypass talkToMobileNPC - stale NPCData, one-answer gate never resets",
+  "claim": "NPCSession.talkToMobileNPC (npcSession.js:439) has no caller in src/ (tests only). Both exterior hosts route mobile clicks through townTalk.activate (townTalk.js:274-329, from world.js:3175 / exterior.js:1514), which opens the engine-backed window (answers read npcSession.npcData via the pipeline) without calling setTargetMobileNPC/talkToNpc. C# TalkToMobileNPC (TalkManager.cs:727-745) builds a fresh NPCData and resets numAnswersGivenTellMeAboutOrRumors=0 every click (:742), and TalkToNpc runs ResetNPCKnowledge on a new target (:2652-2654). The port does neither on a mobile click: npcData keeps the last static NPC's socialGroup/race/isSpyMaster and answer counter.",
+  "consequence": "After any conversation spends its one tell-me-about answer, every street NPC forever answers news/tell-me-about with the out-of-news/doesn't-know record; mobile answers also inherit the previous static NPC's social group and spymaster flag, and per-topic knowledge is never re-rolled.",
+  "csFile": "Assets/Scripts/Game/TalkManager.cs",
+  "csLine": "727-745, 2652-2654",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "talk-engine",
+  "id": "F091",
+  "verify": {
+   "tier": "batched",
+   "reason": "Same defect as F087: townTalk.js:274-329 (only reached via world.js:3175/exterior.js:1514) never calls setTargetMobileNPC, so npcSession.npcData (read via world.js:2551) keeps a prior static NPC's state (npcSession.js:387-410,463-497). C# TalkToMobileNPC (TalkManager.cs:727-745, from PlayerActivate.cs:783) resets npcFactionData and zeroes numAnswersGivenTellMeAboutOrRumors every click; ResetNPCKnowledge (:2652-2654) re-rolls knowledge. Port's mobile window drives real Q&A via eng.pipeline.getAnswerText (townTalk.js:339-360), so stale npcData corrupts answers."
+  }
+ }
+]

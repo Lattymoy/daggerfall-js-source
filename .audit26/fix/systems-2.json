@@ -1,0 +1,104 @@
+[
+ {
+  "jsFile": "src/systems/useItem.js",
+  "jsLine": 77,
+  "csFile": "Game/UserInterfaceWindows/DaggerfallInventoryWindow.cs",
+  "csLine": "1670-1701",
+  "title": "Quest item use never sets useClicked - ItemUsedDo quests cannot advance",
+  "claim": "DFU UseItem sets questItem.UseClicked=true on a use click and shows the item's UsedMessageID popup (InventoryWindow.cs:1681-1700); the port's ItemUsedDo action is live and polls item.useClicked (systems/quest/actions.js:1028-1038), but no site in src/ ever sets useClicked=true - quest/item.js:74 initializes it false, useItem() only attaches a 'questItem:true' rider (useItem.js:190-195), and nativeInventory._useResult ignores that rider. isParchment/isClothing (useItem.js:77-79), ported verbatim for exactly this DFU block's parchment/clothing exception, have zero callers.",
+  "consequence": "Any quest using '<item> used do <task>' or 'used saying' stalls forever - using the quest item does nothing, the task never starts, and quest letters' used-message popup never shows.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "sweep-wiring",
+  "id": "F189",
+  "verify": {
+   "tier": "batched",
+   "reason": "DFU sets questItem.UseClicked=true at DaggerfallInventoryWindow.cs:1683 (!UseClicked && ActionWatching); ItemUsedDo.cs:65 polls it, ported at actions.js:1027-1037. grep 'useClicked' src/ shows only quest/item.js:74/312 (init/deserialize) - no production write ever sets it true. nativeInventory.js:333-375 _useResult never reads useItem.js:295's questItem rider, so pop-to-HUD/UseClicked never fires. test/questactions.test.js:631 manually sets useClicked=true to bypass the gap, confirming no end-to-end pin exists. isParchment/isClothing also zero callers."
+  }
+ },
+ {
+  "jsFile": "src/systems/factionRelations.js",
+  "jsLine": 221,
+  "csFile": "Game/Entities/PlayerEntity.cs",
+  "csLine": "1698-1931",
+  "title": "Alliance/war/ruler mutators ported but the 38-day conditions update never calls them",
+  "claim": "DFU PlayerEntity.RegionPowerAndConditionsUpdate(true) wires GetNumberOfCommonAlliesAndEnemies (:1698/:1718/:1760), StartFactionAllies (:1766), StartFactionEnemies (:1904) and SetNewRulerData (:1931) into the 38-day tick. The port carries faithful translations (factionRelations.js:109/221/247/299/309, regionConditions.resetWarDataForRegion:162) with zero callers: worldTick.js:507-510's 38-day arm calls only regionPowerUpdate, and its comment flags the conditions body while stale-claiming the mutators are 'unported' - they exist one module away.",
+  "consequence": "Regional wars never start or end, alliances never shift, rulers never change, and region condition flags (war/plague etc.) never flip - talk news, war rumors, and condition-driven shop/quest state stay frozen for the whole game.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "sweep-wiring",
+  "id": "F191",
+  "verify": {
+   "tier": "batched",
+   "reason": "PlayerEntity.cs:469-472 calls RegionPowerAndConditionsUpdate(true) on the 38-day tick; its conditions body (:1687-1930) calls the alliance/war/ruler mutators. factionRelations.js:221/235/247/259/299 and regionConditions.js:162 port them faithfully, but grep for actual calls (not defs) across src/ returns nothing - only unit tests call them. worldTick.js:507-510's 38-day arm calls only regionPowerUpdate; its own comment (:499-500) says the conditions half 'needs the alliance mutators, unported' - stale since they exist. Wars/alliances/rulers stay frozen either way."
+  }
+ },
+ {
+  "jsFile": "src/systems/daedraSummoning.js",
+  "jsLine": 80,
+  "csFile": "Game/UserInterfaceWindows/DaggerfallQuestPopupWindow.cs",
+  "csLine": "252-258",
+  "title": "Failed witches-coven summoning spawns no daedra - DAEDRIC_FOES table orphaned",
+  "claim": "DFU spawns CreateFoeSpawner(true, daedricFoes[Random.Range(0,5)], Random.Range(1,4), 4, 64) when a summoning fails at a witches coven (QuestPopupWindow.cs:255-257). The port ports the five-foe table (daedraSummoning.js:80-82, zero callers) and attemptSummoning returns spawnFoes:true (:166), but the host's failure arm (worldModes.js:1663-1669) only console.warns - its own comment FLAGS that the interior has no foe pool - and shows the failure text.",
+  "consequence": "Failing a coven summoning is consequence-free: the 1-3 daedra that should attack the player never appear.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "sweep-wiring",
+  "id": "F194",
+  "verify": {
+   "tier": "batched",
+   "reason": "QuestPopupWindow.cs:252-257: a failed coven summoning spawns 1-3 daedra via CreateFoeSpawner. daedraSummoning.js:80-82 ports the DAEDRIC_FOES table and attemptSummoning (:166) correctly answers spawnFoes:true, but grep shows DAEDRIC_FOES is referenced nowhere in src/ (only test/daedrasummoning.test.js:147 checks its length). worldModes.js:1663-1669's failure arm only does `console.warn(...'the interior has no foe pool (FLAGGED)')` when spawnFoes is true - no foes are ever created. The port's own comment self-documents the gap."
+  }
+ },
+ {
+  "jsFile": "src/systems/quest/questMacros.js",
+  "jsLine": 549,
+  "csFile": "Game/UserInterfaceWindows/DaggerfallQuestJournalWindow.cs",
+  "csLine": "401, 439-485",
+  "title": "Journal click-to-find-place dead - getMessageResources has no caller",
+  "claim": "DFU's quest journal handles a click on an active quest entry (JournalWindow.cs:401 -> HandleQuestClicks :439-466) by calling GetMessageResources (:471-485) to find the last Place mentioned, then offers 'Find <location> in <region>?' and sends the travel map there (GotoPlace :360). The port translated getMessageResources (questMacros.js:549-565, zero callers), and questJournal.click (ui/questJournal.js:182-191) merely consumes clicks inside the log rect without inspecting the entry.",
+  "consequence": "Players cannot click a journal quest entry to locate its destination on the travel map - a core classic navigation aid is missing.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "sweep-wiring",
+  "id": "F195",
+  "verify": {
+   "tier": "batched",
+   "reason": "DFU HandleClick (JournalWindow.cs:401)->HandleQuestClicks(:439-466) resolves GetMessageResources(:471-485) and offers a find-place dialog wired to GotoPlace(:360). Port's getMessageResources (questMacros.js:549) has zero src/ callers; QuestJournalWindow.click (ui/questJournal.js) only handles exit/dialog/arrow rects and otherwise consumes clicks in log/title rects with no line-to-entry mapping or resource lookup, in any mode. No host wraps extra logic around it. Confirmed dead."
+  }
+ },
+ {
+  "jsFile": "src/systems/quest/questMacros.js",
+  "jsLine": 492,
+  "csFile": "Game/Items/ItemHelper.cs",
+  "csLine": "335-349",
+  "title": "expandLetterSignoff never called - every quest letter reads as bare Parchment",
+  "claim": "DFU ResolveItemLongName returns 'Letter: <signoff line>' for quest parchment by calling QuestMacroHelper.ExpandLetterSignoff (ItemHelper.cs:335-348). The port carries a documented verbatim translation (questMacros.js:492-537 incl. the one-line bug-for-bug walk and 'Letter: ' prefix) with zero callers: item labels come from worldModes._itemLabel (:633, plain name??template name), and quest/item.js:89-93's own comment concedes the long-name maker is not built.",
+  "consequence": "Quest letters all display as 'Parchment' in the inventory - with two letters from two quests there is no way to tell them apart without using each one.",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "sweep-wiring",
+  "id": "F196",
+  "verify": {
+   "tier": "batched",
+   "reason": "ItemHelper.ResolveItemLongName (ItemHelper.cs:335-348) special-cases quest Parchment via QuestMacroHelper.ExpandLetterSignoff. Port's expandLetterSignoff (questMacros.js:492) has zero src/ callers (only test file); 'Letter: ' prefix never reaches item.name anywhere; labels come from worldModes.js:633 _itemLabel = it.name ?? template.name, i.e. plain 'Parchment' for any quest letter since items are minted generically (systems/quest/item.js). Confirmed: letters indistinguishable."
+  }
+ },
+ {
+  "jsFile": "src/systems/answerPipeline.js",
+  "jsLine": 657,
+  "title": "expandQuestTokens seam unwired for the pipeline - quest hints print raw tokens, never reveal",
+  "claim": "_answerFromTokensArray (answerPipeline.js:653-658) returns deps.expandQuestTokens?.(questID, tokens) ?? tokens.map(t=>t.text??'').join(''). C# GetAnswerFromTokensArray (TalkManager.cs:3545-3559) always runs QuestMacroHelper.ExpandQuestMessage(quest, ref tokens, true) - expanding quest macros AND revealing dialog-linked resources - before TokensToString. world.js's AnswerPipeline deps (:2549-2587) never wire expandQuestTokens, while the RumorMill construction beside it does (world.js:2416-2431), so the omission is pipeline-only.",
+  "consequence": "Every %hnt/%hnt2 tell-me-about answer for a quest topic prints with quest macros and symbol names unexpanded, and asking never reveals the topic's dialog-linked resources as C#'s reveal=true does.",
+  "csFile": "Assets/Scripts/Game/TalkManager.cs",
+  "csLine": "3545-3559",
+  "severity": "bug",
+  "confidence": "high",
+  "group": "talk-engine",
+  "id": "F093",
+  "verify": {
+   "tier": "batched",
+   "reason": "C# GetAnswerFromTokensArray (TalkManager.cs:3554-3556) always runs ExpandQuestMessage(...,true) before TokensToString. Port's _answerFromTokensArray (answerPipeline.js:653-658) falls back to a plain tokens.join('') because deps.expandQuestTokens is never set: the only AnswerPipeline construction (world.js:2549-2587) lacks that key, while the sibling RumorMill construction (world.js:2411-2416) wires it. grep confirms expandQuestTokens is never passed to AnswerPipeline outside tests."
+  }
+ }
+]
