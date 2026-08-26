@@ -7,8 +7,8 @@
 //
 // Y bands are in the body's pre-HSCALE space (see neutralBody.js).
 // Draped garments (skirts, robes, cloaks, togas, dresses, surcoats,
-// kimono, sash, mummy wrappings) are DEFERRED - they need standoff
-// geometry, handled elsewhere. They resolve to [] here.
+// kimono, sash, mummy wrappings) use standoff geometry, handled by
+// pieces/draped.js rather than body displacement.
 
 import templates from './itemTemplates.json' with { type: 'json' };
 
@@ -49,16 +49,78 @@ const TYPES = {
   'Tall Boots':       [feet(0.00, 0.34)],
 };
 
-// Deferred (draped) - resolve to no displacement here.
-const DRAPED = new Set(['Toga', 'Dwynnen Surcoat', 'Anticlere Surcoat', 'Casual Dress', 'Strapless Dress', 'Kimono', 'Sash', 'Mummy Wrappings', 'Short Skirt', 'Long Skirt', 'Wrap', 'Plain Robes', 'Priest Robes', 'Priestess Robes', 'Casual Cloak', 'Formal Cloak']);
+// Classic clothing that hangs away from the body. The names are the item DB
+// names AND the keys used by pieces/draped.js, so the 2D Daggerfall item and
+// the 3D garment share one identity instead of a second hand-maintained map.
+export const DRAPED_CLOTHING_TYPES = Object.freeze([
+  'Toga', 'Dwynnen Surcoat', 'Anticlere Surcoat', 'Casual Dress',
+  'Strapless Dress', 'Kimono', 'Sash', 'Mummy Wrappings', 'Short Skirt',
+  'Long Skirt', 'Wrap', 'Plain Robes', 'Priest Robes', 'Priestess Robes',
+  'Casual Cloak', 'Formal Cloak',
+]);
+const DRAPED = new Set(DRAPED_CLOTHING_TYPES);
 
-const byIndex = new Map(templates.map((t) => [t.index, t.name]));
+const byIndex = new Map(templates.map((t) => [t.index, t]));
+const byName = new Map();
+for (const t of templates) if (!byName.has(t.name)) byName.set(t.name, t);
+
+const cloneZone = (z) => ({ ...z, groups: [...z.groups] });
 
 /** Zones for a clothing template index (or name). [] if draped/unknown. */
 export function clothingZones(indexOrName) {
-  const name = typeof indexOrName === 'number' ? byIndex.get(indexOrName) : indexOrName;
+  const name = typeof indexOrName === 'number' ? byIndex.get(indexOrName)?.name : indexOrName;
   if (!name || DRAPED.has(name)) return [];
-  return TYPES[name] || [];
+  return (TYPES[name] || []).map(cloneZone);
+}
+
+/** 'body' for body-owned cloth, 'drape' for standoff cloth, null otherwise. */
+export function clothingRenderKind(indexOrName) {
+  const name = typeof indexOrName === 'number' ? byIndex.get(indexOrName)?.name : indexOrName;
+  if (!name) return null;
+  if (TYPES[name]) return 'body';
+  if (DRAPED.has(name)) return 'drape';
+  return null;
+}
+
+/**
+ * The Daggerfall clothing records that the 3D rig knows how to represent.
+ * Art addressing is kept beside the geometry identity now because the next
+ * stage can consume the original paperdoll TEXTURE archive/record without
+ * inventing another clothing table.
+ */
+export const CLOTHING_CATALOG = Object.freeze(
+  templates
+    .filter((t) => TYPES[t.name] || DRAPED.has(t.name))
+    .map((t) => Object.freeze({
+      index: t.index,
+      name: t.name,
+      kind: TYPES[t.name] ? 'body' : 'drape',
+      zones: TYPES[t.name] ? TYPES[t.name].map(cloneZone) : [],
+      drape: DRAPED.has(t.name) ? t.name : null,
+      variants: t.variants ?? 0,
+      drawOrder: t.drawOrderOrEffect ?? 0,
+      playerTextureArchive: t.playerTextureArchive ?? 0,
+      playerTextureRecord: t.playerTextureRecord ?? 0,
+    })),
+);
+
+/** Full 3D descriptor by classic template index or clothing name. */
+export function clothingDescriptor(indexOrName) {
+  const t = typeof indexOrName === 'number' ? byIndex.get(indexOrName) : byName.get(indexOrName);
+  if (!t) return null;
+  const kind = clothingRenderKind(t.index);
+  if (!kind) return null;
+  return {
+    index: t.index,
+    name: t.name,
+    kind,
+    zones: clothingZones(t.index),
+    drape: kind === 'drape' ? t.name : null,
+    variants: t.variants ?? 0,
+    drawOrder: t.drawOrderOrEffect ?? 0,
+    playerTextureArchive: t.playerTextureArchive ?? 0,
+    playerTextureRecord: t.playerTextureRecord ?? 0,
+  };
 }
 
 export { TYPES as CLOTHING_TYPES };
