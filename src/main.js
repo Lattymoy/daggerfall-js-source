@@ -23,6 +23,10 @@ import { ensureArena2, getBytes } from './scenes/dataSource.js';
 import { installCursor } from './ui/cursor.js';
 import { getBool } from './systems/settings.js';   // SETT: the launcher gate
 import { isEnhanced } from './systems/uiSkin.js';   // THE SKIN: which front door
+// The deployed site is redeployed several times a day and every deploy
+// renames chunks, so a page held open across one is holding a map of a
+// build that is gone. Recoverable, and the law of that is its own file.
+import { staleChunkAction, RELOAD_KEY, STALE_CHUNK_TEXT } from './systems/staleChunk.js';
 
 async function boot() {
   const canvas = document.getElementById('c');
@@ -190,8 +194,36 @@ async function boot() {
   return bootWorld(canvas, renderer, params, status);
 }
 
-boot().catch((e) => {
-  document.body.textContent = `boot failed: ${e.message}`;
+/** sessionStorage throws OUTRIGHT in some privacy modes rather than
+ *  answering null, and a storage failure must never become the boot
+ *  failure - so every touch is shielded the way settings.js and
+ *  inputActions.js shield theirs. No memory means NO free reload,
+ *  which is the safe way to be wrong: a page that cannot remember it
+ *  already tried is a page that would reload forever. */
+const reloadTried = () => {
+  try { return !!globalThis.sessionStorage?.getItem(RELOAD_KEY); } catch { return true; }
+};
+const rememberReload = () => {
+  try { globalThis.sessionStorage.setItem(RELOAD_KEY, '1'); return true; } catch { return false; }
+};
+
+boot().then(() => {
+  // A boot that WORKED gives the next one its reload back. Without
+  // this the flag outlives the problem: a player who recovers once
+  // would face the dead page on the next deploy with the retry
+  // already spent.
+  try { globalThis.sessionStorage?.removeItem(RELOAD_KEY); } catch { /* nothing to forget */ }
+}).catch((e) => {
+  // THE BUILD MOVED WHILE THE PAGE WAS OPEN (systems/staleChunk.js).
+  // The page is holding a map of a build that is gone; the current one
+  // is one fetch away, so this is recoverable rather than fatal.
+  const act = staleChunkAction(e, { reloaded: reloadTried() });
+  if (act === 'reload' && rememberReload()) {
+    console.warn('[boot] a chunk of this build is gone - reloading onto the current one', e);
+    location.reload();
+    return;
+  }
+  document.body.textContent = act === 'rethrow' ? `boot failed: ${e.message}` : STALE_CHUNK_TEXT;
   console.error(e);
   // A data-seam failure (missing file in the stored set - the
   // partial-ingest brick) gets a recovery path: wipe + re-pick.
