@@ -124,7 +124,13 @@ export function buildNeutralBody(ramps, opts = {}) {
   // shoulder, giving the shoulder LINE (not a flat lid). Flat-ish top
   // (low p) so it reads as a plane, not a dome.
   const TRAP = [
-    { y: 1.66, rx: 0.086, rz: 0.058, p: 0.5, cx: 0.00 }, // at the neck
+    // The old y=1.66/r=.086 end ring was an OPEN loft boundary. From an
+    // elevated camera it exposed the hollow torso between the neck and both
+    // shoulders. Keep the same three rows (and therefore the same face count),
+    // but terminate the roof on the neck's y=1.68 ring instead. Duplicate
+    // vertices are fine; the two surfaces coincide visually and the skin UV
+    // face order stays untouched.
+    { y: 1.68, rx: 0.070, rz: 0.072, p: 0.8, cx: 0.00, cz: -0.01 }, // closes into neck column
     { y: 1.64, rx: 0.150, rz: 0.070, p: 0.5, cx: 0.00 }, // sloping out
     { y: 1.61, rx: 0.215, rz: 0.082, p: 0.5, cx: 0.00 }, // shoulder shelf
   ];
@@ -132,7 +138,11 @@ export function buildNeutralBody(ramps, opts = {}) {
   // DELTOID: an angular capped wedge over the joint (low p = planar
   // facets, flatter than deep), defined edge into the arm - not a ball.
   const DELT = [
-    { y: 1.64, rx: 0.070, rz: 0.072, p: 0.55 }, // top, tucks under the trap shelf
+    // loft() intentionally carries no cap faces. A full-radius top row here
+    // therefore rendered as two circular holes when the camera looked down at
+    // the shoulders. Pinch the EXISTING end ring nearly shut instead of adding
+    // cap faces: same topology / face indices, closed-looking voxel shoulder.
+    { y: 1.655, rx: 0.010, rz: 0.012, p: 0.7 }, // near-point shoulder cap
     { y: 1.60, rx: 0.090, rz: 0.082, p: 0.55 }, // deltoid belly (planar)
     { y: 1.55, rx: 0.082, rz: 0.076, p: 0.55 }, // mid deltoid
     { y: 1.50, rx: 0.066, rz: 0.068, p: 0.6 },  // defined edge into the arm

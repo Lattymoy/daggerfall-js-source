@@ -741,6 +741,10 @@ function applyClassicClothing(c) {
   if (c && c.kind === 'body') {
     for (let k = 0; k < c.idx.length; k++) {
       const f = c.idx[k], pb = k * 12, cb = k * 3;
+      // Classic body clothing never owns the wrapped head arc. If stale or
+      // malformed payload data ever says otherwise, skip it rather than making
+      // skin.js correctly abandon the atlas for a head colour override.
+      if ((D.G ? D.G[f] : 0) === 1) continue;
       const r = c.C[cb] / 255, g = c.C[cb + 1] / 255, b = c.C[cb + 2] / 255;
       let o = f * 18;
       for (const vi of TRI) {

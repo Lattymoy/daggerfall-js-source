@@ -528,6 +528,31 @@ export function buildPaperdollPayload(pal, img, cif) {
   // face list as the neutral body and ship as deltas; skirts/robes/cloaks
   // keep their standoff drape identity. Classic archive/record addressing
   // travels with each pack for the texture stage that follows this one.
+  // Classic clothing ownership is GEOMETRIC, not a full shaded-body diff.
+  // buildNeutralBody recomputes AO after a garment displaces its faces, which
+  // can recolour nearby skin (including the head) without moving it. Shipping
+  // those AO-only neighbours as clothing deltas makes the texture compositor
+  // see a head override and deliberately fall back to vertex colours. That is
+  // why some outfit clicks appeared to remove every sprite texture.
+  //
+  // Every body-fitted clothing zone has positive thickness, so an owned face is
+  // exactly a face whose corners moved. Carry its final cloth colour with it;
+  // ignore recolour-only AO collateral.
+  const clothingSurfaceDelta = (baseFaces, clothedFaces) => {
+    const idx = [], P = [], C = [];
+    for (let i = 0; i < clothedFaces.length; i++) {
+      const a = clothedFaces[i], b = baseFaces[i];
+      let moved = false;
+      for (let k = 0; k < 12; k++) {
+        if (Math.abs(a.p[k] - b.p[k]) > 1e-6) { moved = true; break; }
+      }
+      if (!moved) continue;
+      idx.push(i);
+      for (let k = 0; k < 12; k++) P.push(Math.round(a.p[k] * 1000));
+      C.push(a.c[0], a.c[1], a.c[2]);
+    }
+    return { idx, P, C };
+  };
   const clothingPacks = CLOTHING_CATALOG.map((item) => {
     if (item.kind === 'drape') {
       return {
@@ -540,7 +565,7 @@ export function buildPaperdollPayload(pal, img, cif) {
       { ...ramps, cloth: CLOTH_RAMP },
       { face, clothZones: clothingZones(item.index), cloth: CLOTH_RAMP },
     );
-    return { ...item, drape: null, ...villagerDelta(faces, cf) };
+    return { ...item, drape: null, ...clothingSurfaceDelta(faces, cf) };
   });
 
   // Per-race body colours: same geometry, re-shaded with the race hide/fur.
