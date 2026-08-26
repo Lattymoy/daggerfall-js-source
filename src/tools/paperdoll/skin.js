@@ -122,6 +122,9 @@ export function createSkin(ctx) {
       try {
         const bi = await new Promise((res, rej) => { const i = new Image();
           i.onload = () => res(i); i.onerror = rej; i.src = './skin/skin-intensity-beast.png'; });
+        if (bi.width !== c.width || bi.height !== c.height) {
+          throw new Error('stale beast skin dimensions');
+        }
         const bc = document.createElement('canvas');
         bc.width = bi.width; bc.height = bi.height;
         bc.getContext('2d').drawImage(bi, 0, 0);
