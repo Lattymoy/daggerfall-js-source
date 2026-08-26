@@ -210,7 +210,9 @@ test('G5: the service reaches the map through a HOST DOOR, and a host without on
   const j = world.indexOf('function openTeleportMap()');
   assert.ok(j > 0);
   const door = world.slice(j, world.indexOf('\n  }', j));
-  assert.ok(door.includes('travelMapArtLoaded()'), 'no art, no map - the U8 idiom');
+  // U60: the gate is the DOOR's predicate now - the same "no art, no
+  // map" law on the classic skin, and no art needed on the enhanced.
+  assert.ok(door.includes('travelMapDoorReady()'), 'no door, no map - the U8 idiom through U60\'s door');
   // DFU arms the window and only THEN pushes it
   // (DaggerfallGuildServicePopupWindow.cs:414-418: CloseWindow,
   // ActivateTeleportationTravel, PushWindow) - a map handed over

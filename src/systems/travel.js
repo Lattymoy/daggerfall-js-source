@@ -18,16 +18,15 @@ export const CLIMATE_INDICES = Object.freeze([0, 0, 0, 1, 2, 3, 4, 5, 5, 5]);
 // :33 - per-terrain movement modifiers.
 export const TERRAIN_MOVEMENT_MODIFIERS = Object.freeze([240, 220, 200, 200, 230, 250]);
 
-/** CalculateTravelTime (:64-157). start/end are map pixels
- *  ({x, y}); getClimateIndex(x, y) answers CLIMATE.PAK (the
- *  MapsFile method). Returns { minutes, oceanPixels } - the ocean
- *  count feeds the trip cost exactly as the C# field did. */
-export function calculateTravelTime(start, end, {
-  speedCautious = false, sleepModeInn = false, travelShip = false,
-  hasHorse = false, hasCart = false,
-} = {}, getClimateIndex) {
-  const transportModifier = hasHorse ? 128 : hasCart ? 192 : 256;
-
+/** The calculator's pixel walk (:64-157's loop head), extracted whole
+ *  for U60: the overworld map draws its route line and flies its
+ *  camera along the SAME pixels the time law charges, so the picture
+ *  of the journey is the law's own path rather than a second reading.
+ *  Returns every pixel visited AFTER each move - the start pixel is
+ *  not in the list, exactly as the loop never charges it. The stepper
+ *  is the classic longest-axis walk, NOT true Bresenham: the
+ *  increment compares with > not >=, kept exactly. */
+export function walkTravelPath(start, end) {
   let px = start.x, py = start.y;
   const dx = end.x - px, dy = end.y - py;
   const adx = Math.abs(dx), ady = Math.abs(dy);
@@ -35,7 +34,8 @@ export function calculateTravelTime(start, end, {
   const sx = dx >= 0 ? 1 : -1;
   const sy = dy >= 0 ? 1 : -1;
 
-  let moves = 0, inc = 0, minutes = 0, oceanPixels = 0;
+  const path = [];
+  let moves = 0, inc = 0;
   while (moves < furthest) {
     if (furthest === adx) {
       px += sx;
@@ -46,9 +46,26 @@ export function calculateTravelTime(start, end, {
       inc += adx;
       if (inc > ady) { inc -= ady; px += sx; }
     }
+    path.push({ x: px, y: py });
+    ++moves;
+  }
+  return path;
+}
 
+/** CalculateTravelTime (:64-157). start/end are map pixels
+ *  ({x, y}); getClimateIndex(x, y) answers CLIMATE.PAK (the
+ *  MapsFile method). Returns { minutes, oceanPixels } - the ocean
+ *  count feeds the trip cost exactly as the C# field did. */
+export function calculateTravelTime(start, end, {
+  speedCautious = false, sleepModeInn = false, travelShip = false,
+  hasHorse = false, hasCart = false,
+} = {}, getClimateIndex) {
+  const transportModifier = hasHorse ? 128 : hasCart ? 192 : 256;
+
+  let minutes = 0, oceanPixels = 0;
+  for (const { x, y } of walkTravelPath(start, end)) {
     let thisMove;
-    const terrain = getClimateIndex(px, py);
+    const terrain = getClimateIndex(x, y);
     if (terrain === CLIMATES.Ocean) {
       ++oceanPixels;
       thisMove = travelShip ? 51 : 255;
@@ -60,7 +77,6 @@ export function calculateTravelTime(start, end, {
 
     if (!sleepModeInn) thisMove = (300 * thisMove) >> 8;
     minutes += thisMove;
-    ++moves;
   }
 
   if (!speedCautious) minutes = minutes >> 1;

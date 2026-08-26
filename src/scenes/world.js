@@ -50,7 +50,7 @@ import { restDecision } from '../systems/restSession.js';   // U48: the DISPATCH
 import { isHouseOwned, shipCoords, ownsShip } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup
 import { clearSceneCache } from '../systems/sceneCache.js';   // P1: SaveLoadManager.ClearSceneCache, at PlayerGPS's map-pixel seam
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
-import { TravelMapWindow, preloadTravelMapArt, travelMapArtLoaded, canFindPlace } from '../ui/travelMapWindow.js';   // W1: the classic art window (retires the F-slice's keyed stand-in)
+import { createTravelMapWindow, travelMapDoorReady, preloadTravelMapArt, canFindPlace } from '../ui/travelMapDoor.js';   // W1's classic art window + U60's overworld, one door
 import { buildMapDict } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict
 import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
@@ -1777,12 +1777,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     // is asked for - a goto opens past the "an overlay is up" guard the
     // M key answers to.
     if (!gotoPlace && townTalk.overlayActive) return;
-    // W1: the classic window needs its art. Without it there is no
-    // map to click, so the door says so rather than opening a blank
-    // one (the HUD/pause law: a missing IMG closes a door, never the
-    // game).
-    if (!travelMapArtLoaded()) { townTalk.say('(the travel map art is unavailable)'); return; }
+    // W1/U60: the DOOR decides which map this skin wears. The classic
+    // window needs its art - without it there is no map to click, so
+    // the door says so rather than opening a blank one (the HUD/pause
+    // law: a missing IMG closes a door, never the game); the enhanced
+    // overworld reads no art at all.
+    if (!travelMapDoorReady()) { townTalk.say('(the travel map art is unavailable)'); return; }
     _travelMap = buildTravelMapWindow({ onTravel: (pick, opts, computed) => { fastTravelTo(pick, opts, computed); } });
+    if (!_travelMap) { townTalk.say('(the travel map art is unavailable)'); return; }
     if (gotoPlace) _travelMap.gotoPlace(gotoPlace);   // GotoPlace (:214-217), consumed on the map's first tick
     townTalk.showOverlay(_travelMap);
   };
@@ -1791,22 +1793,25 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  has a streaming world to land in; the interior arm reads it off
    *  `host` and a host without one refuses the service. */
   function openTeleportMap() {
-    if (!travelMapArtLoaded()) return null;
+    if (!travelMapDoorReady()) return null;
     let win = null;
     win = buildTravelMapWindow({
       onTeleport: (pick) => { teleportTo(pick); },
       onClose: () => { if (modes?.questOverlay === win) modes?.showQuestOverlay?.(null); },
     });
-    win.activateTeleportationTravel();
+    win?.activateTeleportationTravel();
     return win;
   }
 
   /** ONE construction for the map, because G5 gave it a second opener
    *  and the dependency list is long enough that two copies would
-   *  drift (the ONE CONSTRUCTION SEAM rule). */
+   *  drift (the ONE CONSTRUCTION SEAM rule). U60: the DOOR now forks
+   *  the skin inside this one seam - the host says what it HAS
+   *  (woods rides along for the overworld's relief) and never which
+   *  map that adds up to. */
   function buildTravelMapWindow(extra = {}) {
-    return new TravelMapWindow({
-      maps, mapDict,
+    return createTravelMapWindow({
+      maps, mapDict, woods,
       getPlayerPixel: playerTravelPixel,
       getClimateIndex: (x, yy) => maps.getClimateIndex(x, yy),
       // GetGoldAmount is coins PLUS letters of credit; the popup's
@@ -3002,7 +3007,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // label reads, which box or sub-window is up, and the popup's
     // numbers. The keyed stand-in could be driven blind; a click
     // surface cannot.
-    window.__travelMap = () => JSON.stringify(_travelMap && !_travelMap.done ? {
+    // U60: the enhanced overworld carries its own probe surface
+    // (globalThis.__overworld); this one reads the CLASSIC window's
+    // shape and answers null for the other skin rather than throwing
+    // on fields it does not have.
+    window.__travelMap = () => JSON.stringify(_travelMap && !_travelMap.done && _travelMap.regionLabelText ? {
       regionSelected: _travelMap.regionSelected, region: _travelMap.selectedRegion,
       label: _travelMap.regionLabelText(), top: _travelMap.top,
       picker: _travelMap.picker ? _travelMap.picker.items.length : 0,

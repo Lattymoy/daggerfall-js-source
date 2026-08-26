@@ -15,6 +15,10 @@ directory by `test/audit18_bible_docs.test.js`:
 - `characterSprite.js` - the classic-visuals sprite pass (one fixed
   CHAR_SPRITE_RT_SIZE target).
 - `skyRenderer.js` - painted skies (R4) + the night sky.
+- `overworldRenderer.js` - U60 the OVERWORLD pass: the whole-bay relief,
+  its location markers, the route line and the cloud deck behind the
+  enhanced travel map (self-contained, save/restore, plain RH camera -
+  see `src/ui/overworldMap.js` for the window that drives it).
 - `windowEmission.js` - R2 window emission.
 - `precipitation.js` - R13 rain/snow + storm lightning.
 - `flatAnimation.js` - FA1 the ANIMATED FLATS: DaggerfallBillboard's

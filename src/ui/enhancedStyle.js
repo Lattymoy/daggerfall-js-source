@@ -878,6 +878,106 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   .wizard .brand { padding-bottom: 12px; }
   .provlabel { font-size: 7px; }
 }
+
+/* ── THE OVERWORLD (U60) ────────────────────────────────────
+   The travel map whose picture is the GL frame beneath it, so the
+   root is TRANSPARENT - the one deliberate break from the opaque
+   peer div, recorded in ui/overworldMap.js. Everything drawn here
+   is chrome floating over the relief; every class is ov-prefixed
+   (the .detail/.packcol/.empty lesson, three times paid). */
+.ovroot {
+  position: fixed; inset: 0; z-index: 13; overflow: hidden;
+  background: transparent; cursor: grab; touch-action: none;
+  font-family: var(--body, sans-serif); color: var(--bone);
+}
+.ovroot:active { cursor: grabbing; }
+.ovtop {
+  position: absolute; top: 0; left: 0; right: 0; display: flex;
+  align-items: flex-start; gap: 14px; padding: 14px 18px;
+  pointer-events: none;
+}
+.ovlabel {
+  flex: 1 1 auto; min-width: 0; font-family: var(--display);
+  font-weight: 300; font-size: 24px; line-height: 1.2;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.8); min-height: 30px;
+}
+.ovsearch { position: relative; flex: 0 1 300px; pointer-events: auto; }
+.ovsearch input {
+  width: 100%; min-height: 44px; padding: 8px 12px;
+  background: rgba(10, 13, 17, 0.82); border: 1px solid var(--iron);
+  color: var(--bone); font-size: 14px;
+}
+.ovsearch input:focus { outline: none; border-color: var(--brass); }
+.ovresults {
+  display: none; position: absolute; top: 100%; left: 0; right: 0;
+  margin: 4px 0 0; padding: 0; list-style: none; max-height: 46vh;
+  overflow: auto; background: rgba(10, 13, 17, 0.94);
+  border: 1px solid var(--iron); z-index: 1;
+}
+.ovresults.open { display: block; }
+.ovresult {
+  display: flex; justify-content: space-between; gap: 12px; width: 100%;
+  min-height: 44px; padding: 9px 12px; text-align: left; font-size: 13.5px;
+}
+.ovresult:hover { background: #12161b; }
+.ovresult-region { color: var(--dim); font-size: 12px; }
+.ovclose { pointer-events: auto; }
+.ovfilters {
+  position: absolute; left: 18px; bottom: 18px; display: flex; gap: 8px;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.ovchip {
+  min-height: 44px; padding: 9px 16px; font-size: 13px; color: var(--brass);
+  background: rgba(10, 13, 17, 0.82); border: 1px solid var(--brass);
+}
+/* a filter flag TRUE HIDES its bucket - the chip dims with its dots */
+.ovchip.off { color: var(--dim); border-color: var(--iron); }
+.ovcard {
+  display: none; position: absolute; right: 18px; bottom: 18px;
+  width: min(340px, calc(100vw - 36px)); padding: 18px 20px;
+  background: rgba(10, 13, 17, 0.92); border: 1px solid var(--iron);
+  margin-bottom: env(safe-area-inset-bottom);
+}
+.ovcard.open { display: block; }
+.ovname { font-family: var(--display); font-weight: 300; font-size: 24px; margin: 0; }
+.ovmeta { color: var(--dim); font-size: 13px; margin: 4px 0 12px; }
+.ovprompt { font-size: 14px; margin: 10px 0 12px; }
+.ovacts { display: flex; gap: 8px; margin-top: 12px; }
+.ovacts .act { flex: 1 1 auto; text-align: center; }
+.act.ovghost { color: var(--dim); border-color: var(--iron); }
+.ovpair { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.ovpair-k {
+  flex: 0 0 64px; color: var(--dim); font-size: 10.5px;
+  letter-spacing: 0.12em; text-transform: uppercase;
+}
+.ovpick {
+  flex: 1 1 auto; min-height: 44px; padding: 8px 6px; font-size: 13px;
+  color: var(--dim); background: transparent; border: 1px solid var(--iron);
+}
+.ovpick.on { color: var(--brass); border-color: var(--brass); background: #12161b; }
+.ovtrip { margin: 12px 0 0; }
+.ovnotice { color: #d98074; font-size: 13px; margin: 10px 0 0; }
+.ovskip {
+  display: none; position: absolute; left: 50%; bottom: 42px;
+  transform: translateX(-50%); padding: 10px 18px; font-size: 12px;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--bone);
+  background: rgba(10, 13, 17, 0.7); border: 1px solid var(--iron);
+  pointer-events: none;
+}
+.ovskip.on { display: block; }
+.ovhint {
+  position: absolute; left: 50%; top: 8px; transform: translateX(-50%);
+  color: var(--dim); font-size: 11px; letter-spacing: 0.08em;
+  pointer-events: none; opacity: 0.8;
+}
+@media (max-width: 860px) {
+  .ovlabel { font-size: 18px; }
+  .ovtop { flex-wrap: wrap; }
+  .ovsearch { flex: 1 1 100%; order: 3; }
+  .ovhint { display: none; }
+  .ovcard { right: 12px; bottom: 76px; }
+  .ovfilters { left: 12px; bottom: 12px; flex-wrap: wrap; max-width: calc(100vw - 24px); }
+}
 `;
 
 const STYLE_ID = 'dagger-enhanced-style';
