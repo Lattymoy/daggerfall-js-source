@@ -1,0 +1,30 @@
+name: verify clothing wraps
+
+on:
+  push:
+    branches: [chatgpt/exact-face-atlas]
+    paths:
+      - .github/workflows/verify-clothing-wraps.yml
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/exact-face-atlas
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: Verify eight-way clothing wrap pass
+        run: |
+          node --check src/tools/paperdoll/clothingTexture.js
+          node --check src/tools/paperdollViewer.js
+          grep -q "generated-8-way" src/tools/paperdoll/clothingTexture.js
+          grep -q 'id="wrapdir"' viewer.html
+          npm run build
+          git diff --check
