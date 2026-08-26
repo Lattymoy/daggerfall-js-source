@@ -5,7 +5,8 @@ import { loftPiece, shadePiece, compress, STEEL_RAMP } from './pieceLoft.js';
 
 const SH_X = 0.235; // mirror neutralBody arm centre
 
-export function buildPauldrons(ramp) {
+/** Build both pauldrons (legacy/default) or one exact item side. */
+export function buildPauldrons(ramp, side = 'both') {
   const faces = [];
   const P = 0.6;
   const cap = (sign) => loftPiece(faces, [
@@ -14,7 +15,8 @@ export function buildPauldrons(ramp) {
     { y: 1.570, rx: 0.108, rz: 0.104, p: P }, // skirt over the upper arm
     { y: 1.520, rx: 0.082, rz: 0.080, p: P }, // lower edge
   ], { cx: sign * SH_X, group: sign < 0 ? 'armL' : 'armR', seg: 20 });
-  cap(-1); cap(1);
+  if (side === 'both' || side === 'left') cap(-1);
+  if (side === 'both' || side === 'right') cap(1);
   compress(faces);
   return shadePiece(faces, ramp);
 }
