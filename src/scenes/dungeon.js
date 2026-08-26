@@ -77,8 +77,24 @@ export async function bootDungeon(canvas, renderer, params, status) {
 
   status(`laying out ${dungeonName}`);
   const pipeline = createDataPipeline({ renderer, arch, palette });
+  // S5.2: the yaw/pitch/isCrouching half of PlayerPositionData_v1
+  // (SerializableGameObject.cs:228-230). This page's camera and motor
+  // are built BELOW - the boot ?load runs before they exist - so the
+  // context reaches them through this one slot, and a facing restored
+  // by that boot load is HELD here and applied with the spawn,
+  // exactly as loadedPos already is.
+  const view = { cam: null, player: null, pending: null };
+  const playerFacing = () => (view.cam
+    ? { yaw: view.cam.yaw, pitch: view.cam.pitch, crouching: view.player.crouching }   // SerializablePlayer.cs:212-214
+    : null);
+  const setPlayerFacing = (f) => {   // RestorePosition's tail (:475-477); a null member = a pre-S5.2 save, live value stands
+    if (!view.cam) { view.pending = f; return; }
+    if (f?.yaw != null) view.cam.yaw = f.yaw;
+    if (f?.pitch != null) view.cam.pitch = f.pitch;
+    if (f?.crouching != null) view.player.crouching = f.crouching;
+  };
   const ctx = await buildDungeonContext(
-    { ...pipeline, renderer, arch, palette }, dfLocation, blocks, dfLocation.climate.climateType, { foes: !params.has('nofoes'), playerClass: params.has('class') ? Number(params.get('class')) : undefined, playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined, playerWeapon: params.get('weapon') ?? undefined });
+    { ...pipeline, renderer, arch, palette }, dfLocation, blocks, dfLocation.climate.climateType, { foes: !params.has('nofoes'), playerClass: params.has('class') ? Number(params.get('class')) : undefined, playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined, playerWeapon: params.get('weapon') ?? undefined, playerFacing, setPlayerFacing });
 
   // U21: the menu's LOAD GAME. The context is built, so restore into
   // it through the host's own quickLoad - the same call F12 makes -
@@ -114,6 +130,10 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const player = new PlayerMotor(ctx.collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), climbing: climbingDeps(playerEntity), carriedWeight: () => totalWeight(playerEntity.items ?? []) });   // AcrobatMotor skill jump (P14) + M3 climbing (no HUD seam in the standalone host); motorStats = the LIVE entity
     const _footsteps = new FootstepMachine();   // FS-slice
   player.spawn(spawn[0], spawn[1], spawn[2]);
+  // S5.2: the camera and motor now exist - hand them to the context's
+  // facing slot, and drain a facing the boot ?load already restored.
+  view.cam = cam; view.player = player;
+  if (view.pending) { const f = view.pending; view.pending = null; setPlayerFacing(f); }
   console.log(`[spawn] marker ${JSON.stringify(ctx.startMarker)} -> feet [${spawn.map((v) => v.toFixed(3)).join(', ')}] (startSpawn build)`);
   // P10 Teleport actions: player transform = the destination object's
   // (DFU DaggerfallAction.Teleport). spawn() zeroes velY and drops

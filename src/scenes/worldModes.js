@@ -2897,6 +2897,20 @@ export function createWorldModes(host) {
           // instead of a second, host-blind copy of the restore that
           // could only ever say "(different dungeon)".
           hostQuickLoad,
+          // S5.2: this host's camera and motor, for the dungeon
+          // envelope's yaw/pitch/isCrouching (PlayerPositionData_v1
+          // :228-230). The context has neither of its own; the getter
+          // is SerializablePlayer.cs:212-214 and the setter is
+          // RestorePosition's tail (:475-477,
+          // `playerMouseLook.SetFacing(yaw, pitch)` then
+          // `playerMotor.IsCrouching`). A null member is a snapshot
+          // older than the field - the live value stands.
+          playerFacing: () => ({ yaw: cam.yaw, pitch: cam.pitch, crouching: player.crouching }),
+          setPlayerFacing: (f) => {
+            if (f?.yaw != null) cam.yaw = f.yaw;
+            if (f?.pitch != null) cam.pitch = f.pitch;
+            if (f?.crouching != null) player.crouching = f.crouching;
+          },
         });
       dungeonCtx = ctx;
       // P10 host parity (2026-08-16 audit: only the standalone scene

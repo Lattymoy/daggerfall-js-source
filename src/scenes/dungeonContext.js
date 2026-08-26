@@ -2967,6 +2967,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     reportMouse(dx, dy, locked) { _mouseState = `dx:${dx} dy:${dy} lock:${locked ? 'Y' : 'N'}`; },
     reportInput(keys, pitch) { _inputState = `keys:${keys} pitch:${pitch.toFixed(2)}`; },
     quickSave() {
+      // S5.2: the HOST's camera and motor. This context has neither -
+      // worldModes and the standalone ?dungeon page each own their own
+      // `cam`/`player` - so the facing comes down through opts. A host
+      // that supplies none leaves all three null, which the restore
+      // reads as "leave the live value standing".
+      const facing = opts.playerFacing?.() ?? null;
       const snap = snapshotPlayer(playerEntity, {
         position: lastPlayerFeet, classicMinutes: classicMinutesRef.value,
         readiedSpellIndex: magic.readiedIndex(),
@@ -2979,6 +2985,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // writes nulls there, same as every pre-B4 save).
         ...composeSessionState({ questBridge: opts.questBridge, talk: opts.talkSave }),
         locationKey: _locationKey,
+        // S5.2 - the weapon and the stance, the same four members the
+        // exterior host writes. `weaponDrawn` is DFU's INVERSION of
+        // the live flag (SerializablePlayer.cs:175,
+        // `!weaponManager.Sheathed`); the rig is this context's own,
+        // because the port mints one per host where DFU has a single
+        // WeaponManager. yaw/pitch/isCrouching are the HOST's - the
+        // context has no camera and no motor, so they come down
+        // through opts.playerFacing, read above.
+        yaw: facing ? facing.yaw : null,
+        pitch: facing ? facing.pitch : null,
+        isCrouching: facing ? !!facing.crouching : null,
+        weaponDrawn: !weaponRig.playerWeapon.sheathed,
         world: collectWorld(),
       });
       if (writeQuicksave(snap)) hudText.add('Game saved.');
@@ -3051,6 +3069,25 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // record the save itself carried (A1 review).
       automapRec = enterDungeonAutomap(automapKey, classicMinutesRef.value, { fromLoad: true });
       if (extras.position && extras.locationKey === _locationKey && setPlayerPos) setPlayerPos(extras.position);
+      // S5.2 - SerializablePlayer.RestorePosition's TAIL (:475-477):
+      // SetFacing(yaw, pitch), then playerMotor.IsCrouching, applied
+      // AFTER the position and inside the same body - which is what
+      // this is. Under the world host that body runs only once
+      // restorePositionHelper has respawned the player into this
+      // dungeon (SaveLoadManager.cs:1476 < :1497); the standalone
+      // ?dungeon page has no host to switch and runs it in place.
+      // Gated on the same location match the position is: DFU's facing
+      // rides inside RestorePosition, which a load that cannot
+      // reposition never calls (:413-417).
+      if (extras.locationKey === _locationKey) {
+        opts.setPlayerFacing?.({ yaw: extras.yaw, pitch: extras.pitch, crouching: extras.isCrouching });
+      }
+      // SerializablePlayer.cs:420 - `weaponManager.Sheathed =
+      // !data.weaponDrawn`, the save-side inversion read back. It sits
+      // OUTSIDE RestorePosition and is unconditional there, so no
+      // location gate here. null = a pre-S5.2 snapshot: the live
+      // sheath stands (save.js's additive-field note).
+      if (extras.weaponDrawn != null) weaponRig.playerWeapon.sheathed = !extras.weaponDrawn;
       surfacePlayer();
       // A loaded game supersedes whatever pre-game overlay is up.
       // AUDIT 19 F7 (critical): only DeathScreen was cleared, so the

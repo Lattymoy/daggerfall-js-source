@@ -160,13 +160,51 @@ export const copyEffectEntry = (a) => {
 export const equippedWeaponIndex = (weapon, items) => (weapon ? items.indexOf(weapon) : -1);
 
 /** A plain-object snapshot of the player + scene extras. */
-export function snapshotPlayer(entity, { position = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null, quest = null, talk = null } = {}) {
+export function snapshotPlayer(entity, { position = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null, quest = null, talk = null, weaponDrawn = null, yaw = null, pitch = null, isCrouching = null } = {}) {
   // Q4-v: `quest` is the bridge's whole envelope (machine + notebook +
   // the one-time list) - opaque here, exactly like `world`.
   // TK-i: `talk` is TalkManager's SaveDataConversation (the rumor
   // mill's halves for now; TK-ii/TK-iv grow it) - the same shape of
   // slot.
   const snap = { v: SAVE_VERSION, position, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk };
+  // S5.2 - THE WEAPON AND THE STANCE. DFU writes `weaponDrawn`
+  // (SerializablePlayer.cs:175, `!weaponManager.Sheathed`) beside the
+  // entity, and `yaw`/`pitch`/`isCrouching` inside
+  // PlayerPositionData_v1 (SerializableGameObject.cs:228-230, written
+  // at SerializablePlayer.cs:212-214 off playerMouseLook.Yaw/Pitch and
+  // playerMotor.IsCrouching). The port carried none of them, so every
+  // load stood the player up, sheathed their weapon and pointed them
+  // at the default heading however they left it - which in a dungeon
+  // is an unarmed character facing the wrong way mid-fight.
+  //
+  // The port's `position` is a bare feet array, not a
+  // PlayerPositionData_v1, so the three position members ride the
+  // envelope flat under DFU's OWN member names rather than nested.
+  //
+  // UNITS (the standing radians-vs-degrees hazard): DFU's
+  // PlayerMouseLook.Yaw/Pitch are DEGREE-valued properties over a
+  // radian field (PlayerMouseLook.cs:62-84). The port has no
+  // PlayerMouseLook - the hosts' `cam.yaw`/`cam.pitch` ARE the radian
+  // field - so yaw and pitch travel in RADIANS, the same unit the
+  // enemy `yaw` in this envelope's world half already uses. A save
+  // file is a port artifact, not a DFU one; the number is stated here
+  // so no reader has to guess.
+  //
+  // DFU has a fifth member here, `usingLeftHand`
+  // (SerializablePlayer.cs:176, `!weaponManager.UsingRightHand`).
+  // DELIBERATELY ABSENT: the port has no hand to switch.
+  // WeaponManager.ToggleHand (:700-710) has no port, weaponRig binds
+  // EQUIP_SLOTS.RightHand unconditionally (weaponRig.js:54) and
+  // FPSWeapon's FlipHorizontal is unimplemented by its own header
+  // (fpsWeapon.js:19-20). The action name exists in the binding
+  // registry (inputActions.js: 'SwitchHand') with no consumer, so the
+  // member would be a constant `false` round-tripping through nothing.
+  // Saving state the port cannot hold is the same defect as dropping
+  // state it can.
+  snap.weaponDrawn = weaponDrawn;
+  snap.yaw = yaw;
+  snap.pitch = pitch;
+  snap.isCrouching = isCrouching;
   // W1: DFU persists exactly ONE weather value (playerPosition.weather)
   // and re-rolls the six-zone array on the next date change - the sim
   // is a module singleton, so the envelope reads it here and every
@@ -505,7 +543,24 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // handoff between this half of the load and restoreSessionState,
   // which is where DFU's :1518 sits - so the entity travels the seam
   // that is already there rather than a second host argument.
-  return { entity, position: snap.position, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null };
+  // S5.2: the weapon and the stance ride the extras rather than being
+  // applied here. DFU applies them at SerializablePlayer.cs:420 and
+  // :475-477 - i.e. inside RestoreSaveData, which SaveLoadManager runs
+  // at :1497, AFTER RestorePositionHelper has respawned the player in
+  // the host the save was made in (:1476). This function is the port's
+  // SerializablePlayer ENTITY half and runs BEFORE that seam, and the
+  // dungeon respawn mints a fresh weapon rig - so a sheath or a facing
+  // applied here would be applied to a host the player is about to
+  // leave, and silently clobbered. The hosts apply them at DFU's slot.
+  //
+  // `?? null` on each: a snapshot older than these fields carries no
+  // member, and the hosts leave the live value standing for a null
+  // (the additive-field shape this file already gives weather and a
+  // restored foe's maxHealth). A DEPARTURE, recorded: C#'s
+  // deserializer would give the missing members its type defaults
+  // (false/0f), which would sheathe the weapon and point a pre-fix
+  // save at heading 0 - the very bug this wave removes.
+  return { entity, position: snap.position, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null, weaponDrawn: snap.weaponDrawn ?? null, yaw: snap.yaw ?? null, pitch: snap.pitch ?? null, isCrouching: snap.isCrouching ?? null };
 }
 
 /** AUDIT 25 B4: ONE quest+talk envelope composer, every quicksaving

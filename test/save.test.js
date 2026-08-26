@@ -31,7 +31,13 @@ test('save: round-trip restores everything; extras carried; deep copies', () => 
   // GameManager.Instance.PlayerEntity - the port has no such singleton,
   // so the entity rides the extras to restoreSessionState, where that
   // step lives.
-  assert.deepEqual(extras, { entity: dst, position: [1, 2, 3], classicMinutes: 77.5, readiedSpellIndex: 97, world, locationKey: 'dungeon:42', quest: null, talk: null });
+  // SAVE WAVE 5.2: weaponDrawn/yaw/pitch/isCrouching
+  // (SerializablePlayer.cs:175, :212-214) ride the extras too - the
+  // hosts apply them at DFU's slot, after the respawn. This caller
+  // passes none, so all four come back null: the additive-field shape
+  // that leaves a pre-5.2 save's live weapon, facing and stance
+  // standing (pinned in audit26_wave52.test.js).
+  assert.deepEqual(extras, { entity: dst, position: [1, 2, 3], classicMinutes: 77.5, readiedSpellIndex: 97, world, locationKey: 'dungeon:42', quest: null, talk: null, weaponDrawn: null, yaw: null, pitch: null, isCrouching: null });
   assert.equal(dst.name, 'Mac');
   assert.equal(dst.stats.luck, 60);
   assert.equal(dst.items[0].name, 'Short Bow');

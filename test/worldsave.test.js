@@ -63,7 +63,11 @@ test('worldsave: the world host wires F9/F11 with the native envelope and the lo
   assert.ok(s.includes("act === 'QuickSave'") && s.includes('worldQuickSave()'), 'the QuickSave action saves (I2; F9 is its registry default, InputManager.SetupDefaults)');
   assert.ok(s.includes("act === 'QuickLoad'") && s.includes('worldQuickLoad()'), 'and QuickLoad loads (F11 default)');
   const i = s.indexOf('function worldQuickSave');
-  const fn = s.slice(i, i + 1000);   // TK-iv widened it (SaveDataConversation whole rides the talk slot)
+  // SAVE WAVE 5.2: brace-MATCHED, like the restore half below. The
+  // 1000-character window this used to be was a guess, and the wave
+  // that added weaponDrawn/yaw/pitch/isCrouching (SerializablePlayer
+  // .cs:175, :212-214) pushed the compensation assert out of it.
+  const fn = braceBlock(s, i);
   assert.ok(fn.includes('state.worldCoords(pf)'), 'the save stores NATIVES, not local scene positions');
   assert.ok(fn.includes('pf[1] - state.compensation[1]'), 'the height sheds the vertical compensation');
   // B4: the quest+talk envelope moved into the ONE composer both hosts

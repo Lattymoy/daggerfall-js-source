@@ -1775,6 +1775,17 @@ export async function bootWorld(canvas, renderer, params, status) {
       // how the dungeon half drifted to saving neither.
       ...composeSessionState({ questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession } }),
       locationKey: 'world',
+      // S5.2 - the weapon and the stance. `weaponDrawn` is DFU's own
+      // INVERSION of the live flag (SerializablePlayer.cs:175,
+      // `data.weaponDrawn = !weaponManager.Sheathed`), so the envelope
+      // records DRAWN and the restore inverts it back; storing the
+      // sheath raw would round-trip through one host and not the other
+      // and never show it. yaw/pitch are this host's `cam` - the
+      // RADIAN field DFU's degree-valued PlayerMouseLook.Yaw/Pitch
+      // wraps (see save.js) - and isCrouching is the motor's
+      // PlayerMotor.IsCrouching (:132-136), a plain field there too.
+      weaponDrawn: !weaponRig.playerWeapon.sheathed,
+      yaw: cam.yaw, pitch: cam.pitch, isCrouching: !!player.crouching,
       world: {
         pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],
         // P2-slice (items-2): loose piles ride the envelope in
@@ -2068,6 +2079,42 @@ export async function bootWorld(canvas, renderer, params, status) {
         // and it is said out loud rather than silently pretended.
         townTalk.say('(saved elsewhere - character restored; travel there yourself)');
       }
+      // S5.2 - SerializablePlayer.RestorePosition's TAIL (:475-477):
+      // `playerMouseLook.SetFacing(yaw, pitch)` then
+      // `playerMotor.IsCrouching`, applied after the position and
+      // never before it. THIS LINE IS DFU'S SLOT: RestorePosition is
+      // reached from RestoreSaveData, which SaveLoadManager runs at
+      // :1497 - after RestorePositionHelper (:1476) has respawned the
+      // player into the host the save was made in. `cam` and `player`
+      // are shared with worldModes, so a facing written before the
+      // respawn survives it, but a facing written before
+      // forceExitToExterior/_teleportToPixel is exactly the
+      // silently-clobbered case - the dungeon exit landing rewrites
+      // cam.yaw (worldModes tryExitDungeon) and the respawn resets the
+      // motor's pending height action.
+      //
+      // The DUNGEON arm's facing is NOT applied here: it rides
+      // dungeonContext.applyLoadedScene, the ONE body that is also the
+      // standalone ?dungeon page's whole load, so both entry points
+      // run one RestorePosition rather than two copies.
+      //
+      // null = a snapshot older than these fields: the live value
+      // stands (the additive-field shape; see save.js's note on the
+      // C# type-default departure).
+      if (restoredHost !== 'dungeon') {
+        if (extras.yaw != null) cam.yaw = extras.yaw;
+        if (extras.pitch != null) cam.pitch = extras.pitch;
+        if (extras.isCrouching != null) player.crouching = extras.isCrouching;
+      }
+      // SerializablePlayer.cs:420 - `weaponManager.Sheathed =
+      // !data.weaponDrawn`, DFU's inversion read back. It sits OUTSIDE
+      // RestorePosition and is unconditional there, so it is here too.
+      // DFU has one WeaponManager; the port has one rig per host (this
+      // one, worldModes' interiorWeapon, and each dungeon context's),
+      // so each restores from the same field - the dungeon context
+      // does it in applyLoadedScene, and this rig takes it either way
+      // because it is the rig the player comes back to on the way out.
+      if (extras.weaponDrawn != null) weaponRig.playerWeapon.sheathed = !extras.weaponDrawn;
       _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // no spawn catch-up across a load (DFU LoadInProgress)
       surfacePlayer();
       // S1: a dungeon landing says it on the DUNGEON's HUD, inside
