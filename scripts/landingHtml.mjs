@@ -8,12 +8,19 @@
 // palette and no font URL of its own. This plugin puts the skin's
 // ENHANCED_TOKENS block and ENHANCED_FONTS_URL into it at serve/build
 // time, the way build-tag-meta puts the sha into every page, and the
-// page's own <style> only ever says var(--brass).
+// page's own <style> only ever says var(--brass). Its fonts are the
+// skin's BRAND face and DATA face through the skin's own URL builder.
 //
 // The transform is a pure function over the html so the test can run
 // it without Vite and assert the tokens on the page ARE the skin's.
 import { readFileSync } from 'node:fs';
-import { ENHANCED_TOKENS, ENHANCED_FONTS_URL } from '../src/ui/enhancedStyle.js';
+import { ENHANCED_TOKENS, FONT_BRAND, FONT_DATA, fontsUrl } from '../src/ui/enhancedStyle.js';
+
+/** The landing page's own request: the brand face and the data face,
+ *  through the skin's URL builder. The woff2 files Google serves are
+ *  shared with the game by file URL, so the data face is fetched once
+ *  for both pages whatever the css2 URL says. */
+export const LANDING_FONTS_URL = fontsUrl([FONT_BRAND, FONT_DATA]);
 
 /** The page this plugin is for - only the root document. `/play/index.html`
  *  is the game and gets nothing from here. */
@@ -36,7 +43,7 @@ export function readBuildSha(read = (p) => readFileSync(p, 'utf8')) {
  *  Returns Vite's { html, tags } shape. The stamp is a data attribute
  *  on the element the page styles as the build line, and the page hides
  *  it when empty, so a dev serve shows no stamp rather than a lie. */
-export function transformLanding(html, { sha = '', tokens = ENHANCED_TOKENS, fontsUrl = ENHANCED_FONTS_URL } = {}) {
+export function transformLanding(html, { sha = '', tokens = ENHANCED_TOKENS, fonts = LANDING_FONTS_URL } = {}) {
   // Every empty stamp on the page, not the first: the rail's foot hides
   // on a phone and the page's end carries the same line for that case.
   // A stamp that links to `.../commit/` gets the sha on the end of it.
@@ -57,7 +64,7 @@ export function transformLanding(html, { sha = '', tokens = ENHANCED_TOKENS, fon
       ...(ink ? [{ tag: 'meta', attrs: { name: 'theme-color', content: ink }, injectTo: 'head' }] : []),
       { tag: 'link', attrs: { rel: 'preconnect', href: 'https://fonts.googleapis.com' }, injectTo: 'head' },
       { tag: 'link', attrs: { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }, injectTo: 'head' },
-      { tag: 'link', attrs: { rel: 'stylesheet', href: fontsUrl }, injectTo: 'head' },
+      { tag: 'link', attrs: { rel: 'stylesheet', href: fonts }, injectTo: 'head' },
     ],
   };
 }

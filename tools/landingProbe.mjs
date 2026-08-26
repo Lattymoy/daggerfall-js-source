@@ -50,10 +50,25 @@ async function landing(label, ctxOpts) {
   check(`${label}: a computed colour on the page IS brass`, sub === 'rgb(192, 138, 62)', sub);
   const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
   check(`${label}: the ground is ink`, bg === 'rgb(14, 16, 19)', bg);
-  check(`${label}: the fonts link is the skin's`,
-    (await page.locator('link[rel=stylesheet][href*="fonts.googleapis.com"]').count()) === 1);
+  check(`${label}: one fonts link, and it asks for the brand face`,
+    (await page.locator('link[rel=stylesheet][href*="fonts.googleapis.com"]').count()) === 1
+    && /Grenze\+Gotisch/.test(await page.locator('link[rel=stylesheet][href*="fonts.googleapis.com"]').getAttribute('href') ?? ''));
+  // The face RESOLVED, not merely was asked for (needs the network; the
+  // page itself never traps on it - Georgia is the fallback).
+  const h1Face = await page.locator('h1').evaluate((el) => getComputedStyle(el).fontFamily);
+  check(`${label}: the headline is set in the brand face`, /Grenze Gotisch/.test(h1Face), h1Face);
+  check(`${label}: ...and the brand face loaded`,
+    await page.evaluate(() => document.fonts.check("300 40px 'Grenze Gotisch'")));
   check(`${label}: no script, no image, no canvas on the landing`,
     (await page.locator('script:not([src^="/@vite/"]), img, canvas, video').count()) === 0);   // vite's own HMR client is the dev server's, not the page's
+  check(`${label}: the gate wears its four corner fittings`,
+    await page.locator('.gate').evaluate((el) => {
+      const w = (n, ps) => getComputedStyle(n, ps).borderTopWidth + getComputedStyle(n, ps).borderLeftWidth
+        + getComputedStyle(n, ps).borderBottomWidth + getComputedStyle(n, ps).borderRightWidth;
+      const fit = el.querySelector('.fit');
+      return [w(el, '::before'), w(el, '::after'), w(fit, '::before'), w(fit, '::after')]
+        .every((x) => x.includes('2px'));
+    }));
   const play = await page.locator('.gate a.act.primary').getAttribute('href');
   check(`${label}: Play points one directory down`, play === './play/', play);
   check(`${label}: no page errors`, errors.length === 0, errors.join(' | '));

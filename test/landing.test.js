@@ -23,8 +23,8 @@ import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { Writable } from 'node:stream';
-import { ENHANCED_TOKENS, ENHANCED_FONTS_URL, ENHANCED_CSS } from '../src/ui/enhancedStyle.js';
-import { transformLanding, LANDING_PATH } from '../scripts/landingHtml.mjs';
+import { ENHANCED_TOKENS, ENHANCED_FONTS_URL, ENHANCED_CSS, FONT_BRAND, FONT_DATA, FONT_DISPLAY, fontsUrl } from '../src/ui/enhancedStyle.js';
+import { transformLanding, LANDING_PATH, LANDING_FONTS_URL } from '../scripts/landingHtml.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
@@ -81,7 +81,18 @@ test('U60: the injected block IS the skin\'s token block, and the skin still wea
   assert.equal(style?.children, ENHANCED_TOKENS, 'the style tag carries the token block verbatim');
   assert.equal(style?.injectTo, 'head-prepend', 'tokens land before the page\'s own <style>');
   const fonts = out.tags.find((t) => t.tag === 'link' && t.attrs.rel === 'stylesheet');
-  assert.equal(fonts?.attrs.href, ENHANCED_FONTS_URL, 'the fonts request is the skin\'s own URL');
+  assert.equal(fonts?.attrs.href, LANDING_FONTS_URL, 'the fonts request is composed, not typed');
+  // U60b: the brand face. The skin's URL is unchanged by the addition -
+  // the game loads nothing it does not use - and both URLs come out of
+  // the same builder over the same family strings.
+  assert.equal(ENHANCED_FONTS_URL, fontsUrl([FONT_DISPLAY, FONT_DATA]));
+  assert.equal(ENHANCED_FONTS_URL,
+    'https://fonts.googleapis.com/css2?family=Cormorant:wght@300;400;600&family=Barlow+Semi+Condensed:wght@400;500;600&display=swap',
+    'the skin\'s request is byte-identical to what it was before the brand face existed');
+  assert.equal(LANDING_FONTS_URL, fontsUrl([FONT_BRAND, FONT_DATA]));
+  assert.match(FONT_BRAND, /^Grenze\+Gotisch:wght@/);
+  assert.match(ENHANCED_TOKENS, /--brand: 'Grenze Gotisch'/, 'the face is a token the skin declares');
+  assert.match(landing, /h1, h2, h3 \{ font-family: var\(--brand\)/, 'and every heading on the page is set in it');
   const ink = ENHANCED_TOKENS.match(/--ink:\s*(#[0-9a-f]{6})/)?.[1];
   const theme = out.tags.find((t) => t.tag === 'meta' && t.attrs.name === 'theme-color');
   assert.equal(theme?.attrs.content, ink, 'the phone\'s address bar reads the ink token');

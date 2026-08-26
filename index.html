@@ -15,7 +15,7 @@
     landingHtml.mjs injects the enhanced skin's own tokens at serve and
     build, so the page you land on and the menu you play in are one
     interface. Every colour below is a var(); test/landing.test.js
-    holds it to that.
+    holds it to that. The brand face (U60b) is the skin's --brand.
   -->
   <style>
     * { box-sizing: border-box; }
@@ -26,7 +26,7 @@
       font-family: var(--data); font-size: 15px; line-height: 1.55;
       -webkit-font-smoothing: antialiased;
     }
-    a { color: var(--bone); text-decoration: underline; text-decoration-color: var(--brass); text-underline-offset: 3px; }
+    a { color: var(--bone); text-decoration: underline; text-decoration-color: var(--brass); text-decoration-thickness: 1px; text-underline-offset: 3px; }
     a:hover { color: var(--brass); }
     :focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
     .skip {
@@ -34,6 +34,11 @@
       background: var(--brass); color: var(--ink); text-decoration: none; z-index: 10;
     }
     .skip:focus { top: 12px; }
+    h1, h2, h3 { font-family: var(--brand); font-weight: 400; margin: 0; }
+    /* A gothic capital is a shape before it is a letter, so a name that
+       is all capitals - a folder, an acronym - is set in the data face
+       inside a heading, the way a label is stamped into a fitting. */
+    h1 .cap, h2 .cap, h3 .cap, dt .cap { font-family: var(--data); font-weight: 500; font-size: 0.74em; letter-spacing: 0.06em; }
 
     /* ── SHELL ── the menu's own two columns: a rail of words, and the
        pane that answers them. Here the pane scrolls and the rail stays. */
@@ -44,9 +49,10 @@
     .side { background: var(--ink); position: sticky; top: 0; height: 100dvh; display: flex; flex-direction: column; }
     .pane { background: var(--slate); min-width: 0; }
 
-    /* ── BRAND ── the same block the menu draws, one word swapped. */
+    /* ── BRAND ── the same block the menu draws, one word swapped and
+       the face the site is set in. */
     .brand { display: block; padding: 30px 22px 24px; color: inherit; text-decoration: none; }
-    .brand .mark { display: block; font-family: var(--display); font-weight: 300; font-size: 34px; letter-spacing: 0.03em; line-height: 1; }
+    .brand .mark { display: block; font-family: var(--brand); font-weight: 300; font-size: 40px; letter-spacing: 0.02em; line-height: 1; }
     .brand .sub { display: block; color: var(--brass); font-size: 11px; letter-spacing: 0.26em; text-transform: uppercase; margin-top: 9px; }
 
     .rail { padding: 6px 0 20px; flex: 1; }
@@ -68,22 +74,28 @@
     .build:empty { display: none; }
 
     /* ── HERO ── */
-    .hero { padding: clamp(48px, 10vh, 120px) clamp(24px, 5vw, 72px) clamp(40px, 6vh, 64px); max-width: 960px; }
+    .hero { padding: clamp(48px, 10vh, 120px) clamp(24px, 5vw, 72px) clamp(40px, 6vh, 64px); max-width: 980px; }
     .eyebrow { color: var(--brass); font-size: 11px; letter-spacing: 0.26em; text-transform: uppercase; margin: 0; }
-    .hero h1 {
-      font-family: var(--display); font-weight: 300; font-size: clamp(44px, 7vw, 86px);
-      line-height: 1.02; letter-spacing: 0.005em; margin: 18px 0 22px;
-    }
+    .hero h1 { font-weight: 300; font-size: clamp(48px, 7.4vw, 92px); line-height: 1; letter-spacing: 0.005em; margin: 18px 0 24px; }
     .dek { font-size: 18px; line-height: 1.5; max-width: 60ch; margin: 0; }
 
     /* ── THE GATE ── the first thing the game asks for, said here
-       first. The one panel on the page with a brass edge. */
+       first. Brass edge, brass corner fittings: Daggerfall's chrome is
+       carved stone with metal at the corners, and this is the one
+       panel on the page that wears it. */
     .gate {
-      margin-top: 44px; max-width: 760px; background: var(--ink); border: 1px solid var(--brass);
-      display: grid; grid-template-columns: 1fr auto; gap: 22px 32px; align-items: center; padding: 24px 26px;
+      position: relative; margin-top: 44px; max-width: 780px; background: var(--ink); border: 1px solid var(--brass);
+      display: grid; grid-template-columns: 1fr auto; gap: 22px 32px; align-items: center; padding: 26px 28px;
     }
+    .gate::before, .gate::after, .fit::before, .fit::after {
+      content: ''; position: absolute; width: 11px; height: 11px; border: 0 solid var(--brass);
+    }
+    .gate::before { top: -5px; left: -5px; border-width: 2px 0 0 2px; }
+    .gate::after { top: -5px; right: -5px; border-width: 2px 2px 0 0; }
+    .fit::before { bottom: -5px; left: -5px; border-width: 0 0 2px 2px; }
+    .fit::after { bottom: -5px; right: -5px; border-width: 0 2px 2px 0; }
     .gate .eyebrow { margin-bottom: 8px; }
-    .gate h2 { font-family: var(--display); font-weight: 300; font-size: 26px; line-height: 1.1; margin: 0 0 8px; }
+    .gate h2 { font-size: 30px; line-height: 1.05; margin: 0 0 8px; }
     .gate p { margin: 0; color: var(--dim); font-size: 14px; max-width: 52ch; }
     .gate .more { display: block; margin-top: 10px; font-size: 13px; }
 
@@ -96,16 +108,28 @@
     .act.primary { border-color: var(--brass); color: var(--brass); }
     .act.primary:hover { background: var(--brass); color: var(--ink); }
 
-    /* ── SECTIONS ── one line of heading, as the pane heads are. */
-    .sec { margin: 0 clamp(24px, 5vw, 72px); padding: 44px 0 52px; max-width: 960px; border-top: 1px solid var(--iron); }
-    .sec h2 { font-family: var(--display); font-weight: 300; font-size: 30px; line-height: 1.1; margin: 0 0 22px; }
+    /* ── SECTIONS ── one line of heading, as the pane heads are, and a
+       brass diamond on the rule where a section begins: the one
+       fitting, used as structure and nowhere else. */
+    .sec { position: relative; margin: 0 clamp(24px, 5vw, 72px); padding: 46px 0 54px; max-width: 980px; border-top: 1px solid var(--iron); }
+    .sec::before {
+      content: ''; position: absolute; top: -4px; left: 0; width: 7px; height: 7px;
+      background: var(--slate); border: 1px solid var(--brass); transform: rotate(45deg);
+    }
+    .sec h2 { font-size: 36px; line-height: 1.05; margin: 0 0 8px; }
+    .sec .lede { color: var(--dim); font-size: 14px; margin: 0 0 24px; max-width: 62ch; }
     .sec p { margin: 0 0 12px; max-width: 62ch; }
     .sec p:last-child { margin-bottom: 0; }
 
     .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--iron); border: 1px solid var(--iron); }
     .col { background: var(--slate); padding: 22px 20px 24px; }
-    .col h3 { font-family: var(--display); font-weight: 400; font-size: 22px; line-height: 1.1; margin: 0 0 10px; }
+    .col h3 { font-size: 24px; line-height: 1.1; margin: 0 0 10px; }
     .col p { font-size: 15px; }
+
+    /* THE ANTI-LIE BOX, borrowed from the menu: a thing that does not
+       work yet is shown and says so, never quietly absent. */
+    .notyet { border: 1px dashed var(--iron); padding: 18px 20px; margin-top: 22px; max-width: 62ch; color: var(--dim); font-size: 14px; }
+    .notyet b { color: var(--bone); font-weight: 500; }
 
     /* Steps are a real sequence - the numbers carry order. */
     .steps { list-style: none; margin: 0; padding: 0; counter-reset: step; }
@@ -113,17 +137,36 @@
     .step:first-child { border-top: 0; padding-top: 0; }
     .step::before {
       counter-increment: step; content: counter(step);
-      font-family: var(--display); font-weight: 300; font-size: 36px; line-height: 1; color: var(--brass);
+      font-family: var(--brand); font-weight: 300; font-size: 40px; line-height: 1; color: var(--brass);
     }
-    .step h3 { font-family: var(--display); font-weight: 400; font-size: 21px; line-height: 1.1; margin: 4px 0 8px; }
+    .step h3 { font-size: 23px; line-height: 1.1; margin: 4px 0 8px; }
     .step p { font-size: 15px; }
     .step code { font-family: var(--data); font-weight: 600; letter-spacing: 0.04em; }
     .sources { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 14px; }
 
-    .credits { display: grid; grid-template-columns: 220px 1fr; gap: 18px 28px; margin: 0; }
-    .credits dt { font-family: var(--display); font-weight: 400; font-size: 20px; line-height: 1.15; }
-    .credits dt a { text-decoration-thickness: 1px; }
-    .credits dd { margin: 0; }
+    /* ── KEYS ── the defaults the game ships with (they are Daggerfall
+       Unity's), three groups, rebindable in Settings. */
+    .keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--iron); border: 1px solid var(--iron); }
+    .keygroup { background: var(--slate); padding: 18px 20px 20px; }
+    .keygroup h3 { font-size: 22px; margin: 0 0 12px; }
+    .keygroup table { border-collapse: collapse; width: 100%; font-size: 14px; }
+    .keygroup td { padding: 6px 0; border-top: 1px solid var(--iron); vertical-align: top; }
+    .keygroup tr:first-child td { border-top: 0; padding-top: 0; }
+    .keygroup td:last-child { text-align: right; white-space: nowrap; color: var(--bone); }
+    .keygroup td:first-child { color: var(--dim); padding-right: 12px; }
+    kbd {
+      font-family: var(--data); font-weight: 600; font-size: 12px; letter-spacing: 0.04em;
+      border: 1px solid var(--iron); padding: 1px 6px 2px; margin-left: 3px;
+    }
+
+    .faq { display: grid; grid-template-columns: 240px 1fr; gap: 20px 28px; margin: 0; }
+    .faq dt { font-family: var(--brand); font-size: 22px; line-height: 1.15; }
+    .faq dd { margin: 0; max-width: 62ch; }
+    .faq dd code { font-family: var(--data); font-weight: 600; letter-spacing: 0.04em; }
+
+    .credits { display: grid; grid-template-columns: 240px 1fr; gap: 18px 28px; margin: 0; }
+    .credits dt { font-family: var(--brand); font-size: 22px; line-height: 1.15; }
+    .credits dd { margin: 0; max-width: 62ch; }
     .credits dd .meta { display: block; color: var(--dim); font-size: 13px; margin-top: 4px; }
 
     .end {
@@ -142,7 +185,7 @@
       .shell { grid-template-columns: 1fr; }
       .side { position: static; height: auto; }
       .brand { padding: 22px 20px 16px; }
-      .brand .mark { font-size: 27px; }
+      .brand .mark { font-size: 32px; }
       .rail { display: flex; flex-wrap: wrap; gap: 2px; padding: 0 12px 12px; flex: 0 0 auto; }
       .railbtn {
         flex: 1 1 auto; text-align: center; white-space: nowrap;
@@ -151,17 +194,18 @@
       .foot { display: none; }
       .pane { padding-bottom: 92px; }
       .hero { padding-top: 40px; }
-      .hero h1 { font-size: clamp(40px, 11vw, 56px); }
+      .hero h1 { font-size: clamp(44px, 12vw, 60px); }
       .dek { font-size: 17px; }
       /* The gate keeps its words; the door itself is the bar below,
          once, in the thumb's arc. */
       .gate { grid-template-columns: 1fr; padding: 20px; }
       .gate .act { display: none; }
+      .sec h2 { font-size: 32px; }
+      .cols, .keys { grid-template-columns: 1fr; }
       .step { grid-template-columns: 40px 1fr; }
-      .step::before { font-size: 30px; }
-      .cols { grid-template-columns: 1fr; }
-      .credits { grid-template-columns: 1fr; gap: 4px 0; }
-      .credits dd { margin-bottom: 14px; }
+      .step::before { font-size: 32px; }
+      .faq, .credits { grid-template-columns: 1fr; gap: 4px 0; }
+      .faq dd, .credits dd { margin-bottom: 16px; }
       .thumb {
         display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
         padding: 12px 16px max(12px, env(safe-area-inset-bottom));
@@ -185,7 +229,10 @@
       </a>
       <nav class="rail" aria-label="Sections">
         <a class="railbtn" href="#what">What it is</a>
+        <a class="railbtn" href="#inside">What's in it</a>
         <a class="railbtn" href="#how">How to play</a>
+        <a class="railbtn" href="#keys">Controls</a>
+        <a class="railbtn" href="#know">Good to know</a>
         <a class="railbtn" href="#credits">Credits</a>
       </nav>
       <div class="foot">
@@ -201,9 +248,9 @@
         <p class="dek">The 1996 game with its rules intact: the formulas, the quests, the calendar, the crimes, translated line by line from Daggerfall Unity and drawn on a renderer built from scratch. Desktop or phone. Nothing to install.</p>
 
         <div class="gate">
-          <div>
+          <div class="fit">
             <p class="eyebrow">Before the door opens</p>
-            <h2>Bring your own ARENA2 folder.</h2>
+            <h2>Bring your own <span class="cap">ARENA2</span> folder.</h2>
             <p>This site carries no game data. Daggerfall is free, but its files aren't ours to hand out, so the first thing the game asks for is the folder. Pick it once; it stays in your browser and never leaves your device.</p>
             <a class="more" href="#how">Don't have it yet? Getting it takes a minute.</a>
           </div>
@@ -213,6 +260,7 @@
 
       <section class="sec" id="what" aria-labelledby="what-h">
         <h2 id="what-h">What it is</h2>
+        <p class="lede">Three things at once, and the split is deliberate.</p>
         <div class="cols">
           <div class="col">
             <h3>Ported 1:1</h3>
@@ -229,8 +277,53 @@
         </div>
       </section>
 
+      <section class="sec" id="inside" aria-labelledby="inside-h">
+        <h2 id="inside-h">What's in it</h2>
+        <p class="lede">As of 26 August 2026. Every line here is something you can walk up to and use; the ledger keeps the finer print.</p>
+        <div class="cols">
+          <div class="col">
+            <h3>The world</h3>
+            <p>The whole Iliac Bay, streamed as you walk it: its towns, its wilderness, the weather and the seasons, day and night on the game's own calendar with its holidays. The travel map for the long way round.</p>
+          </div>
+          <div class="col">
+            <h3>Towns and people</h3>
+            <p>Streets with people in them who answer questions, give directions, trade rumours and take offence. Shops, taverns, banks with letters of credit, temples, guild halls with their services, and a city watch that arrests you and a court that tries you.</p>
+          </div>
+          <div class="col">
+            <h3>Dungeons</h3>
+            <p>The classic dungeons with their doors, locks, teleporters and traps, an automap that fills in as you go, and every monster from the rat to the ancient lich on the same combat rules as the classes that hunt you.</p>
+          </div>
+          <div class="col">
+            <h3>Combat</h3>
+            <p>The classic first-person weapons with Daggerfall's own hit and damage formulas: bows both ways, knockback, armour that wears, poisons and diseases that take days, and enemies that shoot, cast, open doors and give up.</p>
+          </div>
+          <div class="col">
+            <h3>Magic</h3>
+            <p>The spellbook and click-to-cast, the spell maker, the potion maker and the item maker, magic items, and the spell effects themselves: ninety of the game's ninety-one, priced and saved the way the original does it.</p>
+          </div>
+          <div class="col">
+            <h3>Your character</h3>
+            <p>Character creation with the class questions, the custom class builder and the biography, then levelling, skills, reputation with every faction, and an inventory with a wagon behind it.</p>
+          </div>
+          <div class="col">
+            <h3>Quests</h3>
+            <p>Quests run on the game's own scripts, 265 of them, offered by questgivers, argued about in the talk window, tracked in the logbook and kept across saves.</p>
+          </div>
+          <div class="col">
+            <h3>The screens</h3>
+            <p>Every classic window laid out from the original art: character sheet, inventory, spellbook, travel map, both automaps, talk, trade, rest, the book reader, the pause menu with 171 settings and every key rebindable. Plus the enhanced menu, wizard, sheet and pack.</p>
+          </div>
+          <div class="col">
+            <h3>Sound and music</h3>
+            <p>The game's sounds and ambience, footsteps that know what floor you are on, and the music: Daggerfall's own MIDI, played by a synth written for this port, or your own tracks in its place if you have them.</p>
+          </div>
+        </div>
+        <p class="notyet"><b>Not yet:</b> riding a horse or cart, importing save games from classic Daggerfall or Daggerfall Unity, and mods. Saves made here are the port's own.</p>
+      </section>
+
       <section class="sec" id="how" aria-labelledby="how-h">
         <h2 id="how-h">How to play</h2>
+        <p class="lede">Four steps, and the first three only happen once.</p>
         <ol class="steps">
           <li class="step">
             <div>
@@ -245,39 +338,107 @@
           </li>
           <li class="step">
             <div>
-              <h3>Find the ARENA2 folder.</h3>
+              <h3>Find the <span class="cap">ARENA2</span> folder.</h3>
               <p>It's inside the game folder. From Steam, look under <code>DF/DAGGER/ARENA2</code>. In DaggerfallGameFiles.zip it's <code>arena2/</code>, and on a phone you can hand the game the whole zip instead.</p>
             </div>
           </li>
           <li class="step">
             <div>
               <h3>Press Play and pick it.</h3>
-              <p>On a desktop, choose the folder or drop it on the page. On a phone, choose the zip. The files are read into your browser's storage once and never uploaded; the next visit skips this step. Saves stay in your browser too, so clearing the site's data clears them.</p>
+              <p>On a desktop, choose the folder or drop it on the page. On a phone, choose the zip. The files are read into your browser's storage once and never uploaded; the next visit skips this step.</p>
             </div>
           </li>
           <li class="step">
             <div>
               <h3>Then play.</h3>
-              <p>W, A, S and D to move, the mouse to look, Shift to run. Click the game to take the pointer; Escape gives it back and opens the pause menu. On a phone a stick, a look pad and the buttons appear on their own.</p>
+              <p>You wake in Privateer's Hold, as everyone does. The keys are below; on a phone a stick, a look pad, an attack button and a row of buttons appear on their own.</p>
             </div>
           </li>
         </ol>
+      </section>
+
+      <section class="sec" id="keys" aria-labelledby="keys-h">
+        <h2 id="keys-h">Controls</h2>
+        <p class="lede">Daggerfall Unity's defaults, and every one of them can be changed in Settings.</p>
+        <div class="keys">
+          <div class="keygroup">
+            <h3>Moving</h3>
+            <table>
+              <tr><td>Move</td><td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></td></tr>
+              <tr><td>Look</td><td>Mouse</td></tr>
+              <tr><td>Run</td><td><kbd>Shift</kbd></td></tr>
+              <tr><td>Sneak</td><td><kbd>Alt</kbd></td></tr>
+              <tr><td>Jump</td><td><kbd>Space</kbd></td></tr>
+              <tr><td>Crouch</td><td><kbd>C</kbd></td></tr>
+              <tr><td>Rest</td><td><kbd>R</kbd></td></tr>
+              <tr><td>Travel map</td><td><kbd>V</kbd></td></tr>
+            </table>
+          </div>
+          <div class="keygroup">
+            <h3>Fighting</h3>
+            <table>
+              <tr><td>Draw weapon</td><td><kbd>Z</kbd></td></tr>
+              <tr><td>Swing</td><td>Right mouse, drag</td></tr>
+              <tr><td>Switch hand</td><td><kbd>H</kbd></td></tr>
+              <tr><td>Cast a spell</td><td><kbd>Backspace</kbd></td></tr>
+              <tr><td>Recast</td><td><kbd>Q</kbd></td></tr>
+              <tr><td>Use magic item</td><td><kbd>U</kbd></td></tr>
+              <tr><td>Spellbook</td><td>Character sheet, or cast</td></tr>
+            </table>
+          </div>
+          <div class="keygroup">
+            <h3>Around you</h3>
+            <table>
+              <tr><td>Use what you're looking at</td><td>Left mouse</td></tr>
+              <tr><td>Steal · Grab · Info · Talk</td><td><kbd>F1</kbd><kbd>F2</kbd><kbd>F3</kbd><kbd>F4</kbd></td></tr>
+              <tr><td>Character sheet</td><td><kbd>F5</kbd></td></tr>
+              <tr><td>Inventory</td><td><kbd>F6</kbd></td></tr>
+              <tr><td>Logbook · Notebook</td><td><kbd>L</kbd><kbd>N</kbd></td></tr>
+              <tr><td>Map</td><td><kbd>M</kbd></td></tr>
+              <tr><td>Quick save · load</td><td><kbd>F9</kbd><kbd>F11</kbd></td></tr>
+              <tr><td>Pause</td><td><kbd>Esc</kbd></td></tr>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec" id="know" aria-labelledby="know-h">
+        <h2 id="know-h">Good to know</h2>
+        <dl class="faq">
+          <dt>Which browsers?</dt>
+          <dd>Any current one with WebGL2: Chrome, Edge, Firefox, Safari. On a phone, Safari on iOS or Chrome on Android; the touch controls appear on their own.</dd>
+
+          <dt>Where do my files and saves go?</dt>
+          <dd>Into your browser's storage for this site, on your device. There is no account and no server: nothing is uploaded. Clearing the site's data removes the game files and your saves together, so you would pick the folder again.</dd>
+
+          <dt>Classic or enhanced?</dt>
+          <dd>Enhanced by default: the same game with its menus, wizard, character sheet and inventory rebuilt as type and layout. The classic screens are all there too. Switch in either menu, or add <code>?skin=classic</code> to the address.</dd>
+
+          <dt>Is this Daggerfall Unity?</dt>
+          <dd>No, it is a port of it. Daggerfall Unity is the reference: its C# is what was translated, formula by formula. It has years more polish, a mod scene and a community. This is the same rules in a browser tab, on a phone if you like.</dd>
+
+          <dt>Does it work offline?</dt>
+          <dd>The page has to load from the network. After that the game reads everything from your device; it never fetches game data from this site, because there is none here to fetch.</dd>
+
+          <dt>Something's wrong.</dt>
+          <dd>Reload first: the site is rebuilt several times a day and a page held open across a rebuild can lose its footing. If it is a real bug, the <a href="https://github.com/Lattymoy/project-dagger/issues">issue tracker</a> wants it, with what you did and what happened.</dd>
+        </dl>
       </section>
 
       <section class="sec" id="credits" aria-labelledby="credits-h">
         <h2 id="credits-h">Credits</h2>
         <dl class="credits">
           <dt><a href="https://github.com/Interkarma/daggerfall-unity">Daggerfall Unity</a></dt>
-          <dd>Interkarma and contributors, MIT licence. Every format reader and every formula here is a translation of Daggerfall Unity's C#; without it there would be nothing to port.</dd>
+          <dd>Interkarma and contributors, MIT licence. Every format reader and every formula here is a translation of Daggerfall Unity's C#, and the quest scripts are its own; without it there would be nothing to port.</dd>
 
           <dt>The Elder Scrolls II: Daggerfall</dt>
           <dd>Bethesda Softworks, 1996. Daggerfall JavaScript is a fan project, not affiliated with or endorsed by Bethesda or ZeniMax. The game's data stays theirs and yours; none of it is served from this site.</dd>
 
-          <dt><a href="https://www.dfworkshop.net/">Daggerfall Workshop</a> and <a href="https://en.uesp.net/wiki/Daggerfall:Daggerfall">UESP</a></dt>
+          <dt><a href="https://www.dfworkshop.net/">Daggerfall Workshop</a> and <a href="https://en.uesp.net/wiki/Daggerfall:Daggerfall"><span class="cap">UESP</span></a></dt>
           <dd>The documentation of Daggerfall's file formats that the readers were checked against.</dd>
 
           <dt><a href="https://github.com/Lattymoy">Lattymoy</a></dt>
-          <dd>Built the port. Source, docs and the ledger are on <a href="https://github.com/Lattymoy/project-dagger">GitHub</a>.<span class="meta">Set in Cormorant and Barlow Semi Condensed, loaded from Google Fonts: the one request this site makes to anyone else.</span></dd>
+          <dd>Built the port. Source, docs and the ledger are on <a href="https://github.com/Lattymoy/project-dagger">GitHub</a>.<span class="meta">Set in Grenze Gotisch and Barlow Semi Condensed, loaded from Google Fonts: the one request this site makes to anyone else.</span></dd>
         </dl>
       </section>
 

@@ -74,6 +74,84 @@ None of these blocks anything; all three are real.
                         will be, because this repo holds no game data.
 
 
+## U60b THE BRAND FACE, AND THE DETAIL (2026-08-26, Mac's call)
+
+Mac's verdict on U60 was "simple and perfect", with two asks: a
+Daggerfall-esque face for the site, and "even more detailed". Both
+recorded as his; the choices inside them are mine.
+
+THE FACE. The classic game's own fonts are FONT000x.FNT in ARENA2 -
+game data, so they cannot be on a page that opens before the folder
+pick, and cannot ship at all. What can is a free face that reads as the
+title without turning a headline into a fraktur puzzle. A dozen
+candidates were RENDERED on the skin's ground (Grenze Gotisch at three
+weights, Pirata One, MedievalSharp, Almendra Display, New Rocker,
+UnifrakturCook, Cinzel, IM Fell English, Metamorphous, Uncial Antiqua,
+beside Cormorant) and eyeballed at the wordmark, the headline and a
+20px line. GRENZE GOTISCH, a gothic-roman hybrid, is the one that reads
+as the classic title at 92px and still reads as words at 22px; the
+frakturs do not survive the small line, Cinzel is Oblivion's Roman
+rather than Daggerfall's gothic, and the uncials are Morrowind.
+
+IT IS A TOKEN, `--brand`, declared in ENHANCED_TOKENS beside --display
+and --data, so the menu can take the same wordmark in one line if
+that is ever wanted; nothing in-game uses it today and nothing in-game
+LOADS it. The family strings became three constants (FONT_DISPLAY,
+FONT_DATA, FONT_BRAND) with ONE URL builder, `fontsUrl()`; the skin's
+ENHANCED_FONTS_URL is composed from display + data and is pinned
+byte-identical to the literal it replaced, and the landing's
+LANDING_FONTS_URL is brand + data. The page loads Cormorant no more.
+Every heading on the page is the brand face; the wordmark and the
+headline at weight 300, the rest at 400.
+
+A GOTHIC CAPITAL IS A SHAPE BEFORE IT IS A LETTER. The first render had
+"Bring your own ARENA2 folder" with the folder name unreadable - the
+one word on the page that must not be. All-capital names inside a
+heading (ARENA2, UESP) are set in the data face at 0.74em, stamped into
+the gothic line the way a label is stamped into a fitting. It reads,
+and it is a detail rather than a workaround.
+
+THE FITTINGS. Daggerfall's chrome is carved stone with metal at the
+corners, and the skin renders that flat. The site takes one step
+further than the skin, in two places and no more: THE GATE wears four
+brass corner brackets (pseudo-elements on the panel and its inner
+wrapper, offset outside the border), and every section begins with a
+brass DIAMOND sitting on its rule - the one ornament, used as structure
+at section boundaries and nowhere else. Both are CSS; the page still
+carries no image.
+
+THE DETAIL. Three sections, every claim in them checked against the
+arc records before it was written:
+  WHAT'S IN IT - nine cards, dated, one per area (world, towns,
+    dungeons, combat, magic, character, quests, screens, sound), each
+    a sentence of things a player can walk up to and use. The numbers
+    are the ledger's: 265 vendored quest scripts, 171 settings keys,
+    NINETY OF NINETY-ONE spell effects (Port-Ledger board item 3:
+    Morph Self is the last inert one). The claims that did NOT make
+    it: "the opening film" (classic-skin only, U49), "the full ladder
+    of effects" (one is inert), and voxel characters (U60's finding).
+    Under the cards, the NOT-YET box in the menu's anti-lie idiom:
+    riding, importing classic or DFU saves, mods - each verified open
+    (World arc "Next: riding"; the .SAV reader row; paneMods).
+  CONTROLS - DEFAULT_BINDINGS from systems/inputActions.js in three
+    groups (moving, fighting, around you), with the RMB-drag swing and
+    the F1-F4 modes, and the line that Settings rebinds all of them.
+  GOOD TO KNOW - browsers, where files and saves live (and that
+    clearing site data takes both), classic vs enhanced with the
+    `?skin=classic` override, "is this DFU?", offline, and what to do
+    when something is wrong (reload first - the stale-chunk story in
+    the player's words - then the issue tracker).
+The rail grew to six destinations and wraps on a phone, as U51 ruled.
+
+Pins: the U60 suite absorbed the face - the composed URLs pinned to the
+builder and to the old literal, `--brand` pinned as a token, every
+heading pinned to it. The probe grew six checks: the fonts link asks
+for the brand face, the headline's computed family IS Grenze Gotisch,
+`document.fonts.check` says it LOADED (network; the page itself never
+traps - Georgia is the fallback), and the gate's four fittings each
+draw 2px of brass. 32/32, desktop and Pixel 5, eyeballed at every
+section on both.
+
 ## U60 THE DOOR IN FRONT OF THE DOOR (2026-08-26, Mac's call)
 
 Mac asked for a proper website for the port. Three decisions were his
