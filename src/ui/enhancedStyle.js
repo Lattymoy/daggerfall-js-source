@@ -499,6 +499,67 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .itemwt { flex: 0 0 auto; color: var(--dim); font-size: 12px; font-variant-numeric: tabular-nums; }
 .packempty { color: var(--dim); font-size: 14px; margin: 10px 2px; }
 .packdetail .sheet-close { display: none; }
+
+/* ── THE REMOTE SIDE ────────────────────────────────────────
+   DFU's window is TWO lists side by side, so these are PEERS sharing
+   one grid cell rather than a panel hung off the pack. Splitting the
+   middle column keeps the outer three-column shape - and every phone
+   rule written against it - exactly as it was. */
+.packlists {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--gap); min-height: 0; background: var(--iron);
+}
+.packremote { background: #10141a; }
+.remotehead {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 10px; flex-wrap: wrap; margin: 0 0 14px;
+}
+.remotewho h3 {
+  font-family: var(--display); font-weight: 300; font-size: 19px; margin: 0;
+}
+.remotewho .meta {
+  color: var(--dim); font-size: 12px; margin: 5px 0 0; font-variant-numeric: tabular-nums;
+}
+.remoteacts { display: flex; gap: 6px; flex-wrap: wrap; }
+.goldfield {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 12px; margin: 0 0 14px; background: var(--ink); border: 1px solid var(--iron);
+}
+.goldfield input {
+  flex: 1 1 90px; min-width: 0; min-height: 44px; padding: 0 12px;
+  background: #0b0e12; border: 1px solid var(--iron); color: var(--bone);
+  font: inherit; font-size: 15px; font-variant-numeric: tabular-nums;
+}
+.goldfield input:focus-visible { outline: none; border-color: var(--brass); }
+.goldfield .meta { flex: 1 0 100%; color: var(--dim); font-size: 11.5px; margin: 0; }
+
+/* THE LISTS STACK BELOW THE PACK'S OWN BREAKPOINT, not at it: two
+   half-width lists are still readable at 1100px, and one of them
+   sitting under the doll is not. */
+@media (max-width: 1100px) {
+  /* The PAIR scrolls as one when it stacks - two independently
+     scrolling half-height lists in one column is a scroll trap. */
+  .packlists { grid-template-columns: 1fr; grid-auto-rows: min-content; overflow: auto; }
+  .packlists .packcol { overflow: visible; }
+  /* THE LIST YOU CAME FOR GOES FIRST. Opening a corpse and being shown
+     your own pack is the screen answering a question nobody asked; the
+     ground and the wagon are the other way round, because there you
+     came to put something down. */
+  .packlists.remotefirst .packremote { order: 0; }
+  .packlists.remotefirst > .packcol:not(.packremote) { order: 1; }
+}
+
+/* THE SCHEMATIC GOES LAST ON A PHONE. Stacked, it is 46vh of figure
+   above everything, so the LISTS started below the fold - the remote
+   one at y=781 in a 727px viewport, which is a browser-only finding
+   and exactly the shape AUDIT 24 keeps turning up. A player opening
+   their pack came for their items; the doll is what they scroll to. */
+@media (max-width: 860px) {
+  .pack .slotmap { order: 2; }
+  .pack .packlists { order: 1; }
+  .pack .packdetail { order: 3; }
+}
+
 .iconnote { color: var(--dim); font-size: 11.5px; margin: 12px 2px 0; line-height: 1.5; }
 
 @media (max-width: 860px) {

@@ -8,6 +8,77 @@ policies one by one.
 
 
 
+## U58 THE REMOTE PANE, and the boundary comes down (2026-08-26)
+
+The pack had a local list and no remote one, and that single absence
+WAS every flow the enhanced screen could not answer: the wagon, a
+corpse, a guild's reward tray, and dropping anything at all. U53 named
+that a boundary rather than a gap and handed those calls to the
+classic window. U56 and U57 moved the law they needed, so the boundary
+had nothing left to protect. `CLASSIC_ONLY_MODES` is gone, and the
+inventory fork is now the plain skin question every other door asks.
+
+TWO LISTS, AS PEERS. DFU's window is local beside remote, so these
+share one grid cell and split it - which leaves the outer
+three-column shape, and every phone rule written against it, exactly
+as it was. The verb on the button names the DESTINATION, because
+"Transfer" tells the player nothing about where: Drop, Stow in wagon,
+Put back, and - for a reward tray - "Take this one", which says that
+taking IS the choice before the player discovers it by pressing.
+
+WHAT THE PANE DECIDES AND WHAT IT ASKS. It decides the shape: which
+column, which verb, whether the wagon button is drawn at all (only
+with a cart in the bag - DFU draws it always and answers "You don't
+own a wagon.", which is a control whose whole purpose is to refuse).
+Everything else it ASKS: `planStore`, `planTake`, `applyTransfer`,
+`planDropGold`, `planWagonToggle`, `remoteTarget`, `openState`. The
+file carries no 750, no Transportation check, no summoned guard and no
+cart check of its own, and a sweep says so.
+
+`canStow` IS THE INTERESTING ONE. It asks the LADDER whether to draw
+the button, not whether to allow the press: DFU's transport block and
+its choose-one bar are SILENT refusals, so a Stow button there could
+only ever do nothing - U53's deleted "worn" badge again, one control
+up. A refusal that SPEAKS still gets its button, because the full
+wagon has something to say.
+
+TWO BUGS, FROM THE TWO PLACES THAT FIND THEM.
+
+The node pins found a live-list bug before it shipped:
+`remoteModel.items` is a filtered COPY, and `useItem` consumes out of
+whatever collection it is handed, so a potion drunk from a corpse
+through that copy would have vanished from the screen and stayed in
+the pile. Every arm reads the live list now. The pin then SURVIVED its
+own mutation - a 900-character slice from `stow` ran on into `take`'s
+body and passed on ITS call - which is the byte-count slice being a
+worse boundary than the next `function`.
+
+The BROWSER found the other, and it is the shape this arc keeps
+finding: stacked on a Pixel 5, the remote list started at y=781 in a
+727px viewport, under 46vh of slot-map schematic. Perfect at 1440px,
+invisible in source. The schematic goes last on a phone now - a player
+opening their pack came for their items, and the doll is what they
+scroll to - and a CONTAINER or a reward tray puts its own list first,
+because being shown your own pack when you opened a corpse is the
+screen answering a question nobody asked.
+
+A THIRD, from looking at the screen. "1 items" - a count printed into
+a template literal, right eleven times out of twelve and wrong on the
+twelfth, which is the one the player is reading when they drop one
+thing. The pack's own header had said it since U53. Both use a helper
+now, and its pin caught the VACUOUS SHAPE one more time on the way in:
+the first draft re-derived the helper inside the test file and
+compared the copy to itself, so it is exported and the pin imports the
+real one.
+
+PROVED IN A REAL BROWSER by `tools/enhancedRemoteProbe.mjs` - 60/60
+across a desktop, a Pixel 5, and three separate mounts for the flows
+that only exist once: the drop pile MINTING when the window closes
+(AUDIT B-C1, and no screenshot shows a missing mint), a corpse
+shrinking the HOST's pile rather than a copy, and a reward tray
+closing and firing its callback on the one take. The four existing
+probes are still green.
+
 ## U57 The remote side comes out too (2026-08-26)
 
 U56 moved the transfer LADDER. A transfer needs somewhere to transfer

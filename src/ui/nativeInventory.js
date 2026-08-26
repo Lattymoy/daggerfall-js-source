@@ -53,7 +53,7 @@ import { goldAmount, deductGold } from '../systems/court.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { addItem, isEnchanted, goldStack, canHoldAmount, totalWeight, GOLD_PIECE_WEIGHT_KG } from '../systems/inventory.js';   // L-slice (items-9)
 // U56: TransferItem's ladder - the guards, their order, and the split.
-import { planStore, planTake, applyTransfer, WAGON_KG_LIMIT } from '../systems/itemTransfer.js';
+import { planStore, planTake, applyTransfer, planDropGold } from '../systems/itemTransfer.js';
 // U57: which list is the remote one, and what opening and closing
 // this window decide.
 import {
@@ -125,13 +125,13 @@ export const GOLD_TO_DROP_TEXT_ID = 25;
 // LADDER owns live with it now (systems/itemTransfer.js) and are
 // re-exported here, because a caller reaching for the wagon's limit
 // is usually already holding this window.
-export { WAGON_KG_LIMIT, CANNOT_HOLD_TEXT, CANNOT_CARRY_TEXT } from '../systems/itemTransfer.js';
+export {
+  WAGON_KG_LIMIT, CANNOT_HOLD_TEXT, CANNOT_CARRY_TEXT, wagonFullGoldText,
+} from '../systems/itemTransfer.js';
 // U57: and the remote side's, for the same reason.
 export {
   SMALL_CART_TEMPLATE, NO_WAGON_TEXT, EXIT_TOO_FAR_TEXT, WAGON_ACCESS_DISTANCE,
 } from '../systems/inventorySession.js';
-/** key "wagonFullGold" (:1303) - the drop-gold clamp's box. */
-export const wagonFullGoldText = (n) => `Your wagon can only hold ${n} more gold.`;
 export const TABS = ['weapons', 'magic', 'clothing', 'ingredients'];
 const TAB_RECT = { weapons: INV_RECTS.tabWeapons, magic: INV_RECTS.tabMagic, clothing: INV_RECTS.tabClothing, ingredients: INV_RECTS.tabIngredients };
 const MODES = ['wagon', 'info', 'equip', 'remove', 'use', 'gold'];
@@ -393,23 +393,18 @@ export class NativeInventoryWindow {
       rows: this.hooks.rows?.(GOLD_TO_DROP_TEXT_ID) ?? [{ text: 'How much gold?', center: true }],
       field: true,
       onInput: (text) => {
-        const carried = goldAmount(this.hooks.entity ?? { items: this.hooks.items() });
-        let n = /^[0-9]+$/.test(text) ? Number(text) : 0;
-        if (n < 1 || n > carried) return;
-        // W-slice: gold INTO the wagon clamps to the 750kg headroom
-        // with the wagonFullGold box (:1296-1303); a full wagon's
-        // clamp-to-zero adds nothing (DFU would mint a 0 stack -
-        // guarded, Ledger A).
-        if (this.usingWagon) {
-          const canHold = canHoldAmount(carried, GOLD_PIECE_WEIGHT_KG, WAGON_KG_LIMIT, totalWeight(this._remote()));
-          if (n > canHold) {
-            n = canHold;
-            this.boxes = [{ rows: [{ text: wagonFullGoldText(canHold), center: true }] }];
-          }
-          if (n < 1) return;
-        }
-        deductGold(this.hooks.entity ?? { items: this.hooks.items() }, n);
-        addItem(this._remote(), goldStack(n));
+        const player = this.hooks.entity ?? { items: this.hooks.items() };
+        // U57: the range refusal and the wagon clamp are
+        // systems/itemTransfer.js; the BOX is this window's.
+        const plan = planDropGold(text, {
+          carried: goldAmount(player),
+          usingWagon: this.usingWagon,
+          remote: this._remote(),
+        });
+        if (plan.notice) this.boxes = [{ rows: [{ text: plan.notice, center: true }] }];
+        if (!plan.ok) return;
+        deductGold(player, plan.amount);
+        addItem(this._remote(), goldStack(plan.amount));
       },
     }];
   }

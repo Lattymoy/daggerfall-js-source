@@ -65,7 +65,17 @@ import {
   equipItem, unequipSlot, equipTableOf, isEquipped,
   isForbiddenEquip, isBrokenItem,
 } from '../systems/equip.js';
-import { itemWeight, isEnchanted } from '../systems/inventory.js';
+import { itemWeight, isEnchanted, totalWeight, addItem, goldStack } from '../systems/inventory.js';
+import { goldAmount, deductGold } from '../systems/court.js';
+// U56/U57: DFU's transfer ladder and DFU's remote side, both extracted
+// from the classic window so this pane runs them rather than a second
+// reading of them.
+import {
+  planStore, planTake, applyTransfer, planDropGold, WAGON_KG_LIMIT,
+} from '../systems/itemTransfer.js';
+import {
+  openState, remoteTarget, planWagonToggle, hasCart,
+} from '../systems/inventorySession.js';
 import { maxEncumbrance } from '../combat/formulas.js';
 import { liveStat } from '../systems/statMods.js';
 import { conditionWord, conditionPercentage, materialName } from '../systems/itemInfo.js';
@@ -152,6 +162,43 @@ export function packModel(deps = {}) {
     // expression the character sheet and the classic window use.
     encumbrance: { now: Math.trunc(carried), max: maxEncumbrance(liveStat(entity, 'strength')) },
     count: items.length,
+  };
+}
+
+/** What the remote side is CALLED, per DFU's four claims. The word is
+ *  the port's; which claim is showing is inventorySession's. */
+export const REMOTE_TITLE = Object.freeze({
+  wagon: 'Wagon', reward: 'Choose one', container: 'Loot', ground: 'Ground',
+});
+/** What moving an item THERE is called. A verb per destination,
+ *  because "Transfer" tells the player nothing about where. */
+export const STOW_LABEL = Object.freeze({
+  wagon: 'Stow in wagon', reward: 'Stow', container: 'Put back', ground: 'Drop',
+});
+
+/**
+ * THE REMOTE SIDE, as data. Pure, like packModel: which list is
+ * showing, what it is called, what it weighs, and - for the wagon
+ * alone - what it is allowed to weigh.
+ *
+ * The KIND is derived in the same order inventorySession answers the
+ * target in, because a pane that named the ground while showing the
+ * wagon would be a second reading of that order.
+ */
+export function remoteModel(deps = {}, state = {}) {
+  const items = (remoteTarget(deps, state) ?? []).filter(Boolean);
+  const kind = state.usingWagon ? 'wagon'
+    : state.chooseOne ? 'reward'
+      : deps.loot ? 'container' : 'ground';
+  return {
+    kind,
+    title: REMOTE_TITLE[kind],
+    items,
+    count: items.length,
+    weight: totalWeight(items),
+    // ItemHelper.WagonKgLimit is the ONLY capacity a remote list has -
+    // the ground and a corpse hold anything.
+    capacity: kind === 'wagon' ? WAGON_KG_LIMIT : null,
   };
 }
 
@@ -261,7 +308,16 @@ let deps = {};
 let model = null;
 let tab = TABS[0];
 let picked = null;      // the selected item object
+let side = 'local';     // which list `picked` came out of
 let notice = null;
+// U57: the window's own session - which list is remote, and the
+// session's drop pile. `dropped` is DFU's droppedItems and it MINTS ON
+// CLOSE (AUDIT B-C1), which is why the door reads it back out.
+let session = { usingWagon: false, allowDungeonWagonAccess: false, chooseOne: null };
+let dropped = [];
+let wagonLocal = [];
+let remote = null;
+let goldEntry = null;   // the drop-gold field's live text, or null
 let onExit = () => {};
 let keyHandler = null;
 let lockHandler = null;
@@ -272,6 +328,11 @@ let lockHandler = null;
 // each one once per repaint until the first lands, and the count
 // doubles; the probe measures it, which is the only way that shows.
 let repaints = 0;
+
+/** "1 item", not "1 items". A count printed by a template literal is
+ *  right eleven times out of twelve and wrong on the twelfth, which is
+ *  the one the player is looking at when they drop something. */
+export const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 const el = (t, cls, txt) => {
   const n = document.createElement(t);
@@ -285,7 +346,11 @@ const svg = (t, attrs) => {
   return n;
 };
 
-const refresh = () => { model = packModel(deps); };
+const sessionState = () => ({ ...session, dropped, wagonLocal });
+const refresh = () => {
+  model = packModel(deps);
+  remote = remoteModel(deps, sessionState());
+};
 
 /** Wearing something, through the ONE chain. A refusal is REPORTED -
  *  the classic window pops TEXT.RSC for the same two cases, and a
@@ -305,9 +370,9 @@ function wear(item) {
 /** USING something, through the ONE law. The deps are the classic
  *  window's own, hook for hook - a host that hands none leaves the arm
  *  silent in exactly the way it leaves the classic window's silent. */
-function use(item) {
+function use(item, collection = deps.items?.() ?? []) {
   notice = null;
-  const r = useItem(item, deps.items?.() ?? [], {
+  const r = useItem(item, collection, {
     entity: deps.entity,
     // AUDIT 22 F4: the oil arm looks for its lantern in the LOCAL pack
     // whatever list the click came from, so the bag travels separately.
@@ -351,6 +416,103 @@ function use(item) {
 function takeOff(slot) {
   notice = null;
   unequipSlot(deps.entity, slot);
+  refresh();
+  render();
+}
+
+/** A refusal, rendered. The LADDER decides whether a transfer happens
+ *  and whether the player is told; a refusal with no text - DFU's
+ *  transport block, the choose-one pile - is a click that does
+ *  nothing, and this pane does not draw a control for one (see
+ *  `canStow`), so reaching here silently means the law changed under
+ *  the view rather than the view guessing. */
+function refuse(refusal) {
+  notice = refusal.text ?? null;
+  render();
+}
+
+/** Whether STOW is a control at all. Asked of the LAW rather than
+ *  decided here: a refusal the player would never see is a button
+ *  that can only do nothing, and U53 deleted a "worn" badge for
+ *  exactly that. A refusal that SPEAKS still gets its button - the
+ *  full wagon has something to say. */
+function canStow(item) {
+  const plan = planStore(item, { remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne });
+  return plan.ok || !!plan.refusal.text;
+}
+
+/** LOCAL -> REMOTE, through U56's ladder. */
+function stow(item) {
+  notice = null;
+  const to = remoteTarget(deps, sessionState());
+  const plan = planStore(item, { remote: to, usingWagon: session.usingWagon, chooseOne: session.chooseOne });
+  if (!plan.ok) return refuse(plan.refusal);
+  // The item that ARRIVES stays picked - a split leaves the remainder
+  // behind and mints a new record, and following the one that moved is
+  // what lets the player put it straight back.
+  picked = applyTransfer(item, plan, deps.items?.() ?? [], to);
+  side = 'remote';
+  refresh();
+  render();
+}
+
+/** REMOTE -> LOCAL, through the same ladder. */
+function take(item) {
+  notice = null;
+  const from = remoteTarget(deps, sessionState());
+  const bag = deps.items?.() ?? [];
+  const plan = planTake(item, {
+    bag, entity: deps.entity, mode: 'remove',
+    chooseOne: session.chooseOne, usingWagon: session.usingWagon,
+  });
+  if (!plan.ok) return refuse(plan.refusal);
+  const taken = applyTransfer(item, plan, from, bag);
+  // G6 (:1585-1591): ONE is the whole gift. The window closes and the
+  // callback runs - the claim and the taking are one event, so this
+  // arm must not repaint a screen that is going away.
+  if (plan.claimsChoice) {
+    const cb = session.chooseOne.onChoose;
+    session.chooseOne = null;
+    onExit();
+    cb?.(taken);
+    return;
+  }
+  picked = taken;
+  side = 'local';
+  // The pack's TAB follows what just arrived, or the player takes a
+  // sword on the Ingredients page and watches nothing happen.
+  tab = TABS.find((t) => filterByTab([taken], t).length) ?? tab;
+  refresh();
+  render();
+}
+
+/** WagonButton_OnMouseClick's ladder (:1234-1243), through U57. */
+function toggleWagon() {
+  notice = null;
+  const plan = planWagonToggle(deps, session);
+  if (!plan.ok) return refuse(plan.refusal);
+  session.usingWagon = plan.usingWagon;
+  // The selection belonged to the list that just went away.
+  if (side === 'remote') { picked = null; side = 'local'; }
+  refresh();
+  render();
+}
+
+/** DropGoldPopup_OnGotUserInput (:1269-1303), through U56. The FIELD
+ *  is this pane's; the range refusal and the wagon clamp are not. */
+function dropGold(text) {
+  notice = null;
+  const player = deps.entity ?? { items: deps.items?.() ?? [] };
+  const to = remoteTarget(deps, sessionState());
+  const plan = planDropGold(text, {
+    carried: goldAmount(player), usingWagon: session.usingWagon, remote: to,
+  });
+  if (plan.notice) notice = plan.notice;
+  if (plan.ok) {
+    deductGold(player, plan.amount);
+    addItem(to, goldStack(plan.amount));
+    goldEntry = null;
+  }
   refresh();
   render();
 }
@@ -428,9 +590,9 @@ function itemTile(line) {
   return tile;
 }
 
-function itemRow(item) {
+function itemRow(item, from = 'local') {
   const line = itemLine(item, deps.entity);
-  const row = el('button', `itemrow${picked === item ? ' on' : ''}`);
+  const row = el('button', `itemrow${picked === item && side === from ? ' on' : ''}`);
   row.append(itemTile(line));
   const mid = el('span', 'itemname');
   mid.append(el('span', null, line.name + (line.stack ? ` ×${line.stack}` : '')));
@@ -438,8 +600,77 @@ function itemRow(item) {
   if (sub) mid.append(el('small', null, sub));
   row.append(mid);
   row.append(el('span', 'itemwt', `${line.weight.toFixed(2)} kg`));
-  row.onclick = () => { picked = item; notice = null; render(); };
+  row.onclick = () => { picked = item; side = from; notice = null; render(); };
   return row;
+}
+
+// ── THE REMOTE SIDE ──────────────────────────────────────────────
+// DFU's window is TWO lists, and every flow the enhanced pack could
+// not answer - the wagon, a corpse, a guild's reward tray, dropping
+// anything at all - was the second one missing. It is a peer of the
+// pack list rather than a panel hung off it, because that is what it
+// is: the ground is a container the player is standing in.
+function remoteCol() {
+  const col = el('section', 'packcol packremote');
+  const head = el('div', 'remotehead');
+  const who = el('div', 'remotewho');
+  who.append(el('h3', null, remote.title));
+  who.append(el('p', 'meta', remote.capacity != null
+    ? `${plural(remote.count, 'item')} · ${remote.weight.toFixed(2)} / ${remote.capacity} kg`
+    : `${plural(remote.count, 'item')} · ${remote.weight.toFixed(2)} kg`));
+  head.append(who);
+  const acts = el('div', 'remoteacts');
+  // THE WAGON BUTTON EXISTS ONLY WITH A CART IN THE BAG. DFU draws it
+  // always and answers "You don't own a wagon." - and DFU has a fixed
+  // parchment layout with a place for it. This one would be a control
+  // whose whole purpose is to refuse, so it appears when there is
+  // something to open. The DUNGEON refusal still speaks, because that
+  // one is temporary: the door is somewhere the player can walk to.
+  if (hasCart(deps.items?.() ?? [])) {
+    const b = el('button', `act${session.usingWagon ? ' primary' : ''}`,
+      session.usingWagon ? 'Leave wagon' : 'Wagon');
+    b.onclick = toggleWagon;
+    acts.append(b);
+  }
+  // GOLD IS NOT AN ITEM ROW. It is one stack in the pack that the list
+  // shows as a line, and DFU gives it its own button and its own
+  // numeric popup because "drop 40 of 12000" is not a click.
+  const g = el('button', 'act', 'Gold');
+  g.onclick = () => { goldEntry = goldEntry == null ? '0' : null; notice = null; render(); };
+  acts.append(g);
+  head.append(acts);
+  col.append(head);
+  if (goldEntry != null) col.append(goldField());
+  if (!remote.items.length) {
+    col.append(el('p', 'packempty', remote.kind === 'ground'
+      ? 'Nothing dropped here yet.'
+      : 'Empty.'));
+  }
+  for (const it of remote.items) col.append(itemRow(it, 'remote'));
+  return col;
+}
+
+/** A numeric field of 8, opening on "0" (:1272). The REFUSAL is
+ *  silent and outright rather than a clamp, which is why this shows
+ *  what the player has: a field that rejects without saying why needs
+ *  the ceiling written next to it. */
+function goldField() {
+  const form = el('form', 'goldfield');
+  const carried = goldAmount(deps.entity ?? { items: deps.items?.() ?? [] });
+  const input = el('input');
+  input.type = 'text';
+  input.inputMode = 'numeric';
+  input.maxLength = 8;
+  input.value = goldEntry;
+  input.setAttribute('aria-label', 'How much gold');
+  input.oninput = () => { goldEntry = input.value; };
+  form.append(input);
+  const go = el('button', 'act primary', session.usingWagon ? 'Stow' : 'Drop');
+  go.type = 'submit';
+  form.onsubmit = (e) => { e.preventDefault(); dropGold(goldEntry); };
+  form.append(go);
+  form.append(el('p', 'meta', `${carried.toLocaleString()} gold in the purse`));
+  return form;
 }
 
 function listCol() {
@@ -505,29 +736,56 @@ function detailCol() {
   const pair = (k, v) => { if (v != null) dl.append(el('dt', null, k), el('dd', null, String(v))); };
   pair('Weight', `${line.weight.toFixed(2)} kg`);
   pair('Condition', line.condition != null ? `${line.word} · ${line.condition}%` : null);
-  pair('Worn', line.equipped ? 'yes' : 'no');
+  if (side === 'local') pair('Worn', line.equipped ? 'yes' : 'no');
+  else pair('Where', remote.title);
   c.append(dl);
   const acts = el('div', 'acts');
-  // REACHABLE, unlike a badge on a row: the selection survives the
-  // press, so the item you just wore is still here and can come
-  // straight back off. Every OTHER way to take something off is the
-  // slot map.
-  if (line.equipped) {
-    const b = el('button', 'act primary', 'Take off');
-    b.onclick = () => takeOff(picked.equipSlot);
-    acts.append(b);
+  if (side === 'local') {
+    // REACHABLE, unlike a badge on a row: the selection survives the
+    // press, so the item you just wore is still here and can come
+    // straight back off. Every OTHER way to take something off is the
+    // slot map.
+    if (line.equipped) {
+      const b = el('button', 'act primary', 'Take off');
+      b.onclick = () => takeOff(picked.equipSlot);
+      acts.append(b);
+    } else {
+      const b = el('button', 'act primary', 'Wear');
+      b.onclick = () => wear(picked);
+      acts.append(b);
+    }
+    // The verb names the DESTINATION, and the destination is whichever
+    // list is showing. Drawn only when the law would either move
+    // something or say something (`canStow`).
+    if (canStow(picked)) {
+      const t = el('button', 'act', STOW_LABEL[remote.kind]);
+      t.onclick = () => stow(picked);
+      acts.append(t);
+    }
   } else {
-    const b = el('button', 'act primary', 'Wear');
-    b.onclick = () => wear(picked);
+    // G6: taking ONE from a reward tray IS the claim, and the window
+    // goes with it. The label says so rather than letting a player
+    // discover it by pressing.
+    const b = el('button', 'act primary',
+      remote.kind === 'reward' ? 'Take this one' : 'Take');
+    b.onclick = () => take(picked);
     acts.append(b);
   }
   // USE is offered for EVERYTHING, exactly as the classic window's Use
   // mode is: `useItem` has an arm for every group and the honest answer
   // for a thing with no use is its own "Nothing happens." A button that
   // appeared only for items this screen believed were usable would be
-  // this screen making a judgement the law already makes.
+  // this screen making a judgement the law already makes. DFU offers
+  // it on the REMOTE list too (:2048-2051), so this pane does.
   const u = el('button', 'act', 'Use');
-  u.onclick = () => use(picked);
+  // THE COLLECTION IS THE LIVE LIST, not the model's. `useItem`
+  // CONSUMES out of what it is handed (:2048-2051 - a potion drunk
+  // from a corpse must leave the corpse), and `remoteModel.items` is a
+  // filtered COPY, so passing that would drink the potion and leave it
+  // sitting in the pile. The bag travels separately for AUDIT 22 F4's
+  // reason, inside `use`.
+  u.onclick = () => use(picked,
+    side === 'remote' ? remoteTarget(deps, sessionState()) : (deps.items?.() ?? []));
   acts.append(u);
   c.append(acts);
   col.append(c);
@@ -551,14 +809,25 @@ function render() {
     const who = el('div');
     who.append(el('h2', null, 'Pack'));
     who.append(el('p', 'meta',
-      `${model.count} items · ${model.encumbrance.now} / ${model.encumbrance.max} kg · ${model.gold.toLocaleString()} gold`));
+      `${plural(model.count, 'item')} · ${model.encumbrance.now} / ${model.encumbrance.max} kg · ${model.gold.toLocaleString()} gold`));
     head.append(who);
     const close = el('button', 'act', 'Close');
     close.onclick = () => onExit();
     head.append(close);
     shell.append(head);
     const grid = el('div', 'pack');
-    grid.append(slotMap(), listCol(), detailCol());
+    // The two lists are a PAIR - DFU's window is local beside remote -
+    // so they share one grid cell and split it, which keeps the outer
+    // three-column shape (and every phone rule written against it)
+    // exactly as it was.
+    // A CONTAINER or a REWARD TRAY is what the player opened the
+    // window FOR, so on a stacked layout that list goes first. The
+    // ground and the wagon are the other way round - there the pack is
+    // what you came to empty.
+    const first = remote.kind === 'container' || remote.kind === 'reward';
+    const lists = el('div', `packlists${first ? ' remotefirst' : ''}`);
+    lists.append(listCol(), remoteCol());
+    grid.append(slotMap(), lists, detailCol());
     shell.append(grid);
     if (notice) shell.append(el('p', 'sheet-notice', notice));
     host.append(shell);
@@ -593,8 +862,23 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   onExit = d.onExit ?? (() => {});
   tab = TABS[0];
   picked = null;
+  side = 'local';
   notice = null;
+  goldEntry = null;
   repaints = 0;
+  // U57: the three things opening the window already decided -
+  // selectedActionMode, CheckWagonAccess and SetChooseOne - read once,
+  // from the module the classic window reads them from. The pack has
+  // no action MODE (every row carries its own verbs), so `mode` is the
+  // one answer this screen does not use.
+  const open = openState(d);
+  session = {
+    usingWagon: open.usingWagon,
+    allowDungeonWagonAccess: open.allowDungeonWagonAccess,
+    chooseOne: open.chooseOne,
+  };
+  dropped = [];
+  wagonLocal = [];
   refresh();
   render();
   keyHandler = onKey;
@@ -604,6 +888,11 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   if (typeof document !== 'undefined') document.addEventListener('pointerlockchange', lockHandler);
   globalThis.__pack = () => JSON.stringify({
     tab, repaints, count: model.count, worn: model.worn.size,
+    side, remoteKind: remote.kind, remoteCount: remote.count,
+    remoteRows: [...hostEl.querySelectorAll('.packremote .itemrow')].length,
+    dropped: dropped.length, gold: model.gold, goldOpen: goldEntry != null,
+    usingWagon: session.usingWagon,
+    acts: [...hostEl.querySelectorAll('.acts .act')].map((b) => b.textContent),
     rows: [...hostEl.querySelectorAll('.itemrow')].length,
     nodes: [...hostEl.querySelectorAll('.node')].length,
     filled: [...hostEl.querySelectorAll('.node.filled')].length,
@@ -611,6 +900,10 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   });
   return {
     repaint() { refresh(); render(); },
+    /** The session's dropped items, for the door's close law. AUDIT
+     *  B-C1: they MINT A WORLD PILE when this window goes, and the
+     *  window going is the door's event, not this module's. */
+    dropped: () => dropped,
     unmount() {
       // EVERY LISTENER HAS AN OWNER, and this one claims F6 - an orphan
       // eats the key that opens the pack, for the rest of the session.
@@ -622,6 +915,8 @@ export function mountEnhancedInventory(hostEl, d = {}) {
       host = null;
       deps = {};
       onExit = () => {};
+      picked = null;
+      remote = null;
       delete globalThis.__pack;
     },
   };

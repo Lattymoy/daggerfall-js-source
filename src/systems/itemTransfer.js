@@ -40,6 +40,7 @@
 
 import {
   addItem, canHoldAmount, effectiveUnitWeightInKg, totalWeight, isSummoned,
+  GOLD_PIECE_WEIGHT_KG,
 } from './inventory.js';
 import { CANNOT_REMOVE_ITEM_TEXT } from './createItem.js';
 import { maxEncumbrance } from '../combat/formulas.js';
@@ -67,7 +68,45 @@ export const REFUSAL = Object.freeze({
   chooseOnePile: { reason: 'chooseOnePile', text: null },
   wagonFull: { reason: 'wagonFull', text: CANNOT_HOLD_TEXT },
   cannotCarry: { reason: 'cannotCarry', text: CANNOT_CARRY_TEXT },
+  /** The drop-gold field's own refusal, and it is SILENT because DFU's
+   *  is: an amount below 1 or above the purse is REFUSED OUTRIGHT
+   *  rather than clamped (:1272-1300), and the field simply does not
+   *  take it. */
+  badAmount: { reason: 'badAmount', text: null },
 });
+
+/** key "wagonFullGold" (:1303) - the drop-gold clamp's box. */
+export const wagonFullGoldText = (n) => `Your wagon can only hold ${n} more gold.`;
+
+/**
+ * DropGoldPopup_OnGotUserInput (:1269-1303). The GOLD arm of the same
+ * transfer, and it does not behave like the item one: an amount out of
+ * range is refused OUTRIGHT and silently, while an amount the WAGON
+ * cannot take is CLAMPED with a box that names the headroom.
+ *
+ * `carried` is the purse (PlayerEntity's gold), passed in rather than
+ * read, because a screen holding an entity and a screen holding only
+ * an item list both ask this.
+ *
+ * @returns {{ok:true, amount:number, notice:string|null}
+ *          |{ok:false, refusal:object, notice:string|null}}
+ */
+export function planDropGold(text, { carried = 0, usingWagon = false, remote = [] } = {}) {
+  // A numeric field of 8 opening on "0": anything that is not a run of
+  // digits is not a number, and 0 fails the range below.
+  const asked = /^[0-9]+$/.test(String(text)) ? Number(text) : 0;
+  if (asked < 1 || asked > carried) return { ok: false, refusal: REFUSAL.badAmount, notice: null };
+  if (!usingWagon) return { ok: true, amount: asked, notice: null };
+  // :1296-1303 - the 750kg headroom in COINS, and the box names it.
+  const canHold = canHoldAmount(carried, GOLD_PIECE_WEIGHT_KG, WAGON_KG_LIMIT, totalWeight(remote));
+  const notice = asked > canHold ? wagonFullGoldText(canHold) : null;
+  const amount = Math.min(asked, canHold);
+  // A FULL wagon still shows the box - it says "0 more gold", which is
+  // the answer - and then nothing moves. DFU would mint a 0 stack
+  // here; the port guards it (Ledger A).
+  if (amount < 1) return { ok: false, refusal: REFUSAL.wagonFull, notice };
+  return { ok: true, amount, notice };
+}
 
 /**
  * LOCAL -> REMOTE. The Remove arm's `TransferItem(item, localItems,

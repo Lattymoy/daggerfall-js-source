@@ -83,7 +83,7 @@ import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-
 import { getInteractionMode } from '../player/interactionMode.js';   // U45: the mode panel's cycle reads it
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
 import { preloadInventoryArt } from '../ui/nativeInventory.js';   // U8d: the native inventory
-import { createInventoryWindow, inventoryDoorReady, inventoryArtLoaded } from '../ui/inventoryDoor.js';   // U53: the pack's ONE seam, and the skin fork in front of it (inventoryArtLoaded re-exported: the LOOT arm still gates on the classic art)
+import { createInventoryWindow, inventoryDoorReady } from '../ui/inventoryDoor.js';   // U53: the pack's ONE seam, and the skin fork in front of it
 import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
 import { seedStartingEquipment, EQUIP_SLOTS } from '../systems/equip.js';   // U8h: the worn-weapon binding
@@ -3191,10 +3191,13 @@ export async function bootWorld(canvas, renderer, params, status) {
               pool.takeLoot(lootKey, (l) => townTalk.say(l));
               surfacePlayer();
             }
-            // U53: THE ART, not the door. A pile is a LOOT target, and
-          // ui/inventoryDoor.js hands every loot call the CLASSIC window -
-          // so this arm needs INVE00I0 loaded whatever skin is on.
-          else if (dropKey && inventoryArtLoaded()) {
+            // U58: THE DOOR AGAIN. U53 pinned this arm to the ART
+          // because the door handed every LOOT call the classic window,
+          // which cannot draw without INVE00I0. The enhanced pane runs
+          // the pile itself now, so the gate is the skin question every
+          // other pack arm asks - and on the classic skin it still comes
+          // down to the same art.
+          else if (dropKey && inventoryDoorReady()) {
               // U8e: a pile under the ray opens the inventory WITH the
               // pile as the remote target (Remove defaults - the OnPush law)
               const pile = droppedLoot.pileFor(dropKey);

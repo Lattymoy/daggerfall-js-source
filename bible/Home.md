@@ -249,7 +249,7 @@ combat line numbers below are refreshed with it.
 - `src/scenes/exterior.js:1056` - (FLAGGED); swallowing the browser reload is not optional.
 - `src/scenes/exterior.js:1349` - (FLAGGED: the climate People table pends; the test city is
 - `src/scenes/exterior.js:1501` - FLAGGED here exactly as in world.js - no tile lookup yet).
-- `src/scenes/exterior.js:1839` - ground (FLAGGED with world.js's same gap), so Detect Treasure
+- `src/scenes/exterior.js:1842` - ground (FLAGGED with world.js's same gap), so Detect Treasure
 - `src/scenes/shared.js:223` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:240` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:345` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
@@ -267,8 +267,8 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:2725` - FLAGGED: the QuestComplete loot window pends the UI arc - the
 - `src/scenes/world.js:2752` - castle interior (FLAGGED with the palace blocks).
 - `src/scenes/world.js:3154` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:3470` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/world.js:3543` - (FLAGGED: exterior corpse containers are the loot arc's), so
+- `src/scenes/world.js:3473` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:3546` - (FLAGGED: exterior corpse containers are the loot arc's), so
 - `src/scenes/worldModes.js:288` - rather than pretending to scan. FLAGGED.
 - `src/scenes/worldModes.js:413` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:561` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon

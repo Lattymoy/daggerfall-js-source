@@ -12,10 +12,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { packModel, itemLine, SLOT_MAP, useResultAction } from '../src/ui/enhancedInventory.js';
+import {
+  packModel, itemLine, SLOT_MAP, useResultAction, remoteModel, REMOTE_TITLE, STOW_LABEL, plural,
+} from '../src/ui/enhancedInventory.js';
+import { WAGON_KG_LIMIT } from '../src/systems/itemTransfer.js';
 import { USE_PENDING } from '../src/ui/nativeInventory.js';
 import {
-  createInventoryWindow, inventoryDoorReady, needsClassicInventory, CLASSIC_ONLY_MODES,
+  createInventoryWindow, inventoryDoorReady,
 } from '../src/ui/inventoryDoor.js';
 import { TABS, filterByTab } from '../src/ui/nativeInventory.js';
 import { EQUIP_SLOTS, ITEM_TEMPLATES, getTemplate } from '../src/characters/paperdoll.js';
@@ -289,24 +292,39 @@ test('U53: the enhanced skin gets the DOM pack', () => {
 });
 
 test('U53: the fork asks the SKIN, not only the document', () => {
+  // U58 removed the third clause. The boundary it named - loot piles
+  // and reward trays - is gone because U56 and U57 took the law out of
+  // the classic window, so this is now the plain skin question every
+  // other door asks.
   assert.match(read('src/ui/inventoryDoor.js'),
-    /if \(isEnhanced\(\) && typeof document !== 'undefined' && !needsClassicInventory\(deps\)\) \{/);
+    /if \(isEnhanced\(\) && typeof document !== 'undefined'\) \{/);
 });
 
-test('U53: a LOOT pile or a reward picker gets the classic window, on either skin', () => {
-  // Not a gap: those flows are whole DFU windows of law living inside
-  // the classic one, and a player who opens a corpse gets the window
-  // that has always opened it. What would break the never-traps law is
-  // an enhanced pack that silently dropped the wagon on the floor.
-  assert.deepEqual([...CLASSIC_ONLY_MODES], ['loot', 'chooseOne']);
+test('U58: a LOOT pile and a reward tray now get the ENHANCED pane', () => {
+  // U53 handed both to the classic window and called it a boundary
+  // rather than a gap. U56 and U57 moved the law those flows needed -
+  // TransferItem's ladder and the remote side's four claims - so the
+  // boundary had nothing left to protect.
+  const doorSrc = read('src/ui/inventoryDoor.js');
+  assert.ok(!doorSrc.includes('CLASSIC_ONLY_MODES'.replace('_MODES', '_MODES =')),
+    'the classic-only list is back');
   skin('enhanced');
   withDocument(() => {
-    for (const mode of CLASSIC_ONLY_MODES) {
-      assert.equal(needsClassicInventory({ [mode]: {} }), true);
-      const w = createInventoryWindow({ entity: hero(), [mode]: { items: () => [] } });
-      assert.equal(w?.constructor?.name, 'NativeInventoryWindow', `${mode} must stay classic`);
+    for (const mode of ['loot', 'chooseOne']) {
+      const deps = mode === 'loot'
+        ? { entity: hero(), loot: { items: () => [] } }
+        : { entity: hero(), chooseOne: { items: [], onChoose: () => {} } };
+      const w = createInventoryWindow(deps);
+      assert.notEqual(w?.constructor?.name, 'NativeInventoryWindow', `${mode} still falls to classic`);
+      assert.equal(typeof w.dispose, 'function', `${mode} must still be an overlay`);
+      w.dispose();
     }
-    assert.equal(needsClassicInventory({ entity: hero() }), false, 'a bare pack is not one of them');
+  });
+  // and the classic skin keeps every one of them
+  skin('classic');
+  withDocument(() => {
+    const w = createInventoryWindow({ entity: hero(), loot: { items: () => [] } });
+    assert.equal(w?.constructor?.name, 'NativeInventoryWindow');
   });
 });
 
@@ -317,15 +335,18 @@ test('U53: the door needs classic art only where the classic window draws it', (
   assert.equal(inventoryDoorReady(), true, 'the enhanced pack reads no game data at all');
 });
 
-test('U53: the LOOT arm keeps the ART gate, because the door hands it the classic window', () => {
-  // The subtle one. Every other inventory gate moved to the door; this
-  // one must NOT, or a pile opens a classic window with no art in it.
+test('U58: the LOOT arm asks the DOOR now, like every other pack arm', () => {
+  // U53's subtlety, retired by its own reasoning. The pile gate asked
+  // the ART because the door handed every loot call the classic
+  // window, which cannot draw without INVE00I0. The enhanced pane runs
+  // the pile itself now, so the gate is the skin question - and on the
+  // classic skin `inventoryDoorReady` still comes down to that art.
   for (const rel of ['scenes/world.js', 'scenes/exterior.js']) {
     const src = read(`src/${rel}`);
-    assert.match(src, /else if \(dropKey && inventoryArtLoaded\(\)\) \{/,
-      `${rel}: the pile gate stays on the art`);
-    assert.match(src, /A pile is a LOOT target/, `${rel}: and says why`);
-    assert.match(src, /inventoryDoorReady\(\)/, `${rel}: while the bare pack asks the door`);
+    assert.match(src, /else if \(dropKey && inventoryDoorReady\(\)\) \{/,
+      `${rel}: the pile gate did not follow the door`);
+    assert.ok(!/inventoryArtLoaded/.test(src),
+      `${rel}: a second gate on the raw art survives`);
   }
 });
 
@@ -359,15 +380,23 @@ test('U53: every listener has an owner', () => {
   assert.match(unmount, /removeEventListener\('pointerlockchange', lockHandler\)/);
 });
 
-test('U53: onClose is owed to the host whatever skin drew the window', () => {
+test('U58: the door runs the CLOSE LAW, not half of it', () => {
   // AUDIT 17e F28: DFU frees the container on window close, and the
-  // two loot arms hand onClose for exactly that. The classic window
-  // calls it; the enhanced overlay must too or a pile stays locked.
+  // two loot arms hand onClose for exactly that. AUDIT B-C1 is the
+  // other half: the session's dropped items mint their world flat.
+  // U57 put both in closeSession, and now that the enhanced pane can
+  // DROP, the enhanced door owes both.
   const src = read('src/ui/inventoryDoor.js');
-  const close = src.slice(src.indexOf('const close = ()'), src.indexOf('const overlay = {'));
-  assert.match(close, /deps\.onClose\?\.\(\)/);
-  assert.ok(close.indexOf('fired = true') < close.indexOf('deps.onClose'),
+  const at = src.indexOf('const close = ()');
+  assert.ok(at > 0, 'the close arm is gone');
+  const close = src.slice(at, src.indexOf('const overlay = {'));
+  assert.match(close, /closeSession\(deps, \{ dropped \}\)/);
+  assert.ok(!/deps\.onClose\?\.\(\)/.test(close), 'half the close law survives beside the whole one');
+  assert.ok(close.indexOf('fired = true') < close.indexOf('closeSession('),
     'the window is down before the host is told');
+  // AND THE PILE IS READ BEFORE THE UNMOUNT, which clears the view.
+  assert.ok(close.indexOf('view?.dropped?.()') < close.indexOf('view?.unmount()'),
+    'the drop pile is read out of a view that has already been torn down');
 });
 
 test('U53: the host arms are no-ops BY DESIGN, and say so', () => {
@@ -482,7 +511,9 @@ test('U55: the two hand-offs run in OPPOSITE orders, in both windows', () => {
   assert.ok(cSpell.indexOf('_closeSilently()') < cSpell.indexOf('this.hooks.openSpellbook()'),
     'classic spellbook: close, THEN hand over');
 
-  const eUse = enhanced.slice(enhanced.indexOf('function use(item)'), enhanced.indexOf('function takeOff(slot)'));
+  const useAt = enhanced.indexOf('function use(item');
+  assert.ok(useAt > 0, 'the use arm is gone, and -1 would slice a passing window out of thin air');
+  const eUse = enhanced.slice(useAt, enhanced.indexOf('function takeOff(slot)'));
   const eBook = eUse.slice(eUse.indexOf("if (act.kind === 'openBook')"),
     eUse.indexOf("if (act.kind === 'openSpellbook')"));
   assert.ok(eBook.indexOf('open(act.item') < eBook.indexOf('onExit()'),
@@ -507,4 +538,142 @@ test('U55: the pack passes useItem the same deps the classic window does', () =>
   for (const dep of ['entity:', 'localItems:', 'spellCount:', 'isEnchanted', 'nowMinute:', 'revealMap:', 'drinkPotion:']) {
     assert.ok(useArm.includes(dep), `the pack drops ${dep}`);
   }
+});
+
+
+// ── U58: THE REMOTE PANE ─────────────────────────────────────────
+// The pack's second list. The LAW under it moved out of the classic
+// window in U56 and U57 and is pinned in those files; what is pinned
+// here is the pane's own half - which list it is showing, what it
+// calls that, and that it runs the extracted modules rather than a
+// second reading of them.
+
+test('U58 remoteModel: four claims, in the order inventorySession answers them', () => {
+  const axe = mk('Battle Axe');
+  const helm = mk('Helm', 'Armor');
+  const wagon = [axe];
+  const pile = [helm];
+  const reward = [mk('Claymore')];
+  const dropped = [];
+  const deps = { wagonItems: () => wagon, loot: { items: () => pile } };
+
+  // the GROUND is OnPush's default, and it has no capacity
+  const g = remoteModel({}, { dropped });
+  assert.equal(g.kind, 'ground');
+  assert.equal(g.title, REMOTE_TITLE.ground);
+  assert.equal(g.capacity, null, 'the ground holds anything');
+  assert.equal(g.count, 0);
+
+  // a container outranks the ground...
+  assert.equal(remoteModel(deps, { dropped }).kind, 'container');
+  // ...a reward tray outranks the container...
+  assert.equal(remoteModel(deps, { dropped, chooseOne: { items: reward } }).kind, 'reward');
+  // ...and the WAGON outranks everything while it shows
+  const w = remoteModel(deps, { dropped, chooseOne: { items: reward }, usingWagon: true });
+  assert.equal(w.kind, 'wagon');
+  assert.equal(w.items[0], axe, 'the wagon model shows records that are not the host\'s');
+  // the ONLY capacity a remote list has is ItemHelper.WagonKgLimit
+  assert.equal(w.capacity, WAGON_KG_LIMIT);
+  assert.equal(w.weight > 0, true, 'and it weighs what is in it');
+  assert.equal(w.count, 1);
+
+  // every kind is NAMED, both ways - a pane that fell through to
+  // undefined would draw an empty heading and an empty button
+  for (const kind of ['wagon', 'reward', 'container', 'ground']) {
+    assert.equal(typeof REMOTE_TITLE[kind], 'string', `${kind} has no title`);
+    assert.ok(REMOTE_TITLE[kind].length, `${kind}'s title is empty`);
+    assert.equal(typeof STOW_LABEL[kind], 'string', `${kind} has no stow verb`);
+    assert.ok(STOW_LABEL[kind].length, `${kind}'s stow verb is empty`);
+  }
+  // and the verbs are DIFFERENT, because naming the destination is
+  // the whole point of having four of them
+  assert.equal(new Set(Object.values(STOW_LABEL)).size >= 3, true, Object.values(STOW_LABEL).join(' / '));
+});
+
+test('U58: the pane runs the extracted law, not a second reading of it', () => {
+  const src = code('src/ui/enhancedInventory.js');
+  // it calls the ladder and the session
+  for (const fn of ['planStore(', 'planTake(', 'applyTransfer(', 'planDropGold(',
+    'planWagonToggle(', 'remoteTarget(', 'openState(']) {
+    assert.ok(src.includes(fn), `the pane does not use ${fn}`);
+  }
+  // and carries none of the rungs itself
+  assert.ok(!/750/.test(src), 'a second WagonKgLimit');
+  assert.ok(!/'Transportation'/.test(src), 'a second transport block');
+  assert.ok(!/isSummoned/.test(src), 'a second summoned guard');
+  assert.ok(!/canHoldAmount|maxEncumbrance\(liveStat\(deps/.test(src.replace(/maxEncumbrance\(liveStat\(entity[^)]*\)\)/g, '')),
+    'a second capacity gate');
+  assert.ok(!/SMALL_CART_TEMPLATE|templateIndex === 93/.test(src), 'a second cart check');
+  // the CART CHECK is asked of the module, because the wagon button
+  // exists only when there is a wagon to open
+  assert.ok(src.includes('hasCart(deps.items'), 'the wagon button guesses at the cart');
+});
+
+test('U58: STOW is drawn only when the law would move something or SAY something', () => {
+  // U53 deleted a "worn" badge that could never render. The same rule
+  // applies to a button: DFU's transport block and its choose-one bar
+  // are SILENT refusals, so a Stow button on those can only do
+  // nothing. A refusal that SPEAKS still gets its button - the full
+  // wagon has something to say.
+  const src = read('src/ui/enhancedInventory.js');
+  const fn = src.slice(src.indexOf('function canStow(item)'), src.indexOf('function stow(item)'));
+  assert.ok(fn.length > 40, 'canStow is gone');
+  assert.match(fn, /planStore\(/, 'canStow decides for itself instead of asking the ladder');
+  assert.match(fn, /plan\.ok \|\| !!plan\.refusal\.text/,
+    'a silent refusal and a speaking one are being treated alike');
+  // and the button is actually gated on it
+  assert.match(src, /if \(canStow\(picked\)\) \{/);
+});
+
+test('U58: a USE on the remote side consumes out of the LIVE list', () => {
+  // `remoteModel.items` is a FILTERED COPY, and `useItem` consumes out
+  // of the collection it is handed - so a potion drunk from a corpse
+  // through the model's copy would vanish from the screen and stay in
+  // the pile. Every transfer arm already reads the live list; this is
+  // the one that was written the other way first.
+  const src = read('src/ui/enhancedInventory.js');
+  const at = src.indexOf("const u = el('button', 'act', 'Use')");
+  assert.ok(at > 0, 'the Use button is gone');
+  const arm = src.slice(at, src.indexOf('c.append(acts)', at));
+  assert.match(arm, /remoteTarget\(deps, sessionState\(\)\)/,
+    'the Use arm hands over the model copy instead of the live list');
+  assert.ok(!/remote\.items/.test(arm), 'the model copy is still reachable from here');
+  // and the transfer arms read the live list too. SLICED TO THE NEXT
+  // FUNCTION, not to a byte count: a 900-char window from `stow` ran
+  // into `take`'s body and passed on ITS call, so this pin survived
+  // the mutation that pointed `stow` at the copy.
+  for (const fn of ['function stow(item)', 'function take(item)']) {
+    const from = src.indexOf(fn);
+    assert.ok(from > 0, `${fn} is gone`);
+    const to = src.indexOf('\nfunction ', from + fn.length);
+    assert.ok(to > from, `${fn} has no end`);
+    assert.match(src.slice(from, to), /remoteTarget\(deps, sessionState\(\)\)/, `${fn} works off a copy`);
+  }
+});
+
+test('U58: one item is not "1 items"', () => {
+  // A count printed straight into a template literal is right eleven
+  // times out of twelve, and wrong on exactly the one the player is
+  // looking at when they drop something.
+  const src = read('src/ui/enhancedInventory.js');
+  assert.ok(!/\$\{[a-z.]*count\} items/.test(src), 'a raw count is still being pluralised by hope');
+  assert.match(src, /const plural = \(n, word\) =>/);
+  // the DEFINITION plus BOTH headers - the pack's own count was
+  // written the same wrong way in U53 and is fixed with it.
+  assert.equal((src.match(/plural\(/g) || []).length, 3,
+    'one of the two headers still does it by hand');
+  // THE MODULE'S OWN, imported. A copy of the helper re-derived in
+  // this file would compare it to itself, which is the vacuous shape
+  // U56 found in the wagon suite.
+  assert.equal(plural(1, 'item'), '1 item');
+  assert.equal(plural(0, 'item'), '0 items');
+  assert.equal(plural(2, 'item'), '2 items');
+});
+
+test('U58: the door reads the drop pile OUT of the view before tearing it down', () => {
+  const src = read('src/ui/inventoryDoor.js');
+  assert.match(src, /view\?\.dropped\?\.\(\) \?\? \[\]/);
+  // and the view actually offers it
+  const view = read('src/ui/enhancedInventory.js');
+  assert.match(view, /dropped: \(\) => dropped,/, 'the view has no pile to hand over');
 });

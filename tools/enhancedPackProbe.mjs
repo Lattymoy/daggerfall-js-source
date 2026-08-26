@@ -316,18 +316,23 @@ await run('phone', devices['Pixel 5']);
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await toGamePage(page);
-  // A LOOT PILE STAYS CLASSIC, on the enhanced skin, deliberately.
+  // U58: A LOOT PILE IS THE ENHANCED PANE NOW. U53 handed it to the
+  // classic window and pinned that as a boundary; U56 and U57 moved
+  // the law it was protecting, so the boundary went with it.
   const kind = await page.evaluate(async () => {
     const { createInventoryWindow } = await import('/src/ui/inventoryDoor.js');
     const w = createInventoryWindow({
       entity: { items: [], stats: {} }, items: () => [], wagonItems: () => [],
       loot: { items: () => [] },
     });
-    return { name: w?.constructor?.name, dom: document.querySelectorAll('#enhanced-inventory').length };
+    await new Promise((r) => setTimeout(r, 400));
+    const out = { name: w?.constructor?.name, dom: document.querySelectorAll('#enhanced-inventory').length };
+    w.dispose();
+    return out;
   });
-  check('boundary: a loot pile gets the classic window on the enhanced skin',
-    kind.name === 'NativeInventoryWindow', kind.name);
-  check('boundary: and no enhanced pack is mounted for it', kind.dom === 0);
+  check('boundary: a loot pile opens the ENHANCED pane on the enhanced skin',
+    kind.name !== 'NativeInventoryWindow', kind.name);
+  check('boundary: and the pane really mounted', kind.dom === 1, `${kind.dom} mounted`);
   check('boundary: no page errors', errors.length === 0, errors.join(' | '));
 
   await page.goto(`${BASE}/?skin=classic`, { waitUntil: 'domcontentloaded' });

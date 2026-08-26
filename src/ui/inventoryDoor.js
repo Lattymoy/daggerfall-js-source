@@ -11,25 +11,33 @@
 // and their indentation had drifted, which is what a copy-paste looks
 // like a month later. Same finding as U52's, twice over.
 //
-// ── THE FORK IS NARROW, AND SAYS WHERE IT STOPS ──────────────────
+// ── THE FORK WAS NARROW, AND U58 CLOSED IT ───────────────────────
 //
 // The classic window is not one screen. It is the pack, the LOOT pile,
 // the WAGON, the guild REWARD picker, drop-gold and the whole USE
-// chain (books, potions, maps, the spellbook item), each with its own
-// DFU law. The enhanced screen answers the first of those - open your
-// pack, see what you are wearing, wear something else - and the door
-// hands the CLASSIC window every call that carries a `loot` target or
-// a `chooseOne` list.
+// chain, each with its own DFU law. U53 shipped the first of those and
+// handed the classic window every call carrying a `loot` target or a
+// `chooseOne` list - a boundary rather than a gap, since nothing was
+// unreachable.
 //
-// That is a boundary, not a gap. A player who opens a corpse gets the
-// proven window that has always opened it, and the never-traps law is
-// served because nothing is unreachable; what would break the law is
-// an enhanced pack that silently dropped the wagon on the floor. The
-// remaining flows are their own slice and are named in the arc.
+// U58 removed it, and could only remove it because U56 and U57 took
+// the law out of the window first: TransferItem's ladder is
+// systems/itemTransfer.js, the remote side's four claims and the
+// wagon's two refusals are systems/inventorySession.js, and the
+// enhanced pane runs both rather than a second reading of either.
+// `CLASSIC_ONLY_MODES` is gone; the fork is now the plain skin
+// question every other door asks.
+//
+// WHAT THE DOOR STILL OWES: the drop pile. DFU mints a world flat from
+// the session's dropped items in OnPop (AUDIT B-C1), and the window
+// GOING is the door's event rather than the view's - so the door reads
+// the pile back out of the view and runs the same closeSession the
+// classic window runs.
 // ═══════════════════════════════════════════════════════════════════
 
 import { isEnhanced } from '../systems/uiSkin.js';
 import { NativeInventoryWindow, inventoryArtLoaded } from './nativeInventory.js';
+import { closeSession } from '../systems/inventorySession.js';
 
 export { inventoryArtLoaded };
 
@@ -41,15 +49,6 @@ export function inventoryDoorReady() {
   return isEnhanced() || inventoryArtLoaded();
 }
 
-/** The flows the enhanced pack does not answer yet, each of which is
- *  a whole DFU window's worth of law living inside the classic one.
- *  Exported so the pin reads the same list the fork does. */
-export const CLASSIC_ONLY_MODES = Object.freeze(['loot', 'chooseOne']);
-
-/** True when this call is one of those. */
-export const needsClassicInventory = (deps = {}) =>
-  CLASSIC_ONLY_MODES.some((k) => deps[k] != null);
-
 /**
  * Build the pack this skin wears. `deps` is NativeInventoryWindow's
  * own hook bag, unchanged - a host says what it HAS and never which
@@ -59,7 +58,7 @@ export function createInventoryWindow(deps = {}) {
   // `document` for the reason every fork before this one gives: node
   // drives these hosts headless and keeps the canvas window rather
   // than getting a special case written for it.
-  if (isEnhanced() && typeof document !== 'undefined' && !needsClassicInventory(deps)) {
+  if (isEnhanced() && typeof document !== 'undefined') {
     return enhancedInventoryOverlay(deps);
   }
   return new NativeInventoryWindow(deps);
@@ -87,14 +86,19 @@ function enhancedInventoryOverlay(deps) {
 
   const close = () => {
     if (fired) return;
+    // THE PILE IS READ BEFORE THE UNMOUNT, which clears the view's
+    // state. A drop that mints nothing is not a visible bug - it looks
+    // like the player misremembered dropping something.
+    const dropped = view?.dropped?.() ?? [];
     view?.unmount();
     view = null;
     host.remove();
     fired = true;   // last: `done` must not be true while the DOM is up
-    // AUDIT 17e F28's law, carried: DFU frees the container on window
-    // close, and a host that handed onClose is owed the call whatever
-    // skin drew the window.
-    deps.onClose?.();
+    // OnPop, through the module the classic window uses: the session's
+    // dropped items mint their world flat and the container releases.
+    // AUDIT 17e F28's law is the second half of that - a host that
+    // handed onClose is owed the call whatever skin drew the window.
+    closeSession(deps, { dropped });
   };
 
   const overlay = {
