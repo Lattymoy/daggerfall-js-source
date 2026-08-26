@@ -66,7 +66,23 @@ const rows = secC.split('\n')
   });
 // A `Kept` or `Not planned` row is a DECISION, not a claim that
 // something is unported, so it cannot go stale the same way.
-const open = rows.filter((r) => !r.feature.includes('~~') && !/^(Kept|Not planned)/.test(r.target));
+//
+// STRUCK MEANS THE CLAIM ITSELF IS STRUCK, not that a strikethrough
+// appears somewhere in the row. The first rule here was
+// `!r.feature.includes('~~')`, which read a NARROWED row - one whose
+// closed clause is struck and whose open half stands live beside it,
+// the shape this ledger's own "narrow, do not strike" rule produces -
+// as fully closed, and dropped it from the sweep. Exactly seven live
+// rows were invisible that way when AUDIT 26 closed its parity block.
+//
+// The convention the file actually follows is that a closed row
+// strikes its CLAIM, at the head, and carries the closing note after
+// it; a narrowed row leaves its claim standing and strikes only the
+// clause that shipped. So read the head, not the whole cell - and do
+// not try to measure how much prose survives, because a dated closing
+// note is often longer than the claim it retires.
+const isStruck = (feature) => feature.trimStart().startsWith('~~');
+const open = rows.filter((r) => !isStruck(r.feature) && !/^(Kept|Not planned)/.test(r.target));
 
 // ---- signal 1: the arc docs' own SHIPPED/CLOSED headings --------------
 const bible = [];
