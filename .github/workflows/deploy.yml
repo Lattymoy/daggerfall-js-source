@@ -1,13 +1,16 @@
-# Production deploy: GitHub Pages via Actions (build_type: workflow).
-# Gate is the house `npm run check` (suite + vite build) - a red suite
-# never ships. The build contains NO game data: ARENA2 is freeware but
-# non-redistributable (Port-Doctrine) and is never committed or bundled;
-# the deployed app loads user-supplied data at runtime.
+# Production + experimental preview deploy: GitHub Pages via Actions.
+#
+# Root always comes from main and keeps the house `npm run check` gate.
+# The exact-face-atlas experiment is built separately and mounted beneath
+# /preview/exact-face-atlas/ so it can be opened on a phone without merging
+# experimental rendering code into production.
 name: deploy
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - chatgpt/exact-face-atlas
   workflow_dispatch:
 
 permissions:
@@ -26,16 +29,51 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout production
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: production
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm run check   # suite + build, the same local gate
+
+      - name: Install production dependencies
+        run: npm ci
+        working-directory: production
+
+      - name: Verify and build production
+        run: npm run check
+        working-directory: production
+
+      - name: Assemble production site
+        run: |
+          mkdir -p site
+          cp -a production/dist/. site/
+
+      - name: Checkout exact-face-atlas preview
+        uses: actions/checkout@v4
+        with:
+          ref: chatgpt/exact-face-atlas
+          path: exact-face-atlas
+
+      - name: Install preview dependencies
+        run: npm ci
+        working-directory: exact-face-atlas
+
+      - name: Build exact-face-atlas preview
+        run: npm run build
+        working-directory: exact-face-atlas
+
+      - name: Mount preview under production site
+        run: |
+          mkdir -p site/preview/exact-face-atlas
+          cp -a exact-face-atlas/dist/. site/preview/exact-face-atlas/
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: site
       - id: deployment
         uses: actions/deploy-pages@v4
