@@ -8,6 +8,72 @@ policies one by one.
 
 
 
+## THE BOARD, as of U59 (2026-08-26) — OPEN, not shipped
+
+Logged so the queue survives the session that found it. Every count
+below is a `grep` over `src/` on this commit; re-run them rather than
+trusting them, because they are exactly the kind of number that rots.
+
+### THE ENHANCED LANE
+
+The character sheet has four buttons - Inventory, Spellbook, Logbook,
+History. INVENTORY is the enhanced pack now (U53-U59). The other three
+still push CLASSIC canvas windows as children under the DOM, and so
+does the pack's USE arm.
+
+    THE SPELLBOOK       FIVE construction sites across FOUR hosts:
+                        worldModes.js:1562 (the factory) and :1904 (a
+                        HAND-ROLLED second one, 342 lines below it in
+                        the same file),
+                        dungeonContext.js:788, world.js:1388,
+                        exterior.js:873. It is the only window TWO
+                        enhanced screens already push - the sheet's
+                        button and the pack's USE hand-off, whose
+                        close-then-hand-over ordering U55 got
+                        backwards. No law needs extracting first.
+    THE LOGBOOK         THREE sites: charSheetNav.js:53,
+    / NOTEBOOK          world.js:1427, dungeonContext.js:3053. A seam
+                        wants making, as U52's and U53's did.
+    HISTORY             ONE site (charSheetNav.js:61), and it reads
+                        only the entity's backStory. The small one.
+    THE TRAVEL MAP      ONE site (world.js:1808) in ONE host, so the
+                        seam is nearly free - but it is a big screen
+                        with a real design problem behind it.
+    THE HUD             No door, and unlike every screen above it is
+                        drawn PER FRAME on the canvas rather than
+                        mounted as an overlay. The largest surface the
+                        player looks at, and the least like the four
+                        doors this arc has built. It does not fit the
+                        pattern; that is the interesting part.
+
+RECOMMENDED NEXT: THE SPELLBOOK, for the reason each of U50-U53 was -
+five sites and a hand-rolled duplicate is the U53 finding again, and
+it is the last classic window either enhanced screen pushes twice.
+Unlike U56-U58 it should be ONE slice, because the law it needs is
+already exported.
+
+### RESIDUE ON WHAT HAS SHIPPED
+
+None of these blocks anything; all three are real.
+
+    THE SPLIT POPUP     systems/itemTransfer.js:247. TransferItem
+                        opens a numeric field DEFAULTED to maxAmount
+                        when a stack will not fit whole (:1515);
+                        BOTH skins take exactly what fits and never
+                        offer the field. A DFU behaviour neither
+                        window has - the one item on this board that
+                        is a gap rather than a skin.
+    THE DOLL'S CLICK    U59 wired GetEquipIndex to the enhanced
+                        avatar. It walks the compositor's real item
+                        layers, so a synthetic composite cannot reach
+                        it: wired, and unproven without ARENA2.
+    THE ICONS' DECODE   U54's standing caveat. tools/enhancedIconProbe
+                        proves the PIPELINE against a synthetic
+                        archive; that a real TEXTURE record decodes to
+                        the right PICTURE is unproven on CI and always
+                        will be, because this repo holds no game data.
+
+
 ## U59 THE AVATAR, AND WHAT YOU ARE WEARING (2026-08-26)
 
 Two complaints, one gap. The pack showed what you CARRY and turned
