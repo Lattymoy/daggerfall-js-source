@@ -54,8 +54,8 @@ rep(
 
 rep(
     'src/tools/paperdollViewer.js',
-    "syncArmorButtons();\ndocument.getElementById('race').onclick = async (e) => { raceIx = (raceIx+1)%RACES.length; syncRace(); if (classicClothingOn) await syncClassicClothingTexture(classicClothingOn); e.target.textContent = 'race: '+RACES[raceIx]; const pal=(D.PALETTES||{})[PKEY[RACES[raceIx]]]; if(pal) document.getElementById('tone').textContent='tone: '+pal[toneIx[RACES[raceIx]]%pal.length].name;  };",
-    "syncArmorButtons();\ndocument.getElementById('gender').onclick = async () => { await setGender(gender === 'male' ? 'female' : 'male'); };\ndocument.getElementById('race').onclick = async (e) => { raceIx = (raceIx+1)%RACES.length; syncRace(); if (classicClothingOn) await syncClassicClothingTexture(classicClothingOn); if (armorOn.size) await syncSelectedArmorTextures(); e.target.textContent = 'race: '+RACES[raceIx]; const pal=(D.PALETTES||{})[PKEY[RACES[raceIx]]]; if(pal) document.getElementById('tone').textContent='tone: '+pal[toneIx[RACES[raceIx]]%pal.length].name;  };",
+    "syncArmorButtons();\ndocument.getElementById('race').onclick",
+    "syncArmorButtons();\ndocument.getElementById('gender').onclick = async () => { await setGender(gender === 'male' ? 'female' : 'male'); };\ndocument.getElementById('race').onclick",
 )
 
 # Extend the permanent matrix probe: gender is a real armor archive axis, and
