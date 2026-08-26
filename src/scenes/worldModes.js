@@ -128,7 +128,7 @@ import { preloadMessageBoxArt } from '../ui/messageBox.js';
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
 import { questLetterName } from '../systems/itemInfo.js';   // ResolveItemLongName's quest-letter arm
-import { goldAmount, deductGold, addGold } from '../systems/court.js';
+import { goldAmount, creditAmount, deductGold, addGold } from '../systems/court.js';
 // Q4-v: the quest layer's host wiring. The BRIDGE (scenes/questBridge.js)
 // is created by the outer host (world.js) and rides in; this machine owns
 // the interior half - the click stamp, the Quests service arm, the scene
@@ -1407,9 +1407,7 @@ export function createWorldModes(host) {
       // GetLoanDueDateString (:571-580) - empty when nothing is owed,
       // otherwise DateString(), which carries no year.
       dueDateText: (minutes) => (minutes > 0 ? dateString(dateFromClassicMinutes(minutes)) : ''),
-      // H1: house ownership is live. SHIP ownership still needs the two
-      // fixed ship scenes and stays FLAGGED, so those buttons keep
-      // refusing through the law's own decisions.
+      // H1: house ownership is live; H3 wired the ship purchase.
       ownsHouse: () => ownsHouse(playerEntity.houses ?? [], bankRegion()),
       housesForSale: () => currentHousesForSale().length,
       // H2: BUY HOUSE reaches the purchase window. The U24 identity
@@ -1496,6 +1494,10 @@ export function createWorldModes(host) {
     const wagonStack = () => (playerEntity.wagonItems ?? []).find((i) => i.group === 'Currency') ?? null;
     return {
       gold: () => goldAmount(playerEntity),
+      // GetGoldAmount (PlayerEntity.cs:1313-1316) is gold pieces PLUS
+      // letters of credit, and the purchase and repayment gates read it
+      // where deposit/withdraw read GoldPieces alone (:344, :373).
+      creditGold: () => creditAmount(playerEntity),
       deductGold: (n) => deductGold(playerEntity, n),
       addGold: (n) => addGold(playerEntity, n),
       wagonGold: () => wagonStack()?.stackCount ?? 0,

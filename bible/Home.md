@@ -280,29 +280,28 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:1031` - FLAGGED, above ground only, each with the DFU line it owes:
 - `src/scenes/worldModes.js:1125` - trade window in Sell mode. The BANKING arm stays FLAGGED below;
 - `src/scenes/worldModes.js:1214` - FLAGGED, each with the slice it waits on:
-- `src/scenes/worldModes.js:1411` - fixed ship scenes and stays FLAGGED, so those buttons keep
-- `src/scenes/worldModes.js:1438` - H3: the sell price, which was FLAGGED at zero because it needs
-- `src/scenes/worldModes.js:1609` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:1663` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
-- `src/scenes/worldModes.js:1721` - skip, the refusal line. Only the destination was a FLAGGED null,
-- `src/scenes/worldModes.js:1892` - FLAGGED: a coven's failure spawns daedric foes ON YOU
-- `src/scenes/worldModes.js:1896` - if (r.spawnFoes) console.warn('[summon] a coven failure owes you daedra; the interior has no foe pool (FLAGGED)');
-- `src/scenes/worldModes.js:1963` - been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:2005` - destination has been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:2024` - been FLAGGED nulls since G3.
-- `src/scenes/worldModes.js:2127` - with the trade window's own mode flow, the same INTERIM the
-- `src/scenes/worldModes.js:2352` - first (owned houses and quest buildings FLAGGED/seamed per
-- `src/scenes/worldModes.js:2360` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
-- `src/scenes/worldModes.js:2675` - FLAGGED, unchanged by this: DFU then raises the private-
-- `src/scenes/worldModes.js:3166` - too. FLAGGED: interior loot containers are the loot arc's -
-- `src/scenes/worldModes.js:3308` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:3407` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:3745` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
-- `src/scenes/worldModes.js:4166` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
+- `src/scenes/worldModes.js:1436` - H3: the sell price, which was FLAGGED at zero because it needs
+- `src/scenes/worldModes.js:1611` - FactionData; the port's pre-chargen INTERIM entity does not, and
+- `src/scenes/worldModes.js:1665` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
+- `src/scenes/worldModes.js:1723` - skip, the refusal line. Only the destination was a FLAGGED null,
+- `src/scenes/worldModes.js:1894` - FLAGGED: a coven's failure spawns daedric foes ON YOU
+- `src/scenes/worldModes.js:1898` - if (r.spawnFoes) console.warn('[summon] a coven failure owes you daedra; the interior has no foe pool (FLAGGED)');
+- `src/scenes/worldModes.js:1965` - been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:2007` - destination has been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:2026` - been FLAGGED nulls since G3.
+- `src/scenes/worldModes.js:2129` - with the trade window's own mode flow, the same INTERIM the
+- `src/scenes/worldModes.js:2354` - first (owned houses and quest buildings FLAGGED/seamed per
+- `src/scenes/worldModes.js:2362` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
+- `src/scenes/worldModes.js:2677` - FLAGGED, unchanged by this: DFU then raises the private-
+- `src/scenes/worldModes.js:3168` - too. FLAGGED: interior loot containers are the loot arc's -
+- `src/scenes/worldModes.js:3310` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:3409` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:3747` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
+- `src/scenes/worldModes.js:4168` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
-- `src/systems/banking.js:656` - FLAGGED, with the slice it waits on:
+- `src/systems/banking.js:657` - FLAGGED, with the slice it waits on:
 - `src/systems/biography.js:14` - FLAGGED, exactly as DFU flags them: AE, AF and AO are parsed and
 - `src/systems/biography.js:81` - INTERIM, loud and the same one shopStock.js:115 carries: message
 - `src/systems/buildingLocks.js:48` - *                                   (FLAGGED: banking is a ledger row -
@@ -395,8 +394,8 @@ combat line numbers below are refreshed with it.
 - `src/ui/nativeInventory.js:206` - *  is 0 until those effect channels exist (FLAGGED). Exported so the
 - `src/ui/nativeInventory.js:358` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
 - `src/ui/nativeInventory.js:731` - field is INTERIM-pending with the local Remove split.
-- `src/ui/nativeTalk.js:279` - lands with the Tell-me-about slice (FLAGGED).
-- `src/ui/nativeTalk.js:303` - B5-6: the four pages that were INTERIM no-ops. Each falls back
+- `src/ui/nativeTalk.js:295` - lands with the Tell-me-about slice (FLAGGED).
+- `src/ui/nativeTalk.js:319` - B5-6: the four pages that were INTERIM no-ops. Each falls back
 - `src/ui/paperDoll.js:18` - Human +2 - Breton INTERIM), record = playerTextureRecord
 - `src/ui/paperDoll.js:63` - table, the loud INTERIM the U8f/U8g records flagged.
 - `src/ui/pauseWindow.js:58` - FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
