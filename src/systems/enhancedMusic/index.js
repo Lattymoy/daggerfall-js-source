@@ -48,5 +48,5 @@ export function enhancedScore(context, { enhanced = isEnhanced() } = {}) {
       ? { root: track.root, mode: track.mode ?? undefined, bpm: track.bpm ?? undefined }
       : {});
   }
-  return { track, song };
+  return { track, song, palette };
 }

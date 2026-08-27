@@ -105,11 +105,13 @@ export function composeScore(palette, seed, opts = {}) {
   const cell = composeCell(rand, L.motif);
 
   const events = [];
-  // Programs, volumes and pans, at the top, one per layer.
+  // Programs, volumes and pans, at the top, one per layer (and per paired voice).
   for (const layer of Object.values(L)) {
-    events.push({ tick: 0, type: 'programChange', channel: layer.channel, program: layer.program });
-    events.push({ tick: 0, type: 'controller', channel: layer.channel, controller: 7, value: layer.volume });
-    events.push({ tick: 0, type: 'controller', channel: layer.channel, controller: 10, value: layer.pan });
+    for (const v of [layer, layer.pair].filter(Boolean)) {
+      events.push({ tick: 0, type: 'programChange', channel: v.channel, program: v.program });
+      events.push({ tick: 0, type: 'controller', channel: v.channel, controller: 7, value: v.volume });
+      events.push({ tick: 0, type: 'controller', channel: v.channel, controller: 10, value: v.pan });
+    }
   }
 
   let prevVoicing = null;
@@ -156,6 +158,47 @@ export function composeScore(palette, seed, opts = {}) {
             : (bassRoot + 12 <= bhi ? bassRoot + 12 : bassRoot);
           events.push({ tick: b0 + TICKS_PER_BEAT * 3, type: 'noteOn', channel: L.bass.channel, note,
             velocity: irand(rand, L.bass.velocity[0], L.bass.velocity[1]) - 8, duration: TICKS_PER_BEAT - 6 });
+        }
+      }
+
+      // tension (EM4b): a low pulse on one and three of every bar, a
+      // pickup on the and-of-four every other bar, and a sustained
+      // dissonant pair - the chord's second against its root - held for
+      // the chord in the strings. Composed always; mixed in by danger.
+      if (L.tension) {
+        const T = L.tension;
+        const [tlo, thi] = T.register;
+        const pulse = fitRegister(degreeToPitch(root, mode, degree), tlo, thi);
+        for (let bar = 0; bar < palette.barsPerChord; bar++) {
+          const b0 = at + bar * TICKS_PER_BAR;
+          for (const beat of [0, 2]) {
+            events.push({ tick: b0 + beat * TICKS_PER_BEAT, type: 'noteOn', channel: T.channel, note: pulse,
+              velocity: irand(rand, T.velocity[0], T.velocity[1]), duration: TICKS_PER_BEAT - 10 });
+          }
+          if (bar % 2 === 1) {
+            events.push({ tick: b0 + TICKS_PER_BEAT * 3 + TICKS_PER_BEAT / 2, type: 'noteOn', channel: T.channel, note: pulse,
+              velocity: irand(rand, T.velocity[0], T.velocity[1]) - 12, duration: TICKS_PER_BEAT / 2 - 6 });
+          }
+        }
+        if (T.pair) {
+          const [plo, phi] = T.pair.register;
+          for (const d of [degree, degree + 1]) {
+            events.push({ tick: at, type: 'noteOn', channel: T.pair.channel, note: fitRegister(degreeToPitch(root, mode, d), plo, phi),
+              velocity: irand(rand, T.pair.velocity[0], T.pair.velocity[1]), duration: chordTicks - 12 });
+          }
+        }
+      }
+
+      // drive (EM4b): eighth notes, root root fifth root, the whole chord.
+      if (L.drive) {
+        const Dr = L.drive;
+        const [dlo, dhi] = Dr.register;
+        const r0 = fitRegister(degreeToPitch(root, mode, degree), dlo, dhi);
+        const r5 = fitRegister(degreeToPitch(root, mode, degree + 4), dlo, dhi);
+        const eighth = TICKS_PER_BEAT / 2;
+        for (let k = 0; k < chordTicks / eighth; k++) {
+          events.push({ tick: at + k * eighth, type: 'noteOn', channel: Dr.channel, note: k % 4 === 2 ? r5 : r0,
+            velocity: irand(rand, Dr.velocity[0], Dr.velocity[1]) - (k % 2 ? 14 : 0), duration: eighth - 8 });
         }
       }
 

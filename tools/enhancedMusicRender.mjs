@@ -15,6 +15,7 @@ const args = process.argv.slice(2);
 const flag = (name, dflt) => { const i = args.indexOf(name); if (i < 0) return dflt; const v = args[i + 1]; args.splice(i, 2); return v; };
 const SECONDS = Number(flag('--seconds', 45));
 const OUT = flag('--out', '/tmp/enhanced.wav');
+const DANGER = flag('--danger', null);   // EM4b: 'from,to' seconds of a danger episode - the meter rises at `from`, falls at `to`, and the layers follow
 const ROOT = flag('--root', null);     // EM2c: compose in a scored track's key
 const MODE = flag('--mode', null);
 const ENV = args[0] || 'dungeonInterior';
@@ -29,11 +30,13 @@ page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 await page.route('**/', (r) => r.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><meta charset="utf-8"><body>' }));
 await page.goto('http://localhost:5234/play/');
 
-const out = await page.evaluate(async ({ ENV, SEED_WORDS, SECONDS, RATE, ROOT, MODE }) => {
+const out = await page.evaluate(async ({ ENV, SEED_WORDS, SECONDS, RATE, ROOT, MODE, DANGER }) => {
   const { composeScore } = await import('/src/systems/enhancedMusic/composer.js');
   const { paletteFor } = await import('/src/systems/enhancedMusic/palettes.js');
   const { hashSeed } = await import('/src/systems/enhancedMusic/theory.js');
   const { SongPlayer, applyChannelEvents, freshChannelState } = await import('/src/systems/songPlayer.js');
+  const { layerMix } = await import('/src/systems/enhancedMusic/palettes.js');
+  const { DangerMeter } = await import('/src/systems/enhancedMusic/danger.js');
   const palette = paletteFor(ENV);
   if (!palette) return { error: `no palette for ${ENV}` };
   const song = composeScore(palette, hashSeed(...SEED_WORDS), { root: ROOT === null ? undefined : Number(ROOT), mode: MODE ?? undefined });
@@ -42,6 +45,18 @@ const out = await page.evaluate(async ({ ENV, SEED_WORDS, SECONDS, RATE, ROOT, M
   p._ensureMaster();
   p._state = freshChannelState();
   p._originTime = 0;
+  // EM4b: a danger episode, scheduled ahead on the offline clock - the
+  // real meter, stepped at 30 Hz, the real mix law, the real mix door.
+  if (DANGER) {
+    const [from, to] = DANGER.split(',').map(Number);
+    const meter = new DangerMeter();
+    let last = null;
+    for (let t = 0; t < SECONDS; t += 1 / 30) {
+      meter.update(1 / 30, t >= from && t < to ? 1 : 0);
+      const key = meter.level.toFixed(3);
+      if (key !== last) { p.setLayerMix(layerMix(palette, meter.level), { seconds: 1 / 30, at: t }); last = key; }
+    }
+  } else p.setLayerMix(layerMix(palette, 0), { seconds: 0.01, at: 0 });
   let notes = 0;
   for (const e of song.events) {
     const t = e.tick * song.secondsPerTick;
@@ -69,7 +84,7 @@ const out = await page.evaluate(async ({ ENV, SEED_WORDS, SECONDS, RATE, ROOT, M
   let bin = ''; const CH = 0x8000;
   for (let i = 0; i < bytes.length; i += CH) bin += String.fromCharCode(...bytes.subarray(i, i + CH));
   return { b64: btoa(bin), notes, peak, rms: Math.sqrt(sq / n), meta: song.meta, loopSeconds: song.durationTicks * song.secondsPerTick, name: song.name };
-}, { ENV, SEED_WORDS, SECONDS, RATE, ROOT, MODE });
+}, { ENV, SEED_WORDS, SECONDS, RATE, ROOT, MODE, DANGER });
 
 if (out.error) console.log('ERROR', out.error);
 else {

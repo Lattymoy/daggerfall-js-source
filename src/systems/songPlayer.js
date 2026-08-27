@@ -428,10 +428,58 @@ export class SongPlayer {
     if (!g) {
       g = this.ctx.createGain();
       g.gain.value = this._state[channel]?.volume ?? 1;
-      g.connect(this._master);
+      g.connect(this._mixGain(channel));   // EM4b: through the layer mix, then the master
       this._chGains[channel] = g;
     }
     return g;
+  }
+
+  /** EM4b: THE LAYER MIX. A second gain per channel, between the song's
+   *  own CC7 volume and the master, that the RUNTIME owns: the danger
+   *  meter's level lands here as a per-layer gain (palettes.layerMix),
+   *  so a composed piece is a vertical mix - the stem system's idea over
+   *  material the composer wrote. The song's CC7 never touches it and it
+   *  never touches CC7; a new song starts with every mix at 1 unless the
+   *  caller sets otherwise. */
+  _mixGain(channel) {
+    this._mixGains ??= {};
+    let g = this._mixGains[channel];
+    if (!g) {
+      g = this.ctx.createGain();
+      g.gain.value = this._mix?.[channel] ?? 1;
+      g.connect(this._master);
+      this._mixGains[channel] = g;
+    }
+    return g;
+  }
+
+  /** Set the layer mix for several channels at once, ramped. CHANGE-
+   *  GUARDED: a channel whose target moved less than `epsilon` is left
+   *  alone, so a meter that ticks every frame schedules nothing while
+   *  nothing moves (project-final's overlapping-curve freeze, avoided by
+   *  construction). `at` is for offline renders; live calls use now. */
+  setLayerMix(mix, { seconds = 0.3, epsilon = 0.005, at = null } = {}) {
+    this._mix ??= {};
+    const now = at ?? this.ctx?.currentTime ?? 0;
+    for (const [ch, target] of Object.entries(mix)) {
+      const prev = this._mix[ch] ?? 1;
+      if (Math.abs(prev - target) < epsilon && this._mixGains?.[ch]) continue;
+      this._mix[ch] = target;
+      if (!this.ctx) continue;
+      const g = this._mixGain(ch);
+      try {
+        g.gain.cancelScheduledValues(now);
+        g.gain.setValueAtTime(at === null ? g.gain.value : prev, now);
+        g.gain.linearRampToValueAtTime(target, now + Math.max(0.01, seconds));
+      } catch { /* a param already past */ }
+    }
+  }
+
+  /** Every layer back to 1, at once (a new place). */
+  resetLayerMix() {
+    if (!this._mix) return;
+    const all = {}; for (const ch of Object.keys(this._mix)) all[ch] = 1;
+    this.setLayerMix(all, { seconds: 0.05 });
   }
 
   _connect(gain, pan, channel = 0) {

@@ -45,13 +45,48 @@ export const MUSIC_PALETTES = Object.freeze({
     barsPerChord: 2,
     progressions: DARK_PROGRESSIONS,
     layers: Object.freeze({
-      bed:   { channel: 0, program: 89, register: [40, 59], velocity: [66, 78], volume: 96,  pan: 64, seventh: 0.35 },
+      bed:   { channel: 0, program: 89, register: [40, 59], velocity: [66, 78], volume: 96,  pan: 64, seventh: 0.35,
+               mix: { floor: 1, full: 0.75, from: 0.4, to: 0.9 } },                      // darkens a little under danger
       bass:  { channel: 1, program: 33, register: [28, 40], velocity: [86, 100], volume: 118, pan: 64, restBeat4: 0.6, fifthBeat4: 0.25 },
-      motif: { channel: 2, program: 52, register: [60, 79], velocity: [80, 100], volume: 122, pan: 54, cell: [4, 6], leap: 0.3, dotted: 0.35 },
+      motif: { channel: 2, program: 52, register: [60, 79], velocity: [80, 100], volume: 122, pan: 54, cell: [4, 6], leap: 0.3, dotted: 0.35,
+               mix: { floor: 1, full: 0.3, from: 0.3, to: 0.8 } },                       // the motif THINS as danger rises
       color: { channel: 3, program: 14, register: [52, 67], velocity: [74, 90], volume: 104, pan: 74 },
+      /** THE TENSION LAYERS (EM4b): composed for the whole loop and SILENT
+       *  at rest - their mix floor is 0 - they come up with the danger
+       *  level, on the grid they were written on, so they never enter
+       *  off the beat. tension: a low pulse on one and three plus a
+       *  dissonant sustained pair in the strings; drive: an eighth-note
+       *  ostinato on the root and fifth. */
+      tension: { channel: 4, program: 47, register: [36, 48], velocity: [90, 110], volume: 118, pan: 60,
+                 pair: { program: 48, channel: 6, register: [64, 76], velocity: [60, 76], volume: 100, pan: 80 },
+                 mix: { floor: 0, full: 1, from: 0.2, to: 0.7 } },
+      drive:   { channel: 5, program: 39, register: [33, 45], velocity: [92, 112], volume: 116, pan: 44,
+                 mix: { floor: 0, full: 1, from: 0.5, to: 1 } },
     }),
   }),
 });
+
+/** THE MIX LAW (EM4b). A layer with a `mix` record sits at `floor` when
+ *  the danger level is at or below `from`, at `full` at or above `to`,
+ *  and eases (smoothstep) between; a layer without one is always 1.
+ *  Pure: the level in, one gain per channel out - the stem system's
+ *  vertical mix, over material the composer wrote instead of files. */
+export function layerMix(palette, level) {
+  const t = Math.max(0, Math.min(1, level));
+  const out = {};
+  const apply = (layer) => {
+    const m = layer.mix;
+    if (!m) { out[layer.channel] = 1; return; }
+    const u = m.to <= m.from ? (t >= m.to ? 1 : 0) : Math.max(0, Math.min(1, (t - m.from) / (m.to - m.from)));
+    const e = u * u * (3 - 2 * u);
+    out[layer.channel] = m.floor + (m.full - m.floor) * e;
+  };
+  for (const layer of Object.values(palette.layers)) {
+    apply(layer);
+    if (layer.pair) out[layer.pair.channel] = out[layer.channel];   // a paired voice rides its layer's mix
+  }
+  return out;
+}
 
 /** The palette for an environment, or null: no record, classic song. */
 export const paletteFor = (environment) => MUSIC_PALETTES[environment] ?? null;
