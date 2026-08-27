@@ -42,6 +42,14 @@ export const TICK_INTERVAL_MS = 100;
 export const MUSIC_GAIN = 0.22;
 export const musicGain = () => MUSIC_GAIN * getFloat('Controls', 'MusicVolume', 0, 1);
 
+/** THE SETTING ALONE, no synth trim (EM2b). MUSIC_GAIN exists because
+ *  the FM bank's raw oscillators sum hot and the classic songs are
+ *  mixed under it; a MASTERED track - Mac's theme peaks at 0.72 with
+ *  its own headroom - needs no such trim, and under it the menu theme
+ *  played at a ninth of its level. Tracks take the setting straight,
+ *  times their own record's gain. */
+export const trackGain = () => getFloat('Controls', 'MusicVolume', 0, 1);
+
 /** Lead given to a loop's new origin. It must be SMALLER than the
  *  lookahead: the re-pump schedules [now, now + lookahead), so a lead of a
  *  full lookahead makes that window exactly empty and the repeat starts a
@@ -172,6 +180,16 @@ export class SongPlayer {
     this._master = this.ctx.createGain();
     this._master.gain.value = musicGain();
     this._master.connect(this._destination ?? this.ctx.destination);
+  }
+
+  /** EM2b: the MusicVolume setting moved - follow it now, not at the
+   *  next song. A short ramp, so a slider drag is not a zipper. */
+  resyncGain() {
+    if (!this._master) return;
+    const now = this.ctx.currentTime;
+    this._master.gain.cancelScheduledValues(now);
+    this._master.gain.setValueAtTime(this._master.gain.value, now);
+    this._master.gain.linearRampToValueAtTime(musicGain(), now + 0.05);
   }
 
   /** Start a decoded song (hmiFile getSong result). Idempotent per song. */
@@ -488,6 +506,15 @@ export class AudioSongPlayer {
     this._master = this.ctx.createGain();
     this._master.gain.value = musicGain();
     this._master.connect(this._destination ?? this.ctx.destination);
+  }
+
+  /** EM2b: follow the setting now (see SongPlayer.resyncGain). */
+  resyncGain() {
+    if (!this._master) return;
+    const now = this.ctx.currentTime;
+    this._master.gain.cancelScheduledValues(now);
+    this._master.gain.setValueAtTime(this._master.gain.value, now);
+    this._master.gain.linearRampToValueAtTime(musicGain(), now + 0.05);
   }
 
   /** Start a decoded AudioBuffer. Returns false rather than throwing on

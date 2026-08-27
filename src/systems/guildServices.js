@@ -271,6 +271,21 @@ function knightlyCanAccessService(membership, service) {
 }
 
 export function canAccessService(guild, membership, service) {
+  // AUDIT 26 F115: a NON-MEMBER never reaches the subclass switch.
+  // GuildManager.GetGuild (:229-249) hands them guildNotMember - or
+  // templeNotMember at a temple - BEFORE CanAccessService is asked,
+  // and NonMemberGuild.CanAccessService (:52-58) is the BASE switch
+  // with one override: Training answers its canTrain flag, true only
+  // for the temple instance. So a stranger at a knightly seneschal is
+  // refused ReceiveHouse (base default false -> "members only"), not
+  // handed the order's own ReceiveHouse=true and then the rank-9
+  // refusal DFU reserves for members. membershipOf already answers
+  // null for a member of a DIFFERENT order or temple in the same
+  // slot, which is exactly GetGuild's order-matching.
+  if (!isMember(membership)) {
+    if (service === 'Training') return !!guild.divine;
+    return baseCanAccessService(membership, service);
+  }
   if (guild.divine) return templeCanAccessService(guild, membership, service);
   if (guild.order) return knightlyCanAccessService(membership, service);
   switch (guild.name) {
@@ -334,6 +349,23 @@ export function freeTavernRooms(guild, m, { regionIndex = null, orderRegion = nu
 
 /** KnightlyOrder.FreeShipTravel - rank 6. */
 export const freeShipTravel = (guild, m) => !!guild.order && (m?.rank ?? -1) >= 6;
+
+/** GuildManager.AvoidDeath (:396-402) asks every membership; only
+ *  Temple overrides the base false (Temple.cs:450-460), and only
+ *  Stendarr's arm can answer: not submerged, and Random.Range(0,50)
+ *  < rank - rank-in-fifty odds of surviving a killing blow. The
+ *  CONSEQUENCE (health restored to 10% of max instead of the death
+ *  event) is PlayerEntity.SetHealth's (:1205-1211) and lives on the
+ *  port's one damage door, not here. AUDIT 26 F117. */
+export function avoidDeath(memberships, { submerged = false, rolls = Math.random } = {}) {
+  for (const m of Object.values(memberships ?? {})) {
+    if (m.guild !== 'Temple:Stendarr') continue;
+    if (!submerged && Math.floor(rolls() * 50) < (m.rank ?? 0)) return true;
+  }
+  return false;
+}
+/** GetLocalizedText("avoidDeath") - DFU's en table, m_Id 106. */
+export const AVOID_DEATH_TEXT = 'By the mercy of Stendarr, you survive certain death!';
 
 /** FightersGuild.AlterReward - a member's quest reward GROWS with rank. */
 export const alterReward = (guild, m, reward) =>

@@ -183,21 +183,19 @@ export function orderOf(order) {
     nonMemberTitle: 'nonMember',
     femaleTitleRanks: [5],
     // KnightlyOrder.GetPromotionMsgId (:138-148): free rooms at 4, free
-    // ships at 6.
-    //
-    // AUDIT 21 F5. Rank 9 is OwnsHouse-gated:
-    //     return DaggerfallBankManager.OwnsHouse ? PromotionNoHouseId   // 5241
-    //                                            : PromotionHouseId;    // 5240
-    // Banking does not exist yet, so WHICH of the two is FLAGGED to the
-    // banking slice - but the fallback used to be 5237, and 5237 is the
-    // one record DFU picks in NEITHER branch. Rank 9 now takes 5240, the
-    // branch a player who does not already own a house gets, which is the
-    // common case and is wrong strictly less often than 5237 was.
-    //
-    // Preserve when banking lands: DFU's ternary reads INVERTED (OwnsHouse
-    // -> "NoHouse"). That is DFU's own apparent bug and this port is
-    // bug-for-bug, so reproduce it rather than tidy it.
-    promotionByRank: { 4: 5238, 6: 5239, 9: 5240 },
+    // ships at 6, and rank 9 gated on house ownership in the CURRENT
+    // region (DaggerfallBankManager.OwnsHouse, :136). AUDIT 26 F114
+    // wired the gate - banking landed at B2/H1, so the AUDIT 21 F5
+    // fallback of unconditional 5240 expired. DFU's ternary reads
+    // INVERTED (OwnsHouse -> PromotionNoHouseId 5241); that is DFU's
+    // own apparent bug and this port is bug-for-bug, so it is
+    // reproduced rather than tidied. Falling through to null is
+    // GetPromotionMsgId's `return PromotionMsgId` (5237, text.promotion).
+    promotionForRank: (rank, ctx) => (
+      rank === 4 ? 5238
+        : rank === 6 ? 5239
+          : rank === 9 ? (ctx?.ownsHouse?.() ? 5241 : 5240)
+            : null),
   };
 }
 

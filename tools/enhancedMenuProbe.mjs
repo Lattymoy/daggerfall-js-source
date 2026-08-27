@@ -90,6 +90,19 @@ async function run(label, opts) {
   check(`${label}: the title theme is mounted on Mac's file`, theme.mounted && /music\/enhanced\/main-theme\.mp3$/.test(theme.src ?? ''), JSON.stringify(theme));
   check(`${label}: ...and PLAYING, looped, as the service's current`, theme.playing && theme.loop && theme.current === 'title' && theme.currentTime > 0, `t=${theme.currentTime?.toFixed?.(2)} ctx=${theme.ctx}`);
   check(`${label}: ...with signal on its bus`, theme.level > 0.001, `peak ${theme.level?.toFixed?.(4)}`);
+  // 2c. EM2b: THE SLIDER IS HEARD. Write MusicVolume through the same
+  //     setValue the settings pane uses and read the track's gain node:
+  //     it follows at once, and at the setting itself - no synth trim.
+  const levels = await page.evaluate(async () => {
+    const { music } = await import('/src/systems/music.js');
+    const { setValue } = await import('/src/systems/settings.js');
+    const g = music._track.master.gain;
+    const read = async (v) => { setValue('Controls', 'MusicVolume', v); await new Promise((r) => setTimeout(r, 120)); return +g.value.toFixed(3); };
+    return { half: await read(0.5), full: await read(1), quiet: await read(0.1) };
+  });
+  check(`${label}: MusicVolume moves the theme's gain live and untrimmed`,
+    levels.full > 0.95 && Math.abs(levels.half - 0.5) < 0.05 && Math.abs(levels.quiet - 0.1) < 0.05, JSON.stringify(levels));
+  await page.evaluate(async () => { const { setValue } = await import('/src/systems/settings.js'); setValue('Controls', 'MusicVolume', 0.5); });
 
   // 3. THE PICK APPEARS WHEN A GAME STARTS, and not one moment before.
   await page.locator('#enhanced-menu .railbtn', { hasText: 'New Game' }).click();

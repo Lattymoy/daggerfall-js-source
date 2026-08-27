@@ -58,7 +58,7 @@ import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/
 import { calculateCastCost } from '../systems/spellcost.js';   // M2
 import { SOUND, swingSoundFor } from '../systems/soundClips.js';   // AUDIT 23: the bow loose + no-enemy swing sounds
 import { fetchBytes, applyMotorEffectFlags, applyFallLanding, ridePlatform } from './shared.js';
-import { setDeathPresenter, hurtPlayer } from '../characters/playerEntity.js';   // AUDIT 21 hosts F6; AUDIT 23 C5 fatal collapse
+import { setDeathPresenter, setAvoidDeathHook, hurtPlayer } from '../characters/playerEntity.js';   // AUDIT 21 hosts F6; AUDIT 23 C5 fatal collapse
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying in a building
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the HUD vanished inside buildings
 import { largeHudOptions, routeLargeHudClick } from '../ui/hudLarge.js';   // U45: the classic bottom bar and its eleven panels
@@ -85,7 +85,7 @@ import {
   receiveHouseDecision, claimHouse, ALREADY_GIVEN_HOUSE,   // H1
 } from '../systems/knightlyGifts.js';   // G6
 import { mintCondition } from '../systems/itemTemplates.js';   // G6: the gift's pieces mint like any other item
-import { npcServiceKind, freeHealing, freeMagickaRecharge } from '../systems/guildServices.js';
+import { npcServiceKind, freeHealing, freeMagickaRecharge, avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';
 import { createGuildForGroup, ORDERS } from '../systems/guildVariants.js';
 import { membershipOf, joinGuild, joinDecision, activeMemberships } from '../systems/guilds.js';   // V2e: GuildManager.Memberships, the per-read vampire book pick
 import { ensureFactionRep } from '../systems/factionRep.js';
@@ -1585,6 +1585,8 @@ export function createWorldModes(host) {
         freeHealing: freeHealing(guild, membershipOf(memberships, guild)),
         freeMagickaRecharge: freeMagickaRecharge(guild, membershipOf(memberships, guild), playerEntity),
         revealLocation: host.revealLocation ?? null,   // G8: the TG/DB map reveals
+        // F114: OwnsHouse per CURRENT region (DaggerfallBankManager.cs:136).
+        ownsHouse: () => ownsHouse(playerEntity.houses ?? [], interiorBuilding?.regionIndex ?? 0),
       }),
       onJoin: () => {
         // JoinButton_OnMouseClick (:497-525). joinDecision is null for
@@ -2047,6 +2049,8 @@ export function createWorldModes(host) {
       flow = buildCureDiseaseFlow(playerEntity, guild, membership, {
         rows, now, onClose: () => closeSelf(), godName,
         quality: b?.quality ?? 0, regionIndex: b?.regionIndex ?? 0,
+        // F113: CalculateCost applies the regional adjustment itself.
+        priceAdjustment: regionPriceAdjustment(playerEntity, b?.regionIndex ?? 0),
       });
     } else if (destination === 'questOffer' && questBridge && store) {
       // Q4-v: the guild Quests service - the Q4-ii offer flow through
@@ -2942,6 +2946,15 @@ export function createWorldModes(host) {
       setDeathPresenter(() => {
         if (mode === 'exterior' && prevDeathPresenter) return prevDeathPresenter();
         presentInteriorDeath();
+      });
+      // F117: take the avoid-death consult back from the dungeon too -
+      // its hook closed over the dungeon's submersion marker. Above
+      // ground there is no submersion model, so this is the plain
+      // Stendarr consult, same as the boot host's.
+      setAvoidDeathHook(() => {
+        if (!avoidDeath(activeMemberships(playerEntity))) return false;
+        say(AVOID_DEATH_TEXT);
+        return true;
       });
       // AUDIT 18: interior mode had NO fall-damage seam at all, behind
       // a flag that claimed single-storey shells could never fall far

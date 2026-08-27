@@ -199,13 +199,16 @@ export function cureAllAttributes(entity) {
  *  argument list (the magicka one needs the entity's career). */
 export function onPushEffects(entity, guild, memberships, store, now, {
   freeHealing = false, freeMagickaRecharge = false, revealLocation = null,
+  ownsHouse = null,
 } = {}) {
   const steps = [];
   // Check guild advancement. UpdateRank returns tokens only when the
   // rank actually MOVED; the port's returns the outcome + new rank.
   // G8: revealLocation is the host's DiscoverRandomLocation seam -
   // the TG rank-6/8 map gates and the DB every-promotion reveal.
-  const moved = updateRank(memberships, guild, entity, store, now, { revealLocation });
+  // F114: ownsHouse is the host's DaggerfallBankManager.OwnsHouse
+  // read (current region), for the knightly rank-9 promotion text.
+  const moved = updateRank(memberships, guild, entity, store, now, { revealLocation, ownsHouse });
   if (moved) steps.push({ textId: moved.textId, clickAnywhere: true, rankChange: moved });
   if (freeHealing) {
     if ((entity.health ?? 0) < (entity.maxHealth ?? 0)) {
