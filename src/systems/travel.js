@@ -56,27 +56,68 @@ export function walkTravelPath(start, end) {
  *  ({x, y}); getClimateIndex(x, y) answers CLIMATE.PAK (the
  *  MapsFile method). Returns { minutes, oceanPixels } - the ocean
  *  count feeds the trip cost exactly as the C# field did. */
+/**
+ * The per-pixel charge, lifted VERBATIM out of CalculateTravelTime's
+ * loop body so the router that draws a route and the law that prices
+ * it are the same arithmetic. Extracted, not rewritten: with roadKind
+ * ROAD_NONE this returns exactly what the inline expression returned,
+ * and every existing pin on calculateTravelTime holds.
+ *
+ * THE ROAD TERM IS THE ONLY DEPARTURE (enhanced-only, Ledger A). It
+ * lands after the terrain branch and before the sleep term - a road
+ * changes how fast you cross ground, while the sleep term is about
+ * resting - and it never touches OCEAN, because there are no sea
+ * roads. Kept in the law's own >>8 idiom so the result stays an
+ * integer the way every other term here does.
+ */
+export function travelPixelMinutes(terrain, transportModifier, {
+  travelShip = false, sleepModeInn = false, roadKind = 0, roadSpeed = null,
+} = {}) {
+  let thisMove;
+  if (terrain === CLIMATES.Ocean) {
+    thisMove = travelShip ? 51 : 255;
+  } else {
+    const idx = CLIMATE_INDICES[terrain - CLIMATES.Ocean];
+    thisMove = (((102 * transportModifier) >> 8)
+      * (256 - TERRAIN_MOVEMENT_MODIFIERS[idx] + 256)) >> 8;
+    if (roadKind && roadSpeed) thisMove = (thisMove * roadSpeed[roadKind]) >> 8;
+  }
+  if (!sleepModeInn) thisMove = (300 * thisMove) >> 8;
+  return thisMove;
+}
+
+/** CalculateTravelTime (:64-157). start/end are map pixels
+ *  ({x, y}); getClimateIndex(x, y) answers CLIMATE.PAK (the
+ *  MapsFile method). Returns { minutes, oceanPixels } - the ocean
+ *  count feeds the trip cost exactly as the C# field did.
+ *
+ *  TWO OPTIONAL DEPS, both defaulting to classic EXACTLY (enhanced
+ *  only, Ledger A):
+ *
+ *    path    - walk these pixels instead of walkTravelPath's. The law
+ *              charges a LIST of pixels; which list it is was never
+ *              part of it. Null means the classic longest-axis walk,
+ *              and then this function is byte-identical to the port.
+ *    roadAt  - (x, y) => road class at that pixel. Null means no
+ *              roads exist, which is what classic believes.
+ *
+ *  Everything enhanced therefore lives OUTSIDE this module: it does
+ *  not know what a road network is, only that a pixel may carry a
+ *  class and that a class may be worth a discount. */
 export function calculateTravelTime(start, end, {
   speedCautious = false, sleepModeInn = false, travelShip = false,
   hasHorse = false, hasCart = false,
+  path = null, roadAt = null, roadSpeed = null,
 } = {}, getClimateIndex) {
   const transportModifier = hasHorse ? 128 : hasCart ? 192 : 256;
 
   let minutes = 0, oceanPixels = 0;
-  for (const { x, y } of walkTravelPath(start, end)) {
-    let thisMove;
+  for (const { x, y } of path ?? walkTravelPath(start, end)) {
     const terrain = getClimateIndex(x, y);
-    if (terrain === CLIMATES.Ocean) {
-      ++oceanPixels;
-      thisMove = travelShip ? 51 : 255;
-    } else {
-      const idx = CLIMATE_INDICES[terrain - CLIMATES.Ocean];
-      thisMove = (((102 * transportModifier) >> 8)
-        * (256 - TERRAIN_MOVEMENT_MODIFIERS[idx] + 256)) >> 8;
-    }
-
-    if (!sleepModeInn) thisMove = (300 * thisMove) >> 8;
-    minutes += thisMove;
+    if (terrain === CLIMATES.Ocean) ++oceanPixels;
+    minutes += travelPixelMinutes(terrain, transportModifier, {
+      travelShip, sleepModeInn, roadKind: roadAt ? roadAt(x, y) : 0, roadSpeed,
+    });
   }
 
   if (!speedCautious) minutes = minutes >> 1;
