@@ -298,32 +298,10 @@ export function setValue(section, key, value) {
   if (def !== undefined && str === String(def)) {
     // back to the default: drop the override rather than pinning today's value
     if (_values[section]) { delete _values[section][key]; if (!Object.keys(_values[section]).length) delete _values[section]; }
-    _publish(section, key, str);
     return;
   }
   _values[section] ??= {};
   _values[section][key] = str;
-  _publish(section, key, str);
-}
-
-// ---- THE CHANGE, PUBLISHED (EM2b, 2026-08-27) ----
-// LIVE was a tier the registry could name but a consumer could only
-// honour by re-reading on its next natural occasion - the next song, the
-// next boot. Mac, on the menu: the theme "needs to work with the
-// settings option", and a theme that loops for the whole session has no
-// next occasion. So a write is PUBLISHED, once, to whoever asked: the
-// music service re-levels its players, and any other LIVE consumer can
-// take the same door instead of polling. The callback gets the section,
-// the key, and the string as stored (the default's string when the
-// override was dropped). Never throws into the caller: a listener that
-// throws is warned and skipped, because a bad listener must not make a
-// settings write fail.
-const _listeners = new Set();
-export function onSettingChange(fn) { _listeners.add(fn); return () => _listeners.delete(fn); }
-function _publish(section, key, str) {
-  for (const fn of _listeners) {
-    try { fn(section, key, str); } catch (e) { console.warn('[settings] listener failed:', e?.message ?? e); }
-  }
 }
 
 /** Every value the store would report, defaults merged with overrides
