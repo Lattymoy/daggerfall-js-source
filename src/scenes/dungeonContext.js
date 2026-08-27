@@ -14,7 +14,7 @@ import { layoutDungeon } from '../world/dungeonLayout.js';
 import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, automapRevealTick, automapEntranceTick, automapDungeonKey, SCAN_INTERVAL_S } from '../systems/automap.js';   // A1
 import { AutomapWindow } from '../ui/automapWindow.js';   // A1: the M window
 import { applyTextureTable } from '../world/dungeonTextures.js';
-import { collectDungeonLights } from '../world/dungeonLights.js';
+import { collectDungeonLights, dungeonAmbientFor, DUNGEON_AMBIENT, SPECIAL_AREA_BLOCK } from '../world/dungeonLights.js';   // AUDIT 26 F183: the castle / special-area ambients
 import { CityLightAnimator, MINUTES_PER_DAY } from '../world/worldClock.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { MobileUnit } from '../characters/mobileUnit.js';   // C11: classic sprite monsters
@@ -1737,6 +1737,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     armFlatAnim(m.batch, t, archive, 0, flatAnims, uploadRecordFrame, { fps: MISSILE_FPS });
     billboardBatches.push(m.batch);
   }
+  /** AUDIT 26 F033 - DaggerfallMissile.DoCollision's impact flash
+   *  (:364-370). Element None (an arrow) and ByTouch both skip it, so
+   *  the gate lives here rather than at the three call sites. */
+  function showImpactFlash(m, pos) {
+    if (!m.spell || m.spell.element == null || m.spell.rangeType === 1) return;   // rangeType 1 = TargetTypes.ByTouch
+    hitEffects?.showImpactFlash(missileArchive(m.spell.element), pos);
+  }
   function retireMissile(m) {
     if (m.draw && m.draw.object) {
       const di = dynamicDraws.indexOf(m.draw);
@@ -1784,11 +1791,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // AUDIT 23 (magic-2) - DaggerfallMissile.cs:399-402 DoCollision:
         // an AreaAtRange payload explodes AT THE IMPACT POINT whatever
         // was struck; the port retired wall hits with no payload.
+        const impact = [m.pos[0] + m.dir[0] * hitWall, m.pos[1] + m.dir[1] * hitWall, m.pos[2] + m.dir[2] * hitWall];
         if (m.spell?.rangeType === 4) {
-          const impact = [m.pos[0] + m.dir[0] * hitWall, m.pos[1] + m.dir[1] * hitWall, m.pos[2] + m.dir[2] * hitWall];
           const wCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
           magic.explodeAt(impact, m.spell, m.casterLevel ?? playerEntity.level, playerFeet, wCaster);
         }
+        // AUDIT 26 F033: DoCollision swaps the billboard to record 1 of
+        // the missile's own element archive, one-shot at 15fps
+        // (:364-370) - gated on `elementType != None && targetType !=
+        // ByTouch`, so arrows never flash and neither does a touch cast.
+        // DFU flashes on ANY wall hit, so `impact` is hoisted out of
+        // the AoE branch above rather than computed inside it.
+        showImpactFlash(m, impact);
         retireMissile(m);
         continue;
       }
@@ -1931,6 +1945,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           const fCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
           if (m.spell.rangeType === 4) magic.explodeAt(m.pos, m.spell, m.casterLevel ?? playerEntity.level, playerFeet, fCaster);
           else applySpell(m.spell, m.casterLevel ?? playerEntity.level, af.entity, foeSinks(af), Math.random, fCaster);
+          showImpactFlash(m, [m.pos[0], m.pos[1], m.pos[2]]);   // F033
           retireMissile(m);
         }
         continue;
@@ -1943,6 +1958,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         const mCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
         if (m.spell.rangeType === 4) magic.explodeAt(m.pos, m.spell, m.casterLevel ?? playerEntity.level, playerFeet, mCaster);
         else magic.applySpellToPlayer(m.spell, m.casterLevel ?? playerEntity.level, mCaster);
+        showImpactFlash(m, [m.pos[0], m.pos[1], m.pos[2]]);   // F033
         retireMissile(m);
       }
     }
@@ -2340,6 +2356,27 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       }
     }
     return false;
+  }
+  /** AUDIT 26 F183: the castle block's sibling. SpecialAreaCheck
+   *  (PlayerEnterExit.cs:1221-1238) switches on the block NAME and has
+   *  exactly one case - S0000161.RDB, the Daggerfall treasure room.
+   *  Same block lookup, same question. */
+  function specialAreaBlockAt(x, z) {
+    for (const b of dungeon.blocks) {
+      if (x >= b.originX && x < b.originX + RDB_SIDE && z >= b.originZ && z < b.originZ + RDB_SIDE) {
+        return b.name === SPECIAL_AREA_BLOCK;
+      }
+    }
+    return false;
+  }
+  /** The ambient the player's CURRENT block takes
+   *  (PlayerAmbientLight.cs:82-90), castle before special area. */
+  function ambientAt(feet) {
+    if (!feet) return DUNGEON_AMBIENT;
+    return dungeonAmbientFor({
+      inCastle: castleBlockAt(feet[0], feet[2]),
+      inSpecialArea: specialAreaBlockAt(feet[0], feet[2]),
+    });
   }
   // P12/P18: breath/drowning (PlayerEntity.FixedUpdate on the classic
   // update cadence). Submerged = the controller CENTER (feet + 0.9)
@@ -2900,6 +2937,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  block the player is standing in - the Castle playlist and
      *  doNotPlayInCastle both had it hardcoded false. */
     get inCastle() { return lastPlayerFeet ? castleBlockAt(lastPlayerFeet[0], lastPlayerFeet[2]) : false; },
+    /** F183: the ambient this block takes - the host applies it. */
+    get ambient() { return ambientAt(lastPlayerFeet); },
+    get inSpecialArea() { return lastPlayerFeet ? specialAreaBlockAt(lastPlayerFeet[0], lastPlayerFeet[2]) : false; },
     musicSeed: dungeonKey(
       (dfLocation?.dungeon?.recordElement?.header?.unknown2 ?? 0) & 0xffff,
       dfLocation?.regionIndex ?? 0),

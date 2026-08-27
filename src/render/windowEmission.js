@@ -10,6 +10,14 @@ export const WINDOW_STYLES = Object.freeze({
   night: { color: [255, 182, 56], intensity: 0.8 },
   fog: { color: [117, 117, 117], intensity: 0.5 },
   custom: { color: [200, 0, 200], intensity: 1.0 },
+  // AUDIT 26 F001: WindowStyle.Disabled is Color.black OUTRIGHT
+  // (MaterialReader.cs:933-935) - not a colour times an intensity, so
+  // the zeros here are the literal law rather than a dimming. Every
+  // interior mesh is laid out with it (DaggerfallInterior.cs:473 for
+  // individual models, :517 for the combined batch, :1270 for action
+  // doors), which is why an interior's glass is unlit in DFU and in
+  // classic while the port's day/night glow followed the player in.
+  disabled: { color: [0, 0, 0], intensity: 0 },
 });
 
 /** Style name -> normalized RGB emission (color/255 * intensity). */

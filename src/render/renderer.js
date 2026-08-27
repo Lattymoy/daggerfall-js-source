@@ -748,6 +748,13 @@ export class Renderer {
     const cs = this._charSpriteRT();
     gl.bindFramebuffer(gl.FRAMEBUFFER, cs.fbo);
     gl.viewport(0, 0, CHAR_SPRITE_RT_SIZE, CHAR_SPRITE_RT_SIZE);
+    // AUDIT 26 F034: BORROWED and returned. The clear colour is global
+    // GL state, and beginFrame (:1104) clears without setting one - so
+    // leaving this transparent black behind repainted EVERY later
+    // frame's uncovered pixels, visible before the sky panorama loads
+    // and in skyless scenes. Same save/restore the automap preview
+    // has used since its own pass (worldModes.js:1463/:1476).
+    const prevClear = gl.getParameter(gl.COLOR_CLEAR_VALUE);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.viewport(0, 0, pw, ph);
@@ -757,6 +764,7 @@ export class Renderer {
     this._proj = sp; this._view = sv;
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    gl.clearColor(prevClear[0], prevClear[1], prevClear[2], prevClear[3]);
     return cs.tex;
   }
 

@@ -38,13 +38,15 @@
 // and dungeonContext.js:1107). When friendly fire lands, its splash is
 // `showBloodSplash(targetBloodIndex, bloodCentre(...))`.
 
-import { FlatAnim, isAnimatedFlat } from '../render/flatAnimation.js';
+import { FlatAnim, isAnimatedFlat, IMPACT_FPS } from '../render/flatAnimation.js';   // AUDIT 26 F033: ImpactBillboardFramesPerSecond
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 
 /** EnemyBlood.cs:23. */
 export const BLOOD_ARCHIVE = 380;
 /** :37 - pinned to ten, not the general five. */
 export const BLOOD_FPS = 10;
+/** F033: UseSpellBillboardAnims(1, true) - record 1, one-shot. */
+export const IMPACT_RECORD = 1;
 /** :35 - `+ transform.forward * 0.02f`. */
 export const FORWARD_NUDGE = 0.02;
 
@@ -89,7 +91,7 @@ export function createHitEffects({ renderer, getTexture, uploadRecordFrame, onSp
   // list per frame and use batches() instead. One pool either way.
   const live = [];   // { batch, anim }
 
-  function spawn(record, pos, facing = null) {
+  function spawn(record, pos, facing = null, { archive = BLOOD_ARCHIVE, fps = BLOOD_FPS } = {}) {
     if (!(record >= 0) || !pos) return null;
     const at = [pos[0], pos[1], pos[2]];
     if (facing) {
@@ -100,17 +102,20 @@ export function createHitEffects({ renderer, getTexture, uploadRecordFrame, onSp
     // record/size/pos live on the ENTRY, not the batch: a recenter has
     // to REBUILD the batch (centres are baked into a STATIC_DRAW
     // buffer) and cannot read them back out of the one it destroys.
-    const entry = { batch: null, anim: null, dead: false, record, pos: at, size: null };
+    // AUDIT 26 F033: `archive` and `fps` ride on the ENTRY for the same
+    // reason record/size/pos do - a recenter REBUILDS the batch and
+    // cannot read them back out of the one it destroys.
+    const entry = { batch: null, anim: null, dead: false, record, pos: at, size: null, archive, fps };
     live.push(entry);
-    getTexture(BLOOD_ARCHIVE).then((t) => {
+    getTexture(archive).then((t) => {
       // the pool can be cleared while the archive warms (a scene torn
       // down, a pixel evicted) - the corpse mint's lesson, same shape
       if (entry.dead || !t) return;
       if (t.recordCount != null && record >= t.recordCount) { retire(entry); return; }
       const frameCount = t.getFrameCount?.(record) ?? 1;
-      for (let f = 0; f < frameCount; f++) uploadRecordFrame(BLOOD_ARCHIVE, record, f);
+      for (let f = 0; f < frameCount; f++) uploadRecordFrame(archive, record, f);
       entry.size = scaledBillboardSize(t.getSize(record), t.getScale(record));
-      entry.batch = renderer.createBillboardBatch(BLOOD_ARCHIVE, record, entry.size, [entry.pos]);
+      entry.batch = renderer.createBillboardBatch(archive, record, entry.size, [entry.pos]);
       entry.batch.frame = 0;
       onSpawn?.(entry.batch);
       // A single-frame record has no wrap to end on, so it would hang
@@ -119,7 +124,7 @@ export function createHitEffects({ renderer, getTexture, uploadRecordFrame, onSp
       // out immediately - so a still splash is retired on the next
       // tick rather than kept.
       entry.anim = isAnimatedFlat(frameCount)
-        ? new FlatAnim(BLOOD_ARCHIVE, frameCount, true, BLOOD_FPS)
+        ? new FlatAnim(archive, frameCount, true, fps)
         : null;
     }).catch(() => {});
     return entry;
@@ -142,6 +147,22 @@ export function createHitEffects({ renderer, getTexture, uploadRecordFrame, onSp
     showBloodSplash: (bloodIndex, pos, facing = null) => spawn(bloodIndex ?? 0, pos, facing),
     /** ShowMagicSparkles (:41-54), record 3. */
     showMagicSparkles: (pos, facing = null) => spawn(SPARKLES_RECORD, pos, facing),
+    /** AUDIT 26 F033 - DaggerfallMissile.DoCollision (:364-370):
+     *
+     *    if (elementType != ElementTypes.None && targetType != ByTouch)
+     *    {
+     *        UseSpellBillboardAnims(1, true);
+     *        myBillboard.FramesPerSecond = ImpactBillboardFramesPerSecond;
+     *    }
+     *
+     *  Record 1 of the missile's OWN element archive (:601
+     *  GetMissileTextureArchive), one-shot, at IMPACT_FPS. `facing` is
+     *  deliberately null: DFU parents the flash to the missile at
+     *  `localPosition = Vector3.zero` (:602), so there is no nudge.
+     *  The flash ENDS on FlatAnim.done, which is DFU's OneShot
+     *  self-destruct - not the missile's 0.6s lifetime, which governs
+     *  the parent rather than the billboard. */
+    showImpactFlash: (archive, pos) => spawn(IMPACT_RECORD, pos, null, { archive, fps: IMPACT_FPS }),
     tick(dt) {
       for (let i = live.length - 1; i >= 0; i--) {
         const e = live[i];
@@ -165,7 +186,7 @@ export function createHitEffects({ renderer, getTexture, uploadRecordFrame, onSp
         if (!e.batch) continue;
         onRetire?.(e.batch);
         renderer.destroyBillboardBatch(e.batch);
-        e.batch = renderer.createBillboardBatch(BLOOD_ARCHIVE, e.record, e.size, [e.pos]);
+        e.batch = renderer.createBillboardBatch(e.archive, e.record, e.size, [e.pos]);
         e.batch.frame = e.anim?.frame ?? 0;
         onSpawn?.(e.batch);
       }
