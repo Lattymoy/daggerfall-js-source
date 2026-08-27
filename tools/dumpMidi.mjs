@@ -78,7 +78,7 @@ function eventBytes(e) {
 }
 
 function toSmf(hmi) {
-  const division = hmi.ticksPerQuarterNote || 480;
+  const division = hmi.ticksPerQuarterNote;   // the HMI clock (60), never the header's 480
   const bpm = hmi.beatsPerMinute || 120;
   const usPerQuarter = Math.round(60000000 / bpm);
 

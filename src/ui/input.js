@@ -93,8 +93,30 @@ export function routeKey(e, ctx, setPlayerPos = null) {
   // Diagnostics, not a DFU action: DFU's F8 is PrintScreen, which has
   // no consumer here yet, and the debug HUD is the port's own.
   if (e.code === 'F8') { ctx.toggleDebugHud?.(); return true; }
-  return routeAction(actionOf(e), ctx, setPlayerPos);
+  const act = actionOf(e);
+  if (POLLED_ACTIONS.has(act)) return false;
+  return routeAction(act, ctx, setPlayerPos);
 }
+
+/**
+ * THE ACTIONS THE FRAME OWNS. WeaponManager.Update reads ReadyWeapon
+ * itself, per frame, on ActionStarted's edge (WeaponManager.cs:284) -
+ * it is NOT in GameManager's key dispatch chain (:509-557), and every
+ * host here polls it the same way (`held(keys, 'ReadyWeapon')` with an
+ * edge latch). When U45 gave routeAction a ReadyWeapon arm so the
+ * large HUD's sheath panel could reach the same door, the KEYBOARD
+ * started reaching it too, through routeKey, in every host whose ctx
+ * carries toggleSheath: the two dungeon contexts. There a Z press
+ * toggled on keydown AND on the frame's edge - twice, net nothing -
+ * and the player could not draw or sheathe a weapon in a dungeon.
+ * Above ground and indoors the ctx had no toggleSheath, so one path
+ * fired and it worked, which is why it read as "dungeons only".
+ *
+ * So the keyboard dispatch declines these; the frame's poll is their
+ * one door for a key, and routeAction keeps the arm for the panel,
+ * which has no poll.
+ */
+export const POLLED_ACTIONS = new Set(['ReadyWeapon']);
 
 /**
  * THE ACTION LADDER ALONE, without the key event. U45 pulled it out

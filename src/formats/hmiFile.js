@@ -28,7 +28,8 @@
 //
 // SONG (HMI-MIDISONG061595)
 //   0x000  18   signature "HMI-MIDISONG061595"
-//   0x0D2  u16  ticks per quarter note      (480 in every retail song)
+//   0x0D2  u16  header resolution            (480 in every retail song - NOT
+//               the time base; see THE CLOCK below)
 //   0x0D4  u16  beats per minute            (120 in every retail song)
 //   0x0D6  u32  = trackTableOffset + 8*trackCount (end of the second table)
 //   0x0E4  u32  track count                 (1..41 across the archive)
@@ -66,6 +67,21 @@
 //   Meta events are 0xFF <type> <VLQ len> <data>; the only type in the archive
 //   is 0x2F (end of track). There is NO tempo meta - tempo lives in the song
 //   header, so a song has exactly one tempo for its whole length.
+//
+// THE CLOCK (2026-08-27, Mac: "music continuously loops with short tracks")
+//   This reader first took the u16 at 0x0D2 (480) for ticks-per-quarter and
+//   the u16 at 0x0D4 (120) for BPM, giving 1/960 s per tick - and every song
+//   played EIGHT TIMES too fast: DUNGEON.HMI in 28 seconds, D1 in 28, then
+//   looped. The HMI driver's tick is 1/BPM of a second - SIXTY ticks per
+//   quarter at the header's BPM - and the 480 is the header's resolution
+//   field, not the sequencer's rate. Two independent readers agree:
+//   WildMIDI's f_hmi.c (bpm from byte 212, division fixed at 60) and
+//   foo_midi's midi_processor_hmi.cpp (192 ppqn at 1,605,632 us, the same
+//   8.36 ms/tick), and DFU's own shipped conversions were made with the
+//   latter: dungeon.mid is 223 s at 192 ppqn / 1,605,566 us, i.e. this
+//   archive's 26,675 ticks at 8.36 ms each - not 28 s. So secondsPerTick is
+//   1/BPM, the header resolution is kept as the field it is, and the
+//   corpus pins that said 28.048 s now say 224.383 s.
 //   Only 0x9n, 0xBn, 0xCn and 0xEn channel events occur; no sysex, no aftertouch.
 //
 // Anything outside this vocabulary throws. A reader that decodes most of an
@@ -121,8 +137,15 @@ export const SONG_SIGNATURE = 'HMI-MIDISONG061595';
 export const TRACK_SIGNATURE = 'HMI-MIDITRACK';
 
 // Song header field offsets.
-const SONG_DIVISION = 0xd2;
+const SONG_RESOLUTION = 0xd2;
 const SONG_TEMPO_BPM = 0xd4;
+
+/** THE CLOCK: the HMI sequencer's ticks per quarter note at the header's
+ *  BPM - sixty, so one tick is 1/BPM of a second (WildMIDI f_hmi.c:92;
+ *  foo_midi's 192 ppqn at 1,605,632 us is the same 8.36 ms/tick). The
+ *  header's own resolution field (0x0D2, 480 throughout the archive) is
+ *  NOT this number - reading it as the time base ran every song 8x fast. */
+export const HMI_TICKS_PER_QUARTER = 60;
 const SONG_TRACK_COUNT = 0xe4;
 const SONG_TRACK_TABLE = 0xe8;
 const SONG_TRAILER_SIZE = 16;
@@ -160,15 +183,15 @@ function readCString(bytes, offset, maxLength) {
 /**
  * One HMI song: header, tracks, and a merged event stream.
  *
- * All ticks are in units of ticksPerQuarterNote. The stream is the whole song -
- * a synth needs nothing from this class but `events`, `secondsPerTick` and the
- * channel of each event.
+ * All ticks are the HMI clock's: HMI_TICKS_PER_QUARTER (60) per quarter note
+ * at the header's BPM. The stream is the whole song - a synth needs nothing
+ * from this class but `events`, `secondsPerTick` and the channel of each event.
  */
 export class HmiFile {
   constructor() {
     this.name = '';
     this.signature = '';
-    this.ticksPerQuarterNote = 0;
+    this.headerResolution = 0;   // the 0x0D2 field, 480 in every retail song; not the time base
     this.beatsPerMinute = 0;
     this.trackCount = 0;
     this.tracks = [];
@@ -194,12 +217,12 @@ export class HmiFile {
 
     this._bytes = bytes;
     const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-    this.ticksPerQuarterNote = view.getUint16(SONG_DIVISION, true);
+    this.headerResolution = view.getUint16(SONG_RESOLUTION, true);
     this.beatsPerMinute = view.getUint16(SONG_TEMPO_BPM, true);
     this.trackCount = view.getUint32(SONG_TRACK_COUNT, true);
     const tableOffset = view.getUint32(SONG_TRACK_TABLE, true);
 
-    if (this.ticksPerQuarterNote <= 0) this._fail('bad ticks per quarter note');
+    if (this.headerResolution <= 0) this._fail('bad header resolution');
     if (this.beatsPerMinute <= 0) this._fail('bad tempo');
     if (this.trackCount <= 0) this._fail('no tracks');
     if (tableOffset + 4 * this.trackCount > bytes.length) this._fail('track table out of range');
@@ -233,9 +256,15 @@ export class HmiFile {
     return true;
   }
 
-  /** Seconds per tick at the song's single tempo. */
+  /** The HMI clock: ticks per quarter note, for consumers that want a
+   *  standard-MIDI division to pair with microsecondsPerQuarterNote. */
+  get ticksPerQuarterNote() {
+    return HMI_TICKS_PER_QUARTER;
+  }
+
+  /** Seconds per tick at the song's single tempo: 1/BPM (THE CLOCK above). */
   get secondsPerTick() {
-    return 60 / (this.beatsPerMinute * this.ticksPerQuarterNote);
+    return 60 / (this.beatsPerMinute * HMI_TICKS_PER_QUARTER);
   }
 
   /** Standard-MIDI microseconds per quarter note, for exporting/consumers. */
