@@ -115,7 +115,12 @@ test('AUDIT 23 guilds-1: the four subclass service switches replace the base ent
   assert.equal(canAccessService(GUILDS.ThievesGuild, at(2), 'SellMagicItems'), true);
   assert.equal(canAccessService(GUILDS.ThievesGuild, at(3), 'Spymaster'), false);
   assert.equal(canAccessService(GUILDS.ThievesGuild, at(4), 'Spymaster'), true);
-  assert.equal(canAccessService(GUILDS.ThievesGuild, null, 'Identify'), false, 'no Identify arm in the override');
+  // AUDIT 26 F115 re-pinned this on a MEMBER: "the override replaces
+  // the base" is a statement about members. A NON-member never reaches
+  // the subclass switch at all - GuildManager.GetGuild hands them
+  // NonMemberGuild, whose base switch answers Identify TRUE.
+  assert.equal(canAccessService(GUILDS.ThievesGuild, at(9), 'Identify'), false, 'no Identify arm in the override');
+  assert.equal(canAccessService(GUILDS.ThievesGuild, null, 'Identify'), true, 'a stranger gets the base switch');
   assert.equal(canAccessService(GUILDS.DarkBrotherhood, at(1), 'BuyPotions'), true);
   assert.equal(canAccessService(GUILDS.DarkBrotherhood, at(7), 'Spymaster'), true);
   // the base still serves the guilds with no override

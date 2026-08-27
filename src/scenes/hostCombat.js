@@ -9,6 +9,7 @@
 // (MIT, Daggerfall Workshop).
 
 import { SKILLS, tallySkill, skillValue, SKILL_NAMES } from '../systems/skills.js';
+import { vampireAttackVoice } from '../systems/vampirism.js';   // V5: GetCustomRaceGenderAttackSoundData
 import { ENEMY_GROUPS, dice100 } from '../combat/formulas.js';
 import { combatVoicesEnabled, ATTACK_VOICE_CHANCE, PAIN_VOICE_CHANCE, combatVoice, playerVoice, rollVoiceRace, isHeavyDamage } from '../combat/combatVoices.js';   // C2-slice; playerVoice AUDIT 24 (wave 46)
 import { RACES } from '../systems/races.js';   // C2-slice: the player grunt's race
@@ -206,11 +207,16 @@ export function enemyPainVoice(f, damage, rolls = Math.random) {
 }
 
 /** The PLAYER's 20% attack grunt at the hit frame - never for a bow
- *  (WeaponManager.cs:385-389; the racial-override suppression rides
- *  the vampirism arc). Returns { clip, pitchLift } or null. */
+ *  (WeaponManager.cs:385-389). V5: the racial override's clip rides
+ *  GetRaceGenderAttackSound's own order (DaggerfallEntity.cs:979-988)
+ *  - the 20% FIRE chance stays here, the OVERRIDE picks the clip, so
+ *  a vampire grunts as a vampire, by gender. Returns
+ *  { clip, pitchLift } or null. */
 export function playerAttackGrunt(playerEntity, isBow, rolls = Math.random) {
   if (!combatVoicesEnabled() || isBow) return null;
   if (!dice100(ATTACK_VOICE_CHANCE, rolls())) return null;
+  const vamp = vampireAttackVoice(playerEntity, rolls);
+  if (vamp != null) return { clip: vamp, pitchLift: 0 };
   // AUDIT 24 (wave 46): playerVoice, not combatVoice. FPSWeapon
   // .PlayAttackVoice:315 calls GetRaceGenderAttackSound DIRECTLY and
   // never touches PlayCombatVoice, so the male High Elf -> Wood Elf

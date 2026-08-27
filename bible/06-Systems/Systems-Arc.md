@@ -4007,3 +4007,48 @@ with every scene write proven routed, the promote-arm hold, the claws
 end to end (marker -> type -> swing sound -> rig consult -> silent
 draw), the voice's two-separate-rolls law with both strains and all
 four clip ids, and the door sweep.
+
+## V5 - THE FACE OF THE CURSE: the art laws and the vampire's voice (2026-08-27)
+
+Both curses' remaining art members, and the V-arc closes against
+Effects/Special/*. The three art laws ride vampirism.js as ONE switch
+(it already imports lycanthropy, and DFU's consumers ask the one
+racial override): racialOverrideHeadArt - the wolf and boar heads
+(WERE01I0/WERE00I0) transformed only, and the vampire's clanless
+VAMP00I0.CIF face ALWAYS, females records 0-7 and males 8-15 keyed by
+BirthRaceTemplate.ID - 1 (entity.race stays the birth race; the curse
+only ever overrode the NAME); racialPaperDollBackground - the beast's
+full-body art transformed, the vampire's crypt SCBG08I0 whatever the
+location context, all under the one 8,7,110x184 sub-rect law the
+SCBGs share; racialSuppressPaperDollBodyAndItems - the transformed
+panel is the background ALONE (PaperDollRenderer:165 skips cloaks,
+body, head and items wholesale, and the click mask empties with
+them).
+
+THE CONSUMERS ORDER THE OVERRIDE FIRST, as DFU does at all three of
+its sites: paperDoll's compose picks the override background, skips
+the suppressed layers, and blits the vampire head over the racial
+one (the override art rides its own small cache beside the
+identity-keyed set - a morph flips it mid-session); hudLarge's head
+loader runs the override before headArchiveFor, and the head's
+identity KEY carries the override string, so the morph and the cure
+swap the face on the next frame - DFU's null-and-re-read, spelled as
+a key change. The retiring hudLarge flag had named this exact hook
+since the C-slice.
+
+AND THE VAMPIRE SPEAKS. GetCustomRaceGenderAttackSoundData rides
+INSIDE playerAttackGrunt's clip pick, at GetRaceGenderAttackSound's
+own slot (DaggerfallEntity:979-988): the 20% fire chance stays the
+caller's, the override picks the CLIP - 20% the bark else the attack
+cry, by gender (199/200 female, 205/206 male), never silence once it
+fires. The werewolf's voices stay V4's OnWeaponHitEntity pair, which
+is DFU's own asymmetry.
+
+FLAGGED: the 4-20s real-time move-sound loop while transformed (the
+one remaining LycanthropyEffect member), the allied-spawn door.
+
+Pins: 4 in `test/curseart.test.js` - the head switch across morph and
+cure with the birth-race law pinned against the name override, the
+background/suppression walk for all three states, the voice's
+always-a-clip law with the verbatim ids and the fire/pick split, and
+the three consumers' override-first order.

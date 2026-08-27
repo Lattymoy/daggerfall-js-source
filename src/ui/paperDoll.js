@@ -34,6 +34,7 @@
 // identity and this file reloads on identity change - AUDIT 23).
 
 import { ImgFile } from '../formats/imgFile.js';
+import { racialPaperDollBackground, racialOverrideHeadArt, racialSuppressPaperDollBodyAndItems } from '../systems/vampirism.js';   // V5: the curse art laws, both curses' one switch
 import { CifRciFile } from '../formats/cifRciFile.js';
 import { EQUIP_SLOTS, equipTableOf, getItemHands, ITEM_HANDS } from '../systems/equip.js';
 import { getTemplate, paperdollOrder } from '../characters/paperdoll.js';
@@ -191,6 +192,32 @@ function blit(out, img, { rows = null, remap = null, atOffset = null } = {}) {
 /** Recompose the doll from the entity's live equip table. Item
  *  records stream through the host getTexture pipeline (async);
  *  the composite swaps in whole when done. */
+// ── V5: THE CURSE ART (GetCustomPaperDollBackgroundTexture /
+// GetCustomHeadImageData / SuppressPaperDollBodyAndItems) ──────────
+// The override art is not identity-keyed like _art - a morph flips it
+// mid-session - so it rides its own small cache. A failed load falls
+// back to the racial art, the never-traps rule.
+const _overrideArt = new Map();   // 'FILE#record' -> { bmp, off } | null
+async function loadOverrideArt(file, record = 0) {
+  const key = `${file}#${record}`;
+  if (_overrideArt.has(key)) return _overrideArt.get(key);
+  let art = null;
+  try {
+    if (file.endsWith('.CIF')) {
+      const cif = new CifRciFile();
+      cif.load(await _deps.fetchBytes(file), file, _art.palette);
+      art = { bmp: cif.getDFBitmap(record, 0), off: cif.getOffset(record) };
+    } else {
+      const img = new ImgFile();
+      img.load(await _deps.fetchBytes(file), file, _art.palette);
+      art = { bmp: img.getDFBitmap(), off: img.imageOffset };
+    }
+    if (!art.bmp?.width) art = null;
+  } catch { console.warn('[paperdoll] override art unavailable:', key); art = null; }
+  _overrideArt.set(key, art);
+  return art;
+}
+
 export async function refreshPaperDoll(entity) {
   if (!_art || !_deps) return;
   // AUDIT 17e F16 / ASYNC NEVER DROPS: this guard used to DISCARD a
@@ -203,8 +230,15 @@ export async function refreshPaperDoll(entity) {
   try {
     const out = new Uint8Array(PAPERDOLL_W * PAPERDOLL_H * 4);
     const layout = [];
+    // V5: the racial override's three art laws - the beast/crypt
+    // background, the whole-body suppression (PaperDollRenderer:165 -
+    // the transformed panel is the background ALONE, empty click mask
+    // included), and the vampire's head.
+    const bgOverrideName = racialPaperDollBackground(entity);
+    const suppress = racialSuppressPaperDollBodyAndItems(entity);
+    const bgOverride = bgOverrideName ? await loadOverrideArt(bgOverrideName) : null;
     // background subrect fills the panel
-    const bg = _art.bg.bmp;
+    const bg = (bgOverride ?? _art.bg).bmp;
     for (let y = 0; y < PAPERDOLL_H; y++) {
       for (let x = 0; x < PAPERDOLL_W; x++) {
         const idx = bg.data[(y + BG_SUBRECT[1]) * bg.width + (x + BG_SUBRECT[0])];
@@ -217,7 +251,7 @@ export async function refreshPaperDoll(entity) {
     const worn = table.filter(Boolean).map((it) => ({ it, t: getTemplate(it.templateIndex) })).filter((w) => w.t);
     // cloak interiors first (BlitCloakInterior: cloak2 then cloak1,
     // the template's own record = the interior image)
-    for (const slot of [EQUIP_SLOTS.Cloak2, EQUIP_SLOTS.Cloak1]) {
+    for (const slot of suppress ? [] : [EQUIP_SLOTS.Cloak2, EQUIP_SLOTS.Cloak1]) {
       const it = table[slot];
       if (!it || !CLOAK_TEMPLATES.has(it.templateIndex)) continue;
       const t = getTemplate(it.templateIndex);
@@ -235,14 +269,19 @@ export async function refreshPaperDoll(entity) {
       }
       break;   // DFU stops at the first drawn cloak interior
     }
-    // body + welds + head (BlitBody)
-    blit(out, _art.nude);
-    const split = WAIST_HEIGHT;
-    if (!table[EQUIP_SLOTS.ChestClothes] && !table[EQUIP_SLOTS.ChestArmor]) blit(out, _art.clothed, { rows: [0, split] });
-    if (!table[EQUIP_SLOTS.LegsClothes]) blit(out, _art.clothed, { rows: [split, _art.clothed.bmp.height] });
-    blit(out, _art.head);
+    // body + welds + head (BlitBody) - all skipped while suppressed
+    if (!suppress) {
+      blit(out, _art.nude);
+      const split = WAIST_HEIGHT;
+      if (!table[EQUIP_SLOTS.ChestClothes] && !table[EQUIP_SLOTS.ChestArmor]) blit(out, _art.clothed, { rows: [0, split] });
+      if (!table[EQUIP_SLOTS.LegsClothes]) blit(out, _art.clothed, { rows: [split, _art.clothed.bmp.height] });
+      // V5: the vampire's clanless head replaces the racial one
+      const headOv = racialOverrideHeadArt(entity);
+      const headArt = headOv ? await loadOverrideArt(headOv.file, headOv.record) : null;
+      blit(out, headArt ?? _art.head);
+    }
     // items ascending drawOrder (BlitItems)
-    const ordered = paperdollOrder(worn.map((w) => ({ ...w.it, drawOrder: w.t.drawOrderOrEffect })));
+    const ordered = suppress ? [] : paperdollOrder(worn.map((w) => ({ ...w.it, drawOrder: w.t.drawOrderOrEffect })));
     for (const it of ordered) {
       const res = paperdollItemImage(it, { gender: _deps.gender, race: _deps.race });
       if (!res) continue;

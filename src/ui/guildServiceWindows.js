@@ -251,9 +251,9 @@ export function buildDonationFlow(entity, store, divineFactionId, deps) {
 
 /** CureDiseaseService (:54-130). */
 export function buildCureDiseaseFlow(entity, guild, membership, deps) {
-  const { rows, onClose, quality = 0, regionIndex = 0, now, godName = '', becomingVampireOrWerebeast = false } = deps;
+  const { rows, onClose, quality = 0, regionIndex = 0, now, godName = '', becomingVampireOrWerebeast = false, priceAdjustment = 1000 } = deps;
   const offer = cureDiseaseOffer(entity, guild, membership, {
-    quality, regionIndex, nowClassicMinutes: now(), becomingVampireOrWerebeast,
+    quality, regionIndex, nowClassicMinutes: now(), becomingVampireOrWerebeast, priceAdjustment,
   });
   const ctxFor = (amount) => ({ amount, gold: goldAmount(entity), god: godName, playerName: entity.name ?? '', ...identity(entity) });
 

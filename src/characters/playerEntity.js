@@ -71,6 +71,23 @@ export function setDeathPresenter(fn) {
   return prev;
 }
 
+// AUDIT 26 F117: GuildManager.AvoidDeath, consulted by SetHealth at
+// the zero crossing (PlayerEntity.cs:1205-1211). The hook is the
+// host's - it closes over the live submersion state Temple.AvoidDeath
+// reads globally, rolls the rank-in-fifty, and speaks the HUD line
+// (DFU shows it from INSIDE Temple.AvoidDeath, the consulted side).
+// Answering true cancels the death; the 10% restore below is
+// SetHealth's own consequence and stays on the door.
+let _avoidDeathHook = null;
+
+/** Register the live host's avoid-death consult. Same idiom as the
+ *  presenter above: returns the previous hook. */
+export function setAvoidDeathHook(fn) {
+  const prev = _avoidDeathHook;
+  _avoidDeathHook = fn ?? null;
+  return prev;
+}
+
 /** THE damage door. Every path that can take player health goes through here.
  *  Returns true when this blow killed. */
 /** X1: consume `dmg` from any live Shield pool and answer what is
@@ -120,6 +137,15 @@ export function hurtPlayer(entity, dmg, { bypassShield = false } = {}) {
   // `instanceof DeathScreen` guard in its presenter, which made the guard
   // load-bearing and every future presenter's problem.
   if (wasAlive && entity.health === 0) {
+    // F117: `(int)(MaxHealth * 0.1f)` - SetHealth restores a tenth
+    // instead of raising OnDeath when a guild answers AvoidDeath.
+    // Consulted on the TRANSITION only, like the presenter: once dead,
+    // further damage cannot resurrect the question.
+    if (_avoidDeathHook?.(entity)) {
+      entity.health = Math.trunc((entity.maxHealth ?? 0) * 0.1);
+      surfacePlayer();
+      return false;
+    }
     _deathPresenter?.(entity);
     return true;
   }

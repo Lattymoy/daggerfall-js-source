@@ -41,6 +41,7 @@
 // names so the day that window lands there is nothing to look up.
 
 import { FACTION_FLAGS } from './factionRep.js';
+import { FACTION_TYPES, GUILD_GROUPS } from '../formats/factionFile.js';
 
 /** The sixteen princes, in DFU's own array order - the order is
  *  load-bearing twice: index 0 is Hircine (Glenmoril's, and excluded
@@ -66,9 +67,14 @@ export const DAEDRA = Object.freeze([
 export const HIRCINE_INDEX = 0;
 export const SHEOGORATH_INDEX = 8;
 export const GLENMORIL_WITCHES = 419;
-/** FactionFile.FactionTypes.WitchesCoven / GuildGroups.Witches. */
-export const WITCHES_COVEN_TYPE = 6;
-export const WITCHES_GUILD_GROUP = 8;
+/** FactionFile.FactionTypes.WitchesCoven / GuildGroups.Witches -
+ *  DERIVED from the enum tables, not written by hand: AUDIT 26 F112
+ *  found the literals here as 6 and 8, which are VampireClan and
+ *  GGroup8, so a real coven (type 8, ggroup 22) failed BOTH tests -
+ *  no daily random-prince draw, and no daedric reprisal on a failed
+ *  summoning. The callers pass the record's raw type and ggroup. */
+export const WITCHES_COVEN_TYPE = FACTION_TYPES.WitchesCoven;
+export const WITCHES_GUILD_GROUP = GUILD_GROUPS.Witches;
 
 /** The four TEXT.RSC records the summoner speaks (:28-31). */
 export const SUMMON_TEXT = Object.freeze({

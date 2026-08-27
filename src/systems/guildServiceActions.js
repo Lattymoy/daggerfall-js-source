@@ -201,7 +201,7 @@ export const CURE_BASE_COST_PER_DISEASE = 250;
  *  they cure whether or not the player could have paid. */
 export function cureDiseaseOffer(entity, guild, membership, {
   quality = 0, regionIndex = 0, nowClassicMinutes = 0,
-  becomingVampireOrWerebeast = false,
+  becomingVampireOrWerebeast = false, priceAdjustment = 1000,
 } = {}) {
   let numberOfDiseases = diseaseCount(entity);
   if (becomingVampireOrWerebeast) numberOfDiseases++;
@@ -214,10 +214,13 @@ export function cureDiseaseOffer(entity, guild, membership, {
 
   let baseCost = CURE_BASE_COST_PER_DISEASE * numberOfDiseases;
   baseCost = reducedCureCost(guild, membership, baseCost);   // Arkay's members only
-  // CalculateCost is called with TWO arguments here (:81), so the
-  // regional price adjustment stays at its neutral 1000 - curing a
-  // disease costs the same in every province, unlike merchandise.
-  let costBeforeBargaining = calculateCost(baseCost, quality);
+  // AUDIT 26 F113: CalculateCost's two-argument call here (:81) omits
+  // conditionPercentage, NOT the regional term - CalculateCost always
+  // runs ApplyRegionalPriceAdjustment inside (FormulaHelper.cs:1895),
+  // so a temple cure scales by the region's 750-1250 like any shelf
+  // price. The earlier comment misread the omitted parameter and
+  // pinned the neutral 1000 in.
+  let costBeforeBargaining = calculateCost(baseCost, quality, priceAdjustment);
   // "Halve the price on North Winds Prayer holiday" - DFU's comment
   // names the wrong holiday; the CODE tests North_Winds_Festival, and
   // the code is what ships.
