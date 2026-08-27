@@ -2946,7 +2946,11 @@ export function createWorldModes(host) {
         sneak: held(keys, 'Sneak'),   // P15: DFU's default Sneak binding (LeftAlt), held
         jump: jumpHeld,   // P14: HELD, verbatim (the 0.1 s grounded gate owns re-fire)
         up: jumpHeld || held(keys, 'FloatUp'),
-        down: held(keys, 'FloatDown'),
+        // AUDIT 26 F031: LevitateMotor's descent arm is Crouch OR
+        // FloatDown (:88-89), the mirror of the rise arm above; the
+        // port's own motor contract said so and every host passed
+        // FloatDown alone, so C did nothing but toggle the stance.
+        down: crouchHeld || held(keys, 'FloatDown'),
         crouch: crouchHeld && !latch.crouch,
       }, cam.yaw, cam.pitch);
       latch.crouch = crouchHeld;
