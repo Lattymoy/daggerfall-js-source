@@ -844,7 +844,7 @@ export function subscribeFoePools(ticker, pools, sinksFor) {
  * @param {number} gameMinutes the classic clock
  * @param {object} [activity]  { movingLessThanHalfSpeed }
  */
-export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = true } = {}) {
+export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = true, candidates = null, playerEntity = null } = {}) {
   entity.stealthCheckBox = entity.stealthCheckBox ?? { minute: -1 };
   return {
     gameMinutes: Math.floor(gameMinutes),
@@ -858,6 +858,14 @@ export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = t
     playerShade: isAShade(entity),
     sharedStealth: entity.stealthCheckBox,
     tallyStealth: () => tallySkill(entity, SKILLS.Stealth),
+    // MT-ii: the target-machine seam. A host that owns a pool passes
+    // `candidates` (a live getter over every ACTIVE enemy record, the
+    // ActiveGameObjectDatabase join) and the pools arm each foe's own
+    // targeting closure over it. ABSENT = the player-only path, which
+    // is both the headless charter and DFU's own behaviour with no
+    // other enemy in the scene.
+    candidates,
+    playerEntity: playerEntity ?? entity,
   };
 }
 

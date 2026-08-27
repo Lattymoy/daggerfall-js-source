@@ -154,6 +154,7 @@ export function createQuestBridge(ctx) {
     spawnCityGuards: (immediate) => ctx.spawnCityGuards?.(immediate),
     makeEnemiesHostile: () => ctx.makeEnemiesHostile?.(),
     clearEnemies: () => ctx.clearEnemies?.(),
+    questFoeInstances: (symbol) => ctx.questFoeInstances?.(symbol) ?? [],   // MT-iii
     getReputation: (fid) => ctx.getReputation?.(fid) ?? 0,
     getGold: () => ctx.getGold?.() ?? 0,
     deductGold: (n) => ctx.deductGold?.(n),

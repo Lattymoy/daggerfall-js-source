@@ -46,7 +46,10 @@ test('audit24 lifetimes: an encounter foe frees its billboard batch on BOTH ends
   // the distance cull - the foe is spliced out of `foes` right after,
   // taking the only reference to its batch with it
   const update = bodyOf(src, 'function update(dt, playerFeet, eye, senses = {})');
-  assert.match(update, /_dist > ENCOUNTER_CULL_DISTANCE[\s\S]{0,200}releaseFoeBatch\(f\)/,
+  // MT-ii: the cull's distance is measured to the PLAYER now (`_dist`
+  // became target-relative when the pool armed), but the LIFETIME law
+  // this pin guards is unchanged - release, then mark dead.
+  assert.match(update, /_playerDist > ENCOUNTER_CULL_DISTANCE[\s\S]{0,200}releaseFoeBatch\(f\)/,
     'the cull releases before it marks the foe dead');
   // and death - where the record STAYS in `foes` (the tail splice
   // spares corpses), so the batch would be unreachable and undead
@@ -70,7 +73,9 @@ test('audit24 lifetimes: an encounter foe frees its billboard batch on BOTH ends
 test('audit24 lifetimes: a city guard frees its batch on both death paths, and the array is NOT pruned', () => {
   const src = read('src/scenes/cityGuards.js');
   assert.match(src, /function releaseGuardBatch\(g\) \{[\s\S]*?destroyBillboardBatch\(g\.batch\)/);
-  assert.match(bodyOf(src, 'function damageGuard(g, damage, playerFeet, knockDir)'),
+  // MT-ii widened the signature with the player-source gate (the
+  // Murder crime's, DaggerfallEntityBehaviour.cs:203).
+  assert.match(bodyOf(src, 'function damageGuard(g, damage, playerFeet, knockDir, fromPlayer = true)'),
     /health <= 0[\s\S]{0,300}releaseGuardBatch\(g\)/, 'the killed path');
   assert.match(src, /if \(!g\.dead\) \{ g\.dead = true; releaseGuardBatch\(g\); \}/,
     'and the walk-away path when the crime clears');

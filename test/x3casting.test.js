@@ -85,8 +85,11 @@ test('x3 wiring: the pool spawns casters, the decision drives the shared executo
   const xf = src('src/scenes/exteriorFoes.js');
   assert.ok(xf.includes('assignEnemySpells(entity, sbi)'), 'exterior spawns assign the S16 lists');
   assert.ok(xf.includes('new EnemyCaster(entity, rolls)'), 'a listed caster gets the shared decision driver');
-  assert.ok(xf.includes('f.caster.update(dt, f.ai, f.attack, playerFeet, playerEntity)'), 'the decision rides beside the attack machine');
-  assert.ok(xf.includes('castSpellFrom(f, dec.spell, playerFeet);'), 'and releases through the ONE executor');
+  // MT-ii: the decision aims at the SELECTED target, and reads that
+  // target's own entity - a foe duelling another foe no longer picks
+  // its school off the player's effects, nor releases at them.
+  assert.ok(xf.includes('f.caster.update(dt, f.ai, f.attack, _tgt, _castTargetEntity)'), 'the decision rides beside the attack machine');
+  assert.ok(xf.includes('castSpellFrom(f, dec.spell, _tgt);'), 'and releases through the ONE executor, AT the target');
   // wave 30: the deps of that executor are bound ONCE for this pool - the
   // decision and the spider/scorpion paralyze rider share the binding.
   assert.ok(xf.includes('function castSpellFrom(f, spell, playerFeet, noSpellPointCost = false) {'), 'the pool binds the executor once');

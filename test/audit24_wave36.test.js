@@ -132,14 +132,20 @@ test('audit24 wave36: the 8-hour alert decay is the ENTITY tick\'s, so every hos
 
 test('audit24 wave36: the watch raises and lowers the alert, and takes fall damage', () => {
   const cg = rd('src/scenes/cityGuards.js');
-  assert.ok(cg.includes('if (g.ai.inSight && g.ai.detected) setEnemyAlert(playerEntity, true, currentMinute());'),
-    'EnemySenses:531-535 - raised by any enemy that targets and sees the player');
-  assert.ok(cg.includes('if (g.ai?.detected) setEnemyAlert(playerEntity, false);'),
-    'EnemyDeath:131-136 - and lowered by its death');
+  // MT-ii restored the source's `Target == PlayerEntityBehaviour`
+  // term (:531), which was unobservable while every foe targeted the
+  // player: a watchman fighting a rat must not hold the alert up.
+  assert.ok(cg.includes('if (isPlayerTarget(g.ai.target) && g.ai.inSight && g.ai.detected) setEnemyAlert(playerEntity, true, currentMinute());'),
+    'EnemySenses:531-535 - raised by any enemy that targets and sees THE PLAYER');
+  // MT-ii: EnemyDeath's clear carries the same target==player gate.
+  assert.ok(cg.includes('if (isPlayerTarget(g.ai?.target) && g.ai?.detected) setEnemyAlert(playerEntity, false);'),
+    'EnemyDeath:131-136 - and lowered by its death, when the player was its target');
   // the same two lines the encounter pool has carried since the X-slice
   const xf = rd('src/scenes/exteriorFoes.js');
   assert.ok(xf.includes('setEnemyAlert(playerEntity, true, currentMinute());'));
-  assert.ok(xf.includes('if (f.ai?.detected) setEnemyAlert(playerEntity, false);'));
+  // MT-ii: the encounter pool's clear gained the same target==player
+  // gate the watch's did (EnemyDeath:131-136).
+  assert.ok(xf.includes('if (isPlayerTarget(f.ai?.target) && f.ai?.detected) setEnemyAlert(playerEntity, false);'));
 
   // ApplyFallDamage runs for EVERY enemy (:173) - the motor has always
   // produced landedFall for guards, and nobody read it.
@@ -177,6 +183,11 @@ test('audit24 wave36: hostility SEEDS the remembered position - the freeze wave 
   assert.equal(GIVE_UP_TICKS, 200, 'the DFU default the C# refills');
   // every pool passes the position
   assert.ok(rd('src/scenes/cityGuards.js').includes('ai.makeHostileToPlayer(600, attackerFeet);'));
-  assert.ok(rd('src/scenes/exteriorFoes.js').includes('f.ai.makeHostileToPlayer?.(undefined, playerFeet ?? null);'));
+  // MT-ii: a player hit now runs MakeEnemyHostileToAttacker WHOLE
+  // (the target reassign included, :193-202); the bare seed survives
+  // for a SOURCELESS hurt - a fall, a poison tick, a self-cast - which
+  // has no attacker to remember.
+  assert.ok(rd('src/scenes/exteriorFoes.js').includes('f.ai.makeEnemyHostileToAttacker?.(PLAYER_TARGET, playerFeet);'));
+  assert.ok(rd('src/scenes/exteriorFoes.js').includes("f.ai.makeHostileToPlayer?.(undefined, null);   // wave 36: a sourceless hurt"));
   assert.ok(rd('src/scenes/dungeonContext.js').includes('foe.ai.makeHostileToPlayer?.(undefined, lastPlayerFeet);'));
 });

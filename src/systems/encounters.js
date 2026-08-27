@@ -10,6 +10,7 @@
 // needs the exterior mobile-foe mount (the ledger row); the dungeon
 // REST arm is live through the alert state.
 
+import { mobileTeamOf } from '../characters/enemyTargets.js';   // MT-ii: :709's MobileEnemy.Team read
 import { CLIMATES } from '../formats/mapsFile.js';
 import { ENCOUNTER_TABLES } from '../characters/encounterTables.js';
 import { dice100 } from '../combat/formulas.js';   // Dice100.SuccessRoll, one home
@@ -198,17 +199,37 @@ export const RESTING_DISTANCE = 12;
  * different rule: a guard spawned across town blocks sleep forever,
  * since guards persist until the crime clears.
  *
- * FLAGGED, both from the tail of the C#: the pacified/team test
- * (`IsHostile && Team != PlayerAlly`, :710) pends the pacify effect,
- * and the FoeSpawner sweep (:721-728) pends quest spawners carrying a
- * live position.
+ * MT-ii: the pacified/team test is PORTED - GameManager.cs:709 is
+ * `includingPacified || (enemyMotor.IsHostile && enemyEntity
+ * .MobileEnemy.Team != MobileTeams.PlayerAlly)`, and both halves are
+ * now real: pacification has driven IsHostile since the C-slice, and
+ * MobileTeams shipped with the infighting slice. Note WHICH team it
+ * reads - the per-instance MobileEnemy copy (an allied summon's IS
+ * PlayerAlly), not the static row - so your own summons never keep
+ * you from resting, and a pacified bandit does not either.
+ *
+ * `includingPacified` is C#'s own second parameter (`AreEnemiesNearby
+ * (bool resting = false, bool includingPacified = false)`), which the
+ * port had dropped entirely; it is what a caller passes to ask the
+ * coarser "is anything alive nearby" question.
+ *
+ * STILL FLAGGED: the FoeSpawner sweep (:721-728) pends quest spawners
+ * carrying a live position.
  */
-export function areEnemiesNearby(foes, { resting = false } = {}) {
+export function areEnemiesNearby(foes, { resting = false, includingPacified = false } = {}) {
   for (const f of foes ?? []) {
     if (!f || f.dead || !f.ai) continue;
     const canSee = !!(f.ai.detected && f.ai.inSight);
     if (resting && !canSee && (f.ai._dist ?? Infinity) > RESTING_DISTANCE) continue;
-    if (canSee || f.ai.wouldBeSpawned) return true;
+    if (!(canSee || f.ai.wouldBeSpawned)) continue;
+    // :709 - the hostility/team gate, INSIDE the proximity arm
+    if (includingPacified) return true;
+    // `isHostile ?? true`: EnemyMotor.IsHostile is initialised TRUE
+    // (:79) and only pacification clears it, so an ai without the
+    // field - a headless stub, a pool that predates the C-slice -
+    // reads hostile, which is the charter's "absent member idles the
+    // arm" for a flag whose absence means "no pacification here".
+    if ((f.ai.isHostile ?? true) && mobileTeamOf(f.entity) !== 'PlayerAlly') return true;
   }
   return false;
 }

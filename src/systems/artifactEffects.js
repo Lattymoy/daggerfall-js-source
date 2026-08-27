@@ -18,10 +18,11 @@
 // THE HOST DOORS (all optional, the headless charter): messageBox(id)
 // for Azura's TEXT.RSC lines, openCharacterSheet() for the Oghma,
 // replaceFoe(target, mobileType) for the Wabbajack's transform,
-// spawnAlliedFoe(mobileType) for the two summons - FLAGGED: the port
-// has no ally/team combat (every foe fights the player), so NO host
-// mounts it yet; the summons check their range and speak their fail
-// line, and the spawn arm idles until the team system exists.
+// spawnAlliedFoe(mobileType) for the two summons - MOUNTED at MT-ii,
+// where MobileTeams targeting shipped: world.js spawns the summon
+// into the encounter pool on team PlayerAlly (both team fields, per
+// SetupDemoEnemy.cs:85-86), and getTargets' ally arms make it fight
+// for the player instead of at them.
 //
 // MACE STATE is an activeEffects entry (kind 'artifact', key
 // 'maceOfMolagBal') - the same shape every other persistent modifier
@@ -169,13 +170,16 @@ const HANDLERS = new Map([
     },
   }],
 
-  /** SanguineRoseEffect.cs - Used: an enemy inside 12 or the fail
-   *  line; the summon is an ALLIED Daedroth. FLAGGED: no host mounts
-   *  spawnAlliedFoe - the port has no ally/team combat - so the range
-   *  gate and the fail line are live and the spawn arm idles. */
+  /** SanguineRoseEffect.cs:44-60 - Used: a NON-ALLIED enemy inside 12
+   *  or the fail line; the summon is an ALLIED Daedroth
+   *  (CreateFoeSpawner alliedToPlayer:true). MT-ii mounted the door.
+   *  THE FILTER IS PART OF THE LAW (:47-48): the nearby scan is
+   *  `.Where(x => Team != MobileTeams.PlayerAlly)`, so your own
+   *  standing summons do not count as company - rose in hand, alone
+   *  but for two allied Daedra, you get the fail line. */
   [ARTIFACTS.SanguineRose, {
     used({ ctx }) {
-      const nearby = ctx?.nearbyFoes?.(SUMMON_ENEMY_RANGE) ?? [];
+      const nearby = (ctx?.nearbyFoes?.(SUMMON_ENEMY_RANGE) ?? []).filter((n) => n.team !== 'PlayerAlly');
       if (!nearby.length) { ctx?.say?.(NO_MONSTERS_NEARBY_TEXT); return null; }
       ctx?.spawnAlliedFoe?.(MT.Daedroth);
       return { durabilityLoss: SUMMON_DURABILITY_LOSS };
@@ -213,17 +217,22 @@ const HANDLERS = new Map([
     },
   }],
 
-  /** SkullOfCorruptionEffect.cs - Used: the NEAREST enemy inside 12
-   *  is cloned as an allied copy; no enemy, the fail line. The same
-   *  spawnAlliedFoe FLAG as the Rose. */
+  /** SkullOfCorruptionEffect.cs:46-82 - Used: the NEAREST non-allied
+   *  enemy inside 12 is cloned as an allied copy; no enemy, the fail
+   *  line. TWO PlayerAlly GATES, and the second is dead code in C#:
+   *  :47-48 filters the scan exactly as the Rose does, and then
+   *  :67-71 RE-CHECKS the winner it just filtered for and fails on
+   *  it. Both ported - the redundancy is the source's, and a port
+   *  that keeps one and drops the other is guessing which. */
   [ARTIFACTS.SkullOfCorruption, {
     used({ ctx }) {
-      const nearby = ctx?.nearbyFoes?.(SUMMON_ENEMY_RANGE) ?? [];
+      const nearby = (ctx?.nearbyFoes?.(SUMMON_ENEMY_RANGE) ?? []).filter((n) => n.team !== 'PlayerAlly');
       if (!nearby.length) { ctx?.say?.(NO_MONSTERS_NEARBY_TEXT); return null; }
       let nearest = nearby[0];
       for (const n of nearby.slice(1)) {
         if ((n.distance ?? Infinity) < (nearest.distance ?? Infinity)) nearest = n;
       }
+      if (nearest.team === 'PlayerAlly') { ctx?.say?.(NO_MONSTERS_NEARBY_TEXT); return null; }   // :67-71, unreachable past the filter
       if (nearest.mobileType == null) { ctx?.say?.(NO_MONSTERS_NEARBY_TEXT); return null; }
       ctx?.spawnAlliedFoe?.(nearest.mobileType);
       return { durabilityLoss: SUMMON_DURABILITY_LOSS };

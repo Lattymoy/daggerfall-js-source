@@ -306,11 +306,17 @@ test('audit24 wave35: the target-position MEMORY, and the LOS timer that guards 
   ai._senses(far, s);
   assert.deepEqual(ai.lastKnownTargetPos, far, 'and released once the timer runs out');
 
-  // the timer decays on the CLASSIC tick, not the fixed step (:445-449)
+  // the timer decays on the CLASSIC tick, not the fixed step (:445-449).
+  // MT-i moved it out of the FIRST ClassicUpdate block and into the
+  // SECOND, which is where C# has it - BELOW the `if (target == null)
+  // ... return` at :410-414, so a foe holding no target freezes the
+  // timer instead of draining it. Same cadence, one method over.
   const t = new EnemyAI(sightStub(), [0, 0, 0], 0, { liveSpeed: 50 });
   t.lastHadLOSTimer = 3;
-  t._classicSenses([0, 0, 5], null);
+  t._classicPostTarget(null);
   assert.equal(t.lastHadLOSTimer, 2);
+  t._classicSenses([0, 0, 5], null);
+  assert.equal(t.lastHadLOSTimer, 2, 'the spawn-band half never touches it');
 });
 
 test('audit24 wave35: lastPositionDiff needs TWO consecutive sighted prediction passes', () => {

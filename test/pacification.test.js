@@ -100,8 +100,15 @@ test('pacification: the host runs it on the FIRST-encounter edge and a pacified 
     'only paralysis skips the attack component - DFU has no hostility gate there');
   assert.equal(/_fParalyzed \|\| !f\.ai\.isHostile/.test(src), false, 'the host gate is gone');
   const motor = readFileSync(join(root, 'src/characters/enemyMotor.js'), 'utf8');
-  assert.ok(motor.includes('if (!this.isHostile) {\n      this.inSight = false;\n      this.detected = false;'),
+  // MT-i refined the blind arm to what :321-327 actually says: the
+  // non-hostile drop nulls the PLAYER target only, so a pacified foe
+  // that a bear is mauling keeps its senses and fights back (through
+  // MakeEnemyHostileToAttacker). With no target - the unarmed pool's
+  // pacified foe, and every pre-MT caller - it still reads blind.
+  assert.ok(motor.includes('if (!this.isHostile && !foeTarget) {\n      this.inSight = false;\n      this.detected = false;'),
     'the senses read blind instead');
+  assert.ok(motor.includes('const foeTarget = this._armedTargeting && this._targetCandidate && !this._targetCandidate.isPlayer;'),
+    'and the one exception is a live FOE target, per :321-327');
   // the CASTING gate stays: DFU's spell paths hang off the MOTOR's
   // TakeAction, behind CanAct, which HandleNoAction:357-364 drops the
   // moment the target is null.

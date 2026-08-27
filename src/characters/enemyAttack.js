@@ -34,7 +34,7 @@ import {
   MELEE_NUM_FRAMES, CLASSIC_UPDATE_INTERVAL,
 } from './weaponStates.js';
 import { STRIKES, ATTACKS_1H, sampleClip } from './anims.js';
-import { MELEE_DISTANCE, withinYaw, MIN_RANGED_DISTANCE, MAX_RANGED_DISTANCE } from './enemyMotor.js';
+import { MELEE_DISTANCE, CLASSIC_MELEE_DISTANCE_VS_AI, withinYaw, MIN_RANGED_DISTANCE, MAX_RANGED_DISTANCE } from './enemyMotor.js';
 
 export const ATTACK_SPEED_FLOOR = 8;               // EnemyAttack.cs speedFloor
 export const ATTACK_YAW_DEG = 22.5;                // MeleeAnimation yaw gate
@@ -142,7 +142,17 @@ export class EnemyAttack {
       }
       if (!meleePass) continue;
       if (!ai.inSight || !withinYaw(ai.yaw, dx, dz, ATTACK_YAW_DEG)) continue;
-      if (dist > MELEE_DISTANCE) continue;
+      // MT-ii: MeleeAnimation's OWN reach (:157-160), which the port
+      // exported as CLASSIC_MELEE_DISTANCE_VS_AI at C8 and never
+      // consumed, because nothing but the player could be a target:
+      //   float distance = MeleeDistance;
+      //   if (!EnhancedCombatAI && Target != PlayerEntityBehaviour)
+      //       distance = ClassicMeleeDistanceVsAI;
+      // "Classic uses separate melee distance for targeting player
+      // and for targeting other AI" - 1.5 rather than 2.25. Unarmed
+      // (and against the player) the reach is unchanged.
+      const vsAI = ai._armedTargeting && ai.target && !ai.target.isPlayer;
+      if (dist > (vsAI ? CLASSIC_MELEE_DISTANCE_VS_AI : MELEE_DISTANCE)) continue;
       // MeleeAnimation (:151-176) has now returned TRUE, so FixedUpdate
       // :85 calls ResetMeleeTimer UNCONDITIONALLY - even when the state
       // change it just asked for did nothing. Classic mobiles have ONE

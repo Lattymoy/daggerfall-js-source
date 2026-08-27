@@ -17,6 +17,7 @@ import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { lycanthropeAttackVoice } from '../systems/lycanthropy.js';   // V4: the beast's attack voice
 import { copyEffectEntry } from '../systems/save.js';   // AUDIT 26 F216: the caster-stripping effect copy, one home
 import { EnemyAI, isBackFacing, withinYaw } from '../characters/enemyMotor.js';
+import { runTargetMachine, isPlayerTarget, resetAllyTeamOnPlayerAttack, PLAYER_TARGET } from '../characters/enemyTargets.js';   // MT-ii
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';   // CH3: the shared fall formula
 import { SOUND } from '../systems/soundClips.js';   // CH3: the FallDamage clip
 import { EnemyCaster, castEnemySpell, hasRangedSpell } from '../characters/enemyCasting.js';   // X3: the shared decision + the ONE cast executor
@@ -29,7 +30,7 @@ import { EnemyAttack } from '../characters/enemyAttack.js';
 import { makeEnemyEntity, loadMonsterCareer } from '../characters/enemyEntity.js';
 import { MobileUnit } from '../characters/mobileUnit.js';
 import { ClassFile } from '../formats/classFile.js';
-import { equipEnemy, hasBowAttack, backstabChanceOf, zeroDamageHitSound, enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt, tickEnemySound, playEnemyClip, tryLanguagePacification } from './hostCombat.js';   // C2-slice (combat-9/17)
+import { equipEnemy, hasBowAttack, backstabChanceOf, zeroDamageHitSound, enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt, tickEnemySound, playEnemyClip, tryLanguagePacification, applyDamageToNonPlayer } from './hostCombat.js';   // C2-slice (combat-9/17); MT-ii: the foe-vs-foe payload
 import { generateItems as generateLootItems, addEnemyLootExtras } from '../systems/loot.js';   // AUDIT 24 (wave 43)
 import { calculateAttackDamage, meleeHitConnects, MELEE_HIT_YAW_DEG, chooseEnemyWeapon, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies, enemyLanguageSkill, calculateEnemyPacification } from '../combat/formulas.js';   // AUDIT 24 (wave 42): pacification
 import { tallySkill, SKILLS } from '../systems/skills.js';
@@ -81,7 +82,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  from the encounter self-limit: DFU's CreateFoe spawns
    *  unconditionally, and the cap is the port's own encounter bound,
    *  not a law. */
-  async function spawnFoe(mobileType, pos, { gender: forcedGender = null, yaw = null, questBehaviour = null } = {}) {
+  async function spawnFoe(mobileType, pos, { gender: forcedGender = null, yaw = null, questBehaviour = null, allied = false } = {}) {
     if (!questBehaviour && activeCount() >= MAX_ACTIVE_ENCOUNTER_FOES) return null;
     const basics = ENEMY_BASICS[mobileType];
     if (!basics || !basics.maleTexture) return null;
@@ -91,6 +92,13 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         ? (() => { const cf = new ClassFile(); return fetchBytes(`CLASS${String(mobileType - 128).padStart(2, '0')}.CFG`).then((b) => { cf.load(b); return cf.career; }); })()
         : loadMonsterCareer(mobileType, fetchBytes);
       const entity = makeEnemyEntity(mobileType, basics, await career, playerEntity.level);
+      // MT-ii: an ALLIED summon (Sanguine Rose / Skull of Corruption).
+      // SetupDemoEnemy.cs:85-86 overwrites the MobileEnemy STRUCT COPY
+      // before SetEnemy, and EnemyEntity.cs:316 seeds Entity.Team from
+      // that copy - so BOTH per-instance fields turn, and the shared
+      // frozen basics row (the STATIC table the ally-revert reads)
+      // does not. Getting that wrong would ally every foe of the type.
+      if (allied) { entity.team = 'PlayerAlly'; entity.mobileTeam = 'PlayerAlly'; }
       entity.items = generateLootItems(basics.lootTableKey ?? '-', { level: playerEntity.level, gender: playerEntity.gender });
       equipEnemy(entity, mobileType, playerEntity.level);
       addEnemyLootExtras(entity.items, basics, rolls);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397, after the equipment as DFU has it
@@ -124,6 +132,22 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
       const f = { mobile, ai, attack, entity, caster, batch, tex, archive, mobileType, gender, dead: false, _encounter: true, _prevMState: 'Idle', _mout: null,
         sounds: new EnemySoundSource(mobileType, rolls) };   // AUDIT 24 (wave 41): this pool made no sound at all
+      // MT-ii: THE RECORD IS THE CANDIDATE. getTargets reads `ai` and
+      // `entity` off it, and its identity IS the target handle (the
+      // `c === self` skip and the mutual-target write both rely on
+      // one stable object per foe, exactly as DFU's behaviour
+      // reference does). The two quest halves are LIVE GETTERS, never
+      // frozen booleans: bindQuestFoeHost runs after this line, and
+      // ChangeFoeInfighting flips IsAttackableByAI mid-quest.
+      Object.defineProperties(f, {
+        isQuestFoe: { get: () => !!f.questBehaviour, enumerable: false },
+        questAttackable: { get: () => !!f.questBehaviour?.isAttackableByAI, enumerable: false },
+      });
+      // MT-ii: the cross-pool damage door (the guard pool's twin) - a
+      // striker in the OTHER pool reaches this foe's death chain
+      // through its own candidate handle, with no attacker feet, so
+      // the player-attack arm never runs for a monster's blow.
+      f.hurtFromFoe = (dmg, dir) => damageFoe(f, dmg, null, dir ?? null);
       foes.push(f);
       // B1: the quest resource behaviour couples at the stand - the
       // activation moment, where Unity runs the deferred Start.
@@ -190,7 +214,18 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   }
 
   function damageFoe(f, damage, playerFeet, knockDir = null) {
-    if (f.ai && !f.ai.isHostile) { f.ai.isHostile = true; f.ai.makeHostileToPlayer?.(undefined, playerFeet ?? null); }   // wave 36: seeded with where the attack came from
+    // MT-ii: MakeEnemyHostileToAttacker WHOLE (EnemyMotor.cs:186-214).
+    // The target-reassign guard runs on EVERY player hit, not only on
+    // a non-hostile foe - that was the pre-MT shape, when there was
+    // no target to reassign; and the PLAYER arm additionally raises
+    // hostility and reverts a struck former ally to its species
+    // (:204-213, the entity-side half in enemyTargets).
+    if (f.ai && playerFeet) {
+      f.ai.makeEnemyHostileToAttacker?.(PLAYER_TARGET, playerFeet);   // headless: a stub ai idles the arm
+      resetAllyTeamOnPlayerAttack(f.ai, f.entity, f.mobileType);
+    } else if (f.ai && !f.ai.isHostile) {
+      f.ai.isHostile = true; f.ai.makeHostileToPlayer?.(undefined, null);   // wave 36: a sourceless hurt (fall, poison, a self-cast)
+    }
     f.entity.health -= damage;
     if (f.entity.health <= 0) {
       // X5: the SOUL TRAP intercept, where EnemyEntity.SetHealth's
@@ -213,7 +248,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // the cull the record STAYS in `foes` (the tail splice spares
       // corpses), so the batch was unreachable and undead at once.
       releaseFoeBatch(f);
-      if (f.ai?.detected) setEnemyAlert(playerEntity, false);   // EnemyDeath:132-136
+      // EnemyDeath:131-136 gates the clear on `senses.Target ==
+      // PlayerEntityBehaviour` too - a foe killed while fighting
+      // ANOTHER foe never touches the player's alert (MT-ii).
+      if (isPlayerTarget(f.ai?.target) && f.ai?.detected) setEnemyAlert(playerEntity, false);
       sayEnemyDied(say, f.mobileType);   // EnemyDeath:79-83, the kill notice
       // AUDIT 24 (wave 38): EnemyDeath.CompleteDeath, through the one
       // home. This pool minted the marker inline at f.ai.feet - so a
@@ -265,6 +303,30 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
 
   /** The per-frame loop - the guard loop minus the crime arms, plus
    *  the distance cull and the sight alert raise. */
+  /** MT-ii: one foe's armed senses context. The motor hands its
+   *  targeting closure only (ai, playerFeet, dt), but runTargetMachine
+   *  needs the CANDIDATE, so the binding happens here where the record
+   *  is in hand. No `candidates` in the context = the legacy
+   *  player-only path, untouched. */
+  function _armed(f, senses) {
+    if (!senses?.candidates) return senses;
+    return {
+      ...senses,
+      targeting: (ai, pf, cdt) => runTargetMachine(f, senses.candidates(), pf, cdt, {
+        playerEntity: senses.playerEntity ?? null,
+      }),
+    };
+  }
+  /** The feet the ATTACK and CAST components must aim at: DFU's
+   *  components read senses.Target, not the player (EnemyAttack.cs:
+   *  199-209). Unarmed, or with the player selected, this is the
+   *  player's own feet and nothing changes. */
+  function _targetFeet(f, playerFeet) {
+    const t = f.ai.target;
+    if (t == null) return f.ai._armedTargeting ? null : playerFeet;
+    return isPlayerTarget(t) ? playerFeet : t.ai.feet;
+  }
+
   function update(dt, playerFeet, eye, senses = {}) {
     for (const f of foes) {
       // B1: the QuestResourceBehaviour drives every frame the object
@@ -282,7 +344,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // (:247-260) drops CanAct, and EnemyAttack returns at the top of both
       // its Update (:91-94) and its FixedUpdate (:55-57).
       const _fParalyzed = entityIsParalyzed(f.entity);   // S22: the FreeAction read-time fold
-      f.ai.update(dt, playerFeet, senses, _fParalyzed);
+      f.ai.update(dt, playerFeet, _armed(f, senses), _fParalyzed);
+      // MT-ii: the foe now aims at whatever it SELECTED - the player
+      // (the only candidate in an unarmed host) or another enemy.
+      const _tgt = _targetFeet(f, playerFeet);
       // CH3 (characters-8): a past-threshold landing bills the fall
       // formula through the pool's damage door - no knockback.
       if (f.ai.landedFall > 0 && !f.dead) {
@@ -307,23 +372,45 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // the only reference to its billboard batch, a VAO and two GL
       // buffers, which nothing freed. Encounters respawn on a timer
       // forever, so this bled for the whole session.
-      if (f.ai._dist > ENCOUNTER_CULL_DISTANCE && !f.ai.detected) {
+      // MT-ii: the cull measures to the PLAYER, always. `f.ai._dist`
+      // is the distance to the SELECTED TARGET once the pool is armed
+      // (EnemySenses keeps distanceToPlayer and distanceToTarget as
+      // two fields, :372-375 vs :424-427, and this is the
+      // distanceToPlayer one). Reading _dist here would make two foes
+      // brawling 2m apart uncullable however far the player walked -
+      // the encounter pool respawns forever, so that leaks.
+      const _playerDist = Math.hypot(playerFeet[0] - f.ai.feet[0], playerFeet[1] - f.ai.feet[1], playerFeet[2] - f.ai.feet[2]);
+      if (_playerDist > ENCOUNTER_CULL_DISTANCE && !f.ai.detected) {
         releaseFoeBatch(f);
         f.dead = true;
         f.questBehaviour?.notifyDestroyed();   // B1: Destroy(gameObject) - the resource uncouples
         continue;
       }
-      if (f.ai.inSight && f.ai.detected) setEnemyAlert(playerEntity, true, currentMinute());   // EnemySenses:533-535
+      // EnemySenses:531-535 - `if (Target == PlayerEntityBehaviour &&
+      // TargetInSight)`. MT-ii: the target==player term was
+      // unobservable while every foe targeted the player and is not
+      // now: two orcs fighting each other must not hold the player's
+      // alert state up (the source's own comment: "Any enemies
+      // actively targeting player will continue to raise alert").
+      if (isPlayerTarget(f.ai.target) && f.ai.inSight && f.ai.detected) setEnemyAlert(playerEntity, true, currentMinute());
       f.mobile.frameSpeedDivisor = Math.max(1, Math.trunc((f.entity.stats?.speed ?? 50) / Math.max(8, liveStat(f.entity, 'speed'))));
-      if (!_fParalyzed) f.attack.update(dt, f.ai, playerFeet);
+      if (!_fParalyzed && _tgt) f.attack.update(dt, f.ai, _tgt);   // MT-ii: at the SELECTED target (:199-209)
       // X3-slice: the S16 casting decision rides beside the attack
       // machine, the dungeon's exact shape - the decision casts
       // INSTANTLY through the ONE shared executor.
       f._castPending = false;
-      if (playerFeet && f.caster && !_fParalyzed && f.ai.isHostile) {
-        const dec = f.caster.update(dt, f.ai, f.attack, playerFeet, playerEntity);
+      // MT-ii: the caster aims at the SELECTED target too, and the
+      // spell releases where it aimed - otherwise a foe duelling
+      // another foe would hurl its fireballs at the player. The
+      // ENTITY the decision reads is still the player's for a player
+      // target; a foe target hands its own (the decision reads the
+      // target's live effects for its school picks).
+      const _castTargetEntity = isPlayerTarget(f.ai.target) || !f.ai._armedTargeting
+        ? playerEntity : (f.ai.target?.entity ?? playerEntity);
+      if (_tgt && f.caster && !_fParalyzed && f.ai.isHostile) {
+        const dec = f.caster.update(dt, f.ai, f.attack, _tgt, _castTargetEntity);
         if (dec) {
-          castSpellFrom(f, dec.spell, playerFeet);
+          castSpellFrom(f, dec.spell, _tgt);
         }
       }
       // AUDIT 24 (wave 42): EnemySenses:504-527 - the first-encounter
@@ -357,8 +444,38 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // MELEE FIRST, arrow as the ELSE-IF: EnemyAttack.Update is
       // `if (DoMeleeDamage) {...} else if (ShootArrow) {...}` (:97-105).
       // (Found by the wave-35 re-read.)
-      if (!_fParalyzed && f.mobile.doMeleeDamage && playerFeet) {
+      if (!_fParalyzed && f.mobile.doMeleeDamage && _tgt) {
         f.mobile.doMeleeDamage = false;
+        // MT-ii: MeleeDamage's TWO-ARM SPLIT (EnemyAttack.cs:199-209)
+        // - `if (Target == PlayerEntityBehaviour) ApplyDamageToPlayer
+        // else ApplyDamageToNonPlayer(weapon, transform.forward)`.
+        // Everything below this branch is the player arm, unchanged;
+        // the foe arm is the shared payload in hostCombat.js.
+        const _foeTarget = f.ai._armedTargeting && f.ai.target && !isPlayerTarget(f.ai.target)
+          ? f.ai.target : null;
+        if (_foeTarget) {
+          const fdx = _tgt[0] - f.ai.feet[0], fdz = _tgt[2] - f.ai.feet[2];
+          const fwpn = chooseEnemyWeapon(f.entity.weapon, ENEMY_BASICS[f.mobileType]);
+          const ffwd = [Math.sin(f.ai.yaw), 0, Math.cos(f.ai.yaw)];   // transform.forward (:208)
+          if (meleeHitConnects(f.ai._dist, f.ai.inSight, withinYaw(f.ai.yaw, fdx, fdz, MELEE_HIT_YAW_DEG))) {
+            applyDamageToNonPlayer(f, _foeTarget, {
+              weapon: fwpn, direction: ffwd, rolls,
+              calculateAttackDamage,
+              // the TARGET's own pool owns its death chain: an
+              // encounter foe routes to damageFoe, a watchman to the
+              // guard pool's door (the host wires that through the
+              // candidate's `hurtFromFoe`, the `_encounter` split
+              // world.js already uses for spell sinks).
+              dealDamage: (t, d) => (t.hurtFromFoe ? t.hurtFromFoe(d, ffwd) : damageFoe(t, d, null, ffwd)),
+              audio, hitEffects,
+            });
+          } else {
+            audio?.play3d?.(enemyMissSound(fwpn), [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
+          }
+          const fv = enemyAttackVoice(f);   // :216-226 fires whatever the target
+          if (fv && fv.clip >= 0) audio?.play3d?.(fv.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
+          continue;   // the player arm below is the ELSE
+        }
         const hdx = playerFeet[0] - f.ai.feet[0], hdz = playerFeet[2] - f.ai.feet[2];
         const wpn = chooseEnemyWeapon(f.entity.weapon, ENEMY_BASICS[f.mobileType]);
         const mid = [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]];
@@ -413,10 +530,17 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // nothing lands. The dungeon host gets this by suppressing the whole
       // mobile update; this pool resolves off the mobile's own frames, so it
       // needs the gate written out.
-      else if (!_fParalyzed && f.mobile.shootArrow && playerFeet && onArrow) {
+      else if (!_fParalyzed && f.mobile.shootArrow && _tgt && onArrow) {
         f.mobile.shootArrow = false;
+        // MT-ii: the shaft flies at the SELECTED target - BowDamage
+        // carries the same two-arm split as MeleeDamage (:134-148).
+        // FLAGGED: the arrow's IMPACT still only knows the player
+        // (the host's arrows.update has one onPlayerHit door), so an
+        // arrow loosed at another foe flies true and lands nothing.
+        // Written loudly rather than aimed wrongly: the alternative
+        // was firing at the player while the archer faced a bear.
         const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
-        const d = [playerFeet[0] - from[0], playerFeet[1] + 0.9 - from[1], playerFeet[2] - from[2]];
+        const d = [_tgt[0] - from[0], _tgt[1] + 0.9 - from[1], _tgt[2] - from[2]];
         const l = Math.hypot(...d) || 1;
         onArrow(from, [d[0] / l, d[1] / l, d[2] / l], f);
       }

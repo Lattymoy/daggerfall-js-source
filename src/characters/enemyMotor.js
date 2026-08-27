@@ -353,6 +353,24 @@ export class EnemyAI {
     this.spawnDistanceType = spawnDistanceType;
     this.playerInside = playerInside;
     this.giveUpTimer = 0;   // G1: blind-pursuit ticks (EnemyMotor.GiveUpTimer)
+    // MT-i: EnemySenses.Target + the SecondaryTarget slot
+    // MakeEnemyHostileToAttacker writes (:197). A target is a
+    // CANDIDATE descriptor ({ isPlayer } sentinel or { ai, entity })
+    // from the host's shared list; null = no target = the :410-414
+    // blind arm. The machine (characters/enemyTargets.js) arms only
+    // through senses.targeting - unarmed callers keep the
+    // player-only path, which is DFU's own behavior with no other
+    // enemy in range.
+    this.target = null;
+    this.secondaryTarget = null;
+    this.classicTargetUpdateTimer = 0;   // EnemySenses.cs:74 - the GetTargets cadence
+    // EnemySenses.targetSenses (:56) is a persistent FIELD, and the
+    // mutual-target write reads it OUTSIDE the spawn-band gate - so
+    // it can be a target selected several passes ago.
+    this.targetSenses = null;
+    this.sawSecondaryTarget = false;   // :62 - written outside the Enhanced guard, read on the classic path
+    this._armedTargeting = false;
+    this._targetCandidate = null;
     // The detour machine's whole state (wave 34), name-for-name with
     // EnemyMotor's fields so the laws below read against the source.
     this.obstacleDetected = false;
@@ -418,19 +436,43 @@ export class EnemyAI {
    *  resolve every FixedUpdate (see _senses). This half runs per
    *  classic tick. */
   _classicSenses(playerFeet, senses = null) {
-    // EnemySenses.cs:445-449 - the LOS timer decays on the CLASSIC update,
-    // ahead of the detection block that refills it (wave 35).
-    if (this.lastHadLOSTimer > 0) this.lastHadLOSTimer--;
+    // MT-i (the adversarial re-read): the LOS-timer decrement used to
+    // live HERE, at the top of the classic tick. It is NOT there in
+    // DFU - it sits at :446-447, in the SECOND ClassicUpdate block,
+    // BELOW the `if (target == null) ... return;` at :410-414. So a
+    // foe holding no target never decrements it: the timer freezes
+    // rather than draining. Unarmed the difference is unobservable
+    // (the player is always the target), which is why it survived
+    // wave 35 - armed it is not, so it moved to _classicPostTarget
+    // where the source keeps it.
     if (!senses) return;
     const dxp = playerFeet[0] - this.feet[0], dzp = playerFeet[2] - this.feet[2];
     const dist = Math.hypot(dxp, playerFeet[1] - this.feet[1], dzp);
     this.wouldBeSpawned = wouldBeSpawnedInClassic(
       dist, this.feet[1] - playerFeet[1], this.wouldBeSpawned, this.spawnDistanceType, this.playerInside);
-    this._blocked = blockedByIllusionEffect(this.seesThroughInvisibility, {
-      invisible: senses.playerInvisible ?? false,
-      blending: senses.playerBlending ?? false,
-      shade: senses.playerShade ?? false,
-    }, senses.rolls ?? Math.random);
+  }
+
+  /** The illusion re-roll (:444-449), split out of _classicSenses at
+   *  MT-i so it runs AFTER the target block, DFU's Update order - and
+   *  because BlockedByIllusionEffect reads the TARGET's concealment
+   *  (:668-683): the player's flags ride the senses context as ever;
+   *  a foe target's ride its candidate's concealment() closure (the
+   *  host builds it over effects.js; absent = unconcealed). */
+  _classicPostTarget(senses) {
+    // EnemySenses.cs:443-449, the SECOND ClassicUpdate block - which
+    // the :410-414 null-target return sits ABOVE, so neither of these
+    // two runs on a tick that found no target.
+    if (this.lastHadLOSTimer > 0) this.lastHadLOSTimer--;
+    if (!senses) return;
+    const foeTarget = this._armedTargeting && this.target && !this.target.isPlayer;
+    const flags = foeTarget
+      ? (this.target.concealment?.() ?? {})
+      : {
+          invisible: senses.playerInvisible ?? false,
+          blending: senses.playerBlending ?? false,
+          shade: senses.playerShade ?? false,
+        };
+    this._blocked = blockedByIllusionEffect(this.seesThroughInvisibility, flags, senses.rolls ?? Math.random);
   }
 
   /** EnemySenses' detection resolution. CH4: runs EVERY fixed step -
@@ -449,7 +491,15 @@ export class EnemyAI {
     // (:879) and records the ray's blocking door; the host resolves
     // the key against its action registry for OpenDoors.
     const _blocker = { key: null };
-    this.inSight = canSeeTarget(this.collider, this.feet, this.yaw, this.height, playerFeet, undefined, _blocker);
+    // MT-i (the adversarial re-read): the destination eye is the
+    // TARGET's own controller height (:896-898), not a constant. It
+    // was the default capsule height here, which is exactly right for
+    // the player and wrong for every foe target that is not
+    // player-sized - a rat's eye sat a metre and a half too high, so
+    // a wall that hides it did not.
+    const _targetHeight = this._armedTargeting && this._targetCandidate && !this._targetCandidate.isPlayer
+      ? (this._targetCandidate.ai?.height ?? undefined) : undefined;
+    this.inSight = canSeeTarget(this.collider, this.feet, this.yaw, this.height, playerFeet, _targetHeight, _blocker);
     this.doorKey = _blocker.key;
     // AUDIT 24 (the re-read): DFU's NON-HOSTILE MODE is a TARGET drop,
     // not an action skip. EnemySenses.Update:321-327 nulls `target`
@@ -461,7 +511,13 @@ export class EnemyAI {
     // their geometric values and stopped the attack component at the
     // host instead, which dropped that foe's DFRandom draw off the one
     // shared global stream every classic tick it stood pacified.
-    if (!this.isHostile) {
+    // MT-i: the ARMED exception to the pacified blind - DFU's
+    // Update:321-327 drops only the PLAYER as a pacified foe's
+    // target; a FOE target survives (a bear that attacks a pacified
+    // orc is fought back through MakeEnemyHostileToAttacker), so a
+    // pacified foe with a live foe target keeps its senses.
+    const foeTarget = this._armedTargeting && this._targetCandidate && !this._targetCandidate.isPlayer;
+    if (!this.isHostile && !foeTarget) {
       this.inSight = false;
       this.detected = false;
       return;
@@ -474,7 +530,7 @@ export class EnemyAI {
       if (this.detected) {
         this.lastKnownTargetPos = [playerFeet[0], playerFeet[1], playerFeet[2]];
         this.lastHadLOSTimer = LAST_HAD_LOS_TICKS;
-        if (!this.hasEncounteredPlayer) { this.hasEncounteredPlayer = true; this.justEncountered = true; }
+        this._encounterEdge();
       }
       this._trackPredictedPos();
       return;
@@ -499,9 +555,18 @@ export class EnemyAI {
       this.detected = true;
       if (this.lastHadLOSTimer <= 0) this.lastKnownTargetPos = [playerFeet[0], playerFeet[1], playerFeet[2]];
     } else this.detected = false;
-    if (this.detected && !this.hasEncounteredPlayer) { this.hasEncounteredPlayer = true; this.justEncountered = true; }
+    if (this.detected) this._encounterEdge();
 
     this._trackPredictedPos();
+  }
+
+  /** The first-encounter edge (EnemySenses:503-505): DFU's guard is
+   *  `detectedTarget && !hasEncounteredPlayer && target == player` -
+   *  detecting a FOE target (MT-i, armed pools) never spends the
+   *  player-encounter edge or the pacification roll it feeds. */
+  _encounterEdge() {
+    if (this._armedTargeting && this._targetCandidate && !this._targetCandidate.isPlayer) return;
+    if (!this.hasEncounteredPlayer) { this.hasEncounteredPlayer = true; this.justEncountered = true; }
   }
 
   /** EnemySenses.cs:472-495 - the tail of the detection block: the
@@ -568,6 +633,30 @@ export class EnemyAI {
     this.predictedTargetPos = at;
   }
 
+  /** MT-i: MakeEnemyHostileToAttacker's TARGET bookkeeping
+   *  (:193-202), which the method above's own comment called "the
+   *  part that is not target bookkeeping" while the port was
+   *  single-target. The reassign guard is verbatim: only when there
+   *  is no target, the current one is unseen, or it stands more than
+   *  2 units off. attacker is a candidate descriptor; the player arm
+   *  (:204-213) raises hostility here and the ally TEAM reset is the
+   *  entity-side half (enemyTargets.resetAllyTeamOnPlayerAttack -
+   *  the motor does not own entities). */
+  makeEnemyHostileToAttacker(attacker, attackerFeet = null, ticks = GIVE_UP_TICKS) {
+    if (attacker && (this.target == null || !this.inSight || this._dist > 2)) {
+      this.target = attacker;
+      this.secondaryTarget = attacker;
+      if (attackerFeet) {
+        const at = [attackerFeet[0], attackerFeet[1], attackerFeet[2]];
+        this.oldLastKnownTargetPos = [...at];
+        this.lastKnownTargetPos = at;
+        this.predictedTargetPos = at;
+      }
+      this.giveUpTimer = ticks;
+    }
+    if (attacker?.isPlayer) this.isHostile = true;
+  }
+
   /** EnemySenses.StealthCheck, verbatim: the castle-non-hostile gate
    *  is inert here (no castle detection; foes are hostile-on-sight);
    *  un-spawnable-in-classic foes never stealth-detect; one check per
@@ -581,17 +670,31 @@ export class EnemyAI {
     if (this._dist > STEALTH_MAX_DISTANCE) return false;
     const gameMinutes = senses.gameMinutes ?? 0;
     if (gameMinutes === this._lastStealthMinute) return this.detected;
-    if (senses.movingLessThanHalfSpeed) {
-      if ((gameMinutes & 1) === 1) return this.detected;
-    } else if (this.hasEncounteredPlayer) {
-      return true;
-    }
-    if (senses.sharedStealth && senses.sharedStealth.minute !== gameMinutes) {
-      senses.tallyStealth?.();
-      senses.sharedStealth.minute = gameMinutes;
+    // MT-i: StealthCheck's `if (target == player)` half (:633-650) -
+    // the half-speed minute skip, the encountered fast-mover
+    // auto-detect and the Stealth TALLY are the PLAYER target's; a
+    // foe target (armed pools) rolls on its own live Stealth below.
+    const foeTarget = this._armedTargeting && this._targetCandidate && !this._targetCandidate.isPlayer;
+    if (!foeTarget) {
+      if (senses.movingLessThanHalfSpeed) {
+        if ((gameMinutes & 1) === 1) return this.detected;
+      } else if (this.hasEncounteredPlayer) {
+        return true;
+      }
+      if (senses.sharedStealth && senses.sharedStealth.minute !== gameMinutes) {
+        senses.tallyStealth?.();
+        senses.sharedStealth.minute = gameMinutes;
+      }
     }
     this._lastStealthMinute = gameMinutes;
-    const chance = stealthChance(this._dist, senses.playerStealth ?? 0);
+    // CalculateStealthChance(distanceToTarget, target) reads the
+    // TARGET's live Stealth (:654): the foe entity's uniform skill
+    // block (skillsLevel) or the candidate's own stealthOf override.
+    const liveStealth = foeTarget
+      ? (this._targetCandidate.stealthOf?.()
+        ?? (typeof this._targetCandidate.entity?.skills === 'number' ? this._targetCandidate.entity.skills : 0))
+      : (senses.playerStealth ?? 0);
+    const chance = stealthChance(this._dist, liveStealth);
     const rolls = senses.rolls ?? Math.random;
     return Math.floor(rolls() * 100) >= chance;   // Dice100.FailedRoll(stealthChance) -> detected on a FAILED stealth roll
   }
@@ -840,8 +943,20 @@ export class EnemyAI {
    * player it cannot reach; the last is the one that sends it to the
    * doorway you went through instead of into the wall beside it.
    */
+  /** `senses.Target.GetComponent<CharacterController>().height`
+   *  (EnemyMotor.cs:532) - the TARGET's own capsule, which
+   *  GetDestination measures twice against. Unarmed (and against the
+   *  player) it is the one capsule constant the port has always used;
+   *  armed, a rat and a giant are not the same height and the source
+   *  says so in as many words. */
+  _targetHeight() {
+    const t = this._armedTargeting ? this._targetCandidate : null;
+    return (t && !t.isPlayer && t.ai?.height) || CAPSULE_HEIGHT;
+  }
+
   _getDestination(playerFeet) {
     const c = this._centre();
+    const tHeight = this._targetHeight();
     if (this.avoidObstaclesTimer > 0) {
       this.destination = this.detourDestination;
       return;
@@ -855,7 +970,7 @@ export class EnemyAI {
     // are feet-space, which is the same difference.
     const prevDist = Math.hypot(prev[0] - this.feet[0], prev[1] - this.feet[1], prev[2] - this.feet[2]);
     const predicted = this.predictedTargetPos ?? playerFeet;
-    const predictedCentre = [predicted[0], predicted[1] + CAPSULE_HEIGHT / 2, predicted[2]];
+    const predictedCentre = [predicted[0], predicted[1] + tHeight / 2, predicted[2]];
     // ...or the foe is a shooter with the target in sight, in which case
     // it heads for the target whether the path is clear or not (:539-540
     // - `senses.TargetInSight && (hasBowAttack || entity.CurrentMagicka > 0)`).
@@ -863,8 +978,11 @@ export class EnemyAI {
       || (this.inSight && (this.hasBowAttack || this.canCastRangedSpell()))) {
       const d = [predicted[0], predicted[1], predicted[2]];
       // Flyers, levitators and the slaughterfish aim for the target FACE
-      // (:543-544). The port's _aimY already carries that split.
-      if (this.flies || this.levitating || this.swims) d[1] += this._aimY;
+      // (:543-544) - `targetController.height * 0.5f`, the TARGET's
+      // capsule. _aimY carries the port's who-aims-where split (a
+      // flyer at the face, a swimmer at the centre); the HEIGHT it
+      // scales is the target's, which only MT-ii made variable.
+      if (this.flies || this.levitating || this.swims) d[1] += this._aimY * (tHeight / CAPSULE_HEIGHT);
       this.destination = d;
       this.searchMult = 0;
     } else {
@@ -886,11 +1004,14 @@ export class EnemyAI {
     }
     // :559-564 - a GROUNDED foe aims at its own height, "otherwise short
     // enemies' vector can aim up towards the target, which could
-    // interfere with distance-to-target calculations". Both controllers
-    // are the port's one capsule height, so the delta is zero and the
-    // line is written for the day they differ.
+    // interfere with distance-to-target calculations". The delta is
+    // `(targetController.height - originalHeight) / 2`: the TARGET's
+    // capsule against this foe's own. It was written as
+    // CAPSULE_HEIGHT (the player's) against `this.height` with a
+    // comment saying the line was "written for the day they differ" -
+    // MT-ii is that day, and a rat hunting a giant is the case.
     if (this.avoidObstaclesTimer <= 0 && !this.flies && !this.levitating && !this.swims) {
-      this.destination = [this.destination[0], this.destination[1] - (CAPSULE_HEIGHT - this.height) / 2, this.destination[2]];
+      this.destination = [this.destination[0], this.destination[1] - (tHeight - this.height) / 2, this.destination[2]];
     }
   }
 
@@ -1047,18 +1168,49 @@ export class EnemyAI {
     // BEFORE TakeAction reads avoidObstaclesTimer (:166-172).
     this._clock += dt;
     this._updateDetourTimers(dt, !paralyzed && !knocked);
+    // MT-i: the host's targeting context arms the classic target
+    // machine - a closure over the pool's shared candidate list
+    // (enemyTargets.runTargetMachine; a hook, not an import, so the
+    // senses half stays cycle-free). Unarmed = player-only, as ever.
+    const targeting = senses?.targeting ?? null;
+    this._armedTargeting = !!targeting;
     let classicTicks = 0;
     this._classicTimer += dt;
     while (this._classicTimer >= CLASSIC_UPDATE_INTERVAL) {
       this._classicTimer -= CLASSIC_UPDATE_INTERVAL;
       classicTicks++;
+      // DFU's Update order, per classic tick: the spawn-band block
+      // (:260-310), then the target machine (:312-405), then the
+      // NULL-TARGET RETURN (:410-414) - and only past it the second
+      // ClassicUpdate block with the illusion re-roll and the LOS
+      // decrement (:443-449). A tick that ends with no target runs
+      // NEITHER, which is why they sit together in one method.
       this._classicSenses(playerFeet, senses);
+      if (targeting) targeting(this, playerFeet, dt);
+      if (!targeting || this.target != null) this._classicPostTarget(senses);
     }
     // EnemySenses.targetPosPredict (:249-257) is its own 0.0625s timer -
     // the classic-update interval, independently phased. The port reads
     // "a classic tick happened this step" as the same thing, and says so.
     this._targetPosPredict = classicTicks > 0;
-    this._senses(playerFeet, senses);
+    // MT-i: the senses aim at the TARGET's live feet - the player's
+    // when unarmed or the player is it, the foe candidate's when a
+    // GetTargets pass picked one. No target reads BLIND (:410-414):
+    // targetInSight false, detectedTarget false, return - the timers
+    // and HandleNoAction below still run, exactly as DFU's early
+    // return leaves FixedUpdate's remainder to the motor.
+    let targetFeet = playerFeet;
+    if (targeting) {
+      this._targetCandidate = this.target;
+      targetFeet = this.target == null ? null
+        : (this.target.isPlayer ? playerFeet : this.target.ai.feet);
+    } else this._targetCandidate = null;
+    if (targeting && targetFeet == null) {
+      this.inSight = false;
+      this.detected = false;
+    } else {
+      this._senses(targetFeet, senses);
+    }
     // AUDIT 26 F014 (UpdateTimers, UNCONDITIONAL - EnemyMotor.cs runs
     // it every FixedUpdate at :170, after the CanAct writers and
     // before the CanAct gate): detection refills GiveUpTimer to 200
@@ -1082,7 +1234,7 @@ export class EnemyAI {
       // C-slice: a pacified foe (IsHostile false) keeps its senses
       // but takes no action - DFU's motor only pursues hostiles
       // (its senses hold no Target, so HandleNoAction drops CanAct).
-      if (this.canAct) this._classicTick(playerFeet);
+      if (this.canAct) this._classicTick(targetFeet ?? playerFeet);   // MT-i: pursuit aims at the TARGET
     }
     if (paralyzed || !this.isHostile) this.moving = false;
 

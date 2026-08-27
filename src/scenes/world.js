@@ -1329,11 +1329,24 @@ export async function bootWorld(canvas, renderer, params, status) {
           && Math.hypot(f.ai.feet[0] - pf[0], f.ai.feet[1] - pf[1], f.ai.feet[2] - pf[2]) <= range)
           // V3: distance rides along - the Skull of Corruption clones
           // the NEAREST enemy; the field is additive, no reader broke
-          .map((f) => ({ mobileType: f.mobileType ?? f.entity?.mobileType ?? 128, distance: Math.hypot(f.ai.feet[0] - pf[0], f.ai.feet[1] - pf[1], f.ai.feet[2] - pf[2]), hurt: (n) => foeSinks(f).hurt(n) }));
+          .map((f) => ({
+            mobileType: f.mobileType ?? f.entity?.mobileType ?? 128,
+            distance: Math.hypot(f.ai.feet[0] - pf[0], f.ai.feet[1] - pf[1], f.ai.feet[2] - pf[2]),
+            // MT-ii: the LIVE team - both summons filter their scan on
+            // `Team != MobileTeams.PlayerAlly` before counting company
+            // (SanguineRoseEffect.cs:47-48, SkullOfCorruptionEffect
+            // .cs:47-48), so your own standing summons never count.
+            team: f.entity?.team ?? 'PlayerEnemy',
+            hurt: (n) => foeSinks(f).hurt(n),
+          }));
       },
       spawnFoe: (mobileType) => {
         const pf = enchantFeet();
         exteriorFoes.spawnFoe(mobileType, [pf[0] + 2, pf[1] + 1, pf[2]]).catch(() => {});
+      },
+      spawnAlliedFoe: (mobileType) => {
+        const pf = enchantFeet();
+        exteriorFoes.spawnFoe(mobileType, [pf[0] + 2, pf[1] + 1, pf[2]], { allied: true }).catch(() => {});
       },
       // V3: the artifact doors. messageBox is Azura's TEXT.RSC popup
       // (the infection host's flatten, at this consumer);
@@ -1342,8 +1355,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       // foe leaves through removeFoe (a quest foe still in use is
       // left alone, QuestResourceBehaviour's own check) and the new
       // type spawns at its feet with the damage taken carried over.
-      // spawnAlliedFoe stays UNMOUNTED: no ally/team combat yet - the
-      // two summons' range gates and fail lines run, the spawn idles.
+      // spawnAlliedFoe is MOUNTED at MT-ii, where MobileTeams
+      // targeting shipped: GameObjectHelper.CreateFoeSpawner(foeType,
+      // spawnCount: 1, alliedToPlayer: true) is one foe into this
+      // host's own encounter pool on team PlayerAlly, and getTargets'
+      // ally arms then make it fight FOR the player. The spawn offset
+      // is spawnFoe's own (DFU's FoeSpawner places by its own law -
+      // the port's exterior pool has no free-placement caller).
       messageBox: (id) => {
         const lines = plainLines(townTalk.lines(id));
         if (lines?.length) townTalk.showOverlay(new ChoiceWindow({ lines }));
@@ -1401,6 +1419,18 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  first roll for the rest of its life. */
   const _foeSenses = () => sensesContext(playerEntity, playerTicker.classicMinutes, {
     movingLessThanHalfSpeed: player.movingLessThanHalfSpeed ?? true,
+    // MT-ii: THE SHARED CANDIDATE LIST - DFU's
+    // ActiveGameObjectDatabase.GetActiveEnemyBehaviours (EnemySenses
+    // .cs:741-749), which is ONE database across every enemy in the
+    // scene. This host owns BOTH exterior pools and already hands
+    // them the same builder, so the join here is what lets a
+    // spawned monster and a city watchman see each other at all.
+    // Corpses and culled records leave it the same frame they die -
+    // DFU's database yields only ACTIVE behaviours. Passing the
+    // getter (not the array) keeps one live view per frame with no
+    // pool importing the other.
+    candidates: () => [...cityGuards.guards, ...exteriorFoes.foes].filter((f) => !f.dead),
+    playerEntity,
   });
   // U32: ONE construction for the world inventory and spellbook - F6
   // and Backspace open them, and so do the character sheet's buttons.
@@ -2917,6 +2947,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     clearEnemies: () => {
       for (const f of [...exteriorFoes.foes]) { if (!f.dead) exteriorFoes.removeFoe(f); }
+    },
+    // MT-iii: ChangeFoeInfighting / ChangeFoeTeam's instance walk.
+    // DFU filters the active-enemy database on QuestSpawn and matches
+    // QuestResourceBehaviour.TargetSymbol; the port's quest-spawned
+    // foes carry that behaviour at f.questBehaviour (questFoeHost's
+    // bindQuestFoeHost), so HAVING one is being a quest spawn. The
+    // symbol compare is name equality - the port mints a fresh
+    // QuestSymbol per read, which no reference compare could match
+    // (the same law AUDIT 24 recorded for isNPCDataEqual).
+    questFoeInstances: (symbol) => {
+      const want = symbol?.name ?? null;
+      if (want == null) return [];
+      return [...exteriorFoes.foes, ...cityGuards.guards].filter((f) =>
+        !f.dead && f.questBehaviour && f.questBehaviour.targetSymbol?.name === want);
     },
     playerRaceName: () => playerEntity.race ?? null,
     getReputation: (fid) => { const s = _questStore(); return s ? getReputation(s, fid) : 0; },

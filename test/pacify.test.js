@@ -145,11 +145,18 @@ test('X8: the pacify reaches the AI, and attacking restores hostility', () => {
   // THE OTHER HALF - "until player attacks them". Both foe damage
   // doors re-hostile a pacified target, which is what makes the
   // permanent pacify a real mechanic rather than an off switch.
-  for (const p of ['src/scenes/dungeonContext.js', 'src/scenes/exteriorFoes.js']) {
-    assert.match(readFileSync(join(ROOT, p), 'utf8'),
-      /if \((foe|f)\.ai && !\1\.ai\.isHostile\) \{ \1\.ai\.isHostile = true;/,
-      `${p} restores hostility on damage`);
-  }
+  // MT-ii: the encounter pool's door now runs MakeEnemyHostileToAttacker
+  // WHOLE for a player hit (:186-214) - the IsHostile raise is inside
+  // its player arm - and keeps the bare `!isHostile` raise only for a
+  // SOURCELESS hurt. The dungeon host is still on the pre-MT shape.
+  assert.match(readFileSync(join(ROOT, 'src/scenes/dungeonContext.js'), 'utf8'),
+    /if \(foe\.ai && !foe\.ai\.isHostile\) \{ foe\.ai\.isHostile = true;/,
+    'src/scenes/dungeonContext.js restores hostility on damage');
+  const xfs = readFileSync(join(ROOT, 'src/scenes/exteriorFoes.js'), 'utf8');
+  assert.match(xfs, /makeEnemyHostileToAttacker\?\.\(PLAYER_TARGET, playerFeet\)/,
+    'src/scenes/exteriorFoes.js restores hostility on damage - through the whole C# method');
+  assert.match(xfs, /\} else if \(f\.ai && !f\.ai\.isHostile\) \{\n\s*f\.ai\.isHostile = true;/,
+    'and a sourceless hurt still raises it the old way');
   // the motor's own field names the mechanic it was waiting for
   assert.match(readFileSync(join(ROOT, 'src/characters/enemyMotor.js'), 'utf8'),
     /isHostile = true;\s*\/\/ EnemyMotor\.IsHostile - pacification/,
