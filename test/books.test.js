@@ -51,7 +51,10 @@ function buildBook({ title = 'Test Book', author = 'A. Author', naughty = false,
   return out;
 }
 const text = (s) => [...s].map((c) => c.charCodeAt(0));
-// classic centring CLOSES the row it justifies: <text> then 0xFD
+// AUDIT 26 F150 corrected this note. Classic centring does NOT close
+// the row it justifies, and it does not reach BACK over the text
+// already on that line: `<text> then 0xFD` leaves that text LEFT and
+// centres what follows.
 const PAGE1 = new Uint8Array([...text('First line'), RSC.NewLine, ...text('Centered'), RSC.JustifyCenter, RSC.EndOfPage]);
 const PAGE2 = new Uint8Array([RSC.PositionPrefix, 40, ...text('Offset line'), RSC.NewLine, RSC.FontPrefix, 2, ...text('After font'), RSC.EndOfPage]);
 
@@ -146,9 +149,18 @@ test('books: the layout law is ConvertTokensToString - NewLine breaks, justify i
   // PositionPrefix is "Unused" for books.
   const bf = new BookFile();
   bf.load(buildBook({ pages: [PAGE1, PAGE2] }), 'BOK00000.TXT');
+  // AUDIT 26 F150: ONE ROW PER TEXT TOKEN. CreateBookLabels' default
+  // arm adds a separate label per non-formatting token (:253) and
+  // LayoutBookLabels stacks each on its own row (:317-328), so the
+  // two pages' text tokens no longer concatenate into one row - and
+  // 'Centered' is LEFT, because its label is created BEFORE the
+  // JustifyCenter that follows it on the same line. This pin used to
+  // assert the concatenated row and the retroactive centring, which
+  // is the port behaviour F150 corrects.
   assert.deepEqual(layoutBookLines(bf).map((l) => [l.text, l.center]), [
     ['First line', false],
-    ['CenteredOffset line', true],   // page 1's tail merges; PositionPrefix dropped
+    ['Centered', false],             // the justify token comes AFTER it
+    ['Offset line', true],           // ...and reaches this one; PositionPrefix dropped
     ['After font', true],            // centring is STICKY past the newline
   ]);
 
@@ -161,7 +173,8 @@ test('books: the layout law is ConvertTokensToString - NewLine breaks, justify i
     ...text('still left'), RSC.NewLine, RSC.EndOfPage,
   ])] }), 'BOK00000.TXT');
   assert.deepEqual(layoutBookLines(left).map((l) => [l.text, l.center]), [
-    ['c', true], ['still centred', true],
+    ['c', false],            // F150: emitted before its line's justify token
+    ['still centred', true],
     ['left again', false],
     ['still left', false],   // AUDIT B-M17: un-centring is STICKY too
   ]);
@@ -175,9 +188,15 @@ test('AUDIT 24: a BLANK LINE resets the sticky alignment to Left', () => {
   // (DaggerfallBookReaderWindow.cs:221-228). The port carried the
   // centring straight across the blank line, so a centred title
   // centred the whole rest of the book.
+  // AUDIT 26 F150 reordered this fixture. It used to put the
+  // JustifyCenter AFTER the title text and expect a centred title -
+  // which only worked because the port applied a justify token
+  // retroactively to the row already accumulated. In DFU the title's
+  // label is created with the alignment standing at that moment, so a
+  // real centred title page justifies FIRST.
   const bf = new BookFile();
   bf.load(buildBook({ pages: [new Uint8Array([
-    ...text('A TITLE'), RSC.JustifyCenter, RSC.NewLine,
+    RSC.JustifyCenter, ...text('A TITLE'), RSC.NewLine,
     RSC.NewLine,
     ...text('the body'), RSC.NewLine,
     ...text('still left'), RSC.NewLine, RSC.EndOfPage,
@@ -188,15 +207,31 @@ test('AUDIT 24: a BLANK LINE resets the sticky alignment to Left', () => {
     ['the body', false],
     ['still left', false],
   ]);
+
+  // ...and the other order, which is what F150 is about: the justify
+  // reaches only the tokens AFTER it, so this title stays left and
+  // the centring lands on the next line instead - the shifted-by-one
+  // centring the row describes.
+  const late = new BookFile();
+  late.load(buildBook({ pages: [new Uint8Array([
+    ...text('A TITLE'), RSC.JustifyCenter, RSC.NewLine,
+    ...text('the body'), RSC.NewLine, RSC.EndOfPage,
+  ])] }), 'BOK00000.TXT');
+  assert.deepEqual(layoutBookLines(late).map((l) => [l.text, l.center]),
+    [['A TITLE', false], ['the body', true]]);
+
   // ...and a line that carries a token is NOT an empty line: the
   // centring survives a bare justify token, as C#'s else-arm does.
+  // That line emits NO row of its own either - the switch consumes a
+  // justify token and only the `default:` arm makes a label.
   const keep = new BookFile();
   keep.load(buildBook({ pages: [new Uint8Array([
-    ...text('T'), RSC.JustifyCenter, RSC.NewLine,
+    RSC.JustifyCenter, ...text('T'), RSC.NewLine,
     RSC.JustifyCenter, RSC.NewLine,
     ...text('body'), RSC.NewLine, RSC.EndOfPage,
   ])] }), 'BOK00000.TXT');
-  assert.deepEqual(layoutBookLines(keep).map((l) => l.center), [true, true, true]);
+  assert.deepEqual(layoutBookLines(keep).map((l) => [l.text, l.center]),
+    [['T', true], ['body', true]], 'the bare-justify line adds no row and resets nothing');
 });
 
 test('books: an empty book scrolls nowhere and a corrupt page offset reads empty, never throws', () => {

@@ -214,6 +214,11 @@ export const spellEffects = (spell) => (spell?.effects ?? []).filter((e) => e &&
 export function spellRowText(spell, cost) { return `${cost} - ${spell.name}`; }
 export function spellPointCost(spell, castCost) {
   if (spell?.tag === LYCANTHROPY_SPELL_TAG) return 0;
+  return rawSpellPointCost(spell, castCost);
+}
+/** The same CalculateTotalEffectCosts value WITHOUT the display
+ *  quirk - what SortSpellsPointCost orders by (AUDIT 26 F179). */
+export function rawSpellPointCost(spell, castCost) {
   return castCost ? castCost(spell) : (spell?.cost ?? 0);
 }
 
@@ -511,7 +516,16 @@ export class SpellbookWindow {
       const before = list.slice();
       list.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
       if (list.every((sp, i) => sp === before[i])) {
-        const cost = new Map(list.map((sp) => [sp, spellPointCost(sp, this.deps.castCost)]));
+        // AUDIT 26 F179: the RAW cost, not the display one.
+        // SortSpellsPointCost (DaggerfallEntity.cs:741-752) calls
+        // CalculateTotalEffectCosts with no tag check at all - the
+        // zero-cost lycanthropy quirk lives only in
+        // PopulateSpellsList (:264-267), where its comment says it is
+        // "so it displays correctly in spellbook". Sorting through
+        // the display value floated that spell to the front of a
+        // lycanthrope's book instead of leaving it at its real
+        // position.
+        const cost = new Map(list.map((sp) => [sp, rawSpellPointCost(sp, this.deps.castCost)]));
         list.sort((a, b) => cost.get(a) - cost.get(b));
       }
       this.refreshSpellsList(false);

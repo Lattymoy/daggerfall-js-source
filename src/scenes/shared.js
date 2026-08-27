@@ -1029,6 +1029,12 @@ export function wireInfectionVideos(renderer, { textAt = null, showText = null, 
         try {
           const { playVideo } = await import('../ui/videoPlayer.js');
           const { getBytes } = await import('./dataSource.js');
+          // endOnAnyKey false is DFU's own for these
+          // (VampirismInfection.cs:126/:136,
+          // LycanthropyInfection.cs:114) - but it does NOT make them
+          // unskippable, as AUDIT 26 F151 found this lane claiming:
+          // Escape is a separate disjunct in Update (:140-142) and
+          // closes any video, whatever this flag says.
           const played = await playVideo(renderer.canvas, renderer, await getBytes(name), { endOnAnyKey: false });
           if (typeof window !== 'undefined') (window.__infectionVideos ??= []).push({ name, played });
         } catch (e) {

@@ -70,14 +70,20 @@ export const JOURNAL_MODES = Object.freeze(['activeQuests', 'finishedQuests', 'n
  *  no localisation table, so the English literals live here - the same
  *  call the rest of the port's native windows make. */
 /** MultiFormatTextLabel.SetText (:355-371): one colour per formatting.
- *  TextHighlight takes the label's HighlightColor, which defaults to
- *  DaggerfallUI.DaggerfallHighlightTextColor (:36); TextQuestion and
- *  TextAnswer take their own two - and Answer is
- *  DaggerfallDefaultInputTextColor, not the default text colour. */
+ *  TextHighlight takes the LABEL's HighlightColor (:362-364);
+ *  TextQuestion and TextAnswer take their own two - and Answer is
+ *  DaggerfallDefaultInputTextColor, not the default text colour.
+ *
+ *  AUDIT 26 F163: the port took DaggerfallHighlightTextColor
+ *  (219,130,40) as the highlight, which is MultiFormatTextLabel's
+ *  DEFAULT (:36) - but this window overrides it outright:
+ *  `questLogLabel.HighlightColor = Color.white`
+ *  (DaggerfallQuestJournalWindow.cs:152). Every notebook date header
+ *  and finished-quest header showed orange where DFU shows white. */
 export const JOURNAL_COLORS = Object.freeze({
   text: DEFAULT_TEXT_COLOR,
   newline: DEFAULT_TEXT_COLOR,
-  highlight: [219 / 255, 130 / 255, 40 / 255, 1],   // DaggerfallHighlightTextColor
+  highlight: [1, 1, 1, 1],                          // Color.white, this window's override
   question: [0.698, 0.812, 1.0, 1],                 // DaggerfallQuestionTextColor
   answer: [227 / 255, 223 / 255, 0, 1],             // DaggerfallDefaultInputTextColor
 });
