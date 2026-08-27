@@ -83,7 +83,7 @@ export class AudioEngine {
       // black screen while the sound and music archives read in. The sync
       // prefix hands the context to an un-awaited caller immediately.
       this._ensureCtx();
-      this.attachGestureResume();
+      if (!this._gestureHooked) { this._gestureHooked = true; this.attachGestureResume(); }
     }
     await this.init(fetchBytes);
   }
@@ -102,7 +102,20 @@ export class AudioEngine {
     }
   }
 
-  /** Hook the first-gesture resume. Call once after init; idempotent. */
+  /** A CLOCK WITHOUT THE ARCHIVES (EM2a). The enhanced front door plays
+   *  Mac's title theme before any folder pick, so it needs the context
+   *  and the gesture resume and NOTHING that reads ARENA2. ensure() ties
+   *  the two to the DAGGER.SND load; this is the same two alone, and it
+   *  is idempotent so the door and every later ensure() agree. */
+  ensureClock() {
+    if (typeof window === 'undefined') return null;
+    this._ensureCtx();
+    if (!this._gestureHooked) { this._gestureHooked = true; this.attachGestureResume(); }
+    return this.ctx;
+  }
+
+  /** Hook the first-gesture resume. Call once after init; idempotent
+   *  only through ensureClock/ensure, which guard it. */
   attachGestureResume(target = window) {
     const resume = () => {
       this._ensureCtx();

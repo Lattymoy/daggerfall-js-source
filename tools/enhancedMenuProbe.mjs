@@ -24,7 +24,7 @@ const check = (name, ok, detail = '') => {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`);
 };
 
-const browser = await chromium.launch();
+const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] });   // EM2a: the theme plays without a gesture here; a real browser waits for the first click
 
 async function run(label, opts) {
   const ctx = await browser.newContext(opts);
@@ -32,7 +32,7 @@ async function run(label, opts) {
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
 
-  await page.goto(`${BASE}/play/`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/play/`, { waitUntil: 'load' });
   await page.waitForSelector('#enhanced-menu .railbtn', { timeout: 15000 });
 
   // 1. THE DOOR OPENED WITHOUT DATA. ensureArena2's picker is a fixed
@@ -65,6 +65,31 @@ async function run(label, opts) {
     `${before} -> ${after}`);
 
   await page.screenshot({ path: `${shots}/door-${label}.png` });
+
+  // 2b. EM2a: THE DOOR HAS ITS TITLE MOMENT. Mac's theme streams through
+  //     a media source with no ARENA2 and no folder pick; headless
+  //     Chromium is launched without the gesture rule, so the element
+  //     should be playing after the click above (a real browser starts
+  //     it on that same first click). Sound is measured, not assumed:
+  //     an AnalyserNode on the track's own bus reads a non-zero level.
+  const theme = await page.evaluate(async () => {
+    const { music } = await import('/src/systems/music.js');
+    const t = music._track;
+    const el = t?.element;
+    if (!el) return { mounted: false };
+    await new Promise((r) => setTimeout(r, 1200));
+    let level = 0;
+    try {
+      const an = t.ctx.createAnalyser(); an.fftSize = 2048;
+      t.master.connect(an);
+      const buf = new Float32Array(an.fftSize);
+      for (let i = 0; i < 10; i++) { await new Promise((r) => setTimeout(r, 60)); an.getFloatTimeDomainData(buf); level = Math.max(level, ...buf.map(Math.abs)); }
+    } catch (e) { level = -1; }
+    return { mounted: true, src: el.src, playing: t.playing && !el.paused, loop: el.loop, currentTime: el.currentTime, current: music.current, level, ctx: t.ctx.state };
+  });
+  check(`${label}: the title theme is mounted on Mac's file`, theme.mounted && /music\/enhanced\/main-theme\.mp3$/.test(theme.src ?? ''), JSON.stringify(theme));
+  check(`${label}: ...and PLAYING, looped, as the service's current`, theme.playing && theme.loop && theme.current === 'title' && theme.currentTime > 0, `t=${theme.currentTime?.toFixed?.(2)} ctx=${theme.ctx}`);
+  check(`${label}: ...with signal on its bus`, theme.level > 0.001, `peak ${theme.level?.toFixed?.(4)}`);
 
   // 3. THE PICK APPEARS WHEN A GAME STARTS, and not one moment before.
   await page.locator('#enhanced-menu .railbtn', { hasText: 'New Game' }).click();

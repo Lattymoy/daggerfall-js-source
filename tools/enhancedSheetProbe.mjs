@@ -56,7 +56,7 @@ async function bootSettled(page) {
  *  unmounts through runEnhancedMenu's own resolve and what is left is
  *  the game's real page. */
 async function toGamePage(page) {
-  await page.goto(`${BASE}/play/?skin=enhanced`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/play/?skin=enhanced`, { waitUntil: 'load' });
   await page.waitForSelector('#enhanced-menu .railbtn', { timeout: 20000 });
   await page.getByRole('button', { name: 'New Game', exact: true }).click();
   await page.getByRole('button', { name: 'Begin', exact: true }).click();

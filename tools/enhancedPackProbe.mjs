@@ -47,7 +47,7 @@ async function bootSettled(page) {
 
 
 async function toGamePage(page, skin = 'enhanced') {
-  await page.goto(`${BASE}/play/?skin=${skin}`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/play/?skin=${skin}`, { waitUntil: 'load' });
   if (skin !== 'enhanced') return;
   await page.waitForSelector('#enhanced-menu .railbtn', { timeout: 20000 });
   await page.locator('#enhanced-menu .railbtn', { hasText: 'New Game' }).first().click();

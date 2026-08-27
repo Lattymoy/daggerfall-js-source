@@ -201,5 +201,101 @@ test('EM1 service: playScore plays a composed song through the one scheduler, an
   const cold = new MusicService();
   assert.equal(cold.playScore(song), false);
   assert.equal(cold._pending, song);
-  assert.match(read('src/systems/music.js'), /typeof p === 'string' \? this\.playSong\(p\) : this\.playScore\(p\)/);
+  assert.match(read('src/systems/music.js'), /if \(typeof p === 'string'\) \{ if \(this\.playSong\(p\)\) this\._pending = null; return; \}/);
+  assert.match(read('src/systems/music.js'), /if \(p\.file\) \{ this\.playTrack\(p\)/, 'a pending TRACK is replayed too (EM2a)');
+  assert.match(read('src/systems/music.js'), /if \(this\.playScore\(p\)\) this\._pending = null;/);
+});
+
+// ── EM2a: THE TITLE THEME - Mac's first track, streamed ────────────
+import { TrackPlayer, DEFAULT_FADE_SECONDS } from '../src/systems/enhancedMusic/trackPlayer.js';
+import { TITLE_THEME, PLACE_SCORES, scoreFor } from '../src/systems/enhancedMusic/scores.js';
+import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
+
+/** A fake AudioContext: gain nodes that record their ramps, a media
+ *  source that records connections, a clock. */
+function fakeCtx() {
+  const log = [];
+  const param = (name) => ({
+    value: 0,
+    setValueAtTime(v, t) { log.push([name, 'set', v, t]); this.value = v; },
+    linearRampToValueAtTime(v, t) { log.push([name, 'ramp', v, t]); this.value = v; },
+    cancelScheduledValues(t) { log.push([name, 'cancel', t]); },
+  });
+  return {
+    currentTime: 10, destination: { id: 'dest' }, log,
+    createGain() { const g = { gain: param('gain'), connect: (to) => log.push(['gain->', to.id ?? 'node']) }; return g; },
+    createMediaElementSource(el) { log.push(['source', el.src]); return { connect: (to) => log.push(['source->gain']), disconnect: () => log.push(['source-disconnect']) }; },
+  };
+}
+const fakeElement = (behaviour = 'plays') => (src) => ({
+  src, loop: false, paused: true, preload: '',
+  play() { if (behaviour === 'refuses') return Promise.reject(new Error('NotAllowedError: gesture')); this.paused = false; return Promise.resolve(); },
+  pause() { this.paused = true; },
+});
+
+test('EM2a scores: the title theme is Mac\'s file, tracked, allow-listed, reachable from the game page', () => {
+  assert.equal(TITLE_THEME.id, 'title');
+  assert.equal(TITLE_THEME.loop, true, 'the door\'s theme loops until the game takes over');
+  assert.match(TITLE_THEME.file, /^\.\.\/music\/enhanced\/[\w-]+\.mp3$/, 'relative to /play/, one directory under the site root, MP3');
+  const onDisk = 'public/' + TITLE_THEME.file.replace(/^\.\.\//, '');
+  assert.ok(existsSync(new URL('../' + onDisk, import.meta.url)), `${onDisk} exists`);
+  const tracked = execFileSync('git', ['ls-files', 'public/music'], { encoding: 'utf8' }).split('\n');
+  assert.ok(tracked.includes(onDisk), `${onDisk} is tracked`);
+  assert.ok(read('test/doctrine.test.js').includes(`['${onDisk}', "OURS - `), 'and on the doctrine allow-list as OURS');
+  assert.deepEqual(PLACE_SCORES, {}, 'no place has a track yet - the composer plays alone (EM1)');
+  assert.equal(scoreFor(MUSIC_ENV.DungeonInterior), null);
+});
+
+test('EM2a track player: streams through a media source into a ramped gain, fades under, never throws', async () => {
+  const ctx = fakeCtx();
+  const tp = new TrackPlayer(ctx, { gain: () => 0.5, createElement: fakeElement() });
+  assert.equal(await tp.play(TITLE_THEME), true);
+  assert.equal(tp.playing, true);
+  assert.equal(tp.element.loop, true);
+  assert.equal(tp.element.paused, false, 'the element plays');
+  assert.deepEqual(ctx.log.filter((l) => l[0] === 'source'), [['source', TITLE_THEME.file]], 'one media source, on the file');
+  assert.ok(ctx.log.some((l) => l[0] === 'gain' && l[1] === 'ramp' && l[2] === 0.5), 'the gain ramps to the setting times the track gain');
+  assert.equal(await tp.play(TITLE_THEME), true, 'idempotent per track');
+  assert.equal(ctx.log.filter((l) => l[0] === 'source').length, 1, 'no second source');
+  const el = tp.element;
+  tp.fadeOut(0);
+  assert.equal(tp.playing, false);
+  assert.equal(el.paused, true, 'faded out at 0s pauses now');
+  assert.equal(tp.element, null);
+  assert.ok(ctx.log.some((l) => l[0] === 'gain' && l[1] === 'ramp' && l[2] === 0), 'the fade is a ramp to zero on the gain, never the element');
+  assert.equal(DEFAULT_FADE_SECONDS, 3);
+  // The gesture rule: a refused play leaves the element armed and reports false.
+  const shy = new TrackPlayer(fakeCtx(), { gain: () => 1, createElement: fakeElement('refuses') });
+  assert.equal(await shy.play(TITLE_THEME), false);
+  assert.equal(shy.playing, false);
+  assert.ok(shy.element, 'still armed');
+  // No context: nothing to do, no throw.
+  assert.equal(await new TrackPlayer(null).play(TITLE_THEME), false);
+});
+
+test('EM2a service: playTrack needs a clock and no archive, pends on refusal, and the game\'s music fades it under', async () => {
+  const svc = new MusicService();
+  // Node has no window: no clock, so the request is refused honestly.
+  assert.equal(await svc.playTrack(TITLE_THEME), false);
+  assert.equal(svc.enabled, false, 'MIDI.BSA was never consulted');
+  // With a track sounding, the composed piece fades it under rather than cutting it.
+  const fades = [];
+  svc._track = { playing: true, fadeOut: (s) => fades.push(s ?? 'default'), stop: () => fades.push('stop') };
+  svc.player = { play: () => true, stop: () => {}, playing: false };
+  assert.equal(svc.playScore(composeScore(D, hashSeed('x'))), true);
+  assert.deepEqual(fades, ['default'], 'faded, with the default fade');
+  assert.equal(svc.playing, true, 'a sounding track counts as playing for the director');
+  svc.stop();
+  assert.ok(fades.includes('stop'), 'stop stops the track too');
+  // The wiring: the enhanced door plays it before the menu, un-awaited.
+  const main = read('src/main.js');
+  assert.match(main, /music\.playTrack\(TITLE_THEME\);\s*\n\s*status\('main menu'\);/, 'the theme is asked for before the menu shows');
+  assert.match(read('src/systems/audio.js'), /ensureClock\(\) \{/, 'a clock without the archives');
+  const src = read('src/systems/music.js');
+  for (const door of ['  _playBuiltIn(name) {', '  async _startReplacement(name) {', '  playScore(song) {']) {
+    const at = src.indexOf(door);
+    assert.ok(at >= 0, `${door.trim()} exists`);
+    assert.match(src.slice(at, at + 1600), /this\._fadeTrackUnder\(\);/, `${door.trim()} fades the track under`);
+  }
 });

@@ -57,7 +57,7 @@ async function shot(name, page, opts = {}) {
 {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
   const page = await ctx.newPage();
-  await page.goto(`${BASE}/play/?skin=enhanced`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/play/?skin=enhanced`, { waitUntil: 'load' });
   await page.waitForSelector('#enhanced-menu .railbtn', { timeout: 20000 });
   await page.locator('#enhanced-menu .railbtn', { hasText: 'Settings' }).first().click();
   await page.waitForSelector('#enhanced-menu .row');
@@ -70,7 +70,7 @@ async function shot(name, page, opts = {}) {
 {
   const ctx = await browser.newContext({ ...devices['Pixel 5'], deviceScaleFactor: 2 });
   const page = await ctx.newPage();
-  await page.goto(`${BASE}/play/?skin=enhanced`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/play/?skin=enhanced`, { waitUntil: 'load' });
   await page.waitForSelector('#enhanced-menu .railbtn', { timeout: 20000 });
   await page.locator('#enhanced-menu .railbtn', { hasText: 'New Game' }).first().click();
   await page.waitForTimeout(600);
@@ -83,7 +83,7 @@ async function shot(name, page, opts = {}) {
 {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
   const page = await ctx.newPage();
-  await page.goto(`${BASE}/play/?skin=enhanced`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/play/?skin=enhanced`, { waitUntil: 'load' });
   await page.waitForSelector('#enhanced-menu .railbtn', { timeout: 20000 });
   await page.locator('#enhanced-menu .railbtn', { hasText: 'New Game' }).first().click();
   await page.getByRole('button', { name: 'Begin', exact: true }).click();
