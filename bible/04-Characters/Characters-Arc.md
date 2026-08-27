@@ -2564,8 +2564,16 @@ and it now anchors to the arm's own brace.
 ## IF - THE INTERIOR FOE POOL (2026-08-27)
 
 The completion analysis' item six, and the last of the port's four
-scene hosts to hold no enemy at all. FOUR flagged sites named this
-gap; all four are retired.
+scene hosts to hold no enemy at all. FIVE flagged sites named this
+gap; all five are retired.
+
+HONEST NOTE ON THE COUNT: the first commit said FOUR and closed the
+row. A scout sweep finishing after that commit found the fifth - the
+Q4-v adapter's absent `standFoe` - whose stated blocker was, in as
+many words, "the INTERIOR enemy host". It was worded differently
+enough from the other four to survive the grep that found them. The
+row was re-opened, the arm written, and the count corrected here
+rather than left to read as if the sweep had been complete.
 
 ### The fact the slice is built on
 
@@ -2622,6 +2630,13 @@ not one.
   scan through the shared `areEnemiesNearby` over this host's own
   database. An interior with no pool minted still answers false -
   because there is nothing there, not because the host cannot look.
+- **Quest foes from BUILDING MARKERS** - the Q4-v adapter's
+  `standFoe`, which is DFU's OTHER quest-foe path into an interior:
+  AddQuestResourceObjects at LAYOUT time (PlayerEnterExit.cs:797-800)
+  and on Place.cs's hot-place (:508-521), where CreateFoe's
+  TryPlacement is the first. The dungeon adapter's twin, to the
+  shape - the stands join the scene's behaviour walk and leave with
+  its teardown.
 - **The summoning REFUSAL's daedra** (Range(3,6) at 8..64,
   DaggerfallDaedraSummonedWindow.cs:125) and **the COVEN failure's**
   (Range(1,4) at 4..64, DaggerfallQuestPopupWindow.cs:257) are the
@@ -2643,7 +2658,7 @@ the action objects and the no-enemy sound only as the else.
 The pool is ARMED for MobileTeams targeting like every other pool
 (MT), over the only active-enemy database this host has - itself.
 
-Pins: 8 in `test/interiorfoes.test.js`, three of them mutation-proven.
+Pins: 9 in `test/interiorfoes.test.js`, four of them mutation-proven.
 One pre-existing pin was REPAIRED rather than advanced, the same class
 of fragility MT-iv found in `ch3`: FA1's corpse-batch pin matched
 `for (const c of corpseBatches)` and took the first hit, which the new
