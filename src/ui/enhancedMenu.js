@@ -92,12 +92,19 @@ import { labelOf, helpOf, INSTEAD, TIER_TEXT } from '../ui/settingsCopy.js';
 import {
   effectiveSettings, setValue, saveSettings, resetToDefaults, tierOf, DEFAULTS,
 } from '../systems/settings.js';
-import { restorableQuicksave, QUICKSAVE_KEY } from '../systems/save.js';
+import { mostRecentRestorable, deleteSave } from '../systems/saveSlots.js';   // SAV4: the slot store
 import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES } from '../systems/uiSkin.js';
 import { dateFromClassicMinutes, dateString } from '../systems/gameDate.js';
 import { BUILD_TAG } from '../buildTag.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { repaintKeepingScroll } from './domRepaint.js';
+import { drawPixelGround } from './pixelGround.js';
+// PX3: the pause window's Stats tab reads the shared player entity
+// through the char sheet's own model - one law, not a restatement.
+// Both are plain modules with no game data; the boot door never
+// renders the tab, so the front door still reads no game state.
+import { sheetModel } from './enhancedCharSheet.js';
+import { playerEntity } from '../characters/playerEntity.js';
 import { overlayAction } from './input.js';   // U51: Escape, through the shared table
 
 // ── THE RAIL ─────────────────────────────────────────────────────
@@ -143,6 +150,9 @@ let sections = SECTIONS_BOOT;
 let hooks = {};
 let keyHandler = null;
 let lockHandler = null;
+let resizeHandler = null;   // PX1: the home ground's redraw-on-resize
+let groundTimer = null;     // PX1b: the home sky's 8fps clock - cleared by every rebuild and by unmount
+let pauseTab = 'system';    // PX3: which tab the pause window shows - System lands on Resume/Save
 
 const el = (t, cls, txt) => {
   const n = document.createElement(t);
@@ -152,19 +162,22 @@ const el = (t, cls, txt) => {
 };
 
 // ── THE SAVE, READ FOR REAL ──────────────────────────────────────
-// restorableQuicksave is save.js's own reader AND its own version
+// mostRecentRestorable is the slot store's own reader AND version
 // test, so a card is drawn only for an envelope this build can
-// actually restore. Reading it with readQuicksave was AUDIT F2: an
-// older save drew a full Continue card and pressing it came up on the
-// chargen wizard. There is ONE slot today (systems/save.js:27,
-// `dagger.quicksave`), which is a fact the Load pane has to state
-// rather than dress up as a list of one.
+// actually restore. Reading raw was AUDIT F2: an older save drew a
+// full Continue card and pressing it came up on the chargen wizard.
+// SAV4: the store holds NAMED SLOTS now; these panes draw the most
+// recent one (the boot Load arm loads exactly that), and the full
+// slot list is the classic save window's - an enhanced-skin slot
+// list is the PX lane's own card to design.
 function savedGame() {
-  let snap = null;
-  try { snap = restorableQuicksave(); } catch { snap = null; }
-  if (!snap) return null;
+  let entry = null;
+  try { entry = mostRecentRestorable(); } catch { entry = null; }
+  if (!entry) return null;
+  const snap = entry.snap;
   const date = Number.isFinite(snap.classicMinutes) ? dateFromClassicMinutes(snap.classicMinutes) : null;
   return {
+    key: entry.key,
     name: snap.name || 'Unnamed',
     career: snap.career?.name ?? null,
     level: snap.level ?? null,
@@ -313,9 +326,9 @@ function paneLoad(body) {
       { label: 'Load', primary: true, disabled: !canLoad, onClick: canLoad ? () => onAction('load') : null },
       { label: 'Delete', onClick: () => ask(
         'Delete this game',
-        `${save.name} is the only saved game, and deleting it cannot be undone.`,
+        `Deleting ${save.name}'s most recent save cannot be undone.`,
         'Delete',
-        () => { try { globalThis.localStorage?.removeItem(QUICKSAVE_KEY); } catch { /* storage disabled */ } },
+        () => { try { deleteSave(save.key); } catch { /* storage disabled */ } },
       ) },
     ]));
     body.append(c);
@@ -324,7 +337,7 @@ function paneLoad(body) {
     body.append(empty('Not from here',
       'This part of the game has no load door. Reach a saved game from the main menu instead.'));
   }
-  body.append(empty('Named slots', 'One quicksave slot today. Named saves and the classic .SAV are their own slices.'));
+  body.append(empty('More saves', 'This pane shows the most recent save; the full slot list rides the classic save window for now.'));
 }
 
 // ── SAVE GAME (pause only) ───────────────────────────────────────
@@ -699,6 +712,195 @@ function paneAbout(body) {
 // ── SHELL ────────────────────────────────────────────────────────
 function go(id) { section = id; pickedKey = null; sheetOpen = false; confirming = null; render(); }
 
+// ── PX1: THE PIXEL HOME (Mac, 2026-08-27) ────────────────────────
+// The boot door's FACE. The prototype of record is menu-pixel.html;
+// what shipped is its structure over the REAL sections: every row
+// navigates to the pane that already carries that section's laws
+// (Continue's restorable card, the Mods waiting-room, the rail-hole
+// rule), rather than acting directly - a home that re-decided what
+// Continue does would be a second implementation of the Continue pane.
+// Escape from any section returns here (see onKey); the skin switch is
+// skinSwitch(), the one door.
+function renderHome() {
+  // PX2: the pause door wears the same face over the LIVE FRAME - no
+  // sky (there is a world behind), no wordmark (a masthead on every
+  // Escape is a billboard), a scrim instead of the opaque night.
+  const paused = mode === 'pause';
+  const home = el('div', `px-home${paused ? ' px-over' : ''}`);
+  if (!paused) {
+    const ground = document.createElement('canvas');
+    ground.className = 'px-ground';
+    const vw = () => globalThis.innerWidth ?? 1280;
+    const vh = () => globalThis.innerHeight ?? 720;
+    drawPixelGround(ground, vw(), vh(), 0);
+    // PX1b: THE SKY LIVES - fog orbits and stars twinkle at 8fps, the
+    // cadence pixel art animates at; a 60fps dither shimmer reads as
+    // noise. The module draws, this mount owns the clock: one interval,
+    // cleared by every rebuild (renderInto) and by unmount, skipped
+    // entirely under prefers-reduced-motion - the same opt-out the CSS
+    // drift honours.
+    const still = typeof globalThis.matchMedia === 'function' && globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!still) {
+      const t0 = Date.now();
+      groundTimer = setInterval(() => drawPixelGround(ground, vw(), vh(), (Date.now() - t0) / 1000), 125);
+    }
+    home.append(ground);
+  }
+  home.append(el('div', 'px-vignette'));
+
+  // PX3: PAUSE IS A WINDOW, NOT A SECOND MAIN MENU (Mac's reference:
+  // Skyrim's journal - a framed panel with tabs over the paused game).
+  // Three tabs: Quests, Stats, System. The window replaces the
+  // fullscreen list; the foot and the About plaque stay on the scrim.
+  if (paused) {
+    const stage = el('div', 'px-stage');
+    stage.append(pauseWindow());
+    home.append(stage);
+    appendPxFoot(home);
+    app.append(home);
+    return;
+  }
+
+  const stage = el('div', 'px-stage');
+  const mark = el('h1', 'px-wordmark', 'Daggerfall');
+  mark.append(el('small', null, 'JavaScript'));
+  stage.append(mark);
+  const rule = el('div', 'px-rule');
+  rule.append(el('span', 'px-gem'));
+  stage.append(rule);
+
+  const menu = el('nav', 'px-menu');
+  menu.setAttribute('aria-label', 'Main menu');
+  // PX1b: About leaves the center list for the corner box below - the
+  // list is what a player DOES, the box is who made it. The SECTION
+  // still exists on the shell rail untouched, so the rail-hole pin and
+  // the shared-sections law hold.
+  for (const label of sections) {
+    if (label === 'About') continue;
+    const id = idOf(label);
+    const b = el('button');
+    b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label), el('span', 'px-c', '\u25c6'));
+    b.onclick = RAIL_ACTS[id] ? () => onAction(RAIL_ACTS[id]) : () => go(id);
+    menu.append(b);
+  }
+  stage.append(menu);
+  home.append(stage);
+
+  appendPxFoot(home);
+  app.append(home);
+}
+
+/** PX1b: three-zone foot - build left, the skin toggle CENTERED (its
+ *  'switch anytime' hint hidden here by the px-foot rules; the shell
+ *  keeps it), and About as the bottom-right box. One builder for both
+ *  faces (PX3 gave pause its own stage). */
+function appendPxFoot(home) {
+  const foot = el('div', 'px-foot');
+  const build = el('span', 'px-build');
+  build.append(document.createTextNode('build '), el('span', null, BUILD_TAG));
+  const about = el('button', 'px-about', 'About');
+  about.onclick = () => go('about');
+  foot.append(build, skinSwitch(), about);
+  home.append(foot);
+}
+
+// ── PX3: THE PAUSE WINDOW ────────────────────────────────────────
+const PAUSE_TABS = Object.freeze([['quests', 'Quests'], ['stats', 'Stats'], ['system', 'System']]);
+// The token formattings that carry a journal line - questJournal's own
+// counted set (DaggerfallQuestJournalWindow.cs:658-662 via its :322).
+const JOURNAL_LINE_FORMATTINGS = new Set(['text', 'newline', 'highlight', 'question', 'answer']);
+
+function pauseWindow() {
+  const win = el('div', 'px-win');
+  for (const c of ['tl', 'tr', 'bl', 'br']) win.append(el('span', `px-gem px-corner px-${c}`));
+
+  const tabs = el('div', 'px-tabs');
+  for (const [id, label] of PAUSE_TABS) {
+    const b = el('button', id === pauseTab ? 'on' : null);
+    b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label), el('span', 'px-c', '\u25c6'));
+    b.onclick = () => { pauseTab = id; render(); };
+    tabs.append(b);
+  }
+  win.append(tabs);
+
+  const body = el('div', 'px-body');
+  ({ quests: pauseQuests, stats: pauseStats, system: pauseSystem })[pauseTab](body);
+  win.append(body);
+  return win;
+}
+
+/** The System tab: the pause actions, compact. About stays the corner
+ *  plaque; everything else keeps its shell pane, so no law moved. */
+function pauseSystem(body) {
+  const list = el('div', 'px-menu px-compact');
+  for (const label of sections) {
+    if (label === 'About') continue;
+    const id = idOf(label);
+    const b = el('button');
+    b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label), el('span', 'px-c', '\u25c6'));
+    b.onclick = RAIL_ACTS[id] ? () => onAction(RAIL_ACTS[id]) : () => go(id);
+    list.append(b);
+  }
+  body.append(list);
+}
+
+/** The Stats tab: the char sheet's OWN model over the shared entity -
+ *  the summary a pause glance wants; the full sheet stays the F5
+ *  window's. */
+function pauseStats(body) {
+  const m = sheetModel(playerEntity);
+  const head2 = el('div', 'px-statshead');
+  head2.append(el('strong', null, m.name || 'Adventurer'));
+  head2.append(el('span', null, `${m.race} ${m.career}${m.career ? ', ' : ''}Level ${m.level}`));
+  body.append(head2);
+  const vit = el('div', 'px-statgrid');
+  for (const [label, v] of [
+    ['Health', `${m.health.now} / ${m.health.max}`],
+    ['Fatigue', `${m.fatigue.now} / ${m.fatigue.max}`],
+    ['Magicka', `${m.magicka.now} / ${m.magicka.max}`],
+    ['Gold', String(m.gold)],
+    ['Encumbrance', `${m.encumbrance.now} / ${m.encumbrance.max}`],
+  ]) {
+    const r = el('div', 'px-stat');
+    r.append(el('span', 'k', label), el('span', 'v', v));
+    vit.append(r);
+  }
+  body.append(vit);
+  const attrs = el('div', 'px-statgrid px-attrs');
+  for (const a of m.attributes) {
+    const r = el('div', 'px-stat');
+    r.append(el('span', 'k', a.key.slice(0, 3).toUpperCase()), el('span', 'v', String(a.value)));
+    attrs.append(r);
+  }
+  body.append(attrs);
+}
+
+/** The Quests tab: the machine's own log messages through the host's
+ *  questMessages hook - the SAME seam the F5 logbook reads
+ *  (world.js:1525). A host without the hook says so rather than
+ *  drawing an empty page that lies about the journal. */
+function pauseQuests(body) {
+  const src = hooks.questMessages;
+  if (!src) {
+    body.append(el('p', 'px-note', 'The journal is not wired into this place yet.'));
+    return;
+  }
+  const msgs = src() ?? [];
+  if (!msgs.length) {
+    body.append(el('p', 'px-note', 'No active quests.'));
+    return;
+  }
+  for (const msg of msgs) {
+    const tokens = Array.isArray(msg) ? msg : (msg?.getTextTokens?.() ?? []);
+    const lines = tokens.filter((t) => JOURNAL_LINE_FORMATTINGS.has(t?.formatting)).map((t) => String(t?.text ?? ''));
+    if (!lines.length) continue;
+    const q = el('div', 'px-quest');
+    for (const line of lines) q.append(el('p', null, line));
+    body.append(q);
+  }
+  if (!body.childElementCount) body.append(el('p', 'px-note', 'No active quests.'));
+}
+
 function render() {
   repaintKeepingScroll(app, () => renderInto());
 }
@@ -707,12 +909,22 @@ function render() {
  *  list carries the same steppers, and a repaint that forgets the
  *  scroll throws the player back to the top of 66 Video rows. */
 function renderInto() {
+  if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }
   app.innerHTML = '';
+  // PX1/PX2: both doors open on the pixel home; every section keeps
+  // its shell.
+  if (section === 'home') { renderHome(); return; }
   const shell = el('div', 'shell');
 
   const side = el('aside', 'side');
   const brand = el('div', 'brand');
-  brand.append(el('h1', null, 'Daggerfall'));
+  const h1 = el('h1', null, 'Daggerfall');
+  // PX1/PX2: the wordmark is the way back to the pixel home - the
+  // same affordance every site's masthead carries. Escape does it too
+  // (onKey); this is the one a finger can see.
+  h1.style.cursor = 'pointer';
+  h1.onclick = () => go('home');
+  brand.append(h1);
   brand.append(skinSwitch());   // the word ENHANCED became the switch
   side.append(brand);
 
@@ -792,8 +1004,9 @@ function onKey(e) {
   // way).
   const back = confirming ? () => { confirming = null; render(); }
     : sheetOpen ? () => { sheetOpen = false; render(); }
-      : mode === 'pause' ? () => onAction('resume')
-        : null;
+      : section !== 'home' ? () => go('home')   // PX1/PX2: a section backs out to the face
+        : mode === 'pause' ? () => onAction('resume')   // Escape on the pause face resumes
+          : null;
   if (!back) return;
   e.preventDefault();
   // A MODAL OVERLAY OWNS ITS INPUT (the wizard's own law, U50). On
@@ -842,12 +1055,13 @@ export function mountEnhancedMenu(host, {
   mode = m === 'pause' ? 'pause' : 'boot';
   hooks = h ?? {};
   sections = mode === 'pause' ? SECTIONS_PAUSE : SECTIONS_BOOT;
-  // WHICH PANE OPENS. Boot opens on Continue - the one save a
-  // returning player wants. Pause opens on SAVE GAME, which is what a
-  // player most often pressed Escape for, and Settings - the reason
-  // this door exists at all - is one press away and permanently
-  // visible on the rail, which is the thing classic could not do.
-  section = mode === 'pause' ? 'save' : 'continue';
+  // WHICH PANE OPENS. Both doors open on the PIXEL HOME (PX1/PX2) -
+  // the face itself, every section one press away. Pause used to open
+  // straight on SAVE GAME (U51's law: what Escape was pressed for);
+  // PX2 trades one press of depth for the face Mac adopted, with Save
+  // Game the second row a thumb meets and Resume the first.
+  section = 'home';
+  pauseTab = 'system';
   category = CATEGORIES[0].id;
   pickedKey = null;
   sheetOpen = false;
@@ -856,6 +1070,11 @@ export function mountEnhancedMenu(host, {
   render();
   keyHandler = onKey;
   globalThis.addEventListener('keydown', keyHandler, { capture: true });
+  // PX1: the pixel ground is drawn for the viewport it mounted on; a
+  // rotate or a resize while the home is up redraws it, or the sky
+  // stretches - the prototype's own phone-shot lesson.
+  resizeHandler = () => { if (mode === 'boot' && section === 'home') render(); };
+  globalThis.addEventListener('resize', resizeHandler);
   lockHandler = releaseLock;
   releaseLock();
   if (typeof document !== 'undefined') document.addEventListener('pointerlockchange', lockHandler);
@@ -875,8 +1094,11 @@ export function mountEnhancedMenu(host, {
       // again.
       if (keyHandler) globalThis.removeEventListener('keydown', keyHandler, { capture: true });
       if (lockHandler && typeof document !== 'undefined') document.removeEventListener('pointerlockchange', lockHandler);
+      if (resizeHandler) globalThis.removeEventListener('resize', resizeHandler);
+      if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }
       keyHandler = null;
       lockHandler = null;
+      resizeHandler = null;
       host.innerHTML = '';
       app = null;
       onAction = () => {};

@@ -2384,3 +2384,282 @@ the mock ray; the cadence - detection on the first 1/60 step with
 zero classic ticks and exactly one illusion die per classic tick,
 the failed see-through blocking the ladder; the snapshot halves
 sweep with the presence-gated restores).
+
+## MT - MOBILE TEAMS: ENEMY INFIGHTING, PlayerAlly, AND THE TARGET MACHINE (2026-08-27)
+
+The completion analysis' standing item five. Until this slice every
+enemy in the port targeted the player and nothing else: `EnemyAI` had
+no target field at all, `SENSES_INTERVAL_UNITS` sat exported and
+unconsumed since C8, and `ENEMY_BASICS` carried a team string for
+every mobile that nothing read.
+
+### MT-i - the selection half (`src/characters/enemyTargets.js`)
+
+`MOBILE_TEAMS` is DaggerfallUnityEnums.cs's enum, index for value
+(gated in-test against the C# itself). `getTargets` is
+EnemySenses.GetTargets (:752-878) whole: the self skip, the
+NoTarget/non-hostile/PlayerAlly player skip, the pacified-vs-ally
+pair, the three-arm can't-target-ally chain, the quest arms, the
+would-be-spawned-or-seen reject and the priority arithmetic.
+`runTargetMachine` is the Update:312-414 classic block: the
+system-timer cadence, the dead-target cull, the non-hostile player
+drop, the null-target reset with the secondary switch, and the
+mutual-target write.
+
+**THREE TEAM FIELDS, NOT ONE**, and getting this wrong is the bug the
+slice nearly shipped. C# takes `MobileEnemy` BY VALUE out of the enemy
+dictionary (SetupDemoEnemy.cs:82) and an allied summon overwrites
+THAT COPY (:85-86) before `SetEnemy`; `EnemyEntity.cs:316` then seeds
+`Entity.Team` from the copy. So:
+- the STATIC row (`ENEMY_BASICS[id].team`, frozen and shared by every
+  foe of the type) - what `MakeEnemyHostileToAttacker`'s ally revert
+  reads (:211), and the ONLY thing that may not be written;
+- the per-instance `MobileEnemy` copy (`entity.mobileTeam`) - what
+  GetTargets' :776 and :801 arms read;
+- the live `Entity.Team` (`entity.team`) - what ChangeFoeTeam rewrites
+  and the :784/:792/:796 arms read.
+They differ for exactly one foe in the game - a Sanguine Rose or Skull
+of Corruption summon - and reading the copy in the revert would have
+left a struck ally allied forever.
+
+THE SEAM is the headless charter's two arms: the machine arms only
+when the host's senses context carries a `targeting` closure. Every
+pre-MT caller keeps the player-only path, which is also DFU's own
+behaviour with no other enemy in the scene.
+
+### MT-ii - the hosts (`exteriorFoes`, `cityGuards`, `hostCombat`)
+
+`world.js` owns both exterior pools and hands them one senses builder,
+so the shared candidate list lives there - DFU's
+ActiveGameObjectDatabase is one database across the scene, which is
+what lets a spawned monster and a watchman see each other. The record
+IS the candidate (its identity is the target handle), with the two
+quest halves as LIVE getters because `bindQuestFoeHost` runs after the
+mint and ChangeFoeInfighting flips the flag mid-quest.
+
+`applyDamageToNonPlayer` (EnemyAttack.cs:303-392) had no port at all,
+because until MT-i no foe could hold a foe as its target. It carries
+the damage roll, the concealment break, blood, knockback, the class
+pain voice, the miss/parry fork and the retaliation - and NOT the
+player-only riders (no `onMonsterHit`: a rat biting an orc infects
+nothing; no damage flash; no Dodging tally).
+
+**THE KNOCKBACK GUARD IS NOT THE PLAYER'S.** EnemyAttack:336-337
+writes parentheses WeaponManager:578-580 leaves out, and its class
+test names the ATTACKER where the player's names the TARGET. Two
+laws that merely look alike, one home each (`enemyKnockbackApplies`
+beside `weaponKnockbackApplies`).
+
+Arming the pools turned five dormant `Target == player` terms live,
+each of which had been unobservable while every foe targeted the
+player - and one of them was a trap:
+- **the Murder crime** (cityGuards) was levied on ANY guard death.
+  DaggerfallEntityBehaviour.cs:203 gates the whole player block on a
+  player source, so an ungated crime would have FRAMED THE PLAYER for
+  a murder a rat committed - and the watch responds to that crime.
+- the alert raise (EnemySenses:531) and clear (EnemyDeath:131) both
+  gate on `Target == PlayerEntityBehaviour`;
+- the encounter cull measured `_dist`, which is the distance to the
+  SELECTED TARGET once armed - two foes brawling 2m apart would never
+  cull, and the pool respawns forever;
+- the attack component, the casting decision and the arrow all aimed
+  at the player while the motor aimed elsewhere;
+- `CLASSIC_MELEE_DISTANCE_VS_AI` (1.5, not 2.25) was exported at C8
+  and never consumed: "Classic uses separate melee distance for
+  targeting player and for targeting other AI" (:157-160).
+
+### MT-iii - the two quest actions
+
+`ChangeFoeInfighting` and `ChangeFoeTeam` leave GUARD_PATTERNS, which
+drops to FOUR. Both write EVERY live instance of a foe symbol through
+the new `questFoeInstances` host door, both leave the action LIVE when
+no instance stands yet (SetComplete sits inside C#'s instance walk),
+and the infighting flag rides C#'s `Convert.ToBoolean` - true/false
+case-insensitively and nothing else.
+
+### What MT unblocked, and what it did not
+
+**Unblocked:** V3's allied-summon door is MOUNTED - and both summons
+turned out to carry a law the port lacked, filtering their nearby scan
+on `Team != PlayerAlly` (so your own summons are not company), with
+the Skull carrying a second, redundant check the port keeps because
+dropping one of two is guessing which. `areEnemiesNearby` gained
+GameManager.cs:709's hostility/team gate and C#'s own
+`includingPacified` parameter.
+
+~~**STILL OPEN (MT-iv):** the DUNGEON host is not armed.~~
+**MT-iv SHIPPED (2026-08-27), the same day.** See below.
+
+Pins: 14 in `test/enemytargets.test.js`, 9 in
+`test/enemyinfighting.test.js`. Three of the MT-i pins exist because
+an adversarial re-read of EnemySenses.cs found the port had them
+wrong: the mutual-target write nested one level too deep (it is a
+sibling of the spawn-band gate, firing off the PERSISTENT
+`targetSenses`), the illusion re-roll and LOS decrement running on
+null-target ticks (C#'s :410-414 return sits above them), and the
+sight ray aiming at a player-sized eye for every target. A fourth,
+`sawSecondaryTarget`, is ported with its quirk intact: the flag is
+written outside the Enhanced guard while `secondaryTargetPos` is
+written only inside it, so a classic-path secondary switch begins its
+pursuit at the world origin.
+
+
+## MT-iv - THE DUNGEON HOST ARMED (2026-08-27)
+
+MT's recorded remainder, closed. `dungeonContext` was the one pool
+still on the player-only path; infighting is no longer an above-ground
+mechanic.
+
+**The subsystem gate held.** This host loads the whole foe subsystem
+lazily behind `opts.foes && palette`, precisely so a foe-less dungeon
+never pays for `enemyMotor` - and `enemyTargets` imports `enemyMotor`.
+So unlike `exteriorFoes`, which imports it statically, the target
+machine rides the DYNAMIC import and is published on `foeDeps`, with
+every consumer below the block guarding on it. A degraded subsystem
+idles the arming and leaves the legacy path, which is the same charter
+the machine's own seam uses.
+
+**The candidate list is this host's whole active-enemy database**
+(EnemySenses.cs:741-749) - nothing to join, unlike world.js, but
+filtered `!dead` every frame so corpses leave it the frame they die.
+The record is the candidate at both mints (the class branch and the
+monster branch) through one `asCandidate` decorator, with the two
+quest halves as live getters.
+
+**The forks, both of them.** MeleeDamage's two-arm split (:199-209)
+sits INSIDE the resolver rather than at its two call sites (the rig
+path and the sprite marker path), so both spellings get it from one
+home. BowDamage carries the same split (:134-148), and it had to land
+together with the aim: an enemy missile now locks its victim at fire
+time, so aiming one at another foe while the impact test still knew
+only the player would have made it fly through and hit nothing - worse
+than never aiming there. The recovered Arrow goes into the TARGET's
+items (:145-147), which had credited the player unconditionally.
+Enemy SPELL missiles take the same fork; the self and AoE-at-caster
+arms need none, being position-driven already.
+
+**One hazard this host has that the exterior pools do not:** a
+DESTROYED foe (the quest teardown, the dispel sweep, the restore cull)
+is marked dead with its health still above zero, so the machine's
+health-based cull can never drop it and every foe holding it would
+chase an object that no longer draws. DFU never has this problem - its
+database stops yielding a destroyed behaviour. One `dropCandidate`
+sweep, called from the single removal door.
+
+**And ChangeFoeTeam finally reaches underground.** The
+`questFoeInstances` door walked the two exterior pools, so a quest foe
+standing in a dungeon was never found - and since SetComplete sits
+inside C#'s instance loop, `change foe X team 1` re-ran every machine
+tick for ever instead of completing. `worldModes.liveQuestFoes()` is
+the inside pool's half of DFU's one database; the interior arm stays
+empty, that host having no enemy pool at all.
+
+Pins: 8 in `test/dungeoninfighting.test.js`. One pre-existing pin
+(`ch3`'s fall-damage arm) was repaired rather than merely advanced:
+its `braceBlock` helper took the last `{` BEFORE the match, so any
+helper declared above the arm shadowed the block it meant to read -
+its own wave-39 comment says the intent was to "brace-match the arm",
+and it now anchors to the arm's own brace.
+
+## IF - THE INTERIOR FOE POOL (2026-08-27)
+
+The completion analysis' item six, and the last of the port's four
+scene hosts to hold no enemy at all. FIVE flagged sites named this
+gap; all five are retired.
+
+HONEST NOTE ON THE COUNT: the first commit said FOUR and closed the
+row. A scout sweep finishing after that commit found the fifth - the
+Q4-v adapter's absent `standFoe` - whose stated blocker was, in as
+many words, "the INTERIOR enemy host". It was worded differently
+enough from the other four to survive the grep that found them. The
+row was re-opened, the arm written, and the count corrected here
+rather than left to read as if the sweep had been complete.
+
+### The fact the slice is built on
+
+**A building interior carries NO STATIC ENEMIES in DFU.** Its whole
+marker vocabulary is `Rest, Enter, Treasure, LadderBottom, LadderTop`
+(DaggerfallInterior.cs:63-70), and the layout chain mints none. That
+was established from the C# before a line was written, and it is what
+makes this slice small: the interior pool is not a spawner, it is a
+HOME, for the things that actually put an enemy in a building - a
+quest's CreateFoe, and the Daedra summoning's two punishments.
+
+RECORDED, because it looks like a gap and is not: DaggerfallInterior
+DOES read RMB Section-3 records into a `spawnPoints` list whose doc
+comment names them interior enemy spawn data, and exposes them on a
+property. Nothing in the DFU tree consumes it. Porting a reader for
+data no consumer reads would be inventing a feature, so the port
+reads nothing and says why here.
+
+### One factory, not a fourth copy
+
+`createExteriorFoes` was never exterior-specific: it takes its
+collider as a parameter and has no spawner of its own - every spawn
+in the port is host-driven. So the interior host MOUNTS THAT FACTORY
+with its own collider rather than growing a fourth copy of the damage
+door, the death chain, the corpse walk and the loot. Its two
+exterior-shaped arms are answered honestly rather than left to
+misfire: `currentPixelKey` answers null (exterior.js's own arm - a
+host whose corpses never leave streaming range hands nothing to
+TrackLooseObject), and `hitEffects` is null and RECORDED, so a blow
+landed indoors draws no blood until this host grows the effect pool
+the other two have.
+
+**AND THE FACTORY GREW A TEARDOWN.** Every allocation has an owner -
+but until a SECOND host mounted this pool, its owner was the process:
+the exterior host outlives the session, so nothing ever had to hand
+its batches back. An interior pool is minted per building and dropped
+on leaving (DFU's OnTransitionExterior tears the interior's enemies
+down the same way), so without `destroy()` every door you walked out
+of leaked one billboard batch per foe standing in it, plus every
+corpse batch on the floor. Both of this host's exit doors free it -
+the questFlats double-free lesson is that this host has two exits,
+not one.
+
+### What the four flags became
+
+- **CreateFoe's INTERIOR arm** is the dungeon arm with ONE term
+  changed. `PlaceFoeBuildingInterior` (CreateFoe.cs:220-234) does not
+  use interior spawn points at all; it calls PlaceFoeFreely, and says
+  why: "Spawn points work well for 'interior hunt' quests but less so
+  for 'directly attack the player'. Feel just placing freely will
+  yield best results overall."
+- **`enemiesNearby`** was a literal `false` at three consumers (the
+  rest deps, restDecision, the exhaustion collapse). It is now ONE
+  scan through the shared `areEnemiesNearby` over this host's own
+  database. An interior with no pool minted still answers false -
+  because there is nothing there, not because the host cannot look.
+- **Quest foes from BUILDING MARKERS** - the Q4-v adapter's
+  `standFoe`, which is DFU's OTHER quest-foe path into an interior:
+  AddQuestResourceObjects at LAYOUT time (PlayerEnterExit.cs:797-800)
+  and on Place.cs's hot-place (:508-521), where CreateFoe's
+  TryPlacement is the first. The dungeon adapter's twin, to the
+  shape - the stands join the scene's behaviour walk and leave with
+  its teardown.
+- **The summoning REFUSAL's daedra** (Range(3,6) at 8..64,
+  DaggerfallDaedraSummonedWindow.cs:125) and **the COVEN failure's**
+  (Range(1,4) at 4..64, DaggerfallQuestPopupWindow.cs:257) are the
+  same `CreateFoeSpawner` call with different numbers, so one host
+  door takes both. The coven site was found by a pin, not by the
+  sweep: it is the fourth flag, and it was worded differently enough
+  from the other three to survive the grep that found them.
+
+### And the swing can meet something now
+
+The interior swing hit action objects only, on the strength of a
+premise that was true and has stopped being: "there is no hitEnemy to
+gate the tally on, so the swing trains nothing, which is what DFU
+does on a miss". A quest foe or a summoned daedra standing in a
+building is not a miss. The pool is asked first
+(WeaponManager.cs:419-436), trains on the hit, and falls through to
+the action objects and the no-enemy sound only as the else.
+
+The pool is ARMED for MobileTeams targeting like every other pool
+(MT), over the only active-enemy database this host has - itself.
+
+Pins: 9 in `test/interiorfoes.test.js`, four of them mutation-proven.
+One pre-existing pin was REPAIRED rather than advanced, the same class
+of fragility MT-iv found in `ch3`: FA1's corpse-batch pin matched
+`for (const c of corpseBatches)` and took the first hit, which the new
+teardown loop became - it anchors on the REBUILD it actually names now.

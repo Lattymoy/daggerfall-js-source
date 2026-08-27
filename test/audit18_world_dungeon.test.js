@@ -338,6 +338,11 @@ test('audit18 world-dungeon: interior doors take DaggerfallActionDoor\'s NormalD
   assert.equal(SOUND.NormalDoorOpen, 94);
   tick(actions, 1.6);
   actions.activate(door.key);
+  // AUDIT 26 F184: Close() is SILENT - the clip is OnCompleteClose's
+  // (:339-346), after the swing. This pin used to read it at the
+  // close's first frame, which is the timing the audit corrected.
+  assert.equal(played.length, 1, 'nothing yet - the door is still swinging shut');
+  tick(actions, 1.6);
   assert.equal(played.length, 2);
   assert.equal(played[1][0], 93);                          // NormalDoorClose
   assert.equal(SOUND.NormalDoorClose, 93);

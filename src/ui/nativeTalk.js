@@ -386,8 +386,20 @@ export class NativeTalkWindow {
       const newest = index === entries.length - 1;
       const color = newest ? SELECTED_TEXT_COLOR
         : e.kind === 'question' ? QUESTION_COLOR : DEFAULT_TEXT_COLOR;
-      e.lines.forEach((text, j) =>
-        shadowText(renderer, font, text, m, R.conversation[0], R.conversation[1] + y + j * ROW_H, { color }));
+      // AUDIT 26 F165: the QUESTION label is placed Right and the
+      // ANSWER Left (SetQuestionAnswerPairInConversationListbox
+      // :1259, :1270) - the classic look, the player's questions
+      // hugging the right margin and the NPC's answers the left. The
+      // port drew every line at the panel's left edge. Only the
+      // label's PLACEMENT differs; DFU sets HorizontalTextAlignment
+      // Left on both, so a wrapped line's own text stays left-run and
+      // each row is offset by its OWN width.
+      e.lines.forEach((text, j) => {
+        const x = e.kind === 'question'
+          ? R.conversation[0] + R.conversation[2] - measureText(font.fnt, text)
+          : R.conversation[0];
+        shadowText(renderer, font, text, m, x, R.conversation[1] + y + j * ROW_H, { color });
+      });
     }
   }
 }

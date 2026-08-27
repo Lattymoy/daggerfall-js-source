@@ -102,7 +102,10 @@ test('audit24 wave36: every exterior pool is handed the full context', () => {
   assert.equal((rd('src/scenes/world.js').match(/_foeSenses\(\)/g) ?? []).length, 2, 'world: the watch and the encounter pool');
   assert.equal((rd('src/scenes/exterior.js').match(/_foeSenses\(\)/g) ?? []).length, 1, 'exterior: the watch');
   // and the dungeon uses the same builder rather than its own literal
-  assert.ok(rd('src/scenes/dungeonContext.js').includes('const _senses = sensesContext(playerEntity, classicMinutesRef.value, _activity);'));
+  // MT-iv spreads the activity bag to add the candidate getter (the
+  // bag is persistent and must not be mutated); the context is still
+  // the one shared builder, which is what this pin guards.
+  assert.ok(rd('src/scenes/dungeonContext.js').includes('const _senses = sensesContext(playerEntity, classicMinutesRef.value, {\n      ..._activity,'));
 });
 
 test('audit24 wave36: the 8-hour alert decay is the ENTITY tick\'s, so every host runs it', () => {
@@ -132,19 +135,33 @@ test('audit24 wave36: the 8-hour alert decay is the ENTITY tick\'s, so every hos
 
 test('audit24 wave36: the watch raises and lowers the alert, and takes fall damage', () => {
   const cg = rd('src/scenes/cityGuards.js');
-  assert.ok(cg.includes('if (g.ai.inSight && g.ai.detected) setEnemyAlert(playerEntity, true, currentMinute());'),
-    'EnemySenses:531-535 - raised by any enemy that targets and sees the player');
-  assert.ok(cg.includes('if (g.ai?.detected) setEnemyAlert(playerEntity, false);'),
-    'EnemyDeath:131-136 - and lowered by its death');
+  // MT-ii restored the source's `Target == PlayerEntityBehaviour`
+  // term (:531), which was unobservable while every foe targeted the
+  // player: a watchman fighting a rat must not hold the alert up.
+  assert.ok(cg.includes('if (isPlayerTarget(g.ai.target) && g.ai.inSight && g.ai.detected) setEnemyAlert(playerEntity, true, currentMinute());'),
+    'EnemySenses:531-535 - raised by any enemy that targets and sees THE PLAYER');
+  // MT-ii: EnemyDeath's clear carries the same target==player gate.
+  assert.ok(cg.includes('if (isPlayerTarget(g.ai?.target) && g.ai?.detected) setEnemyAlert(playerEntity, false);'),
+    'EnemyDeath:131-136 - and lowered by its death, when the player was its target');
   // the same two lines the encounter pool has carried since the X-slice
   const xf = rd('src/scenes/exteriorFoes.js');
   assert.ok(xf.includes('setEnemyAlert(playerEntity, true, currentMinute());'));
-  assert.ok(xf.includes('if (f.ai?.detected) setEnemyAlert(playerEntity, false);'));
+  // MT-ii: the encounter pool's clear gained the same target==player
+  // gate the watch's did (EnemyDeath:131-136).
+  assert.ok(xf.includes('if (isPlayerTarget(f.ai?.target) && f.ai?.detected) setEnemyAlert(playerEntity, false);'));
 
   // ApplyFallDamage runs for EVERY enemy (:173) - the motor has always
   // produced landedFall for guards, and nobody read it.
   assert.ok(cg.includes('if (g.ai.landedFall > 0 && !g.dead) {'), 'the watch bills its own falls');
-  assert.ok(cg.includes('damageGuard(g, gdmg, null, null);'), 'through the pool damage door, so death and crime fire');
+  // AUDIT 26 F035: through the pool damage door, so the death fires -
+  // but NOT the crime. ApplyFallDamage (:1398-1401) calls
+  // DecreaseHealth and nothing else; the Murder assignment lives
+  // inside HandleAttackFromSource's player-source gate
+  // (DaggerfallEntityBehaviour.cs:203, :265-269), which a fall never
+  // enters. The old needle here pinned the crime as correct while
+  // citing the very member that carries none.
+  assert.ok(cg.includes("damageGuard(g, gdmg, null, null, { fromPlayer: false });"),
+    'the fall is sourceless: death yes, Murder no');
 });
 
 test('audit24 wave36: hostility SEEDS the remembered position - the freeze wave 35 could have shipped', () => {
@@ -177,6 +194,17 @@ test('audit24 wave36: hostility SEEDS the remembered position - the freeze wave 
   assert.equal(GIVE_UP_TICKS, 200, 'the DFU default the C# refills');
   // every pool passes the position
   assert.ok(rd('src/scenes/cityGuards.js').includes('ai.makeHostileToPlayer(600, attackerFeet);'));
-  assert.ok(rd('src/scenes/exteriorFoes.js').includes('f.ai.makeHostileToPlayer?.(undefined, playerFeet ?? null);'));
+  // MT-ii: a player hit now runs MakeEnemyHostileToAttacker WHOLE
+  // (the target reassign included, :193-202); the bare seed survives
+  // for a SOURCELESS hurt - a fall, a poison tick, a self-cast - which
+  // has no attacker to remember.
+  // ...and MT-ii runs it through the whole C# method, INSIDE the
+  // audit lane's player-source gate (the two slices met on the same
+  // line): a sourceless hurt - a fall, a poison tick, another
+  // enemy's blow - never reaches it at all now, which is the
+  // stronger form of the same law.
+  const xfs = rd('src/scenes/exteriorFoes.js');
+  assert.ok(xfs.includes('f.ai.makeEnemyHostileToAttacker?.(PLAYER_TARGET, playerFeet ?? null);'));
+  assert.match(xfs, /if \(fromPlayer && f\.ai\) \{/, 'and only for a PLAYER source');
   assert.ok(rd('src/scenes/dungeonContext.js').includes('foe.ai.makeHostileToPlayer?.(undefined, lastPlayerFeet);'));
 });

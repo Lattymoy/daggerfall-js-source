@@ -12,7 +12,7 @@ import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLo
 import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
-import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES } from '../formats/mapsFile.js';
+import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, LOCATION_TYPES } from '../formats/mapsFile.js';
 import { WoodsFile } from '../formats/woodsFile.js';
 import { buildTerrainGrid, buildTerrainIndices, convertTilemap, TERRAIN_TILE_DIM } from '../world/terrainSurface.js';
 import { windowEmissionRGB } from '../render/windowEmission.js';
@@ -66,7 +66,8 @@ import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender } from '
 import { SITE_TYPES } from '../systems/quest/place.js';   // B3: the respawn dispatch reads the site type
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert, areEnemiesNearby, passiveGuardSpawns } from '../systems/encounters.js';   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
-import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
+import { snapshotPlayer, restorePlayer, composeSessionState, restoreSessionState } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
+import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad)
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it
@@ -120,7 +121,7 @@ import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDea
 import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible exterior arrows
-import { addItem, spendArrow } from '../systems/inventory.js';
+import { addItem, spendArrow, totalWeight } from '../systems/inventory.js';
 import { calculateAttackDamage } from '../combat/formulas.js';   // X2-slice: enemy-arrow impacts
 import { inflictPoison } from '../systems/poisons.js';   // X2-slice: poisoned enemy arrows
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
@@ -145,7 +146,7 @@ import { RumorMill, tokensToString } from '../systems/rumorMill.js';
 import { isFaction2RelatedToFaction1 } from '../systems/factionRelations.js';   // S44: the member this host used to stub as false
 import { expandQuestMessage } from '../systems/quest/questMacros.js';
 // TK-ii: THE TOPIC TREE - the quest topic/dialog-link seams land.
-import { TopicTree, QUEST_INFO_RESOURCE_TYPE } from '../systems/topicTree.js';
+import { TopicTree, QUEST_INFO_RESOURCE_TYPE, QUESTION_TYPE } from '../systems/topicTree.js';
 import { NPCSession } from '../systems/npcSession.js';
 import { getPeopleOfCurrentRegion, getReactionToPlayer } from '../systems/talk.js';
 import { BUILDING_TYPES as TALK_BUILDING_TYPES } from '../world/buildingNames.js';
@@ -167,7 +168,9 @@ import {
   LightningPlayer,
 } from '../world/weather.js';
 import { PrecipitationRenderer } from '../render/precipitation.js';
-import { setWeather, currentWeather, tickWeather, weatherRespawn, applyClimateWeather } from '../systems/weatherSim.js';   // W1: the live weather state (the save halves ride save.js)
+import { setWeather, currentWeather, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers } from '../systems/weatherSim.js';   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
+import { classicSaveToSnapshot, takePendingClassicSave, peekPendingClassicSave } from '../systems/classicSave.js';   // SAV3: the classic-save import arm
+import { readTokens as readRscTokens, RSC } from '../formats/textRsc.js';   // SAV3: the classic rumors' token payloads
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';   // I2: the rebindable registry
@@ -656,7 +659,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const shotMode = params.has('shot');
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const startKey = `${startPixel.x},${startPixel.y}`;
-  const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), climbing: climbingDeps(playerEntity, (l) => townTalk?.say(l)) });   // AcrobatMotor skill jump (P14) + M3 climbing; motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
+  const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), carriedWeight: () => totalWeight(playerEntity.items ?? []), climbing: climbingDeps(playerEntity, (l) => townTalk?.say(l)) });   // AcrobatMotor skill jump (P14) + M3 climbing; motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
   // AUDIT 21 (hosts lane, F3): onLevelUp. Without it advancement.js takes its
   // HEADLESS arm - `spendPoolLowest`, which dumps every point into your LOWEST
   // stats with no message and no choice. Cross a level threshold walking a
@@ -863,10 +866,15 @@ export async function bootWorld(canvas, renderer, params, status) {
         questInitAtGameStart();   // Q4-v: OnStartGame for the headless character
       })
       .catch((e) => console.warn('[chargen] CLASS*.CFG unavailable; the interim entity stands in', e));
-  } else if (!playerEntity.chargenDone && !params.has('load')) {
+  } else if (!playerEntity.chargenDone && !params.has('load')
+    && !(params.has('classicload') && peekPendingClassicSave())) {
     // AUDIT 24: ...and not when a SAVE is about to be loaded. The save
     // carries chargenDone, but it arrives after the boot walk, so the
     // wizard would mount over the game the player asked to resume.
+    // SAV3: a classic import is a load by another door - same gate,
+    // but ONLY with a real pending SaveGames: a stale ?classicload
+    // typed into the URL has nothing to import and must not leave the
+    // player wizard-less on an interim entity.
     // AUDIT 17i: ONE construction seam - the flow arrives with every
     // dependency already attached (careers, SPELLS.STD, the biography
     // question sets), so a host cannot forget one. Three separate bugs
@@ -1329,11 +1337,24 @@ export async function bootWorld(canvas, renderer, params, status) {
           && Math.hypot(f.ai.feet[0] - pf[0], f.ai.feet[1] - pf[1], f.ai.feet[2] - pf[2]) <= range)
           // V3: distance rides along - the Skull of Corruption clones
           // the NEAREST enemy; the field is additive, no reader broke
-          .map((f) => ({ mobileType: f.mobileType ?? f.entity?.mobileType ?? 128, distance: Math.hypot(f.ai.feet[0] - pf[0], f.ai.feet[1] - pf[1], f.ai.feet[2] - pf[2]), hurt: (n) => foeSinks(f).hurt(n) }));
+          .map((f) => ({
+            mobileType: f.mobileType ?? f.entity?.mobileType ?? 128,
+            distance: Math.hypot(f.ai.feet[0] - pf[0], f.ai.feet[1] - pf[1], f.ai.feet[2] - pf[2]),
+            // MT-ii: the LIVE team - both summons filter their scan on
+            // `Team != MobileTeams.PlayerAlly` before counting company
+            // (SanguineRoseEffect.cs:47-48, SkullOfCorruptionEffect
+            // .cs:47-48), so your own standing summons never count.
+            team: f.entity?.team ?? 'PlayerEnemy',
+            hurt: (n) => foeSinks(f).hurt(n),
+          }));
       },
       spawnFoe: (mobileType) => {
         const pf = enchantFeet();
         exteriorFoes.spawnFoe(mobileType, [pf[0] + 2, pf[1] + 1, pf[2]]).catch(() => {});
+      },
+      spawnAlliedFoe: (mobileType) => {
+        const pf = enchantFeet();
+        exteriorFoes.spawnFoe(mobileType, [pf[0] + 2, pf[1] + 1, pf[2]], { allied: true }).catch(() => {});
       },
       // V3: the artifact doors. messageBox is Azura's TEXT.RSC popup
       // (the infection host's flatten, at this consumer);
@@ -1342,8 +1363,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       // foe leaves through removeFoe (a quest foe still in use is
       // left alone, QuestResourceBehaviour's own check) and the new
       // type spawns at its feet with the damage taken carried over.
-      // spawnAlliedFoe stays UNMOUNTED: no ally/team combat yet - the
-      // two summons' range gates and fail lines run, the spawn idles.
+      // spawnAlliedFoe is MOUNTED at MT-ii, where MobileTeams
+      // targeting shipped: GameObjectHelper.CreateFoeSpawner(foeType,
+      // spawnCount: 1, alliedToPlayer: true) is one foe into this
+      // host's own encounter pool on team PlayerAlly, and getTargets'
+      // ally arms then make it fight FOR the player. The spawn offset
+      // is spawnFoe's own (DFU's FoeSpawner places by its own law -
+      // the port's exterior pool has no free-placement caller).
       messageBox: (id) => {
         const lines = plainLines(townTalk.lines(id));
         if (lines?.length) townTalk.showOverlay(new ChoiceWindow({ lines }));
@@ -1401,6 +1427,18 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  first roll for the rest of its life. */
   const _foeSenses = () => sensesContext(playerEntity, playerTicker.classicMinutes, {
     movingLessThanHalfSpeed: player.movingLessThanHalfSpeed ?? true,
+    // MT-ii: THE SHARED CANDIDATE LIST - DFU's
+    // ActiveGameObjectDatabase.GetActiveEnemyBehaviours (EnemySenses
+    // .cs:741-749), which is ONE database across every enemy in the
+    // scene. This host owns BOTH exterior pools and already hands
+    // them the same builder, so the join here is what lets a
+    // spawned monster and a city watchman see each other at all.
+    // Corpses and culled records leave it the same frame they die -
+    // DFU's database yields only ACTIVE behaviours. Passing the
+    // getter (not the array) keeps one live view per frame with no
+    // pool importing the other.
+    candidates: () => [...cityGuards.guards, ...exteriorFoes.foes].filter((f) => !f.dead),
+    playerEntity,
   });
   // U32: ONE construction for the world inventory and spellbook - F6
   // and Backspace open them, and so do the character sheet's buttons.
@@ -1829,7 +1867,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // dungeon key: loading a save from the other side restores the
   // CHARACTER and says so (cross-side travel-on-load pends with the
   // dungeon's own note).
-  function worldQuickSave() {
+  /** Save(name, saveName) over the host's own envelope; F9 is the
+   *  QuickSave name (QuickSave() = Save(Name, quickSaveName)) and the
+   *  slot window's saveAs passes the typed one. */
+  function worldQuickSave(saveName = QUICK_SAVE_NAME) {
     const pf = walkMode && playerSpawned ? player.pos : cam.pos;
     const wc = state.worldCoords(pf);
     const snap = snapshotPlayer(playerEntity, {
@@ -1864,12 +1905,20 @@ export async function bootWorld(canvas, renderer, params, status) {
         guards: cityGuards.snapshotWorld((pos) => state.worldCoords(pos)).map((sg) => ({ ...sg, y: sg.y - state.compensation[1] })),
       },
     });
-    townTalk.say(writeQuicksave(snap) ? 'Game saved.' : 'Save failed (storage full or disabled).');
+    const ok = saveSlot(playerEntity.name, saveName, snap).ok;
+    townTalk.say(ok ? 'Game saved.' : 'Save failed (storage full or disabled).');
+    return ok;
   }
   let _loading = false;
-  async function worldQuickLoad() {
+  /** F12/pause = the CURRENT character's QuickSave slot (QuickLoad's
+   *  own law, Load(PlayerEntity.Name, quickSaveName)); the BOOT load
+   *  arm passes mostRecent - the start window's displayMostRecentChar
+   *  shape, because the interim entity has no name to key by. */
+  async function worldQuickLoad({ mostRecent = false, key = null } = {}) {
     if (_loading) return;
-    const snap = readQuicksave();
+    const snap = key != null ? loadSlot(key)
+      : mostRecent ? (mostRecentRestorable()?.snap ?? null)
+        : quickLoadSlot(playerEntity.name);
     if (!snap) { townTalk.say('No saved game.'); return; }
     const extras = restorePlayer(playerEntity, snap, spellsByIndex);
     if (!extras) { townTalk.say('Save version mismatch.'); return; }
@@ -1909,18 +1958,108 @@ export async function bootWorld(canvas, renderer, params, status) {
       // RestorePosition sets yaw/pitch/isCrouching and
       // Sheathed = !weaponDrawn (:420-421). Presence-gated: an old
       // envelope leaves the live pose standing.
-      if (extras.pose) {
-        cam.yaw = extras.pose.yaw ?? cam.yaw;
-        cam.pitch = extras.pose.pitch ?? cam.pitch;
-        if (extras.pose.crouching != null) player.crouching = !!extras.pose.crouching;
-        if (extras.pose.weaponDrawn != null) weaponRig.playerWeapon.sheathed = !extras.pose.weaponDrawn;
-      }
+      applyPose(extras.pose);
       _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // no spawn catch-up across a load (DFU LoadInProgress)
       surfacePlayer();
       townTalk.say('Game loaded.');
     } finally {
       _loading = false;
     }
+  }
+  /** The ONE pose-apply (quickload + the classic import share it). */
+  function applyPose(pose) {
+    if (!pose) return;
+    cam.yaw = pose.yaw ?? cam.yaw;
+    cam.pitch = pose.pitch ?? cam.pitch;
+    if (pose.crouching != null) player.crouching = !!pose.crouching;
+    if (pose.weaponDrawn != null) weaponRig.playerWeapon.sheathed = !pose.weaponDrawn;
+  }
+  /**
+   * SAV3: the classic-save import arm - StartFromClassicSave's game
+   * half over the SAV2 converter. The menu's flow stashed the opened
+   * SaveGames; this host owns the live deps (SPELLS.STD, the faction
+   * dict, MAPS.BSA) so the conversion runs HERE, then the import rides
+   * the ONE restore seam like any load.
+   *
+   * THE FOUR HOSTS, named per the 17e rule: world.js (this host) is
+   * WIRED - StartFromClassicSave always lands the import in the
+   * EXTERIOR world at the position record's X/Z
+   * (EnableExteriorParent + TeleportToWorldCoordinates, :529-534),
+   * whatever the save's environment byte says, so worldModes.js
+   * (interiors) and dungeonContext.js mount NO import arm by DFU's own
+   * law, and exterior.js is the block-viewer probe host with no boot
+   * params at all - all three deliberately unwired.
+   */
+  async function classicLoadBoot() {
+    const saveGames = takePendingClassicSave();
+    if (!saveGames) return false;
+    // The deps the converter wants are async loads this host already
+    // owns - await them so a fast boot cannot import a spell-less,
+    // guild-less character.
+    if (!spellsByIndex) spellsByIndex = await loadSpellIndex(fetchBytes);
+    await townTalk.ensureFactions?.();
+    let bundle;
+    try {
+      bundle = classicSaveToSnapshot(saveGames, {
+        spellsByIndex,
+        factionStore: townTalk.factionDict ? { dict: townTalk.factionDict } : null,
+        resolveLocation: (regionIndex, locationIndex) => {
+          const region = maps.getRegion(regionIndex);
+          const row = region?.mapTable?.[locationIndex];
+          if (!row) return null;
+          return {
+            mapId: row.mapId,
+            regionName: maps.getRegionName(regionIndex) ?? '',
+            locationName: region.mapNames?.[locationIndex] ?? '',
+          };
+        },
+        regionLocationCounts: Array.from({ length: 62 }, (_, i) => maps.getRegion(i)?.locationCount ?? 0),
+      });
+    } catch (e) {
+      console.warn('[world] classic save import failed:', e?.message ?? e);
+      townTalk.say('Could not import the classic save.');
+      return false;
+    }
+    const extras = restorePlayer(playerEntity, bundle.snap, spellsByIndex);
+    if (!extras) return false;
+    setWorldMinutes(extras.classicMinutes ?? worldMinutes());
+    // The quest machine's 64 classic globals, SET in place -
+    // machine.hooks captured the Map reference at construction, so
+    // the entries move, never the Map (ImportClassicGlobalVars).
+    if (questBridge?.machine?.globalVars) {
+      for (const [i, v] of bundle.globalVars) questBridge.machine.globalVars.set(i, v);
+    }
+    // The six-zone weather array, already masked and swapped by the
+    // converter (:631-644); the first exterior frame wears it.
+    importClimateWeathers(bundle.climateWeathers);
+    // "Only import classic rumours when loading in game" (OpenSave
+    // :256-260) - each RUMOR.DAT record through the mill's own
+    // ImportClassicRumor, whose three skip gates do the filtering.
+    for (const rumor of saveGames.rumorFile?.rumors ?? []) {
+      rumorMill.importClassicRumor(rumor, (bytes) => readRscTokens(bytes, 0, RSC.EndOfRecord));
+    }
+    // "Set player to world position": the import ALWAYS lands
+    // exterior at the CharacterPositionRecord's world X/Z (:528-534).
+    // Classic world units are the port's native units; the pixel
+    // teleport rebuilds the streaming origin and the local spawn
+    // lands inside it, the quickload arm's own shape.
+    if (bundle.position) {
+      const px = worldCoordToMapPixel(bundle.position.worldX, bundle.position.worldZ);
+      await _teleportToPixel(px.x, px.y);
+      const [lx, lz] = state.localFromWorld(bundle.position.worldX, bundle.position.worldZ);
+      // The classic worldY does not translate (different vertical
+      // frames); FixStanding's own answer - land on what is there -
+      // is what PositionPlayerToLocation ends in anyway (:1597-1608).
+      const raw = [lx, 2 + state.compensation[1], lz];
+      const ly = walkMode ? floorLanding(collider, raw)[1] : raw[1];
+      if (walkMode) { player.spawn(lx, ly, lz); playerSpawned = true; }
+      cam.pos = [lx, ly + (walkMode ? 0 : 40), lz];
+    }
+    applyPose(bundle.snap.pose);
+    _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // no spawn catch-up across a load
+    surfacePlayer();
+    townTalk.say(`Loaded classic save: ${bundle.saveName || bundle.snap.name}.`);
+    return true;
   }
   const toggleTravelMap = (gotoPlace = null) => {
     // FindPlace_OnButtonClick (DaggerfallQuestJournalWindow.cs:353-363)
@@ -2106,8 +2245,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       openPauseFlow((w) => townTalk.showOverlay(w), {
         quickSave: worldQuickSave,
         quickLoad: worldQuickLoad,
+        // SAV4: the slot window's seams - the pause SAVE/LOAD doors
+        // open it with these (openClassicPauseFlow builds the doors).
+        playerName: () => playerEntity.name,
+        saveAs: (saveName) => worldQuickSave(saveName),
+        loadKey: (key) => worldQuickLoad({ key }),
         exitToMenu: exitToTitleMenu,
         textLines: (id) => townTalk.lines(id),
+        // PX3: the pause window's Quests tab - the SAME seam the F5
+        // logbook reads (:1525).
+        questMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
       });
     },
     cycleMode: (dir) => townTalk.setMode(dir > 0 ? hudLargeNextMode(getInteractionMode()) : hudLargePrevMode(getInteractionMode())),
@@ -2757,7 +2904,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     // whole wilderness and sent this to Breton everywhere outdoors.
     raceOfCurrentRegion: () => (RACE_BY_NAME_BANK[getNameBankOfRegion(_questRegionIndex())] ?? 'Breton'),
     factionRaceId: (race) => (OATH_RACE_INDEX[race] ?? 0),
-    questorGender: () => npcSession.getQuestorGender(),
+    // AUDIT 26 F097: GetMacroDataSource copies potentialQuestorGender
+    // ONLY when the current question is Work and there are NPCs with
+    // work (TalkManagerMCP.cs:32-36); otherwise the context field keeps
+    // the Genders enum default, Male. So %g..%g4 in a NON-Work record
+    // resolve male in DFU whatever questor is remembered - the port
+    // read the questor unconditionally and could say "she" there.
+    questorGender: () => {
+      const q = answerPipeline.currentQuestionListItem;
+      if (q?.questionType !== QUESTION_TYPE.Work || !npcSession.workAvailable) return null;   // null -> the male branch (HasNPCsWithWork)
+      return npcSession.getQuestorGender();
+    },
     bumpSeed: (delta) => bumpSeed(delta),
   });
 
@@ -2917,6 +3074,25 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     clearEnemies: () => {
       for (const f of [...exteriorFoes.foes]) { if (!f.dead) exteriorFoes.removeFoe(f); }
+    },
+    // MT-iii: ChangeFoeInfighting / ChangeFoeTeam's instance walk.
+    // DFU filters the active-enemy database on QuestSpawn and matches
+    // QuestResourceBehaviour.TargetSymbol; the port's quest-spawned
+    // foes carry that behaviour at f.questBehaviour (questFoeHost's
+    // bindQuestFoeHost), so HAVING one is being a quest spawn. The
+    // symbol compare is name equality - the port mints a fresh
+    // QuestSymbol per read, which no reference compare could match
+    // (the same law AUDIT 24 recorded for isNPCDataEqual).
+    questFoeInstances: (symbol) => {
+      const want = symbol?.name ?? null;
+      if (want == null) return [];
+      // MT-iv: DFU's ActiveGameObjectDatabase is ONE database across
+      // the scene, so the walk unions the INSIDE pool too - a quest
+      // foe standing in a dungeon was unreachable, and since
+      // SetComplete sits inside the instance loop the action re-ran
+      // every machine tick for ever rather than completing.
+      return [...exteriorFoes.foes, ...cityGuards.guards, ...(modes?.liveQuestFoes?.() ?? [])].filter((f) =>
+        !f.dead && f.questBehaviour && f.questBehaviour.targetSymbol?.name === want);
     },
     playerRaceName: () => playerEntity.race ?? null,
     getReputation: (fid) => { const s = _questStore(); return s ? getReputation(s, fid) : 0; },
@@ -3221,9 +3397,18 @@ export async function bootWorld(canvas, renderer, params, status) {
   // their save was to start a new game and press F11. A load is not a
   // new game, so it takes the classic start's place rather than
   // running after it.
-  if (params.has('load')) {
+  if (params.has('classicload') && peekPendingClassicSave()) {
+    // SAV3: the classic import takes the load's place in the boot walk
+    // - a load by another door, never a new game (the AUDIT 24 law).
+    status('importing the classic save');
+    await classicLoadBoot();
+  } else if (params.has('load')) {
     status('loading the saved game');
-    await worldQuickLoad();
+    // SAV4: the start menu's slot window boots with the PICKED key;
+    // a bare ?load keeps the most-recent shape.
+    await worldQuickLoad(params.has('loadkey')
+      ? { key: Number(params.get('loadkey')) }
+      : { mostRecent: true });
   } else if (params.has('classic') && getBool('Startup', 'StartInDungeon') && startLoc.hasDungeon) {
     status('entering the dungeon');
     const entered = await modes.startInDungeon();
@@ -3455,7 +3640,11 @@ export async function bootWorld(canvas, renderer, params, status) {
           // Crouch/FloatDown for down, and moves along the camera LOOK
           // (pitch included) - everywhere, not just underground.
           up: jumpHeld || held(keys, 'FloatUp'),
-          down: held(keys, 'FloatDown'),
+          // AUDIT 26 F031: LevitateMotor's descent arm is Crouch OR
+          // FloatDown (:88-89), the mirror of the rise arm above; the
+          // port's own motor contract said so and every host passed
+          // FloatDown alone, so C did nothing but toggle the stance.
+          down: crouchHeld || held(keys, 'FloatDown'),
           crouch: crouchHeld && !latch.crouch,
         }, cam.yaw, cam.pitch);
         latch.crouch = crouchHeld;
@@ -3617,7 +3806,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     animalAmbience.update(dt, cam.pos);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
     const flash = params.has('flashtest') ? 2 : (lightning ? lightning.tick(dt) : 1);
     renderer.setLighting(
-      exteriorAmbient(minute, 1, weatherSun), sunScale(minute) * weatherSun * flash,   // AUDIT 23 (wts-2)
+      exteriorAmbient(minute, 1, weatherSun), sunScale(minute) * weatherSun * flash * sky.sunFactor(),   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground)
       new Float32Array(SUN_RIG_COLOR));
     // R12: the player-following indirect light rides the camera in
     // the streaming world (walk mode keeps cam at the player's eye).
@@ -3638,7 +3827,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT 23 (wts-1): the Normal-weather sky adds the CALENDAR season
     // (DaggerfallSky.cs:354-357); rain/snow keep their boot variant.
     sky.use((currentEntry ? currentEntry.skyBase : 16) + (weatherSkyOffset === 0
-      ? seasonValue(dateFromClassicMinutes(playerTicker.classicMinutes)) : weatherSkyOffset), minute, weatherSkyOffset === 0);
+      ? seasonValue(dateFromClassicMinutes(playerTicker.classicMinutes)) : weatherSkyOffset), minute, weatherSkyOffset === 0,
+    { weather, classicMinutes: playerTicker.classicMinutes });   // ES1: the enhanced sky's clouds and moons
     // Verbatim: fog is never disabled (SetFog keeps RenderSettings.fog on);
     // Sunny/Overcast ARE linear fog to 2400 - the classic distance haze.
     // DaggerfallSky.SetSkyFogColor (:318-325): anything denser than
@@ -3714,6 +3904,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     {
       const _inRect = _musicInLocationRect();
       if (_wasInLocationRect && !_inRect) clearCrimeOnLocationExit(playerEntity);
+      // AUDIT 26 F089: the SAME two events arm the graveyard ambient
+      // layer - OnEnterLocationRect sets IsCemeteryNearby when the
+      // location is a Graveyard and the player is outside (:518-529),
+      // OnExitLocationRect clears it (:531-534). The layer then ticks
+      // its own 1-80s counter beside the ordinary wilderness one.
+      if (_inRect && !_wasInLocationRect) {
+        ambience.setCemeteryNearby(_musicLocationType() === LOCATION_TYPES.Graveyard);
+      } else if (!_inRect) {
+        ambience.setCemeteryNearby(false);
+      }
       _wasInLocationRect = _inRect;
     }
     _playerStill = _lastPlayerPos &&

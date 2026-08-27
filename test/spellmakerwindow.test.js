@@ -33,6 +33,19 @@ const toRow = (w, kind, i = 0) => {
   return w;
 };
 
+/** walk the picker onto Damage/Health (4,0) in the first free slot -
+ *  AllowedTargets Other, AllowedElements All. */
+const addDamageHealth = (w) => {
+  const free = w.slots.findIndex((sl) => !sl);
+  toRow(w, 'slot', free).input('confirm');
+  w.pickCursor = spellMakerGroups().indexOf('Damage');
+  w.input('confirm');
+  w.pickCursor = spellMakerSubgroups('Damage').findIndex((e) => e.subgroup === 'Health');
+  w.input('confirm');
+  w.mode = 'main';
+  return w;
+};
+
 test('S1 catalog: DFU offers 90 spell-maker effects, families expanded in DFCareer.Stats order', () => {
   // U42 turned this table into the BROKER's registry rather than the
   // maker's offer list: the spellbook names an effect through
@@ -173,6 +186,16 @@ test('S1 window: target and element cycle both ways, name types, d clears a slot
   assert.equal(w.rangeType, TARGET_LABELS.length - 1, 'wraps backwards');
   toRow(w, 'element');
   assert.equal(w.element, 4, 'the default is Magic');
+  // AUDIT 26 F181: with NO effects chosen, allowedElements is
+  // defaultElementFlags = ElementFlags_MagicOnly (:565), so Magic is
+  // the only legal element and the cycle has nowhere to go. This pin
+  // used to run on the ungated window and read the wrap as freedom.
+  w.input('confirm');
+  assert.equal(w.element, 4, 'nothing to cycle to while the sheet is empty');
+  // give it an effect whose AllowedElements is ElementFlags_All and
+  // the row cycles - Damage Health (4,0).
+  addDamageHealth(w);
+  toRow(w, 'element');
   w.input('confirm');
   assert.equal(w.element, 0);
   assert.equal(ELEMENT_LABELS[0], 'Fire');

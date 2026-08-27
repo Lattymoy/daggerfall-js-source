@@ -11,6 +11,7 @@
 import templates from './itemTemplates.json' with { type: 'json' };
 import { DYE_COLORS, DYE_TARGETS, getDyeColorTable } from './dyes.js';
 import { SKILLS } from '../systems/skills.js';   // GetWeaponSkillIDAsShort's return set
+import { SOUND } from '../systems/soundClips.js';   // F023: GetEquipSound's clips (soundClips is a leaf)
 
 export const WEAPONS = Object.freeze({
   Dagger: 113, Tanto: 114, Staff: 115, Shortsword: 116, Wakazashi: 117,
@@ -18,6 +19,43 @@ export const WEAPONS = Object.freeze({
   Dai_Katana: 123, Mace: 124, Flail: 125, Warhammer: 126, Battle_Axe: 127,
   War_Axe: 128, Short_Bow: 129, Long_Bow: 130, Arrow: 131,
 });
+
+/** DaggerfallUnityItem.GetEquipSound's WEAPONS arm (:839-867) - the
+ *  sound a drawn weapon makes, which is what FPSWeapon actually plays
+ *  on ToggleSheath (WeaponManager.SetWeapon :780 overwrites
+ *  DrawWeaponSound with it; the declared 78 default never survives an
+ *  applied weapon). AUDIT 26 F023: every draw used to sound alike.
+ *
+ *  Switched on templateIndex exactly as the C# is - NOT on the port's
+ *  weaponTypeForItem, whose grouping differs (it folds Claymore and
+ *  Dai-katana in with the long blades where DFU gives them the
+ *  two-handed clip), and not on names, which carry casing drift.
+ *  Anything else - a bare hand, an arrow, the werecreature claws -
+ *  answers null, DFU's SoundClips.None. */
+export function equipSoundFor(item) {
+  const W = WEAPONS;
+  if (!item || item.werecreatureClaws) return null;
+  switch (item.templateIndex) {
+    case W.Battle_Axe: case W.War_Axe:
+      return SOUND.EquipAxe;
+    case W.Broadsword: case W.Longsword: case W.Saber: case W.Katana:
+      return SOUND.EquipLongBlade;
+    case W.Claymore: case W.Dai_Katana:
+      return SOUND.EquipTwoHandedBlade;
+    case W.Dagger: case W.Tanto: case W.Wakazashi: case W.Shortsword:
+      return SOUND.EquipShortBlade;
+    case W.Flail:
+      return SOUND.EquipFlail;
+    case W.Mace: case W.Warhammer:
+      return SOUND.EquipMaceOrHammer;
+    case W.Staff:
+      return SOUND.EquipStaff;
+    case W.Short_Bow: case W.Long_Bow:
+      return SOUND.EquipBow;
+    default:
+      return null;   // SoundClips.None
+  }
+}
 
 export const WEAPON_MATERIALS = Object.freeze({
   None: -1, Iron: 0, Steel: 1, Silver: 2, Elven: 3, Dwarven: 4,

@@ -532,3 +532,275 @@ directional FILLS - the prefab is authority, recorded in worldClock.)
 Suite 312/75 green (no new unit surface - the proof is the shot
 comparison; the scale/constants ride worldClock where clock.test's
 LightCurve pins already gate the curve).
+
+## ES1 - THE ENHANCED SKY (2026-08-27, Mac's call) - SHIPPED
+
+Mac: "for the enhanced version of the game, I want us to develop our
+own take on the procedural sky system mod from DFU."
+
+Daggerfall's sky is 64 painted frames a day (SKY??.DAT) and one painted
+night (NITE??I0.IMG), and R4 ported that verbatim - it stays, untouched,
+and is what the CLASSIC skin draws. DFU's Enhanced Sky mod (Lypyl)
+replaced the paintings with a real sky out of textures. THIS IS OUR
+TAKE, and it is entirely procedural: one fullscreen pass, no textures
+at all, so it ships with the port and needs no game data - a sky that
+draws before the folder pick, on a phone, in 380 lines.
+
+WHAT IS DFU'S AND WHAT IS OURS. The LAWS the sky reads are the port's
+own verbatim ones - the sun's arc is worldClock's (dawn at map east,
+noon overhead, dusk at map west, and the sky's sun IS the lit world's
+sun while it is up, pinned), day and night are DawnHour 6 / DuskHour
+18, the moons' phases are gameDate's DFU ladder with its offsets, the
+weather is the weather sim's own types. Everything that turns those
+into light is OURS: the palette, the moons' places, the stars, the
+clouds, the glow.
+
+THE PALETTE IS A RECORD. `SKY_KEYS` is a table keyed by the SUN'S
+ELEVATION in degrees - deep night, astronomical twilight, the -4 band
+where the horizon burns, the horizon itself, morning, noon - and every
+colour on the dome is an interpolation of it; `WEATHER_SKY` is a row
+per weather type (cover, edge softness, how far the dome greys, the
+clouds' lit and shaded colours, a wind). The FRAGMENT SHADER CARRIES NO
+COLOUR AT ALL - pinned - so there is exactly one place a colour lives
+and "change a row, change the sky" is true.
+
+THE MOONS' PLACES are ours with a physical spine, and they are the one
+thing a player can catch a sky lying about. A moon sits on the sun's
+own arc, BEHIND the sun by its phase: new beside the sun (so never seen
+at night), a waxing crescent a little behind (in the west after sunset),
+full opposite (rising as the sun sets, overhead at midnight), a waning
+half three quarters behind (rising at midnight, high at dawn). So DFU's
+phase and the moon you see agree - a lycanthrope's full moon IS a full
+moon overhead at midnight - and the terminator is a lit sphere, not a
+texture. Masser is the big red one, Secunda smaller, paler and tilted
+off the arc so they do not overlap forever.
+
+THE SEAM. `createSkyController` builds the enhanced pass when the skin
+is enhanced and `?sky=classic` is absent, and exposes ONE `renderer`
+field either way, so the hosts read clearColor and set fogMix/fogColor
+without knowing which pass they hold. The classic path is untouched by
+construction (skyRenderer.js contains the word "enhanced" nowhere), and
+its panorama cache is never built for under the enhanced sky - which is
+also ~29 MB of CPU pixels the enhanced skin now never allocates. Both
+exterior hosts hand the weather and the classic clock through for the
+clouds and the moons; the call is synchronous - numbers into uniforms,
+nothing to load.
+
+SEEN, NOT ASSERTED. A sky is judged by eye: `tools/enhancedSkyProbe.mjs`
+opens `sky.html` (the lab, `src/tools/skyLab.js`) in a real WebGL
+context at a set of hours, weathers and views, screenshots each, and
+judges what a screenshot can - no page or GL error, no black frame,
+noon brighter than midnight (174 vs 12), the sun's disc in the frame
+looking up at noon, storm darker than overcast darker than clear
+(95 < 137 < 174), points of light at midnight, and Masser's warm lit
+disc where the law puts it on day 11. 7/7. The frames were eyeballed:
+the noon blue with its horizon haze, the dawn burn from the east, a
+midnight starfield, Masser half-lit among the stars, and a storm's
+heavy overcast.
+
+Pins: `test/enhancedSky.test.js`, 6 tests - the palette as an ordered
+record interpolated in elevation with no colour in the shader; a
+weather row per type the sim can produce, ordered in cover and grey;
+the sun as worldClock's arc CONTINUED below the horizon (twilight is a
+matter of degrees, and sunDirection clamps that away); the moons' places
+against their phases (full up at midnight, new never seen at night, the
+waning half high at dawn); the frame state (the hosts' clearColor and
+fillColor roles, the phases coming from the CLASSIC clock so one day is
+one phase, a moon under the world not drawn, an unknown weather falling
+to clear); and the seam. 2 mutants, 2 dead.
+
+FOUND ON THE WAY, AND CLOSED THE SAME DAY: below the horizon the dome
+filled with the flat horizon colour AND took the full dawn glow (the
+glow fell off with `exp(-e * 9)` where `e` is the CLAMPED elevation, so
+everything under the line got `e = 0`, the maximum). At dawn that drew a
+bright tan slab with a hard seam at the horizon - the one fault in the
+first render. The dome keeps going down now: the horizon colour darkens
+toward the nadir, and the glow falls off below the line as fast as above
+it, so the horizon reads as a line rather than an edge. The darkening is
+DELIBERATELY MILD (0.55 of the horizon colour at the nadir, eased): the
+world's geometry covers this band in play, and where it does not - the
+streamed world's far edge - a pale band blends into the distance haze
+where a dark one would announce itself.
+
+## ES1c - THE POLISH (2026-08-27, Mac's call) - SHIPPED
+
+Mac, on the first sky: "how can we improve this". Five faults were put
+to him off the frames and the code; he took four. The fifth - a moving
+cloud's shadow on the ground - is a change to the WORLD's lighting, not
+the sky's, and stays on the board.
+
+THE BANDING. A dome is one enormous smooth gradient and eight bits is
+not enough for one: 46% of the rows down the middle of a noon frame came
+out byte-identical to the row above, which is a visible stair. A
+sub-quantisation dither at the write breaks it. FLAT noise only took it
+to 32%; TRIANGULAR noise - two hashes summed, the shape that fully
+decorrelates the quantisation error from the signal - took it to 25%,
+which is what a dithered gradient looks like. Two instructions.
+
+THE CLOUDS WERE FLAT. One fbm sheet coloured by its own noise value: it
+had no depth, because nothing moved against anything, and no idea where
+the sun was, so a bank never had a bright rim or a dark belly. Now TWO
+DECKS - a high one, smaller and slower and thinner, behind a low one,
+larger and faster, which occludes it where it is - and both LIT: a rim
+where the ray points near the sun (the light coming through a thin
+edge, gated by uSunVis so it is nothing at night), the thick parts
+darkening away from it. The probe judges it: under the same cloud at
+mid-morning, looking east at the sun is 183 against 164 looking west.
+
+THE WEATHER SNAPPED. The sim flips its type between two ticks and the
+state was rebuilt from the type every frame, so the whole dome changed
+in the time it takes to draw once. A weather row is a set of NUMBERS,
+so the sky keeps its own and walks them - cover, softness, greyness,
+wind and both cloud colours, one exponential on a 14-second constant
+(`easeWeather`, pure, injectable). The first call takes the row whole:
+a boot into rain is rain. The same lesson as the danger meter: a slow,
+meaningful state should arrive slowly.
+
+THE STARS STOOD STILL. The field was fixed in world space, so midnight's
+sky was dusk's sky exactly - the one thing everybody has seen a night
+sky do is turn. It turns now, about a POLE (north, leaned off the
+zenith - ours; the Iliac Bay has no stated latitude), one revolution a
+day on the same clock the sun rides, by Rodrigues in the shader. The
+field is sampled in the TURNED frame but fades at the REAL horizon, so
+a star sets where the horizon is. The probe fingerprints where the
+bright points are: three hours on is a different sky, and still full of
+stars.
+
+Pins: 4 more in `test/enhancedSky.test.js` (10 now) - the ease
+(exponential, monotone, whole on the first call, no time no move,
+colours eased too, and the controller keeping one and walking it), the
+wheel (a full turn a day, one way, a unit pole off the zenith, the
+turned sample and the real fade), and the shader's decks, rim, belly
+and triangular dither. 5 mutants, 5 dead. Probe: 9/9, with the lit
+pair and the wheel added.
+
+## ES1d - THE CLOUD IN FRONT OF THE SUN (2026-08-27, Mac's call) - SHIPPED
+
+The fifth fault, taken next: "do it." A weather already scales the
+world's sunlight (WeatherManager, verbatim), but an individual cloud
+passing overhead changed nothing on the ground - the sky hid the sun's
+disc and the ground did not notice.
+
+IT IS ONE FIELD, ASKED TWICE. The shader already multiplies the sun's
+disc by `1 - cloud` along the sun's own ray. `sunOcclusion(state)` is
+that same number on the CPU: the shader's hash, value noise, fbm and
+`deck` written in JS and evaluated at `state.sunDir`. So what you SEE
+and what you FEEL cannot disagree - the disc goes and the ground goes
+with it, because it is one field at one direction. The two texts are
+pinned against each other line for line (the deck calls, the occlusion
+sum, and the six magic numbers of the noise), because a drift here is a
+sun that dims when the sky says it should not.
+
+WHAT IT IS AND IS NOT. It is a DIMMING, not a projected shadow: the
+dome is infinitely far, so the cover moves with the WIND (which a real
+cloud shadow does) but not with the walker (which a real one also
+does). Measured over 400 seconds at nine in the morning: a clear sky
+occludes 0.02 on average, a broken one sweeps the whole range 0.00 to
+1.00 - which is the point, a bank crossing the sun - and a solid deck
+sits at 1.00.
+
+AND IT TAKES THE KEY LIGHT ONLY. `CLOUD_SHADOW` is 0.55, and it
+multiplies `sunScale * weatherSun * flash` in both exterior hosts and
+NOTHING ELSE. Under a cloud the direct sun goes; the sky itself still
+lights the ground, so the ambient and the indirect are untouched. Both
+halves pinned.
+
+## ES1e - THE RETRO PASS (2026-08-27, Mac's call) - SHIPPED
+
+Mac: "I really want to try and match the retro artwork aesthetic of
+Daggerfall." A smooth 24-bit dome beside a chunky classic sprite was
+the one thing in the enhanced sky that did not look like the game.
+Two knobs, both the era's own techniques rather than a filter over the
+top, and ON BY DEFAULT (`?sky=smooth` keeps the modern dome).
+
+THE PIXEL IS THE PAINTED SKY'S PIXEL. Not a screen grid - the first
+attempt snapped to 320x200 in NDC and it was wrong in three ways at
+once. SKY??.DAT is 512 pixels across 180 degrees, which skyRenderer
+already names SKY_ANGLE_PER_PIXEL (PI/512), and the ray's azimuth and
+elevation are snapped to exactly that step BEFORE anything is computed.
+So: the enhanced sky's pixels are the SAME SIZE as the painted sky's,
+and the two skins read as one game; they are fixed to the WORLD, so
+they stay put when you turn your head instead of crawling with the
+camera, as a bitmap sky's do; and they do not move with the field of
+view or the window, so a phone and a desktop see the same sky at the
+same scale. Everything is drawn ON that grid - the sun's disc, the
+moons' terminators, the stars, the cloud edges.
+
+THE COLOUR IS A 1996 GRADIENT. Posterised to 26 levels a channel with
+an ORDERED (Bayer 4x4) dither - the exact thing a 256-colour gradient
+did in 1996, and the reason Daggerfall's own skies have that woven look
+up close. The Bayer cell is indexed by the ANGULAR cell, not the screen
+pixel: one dither cell per sky pixel, or it is a fine weave under a
+coarse one, and it would crawl when the camera turned.
+
+FOUND ON THE WAY: the SMOOTH pass's dither, added in ES1c, was
+`hash21(gl_FragCoord.xy)` - which measured well (46% of identical rows
+down to 25%) but is STRUCTURED at integer coordinates, a visible weave
+under magnification, which is the one thing a dither must not be. It is
+interleaved gradient noise now, the standard for exactly this.
+
+ONE DOOR: `retroFor(search)` decides, and the game and the LAB both
+call it, so the lab cannot show a sky the game does not draw - which it
+did for one run, and the probe caught it (retro and smooth measured
+identically because the lab never read the flag).
+
+Pins: 2 more (12 now) - the occlusion (nothing at night, clear barely,
+broken sweeping, solid whole; the two texts pinned against each other;
+the key light dimmed in both hosts and the ambient NOT), and the retro
+pass (the step IS SKY_ANGLE_PER_PIXEL, the levels a palette's not a
+24-bit one, on by default and off with ?sky=smooth through one door
+both callers use, the snap on the DIRECTION before the dome is
+coloured, the Bayer indexed by the angular cell, and IGN on the smooth
+pass). 6 mutants, 6 dead. Probe 10/10, with retro measured against
+smooth: 124 changes and 8 levels across a row, against 376 and 69.
+
+## ES1f - NO POLE, NO CIRCLE (2026-08-27, Mac's report) - SHIPPED
+
+Mac, looking up: "any way to get rid of the circle that everything
+weaves into. The circle when you look up at the very middle."
+
+He was looking straight at the projection's seam. ES1e snapped the ray
+in AZIMUTH and ELEVATION, and a lat-long grid has its POLE at the
+zenith: the elevation rings become concentric circles centred there and
+the azimuth cells converge to nothing, so the sky wove into a bullseye
+overhead - at every hour, in every weather, and in the star field too,
+which had its own pole and piled its density onto it. (The painted sky
+never shows this because its strip stops at 77 degrees and everything
+above it is a flat fill; a dome that reaches the zenith has nowhere to
+hide.)
+
+A CUBE HAS NO POLE. The direction is projected onto whichever of six
+faces it points at, snapped on that face's square grid, and rebuilt.
+The zenith becomes an ordinary patch of an ordinary face. The star
+field rides the same grid, so it has no pinwheel and an even density
+(its scales were raised to keep the count: a cube covers the sphere
+with far fewer cells than a lat-long grid does).
+
+AND THE FACES ARE EQUI-ANGULAR, which was the second pass and the one
+that finished it. A plain cube face is a TANGENT plane, so its cells
+cover 2.6x less sky at the corners than at the centre - and a cell size
+that varies across the frame beats against the screen's own grid and
+draws curved moire rings. That is the pole's ghost rather than its
+cure, and an amplified difference image showed it plainly. Warping each
+face by atan (the equi-angular cubemap of 360 video) makes every cell
+the same angle everywhere. It also makes the count exact: 90 degrees a
+face over n cells at one step each is n = (PI/2)/step = 256 a face,
+512 across 180 degrees - which is SKY??.DAT's own width, so the retro
+pixel is now provably the painted sky's pixel rather than approximately
+it.
+
+Verified the way it was reported: looking straight up, at noon, at
+dusk, under cloud and at night. The bullseye is gone from all of them,
+and a 22x amplified deviation image - which is how the residual ring
+was found in the first place - shows an even weave with no centre.
+Pins: 1 more (13) - the lat-long snap gone root and branch, the cube's
+face choice and its per-face cell ids, the atan/tan warp both ways, the
+count landing exactly on 256 a face, and the star field on the same
+cube. 3 mutants, 3 dead. The probe's retro-vs-smooth threshold was
+retuned: the equi-angular cells are a touch smaller near the horizon
+than the lat-long ones they replaced, so `changes` alone was the wrong
+measure and LEVELS - 8 against 69 - is the decisive one.
+
+ON THE HORIZON: the sky as a setting rather than a URL, lightning on
+the thunder weather, and a season's hand on the palette.
+

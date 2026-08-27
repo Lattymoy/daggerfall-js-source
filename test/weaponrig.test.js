@@ -11,6 +11,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createWeaponRig, envAttack } from '../src/combat/weaponRig.js';
 import { SOUND } from '../src/systems/soundClips.js';
+import { EQUIP_SLOTS } from '../src/systems/equip.js';
+import { equipSoundFor } from '../src/characters/weapons.js';
 
 const stubAudio = () => {
   const a = { played: [], playOneShot(id) { a.played.push(id); } };
@@ -28,13 +30,43 @@ const rig = (over = {}) => {
   return r;
 };
 
-test('weaponRig: classic starts sheathed; DrawWeapon 78 on unsheathing a real weapon only', () => {
+test('weaponRig: classic starts sheathed; the WEAPON\'S OWN equip sound on unsheathing (F023)', () => {
+  // AUDIT 26 F023: FPSWeapon plays DrawWeaponSound, which
+  // WeaponManager.SetWeapon (:780) overwrites with the item's
+  // GetEquipSound on every applied weapon - so the declared 78
+  // default never survives a real weapon, and this pin used to hold
+  // the port's single clip rather than DFU's eight.
   const r = rig();
   assert.equal(r.playerWeapon.sheathed, true, 'classic starts sheathed');
   r.toggleSheath();   // unsheathe the INTERIM dagger (a real weapon)
-  assert.deepEqual(r._audio.played, [SOUND.DrawWeapon]);
+  assert.deepEqual(r._audio.played, [SOUND.EquipShortBlade], 'a dagger is a SHORT blade');
   r.toggleSheath();   // sheathing back is silent
-  assert.deepEqual(r._audio.played, [SOUND.DrawWeapon]);
+  assert.deepEqual(r._audio.played, [SOUND.EquipShortBlade]);
+});
+
+test('weaponRig F023: the clip follows the weapon TYPE, and falls back for the typeless', () => {
+  const worn = (templateIndex) => ({
+    items: [], equip: { slots: { [EQUIP_SLOTS.RightHand]: { templateIndex } } },
+  });
+  const drawOf = (templateIndex) => {
+    const r = rig({ entity: worn(templateIndex) });
+    r.toggleSheath();
+    return r._audio.played;
+  };
+  assert.deepEqual(drawOf(122), [SOUND.EquipTwoHandedBlade], 'a Claymore is TWO-HANDED - not the long blade its swing groups with');
+  assert.deepEqual(drawOf(120), [SOUND.EquipLongBlade], 'a Longsword is a long blade');
+  assert.deepEqual(drawOf(127), [SOUND.EquipAxe], 'a Battle Axe');
+  assert.deepEqual(drawOf(125), [SOUND.EquipFlail], 'a Flail has its own clip');
+  assert.deepEqual(drawOf(126), [SOUND.EquipMaceOrHammer], 'a Warhammer shares the mace clip');
+  assert.deepEqual(drawOf(115), [SOUND.EquipStaff], 'a Staff');
+  assert.deepEqual(drawOf(130), [SOUND.EquipBow], 'a Long Bow');
+  // SoundClips.None at the LAW's level: an Arrow is in the Weapons
+  // group but hits GetEquipSound's `default:`. It cannot be observed
+  // through the rig - toggleSheath's real-weapon gate never draws one
+  // - so the fallback is pinned where it lives.
+  assert.equal(equipSoundFor({ templateIndex: 131 }), null, 'an Arrow has no equip clip of its own');
+  assert.equal(equipSoundFor(null), null);
+  assert.equal(equipSoundFor({ werecreatureClaws: true }), null, 'the claws draw silently (V4)');
 });
 
 test('weaponRig: sheathed = no attack processing; a drag swings SILENTLY and reaches the hit frame', () => {

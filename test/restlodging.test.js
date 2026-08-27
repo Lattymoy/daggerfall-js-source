@@ -705,7 +705,14 @@ test('S40 restDecision: it is SCENE-FREE - all four hosts run it before opening'
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     assert.match(src(f), /swimming: !!player\.swimming,/, f);
   }
-  assert.match(wm, /enemiesNearby: false,[^}]*swimming: false,/s);
+  // IF: the interior's `enemiesNearby` was a literal false because the
+  // host mounted no foe pool. It mounts one now, so it feeds the
+  // decision LIVE like the other hosts on the line above - the law
+  // this pin guards (every host runs restDecision, scene-free, before
+  // opening) is unchanged and stronger.
+  assert.match(wm, /enemiesNearby: interiorEnemiesNearby\(\{ resting: true \}\),[^}]*swimming: false,/s);
+  assert.match(wm, /const interiorEnemiesNearby = \(opts = \{\}\) => \(interiorFoes \? areEnemiesNearby\(interiorFoes\.foes, opts\) : false\);/,
+    'and it is the ONE shared scan over this host\'s own pool');
   for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/world.js',
     'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
     const h = src(f);

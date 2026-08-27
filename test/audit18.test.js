@@ -143,7 +143,14 @@ test('AUDIT 18 F2: every ARENA2 name live code fetches survives the ingest diet'
     for (const m of stripComments(readFileSync(file, 'utf8')).matchAll(ARENA2_NAME)) named.add(m[1]);
   }
   assert.ok(named.size >= 20, `expected the named-file set, found ${named.size}`);
-  const starved = [...named].filter((n) => !KEEP(n, false) || !KEEP(n, true));
+  // SAV1: the classic-save readers name the SAVE0-SAVE5 files by
+  // charter (SaveGames.cs walks save directories, not ARENA2). They
+  // are NOT ARENA2 members, never reach the ingest store, and the diet
+  // has no say over them - BIO.DAT is even pinned OUT below. IMAGE.RAW,
+  // MAPSAVE.SAV and SAVENAME.TXT carry extensions the regex above never
+  // matches, so only the four .DAT/.TXT-shaped names need the carve-out.
+  const SAVE_DIR_FILES = new Set(['SAVETREE.DAT', 'SAVEVARS.DAT', 'RUMOR.DAT', 'BIO.DAT', 'SAVENAME.TXT']);
+  const starved = [...named].filter((n) => !SAVE_DIR_FILES.has(n) && (!KEEP(n, false) || !KEEP(n, true)));
   assert.deepEqual(starved, [],
     `src/ names these ARENA2 files but the ingest diet drops them:\n${starved.join('\n')}`);
 

@@ -144,14 +144,32 @@ test('X8: the pacify reaches the AI, and attacking restores hostility', () => {
   assert.doesNotMatch(host.slice(armEnd), /applySpell\(spell, casterLevel, t\.entity/,
     'no foe application bypasses the door');
 
-  // THE OTHER HALF - "until player attacks them". Both foe damage
+  // THE OTHER HALF - "until PLAYER attacks them". Both foe damage
   // doors re-hostile a pacified target, which is what makes the
   // permanent pacify a real mechanic rather than an off switch.
-  for (const p of ['src/scenes/dungeonContext.js', 'src/scenes/exteriorFoes.js']) {
-    assert.match(readFileSync(join(ROOT, p), 'utf8'),
-      /if \((foe|f)\.ai && !\1\.ai\.isHostile\) \{ \1\.ai\.isHostile = true;/,
-      `${p} restores hostility on damage`);
-  }
+  // AUDIT 26 F041 sharpened this to DFU's own wording: the flip sits
+  // inside HandleAttackFromSource's player-source gate, so the door
+  // now asks whose blow it was - a FALL no longer un-pacifies. MT-ii
+  // then widened the ENCOUNTER pool's arm inside that same gate to
+  // the whole of MakeEnemyHostileToAttacker (:186-214), because with
+  // targeting armed there is finally a target to reassign; the
+  // dungeon host still runs the pre-MT shape (MT-iv).
+  // MT-iv armed this host too, so BOTH pools run the whole of
+  // MakeEnemyHostileToAttacker inside the gate now; the dungeon keeps
+  // the narrow raise as its no-subsystem fallback (the lazy foe
+  // subsystem can fail to load, and a foe must still stand up).
+  const dgs = readFileSync(join(ROOT, 'src/scenes/dungeonContext.js'), 'utf8');
+  assert.match(dgs, /if \(fromPlayer && foe\.ai\) \{/,
+    'src/scenes/dungeonContext.js restores hostility on a PLAYER attack');
+  assert.match(dgs, /foeDeps\.resetAllyTeamOnPlayerAttack\(foe\.ai, foe\.entity, foe\.mobileType\)/,
+    'and reverts a struck former ally to its species');
+  assert.match(dgs, /\} else if \(!foe\.ai\.isHostile\) \{\n\s*foe\.ai\.isHostile = true;/,
+    'with the legacy raise kept for a degraded foe subsystem');
+  const xfs = readFileSync(join(ROOT, 'src/scenes/exteriorFoes.js'), 'utf8');
+  assert.match(xfs, /if \(fromPlayer && f\.ai\) \{\n\s*f\.ai\.makeEnemyHostileToAttacker\?\.\(PLAYER_TARGET/,
+    'src/scenes/exteriorFoes.js restores hostility on a PLAYER attack - through the whole C# method');
+  assert.match(xfs, /resetAllyTeamOnPlayerAttack\(f\.ai, f\.entity, f\.mobileType\)/,
+    'and reverts a struck former ally to its species');
   // the motor's own field names the mechanic it was waiting for
   assert.match(readFileSync(join(ROOT, 'src/characters/enemyMotor.js'), 'utf8'),
     /isHostile = true;\s*\/\/ EnemyMotor\.IsHostile - pacification/,

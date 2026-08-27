@@ -31,7 +31,6 @@ const tracked = (dir) => execFileSync('git', ['ls-files', dir], { cwd: root, enc
  *  that keeps the original silhouette answers yes. */
 const PUBLIC_ALLOWLIST = new Map([
   ['public/README.md', 'documentation'],
-  ['public/logo.png', "OUR artwork - the title screen brand (U21c), the port's own"],
   // THE SITE'S PICTURES (U60c). Screens of the ENHANCED skin - type and
   // layout - taken by tools/siteShots.mjs with NO ARENA2 anywhere: the
   // tool boots its own vite with no data folder, proves the game's own
@@ -150,6 +149,18 @@ test('doctrine: nothing ships out of public/ that is not provably ours', () => {
     + 'that keeps the original silhouette - it may not be here at all. If it is genuinely\n'
     + "the port's own artwork, add it to PUBLIC_ALLOWLIST with the reason:\n"
     + unexplained.join('\n'));
+});
+
+test('AUDIT 27: the allow-list is checked BOTH ways - no row outlives its file', () => {
+  // The sweep found a row for public/logo.png, a file that exists
+  // nowhere in the tree's history. The list was only ever read one way -
+  // a tracked file must have a row - so a row could be written for a
+  // file that never landed, or outlive one that was deleted, and the
+  // list would still pass while meaning less than it claims.
+  const stale = [...PUBLIC_ALLOWLIST.keys()].filter((f) => !tracked('public').includes(f));
+  assert.deepEqual(stale, [],
+    'these rows name files that are not tracked. A row is a CLAIM that a published\n'
+    + 'file is ours; a claim about a file that does not exist is not a claim.');
 });
 
 test('doctrine: no raster of game data is tracked anywhere in the repo', () => {

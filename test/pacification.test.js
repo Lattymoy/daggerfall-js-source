@@ -96,17 +96,35 @@ test('pacification: the host runs it on the FIRST-encounter edge and a pacified 
   // the component keeps ticking and keeps burning its DFRandom byte;
   // holding it at the host desynced the one shared global stream for
   // as long as the foe stood pacified.
-  assert.ok(src.includes('f.events = _fParalyzed ? [] : f.attack.update'),
-    'only paralysis skips the attack component - DFU has no hostility gate there');
+  // MT-iv: paralysis, or NO TARGET - EnemyAttack's own two returns
+  // (:55-57 paralysed, :136-137 `senses.Target == null`). Still no
+  // hostility gate, which is what this pin guards: a pacified foe
+  // keeps ticking its component and burning its DFRandom byte.
+  assert.ok(src.includes('f.events = (_fParalyzed || !_tgt) ? [] : f.attack.update'),
+    'only paralysis and a null target skip the attack component - DFU has no hostility gate there');
+  assert.equal(/_fParalyzed \|\| !f\.ai\.isHostile/.test(src), false, 'no hostility gate crept in');
   assert.equal(/_fParalyzed \|\| !f\.ai\.isHostile/.test(src), false, 'the host gate is gone');
   const motor = readFileSync(join(root, 'src/characters/enemyMotor.js'), 'utf8');
-  assert.ok(motor.includes('if (!this.isHostile) {\n      this.inSight = false;\n      this.detected = false;'),
+  // MT-i refined the blind arm to what :321-327 actually says: the
+  // non-hostile drop nulls the PLAYER target only, so a pacified foe
+  // that a bear is mauling keeps its senses and fights back (through
+  // MakeEnemyHostileToAttacker). With no target - the unarmed pool's
+  // pacified foe, and every pre-MT caller - it still reads blind.
+  assert.ok(motor.includes('if (!this.isHostile && !foeTarget) {\n      this.inSight = false;\n      this.detected = false;'),
     'the senses read blind instead');
+  assert.ok(motor.includes('const foeTarget = this._armedTargeting && this._targetCandidate && !this._targetCandidate.isPlayer;'),
+    'and the one exception is a live FOE target, per :321-327');
   // the CASTING gate stays: DFU's spell paths hang off the MOTOR's
   // TakeAction, behind CanAct, which HandleNoAction:357-364 drops the
   // moment the target is null.
   assert.ok(src.includes('!_fParalyzed && f.ai.isHostile) {'), 'no casts while pacified');
-  assert.ok(src.includes('if (foe.ai && !foe.ai.isHostile) { foe.ai.isHostile = true;'), 'damage re-hostiles (MakeEnemyHostileToAttacker)');
+  // AUDIT 26 F041: the flip asks WHOSE blow it was - it sits inside
+  // HandleAttackFromSource's player-source gate, so a fall no longer
+  // un-pacifies a language-pacified foe.
+  // ...and MT-iv runs the WHOLE method inside that gate, with the
+  // narrow raise kept as the no-subsystem fallback.
+  assert.ok(src.includes('if (fromPlayer && foe.ai) {'), 'a PLAYER attack re-hostiles (MakeEnemyHostileToAttacker)');
+  assert.ok(src.includes('foeDeps.resetAllyTeamOnPlayerAttack(foe.ai, foe.entity, foe.mobileType);'), 'and reverts a struck ally');
 });
 
 test('pacification: the motor edge fires once and non-hostile foes stop moving', async () => {

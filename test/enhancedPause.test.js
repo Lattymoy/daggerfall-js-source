@@ -151,13 +151,16 @@ test('U51: the fork asks the SKIN, not only the document', () => {
     'both clauses, in that order');
 });
 
-test('U51: the pause door opens on the pane a player pressed Escape for', () => {
-  // Boot opens on Continue - the one save a returning player wants.
-  // Pause opens on SAVE GAME, and Settings - the reason this door
-  // exists at all - is one press away and permanently on the rail,
-  // which is the thing classic could not do at any price.
+test('PX2: both doors open on the pixel home', () => {
+  // U51's pause law was 'open on Save Game - what Escape was pressed
+  // for'. PX2 replaced it deliberately (Mac's adopted face): pause
+  // opens on the SAME pixel home as boot, Save Game one visible press
+  // away, and Escape on the face resumes. The MEASURED half below
+  // holds the resume arm - a home that cannot resume is a trap.
   const src = read('src/ui/enhancedMenu.js');
-  assert.match(src, /section = mode === 'pause' \? 'save' : 'continue';/);
+  assert.match(src, /^  section = 'home';$/m);
+  assert.match(src, /mode === 'pause' \? \(\) => onAction\('resume'\)/,
+    'Escape on the pause face must resume');
 });
 
 test('U51: the pause door mounts the FRONT DOOR, not a second design', () => {

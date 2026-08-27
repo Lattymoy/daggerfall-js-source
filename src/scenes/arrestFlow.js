@@ -26,6 +26,7 @@ import {
   pleaNotGuilty, resolveGuiltyVerdict, raiseRepForSentence, TEXT_EXECUTED,
 } from '../systems/court.js';
 import { advanceWorldMinutes, MINUTES_PER_DAY } from '../systems/worldTick.js';
+import { fillVitalSigns } from '../systems/statMods.js';   // F038: the acquittal's refill
 
 /** ReleaseFromPrison (DaggerfallCourtWindow.cs:482-491) opens with
  *      DaggerfallUnity.WorldTime.DaggerfallDateTime.RaiseTime(240 * 60);
@@ -141,6 +142,12 @@ export function createArrestFlow({
     const r = pleaNotGuilty(court, playerEntity, useDebate, { rolls });
     if (r.outcome === 'free') {
       clearArrest();                   // AUDIT 21 F2: including `arrested`
+      // AUDIT 26 F038: the acquittal calls FillVitalSigns explicitly
+      // (DaggerfallCourtWindow.cs:191) - a FULL refill of all three
+      // pools. Surrender forces health to 1 (PlayerEntity.cs:2321,
+      // the setHealth1 hook above), so without this the acquitted
+      // player walked out of court on exactly 1 HP.
+      fillVitalSigns(playerEntity);
       // AUDIT 17e F22: DFU raises reputation on a successful defense
       // (DaggerfallCourtWindow.cs:426) - and says so against classic
       // in its own comment two lines up ("Also does not repair
@@ -234,10 +241,19 @@ export function createArrestFlow({
 
   /** Leaving CUSTODY - the court exit plus the prison vitals floor. An
    *  acquitted player never went to prison, so they take clearArrest
-   *  alone: the floor is FillVitalSigns' and belongs to release. */
+   *  alone. AUDIT 26 F038: the old note here called the line below
+   *  "FillVitalSigns' floor" and said it belonged to release - both
+   *  halves were wrong. FillVitalSigns is a FULL refill (health,
+   *  fatigue and magicka to their maxima, DaggerfallEntity.cs
+   *  :442-447) and DFU calls it on the ACQUITTAL and the Thieves
+   *  Guild rescue, never on release: ReleaseFromPrison (:482-490)
+   *  does not touch health at all. The clamp below is the port's own
+   *  safeguard against walking out of a sentence at 0 HP, kept and
+   *  named as such. (The TG rescue's refill rides the guild-rescue
+   *  pend with the rest of that branch.) */
   function release() {
     clearArrest();
-    playerEntity.health = Math.max(1, playerEntity.health);   // FillVitalSigns' floor (full refill pends vitals wiring)
+    playerEntity.health = Math.max(1, playerEntity.health);   // the port's own floor, not DFU's
   }
 
   return { onGuardHit, startCourtFlow };

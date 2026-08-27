@@ -110,6 +110,7 @@ export default defineConfig({
         landing: 'index.html',
         main: 'play/index.html',
         viewer: 'viewer.html',
+        sky: 'sky.html',   // ES1: the enhanced sky lab
         // A PROTOTYPE, and deployed on purpose: a design that claims to
         // adapt to a phone has to be opened on one.
         enhanced: 'enhanced.html',
@@ -118,6 +119,11 @@ export default defineConfig({
         menu: 'menu.html',
         // And for the wizard behind it, one stage at a time.
         chargen: 'chargen.html',
+        // THE MODERN DIRECTION (Mac, 2026-08-27): the Skyrim-esque
+        // main-menu redesign, self-contained, deployed for phone eyes.
+        menuRedesign: 'menu-redesign.html',
+        // The same direction cut in Daggerfall's own pixel idiom.
+        menuPixel: 'menu-pixel.html',
       },
     },
   },

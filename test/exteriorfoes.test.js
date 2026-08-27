@@ -29,12 +29,22 @@ test('exteriorfoes: the pool laws - cull AFTER fresh senses, the alert raise, th
   const s = src('exteriorFoes.js');
   // the cull runs after ai.update so a just-spawned foe's Infinity
   // placeholder never culls it (the live probe caught the inversion)
-  const upd = s.indexOf('f.ai.update(dt, playerFeet, senses, _fParalyzed);');
-  const cull = s.indexOf('f.ai._dist > ENCOUNTER_CULL_DISTANCE');
+  const upd = s.indexOf('f.ai.update(dt, playerFeet, _armed(f, senses), _fParalyzed);');
+  const cull = s.indexOf('> ENCOUNTER_CULL_DISTANCE');
   assert.ok(upd > 0 && cull > upd, 'senses first, cull second');
-  assert.ok(s.includes('if (f.ai.inSight && f.ai.detected) setEnemyAlert(playerEntity, true'),
-    'sight raises the enemy alert above ground too (EnemySenses:533-535)');
-  assert.ok(s.includes('if (f.ai?.detected) setEnemyAlert(playerEntity, false)'), 'the targeting kill clears it');
+  // MT-ii advanced BOTH alert gates and the cull's distance. The
+  // target==player term in EnemySenses:531-535 / EnemyDeath:131-136
+  // was unobservable while every foe targeted the player; armed, two
+  // orcs brawling must not hold the player's alert up. And the cull
+  // measures to the PLAYER - `_dist` is the distance to the SELECTED
+  // TARGET now, so reading it would leave a pair of brawlers
+  // uncullable forever.
+  assert.ok(s.includes('if (isPlayerTarget(f.ai.target) && f.ai.inSight && f.ai.detected) setEnemyAlert(playerEntity, true'),
+    'sight raises the enemy alert above ground too, for a PLAYER target (EnemySenses:531-535)');
+  assert.ok(s.includes('if (isPlayerTarget(f.ai?.target) && f.ai?.detected) setEnemyAlert(playerEntity, false)'),
+    'the targeting kill clears it - and only when the player was the target (EnemyDeath:131-136)');
+  assert.ok(s.includes('const _playerDist = Math.hypot(playerFeet[0]'), 'the cull measures to the PLAYER, not the target');
+  assert.ok(!s.includes('f.ai._dist > ENCOUNTER_CULL_DISTANCE'), 'and never to _dist again');
   assert.equal(typeof MAX_ACTIVE_ENCOUNTER_FOES, 'number');
   assert.ok(ENCOUNTER_CULL_DISTANCE > 60, 'the relevance band outlives the senses radius');
   // no crime machinery: killing a wilderness wolf is not Murder
@@ -43,7 +53,7 @@ test('exteriorfoes: the pool laws - cull AFTER fresh senses, the alert raise, th
   // ranged-flags law the dungeon build does, and the shoot frame
   // looses a real arrow through the host's seam
   assert.ok(s.includes('attack.rangedAttack = hasBowAttack(basics)'), 'exterior bow foes arm like the dungeon');
-  assert.ok(s.includes('f.mobile.shootArrow && playerFeet && onArrow'), 'the ranged -1 marker fires the arrow seam');
+  assert.ok(s.includes('f.mobile.shootArrow && _tgt && onArrow'), 'the ranged -1 marker fires the arrow seam');
 });
 
 test('exteriorfoes: the world host - the cadence loop, the travel reset, the facade and the melee order', () => {

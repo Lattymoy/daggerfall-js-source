@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <title>Daggerfall Enhanced — main menu, pixel variant</title>
+    <!-- THE PIXEL VARIANT (Mac, 2026-08-27): the menu-redesign.html
+         structure - centered floating list, no boxes, fog, ornament -
+         re-cut in Daggerfall's own idiom. Everything chunky: a
+         Bayer-dithered ground rendered at low res and upscaled with
+         image-rendering: pixelated, pixel blackletter for the wordmark
+         (Jacquard 12), pixel sans for the list (Pixelify Sans), and the
+         CLASSIC SHADOWED-LABEL IDIOM for the selected row - yellow
+         (243,239,44) over its (93,77,12) +1,+1 shadow, the same pair
+         every native window draws. State changes SNAP (no eased scale -
+         pixels do not tween). All art procedural, no game data. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Jacquard+12&family=Pixelify+Sans:wght@400;500&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --ink: #0a0c11;
+        --bone: #d8cfae;
+        --dim: #7d7460;
+        --gold: rgb(243,239,44);
+        --goldshadow: rgb(93,77,12);
+        --brass: #c08a3e;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; background: var(--ink); overflow: hidden; }
+      body { font-family: 'Pixelify Sans', monospace; color: var(--bone);
+        -webkit-font-smoothing: none; font-smooth: never; }
+
+      /* ── THE GROUND ── a 480x270 canvas: vertical gradient quantized
+         to a short ramp through a 4x4 Bayer matrix, two dithered fog
+         blobs, a scatter of static stars. Drawn once, oversized, and
+         drifted slowly; pixelated upscale keeps every dot square. */
+      #ground { position: fixed; left: -25vw; top: -25vh;
+        width: 150vw; height: 150vh; image-rendering: pixelated;
+        animation: drift 160s linear infinite alternate; }
+      @keyframes drift { from { transform: translate(0,0) } to { transform: translate(6vw,3vh) } }
+      .vignette { position: fixed; inset: 0; pointer-events: none;
+        background: radial-gradient(95% 95% at 50% 45%, transparent 60%, rgba(0,0,0,0.5) 100%); }
+
+      .stage { position: relative; height: 100dvh; display: flex;
+        flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
+
+      /* Jacquard 12 is a 12px-grid pixel blackletter - render at exact
+         multiples so the grid stays square. */
+      .wordmark { font-family: 'Jacquard 12', serif; font-weight: 400; margin: 0;
+        font-size: 96px; line-height: 1; color: var(--bone); text-align: center;
+        text-shadow: 4px 4px 0 rgba(0,0,0,0.7); }
+      .wordmark small { display: block; font-family: 'Pixelify Sans', monospace;
+        font-size: 16px; letter-spacing: 0.5em; text-indent: 0.5em;
+        text-transform: uppercase; color: var(--dim); margin-top: 8px;
+        text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+
+      /* The ornament, in whole pixels: stepped diamond via box-shadow,
+         flanked by 2px rules. */
+      .rule { display: flex; align-items: center; gap: 16px;
+        width: min(420px, 70vw); margin: 28px 0 30px; }
+      .rule::before, .rule::after { content: ''; flex: 1; height: 2px;
+        background: var(--dim); opacity: 0.55; }
+      .gem { position: relative; width: 2px; height: 2px; background: var(--brass);
+        box-shadow:
+          0 -4px 0 var(--brass), 0 4px 0 var(--brass),
+          -4px 0 0 var(--brass), 4px 0 0 var(--brass),
+          -2px -2px 0 var(--brass), 2px -2px 0 var(--brass),
+          -2px 2px 0 var(--brass), 2px 2px 0 var(--brass); }
+
+      /* ── THE LIST ── rest = bone with a hard 2px black shadow;
+         hover/focus = the classic gold pair, pixel chevrons snap in,
+         nothing eases. */
+      .menu { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+      .menu button { font: inherit; font-size: 28px; font-weight: 400;
+        letter-spacing: 0.18em; text-indent: 0.18em; text-transform: uppercase;
+        color: var(--bone); background: none; border: 0; cursor: pointer;
+        padding: 8px 26px; min-height: 48px;
+        display: flex; align-items: center; gap: 18px;
+        text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+      .menu button .c { font-size: 22px; color: var(--gold); visibility: hidden;
+        text-shadow: 2px 2px 0 var(--goldshadow); }
+      .menu button:hover, .menu button:focus-visible { outline: none;
+        color: var(--gold); text-shadow: 2px 2px 0 var(--goldshadow); }
+      .menu button:hover .c, .menu button:focus-visible .c { visibility: visible; }
+      .menu button:disabled { color: rgba(125,116,96,0.45); cursor: default; }
+      .menu button:disabled:hover { color: rgba(125,116,96,0.45);
+        text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+      .menu button:disabled .c { visibility: hidden; }
+
+      .why { font-size: 15px; color: var(--dim); margin: -4px 0 4px;
+        text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+
+      .foot { position: fixed; left: 0; right: 0; bottom: 0;
+        display: flex; justify-content: space-between; align-items: flex-end;
+        padding: 12px 16px; font-size: 15px; letter-spacing: 0.12em;
+        text-transform: uppercase; color: var(--dim);
+        text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+      .foot .skin { color: var(--gold); text-shadow: 2px 2px 0 var(--goldshadow);
+        cursor: pointer; min-height: 44px; display: flex; align-items: flex-end; }
+
+      @media (max-width: 480px) {
+        .wordmark { font-size: 60px; }
+        .menu button { font-size: 24px; letter-spacing: 0.12em; text-indent: 0.12em; }
+      }
+      @media (prefers-reduced-motion: reduce) { #ground { animation: none; } }
+    </style>
+  </head>
+  <body>
+    <canvas id="ground"></canvas>
+    <div class="vignette"></div>
+    <div class="stage">
+      <h1 class="wordmark">Daggerfall<small>JavaScript</small></h1>
+      <div class="rule"><span class="gem"></span></div>
+      <nav class="menu" aria-label="Main menu">
+        <button type="button" autofocus><span class="c">&#9670;</span>Continue<span class="c">&#9670;</span></button>
+        <button type="button"><span class="c">&#9670;</span>New Game<span class="c">&#9670;</span></button>
+        <button type="button"><span class="c">&#9670;</span>Load<span class="c">&#9670;</span></button>
+        <button type="button"><span class="c">&#9670;</span>Settings<span class="c">&#9670;</span></button>
+        <button type="button" disabled><span class="c">&#9670;</span>Mods<span class="c">&#9670;</span></button>
+        <div class="why">arrives with the mod arc</div>
+        <button type="button"><span class="c">&#9670;</span>Credits<span class="c">&#9670;</span></button>
+      </nav>
+    </div>
+    <div class="foot">
+      <span>build 2026-08-27 &middot; pixel variant</span>
+      <span class="skin">Enhanced</span>
+    </div>
+    <script>
+      // THE DITHERED GROUND. A night gradient quantized to a six-step
+      // ramp through 4x4 Bayer thresholds, two fog blobs mixed the same
+      // way, stars on a seeded LCG so every load sees the same sky.
+      // THE PIXEL IS SQUARE BY CONSTRUCTION: the backing store is the
+      // drifted element's own CSS size at 1/4 scale, re-derived on
+      // resize - a fixed 480x270 stretched over a portrait phone drew
+      // every star as a streak (caught in the first phone shot).
+      const cv = document.getElementById('ground');
+      const g = cv.getContext('2d');
+      const BAYER = [ [0,8,2,10], [12,4,14,6], [3,11,1,9], [15,7,13,5] ];
+      const RAMP = ['#07080d','#0b0d14','#10141d','#161c27','#1e2632','#28313f'];
+      const hx = (s) => [parseInt(s.slice(1,3),16), parseInt(s.slice(3,5),16), parseInt(s.slice(5,7),16)];
+      function draw() {
+        const W = cv.width = Math.ceil(innerWidth * 1.5 / 4);
+        const H = cv.height = Math.ceil(innerHeight * 1.5 / 4);
+        const img = g.createImageData(W, H);
+        let seed = 0xda66e4;
+        const rnd = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 0x100000000;
+        const fogs = [ { x: W*0.30, y: H*0.72, r: H*0.55, k: 1.4 },
+                       { x: W*0.78, y: H*0.35, r: H*0.45, k: 0.9 } ];
+        for (let y = 0; y < H; y++) {
+          for (let x = 0; x < W; x++) {
+            let v = y / H;                       // 0 top .. 1 bottom
+            for (const f of fogs) {
+              const d = Math.hypot(x - f.x, y - f.y) / f.r;
+              if (d < 1) v += (1 - d) * (1 - d) * 0.22 * f.k;
+            }
+            v = Math.max(0, Math.min(1, v));
+            const t = v * (RAMP.length - 1);
+            const i0 = Math.floor(t);
+            const frac = t - i0;
+            const th = (BAYER[y & 3][x & 3] + 0.5) / 16;
+            const c = hx(RAMP[Math.min(RAMP.length - 1, i0 + (frac > th ? 1 : 0))]);
+            const o = (y * W + x) * 4;
+            img.data[o] = c[0]; img.data[o+1] = c[1]; img.data[o+2] = c[2]; img.data[o+3] = 255;
+          }
+        }
+        // Stars: upper half, density by area, two brightnesses.
+        const n = Math.round(W * H / 1440);
+        for (let i = 0; i < n; i++) {
+          const x = (rnd() * W) | 0, y = (rnd() * H * 0.55) | 0;
+          const b = rnd() < 0.25 ? 200 : 120;
+          const o = (y * W + x) * 4;
+          img.data[o] = b; img.data[o+1] = b; img.data[o+2] = b - 10;
+        }
+        g.putImageData(img, 0, 0);
+      }
+      draw();
+      addEventListener('resize', draw);
+    </script>
+  </body>
+</html>

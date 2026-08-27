@@ -39,7 +39,14 @@ test('ch3 characters-8: the fall tracker - grounded refreshes, a past-threshold 
 /** The `{ ... }` block containing index `i`, matched rather than
  *  guessed at by character count. */
 function braceBlock(text, i) {
-  const open = text.lastIndexOf('{', i);
+  // MT-iv: the arm's OWN opening brace - the one at or after the
+  // match - not the last one before it. `lastIndexOf` picked up
+  // whatever statement happened to sit above the arm, so a helper
+  // declared just before it shadowed the block this pin means to
+  // read. Same intent the wave-39 comment states ("brace-match the
+  // arm instead, so it cannot drift again"), now actually anchored
+  // to the arm.
+  const open = text.indexOf('{', i);
   let depth = 0;
   for (let k = open; k < text.length; k++) {
     if (text[k] === '{') depth++;

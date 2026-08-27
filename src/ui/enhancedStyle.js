@@ -63,14 +63,23 @@ export const ENHANCED_TOKENS = `:root {
 export const FONT_DISPLAY = 'Cormorant:wght@300;400;600';
 export const FONT_DATA = 'Barlow+Semi+Condensed:wght@400;500;600';
 export const FONT_BRAND = 'Grenze+Gotisch:wght@300;400;500';
+/* THE PIXEL FACES (PX1, Mac 2026-08-27): the menu's home screen is
+   pixel art now - Jacquard 12 is a 12px-grid pixel BLACKLETTER (the
+   wordmark; the same family Grenze Gotisch was chosen to evoke, on an
+   actual pixel grid), Pixelify Sans the list face beside it. Chosen in
+   menu-pixel.html, the prototype of record. */
+export const FONT_PIXEL_BRAND = 'Jacquard+12';
+export const FONT_PIXEL_DATA = 'Pixelify+Sans:wght@400;500';
 export const fontsUrl = (families) =>
   `https://fonts.googleapis.com/css2?${families.map((f) => `family=${f}`).join('&')}&display=swap`;
 
 /** The one Google Fonts request the enhanced skin makes (Port-Ledger:
  *  the port's only third-party request, non-blocking, `?nofonts` skips
  *  it). A named export rather than a literal so nothing else can hold
- *  a second copy of it. */
-export const ENHANCED_FONTS_URL = fontsUrl([FONT_DISPLAY, FONT_DATA]);
+ *  a second copy of it. PX1 folded the two pixel faces into the SAME
+ *  request rather than making a second one - one request is the row's
+ *  own claim. */
+export const ENHANCED_FONTS_URL = fontsUrl([FONT_DISPLAY, FONT_DATA, FONT_PIXEL_BRAND, FONT_PIXEL_DATA]);
 
 export const ENHANCED_CSS = `
 /* ── TOKENS ── see ENHANCED_TOKENS above */
@@ -1028,6 +1037,156 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   .ovcard { right: 12px; bottom: 76px; }
   .ovfilters { left: 12px; bottom: 12px; flex-wrap: wrap; max-width: calc(100vw - 24px); }
 }
+
+/* ── PX1: THE PIXEL HOME (Mac, 2026-08-27) ──────────────────
+   The boot menu's front face in Daggerfall's own idiom, adopted from
+   menu-pixel.html: no boxes - the list floats over the dithered night
+   (src/ui/pixelGround.js), the wordmark is pixel blackletter, and the
+   focused row wears THE CLASSIC SHADOWED-LABEL PAIR - yellow
+   243,239,44 over its 93,77,12 shadow at +1,+1 (scaled x2 for the
+   larger type), the idiom every native window draws. States SNAP:
+   pixels do not tween, so there are no transitions in this block. */
+.px-home { position: fixed; inset: 0; overflow: hidden; background: #0a0c11;
+  font-family: 'Pixelify Sans', monospace; color: #d8cfae;
+  -webkit-font-smoothing: none; }
+/* PX2: the pause face - a scrim, not the night; the paused frame is
+   the ground. */
+.px-home.px-over { background: rgba(10,12,17,0.78); }
+/* ── PX3: THE PAUSE WINDOW ── a framed panel with tabs (Mac's
+   reference: Skyrim's journal), whole pixels throughout: 2px border,
+   corner gems, a tab strip whose active tab wears the classic gold
+   pair. The window scrolls its body; the scrim keeps the foot. */
+.px-win { position: relative; width: min(860px, 94vw); height: min(620px, 74dvh);
+  display: flex; flex-direction: column;
+  background: rgba(10,12,17,0.88); border: 2px solid #7d7460; }
+/* Each gem CENTERS on its corner: the core is 2px with 4px shadow
+   arms, so a translate by half its own size puts the diamond's heart
+   exactly on the frame's corner point. SCOPED under .px-win because
+   the base .px-gem rule sits LATER in this sheet and its
+   position:relative won the single-class tie - all four gems piled up
+   relative at the top-left (caught by the geometry probe). */
+.px-win .px-corner { position: absolute; }
+.px-win .px-tl { left: -1px; top: -1px; transform: translate(-50%,-50%); }
+.px-win .px-tr { right: -1px; top: -1px; transform: translate(50%,-50%); }
+.px-win .px-bl { left: -1px; bottom: -1px; transform: translate(-50%,50%); }
+.px-win .px-br { right: -1px; bottom: -1px; transform: translate(50%,50%); }
+.px-tabs { display: flex; justify-content: center; gap: 4px;
+  border-bottom: 2px solid rgba(125,116,96,0.55); padding: 6px 8px 2px; }
+.px-tabs button { font: inherit; font-size: 20px; letter-spacing: 0.16em; text-indent: 0.16em;
+  text-transform: uppercase; color: #d8cfae; background: none; border: 0; cursor: pointer;
+  min-height: 44px; padding: 6px 18px; display: flex; align-items: center; gap: 12px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); transition: none; }
+.px-tabs button .px-c { font-size: 15px; color: rgb(243,239,44); visibility: hidden;
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-tabs button:hover, .px-tabs button:focus-visible { outline: none;
+  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-tabs button.on { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-tabs button.on .px-c, .px-tabs button:hover .px-c, .px-tabs button:focus-visible .px-c { visibility: visible; }
+.px-body { flex: 1; overflow-y: auto; padding: 18px 26px; }
+/* System: the same floating list, sized for a panel. */
+.px-menu.px-compact { gap: 0; }
+.px-menu.px-compact button { font-size: 22px; min-height: 46px; padding: 6px 22px; }
+/* Stats */
+.px-statshead { display: flex; flex-direction: column; align-items: center; gap: 4px;
+  margin: 6px 0 16px; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-statshead strong { font-size: 26px; font-weight: 400; letter-spacing: 0.1em; }
+.px-statshead span { color: #7d7460; font-size: 16px; letter-spacing: 0.12em; text-transform: uppercase; }
+.px-statgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 6px 18px; margin-bottom: 14px; }
+.px-stat { display: flex; justify-content: space-between; gap: 10px;
+  border-bottom: 2px solid rgba(125,116,96,0.3); padding: 6px 2px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-stat .k { color: #7d7460; font-size: 15px; letter-spacing: 0.14em; text-transform: uppercase; align-self: center; }
+.px-stat .v { font-size: 19px; white-space: nowrap; }
+.px-attrs { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
+/* Quests */
+.px-quest { margin: 0 0 16px; padding: 10px 14px; border-left: 2px solid var(--brass);
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-quest p { margin: 0 0 4px; font-size: 17px; line-height: 1.45; }
+.px-note { color: #7d7460; text-align: center; margin-top: 24px; font-size: 17px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+@media (max-width: 480px) {
+  .px-win { width: 100vw; height: calc(100dvh - 92px); border-left: 0; border-right: 0; }
+  .px-tabs button { font-size: 17px; letter-spacing: 0.1em; text-indent: 0.1em; padding: 6px 10px; gap: 8px; }
+}
+.px-ground { position: absolute; left: -25%; top: -25%; width: 150%; height: 150%;
+  image-rendering: pixelated; animation: px-drift 160s linear infinite alternate; }
+@keyframes px-drift { from { transform: translate(0,0) } to { transform: translate(4%,2%) } }
+.px-vignette { position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(95% 95% at 50% 45%, transparent 60%, rgba(0,0,0,0.5) 100%); }
+.px-stage { position: relative; height: 100%; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; padding: 24px; }
+.px-wordmark { font-family: 'Jacquard 12', var(--brand); font-weight: 400; margin: 0;
+  font-size: 96px; line-height: 1; text-align: center;
+  text-shadow: 4px 4px 0 rgba(0,0,0,0.7); }
+.px-wordmark small { display: block; font-family: 'Pixelify Sans', monospace;
+  font-size: 16px; letter-spacing: 0.5em; text-indent: 0.5em;
+  text-transform: uppercase; color: #7d7460; margin-top: 8px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.px-rule { display: flex; align-items: center; gap: 16px;
+  width: min(420px, 70vw); margin: 28px 0 30px; }
+.px-rule::before, .px-rule::after { content: ''; flex: 1; height: 2px;
+  background: #7d7460; opacity: 0.55; }
+.px-gem { position: relative; width: 2px; height: 2px; background: var(--brass);
+  box-shadow:
+    0 -4px 0 var(--brass), 0 4px 0 var(--brass),
+    -4px 0 0 var(--brass), 4px 0 0 var(--brass),
+    -2px -2px 0 var(--brass), 2px -2px 0 var(--brass),
+    -2px 2px 0 var(--brass), 2px 2px 0 var(--brass); }
+.px-menu { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.px-menu button { font: inherit; font-size: 28px; font-weight: 400;
+  letter-spacing: 0.18em; text-indent: 0.18em; text-transform: uppercase;
+  color: #d8cfae; background: none; border: 0; cursor: pointer;
+  padding: 8px 26px; min-height: 48px; text-align: center;
+  display: flex; align-items: center; gap: 18px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); transition: none; }
+.px-menu button .px-c { font-size: 22px; color: rgb(243,239,44); visibility: hidden;
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-menu button:hover, .px-menu button:focus-visible { outline: none;
+  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-menu button:hover .px-c, .px-menu button:focus-visible .px-c { visibility: visible; }
+/* PX1b: THREE ZONES - build left, the skin toggle dead center, About
+   the bottom-right box. A grid, because flex space-between centers the
+   middle child only when the outer two happen to weigh the same. */
+.px-foot { position: absolute; left: 0; right: 0; bottom: 0;
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: end;
+  padding: 12px 16px; font-size: 15px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: #7d7460;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.px-build { justify-self: start; }
+/* The skin switch keeps skinSwitch()'s own markup; on the pixel foot
+   the active option takes the classic gold, stays a 44px target, and
+   the 'switch anytime' hint is the shell's - the centered pair reads
+   as a control on its own. */
+.px-foot .skinswitch { justify-self: center; display: flex; align-items: center; gap: 14px; }
+.px-foot .skinopt { font: inherit; min-height: 44px; color: #7d7460; cursor: pointer;
+  border: 0; background: none; padding: 0 6px; }   /* the shell's box has no place on the boxless face */
+.px-foot .skinopt.on { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-foot .skinhint { display: none; }
+/* The About box: the ONE box on the boxless face, which is what makes
+   it read as a plaque rather than a menu row. 2px border in whole
+   pixels, gold on hover by the same pair. */
+.px-about { font: inherit; font-size: 16px; letter-spacing: 0.14em; text-indent: 0.14em;
+  text-transform: uppercase; color: #d8cfae; cursor: pointer;
+  justify-self: end; min-height: 44px; padding: 8px 18px;
+  background: rgba(10,12,17,0.55); border: 2px solid #7d7460;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); transition: none; }
+.px-about:hover, .px-about:focus-visible { outline: none;
+  color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+@media (max-width: 480px) {
+  .px-wordmark { font-size: 60px; }
+  .px-menu button { font-size: 24px; letter-spacing: 0.12em; text-indent: 0.12em; }
+  /* PX1b: a phone foot is two rows - the toggle centered on its own,
+     build and About beneath it - because three zones across 393px made
+     the toggle wrap vertically and shoulder into the build line. */
+  .px-foot { grid-template-columns: 1fr auto;
+    grid-template-areas: 'switch switch' 'build about'; row-gap: 4px; }
+  .px-foot .skinswitch { grid-area: switch; }
+  .px-build { grid-area: build; align-self: center; }
+  .px-about { grid-area: about; }
+}
+@media (prefers-reduced-motion: reduce) { .px-ground { animation: none; } }
 `;
 
 const STYLE_ID = 'dagger-enhanced-style';

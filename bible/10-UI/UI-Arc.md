@@ -6365,3 +6365,91 @@ worked - which is why it read as "dungeons only". routeKey now declines
 POLLED_ACTIONS (ReadyWeapon); the panel keeps routeAction. Pinned in
 test/sheathkey.test.js (the keyboard OFF, the panel ON, every host's
 poll and both dungeon routers present), 2 mutants dead.
+
+
+## PX1 (2026-08-27, Mac: "this is it. YES"): THE PIXEL HOME
+
+The enhanced boot menu's FRONT FACE, adopted from the menu-pixel.html
+prototype: the boot door opens on `section = 'home'` - a boxless
+centered list over `src/ui/pixelGround.js`'s Bayer-dithered night
+(seeded stars, square pixels derived from the viewport at 1/4 scale,
+redrawn on the mount-owned resize listener), Jacquard 12 pixel
+blackletter wordmark, Pixelify Sans list, and the focused row wearing
+THE CLASSIC SHADOWED-LABEL PAIR - 243,239,44 over 93,77,12 - the idiom
+every native window draws. States SNAP; the block declares no
+transitions. Every home row NAVIGATES to the pane that already carries
+its laws (Continue's restorable card, the Mods waiting-room) rather
+than acting - a home that re-decided Continue would be a second
+implementation of the Continue pane. Escape backs a section out to
+home (a new rung above the pause-resume arm); the brand wordmark in
+the section shell is the same door for a finger. The pause door is
+UNTOUCHED - its pixel face is its own slice, as are the section
+shells' own restyles. The two pixel faces joined the skin's ONE fonts
+request (landing.test.js repinned to the new bytes, with a measured
+four-family assertion beside it); the pause-open pin repinned to the
+new shape with its pause half unchanged. Verified live over the built
+bundle: menu.html on desktop + phone, a Settings walk, Escape home,
+zero page errors. Prototypes of record: menu-redesign.html (smooth),
+menu-pixel.html (adopted).
+
+PX1b (same day, Mac): THE SKY LIVES AND THE FOOT SETTLES.
+drawPixelGround takes `t` seconds - the fog blobs orbit their homes on
+unequal periods and the bright quarter of the stars twinkle in STEPPED
+levels (a pixel star fades in levels, not a ramp); default t=0 is the
+prior still frame, and the module never schedules - the home mount
+owns an 8fps interval (pixel art's cadence; 60fps dither reads as
+noise), cleared by every rebuild and by unmount, skipped under
+prefers-reduced-motion. The foot is a three-zone grid: build left,
+the skin toggle DEAD CENTER with the 'switch anytime' hint hidden
+(the shell keeps it), and ABOUT as the bottom-right plaque - the ONE
+box on the boxless face - leaving the center list; the About SECTION
+stays on the shell rail so the rail-hole pin and shared-sections law
+hold. Under 480px the foot stacks two rows (the three zones made the
+toggle wrap into the build line - caught in the phone shot). Probed
+live: two canvas frames 1.5s apart differ, the About box opens its
+pane with the clock cleared, Escape returns home, zero page errors.
+
+PX2 (same day): THE PAUSE DOOR WEARS THE FACE. Both doors open on
+`section = 'home'` now - U51's pause law ('open on Save Game, what
+Escape was pressed for') is REPLACED DELIBERATELY, one press of depth
+traded for the adopted face, Save Game the second row a thumb meets
+and Resume the first; the pin repinned to the new shape with a
+MEASURED resume-arm assertion beside it. The pause face draws NO SKY
+and NO WORDMARK - the paused frame is the ground (`.px-over`, a 0.78
+ink scrim; a masthead on every Escape is a billboard) - and the clock
+never starts, so pause costs no interval. The Escape ladder unified:
+confirm -> sheet -> any section backs to home -> home resumes (pause)
+or stays (boot); the shell wordmark goes home in both modes. Probed
+live over a stand-in frame with the module mounted in pause mode:
+scrim on, sky and wordmark absent, Save pane opens, Escape home,
+Escape resumes exactly once, zero page errors. STANDING CAVEAT: the
+scrim is tuned against a stand-in - the first real-ARENA2 eyeball may
+move the 0.78.
+
+PX3 (same day, Mac's reference: Skyrim's journal): PAUSE IS A WINDOW,
+NOT A SECOND MAIN MENU. The pause face became a framed panel -
+min(860px, 94vw) x min(620px, 74dvh), 2px border, four corner gems
+CENTERED on the frame's corner points - with three tabs: QUESTS,
+STATS, SYSTEM (the landing tab; Resume and Save under a thumb). The
+Quests tab reads the machine's own log messages through a NEW
+`hooks.questMessages` seam - the SAME expression the F5 logbook reads
+- flattening each message's counted formattings (questJournal's own
+set) into paragraph blocks with a brass rail; THE FOUR HOSTS RULE:
+world.js WIRED, worldModes/exterior/dungeonContext FLAGGED by name at
+their own openPauseFlow sites (worldModes has no bridge handle yet,
+exterior mounts no machine, the dungeon quest mount is itself AUDIT
+25 P0), each saying so in the tab rather than drawing an empty page
+that lies. The Stats tab is `sheetModel(playerEntity)` - the char
+sheet's OWN model, one law - as name/race/career/level, five vitals
+rows and the eight attributes; the full sheet stays the F5 window's.
+The System tab is the pause list compact (About stays the corner
+plaque); every row keeps its shell pane, Escape from a pane returns
+to the window, Escape on the window resumes. The foot builder
+extracted (appendPxFoot) so both faces share one. TWO CSS LESSONS
+CAUGHT BY PROBES: the corner gems piled up relative at the top-left
+because base .px-gem sits LATER in the sheet and won the single-class
+tie (now scoped .px-win .px-corner), and the probe itself first
+collided with the lab page's own hidden boot menu (scope selectors to
+the probe host). Probed live: two quest blocks render, 13 stat rows,
+Save pane opens from System, Escape window, Escape resumes once,
+zero page errors, desktop + phone.

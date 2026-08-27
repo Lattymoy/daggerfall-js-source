@@ -280,6 +280,22 @@ export function restoreWeather(weather) {
   _updateFromClimateArray = false;
 }
 
+/** SAV3: the classic-save import's weather arm. StartFromClassicSave
+ *  hands the converted six-zone array to PlayerWeather.ClimateWeathers
+ *  (:644) - the 0x7f mask and 5<->6 swap have ALREADY run in
+ *  classicSave.js convertClassicClimateWeathers, this seam only takes
+ *  the result. The array is stamped rolled (no catch-up roll on the
+ *  boot tick) and the apply flag raised, so the first exterior frame's
+ *  drain wears the imported zone's sky - OnInitWorld's own non-load
+ *  shape (:534). */
+export function importClimateWeathers(converted) {
+  if (!converted || converted.length !== 6) return false;
+  _climateWeathers = Uint8Array.from(converted);
+  _climateWeathersRolled = true;
+  _updateFromClimateArray = true;
+  return true;
+}
+
 /** Test seam: back to the fresh-boot state. */
 export function resetWeatherSim() {
   _climateWeathers = new Uint8Array(6);

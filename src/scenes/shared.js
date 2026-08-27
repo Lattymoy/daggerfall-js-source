@@ -11,6 +11,8 @@ import { SkyFile } from '../formats/skyFile.js';
 import { SkyRenderer, buildDaySkyPanorama, buildNightSkyPanorama, buildFallbackSkyPanorama, nightSkyImageName } from '../render/skyRenderer.js';
 import { SEASON } from '../world/climateSwaps.js';
 import { skyFrameForTime } from '../world/worldClock.js';
+import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, retroFor } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin
+import { isEnhanced } from '../systems/uiSkin.js';
 import { hasActiveEffect, isBlending, isInvisible, isAShade } from '../systems/effects.js';
 import { skillValue, tallySkill, SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { DOOR_SPELL_TEXT } from '../systems/mysticism.js';   // X1: the door-spell alert lines
@@ -20,7 +22,8 @@ import { setInfectionHost, vampireClanForFaction } from '../systems/infection.js
 import { findFactions } from '../systems/talk.js';   // V1: GetRegionFaction's FindFactions(Province, region)
 import { FACTION_TYPES } from '../formats/factionFile.js';
 import { killIfAnyLiveStatZero } from '../systems/statMods.js';   // AUDIT 24 (wave 32): the per-entity laws a foe pool owes
-import { hasSpecialAbility, SPECIAL_ABILITY, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate } from '../systems/rest.js';   // the rested hour's three rates, one home for every host (V5 + S40, same line from two lanes)
+import { hasSpecialAbility, SPECIAL_ABILITY, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate } from '../systems/rest.js';
+import { entityImprovedAthleticism } from '../systems/enchantments.js';   // AUDIT 26 F044: the ImprovesTalents fatigue arm   // the rested hour's three rates, one home for every host (V5 + S40, same line from two lanes)
 import { createNearbyScan, updateNearbyObjects, detectedMarkers, hasLiveDetector } from '../systems/nearbyObjects.js';   // X4: the Detect scan
 import { liveStat, maxFatigue } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
@@ -111,6 +114,19 @@ export function skyFrameForWeatherTime(minuteOfDay, showNightSky = true) {
 // (R2/R4 demo compatibility); otherwise the world clock decides.
 export function createSkyController(gl, params) {
   const sky = new SkyRenderer(gl);
+  // ES1 (2026-08-27, Mac's call): under the ENHANCED skin the sky is the
+  // port's own procedural dome - sun, moons on DFU's phases, stars,
+  // clouds, weather - and the classic panorama pass is never built for.
+  // `?sky=classic` keeps the painted sky under the enhanced skin (a
+  // probe's pin, or a player's preference until it is a setting); the
+  // classic skin never takes the enhanced sky. ONE `renderer` field
+  // either way: the hosts read clearColor / set fogMix and fogColor on
+  // it without knowing which pass it is.
+  const enhancedSky = isEnhanced() && params.get('sky') !== 'classic' ? new EnhancedSkyRenderer(gl) : null;
+  if (enhancedSky) enhancedSky.retro = retroFor(params.toString());   // ES1e: retro unless ?sky=smooth - one door, shared with the lab
+  const t0 = (typeof performance !== 'undefined' ? performance.now() : 0);
+  let weatherRowNow = null;   // ES1c: the eased weather, walked toward the sim's row
+  let weatherAt = null;
   // "index:frame" | "index:night" -> panorama, LRU-BOUNDED.
   //
   // AUDIT 24 (the seven-slice sweep): this Map had no eviction at all.
@@ -178,9 +194,41 @@ export function createSkyController(gl, params) {
   }
 
   return {
-    renderer: sky,
-    /** Ensure the panorama for (skyIndex, minuteOfDay); async, frame-late. */
-    use(skyIndex, minuteOfDay, showNightSky = true) {
+    renderer: enhancedSky ?? sky,
+    enhanced: Boolean(enhancedSky),
+    /** ES1d: how much the world's KEY light is taken by the cloud that
+     *  is in front of the sun this frame - the number the shader uses to
+     *  hide the disc, handed to the light so the two agree. 1 under a
+     *  clear sky and under the classic sky, which has no cloud field. */
+    sunFactor() {
+      const occ = enhancedSky?.state?.sunOcclusion ?? 0;
+      return 1 - CLOUD_SHADOW * occ;
+    },
+    /** Ensure the panorama for (skyIndex, minuteOfDay); async, frame-late.
+     *  ES1: the enhanced sky takes the same call and needs the weather
+     *  and the classic clock too (`extra`), for the clouds and the moons;
+     *  it is synchronous - numbers into uniforms, nothing to load. */
+    use(skyIndex, minuteOfDay, showNightSky = true, extra = null) {
+      if (enhancedSky) {
+        const now = (typeof performance !== 'undefined' ? performance.now() : 0);
+        const seconds = (now - t0) / 1000;
+        // ES1c: the weather EASES. The sim flips its type between two
+        // ticks; the sky walks its numbers toward the new row over
+        // WEATHER_EASE_SECONDS instead of changing in one frame. The
+        // first call takes the row whole - a boot into rain is rain.
+        const want = weatherRow(extra?.weather ?? 'sunny');
+        const dt = weatherAt === null ? 0 : Math.min(1, Math.max(0, seconds - weatherAt));
+        weatherAt = seconds;
+        weatherRowNow = easeWeather(weatherRowNow, want, dt);
+        enhancedSky.setState(skyState({
+          minuteOfDay,
+          weather: extra?.weather ?? 'sunny',
+          classicMinutes: extra?.classicMinutes ?? 0,
+          seconds,
+          row: weatherRowNow,
+        }));
+        return;
+      }
       let frame = params.has('window')
         ? (params.get('window') === 'night' ? null : Number(params.get('skyframe') ?? 31))
         : skyFrameForWeatherTime(minuteOfDay, showNightSky);
@@ -217,7 +265,7 @@ export function createSkyController(gl, params) {
       }
     },
     draw(yaw, pitch, fovY, aspect) {
-      sky.draw(yaw, pitch, fovY, aspect);
+      (enhancedSky ?? sky).draw(yaw, pitch, fovY, aspect);
     },
   };
 }
@@ -844,7 +892,7 @@ export function subscribeFoePools(ticker, pools, sinksFor) {
  * @param {number} gameMinutes the classic clock
  * @param {object} [activity]  { movingLessThanHalfSpeed }
  */
-export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = true } = {}) {
+export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = true, candidates = null, playerEntity = null } = {}) {
   entity.stealthCheckBox = entity.stealthCheckBox ?? { minute: -1 };
   return {
     gameMinutes: Math.floor(gameMinutes),
@@ -858,12 +906,33 @@ export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = t
     playerShade: isAShade(entity),
     sharedStealth: entity.stealthCheckBox,
     tallyStealth: () => tallySkill(entity, SKILLS.Stealth),
+    // MT-ii: the target-machine seam. A host that owns a pool passes
+    // `candidates` (a live getter over every ACTIVE enemy record, the
+    // ActiveGameObjectDatabase join) and the pools arm each foe's own
+    // targeting closure over it. ABSENT = the player-only path, which
+    // is both the headless charter and DFU's own behaviour with no
+    // other enemy in the scene.
+    candidates,
+    playerEntity: playerEntity ?? entity,
   };
 }
 
-/** PlayerEntity.cs:388-400 - Athleticism loses fatigue 10% slower. */
+/** PlayerEntity.cs:388-400 - Athleticism loses fatigue 10% slower,
+ *  20% with the Improved Athleticism enchantment. AUDIT 26 F044: the
+ *  enchantment arm is nested INSIDE the career check at :398-399
+ *
+ *      if (career.Athleticism)
+ *          fatigueLossMultiplier = (ImprovedAthleticism) ? 0.8f : 0.9f;
+ *
+ *  so the item does nothing at all for a character without the career
+ *  advantage, and halves the loss again for one who has it. The port
+ *  decoded ImprovesTalents into _enchantMods.improvedAthleticism and
+ *  then nothing read it - a law computed and thrown away. This is the
+ *  ONE home: dungeonContext kept a second copy whose comment said the
+ *  port had no source for the flag, which had stopped being true. */
 export function fatigueLossMultiplierFor(entity) {
-  return hasSpecialAbility(entity?.career, SPECIAL_ABILITY.Athleticism) ? 0.9 : 1.0;
+  if (!hasSpecialAbility(entity?.career, SPECIAL_ABILITY.Athleticism)) return 1.0;
+  return entityImprovedAthleticism(entity) ? 0.8 : 0.9;
 }
 
 // --- THE MUSIC DIRECTOR (AUDIT 19's 1:1 pass) ------------------------
@@ -960,6 +1029,12 @@ export function wireInfectionVideos(renderer, { textAt = null, showText = null, 
         try {
           const { playVideo } = await import('../ui/videoPlayer.js');
           const { getBytes } = await import('./dataSource.js');
+          // endOnAnyKey false is DFU's own for these
+          // (VampirismInfection.cs:126/:136,
+          // LycanthropyInfection.cs:114) - but it does NOT make them
+          // unskippable, as AUDIT 26 F151 found this lane claiming:
+          // Escape is a separate disjunct in Update (:140-142) and
+          // closes any video, whatever this flag says.
           const played = await playVideo(renderer.canvas, renderer, await getBytes(name), { endOnAnyKey: false });
           if (typeof window !== 'undefined') (window.__infectionVideos ??= []).push({ name, played });
         } catch (e) {

@@ -3,8 +3,8 @@
 // (320x200, looping - FLCPlayer's default) with the quest offer read
 // over it in FOUR-LINE CHUNKS, a click (or any key) turning the page,
 // and the LAST chunk waiting on Yes/No: accept starts the quest,
-// refuse looses 3-5 daedra on the summoner's floor (:83-88 - FLAGGED
-// through the host door, the interior foe pool's standing gap). The
+// refuse looses 3-5 daedra on the summoner's floor (:125) through the
+// host door, which IF mounted on the interior foe pool. The
 // answer's own message then reads through the same chunks and the
 // last click closes.
 //
@@ -30,6 +30,12 @@ export const TEXT_LINES_PER_CHUNK = 4;   // :26
  *  units (:86-87) - the SUMMONED window's own refusal spawn, distinct
  *  from the quest popup's 1-3 at 4..64. */
 export const REFUSAL_FOE_COUNT = [3, 5];
+/** The COVEN failure's own band - DaggerfallQuestPopupWindow.cs:257,
+ *  `Random.Range(1, 4)` of one daedric type at 4..64. The same
+ *  CreateFoeSpawner call as the refusal above with different numbers,
+ *  which is why one host door serves both. Inclusive here, as the
+ *  pair above is. */
+export const COVEN_FAIL_FOE_COUNT = [1, 3];
 
 /** Message tokens -> plain lines: text tokens append, every
  *  formatting token breaks - the pairing loadMessage emits (the same
@@ -56,8 +62,8 @@ export class DaedraSummonedWindow {
    *                     failed fetch never reaches this window)
    *   offerStep       - { kind:'offer', prompt, respond } from the
    *                     offer flow (offerNamedQuest)
-   *   spawnRefusalFoes() - optional; the daedric punishment (FLAGGED:
-   *                     no host mounts it - the interior has no pool)
+   *   spawnRefusalFoes() - the daedric punishment; MOUNTED at IF,
+   *                     where the interior grew a foe pool
    *   onClose()
    */
   constructor(hooks) {

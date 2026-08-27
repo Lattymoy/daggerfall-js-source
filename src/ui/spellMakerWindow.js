@@ -31,6 +31,9 @@ import {
   blankEffectSettings, stepSetting, buildCustomSpell, spellMakerCost,
   validateSpellPurchase, purchaseSpell, NO_SPELLBOOK_ID,
   SPELLMAKER_NOT_ENOUGH_GOLD_ID, MUST_CHOOSE_NAME_ID,
+  updateAllowedButtons, enforceSelected, cycleAllowed,
+  DEFAULT_TARGET_INDEX, DEFAULT_ELEMENT_INDEX,
+  TARGET_FLAGS_ALL, ELEMENT_FLAGS_MAGIC_ONLY,
 } from '../systems/spellMaker.js';
 import { goldAmount } from '../systems/court.js';
 
@@ -70,8 +73,12 @@ export class SpellMakerWindow {
   /** SetDefaults: three blank slots, CasterOnly, Magic, no name. */
   reset() {
     this.slots = [null, null, null];
-    this.rangeType = 0;      // CasterOnly
-    this.element = 4;        // ElementFlags_MagicOnly is DFU's default
+    this.rangeType = DEFAULT_TARGET_INDEX;    // CasterOnly
+    this.element = DEFAULT_ELEMENT_INDEX;     // ElementFlags_MagicOnly is DFU's default
+    // AUDIT 26 F181: what the CHOSEN effects permit. With no effects
+    // these are the default flags (:564-570).
+    this.allowedTargets = TARGET_FLAGS_ALL;
+    this.allowedElements = ELEMENT_FLAGS_MAGIC_ONLY;
     this.name = '';
     this.icon = DEFAULT_SPELL_ICON;
     this.mode = 'main';
@@ -81,6 +88,23 @@ export class SpellMakerWindow {
     this.pickCursor = 0;
     this.editSlot = -1;
     this.editCursor = 0;
+  }
+
+  /** UpdateAllowedButtons (:561-594) plus the EnforceSelectedButtons
+   *  that ends it (:595-603). AUDIT 26 F181: DFU runs this after
+   *  every slot change (:226, :338, :396, :462, :1005), so the two
+   *  selections can never outlive the effects that permitted them. */
+  _updateAllowed() {
+    const { targets, elements, forced } = updateAllowedButtons(this.slots);
+    this.allowedTargets = targets;
+    this.allowedElements = elements;
+    if (forced) {
+      this.rangeType = DEFAULT_TARGET_INDEX;
+      this.element = DEFAULT_ELEMENT_INDEX;
+    } else {
+      this.rangeType = enforceSelected(this.rangeType, targets);
+      this.element = enforceSelected(this.element, elements);
+    }
   }
 
   /** The live record for pricing and, on buy, for keeping. */
@@ -127,6 +151,7 @@ export class SpellMakerWindow {
     const slot = this.editSlot >= 0 ? this.editSlot : this.slots.findIndex((s) => !s);
     if (slot < 0) { this.mode = 'main'; this.notice = 'This spell already has three effects.'; return; }
     this.slots[slot] = { type: effect.type, subType: effect.subType, key: effect.key, settings: blankEffectSettings() };
+    this._updateAllowed();   // F181: AddEffect ends in UpdateAllowedButtons (:462)
     this.editSlot = slot;
     this.editCursor = 0;
     this.mode = 'edit';
@@ -175,7 +200,7 @@ export class SpellMakerWindow {
     const row = rows[this.cursor];
     if (action === 'char:n' || action === 'char:N') { const keep = this.onClose; this.reset(); this.onClose = keep; return; }
     if (action === 'char:d' || action === 'char:D') {
-      if (row.kind === 'slot') this.slots[row.i] = null;   // DeleteSlot
+      if (row.kind === 'slot') { this.slots[row.i] = null; this._updateAllowed(); }   // DeleteSlot (:396)
       return;
     }
     if (action !== 'confirm' && action !== 'plus' && action !== 'minus') return;
@@ -185,9 +210,11 @@ export class SpellMakerWindow {
       else if (this.slots.filter(Boolean).length >= MAX_EFFECTS_PER_SPELL) this.notice = 'This spell already has three effects.';
       else { this.editSlot = row.i; this.mode = 'group'; this.pickCursor = 0; }
     } else if (row.kind === 'target') {
-      this.rangeType = (this.rangeType + dir + TARGET_LABELS.length) % TARGET_LABELS.length;
+      // F181: SetSpellTarget returns early on a bit outside
+      // allowedTargets (:490-491), so the cycle steps over one.
+      this.rangeType = cycleAllowed(this.rangeType, dir, this.allowedTargets);
     } else if (row.kind === 'element') {
-      this.element = (this.element + dir + ELEMENT_LABELS.length) % ELEMENT_LABELS.length;
+      this.element = cycleAllowed(this.element, dir, this.allowedElements);   // SetSpellElement (:526-528)
     } else if (row.kind === 'name') {
       this.mode = 'name';
     } else if (row.kind === 'buy') {

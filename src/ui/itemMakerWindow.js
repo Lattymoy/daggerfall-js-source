@@ -100,6 +100,13 @@ export const ITEM_LABELS = Object.freeze({
 export const ROW_W = 75, ROW_W_SCROLLED = 71;
 export const ROW_H_PLAIN = 7, ROW_H_SECONDARY = 12;
 export const ROW_GAP = 5, ROW_START_Y = 2, ROWS_VISIBLE = 7;
+/** AUDIT 26 F171. DFU's rename runs through DaggerfallInputMessageBox,
+ *  whose TextBox takes the default `maxCharacters = 31`
+ *  (TextBox.cs:26), and RenameItem imposes no cap of its own
+ *  (DaggerfallUnityItem.cs:1348-1354). This lane's inline rename strip
+ *  - itself a recorded widget departure - stopped at 26, so names of
+ *  27 to 31 characters that are legal in DFU could not be typed. */
+export const MAX_ITEM_NAME = 31;
 /** F170: EnchantmentListPicker's scroller (:22-26, :180-247) - it
  *  APPEARS past seven rows (ShowScroller), is 4 wide at the panel's
  *  right edge, and the wheel steps 8 pixels; no arrow buttons exist
@@ -362,7 +369,7 @@ export class ItemMakerWindow {
       if (code === 'Enter' || code === 'Escape') { this.renaming = false; return; }
       if (code === 'backspace' || code === 'Backspace') { this.itemName = this.itemName.slice(0, -1); return; }
       const ch = typedChar(code, e);
-      if (ch && this.itemName.length < 26) this.itemName += ch;
+      if (ch && this.itemName.length < MAX_ITEM_NAME) this.itemName += ch;
       return;
     }
     if (code === 'Escape' || code === 'KeyE') this._close();

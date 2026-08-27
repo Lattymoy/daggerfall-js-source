@@ -53,6 +53,7 @@ export const TONE_NAMES = ['Polite', 'Normal', 'Blunt'];   // T3f: TalkTone -> i
 // townTalk keeps the keydown, the HUD line and these re-exports.
 export { MODES, nextInteractionMode } from '../player/interactionMode.js';
 import { MODES, getInteractionMode, setInteractionMode, nextInteractionMode } from '../player/interactionMode.js';
+import { getClassicQuestionIndex } from '../systems/answerPipeline.js';   // F042
 const MODE_KEYS = { F1: 'steal', F2: 'grab', F3: 'info', F4: 'dialogue' };
 export const PERSON_HIT_RADIUS = 0.45;   // MobilePersonNPC controller radius
 export const PERSON_HIT_HEIGHT = 1.8;
@@ -166,12 +167,22 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  drawn ONLY when the record carries %oth (DFU expands lazily). */
   const expandRecord = (raw) => expandMacros(raw, {
     playerName: playerEntity.name ?? '',
-    oath: raw.includes('%oth') ? randomVariant(oathTextId(npcRace), '') : '',
+    oath: raw.includes('%oth') ? randomPooledText(oathTextId(npcRace), '') : '',   // F047: GetRandomText(201 + oathId)
     cityName: cityName(),
   });
   const randomVariant = (id, fallback) => {
     const v = textRsc?.plainText(id);
     return v?.length ? v[Math.floor(rolls() * v.length)] : fallback;
+  };
+  /** AUDIT 26 F046/F047: TextProvider.GetRandomText (:250-269) pools
+   *  every Text TOKEN of a record and picks among them, where
+   *  randomVariant above picks a whole SUBRECORD variant. The two
+   *  diverge exactly where a record holds several one-line entries -
+   *  which is the shape of the oath records (textRsc.js:131-134) and
+   *  of 8999 - so a multi-line variant printed all its lines fused. */
+  const randomPooledText = (id, fallback) => {
+    const t = textRsc?.randomTextById(id, rolls);
+    return t?.length ? t : fallback;
   };
 
   function setMode(m) {
@@ -267,20 +278,28 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // street with SILENCE and let E fall through to a door behind them.
     if (!best || bestDist > RAY_DISTANCE) return false;
     if (getInteractionMode() !== 'steal' && bestDist > MOBILE_NPC_ACTIVATION_DISTANCE) { hud.add('You are too far away.'); return true; }
-    if (getInteractionMode() === 'steal' && bestDist > PICKPOCKET_DISTANCE) { hud.add('You are too far away.'); return true; }
+    // AUDIT 26 F048: ActivateMobileNPC NESTS the steal distance test
+    // inside `if (!mobileNpc.PickpocketByPlayerAttempted)`
+    // (PlayerActivate.cs:785-795), so an already-attempted townsperson
+    // produces NO output at any range - the port gated distance first
+    // and printed a line DFU never shows.
+    if (getInteractionMode() === 'steal' && !best.person?.pickpocketAttempted
+        && bestDist > PICKPOCKET_DISTANCE) { hud.add('You are too far away.'); return true; }
     ensureLoaded().then(() => activate(best, bestDist));
     return true;
   }
 
   function activate(target, dist) {
     if (getInteractionMode() === 'steal') {
-      // PlayerActivate: pickpocket once per person, 3.2 max
-      if (dist > PICKPOCKET_DISTANCE) { hud.add('You are too far away.'); return; }
+      // PlayerActivate: pickpocket once per person, 3.2 max - and
+      // F048's nesting, so the already-attempted arm is SILENT here
+      // too, whatever the range.
       if (target.person.pickpocketAttempted) return;
+      if (dist > PICKPOCKET_DISTANCE) { hud.add('You are too far away.'); return; }
       target.person.pickpocketAttempted = true;
       const r = pickpocketTownsperson(playerEntity, {
         rolls,
-        nothingText: () => randomVariant(FOUND_NOTHING_VALUABLE_TEXT_ID, 'You found nothing valuable.'),
+        nothingText: () => randomPooledText(FOUND_NOTHING_VALUABLE_TEXT_ID, 'You found nothing valuable.'),   // F046: GetRandomText(8999)
       });
       hud.add(r.message);
       // G1: the caught pickpocket IS the crime - SpawnCityGuards(true)
@@ -367,6 +386,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  talkToStaticNPC runs the C# ones inside the engine. Art-less or
    *  building-less sessions keep the keyed greeting chain. */
   function openTalkWindow(greeting, { npcSeed = 0, npcName = '' } = {}) {
+    _talkSeed = npcSeed;   // F043: whoever we are talking to now
     // V4: GetSuppressTalk (LycanthropyEffect.cs:423-437) - every
     // conversation door lands here (B7's one-opener law), so the
     // transformed refusal gates them all at once.
@@ -460,6 +480,16 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   }
 
   let _talkNpc = null;
+  // AUDIT 26 F043: the CURRENT partner's reaction seed. DFU seeds the
+  // roll from whichever NPC is being spoken to - `DFRandom.Seed =
+  // lastTargetMobileNPC.GetHashCode()` or `lastTargetStaticNPC`'s
+  // (TalkManager.cs:669-673) - so it is stable per person. The port
+  // read it off `_talkNpc`, which ONLY the mobile activate path
+  // assigns, so every guild, temple and questor conversation ran on
+  // seed 0 on a fresh boot and then inherited whichever townsperson
+  // was spoken to last. openTalkWindow is the one door both paths
+  // come through, and both already hand it the seed.
+  let _talkSeed = 0;
 
   /** GetReactionToPlayer_0_1_2 (:632-690) for the CURRENT tone and
    *  question. TK-iii's pipeline owns the gate that decides WHEN this
@@ -467,12 +497,20 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  cache it fills - so this is the tier computation alone, handed
    *  to the pipeline as its `reactionTier` seam. */
   function computeTier(questionType, socialGroup) {
-    void questionType;
     return reactionTier012({
       personality: playerEntity.stats?.personality ?? 50,
-      npcSeed: _talkNpc?._talkSeed ?? 0,
+      npcSeed: _talkSeed,   // F043: the door's seed - the static path has one too
       socialGroup: socialGroup ?? 0,
-      questionIndex: 0, toneIndex: tone,
+      // AUDIT 26 F042/F096: the reaction adds
+      // `questionTypeReactionMods[GetClassicQuestionIndex(qt)]`
+      // (TalkManager.cs:663-667) - +5 for LocalBuilding/Regional and
+      // QuestLocation/OrganizationInfo, 0 for the rest. This seam took
+      // the type and VOIDED it, hardcoding index 0, so every question
+      // took the +5 and a Work question banded to 8076/8077 where DFU
+      // refuses with 8075 - and the inflated value was then CACHED in
+      // the session's tone. The mapper and the table both already
+      // existed; only this call dropped them on the floor.
+      questionIndex: getClassicQuestionIndex(questionType), toneIndex: tone,
       skillValue: tone === 0 ? skillValue(playerEntity, SKILLS.Etiquette)
         : tone === 2 ? skillValue(playerEntity, SKILLS.Streetwise) : 0,
       session: engine()?.session?.toneReactionForTalkSession ?? toneSession,
@@ -586,7 +624,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // resolve here exactly as they do in the greeting.
     return expandAnswerRecord(raw, {
       playerName: playerEntity.name ?? '',
-      oath: raw.includes('%oth') ? randomVariant(oathTextId(npcRace), '') : '',
+      oath: raw.includes('%oth') ? randomPooledText(oathTextId(npcRace), '') : '',   // F047: GetRandomText(201 + oathId)
       cityName: cityName(),
       hint, key: building.name,
       honorific: honorificOf(playerEntity.gender),   // T4: the real %hnr/%ra

@@ -95,6 +95,35 @@ export const POTENT_VS_DAMAGE = 5;            // PotentVs.cs:27
 export const LOW_DAMAGE_VS = -5;              // LowDamageVs.cs:27
 export const STRENGTHENS_ARMOR_VALUE = -5;    // StrengthensArmor.cs:25 ("lower armor value equals a stronger rating")
 export const WEAKENS_ARMOR_VALUE = 5;         // WeakensArmor.cs:25
+
+/** AUDIT 26 F122/F123. DaggerfallEntity keeps TWO armour channels and
+ *  neither one accumulates: both setters are MIN-SETS, assigning only
+ *  when the incoming value is lower than the standing one
+ *  (DaggerfallEntity.cs:400-416), and both are zeroed on every
+ *  constant-effects pass (:841-842). The port folded all three
+ *  payloads into one `+=` channel, which diverged three ways:
+ *
+ *  - Two StrengthensArmor items gave -10 where DFU floors at -5, so
+ *    the player was measurably harder to hit than DFU allows. Same
+ *    for two BadReactionsFrom sources.
+ *  - WeakensArmor calls SetDecreasedArmorValueModifier(+5), and
+ *    `5 < 0` is never true from a zeroed channel, so the enchantment
+ *    is INERT in DFU. The port added +5 into the shared channel each
+ *    round, so the drawback the player took for -700 enchantment
+ *    budget cost defence only here. Bug-for-bug: the setter is
+ *    written as DFU writes it and WeakensArmor stays inert.
+ *  - The two channels are SEPARATE, so a Strengthens item and a
+ *    BadReactionsFrom source still reach -10 between them - it is
+ *    only repeats WITHIN a channel that stop stacking.
+ *
+ *  BadReactionsFrom's ChanceToHit term is genuinely additive
+ *  (ChangeChanceToHitModifier, :418-421) and keeps its `+=`. */
+const setIncreasedArmorValueModifier = (mods, amount) => {
+  if (amount < mods.increasedArmorMod) mods.increasedArmorMod = amount;
+};
+const setDecreasedArmorValueModifier = (mods, amount) => {
+  if (amount < mods.decreasedArmorMod) mods.decreasedArmorMod = amount;
+};
 export const BAD_REACTIONS_RANGE = 8;         // BadReactionsFrom.cs:25
 export const BAD_REACTIONS_ARMOR = -5;        // BadReactionsFrom.cs:26
 export const BAD_REACTIONS_HIT = -5;          // BadReactionsFrom.cs:27
@@ -320,6 +349,15 @@ const REGISTRY = new Map([
     equipped(env) { instantiateHeldSpell(env, false); },
     reroll(env) { instantiateHeldSpell(env, true); },
     magicRound({ round, entity, item, ctx }) {
+      // AUDIT 26 F126: the MagicRound item payload is dispatched only
+      // for items in activeMagicItemsInRound, and that map is filled
+      // solely under `if (IsPlayerEntity)`
+      // (EntityEffectManager.cs:1744-1755) - so an ENEMY's
+      // Cast-When-Held item never takes the wear, and is looted at
+      // its remaining condition rather than degrading and breaking.
+      // (The bundle-driven rounds - RegensHealth, ItemDeteriorates,
+      // HealthLeech idle - DO run for any entity and stay ungated.)
+      if (!entity?.isPlayer) return;
       const rate = ctx?.isResting?.() ? HELD_DEGRADE_RATE_RESTING : HELD_DEGRADE_RATE;
       if (round % rate === 0) enchantLowerCondition(item, 1, entity, ctx);
     },
@@ -431,8 +469,8 @@ const REGISTRY = new Map([
   [T.ExtraWeight, { flags: PAYLOAD.Enchanted, enchanted({ item }) { item.weightInKg = (item.weightInKg ?? 0) * 4; } }],
   /** StrengthensArmor/WeakensArmor - Held constants on the armour
    *  channel (FormulaHelper.cs:1158 adds both to ArmorValues[part]). */
-  [T.StrengthensArmor, { flags: PAYLOAD.Held, constant({ mods }) { mods.armorMod += STRENGTHENS_ARMOR_VALUE; } }],
-  [T.WeakensArmor, { flags: PAYLOAD.Held, constant({ mods }) { mods.armorMod += WEAKENS_ARMOR_VALUE; } }],
+  [T.StrengthensArmor, { flags: PAYLOAD.Held, constant({ mods }) { setIncreasedArmorValueModifier(mods, STRENGTHENS_ARMOR_VALUE); } }],
+  [T.WeakensArmor, { flags: PAYLOAD.Held, constant({ mods }) { setDecreasedArmorValueModifier(mods, WEAKENS_ARMOR_VALUE); } }],
   /** ImprovesTalents.cs - Held constant, player only: the three
    *  improved-talent flags. */
   [T.ImprovesTalents, {
@@ -547,7 +585,7 @@ const REGISTRY = new Map([
     constant({ param, ctx, mods }) {
       const affinity = param === 0 ? AFFINITY_PARAM.Humanoid : param === 1 ? AFFINITY_PARAM.Animals : AFFINITY_PARAM.Daedra;
       if (anyNearbyOfAffinity(ctx, affinity, BAD_REACTIONS_RANGE)) {
-        mods.armorMod += BAD_REACTIONS_ARMOR;
+        setDecreasedArmorValueModifier(mods, BAD_REACTIONS_ARMOR);
         mods.chanceToHitMod += BAD_REACTIONS_HIT;
       }
     },
@@ -692,8 +730,10 @@ function applyResults(r, env) {
  *  recompute entity._enchantMods from every EQUIPPED enchanted item.
  *  Channels and their DFU homes:
  *    maxMagicka          - ChangeMaxMagickaModifier (ExtraSpellPts)
- *    armorMod            - Set{Increased,Decreased}ArmorValueModifier
- *                          (Strengthens/WeakensArmor, BadReactionsFrom)
+ *    increasedArmorMod   - SetIncreasedArmorValueModifier
+ *    decreasedArmorMod     (StrengthensArmor / WeakensArmor,
+ *                          BadReactionsFrom) - two MIN-SET channels,
+ *                          NOT one additive one; see F122/F123 above
  *    chanceToHitMod      - ChangeChanceToHitModifier (BadReactionsFrom)
  *    absorbsSpells       - IsAbsorbingSpells (AbsorbsSpells)
  *    weightAllowanceMult - SetIncreasedWeightAllowanceMultiplier
@@ -705,7 +745,7 @@ function applyResults(r, env) {
 export function computeEnchantmentMods(entity, ctx = null) {
   ctx = mergeCtx(ctx);
   const mods = {
-    maxMagicka: 0, armorMod: 0, chanceToHitMod: 0, absorbsSpells: false,
+    maxMagicka: 0, increasedArmorMod: 0, decreasedArmorMod: 0, chanceToHitMod: 0, absorbsSpells: false,
     weightAllowanceMult: 0, skillMods: {},
     improvedAcuteHearing: false, improvedAthleticism: false, improvedAdrenalineRush: false,
   };
@@ -792,8 +832,24 @@ function equippedEnchantedItems(entity) {
 /** The read-time consumers - each answers 0/false with no fold
  *  computed yet, so a host that never pumps stays exactly pre-E1. */
 export const enchantChanceToHitMod = (entity) => entity?._enchantMods?.chanceToHitMod ?? 0;
-export const enchantArmorMod = (entity) => entity?._enchantMods?.armorMod ?? 0;
+/** The COMBAT read: FormulaHelper.cs:1158 adds BOTH channels to the
+ *  struck part's armour value. */
+export const enchantArmorMod = (entity) =>
+  (entity?._enchantMods?.increasedArmorMod ?? 0) + (entity?._enchantMods?.decreasedArmorMod ?? 0);
+/** The DISPLAY read: RefreshArmourValues (PaperDoll.cs:161) shows
+ *  `Decreased - Increased` instead - the paperdoll's armour numbers
+ *  run the other way, so a Strengthens item reads +5 there and -5 in
+ *  the hit chance. */
+export const enchantArmorDisplayMod = (entity) =>
+  (entity?._enchantMods?.decreasedArmorMod ?? 0) - (entity?._enchantMods?.increasedArmorMod ?? 0);
 export const enchantSkillMod = (entity, skill) => entity?._enchantMods?.skillMods?.[skill] ?? 0;
+/** The ImprovesTalents trio (ImprovesTalents.cs:75-88), which set the
+ *  three entity flags DFU clears on every constant pass. F044 wired
+ *  the athleticism one to the fatigue law that had been computing it
+ *  and throwing it away. */
+export const entityImprovedAthleticism = (entity) => entity?._enchantMods?.improvedAthleticism ?? false;
+export const entityImprovedAcuteHearing = (entity) => entity?._enchantMods?.improvedAcuteHearing ?? false;
+export const entityImprovedAdrenalineRush = (entity) => entity?._enchantMods?.improvedAdrenalineRush ?? false;
 export const entityAbsorbsSpells = (entity) => entity?._enchantMods?.absorbsSpells ?? false;
 export const enchantWeightAllowanceMult = (entity) => entity?._enchantMods?.weightAllowanceMult ?? 0;
 /** For an entity WITHOUT the wave-28 live accessor (foes, fixtures):

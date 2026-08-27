@@ -24,7 +24,7 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { Writable } from 'node:stream';
 import { execFileSync } from 'node:child_process';
-import { ENHANCED_TOKENS, ENHANCED_FONTS_URL, ENHANCED_CSS, FONT_BRAND, FONT_DATA, FONT_DISPLAY, fontsUrl } from '../src/ui/enhancedStyle.js';
+import { ENHANCED_TOKENS, ENHANCED_FONTS_URL, ENHANCED_CSS, FONT_BRAND, FONT_DATA, FONT_DISPLAY, FONT_PIXEL_BRAND, FONT_PIXEL_DATA, fontsUrl } from '../src/ui/enhancedStyle.js';
 import { transformLanding, LANDING_PATH, LANDING_FONTS_URL, countTests, countSrcLines, figure } from '../scripts/landingHtml.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -107,10 +107,15 @@ test('U60: the injected block IS the skin\'s token block, and the skin still wea
   // U60b: the brand face. The skin's URL is unchanged by the addition -
   // the game loads nothing it does not use - and both URLs come out of
   // the same builder over the same family strings.
-  assert.equal(ENHANCED_FONTS_URL, fontsUrl([FONT_DISPLAY, FONT_DATA]));
+  // PX1: the pixel faces (Jacquard 12 + Pixelify Sans) folded into
+  // the SAME request - one request is the Ledger row's own claim.
+  assert.equal(ENHANCED_FONTS_URL, fontsUrl([FONT_DISPLAY, FONT_DATA, FONT_PIXEL_BRAND, FONT_PIXEL_DATA]));
+  // MEASURED beside the pin: still exactly one URL, and it names
+  // all four families.
+  assert.equal((ENHANCED_FONTS_URL.match(/family=/g) || []).length, 4);
   assert.equal(ENHANCED_FONTS_URL,
-    'https://fonts.googleapis.com/css2?family=Cormorant:wght@300;400;600&family=Barlow+Semi+Condensed:wght@400;500;600&display=swap',
-    'the skin\'s request is byte-identical to what it was before the brand face existed');
+    'https://fonts.googleapis.com/css2?family=Cormorant:wght@300;400;600&family=Barlow+Semi+Condensed:wght@400;500;600&family=Jacquard+12&family=Pixelify+Sans:wght@400;500&display=swap',
+    'the skin\'s request is these bytes exactly - PX1 added the two pixel faces; the landing\'s brand face still adds nothing to it');
   assert.equal(LANDING_FONTS_URL, fontsUrl([FONT_BRAND, FONT_DATA]));
   assert.match(FONT_BRAND, /^Grenze\+Gotisch:wght@/);
   assert.match(ENHANCED_TOKENS, /--brand: 'Grenze Gotisch'/, 'the face is a token the skin declares');

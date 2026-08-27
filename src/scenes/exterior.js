@@ -20,7 +20,7 @@ import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
 import { racialRestBlock } from '../systems/vampirism.js';   // V2b: the vampire's rest gate
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible exterior arrows
-import { spendArrow } from '../systems/inventory.js';
+import { spendArrow, totalWeight } from '../systems/inventory.js';
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -413,7 +413,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const shotMode = params.has('shot');
   // P1: grounded first-person is the default; ?fly restores the fly cam.
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
-  const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), climbing: climbingDeps(playerEntity, (l) => townTalk?.say(l)) });   // AcrobatMotor skill jump (P14) + M3 climbing; motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
+  const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), carriedWeight: () => totalWeight(playerEntity.items ?? []), climbing: climbingDeps(playerEntity, (l) => townTalk?.say(l)) });   // AcrobatMotor skill jump (P14) + M3 climbing; motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
   // AUDIT 21 (hosts lane, F3): onLevelUp. Without it advancement.js takes its
   // HEADLESS arm - `spendPoolLowest`, which dumps every point into your LOWEST
   // stats with no message and no choice. Cross a level threshold walking a
@@ -1001,6 +1001,8 @@ export async function bootExterior(canvas, renderer, params, status) {
         savingPrevented: () => true,
         exitToMenu: exitToTitleMenu,
         textLines: (id) => townTalk.lines(id),
+        // PX3 FLAGGED: questMessages - this test host mounts no quest
+        // bridge, so the pause window's Quests tab says so.
       });
     },
     // A2: the exterior automap (Actions.AutoMap outdoors,
@@ -1478,7 +1480,11 @@ export async function bootExterior(canvas, renderer, params, status) {
         // Crouch/FloatDown for down, and moves along the camera LOOK
         // (pitch included) - everywhere, not just underground.
         up: jumpHeld || held(keys, 'FloatUp'),
-        down: held(keys, 'FloatDown'),
+        // AUDIT 26 F031: LevitateMotor's descent arm is Crouch OR
+        // FloatDown (:88-89), the mirror of the rise arm above; the
+        // port's own motor contract said so and every host passed
+        // FloatDown alone, so C did nothing but toggle the stance.
+        down: crouchHeld || held(keys, 'FloatDown'),
         crouch: crouchHeld && !latch.crouch,
       }, cam.yaw, cam.pitch);
       latch.crouch = crouchHeld;
@@ -1585,7 +1591,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // during a flash frame); ?flashtest pins it on for shots.
     const flash = params.has('flashtest') ? 2 : (lightning ? lightning.tick(dt) : 1);
     renderer.setLighting(
-      exteriorAmbient(minute, 1, weatherSun), sunScale(minute) * weatherSun * flash,   // AUDIT 23 (wts-2): ambient rides the weather scale too
+      exteriorAmbient(minute, 1, weatherSun), sunScale(minute) * weatherSun * flash * sky.sunFactor(),   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground)
       new Float32Array(SUN_RIG_COLOR));
     // R12: the player-following indirect point light (SunlightRig) -
     // intensity x the daylight curve, weather-dimmed with the rig,
@@ -1609,7 +1615,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     // Summer 2 / Winter 3); the rain/snow variants keep their boot
     // roll. One clock, so the season reads the world date.
     sky.use(dfLocation.climate.skyBase + (weatherSkyOffset === 0
-      ? seasonValue(dateFromClassicMinutes(playerTicker.classicMinutes)) : weatherSkyOffset), minute, weatherSkyOffset === 0);
+      ? seasonValue(dateFromClassicMinutes(playerTicker.classicMinutes)) : weatherSkyOffset), minute, weatherSkyOffset === 0,
+    { weather, classicMinutes: playerTicker.classicMinutes });   // ES1: the enhanced sky's clouds and moons
     // Weather fog, colored by the live sky horizon fill (fills DFU's
     // fogColor TODO); heavy fog also swallows the sky.
     // Verbatim: fog is never disabled (SetFog keeps RenderSettings.fog on);

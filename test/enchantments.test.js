@@ -90,14 +90,24 @@ test('E1 pump: RegensHealth cadence + conditions; UserTakesDamage bills through 
 });
 
 test('E1 pump: CastWhenHeld wear (4 normal / 60 resting), HealthLeech\'s daily law, RepairsObjects\' one item', () => {
+  // AUDIT 26 F126: the wear is the PLAYER's - activeMagicItemsInRound
+  // is filled solely under `if (IsPlayerEntity)`
+  // (EntityEffectManager.cs:1744-1755), so only a player's held item
+  // takes it.
   const held = item(T.CastWhenHeld, 4);
-  const w = wearer([held]);
+  const w = wearer([held], { isPlayer: true });
   for (let r = 1; r <= 8; r++) enchantmentMagicRound(w, r, {});
   assert.equal(held.currentCondition, 98, '1 point per 4 rounds');
   const resting = item(T.CastWhenHeld, 4);
-  const w2 = wearer([resting]);
+  const w2 = wearer([resting], { isPlayer: true });
   for (let r = 1; r <= 120; r++) enchantmentMagicRound(w2, r, { nowMinutes: r, ctx: { isResting: () => true } });
   assert.equal(resting.currentCondition, 98, '1 per 60 while resting');
+  // ...and an ENEMY's identical item does NOT wear - it is looted at
+  // its remaining condition rather than degrading and breaking.
+  const foeHeld = item(T.CastWhenHeld, 4);
+  const foe = wearer([foeHeld]);   // no isPlayer
+  for (let r = 1; r <= 120; r++) enchantmentMagicRound(foe, r, {});
+  assert.equal(foeHeld.currentCondition, 100, 'an enemy\'s held item never wears');
   // HealthLeech UnlessUsedDaily: silent inside a day of the stamp, 1/4 rounds past it
   const hurt = [];
   const leech = item(T.HealthLeech, 1, { timeHealthLeechLastUsed: 0 });   // UnlessUsedDaily = 1
@@ -153,7 +163,10 @@ test('E1 fold: the channels reach their formulas - armour, chance-to-hit, skills
   // the absolute chance
   const attacker = { stats: {}, skills: [], level: 1 };
   const targetBase = { armorValues: new Array(7).fill(60), stats: {}, skills: [], level: 1 };
-  const targetStrong = { ...targetBase, _enchantMods: { armorMod: -5 } };
+  // F122: built through the FOLD, not by hand - the bag has two
+  // armour channels now and a hand-written one can spell either.
+  const targetStrong = { ...targetBase, items: [item(T.StrengthensArmor, -1)] };
+  computeEnchantmentMods(targetStrong);
   const threshold = (target) => {
     for (let r = 0; r < 100; r++) {
       if (!calculateSuccessfulHit(attacker, target, 0, 0, () => r / 100)) return r;
