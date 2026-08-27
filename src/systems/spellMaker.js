@@ -27,7 +27,130 @@
 // save envelope carries the whole record for these; see save.js.
 
 import { calculateCastCost } from './spellcost.js';
+import { MAGIC_ONLY_KEYS } from './effects.js';   // AUDIT 26 F181: the AllowedElements set, already read off the effect classes
 import { goldAmount, deductGold } from './court.js';
+
+
+/** AUDIT 26 F181 - THE ALLOWED TARGET AND ELEMENT SETS.
+ *
+ *  DaggerfallSpellMakerWindow gates both selections on what the
+ *  CHOSEN effects permit. SetSpellTarget (:490-491) and
+ *  SetSpellElement (:526-528) return early on a bit that is not in
+ *  the allowed set, and UpdateAllowedButtons (:561-594) recomputes
+ *  both sets on every slot change - by OPPOSITE rules:
+ *
+ *    allowedTargets  = TargetFlags_All;              (:574)
+ *    allowedElements = ElementFlags_MagicOnly;       (:575)
+ *    foreach chosen effect:
+ *      allowedTargets  &= effect.AllowedTargets;     (:585) INTERSECTION
+ *      allowedElements |= effect.AllowedElements;    (:588) UNION
+ *
+ *  So a caster-only effect narrows the targets to CasterOnly for the
+ *  whole spell, while magic is ALWAYS offered as an element and each
+ *  effect only ADDS to what is legal. With no effects chosen at all
+ *  the window falls back to the default flags and forces
+ *  CasterOnly + Magic (:564-570).
+ *
+ *  TargetTypes and ElementTypes are declared in the same order the
+ *  window's rows cycle (MagicAndEffectsEnums.cs:21-29, :36-44), so a
+ *  stored classic INDEX is its bit's position. */
+export const TARGET_FLAGS = Object.freeze({
+  CasterOnly: 1, ByTouch: 2, SingleTargetAtRange: 4, AreaAroundCaster: 8, AreaAtRange: 16,
+});
+export const ELEMENT_FLAGS = Object.freeze({ Fire: 1, Cold: 2, Poison: 4, Shock: 8, Magic: 16 });
+/** EntityEffectBroker.cs:41-48. */
+export const TARGET_FLAGS_ALL = 31;      // every bit
+export const TARGET_FLAGS_SELF = 1;      // CasterOnly
+export const TARGET_FLAGS_OTHER = 30;    // every bit BUT CasterOnly
+export const ELEMENT_FLAGS_ALL = 31;
+export const ELEMENT_FLAGS_MAGIC_ONLY = 16;
+/** The window stores a classic index 0..4; the enums declare their
+ *  bits in that same order. */
+export const flagOfIndex = (i) => (1 << i);
+
+/** The effects whose AllowedTargets is NOT TargetFlags_All, by
+ *  classic (type, subType) key - read off every effect class under
+ *  Game/MagicAndEffects/Effects, not inferred. The two variant
+ *  classes build their keys in a loop: ElementalResistance is
+ *  (8, 0..4) and is All, PacifyEffect is (33, 0..3) and is Other.
+ *  Everything absent from both sets is TargetFlags_All. */
+const SELF_TARGET_KEYS = new Set([
+  '2,255', '6,0', '6,1', '6,2', '14,255', '15,255', '16,255', '17,255', '25,255',
+  '29,255', '39,0', '39,1', '39,2', '40,255', '43,255', '44,255',
+]);
+const OTHER_TARGET_KEYS = new Set([
+  '0,255', '1,0', '1,1', '1,2', '4,0', '4,1', '4,2', '5,255', '7,0',
+  '7,1', '7,2', '7,3', '7,4', '7,5', '7,6', '7,7', '11,0', '11,1',
+  '11,2', '11,3', '11,4', '11,5', '11,6', '11,7', '11,8', '11,9', '12,255',
+  '33,0', '33,1', '33,2', '33,3', '34,255',
+]);
+
+export const allowedTargetsOf = (type, subType) => {
+  const k = `${type},${subType}`;
+  if (SELF_TARGET_KEYS.has(k)) return TARGET_FLAGS_SELF;
+  if (OTHER_TARGET_KEYS.has(k)) return TARGET_FLAGS_OTHER;
+  return TARGET_FLAGS_ALL;
+};
+/** The element half needs no second table: MAGIC_ONLY_KEYS already IS
+ *  the set of effects whose AllowedElements is ElementFlags_MagicOnly,
+ *  read off the same classes for the GetElementType law. The two
+ *  derivations were cross-checked key for key and agree exactly. */
+export const allowedElementsOf = (type, subType) =>
+  (MAGIC_ONLY_KEYS.has(`${type},${subType}`) ? ELEMENT_FLAGS_MAGIC_ONLY : ELEMENT_FLAGS_ALL);
+
+/** UpdateAllowedButtons, verbatim. `slots` is the window's three, of
+ *  which any may be empty - DFU's own loop skips a slot with no key. */
+export function updateAllowedButtons(slots) {
+  const used = (slots ?? []).filter((sl) => sl && sl.type != null);
+  // The default arm (:564-570) does NOT merely enforce: it CALLS
+  // SetSpellTarget(CasterOnly) and SetSpellElement(Magic), so
+  // deleting the last effect snaps a selection of, say, Area At
+  // Range back to Caster Only even though the default target set
+  // allows it. `forced` carries that distinction to the caller.
+  if (used.length === 0) {
+    return { targets: TARGET_FLAGS_ALL, elements: ELEMENT_FLAGS_MAGIC_ONLY, forced: true };
+  }
+  let targets = TARGET_FLAGS_ALL;
+  let elements = ELEMENT_FLAGS_MAGIC_ONLY;
+  for (const sl of used) {
+    targets &= allowedTargetsOf(sl.type, sl.subType);
+    elements |= allowedElementsOf(sl.type, sl.subType);
+  }
+  return { targets, elements, forced: false };
+}
+/** The two the default arm forces back to. */
+export const DEFAULT_TARGET_INDEX = 0;    // TargetTypes.CasterOnly
+export const DEFAULT_ELEMENT_INDEX = 4;   // ElementTypes.Magic
+
+/** SelectFirstAllowedTargetType / SelectFirstAllowedElementType
+ *  (:605-660): the FIRST set bit in declaration order, which for both
+ *  is the lowest. DFU leaves the selection alone when nothing is
+ *  allowed (every arm falls through); -1 says so. */
+export const firstAllowedIndex = (flags) => {
+  for (let i = 0; i < 5; i++) if (flags & flagOfIndex(i)) return i;
+  return -1;
+};
+
+/** EnforceSelectedButtons (:595-603): only an ILLEGAL selection moves. */
+export function enforceSelected(index, flags) {
+  if (flags & flagOfIndex(index)) return index;
+  const first = firstAllowedIndex(flags);
+  return first === -1 ? index : first;
+}
+
+/** The window cycles one row where DFU has five buttons, so its
+ *  translation of "SetSpell* returns early on a disallowed bit" is to
+ *  step OVER the disallowed values: the player can no more land on
+ *  one here than they can select one there. */
+export function cycleAllowed(index, dir, flags) {
+  if (!(flags & (flags - 1))) return firstAllowedIndex(flags) === -1 ? index : firstAllowedIndex(flags);
+  let i = index;
+  for (let n = 0; n < 5; n++) {
+    i = (i + dir + 5) % 5;
+    if (flags & flagOfIndex(i)) return i;
+  }
+  return index;
+}
 
 export const MAX_EFFECTS_PER_SPELL = 3;      // maxEffectsPerSpell (SpellMakerWindow:131)
 export const DEFAULT_SPELL_ICON = 1;         // defaultSpellIcon (:132)
