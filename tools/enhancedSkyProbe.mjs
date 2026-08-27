@@ -109,8 +109,12 @@ check('the clouds are lit: under the same cloud, toward the sun is brighter than
   towardSun.mean > awaySun.mean * 1.06, `${towardSun.mean.toFixed(0)} vs ${awaySun.mean.toFixed(0)}`);
 check('the star field wheels: three hours on is a different sky, still full of stars',
   night3.starHash !== night.starHash && night3.max > 200, `${night.starHash} -> ${night3.starHash}`);
-check('the retro pass is the DEFAULT: chunkier and more posterised than ?sky=smooth',
-  retro.changes < smooth.changes * 0.6 && retro.levels <= smooth.levels,
+// The decisive one is LEVELS - a posterised gradient has a handful where
+// a 24-bit one has dozens. `changes` only has to be fewer: how much
+// fewer depends on the field of view, and ES1f's equi-angular cells are
+// a touch smaller near the horizon than the lat-long ones they replaced.
+check('the retro pass is the DEFAULT: chunkier and far more posterised than ?sky=smooth',
+  retro.changes < smooth.changes * 0.8 && retro.levels * 4 < smooth.levels,
   `retro ${retro.changes} changes / ${retro.levels} levels vs smooth ${smooth.changes} / ${smooth.levels}`);
 check('Masser is in the frame when the camera is pointed at where the law puts it', moons.warmFrac > 0.0003 && moons.warmFrac < 0.01, `${(moons.warmFrac * 100).toFixed(3)}% of the frame is its warm lit disc`);
 

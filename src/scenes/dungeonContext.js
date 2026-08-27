@@ -82,7 +82,7 @@ import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dis
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
 import { ListPickerWindow, listPickerArtLoaded, preloadListPickerArt } from '../ui/listPicker.js';   // X11b: the Create Item picker
-import { createItemLabels, grantCreatedItem } from '../systems/createItem.js';   // X11b
+import { createItemLabels, grantCreatedItem, lastCreateItemIndex, setLastCreateItemIndex } from '../systems/createItem.js';   // X11b
 import {
   missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS,
   MISSILE_LIFESPAN_S,
@@ -140,9 +140,9 @@ import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   //
  * @param blocks BlocksFile
  * @param climateBaseType ClimateBases value for the table remap
  */
-/** CreateItem.lastSelectedIndex (:35) - a STATIC. Module scope IS that
- *  static: the picker reopens where the player left it, across casts. */
-let _lastCreateItemIndex = 0;
+// AUDIT 26 F079: the ONE CreateItem.lastSelectedIndex static now
+// lives with the law in systems/createItem.js - this host and the
+// world host each kept a copy, so the picker opened on the other's row.
 
 export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseType, opts = {}) {
   const { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, palette } = deps;
@@ -1257,9 +1257,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       activeOverlay = new ListPickerWindow({
         items: createItemLabels(),
         allowCancel: false,                    // CreateItem.cs:70
-        selectedIndex: _lastCreateItemIndex,   // the static (:35)
+        selectedIndex: lastCreateItemIndex(),   // the static (:29)
         onPick: (i) => {
-          _lastCreateItemIndex = i;
+          setLastCreateItemIndex(i);
           const made = grantCreatedItem(playerEntity, i, {
             gender: playerEntity.gender ?? 'male',
             nowMinutes: Math.floor(classicMinutesRef.value),

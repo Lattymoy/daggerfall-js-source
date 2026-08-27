@@ -355,6 +355,44 @@ uniform float uStarAngle;
 uniform float uRetroStep;   // 0 = the smooth pass; else the angular pixel (radians)
 uniform float uRetroLevels; // 0 = no posterise
 
+// ES1f: A CELL ON THE CUBE, NOT ON A LAT-LONG GRID.
+// Snapping azimuth and elevation put the grid's POLE at the zenith:
+// the elevation rings became concentric circles and the azimuth cells
+// converged to nothing, so looking straight up was a bullseye with
+// everything woven into it. A cube has no pole. The direction is
+// projected onto whichever of the six faces it points at, snapped on
+// that face's square grid, and rebuilt - cells stay near-square
+// everywhere, the zenith is an ordinary patch of an ordinary face, and
+// the only cost is the cube's own mild corner distortion, which has no
+// centre for the eye to find.
+// The n argument is cells per face; the cell id (with the face folded in) comes
+// back in cellOut for the dither and the star field.
+vec3 cubeSnap(vec3 dir, float n, out vec2 cellOut) {
+  vec3 a = abs(dir);
+  float m = max(a.x, max(a.y, a.z));
+  vec2 raw; float face;
+  if (a.x >= m) { raw = dir.zy / a.x; face = dir.x > 0.0 ? 0.0 : 1.0; }
+  else if (a.y >= m) { raw = dir.xz / a.y; face = dir.y > 0.0 ? 2.0 : 3.0; }
+  else { raw = dir.xy / a.z; face = dir.z > 0.0 ? 4.0 : 5.0; }
+  // EQUI-ANGULAR faces (ES1f, second pass). A plain cube face is a
+  // TANGENT plane, so its cells cover 2.6x less sky at the corners than
+  // at the centre - and a cell size that varies across the frame beats
+  // against the screen's own grid and draws curved moire rings, which
+  // is the pole artifact's ghost rather than its cure. Warping the face
+  // by atan (the equi-angular cubemap of 360 video) makes every cell
+  // the SAME ANGLE everywhere, so the grid reads as an even bitmap in
+  // every direction. A face spans 90 degrees, so n = (PI/2)/step gives
+  // the painted sky's pixel: 256 a face, 512 across 180 degrees, which
+  // is SKY??.DAT's own width.
+  vec2 uv = atan(raw) * 1.27323954;                 // 4/PI: [-1,1] over the face
+  vec2 cell = floor(uv * n);
+  vec2 t = tan((cell + 0.5) / n * 0.78539816);      // PI/4: back to the tangent plane
+  cellOut = cell + face * 977.0;                    // a face's cells are its own
+  if (a.x >= m) return normalize(vec3(sign(dir.x), t.y, t.x));
+  if (a.y >= m) return normalize(vec3(t.x, sign(dir.y), t.y));
+  return normalize(vec3(t.x, t.y, sign(dir.z)));
+}
+
 // Bayer 4x4, the ordered dither a 256-colour gradient used.
 float bayer4(vec2 p) {
   int x = int(mod(p.x, 4.0)), y = int(mod(p.y, 4.0));
@@ -416,10 +454,18 @@ float stars(vec3 dir, float amount) {
   vec3 axis = normalize(uStarPole);
   float ca = cos(uStarAngle), sa = sin(uStarAngle);
   vec3 d = dir * ca + cross(axis, dir) * sa + axis * dot(axis, dir) * (1.0 - ca);   // Rodrigues
-  vec2 sc = vec2(atan(d.x, d.z), asin(clamp(d.y, -1.0, 1.0)));
+  // ES1f: the field is cast on the CUBE too. On a lat-long grid the
+  // cells converged at the pole - a pinwheel of stars - and the density
+  // piled up there, which is exactly wrong: a star field is even.
   for (int layer = 0; layer < 2; layer++) {
-    float scale = layer == 0 ? 70.0 : 130.0;
-    vec2 g = sc * scale + float(layer) * 31.7;
+    // The cube covers the sphere with 6n^2 cells where the lat-long grid
+    // used ~2*pi^2*scale^2, so the same star density wants a bigger n:
+    // 6n^2 = 2*pi^2*70^2 gives n ~ 127, and the second layer follows.
+    float scale = layer == 0 ? 127.0 : 236.0;
+
+    vec2 sc2;
+    cubeSnap(d, scale, sc2);
+    vec2 g = sc2 + float(layer) * 31.7;
     vec2 cell = floor(g), f = fract(g);
     float h = hash21(cell + 7.3 * float(layer));
     float thresh = layer == 0 ? 0.955 : 0.985;
@@ -440,18 +486,15 @@ void main() {
   float cy = cos(uYaw), sy = sin(uYaw);
   vec3 dir = normalize(vec3(r1.x * cy + r1.z * sy, r1.y, -r1.x * sy + r1.z * cy));
 
-  // ES1e: THE ANGULAR PIXEL. The direction is snapped to the painted
-  // sky's own grid (PI/512 in azimuth and elevation) BEFORE anything is
-  // computed, so every feature below is drawn on it and the pixels are
-  // fixed to the world rather than to the screen.
+  // ES1e: THE ANGULAR PIXEL, on the painted sky's own scale
+  // (SKY_ANGLE_PER_PIXEL) - and ES1f: on a CUBE, so it has no pole. The
+  // direction is snapped BEFORE anything is computed, so every feature
+  // below is drawn on the grid and the pixels are fixed to the world
+  // rather than to the screen. The faces are equi-angular, so a face's
+  // 90 degrees over n cells makes every cell exactly one step wide:
+  // n = (PI/2)/step is 256 a face, 512 across 180 degrees - SKY??.DAT.
   vec2 cell = vec2(0.0);
-  if (uRetroStep > 0.0) {
-    float az = atan(dir.x, dir.z), el = asin(clamp(dir.y, -1.0, 1.0));
-    cell = floor(vec2(az, el) / uRetroStep);
-    vec2 q = (cell + 0.5) * uRetroStep;
-    float ce = cos(q.y);
-    dir = vec3(sin(q.x) * ce, sin(q.y), cos(q.x) * ce);
-  }
+  if (uRetroStep > 0.0) dir = cubeSnap(dir, 1.57079633 / uRetroStep, cell);
 
   // The dome: horizon to zenith.
   float e = clamp(dir.y, 0.0, 1.0);

@@ -320,6 +320,15 @@ const REGISTRY = new Map([
     equipped(env) { instantiateHeldSpell(env, false); },
     reroll(env) { instantiateHeldSpell(env, true); },
     magicRound({ round, entity, item, ctx }) {
+      // AUDIT 26 F126: the MagicRound item payload is dispatched only
+      // for items in activeMagicItemsInRound, and that map is filled
+      // solely under `if (IsPlayerEntity)`
+      // (EntityEffectManager.cs:1744-1755) - so an ENEMY's
+      // Cast-When-Held item never takes the wear, and is looted at
+      // its remaining condition rather than degrading and breaking.
+      // (The bundle-driven rounds - RegensHealth, ItemDeteriorates,
+      // HealthLeech idle - DO run for any entity and stay ungated.)
+      if (!entity?.isPlayer) return;
       const rate = ctx?.isResting?.() ? HELD_DEGRADE_RATE_RESTING : HELD_DEGRADE_RATE;
       if (round % rate === 0) enchantLowerCondition(item, 1, entity, ctx);
     },

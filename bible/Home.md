@@ -172,6 +172,9 @@ cited anywhere fails to resolve, that is why, and Mac holds the map.
 
 ## Active arcs
 
+- `01-Overview/Audit-26.md` - CLOSED 2026-08-26: THE FULL-TREE PARITY AND BUG AUDIT. 43 surveyors over the whole of `src/` against the whole of DFU with the C# in the container; 223 claims, 218 confirmed, 5 refuted (67 bug / 89 parity / 62 nit). The bugs were fixed in clusters across 2026-08-26/27; the parity and nit findings are 117 rows in Port-Ledger section C, every id greppable. Verification was two-tier and the page says so.
+- `01-Overview/Audit-27.md` - CLOSED 2026-08-27: THE STATE-OF-THE-TREE AUDIT. Not a parity sweep (AUDIT 26 was the day before): ten mechanical sweeps over the tree and the bible for the things a parity read does not look at - dead exports, four-hosts seams, citation integrity, allow-list drift, URL flags, Ledger and Testing.md consistency - plus a doctrine read of the day's own work. 6 findings, 3 fixed on the spot.
+- `07-Rendering/Rendering-Arc.md` - ACTIVE. The R-slices, and since 2026-08-27 the ENHANCED SKY (ES1-ES1f): a procedural dome behind the skin toggle, drawn with no game data at all - sun and moons on the port's own clock and DFU's phase law, weather from the sim eased over 14 s, two sun-lit cloud decks, a star field that wheels, the cloud in front of the sun dimming the world's key light, and a RETRO pass on the painted sky's own angular pixel (256 cells a face, 512 across 180 degrees) posterised with a Bayer dither. 13 pins, probe 10/10.
 - `01-Overview/Audit-25.md` - CLOSED 2026-08-23: THE COMPLETENESS AUDIT. The first audit whose denominator is the DFU tree rather than `src/`: 27 subsystem groups over a real 849-file checkout, a surveyor and an adversarial refuter each, four reconciliation passes. 767 surviving gaps, ~63,400 JS lines. Six systems at or near zero (enchanting, both automaps, the magic crafting windows, banking, the classic `.SAV` reader, the pause menu + keybinding registry) and seven P0 host seams, all of them wire for laws already ported. The gap register and the slice order live in the page; the ledger rows it found are folded into `01-Overview/Port-Ledger.md` section C.
 - `01-Overview/Audit-24.md` - CLOSED 2026-08-22: THE FULL-CODEBASE PARITY SWEEP. A 145-agent workflow read the 161 port modules that cite a C# original against the DFU tree in 21 groups; every claim went to two independent refuters (one C#-side, one JS-side, both refute-by-default) and 54 of 62 survived both. ALL 54 ARE FIXED AND PINNED, in five waves, every pin verified by reintroducing its bug: the hovering flyer's fall anchor, the DFRandom byte that stopped drawing mid-swing, the bow band's missing DetectedTarget/GiveUpTimer gates, the swimmer measuring from the standing capsule at five water sites and AddMovement's three arms in the wrong order, the legal-rep clamp running before the restore, the shield that never reached the forbidden-material arm, the Place expansion stealing the pronoun context, the five missing capitalized pronoun macros, the quest popup that revealed no dialog links, the CurrentLogMessageId latch that made every %qdt print the accept date, the Transportation item that could be dropped into its own wagon, the journal filtering on formatting names nothing emits, ScreenDimColor (Color.clear, and eighteen windows assign it), the swing gate that compared the sum where DFU compares the trail, MaxGestureSeconds as a sliding window, the cancelled bow draw that was free, five format readers, seenByGuard behind a clear line of sight, DateString's invented format, and a saving throw whose element and flag were driven off one predicate. FOUR EXISTING PINS HAD RECORDED THE BUG AS THE LAW and were corrected, not extended - including AUDIT 19 F2, which had 'fixed' the letterbox in the wrong direction a fortnight earlier. A pin that restates the port instead of the source is not a pin
 - `02-Formats/Readers-Arc.md` - COMPLETE. All 8 format readers shipped with corpus gates (+ SKY under R4, + GFX under U18 - post-close additions with gates of their own).
@@ -284,31 +287,31 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:3890` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/world.js:3963` - (FLAGGED: exterior corpse containers are the loot arc's), so
 - `src/scenes/worldModes.js:591` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
-- `src/scenes/worldModes.js:739` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
-- `src/scenes/worldModes.js:820` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
-- `src/scenes/worldModes.js:829` - FLAGGED to the crime arc, as the Ledger records.
-- `src/scenes/worldModes.js:898` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
-- `src/scenes/worldModes.js:913` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
-- `src/scenes/worldModes.js:951` - credit instead. FLAGGED: there is nowhere to cash one yet, so
-- `src/scenes/worldModes.js:1094` - is the quest machine's, FLAGGED with it.
-- `src/scenes/worldModes.js:1099` - FLAGGED, above ground only, each with the DFU line it owes:
-- `src/scenes/worldModes.js:1193` - trade window in Sell mode. The BANKING arm stays FLAGGED below;
-- `src/scenes/worldModes.js:1288` - FLAGGED, each with the slice it waits on:
-- `src/scenes/worldModes.js:1517` - fixed ship scenes and stays FLAGGED, so those buttons keep
-- `src/scenes/worldModes.js:1549` - H3: the sell price, which was FLAGGED at zero because it needs
-- `src/scenes/worldModes.js:1727` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:1783` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
-- `src/scenes/worldModes.js:1841` - skip, the refusal line. Only the destination was a FLAGGED null,
-- `src/scenes/worldModes.js:2116` - been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:2161` - destination has been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:2180` - been FLAGGED nulls since G3.
-- `src/scenes/worldModes.js:2285` - with the trade window's own mode flow, the same INTERIM the
-- `src/scenes/worldModes.js:2510` - first (owned houses and quest buildings FLAGGED/seamed per
-- `src/scenes/worldModes.js:2518` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
-- `src/scenes/worldModes.js:3365` - too. FLAGGED: interior loot containers are the loot arc's -
-- `src/scenes/worldModes.js:3507` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:3606` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:3944` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
+- `src/scenes/worldModes.js:770` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
+- `src/scenes/worldModes.js:852` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
+- `src/scenes/worldModes.js:861` - FLAGGED to the crime arc, as the Ledger records.
+- `src/scenes/worldModes.js:930` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
+- `src/scenes/worldModes.js:945` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
+- `src/scenes/worldModes.js:983` - credit instead. FLAGGED: there is nowhere to cash one yet, so
+- `src/scenes/worldModes.js:1137` - is the quest machine's, FLAGGED with it.
+- `src/scenes/worldModes.js:1142` - FLAGGED, above ground only, each with the DFU line it owes:
+- `src/scenes/worldModes.js:1236` - trade window in Sell mode. The BANKING arm stays FLAGGED below;
+- `src/scenes/worldModes.js:1331` - FLAGGED, each with the slice it waits on:
+- `src/scenes/worldModes.js:1560` - fixed ship scenes and stays FLAGGED, so those buttons keep
+- `src/scenes/worldModes.js:1592` - H3: the sell price, which was FLAGGED at zero because it needs
+- `src/scenes/worldModes.js:1770` - FactionData; the port's pre-chargen INTERIM entity does not, and
+- `src/scenes/worldModes.js:1826` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
+- `src/scenes/worldModes.js:1884` - skip, the refusal line. Only the destination was a FLAGGED null,
+- `src/scenes/worldModes.js:2159` - been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:2204` - destination has been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:2223` - been FLAGGED nulls since G3.
+- `src/scenes/worldModes.js:2328` - with the trade window's own mode flow, the same INTERIM the
+- `src/scenes/worldModes.js:2553` - first (owned houses and quest buildings FLAGGED/seamed per
+- `src/scenes/worldModes.js:2561` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
+- `src/scenes/worldModes.js:3408` - too. FLAGGED: interior loot containers are the loot arc's -
+- `src/scenes/worldModes.js:3550` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:3649` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:3987` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
 - `src/systems/advancement.js:84` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
@@ -332,7 +335,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/effects.js:1406` - out.skipped++;   // FLAGGED: the library grows one family at a time
 - `src/systems/effects.js:1410` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
 - `src/systems/enchantments.js:122` - had been FLAGGED at its own site since S4c - "a magic item still
-- `src/systems/enchantments.js:641` - a MagicRound-FLAGGED row's is the payload callback :1767
+- `src/systems/enchantments.js:650` - a MagicRound-FLAGGED row's is the payload callback :1767
 - `src/systems/encounters.js:221` - * STILL FLAGGED: the FoeSpawner sweep (:721-728) pends quest spawners
 - `src/systems/equip.js:17` - hooks below. FLAGGED: equip sounds.
 - `src/systems/equip.js:240` - /** INTERIM starting equipment (chargen's starting-gear roll
@@ -342,8 +345,8 @@ combat line numbers below are refreshed with it.
 - `src/systems/inputActions.js:302` - FLAGGED, each with the slice it waits on:
 - `src/systems/inventory.js:43` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
 - `src/systems/itemInfo.js:5` - U8e's inventory shipped an INTERIM info panel that made up its own
-- `src/systems/itemInfo.js:84` - if (isPotionRecipe(item)) return INFO_TEXT.misc;   // DFU builds recipe tokens by hand - FLAGGED
-- `src/systems/itemInfo.js:169` - *  screen. FLAGGED as a group - they land with their own arcs.
+- `src/systems/itemInfo.js:85` - if (isPotionRecipe(item)) return INFO_TEXT.misc;   // DFU builds recipe tokens by hand - FLAGGED
+- `src/systems/itemInfo.js:170` - *  screen. FLAGGED as a group - they land with their own arcs.
 - `src/systems/itemTemplates.js:123` - if (!Object.isExtensible(item)) return item;   // C-slice: the frozen pre-chargen stand-ins (INTERIM_WEAPON) carry no condition
 - `src/systems/knightlyGifts.js:3` - remaining FLAGGED service destinations, and the only two that need
 - `src/systems/knightlyGifts.js:31` - FLAGGED, not ported: RestoreGuildData's legacy flag migration
@@ -374,7 +377,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/tradeModes.js:4` - U8c shipped the shop screen in BUY mode only, and said so: "FLAGGED
 - `src/systems/tradeModes.js:127` - *  destination has been a FLAGGED null, so the mode could not be
 - `src/systems/tradeModes.js:388` - FLAGGED, with the slices they wait on:
-- `src/systems/useItem.js:311` - lantern's and refuses when it would overflow. FLAGGED: DFU
+- `src/systems/useItem.js:318` - lantern's and refuses when it would overflow. FLAGGED: DFU
 - `src/ui/automapWindow.js:20` - portals stay FLAGGED (systems/automap.js keeps the list); A2
 - `src/ui/bankWindow.js:28` - law's. The SHIP popup is still FLAGGED - it needs the two fixed
 - `src/ui/bookReader.js:25` - INTERIM, loud: lines draw in the host font at a fixed 10px row -

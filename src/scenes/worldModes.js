@@ -79,7 +79,7 @@ import { isShop, isRepairShop, stockShopShelf, stockHouseContainer, calculateCos
 import { identifySpellPass, identifiedTallyText } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll
 import { liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // X10: the Dispel Magic picker
 import { ListPickerWindow, listPickerArtLoaded } from '../ui/listPicker.js';   // X10
-import { createItemLabels, grantCreatedItem } from '../systems/createItem.js';   // X11b
+import { createItemLabels, grantCreatedItem, lastCreateItemIndex, setLastCreateItemIndex } from '../systems/createItem.js';   // X11b
 import { LevelUpScreen } from '../ui/charsheet.js';   // AUDIT 21 hosts F3: levelling in a building
 import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded, TRADE_RECTS } from '../ui/nativeTrade.js';   // U8c
 // U23: the static-NPC seam and the guild service popup.
@@ -193,11 +193,11 @@ let _charAnimMode = 'idle'; // in-engine character animation: idle | walk | off 
 const DUNGEON_WATER_COLOR = [1, 1, 1, 0.82];
 const DUNGEON_WATER_SCROLL = 0.05;
 
-/** CreateItem.lastSelectedIndex (CreateItem.cs:35) - a STATIC, so the
- *  picker reopens on the row the player took last time. Module scope
- *  here is that static: it outlives the window, the cast and the
- *  scene, exactly as DFU's does. */
-let _lastCreateItemIndex = 0;
+// AUDIT 26 F079: CreateItem.lastSelectedIndex is ONE static shared by
+// every cast in a run (CreateItem.cs:29, :75, :121). This host kept
+// its own module copy and the dungeon host kept another, so casting
+// in a dungeon and again outdoors opened at the OTHER host's row. The
+// single static now lives with the law, in systems/createItem.js.
 
 export function createWorldModes(host) {
   const _footsteps = new FootstepMachine();   // FS-slice: the modal stride (interior wood / dungeon stone + water)
@@ -610,7 +610,14 @@ export function createWorldModes(host) {
    *  Without it every quest NPC and item in a dungeon hangs half a
    *  sprite too high - and a distant screenshot passes that, exactly
    *  as it passed a vertically flipped billboard for six milestones. */
-  function standQuestFlatIn(list, getCtx, toScene, inDungeon, archive, record, position, behaviour, staticNpcFactionId = null, hashPosition = null) {
+  /** AddQuestItem's dungeon shift (GameObjectHelper.cs:1135-1136):
+   *  `-DaggerfallLoot.randomTreasureMarkerDim / 2 * MeshReader
+   *  .GlobalScale` = -(40 / 2) * 0.025 = -0.5, a CONSTANT and not a
+   *  function of the sprite. RDBLayout.cs:1584 applies the same one to
+   *  the loot piles. */
+  const QUEST_ITEM_MARKER_SHIFT = 0.5;
+
+  function standQuestFlatIn(list, getCtx, toScene, inDungeon, archive, record, position, behaviour, staticNpcFactionId = null, hashPosition = null, isItem = false) {
     const ctx = getCtx();   // capture: an async fill must not cross scenes
     if (!ctx) return null;
     // flatPosition is already scene units with -y (the Place marker
@@ -632,16 +639,39 @@ export function createWorldModes(host) {
       uploadRecord(archive, record);
       const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
       stand.width = size.w; stand.height = size.h;
-      // The anchor (see the header), then AlignBillboardToGround
-      // (GameObjectHelper.cs:336-346), which AddQuestNPC/AddQuestItem
-      // both call with distance 4: a ray from 0.2 above, and on a hit
-      // the CENTRE goes to hit + size.y * 0.52 - so a bottom-anchored
-      // base sits size.y * 0.02 off the floor, the 2% lift that keeps
-      // it out of the ground plane. No floor within 4 and the marker
-      // position stands as-is, verbatim (C# returns without moving).
-      let by = inDungeon ? y - size.h / 2 : y;
-      const drop = ctx.collider?.raycast?.([x, by + 0.2, z], [0, -1, 0], 4);
-      if (Number.isFinite(drop)) by = (by + 0.2 - drop) + size.h * 0.02;
+      // AUDIT 26 F068: an ITEM and an NPC are stood by DIFFERENT laws.
+      // The old comment here said AddQuestNPC and AddQuestItem "both
+      // call" the align; only AddQuestNPC does (:1040).
+      //
+      // AddQuestItem (GameObjectHelper.cs:1128-1141) NEVER rays. Its
+      // dungeon shift is the CONSTANT
+      // `-randomTreasureMarkerDim / 2 * GlobalScale` (:1135-1136) -
+      // the treasure marker's centre origin, -0.5 flat, nothing to do
+      // with the sprite's own height - and then `+= Size.y / 2` lifts
+      // the CENTRE, which in this port's base-anchored terms cancels
+      // out. So the item's base sits at the marker, half a unit down
+      // in a dungeon, and an item on a table, cage or ledge STAYS UP
+      // where the port's ray snapped it to the floor below.
+      let by;
+      if (isItem) {
+        by = inDungeon ? y - QUEST_ITEM_MARKER_SHIFT : y;
+      } else {
+        // AlignBillboardToGround (:335-345) with distance 4: a ray
+        // from 0.2 above the billboard's CENTRE, and on a hit the
+        // centre goes to hit + size.y * 0.52 - so a bottom-anchored
+        // base sits size.y * 0.02 off the floor, the 2% lift that
+        // keeps it out of the ground plane. No floor within 4 and the
+        // marker position stands as-is (C# returns without moving).
+        //
+        // F069: the ray starts at the CENTRE, not the base. The port
+        // rayed from `by + 0.2` - half a sprite lower - so a tall
+        // dungeon NPC could start its ray below a surface DFU clears
+        // and miss the snap entirely, standing embedded.
+        by = inDungeon ? y - size.h / 2 : y;
+        const origin = by + size.h / 2 + 0.2;
+        const drop = ctx.collider?.raycast?.([x, origin, z], [0, -1, 0], 4);
+        if (Number.isFinite(drop)) by = (origin - drop) + size.h * 0.02;
+      }
       stand.y = by;
       stand.batch = renderer.createBillboardBatch(archive, record, size, [[x, by, z]]);
       if (stand.active) ctx.billboardBatches.push(stand.batch);
@@ -687,7 +717,8 @@ export function createWorldModes(host) {
       // AddQuestItem draws the item's WORLD texture (the ground sprite).
       const t = templateByIndex(item.daggerfallUnityItem?.templateIndex);
       if (!t) return null;
-      return standQuestFlat(t.worldTextureArchive, t.worldTextureRecord, position, behaviour);
+      // F068: an item is placed, not aligned - no ray.
+      return standQuestFlat(t.worldTextureArchive, t.worldTextureRecord, position, behaviour, null, null, true);
     },
     // standFoe absent - see the FLAG above.
   };
@@ -754,7 +785,8 @@ export function createWorldModes(host) {
     standItem: ({ item, position, behaviour }) => {
       const t = templateByIndex(item.daggerfallUnityItem?.templateIndex);
       if (!t) return null;
-      return standDungeonQuestFlat(t.worldTextureArchive, t.worldTextureRecord, position, behaviour);
+      // F068: an item is placed, not aligned - no ray.
+      return standDungeonQuestFlat(t.worldTextureArchive, t.worldTextureRecord, position, behaviour, null, null, true);
     },
     standFoe: ({ foe, gender, position, behaviour }) => {
       if (!dungeonCtx) return null;
@@ -976,9 +1008,20 @@ export function createWorldModes(host) {
         // staged item never left the pack here (see packItems), so the
         // instant arm mends it in place: the addItem that stood for
         // that return aliased it into the pack a second time.
-        if (getBool('Controls', 'InstantRepairs')) it.currentCondition = it.maxCondition;
-        else leaveForRepair(it, interiorBuilding?.buildingKey ?? 0,
+        if (getBool('Controls', 'InstantRepairs')) { it.currentCondition = it.maxCondition; continue; }
+        leaveForRepair(it, interiorBuilding?.buildingKey ?? 0,
           calculateItemRepairTime(it.currentCondition ?? 0, it.maxCondition ?? 0), now);
+        // AUDIT 26 F070: ConfirmTrade's Repair arm runs
+        // UpdateRepairTimes(true) over remoteItemsFiltered - EVERY job
+        // at this shop plus the new one (:1060-1072 -> :514-568), which
+        // is what makes the longest-job queue stretch and the
+        // never-decrease clamp real laws rather than dead arms of a
+        // one-item list. This arm booked each item on its own time and
+        // would have diverged the day the native window is opened in
+        // Repair mode; the keyed choice flow has applied the queue law
+        // since R1 and is the only live path today.
+        const bk = interiorBuilding?.buildingKey ?? 0;
+        updateRepairTimes([...repairJobsAt(playerEntity, bk, now), it], { commit: true, nowMinutes: now, buildingKey: bk });
       }
     } else if (mode === 'Identify') {
       // X7: two Identify paths through one arm, as DFU has them. The
@@ -4324,9 +4367,9 @@ export function createWorldModes(host) {
       win = new ListPickerWindow({
         items: createItemLabels(),
         allowCancel: false,           // CreateItem.cs:70 - the magicka is already spent
-        selectedIndex: _lastCreateItemIndex,
+        selectedIndex: lastCreateItemIndex(),
         onPick: (i) => {
-          _lastCreateItemIndex = i;   // the static, updated in ItemPicker_OnItemPicked (:113)
+          setLastCreateItemIndex(i);   // the static, updated in ItemPicker_OnItemPicked (:113)
           const made = grantCreatedItem(playerEntity, i, {
             gender: playerEntity.gender ?? 'male',
             nowMinutes: Math.floor(worldMinutes()),

@@ -28,6 +28,7 @@ import { weaponMaterialModifier, weaponMinDamage, weaponMaxDamage, WEAPON_MATERI
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { srand, rand, randomRangeInclusive } from '../formats/dfRandom.js';   // the painting identity's whole PRNG
 import { fullName } from '../characters/nameHelper.js';   // %an: NameHelper.FullName(race, gender)
+import { soulTrapNameSuffix } from './mysticism.js';   // F077: ResolveItemLongName's soul arm
 
 /** The thirteen ids GetItemInfo names as constants (:750-762). */
 export const INFO_TEXT = Object.freeze({
@@ -335,8 +336,15 @@ export function expandItemInfo(text, item, { name = null, soul = null, potion = 
   // An ARTIFACT shares the material half of that (`!IsIdentified ||
   // IsArtifact` at :302) - Azura's Star is not "an Ebony Amulet".
   const identified = itemIsIdentified(item);
+  // AUDIT 26 F077: ResolveItemLongName's LAST arm APPENDS the trapped
+  // soul - "Soul Trap (Wraith)" (ItemHelper.cs:352-368) - and it sits
+  // AFTER the `!IsIdentified || IsArtifact` early return (:302), so an
+  // unidentified trap says nothing. mysticism.soulTrapNameSuffix has
+  // carried the law with no caller since it was ported; this is the
+  // naming path it was written for. (DFU's "(empty)" alternative is
+  // commented out at :365-368, so a blank empty trap is deliberate.)
   const itemName = identified
-    ? (name ?? item?.name ?? t?.name ?? '')
+    ? (name ?? item?.name ?? t?.name ?? '') + soulTrapNameSuffix(item, enemyDisplayName)
     : (t?.name ?? '');
   const soulName = soul ?? (item?.trappedSoulType != null ? enemyDisplayName(item.trappedSoulType) : null);
   return (text ?? '')

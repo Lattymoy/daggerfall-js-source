@@ -98,7 +98,7 @@ test('audit24 wave22: the quest NPC hash reads marker.flatPosition, not the stan
   // B2 widened the stand to serve both scenes; the hash law rides the
   // shared body and the interior wrapper keeps the original argument
   // order, so the two reads below are the pin that matters.
-  assert.match(s, /function standQuestFlatIn\(list, getCtx, toScene, inDungeon, archive, record, position, behaviour, staticNpcFactionId = null, hashPosition = null\)/);
+  assert.match(s, /function standQuestFlatIn\(list, getCtx, toScene, inDungeon, archive, record, position, behaviour, staticNpcFactionId = null, hashPosition = null, isItem = false\)/);
   assert.match(s, /marker: hashPosition \?\? position,/);
   assert.match(s, /standNPC: \(\{ marker, person, flatData, position, behaviour \}\) =>\s*\n\s*standQuestFlat\(flatData\.archive, flatData\.record, position, behaviour, person\?\.factionId \?\? null, marker\?\.flatPosition \?\? null\),/);
 });
