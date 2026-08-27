@@ -588,11 +588,16 @@ export function createWorldModes(host) {
   // behaviours drive every modal frame (Unity Update), an E-click
   // routes DoClick, and the interior teardown notifies destruction
   // exactly as Unity's OnDestroy does on a scene transition.
-  // FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
-  // pend the INTERIOR enemy host alone - this adapter's standFoe stays
-  // absent, so the walk skips the stand inside a building. The dungeon
-  // mount SHIPPED (B2 below) and stands real foes through B1's chain.
+  // IF: quest FOES stand inside a building too now. This adapter's
+  // standFoe was absent for one stated reason - "the INTERIOR enemy
+  // host" - and that host exists (see `interiorFoes`), so the walk no
+  // longer skips the stand. It is the SECOND of DFU's two quest-foe
+  // paths into a building: this one is AddQuestResourceObjects at
+  // LAYOUT time (PlayerEnterExit.cs:797-800) and on Place.cs's
+  // hot-place (:508-521), where CreateFoe's TryPlacement is the
+  // other. The dungeon mount (B2 below) is its twin.
   let questFlats = [];          // interior stands (the click sites index this list)
+  let interiorFoeStands = [];   // IF: behaviours standFoe accepted, listed before the async build lands
   let dungeonQuestFlats = [];   // B2: dungeon stands, same record shape
   /** `inDungeon` is not decoration - it selects the ANCHOR.
    *  AddQuestNPC raises the billboard by half its height
@@ -720,7 +725,15 @@ export function createWorldModes(host) {
       // F068: an item is placed, not aligned - no ray.
       return standQuestFlat(t.worldTextureArchive, t.worldTextureRecord, position, behaviour, null, null, true);
     },
-    // standFoe absent - see the FLAG above.
+    // IF: the marker-time stand, the dungeon adapter's twin.
+    standFoe: ({ foe, gender, position, behaviour }) => {
+      if (!interiorCtx || !interiorFoes) return null;
+      interiorFoeStands.push(behaviour);
+      interiorFoes.spawnFoe(foe.foeType, interiorCtx.parentPt(position.x, position.y, position.z), {
+        gender, questBehaviour: behaviour,
+      }).catch((e) => console.error('[quest] interior marker foe failed:', e?.message ?? e));
+      return null;   // the async build binds the host; addQuestFoe's start() runs either way
+    },
   };
   /** SetupIndividualStaticNPC's call site (DaggerfallInterior.cs:1224),
    *  handed to buildInteriorContext so it runs at AddPeople's own
@@ -741,6 +754,7 @@ export function createWorldModes(host) {
   const sceneBehaviours = () => {
     const out = questFlats.map((s) => s.behaviour);
     for (const pn of interiorCtx?.people ?? []) if (pn.questBehaviour) out.push(pn.questBehaviour);
+    for (const b of interiorFoeStands) out.push(b);   // IF: the marker-stood foes, as the dungeon walk does
     return out;
   };
   /** The building-interior mount; also the machine's hot-place callback
@@ -833,6 +847,7 @@ export function createWorldModes(host) {
       s.batch = null;
     }
     questFlats = [];
+    interiorFoeStands = [];   // IF
   }
 
   // E2: the shelf browse/buy chain (DFU's trade window collapsed to

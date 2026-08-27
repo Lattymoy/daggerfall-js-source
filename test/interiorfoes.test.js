@@ -140,3 +140,22 @@ test('IF: the pool is ARMED for targeting like every other pool, over its own da
     'through the ONE senses builder');
   assert.match(WM, /const _foeBatches = interiorFoes\.batches\(\);/, 'and its billboards ride the host\'s draw');
 });
+
+test('IF: quest foes stand from BUILDING MARKERS too - DFU\'s second path into an interior', () => {
+  // AddQuestResourceObjects at LAYOUT time (PlayerEnterExit.cs:797-800)
+  // and on Place.cs's hot-place (:508-521) is a DIFFERENT path from
+  // CreateFoe's TryPlacement, and the Q4-v adapter's standFoe was
+  // absent for one stated reason - "the INTERIOR enemy host" - which
+  // this slice built. (Found by the scout sweep AFTER the first
+  // commit: the flag was worded differently enough to survive the
+  // grep that found the other four.)
+  assert.match(WM, /standFoe: \(\{ foe, gender, position, behaviour \}\) => \{\n\s+if \(!interiorCtx \|\| !interiorFoes\) return null;/);
+  assert.match(WM, /interiorFoes\.spawnFoe\(foe\.foeType, interiorCtx\.parentPt\(position\.x, position\.y, position\.z\)/,
+    'parented exactly as this host\'s own flats are');
+  assert.match(WM, /gender, questBehaviour: behaviour,/, 'and the resource behaviour binds at the stand');
+  // the behaviour joins the scene walk and leaves with the teardown,
+  // the dungeon adapter's own shape
+  assert.match(WM, /for \(const b of interiorFoeStands\) out\.push\(b\);/);
+  assert.match(WM, /questFlats = \[\];\n\s+interiorFoeStands = \[\];/);
+  assert.ok(!WM.includes('this adapter\'s standFoe stays'), 'the fifth flag sentence is gone');
+});
