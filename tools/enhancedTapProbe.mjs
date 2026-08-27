@@ -64,7 +64,7 @@ for (const [label, opts] of [
 ]) {
   const ctx = await browser.newContext(opts);
   const page = await ctx.newPage();
-  await page.goto(`${BASE}/play/`, { waitUntil: 'load' });
+  await page.goto(`${BASE}/play/`, { waitUntil: 'networkidle' });
   await page.waitForSelector('#enhanced-menu .railbtn');
 
   // every pane, because a target that only exists under Settings is

@@ -42,14 +42,6 @@ export const TICK_INTERVAL_MS = 100;
 export const MUSIC_GAIN = 0.22;
 export const musicGain = () => MUSIC_GAIN * getFloat('Controls', 'MusicVolume', 0, 1);
 
-/** THE SETTING ALONE, no synth trim (EM2b). MUSIC_GAIN exists because
- *  the FM bank's raw oscillators sum hot and the classic songs are
- *  mixed under it; a MASTERED track - Mac's theme peaks at 0.72 with
- *  its own headroom - needs no such trim, and under it the menu theme
- *  played at a ninth of its level. Tracks take the setting straight,
- *  times their own record's gain. */
-export const trackGain = () => getFloat('Controls', 'MusicVolume', 0, 1);
-
 /** Lead given to a loop's new origin. It must be SMALLER than the
  *  lookahead: the re-pump schedules [now, now + lookahead), so a lead of a
  *  full lookahead makes that window exactly empty and the repeat starts a
@@ -173,32 +165,14 @@ export class SongPlayer {
     this._voices = [];
     this._master = null;
     this._destination = destination;
-    // EM2c: a trim on the master for the UNDERSCORE - the composed piece
-    // under one of Mac's tracks sits at a fraction of the music level.
-    // 1 when a piece plays alone.
-    this.trim = 1;
   }
 
   _ensureMaster() {
     if (this._master || !this.ctx) return;
     this._master = this.ctx.createGain();
-    this._master.gain.value = musicGain() * this.trim;
+    this._master.gain.value = musicGain();
     this._master.connect(this._destination ?? this.ctx.destination);
   }
-
-  /** EM2b: the MusicVolume setting moved - follow it now, not at the
-   *  next song. A short ramp, so a slider drag is not a zipper. EM2c:
-   *  and the trim, by the same door (`setTrim`). */
-  resyncGain() {
-    if (!this._master) return;
-    const now = this.ctx.currentTime;
-    this._master.gain.cancelScheduledValues(now);
-    this._master.gain.setValueAtTime(this._master.gain.value, now);
-    this._master.gain.linearRampToValueAtTime(musicGain() * this.trim, now + 0.05);
-  }
-
-  /** EM2c: the underscore trim, ramped. */
-  setTrim(trim) { this.trim = trim; this.resyncGain(); }
 
   /** Start a decoded song (hmiFile getSong result). Idempotent per song. */
   play(song) {
@@ -428,58 +402,10 @@ export class SongPlayer {
     if (!g) {
       g = this.ctx.createGain();
       g.gain.value = this._state[channel]?.volume ?? 1;
-      g.connect(this._mixGain(channel));   // EM4b: through the layer mix, then the master
+      g.connect(this._master);
       this._chGains[channel] = g;
     }
     return g;
-  }
-
-  /** EM4b: THE LAYER MIX. A second gain per channel, between the song's
-   *  own CC7 volume and the master, that the RUNTIME owns: the danger
-   *  meter's level lands here as a per-layer gain (palettes.layerMix),
-   *  so a composed piece is a vertical mix - the stem system's idea over
-   *  material the composer wrote. The song's CC7 never touches it and it
-   *  never touches CC7; a new song starts with every mix at 1 unless the
-   *  caller sets otherwise. */
-  _mixGain(channel) {
-    this._mixGains ??= {};
-    let g = this._mixGains[channel];
-    if (!g) {
-      g = this.ctx.createGain();
-      g.gain.value = this._mix?.[channel] ?? 1;
-      g.connect(this._master);
-      this._mixGains[channel] = g;
-    }
-    return g;
-  }
-
-  /** Set the layer mix for several channels at once, ramped. CHANGE-
-   *  GUARDED: a channel whose target moved less than `epsilon` is left
-   *  alone, so a meter that ticks every frame schedules nothing while
-   *  nothing moves (project-final's overlapping-curve freeze, avoided by
-   *  construction). `at` is for offline renders; live calls use now. */
-  setLayerMix(mix, { seconds = 0.3, epsilon = 0.005, at = null } = {}) {
-    this._mix ??= {};
-    const now = at ?? this.ctx?.currentTime ?? 0;
-    for (const [ch, target] of Object.entries(mix)) {
-      const prev = this._mix[ch] ?? 1;
-      if (Math.abs(prev - target) < epsilon && this._mixGains?.[ch]) continue;
-      this._mix[ch] = target;
-      if (!this.ctx) continue;
-      const g = this._mixGain(ch);
-      try {
-        g.gain.cancelScheduledValues(now);
-        g.gain.setValueAtTime(at === null ? g.gain.value : prev, now);
-        g.gain.linearRampToValueAtTime(target, now + Math.max(0.01, seconds));
-      } catch { /* a param already past */ }
-    }
-  }
-
-  /** Every layer back to 1, at once (a new place). */
-  resetLayerMix() {
-    if (!this._mix) return;
-    const all = {}; for (const ch of Object.keys(this._mix)) all[ch] = 1;
-    this.setLayerMix(all, { seconds: 0.05 });
   }
 
   _connect(gain, pan, channel = 0) {
@@ -533,14 +459,10 @@ export class SongPlayer {
  * AudioSource plays it, so replacement and built-in music share one
  * volume and one "is something playing" answer. That sharing is the
  * part worth keeping, and it is why this lives beside SongPlayer
- * rather than in the replacement module. THE LEVEL LAW SPLIT ON
- * 2026-08-27 (EM2b/EM2c, Mac: "fix it also"): MUSIC_GAIN is the FM
- * bank's trim - raw oscillators sum hot - and a user's replacement is a
- * MASTERED file with its own headroom, exactly like Mac's own tracks,
- * so it played at a fifth of itself under the trim. This player reads
- * `trackGain()` now - Controls/MusicVolume alone - beside SongPlayer's
- * `musicGain()`; one setting still moves both, through the service's
- * resync, so the mixer cannot drift between them.
+ * rather than in the replacement module: `musicGain()` is the one
+ * volume law (MUSIC_GAIN x Controls/MusicVolume) and both players read
+ * it, so the mixer cannot drift between a built-in song and a
+ * replacement of the same song.
  *
  * LOOPS BY DEFAULT, because Daggerfall's songs do. A replacement track
  * that has been cut with its own fade still loops - DFU's clips loop
@@ -564,17 +486,8 @@ export class AudioSongPlayer {
   _ensureMaster() {
     if (this._master || !this.ctx) return;
     this._master = this.ctx.createGain();
-    this._master.gain.value = trackGain();   // EM2c (Mac: 'fix it also'): a user's mastered pack takes the setting alone, as Mac's tracks do
+    this._master.gain.value = musicGain();
     this._master.connect(this._destination ?? this.ctx.destination);
-  }
-
-  /** EM2b: follow the setting now (see SongPlayer.resyncGain). */
-  resyncGain() {
-    if (!this._master) return;
-    const now = this.ctx.currentTime;
-    this._master.gain.cancelScheduledValues(now);
-    this._master.gain.setValueAtTime(this._master.gain.value, now);
-    this._master.gain.linearRampToValueAtTime(trackGain(), now + 0.05);
   }
 
   /** Start a decoded AudioBuffer. Returns false rather than throwing on
@@ -586,7 +499,7 @@ export class AudioSongPlayer {
     // The gain is re-read on every start, not just on the first: a
     // player who moves the music slider between songs expects the next
     // one to obey it, and the node is built once.
-    this._master.gain.value = trackGain();   // EM2c (Mac: 'fix it also'): a user's mastered pack takes the setting alone, as Mac's tracks do
+    this._master.gain.value = musicGain();
     const src = this.ctx.createBufferSource();
     src.buffer = buffer;
     src.loop = this.loop;
