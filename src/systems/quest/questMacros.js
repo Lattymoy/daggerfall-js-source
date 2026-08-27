@@ -31,6 +31,10 @@
 // registry's guard precedent.
 
 import { srand, randomRangeInclusive } from '../../formats/dfRandom.js';
+import { liveStat } from '../statMods.js';                       // M-X: %mad's MagicResist read
+import { permanentSkillValue, SKILL_NAMES } from '../skills.js'; // M-X: %ski
+import { entityMaxEncumbrance } from '../../combat/formulas.js'; // M-X: %enc (FormulaHelper.MaxEncumbrance over LiveStrength)
+import { surname } from '../../characters/nameHelper.js';        // M-X: %ln
 import { GENDERS, getNameBankOfRegion, fullName, getNameBank } from '../../characters/nameHelper.js';
 
 // FactionRaces number -> race key (FactionFile.cs:609-624 through
@@ -40,7 +44,7 @@ const FACTION_RACE_KEYS = Object.freeze({
   0: 'Nord', 1: 'Khajiit', 2: 'Redguard', 3: 'Breton',
   4: 'Argonian', 5: 'WoodElf', 6: 'HighElf', 7: 'DarkElf',
 });
-import { dateFromSeconds, dateString } from '../gameDate.js';
+import { dateFromSeconds, dateString, dayName, monthName, birthSignName, SEASON_NAMES, seasonValue } from '../gameDate.js';
 import { REGION_TEMPLES } from '../../formats/mapsFile.js';
 import { factionRaceFromRace } from '../../characters/staticNpc.js';
 
@@ -278,6 +282,10 @@ const capFirst = (s) => s.substring(0, 1).toUpperCase() + s.substring(1);
 // set it around expansions).
 let idRegion = -1;
 export const setIdRegion = (v) => { idRegion = v; };
+// M-X: SetFactionIdsAndRegionID's other two outs - the news pair
+// %fx1/%fx2 (and the lord/title reads over them) speak these.
+let idFaction1 = -1, idFaction2 = -1;
+export const setIdFactions = (f1, f2) => { idFaction1 = f1; idFaction2 = f2; };
 
 /** CapFirst over a source method's answer, leaving a null/non-string
  *  miss alone - MacroHelper's *Cap handlers all read
@@ -413,10 +421,256 @@ const HANDLERS = {
   '%qdat': (mcp) => call(mcp, 'questDate'),
   '%vcn': (mcp) => call(mcp, 'vampireNpcClan'),
   '%hrn': (mcp) => call(mcp, 'homeRegion'),
+
+  // ── M-X (2026-08-27): THE REST OF MacroHelper's TABLE ──────────
+  // Every remaining row, in the C# handler's own shape. Three kinds:
+  //  1. mcp CALL-THROUGHS - `mcp.GetMacroDataSource().X()` verbatim
+  //     as call(mcp, 'x'); a source without the override answers the
+  //     error ladder ([srcDataUnknown]), DFU's own behavior. The
+  //     SOURCES land with their arcs: the biography MCP (%q block,
+  //     %hpn/%hpw/%bn...), the spell-info MCP (%1am..%clm/%mpw), the
+  //     bank MCP (%ml/%r2-4).
+  //  2. PLAYER/WORLD GLOBALS off hooks - an absent hook answers null
+  //     -> [nullMCP], the headless charter; the world members the
+  //     talk arc has not mounted yet answer the same way.
+  //  3. C#-null rows join NULL_HANDLERS below ([unhandled]).
+
+  // the ATTRIBUTE block (Str..Luck, all mcp-sourced)
+  '%str': (mcp) => call(mcp, 'str'),
+  '%int': (mcp) => call(mcp, 'int'),
+  '%wil': (mcp) => call(mcp, 'wil'),
+  '%agi': (mcp) => call(mcp, 'agi'),
+  '%end': (mcp) => call(mcp, 'end'),
+  '%per': (mcp) => call(mcp, 'per'),
+  '%spd': (mcp) => call(mcp, 'spd'),
+  '%luc': (mcp) => call(mcp, 'luck'),
+  '%ark': (mcp) => call(mcp, 'attributeRating'),
+
+  // the PLAYER VITALS (globals off the entity hook)
+  '%spc': (mcp, hooks) => str(hooks?.playerEntity?.()?.magicka),
+  '%spt': (mcp, hooks) => str(hooks?.playerEntity?.()?.maxMagicka),
+  '%enc': (mcp, hooks) => {
+    const e = hooks?.playerEntity?.();
+    return e ? String(entityMaxEncumbrance(e)) : null;
+  },
+  '%mad': (mcp, hooks) => {
+    const e = hooks?.playerEntity?.();
+    return e ? String(Math.floor(liveStat(e, 'willpower') / 10)) : null;   // PlayerEntity.MagicResist
+  },
+  // the four BIOGRAPHY-fed modifiers, in C#'s "+0;-0;0" signed format
+  '%thd': (mcp, hooks) => signedOff(hooks, 'toHitModifier'),
+  '%dam': (mcp, hooks) => signedOff(hooks, 'damageModifier'),
+  '%hea': (mcp, hooks) => signedOff(hooks, 'hitPointsModifier'),
+  '%hmd': (mcp, hooks) => signedOff(hooks, 'healingRateModifier'),
+  // %ski - the first PRIMARY skill at permanent 100, else "BLANK"
+  '%ski': (mcp, hooks) => {
+    const e = hooks?.playerEntity?.();
+    if (!e?.career?.primarySkills) return null;
+    for (const id of e.career.primarySkills) {
+      if (permanentSkillValue(e, id) === 100) return SKILL_NAMES[id] ?? String(id);
+    }
+    return 'BLANK';
+  },
+
+  // the DATE/TIME block (DaggerfallDateTime's own laws, off the
+  // machine's nowSeconds clock)
+  '%hour': (mcp, hooks) => str(nowDate(hooks)?.hour),
+  '%min': (mcp, hooks) => str(nowDate(hooks)?.minute),
+  '%tim': (mcp, hooks) => {
+    const d = nowDate(hooks);
+    return d ? `${String(d.hour).padStart(2, '0')}:${String(d.minute).padStart(2, '0')}` : null;   // MinTimeString
+  },
+  '%day': (mcp, hooks) => str(nowDate(hooks) && nowDate(hooks).day + 1),   // DayOfMonth is ONE-based (:626)
+  '%dayn': (mcp, hooks) => { const d = nowDate(hooks); return d ? dayName(d) : null; },
+  '%days': (mcp, hooks) => {
+    const d = nowDate(hooks);
+    return d ? `${d.day + 1}${daySuffix(d.day + 1)}` : null;   // DayOfMonthWithSuffix (:195-198)
+  },
+  '%mon': (mcp, hooks) => str(nowDate(hooks) && nowDate(hooks).month + 1),   // MonthOfYear, one-based
+  '%monn': (mcp, hooks) => { const d = nowDate(hooks); return d ? monthName(d) : null; },
+  '%year': (mcp, hooks) => str(nowDate(hooks)?.year),
+  '%sea': (mcp, hooks) => { const d = nowDate(hooks); return d ? SEASON_NAMES[seasonValue(d)] : null; },
+  '%sign': (mcp, hooks) => { const d = nowDate(hooks); return d ? birthSignName(d) : null; },
+
+  // the PLAYER IDENTITY block
+  '%pcl': (mcp, hooks) => {   // GetLastname: parts[1] or the whole name
+    const name = hooks?.playerName?.();
+    if (name == null) return null;
+    const parts = name.split(' ');
+    return parts.length > 1 ? parts[1] : name;
+  },
+  '%pg': (mcp, hooks) => pgender(hooks) ? EN.pronounShe : EN.pronounHe,   // %pg and %pg1 share PlayerPronoun
+  '%pg1': (mcp, hooks) => pgender(hooks) ? EN.pronounShe : EN.pronounHe,
+  '%pg2': (mcp, hooks) => pgender(hooks) ? EN.pronounHer : EN.pronounHim,
+  '%pg2self': (mcp, hooks) => pgender(hooks) ? EN.pronounHerself : EN.pronounHimself,
+  '%pg4': (mcp, hooks) => pgender(hooks) ? EN.pronounHers : EN.pronounHis2,
+
+  // RANDOM NAMES (the mcp-less %ln off the current region's bank;
+  // the mcp-sourced pairs ride the biography/talk sources)
+  '%ln': (mcp, hooks) => {
+    const w = hooks?.world;
+    if (!w) return null;
+    const bank = getNameBankOfRegion(w.currentRegionIndex?.() ?? -1);
+    return surname(bank);
+  },
+  '%bn': (mcp) => call(mcp, 'name'),
+  '%fn2': (mcp) => call(mcp, 'femaleName'),
+  '%mn2': (mcp) => call(mcp, 'maleName'),
+  '%imp': (mcp) => call(mcp, 'imperialName'),
+
+  // REPUTATION AND MONEY (mcp-sourced except the legal-rep bands)
+  '%ml': (mcp) => call(mcp, 'maxLoan'),
+  '%r2': (mcp) => call(mcp, 'merchantsRep'),
+  '%r3': (mcp) => call(mcp, 'scholarsRep'),
+  '%r1': (mcp) => call(mcp, 'commonersRep'),
+  '%r4': (mcp) => call(mcp, 'nobilityRep'),
+  '%r5': (mcp) => call(mcp, 'underworldRep'),
+  // %ltn - LegalReputation's fourteen bands, the exact C# chain
+  // (:the > ladder then the < ladder; "unknown" is unreachable and
+  // kept as the C# tail)
+  '%ltn': (mcp, hooks) => {
+    const rep = hooks?.world?.legalRepNow?.();
+    if (rep == null) return null;
+    if (rep > 80) return 'revered';
+    if (rep > 60) return 'esteemed';
+    if (rep > 40) return 'honored';
+    if (rep > 20) return 'admired';
+    if (rep > 10) return 'respected';
+    if (rep > 0) return 'dependable';
+    if (rep === 0) return 'a common citizen';
+    if (rep < -80) return 'hated';
+    if (rep < -60) return 'pond scum';
+    if (rep < -40) return 'a villain';
+    if (rep < -20) return 'a criminal';
+    if (rep < -10) return 'a scoundrel';
+    if (rep < 0) return 'undependable';
+    return 'unknown';
+  },
+
+  // PLACE (globals over the world hook)
+  '%lp': (mcp, hooks) => {   // LocalProvince: Breton region -> High Rock, else Hammerfell
+    const race = hooks?.world?.currentRegionRace?.();
+    if (race == null) return null;
+    return race === LOCAL_PROVINCE_BRETON ? 'High Rock' : 'Hammerfell';
+  },
+  '%ct': (mcp, hooks) => {   // CityType's switch, verbatim strings
+    const t = hooks?.world?.currentLocationType?.();
+    if (t == null) return null;
+    return CITY_TYPES[t] ?? String(t);
+  },
+  '%cn2': (mcp, hooks) => {   // the region's first OTHER TownCity
+    const w = hooks?.world;
+    const region = w?.maps?.getRegion?.(w.currentRegionIndex?.());
+    if (!region?.mapTable) return null;
+    const here = w.currentLocationIndex?.() ?? -1;
+    for (let i = 0; i < region.mapTable.length; i++) {
+      if (i !== here && region.mapTable[i].locationType === TOWN_CITY_TYPE) return region.mapNames?.[i] ?? null;
+    }
+    return null;
+  },
+  '%cbd': (mcp, hooks) => {   // CurrentBuilding: "[invalid]" outside
+    const w = hooks?.world;
+    if (!w) return null;
+    return w.currentBuildingName?.() ?? '[invalid]';
+  },
+  '%nt': (mcp, hooks) => hooks?.world?.randomTavernName?.() ?? null,
+
+  // THE TALK BLOCK (TalkManager's own getters; the talk arc mounts
+  // them on the world hook - absent answers the charter's null).
+  // C#'s OWN asymmetries kept: %fae reads GetFactionNPCEnemy exactly
+  // as %fe does, and %fea reads GetFactionNPCAlly exactly as %fa.
+  '%fa': (mcp, hooks) => hooks?.world?.factionNPCAlly?.() ?? null,
+  '%fae': (mcp, hooks) => hooks?.world?.factionNPCEnemy?.() ?? null,
+  '%fe': (mcp, hooks) => hooks?.world?.factionNPCEnemy?.() ?? null,
+  '%fea': (mcp, hooks) => hooks?.world?.factionNPCAlly?.() ?? null,
+  '%fnpc': (mcp, hooks) => hooks?.world?.factionNPC?.() ?? null,
+  '%fpa': (mcp, hooks) => hooks?.world?.factionName?.() ?? null,
+  '%fpc': (mcp, hooks) => hooks?.world?.factionPC?.() ?? null,
+  '%fon': (mcp) => call(mcp, 'factionOrderName'),
+  // the NEWS pair + their lords (SetFactionIdsAndRegionID's outs)
+  '%fx1': (mcp, hooks) => (idFaction1 !== -1 ? hooks?.world?.getFactionData?.(idFaction1)?.name ?? null : null),
+  '%fx2': (mcp, hooks) => (idFaction2 !== -1 ? hooks?.world?.getFactionData?.(idFaction2)?.name ?? null : null),
+  '%fl1': (mcp, hooks) => hooks?.world?.lordNameForFaction?.(idFaction1) ?? null,
+  '%fl2': (mcp, hooks) => hooks?.world?.lordNameForFaction?.(idFaction2) ?? null,
+  '%lt1': (mcp, hooks) => {
+    const fd = hooks?.world?.getFactionData?.(idFaction1);
+    return fd ? rulerTitle(fd.ruler ?? 0) : null;
+  },
+  '%ol1': (mcp, hooks) => hooks?.world?.lordNameForFaction?.(idFaction1, true) ?? null,
+  '%olf': (mcp, hooks) => hooks?.world?.oldLeaderFate?.(randomRangeInclusive(0, 4)) ?? null,
+
+  // the mcp-sourced singles
+  '%gdd': (mcp) => call(mcp, 'godDesc'),
+  '%dae': (mcp) => call(mcp, 'daedra'),
+  '%dng': (mcp) => call(mcp, 'dungeon'),
+  '%hpn': (mcp) => call(mcp, 'homeProvinceName'),
+  '%hpw': (mcp) => call(mcp, 'geographicalFeature'),
+  '%lev': (mcp) => call(mcp, 'guildTitle'),   // %lev shares GuildTitle with %pct, minus its player-name fallback
+
+  // the SPELL-INFO block (the spell bundle's MCP - the spellbook
+  // info arc mounts the source)
+  '%1am': (mcp) => call(mcp, 'magnitudePlusMin'),
+  '%1bm': (mcp) => call(mcp, 'magnitudeBaseMin'),
+  '%2am': (mcp) => call(mcp, 'magnitudePlusMax'),
+  '%2bm': (mcp) => call(mcp, 'magnitudeBaseMax'),
+  '%ach': (mcp) => call(mcp, 'chancePlus'),
+  '%adr': (mcp) => call(mcp, 'durationPlus'),
+  '%bch': (mcp) => call(mcp, 'chanceBase'),
+  '%bdr': (mcp) => call(mcp, 'durationBase'),
+  '%clc': (mcp) => call(mcp, 'chancePerLevel'),
+  '%cld': (mcp) => call(mcp, 'durationPerLevel'),
+  '%clm': (mcp) => call(mcp, 'magnitudePerLevel'),
+  '%mpw': (mcp) => call(mcp, 'magicPowers'),   // token-level in C#; the string arm until the spell MCP lands (recorded)
 };
 
+// M-X: the BIOGRAPHY %q block - Q1..Q12 with the a/b arms (C# has
+// all thirty-six), every one `mcp.GetMacroDataSource().Qx()` (the
+// biography MCP is its arc's).
+for (let n = 1; n <= 12; n++) {
+  for (const suffix of ['', 'a', 'b']) HANDLERS[`%q${n}${suffix}`] = (mcp) => call(mcp, `q${n}${suffix}`);
+}
+
+// M-X helper laws
+const str = (v) => (v == null ? null : String(v));
+const signedFmt = (n) => (n > 0 ? `+${n}` : String(n));   // C#'s "+0;-0;0"
+const signedOff = (hooks, field) => {
+  const e = hooks?.playerEntity?.();
+  return e ? signedFmt(e[field] ?? 0) : null;
+};
+const pgender = (hooks) => hooks?.playerGender?.() === 'female';
+const nowDate = (hooks) => {
+  const sec = hooks?.nowSeconds?.();
+  return sec == null ? null : dateFromSeconds(sec);
+};
+/** GetSuffix (DaggerfallDateTime.cs:641-651), on the ONE-based day. */
+const daySuffix = (day) => (day === 1 || day === 21 ? 'st' : day === 2 || day === 22 ? 'nd' : day === 3 || day === 23 ? 'rd' : 'th');
+/** RaceTemplate ID 1 = Breton (the bridge's currentRegionRace answers
+ *  REGION_RACES + 1, RaceTemplate ids). */
+const LOCAL_PROVINCE_BRETON = 1;
+/** DFRegion.LocationTypes.TownCity (mapsFile.LOCATION_TYPES). */
+const TOWN_CITY_TYPE = 0;
+/** CityType's switch (MacroHelper %ct), the Internal_Strings values
+ *  over mapsFile.LOCATION_TYPES' real ids: TownCity 0 city,
+ *  TownHamlet 1 hamlet, TownVillage 2 village, HomeFarms 3 farm,
+ *  HomePoor 11 shack, HomeWealthy 8 manor, Tavern 6 community,
+ *  ReligionTemple 5 temple, ReligionCult 9 shrine; everything else
+ *  falls to the enum's own name-string arm (the default:). */
+const CITY_TYPES = Object.freeze({
+  0: 'city', 1: 'hamlet', 2: 'village', 3: 'farm',
+  11: 'shack', 8: 'manor', 6: 'community', 5: 'temple', 9: 'shrine',
+});
+
+
 // C#'s table carries these with a NULL handler - '[unhandled]'.
-const NULL_HANDLERS = new Set(['%1hn', '%2hn', '%3hn', '%cbl', '%dts', '%ef']);
+const NULL_HANDLERS = new Set(['%1hn', '%2hn', '%3hn', '%cbl', '%dts', '%ef',
+  // M-X: the rest of C#'s null rows - each renders [unhandled], verbatim
+  '%hol', '%hrg', '%htwn', '%key2', '%mit', '%on', '%pdg', '%plq', '%pnq',
+  '%ptm', '%qot', '%vn', '%wpn']);
+
+/** M-X: the coverage gate's surface - the table's whole membership,
+ *  so test/macrocoverage.test.js can diff it against MacroHelper.cs
+ *  itself and the count can never silently rot. */
+export const macroTableCoverage = () => ({ handled: Object.keys(HANDLERS), nulls: [...NULL_HANDLERS] });
 
 /** MacroHelper.GetValue (MacroHelper.cs:502-528): the error-shape
  *  ladder, verbatim. mcp/mcp2 are {quest, source} bundles or null. */

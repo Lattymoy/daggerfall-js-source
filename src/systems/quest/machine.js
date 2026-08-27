@@ -366,6 +366,11 @@ export class QuestMachine {
       isNPCDataEqual: (a, b) => this.isNPCDataEqual(a, b),
       playerName: () => this.deps.playerName?.() ?? null,
       playerRaceName: () => this.deps.playerRaceName?.() ?? null,
+      // M-X: the macro table's remaining globals - the live entity
+      // (vitals, %ski, the biography modifiers) and the clock the
+      // date/time block reads.
+      playerEntity: () => this.deps.playerEntity ?? null,
+      nowSeconds: () => this.deps.nowSeconds?.() ?? null,
       addFactionListener: (factionID, owner) => this.addFactionListener(factionID, owner),
       removeFactionListener: (factionID) => this.removeFactionListener(factionID),
       activeFactionPersons: (factionID) => this.activeFactionPersons(factionID),
