@@ -50,6 +50,7 @@ import {
   tickEnemySound, playEnemyClip,   // AUDIT 24 (wave 41): EnemySounds through the host's devices
   tryLanguagePacification,         // AUDIT 24 (wave 42): EnemySenses:504-527
   playerPainVoice, playPlayerVoice,   // AUDIT 24 (wave 46): PlayerFootsteps.RemoveHealth's 40% cry
+  applyDamageToNonPlayer,          // MT-iv: EnemyAttack.ApplyDamageToNonPlayer (:303-392)
 } from './hostCombat.js';   // AUDIT 18: the laws every host must share
 import { createCharacter, CLASS_CAREERS } from '../systems/chargen.js';
 import { createChargenFlow, finishChargen, applyHeadlessChargen, applyCreationExtras } from '../systems/chargenSession.js';   // S3c/U9 + 17i: one construction seam
@@ -81,7 +82,7 @@ import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dis
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
 import { ListPickerWindow, listPickerArtLoaded, preloadListPickerArt } from '../ui/listPicker.js';   // X11b: the Create Item picker
-import { createItemLabels, grantCreatedItem } from '../systems/createItem.js';   // X11b
+import { createItemLabels, grantCreatedItem, lastCreateItemIndex, setLastCreateItemIndex } from '../systems/createItem.js';   // X11b
 import {
   missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS,
   MISSILE_LIFESPAN_S,
@@ -139,9 +140,9 @@ import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   //
  * @param blocks BlocksFile
  * @param climateBaseType ClimateBases value for the table remap
  */
-/** CreateItem.lastSelectedIndex (:35) - a STATIC. Module scope IS that
- *  static: the picker reopens where the player left it, across casts. */
-let _lastCreateItemIndex = 0;
+// AUDIT 26 F079: the ONE CreateItem.lastSelectedIndex static now
+// lives with the law in systems/createItem.js - this host and the
+// world host each kept a copy, so the picker opened on the other's row.
 
 export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseType, opts = {}) {
   const { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, palette } = deps;
@@ -434,11 +435,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // the loop once pointed at a name only in THIS block's scope -
     // caught in review, hoisted).
     const [shared, engineRig, { buildRaceCharacter },
-      { EnemyAI, withinYaw, isBackFacing, openDoorsStep }, { EnemyAttack }, { makeEnemyEntity, loadMonsterCareer }, { EnemyCaster, castEnemySpell: castShared, hasRangedSpell }] = await Promise.all([
+      { EnemyAI, withinYaw, isBackFacing, openDoorsStep }, { EnemyAttack }, { makeEnemyEntity, loadMonsterCareer }, { EnemyCaster, castEnemySpell: castShared, hasRangedSpell },
+      { runTargetMachine, isPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack }] = await Promise.all([
       import('./shared.js'), import('../characters/engineRig.js'),
       import('../characters/raceCharacter.js'),
       import('../characters/enemyMotor.js'), import('../characters/enemyAttack.js'),
       import('../characters/enemyEntity.js'), import('../characters/enemyCasting.js'),
+      // MT-iv: DYNAMIC, unlike exteriorFoes' static import - this host
+      // gates the whole foe subsystem behind `opts.foes && palette`
+      // precisely so a foe-less dungeon never pays for enemyMotor, and
+      // enemyTargets imports enemyMotor. A static import here would
+      // defeat that gate.
+      import('../characters/enemyTargets.js'),
     ]);
     const bodyImg = new ImgFile();
     bodyImg.load(await fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
@@ -464,6 +472,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       buildRaceCharacter, floorLanding, EnemyAI, EnemyAttack, makeEnemyEntity, loadMonsterCareer, EnemyCaster, ClassFile, playerEntity,   // floorLanding/playerEntity/ClassFile/fetchBytes/generateItems ride the STATIC imports (audits 06c-06e)
       castEnemySpell: castShared,   // X3: the ONE cast executor (characters/enemyCasting.js)
       hasRangedSpell,   // wave 35: the selection-free half of CanCastRangedSpell, for the stand-off band
+      // MT-iv: the target machine. Every consumer below the lazy block
+      // reads foeDeps.* and must guard on foeDeps first, as
+      // resolvePlayerHit already does.
+      runTargetMachine, isPlayerTarget, PLAYER_TARGET, resetAllyTeamOnPlayerAttack,
     };
    } catch (err) {
      // The foe SUBSYSTEM failing to initialize (a dynamic import, the
@@ -504,6 +516,42 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     assignEnemySpells(rec.entity, foeSpellTable);
     if (rec.entity.spells?.length) rec.caster = new foeDeps.EnemyCaster(rec.entity);
   }
+  /** MT-iv: THE RECORD IS THE CANDIDATE (exteriorFoes' law, one
+   *  spelling). getTargets reads `ai` and `entity` off it and its
+   *  identity IS the target handle. The two quest halves are LIVE
+   *  GETTERS, never frozen booleans: bindQuestFoeHost runs after the
+   *  record is stood, and ChangeFoeInfighting flips IsAttackableByAI
+   *  mid-quest. Non-enumerable, so the save/snapshot walks that
+   *  iterate a record are untouched. */
+  function asCandidate(rec) {
+    Object.defineProperties(rec, {
+      isQuestFoe: { get: () => !!rec.questBehaviour, enumerable: false },
+      questAttackable: { get: () => !!rec.questBehaviour?.isAttackableByAI, enumerable: false },
+    });
+    // the cross-pool damage door another enemy's blow lands through.
+    // `fromPlayer: false` - a monster's blow is not the player's
+    // (DaggerfallEntityBehaviour.cs:203).
+    rec.hurtFromFoe = (dmg, dir) => damageFoe(rec, dmg, null, dir ?? null, { fromPlayer: false });
+    return rec;
+  }
+
+  /** MT-iv: a DESTROYED foe (Destroy(gameObject) - the quest teardown,
+   *  the dispel sweep, the restore cull) is marked dead with its
+   *  health still ABOVE zero, so the target machine's dead-target cull
+   *  (which reads health, as EnemySenses:315-318 does) can never drop
+   *  it. Every other foe holding it would chase an object that no
+   *  longer draws. DFU never has this problem: its database stops
+   *  yielding a destroyed behaviour and its `target` reference goes
+   *  null with the object. One sweep, called from every removal. */
+  function dropCandidate(f) {
+    for (const o of foes) {
+      if (o === f || !o.ai) continue;
+      if (o.ai.target === f) o.ai.target = null;
+      if (o.ai.secondaryTarget === f) o.ai.secondaryTarget = null;
+      if (o.ai.targetSenses === f) o.ai.targetSenses = null;
+    }
+  }
+
   async function buildFoeAt(e, fallbackFlat = true) {
     const basics = ENEMY_BASICS[e.mobileType];
     if (!basics) return;
@@ -558,7 +606,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const t = await getTexture(archive);
       const mobile = new MobileUnit(e.mobileType, basics, (rec) => t.getFrameCount(rec), Math.random, e.gender);
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
-      const rec = { mobile, mobileArchive: archive, mobileTex: t, batch, ai, attack, entity, mobileType: e.mobileType, gender: e.gender };
+      const rec = asCandidate({ mobile, mobileArchive: archive, mobileTex: t, batch, ai, attack, entity, mobileType: e.mobileType, gender: e.gender });
       assignFoeSpells(rec);   // SetEnemyCareer's tail, on every spawn
       foes.push(rec);
       return rec;   // B1: the quest spawner binds its behaviour to the stood record
@@ -627,7 +675,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // per frame (the batch geometry is a unit quad; size is a
       // uniform, origin a live translation - zero rebuilds).
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
-      const rec = { mobile, mobileArchive: archive, mobileTex: t, batch, ai, attack, entity, mobileType: e.mobileType, gender: e.gender };
+      const rec = asCandidate({ mobile, mobileArchive: archive, mobileTex: t, batch, ai, attack, entity, mobileType: e.mobileType, gender: e.gender });
       assignFoeSpells(rec);   // SetEnemyCareer's tail, on every spawn
       foes.push(rec);
       return rec;   // B1: the quest spawner binds its behaviour to the stood record
@@ -672,6 +720,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       f.dead = true;
       if (f.batch) { renderer.destroyBillboardBatch(f.batch); f.batch = null; }
       f.questBehaviour?.notifyDestroyed();
+      dropCandidate(f);
     },
     zeroFoeHealth: (f) => { if (!f.dead) damageFoe(f, f.entity.health, null, null); },
     spellsByIndex: () => spellsByIndex,
@@ -1208,9 +1257,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       activeOverlay = new ListPickerWindow({
         items: createItemLabels(),
         allowCancel: false,                    // CreateItem.cs:70
-        selectedIndex: _lastCreateItemIndex,   // the static (:35)
+        selectedIndex: lastCreateItemIndex(),   // the static (:29)
         onPick: (i) => {
-          _lastCreateItemIndex = i;
+          setLastCreateItemIndex(i);
           const made = grantCreatedItem(playerEntity, i, {
             gender: playerEntity.gender ?? 'male',
             nowMinutes: Math.floor(classicMinutesRef.value),
@@ -1696,8 +1745,22 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     for (const m of missiles) {
       if (m.dead) continue;
       if (!m.arrow) ensureMissileBatch(m);   // arrows render as the 99800 model, not an element billboard
-      if (!m.dir) {   // verbatim: normalized (player - object), locked at fire time
-        const d = [target[0] - m.pos[0], target[1] - m.pos[1], target[2] - m.pos[2]];
+      if (!m.dir) {   // verbatim: normalized (target - object), locked at fire time
+        // MT-iv: DaggerfallMissile aims at its CASTER'S TARGET, which
+        // was the player and only the player until targeting armed.
+        // An enemy caster duelling another foe now throws at that
+        // foe. (The player's own missiles keep the player's aim: they
+        // are fired down the crosshair, not at a target.)
+        const ct = (m.casterFoe ?? m.shooterFoe)?.ai?.target;
+        // ...and the missile REMEMBERS whom it was loosed at, so the
+        // impact fork below picks its arm without re-reading a target
+        // that may have moved on mid-flight (DFU locks direction at
+        // fire time; the port locks the victim with it).
+        m.aimFoe = (foeDeps && ct && !foeDeps.isPlayerTarget(ct)) ? ct : null;
+        const aim = m.aimFoe
+          ? [m.aimFoe.ai.feet[0], m.aimFoe.ai.feet[1] + (m.aimFoe.ai.height ?? 1.8) / 2, m.aimFoe.ai.feet[2]]
+          : target;
+        const d = [aim[0] - m.pos[0], aim[1] - m.pos[1], aim[2] - m.pos[2]];
         const l = Math.hypot(...d) || 1;
         m.dir = [d[0] / l, d[1] / l, d[2] / l];
       }
@@ -1766,12 +1829,39 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
                 // C2-slice (combat-17): the arrow-struck class foe cries out too
                 const pain = enemyPainVoice(f, dmg);
                 if (pain && pain.clip >= 0) audio.play3d(pain.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
-                damageFoe(f, dmg, null, m.dir);   // C15: arrows knock along their flight
+                damageFoe(f, dmg, lastPlayerFeet, m.dir);   // C15: arrows knock along their flight; MT-iv: the player arm keys on the feet, so an arrow kill reverts a struck ally too
               }
               addItem(f.entity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });   // BowDamage verbatim: the arrow is recoverable from the target
               retireMissile(m);
               break;
             }
+          }
+        } else if (m.aimFoe && !m.aimFoe.dead) {
+          // MT-iv: BowDamage's OWN two-arm split (EnemyAttack.cs:
+          // 134-148) - `if (Target == player) ApplyDamageToPlayer else
+          // ApplyDamageToNonPlayer(weapon, direction, bowAttack: true)`.
+          // Without this arm an arrow AIMED at another foe would fly
+          // through it and land nothing, which is worse than the
+          // pre-MT behaviour of never aiming there at all.
+          const af = m.aimFoe;
+          const ax = af.ai.feet[0] - m.pos[0];
+          const ay = af.ai.feet[1] + (af.ai.height ?? 1.8) / 2 - m.pos[1];
+          const az = af.ai.feet[2] - m.pos[2];
+          if (Math.hypot(ax, ay, az) <= MISSILE_COLLIDER_RADIUS + 0.45) {
+            if (m.shooterFoe && foeDeps) {
+              applyDamageToNonPlayer(m.shooterFoe, af, {
+                weapon: m.weapon, direction: m.dir, bowAttack: true, rolls: Math.random,
+                calculateAttackDamage: foeDeps.calculateAttackDamage,
+                dealDamage: (tt, d) => tt.hurtFromFoe?.(d, m.dir),
+                audio, hitEffects,
+              });
+            }
+            // :145-147 - the recovered Arrow goes into the TARGET's
+            // items, not the player's. That line credited the player
+            // unconditionally, which only stayed right while the
+            // player was the only thing an arrow could reach.
+            addItem(af.entity.items ??= [], { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
+            retireMissile(m);
           }
         } else if (playerFeet) {
           const dx2 = target[0] - m.pos[0], dy2 = target[1] - m.pos[1], dz2 = target[2] - m.pos[2];
@@ -1818,6 +1908,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       }
       // M3: player SPELL missiles fly in the engine now; this loop
       // carries enemy spells (and, upstream, both sides' arrows).
+      // MT-iv: an enemy SPELL missile aimed at another foe resolves
+      // on THAT foe - the same fork the arrow arm takes.
+      if (m.aimFoe && !m.aimFoe.dead) {
+        const af = m.aimFoe;
+        const sx = af.ai.feet[0] - m.pos[0];
+        const sy = af.ai.feet[1] + (af.ai.height ?? 1.8) / 2 - m.pos[1];
+        const sz = af.ai.feet[2] - m.pos[2];
+        if (Math.hypot(sx, sy, sz) <= MISSILE_COLLIDER_RADIUS + 0.45) {
+          const fCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
+          if (m.spell.rangeType === 4) magic.explodeAt(m.pos, m.spell, m.casterLevel ?? playerEntity.level, playerFeet, fCaster);
+          else applySpell(m.spell, m.casterLevel ?? playerEntity.level, af.entity, foeSinks(af), Math.random, fCaster);
+          retireMissile(m);
+        }
+        continue;
+      }
       const dx = target[0] - m.pos[0], dy = target[1] - m.pos[1], dz = target[2] - m.pos[2];
       if (Math.hypot(dx, dy, dz) <= MISSILE_COLLIDER_RADIUS + 0.45) {   // missile radius + player capsule radius
         // S16: enemy missiles carry their caster (level + the
@@ -1980,7 +2085,23 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // C-slice: MakeEnemyHostileToAttacker - damaging a PACIFIED foe
     // re-hostiles it (and pre-loads the pursuit, the G1 shape). F041:
     // inside DFU's player-source gate, so a FALL cannot do it.
-    if (fromPlayer && foe.ai && !foe.ai.isHostile) { foe.ai.isHostile = true; foe.ai.makeHostileToPlayer?.(undefined, lastPlayerFeet); }   // wave 36: seeded with where the attack came from
+    // MT-iv: and INSIDE that gate the whole of
+    // MakeEnemyHostileToAttacker (EnemyMotor.cs:186-214), as the
+    // exterior pool now runs it - the target-reassign guard fires on
+    // EVERY player hit (a no-op before targeting existed), and the
+    // player arm reverts a struck former ally to its species. The
+    // revert reads the STATIC row by mobile id, never the instance's
+    // own copy. foeDeps guards it: everything below the lazy block
+    // must, and a foe hurt before the subsystem loaded still stands
+    // up through the legacy arm.
+    if (fromPlayer && foe.ai) {
+      if (foeDeps) {
+        foe.ai.makeEnemyHostileToAttacker?.(foeDeps.PLAYER_TARGET, playerFeet ?? lastPlayerFeet);
+        foeDeps.resetAllyTeamOnPlayerAttack(foe.ai, foe.entity, foe.mobileType);
+      } else if (!foe.ai.isHostile) {
+        foe.ai.isHostile = true; foe.ai.makeHostileToPlayer?.(undefined, lastPlayerFeet);   // wave 36: seeded with where the attack came from
+      }
+    }
     foe.entity.health -= damage;
     if (foe.entity.health <= 0) {
       // X5: SOUL TRAP intercepts the kill, exactly where DFU's
@@ -2004,7 +2125,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       foe.dead = true;
       // E-slice: EnemyDeath:132-136 - the targeting foe's death
       // clears the alert (survivors re-raise it next update).
-      if (foe.ai?.detected) setEnemyAlert(playerEntity, false);
+      // EnemyDeath:131-136 gates on `senses.Target ==
+      // PlayerEntityBehaviour` - a foe killed while fighting ANOTHER
+      // foe never touches the player's alert (MT-iv).
+      if ((!foeDeps || !foe.ai?._armedTargeting || foeDeps.isPlayerTarget(foe.ai?.target)) && foe.ai?.detected) setEnemyAlert(playerEntity, false);
       spawnCorpse(foe);
       return;
     }
@@ -2057,7 +2181,35 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (v && v.clip >= 0) audio.play3d(v.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
   }
 
+  /** MT-iv: MeleeDamage's TWO-ARM SPLIT (EnemyAttack.cs:199-209) -
+   *  `if (Target == PlayerEntityBehaviour) ApplyDamageToPlayer else
+   *  ApplyDamageToNonPlayer(weapon, transform.forward)`. The fork
+   *  lives HERE rather than at the two call sites (the rig path and
+   *  the sprite marker path), so both spellings get it from one
+   *  home. Returns true when it handled a FOE target. */
+  function resolveFoeMeleeVsFoe(f) {
+    const t = f.ai.target;
+    if (!foeDeps || !f.ai._armedTargeting || !t || foeDeps.isPlayerTarget(t)) return false;
+    const tf = t.ai.feet;
+    const fdx = tf[0] - f.ai.feet[0], fdz = tf[2] - f.ai.feet[2];
+    const wpn = foeDeps.chooseEnemyWeapon(f.entity.weapon, ENEMY_BASICS[f.mobileType]);
+    const fwd = [Math.sin(f.ai.yaw), 0, Math.cos(f.ai.yaw)];   // transform.forward (:208)
+    if (foeDeps.meleeHitConnects(f.ai._dist, f.ai.inSight, foeDeps.withinYaw(f.ai.yaw, fdx, fdz, foeDeps.MELEE_HIT_YAW_DEG))) {
+      applyDamageToNonPlayer(f, t, {
+        weapon: wpn, direction: fwd, rolls: Math.random,
+        calculateAttackDamage: foeDeps.calculateAttackDamage,
+        dealDamage: (tt, d) => tt.hurtFromFoe?.(d, fwd),
+        audio, hitEffects,
+      });
+    } else {
+      audio.play3d(enemyMissSound(wpn), [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
+    }
+    foeAttackVoice(f);   // :216-226 fires whatever the target
+    return true;
+  }
+
   function resolveFoeMelee(f, playerFeet) {
+    if (resolveFoeMeleeVsFoe(f)) return;   // MT-iv: the ELSE arm is everything below
     const hdx = playerFeet[0] - f.ai.feet[0], hdz = playerFeet[2] - f.ai.feet[2];
     // E4b: weapon vs weaponless per the DFU rule (EnemyAttack also
     // drops the weapon if the target is metal-immune to it - the
@@ -2269,7 +2421,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // difference between the two objects was three live bugs above
     // ground. The shared-stealth box moved onto the player entity with
     // it, which is where PlayerEntity.TimeOfLastStealthCheck lives.
-    const _senses = sensesContext(playerEntity, classicMinutesRef.value, _activity);
+    // MT-iv: THE ACTIVE-ENEMY DATABASE for this host. Unlike world.js
+    // there is nothing to join - this pool is the dungeon's only
+    // enemy pool - but it must filter `dead` every frame so corpses
+    // and culled records leave the database the frame they die, as
+    // DFU's GetActiveEnemyBehaviours yields only ACTIVE ones.
+    // `_activity` is a persistent mutable bag: spread, never mutate.
+    const _senses = sensesContext(playerEntity, classicMinutesRef.value, {
+      ..._activity,
+      candidates: foeDeps ? () => foes.filter((f) => !f.dead && f.ai) : null,
+    });
     // AUDIT 18: the PLAYER half of this tick moved to systems/worldTick.js
     // and is now called by every host - it used to run only here, so a
     // character who stayed above ground never aged an effect, never
@@ -2384,10 +2545,27 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // (no decisions, no damage frame). EnemySounds is NOT gated
       // in DFU, so the bark pass below still runs.
       const _fParalyzed = entityIsParalyzed(f.entity);   // S22: the FreeAction read-time fold
+      // MT-iv: the armed context and the target's feet - exteriorFoes'
+      // pair, one spelling. Unarmed (no candidates, or the foe
+      // subsystem never loaded) both fall through to the legacy
+      // player-only path untouched.
+      const _armed = (rec, sn) => (sn?.candidates && foeDeps ? {
+        ...sn,
+        targeting: (ai, pf, cdt) => foeDeps.runTargetMachine(rec, sn.candidates(), pf, cdt, {
+          playerEntity: sn.playerEntity ?? playerEntity,
+        }),
+      } : sn);
+      const _pf = playerFeet || eye;
+      const _targetFeet = (rec) => {
+        const t = rec.ai.target;
+        if (t == null) return rec.ai._armedTargeting ? null : _pf;
+        return foeDeps?.isPlayerTarget?.(t) ? _pf : t.ai.feet;
+      };
       // C12: paralysis now flows THROUGH the motor (DFU CanAct=false +
       // flyerFalls) - senses keep running, decisions stop, paralyzed
       // FLYERS fall out of the air, swimmers freeze.
-      f.ai.update(dt, playerFeet || eye, _senses, _fParalyzed);   // E2 senses + pursuit; P13: the stealth context
+      f.ai.update(dt, _pf, _armed(f, _senses), _fParalyzed);   // E2 senses + pursuit; P13: the stealth context; MT-iv: the target machine
+      const _tgt = _targetFeet(f);   // MT-iv: whatever it SELECTED
       // CH3 (characters-8): a past-threshold landing bills the
       // player's fall formula - trunc(5 x (drop - 5)) - through the
       // pool's damage door (no knockback), ringing FallDamage at the
@@ -2408,7 +2586,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // E-slice: EnemySenses:533-535 - a foe with the player IN SIGHT
       // raises the enemy alert every update (the dungeon rest roll
       // reads it; an 8-hour decay lowers it).
-      if (f.ai.inSight && f.ai.detected && !f.dead) setEnemyAlert(playerEntity, true, classicMinutesRef.value);
+      // EnemySenses:531-535 - `Target == PlayerEntityBehaviour &&
+      // TargetInSight`. MT-iv: two foes brawling must not hold the
+      // player's alert state up.
+      if ((!foeDeps || !f.ai._armedTargeting || foeDeps.isPlayerTarget(f.ai.target))
+        && f.ai.inSight && f.ai.detected && !f.dead) setEnemyAlert(playerEntity, true, classicMinutesRef.value);
       // C-slice (AUDIT 23 characters-3): EnemyMotor.OpenDoors - a
       // CanOpenDoors foe whose sight ray to the player is blocked by
       // an action DOOR opens it when unlocked and within 2m. The
@@ -2465,7 +2647,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // it swinging is the senses' target drop, which now reads blind
       // in the motor. Skipping the component was a law left with the
       // host, and it desynced the shared stream.
-      f.events = _fParalyzed ? [] : f.attack.update(dt, f.ai, playerFeet || eye);
+      f.events = (_fParalyzed || !_tgt) ? [] : f.attack.update(dt, f.ai, _tgt);   // MT-iv: at the SELECTED target (:199-209)
       // C11 audit 08-17: the attack START edge (machine Idle -> swing
       // this frame) - MeleeAnimation fires ChangeEnemyState + the
       // attack sound ONCE at the start, not at the hit frame, and not
@@ -2488,7 +2670,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // range and strafe (Enhanced AI) or stand off - our motor keeps
       // the C8 pursuit; the foe casts while closing.
       if (playerFeet && f.caster && !_fParalyzed && f.ai.isHostile) {
-        const dec = f.caster.update(dt, f.ai, f.attack, playerFeet, playerEntity);
+        // MT-iv: the decision aims at the SELECTED target and reads
+        // that target's own entity, so a foe duelling another foe
+        // neither picks its school off the player's effects nor
+        // releases at them.
+        const _castEnt = (!foeDeps || !f.ai._armedTargeting || foeDeps.isPlayerTarget(f.ai.target))
+          ? playerEntity : (f.ai.target?.entity ?? playerEntity);
+        const dec = f.caster.update(dt, f.ai, f.attack, _tgt, _castEnt);
         if (dec) castEnemySpell(f, dec.spell);
       }
       // E3b: the machine's hit frame resolves against the player -
@@ -2512,7 +2700,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // sprite mobiles land damage on their -1 sequence markers
         // below (doMeleeDamage, verbatim - the Frost Daedra's base
         // sequence strikes TWICE per swing).
-        if (!f.mobile) resolveFoeMelee(f, playerFeet);
+        if (!f.mobile) resolveFoeMelee(f, _pf);
       }
       if (f.mobile) {
         // C11: the sprite mobile. Paralysis freezes the anim clock
@@ -2560,7 +2748,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // latched both would loose an arrow AND land a blow in one
           // frame, and would prefer the arrow. (Found by the wave-35
           // re-read.)
-          if (playerFeet && !_fParalyzed && f.mobile.doMeleeDamage) { f.mobile.doMeleeDamage = false; resolveFoeMelee(f, playerFeet); }
+          if (_tgt && !_fParalyzed && f.mobile.doMeleeDamage) { f.mobile.doMeleeDamage = false; resolveFoeMelee(f, _pf); }   // MT-iv: gated on a live TARGET (:136-137), not the player alone
           else if (playerFeet && !_fParalyzed && f.mobile.shootArrow) {
             f.mobile.shootArrow = false;
             const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];

@@ -240,7 +240,13 @@ test('rest: the grounded check has ONE home, and every rest host feeds the dispa
   // the ray is what the sweep looks for. `controller.height / 2 +
   // 0.2f` is the only geometry in the law; a duplicate cannot avoid
   // writing it.
-  assert.deepEqual(modulesMatching(/\/\s*2\s*\+\s*0\.2(?!\d)/), ['player/motor.js'],
+  // AUDIT 26 F069: the needle was bare `/ 2 + 0.2`, which is arithmetic
+  // rather than geometry - worldModes' AlignBillboardToGround centre
+  // offset (`by + size.h / 2 + 0.2`) matched it without being a second
+  // copy of anything. The rest ray's geometry is the CAPSULE's, and a
+  // real duplicate could not avoid writing that, so the needle now
+  // names it. Intent unchanged; the false positive is gone.
+  assert.deepEqual(modulesMatching(/CAPSULE_HEIGHT\s*\/\s*2\s*\+\s*0\.2(?!\d)/), ['player/motor.js'],
     'the fallback ray is written in exactly one module');
   assert.equal(typeof startRestGroundedCheck, 'function');
 

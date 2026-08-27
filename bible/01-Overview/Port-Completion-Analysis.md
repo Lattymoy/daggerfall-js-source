@@ -53,10 +53,14 @@ The HONEST still-open list as of the re-verification:
    candidate list, so a spawned monster and a city watchman fight each
    other. The V3 allied-summon door this row named is MOUNTED, and
    both summons gained the `Team != PlayerAlly` scan filter they were
-   missing. WHAT REMAINS is MT-iv: `dungeonContext` still runs the
-   player-only path (unchanged behaviour, not a break), which also
-   keeps dungeon quest foes out of ChangeFoeTeam's reach and leaves
-   the enemy-arrow impact fork FLAGGED at its shoot site.
+   missing. ~~WHAT REMAINS is MT-iv~~ **MT-iv SHIPPED the same day**:
+   the dungeon host is armed too (its target machine rides the LAZY
+   foe-subsystem import, so a foe-less dungeon still pays nothing),
+   with MeleeDamage's and BowDamage's two-arm splits, the enemy
+   missile locking its victim at fire time, a stale-candidate sweep
+   for DESTROYED foes whose health never reaches zero, and
+   ChangeFoeTeam's reach underground through
+   `worldModes.liveQuestFoes()`. This row is CLOSED.
 6. **The interior foe pool** - the standing seam behind the coven
    failure's and the summoning refusal's unspawned daedra and Q4-v's
    interior enemies.

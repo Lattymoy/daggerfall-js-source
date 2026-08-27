@@ -96,8 +96,13 @@ test('pacification: the host runs it on the FIRST-encounter edge and a pacified 
   // the component keeps ticking and keeps burning its DFRandom byte;
   // holding it at the host desynced the one shared global stream for
   // as long as the foe stood pacified.
-  assert.ok(src.includes('f.events = _fParalyzed ? [] : f.attack.update'),
-    'only paralysis skips the attack component - DFU has no hostility gate there');
+  // MT-iv: paralysis, or NO TARGET - EnemyAttack's own two returns
+  // (:55-57 paralysed, :136-137 `senses.Target == null`). Still no
+  // hostility gate, which is what this pin guards: a pacified foe
+  // keeps ticking its component and burning its DFRandom byte.
+  assert.ok(src.includes('f.events = (_fParalyzed || !_tgt) ? [] : f.attack.update'),
+    'only paralysis and a null target skip the attack component - DFU has no hostility gate there');
+  assert.equal(/_fParalyzed \|\| !f\.ai\.isHostile/.test(src), false, 'no hostility gate crept in');
   assert.equal(/_fParalyzed \|\| !f\.ai\.isHostile/.test(src), false, 'the host gate is gone');
   const motor = readFileSync(join(root, 'src/characters/enemyMotor.js'), 'utf8');
   // MT-i refined the blind arm to what :321-327 actually says: the
@@ -116,7 +121,10 @@ test('pacification: the host runs it on the FIRST-encounter edge and a pacified 
   // AUDIT 26 F041: the flip asks WHOSE blow it was - it sits inside
   // HandleAttackFromSource's player-source gate, so a fall no longer
   // un-pacifies a language-pacified foe.
-  assert.ok(src.includes('if (fromPlayer && foe.ai && !foe.ai.isHostile) { foe.ai.isHostile = true;'), 'a PLAYER attack re-hostiles (MakeEnemyHostileToAttacker)');
+  // ...and MT-iv runs the WHOLE method inside that gate, with the
+  // narrow raise kept as the no-subsystem fallback.
+  assert.ok(src.includes('if (fromPlayer && foe.ai) {'), 'a PLAYER attack re-hostiles (MakeEnemyHostileToAttacker)');
+  assert.ok(src.includes('foeDeps.resetAllyTeamOnPlayerAttack(foe.ai, foe.entity, foe.mobileType);'), 'and reverts a struck ally');
 });
 
 test('pacification: the motor edge fires once and non-hostile foes stop moving', async () => {

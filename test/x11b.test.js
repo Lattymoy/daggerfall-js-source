@@ -313,11 +313,19 @@ test('X11b picker: the remembered index is a MODULE-LEVEL static, in both mounti
   // CreateItem.cs:35's `static int lastSelectedIndex` survives the
   // window, the cast and the character. A per-window field would reset
   // to 0 on every cast, which is the whole thing it exists to avoid.
+  // AUDIT 26 F079: it is ONE static, not one per host. This pin used
+  // to require a module-level copy in EACH host - which is exactly the
+  // divergence the audit found, since casting in a dungeon and again
+  // outdoors then opened on the other host's remembered row. The
+  // single static now lives with the law in systems/createItem.js and
+  // both hosts read and write it through the accessors.
+  assert.ok(/^let _lastSelectedIndex = 0;$/m.test(src('src/systems/createItem.js')),
+    'the ONE static lives with the law');
   for (const f of ['src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) {
     const s = src(f);
-    assert.ok(/^let _lastCreateItemIndex = 0;$/m.test(s), `${f} has no module-level static`);
-    assert.ok(s.includes('_lastCreateItemIndex = i'), `${f} never updates it`);
-    assert.ok(s.includes('selectedIndex: _lastCreateItemIndex'), `${f} never reads it back`);
+    assert.equal(/^let _lastCreateItemIndex = 0;$/m.test(s), false, `${f} keeps no copy of its own`);
+    assert.ok(s.includes('setLastCreateItemIndex(i)'), `${f} never updates it`);
+    assert.ok(s.includes('selectedIndex: lastCreateItemIndex()'), `${f} never reads it back`);
     assert.ok(s.includes('allowCancel: false'), `${f} lets the player cancel a paid-for cast`);
   }
 });

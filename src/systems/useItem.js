@@ -77,7 +77,14 @@ export const isPotionRecipe = (it) => it?.group === 'MiscItems' && it.templateIn
 export const isParchment = (it) => it?.group === 'UselessItems2' && it.templateIndex === TEMPLATES.Parchment;
 /** IsClothing (:368-371). */
 export const isClothing = (it) => it?.group === 'MensClothing' || it?.group === 'WomensClothing';
-export const isBook = (it) => it?.group === 'Books';
+/** DaggerfallInventoryWindow's book arm (:1712) is
+ *  `ItemGroup == Books && !item.IsArtifact` - AUDIT 26 F125: an
+ *  ARTIFACT book (the Oghma Infinium) skips the reader entirely and
+ *  falls through to the enchanted Used payload. The port tested the
+ *  group alone, so it would have opened the plain reader first. The
+ *  artifact marker is createArtifact's (loot.js), SetArtifact's
+ *  artifactMask (:617). */
+export const isBook = (it) => it?.group === 'Books' && !it.artifact;
 export const isDrug = (it) => it?.group === 'Drugs';
 export const isSpellbook = (it) => it?.templateIndex === TEMPLATES.Spellbook;
 /** UseItem's map arm tests BOTH groups (:1741-1742) - the same

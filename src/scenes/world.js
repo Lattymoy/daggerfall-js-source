@@ -145,7 +145,7 @@ import { RumorMill, tokensToString } from '../systems/rumorMill.js';
 import { isFaction2RelatedToFaction1 } from '../systems/factionRelations.js';   // S44: the member this host used to stub as false
 import { expandQuestMessage } from '../systems/quest/questMacros.js';
 // TK-ii: THE TOPIC TREE - the quest topic/dialog-link seams land.
-import { TopicTree, QUEST_INFO_RESOURCE_TYPE } from '../systems/topicTree.js';
+import { TopicTree, QUEST_INFO_RESOURCE_TYPE, QUESTION_TYPE } from '../systems/topicTree.js';
 import { NPCSession } from '../systems/npcSession.js';
 import { getPeopleOfCurrentRegion, getReactionToPlayer } from '../systems/talk.js';
 import { BUILDING_TYPES as TALK_BUILDING_TYPES } from '../world/buildingNames.js';
@@ -2787,7 +2787,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     // whole wilderness and sent this to Breton everywhere outdoors.
     raceOfCurrentRegion: () => (RACE_BY_NAME_BANK[getNameBankOfRegion(_questRegionIndex())] ?? 'Breton'),
     factionRaceId: (race) => (OATH_RACE_INDEX[race] ?? 0),
-    questorGender: () => npcSession.getQuestorGender(),
+    // AUDIT 26 F097: GetMacroDataSource copies potentialQuestorGender
+    // ONLY when the current question is Work and there are NPCs with
+    // work (TalkManagerMCP.cs:32-36); otherwise the context field keeps
+    // the Genders enum default, Male. So %g..%g4 in a NON-Work record
+    // resolve male in DFU whatever questor is remembered - the port
+    // read the questor unconditionally and could say "she" there.
+    questorGender: () => {
+      const q = answerPipeline.currentQuestionListItem;
+      if (q?.questionType !== QUESTION_TYPE.Work || !npcSession.workAvailable) return null;   // null -> the male branch (HasNPCsWithWork)
+      return npcSession.getQuestorGender();
+    },
     bumpSeed: (delta) => bumpSeed(delta),
   });
 
@@ -2959,7 +2969,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     questFoeInstances: (symbol) => {
       const want = symbol?.name ?? null;
       if (want == null) return [];
-      return [...exteriorFoes.foes, ...cityGuards.guards].filter((f) =>
+      // MT-iv: DFU's ActiveGameObjectDatabase is ONE database across
+      // the scene, so the walk unions the INSIDE pool too - a quest
+      // foe standing in a dungeon was unreachable, and since
+      // SetComplete sits inside the instance loop the action re-ran
+      // every machine tick for ever rather than completing.
+      return [...exteriorFoes.foes, ...cityGuards.guards, ...(modes?.liveQuestFoes?.() ?? [])].filter((f) =>
         !f.dead && f.questBehaviour && f.questBehaviour.targetSymbol?.name === want);
     },
     playerRaceName: () => playerEntity.race ?? null,
