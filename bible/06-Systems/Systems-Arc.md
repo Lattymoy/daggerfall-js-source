@@ -4052,3 +4052,39 @@ cure with the birth-race law pinned against the name override, the
 background/suppression walk for all three states, the voice's
 always-a-clip law with the verbatim ids and the fire/pick split, and
 the three consumers' override-first order.
+
+## H4 - THE PICTURE OF THE HOUSE: the purchase preview goes live (2026-08-27)
+
+The last piece of the bank purchase flow, and the ledger's own
+recommended-next row. DaggerfallBankPurchasePopUp's 104x91 display
+panel renders the selected building's own ARCH3D model, rotating one
+NEGATIVE degree per 0.02 seconds of real time (:68, :163-178) - and
+now the port's does too, split along the seam the two halves already
+suggested: the WINDOW owns the rotation clock (a real-time
+accumulator in tick(dt), so any frame pacing spins at DFU's rate) and
+the camera law (Display3dModelSelection :245 - houses from (0,3,-20),
+near 0.7 far 100, Unity's default 60-degree lens; the ships arm's
+(0,12,shipCameraDist) pairs now sit in banking.js beside the model
+ids they pair with, for the day a ships list exists), and the HOST
+owns the GL: worldModes' drawBankModelPreview is the automap's
+second-beginFrame precedent cut down to a panel - scissor BEFORE
+beginFrame so its CLEAR touches only the display rect, viewport AFTER
+it (beginFrame sets the full one), the ONE mirror on the projection
+(mat4's law - this pass culls), the model spun by the window's yaw
+through trs, the mesh through the pipeline's own async getGpuMesh
+(the panel stays empty for the frames the load takes - DFU's own
+first-frame gap), and the clear color borrowed and returned.
+
+SelectNone shows an empty panel, exactly as DFU starts (:298); the
+result box is never painted over; the rect travels in CANVAS pixels
+because that is the scissor's frame. Fog and lighting overrides
+self-heal - every mode's frame body re-sets both before its own
+beginFrame. RECORDED: DFU climate-swaps the preview's textures and
+lights with a 0.4 directional + hard shadows; the port draws the base
+textures under the collapsed-ambient idiom the automap records.
+
+Pins: 4 in `test/bankpreview.test.js` - the popup's own constants
+with the ship pairs, the negative-degree clock across mixed frame
+pacing (values off the 0.02 boundary: the accumulator is float math),
+the window's gate-and-order laws, and the host pass's bracket order
+with both states restored.

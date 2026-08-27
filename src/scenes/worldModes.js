@@ -45,7 +45,7 @@ import { entityMaxEncumbrance } from '../combat/formulas.js';   // U40: the lett
 import { nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries ride every host's light array
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
-import { lookAt, perspective, mirrorProjectionX } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
+import { lookAt, perspective, mirrorProjectionX, trs } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law); H4: the preview's model matrix
 import { routeKey, actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';
@@ -1205,6 +1205,47 @@ export function createWorldModes(host) {
   const pricedHousesForSale = () => currentHousesForSale()
     .map((h) => ({ ...h, meshRadius: houseMeshRadius(h) }));
 
+  // H4 - THE PURCHASE PREVIEW'S SECOND CAMERA PASS. The window owns
+  // the rotation clock and the camera law; this host owns the GL:
+  // scissor to the display rect so beginFrame's CLEAR touches only
+  // it (the automap's second-frame precedent, cut down to a panel),
+  // viewport to the same rect AFTER beginFrame (which sets the full
+  // one), the ONE mirror on the projection (mat4's law - this pass
+  // culls), and the model spun by the window's yaw. The mesh loads
+  // through the pipeline's own getGpuMesh (async - the panel stays
+  // empty for the frames the load takes, DFU's first-frame gap).
+  // RECORDED: DFU climate-swaps the preview's textures and lights it
+  // with a 0.4 directional + hard shadows; the port draws the base
+  // textures under the collapsed-ambient idiom the automap records.
+  // Fog/lighting overrides self-heal: every mode's frame body re-sets
+  // both before its own beginFrame.
+  const _previewMeshes = new Map();   // modelIdNum -> gpu | null(loading/failed)
+  function drawBankModelPreview(modelIdNum, rect, yawDeg, camera) {
+    let gpu = _previewMeshes.get(modelIdNum);
+    if (gpu === undefined) {
+      _previewMeshes.set(modelIdNum, null);
+      getGpuMesh(modelIdNum).then((g) => _previewMeshes.set(modelIdNum, g ?? null)).catch(() => {});
+      return;
+    }
+    if (!gpu) return;
+    const gl = renderer.gl;
+    const ch = renderer.canvas.height;
+    const prevClear = gl.getParameter(gl.COLOR_CLEAR_VALUE);
+    gl.enable(gl.SCISSOR_TEST);
+    gl.scissor(rect.x, ch - (rect.y + rect.h), rect.w, rect.h);
+    gl.clearColor(0, 0, 0, 1);   // the camera's SolidColor clear, black as the automap paints
+    renderer.setFog('off');
+    renderer.setLighting(new Float32Array([0.75, 0.75, 0.75]), 0);
+    const proj = mirrorProjectionX(perspective(60 * (Math.PI / 180), rect.w / Math.max(1, rect.h), 0.7, 100));   // Unity's default 60-degree lens, near/far :212-213
+    const view = lookAt([0, camera.y, camera.z], [0, camera.y, camera.z + 1], [0, 1, 0]);   // identity rotation: straight down +z
+    renderer.beginFrame(proj, view, new Float32Array([0, 0.707, -0.707]));
+    gl.viewport(rect.x, ch - (rect.y + rect.h), rect.w, rect.h);
+    renderer.drawMesh(gpu, trs(0, 0, 0, 0, yawDeg, 0));
+    gl.disable(gl.SCISSOR_TEST);
+    gl.viewport(0, 0, renderer.canvas.width, ch);
+    gl.clearColor(prevClear[0], prevClear[1], prevClear[2], prevClear[3]);
+  }
+
   /** The side effects AllocateHouseToPlayer carries besides the slot:
    *  discovery, the permanent scene, and the deed in the notebook. */
   function houseSideEffects() {
@@ -1331,6 +1372,8 @@ export function createWorldModes(host) {
         let pw = null;
         pw = new BankPurchaseWindow({
           houses: () => pricedHousesForSale(),
+          drawModelPreview: drawBankModelPreview,   // H4: the live 3D panel
+
           rows: (id) => townTalk?.lines?.(id) ?? [],
           buy: (h) => purchaseHouse(playerEntity.bankAccounts, playerEntity.houses, region, h, bankPurse(), {
             meshRadius: h.meshRadius ?? 0,

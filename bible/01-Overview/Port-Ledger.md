@@ -586,16 +586,23 @@ build what already ships.
 naming the slice, the same way section C rows are closed. If an entry
 is still open after a slice that touched its area, say why.**
 
-### 1. The bank purchase window's 3D model preview
+### 1. ~~The bank purchase window's 3D model preview~~ SHIPPED (H4 2026-08-27)
 
-`ui/bankPurchaseWindow.js:49` - `display: [117, 12, 104, 91], //
-FLAGGED: the 3D preview`. The rect is drawn and empty. This is the last
-piece of the bank purchase flow H2 left open, and H3 made it tractable
-without meaning to: `houseMeshRadius` already resolves the model behind
-a `buildingKey` and reads its mesh, which is the same lookup the
-preview needs, and `SHIP_MODEL_IDS`/`shipCameraDist` are already in
-`systems/banking.js` for the ship half. Self-contained, no new
-subsystem. **Recommended next.**
+The 104x91 panel shows the selected building's own ARCH3D model live,
+rotating -1 degree per 0.02s (the window's clock, real-time
+accumulated). The split: the WINDOW owns the rotation and the camera
+law (houses from (0,3,-20), near 0.7 far 100, Unity's default
+60-degree lens; the ships arm's (0,12,SHIP_CAMERA_DIST) pairs sit in
+banking.js beside the model ids for the day a ships list exists) and
+worldModes owns drawBankModelPreview - the automap's second-beginFrame
+precedent cut down to a panel: scissor BEFORE beginFrame so the clear
+touches only the display rect, viewport AFTER it (beginFrame sets the
+full one), the ONE mirror on the projection, the mesh through the
+pipeline's own async getGpuMesh, clear color borrowed and returned.
+RECORDED: DFU climate-swaps the preview's textures and lights it with
+a 0.4 directional + hard shadows; the port draws base textures under
+the collapsed-ambient idiom the automap records. Pins in
+`test/bankpreview.test.js`.
 
 ### 2. The sixteen `.FLC` summoning videos
 
