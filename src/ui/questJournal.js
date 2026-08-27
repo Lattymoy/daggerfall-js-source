@@ -18,7 +18,7 @@ import { loadImg, nativeMetrics, drawImg, shadowText, DEFAULT_TEXT_COLOR, DEFAUL
 import { drawText, measureText, makeFont } from './text.js';
 import { FntFile } from '../formats/fntFile.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
-import { MAX_LINES_QUESTS, MAX_LINES_SMALL } from '../systems/notebook.js';
+import { MAX_LINES_QUESTS, MAX_LINES_SMALL, MAX_LINE_LENGTH } from '../systems/notebook.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded } from './messageBox.js';
 import { getMessageResources } from '../systems/quest/questMacros.js';   // QuestMacroHelper.GetMessageResources (:61-83)
 import { REGION_NAMES, patchRegionIndex } from '../formats/mapsFile.js';
@@ -109,6 +109,19 @@ export const FIND_PLACE_TEXT = Object.freeze({
   locationInRegion: (locationName, regionName) => `${locationName} in ${regionName} province`,
 });
 
+/** F160: CreateDialogBox's six strings and the note prompt -
+ *  Internal_Strings_en verbatim (m_Id 636-641, 645), the same table
+ *  FIND_PLACE_TEXT came from. */
+export const CONFIRM_TEXT = Object.freeze({
+  moveHead: 'Move entry',
+  move: 'Do you want to change the position of this entry?',
+  move2: '(It will be moved to before the next entry clicked)',
+  removeHead: 'Delete entry',
+  remove: 'Are you sure you want to remove this entry?',
+  remove2: '(It will be deleted permanently and cannot be restored)',
+});
+export const ENTER_NOTE_PROMPT = 'Enter your note:';
+
 export class QuestJournalWindow {
   /**
    * @param {object} deps
@@ -149,6 +162,10 @@ export class QuestJournalWindow {
     // findPlace (:78) and the dialog it arms (:481-484).
     this.findPlace = null;
     this.findBox = null;
+    // F160: the move/remove confirm (CreateDialogBox, :487-505) and
+    // the EnterNote input box (:507-526).
+    this.moveRemoveBox = null;
+    this.noteBox = null;
     this._font = null;
     audio.playOneShot(SOUND.OpenBook, 1);
   }
@@ -182,6 +199,7 @@ export class QuestJournalWindow {
     const i = JOURNAL_MODES.indexOf(this.mode);
     this.mode = JOURNAL_MODES[(i + 1) % JOURNAL_MODES.length];
     this.currentMessageIndex = 0;
+    this.selectedEntry = null;   // F160: DialogButton resets it (:267) - a stale pick must not arm a move
     audio.playOneShot(SOUND.OpenBook, 1);
     return true;
   }
@@ -207,6 +225,20 @@ export class QuestJournalWindow {
     const code = e?.code ?? action;
     // The find dialog is a pushed window in DFU, so it owns the keys
     // while it is up - Escape is its No, Enter its Yes.
+    // F160: the EnterNote field (DaggerfallInputMessageBox) - chars,
+    // backspace, Enter submits, Escape cancels; MaxLineLenth 70.
+    if (this.noteBox) {
+      if (action === 'confirm' || code === 'Enter') return this._submitNote();
+      if (action === 'back' || code === 'Escape') { this.noteBox = null; this.selectedEntry = null; return true; }
+      if (action === 'backspace' || code === 'Backspace') { this.noteBox.value = this.noteBox.value.slice(0, -1); return true; }
+      if (typeof action === 'string' && action.startsWith('char:') && this.noteBox.value.length < MAX_LINE_LENGTH) { this.noteBox.value += action.slice(5); return true; }
+      return true;
+    }
+    if (this.moveRemoveBox) {
+      if (action === 'confirm' || code === 'Enter' || action === 'char:y' || action === 'char:Y') return this.answerMoveRemove(MB_BUTTONS.Yes);
+      if (action === 'back' || code === 'Escape' || action === 'char:n' || action === 'char:N') return this.answerMoveRemove(MB_BUTTONS.No);
+      return true;
+    }
     if (this.findBox) {
       if (action === 'back' || code === 'Escape') return this.answerFindPlace(MB_BUTTONS.No);
       if (action === 'confirm' || code === 'Enter') return this.answerFindPlace(MB_BUTTONS.Yes);
@@ -223,8 +255,16 @@ export class QuestJournalWindow {
    *  arrow buttons. */
   wheel(dy) { return dy > 0 ? this.scrollDown(false) : this.scrollUp(false); }
 
-  click(vx, vy) {
+  click(vx, vy, right = false) {
     const R = JOURNAL_RECTS;
+    // F160: the confirm and input boxes own the screen while open.
+    if (this.moveRemoveBox) {
+      if (!this.moveRemoveBox.box) return this.answerMoveRemove(MB_BUTTONS.No);
+      const hit = messageBoxHit(this.moveRemoveBox.box, vx, vy);
+      if (hit !== null) return this.answerMoveRemove(hit);
+      return true;
+    }
+    if (this.noteBox) return true;   // keys drive the note field
     if (this.findBox) {
       // A box the popup art could not draw has no buttons to hit, so a
       // click dismisses it rather than trapping the window - the same
@@ -240,10 +280,12 @@ export class QuestJournalWindow {
     if (inRect(R.downArrow, vx, vy)) { this.scrollDown(); return true; }
     // QuestLogLabel_OnMouseClick (:322-325) - the log panel's click is
     // the journal's one navigation aid, and it was consumed and dropped.
-    if (inRect(R.log, vx, vy)) { this.handleClick(vy); return true; }
+    if (inRect(R.log, vx, vy)) { this.handleClick(vy, right); return true; }   // F160: the remove gesture rides the button
     // Every other rect on the page is consumed rather than allowed to
     // fall through to the host's pointer-lock request.
-    return inRect(R.title, vx, vy);
+    // F160: TitlePanel_OnMouseClick (:297-300) - EnterNote(0).
+    if (inRect(R.title, vx, vy)) { this.enterNote(0); return true; }
+    return false;
   }
 
   /** SetTextActiveQuests / SetTextWithListEntries (:565-676): walk the
@@ -259,6 +301,12 @@ export class QuestJournalWindow {
     // and the blank line that closes each entry belongs to that entry
     // too, so a click on the gap under a quest still selects it.
     const map = [];
+    // F160: SetTextWithListEntries tags the GAP line with a NEGATIVE
+    // boundary (:673-674, `entryLineMap.Add(--boundary)`) - the
+    // click-between-entries add-note gesture and the move target
+    // decode both ride the sign; SetTextActiveQuests tags it with
+    // the entry (:602-603).
+    let boundary = 0;
     for (let i = this.currentMessageIndex; i < entries.length; i++) {
       if (out.length >= this.maxLines) break;
       for (const token of entries[i] ?? []) {
@@ -286,7 +334,7 @@ export class QuestJournalWindow {
       }
       if (out.length >= this.maxLines) break;
       out.push({ text: '', color: DEFAULT_TEXT_COLOR });   // the NewLineToken between entries (:602, :672)
-      map.push(i);
+      map.push(this.mode === 'activeQuests' ? i : --boundary);
     }
     this.entryLineMap = map;
     return out;
@@ -304,17 +352,116 @@ export class QuestJournalWindow {
    * arms of HandleClick (:405-435) move, remove and annotate entries,
    * which is a separate feature the port has not built.
    */
-  handleClick(vy) {
-    this.pageLines();   // SetTextActiveQuests builds the map with the page
+  handleClick(vy, remove = false) {
+    this.pageLines();
     if (!this.entryLineMap.length) return false;
     const pitch = this.lineHeight;
     if (pitch <= 0) return false;
+    // F160: :390 captures the PREVIOUS pick before overwriting - a
+    // set value here is an ARMED move (confirmMove answered Yes).
+    const moveSrcIdx = this.selectedEntry;
     const line = Math.trunc((vy - JOURNAL_RECTS.log[1]) / pitch);
     this.selectedEntry = line < this.entryLineMap.length
       ? this.entryLineMap[line]
       : this.entryLineMap[this.entryLineMap.length - 1];
-    if (this.mode !== 'activeQuests') return false;
-    return this._handleQuestClicks(this.questMessages[this.selectedEntry] ?? null);
+    if (this.mode === 'activeQuests') {
+      return this._handleQuestClicks(this.questMessages[this.selectedEntry] ?? null);
+    }
+    // F160: the finished-quest and notebook arms (:403-435).
+    if (moveSrcIdx == null) {
+      if (this.selectedEntry < 0) return this.enterNote(this.selectedEntry);   // add between (:408-411)
+      const entry = this.getEntry(this.selectedEntry);
+      if (entry && entry.length > 0) {
+        // CreateDialogBox (:487-505): heading centred, the action
+        // line, a blank, the entry (TextHighlight - flattened, the
+        // findBox precedent), the explanation; Yes/No.
+        const entryStr = String(entry[0]?.text ?? '');
+        this.moveRemoveBox = {
+          rows: [
+            { text: remove ? CONFIRM_TEXT.removeHead : CONFIRM_TEXT.moveHead, center: true },
+            { text: remove ? CONFIRM_TEXT.remove : CONFIRM_TEXT.move, center: false },
+            { text: '', center: false },
+            { text: entryStr, center: true },
+            { text: remove ? CONFIRM_TEXT.remove2 : CONFIRM_TEXT.move2, center: false },
+          ],
+          box: null,
+          remove,
+        };
+      }
+      return true;
+    }
+    // the SECOND click of a move (:426-434): a boundary decodes to
+    // the position before the next entry.
+    if (this.selectedEntry < 0) this.selectedEntry = -this.selectedEntry + this.currentMessageIndex;
+    this.moveEntry(moveSrcIdx, this.selectedEntry);
+    this.selectedEntry = null;
+    audio.playOneShot(SOUND.PageTurn, 1);   // editNotebook = SoundClips.PageTurn (:31)
+    return true;
+  }
+
+  /** GetEntry/MoveEntry/RemoveEntry (:528-564) - per-mode dispatch
+   *  onto the notebook store; every other mode answers nothing. */
+  getEntry(i) {
+    const nb = this.deps.notebook();
+    if (this.mode === 'finishedQuests') return nb?.getFinishedQuest(i) ?? null;
+    if (this.mode === 'notebook') return nb?.getNote(i) ?? null;
+    return null;
+  }
+
+  moveEntry(src, dst) {
+    const nb = this.deps.notebook();
+    if (this.mode === 'finishedQuests') nb?.moveFinishedQuest(src, dst);
+    else if (this.mode === 'notebook') nb?.moveNote(src, dst);
+  }
+
+  removeEntry(i) {
+    const nb = this.deps.notebook();
+    if (this.mode === 'finishedQuests') nb?.removeFinishedQuest(i);
+    else if (this.mode === 'notebook') nb?.removeNote(i);
+  }
+
+  /** RemoveEntry_OnButtonClick (:332-344) / MoveEntry_OnButtonClick
+   *  (:346-351): remove acts on Yes and clears either way; move
+   *  clears ONLY on non-Yes - a Yes leaves the pick ARMED for the
+   *  next click to consume. */
+  answerMoveRemove(button) {
+    const b = this.moveRemoveBox;
+    this.moveRemoveBox = null;
+    if (!b) return true;
+    if (b.remove) {
+      if (button === MB_BUTTONS.Yes) {
+        this.removeEntry(this.selectedEntry);
+        if (this.currentMessageIndex === this.selectedEntry) this.currentMessageIndex = 0;   // :337-338
+        audio.playOneShot(SOUND.PageTurn, 1);
+      }
+      this.selectedEntry = null;
+    } else if (button !== MB_BUTTONS.Yes) {
+      this.selectedEntry = null;
+    }
+    return true;
+  }
+
+  /** EnterNote (:507-526) - the NOTEBOOK only (:509); finished
+   *  quests move and remove but never take a note. The negative
+   *  index decode is :511's. */
+  enterNote(index) {
+    if (this.mode !== 'notebook') return true;
+    this.selectedEntry = -index + this.currentMessageIndex;
+    this.noteBox = { value: '' };
+    return true;
+  }
+
+  /** EnterNote_OnGotUserInput (:365-374): empty adds nothing; either
+   *  way the pick clears. */
+  _submitNote() {
+    const text = this.noteBox?.value ?? '';
+    this.noteBox = null;
+    if (text.length) {
+      this.deps.notebook()?.addNote(text, this.selectedEntry);
+      audio.playOneShot(SOUND.PageTurn, 1);   // editNotebook
+    }
+    this.selectedEntry = null;
+    return true;
   }
 
   /** GetLastPlaceMentionedInMessage (:469-485): the LAST Place resource
@@ -457,6 +604,22 @@ export class QuestJournalWindow {
     // The find-place dialog, over the page it was raised from. A host
     // without the popup art keeps the journal drawable and simply never
     // shows the box, the same refusal the rest of the port's doors give.
+    // F160: the move/remove confirm and the note field draw over the
+    // page, the findBox idiom.
+    if (this.moveRemoveBox && messageBoxArtLoaded()) {
+      this.moveRemoveBox.box = layoutMessageBox(font, this.moveRemoveBox.rows, [MB_BUTTONS.Yes, MB_BUTTONS.No]);
+      drawMessageBox(renderer, m, font, this.moveRemoveBox.box);
+    }
+    if (this.noteBox && messageBoxArtLoaded()) {
+      // DaggerfallInputMessageBox: the entry line under the prompt in
+      // one parchment box; the sizing row fixes the width the way
+      // WidthOverride = 318 does (:521), so the box does not breathe
+      // as the note grows.
+      const entry = ` > ${this.noteBox.value}_`;
+      const box = layoutMessageBox(font, [{ text: ENTER_NOTE_PROMPT, center: false }, { text: entry, center: false }], [],
+        { sizingRows: [ENTER_NOTE_PROMPT, ` > ${'M'.repeat(44)}_`] });
+      drawMessageBox(renderer, m, font, box);
+    }
     if (this.findBox && messageBoxArtLoaded()) {
       this.findBox.box = layoutMessageBox(font, this.findBox.rows, [MB_BUTTONS.Yes, MB_BUTTONS.No]);
       drawMessageBox(renderer, m, font, this.findBox.box);
