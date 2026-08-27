@@ -31,6 +31,7 @@ import {
 } from '../player/activate.js';
 import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells } from './shared.js';
 import { routeKey, held, moveHeld, anyMove, actionOf, swallowBrowserKey } from '../ui/input.js';
+import { capturePendingScreenshot } from '../systems/saveSlots.js';   // SS1: the context arms the shot, THIS loop delivers it
 import { routeLargeHudClick } from '../ui/hudLarge.js';   // U45: the bar's eleven panels
 import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { createDataPipeline } from './dataPipeline.js';
@@ -499,6 +500,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // dungeon inventory probe hit it on its first press of F6.
       frames++;
       if (shotMode) window.__frame = frames;
+      capturePendingScreenshot(canvas);   // SS1: a save armed under an overlay still lands its shot
       requestAnimationFrame(frame);
       return;   // U2b/U3: hold gameplay, keep the loop (AUDIT 18 F5: the overlay's own clock still runs - DFU's RestWindow.Update ticks on realtime under timeScale 0)
     }
@@ -510,6 +512,10 @@ export async function bootDungeon(canvas, renderer, params, status) {
     frames++;
     if (shotMode) window.__frame = frames;
     if (shotMode && frames === 5) window.__shotReady = true;
+    // SS1: deliver a pending save screenshot after the frame's last
+    // draw (preserveDrawingBuffer false - the buffer is only this
+    // task's to read).
+    capturePendingScreenshot(canvas);
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);

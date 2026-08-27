@@ -183,7 +183,7 @@ test('U43: ONE dispatch - the interior host routes the same table as the dungeon
   // U51: the gate became pauseDoorReady (art OR the enhanced skin,
   // which needs none) and the call goes through ui/pauseDoor.js. The
   // door being opened is the same door.
-  assert.match(modes, /togglePause\(\) \{\n      if \(!pauseDoorReady\(\)\) return;\n      \/\/ I3[^]*?openPauseFlow\(/,
+  assert.match(modes, /togglePause\(\) \{\n      if \(!pauseDoorReady\(\)\) return;\n      \/\/ IS1[^]*?openPauseFlow\(/,
     'the interior Escape door opens the pause flow');
   assert.match(src('scenes/world.js'), /makeCharSheet: \(\) =>/, 'world.js hands its builder down');
   assert.match(src('scenes/world.js'), /makeJournal: \(mode\) =>/);
@@ -191,11 +191,13 @@ test('U43: ONE dispatch - the interior host routes the same table as the dungeon
   // because townTalk draws its overlay in EVERY mode
   assert.match(modes, /if \(townTalk\?\.overlayActive\) return;/,
     'the interior arm must not answer keys aimed at the outer overlay');
-  // the honest absence: interior SAVING is unbuilt, so no quickSave
-  // hook - the pause window says so rather than the key doing nothing
+  // IS1 closed the last absent arms: the interior ctx answers the
+  // quick keys through the world host's composer (GameManager
+  // .cs:570-586 is scene-free), where it used to hand no hook at all.
   const ctxBlock = modes.slice(modes.indexOf('const interiorKeyCtx = {'),
     modes.indexOf('addEventListener(\'keydown\''));
-  assert.equal(/quickSave/.test(ctxBlock), false, 'no interior quicksave hook');
+  assert.match(ctxBlock, /quickSave\(\) \{ host\.quickSave\?\.\(\); \}/, 'F9 inside lands on the composer');
+  assert.match(ctxBlock, /quickLoad\(\) \{ host\.quickLoad\?\.\(\); \}/, 'and F11 with it');
 });
 
 test('U43-ii: every modal mode can SPEAK - no HUD line goes to the console', () => {

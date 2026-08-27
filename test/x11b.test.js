@@ -349,18 +349,37 @@ test('X11c hosts: every window-opening spell is routed by every host that mounts
   // slot picker existed there was nowhere outdoors to put them. All
   // three seams open a WINDOW, so every host with a window stack owes
   // all three.
-  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+  // PR1 added the STANDALONE dungeon host: it cannot mount the trade
+  // window or the bundle picker (DFU has no standalone dungeon scene -
+  // it is the port's own dev route, and bootWorld carries both
+  // windows), but absent seams optional-chained into SILENCE - Identify
+  // refunded and said nothing, Dispel Magic spent the cast on nothing
+  // and said nothing. A seam that cannot mount says so.
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js']) {
     const s = src(f);
     for (const seam of ['onCreateItem', 'onIdentify', 'onDispelMagic']) {
       assert.ok(new RegExp(`^\\s*${seam}:`, 'm').test(s), `${f} does not route ${seam}`);
     }
   }
-  // ...and the refusal line is the SAME line in both, because it is
-  // the same law: a window seam that cannot mount says so rather than
-  // swallowing the cast (the magicka is already spent).
-  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.ok(src(f).includes('You cannot concentrate on that right now.'),
-      `${f} swallows a window cast it cannot mount`);
+  // ...and the refusal line is the SAME line in all three, SPOKEN
+  // through each host's own mouth, because it is the same law: a
+  // window seam that cannot mount says so rather than swallowing the
+  // cast (the magicka is already spent). The pin anchors the SPEAKING
+  // CALL, not the string - a mutant that keeps the words but drops the
+  // call is exactly the silence this test exists to forbid.
+  const SPEAKS = {
+    'src/scenes/world.js': ["townTalk.say('You cannot concentrate on that right now.')"],
+    'src/scenes/exterior.js': ["townTalk.say('You cannot concentrate on that right now.')"],
+    // BOTH arms pinned whole - they share the string's prefix, so a
+    // mutant that silences one arm still leaves the other's call for
+    // a prefix match to find.
+    'src/scenes/dungeonContext.js': [
+      "onIdentify: () => hudText.add('You cannot concentrate on that right now.",
+      "onDispelMagic: () => hudText.add('You cannot concentrate on that right now.",
+    ],
+  };
+  for (const [f, calls] of Object.entries(SPEAKS)) {
+    for (const call of calls) assert.ok(src(f).includes(call), `${f} swallows a window cast it cannot mount`);
   }
 });
 

@@ -295,6 +295,14 @@ export function factionConditionsStep(dict, faction, keys, { allies, enemies, al
   if (warEnemyID !== 0) {
     const warEnemy = dict.get(warEnemyID) ?? null;
     if (warEnemy) {
+      // RS1: C# copies the STRUCT here (:1791), and the battle's
+      // ChangePower calls mutate the DICT, not the copy - so the
+      // won-war spoils below (:1845 `warEnemy.power / 2`) read the
+      // PRE-battle power, while the lost-war arm reads the faction
+      // fresh from the dict (:1851) and gets the POST-battle value.
+      // The asymmetry is DFU's own; a live reference here read the
+      // mutated record on both sides.
+      const warEnemyPowerAtCopy = warEnemy.power;
       // A potential war enemy is a Province with a real region, so
       // `faction.region` indexes the store safely here (:1795).
       const region = faction.region;
@@ -319,7 +327,7 @@ export function factionConditionsStep(dict, faction, keys, { allies, enemies, al
           let combinedPower = faction.power + Math.trunc(alliesPower / 5);
           let warEnemyAlliesPower = 0;
           for (const id of [warEnemy.ally1, warEnemy.ally2, warEnemy.ally3]) warEnemyAlliesPower += powerOf(id);
-          let combinedEnemyPower = warEnemy.power + Math.trunc(warEnemyAlliesPower / 5);
+          let combinedEnemyPower = warEnemyPowerAtCopy + Math.trunc(warEnemyAlliesPower / 5);
 
           // Random.Range(1, x/10 + 1): power is clamped to 1..100 so the
           // exclusive bound is never below the inclusive one, and
@@ -336,7 +344,7 @@ export function factionConditionsStep(dict, faction, keys, { allies, enemies, al
 
           if (combinedPower - combinedEnemyPower > combinedEnemyPower) {
             rumor(faction.id, warEnemy.id, -1, 100, 1408);   // War over
-            changePower(store, faction.id, Math.trunc(warEnemy.power / 2));
+            changePower(store, faction.id, Math.trunc(warEnemyPowerAtCopy / 2));   // the :1791 copy, pre-battle
             turnOnConditionFlag(regionConditions, warEnemy.region, REGION_FLAGS.WarLost, rolls);
             turnOnConditionFlag(regionConditions, region, REGION_FLAGS.WarWon, rolls);
           } else if (combinedEnemyPower - combinedPower > combinedPower) {
@@ -437,7 +445,11 @@ export function factionConditionsStep(dict, faction, keys, { allies, enemies, al
 
     // Plague (:1986-2020). Same three-state walk, and every live arm
     // costs the region's TEMPLE and the province a point of power.
+    // RS1: C# copies the temple STRUCT here (:1974), so the persecuted
+    // arm's two power reads (:2024, :2026) see the PRE-plague value
+    // even after the plague arms bill the temple - snapshot it now.
     const temple = dict.get(REGION_TEMPLES[region]) ?? ZERO_FACTION;
+    const templePowerAtCopy = temple.power;
     if (conditionFlag(regionConditions, region, REGION_FLAGS.PlagueEnding)) {
       turnOffConditionFlag(regionConditions, region, REGION_FLAGS.PlagueEnding);
     } else if (conditionFlag(regionConditions, region, REGION_FLAGS.PlagueOngoing)) {
@@ -464,9 +476,9 @@ export function factionConditionsStep(dict, faction, keys, { allies, enemies, al
     // the whole arm, and one whose temple faction is simply missing
     // still runs it against the zero struct.
     if (REGION_TEMPLES[region] !== 0) {
-      if (!dice100(Math.trunc((temple.power - faction.power + 5) / 5), rolls())) {
+      if (!dice100(Math.trunc((templePowerAtCopy - faction.power + 5) / 5), rolls())) {
         turnOffConditionFlag(regionConditions, region, REGION_FLAGS.PersecutedTemple);
-      } else if (temple.power >= 2 * faction.power) {
+      } else if (templePowerAtCopy >= 2 * faction.power) {
         turnOffConditionFlag(regionConditions, region, REGION_FLAGS.PersecutedTemple);
       } else {
         regionConditions[region].idOfPersecutedTemple = temple.id & 0xFFFF;   // (ushort)
@@ -494,9 +506,12 @@ export function factionConditionsStep(dict, faction, keys, { allies, enemies, al
     // BEFORE the `witches.id != 0` guard, so a region with no coven
     // still bills the zero id - a no-op, and DFU's.
     const witches = findFactionByTypeAndRegion(dict, FACTION_TYPES.WitchesCoven, region) ?? ZERO_FACTION;
+    // RS1: the same struct-copy law (:2057) - the roll below reads the
+    // coven's power from BEFORE the standing-burnings bill above it.
+    const witchesPowerAtCopy = witches.power;
     if (conditionFlag(regionConditions, region, REGION_FLAGS.WitchBurnings)) changePower(store, witches.id, -1);
     if (witches.id !== 0) {
-      if (!dice100(Math.trunc((witches.power - faction.power + 5) / 5), rolls())) {
+      if (!dice100(Math.trunc((witchesPowerAtCopy - faction.power + 5) / 5), rolls())) {
         turnOffConditionFlag(regionConditions, region, REGION_FLAGS.WitchBurnings);
       } else {
         turnOnConditionFlag(regionConditions, region, REGION_FLAGS.WitchBurnings, rolls);

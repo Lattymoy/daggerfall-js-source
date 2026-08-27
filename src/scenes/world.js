@@ -63,11 +63,10 @@ import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   //
 import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1
-import { SITE_TYPES } from '../systems/quest/place.js';   // B3: the respawn dispatch reads the site type
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert, areEnemiesNearby, passiveGuardSpawns } from '../systems/encounters.js';   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { snapshotPlayer, restorePlayer, composeSessionState, restoreSessionState } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
-import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad)
+import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, requestScreenshot, capturePendingScreenshot } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it
@@ -1755,14 +1754,22 @@ export async function bootWorld(canvas, renderer, params, status) {
   // dungeon. The port's halves all existed - forceExitToExterior,
   // _teleportToPixel, startInDungeon - and nothing composed them, so
   // every TeleportPc idled forever on its declared-pending seam.
-  // FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
-  // Interior off exteriorDoors) pends a door-by-buildingKey entry
-  // helper - respawnPlayerAtSite answers false for Building sites and
-  // the action keeps retrying, the same idle as before for that one
-  // site type. Dungeon-less locations fall through to the exterior
-  // landing, which is C#'s own "all else fails" arm (:561-565).
+  // BT1 (2026-08-27) RETIRED THE BUILDING FLAG by reading the caller:
+  // DFU's TeleportPc is a PARTIAL implementation by its own header
+  // ("Does not exactly emulate classic for 'transfer pc inside'...")
+  // and hardcodes RespawnPlayer(x, y, insideDungeon: TRUE) for EVERY
+  // place (TeleportPc.cs:113-118) - there is no building arm in DFU to
+  // port, so the refusal that idled the action forever was the
+  // divergence, not the missing feature. The composer attempts the
+  // dungeon UNCONDITIONALLY; dungeon-less locations fall through to
+  // the exterior landing, C#'s own "all else fails" arm (:561-565),
+  // and a building-site teleport takes the same path, marker math and
+  // all - the C#'s dungeon-space landing for a non-dungeon marker is
+  // the recorded wart. The shipped corpus never reaches it: every
+  // `teleport pc to` targets a dungeon place and `transfer pc inside`
+  // is S0000016's story dungeon alone.
   let _respawning = false;
-  async function _respawnAtSite(loc, siteType) {
+  async function _respawnAtSite(loc) {
     modes?.forceExitToExterior();
     const px = longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude);
     await _teleportToPixel(px.x, px.y);
@@ -1773,10 +1780,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!weatherOverride && weatherRespawn(Math.floor(playerTicker.classicMinutes), maps.getClimateIndex(px.x, px.y))) {
       applyWeather(currentWeather());
     }
-    if (siteType === SITE_TYPES.Dungeon) {
-      const entered = await modes?.startInDungeon();
-      if (!entered) console.warn('[quest] respawn: no dungeon entrance at site - exterior landing (the C# fallback arm)');
-    }
+    // insideDungeon TRUE always (TeleportPc.cs:116) - never a site-type
+    // dispatch; the entrance failing IS the exterior fallback.
+    const entered = await modes?.startInDungeon();
+    if (!entered) console.warn('[quest] respawn: no dungeon entrance at site - exterior landing (the C# fallback arm)');
     surfacePlayer();
   }
   let _traveling = false;
@@ -1873,7 +1880,16 @@ export async function bootWorld(canvas, renderer, params, status) {
   function worldQuickSave(saveName = QUICK_SAVE_NAME) {
     const pf = walkMode && playerSpawned ? player.pos : cam.pos;
     const wc = state.worldCoords(pf);
+    // IS1 (AUDIT 26 F221): the inside-building half (SerializablePlayer
+    // .cs:183-187) - resolved FIRST, because interiorSaveData writes
+    // the live scene into the entity's P1 cache and snapshotPlayer is
+    // about to read it. Null anywhere but interior mode. The world arm
+    // below stays valid either way: the exterior pixel stands under
+    // the building with its pools alive, and P8's unified frame makes
+    // the inside position a plain world position.
+    const interior = modes?.interiorSaveData?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
+      interior,
       classicMinutes: Math.floor(playerTicker.classicMinutes),
       readiedSpellIndex: magic.readiedIndex(),
       // B4: quest (Q4-v: machine + notebook + one-time list) and talk
@@ -1905,9 +1921,14 @@ export async function bootWorld(canvas, renderer, params, status) {
         guards: cityGuards.snapshotWorld((pos) => state.worldCoords(pos)).map((sg) => ({ ...sg, y: sg.y - state.compensation[1] })),
       },
     });
-    const ok = saveSlot(playerEntity.name, saveName, snap).ok;
-    townTalk.say(ok ? 'Game saved.' : 'Save failed (storage full or disabled).');
-    return ok;
+    const r = saveSlot(playerEntity.name, saveName, snap);
+    // SS1: the shot is DEFERRED to frame end (SaveGame's two
+    // WaitForEndOfFrame yields) - the frame loop's
+    // capturePendingScreenshot delivers it once the save window has
+    // popped, HUD in shot exactly as the C# leaves it.
+    if (r.ok) requestScreenshot(r.key);
+    townTalk.say(r.ok ? 'Game saved.' : 'Save failed (storage full or disabled).');
+    return r.ok;
   }
   let _loading = false;
   /** F12/pause = the CURRENT character's QuickSave slot (QuickLoad's
@@ -1924,6 +1945,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!extras) { townTalk.say('Save version mismatch.'); return; }
     _loading = true;
     try {
+      // IS1: a load never runs UNDER a mounted mode - RespawnPlayer
+      // destroys the standing interior first (PlayerEnterExit
+      // .cs:453-459). The dying scene is NOT cached on the way out:
+      // the entity's cache is already the SAVE's own (restorePlayer
+      // above), and DFU's load path deregisters rather than
+      // serializes it (:464).
+      if ((modes?.mode ?? 'exterior') !== 'exterior') modes?.forceExitToExterior({ cacheScene: false });
       setWorldMinutes(extras.classicMinutes ?? worldMinutes());
       magic.setReadiedByIndex(extras.readiedSpellIndex ?? null, spellsByIndex);
       // Q4-v: the quest envelope rides the same slot; a pre-Q4-v save
@@ -1939,8 +1967,25 @@ export async function bootWorld(canvas, renderer, params, status) {
         await _teleportToPixel(w.pixel.x, w.pixel.y);
         const [lx, lz] = state.localFromWorld(w.nativeX, w.nativeZ);
         const ly = (w.y ?? 2) + state.compensation[1];
-        if (walkMode) { player.spawn(lx, ly, lz); playerSpawned = true; }
-        cam.pos = [lx, ly + (walkMode ? 0 : 40), lz];
+        // IS1: an inside save re-enters its building BEFORE the player
+        // lands - the Respawner's building arm (PlayerEnterExit
+        // .cs:559-567) with RestorePosition landing the saved
+        // transform raw. A door that cannot be found takes DFU's own
+        // reposition arm (:615-621): say the line and keep the
+        // teleport's default landing, never the inside position on the
+        // outside collider.
+        const inside = extras.interior
+          ? await (modes?.restoreInterior?.(extras.interior, [lx, ly, lz]) ?? false)
+          : false;
+        if (inside) {
+          playerSpawned = true;
+          cam.pos = [lx, ly, lz];
+        } else if (extras.interior) {
+          townTalk.say('Building has no exterior doors. Repositioning player.');
+        } else {
+          if (walkMode) { player.spawn(lx, ly, lz); playerSpawned = true; }
+          cam.pos = [lx, ly + (walkMode ? 0 : 40), lz];
+        }
         // P2-slice (items-2): the teleport's teardown collected every
         // live pile (the reference's sweep); the envelope re-mints the
         // saved ones at their native spots.
@@ -2255,6 +2300,33 @@ export async function bootWorld(canvas, renderer, params, status) {
         // PX3: the pause window's Quests tab - the SAME seam the F5
         // logbook reads (:1525).
         questMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
+        // PX4: the STRUCTURED walk - per-quest name + messages for the
+        // journal's rail/detail, and the notebook's finished entries
+        // for the archive. Raw messages and raw token entries: the
+        // menu flattens, one flattener, one home.
+        questLog: () => {
+          const m = questBridge?.machine;
+          const active = [];
+          if (m) {
+            for (const q of m.quests.values()) {
+              const les = q.getLogMessages();
+              if (!les?.length) continue;
+              const messages = les.map((le) => q.getMessage(le.messageID)).filter(Boolean);
+              if (!messages.length) continue;
+              // PX5: the tightest RUNNING clock on the quest - Clock
+              // resources carry remainingTimeInSeconds in game seconds
+              // and clockEnabled/clockFinished (quest/clock.js:92,164).
+              let clockSeconds = null;
+              for (const r of q.resources.values()) {
+                if (r.clockEnabled && !r.clockFinished && Number.isFinite(r.remainingTimeInSeconds)) {
+                  clockSeconds = clockSeconds == null ? r.remainingTimeInSeconds : Math.min(clockSeconds, r.remainingTimeInSeconds);
+                }
+              }
+              active.push({ id: String(q.uid), name: q.displayName || null, questName: q.questName || '', clockSeconds, messages });
+            }
+          }
+          return { active, finished: questBridge?.notebook?.getFinishedQuests() ?? [] };
+        },
       });
     },
     cycleMode: (dir) => townTalk.setMode(dir > 0 ? hudLargeNextMode(getInteractionMode()) : hudLargePrevMode(getInteractionMode())),
@@ -2726,18 +2798,18 @@ export async function bootWorld(canvas, renderer, params, status) {
      *  modes host (dungeon mode owns the only rest overlay). */
     raiseOnEncounterEvent: () => modes?.raiseOnEncounterEvent?.(),
     // ---- B3: THE RESPAWN SEAMS (TeleportPc's transport - see
-    // _respawnAtSite above for the composition and the Building flag).
+    // _respawnAtSite above for the composition and the BT1 record of
+    // DFU's own partial implementation).
     /** GetLocation + RespawnPlayer (TeleportPc.cs:96-118): true =
      *  the respawn STARTED (the action idles on isRespawning); false =
-     *  unresolvable location or an unsupported site type, retry. */
+     *  unresolvable location, retry - the C#'s ONLY refusal. */
     respawnPlayerAtSite: (place) => {
       const sd = place?.siteDetails;
       if (!sd || _respawning) return false;
-      if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
       const loc = maps.getLocationByName(sd.regionName, sd.locationName);
       if (!loc?.loaded) return false;
       _respawning = true;
-      _respawnAtSite(loc, sd.siteType)
+      _respawnAtSite(loc)
         .catch((e) => console.error('[quest] respawn failed:', e?.message ?? e))
         .finally(() => { _respawning = false; });
       return true;
@@ -3344,6 +3416,17 @@ export async function bootWorld(canvas, renderer, params, status) {
       ...e, door: shiftedDoor(e),
       dfLocation: locationIndex.get(e.pixelKey), group: e.pixelKey,
     })),
+    // IS1: the save composer's doors for the interior mode's pause and
+    // F9/F11 (GameManager.cs:570-586 dispatches the quick keys
+    // scene-free). THE FOUR HOSTS: world.js hands its ONE composer in
+    // here and worldModes' interior arm consumes it;
+    // dungeonContext.js keeps its own composer (no buildings there);
+    // exterior.js builds no save doors (the probe host).
+    quickSave: () => worldQuickSave(),
+    quickLoad: () => worldQuickLoad(),
+    playerName: () => playerEntity.name,
+    saveAs: (saveName) => worldQuickSave(saveName),
+    loadKey: (key) => worldQuickLoad({ key }),
     // AUDIT 26 (F019): RMBLayout's exterior StaticNPCs, shifted through
     // the LIVE floating-origin translation exactly as shiftedDoor does
     // - the activation ray works in world space
@@ -3577,6 +3660,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // console.log. Drawn ABOVE the modal render, which is where
       // townTalk always draws.
       townTalk.frame(dt);
+      capturePendingScreenshot(canvas);   // SS1: a save armed from a modal mode still lands its shot
       requestAnimationFrame(frame);
       return;
     }
@@ -4097,6 +4181,10 @@ export async function bootWorld(canvas, renderer, params, status) {
           largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity) });   // U38 + X4 + U43
     }
     townTalk.frame(dt);   // T3b: HUD lines + the talk overlay, above everything
+    // SS1: the frame's LAST draw is behind us - deliver a pending save
+    // screenshot while the buffer is still this task's to read
+    // (preserveDrawingBuffer false clears it after compositing).
+    capturePendingScreenshot(canvas);
 
     if (shotMode) {
       window.__frame++;

@@ -490,6 +490,11 @@ export function createWorldModes(host) {
   }
   // E2: the entered building's identity + the shop browse overlay.
   let interiorBuilding = null;
+  // IS1: the entered exterior door - SetExteriorDoors (PlayerEnterExit
+  // .cs:469) latches it through RespawnPlayer and TransitionInterior
+  // so the save can carry the way back in (SerializablePlayer
+  // .cs:183-187). Cleared with interiorBuilding at every exit.
+  let exteriorDoor = null;
   /** GetNameBankOfCurrentRegion (PlayerGPS.cs:421-427) - F016. An
    *  unknown region answers Breton, which is DFU's own fallback. */
   const currentNameBank = () => getNameBankOfRegion(
@@ -2671,6 +2676,22 @@ export function createWorldModes(host) {
         }
       }
     }
+    return enterInteriorCore(hit, entries);
+  }
+
+  /** IS1: TransitionInterior's shared core - the clicked door
+   *  (tryEnter, above) and the load re-entry (restoreInterior) both
+   *  land here, exactly as DFU routes the click (PlayerActivate) and
+   *  the Respawner's building arm (StartBuildingInterior :1022-1035)
+   *  through the ONE TransitionInterior. A `restore` bag carries what
+   *  the save resolved live at ITS entry time - the building identity
+   *  with the insideOpenShop latch already on it (SerializablePlayer
+   *  .cs:394-400 restores BuildingDiscoveryData + IsPlayerInsideOpenShop
+   *  rather than recomputing at the load hour, which is what keeps a
+   *  shop entered while open an open shop) - and the saved position,
+   *  which lands RAW after the layout (RestorePosition's interior arm,
+   *  transform.position = the saved value). */
+  async function enterInteriorCore(hit, entries, restore = null) {
     transitioning = true;
     try {
       // E2/P1: the building's identity, resolved BEFORE the interior
@@ -2681,18 +2702,25 @@ export function createWorldModes(host) {
       // a `buildingData` already in hand. The port used to resolve the
       // identity AFTER buildInteriorContext, which is why the people
       // gate had nothing to read.
-      interiorBuilding = buildingDataForDoor?.(hit) ?? null;
-      // PlayerActivate.cs:1120 verbatim - computed once, at the door,
-      // and then left alone. A shop entered while open keeps its
-      // people even if the player is still inside at closing time.
-      const _bt = interiorBuilding?.buildingType;
       const _hour = Math.floor((Math.floor(worldMinutes()) % 1440) / 60);
-      const insideOpenShop = _bt != null && isShop(_bt) && isBuildingOpen(_bt, _hour);
-      // AUDIT 26 F066: the latch RIDES the building record, because
-      // PlayerActivate reads it again at shelf time (:887-899) - the
-      // port computed it here for the people gate and then dropped it,
-      // so a shop broken into after hours still sold at full price.
-      if (interiorBuilding) interiorBuilding.insideOpenShop = insideOpenShop;
+      let insideOpenShop;
+      if (restore) {
+        // The SAVED record stands whole - identity, latch and all.
+        interiorBuilding = restore.building ?? null;
+        insideOpenShop = !!interiorBuilding?.insideOpenShop;
+      } else {
+        interiorBuilding = buildingDataForDoor?.(hit) ?? null;
+        // PlayerActivate.cs:1120 verbatim - computed once, at the door,
+        // and then left alone. A shop entered while open keeps its
+        // people even if the player is still inside at closing time.
+        const _bt = interiorBuilding?.buildingType;
+        insideOpenShop = _bt != null && isShop(_bt) && isBuildingOpen(_bt, _hour);
+        // AUDIT 26 F066: the latch RIDES the building record, because
+        // PlayerActivate reads it again at shelf time (:887-899) - the
+        // port computed it here for the people gate and then dropped it,
+        // so a shop broken into after hours still sold at full price.
+        if (interiorBuilding) interiorBuilding.insideOpenShop = insideOpenShop;
+      }
       const _dict = townTalk?.factionDict ?? null;
       const peopleVisible = !interiorBuilding ? true : peopleAreVisible(interiorBuilding, {
         hour: _hour,
@@ -2725,6 +2753,7 @@ export function createWorldModes(host) {
         doorWorldPosition(hit.door), ctx.enterMarkers, ctx.doors);
       if (!landing) throw new Error('no interior landing');
       exitReturn = { siblings };
+      exteriorDoor = hit.door;   // IS1: SetExteriorDoors - the save's way back in
       interiorCtx = ctx;
       interiorFoes = makeInteriorFoes(ctx);   // IF: the pool lives exactly as long as the interior does
       // X1: an armed Open/Lock spell fires on this interior's doors
@@ -2748,7 +2777,13 @@ export function createWorldModes(host) {
       // host's half of that context.
       player.collider = ctx.collider;
       const floored = floorLanding(ctx.collider, landing);   // verbatim FixStanding: instant snap, no gravity drop-in
-      player.spawn(floored[0], floored[1], floored[2]);
+      // IS1: a restore lands the SAVED position raw over the door
+      // landing (RestorePosition: transform.position = saved, the
+      // interior arm) - the landing above still ran, because a
+      // doorless interior must refuse a restore exactly as it refuses
+      // a click.
+      const spot = restore?.pos ?? floored;
+      player.spawn(spot[0], spot[1], spot[2]);
       mode = 'interior';
       console.log(`interior: ${ctx.drawList.length} draws, ${ctx.doors.length} doors, ${ctx.lights.length} lights, ${ctx.people.length} people`);
     } finally {
@@ -2938,6 +2973,7 @@ export function createWorldModes(host) {
     interiorFoes = null;
     interiorCtx = null;
     interiorBuilding = null;   // E2: the identity + overlay leave with the interior
+    exteriorDoor = null;       // IS1: ...and the way back in with them
     interiorOverlay = null;
     player.collider = baseCollider();
     // RepositionPlayer(Offset): the door centre is where DFU puts the
@@ -4021,10 +4057,10 @@ export function createWorldModes(host) {
    *  CONSTRUCTION SEAM - it only decides which slot the window lands
    *  in, because this mode draws `interiorOverlay` and not townTalk's.
    *
-   *  Deliberately absent: quickSave/quickLoad. Interior saving really
-   *  is unbuilt (the composer saves from the exterior and the dungeon
-   *  contexts), and the pause window's SAVE button already answers
-   *  DFU's cannot-save line rather than pretending. */
+   *  IS1 closed the last absent arms: quickSave/quickLoad land on the
+   *  world host's ONE composer (GameManager.cs:570-586 dispatches the
+   *  quick keys scene-free; the interior was the one mode still
+   *  answering nothing). */
   /** Mount a window in this host's ONE overlay slot, disposing whatever
    *  it replaces - the shape townTalk.showOverlay has always had
    *  (:243-247) and this seam did not.
@@ -4163,11 +4199,18 @@ export function createWorldModes(host) {
     },
     togglePause() {
       if (!pauseDoorReady()) return;
-      // I3: SAVE answers DFU's cannot-save line here - the classic
-      // window through its button, the enhanced screen (U51) by
-      // drawing no button and saying the line instead.
+      // IS1: the interior saves like anywhere else - DFU's ONE
+      // standing save block is mid-rappel (RappelMotor.cs:66,
+      // RegisterPreventSaveCondition's only caller); a building was
+      // never one, and the port's gate here was a stopgap for the
+      // unbuilt serialization, not a law. The doors are the WORLD
+      // host's own composer, riding in on the host bag.
       openPauseFlow((w) => { interiorOverlay = w; }, {
-        savingPrevented: () => true,
+        quickSave: host.quickSave,
+        quickLoad: host.quickLoad,
+        playerName: host.playerName,
+        saveAs: host.saveAs,
+        loadKey: host.loadKey,
         exitToMenu: exitToTitleMenu,
         textLines: (id) => townTalk?.lines?.(id) ?? null,
         // PX3 FLAGGED: questMessages - the quest machine lives on the
@@ -4182,6 +4225,11 @@ export function createWorldModes(host) {
     toggleSpellbook() { if (magic) mountInterior(makeSpellbookWindow()); },
     toggleLogbook() { mountInterior(host.makeJournal?.('activeQuests')); },
     toggleNotebook() { mountInterior(host.makeJournal?.('notebook')); },
+    // IS1: F9/F11 inside a building - the world host's composer
+    // (the routeKey table's own arms; quickLoad's setPlayerPos arg is
+    // the dungeon context's concern, not this host's, so it drops).
+    quickSave() { host.quickSave?.(); },
+    quickLoad() { host.quickLoad?.(); },
     // THE REST KEY, INSIDE - the last dead arm of this ctx. U43 routed
     // the Rest action in here and `ctx.toggleRest?.()` (ui/input.js)
     // then optional-chained into nothing, because no host outside
@@ -4570,7 +4618,7 @@ export function createWorldModes(host) {
      *  the context had already freed, so the NEXT building's teardown
      *  double-freed them - and every quest behaviour missed its
      *  OnDestroy, so the resource side never decoupled. */
-    forceExitToExterior() {
+    forceExitToExterior({ cacheScene = true } = {}) {
       const wasInside = mode !== 'exterior';
       if (interiorCtx) {
         // Teleport.cs:145-148, "Cache scene before departing": inside a
@@ -4580,7 +4628,11 @@ export function createWorldModes(host) {
         // everything done inside and the next visit restored the stale
         // pre-entry cache. (The dungeon arm has no counterpart: DFU
         // takes TransitionDungeonExteriorImmediate there, :151.)
-        cacheInteriorScene();
+        // IS1: the LOAD path alone passes cacheScene false - by then
+        // the entity's cache is the SAVE's own (restorePlayer ran),
+        // and DFU's load deregisters the dying scene rather than
+        // serializing it (RespawnPlayer :464).
+        if (cacheScene) cacheInteriorScene();
         // OnPop runs on every window the manager removes
         // (UserInterfaceManager.cs:189-196). A door that drops the slot
         // RAW skips it, and RestWindow raises IsResting on open and
@@ -4593,7 +4645,7 @@ export function createWorldModes(host) {
         interiorCtx.destroy();
         interiorFoes?.destroy?.();
         interiorFoes = null;
-        interiorCtx = null; interiorBuilding = null; interiorOverlay = null;
+        interiorCtx = null; interiorBuilding = null; interiorOverlay = null; exteriorDoor = null;
       }
       if (dungeonCtx) {
         teardownDungeonQuestFlats();
@@ -4677,6 +4729,56 @@ export function createWorldModes(host) {
     get questOverlay() {
       if (mode === 'interior') return interiorOverlay;
       return mode === 'dungeon' ? (dungeonCtx?.overlayWindow?.() ?? null) : null;
+    },
+    /** IS1 - the inside-building save half (SerializablePlayer
+     *  .cs:183-187): the entered exterior door's identity + the
+     *  building discovery record (its insideOpenShop latch riding on
+     *  it, F066's field), with the LIVE scene written into the
+     *  entity's P1 cache first so the envelope's sceneCache carries
+     *  what the shelves and containers hold right now - the port's
+     *  shape of DFU serializing the live interior objects into the
+     *  save. Null anywhere but interior mode. */
+    interiorSaveData() {
+      if (mode !== 'interior' || !exteriorDoor) return null;
+      cacheInteriorScene();
+      return {
+        door: {
+          blockIndex: exteriorDoor.blockIndex,
+          recordIndex: exteriorDoor.recordIndex,
+          doorIndex: exteriorDoor.doorIndex,
+          buildingKey: interiorBuilding?.buildingKey ?? 0,
+        },
+        building: interiorBuilding ? { ...interiorBuilding } : null,
+      };
+    },
+    /** IS1 - the load re-entry (the Respawner's building arm,
+     *  PlayerEnterExit.cs:559-567 -> StartBuildingInterior off
+     *  exteriorDoors[0]): find the saved door among the LIVE
+     *  exterior's targets by its (blockIndex, recordIndex, doorIndex)
+     *  identity - buildingKey disambiguating twin blocks in one
+     *  location - and run the ONE transition core with the saved
+     *  discovery record and position. False when the door cannot be
+     *  found or the entry fails; the no-door reposition arm
+     *  (RestorePositionHelper :615-621) belongs to the caller. */
+    async restoreInterior(saved, pos = null) {
+      const d = saved?.door;
+      if (!d || mode !== 'exterior') return false;
+      const entries = doorTargets();
+      const matches = entries.filter((e) =>
+        e.door.blockIndex === d.blockIndex
+        && e.door.recordIndex === d.recordIndex
+        && e.door.doorIndex === d.doorIndex);
+      const entry = (matches.length > 1 && d.buildingKey
+        ? matches.find((e) => (buildingDataForDoor?.(e)?.buildingKey ?? 0) === d.buildingKey)
+        : null) ?? matches[0] ?? null;
+      if (!entry) return false;
+      try {
+        await enterInteriorCore(entry, entries, { building: saved.building ?? null, pos });
+      } catch (e) {
+        console.error('[worldModes] restoreInterior failed:', e);
+        return false;
+      }
+      return mode === 'interior';
     },
     tryEnter,
     frame,

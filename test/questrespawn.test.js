@@ -25,7 +25,7 @@ test('B3 seam gate: the respawn trio is mounted and composed from the existing h
   // the composition is the C# order: teardown, travel, re-enter
   const i = world.indexOf('async function _respawnAtSite');
   assert.ok(i > 0, 'the respawn composer exists');
-  const body = world.slice(i, i + 900);
+  const body = world.slice(i, i + 1400);   // BT1 widened it (the unconditional-dungeon comment)
   const tOrder = ['forceExitToExterior', '_teleportToPixel', 'startInDungeon', 'surfacePlayer'];
   let at = 0;
   for (const step of tOrder) {
@@ -35,8 +35,19 @@ test('B3 seam gate: the respawn trio is mounted and composed from the existing h
   }
   // an unresolvable location answers false BEFORE any teardown
   assert.match(world, /if \(!loc\?\.loaded\) return false;/);
-  // the Building arm pends loudly, not silently
-  assert.match(world, /siteType === SITE_TYPES\.Building\) return false;\s+\/\/ FLAGGED/);
+  // BT1: NO site-type dispatch anywhere in the host - DFU's TeleportPc
+  // hardcodes insideDungeon TRUE for every place (:113-118, a partial
+  // implementation by its own header), so the port's old Building
+  // refusal - which idled the action forever where DFU completes it -
+  // was the divergence. The dungeon attempt is UNCONDITIONAL and the
+  // entrance failing IS the exterior fallback (the "all else fails"
+  // arm, :561-565).
+  assert.ok(!world.includes('SITE_TYPES'), 'the site type never reaches the respawn host');
+  assert.match(body, /the exterior fallback\.\n    const entered = await modes\?\.startInDungeon\(\);\s*\n\s*if \(!entered\) console\.warn/,
+    'insideDungeon true always - the attempt sits UNGATED against its comment, the fallback loud');
+  assert.ok(!body.includes('siteType'), 'the composer takes a location alone (RespawnPlayer x, y, true, true)');
+  const seam = world.slice(world.indexOf('respawnPlayerAtSite: (place)'), world.indexOf('isRespawning:'));
+  assert.ok(!seam.includes('siteType'), 'and the mount reads no site type either - location resolution is the only refusal');
   // the marker landing is mode-aware - the interior parents, the rest is raw scene space
   assert.match(modes, /setPlayerScenePosition\(p\) \{/);
   assert.match(modes, /interiorCtx\.parentPt\(p\.x, p\.y, p\.z\)/);

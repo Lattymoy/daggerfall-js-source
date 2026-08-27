@@ -6453,3 +6453,107 @@ collided with the lab page's own hidden boot menu (scope selectors to
 the probe host). Probed live: two quest blocks render, 13 stat rows,
 Save pane opens from System, Escape window, Escape resumes once,
 zero page errors, desktop + phone.
+
+PX4 (same day, Mac: "go all in"): THE JOURNAL, AND THE GLASS. Three
+moves. (1) The pause face sheds its foot - no skin toggle, no About
+plaque (Mac's call); About rides the System tab list, the switch
+stays on the boot face and the settings shell. (2) TRANSLUCENCY: the
+enhanced pause host's background went transparent - the classic pause
+has always drawn its panel over the live frame in the same overlay
+slot, so the frame is there to show - the scrim dropped to 0.55 and
+the window to 0.72, per the reference; the STANDING CAVEAT is written
+at the host (a scene that stopped presenting under an overlay would
+show the renderer's pale clear through it; the classic window's
+behaviour says none does, the first real-ARENA2 eyeball owns the
+verdict, and the boot door stays opaque for exactly that clear). (3)
+THE JOURNAL: the Quests tab became the reference's page - a rail of
+quest NAMES (active first, THE ARCHIVE beneath a small heading, done
+rows dimmed), the chosen quest on the right with its name inside wing
+rules, the LATEST log entry as the description, and the trail as
+diamond-marked entries newest-first under a titled JOURNAL divider -
+because a Daggerfall quest speaks in journal entries, not objective
+flags: the entries ARE the tasks, and inventing checkbox objectives
+the machine does not track would be a lying UI. Archived quests parse
+the notebook's own filed header ('<name> completed|ended at <date>:',
+notebook.js:151-182) back into name/verdict/date - the verdict line
+gold for completed, dim for ended - with the headerless overflow
+entry (the notebook's kept quirk) reading as a continuation. Data
+arrives RAW through the new `hooks.questLog` (world.js walks
+machine.quests for per-quest displayName + messages and hands
+notebook.getFinishedQuests() beside it); ONE flattener in the menu
+(journalLines) serves every journal source. THE FOUR HOSTS: world
+wired; the other three keep their PX3 flags and the wired-tab-only
+message. On a phone the journal stacks, rail above detail. Probed
+live over a busy stand-in frame: 4 rail rows + the Archive heading,
+the archived verdict renders, no foot at pause, Escape resumes once,
+zero page errors both viewports.
+
+PX5 (same day, Mac): TIMERS, THE CLOCK, AND MAIN/SIDE. Three asks,
+each grounded in something the port already carries. (1) QUEST
+TIMERS: the world's questLog walk now reports the TIGHTEST RUNNING
+clock per quest - Clock resources carry remainingTimeInSeconds with
+clockEnabled/clockFinished (quest/clock.js:92,164) - and the journal
+draws it under the quest name as 'Time remains: N days N hours'
+(hours+min under a day, min alone under an hour), URGENT GOLD below
+one game day, with a gold gem pushed right on the rail row of any
+timed quest. (2) THE DATE AND TIME sit bottom-right on the scrim, the
+reference's corner: dateString + the header formatter's HH:MM:SS over
+THE ONE CLOCK (worldMinutes, AUDIT 23 C2) imported directly - every
+host already reads that module, so no seam and no drift; one read per
+render is the truth for a paused clock. (3) MAIN/SIDE LABELING by the
+pack's own naming - DFU ships the story quests as S0000*.txt (34
+files in vendor/dfu-quests/Quests) and _BRISIEN is the MQ opener
+(StartGameBehaviour.cs:445-447) - the rail groups MAIN QUESTS above
+QUESTS (headings only when BOTH kinds are on the log; one group under
+a header is a header explaining nothing) and the detail carries a
+Main Quest / Side Quest tag beside the timer. The archive stays
+ungrouped honestly: the notebook's filed header keeps only the
+display name, so the questName is gone by the time a quest is filed.
+Probed live: the three headings render, two timed gems, the urgent
+tag on a 9.5-hour letter, Side Quest under its name, the corner
+clock reading the probe's own set minutes, zero page errors both
+viewports.
+
+PX6 (same day, Mac: "give it the same love"): THE STATS PAGE. The
+journal's own bones - a rail of pages, the chosen one on the right,
+because one structure learned once is the whole window's. Four pages,
+every row something the game actually carries. CHARACTER: name in the
+wing rules, race/career/level tag, and the three vitals as
+WHOLE-PIXEL METERS - 2px frame, flat fill, no easing - health in the
+skin's blood, fatigue in bone, magicka in verdigris, with gold and
+encumbrance under a BURDEN divider. ATTRIBUTES: the eight on meters
+against the classic 100. SKILLS: the three career groups open under
+their own dividers - the character's chosen shape - each skill on a
+thin meter, with Miscellaneous behind the F5 sheet's own disclosure
+gesture ('Show N miscellaneous skills'). STANDING: the five NAMED
+social groups getReactionToPlayer reads (factionFile.js:23-27),
+positive gold / negative blood, with the honest line that guild rank
+lives with each guild hall - and LEGAL STANDING DELIBERATELY ABSENT:
+it is per-region (court.js owns player.legalRep[region]) and the
+window does not know where you stand, so a number without its region
+would be a lying row; it waits on a host region seam. Probed live
+with a mid-game Battlemage: 3 vitals meters, 12 career skill rows
+growing to 35 through the disclosure, 5 standing rows with 2 gold
+and 2 blood, zero page errors both viewports. (Follow-up, Mac: the
+Standing caption removed.)
+
+PX7 (same day, Mac): THE SYSTEM PAGE. The journal's bones a third
+time - and NOT a third implementation of anything: the rail is the
+pause list (Resume ACTS from the rail, the shell's own RAIL_ACTS
+reasoning; Settings alone still opens its shell, because three
+columns of 171 keys need the room an 860px window does not have and
+a cramped settings page is worse than a door to a good one), and the
+detail renders the SAME pane functions the shell has always run -
+paneSave's overwrite card, paneLoad's no-confirm law and its
+delete-behind-ask, paneMods' honest waiting room, paneAbout,
+paneExit's confirm - so every audited law keeps its one home and
+ONLY THE PAINT changed: .px-sys repaints .card/.act/.empty/.stats/
+.tag/.row in whole pixels (2px-bordered cards, gold primary acts,
+quiet key/value rows). The confirm card renders INSIDE the detail
+(the ask() flow lands where the press was made). ONE FONT CATCH from
+the eyeball: the card h3 fell back to the shell's Cormorant because
+the repaint never declared a family - font-family: inherit now, the
+same one-rule-forgot shape as PX3's gem specificity. Probed live:
+seven rail rows, the Exit confirm titled 'Leave this game' inside
+the window, Cancel restores the pane, Resume acts exactly once,
+About's stats grid pixel-faced, zero page errors both viewports.

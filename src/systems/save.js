@@ -106,7 +106,7 @@ export const copyEffectEntry = (a) => {
 };
 
 /** A plain-object snapshot of the player + scene extras. */
-export function snapshotPlayer(entity, { position = null, pose = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null, quest = null, talk = null } = {}) {
+export function snapshotPlayer(entity, { position = null, pose = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null, quest = null, talk = null, interior = null } = {}) {
   // Q4-v: `quest` is the bridge's whole envelope (machine + notebook +
   // the one-time list) - opaque here, exactly like `world`.
   // TK-i: `talk` is TalkManager's SaveDataConversation (the rumor
@@ -120,7 +120,13 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // - including a save made crouched in a 0.9 crawlspace. The hosts
   // own the live objects, so the envelope takes an opaque
   // { yaw, pitch, crouching, weaponDrawn } bag.
-  const snap = { v: SAVE_VERSION, position, pose, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk };
+  // IS1 (AUDIT 26 F221): `interior` is the inside-building half of
+  // PlayerPositionData_v1 (SerializablePlayer.cs:183-187) - the
+  // entered exterior door's identity + the building discovery record
+  // - opaque here like `world`; the world host composes and consumes
+  // it. Null everywhere but interior mode, and a pre-IS1 save
+  // restores null (the additive-field shape, version held at 1).
+  const snap = { v: SAVE_VERSION, position, pose, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk, interior };
   // W1: DFU persists exactly ONE weather value (playerPosition.weather)
   // and re-rolls the six-zone array on the next date change - the sim
   // is a module singleton, so the envelope reads it here and every
@@ -466,7 +472,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // expiring restored buffs on the spot and bursting a restored
   // continuous-damage effect over a window the saved game never lived.
   resetMagicRoundMarker(Math.floor(snap.classicMinutes ?? 0));
-  return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null };
+  return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null };
 }
 
 /** AUDIT 25 B4: ONE quest+talk envelope composer, every quicksaving

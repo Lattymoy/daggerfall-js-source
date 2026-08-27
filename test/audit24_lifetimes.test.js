@@ -117,7 +117,7 @@ test('audit24 lifetimes: the sky panorama cache is BOUNDED', () => {
 
 test('audit24 lifetimes: forceExitToExterior tears the quest stands down like the real door', () => {
   const src = read('src/scenes/worldModes.js');
-  const force = bodyOf(src, 'forceExitToExterior() {');
+  const force = bodyOf(src, 'forceExitToExterior({ cacheScene = true } = {}) {');   // IS1 grew the load-path opt-out
   assert.match(force, /teardownQuestFlats\(\);[\s\S]{0,120}interiorCtx\.destroy\(\)/,
     'the stands leave the context BEFORE destroy - otherwise the next teardown double-frees them');
   assert.match(force, /questBridge\?\.onExteriorTransition\(\)/,

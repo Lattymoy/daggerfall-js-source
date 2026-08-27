@@ -124,7 +124,7 @@ test('AUDIT 26 F065: the world-hosted motor stops under a window, as the standal
 // ---------------------------------------------------------------------
 
 test('AUDIT 26 F211 + F064: the forced exit caches the interior and disposes the window it drops', () => {
-  const force = bodyOf(WM, 'forceExitToExterior() {');
+  const force = bodyOf(WM, 'forceExitToExterior({ cacheScene = true } = {}) {');   // IS1 grew the load-path opt-out
   // Teleport.cs:148 - CacheScene(playerEnterExit.Interior.name), the same
   // write the real door makes (PlayerEnterExit.cs:860 / tryExit)
   assert.match(force, /cacheInteriorScene\(\);/,

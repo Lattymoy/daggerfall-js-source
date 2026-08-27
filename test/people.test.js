@@ -173,7 +173,9 @@ test('P1 hosts: the gate is evaluated at the DOOR and the quest hook is its ELSE
   assert.ok(wm.includes('peopleAreVisible('), 'the host never evaluates the visibility gate');
   assert.ok(wm.includes('peopleVisible })'), 'the answer never reaches buildInteriorContext');
   // the latch is the entry-time computation, not a live clock read
-  assert.match(wm, /const insideOpenShop = .*isShop\(_bt\) && isBuildingOpen\(_bt, _hour\)/,
+  // (IS1 hoisted the declaration - the RESTORE branch takes the saved
+  // latch instead of recomputing, SerializablePlayer.cs:394-400)
+  assert.match(wm, /insideOpenShop = .*isShop\(_bt\) && isBuildingOpen\(_bt, _hour\)/,
     'the shop latch is not PlayerActivate.cs:1120');
 
   const ic = src('src/scenes/interiorContext.js');
