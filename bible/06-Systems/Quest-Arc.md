@@ -5030,3 +5030,63 @@ playVideo, the HUD faces panel, the disease seams, the QuestComplete
 loot window; WhenPcEntersExits' interior-transition feed beyond the
 polled rect. Each is a seam the law modules already speak - absent
 members idle loudly, never silently.
+
+## M-X - THE TABLE, WHOLE: MacroHelper's last 132 rows + the gate (2026-08-27)
+
+The completion analysis' item three, closed at the TABLE level. Every
+row of MacroHelper.cs now has its counterpart in questMacros.js, in
+the C# handler's own shape - three kinds:
+
+MCP CALL-THROUGHS, verbatim (`mcp.GetMacroDataSource().X()` as
+call(mcp, 'x')): the attribute block (%str..%luc, %ark), the whole
+biography %q block (Q1..Q12 with the a/b arms, thirty-six rows), the
+spell-info block (%1am/%1bm/%2am/%2bm/%ach/%adr/%bch/%bdr/%clc/%cld/
+%clm/%mpw), the bank reads (%ml, %r1..%r5), the home-province pair,
+the summon pair (%dae/%dng), %gdd, %fon, the name pairs
+(%bn/%fn2/%mn2/%imp) and %lev (GuildTitle without %pct's player-name
+fallback). A source without the override answers the error ladder
+([srcDataUnknown]) - DFU's own behavior - and the SOURCES land with
+their arcs: the biography MCP, the spell-info MCP, the bank MCP.
+
+PLAYER/WORLD GLOBALS off hooks: the date/time block on the machine's
+nowSeconds clock (DayOfMonth ONE-based per :626, GetSuffix's
+1st/21st law, MinTimeString's {0:00}:{1:00} padding, monthName/
+dayName/birthSignName/SEASON_NAMES off gameDate's own tables), the
+vitals (%spc/%spt, %enc = floor(str*1.5), %mad = floor(will/10)),
+the four biography modifiers in C#'s "+0;-0;0" signed format, %ski's
+first-primary-at-permanent-100-else-"BLANK", the pronoun quartet
+plus %pg/%pg1 sharing PlayerPronoun, %pcl's parts[1] lastname,
+%ltn's FOURTEEN legal-rep bands with C#'s unreachable "unknown" tail
+kept, %ct's switch over the REAL LOCATION_TYPES ids (HomeWealthy is
+a manor, HomePoor a shack) with the default falling to the enum
+value's own string, %lp's Breton-or-Hammerfell, %cn2's
+first-other-TownCity walk, %cbd's "[invalid]" outside-a-building
+arm, and the talk/news block (%fa/%fae/%fe/%fea/%fnpc/%fpa/%fpc plus
+%fx1/%fx2 over the new setIdFactions state and the lord reads) -
+with C#'s OWN asymmetry kept: %fae speaks GetFactionNPCEnemy exactly
+as %fe, %fea speaks GetFactionNPCAlly exactly as %fa. The talk-arc
+getters answer the charter's null until that arc mounts them.
+
+C#-NULL ROWS join NULL_HANDLERS ([unhandled], verbatim): %hol %hrg
+%htwn %key2 %mit %on %pdg %plq %pnq %ptm %qot %vn %wpn beside the
+six already there.
+
+AND THE GATE. test/macrocoverage.test.js extracts MacroHelper.cs's
+own `{ "%x", Handler }` table (ARENA2-posture skip without the
+sparse clone) and asserts every row is handled, null-handled, or
+RECORDED at the per-window expander that owns it - thirty-seven
+tokens (itemInfo's weapon/armour/painting block, arrestFlow's court
+block, townTalk's, talkMacros', guildServiceActions') each VERIFIED
+present in its named home so the record cannot rot - and that no
+port handler stands where C# has null. The gate found those
+thirty-seven the analyst sweep had miscounted as present-in-table;
+consolidating them into the one table is the recorded follow-up.
+
+Wiring: machine hooks gain playerEntity and nowSeconds; questWorld
+gains legalRepNow and currentLocationType (world.js answers both);
+the machine deps gain the entity itself.
+
+Pins: 5 in `test/macrocoverage.test.js` - the gate, the date/time
+laws at their boundaries, the player globals with %ski's BLANK arm,
+the fourteen bands and the %ct fallback, and the error shapes with
+the news pair and the %fae/%fea asymmetry.

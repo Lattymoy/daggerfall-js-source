@@ -21,10 +21,16 @@ The HONEST still-open list as of the re-verification:
    CharacterRecord, ~3,200 C# loc) - absent, unchanged.
 2. **Multi-slot save/load windows** - the pause menu rides the
    quicksave; DFU's slot UI has no counterpart.
-3. **The 123 missing macros** - dominated by the biography %q block,
-   the attribute block (%str..%luc), the clock/date block
-   (%hour/%day/%mon/%year/%sea/%hol), the weapon/armour info block
-   and the painting pair (%sub/%adj).
+3. ~~The 123 missing macros~~ **THE TABLE IS COMPLETE (M-X
+   2026-08-27)**: every MacroHelper.cs row is now handled in
+   questMacros.js, null-handled where C# is null, or RECORDED at the
+   per-window expander that owns it (37 tokens, each verified in its
+   named home) - and `test/macrocoverage.test.js` is the coverage
+   GATE this page asked for, diffing the C# table mechanically. What
+   remains is per-MCP SOURCES: the biography MCP (the %q block's
+   answers), the spell-info MCP (%1am..%clm/%mpw), the bank MCP
+   (%ml/%r1-5) - each its arc's, reached through the error ladder
+   until then.
 4. **The 20 pended quest actions** (GUARD_PATTERNS in
    systems/quest/actions.js - PlaySong left the list 2026-08-25).
 5. **Enemy infighting / MobileTeams combat / PlayerAlly**
