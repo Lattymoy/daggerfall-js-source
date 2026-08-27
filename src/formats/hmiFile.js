@@ -117,11 +117,19 @@
 //     they carry no information; the rest of the 370-byte song header is zero
 //     or constant across the archive.
 //
-// CORPUS QUIRKS, all preserved verbatim
-//   - SUNNYDAY.HMI track 5 carries a 1,192,560-tick delta before its last two
-//     events, so that one song reports ~1249 s where every other track in it
-//     ends at tick 6802. Real bytes, not a misparse: the track still lands
-//     exactly on its end-of-track meta.
+// CORPUS QUIRKS, all preserved verbatim - but one
+//   - SUNNYDAY.HMI track 5 carries a 1,192,560-tick delta (VLQ c8 e4 70)
+//     before its last two events, a reverb-send controller and the closing
+//     marker, where every other track in the song ends at tick 6802. Real
+//     bytes, not a misparse - the track still lands exactly on its
+//     end-of-track meta - and taking them at their word made that ONE song's
+//     loop wait 2.76 hours in silence (9,994 s at the true clock; the song
+//     is 57 s). It is an authoring artifact, and the reference reader knows
+//     it: foo_midi's midi_processor_hmi.cpp "shunts" any HMI delta over
+//     0xFFFF - the event lands at the track's last timestamp instead of
+//     advancing - which is why DFU's shipped sunnyday.mid is 54.8 s. So
+//     does this reader now (HMI_MAX_DELTA, 2026-08-27), and SUNNYDAY's
+//     end tick is 6802 like its nine siblings.
 //   - 129 songs have exactly one 0xFE 0x10 per track plus one 0xFE 0x14 and one
 //     0xFE 0x15. TAVERN.HMI has extra 0xFE 0x10s and the archive's only
 //     0xFE 0x12 and 0xFE 0x13; FOLK3.HMI has two 0xFE 0x14 and no 0xFE 0x15.
@@ -146,6 +154,13 @@ const SONG_TEMPO_BPM = 0xd4;
  *  header's own resolution field (0x0D2, 480 throughout the archive) is
  *  NOT this number - reading it as the time base ran every song 8x fast. */
 export const HMI_TICKS_PER_QUARTER = 60;
+
+/** THE SHUNT: a delta over this is not time. foo_midi's HMI processor
+ *  (`delta > 0xFFFF`: "Large HMI delta detected, shunting") drops the
+ *  event onto the track's last event tick rather than advancing by it;
+ *  one retail track (SUNNYDAY.HMI track 5) carries such a delta and the
+ *  original driver plainly did not wait 2.76 hours on it. */
+export const HMI_MAX_DELTA = 0xffff;
 const SONG_TRACK_COUNT = 0xe4;
 const SONG_TRACK_TABLE = 0xe8;
 const SONG_TRAILER_SIZE = 16;
@@ -335,8 +350,11 @@ export class HmiFile {
       return ev;
     };
 
+    let lastTick = 0;   // the shunt's landing: the latest tick any event took
     for (;;) {
-      tick += vlq();
+      const delta = vlq();
+      if (delta > HMI_MAX_DELTA) tick = lastTick;   // THE SHUNT (foo_midi): an authoring artifact, not time
+      else { tick += delta; if (tick > lastTick) lastTick = tick; }
       if (p >= limit) this._fail(`track ${index} ended without end-of-track`, p);
       let st = bytes[p];
       if (st & 0x80) p++;
