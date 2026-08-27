@@ -61,9 +61,18 @@ The HONEST still-open list as of the re-verification:
    for DESTROYED foes whose health never reaches zero, and
    ChangeFoeTeam's reach underground through
    `worldModes.liveQuestFoes()`. This row is CLOSED.
-6. **The interior foe pool** - the standing seam behind the coven
-   failure's and the summoning refusal's unspawned daedra and Q4-v's
-   interior enemies.
+6. ~~The interior foe pool~~ **SHIPPED (IF 2026-08-27).** The deciding
+   fact came first: a building interior carries NO STATIC ENEMIES in
+   DFU (DaggerfallInterior's whole marker vocabulary is Rest/Enter/
+   Treasure/LadderBottom/LadderTop), so the pool is not a spawner but
+   a HOME - which is what made it small. The interior host mounts the
+   SAME pool factory the exterior does, with its own collider, and
+   that factory grew the teardown a per-building lifetime needs.
+   FOUR flag sentences retired: CreateFoe's interior arm (which is
+   PlaceFoeFreely, by DFU's own choice over spawn points),
+   `enemiesNearby` at three consumers, and BOTH daedric punishments -
+   the summoning refusal's and the coven failure's, which are one
+   CreateFoeSpawner call with different numbers. This row is CLOSED.
 7. **CfaFile** (horse/cart FP sprites), **HeadBobber** (a settings
    toggle exists, no bobber), **DilateCoastalClimate**, city gates
    closing at night, HUDActiveSpells + escorting faces, the
