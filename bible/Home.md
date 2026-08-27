@@ -275,15 +275,15 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:1233` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
 - `src/scenes/world.js:1237` - while inSunlight/inHolyPlace stay the E1 FLAGGED seams no host
 - `src/scenes/world.js:1630` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
-- `src/scenes/world.js:1956` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:2235` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:2408` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
-- `src/scenes/world.js:2500` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:2765` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:2792` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:3212` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:3549` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/world.js:3622` - (FLAGGED: exterior corpse containers are the loot arc's), so
+- `src/scenes/world.js:1961` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:2240` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:2413` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
+- `src/scenes/world.js:2505` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:2770` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:2797` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:3221` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:3558` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:3631` - (FLAGGED: exterior corpse containers are the loot arc's), so
 - `src/scenes/worldModes.js:289` - rather than pretending to scan. FLAGGED.
 - `src/scenes/worldModes.js:414` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:562` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon

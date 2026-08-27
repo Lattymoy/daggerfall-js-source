@@ -8,7 +8,7 @@ policies one by one.
 
 
 
-## THE BOARD, as of U59 (2026-08-26) — OPEN, not shipped
+## THE BOARD, as of U61 (2026-08-26) — OPEN, not shipped
 
 Logged so the queue survives the session that found it. Every count
 below is a `grep` over `src/` on this commit; re-run them rather than
@@ -36,9 +36,6 @@ does the pack's USE arm.
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
-    THE TRAVEL MAP      ONE site (world.js:1808) in ONE host, so the
-                        seam is nearly free - but it is a big screen
-                        with a real design problem behind it.
     THE HUD             No door, and unlike every screen above it is
                         drawn PER FRAME on the canvas rather than
                         mounted as an overlay. The largest surface the
@@ -54,7 +51,21 @@ already exported.
 
 ### RESIDUE ON WHAT HAS SHIPPED
 
-None of these blocks anything; all three are real.
+None of these blocks anything; all are real.
+
+    THE OVERWORLD'S     U61's standing caveat, the U54 shape: the
+    REAL BYTES          relief, markers and laws are proven on a
+                        SYNTHETIC bay (40/40 in the probe) and the
+                        node pins hold the height/water/bucket laws
+                        against the owning modules - but the real
+                        WOODS.WLD/CLIMATE.PAK render is unproven on
+                        CI and always will be, because this repo
+                        holds no game data.
+    THE TOUCH DOOR      No touch button opens ANY travel map -
+                        ui/touch.js's roster carries no V and no M.
+                        Pre-existing (map-consumers audit), and U61
+                        makes it worth fixing: the overworld is the
+                        first map a thumb could actually drive.
 
     THE SPLIT POPUP     systems/itemTransfer.js:247. TransferItem
                         opens a numeric field DEFAULTED to maxAmount
@@ -74,6 +85,131 @@ None of these blocks anything; all three are real.
                         will be, because this repo holds no game data.
 
 
+## U61 THE OVERWORLD: THE TRAVEL MAP IS THE WORLD ITSELF (2026-08-26)
+
+Mac's call, and a re-conception rather than a re-skin: the enhanced
+travel map is not a picture OF the world, it is the world. Press the
+travel key outside and the view climbs through cloud; above the deck
+is the whole Iliac Bay as a live relief - the same 1000x500 WOODS.WLD
+bytes every streamed terrain pixel is sampled from, one vertex per
+map pixel, tinted by the same CLIMATE.PAK byte the travel calculator
+charges. Pan, zoom, search, pick a destination, choose how you
+travel, and the camera FLIES the route - then drops back through
+cloud into first person at the far end. Hold to skip the flight.
+Classic is one toggle away and untouched.
+
+THE CLOUDS ARE LOAD-BEARING. Nothing can draw 800km of streamed
+terrain, so there are two worlds - the host's live frame below the
+deck, the one-vertex-per-pixel relief above it - and the cloud veil
+is what hides both swaps. The window's draw() opens a SECOND
+beginFrame (the automap's precedent) only once the camera cut is
+made; during the veil phases it draws a single blended quad over the
+HOST's still-live frame, which is also what covers the streamer
+rebuilding at the destination after the commit. A source pin holds
+beginFrame inside the camera-live arm, because the whole transition
+design is that ordering.
+
+THE FLIGHT IS THE LAW'S OWN PATH. systems/travel.js grew ONE export -
+walkTravelPath, the classic longest-axis stepper extracted whole from
+calculateTravelTime, which now iterates it - so the route line and
+the camera fly exactly the pixels the time law charges. The pin that
+proves the extraction found the stepper's own truth: with `inc > adx`
+strict, the (10,-4) diagonal lands a pixel SHY of its destination,
+and a >= "fix" is what the pin kills. The flight is seconds of real
+time; the CLOCK advances by computed.minutes inside fastTravelTo,
+untouched.
+
+WHAT IS LAW HERE IS THE CLASSIC MODULE'S OWN, imported never copied:
+calculateTravelTime / calculateTripCost / travelDays behind the
+decision panel, recomputed per toggle; the disease box BEFORE the
+two-sided gold gate (letters of credit cover the passage and cannot
+pay the inn - the notice says so); transports SNAPSHOT at panel open;
+the three toggles round-tripping through travelMapPopUpState so the
+save envelope never changed shape; the LIVE travelMapFilters() object
+edited in place; discovery through checkLocationDiscovered and the
+fourteen dot buckets through getPixelColorIndex (both module exports
+since U41 - the palette is ours, the BUCKETS are not); gotoPlace and
+teleportationTravel as one-shots, No on the teleport box leaving the
+map ARMED; teleport = arrival without the journey, so it gets the
+veil and NO flight; and the pick handed to onTravel is fastTravelTo's
+own {pixel, name, region, mapId, regionIndex, locationIndex}.
+
+THE DOOR is ui/travelMapDoor.js, the sixth of its shape, and the
+first whose fork is a STATIC import: the window must answer
+gotoPlace/activateTeleportationTravel synchronously (the journal and
+the guild service call them the same breath they open it), and the
+heavy half is already lazy behind the first draw the veil covers.
+Both skins ride world.js's ONE construction seam - buildTravelMapWindow
+hands the door what the host HAS (`woods` joined the bag) and both
+openers gate on travelMapDoorReady(). Two shipped pins moved with the
+gate (teleportpopup's G5 door needle, travelmap's U41 art needle) -
+same law, one predicate deeper.
+
+THE FOUR HOSTS, named: scenes/world.js OWNS the map, both openers and
+the probe surface (now guarded to the classic shape; the overworld
+carries globalThis.__overworld). scenes/exterior.js still refuses -
+V retired deliberately at its :1507 note - and hands no opener.
+scenes/dungeonContext.js still refuses at its :799 note. scenes/
+worldModes.js still owns nothing and borrows host.openTeleportMap for
+the guild service, which arms the enhanced window through the same
+one-shot. All three refusals pinned by name.
+
+THE SCREEN BREAKS ONE PEER RULE ON PURPOSE: the chrome div is
+TRANSPARENT, not #0e1013 - the picture IS the GL frame beneath - and
+it owns the pointer at full resolution (pan, zoom-to-cursor, pick,
+hold-to-skip), so the host-contract click/hover/wheel arms are no-ops
+BY DESIGN with their comments pinned. The search field stops its own
+keydown propagation so a typed V never reaches the host's ladder; the
+region label under the cursor is the raw politic-128 read,
+range-checked, so the sea answers nothing; search is BAY-WIDE - the
+find box's own weighted edit distance and MatchesCutOff per name,
+discovery-gated per entry - which is a recorded departure from the
+classic region-scoped box.
+
+RECORDED DEPARTURES (skin, each stated in the modules): the whole bay
+replaces the province/FMAP page flow, so the page arrows, right-click
+zoom crop, identify flash, MBRD border and the dots-outline setting
+have no meaning here; the climate and dot PALETTES are ours (there is
+no data color table in DFU - the classic terrain is baked art);
+vertical relief is one documented exaggeration constant; notices are
+literal strings where the classic popups read TEXT.RSC 454/1010; and
+the countdown-days animation became the flight.
+
+NEW MODULES: ui/overworldModel.js (pure - the relief grid, tints,
+markers, route points; synthetic-bay testable), render/
+overworldRenderer.js (the self-contained pass: terrain, POINTS
+markers, route line, rings, procedural cloud deck, backdrop -
+saves/restores program, brackets cull both ways, plain RH camera with
+NO mirrorProjectionX because this is our data, not DFU's LH world),
+ui/overworldMap.js (the window: phases veilin/rise/map/flight/
+descend/hold/veilout, the chrome, the laws), ui/travelMapDoor.js.
+The relief grid is cached per WOODS buffer across opens.
+
+PROVED: 28 node pins (test/overworldmap.test.js - the walk re-summed
+under four option sets, the height/water/tint laws against
+terrainSampler's own constants, buckets against getPixelColorIndex
+itself, the door fork both ways, the stub-document window driving
+every panel law, and the no-second-reading sweeps) and 40/40 browser
+checks (tools/overworldProbe.mjs - a synthetic bay through a REAL
+Renderer: sea pixels blue and land not, markers equal to the law's
+count, drag/wheel/click through real pointer events, the panel's
+numbers equal to the law modules imported into the page, Recklessly
+exactly the halved minutes, the coinless-purse refusal, the flight
+with the skip pill and the one commit in fastTravelTo's shapes,
+teleport armed/No-keeps-armed/Yes-skips-the-flight, gotoPlace landing
+selected with the decision open, Pixel 5 taps with every target 44px,
+and ?skin=classic answering null with zero enhanced DOM). What the
+probe does NOT prove is on THE BOARD: the real ARENA2 bytes.
+
+THREE THINGS THE BUILD CAUGHT: drawScreenQuad's dst is an OBJECT
+{x,y,w,h}, not an array - the veil drew nothing until the shape
+matched (the probe's first run); the probe had no HOST, so nothing
+called dispose() on done and the chrome outlived the window - the
+probe now runs the done->dispose step townTalk's tick performs, which
+is exactly the contract; and the pan assertion first encoded the
+wrong SIGN for south (-z), which the probe's own failure corrected -
+the map's conventions are the streamed world's, and the pin now says
+so.
 ## U60c THE LEDGER STRIP, THE PICTURES, AND THE CUT (2026-08-26, Mac's call)
 
 While the js.org request waits, Mac asked for organising, debloat and
@@ -314,7 +450,6 @@ that the phone's thumb-bar Play is a 44px target, and that both data
 mounts serve the folder: 26/26, desktop and Pixel 5, eyeballed.
 
 ## U59 THE AVATAR, AND WHAT YOU ARE WEARING (2026-08-26)
-
 Two complaints, one gap. The pack showed what you CARRY and turned
 what you WEAR into twenty-seven 7px circles - so you could not see
 your character at all, and you could not read your kit without
