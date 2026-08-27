@@ -21,7 +21,8 @@ import { selectSong } from './songManager.js';
 import { SongPlayer, AudioSongPlayer } from './songPlayer.js';   // M-EXT: the replacement's player shares the volume law
 import { hasReplacement, replacementBytes } from './musicReplacement.js';   // M-EXT: SoundReplacement.TryImportSong
 import { TrackPlayer } from './enhancedMusic/trackPlayer.js';   // EM2a: Mac's own tracks, streamed
-import { musicGain } from './songPlayer.js';
+import { trackGain } from './songPlayer.js';   // EM2b: the setting alone - no synth trim on a mastered track
+import { onSettingChange } from './settings.js';
 
 export class MusicService {
   constructor() {
@@ -36,6 +37,19 @@ export class MusicService {
     // live boot probe, not by the suite (AUDIT 19).
     this._booted = null;
     this._current = null;
+    // EM2b: the MusicVolume setting is LIVE in fact, not just in tier -
+    // every player this service owns re-levels the moment it is written,
+    // so the slider is heard on the menu theme and mid-song alike.
+    this._unsubscribe = onSettingChange((section, key) => {
+      if (section === 'Controls' && key === 'MusicVolume') this.resyncGain();
+    });
+  }
+
+  /** Re-level whatever is sounding to the MusicVolume setting. */
+  resyncGain() {
+    this.player?.resyncGain?.();
+    this._audio?.resyncGain?.();
+    this._track?.resyncGain?.();
   }
 
   /** The one bootstrap. Safe to call from every host, every entry.
@@ -154,7 +168,7 @@ export class MusicService {
     const ctx = audio.ensureClock();
     if (!ctx) return false;
     this.attachGestureStart();
-    this._track ??= new TrackPlayer(ctx, { gain: musicGain });
+    this._track ??= new TrackPlayer(ctx, { gain: trackGain });
     this.player?.stop();    // the scheduler must not sound underneath
     this._audio?.stop();    // nor a replacement
     this._current = track.id;

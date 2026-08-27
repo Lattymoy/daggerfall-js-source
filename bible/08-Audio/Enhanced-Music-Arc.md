@@ -161,6 +161,43 @@ zero, the refused play left armed; the service needing a clock and no
 archive, every other door fading the track under, main.js asking
 before the menu).
 
+## EM2b (2026-08-27): THE LEVEL, AND THE SETTING THAT MOVES IT - SHIPPED
+
+Mac, on the menu: "the menu music is too low with audio and needs to
+work with the settings option." Two roots.
+
+THE TRIM. The track player took `musicGain()` - MUSIC_GAIN (0.22) times
+the setting - which exists because the FM bank's raw oscillators sum
+hot and the classic songs are mixed under it. A MASTERED track has its
+own headroom (the theme peaks at 0.72), and under the trim it played at
+a ninth of itself: 0.22 x the 0.5 default. `trackGain()` is the setting
+alone, times the record's own gain; the synth keeps its trim. Measured
+on the door's bus: peak 0.055 before, 0.251 after, at the same setting.
+(M-EXT's replacement player, the user's own music packs, still takes
+the trimmed law - deliberately shared at the time; the same argument
+applies to it and it is Mac's call.)
+
+THE SETTING. `Controls/MusicVolume` was LIVE in the registry's tier and
+read once per player - at `_ensureMaster` - and never again, so a theme
+that loops for the whole session had no next occasion to hear the
+slider. `settings.setValue` now PUBLISHES every write (`onSettingChange`,
+a small subscriber set: the section, the key, the string as stored;
+a throwing listener is warned and skipped so a bad listener cannot
+fail a write), and MusicService subscribes: on MusicVolume it re-levels
+all three of its players - the scheduler, the replacement player and
+the track - each with a 50 ms ramp on its master so a slider drag is
+not a zipper. Every writer already goes through setValue (the enhanced
+pane, the classic settings window, the pause window), so nothing else
+had to learn the door; any other LIVE consumer can take it instead of
+polling. Proof: the door probe writes 0.5, 1 and 0.1 through setValue
+and reads the track's gain node at 0.5, 1 and 0.1 - live, untrimmed -
+on desktop and Pixel 5, 24/24. Pins: three more in enhancedMusic.test.js
+(the level law and where the service builds on it; the publish - once,
+the default's string on a drop, unsubscribe, a throwing listener
+skipped, and the service re-levelling exactly its three players on
+exactly that key; each player's resyncGain ramping its master to the
+setting now).
+
 ## The board
 
 1. **EM2 - MAC'S TRACKS FOR THE PLACES.** The player and the score

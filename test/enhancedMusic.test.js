@@ -299,3 +299,77 @@ test('EM2a service: playTrack needs a clock and no archive, pends on refusal, an
     assert.match(src.slice(at, at + 1600), /this\._fadeTrackUnder\(\);/, `${door.trim()} fades the track under`);
   }
 });
+
+// ── EM2b: THE LEVEL, AND THE SETTING THAT MOVES IT ────────────────
+// Mac, on the menu: "the menu music is too low with audio and needs to
+// work with the settings option." Two roots: the track took the FM
+// synth's trim (MUSIC_GAIN 0.22, there because raw oscillators sum hot)
+// on top of the setting - a mastered theme at a ninth of its level -
+// and MusicVolume was LIVE only in tier: read once per player, never
+// again, so a looping theme never heard the slider.
+import { setValue, onSettingChange, _resetForTests } from '../src/systems/settings.js';
+import { musicGain, trackGain, MUSIC_GAIN, SongPlayer, AudioSongPlayer } from '../src/systems/songPlayer.js';
+
+test('EM2b level: a track takes the setting alone; the synth keeps its trim', () => {
+  _resetForTests();
+  setValue('Controls', 'MusicVolume', 0.5);
+  assert.equal(trackGain(), 0.5, 'the setting, straight');
+  assert.equal(musicGain(), MUSIC_GAIN * 0.5, 'the classic songs keep MUSIC_GAIN under the setting');
+  assert.ok(trackGain() / musicGain() > 4, 'the theme is no longer a ninth of itself');
+  assert.match(read('src/systems/music.js'), /new TrackPlayer\(ctx, \{ gain: trackGain \}\)/, 'the service builds the track player on trackGain');
+  _resetForTests();
+});
+
+test('EM2b live: a settings write is published once, and the service re-levels every player', () => {
+  _resetForTests();
+  const seen = [];
+  const off = onSettingChange((sec, key, str) => seen.push(`${sec}/${key}=${str}`));
+  setValue('Controls', 'MusicVolume', 0.8);
+  assert.deepEqual(seen, ['Controls/MusicVolume=0.8']);
+  setValue('Controls', 'MusicVolume', 0.5);   // back to the default: still published, as the default's string
+  assert.equal(seen[1], 'Controls/MusicVolume=0.5');
+  off();
+  setValue('Controls', 'MusicVolume', 0.3);
+  assert.equal(seen.length, 2, 'unsubscribed');
+  // A listener that throws is skipped, and the write still lands.
+  const off2 = onSettingChange(() => { throw new Error('bad listener'); });
+  setValue('Controls', 'MusicVolume', 0.4);
+  assert.equal(trackGain(), 0.4);
+  off2();
+
+  // The service: three players, one setting, one ramp each.
+  const svc = new MusicService();
+  const calls = [];
+  svc.player = { resyncGain: () => calls.push('song') };
+  svc._audio = { resyncGain: () => calls.push('replacement') };
+  svc._track = { resyncGain: () => calls.push('track') };
+  setValue('Controls', 'MusicVolume', 0.6);
+  assert.deepEqual(calls, ['song', 'replacement', 'track']);
+  setValue('Controls', 'SoundVolume', 0.9);
+  assert.equal(calls.length, 3, 'another key does not touch the music');
+  svc._unsubscribe();
+  _resetForTests();
+});
+
+test('EM2b live: each player\'s resyncGain ramps its master to the setting now', () => {
+  _resetForTests();
+  const ctx = fakeCtx();
+  // The scheduler's master is created on _ensureMaster; ramp to musicGain.
+  const sp = new SongPlayer(ctx); sp._ensureMaster();
+  setValue('Controls', 'MusicVolume', 0.7);
+  sp.resyncGain();
+  const last = ctx.log.filter((l) => l[0] === 'gain' && l[1] === 'ramp').pop();
+  assert.ok(Math.abs(last[2] - MUSIC_GAIN * 0.7) < 1e-9, 'the scheduler ramps to MUSIC_GAIN x the setting');
+  assert.ok(last[3] - ctx.currentTime <= 0.06, 'a short ramp, not a zipper');
+  const ap = new AudioSongPlayer(ctx); ap._ensureMaster(); ap.resyncGain();
+  assert.ok(Math.abs(ctx.log.filter((l) => l[0] === 'gain' && l[1] === 'ramp').pop()[2] - MUSIC_GAIN * 0.7) < 1e-9);
+  // The track: the setting times the record's gain, no trim.
+  const tp = new TrackPlayer(ctx, { gain: trackGain, createElement: fakeElement() });
+  return tp.play({ id: 't', file: 'x.mp3', gain: 0.9 }).then(() => {
+    setValue('Controls', 'MusicVolume', 1);
+    tp.resyncGain();
+    const l = ctx.log.filter((x) => x[0] === 'gain' && x[1] === 'ramp').pop();
+    assert.ok(Math.abs(l[2] - 0.9) < 1e-9, 'the track ramps to setting x record gain');
+    _resetForTests();
+  });
+});
