@@ -58,7 +58,7 @@ work queue routed to arcs.
 | X11a: the magic candle's WOBBLE is added in world space (`src/scenes/magicCandle.js`) | MagicCandleBehaviour parents the candle to the player object and jitters its LOCAL position (`startLocalPosition + Random.insideUnitSphere * 0.125`, :47). The port has no transform hierarchy, so the base offset is recomputed from the live facing every frame and the jitter is added in world space. The two differ only by the yaw rotation of a vector shorter than 12cm. The base position itself is exact - 1.4 units forward, `y += height * 0.25` | X11a 2026-08-25 |
 | X11a: DISINTEGRATE kills through the damage door, not a SetHealth sink | `Disintegrate.MagicRound` is one line - `entityBehaviour.Entity.SetHealth(0)` (:52) - and the port has no SetHealth sink: `sinks.hurt` IS the vitals-and-death door every host wires. The kill therefore goes through it, for the target's whole remaining health. That routes it through EnemyEntity.SetHealth's soul-trap intercept (where DFU puts it too) and ADDITIONALLY through MakeEnemyHostileToAttacker, which DFU's SetHealth path does not run. Unobservable: the only entity it could re-hostile is one dying in the same call | X11a 2026-08-25 |
 | X11a: the COMPREHEND LANGUAGES bonus reaches the pacification formula as an ARGUMENT | `CalculateEnemyPacification` reads the live effect off PlayerEffectManager inside itself (FormulaHelper.cs:377-380). The port passes it in, for the same reason `sheathed` is a parameter here and a `WeaponManager.Sheathed` global read there - and for a second reason: reading it inside `combat/formulas.js` would mean importing `systems/effects.js`, and effects -> spellcast -> formulas is the cycle `systems/concealment.js` exists as a leaf to avoid. `scenes/hostCombat.js` supplies it at the ONE seam all three enemy pools share, so there is no fourth-host divergence to have | X11a 2026-08-25 |
-| ~~X11b: Identify REFUSES outside an interior instead of opening anywhere~~ RETIRED THE NEXT LANE (`src/scenes/worldModes.js`) | Identify can be cast anywhere in DFU. This host's three spell-window openers all wrote into `interiorOverlay`, which it draws in INTERIOR mode only - so an outdoor or in-dungeon cast mounted a window nothing drew, ticked or clicked, and the magicka was gone. X11b routed the two PICKERS through a per-mode slot-picker and left Identify refusing, because its window is a TRADE window whose lifecycle was entangled with a MODULE-LEVEL `_identifySpell` latch drained in four separate `interiorOverlay?.done` arms. **X11c 2026-08-25 closed it**: the latch moved onto the commit closure `openTradeWindow` builds per window, so its lifetime is the window's and no slot has to remember it; the four drains and the module state are gone; `openIdentifyWindow` mounts through the same slot-picker as the other two, and the `mode !== 'interior'` refusal with it. The live probe casts Identify in the STREET and drives the window to a completed deal. One residue, ROUTED not swallowed: the STANDALONE dungeon host (`src/scenes/dungeonContext.js`, the `?dungeon` dev route) has no trade window at all - no `NativeTradeWindow`, no trade art - so Identify there still has nowhere to mount. The shipped route is `bootWorld`, which mounts all three. | X11b 2026-08-25, RETIRED X11c 2026-08-25 |
+| ~~X11b: Identify REFUSES outside an interior instead of opening anywhere~~ RETIRED THE NEXT LANE (`src/scenes/worldModes.js`) | Identify can be cast anywhere in DFU. This host's three spell-window openers all wrote into `interiorOverlay`, which it draws in INTERIOR mode only - so an outdoor or in-dungeon cast mounted a window nothing drew, ticked or clicked, and the magicka was gone. X11b routed the two PICKERS through a per-mode slot-picker and left Identify refusing, because its window is a TRADE window whose lifecycle was entangled with a MODULE-LEVEL `_identifySpell` latch drained in four separate `interiorOverlay?.done` arms. **X11c 2026-08-25 closed it**: the latch moved onto the commit closure `openTradeWindow` builds per window, so its lifetime is the window's and no slot has to remember it; the four drains and the module state are gone; `openIdentifyWindow` mounts through the same slot-picker as the other two, and the `mode !== 'interior'` refusal with it. The live probe casts Identify in the STREET and drives the window to a completed deal. ~~One residue, ROUTED not swallowed: the STANDALONE dungeon host (`src/scenes/dungeonContext.js`, the `?dungeon` dev route) has no trade window at all - no `NativeTradeWindow`, no trade art - so Identify there still has nowhere to mount.~~ PR1 (2026-08-27) closed the residue: the host was in fact SILENT there (the absent seams optional-chained past the engine's dispatch), and both `onIdentify`/`onDispelMagic` now refuse out loud in the onTeleport INTERIM idiom - the trade window itself was never owed, DFU having no standalone dungeon scene. The shipped route is `bootWorld`, which mounts all three. | X11b 2026-08-25, RETIRED X11c 2026-08-25 |
 | T2: SOLD GOODS LAND ON THE OPEN SHELF, where DFU simply discards them (`src/scenes/worldModes.js`) | ConfirmTrade's Sell arm ends `remoteItems.Clear()` (:1051) - the goods the merchant just bought cease to exist, and a player who sells a sword by mistake cannot buy it back at any price. The port pushes them onto the shelf the window is already showing, so the sale is reversible at the merchant's own buy price. E3 shipped this deliberately in 2026-08-17 ("proceeds via addGold with sold goods landing on the OPEN shelf (buy-backs work)") and the reasoning is recorded in Home.md's E3 note and UI-Arc.md, but it never reached Ledger A - found while reading ConfirmTrade line by line for the letter-of-credit announcement. It costs nothing in fidelity that a player can observe except that the shelf grows, and shelves restock lazily anyway. | E3 2026-08-17, RECORDED T2 2026-08-25 |
 | T1: the torch's GUTTERING rides RANGE, not intensity (`src/systems/playerTorch.js`) | EnablePlayerTorch cycles an INTENSITY band under condition 3 - `0.85 + cos(guttering) * 0.2`, walked by `Random.Range(-0.02, 0.06)`. This port's point-light channel is a vec4 `[x, y, z, range]` with ONE colour per scene; there is no per-light intensity to put it in. DFU itself animates RANGE for every scene light (DaggerfallLight.AnimateLight, ported verbatim in `world/worldClock.js`), so range IS this port's light-animation channel, and the band is expressed in it - normalised against the steady 1.25 so a healthy torch is exactly its template radius. The visible law survives: the light pulses as the fuel runs out. `PlayerTorchLightScale` stays inert for the opposite reason - it is a 0..1 BRIGHTNESS whose default of 1.0 is a no-op, and mapping a brightness slider onto a radius would be a worse lie than leaving it alone | T1 2026-08-25 |
 | T1: the torch's OFFSET is read as LOCAL, not as the world write DFU makes (`src/systems/playerTorch.js`) | `torchLight.transform.position = new Vector3(-0.3f, 1.2f, 0.2f)` runs ONCE in Start (:52). PlayerTorch is a CHILD of the player and `transform.position` is a WORLD write, so what that line actually fixes is a local offset of `(-0.3, 1.2, 0.2) minus wherever the player happened to be standing when Start ran - and the torch rides that arbitrary offset for the whole session. With the setting OFF the line never runs at all. It is not reproducible and it is plainly not what the numbers mean, so the port reads them as the local offset they describe: a light at the player's left hand, 1.2 up, 0.2 forward, on a YAW-ONLY basis because the player body turns in yaw while the pitch belongs to the camera | T1 2026-08-25 |
@@ -627,15 +627,28 @@ racial override shipped (`systems/lycanthropy.js`, the row above
 narrows in full) and Morph Self's arm rides the ONE cast engine. The
 gated inert figure reads ZERO.
 
-### 4. The probe residue T2 and X11c routed
+### 4. The probe residue T2 and X11c routed - NARROWED (PR1 2026-08-27)
 
-Four rows already sit in section C above and are repeated here only so
-the working list is complete: `tools/shopProbe.mjs` and
-`tools/toneProbe.mjs` are stale against windows U40 and B5-6 replaced;
-`tools/worldWhereIsProbe.mjs` stalls on the classic-start intro box;
-and the standalone `?dungeon` host mounts no trade window, so Identify
-has nowhere to open there. All four are small and none is urgent - the
-shipped route (`bootWorld`) carries all three window seams.
+~~The standalone `?dungeon` host mounts no trade window, so Identify
+has nowhere to open there~~ - PR1 closed the fourth item, and by
+reading it honestly: DFU has NO standalone dungeon scene (it is the
+port's own dev route), so the trade window there was never owed. What
+WAS owed is loudness - the absent `onIdentify`/`onDispelMagic` seams
+optional-chained into SILENCE (Identify refunded and said nothing;
+Dispel Magic spent the cast on nothing and said nothing, the anti-lie
+shape) - and both arms now refuse out loud in the onTeleport INTERIM
+idiom, pinned per-arm in x11b.test.js. The shipped route (`bootWorld`)
+carries all three real windows.
+
+The three PROBE items stay open, DATA-GATED, and here is why rather
+than a silent hold: `tools/shopProbe.mjs` and `tools/toneProbe.mjs`
+are stale against windows U40 and B5-6 replaced, and
+`tools/worldWhereIsProbe.mjs` stalls on the classic-start intro box -
+all three are Playwright drives against REAL game data (they even root
+at the data-bearing checkout), and this repo's own record says probes
+are only verified by RUNNING them (the enhancedScrollProbe took three
+tries, every failure the probe's). A blind rewrite here would ship the
+exact trap; they wait for a session with ARENA2 beside the tree.
 
 **RESTOCKED 2026-08-27, at the end of the SAV1-SAV4 run** (the classic
 `.SAV` row closed whole; the multi-slot row narrowed to its interior
@@ -678,14 +691,16 @@ pane shows the most recent slot only - the "More saves" note at
 store already enumerates. PX-lane work (the modern surface), not a
 DFU-parity row.
 
-### 8. F304 stands - Mac's call
+### 8. ~~F304 stands - Mac's call~~ DECIDED (2026-08-27): leave them
 
-The 36 URL flags (audit table above): leave, gate, or strip from the
-production build. Blocked on a decision, not on work.
+Mac's answer, verbatim: "URL flags are fine, no need." The 36 flags
+stay ungated in the production build; the audit row above records the
+decision. Closed by a decision, not by work - there was never work to
+do.
 
 ## AUDIT 27 (2026-08-27) - state-of-the-tree findings
 
 | Id | What | Status |
 |---|---|---|
 | F301 | **Twelve exported functions nothing calls**, definition excluded, anywhere in src/test/tools/scripts. Five debug getters in `characters/rewrite/body.js` (lastRavagerMuzzles, lastIdolMuzzle, lastBulwarkMuzzle, lastBulwarkAim, lastRig); five test seams whose tests stopped calling them (`textureReplacement._setDecodedForTests`, `hud._resetActiveSpellHud`, `hudLarge._resetLargeHud`, `textureCanvas._resetIconsForTests`, `travelPopUp._setTravelPopUpArtForTests`); two laws (`enchantments.removeHeldSpell`, `itemInfo.getPaintFile`). NIT. Left alone on purpose: several sit in files the AUDIT 26 fix campaign is editing in the other lane, and deleting an export under a running campaign trades a nit for a merge conflict. | OPEN (nit) |
-| F304 | **The shipped build honours 36 URL flags and several are powers** - `?fly` (free camera), `?nofoes` (no monsters), `?tp`, `?timescale`, `?load` - and they work on the live site. Not a bug: DFU ships a console with more, and a single-player game's cheats are the player's business. But the port has never DECIDED it. Options: leave them; gate the powers behind an existing setting; strip them from a production build. | OPEN - **Mac's call** |
+| F304 | **The shipped build honours 36 URL flags and several are powers** - `?fly` (free camera), `?nofoes` (no monsters), `?tp`, `?timescale`, `?load` - and they work on the live site. Not a bug: DFU ships a console with more, and a single-player game's cheats are the player's business. But the port had never DECIDED it. **DECIDED (Mac, 2026-08-27): leave them.** "URL flags are fine, no need" - the flags stay as they are, ungated, in the production build. The question is settled, not deferred; nobody re-opens this row without a new reason | DECIDED - leave |

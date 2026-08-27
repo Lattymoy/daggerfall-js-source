@@ -1278,6 +1278,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       for (const f of gone) questPoolOps.removeFoe(f);
       if (gone.length) hudText.add(`${gone.length} dispelled.`);
     },
+    // PR1: the two window seams this host cannot mount, LOUD (the
+    // onTeleport INTERIM shape). Absent, the engine's dispatch
+    // optional-chained into silence: Identify refunded its cost and
+    // said NOTHING, Dispel Magic spent the cast on nothing and said
+    // NOTHING - the anti-lie law's exact shape. The full trade window
+    // and the bundle picker live on the worldModes host; DFU has no
+    // standalone dungeon scene at all (this is the port's own dev
+    // route), so the shipped bootWorld path carries both windows and
+    // this host says why it cannot.
+    onIdentify: () => hudText.add('You cannot concentrate on that right now. (the Identify window lives in the ?world route)'),
+    onDispelMagic: () => hudText.add('You cannot concentrate on that right now. (the Dispel Magic picker lives in the ?world route)'),
     renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
     now: () => classicMinutesRef.value,   // V2a: MorphSelf's once-a-day clock
     collider,
