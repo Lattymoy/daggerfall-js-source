@@ -66,6 +66,19 @@ async function run(label, opts) {
 
   await page.screenshot({ path: `${shots}/door-${label}.png` });
 
+  // 2b. THE SWITCH ON THE DOOR (U62): the two skins under the brand, the
+  //     one in effect lit and pressed, the other a control, the hint
+  //     under them - and on a phone, a thumb's target.
+  const sw = await page.evaluate(() => {
+    const on = document.querySelector('.brand .skinopt.on'), off = document.querySelector('.brand .skinopt:not(.on)');
+    const hint = document.querySelector('.brand .skinhint');
+    return on && off && hint ? { on: on.textContent, off: off.textContent, pressed: on.getAttribute('aria-pressed'), hint: hint.textContent,
+      h: Math.round(off.getBoundingClientRect().height), sub: !!document.querySelector('.brand .sub') } : null;
+  });
+  check(`${label}: the skin switch sits under the brand, Enhanced lit, Classic a press away`,
+    sw?.on === 'Enhanced' && sw?.off === 'Classic' && sw?.pressed === 'true' && sw?.hint === 'switch anytime' && !sw?.sub, JSON.stringify(sw));
+  if (label === 'phone') check('phone: the switch is a thumb\'s target', sw?.h >= 44, `${sw?.h}px`);
+
   // 3. THE PICK APPEARS WHEN A GAME STARTS, and not one moment before.
   await page.locator('#enhanced-menu .railbtn', { hasText: 'New Game' }).click();
   await page.locator('#enhanced-menu .act.primary', { hasText: 'Begin' }).click();
@@ -89,6 +102,25 @@ await run('phone', { ...devices['Pixel 5'] });
   const picked = await page.waitForSelector('#pick', { timeout: 15000 }).then(() => true, () => false);
   check('classic: gates the data before its menu', picked);
   check('classic: no enhanced menu mounted', (await page.locator('#enhanced-menu').count()) === 0);
+  await ctx.close();
+}
+
+// 5. THE PRESS (U62). Pressing Classic on the door STORES the choice
+//    and reloads with no ?skin= on the URL - onto the classic door,
+//    which gates the data before its menu. A fresh context, so the
+//    stored choice is this context's alone, and it is cleared after.
+{
+  const ctx = await browser.newContext({ viewport: { width: 1400, height: 900 } });
+  const page = await ctx.newPage();
+  await page.goto(`${BASE}/play/`, { waitUntil: 'load' });
+  await page.waitForSelector('#enhanced-menu .railbtn', { timeout: 20000 });
+  await page.locator('.brand .skinopt:not(.on)').click();
+  const picked = await page.waitForSelector('#pick', { timeout: 15000 }).then(() => true, () => false);
+  check('press Classic: the classic door opens, data first', picked && (await page.locator('#enhanced-menu').count()) === 0);
+  check('press Classic: the URL carries no override - the choice is STORED', !new URL(page.url()).searchParams.has('skin'));
+  const stored = await page.evaluate(async () => { const { uiSkin } = await import('/src/systems/uiSkin.js'); return uiSkin(''); });
+  check('press Classic: uiSkin reads classic with no URL at all', stored === 'classic');
+  await page.evaluate(() => localStorage.clear());
   await ctx.close();
 }
 

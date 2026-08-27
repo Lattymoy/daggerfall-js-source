@@ -85,6 +85,44 @@ None of these blocks anything; all are real.
                         will be, because this repo holds no game data.
 
 
+## U62 THE SWITCH ON THE DOOR (2026-08-27, Mac's call)
+
+Mac: "not hide the enhanced version toggle within a settings window and
+instead make it more loud. Enhanced is on by default and I want people
+to know they can easily switch if they want classic."
+
+Since U49 the way between the two skins was a row under Settings >
+Interface on the enhanced side and a footer button on the classic
+settings window - correct, and invisible to anyone who did not go
+looking. Now the word ENHANCED under the brand, which had been a
+label, IS THE CONTROL: the two skins side by side in the brand block's
+own tracked caps, the one in effect in brass and aria-pressed, the
+other a press away, and "switch anytime" under them, because a pair of
+words is not obviously a control until it says so. On a phone the pair
+is 44px tall, as every control on a phone is (U51's rule). It is drawn
+on the DOOR only - the wizard's and the pause's brand blocks keep their
+own subs; a player mid-game switches from Settings as before.
+
+ONE DOOR. The settings row and the brand switch call the same
+`switchSkin(to)`: it stores the choice through uiSkin and reloads with
+the ?skin= override dropped, because the two skins are two hosts and
+there is nothing to hand over in place. The row had carried that logic
+inline; it is the one exported function now, and the pin holds that
+exactly one place drops the override. The classic side is untouched
+(its footer button was always the way back), and the site's "Classic
+or enhanced?" line says where the switch is.
+
+Pins: uiSkin.test.js's "way back" test grew the door's half - switchSkin
+exported and used by the row, the switch under the brand and the bare
+word gone, both skins always shown, the one in effect pressed and
+inert, the other switching, the hint present, brass in the style, 44px
+on a phone; 1 mutant dead. Live: enhancedMenuProbe 22/22 - the switch
+under the brand on desktop and Pixel 5 with Enhanced lit and the hint
+present, the phone target 44px, and THE PRESS in a fresh context:
+Classic opens the classic door with its data pick first, the URL
+carries no override, and uiSkin('') reads classic - the choice is
+stored, not a page-load answer.
+
 ## U61 THE OVERWORLD: THE TRAVEL MAP IS THE WORLD ITSELF (2026-08-26)
 
 Mac's call, and a re-conception rather than a re-skin: the enhanced

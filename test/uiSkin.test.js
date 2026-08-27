@@ -94,14 +94,30 @@ test('the CLASSIC settings screen carries a way back to enhanced', () => {
   assert.match(src, /searchParams\.delete\('skin'\)/);
 });
 
-test('the ENHANCED menu carries a way back to classic', () => {
+test('the ENHANCED menu carries a way back to classic - on the door itself (U62), and in settings', () => {
   // the screen moved to src/ui/ when the game started mounting it;
   // src/tools/enhancedMenu.js is the prototype HOST now and carries
   // no screen of its own
   const src = readFileSync(new URL('../src/ui/enhancedMenu.js', import.meta.url), 'utf8');
   assert.match(src, /function skinRow\(\)/);
-  assert.match(src, /setUiSkin\(otherSkin\(uiSkin\(\)\)\)/);
+  // U62 (Mac: "make it more loud"): ONE door for every control that
+  // switches - switchSkin stores and reloads without the override -
+  // and the brand block draws the switch where the word ENHANCED sat.
+  assert.match(src, /export function switchSkin\(to = otherSkin\(uiSkin\(\)\)\) \{/);
+  assert.match(src, /setUiSkin\(to\);/);
   assert.match(src, /searchParams\.delete\('skin'\)/);
+  assert.equal((src.match(/searchParams\.delete\('skin'\)/g) ?? []).length, 1, 'one place drops the override: switchSkin');
+  assert.match(src, /b\.onclick = \(\) => switchSkin\(\);/, 'the settings row uses it');
+  assert.match(src, /export function skinSwitch\(\) \{/);
+  assert.match(src, /brand\.append\(skinSwitch\(\)\);/, 'the switch sits under the brand');
+  assert.doesNotMatch(src, /brand\.append\(el\('div', 'sub', 'Enhanced'\)\)/, 'the word alone is gone - it is the control now');
+  assert.match(src, /for \(const skin of \['enhanced', 'classic'\]\)/, 'both skins are shown, always');
+  assert.match(src, /b\.setAttribute\('aria-pressed', String\(skin === current\)\);/, 'the one in effect is pressed');
+  assert.match(src, /if \(skin !== current\) switchSkin\(skin\);/, 'pressing the other switches; the lit one is inert');
+  assert.match(src, /el\('div', 'skinhint', 'switch anytime'\)/, 'and it says it can be switched');
+  const css = readFileSync(new URL('../src/ui/enhancedStyle.js', import.meta.url), 'utf8');
+  assert.match(css, /\.skinopt\.on \{ color: var\(--brass\); border-color: var\(--brass\)/, 'the one in effect is brass');
+  assert.match(css, /\.skinopt \{ min-height: 44px; padding: 8px 14px; \}/, 'a thumb\'s target on a phone');
 });
 
 // ── THE FOOTER HOLDS FOUR BUTTONS AT EVERY WIDTH ─────────────────

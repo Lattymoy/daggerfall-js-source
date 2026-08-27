@@ -119,6 +119,21 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   text-transform: uppercase; margin-top: 9px;
 }
 
+/* ── THE SWITCH ON THE DOOR ──────────────────────────────────
+   The two skins under the brand, the one in effect in brass, the
+   other a press away; "switch anytime" under them, because a pair of
+   words is not obviously a control until it says so. Same tracked caps
+   as the sub it replaced, so the brand block keeps its shape. */
+.skinswitch { display: flex; flex-wrap: wrap; align-items: center; gap: 1px; margin-top: 9px; }
+.skinopt {
+  font-family: var(--data); font-size: 11px; letter-spacing: 0.26em; text-transform: uppercase;
+  color: var(--dim); background: transparent; border: 1px solid var(--iron);
+  padding: 5px 10px 6px; min-height: 28px; cursor: pointer;
+}
+.skinopt:hover { color: var(--bone); }
+.skinopt.on { color: var(--brass); border-color: var(--brass); cursor: default; }
+.skinhint { flex-basis: 100%; color: var(--dim); font-size: 10px; letter-spacing: 0.12em; margin-top: 5px; }
+
 /* ── RAIL ──────────────────────────────────────────────────
    Six destinations, one press each. Classic makes you leave the
    menu to reach settings and gives mods nowhere to live at all.
@@ -315,6 +330,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   .side { display: contents; }
   .brand { padding: 22px 20px 16px; background: var(--ink); }
   .brand h1 { font-size: 27px; }
+  .skinopt { min-height: 44px; padding: 8px 14px; }   /* a thumb's target, as every control on a phone */
   .rail {
     order: 3; display: flex; gap: 2px; padding: 0 12px 12px;
     padding-bottom: max(12px, env(safe-area-inset-bottom));
