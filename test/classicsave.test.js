@@ -882,3 +882,483 @@ test('corpus: every real classic save parses - version, character, savevars tabl
     }
   }
 });
+
+// ═══════════════════════════ SAV2: the import core ═══════════════════════════
+
+import {
+  classicPitchDegrees, classicYawDegrees, convertClassicClimateWeathers,
+  classicGlobalVars, classicBankAccounts, classicLycanthropyType,
+  classicItemFromRecord, classicSpellsFromContainer, classicItemsAndSpells,
+  classicGuildMemberships, classicFactionRep, classicRegionData,
+  restoreOldClassSpecials, classicSaveToSnapshot,
+} from '../src/systems/classicSave.js';
+import { SAVE_VERSION } from '../src/systems/save.js';
+import { EQUIP_SLOTS } from '../src/systems/equip.js';
+import { GUILD_GROUPS } from '../src/formats/factionFile.js';
+
+// A parameterized 107-byte item record data block.
+function itemData({ name = 'Thing', group = 3, index = 4, value = 100, flags = 0,
+  currentCondition = 300, maxCondition = 400, typeDependentData = 0,
+  image1 = 0x1234, image2 = 0x0304, material = 0, color = 0, weight = 400,
+  enchantmentPoints = 0, message = 0, magic = null } = {}) {
+  const w = new Writer(107);
+  w.str(0, name);
+  w.u16(32, group); w.u16(34, index); w.u32(36, value);
+  w.u16(42, flags); w.u16(44, currentCondition); w.u16(46, maxCondition);
+  w.u8(49, typeDependentData);
+  w.u16(50, image1); w.u16(52, image2); w.u16(54, material); w.u8(56, color);
+  w.u32(57, weight); w.u16(61, enchantmentPoints); w.u16(63, message);
+  for (let i = 0; i < 10; i++) {
+    const m = magic?.[i] ?? { type: 0, param: 0 };
+    w.i16(67 + i * 4, m.type); w.i16(69 + i * 4, m.param);
+  }
+  return w.bytes;
+}
+
+function recordElement(type, recordId, parentRecordId, data = new Uint8Array(0), rootOpts = {}) {
+  const body = concat(buildRecordRoot({ type, recordId, parentRecordId, ...rootOpts }), data);
+  return buildElement(body.length, body);
+}
+
+// The import tree: a character with bag + wagon containers, a
+// spellbook with one spell, a worn sword, arrows, a hacked item, a
+// conjured item, a filled soul gem, guild + old-guild rows, an
+// OldClass record, a bank record and the position record.
+function buildImportTree({ charOpts = {}, diseaseId = null, guildTime = 1440 * 10,
+  bankDataLength = 40, oldClassFlags = null, charName = null } = {}) {
+  const header = new Writer(SAVE_TREE_HEADER_LENGTH);
+  header.i32(0, SAVE_TREE_VERSION);
+  header.i32(4, 0); header.i32(8, 0); header.i32(12, 0);
+  header.u16(16, 0x123);
+  header.u8(18, ENVIRONMENTS.Building);   // the import IGNORES this - always exterior
+
+  const charData = buildCharacterData(charOpts);
+  if (charName != null) {
+    charData.fill(0, 0, 32);
+    for (let i = 0; i < charName.length; i++) charData[i] = charName.charCodeAt(i);
+  }
+  // Worn: the sword (record 21) alone.
+  new DataView(charData.buffer).setUint32(0x16f, 21, true);
+
+  const guildRow = new Writer(13);
+  guildRow.u8(0, 3); guildRow.u8(1, 1); guildRow.u8(2, 9); guildRow.u16(3, 368);
+  guildRow.u32(5, guildTime); guildRow.u16(11, 0);
+  const oldGuildRow = new Writer(13);
+  oldGuildRow.u8(0, 5); oldGuildRow.u8(2, 9); oldGuildRow.u16(3, 400);
+  oldGuildRow.u32(5, guildTime);
+
+  const oldClass = buildClassRecord();
+  if (oldClassFlags) {
+    oldClass[0] = oldClassFlags.resistanceFlags;
+    oldClass[1] = oldClassFlags.immunityFlags;
+    oldClass[2] = oldClassFlags.lowToleranceFlags;
+    oldClass[3] = oldClassFlags.criticalWeaknessFlags;
+    new DataView(oldClass.buffer).setUint16(4, oldClassFlags.abilityFlagsAndSpellPointsBitfield, true);
+  }
+
+  const bank = new Writer(bankDataLength);
+  bank.i32(0, 1000); bank.i32(4, 50); bank.u32(8, 777); bank.u8(12, 1);
+  bank.i32(13, 2000); bank.i32(17, 0); bank.u32(21, 0); bank.u8(25, 0);
+  bank.i32(26, 3000); bank.i32(30, 60); bank.u32(34, 888); bank.u8(38, 0);
+
+  const parts = [
+    header.bytes,
+    Uint8Array.of(0, 0, 0, 0),                                     // empty buildings block
+    recordElement(RECORD_TYPES.Character, 2, 0, charData),
+    recordElement(RECORD_TYPES.Container, 10, 2, Uint8Array.of(0), { spriteIndex: 0 }),
+    recordElement(RECORD_TYPES.Container, 11, 2, Uint8Array.of(0), { spriteIndex: 4 }),
+    // The spellbook FIRST, so it is the container's children[0] -
+    // ImportSpells reads children[0] REGARDLESS, DFU's own shape.
+    recordElement(RECORD_TYPES.Item, 20, 10, itemData({ name: 'Spellbook', group: 27, index: 0 })),
+    recordElement(RECORD_TYPES.Spell, 30, 20, buildSpellData()),
+    recordElement(RECORD_TYPES.Item, 21, 10, itemData({ name: 'My Sword', group: 3, index: 4, material: 2, value: 999 })),
+    recordElement(RECORD_TYPES.Item, 22, 10, itemData({ name: 'Arrows', group: 3, index: 18, typeDependentData: 24 })),
+    recordElement(RECORD_TYPES.Item, 23, 10, itemData({ name: 'Hacked', image1: 0 })),
+    recordElement(RECORD_TYPES.Item, 24, 10, itemData({ name: 'Conjured', group: 14, index: 2, flags: 0x1000 }), { time: 5555 }),
+    recordElement(RECORD_TYPES.Item, 25, 10, itemData({ name: 'Soul gem', group: 27, index: 1 })),
+    recordElement(RECORD_TYPES.TrappedSoul, 26, 25, Uint8Array.of(150), { spriteIndex: 9 }),
+    recordElement(RECORD_TYPES.Item, 27, 11, itemData({ name: 'Wagon thing', group: 14, index: 1 })),
+    recordElement(RECORD_TYPES.GuildMembership, 40, 2, guildRow.bytes),
+    recordElement(RECORD_TYPES.OldGuild, 41, 2, oldGuildRow.bytes),
+    recordElement(RECORD_TYPES.OldClass, 43, 2, oldClass),
+    recordElement(RECORD_TYPES.BankAccount, 44, 0, bank.bytes),
+    recordElement(RECORD_TYPES.CharacterPositionRecord, 45, 0, new Uint8Array(0), {}),
+  ];
+  if (diseaseId != null) {
+    const dz = new Writer(47);
+    dz.u8(0, diseaseId);
+    parts.push(recordElement(RECORD_TYPES.DiseaseOrPoison, 46, 2, dz.bytes));
+  }
+  parts.push(Uint8Array.of(0, 0, 0, 0));
+  const tree = new SaveTree();
+  tree.load(concat(...parts));
+  return tree;
+}
+
+const FAKE_FACTIONS = new Map([
+  [368, { id: 368, name: 'The Fighters Guild', type: 2, ggroup: GUILD_GROUPS.FightersGuild, rep: 0, flags: 3, power: 60, children: [] }],
+  [400, { id: 400, name: 'The Mages Guild', type: 2, ggroup: GUILD_GROUPS.MagesGuild, rep: 5, flags: 1, power: 70, children: [] }],
+]);
+
+function importSaveGames(treeOpts = {}) {
+  const tree = buildImportTree(treeOpts);
+  const vars = new SaveVars();
+  const varsBytes = buildSaveVarsFile();
+  // The import's global vars must be classic-legal 0/1 (the general
+  // savevars fixture uses a recognizable byte pattern instead).
+  for (let i = 0; i < 64; i++) varsBytes[0x34f + i] = i % 2;
+  vars.load(varsBytes);
+  return {
+    saveTree: tree, saveVars: vars, mapSave: null,
+    bioFile: { lines: ['a scrappy urchin', ''] }, saveName: 'My Save',
+  };
+}
+
+test('SAV2: the classic look conversions - +-256 pitch is +-45, 2048 yaw is 360', () => {
+  assert.equal(classicPitchDegrees(256), 45);
+  assert.equal(classicPitchDegrees(-256), -45);
+  assert.equal(classicPitchDegrees(0), 0);
+  assert.equal(classicYawDegrees(1024), 180);
+  assert.equal(classicYawDegrees(2048), 360);
+  assert.equal(classicYawDegrees(0), 0);
+});
+
+test('SAV2: the weather import masks 0x80 and swaps thunder/snow 5<->6', () => {
+  assert.deepEqual(
+    convertClassicClimateWeathers(Uint8Array.of(0x85, 5, 6, 3, 0x80, 2)),
+    Uint8Array.of(6, 6, 5, 3, 0, 2));
+});
+
+test('SAV2: global vars are strictly 0/1 booleans, anything else throws', () => {
+  const vars = { globalVars: Uint8Array.of(0, 1, 1, 0) };
+  assert.deepEqual(classicGlobalVars(vars), [[0, false], [1, true], [2, true], [3, false]]);
+  assert.throws(() => classicGlobalVars({ globalVars: Uint8Array.of(0, 2) }), /unexpected global variable/);
+});
+
+test('SAV2: bank rows read 13 bytes each and the guard DROPS a row ending exactly at the end', () => {
+  const data = new Writer(40);
+  data.i32(0, 1000); data.i32(4, 50); data.u32(8, 777); data.u8(12, 1);
+  data.i32(13, 2000);
+  data.i32(26, 3000); data.u8(38, 1);
+  const record = { recordType: RECORD_TYPES.BankAccount, recordData: data.bytes };
+  const accounts = classicBankAccounts(record, 62);
+  assert.equal(accounts.length, 62);
+  assert.deepEqual(accounts[0], { regionIndex: 0, accountGold: 1000, loanTotal: 50, loanDueDate: 777, hasDefaulted: true });
+  assert.deepEqual(accounts[1], { regionIndex: 1, accountGold: 2000, loanTotal: 0, loanDueDate: 0, hasDefaulted: false });
+  assert.equal(accounts[2].accountGold, 3000);
+  assert.equal(accounts[3].accountGold, 0);
+
+  // 39 bytes = exactly three rows, and `position + 13 < length` never
+  // admits the third: DFU's own off-by-one, preserved.
+  const short = { recordType: RECORD_TYPES.BankAccount, recordData: data.bytes.subarray(0, 39) };
+  const clipped = classicBankAccounts(short, 62);
+  assert.equal(clipped[1].accountGold, 2000);
+  assert.equal(clipped[2].accountGold, 0, 'the last full row is dropped, verbatim');
+
+  // No record / wrong type = fresh accounts.
+  assert.equal(classicBankAccounts(null, 62)[0].accountGold, 0);
+});
+
+test('SAV2: item conversion - template mapping, arrows stack, enchantment discard', () => {
+  const sword = classicItemFromRecord({ parsedData: {
+    name: 'My Sword', group: 3, index: 4, value: 999, flags: 0,
+    currentCondition: 300, maxCondition: 400, typeDependentData: 0,
+    image1: 0x1234, material: 2, color: 0, enchantmentPoints: 0, message: 0,
+    magic: Array.from({ length: 10 }, () => ({ type: 0, param: 0 })),
+  } });
+  assert.equal(sword.group, 'Weapons');
+  assert.equal(sword.templateIndex, 117);              // Weapons[4]
+  assert.equal(sword.material, 2);
+  assert.equal(sword.value, 999);
+  assert.equal(sword.stackCount, 1);
+  assert.equal(sword.enchantments, undefined, 'an all-None magic array is discarded');
+
+  const arrows = classicItemFromRecord({ parsedData: {
+    name: 'Arrows', group: 3, index: 18, value: 1, flags: 0,
+    currentCondition: 0, maxCondition: 0, typeDependentData: 24,
+    image1: 0x1234, material: 0, color: 0, enchantmentPoints: 0, message: 0, magic: [],
+  } });
+  assert.equal(arrows.stackCount, 24, 'arrow typeDependentData is the stack');
+
+  const magic = classicItemFromRecord({ parsedData: {
+    name: 'Ring', group: 25, index: 0, value: 5000, flags: 0x20,
+    currentCondition: 1, maxCondition: 1, typeDependentData: 0,
+    image1: 0x1234, material: 0, color: 0, enchantmentPoints: 500, message: 0,
+    magic: [{ type: 24, param: 7 }, { type: -1, param: -1 }],
+  } });
+  assert.deepEqual(magic.enchantments, [{ type: 24, param: 7 }, { type: -1, param: -1 }]);
+});
+
+test('SAV2: items and spells - discard law, wagon split, equip, soul, conjured time, gold', () => {
+  const tree = buildImportTree();
+  const spellsByIndex = new Map([[77, { name: 'Test Spell' }]]);
+  const { items, wagonItems, spells } = classicItemsAndSpells(tree, { spellsByIndex });
+
+  const names = items.map((i) => i.name);
+  assert.ok(!names.includes('Hacked'), 'image1 == 0 is discarded');
+  assert.ok(names.includes('Spellbook'));
+  assert.deepEqual(wagonItems.map((i) => i.name), ['Wagon thing']);
+
+  const sword = items.find((i) => i.name === 'My Sword');
+  assert.equal(sword.equipSlot, EQUIP_SLOTS.RightHand, 'the worn sword lands in the hand');
+  const book = items.find((i) => i.name === 'Spellbook');
+  assert.equal(book.equipSlot, undefined);
+
+  const soulGem = items.find((i) => i.name === 'Soul gem');
+  assert.equal(soulGem.trappedSoulType, 9, 'the soul rides the child root SpriteIndex');
+
+  const conjured = items.find((i) => i.name === 'Conjured');
+  assert.equal(conjured.timeForItemToDisappear, 5555, 'flag 0x1000 takes the root Time');
+
+  const gold = items.find((i) => i.group === 'Currency');
+  assert.equal(gold.stackCount, 100000, 'physicalGold mints the one gold stack');
+
+  // The stock spell matched by index AND name travels as its index.
+  assert.deepEqual(spells, [77]);
+});
+
+test('SAV2: a renamed classic spell rides whole as a made spell', () => {
+  const container = { children: [{ children: [
+    { parsedData: { ...JSON.parse(JSON.stringify({ effects: [{ type: 1, subType: 2 }], element: 0, rangeType: 0, cost: 5, name: 'My Zap', icon: 1, index: 77 })) } },
+  ] }] };
+  const spellsByIndex = new Map([[77, { name: 'Test Spell' }]]);
+  const spells = classicSpellsFromContainer(container, spellsByIndex);
+  assert.equal(spells.length, 1);
+  assert.equal(spells[0].custom, true);
+  assert.equal(spells[0].name, 'My Zap');
+
+  // No index match at all - also a made spell.
+  const unknown = classicSpellsFromContainer(container, new Map());
+  assert.equal(unknown[0].custom, true);
+});
+
+test('SAV2: guild memberships - group resolution, day conversion, the vampire book flip', () => {
+  const tree = buildImportTree({ guildTime: 1440 * 123 });
+  const mortalStore = classicGuildMemberships(tree, FAKE_FACTIONS, false);
+  const fg = mortalStore.mortal[GUILD_GROUPS.FightersGuild];
+  assert.ok(fg, 'the live membership lands in the mortal book');
+  assert.equal(fg.guild, 'The Fighters Guild');
+  assert.equal(fg.rank, 3);
+  // 123 classic days from the epoch -> daySinceZero through the one
+  // date home (epoch 3E405's own day count rides the conversion).
+  assert.equal(typeof fg.lastRankChange, 'number');
+  const mg = mortalStore.vampire[GUILD_GROUPS.MagesGuild];
+  assert.ok(mg, 'the OldGuild membership lands in the OTHER book');
+  assert.equal(mg.rank, 5);
+
+  const vampStore = classicGuildMemberships(tree, FAKE_FACTIONS, true);
+  assert.ok(vampStore.vampire[GUILD_GROUPS.FightersGuild], 'a vampire keeps the live book on the vampire side');
+  assert.ok(vampStore.mortal[GUILD_GROUPS.MagesGuild]);
+});
+
+test('SAV2: the faction merge copies ONLY the live reputation', () => {
+  const store = { dict: new Map([
+    [368, { id: 368, rep: 0, flags: 3, power: 60 }],
+    [400, { id: 400, rep: 5, flags: 1, power: 70 }],
+    [999, { id: 999, rep: 9, flags: 0, power: 10 }],
+  ]) };
+  const saveVars = { factions: [
+    { id: 368, rep: -42, flags: 0x7777, power: 1 },     // flags/power must NOT copy
+    { id: 12345, rep: 50 },                             // unknown id ignored
+  ] };
+  assert.deepEqual(classicFactionRep(saveVars, store), {
+    ids: [368, 400, 999],
+    rep: [-42, 5, 9],
+    flags: [3, 1, 0],
+    power: [60, 70, 10],
+  });
+  assert.equal(classicFactionRep(saveVars, null), null);
+});
+
+test('SAV2: the region table fans out to legalRep, prices and the condition snapshot', () => {
+  const vars = new SaveVars();
+  vars.load(buildSaveVarsFile());
+  const { legalRep, regionPrices, regionConditions } = classicRegionData(vars);
+  assert.equal(legalRep[0], -12);
+  assert.equal(legalRep[61], 99);
+  assert.equal(legalRep[5], undefined, 'a zero rep stays unwritten');
+  assert.equal(regionPrices[0], 1024);
+  assert.equal(regionConditions.length, 62);
+  assert.deepEqual(regionConditions[0], {
+    v: Array.from({ length: 29 }, (_, j) => j + 1),
+    f: Array.from({ length: 29 }, (_, j) => (j % 2 === 1 ? 1 : 0)).join(''),
+    g: Array.from({ length: 14 }, (_, j) => (j % 3 === 0 ? 1 : 0)).join(''),
+    p: 7, s: 9, t: 0x1234,
+  });
+});
+
+test('SAV2: RestoreOldClassSpecials copies the sun/holy and tolerance bits back', () => {
+  const tree = buildImportTree({ oldClassFlags: {
+    resistanceFlags: 0, immunityFlags: 0, lowToleranceFlags: 0,
+    criticalWeaknessFlags: 0, abilityFlagsAndSpellPointsBitfield: 0,
+  } });
+  const career = {
+    abilityFlagsAndSpellPointsBitfield: 0xffff,
+    resistanceFlags: 0xff, immunityFlags: 0xff,
+    lowToleranceFlags: 0xff, criticalWeaknessFlags: 0xff,
+  };
+  assert.equal(restoreOldClassSpecials(tree, career, TRANSFORMED_RACES.Vampire, LYCANTHROPY_TYPES.None), true);
+  assert.equal(career.abilityFlagsAndSpellPointsBitfield, 0xffff & ~48, 'sunDamage(16) + holyDamage(32) restored');
+  assert.equal(career.resistanceFlags, 0xff & ~65, 'Paralysis(1) + Disease(64) bits restored');
+  assert.equal(career.criticalWeaknessFlags, 0xff & ~65);
+
+  // The lycanthrope arm touches Disease alone.
+  const career2 = { ...career, resistanceFlags: 0xff, abilityFlagsAndSpellPointsBitfield: 0xffff };
+  assert.equal(restoreOldClassSpecials(tree, career2, TRANSFORMED_RACES.None, LYCANTHROPY_TYPES.Werewolf), true);
+  assert.equal(career2.resistanceFlags, 0xff & ~64);
+  assert.equal(career2.abilityFlagsAndSpellPointsBitfield, 0xffff, 'the ability bits stay');
+});
+
+test('SAV2: lycanthropy detection reads 101/102 and diseases import as nothing', () => {
+  assert.equal(classicLycanthropyType(buildImportTree()), LYCANTHROPY_TYPES.None);
+  assert.equal(classicLycanthropyType(buildImportTree({ diseaseId: 101 })), LYCANTHROPY_TYPES.Werewolf);
+  assert.equal(classicLycanthropyType(buildImportTree({ diseaseId: 102 })), LYCANTHROPY_TYPES.Wereboar);
+  assert.equal(classicLycanthropyType(buildImportTree({ diseaseId: 3 })), LYCANTHROPY_TYPES.None);
+});
+
+test('SAV2: classicSaveToSnapshot - the whole envelope, at SAVE_VERSION', () => {
+  const games = importSaveGames({ charName: 'Alaric  ' });
+  const spellsByIndex = new Map([[77, { name: 'Test Spell' }]]);
+  const bundle = classicSaveToSnapshot(games, {
+    spellsByIndex,
+    factionStore: { dict: FAKE_FACTIONS },
+  });
+  const snap = bundle.snap;
+
+  assert.equal(snap.v, SAVE_VERSION);
+  assert.equal(snap.classicMinutes, 987654321, 'the clock IS classic minutes');
+  assert.equal(snap.name, 'Alaric', 'the Trim law');
+  assert.equal(snap.career.name, 'TestClass');
+  assert.equal(snap.gender, 'female');
+  assert.equal(snap.race, 'Redguard');
+  assert.equal(snap.raceId, 2);
+  assert.equal(snap.careerIndex, -1, 'the career rides whole');
+  assert.equal(snap.level, 13);
+  assert.equal(snap.maxHealth, 77, 'BASEhealth, the ToCharacterDocument law');
+  assert.equal(snap.health, 55);
+  assert.equal(snap.magicka, 25);
+  assert.equal(snap.fatigue, 800);
+  assert.equal(snap.currentBreath, 42);
+  assert.deepEqual(snap.stats, {
+    strength: 51, intelligence: 52, willpower: 53, agility: 54,
+    endurance: 55, personality: 56, speed: 57, luck: 58,
+  });
+  assert.equal(snap.skills.length, 35);
+  assert.equal(snap.chargenDone, true);
+
+  // SetCurrentLevelUpSkillSum over the imported skills.
+  assert.equal(snap.currentLevelUpSkillSum, levelUpSkillSumProbe(snap.career, snap.skills));
+
+  assert.equal(snap.biographyResistDiseaseMod, 1);
+  assert.equal(snap.biographyFatigueMod, 5);
+  assert.equal(snap.biographyReactionMod, -2);
+  assert.equal(snap.lastSkillCheckTime, 13579);
+  assert.equal(snap.timeOfLastSkillTraining, 666666);
+
+  assert.deepEqual(snap.sGroupReputations.slice(0, 5), [10, -20, 30, -40, 50]);
+  assert.equal(snap.sGroupReputations.length, 11);
+  assert.equal(snap.crimeCommitted, 5);
+  assert.equal(snap.legalRep[0], -12);
+  assert.equal(snap.regionPrices[0], 1024);
+  assert.equal(snap.regionConditions.length, 62);
+
+  assert.equal(snap.bankAccounts[0].accountGold, 1000);
+  assert.equal(snap.ownedShip, 0, 'the small ship');
+  assert.deepEqual(snap.spells, [77]);
+  assert.ok(snap.items.some((i) => i.group === 'Currency'));
+  assert.deepEqual(snap.backStory, ['a scrappy urchin', '']);
+  // The savevars fixture's faction 368 matches the fake dict - its
+  // LIVE rep (-3) merges in; 400 has no savevars row and keeps the
+  // store's own rep (the Merge law end to end).
+  assert.deepEqual(snap.factionRep.rep, [-3, 5]);
+
+  // The pose: converted look, classic weaponDrawn.
+  assert.equal(snap.pose.weaponDrawn, true);
+  assert.equal(snap.pose.pitch, classicPitchDegrees(-100));
+  assert.equal(snap.pose.yaw, classicYawDegrees(200));
+  assert.equal(snap.pose.crouching, false);
+
+  // The bundle's host-frame half.
+  assert.deepEqual(bundle.position, { worldX: 111, worldY: -222, worldZ: 333 });
+  assert.equal(bundle.environment, ENVIRONMENTS.Building, 'reported, though the import lands exterior');
+  assert.deepEqual(bundle.climateWeathers, Uint8Array.of(0, 1, 2, 3, 4, 6), 'the 5->6 swap on zone 5');
+  assert.equal(bundle.globalVars.length, 64);
+  assert.equal(bundle.saveName, 'My Save');
+  assert.equal(bundle.classicTransformedRace, TRANSFORMED_RACES.None);
+});
+
+// The advancement law re-derived locally so a drifted import breaks
+// the pin (levelUpSkillSum's own body, over a bare career + skills).
+function levelUpSkillSumProbe(career, skills) {
+  let sum = 0;
+  for (const id of career.primarySkills) sum += skills[id];
+  let lowMaj = Infinity;
+  for (const id of career.majorSkills) { sum += skills[id]; if (skills[id] < lowMaj) lowMaj = skills[id]; }
+  let hiMin = -Infinity;
+  for (const id of career.minorSkills) if (skills[id] > hiMin) hiMin = skills[id];
+  return sum - lowMaj + hiMin;
+}
+
+test('SAV2: a vampire import strips, curses, and flips the guild books', () => {
+  const games = importSaveGames({ charOpts: { race: 8, race2: 1, vampireClan: VAMPIRE_CLANS.Anthotis } });
+  const bundle = classicSaveToSnapshot(games, { factionStore: { dict: FAKE_FACTIONS } });
+  const snap = bundle.snap;
+
+  assert.equal(bundle.classicTransformedRace, TRANSFORMED_RACES.Vampire);
+  assert.equal(bundle.vampireClan, VAMPIRE_CLANS.Anthotis);
+  assert.equal(snap.raceId, 2, 'race2 + 1 restored');
+  // The Anthotis strip reached the envelope's stats.
+  assert.equal(snap.stats.strength, 31);
+  assert.equal(snap.stats.intelligence, 32);
+  // The curse rides activeEffects with its clan.
+  const curse = snap.activeEffects.find((a) => a.kind === 'racialOverride');
+  assert.ok(curse, 'the vampirism curse re-applies through the effect system');
+  assert.equal(curse.racial, 'vampirism');
+  assert.equal(curse.clan, VAMPIRE_CLANS.Anthotis);
+  // The live guild book sits on the vampire side.
+  assert.ok(snap.guildMemberships.vampire[GUILD_GROUPS.FightersGuild]);
+  assert.ok(snap.guildMemberships.mortal[GUILD_GROUPS.MagesGuild]);
+});
+
+test('SAV2: a werewolf-infected import carries the strip and the lycanthropy curse', () => {
+  const games = importSaveGames({ diseaseId: 101 });
+  const bundle = classicSaveToSnapshot(games, { factionStore: { dict: FAKE_FACTIONS } });
+  assert.equal(bundle.lycanthropyType, LYCANTHROPY_TYPES.Werewolf);
+  // The stripLycanthropyType arm strips even an untransformed carrier.
+  assert.equal(bundle.snap.stats.strength, 11);
+  const curse = bundle.snap.activeEffects.find((a) => a.kind === 'racialOverride');
+  assert.ok(curse, 'the lycanthropy curse re-applies');
+});
+
+test('SAV2: no character record throws, as the C# does', () => {
+  const header = new Writer(SAVE_TREE_HEADER_LENGTH);
+  header.i32(0, SAVE_TREE_VERSION);
+  const tree = new SaveTree();
+  tree.load(concat(header.bytes, Uint8Array.of(0, 0, 0, 0), Uint8Array.of(0, 0, 0, 0)));
+  const vars = new SaveVars();
+  vars.load(buildSaveVarsFile());
+  assert.throws(
+    () => classicSaveToSnapshot({ saveTree: tree, saveVars: vars, bioFile: null, saveName: '' }),
+    /CharacterRecord not found/);
+});
+
+test('SAV2: MAPSAVE discovery lands in the envelope through the resolver seam', () => {
+  const games = importSaveGames();
+  games.mapSave = new BsaFile(buildMapSave());
+  const counts = new Array(62).fill(8);
+  const bundle = classicSaveToSnapshot(games, {
+    factionStore: { dict: FAKE_FACTIONS },
+    regionLocationCounts: counts,
+    resolveLocation: (regionIndex, locationIndex) => ({
+      mapId: (regionIndex << 8) | locationIndex,
+      regionName: `R${regionIndex}`, locationName: `L${locationIndex}`,
+    }),
+  });
+  assert.deepEqual(bundle.snap.discovery, {
+    buildings: {},
+    locations: {
+      [(5 << 8) | 2]: { regionName: 'R5', locationName: 'L2' },
+      [(5 << 8) | 7]: { regionName: 'R5', locationName: 'L7' },
+    },
+  });
+});

@@ -330,7 +330,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/chargen.js:151` - spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // INTERIM policy (the U2b flow replaces this path)
 - `src/systems/chargenSession.js:7` - played the pre-chargen INTERIM entity (flat skills 30, maxHealth
 - `src/systems/chargenSession.js:310` - *    - scenes/dungeonContext.js  FLAGGED: it holds the RAW flow as its
-- `src/systems/classicSave.js:9` - FLAGGED: no consumer yet. The load-classic-game window
+- `src/systems/classicSave.js:20` - FLAGGED: no window mounts this yet. The load-classic-game entry
 - `src/systems/controlsConfig.js:8` - FLAGGED with I1's combo flag: GetDuplicates' second and third
 - `src/systems/court.js:28` - FLAGGED loud: guild rescues (Thieves/Dark Brotherhood) pend the
 - `src/systems/court.js:255` - *  daysInPrison } (guild rescues FLAGGED). */
