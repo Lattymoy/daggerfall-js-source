@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Enhanced sky lab</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; color: #e9e4d9; font: 13px system-ui, sans-serif; }
+    #c { display: block; width: 100vw; height: 100vh; }
+    #panel { position: fixed; left: 10px; top: 10px; background: rgba(14,16,19,0.85); padding: 10px 12px; border: 1px solid #2b323b; display: grid; grid-template-columns: auto 1fr auto; gap: 6px 10px; align-items: center; }
+    #panel input[type=range] { width: 180px; }
+    #panel .v { min-width: 4ch; text-align: right; color: #c08a3e; }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="panel">
+    <label for="hour">Hour</label><input id="hour" type="range" min="0" max="24" step="0.05" value="9" /><span class="v" id="hourV"></span>
+    <label for="weather">Weather</label><select id="weather"><option>sunny</option><option>cloudy</option><option>overcast</option><option>fog</option><option>rain</option><option>snow</option><option>thunder</option></select><span></span>
+    <label for="day">Day of year</label><input id="day" type="range" min="0" max="359" step="1" value="10" /><span class="v" id="dayV"></span>
+    <label for="yaw">Yaw</label><input id="yaw" type="range" min="-180" max="180" step="1" value="90" /><span class="v" id="yawV"></span>
+    <label for="pitch">Pitch</label><input id="pitch" type="range" min="-10" max="80" step="1" value="12" /><span class="v" id="pitchV"></span>
+    <label for="fog">Fog mix</label><input id="fog" type="range" min="0" max="1" step="0.01" value="0" /><span class="v" id="fogV"></span>
+  </div>
+  <script type="module" src="/src/tools/skyLab.js"></script>
+</body>
+</html>

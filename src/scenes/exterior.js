@@ -1613,7 +1613,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     // Summer 2 / Winter 3); the rain/snow variants keep their boot
     // roll. One clock, so the season reads the world date.
     sky.use(dfLocation.climate.skyBase + (weatherSkyOffset === 0
-      ? seasonValue(dateFromClassicMinutes(playerTicker.classicMinutes)) : weatherSkyOffset), minute, weatherSkyOffset === 0);
+      ? seasonValue(dateFromClassicMinutes(playerTicker.classicMinutes)) : weatherSkyOffset), minute, weatherSkyOffset === 0,
+    { weather, classicMinutes: playerTicker.classicMinutes });   // ES1: the enhanced sky's clouds and moons
     // Weather fog, colored by the live sky horizon fill (fills DFU's
     // fogColor TODO); heavy fog also swallows the sky.
     // Verbatim: fog is never disabled (SetFog keeps RenderSettings.fog on);
