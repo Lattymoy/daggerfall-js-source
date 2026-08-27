@@ -14,14 +14,15 @@
 // `GeneratePopup(PurchaseHouse(house, regionIndex))` (:234-237) - the
 // transaction runs and its RESULT is the message. There is no Yes/No.
 //
-// FLAGGED, and it is presentation rather than function: the 104x91
-// panel at (117,12) is a live 3D render of the selected building's own
-// model, rotating one degree per 0.02s on a dedicated Unity camera and
-// layer (:163-178, :202-260). The port draws the panel and leaves it
-// empty. Everything the window is FOR - choosing a house, seeing its
-// price, paying - is here; what is missing is a picture of it. Doing
-// that properly means rendering an ARCH3D model to a texture inside a
-// UI panel, which is a rendering slice and not a banking one.
+// H4: THE 3D PREVIEW IS LIVE. The 104x91 panel at (117,12) shows the
+// selected building's own ARCH3D model rotating -1 degree per 0.02s
+// (:163-178's Update), through the host's drawModelPreview door - the
+// WINDOW owns the rotation clock and the camera law (houses at
+// (0,3,-20), Display3dModelSelection :245; the ships arm's
+// (0,12,shipCameraDist) camera is carried for the day a ships list
+// exists), the HOST owns the scissored second camera pass (the
+// automap's beginFrame precedent). No selection, no render - DFU
+// starts with SelectNone and an empty panel.
 //
 // The port's own departure (Ledger A, the bank window's rule): DFU
 // binds each button to a DaggerfallShortcut hotkey; the accelerators
@@ -46,7 +47,7 @@ export const PURCHASE_RECTS = Object.freeze({
   upArrow: [105, 23, 9, 16],
   downArrow: [105, 87, 9, 16],
   scrollBar: [106, 39, 7, 48],
-  display: [117, 12, 104, 91],   // FLAGGED: the 3D preview
+  display: [117, 12, 104, 91],   // H4: the live 3D preview (drawn through the host door)
   buy: [38, 106, 40, 19],
   exit: [150, 106, 40, 19],
 });
@@ -56,6 +57,16 @@ export const LIST_ROWS = 10;
 export const LIST_ROW_H = 7;
 /** scrollNum (:66) - one item per scroll tick. */
 export const SCROLL_NUM = 1;
+
+/** rotSpeed (:68) - the model turns one degree every 0.02 seconds,
+ *  NEGATIVE about Y (Update :175). */
+export const PREVIEW_ROT_SPEED = 0.02;
+/** Display3dModelSelection's two cameras (:245-252): houses from
+ *  (0, 3, -20); ships from (0, 12, GetShipCameraDist) - the ship
+ *  distances are banking.js's SHIP_CAMERA_DIST. Near 0.7, far 100
+ *  (SetupDisplayPanel :212-213). */
+export const PREVIEW_HOUSE_CAMERA = Object.freeze({ y: 3, z: -20 });
+export const PREVIEW_NEAR = 0.7, PREVIEW_FAR = 100;
 
 /** Internal_Strings `bankPurchasePrice`, verbatim. */
 export const priceRow = (price) => `Price : ${price} gold`;
@@ -90,6 +101,18 @@ export class BankPurchaseWindow {
     this.scroll = 0;
     this.box = null;
     this._boxLayout = null;
+    this.yawDeg = 0;              // H4: the preview's rotation, this window's clock
+    this._rotAcc = 0;
+  }
+
+  /** H4: Update's rotation clock (:167-177) - one NEGATIVE degree per
+   *  0.02s of real time, however many frames that spans. */
+  tick(dt) {
+    this._rotAcc += dt;
+    while (this._rotAcc >= PREVIEW_ROT_SPEED) {
+      this._rotAcc -= PREVIEW_ROT_SPEED;
+      this.yawDeg -= 1;
+    }
   }
 
   get houses() { return this.hooks.houses?.() ?? []; }
@@ -194,6 +217,18 @@ export class BankPurchaseWindow {
       shadowText(renderer, font, r.text, m,
         PURCHASE_PANEL_X + lx + 2, PURCHASE_PANEL_Y + y,
         r.index === this.selected ? { color: SELECTED_TEXT } : undefined);
+    }
+    // H4: the live model, through the host's door - AFTER the chrome,
+    // because the pass paints inside the display rect over it. The
+    // rect travels in CANVAS pixels (the scissor's frame).
+    const sel = this.houses[this.selected];
+    if (sel?.modelIdNum != null && !this.box) {
+      const [dx, dy, dw, dh] = PURCHASE_RECTS.display;
+      this.hooks.drawModelPreview?.(sel.modelIdNum, {
+        x: m.ox + (PURCHASE_PANEL_X + dx) * m.s,
+        y: m.oy + (PURCHASE_PANEL_Y + dy) * m.s,
+        w: dw * m.s, h: dh * m.s,
+      }, this.yawDeg, PREVIEW_HOUSE_CAMERA);
     }
     if (this.box) {
       this._boxLayout = layoutMessageBox(font, this.box.rows, []);

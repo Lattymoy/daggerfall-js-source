@@ -93,6 +93,9 @@ export const SHIP_TYPES = Object.freeze({ None: -1, Small: 0, Large: 1 });
 /** shipPrices (:95) and the model ids that stand them in the world. */
 export const SHIP_PRICES = Object.freeze([100000, 200000]);
 export const SHIP_MODEL_IDS = Object.freeze([910, 909]);
+/** shipCameraDist (:101) - H4: the purchase preview's camera z per
+ *  ship type, beside the model ids it pairs with. */
+export const SHIP_CAMERA_DIST = Object.freeze([-30, -50]);
 export const SHIP_COORDS = Object.freeze([{ x: 2, y: 2 }, { x: 5, y: 5 }]);
 /** deedSellMult (:93) - a deed sells back for 85% of its price. */
 export const DEED_SELL_MULT = 0.85;
