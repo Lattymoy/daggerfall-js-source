@@ -232,23 +232,147 @@ export function buildMarkerModel(summaries, filters, { isDiscovered = checkLocat
 }
 
 /**
+ * The ONE mapping from a map pixel to a point on the relief: pixel
+ * centre, the height law, the streamed world's sign convention, plus
+ * a lift. Every line this map draws goes through here - the route did
+ * it inline until the roads needed the same arithmetic, and two copies
+ * of a coordinate convention is how a layer ends up half a pixel out
+ * from the ground it is drawn on.
+ *
+ * Clamped rather than guarded: a path may touch the edge of the data,
+ * and the edge byte is the honest answer there.
+ */
+export function reliefPoint(px, py, { heightBytes, width, height }, lift = 0) {
+  const bx = Math.min(width - 1, Math.max(0, px));
+  const by = Math.min(height - 1, Math.max(0, py));
+  return [px + 0.5, overworldHeight(heightBytes[by * width + bx]) + lift, -(py + 0.5)];
+}
+
+/**
+ * How far each line layer floats above the ground, and therefore what
+ * paints over what. The ORDER is the law and the numbers are skin:
+ *
+ *   ground < track < trunk < route
+ *
+ * A track is the humblest thing on the map; a trunk crosses it at a
+ * junction and should read as continuous through it; and the player's
+ * own journey has to be legible ON TOP of the network it follows,
+ * which is the whole reason the route is drawn in its own colour
+ * rather than just highlighting road. Equal lifts z-fight where two
+ * classes share a pixel, which they do at every junction.
+ */
+export const RELIEF_LIFT = Object.freeze({ track: 0.14, trunk: 0.20, route: 0.35 });
+
+/**
  * The route line's points over the relief: the law's own pixel walk
  * (walkTravelPath - the start pixel is prepended here because a LINE
  * needs its anchor even though the time law never charges it), each
  * lifted a hair above its pixel's vertex so the line never z-fights
  * the ground it explains.
  */
-export function routePoints(start, path, { heightBytes, width, height }) {
-  const lift = 0.35;
+export function routePoints(start, path, ctx) {
   const pts = new Float32Array((path.length + 1) * 3);
   const set = (i, px, py) => {
-    const byte = heightBytes[Math.min(height - 1, Math.max(0, py)) * width
-      + Math.min(width - 1, Math.max(0, px))];
-    pts[i * 3] = px + 0.5;
-    pts[i * 3 + 1] = overworldHeight(byte) + lift;
-    pts[i * 3 + 2] = -(py + 0.5);
+    const [x, y, z] = reliefPoint(px, py, ctx, RELIEF_LIFT.route);
+    pts[i * 3] = x; pts[i * 3 + 1] = y; pts[i * 3 + 2] = z;
   };
   set(0, start.x, start.y);
   path.forEach((p, i) => set(i + 1, p.x, p.y));
   return pts;
+}
+
+// ── R3: THE ROAD LAYER ───────────────────────────────────────────
+
+/**
+ * Traced road chains as drawable vertex runs, on the same relief and
+ * through the same mapping as the route.
+ *
+ * One Float32Array per chain rather than one big buffer: the chains
+ * are what tracePolylines already split at junctions, and a line strip
+ * that silently jumps between two unconnected roads draws a road that
+ * is not there.
+ */
+export function roadPoints(lines, ctx, lift) {
+  return lines.map((line) => {
+    const pts = new Float32Array(line.length * 3);
+    line.forEach((p, i) => {
+      const [x, y, z] = reliefPoint(p.x, p.y, ctx, lift);
+      pts[i * 3] = x; pts[i * 3 + 1] = y; pts[i * 3 + 2] = z;
+    });
+    return pts;
+  });
+}
+
+/** Both classes at their own lifts, ready to hand to the renderer. */
+export function roadModel({ trunk = [], track = [] }, ctx) {
+  return {
+    track: roadPoints(track, ctx, RELIEF_LIFT.track),
+    trunk: roadPoints(trunk, ctx, RELIEF_LIFT.trunk),
+  };
+}
+
+// ── DISCOVERY ────────────────────────────────────────────────────
+
+/** How far word of a road travels from a place you have been. Skin -
+ *  there is no source law, classic has no roads to be faithful to. */
+export const ROAD_REVEAL_RADIUS = 6;
+
+/**
+ * A per-pixel mask of the road anyone would know about: everything
+ * within ROAD_REVEAL_RADIUS of somewhere the player has actually
+ * found. Chebyshev, because a square is what a square scan gives and
+ * the difference is invisible at this radius.
+ *
+ * Built from the marker model, so it inherits the classic window's own
+ * discovery law rather than restating it - the mask can only ever be
+ * as generous as checkLocationDiscovered already was.
+ */
+export function buildRevealMask(markers, { width, height, radius = ROAD_REVEAL_RADIUS }) {
+  const mask = new Uint8Array(width * height);
+  for (const m of markers) {
+    // markers carry scene coordinates; back to map pixels
+    const cx = Math.round(m.x - 0.5), cy = Math.round(-m.z - 0.5);
+    const x0 = Math.max(0, cx - radius), x1 = Math.min(width - 1, cx + radius);
+    const y0 = Math.max(0, cy - radius), y1 = Math.min(height - 1, cy + radius);
+    for (let y = y0; y <= y1; y++) mask.fill(1, y * width + x0, y * width + x1 + 1);
+  }
+  return mask;
+}
+
+/**
+ * Split chains down to the runs the player is allowed to see.
+ *
+ * PARTIAL, not all-or-nothing: a trunk road running from a town you
+ * know to one you have never heard of should fade out somewhere in
+ * between, not vanish entirely and not draw the whole way. A run of
+ * one pixel is dropped - a single lit pixel is a dot, not a road.
+ */
+export function revealLines(lines, mask, width) {
+  const out = [];
+  for (const line of lines) {
+    let run = [];
+    for (const p of line) {
+      if (mask[p.y * width + p.x]) { run.push(p); continue; }
+      if (run.length > 1) out.push(run);
+      run = [];
+    }
+    if (run.length > 1) out.push(run);
+  }
+  return out;
+}
+
+// ── LEVEL OF DETAIL ──────────────────────────────────────────────
+
+/** Camera distance above which tracks stop drawing. Pulled back over
+ *  the whole bay every farm lane at once is noise that buries the
+ *  trunk network; coming down, the lanes are the interesting part.
+ *  Between DIST_MIN 15 and DIST_MAX 1500, this sits nearer the
+ *  cruising altitude than the ceiling. */
+export const TRACK_FADE_DIST = 260;
+
+/** What the map should draw at this camera distance. Trunk roads are
+ *  always on: they are the shape of the province and reading them from
+ *  altitude is the point. */
+export function roadLayersForDistance(dist) {
+  return { trunk: true, track: dist <= TRACK_FADE_DIST };
 }
