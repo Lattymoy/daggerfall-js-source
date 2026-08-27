@@ -55,7 +55,7 @@ None of these blocks anything; all are real.
 
     THE OVERWORLD'S     U61's standing caveat, the U54 shape: the
     REAL BYTES          relief, markers and laws are proven on a
-                        SYNTHETIC bay (40/40 in the probe) and the
+                        SYNTHETIC bay (47/47 in the probe) and the
                         node pins hold the height/water/bucket laws
                         against the owning modules - but the real
                         WOODS.WLD/CLIMATE.PAK render is unproven on
@@ -179,27 +179,33 @@ NEW MODULES: ui/overworldModel.js (pure - the relief grid, tints,
 markers, route points; synthetic-bay testable), render/
 overworldRenderer.js (the self-contained pass: terrain, POINTS
 markers, route line, rings, procedural cloud deck, backdrop -
-saves/restores program, brackets cull both ways, plain RH camera with
-NO mirrorProjectionX because this is our data, not DFU's LH world),
+saves/restores program, brackets cull both ways; the camera wraps
+mirrorProjectionX like every world pass - see THE REVIEW below for
+the first draft's "our data is right-handed" mistake),
 ui/overworldMap.js (the window: phases veilin/rise/map/flight/
 descend/hold/veilout, the chrome, the laws), ui/travelMapDoor.js.
 The relief grid is cached per WOODS buffer across opens.
 
 PROVED: 28 node pins (test/overworldmap.test.js - the walk re-summed
-under four option sets, the height/water/tint laws against
-terrainSampler's own constants, buckets against getPixelColorIndex
-itself, the door fork both ways, the stub-document window driving
-every panel law, and the no-second-reading sweeps) and 40/40 browser
-checks (tools/overworldProbe.mjs - a synthetic bay through a REAL
-Renderer: sea pixels blue and land not, markers equal to the law's
-count, drag/wheel/click through real pointer events, the panel's
-numbers equal to the law modules imported into the page, Recklessly
-exactly the halved minutes, the coinless-purse refusal, the flight
-with the skip pill and the one commit in fastTravelTo's shapes,
-teleport armed/No-keeps-armed/Yes-skips-the-flight, gotoPlace landing
-selected with the decision open, Pixel 5 taps with every target 44px,
-and ?skin=classic answering null with zero enhanced DOM). What the
-probe does NOT prove is on THE BOARD: the real ARENA2 bytes.
+under four option sets AND both stepper arms pinned literal for
+literal, the height/water/tint laws against terrainSampler's own
+constants with the sun's direction held on a lone peak, buckets
+against getPixelColorIndex itself, the door fork both ways, the
+stub-document window driving every panel law with BOTH sides of the
+gold gate, and the no-second-reading sweeps) and 47/47 browser checks
+(tools/overworldProbe.mjs - a synthetic bay through a REAL Renderer:
+sea pixels blue and land not, WEST left of EAST on screen, markers
+equal to the law's count, the route buffer sized by the walk itself,
+drag/wheel/click through real pointer events, the panel's numbers
+equal to the law modules imported into the page, Recklessly exactly
+the halved minutes, the coinless-purse refusal, the flight whose
+hold-to-skip provably ENDS it early, the one commit in fastTravelTo's
+shapes, teleport armed/No-keeps-armed/Yes-skips-the-flight, gotoPlace
+landing selected with the decision open, the input() hotkey and
+Escape ladder rung by rung, Pixel 5 taps with every target 44px -
+decision panel included - and ?skin=classic answering null with zero
+enhanced DOM). What the probe does NOT prove is on THE BOARD: the
+real ARENA2 bytes.
 
 THREE THINGS THE BUILD CAUGHT: drawScreenQuad's dst is an OBJECT
 {x,y,w,h}, not an array - the veil drew nothing until the shape
@@ -210,6 +216,38 @@ is exactly the contract; and the pan assertion first encoded the
 wrong SIGN for south (-z), which the probe's own failure corrected -
 the map's conventions are the streamed world's, and the pin now says
 so.
+
+THE REVIEW (same day, before the merge settled): five lenses, then a
+skeptic per finding - 27 raised, 3 refuted with evidence, 24 stood
+and every one is fixed and pinned above. The one BLOCKER was this
+slice's own founding mistake: the first draft called the relief "our
+right-handed data" and skipped mirrorProjectionX - but east +x,
+north +z, up +y is LEFT-handed (east x up = south), the exact frame
+mat4's HANDEDNESS LAW exists for, and the verifier proved it
+numerically: the bay drew east-west FLIPPED, horizontal pan fought
+the hand, and _groundAt disagreed with the picture. The probe never
+saw it because every check sampled through the window's own
+projection - self-consistent with its own mirror - which is why the
+west-LEFT-of-east pin now reads absolute screen positions. The rest,
+each now a pin: the hillshade's swapped operands lit the shadow side
+(executed, not eyeballed); gotoPlace's panel rendered into a
+phase-gated card that nothing re-rendered on reaching the map; a
+key-closed teleport map left its chrome floating over the guild hall
+because worldModes' drain drops a done window without dispose - so
+close() owns the teardown now, done-after-DOM-down; two fingers made
+the camera oscillate (one pointer pans, the rest are ignored); the
+wheel hijacked the search dropdown's scroll; the teleport box was
+mouse-only where classic answers Y/Enter/N/E; Escape on the diseased
+box ate the whole panel where classic steps back to it; and the
+mutation runs showed which pins were decorative - the y-major stepper
+arm, the total-pool side of the gold gate, the beginFrame containment
+(text ORDER survives a hoist; the pin walks braces now), a
+double-escaped forbidden-fragment regex that could match nothing, the
+route line's existence, and a hold-to-skip check that passed with the
+mechanism deleted. Verdicts in the review workflow's journal; the
+lesson for the next slice is the pixel one: a probe that measures a
+picture only through that picture's own camera cannot see the camera
+being wrong.
 ## U60c THE LEDGER STRIP, THE PICTURES, AND THE CUT (2026-08-26, Mac's call)
 
 While the js.org request waits, Mac asked for organising, debloat and

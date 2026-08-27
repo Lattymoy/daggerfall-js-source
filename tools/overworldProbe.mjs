@@ -202,6 +202,18 @@ async function runDesktop() {
   });
   check('desktop: the western sea draws blue', !!px.sea && px.sea[2] > px.sea[0],
     JSON.stringify(px.sea));
+  // ORIENTATION, absolutely: west must land LEFT of east ON SCREEN.
+  // The pixel reads above go through the window's own projection and
+  // were self-consistent with the review's mirrored first draft -
+  // this is the pin that would have caught it.
+  const westEast = await page.evaluate(() => {
+    const w = globalThis.__win;
+    const west = w._project(10, w._heightAt(10, -40), -40);
+    const east = w._project(60, w._heightAt(60, -40), -40);
+    return west && east ? { west: west[0], east: east[0] } : null;
+  });
+  check('desktop: west is LEFT of east - the bay is not mirrored',
+    !!westEast && westEast.west < westEast.east, JSON.stringify(westEast));
   check('desktop: the eastern land does not', !!px.land && px.land[1] >= px.land[2],
     JSON.stringify(px.land));
 
@@ -269,6 +281,16 @@ async function runDesktop() {
   await page.locator('#enhanced-travelmap .ovacts button', { hasText: 'Begin journey' }).click();
   s = await state(page);
   check('desktop: Begin flies', s.phase === 'flight', s.phase);
+  const flightStarted = Date.now();
+  // the route line is UPLOADED and sized by the law's own walk - the
+  // review deleted setRoute and everything stayed green
+  const route = await page.evaluate(() => {
+    const { travel } = globalThis.__law;
+    const expected = travel.walkTravelPath({ x: 70, y: 40 }, { x: 40, y: 30 }).length + 1;
+    return { expected, got: globalThis.__win._ov?._route?.count ?? 0 };
+  });
+  check('desktop: the route line carries the walk, anchor included',
+    route.got === route.expected && route.got > 2, JSON.stringify(route));
   // the pill lights on the first FLIGHT tick, one frame after Begin
   check('desktop: the skip pill shows', await page.waitForFunction(
     () => document.querySelector('#enhanced-travelmap .ovskip')?.classList.contains('on'),
@@ -276,6 +298,14 @@ async function runDesktop() {
   await page.mouse.down();
   await page.waitForTimeout(600);
   await page.mouse.up();
+  // the skip must actually SHORTEN the flight - the review proved the
+  // old check passed with the mechanism deleted, since the natural
+  // 2.2s flight commits inside any generous wait. This route's natural
+  // flight alone exceeds the bound; only a working skip beats it.
+  await page.waitForFunction(
+    () => JSON.parse(globalThis.__overworld()).phase !== 'flight', null, { timeout: 5000 });
+  const flightMs = Date.now() - flightStarted;
+  check('desktop: holding actually skipped - the flight ended early', flightMs < 1900, `${flightMs}ms`);
   await page.waitForFunction(() => globalThis.__win.done, null, { timeout: 15000 });
   // the host's done->dispose step runs on the next frame; wait for the
   // teardown the way townTalk's tick would deliver it
@@ -331,16 +361,32 @@ async function runFilters() {
   check('search: picking a result selects and flies the camera', s.selected === 'Proofhold'
     && Math.abs(s.cam.tx - 40.5) < 40, JSON.stringify({ sel: s.selected, cam: s.cam }));
 
-  // Escape walks back: panel -> selection -> the world
-  await page.keyboard.press('Escape');
-  // the host would route Escape through input(); the probe drives the
-  // same contract arm directly
+  // The host feeds input() raw codes - drive the whole ladder through
+  // that arm, each rung asserted EXPLICITLY (the review found the old
+  // checks passed vacuously: 'panel === null' was true before the
+  // press, and 'closes the map' was a hard-coded true).
+  await page.locator('#enhanced-travelmap .ovcard button', { hasText: 'Travel here' }).click();
+  s = await state(page);
+  check('hotkeys: the panel is open with the stored defaults', s.panel === 'travel'
+    && s.save.speedCautious === true, JSON.stringify(s.save));
+  await page.evaluate(() => globalThis.__win.input('KeyS'));
+  s = await state(page);
+  check('hotkeys: KeyS toggles the pair through the host arm', s.save.speedCautious === false,
+    JSON.stringify(s.save));
+  await page.evaluate(() => globalThis.__win.input('KeyS'));
   await page.evaluate(() => globalThis.__win.input('Escape'));
   s = await state(page);
-  check('escape: steps back through selection', s.selected === null || s.panel === null, JSON.stringify(s));
+  check('escape: closes the panel, keeps the selection', s.panel === null && s.selected === 'Proofhold',
+    JSON.stringify({ panel: s.panel, sel: s.selected }));
+  await page.evaluate(() => globalThis.__win.input('Escape'));
+  s = await state(page);
+  check('escape: then drops the selection', s.selected === null && s.phase === 'map',
+    JSON.stringify({ sel: s.selected, phase: s.phase }));
   await page.evaluate(() => globalThis.__win.input('Escape'));
   await page.waitForFunction(() => globalThis.__win.done, null, { timeout: 5000 });
-  check('escape: then closes the map', true);
+  check('escape: then closes the map', await page.evaluate(() => globalThis.__win.done === true
+    && document.querySelectorAll('#enhanced-travelmap').length === 0),
+    'done with the chrome down');
   check('filters/search: no page errors', errors.length === 0, errors.join(' | '));
   await ctx.close();
 }
@@ -401,11 +447,18 @@ async function runPhone() {
   await page.touchscreen.tap(cityPos[0], cityPos[1]);
   const s = await state(page);
   check('phone: a tap selects', s.selected === 'Proofhold', s.selected ?? '(none)');
-  const small = await page.$$eval('#enhanced-travelmap button', (ns) => ns
+  const sweep = () => page.$$eval('#enhanced-travelmap button', (ns) => ns
     .map((n) => ({ t: (n.textContent ?? '').trim().slice(0, 16), r: n.getBoundingClientRect() }))
     .filter(({ r }) => r.height > 0 && r.height < 44)
     .map(({ t, r }) => `${t}@${Math.round(r.height)}`));
+  const small = await sweep();
   check('phone: every finger target is 44px', small.length === 0, small.join(', '));
+  // ...including the decision panel's, which only exist once it opens -
+  // the review caught the sweep running before they were mounted
+  await page.locator('#enhanced-travelmap .ovcard button', { hasText: 'Travel here' }).click();
+  await page.waitForSelector('#enhanced-travelmap .ovpick', { timeout: 5000 });
+  const smallPanel = await sweep();
+  check('phone: the decision panel\'s targets are 44px too', smallPanel.length === 0, smallPanel.join(', '));
   check('phone: no page errors', errors.length === 0, errors.join(' | '));
   await ctx.close();
 }

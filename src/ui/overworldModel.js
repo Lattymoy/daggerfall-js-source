@@ -152,9 +152,12 @@ export function buildOverworldGrid({ heightBytes, width, height, climateAt }) {
       if (!water) {
         // A fixed north-west sun baked into the vertex color: the map
         // is read, not lit, so the light never moves and the shader
-        // needs no normals. Map y runs SOUTH, so the NW neighbour is
-        // (px-1, py-1).
-        const slope = (cl(px - 1, py - 1) - cl(px + 1, py + 1)) * BASE_HEIGHT_SCALE;
+        // needs no normals. A NW-facing flank DESCENDS toward the sun
+        // - its SE neighbour (px+1, py+1; map y runs SOUTH) stands
+        // HIGHER - so that difference is what brightens. The first
+        // draft had the operands swapped and lit the shadow side; the
+        // review's verifier executed it and caught the inversion.
+        const slope = (cl(px + 1, py + 1) - cl(px - 1, py - 1)) * BASE_HEIGHT_SCALE;
         const shade = Math.min(1.18, Math.max(0.55, 0.9 + slope * 0.004));
         r *= shade; g *= shade; b *= shade;
       }

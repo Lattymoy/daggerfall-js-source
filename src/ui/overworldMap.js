@@ -54,7 +54,7 @@
 // vertical relief is exaggerated by one documented constant.
 // ═══════════════════════════════════════════════════════════════════
 
-import { perspective, lookAt } from '../world/mat4.js';
+import { perspective, lookAt, mirrorProjectionX } from '../world/mat4.js';
 import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { REGION_NAMES, longitudeLatitudeToMapPixel, getPixelFromPixelID, patchRegionIndex } from '../formats/mapsFile.js';
 import { locationSummaryAt } from '../systems/mapDirectory.js';
@@ -143,7 +143,8 @@ export class OverworldMapWindow {
     this._dead = false;
 
     this._mountChrome();
-    globalThis.__overworld = () => JSON.stringify({
+    this._tornDown = false;
+    this._probeFn = () => JSON.stringify({
       phase: this._phase, veil: Math.round(this._veil * 100) / 100,
       cam: { tx: Math.round(this._cam.tx), tz: Math.round(this._cam.tz), dist: Math.round(this._cam.dist) },
       markers: this._markers.length,
@@ -155,6 +156,7 @@ export class OverworldMapWindow {
       notice: this._panelState?.notice ?? null,
       save: this.getTravelMapSaveData(),
     });
+    globalThis.__overworld = this._probeFn;
   }
 
   // ── THE CLASSIC WINDOW'S CONTRACT, kept ────────────────────────
@@ -183,21 +185,34 @@ export class OverworldMapWindow {
     if (code === 'Escape' || actionForCode(bindings(), code) === 'TravelMap') {
       e?.preventDefault?.();
       if (this._phase !== 'map') return;      // mid-transition: hold-to-skip is the only out
+      // the diseased box steps back to the PANEL, not out of it - the
+      // classic popup's No arm (the review caught Escape eating the
+      // whole panel)
+      if (this._panelState?.confirm) { this._confirmDiseased(false); return; }
       if (this._panel) { this._closePanel(); return; }
       if (this._selected) { this._select(null); return; }
       this._close();
       return;
     }
-    if (this._phase === 'map' && this._panel === 'travel' && this._panelState && !this._panelState.confirm) {
+    if (this._phase !== 'map') return;
+    if (this._panelState?.confirm) {
+      if (code === 'KeyY') { this._confirmDiseased(true); return; }
+      if (code === 'KeyN') { this._confirmDiseased(false); return; }
+      return;
+    }
+    if (this._panel === 'teleport') {
+      // the teleport box answers keys exactly as the classic one does:
+      // Y/Enter yes, N/E no (Escape is the ladder above)
+      if (code === 'KeyY' || code === 'Enter' || code === 'NumpadEnter') { this._confirmTeleport(true); return; }
+      if (code === 'KeyN' || code === 'KeyE') { this._confirmTeleport(false); return; }
+      return;
+    }
+    if (this._panel === 'travel' && this._panelState) {
       // The classic popup's own hotkeys: S/T/N toggle their pair.
       if (code === 'KeyS') { this._toggleOpt('speedCautious'); return; }
       if (code === 'KeyT') { this._toggleOpt('travelShip'); return; }
       if (code === 'KeyN') { this._toggleOpt('sleepModeInn'); return; }
       if (code === 'KeyB') { this._begin(); return; }
-    }
-    if (this._phase === 'map' && this._panelState?.confirm) {
-      if (code === 'KeyY') { this._confirmDiseased(true); return; }
-      if (code === 'KeyN') { this._confirmDiseased(false); return; }
     }
   }
 
@@ -206,6 +221,7 @@ export class OverworldMapWindow {
   wheel() { /* the chrome div owns the wheel - zoom needs the cursor position anyway */ }
 
   tick(dt) {
+    if (this.done) return;   // a torn-down window has no chrome to drive
     this._clock += dt;
     if (!this._ticked) {
       this._ticked = true;
@@ -224,7 +240,13 @@ export class OverworldMapWindow {
         this._cam.tx += (this._camGoal.tx - this._cam.tx) * Math.min(1, dt * 3);
         this._cam.tz += (this._camGoal.tz - this._cam.tz) * Math.min(1, dt * 3);
         this._veil = clamp(1 - this._t / RISE_VEIL_OUT, 0, 1);
-        if (this._t >= RISE) { this._phase = 'map'; this._t = 0; this._veil = 0; }
+        if (this._t >= RISE) {
+          this._phase = 'map'; this._t = 0; this._veil = 0;
+          // a gotoPlace consumed during the veil selected and opened
+          // its panel while _renderCard was phase-gated shut - the
+          // review caught the card never appearing. Render on entry.
+          this._renderCard();
+        }
         break;
       }
       case 'map': {
@@ -285,15 +307,22 @@ export class OverworldMapWindow {
   }
 
   draw(renderer, canvas) {
-    if (this._dead) return;
+    if (this._dead || this.done) return;
     try {
       if (this._cameraLive) {
         this._ensureScene(renderer);
         const w = canvas.clientWidth || canvas.width, h = canvas.clientHeight || canvas.height;
         const aspect = w / Math.max(1, h);
-        // OUR right-handed relief: a PLAIN perspective, no
-        // mirrorProjectionX - the pass brackets CULL_FACE off itself.
-        const proj = perspective(FOV_Y, aspect, 0.5, 6000);
+        // THE MIRROR RIDES HERE, like every world pass. The relief
+        // keeps the streamed world's axis labels (east +x, north +z,
+        // up +y) and that triple is LEFT-handed - east x up = south -
+        // which is exactly the frame mat4's HANDEDNESS LAW mirrors at
+        // the projection. The review's verifiers proved the "our data
+        // is right-handed" first draft numerically wrong: without the
+        // mirror the bay drew east-west FLIPPED and _groundAt fought
+        // the picture. Winding flips with it; the pass brackets
+        // CULL_FACE off itself, so nothing else moves.
+        const proj = mirrorProjectionX(perspective(FOV_Y, aspect, 0.5, 6000));
         const eye = this._eye();
         const view = lookAt(eye, [this._cam.tx, this._groundY(), this._cam.tz], [0, 1, 0]);
         renderer.beginFrame(proj, view, [0, 1, 0]);
@@ -320,21 +349,35 @@ export class OverworldMapWindow {
 
   dispose() {
     this._dead = true;
-    this.done = true;
-    this.teleportationTravel = false;
-    if (this._panelState) this._rememberPanel();
+    this._close();
+  }
+
+  /** Everything the window holds, released once. In close() rather
+   *  than dispose() alone because the guild-teleport mount lives in
+   *  worldModes' interiorOverlay, whose drain drops a done window
+   *  WITHOUT a dispose call - the review caught the chrome outliving
+   *  a key-closed teleport map, dead controls floating over the guild
+   *  hall. Torn down BEFORE done reads true, the done-after-DOM-down
+   *  ordering every door keeps. */
+  _teardown() {
+    if (this._tornDown) return;
+    this._tornDown = true;
     this._ov?.dispose();
     this._ov = null;
     this._unmountChrome();
-    delete globalThis.__overworld;
+    // ownership-checked: a second window minted after this one owns
+    // the surface now, and an unconditional delete would blind it
+    if (globalThis.__overworld === this._probeFn) delete globalThis.__overworld;
   }
 
-  /** closeTravelWindows' tail: done, one-shots cleared, onClose owed. */
+  /** closeTravelWindows' tail: teardown, done, one-shots cleared,
+   *  onClose owed - once, whichever door closed it. */
   _close() {
     if (this.done) return;
     if (this._panelState) this._rememberPanel();
-    this.done = true;
     this.teleportationTravel = false;
+    this._teardown();
+    this.done = true;
     this.deps.onClose?.();
   }
 
@@ -774,11 +817,16 @@ export class OverworldMapWindow {
       if (e.target !== root) return;   // controls keep their own pointer
       if (this._phase === 'flight') { this._skipHold = 0.0001; return; }
       if (this._phase !== 'map') return;
-      downAt = { x: e.clientX, y: e.clientY, tx: this._cam.tx, tz: this._cam.tz };
+      // ONE finger pans; a second is ignored rather than adopted - the
+      // review caught two thumbs making the camera oscillate at event
+      // rate as each move diffed against the other finger's anchor
+      if (downAt) return;
+      downAt = { id: e.pointerId, x: e.clientX, y: e.clientY, tx: this._cam.tx, tz: this._cam.tz };
       panned = false;
       root.setPointerCapture(e.pointerId);
     });
     root.addEventListener('pointermove', (e) => {
+      if (downAt && e.pointerId !== downAt.id) return;
       if (this._phase === 'map') {
         if (downAt) {
           const dx = e.clientX - downAt.x, dy = e.clientY - downAt.y;
@@ -796,12 +844,20 @@ export class OverworldMapWindow {
     });
     root.addEventListener('pointerup', (e) => {
       if (this._phase === 'flight') { this._skipHold = 0; return; }
+      if (downAt && e.pointerId !== downAt.id) return;
       if (this._phase !== 'map') { downAt = null; return; }
       if (downAt && !panned && e.target === root) this._pickAt(e.clientX, e.clientY);
       downAt = null;
     });
-    root.addEventListener('pointercancel', () => { downAt = null; this._skipHold = 0; });
+    root.addEventListener('pointercancel', (e) => {
+      if (downAt && e.pointerId !== downAt.id) return;
+      downAt = null; this._skipHold = 0;
+    });
     root.addEventListener('wheel', (e) => {
+      // the chrome's own scrollables keep their wheel - the review
+      // caught the search dropdown scrolling nothing while the map
+      // zoomed behind it
+      if (e.target !== root) return;
       if (this._phase !== 'map') return;
       e.preventDefault();
       const before = this._groundAt(e.clientX, e.clientY);

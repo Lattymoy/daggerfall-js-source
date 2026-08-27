@@ -9,11 +9,15 @@
 // anywhere in a frame (it runs inside the overworld window's own
 // second beginFrame, the automap's precedent).
 //
-// The relief is OUR data in a right-handed frame (east +x, north +z,
-// up +y), not DFU's left-handed world, so the camera uses a PLAIN
-// perspective - no mirrorProjectionX - and every draw here brackets
-// CULL_FACE off (the global state is frontFace(CW) for the mirrored
-// world passes; the sky-blue-screen lesson).
+// The relief keeps the streamed world's axis labels - east +x,
+// north +z, up +y - and that triple is LEFT-handed (east x up =
+// south), the very frame mat4's HANDEDNESS LAW exists for. So the
+// window's camera wraps mirrorProjectionX like every world pass; the
+// first draft claimed the frame was "our right-handed data", drew
+// the bay east-west FLIPPED, and the review's verifiers proved it
+// numerically. Every draw here still brackets CULL_FACE off (the
+// mirror flips winding, this pass never relies on it; the
+// sky-blue-screen lesson).
 //
 // Draw order is meaning: backdrop (the high-altitude sky), terrain
 // (depth on), route then markers (depth OFF - a marker buried in a
@@ -55,6 +59,10 @@ out vec3 vColor;
 void main() {
   vColor = aColor;
   gl_Position = uProj * uView * vec4(aPos, 1.0);
+  // KNOWN COSMETIC: gl.POINTS clip by CENTER, so a marker (or ring)
+  // pops out whole at the viewport edge with up to half its radius
+  // still due on screen - driver-dependent, accepted for one draw
+  // call over fifteen thousand dots.
   gl_PointSize = clamp(aSize * uScale, 2.5, 28.0);
 }`;
 const MARKER_FS = `#version 300 es
@@ -298,7 +306,7 @@ export class OverworldRenderer {
 
   /**
    * One overworld frame. proj/view are the window's own camera
-   * (PLAIN perspective - see header). opts:
+   * (mirrorProjectionX'd like every world pass - see header). opts:
    *   time, cloudY, cloudAlpha - the deck
    *   markerScale - screen-px multiplier from the zoom
    *   haze {color:[r,g,b], density} - distance cue

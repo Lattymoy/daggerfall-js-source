@@ -50,6 +50,17 @@ test('U61: walkTravelPath is exactly the calculator\'s pixel sequence', () => {
     'the strict > comparison is load-bearing');
   assert.ok(!path.some((p) => p.x === 0 && p.y === 0), 'the start pixel is never charged');
 
+  // The Y-MAJOR arm, pinned by literal - the review found every
+  // coordinate pin above runs the x-major branch, leaving the whole
+  // `furthest === ady` arm swappable unnoticed. Hand-traced: inc
+  // gains 3 per move, x steps only when inc EXCEEDS 10 - and this
+  // diagonal also lands a pixel shy (x=2, not 3).
+  assert.deepEqual(walkTravelPath({ x: 0, y: 0 }, { x: 3, y: 10 }), [
+    { x: 0, y: 1 }, { x: 0, y: 2 }, { x: 0, y: 3 }, { x: 1, y: 4 },
+    { x: 1, y: 5 }, { x: 1, y: 6 }, { x: 2, y: 7 }, { x: 2, y: 8 },
+    { x: 2, y: 9 }, { x: 2, y: 10 },
+  ], 'the y-major stepper, literal for literal');
+
   // Summing the calculator's own per-pixel charge over the walk must
   // reproduce calculateTravelTime EXACTLY - a walk that visits one
   // different pixel lands on a different climate and a different sum.
@@ -130,6 +141,21 @@ test('U61: the grid puts a vertex on every pixel CENTER with north at +z', () =>
   const land = grid.colors.subarray((width - 1) * 3, width * 3);
   assert.ok(sea[2] > sea[0], 'sea blue');
   assert.ok(land[1] >= land[2], 'land green-brown');
+  // THE SUN IS NORTH-WEST: on a lone peak, the NW flank (which faces
+  // the sun) is brighter than the SE flank. The first draft lit the
+  // shadow side; the review's verifier executed the shade and caught
+  // the swapped operands - so the direction is pinned, not the bounds.
+  const w2 = 5, h2 = 5;
+  const peak = new Uint8Array(w2 * h2).fill(20);
+  peak[2 * w2 + 2] = 120;   // the summit at (2,2)
+  const g2 = buildOverworldGrid({
+    heightBytes: peak, width: w2, height: h2, climateAt: () => CLIMATES.Woodlands,
+  });
+  const lum = (px, py) => {
+    const i = (py * w2 + px) * 3;
+    return g2.colors[i] + g2.colors[i + 1] + g2.colors[i + 2];
+  };
+  assert.ok(lum(1, 1) > lum(3, 3), 'the NW flank faces the sun; the SE flank is its shadow');
 });
 
 // ── THE MARKERS RIDE THE CLASSIC LAWS ────────────────────────────
@@ -292,7 +318,8 @@ test('U61: the world host builds through the door, once, and gates on it', () =>
     'ONE construction seam, as G5 demanded');
   assert.doesNotMatch(src, /new TravelMapWindow\(/, 'no host constructs past the door');
   assert.doesNotMatch(src, /travelMapArtLoaded/, 'hosts ask the DOOR, never the raw art');
-  assert.match(src, /if \(!travelMapDoorReady\(\)\)/, 'both openers gate on the door predicate');
+  assert.equal([...src.matchAll(/if \(!travelMapDoorReady\(\)\)/g)].length, 2,
+    'BOTH openers gate on the door predicate - a single match let one drop its gate unnoticed (the review)');
   assert.match(src, /woods,\n\s*getPlayerPixel: playerTravelPixel/, 'the relief rides the one dep bag');
 });
 
@@ -390,6 +417,24 @@ test('U61: disease speaks BEFORE gold, the gate is two-sided, and the commit is 
     assert.match(win._panelState.notice, /gold pieces/,
       'coins alone gate the inn nights - the two-sided law');
     assert.equal(win._commit, null, 'no commit through a failed gate');
+    win.dispose();
+
+    // ...and the OTHER side: coins enough for the inn, the TOTAL pool
+    // short of the ship rental. The review deleted the total clause
+    // and the suite stayed green - this is the pin that dies now.
+    const sea = mkWin({
+      getClimateIndex: () => CLIMATES.Ocean,
+      gold: () => 10, goldPieces: () => 10,
+    });
+    sea._selected = { summary: summaryOf(9, 5, LOCATION_TYPES.TownCity), name: 'Far', x: 9.5, z: -5.5, y: 1 };
+    sea._openPanel('travel');
+    assert.ok(sea._panelState.trip.totalCost > sea._panelState.trip.piecesCost,
+      'the ship rental makes the sides differ');
+    assert.ok(sea._panelState.trip.piecesCost <= 10, 'the coins side alone would pass');
+    sea._begin();
+    assert.match(sea._panelState.notice, /gold/, 'the TOTAL pool refuses the passage');
+    assert.equal(sea._commit, null);
+    sea.dispose();
     sick = 0;
     win.dispose();
   });
@@ -484,7 +529,7 @@ test('U61: the window computes no travel law of its own', () => {
   // the fixed-point chain, the reckless halving, the inn arithmetic
   // and the day rounding all live in systems/travel.js - a second
   // spelling here is the drift the ONE-EXPORT rule exists to prevent
-  for (const forbidden of ['>> 8', '(300 *', '102 *', '* 4)', '+ 59)', '1439', '25 *', '5 \\* Math.trunc']) {
+  for (const forbidden of ['>> 8', '(300 *', '102 *', '* 4)', '+ 59)', '1439', '25 *', '5 * Math.trunc']) {
     assert.doesNotMatch(src, new RegExp(forbidden.replace(/[*+()]/g, '\\$&')),
       `the law fragment "${forbidden}" must not be re-derived in the view`);
   }
@@ -521,8 +566,23 @@ test('U61: the overworld pass restores what it touches', () => {
 test('U61: the veil phases never open a beginFrame - the host\'s live frame is the world below the clouds', () => {
   const src = read('src/ui/overworldMap.js');
   const draw = src.slice(src.indexOf('  draw(renderer, canvas)'), src.indexOf('  dispose()'));
-  assert.match(draw, /if \(this\._cameraLive\)/, 'the relief only draws once the camera cut is made');
-  const begin = draw.indexOf('renderer.beginFrame');
   const guard = draw.indexOf('if (this._cameraLive)');
-  assert.ok(guard >= 0 && begin > guard, 'beginFrame lives inside the camera-live arm');
+  assert.ok(guard >= 0, 'the relief only draws once the camera cut is made');
+  // CONTAINMENT, not text order - the review hoisted beginFrame past
+  // the arm's close brace and the old indexOf pin stayed green. Walk
+  // the braces to the arm's real end and hold every beginFrame inside.
+  let depth = 0, end = -1;
+  for (let i = draw.indexOf('{', guard); i < draw.length; i++) {
+    if (draw[i] === '{') depth++;
+    else if (draw[i] === '}') { depth--; if (depth === 0) { end = i; break; } }
+  }
+  assert.ok(end > guard, 'the arm closes');
+  const inside = draw.slice(guard, end);
+  assert.match(inside, /renderer\.beginFrame/, 'beginFrame lives inside the camera-live arm');
+  const outside = draw.slice(0, guard) + draw.slice(end);
+  assert.doesNotMatch(outside, /renderer\.beginFrame/,
+    'and NOWHERE else in draw - a veil frame that cleared the host\'s world would break the transition');
+  // and the mirror is the world passes' own, on this camera too
+  assert.match(inside, /mirrorProjectionX\(perspective\(/,
+    'the projection wraps the handedness mirror (the review proved the "right-handed" first draft flipped the bay)');
 });
