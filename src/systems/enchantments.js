@@ -52,18 +52,13 @@ import { MINUTES_PER_DAY } from './gameDate.js';   // the canonical home - world
 import { classicCastingCost } from './spellcost.js';   // E2: CastWhenHeld's equip durability hit IS the spell's classic casting cost
 import { skillValue } from './skills.js';
 import { enchantmentCost, defaultParam } from './enchantmentCatalogue.js';   // G4: the legacy value sum reads M4's costs
+import { artifactHook } from './artifactEffects.js';   // V3: the nine artifact classes' sub-registry
 
-/** EnchantmentTypes (ItemsFile.cs:111-141), verbatim. */
-export const ENCHANTMENT_TYPES = Object.freeze({
-  None: -1,
-  CastWhenUsed: 0, CastWhenHeld: 1, CastWhenStrikes: 2, ExtraSpellPts: 3,
-  PotentVs: 4, RegensHealth: 5, VampiricEffect: 6, IncreasedWeightAllowance: 7,
-  RepairsObjects: 8, AbsorbsSpells: 9, EnhancesSkill: 10, FeatherWeight: 11,
-  StrengthensArmor: 12, ImprovesTalents: 13, GoodRepWith: 14, SoulBound: 15,
-  ItemDeteriorates: 16, UserTakesDamage: 17, VisionProblems: 18,
-  WalkingProblems: 19, LowDamageVs: 20, HealthLeech: 21, BadReactionsFrom: 22,
-  ExtraWeight: 23, WeakensArmor: 24, BadRepWith: 25, SpecialArtifactEffect: 26,
-});
+// EnchantmentTypes moved HOME to formats/magicDef.js (V3) - it is
+// FallExe's enum and the artifact registry reads it below this module
+// in the graph; re-exported for this module's many consumers.
+import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';
+export { ENCHANTMENT_TYPES };
 
 /** EnchantmentSettings.ClassicType (DaggerfallUnityItem.cs:1316-1320).
  *  A settings row names its effect by KEY - DFU's EffectKey is the
@@ -561,6 +556,23 @@ const REGISTRY = new Map([
   // effect class anywhere in DFU - GetCombinedEnchantmentSettings
   // still emits them and the dispatcher's unknown-key quirk below is
   // what handles them, in DFU exactly as here.
+  /** V3 - SpecialArtifactEffect: the nine Effects/Special/* artifact
+   *  classes, keyed by the enchantment's PARAM (the artifact subtype
+   *  - GetCombinedEnchantmentSettings keys a Special row by it). The
+   *  registry row carries the union of their flags; each subtype's
+   *  own hooks live in systems/artifactEffects.js, and a subtype with
+   *  no class (Volendrung and the rest carry ordinary enchantments
+   *  only) idles rather than aborting. The Ring of Namira is NOT
+   *  here: DFU fires its callback by hand at CalculateAttackDamage's
+   *  tail, and so does the port (the registered player-struck hook,
+   *  worldTick's). */
+  [T.SpecialArtifactEffect, {
+    flags: PAYLOAD.Used | PAYLOAD.Held | PAYLOAD.Strikes | PAYLOAD.MagicRound,
+    used: artifactHook('used'),
+    strikes: artifactHook('strikes'),
+    constant: artifactHook('constant'),
+    magicRound: artifactHook('magicRound'),
+  }],
 ]);
 
 function applyRepMod(entity, param, amount) {

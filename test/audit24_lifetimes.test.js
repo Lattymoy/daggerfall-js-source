@@ -56,8 +56,10 @@ test('audit24 lifetimes: an encounter foe frees its billboard batch on BOTH ends
   // Soul Trap intercept between the two points (the trap can refuse
   // the death, so it must run BEFORE the batch is freed), which is
   // legitimate code in that gap; the bound moved to fit it rather than
-  // the documentation being cut to fit the bound.
-  assert.match(dmg, /health <= 0[\s\S]{0,900}releaseFoeBatch\(f\)/, 'death releases too');
+  // the documentation being cut to fit the bound. V3 moved it again:
+  // the Azura's Star kill-capture sits in the same gap, after the trap
+  // (a filled Star must count) and before the release.
+  assert.match(dmg, /health <= 0[\s\S]{0,1200}releaseFoeBatch\(f\)/, 'death releases too');
   // and the intercept must sit ahead of the release, not after it
   assert.ok(dmg.indexOf('attemptSoulTrap') < dmg.indexOf('releaseFoeBatch(f)'),
     'a trap that refuses the death must not have freed the batch first');

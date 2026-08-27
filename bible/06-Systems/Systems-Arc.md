@@ -3901,3 +3901,65 @@ clear laws, the cemetery pick's boundaries, the deploy's
 raise-transfer-popup order with the werewolf's quiet deploy beside
 it, and the host wiring greppable including the re-registration
 forward.
+
+## V3 - THE DAEDRIC ARTIFACT PAYLOADS: nine classes, one row (2026-08-27)
+
+The last enchantment type the dispatcher answered with the
+unknown-key abort. `systems/artifactEffects.js` is the nine
+Effects/Special/* classes as a sub-registry keyed by the
+enchantment's PARAM - the artifact subtype, exactly how
+GetCombinedEnchantmentSettings keys a Special row - mounted as ONE
+registry row (type 26) whose hooks route by param; a subtype with no
+class (Volendrung and the rest carry ordinary enchantments only)
+idles rather than aborting, which is stock DFU's own behavior for a
+missing class.
+
+THE LAWS, each verbatim: Azura's Star releases its soul on Use (TEXT
+32, or 20 for an empty Star) and - the HELD half - takes EVERY slain
+monster's soul while equipped, at both host death sites through
+fillEmptyTrap's azurasStarOnly arm X5 built (always successful while
+the Star is empty, class enemies excluded - the EnemyMonster gate).
+The Masque of Clavicus adds LivePersonality/5 to every social group's
+reaction mod each round, riding the same array the fold clears. The
+Razor deals the target's WHOLE health behind a failed magic save and
+pays the same in condition. The Mace of Molag Bal drains magicka up
+to the strike's damage with any overflow above the wielder's max
+RAISING max (the increase folds into mods.maxMagicka, so it sums with
+ExtraSpellPts and V2c's magery through the one modifier), takes 1d6
+strength from a dry target, and resets both twelve game minutes after
+the last strike - its state an activeEffects entry (kind 'artifact')
+the save carries free and liveStat reads through one added arm
+(RECORDED: DFU also moves the strength MAX; the port clamps at 100).
+The Oghma Infinium sets both level flags, opens the sheet, and is
+consumed; advancement's new oghma arm grants the fixed 30-point pool
+with NO Level++ and no health raise, both flags clearing together.
+The Wabbajack rerolls a struck creature from its own seventeen-entry
+table, never the same type, once per creature, through the world
+host's replaceFoe door - the old foe leaves through removeFoe, the
+new type spawns at its feet with the damage carried over, and a live
+quest foe is left alone. The Ring of Namira reflects an enemy's
+strike on the player by the attacker's TEAM (the six animal teams
+nothing, Daedra half, Undead double, the rest full; the ring pays the
+reflection in condition), dispatched where DFU dispatches it -
+CalculateAttackDamage's tail - through a second registered hook
+beside the racial one. The Rose and the Skull gate on an enemy inside
+12 and speak the fail line; their ALLIED summon door
+(spawnAlliedFoe) is FLAGGED unmounted - the port has no ally/team
+combat - so the arm idles loudly until the team system exists.
+
+AND THE ENUM WENT HOME. ENCHANTMENT_TYPES is FallExe's
+(ItemsFile.cs:111-141); it moved to formats/magicDef.js - the file
+that reads the records carrying it - with enchantments.js
+re-exporting, because the artifact registry sits under the
+enchantment system in the graph and importing the enum through its
+consumer would close a cycle.
+
+Pins: 9 in `test/artifacts.test.js`, every one through the REAL
+dispatcher or the real hook site - the abort's end proven by a known
+row running PAST a Special row, the Star's release pair and both
+death-site reads, the Masque's sweep, the Razor both sides of the
+save, the Mace's drain/overflow/strength/decay walk with the fold
+sum, the Oghma end to end into applyLevelUp, both summons' gates with
+the unmounted door pinned ABSENT, the Wabbajack's forced reroll and
+latch with the world door's three laws, and Namira's four team arms
+plus the no-ring null.

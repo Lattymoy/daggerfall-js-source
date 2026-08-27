@@ -46,6 +46,12 @@ export function liveStat(entity, statName) {
       // entry's map, re-applied every round by lycanthropyMagicRound
       // exactly as RacialOverrideEffect's constant pass does
       if (a.kind === 'racialOverride') { if (!a.ended) mod += a.statMods?.[statName] ?? 0; continue; }
+      // V3: the artifact channel - the Mace of Molag Bal's strength
+      // gain (wielder) and drain (target) ride entries of this kind,
+      // reset by the effect's own 12-minute decay rather than a
+      // duration. RECORDED: DFU also moves the MAX (ChangeStatMaxMod);
+      // the port's clamp holds at MAX_STAT_VALUE.
+      if (a.kind === 'artifact') { if (!a.ended) mod += a.statMods?.[statName] ?? 0; continue; }
       if (a.stat !== statName) continue;
       if (a.kind === 'fortifyAttribute') mod += a.magnitude;
       else if (a.kind === 'drainAttribute' || a.kind === 'transferAttribute') mod -= a.magnitude;

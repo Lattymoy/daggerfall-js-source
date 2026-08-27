@@ -86,7 +86,8 @@ import {
   MISSILE_LIFESPAN_S,
   EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
 } from '../systems/spellcast.js';
-import { silenceBlocksCast, SILENCED_TEXT, attemptSoulTrap, SOUL_TRAP_TEXT, dispelNearby } from '../systems/mysticism.js';   // S27; X5 the soul trap's kill intercept
+import { silenceBlocksCast, SILENCED_TEXT, attemptSoulTrap, SOUL_TRAP_TEXT, dispelNearby, fillEmptyTrap } from '../systems/mysticism.js';   // S27; X5 the soul trap's kill intercept
+import { isAzurasStarEquipped } from '../systems/artifactEffects.js';   // V3: the Star's kill capture
 import { applySpell, hasActiveEffect, entityIsParalyzed, maxFatigue } from '../systems/effects.js';
 import { FATIGUE_LOSS, liveStat, killIfAnyLiveStatZero } from '../systems/statMods.js';
 import { breathStep } from '../systems/breath.js';
@@ -1930,6 +1931,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const trap = attemptSoulTrap(foe.entity, foe.mobileType, playerEntity.items, Math.random());
       if (trap.alert) hudText.add(SOUL_TRAP_TEXT[trap.alert]);
       if (!trap.allowDeath) { foe.entity.health = 1; return; }
+      // V3: the equipped AZURA'S STAR takes every slain MONSTER's soul
+      // (DaggerfallEntityBehaviour.cs:240-247) - no Soul Trap effect
+      // needed, always successful while the Star is empty. Runs AFTER
+      // the trap intercept, so a trap-filled Star is simply no longer
+      // empty and this arm no-ops; class enemies (mobileType >= 128)
+      // have no soul to take, DFU's EnemyMonster gate.
+      if (foe.mobileType < 128 && isAzurasStarEquipped(playerEntity)
+        && fillEmptyTrap(playerEntity.items, foe.mobileType, { azurasStarOnly: true })) {
+        hudText.add(SOUL_TRAP_TEXT.trapSuccess);
+      }
       foe.dead = true;
       // E-slice: EnemyDeath:132-136 - the targeting foe's death
       // clears the alert (survivors re-raise it next update).

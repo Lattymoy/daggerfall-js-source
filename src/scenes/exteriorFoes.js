@@ -21,7 +21,8 @@ import { EnemyCaster, castEnemySpell, hasRangedSpell } from '../characters/enemy
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';   // X3
 import { applySpell, maxFatigue, entityIsParalyzed } from '../systems/effects.js';   // X3: self-casts land through the effect spine
 import { calculateCastCost } from '../systems/spellcost.js';   // X3: costs priced off the player (magic-15 note)
-import { silenceBlocksCast, attemptSoulTrap, SOUL_TRAP_TEXT } from '../systems/mysticism.js';   // X3: the enemy silence gate; X5: the soul trap's kill intercept
+import { silenceBlocksCast, attemptSoulTrap, SOUL_TRAP_TEXT, fillEmptyTrap } from '../systems/mysticism.js';   // X3: the enemy silence gate; X5: the soul trap's kill intercept
+import { isAzurasStarEquipped } from '../systems/artifactEffects.js';   // V3: the Star's kill capture
 import { EnemyAttack } from '../characters/enemyAttack.js';
 import { makeEnemyEntity, loadMonsterCareer } from '../characters/enemyEntity.js';
 import { MobileUnit } from '../characters/mobileUnit.js';
@@ -195,6 +196,13 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const trap = attemptSoulTrap(f.entity, f.mobileType, playerEntity.items, Math.random());
       if (trap.alert) say?.(SOUL_TRAP_TEXT[trap.alert]);
       if (!trap.allowDeath) { f.entity.health = 1; return; }
+      // V3: the equipped AZURA'S STAR takes every slain MONSTER's soul
+      // (DaggerfallEntityBehaviour.cs:240-247); after the trap, so a
+      // trap-filled Star is no longer empty; classes have no soul.
+      if (f.mobileType < 128 && isAzurasStarEquipped(playerEntity)
+        && fillEmptyTrap(playerEntity.items, f.mobileType, { azurasStarOnly: true })) {
+        say?.(SOUL_TRAP_TEXT.trapSuccess);
+      }
       f.dead = true;
       f.corpse = true;
       // the LIVE batch is finished the moment the foe is - batches()
