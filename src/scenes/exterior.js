@@ -1150,6 +1150,8 @@ export async function bootExterior(canvas, renderer, params, status) {
   // and read undefined rather than throw a TDZ ReferenceError. Every
   // reference BEFORE this line must therefore be `modes?.` - which is
   // what test/audit24_wave37.test.js asserts, both ways.
+  // V2c: createWorldModes also registers setPassiveSpecialsHost (the
+  // sunlight/holy-place seam) for THIS page - THE FOUR HOSTS RULE.
   var modes = createWorldModes({
     canvas, renderer, player, cam, keys, latch, blocks,
     // S40: IsPlayerInTown() with both flags at their defaults - the

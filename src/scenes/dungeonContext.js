@@ -28,6 +28,7 @@ import { addItem, spendArrow } from '../systems/inventory.js';
 import { worldAabb } from '../player/activate.js';
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface
 import { racialRestBlock } from '../systems/vampirism.js';   // V2b: the vampire's rest gate
+import { setPassiveSpecialsHost } from '../systems/passiveSpecials.js';   // V2c: the sunlight/holy-place seam
 // U26: this host's own equip hook is retired - the native inventory
 // window owns equipping, the career gate (S23) and the paperdoll, so
 // the duplicate pair here had nothing left to serve. AUDIT 17e F17's
@@ -1617,6 +1618,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     get value() { return worldMinutes(); },
     set value(v) { setWorldMinutes(v); },
   };
+  // V2c: THE SUNLIGHT SEAM, the dungeon's answers - always inside,
+  // always a dungeon, never holy (PlayerEnterExit's holy pair is a
+  // BUILDING check), swimming from the live activity report. Built by
+  // worldModes' dungeon branch OR the standalone dungeon scene; the
+  // previous registration (worldModes') is restored in destroy(), the
+  // death-presenter shape.
+  const _prevPassiveHost = setPassiveSpecialsHost({
+    now: () => Math.floor(classicMinutesRef.value),
+    isInside: () => true,
+    inDungeon: () => true,
+    isHolyPlace: () => false,
+    isSwimming: () => !!_activity.swimming,
+  });
   async function ensureMissileBatch(m) {
     if (m.batch !== null) return;
     m.batch = false;   // in-flight guard
@@ -3153,6 +3167,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // billboard batch each and leave with the dungeon.
       for (const p of droppedLoot._piles) if (p.batch) renderer.destroyBillboardBatch(p.batch);
       droppedLoot._piles.length = 0;
+      // V2c: hand the sunlight seam back to whoever held it (the town
+      // page's worldModes registration) - a latched dungeon answer
+      // would keep the sun off the player forever after the exit.
+      setPassiveSpecialsHost(_prevPassiveHost);
     },
   };
 }

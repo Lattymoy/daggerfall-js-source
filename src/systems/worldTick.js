@@ -52,6 +52,7 @@ import { RACES } from './races.js';
 // AUDIT 24 (wave 24): one home, systems/gameDate.js.
 import { MINUTES_PER_DAY } from './gameDate.js';
 import { enchantmentMagicRound } from './enchantments.js';   // E1: the per-round item payload pump
+import { passiveSpecialsMagicRound } from './passiveSpecials.js';   // V2c: careers' regen/sun/holy/magery + the vampire's fire
 // S41 - the day-change block's four members. They live in their own
 // systems; this file is only the ONE PLACE that runs them on a day
 // boundary, which is where PlayerEntity.Update runs them.
@@ -186,6 +187,10 @@ export function runMagicRoundsFor(entity, from, to, { sinks, rolls = Math.random
       nowMinutes: r + 1,
       ctx: { ...(enchantCtx ?? {}), hurtSelf: (n) => sinks?.hurt?.(n), say },
     });
+    // V2c: PassiveSpecials rides the same round, AFTER the enchant
+    // fold - its magery arm SUMS the two producers into the one
+    // maxMagickaModifier the accessor reads. Player-gated inside.
+    passiveSpecialsMagicRound(entity, { nowMinutes: r + 1, sinks });
     rounds++;
   }
   return rounds;

@@ -36,9 +36,10 @@
 // doors for held applies), castingSkillOf(skillId) (the equip
 // durability bill's skill read - defaults to the wearer's),
 // inSunlight()/inDarkness()/inHolyPlace() (PlayerEnterExit flags -
-// FLAGGED: no host computes them yet, so the conditional arms of
-// RegensHealth/ItemDeteriorates/UserTakesDamage idle), season(),
-// moonPhase() (FLAGGED: lunar phases are a Ledger C row),
+// V2c: answered off the passiveSpecials host seam at world.js's
+// mount, so RegensHealth/ItemDeteriorates/UserTakesDamage's
+// conditional arms are live), season(), moonPhase(param) (V2c:
+// ExtraSpellPts' IsFull/IsHalf/IsNewMoon over gameDate's lunar law),
 // nearbyFoes(range) -> [{ mobileType, hurt(n) }] (PlayerGPS.
 // GetNearbyObjects - the affinity classifier lives HERE off
 // ENEMY_BASICS), spawnFoe(mobileType) (SoulBound's break, B1's
@@ -342,8 +343,8 @@ const REGISTRY = new Map([
     },
   }],
   /** ExtraSpellPts.cs - Held constant: +75 max magicka while the
-   *  condition holds. Params 0-3 seasons, 4-6 moons (FLAGGED: lunar
-   *  phases are a Ledger C row - the moon arms idle), 7-10 near
+   *  condition holds. Params 0-3 seasons, 4-6 moons (V2c: the host's
+   *  moonPhase(param) answers off gameDate's lunar law), 7-10 near
    *  undead/daedra/humanoids/animals inside 18 units. */
   [T.ExtraSpellPts, {
     flags: PAYLOAD.Held,

@@ -52,6 +52,7 @@ import { clearSceneCache } from '../systems/sceneCache.js';   // P1: SaveLoadMan
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
 import { createTravelMapWindow, travelMapDoorReady, preloadTravelMapArt, canFindPlace } from '../ui/travelMapDoor.js';   // W1's classic art window + U61's overworld, one door
 import { racialRestBlock, racialFastTravelBlock } from '../systems/vampirism.js';   // V2b: the vampire's rest and daylight gates
+import { playerInSunlight, playerInHolyPlace } from '../systems/passiveSpecials.js';   // V2c: the enchant ctx's two E1 flags
 import { buildMapDict } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict
 import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
@@ -65,7 +66,7 @@ import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSe
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it
-import { seasonValue, SEASONS, dateFromClassicMinutes, dateTimeString, midDateTimeString } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes
+import { seasonValue, SEASONS, dateFromClassicMinutes, dateTimeString, midDateTimeString, lunarPhasesFromMinutes, LUNAR_PHASES } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes; V2c: the enchant ctx's moon arms
 import { regionPriceAdjustment, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from '../systems/shopStock.js';   // Q4-v: CreateGold's regional term (the shops' own producer); U41: Items.Contains(Transportation, ...)
 import { getNameBankOfRegion } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5)
 import { createHitEffects } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
@@ -1235,9 +1236,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
   // there with the rest of its enchant wiring. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
-  // ground (no rest window here yet)", and this slice put one here -
-  // while inSunlight/inHolyPlace stay the E1 FLAGGED seams no host
-  // computes.
+  // ground (no rest window here yet)", and this slice put one here.
+  // V2c filled inSunlight/inHolyPlace in the same way: the answers
+  // ride passiveSpecials' registered host seam (worldModes' mount).
   // X4: hoisted out of the enchant block below - the Detect feed and
   // the frame body need the same two live reads the enchant ctx does
   // (the player's feet, and exterior mode's foe pool), and one
@@ -1264,6 +1265,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       // window raises the flag on OPEN, so it is live here the moment
       // the rest page is up.
       isResting: () => !!playerEntity.isResting,
+      // V2c: the E1 conditional arms' two flags (RepairsObjects' sun
+      // gate, the affinity/curse place gates). Both read the sunlight
+      // seam worldModes registered, so they route by LIVE mode.
+      inSunlight: () => playerInSunlight(),
+      inHolyPlace: () => playerInHolyPlace(),
       applySpellToSelf: (record) => magic.castByItemSelf(record),
       setReadySpell: (record) => magic.readySpell(record, { free: true }),
       applySpellToTarget: (record, attacker, target) => {
@@ -1312,6 +1318,18 @@ export async function bootWorld(canvas, renderer, params, status) {
       season: () => {
         const s = seasonValue(dateFromClassicMinutes(worldMinutes()));
         return s === SEASONS.Winter ? 0 : s === SEASONS.Fall ? 3 : s;
+      },
+      // V2c: the moon arms, off V2a's lunar law. ExtraSpellPts'
+      // IsFullMoon/IsHalfMoon/IsNewMoon (:133-154) each answer true
+      // when EITHER moon shows the phase; half counts both the waxing
+      // and waning half. Params 4/5/6 = Full/Half/New (:190-192).
+      moonPhase: (param) => {
+        const { masser, secunda } = lunarPhasesFromMinutes(worldMinutes());
+        const either = (...phases) => phases.includes(masser) || phases.includes(secunda);
+        if (param === 4) return either(LUNAR_PHASES.Full);
+        if (param === 5) return either(LUNAR_PHASES.HalfWax, LUNAR_PHASES.HalfWane);
+        if (param === 6) return either(LUNAR_PHASES.New);
+        return false;
       },
     });
   }

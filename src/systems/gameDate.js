@@ -20,10 +20,10 @@
 // classicMinutes counts from that start, so a live date is
 // dateFromClassicMinutes(classicGameStartTime + elapsed).
 //
-// FLAGGED, deliberately: the two LUNAR PHASE getters (:134-150,
-// GetLunarPhase) are not here - nothing in the port reads a moon yet,
-// and DFU's own comment says the logic mirrors the Enhanced Sky mod
-// rather than classic. RaiseTime's carry chain is not ported either:
+// THE MOONS LANDED AT V2a (the lunar block below): lycanthropy's
+// full-moon forced change is what finally read one, and DFU's own
+// comment - the logic mirrors Enhanced Sky rather than classic - is
+// carried on the block. RaiseTime's carry chain is not ported:
 // this module is pure functions over an absolute minute count, so
 // there is no mutable clock object to carry.
 
@@ -169,6 +169,14 @@ export const lunarPhasesFromMinutes = (gameMinutes) => {
     masser: lunarPhase(date, { masser: true }),
     secunda: lunarPhase(date, { masser: false }),
   };
+};
+
+/** IsDay (DaggerfallDateTime's own property): hour in [DawnHour,
+ *  DuskHour) - 6:00 to 17:59. The V2b fast-travel gate and V2c's
+ *  sunlight law both read it off the classic-minutes clock. */
+export const isDayFromMinutes = (gameMinutes) => {
+  const hour = dateFromClassicMinutes(gameMinutes).hour;
+  return hour >= DAWN_HOUR && hour < DUSK_HOUR;
 };
 /** LycanthropyEffect.MagicRound's own full-moon test (:151-152):
  *  EITHER moon full forces the change. */

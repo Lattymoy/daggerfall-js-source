@@ -21,14 +21,13 @@
 // of lycanthropy's innocence test. DFU's own design: the vampire
 // feeds in combat, the werewolf must hunt the innocent.
 //
+// SUN AND HOLY DAMAGE went live in V2c: the entry's
+// sunDamage/holyDamage flags are the racial-override arm
+// passiveSpecials.js's burn reads (12 per 4th round, through the
+// IsPlayerInSunlight/IsPlayerInHolyPlace host seam registered by the
+// hosts).
+//
 // FLAGGED, with the slice each waits on:
-//  - SUN DAMAGE and HOLY DAMAGE (the compound race's
-//    SpecialAbilityFlags): the entry carries sunDamage/holyDamage
-//    true, and the fast-travel day gate and the sun-averse arrival
-//    clamp read them NOW - but the per-round 12-damage-per-4-rounds
-//    law lives in PassiveSpecialsEffect, which needs the
-//    IsPlayerInSunlight host seam nobody has built (the same seam
-//    enchantments' conditional arms idle on). V2c.
 //  - the quests ($CUREVAM, the initial P0A01L00, the clan's guild
 //    quest line) - quest-bridge work, beside lycanthropy's $CUREWER
 //  - the guild swap (guilds.js carries membershipsFor(store,
@@ -36,7 +35,7 @@
 //    SCBG08I0 paperdoll art, the gendered attack voices - host work
 
 import { VAMPIRE_CLANS, LYCANTHROPY_TYPES } from './infection.js';
-import { MINUTES_PER_DAY, dateFromClassicMinutes, DAWN_HOUR, DUSK_HOUR } from './gameDate.js';
+import { MINUTES_PER_DAY, isDayFromMinutes } from './gameDate.js';
 import { spellRecordOfIndex } from './loot.js';
 import { SKILLS } from './skills.js';
 import { WEAPON_MATERIALS } from '../characters/weapons.js';
@@ -192,12 +191,10 @@ export function racialRestBlock(entity, nowMinutes = 0) {
   return { textId: NOT_SATED_TEXT_ID };
 }
 
-/** IsDay (DaggerfallDateTime:  hour in [6, 18)) off the classic
- *  minutes clock - the fast-travel gate's own read. */
-export const isDayFromMinutes = (gameMinutes) => {
-  const hour = dateFromClassicMinutes(gameMinutes).hour;
-  return hour >= DAWN_HOUR && hour < DUSK_HOUR;
-};
+// isDayFromMinutes moved HOME to gameDate.js (V2c) - it is date law,
+// and the sunlight seam reads it too; re-exported for this module's
+// existing consumers.
+export { isDayFromMinutes };
 
 /** CheckFastTravel (:129-141), called where DFU calls it - at the
  *  travel map's own door (DaggerfallUI.cs:625): a sun-damaged

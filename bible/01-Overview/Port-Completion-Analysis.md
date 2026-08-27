@@ -140,9 +140,10 @@ Motor core is close to 1:1. Everything around it is thin:
   has no port (~330).
 - `HeadBobber` absent (~170). Levitation inert above ground. Paralysis
   does not stop the player outside the dungeon host.
-- `IsPlayerInSunlight` / `InDarkness` / `InHolyPlace` / `InsideOpenShop` /
-  `Tavern` / `Residence` are never computed (~100) - several unported
-  effects depend on these.
+- ~~`IsPlayerInSunlight` / `InDarkness` / `InHolyPlace` never computed~~
+  SHIPPED (V2c: the passiveSpecials host seam, registered by worldModes
+  and dungeonContext). `InsideOpenShop` / `Tavern` / `Residence` still
+  uncomputed (~40).
 - Arrival and greeting text: "You are entering %s", dungeon flavour,
   rented-room reminders, shop-quality greetings (~220).
 
@@ -154,8 +155,8 @@ The most complete subsystem measured. Residue only, but some of it bites:
   equipment can never be fixed (~240).
 - No lockpick ATTEMPT path, so the Lockpicking skill has no consumer and
   can never advance (~110).
-- `PassiveSpecialsEffect` unported: career Regeneration, Sun Damage, Holy
-  Damage and Light/Darkness-Powered Magery are all inert (~150).
+- ~~`PassiveSpecialsEffect` unported~~ SHIPPED (V2c:
+  systems/passiveSpecials.js - regen, sun/holy damage, both mageries).
 - Enemy infighting damage (`ApplyDamageToNonPlayer`) unported (~200).
 - The enchantment modifier channels (`ChanceToHitModifier`,
   armour-value modifiers, `MaxHealthLimiter`...) are the already-flagged

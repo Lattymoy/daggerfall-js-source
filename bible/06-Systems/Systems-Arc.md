@@ -3741,3 +3741,55 @@ cemetery respawn, the art and voices, the artifact payloads.
 
 Pins: 9 in `test/vampirism.test.js`; the S40 rest sweeps and the
 round-order sweep advance.
+
+## V2c - PASSIVE SPECIALS + THE SUNLIGHT SEAM: one key, three doors (2026-08-27)
+
+`PassiveSpecialsEffect.cs` whole, in `systems/passiveSpecials.js`, and
+the two PlayerEnterExit flags it and the E1 enchant arms had been
+idling on. The laws are small and verbatim: IsPlayerInSunlight =
+IsDay && !IsPlayerInside && !InPrison (:371 - no weather term);
+IsPlayerInHolyPlace = a Temple-type building or the Fighter Trainers'
+faction 849 (:1424-1431, DFU's own quirky pair); regen 1 per 4th
+round by RegenerationFlags (Always / InDarkness = night-or-dungeon /
+InLight / InWater = the motor's swimming flag); 12 sun and 12 holy
+damage per 4th round off the career bit OR the racial override's
+compound-race flag; Light/Darkness Powered Magery writing -33% of
+RawMaxMagicka or the -10000000 unable constant.
+
+THE SEAM IS REGISTERED BY THE MODE MACHINE. worldModes owns mode and
+interiorBuilding for BOTH town pages - world.js and exterior.js each
+build it at boot - so the one registration there answers all three
+modes, routed by LIVE mode (the death-presenter lesson). The dungeon
+context registers its own on build and RESTORES the displaced host in
+destroy() - setPassiveSpecialsHost answers the previous registration
+for exactly this - so a town dungeon hands the seam back at the door.
+inPrison stays an absent member: the port serves a sentence as a
+clock move (arrestFlow), never as a live scene.
+
+THE MODIFIER IS A SUM, AND RAW IS READ WITH THE MODIFIER ZEROED.
+ChangeMaxMagickaModifier accumulates from every producer; the port
+has two - the enchant fold's ExtraSpellPts and this magery pass - so
+the pass runs in worldTick's round AFTER the fold and writes
+`_enchantMods.maxMagicka + magery` into the one field
+defineLiveMaxMagicka reads. RawMaxMagicka is never recovered by
+subtracting the modifier back out: the accessor FLOORS at 0 and a
+plain headless maxMagicka is not modifier-inclusive, so the pass
+zeroes the modifier for the read (the pin that fails on the
+subtraction shape is the enchant-fold SUM).
+
+THE E1 RESIDUE TRIPLE CLOSED AT THE ONE MOUNT. world.js's enchant ctx
+now answers inSunlight/inHolyPlace off this seam and moonPhase(param)
+off V2a's lunar law - ExtraSpellPts' IsFullMoon/IsHalfMoon/IsNewMoon,
+either moon, half counting both wax and wane - so RegensHealth,
+ItemDeteriorates, UserTakesDamage and the moon-conditioned
+ExtraSpellPts arms are live.
+
+FLAGGED, each loudly: the transformed suppressions/claws/sounds/art
+both curses' hosts owe, the quests, the guild swap, the cemetery
+respawn, the artifact payloads; the dungeon host's enchant ctx mount.
+
+Pins: 11 in `test/passivespecials.test.js` - the two flags through
+the seam, the career reads off parseCareerData's own bitfields, all
+four regen flags, both burns (career arm and override arm), the
+magery SUM and the unable write's stability on the live accessor, the
+vampire burning through runMagicRoundsFor, and the four-hosts sweep.
