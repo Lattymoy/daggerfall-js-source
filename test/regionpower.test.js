@@ -203,3 +203,140 @@ test('S43 wiring: the tick walks the powers every 7 days and again every 38', ()
   });
   assert.equal(solo.power, 48, 'both arms fired on the aligned minute - two points, not one');
 });
+
+// ── RS1: THE STRUCT-COPY LAW (2026-08-27) ───────────────────────────
+// The re-sweep of the shipped conditions body against PlayerEntity.cs
+// found three places where C# copies a FactionData STRUCT and later
+// reads its power - so the read sees the value AT THE COPY, not the
+// record ChangePower has since mutated. The port's dict hands out LIVE
+// references, which silently read the post-mutation value at all three
+// sites until this slice snapshotted them:
+//   - the won-war spoils (:1845) read warEnemy.power from the :1791
+//     copy, PRE-battle - while the lost-war arm reads the faction
+//     fresh from the dict (:1851), POST-battle. DFU's own asymmetry.
+//   - the persecuted-temple roll (:2024/:2026) reads temple.power from
+//     the :1974 copy, before the plague arms billed it.
+//   - the witch-burnings roll (:2059) reads witches.power from the
+//     :2057 copy, before the standing-burnings bill above it.
+// Each test scripts the WHOLE roll stream and asserts it is consumed
+// exactly - a change to the arm walk fails here first, not silently.
+
+const { factionConditionsStep } = await import('../src/systems/regionPower.js');
+const { createRegionConditions, turnOnConditionFlag, conditionFlag, REGION_FLAGS } =
+  await import('../src/systems/regionConditions.js');
+
+const rollQueue = (vals) => {
+  const q = [...vals];
+  const fn = () => {
+    if (!q.length) throw new Error('roll queue exhausted - the arm walk changed shape');
+    return q.shift();
+  };
+  fn.left = () => q.length;
+  return fn;
+};
+const province = (o) => f({ type: FACTION_TYPES.Province, ...o });
+const stepSnapshot = (dict, a) => {
+  const allies = [a.ally1, a.ally2, a.ally3];
+  const enemies = [a.enemy1, a.enemy2, a.enemy3];
+  let alliesPower = 0;
+  for (const id of allies) alliesPower += dict.get(id)?.power ?? 0;
+  return { allies, enemies, alliesPower };
+};
+
+test('RS1 war: the spoils are the PRE-battle copy, and WarWon\'s group-clear drops WarOngoing', () => {
+  // Region 0 borders region 44 (BORDER_REGIONS[0] = 44), so B is a
+  // potential war enemy of A and the standing rivalry is permanent
+  // until the war is over (no end-rivalry roll).
+  const A = province({ id: 201, region: 0, power: 60, enemy1: 202 });
+  const B = province({ id: 202, region: 44, power: 2, enemy1: 201 });
+  const dict = store(A, B).dict;
+  const rc = createRegionConditions();
+  turnOnConditionFlag(rc, 0, REGION_FLAGS.WarOngoing, () => 0.5);
+  // The stream: alliance pick (B, an enemy - refused), the 95% battle
+  // gate, powerLoss (1 + floor(r*0) = 1 always), enemyPowerLoss
+  // (1 + floor(0.4*6) = 3), the two flag-value rolls of the won-war
+  // arm, the rivalry pick (B again, refused), the ruler roll (passes,
+  // no new ruler), famine/plague 2% starts (miss), the persecuted and
+  // crime rolls (negative chances, both turn off nothing).
+  const rolls = rollQueue([0.0, 0.99, 0.0, 0.4, 0.5, 0.5, 0.0, 0.0, 0.99, 0.99, 0.5, 0.5]);
+  factionConditionsStep(dict, A, [202], stepSnapshot(dict, A), { regionConditions: rc, rolls });
+  assert.equal(rolls.left(), 0, 'the whole stream was consumed');
+  // The battle: A +1 (the positive powerLoss, DFU's own), then the
+  // spoils trunc(2/2)=1 off B's PRE-battle power 2 - a live read of
+  // the post-battle 5 would have paid trunc(5/2)=2 and left A at 63.
+  assert.equal(A.power, 62, 'the spoils read the :1791 struct copy');
+  assert.equal(B.power, 5, 'B gained its enemyPowerLoss of 3');
+  assert.equal(conditionFlag(rc, 0, REGION_FLAGS.WarWon), true, 'A\'s region won');
+  assert.equal(conditionFlag(rc, 44, REGION_FLAGS.WarLost), true, 'B\'s region lost');
+  // TurnOnConditionFlag's group-clear: WarWon shares group 0 with the
+  // WarOngoing set at the top, so raising it dropped the old flag.
+  assert.equal(conditionFlag(rc, 0, REGION_FLAGS.WarOngoing), false, 'the group-clear ran');
+});
+
+test('RS1 temple: the persecution roll reads the PRE-plague copy of the temple\'s power', () => {
+  // REGION_TEMPLES[0] = 106. Temple power 5 at the copy; the ongoing
+  // plague bills it to 4 before the persecution roll. The pre-copy
+  // chance trunc((5-5+5)/5) = 1 beats a floor-0 roll; the live 4 gives
+  // chance 0, which nothing beats - the bug turned persecution OFF on
+  // exactly this boundary.
+  const A = province({ id: 301, region: 0, power: 6 });
+  const T = f({ id: 106, type: FACTION_TYPES.Temple, power: 5, region: -1 });
+  const dict = store(A, T).dict;
+  const rc = createRegionConditions();
+  turnOnConditionFlag(rc, 0, REGION_FLAGS.PlagueOngoing, () => 0.5);
+  // alliance pick (the temple - invalid for the mill, taken anyway) +
+  // its refused roll, rivalry pick + its passed roll, ruler, famine,
+  // the plague end-roll (fails, plague continues), the persecution
+  // roll (floor 0 < chance 1), the flag-value roll, the crime roll.
+  const rolls = rollQueue([0.0, 0.5, 0.0, 0.0, 0.0, 0.99, 0.99, 0.001, 0.5, 0.5]);
+  factionConditionsStep(dict, A, [106], stepSnapshot(dict, A), { regionConditions: rc, rolls });
+  assert.equal(rolls.left(), 0, 'the whole stream was consumed');
+  assert.equal(conditionFlag(rc, 0, REGION_FLAGS.PersecutedTemple), true,
+    'the roll used the :1974 copy - the live post-plague power would have turned it off');
+  assert.equal(T.power, 3, 'billed once by the plague, once by the persecution');
+  assert.equal(rc[0].idOfPersecutedTemple, 106);
+  assert.equal(A.power, 5, 'the province paid the plague point');
+});
+
+test('RS1 witches: the burnings roll reads the coven\'s power from BEFORE the standing bill', () => {
+  // Region 2 has no temple (REGION_TEMPLES[2] = 0 - the persecution
+  // arm is skipped whole). Coven power 10 at the copy; the standing
+  // burnings bill it to 9 first. Pre-copy chance trunc((10-10+5)/5)=1
+  // beats a floor-0 roll and the burnings CONTINUE; the live 9 gives
+  // chance 0 and the bug ended them.
+  const A = province({ id: 401, region: 2, power: 10 });
+  const W = f({ id: 402, type: FACTION_TYPES.WitchesCoven, power: 10, region: 2 });
+  const dict = store(A, W).dict;
+  const rc = createRegionConditions();
+  turnOnConditionFlag(rc, 2, REGION_FLAGS.WitchBurnings, () => 0.5);
+  // alliance pick + refused roll, rivalry pick + passed roll, ruler,
+  // famine, plague 2% start (miss), crime, the burnings roll, the
+  // flag-value roll of the re-raised burnings.
+  const rolls = rollQueue([0.0, 0.5, 0.0, 0.0, 0.0, 0.99, 0.99, 0.5, 0.001, 0.5]);
+  factionConditionsStep(dict, A, [402], stepSnapshot(dict, A), { regionConditions: rc, rolls });
+  assert.equal(rolls.left(), 0, 'the whole stream was consumed');
+  assert.equal(conditionFlag(rc, 2, REGION_FLAGS.WitchBurnings), true,
+    'the roll used the :2057 copy - the live post-bill power would have ended the burnings');
+  assert.equal(W.power, 8, 'billed by the standing wave AND the survived roll');
+});
+
+test('RS1 temple: the double-power mercy gate reads the copy too (>= 2x on the boundary)', () => {
+  // Temple copy 10 = exactly 2x the post-plague province power 5, so
+  // the C# else-if turns persecution OFF; the live post-plague 9 sits
+  // below the bar and the bug fell through to persecution ON. The
+  // first roll passes either way (chances 2 and 1 both beat floor 0),
+  // so the branches split on the gate alone - and the OFF arm draws no
+  // flag-value roll, which the queue length pins.
+  const A = province({ id: 311, region: 0, power: 6 });
+  const T = f({ id: 106, type: FACTION_TYPES.Temple, power: 10, region: -1 });
+  const dict = store(A, T).dict;
+  const rc = createRegionConditions();
+  turnOnConditionFlag(rc, 0, REGION_FLAGS.PlagueOngoing, () => 0.5);
+  const rolls = rollQueue([0.0, 0.5, 0.0, 0.0, 0.0, 0.99, 0.99, 0.001, 0.5]);
+  factionConditionsStep(dict, A, [106], stepSnapshot(dict, A), { regionConditions: rc, rolls });
+  assert.equal(rolls.left(), 0, 'the whole stream was consumed - no persecution value roll');
+  assert.equal(conditionFlag(rc, 0, REGION_FLAGS.PersecutedTemple), false,
+    'copy 10 >= 2*5 turns persecution off; the live 9 would have persecuted');
+  assert.equal(T.power, 9, 'billed by the plague alone');
+  assert.equal(rc[0].idOfPersecutedTemple, 0, 'no persecuted temple recorded');
+});
