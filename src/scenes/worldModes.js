@@ -161,6 +161,7 @@ import { canRest as guildCanRest } from '../systems/guildServices.js';
 import { interiorRestPlace, restDecision } from '../systems/restSession.js';   // CanRest's inside-a-building bag + the scene-free open gate above it
 import { racialRestBlock } from '../systems/vampirism.js';   // V2b: the vampire's rest gate
 import { setPassiveSpecialsHost, FIGHTER_TRAINERS_FACTION } from '../systems/passiveSpecials.js';   // V2c: the sunlight/holy-place seam
+import { DaedraSummonedWindow } from '../ui/daedraSummonedWindow.js';   // G7b: the summoning's own film window
 import { orderOf } from '../systems/guildVariants.js';
 import { joinedGuildOfGroup } from '../systems/guilds.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js';
@@ -1861,15 +1862,40 @@ export function createWorldModes(host) {
           }
           setFlag(store, r.daedra.factionId, r.flag);
           const offered = questBridge?.offerDaedricQuest?.(r.quest, summonerId) ?? null;
-          const boxes = offered ? questBridge.offerBoxes(offered, (id) => townTalk?.lines?.(id) ?? []) : [];
-          if (boxes.length && guildServiceArtLoaded() && _shopFont) {
+          // G7b: the prince's own .FLC window carries the OFFER step -
+          // DaggerfallDaedraSummonedWindow, the film with the offer
+          // read over it in four-line chunks. The step has ONE
+          // consumer: the film window when the FLC loads, the box
+          // chain when it cannot (never traps). The fetch is async,
+          // so the service window closes now and the summons appears
+          // on arrival - DFU's own push replaces the popup the same
+          // way.
+          const mountBoxes = () => {
+            const boxes = offered ? questBridge.offerBoxes(offered, (id) => townTalk?.lines?.(id) ?? []) : [];
+            if (!boxes.length || !guildServiceArtLoaded() || !_shopFont) return;
             let offerWin = null;
             offerWin = new ServiceFlowWindow(boxes, {
               onClose: () => { if (interiorOverlay === offerWin) interiorOverlay = null; },
             });
             interiorOverlay = offerWin;
+          };
+          if (offered?.kind === 'offer' && r.daedra.video) {
+            fetchBytes(r.daedra.video).then((bytes) => {
+              let sw = null;
+              sw = new DaedraSummonedWindow({
+                flcBytes: bytes, flcName: r.daedra.video, offerStep: offered,
+                // FLAGGED: a refusal owes 3-5 daedra at 8..64 units
+                // (:86-87); the interior has no foe pool - the coven
+                // failure's standing gap, same seam.
+                spawnRefusalFoes: () => console.warn('[summon] a refusal owes you daedra; the interior has no foe pool (FLAGGED)'),
+                onClose: () => { if (interiorOverlay === sw) interiorOverlay = null; },
+              });
+              if (!sw.flc.readyToPlay) { mountBoxes(); return; }
+              interiorOverlay = sw;
+            }).catch(() => mountBoxes());
             return null;
           }
+          if (offered) { mountBoxes(); return null; }
           return { rows: [{ text: `${r.daedra.name} answers your summons.`, center: true }] };
         },
       };

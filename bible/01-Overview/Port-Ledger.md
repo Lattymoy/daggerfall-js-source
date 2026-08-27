@@ -604,14 +604,20 @@ a 0.4 directional + hard shadows; the port draws base textures under
 the collapsed-ambient idiom the automap records. Pins in
 `test/bankpreview.test.js`.
 
-### 2. The sixteen `.FLC` summoning videos
+### 2. ~~The sixteen `.FLC` summoning videos~~ SHIPPED (G7b 2026-08-27)
 
-`systems/daedraSummoning.js:38` names it: HIRCINE.FLC and its fifteen
-siblings, one per Daedra prince, played when a summoning succeeds. G7
-shipped the SERVICE whole; this is its residue. The decoder already
-exists - `formats/flcFile.js` (F1) and `ui/flcPlayer.js` (F2a) were
-built for the three chargen constellation animations and are the same
-reader. Mostly a mount, not a port.
+`ui/daedraSummonedWindow.js` is DaggerfallDaedraSummonedWindow: the
+prince's own film fullscreen and LOOPING (FLCPlayer.Loop's default)
+over the F1/F2a reader the constellations built, the quest offer read
+over it in FOUR-LINE chunks (a click or any key turns the page), the
+last chunk answering to Yes/No through the offer flow's REAL respond -
+so accept runs startQuestImmediate and refuse runs the rumor/topic
+sweeps - and the answer's own message reading through the same chunks
+before the last click closes. The refusal's 3-5 daedra ride a
+spawnRefusalFoes door FLAGGED unmounted (the interior foe pool's
+standing gap, the coven-failure seam). The host mounts ONE consumer
+of the offer step: the film window when the FLC loads, the box chain
+when it cannot - never traps.
 
 ### 3. ~~Morph Self, the last inert effect~~ TAKEN (V2a 2026-08-27)
 
