@@ -136,6 +136,7 @@ const judges = (l) => !isHelperDef(l) && JUDGES.some((re) => re.test(l));
 const EYEBALL_TOOLS = new Set([
   'screenshot.mjs',      // "Headless screenshot proof for the current milestone scene"
   'musicRender.mjs',     // "render a song to a WAV so a human can HEAR it"
+  'enhancedMusicRender.mjs',   // EM1: the same, for a composed piece - a WAV for Mac's ear
   'splashProbe.mjs',     // shoots ANIM0001.VID mid-play for a human to compare
   'titleProbe.mjs',      // the title screen, captured
   'townProbe.mjs',       // close-up screenshot (doctrine)

@@ -30,7 +30,8 @@ import { applyBiographyEffects } from './biography.js';   // S3e
 import { customSpellSetIndex } from './customClass.js';   // U20a
 import { SOCIAL_GROUP_COUNT, FactionFile } from '../formats/factionFile.js';   // U20a + S25
 import { attachFactionRep } from './factionRep.js';   // S25
-import { createRegionConditions } from './regionConditions.js';   // PlayerEntity.InitializeRegionData (:2189-2218), at every new game
+import { createRegionConditions } from './regionConditions.js';
+import { bootstrapRegionPower } from './regionPower.js';   // AUDIT 26 F107   // PlayerEntity.InitializeRegionData (:2189-2218), at every new game
 
 /** SPELLS.STD as an index -> spell map. AUDIT 17f: the exterior
  *  hosts ran chargen without one and called finishChargen with no
@@ -139,6 +140,8 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
   // StartGameBehaviour.cs:433 InitializeRegionData - the same store the
   // wizard's path mints, on the second construction copy above.
   playerEntity.regionConditions = createRegionConditions();
+  // AUDIT 26 F107: InitializeRegionData's own tail (:2211-2217).
+  bootstrapRegionPower(playerEntity.factionRep, { regionConditions: playerEntity.regionConditions });
   console.log(`[chargen] ${CLASS_CAREERS[classIndex]}: HP ${playerEntity.maxHealth}, spells ${playerEntity.spells.length}`);
   return playerEntity;
 }
@@ -196,6 +199,7 @@ export function applyCreationExtras(playerEntity, result, spellsByIndex = null, 
   // recorded a blank store. Nothing in the mint reads the character,
   // so it sits with the rest of what creation hands out.
   playerEntity.regionConditions = createRegionConditions();
+  bootstrapRegionPower(playerEntity.factionRep, { regionConditions: playerEntity.regionConditions });   // AUDIT 26 F107: InitializeRegionData's tail (:2211-2217)
   return playerEntity;
 }
 

@@ -556,6 +556,22 @@ export function factionConditionsStep(dict, faction, keys, { allies, enemies, al
  *   conditions half and ignored by the power half
  * @returns {{walked: number, changed: number}}
  */
+/** AUDIT 26 F107 - InitializeRegionData's tail (PlayerEntity.cs:
+ *  2211-2217): TWELVE iterations of RegionPowerAndConditionsUpdate
+ *  (false) AND (true) - the Ledger row said "twelve false then one
+ *  true" and the code is the law: both arms, twelve times each. Every
+ *  faction starts play 24 power-walk steps in, with the conditions
+ *  body rolled twelve times over the fresh store - which is what
+ *  seeds the merchants-vs-region term of the very first regional
+ *  price day. Without it every character started on raw FACTION.TXT
+ *  powers, shifting every later power read for the life of the save. */
+export function bootstrapRegionPower(store, { rumorMill = null, regionConditions = null, rolls = Math.random } = {}) {
+  for (let i = 0; i < 12; i++) {
+    regionPowerUpdate(store, { rumorMill, rolls });
+    regionPowerUpdate(store, { rumorMill, rolls, updateConditions: true, regionConditions });
+  }
+}
+
 export function regionPowerUpdate(store, {
   rumorMill = null, rolls = Math.random, updateConditions = false, regionConditions = null,
 } = {}) {

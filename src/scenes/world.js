@@ -3374,6 +3374,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (!_overlayHeld) playerTicker.tick(dt * timeScaleMult, {
         running: player.isRunning && !player.standing,   // AUDIT 23 (entity-2): PlayerEntity.cs:408
         swimming: player.swimming,
+        climbing: !!player.climb?.isClimbing,   // AUDIT 26 F083: the band's first arm (:405-408)
         jumped: player.jumped,   // C6: the per-jump drain+tally ride the tick
       });
         // AUDIT 18 HOST GAP: levitate/waterWalking/slowFall were
