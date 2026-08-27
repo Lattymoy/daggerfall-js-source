@@ -3,7 +3,7 @@
 // the fog on sliders - the tuning surface and the eyeball tool, no game
 // data needed. `?hour=&weather=&day=&yaw=&pitch=&fog=` pins any of them
 // for the probe, and `?still` freezes the clouds' drift.
-import { EnhancedSkyRenderer, skyState } from '../render/enhancedSky.js';
+import { EnhancedSkyRenderer, skyState, retroFor } from '../render/enhancedSky.js';
 import { MINUTES_PER_DAY, lunarPhasesFromMinutes } from '../systems/gameDate.js';
 
 const params = new URLSearchParams(location.search);
@@ -11,6 +11,7 @@ const canvas = document.getElementById('c');
 const gl = canvas.getContext('webgl2', { antialias: false, preserveDrawingBuffer: true });   // the probe reads pixels after the frame
 if (!gl) throw new Error('webgl2 unavailable');
 const sky = new EnhancedSkyRenderer(gl);
+sky.retro = retroFor(location.search);   // ES1e: the lab shows what the game shows
 const $ = (id) => document.getElementById(id);
 const controls = ['hour', 'weather', 'day', 'yaw', 'pitch', 'fog'];
 for (const id of controls) if (params.has(id)) $(id).value = params.get(id);

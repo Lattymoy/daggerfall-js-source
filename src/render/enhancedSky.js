@@ -86,11 +86,116 @@ export const MOONS = Object.freeze({
  *  every game sun is, so it reads at a glance. */
 export const SUN_RADIUS = 0.032;
 
+/* ── THE RETRO PASS (ES1e, 2026-08-27, Mac: "I really want to try and
+   match the retro artwork aesthetic of Daggerfall") ──────────────────
+   Daggerfall drew at 320x200 in a 256-colour palette, and its painted
+   skies are 512x220 bitmaps the port already blits with NEAREST - so a
+   smooth 24-bit dome next to a chunky classic sprite is the one thing
+   in the enhanced sky that does NOT look like the game. Two knobs, both
+   the era's own techniques rather than a filter over the top:
+
+   PIXELS, AND THE RIGHT SIZE. Not a screen grid: the CLASSIC SKY'S OWN
+   ANGULAR GRID. SKY??.DAT is 512 pixels across 180 degrees, which
+   skyRenderer already names SKY_ANGLE_PER_PIXEL (PI/512), so the ray's
+   azimuth and elevation are snapped to exactly that step before
+   anything is computed. Three things follow, and they are the whole
+   argument for doing it this way. The enhanced sky's pixels are the
+   SAME SIZE as the painted sky's, so the two skins read as one game.
+   They are fixed to the WORLD, not the screen - turn your head and the
+   sky's pixels stay where they are, as a bitmap sky's do, instead of
+   crawling with the camera. And they do not change with the field of
+   view or the window, so a phone and a desktop see the same sky at the
+   same scale. Everything is drawn ON that grid - the sun's disc, the
+   moons' terminators, the stars, the cloud edges - so it is 1996 art
+   rather than a modern render with a mosaic laid over it.
+
+   LEVELS. Then the colour is posterised with an ORDERED (Bayer 4x4)
+   dither - the exact thing a 256-colour gradient did in 1996, and the
+   reason Daggerfall's own skies have that woven look up close. The
+   smooth triangular dither of ES1c is for the SMOOTH pass; here the
+   ordered one replaces it, because random noise on a posterised
+   gradient is film grain and a Bayer pattern is a palette.
+
+   `?sky=smooth` turns both off and keeps the modern dome. */
+export const RETRO = Object.freeze({ step: Math.PI / 512, levels: 26 });   // step: SKY_ANGLE_PER_PIXEL, the painted sky's own pixel
+
+/** ONE DOOR for the retro decision, so the game and the lab cannot
+ *  disagree about what the sky looks like: retro unless `?sky=smooth`. */
+export const retroFor = (search = globalThis.location?.search ?? '') =>
+  (new URLSearchParams(search).get('sky') === 'smooth' ? null : RETRO);
+
 /** The pole the star field turns about: north (+Z here, since the sun's
  *  arc is the XZ east-west line), leaned toward the zenith so the field
  *  wheels at an angle rather than spinning flat overhead. Ours - the
  *  Iliac Bay has no stated latitude. */
 export const STAR_POLE = Object.freeze([0, 0.622244, 0.782823]);   // unit: the shader normalises anyway, but a direction should BE one
+
+// ── THE CLOUD FIELD, ON THE CPU (ES1d) ───────────────────────────
+// The shader's hash/value-noise/fbm, in JS, IDENTICALLY - so the port
+// can ask "is a cloud in front of the sun right now" without reading a
+// pixel back. The shader is the same three functions in GLSL, and
+// test/enhancedSky.test.js pins the two texts against each other line
+// for line, because a drift here is a sun that dims when the sky says
+// it should not.
+const fract = (x) => x - Math.floor(x);
+export function hash21(x, y) {
+  let px = fract(x * 123.34), py = fract(y * 456.21);
+  const d = px * (px + 45.32) + py * (py + 45.32);
+  px += d; py += d;
+  return fract(px * py);
+}
+function vnoise(x, y) {
+  const ix = Math.floor(x), iy = Math.floor(y);
+  let fx = x - ix, fy = y - iy;
+  fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+  const a = hash21(ix, iy), b = hash21(ix + 1, iy), c = hash21(ix, iy + 1), d = hash21(ix + 1, iy + 1);
+  return (a + (b - a) * fx) + ((c + (d - c) * fx) - (a + (b - a) * fx)) * fy;
+}
+export function fbm(x, y) {
+  let v = 0, amp = 0.5, px = x, py = y;
+  for (let i = 0; i < 5; i++) {
+    v += amp * vnoise(px, py);
+    const nx = px * 2.03 + 17.1, ny = py * 2.03 + 9.7;
+    px = nx; py = ny; amp *= 0.5;
+  }
+  return v;
+}
+const smoothstep = (e0, e1, x) => { const t = clamp01((x - e0) / (e1 - e0)); return t * t * (3 - 2 * t); };
+
+/** One deck's cover along a direction - the shader's `deck`, in JS. */
+function deckCover(dir, scale, wind, cover, soft, time) {
+  const k = 1 / (dir[1] + 0.18);
+  const n = fbm(dir[0] * k * scale + wind[0] * time, dir[2] * k * scale + wind[1] * time);
+  return smoothstep(1 - cover, 1 - cover + soft, n);
+}
+
+/**
+ * ES1d - THE CLOUD IN FRONT OF THE SUN, 0..1 (Mac: the fifth fault).
+ * The shader already draws it: the sun's disc is multiplied by
+ * `1 - cloud` along the sun's own ray. This is that same number, on the
+ * CPU, for the WORLD's light - so when a bank crosses the sun you SEE
+ * the disc go and FEEL the ground go with it, and the two cannot
+ * disagree, because it is one field evaluated at one direction.
+ *
+ * It is a dimming, not a projected shadow: the dome is infinitely far,
+ * so the cover does not change as the player walks (a real cloud
+ * shadow moves with the cloud, which this does - via the wind - and
+ * with the walker, which this does not). Below the horizon there is no
+ * sun to occlude and it is 0.
+ */
+export function sunOcclusion(state) {
+  if (!state || state.sunDir[1] <= 0) return 0;
+  const d = state.sunDir, w = state.wind, t = state.seconds;
+  const hi = deckCover(d, 0.95, [w[0] * 0.55, w[1] * 0.55], state.cloudCover * 0.75, state.cloudSoft * 1.5, t);
+  const lo = deckCover(d, 1.9, w, state.cloudCover, state.cloudSoft, t);
+  return clamp01(lo + hi * (1 - lo) * 0.7);
+}
+
+/** How much of the sun a full cover takes off the WORLD. Not 1: even
+ *  under a solid deck the ground is lit, by the sky itself, and the
+ *  weather's own sunlight scale (WeatherManager, verbatim) has already
+ *  had its say - this is the moving cloud on top of that. */
+export const CLOUD_SHADOW = 0.55;
 
 /** Interpolate the palette at a sun elevation (degrees). Pure. */
 export function paletteAt(elevDeg) {
@@ -208,7 +313,7 @@ export function skyState({ minuteOfDay, weather = 'sunny', classicMinutes = 0, s
   // north, tilted off the zenith the way a sky's is anywhere but the
   // pole itself.
   const starAngle = (minuteOfDay / 1440) * Math.PI * 2;
-  return {
+  const state = {
     sunDir, elevDeg, starAngle, starPole: STAR_POLE,
     zenith, horizon, sun: pal.sun, glow: pal.glow,
     glowAmount: pal.glowAmount * (1 - w.grey * 0.7),
@@ -222,6 +327,9 @@ export function skyState({ minuteOfDay, weather = 'sunny', classicMinutes = 0, s
     // classic pass's clearColor/fillColor roles).
     clearColor: horizon, fillColor: zenith,
   };
+  // ES1d: the cloud in front of the sun, for the world's light.
+  state.sunOcclusion = sunOcclusion(state);
+  return state;
 }
 
 const VS = `#version 300 es
@@ -244,6 +352,16 @@ uniform vec2 uWind;
 uniform float uFogMix;
 uniform vec3 uStarPole;
 uniform float uStarAngle;
+uniform float uRetroStep;   // 0 = the smooth pass; else the angular pixel (radians)
+uniform float uRetroLevels; // 0 = no posterise
+
+// Bayer 4x4, the ordered dither a 256-colour gradient used.
+float bayer4(vec2 p) {
+  int x = int(mod(p.x, 4.0)), y = int(mod(p.y, 4.0));
+  int i = y * 4 + x;
+  float m[16] = float[16](0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0, 3.0, 11.0, 1.0, 9.0, 15.0, 7.0, 13.0, 5.0);
+  return m[i] / 16.0;
+}
 out vec4 outColor;
 
 float hash21(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
@@ -322,6 +440,19 @@ void main() {
   float cy = cos(uYaw), sy = sin(uYaw);
   vec3 dir = normalize(vec3(r1.x * cy + r1.z * sy, r1.y, -r1.x * sy + r1.z * cy));
 
+  // ES1e: THE ANGULAR PIXEL. The direction is snapped to the painted
+  // sky's own grid (PI/512 in azimuth and elevation) BEFORE anything is
+  // computed, so every feature below is drawn on it and the pixels are
+  // fixed to the world rather than to the screen.
+  vec2 cell = vec2(0.0);
+  if (uRetroStep > 0.0) {
+    float az = atan(dir.x, dir.z), el = asin(clamp(dir.y, -1.0, 1.0));
+    cell = floor(vec2(az, el) / uRetroStep);
+    vec2 q = (cell + 0.5) * uRetroStep;
+    float ce = cos(q.y);
+    dir = vec3(sin(q.x) * ce, sin(q.y), cos(q.x) * ce);
+  }
+
   // The dome: horizon to zenith.
   float e = clamp(dir.y, 0.0, 1.0);
   vec3 color = mix(uHorizon, uZenith, pow(e, 0.55));
@@ -394,8 +525,24 @@ void main() {
   // error a triangular distribution, which is the shape that fully
   // decorrelates it from the signal - a flat one left a third of the
   // rows still identical to the row above.
-  float d = (hash21(gl_FragCoord.xy) + hash21(gl_FragCoord.xy + 13.7) - 1.0) / 255.0;
-  outColor = vec4(mix(clamp(color, 0.0, 1.0), uFogColor, uFogMix) + d, 1.0);
+  vec3 out3 = mix(clamp(color, 0.0, 1.0), uFogColor, uFogMix);
+  if (uRetroLevels > 0.0) {
+    // ES1e: posterise with an ORDERED dither, indexed by the ANGULAR
+    // cell - one Bayer cell per sky pixel, or it is a fine weave under a
+    // coarse one, which is two eras at once, and it would crawl when the
+    // camera turned.
+    float b = bayer4(uRetroStep > 0.0 ? cell : gl_FragCoord.xy) - 0.5;
+    out3 = floor(out3 * uRetroLevels + 0.5 + b) / uRetroLevels;
+  } else {
+    // The SMOOTH pass's dither. Interleaved gradient noise, not a hash:
+    // the hash of ES1c measured well (46% of identical rows to 25%) but
+    // it is STRUCTURED at integer coordinates - a visible weave under
+    // magnification, which is the one thing a dither must not be. IGN is
+    // the standard for exactly this and is three constants.
+    float ign = fract(52.9829189 * fract(0.06711056 * gl_FragCoord.x + 0.00583715 * gl_FragCoord.y));
+    out3 += (ign - 0.5) / 255.0;
+  }
+  outColor = vec4(out3, 1.0);
 }`;
 
 /** The pass. Same contract as SkyRenderer: draw(yaw, pitch, fovY, aspect)
@@ -419,7 +566,8 @@ export class EnhancedSkyRenderer {
     this.u = {};
     for (const name of ['uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uZenith', 'uHorizon', 'uSunColor', 'uGlowColor', 'uCloudLit', 'uCloudShade',
       'uFogColor', 'uSunDir', 'uSunRadius', 'uSunVis', 'uGlowAmount', 'uStars', 'uMoonA', 'uMoonB', 'uMoonAColor', 'uMoonBColor',
-      'uMoonAVis', 'uMoonBVis', 'uCloudCover', 'uCloudSoft', 'uTime', 'uWind', 'uFogMix', 'uStarPole', 'uStarAngle']) {
+      'uMoonAVis', 'uMoonBVis', 'uCloudCover', 'uCloudSoft', 'uTime', 'uWind', 'uFogMix', 'uStarPole', 'uStarAngle',
+      'uRetroStep', 'uRetroLevels']) {
       this.u[name] = gl.getUniformLocation(prog, name);
     }
     this.vao = gl.createVertexArray();
@@ -435,6 +583,9 @@ export class EnhancedSkyRenderer {
     this.clearColor = new Float32Array([0.66, 0.78, 0.92]);
     this.fillColor = new Float32Array([0.17, 0.35, 0.72]);
     this.state = null;
+    // ES1e: the retro pass, on by default - Mac's call. `?sky=smooth`
+    // clears it and the modern dome comes back.
+    this.retro = RETRO;
   }
 
   /** The frame's state (skyState). Cheap: numbers into fields. */
@@ -470,6 +621,8 @@ export class EnhancedSkyRenderer {
     gl.uniform1f(u.uFogMix, this.fogMix);
     gl.uniform3fv(u.uStarPole, s.starPole);
     gl.uniform1f(u.uStarAngle, s.starAngle);
+    gl.uniform1f(u.uRetroStep, this.retro ? this.retro.step : 0);
+    gl.uniform1f(u.uRetroLevels, this.retro ? this.retro.levels : 0);
     // HANDEDNESS: as the classic pass - the triangle winds CCW under a
     // CW front face, so culling is off for it.
     gl.disable(gl.CULL_FACE);

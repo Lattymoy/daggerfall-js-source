@@ -291,7 +291,93 @@ test('ES1c clouds and dither: two decks lit by the sun, and a triangular dither 
   assert.match(fs, /cc \+= uSunColor \* rim \* 0\.55 \* uSunVis;/, 'the rim is the sun through the edge, and is nothing at night');
   assert.match(fs, /\(1\.0 - pow\(sunAz, 0\.7\)\) \* thick/, 'and the belly darkens away from it');
   assert.doesNotMatch(fs, /vec3 cc = mix\(uCloudShade, uCloudLit, smoothstep\(0\.5, 0\.95, n\)\);/, 'the old unlit colouring is gone');
-  // The dither: triangular, one quantisation step, on the final write.
-  assert.match(fs, /float d = \(hash21\(gl_FragCoord\.xy\) \+ hash21\(gl_FragCoord\.xy \+ 13\.7\) - 1\.0\) \/ 255\.0;/);
-  assert.match(fs, /outColor = vec4\(mix\(clamp\(color, 0\.0, 1\.0\), uFogColor, uFogMix\) \+ d, 1\.0\);/, 'added at the write, after the fog');
+  // The dither is at the final write, after the fog. (ES1e replaced the
+  // hash with interleaved gradient noise on the smooth pass and with an
+  // ordered dither on the retro one - the dither's SHAPE is pinned in
+  // the ES1e test; what is pinned here is that there is one, and where.)
+  assert.match(fs, /vec3 out3 = mix\(clamp\(color, 0\.0, 1\.0\), uFogColor, uFogMix\);/);
+  assert.match(fs, /out3 \+= \(ign - 0\.5\) \/ 255\.0;/, 'a sub-quantisation step, never more');
+  assert.match(fs, /outColor = vec4\(out3, 1\.0\);/);
+});
+
+// ── ES1d: THE CLOUD IN FRONT OF THE SUN ───────────────────────────
+import { sunOcclusion, CLOUD_SHADOW, fbm, hash21 } from '../src/render/enhancedSky.js';
+
+test('ES1d shadow: the sun dims under the cloud the SHADER draws, and the two cannot disagree', () => {
+  // Nothing at night: there is no sun to occlude.
+  assert.equal(sunOcclusion(skyState({ minuteOfDay: 2 * 60, weather: 'cloudy' })), 0);
+  assert.equal(sunOcclusion(null), 0);
+  // A clear sky barely occludes; a solid deck occludes wholly; a broken
+  // one SWEEPS - which is the whole point, a cloud passing over you.
+  const over = (w) => {
+    const v = [];
+    for (let t = 0; t < 400; t += 10) v.push(sunOcclusion(skyState({ minuteOfDay: 9 * 60, weather: w, seconds: t })));
+    return { min: Math.min(...v), max: Math.max(...v), mean: v.reduce((a, b) => a + b) / v.length };
+  };
+  const sunny = over('sunny'), cloudy = over('cloudy'), overcast = over('overcast');
+  assert.ok(sunny.mean < 0.1, `clear: the sun is mostly out (${sunny.mean.toFixed(2)})`);
+  assert.ok(cloudy.min < 0.1 && cloudy.max > 0.9, `broken: it sweeps (${cloudy.min.toFixed(2)}..${cloudy.max.toFixed(2)})`);
+  assert.ok(overcast.min > 0.95, 'solid: the sun is gone');
+  for (const s of [sunny, cloudy, overcast]) assert.ok(s.min >= 0 && s.max <= 1);
+  // It is the SAME field the shader draws with: the same deck call, at
+  // the sun's own direction. A drift here is a sun that dims when the
+  // sky says it should not, so the two texts are pinned against each other.
+  const fs = read('src/render/enhancedSky.js');
+  assert.match(fs, /vec2 hi = deck\(dir, 0\.95, uWind \* 0\.55, uCloudCover \* 0\.75, uCloudSoft \* 1\.5, 0\.0\);/);
+  assert.match(fs, /const hi = deckCover\(d, 0\.95, \[w\[0\] \* 0\.55, w\[1\] \* 0\.55\], state\.cloudCover \* 0\.75, state\.cloudSoft \* 1\.5, t\);/);
+  assert.match(fs, /vec2 lo = deck\(dir, 1\.9, uWind, uCloudCover, uCloudSoft, 0\.0\);/);
+  assert.match(fs, /const lo = deckCover\(d, 1\.9, w, state\.cloudCover, state\.cloudSoft, t\);/);
+  assert.match(fs, /float covHi = hi\.x \* \(1\.0 - lo\.x\) \* 0\.7;/);
+  assert.match(fs, /clamp01\(lo \+ hi \* \(1 - lo\) \* 0\.7\)/);
+  // The JS noise is the GLSL noise: same magic numbers, same octaves.
+  for (const n of ['123.34', '456.21', '45.32', '2.03', '17.1', '9.7']) {
+    assert.ok(fs.includes(n), `${n} appears in both the shader and the JS`);
+  }
+  assert.ok(fbm(1.5, 2.5) >= 0 && fbm(1.5, 2.5) <= 1);
+  assert.equal(hash21(1, 1), hash21(1, 1));
+  assert.notEqual(hash21(1, 1), hash21(1, 2));
+  // The world takes it off the KEY light only - the sky still lights the
+  // ground under a cloud - and the same number in both exterior hosts.
+  assert.ok(CLOUD_SHADOW > 0.2 && CLOUD_SHADOW < 0.8, `${CLOUD_SHADOW}: a cloud dims the sun, it does not switch it off`);
+  assert.match(read('src/scenes/shared.js'), /return 1 - CLOUD_SHADOW \* occ;/);
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const src = read(host);
+    assert.match(src, /sunScale\(minute\) \* weatherSun \* flash \* sky\.sunFactor\(\)/, `${host} dims the key light`);
+    assert.doesNotMatch(src, /exteriorAmbient\(minute, 1, weatherSun \* sky\.sunFactor/, `${host} does NOT dim the ambient`);
+  }
+});
+
+// ── ES1e: THE RETRO PASS ──────────────────────────────────────────
+import { RETRO, retroFor } from '../src/render/enhancedSky.js';
+import { SKY_ANGLE_PER_PIXEL } from '../src/render/skyRenderer.js';
+
+test('ES1e retro: the enhanced sky is drawn on the PAINTED sky\'s own angular pixel, posterised with an ordered dither', () => {
+  // The pixel is the classic sky's pixel - not a screen grid - so the
+  // two skins read as one game, the pixels stay put when the camera
+  // turns, and a phone and a desktop see the same scale.
+  assert.equal(RETRO.step, SKY_ANGLE_PER_PIXEL, 'PI/512: SKY??.DAT is 512 across 180 degrees');
+  assert.ok(RETRO.levels >= 12 && RETRO.levels <= 64, `${RETRO.levels}: a 256-colour gradient, not a 24-bit one`);
+  // On by default (Mac's call), off with ?sky=smooth - ONE door, so the
+  // game and the lab cannot disagree about what the sky looks like.
+  assert.equal(retroFor(''), RETRO);
+  assert.equal(retroFor('?sky=smooth'), null);
+  assert.equal(retroFor('?sky=classic'), RETRO, 'classic is the OTHER pass entirely; it never reaches here');
+  assert.match(read('src/scenes/shared.js'), /enhancedSky\.retro = retroFor\(params\.toString\(\)\);/);
+  assert.match(read('src/tools/skyLab.js'), /sky\.retro = retroFor\(location\.search\);/);
+  const fs = read('src/render/enhancedSky.js');
+  // The snap happens to the DIRECTION, before anything is computed - so
+  // the sun, the moons, the stars and the cloud edges are all ON the grid.
+  assert.match(fs, /cell = floor\(vec2\(az, el\) \/ uRetroStep\);/);
+  assert.match(fs, /dir = vec3\(sin\(q\.x\) \* ce, sin\(q\.y\), cos\(q\.x\) \* ce\);/);
+  const body = fs.slice(fs.indexOf('void main() {'));
+  assert.ok(body.indexOf('uRetroStep > 0.0') < body.indexOf('float e = clamp(dir.y'), 'snapped BEFORE the dome is coloured');
+  // Ordered dither, indexed by the angular cell (not the screen pixel,
+  // which would crawl when the camera turned).
+  assert.match(fs, /float bayer4\(vec2 p\)/);
+  assert.match(fs, /float b = bayer4\(uRetroStep > 0\.0 \? cell : gl_FragCoord\.xy\) - 0\.5;/);
+  assert.match(fs, /out3 = floor\(out3 \* uRetroLevels \+ 0\.5 \+ b\) \/ uRetroLevels;/);
+  // ...and the SMOOTH pass keeps a dither, but interleaved gradient
+  // noise rather than the hash, which was structured under magnification.
+  assert.match(fs, /float ign = fract\(52\.9829189 \* fract\(0\.06711056 \* gl_FragCoord\.x \+ 0\.00583715 \* gl_FragCoord\.y\)\);/);
+  assert.doesNotMatch(fs, /hash21\(gl_FragCoord\.xy\) \+ hash21\(gl_FragCoord\.xy \+ 13\.7\)/, 'the structured hash dither is gone');
 });
