@@ -19,6 +19,7 @@ import { isEnhanced } from '../uiSkin.js';
 import { paletteFor } from './palettes.js';
 import { composeScore } from './composer.js';
 import { hashSeed } from './theory.js';
+import { scoreFor } from './scores.js';
 
 /** The seed for a cue. A dungeon composes on its own key - the header
  *  field DFU seeds its song choice with (SongManager.cs:353-356), so a
@@ -29,12 +30,23 @@ export function cueSeed(context) {
   return hashSeed(context.environment, context.locationIndex ?? -1, context.gameDays ?? 0);
 }
 
-/** The enhanced side's answer for a cue: a composed song for SongPlayer,
- *  or null to leave the classic song alone (classic skin, or a place
- *  with no palette yet). */
+/** The enhanced side's answer for a cue, or null to leave the classic
+ *  song alone (classic skin, or a place with neither a track nor a
+ *  palette): `{ track, song }` - Mac's track for the place if one is
+ *  scored, and the composed piece if the place has a palette. Both,
+ *  and the piece is composed IN THE TRACK'S KEY and tempo when the
+ *  record names them, to sit underneath it; a track that names no key
+ *  plays alone rather than clash. (EM2c) */
 export function enhancedScore(context, { enhanced = isEnhanced() } = {}) {
   if (!enhanced || !context) return null;
+  const track = scoreFor(context.environment);
   const palette = paletteFor(context.environment);
-  if (!palette) return null;
-  return composeScore(palette, cueSeed(context));
+  if (!track && !palette) return null;
+  let song = null;
+  if (palette && (!track || track.root !== undefined)) {
+    song = composeScore(palette, cueSeed(context), track
+      ? { root: track.root, mode: track.mode ?? undefined, bpm: track.bpm ?? undefined }
+      : {});
+  }
+  return { track, song };
 }

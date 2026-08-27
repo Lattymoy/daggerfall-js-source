@@ -1048,7 +1048,7 @@ export function createMusicDirector({ fm = null, play = null, stop = null, playi
   manager = new SongManager({
     play: play ?? ((name) => {
       const score = enhancedScore(manager?.currentContext);
-      return score ? music.playScore(score) : music.playFrom([name], { gameDays: 0 });
+      return score ? music.playEnhanced(score) : music.playFrom([name], { gameDays: 0 });
     }),
     stop: stop ?? (() => music.stop()),
     fm: useFm,

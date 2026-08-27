@@ -15,6 +15,8 @@ const args = process.argv.slice(2);
 const flag = (name, dflt) => { const i = args.indexOf(name); if (i < 0) return dflt; const v = args[i + 1]; args.splice(i, 2); return v; };
 const SECONDS = Number(flag('--seconds', 45));
 const OUT = flag('--out', '/tmp/enhanced.wav');
+const ROOT = flag('--root', null);     // EM2c: compose in a scored track's key
+const MODE = flag('--mode', null);
 const ENV = args[0] || 'dungeonInterior';
 const SEED_WORDS = args.slice(1).length ? args.slice(1) : ['Privateer', 'Hold'];
 const RATE = 22050;
@@ -27,14 +29,14 @@ page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 await page.route('**/', (r) => r.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><meta charset="utf-8"><body>' }));
 await page.goto('http://localhost:5234/play/');
 
-const out = await page.evaluate(async ({ ENV, SEED_WORDS, SECONDS, RATE }) => {
+const out = await page.evaluate(async ({ ENV, SEED_WORDS, SECONDS, RATE, ROOT, MODE }) => {
   const { composeScore } = await import('/src/systems/enhancedMusic/composer.js');
   const { paletteFor } = await import('/src/systems/enhancedMusic/palettes.js');
   const { hashSeed } = await import('/src/systems/enhancedMusic/theory.js');
   const { SongPlayer, applyChannelEvents, freshChannelState } = await import('/src/systems/songPlayer.js');
   const palette = paletteFor(ENV);
   if (!palette) return { error: `no palette for ${ENV}` };
-  const song = composeScore(palette, hashSeed(...SEED_WORDS));
+  const song = composeScore(palette, hashSeed(...SEED_WORDS), { root: ROOT === null ? undefined : Number(ROOT), mode: MODE ?? undefined });
   const off = new OfflineAudioContext(2, Math.ceil(SECONDS * RATE), RATE);
   const p = new SongPlayer(off);
   p._ensureMaster();
@@ -67,7 +69,7 @@ const out = await page.evaluate(async ({ ENV, SEED_WORDS, SECONDS, RATE }) => {
   let bin = ''; const CH = 0x8000;
   for (let i = 0; i < bytes.length; i += CH) bin += String.fromCharCode(...bytes.subarray(i, i + CH));
   return { b64: btoa(bin), notes, peak, rms: Math.sqrt(sq / n), meta: song.meta, loopSeconds: song.durationTicks * song.secondsPerTick, name: song.name };
-}, { ENV, SEED_WORDS, SECONDS, RATE });
+}, { ENV, SEED_WORDS, SECONDS, RATE, ROOT, MODE });
 
 if (out.error) console.log('ERROR', out.error);
 else {
