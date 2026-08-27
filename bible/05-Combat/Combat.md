@@ -622,3 +622,19 @@ shipping enabled.
 
 5 pins + 4 backstab fixtures moved to the lazy signature; 5
 mutations run, 5 killed. Suite 1444 across 189, green both modes.
+
+## FROM PLAY (2026-08-27): THE SPLASH CLOCK - blood standing still in the air
+
+Mac: "enemies' blood texture stays static in the air when attacking
+them in dungeons". AUDIT 24 wave 39 made the splash a one-shot pool
+whose clock the HOST runs (`hitEffects.tick(dt)`), and wired that clock
+into dungeon.js - the dev host - and both exterior hosts. worldModes,
+the host the game is played in, draws the dungeon's billboardBatches
+(where the pool registers) and never ran the clock: a splash spawned
+at frame 0 and stayed, wherever the foe had been. THE FOUR HOSTS RULE,
+one more time, and this time the fix is structural rather than a
+fourth wire: the clock runs inside dungeonContext.drawFoes, the one
+frame function both dungeon hosts already call, and neither host runs
+it itself - so none can forget it and none can run it twice. The
+wave-39 wiring pin, which had pinned dungeon.js and said nothing about
+worldModes, now pins the context and both hosts' absence. Mutant dead.

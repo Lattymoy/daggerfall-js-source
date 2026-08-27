@@ -114,6 +114,7 @@ import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, crea
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
 import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // StartRestGroundedCheck's ONE home
+import { floorLanding } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27)
 import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -1607,7 +1608,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     queue.push(...state.init(px, py));
     const first = queue.shift();
     const dest = await buildPixel(first.px, first.py);
-    const pos = localPos ?? [TERRAIN_SIZE / 2, dest.centerHeight + state.compensation[1] + 2, TERRAIN_SIZE / 2];
+    // PositionPlayerToLocation ends in FixStanding (StreamingWorld
+    // :1597-1608): the arrival is snapped to what is under it, not
+    // dropped from 2u up. The pixel is built by now, so the collider
+    // has its terrain and its blocks; nothing beneath leaves the +2
+    // (and gravity) as the fallback it always was.
+    const raw = localPos ?? [TERRAIN_SIZE / 2, dest.centerHeight + state.compensation[1] + 2, TERRAIN_SIZE / 2];
+    const pos = walkMode && !localPos ? floorLanding(collider, raw) : raw;
     if (walkMode) { player.spawn(pos[0], pos[1], pos[2]); playerSpawned = true; }
     cam.pos = [pos[0], pos[1] + (walkMode ? 0 : 40), pos[2]];
     // Q4-v: StreamingWorld.OnInitWorld - the world re-initialised at a
@@ -3308,8 +3315,10 @@ export async function bootWorld(canvas, renderer, params, status) {
 
     if (walkMode) {
       if (!playerSpawned && built.has(startKey)) {
-        // Drop in above the terrain once the start pixel's collider is up.
-        player.spawn(cam.pos[0], heightAt(cam.pos[0], cam.pos[2]) + 2, cam.pos[2]);
+        // Stand on the terrain once the start pixel's collider is up -
+        // FixStanding from 2u above it, not a drop from there.
+        const stand = floorLanding(collider, [cam.pos[0], heightAt(cam.pos[0], cam.pos[2]) + 2, cam.pos[2]]);
+        player.spawn(stand[0], stand[1], stand[2]);
         playerSpawned = true;
       }
       if (playerSpawned) {

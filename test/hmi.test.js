@@ -126,13 +126,15 @@ test('xmi: synthetic HMI song decodes to an ordered event stream', () => {
   assert.equal(hmi.load(syntheticSong(), 'SYNTH.HMI'), true);
 
   assert.equal(hmi.signature, SONG_SIGNATURE);
-  assert.equal(hmi.ticksPerQuarterNote, 480);
+  assert.equal(hmi.headerResolution, 480, 'the 0x0D2 field, kept as what it is');
+  assert.equal(hmi.ticksPerQuarterNote, 60, 'THE CLOCK: sixty ticks per quarter, not the header field');
   assert.equal(hmi.beatsPerMinute, 120);
   assert.equal(hmi.trackCount, 2);
   assert.equal(hmi.sourceName, '*.mid');
   assert.equal(hmi.microsecondsPerQuarterNote, 500000);
-  assert.equal(hmi.secondsPerTick, 60 / (120 * 480));
-  assert.equal(hmi.tickToSeconds(480), 0.5);
+  assert.equal(hmi.secondsPerTick, 1 / 120, 'one tick is 1/BPM of a second');
+  assert.equal(hmi.tickToSeconds(480), 4, '480 ticks is four seconds at 120 - a quarter note is 60 ticks, half a second');
+  assert.equal(hmi.tickToSeconds(60), 0.5);
 
   const t0 = hmi.tracks[0];
   assert.equal(t0.channel, 4);
@@ -146,7 +148,7 @@ test('xmi: synthetic HMI song decodes to an ordered event stream', () => {
   assert.equal(hmi.tracks[1].prologue.length, 13);
   assert.equal(hmi.tracks[1].endTick, 64);
   assert.equal(hmi.durationTicks, 146);
-  assert.equal(hmi.durationSeconds, 146 * (60 / (120 * 480)));
+  assert.equal(hmi.durationSeconds, 146 / 120);
 
   // Track 0's own stream, in emitted order.
   assert.deepEqual(
@@ -319,7 +321,8 @@ test('xmi: every song in the real archive decodes', { skip: skipReal }, () => {
   for (let i = 0; i < m.count; i++) {
     const song = m.getSong(i);
     // One tempo per song, no tempo meta anywhere in the archive.
-    assert.equal(song.ticksPerQuarterNote, 480, song.name);
+    assert.equal(song.headerResolution, 480, song.name);
+    assert.equal(song.beatsPerMinute, 120, song.name);
     assert.equal(song.beatsPerMinute, 120, song.name);
     assert.equal(song.sourceName.length > 0, true, song.name);
     tracks += song.trackCount;
@@ -395,7 +398,9 @@ test('xmi: named songs pinned by shape and stream checksum', { skip: skipReal },
   assert.deepEqual(d1.tracks.map((t) => t.channel), [4, 5, 6, 9]);
   assert.deepEqual(d1.tracks.map((t) => t.byteLength), [721, 2758, 8141, 7316]);
   assert.deepEqual(d1.tracks.map((t) => t.streamEventCount), [109, 779, 2430, 2292]);
-  assert.equal(d1.durationSeconds.toFixed(3), '28.048');
+  // 26,926 ticks at 1/120 s. DFU's shipped d1.mid (192 ppqn, 1,605,566 us)
+  // is 216 s; this reader said 28.048 s until 2026-08-27 - 8x fast.
+  assert.equal(d1.durationSeconds.toFixed(3), '224.383');
   assert.deepEqual(d1.events[3], { tick: 0, type: 'programChange', channel: 4, program: 88, track: 0 });
   const firstNote = d1.events.find((e) => e.type === 'noteOn');
   assert.deepEqual(firstNote, {
@@ -413,7 +418,7 @@ test('xmi: real-archive quirks stay pinned', { skip: skipReal }, () => {
   assert.deepEqual(sunny.tracks.map((t) => t.endTick),
     [6802, 6802, 6802, 6802, 6802, 1199310, 6802, 6802, 6802, 6802]);
   assert.equal(sunny.tracks[5].trailingBytes, 0);
-  assert.equal(Math.round(sunny.durationSeconds), 1249);
+  assert.equal(Math.round(sunny.durationSeconds), 9994);   // 1,199,310 ticks - see the SUNNYDAY residue in the record
 
   // TAVERN track 22 is the only track whose header event count disagrees with
   // the stream, and the only one carrying 0xFE 0x12 / 0xFE 0x13.

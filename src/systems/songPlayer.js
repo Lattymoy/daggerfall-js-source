@@ -251,7 +251,8 @@ export class SongPlayer {
       this._cursorTick = toTick;
     }
 
-    // Loop: songs are 4-44s cues, so ending in silence is wrong. Rewind
+    // Loop: DFU replays the song when its context has not moved
+    // (SongManager.UpdateSong:229), so ending in silence is wrong. Rewind
     // once the last note has had time to ring out.
     //
     // AUDIT 19 F7: the rewind used to take 0.02s of lead against a 0.1s

@@ -21,7 +21,7 @@
 //      stay valid for the exit landing math.
 //   baseCollider() - the collider to restore on exit.
 
-import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding } from '../player/enterExit.js';
+import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding, repositionFeetY } from '../player/enterExit.js';
 import { startRestGroundedCheck } from '../player/motor.js';   // S40: the rest gate's grounded input
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { pickActivatable, worldAabb, activationTargets } from '../player/activate.js';
@@ -2609,7 +2609,10 @@ export function createWorldModes(host) {
     interiorBuilding = null;   // E2: the identity + overlay leave with the interior
     interiorOverlay = null;
     player.collider = baseCollider();
-    player.spawn(landing[0], landing[1], landing[2]);
+    // RepositionPlayer(Offset): the door centre is where DFU puts the
+    // controller's CENTRE; the feet go a body-half lower, never below
+    // the terrain's floor (enterExit.repositionFeetY).
+    player.spawn(landing[0], repositionFeetY(player.collider.heightAt(landing[0], landing[2]), landing[1]), landing[2]);
     mode = 'exterior';
     questBridge?.onExteriorTransition();   // Q4-v: CreateFoe's pending-wave invalidation
     npcSession?.onWorldChanged();          // TK-v: OnTransitionToExterior (:3599-3603)
@@ -2744,7 +2747,9 @@ export function createWorldModes(host) {
     npcSession?.onWorldChanged();          // TK-v: OnTransitionToDungeonExterior (:3605-3609)
     player.collider = baseCollider();
     if (landing) {
-      player.spawn(landing.pos[0], landing.pos[1], landing.pos[2]);
+      // RepositionPlayer(DungeonEntrance): same law as the building
+      // door - the door centre is the controller's centre, not the feet.
+      player.spawn(landing.pos[0], repositionFeetY(player.collider.heightAt(landing.pos[0], landing.pos[2]), landing.pos[1]), landing.pos[2]);
       cam.yaw = Math.atan2(landing.normal[0], landing.normal[2]);
     }
     cam.pos = player.eye;

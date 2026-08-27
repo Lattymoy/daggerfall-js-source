@@ -2161,6 +2161,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   sceneAmbience.setPreset('dungeon');
   function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false, playerHeight = CAPSULE_HEIGHT) {
     _weaponCanvas = canvas;   // C10: the rig's late canvas (gesture dim + the overlay draw)
+    // THE FOUR HOSTS RULE (2026-08-27, Mac: "blood texture stays static
+    // in the air when attacking them in dungeons"). The splash pool's
+    // clock was the HOST'S to run - dungeon.js ran it, worldModes never
+    // did - so in the played game a splash spawned into billboardBatches
+    // and then nothing advanced or retired it: frame 0, for ever, in the
+    // air where the foe was. The context is the one thing both dungeon
+    // hosts share and this is the one frame function both call, so the
+    // clock lives here and no host can forget it. Real dt, and it ENDS
+    // (a finished splash frees its batch inside tick).
+    hitEffects.tick(dt);
     const _mobileBatches = [];   // C11: the frame's live sprite-mobile quads
     if (playerFeet) lastPlayerFeet = [...playerFeet];
     // B1: QuestResourceBehaviour.Update every frame the object lives
