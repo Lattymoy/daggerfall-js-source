@@ -38,16 +38,21 @@
 // pick), and the deploy's transfer rides infection.js's
 // transferToCemetery host arm.
 //
-// FLAGGED, with the slice each waits on:
-//  - the VAMP00I0.CIF head and SCBG08I0 paperdoll art, the gendered
-//    attack voices - host art work
+// THE ART AND THE VOICE went live in V5: racialOverrideHeadArt /
+// racialPaperDollBackground / racialSuppressPaperDollBodyAndItems
+// below (both curses' one switch, consumed by hudLarge's head and
+// paperDoll's compose) and vampireAttackVoice inside
+// playerAttackGrunt's clip pick. The curse is COMPLETE against
+// VampirismEffect.cs.
 
 import { VAMPIRE_CLANS, LYCANTHROPY_TYPES } from './infection.js';
 import { MINUTES_PER_DAY, isDayFromMinutes } from './gameDate.js';
 import { spellRecordOfIndex } from './loot.js';
 import { SKILLS } from './skills.js';
 import { WEAPON_MATERIALS } from '../characters/weapons.js';
-import { VAMPIRE_SPELL_TAG, endOldLifeEffects } from './lycanthropy.js';
+import { VAMPIRE_SPELL_TAG, endOldLifeEffects, liveLycanthropy } from './lycanthropy.js';
+import { RACES } from './races.js';        // V5: the BIRTH race id keys the VAMP00I0 head
+import { SOUND } from './soundClips.js';   // V5: the gendered attack voices
 import { endVampireQuests } from './racialQuests.js';   // V2d: the cure's P0* tombstone sweep
 
 /** VampirismEffect.VampirismCurseKey (:33). */
@@ -198,6 +203,61 @@ export function racialRestBlock(entity, nowMinutes = 0) {
   if (!entry) return null;
   if (isVampireSatiated(entity, nowMinutes)) return null;
   return { textId: NOT_SATED_TEXT_ID };
+}
+
+// ── V5 - THE CURSE ART + THE VAMPIRE'S VOICE ─────────────────────
+// GetCustomHeadImageData / GetCustomPaperDollBackgroundTexture for
+// BOTH curses live here (vampirism already imports lycanthropy, and
+// the two laws are one switch), consumed by hudLarge's head and
+// paperDoll's compose. GetCustomRaceGenderAttackSoundData is the
+// vampire's alone - the werewolf voices ride OnWeaponHitEntity (V4).
+
+/** The override HEAD: transformed lycanthropes wear WERE01I0 (wolf) /
+ *  WERE00I0 (boar); a vampire ALWAYS wears the clanless VAMP00I0.CIF
+ *  face - "one per birth race and gender", females records 0-7,
+ *  males 8-15, keyed by BirthRaceTemplate.ID - 1 (VampirismEffect
+ *  :149-169). Answers { file, record } or null. */
+export function racialOverrideHeadArt(entity) {
+  const lyc = liveLycanthropy(entity);
+  if (lyc?.isTransformed) {
+    return { file: lyc.infectionType === LYCANTHROPY_TYPES.Wereboar ? 'WERE00I0.IMG' : 'WERE01I0.IMG', record: 0 };
+  }
+  if (liveVampirism(entity)) {
+    const raceId = RACES[entity?.race] ?? 1;   // entity.race stays the BIRTH race; the curse only overrides the NAME
+    return { file: 'VAMP00I0.CIF', record: (entity?.gender === 'female' ? 0 : 8) + raceId - 1 };
+  }
+  return null;
+}
+
+/** The override PAPERDOLL BACKGROUND (LycanthropyEffect :269-302 /
+ *  VampirismEffect :134-147): the transformed beast's full-body art,
+ *  or the vampire's crypt - whatever the location context. The same
+ *  8,7,110x184 sub-rect law as every SCBG. Answers a filename or
+ *  null. */
+export function racialPaperDollBackground(entity) {
+  const lyc = liveLycanthropy(entity);
+  if (lyc?.isTransformed) return lyc.infectionType === LYCANTHROPY_TYPES.Wereboar ? 'BOAR00I0.IMG' : 'WOLF00I0.IMG';
+  if (liveVampirism(entity)) return 'SCBG08I0.IMG';
+  return null;
+}
+
+/** SuppressPaperDollBodyAndItems (LycanthropyEffect :113-116, the
+ *  renderer's whole-body skip at PaperDollRenderer :165): while
+ *  transformed the panel is the beast background ALONE - no cloaks,
+ *  no body, no head, no items, and an empty click mask with them. */
+export const racialSuppressPaperDollBodyAndItems = (entity) => !!liveLycanthropy(entity)?.isTransformed;
+
+/** GetCustomRaceGenderAttackSoundData (:171-187): a vampire's attack
+ *  grunt is the vampire's own, by GENDER - 20% the bark, else the
+ *  attack cry (one roll; unlike the werewolf pair this always answers
+ *  a clip). Consumed inside playerAttackGrunt's clip pick - the 20%
+ *  FIRE chance stays the caller's, as DFU's does. */
+export function vampireAttackVoice(entity, rolls = Math.random) {
+  if (!liveVampirism(entity)) return null;
+  const bark = Math.floor(rolls() * 100) < 20;
+  return entity?.gender === 'female'
+    ? (bark ? SOUND.EnemyFemaleVampireBark : SOUND.EnemyFemaleVampireAttack)
+    : (bark ? SOUND.EnemyVampireBark : SOUND.EnemyVampireAttack);
 }
 
 // isDayFromMinutes moved HOME to gameDate.js (V2c) - it is date law,

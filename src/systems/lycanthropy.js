@@ -39,9 +39,13 @@
 // high-pitch swing) and the strain-keyed attack voices at all three
 // player-hit sites.
 //
-// FLAGGED, with the slice each waits on:
-//  - the transformed PAPERDOLL body (WOLF00I0/WERE0*I0 art) and the
-//    4-20s real-time MOVE sound loop - host art/audio work
+// THE TRANSFORMED PAPERDOLL AND HEADS went live in V5 (the art laws
+// ride vampirism.js's one switch: WOLF00I0/BOAR00I0 backgrounds with
+// the whole-body suppression, WERE01I0/WERE00I0 heads).
+//
+// FLAGGED, with the slice it waits on:
+//  - the 4-20s real-time MOVE sound loop while transformed - the one
+//    remaining LycanthropyEffect member (host audio-frame work)
 
 import {
   LYCANTHROPY_TYPES, INFECTION,

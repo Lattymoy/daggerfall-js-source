@@ -24,6 +24,10 @@ export const SOUND = {
   EnemyWerewolfAttack: 144,
   EnemyWereboarBark: 158,
   EnemyWereboarAttack: 159,
+  EnemyFemaleVampireBark: 199,   // V5: the vampire player's own gendered attack voices (SoundClips.cs)
+  EnemyFemaleVampireAttack: 200,
+  EnemyVampireBark: 205,
+  EnemyVampireAttack: 206,
   FallDamage: 91,     // P14: PlayerFootsteps on ApplyPlayerFallDamage
   FallHard: 92,       // P14: PlayerFootsteps on HardFallAlert
   Hit1: 108,          // Hit1..Hit5 = 108..112; DFU rolls Hit1 + Range

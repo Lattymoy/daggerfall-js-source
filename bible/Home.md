@@ -358,7 +358,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/knightlyGifts.js:96` - * H1 - ReceiveHouse (:222-252), the LAST of the four FLAGGED service
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
 - `src/systems/loot.js:223` - G4: THE VALUE IS OVERWRITTEN (:632). This had been FLAGGED here
-- `src/systems/lycanthropy.js:42` - FLAGGED, with the slice each waits on:
+- `src/systems/lycanthropy.js:46` - FLAGGED, with the slice it waits on:
 - `src/systems/npcSession.js:628` - FLAGGED: no host calls this. C# populates the pool INSIDE
 - `src/systems/passiveSpecials.js:8` - arms FLAGGED since E1.
 - `src/systems/playerTorch.js:12` - arm is FLAGGED here rather than guessed - see the note below.
@@ -383,7 +383,6 @@ combat line numbers below are refreshed with it.
 - `src/systems/tradeModes.js:127` - *  destination has been a FLAGGED null, so the mode could not be
 - `src/systems/tradeModes.js:388` - FLAGGED, with the slices they wait on:
 - `src/systems/useItem.js:311` - lantern's and refuses when it would overflow. FLAGGED: DFU
-- `src/systems/vampirism.js:41` - FLAGGED, with the slice each waits on:
 - `src/ui/automapWindow.js:20` - portals stay FLAGGED (systems/automap.js keeps the list); A2
 - `src/ui/bankPurchaseWindow.js:17` - FLAGGED, and it is presentation rather than function: the 104x91
 - `src/ui/bankPurchaseWindow.js:49` - display: [117, 12, 104, 91],   // FLAGGED: the 3D preview
@@ -396,9 +395,7 @@ combat line numbers below are refreshed with it.
 - `src/ui/exteriorAutomapWindow.js:22` - (:682-709) is FLAGGED - the port's directory carries named
 - `src/ui/guildServiceWindow.js:33` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
 - `src/ui/hudActiveSpells.js:45` - FLAGGED: HUDEscortingNPCFaces, the third component of that row, is
-- `src/ui/hudLarge.js:46` - head hook is FLAGGED below and falls to the plain racial head.
-- `src/ui/hudLarge.js:48` - FLAGGED, by name: HUDActiveSpells (the buff/debuff icon rows) and
-- `src/ui/hudLarge.js:242` - *  FLAGGED: RacialOverrideEffect.GetCustomHeadImageData (:314-320)
+- `src/ui/hudLarge.js:47` - FLAGGED, by name: HUDActiveSpells (the buff/debuff icon rows) and
 - `src/ui/input.js:15` - and E's DFU meaning (AbortSpell) with Q's (RecastSpell) - FLAGGED
 - `src/ui/itemMakerWindow.js:46` - FLAGGED: DFU opens a DaggerfallInputMessageBox from the rename
 - `src/ui/listPicker.js:22` - FLAGGED: the scroll bar draws as DFU's plain thumb rect rather than
@@ -410,7 +407,7 @@ combat line numbers below are refreshed with it.
 - `src/ui/nativeTalk.js:237` - lands with the Tell-me-about slice (FLAGGED).
 - `src/ui/nativeTalk.js:259` - B5-6: the four pages that were INTERIM no-ops. Each falls back
 - `src/ui/paperDoll.js:18` - Human +2 - Breton INTERIM), record = playerTextureRecord
-- `src/ui/paperDoll.js:63` - table, the loud INTERIM the U8f/U8g records flagged.
+- `src/ui/paperDoll.js:64` - table, the loud INTERIM the U8f/U8g records flagged.
 - `src/ui/pauseWindow.js:58` - FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
 - `src/ui/potionMakerWindow.js:24` - FLAGGED: DFU's ingredient buttons carry a tooltip and a stack-count
 - `src/ui/restWindow.js:2` - text-panel idiom (backgrounds FLAGGED pending art-name
