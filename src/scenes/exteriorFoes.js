@@ -14,6 +14,7 @@
 // 13 fixed-list casters do not cast up here yet.
 
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
+import { copyEffectEntry } from '../systems/save.js';   // AUDIT 26 F216: the caster-stripping effect copy, one home
 import { EnemyAI, isBackFacing, withinYaw } from '../characters/enemyMotor.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';   // CH3: the shared fall formula
 import { SOUND } from '../systems/soundClips.js';   // CH3: the FallDamage clip
@@ -544,6 +545,51 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   // same Destroy(gameObject) the cull and the quest teardown use -
   // gone with no corpse, no loot and no death, which is exactly
   // what DFU's dispel does and why it can break quests.
-  return { foes, spawnFoe, damageFoe, update, resolvePlayerHit, batches, offsetAll, activeCount, lootTargets, takeLoot,
+  /** AUDIT 26 F216: the pool's half of the SAVE ENVELOPE. DFU's
+   *  SaveData_v1 carries enemyData for every registered live enemy
+   *  wherever the player stands (:865, restored :1006); this pool was
+   *  saved NOWHERE, so a quickload during a wilderness ambush - with
+   *  the spawn catch-up suppressed across the load - despawned every
+   *  attacker: a free escape from any outdoor fight. Positions ride in
+   *  NATIVES via `toNative` with the compensation shed by the caller,
+   *  the pile envelope's exact law. Dead foes stay out: the exterior
+   *  teardown loses corpses on any teleport already, and DFU's own
+   *  restore disables a dead record rather than re-minting it. */
+  function snapshotWorld(toNative) {
+    return foes.filter((f) => !f.dead).map((f) => {
+      const wc = toNative(f.ai.feet);
+      return {
+        mobileType: f.mobileType, gender: f.gender,
+        nativeX: wc.x, nativeZ: wc.z, y: f.ai.feet[1], yaw: f.ai.yaw,
+        health: f.entity.health, maxHealth: f.entity.maxHealth,
+        magicka: f.entity.magicka ?? 0, fatigue: f.entity.fatigue ?? 0,
+        items: (f.entity.items ?? []).map((it) => ({ ...it })),
+        activeEffects: (f.entity.activeEffects ?? []).map(copyEffectEntry),
+        hostile: f.ai.isHostile !== false, encountered: !!f.ai.hasEncounteredPlayer,
+      };
+    });
+  }
+  /** The restore half: re-mint through the pool's ONE spawn chain,
+   *  then overlay the saved truth - SerializableEnemy's own shape
+   *  (rebuild, then SetHealth/SetMagicka/... per record). Async, as
+   *  the mint is; the caller does not wait on the art. */
+  function restoreWorld(saved, fromNative, yOffset = 0) {
+    for (const sf of saved ?? []) {
+      const [lx, lz] = fromNative(sf.nativeX, sf.nativeZ);
+      spawnFoe(sf.mobileType, [lx, sf.y + yOffset, lz], { gender: sf.gender }).then((f) => {
+        if (!f) return;
+        f.ai.yaw = sf.yaw ?? f.ai.yaw;
+        f.entity.maxHealth = sf.maxHealth ?? f.entity.maxHealth;
+        f.entity.health = Math.min(sf.health ?? f.entity.health, f.entity.maxHealth);
+        if (sf.magicka != null) f.entity.magicka = sf.magicka;
+        if (sf.fatigue != null) f.entity.fatigue = sf.fatigue;
+        if (sf.items) f.entity.items = sf.items.map((it) => ({ ...it }));
+        if (sf.activeEffects) f.entity.activeEffects = sf.activeEffects.map((a) => ({ ...a }));
+        if (sf.hostile != null) f.ai.isHostile = !!sf.hostile;
+        if (sf.encountered != null) f.ai.hasEncounteredPlayer = !!sf.encountered;
+      }).catch((e) => console.error('[encounter] restore failed:', e?.message ?? e));
+    }
+  }
+  return { foes, spawnFoe, damageFoe, update, resolvePlayerHit, batches, offsetAll, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld,
     collectPixel, removeFoe: questPoolOps.removeFoe };
 }

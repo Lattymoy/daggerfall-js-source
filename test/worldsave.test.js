@@ -51,19 +51,25 @@ test('worldsave: the world host wires F9/F11 with the native envelope and the lo
   assert.ok(s.includes("act === 'QuickSave'") && s.includes('worldQuickSave()'), 'the QuickSave action saves (I2; F9 is its registry default, InputManager.SetupDefaults)');
   assert.ok(s.includes("act === 'QuickLoad'") && s.includes('worldQuickLoad()'), 'and QuickLoad loads (F11 default)');
   const i = s.indexOf('function worldQuickSave');
-  const fn = s.slice(i, i + 1000);   // TK-iv widened it (SaveDataConversation whole rides the talk slot)
+  const fn = s.slice(i, i + 2600);   // TK-iv widened it; AUDIT 26 F216/F222 widened it again (the pose + the foe/guard pools ride the envelope)
   assert.ok(fn.includes('state.worldCoords(pf)'), 'the save stores NATIVES, not local scene positions');
   assert.ok(fn.includes('pf[1] - state.compensation[1]'), 'the height sheds the vertical compensation');
+  // AUDIT 26 F216/F217: the live pools ride the envelope in natives
+  assert.ok(fn.includes('foes: exteriorFoes.snapshotWorld('), 'the encounter pool is saved');
+  assert.ok(fn.includes('guards: cityGuards.snapshotWorld('), 'and the watch');
+  assert.ok(fn.includes('pose: { yaw: cam.yaw, pitch: cam.pitch'), 'F222/F223/F101: the pose rides too');
   // B4: the quest+talk envelope moved into the ONE composer both hosts
   // call (the laws themselves are pinned in sessionsave.test.js) - this
   // host must still ride it, with the live bridge and the full trio
   assert.ok(fn.includes('...composeSessionState({ questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession } })'), 'Q4-v/TK-iv via B4: quest + SaveDataConversation ride the quicksave through the composer');
   const j = s.indexOf('async function worldQuickLoad');
-  const lf = s.slice(j, j + 2800);   // Q4-v widened the function (the quest envelope restore); TK-iv widened it again (the conversation halves)
+  const lf = s.slice(j, j + 4200);   // Q4-v widened the function (the quest envelope restore); TK-iv widened it again (the conversation halves)
   assert.ok(lf.includes('restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession } })'), 'Q4-v via B4: the quest envelope restores through the composer');
   assert.ok(lf.includes('_questStarted = true'), 'a restored quest latches the start guard - initAtGameStart must not re-run over it');
   assert.ok(lf.includes('await _teleportToPixel(w.pixel.x, w.pixel.y)'), 'the load teleports through the travel core');
   assert.ok(lf.includes('state.localFromWorld(w.nativeX, w.nativeZ)'), 'and lands at the exact native spot');
   assert.ok(lf.includes('_lastEncMinutes = Math.floor(playerTicker.classicMinutes)'), 'no encounter catch-up across a load (LoadInProgress parity)');
+  assert.ok(lf.includes('exteriorFoes.restoreWorld(w.foes,') && lf.includes('cityGuards.restoreWorld(w.guards,'),
+    'F216/F217: both pools restore after the teleport, the pile law');
   assert.ok(lf.includes("extras.locationKey !== 'world'"), 'a dungeon-side save restores the character and says so');
 });

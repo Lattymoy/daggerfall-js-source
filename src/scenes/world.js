@@ -54,6 +54,7 @@ import { createTravelMapWindow, travelMapDoorReady, preloadTravelMapArt, canFind
 import { racialRestBlock, racialFastTravelBlock, cureVampirism } from '../systems/vampirism.js';   // V2b: the vampire's rest and daylight gates; V2d: $CUREVAM's cure arm
 import { cureLycanthropy } from '../systems/lycanthropy.js';   // V2d: $CUREWER's cure arm
 import { setRacialQuestHost } from '../systems/racialQuests.js';   // V2d: the quest-start seam (the machine is this host's)
+import { randomCemeteryLocationIndex } from '../systems/infection.js';   // V2e: GetRandomCemetery's pick half
 import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: the vampire clan pool asks as a Member
 import { playerInSunlight, playerInHolyPlace } from '../systems/passiveSpecials.js';   // V2c: the enchant ctx's two E1 flags
 import { buildMapDict } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict
@@ -135,7 +136,7 @@ import { changeLegalRep, legalRepOf, CRIMES } from '../systems/court.js';   // P
 import { isEquipped, unequipSlot } from '../systems/equip.js';
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { makeItemPermanent } from '../systems/quest/item.js';
-import { guildOfFaction, membershipOf, guildFactionIdOfGroup, joinedGuildOfGroup } from '../systems/guilds.js';
+import { guildOfFaction, membershipOf, guildFactionIdOfGroup, joinedGuildOfGroup, activeMemberships } from '../systems/guilds.js';   // V2e: the per-read vampire book pick
 import { GUILD_GROUPS } from '../formats/factionFile.js';   // the membership book's key - the travel popup's free-ship read
 import { freeShipTravel } from '../systems/guildServices.js';   // KnightlyOrder.FreeShipTravel, the second half of hasShip
 import { resolveVariantGuild, orderOf } from '../systems/guildVariants.js';
@@ -820,6 +821,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     textAt: (id) => townTalk.lines(id),
     showText: (lines) => townTalk.showOverlay(new ChoiceWindow({ lines })),
     factionDict: () => townTalk.factionDict ?? null,
+    transferToCemetery: transferToCemeteryArm,   // V2e: the world host's arm (hoisted; defined by fastTravelTo)
   });
   // Q4-v: InitAtGameStart runs ONCE when a NEW character finishes
   // chargen (DFU's OnStartGame path into QuestListsManager). Chargen
@@ -1691,6 +1693,35 @@ export async function bootWorld(canvas, renderer, params, status) {
     surfacePlayer();
   }
   let _traveling = false;
+  // V2e: DeployFullBlownVampirism's cemetery transfer (:164-175) -
+  // GetRandomCemetery over the CURRENT region's mapTable, then the
+  // same pixel arrival fast travel takes (_teleportToPixel re-inits
+  // the streamer; _lastEncMinutes is the PreventEnemySpawns parity -
+  // "intentionally not spawning enemies, for this time the PLAYER is
+  // the monster"). RECORDED DIVERGENCE: DFU's RespawnPlayer lands the
+  // player INSIDE the cemetery crypt (insideDungeon true); the port
+  // has no door-less dungeon entry yet, so the vampire wakes at the
+  // cemetery's exterior, its crypt door in front of them. Off the
+  // tick's frame like the videos; interior/dungeon modes skip loudly
+  // (DFU tears the interior down in RespawnPlayer - host work).
+  function transferToCemeteryArm() {
+    if ((modes?.mode ?? 'exterior') !== 'exterior') {
+      console.warn('[infection] the cemetery transfer needs the exterior mode - the vampire wakes where they fell');
+      return;
+    }
+    const mapTable = maps.getRegion(_questRegionIndex())?.mapTable ?? [];
+    const idx = randomCemeteryLocationIndex(mapTable);
+    if (idx == null) {
+      console.warn('[infection] no cemetery in this region - the transfer is skipped (DFU throws here)');
+      return;
+    }
+    const pos = longitudeLatitudeToMapPixel(mapTable[idx].longitude, mapTable[idx].latitude);
+    Promise.resolve().then(async () => {
+      await _teleportToPixel(pos.x, pos.y);
+      _lastEncMinutes = Math.floor(playerTicker.classicMinutes);
+    });
+  }
+
   async function fastTravelTo(pick, opts, computed) {
     if (_traveling) return;
     _traveling = true;
@@ -1762,6 +1793,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       // hosts call - two inline copies of this envelope is exactly
       // how the dungeon half drifted to saving neither.
       ...composeSessionState({ questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession } }),
+      // AUDIT 26 F222/F223/F101: the POSE - weaponDrawn
+      // (SerializablePlayer :175, restored Sheathed = !weaponDrawn),
+      // yaw/pitch/isCrouching (PlayerPositionData_v1 :212-214).
+      pose: { yaw: cam.yaw, pitch: cam.pitch, crouching: !!player.crouching, weaponDrawn: !weaponRig.playerWeapon.sheathed },
       locationKey: 'world',
       world: {
         pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],
@@ -1769,6 +1804,15 @@ export async function bootWorld(canvas, renderer, params, status) {
         // NATIVES with the compensation-free height, the player
         // half's exact law.
         piles: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos)).map((sp) => ({ ...sp, y: sp.y - state.compensation[1] })),
+        // AUDIT 26 F216/F217: LIVE ENEMIES ride the envelope - DFU's
+        // SaveData_v1 carries enemyData wherever the player stands
+        // (:865, restored :1006). Saved nowhere, a quickload during a
+        // wilderness ambush or a guard pursuit despawned every
+        // attacker with the spawn catch-up suppressed: a free escape
+        // from any outdoor fight. Natives, the pile law; the
+        // compensation-free height rides per record.
+        foes: exteriorFoes.snapshotWorld((pos) => state.worldCoords(pos)).map((sf) => ({ ...sf, y: sf.y - state.compensation[1] })),
+        guards: cityGuards.snapshotWorld((pos) => state.worldCoords(pos)).map((sg) => ({ ...sg, y: sg.y - state.compensation[1] })),
       },
     });
     townTalk.say(writeQuicksave(snap) ? 'Game saved.' : 'Save failed (storage full or disabled).');
@@ -1803,8 +1847,24 @@ export async function bootWorld(canvas, renderer, params, status) {
         // live pile (the reference's sweep); the envelope re-mints the
         // saved ones at their native spots.
         droppedLoot.restoreWorld(w.piles, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
+        // F216/F217: the pools re-mint through their one spawn chain,
+        // then overlay the saved truth (SerializableEnemy's own
+        // rebuild-then-set shape). Async behind the art; the teleport
+        // above already tore the old pools down with the pixel.
+        exteriorFoes.restoreWorld(w.foes, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
+        cityGuards.restoreWorld(w.guards, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
       } else if (extras.locationKey && extras.locationKey !== 'world') {
         townTalk.say('(saved elsewhere - character restored; travel there yourself)');
+      }
+      // AUDIT 26 F222/F223/F101: the pose lands with the position -
+      // RestorePosition sets yaw/pitch/isCrouching and
+      // Sheathed = !weaponDrawn (:420-421). Presence-gated: an old
+      // envelope leaves the live pose standing.
+      if (extras.pose) {
+        cam.yaw = extras.pose.yaw ?? cam.yaw;
+        cam.pitch = extras.pose.pitch ?? cam.pitch;
+        if (extras.pose.crouching != null) player.crouching = !!extras.pose.crouching;
+        if (extras.pose.weaponDrawn != null) weaponRig.playerWeapon.sheathed = !extras.pose.weaponDrawn;
       }
       _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // no spawn catch-up across a load (DFU LoadInProgress)
       surfacePlayer();
@@ -1881,7 +1941,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // window's free-rooms read does the same).
       hasShip: () => {
         if (ownsShip(playerEntity)) return true;
-        const km = joinedGuildOfGroup(playerEntity.guildMemberships ?? {}, GUILD_GROUPS.KnightlyOrder);
+        const km = joinedGuildOfGroup(activeMemberships(playerEntity), GUILD_GROUPS.KnightlyOrder);
         const order = km?.guild?.startsWith('Order:') ? orderOf(km.guild.slice('Order:'.length)) : null;
         return !!order && freeShipTravel(order, km);
       },
@@ -2560,7 +2620,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     nameBankOfCurrentRegion: () => getNameBankOfRegion(_questRegionIndex()),   // AUDIT 24: the POLITIC-derived index, like every other region read - the location's is -1 across the whole wilderness
     buildingType: () => (modes?.interiorBuilding?.buildingType === TALK_BUILDING_TYPES.Palace ? 'Palace' : null),
     isPlayerInsideCastle: () => false,   // the Q4-v caveat rides here too
-    guildMemberships: () => Object.entries(playerEntity.guildMemberships ?? {})
+    guildMemberships: () => Object.entries(activeMemberships(playerEntity))
       .map(([factionId]) => ({ factionId: Number(factionId) })),
     guildOfBuildingFaction: () => null,   // TK-v wires the guild MCP
     sgroupReputation: (sgroup) => playerEntity.sGroupReputations?.[sgroup] ?? 0,
@@ -2850,7 +2910,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const dict = townTalk.factionDict ?? null;
       const g = guildOfFaction(fid, resolveVariantGuild(dict), dict);
       if (!g) return null;
-      const m = membershipOf(playerEntity.guildMemberships ?? {}, g);
+      const m = membershipOf(activeMemberships(playerEntity), g);
       return { guildGroup: g.guildGroup, rank: m?.rank ?? 0, power: _questStore()?.dict.get(g.factionId)?.power ?? 0, isNonMember: !m };
     },
     regionPriceAdjustment: () => regionPriceAdjustment(playerEntity, _questLoc()?.regionIndex ?? 0),
@@ -2903,6 +2963,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // reference BEFORE this line must therefore be `modes?.` - which is
   // what test/audit24_wave37.test.js asserts, both ways.
   var modes = createWorldModes({
+    // V2e: worldModes re-registers the infection host on entry, so the
+    // cemetery arm rides the bag or it dies at that re-registration.
+    transferToCemetery: transferToCemeteryArm,
     canvas, renderer, player, cam, keys, latch, blocks,
     // V5: PlayerGPS, for CanRest. Only this host knows what kind of
     // place the player is standing in, and the rest law's first two

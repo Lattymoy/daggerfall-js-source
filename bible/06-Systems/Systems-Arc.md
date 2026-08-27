@@ -3851,3 +3851,53 @@ tombstoned instance, both tombstone sweeps off the real cures, the
 two cadence arms driven through the REAL tickPlayerMinutes across
 their boundaries (and not between them), and the world host's mount
 laws.
+
+## V2e - THE GUILD-BOOK SWAP + THE CEMETERY: the store adopted, the grave dug (2026-08-27)
+
+Two host halves of the vampire, one slice. THE STORE WAS ALREADY
+BUILT - AUDIT 21 F9 shipped newMembershipStore/membershipsFor with
+"retrofitting a second book later would mean touching every call
+site" written on it - and this slice touched every call site:
+guilds.js's new activeMemberships is GuildManager.Memberships
+(:109-112) verbatim, the ACTIVE book picked PER READ by the player's
+live vampirism (never a swap-on-transition, so effect state and book
+cannot desync; the vampirism test is the marker read itself, because
+importing the curse module would be a cycle). worldModes' seven
+sites, world.js's three, breath.js's deep-breath read and
+npcSession's dep all route through it; a vampire's join lands in the
+vampire book, the mortal ranks hide rather than vanish, and the cure
+reads them back. The SAVE carries both books deep-copied
+(GetMembershipData(bool vampire), :313-320), a pre-V2e plain-object
+snap restores as the plain book it was, and activeMemberships
+migrates a legacy book IN PLACE as the mortal book - so an old save
+with a live curse cannot read the wrong one.
+
+AND THE NEW VAMPIRE WAKES AT A GRAVE. DeployFullBlownVampirism's
+transfer (:164-175) rides a new transferToCemetery member on the
+infection host, called between the clock raise and the "death is not
+eternal" popup - DFU's own order. The pick is pure law in
+infection.js (GetRandomCemetery :194-217: the region mapTable's
+dungeonType-18 rows, one picked uniformly; null-never-throw where DFU
+throws on a cemeteryless region). The ARM is the world host's alone -
+the same single-location reality that makes travel's V world-host
+only - implemented over the same pixel teleport fast travel takes,
+with _lastEncMinutes stamped for the PreventEnemySpawns parity
+("intentionally not spawning enemies, for this time the PLAYER is the
+monster"). worldModes' infection re-registration FORWARDS the outer
+host's arm rather than dropping it - the re-registration shadowing
+that V2c's death-presenter lesson predicted. RECORDED DIVERGENCE:
+DFU's RespawnPlayer lands the player INSIDE the crypt; the port has
+no door-less dungeon entry, so the vampire wakes at the cemetery's
+exterior with the crypt door in front of them, and interior/dungeon
+modes skip loudly where DFU tears the scene down.
+
+FLAGGED, each loudly: the transformed suppressions/claws/sounds/
+paperdoll+head art (host work), the artifact payloads.
+
+Pins: 7 in `test/guildswap.test.js` - the per-read pick across curse
+and cure with both books persisting, the in-place legacy migration,
+the save round-trip with copy-isolation proven by mutation, both
+clear laws, the cemetery pick's boundaries, the deploy's
+raise-transfer-popup order with the werewolf's quiet deploy beside
+it, and the host wiring greppable including the re-registration
+forward.

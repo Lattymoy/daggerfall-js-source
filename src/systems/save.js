@@ -25,6 +25,11 @@ import { seedBundleSeq } from './effects.js';   // X10: the live-bundle counter'
 import { SOCIAL_GROUPS } from '../formats/factionFile.js';   // AUDIT 24
 import { travelMapSaveData, restoreTravelMapSaveData } from './travelMapState.js';   // U41: TravelMapSaveData
 import { resetMagicRoundMarker } from './worldTick.js';   // EntityEffectBroker.InitMagicRoundTimer, on the LOAD arm (:230-233)
+import { isMembershipStore } from './guilds.js';   // V2e: the two-book membership store rides the save whole
+
+/** One membership book, rows copied (GuildMembership_v1's shape). */
+const copyMembershipBook = (book) => Object.fromEntries(
+  Object.entries(book ?? {}).map(([k, m]) => [k, { ...m }]));
 
 export const SAVE_VERSION = 1;
 export const QUICKSAVE_KEY = 'dagger.quicksave';
@@ -52,6 +57,14 @@ const ENTITY_FIELDS = [
   // it a backward load left a FUTURE marker that froze all skill-raise
   // checks until the clock re-passed it.
   'lastSkillCheckTime',
+  // AUDIT 26 F219/F100: the coven's daedra-of-the-day. DFU persists
+  // DaedraSummonDay and DaedraSummonIndex one for one
+  // (SerializablePlayer.cs:164-165, restored :332-333);
+  // daedraForSummoner mutates both onto the entity and nothing saved
+  // them, so a reload from a fresh boot re-rolled the prince - a
+  // save-scum until the one you want answers - and a backward load
+  // kept the post-save roll instead of the saved one.
+  'daedraSummonDay', 'daedraSummonIndex',
   // U39: the tavern's hunger clock (SerializablePlayer.cs:147, :316).
   // DoFoodAndDrink's gate is a DIFFERENCE against it, so a save that
   // dropped it would let a player eat every four in-game hours OR
@@ -73,7 +86,7 @@ const REP_ARRAYS = ['sGroupReputations', 'reactionMods'];
  *  no effect record (S15); disease entries carry the accumulating
  *  per-stat statMods map (S18) - both nested objects must detach or
  *  the snapshot mutates with the live entity. */
-const copyEffectEntry = (a) => {
+export const copyEffectEntry = (a) => {
   const c = { ...a };
   if (a.effect) c.effect = { ...a.effect };
   if (a.statMods) c.statMods = { ...a.statMods };
@@ -93,13 +106,21 @@ const copyEffectEntry = (a) => {
 };
 
 /** A plain-object snapshot of the player + scene extras. */
-export function snapshotPlayer(entity, { position = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null, quest = null, talk = null } = {}) {
+export function snapshotPlayer(entity, { position = null, pose = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null, quest = null, talk = null } = {}) {
   // Q4-v: `quest` is the bridge's whole envelope (machine + notebook +
   // the one-time list) - opaque here, exactly like `world`.
   // TK-i: `talk` is TalkManager's SaveDataConversation (the rumor
   // mill's halves for now; TK-ii/TK-iv grow it) - the same shape of
   // slot.
-  const snap = { v: SAVE_VERSION, position, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk };
+  // AUDIT 26 F222/F223/F101: the POSE - SerializablePlayer saves
+  // weaponDrawn (:175, restored `Sheathed = !weaponDrawn` :420-421)
+  // and PlayerPositionData_v1 carries yaw, pitch and isCrouching
+  // (:212-214). The port had all of it live and saved none, so every
+  // load came back sheathed, facing the motor default and standing up
+  // - including a save made crouched in a 0.9 crawlspace. The hosts
+  // own the live objects, so the envelope takes an opaque
+  // { yaw, pitch, crouching, weaponDrawn } bag.
+  const snap = { v: SAVE_VERSION, position, pose, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk };
   // W1: DFU persists exactly ONE weather value (playerPosition.weather)
   // and re-rolls the six-zone array on the next date change - the sim
   // is a module singleton, so the envelope reads it here and every
@@ -213,8 +234,14 @@ export function snapshotPlayer(entity, { position = null, classicMinutes = 0, re
     ? snapshotFactionRep(entity.factionRep)
     : (entity.savedFactionRep ?? null);
   // GuildMembership_v1, keyed by guild GROUP exactly as DFU keys it.
+  // V2e: the field is the TWO-BOOK store now (mortal + vampire, both
+  // serialized - GetMembershipData(bool vampire), GuildManager
+  // :313-320); a legacy plain object still snaps as the mortal book
+  // it means.
   snap.guildMemberships = entity.guildMemberships
-    ? Object.fromEntries(Object.entries(entity.guildMemberships).map(([k, m]) => [k, { ...m }]))
+    ? (isMembershipStore(entity.guildMemberships)
+      ? { mortal: copyMembershipBook(entity.guildMemberships.mortal), vampire: copyMembershipBook(entity.guildMemberships.vampire) }
+      : copyMembershipBook(entity.guildMemberships))
     : null;
   // T4: the building-discovery store (PlayerGPS discoveredLocations -
   // DFU serialises it in SaveData_v1). Module-level world state, so
@@ -385,9 +412,12 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // so a save from before any guild contact must reset the book -
   // keeping the live one let later-joined memberships survive a
   // backward load.
+  // V2e: both books restore; a pre-V2e snap is a plain object and
+  // stays one - activeMemberships reads it as the mortal book.
   entity.guildMemberships = snap.guildMemberships
-    ? Object.fromEntries(
-      Object.entries(snap.guildMemberships).map(([k, m]) => [k, { ...m }]))
+    ? (isMembershipStore(snap.guildMemberships)
+      ? { mortal: copyMembershipBook(snap.guildMemberships.mortal), vampire: copyMembershipBook(snap.guildMemberships.vampire) }
+      : copyMembershipBook(snap.guildMemberships))
     : {};
   // S1: made spells restore from their own carried record (and re-seed
   // the index mint below the lowest one, so a spell made after this
@@ -436,7 +466,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // expiring restored buffs on the spot and bursting a restored
   // continuous-damage effect over a window the saved game never lived.
   resetMagicRoundMarker(Math.floor(snap.classicMinutes ?? 0));
-  return { position: snap.position, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null };
+  return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null };
 }
 
 /** AUDIT 25 B4: ONE quest+talk envelope composer, every quicksaving

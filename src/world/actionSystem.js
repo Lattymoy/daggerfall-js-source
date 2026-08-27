@@ -824,14 +824,22 @@ export class ActionSystem {
    *  Move-flagged door saved mid-rise snapped back to its base pose on
    *  load (AUDIT 18 / AUDIT 23 save-load-11).
    *
-   *  NOT carried: failedSkillLevel (see addDoor - a live gap, FLAGGED,
-   *  not this slice). */
+   *  failedSkillLevel rides the door record since AUDIT 26 F187. */
   collectSaveData() {
+    // AUDIT 26 F185: activationCount is NOT in the record.
+    // SerializableActionObject persists position/rotation/state/tween
+    // only (:55-88) and the scene rebuilds on load, so every counter
+    // restarts at 0 in DFU - a DoorText door re-shows its text and
+    // holds shut on the first click after a load, and Hurt21's
+    // every-twentieth-hit phase restarts. The port carried it and
+    // diverged after every save.
+    // AUDIT 26 F187: failedSkillLevel IS in the door record
+    // (SerializableActionDoor :77, :99-101) - without it a failed
+    // pick could be retried across a save/load.
     return [...this.objects.values()].map((o) => ({
       key: o.key, state: o.state, t: o.t ?? 0,
-      activationCount: o.activationCount ?? 0,
       ...(o.kind === 'door'
-        ? { lock: o.currentLockValue, moveState: o.moveState, moveT: o.moveT ?? 0 }   // P10 lock; the Move pair
+        ? { lock: o.currentLockValue, failedSkillLevel: o.failedSkillLevel ?? 0, moveState: o.moveState, moveT: o.moveT ?? 0 }   // P10 lock; the Move pair
         : {}),
     }));
   }
@@ -856,9 +864,12 @@ export class ActionSystem {
       if (!o) return;
       o.state = sa.state;
       o.t = sa.t;
-      o.activationCount = sa.activationCount;
+      // F185: activationCount deliberately NOT restored - an old
+      // envelope still carrying the field is ignored, so every
+      // counter starts the rebuilt scene at 0, as DFU's does.
       if (o.kind === 'door') {
         if (sa.lock != null) o.currentLockValue = sa.lock;   // P10: door locks persist
+        if (sa.failedSkillLevel != null) o.failedSkillLevel = sa.failedSkillLevel;   // F187: the pick latch survives
         if (sa.moveState != null) { o.moveState = sa.moveState; o.moveT = sa.moveT ?? 0; }
       }
       this.syncRestored(o);
