@@ -21,7 +21,7 @@ import { racialRestBlock } from '../systems/vampirism.js';   // V2b: the vampire
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible exterior arrows
 import { spendArrow } from '../systems/inventory.js';
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
-import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter } from '../characters/playerEntity.js';
+import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
 import { Collider } from '../player/collider.js';
 import { getStaticDoors } from '../world/staticDoors.js';
@@ -107,6 +107,8 @@ import { actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/inpu
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
 import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
 import { discoveredBuildings } from '../systems/discovery.js';   // A2: the nameplates' gate
+import { activeMemberships } from '../systems/guilds.js';   // F117
+import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // F117: Stendarr
 
 export async function bootExterior(canvas, renderer, params, status) {
   const regionName = params.get('region') || 'Daggerfall';
@@ -476,6 +478,14 @@ export async function bootExterior(canvas, renderer, params, status) {
   // passed down four call chains, because there is one player and one death.
   setDeathPresenter(() => {
     if (!(townTalk.overlay instanceof DeathScreen)) townTalk.showOverlay(new DeathScreen({ onReset: () => endRunToTitleMenu(renderer) }));   // D1
+  });
+  // F117: Stendarr's rank-in-fifty, consulted by the door before the
+  // presenter. No submersion model above ground; townTalk closes later
+  // in this function, initialised by the first time damage can land.
+  setAvoidDeathHook(() => {
+    if (!avoidDeath(activeMemberships(playerEntity))) return false;
+    townTalk.say(AVOID_DEATH_TEXT);
+    return true;
   });
 
   // AUDIT 19 F4: the CUMULATIVE game-day count, for the music seed. The

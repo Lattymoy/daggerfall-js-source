@@ -23,7 +23,7 @@ import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, DOOR_VERB_FLAGS, classifyPlac
 import { TextRsc } from '../formats/textRsc.js';
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // U51 picks the skin
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
-import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, setDeathPresenter } from '../characters/playerEntity.js';
+import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
 import { addItem, spendArrow } from '../systems/inventory.js';
 import { worldAabb } from '../player/activate.js';
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface
@@ -127,6 +127,8 @@ import { ENEMY_BASICS, enemyDisplayName } from '../characters/enemyBasics.js';
 import { createHitEffects, bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { EnemySoundSource } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
+import { activeMemberships } from '../systems/guilds.js';   // F117
+import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // F117: Stendarr
 
 
 
@@ -1077,6 +1079,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       activeOverlay?.dispose?.();
       activeOverlay = new DeathScreen({ onReset: () => endRunToTitleMenu(renderer) });   // D1
     }
+  });
+  // F117: Stendarr's rank-in-fifty, consulted by the door before the
+  // presenter. This is the ONE host with a submersion model, so the
+  // breath tick's marker rides in - a drowning Stendarr priest is not
+  // saved (Temple.AvoidDeath tests !IsPlayerSubmerged). worldModes
+  // re-installs its own hook when the dungeon is left, exactly as it
+  // takes the presenter back.
+  setAvoidDeathHook(() => {
+    if (!avoidDeath(activeMemberships(playerEntity), { submerged: _submergedNow })) return false;
+    hudText.add(AVOID_DEATH_TEXT);
+    return true;
   });
   function hurtPlayer(dmg) {
     hurtEntity(playerEntity, dmg);
@@ -2143,6 +2156,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // the geometry, and the SetHealth(0).
   let _breathTimer = 0;
   const _breathState = { tally: 0 };
+  // F117: the last classic update's submersion, for the avoid-death
+  // consult - Temple.AvoidDeath reads IsPlayerSubmerged globally, and
+  // this host's equivalent global is the breath tick's own test.
+  let _submergedNow = false;
   // AUDIT 24 player: `player.transform.position.y` in
   // PlayerEnterExit.cs:382/:407 is the LIVE capsule's centre, and a
   // swimmer is force-crouched to 0.9 - so the half-height rides in
@@ -2153,6 +2170,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       _breathTimer -= CLASSIC_UPDATE_INTERVAL;
       const surf = waterSurfaceYAt(playerFeet[0], playerFeet[2]);
       const submerged = surf != null && playerFeet[1] + playerHeight / 2 + 76 * 0.025 - 0.95 < surf;
+      _submergedNow = submerged;   // F117
       if (breathStep(playerEntity, submerged, _breathState) === 'drowned') {
         // PlayerEntity.cs:339-340 - `if (currentBreath <= 0) SetHealth(0)`.
         // The three-argument door is the IMPORT (hurtEntity, :26), not

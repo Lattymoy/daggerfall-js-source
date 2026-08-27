@@ -74,7 +74,7 @@ test('G8: the DarkBrotherhood reveals on EVERY promotion, whatever the rank', ()
 
 test('G8: the seam threads host-to-law', () => {
   const flow = readFileSync(new URL('../src/systems/guildServiceFlow.js', import.meta.url), 'utf8');
-  assert.ok(flow.includes('updateRank(memberships, guild, entity, store, now, { revealLocation })'),
+  assert.ok(flow.includes('updateRank(memberships, guild, entity, store, now, { revealLocation, ownsHouse })'),
     'onPushEffects hands the reveal seam to updateRank');
   const wm = readFileSync(new URL('../src/scenes/worldModes.js', import.meta.url), 'utf8');
   assert.ok(wm.includes('revealLocation: host.revealLocation ?? null'), 'the interior host threads it');

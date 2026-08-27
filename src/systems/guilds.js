@@ -298,7 +298,10 @@ export function promotionTextId(guild, rank, ctx = null) {
     return ctx?.revealLocation?.(pr.noteKey) ? pr.mapIds[rank] : guild.text.promotion;
   }
   if (guild.promotionForRank) {
-    const id = guild.promotionForRank(rank);
+    // F114: ctx rides along for the knightly rank-9 house gate
+    // (KnightlyOrder.GetPromotionMsgId reads OwnsHouse); the Temple's
+    // computed table ignores it.
+    const id = guild.promotionForRank(rank, ctx);
     if (id != null) return id;
   }
   return guild.promotionByRank?.[rank] ?? guild.text.promotion;

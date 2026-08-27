@@ -306,8 +306,18 @@ test('AUDIT 21 F14: the text-record ids are pinned to literals, not to themselve
   assert.deepEqual({ ...KNIGHTLY_TEXT }, {
     ineligibleBadRep: 751, ineligibleLowSkill: 750, eligible: 752, welcome: 5291, promotion: 5237,
   });
-  // KnightlyOrder.cs:138-148 - and see F5 for rank 9.
-  assert.deepEqual(orderOf('Rose').promotionByRank, { 4: 5238, 6: 5239, 9: 5240 });
+  // KnightlyOrder.cs:138-148. AUDIT 26 F114 turned the map into
+  // GetPromotionMsgId's function: rank 9 consults the host's OwnsHouse
+  // (current region), and DFU's ternary is INVERTED as written -
+  // owning a house draws PromotionNoHouseId 5241. null falls through
+  // to text.promotion (5237), GetPromotionMsgId's own default.
+  const pfr = orderOf('Rose').promotionForRank;
+  assert.equal(pfr(4), 5238);
+  assert.equal(pfr(6), 5239);
+  assert.equal(pfr(9, { ownsHouse: () => true }), 5241);
+  assert.equal(pfr(9, { ownsHouse: () => false }), 5240);
+  assert.equal(pfr(9), 5240, 'no seam in ctx reads as no house');
+  assert.equal(pfr(5), null);
 });
 
 test('AUDIT 21 F15: guildGroup is pinned by value, on the real corpus', () => {

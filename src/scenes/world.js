@@ -116,7 +116,7 @@ import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law
 import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // StartRestGroundedCheck's ONE home
 import { floorLanding } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27)
 import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
-import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter } from '../characters/playerEntity.js';
+import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible exterior arrows
@@ -138,7 +138,7 @@ import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { makeItemPermanent } from '../systems/quest/item.js';
 import { guildOfFaction, membershipOf, guildFactionIdOfGroup, joinedGuildOfGroup, activeMemberships } from '../systems/guilds.js';   // V2e: the per-read vampire book pick
 import { GUILD_GROUPS } from '../formats/factionFile.js';   // the membership book's key - the travel popup's free-ship read
-import { freeShipTravel } from '../systems/guildServices.js';   // KnightlyOrder.FreeShipTravel, the second half of hasShip
+import { freeShipTravel, avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // KnightlyOrder.FreeShipTravel, the second half of hasShip
 import { resolveVariantGuild, orderOf } from '../systems/guildVariants.js';
 // TK-i: THE RUMOR MILL - the quest machine's rumor seams stop being silent.
 import { RumorMill, tokensToString } from '../systems/rumorMill.js';
@@ -716,6 +716,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   // passed down four call chains, because there is one player and one death.
   setDeathPresenter(() => {
     if (!(townTalk.overlay instanceof DeathScreen)) townTalk.showOverlay(new DeathScreen({ onReset: () => endRunToTitleMenu(renderer) }));   // D1
+  });
+  // F117: Stendarr's rank-in-fifty, consulted by the door before the
+  // presenter. This host has no submersion model, so submerged is the
+  // default false - which is also true of every death it can present.
+  setAvoidDeathHook(() => {
+    if (!avoidDeath(activeMemberships(playerEntity))) return false;
+    townTalk.say(AVOID_DEATH_TEXT);
+    return true;
   });
 
   // AUDIT 19 F4: the CUMULATIVE game-day count, for the music seed. The

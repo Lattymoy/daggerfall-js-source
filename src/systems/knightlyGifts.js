@@ -90,7 +90,11 @@ export function receiveArmorDecision(membership, { rolls = Math.random, makeArmo
 /** The house's own text records (:34-39). */
 export const HOUSE_TEXT_ID = 462;              // "I have a house for you."
 export const RECEIVE_HOUSE_RANK = 9;           // ReceiveHouse's gate (:224)
-export const ALREADY_GIVEN_HOUSE = 'You have already been given a house.';   // serviceReceiveHouseAlready
+// serviceReceiveHouseAlready, VERBATIM from DFU's en string table
+// (Internal_Strings_en, m_Id 95) - AUDIT 26 F116: the line had been
+// paraphrased ("been given a house"); it is DFU localization rather
+// than ARENA2, so it is written here, but written EXACTLY.
+export const ALREADY_GIVEN_HOUSE = 'You have already received your house.';
 
 /**
  * H1 - ReceiveHouse (:222-252), the LAST of the four FLAGGED service
