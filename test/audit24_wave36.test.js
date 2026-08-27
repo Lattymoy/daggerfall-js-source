@@ -102,7 +102,10 @@ test('audit24 wave36: every exterior pool is handed the full context', () => {
   assert.equal((rd('src/scenes/world.js').match(/_foeSenses\(\)/g) ?? []).length, 2, 'world: the watch and the encounter pool');
   assert.equal((rd('src/scenes/exterior.js').match(/_foeSenses\(\)/g) ?? []).length, 1, 'exterior: the watch');
   // and the dungeon uses the same builder rather than its own literal
-  assert.ok(rd('src/scenes/dungeonContext.js').includes('const _senses = sensesContext(playerEntity, classicMinutesRef.value, _activity);'));
+  // MT-iv spreads the activity bag to add the candidate getter (the
+  // bag is persistent and must not be mutated); the context is still
+  // the one shared builder, which is what this pin guards.
+  assert.ok(rd('src/scenes/dungeonContext.js').includes('const _senses = sensesContext(playerEntity, classicMinutesRef.value, {\n      ..._activity,'));
 });
 
 test('audit24 wave36: the 8-hour alert decay is the ENTITY tick\'s, so every host runs it', () => {

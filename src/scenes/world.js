@@ -2959,7 +2959,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     questFoeInstances: (symbol) => {
       const want = symbol?.name ?? null;
       if (want == null) return [];
-      return [...exteriorFoes.foes, ...cityGuards.guards].filter((f) =>
+      // MT-iv: DFU's ActiveGameObjectDatabase is ONE database across
+      // the scene, so the walk unions the INSIDE pool too - a quest
+      // foe standing in a dungeon was unreachable, and since
+      // SetComplete sits inside the instance loop the action re-ran
+      // every machine tick for ever rather than completing.
+      return [...exteriorFoes.foes, ...cityGuards.guards, ...(modes?.liveQuestFoes?.() ?? [])].filter((f) =>
         !f.dead && f.questBehaviour && f.questBehaviour.targetSymbol?.name === want);
     },
     playerRaceName: () => playerEntity.race ?? null,

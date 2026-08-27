@@ -129,8 +129,12 @@ test('encounters: the dungeon host arm - the rest loop, the sight raise, the kil
   assert.ok(fn.includes('intermittentEnemySpawn({'), 'the rest advance runs the catch-up loop');
   assert.ok(fn.includes('enemyAlertActive: !!playerEntity.enemyAlertActive'), 'gated on the alert');
   assert.ok(fn.includes('_spawnEncounter(hit); break;'), 'one spawn per advance, as the C# break');
-  assert.ok(src.includes('if (f.ai.inSight && f.ai.detected && !f.dead) setEnemyAlert(playerEntity, true'), 'sight raises');
-  assert.ok(src.includes("if (foe.ai?.detected) setEnemyAlert(playerEntity, false)"), 'the targeting kill clears');
+  // MT-iv restored EnemySenses:531's `Target == PlayerEntityBehaviour`
+  // term: a foe brawling another foe must not hold the alert up.
+  assert.ok(src.includes('&& f.ai.inSight && f.ai.detected && !f.dead) setEnemyAlert(playerEntity, true'), 'sight raises');
+  assert.ok(src.includes('foeDeps.isPlayerTarget(f.ai.target))'), 'for a PLAYER target');
+  // EnemyDeath:131-136 carries the same target==player gate (MT-iv).
+  assert.ok(src.includes("foeDeps.isPlayerTarget(foe.ai?.target)) && foe.ai?.detected) setEnemyAlert(playerEntity, false)"), 'the targeting kill clears');
   // S40 moved the rest OPEN GATE to systems/restSession.js - DFU raises
   // it from one scene-free handler and three more hosts can rest now -
   // so this pin follows it: the gate must still say `alert` on the

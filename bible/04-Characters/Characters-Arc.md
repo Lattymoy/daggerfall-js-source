@@ -2487,15 +2487,8 @@ dropping one of two is guessing which. `areEnemiesNearby` gained
 GameManager.cs:709's hostility/team gate and C#'s own
 `includingPacified` parameter.
 
-**STILL OPEN (MT-iv):** the DUNGEON host is not armed. `dungeonContext`
-keeps the player-only path - which is correct and unchanged behaviour,
-not a break - so infighting is an above-ground mechanic until that
-slice lands. With it go: the dungeon's own `questFoeInstances` reach
-(the door walks the two exterior pools, so a quest foe standing in a
-dungeon is out of ChangeFoeTeam's reach), and the enemy-arrow impact
-fork (an arrow loosed at another foe flies true and lands nothing -
-FLAGGED in place at the shoot site, because the host's missile has one
-`onPlayerHit` door).
+~~**STILL OPEN (MT-iv):** the DUNGEON host is not armed.~~
+**MT-iv SHIPPED (2026-08-27), the same day.** See below.
 
 Pins: 14 in `test/enemytargets.test.js`, 9 in
 `test/enemyinfighting.test.js`. Three of the MT-i pins exist because
@@ -2509,3 +2502,61 @@ sight ray aiming at a player-sized eye for every target. A fourth,
 written outside the Enhanced guard while `secondaryTargetPos` is
 written only inside it, so a classic-path secondary switch begins its
 pursuit at the world origin.
+
+
+## MT-iv - THE DUNGEON HOST ARMED (2026-08-27)
+
+MT's recorded remainder, closed. `dungeonContext` was the one pool
+still on the player-only path; infighting is no longer an above-ground
+mechanic.
+
+**The subsystem gate held.** This host loads the whole foe subsystem
+lazily behind `opts.foes && palette`, precisely so a foe-less dungeon
+never pays for `enemyMotor` - and `enemyTargets` imports `enemyMotor`.
+So unlike `exteriorFoes`, which imports it statically, the target
+machine rides the DYNAMIC import and is published on `foeDeps`, with
+every consumer below the block guarding on it. A degraded subsystem
+idles the arming and leaves the legacy path, which is the same charter
+the machine's own seam uses.
+
+**The candidate list is this host's whole active-enemy database**
+(EnemySenses.cs:741-749) - nothing to join, unlike world.js, but
+filtered `!dead` every frame so corpses leave it the frame they die.
+The record is the candidate at both mints (the class branch and the
+monster branch) through one `asCandidate` decorator, with the two
+quest halves as live getters.
+
+**The forks, both of them.** MeleeDamage's two-arm split (:199-209)
+sits INSIDE the resolver rather than at its two call sites (the rig
+path and the sprite marker path), so both spellings get it from one
+home. BowDamage carries the same split (:134-148), and it had to land
+together with the aim: an enemy missile now locks its victim at fire
+time, so aiming one at another foe while the impact test still knew
+only the player would have made it fly through and hit nothing - worse
+than never aiming there. The recovered Arrow goes into the TARGET's
+items (:145-147), which had credited the player unconditionally.
+Enemy SPELL missiles take the same fork; the self and AoE-at-caster
+arms need none, being position-driven already.
+
+**One hazard this host has that the exterior pools do not:** a
+DESTROYED foe (the quest teardown, the dispel sweep, the restore cull)
+is marked dead with its health still above zero, so the machine's
+health-based cull can never drop it and every foe holding it would
+chase an object that no longer draws. DFU never has this problem - its
+database stops yielding a destroyed behaviour. One `dropCandidate`
+sweep, called from the single removal door.
+
+**And ChangeFoeTeam finally reaches underground.** The
+`questFoeInstances` door walked the two exterior pools, so a quest foe
+standing in a dungeon was never found - and since SetComplete sits
+inside C#'s instance loop, `change foe X team 1` re-ran every machine
+tick for ever instead of completing. `worldModes.liveQuestFoes()` is
+the inside pool's half of DFU's one database; the interior arm stays
+empty, that host having no enemy pool at all.
+
+Pins: 8 in `test/dungeoninfighting.test.js`. One pre-existing pin
+(`ch3`'s fall-damage arm) was repaired rather than merely advanced:
+its `braceBlock` helper took the last `{` BEFORE the match, so any
+helper declared above the arm shadowed the block it meant to read -
+its own wave-39 comment says the intent was to "brace-match the arm",
+and it now anchors to the arm's own brace.

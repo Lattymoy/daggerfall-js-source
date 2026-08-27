@@ -154,9 +154,17 @@ test('X8: the pacify reaches the AI, and attacking restores hostility', () => {
   // the whole of MakeEnemyHostileToAttacker (:186-214), because with
   // targeting armed there is finally a target to reassign; the
   // dungeon host still runs the pre-MT shape (MT-iv).
-  assert.match(readFileSync(join(ROOT, 'src/scenes/dungeonContext.js'), 'utf8'),
-    /if \(fromPlayer && foe\.ai && !foe\.ai\.isHostile\) \{ foe\.ai\.isHostile = true;/,
+  // MT-iv armed this host too, so BOTH pools run the whole of
+  // MakeEnemyHostileToAttacker inside the gate now; the dungeon keeps
+  // the narrow raise as its no-subsystem fallback (the lazy foe
+  // subsystem can fail to load, and a foe must still stand up).
+  const dgs = readFileSync(join(ROOT, 'src/scenes/dungeonContext.js'), 'utf8');
+  assert.match(dgs, /if \(fromPlayer && foe\.ai\) \{/,
     'src/scenes/dungeonContext.js restores hostility on a PLAYER attack');
+  assert.match(dgs, /foeDeps\.resetAllyTeamOnPlayerAttack\(foe\.ai, foe\.entity, foe\.mobileType\)/,
+    'and reverts a struck former ally to its species');
+  assert.match(dgs, /\} else if \(!foe\.ai\.isHostile\) \{\n\s*foe\.ai\.isHostile = true;/,
+    'with the legacy raise kept for a degraded foe subsystem');
   const xfs = readFileSync(join(ROOT, 'src/scenes/exteriorFoes.js'), 'utf8');
   assert.match(xfs, /if \(fromPlayer && f\.ai\) \{\n\s*f\.ai\.makeEnemyHostileToAttacker\?\.\(PLAYER_TARGET/,
     'src/scenes/exteriorFoes.js restores hostility on a PLAYER attack - through the whole C# method');
