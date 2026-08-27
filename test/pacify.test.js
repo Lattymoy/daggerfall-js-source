@@ -57,15 +57,17 @@ test('X8: Pacify lands on a MATCHING group and is silent on any other', () => {
 });
 
 test('X8: the Humanoid/Charm SPLIT - neither reaches the other\'s targets', () => {
-  // "Pacify Humanoid only operates on humanoid monsters (not enemy
-  // classes)" + "Charm only works on enemy classes (not monstrous
-  // humanoids)". Between them they cover every humanoid, and the
-  // reason is the career table: a class enemy is absent from
-  // GetEnemyEntityEnemyGroup, so its group is None.
+  // Charm only works on enemy classes (IsEnemyClass); Pacify matches
+  // the GROUP - and AUDIT 26 F080: GetEnemyEntityEnemyGroup switches
+  // on CareerIndex, which for a class is ID - 128, so a class enemy
+  // COLLIDES into a monster career's group. A Mage (128, career 0 =
+  // Rat) is ANIMALS - so Pacify Humanoid still cannot touch it, but
+  // Pacify Animal can, and that is DFU's shipping code whatever
+  // PacifyEffect's own comment says.
   const orc = foe(7);            // a humanoid MONSTER
-  const bandit = foe(128);       // an enemy CLASS
+  const bandit = foe(128);       // an enemy CLASS - the Mage
   assert.equal(enemyGroupOf(7), NEARBY.Humanoid);
-  assert.equal(enemyGroupOf(128), NEARBY.None, 'a class enemy has no group at all');
+  assert.equal(enemyGroupOf(128), NEARBY.Animal, 'the Mage rides Rat\'s career slot');
   assert.equal(cast(orc, 33, 2).pacify, true, 'Pacify Humanoid takes the orc');
   assert.equal(cast(bandit, 33, 2).pacify, undefined, 'and cannot touch the bandit');
   assert.equal(cast(bandit, 34, 255).pacify, true, 'Charm takes the bandit');

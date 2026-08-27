@@ -340,7 +340,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/effects.js:1410` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
 - `src/systems/enchantments.js:122` - had been FLAGGED at its own site since S4c - "a magic item still
 - `src/systems/enchantments.js:641` - a MagicRound-FLAGGED row's is the payload callback :1767
-- `src/systems/encounters.js:201` - * FLAGGED, both from the tail of the C#: the pacified/team test
+- `src/systems/encounters.js:206` - * FLAGGED, both from the tail of the C#: the pacified/team test
 - `src/systems/equip.js:17` - hooks below. FLAGGED: equip sounds.
 - `src/systems/equip.js:240` - /** INTERIM starting equipment (chargen's starting-gear roll
 - `src/systems/factionRep.js:229` - *  pre-chargen INTERIM entity (characters/playerEntity.js) has no
