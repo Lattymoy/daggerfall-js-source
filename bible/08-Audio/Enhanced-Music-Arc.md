@@ -251,6 +251,55 @@ cues beyond DFU's, the enhanced side's own - and their doors are EM4
 (danger from the enemy-senses law, crossfading the dungeon track into
 its danger variant and back) and the death screen.
 
+## EM4 (2026-08-27): DANGER - SHIPPED
+
+Mac: "This is danger." 2:43, MP3 (3.5 MB) at
+public/music/enhanced/danger.mp3, OURS; key measured off the file
+(C 1.00, G 0.72, D 0.45, D# 0.45, F 0.25, G# 0.21 - C minor), a
+semitone off the dungeon track's B, which decides one thing below.
+Mac's to confirm.
+
+THE SIGNAL IS DFU'S. "An enemy that can see the player" is
+AreEnemiesNearby's own line - `detected && inSight` on the foe's AI,
+the law that refuses a rest (encounters.areEnemiesNearby) - and
+`dangerRaw` reads exactly those fields off exactly those records: every
+living foe that can see you counts, nearer counting more (a distant
+watcher a quarter, two in your face saturate). A foe that has only
+HEARD you does not count, as it does not for the rest law.
+
+THE METER IS OURS, and it is project-final's lesson made structural:
+that arc drove its mix from a per-frame threat number and the music
+fluttered. `DangerMeter` is a slew - it rises fast (0.35 s to most of
+a step: a foe seeing you is news), HOLDS six seconds after the raw
+signal drops (a foe behind a pillar does not end the fight), then falls
+slowly (5 s), and the decision has hysteresis (on at 0.5, off at 0.15).
+Pinned: seen for 0.3 s is ON; a two-second blink does not flip; the
+fight's end is OFF well after the last sighting; a 50/50 flicker around
+the threshold flips at most once.
+
+THE DOOR is on the service: `reportDanger(dt, foes)` from the hosts,
+inert unless the enhanced side is scoring the place (there is nothing
+to return to otherwise - the classic skin never crossfades). When the
+meter switches ON, the place's track CROSSFADES into the danger track
+and the composed underscore - written in the PLACE's key, not
+danger's - fades to silence under it rather than play a semitone
+wrong; OFF crossfades the place's own track back and lifts the
+underscore to its trim. A place that composes alone gets the danger
+track over its piece and the piece back alone after. A NEW CUE RESETS
+the meter and the flag: whatever danger the last place was in does not
+follow the player through a door.
+
+THE HOSTS report from the frame functions they already share: the
+dungeon context's drawFoes (both dungeon hosts call it - the splash
+clock's reasoning), and the exterior host's foe tick, over both of its
+pools, the watch and the encounter foes, exactly as it asks
+areEnemiesNearby. Pins: three (the raw law against the rest law's own
+answers; the meter's temper; the service's door - ON, OFF, the reset,
+the alone-piece arm - and both hosts' reports). 3 mutants, 3 dead.
+
+TO FOLLOW: death. `EXTRA_SCORES.death` when the track lands, its door
+the death screen.
+
 ## The board
 
 1. **EM2 - MAC'S TRACKS FOR THE PLACES.** The machinery is whole
@@ -262,10 +311,10 @@ its danger variant and back) and the death screen.
    night, wilderness with the weather folded in as the director folds
    it, taverns (the one place that wants percussion), temples, the
    Mages Guild. Each is a record; the composer stays as it is.
-3. **EM4 - DYNAMICS.** Danger from the enemy-senses law (how many have
-   seen you, how near) and health, smoothed with a slew, driving
-   per-layer gains - the motif thins and the bed darkens as danger
-   rises. Slow scalars, never a frame-rate number.
+3. **EM4 - DYNAMICS.** Danger SHIPPED as a track crossfade on the
+   rest law's own signal through a slew (above). Health, and the finer
+   per-layer dynamics of the composed piece (the motif thinning, the
+   bed darkening), remain.
 4. **EM5 - THE LAB.** A page that composes a palette live, with every
    record field as a control and a render button - the tuning surface,
    for Mac's ear.
