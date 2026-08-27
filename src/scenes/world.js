@@ -120,7 +120,7 @@ import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDea
 import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible exterior arrows
-import { addItem, spendArrow } from '../systems/inventory.js';
+import { addItem, spendArrow, totalWeight } from '../systems/inventory.js';
 import { calculateAttackDamage } from '../combat/formulas.js';   // X2-slice: enemy-arrow impacts
 import { inflictPoison } from '../systems/poisons.js';   // X2-slice: poisoned enemy arrows
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
@@ -656,7 +656,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const shotMode = params.has('shot');
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const startKey = `${startPixel.x},${startPixel.y}`;
-  const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), climbing: climbingDeps(playerEntity, (l) => townTalk?.say(l)) });   // AcrobatMotor skill jump (P14) + M3 climbing; motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
+  const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), carriedWeight: () => totalWeight(playerEntity.items ?? []), climbing: climbingDeps(playerEntity, (l) => townTalk?.say(l)) });   // AcrobatMotor skill jump (P14) + M3 climbing; motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
   // AUDIT 21 (hosts lane, F3): onLevelUp. Without it advancement.js takes its
   // HEADLESS arm - `spendPoolLowest`, which dumps every point into your LOWEST
   // stats with no message and no choice. Cross a level threshold walking a
@@ -3455,7 +3455,11 @@ export async function bootWorld(canvas, renderer, params, status) {
           // Crouch/FloatDown for down, and moves along the camera LOOK
           // (pitch included) - everywhere, not just underground.
           up: jumpHeld || held(keys, 'FloatUp'),
-          down: held(keys, 'FloatDown'),
+          // AUDIT 26 F031: LevitateMotor's descent arm is Crouch OR
+          // FloatDown (:88-89), the mirror of the rise arm above; the
+          // port's own motor contract said so and every host passed
+          // FloatDown alone, so C did nothing but toggle the stance.
+          down: crouchHeld || held(keys, 'FloatDown'),
           crouch: crouchHeld && !latch.crouch,
         }, cam.yaw, cam.pitch);
         latch.crouch = crouchHeld;

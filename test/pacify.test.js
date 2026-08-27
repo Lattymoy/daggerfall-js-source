@@ -144,13 +144,16 @@ test('X8: the pacify reaches the AI, and attacking restores hostility', () => {
   assert.doesNotMatch(host.slice(armEnd), /applySpell\(spell, casterLevel, t\.entity/,
     'no foe application bypasses the door');
 
-  // THE OTHER HALF - "until player attacks them". Both foe damage
+  // THE OTHER HALF - "until PLAYER attacks them". Both foe damage
   // doors re-hostile a pacified target, which is what makes the
   // permanent pacify a real mechanic rather than an off switch.
+  // AUDIT 26 F041 sharpened this to DFU's own wording: the flip sits
+  // inside HandleAttackFromSource's player-source gate, so the door
+  // now asks whose blow it was - a FALL no longer un-pacifies.
   for (const p of ['src/scenes/dungeonContext.js', 'src/scenes/exteriorFoes.js']) {
     assert.match(readFileSync(join(ROOT, p), 'utf8'),
-      /if \((foe|f)\.ai && !\1\.ai\.isHostile\) \{ \1\.ai\.isHostile = true;/,
-      `${p} restores hostility on damage`);
+      /if \(fromPlayer && (foe|f)\.ai && !\1\.ai\.isHostile\) \{ \1\.ai\.isHostile = true;/,
+      `${p} restores hostility on a PLAYER attack`);
   }
   // the motor's own field names the mechanic it was waiting for
   assert.match(readFileSync(join(ROOT, 'src/characters/enemyMotor.js'), 'utf8'),

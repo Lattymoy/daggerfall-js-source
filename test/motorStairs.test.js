@@ -18,7 +18,7 @@ import assert from 'node:assert/strict';
 import {
   PlayerMotor, JUMP_SPEED, GRAVITY, STEP_OFFSET, GROUNDED_JUMP_GATE_S,
   CROUCH_JUMP_DELTA, JUMP_FWD_BOOST, FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE,
-  SLOWFALL_SPEED, walkSpeed, sneakSpeed,
+  SLOWFALL_SPEED, UNITY_FIXED_DT, walkSpeed, sneakSpeed,
 } from '../src/player/motor.js';
 import { jumpSpeedMultiplier } from '../src/systems/skills.js';
 import { Collider } from '../src/player/collider.js';
@@ -285,14 +285,19 @@ test('motor: a fall reports its landing distance; slowfall re-anchors and falls 
   assert.ok(Math.abs(landedAt - 8) < 0.2, `fall distance ${landedAt.toFixed(2)} ~ 8`);
   assert.equal(FALL_DAMAGE_THRESHOLD, 5);   // the host's law: trunc(5 * (d - 5)) HP past 5
   assert.equal(FALL_HP_PER_METRE, 5);       // (an 8-unit drop bills 15 HP)
-  // Slowfall: constant -105 * dt velocity, fallStart re-anchored every
-  // tick - the landing reports (nearly) nothing.
+  // Slowfall: a constant 2.1 m/s descent (AUDIT 26 F032 - DFU's
+  // slowFallSpeed 105 rides UNITY's 0.02 fixed step inside
+  // FixedUpdate, not the port's 1/60; the old pin asserted -105/60
+  // and made the buffed descent ~20% slower than DFU's), fallStart
+  // re-anchored every tick - the landing reports (nearly) nothing.
   const m2 = new PlayerMotor(col);
   m2.spawn(0, 8, 0);
   m2.slowFalling = true;
   m2.update(1 / 60, still(), 0);   // CheckInitFall frame
   m2.update(1 / 60, still(), 0);
-  assert.ok(Math.abs(m2.velY - (-SLOWFALL_SPEED / 60)) < 1e-9, `slowfall velocity ${m2.velY.toFixed(3)} = -105/60`);
+  assert.ok(Math.abs(m2.velY - -2.1) < 1e-9, `slowfall velocity ${m2.velY.toFixed(3)} = -2.1 m/s`);
+  assert.equal(SLOWFALL_SPEED, 105, 'the C# constant, as written');
+  assert.equal(UNITY_FIXED_DT, 0.02, 'and Unity\'s step, which it is coupled to');
   let landed2 = -1;
   for (let f = 0; f < 600 && landed2 < 0; f++) {
     m2.update(1 / 60, still(), 0);

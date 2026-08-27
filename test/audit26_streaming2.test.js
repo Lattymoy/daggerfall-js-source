@@ -299,7 +299,10 @@ test('audit26 F030: no host drops the up/down keys or the pitch argument', () =>
         `${f} passes the camera LOOK, pitch included`);
       const body = s.slice(i, tail);
       assert.match(body, /up: jumpHeld \|\| held\(keys, 'FloatUp'\)/, `${f} reads Jump/FloatUp for up`);
-      assert.match(body, /down: held\(keys, 'FloatDown'\)/, `${f} reads FloatDown for down`);
+      // AUDIT 26 F031 grew this: LevitateMotor's descent arm is
+      // Crouch OR FloatDown (:88-89), the mirror of the rise arm
+      // above - the old needle pinned the FloatDown-alone shape.
+      assert.match(body, /down: crouchHeld \|\| held\(keys, 'FloatDown'\)/, `${f} reads Crouch/FloatDown for down`);
     }
   }
 });

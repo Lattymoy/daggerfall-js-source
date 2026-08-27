@@ -271,7 +271,15 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     g.batch = null;
   }
 
-  function damageGuard(g, damage, playerFeet, knockDir) {
+  /** AUDIT 26 F035: `fromPlayer` is this door's provenance flag, the
+   *  hurtPlayer(bypassShield) idiom. DFU assigns the Murder crime
+   *  inside HandleAttackFromSource's `sourceEntityBehaviour ==
+   *  PlayerEntityBehaviour` gate (DaggerfallEntityBehaviour.cs:203,
+   *  :265-269), and EnemyMotor.ApplyFallDamage calls DecreaseHealth
+   *  and nothing else (:1398-1401) - so a watchman who dies falling
+   *  while chasing must not brand the player a murderer for a kill
+   *  they never made. Defaults TRUE: every player blow is unchanged. */
+  function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true } = {}) {
     g.entity.health -= damage;
     if (g.entity.health <= 0) {
       g.dead = true;
@@ -281,8 +289,9 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       sayEnemyDied(say, GUARD_MOBILE_TYPE);   // EnemyDeath:79-83, the kill notice
       // G4 (HandleAttackFromSource, verbatim): killing the city watch
       // IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
-      // the thieves-guild arc.
-      setCrimeCommitted(playerEntity, CRIME_MURDER);   // V4: through the one setter (SuppressCrime)
+      // the thieves-guild arc. F035: and only when the PLAYER is the
+      // source - the whole block is inside DFU's player gate.
+      if (fromPlayer) setCrimeCommitted(playerEntity, CRIME_MURDER);   // V4: through the one setter (SuppressCrime)
       // AUDIT 24 (wave 38): EnemyDeath.CompleteDeath, through the one
       // home (this was the second copy of exteriorFoes' mint, to the
       // line). It gains FindGroundPosition (:817) - the watch walks, so
@@ -374,7 +383,13 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         g.ai.landedFall = 0;
         if (gdmg > 0) {
           audio?.play3d?.(SOUND.FallDamage, [g.ai.feet[0], g.ai.feet[1], g.ai.feet[2]], 1, { maxDistance: 16 });
-          damageGuard(g, gdmg, null, null);
+          // AUDIT 26 F040: EnemyMotor.cs:1403-1407 splashes on EVERY
+          // enemy fall past the threshold - index 0, at the position
+          // DFU passes (the feet, as the sibling pool notes). This arm
+          // billed the damage and played the clip but never bled,
+          // where exteriorFoes has splashed since CH3.
+          hitEffects?.showBloodSplash(0, [g.ai.feet[0], g.ai.feet[1], g.ai.feet[2]]);
+          damageGuard(g, gdmg, null, null, { fromPlayer: false });   // F035: ApplyFallDamage carries no crime
           if (g.dead) continue;
         }
       }

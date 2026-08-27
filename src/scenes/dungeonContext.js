@@ -1750,6 +1750,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
                 say: (l) => hudText.add(l),   // C-slice: equipment breaks speak
               }) : 0;
               if (dmg > 0) {
+                // AUDIT 26 F052: an arrow runs the SAME
+                // WeaponManager.WeaponDamage the melee swing does
+                // (DaggerfallMissile.cs:681-687, arrowHit true), whose
+                // damage-above-zero arm plays the enemy-side hit sound
+                // (:562-567) and splashes at the impact point
+                // (:569-573) BEFORE the knockback and the pain voice.
+                // This arm played the voice alone, so every landed
+                // arrow was silent and bloodless while every melee hit
+                // thudded and splashed. The missile's own position IS
+                // DFU's impactPosition here - the one place the port
+                // has the real hit point rather than the body centre.
+                audio.play3d(hitSoundFor(m.weapon), f.ai.feet, 1.1, { maxDistance: 16 });
+                hitEffects?.showBloodSplash(ENEMY_BASICS[f.mobileType]?.bloodIndex ?? 0, [m.pos[0], m.pos[1], m.pos[2]]);
                 // C2-slice (combat-17): the arrow-struck class foe cries out too
                 const pain = enemyPainVoice(f, dmg);
                 if (pain && pain.clip >= 0) audio.play3d(pain.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
@@ -1787,6 +1800,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               audio.playOneShot(hitSoundFor(m.weapon), 1.1);
               flashPlayerDamage();
               playPlayerVoice(audio, playerPainVoice(playerEntity, dmg));
+            } else if (m.shooterFoe) {
+              // AUDIT 26 F053: ApplyDamageToPlayer's else arm rings
+              // PlayMissSound on the ENEMY's own source
+              // (EnemyAttack.cs:297-298) - the port's melee arm has
+              // this else and the arrow arm did not, so a dodged
+              // arrow was silent.
+              const sf = m.shooterFoe;
+              audio.play3d(enemyMissSound(m.weapon), [sf.ai.feet[0], sf.ai.feet[1] + 0.9, sf.ai.feet[2]], 1, { maxDistance: 16 });
             }
             addItem(playerEntity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
             surfacePlayer();
@@ -1953,10 +1974,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // Shared foe-damage path: melee and spells kill through the same
   // door (corpse + reaction). Factored in S5 so missiles do not grow
   // a second death path.
-  function damageFoe(foe, damage, playerFeet = null, knockDir = null) {
+  /** AUDIT 26 F035/F041: `fromPlayer` is this door's provenance flag,
+   *  the third pool's copy of the same law - see exteriorFoes. */
+  function damageFoe(foe, damage, playerFeet = null, knockDir = null, { fromPlayer = true } = {}) {
     // C-slice: MakeEnemyHostileToAttacker - damaging a PACIFIED foe
-    // re-hostiles it (and pre-loads the pursuit, the G1 shape).
-    if (foe.ai && !foe.ai.isHostile) { foe.ai.isHostile = true; foe.ai.makeHostileToPlayer?.(undefined, lastPlayerFeet); }   // wave 36: seeded with where the attack came from
+    // re-hostiles it (and pre-loads the pursuit, the G1 shape). F041:
+    // inside DFU's player-source gate, so a FALL cannot do it.
+    if (fromPlayer && foe.ai && !foe.ai.isHostile) { foe.ai.isHostile = true; foe.ai.makeHostileToPlayer?.(undefined, lastPlayerFeet); }   // wave 36: seeded with where the attack came from
     foe.entity.health -= damage;
     if (foe.entity.health <= 0) {
       // X5: SOUL TRAP intercepts the kill, exactly where DFU's
@@ -2378,7 +2402,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // says "falling enemies bleed at the center"; the line does
           // not add controller.center, so the feet are what DFU passes.
           hitEffects?.showBloodSplash(0, [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]]);
-          damageFoe(f, dmg, null, null);
+          damageFoe(f, dmg, null, null, { fromPlayer: false });   // F041: a fall is nobody's attack
         }
       }
       // E-slice: EnemySenses:533-535 - a foe with the player IN SIGHT
@@ -2876,10 +2900,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // fall-damage sound; a 2.5..5 drop is the hard-fall alert only.
       // No water exemption HERE - DFU's is outdoor-tile-only
       // (StreamingWorld.PlayerTileMapIndex == 0), so a dungeon-water
-      // landing that grounds bills like ground, bug-for-bug. The
-      // ShowPlayerDamage screen flash pends the HUD arc (flagged).
+      // landing that grounds bills like ground, bug-for-bug.
+      // AUDIT 26 F206: the flash is NOT pending - PlayerHealth
+      // .RemoveHealth opens with ShowPlayerDamage.Flash (:36-38,
+      // :49-58) and ApplyPlayerFallDamage goes through it, so every
+      // damaging fall flashes. This file already flashes for arrows
+      // and melee, and shared.applyFallLanding - which the other
+      // THREE hosts use - flashes for this exact reason; only a
+      // dungeon fall was silent, behind a stale pending comment.
       if (fell > FALL_DAMAGE_THRESHOLD) {
         hurtPlayer(Math.trunc(FALL_HP_PER_METRE * (fell - FALL_DAMAGE_THRESHOLD)));
+        flashPlayerDamage();
         audio.playOneShot(SOUND.FallDamage);
       } else if (fell > FALL_DAMAGE_THRESHOLD / 2) {
         audio.playOneShot(SOUND.FallHard);

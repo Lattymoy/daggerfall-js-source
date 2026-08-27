@@ -74,10 +74,22 @@ export const FIXED_DT = 1 / 60;
 export const MAX_FRAME_DT = 0.25;
 export const CROUCH_JUMP_DELTA = 0.8;
 export const JUMP_FWD_BOOST = 0.05;
-export const SLOWFALL_SPEED = 105;          // AcrobatMotor slowFallSpeed (x dt = the constant fall velocity)
+export const SLOWFALL_SPEED = 105;          // AcrobatMotor slowFallSpeed (:9)
+/** AUDIT 26 F032: ApplyGravity writes `moveDirection.y =
+ *  -slowFallSpeed * Time.deltaTime` (:187) from INSIDE FixedUpdate
+ *  (PlayerMotor.cs:275/:357), where Time.deltaTime IS the fixed step
+ *  - Unity's 0.02 - and moveDirection is a VELOCITY (spent as
+ *  `Move(moveDirection * dt)`, PlayerGroundMotor.cs:86). So DFU's
+ *  slow fall is a flat 2.1 m/s. The constant is coupled to Unity's
+ *  step, not to ours: multiplying by the port's own 1/60 gave 1.75
+ *  and made every buffed descent ~20% slower. */
+export const UNITY_FIXED_DT = 0.02;
+export const SLOWFALL_VELOCITY = SLOWFALL_SPEED * UNITY_FIXED_DT;   // 2.1 m/s
 export const FALL_DAMAGE_THRESHOLD = 5.0;   // AcrobatMotor fallingDamageThreshold (= PlayerHealth's threshold)
 export const FALL_HP_PER_METRE = 5;         // PlayerHealth.ApplyPlayerFallDamage HPPerMetre
 export const GRAVITY = 20.0;
+/** LevitateMotor's overEncumbered threshold (:83): CarriedWeight * 4 > 250. */
+export const OVER_ENCUMBERED_LIMIT = 250;
 export const CAPSULE_HEIGHT = 1.8;
 export const CAPSULE_RADIUS = 0.35;
 export const STEP_OFFSET = 0.5;
@@ -187,10 +199,15 @@ export function startRestGroundedCheck(grounded, feet, collider) {
  * and integrates AcrobatMotor-style vertical motion.
  */
 export class PlayerMotor {
-  constructor(collider, stats = { speed: 50, running: 30, swimming: 30 }, { jumpBoost = null, climbing = null } = {}) {
+  constructor(collider, stats = { speed: 50, running: 30, swimming: 30 }, { jumpBoost = null, climbing = null, carriedWeight = null } = {}) {
     this.collider = collider;
     this.stats = stats;
     this.jumpBoost = jumpBoost;    // () => AcrobatMotor jumpSpeedMultiplier (systems/skills owns the formula)
+    // AUDIT 26 F027: () => PlayerEntity.CarriedWeight (:184 - the
+    // pack's weight plus gold at 0.0025 kg a piece, which the port's
+    // inventory.totalWeight already is, gold being an item here).
+    // A headless motor passes none and is never over-encumbered.
+    this.carriedWeight = carriedWeight;
     // M3 CLIMBING (ClimbingMotor, classic path): the check machine -
     // mounted ONLY when the host passes deps, exactly as the
     // component is a mount in DFU (headless/test motors stay
@@ -355,9 +372,29 @@ export class PlayerMotor {
     // ((!swimming || IsGrounded) && pressedCrouch), and a free swim
     // FORCES the crouched capsule on the medium clock - DFU always
     // shrinks a swimmer; surfacing un-forces it the same way.
-    if (input.crouch && (!this.swimming || this.grounded)) {
+    // AUDIT 26 F028/F029: the two FORCED-STAND arms the port lacked.
+    // (1) A crouched LEVITATOR is stood up and DecideHeightAction
+    // RETURNS (:137-145) - no other arm runs; and the whole
+    // crouch/climb/swim block below is gated `!riding && !onWater &&
+    // !levitating` (:171), so a levitating player cannot toggle the
+    // 0.9 capsule in mid-air and fit through gaps DFU forbids.
+    // (Riding and onWater have no port model yet - the transport and
+    // water-surface arms - so only the levitating gate is expressed.)
+    if (this.levitating) {
+      if (this.crouching) this.heightAction = 'stand';   // timerMax is NOT set here, DFU keeps its last
+    } else if (input.crouch && (!this.swimming || this.grounded)) {
       this.heightAction = this.crouching ? 'stand' : 'crouch';
       this.heightTimerMax = HEIGHT_TIMER_FAST;
+      this.forcedSwimCrouch = false;
+    } else if (this.climb?.isClimbing) {
+      // (2) CLIMBING forces standing every frame on the medium clock
+      // (:184-191) - the timerMax is set whether or not a stand is
+      // needed, verbatim - so a crouched climber does not carry the
+      // crouched capsule and eye up the wall and past the top. This
+      // reads the flag from before this update's _climbStep (:529),
+      // which differs from DFU only on a climb's first frame.
+      this.heightTimerMax = HEIGHT_TIMER_MEDIUM;
+      if (this.crouching) this.heightAction = 'stand';
       this.forcedSwimCrouch = false;
     } else if (this.swimming && !this.forcedSwimCrouch && !this.grounded) {
       if (!this.crouching) { this.heightAction = 'crouch'; this.heightTimerMax = HEIGHT_TIMER_MEDIUM; }
@@ -527,7 +564,16 @@ export class PlayerMotor {
       // Swimming without levitation: no vertical from the look
       // (AddMovement zeroes y unless a float key drives it).
       if (this.swimming && !this.levitating) my = 0;
-      if (input.up) my += 1;
+      // LevitateMotor's up/down ladder (:81-90), in DFU's order. The
+      // FIRST arm is AUDIT 26 F027: an over-encumbered swimmer is
+      // dragged DOWN and the sink REPLACES the float keys, so past
+      // 62.5 kg the player cannot surface. Climbing or water-walking
+      // exempts them; levitation does too, through overEncumbered's
+      // own !playerLevitating term. (GodMode has no port counterpart
+      // - it is a debug console flag - so that term is absent.)
+      const overEncumbered = (this.carriedWeight?.() ?? 0) * 4 > OVER_ENCUMBERED_LIMIT && !this.levitating;
+      if (this.swimming && overEncumbered && !this.climb?.isClimbing && !this.waterWalking) my -= 1;
+      else if (input.up) my += 1;
       else if (input.down) my -= 1;
       // AddMovement's THREE arms, in DFU's own order (LevitateMotor.cs
       // :116-140). AUDIT 24 player: the port had a different ladder -
@@ -646,7 +692,17 @@ export class PlayerMotor {
     // the scene's jumpSpeedMultiplier (Jumping skill; athleticism +
     // jump spell pend); crouched jumps scale by crouchingJumpDelta;
     // a MOVING jump adds forward * jumpSpeed * 0.05 of momentum.
-    if (this.grounded && input.jump && this.groundedTime >= GROUNDED_JUMP_GATE_S && !this.slowFalling) {
+    // AUDIT 26 F026: the gate is `if (!WasClimbing && GroundedTime <
+    // 0.1f) return;` (:76) - a player who was climbing at the START
+    // of the frame BYPASSES the bunny-hop clock, so topping out or
+    // aborting a climb onto ground and pressing Jump goes at once.
+    // climb.step() has already run this update (:522) and left
+    // wasClimbing holding the previous frame's isClimbing, exactly as
+    // ClimbingMotor.cs:390 does - and an ACTIVE climb never reaches
+    // here, so this reads only on the frame a climb ended. The flag
+    // had been written every step with no reader anywhere in src/.
+    if (this.grounded && input.jump && !this.slowFalling
+        && (this.climb?.wasClimbing || this.groundedTime >= GROUNDED_JUMP_GATE_S)) {
       this.velY = JUMP_SPEED * (this.jumpBoost ? this.jumpBoost() : 1);
       if (this.crouching) this.velY *= CROUCH_JUMP_DELTA;
       if (input.forward !== 0 || input.strafe !== 0) {
@@ -661,13 +717,13 @@ export class PlayerMotor {
     this._airVelX = vx;
     this._airVelZ = vz;
 
-    // ApplyGravity: slowfall is a CONSTANT -105 * dt fall speed with
+    // ApplyGravity: slowfall is a CONSTANT 2.1 m/s fall speed with
     // fallStart re-anchored every tick (expiry mid-fall only bills
     // the rest of the drop); otherwise integrate normally.
     if (!this.grounded) {
       if (this.slowFalling && this.falling) {
         this.fallStart = this.pos[1];
-        this.velY = -SLOWFALL_SPEED * dt;
+        this.velY = -SLOWFALL_VELOCITY;   // F032: DFU's step, not ours
       } else {
         this.velY -= GRAVITY * dt;
       }
