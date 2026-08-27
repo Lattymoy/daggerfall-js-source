@@ -119,6 +119,9 @@ export default defineConfig({
         menu: 'menu.html',
         // And for the wizard behind it, one stage at a time.
         chargen: 'chargen.html',
+        // THE MODERN DIRECTION (Mac, 2026-08-27): the Skyrim-esque
+        // main-menu redesign, self-contained, deployed for phone eyes.
+        menuRedesign: 'menu-redesign.html',
       },
     },
   },

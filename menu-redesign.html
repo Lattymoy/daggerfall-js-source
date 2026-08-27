@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <title>Daggerfall Enhanced — main menu redesign prototype</title>
+    <!-- A DESIGN PROTOTYPE, self-contained on purpose (Mac, 2026-08-27):
+         the modern direction - Skyrim-esque - explored as a replacement
+         for the enhanced menu's card sheet. No boxes: type floats on an
+         atmospheric ground, condensed caps with wide tracking, the
+         selection brightens and grows, fog drifts. The PALETTE and the
+         FACES stay ours (ink/bone/brass, Barlow + Grenze Gotisch), so
+         this is our brand wearing Skyrim's structure, not a clone.
+         Nothing here touches the live skin - if the direction is
+         adopted, the language moves into enhancedStyle.js and this page
+         becomes the record of where it came from. No game data. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@300;400;500&family=Grenze+Gotisch:wght@300;400&family=Cormorant:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --ink: #0e1013;
+        --bone: #e9e4d9;
+        --dim: #8b8578;
+        --brass: #c08a3e;
+        --data: 'Barlow Semi Condensed', system-ui, sans-serif;
+        --brand: 'Grenze Gotisch', Georgia, serif;
+        --display: 'Cormorant', Georgia, serif;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; background: var(--ink); overflow: hidden; }
+      body { font-family: var(--data); color: var(--bone); -webkit-font-smoothing: antialiased; }
+
+      /* ── THE GROUND ──────────────────────────────────────────
+         Three fog layers over a vignetted near-black. Pure CSS -
+         huge soft radial blobs, blurred, drifting on long loops at
+         different speeds so the composite never visibly repeats.
+         The live menu would sit this over the paused world render
+         (dimmed); here the gradient IS the world. */
+      .ground { position: fixed; inset: 0; overflow: hidden;
+        background:
+          radial-gradient(120% 90% at 50% 110%, #1a2029 0%, #12161c 45%, #0b0d10 100%);
+      }
+      .fog { position: absolute; width: 160vmax; height: 160vmax; border-radius: 50%;
+        filter: blur(60px); opacity: 0.5; will-change: transform; }
+      .fog.a { left: -60vmax; top: -30vmax;
+        background: radial-gradient(circle at 40% 55%, rgba(102,116,134,0.16), transparent 55%);
+        animation: drift-a 90s linear infinite alternate; }
+      .fog.b { right: -70vmax; bottom: -50vmax;
+        background: radial-gradient(circle at 55% 45%, rgba(78,127,114,0.10), transparent 55%);
+        animation: drift-b 120s linear infinite alternate; }
+      .fog.c { left: -20vmax; bottom: -80vmax;
+        background: radial-gradient(circle at 50% 40%, rgba(192,138,62,0.07), transparent 60%);
+        animation: drift-c 150s linear infinite alternate; }
+      @keyframes drift-a { from { transform: translate(0,0) } to { transform: translate(14vmax, 6vmax) } }
+      @keyframes drift-b { from { transform: translate(0,0) } to { transform: translate(-12vmax,-8vmax) } }
+      @keyframes drift-c { from { transform: translate(0,0) } to { transform: translate(9vmax,-10vmax) } }
+      .vignette { position: absolute; inset: 0;
+        background: radial-gradient(90% 90% at 50% 45%, transparent 55%, rgba(0,0,0,0.55) 100%); }
+
+      /* ── THE LAYOUT ─────────────────────────────────────────
+         One centered column: wordmark, ornament, the list, and a
+         build line pinned to the bottom edge. Skyrim centers its
+         emblem and list; we do the same with our wordmark as the
+         emblem. */
+      .stage { position: relative; height: 100dvh; display: flex;
+        flex-direction: column; align-items: center; justify-content: center;
+        gap: 0; padding: 24px; }
+
+      .wordmark { font-family: var(--brand); font-weight: 300;
+        font-size: clamp(40px, 7vw, 72px); letter-spacing: 0.04em;
+        color: var(--bone); text-align: center; line-height: 1;
+        text-shadow: 0 2px 24px rgba(0,0,0,0.8); margin: 0; }
+      .wordmark small { display: block; font-family: var(--data); font-weight: 300;
+        font-size: clamp(10px, 1.4vw, 13px); letter-spacing: 0.55em;
+        text-transform: uppercase; color: var(--dim); margin-top: 10px;
+        text-indent: 0.55em; /* balance the trailing tracking */ }
+
+      /* The ornament: line — diamond — line. The landing page's own
+         rule motif, thinned to Skyrim's weight. */
+      .rule { display: flex; align-items: center; gap: 14px;
+        width: min(420px, 70vw); margin: 26px 0 30px; opacity: 0.7; }
+      .rule::before, .rule::after { content: ''; flex: 1; height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(233,228,217,0.45)); }
+      .rule::after { background: linear-gradient(90deg, rgba(233,228,217,0.45), transparent); }
+      .rule .gem { width: 7px; height: 7px; transform: rotate(45deg);
+        border: 1px solid var(--brass); background: rgba(192,138,62,0.25); }
+
+      /* ── THE LIST ───────────────────────────────────────────
+         No boxes, no fills. Caps, wide tracking, thin weight.
+         Rest state sits dim; hover/focus brightens to full bone,
+         grows ~6%, and lights a pair of brass gems either side.
+         Rows are real buttons, 48px min height for thumbs. */
+      .menu { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+      .menu button { font-family: var(--data); font-weight: 300;
+        font-size: clamp(19px, 2.6vw, 24px); letter-spacing: 0.34em;
+        text-transform: uppercase; text-indent: 0.34em; /* recenter */
+        color: rgba(233,228,217,0.55); background: none; border: 0;
+        padding: 10px 28px; min-height: 48px; cursor: pointer;
+        display: flex; align-items: center; gap: 16px;
+        transition: color 140ms ease, transform 140ms ease, text-shadow 140ms ease;
+        transform-origin: center; }
+      .menu button .g { width: 5px; height: 5px; transform: rotate(45deg);
+        background: var(--brass); opacity: 0; transition: opacity 140ms ease; }
+      .menu button:hover, .menu button:focus-visible { color: var(--bone);
+        transform: scale(1.06); outline: none;
+        text-shadow: 0 0 18px rgba(233,228,217,0.35); }
+      .menu button:hover .g, .menu button:focus-visible .g { opacity: 1; }
+      .menu button:disabled { color: rgba(139,133,120,0.35); cursor: default; }
+      .menu button:disabled:hover { transform: none; text-shadow: none; }
+      .menu button:disabled .g { opacity: 0; }
+
+      /* One quiet caption under a disabled row, Cormorant italic —
+         the anti-lie law: a dead control says why. */
+      .why { font-family: var(--display); font-style: italic; font-weight: 300;
+        font-size: 13px; color: var(--dim); margin: -2px 0 6px; letter-spacing: 0.04em; }
+
+      /* ── THE FOOT ───────────────────────────────────────────
+         Build line bottom-center; the skin switch word bottom-right,
+         same control as the landing page's ENHANCED toggle. */
+      .foot { position: fixed; left: 0; right: 0; bottom: 0;
+        display: flex; align-items: flex-end; justify-content: space-between;
+        padding: 14px 18px; font-size: 11px; letter-spacing: 0.22em;
+        text-transform: uppercase; color: rgba(139,133,120,0.7); }
+      .foot .skin { color: var(--brass); cursor: pointer; min-height: 44px;
+        display: flex; align-items: flex-end; }
+
+      @media (max-width: 480px) {
+        .menu button { letter-spacing: 0.26em; text-indent: 0.26em; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .fog { animation: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="ground">
+      <div class="fog a"></div>
+      <div class="fog b"></div>
+      <div class="fog c"></div>
+      <div class="vignette"></div>
+    </div>
+    <div class="stage">
+      <h1 class="wordmark">Daggerfall<small>JavaScript</small></h1>
+      <div class="rule"><span class="gem"></span></div>
+      <nav class="menu" aria-label="Main menu">
+        <button type="button" autofocus>Continue</button>
+        <button type="button">New Game</button>
+        <button type="button">Load</button>
+        <button type="button">Settings</button>
+        <button type="button" disabled>Mods</button>
+        <div class="why">arrives with the mod arc</div>
+        <button type="button">Credits</button>
+      </nav>
+    </div>
+    <div class="foot">
+      <span>build 2026-08-27 · prototype</span>
+      <span class="skin">Enhanced</span>
+    </div>
+  </body>
+</html>
