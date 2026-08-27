@@ -2968,7 +2968,9 @@ export function createWorldModes(host) {
           ? { inside: true, inBuilding: true }
           : { inside: true, inBuilding: false,
               dungeonSwimming: player.swimming,
-              dungeonShallow: _surf != null && !player.swimming && (player.pos[1] + 0.9 - 0.57) < _surf }));
+              // F090: the LATCHED flag - shallow is entered at 0.57 and
+              // only left at 0.95 (PlayerFootsteps :189, :199-208).
+              dungeonShallow: _footsteps.waterStep(player.pos[1] + 0.9, _surf, player.swimming) }));
         if (_step) audio.playOneShot(_step.clip, _step.volume);
       }
     }

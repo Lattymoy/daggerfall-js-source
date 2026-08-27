@@ -60,6 +60,29 @@ export class FootstepMachine {
     this.alternate = false;
     this.lostGrounding = false;
     this.ignoreLostGrounding = true;   // swallow the first landing (load/entry)
+    // AUDIT 26 F090: the dungeon water HYSTERESIS is state, so it
+    // lives with the machine that already carries some. See waterStep.
+    this.dungeonShallow = false;
+  }
+
+  /** PlayerFootsteps' water arms (:189, :199-208), which are NOT one
+   *  threshold: shallow steps are ENTERED at `(y - 0.57) < waterY`
+   *  and only left at `(y - 0.95) >= waterY` - or when the water
+   *  level clears entirely (blockWaterLevel == 10000, which is a null
+   *  surface here). BETWEEN the two the current sound STICKS, so
+   *  wading out keeps the splash for another 0.38 units. Both dungeon
+   *  hosts recomputed the flag from the ENTER threshold alone every
+   *  frame - stateless picking cannot express a latch - and so went
+   *  back to stone early.
+   *
+   *  `centreY` is the capsule CENTRE, which is DFU's
+   *  transform.position on a CharacterController; the hosts pass
+   *  feet + half-height. Returns the latched shallow flag. */
+  waterStep(centreY, surf, swimming) {
+    if (swimming) return this.dungeonShallow;   // the submerged arm owns this frame
+    if (surf == null || (centreY - 0.95) >= surf) this.dungeonShallow = false;
+    else if (!this.dungeonShallow && (centreY - 0.57) < surf) this.dungeonShallow = true;
+    return this.dungeonShallow;
   }
 
   /** @param pos [x, y, z]

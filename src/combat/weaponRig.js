@@ -23,6 +23,7 @@ import { EQUIP_SLOTS } from '../systems/equip.js';   // AUDIT 17e F17
 import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES } from './fpsWeapon.js';
 import { worldAabb, rayAabb } from '../player/activate.js';
 import { SOUND } from '../systems/soundClips.js';
+import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSound
 
 /**
  * @param deps {
@@ -105,11 +106,19 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     },
     /** ClickToAttack for the touch button. */
     clickAttack() { if (!playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0) playerWeapon.clickAttack(); },
-    /** ToggleSheath + the draw sound (78) on unsheathing a real weapon. */
+    /** ToggleSheath + the draw sound on unsheathing a real weapon.
+     *  AUDIT 26 F023: the clip is the WEAPON's own GetEquipSound
+     *  (WeaponManager.SetWeapon :780 overwrites DrawWeaponSound with
+     *  it on every applied weapon, and FPSWeapon.ToggleSheath :295
+     *  plays that field) - eight clips by weapon type, not the 78
+     *  default, which no applied weapon ever reaches. A weapon with
+     *  no equip clip of its own falls back to 78. */
     toggleSheath() {
       syncWorn();
       // V4: the claws draw silently (DrawWeaponSound = None, :338)
-      if (playerWeapon.toggleSheath() && !playerWeapon.weapon?.werecreatureClaws) audio.playOneShot(SOUND.DrawWeapon);
+      if (playerWeapon.toggleSheath() && !playerWeapon.weapon?.werecreatureClaws) {
+        audio.playOneShot(equipSoundFor(playerWeapon.weapon) ?? SOUND.DrawWeapon);
+      }
     },
     /**
      * Per-frame: gesture consume, the swing-sound edge, machine step.

@@ -244,7 +244,7 @@ combat line numbers below are refreshed with it.
 - `src/combat/playerWeapon.js:47` - /** INTERIM starting weapon (items arc replaces): Iron Dagger.
 - `src/combat/playerWeapon.js:57` - export const INTERIM_WEAPON = Object.freeze({
 - `src/combat/playerWeapon.js:84` - constructor({ liveSpeed = 50, weapon = INTERIM_WEAPON } = {}) {
-- `src/combat/weaponRig.js:35` - *                     (FLAGGED at the call sites - their HUD pends),
+- `src/combat/weaponRig.js:36` - *                     (FLAGGED at the call sites - their HUD pends),
 - `src/player/pointerLock.js:38` - FLAGGED: DFU also refuses the toggle for 0.3 seconds after an input
 - `src/scenes/arrestFlow.js:166` - SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
 - `src/scenes/arrestFlow.js:234` - FLAGGED, still owed to their own slices: PreventEnemySpawns across the
@@ -280,8 +280,8 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:2985` - FLAGGED: the QuestComplete loot window pends the UI arc - the
 - `src/scenes/world.js:3012` - castle interior (FLAGGED with the palace blocks).
 - `src/scenes/world.js:3472` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:3821` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/world.js:3894` - (FLAGGED: exterior corpse containers are the loot arc's), so
+- `src/scenes/world.js:3831` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:3904` - (FLAGGED: exterior corpse containers are the loot arc's), so
 - `src/scenes/worldModes.js:293` - rather than pretending to scan. FLAGGED.
 - `src/scenes/worldModes.js:442` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:590` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
@@ -309,11 +309,11 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:2122` - with the trade window's own mode flow, the same INTERIM the
 - `src/scenes/worldModes.js:2347` - first (owned houses and quest buildings FLAGGED/seamed per
 - `src/scenes/worldModes.js:2355` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
-- `src/scenes/worldModes.js:3171` - too. FLAGGED: interior loot containers are the loot arc's -
-- `src/scenes/worldModes.js:3313` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:3412` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:3750` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
-- `src/scenes/worldModes.js:4179` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
+- `src/scenes/worldModes.js:3173` - too. FLAGGED: interior loot containers are the loot arc's -
+- `src/scenes/worldModes.js:3315` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:3414` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:3752` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
+- `src/scenes/worldModes.js:4181` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
 - `src/systems/advancement.js:84` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/artifactEffects.js:21` - spawnAlliedFoe(mobileType) for the two summons - FLAGGED: the port

@@ -425,7 +425,9 @@ export async function bootDungeon(canvas, renderer, params, status) {
           halfSpeed: player.movingLessThanHalfSpeed,
         }, pickFootstepSet({ inside: true, inBuilding: false,
           dungeonSwimming: player.swimming,
-          dungeonShallow: surf != null && !player.swimming && (player.pos[1] + 0.9 - 0.57) < surf }));
+          // F090: the LATCHED flag - shallow is entered at 0.57 and
+          // only left at 0.95 (PlayerFootsteps :189, :199-208).
+          dungeonShallow: _footsteps.waterStep(player.pos[1] + 0.9, surf, player.swimming) }));
         if (_step) audio.playOneShot(_step.clip, _step.volume);
       }
       cam.pos = player.eye;
