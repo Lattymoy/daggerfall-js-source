@@ -27,16 +27,16 @@
 // it: the nag repeats every NOTIFY_ROUNDS game minutes, the move
 // sound is V2b's host concern (it needs the audio frame anyway).
 //
+// THE $CUREWER QUEST went live in V2d (racialQuests.js: StartQuest's
+// 30% roll on the 84-day cadence with the no-second-instance check,
+// and CureLycanthropy's tombstone sweep); vampirism itself shipped in
+// V2b (vampirism.js consumes the pending marker).
+//
 // FLAGGED, with the slice each waits on:
-//  - the $CUREWER cure quest (StartQuest's 30% roll and
-//    CureLycanthropy's tombstone sweep) - the vendored pack carries
-//    the source; wiring it is quest-bridge work (V2b)
 //  - the transformed suppressions the HOSTS own (inventory/talk
 //    refusals, crime, population spawns, paperdoll body, the
 //    werecreature FPS claws and the attack/move sounds) - V2b names
 //    all four hosts
-//  - vampirism (VampirismEffect.cs) - a vampirism pending marker is
-//    left PENDING loudly rather than half-consumed
 
 import {
   LYCANTHROPY_TYPES, INFECTION,
@@ -51,6 +51,7 @@ import { WEAPON_MATERIALS } from '../characters/weapons.js';
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
 import { ENCHANTMENT_TYPES } from './enchantments.js';
 import { cureAllDiseases } from './effects.js';
+import { endLycanthropyQuests } from './racialQuests.js';   // V2d: the cure's $CUREWER tombstone sweep
 
 /** LycanthropyEffect.LycanthropyCurseKey (:33). */
 export const LYCANTHROPY_CURSE_KEY = 'Lycanthropy-Curse';
@@ -309,9 +310,10 @@ export function onLycanthropeHit(entity, target, { nowMinutes = 0, isCivilian = 
 }
 
 /**
- * CureLycanthropy (:414-430): morph back first, a full RAW heal, the
- * curse ends, one hour passes, and the tagged spells go. The quest
- * tombstone sweep is FLAGGED with the cure quest (V2b).
+ * CureLycanthropy (:475-490): morph back first, a full RAW heal, the
+ * curse ends, one minute passes, the tagged spells go, and every
+ * $CUREWER instance is tombstoned (V2d - EndLycanthropyQuests, the
+ * cure's last line, through the racialQuests host).
  */
 export function cureLycanthropy(entity, { nowMinutes = 0, advanceMinutes = null, refreshHead = null } = {}) {
   const entry = liveLycanthropy(entity);
@@ -327,5 +329,6 @@ export function cureLycanthropy(entity, { nowMinutes = 0, advanceMinutes = null,
   // a port that read the 60 as minutes would jump the clock 60x
   advanceMinutes?.(1);
   if (entity.spells) entity.spells = entity.spells.filter((s) => s.tag !== LYCANTHROPY_SPELL_TAG);
+  endLycanthropyQuests();
   return true;
 }

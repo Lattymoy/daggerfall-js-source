@@ -21,26 +21,30 @@
 // of lycanthropy's innocence test. DFU's own design: the vampire
 // feeds in combat, the werewolf must hunt the innocent.
 //
+// SUN AND HOLY DAMAGE went live in V2c: the entry's
+// sunDamage/holyDamage flags are the racial-override arm
+// passiveSpecials.js's burn reads (12 per 4th round, through the
+// IsPlayerInSunlight/IsPlayerInHolyPlace host seam registered by the
+// hosts).
+//
+// THE QUESTS went live in V2d (racialQuests.js): P0A01L00 on the
+// first 50% hit of the 38-day arm with hasStartedInitialVampireQuest
+// latched on this entry, the clan's guild-pool quests after it,
+// $CUREVAM on the 84-day cure arm's (10,100)<30 roll, and the cure's
+// P0* tombstone sweep below.
+//
 // FLAGGED, with the slice each waits on:
-//  - SUN DAMAGE and HOLY DAMAGE (the compound race's
-//    SpecialAbilityFlags): the entry carries sunDamage/holyDamage
-//    true, and the fast-travel day gate and the sun-averse arrival
-//    clamp read them NOW - but the per-round 12-damage-per-4-rounds
-//    law lives in PassiveSpecialsEffect, which needs the
-//    IsPlayerInSunlight host seam nobody has built (the same seam
-//    enchantments' conditional arms idle on). V2c.
-//  - the quests ($CUREVAM, the initial P0A01L00, the clan's guild
-//    quest line) - quest-bridge work, beside lycanthropy's $CUREWER
 //  - the guild swap (guilds.js carries membershipsFor(store,
 //    hasVampirism)), the cemetery respawn, the VAMP00I0.CIF head and
 //    SCBG08I0 paperdoll art, the gendered attack voices - host work
 
 import { VAMPIRE_CLANS, LYCANTHROPY_TYPES } from './infection.js';
-import { MINUTES_PER_DAY, dateFromClassicMinutes, DAWN_HOUR, DUSK_HOUR } from './gameDate.js';
+import { MINUTES_PER_DAY, isDayFromMinutes } from './gameDate.js';
 import { spellRecordOfIndex } from './loot.js';
 import { SKILLS } from './skills.js';
 import { WEAPON_MATERIALS } from '../characters/weapons.js';
 import { VAMPIRE_SPELL_TAG, endOldLifeEffects } from './lycanthropy.js';
+import { endVampireQuests } from './racialQuests.js';   // V2d: the cure's P0* tombstone sweep
 
 /** VampirismEffect.VampirismCurseKey (:33). */
 export const VAMPIRISM_CURSE_KEY = 'Vampirism-Curse';
@@ -192,12 +196,10 @@ export function racialRestBlock(entity, nowMinutes = 0) {
   return { textId: NOT_SATED_TEXT_ID };
 }
 
-/** IsDay (DaggerfallDateTime:  hour in [6, 18)) off the classic
- *  minutes clock - the fast-travel gate's own read. */
-export const isDayFromMinutes = (gameMinutes) => {
-  const hour = dateFromClassicMinutes(gameMinutes).hour;
-  return hour >= DAWN_HOUR && hour < DUSK_HOUR;
-};
+// isDayFromMinutes moved HOME to gameDate.js (V2c) - it is date law,
+// and the sunlight seam reads it too; re-exported for this module's
+// existing consumers.
+export { isDayFromMinutes };
 
 /** CheckFastTravel (:129-141), called where DFU calls it - at the
  *  travel map's own door (DaggerfallUI.cs:625): a sun-damaged
@@ -210,10 +212,11 @@ export function racialFastTravelBlock(entity, nowMinutes = 0) {
 }
 
 /**
- * CureVampirism (:243-251): the clan is REMEMBERED
+ * CureVampirism (:304-312): the clan is REMEMBERED
  * (PreviousVampireClan - the clan's quest line and reputations
- * outlive the cure), one classic minute passes, the tagged spells go.
- * The quest tombstone sweep is FLAGGED with the quests.
+ * outlive the cure), one classic minute passes, the tagged spells go,
+ * and EVERY P0* quest is tombstoned - the whole clan line leaves with
+ * the curse (V2d - EndVampireQuests, through the racialQuests host).
  */
 export function cureVampirism(entity, { advanceMinutes = null } = {}) {
   const entry = liveVampirism(entity);
@@ -224,5 +227,6 @@ export function cureVampirism(entity, { advanceMinutes = null } = {}) {
   entity.minMetalToHit = undefined;
   advanceMinutes?.(1);   // RaiseTime(60) - sixty SECONDS, the V2a lesson
   if (entity.spells) entity.spells = entity.spells.filter((s) => s.tag !== VAMPIRE_SPELL_TAG);
+  endVampireQuests();
   return true;
 }
