@@ -20,6 +20,7 @@ import { MidiBsaFile } from '../formats/hmiFile.js';
 import { selectSong } from './songManager.js';
 import { SongPlayer, AudioSongPlayer } from './songPlayer.js';   // M-EXT: the replacement's player shares the volume law
 import { hasReplacement, replacementBytes } from './musicReplacement.js';   // M-EXT: SoundReplacement.TryImportSong
+import { onSettingChange } from './settings.js';   // 2026-08-27: MusicVolume applies live
 
 export class MusicService {
   constructor() {
@@ -34,6 +35,18 @@ export class MusicService {
     // live boot probe, not by the suite (AUDIT 19).
     this._booted = null;
     this._current = null;
+    // 2026-08-27: the MusicVolume setting is LIVE in fact, not just in
+    // tier - both players this service owns re-level the moment it is
+    // written, so the slider is heard mid-song, not at the next one.
+    this._unsubscribe = onSettingChange((section, key) => {
+      if (section === 'Controls' && key === 'MusicVolume') this.resyncGain();
+    });
+  }
+
+  /** Re-level whatever is sounding to the MusicVolume setting. */
+  resyncGain() {
+    this.player?.resyncGain?.();
+    this._audio?.resyncGain?.();
   }
 
   /** The one bootstrap. Safe to call from every host, every entry.
