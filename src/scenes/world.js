@@ -2309,7 +2309,17 @@ export async function bootWorld(canvas, renderer, params, status) {
               const les = q.getLogMessages();
               if (!les?.length) continue;
               const messages = les.map((le) => q.getMessage(le.messageID)).filter(Boolean);
-              if (messages.length) active.push({ id: String(q.uid), name: q.displayName || null, messages });
+              if (!messages.length) continue;
+              // PX5: the tightest RUNNING clock on the quest - Clock
+              // resources carry remainingTimeInSeconds in game seconds
+              // and clockEnabled/clockFinished (quest/clock.js:92,164).
+              let clockSeconds = null;
+              for (const r of q.resources.values()) {
+                if (r.clockEnabled && !r.clockFinished && Number.isFinite(r.remainingTimeInSeconds)) {
+                  clockSeconds = clockSeconds == null ? r.remainingTimeInSeconds : Math.min(clockSeconds, r.remainingTimeInSeconds);
+                }
+              }
+              active.push({ id: String(q.uid), name: q.displayName || null, questName: q.questName || '', clockSeconds, messages });
             }
           }
           return { active, finished: questBridge?.notebook?.getFinishedQuests() ?? [] };

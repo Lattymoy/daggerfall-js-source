@@ -94,7 +94,11 @@ import {
 } from '../systems/settings.js';
 import { mostRecentRestorable, deleteSave } from '../systems/saveSlots.js';   // SAV4: the slot store
 import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES } from '../systems/uiSkin.js';
-import { dateFromClassicMinutes, dateString } from '../systems/gameDate.js';
+import { dateFromClassicMinutes, dateString, dateTimeString } from '../systems/gameDate.js';
+// PX5: the pause clock reads THE ONE CLOCK directly (AUDIT 23 C2's
+// law - every host already reads this same module), so no host seam
+// is needed and no host can drift.
+import { worldMinutes } from '../systems/worldTick.js';
 import { BUILD_TAG } from '../buildTag.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { repaintKeepingScroll } from './domRepaint.js';
@@ -761,6 +765,13 @@ function renderHome() {
     // PX4 (Mac): NO FOOT AT PAUSE - no skin toggle, no About plaque;
     // About is a System-tab row instead, and the skin switch stays on
     // the boot face and the settings shell.
+    // PX5: the world's date and time, bottom-right like the reference,
+    // through DFU's own header formatter over THE ONE CLOCK - a paused
+    // clock, so one read at render is the truth for the whole visit.
+    const d = dateFromClassicMinutes(Math.floor(worldMinutes()));
+    const clock = el('div', 'px-clock');
+    clock.append(el('span', null, dateString(d)), el('span', 'px-clocktime', dateTimeString(d).split(' on ')[0]));
+    home.append(clock);
     app.append(home);
     return;
   }
@@ -879,6 +890,22 @@ function pauseStats(body) {
   body.append(attrs);
 }
 
+/** PX5: THE MAIN QUEST, by the pack's own naming - DFU ships the
+ *  story quests as S0000*.txt (34 files in vendor/dfu-quests/Quests)
+ *  and _BRISIEN is the main quest's opener (StartGameBehaviour.cs:
+ *  445-447 via questBridge.GAME_START_QUESTS). Everything else on the
+ *  log is a side quest. */
+const isMainQuest = (questName) => /^S0000/.test(questName ?? '') || questName === '_BRISIEN';
+
+/** PX5: remaining game seconds as words - days+hours above a day,
+ *  hours+minutes below it, minutes alone under an hour. */
+function remainWords(s) {
+  const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m2 = Math.floor((s % 3600) / 60);
+  if (d > 0) return `${d} day${d === 1 ? '' : 's'}${h ? ` ${h} hour${h === 1 ? '' : 's'}` : ''}`;
+  if (h > 0) return `${h} hour${h === 1 ? '' : 's'}${m2 ? ` ${m2} min` : ''}`;
+  return `${Math.max(1, m2)} min`;
+}
+
 /** One flattener for every journal source: message object or raw
  *  token array in, text lines out, questJournal's own counted set. */
 function journalLines(msgOrTokens) {
@@ -929,6 +956,8 @@ function pauseQuests(body) {
   const active = (log.active ?? []).map((q, i) => ({
     key: `a:${q.id ?? i}`,
     name: q.name || `Quest ${i + 1}`,
+    main: isMainQuest(q.questName),
+    clockSeconds: Number.isFinite(q.clockSeconds) ? q.clockSeconds : null,
     entries: (q.messages ?? []).map(journalLines).filter((ls) => ls.length),
   })).filter((q) => q.entries.length);
   const finished = (log.finished ?? []).map(parseFinished).filter((q) => q.lines.length || q.name);
@@ -946,11 +975,24 @@ function pauseQuests(body) {
     for (const q of items) {
       const b = el('button', `px-qrow${cls}${q.key === questSel ? ' on' : ''}`);
       b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(q.name));
+      if (q.clockSeconds != null) b.append(el('span', 'px-qtimed', '\u25c6'));
       b.onclick = () => { questSel = q.key; render(); };
       rail.append(b);
     }
   };
-  railList(active, '');
+  // PX5: main quests above side quests, each under its own small
+  // heading - shown only when BOTH kinds are on the log, because a
+  // rail of one group under a header is a header explaining nothing.
+  const mains = active.filter((q) => q.main);
+  const sides = active.filter((q) => !q.main);
+  if (mains.length && sides.length) {
+    rail.append(el('div', 'px-qarch px-qfirst', 'Main Quests'));
+    railList(mains, '');
+    rail.append(el('div', 'px-qarch', 'Quests'));
+    railList(sides, '');
+  } else {
+    railList(active, '');
+  }
   if (finished.length) {
     rail.append(el('div', 'px-qarch', 'Archive'));
     railList(finished, ' done');
@@ -962,6 +1004,16 @@ function pauseQuests(body) {
     const head2 = el('div', 'px-qname');
     head2.append(el('span', 'px-qwing'), el('h3', null, sel.name), el('span', 'px-qwing px-flip'));
     detail.append(head2);
+    if (sel.entries) {
+      const meta = el('div', 'px-qmeta');
+      meta.append(el('span', 'px-qkind', sel.main ? 'Main Quest' : 'Side Quest'));
+      if (sel.clockSeconds != null) {
+        // Under a game day the words go URGENT gold.
+        const urgent = sel.clockSeconds < 86400;
+        meta.append(el('span', `px-qtimer${urgent ? ' urgent' : ''}`, `Time remains: ${remainWords(sel.clockSeconds)}`));
+      }
+      detail.append(meta);
+    }
     if (sel.entries) {
       // Active: the LATEST entry is the state of the quest; the trail
       // beneath it, newest first.
