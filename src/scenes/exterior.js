@@ -796,6 +796,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
     collider: { raycast: (o, d, m) => ((modes?.mode === 'interior' && modes?.interiorCollider) ? modes?.interiorCollider : collider).raycast(o, d, m) },
     playerEntity,
+    now: () => playerTicker.classicMinutes,   // V2a: MorphSelf's once-a-day clock
     playerSinks: {
       hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n); },
       heal: (n) => { if (n > 0) { playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n); surfacePlayer(); } },

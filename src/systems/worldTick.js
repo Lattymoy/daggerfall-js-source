@@ -20,6 +20,7 @@
 
 import { updateDiseases } from './diseases.js';
 import { runInfections } from './infection.js';   // V1: UpdateDisease's override, which the base walk skips
+import { consumeRacialOverridePending, lycanthropyMagicRound } from './lycanthropy.js';   // V2a: the curse the deploy mints
 import { updatePoisons } from './poisons.js';
 import { tickActiveEffects } from './effects.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
@@ -153,6 +154,13 @@ export function runMagicRoundsFor(entity, from, to, { sinks, rolls = Math.random
     // feeds the tick gets the dream and the turn; the video and the
     // clock arrive through infection.js's registered host.
     runInfections(entity, Math.floor((r + 1) / MINUTES_PER_DAY));
+    // V2a: the infection's deploy mints racialOverridePending in the
+    // SAME round; the curse consumes it here so the turn is complete
+    // before the next round's laws read the entity. The lycanthropy
+    // fold then rides every round, exactly as RacialOverrideEffect's
+    // constant pass does (a vampirism pending stands - V2b).
+    consumeRacialOverridePending(entity, { now: r + 1 });
+    lycanthropyMagicRound(entity, { nowMinutes: r + 1, say });
     updatePoisons(entity, r + 1, sinks, rolls, say);
     tickActiveEffects(entity, sinks);
     // E1: the enchantment pump rides the SAME round (DoMagicRound's

@@ -185,9 +185,12 @@ export const SORT_SPELLS_PROMPT = 'Do you want to sort spells?';               /
 export const ENTER_SPELL_NAME = 'Enter spell name : ';                         // enterSpellName + " " (:934)
 export const EFFECT_NOT_FOUND = '<effect not found>';                          // effectNotFoundError
 export const SELECT_ICON_TIP = 'Select icon';                                  // selectIcon
-/** PlayerEntity.cs:41-42 - the two tags DELETE refuses. */
-export const VAMPIRE_SPELL_TAG = 'vampire';
-export const LYCANTHROPY_SPELL_TAG = 'lycanthrope';
+/** PlayerEntity.cs:41-42 - the two tags DELETE refuses. V2a moved
+ *  their HOME to systems/lycanthropy.js (the producer that grants the
+ *  tagged spells lives there now); imported and re-exported so this
+ *  window's own laws and its consumers keep one spelling. */
+import { VAMPIRE_SPELL_TAG, LYCANTHROPY_SPELL_TAG } from '../systems/lycanthropy.js';
+export { VAMPIRE_SPELL_TAG, LYCANTHROPY_SPELL_TAG };
 /** ListItem's desaturation toward grey when the spell is unaffordable
  *  (:276-279). */
 export const DESATURATION = 0.75;

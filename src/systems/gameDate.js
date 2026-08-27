@@ -133,6 +133,49 @@ export const dayOfYearFromMinutes = (gameMinutes) =>
 /** GetMonthOfYear (:635-639) and GetDayOfMonth (:623-627): both 1-based. */
 export const monthOfYear = (date) => date.month + 1;
 export const dayOfMonth = (date) => date.day + 1;
+
+// ── THE MOONS (V2) ───────────────────────────────────────────────
+// DaggerfallUnityEnums.LunarPhases (:644-655) and
+// DaggerfallDateTime.GetLunarPhase (:655-687), verbatim: one 32-day
+// cycle over (DayOfYear + Year * 360 + offset), Massar offset 3 /
+// Secunda offset -1 - DFU's own note says the offsets align the full
+// moon with vanilla DF and Enhanced Sky, "so lycanthropes will see
+// full moon on days they are forced to change". The ratio bands are
+// the source's exact ladder in the source's exact ORDER: the two ==
+// tests run before the bands, so ratio 16 reads New where the <=22
+// band below would have called it OneWax.
+export const LUNAR_PHASES = Object.freeze({
+  None: -1, New: 0, OneWax: 1, HalfWax: 2, ThreeWax: 3,
+  Full: 4, ThreeWane: 5, HalfWane: 6, OneWane: 7,
+});
+export function lunarPhase(date, { masser = true } = {}) {
+  if (date.year < 0) return LUNAR_PHASES.None;   // "Year < 0 not supported"
+  const offset = masser ? 3 : -1;
+  const moonRatio = (dayOfYear(date) + date.year * MONTHS_PER_YEAR * DAYS_PER_MONTH + offset) % 32;
+  if (moonRatio === 0) return LUNAR_PHASES.Full;
+  if (moonRatio === 16) return LUNAR_PHASES.New;
+  if (moonRatio <= 5) return LUNAR_PHASES.ThreeWane;
+  if (moonRatio <= 10) return LUNAR_PHASES.HalfWane;
+  if (moonRatio <= 15) return LUNAR_PHASES.OneWane;
+  if (moonRatio <= 22) return LUNAR_PHASES.OneWax;
+  if (moonRatio <= 28) return LUNAR_PHASES.HalfWax;
+  return LUNAR_PHASES.ThreeWax;   // 29..31
+}
+/** Both moons off one classic-minutes clock - the shape every system
+ *  caller has (worldTick's round, the enchantment ctx). */
+export const lunarPhasesFromMinutes = (gameMinutes) => {
+  const date = dateFromClassicMinutes(gameMinutes);
+  return {
+    masser: lunarPhase(date, { masser: true }),
+    secunda: lunarPhase(date, { masser: false }),
+  };
+};
+/** LycanthropyEffect.MagicRound's own full-moon test (:151-152):
+ *  EITHER moon full forces the change. */
+export const isFullMoonFromMinutes = (gameMinutes) => {
+  const { masser, secunda } = lunarPhasesFromMinutes(gameMinutes);
+  return masser === LUNAR_PHASES.Full || secunda === LUNAR_PHASES.Full;
+};
 /** GetMinuteOfDay (:618-622). */
 export const minuteOfDay = (date) => (date.hour * MINUTES_PER_HOUR) + date.minute;
 

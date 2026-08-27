@@ -3632,3 +3632,68 @@ and ask for nothing. The bank stays behind `voiceSpec` and
 `percussionSpec` precisely so an SF2 or sample set replaces it without
 touching the scheduler - and now that M-EXT exists, a player-supplied
 soundfont is the obvious next slice.
+
+## V2a - THE LYCANTHROPY CURSE: the racial override V1 was ramping into (2026-08-27)
+
+V1 ended at `entity.racialOverridePending` and said so; V2a consumes
+it. `systems/lycanthropy.js` is `LycanthropyEffect.cs` + `MorphSelf.cs`
+whole, on the shape V1 established: the curse is an activeEffects
+ENTRY (kind `racialOverride`) rather than a class instance, so the
+save envelope carries its whole CustomSaveData_v1 state for free and
+the marker `entity.racialOverride` is REBUILT from the entry on
+restore, never trusted from the envelope.
+
+THE TURN COMPLETES IN ITS OWN ROUND. worldTick's one pump runs
+infection -> consume -> fold, so the round that deploys the pending
+marker ends with the curse live: CureAll ends the old life's effects,
+the disease gate and infectionAccepted read the marker (a lycanthrope
+catches nothing, for ever), and the free spell lands - SPELLS.STD
+record 92, the '!' stripped, tag 'lycanthrope', custom:true. THE U42
+SEAM MEETS ITS PRODUCER: the spellbook's free-cast and delete-refusal
+laws have keyed on that tag since U42 with nothing minting it - the
+exact `{enchanted: true}` no-producer shape AUDIT 17e recorded - and
+the pin now drives the real spell through the shipped window laws.
+The tag pair's HOME moved to the producer (the window re-exports).
+
+THE MOONS ARE REAL NOW. `gameDate.js` grew DFU's `GetLunarPhase`
+verbatim - the 32-day ratio over (dayOfYear + year*360 + offset),
+Massar 3 / Secunda -1, the band ladder in the source's own order
+(ratio 16 is New only because the == tests run first) - and EITHER
+moon full forces the change through `MorphSelf(force)` with the dream
+line. That also un-FLAGs the enchantment ctx's moonPhase seam's data
+half. Two fixture lessons are recorded in the test: year-0 dates are
+NEGATIVE classic minutes (the epoch is year 397), and day 0 of year 0
+is a secunda full moon - the first fixture transformed its own test
+subject a round early and the failure was the law working.
+
+THE ADVANTAGES RIDE THE LIVE CHANNELS: +40 Str/Agi/End/Spd and +30 on
+the seven skills as the entry's own maps, re-applied every round
+exactly as the constant pass does, read by ONE added arm each in
+liveStat and skillValue. MinMetalToHit is iron untransformed, silver
+in beast form - ordered AFTER the forced change inside the round so
+silver never lags the moon by a round (DFU's per-frame constant pass
+has no such lag to avoid). The urge: a classic month without an
+innocent's blood and the health ceiling falls 24/day to the floor of
+4, blood clamped down at the fold's cadence (recorded; DFU clamps
+continuously through CurrentMaxHealth); a dead civilian or
+Knight_CityWatch resets satiation; the Ring of Hircine
+(SpecialArtifactEffect param 3, either ring slot) masters the moon,
+the urge and the once-a-day gate alike. The cure: morph back, full
+RAW heal, RaiseTime(60) pinned as ONE MINUTE - sixty seconds, the
+unit a hasty read would multiply by sixty - and the tagged spells go.
+
+MORPH SELF GOES LIVE - the last inert catalog row, closed by building
+the consumer it was durable for. The arm rides applySpellToPlayer's
+ctx in the ONE cast engine; THE FOUR HOSTS: world, exterior and the
+dungeon context hand their clocks to createPlayerMagic, and worldModes
+BORROWS the outer host's engine by construction - all four named in
+the pin.
+
+FLAGGED, each loudly: VampirismEffect (V2b - a vampirism pending
+stands unconsumed); the host-facing suppressions (inventory/talk/
+crime/population while transformed), the werecreature claws, sounds
+and the WOLF00I0/WERE0*I0 art; the $CUREWER quest; the cemetery
+respawn; PassiveSpecials and the artifact payloads.
+
+Pins: 12 in `test/lycanthropy.test.js`, the walk from the moons to the
+save round-trip, every figure DFU's own constant.

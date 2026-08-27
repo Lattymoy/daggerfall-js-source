@@ -1207,6 +1207,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (gone.length) hudText.add(`${gone.length} dispelled.`);
     },
     renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
+    now: () => classicMinutesRef.value,   // V2a: MorphSelf's once-a-day clock
     collider,
     playerEntity, playerSinks,
     say: (l) => hudText.add(l),

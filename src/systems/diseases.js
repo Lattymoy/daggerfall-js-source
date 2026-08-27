@@ -225,6 +225,11 @@ export function updateDiseases(entity, currentDay, sinks, rolls = Math.random, o
  */
 export function inflictDisease(target, diseaseList, { rolls = Math.random, currentDay = 0, onContract = null } = {}) {
   if (!diseaseList || !diseaseList.length || !target.isPlayer) return null;
+  // V2a: IsImmuneToDisease - the racial override's ConstantEffect
+  // sets it every frame (LycanthropyEffect.cs:136); a lycanthrope
+  // catches nothing, and the pending marker counts because the turn
+  // is already irreversible (V1's infectionAccepted reads the same pair)
+  if (target.racialOverride || target.racialOverridePending) return null;
   if (target.level === 1) return null;   // classic: no diseases at level 1
   if (savingThrow(2, EFFECT_FLAGS.Disease, target, 0, rolls) === 0) return null;   // resisted
   const diseaseType = diseaseList[Math.floor(rolls() * diseaseList.length)];   // Range(0, length)

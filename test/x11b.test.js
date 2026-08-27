@@ -486,8 +486,11 @@ test('X11b catalog: Create Item goes live and MORPH SELF is the last row standin
   assert.equal(effectByKey('2,255').ported, true);
   assert.ok(PORTED_KEYS.has('2,255'));
   const inert = SPELL_MAKER_EFFECTS.filter((e) => !e.ported).map((e) => e.key);
-  assert.deepEqual(inert, ['29,255'], 'exactly one row remains inert');
-  // and it stays, for a reason no lane will casually close
-  assert.equal(effectByKey('29,255').craftable, false, 'AllowedCraftingStations = None');
+  // "the last row standing" stood until V2a built its consumer - the
+  // racial override - and the arm rides applySpell's own ladder (not
+  // BUFF_KINDS: a one-round call, not a duration buff)
+  assert.deepEqual(inert, [], 'V2a took Morph Self; nothing is inert');
+  assert.equal(effectByKey('29,255').ported, true);
+  assert.equal(effectByKey('29,255').craftable, false, 'AllowedCraftingStations = None, still');
   assert.ok(!src('src/systems/effects.js').includes("'29,255': "), 'no BUFF_KINDS row pretends otherwise');
 });

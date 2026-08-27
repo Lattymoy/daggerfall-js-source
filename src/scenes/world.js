@@ -1145,6 +1145,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     playerEntity,
     playerSinks: playerSpellSinks,
     say: (l) => townTalk.say(l),
+    now: () => playerTicker.classicMinutes,   // V2a: MorphSelf's once-a-day clock
     surfacePlayer,
     foes: () => (modes?.mode ?? 'exterior') === 'exterior' ? [...cityGuards.guards, ...exteriorFoes.foes] : [],   // X-slice: encounter foes are spell targets too
     foeSinks,

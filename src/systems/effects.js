@@ -698,6 +698,18 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       if ((spell.rangeType ?? 0) === 0) out.teleport = true;
       continue;
     }
+    // V2a: MorphSelf (29,255) goes LIVE - the last inert catalog row.
+    // MorphSelf.cs:34-41's whole payload is one call into the racial
+    // override (GetRacialOverrideEffect().MorphSelf()) and a
+    // RoundsRemaining = 0; the override lives in systems/lycanthropy.js
+    // and the HOST hands the arm through ctx so this module stays
+    // upstream of it. A caster with no override sees nothing happen -
+    // DFU's own null check.
+    if (e.type === 29 && classicSub(e) === 255) {
+      ctx.morphSelf?.();
+      pushInstantMarker(target, 'morphSelf');
+      continue;
+    }
     if (isHealHealth(e)) {
       const n = magnitude(e);
       out.healed += n;
