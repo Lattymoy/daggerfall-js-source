@@ -2457,6 +2457,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // is the interior host's and this exterior host answers none
     // ('[invalid]' at the handler, DFU's own outside-a-building arm).
     legalRepNow: () => legalRepOf(playerEntity, _questRegionIndex()),
+    // Q5: the Weather and Climate triggers' reads - the weather IS
+    // the seven-name enum, the climate the MAPS.BSA index at the
+    // player's pixel.
+    currentWeatherKey: () => WEATHER_TYPES[weatherOverride ?? currentWeather()] ?? null,
+    currentClimateIndex: () => maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y),
     currentLocationType: () => _questLoc()?.mapTableData?.locationType ?? null,
     currentRegionName: () => maps.getRegion(_questRegionIndex())?.name ?? '',
     isPlayerInLocationRect: () => _musicInLocationRect(),
@@ -2889,6 +2894,29 @@ export async function bootWorld(canvas, renderer, params, status) {
         nowMinutes: Math.floor(worldMinutes()),
         advanceMinutes: (m) => setWorldMinutes(worldMinutes() + m),
       })) surfacePlayer();
+    },
+    // Q5: the un-pended quest actions' doors. setPlayerCrime rides
+    // the ONE setter (V4's SuppressCrime gate); the pieces pair is
+    // PayMoney's `gold` arm (coins alone, letters excluded);
+    // raiseTime is TrainPc's bare three-hour move; the guards call
+    // is F036's witness-arm caller with the live pool; the enemy
+    // pair walks THIS host's exterior pools (a foe already dead or
+    // a guard already spawned simply passes through).
+    setPlayerCrime: (crime) => setCrimeCommitted(playerEntity, crime),
+    getGoldPieces: () => goldAmount(playerEntity),
+    deductGoldPieces: (n) => deductGoldPieces(playerEntity, n),
+    raiseTime: (seconds) => setWorldMinutes(worldMinutes() + seconds / 60),
+    spawnCityGuards: (immediate) => {
+      const feet = walkMode && playerSpawned ? player.pos : cam.pos;
+      cityGuards.spawnCityGuards(!!immediate, { playerFeet: [...feet], playerFwd: [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)], pool: _guardPool() }).catch((e) => console.error('[guards]', e));
+    },
+    makeEnemiesHostile: () => {
+      for (const f of [...exteriorFoes.foes, ...cityGuards.guards]) {
+        if (!f.dead && f.ai && !f.ai.isHostile) { f.ai.isHostile = true; f.ai.makeHostileToPlayer?.(); }
+      }
+    },
+    clearEnemies: () => {
+      for (const f of [...exteriorFoes.foes]) { if (!f.dead) exteriorFoes.removeFoe(f); }
     },
     playerRaceName: () => playerEntity.race ?? null,
     getReputation: (fid) => { const s = _questStore(); return s ? getReputation(s, fid) : 0; },
