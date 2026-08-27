@@ -45,13 +45,19 @@ import { entityMaxEncumbrance } from '../combat/formulas.js';   // U40: the lett
 import { nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries ride every host's light array
 import { playerTorchLight } from '../systems/playerTorch.js';   // T1
-import { lookAt, perspective, mirrorProjectionX, trs } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law); H4: the preview's model matrix
+import { lookAt, perspective, mirrorProjectionX, trs, multiply } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law); H4: the preview's model matrix
 import { routeKey, actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible interior arrows
 import { tallySkill, skillValue, SKILLS } from '../systems/skills.js';
-import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS } from './hostCombat.js';   // AUDIT 21 hosts F8: the swing law, shared with the dungeon and the guards
+import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playPlayerVoice, playerPainVoice } from './hostCombat.js';   // AUDIT 21 hosts F8: the swing law, shared with the dungeon and the guards; IF: the pain cry
+import { createExteriorFoes } from './exteriorFoes.js';   // IF: the ONE foe-pool factory - see interiorFoes below
+import { hitSoundFor } from '../systems/soundClips.js';   // IF: the blow that lands on the player indoors
+import { sensesContext } from './shared.js';   // IF: the one senses builder every pool is handed
+import { makeInView } from '../player/cameraView.js';   // IF: the swing's in-view test, the guards' own
+import { MOBILE_TYPES } from '../characters/mobileTypes.js';   // IF: the daedric punishment's name->id door
+import { areEnemiesNearby } from '../systems/encounters.js';   // IF: GameManager.AreEnemiesNearby, one method over this host's database
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { audio } from '../systems/audio.js';
 import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in), and the guilds' BUY mode
@@ -70,7 +76,7 @@ import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from '../ui/text.js';
 import { hudScale } from '../ui/hud.js';
 import { isShop, isRepairShop, stockShopShelf, stockHouseContainer, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves
-import { identifySpellPass, identifiedTallyText } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll
+import { identifySpellPass, identifiedTallyText, NOT_ENOUGH_SPELL_POINTS_TEXT } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll; F067: its magicka refusal
 import { liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // X10: the Dispel Magic picker
 import { ListPickerWindow, listPickerArtLoaded } from '../ui/listPicker.js';   // X10
 import { createItemLabels, grantCreatedItem, lastCreateItemIndex, setLastCreateItemIndex } from '../systems/createItem.js';   // X11b
@@ -136,7 +142,7 @@ import { goldAmount, totalGoldAmount, deductGold, addGold } from '../systems/cou
 import { getReputation, getFlag, setFlag, FACTION_FLAGS } from '../systems/factionRep.js';
 // G7: the last unbuilt guild service - the summoning calendar, the
 // cost, Sheogorath's hijack and the roll.
-import { daedraForSummoner, attemptSummoning, SUMMON_TEXT } from '../systems/daedraSummoning.js';
+import { daedraForSummoner, attemptSummoning, SUMMON_TEXT, DAEDRIC_FOES } from '../systems/daedraSummoning.js';   // IF: the punishment table
 import { currentWeatherEnum, WEATHER_ENUM } from '../systems/weatherSim.js';
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 // U39: the tavern - the window, the knightly free-room perk and the
@@ -162,7 +168,7 @@ import { canRest as guildCanRest } from '../systems/guildServices.js';
 import { interiorRestPlace, restDecision } from '../systems/restSession.js';   // CanRest's inside-a-building bag + the scene-free open gate above it
 import { racialRestBlock } from '../systems/vampirism.js';   // V2b: the vampire's rest gate
 import { setPassiveSpecialsHost, FIGHTER_TRAINERS_FACTION } from '../systems/passiveSpecials.js';   // V2c: the sunlight/holy-place seam
-import { DaedraSummonedWindow } from '../ui/daedraSummonedWindow.js';   // G7b: the summoning's own film window
+import { DaedraSummonedWindow, REFUSAL_FOE_COUNT, COVEN_FAIL_FOE_COUNT } from '../ui/daedraSummonedWindow.js';   // G7b: the summoning's own film window
 import { orderOf } from '../systems/guildVariants.js';
 import { joinedGuildOfGroup } from '../systems/guilds.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js';
@@ -223,8 +229,8 @@ export function createWorldModes(host) {
     _inExhaustion = true;
     try {
       const out = exhaustionOutcome({
-        enemiesNearby: false, swimming: false, entity: playerEntity,
-        day: false, inside: true,   // a building interior: no foes, dry feet
+        enemiesNearby: interiorEnemiesNearby(), swimming: false, entity: playerEntity,
+        day: false, inside: true,   // IF: a building interior CAN hold foes now; the feet stay dry
       });
       if (!interiorOverlay) interiorOverlay = new ActionTextBox(out.inWater ? [EXHAUSTED_IN_WATER] : ['You collapse from exhaustion.']);
       if (out.kind === 'rest') {
@@ -287,10 +293,10 @@ export function createWorldModes(host) {
   // V5's interiorRestDeps retired into the fuller one below (search
   // `place: interiorRestPlaceHere`), which carries the same two
   // host-only halves plus the place bag, MoveToBed, the quest tick and
-  // the expired-room sweep. Its one note is worth keeping: A BUILDING
-  // HAS NO FOE POOL in this port - the Q4-v flag on interior enemies
-  // is still open - so `enemiesNearby` answers false and says so
-  // rather than pretending to scan. FLAGGED.
+  // the expired-room sweep. Its one note is RETIRED at IF: this host
+  // mounts a foe pool now (see `interiorFoes`), so `enemiesNearby`
+  // scans it through the one shared areEnemiesNearby instead of
+  // answering a literal false.
   const interiorTicker = createPlayerTicker(playerEntity, {
     onExhausted: onExhaustedInterior,   // AUDIT 23 (C5)
     say,
@@ -343,6 +349,144 @@ export function createWorldModes(host) {
   const interiorArrows = new ArrowFlight({ getGpuMesh: pipeline.getGpuMesh, collider: () => interiorCtx?.collider });
   let _arrowsCtx = null;
   let interiorCtx = null;
+  /**
+   * IF - THE INTERIOR FOE POOL. A building interior carries NO STATIC
+   * ENEMIES in DFU: DaggerfallInterior's whole marker vocabulary is
+   * `Rest, Enter, Treasure, LadderBottom, LadderTop`
+   * (DaggerfallInterior.cs:63-70) - there is no enemy marker to read,
+   * and no interior layout call that mints one. So this pool is not a
+   * spawner; it is a HOME, for the two things that DO put an enemy
+   * inside a building:
+   *   - a quest's CreateFoe (PlaceFoeBuildingInterior, CreateFoe.cs:
+   *     220-234, which is PlaceFoeFreely with the interior as parent -
+   *     DFU's own comment rejects spawn points, "Feel just placing
+   *     freely will yield best results overall")
+   *   - the Daedra summoning window's refusal (G7b)
+   *
+   * It is the SAME pool factory the exterior encounter host mounts,
+   * with this host's collider: that module never spawned encounters
+   * of its own (every spawn is host-driven) and already takes its
+   * collider as a parameter, so a fourth copy of the damage door, the
+   * death chain and the corpse walk would have been exactly the
+   * duplication the port's ONE HOME law forbids. Its one
+   * exterior-shaped behaviour, the 120-unit relevance cull, is inert
+   * inside a building - nothing indoors is ever that far from the
+   * player - and `currentPixelKey` answers null, which is the same
+   * arm exterior.js takes: a host whose corpses are never streamed
+   * out of range never hands them to TrackLooseObject.
+   *
+   * LIFETIME: minted with the interior context and destroyed with it.
+   * DFU's OnTransitionExterior tears the interior's enemies down the
+   * same way, which is also why a quest wave pending inside a
+   * building is invalidated by leaving.
+   */
+  let interiorFoes = null;
+  /**
+   * IF: CreateFoeSpawner's punishment wave - the summoning window's
+   * refusal (DaggerfallDaedraSummonedWindow.cs:125) and the coven
+   * failure's (DaggerfallQuestPopupWindow.cs:257) are the SAME call
+   * with different numbers:
+   *   refusal: daedricFoes[Range(0,5)], Range(3,6) foes, 8..64
+   *   coven:   daedricFoes[Range(0,5)], Range(1,4) foes, 4..64
+   * so one door takes them both. Placement is PlaceFoeFreely's ring,
+   * which is what CreateFoeSpawner ends in.
+   */
+  function spawnDaedricPunishment({ count, minDistance, maxDistance, rolls = Math.random }) {
+    if (!interiorCtx || !interiorFoes) return 0;
+    const type = MOBILE_TYPES[DAEDRIC_FOES[Math.floor(rolls() * DAEDRIC_FOES.length)]];
+    const feet = player.pos;
+    let stood = 0;
+    for (let i = 0; i < count; i++) {
+      const env = placeFoeEnv({
+        collider: interiorCtx.collider,
+        playerFeet: [feet[0], feet[1] + 0.9, feet[2]],
+        playerYawRad: cam.yaw,
+        fovDegrees: fieldOfView() * 180 / Math.PI,
+        isOccupied: entityOccupancy((f) => f.ai?.feet, () => interiorFoes.foes, feet),
+        rolls,
+      });
+      const spot = placeFoeFreely(env, { minDistance, maxDistance });
+      if (!spot) continue;   // no room: this one simply does not stand, as DFU's spawner gives up
+      interiorFoes.spawnFoe(type, [spot.x, spot.y, spot.z], {
+        yaw: Math.atan2(feet[0] - spot.x, feet[2] - spot.z),
+      }).catch((e) => console.error('[summon] daedra stand failed:', e?.message ?? e));
+      stood++;
+    }
+    return stood;
+  }
+
+  /** IF: this host's enemies-nearby scan, which used to be the
+   *  literal `false` three consumers each carried. GameManager
+   *  .AreEnemiesNearby is one method over one database; the interior's
+   *  database is its pool. An interior with no pool minted (no
+   *  building entered) answers false because there is genuinely
+   *  nothing there - not because the host cannot look. */
+  const interiorEnemiesNearby = (opts = {}) => (interiorFoes ? areEnemiesNearby(interiorFoes.foes, opts) : false);
+
+  /**
+   * IF: CreateFoe's INTERIOR arm - PlaceFoeBuildingInterior
+   * (CreateFoe.cs:220-234), which is PlaceFoeFreely over this
+   * building's collider. The dungeon arm's twin, to the term.
+   */
+  function tryPlaceInteriorQuestFoe(handle) {
+    if (!interiorCtx || !interiorFoes) return false;   // retry next machine tick, verbatim
+    const feet = player.pos;
+    const env = placeFoeEnv({
+      collider: interiorCtx.collider,
+      playerFeet: [feet[0], feet[1] + 0.9, feet[2]],   // the controller centre, not the feet
+      playerYawRad: cam.yaw,
+      fovDegrees: fieldOfView() * 180 / Math.PI,       // the law speaks DEGREES
+      isOccupied: entityOccupancy((f) => f.ai?.feet, () => interiorFoes.foes, feet),
+    });
+    const spot = placeFoeFreely(env);
+    if (!spot) return false;
+    const foe = handle.foe;
+    // FinalizeFoe (:341-359): a FLYING foe is lifted 1.5 off the test
+    // point; a walker keeps the floor the probe found.
+    const _fly = (ENEMY_BASICS[foe.foeType]?.behaviour ?? 'General') === 'Flying';
+    interiorFoes.spawnFoe(foe.foeType, [spot.x, _fly ? spot.y + 1.5 : spot.y, spot.z], {
+      gender: questFoeGender(foe),
+      yaw: Math.atan2(feet[0] - spot.x, feet[2] - spot.z),   // LookAt player (:328)
+      questBehaviour: handle.behaviour,
+    }).catch((e) => console.error('[quest] interior foe stand failed:', e?.message ?? e));
+    return true;
+  }
+
+  /** Mint the pool over THIS interior's collider. Called at the mount,
+   *  torn down with the context. */
+  function makeInteriorFoes(ctx) {
+    return createExteriorFoes({
+      renderer, collider: ctx.collider, fetchBytes, getTexture, uploadRecordFrame,
+      playerEntity, audio,
+      // no hitEffects handle exists in this host - RECORDED, not
+      // silently dropped: a blow landed inside a building draws no
+      // blood splash until the interior grows the pool the dungeon
+      // and the exterior already have. Everything else the payload
+      // does (sound, knockback, death, corpse, loot) runs.
+      hitEffects: null,
+      playerWeaponSheathed: () => !!interiorWeapon.playerWeapon.sheathed,
+      currentMinute: () => Math.floor(interiorTicker.classicMinutes),
+      // exterior.js's arm, and for the same reason: a host whose
+      // corpses never leave streaming range hands nothing to
+      // TrackLooseObject (GameObjectHelper.cs:836-839).
+      currentPixelKey: () => null,
+      playerSinks: interiorTicker.sinks,
+      say: (l) => say(l),
+      onPlayerHurt: (dmg, wpn) => {
+        if (dmg <= 0) return;
+        hurtPlayer(playerEntity, dmg);
+        audio.playOneShot(hitSoundFor(wpn), 1.1);
+        playPlayerVoice(audio, playerPainVoice(playerEntity, dmg));
+        surfacePlayer();
+      },
+      // C13: the interior's own arrow flight, the seam this host
+      // already owns for the player's bow.
+      onArrow: (from, dir, f) => {
+        interiorArrows.fire(from, dir, { enemy: true, shooterFoe: f, weapon: f.entity.weapon });
+        audio.play3d(SOUND.ArrowShoot, from, 1, { maxDistance: 16 });
+      },
+    });
+  }
   // E2: the entered building's identity + the shop browse overlay.
   let interiorBuilding = null;
   /** GetNameBankOfCurrentRegion (PlayerGPS.cs:421-427) - F016. An
@@ -444,11 +588,16 @@ export function createWorldModes(host) {
   // behaviours drive every modal frame (Unity Update), an E-click
   // routes DoClick, and the interior teardown notifies destruction
   // exactly as Unity's OnDestroy does on a scene transition.
-  // FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
-  // pend the INTERIOR enemy host alone - this adapter's standFoe stays
-  // absent, so the walk skips the stand inside a building. The dungeon
-  // mount SHIPPED (B2 below) and stands real foes through B1's chain.
+  // IF: quest FOES stand inside a building too now. This adapter's
+  // standFoe was absent for one stated reason - "the INTERIOR enemy
+  // host" - and that host exists (see `interiorFoes`), so the walk no
+  // longer skips the stand. It is the SECOND of DFU's two quest-foe
+  // paths into a building: this one is AddQuestResourceObjects at
+  // LAYOUT time (PlayerEnterExit.cs:797-800) and on Place.cs's
+  // hot-place (:508-521), where CreateFoe's TryPlacement is the
+  // other. The dungeon mount (B2 below) is its twin.
   let questFlats = [];          // interior stands (the click sites index this list)
+  let interiorFoeStands = [];   // IF: behaviours standFoe accepted, listed before the async build lands
   let dungeonQuestFlats = [];   // B2: dungeon stands, same record shape
   /** `inDungeon` is not decoration - it selects the ANCHOR.
    *  AddQuestNPC raises the billboard by half its height
@@ -576,7 +725,15 @@ export function createWorldModes(host) {
       // F068: an item is placed, not aligned - no ray.
       return standQuestFlat(t.worldTextureArchive, t.worldTextureRecord, position, behaviour, null, null, true);
     },
-    // standFoe absent - see the FLAG above.
+    // IF: the marker-time stand, the dungeon adapter's twin.
+    standFoe: ({ foe, gender, position, behaviour }) => {
+      if (!interiorCtx || !interiorFoes) return null;
+      interiorFoeStands.push(behaviour);
+      interiorFoes.spawnFoe(foe.foeType, interiorCtx.parentPt(position.x, position.y, position.z), {
+        gender, questBehaviour: behaviour,
+      }).catch((e) => console.error('[quest] interior marker foe failed:', e?.message ?? e));
+      return null;   // the async build binds the host; addQuestFoe's start() runs either way
+    },
   };
   /** SetupIndividualStaticNPC's call site (DaggerfallInterior.cs:1224),
    *  handed to buildInteriorContext so it runs at AddPeople's own
@@ -597,6 +754,7 @@ export function createWorldModes(host) {
   const sceneBehaviours = () => {
     const out = questFlats.map((s) => s.behaviour);
     for (const pn of interiorCtx?.people ?? []) if (pn.questBehaviour) out.push(pn.questBehaviour);
+    for (const b of interiorFoeStands) out.push(b);   // IF: the marker-stood foes, as the dungeon walk does
     return out;
   };
   /** The building-interior mount; also the machine's hot-place callback
@@ -689,6 +847,7 @@ export function createWorldModes(host) {
       s.batch = null;
     }
     questFlats = [];
+    interiorFoeStands = [];   // IF
   }
 
   // E2: the shelf browse/buy chain (DFU's trade window collapsed to
@@ -886,12 +1045,27 @@ export function createWorldModes(host) {
       // magicka ONCE for the whole list, whatever the outcome
       // (DaggerfallTradeWindow.cs:966-991).
       if (identifySpell) {
+        // AUDIT 26 F067: the SPELL runs DoModeAction (:954-995), a
+        // path that never reaches ConfirmTrade at all. Two laws come
+        // with that. First its magicka refusal (:960-963) turns back
+        // the WHOLE pass - nothing identified, nothing spent:
+        if (identifySpell.cost > (playerEntity.magicka ?? 0)) {
+          townTalk?.say?.(NOT_ENOUGH_SPELL_POINTS_TEXT);
+          surfacePlayer();
+          return;
+        }
         const pass = identifySpellPass(staged, identifySpell.chance, Math.random);
         for (const it of pass.identified) it.isIdentified = true;
         if (pass.spendMagicka) {
           playerEntity.magicka = Math.max(0, (playerEntity.magicka ?? 0) - identifySpell.cost);
         }
         townTalk?.say?.(identifiedTallyText(pass.successCount, pass.total));
+        // ...and second, the Mercantile tally below is ConfirmTrade's
+        // (:1088), which the spell path never reaches. The paid
+        // SERVICE does tally - it goes through ConfirmTrade's own
+        // Identify arm (:1074-1082) like every other mode.
+        surfacePlayer();
+        return;
       } else {
         deductGold(playerEntity, price);
         for (const it of staged) it.isIdentified = true;
@@ -1908,11 +2082,17 @@ export function createWorldModes(host) {
           deductGold(playerEntity, r.cost);
           surfacePlayer();
           if (r.kind === 'failed') {
-            // FLAGGED: a coven's failure spawns daedric foes ON YOU
-            // (CreateFoeSpawner, 1-3 of one type at 4..64 units). The
-            // spawner is an EXTERIOR seam and this arm runs inside a
-            // building, so the summons is recorded and not yet loosed.
-            if (r.spawnFoes) console.warn('[summon] a coven failure owes you daedra; the interior has no foe pool (FLAGGED)');
+            // IF: a coven's failure spawns daedric foes ON YOU -
+            // DaggerfallQuestPopupWindow.cs:257, Range(1,4) of one
+            // type at 4..64 units. The SAME CreateFoeSpawner call as
+            // the summoning window's refusal, so it takes the same
+            // door with its own numbers.
+            if (r.spawnFoes) {
+              spawnDaedricPunishment({
+                count: COVEN_FAIL_FOE_COUNT[0] + Math.floor(Math.random() * (COVEN_FAIL_FOE_COUNT[1] + 1 - COVEN_FAIL_FOE_COUNT[0])),
+                minDistance: 4, maxDistance: 64,
+              });
+            }
             return { rows: rows?.(SUMMON_TEXT.failed) ?? [{ text: 'The daedra does not answer.', center: true }] };
           }
           if (r.kind === 'greeting') {
@@ -1942,10 +2122,12 @@ export function createWorldModes(host) {
               let sw = null;
               sw = new DaedraSummonedWindow({
                 flcBytes: bytes, flcName: r.daedra.video, offerStep: offered,
-                // FLAGGED: a refusal owes 3-5 daedra at 8..64 units
-                // (:86-87); the interior has no foe pool - the coven
-                // failure's standing gap, same seam.
-                spawnRefusalFoes: () => console.warn('[summon] a refusal owes you daedra; the interior has no foe pool (FLAGGED)'),
+                // IF: the refusal's punishment is REAL now - 3-5 daedra
+                // at 8..64 units (:125), through the interior pool.
+                spawnRefusalFoes: () => spawnDaedricPunishment({
+                  count: REFUSAL_FOE_COUNT[0] + Math.floor(Math.random() * (REFUSAL_FOE_COUNT[1] + 1 - REFUSAL_FOE_COUNT[0])),
+                  minDistance: 8, maxDistance: 64,
+                }),
                 onClose: () => { if (interiorOverlay === sw) interiorOverlay = null; },
               });
               if (!sw.flc.readyToPlay) { mountBoxes(); return; }
@@ -2543,6 +2725,7 @@ export function createWorldModes(host) {
       if (!landing) throw new Error('no interior landing');
       exitReturn = { siblings };
       interiorCtx = ctx;
+      interiorFoes = makeInteriorFoes(ctx);   // IF: the pool lives exactly as long as the interior does
       // X1: an armed Open/Lock spell fires on this interior's doors
       // too - the same law the dungeon context wires for its own.
       wireDoorSpells(ctx.actions, playerEntity, (t) => townTalk?.say?.(t));
@@ -2750,6 +2933,8 @@ export function createWorldModes(host) {
     cacheInteriorScene();
     teardownQuestFlats();   // Q4-v: OnDestroy for the quest stands, before the batch teardown
     interiorCtx.destroy();
+    interiorFoes?.destroy?.();   // IF: OnTransitionExterior tears the interior's enemies down with it
+    interiorFoes = null;
     interiorCtx = null;
     interiorBuilding = null;   // E2: the identity + overlay leave with the interior
     interiorOverlay = null;
@@ -3076,6 +3261,16 @@ export function createWorldModes(host) {
         swimming: false,
         jumped: player.jumped,   // C6
       });
+      // IF: the pool's frame. Armed for MobileTeams targeting like
+      // every other pool (MT) - the candidate list is this host's
+      // whole active-enemy database, which is the pool itself.
+      if (interiorFoes && interiorCtx) {
+        interiorFoes.update(overlayHeld ? 0 : dt, player.pos, cam.pos, sensesContext(playerEntity, interiorTicker.classicMinutes, {
+          movingLessThanHalfSpeed: player.movingLessThanHalfSpeed ?? true,
+          candidates: () => interiorFoes.foes.filter((f) => !f.dead),
+          playerEntity,
+        }));
+      }
     }
     cam.pos = player.eye;
     const useHeld = keys.has('KeyE');   // I2 departure: DFU activates on Mouse0 and E is AbortSpell - the pointer-parity slice owns the move
@@ -3159,6 +3354,12 @@ export function createWorldModes(host) {
     interiorArrows.draw(renderer, interiorCtx.texRemap);
     interiorCtx.flatAnims.tick(dt);   // FA1
     renderer.drawBillboards(interiorCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
+    // IF: the pool's own billboards ride the same axis, the same call
+    // the exterior host makes for its foes.
+    if (interiorFoes) {
+      const _foeBatches = interiorFoes.batches();
+      if (_foeBatches.length) renderer.drawBillboards(_foeBatches, camRight, new Float32Array([0, 1, 0]));
+    }
     if (magic) {
       // M2: the armed click's cast + missile flight, on the interior's
       // own collider (the engine's mode-aware raycast reads it).
@@ -3197,15 +3398,25 @@ export function createWorldModes(host) {
         }
         continue;
       }
-      // "// Fatigue loss" - unconditional. envAttack hits the interior's
-      // ACTION objects, not an enemy, so there is no hitEnemy to gate the
-      // tally on: the swing costs its fatigue and trains nothing, which is
-      // what DFU does on a miss.
+      // "// Fatigue loss" - unconditional, whatever the swing meets.
       drainInteriorFatigue(SWING_WEAPON_FATIGUE_LOSS);
+      // IF: ...and an interior swing CAN meet an enemy now. This was
+      // `envAttack` alone, on the strength of a true premise that has
+      // stopped being true: with no interior pool there was never a
+      // hitEnemy to gate the skill tally on, so the comment here said
+      // the swing "trains nothing, which is what DFU does on a miss".
+      // A quest foe or a summoned daedra standing in a building is
+      // not a miss. WeaponManager.cs:419-436 tallies on the hit and
+      // rings the no-enemy sound only when nothing was struck.
+      if (interiorFoes?.resolvePlayerHit(interiorWeapon.playerWeapon, cam.pos, eyeDir(), player.pos,
+        makeInView(proj, view, multiply), (wpn) => audio.playOneShot(hitSoundFor(wpn), 1.1))) {
+        tallySwingSkills(playerEntity, interiorWeapon.playerWeapon.weapon);
+        continue;
+      }
       envAttack(interiorCtx.actions, interiorCtx.collider, player.eye, eyeDir());
-      // AUDIT 23 (C9) - WeaponManager.cs:423-424: an interior swing
-      // never sets hitEnemy, so the no-enemy swing sound fires at the
-      // hit frame (the rig's strike-entry whoosh is gone).
+      // AUDIT 23 (C9) - WeaponManager.cs:423-424: a swing that set no
+      // hitEnemy rings the no-enemy sound at the hit frame (the rig's
+      // strike-entry whoosh is gone).
       audio.playOneShot(swingSoundFor(interiorWeapon.playerWeapon.weapon), 1.1);
     }
     interiorWeapon.draw();
@@ -3872,7 +4083,7 @@ export function createWorldModes(host) {
     // host's ordinary quest tick is gated on "no overlay up", so
     // without this a rested night ran none at all.
     tickQuests: () => questBridge?.machine?.tick?.(),
-    enemiesNearby: () => false,   // this host mounts no foe pool
+    enemiesNearby: () => interiorEnemiesNearby({ resting: true }),   // IF: the pool IS this host's scan (S40's resting variant)
     place: interiorRestPlaceHere,
     // MoveToBed (:601-609) is `transform.position = allocatedBed` and
     // then FixStanding(0.4, 0.4) - the snap is NOT optional. floorLanding
@@ -3965,7 +4176,7 @@ export function createWorldModes(host) {
       if (interiorOverlay) return;
       const rb = racialRestBlock(playerEntity, Math.floor(interiorTicker.classicMinutes));   // V2b
       const d = restDecision({
-        enemiesNearby: false,   // no foe pool in a building interior
+        enemiesNearby: interiorEnemiesNearby({ resting: true }),   // IF: rest asks the pool now
         swimming: false,        // nor water
         grounded: startRestGroundedCheck(!!player.grounded, player.pos, interiorCtx?.collider),
         racialOverrideBlocks: !!rb,
@@ -4228,14 +4439,17 @@ export function createWorldModes(host) {
     },
     startInDungeon,
     /** B1: CreateFoe's TryPlacement, this host's two INSIDE arms
-     *  (CreateFoe.cs:194-211). The dungeon arm runs PlaceFoeFreely
-     *  over the dungeon collider and stands the foe through the
-     *  context's one build chain; false = retry next machine tick,
-     *  verbatim. The INTERIOR arm answers false unconditionally -
-     *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
-     *  the scene mount above), so a wave pending inside a building
-     *  waits, and leaving invalidates it exactly as DFU's
-     *  OnTransitionExterior handler does. */
+     *  (CreateFoe.cs:194-211); false = retry next machine tick,
+     *  verbatim.
+     *
+     *  IF: BOTH arms are live now, and they are the SAME LAW - DFU's
+     *  PlaceFoeBuildingInterior (:220-234) does not use interior spawn
+     *  points at all, it calls PlaceFoeFreely with the interior as
+     *  parent, and says why in its own comment: "Spawn points work
+     *  well for 'interior hunt' quests but less so for 'directly
+     *  attack the player'. Feel just placing freely will yield best
+     *  results overall." So the interior arm differs from the dungeon
+     *  arm in exactly one term, the collider it probes. */
     /** MT-iv: the INSIDE pool's half of DFU's one
      *  ActiveGameObjectDatabase (ChangeFoeInfighting.cs:59 /
      *  ChangeFoeTeam.cs:77 walk it globally). world.js unions this
@@ -4250,6 +4464,7 @@ export function createWorldModes(host) {
       return dungeonCtx.foes.filter((f) => !f.dead && f.questBehaviour);
     },
     tryPlaceQuestFoe(handle) {
+      if (mode === 'interior') return tryPlaceInteriorQuestFoe(handle);
       if (mode !== 'dungeon' || !dungeonCtx) return false;
       const feet = player.pos;
       // origin lifted to the controller centre - DFU casts from
@@ -4348,6 +4563,8 @@ export function createWorldModes(host) {
         interiorOverlay?.dispose?.();
         teardownQuestFlats();
         interiorCtx.destroy();
+        interiorFoes?.destroy?.();
+        interiorFoes = null;
         interiorCtx = null; interiorBuilding = null; interiorOverlay = null;
       }
       if (dungeonCtx) {

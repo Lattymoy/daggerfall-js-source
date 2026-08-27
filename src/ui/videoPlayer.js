@@ -229,10 +229,21 @@ export class VideoPlayer {
     return true;
   }
 
-  /** DaggerfallVidPlayerWindow.Update: end on any key, or on end of file
-   *  while playing. Returns true when the window should close. */
-  shouldClose(anyKeyDown = false, endOnAnyKey = true) {
-    return (endOnAnyKey && anyKeyDown) || (this.endOfFile && this.playing);
+  /** DaggerfallVidPlayerWindow.Update (:140-142): THREE disjoined
+   *  conditions, in DFU's own order.
+   *
+   *      endOnAnyKey && AnyKeyDownIgnoreAxisBinds ||
+   *      GetBackButtonDown() ||
+   *      EndOfFile && Playing
+   *
+   *  AUDIT 26 F151: the middle one is not inside the endOnAnyKey gate,
+   *  so Escape skips even DFU's endOnAnyKey-FALSE videos - the
+   *  vampirism and lycanthropy dream and turning clips
+   *  (VampirismInfection.cs:126/:136, LycanthropyInfection.cs:114) and
+   *  every quest PlayVideo (:78). The port had no back arm at all, so
+   *  those ran to the end with no way out. */
+  shouldClose(anyKeyDown = false, endOnAnyKey = true, backButtonDown = false) {
+    return (endOnAnyKey && anyKeyDown) || backButtonDown || (this.endOfFile && this.playing);
   }
 
   /** DFU Dispose(): stop playback and drop the frame texture. */
@@ -252,8 +263,13 @@ const LIGHT = new Float32Array([0, 1, 0]);
 function defaultListen(onAnyKey) {
   if (typeof window === 'undefined') return () => {};
   const events = ['pointerdown', 'keydown', 'touchstart'];
-  for (const ev of events) window.addEventListener(ev, onAnyKey, { passive: true });
-  return () => { for (const ev of events) window.removeEventListener(ev, onAnyKey); };
+  // AUDIT 26 F151: the handler is told whether the press was the BACK
+  // button - Escape (InputManager.cs:1065-1067). Update tests
+  // GetBackButtonDown as its own disjunct, OUTSIDE the endOnAnyKey
+  // gate, so it skips a video that no other key can.
+  const handler = (ev) => onAnyKey(ev?.key === 'Escape');
+  for (const ev of events) window.addEventListener(ev, handler, { passive: true });
+  return () => { for (const ev of events) window.removeEventListener(ev, handler); };
 }
 
 /**
@@ -273,8 +289,9 @@ export function playVideo(canvas, renderer, bytes, {
     if (!player.play(bytes)) { resolve(false); return; }
 
     let anyKey = false;
+    let backDown = false;   // F151: GetBackButtonDown, its own disjunct
     let settled = false;
-    const detach = listen(() => { anyKey = true; });
+    const detach = listen((back = false) => { anyKey = true; if (back) backDown = true; });
     const finish = (played) => {
       if (settled) return;
       settled = true;
@@ -307,7 +324,7 @@ export function playVideo(canvas, renderer, bytes, {
         finish(false);
         return;
       }
-      if (player.shouldClose(anyKey, endOnAnyKey)) {
+      if (player.shouldClose(anyKey, endOnAnyKey, backDown)) {
         finish(true);
         return;
       }

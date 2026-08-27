@@ -130,6 +130,13 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && 
 /** The four buttons that lead somewhere (:134-204). */
 export const NAV_BUTTONS = Object.freeze(['inventory', 'spellbook', 'logbook', 'history']);
 
+/** AUDIT 26 F164 - UpdatePlayerValues' stat colours
+ *  (DaggerfallCharacterSheetWindow.cs:414-419), verbatim from
+ *  DaggerfallUI.cs:65-66. Below the permanent value is DRAINED, above
+ *  it is INCREASED, and equal takes the label's default. */
+export const STAT_DRAINED_COLOR = Object.freeze([190 / 255, 85 / 255, 24 / 255, 1]);
+export const STAT_INCREASED_COLOR = Object.freeze([178 / 255, 207 / 255, 255 / 255, 1]);
+
 /** What the sheet says when a host cannot open one. NEVER a silent
  *  swallow, and never a word about the port's own gaps - the same rule
  *  the settings screen follows. */
@@ -289,8 +296,19 @@ export class CharSheet {
     label(`${Math.trunc((e.fatigue ?? maxFatigue(e)) / FATIGUE_MULTIPLIER)}/${Math.trunc(maxFatigue(e) / FATIGUE_MULTIPLIER)}`, 57, 54);
     label(`${e.health}/${e.maxHealth}`, 52, 64);
     label(`${Math.trunc(carriedWeight(e))}/${entityMaxEncumbrance(e)}`, 90, 74);   // DaggerfallCharacterSheetWindow.cs:404 reads PlayerEntity.MaxEncumbrance
-    STAT_KEYS_ORDER.forEach((k, i) =>
-      label(liveStat(e, k), 141, 17 + i * 24, { align: 'center', w: 28 }));
+    // AUDIT 26 F164: UpdatePlayerValues colours each stat label by the
+    // live value against the PERMANENT one (:414-419) - drained below,
+    // increased above, default when they agree. The port drew all
+    // eight at the shadow-text default, so the at-a-glance warning DFU
+    // gives after a disease or a drain spell was absent. `stats` IS
+    // the permanent map here (statMods.js:31 clamps permanent + mods).
+    STAT_KEYS_ORDER.forEach((k, i) => {
+      const live = liveStat(e, k);
+      const permanent = e.stats?.[k] ?? 0;
+      const color = live < permanent ? STAT_DRAINED_COLOR
+        : live > permanent ? STAT_INCREASED_COLOR : undefined;
+      label(live, 141, 17 + i * 24, { align: 'center', w: 28, color });
+    });
     drawPaperDoll(renderer, m, e, PAPERDOLL_ORIGIN[0], PAPERDOLL_ORIGIN[1]);
     if (this.page) this._drawSkillPage(renderer, font, m);
     return undefined;

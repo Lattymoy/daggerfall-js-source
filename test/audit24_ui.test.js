@@ -69,7 +69,15 @@ test('audit24 ui: the journal counts the formattings the notebook actually emits
   const set = new Set([JOURNAL_COLORS.highlight, JOURNAL_COLORS.question,
     JOURNAL_COLORS.answer, DEFAULT_TEXT_COLOR].map((c) => c.join(',')));
   assert.equal(set.size, 4, 'four distinct colours');
-  assert.deepEqual(JOURNAL_COLORS.highlight, [219 / 255, 130 / 255, 40 / 255, 1]);
+  // AUDIT 26 F163: WHITE, not DaggerfallHighlightTextColor. The
+  // orange (219,130,40) is MultiFormatTextLabel's DEFAULT
+  // HighlightColor (:36), and this window overrides it outright -
+  // `questLogLabel.HighlightColor = Color.white`
+  // (DaggerfallQuestJournalWindow.cs:152). The default is what this
+  // pin used to assert.
+  assert.deepEqual(JOURNAL_COLORS.highlight, [1, 1, 1, 1]);
+  assert.notDeepEqual(JOURNAL_COLORS.highlight, [219 / 255, 130 / 255, 40 / 255, 1],
+    'the label default is not this window\'s colour');
   assert.deepEqual(JOURNAL_COLORS.answer, [227 / 255, 223 / 255, 0, 1]);
   // and the four page TITLES are Internal_Strings_en's own, ids 628 /
   // 630 / 632 / 634 - two of them were the port's sentence case where

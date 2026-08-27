@@ -674,6 +674,27 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     }
   }
 
+  /**
+   * IF: TEARDOWN. Every allocation has an owner, and until a SECOND
+   * host mounted this factory the pool's owner was the process: the
+   * exterior host lives as long as the session, so nothing ever had
+   * to hand its batches back. An INTERIOR pool is minted per building
+   * and dropped on leaving (DFU's OnTransitionExterior tears the
+   * interior's enemies down the same way), so without this every door
+   * you walked out of leaked one billboard batch per foe standing in
+   * it, plus every corpse batch on the floor.
+   *
+   * Idempotent, and it leaves the record list empty so a caller that
+   * keeps the handle by mistake draws nothing rather than drawing
+   * freed GL objects.
+   */
+  function destroy() {
+    for (const f of foes) releaseFoeBatch(f);
+    for (const c of corpseBatches) renderer.destroyBillboardBatch(c.batch);
+    corpseBatches.length = 0;
+    foes.length = 0;
+  }
+
   /** AUDIT 17e F23: the floating-origin recenter shifts everything. */
   function offsetAll(offset) {
     for (const f of foes) {
@@ -737,6 +758,6 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       }).catch((e) => console.error('[encounter] restore failed:', e?.message ?? e));
     }
   }
-  return { foes, spawnFoe, damageFoe, update, resolvePlayerHit, batches, offsetAll, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld,
+  return { foes, spawnFoe, damageFoe, update, resolvePlayerHit, batches, offsetAll, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld, destroy,
     collectPixel, removeFoe: questPoolOps.removeFoe };
 }

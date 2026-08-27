@@ -57,9 +57,12 @@ export const bookArtLoaded = () => !!_art;
 
 /** Token stream -> layout lines, LocalizedBook.ConvertTokensToString +
  *  CreateBookLabels' law (AUDIT B-P1, which corrected this):
- *   - a row is closed by NewLine ALONE. Justify tokens do NOT break
- *     the row; they set STICKY alignment that holds until the next
- *     justify token, so a centred passage stays centred across lines.
+ *   - EVERY non-formatting token is its own ROW (AUDIT 26 F150 - a
+ *     label each, stacked by LayoutBookLabels). Justify tokens emit
+ *     no row of their own; they set STICKY alignment that holds until
+ *     the next justify token, so a centred passage stays centred
+ *     across lines - but it applies only to the tokens that FOLLOW
+ *     it, never to text already emitted.
  *   - PAGES CONCATENATE: DFU appends every page's converted text into
  *     one Content string, so a page not ending in NewLine merges with
  *     the next page's first line rather than closing a row.
@@ -70,7 +73,6 @@ export const bookArtLoaded = () => !!_art;
  *     loud interim in this file's header). */
 export function layoutBookLines(bookFile) {
   const lines = [];
-  let current = { text: '', center: false, font: 0 };
   let alignCenter = false, font = 0, lineTokens = 0;
   // AUDIT 24 ui: the stickiness holds only until an EMPTY LINE.
   // CreateBookLabels splits Content on '\n' and runs
@@ -82,37 +84,45 @@ export function layoutBookLines(bookFile) {
   // tokens at all is that line; one carrying only a justify token is
   // not. Without the reset a centred heading followed by a blank line
   // centred the whole rest of the book.
-  const flush = () => {
+  // AUDIT 26 F150: ONE ROW PER TEXT TOKEN, with the alignment current
+  // at that token. CreateBookLabels' `default:` arm adds a SEPARATE
+  // label per non-formatting token (:253), and LayoutBookLabels
+  // stacks each one on its own row - `y += label.Size.y` (:317-328).
+  // The port concatenated a line's Text tokens into one row and let a
+  // JustifyCenter reach BACK over the text already accumulated, so
+  // for `Text('A'), 0xFD, Text('B'), NewLine` DFU renders 'A' left and
+  // 'B' centred on two rows where the port rendered one centred 'AB'.
+  // Classic books that use 0xFD terminators - centred title pages,
+  // poems - ran consecutive centred lines together on one over-wide
+  // row with the centring shifted a line.
+  const endLine = () => {
     if (lineTokens === 0) {
-      current.center = false; current.font = 0;
+      // The empty line: DFU converts it to null tokens and takes the
+      // arm that adds a Left-aligned empty label and THEN resets
+      // alignment, colour and scale (:221-228). A line carrying only
+      // a justify token is not this line - it converted to tokens.
+      lines.push({ text: '', center: false, font: 0 });
       alignCenter = false; font = 0;
     }
-    lines.push(current);
-    current = { text: '', center: alignCenter, font };
     lineTokens = 0;
   };
   for (let page = 0; page < bookFile.pageCount; page++) {
     for (const token of bookFile.getPageTokens(page) ?? []) {
       if (token.formatting !== RSC.NewLine) lineTokens++;
       if (token.formatting === TOKEN_TEXT) {
-        current.text += token.text;
+        lines.push({ text: token.text ?? '', center: alignCenter, font });
       } else if (token.formatting === RSC.NewLine) {
-        flush();
+        endLine();
       } else if (token.formatting === RSC.JustifyCenter) {
         alignCenter = true;
-        current.center = true;
       } else if (token.formatting === RSC.JustifyLeft) {
         alignCenter = false;
-        current.center = false;
       } else if (token.formatting === RSC.FontPrefix) {
         font = token.x ?? 0;
-        current.font = font;
       }
       // PositionPrefix / SameLineOffset: unused for books (DFU)
     }
   }
-  // The trailing partial line closes the book (DFU's final split entry)
-  if (current.text) lines.push(current);
   return lines;
 }
 

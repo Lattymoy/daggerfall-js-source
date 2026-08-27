@@ -77,7 +77,7 @@ import { applyLevelUp } from '../systems/advancement.js';
 import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
 import { spendPoolLowest } from '../systems/chargen.js';
 import { ClassFile } from '../formats/classFile.js';
-import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, raiseAtRestEnd, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord, restVitals, restFullyHealed, createRestDeps} from './shared.js';
+import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, raiseAtRestEnd, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord, restVitals, restFullyHealed, createRestDeps, fatigueLossMultiplierFor} from './shared.js';
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
@@ -1168,11 +1168,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // displayingExhaustedPopup so rapid drains - the Somnalius case -
   // never stack collapses).
   let _exhaustedShowing = false;
-  /** PlayerEntity.cs:396-400: 1.0, or 0.9 with the Athleticism career
-   *  advantage (0.8 needs the Improved Athleticism enchantment, which
-   *  the port has no source for). */
-  const fatigueLossMultiplier = () =>
-    (hasSpecialAbility(playerEntity.career, SPECIAL_ABILITY.Athleticism) ? 0.9 : 1.0);
+  /** PlayerEntity.cs:396-400, through the ONE home in scenes/shared.js
+   *  - AUDIT 26 F044 collapsed the copy that used to live here, whose
+   *  comment said the port had no source for the Improved Athleticism
+   *  enchantment. It has had one since E1 decoded ImprovesTalents. */
+  const fatigueLossMultiplier = () => fatigueLossMultiplierFor(playerEntity);
   function drainFatigue(n) {
     if (n <= 0) return;
     playerEntity.fatigue = Math.max(0, (playerEntity.fatigue ?? 0) - n);

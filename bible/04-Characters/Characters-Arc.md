@@ -2560,3 +2560,106 @@ its `braceBlock` helper took the last `{` BEFORE the match, so any
 helper declared above the arm shadowed the block it meant to read -
 its own wave-39 comment says the intent was to "brace-match the arm",
 and it now anchors to the arm's own brace.
+
+## IF - THE INTERIOR FOE POOL (2026-08-27)
+
+The completion analysis' item six, and the last of the port's four
+scene hosts to hold no enemy at all. FIVE flagged sites named this
+gap; all five are retired.
+
+HONEST NOTE ON THE COUNT: the first commit said FOUR and closed the
+row. A scout sweep finishing after that commit found the fifth - the
+Q4-v adapter's absent `standFoe` - whose stated blocker was, in as
+many words, "the INTERIOR enemy host". It was worded differently
+enough from the other four to survive the grep that found them. The
+row was re-opened, the arm written, and the count corrected here
+rather than left to read as if the sweep had been complete.
+
+### The fact the slice is built on
+
+**A building interior carries NO STATIC ENEMIES in DFU.** Its whole
+marker vocabulary is `Rest, Enter, Treasure, LadderBottom, LadderTop`
+(DaggerfallInterior.cs:63-70), and the layout chain mints none. That
+was established from the C# before a line was written, and it is what
+makes this slice small: the interior pool is not a spawner, it is a
+HOME, for the things that actually put an enemy in a building - a
+quest's CreateFoe, and the Daedra summoning's two punishments.
+
+RECORDED, because it looks like a gap and is not: DaggerfallInterior
+DOES read RMB Section-3 records into a `spawnPoints` list whose doc
+comment names them interior enemy spawn data, and exposes them on a
+property. Nothing in the DFU tree consumes it. Porting a reader for
+data no consumer reads would be inventing a feature, so the port
+reads nothing and says why here.
+
+### One factory, not a fourth copy
+
+`createExteriorFoes` was never exterior-specific: it takes its
+collider as a parameter and has no spawner of its own - every spawn
+in the port is host-driven. So the interior host MOUNTS THAT FACTORY
+with its own collider rather than growing a fourth copy of the damage
+door, the death chain, the corpse walk and the loot. Its two
+exterior-shaped arms are answered honestly rather than left to
+misfire: `currentPixelKey` answers null (exterior.js's own arm - a
+host whose corpses never leave streaming range hands nothing to
+TrackLooseObject), and `hitEffects` is null and RECORDED, so a blow
+landed indoors draws no blood until this host grows the effect pool
+the other two have.
+
+**AND THE FACTORY GREW A TEARDOWN.** Every allocation has an owner -
+but until a SECOND host mounted this pool, its owner was the process:
+the exterior host outlives the session, so nothing ever had to hand
+its batches back. An interior pool is minted per building and dropped
+on leaving (DFU's OnTransitionExterior tears the interior's enemies
+down the same way), so without `destroy()` every door you walked out
+of leaked one billboard batch per foe standing in it, plus every
+corpse batch on the floor. Both of this host's exit doors free it -
+the questFlats double-free lesson is that this host has two exits,
+not one.
+
+### What the four flags became
+
+- **CreateFoe's INTERIOR arm** is the dungeon arm with ONE term
+  changed. `PlaceFoeBuildingInterior` (CreateFoe.cs:220-234) does not
+  use interior spawn points at all; it calls PlaceFoeFreely, and says
+  why: "Spawn points work well for 'interior hunt' quests but less so
+  for 'directly attack the player'. Feel just placing freely will
+  yield best results overall."
+- **`enemiesNearby`** was a literal `false` at three consumers (the
+  rest deps, restDecision, the exhaustion collapse). It is now ONE
+  scan through the shared `areEnemiesNearby` over this host's own
+  database. An interior with no pool minted still answers false -
+  because there is nothing there, not because the host cannot look.
+- **Quest foes from BUILDING MARKERS** - the Q4-v adapter's
+  `standFoe`, which is DFU's OTHER quest-foe path into an interior:
+  AddQuestResourceObjects at LAYOUT time (PlayerEnterExit.cs:797-800)
+  and on Place.cs's hot-place (:508-521), where CreateFoe's
+  TryPlacement is the first. The dungeon adapter's twin, to the
+  shape - the stands join the scene's behaviour walk and leave with
+  its teardown.
+- **The summoning REFUSAL's daedra** (Range(3,6) at 8..64,
+  DaggerfallDaedraSummonedWindow.cs:125) and **the COVEN failure's**
+  (Range(1,4) at 4..64, DaggerfallQuestPopupWindow.cs:257) are the
+  same `CreateFoeSpawner` call with different numbers, so one host
+  door takes both. The coven site was found by a pin, not by the
+  sweep: it is the fourth flag, and it was worded differently enough
+  from the other three to survive the grep that found them.
+
+### And the swing can meet something now
+
+The interior swing hit action objects only, on the strength of a
+premise that was true and has stopped being: "there is no hitEnemy to
+gate the tally on, so the swing trains nothing, which is what DFU
+does on a miss". A quest foe or a summoned daedra standing in a
+building is not a miss. The pool is asked first
+(WeaponManager.cs:419-436), trains on the hit, and falls through to
+the action objects and the no-enemy sound only as the else.
+
+The pool is ARMED for MobileTeams targeting like every other pool
+(MT), over the only active-enemy database this host has - itself.
+
+Pins: 9 in `test/interiorfoes.test.js`, four of them mutation-proven.
+One pre-existing pin was REPAIRED rather than advanced, the same class
+of fragility MT-iv found in `ch3`: FA1's corpse-batch pin matched
+`for (const c of corpseBatches)` and took the first hit, which the new
+teardown loop became - it anchors on the REBUILD it actually names now.
