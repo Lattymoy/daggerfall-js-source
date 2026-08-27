@@ -50,6 +50,7 @@ import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './m
 import { useItem, isLightSource } from '../systems/useItem.js';   // U25
 import { itemInfoRows, questLetterName, INFO_TEXT } from '../systems/itemInfo.js';   // U25
 import { goldAmount, deductGold } from '../systems/court.js';
+import { enchantArmorDisplayMod } from '../systems/enchantments.js';   // AUDIT 26 F122: PaperDoll.cs:161's armorMod
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { addItem, isEnchanted, goldStack, canHoldAmount, totalWeight, GOLD_PIECE_WEIGHT_KG } from '../systems/inventory.js';   // L-slice (items-9)
 // U56: TransferItem's ladder - the guards, their order, and the split.
@@ -148,8 +149,9 @@ export const isIngredientTemplate = (i) => i >= 0 && i <= 77;
 
 /** AUDIT 17e F36 - RefreshArmourValues' displayed number
  *  (PaperDoll.cs:159-173): (100 - armorValue) / 5, plus armorMod
- *  (DecreasedArmorValueModifier - IncreasedArmorValueModifier), which
- *  is 0 until those effect channels exist (FLAGGED). Exported so the
+ *  (DecreasedArmorValueModifier - IncreasedArmorValueModifier), fed
+ *  by enchantArmorDisplayMod since AUDIT 26 F122 split the port's one
+ *  additive armour channel into DFU's two min-sets. Exported so the
  *  law can be pinned against LIVE armor values - the old pin was
  *  `Math.trunc((100-55)/5) === 9`, pure literal arithmetic that
  *  touched no port code at all. */
@@ -726,12 +728,16 @@ export class NativeInventoryWindow {
       drawImgSub(renderer, _art.gold, m, wr[0], wr[1], wr[2], wr[3]);
     }
     // U8f/U8g: the paperdoll at (49,13); U8h: the armor value labels
-    // (RefreshArmourValues - (100 - av)/5 per body part; the
-    // drained/increased colors pend their effect channels)
+    // (RefreshArmourValues - (100 - av)/5 per body part, plus the
+    // enchantment armorMod; the drained/increased label COLOURS are
+    // still unported - F164 tracks the stat-sheet half of that law)
     drawPaperDoll(renderer, m, this.hooks.entity ?? { }, 49, 13);
     const av = this.hooks.entity?.armorValues;
+    // F122: the same armorMod for every body part - RefreshArmourValues
+    // recomputes it inside the loop but off entity-wide channels.
+    const armorMod = enchantArmorDisplayMod(this.hooks.entity);
     if (av) ARMOR_LABEL_POS.forEach(([lx, ly], i) =>
-      shadowText(renderer, font, String(armorLabelValue(av[i] ?? 100)), m, 49 + lx, 13 + ly));
+      shadowText(renderer, font, String(armorLabelValue(av[i] ?? 100, armorMod)), m, 49 + lx, 13 + ly));
     this._clampScroll();
     // both sides through the shared scroller: the filtered bag
     // locally, the pile (loot target or session drops) remotely

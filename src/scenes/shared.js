@@ -22,7 +22,8 @@ import { setInfectionHost, vampireClanForFaction } from '../systems/infection.js
 import { findFactions } from '../systems/talk.js';   // V1: GetRegionFaction's FindFactions(Province, region)
 import { FACTION_TYPES } from '../formats/factionFile.js';
 import { killIfAnyLiveStatZero } from '../systems/statMods.js';   // AUDIT 24 (wave 32): the per-entity laws a foe pool owes
-import { hasSpecialAbility, SPECIAL_ABILITY, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate } from '../systems/rest.js';   // the rested hour's three rates, one home for every host (V5 + S40, same line from two lanes)
+import { hasSpecialAbility, SPECIAL_ABILITY, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate } from '../systems/rest.js';
+import { entityImprovedAthleticism } from '../systems/enchantments.js';   // AUDIT 26 F044: the ImprovesTalents fatigue arm   // the rested hour's three rates, one home for every host (V5 + S40, same line from two lanes)
 import { createNearbyScan, updateNearbyObjects, detectedMarkers, hasLiveDetector } from '../systems/nearbyObjects.js';   // X4: the Detect scan
 import { liveStat, maxFatigue } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
@@ -916,9 +917,22 @@ export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = t
   };
 }
 
-/** PlayerEntity.cs:388-400 - Athleticism loses fatigue 10% slower. */
+/** PlayerEntity.cs:388-400 - Athleticism loses fatigue 10% slower,
+ *  20% with the Improved Athleticism enchantment. AUDIT 26 F044: the
+ *  enchantment arm is nested INSIDE the career check at :398-399
+ *
+ *      if (career.Athleticism)
+ *          fatigueLossMultiplier = (ImprovedAthleticism) ? 0.8f : 0.9f;
+ *
+ *  so the item does nothing at all for a character without the career
+ *  advantage, and halves the loss again for one who has it. The port
+ *  decoded ImprovesTalents into _enchantMods.improvedAthleticism and
+ *  then nothing read it - a law computed and thrown away. This is the
+ *  ONE home: dungeonContext kept a second copy whose comment said the
+ *  port had no source for the flag, which had stopped being true. */
 export function fatigueLossMultiplierFor(entity) {
-  return hasSpecialAbility(entity?.career, SPECIAL_ABILITY.Athleticism) ? 0.9 : 1.0;
+  if (!hasSpecialAbility(entity?.career, SPECIAL_ABILITY.Athleticism)) return 1.0;
+  return entityImprovedAthleticism(entity) ? 0.8 : 0.9;
 }
 
 // --- THE MUSIC DIRECTOR (AUDIT 19's 1:1 pass) ------------------------

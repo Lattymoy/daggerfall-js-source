@@ -163,7 +163,10 @@ test('E1 fold: the channels reach their formulas - armour, chance-to-hit, skills
   // the absolute chance
   const attacker = { stats: {}, skills: [], level: 1 };
   const targetBase = { armorValues: new Array(7).fill(60), stats: {}, skills: [], level: 1 };
-  const targetStrong = { ...targetBase, _enchantMods: { armorMod: -5 } };
+  // F122: built through the FOLD, not by hand - the bag has two
+  // armour channels now and a hand-written one can spell either.
+  const targetStrong = { ...targetBase, items: [item(T.StrengthensArmor, -1)] };
+  computeEnchantmentMods(targetStrong);
   const threshold = (target) => {
     for (let r = 0; r < 100; r++) {
       if (!calculateSuccessfulHit(attacker, target, 0, 0, () => r / 100)) return r;

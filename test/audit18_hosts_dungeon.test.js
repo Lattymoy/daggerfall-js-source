@@ -523,7 +523,11 @@ test('audit18 sweep: the swing fatigue and the tally arm are wired into the dung
 
 test('audit18 sweep: the Athleticism fatigue multiplier is applied and truncated AFTER the multiply', () => {
   const src = hostSrc('dungeonContext.js');
-  assert.ok(/hasSpecialAbility\(playerEntity\.career, SPECIAL_ABILITY\.Athleticism\) \? 0\.9 : 1\.0/.test(src));
+  // AUDIT 26 F044: the host used to spell the multiplier inline, with
+  // a comment saying the port had no source for the Improved
+  // Athleticism enchantment. It has, so the law collapsed into the
+  // ONE home in scenes/shared.js and the host delegates.
+  assert.ok(/const fatigueLossMultiplier = \(\) => fatigueLossMultiplierFor\(playerEntity\);/.test(src));
   // AUDIT 23 (C6): the jump drain moved INTO tickPlayerMinutes
   // (PlayerEntity.cs:425-430 is the entity update); the host now only
   // forwards the motor's frame edge on the activity.
@@ -546,6 +550,10 @@ test('audit18 sweep: the Athleticism fatigue multiplier is applied and truncated
   assert.equal(runTick(0.9, { running: false, swimming: false }), 9, 'Default with Athleticism');
   assert.equal(runTick(1.0, { running: true, swimming: false }), 88, 'Running');
   assert.equal(runTick(0.9, { running: true, swimming: false }), 79, 'Running with Athleticism');
+  // F044: and the enchantment's arm, which had no reachable value
+  // before - 0.8 is only ever produced FOR an Athleticism career.
+  assert.equal(runTick(0.8, { running: false, swimming: false }), 8, 'Default with Improved Athleticism');
+  assert.equal(runTick(0.8, { running: true, swimming: false }), 70, 'Running with Improved Athleticism');
   // AUDIT 23 (C6): the jump edge drains its own 11 x multiplier in the
   // SAME tick (PlayerEntity.cs:427), on top of the minute's band.
   assert.equal(runTick(1.0, { running: false, swimming: false, jumped: true }), 22, 'jump + minute');
