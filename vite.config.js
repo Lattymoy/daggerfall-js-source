@@ -122,6 +122,8 @@ export default defineConfig({
         // THE MODERN DIRECTION (Mac, 2026-08-27): the Skyrim-esque
         // main-menu redesign, self-contained, deployed for phone eyes.
         menuRedesign: 'menu-redesign.html',
+        // The same direction cut in Daggerfall's own pixel idiom.
+        menuPixel: 'menu-pixel.html',
       },
     },
   },
