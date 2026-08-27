@@ -41,7 +41,7 @@ test('AUDIT 23 ui-native-3: the talk ray reaches 76.8; each mode gates with the 
   // R1: the mode moved to the interactionMode singleton (PlayerActivate's
   // currentMode is global) - the gates read it live, same law
   assert.ok(tt.includes("if (getInteractionMode() !== 'steal' && bestDist > MOBILE_NPC_ACTIVATION_DISTANCE) { hud.add('You are too far away.'); return true; }"));
-  assert.ok(tt.includes("if (getInteractionMode() === 'steal' && bestDist > PICKPOCKET_DISTANCE) { hud.add('You are too far away.'); return true; }"));
+  assert.ok(tt.includes("if (getInteractionMode() === 'steal' && !best.person?.pickpocketAttempted\n        && bestDist > PICKPOCKET_DISTANCE) { hud.add('You are too far away.'); return true; }"));
 });
 
 test('AUDIT 23 ui-native-5: the drawn space omits GlyphSpacing; the measured space keeps it', () => {

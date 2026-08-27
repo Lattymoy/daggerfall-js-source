@@ -6,11 +6,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   positionHash, staticNpcData, raceFromFaction, raceFromFactionRace,
-  staticNpcName, bankForRace,
+  staticNpcName, 
 } from '../src/characters/staticNpc.js';
 import { FACTION_TYPES } from '../src/formats/factionFile.js';
 import { RACES } from '../src/systems/races.js';
 import { GENDERS } from '../src/characters/nameHelper.js';
+import { getNameBankOfRegion } from '../src/characters/nameHelper.js';   // F016
 
 test('StaticNPC: the position hash is x ^ y<<2 ^ z>>2', () => {
   // GetPositionHash (:333-336). Shift binds tighter than xor in both
@@ -129,11 +130,23 @@ test('StaticNPC: an INDIVIDUAL faction answers its own name; everyone else is se
   assert.ok(staticNpcName(d).length > 1);
 });
 
-test('StaticNPC: the name bank follows the race, and an unknown race falls to Breton', () => {
-  assert.equal(bankForRace(RACES.Redguard), bankForRace(RACES.Redguard));
-  assert.equal(bankForRace(9999), bankForRace(RACES.Breton), 'getNameBank\'s own fallback');
-  // a female Nord and a male Nord draw from the same bank
-  assert.equal(bankForRace(RACES.Nord), bankForRace(RACES.Nord));
+test('StaticNPC F016: the name bank is the REGION\'s, never the race\'s', () => {
+  // SetRuntimeData stores GetNameBankOfCurrentRegion() (:309) and
+  // GetDisplayName reads that bank (:325-326) - no line in DFU
+  // derives a bank from a race, so `bankForRace` is gone with the
+  // default that invented it. Two NPCs of DIFFERENT races in the same
+  // region must draw from the same bank.
+  const nord = staticNpcData({ x: 1, y: 2, z: 3, position: 10, buildingKey: 1, locationIndex: 1, factionId: 0 });
+  const redguard = staticNpcData({ x: 1, y: 2, z: 3, position: 10, buildingKey: 1, locationIndex: 1, factionId: 0 });
+  nord.race = RACES.Nord;
+  redguard.race = RACES.Redguard;
+  const bank = getNameBankOfRegion(17);   // Daggerfall's own region
+  assert.equal(staticNpcName(nord, { nameBank: bank }), staticNpcName(redguard, { nameBank: bank }),
+    'same seed, same region bank, same name - the race does not enter it');
+  // and with NO bank passed the fallback is Breton, which is what
+  // GetNameBankOfCurrentRegion answers for an unknown region
+  // (PlayerGPS.cs:421-427) - not a race guess.
+  assert.equal(staticNpcName(nord), staticNpcName(nord, { nameBank: getNameBankOfRegion(-1) }));
 });
 
 test('StaticNPC: the layout record carries what the billboard needs', () => {
