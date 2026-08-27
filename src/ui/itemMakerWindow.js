@@ -48,7 +48,7 @@
 // rides the port's own inline field here, and the icon picker waits
 // on the item-icon variant seam.
 
-import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, drawRect, shadowText } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { layoutMessageBox, drawMessageBox } from './messageBox.js';
 import { ListPickerWindow, listPickerArtLoaded } from './listPicker.js';
@@ -100,6 +100,15 @@ export const ITEM_LABELS = Object.freeze({
 export const ROW_W = 75, ROW_W_SCROLLED = 71;
 export const ROW_H_PLAIN = 7, ROW_H_SECONDARY = 12;
 export const ROW_GAP = 5, ROW_START_Y = 2, ROWS_VISIBLE = 7;
+/** F170: EnchantmentListPicker's scroller (:22-26, :180-247) - it
+ *  APPEARS past seven rows (ShowScroller), is 4 wide at the panel's
+ *  right edge, and the wheel steps 8 pixels; no arrow buttons exist
+ *  on this control in DFU. */
+export const ENCH_SCROLLER_W = 4;
+export const ENCH_SCROLLER_STEP = 8;
+/** Scroller.TotalUnits: RefreshPanelLayout sums Size.y + panelSpacing
+ *  per row (:220-232). */
+export const enchContentH = (list) => rowLayout(list).reduce((a, r) => Math.max(a, r.y + r.h + ROW_GAP), 0);
 export const SECONDARY_INDENT = '  ';
 /** DaggerfallUI.DaggerfallForcedEnchantmentTextColor (:64). */
 export const FORCED_TEXT_COLOR = [186 / 255, 207 / 255, 125 / 255, 1];
@@ -144,9 +153,11 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && 
  *  RefreshPanelLayout walks (:222-231). A row is twelve tall when its
  *  effect has a parameter name to print underneath and seven when it
  *  does not, so the stride is not uniform. */
-export function rowLayout(list) {
+export function rowLayout(list, scrollPx = 0) {
   const out = [];
-  let y = ROW_START_Y;
+  // F170: Scroller_OnScroll starts panelPos.y at the vertical origin
+  // MINUS ScrollIndex (:284); an unscrolled call is unchanged.
+  let y = ROW_START_Y - scrollPx;
   for (const e of list) {
     const h = enchantmentParams(e.type).length > 0 ? ROW_H_SECONDARY : ROW_H_PLAIN;
     out.push({ y, h, entry: e });
@@ -163,6 +174,24 @@ export function rowLayout(list) {
  *   onClose()
  */
 export class ItemMakerWindow {
+  /** F170: MouseScrollUp/Down (:180-196) - wheel only, gated on
+   *  ShowScroller (> 7 rows), stepping scrollerStep (8) against the
+   *  SetScrollIndex clamp; routed to whichever list the cursor is
+   *  over, since DFU's wheel fires per component. */
+  hover(vx, vy) { this._mouse = [vx, vy]; }
+  wheel(dir) {
+    if (!dir) return;
+    const [vx, vy] = this._mouse;
+    for (const [rect, list, scrollKey] of [[ITEM_RECTS.powersList, this.powers, 'powersScroll'],
+      [ITEM_RECTS.sideEffectsList, this.sideEffects, 'sideEffectsScroll']]) {
+      if (!inRect(rect, vx, vy)) continue;
+      if (list.length <= ROWS_VISIBLE) return;   // ShowScroller (:182, :191)
+      const max = Math.max(0, enchContentH(list) - rect[3]);
+      this[scrollKey] = Math.max(0, Math.min(max, this[scrollKey] + Math.sign(dir) * ENCH_SCROLLER_STEP));
+      return;
+    }
+  }
+
   constructor(hooks) {
     this.hooks = hooks;
     this.done = false;
@@ -173,6 +202,10 @@ export class ItemMakerWindow {
     this.sideEffects = [];
     this.selectingPowers = true;
     this.scroll = 0;
+    // F170: one ScrollIndex per EnchantmentListPicker instance.
+    this.powersScroll = 0;
+    this.sideEffectsScroll = 0;
+    this._mouse = [0, 0];
     this.itemName = '';
     this.renaming = false;
     this.box = null;
@@ -351,10 +384,12 @@ export class ItemMakerWindow {
     if (inRect(ITEM_RECTS.selectedItem, vx, vy)) { if (this.selected) this._deselect(); return true; }
     if (inRect(ITEM_RECTS.nameItem, vx, vy)) { if (this.selected) this.renaming = true; return true; }
 
-    for (const [rect, list] of [[ITEM_RECTS.powersList, this.powers],
-      [ITEM_RECTS.sideEffectsList, this.sideEffects]]) {
+    for (const [rect, list, scrollKey] of [[ITEM_RECTS.powersList, this.powers, 'powersScroll'],
+      [ITEM_RECTS.sideEffectsList, this.sideEffects, 'sideEffectsScroll']]) {
       if (!inRect(rect, vx, vy)) continue;
-      const hit = rowLayout(list).find((r) => vy >= rect[1] + r.y && vy < rect[1] + r.y + r.h);
+      // F170: the hit maps through the live scroll - the C# panels
+      // carry their click at their SCROLLED position (:262-276).
+      const hit = rowLayout(list, this[scrollKey]).find((r) => vy >= rect[1] + r.y && vy < rect[1] + r.y + r.h);
       // "Can only click to remove parent panels, child panels are
       // removed by clicking on parent" (EnchantmentListPicker.cs:
       // 266-271) - a forced child is not the player's to take off.
@@ -397,11 +432,13 @@ export class ItemMakerWindow {
     }
 
     // the two enchantment lists
-    for (const [rect, list] of [[ITEM_RECTS.powersList, this.powers],
-      [ITEM_RECTS.sideEffectsList, this.sideEffects]]) {
+    for (const [rect, list, scrollKey] of [[ITEM_RECTS.powersList, this.powers, 'powersScroll'],
+      [ITEM_RECTS.sideEffectsList, this.sideEffects, 'sideEffectsScroll']]) {
       const scrolled = list.length > ROWS_VISIBLE;
-      for (const row of rowLayout(list)) {
-        if (row.y + row.h > rect[3]) break;
+      // F170: rows lay out through the live scroll and hide only when
+      // WHOLLY outside, either end (panel.Enabled = Overlaps, :289).
+      for (const row of rowLayout(list, this[scrollKey])) {
+        if (row.y + row.h <= 0 || row.y >= rect[3]) continue;
         // a FORCED row is the one thing this window colours
         // differently - it is how you can tell a row you did not pick
         const opts = row.entry.parentEnchantment !== 0 ? { color: FORCED_TEXT_COLOR } : undefined;
@@ -415,7 +452,14 @@ export class ItemMakerWindow {
           shadowText(renderer, font, SECONDARY_INDENT + enchantmentParamName(row.entry.type, row.entry.param),
             m, rect[0], rect[1] + row.y + 8, opts);
         }
-        void scrolled;
+      }
+      if (scrolled) {
+        // the slim scroller, 4 wide at the right edge (:208-214), its
+        // thumb the VerticalScrollBar formula the spellbook draws.
+        const total = enchContentH(list);
+        const th = Math.max(4, rect[3] * (rect[3] / total));
+        const ty = (this[scrollKey] * (rect[3] - th)) / Math.max(1, total - rect[3]);
+        drawRect(renderer, m, rect[0] + rect[2] - ENCH_SCROLLER_W, rect[1] + ty, ENCH_SCROLLER_W, th, [0.53, 0.53, 0.53, 1]);
       }
     }
 

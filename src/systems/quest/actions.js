@@ -41,7 +41,12 @@
 import { Symbol as QuestSymbol, symbolToSaveData, symbolFromSaveData } from './symbol.js';
 import { parseInt as questParseInt } from './parseUtils.js';
 import { staticMessagesTable, soundsTable, placesTable, spellsTable, diseasesTable } from './tables.js';
-import { dateFromSeconds } from '../gameDate.js';
+import { dateFromSeconds, SEASON_NAMES, seasonValue } from '../gameDate.js';   // Q5: the Season trigger
+import { SKILLS, skillValue, tallySkill } from '../skills.js';   // Q5: WhenSkillLevel/TrainPc
+import { SKILL_ADVANCEMENT_MULTIPLIER } from '../advancement.js';   // Q5: TrainPc's tally scale
+import { liveStat, FATIGUE_LOSS } from '../statMods.js';   // Q5: WhenAttributeLevel/TrainPc
+import { CRIMES } from '../court.js';   // Q5: SetPlayerCrime's enum
+import { randomRangeInclusive } from '../../formats/dfRandom.js';   // Q5: TrainPc's Range(10,21)
 import { makeItemPermanent } from './item.js';
 import { QUEST_MESSAGES } from './quest.js';
 import { customParseInt, isPlayerAtBuildingType, isPlayerAtDungeonType, MARKER_PREFERENCE } from './place.js';
@@ -2644,6 +2649,468 @@ export const READ_MAP_NOTE = 'Discovered the location of %map after studying a m
  *  RegisterActionTemplates whole and every corpus line resolves or
  *  pends exactly where DFU's scan sends it. Patterns are the DFU
  *  originals' match surface, group-free. */
+// ══ Q5 (2026-08-27): FOURTEEN GUARDS RETIRED ════════════════════
+// Each class is its .cs whole; the six still guarded below carry
+// their blocker in GUARD_PATTERNS' comment.
+
+/** WhenSkillLevel.cs - trigger: the LIVE skill at least N. The
+ *  skill name is the C# enum member's; an unknown name completes
+ *  and THROWS, verbatim. */
+export class WhenSkillLevel extends ActionTemplate {
+  static typeName = 'WhenSkillLevel';
+  get saveShape() { return [['skill'], ['minSkillValue']]; }
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.isTriggerCondition = true;
+    this.skill = -1;
+    this.minSkillValue = 0;
+  }
+  get pattern() { return /when skill (?<skillName>\w+) is at least (?<minSkillValue>\d+)/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new WhenSkillLevel(parentQuest);
+    const name = match.groups.skillName;
+    if (!(name in SKILLS)) {
+      this.setComplete();
+      throw new Error(`SkillLevel: Skill name ${name} is not a known Daggerfall skill`);
+    }
+    action.skill = SKILLS[name];
+    action.minSkillValue = questParseInt(match.groups.minSkillValue);
+    return action;
+  }
+  checkTrigger(_caller) {
+    const e = this.parentQuest.hooks?.playerEntity?.();
+    return !!e && skillValue(e, this.skill) >= this.minSkillValue;   // GetLiveSkillValue
+  }
+}
+
+/** WhenAttributeLevel.cs - trigger: the LIVE stat at least N. */
+export class WhenAttributeLevel extends ActionTemplate {
+  static typeName = 'WhenAttributeLevel';
+  get saveShape() { return [['attribute'], ['minAttributeValue']]; }
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.isTriggerCondition = true;
+    this.attribute = '';
+    this.minAttributeValue = 0;
+  }
+  get pattern() { return /when attribute (?<attributeName>\w+) is at least (?<minAttributeValue>\d+)/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new WhenAttributeLevel(parentQuest);
+    const name = match.groups.attributeName;
+    if (!STAT_KEYS_BY_ENUM[name]) {
+      this.setComplete();
+      throw new Error(`WhenAttributeLevel: Attribute name ${name} is not a known Daggerfall attribute`);
+    }
+    action.attribute = STAT_KEYS_BY_ENUM[name];
+    action.minAttributeValue = questParseInt(match.groups.minAttributeValue);
+    return action;
+  }
+  checkTrigger(_caller) {
+    const e = this.parentQuest.hooks?.playerEntity?.();
+    return !!e && liveStat(e, this.attribute) >= this.minAttributeValue;   // GetLiveStatValue
+  }
+}
+/** DFCareer.Stats enum names -> the port's stat keys. */
+const STAT_KEYS_BY_ENUM = Object.freeze({
+  Strength: 'strength', Intelligence: 'intelligence', Willpower: 'willpower',
+  Agility: 'agility', Endurance: 'endurance', Personality: 'personality',
+  Speed: 'speed', Luck: 'luck',
+});
+
+/** Season.cs - ALWAYS-ON trigger: the calendar's season. */
+export class SeasonCondition extends ActionTemplate {
+  static typeName = 'Season';
+  get saveShape() { return [['season']]; }
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.isTriggerCondition = true;
+    this.isAlwaysOnTriggerCondition = true;
+    this.season = '';
+  }
+  get pattern() { return /season (?<season>fall|summer|spring|winter)/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new SeasonCondition(parentQuest);
+    action.season = match.groups.season;
+    return action;
+  }
+  checkTrigger(_caller) {
+    const sec = this.parentQuest.hooks?.nowSeconds?.();
+    if (sec == null) return false;
+    return SEASON_NAMES[seasonValue(dateFromSeconds(sec))]?.toLowerCase() === this.season;
+  }
+}
+
+/** Weather.cs - ALWAYS-ON trigger. DFU derives the seven states from
+ *  WeatherManager's flag set because it HAS no single enum; the
+ *  port's weather IS the same seven-value enum (weather.js
+ *  WEATHER_TYPES, name for name), so the check is equality - one
+ *  law, two spellings, recorded. */
+export class WeatherCondition extends ActionTemplate {
+  static typeName = 'Weather';
+  get saveShape() { return [['weather']]; }
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.isTriggerCondition = true;
+    this.isAlwaysOnTriggerCondition = true;
+    this.weather = '';
+  }
+  get pattern() { return /weather (?<weather>sunny|cloudy|overcast|fog|rain|thunder|snow)/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new WeatherCondition(parentQuest);
+    action.weather = match.groups.weather;
+    return action;
+  }
+  checkTrigger(_caller) {
+    return this.parentQuest.hooks?.world?.currentWeatherKey?.() === this.weather;
+  }
+}
+
+/** Climate.cs - ALWAYS-ON trigger: the named climate, or `base` and
+ *  one of desert/mountain/temperate/swamp. The named arm compares
+ *  the MAPS.BSA climate index; the base arm folds it (Climates ->
+ *  ClimateBaseType, ClimateSwaps.FromAPIClimateBase's own grouping). */
+export class ClimateCondition extends ActionTemplate {
+  static typeName = 'Climate';
+  get saveShape() { return [['climate'], ['climateBase']]; }
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.isTriggerCondition = true;
+    this.isAlwaysOnTriggerCondition = true;
+    this.climate = -1;       // MapsFile.Climates value, or -1
+    this.climateBase = '';   // 'desert'|'mountain'|'temperate'|'swamp', or ''
+  }
+  get pattern() {
+    return /climate (?<climate>desert2|desert|mountainwoods|mountain|rainforest|ocean|swamp|subtropical|woodlands|hauntedwoodlands)|climate (?<base>base) (?<climatebase>desert|mountain|temperate|swamp)/;
+  }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new ClimateCondition(parentQuest);
+    if (match.groups.base) {
+      action.climateBase = match.groups.climatebase;
+    } else {
+      action.climate = QUEST_CLIMATES[match.groups.climate];
+      if (action.climate == null) throw new Error("Climate: Syntax is 'climate desert|desert2|mountain|mountainwoods|rainforest|ocean|swamp|subtropical|woodlands|hauntedwoodlands'");
+    }
+    return action;
+  }
+  checkTrigger(_caller) {
+    const idx = this.parentQuest.hooks?.world?.currentClimateIndex?.();
+    if (idx == null) return false;
+    if (this.climate !== -1) return idx === this.climate;
+    return CLIMATE_BASE_OF[idx] === this.climateBase;
+  }
+}
+/** The quest grammar's climate names -> MapsFile.Climates values. */
+const QUEST_CLIMATES = Object.freeze({
+  ocean: 223, desert: 224, desert2: 225, mountain: 226, rainforest: 227,
+  swamp: 228, subtropical: 229, mountainwoods: 230, woodlands: 231,
+  hauntedwoodlands: 232,
+});
+/** ClimateSwaps.FromAPIClimateBase: which base each climate folds to
+ *  (ocean rides temperate, DFU's own fold). */
+const CLIMATE_BASE_OF = Object.freeze({
+  223: 'temperate', 224: 'desert', 225: 'desert', 226: 'mountain',
+  227: 'swamp', 228: 'swamp', 229: 'desert', 230: 'mountain',
+  231: 'temperate', 232: 'temperate',
+});
+
+/** SetPlayerCrime.cs - CrimeCommitted through the ONE setter (the
+ *  V4 SuppressCrime gate rides the hook's implementation). An
+ *  unknown crime name completes and THROWS, verbatim. */
+export class SetPlayerCrimeAction extends ActionTemplate {
+  static typeName = 'SetPlayerCrime';
+  get saveShape() { return [['playerCrime']]; }
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.playerCrime = 0;
+  }
+  get pattern() { return /setplayercrime (?<crime>[a-zA-Z_]+)/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new SetPlayerCrimeAction(parentQuest);
+    const crime = match.groups.crime;
+    if (!(crime in CRIMES)) {
+      this.setComplete();
+      throw new Error(`SetPlayerCrime: Crime ${crime} is not a known crime from PlayerEntity.Crimes enum.`);
+    }
+    action.playerCrime = CRIMES[crime];
+    return action;
+  }
+  update(_caller) {
+    this.parentQuest.hooks?.setPlayerCrime?.(this.playerCrime);
+    this.setComplete();
+  }
+}
+
+/** PayMoney.cs - `gold` counts COINS alone, `money` the whole purse
+ *  (letters of credit included); the paid/not tasks start
+ *  accordingly and the amount is only taken when it covers. */
+export class PayMoney extends ActionTemplate {
+  static typeName = 'PayMoney';
+  get saveShape() { return [['paidTaskSymbol'], ['notTaskSymbol'], ['amount'], ['goldOnly']]; }
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.paidTaskSymbol = null;
+    this.notTaskSymbol = null;
+    this.amount = 0;
+    this.goldOnly = false;
+  }
+  get pattern() { return /pay (?<amount>\d+) (?<type>money|gold) do (?<paidTaskName>[a-zA-Z0-9_.]+) otherwise do (?<notTaskName>[a-zA-Z0-9_.]+)/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new PayMoney(parentQuest);
+    action.amount = questParseInt(match.groups.amount);
+    action.goldOnly = match.groups.type === 'gold';
+    action.paidTaskSymbol = new QuestSymbol(match.groups.paidTaskName);
+    action.notTaskSymbol = new QuestSymbol(match.groups.notTaskName);
+    return action;
+  }
+  update(_caller) {
+    const hooks = this.parentQuest.hooks;
+    if (this.amount > 0) {
+      const held = this.goldOnly ? (hooks?.getGoldPieces?.() ?? 0) : (hooks?.getGold?.() ?? 0);
+      if (held >= this.amount) {
+        if (this.goldOnly) hooks?.deductGoldPieces?.(this.amount);
+        else hooks?.deductGold?.(this.amount);
+        this.parentQuest.startTask(this.paidTaskSymbol);
+      } else {
+        this.parentQuest.startTask(this.notTaskSymbol);
+      }
+    }
+    this.setComplete();
+  }
+}
+
+/** JournalNote.cs - the message's tokens into the notebook's NOTES
+ *  page (the addNote seam Q3 mounted). */
+export class JournalNote extends ActionTemplate {
+  static typeName = 'JournalNote';
+  get saveShape() { return [['id']]; }
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.id = 0;
+  }
+  get pattern() { return /journal note (?<id>\d+)/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const note = new JournalNote(parentQuest);
+    note.id = questParseInt(match.groups.id);
+    return note;
+  }
+  update(_caller) {
+    const message = this.parentQuest.getMessage(this.id);
+    if (message) this.parentQuest.hooks?.world?.addNote?.(message.getTextTokens());
+    this.setComplete();
+  }
+}
+
+/** TrainPc.cs - free training: QuestSuccess, the QuestComplete
+ *  popup, then the training itself - the last-training stamp, THREE
+ *  hours raised, 180 minutes of fatigue, and a tally of
+ *  Range(10,21) x the skill's advancement multiplier. C# trains on
+ *  the popup's OnClose; the port's popup hook is fire-and-forget, so
+ *  the training runs in the same update - a deferral folded, the
+ *  outcome identical (recorded). */
+export class TrainPc extends ActionTemplate {
+  static typeName = 'TrainPc';
+  get saveShape() { return [['skill']]; }
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.skill = -1;
+  }
+  get pattern() { return /train pc (?<skillName>\w+)/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new TrainPc(parentQuest);
+    const name = match.groups.skillName;
+    if (!(name in SKILLS)) {
+      this.setComplete();
+      throw new Error(`TrainPc: Skill name ${name} is not a known Daggerfall skill`);
+    }
+    action.skill = SKILLS[name];
+    return action;
+  }
+  update(_caller) {
+    const q = this.parentQuest;
+    const hooks = q.hooks;
+    q.questSuccess = true;
+    const message = q.getMessage(QUEST_MESSAGES.QuestComplete);
+    if (message) hooks?.showPopup?.(q, message.getTextTokens(-1, q.rolls));
+    const e = hooks?.playerEntity?.();
+    if (e) {
+      const sec = hooks?.nowSeconds?.() ?? 0;
+      e.timeOfLastSkillTraining = Math.floor(sec / 60);   // ToClassicDaggerfallTime is classic MINUTES
+      hooks?.raiseTime?.(3 * 3600);                       // SecondsPerHour * 3
+      e.fatigue = Math.max(0, (e.fatigue ?? 0) - FATIGUE_LOSS.Default * 180);   // DefaultFatigueLoss * 180
+      const tally = randomRangeInclusive(10, 20) * (SKILL_ADVANCEMENT_MULTIPLIER[this.skill] ?? 1);
+      tallySkill(e, this.skill, tally);
+    }
+    this.setComplete();
+  }
+}
+
+/** KillFoe.cs - the Foe resource dies outright; a missing symbol
+ *  completes and THROWS, verbatim. */
+export class KillFoeAction extends ActionTemplate {
+  static typeName = 'KillFoe';
+  get saveShape() { return [['foeSymbol']]; }
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.foeSymbol = null;
+  }
+  get pattern() { return /kill foe (?<aFoe>[a-zA-Z0-9_.-]+)/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new KillFoeAction(parentQuest);
+    action.foeSymbol = new QuestSymbol(match.groups.aFoe);
+    return action;
+  }
+  update(_caller) {
+    const foe = this.parentQuest.getFoe(this.foeSymbol);
+    if (!foe) {
+      this.setComplete();
+      throw new Error(`Could not find Foe resource symbol ${this.foeSymbol?.name}`);
+    }
+    foe.kill();
+    this.setComplete();
+  }
+}
+
+/** UnrestrainFoe.cs - clears the restraint; a missing foe simply
+ *  waits (no throw, no complete - C# returns), verbatim. */
+export class UnrestrainFoe extends ActionTemplate {
+  static typeName = 'UnrestrainFoe';
+  get saveShape() { return [['foeSymbol']]; }
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.foeSymbol = null;
+  }
+  get pattern() { return /unrestrain foe (?<aFoe>[a-zA-Z0-9_.-]+)/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new UnrestrainFoe(parentQuest);
+    action.foeSymbol = new QuestSymbol(match.groups.aFoe);
+    return action;
+  }
+  update(_caller) {
+    const foe = this.parentQuest.getFoe(this.foeSymbol);
+    if (!foe) return;
+    foe.clearRestrained();
+    this.setComplete();
+  }
+}
+
+/** RunQuest.cs - start a child quest by name and WAIT on it: the
+ *  success task on QuestComplete+QuestSuccess, the failure task on
+ *  completion-without-success OR a quest the lists cannot serve. */
+export class RunQuest extends ActionTemplate {
+  static typeName = 'RunQuest';
+  get saveShape() { return [['questName'], ['successSymbol'], ['failureSymbol'], ['questStarted'], ['questUId']]; }
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.questName = '';
+    this.successSymbol = null;
+    this.failureSymbol = null;
+    this.questStarted = false;
+    this.questUId = null;
+    this._quest = null;   // transient; re-found by uid after a load
+  }
+  get pattern() { return /run quest (?<questName>\w+) then (?<successTask>[a-zA-Z0-9_.]+) or (?<failureTask>[a-zA-Z0-9_.]+)/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new RunQuest(parentQuest);
+    action.questName = match.groups.questName;
+    action.successSymbol = new QuestSymbol(match.groups.successTask);
+    action.failureSymbol = new QuestSymbol(match.groups.failureTask);
+    return action;
+  }
+  update(_caller) {
+    const hooks = this.parentQuest.hooks;
+    if (!this.questStarted) {
+      this._quest = hooks?.startQuest?.(this.questName) ?? null;
+      this.questUId = this._quest?.uid ?? null;
+      this.questStarted = true;
+    }
+    if (!this._quest) {
+      if (this.questUId != null) this._quest = hooks?.getQuest?.(this.questUId) ?? null;
+      if (!this._quest) {
+        this.parentQuest.startTask(this.failureSymbol);
+        this.setComplete();
+        return;
+      }
+    }
+    if (this._quest.questComplete) {
+      this.parentQuest.startTask(this._quest.questSuccess ? this.successSymbol : this.failureSymbol);
+      this.setComplete();
+      this._quest = null;
+    }
+  }
+}
+
+/** SpawnCityGuards.cs - PlayerEntity.SpawnCityGuards(immediate),
+ *  through the host door F036 gave a production caller. */
+export class SpawnCityGuardsAction extends ActionTemplate {
+  static typeName = 'SpawnCityGuards';
+  get saveShape() { return [['immediateSpawn']]; }
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.immediateSpawn = false;
+  }
+  get pattern() { return /spawncityguards (?<immediate>immediate)|spawncityguards/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new SpawnCityGuardsAction(parentQuest);
+    action.immediateSpawn = !!match.groups?.immediate;
+    return action;
+  }
+  update(_caller) {
+    this.parentQuest.hooks?.spawnCityGuards?.(this.immediateSpawn);
+    this.setComplete();
+  }
+}
+
+/** Enemies.cs - `makehostile` turns every loaded foe on the player;
+ *  `clear` removes them all. Host pools, host doors. */
+export class EnemiesAction extends ActionTemplate {
+  static typeName = 'Enemies';
+  get saveShape() { return [['clear']]; }
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.clear = false;
+  }
+  get pattern() { return /enemies (?<op>makehostile|clear)/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new EnemiesAction(parentQuest);
+    action.clear = match.groups.op === 'clear';
+    return action;
+  }
+  update(_caller) {
+    const hooks = this.parentQuest.hooks;
+    if (this.clear) hooks?.clearEnemies?.();
+    else hooks?.makeEnemiesHostile?.();
+    this.setComplete();
+  }
+}
+
 class PendingTrigger extends ActionTemplate {
   constructor(parentQuest, pattern) { super(parentQuest); this._pattern = pattern; }
   get pattern() { return this._pattern; }
@@ -2651,27 +3118,23 @@ class PendingTrigger extends ActionTemplate {
 }
 
 const GUARD_PATTERNS = Object.freeze({
-  // Trigger conditions ahead of the tranche
-  WhenSkillLevel: /when skill (\w+) is at least (\d+)/,
-  WhenAttributeLevel: /when attribute (\w+) is at least (\d+)/,
-  Season: /season (fall|summer|spring|winter)/,
-  Weather: /weather (sunny|cloudy|overcast|fog|rain|thunder|snow)/,
-  Climate: /climate (desert|desert2|mountain|mountainwoods|rainforest|ocean|swamp|subtropical|woodlands|hauntedwoodlands)|climate (base) (desert|mountain|temperate|swamp)/,
-  // Default actions
-  RunQuest: /run quest (\w+) then ([a-zA-Z0-9_.]+) or ([a-zA-Z0-9_.]+)/,
+  // Q5 (2026-08-27) retired fourteen rows into real classes above.
+  // The six left each name their blocker:
+  //  - CastEffectDo: needs the effect-template key registry the cast
+  //    windows use, bridged into the machine (spell arc)
+  //  - WorldUpdate: needs the world-data variant system (no
+  //    block/building variant swaps exist in the port)
+  //  - ClickedFoe: needs the foe-click surface (foes have no click
+  //    door; NPC clicks have one, foe clicks do not)
+  //  - ChangeFoeInfighting / ChangeFoeTeam: need MobileTeams combat
+  //    (the completion analysis' standing item five)
+  //  - PromptMulti: needs a multi-button prompt window (the host's
+  //    prompt door is Yes/No)
   CastEffectDo: /cast ([a-zA-Z0-9_.-]+) effect do ([a-zA-Z0-9_.-]+)/,
   WorldUpdate: /worldupdate (location) at (\d+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (locationnew) named (.+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (block) ([a-zA-Z0-9_.-]+) at (\d+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (blockAll) ([a-zA-Z0-9_.-]+) variant ([a-zA-Z0-9_.-]+)|worldupdate (building) ([a-zA-Z0-9_.-]+) (\d+) at (\d+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (buildingAll) ([a-zA-Z0-9_.-]+) (\d+) variant ([a-zA-Z0-9_.-]+)/,
-  Enemies: /enemies (makehostile|clear)/,
   ClickedFoe: /clicked foe ([a-zA-Z0-9_.-]+) and at least (\d+) gold otherwise do ([a-zA-Z0-9_.]+)|clicked foe ([a-zA-Z0-9_.-]+) say (\d+)|clicked foe ([a-zA-Z0-9_.-]+) say (\w+)|clicked foe ([a-zA-Z0-9_.-]+)/,
-  KillFoe: /kill foe ([a-zA-Z0-9_.-]+)/,
-  PayMoney: /pay (\d+) (money|gold) do ([a-zA-Z0-9_.]+) otherwise do ([a-zA-Z0-9_.]+)/,
-  JournalNote: /journal note (\d+)/,
   ChangeFoeInfighting: /change foe ([a-zA-Z0-9_.-]+) infighting ([a-zA-Z]+)/,
   ChangeFoeTeam: /change foe ([a-zA-Z0-9_.-]+) team (\d+)|change foe ([a-zA-Z0-9_.-]+) team (\w+)/,
-  SetPlayerCrime: /setplayercrime ([a-zA-Z_]+)/,
-  SpawnCityGuards: /spawncityguards (immediate)?/,
-  UnrestrainFoe: /unrestrain foe ([a-zA-Z0-9_.-]+)/,
-  TrainPc: /train pc (\w+)/,
   PromptMulti: /promptmulti (\d+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+)|promptmulti (\d+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+)|promptmulti (\d+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+)/,
 });
 const guard = (name) => new PendingTrigger(null, GUARD_PATTERNS[name]);
@@ -2687,8 +3150,8 @@ export function defaultActionTemplates() {
     new WhenPcEntersExits(null),
     new WhenNpcIsAvailable(null),
     new WhenReputeWith(null),
-    guard('WhenSkillLevel'),
-    guard('WhenAttributeLevel'),
+    new WhenSkillLevel(null),
+    new WhenAttributeLevel(null),
     new WhenTask(null),
     new ClickedNpc(null),
     new ClickedItem(null),
@@ -2698,9 +3161,9 @@ export function defaultActionTemplates() {
     new TotingItemAndClickedNpc(null),
     new DailyFrom(null),
     new DroppedItemAtPlace(null),
-    guard('Season'),
-    guard('Weather'),
-    guard('Climate'),
+    new SeasonCondition(null),
+    new WeatherCondition(null),
+    new ClimateCondition(null),
     // Default actions
     new EndQuest(null),
     new Prompt(null),
@@ -2728,7 +3191,7 @@ export function defaultActionTemplates() {
     new DropFace(null),
     new GetItem(null),
     new StartQuest(null),
-    guard('RunQuest'),
+    new RunQuest(null),
     new UnsetTask(null),
     new ChangeReputeWith(null),
     new ReputeExceedsDo(null),
@@ -2754,18 +3217,18 @@ export function defaultActionTemplates() {
     new MuteNpc(null),
     new DestroyNpc(null),
     guard('WorldUpdate'),
-    guard('Enemies'),
+    new EnemiesAction(null),
     guard('ClickedFoe'),
-    guard('KillFoe'),
-    guard('PayMoney'),
-    guard('JournalNote'),
+    new KillFoeAction(null),
+    new PayMoney(null),
+    new JournalNote(null),
     guard('ChangeFoeInfighting'),
     guard('ChangeFoeTeam'),
     new PlaySong(null),
-    guard('SetPlayerCrime'),
-    guard('SpawnCityGuards'),
-    guard('UnrestrainFoe'),
-    guard('TrainPc'),
+    new SetPlayerCrimeAction(null),
+    new SpawnCityGuardsAction(null),
+    new UnrestrainFoe(null),
+    new TrainPc(null),
     guard('PromptMulti'),
   ];
 }

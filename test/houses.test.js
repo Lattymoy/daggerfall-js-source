@@ -323,10 +323,11 @@ test('H2: the window lists, scrolls, selects and buys', async () => {
   const { BankPurchaseWindow, priceRow, LIST_ROWS } = await import('../src/ui/bankPurchaseWindow.js');
   const market = Array.from({ length: 14 }, (_, i) => ({ buildingKey: i + 1, meshRadius: 10 + i }));
   let bought = null;
+  let shown = null;
   const win = new BankPurchaseWindow({
     houses: () => market,
     buy: (h) => { bought = h; return { result: TRANSACTION_RESULT.PURCHASED_HOUSE, amount: housePrice(h.meshRadius) }; },
-    rows: () => [{ text: 'Congratulations.', center: true }],
+    showResult: (result, amount) => { shown = { result, amount }; },
     onClose: () => {},
   });
 
@@ -336,7 +337,7 @@ test('H2: the window lists, scrolls, selects and buys', async () => {
   assert.equal(win.selected, -1);
   win.input('Enter');
   assert.equal(bought, null, 'BUY with no selection buys nothing and says nothing');
-  assert.equal(win.box, null);
+  assert.equal(win.done, false, 'and the list stays open - the guard is BEFORE CloseWindow');
 
   // ten rows displayed, the price row verbatim
   assert.equal(win.rows().length, LIST_ROWS);
@@ -356,29 +357,33 @@ test('H2: the window lists, scrolls, selects and buys', async () => {
   assert.equal(win.selected, LIST_ROWS + 1);
   assert.ok(win.selected >= win.scroll && win.selected < win.scroll + LIST_ROWS, 'the pick stays on screen');
 
-  // ...and BUY takes the SELECTED house, not the first
+  // ...and BUY takes the SELECTED house, not the first. AUDIT 26
+  // F138: CloseWindow() runs BEFORE the outcome is known (:386), so
+  // the list is ALREADY closed and the result box is the banking
+  // window's own GeneratePopup, through the showResult hook.
   win.input('Enter');
   assert.equal(bought, market[LIST_ROWS + 1]);
-  assert.ok(win.box, 'the result is a message');
-  assert.equal(win.box.bought, true);
-  // a completed purchase closes the market with the box
-  win._dismissBox();
-  assert.equal(win.done, true);
+  assert.equal(win.done, true, 'the list closed at buy time, not at box-dismiss');
+  assert.equal(shown.result, TRANSACTION_RESULT.PURCHASED_HOUSE);
+  assert.equal(shown.amount, housePrice(10 + LIST_ROWS + 1));
 });
 
-test('H2: a refused purchase leaves the window open', async () => {
+test('H2: a refused purchase closes the list too - the message shows over the BANK (F138)', async () => {
+  // BuyButton_OnMouseClick (:386-390) closes the purchase popup on
+  // EVERY outcome; "stay in the market on a refusal" was never DFU's
+  // law - the old pin here had encoded the port's invention.
   const { BankPurchaseWindow } = await import('../src/ui/bankPurchaseWindow.js');
+  let shown = null;
   const win = new BankPurchaseWindow({
     houses: () => [{ buildingKey: 1, meshRadius: 10 }],
     buy: () => ({ result: TRANSACTION_RESULT.NOT_ENOUGH_GOLD, amount: 999 }),
-    rows: () => [{ text: 'You do not have enough gold.', center: true }],
+    showResult: (result, amount) => { shown = { result, amount }; },
     onClose: () => {},
   });
   win.input('ArrowDown');
   win.input('Enter');
-  assert.equal(win.box.bought, false);
-  win._dismissBox();
-  assert.equal(win.done, false, 'you stay in the market to look at something cheaper');
+  assert.equal(win.done, true, 'refusal or not, the list is gone');
+  assert.equal(shown.result, TRANSACTION_RESULT.NOT_ENOUGH_GOLD);
 });
 
 test('H2: the bank routes BUY HOUSE to the window, and the refusals stay the law\'s', () => {

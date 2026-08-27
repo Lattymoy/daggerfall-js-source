@@ -232,9 +232,13 @@ export function canRest({
 }
 export const REST_PROMPT = 'Rest how many hours : ';
 /** TimedRestPrompt's range arm (:753-757): past 99 hours DFU refuses
- *  with TEXT.RSC 26 and the prompt STAYS UP. The port used to make
- *  this unreachable by capping the field at two digits, which is a
- *  cap DFU does not have - its MaxCharacters is 8 (:621, :702). */
+ *  with TEXT.RSC 26 as a NEW box over the SELECTION page - the input
+ *  box already closed itself before the handler ran
+ *  (DaggerfallInputMessageBox.cs:298-304); AUDIT 26 F144 corrected
+ *  this comment's old claim that the prompt "stays up", which had
+ *  licensed a retry that skipped CanRest. The port also used to make
+ *  the arm unreachable by capping the field at two digits, a cap DFU
+ *  does not have - its MaxCharacters is 8 (:621, :702). */
 export const CANNOT_REST_MORE_THAN_99_HOURS_ID = 26;
 export const MAX_REST_HOURS = 99;
 /** DaggerfallInputMessageBox.TextBox.MaxCharacters on both prompts

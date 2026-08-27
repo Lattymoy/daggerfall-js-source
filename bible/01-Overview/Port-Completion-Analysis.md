@@ -8,7 +8,7 @@ against that day's tree (suite 3761/0, src 127,925 loc / 404 files,
 tests 94,415 loc / 387 files). The five days between the snapshot and
 the re-verification closed MOST of this page: every row struck below
 names the slice that shipped it, and the three verified counts are
-re-run (quest actions 62 of 82 with 20 pended; macros 93 of 216
+re-run (quest actions 76 of 82 with 6 pended since Q5; macros 93 of 216
 present, 123 missing; effect classes EFFECTIVELY COMPLETE - the 33
 .cs files unnamed in src are the per-attribute
 Drain/Fortify/Heal/Transfer family this page already records as
@@ -31,8 +31,17 @@ The HONEST still-open list as of the re-verification:
    answers), the spell-info MCP (%1am..%clm/%mpw), the bank MCP
    (%ml/%r1-5) - each its arc's, reached through the error ladder
    until then.
-4. **The 20 pended quest actions** (GUARD_PATTERNS in
-   systems/quest/actions.js - PlaySong left the list 2026-08-25).
+4. ~~The 20 pended quest actions~~ **SIX pended quest actions (Q5
+   2026-08-27)**: fourteen guards retired in one slice (the skill/
+   attribute/season/weather/climate conditions, SetPlayerCrime,
+   PayMoney, JournalNote, TrainPc, KillFoe, UnrestrainFoe, RunQuest,
+   SpawnCityGuards, Enemies - pinned in test/questactions5.test.js,
+   including DFU's own RestrainFoe-shadows-UnrestrainFoe parse
+   quirk). The six left each name their blocker in GUARD_PATTERNS:
+   CastEffectDo (effect-template registry lookup by key), WorldUpdate
+   (world-variant system), ClickedFoe (no foe-click door),
+   ChangeFoeInfighting + ChangeFoeTeam (item 5's MobileTeams combat),
+   PromptMulti (multi-button prompt window).
 5. **Enemy infighting / MobileTeams combat / PlayerAlly**
    (ApplyDamageToNonPlayer) - ENEMY_BASICS carries every team string
    and nothing fights over them; this is also what the two artifact
@@ -78,16 +87,22 @@ exclusions.
 Citation is a WEAK signal - it proves a module claimed the source, not
 that it ported it. The three verified counts below are the strong ones.
 
-**Quest actions: ~~61~~ 62 of 82 implemented.** The other ~~21~~ 20 are
-`PendingTrigger` guards (`systems/quest/actions.js`) - the line matches its
-verbatim pattern and PENDS, exactly as DFU sends an unregistered line, and
-nothing runs: `CastEffectDo`, `ChangeFoeInfighting`, `ChangeFoeTeam`,
-`ClickedFoe`, `Climate`, `Enemies`, `JournalNote`, `KillFoe`, `PayMoney`,
-~~`PlaySong`,~~ `PromptMulti`, `RunQuest`, `Season`, `SetPlayerCrime`,
-`SpawnCityGuards`, `TrainPc`, `UnrestrainFoe`, `Weather`,
-`WhenAttributeLevel`, `WhenSkillLevel`, `WorldUpdate`. **PlaySong SHIPPED
-2026-08-25** - a real template over `systems/songFiles.js` (SongFiles.cs +
-EnumToFilename in the archive's spelling); its Ledger row is struck.
+**Quest actions: ~~61~~ ~~62~~ 76 of 82 implemented.** The other
+~~21~~ ~~20~~ SIX are `PendingTrigger` guards
+(`systems/quest/actions.js`) - the line matches its verbatim pattern
+and PENDS, exactly as DFU sends an unregistered line, and nothing
+runs: `CastEffectDo`, `ChangeFoeInfighting`, `ChangeFoeTeam`,
+`ClickedFoe`, `PromptMulti`, `WorldUpdate` - each guard now carries
+its blocker in a comment. **PlaySong SHIPPED 2026-08-25** - a real
+template over `systems/songFiles.js` (SongFiles.cs + EnumToFilename
+in the archive's spelling); its Ledger row is struck. **FOURTEEN MORE
+SHIPPED 2026-08-27 (Q5)**: ~~`Climate`~~, ~~`Enemies`~~,
+~~`JournalNote`~~, ~~`KillFoe`~~, ~~`PayMoney`~~, ~~`RunQuest`~~,
+~~`Season`~~, ~~`SetPlayerCrime`~~, ~~`SpawnCityGuards`~~,
+~~`TrainPc`~~, ~~`UnrestrainFoe`~~, ~~`Weather`~~,
+~~`WhenAttributeLevel`~~, ~~`WhenSkillLevel`~~ - real templates with
+host doors through world.js (Quest-Arc's Q5 record;
+test/questactions5.test.js).
 
 **Macros: 83 of MacroHelper's 217 appear anywhere in `src/`; 134 do not.**
 The missing set is dominated by the biography/class-question block

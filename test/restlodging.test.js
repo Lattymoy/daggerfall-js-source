@@ -333,9 +333,15 @@ test('S40 RestWindow: LOITER is never gated and never moves the player', () => {
   // a mutant raising the cap to 999 passed the whole suite.
   assert.equal(w.value, PROMPT_INITIAL, 'the field is PREFILLED with "0" (:700)');
   w.input('backspace'); w.input('char:9'); w.input('confirm');
-  assert.equal(w.state, 'hours', 'a 9-hour loiter is refused, not started');
+  // AUDIT 26 F144: the refusal is a box over the SELECTION page - the
+  // prompt self-closed before the handler ran, so the retry routes
+  // back through the Loiter button for a FRESH prompt.
+  assert.equal(w.state, 'hoursRefused', 'a 9-hour loiter is refused, not started');
   assert.deepEqual(w.notice, cannotLoiterLines());
-  assert.equal(w.value, PROMPT_INITIAL, 'and the field resets to "0" for another try');
+  w.input('confirm');
+  assert.equal(w.state, 'selection', 'dismissing lands on the buttons, not a live field');
+  w.input('char:3');
+  assert.equal(w.value, PROMPT_INITIAL, 'a fresh prompt, prefilled with "0"');
   w.input('backspace'); w.input('char:2'); w.input('confirm');
   assert.equal(w.state, 'resting');
   assert.deepEqual(crimes, []);
@@ -1482,13 +1488,21 @@ test('S40 RestWindow: the hours page - PREFILLED with 0, and the 99-hour arm is 
   assert.equal(wide.value, '77777777');
   assert.equal(wide.value.length, PROMPT_MAX_CHARS);
 
-  // ...and the 99-hour refusal is what stops a longer rest, with the
-  // prompt STAYING UP and the field reset, exactly as :753-757.
+  // ...and the 99-hour refusal is what stops a longer rest. AUDIT 26
+  // F144: TEXT.RSC 26 is a NEW box over the SELECTION page - the
+  // input box self-closed before the handler ran (:753-757 show a
+  // MessageBox and return; the old comment here misread that as the
+  // prompt staying up). The retry goes back through the While button,
+  // which re-runs the whole gate, CanRest included.
   wide.input('confirm');
-  assert.equal(wide.state, 'hours', 'refused, not started');
+  assert.equal(wide.state, 'hoursRefused', 'refused, not started');
   assert.deepEqual(wide.notice, [`text:${CANNOT_REST_MORE_THAN_99_HOURS_ID}`]);
-  assert.equal(wide.value, PROMPT_INITIAL);
   assert.equal(wide.session, null);
+  wide.input('confirm');
+  assert.equal(wide.state, 'selection', 'the refusal dismisses to the buttons');
+  wide.input('char:1');
+  assert.equal(wide.state, 'hours', 'a fresh While press, a fresh prompt');
+  assert.equal(wide.value, PROMPT_INITIAL);
   // 99 exactly is allowed - the arm is `time > 99`.
   wide.input('backspace'); wide.input('char:9'); wide.input('char:9');
   wide.input('confirm');

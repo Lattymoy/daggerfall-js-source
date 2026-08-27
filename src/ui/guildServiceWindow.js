@@ -36,7 +36,9 @@
 // are the port's own (Ledger A) and are named as such.
 
 import { loadImg, nativeMetrics, drawImg, shadowText, DEFAULT_TEXT_COLOR } from './nativePanel.js';
-import { drawMenuBackdrop } from './chargenArt.js';
+import { drawScreenDimBackdrop } from './chargenArt.js';
+import { audio } from '../systems/audio.js';   // F141: the ButtonClick roster
+import { SOUND } from '../systems/soundClips.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
 import { drawText, measureText } from './text.js';
 import { serviceLabel } from '../systems/guildServiceFlow.js';
@@ -158,18 +160,26 @@ export class GuildServiceWindow {
       this._dismissTop();
       return true;
     }
-    if (!this.hooks.member() && inRect(GUILD_RECTS.join, vx, vy)) { this._join(); return true; }
-    if (inRect(GUILD_RECTS.talk, vx, vy)) { this.hooks.onTalk?.(); this._close(); return true; }
-    if (inRect(GUILD_RECTS.service, vx, vy)) { this._service(); return true; }
-    if (inRect(GUILD_RECTS.exit, vx, vy)) { this._close(); return true; }
+    // F141: PlayOneShot(SoundClips.ButtonClick) heads every handler -
+    // Join (:501), Talk (:293), Service (:457), Exit (:477).
+    if (!this.hooks.member() && inRect(GUILD_RECTS.join, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._join(); return true; }
+    if (inRect(GUILD_RECTS.talk, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.hooks.onTalk?.(); this._close(); return true; }
+    if (inRect(GUILD_RECTS.service, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._service(); return true; }
+    if (inRect(GUILD_RECTS.exit, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return true; }
     return false;
   }
 
   draw(renderer, canvas, font) {
     if (!_art) { this._close(); return; }
     const m = nativeMetrics(canvas);
-    // AUDIT 19 F2: DaggerfallBaseWindow's parentPanel is opaque BLACK.
-    drawMenuBackdrop(renderer, canvas);
+    // AUDIT 26 F136: this window's OWN ctor overrides the base black -
+    // `ParentPanel.BackgroundColor = Color.clear` (:99) - and
+    // DaggerfallPopupWindow's ScreenDimColor is hard-clear (:26-34,
+    // the setter discards its value), so the room stays visible behind
+    // the 130x51 panel. The AUDIT 19 comment here cited the base
+    // default this ctor overrides - the defect class AUDIT 24 fixed on
+    // five sibling windows, with this one missed.
+    drawScreenDimBackdrop(renderer, canvas);
     const member = this.hooks.member();
     drawImg(renderer, member ? _art.member : _art.base, m, PANEL_X, PANEL_Y);
     // The service label: centred in the service button, +1 down, and

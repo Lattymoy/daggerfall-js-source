@@ -53,6 +53,10 @@ export const TALK_RECTS = Object.freeze({
   toneNormal: [258, 28, 6, 6],
   toneBlunt: [258, 38, 6, 6],
   topicUp: [102, 69, 9, 16],
+  // F159: rectButtonConversationUp/Down (:226-227) - the port had no
+  // conversation arrows at all.
+  conversationUp: [303, 64, 9, 16],
+  conversationDown: [303, 176, 9, 16],
   topicDown: [102, 161, 9, 16],
 });
 // ListBox verbatim (the 17d UI audit): row height = FONT0003's
@@ -78,6 +82,8 @@ export const ANSWER_COLOR = [227 / 255, 223 / 255, 0, 1];   // DaggerfallAnswerT
 export const PLAYER_SAYS_RECT = Object.freeze([123, 8, 124, 38]);
 export const TALK_TOGGLE_COLOR = [162 / 255, 36 / 255, 12 / 255, 1];   // DaggerfallTalkWindow.toggleColor
 export const TOPIC_ARROW_SCROLL = 5;   // ButtonTopicUp/Down_OnMouseClick: ScrollIndex -/+= 5
+/** ButtonConversationUp/Down_OnMouseClick (:1442-1452): 5 pixels. */
+export const CONVERSATION_ARROW_SCROLL = 5;
 
 /** VerticalScrollBar.SetScrollIndex (VerticalScrollBar.cs:187-198):
  *  clamp to [0, max(0, totalUnits - displayUnits)]. */
@@ -127,6 +133,15 @@ export class NativeTalkWindow {
     this.topics = [];                // current list rows
     this.topicMode = 'none';         // none | categories | buildings | topics | work
     this.scroll = 0;
+    // F159: the conversation's PERSISTENT scroll -
+    // verticalScrollBarConversation.ScrollIndex. null = pin to the
+    // newest row at the next draw, which is UpdateScrollBarConversation
+    // (:820-828) run from the content-changing sites, NOT every frame;
+    // the old draw() recomputed the pin per frame, so the player could
+    // never read back up.
+    this.conversationScroll = null;
+    this._conversationContentH = 0;
+    this._mouse = [0, 0];            // for the wheel's per-panel routing
     this._category = null;
     // MERGE (the S-A lane's shape): selectedTalkCategory persists -
     // SetTalkModeWhereIs re-runs SetTalkCategory(selectedTalkCategory)
@@ -184,6 +199,7 @@ export class NativeTalkWindow {
     if (this.topicMode !== 'work' || !this.hooks.askWork) return;
     this.conversation.push({ text: this.question, kind: 'question' });
     this.conversation.push({ text: this.hooks.askWork(), kind: 'answer' });
+    this.conversationScroll = null;   // F159: UpdateScrollBarConversation on new content
   }
   /** The index of the first row ListBox.Draw renders at this pixel
    *  scroll - what the port's digit accelerators address. */
@@ -209,9 +225,29 @@ export class NativeTalkWindow {
       this.question = this.hooks.question?.(it) ?? `Where is ${it.label ?? it.name}?`;
       this.conversation.push({ text: this.question, kind: 'question' });
       this.conversation.push({ text: this.hooks.answer(it), kind: 'answer' });
+      this.conversationScroll = null;   // F159
     }
   }
   /** VerticalScrollBar.ScrollIndex +/- dPx, clamped. */
+  /** F159: the conversation twin of _scrollBy - the clamp is
+   *  SetScrollIndex against the content measured at the last draw. */
+  _scrollConversationBy(dPx) {
+    const pinned = conversationScroll(this._conversationContentH, TALK_RECTS.conversation[3]);
+    const cur = this.conversationScroll ?? pinned;
+    this.conversationScroll = clampScrollPixels(cur + dPx, this._conversationContentH, TALK_RECTS.conversation[3]);
+  }
+
+  /** F159: the wheel - ListBox.MouseScrollUp/Down fire per COMPONENT
+   *  in DFU (:514-526), one unit (= one pixel, PixelWise) per notch;
+   *  the port routes by the cursor's panel. hover() feeds it. */
+  hover(vx, vy) { this._mouse = [vx, vy]; }
+  wheel(dir) {
+    if (!dir) return;
+    const [vx, vy] = this._mouse;
+    if (inRect(TALK_RECTS.conversation, vx, vy)) this._scrollConversationBy(Math.sign(dir));
+    else if (inRect(TALK_RECTS.topicList, vx, vy)) this._scrollBy(Math.sign(dir));
+  }
+
   _scrollBy(dPx) {
     this.scroll = clampScrollPixels(this.scroll + dPx, this.topics.length * TOPIC_ROW_H, TALK_RECTS.topicList[3]);
   }
@@ -253,6 +289,9 @@ export class NativeTalkWindow {
     if (inRect(R.toneBlunt, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.hooks.setTone(2); return true; }
     if (inRect(R.topicUp, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollBy(-TOPIC_ARROW_SCROLL); return true; }
     if (inRect(R.topicDown, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollBy(TOPIC_ARROW_SCROLL); return true; }
+    // F159: the conversation arrows (:1442-1452) - 5 pixels a click.
+    if (inRect(R.conversationUp, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollConversationBy(-CONVERSATION_ARROW_SCROLL); return true; }
+    if (inRect(R.conversationDown, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollConversationBy(CONVERSATION_ARROW_SCROLL); return true; }
     // ListBox.MouseClick's PixelWise branch: the hit row is found at
     // scrollIndex + clickY, not at the visible-row ordinal.
     if (inRect(R.topicList, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._pickIndex(Math.floor((vy - R.topicList[1] + this.scroll) / TOPIC_ROW_H)); return true; }
@@ -335,7 +374,13 @@ export class NativeTalkWindow {
     // its last row. The port anchored every conversation to the bottom.
     const heights = entries.map((e) => e.lines.length * ROW_H);
     const contentH = heights.reduce((a, b) => a + b, 0) + Math.max(0, entries.length - 1) * ROW_SPACING;
-    const scroll = conversationScroll(contentH, R.conversation[3]);
+    // F159: null = new content since the last draw - pin to the
+    // newest row ONCE (UpdateScrollBarConversation), then hold the
+    // player's own position between frames.
+    this._conversationContentH = contentH;
+    if (this.conversationScroll == null) this.conversationScroll = conversationScroll(contentH, R.conversation[3]);
+    else this.conversationScroll = clampScrollPixels(this.conversationScroll, contentH, R.conversation[3]);
+    const scroll = this.conversationScroll;
     for (const { index, y } of layoutPixelRows(heights, scroll, R.conversation[3], ROW_SPACING)) {
       const e = entries[index];
       const newest = index === entries.length - 1;

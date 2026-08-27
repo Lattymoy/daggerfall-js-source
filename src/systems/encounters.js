@@ -32,9 +32,14 @@ const CLIMATE_TABLE = new Map([
   [CLIMATES.Swamp, [32, 33, 34]], [CLIMATES.MountainWoods, [32, 33, 34]], [CLIMATES.Woodlands, [32, 33, 34]],
   [CLIMATES.HauntedWoodlands, [35, 36, 37]],
 ]);
-// The building-type table indexes (:1348-1364). BuildingTypes:
-// GuildHall 10, Temple 11, House1 17, House2 18, House3 19, Palace 15.
-const BUILDING_TABLE = new Map([[10, 40], [11, 41], [15, 42], [17, 42], [18, 43], [19, 44]]);
+// The building-type table indexes (:1351-1363). AUDIT 26 F081: the
+// old map was keyed by GUESSED enum values (GuildHall "10", Temple
+// "11", Palace "15") - DFLocation.cs:106-133 and the port's own
+// buildingNames.js say GuildHall 11, Temple 14, Palace 16 - so the
+// Library took the guild-hall list, the GuildHall the temple list,
+// the Tavern the palace list, and Temple and Palace fell to the
+// default 39. Latent until interior spawning wires ctx.buildingType.
+const BUILDING_TABLE = new Map([[11, 40], [14, 41], [16, 42], [17, 42], [18, 43], [19, 44]]);
 
 // PlayerEntity.IntermittentEnemySpawn:549-552 - minimum spawn
 // distances from the player by place.

@@ -146,6 +146,14 @@ export function createQuestBridge(ctx) {
     playerName: () => ctx.playerEntity?.name ?? null,
     playerRaceName: () => ctx.playerRaceName?.() ?? null,
     playerEntity: ctx.playerEntity ?? null,   // M-X: the macro globals (vitals, %ski, the biography modifiers)
+    // Q5: the un-pended actions' host doors
+    setPlayerCrime: (crime) => ctx.setPlayerCrime?.(crime),
+    getGoldPieces: () => ctx.getGoldPieces?.() ?? 0,
+    deductGoldPieces: (n) => ctx.deductGoldPieces?.(n),
+    raiseTime: (seconds) => ctx.raiseTime?.(seconds),
+    spawnCityGuards: (immediate) => ctx.spawnCityGuards?.(immediate),
+    makeEnemiesHostile: () => ctx.makeEnemiesHostile?.(),
+    clearEnemies: () => ctx.clearEnemies?.(),
     getReputation: (fid) => ctx.getReputation?.(fid) ?? 0,
     getGold: () => ctx.getGold?.() ?? 0,
     deductGold: (n) => ctx.deductGold?.(n),

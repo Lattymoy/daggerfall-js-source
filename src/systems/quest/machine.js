@@ -371,6 +371,15 @@ export class QuestMachine {
       // date/time block reads.
       playerEntity: () => this.deps.playerEntity ?? null,
       nowSeconds: () => this.deps.nowSeconds?.() ?? null,
+      // Q5: the fourteen un-pended actions' doors
+      setPlayerCrime: (crime) => this.deps.setPlayerCrime?.(crime),
+      getGoldPieces: () => this.deps.getGoldPieces?.() ?? 0,
+      deductGoldPieces: (n) => this.deps.deductGoldPieces?.(n),
+      raiseTime: (seconds) => this.deps.raiseTime?.(seconds),
+      spawnCityGuards: (immediate) => this.deps.spawnCityGuards?.(immediate),
+      makeEnemiesHostile: () => this.deps.makeEnemiesHostile?.(),
+      clearEnemies: () => this.deps.clearEnemies?.(),
+      getQuest: (uid) => this.getQuest(uid),
       addFactionListener: (factionID, owner) => this.addFactionListener(factionID, owner),
       removeFactionListener: (factionID) => this.removeFactionListener(factionID),
       activeFactionPersons: (factionID) => this.activeFactionPersons(factionID),

@@ -36,9 +36,11 @@ test('X4 nearby: the group bit is the CAREER switch, not the port\'s affinity fi
   assert.equal(g(40), NEARBY.Enemy | NEARBY.Animal, 'Dragonling_Alternate is ANIMAL (classic grouped it as undead)');
   // the four atronachs are an EXPLICIT None - Enemy, no group bit
   for (const at of [35, 36, 37, 38]) assert.equal(g(at), NEARBY.Enemy, `atronach ${at} takes no group bit`);
-  // and a CLASS enemy is absent from the switch entirely
-  assert.equal(g(128), NEARBY.Enemy, 'a human bandit is invisible to a Humanoid scan');
-  assert.equal(g(146), NEARBY.Enemy);
+  // AUDIT 26 F080: a CLASS enemy reaches the switch through its
+  // careerIndex (ID - 128) and COLLIDES into a monster career's group
+  // - the old pin here asserted the None answer the audit refuted.
+  assert.equal(g(128), NEARBY.Enemy | NEARBY.Animal, 'the Mage rides Rat\'s slot');
+  assert.equal(g(146), NEARBY.Enemy | NEARBY.Undead, 'the City Watch rides Ghost\'s');
 });
 
 test('X4 nearby: a civilian is Humanoid and NEVER Enemy; the Magic bit is any live effect', () => {

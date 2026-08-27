@@ -73,19 +73,37 @@ export function resolveNameplates(input) {
       const ySize = p.h / 2 + q.h / 2;
       const [dp, dq] = dirsOf(p, q);
       if (q.count === 1) {
-        // the pair fix (:1192-1252): half-shift both, else 2x one alone
+        // the pair fix (:1190-1275). Arm 1 (:1201) half-shifts BOTH,
+        // its two checks genuinely run together - C# mutates nothing
+        // between them.
         const bias = (ySize - dy) * 0.5;
         if (clearOfPlaced(p, dp * bias, plates, q) && clearOfPlaced(q, dq * bias, plates, p)) {
           p.offY += dp * bias; q.offY += dq * bias;
           p.placed = q.placed = true;
-        } else if (clearOfPlaced(p, dp * bias * 2, plates, q) && clearOfPlaced(q, 0, plates, p)) {
+        } else if (clearOfPlaced(p, dp * bias * 2, plates, q)) {
+          // AUDIT 26 F139: the 2x fallback places p on ITS OWN check
+          // ALONE (:1230-1234, committed before second is even
+          // probed); q's placement is a separate question, asked at
+          // zero offset against p's NEW spot with no skip (:1236-1239).
+          // The old cut conjoined the two and placed both-or-neither,
+          // then fell through to the mirrored arm C# never reaches.
           p.offY += dp * bias * 2;
-          p.placed = q.placed = true;
-        } else if (clearOfPlaced(q, dq * bias * 2, plates, p) && clearOfPlaced(p, 0, plates, q)) {
+          p.placed = true;
+          if (clearOfPlaced(q, 0, plates, null)) q.placed = true;
+        } else if (clearOfPlaced(q, dq * bias * 2, plates, p)) {
+          // the symmetric fallback (:1242-1252)
           q.offY += dq * bias * 2;
-          p.placed = q.placed = true;
+          q.placed = true;
+          if (clearOfPlaced(p, 0, plates, null)) p.placed = true;
         }
-      } else {
+        // :1274-1275 - ONE decrement after the whole chain, keyed only
+        // on p, always aimed at q, EVEN when q itself stayed unplaced.
+        // That can leave q at count 0 with placed false, and the
+        // no-recompute re-place pass below then fixes q at its
+        // untouched original spot with no fresh check - DFU's own
+        // accepted quirk, reproduced rather than tidied.
+        if (p.placed) q.count--;
+      } else if (q.count > 1) {
         // the collider is entangled elsewhere: shift THIS plate a
         // full ySize, trying away-from then toward (:1277-1308)
         if (clearOfPlaced(p, dp * ySize, plates, q)) {
@@ -94,6 +112,8 @@ export function resolveNameplates(input) {
           p.offY += -dp * ySize; p.placed = true; q.count--;
         }
       }
+      // q.count === 0: NEITHER arm - C#'s `else if (> 1)` leaves a
+      // partner whose count was already talked down alone this pass.
     }
     for (const p of plates) if (!p.placed && p.count === 0) p.placed = true;   // re-place, no recompute (:1317-1318)
     for (const p of plates) {

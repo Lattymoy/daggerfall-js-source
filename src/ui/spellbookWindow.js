@@ -693,6 +693,24 @@ export class SpellbookWindow {
         ...(this._effectDescription(i) ?? [])];
       return true;
     }
+    // F180: VerticalScrollBar.MouseClick (:142-150) - a trough click
+    // PAGES by displayUnits, above or below the thumb, with the same
+    // thumb geometry draw() computes. (DFU also drags the thumb from
+    // its per-frame Update loop, :101-130; the port's UI seam carries
+    // single-shot clicks only - no held-button state reaches any
+    // overlay window - so the drag stays unported, the listPicker.js
+    // precedent, and the trough + wheel + arrows reach every index
+    // the drag can.)
+    if (this._rows.length > ROWS_DISPLAYED && hitPanel(SPELLBOOK_RECTS.scrollBar, vx, vy)) {
+      const [, sy, , sh] = SPELLBOOK_RECTS.scrollBar;
+      const th = Math.max(SCROLL_THUMB_MIN_H, sh * (ROWS_DISPLAYED / this._rows.length));
+      const ty = (this.scrollIndex * (sh - th)) / (this._rows.length - ROWS_DISPLAYED);
+      const localY = vy - PANEL_Y - sy;
+      if (localY < ty) this.scrollIndex -= ROWS_DISPLAYED;
+      else if (localY > ty + th) this.scrollIndex += ROWS_DISPLAYED;
+      this._clampScroll();
+      return true;
+    }
     // a click in the list selects that row
     const [lx, ly, lw, lh] = SPELLBOOK_RECTS.list;
     if (inRect([lx, ly, lw, lh], vx - PANEL_X, vy - PANEL_Y)) {

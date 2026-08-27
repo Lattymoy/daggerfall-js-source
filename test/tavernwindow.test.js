@@ -144,10 +144,17 @@ test('U39: renting - offer, confirm, gold, and the record it mints', () => {
   assert.equal(room.name, 'The Dancing Dagger');
   assert.equal(room.allocatedBedIndex, 2, 'the bed comes from the rest-marker COUNT');
   assert.equal(room.expiryMinutes, now + 3 * MINUTES_PER_DAY);
-  assert.equal(w.done, true, 'ConfirmRenting closes the tavern either way (:212)');
+  // AUDIT 26 F143: ConfirmRenting's CloseWindow (:212) pops the PRICE
+  // BOX it just pushed (UserInterfaceWindow.CloseWindow pops the
+  // stack's top, :127-132) - the tavern panel is what is left showing.
+  assert.equal(w.done, false, 'the rental lands you back on the four-button panel');
+  assert.equal(w.flow, null, 'the chain is spent');
 });
 
-test('U39: declining the price closes the tavern - it does NOT return to the panel (:212)', () => {
+test('U39/F143: declining the price returns to the four-button panel', () => {
+  // The old pin here read :212 as closing the TAVERN; it pops the
+  // price box. Every ending of the rental chain leaves the tavern
+  // topmost - the room button never calls CloseWindow (:153-171).
   const { w, entity } = win();
   clickRect(w, 'room');
   type(w, '2');
@@ -156,7 +163,8 @@ test('U39: declining the price closes the tavern - it does NOT return to the pan
   w.flow.input('KeyN');
   assert.equal(entity.items[0].stackCount, before, 'nothing paid');
   assert.equal(entity.rentedRooms.length, 0, 'nothing rented');
-  assert.equal(w.done, true, 'CloseWindow runs BEFORE the button is even looked at');
+  assert.equal(w.done, false, 'the tavern stands');
+  assert.equal(w.flow, null, 'and the panel is back');
 });
 
 test('U39: the gold test is at the YES, so the game offers a price you cannot pay (:214-222)', () => {
@@ -222,7 +230,10 @@ test('U39: an unparsable day count does NOTHING AT ALL, as int.TryParse does (:1
     clickRect(w, 'room');
     type(w, bad);
     w.flow.input('Enter');
-    assert.equal(w.done, true, `"${bad}" closes with no message`);
+    // F143: int.TryParse failing just RETURNS (:176-178) - the input
+    // box has self-closed and the tavern panel is showing again.
+    assert.equal(w.done, false, `"${bad}" lands back on the panel with no message`);
+    assert.equal(w.flow, null);
     assert.equal(entity.rentedRooms.length, 0);
   }
 });

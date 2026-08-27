@@ -146,12 +146,20 @@ const ENEMY_GROUP_BIT = Object.freeze({
   // 37 FleshAtronach, 38 IceAtronach: no group bit.
 });
 
-/** FormulaHelper.GetEnemyEntityEnemyGroup as a plain lookup - the
- *  group BIT for a mobile id, or NEARBY.None for a class enemy and
- *  the four atronachs. X8's Pacify family reads this rather than
- *  re-transcribing the career switch: DFU's PacifyEffect matches on
- *  exactly this enum (PacifyEffect.cs:131-132), so the two must not
- *  be allowed to drift apart. */
+/** FormulaHelper.GetEnemyEntityEnemyGroup as a plain lookup. AUDIT 26
+ *  F080: the switch runs on e.CareerIndex (:2752), and for an
+ *  EnemyClass careerIndex is ID - 128 (EnemyEntity.cs:293) - so the
+ *  class enemies COLLIDE into the monster careers: a Mage (0 = Rat)
+ *  is Animals, a Burglar (7 = Orc) is Humanoid, Barbarian (15 =
+ *  SkeletalWarrior), Knight (17 = Zombie) and the City Watch (18 =
+ *  Ghost) are Undead. That collision is DFU's shipping behaviour -
+ *  PacifyEffect.IsGroupMatch (:132) and DispelUndead read the group
+ *  with NO class gate, whatever PacifyEffect's own comment claims -
+ *  and the old lookup answered None for anything >= 128, so Pacify
+ *  Animal never calmed a Mage and Dispel Undead could not destroy a
+ *  Knight. X8's Pacify family reads this rather than re-transcribing
+ *  the career switch, so the two cannot drift apart. */
+const careerIndexOf = (mobileType) => (mobileType >= 128 ? mobileType - 128 : mobileType);
 /**
  * V5 - PlayerGPS.IsPlayerInTown (:504-527), verbatim including its
  * two optional gates, because getting them backwards inverts the
@@ -183,7 +191,7 @@ export function isPlayerInTown(locationType, {
   return true;
 }
 
-export const enemyGroupOf = (mobileType) => ENEMY_GROUP_BIT[mobileType] ?? NEARBY.None;
+export const enemyGroupOf = (mobileType) => ENEMY_GROUP_BIT[careerIndexOf(mobileType)] ?? NEARBY.None;
 
 /** GetEntityFlags (:779-819).
  *  rec = { mobileType, civilian?, effectCount? }.
@@ -191,11 +199,10 @@ export const enemyGroupOf = (mobileType) => ENEMY_GROUP_BIT[mobileType] ?? NEARB
  *  bit (DFU's civilian branch is an `else if` that skips the
  *  enemy-group switch entirely).
  *
- *  A CLASS enemy (mobileType >= 128 - bandits, mages, every human
- *  career) is absent from the group switch, so it falls to the
- *  default and takes the Enemy bit with NO group bit. That is DFU
- *  behaviour, not an omission: a human bandit is invisible to a
- *  Humanoid scan while a Nymph is not. */
+ *  A CLASS enemy (mobileType >= 128) reaches the switch through its
+ *  careerIndex (ID - 128) and takes the COLLIDING monster career's
+ *  group - F080; the old comment here claimed it fell to the default,
+ *  which is exactly the misreading the audit found. */
 export function entityFlags(rec) {
   if (!rec) return NEARBY.None;
   let result = NEARBY.None;
@@ -203,7 +210,7 @@ export function entityFlags(rec) {
     result |= NEARBY.Humanoid;
   } else {
     result |= NEARBY.Enemy;
-    result |= ENEMY_GROUP_BIT[rec.mobileType] ?? 0;
+    result |= ENEMY_GROUP_BIT[careerIndexOf(rec.mobileType)] ?? 0;
   }
   // The Magic bit: DFU's acknowledged approximation - ANY live effect.
   if ((rec.effectCount ?? 0) > 0) result |= NEARBY.Magic;

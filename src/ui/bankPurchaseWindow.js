@@ -30,7 +30,6 @@
 
 import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
-import { layoutMessageBox, drawMessageBox } from './messageBox.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { TRANSACTION_RESULT, housePrice } from '../systems/banking.js';
@@ -38,8 +37,12 @@ import { TRANSACTION_RESULT, housePrice } from '../systems/banking.js';
 /** mainPanel.Size (:125) - and the size BANK01I0.IMG ships. */
 export const PURCHASE_PANEL_W = 225, PURCHASE_PANEL_H = 129;
 export const PURCHASE_PANEL_X = Math.round((320 - PURCHASE_PANEL_W) / 2);   // 48
-/** mainPanel.Position (:124) is (0, 50) under a MIDDLE alignment. */
-export const PURCHASE_PANEL_Y = 50;
+/** AUDIT 26 F137: mainPanel.Position (:124) declares (0, 50) - but
+ *  under VerticalAlignment.Middle the y is DEAD: BaseScreenComponent
+ *  :1234-1236 centres the rect and only VerticalAlignment.None reads
+ *  position.y. The real y is (200-129)/2 = 35.5, rounded the way the
+ *  siblings round their centring (guildServiceWindow.js PANEL_Y). */
+export const PURCHASE_PANEL_Y = Math.round((200 - PURCHASE_PANEL_H) / 2);
 
 /** The window's rects, verbatim (:23-28, :287-288, :320-334). */
 export const PURCHASE_RECTS = Object.freeze({
@@ -51,10 +54,14 @@ export const PURCHASE_RECTS = Object.freeze({
   buy: [38, 106, 40, 19],
   exit: [150, 106, 40, 19],
 });
-/** listDisplayUnits (:65) - ten rows in the scrolling area, and the
- *  list is 78 tall, so a row is 7 with the remainder as padding. */
+/** listDisplayUnits (:65) - ten rows in the scrolling area. AUDIT 26
+ *  F142: the row PITCH is not a size/count division - DFU's ListBox
+ *  advances `y += TextHeight + rowSpacing` (ListBox.cs:327) and maps
+ *  clicks by `GlyphHeight + rowSpacing` (:434), and this list rides
+ *  FONT0003 (fixedHeight 7) with the default rowSpacing 1 - so 8,
+ *  rows drifting past the old derived 7 exactly as DFU's do. */
 export const LIST_ROWS = 10;
-export const LIST_ROW_H = 7;
+export const LIST_ROW_H = 8;
 /** scrollNum (:66) - one item per scroll tick. */
 export const SCROLL_NUM = 1;
 
@@ -89,7 +96,7 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + PURCHASE_PANEL_X && y >= ry
  * hooks:
  *   houses()        -> [{ buildingKey, meshRadius, ... }] on the market
  *   buy(house)      -> { result, amount } (systems/banking.purchaseHouse)
- *   rows(textId)    -> the host's TEXT.RSC reader
+ *   showResult(result, amount) -> the BANKING window's GeneratePopup
  *   onClose()
  */
 export class BankPurchaseWindow {
@@ -99,8 +106,6 @@ export class BankPurchaseWindow {
     this.isChoiceWindow = true;   // raw codes through the overlay seam
     this.selected = -1;           // SelectNone (:298)
     this.scroll = 0;
-    this.box = null;
-    this._boxLayout = null;
     this.yawDeg = 0;              // H4: the preview's rotation, this window's clock
     this._rotAcc = 0;
   }
@@ -138,40 +143,26 @@ export class BankPurchaseWindow {
     this.scroll = Math.max(0, Math.min(next, Math.max(0, this.houses.length - LIST_ROWS)));
   }
 
-  /** BuyButton_OnMouseClick (:380-392). SelectedIndex < 0 does
-   *  NOTHING AT ALL - no beep, no message - which is DFU's own
-   *  `if (SelectedIndex < 0) return;` and is why the button feels
-   *  dead until a row is picked. */
+  /** BuyButton_OnMouseClick (:380-391), in DFU's exact order - the
+   *  click sound FIRST (:382), then `if (SelectedIndex < 0) return;`
+   *  with no beep and no message, which is why the button feels dead
+   *  until a row is picked. AUDIT 26 F138: then CloseWindow() runs
+   *  BEFORE the result is even known (:386) - the purchase list
+   *  closes on EVERY outcome, refusal included, and the result box is
+   *  the BANKING window's (GeneratePurchaseHousePopup -> the parent's
+   *  GeneratePopup), shown over it via the showResult hook. The old
+   *  cut kept the list open under the box and closed only on success. */
   _buy() {
+    audio.playOneShot(SOUND.ButtonClick, 1);
     if (this.selected < 0) return;
     const house = this.houses[this.selected];
     if (!house) return;
-    audio.playOneShot(SOUND.ButtonClick, 1);
+    this._close();
     const r = this.hooks.buy?.(house) ?? { result: TRANSACTION_RESULT.NONE };
-    if (r.result === TRANSACTION_RESULT.NONE) return;   // GeneratePopup says nothing on NONE
-    const rows = this.hooks.rows?.(r.result) ?? [];
-    this.box = {
-      rows: rows.length ? rows : [{ text: String(r.result), center: true }],
-      amount: r.amount ?? 0,
-      bought: r.result === TRANSACTION_RESULT.PURCHASED_HOUSE,
-    };
-  }
-
-  _dismissBox() {
-    const b = this.box;
-    this.box = null;
-    // A completed purchase closes the window with it: the list it was
-    // showing is a market this player has just left.
-    if (b?.bought) this._close();
+    this.hooks.showResult?.(r.result, r.amount ?? 0);
   }
 
   click(vx, vy) {
-    if (this.box) {
-      // ClickAnywhereToClose: the result box has no buttons, so any
-      // click inside the window dismisses it.
-      this._dismissBox();
-      return true;
-    }
     if (inRect(PURCHASE_RECTS.exit, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return true; }
     if (inRect(PURCHASE_RECTS.buy, vx, vy)) { this._buy(); return true; }
     if (inRect(PURCHASE_RECTS.upArrow, vx, vy)) { this._scroll(-1); return true; }
@@ -189,7 +180,6 @@ export class BankPurchaseWindow {
   }
 
   input(code) {
-    if (this.box) { this._dismissBox(); return; }
     if (code === 'Escape' || code === 'KeyE') { this._close(); return; }
     if (code === 'ArrowUp') {
       if (this.selected > 0) this.selected--;
@@ -222,7 +212,7 @@ export class BankPurchaseWindow {
     // because the pass paints inside the display rect over it. The
     // rect travels in CANVAS pixels (the scissor's frame).
     const sel = this.houses[this.selected];
-    if (sel?.modelIdNum != null && !this.box) {
+    if (sel?.modelIdNum != null) {
       const [dx, dy, dw, dh] = PURCHASE_RECTS.display;
       this.hooks.drawModelPreview?.(sel.modelIdNum, {
         x: m.ox + (PURCHASE_PANEL_X + dx) * m.s,
@@ -230,9 +220,5 @@ export class BankPurchaseWindow {
         w: dw * m.s, h: dh * m.s,
       }, this.yawDeg, PREVIEW_HOUSE_CAMERA);
     }
-    if (this.box) {
-      this._boxLayout = layoutMessageBox(font, this.box.rows, []);
-      drawMessageBox(renderer, m, font, this._boxLayout);
-    } else this._boxLayout = null;
   }
 }
