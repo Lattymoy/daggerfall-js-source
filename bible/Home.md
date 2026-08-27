@@ -279,15 +279,15 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:822` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/world.js:1269` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
 - `src/scenes/world.js:1758` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
-- `src/scenes/world.js:2270` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:2549` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:2736` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
-- `src/scenes/world.js:2831` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:3161` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:3188` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:3657` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:4016` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/world.js:4089` - (FLAGGED: exterior corpse containers are the loot arc's), so
+- `src/scenes/world.js:2287` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:2566` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:2753` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
+- `src/scenes/world.js:2848` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:3178` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:3205` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:3674` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:4033` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:4106` - (FLAGGED: exterior corpse containers are the loot arc's), so
 - `src/scenes/worldModes.js:784` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
 - `src/scenes/worldModes.js:867` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
 - `src/scenes/worldModes.js:876` - FLAGGED to the crime arc, as the Ledger records.
@@ -387,8 +387,8 @@ combat line numbers below are refreshed with it.
 - `src/ui/bookReader.js:25` - INTERIM, loud: lines draw in the host font at a fixed 10px row -
 - `src/ui/chargenArt.js:718` - *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
 - `src/ui/chargenArt.js:850` - *  from the difficulty law). FLAGGED: the dagger's one-second fading
-- `src/ui/enhancedMenu.js:980` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
-- `src/ui/enhancedMenu.js:1131` - if (action === 'delete') return;   // FLAGGED: no save manager yet
+- `src/ui/enhancedMenu.js:1075` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
+- `src/ui/enhancedMenu.js:1227` - if (action === 'delete') return;   // FLAGGED: no save manager yet
 - `src/ui/exteriorAutomapWindow.js:22` - (:682-709) is FLAGGED - the port's directory carries named
 - `src/ui/guildServiceWindow.js:33` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
 - `src/ui/hudActiveSpells.js:45` - FLAGGED: HUDEscortingNPCFaces, the third component of that row, is

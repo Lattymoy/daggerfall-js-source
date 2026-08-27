@@ -153,6 +153,7 @@ let lockHandler = null;
 let resizeHandler = null;   // PX1: the home ground's redraw-on-resize
 let groundTimer = null;     // PX1b: the home sky's 8fps clock - cleared by every rebuild and by unmount
 let pauseTab = 'system';    // PX3: which tab the pause window shows - System lands on Resume/Save
+let questSel = null;        // PX4: the journal's selected row - 'a:<uid>' | 'f:<index>' | null = first active
 
 const el = (t, cls, txt) => {
   const n = document.createElement(t);
@@ -756,7 +757,9 @@ function renderHome() {
     const stage = el('div', 'px-stage');
     stage.append(pauseWindow());
     home.append(stage);
-    appendPxFoot(home);
+    // PX4 (Mac): NO FOOT AT PAUSE - no skin toggle, no About plaque;
+    // About is a System-tab row instead, and the skin switch stays on
+    // the boot face and the settings shell.
     app.append(home);
     return;
   }
@@ -833,8 +836,8 @@ function pauseWindow() {
  *  plaque; everything else keeps its shell pane, so no law moved. */
 function pauseSystem(body) {
   const list = el('div', 'px-menu px-compact');
+  // PX4: About rides the list here - the pause face has no plaque.
   for (const label of sections) {
-    if (label === 'About') continue;
     const id = idOf(label);
     const b = el('button');
     b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label), el('span', 'px-c', '\u25c6'));
@@ -875,30 +878,122 @@ function pauseStats(body) {
   body.append(attrs);
 }
 
-/** The Quests tab: the machine's own log messages through the host's
- *  questMessages hook - the SAME seam the F5 logbook reads
- *  (world.js:1525). A host without the hook says so rather than
- *  drawing an empty page that lies about the journal. */
+/** One flattener for every journal source: message object or raw
+ *  token array in, text lines out, questJournal's own counted set. */
+function journalLines(msgOrTokens) {
+  const tokens = Array.isArray(msgOrTokens) ? msgOrTokens : (msgOrTokens?.getTextTokens?.() ?? []);
+  return tokens.filter((t) => JOURNAL_LINE_FORMATTINGS.has(t?.formatting)).map((t) => String(t?.text ?? ''));
+}
+
+/** The finished-quest header the notebook files:
+ *  '<name> completed|ended at <date>:' (notebook.js:151-182). The name
+ *  and the verdict come back out of it; a headerless overflow entry
+ *  (the notebook's own kept quirk) reads as a continuation. */
+function parseFinished(entry, index) {
+  const head2 = entry?.[0];
+  const header = head2?.formatting === 'highlight' ? String(head2.text ?? '') : null;
+  const m = header ? /^(.*?) (completed|ended) at (.*?):?$/.exec(header) : null;
+  return {
+    key: `f:${index}`,
+    name: m ? m[1] : (header ?? 'Quest record'),
+    success: m ? m[2] === 'completed' : null,
+    when: m ? m[3] : null,
+    lines: journalLines(header ? entry.slice(1) : entry).filter((l, i, a) => l !== '' || a[i - 1] !== ''),
+  };
+}
+
+/** A titled ornamental divider - line, gem, WORD, gem, line - the
+ *  reference's OBJECTIVES rule in whole pixels. */
+function pxDivider(word) {
+  const d = el('div', 'px-divider');
+  d.append(el('span', 'px-gem'), el('span', 'px-divword', word), el('span', 'px-gem'));
+  return d;
+}
+
+/** PX4 - THE JOURNAL (Mac's reference: Skyrim's quest page). A rail of
+ *  quest names on the left - active first, THE ARCHIVE beneath them -
+ *  and the selected quest on the right: name under its ornament, the
+ *  latest entry as the description, and every step of the trail as a
+ *  diamond-bulleted entry, newest first, exactly the shape the
+ *  machine's log walk gives (a Daggerfall quest speaks in journal
+ *  entries, not objective flags - the entries ARE the tasks). Data
+ *  arrives raw through hooks.questLog (world.js wires it beside the
+ *  F5 logbook's flat seam); a host without the hook says so. */
 function pauseQuests(body) {
-  const src = hooks.questMessages;
-  if (!src) {
+  if (!hooks.questLog) {
     body.append(el('p', 'px-note', 'The journal is not wired into this place yet.'));
     return;
   }
-  const msgs = src() ?? [];
-  if (!msgs.length) {
+  const log = hooks.questLog() ?? { active: [], finished: [] };
+  const active = (log.active ?? []).map((q, i) => ({
+    key: `a:${q.id ?? i}`,
+    name: q.name || `Quest ${i + 1}`,
+    entries: (q.messages ?? []).map(journalLines).filter((ls) => ls.length),
+  })).filter((q) => q.entries.length);
+  const finished = (log.finished ?? []).map(parseFinished).filter((q) => q.lines.length || q.name);
+  if (!active.length && !finished.length) {
     body.append(el('p', 'px-note', 'No active quests.'));
     return;
   }
-  for (const msg of msgs) {
-    const tokens = Array.isArray(msg) ? msg : (msg?.getTextTokens?.() ?? []);
-    const lines = tokens.filter((t) => JOURNAL_LINE_FORMATTINGS.has(t?.formatting)).map((t) => String(t?.text ?? ''));
-    if (!lines.length) continue;
-    const q = el('div', 'px-quest');
-    for (const line of lines) q.append(el('p', null, line));
-    body.append(q);
+  const rows = [...active, ...finished];
+  if (!rows.some((r) => r.key === questSel)) questSel = rows[0].key;
+  const sel = rows.find((r) => r.key === questSel);
+
+  const wrap = el('div', 'px-journal');
+  const rail = el('div', 'px-qrail');
+  const railList = (items, cls) => {
+    for (const q of items) {
+      const b = el('button', `px-qrow${cls}${q.key === questSel ? ' on' : ''}`);
+      b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(q.name));
+      b.onclick = () => { questSel = q.key; render(); };
+      rail.append(b);
+    }
+  };
+  railList(active, '');
+  if (finished.length) {
+    rail.append(el('div', 'px-qarch', 'Archive'));
+    railList(finished, ' done');
   }
-  if (!body.childElementCount) body.append(el('p', 'px-note', 'No active quests.'));
+  wrap.append(rail);
+
+  const detail = el('div', 'px-qdetail');
+  if (sel) {
+    const head2 = el('div', 'px-qname');
+    head2.append(el('span', 'px-qwing'), el('h3', null, sel.name), el('span', 'px-qwing px-flip'));
+    detail.append(head2);
+    if (sel.entries) {
+      // Active: the LATEST entry is the state of the quest; the trail
+      // beneath it, newest first.
+      const latest = sel.entries[sel.entries.length - 1];
+      const desc = el('div', 'px-qdesc');
+      for (const line of latest) desc.append(el('p', null, line));
+      detail.append(desc);
+      if (sel.entries.length > 1) {
+        detail.append(pxDivider('Journal'));
+        for (let i = sel.entries.length - 2; i >= 0; i--) {
+          const e = el('div', 'px-qentry');
+          const mark = el('span', 'px-qmark', '\u25c7');
+          const text = el('div');
+          for (const line of sel.entries[i]) text.append(el('p', null, line));
+          e.append(mark, text);
+          detail.append(e);
+        }
+      }
+    } else {
+      // Archived: the verdict line, then the filed record.
+      const verdict = sel.success == null ? null
+        : `${sel.success ? 'Completed' : 'Ended'}${sel.when ? ` at ${sel.when}` : ''}`;
+      if (verdict) detail.append(el('p', `px-qverdict${sel.success ? ' won' : ''}`, verdict));
+      const desc = el('div', 'px-qdesc');
+      for (const line of sel.lines) {
+        if (line === '') { desc.append(el('div', 'px-qgap')); continue; }
+        desc.append(el('p', null, line));
+      }
+      detail.append(desc);
+    }
+  }
+  wrap.append(detail);
+  body.append(wrap);
 }
 
 function render() {
@@ -1062,6 +1157,7 @@ export function mountEnhancedMenu(host, {
   // Game the second row a thumb meets and Resume the first.
   section = 'home';
   pauseTab = 'system';
+  questSel = null;
   category = CATEGORIES[0].id;
   pickedKey = null;
   sheetOpen = false;

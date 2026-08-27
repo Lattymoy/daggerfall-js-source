@@ -2255,6 +2255,23 @@ export async function bootWorld(canvas, renderer, params, status) {
         // PX3: the pause window's Quests tab - the SAME seam the F5
         // logbook reads (:1525).
         questMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
+        // PX4: the STRUCTURED walk - per-quest name + messages for the
+        // journal's rail/detail, and the notebook's finished entries
+        // for the archive. Raw messages and raw token entries: the
+        // menu flattens, one flattener, one home.
+        questLog: () => {
+          const m = questBridge?.machine;
+          const active = [];
+          if (m) {
+            for (const q of m.quests.values()) {
+              const les = q.getLogMessages();
+              if (!les?.length) continue;
+              const messages = les.map((le) => q.getMessage(le.messageID)).filter(Boolean);
+              if (messages.length) active.push({ id: String(q.uid), name: q.displayName || null, messages });
+            }
+          }
+          return { active, finished: questBridge?.notebook?.getFinishedQuests() ?? [] };
+        },
       });
     },
     cycleMode: (dir) => townTalk.setMode(dir > 0 ? hudLargeNextMode(getInteractionMode()) : hudLargePrevMode(getInteractionMode())),
