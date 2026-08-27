@@ -1001,6 +1001,8 @@ export async function bootExterior(canvas, renderer, params, status) {
         savingPrevented: () => true,
         exitToMenu: exitToTitleMenu,
         textLines: (id) => townTalk.lines(id),
+        // PX3 FLAGGED: questMessages - this test host mounts no quest
+        // bridge, so the pause window's Quests tab says so.
       });
     },
     // A2: the exterior automap (Actions.AutoMap outdoors,

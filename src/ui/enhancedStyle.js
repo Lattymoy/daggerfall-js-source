@@ -1051,7 +1051,118 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   -webkit-font-smoothing: none; }
 /* PX2: the pause face - a scrim, not the night; the paused frame is
    the ground. */
-.px-home.px-over { background: rgba(10,12,17,0.78); }
+.px-home.px-over { background: rgba(10,12,17,0.55); }   /* PX4: the game reads through */
+/* ── PX3: THE PAUSE WINDOW ── a framed panel with tabs (Mac's
+   reference: Skyrim's journal), whole pixels throughout: 2px border,
+   corner gems, a tab strip whose active tab wears the classic gold
+   pair. The window scrolls its body; the scrim keeps the foot. */
+.px-win { position: relative; width: min(920px, 94vw); height: min(620px, 74dvh);
+  display: flex; flex-direction: column;
+  background: rgba(10,12,17,0.72); border: 2px solid #7d7460; }   /* PX4: slight transparency, per the reference */
+/* Each gem CENTERS on its corner: the core is 2px with 4px shadow
+   arms, so a translate by half its own size puts the diamond's heart
+   exactly on the frame's corner point. SCOPED under .px-win because
+   the base .px-gem rule sits LATER in this sheet and its
+   position:relative won the single-class tie - all four gems piled up
+   relative at the top-left (caught by the geometry probe). */
+.px-win .px-corner { position: absolute; }
+.px-win .px-tl { left: -1px; top: -1px; transform: translate(-50%,-50%); }
+.px-win .px-tr { right: -1px; top: -1px; transform: translate(50%,-50%); }
+.px-win .px-bl { left: -1px; bottom: -1px; transform: translate(-50%,50%); }
+.px-win .px-br { right: -1px; bottom: -1px; transform: translate(50%,50%); }
+.px-tabs { display: flex; justify-content: center; gap: 4px;
+  border-bottom: 2px solid rgba(125,116,96,0.55); padding: 6px 8px 2px; }
+.px-tabs button { font: inherit; font-size: 20px; letter-spacing: 0.16em; text-indent: 0.16em;
+  text-transform: uppercase; color: #d8cfae; background: none; border: 0; cursor: pointer;
+  min-height: 44px; padding: 6px 18px; display: flex; align-items: center; gap: 12px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); transition: none; }
+.px-tabs button .px-c { font-size: 15px; color: rgb(243,239,44); visibility: hidden;
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-tabs button:hover, .px-tabs button:focus-visible { outline: none;
+  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-tabs button.on { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-tabs button.on .px-c, .px-tabs button:hover .px-c, .px-tabs button:focus-visible .px-c { visibility: visible; }
+.px-body { flex: 1; overflow-y: auto; padding: 18px 26px; }
+/* System: the same floating list, sized for a panel. */
+.px-menu.px-compact { gap: 0; }
+.px-menu.px-compact button { font-size: 22px; min-height: 46px; padding: 6px 22px; }
+/* Stats */
+.px-statshead { display: flex; flex-direction: column; align-items: center; gap: 4px;
+  margin: 6px 0 16px; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-statshead strong { font-size: 26px; font-weight: 400; letter-spacing: 0.1em; }
+.px-statshead span { color: #7d7460; font-size: 16px; letter-spacing: 0.12em; text-transform: uppercase; }
+.px-statgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 6px 18px; margin-bottom: 14px; }
+.px-stat { display: flex; justify-content: space-between; gap: 10px;
+  border-bottom: 2px solid rgba(125,116,96,0.3); padding: 6px 2px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-stat .k { color: #7d7460; font-size: 15px; letter-spacing: 0.14em; text-transform: uppercase; align-self: center; }
+.px-stat .v { font-size: 19px; white-space: nowrap; }
+.px-attrs { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
+/* Quests */
+.px-quest { margin: 0 0 16px; padding: 10px 14px; border-left: 2px solid var(--brass);
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-quest p { margin: 0 0 4px; font-size: 17px; line-height: 1.45; }
+.px-note { color: #7d7460; text-align: center; margin-top: 24px; font-size: 17px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+/* ── PX4: THE JOURNAL ── the reference's shape: names on a left rail
+   (the archive beneath a small heading), the chosen quest on the
+   right - its name inside wing rules, the latest entry as the
+   description, the trail as diamond-marked entries under a titled
+   divider. */
+.px-journal { display: flex; gap: 0; min-height: 100%; }
+.px-qrail { flex: 0 0 240px; border-right: 2px solid rgba(125,116,96,0.45);
+  padding: 4px 12px 4px 0; overflow-y: auto; }
+.px-qrow { font: inherit; font-size: 16px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: #d8cfae; background: none; border: 0; cursor: pointer; text-align: left;
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  min-height: 44px; padding: 6px 8px; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); transition: none; }
+.px-qrow .px-c { font-size: 12px; color: rgb(243,239,44); visibility: hidden;
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-qrow:hover, .px-qrow:focus-visible { outline: none; color: rgb(243,239,44);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-qrow.on { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-qrow.on .px-c, .px-qrow:hover .px-c, .px-qrow:focus-visible .px-c { visibility: visible; }
+.px-qrow.done { color: #7d7460; }
+.px-qrow.done.on { color: rgb(243,239,44); }
+.px-qarch { color: #7d7460; font-size: 13px; letter-spacing: 0.3em; text-indent: 0.3em;
+  text-transform: uppercase; text-align: center; margin: 14px 0 4px;
+  border-top: 2px solid rgba(125,116,96,0.3); padding-top: 10px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.px-qdetail { flex: 1; padding: 4px 6px 4px 22px; overflow-y: auto; }
+.px-qname { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 6px 0 14px; }
+.px-qname h3 { font-size: 24px; font-weight: 400; letter-spacing: 0.14em; text-indent: 0.14em;
+  text-transform: uppercase; margin: 0; text-align: center;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-qwing { flex: 1; height: 2px; max-width: 120px;
+  background: linear-gradient(90deg, transparent, rgba(125,116,96,0.7)); }
+.px-qwing.px-flip { background: linear-gradient(90deg, rgba(125,116,96,0.7), transparent); }
+.px-qdesc p { margin: 0 0 5px; font-size: 17px; line-height: 1.5;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-qgap { height: 10px; }
+.px-divider { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 16px 0 12px; }
+.px-divider::before, .px-divider::after { content: ''; flex: 1; height: 2px; max-width: 140px;
+  background: rgba(125,116,96,0.55); }
+.px-divword { color: #7d7460; font-size: 13px; letter-spacing: 0.3em; text-indent: 0.3em;
+  text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.px-qentry { display: flex; gap: 12px; margin: 0 0 12px; }
+.px-qmark { color: var(--brass); font-size: 14px; line-height: 1.6;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-qentry p { margin: 0 0 4px; font-size: 16px; line-height: 1.45; color: #c5bda2;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-qverdict { text-align: center; color: #7d7460; font-size: 14px; letter-spacing: 0.2em;
+  text-transform: uppercase; margin: -6px 0 12px; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.px-qverdict.won { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+@media (max-width: 480px) {
+  .px-win { width: 100vw; height: calc(100dvh - 48px); border-left: 0; border-right: 0; }
+  .px-tabs button { font-size: 17px; letter-spacing: 0.1em; text-indent: 0.1em; padding: 6px 10px; gap: 8px; }
+  /* PX4: the journal stacks - the rail is a strip of rows across the
+     top, the detail beneath, both still whole pixels. */
+  .px-journal { flex-direction: column; }
+  .px-qrail { flex: 0 0 auto; max-height: 32%; border-right: 0;
+    border-bottom: 2px solid rgba(125,116,96,0.45); padding: 0 0 6px; }
+  .px-qdetail { padding: 10px 2px 4px; }
+}
 .px-ground { position: absolute; left: -25%; top: -25%; width: 150%; height: 150%;
   image-rendering: pixelated; animation: px-drift 160s linear infinite alternate; }
 @keyframes px-drift { from { transform: translate(0,0) } to { transform: translate(4%,2%) } }

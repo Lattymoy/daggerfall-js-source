@@ -4188,6 +4188,9 @@ export function createWorldModes(host) {
         loadKey: host.loadKey,
         exitToMenu: exitToTitleMenu,
         textLines: (id) => townTalk?.lines?.(id) ?? null,
+        // PX3 FLAGGED: questMessages - the quest machine lives on the
+        // world host's bridge (world.js:2240); this mode's pause has no
+        // handle to it yet, so the Quests tab says so.
       });
     },
     toggleCharSheet() { mountInterior(host.makeCharSheet?.()); },

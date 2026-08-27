@@ -259,14 +259,16 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:740` - effects FLAGGED to the effect-library slice.
 - `src/scenes/dungeonContext.js:750` - "database FLAGGED" narrows to the skill/loot message ids).
 - `src/scenes/dungeonContext.js:1246` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/dungeonContext.js:3024` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
+- `src/scenes/dungeonContext.js:2957` - PX3 FLAGGED: questMessages - the dungeon quest mount is
+- `src/scenes/dungeonContext.js:3027` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
 - `src/scenes/exterior.js:556` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:562` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:790` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:1034` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:1331` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:1494` - FLAGGED here exactly as in world.js - no tile lookup yet).
-- `src/scenes/exterior.js:1836` - ground (FLAGGED with world.js's same gap), so Detect Treasure
+- `src/scenes/exterior.js:1004` - PX3 FLAGGED: questMessages - this test host mounts no quest
+- `src/scenes/exterior.js:1036` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/exterior.js:1333` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:1496` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:1838` - ground (FLAGGED with world.js's same gap), so Detect Treasure
 - `src/scenes/exteriorFoes.js:550` - FLAGGED: the arrow's IMPACT still only knows the player
 - `src/scenes/shared.js:292` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:309` - *  mirrors motorStats (the INTERIM entity carries no stats). */
@@ -277,15 +279,15 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:822` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/world.js:1269` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
 - `src/scenes/world.js:1758` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
-- `src/scenes/world.js:2304` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:2583` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:2770` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
-- `src/scenes/world.js:2865` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:3195` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:3222` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:3702` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:4061` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/world.js:4134` - (FLAGGED: exterior corpse containers are the loot arc's), so
+- `src/scenes/world.js:2324` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:2603` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:2790` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
+- `src/scenes/world.js:2885` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:3215` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:3242` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:3722` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:4081` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:4154` - (FLAGGED: exterior corpse containers are the loot arc's), so
 - `src/scenes/worldModes.js:789` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
 - `src/scenes/worldModes.js:872` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
 - `src/scenes/worldModes.js:881` - FLAGGED to the crime arc, as the Ledger records.
@@ -311,6 +313,7 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:3616` - string is the seam that was a FLAGGED null until this slice,
 - `src/scenes/worldModes.js:3715` - *  FLAGGED null this slice closed. */
 - `src/scenes/worldModes.js:4053` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
+- `src/scenes/worldModes.js:4191` - PX3 FLAGGED: questMessages - the quest machine lives on the
 - `src/systems/advancement.js:84` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
@@ -384,8 +387,8 @@ combat line numbers below are refreshed with it.
 - `src/ui/bookReader.js:25` - INTERIM, loud: lines draw in the host font at a fixed 10px row -
 - `src/ui/chargenArt.js:718` - *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
 - `src/ui/chargenArt.js:850` - *  from the difficulty law). FLAGGED: the dagger's one-second fading
-- `src/ui/enhancedMenu.js:861` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
-- `src/ui/enhancedMenu.js:1011` - if (action === 'delete') return;   // FLAGGED: no save manager yet
+- `src/ui/enhancedMenu.js:1076` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
+- `src/ui/enhancedMenu.js:1228` - if (action === 'delete') return;   // FLAGGED: no save manager yet
 - `src/ui/exteriorAutomapWindow.js:22` - (:682-709) is FLAGGED - the port's directory carries named
 - `src/ui/guildServiceWindow.js:33` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
 - `src/ui/hudActiveSpells.js:45` - FLAGGED: HUDEscortingNPCFaces, the third component of that row, is

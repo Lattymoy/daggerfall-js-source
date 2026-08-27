@@ -6425,3 +6425,65 @@ scrim on, sky and wordmark absent, Save pane opens, Escape home,
 Escape resumes exactly once, zero page errors. STANDING CAVEAT: the
 scrim is tuned against a stand-in - the first real-ARENA2 eyeball may
 move the 0.78.
+
+PX3 (same day, Mac's reference: Skyrim's journal): PAUSE IS A WINDOW,
+NOT A SECOND MAIN MENU. The pause face became a framed panel -
+min(860px, 94vw) x min(620px, 74dvh), 2px border, four corner gems
+CENTERED on the frame's corner points - with three tabs: QUESTS,
+STATS, SYSTEM (the landing tab; Resume and Save under a thumb). The
+Quests tab reads the machine's own log messages through a NEW
+`hooks.questMessages` seam - the SAME expression the F5 logbook reads
+- flattening each message's counted formattings (questJournal's own
+set) into paragraph blocks with a brass rail; THE FOUR HOSTS RULE:
+world.js WIRED, worldModes/exterior/dungeonContext FLAGGED by name at
+their own openPauseFlow sites (worldModes has no bridge handle yet,
+exterior mounts no machine, the dungeon quest mount is itself AUDIT
+25 P0), each saying so in the tab rather than drawing an empty page
+that lies. The Stats tab is `sheetModel(playerEntity)` - the char
+sheet's OWN model, one law - as name/race/career/level, five vitals
+rows and the eight attributes; the full sheet stays the F5 window's.
+The System tab is the pause list compact (About stays the corner
+plaque); every row keeps its shell pane, Escape from a pane returns
+to the window, Escape on the window resumes. The foot builder
+extracted (appendPxFoot) so both faces share one. TWO CSS LESSONS
+CAUGHT BY PROBES: the corner gems piled up relative at the top-left
+because base .px-gem sits LATER in the sheet and won the single-class
+tie (now scoped .px-win .px-corner), and the probe itself first
+collided with the lab page's own hidden boot menu (scope selectors to
+the probe host). Probed live: two quest blocks render, 13 stat rows,
+Save pane opens from System, Escape window, Escape resumes once,
+zero page errors, desktop + phone.
+
+PX4 (same day, Mac: "go all in"): THE JOURNAL, AND THE GLASS. Three
+moves. (1) The pause face sheds its foot - no skin toggle, no About
+plaque (Mac's call); About rides the System tab list, the switch
+stays on the boot face and the settings shell. (2) TRANSLUCENCY: the
+enhanced pause host's background went transparent - the classic pause
+has always drawn its panel over the live frame in the same overlay
+slot, so the frame is there to show - the scrim dropped to 0.55 and
+the window to 0.72, per the reference; the STANDING CAVEAT is written
+at the host (a scene that stopped presenting under an overlay would
+show the renderer's pale clear through it; the classic window's
+behaviour says none does, the first real-ARENA2 eyeball owns the
+verdict, and the boot door stays opaque for exactly that clear). (3)
+THE JOURNAL: the Quests tab became the reference's page - a rail of
+quest NAMES (active first, THE ARCHIVE beneath a small heading, done
+rows dimmed), the chosen quest on the right with its name inside wing
+rules, the LATEST log entry as the description, and the trail as
+diamond-marked entries newest-first under a titled JOURNAL divider -
+because a Daggerfall quest speaks in journal entries, not objective
+flags: the entries ARE the tasks, and inventing checkbox objectives
+the machine does not track would be a lying UI. Archived quests parse
+the notebook's own filed header ('<name> completed|ended at <date>:',
+notebook.js:151-182) back into name/verdict/date - the verdict line
+gold for completed, dim for ended - with the headerless overflow
+entry (the notebook's kept quirk) reading as a continuation. Data
+arrives RAW through the new `hooks.questLog` (world.js walks
+machine.quests for per-quest displayName + messages and hands
+notebook.getFinishedQuests() beside it); ONE flattener in the menu
+(journalLines) serves every journal source. THE FOUR HOSTS: world
+wired; the other three keep their PX3 flags and the wired-tab-only
+message. On a phone the journal stacks, rail above detail. Probed
+live over a busy stand-in frame: 4 rail rows + the Archive heading,
+the archived verdict renders, no foot at pause, Escape resumes once,
+zero page errors both viewports.
