@@ -54,7 +54,10 @@ export class QuestResourceBehaviour {
     this.isFoeDead = false;
     this.foeSpellQueuePosition = 0;
     this.foeItemQueuePosition = 0;
-    this.isAttackableByAI = false;   // never set in core - custom actions only, C#
+    // ChangeFoeInfighting.cs:68 writes this (MT-iii ported it); the
+    // DEFAULT is false, which is what makes a quest foe untargetable
+    // by other AI until a quest says otherwise (GetTargets :806-815).
+    this.isAttackableByAI = false;
     // volatile state
     this.restraintApplied = false;
     this.targetQuest = null;

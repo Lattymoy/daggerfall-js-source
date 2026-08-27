@@ -719,7 +719,7 @@ test('the ring refusals: grazing normals, short slack, no floor, occupied space'
 test('behaviour defaults and cacheTarget faces: the save shape starts clean, every miss answers false, success answers true', () => {
   const m = new QuestMachine();
   const q = makeQuest(m);
-  assert.equal(new QuestResourceBehaviour(m).getSaveData().isAttackableByAI, false, 'never set in core, C#');
+  assert.equal(new QuestResourceBehaviour(m).getSaveData().isAttackableByAI, false, 'the ctor default - ChangeFoeInfighting (MT-iii) is what writes it');
 
   const unknownQuest = new QuestResourceBehaviour(m);
   unknownQuest.questUID = 424242;

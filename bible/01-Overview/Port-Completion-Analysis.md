@@ -8,7 +8,7 @@ against that day's tree (suite 3761/0, src 127,925 loc / 404 files,
 tests 94,415 loc / 387 files). The five days between the snapshot and
 the re-verification closed MOST of this page: every row struck below
 names the slice that shipped it, and the three verified counts are
-re-run (quest actions 76 of 82 with 6 pended since Q5; macros 93 of 216
+re-run (quest actions 78 of 82 with 4 pended since MT-iii; macros 93 of 216
 present, 123 missing; effect classes EFFECTIVELY COMPLETE - the 33
 .cs files unnamed in src are the per-attribute
 Drain/Fortify/Heal/Transfer family this page already records as
@@ -31,21 +31,32 @@ The HONEST still-open list as of the re-verification:
    answers), the spell-info MCP (%1am..%clm/%mpw), the bank MCP
    (%ml/%r1-5) - each its arc's, reached through the error ladder
    until then.
-4. ~~The 20 pended quest actions~~ **SIX pended quest actions (Q5
-   2026-08-27)**: fourteen guards retired in one slice (the skill/
+4. ~~The 20 pended quest actions~~ ~~SIX~~ **FOUR pended quest
+   actions (Q5 + MT-iii, 2026-08-27)**: fourteen guards retired in one slice (the skill/
    attribute/season/weather/climate conditions, SetPlayerCrime,
    PayMoney, JournalNote, TrainPc, KillFoe, UnrestrainFoe, RunQuest,
    SpawnCityGuards, Enemies - pinned in test/questactions5.test.js,
    including DFU's own RestrainFoe-shadows-UnrestrainFoe parse
-   quirk). The six left each name their blocker in GUARD_PATTERNS:
+   quirk). The four left each name their blocker in GUARD_PATTERNS:
    CastEffectDo (effect-template registry lookup by key), WorldUpdate
    (world-variant system), ClickedFoe (no foe-click door),
-   ChangeFoeInfighting + ChangeFoeTeam (item 5's MobileTeams combat),
-   PromptMulti (multi-button prompt window).
-5. **Enemy infighting / MobileTeams combat / PlayerAlly**
-   (ApplyDamageToNonPlayer) - ENEMY_BASICS carries every team string
-   and nothing fights over them; this is also what the two artifact
-   summons' allied-spawn door (V3, FLAGGED) waits on.
+   PromptMulti (multi-button prompt window). ~~ChangeFoeInfighting +
+   ChangeFoeTeam~~ SHIPPED with MT-iii the same day, so the guard
+   list is FOUR.
+5. ~~Enemy infighting / MobileTeams combat / PlayerAlly~~ **SHIPPED
+   ABOVE GROUND (MT 2026-08-27); the DUNGEON host is the remainder.**
+   `characters/enemyTargets.js` is EnemySenses' selection half whole
+   (MOBILE_TEAMS, GetTargets, the classic target machine) and
+   `hostCombat.applyDamageToNonPlayer` is EnemyAttack.cs:303-392,
+   which had no port because until this slice no foe could hold a foe
+   as its target. Both exterior pools are armed off ONE shared
+   candidate list, so a spawned monster and a city watchman fight each
+   other. The V3 allied-summon door this row named is MOUNTED, and
+   both summons gained the `Team != PlayerAlly` scan filter they were
+   missing. WHAT REMAINS is MT-iv: `dungeonContext` still runs the
+   player-only path (unchanged behaviour, not a break), which also
+   keeps dungeon quest foes out of ChangeFoeTeam's reach and leaves
+   the enemy-arrow impact fork FLAGGED at its shoot site.
 6. **The interior foe pool** - the standing seam behind the coven
    failure's and the summoning refusal's unspawned daedra and Q4-v's
    interior enemies.
@@ -87,13 +98,12 @@ exclusions.
 Citation is a WEAK signal - it proves a module claimed the source, not
 that it ported it. The three verified counts below are the strong ones.
 
-**Quest actions: ~~61~~ ~~62~~ 76 of 82 implemented.** The other
-~~21~~ ~~20~~ SIX are `PendingTrigger` guards
+**Quest actions: ~~61~~ ~~62~~ ~~76~~ 78 of 82 implemented.** The
+other ~~21~~ ~~20~~ ~~6~~ FOUR are `PendingTrigger` guards
 (`systems/quest/actions.js`) - the line matches its verbatim pattern
 and PENDS, exactly as DFU sends an unregistered line, and nothing
-runs: `CastEffectDo`, `ChangeFoeInfighting`, `ChangeFoeTeam`,
-`ClickedFoe`, `PromptMulti`, `WorldUpdate` - each guard now carries
-its blocker in a comment. **PlaySong SHIPPED 2026-08-25** - a real
+runs: `CastEffectDo`, `ClickedFoe`, `PromptMulti`, `WorldUpdate` -
+each guard now carries its blocker in a comment. **PlaySong SHIPPED 2026-08-25** - a real
 template over `systems/songFiles.js` (SongFiles.cs + EnumToFilename
 in the archive's spelling); its Ledger row is struck. **FOURTEEN MORE
 SHIPPED 2026-08-27 (Q5)**: ~~`Climate`~~, ~~`Enemies`~~,
@@ -102,7 +112,11 @@ SHIPPED 2026-08-27 (Q5)**: ~~`Climate`~~, ~~`Enemies`~~,
 ~~`TrainPc`~~, ~~`UnrestrainFoe`~~, ~~`Weather`~~,
 ~~`WhenAttributeLevel`~~, ~~`WhenSkillLevel`~~ - real templates with
 host doors through world.js (Quest-Arc's Q5 record;
-test/questactions5.test.js).
+test/questactions5.test.js). **TWO MORE SHIPPED 2026-08-27 (MT-iii)**:
+~~`ChangeFoeInfighting`~~ and ~~`ChangeFoeTeam`~~, which item 5's
+MobileTeams slice unblocked the same day - both writing every live
+instance of a foe symbol through the new `questFoeInstances` door
+(Characters-Arc's MT record; test/enemyinfighting.test.js).
 
 **Macros: 83 of MacroHelper's 217 appear anywhere in `src/`; 134 do not.**
 The missing set is dominated by the biography/class-question block

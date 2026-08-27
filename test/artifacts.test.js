@@ -147,7 +147,7 @@ test('V3: the Oghma Infinium - flags set, the sheet opens, the book is consumed,
   assert.equal(p.readyToLevelUp, false);
 });
 
-test('V3: the two summons - the range gate and fail line are live, the allied spawn door stays unmounted and FLAGGED', () => {
+test('V3/MT-ii: the two summons - the range gate, the fail line, the PlayerAlly filters, and the MOUNTED allied door', () => {
   const said = [];
   const spawned = [];
   const rose = artifactItem(ARTIFACTS.SanguineRose);
@@ -172,9 +172,44 @@ test('V3: the two summons - the range gate and fail line are live, the allied sp
     },
   });
   assert.equal(spawned.at(-1), MOBILE_TYPES.Lich);
-  // and NO host mounts the door yet - the FLAG is the absence
-  assert.ok(!read('src/scenes/world.js').includes('spawnAlliedFoe:'),
-    'spawnAlliedFoe stays unmounted until the ally/team system exists');
+  // MT-ii: THE DOOR IS MOUNTED, and RETIRING A FLAG DELETES THE
+  // SENTENCE - the module header's "no host mounts it" is gone with it.
+  const w = read('src/scenes/world.js');
+  assert.ok(w.includes('spawnAlliedFoe: (mobileType) => {'), 'world.js mounts the allied spawn');
+  assert.ok(w.includes("exteriorFoes.spawnFoe(mobileType, [pf[0] + 2, pf[1] + 1, pf[2]], { allied: true })"),
+    'through the encounter pool, on team PlayerAlly');
+  assert.ok(read('src/scenes/exteriorFoes.js').includes("if (allied) { entity.team = 'PlayerAlly'; entity.mobileTeam = 'PlayerAlly'; }"),
+    'and BOTH per-instance team fields turn (SetupDemoEnemy.cs:85-86), never the shared static row');
+  assert.ok(!read('src/systems/artifactEffects.js').includes('the port has no ally/team combat'),
+    'the flag sentence is deleted, not merely contradicted');
+
+  // AND THE FILTERS both summons apply BEFORE counting company
+  // (:47-48): a player standing alone among their OWN summons gets
+  // the fail line, because an ally is not an enemy.
+  const said2 = [];
+  const spawned2 = [];
+  doItemEnchantmentPayloads(PAYLOAD.Used, artifactItem(ARTIFACTS.SanguineRose), {
+    entity: P(),
+    ctx: {
+      nearbyFoes: () => [{ mobileType: MOBILE_TYPES.Daedroth, distance: 4, team: 'PlayerAlly' }],
+      say: (t) => said2.push(t), spawnAlliedFoe: (t) => spawned2.push(t),
+    },
+  });
+  assert.deepEqual(said2, [NO_MONSTERS_NEARBY_TEXT], 'the Rose counts no ally as company');
+  assert.deepEqual(spawned2, [], 'and summons nothing');
+  // the Skull's SECOND gate (:67-71) - dead code past its own filter,
+  // ported because a port that keeps one and drops the other guesses
+  const said3 = [];
+  doItemEnchantmentPayloads(PAYLOAD.Used, artifactItem(ARTIFACTS.SkullOfCorruption), {
+    entity: P(),
+    ctx: {
+      nearbyFoes: () => [{ mobileType: MOBILE_TYPES.Rat, distance: 3, team: 'PlayerAlly' }],
+      say: (t) => said3.push(t), spawnAlliedFoe: (t) => spawned2.push(t),
+    },
+  });
+  assert.deepEqual(said3, [NO_MONSTERS_NEARBY_TEXT], 'the Skull refuses to clone an ally');
+  assert.ok(read('src/systems/artifactEffects.js').includes(":67-71, unreachable past the filter"),
+    'and the redundancy is recorded as the source\'s, not tidied away');
 });
 
 test('V3: the Wabbajack rerolls from the seventeen-entry table, never the same type, once per creature', () => {

@@ -132,6 +132,20 @@ export function makeEnemyEntity(mobileType, basics, career, playerLevel, rollFn 
     // MobileTeams' zero member, PlayerEnemy, never a "None" that the
     // enum does not even have.
     team: basics.team ?? 'PlayerEnemy',
+    // MT-i: and the MobileEnemy STRUCT COPY's own Team, which is a
+    // second field in DFU and not an alias for the row's. C# takes
+    // MobileEnemy by VALUE out of the enemy dictionary
+    // (SetupDemoEnemy.cs:82), and an allied summon overwrites THAT
+    // COPY (`if (AlliedToPlayer) mobileEnemy.Team =
+    // MobileTeams.PlayerAlly`, :85-86) before SetEnemy hands it to
+    // the mobile - leaving the STATIC EnemyBasics.Enemies row
+    // untouched. The port's `basics` is that static row itself,
+    // frozen and shared by every foe of the type, so the per-instance
+    // copy has to be its own field. GetTargets' :776 and :801 arms
+    // read this one; MakeEnemyHostileToAttacker's revert (:211) reads
+    // the static table, and the two disagree for exactly one foe in
+    // the game: a Sanguine Rose / Skull of Corruption summon.
+    mobileTeam: basics.team ?? 'PlayerEnemy',
     affinity: basics.affinity,
     name: isClass ? career.name : undefined,
   };

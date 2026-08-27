@@ -68,10 +68,16 @@ test('audit24 wave33: no host freezes the animation, and every host consumes its
     'and so does its archer arm');
 
   const xf = rd('src/scenes/exteriorFoes.js');
-  assert.ok(xf.includes('if (!_fParalyzed && f.mobile.doMeleeDamage && playerFeet) {\n        f.mobile.doMeleeDamage = false;'));
-  assert.ok(xf.includes('if (!_fParalyzed && f.mobile.shootArrow && playerFeet && onArrow) {\n        f.mobile.shootArrow = false;'));
+  // MT-ii: the frame is gated on a live TARGET now (`_tgt`), which is
+  // the player's feet whenever the player is the target - and null only
+  // when an armed foe holds no target at all, where DFU's own
+  // MeleeDamage cannot run either (senses.Target == null).
+  assert.ok(xf.includes('if (!_fParalyzed && f.mobile.doMeleeDamage && _tgt) {\n        f.mobile.doMeleeDamage = false;'));
+  // MT-ii: BowDamage returns at `senses.Target == null` too (:136).
+  assert.ok(xf.includes('if (!_fParalyzed && f.mobile.shootArrow && _tgt && onArrow) {\n        f.mobile.shootArrow = false;'));
   const cg = rd('src/scenes/cityGuards.js');
-  assert.ok(cg.includes('if (!_gParalyzed && g.mobile.doMeleeDamage) {\n        g.mobile.doMeleeDamage = false;'));
+  // MT-ii: gated on a live target, as EnemyAttack.MeleeDamage is.
+  assert.ok(cg.includes('if (!_gParalyzed && g.mobile.doMeleeDamage && _tgt) {\n        g.mobile.doMeleeDamage = false;'));
 
   // EVERY consumer must clear, or a latch fires forever. Count them: the
   // three reads above and exactly three clears, no more and no fewer.

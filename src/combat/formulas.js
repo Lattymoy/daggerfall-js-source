@@ -703,6 +703,31 @@ export function weaponKnockbackApplies(knockbackSpeed, isClass, mobileWeight) {
   return (knockbackSpeed <= 5 / KB_UNIT && !!isClass) || (mobileWeight ?? 0) > 0;
 }
 
+/**
+ * MT-ii: the SAME guard one component over, and it is NOT the same
+ * expression. EnemyAttack.ApplyDamageToNonPlayer:336-337 writes the
+ * parentheses DFU's player-side arm leaves out:
+ *
+ *   if (targetMotor && (targetMotor.KnockbackSpeed <= (5 / ratio)
+ *           && (entityBehaviour.EntityType == EntityTypes.EnemyClass
+ *               || targetEntity.MobileEnemy.Weight > 0)))
+ *
+ * Two differences from weaponKnockbackApplies above, both real:
+ *   1. THE BINDING. The player's arm is `speed <= 5 && targetIsClass
+ *      || weight > 0`, so a weighted monster is shoved by every
+ *      landed hit however hard it is already flying. The foe's arm
+ *      is `speed <= 5 && (isClass || weight > 0)`, so the decay
+ *      threshold governs EVERY foe-dealt knockback - one enemy never
+ *      chain-shoves another.
+ *   2. WHOSE class. `entityBehaviour` in WeaponManager is the enemy
+ *      being hit; in EnemyAttack it is the ATTACKER. So the class
+ *      test names the attacker here and the target there.
+ * One home each, because they are two laws that merely look alike.
+ */
+export function enemyKnockbackApplies(knockbackSpeed, attackerIsClass, targetMobileWeight) {
+  return knockbackSpeed <= 5 / KB_UNIT && (!!attackerIsClass || (targetMobileWeight ?? 0) > 0);
+}
+
 /** The WeaponManager player-hit knockback speed, verbatim:
  *  kb = ((10d - w) * 256) / (w + 10d) * 2d;
  *  speed = (10d / w) * (2d - kb/256), through the ratio, floored at
