@@ -53,6 +53,7 @@ import { customParseInt, isPlayerAtBuildingType, isPlayerAtDungeonType, MARKER_P
 import { getIndividualFactionID, getFactionDataOrThrow } from './person.js';
 import { markerScenePosition } from './sceneMount.js';
 import { isSongFileDefined, songFileToRecordName } from '../songFiles.js';
+import { MOBILE_TEAMS } from '../../characters/enemyTargets.js';   // MT-iii: ChangeFoeTeam's enum door
 
 /** TalkManager.cs:285-291 - the dialog-link resource types. */
 export const QUEST_INFO_RESOURCE_TYPE = Object.freeze({
@@ -3111,6 +3112,108 @@ export class EnemiesAction extends ActionTemplate {
   }
 }
 
+/** C#'s `Convert.ToBoolean(string)`, which ChangeFoeInfighting reads
+ *  its flag through: "true"/"false" case-insensitively and NOTHING
+ *  else - every other string throws FormatException, and ParseQuest's
+ *  catch then drops the whole quest. Not JS truthiness. */
+function convertToBoolean(text, who) {
+  const s = String(text ?? '').trim().toLowerCase();
+  if (s === 'true') return true;
+  if (s === 'false') return false;
+  throw new Error(`${who}: '${text}' was not recognized as a valid Boolean`);
+}
+
+/** ChangeFoeInfighting.cs - "Changes whether or not a quest foe is
+ *  attackable by other NPCs": the flag lands on EVERY spawned
+ *  instance carrying this Foe's symbol (C# walks the active-enemy
+ *  database, :44-56), and SetComplete fires INSIDE that loop, so a
+ *  wave with no instance standing yet leaves the action live and it
+ *  retries next tick. A missing Foe resource simply returns (:41-42 -
+ *  no throw, unlike the Kill/Restrain family). */
+export class ChangeFoeInfighting extends ActionTemplate {
+  static typeName = 'ChangeFoeInfighting';
+  get saveShape() { return [['npcSymbol', 'sym'], ['isAttackableByAI']]; }
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.npcSymbol = null;
+    this.isAttackableByAI = false;
+  }
+  get pattern() { return /change foe (?<anNPC>[a-zA-Z0-9_.-]+) infighting (?<isAttackableByAI>[a-zA-Z]+)/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new ChangeFoeInfighting(parentQuest);
+    action.npcSymbol = new QuestSymbol(match.groups.anNPC);
+    action.isAttackableByAI = convertToBoolean(match.groups.isAttackableByAI, 'ChangeFoeInfighting');
+    return action;
+  }
+  update(_caller) {
+    const foe = this.parentQuest.getFoe(this.npcSymbol);
+    if (!foe) return;
+    // MT-iii: the host door answers every LIVE instance of this foe
+    // symbol (DFU's ActiveGameObjectDatabase walk, QuestSpawn-filtered
+    // and TargetSymbol-matched). An absent door idles the arm - the
+    // headless charter - which is also C#'s own behaviour with no
+    // enemy standing.
+    for (const inst of this.parentQuest.hooks?.questFoeInstances?.(this.npcSymbol) ?? []) {
+      if (inst?.behaviour) inst.behaviour.isAttackableByAI = this.isAttackableByAI;
+      this.setComplete();
+    }
+  }
+}
+
+/** ChangeFoeTeam.cs - retarget a quest foe's MobileTeams membership,
+ *  by number or by enum NAME; an unknown name completes and THROWS
+ *  (:57-61). Team 1 (PlayerAlly) is how a quest hands the player a
+ *  bodyguard - MT-i's targeting arms are what make that mean
+ *  anything. Like its sibling: a missing Foe returns, and SetComplete
+ *  sits INSIDE the instance loop. */
+export class ChangeFoeTeam extends ActionTemplate {
+  static typeName = 'ChangeFoeTeam';
+  get saveShape() { return [['npcSymbol', 'sym'], ['teamNumber']]; }
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.npcSymbol = null;
+    this.teamNumber = 0;
+  }
+  get pattern() {
+    return /change foe (?<anNPC>[a-zA-Z0-9_.-]+) team (?<teamNumber>\d+)|change foe (?<anNPC2>[a-zA-Z0-9_.-]+) team (?<teamName>\w+)/;
+  }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new ChangeFoeTeam(parentQuest);
+    const g = match.groups;
+    action.npcSymbol = new QuestSymbol(g.anNPC ?? g.anNPC2);
+    if (g.teamNumber != null) {
+      action.teamNumber = questParseInt(g.teamNumber);
+    } else {
+      const idx = MOBILE_TEAMS.indexOf(g.teamName);
+      if (idx === -1) {
+        this.setComplete();
+        throw new Error(`ChangeFoeTeam: Team ${g.teamName} is not a known team from MobileTeams enum.`);
+      }
+      action.teamNumber = idx;
+    }
+    return action;
+  }
+  update(_caller) {
+    const foe = this.parentQuest.getFoe(this.npcSymbol);
+    if (!foe) return;
+    // `enemyEntity.Team = (MobileTeams)teamNumber` (:89). The port's
+    // entities carry the team as its NAME (enemyBasics' rows), so the
+    // enum value is spelled back through MOBILE_TEAMS - and a number
+    // outside the enum is an unchecked cast in C# too, so it lands as
+    // undefined here and matches no team, exactly as it matches no
+    // member there.
+    const team = MOBILE_TEAMS[this.teamNumber];
+    for (const inst of this.parentQuest.hooks?.questFoeInstances?.(this.npcSymbol) ?? []) {
+      if (inst?.entity) inst.entity.team = team;
+      this.setComplete();
+    }
+  }
+}
+
 class PendingTrigger extends ActionTemplate {
   constructor(parentQuest, pattern) { super(parentQuest); this._pattern = pattern; }
   get pattern() { return this._pattern; }
@@ -3118,23 +3221,20 @@ class PendingTrigger extends ActionTemplate {
 }
 
 const GUARD_PATTERNS = Object.freeze({
-  // Q5 (2026-08-27) retired fourteen rows into real classes above.
-  // The six left each name their blocker:
+  // Q5 (2026-08-27) retired fourteen rows into real classes above and
+  // MT-iii (2026-08-27) took the two MobileTeams rows with the
+  // infighting slice. The FOUR left each name their blocker:
   //  - CastEffectDo: needs the effect-template key registry the cast
   //    windows use, bridged into the machine (spell arc)
   //  - WorldUpdate: needs the world-data variant system (no
   //    block/building variant swaps exist in the port)
   //  - ClickedFoe: needs the foe-click surface (foes have no click
   //    door; NPC clicks have one, foe clicks do not)
-  //  - ChangeFoeInfighting / ChangeFoeTeam: need MobileTeams combat
-  //    (the completion analysis' standing item five)
   //  - PromptMulti: needs a multi-button prompt window (the host's
   //    prompt door is Yes/No)
   CastEffectDo: /cast ([a-zA-Z0-9_.-]+) effect do ([a-zA-Z0-9_.-]+)/,
   WorldUpdate: /worldupdate (location) at (\d+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (locationnew) named (.+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (block) ([a-zA-Z0-9_.-]+) at (\d+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (blockAll) ([a-zA-Z0-9_.-]+) variant ([a-zA-Z0-9_.-]+)|worldupdate (building) ([a-zA-Z0-9_.-]+) (\d+) at (\d+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (buildingAll) ([a-zA-Z0-9_.-]+) (\d+) variant ([a-zA-Z0-9_.-]+)/,
   ClickedFoe: /clicked foe ([a-zA-Z0-9_.-]+) and at least (\d+) gold otherwise do ([a-zA-Z0-9_.]+)|clicked foe ([a-zA-Z0-9_.-]+) say (\d+)|clicked foe ([a-zA-Z0-9_.-]+) say (\w+)|clicked foe ([a-zA-Z0-9_.-]+)/,
-  ChangeFoeInfighting: /change foe ([a-zA-Z0-9_.-]+) infighting ([a-zA-Z]+)/,
-  ChangeFoeTeam: /change foe ([a-zA-Z0-9_.-]+) team (\d+)|change foe ([a-zA-Z0-9_.-]+) team (\w+)/,
   PromptMulti: /promptmulti (\d+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+)|promptmulti (\d+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+)|promptmulti (\d+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+)/,
 });
 const guard = (name) => new PendingTrigger(null, GUARD_PATTERNS[name]);
@@ -3222,8 +3322,8 @@ export function defaultActionTemplates() {
     new KillFoeAction(null),
     new PayMoney(null),
     new JournalNote(null),
-    guard('ChangeFoeInfighting'),
-    guard('ChangeFoeTeam'),
+    new ChangeFoeInfighting(null),
+    new ChangeFoeTeam(null),
     new PlaySong(null),
     new SetPlayerCrimeAction(null),
     new SpawnCityGuardsAction(null),

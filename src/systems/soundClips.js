@@ -8,7 +8,22 @@ export const SOUND = {
   BodyFall: 15,             // AUDIT 24 wave 38: EnemyDeath plays it at the corpse, every death
   PlayerDoorBash: 7,
   ActivateLockUnlock: 316,  // R1: the picked-lock chime (AttemptLockpicking + exterior success)
-  DrawWeapon: 78,     // ToggleSheath's unsheathe sound (FPSWeapon.DrawWeaponSound default)
+  // AUDIT 26 F023: FPSWeapon.DrawWeaponSound's declared default (78)
+  // is DEAD in DFU - WeaponManager.SetWeapon overwrites the field with
+  // `weapon.GetEquipSound()` on every applied weapon (:780) and
+  // ToggleSheath plays THAT (FPSWeapon.cs:295). Kept for the
+  // barehanded/claws arms, which have no item to ask.
+  DrawWeapon: 78,
+  // DaggerfallUnityItem.GetEquipSound's weapon arm (:839-867), by
+  // DAGGER.SND index (SoundClips.cs:466-469, :512-515).
+  EquipShortBlade: 377,
+  EquipLongBlade: 378,
+  EquipTwoHandedBlade: 379,
+  EquipStaff: 380,
+  EquipMaceOrHammer: 413,
+  EquipFlail: 414,
+  EquipAxe: 415,
+  EquipBow: 416,
   DungeonDoorClose: 24,
   DungeonDoorOpen: 25,
   NormalDoorClose: 93,

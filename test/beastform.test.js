@@ -18,6 +18,7 @@ import { setCrimeCommitted, CRIMES } from '../src/systems/court.js';
 import { setRacialQuestHost } from '../src/systems/racialQuests.js';
 import { weaponTypeForItem, WEAPON_TYPES } from '../src/combat/fpsWeapon.js';
 import { swingSoundFor, SOUND } from '../src/systems/soundClips.js';
+import { equipSoundFor } from '../src/characters/weapons.js';   // F023
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const P = () => ({
@@ -87,8 +88,12 @@ test('V4: SetFPSWeapon - the transformed rig IS the wereclaws, silent draw, high
   assert.equal(swingSoundFor(WERECLAWS_ITEM), SOUND.SwingHighPitch, 'SetFPSWeapon:339');
   const rig = read('src/combat/weaponRig.js');
   assert.ok(rig.includes('const claws = racialFpsWeapon(entity);'), 'the per-frame sync consults the override');
-  assert.ok(rig.includes("!playerWeapon.weapon?.werecreatureClaws) audio.playOneShot(SOUND.DrawWeapon)"),
+  // AUDIT 26 F023 made the draw clip per-weapon, so the gate grew a
+  // block - but the claws arm is unchanged: they still draw silently
+  // (SetFPSWeapon :338, and DFU's SetMelee forces None at :764).
+  assert.ok(rig.includes('!playerWeapon.weapon?.werecreatureClaws) {'),
     'DrawWeaponSound = None (:338) - the claws draw silently');
+  assert.equal(equipSoundFor(WERECLAWS_ITEM), null, 'and the law agrees, not just the gate');
 });
 
 test('V4: the attack voice - 10% attack ELSE 20% bark, strain-keyed, transformed only', () => {

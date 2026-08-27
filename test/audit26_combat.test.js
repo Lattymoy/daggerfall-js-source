@@ -51,28 +51,45 @@ test('F035: the Murder crime is gated on the player being the source', () => {
 });
 
 test('F041: the hostility flip is gated the same way, in both foe pools', () => {
-  for (const f of ['scenes/exteriorFoes.js', 'scenes/dungeonContext.js']) {
-    assert.ok(src(f).includes('if (fromPlayer && f'.replace('f', f.includes('dungeon') ? 'foe' : 'f')
-      + '.ai && !')
-      || src(f).match(/if \(fromPlayer && (f|foe)\.ai && !\1\.ai\.isHostile\)/),
-    `${f} re-hostiles only for a PLAYER source`);
-  }
+  // MT-ii widened the ENCOUNTER pool's arm inside this same gate to
+  // the whole of MakeEnemyHostileToAttacker (EnemyMotor.cs:186-214) -
+  // there is a target to reassign now, and a struck ally to revert -
+  // so its shape is `if (fromPlayer && f.ai) { ... }`. The LAW the
+  // pin guards is unchanged and asserted for both: nothing
+  // re-hostiles a foe unless the PLAYER was the source. The dungeon
+  // host keeps the narrow arm until MT-iv arms it.
+  assert.match(src('scenes/dungeonContext.js'), /if \(fromPlayer && foe\.ai && !foe\.ai\.isHostile\)/,
+    'scenes/dungeonContext.js re-hostiles only for a PLAYER source');
+  const xf = src('scenes/exteriorFoes.js');
+  assert.match(xf, /if \(fromPlayer && f\.ai\) \{\n\s*f\.ai\.makeEnemyHostileToAttacker\?\.\(PLAYER_TARGET/,
+    'scenes/exteriorFoes.js re-hostiles only for a PLAYER source');
+  assert.ok(!/f\.ai\.makeEnemyHostileToAttacker\?\.\(PLAYER_TARGET[\s\S]{0,400}\n  \}/.test(xf.slice(xf.indexOf('function damageFoe')).split('if (fromPlayer')[0]),
+    'and nothing outside the gate raises hostility');
 });
 
-test('F035/F041: the three FALL arms - and only they - pass fromPlayer false', () => {
+test('F035/F041: the FALL arms - and MT-ii\'s foe-source door - pass fromPlayer false', () => {
   const files = ['scenes/cityGuards.js', 'scenes/exteriorFoes.js', 'scenes/dungeonContext.js'];
   let falseCalls = 0;
   for (const f of files) {
     const s = src(f);
     const hits = [...s.matchAll(/\{ fromPlayer: false \}/g)];
-    assert.equal(hits.length, 1, `${f} has exactly one sourceless caller`);
+    // MT-ii gave the two EXTERIOR pools a SECOND sourceless caller:
+    // `hurtFromFoe`, the cross-pool door another enemy's blow lands
+    // through. Another enemy's blow is not the player's either, and
+    // getting that wrong would re-hostile the victim toward the
+    // player and revert a struck ally's team for a blow the player
+    // never struck. The dungeon keeps its single fall arm (MT-iv).
+    const expected = f.includes('dungeon') ? 1 : 2;
+    assert.equal(hits.length, expected, `${f} has ${expected} sourceless caller(s)`);
     falseCalls += hits.length;
-    // and it is the landedFall arm
-    const i = s.indexOf('{ fromPlayer: false }');
-    const before = s.slice(Math.max(0, i - 700), i);
-    assert.ok(before.includes('landedFall'), `${f}: the sourceless call is the FALL arm`);
+    // every one of them is either the FALL arm or the foe-source door
+    for (const h of hits) {
+      const before = s.slice(Math.max(0, h.index - 700), h.index);
+      assert.ok(before.includes('landedFall') || before.includes('hurtFromFoe'),
+        `${f}: a sourceless call is the FALL arm or the foe-source door`);
+    }
   }
-  assert.equal(falseCalls, 3);
+  assert.equal(falseCalls, 5);
 });
 
 // ── F038 ──────────────────────────────────────────────────────────

@@ -48,6 +48,8 @@ import { copyEffectEntry } from '../systems/save.js';   // AUDIT 26 F217
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
 import { MobileUnit } from '../characters/mobileUnit.js';
 import { EnemyAI, withinYaw, isBackFacing } from '../characters/enemyMotor.js';
+import { runTargetMachine, isPlayerTarget, PLAYER_TARGET } from '../characters/enemyTargets.js';   // MT-ii
+import { applyDamageToNonPlayer } from './hostCombat.js';   // MT-ii: EnemyAttack.ApplyDamageToNonPlayer
 import { EnemyAttack } from '../characters/enemyAttack.js';
 import { makeEnemyEntity } from '../characters/enemyEntity.js';
 import { ClassFile } from '../formats/classFile.js';
@@ -165,8 +167,15 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     const tex = await getTexture(archive);
     const mobile = new MobileUnit(GUARD_MOBILE_TYPE, basics, (rec) => tex.getFrameCount(rec), Math.random, 'male');
     const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
-    const g = { mobile, ai, attack, entity, batch, tex, archive, dead: false, _prevMState: 'Idle', _mout: null,
-      sounds: new EnemySoundSource(GUARD_MOBILE_TYPE, rand) };   // AUDIT 24 (wave 41)
+    const g = { mobile, ai, attack, entity, batch, tex, archive, mobileType: GUARD_MOBILE_TYPE, dead: false, _prevMState: 'Idle', _mout: null,
+      sounds: new EnemySoundSource(GUARD_MOBILE_TYPE, rand),
+      // MT-ii: THE CROSS-POOL DAMAGE DOOR. A striker resolves its
+      // melee frame inside its OWN pool's loop, so the target's pool
+      // has to expose its death chain on the record itself - the
+      // candidate IS the handle both pools already share. `fromPlayer
+      // = false`: a monster's blow is not the player's, so it levies
+      // no Murder (DaggerfallEntityBehaviour.cs:203).
+      hurtFromFoe: (dmg, dir) => damageGuard(g, dmg, null, dir ?? null, { fromPlayer: false }) };   // AUDIT 24 (wave 41)
     guards.push(g);
     return g;   // AUDIT 26 F217: the restore overlays the record it minted - two interleaved async spawns make `guards[length-1]` a race
   }
@@ -271,26 +280,35 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     g.batch = null;
   }
 
-  /** AUDIT 26 F035: `fromPlayer` is this door's provenance flag, the
-   *  hurtPlayer(bypassShield) idiom. DFU assigns the Murder crime
-   *  inside HandleAttackFromSource's `sourceEntityBehaviour ==
+  /** AUDIT 26 F035 + MT-ii: `fromPlayer` is this door's provenance
+   *  flag, the hurtPlayer(bypassShield) idiom. DFU assigns the Murder
+   *  crime inside HandleAttackFromSource's `sourceEntityBehaviour ==
    *  PlayerEntityBehaviour` gate (DaggerfallEntityBehaviour.cs:203,
    *  :265-269), and EnemyMotor.ApplyFallDamage calls DecreaseHealth
    *  and nothing else (:1398-1401) - so a watchman who dies falling
    *  while chasing must not brand the player a murderer for a kill
-   *  they never made. Defaults TRUE: every player blow is unchanged. */
+   *  they never made. Defaults TRUE: every player blow is unchanged.
+   *
+   *  TWO LANES FOUND THIS GATE INDEPENDENTLY, from opposite ends: the
+   *  audit from the fall, and MT from infighting, where the stakes
+   *  are higher still - the moment a spawned monster can kill a
+   *  watchman, an ungated crime FRAMES THE PLAYER for a murder they
+   *  did not commit, and the watch responds to that crime, so the
+   *  town turns on them for a rat's work. */
   function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true } = {}) {
     g.entity.health -= damage;
     if (g.entity.health <= 0) {
       g.dead = true;
       g.corpse = true;   // G3: only a KILLED guard is lootable (walk-aways vanish with their items)
       releaseGuardBatch(g);
-      if (g.ai?.detected) setEnemyAlert(playerEntity, false);   // EnemyDeath:131-136 (wave 36)
+      // EnemyDeath:131-136 - the clear gates on `senses.Target ==
+      // PlayerEntityBehaviour`, which MT-ii makes observable.
+      if (isPlayerTarget(g.ai?.target) && g.ai?.detected) setEnemyAlert(playerEntity, false);
       sayEnemyDied(say, GUARD_MOBILE_TYPE);   // EnemyDeath:79-83, the kill notice
       // G4 (HandleAttackFromSource, verbatim): killing the city watch
       // IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
-      // the thieves-guild arc. F035: and only when the PLAYER is the
-      // source - the whole block is inside DFU's player gate.
+      // the thieves-guild arc. F035/MT-ii: and only when the PLAYER
+      // is the source - the whole block is inside DFU's player gate.
       if (fromPlayer) setCrimeCommitted(playerEntity, CRIME_MURDER);   // V4: through the one setter (SuppressCrime)
       // AUDIT 24 (wave 38): EnemyDeath.CompleteDeath, through the one
       // home (this was the second copy of exteriorFoes' mint, to the
@@ -331,6 +349,25 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     }
   }
 
+  /** MT-ii: this guard's armed senses context - the twin of the
+   *  encounter pool's. Unarmed (no `candidates` in the context) it
+   *  hands the object straight back and the watch stays player-only,
+   *  which is what exterior.js's guard-only host wants anyway. */
+  function _armed(g, senses) {
+    if (!senses?.candidates) return senses;
+    return {
+      ...senses,
+      targeting: (ai, pf, cdt) => runTargetMachine(g, senses.candidates(), pf, cdt, {
+        playerEntity: senses.playerEntity ?? null,
+      }),
+    };
+  }
+  const _targetFeet = (g, playerFeet) => {
+    const t = g.ai.target;
+    if (t == null) return g.ai._armedTargeting ? null : playerFeet;
+    return isPlayerTarget(t) ? playerFeet : t.ai.feet;
+  };
+
   /** Per-frame drive; returns the live mobile batches (the host draws
    *  them on the flats' axis with the corpses). */
   function update(dt, playerFeet, eye, senses = {}) {
@@ -362,7 +399,8 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // (:55-57) - a city guard is an ordinary EnemyClass entity with no
       // exemption from either.
       const _gParalyzed = entityIsParalyzed(g.entity);   // S22: the FreeAction read-time fold
-      g.ai.update(dt, playerFeet, senses, _gParalyzed);
+      g.ai.update(dt, playerFeet, _armed(g, senses), _gParalyzed);
+      const _tgt = _targetFeet(g, playerFeet);   // MT-ii: whatever it SELECTED
       // AUDIT 24 (wave 36): EnemySenses.cs:531-535 - ANY enemy that is
       // targeting and seeing the player raises the alert, as the last
       // statement of FixedUpdate at method-body indent, not inside a
@@ -372,7 +410,10 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // touched the flag, while exteriorFoes has raised it since the
       // X-slice - so the alert the watch should raise never armed the
       // dungeon spawn roll, and one it inherited never cleared.
-      if (g.ai.inSight && g.ai.detected) setEnemyAlert(playerEntity, true, currentMinute());
+      // MT-ii: and the source's `Target == PlayerEntityBehaviour` term
+      // with it (:531) - a watchman trading blows with a rat must not
+      // hold the player's alert state up.
+      if (isPlayerTarget(g.ai.target) && g.ai.inSight && g.ai.detected) setEnemyAlert(playerEntity, true, currentMinute());
       // CH3 (characters-8): a past-threshold landing bills the fall
       // formula through the pool's damage door. EnemyMotor.ApplyFallDamage
       // (:173, :1384-1418) runs unconditionally for every enemy and the
@@ -411,7 +452,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // brigand.
       tickEnemySound(g.sounds, g.ai.feet, playerFeet, dt, { audio, collider });
       g.mobile.frameSpeedDivisor = Math.max(1, Math.trunc((g.entity.stats?.speed ?? 50) / Math.max(8, liveStat(g.entity, 'speed'))));   // AUDIT 23 (characters-11)
-      const events = _gParalyzed ? [] : g.attack.update(dt, g.ai, playerFeet);
+      const events = (_gParalyzed || !_tgt) ? [] : g.attack.update(dt, g.ai, _tgt);   // MT-ii: at the SELECTED target
       void events;
       const mstate = g.attack.machine.state;
       const strikeEdge = mstate !== 'Idle' && (g._prevMState ?? 'Idle') === 'Idle';
@@ -427,8 +468,31 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // C16: the -1 damage marker resolves the melee vs the player
       // EnemyAttack.Update returns at the top while paralysed (:91-94), so no
       // damage frame resolves - the swing may still be drawn, nothing lands.
-      if (!_gParalyzed && g.mobile.doMeleeDamage) {
+      if (!_gParalyzed && g.mobile.doMeleeDamage && _tgt) {
         g.mobile.doMeleeDamage = false;
+        // MT-ii: MeleeDamage's two-arm split (EnemyAttack.cs:199-209).
+        // The watch fighting a monster is the whole point of the
+        // CityWatch team; everything below is the player arm.
+        const _foeTarget = g.ai._armedTargeting && g.ai.target && !isPlayerTarget(g.ai.target)
+          ? g.ai.target : null;
+        if (_foeTarget) {
+          const fdx = _tgt[0] - g.ai.feet[0], fdz = _tgt[2] - g.ai.feet[2];
+          const fwpn = chooseEnemyWeapon(g.entity.weapon, ENEMY_BASICS[GUARD_MOBILE_TYPE]);
+          const ffwd = [Math.sin(g.ai.yaw), 0, Math.cos(g.ai.yaw)];   // transform.forward (:208)
+          if (meleeHitConnects(g.ai._dist, g.ai.inSight, withinYaw(g.ai.yaw, fdx, fdz, MELEE_HIT_YAW_DEG))) {
+            applyDamageToNonPlayer(g, _foeTarget, {
+              weapon: fwpn, direction: ffwd, rolls: Math.random,
+              calculateAttackDamage,
+              dealDamage: (t, d) => t.hurtFromFoe?.(d, ffwd),
+              audio, hitEffects,
+            });
+          } else {
+            audio?.play3d?.(enemyMissSound(fwpn), [g.ai.feet[0], g.ai.feet[1] + 0.9, g.ai.feet[2]], 1, { maxDistance: 16 });
+          }
+          const gv = enemyAttackVoice(g);   // :216-226 fires whatever the target
+          if (gv && gv.clip >= 0) audio?.play3d?.(gv.clip, [g.ai.feet[0], g.ai.feet[1] + 0.9, g.ai.feet[2]], 1, { maxDistance: 16 });
+          continue;
+        }
         const hdx = playerFeet[0] - g.ai.feet[0], hdz = playerFeet[2] - g.ai.feet[2];
         const wpn = chooseEnemyWeapon(g.entity.weapon, ENEMY_BASICS[GUARD_MOBILE_TYPE]);
         const gmid = [g.ai.feet[0], g.ai.feet[1] + 0.9, g.ai.feet[2]];

@@ -63,6 +63,11 @@ export const ALL_KEYS = Object.freeze(
  *  entry names the consumer so settings.test.js can check it. */
 export const LIVE = Object.freeze({
   'Enhancements/CombatVoices': 'src/combat/combatVoices.js',
+  // MT-i: EnemyInfighting. OFF sends GetTargets down its else-arm
+  // (:801-803), where a non-PlayerAlly foe skips every enemy
+  // candidate and the whole scene is player-only again - which is
+  // exactly what the launcher's own blurb promises.
+  'Enhancements/EnemyInfighting': 'src/characters/enemyTargets.js',
   'Enhancements/PlayerTorchFromItems': 'src/systems/playerTorch.js',   // T1: it gates the torch itself now, not just the starting gear
   'Enhancements/LoiterLimitInHours': 'src/systems/restSession.js',
   // S40: the illegal-rest confirm. OFF makes camping in a town simply

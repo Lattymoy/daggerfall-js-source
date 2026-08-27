@@ -10,13 +10,16 @@
 
 import { SKILLS, tallySkill, skillValue, SKILL_NAMES } from '../systems/skills.js';
 import { vampireAttackVoice } from '../systems/vampirism.js';   // V5: GetCustomRaceGenderAttackSoundData
-import { ENEMY_GROUPS, dice100 } from '../combat/formulas.js';
+import {
+  ENEMY_GROUPS, dice100,
+  enemyKnockbackApplies, weaponKnockbackSpeed, enemyWeightClassicUnits,   // MT-ii: ApplyDamageToNonPlayer's knockback
+} from '../combat/formulas.js';
 import { combatVoicesEnabled, ATTACK_VOICE_CHANCE, PAIN_VOICE_CHANCE, combatVoice, playerVoice, rollVoiceRace, isHeavyDamage } from '../combat/combatVoices.js';   // C2-slice; playerVoice AUDIT 24 (wave 46)
 import { RACES } from '../systems/races.js';   // C2-slice: the player grunt's race
 import { assignEnemyEquipment, equipmentVariantFor, equipmentItems } from '../combat/enemyEquipment.js';
 import { rollEnemyWeaponPoison } from '../systems/poisons.js';
 import { GLOBAL_SCALE } from '../world/meshReader.js';
-import { swingSoundFor } from '../systems/soundClips.js';
+import { swingSoundFor, hitSoundFor } from '../systems/soundClips.js';
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
 import { ATTRACT_RADIUS } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41)
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // AUDIT 24 (wave 42)
@@ -337,6 +340,87 @@ export function playEnemyClip(audio, out, feet) {
   audio?.play3d?.(out.clip, [feet[0], feet[1] + 1, feet[2]], out.volume,
     { maxDistance: ATTRACT_RADIUS, distanceModel: 'linear' });
   return out.clip;
+}
+
+// ---- MT-ii: ApplyDamageToNonPlayer (EnemyAttack.cs:303-392) ----
+/**
+ * One enemy's blow landing on ANOTHER enemy - the whole payload DFU
+ * runs when senses.Target is a foe rather than the player. It lived
+ * nowhere in the port, because until MT-i no foe could hold a foe as
+ * its target.
+ *
+ * Everything the source does, in its order: the damage roll, the
+ * attacker's own normal-power concealment break, the hit sound,
+ * blood, knockback (its OWN guard - see enemyKnockbackApplies), the
+ * 40% class pain voice, the miss/parry fork, the Strikes payload,
+ * the health write, and MakeEnemyHostileToAttacker on the target.
+ *
+ * THREE THINGS DFU DOES *NOT* DO HERE, and the port must not either:
+ *   - onMonsterHit. FormulaHelper calls it in the weaponless MONSTER
+ *     arm against the PLAYER only; a rat biting an orc infects
+ *     nothing. (The exterior pool's own comment already records the
+ *     same rule for its arrow and city-watch paths.)
+ *   - the damage FLASH. That is the player's ShowPlayerDamage.
+ *   - the Dodging tally. The player's, at the player's own hit.
+ *
+ * The caller owns its pool's death handling: `dealDamage(target,
+ * damage)` is the target pool's damageFoe, so a foe killed by
+ * another foe runs the same soul-trap/corpse/notice chain a
+ * player-killed one does - EnemyEntity.DecreaseHealth is one method
+ * in DFU and this is the port's one seam onto it.
+ *
+ * @returns the damage dealt (0 for a miss), as the source returns it.
+ */
+export function applyDamageToNonPlayer(attacker, target, {
+  weapon = null, direction = null, bowAttack = false,
+  dealDamage, calculateAttackDamage, audio = null, rolls = Math.random,
+  hitEffects = null,
+} = {}) {
+  if (!target || !attacker) return 0;   // :305-306, `senses.Target == null`
+  const aEnt = attacker.entity, tEnt = target.entity;
+  const damage = calculateAttackDamage(aEnt, tEnt, { weapon, rolls });
+  // :316-317 - the ATTACKER's normal-power concealment breaks on a
+  // landed blow, whoever it landed on.
+  if (damage > 0 && attacker.breakConcealment) attacker.breakConcealment();
+  const at = target.ai?.feet ?? [0, 0, 0];
+  const mid = [at[0], at[1] + (target.ai?.height ?? 1.8) / 2, at[2]];
+  if (damage > 0) {
+    // :323 PlayHitSound at the TARGET (hitSoundFor is the port's one
+    // home for EnemySounds.PlayHitSound's weapon-aware clip), then
+    // :325-333 the blood splash at the target's centre + height/8.
+    audio?.play3d?.(hitSoundFor(weapon), at, 1.1, { maxDistance: 16 });
+    hitEffects?.showBloodSplash?.(tEnt?.basics?.bloodIndex ?? 0,
+      [at[0], at[1] + (target.ai?.height ?? 1.8) / 8, at[2]]);
+    // :336-350 - the knockback, on the ATTACKER-class guard
+    if (target.ai && enemyKnockbackApplies(target.ai.knockbackSpeed ?? 0, aEnt?.isClass,
+      tEnt?.basics?.weight)) {
+      const w = enemyWeightClassicUnits(tEnt?.isClass, tEnt?.gender, tEnt?.basics?.weight);
+      if (w > 0) {
+        target.ai.knockbackSpeed = weaponKnockbackSpeed(damage, w);
+        target.ai.knockbackDir = direction ?? target.ai.knockbackDir;
+      }
+    }
+    // :353-363 - the 40% pain voice, class targets only, the
+    // Knight_CityWatch id forced male (enemyPainVoice IS that law)
+    const v = enemyPainVoice(target, damage, rolls);
+    if (v && v.clip >= 0) audio?.play3d?.(v.clip, mid, 1, { maxDistance: 16 });
+  } else {
+    // :366-375 - the miss/parry fork. The MISS rings at the ATTACKER
+    // (`sounds`, its own component); the PARRY at the target.
+    const parries = !!tEnt?.basics?.parrySounds;
+    const z = zeroDamageHitSound({ weapon, arrowHit: bowAttack, parrySounds: parries, roll: rolls() });
+    if (z) {
+      const where = z.at === 'enemy' ? at : (attacker.ai?.feet ?? at);
+      audio?.play3d?.(z.sound, where, 1, { maxDistance: 16 });
+    }
+  }
+  // :378-385 the Strikes payload, then :387 DecreaseHealth. The
+  // enchantment door is the caller's (it owns the item seam); the
+  // health write is the pool's own damageFoe, so death runs whole.
+  dealDamage?.(target, damage);
+  // :389-391 - and the struck foe turns on whoever hit it.
+  target.ai?.makeEnemyHostileToAttacker?.(attacker, attacker.ai?.feet ?? null);
+  return damage;
 }
 
 // ---- First-encounter language pacification (AUDIT 24, wave 42) ----

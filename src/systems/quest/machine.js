@@ -379,6 +379,12 @@ export class QuestMachine {
       spawnCityGuards: (immediate) => this.deps.spawnCityGuards?.(immediate),
       makeEnemiesHostile: () => this.deps.makeEnemiesHostile?.(),
       clearEnemies: () => this.deps.clearEnemies?.(),
+      // MT-iii: every LIVE spawned instance of a quest Foe symbol -
+      // DFU's ActiveGameObjectDatabase walk, QuestSpawn-filtered and
+      // TargetSymbol-matched (ChangeFoeInfighting.cs:44-56 /
+      // ChangeFoeTeam.cs:77-92). Answers [] with no host, which idles
+      // both actions exactly as C# does with no enemy standing.
+      questFoeInstances: (symbol) => this.deps.questFoeInstances?.(symbol) ?? [],
       getQuest: (uid) => this.getQuest(uid),
       addFactionListener: (factionID, owner) => this.addFactionListener(factionID, owner),
       removeFactionListener: (factionID) => this.removeFactionListener(factionID),

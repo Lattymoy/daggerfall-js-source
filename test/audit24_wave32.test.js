@@ -142,23 +142,32 @@ test('audit24 wave32: paralysis reaches the exterior pools', () => {
   // expired either, which made it permanent.
   const xf = rd('src/scenes/exteriorFoes.js');
   assert.ok(xf.includes('const _fParalyzed = entityIsParalyzed(f.entity);'), 'exteriorFoes reads it');
-  assert.ok(xf.includes('f.ai.update(dt, playerFeet, senses, _fParalyzed);'), 'the motor is told');
-  assert.ok(xf.includes('if (!_fParalyzed) f.attack.update(dt, f.ai, playerFeet);'), 'the attack machine holds');
-  assert.ok(xf.includes('if (playerFeet && f.caster && !_fParalyzed && f.ai.isHostile) {'), 'and so does casting');
+  // MT-ii wrapped the context (_armed adds the targeting closure when
+  // the host supplies candidates); the paralysis argument is untouched.
+  assert.ok(xf.includes('f.ai.update(dt, playerFeet, _armed(f, senses), _fParalyzed);'), 'the motor is told');
+  // MT-ii: the component aims at the SELECTED target (EnemyAttack
+  // reads senses.Target, :199-209) and holds when there is none.
+  assert.ok(xf.includes('if (!_fParalyzed && _tgt) f.attack.update(dt, f.ai, _tgt);'), 'the attack machine holds');
+  // MT-ii: the caster aims at the target too, so a foe duelling
+  // another foe stops hurling its fireballs at the player.
+  assert.ok(xf.includes('if (_tgt && f.caster && !_fParalyzed && f.ai.isHostile) {'), 'and so does casting');
   // and no DAMAGE FRAME resolves. EnemyAttack.Update returns at the top while
   // paralysed, so MeleeDamage/BowDamage never run. The dungeon host gets this
   // free by suppressing the whole mobile update; these pools resolve off the
   // mobile's own frames, so without the gate freezing the attack MACHINE would
   // still have let a mid-swing animation land its blow.
-  assert.ok(xf.includes('if (!_fParalyzed && f.mobile.doMeleeDamage && playerFeet) {'), 'no melee lands');
-  assert.ok(xf.includes('if (!_fParalyzed && f.mobile.shootArrow && playerFeet && onArrow) {'), 'no arrow looses');
+  // MT-ii: both frames gate on a live TARGET (`_tgt`) instead of the
+  // player's feet - EnemyAttack's MeleeDamage and BowDamage both
+  // return at `senses.Target == null` (:136-137).
+  assert.ok(xf.includes('if (!_fParalyzed && f.mobile.doMeleeDamage && _tgt) {'), 'no melee lands');
+  assert.ok(xf.includes('if (!_fParalyzed && f.mobile.shootArrow && _tgt && onArrow) {'), 'no arrow looses');
   assert.equal(xf.includes('senses, false)'), false, 'no literal false left behind');
 
   const cg = rd('src/scenes/cityGuards.js');
   assert.ok(cg.includes('const _gParalyzed = entityIsParalyzed(g.entity);'), 'cityGuards reads it');
-  assert.ok(cg.includes('g.ai.update(dt, playerFeet, senses, _gParalyzed);'), 'the motor is told');
-  assert.ok(cg.includes('const events = _gParalyzed ? [] : g.attack.update(dt, g.ai, playerFeet);'), 'the attack machine holds');
-  assert.ok(cg.includes('if (!_gParalyzed && g.mobile.doMeleeDamage) {'), 'and no blow lands');
+  assert.ok(cg.includes('g.ai.update(dt, playerFeet, _armed(g, senses), _gParalyzed);'), 'the motor is told');   // MT-ii: same wrap
+  assert.ok(cg.includes('const events = (_gParalyzed || !_tgt) ? [] : g.attack.update(dt, g.ai, _tgt);'), 'the attack machine holds');   // MT-ii: same
+  assert.ok(cg.includes('if (!_gParalyzed && g.mobile.doMeleeDamage && _tgt) {'), 'and no blow lands');   // MT-ii: target-gated
   assert.equal(cg.includes('senses, false)'), false, 'no literal false left behind');
 });
 
