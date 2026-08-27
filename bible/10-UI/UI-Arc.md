@@ -6557,3 +6557,33 @@ same one-rule-forgot shape as PX3's gem specificity. Probed live:
 seven rail rows, the Exit confirm titled 'Leave this game' inside
 the window, Cancel restores the pane, Resume acts exactly once,
 About's stats grid pixel-faced, zero page errors both viewports.
+
+PX8 (same day, Mac: "Settings next"): THE SHELL WEARS THE PIXELS.
+The section shell - side rail, brand, pane, and above all the
+settings three-pane screen - repainted into the pixel idiom in ONE
+block scoped under `.shell` (the menu's root alone; the wizard, the
+sheet and the inventory own other roots, verified by grep before the
+first rule was written). EVERY RULE IS PAINT: Pixelify on the shell,
+Jacquard on the brand, 2px borders and zero radii on cards, acts,
+steppers, swatches and the dcard's code chip, the gold pair on
+active rail/subrail rows and primary acts, square tier dots and
+legend squares - and NO geometry moved, so AUDIT F1's 44px floors,
+the phone sheet, the F8 second-tap gesture and its dot all keep
+their laws. Settings still lives in the shell (PX7's reasoning
+stands); it just stops looking like a different game. THE TAP PROBE
+EARNED ITS KEEP TWICE: it predates the pixel home and hung waiting
+for a rail the boot no longer opens on, so it now measures the HOME
+FACE first and walks through it - and that walk found the real one:
+on a Pixel 5 the centered list's last rows ran UNDER the fixed foot,
+whose skin switch intercepted their taps - Load Game drawn and
+unreachable, the F1 shape exactly. The first fix keyed on max-WIDTH
+and a landscape phone (851x393) sailed past it: the condition was
+never 'narrow', it was SHORT. The stage now stops centering, scrolls
+and reserves the foot's height under (max-height: 560px) or
+(max-width: 480px). Probe green end to end on the enhanced legs -
+the pixel home + five panes + all seven settings categories, both
+orientations, 26 ok; the probe's WIZARD leg (.prov on /chargen.html)
+times out on the CLEAN tree too in this container - it needs ARENA2
+- and the classic settingsProbe fails pre-existing for the same
+reason, both verified by stash before being attributed to the
+environment.
