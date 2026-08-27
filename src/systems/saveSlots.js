@@ -228,6 +228,48 @@ export function screenshotOf(key, storage = store()) {
   return storage?.getItem(SAVE_SHOT_PREFIX + key) ?? null;
 }
 
+// ── SS1: THE SCREENSHOT CAPTURE ──────────────────────────────────
+// SaveLoadManager.SaveGame's tail (:1146-1152, :1225-1227): the shot
+// is taken at END OF FRAME - the coroutine yields WaitForEndOfFrame
+// TWICE (so the save window has popped), then ReadPixels the whole
+// screen WITH the HUD on it (the hide-UI attempt is commented out in
+// the C#), EncodeToJPG, write beside the save. The port's WebGL
+// context has preserveDrawingBuffer false, so the canvas is only
+// readable in the same task as the draw: the save ARMS a request here
+// and the host frame loop DELIVERS it after its last draw call, with
+// the same two-frame countdown standing in for the two yields.
+// RECORDED departure: DFU stores the full Screen.width x height JPEG
+// on disk; the port downscales to 320x200 (the native frame) for the
+// localStorage quota - the window's panel is 168x95, so nothing the
+// player can see is lost.
+export const SCREENSHOT_W = 320;
+export const SCREENSHOT_H = 200;
+let _pendingShot = null;               // { key, frames }
+export function requestScreenshot(key) {
+  _pendingShot = Number.isInteger(key) && key >= 0 ? { key, frames: 2 } : null;
+}
+/** The host frame loop's delivery - call after the frame's last draw.
+ *  True only on the frame the shot lands. A slot deleted while the
+ *  countdown ran captures nothing (the info-must-exist law), and a
+ *  failure of any kind leaves the slot shotless - the window's bare
+ *  panel is GetSaveScreenshot -> null's own look. */
+export function capturePendingScreenshot(canvas, storage = store()) {
+  if (!_pendingShot || !canvas || !storage) return false;
+  if (--_pendingShot.frames > 0) return false;   // the two WaitForEndOfFrame yields
+  const { key } = _pendingShot;
+  _pendingShot = null;                           // one save, one shot
+  try {
+    if (!saveInfoOf(key, storage)) return false;
+    const off = document.createElement('canvas');
+    off.width = SCREENSHOT_W; off.height = SCREENSHOT_H;
+    off.getContext('2d').drawImage(canvas, 0, 0, SCREENSHOT_W, SCREENSHOT_H);
+    const url = off.toDataURL('image/jpeg', 0.7);   // EncodeToJPG
+    if (!url || !url.startsWith('data:image/')) return false;
+    storage.setItem(SAVE_SHOT_PREFIX + key, url);
+    return true;
+  } catch { return false; }   // quota, tainted canvas, headless - never a thrown frame
+}
+
 /** DeleteSaveFolder: the known files only, then the caller
  *  re-enumerates (every reader here enumerates fresh). */
 export function deleteSave(key, storage = store()) {

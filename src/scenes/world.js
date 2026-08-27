@@ -67,7 +67,7 @@ import { SITE_TYPES } from '../systems/quest/place.js';   // B3: the respawn dis
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert, areEnemiesNearby, passiveGuardSpawns } from '../systems/encounters.js';   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { snapshotPlayer, restorePlayer, composeSessionState, restoreSessionState } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
-import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad)
+import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, requestScreenshot, capturePendingScreenshot } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it
@@ -1918,9 +1918,14 @@ export async function bootWorld(canvas, renderer, params, status) {
         guards: cityGuards.snapshotWorld((pos) => state.worldCoords(pos)).map((sg) => ({ ...sg, y: sg.y - state.compensation[1] })),
       },
     });
-    const ok = saveSlot(playerEntity.name, saveName, snap).ok;
-    townTalk.say(ok ? 'Game saved.' : 'Save failed (storage full or disabled).');
-    return ok;
+    const r = saveSlot(playerEntity.name, saveName, snap);
+    // SS1: the shot is DEFERRED to frame end (SaveGame's two
+    // WaitForEndOfFrame yields) - the frame loop's
+    // capturePendingScreenshot delivers it once the save window has
+    // popped, HUD in shot exactly as the C# leaves it.
+    if (r.ok) requestScreenshot(r.key);
+    townTalk.say(r.ok ? 'Game saved.' : 'Save failed (storage full or disabled).');
+    return r.ok;
   }
   let _loading = false;
   /** F12/pause = the CURRENT character's QuickSave slot (QuickLoad's
@@ -3642,6 +3647,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // console.log. Drawn ABOVE the modal render, which is where
       // townTalk always draws.
       townTalk.frame(dt);
+      capturePendingScreenshot(canvas);   // SS1: a save armed from a modal mode still lands its shot
       requestAnimationFrame(frame);
       return;
     }
@@ -4162,6 +4168,10 @@ export async function bootWorld(canvas, renderer, params, status) {
           largeHud: largeHudOptions({ renderer, fetchBytes, palette }, playerEntity) });   // U38 + X4 + U43
     }
     townTalk.frame(dt);   // T3b: HUD lines + the talk overlay, above everything
+    // SS1: the frame's LAST draw is behind us - deliver a pending save
+    // screenshot while the buffer is still this task's to read
+    // (preserveDrawingBuffer false clears it after compositing).
+    capturePendingScreenshot(canvas);
 
     if (shotMode) {
       window.__frame++;

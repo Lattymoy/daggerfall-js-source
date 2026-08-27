@@ -104,7 +104,7 @@ import { dice100, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockback
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost, effectSchool, EFFECT_COST_TABLE } from '../systems/spellcost.js';
 import { snapshotPlayer, restorePlayer, composeSessionState, restoreSessionState , copyEffectEntry } from '../systems/save.js';   // B4: the ONE quest+talk composer
-import { saveSlot, loadSlot, quickLoadSlot, QUICK_SAVE_NAME } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave
+import { saveSlot, loadSlot, quickLoadSlot, QUICK_SAVE_NAME, requestScreenshot } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave; SS1: the shot arms here, the HOST loop delivers it
 import { bindQuestFoeHost } from './questFoeHost.js';   // B1: quest foes ride this pool
 import { dungeonKey } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
@@ -3133,10 +3133,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         locationKey: _locationKey,
         world: collectWorld(),
       });
-      const ok = saveSlot(playerEntity.name, saveName, snap).ok;
-      if (ok) hudText.add('Game saved.');
+      const r = saveSlot(playerEntity.name, saveName, snap);
+      // SS1: arm the deferred shot; the HOST's frame loop delivers it
+      // (dungeon.js's tail) - this context owns no canvas of its own.
+      if (r.ok) requestScreenshot(r.key);
+      if (r.ok) hudText.add('Game saved.');
       else hudText.add('Save failed (storage full or disabled).');   // never silent - the write can fail on real browsers
-      return ok;
+      return r.ok;
     },
     quickLoad(setPlayerPos, key = null) {
       const snap = key != null ? loadSlot(key) : quickLoadSlot(playerEntity.name);
