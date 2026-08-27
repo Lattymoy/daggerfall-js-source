@@ -858,10 +858,13 @@ function pauseWindow() {
 // home and only the paint changes (.px-win repaints .card/.act/.empty
 // in the pixel idiom). Resume ACTS from the rail - a pane whose only
 // content repeats the word just pressed is a pane that wasted a press
-// (the shell's own RAIL_ACTS reasoning). Settings alone still opens
-// its shell: three columns of 171 keys need the room a 860px window
-// does not have, and a cramped settings page would be worse than a
-// door to a good one.
+// (the shell's own RAIL_ACTS reasoning). PX9 (Mac: "why isn't this in
+// the pause menu"): SETTINGS LIVES HERE TOO - the same paneSettings
+// function, its category/pickedKey/sheetOpen machine and every F7/F8
+// law intact, REFLOWED by CSS into the window's shape: the category
+// rail becomes a chip strip across the top, the rows scroll beneath,
+// and the help/reset card rises as the SHEET the phone layout already
+// proved. Boot keeps the fullscreen shell, where there is room.
 const SYSTEM_PANES = Object.freeze([
   ['resume', 'Resume'], ['save', 'Save Game'], ['load', 'Load Game'],
   ['settings', 'Settings'], ['mods', 'Mods'], ['about', 'About'], ['exit', 'Exit'],
@@ -871,17 +874,23 @@ function pauseSystem(body) {
   const wrap = el('div', 'px-journal');
   const rail = el('div', 'px-qrail');
   for (const [id, label] of SYSTEM_PANES) {
-    const b = el('button', `px-qrow${id === sysSec && !RAIL_ACTS[id] && id !== 'settings' ? ' on' : ''}`);
+    const b = el('button', `px-qrow${id === sysSec && !RAIL_ACTS[id] ? ' on' : ''}`);
     b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label));
     b.onclick = RAIL_ACTS[id] ? () => onAction(RAIL_ACTS[id])
-      : id === 'settings' ? () => go('settings')
-        : () => { sysSec = id; confirming = null; render(); };
+      : () => { sysSec = id; confirming = null; sheetOpen = false; pickedKey = null; render(); };
     rail.append(b);
   }
   wrap.append(rail);
-  const detail = el('div', 'px-qdetail px-sys');
-  if (confirming) detail.append(confirmCard());
-  else ({ save: paneSave, load: paneLoad, mods: paneMods, about: paneAbout, exit: paneExit })[sysSec](detail);
+  const detail = el('div', `px-qdetail px-sys${sysSec === 'settings' ? ' px-setwrap' : ''}`);
+  if (sysSec === 'settings') {
+    // paneSettings owns its own confirm placement (the reset ask
+    // renders inside its detail sheet).
+    paneSettings(detail);
+  } else if (confirming) {
+    detail.append(confirmCard());
+  } else {
+    ({ save: paneSave, load: paneLoad, mods: paneMods, about: paneAbout, exit: paneExit })[sysSec](detail);
+  }
   wrap.append(detail);
   body.append(wrap);
 }

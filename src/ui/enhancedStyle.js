@@ -1391,6 +1391,37 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   border-radius: 0; background: rgba(0,0,0,0.35); letter-spacing: 0.06em; }
 .shell .sheet-close { letter-spacing: 0.2em; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 /* tier dots stay their tier colours; only the shape squares off. */
+
+/* ── PX9: SETTINGS INSIDE THE PAUSE WINDOW ──────────────────────
+   The same paneSettings DOM, reflowed for the window: the category
+   subrail becomes a wrapping chip strip on top, the rows scroll
+   beneath, and the help/reset detail rises as a SHEET inside the
+   window - the phone pattern the screen already carries, applied one
+   size up. All paint and flow; the machine underneath is untouched. */
+.px-setwrap { padding: 0; overflow: hidden; display: flex; }
+.px-setwrap .panes { display: flex; flex-direction: column; flex: 1; min-width: 0; position: relative; overflow: hidden; }
+.px-setwrap .subrail { display: flex; flex-direction: row; flex-wrap: wrap; gap: 2px;
+  width: auto; border-right: 0; border-bottom: 2px solid rgba(125,116,96,0.45);
+  padding: 4px 6px 6px; overflow: visible; }
+.px-setwrap .subbtn { min-height: 44px; padding: 6px 12px; font-size: 14px;
+  display: flex; align-items: center; gap: 8px;
+  color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-setwrap .subbtn.on { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-setwrap .subbtn .count { font-size: 11px; }
+.px-setwrap .list { flex: 1; overflow-y: auto; padding: 8px 12px 12px; }
+.px-setwrap .row { min-height: 44px; }
+/* The sheet: absolute within the window (px-win is relative), risen
+   by the same .open class the phone sheet uses. */
+.px-setwrap .detail { position: absolute; left: 0; right: 0; bottom: 0; max-height: 78%;
+  overflow-y: auto; z-index: 5; background: rgba(10,12,17,0.96);
+  border-top: 2px solid var(--brass);
+  transform: translateY(101%); transition: transform 0.18s steps(4); }
+.px-setwrap .detail.open { transform: translateY(0); }
+.px-setwrap .sheet-close { display: block; width: 100%; min-height: 44px;
+  color: #7d7460; letter-spacing: 0.2em; text-transform: uppercase;
+  border-bottom: 2px solid rgba(125,116,96,0.4);
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+@media (prefers-reduced-motion: reduce) { .px-setwrap .detail { transition: none; } }
 `;
 
 const STYLE_ID = 'dagger-enhanced-style';
