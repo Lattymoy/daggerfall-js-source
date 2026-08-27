@@ -225,9 +225,23 @@ describing the bug; the songs are 30 s to 4 min, and the player's loop
 is DFU's own end-of-song arm (SongManager.UpdateSong:229 replays the
 same song when the context has not moved). Mutant dead.
 
-RESIDUE, found on the way, needs ARENA2: SUNNYDAY.HMI's durationTicks
-pins at 1,199,310 - 9,994 s at the true clock - while DFU's sunnyday.mid
-is 54.8 s (~6,600 ticks). One track's end tick is ~180x the music; a
-mis-decoded delta somewhere in its stream, most likely around one of
-the HMI-specific events. Its notes play; its LOOP would wait 2.7 hours
-in silence. `tools/dumpMidi.mjs` on that one song is the way in.
+THE SUNNYDAY RESIDUE, CLOSED THE SAME DAY (Mac: "if it needs fixing,
+fix it"). Read against a copy of MIDI.BSA in a scratch directory
+(never the repo): track 5 of SUNNYDAY.HMI ends `87 5e 45 01 33 | c8 e4
+70 | b5 5b 4c | 00 b0 69 00 | 00 ff 2f 00` - the last note, then a
+three-byte VLQ delta of 1,192,560 ticks before a reverb-send
+controller (CC91 = 76) and the closing marker, where its nine sibling
+tracks end `34 | b0 69 00 | 00 ff 2f 00` at tick 6802. Not a misparse:
+the reader had read it right and recorded it as a corpus quirk
+"preserved verbatim" - and preserving it parked the loop 2.76 hours
+out. The reference reader knows the case: foo_midi's
+midi_processor_hmi.cpp SHUNTS any HMI delta over 0xFFFF ("Large HMI
+delta detected, shunting") - the event lands on the track's last
+timestamp instead of advancing - which is exactly why DFU's shipped
+sunnyday.mid is 54.8 s. `HMI_MAX_DELTA` (0xFFFF, inclusive) does the
+same here; SUNNYDAY ends at 6802 like its siblings, 57 s, and the
+whole archive re-read shows no other track with a non-musical tail.
+Pinned synthetically (a miniature of track 5, plus the boundary:
+65,535 advances, 65,536 shunts) and in the corpus pins, which were
+re-run against the real archive: D1 at 224.383 s, SUNNYDAY at 57 s,
+every checksum but SUNNYDAY's unchanged.
