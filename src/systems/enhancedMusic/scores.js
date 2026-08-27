@@ -23,44 +23,20 @@ export const TITLE_THEME = Object.freeze({
   gain: 1.0,
 });
 
-/** Scores by cue for the places (keyed by songManager's MUSIC_ENV
- *  names). A cue with no score composes alone (EM1). */
-export const PLACE_SCORES = Object.freeze({
-  /** EM2c. 3:09, looped. The key was MEASURED off the file's pitch-class
-   *  energy (B 1.00, F# 0.42, D 0.32, C# 0.28, E 0.24 - a B minor triad
-   *  with the aeolian second) and is Mac's to confirm; the underscore
-   *  composes on it. No tempo named: the piece keeps the palette's own. */
-  dungeonInterior: Object.freeze({
-    id: 'dungeon',
-    file: '../music/enhanced/dungeon.mp3',
-    loop: true,
-    gain: 1.0,
-    root: 47,          // B2
-    mode: 'aeolian',
-  }),
-});
-
-/** Cues beyond DFU's - the enhanced side's own. The records land here
- *  as the tracks arrive; a cue without one is absent, not a placeholder. */
-export const EXTRA_SCORES = Object.freeze({
-  /** EM4 ("This is danger"). 2:43, looped. The place's track crossfades
-   *  into this while the enemies have you (enhancedMusic/danger.js) and
-   *  back when they lose you. Key measured off the file: C 1.00, G 0.72,
-   *  D 0.45, D# 0.45, F 0.25, G# 0.21 - C minor, a semitone off the
-   *  dungeon track's B - so the composed underscore is faded OUT under
-   *  it rather than played in the wrong key. Mac's to confirm. */
-  danger: Object.freeze({
-    id: 'danger',
-    file: '../music/enhanced/danger.mp3',
-    loop: true,
-    gain: 1.0,
-    root: 48,          // C3
-    mode: 'aeolian',
-  }),
-});
+/** THE PLACES COMPOSE. On 2026-08-27 Mac retired the imported-track
+ *  direction for the places ("forget this entirely and completely focus
+ *  on the procedural audio system"): a full track is one long song from
+ *  beginning to end, and a place wants a STATE - the same piece, present
+ *  the whole time, with more or less of it audible. That is what the
+ *  composer's layers and the runtime mix (palettes.layerMix) are. So
+ *  these tables are EMPTY by decision, not by absence; the record shape
+ *  and the streamed player stay for the one track that is a song and
+ *  should be - the door's theme above. */
+export const PLACE_SCORES = Object.freeze({});
+export const EXTRA_SCORES = Object.freeze({});
 
 export const scoreFor = (environment) => PLACE_SCORES[environment] ?? null;
 
-/** How far under a track the composed piece sits: the scheduler's master
- *  is trimmed by this while a track plays. Felt more than heard. */
+/** How far under a track the composed piece sits, should a place ever
+ *  score one again: the scheduler's master trim while a track plays. */
 export const UNDERSCORE_TRIM = 0.35;

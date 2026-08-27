@@ -300,21 +300,99 @@ the alone-piece arm - and both hosts' reports). 3 mutants, 3 dead.
 TO FOLLOW: death. `EXTRA_SCORES.death` when the track lands, its door
 the death screen.
 
+## THE PIVOT (2026-08-27): THE PLACES COMPOSE - EM2c/EM4's tracks retired
+
+Mac: "So one thing I was hoping we could do for the dungeon tracks ...
+really hone in on the stem system instead of just using full tracks.
+The tracks themselves from beginning to end are just one long song
+which isn't what I'm going for." And then, asked where stems would
+come from: "let's forget this entirely and completely focus on the
+procedural audio system."
+
+Recorded as his: the imported-track direction for the PLACES is
+retired. dungeon.mp3 and danger.mp3 are out of the repo and off the
+allow-list; PLACE_SCORES and EXTRA_SCORES are empty BY DECISION, not by
+absence; the record shape, the streamed player and the crossfade stay
+for the one track that is a song and should be - the door's theme -
+and for any day a place scores one again (the key-following mechanism
+is pinned, unused). The diagnosis was right and the stem idea was
+right: a place wants a STATE, not a story - the same piece present the
+whole time with more or less of it audible. The place to build that,
+without stems that would have had to be separated from finished mixes
+(the thing project-final built and ripped out), is the composer, whose
+layers are separate parts by construction. So:
+
+## EM4b (2026-08-27): DANGER AS LAYERS - the stem system over composed material - SHIPPED
+
+THE TENSION LAYERS. The dungeon palette grew two: TENSION - a low pulse
+(timpani) on one and three of every bar with a pickup on the and-of-
+four every other bar, and a sustained dissonant pair in the strings,
+the chord's second against its root, held for the chord - and DRIVE, an
+eighth-note ostinato on the root and fifth in a synth bass. Both are
+COMPOSED for the whole loop on the grid the piece was written on, in
+the mode, in their registers (the 200-seed sweep now proves the pulse
+on one and three of every bar and eighths the whole loop), and both
+are SILENT AT REST: their mix floor is zero.
+
+THE MIX LAW is data on the palette (`layers.<name>.mix = { floor, full,
+from, to }`) and one pure function, `layerMix(palette, level)`: a
+layer sits at `floor` at or below `from`, at `full` at or above `to`,
+and eases (smoothstep) between; a layer without a record is always 1.
+Today: tension 0->1 over 0.2..0.7, drive 0->1 over 0.5..1 (it waits for
+real danger), the motif 1->0.3 over 0.3..0.8 (it THINS), the bed
+1->0.75 (it darkens), bass and bell untouched. Monotone in the level,
+pinned.
+
+THE MIX DOOR is the scheduler's: a MIX gain per channel between the
+song's own CC7 volume and the master, owned by the runtime - the song
+never touches it and it never touches CC7 - with `setLayerMix(mix)`
+ramping each channel over 0.3 s and CHANGE-GUARDED: a channel whose
+target moved under 0.005 schedules nothing, so the per-frame report
+costs nothing while nothing moves (project-final's overlapping-curve
+freeze, avoided by construction). `resetLayerMix` puts every layer
+back to 1 on a new place.
+
+THE DRIVER is the meter from EM4, unchanged: `reportDanger` now hands
+the meter's continuous, slewed LEVEL to the law and the law's gains to
+the door, every frame - so a foe seeing you brings the strings up over
+a few hundred milliseconds, two in your face bring the drive, a foe
+behind a pillar changes nothing for six seconds, and the fight's end
+is a slow fall back to the bed and the motif, on the beat the piece
+was always on. No crossfade, no second song, no sync, no memory: it is
+the synth, mixed.
+
+HEARD: dungeon-calm-danger-calm.wav - Privateer's Hold's piece, 90 s,
+with a danger episode from 25 s to 55 s driven through the REAL meter
+(stepped at 30 Hz), the real law and the real mix door on the offline
+clock; the spectrogram shows the eighths and the sustained pair come
+in at the first mark and go out, on the meter's fall, a beat after the
+second. Pins: 21 in enhancedMusic.test.js now - the sweep for the
+tension grid; the law (rest floors, top fulls, monotone, the drive
+waiting); the scheduler's door (a ramp per channel, the change guard
+scheduling nothing under epsilon, the reset); the service turning the
+level into the mix, inert without a composed place, at rest on a new
+one, the paired strings riding the tension mix. The retired pins are
+gone with the tracks.
+
 ## The board
 
-1. **EM2 - MAC'S TRACKS FOR THE PLACES.** The machinery is whole
-   (EM2a-c): a record per place with the track's key, the piece under
-   it, the crossfade. What remains is the records, one per track as it
-   arrives, each with an OURS row - and the danger and death cues in
-   EXTRA_SCORES with their doors (EM4, the death screen).
-2. **EM3 - THE OTHER PLACES.** Palettes for the city by day and by
-   night, wilderness with the weather folded in as the director folds
-   it, taverns (the one place that wants percussion), temples, the
-   Mages Guild. Each is a record; the composer stays as it is.
-3. **EM4 - DYNAMICS.** Danger SHIPPED as a track crossfade on the
-   rest law's own signal through a slew (above). Health, and the finer
-   per-layer dynamics of the composed piece (the motif thinning, the
-   bed darkening), remain.
-4. **EM5 - THE LAB.** A page that composes a palette live, with every
-   record field as a control and a render button - the tuning surface,
-   for Mac's ear.
+The focus is the procedural system - all of it.
+
+1. **EM3 - THE OTHER PLACES.** A palette record for each of the
+   director's environments: the city by day and by night, wilderness
+   with the weather folded in as the director folds it, taverns (the
+   one place that wants percussion at rest), shops, temples, the Mages
+   Guild, castles and palaces, graveyards and dungeon exteriors, the
+   court. Each with its own layers and mix law; the composer stays as
+   it is unless a palette needs a device it lacks.
+2. **EM5 - THE LAB.** A page that composes a palette live, with every
+   record field as a control, the danger level on a slider, and a
+   render button - Mac's tuning surface, the one thing from
+   project-final's arc worth carrying whole.
+3. **EM6 - THE COMPOSER'S CRAFT.** Counter-melody, ornaments, a second
+   form, harmonic rhythm that breathes, a percussion vocabulary for the
+   places that want it, and the danger law reaching the composition
+   itself (a motif variant under danger, not only a thinning).
+4. **EM7 - HEALTH AND THE REST.** The second slow scalar (health) into
+   the mix law; day into night as a crossfade of palettes; the pause
+   and the death screen.

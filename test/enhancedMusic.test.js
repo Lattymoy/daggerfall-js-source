@@ -14,7 +14,7 @@ import { readFileSync } from 'node:fs';
 import {
   seededRandom, hashSeed, SCALE_MODES, degreeToPitch, inMode, chordOnDegree, fitRegister, voiceLead, pickWeighted,
 } from '../src/systems/enhancedMusic/theory.js';
-import { MUSIC_PALETTES, paletteFor, TICKS_PER_BEAT, TICKS_PER_BAR, BARS_PER_SECTION } from '../src/systems/enhancedMusic/palettes.js';
+import { MUSIC_PALETTES, paletteFor, layerMix, TICKS_PER_BEAT, TICKS_PER_BAR, BARS_PER_SECTION } from '../src/systems/enhancedMusic/palettes.js';
 import { composeScore } from '../src/systems/enhancedMusic/composer.js';
 import { enhancedScore, cueSeed } from '../src/systems/enhancedMusic/index.js';
 import { SongManager, MUSIC_ENV } from '../src/systems/songManager.js';
@@ -117,21 +117,28 @@ test('EM1 composer: every piece is the scheduler\'s shape, in its mode, in its r
       assert.ok(n.note >= 0 && n.note <= 127 && n.velocity >= 1 && n.velocity <= 127 && n.duration > 0);
       assert.ok(n.tick + n.duration <= song.durationTicks, 'no note runs past the loop');
       assert.ok(inMode(root, mode, n.note), `${n.note} is in ${mode} on ${root}`);
-      const layer = Object.values(D.layers).find((l) => l.channel === n.channel);
-      assert.ok(layer, 'every note is on a layer channel');
+      const voices = Object.values(D.layers).flatMap((l) => [l, l.pair].filter(Boolean));
+      const layer = voices.find((l) => l.channel === n.channel);
+      assert.ok(layer, 'every note is on a layer channel (or a layer\'s paired voice)');
       assert.ok(n.note >= layer.register[0] && n.note <= layer.register[1], `in ${layer.program}'s register`);
       (byChannel[n.channel] ??= []).push(n);
     }
-    for (const layer of Object.values(D.layers)) {
+    for (const layer of Object.values(D.layers).flatMap((l) => [l, l.pair].filter(Boolean))) {
       assert.ok(song.events.some((e) => e.type === 'programChange' && e.channel === layer.channel && e.program === layer.program && e.tick === 0),
         'each layer declares its program at the top');
       assert.ok(byChannel[layer.channel]?.length > 0, 'each layer plays');
     }
+
     // The bass says the chord root on every downbeat, and the bed holds every chord.
     const bars = BARS_PER_SECTION * D.form.length;
     for (let bar = 0; bar < bars; bar++) {
       assert.ok(byChannel[D.layers.bass.channel].some((n) => n.tick === bar * TICKS_PER_BAR), `bass on bar ${bar}'s downbeat`);
     }
+    // EM4b: the tension pulse on one and three of EVERY bar, the drive on every eighth.
+    for (let bar = 0; bar < bars; bar++) {
+      for (const beat of [0, 2]) assert.ok(byChannel[D.layers.tension.channel].some((n) => n.tick === bar * TICKS_PER_BAR + beat * TICKS_PER_BEAT), `tension pulse bar ${bar} beat ${beat + 1}`);
+    }
+    assert.equal(byChannel[D.layers.drive.channel].length, bars * 8, 'the drive is eighths, the whole loop');
     const chordStarts = new Set(byChannel[D.layers.bed.channel].map((n) => n.tick));
     assert.equal(chordStarts.size, bars / D.barsPerChord, 'one voicing per chord');
     // The motif rests: it does not speak on every chord.
@@ -153,7 +160,8 @@ test('EM1 door: the enhanced skin composes for a place with a palette, and nothi
   assert.equal(enhancedScore(null, { enhanced: true }), null);
   const s = enhancedScore(dungeon, { enhanced: true });
   assert.ok(s?.song?.events?.length, 'enhanced skin + a palette: a composed piece');
-  assert.equal(s.track?.id, 'dungeon', '...and the dungeon has Mac\'s track (EM2c)');
+  assert.equal(s.track, null, '...and no track: the places compose (Mac, 2026-08-27)');
+  assert.equal(s.palette, D, 'the answer carries the palette, for the mix law');
   // The seed law: a dungeon composes on its own key across days and visits...
   assert.equal(cueSeed(dungeon), cueSeed({ ...dungeon, gameDays: 99, locationIndex: 1 }));
   assert.notEqual(cueSeed(dungeon), cueSeed({ ...dungeon, dungeonKey: 4243 }));
@@ -176,7 +184,7 @@ test('EM1 door: the director asks the enhanced side through its play sink, with 
     stop: () => played.push('stop'),
   });
   manager.update({ environment: MUSIC_ENV.DungeonInterior, dungeonKey: 77, gameDays: 1, locationIndex: 3 });
-  assert.match(played[0], /^dungeon\+enhanced:dungeonInterior:\d+$/, 'in a dungeon: Mac\'s track with the piece under it');
+  assert.match(played[0], /^-\+enhanced:dungeonInterior:\d+$/, 'in a dungeon: the composed piece, no track');
   manager.update({ environment: MUSIC_ENV.City, gameDays: 1, locationIndex: 3, dungeonKey: null });
   assert.match(played[1], /^classic:/, 'in the city the classic song plays - no palette yet');
   assert.match(read('src/scenes/shared.js'), /const score = enhancedScore\(manager\?\.currentContext\);/, 'the real sink does this');
@@ -244,17 +252,12 @@ test('EM2a scores: the title theme is Mac\'s file, tracked, allow-listed, reacha
   const tracked = execFileSync('git', ['ls-files', 'public/music'], { encoding: 'utf8' }).split('\n');
   assert.ok(tracked.includes(onDisk), `${onDisk} is tracked`);
   assert.ok(read('test/doctrine.test.js').includes(`['${onDisk}', "OURS - `), 'and on the doctrine allow-list as OURS');
-  // EM2c: every scored place is a tracked, allow-listed MP3 reachable from /play/.
-  for (const [env, rec] of Object.entries(PLACE_SCORES)) {
-    assert.ok(MUSIC_ENV[Object.keys(MUSIC_ENV).find((k) => MUSIC_ENV[k] === env)], `${env} is a director environment`);
-    assert.match(rec.file, /^\.\.\/music\/enhanced\/[\w-]+\.mp3$/);
-    const f = 'public/' + rec.file.replace(/^\.\.\//, '');
-    assert.ok(tracked.includes(f), `${f} is tracked`);
-    assert.ok(read('test/doctrine.test.js').includes(`['${f}', "OURS - `), `${f} is allow-listed as OURS`);
-    if (rec.root !== undefined) assert.ok(rec.root >= 0 && rec.root <= 127 && SCALE_MODES[rec.mode], `${env} names a real key`);
-  }
-  assert.equal(scoreFor(MUSIC_ENV.DungeonInterior)?.id, 'dungeon');
-  assert.equal(scoreFor(MUSIC_ENV.City), null);
+  // 2026-08-27, Mac: the places COMPOSE. The tables are empty by decision,
+  // and the only music file in the repo is the door's theme.
+  assert.deepEqual(PLACE_SCORES, {});
+  assert.equal(scoreFor(MUSIC_ENV.DungeonInterior), null);
+  assert.deepEqual(tracked.filter(Boolean), ['public/music/enhanced/main-theme.mp3'], 'one track in the repo: the theme');
+  assert.ok(!read('test/doctrine.test.js').includes("public/music/enhanced/dungeon.mp3"), 'the retired rows are gone');
 });
 
 test('EM2a track player: streams through a media source into a ramped gain, fades under, never throws', async () => {
@@ -389,16 +392,15 @@ test('EM2b live: each player\'s resyncGain ramps its master to the setting now',
 // ── EM2c: THE DUNGEON TRACK, THE UNDERSCORE, THE CROSSFADE ────────
 import { UNDERSCORE_TRIM } from '../src/systems/enhancedMusic/scores.js';
 
-test('EM2c door: a scored place composes its piece IN THE TRACK\'S KEY; a track without a key plays alone', () => {
+test('EM2c door: the key-following mechanism stays, unused - a pinned key composes in that key', () => {
+  // Kept for the day a place scores a track again (the theme is the
+  // only track today): a record's root and mode pin the piece's key.
+  const s = composeScore(D, hashSeed('key'), { root: 47, mode: 'aeolian' });
+  assert.equal(s.meta.root, 47); assert.equal(s.meta.mode, 'aeolian');
+  assert.ok(notesOf(s).every((n) => inMode(47, 'aeolian', n.note)));
   const dungeon = { environment: MUSIC_ENV.DungeonInterior, dungeonKey: 9, gameDays: 1, locationIndex: 2 };
-  const s = enhancedScore(dungeon, { enhanced: true });
-  assert.equal(s.track.id, 'dungeon');
-  assert.equal(s.song.meta.root, s.track.root, 'the piece is composed on the track\'s root');
-  assert.equal(s.song.meta.mode, s.track.mode, '...and in its mode');
-  assert.ok(notesOf(s.song).every((n) => inMode(s.track.root, s.track.mode, n.note)), 'every underscore note is in the track\'s key');
-  // The seed law still holds under a track: same dungeon, same piece.
-  const again = enhancedScore({ ...dungeon, gameDays: 40 }, { enhanced: true });
-  assert.deepEqual(again.song.events, s.song.events);
+  const a = enhancedScore(dungeon, { enhanced: true }), b = enhancedScore({ ...dungeon, gameDays: 40 }, { enhanced: true });
+  assert.deepEqual(a.song.events, b.song.events, 'the dungeon seed law: same dungeon, same piece');
 });
 
 test('EM2c service: playEnhanced plays the track with the piece trimmed under it, or either alone', () => {
@@ -453,7 +455,6 @@ test('EM2c player: a second track crossfades - the old layer ramps out, the new 
 
 // ── EM4: DANGER ───────────────────────────────────────────────────
 import { DangerMeter, dangerRaw } from '../src/systems/enhancedMusic/danger.js';
-import { EXTRA_SCORES } from '../src/systems/enhancedMusic/scores.js';
 import { areEnemiesNearby } from '../src/systems/encounters.js';
 
 const foe = ({ dead = false, ...over } = {}) => ({ dead, ai: { detected: true, inSight: true, _dist: 5, ...over } });
@@ -501,49 +502,71 @@ test('EM4 meter: rises fast, holds, falls slow, and decides with hysteresis - it
   assert.equal(w.level, 0); assert.equal(w.active, false);
 });
 
-test('EM4 service: danger crossfades to the danger track and back, quiets the underscore, and resets on a new cue', () => {
-  assert.equal(EXTRA_SCORES.danger.id, 'danger');
-  assert.match(EXTRA_SCORES.danger.file, /^\.\.\/music\/enhanced\/danger\.mp3$/);
-  assert.ok(read('test/doctrine.test.js').includes(`['public/music/enhanced/danger.mp3', "OURS - `));
+test('EM4b service: the danger level is the piece\'s LAYER MIX - tension up from silence, the motif thin, and rest on a new place', () => {
   const svc = new MusicService();
-  const log = [];
-  svc.player = { play: () => true, stop: () => log.push('song-stop'), playing: true, setTrim: (t) => log.push(`trim:${t}`) };
+  const mixes = [];
+  svc.player = { play: () => true, stop: () => {}, playing: true, setTrim: () => {}, setLayerMix: (m) => mixes.push(m), resetLayerMix: () => mixes.push('reset') };
   svc._audio = { stop: () => {}, playing: false };
-  svc._track = { playing: true, track: null, fadeOut: () => log.push('track-fade'), stop: () => {} };
-  svc.playTrack = async (t) => { log.push(`track:${t.id}`); svc._track.track = t; return true; };
-  // No place score (classic skin, or an unscored place): the report is inert.
+  // Inert without a composed place.
   assert.equal(svc.reportDanger(1, [foe()]), false);
-  assert.deepEqual(log, []);
-  // A scored dungeon.
-  const song = composeScore(D, hashSeed('d'));
-  svc.playEnhanced({ track: { id: 'dungeon', file: 'd.mp3' }, song });
-  log.length = 0;
-  for (let i = 0; i < 30; i++) svc.reportDanger(1 / 60, [foe()]);
-  assert.ok(svc.inDanger);
-  assert.deepEqual(log, ['track:danger', 'trim:0'], 'seen: the danger track, the underscore quiet');
-  log.length = 0;
-  for (let i = 0; i < 60 * 20; i++) svc.reportDanger(1 / 60, []);
-  assert.ok(!svc.inDanger);
-  assert.deepEqual(log, ['track:dungeon', `trim:${UNDERSCORE_TRIM}`], 'lost you: the place\'s track back, the underscore back under it');
-  // A new cue mid-danger resets: the town does not start in danger.
-  for (let i = 0; i < 30; i++) svc.reportDanger(1 / 60, [foe()]);
-  assert.ok(svc.inDanger);
-  svc._current = null;
-  svc.playEnhanced({ track: { id: 'city', file: 'c.mp3' }, song: null });
-  assert.ok(!svc.inDanger);
-  assert.equal(svc._dangerMeter.level, 0, 'the meter starts over');
-  // A place that composes alone: danger over the piece, then the piece comes back up alone.
-  log.length = 0;
-  svc.playEnhanced({ track: null, song });
-  log.length = 0;
-  for (let i = 0; i < 30; i++) svc.reportDanger(1 / 60, [foe()]);
-  assert.deepEqual(log, ['track:danger', 'trim:0']);
-  log.length = 0;
-  for (let i = 0; i < 60 * 20; i++) svc.reportDanger(1 / 60, []);
-  assert.deepEqual(log, ['track-fade', 'trim:1']);
+  assert.deepEqual(mixes, []);
+  const dungeon = { environment: MUSIC_ENV.DungeonInterior, dungeonKey: 3, gameDays: 1, locationIndex: 1 };
+  svc.playEnhanced(enhancedScore(dungeon, { enhanced: true }));
+  assert.deepEqual(mixes, ['reset'], 'a new place starts at rest');
+  mixes.length = 0;
+  svc.reportDanger(1 / 60, []);
+  assert.deepEqual(mixes[0], layerMix(D, 0), 'at rest: the law at level 0');
+  assert.equal(mixes[0][D.layers.tension.channel], 0, 'tension silent at rest');
+  assert.equal(mixes[0][D.layers.drive.channel], 0);
+  assert.equal(mixes[0][D.layers.motif.channel], 1);
+  for (let i = 0; i < 60; i++) svc.reportDanger(1 / 60, [foe({ _dist: 2 }), foe({ _dist: 3 })]);
+  assert.ok(svc.inDanger && svc.dangerLevel > 0.9);
+  const hot = mixes[mixes.length - 1];
+  assert.ok(hot[D.layers.tension.channel] > 0.95, 'seen, close: tension fully up');
+  assert.ok(hot[D.layers.drive.channel] > 0.9, 'and the drive');
+  assert.ok(hot[D.layers.motif.channel] < 0.35, 'the motif thins');
+  assert.ok(hot[D.layers.bed.channel] < 0.8, 'the bed darkens');
+  assert.equal(hot[D.layers.bass.channel], 1, 'the bass never moves');
+  assert.equal(hot[D.layers.tension.pair.channel], hot[D.layers.tension.channel], 'the strings ride the tension mix');
   // The hosts report from the frame functions both dungeon hosts and the exterior share.
   const ctx = read('src/scenes/dungeonContext.js');
   const drawFoes = ctx.slice(ctx.indexOf('function drawFoes('), ctx.indexOf('function drawFoes(') + 2200);
   assert.match(drawFoes, /music\.reportDanger\(dt, foes\);/);
   assert.match(read('src/scenes/world.js'), /music\.reportDanger\(dt, \[\.\.\.\(cityGuards\?\.guards \?\? \[\]\), \.\.\.exteriorFoes\.foes\]\);/);
+});
+
+test('EM4b law: layerMix is smooth, monotone, floored at rest, full at the top, and 1 for a layer without a record', () => {
+  const at = (l) => layerMix(D, l);
+  assert.deepEqual(at(0), { 0: 1, 1: 1, 2: 1, 3: 1, 4: 0, 5: 0, 6: 0 });
+  assert.equal(at(-1)[4], 0); assert.equal(at(2)[4], 1, 'clamped');
+  let prev = at(0);
+  for (let l = 0.05; l <= 1.0001; l += 0.05) {
+    const m = at(l);
+    assert.ok(m[4] >= prev[4] - 1e-9 && m[5] >= prev[5] - 1e-9, 'tension and drive never fall as danger rises');
+    assert.ok(m[2] <= prev[2] + 1e-9, 'the motif never rises as danger rises');
+    prev = m;
+  }
+  assert.equal(at(0.2)[4], 0, 'tension starts at its from');
+  assert.equal(at(0.7)[4], 1, '...and is full at its to');
+  assert.ok(at(0.45)[4] > 0.4 && at(0.45)[4] < 0.6, 'and eases between');
+  assert.equal(at(0.5)[5], 0, 'the drive waits for real danger');
+  assert.ok(Math.abs(at(1)[2] - D.layers.motif.mix.full) < 1e-9);
+});
+
+test('EM4b scheduler: setLayerMix is a ramp on a mix gain per channel, change-guarded, reset to 1 on a new place', () => {
+  const ctx = fakeCtx();
+  const sp = new SongPlayer(ctx); sp._ensureMaster();
+  sp.setLayerMix({ 4: 0, 5: 0, 2: 1 });
+  const ramps = () => ctx.log.filter((l) => l[0] === 'gain' && l[1] === 'ramp').length;
+  const n1 = ramps();
+  assert.ok(n1 >= 2, 'the first set ramps the channels that are not at 1');
+  sp.setLayerMix({ 4: 0.002, 5: 0, 2: 1 });
+  assert.equal(ramps(), n1, 'a move under epsilon schedules NOTHING - the per-frame report is free');
+  sp.setLayerMix({ 4: 0.5 });
+  assert.equal(ramps(), n1 + 1, 'a real move ramps that one channel');
+  assert.equal(sp._mix[4], 0.5);
+  sp.resetLayerMix();
+  assert.ok(Object.values(sp._mix).every((v) => v === 1), 'every layer back to 1');
+  // The mix gain sits between the channel's CC7 gain and the master.
+  assert.ok(ctx.log.some((l) => l[0] === 'gain->' && l[1] === 'node'), 'a channel gain connects into a node (the mix), not the master directly');
 });

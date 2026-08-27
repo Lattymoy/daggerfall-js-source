@@ -22,8 +22,9 @@ import { SongPlayer, AudioSongPlayer } from './songPlayer.js';   // M-EXT: the r
 import { hasReplacement, replacementBytes } from './musicReplacement.js';   // M-EXT: SoundReplacement.TryImportSong
 import { TrackPlayer } from './enhancedMusic/trackPlayer.js';   // EM2a: Mac's own tracks, streamed
 import { trackGain } from './songPlayer.js';   // EM2b: the setting alone - no synth trim on a mastered track
-import { UNDERSCORE_TRIM, EXTRA_SCORES } from './enhancedMusic/scores.js';   // EM2c: how far under a track the composed piece sits; EM4: the danger cue
+import { UNDERSCORE_TRIM } from './enhancedMusic/scores.js';   // EM2c: how far under a track the composed piece sits
 import { DangerMeter, dangerRaw } from './enhancedMusic/danger.js';   // EM4
+import { layerMix } from './enhancedMusic/palettes.js';   // EM4b: the danger level as a per-layer gain
 import { onSettingChange } from './settings.js';
 
 export class MusicService {
@@ -191,29 +192,20 @@ export class MusicService {
    *  the classic skin or in a place the enhanced side is not scoring:
    *  there is no place score to return to. Returns the meter's state. */
   reportDanger(dt, foes) {
-    if (!this._placeScore || !EXTRA_SCORES.danger) return false;
+    if (!this._placeScore?.song || !this._placeScore.palette) return false;
     this._dangerMeter ??= new DangerMeter();
-    if (this._dangerMeter.update(dt, dangerRaw(foes))) this._setDanger(this._dangerMeter.active);
-    return this._dangerMeter.active;
-  }
-
-  _setDanger(active) {
-    if (active === this._danger) return;
-    this._danger = active;
-    const { track, song } = this._placeScore;
-    if (active) {
-      this.playTrack(EXTRA_SCORES.danger);
-      if (song) this.player?.setTrim?.(0);          // the underscore is in the place's key; under danger it goes quiet
-    } else if (track) {
-      this.playTrack(track);                         // the crossfade back
-      if (song) this.player?.setTrim?.(UNDERSCORE_TRIM);
-    } else {
-      this._track?.fadeOut();                        // a place that composes alone: the piece comes back up
-      if (song) this.player?.setTrim?.(1);
-    }
+    const meter = this._dangerMeter;
+    meter.update(dt, dangerRaw(foes));
+    this._danger = meter.active;
+    // EM4b: the LEVEL, continuous and slewed, becomes the piece's layer
+    // mix - the tension layers come up from silence, the motif thins,
+    // the bed darkens - through the scheduler's change-guarded door.
+    this.player?.setLayerMix?.(layerMix(this._placeScore.palette, meter.level));
+    return meter.active;
   }
 
   get inDanger() { return Boolean(this._danger); }
+  get dangerLevel() { return this._dangerMeter?.level ?? 0; }
 
   /** EM2c: play the enhanced side's answer for a cue - `{ track, song }`
    *  from enhancedMusic.enhancedScore. A track crossfades from whatever
@@ -230,6 +222,7 @@ export class MusicService {
     this._placeScore = score;
     this._danger = false;
     this._dangerMeter?.reset();
+    this.player?.resetLayerMix?.();   // EM4b: a new place starts at rest
     let any = false;
     if (track) { this.playTrack(track); any = true; }
     if (song) {
