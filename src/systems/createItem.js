@@ -121,6 +121,16 @@ export const CREATE_ITEM_ROWS = Object.freeze([
 ]);
 
 /** The picker's rows, in enum order. */
+/** CreateItem.lastSelectedIndex (CreateItem.cs:29, :75, :121) - ONE
+ *  static shared by every cast in a run, so the picker reopens on the
+ *  row the player took last. AUDIT 26 F079: the port kept a module
+ *  copy in EACH host, so casting in a dungeon and again outdoors
+ *  opened at the other host's remembered row. The law's own module is
+ *  the one static both hosts can share. */
+let _lastSelectedIndex = 0;
+export const lastCreateItemIndex = () => _lastSelectedIndex;
+export const setLastCreateItemIndex = (i) => { _lastSelectedIndex = i | 0; };
+
 export const createItemLabels = () => CREATE_ITEM_ROWS.map((r) => r.label);
 
 /**

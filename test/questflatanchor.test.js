@@ -19,9 +19,11 @@
 //    screenshot passes a half-height float exactly as it passed a
 //    vertically flipped billboard for six milestones.
 //
-// 2. ALIGNBILLBOARDTOGROUND (GameObjectHelper.cs:336-346), which
-//    AddQuestNPC and AddQuestItem both call with distance 4, was
-//    absent from BOTH arms.
+// 2. ALIGNBILLBOARDTOGROUND (GameObjectHelper.cs:335-345), which
+//    AddQuestNPC calls with distance 4, was absent from BOTH arms.
+//    AUDIT 26 F068 corrected this header: AddQuestItem does NOT call
+//    it - it never rays at all (:1128-1141) - so the two resources
+//    are stood by different laws and only the NPC aligns.
 //
 // 3. THE TALK WINDOW'S CATEGORY GATE. All four category handlers open
 //    with `if (selectedTalkOption == TalkOption.WhereIs)` and play the
@@ -45,8 +47,14 @@ test('questflatanchor: a DUNGEON quest flat drops half a height, a BUILDING one 
   // The anchor rides a parameter, so the two curried stands cannot
   // drift apart or silently share the wrong one.
   assert.match(s, /function standQuestFlatIn\(list, getCtx, toScene, inDungeon, /);
-  assert.match(s, /let by = inDungeon \? y - size\.h \/ 2 : y;/,
-    'the dungeon arm takes the half-height shift the building arm must not');
+  // F068: the half-height anchor is the NPC arm's; an ITEM takes
+  // AddQuestItem's flat -0.5 marker shift instead.
+  assert.match(s, /by = inDungeon \? y - size\.h \/ 2 : y;/,
+    'the dungeon NPC arm takes the half-height shift the building arm must not');
+  assert.match(s, /by = inDungeon \? y - QUEST_ITEM_MARKER_SHIFT : y;/,
+    'and an ITEM takes the constant treasure-marker shift');
+  assert.match(s, /const QUEST_ITEM_MARKER_SHIFT = 0\.5;/,
+    '-(randomTreasureMarkerDim / 2) * GlobalScale = -(40 / 2) * 0.025');
   assert.match(s, /standQuestFlatIn\(questFlats, \(\) => interiorCtx, \(ctx, p\) => ctx\.parentPt\(p\.x, p\.y, p\.z\), false,/,
     'the interior stand is NOT in a dungeon');
   assert.match(s, /standQuestFlatIn\(dungeonQuestFlats, \(\) => dungeonCtx, \(_ctx, p\) => \[p\.x, p\.y, p\.z\], true,/,
@@ -57,13 +65,21 @@ test('questflatanchor: a DUNGEON quest flat drops half a height, a BUILDING one 
     "the dungeon's RDB flats shift by the same half height - a quest flat in the same scene cannot differ");
 });
 
-test('questflatanchor: AlignBillboardToGround runs on the stand, distance 4, with the 2% lift', () => {
+test('questflatanchor: AlignBillboardToGround runs on the NPC stand, distance 4, with the 2% lift', () => {
   const s = rd('src/scenes/worldModes.js');
-  // Ray from 0.2 above (:340), distance 4 as AddQuestNPC passes it.
-  assert.match(s, /collider\?\.raycast\?\.\(\[x, by \+ 0\.2, z\], \[0, -1, 0\], 4\)/);
-  // On a hit the CENTRE goes to hit.y + size.y * 0.52 (:345), so a
+  // Ray from 0.2 above the billboard's CENTRE (:339), distance 4 as
+  // AddQuestNPC passes it. AUDIT 26 F069: the port rayed from the
+  // BASE + 0.2, half a sprite lower, so a tall dungeon NPC could
+  // start below a surface DFU clears and miss the snap entirely.
+  assert.match(s, /const origin = by \+ size\.h \/ 2 \+ 0\.2;/);
+  assert.match(s, /collider\?\.raycast\?\.\(\[x, origin, z\], \[0, -1, 0\], 4\)/);
+  // On a hit the CENTRE goes to hit.y + size.y * 0.52 (:344), so a
   // bottom-anchored base sits size.y * 0.02 above the floor.
-  assert.match(s, /if \(Number\.isFinite\(drop\)\) by = \(by \+ 0\.2 - drop\) \+ size\.h \* 0\.02;/);
+  assert.match(s, /if \(Number\.isFinite\(drop\)\) by = \(origin - drop\) \+ size\.h \* 0\.02;/);
+  // ...and the ray is the NPC arm's ALONE - an item never reaches it.
+  assert.match(s, /if \(isItem\) \{/, 'the two laws are split by resource');
+  assert.equal((s.match(/standQuestFlat\(t\.worldTextureArchive[^\n]*true\)/g) ?? []).length, 1);
+  assert.equal((s.match(/standDungeonQuestFlat\(t\.worldTextureArchive[^\n]*true\)/g) ?? []).length, 1);
   // No floor within 4 -> C# returns without moving anything. The
   // guard, not a fallback, is what expresses that.
   assert.doesNotMatch(s, /Number\.isFinite\(drop\) \?[^\n]*:\s*0/,
