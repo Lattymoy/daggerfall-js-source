@@ -109,6 +109,8 @@ import { drawPixelGround } from './pixelGround.js';
 // renders the tab, so the front door still reads no game state.
 import { sheetModel } from './enhancedCharSheet.js';
 import { playerEntity } from '../characters/playerEntity.js';
+// PX6: the Stats page's skill labels - the one home (systems/skills.js).
+import { SKILL_NAMES } from '../systems/skills.js';
 import { overlayAction } from './input.js';   // U51: Escape, through the shared table
 
 // ── THE RAIL ─────────────────────────────────────────────────────
@@ -159,6 +161,8 @@ let resizeHandler = null;   // PX1: the home ground's redraw-on-resize
 let groundTimer = null;     // PX1b: the home sky's 8fps clock - cleared by every rebuild and by unmount
 let pauseTab = 'system';    // PX3: which tab the pause window shows - System lands on Resume/Save
 let questSel = null;        // PX4: the journal's selected row - 'a:<uid>' | 'f:<index>' | null = first active
+let statsSec = 'character'; // PX6: the Stats page's rail - character | attributes | skills | standing
+let statsAllSkills = false; // PX6: the Miscellaneous disclosure, the sheet's own gesture
 
 const el = (t, cls, txt) => {
   const n = document.createElement(t);
@@ -859,35 +863,127 @@ function pauseSystem(body) {
   body.append(list);
 }
 
-/** The Stats tab: the char sheet's OWN model over the shared entity -
- *  the summary a pause glance wants; the full sheet stays the F5
- *  window's. */
+// ── PX6: THE STATS PAGE ──────────────────────────────────────────
+// The journal's own bones - a rail of pages, the chosen one on the
+// right - because one structure learned once is the whole window's.
+// Everything drawn is something the entity actually carries: the char
+// sheet's model (vitals, attributes, the career skill groups), and
+// the three reputation stores the talk and court systems read.
+const STATS_SECTIONS = Object.freeze([
+  ['character', 'Character'], ['attributes', 'Attributes'],
+  ['skills', 'Skills'], ['standing', 'Standing'],
+]);
+// The five NAMED social groups getReactionToPlayer reads
+// (formats/factionFile.js:23-27; talk.js seeds the array) - the enum
+// slots past Underworld are DFU's own placeholders and stay unlisted.
+const SOCIAL_GROUP_NAMES = Object.freeze(['Commoners', 'Merchants', 'Scholars', 'Nobility', 'Underworld']);
+
+/** A whole-pixel meter: 2px frame, flat fill, no easing. */
+function pxMeter(now, max, tone) {
+  const wrap = el('div', 'px-meter');
+  const fill = el('div', `px-fill${tone ? ` ${tone}` : ''}`);
+  const pct = max > 0 ? Math.max(0, Math.min(100, (now / max) * 100)) : 0;
+  fill.style.width = `${pct}%`;
+  wrap.append(fill);
+  return wrap;
+}
+
+function meterRow(label, now, max, tone) {
+  const r = el('div', 'px-mrow');
+  const top = el('div', 'px-mtop');
+  top.append(el('span', 'k', label), el('span', 'v', `${now} / ${max}`));
+  r.append(top, pxMeter(now, max, tone));
+  return r;
+}
+
 function pauseStats(body) {
   const m = sheetModel(playerEntity);
-  const head2 = el('div', 'px-statshead');
-  head2.append(el('strong', null, m.name || 'Adventurer'));
-  head2.append(el('span', null, `${m.race} ${m.career}${m.career ? ', ' : ''}Level ${m.level}`));
-  body.append(head2);
-  const vit = el('div', 'px-statgrid');
-  for (const [label, v] of [
-    ['Health', `${m.health.now} / ${m.health.max}`],
-    ['Fatigue', `${m.fatigue.now} / ${m.fatigue.max}`],
-    ['Magicka', `${m.magicka.now} / ${m.magicka.max}`],
-    ['Gold', String(m.gold)],
-    ['Encumbrance', `${m.encumbrance.now} / ${m.encumbrance.max}`],
-  ]) {
+  const wrap = el('div', 'px-journal');
+  const rail = el('div', 'px-qrail');
+  for (const [id, label] of STATS_SECTIONS) {
+    const b = el('button', `px-qrow${id === statsSec ? ' on' : ''}`);
+    b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label));
+    b.onclick = () => { statsSec = id; render(); };
+    rail.append(b);
+  }
+  wrap.append(rail);
+  const detail = el('div', 'px-qdetail');
+  ({ character: statsCharacter, attributes: statsAttributes, skills: statsSkills, standing: statsStanding })[statsSec](detail, m);
+  wrap.append(detail);
+  body.append(wrap);
+}
+
+/** CHARACTER: who you are, and the three bars a glance wants - health
+ *  in the skin's blood, fatigue in bone, magicka in verdigris. */
+function statsCharacter(detail, m) {
+  const head2 = el('div', 'px-qname');
+  head2.append(el('span', 'px-qwing'), el('h3', null, m.name || 'Adventurer'), el('span', 'px-qwing px-flip'));
+  detail.append(head2);
+  const meta = el('div', 'px-qmeta');
+  meta.append(el('span', 'px-qkind', `${m.race}${m.career ? ` ${m.career}` : ''} \u00b7 Level ${m.level}`));
+  detail.append(meta);
+  detail.append(meterRow('Health', m.health.now, m.health.max, 'blood'));
+  detail.append(meterRow('Fatigue', m.fatigue.now, m.fatigue.max, ''));
+  detail.append(meterRow('Magicka', m.magicka.now, m.magicka.max, 'verdigris'));
+  detail.append(pxDivider('Burden'));
+  const g = el('div', 'px-statgrid');
+  for (const [label, v] of [['Gold', String(m.gold)], ['Encumbrance', `${m.encumbrance.now} / ${m.encumbrance.max}`]]) {
     const r = el('div', 'px-stat');
     r.append(el('span', 'k', label), el('span', 'v', v));
-    vit.append(r);
+    g.append(r);
   }
-  body.append(vit);
-  const attrs = el('div', 'px-statgrid px-attrs');
+  detail.append(g);
+}
+
+/** ATTRIBUTES: the eight, each with a meter on the classic 100. */
+function statsAttributes(detail, m) {
+  detail.append(pxDivider('Attributes'));
   for (const a of m.attributes) {
-    const r = el('div', 'px-stat');
-    r.append(el('span', 'k', a.key.slice(0, 3).toUpperCase()), el('span', 'v', String(a.value)));
-    attrs.append(r);
+    detail.append(meterRow(a.key[0].toUpperCase() + a.key.slice(1), a.value, 100, ''));
   }
-  body.append(attrs);
+}
+
+/** SKILLS: the three career groups open - the character's chosen
+ *  shape - and Miscellaneous behind the sheet's own disclosure. */
+function statsSkills(detail, m) {
+  for (const group of m.groups) {
+    if (!group.career && !statsAllSkills) continue;
+    if (!group.ids.length) continue;
+    detail.append(pxDivider(group.name));
+    const grid = el('div', 'px-skillgrid');
+    for (const id of group.ids) {
+      const r = el('div', 'px-skill');
+      const top = el('div', 'px-mtop');
+      top.append(el('span', 'k', SKILL_NAMES[id] ?? `Skill ${id}`), el('span', 'v', String(m.skill(id))));
+      r.append(top, pxMeter(m.skill(id), 100, 'thin'));
+      grid.append(r);
+    }
+    detail.append(grid);
+  }
+  const more = el('button', 'px-qrow px-disclose');
+  const miscCount = m.groups[3]?.ids.length ?? 0;
+  more.append(el('span', 'px-c', '\u25c6'),
+    document.createTextNode(statsAllSkills ? 'Hide miscellaneous' : `Show ${miscCount} miscellaneous skills`));
+  more.onclick = () => { statsAllSkills = !statsAllSkills; render(); };
+  detail.append(more);
+}
+
+/** STANDING: the three reputation stores the game actually reads -
+ *  the five named social groups (getReactionToPlayer's own inputs).
+ *  Legal standing is PER REGION and the window does not know where
+ *  you stand, so it stays with the court until a host hands a region
+ *  seam - drawing a number without its region would be a lying row. */
+function statsStanding(detail) {
+  detail.append(pxDivider('Reputation'));
+  const reps = playerEntity.sGroupReputations ?? [];
+  for (let i = 0; i < SOCIAL_GROUP_NAMES.length; i++) {
+    const v = reps[i] ?? 0;
+    const r = el('div', 'px-stat');
+    r.append(el('span', 'k', SOCIAL_GROUP_NAMES[i]),
+      el('span', `v${v > 0 ? ' won' : v < 0 ? ' bad' : ''}`, v > 0 ? `+${v}` : String(v)));
+    detail.append(r);
+  }
+  detail.append(el('p', 'px-note', 'How the streets receive you. Guild rank lives with each guild hall.'));
 }
 
 /** PX5: THE MAIN QUEST, by the pack's own naming - DFU ships the
@@ -1211,6 +1307,8 @@ export function mountEnhancedMenu(host, {
   section = 'home';
   pauseTab = 'system';
   questSel = null;
+  statsSec = 'character';
+  statsAllSkills = false;
   category = CATEGORIES[0].id;
   pickedKey = null;
   sheetOpen = false;

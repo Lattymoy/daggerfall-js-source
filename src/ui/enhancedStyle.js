@@ -1147,6 +1147,26 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   color: #c5bda2; font-size: 15px; letter-spacing: 0.1em;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .px-clocktime { color: #7d7460; font-size: 13px; letter-spacing: 0.14em; }
+/* ── PX6: THE STATS PAGE ── meters and rows in whole pixels. */
+.px-mrow { margin: 0 0 14px; }
+.px-mtop { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 5px; }
+.px-mtop .k { color: #7d7460; font-size: 14px; letter-spacing: 0.16em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.px-mtop .v { font-size: 18px; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); white-space: nowrap; }
+.px-meter { height: 10px; border: 2px solid rgba(125,116,96,0.55); background: rgba(0,0,0,0.4); }
+.px-fill { height: 100%; background: #d8cfae; }
+.px-fill.blood { background: var(--blood); }
+.px-fill.verdigris { background: var(--verdigris); }
+.px-fill.thin { background: rgba(216,207,174,0.75); }
+.px-skillgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 4px 26px; margin-bottom: 8px; }
+.px-skill { margin: 0 0 8px; }
+.px-skill .px-meter { height: 6px; border-width: 2px; }
+.px-skill .px-mtop { margin-bottom: 3px; }
+.px-skill .px-mtop .v { font-size: 16px; }
+.px-disclose { width: auto; margin: 10px auto 0; }
+.px-stat .v.won { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-stat .v.bad { color: var(--blood); }
 .px-qdetail { flex: 1; padding: 4px 6px 4px 22px; overflow-y: auto; }
 .px-qname { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 6px 0 14px; }
 .px-qname h3 { font-size: 24px; font-weight: 400; letter-spacing: 0.14em; text-indent: 0.14em;
