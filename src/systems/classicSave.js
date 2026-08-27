@@ -17,13 +17,12 @@
 // Fields the envelope does not carry restore as an old save would -
 // additively, by restorePlayer's own charter.
 //
-// FLAGGED: no window mounts this yet. The load-classic-game entry
-// (DaggerfallLoadClassicGameWindow) is the Ledger row's remaining
-// half; when it lands it feeds the returned bundle to the quickload
-// path (snap), the weather sim (climateWeathers), the quest machine
-// (globalVars) and the streaming world (position). No host seam is
-// wired by this slice - exterior.js, world.js, worldModes.js and
-// dungeonContext.js are all untouched.
+// SAV3 mounted the consumers: ui/loadClassicWindow.js is the window,
+// scenes/menu.js runs the picker + flow and stashes the opened
+// SaveGames (the hand-off slot below), and world.js's classicLoadBoot
+// feeds the bundle to the quickload path (snap), the weather sim
+// (climateWeathers), the quest machine (globalVars) and the streaming
+// world (position).
 //
 // Recorded divergences (all narrow, all in the Ledger row):
 //   - a BROKEN worn item imports into the bag, not the doll - DFU's
@@ -736,4 +735,19 @@ export function classicSaveToSnapshot(saveGames, {
     vampireClan: doc.vampireClan,
     saveName: saveGames.saveName,
   };
+}
+
+// ── SAV3: the menu -> world hand-off ──────────────────────────────
+// The menu's classic-load flow opens the SaveGames and the world host
+// converts it once its live deps (spell index, faction dict, maps)
+// exist - two hosts, one object, so the slot lives here beside the
+// converter rather than in either scene. Taking it clears it: a
+// second boot cannot replay a consumed import.
+let _pendingClassicSave = null;
+export const setPendingClassicSave = (saveGames) => { _pendingClassicSave = saveGames; };
+export const peekPendingClassicSave = () => _pendingClassicSave;
+export function takePendingClassicSave() {
+  const s = _pendingClassicSave;
+  _pendingClassicSave = null;
+  return s;
 }

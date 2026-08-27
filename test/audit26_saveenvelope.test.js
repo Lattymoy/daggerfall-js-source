@@ -56,8 +56,12 @@ test('audit26 F222: the pose bag rides the envelope and comes back', () => {
 test('audit26 F222: both hosts write the pose and land it on load', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /pose: \{ yaw: cam\.yaw, pitch: cam\.pitch, crouching: !!player\.crouching, weaponDrawn: !weaponRig\.playerWeapon\.sheathed \}/);
-  assert.match(w, /if \(extras\.pose\.weaponDrawn != null\) weaponRig\.playerWeapon\.sheathed = !extras\.pose\.weaponDrawn;/,
+  // SAV3 moved the landing into the ONE pose-apply (quickload + the
+  // classic import share it) - the inversion law lives there now.
+  assert.match(w, /if \(pose\.weaponDrawn != null\) weaponRig\.playerWeapon\.sheathed = !pose\.weaponDrawn;/,
     'Sheathed = !weaponDrawn, the :420-421 inversion');
+  assert.match(w, /applyPose\(extras\.pose\);/, 'the quickload lands through it');
+  assert.match(w, /applyPose\(bundle\.snap\.pose\);/, 'and the classic import too');
   const d = rd('src/scenes/dungeonContext.js');
   assert.match(d, /pose: \{ \.\.\.\(opts\.pose\?\.read\?\.\(\) \?\? \{\}\), weaponDrawn: !playerWeapon\.sheathed \}/,
     'the dungeon context folds its own weapon in and takes yaw/pitch/crouch from the host seam');

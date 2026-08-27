@@ -154,13 +154,17 @@ export const hudScale = (canvasWidth, canvasHeight) =>
  * the art is absent - the HUD is data-gated like everything else.
  * ImgFile + palette come from the caller (scene layer owns data).
  */
-export function bitmapToColor32(bmp, palette) {
+export function bitmapToColor32(bmp, palette, alphaIndex = 0) {
+  // alphaIndex is GetColor32's own parameter: classic IMG UI art keys
+  // index 0 transparent (the box corners) - the default every caller
+  // rode before it was a parameter - while a save screenshot
+  // (SAV3, IMAGE.RAW) is opaque edge to edge and passes -1.
   const colors = new Uint32Array(bmp.width * bmp.height);
   const u8 = new Uint8Array(colors.buffer);
   for (let i = 0; i < bmp.data.length; i++) {
     const idx = bmp.data[i];
     const o = i * 4;
-    if (idx === 0) continue;   // classic IMG index 0 = transparent (the box corners)
+    if (idx === alphaIndex) continue;
     const c = palette.get(idx);
     u8[o] = c.r; u8[o + 1] = c.g; u8[o + 2] = c.b; u8[o + 3] = 255;
   }

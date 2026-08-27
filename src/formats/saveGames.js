@@ -17,8 +17,9 @@
 //     readMapSaveDiscovery below (the caller supplies per-region
 //     location counts from MAPS.BSA and applies the result), and the
 //     parsed rumor list sits on this.rumorFile for the mill to import.
-//     FLAGGED: nothing consumes either yet - the load-classic-game
-//     window is the Ledger row's still-open half.
+//     SAV3 wired both: world.js's classicLoadBoot resolves the
+//     discovery through MAPS and feeds each rumor to the mill's own
+//     ImportClassicRumor.
 //
 // Quirks preserved: EnumerateSaves admits a save with SAVETREE.DAT +
 // IMAGE.RAW and does NOT require SAVEVARS.DAT - DFU's own check is

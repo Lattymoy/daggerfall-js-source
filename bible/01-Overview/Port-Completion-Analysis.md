@@ -28,10 +28,15 @@ The HONEST still-open list as of the re-verification:
    the port's own save envelope from a classic save
    (StartFromClassicSave's whole data half, the weather 0x7f/5<->6
    law included), so the existing restore seam is the only consumer
-   the entry point needs. What remains is the WINDOW and the wiring:
-   no load-classic menu entry, no file hand-off, nothing feeds the
-   bundle to the quickload path. The Ledger's S-F row carries the
-   full narrow.
+   the entry point needs. **CLOSED (SAV3, same day): the window and
+   the wiring ship** - ui/loadClassicWindow.js (LOAD00I0, the DFU
+   rects verbatim), the menu's picker + flow, and world.js's
+   classicLoadBoot feeding the bundle to the restore seam, the
+   weather sim, the quest globals, the rumor mill and the streaming
+   world. A classic character can be played end to end from SAVE0-5.
+   The Ledger's S-F row records the residues (the phone zip arm; the
+   classic list behind an existing quicksave rides the multi-slot
+   save window row).
 2. **Multi-slot save/load windows** - the pause menu rides the
    quicksave; DFU's slot UI has no counterpart.
 3. ~~The 123 missing macros~~ **THE TABLE IS COMPLETE (M-X

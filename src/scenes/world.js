@@ -167,7 +167,9 @@ import {
   LightningPlayer,
 } from '../world/weather.js';
 import { PrecipitationRenderer } from '../render/precipitation.js';
-import { setWeather, currentWeather, tickWeather, weatherRespawn, applyClimateWeather } from '../systems/weatherSim.js';   // W1: the live weather state (the save halves ride save.js)
+import { setWeather, currentWeather, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers } from '../systems/weatherSim.js';   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
+import { classicSaveToSnapshot, takePendingClassicSave, peekPendingClassicSave } from '../systems/classicSave.js';   // SAV3: the classic-save import arm
+import { readTokens as readRscTokens, RSC } from '../formats/textRsc.js';   // SAV3: the classic rumors' token payloads
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';   // I2: the rebindable registry
@@ -863,10 +865,15 @@ export async function bootWorld(canvas, renderer, params, status) {
         questInitAtGameStart();   // Q4-v: OnStartGame for the headless character
       })
       .catch((e) => console.warn('[chargen] CLASS*.CFG unavailable; the interim entity stands in', e));
-  } else if (!playerEntity.chargenDone && !params.has('load')) {
+  } else if (!playerEntity.chargenDone && !params.has('load')
+    && !(params.has('classicload') && peekPendingClassicSave())) {
     // AUDIT 24: ...and not when a SAVE is about to be loaded. The save
     // carries chargenDone, but it arrives after the boot walk, so the
     // wizard would mount over the game the player asked to resume.
+    // SAV3: a classic import is a load by another door - same gate,
+    // but ONLY with a real pending SaveGames: a stale ?classicload
+    // typed into the URL has nothing to import and must not leave the
+    // player wizard-less on an interim entity.
     // AUDIT 17i: ONE construction seam - the flow arrives with every
     // dependency already attached (careers, SPELLS.STD, the biography
     // question sets), so a host cannot forget one. Three separate bugs
@@ -1939,18 +1946,108 @@ export async function bootWorld(canvas, renderer, params, status) {
       // RestorePosition sets yaw/pitch/isCrouching and
       // Sheathed = !weaponDrawn (:420-421). Presence-gated: an old
       // envelope leaves the live pose standing.
-      if (extras.pose) {
-        cam.yaw = extras.pose.yaw ?? cam.yaw;
-        cam.pitch = extras.pose.pitch ?? cam.pitch;
-        if (extras.pose.crouching != null) player.crouching = !!extras.pose.crouching;
-        if (extras.pose.weaponDrawn != null) weaponRig.playerWeapon.sheathed = !extras.pose.weaponDrawn;
-      }
+      applyPose(extras.pose);
       _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // no spawn catch-up across a load (DFU LoadInProgress)
       surfacePlayer();
       townTalk.say('Game loaded.');
     } finally {
       _loading = false;
     }
+  }
+  /** The ONE pose-apply (quickload + the classic import share it). */
+  function applyPose(pose) {
+    if (!pose) return;
+    cam.yaw = pose.yaw ?? cam.yaw;
+    cam.pitch = pose.pitch ?? cam.pitch;
+    if (pose.crouching != null) player.crouching = !!pose.crouching;
+    if (pose.weaponDrawn != null) weaponRig.playerWeapon.sheathed = !pose.weaponDrawn;
+  }
+  /**
+   * SAV3: the classic-save import arm - StartFromClassicSave's game
+   * half over the SAV2 converter. The menu's flow stashed the opened
+   * SaveGames; this host owns the live deps (SPELLS.STD, the faction
+   * dict, MAPS.BSA) so the conversion runs HERE, then the import rides
+   * the ONE restore seam like any load.
+   *
+   * THE FOUR HOSTS, named per the 17e rule: world.js (this host) is
+   * WIRED - StartFromClassicSave always lands the import in the
+   * EXTERIOR world at the position record's X/Z
+   * (EnableExteriorParent + TeleportToWorldCoordinates, :529-534),
+   * whatever the save's environment byte says, so worldModes.js
+   * (interiors) and dungeonContext.js mount NO import arm by DFU's own
+   * law, and exterior.js is the block-viewer probe host with no boot
+   * params at all - all three deliberately unwired.
+   */
+  async function classicLoadBoot() {
+    const saveGames = takePendingClassicSave();
+    if (!saveGames) return false;
+    // The deps the converter wants are async loads this host already
+    // owns - await them so a fast boot cannot import a spell-less,
+    // guild-less character.
+    if (!spellsByIndex) spellsByIndex = await loadSpellIndex(fetchBytes);
+    await townTalk.ensureFactions?.();
+    let bundle;
+    try {
+      bundle = classicSaveToSnapshot(saveGames, {
+        spellsByIndex,
+        factionStore: townTalk.factionDict ? { dict: townTalk.factionDict } : null,
+        resolveLocation: (regionIndex, locationIndex) => {
+          const region = maps.getRegion(regionIndex);
+          const row = region?.mapTable?.[locationIndex];
+          if (!row) return null;
+          return {
+            mapId: row.mapId,
+            regionName: maps.getRegionName(regionIndex) ?? '',
+            locationName: region.mapNames?.[locationIndex] ?? '',
+          };
+        },
+        regionLocationCounts: Array.from({ length: 62 }, (_, i) => maps.getRegion(i)?.locationCount ?? 0),
+      });
+    } catch (e) {
+      console.warn('[world] classic save import failed:', e?.message ?? e);
+      townTalk.say('Could not import the classic save.');
+      return false;
+    }
+    const extras = restorePlayer(playerEntity, bundle.snap, spellsByIndex);
+    if (!extras) return false;
+    setWorldMinutes(extras.classicMinutes ?? worldMinutes());
+    // The quest machine's 64 classic globals, SET in place -
+    // machine.hooks captured the Map reference at construction, so
+    // the entries move, never the Map (ImportClassicGlobalVars).
+    if (questBridge?.machine?.globalVars) {
+      for (const [i, v] of bundle.globalVars) questBridge.machine.globalVars.set(i, v);
+    }
+    // The six-zone weather array, already masked and swapped by the
+    // converter (:631-644); the first exterior frame wears it.
+    importClimateWeathers(bundle.climateWeathers);
+    // "Only import classic rumours when loading in game" (OpenSave
+    // :256-260) - each RUMOR.DAT record through the mill's own
+    // ImportClassicRumor, whose three skip gates do the filtering.
+    for (const rumor of saveGames.rumorFile?.rumors ?? []) {
+      rumorMill.importClassicRumor(rumor, (bytes) => readRscTokens(bytes, 0, RSC.EndOfRecord));
+    }
+    // "Set player to world position": the import ALWAYS lands
+    // exterior at the CharacterPositionRecord's world X/Z (:528-534).
+    // Classic world units are the port's native units; the pixel
+    // teleport rebuilds the streaming origin and the local spawn
+    // lands inside it, the quickload arm's own shape.
+    if (bundle.position) {
+      const px = worldCoordToMapPixel(bundle.position.worldX, bundle.position.worldZ);
+      await _teleportToPixel(px.x, px.y);
+      const [lx, lz] = state.localFromWorld(bundle.position.worldX, bundle.position.worldZ);
+      // The classic worldY does not translate (different vertical
+      // frames); FixStanding's own answer - land on what is there -
+      // is what PositionPlayerToLocation ends in anyway (:1597-1608).
+      const raw = [lx, 2 + state.compensation[1], lz];
+      const ly = walkMode ? floorLanding(collider, raw)[1] : raw[1];
+      if (walkMode) { player.spawn(lx, ly, lz); playerSpawned = true; }
+      cam.pos = [lx, ly + (walkMode ? 0 : 40), lz];
+    }
+    applyPose(bundle.snap.pose);
+    _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // no spawn catch-up across a load
+    surfacePlayer();
+    townTalk.say(`Loaded classic save: ${bundle.saveName || bundle.snap.name}.`);
+    return true;
   }
   const toggleTravelMap = (gotoPlace = null) => {
     // FindPlace_OnButtonClick (DaggerfallQuestJournalWindow.cs:353-363)
@@ -3280,7 +3377,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   // their save was to start a new game and press F11. A load is not a
   // new game, so it takes the classic start's place rather than
   // running after it.
-  if (params.has('load')) {
+  if (params.has('classicload') && peekPendingClassicSave()) {
+    // SAV3: the classic import takes the load's place in the boot walk
+    // - a load by another door, never a new game (the AUDIT 24 law).
+    status('importing the classic save');
+    await classicLoadBoot();
+  } else if (params.has('load')) {
     status('loading the saved game');
     await worldQuickLoad();
   } else if (params.has('classic') && getBool('Startup', 'StartInDungeon') && startLoc.hasDungeon) {

@@ -1362,3 +1362,136 @@ test('SAV2: MAPSAVE discovery lands in the envelope through the resolver seam', 
     },
   });
 });
+
+// ═══════════════════════ SAV3: the window and the wiring ═══════════════════════
+
+import {
+  LoadClassicWindow, SAVE_IMAGE_RECTS, SAVE_TEXT_RECTS, OUTLINE_RECTS,
+  LOAD_BUTTON_RECT, EXIT_BUTTON_RECT, LOAD_CLASSIC_IMG,
+} from '../src/ui/loadClassicWindow.js';
+import {
+  importClimateWeathers, resetWeatherSim, tickWeather, currentWeatherEnum, WEATHER_ENUM,
+} from '../src/systems/weatherSim.js';
+import { bitmapToColor32 } from '../src/ui/hud.js';
+import {
+  setPendingClassicSave, takePendingClassicSave, peekPendingClassicSave,
+} from '../src/systems/classicSave.js';
+
+const CANVAS_320x200 = { width: 320, height: 200 };
+
+test('SAV3: the load-classic window pins its DFU geometry WHOLE', () => {
+  assert.equal(LOAD_CLASSIC_IMG, 'LOAD00I0.IMG');
+  assert.deepEqual(SAVE_IMAGE_RECTS.map((r) => [...r]), [
+    [40, 4, 80, 50], [40, 69, 80, 50], [40, 134, 80, 50],
+    [200, 4, 80, 50], [200, 69, 80, 50], [200, 134, 80, 50],
+  ]);
+  assert.deepEqual(SAVE_TEXT_RECTS.map((r) => [...r]), [
+    [1, 56, 158, 9], [1, 121, 158, 9], [1, 186, 158, 9],
+    [162, 56, 158, 9], [162, 121, 158, 9], [162, 186, 158, 9],
+  ]);
+  assert.deepEqual(OUTLINE_RECTS.map((r) => [...r]), [
+    [39, 3, 81, 51], [39, 68, 81, 51], [39, 133, 81, 51],
+    [199, 3, 81, 51], [199, 68, 81, 51], [199, 133, 81, 51],
+  ]);
+  assert.deepEqual([...LOAD_BUTTON_RECT], [126, 5, 68, 11]);
+  assert.deepEqual([...EXIT_BUTTON_RECT], [133, 150, 56, 19]);
+});
+
+test('SAV3: the window click law - first valid selected, slot picks, double-click loads', () => {
+  const slots = [null, { name: 'SLOT ONE', tex: null }, null, { name: 'SLOT THREE', tex: null }, null, null];
+  const win = new LoadClassicWindow(null, slots);
+  assert.equal(win.selectedSaveGame, 1, 'the first VALID save starts selected');
+
+  // A click inside slot 3's image rect selects it.
+  assert.deepEqual(win.click(CANVAS_320x200, 210, 10), { action: 'select', index: 3 });
+  assert.equal(win.selectedSaveGame, 3);
+  // Its 158x9 name rect selects too.
+  assert.deepEqual(win.click(CANVAS_320x200, 170, 60), { action: 'select', index: 3 });
+  // An UNMOUNTED slot's rects answer nothing (:117-121 skips them).
+  assert.equal(win.click(CANVAS_320x200, 45, 10), null);
+  // The Load Game button loads the selection.
+  assert.deepEqual(win.click(CANVAS_320x200, 130, 8), { action: 'load', index: 3 });
+  // A double click on a slot selects AND loads (:225-230).
+  assert.deepEqual(win.click(CANVAS_320x200, 45, 75, true), { action: 'load', index: 1 });
+  assert.equal(win.selectedSaveGame, 1);
+  // Exit.
+  assert.deepEqual(win.click(CANVAS_320x200, 140, 160), { action: 'exit' });
+  // Outside every rect: consumed, no action.
+  assert.equal(win.click(CANVAS_320x200, 0, 0), null);
+});
+
+test('SAV3: with no valid slot, the Load button does not exist (:155-159)', () => {
+  const win = new LoadClassicWindow(null, new Array(6).fill(null));
+  assert.equal(win.selectedSaveGame, -1);
+  assert.equal(win.click(CANVAS_320x200, 130, 8), null);
+  assert.deepEqual(win.click(CANVAS_320x200, 140, 160), { action: 'exit' }, 'Exit always mounts');
+});
+
+test('SAV3: importClimateWeathers - the imported array wears on the next tick, no re-roll', () => {
+  resetWeatherSim();
+  assert.equal(importClimateWeathers(Uint8Array.of(4, 4, 4)), false, 'six zones or nothing');
+  assert.equal(importClimateWeathers(Uint8Array.of(4, 4, 4, 4, 4, 4)), true);
+  // tickWeather must NOT re-roll (the array is stamped rolled) and
+  // must apply the imported zone value on the first exterior frame.
+  const changed = tickWeather(0, 223, () => { throw new Error('a re-roll clobbered the imported array'); });
+  assert.equal(changed, true);
+  assert.equal(currentWeatherEnum(), WEATHER_ENUM.rain ?? 4);
+  resetWeatherSim();
+});
+
+test('SAV3: bitmapToColor32 grows the GetColor32 alphaIndex - -1 draws index 0 opaque', () => {
+  const bmp = { width: 2, height: 1, data: Uint8Array.of(0, 1) };
+  const palette = { get: (i) => ({ r: i * 10, g: 0, b: 0 }) };
+  const keyed = new Uint8Array(bitmapToColor32(bmp, palette).colors.buffer);
+  assert.equal(keyed[3], 0, 'index 0 stays transparent by default');
+  const opaque = new Uint8Array(bitmapToColor32(bmp, palette, -1).colors.buffer);
+  assert.equal(opaque[3], 255, 'alphaIndex -1 keeps the screenshot whole');
+  assert.equal(opaque[0], 0);
+  assert.equal(opaque[4 + 0], 10);
+});
+
+test('SAV3: the pending hand-off - set, peek, and TAKE clears', () => {
+  const marker = { saveName: 'X' };
+  setPendingClassicSave(marker);
+  assert.equal(peekPendingClassicSave(), marker);
+  assert.equal(takePendingClassicSave(), marker);
+  assert.equal(peekPendingClassicSave(), null, 'a consumed import cannot replay');
+  assert.equal(takePendingClassicSave(), null);
+});
+
+// The host wiring cannot run headless (a live canvas, IDB and rAF);
+// the seam is READ instead - the project's own idiom for host-side
+// laws (the mysticism host sweeps' shape).
+test('SAV3: the wiring source pins - menu arm, boot arm order, chargen gate, main routing', () => {
+  const world = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
+  // The classic arm sits BEFORE the load arm in the boot walk and is
+  // gated on a REAL pending import.
+  const classicArm = world.indexOf("params.has('classicload') && peekPendingClassicSave()");
+  const loadArm = world.indexOf("} else if (params.has('load')) {");
+  assert.ok(classicArm > -1 && loadArm > -1 && classicArm < loadArm,
+    'the classicload arm precedes the load arm');
+  // The chargen gate skips the wizard only for a REAL pending import.
+  assert.match(world, /!\(params\.has\('classicload'\) && peekPendingClassicSave\(\)\)/);
+  // The boot arm awaits the deps a fast boot would otherwise miss.
+  assert.match(world, /if \(!spellsByIndex\) spellsByIndex = await loadSpellIndex\(fetchBytes\);/);
+  assert.match(world, /await townTalk\.ensureFactions\?\.\(\);/);
+  // The position lands through the streaming world's own converters.
+  assert.match(world, /worldCoordToMapPixel\(bundle\.position\.worldX, bundle\.position\.worldZ\)/);
+  assert.match(world, /importClimateWeathers\(bundle\.climateWeathers\)/);
+  // The quest globals move ENTRY BY ENTRY - the machine's hooks hold
+  // the Map reference.
+  assert.match(world, /questBridge\.machine\.globalVars\.set\(i, v\)/);
+  // The classic rumors reach the mill through ITS import member.
+  assert.match(world, /rumorMill\.importClassicRumor\(rumor, /);
+
+  const menu = readFileSync(new URL('../src/scenes/menu.js', import.meta.url), 'utf8');
+  // Load with no quicksave runs the classic flow - the old dead end is gone.
+  assert.match(menu, /const picked = await runClassicLoad\(canvas, renderer, status\);/);
+  assert.doesNotMatch(menu, /no quicksave to load/);
+  // The screenshot uploads OPAQUE (GetColor32 alphaIndex -1).
+  assert.match(menu, /bitmapToColor32\(bmp, palette, -1\)/);
+
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  // SET on classicload, DELETE on anything else (the F12 law's shape).
+  assert.match(main, /if \(action === 'classicload'\) params\.set\('classicload', '1'\);\n\s*else params\.delete\('classicload'\);/);
+});

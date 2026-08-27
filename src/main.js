@@ -182,6 +182,12 @@ async function boot() {
   // not to.
   if (action === 'load') params.set('load', '1');
   else params.delete('load');
+  // SAV3: a picked classic save boots the world's import arm. Same
+  // SET-or-DELETE law as `load` - a stale ?classicload with no pending
+  // SaveGames is a no-op in the world host, but it never survives a
+  // non-classicload action either.
+  if (action === 'classicload') params.set('classicload', '1');
+  else params.delete('classicload');
   // U31: THE CLASSIC START IS THE WORLD, not the standalone dungeon
   // scene. scenes/dungeon.js has no exit path at all - its only
   // activation arm is ctx.actions.activate - so booting it left
