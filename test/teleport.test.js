@@ -59,7 +59,7 @@ test('TP: the engine seam, the world prompt, the consume, the mode exit', () => 
   // its assignment, so the guard belongs on the OBJECT (audit24_wave37).
   assert.ok(w.includes("!== 'exterior') modes?.forceExitToExterior();"), 'a cast inside a mode leaves it first (:151)');
   const wm = readFileSync(new URL('../src/scenes/worldModes.js', import.meta.url), 'utf8');
-  const i = wm.indexOf('forceExitToExterior()');
+  const i = wm.indexOf('forceExitToExterior(');   // IS1 grew the signature ({ cacheScene })
   const fn = wm.slice(i, wm.indexOf('},', i));
   assert.ok(fn.includes("mode = 'exterior';"), 'the forced exit lands the mode');
   assert.ok(fn.includes('player.collider = baseCollider();'), 'and restores the exterior collider');

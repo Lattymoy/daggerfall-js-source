@@ -51,7 +51,7 @@ test('worldsave: the world host wires F9/F11 with the native envelope and the lo
   assert.ok(s.includes("act === 'QuickSave'") && s.includes('worldQuickSave()'), 'the QuickSave action saves (I2; F9 is its registry default, InputManager.SetupDefaults)');
   assert.ok(s.includes("act === 'QuickLoad'") && s.includes('worldQuickLoad()'), 'and QuickLoad loads (F11 default)');
   const i = s.indexOf('function worldQuickSave');
-  const fn = s.slice(i, i + 2600);   // TK-iv widened it; AUDIT 26 F216/F222 widened it again (the pose + the foe/guard pools ride the envelope)
+  const fn = s.slice(i, i + 3600);   // TK-iv widened it; AUDIT 26 F216/F222 widened it again (the pose + the foe/guard pools); IS1 again (the interior bag)
   assert.ok(fn.includes('state.worldCoords(pf)'), 'the save stores NATIVES, not local scene positions');
   assert.ok(fn.includes('pf[1] - state.compensation[1]'), 'the height sheds the vertical compensation');
   // AUDIT 26 F216/F217: the live pools ride the envelope in natives

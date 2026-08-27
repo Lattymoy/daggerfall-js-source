@@ -114,10 +114,11 @@ const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Settings', 'Mods', 
 // Exit answer "what now", which is the only thing left to ask.
 //
 // SAVE AND LOAD STAY ON THE RAIL EVEN WHERE THE HOST REFUSES THEM.
-// Two of the four hosts hand `savingPrevented: () => true` and no save
-// hook at all (exterior, worldModes), and the pane says so in words. A
-// rail that drops the row instead teaches the player the door was
-// never there - the same argument the Mods section is built on.
+// One host still hands `savingPrevented: () => true` and no save hook
+// at all (exterior.js, the block-viewer probe; IS1 wired the interior
+// mode's doors), and the pane says so in words. A rail that drops the
+// row instead teaches the player the door was never there - the same
+// argument the Mods section is built on.
 const SECTIONS_PAUSE = ['Resume', 'Save Game', 'Load Game', 'Settings', 'Mods', 'About', 'Exit'];
 
 const idOf = (label) => label.toLowerCase().split(' ')[0];

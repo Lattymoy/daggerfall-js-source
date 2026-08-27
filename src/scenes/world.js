@@ -1756,11 +1756,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   // _teleportToPixel, startInDungeon - and nothing composed them, so
   // every TeleportPc idled forever on its declared-pending seam.
   // FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
-  // Interior off exteriorDoors) pends a door-by-buildingKey entry
-  // helper - respawnPlayerAtSite answers false for Building sites and
-  // the action keeps retrying, the same idle as before for that one
-  // site type. Dungeon-less locations fall through to the exterior
-  // landing, which is C#'s own "all else fails" arm (:561-565).
+  // Interior off exteriorDoors) still pends for QUEST teleports -
+  // respawnPlayerAtSite answers false for Building sites and the
+  // action keeps retrying, the same idle as before for that one site
+  // type. IS1 built the door-finder half (modes.restoreInterior keys
+  // a saved door identity into the live doorTargets), but a quest
+  // site arrives with a buildingKey and NO saved door or position -
+  // the marker landing is its own work. Dungeon-less locations fall
+  // through to the exterior landing, which is C#'s own "all else
+  // fails" arm (:561-565).
   let _respawning = false;
   async function _respawnAtSite(loc, siteType) {
     modes?.forceExitToExterior();
@@ -1873,7 +1877,16 @@ export async function bootWorld(canvas, renderer, params, status) {
   function worldQuickSave(saveName = QUICK_SAVE_NAME) {
     const pf = walkMode && playerSpawned ? player.pos : cam.pos;
     const wc = state.worldCoords(pf);
+    // IS1 (AUDIT 26 F221): the inside-building half (SerializablePlayer
+    // .cs:183-187) - resolved FIRST, because interiorSaveData writes
+    // the live scene into the entity's P1 cache and snapshotPlayer is
+    // about to read it. Null anywhere but interior mode. The world arm
+    // below stays valid either way: the exterior pixel stands under
+    // the building with its pools alive, and P8's unified frame makes
+    // the inside position a plain world position.
+    const interior = modes?.interiorSaveData?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
+      interior,
       classicMinutes: Math.floor(playerTicker.classicMinutes),
       readiedSpellIndex: magic.readiedIndex(),
       // B4: quest (Q4-v: machine + notebook + one-time list) and talk
@@ -1924,6 +1937,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!extras) { townTalk.say('Save version mismatch.'); return; }
     _loading = true;
     try {
+      // IS1: a load never runs UNDER a mounted mode - RespawnPlayer
+      // destroys the standing interior first (PlayerEnterExit
+      // .cs:453-459). The dying scene is NOT cached on the way out:
+      // the entity's cache is already the SAVE's own (restorePlayer
+      // above), and DFU's load path deregisters rather than
+      // serializes it (:464).
+      if ((modes?.mode ?? 'exterior') !== 'exterior') modes?.forceExitToExterior({ cacheScene: false });
       setWorldMinutes(extras.classicMinutes ?? worldMinutes());
       magic.setReadiedByIndex(extras.readiedSpellIndex ?? null, spellsByIndex);
       // Q4-v: the quest envelope rides the same slot; a pre-Q4-v save
@@ -1939,8 +1959,25 @@ export async function bootWorld(canvas, renderer, params, status) {
         await _teleportToPixel(w.pixel.x, w.pixel.y);
         const [lx, lz] = state.localFromWorld(w.nativeX, w.nativeZ);
         const ly = (w.y ?? 2) + state.compensation[1];
-        if (walkMode) { player.spawn(lx, ly, lz); playerSpawned = true; }
-        cam.pos = [lx, ly + (walkMode ? 0 : 40), lz];
+        // IS1: an inside save re-enters its building BEFORE the player
+        // lands - the Respawner's building arm (PlayerEnterExit
+        // .cs:559-567) with RestorePosition landing the saved
+        // transform raw. A door that cannot be found takes DFU's own
+        // reposition arm (:615-621): say the line and keep the
+        // teleport's default landing, never the inside position on the
+        // outside collider.
+        const inside = extras.interior
+          ? await (modes?.restoreInterior?.(extras.interior, [lx, ly, lz]) ?? false)
+          : false;
+        if (inside) {
+          playerSpawned = true;
+          cam.pos = [lx, ly, lz];
+        } else if (extras.interior) {
+          townTalk.say('Building has no exterior doors. Repositioning player.');
+        } else {
+          if (walkMode) { player.spawn(lx, ly, lz); playerSpawned = true; }
+          cam.pos = [lx, ly + (walkMode ? 0 : 40), lz];
+        }
         // P2-slice (items-2): the teleport's teardown collected every
         // live pile (the reference's sweep); the envelope re-mints the
         // saved ones at their native spots.
@@ -3341,6 +3378,17 @@ export async function bootWorld(canvas, renderer, params, status) {
       ...e, door: shiftedDoor(e),
       dfLocation: locationIndex.get(e.pixelKey), group: e.pixelKey,
     })),
+    // IS1: the save composer's doors for the interior mode's pause and
+    // F9/F11 (GameManager.cs:570-586 dispatches the quick keys
+    // scene-free). THE FOUR HOSTS: world.js hands its ONE composer in
+    // here and worldModes' interior arm consumes it;
+    // dungeonContext.js keeps its own composer (no buildings there);
+    // exterior.js builds no save doors (the probe host).
+    quickSave: () => worldQuickSave(),
+    quickLoad: () => worldQuickLoad(),
+    playerName: () => playerEntity.name,
+    saveAs: (saveName) => worldQuickSave(saveName),
+    loadKey: (key) => worldQuickLoad({ key }),
     // AUDIT 26 (F019): RMBLayout's exterior StaticNPCs, shifted through
     // the LIVE floating-origin translation exactly as shiftedDoor does
     // - the activation ray works in world space
