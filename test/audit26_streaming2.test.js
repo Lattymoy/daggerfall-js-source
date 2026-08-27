@@ -14,7 +14,7 @@ import { calculateTripCost } from '../src/systems/travel.js';
 import { ownsShip, SHIP_TYPES } from '../src/systems/banking.js';
 import { freeShipTravel } from '../src/systems/guildServices.js';
 import { orderOf } from '../src/systems/guildVariants.js';
-import { joinedGuildOfGroup } from '../src/systems/guilds.js';
+import { joinedGuildOfGroup, activeMemberships } from '../src/systems/guilds.js';
 import { GUILD_GROUPS } from '../src/formats/factionFile.js';
 import { buildingCompassDirection, DIRECTION_HINTS } from '../src/systems/talk.js';
 import { expandRandomTextRecord } from '../src/systems/talkMacros.js';
@@ -100,8 +100,12 @@ function hostHasShip(playerEntity) {
   const end = s.indexOf('\n      },', i);
   assert.ok(end > i, 'the hasShip closure is a block');
   const body = s.slice(i + 'hasShip: '.length, end + '\n      }'.length);
-  const make = new Function('ownsShip', 'joinedGuildOfGroup', 'GUILD_GROUPS', 'orderOf', 'freeShipTravel', 'playerEntity', `return (${body});`);
-  return make(ownsShip, joinedGuildOfGroup, GUILD_GROUPS, orderOf, freeShipTravel, playerEntity)();
+  // V2e: the closure reads memberships through activeMemberships (the
+  // vampire-aware book pick), so the harness injects it too - a plain
+  // fixture book migrates in place as the mortal book, which is the pin's
+  // intent.
+  const make = new Function('ownsShip', 'joinedGuildOfGroup', 'GUILD_GROUPS', 'orderOf', 'freeShipTravel', 'activeMemberships', 'playerEntity', `return (${body});`);
+  return make(ownsShip, joinedGuildOfGroup, GUILD_GROUPS, orderOf, freeShipTravel, activeMemberships, playerEntity)();
 }
 
 const knight = (rank) => ({ guildMemberships: { [GUILD_GROUPS.KnightlyOrder]: { guild: 'Order:Rose', rank, lastRankChange: 0 } } });

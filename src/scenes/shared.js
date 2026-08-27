@@ -944,8 +944,14 @@ export async function endRunToTitleMenu(renderer) {
  * close callback is what carries the lifecycle forward and it runs on
  * every path out.
  */
-export function wireInfectionVideos(renderer, { textAt = null, showText = null, factionDict = null } = {}) {
+export function wireInfectionVideos(renderer, { textAt = null, showText = null, factionDict = null, transferToCemetery = null } = {}) {
   setInfectionHost({
+    // V2e: DeployFullBlownVampirism's cemetery transfer (:164-175).
+    // Only the WORLD host can arrive at another location (the same
+    // single-location reality that makes travel's V world-host only),
+    // so everywhere else this stays null and the new vampire wakes
+    // where they fell - recorded, not silent: the deploy still runs.
+    transferToCemetery,
     playVideo(name, onClose) {
       // Off the tick's own frame: playVideo OWNS the frame loop for
       // its lifetime, and pushing it from inside a frame body is the

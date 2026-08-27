@@ -54,6 +54,7 @@ import { createTravelMapWindow, travelMapDoorReady, preloadTravelMapArt, canFind
 import { racialRestBlock, racialFastTravelBlock, cureVampirism } from '../systems/vampirism.js';   // V2b: the vampire's rest and daylight gates; V2d: $CUREVAM's cure arm
 import { cureLycanthropy } from '../systems/lycanthropy.js';   // V2d: $CUREWER's cure arm
 import { setRacialQuestHost } from '../systems/racialQuests.js';   // V2d: the quest-start seam (the machine is this host's)
+import { randomCemeteryLocationIndex } from '../systems/infection.js';   // V2e: GetRandomCemetery's pick half
 import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: the vampire clan pool asks as a Member
 import { playerInSunlight, playerInHolyPlace } from '../systems/passiveSpecials.js';   // V2c: the enchant ctx's two E1 flags
 import { buildMapDict } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict
@@ -134,7 +135,7 @@ import { changeLegalRep, legalRepOf, CRIMES } from '../systems/court.js';   // P
 import { isEquipped, unequipSlot } from '../systems/equip.js';
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { makeItemPermanent } from '../systems/quest/item.js';
-import { guildOfFaction, membershipOf, guildFactionIdOfGroup, joinedGuildOfGroup } from '../systems/guilds.js';
+import { guildOfFaction, membershipOf, guildFactionIdOfGroup, joinedGuildOfGroup, activeMemberships } from '../systems/guilds.js';   // V2e: the per-read vampire book pick
 import { GUILD_GROUPS } from '../formats/factionFile.js';   // the membership book's key - the travel popup's free-ship read
 import { freeShipTravel } from '../systems/guildServices.js';   // KnightlyOrder.FreeShipTravel, the second half of hasShip
 import { resolveVariantGuild, orderOf } from '../systems/guildVariants.js';
@@ -819,6 +820,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     textAt: (id) => townTalk.lines(id),
     showText: (lines) => townTalk.showOverlay(new ChoiceWindow({ lines })),
     factionDict: () => townTalk.factionDict ?? null,
+    transferToCemetery: transferToCemeteryArm,   // V2e: the world host's arm (hoisted; defined by fastTravelTo)
   });
   // Q4-v: InitAtGameStart runs ONCE when a NEW character finishes
   // chargen (DFU's OnStartGame path into QuestListsManager). Chargen
@@ -1684,6 +1686,35 @@ export async function bootWorld(canvas, renderer, params, status) {
     surfacePlayer();
   }
   let _traveling = false;
+  // V2e: DeployFullBlownVampirism's cemetery transfer (:164-175) -
+  // GetRandomCemetery over the CURRENT region's mapTable, then the
+  // same pixel arrival fast travel takes (_teleportToPixel re-inits
+  // the streamer; _lastEncMinutes is the PreventEnemySpawns parity -
+  // "intentionally not spawning enemies, for this time the PLAYER is
+  // the monster"). RECORDED DIVERGENCE: DFU's RespawnPlayer lands the
+  // player INSIDE the cemetery crypt (insideDungeon true); the port
+  // has no door-less dungeon entry yet, so the vampire wakes at the
+  // cemetery's exterior, its crypt door in front of them. Off the
+  // tick's frame like the videos; interior/dungeon modes skip loudly
+  // (DFU tears the interior down in RespawnPlayer - host work).
+  function transferToCemeteryArm() {
+    if ((modes?.mode ?? 'exterior') !== 'exterior') {
+      console.warn('[infection] the cemetery transfer needs the exterior mode - the vampire wakes where they fell');
+      return;
+    }
+    const mapTable = maps.getRegion(_questRegionIndex())?.mapTable ?? [];
+    const idx = randomCemeteryLocationIndex(mapTable);
+    if (idx == null) {
+      console.warn('[infection] no cemetery in this region - the transfer is skipped (DFU throws here)');
+      return;
+    }
+    const pos = longitudeLatitudeToMapPixel(mapTable[idx].longitude, mapTable[idx].latitude);
+    Promise.resolve().then(async () => {
+      await _teleportToPixel(pos.x, pos.y);
+      _lastEncMinutes = Math.floor(playerTicker.classicMinutes);
+    });
+  }
+
   async function fastTravelTo(pick, opts, computed) {
     if (_traveling) return;
     _traveling = true;
@@ -1874,7 +1905,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // window's free-rooms read does the same).
       hasShip: () => {
         if (ownsShip(playerEntity)) return true;
-        const km = joinedGuildOfGroup(playerEntity.guildMemberships ?? {}, GUILD_GROUPS.KnightlyOrder);
+        const km = joinedGuildOfGroup(activeMemberships(playerEntity), GUILD_GROUPS.KnightlyOrder);
         const order = km?.guild?.startsWith('Order:') ? orderOf(km.guild.slice('Order:'.length)) : null;
         return !!order && freeShipTravel(order, km);
       },
@@ -2553,7 +2584,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     nameBankOfCurrentRegion: () => getNameBankOfRegion(_questRegionIndex()),   // AUDIT 24: the POLITIC-derived index, like every other region read - the location's is -1 across the whole wilderness
     buildingType: () => (modes?.interiorBuilding?.buildingType === TALK_BUILDING_TYPES.Palace ? 'Palace' : null),
     isPlayerInsideCastle: () => false,   // the Q4-v caveat rides here too
-    guildMemberships: () => Object.entries(playerEntity.guildMemberships ?? {})
+    guildMemberships: () => Object.entries(activeMemberships(playerEntity))
       .map(([factionId]) => ({ factionId: Number(factionId) })),
     guildOfBuildingFaction: () => null,   // TK-v wires the guild MCP
     sgroupReputation: (sgroup) => playerEntity.sGroupReputations?.[sgroup] ?? 0,
@@ -2843,7 +2874,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const dict = townTalk.factionDict ?? null;
       const g = guildOfFaction(fid, resolveVariantGuild(dict), dict);
       if (!g) return null;
-      const m = membershipOf(playerEntity.guildMemberships ?? {}, g);
+      const m = membershipOf(activeMemberships(playerEntity), g);
       return { guildGroup: g.guildGroup, rank: m?.rank ?? 0, power: _questStore()?.dict.get(g.factionId)?.power ?? 0, isNonMember: !m };
     },
     regionPriceAdjustment: () => regionPriceAdjustment(playerEntity, _questLoc()?.regionIndex ?? 0),
@@ -2896,6 +2927,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // reference BEFORE this line must therefore be `modes?.` - which is
   // what test/audit24_wave37.test.js asserts, both ways.
   var modes = createWorldModes({
+    // V2e: worldModes re-registers the infection host on entry, so the
+    // cemetery arm rides the bag or it dies at that re-registration.
+    transferToCemetery: transferToCemeteryArm,
     canvas, renderer, player, cam, keys, latch, blocks,
     // V5: PlayerGPS, for CanRest. Only this host knows what kind of
     // place the player is standing in, and the rest law's first two

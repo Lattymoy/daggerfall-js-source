@@ -87,7 +87,7 @@ import {
 import { mintCondition } from '../systems/itemTemplates.js';   // G6: the gift's pieces mint like any other item
 import { npcServiceKind, freeHealing, freeMagickaRecharge } from '../systems/guildServices.js';
 import { createGuildForGroup, ORDERS } from '../systems/guildVariants.js';
-import { membershipOf, joinGuild, joinDecision } from '../systems/guilds.js';
+import { membershipOf, joinGuild, joinDecision, activeMemberships } from '../systems/guilds.js';   // V2e: GuildManager.Memberships, the per-read vampire book pick
 import { ensureFactionRep } from '../systems/factionRep.js';
 import { dateFromClassicMinutes, dateString, dayOfYearFromMinutes, MINUTES_PER_DAY, DAYS_PER_MONTH } from '../systems/gameDate.js';   // B2: the loan due date   // H1: the month the houses-for-sale list turns over on
 import { serviceDestination } from '../systems/guildServiceFlow.js';
@@ -306,6 +306,10 @@ export function createWorldModes(host) {
     textAt: (id) => townTalk?.lines?.(id) ?? null,
     showText: (lines) => { if (!interiorOverlay) interiorOverlay = new ChoiceWindow({ lines }); },
     factionDict: () => townTalk?.factionDict ?? null,
+    // V2e: the outer host's cemetery arm rides through, or this
+    // re-registration would silently drop it (world.js passes it;
+    // exterior.js cannot arrive at another location and passes none).
+    transferToCemetery: host.transferToCemetery ?? null,
   });
 
   // X4: the interior arm's Detect scan (see the frame body). Both
@@ -1427,7 +1431,7 @@ export function createWorldModes(host) {
     // membership is keyed by group and carries the guild's name, so
     // the order is recoverable from it; a non-member has no row and
     // pays like everyone else.
-    const memberships = (playerEntity.guildMemberships ??= {});
+    const memberships = activeMemberships(playerEntity);   // V2e: the vampire-aware book
     const km = joinedGuildOfGroup(memberships, GUILD_GROUPS.KnightlyOrder);
     const knightGuild = km?.guild?.startsWith('Order:') ? orderOf(km.guild.slice('Order:'.length)) : null;
     let win = null;
@@ -1495,7 +1499,7 @@ export function createWorldModes(host) {
     const guild = createGuildForGroup(route.guildGroup, route.buildingFactionId, dict);
     if (!guild) { townTalk?.say?.('You get no response.'); return; }
     if (!guildServiceArtLoaded() || !_shopFont) return;   // no art, no window (the U8 idiom)
-    const memberships = (playerEntity.guildMemberships ??= {});
+    const memberships = activeMemberships(playerEntity);   // V2e: the vampire-aware book
     // THE ONE CONSTRUCTION SEAM (5th): DFU's PlayerEntity always has
     // FactionData; the port's pre-chargen INTERIM entity does not, and
     // the join decision reads reputation. The live probe hit this as a
@@ -2270,7 +2274,7 @@ export function createWorldModes(host) {
           guildForBuilding: (factionId) => {
             const guild = guildOfFaction(factionId, resolveVariantGuild(dict), dict);
             if (!guild) return null;
-            const m = membershipOf((playerEntity.guildMemberships ??= {}), guild);
+            const m = membershipOf(activeMemberships(playerEntity), guild);
             return { hallAccessAnytime: hallAccessAnytime(guild, m), isMember: isMember(m) };
           },
           isActiveQuestBuilding: (b) => {
@@ -2355,7 +2359,7 @@ export function createWorldModes(host) {
         guildForBuilding: (factionId) => {
           const g = guildOfFaction(factionId, resolveVariantGuild(_dict), _dict);
           if (!g) return null;
-          const m = membershipOf((playerEntity.guildMemberships ??= {}), g);
+          const m = membershipOf(activeMemberships(playerEntity), g);
           return { hallAccessAnytime: hallAccessAnytime(g, m), isMember: isMember(m) };
         },
       });
@@ -3200,7 +3204,7 @@ export function createWorldModes(host) {
     window.__openGuildService = (destination, group = GUILD_GROUPS.MagesGuild, buildingFactionId = 0) => {
       const dict = townTalk?.factionDict ?? null;
       const guild = createGuildForGroup(group, buildingFactionId, dict);
-      const memberships = (playerEntity.guildMemberships ??= {});
+      const memberships = activeMemberships(playerEntity);   // V2e: the vampire-aware book
       // The real caller assigns what openServiceFlow RETURNS - the
       // trade arms hand back a flow for the popup to mount, where the
       // maker windows mount themselves and answer null. A probe that
@@ -3216,7 +3220,7 @@ export function createWorldModes(host) {
      *  is gated on CanAccessService, which is false for a stranger). */
     window.__joinGuild = (group = GUILD_GROUPS.MagesGuild, rank = 6, buildingFactionId = 0) => {
       const guild = createGuildForGroup(group, buildingFactionId, townTalk?.factionDict ?? null);
-      const memberships = (playerEntity.guildMemberships ??= {});
+      const memberships = activeMemberships(playerEntity);   // V2e: the vampire-aware book
       const m = joinGuild(memberships, guild, Math.floor(worldMinutes()));
       m.rank = rank;
       return JSON.stringify(m);
@@ -3617,7 +3621,7 @@ export function createWorldModes(host) {
     const b = interiorBuilding;
     const mapId = questSceneCtx?.()?.mapId ?? 0;
     const buildingKey = b?.buildingKey ?? 0;
-    const memberships = (playerEntity.guildMemberships ??= {});
+    const memberships = activeMemberships(playerEntity);   // V2e: the vampire-aware book
     const dict = townTalk?.factionDict ?? null;
     const guild = b?.factionId ? guildOfFaction(b.factionId, resolveVariantGuild(dict), dict) : null;
     // The SHAPE is systems/restSession.js' (a review round showed a bag

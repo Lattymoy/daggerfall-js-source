@@ -59,13 +59,13 @@
 // port has no classic-save reader, so the parameter stays false and
 // the count is correct through the disease it already is.
 //
-// FLAGGED, with the slice it waits on:
-//  - the RACIAL OVERRIDE itself (V2): VampirismEffect and
-//    LycanthropyEffect - the sun damage, the blood hunger, the
-//    transformation, the guild swap guilds.js already has the store
-//    for, the cemetery respawn and the clan's spells. `deploy` lands
-//    `entity.racialOverridePending`, which is V2's producer and the
-//    thing that makes a SECOND infection impossible from that moment.
+// THE RACIAL OVERRIDES ALL SHIPPED: V2a lycanthropy, V2b vampirism
+// (the blood hunger, the clan spells, the marker `deploy` lands
+// consumed in the same round), V2c the sun/holy damage, V2d the
+// quests, V2e the guild-book swap and THIS FILE's cemetery transfer
+// (randomCemeteryLocationIndex + the host's transferToCemetery arm,
+// below). `entity.racialOverridePending` remains the one hand-off,
+// and the thing that makes a SECOND infection impossible.
 
 import { PERMANENT_DISEASE_VALUE, COMPLETED_DISEASE_VALUE, endDisease } from './diseases.js';
 // DaggerfallDateTime's two constants for the raise at the bottom of
@@ -74,6 +74,7 @@ import { PERMANENT_DISEASE_VALUE, COMPLETED_DISEASE_VALUE, endDisease } from './
 // modules, neither of which ports DaggerfallDateTime. V1 gave them
 // gameDate.js's roof and left re-exports behind.
 import { DUSK_HOUR, SECONDS_PER_WEEK } from './gameDate.js';
+import { DUNGEON_TYPES } from '../formats/mapsFile.js';   // V2e: the cemetery pick reads the region's mapTable
 
 /** DaggerfallUnityEnums.LycanthropyTypes (:660-665). */
 export const LYCANTHROPY_TYPES = Object.freeze({ None: 0, Werewolf: 1, Wereboar: 2 });
@@ -252,7 +253,7 @@ export const markDreamPlayed = (entry) => { if (entry) entry.dreamPlayed = true;
  * counted by the temple. Cure Disease bought one minute earlier still
  * works; one minute later there is nothing left to cure.
  */
-export function deployInfection(entry, entity, { hourNow = () => 0, raiseTime = null, messageBox = null, clanOf = null } = {}) {
+export function deployInfection(entry, entity, { hourNow = () => 0, raiseTime = null, messageBox = null, clanOf = null, transferToCemetery = null } = {}) {
   if (!entry || entry.deployed) return null;
   entry.deployed = true;
   const key = entry.infection;
@@ -263,6 +264,12 @@ export function deployInfection(entry, entity, { hourNow = () => 0, raiseTime = 
     // BEFORE the popup, because the popup is what the player reads on
     // the far side of the fortnight.
     raiseTime?.(vampireTurnRaiseSeconds(hourNow()));
+    // Transfer player to a random cemetery (:164-175), between the
+    // raise and the popup - DFU's own order. The arm is the HOST's
+    // (V2e): only the world host can arrive at another location, so
+    // everywhere else the member is absent and the player wakes where
+    // they fell (recorded in wireInfectionVideos).
+    transferToCemetery?.();
     messageBox?.(DEATH_IS_NOT_ETERNAL_TEXT_ID);
   }
   if (entity) entity.racialOverridePending = pending;
@@ -311,6 +318,25 @@ export function runInfections(entity, currentDay, opts = {}) {
     deployInfection(entry, entity, o);
   }
   return step;
+}
+
+/**
+ * GetRandomCemetery (:194-217), the pick half as pure law: every
+ * mapTable row whose dungeonType is Cemetery - "always using a small
+ * cemetery, nothing spoils that first vampire moment like being lost
+ * in the guts of a massive dungeon" - one picked uniformly (DFU rolls
+ * UnityEngine.Random.Range, not DFRandom). Answers the LOCATION
+ * INDEX; where DFU would throw (a region with no cemetery, or an
+ * unloadable location) the port answers null and the caller skips
+ * loudly - the never-traps rule.
+ */
+export function randomCemeteryLocationIndex(mapTable, roll = Math.random) {
+  const found = [];
+  for (let i = 0; i < (mapTable?.length ?? 0); i++) {
+    if (mapTable[i]?.dungeonType === DUNGEON_TYPES.Cemetery) found.push(i);
+  }
+  if (!found.length) return null;
+  return found[Math.min(found.length - 1, Math.floor(roll() * found.length))];
 }
 
 /**

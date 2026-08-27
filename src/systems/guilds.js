@@ -442,18 +442,36 @@ export function guildGroupOfFaction(factionDict, factionId) {
  *  both halves (GetMembershipData(bool vampire), :313-320), and
  *  ClearMembershipData() clears BOTH (:298-302).
  *
- *  Vampirism itself is another slice, so nothing sets `hasVampirism` yet.
- *  The STORE is defined here because it is a property of the membership
- *  model this slice owns, and retrofitting a second book later would mean
- *  touching every call site. A PLAIN OBJECT is still accepted everywhere
- *  and means the mortal book - which is exactly what every current caller
- *  intends - so this adds a shape without breaking one. */
+ *  V2e ADOPTED THE STORE: every call site reads through
+ *  activeMemberships below, so the entity field IS the two-book store
+ *  from first touch. A PLAIN OBJECT is still accepted everywhere and
+ *  means the mortal book - which is what a pre-V2e save carries - so
+ *  the shape was added without breaking one. */
 export const newMembershipStore = () => ({ mortal: {}, vampire: {} });
 export function membershipsFor(store, hasVampirism = false) {
   if (!store) return {};
   if (!Object.hasOwn(store, 'mortal') || !Object.hasOwn(store, 'vampire')) return store;
   return hasVampirism ? store.vampire : store.mortal;
 }
+/** V2e - GuildManager.Memberships (:109-112), the getter every call
+ *  site reads: the ACTIVE book, picked PER READ by the player's live
+ *  vampirism (DFU consults HasVampirism() on each access - never a
+ *  swap-on-transition, so effect state and book cannot desync). Mints
+ *  the store on first touch. The vampirism test is the marker read
+ *  itself - importing the curse module here would be a cycle. */
+export function activeMemberships(entity) {
+  if (!entity) return {};
+  const cur = entity.guildMemberships;
+  if (!cur) entity.guildMemberships = newMembershipStore();
+  // a pre-V2e book IS the mortal book - migrated in place, so a
+  // legacy save with a live curse cannot read the wrong book
+  else if (!isMembershipStore(cur)) entity.guildMemberships = { mortal: cur, vampire: {} };
+  const vamp = !!(entity.racialOverride && !entity.racialOverride.ended
+    && entity.racialOverride.racial === 'vampirism');
+  return membershipsFor(entity.guildMemberships, vamp);
+}
+/** The store-shape test membershipsFor and the save both apply. */
+export const isMembershipStore = (v) => !!v && Object.hasOwn(v, 'mortal') && Object.hasOwn(v, 'vampire');
 /** ClearMembershipData() (:298-302) clears BOTH books, not the active one. */
 export function clearMembershipData(store) {
   if (!store) return;
