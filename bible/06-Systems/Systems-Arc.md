@@ -3793,3 +3793,61 @@ the seam, the career reads off parseCareerData's own bitfields, all
 four regen flags, both burns (career arm and override arm), the
 magery SUM and the unable write's stability on the live accessor, the
 vampire burning through runMagicRoundsFor, and the four-hosts sweep.
+
+## V2d - THE CURSE QUESTS: the starts, the pool, and the cure that sweeps (2026-08-27)
+
+The three quests the V-arc had been carrying as flags - $CUREWER,
+$CUREVAM and the vampire initiation P0A01L00 whose
+hasStartedInitialVampireQuest latch V2b minted dead - all start now,
+on DFU's own clock. `systems/racialQuests.js` is
+PlayerEntity.StartRacialOverrideQuest (:540-545) plus each curse's
+StartQuest override, and the cadence is the ENTITY UPDATE's minute
+walk, not the magic round: every 38 days (54720 - the same minute the
+region-conditions update fires on, which is why the call rides beside
+regionPowerUpdate; the "unported" sentence that stood there is gone)
+the non-cure roll, every 84 days (120960, the walk's new fourth arm)
+the cure roll.
+
+THE ROLLS ARE EACH CURSE'S OWN, kept odd where DFU is odd: the
+werewolf rolls (1,100)<30 for $CUREWER and NEVER starts a second
+instance (FindQuests first - and FindQuests counts TOMBSTONED
+instances, the C# default both call sites take); the vampire's cure
+roll is (10,100)<30 - the 10 floor is DFU's own line - with no
+re-offer check at all; the vampire's non-cure arm starts P0A01L00 on
+its first 50% hit and latches hasStartedInitialVampireQuest ON THE
+CURSE ENTRY (so it rides the save for free), then serves the clan's
+own line from the guild pool: GetGuildQuest(Vampires, Member,
+clanFactionId, rep, LEVEL) - the clan IS the faction id (the
+VAMPIRE_CLANS values are 150-158) and the player's level sits in the
+rank seat, DFU's own call. The vendored pack has carried all 21
+Vampires-group sources since Q4; QuestList-Classic routes them.
+
+THE MACHINE IS HOST-OWNED, so the module is a leaf with a registered
+host (the passiveSpecials shape, setRacialQuestHost answering the
+displaced host): world.js registers it beside its createQuestBridge
+mount with the machine's own doors - startQuestByName,
+startQuestImmediate, the quests map filtered two ways (FindQuests
+keeps tombstones, the P0 sweep walks active only, GetAllActiveQuests'
+law), and the clan pool read.
+
+AND THE CURES CLOSE THE LOOP, both ways. CureVampirism tombstones
+EVERY active P0* quest - the whole clan line leaves with the curse,
+while $CUREVAM ends itself - and CureLycanthropy tombstones every
+$CUREWER; both sweeps ride the cure functions' own tails.
+CurePcDisease's `cure vampirism` / `cure lycanthropy` arms - parsed
+and pinned since Q3, wired to nothing - now reach the real cures
+through the bridge ctx (endVampirism/endLycanthropy), with the
+RaiseTime(60) minute as the bare clock move. A cure bought from the
+quest is finally a cure.
+
+FLAGGED, each loudly: the transformed suppressions/claws/sounds/art
+(host work), the cemetery respawn, the guild swap, the artifact
+payloads.
+
+Pins: 7 in `test/racialquests.test.js` - the headless charter, both
+curses' rolls with the odd floor pinned to its verbatim range, the
+latch, the clan-pool ask shape, the no-second-$CUREWER law against a
+tombstoned instance, both tombstone sweeps off the real cures, the
+two cadence arms driven through the REAL tickPlayerMinutes across
+their boundaries (and not between them), and the world host's mount
+laws.

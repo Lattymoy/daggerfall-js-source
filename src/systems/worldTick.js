@@ -45,6 +45,9 @@ import { regionPowerUpdate } from './regionPower.js';
 export const FACTION_POWER_INTERVAL_MINUTES = 10080;
 /** :469 - `% 54720`, thirty-eight days. */
 export const REGION_CONDITIONS_INTERVAL_MINUTES = 54720;
+// V2d: the same loop's racial-quest arms (:472 rides the 38-day
+// minute, :475-476 adds the 84-day cure minute).
+import { startRacialOverrideQuest, CURE_QUEST_INTERVAL_MINUTES } from './racialQuests.js';
 import { CLASSIC_GAME_START_TIME } from './gameDate.js';
 import { RACES } from './races.js';
 
@@ -551,7 +554,15 @@ export function tickPlayerMinutes({
         rumorMill: entity.rumorMill ?? null, rolls,
         updateConditions: true, regionConditions: entity.regionConditions ?? null,
       });
-      // StartRacialOverrideQuest(false) rides this arm too - unported.
+      // :472 - StartRacialOverrideQuest(false) rides this same arm:
+      // the vampire's P0A01L00 initiation, then the clan's own quests
+      // (V2d; a no-op without a live override or a registered host).
+      startRacialOverrideQuest(entity, false, { rolls });
+    }
+    // :475-476, the FOURTH arm - every 84 days, the CURE quest roll
+    // ($CUREVAM at (10,100)<30, $CUREWER at (1,100)<30 once).
+    if (i % CURE_QUEST_INTERVAL_MINUTES === 0) {
+      startRacialOverrideQuest(entity, true, { rolls });
     }
   }
 

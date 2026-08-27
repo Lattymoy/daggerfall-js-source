@@ -27,9 +27,13 @@
 // IsPlayerInSunlight/IsPlayerInHolyPlace host seam registered by the
 // hosts).
 //
+// THE QUESTS went live in V2d (racialQuests.js): P0A01L00 on the
+// first 50% hit of the 38-day arm with hasStartedInitialVampireQuest
+// latched on this entry, the clan's guild-pool quests after it,
+// $CUREVAM on the 84-day cure arm's (10,100)<30 roll, and the cure's
+// P0* tombstone sweep below.
+//
 // FLAGGED, with the slice each waits on:
-//  - the quests ($CUREVAM, the initial P0A01L00, the clan's guild
-//    quest line) - quest-bridge work, beside lycanthropy's $CUREWER
 //  - the guild swap (guilds.js carries membershipsFor(store,
 //    hasVampirism)), the cemetery respawn, the VAMP00I0.CIF head and
 //    SCBG08I0 paperdoll art, the gendered attack voices - host work
@@ -40,6 +44,7 @@ import { spellRecordOfIndex } from './loot.js';
 import { SKILLS } from './skills.js';
 import { WEAPON_MATERIALS } from '../characters/weapons.js';
 import { VAMPIRE_SPELL_TAG, endOldLifeEffects } from './lycanthropy.js';
+import { endVampireQuests } from './racialQuests.js';   // V2d: the cure's P0* tombstone sweep
 
 /** VampirismEffect.VampirismCurseKey (:33). */
 export const VAMPIRISM_CURSE_KEY = 'Vampirism-Curse';
@@ -207,10 +212,11 @@ export function racialFastTravelBlock(entity, nowMinutes = 0) {
 }
 
 /**
- * CureVampirism (:243-251): the clan is REMEMBERED
+ * CureVampirism (:304-312): the clan is REMEMBERED
  * (PreviousVampireClan - the clan's quest line and reputations
- * outlive the cure), one classic minute passes, the tagged spells go.
- * The quest tombstone sweep is FLAGGED with the quests.
+ * outlive the cure), one classic minute passes, the tagged spells go,
+ * and EVERY P0* quest is tombstoned - the whole clan line leaves with
+ * the curse (V2d - EndVampireQuests, through the racialQuests host).
  */
 export function cureVampirism(entity, { advanceMinutes = null } = {}) {
   const entry = liveVampirism(entity);
@@ -221,5 +227,6 @@ export function cureVampirism(entity, { advanceMinutes = null } = {}) {
   entity.minMetalToHit = undefined;
   advanceMinutes?.(1);   // RaiseTime(60) - sixty SECONDS, the V2a lesson
   if (entity.spells) entity.spells = entity.spells.filter((s) => s.tag !== VAMPIRE_SPELL_TAG);
+  endVampireQuests();
   return true;
 }

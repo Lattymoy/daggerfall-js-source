@@ -269,20 +269,20 @@ combat line numbers below are refreshed with it.
 - `src/scenes/shared.js:261` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:366` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:760` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:795` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:801` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1236` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
-- `src/scenes/world.js:1659` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
-- `src/scenes/world.js:1999` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:2278` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:2451` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
-- `src/scenes/world.js:2543` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:2808` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:2835` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:3259` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:3596` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/world.js:3669` - (FLAGGED: exterior corpse containers are the loot arc's), so
+- `src/scenes/world.js:763` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:798` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:804` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1239` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
+- `src/scenes/world.js:1662` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
+- `src/scenes/world.js:2002` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:2281` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:2454` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
+- `src/scenes/world.js:2546` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:2824` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:2851` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:3301` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:3638` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:3711` - (FLAGGED: exterior corpse containers are the loot arc's), so
 - `src/scenes/worldModes.js:291` - rather than pretending to scan. FLAGGED.
 - `src/scenes/worldModes.js:436` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:584` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
@@ -356,8 +356,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/knightlyGifts.js:96` - * H1 - ReceiveHouse (:222-252), the LAST of the four FLAGGED service
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
 - `src/systems/loot.js:223` - G4: THE VALUE IS OVERWRITTEN (:632). This had been FLAGGED here
-- `src/systems/lycanthropy.js:30` - FLAGGED, with the slice each waits on:
-- `src/systems/lycanthropy.js:314` - * tombstone sweep is FLAGGED with the cure quest (V2b).
+- `src/systems/lycanthropy.js:35` - FLAGGED, with the slice each waits on:
 - `src/systems/npcSession.js:628` - FLAGGED: no host calls this. C# populates the pool INSIDE
 - `src/systems/passiveSpecials.js:8` - arms FLAGGED since E1.
 - `src/systems/playerTorch.js:12` - arm is FLAGGED here rather than guessed - see the note below.
@@ -382,8 +381,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/tradeModes.js:127` - *  destination has been a FLAGGED null, so the mode could not be
 - `src/systems/tradeModes.js:388` - FLAGGED, with the slices they wait on:
 - `src/systems/useItem.js:311` - lantern's and refuses when it would overflow. FLAGGED: DFU
-- `src/systems/vampirism.js:30` - FLAGGED, with the slice each waits on:
-- `src/systems/vampirism.js:213` - * The quest tombstone sweep is FLAGGED with the quests.
+- `src/systems/vampirism.js:36` - FLAGGED, with the slice each waits on:
 - `src/ui/automapWindow.js:20` - portals stay FLAGGED (systems/automap.js keeps the list); A2
 - `src/ui/bankPurchaseWindow.js:17` - FLAGGED, and it is presentation rather than function: the 104x91
 - `src/ui/bankPurchaseWindow.js:49` - display: [117, 12, 104, 91],   // FLAGGED: the 3D preview

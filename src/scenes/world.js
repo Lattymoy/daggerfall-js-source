@@ -51,7 +51,10 @@ import { isHouseOwned, shipCoords, ownsShip } from '../systems/banking.js';   //
 import { clearSceneCache } from '../systems/sceneCache.js';   // P1: SaveLoadManager.ClearSceneCache, at PlayerGPS's map-pixel seam
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
 import { createTravelMapWindow, travelMapDoorReady, preloadTravelMapArt, canFindPlace } from '../ui/travelMapDoor.js';   // W1's classic art window + U61's overworld, one door
-import { racialRestBlock, racialFastTravelBlock } from '../systems/vampirism.js';   // V2b: the vampire's rest and daylight gates
+import { racialRestBlock, racialFastTravelBlock, cureVampirism } from '../systems/vampirism.js';   // V2b: the vampire's rest and daylight gates; V2d: $CUREVAM's cure arm
+import { cureLycanthropy } from '../systems/lycanthropy.js';   // V2d: $CUREWER's cure arm
+import { setRacialQuestHost } from '../systems/racialQuests.js';   // V2d: the quest-start seam (the machine is this host's)
+import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: the vampire clan pool asks as a Member
 import { playerInSunlight, playerInHolyPlace } from '../systems/passiveSpecials.js';   // V2c: the enchant ctx's two E1 flags
 import { buildMapDict } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict
 import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
@@ -2741,6 +2744,19 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       surfacePlayer();
     },
+    // V2d: CurePcDisease's other two arms (`cure vampirism` /
+    // `cure lycanthropy` - $CUREVAM's and $CUREWER's own last acts),
+    // declared by the bridge since Q4 and wired to nothing here. The
+    // RaiseTime(60) minute is the bare clock move both cures take.
+    endVampirism: () => {
+      if (cureVampirism(playerEntity, { advanceMinutes: (m) => setWorldMinutes(worldMinutes() + m) })) surfacePlayer();
+    },
+    endLycanthropy: () => {
+      if (cureLycanthropy(playerEntity, {
+        nowMinutes: Math.floor(worldMinutes()),
+        advanceMinutes: (m) => setWorldMinutes(worldMinutes() + m),
+      })) surfacePlayer();
+    },
     playerRaceName: () => playerEntity.race ?? null,
     getReputation: (fid) => { const s = _questStore(); return s ? getReputation(s, fid) : 0; },
     changeReputation: (fid, amount, propagate) => { const s = _questStore(); if (s) changeReputation(s, fid, amount, propagate); },
@@ -2847,6 +2863,32 @@ export async function bootWorld(canvas, renderer, params, status) {
   // The notebook only exists once the bridge is built, so the sink is
   // handed down here.
   townTalk.hudMessageSink = (t) => questBridge?.notebook?.addMessage(t);
+  // V2d: THE RACIAL-QUEST SEAM. worldTick's minute walk rolls the
+  // curse quests (38-day non-cure, 84-day cure) but the machine is
+  // THIS host's, so racialQuests reaches it through a registered host
+  // - the passiveSpecials shape. FindQuests counts TOMBSTONED
+  // instances too (QuestMachine.cs:867-881's default, which both DFU
+  // call sites take); GetAllActiveQuests excludes them (:849-859).
+  setRacialQuestHost({
+    startQuest: (name) => questBridge.machine.startQuestByName(name),
+    startQuestObject: (q) => questBridge.machine.startQuestImmediate(q),
+    findQuests: (name) => [...questBridge.machine.quests.values()].filter((q) => q.questName === name),
+    tombstoneQuestsByName: (name) => {
+      for (const q of [...questBridge.machine.quests.values()]) {
+        if (q.questName === name && !q.questTombstoned) questBridge.machine.tombstoneQuest(q);
+      }
+    },
+    tombstoneQuestsByPrefix: (prefix) => {
+      for (const q of [...questBridge.machine.quests.values()]) {
+        if (!q.questComplete && !q.questTombstoned && q.questName?.startsWith(prefix)) questBridge.machine.tombstoneQuest(q);
+      }
+    },
+    // VampirismEffect.StartQuest:243-255 - the clan IS the faction id,
+    // the player's LEVEL sits in the rank seat, rep from the store.
+    getVampireClanQuest: (clanFactionId, level) => questBridge.questLists.getGuildQuest(
+      GUILD_GROUPS.Vampires, MEMBERSHIP_STATUS.Member, clanFactionId,
+      (() => { const s = _questStore(); return s ? getReputation(s, clanFactionId) : 0; })(), level),
+  });
   if (_questStartPending) questInitAtGameStart();
   // VAR, not const: the pointer and wheel listeners far above close over
   // this binding and are live before it is assigned, so it must exist
