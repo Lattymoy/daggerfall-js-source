@@ -983,7 +983,6 @@ function statsStanding(detail) {
       el('span', `v${v > 0 ? ' won' : v < 0 ? ' bad' : ''}`, v > 0 ? `+${v}` : String(v)));
     detail.append(r);
   }
-  detail.append(el('p', 'px-note', 'How the streets receive you. Guild rank lives with each guild hall.'));
 }
 
 /** PX5: THE MAIN QUEST, by the pack's own naming - DFU ships the
