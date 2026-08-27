@@ -261,12 +261,22 @@ void main() {
   // The dome: horizon to zenith.
   float e = clamp(dir.y, 0.0, 1.0);
   vec3 color = mix(uHorizon, uZenith, pow(e, 0.55));
+  // BELOW THE HORIZON the terrain is what a player sees, but the sky is
+  // drawn first and shows wherever the ground does not reach - and a
+  // flat slab of the horizon colour with the full dawn glow on it read
+  // as a bright BAND with a hard seam at the horizon (the first
+  // render's one fault). So the dome keeps going down: the horizon
+  // colour darkens toward the nadir, and the glow falls off below the
+  // horizon as fast as it does above it, so the horizon is a line
+  // rather than an edge.
+  float below = clamp(-dir.y, 0.0, 1.0);
+  color = mix(color, uHorizon * 0.55, pow(below, 0.7));
 
   // The glow on the sun's side of the horizon (dawn, dusk).
   vec2 dh = normalize(dir.xz + vec2(1e-5, 0.0));
   vec2 sh = normalize(uSunDir.xz + vec2(1e-5, 0.0));
   float az = max(dot(dh, sh), 0.0);
-  color += uGlowColor * pow(az, 2.5) * exp(-e * 9.0) * uGlowAmount;
+  color += uGlowColor * pow(az, 2.5) * exp(-abs(dir.y) * 9.0) * uGlowAmount;
 
   // Stars, then the moons, under the clouds.
   color += vec3(0.95, 0.97, 1.0) * stars(dir, uStars);

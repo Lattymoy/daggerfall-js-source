@@ -609,11 +609,18 @@ fillColor roles, the phases coming from the CLASSIC clock so one day is
 one phase, a moon under the world not drawn, an unknown weather falling
 to clear); and the seam. 2 mutants, 2 dead.
 
-FOUND ON THE WAY, worth a later slice: below the horizon the dome fills
-with the horizon colour, which under a storm reads LIGHTER than the sky
-above it. The world's geometry covers that band in play, so it shows
-only in the lab - but it is wrong and the fix is a darkening below the
-line rather than a flat fill.
+FOUND ON THE WAY, AND CLOSED THE SAME DAY: below the horizon the dome
+filled with the flat horizon colour AND took the full dawn glow (the
+glow fell off with `exp(-e * 9)` where `e` is the CLAMPED elevation, so
+everything under the line got `e = 0`, the maximum). At dawn that drew a
+bright tan slab with a hard seam at the horizon - the one fault in the
+first render. The dome keeps going down now: the horizon colour darkens
+toward the nadir, and the glow falls off below the line as fast as above
+it, so the horizon reads as a line rather than an edge. The darkening is
+DELIBERATELY MILD (0.55 of the horizon colour at the nadir, eased): the
+world's geometry covers this band in play, and where it does not - the
+streamed world's far edge - a pale band blends into the distance haze
+where a dark one would announce itself.
 
 ON THE HORIZON: the sky as a setting rather than a URL, a real fog and
 cloud shadow on the world under it, lightning on the thunder weather,

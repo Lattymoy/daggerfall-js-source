@@ -186,6 +186,23 @@ test('ES1 state: what the shader gets - the palette by elevation, the weather\'s
 });
 
 // ── THE SEAM ──────────────────────────────────────────────────────
+test('ES1 horizon: the dome continues BELOW the line - no flat slab, no glow under it', () => {
+  // The first render's one fault: `e` is the CLAMPED elevation, so
+  // everything under the horizon got e = 0 - the flat horizon colour
+  // AND the maximum dawn glow - which drew a bright band with a hard
+  // seam. Fixed the same day; pinned here because it is a shader fault
+  // and a shader is not otherwise readable by a test.
+  const fs = read('src/render/enhancedSky.js');
+  assert.match(fs, /float below = clamp\(-dir\.y, 0\.0, 1\.0\);/, 'the dome knows how far below the line it is');
+  assert.match(fs, /color = mix\(color, uHorizon \* 0\.55, pow\(below, 0\.7\)\);/, 'and darkens toward the nadir');
+  assert.match(fs, /exp\(-abs\(dir\.y\) \* 9\.0\)/, 'the glow falls off below the line as fast as above it');
+  assert.doesNotMatch(fs, /exp\(-e \* 9\.0\)/, 'never off the clamped elevation, which is 0 for the whole lower half');
+  // The darkening is mild ON PURPOSE: where the streamed world's edge
+  // leaves this band showing, a pale one blends into the distance haze.
+  const factor = Number(fs.match(/uHorizon \* (0\.\d+), pow\(below/)[1]);
+  assert.ok(factor >= 0.4 && factor <= 0.75, `${factor}: darker than the horizon, not a dark band`);
+});
+
 test('ES1 seam: enhanced skin only, one renderer field, the classic pass untouched', () => {
   const shared = read('src/scenes/shared.js');
   assert.match(shared, /const enhancedSky = isEnhanced\(\) && params\.get\('sky'\) !== 'classic' \? new EnhancedSkyRenderer\(gl\) : null;/,
