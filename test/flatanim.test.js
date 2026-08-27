@@ -244,7 +244,12 @@ test('FA1 slice 3: no site hand-writes a frame into a record any more', () => {
   // the recenter rebuilds
   for (const host of ['scenes/cityGuards.js', 'scenes/exteriorFoes.js']) {
     const src = read(host);
-    const rebuild = src.match(/for \(const c of corpseBatches\)[\s\S]*?\n {4}}/)[0];
+    // IF: anchored on the REBUILD, which is what this pin is about -
+    // `for (const c of corpseBatches)` alone now matches the pool's
+    // teardown loop too, and the first match won. Same repair the
+    // ch3 fall-arm pin needed: name the block, do not take the first
+    // one that looks like it.
+    const rebuild = src.match(/for \(const c of corpseBatches\) \{[\s\S]*?createBillboardBatch[\s\S]*?\n {4}}/)[0];
     assert.match(rebuild, /c\.batch\.frame = 0;/, `${host} rebuilds a corpse batch and loses its frame`);
   }
   // and the loot module drops the clock with the batch
