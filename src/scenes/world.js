@@ -107,6 +107,7 @@ import { getBool, getInt } from '../systems/settings.js';   // U31: StartCellX/Y
 import { layoutNature } from '../world/terrainNature.js';
 import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, generateSamples } from '../world/terrainSampler.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
+import { paintRoadTiles } from '../world/roadTiles.js';   // R5 (enhanced): roads on the ground
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
 import { music } from '../systems/music.js';
@@ -378,6 +379,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       locationRect = setLocationTiles(dfLocation, maps, blocks, tilemap);
       blendLocationTerrain(samples, avg, locationRect);
     }
+    // R5: the road goes down AFTER the location and BEFORE marching
+    // squares, using assignTiles' own skip-non-zero rule - so a town's
+    // stamped ground wins inside its rect, the road fills the ground
+    // outside it, and the 1:1 tile law is not touched. roadNetwork is
+    // null until the enhanced bake has run, and null paints nothing.
+    paintRoadTiles(tilemap, this._roadNetwork ?? null, px, py);
     assignTiles(generateTileData(samples, px, py), tilemap, true);
     const climate = getWorldClimateSettings(maps.getClimateIndex(px, py));
     const climateBase = climate.climateType;
