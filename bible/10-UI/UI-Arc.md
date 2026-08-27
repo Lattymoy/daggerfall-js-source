@@ -6513,3 +6513,25 @@ Probed live: the three headings render, two timed gems, the urgent
 tag on a 9.5-hour letter, Side Quest under its name, the corner
 clock reading the probe's own set minutes, zero page errors both
 viewports.
+
+PX6 (same day, Mac: "give it the same love"): THE STATS PAGE. The
+journal's own bones - a rail of pages, the chosen one on the right,
+because one structure learned once is the whole window's. Four pages,
+every row something the game actually carries. CHARACTER: name in the
+wing rules, race/career/level tag, and the three vitals as
+WHOLE-PIXEL METERS - 2px frame, flat fill, no easing - health in the
+skin's blood, fatigue in bone, magicka in verdigris, with gold and
+encumbrance under a BURDEN divider. ATTRIBUTES: the eight on meters
+against the classic 100. SKILLS: the three career groups open under
+their own dividers - the character's chosen shape - each skill on a
+thin meter, with Miscellaneous behind the F5 sheet's own disclosure
+gesture ('Show N miscellaneous skills'). STANDING: the five NAMED
+social groups getReactionToPlayer reads (factionFile.js:23-27),
+positive gold / negative blood, with the honest line that guild rank
+lives with each guild hall - and LEGAL STANDING DELIBERATELY ABSENT:
+it is per-region (court.js owns player.legalRep[region]) and the
+window does not know where you stand, so a number without its region
+would be a lying row; it waits on a host region seam. Probed live
+with a mid-game Battlemage: 3 vitals meters, 12 career skill rows
+growing to 35 through the disclosure, 5 standing rows with 2 gold
+and 2 blood, zero page errors both viewports.
