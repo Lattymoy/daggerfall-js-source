@@ -1310,6 +1310,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 @media (max-width: 480px) {
   .px-wordmark { font-size: 60px; }
   .px-menu button { font-size: 24px; letter-spacing: 0.12em; text-indent: 0.12em; }
+
   /* PX1b: a phone foot is two rows - the toggle centered on its own,
      build and About beneath it - because three zones across 393px made
      the toggle wrap vertically and shoulder into the build line. */
@@ -1320,6 +1321,76 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   .px-about { grid-area: about; }
 }
 @media (prefers-reduced-motion: reduce) { .px-ground { animation: none; } }
+/* PX8, caught by the tap probe TWICE: centering the list on a SHORT
+   screen ran its last rows UNDER the fixed foot, whose skin switch
+   then intercepted their taps - Load Game was drawn and unreachable,
+   the AUDIT F1 shape exactly. The first fix keyed on max-WIDTH and a
+   landscape phone (851x393) sailed past it: the condition was never
+   'narrow', it was 'short'. The stage stops centering, scrolls, and
+   reserves the foot's height whenever height is the constraint; the
+   foot stacks two rows only where width also runs out. */
+@media (max-height: 560px), (max-width: 480px) {
+  .px-stage { justify-content: flex-start; padding: 7dvh 24px 132px; overflow-y: auto; }
+}
+
+/* ── PX8: THE SHELL WEARS THE PIXELS (Mac: "Settings next") ─────
+   The section shell - side rail, pane, and above all the settings
+   three-pane screen - repainted into the pixel idiom. EVERY RULE
+   HERE IS PAINT: scoped under .shell (the menu's root alone; the
+   wizard, sheet and inventory own other roots), later in the sheet
+   so it wins the ties, and it moves NO geometry - the 44px targets
+   AUDIT F1's tap probe measures, the phone sheet, the second-tap
+   gesture and the dot all keep their sizes and their laws. */
+.shell { font-family: 'Pixelify Sans', monospace; -webkit-font-smoothing: none; }
+.shell button { transition: none; border-radius: 0; }
+.shell .brand h1 { font-family: 'Jacquard 12', var(--brand); font-weight: 400;
+  letter-spacing: 0.02em; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.shell .skinopt { border-radius: 0; letter-spacing: 0.14em; }
+.shell .skinopt.on { color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.shell .railbtn { letter-spacing: 0.12em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.shell .railbtn.on { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.shell .railbtn:hover { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.shell .head h2 { font-family: inherit; font-weight: 400; letter-spacing: 0.14em;
+  text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.shell .card, .shell .dcard { border: 2px solid rgba(125,116,96,0.55); border-radius: 0;
+  background: rgba(0,0,0,0.35); }
+.shell .card h3, .shell .dcard h3, .shell .empty h3 { font-family: inherit; font-weight: 400;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.shell .tag { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12);
+  letter-spacing: 0.24em; background: none; border: 0; }
+.shell .act { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; background: none;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--bone);
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.shell .act:hover, .shell .act:focus-visible { color: rgb(243,239,44); border-color: var(--brass);
+  background: none; text-shadow: 2px 2px 0 rgb(93,77,12); }
+.shell .act.primary { color: rgb(243,239,44); border-color: var(--brass); background: none;
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.shell .act:disabled { color: rgba(125,116,96,0.45); border-color: rgba(125,116,96,0.3); }
+/* ── the settings screen ── */
+.shell .subbtn { letter-spacing: 0.1em; text-transform: uppercase; border-radius: 0;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.shell .subbtn.on { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.shell .subbtn .count { font-family: inherit; border-radius: 0;
+  border: 2px solid rgba(125,116,96,0.4); background: none; }
+.shell .more-dot { border-radius: 0; width: 6px; height: 6px; background: var(--brass); }
+.shell .legend i { border-radius: 0; width: 6px; height: 6px; }
+.shell .row { border-radius: 0; }
+.shell .row.on { outline: 2px solid rgba(192,138,62,0.6); outline-offset: -2px; }
+.shell .row-name { text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.shell .ctl .val { letter-spacing: 0.08em; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.shell .step { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; background: none;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.shell .step:hover { color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.shell .swatch { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; }
+.shell .dcard h3 { font-size: 20px; }
+.shell .dcard code { font-family: inherit; border: 2px solid rgba(125,116,96,0.4);
+  border-radius: 0; background: rgba(0,0,0,0.35); letter-spacing: 0.06em; }
+.shell .sheet-close { letter-spacing: 0.2em; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+/* tier dots stay their tier colours; only the shape squares off. */
 `;
 
 const STYLE_ID = 'dagger-enhanced-style';
