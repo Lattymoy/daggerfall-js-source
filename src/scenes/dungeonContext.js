@@ -103,7 +103,8 @@ import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects
 import { dice100, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies, KB_UNIT } from '../combat/formulas.js';   // C15: + knockback
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost, effectSchool, EFFECT_COST_TABLE } from '../systems/spellcost.js';
-import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState , copyEffectEntry } from '../systems/save.js';   // B4: the ONE quest+talk composer
+import { snapshotPlayer, restorePlayer, composeSessionState, restoreSessionState , copyEffectEntry } from '../systems/save.js';   // B4: the ONE quest+talk composer
+import { saveSlot, loadSlot, quickLoadSlot, QUICK_SAVE_NAME } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave
 import { bindQuestFoeHost } from './questFoeHost.js';   // B1: quest foes ride this pool
 import { dungeonKey } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
@@ -2947,6 +2948,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // the LOAD arm needs the host's position applier, exactly as
         // routeKey's own QuickLoad case passes it
         quickLoad: () => ctx.quickLoad?.(setPlayerPos),
+        // SAV4: the slot window's seams over the same two verbs.
+        playerName: () => playerEntity.name,
+        saveAs: (saveName) => ctx.quickSave?.(saveName),
+        loadKey: (key) => ctx.quickLoad?.(setPlayerPos, key),
         exitToMenu: exitToTitleMenu,
         textLines: (id) => rscLines(id),
       });
@@ -3106,7 +3111,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     },
     reportMouse(dx, dy, locked) { _mouseState = `dx:${dx} dy:${dy} lock:${locked ? 'Y' : 'N'}`; },
     reportInput(keys, pitch) { _inputState = `keys:${keys} pitch:${pitch.toFixed(2)}`; },
-    quickSave() {
+    quickSave(saveName = QUICK_SAVE_NAME) {
       const snap = snapshotPlayer(playerEntity, {
         position: lastPlayerFeet, classicMinutes: classicMinutesRef.value,
         readiedSpellIndex: magic.readiedIndex(),
@@ -3125,11 +3130,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         locationKey: _locationKey,
         world: collectWorld(),
       });
-      if (writeQuicksave(snap)) hudText.add('Game saved.');
+      const ok = saveSlot(playerEntity.name, saveName, snap).ok;
+      if (ok) hudText.add('Game saved.');
       else hudText.add('Save failed (storage full or disabled).');   // never silent - the write can fail on real browsers
+      return ok;
     },
-    quickLoad(setPlayerPos) {
-      const snap = readQuicksave();
+    quickLoad(setPlayerPos, key = null) {
+      const snap = key != null ? loadSlot(key) : quickLoadSlot(playerEntity.name);
       if (!snap) { hudText.add('No saved game.'); return; }
       const extras = restorePlayer(playerEntity, snap, spellsByIndex);
       if (!extras) { hudText.add('Save version mismatch.'); return; }

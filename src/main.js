@@ -182,6 +182,12 @@ async function boot() {
   // not to.
   if (action === 'load') params.set('load', '1');
   else params.delete('load');
+  // SAV4: the slot the start menu's save window picked, when it
+  // picked one - the boot's load arm reads it. Same SET-or-DELETE law.
+  const { takePickedLoadKey } = await import('./scenes/menu.js');
+  const pickedKey = takePickedLoadKey();
+  if (action === 'load' && pickedKey != null) params.set('loadkey', String(pickedKey));
+  else params.delete('loadkey');
   // SAV3: a picked classic save boots the world's import arm. Same
   // SET-or-DELETE law as `load` - a stale ?classicload with no pending
   // SaveGames is a no-op in the world host, but it never survives a

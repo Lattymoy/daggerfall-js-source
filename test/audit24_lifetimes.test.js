@@ -233,10 +233,12 @@ test('audit24: LOAD GAME is read by the host that now boots', () => {
   // discarded: the player got a brand-new character in Privateer's
   // Hold, and the only route to their save was to start a new game and
   // press F11.
+  // SAV4 moved the arm onto the slot store: a picked slot boots by
+  // `?loadkey`, a bare ?load keeps the most-recent shape.
   const world = read('src/scenes/world.js');
-  assert.match(world, /if \(params\.has\('load'\)\) \{[\s\S]{0,200}await worldQuickLoad\(\);/,
+  assert.match(world, /if \(params\.has\('load'\)\) \{[\s\S]{0,300}await worldQuickLoad\(params\.has\('loadkey'\)/,
     'the world host reads `load`');
-  assert.match(world, /await worldQuickLoad\(\);\s*\n\s*\} else if \(params\.has\('classic'\)/,
+  assert.match(world, /: \{ mostRecent: true \}\);\s*\n\s*\} else if \(params\.has\('classic'\)/,
     'and a load takes the classic start\'s PLACE - a load is not a new game');
   assert.match(world, /!playerEntity\.chargenDone && !params\.has\('load'\)/,
     'nor does the wizard mount over the game being resumed');

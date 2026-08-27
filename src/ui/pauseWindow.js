@@ -62,6 +62,7 @@
 // A: VersionInfo strings are DFU's identity, not this port's).
 
 import { ControlsWindow, preloadControlsArt, controlsArtLoaded } from './controlsWindow.js';
+import { SaveWindow } from './saveWindow.js';   // SAV4: the slot window rides the pause seam
 import { loadImg, nativeMetrics, drawImg, drawRect, shadowText } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
 import { drawMenuBackdrop } from './chargenArt.js';
@@ -192,10 +193,21 @@ export class PauseOptionsWindow {
       if (this.hooks.savingPrevented?.()) {
         this.top = 'note';
         this._noteRows = ['You cannot save now.'];   // cannotSaveNow (Internal_Strings, recovered)
+      } else if (this.hooks.openSave) {
+        // SAV4: DFU's SAVE GAME opens the slot window (:302), with
+        // this window as its previous. Done-first dispatch (U24).
+        this._closeWith(); this.hooks.openSave();
       } else { this._closeWith(); this.hooks.quickSave?.(); }
       return true;
     }
-    if (inRect(R.load, vx, vy)) { this._click(); this._closeWith(); this.hooks.quickLoad?.(); return true; }
+    if (inRect(R.load, vx, vy)) {
+      this._click(); this._closeWith();
+      // SAV4: LOAD GAME opens the slot window too (:308); a host
+      // without the loadKey seam keeps the one-press quickload.
+      if (this.hooks.openLoad) this.hooks.openLoad();
+      else this.hooks.quickLoad?.();
+      return true;
+    }
     const bx = vx - panelX(), by = vy - PAUSE_PANEL_Y;
     if (inRect(R.soundBar, vx, vy)) {
       this._click();
@@ -307,10 +319,25 @@ export class PauseOptionsWindow {
  *  drift the audit24_onehome ratchet exists to catch, and the classic
  *  flow is what this module is. */
 export function openClassicPauseFlow(show, hooks = {}) {
+  // SAV4: the save/load doors mount the slot window in the SAME slot
+  // the controls grid uses, so all four hosts get it through the one
+  // seam. A host without the saveAs/loadKey seams keeps the old
+  // one-press quicksave arms (the two overlay-less hosts' posture).
+  const saveWindowHooks = (extra) => ({
+    playerName: hooks.playerName,
+    onBack: () => openClassicPauseFlow(show, hooks),
+    ...extra,
+  });
   const win = new PauseOptionsWindow({
     ...hooks,
     openControls: controlsArtLoaded()
       ? () => show(new ControlsWindow({ onBack: () => openClassicPauseFlow(show, hooks) }))
+      : null,
+    openSave: hooks.saveAs
+      ? () => show(new SaveWindow('save', saveWindowHooks({ saveAs: hooks.saveAs })))
+      : null,
+    openLoad: hooks.loadKey
+      ? () => show(new SaveWindow('load', saveWindowHooks({ loadKey: hooks.loadKey })))
       : null,
   });
   show(win);

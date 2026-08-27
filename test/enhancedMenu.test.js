@@ -143,7 +143,7 @@ test('the destructive actions ask first', () => {
   const delAt = src.indexOf("label: 'Delete'");
   assert.match(src.slice(delAt, delAt + 400), /onClick: \(\) => ask\(/,
     'Delete must ask');
-  assert.match(src.slice(delAt, delAt + 500), /removeItem\(QUICKSAVE_KEY\)/,
+  assert.match(src.slice(delAt, delAt + 500), /deleteSave\(save\.key\)/,
     'and it must actually delete - a button that does nothing is the lie the anti-lie law forbids');
 });
 
@@ -258,11 +258,14 @@ test('the settings pane reads the store once, not once per row', () => {
 // doors ask the restorer's own question. readQuicksave parses; it does
 // not judge, and restorePlayer refuses AFTER the world has booted.
 test('both front doors test the save VERSION, through one predicate', () => {
-  assert.match(read('src/systems/save.js'),
-    /export function restorableQuicksave[\s\S]{0,220}snap\.v === SAVE_VERSION/);
+  // SAV4: the predicate moved with the slots. restorableSlot gates
+  // v === SAVE_VERSION and mostRecentRestorable walks recency through
+  // it; both menus ask THAT, never the raw envelope.
+  assert.match(read('src/systems/saveSlots.js'),
+    /export function restorableSlot[\s\S]{0,220}snap\.v === SAVE_VERSION/);
   for (const f of ['src/ui/enhancedMenu.js', 'src/scenes/menu.js']) {
     const src = read(f);
-    assert.match(src, /restorableQuicksave/, `${f} must ask whether the save is RESTORABLE`);
+    assert.match(src, /mostRecentRestorable/, `${f} must ask whether a save is RESTORABLE`);
     assert.ok(!/[^a-zA-Z]readQuicksave\(/.test(src),
       `${f} must not read the envelope without testing its version`);
   }

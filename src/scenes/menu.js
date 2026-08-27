@@ -29,7 +29,7 @@ import { TitleScreen, loadTitleArt } from '../ui/titleScreen.js';
 import { LoadClassicWindow, LOAD_CLASSIC_IMG } from '../ui/loadClassicWindow.js';
 import { fetchBytes } from './shared.js';
 import { music } from '../systems/music.js';
-import { restorableQuicksave } from '../systems/save.js';
+import { mostRecentRestorable } from '../systems/saveSlots.js';   // SAV4: the F2 question, now over the slot store
 import { SaveGames, SAVENAME_TXT, MAPSAVE_FILENAME, RUMOR_FILENAME, BIO_FILENAME } from '../formats/saveGames.js';
 import { SAVETREE_FILENAME } from '../formats/saveTreeFile.js';
 import { SAVE_IMAGE_FILENAME } from '../formats/saveImageFile.js';
@@ -37,9 +37,10 @@ import { SAVEVARS_FILENAME } from '../formats/saveVarsFile.js';
 import { setPendingClassicSave } from '../systems/classicSave.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { FntFile } from '../formats/fntFile.js';
-import { loadImg } from '../ui/nativePanel.js';
+import { loadImg, nativeMetrics, pointToNative } from '../ui/nativePanel.js';
 import { makeFont } from '../ui/text.js';
 import { bitmapToColor32 } from '../ui/hud.js';
+import { SaveWindow } from '../ui/saveWindow.js';   // SAV4: the start menu's Load door
 
 const TITLE_SONGS = ['5STRONG.HMI', '03.HMI'];   // DFU start scene song, then the stand-in
 
@@ -79,20 +80,29 @@ export async function runMenu(canvas, renderer, status) {
       const py = (e.clientY - r.top) * (canvas.height / r.height);
       const action = win.click(canvas, px, py);
       if (!action) return;                      // consumed, but not a button
-      if (action === 'load' && !hasSavedGame()) {
-        // AUDIT 19 F3: LOAD with no save used to fall through and silently
-        // START A NEW GAME. SAV3: DFU's Load with no saves prompts the
-        // CLASSIC list (DaggerfallUnitySaveGameWindow.cs:330's own arm,
-        // and its Classic switch button pends with the multi-slot save
-        // window row) - so the classic-load flow runs here instead of
-        // the old "no saved game" dead end.
+      if (action === 'load') {
+        // SAV4: DFU's start-window Load opens the SLOT WINDOW
+        // (LoadGame mode, displayMostRecentChar - StartWindow.cs:89),
+        // whose no-saves arm prompts the classic list (:328-332) and
+        // whose Classic button reaches it WITH saves present - the
+        // SAV3 residue, closed. AUDIT 19 F3's law holds throughout:
+        // no path here ever starts a game the player did not ask for.
         suspended = true;
-        const picked = await runClassicLoad(canvas, renderer, status);
+        const picked = hasSavedGame()
+          ? await runSaveLoadWindow(canvas, renderer, status)
+          : 'classic';
+        let resolved = null;
+        if (picked === 'classic') {
+          resolved = (await runClassicLoad(canvas, renderer, status)) ? 'classicload' : null;
+        } else if (picked != null) {
+          _pickedLoadKey = picked;
+          resolved = 'load';
+        }
         suspended = false;
-        if (!picked) { status('main menu'); return; }
+        if (!resolved) { status('main menu'); return; }
         done = true;
         canvas.removeEventListener('pointerdown', onPointerDown);
-        resolve('classicload');
+        resolve(resolved);
         return;
       }
       if (action === 'exit') {
@@ -132,8 +142,9 @@ export async function runMenu(canvas, renderer, status) {
  *  blob and does not test its VERSION - so F3's own guard passed on an
  *  envelope restorePlayer would refuse, and Load came up on the chargen
  *  wizard. The question is "can this build restore it", and that
- *  question has one home. */
-export const hasSavedGame = () => !!restorableQuicksave();
+ *  question has one home - SAV4 moved it to the slot store's recency
+ *  walk, so one stale-version save cannot hide an older good one. */
+export const hasSavedGame = () => !!mostRecentRestorable();
 
 /**
  * U21c: the title screen, before the menu. Resolves as soon as the
@@ -359,4 +370,71 @@ export async function runClassicLoad(canvas, renderer, status) {
   }
   setPendingClassicSave(saveGames);
   return true;
+}
+
+// ─────────────────── SAV4: the start menu's slot window ───────────────────
+
+/** The picked slot key rides to main.js the same take-once shape the
+ *  classic hand-off uses. */
+let _pickedLoadKey = null;
+export function takePickedLoadKey() {
+  const k = _pickedLoadKey;
+  _pickedLoadKey = null;
+  return k;
+}
+
+/**
+ * DFU's start-window Load: the slot window in LoadGame mode with
+ * displayMostRecentChar (StartWindow.cs:89). Resolves the picked slot
+ * KEY, the string 'classic' for the classic switch, or null on
+ * cancel.
+ */
+export async function runSaveLoadWindow(canvas, renderer, status) {
+  status('load game');
+  let font = null;
+  try { font = makeFont(renderer, new FntFile().load(await fetchBytes('FONT0003.FNT')), 'FONT0003'); }
+  catch (e) { console.warn('[menu] FONT0003.FNT unavailable - the save list draws bare:', e?.message ?? e); }
+
+  return new Promise((resolve) => {
+    const win = new SaveWindow('load', {
+      loadKey: (key) => { finish(key); },
+      onSwitchClassic: () => { finish('classic'); },
+      onBack: () => { finish(null); },
+    }, { displayMostRecentChar: true });
+    const finish = (result) => {
+      if (win.done && result === undefined) return;
+      win.done = true;
+      canvas.removeEventListener('pointerdown', onPointerDown);
+      removeEventListener('keydown', onKeyDown);
+      resolve(result);
+    };
+    const onPointerDown = (e) => {
+      const r = canvas.getBoundingClientRect();
+      const px = (e.clientX - r.left) * (canvas.width / r.width);
+      const py = (e.clientY - r.top) * (canvas.height / r.height);
+      const m = nativeMetrics(canvas);
+      const pt = pointToNative(m, px, py);
+      if (pt) win.click(pt[0], pt[1]);
+    };
+    const onKeyDown = (e) => {
+      win.input(e.code, e);
+      e.preventDefault();
+    };
+    canvas.addEventListener('pointerdown', onPointerDown);
+    addEventListener('keydown', onKeyDown);
+    const IDENTITY = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+    const LIGHT = new Float32Array([0, 1, 0]);
+    const frame = () => {
+      if (!win.done && font) {
+        renderer.beginFrame(IDENTITY, IDENTITY, LIGHT);
+        win.draw(renderer, canvas, font);
+      }
+      if (!win.done) requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+    // No font, no window - resolve to the boot-load fallback rather
+    // than trap on a black screen (the text-fallback-never-traps law:
+    // here the fallback IS the old most-recent boot load).
+    if (!font) finish(null);
+  });
 }

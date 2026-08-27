@@ -66,7 +66,8 @@ import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender } from '
 import { SITE_TYPES } from '../systems/quest/place.js';   // B3: the respawn dispatch reads the site type
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert, areEnemiesNearby, passiveGuardSpawns } from '../systems/encounters.js';   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
-import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
+import { snapshotPlayer, restorePlayer, composeSessionState, restoreSessionState } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
+import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad)
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it
@@ -1866,7 +1867,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // dungeon key: loading a save from the other side restores the
   // CHARACTER and says so (cross-side travel-on-load pends with the
   // dungeon's own note).
-  function worldQuickSave() {
+  /** Save(name, saveName) over the host's own envelope; F9 is the
+   *  QuickSave name (QuickSave() = Save(Name, quickSaveName)) and the
+   *  slot window's saveAs passes the typed one. */
+  function worldQuickSave(saveName = QUICK_SAVE_NAME) {
     const pf = walkMode && playerSpawned ? player.pos : cam.pos;
     const wc = state.worldCoords(pf);
     const snap = snapshotPlayer(playerEntity, {
@@ -1901,12 +1905,20 @@ export async function bootWorld(canvas, renderer, params, status) {
         guards: cityGuards.snapshotWorld((pos) => state.worldCoords(pos)).map((sg) => ({ ...sg, y: sg.y - state.compensation[1] })),
       },
     });
-    townTalk.say(writeQuicksave(snap) ? 'Game saved.' : 'Save failed (storage full or disabled).');
+    const ok = saveSlot(playerEntity.name, saveName, snap).ok;
+    townTalk.say(ok ? 'Game saved.' : 'Save failed (storage full or disabled).');
+    return ok;
   }
   let _loading = false;
-  async function worldQuickLoad() {
+  /** F12/pause = the CURRENT character's QuickSave slot (QuickLoad's
+   *  own law, Load(PlayerEntity.Name, quickSaveName)); the BOOT load
+   *  arm passes mostRecent - the start window's displayMostRecentChar
+   *  shape, because the interim entity has no name to key by. */
+  async function worldQuickLoad({ mostRecent = false, key = null } = {}) {
     if (_loading) return;
-    const snap = readQuicksave();
+    const snap = key != null ? loadSlot(key)
+      : mostRecent ? (mostRecentRestorable()?.snap ?? null)
+        : quickLoadSlot(playerEntity.name);
     if (!snap) { townTalk.say('No saved game.'); return; }
     const extras = restorePlayer(playerEntity, snap, spellsByIndex);
     if (!extras) { townTalk.say('Save version mismatch.'); return; }
@@ -2233,6 +2245,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       openPauseFlow((w) => townTalk.showOverlay(w), {
         quickSave: worldQuickSave,
         quickLoad: worldQuickLoad,
+        // SAV4: the slot window's seams - the pause SAVE/LOAD doors
+        // open it with these (openClassicPauseFlow builds the doors).
+        playerName: () => playerEntity.name,
+        saveAs: (saveName) => worldQuickSave(saveName),
+        loadKey: (key) => worldQuickLoad({ key }),
         exitToMenu: exitToTitleMenu,
         textLines: (id) => townTalk.lines(id),
       });
@@ -3384,7 +3401,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     await classicLoadBoot();
   } else if (params.has('load')) {
     status('loading the saved game');
-    await worldQuickLoad();
+    // SAV4: the start menu's slot window boots with the PICKED key;
+    // a bare ?load keeps the most-recent shape.
+    await worldQuickLoad(params.has('loadkey')
+      ? { key: Number(params.get('loadkey')) }
+      : { mostRecent: true });
   } else if (params.has('classic') && getBool('Startup', 'StartInDungeon') && startLoc.hasDungeon) {
     status('entering the dungeon');
     const entered = await modes.startInDungeon();

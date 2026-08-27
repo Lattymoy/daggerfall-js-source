@@ -92,7 +92,7 @@ import { labelOf, helpOf, INSTEAD, TIER_TEXT } from '../ui/settingsCopy.js';
 import {
   effectiveSettings, setValue, saveSettings, resetToDefaults, tierOf, DEFAULTS,
 } from '../systems/settings.js';
-import { restorableQuicksave, QUICKSAVE_KEY } from '../systems/save.js';
+import { mostRecentRestorable, deleteSave } from '../systems/saveSlots.js';   // SAV4: the slot store
 import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES } from '../systems/uiSkin.js';
 import { dateFromClassicMinutes, dateString } from '../systems/gameDate.js';
 import { BUILD_TAG } from '../buildTag.js';
@@ -154,19 +154,22 @@ const el = (t, cls, txt) => {
 };
 
 // ── THE SAVE, READ FOR REAL ──────────────────────────────────────
-// restorableQuicksave is save.js's own reader AND its own version
+// mostRecentRestorable is the slot store's own reader AND version
 // test, so a card is drawn only for an envelope this build can
-// actually restore. Reading it with readQuicksave was AUDIT F2: an
-// older save drew a full Continue card and pressing it came up on the
-// chargen wizard. There is ONE slot today (systems/save.js:27,
-// `dagger.quicksave`), which is a fact the Load pane has to state
-// rather than dress up as a list of one.
+// actually restore. Reading raw was AUDIT F2: an older save drew a
+// full Continue card and pressing it came up on the chargen wizard.
+// SAV4: the store holds NAMED SLOTS now; these panes draw the most
+// recent one (the boot Load arm loads exactly that), and the full
+// slot list is the classic save window's - an enhanced-skin slot
+// list is the PX lane's own card to design.
 function savedGame() {
-  let snap = null;
-  try { snap = restorableQuicksave(); } catch { snap = null; }
-  if (!snap) return null;
+  let entry = null;
+  try { entry = mostRecentRestorable(); } catch { entry = null; }
+  if (!entry) return null;
+  const snap = entry.snap;
   const date = Number.isFinite(snap.classicMinutes) ? dateFromClassicMinutes(snap.classicMinutes) : null;
   return {
+    key: entry.key,
     name: snap.name || 'Unnamed',
     career: snap.career?.name ?? null,
     level: snap.level ?? null,
@@ -315,9 +318,9 @@ function paneLoad(body) {
       { label: 'Load', primary: true, disabled: !canLoad, onClick: canLoad ? () => onAction('load') : null },
       { label: 'Delete', onClick: () => ask(
         'Delete this game',
-        `${save.name} is the only saved game, and deleting it cannot be undone.`,
+        `Deleting ${save.name}'s most recent save cannot be undone.`,
         'Delete',
-        () => { try { globalThis.localStorage?.removeItem(QUICKSAVE_KEY); } catch { /* storage disabled */ } },
+        () => { try { deleteSave(save.key); } catch { /* storage disabled */ } },
       ) },
     ]));
     body.append(c);
@@ -326,7 +329,7 @@ function paneLoad(body) {
     body.append(empty('Not from here',
       'This part of the game has no load door. Reach a saved game from the main menu instead.'));
   }
-  body.append(empty('Named slots', 'One quicksave slot today. Named saves and the classic .SAV are their own slices.'));
+  body.append(empty('More saves', 'This pane shows the most recent save; the full slot list rides the classic save window for now.'));
 }
 
 // ── SAVE GAME (pause only) ───────────────────────────────────────

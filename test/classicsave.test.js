@@ -1485,8 +1485,9 @@ test('SAV3: the wiring source pins - menu arm, boot arm order, chargen gate, mai
   assert.match(world, /rumorMill\.importClassicRumor\(rumor, /);
 
   const menu = readFileSync(new URL('../src/scenes/menu.js', import.meta.url), 'utf8');
-  // Load with no quicksave runs the classic flow - the old dead end is gone.
-  assert.match(menu, /const picked = await runClassicLoad\(canvas, renderer, status\);/);
+  // Load with no saves runs the classic flow (SAV4 routed it through
+  // the slot window's no-saves arm) - the old dead end is gone.
+  assert.match(menu, /await runClassicLoad\(canvas, renderer, status\)/);
   assert.doesNotMatch(menu, /no quicksave to load/);
   // The screenshot uploads OPAQUE (GetColor32 alphaIndex -1).
   assert.match(menu, /bitmapToColor32\(bmp, palette, -1\)/);
