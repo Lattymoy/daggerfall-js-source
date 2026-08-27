@@ -141,6 +141,7 @@ export const PORTED_KEYS = new Set([
   '26,255',                                                         // Free Action
   '27,255',                                                         // Jumping (X1)
   '28,255',                                                         // Climbing (X1)
+  '29,255',                                                         // Morph Self (V2a - the arm calls the racial override)
   '30,255',                                                         // Water Breathing
   '31,255',                                                         // Water Walking
   '6,0', '6,1', '6,2',                                              // Dispel {Magic,Undead,Daedra} (X9 the sweeps, X10 the bundle picker)

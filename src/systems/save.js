@@ -77,6 +77,8 @@ const copyEffectEntry = (a) => {
   const c = { ...a };
   if (a.effect) c.effect = { ...a.effect };
   if (a.statMods) c.statMods = { ...a.statMods };
+  if (a.skillMods) c.skillMods = { ...a.skillMods };   // V2a: the racial override's second map
+
   // AUDIT 24 (wave 31): the continuous-damage entries carry their CASTER
   // (IEntityEffect.Caster - HandleAttackFromSource needs it to break the
   // caster's normal-power concealment). It is a live scene reference, not
@@ -303,6 +305,11 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   const li = snap.lightSourceIndex ?? -1;
   entity.lightSource = li >= 0 ? (entity.items[li] ?? null) : null;
   entity.activeEffects = (snap.activeEffects ?? []).filter((a) => !a.heldItem).map(copyEffectEntry);   // E2: a stale pin in an old snapshot cannot re-link - drop it (DFU :2312)
+  // V2a: the racial override MARKER is a live reference into the list
+  // just restored - rebuilt here, never serialized on its own, so the
+  // marker and the entry can never disagree (the gates - a second
+  // infection, the disease immunity - read the marker).
+  entity.racialOverride = entity.activeEffects.find((a) => a.kind === 'racialOverride' && !a.ended) ?? null;
   // X10: bundleId is a MODULE-scope monotonic counter, not saved
   // state - DFU has no counter to collide because its bundles are
   // object references re-instanced on load. A fresh process starts

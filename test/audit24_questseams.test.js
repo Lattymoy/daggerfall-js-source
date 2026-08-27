@@ -61,8 +61,8 @@ const PENDING = new Map([
 /** Bridge-ctx seams the HOST cannot answer yet. Same rule as PENDING
  *  above: removing a row means mounting it. */
 const CTX_PENDING = new Map([
-  ['endVampirism', 'the vampirism arc - no racial-effect system yet'],
-  ['endLycanthropy', 'the lycanthropy arc - likewise'],
+  // endVampirism/endLycanthropy left this list at V2d: the world host
+  // mounts both onto the real cures (cureVampirism/cureLycanthropy).
   ['addFace', 'the HUD escorting faces (AddFace/DropFace)'],
   ['dropFace', 'rides the faces seam above'],
   ['onQuestStarted', "an OPTIONAL host listener - the bridge already fans RaiseOnQuestStartedEvent to the QuestListsManager's one-time recording itself"],

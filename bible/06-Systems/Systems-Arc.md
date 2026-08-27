@@ -3632,3 +3632,222 @@ and ask for nothing. The bank stays behind `voiceSpec` and
 `percussionSpec` precisely so an SF2 or sample set replaces it without
 touching the scheduler - and now that M-EXT exists, a player-supplied
 soundfont is the obvious next slice.
+
+## V2a - THE LYCANTHROPY CURSE: the racial override V1 was ramping into (2026-08-27)
+
+V1 ended at `entity.racialOverridePending` and said so; V2a consumes
+it. `systems/lycanthropy.js` is `LycanthropyEffect.cs` + `MorphSelf.cs`
+whole, on the shape V1 established: the curse is an activeEffects
+ENTRY (kind `racialOverride`) rather than a class instance, so the
+save envelope carries its whole CustomSaveData_v1 state for free and
+the marker `entity.racialOverride` is REBUILT from the entry on
+restore, never trusted from the envelope.
+
+THE TURN COMPLETES IN ITS OWN ROUND. worldTick's one pump runs
+infection -> consume -> fold, so the round that deploys the pending
+marker ends with the curse live: CureAll ends the old life's effects,
+the disease gate and infectionAccepted read the marker (a lycanthrope
+catches nothing, for ever), and the free spell lands - SPELLS.STD
+record 92, the '!' stripped, tag 'lycanthrope', custom:true. THE U42
+SEAM MEETS ITS PRODUCER: the spellbook's free-cast and delete-refusal
+laws have keyed on that tag since U42 with nothing minting it - the
+exact `{enchanted: true}` no-producer shape AUDIT 17e recorded - and
+the pin now drives the real spell through the shipped window laws.
+The tag pair's HOME moved to the producer (the window re-exports).
+
+THE MOONS ARE REAL NOW. `gameDate.js` grew DFU's `GetLunarPhase`
+verbatim - the 32-day ratio over (dayOfYear + year*360 + offset),
+Massar 3 / Secunda -1, the band ladder in the source's own order
+(ratio 16 is New only because the == tests run first) - and EITHER
+moon full forces the change through `MorphSelf(force)` with the dream
+line. That also un-FLAGs the enchantment ctx's moonPhase seam's data
+half. Two fixture lessons are recorded in the test: year-0 dates are
+NEGATIVE classic minutes (the epoch is year 397), and day 0 of year 0
+is a secunda full moon - the first fixture transformed its own test
+subject a round early and the failure was the law working.
+
+THE ADVANTAGES RIDE THE LIVE CHANNELS: +40 Str/Agi/End/Spd and +30 on
+the seven skills as the entry's own maps, re-applied every round
+exactly as the constant pass does, read by ONE added arm each in
+liveStat and skillValue. MinMetalToHit is iron untransformed, silver
+in beast form - ordered AFTER the forced change inside the round so
+silver never lags the moon by a round (DFU's per-frame constant pass
+has no such lag to avoid). The urge: a classic month without an
+innocent's blood and the health ceiling falls 24/day to the floor of
+4, blood clamped down at the fold's cadence (recorded; DFU clamps
+continuously through CurrentMaxHealth); a dead civilian or
+Knight_CityWatch resets satiation; the Ring of Hircine
+(SpecialArtifactEffect param 3, either ring slot) masters the moon,
+the urge and the once-a-day gate alike. The cure: morph back, full
+RAW heal, RaiseTime(60) pinned as ONE MINUTE - sixty seconds, the
+unit a hasty read would multiply by sixty - and the tagged spells go.
+
+MORPH SELF GOES LIVE - the last inert catalog row, closed by building
+the consumer it was durable for. The arm rides applySpellToPlayer's
+ctx in the ONE cast engine; THE FOUR HOSTS: world, exterior and the
+dungeon context hand their clocks to createPlayerMagic, and worldModes
+BORROWS the outer host's engine by construction - all four named in
+the pin.
+
+FLAGGED, each loudly: VampirismEffect (V2b - a vampirism pending
+stands unconsumed); the host-facing suppressions (inventory/talk/
+crime/population while transformed), the werecreature claws, sounds
+and the WOLF00I0/WERE0*I0 art; the $CUREWER quest; the cemetery
+respawn; PassiveSpecials and the artifact payloads.
+
+Pins: 12 in `test/lycanthropy.test.js`, the walk from the moons to the
+save round-trip, every figure DFU's own constant.
+
+## V2b - THE VAMPIRISM CURSE: the other override, and the gates go live (2026-08-27)
+
+`VampirismEffect.cs` on V2a's exact shape - the curse as an
+activeEffects entry, the marker rebuilt on restore, the advantages
+through the same one-arm channels. The vampire's asymmetries are the
+slice's spine, each pinned against the werewolf's: +20 on SEVEN stats
+(Willpower, Personality and Luck join; Intelligence belongs to the
+Anthotis alone), +30 on six skills with Swimming pointedly absent,
+silver-to-be-hit and paralysis immunity ALWAYS - there is no
+untransformed vampire - and FEEDING IS FIGHTING: OnWeaponHitEntity's
+whole body is UpdateSatiation, no innocence test, where the werewolf
+must hunt the innocent.
+
+THE HOOK IS REGISTERED, NOT IMPORTED. OnWeaponHitEntity lands at
+combat/formulas' one-home tail (where OnMonsterHit and the Strikes
+payloads already ride), but formulas cannot import the curses - they
+import effects.js, which imports formulas' own dice100 - so the tail
+calls a registered hook and worldTick, which every host loads,
+registers it. The setEnchantmentHooks precedent, one module over.
+
+THE GATES WENT LIVE ACROSS THE HOSTS. restDecision's
+racialOverrideBlocks parameter - shipped dead in S40 - now feeds from
+racialRestBlock in ALL FOUR hosts, and the blocked arm SPEAKS (the
+unfed vampire's TEXT.RSC 36 box; the S40 sweep that pinned the silent
+return advances with it). CheckFastTravel lands where DFU calls it -
+the travel map's own door (DaggerfallUI.cs:625) - and the arrival
+clamp's sunAverse parameter, wired dead since the F-slice with its
+comment promising "vampirism rides its arc", is finally live: a
+sun-damaged override arrives at dusk.
+
+THE CLANS ARE REAL: eight spell tables (the base Levitate/Charm
+Mortal/Calm Humanoid plus each clan's own, Selenu's three resists to
+Montalion's Recall), granted under the 'vampire' tag the spellbook
+has honored since U42, and the cure stamps PreviousVampireClan - the
+clan outlives the curse, as DFU's reputations expect.
+
+FLAGGED, each loudly: the sun/holy DAMAGE itself (PassiveSpecials
+needs the IsPlayerInSunlight seam - V2c, and the entry already
+carries sunDamage/holyDamage for it), the quests, the guild swap, the
+cemetery respawn, the art and voices, the artifact payloads.
+
+Pins: 9 in `test/vampirism.test.js`; the S40 rest sweeps and the
+round-order sweep advance.
+
+## V2c - PASSIVE SPECIALS + THE SUNLIGHT SEAM: one key, three doors (2026-08-27)
+
+`PassiveSpecialsEffect.cs` whole, in `systems/passiveSpecials.js`, and
+the two PlayerEnterExit flags it and the E1 enchant arms had been
+idling on. The laws are small and verbatim: IsPlayerInSunlight =
+IsDay && !IsPlayerInside && !InPrison (:371 - no weather term);
+IsPlayerInHolyPlace = a Temple-type building or the Fighter Trainers'
+faction 849 (:1424-1431, DFU's own quirky pair); regen 1 per 4th
+round by RegenerationFlags (Always / InDarkness = night-or-dungeon /
+InLight / InWater = the motor's swimming flag); 12 sun and 12 holy
+damage per 4th round off the career bit OR the racial override's
+compound-race flag; Light/Darkness Powered Magery writing -33% of
+RawMaxMagicka or the -10000000 unable constant.
+
+THE SEAM IS REGISTERED BY THE MODE MACHINE. worldModes owns mode and
+interiorBuilding for BOTH town pages - world.js and exterior.js each
+build it at boot - so the one registration there answers all three
+modes, routed by LIVE mode (the death-presenter lesson). The dungeon
+context registers its own on build and RESTORES the displaced host in
+destroy() - setPassiveSpecialsHost answers the previous registration
+for exactly this - so a town dungeon hands the seam back at the door.
+inPrison stays an absent member: the port serves a sentence as a
+clock move (arrestFlow), never as a live scene.
+
+THE MODIFIER IS A SUM, AND RAW IS READ WITH THE MODIFIER ZEROED.
+ChangeMaxMagickaModifier accumulates from every producer; the port
+has two - the enchant fold's ExtraSpellPts and this magery pass - so
+the pass runs in worldTick's round AFTER the fold and writes
+`_enchantMods.maxMagicka + magery` into the one field
+defineLiveMaxMagicka reads. RawMaxMagicka is never recovered by
+subtracting the modifier back out: the accessor FLOORS at 0 and a
+plain headless maxMagicka is not modifier-inclusive, so the pass
+zeroes the modifier for the read (the pin that fails on the
+subtraction shape is the enchant-fold SUM).
+
+THE E1 RESIDUE TRIPLE CLOSED AT THE ONE MOUNT. world.js's enchant ctx
+now answers inSunlight/inHolyPlace off this seam and moonPhase(param)
+off V2a's lunar law - ExtraSpellPts' IsFullMoon/IsHalfMoon/IsNewMoon,
+either moon, half counting both wax and wane - so RegensHealth,
+ItemDeteriorates, UserTakesDamage and the moon-conditioned
+ExtraSpellPts arms are live.
+
+FLAGGED, each loudly: the transformed suppressions/claws/sounds/art
+both curses' hosts owe, the quests, the guild swap, the cemetery
+respawn, the artifact payloads; the dungeon host's enchant ctx mount.
+
+Pins: 11 in `test/passivespecials.test.js` - the two flags through
+the seam, the career reads off parseCareerData's own bitfields, all
+four regen flags, both burns (career arm and override arm), the
+magery SUM and the unable write's stability on the live accessor, the
+vampire burning through runMagicRoundsFor, and the four-hosts sweep.
+
+## V2d - THE CURSE QUESTS: the starts, the pool, and the cure that sweeps (2026-08-27)
+
+The three quests the V-arc had been carrying as flags - $CUREWER,
+$CUREVAM and the vampire initiation P0A01L00 whose
+hasStartedInitialVampireQuest latch V2b minted dead - all start now,
+on DFU's own clock. `systems/racialQuests.js` is
+PlayerEntity.StartRacialOverrideQuest (:540-545) plus each curse's
+StartQuest override, and the cadence is the ENTITY UPDATE's minute
+walk, not the magic round: every 38 days (54720 - the same minute the
+region-conditions update fires on, which is why the call rides beside
+regionPowerUpdate; the "unported" sentence that stood there is gone)
+the non-cure roll, every 84 days (120960, the walk's new fourth arm)
+the cure roll.
+
+THE ROLLS ARE EACH CURSE'S OWN, kept odd where DFU is odd: the
+werewolf rolls (1,100)<30 for $CUREWER and NEVER starts a second
+instance (FindQuests first - and FindQuests counts TOMBSTONED
+instances, the C# default both call sites take); the vampire's cure
+roll is (10,100)<30 - the 10 floor is DFU's own line - with no
+re-offer check at all; the vampire's non-cure arm starts P0A01L00 on
+its first 50% hit and latches hasStartedInitialVampireQuest ON THE
+CURSE ENTRY (so it rides the save for free), then serves the clan's
+own line from the guild pool: GetGuildQuest(Vampires, Member,
+clanFactionId, rep, LEVEL) - the clan IS the faction id (the
+VAMPIRE_CLANS values are 150-158) and the player's level sits in the
+rank seat, DFU's own call. The vendored pack has carried all 21
+Vampires-group sources since Q4; QuestList-Classic routes them.
+
+THE MACHINE IS HOST-OWNED, so the module is a leaf with a registered
+host (the passiveSpecials shape, setRacialQuestHost answering the
+displaced host): world.js registers it beside its createQuestBridge
+mount with the machine's own doors - startQuestByName,
+startQuestImmediate, the quests map filtered two ways (FindQuests
+keeps tombstones, the P0 sweep walks active only, GetAllActiveQuests'
+law), and the clan pool read.
+
+AND THE CURES CLOSE THE LOOP, both ways. CureVampirism tombstones
+EVERY active P0* quest - the whole clan line leaves with the curse,
+while $CUREVAM ends itself - and CureLycanthropy tombstones every
+$CUREWER; both sweeps ride the cure functions' own tails.
+CurePcDisease's `cure vampirism` / `cure lycanthropy` arms - parsed
+and pinned since Q3, wired to nothing - now reach the real cures
+through the bridge ctx (endVampirism/endLycanthropy), with the
+RaiseTime(60) minute as the bare clock move. A cure bought from the
+quest is finally a cure.
+
+FLAGGED, each loudly: the transformed suppressions/claws/sounds/art
+(host work), the cemetery respawn, the guild swap, the artifact
+payloads.
+
+Pins: 7 in `test/racialquests.test.js` - the headless charter, both
+curses' rolls with the odd floor pinned to its verbatim range, the
+latch, the clan-pool ask shape, the no-second-$CUREWER law against a
+tombstoned instance, both tombstone sweeps off the real cures, the
+two cadence arms driven through the REAL tickPlayerMinutes across
+their boundaries (and not between them), and the world host's mount
+laws.

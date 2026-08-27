@@ -50,7 +50,12 @@ import { restDecision } from '../systems/restSession.js';   // U48: the DISPATCH
 import { isHouseOwned, shipCoords, ownsShip } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup
 import { clearSceneCache } from '../systems/sceneCache.js';   // P1: SaveLoadManager.ClearSceneCache, at PlayerGPS's map-pixel seam
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
-import { TravelMapWindow, preloadTravelMapArt, travelMapArtLoaded, canFindPlace } from '../ui/travelMapWindow.js';   // W1: the classic art window (retires the F-slice's keyed stand-in)
+import { createTravelMapWindow, travelMapDoorReady, preloadTravelMapArt, canFindPlace } from '../ui/travelMapDoor.js';   // W1's classic art window + U61's overworld, one door
+import { racialRestBlock, racialFastTravelBlock, cureVampirism } from '../systems/vampirism.js';   // V2b: the vampire's rest and daylight gates; V2d: $CUREVAM's cure arm
+import { cureLycanthropy } from '../systems/lycanthropy.js';   // V2d: $CUREWER's cure arm
+import { setRacialQuestHost } from '../systems/racialQuests.js';   // V2d: the quest-start seam (the machine is this host's)
+import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: the vampire clan pool asks as a Member
+import { playerInSunlight, playerInHolyPlace } from '../systems/passiveSpecials.js';   // V2c: the enchant ctx's two E1 flags
 import { buildMapDict } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict
 import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
@@ -64,7 +69,7 @@ import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSe
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it
-import { seasonValue, SEASONS, dateFromClassicMinutes, dateTimeString, midDateTimeString } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes
+import { seasonValue, SEASONS, dateFromClassicMinutes, dateTimeString, midDateTimeString, lunarPhasesFromMinutes, LUNAR_PHASES } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes; V2c: the enchant ctx's moon arms
 import { regionPriceAdjustment, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from '../systems/shopStock.js';   // Q4-v: CreateGold's regional term (the shops' own producer); U41: Items.Contains(Transportation, ...)
 import { getNameBankOfRegion } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5)
 import { createHitEffects } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
@@ -1146,6 +1151,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     playerEntity,
     playerSinks: playerSpellSinks,
     say: (l) => townTalk.say(l),
+    now: () => playerTicker.classicMinutes,   // V2a: MorphSelf's once-a-day clock
     surfacePlayer,
     foes: () => (modes?.mode ?? 'exterior') === 'exterior' ? [...cityGuards.guards, ...exteriorFoes.foes] : [],   // X-slice: encounter foes are spell targets too
     foeSinks,
@@ -1234,9 +1240,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
   // there with the rest of its enchant wiring. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
-  // ground (no rest window here yet)", and this slice put one here -
-  // while inSunlight/inHolyPlace stay the E1 FLAGGED seams no host
-  // computes.
+  // ground (no rest window here yet)", and this slice put one here.
+  // V2c filled inSunlight/inHolyPlace in the same way: the answers
+  // ride passiveSpecials' registered host seam (worldModes' mount).
   // X4: hoisted out of the enchant block below - the Detect feed and
   // the frame body need the same two live reads the enchant ctx does
   // (the player's feet, and exterior mode's foe pool), and one
@@ -1263,6 +1269,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       // window raises the flag on OPEN, so it is live here the moment
       // the rest page is up.
       isResting: () => !!playerEntity.isResting,
+      // V2c: the E1 conditional arms' two flags (RepairsObjects' sun
+      // gate, the affinity/curse place gates). Both read the sunlight
+      // seam worldModes registered, so they route by LIVE mode.
+      inSunlight: () => playerInSunlight(),
+      inHolyPlace: () => playerInHolyPlace(),
       applySpellToSelf: (record) => magic.castByItemSelf(record),
       setReadySpell: (record) => magic.readySpell(record, { free: true }),
       applySpellToTarget: (record, attacker, target) => {
@@ -1311,6 +1322,18 @@ export async function bootWorld(canvas, renderer, params, status) {
       season: () => {
         const s = seasonValue(dateFromClassicMinutes(worldMinutes()));
         return s === SEASONS.Winter ? 0 : s === SEASONS.Fall ? 3 : s;
+      },
+      // V2c: the moon arms, off V2a's lunar law. ExtraSpellPts'
+      // IsFullMoon/IsHalfMoon/IsNewMoon (:133-154) each answer true
+      // when EITHER moon shows the phase; half counts both the waxing
+      // and waning half. Params 4/5/6 = Full/Half/New (:190-192).
+      moonPhase: (param) => {
+        const { masser, secunda } = lunarPhasesFromMinutes(worldMinutes());
+        const either = (...phases) => phases.includes(masser) || phases.includes(secunda);
+        if (param === 4) return either(LUNAR_PHASES.Full);
+        if (param === 5) return either(LUNAR_PHASES.HalfWax, LUNAR_PHASES.HalfWane);
+        if (param === 6) return either(LUNAR_PHASES.New);
+        return false;
       },
     });
   }
@@ -1515,6 +1538,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // this host had none of it, because rest was a dungeon feature.
     // Outdoors all three inputs are live: real foes, real water, and a
     // levitating or falling player who cannot lie down.
+    // V2b: the vampire's own rest gate - CheckStartRest is LAST in
+    // DFU's ladder and the override speaks for itself (TEXT.RSC 36)
+    const rb = racialRestBlock(playerEntity, Math.floor(worldMinutes()));
     const d = restDecision({
       enemiesNearby: outdoorRestDeps.enemiesNearby(),
       swimming: !!player.swimming,
@@ -1524,6 +1550,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // up here it is also what lets a page whose motor is never
       // stepped rest at all, since `grounded` sits at its initialiser.
       grounded: startRestGroundedCheck(!!player.grounded, player.pos, collider),
+      racialOverrideBlocks: !!rb,
     });
     if (d.kind !== 'rest') {
       // DFU raises the enemy alert on the enemies arm
@@ -1531,7 +1558,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       // DoRestForAWhile; a bare citation here resolves to the wrong
       // file, since every other number in this block is the window's).
       if (d.kind === 'enemies') setEnemyAlert(playerEntity, true, Math.floor(worldMinutes()));
-      if (d.kind === 'blocked') return;   // a racial override says nothing at all
+      if (d.kind === 'blocked') {
+        // V2b: the override's OWN refusal - the unfed vampire's box
+        const lines = plainLines(townTalk.lines(rb.textId));
+        if (lines) townTalk.showOverlay(new ActionTextBox(lines));
+        return;
+      }
       // plainLines: TEXT.RSC answers { text, center } ROWS and
       // ActionTextBox iterates STRINGS (V5b's finding).
       const lines = d.message ? [d.message] : plainLines(townTalk.lines(d.textId));
@@ -1695,7 +1727,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       const clamp = arrivalClampMinutes(playerTicker.classicMinutes, {
         speedCautious: opts.speedCautious,
-        sunAverse: false,   // vampirism / DamageFromSunlight ride their arcs
+        // V2b: the vampirism arc LANDED - a sun-damaged racial
+        // override arrives at dusk, never in daylight (the law has
+        // supported this parameter since the F-slice; only the wiring
+        // waited). Career DamageFromSunlight still rides its own arc.
+        sunAverse: !!playerEntity.racialOverride?.sunDamage,
       });
       if (clamp > 0) playerTicker.advance(clamp);
       _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // X-slice: PreventEnemySpawns parity - no spawn catch-up for the traveled window
@@ -1784,12 +1820,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     // is asked for - a goto opens past the "an overlay is up" guard the
     // M key answers to.
     if (!gotoPlace && townTalk.overlayActive) return;
-    // W1: the classic window needs its art. Without it there is no
-    // map to click, so the door says so rather than opening a blank
-    // one (the HUD/pause law: a missing IMG closes a door, never the
-    // game).
-    if (!travelMapArtLoaded()) { townTalk.say('(the travel map art is unavailable)'); return; }
+    // W1/U61: the DOOR decides which map this skin wears. The classic
+    // window needs its art - without it there is no map to click, so
+    // the door says so rather than opening a blank one (the HUD/pause
+    // law: a missing IMG closes a door, never the game); the enhanced
+    // overworld reads no art at all.
+    if (!travelMapDoorReady()) { townTalk.say('(the travel map art is unavailable)'); return; }
+    // V2b: CheckFastTravel at the map's own door, where DFU calls it
+    // (DaggerfallUI.cs:625) - a sun-damaged override cannot fast
+    // travel by day, and the refusal is the override's own line.
+    const ftb = racialFastTravelBlock(playerEntity, Math.floor(worldMinutes()));
+    if (ftb) { townTalk.say(ftb.text); return; }
     _travelMap = buildTravelMapWindow({ onTravel: (pick, opts, computed) => { fastTravelTo(pick, opts, computed); } });
+    if (!_travelMap) { townTalk.say('(the travel map art is unavailable)'); return; }
     if (gotoPlace) _travelMap.gotoPlace(gotoPlace);   // GotoPlace (:214-217), consumed on the map's first tick
     townTalk.showOverlay(_travelMap);
   };
@@ -1798,22 +1841,25 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  has a streaming world to land in; the interior arm reads it off
    *  `host` and a host without one refuses the service. */
   function openTeleportMap() {
-    if (!travelMapArtLoaded()) return null;
+    if (!travelMapDoorReady()) return null;
     let win = null;
     win = buildTravelMapWindow({
       onTeleport: (pick) => { teleportTo(pick); },
       onClose: () => { if (modes?.questOverlay === win) modes?.showQuestOverlay?.(null); },
     });
-    win.activateTeleportationTravel();
+    win?.activateTeleportationTravel();
     return win;
   }
 
   /** ONE construction for the map, because G5 gave it a second opener
    *  and the dependency list is long enough that two copies would
-   *  drift (the ONE CONSTRUCTION SEAM rule). */
+   *  drift (the ONE CONSTRUCTION SEAM rule). U61: the DOOR now forks
+   *  the skin inside this one seam - the host says what it HAS
+   *  (woods rides along for the overworld's relief) and never which
+   *  map that adds up to. */
   function buildTravelMapWindow(extra = {}) {
-    return new TravelMapWindow({
-      maps, mapDict,
+    return createTravelMapWindow({
+      maps, mapDict, woods,
       getPlayerPixel: playerTravelPixel,
       getClimateIndex: (x, yy) => maps.getClimateIndex(x, yy),
       // GetGoldAmount is coins PLUS letters of credit; the popup's
@@ -2705,6 +2751,19 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       surfacePlayer();
     },
+    // V2d: CurePcDisease's other two arms (`cure vampirism` /
+    // `cure lycanthropy` - $CUREVAM's and $CUREWER's own last acts),
+    // declared by the bridge since Q4 and wired to nothing here. The
+    // RaiseTime(60) minute is the bare clock move both cures take.
+    endVampirism: () => {
+      if (cureVampirism(playerEntity, { advanceMinutes: (m) => setWorldMinutes(worldMinutes() + m) })) surfacePlayer();
+    },
+    endLycanthropy: () => {
+      if (cureLycanthropy(playerEntity, {
+        nowMinutes: Math.floor(worldMinutes()),
+        advanceMinutes: (m) => setWorldMinutes(worldMinutes() + m),
+      })) surfacePlayer();
+    },
     playerRaceName: () => playerEntity.race ?? null,
     getReputation: (fid) => { const s = _questStore(); return s ? getReputation(s, fid) : 0; },
     changeReputation: (fid, amount, propagate) => { const s = _questStore(); if (s) changeReputation(s, fid, amount, propagate); },
@@ -2811,6 +2870,32 @@ export async function bootWorld(canvas, renderer, params, status) {
   // The notebook only exists once the bridge is built, so the sink is
   // handed down here.
   townTalk.hudMessageSink = (t) => questBridge?.notebook?.addMessage(t);
+  // V2d: THE RACIAL-QUEST SEAM. worldTick's minute walk rolls the
+  // curse quests (38-day non-cure, 84-day cure) but the machine is
+  // THIS host's, so racialQuests reaches it through a registered host
+  // - the passiveSpecials shape. FindQuests counts TOMBSTONED
+  // instances too (QuestMachine.cs:867-881's default, which both DFU
+  // call sites take); GetAllActiveQuests excludes them (:849-859).
+  setRacialQuestHost({
+    startQuest: (name) => questBridge.machine.startQuestByName(name),
+    startQuestObject: (q) => questBridge.machine.startQuestImmediate(q),
+    findQuests: (name) => [...questBridge.machine.quests.values()].filter((q) => q.questName === name),
+    tombstoneQuestsByName: (name) => {
+      for (const q of [...questBridge.machine.quests.values()]) {
+        if (q.questName === name && !q.questTombstoned) questBridge.machine.tombstoneQuest(q);
+      }
+    },
+    tombstoneQuestsByPrefix: (prefix) => {
+      for (const q of [...questBridge.machine.quests.values()]) {
+        if (!q.questComplete && !q.questTombstoned && q.questName?.startsWith(prefix)) questBridge.machine.tombstoneQuest(q);
+      }
+    },
+    // VampirismEffect.StartQuest:243-255 - the clan IS the faction id,
+    // the player's LEVEL sits in the rank seat, rep from the store.
+    getVampireClanQuest: (clanFactionId, level) => questBridge.questLists.getGuildQuest(
+      GUILD_GROUPS.Vampires, MEMBERSHIP_STATUS.Member, clanFactionId,
+      (() => { const s = _questStore(); return s ? getReputation(s, clanFactionId) : 0; })(), level),
+  });
   if (_questStartPending) questInitAtGameStart();
   // VAR, not const: the pointer and wheel listeners far above close over
   // this binding and are live before it is assigned, so it must exist
@@ -3009,7 +3094,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // label reads, which box or sub-window is up, and the popup's
     // numbers. The keyed stand-in could be driven blind; a click
     // surface cannot.
-    window.__travelMap = () => JSON.stringify(_travelMap && !_travelMap.done ? {
+    // U61: the enhanced overworld carries its own probe surface
+    // (globalThis.__overworld); this one reads the CLASSIC window's
+    // shape and answers null for the other skin rather than throwing
+    // on fields it does not have.
+    window.__travelMap = () => JSON.stringify(_travelMap && !_travelMap.done && _travelMap.regionLabelText ? {
       regionSelected: _travelMap.regionSelected, region: _travelMap.selectedRegion,
       label: _travelMap.regionLabelText(), top: _travelMap.top,
       picker: _travelMap.picker ? _travelMap.picker.items.length : 0,

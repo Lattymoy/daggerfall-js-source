@@ -42,6 +42,10 @@ export function liveStat(entity, statName) {
       // disease/poison entries carry a signed per-stat statMods map
       // (poison drugs push POSITIVE mods - S19b)
       if (a.kind === 'disease' || a.kind === 'poison') { mod += a.statMods?.[statName] ?? 0; continue; }
+      // V2a: the racial override's SetStatMod channel - the curse
+      // entry's map, re-applied every round by lycanthropyMagicRound
+      // exactly as RacialOverrideEffect's constant pass does
+      if (a.kind === 'racialOverride') { if (!a.ended) mod += a.statMods?.[statName] ?? 0; continue; }
       if (a.stat !== statName) continue;
       if (a.kind === 'fortifyAttribute') mod += a.magnitude;
       else if (a.kind === 'drainAttribute' || a.kind === 'transferAttribute') mod -= a.magnitude;

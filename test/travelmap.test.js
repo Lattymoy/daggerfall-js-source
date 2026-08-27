@@ -253,8 +253,11 @@ test('U41: the world host mounts the art window and keeps performFastTravel\'s o
   // gated on the classic art rather than opening a blank window.
   assert.ok(src.includes('buildMapDict(maps)'), 'the map dict feeds the window');
   assert.ok(src.includes('preloadTravelMapArt({ renderer, fetchBytes, palette })'), 'the art warms at boot');
-  assert.ok(src.includes('if (!travelMapArtLoaded())'), 'no art, no window');
-  assert.ok(src.includes('new TravelMapWindow({\n      maps, mapDict,'), 'the window gets the maps and the dict');
+  // U61: the raw art gate became the DOOR's predicate - same law on
+  // the classic skin, and the construction goes through the one door.
+  assert.ok(src.includes('if (!travelMapDoorReady())'), 'no door, no window');
+  assert.ok(src.includes('createTravelMapWindow({\n      maps, mapDict, woods,'), 'the door gets the maps, the dict and the relief');
+  assert.ok(!src.includes('new TravelMapWindow('), 'no host constructs the window past the door');
   assert.ok(!src.includes('buildTravelIndex'), 'the keyed typeahead\'s directory is retired');
   // DeductFastTravelGold (:469-473): coins for the inn, letters for
   // the rest - and the popup is handed both pools plus the transport

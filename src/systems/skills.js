@@ -82,7 +82,16 @@ export function skillValue(entity, skillId) {
   // Skills.GetLiveSkillValue adds the mod to every read, cleared and
   // re-applied per round by the constant-effect pass. The fold is
   // entity._enchantMods; a host that never pumps reads +0.
-  const mod = entity._enchantMods?.skillMods?.[skillId] ?? 0;
+  let mod = entity._enchantMods?.skillMods?.[skillId] ?? 0;
+  // V2a: the racial override's own SetSkillMod producer - the curse
+  // entry's map (lycanthropy +30 on its seven skills), the same
+  // cleared-and-reapplied cadence through lycanthropyMagicRound
+  const list = entity.activeEffects;
+  if (list) {
+    for (const a of list) {
+      if (a.kind === 'racialOverride' && !a.ended) mod += a.skillMods?.[skillId] ?? 0;
+    }
+  }
   return permanentSkillValue(entity, skillId) + mod;
 }
 

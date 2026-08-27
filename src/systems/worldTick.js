@@ -20,12 +20,24 @@
 
 import { updateDiseases } from './diseases.js';
 import { runInfections } from './infection.js';   // V1: UpdateDisease's override, which the base walk skips
+import { consumeRacialOverridePending, lycanthropyMagicRound } from './lycanthropy.js';   // V2a: the curse the deploy mints
+import { consumeVampirismPending, vampirismMagicRound } from './vampirism.js';   // V2b: the other curse
 import { updatePoisons } from './poisons.js';
 import { tickActiveEffects } from './effects.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
 import { FATIGUE_LOSS, killIfAnyLiveStatZero } from './statMods.js';
 import { decayEnemyAlert } from './encounters.js';   // PlayerEntity.Update:380-384, the 8-hour alert decay
-import { dice100 } from '../combat/formulas.js';
+import { dice100, setRacialHitHook } from '../combat/formulas.js';
+import { onLycanthropeHit } from './lycanthropy.js';
+import { onVampireHit } from './vampirism.js';
+
+// V2a/V2b: OnWeaponHitEntity's registration - formulas.js cannot
+// import the curses (the dice100 cycle), and every host loads THIS
+// module, so the hook rides here.
+setRacialHitHook((attacker, target, { nowMinutes = 0, mobileType = null, isCivilian = false } = {}) => {
+  onVampireHit(attacker, nowMinutes);
+  onLycanthropeHit(attacker, target, { nowMinutes, mobileType, isCivilian });
+});
 import { normalizeReputations, NORMALIZE_INTERVAL_MINUTES } from './court.js';   // AUDIT 23 (C4)
 // S43: the entity update's 7-day and 38-day arms (PlayerEntity.cs:460-472).
 import { regionPowerUpdate } from './regionPower.js';
@@ -33,6 +45,9 @@ import { regionPowerUpdate } from './regionPower.js';
 export const FACTION_POWER_INTERVAL_MINUTES = 10080;
 /** :469 - `% 54720`, thirty-eight days. */
 export const REGION_CONDITIONS_INTERVAL_MINUTES = 54720;
+// V2d: the same loop's racial-quest arms (:472 rides the 38-day
+// minute, :475-476 adds the 84-day cure minute).
+import { startRacialOverrideQuest, CURE_QUEST_INTERVAL_MINUTES } from './racialQuests.js';
 import { CLASSIC_GAME_START_TIME } from './gameDate.js';
 import { RACES } from './races.js';
 
@@ -40,6 +55,7 @@ import { RACES } from './races.js';
 // AUDIT 24 (wave 24): one home, systems/gameDate.js.
 import { MINUTES_PER_DAY } from './gameDate.js';
 import { enchantmentMagicRound } from './enchantments.js';   // E1: the per-round item payload pump
+import { passiveSpecialsMagicRound } from './passiveSpecials.js';   // V2c: careers' regen/sun/holy/magery + the vampire's fire
 // S41 - the day-change block's four members. They live in their own
 // systems; this file is only the ONE PLACE that runs them on a day
 // boundary, which is where PlayerEntity.Update runs them.
@@ -153,6 +169,15 @@ export function runMagicRoundsFor(entity, from, to, { sinks, rolls = Math.random
     // feeds the tick gets the dream and the turn; the video and the
     // clock arrive through infection.js's registered host.
     runInfections(entity, Math.floor((r + 1) / MINUTES_PER_DAY));
+    // V2a: the infection's deploy mints racialOverridePending in the
+    // SAME round; the curse consumes it here so the turn is complete
+    // before the next round's laws read the entity. The lycanthropy
+    // fold then rides every round, exactly as RacialOverrideEffect's
+    // constant pass does (a vampirism pending stands - V2b).
+    consumeRacialOverridePending(entity, { now: r + 1 });
+    consumeVampirismPending(entity, { now: r + 1 });
+    lycanthropyMagicRound(entity, { nowMinutes: r + 1, say });
+    vampirismMagicRound(entity, { nowMinutes: r + 1 });
     updatePoisons(entity, r + 1, sinks, rolls, say);
     tickActiveEffects(entity, sinks);
     // E1: the enchantment pump rides the SAME round (DoMagicRound's
@@ -165,6 +190,10 @@ export function runMagicRoundsFor(entity, from, to, { sinks, rolls = Math.random
       nowMinutes: r + 1,
       ctx: { ...(enchantCtx ?? {}), hurtSelf: (n) => sinks?.hurt?.(n), say },
     });
+    // V2c: PassiveSpecials rides the same round, AFTER the enchant
+    // fold - its magery arm SUMS the two producers into the one
+    // maxMagickaModifier the accessor reads. Player-gated inside.
+    passiveSpecialsMagicRound(entity, { nowMinutes: r + 1, sinks });
     rounds++;
   }
   return rounds;
@@ -525,7 +554,15 @@ export function tickPlayerMinutes({
         rumorMill: entity.rumorMill ?? null, rolls,
         updateConditions: true, regionConditions: entity.regionConditions ?? null,
       });
-      // StartRacialOverrideQuest(false) rides this arm too - unported.
+      // :472 - StartRacialOverrideQuest(false) rides this same arm:
+      // the vampire's P0A01L00 initiation, then the clan's own quests
+      // (V2d; a no-op without a live override or a registered host).
+      startRacialOverrideQuest(entity, false, { rolls });
+    }
+    // :475-476, the FOURTH arm - every 84 days, the CURE quest roll
+    // ($CUREVAM at (10,100)<30, $CUREWER at (1,100)<30 once).
+    if (i % CURE_QUEST_INTERVAL_MINUTES === 0) {
+      startRacialOverrideQuest(entity, true, { rolls });
     }
   }
 

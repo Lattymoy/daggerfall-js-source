@@ -298,7 +298,13 @@ test('infection: the magic round runs it, so every host that ticks gets the turn
   runMagicRoundsFor(p, day(1) - 1, day(1), { sinks: noSinks });
   assert.equal(liveInfection(p).dreamPlayed, true, 'the dream played inside the round');
   runMagicRoundsFor(p, day(4) - 1, day(4), { sinks: noSinks });
-  assert.equal(p.racialOverridePending.lycanthropy, LYCANTHROPY_TYPES.Wereboar);
+  // V2a: the pending marker no longer OUTLIVES the round that minted
+  // it - the curse consumes it in the same tick (DFU's deploy assigns
+  // the bundle immediately). The turn is now the CURSE standing live.
+  assert.equal(p.racialOverridePending, undefined, 'the pending marker was consumed');
+  assert.equal(p.racialOverride?.racial, 'lycanthropy');
+  assert.equal(p.racialOverride?.infectionType, LYCANTHROPY_TYPES.Wereboar);
+  assert.equal(p.racialOverride?.isTransformed, false, 'turned, not yet changed');
   // MUTATION: deleting the runInfections line from runMagicRoundsFor
   // leaves the infection sitting for ever and this fails twice.
 });

@@ -159,6 +159,8 @@ import {
 import { findRentedRoom, removeExpiredRooms } from '../systems/tavern.js';
 import { canRest as guildCanRest } from '../systems/guildServices.js';
 import { interiorRestPlace, restDecision } from '../systems/restSession.js';   // CanRest's inside-a-building bag + the scene-free open gate above it
+import { racialRestBlock } from '../systems/vampirism.js';   // V2b: the vampire's rest gate
+import { setPassiveSpecialsHost, FIGHTER_TRAINERS_FACTION } from '../systems/passiveSpecials.js';   // V2c: the sunlight/holy-place seam
 import { orderOf } from '../systems/guildVariants.js';
 import { joinedGuildOfGroup } from '../systems/guilds.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js';
@@ -338,6 +340,26 @@ export function createWorldModes(host) {
   // E2: the entered building's identity + the shop browse overlay.
   let interiorBuilding = null;
   let interiorOverlay = null;
+  // V2c: THE SUNLIGHT SEAM (THE FOUR HOSTS RULE). This host owns the
+  // mode machine for BOTH town pages - world.js and exterior.js each
+  // build it at boot - so the one registration here answers
+  // IsPlayerInside/holy-place/dungeon for all three modes, routed by
+  // LIVE mode (the death-presenter lesson: never latch a mode).
+  // The dungeon branch's own dungeonContext re-registers on build and
+  // restores this one on destroy. inPrison stays absent: the port
+  // serves a sentence as a clock move (arrestFlow), never as a live
+  // scene the sun could reach into.
+  setPassiveSpecialsHost({
+    now: () => Math.floor(interiorTicker.classicMinutes),   // a VIEW on the one world clock
+    isInside: () => mode !== 'exterior',
+    inDungeon: () => mode === 'dungeon',
+    // PlayerEnterExit.cs:1424-1431: a Temple-type building, or the
+    // Fighter Trainers' faction - DFU's own quirky pair.
+    isHolyPlace: () => mode === 'interior' && !!interiorBuilding
+      && (interiorBuilding.buildingType === BUILDING_TYPES.Temple
+        || interiorBuilding.factionId === FIGHTER_TRAINERS_FACTION),
+    isSwimming: () => !!player?.swimming,
+  });
   /** X11b: mount a modal into whichever slot the CURRENT mode draws.
    *  See the note on openCreateItemPicker for what this fixed. */
   function mountSpellWindow(win) {
@@ -3741,13 +3763,19 @@ export function createWorldModes(host) {
     // have made loitering in a city a crime.
     toggleRest() {
       if (interiorOverlay) return;
+      const rb = racialRestBlock(playerEntity, Math.floor(interiorTicker.classicMinutes));   // V2b
       const d = restDecision({
         enemiesNearby: false,   // no foe pool in a building interior
         swimming: false,        // nor water
         grounded: startRestGroundedCheck(!!player.grounded, player.pos, interiorCtx?.collider),
+        racialOverrideBlocks: !!rb,
       });
       if (d.kind !== 'rest') {
-        if (d.kind === 'blocked') return;   // a racial override says nothing at all
+        if (d.kind === 'blocked') {
+          const lines = plainLines(townTalk?.lines?.(rb.textId));   // V2b: the unfed vampire's own box
+          if (lines) mountInterior(new ActionTextBox(lines));
+          return;
+        }
         const lines = d.message ? [d.message] : plainLines(townTalk?.lines?.(d.textId));
         if (lines) mountInterior(new ActionTextBox(lines));
         return;

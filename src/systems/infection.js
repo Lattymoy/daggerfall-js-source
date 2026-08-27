@@ -195,6 +195,19 @@ export function startInfection(target, key, { day = 0, regionIndex = -1 } = {}) 
 export const liveInfection = (entity) =>
   (entity?.activeEffects ?? []).find((a) => a.infection && !a.ended) ?? null;
 
+/** AUDIT 26 F109: ALL of them. DoMagicRound iterates every instanced
+ *  bundle and calls MagicRound on every live effect
+ *  (EntityEffectManager.cs:1724-1734), so VampirismInfection and
+ *  LycanthropyInfection each ProgressDisease independently every
+ *  round. The port deliberately allows both strains at once
+ *  (infectionAccepted blocks only the same key and the opposing
+ *  strain), and then stepped `liveInfection` - a `.find` returning
+ *  the FIRST unended entry - so a player carrying both saw only the
+ *  earlier one progress: the second's warning dream and three-day
+ *  turn stalled until the first deployed or was cured. */
+export const liveInfections = (entity) =>
+  (entity?.activeEffects ?? []).filter((a) => a.infection && !a.ended);
+
 /**
  * ProgressDisease (:107-141 / :95-127) as a decision. `currentDay` is
  * the classic day number, so the caller owns the clock.
@@ -296,21 +309,29 @@ export function setInfectionHost(host) { _host = host ?? null; }
  * test and in a headless probe. Every real host passes the reader.
  */
 export function runInfections(entity, currentDay, opts = {}) {
-  const entry = liveInfection(entity);
-  if (!entry) return { kind: 'idle' };
+  // F109: every live infection advances, each on its own clock, as
+  // DoMagicRound runs MagicRound on every live effect. The answer
+  // keeps its old single-step shape for the callers and tests that
+  // read it: the first non-idle step of the round, idle when all are.
+  const entries = liveInfections(entity);
+  if (!entries.length) return { kind: 'idle' };
   const o = { ..._host, ...opts };
   const playVideo = o.playVideo ?? ((name, onClose) => onClose());
-  const step = infectionStep(entry, currentDay);
-  if (step.kind === 'dream') {
-    entry.dreamScheduled = true;                     // set at PUSH (:129)
-    playVideo(step.video, () => markDreamPlayed(entry));
-  } else if (step.kind === 'death') {
-    entry.deathScheduled = true;                     // fakeDeathVideoPlayed (:139), also at PUSH
-    playVideo(step.video, () => deployInfection(entry, entity, o));
-  } else if (step.kind === 'deploy') {
-    deployInfection(entry, entity, o);
+  let first = null;
+  for (const entry of entries) {
+    const step = infectionStep(entry, currentDay);
+    if (step.kind === 'dream') {
+      entry.dreamScheduled = true;                   // set at PUSH (:129)
+      playVideo(step.video, () => markDreamPlayed(entry));
+    } else if (step.kind === 'death') {
+      entry.deathScheduled = true;                   // fakeDeathVideoPlayed (:139), also at PUSH
+      playVideo(step.video, () => deployInfection(entry, entity, o));
+    } else if (step.kind === 'deploy') {
+      deployInfection(entry, entity, o);
+    }
+    if (step.kind !== 'idle' && !first) first = step;
   }
-  return step;
+  return first ?? { kind: 'idle' };
 }
 
 /**

@@ -110,9 +110,21 @@ export class EnemyCaster {
     if (!ent.spells?.length) return null;
     const dist = ai._dist;
     const idle = attack.machine.state === 'Idle';
+    // AUDIT 26 F010: both cast branches live inside TakeAction, behind
+    // `if (CanAct)` (:171-172) - a foe in knockback hit-stun or
+    // paralysis casts nothing. `!== false` keeps bare-object ai stubs
+    // on the permissive default.
+    const canAct = ai.canAct !== false;
     // DoTouchSpell: sight + melee reach + the melee timer at 0; a
     // touch cast RESETS the melee timer (ResetMeleeTimer, verbatim).
-    if (idle && ai.inSight && ai.detected && ai.giveUpTimer > 0
+    // AUDIT 26 F013: NO one-shot term - DFU's condition (:621-623) has
+    // none (the only one-shot early-out above it covers the Seducer
+    // transform states alone), so a foe whose melee timer floors to 0
+    // mid-swing casts anyway and ChangeEnemyState CUTS the swing. The
+    // port added `idle` here, delaying the cast by up to one swing and
+    // landing an interrupted blow DFU would have cancelled. Reachable
+    // where ResetMeleeTimer floors: player level ~22+ at low reflexes.
+    if (canAct && ai.inSight && ai.detected && ai.giveUpTimer > 0
         && attack.meleeTimer === 0 && dist <= MELEE_DISTANCE) {
       const sp = pickTouchSpell(ent, playerEntity, this.rolls);
       // EnemyMotor.cs:619-628: SetReadySpell is the LAST term of
@@ -123,6 +135,12 @@ export class EnemyCaster {
       // SHARED melee timer is left alone for EnemyAttack's ordinary
       // swing.
       if (sp && !silenceBlocksCast(ent)) {
+        // ChangeEnemyState(Spell) mid-swing REPLACES the attack anim
+        // (:625-626), so the interrupted blow never reaches its damage
+        // frame. The port's damage rides the attack machine, so the
+        // cut lands there - the same cut enemyAttack's own mid-release
+        // melee decision already makes.
+        if (!idle) { attack.machine.state = 'Idle'; attack.machine.acc = 0; }
         attack.meleeTimer = resetMeleeTimer(attack.playerLevel, attack.reflexes, this.rolls());
         return { spell: sp, touch: true };
       }
@@ -133,7 +151,10 @@ export class EnemyCaster {
     let decision = null;
     while (this._classicTimer >= CLASSIC_UPDATE_INTERVAL) {
       this._classicTimer -= CLASSIC_UPDATE_INTERVAL;
-      if (decision || attack.rangedAttack || !idle || ai.giveUpTimer <= 0) continue;
+      // The RANGED branch keeps its one-shot term - DFU's 1/40 roll
+      // sits behind `if (!isPlayingOneShot)` (:588) exactly as the
+      // 1/32 bow roll does; only the TOUCH arm has none.
+      if (decision || attack.rangedAttack || !idle || !canAct || ai.giveUpTimer <= 0) continue;
       if (dist <= MIN_RANGED_DISTANCE || dist >= MAX_RANGED_DISTANCE) continue;
       if (!ai.inSight || !ai.detected || !withinYaw(ai.yaw, dx, dz, SPELL_YAW_DEG)) continue;
       if (this.rolls() >= RANGED_SPELL_CHANCE) continue;

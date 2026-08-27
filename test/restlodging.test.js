@@ -686,8 +686,13 @@ test('S40 restDecision: it is SCENE-FREE - all four hosts run it before opening'
     assert.match(h, /restDecision\(\{/, f);
     assert.match(h, /if \(d\.kind !== 'rest'\)/, f);
     assert.ok(h.indexOf('restDecision({') < h.indexOf('new RestWindow('), `${f}: the gate must precede the window`);
-    // ...and each acts on the two arms that need acting on.
-    assert.match(h, /if \(d\.kind === 'blocked'\) return;/, f);
+    // ...and each acts on the two arms that need acting on. V2b: the
+    // blocked arm no longer returns SILENTLY - the racial override
+    // speaks for itself (the unfed vampire's TEXT.RSC 36 box), so the
+    // pin holds the gate AND the voice.
+    assert.match(h, /if \(d\.kind === 'blocked'\) \{/, f);
+    assert.match(h, /racialRestBlock\(playerEntity/, f);
+    assert.match(h, /racialOverrideBlocks: !!rb/, f);
   }
   assert.doesNotMatch(src('src/scenes/dungeonContext.js'), /if \(_restDeps\.enemiesNearby\(\)\) \{/);
   // Every host that HAS motor state feeds it LIVE, not as a constant.
@@ -1496,7 +1501,7 @@ test('S40: a refused OPEN GATE actually shows its record, in every host', () => 
   // never on the way INTO a host: deleting the two lines that look the
   // record up and mount it left `return;` alone, and the player got
   // SILENCE instead of TEXT.RSC 355 while swimming or 354 with foes.
-  const arm = (f) => { const h = src(f); const i = h.indexOf('restDecision({'); return h.slice(i, i + 1400); };
+  const arm = (f) => { const h = src(f); const i = h.indexOf('restDecision({'); return h.slice(i, i + 2200); };   // widened for V2b's blocked arm
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     // plainLines, because TEXT.RSC answers ROWS and ActionTextBox
     // iterates STRINGS - the other lane's probe caught that as a

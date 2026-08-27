@@ -92,18 +92,19 @@ test('S1 catalog: the pickers de-duplicate and sort, and the port marks its iner
   assert.equal(effectByKey('4,0').ported, true, 'Damage Health casts');
   // The standing inert example, walked forward as the arms land: Lock
   // lived here until X1, Identify until X7 gave it unidentified-item
-  // state, Spell Reflection until X11a found that its "whole missing
-  // system" was the host seam the port already had. MORPH SELF is the
-  // durable choice now, and durable for a reason no lane will casually
-  // close: its only consumer is LycanthropyEffect, a racial override
-  // the port has not built, and its AllowedCraftingStations is None -
-  // so no player can even make a spell that carries it.
+  // state, Spell Reflection until X11a, and MORPH SELF - "durable for
+  // a reason no lane will casually close" - until V2a built the
+  // LycanthropyEffect it was waiting on. NOTHING is inert now; the
+  // walked-forward pin holds the whole set at zero, and craftable
+  // stays false on 29,255 (AllowedCraftingStations = None is a law
+  // about the MAKER, not about the arm).
   assert.equal(effectByKey('40,255').ported, true, 'Identify casts since X7');
   assert.equal(effectByKey('21,255').ported, true, 'Spell Reflection re-targets since X11a');
-  assert.equal(effectByKey('29,255').ported, false, 'Morph Self still pends the lycanthropy racial override');
-  assert.equal(effectByKey('29,255').craftable, false, 'and no station offers it');
+  assert.equal(effectByKey('29,255').ported, true, 'Morph Self casts since V2a built its racial override');
+  assert.equal(effectByKey('29,255').craftable, false, 'and STILL no station offers it');
+  assert.deepEqual(SPELL_MAKER_EFFECTS.filter((e) => !e.ported).map((e) => e.key), [],
+    'the inert set is EMPTY - every catalog row has its runtime arm');
   assert.equal(PORTED_KEYS.size, SPELL_MAKER_EFFECTS.filter((e) => e.ported).length);
-  assert.ok(PORTED_KEYS.size > 0 && PORTED_KEYS.size < SPELL_MAKER_EFFECTS.length, 'a real subset, not all-or-nothing');
 });
 
 test('S1 window: the group -> subgroup walk lands an effect and opens its editor', () => {

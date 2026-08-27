@@ -46,6 +46,7 @@ import { applySpell, SPELL_REFLECTED_TEXT, hasActiveEffect } from '../systems/ef
 import { potionBundle } from '../systems/potions.js';   // U44: DrinkPotion's bundle
 import { SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { tallySkill } from '../systems/skills.js';
+import { morphSelf } from '../systems/lycanthropy.js';   // V2a: the MorphSelf arm the ONE cast engine wires
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { createMagicCandle, CANDLE } from './magicCandle.js';   // X11: the Light effect's candle
 import { CAPSULE_HEIGHT } from '../player/motor.js';   // PlayerController.height, the candle's y term
@@ -59,6 +60,7 @@ export function createPlayerMagic({
   onDispel = null,     // X9: the creature-dispel sweep seam ({group, chance}) - the host owns the scan and the pool
   onDispelMagic = null,// X10: the bundle-picker seam ({chance}) - the host owns the window
   onCreateItem = null, // X11b: the conjured-item picker seam ({rounds}) - the host owns the window
+  now = null,          // V2a: the classic-minutes clock MorphSelf's once-a-day gate reads
   rolls = Math.random,   // ENGINE-PRNG RULE: the saving-throw/magnitude roll slot (uniform; sequence-free)
 }) {
   const playerCaster = () => ({ entity: playerEntity, sinks: playerSinks });
@@ -132,6 +134,9 @@ export function createPlayerMagic({
   function applySpellToPlayer(spell, casterLevel, caster = null, extraCtx = null) {
     // S24: the absorption context, read from the HOST at landing.
     const base = absorbCtx();
+    // V2a: MorphSelf's arm - the ONE cast engine wires it once, so a
+    // Lycanthropy cast in any host reaches the racial override.
+    base.morphSelf = () => morphSelf(playerEntity, { nowMinutes: now ? Math.floor(now()) : 0, say });
     const ctx = { ...(lastCastCost > 0 ? { ...base, selfCastCost: lastCastCost } : base), ...(extraCtx ?? {}) };
     const r = applySpell(spell, casterLevel, playerEntity, playerSinks, rolls, caster, ctx);
     if (r.paralyzed) say('You are paralyzed.');

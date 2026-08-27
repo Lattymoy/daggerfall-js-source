@@ -251,8 +251,11 @@ test('rest: the grounded check has ONE home, and every rest host feeds the dispa
   for (const h of REST_HOSTS) {
     const d = scan(src(h), 'restDecision({');
     assert.ok(d?.balanced, `${h}: the dispatch call did not parse`);
-    assert.deepEqual(d.keys, ['enemiesNearby', 'swimming', 'grounded'],
-      `${h} asks DFU's three questions and asks nothing about the scene`);
+    // V2b: the FOURTH question is DFU's own - DaggerfallUI's rest
+    // ladder ends at racialOverride.CheckStartRest, and the dispatch
+    // carries it as racialOverrideBlocks (fed by racialRestBlock).
+    assert.deepEqual(d.keys, ['enemiesNearby', 'swimming', 'grounded', 'racialOverrideBlocks'],
+      `${h} asks DFU's four questions and asks nothing about the scene`);
     assert.match(d.value('grounded'), /startRestGroundedCheck\(/,
       `${h} must feed the dispatch through the one home, not the raw flag`);
   }
@@ -311,7 +314,10 @@ test('rest: both above-ground hosts run the DISPATCH, and ONLY its enemies arm r
     assert.equal(raises.length, 1, `${host} raises the alert exactly once`);
     assert.match(raises[0], /d\.kind === 'enemies'/, `${host} raises it on the enemies arm alone`);
     // ...and a racial override says NOTHING: no box at all.
-    assert.match(body, /d\.kind === 'blocked'\)\s*return;/, `${host} refuses silently for a racial override`);
+    // V2b: the blocked arm SPEAKS now - the unfed vampire's own
+    // TEXT.RSC 36 box - so the pin holds the arm and its voice.
+    assert.match(body, /d\.kind === 'blocked'\)\s*\{/, `${host} acts on a racial override's block`);
+    assert.match(body, /rb\.textId/, `${host} speaks the override's own record`);
     // The window opens only past the gate, and only once.
     assert.equal((body.match(/new RestWindow\(/g) ?? []).length, 1, `${host} opens ONE rest window`);
     assert.ok(body.indexOf('restDecision(') < body.indexOf('new RestWindow('),

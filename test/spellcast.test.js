@@ -51,17 +51,24 @@ test('spellcast: magnitude + damage-family resolution', () => {
   // OUTSIDE the library -> skipped (loud); type -1 just drops.
   //
   // THE STAND-IN WALKS FORWARD as the arms land: (3,0) was the cure
-  // fixture until S19c took it, Create Item (2,255) until X11b did.
-  // MORPH SELF (29,255) is the durable choice and stays durable for a
-  // reason no lane will casually close - its only consumer is
-  // LycanthropyEffect, a racial override the port has not built, and
-  // AllowedCraftingStations = None means no spell maker even offers it.
-  const spell = { element: 0, rangeType: 2, effects: [e, { type: 29, subType: 255 }, { type: -1, subType: -1 }] };
+  // fixture until S19c took it, Create Item (2,255) until X11b did,
+  // and MORPH SELF (29,255) - "durable for a reason no lane will
+  // casually close" - until V2a built the racial override it was
+  // waiting on. The catalog carries no inert row now, so the stand-in
+  // is an out-of-catalog key outright: type 99 is nothing DFU minted,
+  // and the loud skip is the same arm a future unported key would hit.
+  const spell = { element: 0, rangeType: 2, effects: [e, { type: 99, subType: 255 }, { type: -1, subType: -1 }] };
   const T = { stats: { willpower: 50 }, career: {} };
   let hurt = 0;
   const r = applySpell(spell, 7, T, { hurt: (n) => { hurt += n; } }, seq(0, 0, 0.99));
   assert.equal(hurt, 9);
   assert.equal(r.skipped, 1);
+  // ...and the walked-forward key itself now RUNS: a 29,255 self-cast
+  // reaches the racial override through ctx.morphSelf (the host arm).
+  let morphs = 0;
+  applySpell({ element: 0, rangeType: 0, effects: [{ type: 29, subType: 255 }] }, 7, T,
+    {}, seq(0), null, { morphSelf: () => morphs++ });
+  assert.equal(morphs, 1, 'MorphSelf is inert no longer');
 });
 
 test('spellcast: the CastSpell action cooldown gate fires through the sink', () => {

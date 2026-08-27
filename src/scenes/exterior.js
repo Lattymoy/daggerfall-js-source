@@ -17,6 +17,7 @@ import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
 import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
 import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
+import { racialRestBlock } from '../systems/vampirism.js';   // V2b: the vampire's rest gate
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible exterior arrows
 import { spendArrow } from '../systems/inventory.js';
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
@@ -709,6 +710,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // this host had none of it, because rest was a dungeon feature.
     // Outdoors all three inputs are live: real foes, real water, and a
     // levitating or falling player who cannot lie down.
+    const rb = racialRestBlock(playerEntity, Math.floor(worldMinutes()));   // V2b: the vampire's rest gate
     const d = restDecision({
       enemiesNearby: outdoorRestDeps.enemiesNearby(),
       swimming: !!player.swimming,
@@ -718,6 +720,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // up here it is also what lets a page whose motor is never
       // stepped rest at all, since `grounded` sits at its initialiser.
       grounded: startRestGroundedCheck(!!player.grounded, player.pos, collider),
+      racialOverrideBlocks: !!rb,
     });
     if (d.kind !== 'rest') {
       // DFU raises the enemy alert on the enemies arm
@@ -725,7 +728,11 @@ export async function bootExterior(canvas, renderer, params, status) {
       // DoRestForAWhile; a bare citation here resolves to the wrong
       // file, since every other number in this block is the window's).
       if (d.kind === 'enemies') setEnemyAlert(playerEntity, true, Math.floor(worldMinutes()));
-      if (d.kind === 'blocked') return;   // a racial override says nothing at all
+      if (d.kind === 'blocked') {
+        const lines = plainLines(townTalk.lines(rb.textId));   // V2b: the unfed vampire's own box
+        if (lines) townTalk.showOverlay(new ActionTextBox(lines));
+        return;
+      }
       // plainLines: TEXT.RSC answers { text, center } ROWS and
       // ActionTextBox iterates STRINGS (V5b's finding).
       const lines = d.message ? [d.message] : plainLines(townTalk.lines(d.textId));
@@ -796,6 +803,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
     collider: { raycast: (o, d, m) => ((modes?.mode === 'interior' && modes?.interiorCollider) ? modes?.interiorCollider : collider).raycast(o, d, m) },
     playerEntity,
+    now: () => playerTicker.classicMinutes,   // V2a: MorphSelf's once-a-day clock
     playerSinks: {
       hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n); },
       heal: (n) => { if (n > 0) { playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n); surfacePlayer(); } },
@@ -1142,6 +1150,8 @@ export async function bootExterior(canvas, renderer, params, status) {
   // and read undefined rather than throw a TDZ ReferenceError. Every
   // reference BEFORE this line must therefore be `modes?.` - which is
   // what test/audit24_wave37.test.js asserts, both ways.
+  // V2c: createWorldModes also registers setPassiveSpecialsHost (the
+  // sunlight/holy-place seam) for THIS page - THE FOUR HOSTS RULE.
   var modes = createWorldModes({
     canvas, renderer, player, cam, keys, latch, blocks,
     // S40: IsPlayerInTown() with both flags at their defaults - the
