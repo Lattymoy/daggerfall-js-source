@@ -316,15 +316,18 @@ test('action save-load-11: a door saved MID-RISE restores mid-rise and keeps ris
   assert.equal(fresh.door.activationCount, 0, 'the fresh graph really has not been activated');
   fresh.a.restoreSaveData(snap);
   assert.equal(fresh.door.moveState, 'forward', 'the Move tween survives the round trip');
-  // BOTH reviewers of this slice found the same hole: the RESTORE of
-  // activationCount was unpinned, and deleting that line left the whole
-  // suite green while Testing.md claimed the field round-tripped. It is
-  // load-bearing - DoorText's first-activation hold reads
-  // `activationCount === 0 && byPlayer` and the Hurt21 relay reads
-  // `activationCount % 20`, so a lost counter re-shows a door's text
-  // after every load. Discriminating here because `receive` left the
-  // saved door at 1 while the fresh one is 0.
-  assert.equal(fresh.door.activationCount, 1, "Receive's counter rides the record");
+  // AUDIT 26 F185 INVERTED THIS PIN. Two reviewers had pinned the
+  // activationCount RESTORE - but against the port's own claim, not
+  // the C#. ActionObjectData_v1 carries loadID, position, rotation,
+  // state and tween percentage ONLY (SerializableActionObject.cs:
+  // 55-88; the word activationCount appears in none of the three
+  // serializers), and the scene rebuilds on load - so every counter
+  // restarts at 0 in DFU, a DoorText door DOES re-show its text and
+  // hold shut on the first click after a load, and Hurt21's
+  // every-twentieth-hit phase DOES restart. The old pin's rationale
+  // ("a lost counter re-shows a door's text after every load")
+  // described exactly the DFU behaviour it was defending against.
+  assert.equal(fresh.door.activationCount, 0, 'F185: the counter is NOT in the record - the rebuilt scene starts at 0, as DFU does');
   approx(fresh.door.moveT, 1 / 3, 1e-2);
   // restored mid-rise, not snapped back to the floor
   approx(fresh.door.matrix[13] - baseY, 3.2 / 3, 2e-2);
@@ -383,7 +386,10 @@ test('action save-load-11: the SWING half of the record still round-trips throug
   const snap = a.collectSaveData();
   assert.equal(snap[0].state, 'forward');
   assert.equal(snap[0].lock, 0);
-  assert.equal(snap[0].activationCount, 0);         // toggleDoor is not Receive
+  assert.equal('activationCount' in snap[0], false,   // F185: not a record field in any DFU serializer
+    'the record carries no counter at all');
+  assert.equal(snap[0].failedSkillLevel, 0,           // F187: the pick latch IS one (SerializableActionDoor :77)
+    'the door record carries failedSkillLevel');
 
   const fresh = buildPortcullis();
   assert.equal(fresh.collider.buckets.has(fresh.door.key), true, 'a closed door starts solid');

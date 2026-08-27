@@ -183,7 +183,20 @@ test('audit24 wave39: the pool registers with a persistent draw list when the ho
   assert.equal(list.length, 0, 'spliced out when the one-shot ends');
 
   assert.match(rd('src/scenes/dungeonContext.js'), /onSpawn: \(b\) => billboardBatches\.push\(b\)/);
-  assert.match(rd('src/scenes/dungeon.js'), /ctx\.hitEffects\.tick\(dt\)/);
+  // 2026-08-27 (Mac: "blood texture stays static in the air ... in
+  // dungeons"): this line used to pin the clock in dungeon.js - the dev
+  // host - and said nothing about worldModes, the host the game is
+  // played in, which never ran it. The clock is the CONTEXT's now, in
+  // drawFoes, the one frame function both dungeon hosts call; neither
+  // host runs it itself, so neither can forget it and neither can run it
+  // twice.
+  const ctxSrc = rd('src/scenes/dungeonContext.js');
+  const drawFoes = ctxSrc.slice(ctxSrc.indexOf('function drawFoes('), ctxSrc.indexOf('function drawFoes(') + 1500);
+  assert.match(drawFoes, /hitEffects\.tick\(dt\);/, 'the splash clock runs inside drawFoes');
+  assert.doesNotMatch(rd('src/scenes/dungeon.js'), /hitEffects\.tick\(/, 'the dev host no longer runs it (it would run twice)');
+  assert.doesNotMatch(rd('src/scenes/worldModes.js'), /hitEffects\.tick\(/, 'the played host never has to');
+  assert.match(rd('src/scenes/worldModes.js'), /dungeonCtx\.drawFoes\(dt,/, '...because it calls drawFoes, which does');
+  assert.match(rd('src/scenes/dungeon.js'), /ctx\.drawFoes\(dt,/);
 });
 
 test('audit24 wave39: ShowPlayerDamage - 0.4 alpha falling at 0.7 a second', () => {

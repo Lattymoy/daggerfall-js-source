@@ -218,7 +218,12 @@ export function purchaseHouse(accounts, houses, regionIndex, house, player, {
 } = {}) {
   if (!(house?.buildingKey > 0)) return { result: TRANSACTION_RESULT.NONE };
   const amount = housePrice(meshRadius);
-  const purse = player.gold();
+  // AUDIT 26 F104: the GATE is GetGoldAmount - coins PLUS letters
+  // (DaggerfallBankManager.cs:415 reads playerEntity.GetGoldAmount()) -
+  // and the payment below spends through deductGold, which takes
+  // letters too, so gate and payment agree again. Coins-only remains
+  // right for deposit/withdraw, which move physical gold.
+  const purse = player.totalGold?.() ?? player.gold();
   const account = accounts[regionIndex].accountGold;
   if (amount > purse + account) return { result: TRANSACTION_RESULT.NOT_ENOUGH_GOLD, amount };
   accounts[regionIndex].accountGold -= player.deductGold(amount);
@@ -298,7 +303,8 @@ export function purchaseShip(accounts, regionIndex, shipType, player, purse, hoo
   if (shipType === SHIP_TYPES.None) return { kind: 'none', result: TRANSACTION_RESULT.NONE };
   const amount = shipPrice(shipType);
   const accountGold = accounts[regionIndex].accountGold;
-  if (amount > purse.gold() + accountGold) {
+  // F105: same law - PurchaseShip gates on GetGoldAmount (:474).
+  if (amount > (purse.totalGold?.() ?? purse.gold()) + accountGold) {
     return { kind: 'refuse', result: TRANSACTION_RESULT.NOT_ENOUGH_GOLD };
   }
   const shortfall = purse.deductGold(amount);
@@ -485,7 +491,7 @@ export function repayLoan(accounts, regionIndex, amount, player, { accountOnly =
   mustValidate(accounts, regionIndex);
   const account = accounts[regionIndex];
   let available = account.accountGold;
-  if (!accountOnly) available += player.gold();
+  if (!accountOnly) available += player.totalGold?.() ?? player.gold();   // F103: RepayLoan gates on GetGoldAmount (:516)
 
   if (!hasLoan(accounts, regionIndex)) return { result: TRANSACTION_RESULT.NONE, amount };
   if (amount > available) return { result: TRANSACTION_RESULT.NOT_ENOUGH_GOLD, amount };

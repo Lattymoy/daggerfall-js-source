@@ -345,7 +345,12 @@ export function createQuestBridge(ctx) {
       if (!data) return;
       machine.clearState();   // C#'s load path: ClearState before RestoreSaveData
       machine.restoreSaveData(data.machine ?? { siteLinks: [], quests: [] });
-      notebook.restoreSaveData(data.notebook ?? { notebookEntries: [], finishedQuestEntries: [] });
+      // AUDIT 26 F102: DFU restores the notebook only when the save
+      // CARRIES one (`if (!string.IsNullOrEmpty(notebookDataJson))`,
+      // SaveLoadManager.cs:1451-1456) - the empty-block substitute
+      // wiped every note and filed quest of the session on an
+      // old-version envelope.
+      if (data.notebook) notebook.restoreSaveData(data.notebook);
       questLists.oneTimeQuestsAccepted = data.oneTimeQuestsAccepted ? [...data.oneTimeQuestsAccepted] : null;
     },
   };

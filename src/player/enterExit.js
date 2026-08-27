@@ -133,6 +133,23 @@ export function dungeonEntranceLanding(entranceDoors) {
   };
 }
 
+/**
+ * Verbatim StreamingWorld.RepositionPlayer's height law (:1330-1350),
+ * in FEET. Both exterior exits hand DFU a reposition point - the
+ * door's position plus its normal times an offset (BuildingTransition-
+ * ExteriorLogic :860-864, PositionPlayerToDungeonExit :1416-1418) -
+ * and RepositionPlayer places the controller's CENTRE there, unless
+ * that point is below `terrain + height/2 + 0.15`, the floor it will
+ * not let a player fall through. The port's spawn is the FEET, and
+ * both exits handed it the door centre (about a body-half up), so the
+ * player stood ~0.9u in the air at every exterior door and dropped.
+ * Mac, 2026-08-27: "spawns in the air and drops".
+ */
+export function repositionFeetY(terrainY, centreY, height = CAPSULE_HEIGHT) {
+  const minFeet = (Number.isFinite(terrainY) ? terrainY : -Infinity) + 0.15;   // terrain + height/2 + 0.15, as feet
+  return Math.max(minFeet, centreY - height / 2);
+}
+
 export const LADDER_MODEL_ID = 41409;
 
 /**

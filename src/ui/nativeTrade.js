@@ -31,6 +31,7 @@ import { drawScreenDimBackdrop } from './chargenArt.js';
 import { LIST_SLOTS, CELL_X, CELL_W, SLOT_H, ARROW_H, DOWN_ARROW_Y, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel } from './itemScroller.js';
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from './text.js';
+import { planTake, applyTransfer, clearLightSourceOnLeave } from '../systems/itemTransfer.js';   // AUDIT 26 F157/F158
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
@@ -227,6 +228,9 @@ export class NativeTradeWindow {
     });
     if (d.kind === 'stage') {
       if (this._refuseTransfer(item)) return;
+      // AUDIT 26 F157: TransferItem :1506-1508 - staging a LIT torch
+      // for sale douses it; from is localItems on every staging arm.
+      clearLightSourceOnLeave(item, this.hooks.entity, true);
       this._move(item, this.hooks.packItems(), this.staged);
       return;
     }
@@ -241,8 +245,24 @@ export class NativeTradeWindow {
   _pickRemote(slot) {
     const item = this.remoteList()[this.remoteScroll + slot];
     if (!item) return;
-    if (this.mode === 'Buy') this._move(item, this.hooks.shelfItems(), this.basket);
-    else this._move(item, this.staged, this.hooks.packItems());
+    if (this.mode === 'Buy') {
+      // AUDIT 26 F158: DFU's Buy-mode remote click transfers shelf to
+      // basket through TransferItem with maxAmount =
+      // CanCarryAmount(item) (DaggerfallTradeWindow.cs:842): no
+      // capacity refuses with "cannot carry any more", a partial fit
+      // SPLITS the stack (:1414-1422). The port moved whole lots with
+      // no gate, so a player could stage and buy past MaxEncumbrance
+      // through the shop screen. The bag under test is pack + basket -
+      // the player walks out with both.
+      const plan = planTake(item, {
+        bag: [...this.hooks.packItems(), ...this.basket],
+        entity: this.hooks.entity ?? null,
+      });
+      if (!plan.ok) { this.box = { rows: [{ text: plan.refusal?.text ?? 'You cannot carry any more.', center: true }], buttons: null }; return; }
+      applyTransfer(item, plan, this.hooks.shelfItems(), this.basket);
+      return;
+    }
+    this._move(item, this.staged, this.hooks.packItems());
   }
 
   /** ClearButton_OnMouseClick (:1020-1025) - everything staged goes

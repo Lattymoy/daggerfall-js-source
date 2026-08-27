@@ -76,8 +76,16 @@ export async function bootDungeon(canvas, renderer, params, status) {
 
   status(`laying out ${dungeonName}`);
   const pipeline = createDataPipeline({ renderer, arch, palette });
+  let _poseCam = null;   // AUDIT 26 F222: filled once the camera exists
   const ctx = await buildDungeonContext(
-    { ...pipeline, renderer, arch, palette }, dfLocation, blocks, dfLocation.climate.climateType, { foes: !params.has('nofoes'), playerClass: params.has('class') ? Number(params.get('class')) : undefined, playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined, playerWeapon: params.get('weapon') ?? undefined });
+    { ...pipeline, renderer, arch, palette }, dfLocation, blocks, dfLocation.climate.climateType, { foes: !params.has('nofoes'), playerClass: params.has('class') ? Number(params.get('class')) : undefined, playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined, playerWeapon: params.get('weapon') ?? undefined,
+      // AUDIT 26 F222/F223: the dev scene's half of the pose. The cam
+      // is created AFTER the context (from startSpawn), so the seam
+      // closes over the slot lazily.
+      pose: {
+        read: () => (_poseCam ? { yaw: _poseCam.yaw, pitch: _poseCam.pitch } : {}),
+        apply: (p) => { if (_poseCam) { _poseCam.yaw = p.yaw ?? _poseCam.yaw; _poseCam.pitch = p.pitch ?? _poseCam.pitch; } },
+      } });
 
   // U21: the menu's LOAD GAME. The context is built, so restore into
   // it through the host's own quickLoad - the same call F12 makes -
@@ -99,6 +107,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // the EYE at the marker - feet under the floor, wedged.
   const spawn = loadedPos ?? ctx.startSpawn();   // U21: a loaded game resumes where it was saved
   const cam = { pos: spawn, yaw: 0, pitch: 0 };
+  _poseCam = cam;   // AUDIT 26 F222: the pose seam's late-bound camera
   const shotMode = params.has('shot');
   // P2: grounded walking is the default (?fly restores the fly cam);
   // spawn drops onto the start-marker floor.
@@ -452,7 +461,8 @@ export async function bootDungeon(canvas, renderer, params, status) {
     for (const d of ctx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, ctx.texRemap);
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
     ctx.flatAnims.tick(dt);   // FA1: whoever draws the flats runs their clock
-    ctx.hitEffects.tick(dt);   // AUDIT 24 (wave 39): and their one-shot clocks, which also END
+    // (the blood pool's clock runs inside ctx.drawFoes now - both dungeon
+    // hosts call it, so neither can forget it; 2026-08-27)
     renderer.drawBillboards(ctx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
     // AUDIT 23 (hosts-9 = audio-3) - SongManager.cs:193: Update() runs
     // every frame, windows open or not - THE MUSIC CONTEXT IS FED

@@ -101,7 +101,7 @@ import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects
 import { dice100, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies, KB_UNIT } from '../combat/formulas.js';   // C15: + knockback
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost, effectSchool, EFFECT_COST_TABLE } from '../systems/spellcost.js';
-import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState } from '../systems/save.js';   // B4: the ONE quest+talk composer
+import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState , copyEffectEntry } from '../systems/save.js';   // B4: the ONE quest+talk composer
 import { bindQuestFoeHost } from './questFoeHost.js';   // B1: quest foes ride this pool
 import { dungeonKey } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
@@ -1820,6 +1820,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         hostile: f.ai.isHostile !== false,
         encountered: !!f.ai.hasEncounteredPlayer,
         magicka: f.entity.magicka ?? 0,
+        // AUDIT 26 F220: SerializableEnemy also round-trips
+        // startingHealth (entity.MaxHealth, :109), currentFatigue
+        // (:111) and the instanced effect bundles (:120, restored
+        // :222). Without maxHealth a rebuild-then-restore load
+        // re-rolled it (enemyEntity.js:80) and restored health could
+        // sit above the new max; without activeEffects a paralyzed
+        // boss woke and a burning foe stopped burning on load.
+        maxHealth: f.entity.maxHealth,
+        fatigue: f.entity.fatigue ?? 0,
+        activeEffects: (f.entity.activeEffects ?? []).map(copyEffectEntry),
       })),
       piles: lootPiles.map((p) => ({ items: p.items.map((it) => ({ ...it })) })),
       // AUDIT 23 (save-load-4): player-dropped piles are containers in
@@ -1845,6 +1855,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (sf.hostile != null) f.ai.isHostile = !!sf.hostile;
       if (sf.encountered != null) f.ai.hasEncounteredPlayer = !!sf.encountered;
       if (sf.magicka != null) f.entity.magicka = sf.magicka;
+      // F220, presence-gated like every additive field: the saved max
+      // replaces the re-roll BEFORE health lands on the next line's
+      // ordering guarantee (health was already set above - re-clamp).
+      if (sf.maxHealth != null) { f.entity.maxHealth = sf.maxHealth; f.entity.health = Math.min(f.entity.health, sf.maxHealth); }
+      if (sf.fatigue != null) f.entity.fatigue = sf.fatigue;
+      if (sf.activeEffects) f.entity.activeEffects = sf.activeEffects.map((a) => ({ ...a, ...(a.effect ? { effect: { ...a.effect } } : {}), ...(a.statMods ? { statMods: { ...a.statMods } } : {}), ...(a.skillMods ? { skillMods: { ...a.skillMods } } : {}) }));
       if (sf.dead && !f.dead) { f.dead = true; spawnCorpse(f); }
       // SL2 (AUDIT 23 save-load-2): the BACKWARD rewind. DFU's load
       // REBUILDS the location and RestoreSaveData SETS the saved
@@ -2156,6 +2172,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   sceneAmbience.setPreset('dungeon');
   function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false, playerHeight = CAPSULE_HEIGHT) {
     _weaponCanvas = canvas;   // C10: the rig's late canvas (gesture dim + the overlay draw)
+    // THE FOUR HOSTS RULE (2026-08-27, Mac: "blood texture stays static
+    // in the air when attacking them in dungeons"). The splash pool's
+    // clock was the HOST'S to run - dungeon.js ran it, worldModes never
+    // did - so in the played game a splash spawned into billboardBatches
+    // and then nothing advanced or retired it: frame 0, for ever, in the
+    // air where the foe was. The context is the one thing both dungeon
+    // hosts share and this is the one frame function both call, so the
+    // clock lives here and no host can forget it. Real dt, and it ENDS
+    // (a finished splash frees its batch inside tick).
+    hitEffects.tick(dt);
     const _mobileBatches = [];   // C11: the frame's live sprite-mobile quads
     if (playerFeet) lastPlayerFeet = [...playerFeet];
     // B1: QuestResourceBehaviour.Update every frame the object lives
@@ -2847,6 +2873,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // ?dungeon scene, which mounts no quest machine - the composer
         // writes nulls there, same as every pre-B4 save).
         ...composeSessionState({ questBridge: opts.questBridge, talk: opts.talkSave }),
+        // AUDIT 26 F222/F223/F101: the pose. The HOST owns yaw/pitch/
+        // crouch (opts.pose.read); this context owns the weapon, so
+        // weaponDrawn lands here whichever host mounted it.
+        pose: { ...(opts.pose?.read?.() ?? {}), weaponDrawn: !playerWeapon.sheathed },
         locationKey: _locationKey,
         world: collectWorld(),
       });
@@ -2876,6 +2906,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // record the save itself carried (A1 review).
       automapRec = enterDungeonAutomap(automapKey, classicMinutesRef.value, { fromLoad: true });
       if (extras.position && extras.locationKey === _locationKey && setPlayerPos) setPlayerPos(extras.position);
+      // F222/F101: Sheathed = !weaponDrawn (:420-421); the host takes
+      // the yaw/pitch/crouch half through its own seam.
+      if (extras.pose) {
+        if (extras.pose.weaponDrawn != null) playerWeapon.sheathed = !extras.pose.weaponDrawn;
+        opts.pose?.apply?.(extras.pose);
+      }
       surfacePlayer();
       // A loaded game supersedes whatever pre-game overlay is up.
       // AUDIT 19 F7 (critical): only DeathScreen was cleared, so the

@@ -7,6 +7,7 @@ import {
   MidiBsaFile,
   SONG_SIGNATURE,
   TRACK_SIGNATURE,
+  HMI_MAX_DELTA,
 } from '../src/formats/hmiFile.js';
 import { DIRECTORY_TYPES } from '../src/formats/bsaFile.js';
 
@@ -126,13 +127,15 @@ test('xmi: synthetic HMI song decodes to an ordered event stream', () => {
   assert.equal(hmi.load(syntheticSong(), 'SYNTH.HMI'), true);
 
   assert.equal(hmi.signature, SONG_SIGNATURE);
-  assert.equal(hmi.ticksPerQuarterNote, 480);
+  assert.equal(hmi.headerResolution, 480, 'the 0x0D2 field, kept as what it is');
+  assert.equal(hmi.ticksPerQuarterNote, 60, 'THE CLOCK: sixty ticks per quarter, not the header field');
   assert.equal(hmi.beatsPerMinute, 120);
   assert.equal(hmi.trackCount, 2);
   assert.equal(hmi.sourceName, '*.mid');
   assert.equal(hmi.microsecondsPerQuarterNote, 500000);
-  assert.equal(hmi.secondsPerTick, 60 / (120 * 480));
-  assert.equal(hmi.tickToSeconds(480), 0.5);
+  assert.equal(hmi.secondsPerTick, 1 / 120, 'one tick is 1/BPM of a second');
+  assert.equal(hmi.tickToSeconds(480), 4, '480 ticks is four seconds at 120 - a quarter note is 60 ticks, half a second');
+  assert.equal(hmi.tickToSeconds(60), 0.5);
 
   const t0 = hmi.tracks[0];
   assert.equal(t0.channel, 4);
@@ -146,7 +149,7 @@ test('xmi: synthetic HMI song decodes to an ordered event stream', () => {
   assert.equal(hmi.tracks[1].prologue.length, 13);
   assert.equal(hmi.tracks[1].endTick, 64);
   assert.equal(hmi.durationTicks, 146);
-  assert.equal(hmi.durationSeconds, 146 * (60 / (120 * 480)));
+  assert.equal(hmi.durationSeconds, 146 / 120);
 
   // Track 0's own stream, in emitted order.
   assert.deepEqual(
@@ -319,7 +322,8 @@ test('xmi: every song in the real archive decodes', { skip: skipReal }, () => {
   for (let i = 0; i < m.count; i++) {
     const song = m.getSong(i);
     // One tempo per song, no tempo meta anywhere in the archive.
-    assert.equal(song.ticksPerQuarterNote, 480, song.name);
+    assert.equal(song.headerResolution, 480, song.name);
+    assert.equal(song.beatsPerMinute, 120, song.name);
     assert.equal(song.beatsPerMinute, 120, song.name);
     assert.equal(song.sourceName.length > 0, true, song.name);
     tracks += song.trackCount;
@@ -381,7 +385,7 @@ test('xmi: named songs pinned by shape and stream checksum', { skip: skipReal },
     'DUNGEON.HMI': { tracks: 20, events: 11099, durationTicks: 26675, sum: 4079693625 },
     'FOLK3.HMI': { tracks: 3, events: 503, durationTicks: 4231, sum: 102046012 },
     'TAVERN.HMI': { tracks: 23, events: 1309, durationTicks: 25717, sum: 3457131586 },
-    'SUNNYDAY.HMI': { tracks: 10, events: 2486, durationTicks: 1199310, sum: 4046892480 },
+    'SUNNYDAY.HMI': { tracks: 10, events: 2486, durationTicks: 6802, sum: 2886307952 },   // 2026-08-27: the shunt (was 1,199,310 / 4046892480)
   };
   for (const [name, pin] of Object.entries(pins)) {
     const song = m.getSong(m.getSongIndex(name));
@@ -395,7 +399,9 @@ test('xmi: named songs pinned by shape and stream checksum', { skip: skipReal },
   assert.deepEqual(d1.tracks.map((t) => t.channel), [4, 5, 6, 9]);
   assert.deepEqual(d1.tracks.map((t) => t.byteLength), [721, 2758, 8141, 7316]);
   assert.deepEqual(d1.tracks.map((t) => t.streamEventCount), [109, 779, 2430, 2292]);
-  assert.equal(d1.durationSeconds.toFixed(3), '28.048');
+  // 26,926 ticks at 1/120 s. DFU's shipped d1.mid (192 ppqn, 1,605,566 us)
+  // is 216 s; this reader said 28.048 s until 2026-08-27 - 8x fast.
+  assert.equal(d1.durationSeconds.toFixed(3), '224.383');
   assert.deepEqual(d1.events[3], { tick: 0, type: 'programChange', channel: 4, program: 88, track: 0 });
   const firstNote = d1.events.find((e) => e.type === 'noteOn');
   assert.deepEqual(firstNote, {
@@ -403,17 +409,50 @@ test('xmi: named songs pinned by shape and stream checksum', { skip: skipReal },
   });
 });
 
+test('hmi: THE SHUNT - a delta over 0xFFFF is not time (2026-08-27)', () => {
+  // SUNNYDAY.HMI track 5 in miniature: a note, then a three-byte delta of
+  // 1,192,560 (c8 e4 70) before a reverb-send controller and the closing
+  // marker. foo_midi's HMI processor shunts any delta over 0xFFFF onto the
+  // track's last timestamp; taken at its word it parked the loop 2.76 hours
+  // out. The boundary is INCLUSIVE at 0xFFFF: 83 ff 7f (65,535) still counts.
+  const stream = [
+    0x00, 0xb0, 0x69, 0x01,          // tick 0    CC ch0 105 = 1 (the opening marker)
+    0x00, 0x95, 0x45, 0x50, 0x33,    // tick 0    note on ch5 69 vel 80, duration 51
+    0xc8, 0xe4, 0x70, 0xb5, 0x5b, 0x4c,   // +1,192,560 -> SHUNTED to tick 0: CC ch5 91 = 76
+    0x00, 0xb0, 0x69, 0x00,          // tick 0    the closing marker
+    0x00, 0xff, 0x2f, 0x00,          // end of track
+  ];
+  const song = new HmiFile();
+  assert.ok(song.load(buildSong([buildTrack({ channel: 5, stream })]), 'shunt.hmi'));
+  const cc = song.events.find((e) => e.type === 'controller' && e.controller === 91);
+  assert.equal(cc.tick, 0, 'the late controller lands on the last event tick, not 1,192,560');
+  assert.equal(song.durationTicks, 51, 'the track ends where its music ends (the note-off at 51)');
+  assert.ok(song.durationSeconds < 1, `${song.durationSeconds}s, not hours`);
+
+  // The boundary: 0xFFFF advances, 0x10000 does not.
+  const edge = (vlq) => {
+    const st = [0x00, 0xb0, 0x69, 0x01, ...vlq, 0xb5, 0x5b, 0x4c, 0x00, 0xff, 0x2f, 0x00];
+    const h = new HmiFile(); h.load(buildSong([buildTrack({ channel: 5, stream: st })]), 'edge.hmi');
+    return h.events.find((e) => e.controller === 91).tick;
+  };
+  assert.equal(edge([0x83, 0xff, 0x7f]), 0xffff, '65,535 is time');
+  assert.equal(edge([0x84, 0x80, 0x00]), 0, '65,536 is not');
+  assert.equal(HMI_MAX_DELTA, 0xffff);
+});
+
 test('xmi: real-archive quirks stay pinned', { skip: skipReal }, () => {
   const m = realArchive();
 
   // SUNNYDAY track 5 carries a 1,192,560-tick delta before its last two events.
   // Every other track in the song ends at 6802. Real bytes, and the track still
-  // lands exactly on its end-of-track meta.
+  // lands exactly on its end-of-track meta - and since 2026-08-27 the delta is
+  // SHUNTED (foo_midi's rule, HMI_MAX_DELTA): the two events land on the
+  // track's last tick and the song is 57 s, not 2.76 hours of silence.
   const sunny = m.getSong(m.getSongIndex('SUNNYDAY.HMI'));
   assert.deepEqual(sunny.tracks.map((t) => t.endTick),
-    [6802, 6802, 6802, 6802, 6802, 1199310, 6802, 6802, 6802, 6802]);
+    [6802, 6802, 6802, 6802, 6802, 6801, 6802, 6802, 6802, 6802]);
   assert.equal(sunny.tracks[5].trailingBytes, 0);
-  assert.equal(Math.round(sunny.durationSeconds), 1249);
+  assert.equal(Math.round(sunny.durationSeconds), 57);   // DFU's shipped sunnyday.mid is 54.8 s
 
   // TAVERN track 22 is the only track whose header event count disagrees with
   // the stream, and the only one carrying 0xFE 0x12 / 0xFE 0x13.

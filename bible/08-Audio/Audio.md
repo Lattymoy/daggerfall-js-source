@@ -201,3 +201,47 @@ C# file were already home (P14, combat).
 stride at its boundaries, the ground-loss laws, the four-host
 sweep); 3 mutations run, 3 killed. Walked live in the dungeon and
 the world with zero page errors.
+
+## A5c FROM PLAY (2026-08-27): THE HMI CLOCK - every song was eight times too fast
+
+Mac: "music continuously loops with short tracks". The reader took the
+u16 at 0x0D2 (480 in every song) for ticks-per-quarter and the u16 at
+0x0D4 (120) for BPM: 1/960 s per tick. DUNGEON.HMI's 26,675 ticks made
+28 seconds, and then the loop - which is the "short track" that loops.
+The HMI sequencer's tick is 1/BPM of a second: SIXTY ticks per quarter
+at the header's BPM, 8.33 ms at 120. Two independent readers say so -
+WildMIDI's f_hmi.c (bpm from byte 212, division fixed at 60, with the
+author's own FIXME that it is "the only offset that plays the files at
+what appears to be the right speed") and foo_midi's
+midi_processor_hmi.cpp (192 ppqn at 1,605,632 us, the same 8.36 ms) -
+and DFU's shipped conversions were made with the latter: its
+dungeon.mid is 223 s at 192 ppqn / 1,605,566 us, which is exactly this
+archive's 26,675 ticks at 8.36 ms, not 28 s; d1.mid 216 s against the
+reader's 28.048. So `secondsPerTick` is 1/BPM (HMI_TICKS_PER_QUARTER =
+60), the 0x0D2 field is kept as `headerResolution` - what it is, not
+the time base - and the corpus pins say 224.383 s where they said
+28.048. The comments that called the songs "4-44 s cues" were
+describing the bug; the songs are 30 s to 4 min, and the player's loop
+is DFU's own end-of-song arm (SongManager.UpdateSong:229 replays the
+same song when the context has not moved). Mutant dead.
+
+THE SUNNYDAY RESIDUE, CLOSED THE SAME DAY (Mac: "if it needs fixing,
+fix it"). Read against a copy of MIDI.BSA in a scratch directory
+(never the repo): track 5 of SUNNYDAY.HMI ends `87 5e 45 01 33 | c8 e4
+70 | b5 5b 4c | 00 b0 69 00 | 00 ff 2f 00` - the last note, then a
+three-byte VLQ delta of 1,192,560 ticks before a reverb-send
+controller (CC91 = 76) and the closing marker, where its nine sibling
+tracks end `34 | b0 69 00 | 00 ff 2f 00` at tick 6802. Not a misparse:
+the reader had read it right and recorded it as a corpus quirk
+"preserved verbatim" - and preserving it parked the loop 2.76 hours
+out. The reference reader knows the case: foo_midi's
+midi_processor_hmi.cpp SHUNTS any HMI delta over 0xFFFF ("Large HMI
+delta detected, shunting") - the event lands on the track's last
+timestamp instead of advancing - which is exactly why DFU's shipped
+sunnyday.mid is 54.8 s. `HMI_MAX_DELTA` (0xFFFF, inclusive) does the
+same here; SUNNYDAY ends at 6802 like its siblings, 57 s, and the
+whole archive re-read shows no other track with a non-musical tail.
+Pinned synthetically (a miniature of track 5, plus the boundary:
+65,535 advances, 65,536 shunts) and in the corpus pins, which were
+re-run against the real archive: D1 at 224.383 s, SUNNYDAY at 57 s,
+every checksum but SUNNYDAY's unchanged.

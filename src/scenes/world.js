@@ -114,6 +114,7 @@ import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, crea
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
 import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // StartRestGroundedCheck's ONE home
+import { floorLanding } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27)
 import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -1636,7 +1637,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     queue.push(...state.init(px, py));
     const first = queue.shift();
     const dest = await buildPixel(first.px, first.py);
-    const pos = localPos ?? [TERRAIN_SIZE / 2, dest.centerHeight + state.compensation[1] + 2, TERRAIN_SIZE / 2];
+    // PositionPlayerToLocation ends in FixStanding (StreamingWorld
+    // :1597-1608): the arrival is snapped to what is under it, not
+    // dropped from 2u up. The pixel is built by now, so the collider
+    // has its terrain and its blocks; nothing beneath leaves the +2
+    // (and gravity) as the fallback it always was.
+    const raw = localPos ?? [TERRAIN_SIZE / 2, dest.centerHeight + state.compensation[1] + 2, TERRAIN_SIZE / 2];
+    const pos = walkMode && !localPos ? floorLanding(collider, raw) : raw;
     if (walkMode) { player.spawn(pos[0], pos[1], pos[2]); playerSpawned = true; }
     cam.pos = [pos[0], pos[1] + (walkMode ? 0 : 40), pos[2]];
     // Q4-v: StreamingWorld.OnInitWorld - the world re-initialised at a
@@ -1815,6 +1822,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       // hosts call - two inline copies of this envelope is exactly
       // how the dungeon half drifted to saving neither.
       ...composeSessionState({ questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession } }),
+      // AUDIT 26 F222/F223/F101: the POSE - weaponDrawn
+      // (SerializablePlayer :175, restored Sheathed = !weaponDrawn),
+      // yaw/pitch/isCrouching (PlayerPositionData_v1 :212-214).
+      pose: { yaw: cam.yaw, pitch: cam.pitch, crouching: !!player.crouching, weaponDrawn: !weaponRig.playerWeapon.sheathed },
       locationKey: 'world',
       world: {
         pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],
@@ -1822,6 +1833,15 @@ export async function bootWorld(canvas, renderer, params, status) {
         // NATIVES with the compensation-free height, the player
         // half's exact law.
         piles: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos)).map((sp) => ({ ...sp, y: sp.y - state.compensation[1] })),
+        // AUDIT 26 F216/F217: LIVE ENEMIES ride the envelope - DFU's
+        // SaveData_v1 carries enemyData wherever the player stands
+        // (:865, restored :1006). Saved nowhere, a quickload during a
+        // wilderness ambush or a guard pursuit despawned every
+        // attacker with the spawn catch-up suppressed: a free escape
+        // from any outdoor fight. Natives, the pile law; the
+        // compensation-free height rides per record.
+        foes: exteriorFoes.snapshotWorld((pos) => state.worldCoords(pos)).map((sf) => ({ ...sf, y: sf.y - state.compensation[1] })),
+        guards: cityGuards.snapshotWorld((pos) => state.worldCoords(pos)).map((sg) => ({ ...sg, y: sg.y - state.compensation[1] })),
       },
     });
     townTalk.say(writeQuicksave(snap) ? 'Game saved.' : 'Save failed (storage full or disabled).');
@@ -1856,8 +1876,24 @@ export async function bootWorld(canvas, renderer, params, status) {
         // live pile (the reference's sweep); the envelope re-mints the
         // saved ones at their native spots.
         droppedLoot.restoreWorld(w.piles, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
+        // F216/F217: the pools re-mint through their one spawn chain,
+        // then overlay the saved truth (SerializableEnemy's own
+        // rebuild-then-set shape). Async behind the art; the teleport
+        // above already tore the old pools down with the pixel.
+        exteriorFoes.restoreWorld(w.foes, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
+        cityGuards.restoreWorld(w.guards, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
       } else if (extras.locationKey && extras.locationKey !== 'world') {
         townTalk.say('(saved elsewhere - character restored; travel there yourself)');
+      }
+      // AUDIT 26 F222/F223/F101: the pose lands with the position -
+      // RestorePosition sets yaw/pitch/isCrouching and
+      // Sheathed = !weaponDrawn (:420-421). Presence-gated: an old
+      // envelope leaves the live pose standing.
+      if (extras.pose) {
+        cam.yaw = extras.pose.yaw ?? cam.yaw;
+        cam.pitch = extras.pose.pitch ?? cam.pitch;
+        if (extras.pose.crouching != null) player.crouching = !!extras.pose.crouching;
+        if (extras.pose.weaponDrawn != null) weaponRig.playerWeapon.sheathed = !extras.pose.weaponDrawn;
       }
       _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // no spawn catch-up across a load (DFU LoadInProgress)
       surfacePlayer();
@@ -3308,8 +3344,10 @@ export async function bootWorld(canvas, renderer, params, status) {
 
     if (walkMode) {
       if (!playerSpawned && built.has(startKey)) {
-        // Drop in above the terrain once the start pixel's collider is up.
-        player.spawn(cam.pos[0], heightAt(cam.pos[0], cam.pos[2]) + 2, cam.pos[2]);
+        // Stand on the terrain once the start pixel's collider is up -
+        // FixStanding from 2u above it, not a drop from there.
+        const stand = floorLanding(collider, [cam.pos[0], heightAt(cam.pos[0], cam.pos[2]) + 2, cam.pos[2]]);
+        player.spawn(stand[0], stand[1], stand[2]);
         playerSpawned = true;
       }
       if (playerSpawned) {

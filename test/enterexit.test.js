@@ -106,3 +106,54 @@ test('floorLanding: FixStanding snap - a raised landing floors instantly', () =>
   const noHit = floorLanding(c, [20, 1.9, 20]);      // off the floor quad: unchanged, gravity fallback
   assert.deepEqual(noHit, [20, 1.9, 20]);
 });
+
+// ── THE EXTERIOR SIDE OF THE DOOR (2026-08-27, Mac: "when entering/
+// exiting locations your character spawns in the air and drops") ──
+//
+// Both exterior exits are RepositionPlayer(Offset|DungeonEntrance) in
+// DFU (StreamingWorld.cs:283-288): the door centre plus the normal is
+// where the controller's CENTRE goes, never below terrain + height/2 +
+// 0.15 (:1345-1351). The port's spawn is the FEET, and it was handed
+// the centre - a body-half in the air, then a drop, at every door out.
+import { repositionFeetY } from '../src/player/enterExit.js';
+import { CAPSULE_HEIGHT } from '../src/player/motor.js';
+import { readFileSync } from 'node:fs';
+const src = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
+
+test('repositionFeetY: RepositionPlayer\'s height law, in feet', () => {
+  // A door centre 1.2u above flat terrain at 10: the centre is above the
+  // floor minimum, so the centre stands and the feet are h/2 below it.
+  assert.equal(repositionFeetY(10, 11.2), 11.2 - CAPSULE_HEIGHT / 2);
+  assert.ok(Math.abs(repositionFeetY(10, 11.2) - 10.3) < 1e-9, 'feet 0.3 over the terrain, which gravity settles - not 1.2');
+  // A door centre at or under the terrain (a sunken doorway): the floor
+  // minimum wins - terrain + 0.15 in feet (terrain + h/2 + 0.15, centre).
+  assert.equal(repositionFeetY(10, 9.5), 10.15);
+  assert.equal(repositionFeetY(10, 10.9), 10.15, 'exactly at the minimum, not below it');
+  // No terrain beneath (heightAt's -Infinity): the centre alone decides.
+  assert.equal(repositionFeetY(-Infinity, 5), 5 - CAPSULE_HEIGHT / 2);
+  assert.equal(repositionFeetY(undefined, 5), 5 - CAPSULE_HEIGHT / 2);
+  // The constants are DFU's: half the standing height, plus 0.15.
+  assert.equal(CAPSULE_HEIGHT, 1.8);
+});
+
+test('the exits and the arrivals stand the player, they do not drop them', () => {
+  const wm = src('src/scenes/worldModes.js');
+  // The building exit and the dungeon exit both go through the law,
+  // with the terrain read off the collider they are about to stand on.
+  assert.match(wm, /player\.spawn\(landing\[0\], repositionFeetY\(player\.collider\.heightAt\(landing\[0\], landing\[2\]\), landing\[1\]\), landing\[2\]\)/,
+    'building exit: feet from the door centre');
+  assert.match(wm, /player\.spawn\(landing\.pos\[0\], repositionFeetY\(player\.collider\.heightAt\(landing\.pos\[0\], landing\.pos\[2\]\), landing\.pos\[1\]\), landing\.pos\[2\]\)/,
+    'dungeon exit: the same law');
+  assert.doesNotMatch(wm, /player\.spawn\(landing\[0\], landing\[1\], landing\[2\]\)/, 'the raw centre spawn is gone');
+  assert.doesNotMatch(wm, /player\.spawn\(landing\.pos\[0\], landing\.pos\[1\], landing\.pos\[2\]\)/);
+  // The world host's arrivals: PositionPlayerToLocation ends in
+  // FixStanding (StreamingWorld.cs:1597-1608), so the teleport and the
+  // first drop-in snap to the built pixel instead of falling 2u.
+  const w = src('src/scenes/world.js');
+  assert.match(w, /const pos = walkMode && !localPos \? floorLanding\(collider, raw\) : raw;/, 'fast travel / teleport arrivals');
+  assert.match(w, /const stand = floorLanding\(collider, \[cam\.pos\[0\], heightAt\(cam\.pos\[0\], cam\.pos\[2\]\) \+ 2, cam\.pos\[2\]\]\);/, 'the first drop-in');
+  // And a saved position is restored as saved - a load or an anchor
+  // recall keeps its own y (DFU restores the transform verbatim).
+  assert.match(w, /const ly = \(w\.y \?\? 2\) \+ state\.compensation\[1\];/);
+  assert.match(w, /const ly = \(a\.y \?\? 2\) \+ state\.compensation\[1\];/);
+});

@@ -514,9 +514,13 @@ export function contextEquals(a, b) {
  *
  * ONE DEPARTURE, deliberate: DFU's `!songPlayer.IsPlaying` drives both the
  * re-evaluation and the replay, because its player stops at the end of a
- * cue. Ours loops in the player (songs are 4-44s), so the host reports
- * `songEnded` instead and the same two arms hang off that. The law being
- * preserved is WHEN a song changes, not what stops it.
+ * cue. Ours loops in the player, so the host reports `songEnded` instead
+ * and the same two arms hang off that. The law being preserved is WHEN a
+ * song changes, not what stops it. (DFU's own end-of-song arm replays the
+ * SAME song when nothing in the context moved - PlayCurrentSong at :229
+ * - so the player's loop is the same music, not a departure in what is
+ * heard. The songs are 30 s to 4 min; the "4-44 s" this comment once
+ * claimed was the reader running them 8x fast, fixed 2026-08-27.)
  */
 export class SongManager {
   /**

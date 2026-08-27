@@ -21,7 +21,7 @@
 //      stay valid for the exit landing math.
 //   baseCollider() - the collider to restore on exit.
 
-import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding } from '../player/enterExit.js';
+import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding, repositionFeetY } from '../player/enterExit.js';
 import { startRestGroundedCheck } from '../player/motor.js';   // S40: the rest gate's grounded input
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { pickActivatable, worldAabb, activationTargets } from '../player/activate.js';
@@ -127,7 +127,7 @@ import { preloadMessageBoxArt } from '../ui/messageBox.js';
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
 import { questLetterName } from '../systems/itemInfo.js';   // ResolveItemLongName's quest-letter arm
-import { goldAmount, deductGold, addGold } from '../systems/court.js';
+import { goldAmount, totalGoldAmount, deductGold, addGold } from '../systems/court.js';
 // Q4-v: the quest layer's host wiring. The BRIDGE (scenes/questBridge.js)
 // is created by the outer host (world.js) and rides in; this machine owns
 // the interior half - the click stamp, the Quests service arm, the scene
@@ -668,6 +668,19 @@ export function createWorldModes(host) {
     if (!b || !shelf) return;
     if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
     shelf.items ??= stockShopShelf({ buildingType: b.buildingType, quality: b.quality }, playerEntity);
+    // AUDIT 26 F066: DFU NEVER opens a paying trade window in a
+    // closed shop. PlayerActivate gates shelf activation on
+    // IsPlayerInsideOpenShop (:887-899) - open opens Buy, CLOSED
+    // opens the inventory in shelf-STEALING mode
+    // (SetShopShelfStealing): the shelf is the Remove-mode remote and
+    // taking is stealing. The port's inventory-with-loot shape IS
+    // that window; the shoplifting ROLL and its crime tally stay
+    // FLAGGED to the crime arc, as the Ledger records.
+    if (b.insideOpenShop === false) {
+      const win = host.makeInventory?.({ loot: { items: () => shelf.items } });
+      if (win) interiorOverlay = win;
+      return;
+    }
     // U8c: the native trade screen when the art is up (the E2/E3
     // loop on INVE00I0 + TRAD00I0 + SHOP00I0; keyed fallback stays)
     if (tradeArtLoaded()) {
@@ -1391,6 +1404,13 @@ export function createWorldModes(host) {
     const wagonStack = () => (playerEntity.wagonItems ?? []).find((i) => i.group === 'Currency') ?? null;
     return {
       gold: () => goldAmount(playerEntity),
+      // AUDIT 26 F103-F105/F178: GetGoldAmount is coins PLUS letters
+      // of credit (PlayerEntity.cs:1313-1316), and DFU gates RepayLoan
+      // (:516), PurchaseHouse (:415) and PurchaseShip (:474) on it -
+      // where deposit/withdraw stay coins-only. One seam had conflated
+      // the two quantities, so the gate and the payment (deductGold,
+      // which DOES spend letters) disagreed with each other.
+      totalGold: () => totalGoldAmount(playerEntity),
       deductGold: (n) => deductGold(playerEntity, n),
       addGold: (n) => addGold(playerEntity, n),
       wagonGold: () => wagonStack()?.stackCount ?? 0,
@@ -2351,6 +2371,11 @@ export function createWorldModes(host) {
       const _bt = interiorBuilding?.buildingType;
       const _hour = Math.floor((Math.floor(worldMinutes()) % 1440) / 60);
       const insideOpenShop = _bt != null && isShop(_bt) && isBuildingOpen(_bt, _hour);
+      // AUDIT 26 F066: the latch RIDES the building record, because
+      // PlayerActivate reads it again at shelf time (:887-899) - the
+      // port computed it here for the people gate and then dropped it,
+      // so a shop broken into after hours still sold at full price.
+      if (interiorBuilding) interiorBuilding.insideOpenShop = insideOpenShop;
       const _dict = townTalk?.factionDict ?? null;
       const peopleVisible = !interiorBuilding ? true : peopleAreVisible(interiorBuilding, {
         hour: _hour,
@@ -2584,7 +2609,10 @@ export function createWorldModes(host) {
     interiorBuilding = null;   // E2: the identity + overlay leave with the interior
     interiorOverlay = null;
     player.collider = baseCollider();
-    player.spawn(landing[0], landing[1], landing[2]);
+    // RepositionPlayer(Offset): the door centre is where DFU puts the
+    // controller's CENTRE; the feet go a body-half lower, never below
+    // the terrain's floor (enterExit.repositionFeetY).
+    player.spawn(landing[0], repositionFeetY(player.collider.heightAt(landing[0], landing[2]), landing[1]), landing[2]);
     mode = 'exterior';
     questBridge?.onExteriorTransition();   // Q4-v: CreateFoe's pending-wave invalidation
     npcSession?.onWorldChanged();          // TK-v: OnTransitionToExterior (:3599-3603)
@@ -2625,6 +2653,17 @@ export function createWorldModes(host) {
           // restored-Symbol duplicate quirk sceneMount records.
           questBridge, talkSave,
           onQuestRestored: () => { onQuestRestored?.(); mountQuestResources(); },
+          // AUDIT 26 F222/F223/F101: the host's half of the pose -
+          // this mode machine owns the modal player and camera; the
+          // context owns the weapon and folds weaponDrawn in itself.
+          pose: {
+            read: () => ({ yaw: cam.yaw, pitch: cam.pitch, crouching: !!player.crouching }),
+            apply: (p) => {
+              cam.yaw = p.yaw ?? cam.yaw;
+              cam.pitch = p.pitch ?? cam.pitch;
+              if (p.crouching != null) player.crouching = !!p.crouching;
+            },
+          },
         });
       dungeonCtx = ctx;
       // P10 host parity (2026-08-16 audit: only the standalone scene
@@ -2708,7 +2747,9 @@ export function createWorldModes(host) {
     npcSession?.onWorldChanged();          // TK-v: OnTransitionToDungeonExterior (:3605-3609)
     player.collider = baseCollider();
     if (landing) {
-      player.spawn(landing.pos[0], landing.pos[1], landing.pos[2]);
+      // RepositionPlayer(DungeonEntrance): same law as the building
+      // door - the door centre is the controller's centre, not the feet.
+      player.spawn(landing.pos[0], repositionFeetY(player.collider.heightAt(landing.pos[0], landing.pos[2]), landing.pos[1]), landing.pos[2]);
       cam.yaw = Math.atan2(landing.normal[0], landing.normal[2]);
     }
     cam.pos = player.eye;
