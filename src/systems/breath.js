@@ -8,6 +8,7 @@ import { RACES } from './races.js';
 import { maxBreath } from './statMods.js';
 import { hasActiveEffect } from './effects.js';
 import { templeOf } from './guildVariants.js';
+import { activeMemberships } from './guilds.js';   // V2e: GuildManager.Memberships
 
 // The one guild whose DeepBreath override is not the identity.
 const KYNARETH = templeOf('Kynareth').name;
@@ -46,7 +47,7 @@ export function deepBreath(memberships, duration) {
 export function breathStep(entity, submerged, state, roll = () => Math.floor(Math.random() * 2)) {
   if (submerged && !hasActiveEffect(entity, 'waterBreathing')) {
     if (!entity.currentBreath) {
-      entity.currentBreath = deepBreath(entity.guildMemberships, maxBreath(entity));
+      entity.currentBreath = deepBreath(activeMemberships(entity), maxBreath(entity));   // V2e: the ACTIVE book (a vampire re-earns rank perks)
     }
     if (state.tally > 18) {
       --entity.currentBreath;

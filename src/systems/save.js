@@ -25,6 +25,11 @@ import { seedBundleSeq } from './effects.js';   // X10: the live-bundle counter'
 import { SOCIAL_GROUPS } from '../formats/factionFile.js';   // AUDIT 24
 import { travelMapSaveData, restoreTravelMapSaveData } from './travelMapState.js';   // U41: TravelMapSaveData
 import { resetMagicRoundMarker } from './worldTick.js';   // EntityEffectBroker.InitMagicRoundTimer, on the LOAD arm (:230-233)
+import { isMembershipStore } from './guilds.js';   // V2e: the two-book membership store rides the save whole
+
+/** One membership book, rows copied (GuildMembership_v1's shape). */
+const copyMembershipBook = (book) => Object.fromEntries(
+  Object.entries(book ?? {}).map(([k, m]) => [k, { ...m }]));
 
 export const SAVE_VERSION = 1;
 export const QUICKSAVE_KEY = 'dagger.quicksave';
@@ -229,8 +234,14 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
     ? snapshotFactionRep(entity.factionRep)
     : (entity.savedFactionRep ?? null);
   // GuildMembership_v1, keyed by guild GROUP exactly as DFU keys it.
+  // V2e: the field is the TWO-BOOK store now (mortal + vampire, both
+  // serialized - GetMembershipData(bool vampire), GuildManager
+  // :313-320); a legacy plain object still snaps as the mortal book
+  // it means.
   snap.guildMemberships = entity.guildMemberships
-    ? Object.fromEntries(Object.entries(entity.guildMemberships).map(([k, m]) => [k, { ...m }]))
+    ? (isMembershipStore(entity.guildMemberships)
+      ? { mortal: copyMembershipBook(entity.guildMemberships.mortal), vampire: copyMembershipBook(entity.guildMemberships.vampire) }
+      : copyMembershipBook(entity.guildMemberships))
     : null;
   // T4: the building-discovery store (PlayerGPS discoveredLocations -
   // DFU serialises it in SaveData_v1). Module-level world state, so
@@ -401,9 +412,12 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // so a save from before any guild contact must reset the book -
   // keeping the live one let later-joined memberships survive a
   // backward load.
+  // V2e: both books restore; a pre-V2e snap is a plain object and
+  // stays one - activeMemberships reads it as the mortal book.
   entity.guildMemberships = snap.guildMemberships
-    ? Object.fromEntries(
-      Object.entries(snap.guildMemberships).map(([k, m]) => [k, { ...m }]))
+    ? (isMembershipStore(snap.guildMemberships)
+      ? { mortal: copyMembershipBook(snap.guildMemberships.mortal), vampire: copyMembershipBook(snap.guildMemberships.vampire) }
+      : copyMembershipBook(snap.guildMemberships))
     : {};
   // S1: made spells restore from their own carried record (and re-seed
   // the index mint below the lowest one, so a spell made after this

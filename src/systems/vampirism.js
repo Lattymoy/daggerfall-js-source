@@ -33,10 +33,14 @@
 // $CUREVAM on the 84-day cure arm's (10,100)<30 roll, and the cure's
 // P0* tombstone sweep below.
 //
+// THE GUILD SWAP AND THE CEMETERY went live in V2e: every membership
+// call site reads guilds.js's activeMemberships (the per-read book
+// pick), and the deploy's transfer rides infection.js's
+// transferToCemetery host arm.
+//
 // FLAGGED, with the slice each waits on:
-//  - the guild swap (guilds.js carries membershipsFor(store,
-//    hasVampirism)), the cemetery respawn, the VAMP00I0.CIF head and
-//    SCBG08I0 paperdoll art, the gendered attack voices - host work
+//  - the VAMP00I0.CIF head and SCBG08I0 paperdoll art, the gendered
+//    attack voices - host art work
 
 import { VAMPIRE_CLANS, LYCANTHROPY_TYPES } from './infection.js';
 import { MINUTES_PER_DAY, isDayFromMinutes } from './gameDate.js';
