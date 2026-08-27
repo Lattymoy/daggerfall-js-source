@@ -12,7 +12,7 @@ import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLo
 import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
-import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES } from '../formats/mapsFile.js';
+import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, LOCATION_TYPES } from '../formats/mapsFile.js';
 import { WoodsFile } from '../formats/woodsFile.js';
 import { buildTerrainGrid, buildTerrainIndices, convertTilemap, TERRAIN_TILE_DIM } from '../world/terrainSurface.js';
 import { windowEmissionRGB } from '../render/windowEmission.js';
@@ -3763,6 +3763,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     {
       const _inRect = _musicInLocationRect();
       if (_wasInLocationRect && !_inRect) clearCrimeOnLocationExit(playerEntity);
+      // AUDIT 26 F089: the SAME two events arm the graveyard ambient
+      // layer - OnEnterLocationRect sets IsCemeteryNearby when the
+      // location is a Graveyard and the player is outside (:518-529),
+      // OnExitLocationRect clears it (:531-534). The layer then ticks
+      // its own 1-80s counter beside the ordinary wilderness one.
+      if (_inRect && !_wasInLocationRect) {
+        ambience.setCemeteryNearby(_musicLocationType() === LOCATION_TYPES.Graveyard);
+      } else if (!_inRect) {
+        ambience.setCemeteryNearby(false);
+      }
       _wasInLocationRect = _inRect;
     }
     _playerStill = _lastPlayerPos &&

@@ -654,7 +654,12 @@ export class ActionSystem {
   _closeDoor(o, byPlayer = false) {
     if (o.state === 'start') return false;   // IsClosed
     o.state = 'reverse';
-    this.onDoorState?.(o, false);   // A1: the audio seam (close)
+    // AUDIT 26 F184: Close() plays NOTHING (:311-332) - the CloseSound
+    // is OnCompleteClose's (:339-346), after the 1.5s swing and just
+    // before the collider solidifies. The emit moved to the swing's
+    // completion below; every door used to shut audibly a second and
+    // a half before it shut. (The OPEN side already matched DFU:
+    // sound at the START, :296-302.)
     if (byPlayer) this._execOwnAction(o);
     return true;
   }
@@ -974,7 +979,11 @@ export class ActionSystem {
     }
     this._applyMatrix(o);
     if (swinging && (o.state === 'forward' ? o.t >= 1 : o.t <= 0)) {
+      const closing = o.state === 'reverse';
       o.state = o.state === 'forward' ? 'end' : 'start';
+      // F184: THIS is OnCompleteClose - the sound, then MakeTrigger(false)
+      // below, in DFU's own order.
+      if (closing) this.onDoorState?.(o, false);
     }
     if (moving && (o.moveState === 'forward' ? o.moveT >= 1 : o.moveT <= 0)) {
       o.moveState = o.moveState === 'forward' ? 'end' : 'start';

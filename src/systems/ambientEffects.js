@@ -48,6 +48,12 @@ export const AMBIENT_SOUNDS = Object.freeze({
 });
 export const AMBIENT_RAIN_LOOP = 389;      // AmbientRaining
 export const AMBIENT_CRICKETS_LOOP = 6;    // AmbientCrickets
+/** AUDIT 26 F089: cemeteryAmbientSounds (:45-50) - the bird is listed
+ *  TWICE, so a graveyard calls it two draws in three. */
+export const CEMETERY_AMBIENT_SOUNDS = Object.freeze([113, 14, 14]);   // AmbientDistantHowl, AmbientCreepyBirdCall x2
+/** CemeteryMinWaitTime / CemeteryMaxWaitTime (:28-29) - its OWN
+ *  window, far wider than the shared one. */
+export const CEMETERY_AMBIENT_WAITS = Object.freeze({ minWait: 1, maxWait: 80 });
 export const WATER_GENTLE = 439;
 export const AMBIENT_WATER_BUBBLES = 114;
 
@@ -74,7 +80,39 @@ export class AmbientEffects {
     this._waterCounter = 0;
     this._rainLoop = null;
     this._cricketsLoop = null;
+    // F089: the SECOND channel - a graveyard's howl/bird layer, armed
+    // by the location rect and ticking its own counter beside the
+    // shared one (:57-59, :154-162).
+    this.cemeteryNearby = false;
+    this._cemeteryWait = 0;
+    this._cemeteryCounter = 0;
     this._startWaiting();
+  }
+
+  /** PlayerGPS_OnEnterLocationRect / OnExitLocationRect (:518-534),
+   *  F089: the layer arms when a GRAVEYARD's rect is entered from
+   *  OUTSIDE, and disarms on any exit or an inside entry. DFU restarts
+   *  the cemetery countdown on the arming edge only. */
+  setCemeteryNearby(near) {
+    const on = !!near;
+    if (on && !this.cemeteryNearby) this._startCemeteryWaiting();
+    this.cemeteryNearby = on;
+  }
+
+  /** StartCemeteryWaiting (:406-411): Next(1, 80), its own counter. */
+  _startCemeteryWaiting() {
+    const w = CEMETERY_AMBIENT_WAITS;
+    this._cemeteryWait = w.minWait + Math.floor(this.rng() * (w.maxWait - w.minWait));
+    this._cemeteryCounter = 0;
+  }
+
+  /** PlayCemeteryEffects (:308-320): one draw from the three-entry
+   *  list, played somewhere around at minimum distance 13 - the same
+   *  PlaySomewhereAround the dungeon one-shots use. */
+  _playCemeteryEffects(deps) {
+    const list = CEMETERY_AMBIENT_SOUNDS;
+    const index = Math.floor(this.rng() * list.length);   // Next(0, length)
+    this._playSomewhereAround(list[index], deps.playerPos ?? [0, 0, 0]);
   }
 
   /** StartWaiting: System.Random.Next(min, max) - EXCLUSIVE max. */
@@ -83,23 +121,38 @@ export class AmbientEffects {
     this._counter = 0;
   }
 
-  /** VERBATIM QUIRK, checked at AUDIT 21 and NOT changed.
+  /** VERBATIM QUIRK, checked at AUDIT 21, CHALLENGED by AUDIT 26 F088
+   *  and NOT changed - twice now, so here is the decisive evidence.
    *
    *  The outdoor rain/crickets loop keeps playing when you walk into a
-   *  building, and layers under the dungeon ambience underground. The hosts
-   *  lane filed that as a bug. It is DFU's behaviour:
+   *  building, and layers under the dungeon ambience underground. It is
+   *  DFU's behaviour:
    *
    *    - WeatherManager.Update (:146-155) opens with "Do nothing if player
    *      inside" and RETURNS, so SetAmbientEffects is never called and
    *      `Presets` stays frozen at Rain.
    *    - AmbientEffectsPlayer.Update (:134-137) then keeps the loop alive for
-   *      as long as Presets says Rain or Storm.
-   *    - The component is still RUNNING indoors, which its own
-   *      `IsCemeteryNearby && !playerEnterExit.IsPlayerInside` guard at :154
-   *      proves - that line would be dead code otherwise.
+   *      as long as Presets says Rain or Storm, and nothing ever stops it:
+   *      Update's only early return is `IsMuted` (:109-110).
    *
-   *  So a setPreset('none') on the interior transition would be a DEPARTURE,
-   *  not a fix, and this port is bug-for-bug. Recorded in Port-Ledger B. */
+   *  F088 argued the COMPONENT is disabled indoors - that it hangs off
+   *  PlayerEnterExit.ExteriorParent, which DisableAllParents deactivates
+   *  on every transition (:1048), OnDisable clearing the loop handles
+   *  (:96-100). That hierarchy claim cannot be read from DFU's scripts at
+   *  all (the .unity scenes are not in the source tree), and the code
+   *  REFUTES it: Update's water arm (:165-175) acts only when
+   *  `playerEnterExit.blockWaterLevel != 10000`, and blockWaterLevel is
+   *  assigned in exactly one place - inside `if (dungeon &&
+   *  isPlayerInsideDungeon)` (PlayerEnterExit.cs:328-343). If the
+   *  component were deactivated on entering a dungeon, that whole arm -
+   *  its DFRandom rolls, its surface positioning, its classic cadence -
+   *  could never run at all. The same goes for the cemetery guard's
+   *  `!playerEnterExit.IsPlayerInside` (:154), which is only meaningful
+   *  inside a component that ticks while inside.
+   *
+   *  So a setPreset('none') on the interior transition would be a
+   *  DEPARTURE, not a fix, and this port is bug-for-bug. Recorded in
+   *  Port-Ledger B, and F088 struck REFUTED with this reasoning. */
   setPreset(preset) {
     if (preset === this.preset) return;
     this.preset = preset;
@@ -182,6 +235,17 @@ export class AmbientEffects {
     if (this._counter > this._wait) {
       this._playEffects(deps);
       this._startWaiting();
+    }
+    // F089: `if (IsCemeteryNearby && !playerEnterExit.IsPlayerInside)`
+    // (:154-162) - a SEPARATE counter, so the graveyard layer plays
+    // over the ordinary wilderness one rather than instead of it. The
+    // inside test is the host's `deps.inside`.
+    if (this.cemeteryNearby && !deps.inside) {
+      this._cemeteryCounter += dt;
+      if (this._cemeteryCounter > this._cemeteryWait) {
+        this._playCemeteryEffects(deps);
+        this._startCemeteryWaiting();
+      }
     }
     // Water sound effects - "timing based on classic"
     if (this._waterCounter > CLASSIC_UPDATE_INTERVAL) {
