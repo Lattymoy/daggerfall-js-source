@@ -25,34 +25,62 @@
 
 export const SPELL_RECORD_SIZE = 0x59;
 
+// The one per-record field walk (DaggerfallSpellReader.ReadSpellData's
+// body: SetSpellTypes' reads + element/range/cost + SetSpellDurations +
+// SetSpellChances + SetSpellMagnitudes + name/icon/index). No gate, no
+// patch - the callers own those.
+function parseSpellRecordAt(v, o) {
+  const effects = [];
+  for (let i = 0; i < 3; i++) {
+    const type = v.getInt8(o++);
+    const subType = v.getInt8(o++);   // always read (see the dead-branch note above)
+    effects.push({ type, subType });
+  }
+  const element = v.getUint8(o++);
+  const rangeType = v.getUint8(o++);
+  const cost = v.getUint16(o, true); o += 2;
+  o += 4;
+  for (const e of effects) { e.durationBase = v.getUint8(o++); e.durationMod = v.getUint8(o++); e.durationPerLevel = v.getUint8(o++); }
+  for (const e of effects) { e.chanceBase = v.getUint8(o++); e.chanceMod = v.getUint8(o++); e.chancePerLevel = v.getUint8(o++); }
+  for (const e of effects) {
+    e.magnitudeBaseLow = v.getUint8(o++); e.magnitudeBaseHigh = v.getUint8(o++);
+    e.magnitudeLevelBase = v.getUint8(o++); e.magnitudeLevelHigh = v.getUint8(o++);
+    e.magnitudePerLevel = v.getUint8(o++);
+  }
+  let name = '';
+  for (let i = 0; i < 25; i++) name += String.fromCharCode(v.getUint8(o++));
+  name = name.split('\0')[0];
+  const icon = v.getUint8(o++);
+  const index = v.getUint8(o++);
+  return { effects, element, rangeType, cost, name, icon, index };
+}
+
+/**
+ * DaggerfallSpellReader.ReadSpellData over a single record buffer -
+ * the parse a classic save's Spell record (0x09) runs on its record
+ * data. Returns null where the C# returns false and leaves the default
+ * (empty) SpellRecordData: buffer shorter than one record, or the
+ * SetSpellTypes gate failing (no effect type > -1). NO Free Action
+ * patch here - that is EntityEffectBroker's SPELLS.STD-dict fix and
+ * never touches save records.
+ * @param {Uint8Array} bytes
+ * @param {number} [offset]
+ */
+export function readSpellRecord(bytes, offset = 0) {
+  if (offset + SPELL_RECORD_SIZE > bytes.byteLength) return null;
+  const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const rec = parseSpellRecordAt(v, offset);
+  if (!(rec.effects[0].type > -1 || rec.effects[1].type > -1 || rec.effects[2].type > -1)) return null;
+  return rec;
+}
+
 export function readSpellsStd(bytes) {
   const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const spells = [];
   let o = 0;
   while (o + SPELL_RECORD_SIZE <= bytes.byteLength) {
     const start = o;
-    const effects = [];
-    for (let i = 0; i < 3; i++) {
-      const type = v.getInt8(o++);
-      const subType = v.getInt8(o++);   // always read (see the dead-branch note above)
-      effects.push({ type, subType });
-    }
-    const element = v.getUint8(o++);
-    const rangeType = v.getUint8(o++);
-    const cost = v.getUint16(o, true); o += 2;
-    o += 4;
-    for (const e of effects) { e.durationBase = v.getUint8(o++); e.durationMod = v.getUint8(o++); e.durationPerLevel = v.getUint8(o++); }
-    for (const e of effects) { e.chanceBase = v.getUint8(o++); e.chanceMod = v.getUint8(o++); e.chancePerLevel = v.getUint8(o++); }
-    for (const e of effects) {
-      e.magnitudeBaseLow = v.getUint8(o++); e.magnitudeBaseHigh = v.getUint8(o++);
-      e.magnitudeLevelBase = v.getUint8(o++); e.magnitudeLevelHigh = v.getUint8(o++);
-      e.magnitudePerLevel = v.getUint8(o++);
-    }
-    let name = '';
-    for (let i = 0; i < 25; i++) name += String.fromCharCode(v.getUint8(o++));
-    name = name.split('\0')[0];
-    const icon = v.getUint8(o++);
-    const index = v.getUint8(o++);
+    const { effects, element, rangeType, cost, name, icon, index } = parseSpellRecordAt(v, o);
     o = start + SPELL_RECORD_SIZE;
     // AUDIT 23 (magic-1) - EntityEffectBroker.cs:892-900: "Fix bad Free
     // Action spell data from SPELLS.STD at runtime". Spell index 10

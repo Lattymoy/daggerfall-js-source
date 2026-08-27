@@ -69,3 +69,26 @@ verbatim) shipped under UI-Arc U18 with its own corpus gate. The only
 GFX files in the game are SCRL00I0/SCRL01I0 - 8 parchment frames each,
 320x80, TEXTURE-style RLE rows behind a per-row offset table - used
 exclusively by the class-questions screen. See 10-UI/UI-Arc.md.
+
+Post-close addition: THE CLASSIC `.SAV` READER (SAV1 2026-08-27) - the
+fourteenth reader, all 13 DFU API/Save files: `formats/saveTreeFile.js`
+(SAVETREE.DAT - header, building records, the 71-byte record root, the
+typed item/character/spell/guild/disease/container/soul records),
+`formats/characterRecord.js`, `formats/saveVarsFile.js` (SAVEVARS.DAT
+with the region and faction tables), `formats/saveImageFile.js`
+(IMAGE.RAW), `formats/bioFile.js` (BIO.DAT), `formats/saveGames.js`
+(the SAVE0-SAVE5 set: SAVENAME.TXT, MAPSAVE.SAV discovery walk, rumor
+and bio wiring). The spell-record parse single-sources into
+spellsStd.js (`readSpellRecord` = DaggerfallSpellReader.ReadSpellData);
+the character-document conversion sits in `systems/classicSave.js`.
+Quirks preserved and pinned in `test/classicsave.test.js` (22 tests, 12
+mutation-checked): the 0x126 version throw, the Light record's x39
+length, the `>=` exactly-at-EOF record rejection, duplicate-RecordID
+drop-and-count, the reputation READ order, the DUPLICATE climateWeathers
+block, ship-price sentinels, the ReadCString trailing-trim law. The
+validation-gate caveat is real and recorded: NO classic save exists in
+this container, so the corpus test (real SAVE0-5 beside ARENA2) skips -
+the reader ships on synthetic byte-exact fixtures, and the corpus gate
+is armed for the first machine that has real saves. The IMPORT half
+(DaggerfallLoadClassicGameWindow, feeding game state) is not this
+reader and stays on Port-Ledger section C's row.

@@ -18,7 +18,14 @@ Namira reflection, VampiricFortifyEffect rides the vampirism round).
 The HONEST still-open list as of the re-verification:
 
 1. **Classic-save import** (SaveTree/SaveVars/SaveGames/
-   CharacterRecord, ~3,200 C# loc) - absent, unchanged.
+   CharacterRecord, ~3,200 C# loc) - ~~absent, unchanged~~ **NARROWED
+   (SAV1 2026-08-27): the READER half ships** - all 13 API/Save files
+   (formats/saveTreeFile.js, characterRecord.js, saveVarsFile.js,
+   saveImageFile.js, bioFile.js, saveGames.js + spellsStd's
+   readSpellRecord + systems/classicSave.js's document conversion),
+   pinned in test/classicsave.test.js. The IMPORT half - the
+   load-classic-game window and feeding game state - remains absent;
+   the Ledger's S-F row carries the narrow.
 2. **Multi-slot save/load windows** - the pause menu rides the
    quicksave; DFU's slot UI has no counterpart.
 3. ~~The 123 missing macros~~ **THE TABLE IS COMPLETE (M-X
