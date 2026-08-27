@@ -385,7 +385,7 @@ test('rest: the ?town page is the FOURTH host, and it runs the SAME laws as the 
   }
   // The crime rides the verdict rather than being named by the host:
   // canRest mints it, the host relays whatever it was handed.
-  assert.match(ed.value('commitCrime'), /playerEntity\.crimeCommitted = crime;/);
+  assert.match(ed.value('commitCrime'), /setCrimeCommitted\(playerEntity, crime\);/);   // V4: through the one setter (SuppressCrime)
   assert.deepEqual(modulesMatching(/CRIMES\.Vagrancy/), [],
     'no host names the crime itself - CanRest answers it');
   // ...and the dispatch above it is the same three questions too.

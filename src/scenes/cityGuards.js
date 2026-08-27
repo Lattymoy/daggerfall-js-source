@@ -36,6 +36,8 @@
 // Assault + an on-the-spot conversion (WeaponManager verbatim).
 
 import { liveStat } from '../systems/statMods.js';   // AUDIT 23 (characters-11)
+import { lycanthropeAttackVoice } from '../systems/lycanthropy.js';   // V4: the beast's attack voice
+import { setCrimeCommitted } from '../systems/court.js';   // V4: the one crime setter (SuppressCrime)
 import { entityIsParalyzed } from '../systems/effects.js';   // AUDIT 24 (wave 32): the watch is paralysable too
 import { hasRangedSpell } from '../characters/enemyCasting.js';   // AUDIT 24 (wave 35): the stand-off band
 import { setEnemyAlert } from '../systems/encounters.js';   // AUDIT 24 (wave 36): EnemySenses:531-535 / EnemyDeath:131-136
@@ -280,7 +282,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // G4 (HandleAttackFromSource, verbatim): killing the city watch
       // IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
       // the thieves-guild arc.
-      playerEntity.crimeCommitted = CRIME_MURDER;
+      setCrimeCommitted(playerEntity, CRIME_MURDER);   // V4: through the one setter (SuppressCrime)
       // AUDIT 24 (wave 38): EnemyDeath.CompleteDeath, through the one
       // home (this was the second copy of exteriorFoes' mint, to the
       // line). It gains FindGroundPosition (:817) - the watch walks, so
@@ -483,6 +485,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // hit frame (melee-only path).
     const grunt = playerAttackGrunt(playerEntity, false, rand);   // ENGINE-PRNG RULE: the pool's seam - the bare default leaked Math.random into the parry pin (the recurring suite flake, root-caused)
     if (grunt && grunt.clip >= 0) audio?.playOneShot?.(grunt.clip, 1);
+    { const v = lycanthropeAttackVoice(playerEntity, rand); if (v != null) audio?.playOneShot?.(v, 1); }   // V4: OnWeaponHitEntity's transformed voice (10% attack / 20% bark)
     // AUDIT 18: the backstab argument was hard-zeroed, so guard combat
     // had no backstab at all where the dungeon host computes facing
     // per foe - and CalculateBackstabChance's Backstabbing tally
@@ -556,11 +559,11 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       hitEffects?.showBloodSplash(0,
         [eye[0] + lookDir[0] * bestD, eye[1] + lookDir[1] * bestD, eye[2] + lookDir[2] * bestD]);
       best.disable();   // one weapon hit kills a civilian (SetActive(false))
-      playerEntity.crimeCommitted = CRIME_MURDER;
+      setCrimeCommitted(playerEntity, CRIME_MURDER);   // V4: through the one setter (SuppressCrime)
       onMurder();       // SpawnCityGuards(true)
       return { crime: 'murder' };
     }
-    playerEntity.crimeCommitted = CRIME_ASSAULT;
+    setCrimeCommitted(playerEntity, CRIME_ASSAULT);   // V4: through the one setter (SuppressCrime)
     await spawnGuardAt(best.pos, best.fwdYaw, playerFeet ?? null);
     best.disable();
     const carriedHit = resolvePlayerHit(playerWeapon, eye, lookDir, playerFeet, inViewFn ?? _lastInView, onHitSound);

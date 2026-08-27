@@ -38,7 +38,12 @@ export class TownPopulation {
    * @param opts { totalBlocks, race, makePerson(archive, guard) ->
    *   MobilePerson (the scene owns textures/collider/ground), rand }
    */
-  constructor(nav, { totalBlocks, race = 'Breton', nameBank = null, makePerson, rand = Math.random } = {}) {
+  constructor(nav, { totalBlocks, race = 'Breton', nameBank = null, makePerson, rand = Math.random, suppressSpawns = () => false } = {}) {
+    // V4: PopulationManager.cs:174-176 - a racial override can
+    // suppress population (the transformed lycanthrope); the gate
+    // holds the PROMOTE arm (:186-191), so pending walkers wait and
+    // the ones already out keep walking, DFU's own shape.
+    this.suppressSpawns = suppressSpawns;
     this.nav = nav;
     this.race = race;
     // AUDIT 23 (characters-5) - MobilePersonNPC.cs:214-215: the NAME
@@ -122,7 +127,7 @@ export class TownPopulation {
       const dx = it.person.pos[0] - playerPos[0], dz = it.person.pos[2] - playerPos[2];
       const dist = Math.hypot(dx, it.person.pos[1] - playerPos[1], dz);
       const allowChange = dist > POP_VISIBLE_RANGE || !this._inView(dx, dz, viewYaw);
-      if (it.scheduleEnable && allowChange && isDay) { it.scheduleEnable = false; it.visible = true; }
+      if (it.scheduleEnable && allowChange && isDay && !this.suppressSpawns()) { it.scheduleEnable = false; it.visible = true; }   // V4: SuppressPopulationSpawns holds the promote
       if (it.person.seekCount > POP_MAX_SEEKS || dist > POP_RECYCLE_DISTANCE || !isDay) it.scheduleRecycle = true;
       if (it.scheduleRecycle && allowChange) {
         it.person.release();

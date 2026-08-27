@@ -32,11 +32,20 @@
 // and CureLycanthropy's tombstone sweep); vampirism itself shipped in
 // V2b (vampirism.js consumes the pending marker).
 //
-// FLAGGED, with the slice each waits on:
-//  - the transformed suppressions the HOSTS own (inventory/talk
-//    refusals, crime, population spawns, paperdoll body, the
-//    werecreature FPS claws and the attack/move sounds) - V2b names
-//    all four hosts
+// THE BEAST-FORM HOST LAWS went live in V4: the inventory and talk
+// refusals at every door (the two Internal_Strings lines verbatim),
+// SuppressCrime through court.js's one setter, the population
+// promote-arm hold, the wereclaws rig (WEAPON11.CIF, silent draw,
+// high-pitch swing) and the strain-keyed attack voices at all three
+// player-hit sites.
+//
+// THE TRANSFORMED PAPERDOLL AND HEADS went live in V5 (the art laws
+// ride vampirism.js's one switch: WOLF00I0/BOAR00I0 backgrounds with
+// the whole-body suppression, WERE01I0/WERE00I0 heads).
+//
+// FLAGGED, with the slice it waits on:
+//  - the 4-20s real-time MOVE sound loop while transformed - the one
+//    remaining LycanthropyEffect member (host audio-frame work)
 
 import {
   LYCANTHROPY_TYPES, INFECTION,
@@ -51,6 +60,7 @@ import { WEAPON_MATERIALS } from '../characters/weapons.js';
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
 import { ENCHANTMENT_TYPES } from './enchantments.js';
 import { cureAllDiseases } from './effects.js';
+import { SOUND } from './soundClips.js';   // V4: the transformed attack voices
 import { endLycanthropyQuests } from './racialQuests.js';   // V2d: the cure's $CUREWER tombstone sweep
 
 /** LycanthropyEffect.LycanthropyCurseKey (:33). */
@@ -302,11 +312,65 @@ export function killedInnocent(target, { isCivilian = false, mobileType = null }
   return innocent && (target.health ?? target.hp ?? 0) <= 0;
 }
 
-/** OnWeaponHitEntity's satiation half (:229-247) - the sounds are
- *  V2b's host concern. Call from the player's landed-hit site. */
+/** OnWeaponHitEntity's satiation half (:229-247) - the VOICE half is
+ *  lycanthropeAttackVoice below (V4), played by the host that owns
+ *  the audio frame. Call from the player's landed-hit site. */
 export function onLycanthropeHit(entity, target, { nowMinutes = 0, isCivilian = false, mobileType = null } = {}) {
   if (!liveLycanthropy(entity)) return;
   if (killedInnocent(target, { isCivilian, mobileType })) updateSatiation(entity, nowMinutes);
+}
+
+// ── V4 - THE TRANSFORMED LAWS (the beast-form host slice) ────────
+
+/** The live entry's isTransformed, the gate every law below shares. */
+const isTransformedNow = (entity) => !!liveLycanthropy(entity)?.isTransformed;
+
+/** GetSuppressInventory / GetSuppressTalk (:409-437): while
+ *  transformed the inventory and every conversation refuse with DFU's
+ *  own two lines (Internal_Strings inventoryWhileShapechanged /
+ *  youGetNoResponse - read verbatim from the widened sparse clone).
+ *  Answers { text }, or null for every mortal and untransformed
+ *  lycanthrope - the racialRestBlock shape, so the hosts consume all
+ *  three gates one way. */
+export const INVENTORY_WHILE_SHAPECHANGED_TEXT = 'You cannot access the inventory while shapechanged...';
+export const NO_RESPONSE_TEXT = 'You get no response.';
+export function racialSuppressInventory(entity) {
+  return isTransformedNow(entity) ? { text: INVENTORY_WHILE_SHAPECHANGED_TEXT } : null;
+}
+export function racialSuppressTalk(entity) {
+  return isTransformedNow(entity) ? { text: NO_RESPONSE_TEXT } : null;
+}
+/** SuppressCrime (:121-124): a transformed lycanthrope is never
+ *  tagged with a crime - the crime-write sites gate on this. */
+export const racialSuppressCrime = (entity) => isTransformedNow(entity);
+/** SuppressPopulationSpawns (:129-132): PopulationManager's promote
+ *  arm holds while transformed (the streets empty out around the
+ *  beast; walkers already out keep walking, DFU's own shape). */
+export const racialSuppressPopulationSpawns = (entity) => isTransformedNow(entity);
+
+/** OnWeaponHitEntity's voice half (:349-372): a transformed
+ *  lycanthrope's landed hit rolls 10% for the attack cry, ELSE 20%
+ *  for the bark - two separate Dice100 rolls, strain-keyed clips.
+ *  Answers a DAGGER.SND clip id or null; the host that resolved the
+ *  hit plays it (it owns the audio frame). */
+export function lycanthropeAttackVoice(entity, rolls = Math.random) {
+  const entry = liveLycanthropy(entity);
+  if (!entry?.isTransformed) return null;
+  const boar = entry.infectionType === LYCANTHROPY_TYPES.Wereboar;
+  if (Math.floor(rolls() * 100) < 10) return boar ? SOUND.EnemyWereboarAttack : SOUND.EnemyWerewolfAttack;
+  if (Math.floor(rolls() * 100) < 20) return boar ? SOUND.EnemyWereboarBark : SOUND.EnemyWerewolfBark;
+  return null;
+}
+
+/** SetFPSWeapon (:332-345): while transformed the screen weapon IS
+ *  the wereclaws - WeaponTypes.Werecreature (the port's WEAPON11.CIF
+ *  rig, type 16), metal None, NO draw sound, SwingHighPitch swing,
+ *  default reach. The rig consults this every worn-weapon sync; the
+ *  marker item is what weaponTypeForItem keys the claws animation
+ *  set on. */
+export const WERECLAWS_ITEM = Object.freeze({ werecreatureClaws: true, material: 0 });
+export function racialFpsWeapon(entity) {
+  return isTransformedNow(entity) ? WERECLAWS_ITEM : null;
 }
 
 /**

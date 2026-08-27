@@ -5,6 +5,7 @@
 // location's climate (CLIMATE.PAK -> GetWorldClimateSettings).
 
 import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
+import { racialSuppressPopulationSpawns, racialSuppressInventory, racialSuppressTalk } from '../systems/lycanthropy.js';   // V4: the transformed gates
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLock.js';   // U45: bindCursorToggle is PlayerMouseLook.cursorActive
 import { attachTouch } from '../ui/touch.js';
@@ -100,7 +101,7 @@ import {
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { setWeather, currentWeather, tickWeather } from '../systems/weatherSim.js';   // W1: the live weather state
 import { SEASON } from '../world/climateSwaps.js';
-import { addGold } from '../systems/court.js';   // U10 probe surface
+import { addGold, setCrimeCommitted } from '../systems/court.js';   // U10 probe surface; V4: the one crime setter
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';   // I2: the rebindable registry
@@ -699,7 +700,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       insideBuilding: false,
     }),
     commitCrime: (crime, spawnGuards) => {
-      playerEntity.crimeCommitted = crime;
+      setCrimeCommitted(playerEntity, crime);   // V4: through the one setter (SuppressCrime)
       if (spawnGuards) _crimeResponse();
     },
     endLines: (id) => townTalk.lines(id),
@@ -985,7 +986,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     // other's note about the deliberately withheld quest hooks. They
     // agreed. That is what drift looks like the day before it stops.
     toggleCharSheet: () => townTalk.showOverlay(makeCharSheetWindow()),
-    toggleInventory: () => { if (inventoryDoorReady()) townTalk.showOverlay(makeInventoryWindow()); },
+    toggleInventory: () => {
+      // V4: GetSuppressInventory (LycanthropyEffect.cs:409-421)
+      const sup = racialSuppressInventory(playerEntity);
+      if (sup) { townTalk.say(sup.text); return; }
+      if (inventoryDoorReady()) townTalk.showOverlay(makeInventoryWindow());
+    },
     toggleSpellbook: () => toggleSpellbook(),
     // S40: the Rest door - world.js's twin (THE FOUR HOSTS RULE).
     toggleRest: () => toggleRest(),
@@ -1341,6 +1347,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   if (populated) await Promise.all(personArchives.map(async (a) => personTex.set(a, await getTexture(a))));
   const personBatchOf = new Map();   // person -> batch
   const population = !populated ? null : new TownPopulation(cityNav, {
+          suppressSpawns: () => racialSuppressPopulationSpawns(playerEntity),   // V4: the transformed lycanthrope empties the streets
     totalBlocks: loc.width * loc.height,
     race: populationRace,
     // AUDIT 23 (characters-5) - MobilePersonNPC.cs:214: the NAME bank

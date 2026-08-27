@@ -9,6 +9,7 @@
 // which is exactly the dungeon convention already on record.
 
 import { FlatAnimator, armFlatAnim, MISSILE_FPS } from '../render/flatAnimation.js';   // FA1: the flats that move
+import { lycanthropeAttackVoice, racialSuppressInventory } from '../systems/lycanthropy.js';   // V4: the beast's attack voice + inventory refusal
 import { layoutDungeon } from '../world/dungeonLayout.js';
 import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, automapRevealTick, automapEntranceTick, automapDungeonKey, SCAN_INTERVAL_S } from '../systems/automap.js';   // A1
 import { AutomapWindow } from '../ui/automapWindow.js';   // A1: the M window
@@ -815,6 +816,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   } : {});
 
   function openInventory(lootItems, onEmptied = null) {
+    // V4: GetSuppressInventory (LycanthropyEffect.cs:409-421) - a
+    // transformed lycanthrope opens NO inventory, loot included; the
+    // caller assigns the null and no overlay mounts.
+    const sup = racialSuppressInventory(playerEntity);
+    if (sup) { hudText.add(sup.text); return null; }
     return createInventoryWindow({
       openBook: openBookHook,   // B1: the use-mode book arm
       items: () => (playerEntity.items ??= []),
@@ -1581,6 +1587,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // per hit frame, never for a bow (this path is melee-only).
     const grunt = playerAttackGrunt(playerEntity, false, Math.random);   // explicit: this path's resolveHit rides Math.random too (no injected seam here)
     if (grunt && grunt.clip >= 0) audio.playOneShot(grunt.clip, 1);
+    { const v = lycanthropeAttackVoice(playerEntity, Math.random); if (v != null) audio.playOneShot(v, 1); }   // V4: OnWeaponHitEntity's transformed voice (10% attack / 20% bark)
     for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, Math.random, (f) => backstabChanceOf(playerEntity, !!f._backFacing), (l) => hudText.add(l),
       (f, pt) => inflictPoison(f.entity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }))) {   // C2-slice (combat-11): the player's poisoned blade infects its victim
       // WeaponDamage returns true for a CONNECTING swing even at zero

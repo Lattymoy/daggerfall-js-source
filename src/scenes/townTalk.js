@@ -22,6 +22,7 @@
 // the U-arc message-box rollout to these hosts.
 
 import { FactionFile } from '../formats/factionFile.js';
+import { racialSuppressTalk } from '../systems/lycanthropy.js';   // V4: the transformed talk refusal
 import { TextRsc } from '../formats/textRsc.js';
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from '../ui/text.js';
@@ -366,6 +367,11 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  talkToStaticNPC runs the C# ones inside the engine. Art-less or
    *  building-less sessions keep the keyed greeting chain. */
   function openTalkWindow(greeting, { npcSeed = 0, npcName = '' } = {}) {
+    // V4: GetSuppressTalk (LycanthropyEffect.cs:423-437) - every
+    // conversation door lands here (B7's one-opener law), so the
+    // transformed refusal gates them all at once.
+    const sup = racialSuppressTalk(playerEntity);
+    if (sup) { hud.add(sup.text); return; }
     const eng = engine();
     if (talkArtLoaded() && directory.length) {
       showOverlay(new NativeTalkWindow(greeting, {

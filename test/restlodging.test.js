@@ -599,7 +599,7 @@ test('S40 hosts: all four can now rest, and each supplies its own place', () => 
     assert.ok(at > 0, `${f}: the Rest arm is not below the guard at all`);
     assert.ok(close > 0 && at < close, `${f}: the Rest arm escaped the guard`);
     assert.match(s, /new RestWindow\(outdoorRestDeps\)/, f);
-    assert.match(s, /playerEntity\.crimeCommitted = crime/, f);
+    assert.match(s, /setCrimeCommitted\(playerEntity, crime\)/, f);   // V4: through the one setter (SuppressCrime)
     assert.match(s, /if \(spawnGuards\) _crimeResponse\(\)/, f);
     assert.match(s, /inTownOutside: _isPlayerInTownStrict\(\)/, f);
     assert.match(s, /insideBuilding: false/, f);

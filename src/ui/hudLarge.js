@@ -39,11 +39,10 @@
 // colour field behind the portrait and vitals, and CMPA00I0.BSS the
 // 32-frame compass needle (formats/bssFile.js, written for this).
 //
-// THE HEAD IS THE RACE'S, through the same FACE archive the paperdoll
-// uses. DFU refreshes it on load and on new game, and names the two
-// things that change it at runtime - "lycanthrope shapechange,
-// vampire infection" - which is V2's business; the racial-override
-// head hook is FLAGGED below and falls to the plain racial head.
+// THE HEAD IS THE RACE'S - or the CURSE'S (V5): the racial-override
+// hook DFU names ("lycanthrope shapechange, vampire infection") is
+// live through racialOverrideHeadArt, and the identity KEY carries
+// the override so the morph swaps the face the same frame.
 //
 // FLAGGED, by name: HUDActiveSpells (the buff/debuff icon rows) and
 // HUDEscortingNPCFaces (quest-gated) are the other two components of
@@ -66,6 +65,7 @@ import { BssFile } from '../formats/bssFile.js';
 // see drawHudLarge's barFill.
 import { bitmapToColor32, largeHudBar } from './hud.js';
 import { raceArt } from '../systems/races.js';
+import { racialOverrideHeadArt } from '../systems/vampirism.js';   // V5: the curse heads, DFU's override-first order
 import { getBool, getFloat, getInt } from '../systems/settings.js';
 import { getInteractionMode } from '../player/interactionMode.js';
 import { cursorActive } from '../player/pointerLock.js';
@@ -238,12 +238,9 @@ export function largeHudClick(bar, px, py, button = 0) {
 /** The FACE archive record this entity's head comes from. DFU reads
  *  RaceTemplate.PaperDollHeads{Male,Female} at FaceIndex (:322-334);
  *  raceArt is where the port keeps that pair.
- *
- *  FLAGGED: RacialOverrideEffect.GetCustomHeadImageData (:314-320)
- *  runs FIRST in DFU and supplies the werewolf, wereboar and vampire
- *  heads. V1 landed the infections; the override itself is V2, so
- *  there is nothing yet that could answer, and this falls to the
- *  racial head exactly as DFU does when no override is in place. */
+ *  V5: RacialOverrideEffect.GetCustomHeadImageData (:314-320) runs
+ *  FIRST, exactly as DFU orders it - the werewolf, wereboar and
+ *  vampire heads through vampirism.js's one switch. */
 export const headArchiveFor = (entity) =>
   raceArt(entity?.race ?? 'Breton', entity?.gender ?? 'male').heads;
 
@@ -299,6 +296,28 @@ export async function loadHudLarge({ fetchBytes, palette, renderer }, entity = n
  *  on new game and Update re-reads it. */
 export async function loadHudLargeHead({ fetchBytes, palette, renderer }, entity) {
   try {
+    // V5: the override head first (GetCustomHeadImageData's slot).
+    // WERE0*I0 are IMGs (one bitmap); VAMP00I0 is a CIF indexed by
+    // gender + birth race. A load failure falls to the racial head -
+    // the never-traps rule.
+    const ov = racialOverrideHeadArt(entity);
+    if (ov) {
+      try {
+        let bmp;
+        if (ov.file.endsWith('.IMG')) {
+          const img = new ImgFile();
+          img.load(await fetchBytes(ov.file), ov.file, palette);
+          bmp = img.getDFBitmap();
+        } else {
+          const cif = new CifRciFile();
+          cif.load(await fetchBytes(ov.file), ov.file, palette);
+          bmp = cif.getDFBitmap(ov.record, 0);
+        }
+        if (bmp?.width) {
+          return { tex: renderer.uploadTexture('img', `${ov.file}#${ov.record}`, bitmapToColor32(bmp, palette)), w: bmp.width, h: bmp.height };
+        }
+      } catch { console.warn('[hudLarge] override head art unavailable - the racial head stands in'); }
+    }
     const name = headArchiveFor(entity);
     const cif = new CifRciFile();
     cif.load(await fetchBytes(name), name, palette);
@@ -404,19 +423,27 @@ export function _resetLargeHud() { _art = null; _loading = null; _headKey = null
  * so a character created after boot (chargen writes race, gender and
  * faceIndex onto the entity) gets their own face without a reload.
  */
+/** The head's identity key. V5: the override art rides in it, so a
+ *  morph (or a cure) swaps the face on the next frame - DFU's
+ *  null-and-re-read, as a key change. */
+const headKeyFor = (entity) => {
+  const ov = racialOverrideHeadArt(entity);
+  return `${entity?.race ?? 'Breton'}|${entity?.gender ?? 'male'}|${entity?.faceIndex ?? 0}|${ov ? `${ov.file}#${ov.record}` : ''}`;
+};
+
 export function largeHudOptions(deps, entity) {
   if (!largeHudEnabled()) return null;
   if (!_art) {
     if (!_loading && deps?.renderer && deps?.fetchBytes) {
       _loading = loadHudLarge(deps, entity).then((a) => {
         _art = a;
-        _headKey = a ? `${entity?.race ?? 'Breton'}|${entity?.gender ?? 'male'}|${entity?.faceIndex ?? 0}` : null;
+        _headKey = a ? headKeyFor(entity) : null;
         _loading = null;
       });
     }
     return null;
   }
-  const key = `${entity?.race ?? 'Breton'}|${entity?.gender ?? 'male'}|${entity?.faceIndex ?? 0}`;
+  const key = headKeyFor(entity);
   if (key !== _headKey) {
     _headKey = key;
     loadHudLargeHead(deps, entity).then((h) => { if (h) _art.head = h; });

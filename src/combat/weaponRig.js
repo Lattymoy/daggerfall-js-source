@@ -18,6 +18,7 @@
 // objects; open exteriors have nothing in reach).
 
 import { PlayerWeapon, WEAPON_REACH } from './playerWeapon.js';
+import { racialFpsWeapon } from '../systems/lycanthropy.js';   // V4: the transformed rig's claws
 import { EQUIP_SLOTS } from '../systems/equip.js';   // AUDIT 17e F17
 import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES } from './fpsWeapon.js';
 import { worldAabb, rayAabb } from '../player/activate.js';
@@ -46,7 +47,13 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   // bindWorn:false is for rigs that manage their own weapon (the
   // dungeon's scripted bow demo).
   const syncWorn = () => {
-    if (!bindWorn || !entity?.equip?.slots) return;
+    if (!bindWorn || !entity) return;
+    // V4: SetFPSWeapon (LycanthropyEffect.cs:332-345) - while
+    // transformed the rig IS the wereclaws, whatever the hand holds;
+    // the per-frame sync makes the swap live the moment of the morph.
+    const claws = racialFpsWeapon(entity);
+    if (claws) { playerWeapon.weapon = claws; return; }
+    if (!entity.equip?.slots) return;
     playerWeapon.weapon = entity.equip.slots[EQUIP_SLOTS.RightHand] ?? null;
   };
   const cv = typeof canvas === 'function' ? canvas : () => canvas;
@@ -101,7 +108,8 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     /** ToggleSheath + the draw sound (78) on unsheathing a real weapon. */
     toggleSheath() {
       syncWorn();
-      if (playerWeapon.toggleSheath()) audio.playOneShot(SOUND.DrawWeapon);
+      // V4: the claws draw silently (DrawWeaponSound = None, :338)
+      if (playerWeapon.toggleSheath() && !playerWeapon.weapon?.werecreatureClaws) audio.playOneShot(SOUND.DrawWeapon);
     },
     /**
      * Per-frame: gesture consume, the swing-sound edge, machine step.

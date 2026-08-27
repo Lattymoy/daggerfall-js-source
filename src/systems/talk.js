@@ -17,6 +17,7 @@
 // crime/quest slices - FLAGGED there, not here).
 
 import { SOCIAL_GROUP_COUNT, FACTION_TYPES, SOCIAL_GROUPS, GUILD_GROUPS } from '../formats/factionFile.js';
+import { racialSuppressCrime } from './lycanthropy.js';   // V4: SuppressCrime's inline gate (court.js imports this module)
 import { calculatePickpocketingChance, dice100 } from '../combat/formulas.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
 import { goldStack } from './inventory.js';   // AUDIT 17f: one gold mint
@@ -283,6 +284,10 @@ export function pickpocketTownsperson(player, { rolls = Math.random, nothingText
     }
     return { success: true, gold: 0, message: nothingText() };
   }
-  player.crimeCommitted = 'Pickpocketing';   // PlayerEntity.Crimes, verbatim state
+  // PlayerEntity.Crimes, verbatim state. V4: the SuppressCrime gate
+  // rides inline here - court.js imports THIS module, so the one
+  // setter cannot be (a transformed werewolf cannot reach this window
+  // anyway; the talk door refuses first).
+  if (!racialSuppressCrime(player)) player.crimeCommitted = 'Pickpocketing';
   return { success: false, gold: 0, message: 'You are not successful.' };
 }

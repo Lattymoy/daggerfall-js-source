@@ -83,7 +83,7 @@ async function toGamePage(page, skin) {
   await page.addInitScript((snap) => {
     try { localStorage.setItem('dagger.quicksave', JSON.stringify(snap)); } catch { /* storage off */ }
   }, SAVE);
-  await page.goto(`${BASE}/play/?skin=${skin}`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/play/?skin=${skin}`, { waitUntil: 'load' });
   if (skin === 'enhanced') {
     await page.waitForSelector('#enhanced-menu .railbtn', { timeout: 15000 });
     await page.getByRole('button', { name: 'New Game', exact: true }).click();

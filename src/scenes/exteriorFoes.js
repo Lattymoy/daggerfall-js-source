@@ -14,6 +14,7 @@
 // 13 fixed-list casters do not cast up here yet.
 
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
+import { lycanthropeAttackVoice } from '../systems/lycanthropy.js';   // V4: the beast's attack voice
 import { copyEffectEntry } from '../systems/save.js';   // AUDIT 26 F216: the caster-stripping effect copy, one home
 import { EnemyAI, isBackFacing, withinYaw } from '../characters/enemyMotor.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';   // CH3: the shared fall formula
@@ -441,6 +442,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     // hit frame (this path is melee-only, never a bow).
     const grunt = playerAttackGrunt(playerEntity, false, rolls);   // ENGINE-PRNG RULE: the pool's uniform seam
     if (grunt && grunt.clip >= 0) audio?.playOneShot?.(grunt.clip, 1);
+    { const v = lycanthropeAttackVoice(playerEntity, rolls); if (v != null) audio?.playOneShot?.(v, 1); }   // V4: OnWeaponHitEntity's transformed voice (10% attack / 20% bark)
     for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, rolls,
       (f) => backstabChanceOf(playerEntity, isBackFacing(f.ai.yaw, f.ai.feet, eye)), say,
       (f, pt) => inflictPoison(f.entity, pt, false, { currentMinute: Math.floor(currentMinute()) }))) {   // C2-slice (combat-11)
