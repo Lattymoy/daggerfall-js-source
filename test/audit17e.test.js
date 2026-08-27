@@ -56,18 +56,13 @@ test('audit17e F2/F3: buy and sell resolve value the SAME way, so no round trip 
 test('audit17e F6: leaving the location rect clears the active crime', () => {
   // PlayerEntity.cs:2449-2453. Only the court cleared it before, so a
   // player who walked out of town stayed wanted for the session.
+  // AUDIT 26 F062 reshaped this into DFU's split: the handler only
+  // CLEARS; the edge detection lives in the host's
+  // PlayerLocationRectCheck twin (world.js), which fires it once on
+  // the widened-rect exit - not on a pixel crossing.
   const e = { crimeCommitted: 5 };
-  assert.equal(clearCrimeOnLocationExit(e, false, '10,20'), false, 'first sync is not an exit');
-  assert.equal(e.crimeCommitted, 5);
-  assert.equal(clearCrimeOnLocationExit(e, null, '10,20'), false, 'wilderness -> town is not an exit');
-  assert.equal(e.crimeCommitted, 5);
-  assert.equal(clearCrimeOnLocationExit(e, '10,20', '10,20'), false, 'staying put is not an exit');
-  assert.equal(e.crimeCommitted, 5);
-  assert.equal(clearCrimeOnLocationExit(e, '10,20', null), true, 'town -> wilderness clears');
+  clearCrimeOnLocationExit(e);
   assert.equal(e.crimeCommitted, 0);
-  const e2 = { crimeCommitted: 4 };
-  assert.equal(clearCrimeOnLocationExit(e2, '10,20', '11,20'), true, 'town -> another town clears too');
-  assert.equal(e2.crimeCommitted, 0);
 });
 
 test('audit17e C1: save/load rebuilds the equip table and re-derives armor from it', () => {

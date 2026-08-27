@@ -759,6 +759,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     const wc = state.worldCoords(walkMode ? player.pos : cam.pos);
     return isInLocationRect(wc.x, wc.z, locationWorldRect(_musicLoc, px.x, px.y));
   };
+  // F062: PlayerGPS.isPlayerInLocationRect (:57), the tracked bool the
+  // transition pair edges on. ResetState (:398-401) drops it WITHOUT
+  // firing exit - the teleport core is the port's ResetState.
+  let _wasInLocationRect = false;
   const _musicLocationType = () => _musicLoc?.mapTableData?.locationType ?? 0xffff;
   const _musicLocationIndex = () => _musicLoc?.locationIndex ?? -1;
   const musicDirector = createMusicDirector();
@@ -916,9 +920,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     const key = cur ? `${cur.px},${cur.py}` : null;
     if (key === _topicsKey) return;
-    // AUDIT 17e F6: this crossing IS DFU's OnExitLocationRect - the
-    // active crime clears when the player leaves the location.
-    clearCrimeOnLocationExit(playerEntity, _topicsKey, key);
+    // AUDIT 26 F062: the crime clear MOVED to the frame loop's rect
+    // edge - AUDIT 17e read this pixel crossing as OnExitLocationRect,
+    // but DFU's event fires on leaving the WIDENED TOWN RECT
+    // (PlayerGPS.cs:702-716), well inside the same map pixel; guards
+    // were chasing a fleeing player all the way to the pixel border.
     _topicsKey = key;
     const dfLocation = key ? locationIndex.get(key) : null;
     _musicLoc = dfLocation ?? null;   // AUDIT 19: the music context's location half
@@ -1049,7 +1055,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       const key = `${playerTravelPixel().x},${playerTravelPixel().y}`;
       const hit = intermittentEnemySpawn({
         gameMinutes: _lastEncMinutes + l + 1, inside: false,
-        inLocationRect: locationIndex.has(key),
+        // F061: IsPlayerInLocationRect is the WIDENED TOWN RECT
+        // (PlayerGPS.cs:687-699), not "this pixel has a location" -
+        // in the wilderness ring of a town's pixel the wilderness
+        // tables roll, day and night.
+        inLocationRect: _musicInLocationRect(),
         climateIndex: maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y),
         playerLevel: playerEntity.level,
       });
@@ -1637,6 +1647,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  ResetStreamingWorld), build the destination pixel, and land the
    *  player - at the pixel centre, or at an exact local position. */
   async function _teleportToPixel(px, py, localPos = null) {
+    _wasInLocationRect = false;   // F062: ResetState (:398-401) - no exit event on arrival
     for (const key of [...built.keys()]) {
       const [bx, by] = key.split(',').map(Number);
       destroyPixel(bx, by);
@@ -2642,7 +2653,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     exteriorBuildings: () => _questLoc()?.exterior?.buildings ?? null,
     factionName: (id) => townTalk.factionDict?.get(id)?.name ?? '',
     addOrReplaceQuestProgressRumor: (uid, m) => rumorMill.addOrReplaceQuestProgressRumor(uid, m),
-    undiscoverBuilding: (buildingKey) => undiscoverBuilding(`${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`, buildingKey),
+    // F099: TalkManager.cs:2958 passes onlyIfResidence=TRUE and the
+    // quest Place's buildingName - the bridge used to drop both, so
+    // the store's refusals were never reachable from the talk seam.
+    undiscoverBuilding: (buildingKey, buildingName) => undiscoverBuilding(`${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`, buildingKey, true, buildingName ?? null),
     talkPartner: () => npcSession.lastTargetStaticNPC ?? npcSession.lastTargetMobileNPC ?? null,
     onTopicListsUpdated: () => {},   // the talk window's refresh is TK-v's
   });
@@ -3654,6 +3668,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AreEnemiesNearby() term BOTH live pools, the city watch and the
     // encounter foes.
     syncTopics();   // T3d: the Where-is directory follows the location pixel
+    // F062: PlayerGPS.PlayerLocationRectCheck's transition pair
+    // (:674-716), played by the host frame loop AFTER syncTopics so
+    // _musicLoc is current - the no-location bail branch (:674-685)
+    // reads as the thunk answering false. Edge-triggered: the exit
+    // event fires ONCE, and PlayerEntity's handler clears the crime
+    // (PlayerEntity.cs:2449-2453).
+    {
+      const _inRect = _musicInLocationRect();
+      if (_wasInLocationRect && !_inRect) clearCrimeOnLocationExit(playerEntity);
+      _wasInLocationRect = _inRect;
+    }
     _playerStill = _lastPlayerPos &&
       Math.hypot(cam.pos[0] - _lastPlayerPos[0], cam.pos[2] - _lastPlayerPos[2]) < 0.001;
     _lastPlayerPos = [cam.pos[0], cam.pos[1], cam.pos[2]];

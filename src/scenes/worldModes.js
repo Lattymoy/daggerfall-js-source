@@ -69,7 +69,7 @@ import { ChoiceWindow } from '../ui/talkWindow.js';
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from '../ui/text.js';
 import { hudScale } from '../ui/hud.js';
-import { isShop, isRepairShop, stockShopShelf, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves
+import { isShop, isRepairShop, stockShopShelf, stockHouseContainer, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves
 import { identifySpellPass, identifiedTallyText } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll
 import { liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // X10: the Dispel Magic picker
 import { ListPickerWindow, listPickerArtLoaded } from '../ui/listPicker.js';   // X10
@@ -2582,13 +2582,24 @@ export function createWorldModes(host) {
         return true;
       }
       if (key.startsWith('container:')) {
-        // S2b: open the house container - synchronous transfer through
-        // the shared inventory (private furniture starts EMPTY; shops/
-        // quests fill these later; open-feedback pends the UI arc).
+        // S2b/F209: open the house container - PlayerActivate.cs
+        // :902-918. An OWNED house never stocks (DFU marks
+        // `stockedDate = 1` and breaks - the furniture is yours and
+        // empty); anyone else's stocks ON FIRST ACCESS through
+        // StockHouseContainer, the `??=` being the same null-latch
+        // the shop shelves ride. Then the synchronous transfer
+        // through the shared inventory (open-feedback and the
+        // private-property Yes/No box pend the UI arc).
         const c = interiorCtx.containers[Number(key.split(':')[1])];
         if (c) {
+          const b = interiorBuilding;
+          if (isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, b?.buildingKey)) {
+            c.items ??= [];
+          } else {
+            c.items ??= stockHouseContainer({ buildingType: b?.buildingType, record: c.record }, playerEntity);
+          }
           transferAll(c.items, playerEntity.items);
-            surfacePlayer();
+          surfacePlayer();
         }
         return true;
       }

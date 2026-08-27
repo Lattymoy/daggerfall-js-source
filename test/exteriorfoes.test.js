@@ -50,9 +50,12 @@ test('exteriorfoes: the world host - the cadence loop, the travel reset, the fac
   const s = src('world.js');
   const i = s.indexOf('function runEncounterTick');
   assert.ok(i > 0);
-  const fn = s.slice(i, i + 1400);
+  const fn = s.slice(i, i + 1800);
   assert.ok(fn.includes('intermittentEnemySpawn({'), 'the classic catch-up loop rolls per elapsed minute');
-  assert.ok(fn.includes('inLocationRect: locationIndex.has(key)'), 'the town rect reads the location index');
+  // AUDIT 26 F061: the roll branches on the WIDENED TOWN RECT
+  // (PlayerGPS.cs:687-699), not "this pixel has a location" - the old
+  // needle here pinned the conflation in.
+  assert.ok(fn.includes('inLocationRect: _musicInLocationRect(),'), 'the town branch reads the rect');
   assert.ok(fn.includes('maps.getClimateIndex('), 'the climate feeds the table pick');
   assert.ok(fn.includes('Math.min(now - _lastEncMinutes, 1440)'), 'the catch-up is bounded');
   assert.ok(s.includes('_lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // X-slice: PreventEnemySpawns parity'),

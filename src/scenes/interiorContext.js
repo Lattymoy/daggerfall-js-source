@@ -159,7 +159,12 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     if (isShopShelfModel(p.modelIdNum)) {
       shelves.push({ cpu, matrix, items: null });
     } else if (isHouseContainerModel(p.modelIdNum)) {
-      containers.push({ cpu, matrix, items: [], record: containerTextureRecord(p.modelIdNum) });
+      // F209: `items: null` IS the stock-once latch, the shelf idiom
+      // one line up - StockHouseContainer runs on first access
+      // (PlayerActivate.cs:915-918), and the scene cache preserves
+      // null so an unopened chest stays unstocked across visits. Born
+      // `[]` it read as already-stocked-empty and no one ever filled it.
+      containers.push({ cpu, matrix, items: null, record: containerTextureRecord(p.modelIdNum) });
     }
   }
   // Interior swing doors run on the ActionSystem (P4): the verbatim

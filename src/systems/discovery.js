@@ -14,6 +14,8 @@
 // pixel id when there is a map to draw, and the save shape below
 // already keys by that one string.
 
+import { isResidence } from '../world/buildingNames.js';   // RMBLayout.IsResidence (:753-760), House1-House4
+
 let _discovered = new Map();   // locationId -> Map(buildingKey -> record)
 
 /** DiscoverBuilding (:917-975): a no-op when already discovered
@@ -59,11 +61,29 @@ export function hasDiscoveredBuilding(locationId, buildingKey) {
   return _discovered.get(locationId)?.has(buildingKey) ?? false;
 }
 
-/** PlayerGPS.UndiscoverBuilding (:980-1010)'s store half: drop one
- *  building from a location's discovered set. TK-ii undiscovers quest
- *  RESIDENCES at topic-add so a previously discovered house does not
- *  pre-reveal on the automap when a quest names it. */
-export function undiscoverBuilding(locationId, buildingKey) {
+/** FactionFile.FactionIDs.The_Thieves_Guild / The_Dark_Brotherhood
+ *  (FactionFile.cs:91, :135) - the two hideout factions
+ *  UndiscoverBuilding shields UNCONDITIONALLY. */
+const THIEVES_GUILD_FACTION = 42;
+const DARK_BROTHERHOOD_FACTION = 108;
+
+/** PlayerGPS.UndiscoverBuilding (:986-1019): drop one building from a
+ *  location's discovered set - AFTER the three refusals, in DFU's
+ *  order (AUDIT 26 F099; the old cut deleted unconditionally):
+ *  a non-residence when onlyIfResidence is set (:1006-1007), a
+ *  Thieves Guild or Dark Brotherhood hideout ALWAYS - even on the
+ *  bank's house-sale call, which passes neither optional (:1010-1012)
+ *  - and a name that does not match the stored displayName
+ *  (:1015-1016). TK-ii undiscovers quest RESIDENCES at topic-add so a
+ *  previously discovered house does not pre-reveal on the automap
+ *  when a quest names it; both quest callers (TalkManager.cs:2958,
+ *  Quest.cs:655) pass (key, true, siteDetails.buildingName). */
+export function undiscoverBuilding(locationId, buildingKey, onlyIfResidence = false, matchName = null) {
+  const rec = _discovered.get(locationId)?.get(buildingKey);
+  if (!rec) return;
+  if (onlyIfResidence && !isResidence(rec.buildingType)) return;
+  if (rec.factionId === THIEVES_GUILD_FACTION || rec.factionId === DARK_BROTHERHOOD_FACTION) return;
+  if (matchName != null && matchName !== rec.displayName) return;
   _discovered.get(locationId)?.delete(buildingKey);
 }
 

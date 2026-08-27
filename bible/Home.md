@@ -269,20 +269,20 @@ combat line numbers below are refreshed with it.
 - `src/scenes/shared.js:262` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:367` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:774` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:809` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:815` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1251` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
-- `src/scenes/world.js:1709` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
-- `src/scenes/world.js:2112` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:2391` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:2564` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
-- `src/scenes/world.js:2656` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:2934` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:2961` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:3417` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:3754` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/world.js:3827` - (FLAGGED: exterior corpse containers are the loot arc's), so
+- `src/scenes/world.js:778` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:813` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:819` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1261` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
+- `src/scenes/world.js:1720` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
+- `src/scenes/world.js:2123` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:2402` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:2575` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
+- `src/scenes/world.js:2670` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:2948` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:2975` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:3431` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:3779` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:3852` - (FLAGGED: exterior corpse containers are the loot arc's), so
 - `src/scenes/worldModes.js:291` - rather than pretending to scan. FLAGGED.
 - `src/scenes/worldModes.js:440` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:588` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
@@ -308,11 +308,11 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:2046` - with the trade window's own mode flow, the same INTERIM the
 - `src/scenes/worldModes.js:2271` - first (owned houses and quest buildings FLAGGED/seamed per
 - `src/scenes/worldModes.js:2279` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
-- `src/scenes/worldModes.js:3080` - too. FLAGGED: interior loot containers are the loot arc's -
-- `src/scenes/worldModes.js:3222` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:3321` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:3659` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
-- `src/scenes/worldModes.js:4088` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
+- `src/scenes/worldModes.js:3091` - too. FLAGGED: interior loot containers are the loot arc's -
+- `src/scenes/worldModes.js:3233` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:3332` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:3670` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
+- `src/scenes/worldModes.js:4099` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
 - `src/systems/advancement.js:84` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/artifactEffects.js:21` - spawnAlliedFoe(mobileType) for the two summons - FLAGGED: the port
@@ -369,7 +369,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/sceneCache.js:154` - FLAGGED, with the slice it waits on:
 - `src/systems/settings.js:39` - INTERIM doctrine - named, not silently ignored)
 - `src/systems/shopStock.js:22` - INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);
-- `src/systems/shopStock.js:184` - (DaggerfallLootDataTables.cs:61). The INTERIM skip predated
+- `src/systems/shopStock.js:185` - (DaggerfallLootDataTables.cs:61). The INTERIM skip predated
 - `src/systems/skills.js:113` - *  AUDIT 18: the +10% used to be INTERIM 0 behind a flag blaming a
 - `src/systems/startingGear.js:3` - seedStartingEquipment's INTERIM iron dagger: a new character now
 - `src/systems/talk.js:17` - crime/quest slices - FLAGGED there, not here).
