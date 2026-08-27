@@ -259,8 +259,8 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:740` - effects FLAGGED to the effect-library slice.
 - `src/scenes/dungeonContext.js:750` - "database FLAGGED" narrows to the skill/loot message ids).
 - `src/scenes/dungeonContext.js:1246` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/dungeonContext.js:2957` - PX3 FLAGGED: questMessages - the dungeon quest mount is
-- `src/scenes/dungeonContext.js:3027` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
+- `src/scenes/dungeonContext.js:2997` - PX3 FLAGGED: questMessages - the dungeon quest mount is
+- `src/scenes/dungeonContext.js:3067` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
 - `src/scenes/exterior.js:556` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:562` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:790` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
@@ -288,32 +288,32 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:3657` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
 - `src/scenes/world.js:4016` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/world.js:4089` - (FLAGGED: exterior corpse containers are the loot arc's), so
-- `src/scenes/worldModes.js:784` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
-- `src/scenes/worldModes.js:867` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
-- `src/scenes/worldModes.js:876` - FLAGGED to the crime arc, as the Ledger records.
-- `src/scenes/worldModes.js:945` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
-- `src/scenes/worldModes.js:960` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
-- `src/scenes/worldModes.js:998` - credit instead. FLAGGED: there is nowhere to cash one yet, so
-- `src/scenes/worldModes.js:1167` - is the quest machine's, FLAGGED with it.
-- `src/scenes/worldModes.js:1172` - FLAGGED, above ground only, each with the DFU line it owes:
-- `src/scenes/worldModes.js:1266` - trade window in Sell mode. The BANKING arm stays FLAGGED below;
-- `src/scenes/worldModes.js:1361` - FLAGGED, each with the slice it waits on:
-- `src/scenes/worldModes.js:1590` - fixed ship scenes and stays FLAGGED, so those buttons keep
-- `src/scenes/worldModes.js:1622` - H3: the sell price, which was FLAGGED at zero because it needs
-- `src/scenes/worldModes.js:1800` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:1856` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
-- `src/scenes/worldModes.js:1914` - skip, the refusal line. Only the destination was a FLAGGED null,
-- `src/scenes/worldModes.js:2189` - been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:2234` - destination has been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:2253` - been FLAGGED nulls since G3.
-- `src/scenes/worldModes.js:2358` - with the trade window's own mode flow, the same INTERIM the
-- `src/scenes/worldModes.js:2583` - first (owned houses and quest buildings FLAGGED/seamed per
-- `src/scenes/worldModes.js:2591` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
-- `src/scenes/worldModes.js:3438` - too. FLAGGED: interior loot containers are the loot arc's -
-- `src/scenes/worldModes.js:3580` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:3679` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:4017` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
-- `src/scenes/worldModes.js:4148` - PX3 FLAGGED: questMessages - the quest machine lives on the
+- `src/scenes/worldModes.js:785` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
+- `src/scenes/worldModes.js:868` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
+- `src/scenes/worldModes.js:877` - FLAGGED to the crime arc, as the Ledger records.
+- `src/scenes/worldModes.js:946` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
+- `src/scenes/worldModes.js:961` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
+- `src/scenes/worldModes.js:999` - credit instead. FLAGGED: there is nowhere to cash one yet, so
+- `src/scenes/worldModes.js:1168` - is the quest machine's, FLAGGED with it.
+- `src/scenes/worldModes.js:1173` - FLAGGED, above ground only, each with the DFU line it owes:
+- `src/scenes/worldModes.js:1267` - trade window in Sell mode. The BANKING arm stays FLAGGED below;
+- `src/scenes/worldModes.js:1362` - FLAGGED, each with the slice it waits on:
+- `src/scenes/worldModes.js:1591` - fixed ship scenes and stays FLAGGED, so those buttons keep
+- `src/scenes/worldModes.js:1623` - H3: the sell price, which was FLAGGED at zero because it needs
+- `src/scenes/worldModes.js:1801` - FactionData; the port's pre-chargen INTERIM entity does not, and
+- `src/scenes/worldModes.js:1857` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
+- `src/scenes/worldModes.js:1915` - skip, the refusal line. Only the destination was a FLAGGED null,
+- `src/scenes/worldModes.js:2190` - been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:2235` - destination has been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:2254` - been FLAGGED nulls since G3.
+- `src/scenes/worldModes.js:2359` - with the trade window's own mode flow, the same INTERIM the
+- `src/scenes/worldModes.js:2584` - first (owned houses and quest buildings FLAGGED/seamed per
+- `src/scenes/worldModes.js:2592` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
+- `src/scenes/worldModes.js:3463` - too. FLAGGED: interior loot containers are the loot arc's -
+- `src/scenes/worldModes.js:3605` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:3704` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:4042` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
+- `src/scenes/worldModes.js:4173` - PX3 FLAGGED: questMessages - the quest machine lives on the
 - `src/systems/advancement.js:84` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED

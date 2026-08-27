@@ -39,6 +39,7 @@ import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U14: t
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { totalWeight } from '../systems/inventory.js';   // F027: PlayerEntity.CarriedWeight
+import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
 
 // Water surface color: presentation choice (see renderer WATER_VS note).
 // R11: the surface is the classic water tile (climate ground archive
@@ -255,6 +256,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // Verbatim dungeon lighting: PlayerAmbientLight.DungeonAmbientLight,
   // no sun; every light flickers (DaggerfallLight Animate).
   renderer.setLighting(new Float32Array(DUNGEON_AMBIENT), 0);
+  renderer.setWindowEmission(windowEmissionRGB('day'));   // F001: SetDungeonTextures keeps GetMaterial's Day default (MaterialReader.cs:456-461)
   // Verbatim DungeonFogSettings: exponential 0.005, fog color black.
   renderer.setFog('exp', 0.005, 0, 0, new Float32Array([0, 0, 0]));
 
@@ -459,6 +461,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
     const view = lookAt(cam.pos, target, [0, 1, 0]);
 
     ctx.flicker.tick(dt);
+    // AUDIT 26 F183: per FRAME, not once at load - the ambient depends
+    // on which block the player stands in (PlayerAmbientLight.cs:82-90),
+    // so it has to follow them across a castle or special-area
+    // boundary the way the load-time write never could.
+    renderer.setLighting(new Float32Array(ctx.ambient), 0);
     renderer.setPointLights(
       withPlayerLights(nearestLights(ctx.lights, cam.pos, 16, ctx.flicker.ranges),
         ctx.candleLight?.(), playerTorchLight(playerEntity, player.pos, cam.yaw)),   // X11 candle; T1 torch

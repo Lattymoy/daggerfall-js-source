@@ -12,6 +12,31 @@ import { GLOBAL_SCALE } from './meshReader.js';
 import { RDB_RESOURCE_TYPES } from '../formats/blocksFile.js';
 
 export const DUNGEON_AMBIENT = Object.freeze([0.12, 0.12, 0.12]);
+/** AUDIT 26 F183 - the two ambients a dungeon can take INSTEAD.
+ *  UpdateAmbientLight (PlayerAmbientLight.cs:82-90) tests the castle
+ *  block FIRST, then the special area, and only the plain-dungeon arm
+ *  is multiplied by Settings.DungeonAmbientLightScale:
+ *
+ *      if (IsPlayerInsideDungeonCastle)   CastleAmbientLight
+ *      else if (IsPlayerInsideSpecialArea) SpecialAreaLight
+ *      else                                DungeonAmbientLight * scale
+ *
+ *  Both declared 0.58 (:32-33). Kept as two constants rather than one
+ *  alias because they are two distinct serialized fields - an
+ *  inspector override could split them, and this clone carries no
+ *  scenes to say whether one has. */
+export const CASTLE_AMBIENT = Object.freeze([0.58, 0.58, 0.58]);
+export const SPECIAL_AREA_AMBIENT = Object.freeze([0.58, 0.58, 0.58]);
+/** SpecialAreaCheck (PlayerEnterExit.cs:1221-1238): exactly one block
+ *  name, the Daggerfall treasure room. */
+export const SPECIAL_AREA_BLOCK = 'S0000161.RDB';
+
+/** The selector, so neither host can get the precedence wrong. */
+export function dungeonAmbientFor({ inCastle = false, inSpecialArea = false } = {}) {
+  if (inCastle) return CASTLE_AMBIENT;
+  if (inSpecialArea) return SPECIAL_AREA_AMBIENT;
+  return DUNGEON_AMBIENT;
+}
 export const DUNGEON_LIGHT_INTENSITY = 0.8;
 export const DUNGEON_LIGHT_COLOR = Object.freeze([
   DUNGEON_LIGHT_INTENSITY, DUNGEON_LIGHT_INTENSITY, DUNGEON_LIGHT_INTENSITY,

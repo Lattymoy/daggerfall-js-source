@@ -186,6 +186,7 @@ import { positionHash, staticNpcData } from './questBridge.js';   // B7: the gui
 import { staticNpcName, getNameBankOfRegion, isChildNPCData } from '../characters/staticNpc.js';   // wave 24: StaticNPC.DisplayName
 import { GENDERS } from '../characters/nameHelper.js';
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
+import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
 let _charT0 = (typeof performance !== 'undefined' ? performance.now() : 0);
 let _charAnimMode = 'idle'; // in-engine character animation: idle | walk | off (window.__anim)
 
@@ -3301,7 +3302,21 @@ export function createWorldModes(host) {
       if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:219's `if (!held)` - a paused game advances no movers
       if (!overlayHeld) dungeonCtx.automapTick?.(dt, cam.pos, fwd);   // A1: the 5 Hz reveal probes ride the same gate
       dungeonCtx.flicker.tick(dt);
-      renderer.setLighting(new Float32Array(DUNGEON_AMBIENT), 0);
+      // AUDIT 26 F183: castle blocks and the one special area take
+      // 0.58 where a plain dungeon takes 0.12 (PlayerAmbientLight.cs
+      // :82-90) - Castle Daggerfall, Wayrest and Sentinel's non-hostile
+      // wings rendered about five times darker than DFU. The predicate
+      // was already live here, driving music and water sounds.
+      renderer.setLighting(new Float32Array(dungeonCtx.ambient), 0);
+      // AUDIT 26 F001: a dungeon mesh is textured by SetDungeonTextures
+      // (DaggerfallMesh.cs:153-169), which calls GetMaterial with NO
+      // window style - so a dungeon's window records keep the colour a
+      // window material is BORN with, DayWindowColor * DayWindowIntensity
+      // (MaterialReader.cs:456-461). Written explicitly because the
+      // emission tint is one renderer global: before this every
+      // non-exterior host simply inherited whatever the exterior last
+      // wrote, so a dungeon entered at night glowed amber.
+      renderer.setWindowEmission(windowEmissionRGB('day'));
       renderer.setFog('exp', 0.005, 0, 0, new Float32Array([0, 0, 0]));
       renderer.setPointLights(
         withPlayerLights(nearestLights(dungeonCtx.lights, cam.pos, 16, dungeonCtx.flicker.ranges),
@@ -3335,6 +3350,16 @@ export function createWorldModes(host) {
     // night interior takes the darker purple-tinted ambient.
     renderer.setLighting(new Float32Array(isNight(worldMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT), 0);
     renderer.setFog('exp', 0.001, 0, 0, new Float32Array([0, 0, 0]));
+    // AUDIT 26 F001: DaggerfallInterior lays out EVERY interior mesh
+    // with WindowStyle.Disabled - individual models (:473), the
+    // combined static batch (:517) and action doors (:1270) - and
+    // Disabled is EmissionColor Color.black outright
+    // (MaterialReader.cs:933-935). Nothing re-lights it mid-visit
+    // either: the interior is created as a ROOT GameObject
+    // (PlayerEnterExit.cs:713), so DaggerfallLocation's Day/Night
+    // re-apply on the city-lights edge never reaches it. The port's
+    // exterior glow used to follow the player indoors.
+    renderer.setWindowEmission(windowEmissionRGB('disabled'));
     renderer.setPointLights(
       withPlayerLights(nearestLights(interiorCtx.lights, cam.pos, 16, interiorCtx.lights.map((l) => l.range)),
         magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw)),   // per-light range (DaggerfallInterior.AddLight); a scalar drops the per-record switch   // X11 candle; T1 torch
