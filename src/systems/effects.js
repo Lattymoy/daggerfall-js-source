@@ -578,7 +578,16 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
   // (CastSpellOnFoe's queue drain, CastSpellDo) land with no save
   // rolled, which is exactly the CasterOnly no-save arm below.
   // Immunities are NOT saves and still apply, as in DFU.
-  const saveScaled = spell.rangeType !== 0 && !ctx.bypassSavingThrows;   // GetMagnitude's CasterOnly gate (S15)
+  // AUDIT 26 F071: TWO predicates, because DFU has two laws. The
+  // bypass flag gates the ASSIGN-TIME gates alone - reflection and
+  // resistance (:521, :525) and the no-magnitude saving throw
+  // (:565-568). GetMagnitude's per-application ModifyEffectAmount has
+  // NO bypass term (EntityEffect.cs:804-806): it runs for every
+  // non-CasterOnly bundle, so a quest-queued Damage Health is still
+  // save-scaled on every application. The port folded the flag into
+  // one predicate and a bypassed magnitude cast landed whole.
+  const saveScaled = spell.rangeType !== 0;                              // GetMagnitude's CasterOnly gate (S15)
+  const assignSave = saveScaled && ctx.bypassSavingThrows !== true;      // AssignBundle's :565-580 gate
   // L2-slice (AUDIT 23 magic-11) - FormulaHelper.GetElementType
   // (:1630-1634): an effect whose AllowedElements is MAGIC-ONLY
   // always saves as MAGIC, whatever element the parent spell rode in
@@ -641,6 +650,15 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     // has no classic pair to carry, so it rides with type -1. Every
     // other -1 is the classic reader's empty-slot sentinel.
     if (e.type <= -1 && !e.key) continue;
+    // AUDIT 26 F074: the hard-immunity drop for an incoming Paralyze
+    // sits BEFORE the absorption/reflection/resistance chain - the
+    // `continue` at EEM:495-498 precedes the caster block at
+    // :504-527. Tested inside the paralyze arm (downstream of
+    // reflection), a player under Free Action with Spell Reflection
+    // up BOUNCED a spider's paralyze back at its caster, and the
+    // resistance gate could print "Spell was resisted." - DFU
+    // discards it silently before either gate can run.
+    if (isParalyze(e) && isEntityImmuneToParalysis(target)) continue;
     // DFU requires a CASTER ENTITY on the bundle (:505) and
     // BundleType == Spell (:509). The port's applySpell is the spell
     // path only, so the caster check is the whole gate here; item and
@@ -772,7 +790,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       if (!dice100(chanceValue(e, casterLevel), rolls())) { out.chanceFailed = (out.chanceFailed ?? 0) + 1; continue; }
       // The no-magnitude save (SupportMagnitude is never set on this
       // class), skipped for a CasterOnly cast exactly as X2's arms are.
-      if (saveScaled && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {
+      if (assignSave && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {
         out.saved = (out.saved ?? 0) + 1;
         continue;
       }
@@ -814,6 +832,10 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // TRANSFER incumbent never claims a plain Drain (its test
       // needs a TransferEffect). The claimed entry keeps its own
       // kind; the old same-kind-only search split the pools.
+      // AUDIT 26 F075: DrainEffect (Transfer IS-A Drain) calls
+      // PlayerAggro (EntityEffect.cs:815-828) - an invisible player
+      // draining a foe breaks cover.
+      handleAttackFromSource(caster?.entity ?? null);
       const kind = isDrainAttribute(e) ? 'drainAttribute' : 'transferAttribute';
       const stat = STAT_KEYS_ORDER[e.subType];
       const amt = magnitude(e);
@@ -842,6 +864,12 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       continue;
     }
     if (isTransferHealth(e)) {
+      // AUDIT 26 F075: TransferHealth damages through
+      // DamageHealthFromSource (DaggerfallEntityBehaviour.cs:143-169),
+      // whose tail breaks the caster's normal-power concealment -
+      // amount and caster gates notwithstanding, as the damageHealth
+      // arm already records.
+      handleAttackFromSource(caster?.entity ?? null);
       // TransferHealth (11, 8): requires a caster (DFU MagicRound
       // returns before acting without one) - damage target, heal
       // caster by the same magnitude.
@@ -857,6 +885,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       continue;
     }
     if (isTransferFatigue(e)) {
+      handleAttackFromSource(caster?.entity ?? null);   // AUDIT 26 F075: DamageFatigueFromSource's tail
       // TransferFatigue (11, 9): requires a caster - fatigue x64 both
       // directions (DamageFatigueFromSource / IncreaseFatigue, both
       // assignMultiplier: true).
@@ -943,12 +972,14 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       continue;
     }
     if (isParalyze(e)) {
-      // S22: AssignBundle drops an incoming Paralyze BEFORE Start
-      // when the entity is hard-immune - silently, no stack, no
-      // chance roll, no message (EntityEffectManager.cs:496).
-      // L2-slice (magic-10): the gate is the MANAGER's check, which
-      // carries the career/racial arms beside the FreeAction flag.
-      if (isEntityImmuneToParalysis(target)) continue;
+      // S22/magic-10's immunity drop moved to the TOP of the loop
+      // (AUDIT 26 F074): EEM:495-498 runs it before the caster block,
+      // so it cannot sit here behind reflection and resistance.
+      // AUDIT 26 F075: Paralyze.Start opens with PlayerAggro()
+      // (Paralyze.cs:48) - BEFORE the chance and save gates, since
+      // AssignBundle calls Start at :531 - so the attack-from-source
+      // break fires on every non-immune assign, chance notwithstanding.
+      handleAttackFromSource(caster?.entity ?? null);
       // Paralyze (0, 255): AssignBundle's exact gate order. The
       // chance rolls ALWAYS (SetChanceSuccess runs in Start); an
       // incumbent re-cast stacks its rounds INSIDE Start (AddState)
@@ -965,7 +996,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
         const inc = findInc((a) => a.kind === 'paralyze');
         if (inc) inc.roundsRemaining += rounds;
         else if (chanceOk) {
-          if (!saveScaled || savingThrow(spell.element, EFFECT_FLAGS.Paralysis | flag, target, 0, rolls) !== 0) {
+          if (!assignSave || savingThrow(spell.element, EFFECT_FLAGS.Paralysis | flag, target, 0, rolls) !== 0) {
             pushActive(target, { kind: 'paralyze', roundsRemaining: rounds }, sinks, rolls);
             out.paralyzed = (out.paralyzed ?? 0) + 1;   // "You are paralyzed." rides this (player hosts, once per instance)
           } else {
@@ -983,7 +1014,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // the initial MagicRound cures (immediate bundle removal).
       const chanceOk = ctx.bypassChance === true || dice100(chanceValue(e, casterLevel), rolls());   // E2: BypassChance
       if (!chanceOk) { out.chanceFailed = (out.chanceFailed ?? 0) + 1; continue; }
-      if (saveScaled && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {   // magic-11: cures save as MAGIC
+      if (assignSave && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {   // magic-11: cures save as MAGIC
         out.saved = (out.saved ?? 0) + 1;
         continue;
       }
@@ -1053,7 +1084,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     if (isSpellAbsorptionEffect(e) || isSpellResistanceEffect(e)
       || isSpellReflectionEffect(e) || isComprehendLanguages(e)) {
       // X2: the same no-magnitude saving throw as above.
-      if (saveScaled && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {
+      if (assignSave && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {
         out.saved = (out.saved ?? 0) + 1;
         continue;
       }
@@ -1094,7 +1125,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // declare SupportMagnitude = false, so AssignBundle rolls the
       // target's save on any non-CasterOnly cast and drops the effect
       // WHOLE when it makes it - a By-Touch buff can be refused.
-      if (saveScaled && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {
+      if (assignSave && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {
         out.saved = (out.saved ?? 0) + 1;
         continue;
       }
@@ -1228,6 +1259,16 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
         : enemyGroupOf(mt) === PACIFY_GROUP[classicSub(e)];
       if (!matches) continue;                   // a mismatch is silent, exactly as DFU's `if` is
       if (!dice100(chanceValue(e, casterLevel), rolls())) { out.chanceFailed = (out.chanceFailed ?? 0) + 1; continue; }
+      // AUDIT 26 F072/F073: the no-magnitude saving throw (EEM:565-580).
+      // PacifyEffect (:60-63) and CharmEffect (:33-44) declare
+      // SupportMagnitude false and no bypass, so on a non-CasterOnly
+      // cast the target saves against the ENTIRE effect - a
+      // high-willpower or magic-tolerant monster can shrug either off,
+      // which the chance roll alone never allowed.
+      if (assignSave && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {
+        out.saved = (out.saved ?? 0) + 1;
+        continue;
+      }
       out.pacify = true;
       continue;
     }
@@ -1303,6 +1344,18 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
         // so a recast cannot sharpen a trap already running.
         if (inc) inc.roundsRemaining += rounds;
         else {
+          // AUDIT 26 F072: the no-magnitude saving throw (EEM:565-580).
+          // SoulTrap's CAST chance is hardcoded true (SoulTrap.cs:47-52,
+          // saved for the kill roll), but SupportMagnitude is false and
+          // there is no bypass - so AssignBundle still rolls the
+          // target's save on a non-CasterOnly cast and drops a NEW trap
+          // whole. The incumbent STACK above survives it, because
+          // AddState runs inside Start, before the save (the buff
+          // family's own quirk, same gate order).
+          if (assignSave && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {
+            out.saved = (out.saved ?? 0) + 1;
+            continue;
+          }
           pushActive(target, { kind: 'soulTrap', chance: chanceValue(e, casterLevel), roundsRemaining: rounds }, sinks, rolls);
           out.trapAlert = 'trapActive';   // BecomeIncumbent speaks only for a NEW incumbent
         }
@@ -1323,13 +1376,19 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // supports chance (Silence.cs:32 - every other buff class sets
       // duration alone), on the OnCast default.
       const rounds = rollDuration(e, casterLevel);
+      // AUDIT 26 F075: Silence.Start opens with PlayerAggro()
+      // (Silence.cs:48) - Start runs at AssignBundle:531, BEFORE the
+      // chance and save gates, so an invisible player silencing a foe
+      // breaks cover even when the cast then fails its chance. The
+      // other buff kinds' classes carry no aggro call.
+      if (kind === 'silenced') handleAttackFromSource(caster?.entity ?? null);
       if (rounds > 0) {
         const inc = findInc((a) => a.kind === kind);
         if (inc) inc.roundsRemaining += rounds;             // incumbent STACKS (F12; = ConcealmentEffect.AddState)
         const chanceOk = kind !== 'silenced' || ctx.bypassChance === true || dice100(chanceValue(e, casterLevel), rolls());   // E2: BypassChance
         if (!chanceOk) { out.chanceFailed = (out.chanceFailed ?? 0) + 1; continue; }
         if (!inc) {
-          if (saveScaled && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {   // magic-11: concealments save as MAGIC
+          if (assignSave && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {   // magic-11: concealments save as MAGIC
             out.saved = (out.saved ?? 0) + 1;
             continue;
           }
