@@ -282,38 +282,38 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:3468` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
 - `src/scenes/world.js:3816` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/world.js:3889` - (FLAGGED: exterior corpse containers are the loot arc's), so
-- `src/scenes/worldModes.js:292` - rather than pretending to scan. FLAGGED.
-- `src/scenes/worldModes.js:441` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
-- `src/scenes/worldModes.js:589` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
-- `src/scenes/worldModes.js:670` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
-- `src/scenes/worldModes.js:679` - FLAGGED to the crime arc, as the Ledger records.
-- `src/scenes/worldModes.js:748` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
-- `src/scenes/worldModes.js:763` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
-- `src/scenes/worldModes.js:801` - credit instead. FLAGGED: there is nowhere to cash one yet, so
-- `src/scenes/worldModes.js:944` - is the quest machine's, FLAGGED with it.
-- `src/scenes/worldModes.js:949` - FLAGGED, above ground only, each with the DFU line it owes:
-- `src/scenes/worldModes.js:1043` - trade window in Sell mode. The BANKING arm stays FLAGGED below;
-- `src/scenes/worldModes.js:1132` - FLAGGED, each with the slice it waits on:
-- `src/scenes/worldModes.js:1361` - fixed ship scenes and stays FLAGGED, so those buttons keep
-- `src/scenes/worldModes.js:1393` - H3: the sell price, which was FLAGGED at zero because it needs
-- `src/scenes/worldModes.js:1571` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:1627` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
-- `src/scenes/worldModes.js:1685` - skip, the refusal line. Only the destination was a FLAGGED null,
-- `src/scenes/worldModes.js:1856` - FLAGGED: a coven's failure spawns daedric foes ON YOU
-- `src/scenes/worldModes.js:1860` - if (r.spawnFoes) console.warn('[summon] a coven failure owes you daedra; the interior has no foe pool (FLAGGED)');
-- `src/scenes/worldModes.js:1890` - FLAGGED: a refusal owes 3-5 daedra at 8..64 units
-- `src/scenes/worldModes.js:1893` - spawnRefusalFoes: () => console.warn('[summon] a refusal owes you daedra; the interior has no foe pool (FLAGGED)'),
-- `src/scenes/worldModes.js:1952` - been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:1994` - destination has been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:2013` - been FLAGGED nulls since G3.
-- `src/scenes/worldModes.js:2118` - with the trade window's own mode flow, the same INTERIM the
-- `src/scenes/worldModes.js:2343` - first (owned houses and quest buildings FLAGGED/seamed per
-- `src/scenes/worldModes.js:2351` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
-- `src/scenes/worldModes.js:3163` - too. FLAGGED: interior loot containers are the loot arc's -
-- `src/scenes/worldModes.js:3305` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:3404` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:3742` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
-- `src/scenes/worldModes.js:4171` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
+- `src/scenes/worldModes.js:293` - rather than pretending to scan. FLAGGED.
+- `src/scenes/worldModes.js:442` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
+- `src/scenes/worldModes.js:590` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
+- `src/scenes/worldModes.js:671` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
+- `src/scenes/worldModes.js:680` - FLAGGED to the crime arc, as the Ledger records.
+- `src/scenes/worldModes.js:749` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
+- `src/scenes/worldModes.js:764` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
+- `src/scenes/worldModes.js:802` - credit instead. FLAGGED: there is nowhere to cash one yet, so
+- `src/scenes/worldModes.js:945` - is the quest machine's, FLAGGED with it.
+- `src/scenes/worldModes.js:950` - FLAGGED, above ground only, each with the DFU line it owes:
+- `src/scenes/worldModes.js:1044` - trade window in Sell mode. The BANKING arm stays FLAGGED below;
+- `src/scenes/worldModes.js:1133` - FLAGGED, each with the slice it waits on:
+- `src/scenes/worldModes.js:1362` - fixed ship scenes and stays FLAGGED, so those buttons keep
+- `src/scenes/worldModes.js:1394` - H3: the sell price, which was FLAGGED at zero because it needs
+- `src/scenes/worldModes.js:1572` - FactionData; the port's pre-chargen INTERIM entity does not, and
+- `src/scenes/worldModes.js:1628` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
+- `src/scenes/worldModes.js:1686` - skip, the refusal line. Only the destination was a FLAGGED null,
+- `src/scenes/worldModes.js:1857` - FLAGGED: a coven's failure spawns daedric foes ON YOU
+- `src/scenes/worldModes.js:1861` - if (r.spawnFoes) console.warn('[summon] a coven failure owes you daedra; the interior has no foe pool (FLAGGED)');
+- `src/scenes/worldModes.js:1891` - FLAGGED: a refusal owes 3-5 daedra at 8..64 units
+- `src/scenes/worldModes.js:1894` - spawnRefusalFoes: () => console.warn('[summon] a refusal owes you daedra; the interior has no foe pool (FLAGGED)'),
+- `src/scenes/worldModes.js:1953` - been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:1998` - destination has been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:2017` - been FLAGGED nulls since G3.
+- `src/scenes/worldModes.js:2122` - with the trade window's own mode flow, the same INTERIM the
+- `src/scenes/worldModes.js:2347` - first (owned houses and quest buildings FLAGGED/seamed per
+- `src/scenes/worldModes.js:2355` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
+- `src/scenes/worldModes.js:3167` - too. FLAGGED: interior loot containers are the loot arc's -
+- `src/scenes/worldModes.js:3309` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:3408` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:3746` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
+- `src/scenes/worldModes.js:4175` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
 - `src/systems/advancement.js:84` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/artifactEffects.js:21` - spawnAlliedFoe(mobileType) for the two summons - FLAGGED: the port
@@ -362,7 +362,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/passiveSpecials.js:8` - arms FLAGGED since E1.
 - `src/systems/playerTorch.js:12` - arm is FLAGGED here rather than guessed - see the note below.
 - `src/systems/playerTorch.js:51` - FLAGGED (blocked on data this reference tree does not carry): the
-- `src/systems/potions.js:241` - FLAGGED, with the slice it waits on:
+- `src/systems/potions.js:245` - FLAGGED, with the slice it waits on:
 - `src/systems/races.js:6` - port had only ever instantiated for Breton (the loud INTERIM the
 - `src/systems/regionConditions.js:25` - consequences are FLAGGED in court.js).
 - `src/systems/save.js:132` - (playerEntity's INTERIM skills: 30) - spreading it threw.

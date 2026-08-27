@@ -32,6 +32,7 @@ import { layoutMessageBox, drawMessageBox } from './messageBox.js';
 import { ListPickerWindow, listPickerArtLoaded } from './listPicker.js';
 import { makeIconDrawer, drawStackLabel } from './itemScroller.js';
 import { audio } from '../systems/audio.js';
+import { isEnchanted } from '../systems/inventory.js';   // F176: Refresh's !IsEnchanted (:148)
 import { SOUND } from '../systems/soundClips.js';
 import {
   CAULDRON_CAPACITY, cauldronAccepts, mixCauldron, consumeCauldron,
@@ -130,17 +131,27 @@ export class PotionMakerWindow {
 
   _close() { this.done = true; this.hooks.onClose?.(); }
 
-  /** The pack's ingredients, minus what is already in the cauldron.
-   *  DFU moves the item OUT of its ingredients collection when it goes
-   *  in the pot, which is the same thing seen from the other side. */
+  /** The pack's ingredients, minus the UNITS already in the cauldron.
+   *  AUDIT 26 F174/F176: DFU's Refresh collects `item.IsIngredient &&
+   *  !item.IsEnchanted` (:147-149) - an enchanted gem cannot be
+   *  ground into a potion - and AddToCauldron splits ONE unit off a
+   *  stack (:251-264), so the remainder stays visible and addable.
+   *  The old cut filtered on the template flag alone and removed the
+   *  whole stack OBJECT by identity: a stack of N elderberries
+   *  vanished while one unit sat in the pot. */
   ingredients() {
-    const inPot = [...this.cauldron];
-    return (this.hooks.packItems?.() ?? []).filter((it) => {
-      if (!isIngredient(it)) return false;
-      const at = inPot.findIndex((c) => c === it);
-      if (at >= 0) { inPot.splice(at, 1); return false; }
-      return true;
-    });
+    const potted = new Map();
+    for (const c of this.cauldron) potted.set(c.templateIndex, (potted.get(c.templateIndex) ?? 0) + 1);
+    const out = [];
+    for (const it of this.hooks.packItems?.() ?? []) {
+      if (!isIngredient(it) || isEnchanted(it)) continue;
+      const held = it.stackCount ?? 1;
+      const take = Math.min(potted.get(it.templateIndex) ?? 0, held);
+      if (take > 0) potted.set(it.templateIndex, (potted.get(it.templateIndex) ?? 0) - take);
+      const left = held - take;
+      if (left > 0) out.push(left === held ? it : { ...it, stackCount: left });
+    }
+    return out;
   }
 
   /** AddToCauldron (:251-264) - a full pot simply refuses, with no
@@ -148,7 +159,9 @@ export class PotionMakerWindow {
   _addToCauldron(item) {
     if (!cauldronAccepts(this.cauldron)) return;
     this.nameLabel = '';
-    this.cauldron.push(item);
+    // SplitStack(item, 1) (:257-258): the pot holds ONE unit; the
+    // remainder stays in the grid through ingredients()'s subtraction.
+    this.cauldron.push({ ...item, stackCount: 1 });
   }
 
   /** ItemsUpButton/ItemsDownButton_OnMouseClick (ItemListScroller.cs:
@@ -167,23 +180,32 @@ export class PotionMakerWindow {
     this.cauldron.splice(slot, 1);
   }
 
-  /** MixCauldron (:311-345), through the law. */
+  /** MixCauldron (:311-345), through the law. AUDIT 26 F173: the
+   *  button plays its click and mixes only `if (cauldron.Count > 0)`
+   *  (:393-398) - an empty pot used to hash to no recipe and pop the
+   *  POTION_FAILED box DFU never shows. */
   _mix() {
     audio.playOneShot(SOUND.ButtonClick, 1);
+    if (this.cauldron.length === 0) return;
     const result = mixCauldron(this.cauldron.map((it) => it.templateIndex));
     if (result.kind === 'failed') {
       this.box = { rows: [{ text: POTION_FAILED, center: true }] };
     } else {
       this.hooks.addPotion?.(result.recipe, result.key);
-      this.nameLabel = result.recipe.name;
+      // F177: MixCauldron never touches the name label (:311-360) -
+      // only AddRecipeToCauldron writes it (:307); the old mix-time
+      // write inverted DFU's label.
       this.box = { rows: [{ text: POTION_MIXED, center: true }] };
       audio.playOneShot(SOUND.MakePotion, 1);
     }
     // The ingredients are spent EITHER WAY, and the walk can break
     // partway - which leaves the cauldron un-emptied, verbatim.
     const spend = consumeCauldron(this.cauldron, {
-      takeFromPack: (t) => !!this.hooks.takeOne?.(t, 'pack'),
-      takeFromWagon: (t) => !!this.hooks.takeOne?.(t, 'wagon'),
+      // F176: GetItem(group, template, allowEnchantedItem: false)
+      // (:338, :345) - the group rides along so the host can refuse
+      // to spend an enchanted twin of a plain reagent.
+      takeFromPack: (t, g) => !!this.hooks.takeOne?.(t, 'pack', g),
+      takeFromWagon: (t, g) => !!this.hooks.takeOne?.(t, 'wagon', g),
     });
     if (spend.kind === 'spent') this.cauldron = [];
   }
