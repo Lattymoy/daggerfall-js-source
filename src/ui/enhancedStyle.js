@@ -1167,6 +1167,47 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .px-disclose { width: auto; margin: 10px auto 0; }
 .px-stat .v.won { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
 .px-stat .v.bad { color: var(--blood); }
+/* ── PX7: THE SYSTEM PAGE ── the shell's own panes repainted in whole
+   pixels. The LAWS stay in the pane functions; every rule here is
+   paint over the same markup (.card/.act/.empty/.stats/.tag/.row). */
+.px-sys .card, .px-sys .dcard { background: rgba(0,0,0,0.35); border: 2px solid rgba(125,116,96,0.55);
+  padding: 16px 20px; margin: 0 0 14px; }
+.px-sys h3 { font-family: inherit;   /* the shell's own h3 rule sets Cormorant; the window is pixel */
+  font-size: 22px; font-weight: 400; letter-spacing: 0.12em; text-indent: 0.12em;
+  text-transform: uppercase; margin: 0 0 6px; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-sys p, .px-sys .meta { color: #c5bda2; font-size: 16px; line-height: 1.5; margin: 0 0 8px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-sys .tag { display: inline-block; color: rgb(243,239,44); font-size: 12px;
+  letter-spacing: 0.24em; text-indent: 0.24em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgb(93,77,12); margin: 0 0 4px; }
+.px-sys .stats { display: grid; grid-template-columns: auto 1fr; gap: 4px 18px; margin: 8px 0 10px; }
+.px-sys .stats dt { color: #7d7460; font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.px-sys .stats dd { margin: 0; font-size: 16px; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-sys .acts { display: flex; gap: 12px; margin-top: 10px; }
+.px-sys .act { font: inherit; font-size: 17px; letter-spacing: 0.16em; text-indent: 0.16em;
+  text-transform: uppercase; color: #d8cfae; background: none; cursor: pointer;
+  border: 2px solid rgba(125,116,96,0.55); padding: 8px 20px; min-height: 44px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); transition: none; }
+.px-sys .act:hover, .px-sys .act:focus-visible { outline: none; color: rgb(243,239,44);
+  border-color: var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-sys .act.primary { color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-sys .act:disabled { color: rgba(125,116,96,0.45); border-color: rgba(125,116,96,0.3);
+  cursor: default; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.px-sys .empty { text-align: center; margin: 14px 0; }
+.px-sys .empty h3 { font-size: 17px; color: #c5bda2; }
+.px-sys .empty p { color: #7d7460; font-size: 15px; }
+/* Mods' DFU-switch rows keep their shell markup; here they read as
+   quiet key/value rows. */
+.px-sys .row { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  border-bottom: 2px solid rgba(125,116,96,0.3); min-height: 44px; }
+.px-sys .row-main { font: inherit; background: none; border: 0; color: inherit; text-align: left;
+  cursor: default; padding: 6px 0; }
+.px-sys .row-name { font-size: 15px; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-sys .ctl { display: flex; align-items: center; gap: 8px; }
+.px-sys .ctl .val { color: #7d7460; font-size: 14px; letter-spacing: 0.1em;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 .px-qdetail { flex: 1; padding: 4px 6px 4px 22px; overflow-y: auto; }
 .px-qname { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 6px 0 14px; }
 .px-qname h3 { font-size: 24px; font-weight: 400; letter-spacing: 0.14em; text-indent: 0.14em;

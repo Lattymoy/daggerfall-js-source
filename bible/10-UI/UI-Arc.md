@@ -6534,4 +6534,26 @@ window does not know where you stand, so a number without its region
 would be a lying row; it waits on a host region seam. Probed live
 with a mid-game Battlemage: 3 vitals meters, 12 career skill rows
 growing to 35 through the disclosure, 5 standing rows with 2 gold
-and 2 blood, zero page errors both viewports.
+and 2 blood, zero page errors both viewports. (Follow-up, Mac: the
+Standing caption removed.)
+
+PX7 (same day, Mac): THE SYSTEM PAGE. The journal's bones a third
+time - and NOT a third implementation of anything: the rail is the
+pause list (Resume ACTS from the rail, the shell's own RAIL_ACTS
+reasoning; Settings alone still opens its shell, because three
+columns of 171 keys need the room an 860px window does not have and
+a cramped settings page is worse than a door to a good one), and the
+detail renders the SAME pane functions the shell has always run -
+paneSave's overwrite card, paneLoad's no-confirm law and its
+delete-behind-ask, paneMods' honest waiting room, paneAbout,
+paneExit's confirm - so every audited law keeps its one home and
+ONLY THE PAINT changed: .px-sys repaints .card/.act/.empty/.stats/
+.tag/.row in whole pixels (2px-bordered cards, gold primary acts,
+quiet key/value rows). The confirm card renders INSIDE the detail
+(the ask() flow lands where the press was made). ONE FONT CATCH from
+the eyeball: the card h3 fell back to the shell's Cormorant because
+the repaint never declared a family - font-family: inherit now, the
+same one-rule-forgot shape as PX3's gem specificity. Probed live:
+seven rail rows, the Exit confirm titled 'Leave this game' inside
+the window, Cancel restores the pane, Resume acts exactly once,
+About's stats grid pixel-faced, zero page errors both viewports.

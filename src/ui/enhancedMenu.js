@@ -163,6 +163,7 @@ let pauseTab = 'system';    // PX3: which tab the pause window shows - System la
 let questSel = null;        // PX4: the journal's selected row - 'a:<uid>' | 'f:<index>' | null = first active
 let statsSec = 'character'; // PX6: the Stats page's rail - character | attributes | skills | standing
 let statsAllSkills = false; // PX6: the Miscellaneous disclosure, the sheet's own gesture
+let sysSec = 'save';        // PX7: the System page's rail - which pane fills the detail
 
 const el = (t, cls, txt) => {
   const n = document.createElement(t);
@@ -848,19 +849,41 @@ function pauseWindow() {
   return win;
 }
 
-/** The System tab: the pause actions, compact. About stays the corner
- *  plaque; everything else keeps its shell pane, so no law moved. */
+// ── PX7: THE SYSTEM PAGE ─────────────────────────────────────────
+// The journal's bones a third time - and NOT a third implementation
+// of anything: the detail renders the SAME pane functions the shell
+// has always run (paneSave's overwrite card, paneLoad's no-confirm
+// law and delete-behind-ask, paneMods' honest waiting room,
+// paneAbout, paneExit's confirm), so every audited law keeps its one
+// home and only the paint changes (.px-win repaints .card/.act/.empty
+// in the pixel idiom). Resume ACTS from the rail - a pane whose only
+// content repeats the word just pressed is a pane that wasted a press
+// (the shell's own RAIL_ACTS reasoning). Settings alone still opens
+// its shell: three columns of 171 keys need the room a 860px window
+// does not have, and a cramped settings page would be worse than a
+// door to a good one.
+const SYSTEM_PANES = Object.freeze([
+  ['resume', 'Resume'], ['save', 'Save Game'], ['load', 'Load Game'],
+  ['settings', 'Settings'], ['mods', 'Mods'], ['about', 'About'], ['exit', 'Exit'],
+]);
+
 function pauseSystem(body) {
-  const list = el('div', 'px-menu px-compact');
-  // PX4: About rides the list here - the pause face has no plaque.
-  for (const label of sections) {
-    const id = idOf(label);
-    const b = el('button');
-    b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label), el('span', 'px-c', '\u25c6'));
-    b.onclick = RAIL_ACTS[id] ? () => onAction(RAIL_ACTS[id]) : () => go(id);
-    list.append(b);
+  const wrap = el('div', 'px-journal');
+  const rail = el('div', 'px-qrail');
+  for (const [id, label] of SYSTEM_PANES) {
+    const b = el('button', `px-qrow${id === sysSec && !RAIL_ACTS[id] && id !== 'settings' ? ' on' : ''}`);
+    b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label));
+    b.onclick = RAIL_ACTS[id] ? () => onAction(RAIL_ACTS[id])
+      : id === 'settings' ? () => go('settings')
+        : () => { sysSec = id; confirming = null; render(); };
+    rail.append(b);
   }
-  body.append(list);
+  wrap.append(rail);
+  const detail = el('div', 'px-qdetail px-sys');
+  if (confirming) detail.append(confirmCard());
+  else ({ save: paneSave, load: paneLoad, mods: paneMods, about: paneAbout, exit: paneExit })[sysSec](detail);
+  wrap.append(detail);
+  body.append(wrap);
 }
 
 // ── PX6: THE STATS PAGE ──────────────────────────────────────────
@@ -983,7 +1006,6 @@ function statsStanding(detail) {
       el('span', `v${v > 0 ? ' won' : v < 0 ? ' bad' : ''}`, v > 0 ? `+${v}` : String(v)));
     detail.append(r);
   }
-  detail.append(el('p', 'px-note', 'How the streets receive you. Guild rank lives with each guild hall.'));
 }
 
 /** PX5: THE MAIN QUEST, by the pack's own naming - DFU ships the
@@ -1309,6 +1331,7 @@ export function mountEnhancedMenu(host, {
   questSel = null;
   statsSec = 'character';
   statsAllSkills = false;
+  sysSec = 'save';
   category = CATEGORIES[0].id;
   pickedKey = null;
   sheetOpen = false;
