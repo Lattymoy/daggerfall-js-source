@@ -389,7 +389,12 @@ test('F045: a night sky that cannot load degrades to the gradient instead of fre
   // degraded; the NIGHT branch awaited two fetches bare.
   // DaggerfallSky.LoadVanillaNightSky (:565-604) reads local files
   // synchronously and has no such guard to wedge.
-  const sky = createSkyController(stubGl, new URLSearchParams(''));
+  // ES1 (2026-08-27): the skin defaults to ENHANCED and the enhanced sky
+  // builds no panorama at all, so this test - which is about the CLASSIC
+  // panorama path - asks for that path by name, the way a player who
+  // wants the painted sky does.
+  const sky = createSkyController(stubGl, new URLSearchParams('sky=classic'));
+  assert.equal(sky.enhanced, false, 'the classic pass, as this test is about');
   const dayDefault = [...sky.renderer.clearColor];
   sky.use(0, 0, true);        // midnight: the NIGHT key, and no ARENA2 here
   await settle();

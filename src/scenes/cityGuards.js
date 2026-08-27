@@ -175,7 +175,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // candidate IS the handle both pools already share. `fromPlayer
       // = false`: a monster's blow is not the player's, so it levies
       // no Murder (DaggerfallEntityBehaviour.cs:203).
-      hurtFromFoe: (dmg, dir) => damageGuard(g, dmg, null, dir ?? null, false) };   // AUDIT 24 (wave 41)
+      hurtFromFoe: (dmg, dir) => damageGuard(g, dmg, null, dir ?? null, { fromPlayer: false }) };   // AUDIT 24 (wave 41)
     guards.push(g);
     return g;   // AUDIT 26 F217: the restore overlays the record it minted - two interleaved async spawns make `guards[length-1]` a race
   }
@@ -280,17 +280,22 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     g.batch = null;
   }
 
-  /**
-   * MT-ii: `fromPlayer` is DaggerfallEntityBehaviour.HandleAttackFromSource's
-   * `sourceEntityBehaviour == PlayerEntityBehaviour` (:203) - the gate
-   * the WHOLE player block sits inside, the Murder crime with it
-   * (:267-270). It defaulted to "always" while the player was the only
-   * thing that could hurt a watchman; the moment a spawned monster can
-   * kill one, an ungated crime FRAMES THE PLAYER for a murder they did
-   * not commit - and the watch responds to that crime, so the town
-   * turns on them for a rat's work.
-   */
-  function damageGuard(g, damage, playerFeet, knockDir, fromPlayer = true) {
+  /** AUDIT 26 F035 + MT-ii: `fromPlayer` is this door's provenance
+   *  flag, the hurtPlayer(bypassShield) idiom. DFU assigns the Murder
+   *  crime inside HandleAttackFromSource's `sourceEntityBehaviour ==
+   *  PlayerEntityBehaviour` gate (DaggerfallEntityBehaviour.cs:203,
+   *  :265-269), and EnemyMotor.ApplyFallDamage calls DecreaseHealth
+   *  and nothing else (:1398-1401) - so a watchman who dies falling
+   *  while chasing must not brand the player a murderer for a kill
+   *  they never made. Defaults TRUE: every player blow is unchanged.
+   *
+   *  TWO LANES FOUND THIS GATE INDEPENDENTLY, from opposite ends: the
+   *  audit from the fall, and MT from infighting, where the stakes
+   *  are higher still - the moment a spawned monster can kill a
+   *  watchman, an ungated crime FRAMES THE PLAYER for a murder they
+   *  did not commit, and the watch responds to that crime, so the
+   *  town turns on them for a rat's work. */
+  function damageGuard(g, damage, playerFeet, knockDir, { fromPlayer = true } = {}) {
     g.entity.health -= damage;
     if (g.entity.health <= 0) {
       g.dead = true;
@@ -302,7 +307,8 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       sayEnemyDied(say, GUARD_MOBILE_TYPE);   // EnemyDeath:79-83, the kill notice
       // G4 (HandleAttackFromSource, verbatim): killing the city watch
       // IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
-      // the thieves-guild arc. INSIDE the player-source gate (:203).
+      // the thieves-guild arc. F035/MT-ii: and only when the PLAYER
+      // is the source - the whole block is inside DFU's player gate.
       if (fromPlayer) setCrimeCommitted(playerEntity, CRIME_MURDER);   // V4: through the one setter (SuppressCrime)
       // AUDIT 24 (wave 38): EnemyDeath.CompleteDeath, through the one
       // home (this was the second copy of exteriorFoes' mint, to the
@@ -418,7 +424,13 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         g.ai.landedFall = 0;
         if (gdmg > 0) {
           audio?.play3d?.(SOUND.FallDamage, [g.ai.feet[0], g.ai.feet[1], g.ai.feet[2]], 1, { maxDistance: 16 });
-          damageGuard(g, gdmg, null, null);
+          // AUDIT 26 F040: EnemyMotor.cs:1403-1407 splashes on EVERY
+          // enemy fall past the threshold - index 0, at the position
+          // DFU passes (the feet, as the sibling pool notes). This arm
+          // billed the damage and played the clip but never bled,
+          // where exteriorFoes has splashed since CH3.
+          hitEffects?.showBloodSplash(0, [g.ai.feet[0], g.ai.feet[1], g.ai.feet[2]]);
+          damageGuard(g, gdmg, null, null, { fromPlayer: false });   // F035: ApplyFallDamage carries no crime
           if (g.dead) continue;
         }
       }

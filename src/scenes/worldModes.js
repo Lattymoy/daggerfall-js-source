@@ -78,7 +78,8 @@ import { LevelUpScreen } from '../ui/charsheet.js';   // AUDIT 21 hosts F3: leve
 import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded, TRADE_RECTS } from '../ui/nativeTrade.js';   // U8c
 // U23: the static-NPC seam and the guild service popup.
 import { STATIC_NPC_ACTIVATION_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../systems/talk.js';
-import { staticNpcRoute, showsJoinButton, serviceAccess, onPushEffects } from '../systems/guildServiceFlow.js';
+import { staticNpcRoute, showsJoinButton, serviceAccess, onPushEffects, NO_POTION_INGREDIENTS } from '../systems/guildServiceFlow.js';
+import { isIngredient } from '../systems/potions.js';   // F201: MakePotionService's scan
 import { canAccessService } from '../systems/guildServices.js';   // G4: does THIS guild also sell soul gems?
 import {
   receiveArmorDecision, claimArmor, SPYMASTER_GREETING_TEXT_ID,
@@ -1951,6 +1952,13 @@ export function createWorldModes(host) {
     // temple and Mages Guild both offer it, and the destination has
     // been a FLAGGED null since G3.
     if (destination === 'guildServicePotionMaker' && potionArtLoaded() && _shopFont) {
+      // AUDIT 26 F201: MakePotionService (:670-686) closes the popup,
+      // scans pack AND wagon for any ingredient, and refuses with
+      // NoPotionIngredients (34) when there is none - the record id
+      // had shipped with zero callers and the mixer opened empty.
+      if (![...(playerEntity.items ?? []), ...(playerEntity.wagonItems ?? [])].some(isIngredient)) {
+        return { rows: rows(NO_POTION_INGREDIENTS), closesWindow: true };
+      }
       let potionWin = null;
       potionWin = new PotionMakerWindow({
         packItems: () => (playerEntity.items ??= []),
@@ -1971,17 +1979,13 @@ export function createWorldModes(host) {
           addItem(playerEntity.items, bottle);
           surfacePlayer();
         },
-        takeOne: (templateIndex, where) => {
+        takeOne: (templateIndex, where, group) => {
           const list = where === 'pack' ? playerEntity.items : (playerEntity.wagonItems ?? []);
-          // X11b: this passed `list[i]` - the ITEM - where removeOne
-          // takes a TEMPLATE INDEX, so its own findIndex compared a
-          // number against an object, matched nothing and returned
-          // false. The potion maker's ingredients were never actually
-          // consumed: brew a potion, keep the reagents, brew again.
-          // The `i` computed above was only ever used to answer
-          // "is one present", which it still does.
-          if (!list.some((it) => it.templateIndex === templateIndex)) return false;
-          return removeOne(list, templateIndex);
+          // F176: GetItem(group, template, allowEnchantedItem: false)
+          // (:338, :345) - the walk must not spend an enchanted twin
+          // of the plain reagent that went in the pot. (X11b's lesson
+          // stands: removeOne takes a TEMPLATE INDEX, not the item.)
+          return removeOne(list, templateIndex, { group, allowEnchantedItem: false });
         },
         icons: { getTexture, uploadRecord, textures: renderer.textures },
         entity: playerEntity,
@@ -2942,7 +2946,11 @@ export function createWorldModes(host) {
         sneak: held(keys, 'Sneak'),   // P15: DFU's default Sneak binding (LeftAlt), held
         jump: jumpHeld,   // P14: HELD, verbatim (the 0.1 s grounded gate owns re-fire)
         up: jumpHeld || held(keys, 'FloatUp'),
-        down: held(keys, 'FloatDown'),
+        // AUDIT 26 F031: LevitateMotor's descent arm is Crouch OR
+        // FloatDown (:88-89), the mirror of the rise arm above; the
+        // port's own motor contract said so and every host passed
+        // FloatDown alone, so C did nothing but toggle the stance.
+        down: crouchHeld || held(keys, 'FloatDown'),
         crouch: crouchHeld && !latch.crouch,
       }, cam.yaw, cam.pitch);
       latch.crouch = crouchHeld;

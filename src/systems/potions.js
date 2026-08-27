@@ -214,8 +214,12 @@ export const cauldronAccepts = (cauldron) => cauldron.length < CAULDRON_CAPACITY
 export function consumeCauldron(cauldron, { takeFromPack, takeFromWagon }) {
   for (let i = 0; i < cauldron.length; i++) {
     const templateIndex = cauldron[i].templateIndex;
-    if (takeFromPack(templateIndex)) continue;
-    if (takeFromWagon(templateIndex)) continue;
+    // F176: the group rides along - DFU's walk looks items up as
+    // GetItem(item.ItemGroup, item.TemplateIndex, allowEnchantedItem:
+    // false) (:338, :345).
+    const group = cauldron[i].group;
+    if (takeFromPack(templateIndex, group)) continue;
+    if (takeFromWagon(templateIndex, group)) continue;
     return { kind: 'broke', at: i };
   }
   return { kind: 'spent' };

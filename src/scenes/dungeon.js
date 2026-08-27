@@ -38,6 +38,7 @@ import { buildDungeonContext } from './dungeonContext.js';
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U14: the overlay pointer seam
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
+import { totalWeight } from '../systems/inventory.js';   // F027: PlayerEntity.CarriedWeight
 
 // Water surface color: presentation choice (see renderer WATER_VS note).
 // R11: the surface is the classic water tile (climate ground archive
@@ -112,7 +113,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // P2: grounded walking is the default (?fly restores the fly cam);
   // spawn drops onto the start-marker floor.
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
-  const player = new PlayerMotor(ctx.collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), climbing: climbingDeps(playerEntity) });   // AcrobatMotor skill jump (P14) + M3 climbing (no HUD seam in the standalone host); motorStats = the LIVE entity
+  const player = new PlayerMotor(ctx.collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), carriedWeight: () => totalWeight(playerEntity.items ?? []), climbing: climbingDeps(playerEntity) });   // AcrobatMotor skill jump (P14) + M3 climbing (no HUD seam in the standalone host); motorStats = the LIVE entity
     const _footsteps = new FootstepMachine();   // FS-slice
   player.spawn(spawn[0], spawn[1], spawn[2]);
   console.log(`[spawn] marker ${JSON.stringify(ctx.startMarker)} -> feet [${spawn.map((v) => v.toFixed(3)).join(', ')}] (startSpawn build)`);
@@ -407,7 +408,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
         sneak: held(keys, 'Sneak'),   // P15: DFU's default Sneak binding (LeftAlt), held
         jump: jumpHeld,   // P14: HELD, verbatim (AcrobatMotor re-fires past the 0.1 s grounded gate - intended bunny-hopping)
         up: jumpHeld || held(keys, 'FloatUp'),
-        down: held(keys, 'FloatDown'),
+        // AUDIT 26 F031: LevitateMotor's descent arm is Crouch OR
+        // FloatDown (:88-89), the mirror of the rise arm above; the
+        // port's own motor contract said so and every host passed
+        // FloatDown alone, so C did nothing but toggle the stance.
+        down: crouchHeld || held(keys, 'FloatDown'),
         crouch: crouchHeld && !prevCrouch,
       }, cam.yaw, cam.pitch);
       prevCrouch = crouchHeld;

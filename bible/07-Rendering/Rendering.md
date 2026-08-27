@@ -15,6 +15,13 @@ directory by `test/audit18_bible_docs.test.js`:
 - `characterSprite.js` - the classic-visuals sprite pass (one fixed
   CHAR_SPRITE_RT_SIZE target).
 - `skyRenderer.js` - painted skies (R4) + the night sky.
+- `enhancedSky.js` - ES1 the ENHANCED SKY: one fullscreen procedural
+  pass, no textures and no game data - a palette record keyed by the
+  sun's elevation, the port's own sun arc, DFU's lunar phases placing
+  the two moons, stars and weather-driven clouds. Behind the enhanced
+  skin (`?sky=classic` opts back to the painted pass); the classic pass
+  above is untouched. Its lab is `sky.html` + `src/tools/skyLab.js`,
+  its eye `tools/enhancedSkyProbe.mjs`.
 - `overworldRenderer.js` - U61 the OVERWORLD pass: the whole-bay relief,
   its location markers, the route line and the cloud deck behind the
   enhanced travel map (self-contained, save/restore, mirrorProjectionX

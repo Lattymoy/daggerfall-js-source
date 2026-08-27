@@ -11,6 +11,8 @@ import { SkyFile } from '../formats/skyFile.js';
 import { SkyRenderer, buildDaySkyPanorama, buildNightSkyPanorama, buildFallbackSkyPanorama, nightSkyImageName } from '../render/skyRenderer.js';
 import { SEASON } from '../world/climateSwaps.js';
 import { skyFrameForTime } from '../world/worldClock.js';
+import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin
+import { isEnhanced } from '../systems/uiSkin.js';
 import { hasActiveEffect, isBlending, isInvisible, isAShade } from '../systems/effects.js';
 import { skillValue, tallySkill, SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { DOOR_SPELL_TEXT } from '../systems/mysticism.js';   // X1: the door-spell alert lines
@@ -111,6 +113,18 @@ export function skyFrameForWeatherTime(minuteOfDay, showNightSky = true) {
 // (R2/R4 demo compatibility); otherwise the world clock decides.
 export function createSkyController(gl, params) {
   const sky = new SkyRenderer(gl);
+  // ES1 (2026-08-27, Mac's call): under the ENHANCED skin the sky is the
+  // port's own procedural dome - sun, moons on DFU's phases, stars,
+  // clouds, weather - and the classic panorama pass is never built for.
+  // `?sky=classic` keeps the painted sky under the enhanced skin (a
+  // probe's pin, or a player's preference until it is a setting); the
+  // classic skin never takes the enhanced sky. ONE `renderer` field
+  // either way: the hosts read clearColor / set fogMix and fogColor on
+  // it without knowing which pass it is.
+  const enhancedSky = isEnhanced() && params.get('sky') !== 'classic' ? new EnhancedSkyRenderer(gl) : null;
+  const t0 = (typeof performance !== 'undefined' ? performance.now() : 0);
+  let weatherRowNow = null;   // ES1c: the eased weather, walked toward the sim's row
+  let weatherAt = null;
   // "index:frame" | "index:night" -> panorama, LRU-BOUNDED.
   //
   // AUDIT 24 (the seven-slice sweep): this Map had no eviction at all.
@@ -178,9 +192,33 @@ export function createSkyController(gl, params) {
   }
 
   return {
-    renderer: sky,
-    /** Ensure the panorama for (skyIndex, minuteOfDay); async, frame-late. */
-    use(skyIndex, minuteOfDay, showNightSky = true) {
+    renderer: enhancedSky ?? sky,
+    enhanced: Boolean(enhancedSky),
+    /** Ensure the panorama for (skyIndex, minuteOfDay); async, frame-late.
+     *  ES1: the enhanced sky takes the same call and needs the weather
+     *  and the classic clock too (`extra`), for the clouds and the moons;
+     *  it is synchronous - numbers into uniforms, nothing to load. */
+    use(skyIndex, minuteOfDay, showNightSky = true, extra = null) {
+      if (enhancedSky) {
+        const now = (typeof performance !== 'undefined' ? performance.now() : 0);
+        const seconds = (now - t0) / 1000;
+        // ES1c: the weather EASES. The sim flips its type between two
+        // ticks; the sky walks its numbers toward the new row over
+        // WEATHER_EASE_SECONDS instead of changing in one frame. The
+        // first call takes the row whole - a boot into rain is rain.
+        const want = weatherRow(extra?.weather ?? 'sunny');
+        const dt = weatherAt === null ? 0 : Math.min(1, Math.max(0, seconds - weatherAt));
+        weatherAt = seconds;
+        weatherRowNow = easeWeather(weatherRowNow, want, dt);
+        enhancedSky.setState(skyState({
+          minuteOfDay,
+          weather: extra?.weather ?? 'sunny',
+          classicMinutes: extra?.classicMinutes ?? 0,
+          seconds,
+          row: weatherRowNow,
+        }));
+        return;
+      }
       let frame = params.has('window')
         ? (params.get('window') === 'night' ? null : Number(params.get('skyframe') ?? 31))
         : skyFrameForWeatherTime(minuteOfDay, showNightSky);
@@ -217,7 +255,7 @@ export function createSkyController(gl, params) {
       }
     },
     draw(yaw, pitch, fovY, aspect) {
-      sky.draw(yaw, pitch, fovY, aspect);
+      (enhancedSky ?? sky).draw(yaw, pitch, fovY, aspect);
     },
   };
 }

@@ -137,7 +137,10 @@ test('M2: mixing a real recipe mints a potion and SPENDS the ingredients (:311-3
   assert.equal(w.box.rows[0].text, POTION_MIXED);
   assert.equal(w.cauldron.length, 0, 'the pot is emptied');
   assert.equal(pack.length, 0, 'and the ingredients are gone from the pack');
-  assert.equal(w.nameLabel, 'slowFalling', 'the name label shows what was made');
+  // AUDIT 26 F177: MixCauldron never touches the name label
+  // (:311-360) - only a recipe fill writes it (:307). The old pin
+  // here had pinned the port's invented mix-time write.
+  assert.equal(w.nameLabel, '', 'the label is the RECIPE\'s, not the mix\'s');
 });
 
 test('M2: a FAILED mix makes nothing and STILL spends the ingredients (:328-333)', () => {

@@ -128,6 +128,19 @@ export function maxFatigue(entity) {
   return (liveStat(entity, 'strength') + liveStat(entity, 'endurance')) * FATIGUE_MULTIPLIER;
 }
 
+/** DaggerfallEntity.FillVitalSigns (:442-447), verbatim: all three
+ *  pools to their maxima. AUDIT 26 F038 gave it one home - DFU calls
+ *  it on the court's acquittal and Thieves-Guild rescue
+ *  (DaggerfallCourtWindow.cs:191, :213), on level-up and on an
+ *  enemy's mint. It is NOT a floor and it is NOT on the prison
+ *  release (ReleaseFromPrison :482-490 never touches health). */
+export function fillVitalSigns(entity) {
+  if (!entity) return;
+  entity.health = entity.maxHealth ?? entity.health;
+  entity.fatigue = maxFatigue(entity);
+  entity.magicka = entity.maxMagicka ?? entity.magicka;
+}
+
 /** DaggerfallEntity.MaxBreath, verbatim: LiveEndurance / 2 (C# int
  *  division). Current breath is a stored field (entity.currentBreath,
  *  P12); 0 whenever the head is above water. */

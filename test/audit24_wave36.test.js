@@ -150,7 +150,15 @@ test('audit24 wave36: the watch raises and lowers the alert, and takes fall dama
   // ApplyFallDamage runs for EVERY enemy (:173) - the motor has always
   // produced landedFall for guards, and nobody read it.
   assert.ok(cg.includes('if (g.ai.landedFall > 0 && !g.dead) {'), 'the watch bills its own falls');
-  assert.ok(cg.includes('damageGuard(g, gdmg, null, null);'), 'through the pool damage door, so death and crime fire');
+  // AUDIT 26 F035: through the pool damage door, so the death fires -
+  // but NOT the crime. ApplyFallDamage (:1398-1401) calls
+  // DecreaseHealth and nothing else; the Murder assignment lives
+  // inside HandleAttackFromSource's player-source gate
+  // (DaggerfallEntityBehaviour.cs:203, :265-269), which a fall never
+  // enters. The old needle here pinned the crime as correct while
+  // citing the very member that carries none.
+  assert.ok(cg.includes("damageGuard(g, gdmg, null, null, { fromPlayer: false });"),
+    'the fall is sourceless: death yes, Murder no');
 });
 
 test('audit24 wave36: hostility SEEDS the remembered position - the freeze wave 35 could have shipped', () => {
@@ -187,7 +195,13 @@ test('audit24 wave36: hostility SEEDS the remembered position - the freeze wave 
   // (the target reassign included, :193-202); the bare seed survives
   // for a SOURCELESS hurt - a fall, a poison tick, a self-cast - which
   // has no attacker to remember.
-  assert.ok(rd('src/scenes/exteriorFoes.js').includes('f.ai.makeEnemyHostileToAttacker?.(PLAYER_TARGET, playerFeet);'));
-  assert.ok(rd('src/scenes/exteriorFoes.js').includes("f.ai.makeHostileToPlayer?.(undefined, null);   // wave 36: a sourceless hurt"));
+  // ...and MT-ii runs it through the whole C# method, INSIDE the
+  // audit lane's player-source gate (the two slices met on the same
+  // line): a sourceless hurt - a fall, a poison tick, another
+  // enemy's blow - never reaches it at all now, which is the
+  // stronger form of the same law.
+  const xfs = rd('src/scenes/exteriorFoes.js');
+  assert.ok(xfs.includes('f.ai.makeEnemyHostileToAttacker?.(PLAYER_TARGET, playerFeet ?? null);'));
+  assert.match(xfs, /if \(fromPlayer && f\.ai\) \{/, 'and only for a PLAYER source');
   assert.ok(rd('src/scenes/dungeonContext.js').includes('foe.ai.makeHostileToPlayer?.(undefined, lastPlayerFeet);'));
 });

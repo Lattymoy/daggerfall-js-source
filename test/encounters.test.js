@@ -49,8 +49,11 @@ test('encounters: ChooseRandomEnemy - the table pick and the level band, verbati
   // roll > 95 above level 5 opens the whole list
   const wild = chooseRandomEnemy({ dungeonType: 0, playerLevel: 6 }, seq(0.96, 0.999));
   assert.equal(wild, ENCOUNTER_TABLES[0][19]);
-  // buildings: a guildhall reads table 40, an unknown type the default 39
-  assert.equal(chooseRandomEnemy({ buildingType: 10, playerLevel: 1 }, seq(0.5, 0)), ENCOUNTER_TABLES[40][0]);
+  // buildings (AUDIT 26 F081): GuildHall is 11 - the old pin keyed 10
+  // (the Library), restating the map's guessed enums. A guildhall
+  // reads table 40; the Library now falls to the default 39.
+  assert.equal(chooseRandomEnemy({ buildingType: 11, playerLevel: 1 }, seq(0.5, 0)), ENCOUNTER_TABLES[40][0]);
+  assert.equal(chooseRandomEnemy({ buildingType: 10, playerLevel: 1 }, seq(0.5, 0)), ENCOUNTER_TABLES[39][0]);
   assert.equal(chooseRandomEnemy({ buildingType: 0, playerLevel: 1 }, seq(0.5, 0)), ENCOUNTER_TABLES[39][0]);
   // underwater forces table 19
   assert.equal(chooseRandomEnemy({ underwater: true, dungeonType: 4, playerLevel: 1 }, seq(0.5, 0)), ENCOUNTER_TABLES[19][0]);

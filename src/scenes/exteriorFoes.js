@@ -147,7 +147,13 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // striker in the OTHER pool reaches this foe's death chain
       // through its own candidate handle, with no attacker feet, so
       // the player-attack arm never runs for a monster's blow.
-      f.hurtFromFoe = (dmg, dir) => damageFoe(f, dmg, null, dir ?? null);
+      // `fromPlayer: false` - ANOTHER ENEMY's blow is not the player's
+      // (DaggerfallEntityBehaviour.cs:203). Without it a monster
+      // mauling a foe would re-hostile that foe toward the PLAYER and
+      // revert a struck ally's team, both for a blow the player never
+      // struck. (The audit lane's F041 pin caught exactly this on the
+      // merge - the two laws meet here.)
+      f.hurtFromFoe = (dmg, dir) => damageFoe(f, dmg, null, dir ?? null, { fromPlayer: false });
       foes.push(f);
       // B1: the quest resource behaviour couples at the stand - the
       // activation moment, where Unity runs the deferred Start.
@@ -213,18 +219,25 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     f.batch = null;
   }
 
-  function damageFoe(f, damage, playerFeet, knockDir = null) {
-    // MT-ii: MakeEnemyHostileToAttacker WHOLE (EnemyMotor.cs:186-214).
-    // The target-reassign guard runs on EVERY player hit, not only on
-    // a non-hostile foe - that was the pre-MT shape, when there was
-    // no target to reassign; and the PLAYER arm additionally raises
-    // hostility and reverts a struck former ally to its species
-    // (:204-213, the entity-side half in enemyTargets).
-    if (f.ai && playerFeet) {
-      f.ai.makeEnemyHostileToAttacker?.(PLAYER_TARGET, playerFeet);   // headless: a stub ai idles the arm
+  /** AUDIT 26 F035/F041: `fromPlayer` is this door's provenance flag.
+   *  DFU flips hostility inside HandleAttackFromSource's player gate
+   *  (DaggerfallEntityBehaviour.cs:203, :250-261) while
+   *  EnemyMotor.ApplyFallDamage calls DecreaseHealth alone
+   *  (:1398-1401), so a language-pacified foe that takes fall damage
+   *  must not turn on the player with no player action. Defaults
+   *  TRUE: every player blow and spell is unchanged.
+   *
+   *  MT-ii: and INSIDE that gate the whole of
+   *  MakeEnemyHostileToAttacker (EnemyMotor.cs:186-214), not the
+   *  hostility raise alone - the target-reassign guard fires on EVERY
+   *  player hit (it was a no-op before MT, when there was no target to
+   *  reassign), and the player arm additionally reverts a struck
+   *  former ally to its species (:204-213). resetAllyTeamOnPlayerAttack
+   *  raises IsHostile itself, so a headless stub ai still stands up. */
+  function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true } = {}) {
+    if (fromPlayer && f.ai) {
+      f.ai.makeEnemyHostileToAttacker?.(PLAYER_TARGET, playerFeet ?? null);   // wave 36: seeded with where the attack came from
       resetAllyTeamOnPlayerAttack(f.ai, f.entity, f.mobileType);
-    } else if (f.ai && !f.ai.isHostile) {
-      f.ai.isHostile = true; f.ai.makeHostileToPlayer?.(undefined, null);   // wave 36: a sourceless hurt (fall, poison, a self-cast)
     }
     f.entity.health -= damage;
     if (f.entity.health <= 0) {
@@ -362,7 +375,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
           // does not add. The feet are what DFU passes, so the feet are
           // what the port passes.
           hitEffects?.showBloodSplash(0, [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]]);
-          damageFoe(f, fdmg, null, null);
+          damageFoe(f, fdmg, null, null, { fromPlayer: false });   // F041: a fall is nobody's attack
         }
       }
       // out of relevance (fresh senses, so a just-spawned foe's

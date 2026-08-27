@@ -113,7 +113,10 @@ test('pacification: the host runs it on the FIRST-encounter edge and a pacified 
   // TakeAction, behind CanAct, which HandleNoAction:357-364 drops the
   // moment the target is null.
   assert.ok(src.includes('!_fParalyzed && f.ai.isHostile) {'), 'no casts while pacified');
-  assert.ok(src.includes('if (foe.ai && !foe.ai.isHostile) { foe.ai.isHostile = true;'), 'damage re-hostiles (MakeEnemyHostileToAttacker)');
+  // AUDIT 26 F041: the flip asks WHOSE blow it was - it sits inside
+  // HandleAttackFromSource's player-source gate, so a fall no longer
+  // un-pacifies a language-pacified foe.
+  assert.ok(src.includes('if (fromPlayer && foe.ai && !foe.ai.isHostile) { foe.ai.isHostile = true;'), 'a PLAYER attack re-hostiles (MakeEnemyHostileToAttacker)');
 });
 
 test('pacification: the motor edge fires once and non-hostile foes stop moving', async () => {

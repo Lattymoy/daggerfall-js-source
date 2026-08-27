@@ -110,6 +110,7 @@ export default defineConfig({
         landing: 'index.html',
         main: 'play/index.html',
         viewer: 'viewer.html',
+        sky: 'sky.html',   // ES1: the enhanced sky lab
         // A PROTOTYPE, and deployed on purpose: a design that claims to
         // adapt to a phone has to be opened on one.
         enhanced: 'enhanced.html',

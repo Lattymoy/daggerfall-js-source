@@ -532,3 +532,150 @@ directional FILLS - the prefab is authority, recorded in worldClock.)
 Suite 312/75 green (no new unit surface - the proof is the shot
 comparison; the scale/constants ride worldClock where clock.test's
 LightCurve pins already gate the curve).
+
+## ES1 - THE ENHANCED SKY (2026-08-27, Mac's call) - SHIPPED
+
+Mac: "for the enhanced version of the game, I want us to develop our
+own take on the procedural sky system mod from DFU."
+
+Daggerfall's sky is 64 painted frames a day (SKY??.DAT) and one painted
+night (NITE??I0.IMG), and R4 ported that verbatim - it stays, untouched,
+and is what the CLASSIC skin draws. DFU's Enhanced Sky mod (Lypyl)
+replaced the paintings with a real sky out of textures. THIS IS OUR
+TAKE, and it is entirely procedural: one fullscreen pass, no textures
+at all, so it ships with the port and needs no game data - a sky that
+draws before the folder pick, on a phone, in 380 lines.
+
+WHAT IS DFU'S AND WHAT IS OURS. The LAWS the sky reads are the port's
+own verbatim ones - the sun's arc is worldClock's (dawn at map east,
+noon overhead, dusk at map west, and the sky's sun IS the lit world's
+sun while it is up, pinned), day and night are DawnHour 6 / DuskHour
+18, the moons' phases are gameDate's DFU ladder with its offsets, the
+weather is the weather sim's own types. Everything that turns those
+into light is OURS: the palette, the moons' places, the stars, the
+clouds, the glow.
+
+THE PALETTE IS A RECORD. `SKY_KEYS` is a table keyed by the SUN'S
+ELEVATION in degrees - deep night, astronomical twilight, the -4 band
+where the horizon burns, the horizon itself, morning, noon - and every
+colour on the dome is an interpolation of it; `WEATHER_SKY` is a row
+per weather type (cover, edge softness, how far the dome greys, the
+clouds' lit and shaded colours, a wind). The FRAGMENT SHADER CARRIES NO
+COLOUR AT ALL - pinned - so there is exactly one place a colour lives
+and "change a row, change the sky" is true.
+
+THE MOONS' PLACES are ours with a physical spine, and they are the one
+thing a player can catch a sky lying about. A moon sits on the sun's
+own arc, BEHIND the sun by its phase: new beside the sun (so never seen
+at night), a waxing crescent a little behind (in the west after sunset),
+full opposite (rising as the sun sets, overhead at midnight), a waning
+half three quarters behind (rising at midnight, high at dawn). So DFU's
+phase and the moon you see agree - a lycanthrope's full moon IS a full
+moon overhead at midnight - and the terminator is a lit sphere, not a
+texture. Masser is the big red one, Secunda smaller, paler and tilted
+off the arc so they do not overlap forever.
+
+THE SEAM. `createSkyController` builds the enhanced pass when the skin
+is enhanced and `?sky=classic` is absent, and exposes ONE `renderer`
+field either way, so the hosts read clearColor and set fogMix/fogColor
+without knowing which pass they hold. The classic path is untouched by
+construction (skyRenderer.js contains the word "enhanced" nowhere), and
+its panorama cache is never built for under the enhanced sky - which is
+also ~29 MB of CPU pixels the enhanced skin now never allocates. Both
+exterior hosts hand the weather and the classic clock through for the
+clouds and the moons; the call is synchronous - numbers into uniforms,
+nothing to load.
+
+SEEN, NOT ASSERTED. A sky is judged by eye: `tools/enhancedSkyProbe.mjs`
+opens `sky.html` (the lab, `src/tools/skyLab.js`) in a real WebGL
+context at a set of hours, weathers and views, screenshots each, and
+judges what a screenshot can - no page or GL error, no black frame,
+noon brighter than midnight (174 vs 12), the sun's disc in the frame
+looking up at noon, storm darker than overcast darker than clear
+(95 < 137 < 174), points of light at midnight, and Masser's warm lit
+disc where the law puts it on day 11. 7/7. The frames were eyeballed:
+the noon blue with its horizon haze, the dawn burn from the east, a
+midnight starfield, Masser half-lit among the stars, and a storm's
+heavy overcast.
+
+Pins: `test/enhancedSky.test.js`, 6 tests - the palette as an ordered
+record interpolated in elevation with no colour in the shader; a
+weather row per type the sim can produce, ordered in cover and grey;
+the sun as worldClock's arc CONTINUED below the horizon (twilight is a
+matter of degrees, and sunDirection clamps that away); the moons' places
+against their phases (full up at midnight, new never seen at night, the
+waning half high at dawn); the frame state (the hosts' clearColor and
+fillColor roles, the phases coming from the CLASSIC clock so one day is
+one phase, a moon under the world not drawn, an unknown weather falling
+to clear); and the seam. 2 mutants, 2 dead.
+
+FOUND ON THE WAY, AND CLOSED THE SAME DAY: below the horizon the dome
+filled with the flat horizon colour AND took the full dawn glow (the
+glow fell off with `exp(-e * 9)` where `e` is the CLAMPED elevation, so
+everything under the line got `e = 0`, the maximum). At dawn that drew a
+bright tan slab with a hard seam at the horizon - the one fault in the
+first render. The dome keeps going down now: the horizon colour darkens
+toward the nadir, and the glow falls off below the line as fast as above
+it, so the horizon reads as a line rather than an edge. The darkening is
+DELIBERATELY MILD (0.55 of the horizon colour at the nadir, eased): the
+world's geometry covers this band in play, and where it does not - the
+streamed world's far edge - a pale band blends into the distance haze
+where a dark one would announce itself.
+
+## ES1c - THE POLISH (2026-08-27, Mac's call) - SHIPPED
+
+Mac, on the first sky: "how can we improve this". Five faults were put
+to him off the frames and the code; he took four. The fifth - a moving
+cloud's shadow on the ground - is a change to the WORLD's lighting, not
+the sky's, and stays on the board.
+
+THE BANDING. A dome is one enormous smooth gradient and eight bits is
+not enough for one: 46% of the rows down the middle of a noon frame came
+out byte-identical to the row above, which is a visible stair. A
+sub-quantisation dither at the write breaks it. FLAT noise only took it
+to 32%; TRIANGULAR noise - two hashes summed, the shape that fully
+decorrelates the quantisation error from the signal - took it to 25%,
+which is what a dithered gradient looks like. Two instructions.
+
+THE CLOUDS WERE FLAT. One fbm sheet coloured by its own noise value: it
+had no depth, because nothing moved against anything, and no idea where
+the sun was, so a bank never had a bright rim or a dark belly. Now TWO
+DECKS - a high one, smaller and slower and thinner, behind a low one,
+larger and faster, which occludes it where it is - and both LIT: a rim
+where the ray points near the sun (the light coming through a thin
+edge, gated by uSunVis so it is nothing at night), the thick parts
+darkening away from it. The probe judges it: under the same cloud at
+mid-morning, looking east at the sun is 183 against 164 looking west.
+
+THE WEATHER SNAPPED. The sim flips its type between two ticks and the
+state was rebuilt from the type every frame, so the whole dome changed
+in the time it takes to draw once. A weather row is a set of NUMBERS,
+so the sky keeps its own and walks them - cover, softness, greyness,
+wind and both cloud colours, one exponential on a 14-second constant
+(`easeWeather`, pure, injectable). The first call takes the row whole:
+a boot into rain is rain. The same lesson as the danger meter: a slow,
+meaningful state should arrive slowly.
+
+THE STARS STOOD STILL. The field was fixed in world space, so midnight's
+sky was dusk's sky exactly - the one thing everybody has seen a night
+sky do is turn. It turns now, about a POLE (north, leaned off the
+zenith - ours; the Iliac Bay has no stated latitude), one revolution a
+day on the same clock the sun rides, by Rodrigues in the shader. The
+field is sampled in the TURNED frame but fades at the REAL horizon, so
+a star sets where the horizon is. The probe fingerprints where the
+bright points are: three hours on is a different sky, and still full of
+stars.
+
+Pins: 4 more in `test/enhancedSky.test.js` (10 now) - the ease
+(exponential, monotone, whole on the first call, no time no move,
+colours eased too, and the controller keeping one and walking it), the
+wheel (a full turn a day, one way, a unit pole off the zenith, the
+turned sample and the real fade), and the shader's decks, rim, belly
+and triangular dither. 5 mutants, 5 dead. Probe: 9/9, with the lit
+pair and the wheel added.
+
+ON THE HORIZON: cloud shadow on the world (the fifth fault - the sky
+already computes the cover at the sun; the world's light does not read
+it), the sky as a setting rather than a URL, lightning on the thunder
+weather, and a season's hand on the palette.
+

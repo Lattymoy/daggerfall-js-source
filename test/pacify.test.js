@@ -57,15 +57,17 @@ test('X8: Pacify lands on a MATCHING group and is silent on any other', () => {
 });
 
 test('X8: the Humanoid/Charm SPLIT - neither reaches the other\'s targets', () => {
-  // "Pacify Humanoid only operates on humanoid monsters (not enemy
-  // classes)" + "Charm only works on enemy classes (not monstrous
-  // humanoids)". Between them they cover every humanoid, and the
-  // reason is the career table: a class enemy is absent from
-  // GetEnemyEntityEnemyGroup, so its group is None.
+  // Charm only works on enemy classes (IsEnemyClass); Pacify matches
+  // the GROUP - and AUDIT 26 F080: GetEnemyEntityEnemyGroup switches
+  // on CareerIndex, which for a class is ID - 128, so a class enemy
+  // COLLIDES into a monster career's group. A Mage (128, career 0 =
+  // Rat) is ANIMALS - so Pacify Humanoid still cannot touch it, but
+  // Pacify Animal can, and that is DFU's shipping code whatever
+  // PacifyEffect's own comment says.
   const orc = foe(7);            // a humanoid MONSTER
-  const bandit = foe(128);       // an enemy CLASS
+  const bandit = foe(128);       // an enemy CLASS - the Mage
   assert.equal(enemyGroupOf(7), NEARBY.Humanoid);
-  assert.equal(enemyGroupOf(128), NEARBY.None, 'a class enemy has no group at all');
+  assert.equal(enemyGroupOf(128), NEARBY.Animal, 'the Mage rides Rat\'s career slot');
   assert.equal(cast(orc, 33, 2).pacify, true, 'Pacify Humanoid takes the orc');
   assert.equal(cast(bandit, 33, 2).pacify, undefined, 'and cannot touch the bandit');
   assert.equal(cast(bandit, 34, 255).pacify, true, 'Charm takes the bandit');
@@ -142,21 +144,24 @@ test('X8: the pacify reaches the AI, and attacking restores hostility', () => {
   assert.doesNotMatch(host.slice(armEnd), /applySpell\(spell, casterLevel, t\.entity/,
     'no foe application bypasses the door');
 
-  // THE OTHER HALF - "until player attacks them". Both foe damage
+  // THE OTHER HALF - "until PLAYER attacks them". Both foe damage
   // doors re-hostile a pacified target, which is what makes the
   // permanent pacify a real mechanic rather than an off switch.
-  // MT-ii: the encounter pool's door now runs MakeEnemyHostileToAttacker
-  // WHOLE for a player hit (:186-214) - the IsHostile raise is inside
-  // its player arm - and keeps the bare `!isHostile` raise only for a
-  // SOURCELESS hurt. The dungeon host is still on the pre-MT shape.
+  // AUDIT 26 F041 sharpened this to DFU's own wording: the flip sits
+  // inside HandleAttackFromSource's player-source gate, so the door
+  // now asks whose blow it was - a FALL no longer un-pacifies. MT-ii
+  // then widened the ENCOUNTER pool's arm inside that same gate to
+  // the whole of MakeEnemyHostileToAttacker (:186-214), because with
+  // targeting armed there is finally a target to reassign; the
+  // dungeon host still runs the pre-MT shape (MT-iv).
   assert.match(readFileSync(join(ROOT, 'src/scenes/dungeonContext.js'), 'utf8'),
-    /if \(foe\.ai && !foe\.ai\.isHostile\) \{ foe\.ai\.isHostile = true;/,
-    'src/scenes/dungeonContext.js restores hostility on damage');
+    /if \(fromPlayer && foe\.ai && !foe\.ai\.isHostile\) \{ foe\.ai\.isHostile = true;/,
+    'src/scenes/dungeonContext.js restores hostility on a PLAYER attack');
   const xfs = readFileSync(join(ROOT, 'src/scenes/exteriorFoes.js'), 'utf8');
-  assert.match(xfs, /makeEnemyHostileToAttacker\?\.\(PLAYER_TARGET, playerFeet\)/,
-    'src/scenes/exteriorFoes.js restores hostility on damage - through the whole C# method');
-  assert.match(xfs, /\} else if \(f\.ai && !f\.ai\.isHostile\) \{\n\s*f\.ai\.isHostile = true;/,
-    'and a sourceless hurt still raises it the old way');
+  assert.match(xfs, /if \(fromPlayer && f\.ai\) \{\n\s*f\.ai\.makeEnemyHostileToAttacker\?\.\(PLAYER_TARGET/,
+    'src/scenes/exteriorFoes.js restores hostility on a PLAYER attack - through the whole C# method');
+  assert.match(xfs, /resetAllyTeamOnPlayerAttack\(f\.ai, f\.entity, f\.mobileType\)/,
+    'and reverts a struck former ally to its species');
   // the motor's own field names the mechanic it was waiting for
   assert.match(readFileSync(join(ROOT, 'src/characters/enemyMotor.js'), 'utf8'),
     /isHostile = true;\s*\/\/ EnemyMotor\.IsHostile - pacification/,
