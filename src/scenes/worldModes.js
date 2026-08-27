@@ -127,7 +127,7 @@ import { preloadMessageBoxArt } from '../ui/messageBox.js';
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
 import { questLetterName } from '../systems/itemInfo.js';   // ResolveItemLongName's quest-letter arm
-import { goldAmount, deductGold, addGold } from '../systems/court.js';
+import { goldAmount, totalGoldAmount, deductGold, addGold } from '../systems/court.js';
 // Q4-v: the quest layer's host wiring. The BRIDGE (scenes/questBridge.js)
 // is created by the outer host (world.js) and rides in; this machine owns
 // the interior half - the click stamp, the Quests service arm, the scene
@@ -668,6 +668,19 @@ export function createWorldModes(host) {
     if (!b || !shelf) return;
     if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
     shelf.items ??= stockShopShelf({ buildingType: b.buildingType, quality: b.quality }, playerEntity);
+    // AUDIT 26 F066: DFU NEVER opens a paying trade window in a
+    // closed shop. PlayerActivate gates shelf activation on
+    // IsPlayerInsideOpenShop (:887-899) - open opens Buy, CLOSED
+    // opens the inventory in shelf-STEALING mode
+    // (SetShopShelfStealing): the shelf is the Remove-mode remote and
+    // taking is stealing. The port's inventory-with-loot shape IS
+    // that window; the shoplifting ROLL and its crime tally stay
+    // FLAGGED to the crime arc, as the Ledger records.
+    if (b.insideOpenShop === false) {
+      const win = host.makeInventory?.({ loot: { items: () => shelf.items } });
+      if (win) interiorOverlay = win;
+      return;
+    }
     // U8c: the native trade screen when the art is up (the E2/E3
     // loop on INVE00I0 + TRAD00I0 + SHOP00I0; keyed fallback stays)
     if (tradeArtLoaded()) {
@@ -1391,6 +1404,13 @@ export function createWorldModes(host) {
     const wagonStack = () => (playerEntity.wagonItems ?? []).find((i) => i.group === 'Currency') ?? null;
     return {
       gold: () => goldAmount(playerEntity),
+      // AUDIT 26 F103-F105/F178: GetGoldAmount is coins PLUS letters
+      // of credit (PlayerEntity.cs:1313-1316), and DFU gates RepayLoan
+      // (:516), PurchaseHouse (:415) and PurchaseShip (:474) on it -
+      // where deposit/withdraw stay coins-only. One seam had conflated
+      // the two quantities, so the gate and the payment (deductGold,
+      // which DOES spend letters) disagreed with each other.
+      totalGold: () => totalGoldAmount(playerEntity),
       deductGold: (n) => deductGold(playerEntity, n),
       addGold: (n) => addGold(playerEntity, n),
       wagonGold: () => wagonStack()?.stackCount ?? 0,
@@ -2351,6 +2371,11 @@ export function createWorldModes(host) {
       const _bt = interiorBuilding?.buildingType;
       const _hour = Math.floor((Math.floor(worldMinutes()) % 1440) / 60);
       const insideOpenShop = _bt != null && isShop(_bt) && isBuildingOpen(_bt, _hour);
+      // AUDIT 26 F066: the latch RIDES the building record, because
+      // PlayerActivate reads it again at shelf time (:887-899) - the
+      // port computed it here for the people gate and then dropped it,
+      // so a shop broken into after hours still sold at full price.
+      if (interiorBuilding) interiorBuilding.insideOpenShop = insideOpenShop;
       const _dict = townTalk?.factionDict ?? null;
       const peopleVisible = !interiorBuilding ? true : peopleAreVisible(interiorBuilding, {
         hour: _hour,

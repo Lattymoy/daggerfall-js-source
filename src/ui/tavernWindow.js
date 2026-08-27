@@ -51,7 +51,7 @@
 import { loadImg, nativeMetrics, drawImg } from './nativePanel.js';
 import { drawMenuBackdrop } from './chargenArt.js';
 import { ServiceFlowWindow, macroRows } from './guildServiceWindows.js';
-import { goldAmount, deductGold } from '../systems/court.js';
+import { goldAmount, totalGoldAmount, deductGold } from '../systems/court.js';
 import { dayOfYearFromMinutes } from '../systems/gameDate.js';
 import { raceDisplayName, honorificOf } from '../systems/talkSession.js';
 import {
@@ -191,7 +191,10 @@ export class TavernWindow {
   /** ConfirmRenting_OnButtonClick's Yes arm (:213-223). */
   _confirm(room, d) {
     const h = this.hooks;
-    if (goldAmount(h.entity) < d.price) return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID, { amount: d.price }) }];
+    // AUDIT 26 F103: both tavern gates read GetGoldAmount - coins plus
+    // letters (DaggerfallTavernWindow.cs:218, :324); the payment
+    // spends letters through deductGold either way.
+    if (totalGoldAmount(h.entity) < d.price) return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID, { amount: d.price }) }];
     deductGold(h.entity, d.price);
     this._rent(room, d.days);
     return null;
@@ -220,7 +223,7 @@ export class TavernWindow {
     this._chain([{
       picker: [...TAVERN_MENU],
       onPick: (i) => {
-        const r = eatOrDrink(i, { gold: goldAmount(h.entity), gameMinutes: now });
+        const r = eatOrDrink(i, { gold: totalGoldAmount(h.entity), gameMinutes: now });   // F103: GetGoldAmount (:324)
         if (r.kind === 'ignore') return null;
         if (r.kind === 'poor') return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID) }];
         if (r.spend) deductGold(h.entity, r.spend);

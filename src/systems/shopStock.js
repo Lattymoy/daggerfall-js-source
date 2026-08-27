@@ -105,7 +105,7 @@ export const TRANSPORT_HORSE = 94;        // Transportation.Horse (template)
 export const TRANSPORT_SMALL_CART = 93;   // Transportation.Small_cart
 // AUDIT 24 (wave 24): Books.Book0..Book3 all resolve to 277 - one
 // constant, declared here and in loot.js.
-import { BOOK_TEMPLATE, createRegularMagicItem, createRandomPotion } from './loot.js';   // G4: the guild shelves' two minters
+import { BOOK_TEMPLATE, createRegularMagicItem, createRandomPotion, randomlyAddPotionRecipe, getMagicItemTemplates } from './loot.js';   // G4: the guild shelves' two minters (AUDIT 26 F129/F130: + the recipe arm and the registry)
 import { SPELLBOOK_TEMPLATE_INDEX } from './spellMaker.js';   // G4: one home for MiscItems 132
 
 export { BOOK_TEMPLATE };
@@ -155,7 +155,12 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
   };
   const pairs = SHOP_ITEM_GROUPS[buildingType] ?? [0];
   if (buildingType === BUILDING_TYPES.Alchemist) {
-    // RandomlyAddPotionRecipe(25, items) - potion recipes pend (loud)
+    // AUDIT 26 F129: RandomlyAddPotionRecipe(25, items)
+    // (DaggerfallLoot.cs:163-166). The function shipped verbatim with
+    // two loot-table callers while this arm stayed a comment - so
+    // alchemists never stocked a recipe, the main legitimate way to
+    // buy one.
+    randomlyAddPotionRecipe(25, items, rolls);
   }
   if (buildingType === BUILDING_TYPES.GeneralStore) {
     add({ group: 'Transportation', templateIndex: TRANSPORT_HORSE });
@@ -170,7 +175,20 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
     if (group === 'MensClothing' && female) group = 'WomensClothing';
     if (group === 'WomensClothing' && !female) group = 'MensClothing';
     if (group === 'Furniture' || group === 'UselessItems1') continue;
-    if (group === 'MagicItems') continue;   // INTERIM loud (the loot MI interim)
+    if (group === 'MagicItems') {
+      // AUDIT 26 F130: StockShopShelf creates ONE random magic item
+      // for the MagicItems group (DaggerfallLoot.cs:240-243 -
+      // ItemBuilder.CreateRandomMagicItem, which IS
+      // CreateRegularMagicItem at a random index, :517-520) - pawn
+      // shops carry the group at chanceMod 10
+      // (DaggerfallLootDataTables.cs:61). The INTERIM skip predated
+      // the MAGIC.DEF registry this file already mints guild-shelf
+      // magic items from; a context that never registered the file
+      // still skips, the loot mint's own LOUD pend.
+      const templates = getMagicItemTemplates();
+      if (templates) add(createRegularMagicItem(templates, level, playerEntity.gender ?? 0, rolls));
+      continue;
+    }
     if (group === 'Books') {
       let qualityMod = Math.trunc((quality + 3) / 5);
       if (qualityMod >= 4) --qualityMod;
