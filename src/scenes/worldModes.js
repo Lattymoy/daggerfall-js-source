@@ -70,7 +70,7 @@ import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from '../ui/text.js';
 import { hudScale } from '../ui/hud.js';
 import { isShop, isRepairShop, stockShopShelf, stockHouseContainer, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves
-import { identifySpellPass, identifiedTallyText } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll
+import { identifySpellPass, identifiedTallyText, NOT_ENOUGH_SPELL_POINTS_TEXT } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll; F067: its magicka refusal
 import { liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // X10: the Dispel Magic picker
 import { ListPickerWindow, listPickerArtLoaded } from '../ui/listPicker.js';   // X10
 import { createItemLabels, grantCreatedItem, lastCreateItemIndex, setLastCreateItemIndex } from '../systems/createItem.js';   // X11b
@@ -886,12 +886,27 @@ export function createWorldModes(host) {
       // magicka ONCE for the whole list, whatever the outcome
       // (DaggerfallTradeWindow.cs:966-991).
       if (identifySpell) {
+        // AUDIT 26 F067: the SPELL runs DoModeAction (:954-995), a
+        // path that never reaches ConfirmTrade at all. Two laws come
+        // with that. First its magicka refusal (:960-963) turns back
+        // the WHOLE pass - nothing identified, nothing spent:
+        if (identifySpell.cost > (playerEntity.magicka ?? 0)) {
+          townTalk?.say?.(NOT_ENOUGH_SPELL_POINTS_TEXT);
+          surfacePlayer();
+          return;
+        }
         const pass = identifySpellPass(staged, identifySpell.chance, Math.random);
         for (const it of pass.identified) it.isIdentified = true;
         if (pass.spendMagicka) {
           playerEntity.magicka = Math.max(0, (playerEntity.magicka ?? 0) - identifySpell.cost);
         }
         townTalk?.say?.(identifiedTallyText(pass.successCount, pass.total));
+        // ...and second, the Mercantile tally below is ConfirmTrade's
+        // (:1088), which the spell path never reaches. The paid
+        // SERVICE does tally - it goes through ConfirmTrade's own
+        // Identify arm (:1074-1082) like every other mode.
+        surfacePlayer();
+        return;
       } else {
         deductGold(playerEntity, price);
         for (const it of staged) it.isIdentified = true;

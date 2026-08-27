@@ -44,6 +44,21 @@ export { breakNormalPowerConcealment, handleAttackFromSource, NORMAL_POWER_CONCE
  *  table; this surface has no text source, so the literal stands. */
 export const SPELL_ABSORBED_TEXT = 'Spell was absorbed.';
 
+/** AUDIT 26 F078 - the two HUD lines the port computed and never
+ *  said. Regenerate.Start prints its line for a PLAYER host
+ *  (Regenerate.cs:45-53, 1.5s) and DrainEffect prints its own from
+ *  ShowPlayerDrained (:102-106), reached from BecomeIncumbent (:71)
+ *  and AddState (:84) - both gated on
+ *  `lastMagnitudeIncreaseAmount > 0`, so it is every magnitude
+ *  INCREASE, not every round and not a heal.
+ *
+ *  Same FLAGGED caveat as the line above: DFU reads these from the
+ *  localised string table (keys `youAreRegenerating`, `youFeelDrained`),
+ *  which is not in the source tree - the literals stand, and the C#
+ *  comments beside both calls quote them. */
+export const REGENERATING_TEXT = 'You are regenerating.';
+export const FEEL_DRAINED_TEXT = 'You feel drained.';
+
 export { FATIGUE_MULTIPLIER, maxFatigue };
 
 const ELEMENT_EFFECT_FLAG = Object.freeze([EFFECT_FLAGS.Fire, EFFECT_FLAGS.Frost, EFFECT_FLAGS.Poison, EFFECT_FLAGS.Shock, EFFECT_FLAGS.Magic]);
@@ -849,6 +864,11 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
           pushPermanent(target, entry);
         }
         increaseDrainMagnitude(target, entry, amt);
+        // F078: ShowPlayerDrained, on the magnitude increase itself -
+        // the `amt > 0` arm this sits in IS DFU's
+        // `lastMagnitudeIncreaseAmount > 0` gate. TransferEffect IS-A
+        // DrainEffect, so it says the line too.
+        sinks?.say?.(FEEL_DRAINED_TEXT);
         if (kind === 'transferAttribute' && caster?.entity) healAttributeDamage(caster.entity, stat, amt);
         out.drained = (out.drained ?? 0) + 1;
       }
@@ -967,6 +987,10 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
         const inc = findInc((a) => a.kind === 'regenerate' && a.settingsKey === sKey);
         if (inc) inc.roundsRemaining += rounds;
         else pushActive(target, { kind: 'regenerate', effect: e, casterLevel, element: saveElement(e), flag: saveFlag(e), saveScaled, settingsKey: sKey, roundsRemaining: rounds }, sinks, rolls);   // magic-11
+        // F078: Start's HUD line. base.Start precedes the incumbency
+        // resolution, so it prints on EVERY cast that takes - the
+        // merge into an incumbent does not silence it.
+        sinks?.say?.(REGENERATING_TEXT);
         out.continuous++;
       }
       continue;
