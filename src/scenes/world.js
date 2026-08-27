@@ -2449,6 +2449,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     currentLocation: () => _questLoc(),
     currentRegionIndex: () => _questRegionIndex(),
     currentLocationIndex: () => _questLoc()?.locationIndex ?? -1,
+    // M-X: the macro table's world reads. legalRepNow feeds %ltn's
+    // fourteen bands; currentLocationType feeds %ct/%cn2. The talk
+    // getters (%fa/%fe/%fpc...), lordNameForFaction and oldLeaderFate
+    // stay unmounted - the talk-news arc's - and answer the charter's
+    // null through the handlers' optional reads; currentBuildingName
+    // is the interior host's and this exterior host answers none
+    // ('[invalid]' at the handler, DFU's own outside-a-building arm).
+    legalRepNow: () => legalRepOf(playerEntity, _questRegionIndex()),
+    currentLocationType: () => _questLoc()?.mapTableData?.locationType ?? null,
     currentRegionName: () => maps.getRegion(_questRegionIndex())?.name ?? '',
     isPlayerInLocationRect: () => _musicInLocationRect(),
     playerPixel: () => playerTravelPixel(),
@@ -3726,8 +3735,6 @@ export async function bootWorld(canvas, renderer, params, status) {
       const _pf = walkMode && playerSpawned ? player.pos : cam.pos;
       if (!townTalk.overlayActive) runEncounterTick(_pf);
       exteriorFoes.update(townTalk.overlayActive ? 0 : dt, _pf, cam.pos, _foeSenses());
-      // EM4: the danger report, both of this host's pools - the watch and the encounter foes - as areEnemiesNearby asks them.
-      music.reportDanger(dt, [...(cityGuards?.guards ?? []), ...exteriorFoes.foes]);
       livePersonBatches.push(...exteriorFoes.batches());
     }
     droppedLoot.tickFlats(dt);   // FA1 slice 3

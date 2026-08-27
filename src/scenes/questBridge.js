@@ -145,6 +145,7 @@ export function createQuestBridge(ctx) {
     playerGender: () => ctx.playerEntity?.gender ?? 'male',
     playerName: () => ctx.playerEntity?.name ?? null,
     playerRaceName: () => ctx.playerRaceName?.() ?? null,
+    playerEntity: ctx.playerEntity ?? null,   // M-X: the macro globals (vitals, %ski, the biography modifiers)
     getReputation: (fid) => ctx.getReputation?.(fid) ?? 0,
     getGold: () => ctx.getGold?.() ?? 0,
     deductGold: (n) => ctx.deductGold?.(n),

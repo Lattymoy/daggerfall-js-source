@@ -37,6 +37,19 @@ const PENDING = new Map([
   // B3 (blocker 3) MOUNTED the respawn trio - respawnPlayerAtSite,
   // isRespawning, setPlayerScenePosition (the Building arm alone
   // stays FLAGGED at the mount and answers false).
+  // M-X: the macro table's talk/news and interior reads - the
+  // handlers answer the charter's null through optional reads until
+  // the talk-news arc (the TalkManager getters, the lord names) and
+  // the interior host (the building name, the tavern pick) mount them.
+  ['factionNPC', 'M-X: TalkManager.GetFactionNPC - the talk-news arc'],
+  ['factionNPCAlly', 'M-X: TalkManager.GetFactionNPCAlly - the talk-news arc'],
+  ['factionNPCEnemy', 'M-X: TalkManager.GetFactionNPCEnemy - the talk-news arc'],
+  ['factionName', 'M-X: TalkManager.GetFactionName - the talk-news arc'],
+  ['factionPC', 'M-X: TalkManager.GetFactionPC - the talk-news arc'],
+  ['lordNameForFaction', 'M-X: GetLordNameForFaction (%fl1/%fl2/%ol1) - the talk-news arc'],
+  ['oldLeaderFate', 'M-X: GetOldLeaderFateString (%olf) - the talk-news arc'],
+  ['currentBuildingName', 'M-X: %cbd is the interior host\'s - the handler answers [invalid] meanwhile, DFU\'s outside arm'],
+  ['randomTavernName', 'M-X: %nt walks the building directory - the interior/town host\'s'],
   ['getClassicSpellEffects', 'CastSpellDo needs the SPELLS.STD classic records'],
   ['spellHasMatchForClassicEffect', 'rides the readied-bundle seam above'],
   ['readiedSpell', 'RETIRED by AUDIT 24 - the latch is the action\'s now; the name survives only in a comment'],

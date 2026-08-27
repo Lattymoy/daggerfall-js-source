@@ -542,10 +542,6 @@ export class SongManager {
     this._current = null;              // currentContext
   }
 
-  /** The context of the frame being decided - what the `play` sink is
-   *  answering for. EM1: the enhanced source composes on it. */
-  get currentContext() { return this._current; }
-
   /**
    * One frame. `songEnded` stands in for DFU's !IsPlaying.
    * Returns the song now playing (or null).

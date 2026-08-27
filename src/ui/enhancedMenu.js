@@ -470,9 +470,19 @@ function paneSettings(pane) {
   pane.append(panes);
 }
 
+/** THE ONE WAY TO SWITCH SKINS, for every control that offers it.
+ *  Stores the choice through uiSkin and reloads without any ?skin=
+ *  override: the two skins are two hosts and there is nothing to hand
+ *  over in place. */
+export function switchSkin(to = otherSkin(uiSkin())) {
+  setUiSkin(to);
+  const url = new URL(location.href);
+  url.searchParams.delete('skin');
+  location.replace(url.toString());
+}
+
 /** The one control that is not a DFU setting. It reads and writes
- *  through uiSkin, and switching to classic reloads: the two skins are
- *  two hosts and there is nothing to hand over in place. */
+ *  through uiSkin, and switching to classic reloads (switchSkin). */
 function skinRow() {
   const row = el('div', 'row');
   const main = el('button', 'row-main');
@@ -483,15 +493,34 @@ function skinRow() {
   const b = el('button', 'act primary', SKIN_NAMES[uiSkin()]);
   b.style.minHeight = '38px';
   b.style.padding = '8px 16px';
-  b.onclick = () => {
-    setUiSkin(otherSkin(uiSkin()));
-    const url = new URL(location.href);
-    url.searchParams.delete('skin');
-    location.replace(url.toString());
-  };
+  b.onclick = () => switchSkin();
   ctl.append(b, el('span', 'tier live'));
   row.append(ctl);
   return row;
+}
+
+/** THE SWITCH ON THE DOOR (2026-08-27, Mac: "not hide the enhanced
+ *  version toggle within a settings window and instead make it more
+ *  loud. Enhanced is on by default and I want people to know they can
+ *  easily switch if they want classic"). Under the brand, where the
+ *  word ENHANCED already sat: the two skins side by side, the one in
+ *  effect lit, the other one press away, and the word "switch anytime"
+ *  under them so nobody has to guess that the pair is a control. It is
+ *  the settings row's own door (switchSkin), not a second one. */
+export function skinSwitch() {
+  const wrap = el('div', 'skinswitch');
+  wrap.setAttribute('role', 'group');
+  wrap.setAttribute('aria-label', 'Interface');
+  const current = uiSkin();
+  for (const skin of ['enhanced', 'classic']) {
+    const b = el('button', `skinopt${skin === current ? ' on' : ''}`, SKIN_NAMES[skin]);
+    b.setAttribute('aria-pressed', String(skin === current));
+    b.title = skin === current ? `${SKIN_NAMES[skin]} interface, in use` : `Switch to the ${SKIN_NAMES[skin]} interface`;
+    b.onclick = () => { if (skin !== current) switchSkin(skin); };
+    wrap.append(b);
+  }
+  wrap.append(el('div', 'skinhint', 'switch anytime'));
+  return wrap;
 }
 
 function categoryCard() {
@@ -684,7 +713,7 @@ function renderInto() {
   const side = el('aside', 'side');
   const brand = el('div', 'brand');
   brand.append(el('h1', null, 'Daggerfall'));
-  brand.append(el('div', 'sub', 'Enhanced'));
+  brand.append(skinSwitch());   // the word ENHANCED became the switch
   side.append(brand);
 
   const rail = el('nav', 'rail');

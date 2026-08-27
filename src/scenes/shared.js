@@ -35,7 +35,6 @@ import { setMusicReplacements } from '../systems/musicReplacement.js';   // M-EX
 import { setTextureReplacements } from '../systems/textureReplacement.js';   // M-TEX: TextureReplacement's registry
 import { getBool } from '../systems/settings.js';   // M-FM: Audio/AlternateMusic, read once for all three hosts
 import { SongManager, musicEnvironment, holdEnvironment } from '../systems/songManager.js';
-import { enhancedScore } from '../systems/enhancedMusic/index.js';   // EM1: the enhanced side's answer for a cue
 import { audio } from '../systems/audio.js';
 
 import { getBytes, storedMusicNames, loadMusicFile, storedTextureNames, loadTextureFile } from './dataSource.js';   // M-EXT/M-TEX: the player's own packs
@@ -1038,18 +1037,8 @@ export function createMusicDirector({ fm = null, play = null, stop = null, playi
   // `null` means ask the setting; an explicit true/false is an
   // override, which is what the pins drive.
   const useFm = fm === null ? getBool('Audio', 'AlternateMusic') : fm;
-  // EM1 (2026-08-27): ONE brain, two answers. The manager decides the
-  // cue and when it changes, exactly as before; the play sink asks the
-  // enhanced side first, and under the classic skin (or for a place with
-  // no palette yet) the answer is null and the classic song plays as it
-  // always has. `manager` is read late so the sink can see the context
-  // the manager is deciding for.
-  let manager = null;
-  manager = new SongManager({
-    play: play ?? ((name) => {
-      const score = enhancedScore(manager?.currentContext);
-      return score ? music.playEnhanced(score) : music.playFrom([name], { gameDays: 0 });
-    }),
+  const manager = new SongManager({
+    play: play ?? ((name) => music.playFrom([name], { gameDays: 0 })),
     stop: stop ?? (() => music.stop()),
     fm: useFm,
   });

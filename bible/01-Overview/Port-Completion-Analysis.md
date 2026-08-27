@@ -3,6 +3,51 @@
 Snapshot taken 2026-08-22 against Daggerfall Unity `81e89e90` (master,
 2026-06-30), by cross-referencing the whole DFU C# tree against `src/`.
 
+**RE-VERIFIED 2026-08-27** - a mechanical pass over every claim below
+against that day's tree (suite 3761/0, src 127,925 loc / 404 files,
+tests 94,415 loc / 387 files). The five days between the snapshot and
+the re-verification closed MOST of this page: every row struck below
+names the slice that shipped it, and the three verified counts are
+re-run (quest actions 62 of 82 with 20 pended; macros 93 of 216
+present, 123 missing; effect classes EFFECTIVELY COMPLETE - the 33
+.cs files unnamed in src are the per-attribute
+Drain/Fortify/Heal/Transfer family this page already records as
+generically covered, their three base classes, and two cosmetic
+filename misses for classes that shipped - RingOfNamiraEffect is V3's
+Namira reflection, VampiricFortifyEffect rides the vampirism round).
+The HONEST still-open list as of the re-verification:
+
+1. **Classic-save import** (SaveTree/SaveVars/SaveGames/
+   CharacterRecord, ~3,200 C# loc) - absent, unchanged.
+2. **Multi-slot save/load windows** - the pause menu rides the
+   quicksave; DFU's slot UI has no counterpart.
+3. ~~The 123 missing macros~~ **THE TABLE IS COMPLETE (M-X
+   2026-08-27)**: every MacroHelper.cs row is now handled in
+   questMacros.js, null-handled where C# is null, or RECORDED at the
+   per-window expander that owns it (37 tokens, each verified in its
+   named home) - and `test/macrocoverage.test.js` is the coverage
+   GATE this page asked for, diffing the C# table mechanically. What
+   remains is per-MCP SOURCES: the biography MCP (the %q block's
+   answers), the spell-info MCP (%1am..%clm/%mpw), the bank MCP
+   (%ml/%r1-5) - each its arc's, reached through the error ladder
+   until then.
+4. **The 20 pended quest actions** (GUARD_PATTERNS in
+   systems/quest/actions.js - PlaySong left the list 2026-08-25).
+5. **Enemy infighting / MobileTeams combat / PlayerAlly**
+   (ApplyDamageToNonPlayer) - ENEMY_BASICS carries every team string
+   and nothing fights over them; this is also what the two artifact
+   summons' allied-spawn door (V3, FLAGGED) waits on.
+6. **The interior foe pool** - the standing seam behind the coven
+   failure's and the summoning refusal's unspawned daedra and Q4-v's
+   interior enemies.
+7. **CfaFile** (horse/cart FP sprites), **HeadBobber** (a settings
+   toggle exists, no bobber), **DilateCoastalClimate**, city gates
+   closing at night, HUDActiveSpells + escorting faces, the
+   transformed move-sound loop - the small-residue tail.
+
+Everything else this page lists as missing was verified SHIPPED and
+is struck in place below.
+
 **READ THIS FIRST - THE STATUS OF THIS PAGE.** Five of sixteen planned
 subsystem sweeps completed before the run was stopped, and NONE of the
 findings on this page went through the two-refuter discipline AUDIT 24
@@ -64,19 +109,19 @@ AUDIT 24's regeneration gate rebuilds that set from the source tree.
 
 | Subsystem | DFU loc | Notes |
 |---|---|---|
-| Interior automap (`Automap.cs` + window) | 5,091 | pure new build; needs a dungeon-geometry discovery model |
-| Controls / keybinding / joystick + `InputManager` | 4,110 | the port has no keybinding registry at all (Ledger A already records the main-menu hotkey gap as a consequence) |
-| Exterior automap | 3,582 | |
-| Enchanting effect tree | 3,498 | gates every enchanted item, artifact and the item maker |
-| HUD component set | 3,272 | `HUDLarge`, `HUDActiveSpells`, `HUDPlaceMarker`, escorting-NPC faces, quest debugger |
+| ~~Interior automap~~ SHIPPED (A-slices: systems/automap.js + ui/automapWindow.js) | 5,091 | struck 2026-08-27 |
+| ~~Controls / keybinding + InputManager~~ SHIPPED (SETT: ui/input.js + ui/controlsWindow.js + systems/settings.js; gamepad still absent) | 4,110 | struck 2026-08-27 |
+| ~~Exterior automap~~ SHIPPED (ui/exteriorAutomapWindow.js) | 3,582 | struck 2026-08-27 |
+| ~~Enchanting effect tree~~ SHIPPED (E1/E2 2026-08-23 + V3's nine artifacts 2026-08-27) | 3,498 | struck 2026-08-27 |
+| ~~HUD component set~~ MOSTLY SHIPPED (ui/hudLarge.js with compass/vitals/head incl. V5's curse heads; HUDActiveSpells, place marker, escorting faces still absent) | 3,272 | narrowed 2026-08-27 |
 | Classic-save import (`API/Save/*`) | 3,200 | SaveTree, SaveVars, SaveGames, CharacterRecord + 7 typed records |
-| Lycanthropy / vampirism / artifact effects | 2,527 | the temple cure-disease count already owes this number |
-| Spell maker (+ effect settings editor, icon picker) | 2,390 | |
-| Banking (loans, deposits, houses, ships) | 1,707 | |
-| Item maker / enchanting UI | 1,320 | |
-| Save/load game windows | 937 | |
-| Rappel / hanging / head-bob motors | 857 | |
-| Potion maker | 408 | |
+| ~~Lycanthropy / vampirism / artifact effects~~ SHIPPED WHOLE (V1-V5 + V3, 2026-08-24..27) | 2,527 | struck 2026-08-27 |
+| ~~Spell maker~~ SHIPPED (systems/spellMaker.js + ui/spellMakerWindow.js) | 2,390 | struck 2026-08-27 |
+| ~~Banking~~ SHIPPED (systems/banking.js + the H-slices through H4's 3D preview) | 1,707 | struck 2026-08-27 |
+| ~~Item maker / enchanting UI~~ SHIPPED (ui/itemMakerWindow.js) | 1,320 | struck 2026-08-27 |
+| Save/load game windows | 937 | STILL OPEN (re-verified 2026-08-27) - the pause menu rides the quicksave; no slot UI |
+| ~~Rappel / hanging~~ SHIPPED (player/climbing.js + motor.js); HeadBobber still absent (a settings toggle only) | 857 | narrowed 2026-08-27 |
+| ~~Potion maker~~ SHIPPED (ui/potionMakerWindow.js) | 408 | struck 2026-08-27 |
 
 One architectural note that changes the arithmetic: DFU carries a
 16,404-loc retained widget toolkit (`Game/UserInterface`) under 37,693 loc
@@ -111,17 +156,18 @@ reader that touches a shipping ARENA2 file. What remains:
 
 ### World / terrain / location - ~4,905 loc
 Static assembly is finished and verbatim. The gaps are dynamic:
-- No dynamic weather at all: no `WeatherTable`, no poll loop, no
-  per-climate array, no save (~350).
-- The season never advances from the calendar - climate and nature swaps
-  are frozen at a URL parameter (~150).
-- No `PlayerTileMapIndex`, so exterior swimming, water-walking, path
-  footsteps and the water fall-damage exemption do not exist (~120).
-- No `PositionPlayerToLocation` / `PositionPlayerToDungeonExit` /
-  `RepositionPlayer` (~200).
+- ~~No dynamic weather at all~~ SHIPPED (S41: systems/weatherSim.js -
+  the climate arrays, the day roll, the save).
+- ~~The season never advances~~ SHIPPED (S41's day block advances it;
+  the sky and the enchant ctx read it live).
+- ~~No `PlayerTileMapIndex`~~ SHIPPED (world.js/dungeonContext read
+  it; exterior swimming and the water arms ride it).
+- ~~No `PositionPlayerTo*`~~ SHIPPED (worldModes'
+  dungeonEntranceLanding is PositionPlayerToDungeonExit verbatim; the
+  travel/cemetery arrivals are the location half).
 - `DilateCoastalClimate` never runs - every ocean-adjacent pixel keeps
   climate 223 (~60).
-- Neither automap (~3,200 of the total above).
+- ~~Neither automap~~ SHIPPED (both - see the struck table rows).
 - Long tail: editor markers (archive 199) unidentified and wrongly
   rendered, city gates never close at night, smaller-dungeon generation,
   `AddSpawnPoints`, per-record interior light intensity/colour,
@@ -129,12 +175,11 @@ Static assembly is finished and verbatim. The gaps are dynamic:
 
 ### Player motors / input - ~3,472 loc
 Motor core is close to 1:1. Everything around it is thin:
-- **No input layer**: no keybinding registry, no Actions model, no
-  rebinding, no gamepad (~700 + ~200). This blocks the settings screen's
-  controls section and the main-menu hotkeys already on the Ledger.
-- Exterior buildings are never locked - no open hours, no
-  `BuildingIsUnlocked`, no lock value, no steal-mode lockpicking, no
-  bashing (~300).
+- ~~No input layer~~ SHIPPED (SETT: ui/input.js's registry +
+  controlsWindow's rebinding); gamepad still absent.
+- ~~Exterior buildings are never locked~~ SHIPPED
+  (systems/buildingLocks.js: open hours, BuildingIsUnlocked, the lock
+  value, R1's lockpicking and the bash).
 - The four interaction modes reach only mobile townsfolk in the exterior
   hosts; entering a building never discovers it; Info mode on a building
   has no port (~330).
@@ -149,12 +194,12 @@ Motor core is close to 1:1. Everything around it is thin:
 
 ### Entities / FormulaHelper / combat - ~1,262 loc
 The most complete subsystem measured. Residue only, but some of it bites:
-- `CalculateProficiencyModifiers` is never applied - expert weapon
-  proficiency gives no to-hit or damage (~25).
-- Item repair is entirely absent (cost, time, the flow) - degraded
-  equipment can never be fixed (~240).
-- No lockpick ATTEMPT path, so the Lockpicking skill has no consumer and
-  can never advance (~110).
+- ~~`CalculateProficiencyModifiers` is never applied~~ SHIPPED
+  (combat/formulas.js carries it).
+- ~~Item repair is entirely absent~~ SHIPPED
+  (systems/repairService.js).
+- ~~No lockpick ATTEMPT path~~ SHIPPED (R1: AttemptLockpicking in
+  the action system, the skill advances).
 - ~~`PassiveSpecialsEffect` unported~~ SHIPPED (V2c:
   systems/passiveSpecials.js - regen, sun/holy damage, both mageries).
 - Enemy infighting damage (`ApplyDamageToNonPlayer`) unported (~200).
@@ -169,11 +214,12 @@ Also close to 1:1 on the classic path. Gaps:
   from its sprite (~60).
 - No multi-target AI: `GetTargets`, `MobileTeams`, infighting, PlayerAlly
   and quest-foe targeting are all absent (~350).
-- Daedra Seducer transformation entirely unported (~140).
+- ~~Daedra Seducer transformation unported~~ SHIPPED
+  (characters/enemyAttack.js + enemyBasics carry it).
 - `HeightAdjust` unported - tall enemies cannot follow through doorways
   (~35).
-- Interior people are always visible (the AddPeople ownership / shop-hours
-  / guild-access gates - already a Ledger C row) (~55).
+- ~~Interior people are always visible~~ SHIPPED
+  (characters/interiorPeople.js gates on hours/ownership).
 - Mobile townspeople get no face record, so every talk portrait falls back
   to record 0 (~35).
 - Dungeon static NPC flats get no StaticNPC identity - no talk target, no
@@ -207,6 +253,13 @@ use, and the audits' own record is that a slice's verify pass reliably
 finds more than the slice did.
 
 ## Sequencing, if it were mine to order
+
+**(RE-VERIFIED 2026-08-27: items 1, 2, 3, 4 and 5 have ALL since
+shipped - the input layer at SETT, enchanting at E1/E2/V3, weather at
+S41, repair + lockpicking at their own slices, both automaps at the
+A-slices; item 6's maker windows all exist; item 7's banking and the
+curses shipped whole, leaving classic-save import the one survivor.
+The list below is kept as the record of what the snapshot saw.)**
 
 1. **The input layer** - a keybinding registry unblocks the settings
    controls section, the main-menu hotkeys, and every "DFU binds this to a

@@ -40,12 +40,6 @@ const PUBLIC_ALLOWLIST = new Map([
   ['public/site/menu-settings.png', 'OURS - the enhanced Settings pane, no game data loaded (tools/siteShots.mjs)'],
   ['public/site/menu-phone.png', 'OURS - the enhanced menu on a phone, no game data loaded (tools/siteShots.mjs)'],
   ['public/site/pack-sample.png', 'OURS - the enhanced pack with a sample character, no game data loaded (tools/siteShots.mjs)'],
-  // ENHANCED MUSIC (EM2a). Mac's own compositions, shipped as MP3 - the
-  // one format every browser on the site's list plays. Nothing of the
-  // game's in them.
-  ['public/music/enhanced/main-theme.mp3', "OURS - Mac's main theme for the enhanced front door (EM2a, 2026-08-27)"],
-  ['public/music/enhanced/dungeon.mp3', "OURS - Mac's dungeon track, the composed piece under it (EM2c, 2026-08-27)"],
-  ['public/music/enhanced/danger.mp3', "OURS - Mac's danger track, the place's track crossfades into it (EM4, 2026-08-27)"],
   // THE BAKED SKIN (tools/skin/). These pixels never touched ARENA2: the
   // source is our own generated eight-direction turnaround, projected onto
   // buildNeutralBody, which is a from-scratch DESIGNED figure and not a trace
