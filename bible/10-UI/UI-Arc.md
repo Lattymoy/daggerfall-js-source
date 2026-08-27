@@ -6365,3 +6365,29 @@ worked - which is why it read as "dungeons only". routeKey now declines
 POLLED_ACTIONS (ReadyWeapon); the panel keeps routeAction. Pinned in
 test/sheathkey.test.js (the keyboard OFF, the panel ON, every host's
 poll and both dungeon routers present), 2 mutants dead.
+
+
+## PX1 (2026-08-27, Mac: "this is it. YES"): THE PIXEL HOME
+
+The enhanced boot menu's FRONT FACE, adopted from the menu-pixel.html
+prototype: the boot door opens on `section = 'home'` - a boxless
+centered list over `src/ui/pixelGround.js`'s Bayer-dithered night
+(seeded stars, square pixels derived from the viewport at 1/4 scale,
+redrawn on the mount-owned resize listener), Jacquard 12 pixel
+blackletter wordmark, Pixelify Sans list, and the focused row wearing
+THE CLASSIC SHADOWED-LABEL PAIR - 243,239,44 over 93,77,12 - the idiom
+every native window draws. States SNAP; the block declares no
+transitions. Every home row NAVIGATES to the pane that already carries
+its laws (Continue's restorable card, the Mods waiting-room) rather
+than acting - a home that re-decided Continue would be a second
+implementation of the Continue pane. Escape backs a section out to
+home (a new rung above the pause-resume arm); the brand wordmark in
+the section shell is the same door for a finger. The pause door is
+UNTOUCHED - its pixel face is its own slice, as are the section
+shells' own restyles. The two pixel faces joined the skin's ONE fonts
+request (landing.test.js repinned to the new bytes, with a measured
+four-family assertion beside it); the pause-open pin repinned to the
+new shape with its pause half unchanged. Verified live over the built
+bundle: menu.html on desktop + phone, a Settings walk, Escape home,
+zero page errors. Prototypes of record: menu-redesign.html (smooth),
+menu-pixel.html (adopted).

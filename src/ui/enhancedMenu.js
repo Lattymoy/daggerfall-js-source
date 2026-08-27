@@ -98,6 +98,7 @@ import { dateFromClassicMinutes, dateString } from '../systems/gameDate.js';
 import { BUILD_TAG } from '../buildTag.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { repaintKeepingScroll } from './domRepaint.js';
+import { drawPixelGround } from './pixelGround.js';
 import { overlayAction } from './input.js';   // U51: Escape, through the shared table
 
 // ── THE RAIL ─────────────────────────────────────────────────────
@@ -143,6 +144,7 @@ let sections = SECTIONS_BOOT;
 let hooks = {};
 let keyHandler = null;
 let lockHandler = null;
+let resizeHandler = null;   // PX1: the home ground's redraw-on-resize
 
 const el = (t, cls, txt) => {
   const n = document.createElement(t);
@@ -699,6 +701,51 @@ function paneAbout(body) {
 // ── SHELL ────────────────────────────────────────────────────────
 function go(id) { section = id; pickedKey = null; sheetOpen = false; confirming = null; render(); }
 
+// ── PX1: THE PIXEL HOME (Mac, 2026-08-27) ────────────────────────
+// The boot door's FACE. The prototype of record is menu-pixel.html;
+// what shipped is its structure over the REAL sections: every row
+// navigates to the pane that already carries that section's laws
+// (Continue's restorable card, the Mods waiting-room, the rail-hole
+// rule), rather than acting directly - a home that re-decided what
+// Continue does would be a second implementation of the Continue pane.
+// Escape from any section returns here (see onKey); the skin switch is
+// skinSwitch(), the one door.
+function renderHome() {
+  const home = el('div', 'px-home');
+  const ground = document.createElement('canvas');
+  ground.className = 'px-ground';
+  drawPixelGround(ground, globalThis.innerWidth ?? 1280, globalThis.innerHeight ?? 720);
+  home.append(ground);
+  home.append(el('div', 'px-vignette'));
+
+  const stage = el('div', 'px-stage');
+  const mark = el('h1', 'px-wordmark', 'Daggerfall');
+  mark.append(el('small', null, 'JavaScript'));
+  stage.append(mark);
+  const rule = el('div', 'px-rule');
+  rule.append(el('span', 'px-gem'));
+  stage.append(rule);
+
+  const menu = el('nav', 'px-menu');
+  menu.setAttribute('aria-label', 'Main menu');
+  for (const label of sections) {
+    const id = idOf(label);
+    const b = el('button');
+    b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label), el('span', 'px-c', '\u25c6'));
+    b.onclick = RAIL_ACTS[id] ? () => onAction(RAIL_ACTS[id]) : () => go(id);
+    menu.append(b);
+  }
+  stage.append(menu);
+  home.append(stage);
+
+  const foot = el('div', 'px-foot');
+  const build = el('span');
+  build.append(document.createTextNode('build '), el('span', null, BUILD_TAG));
+  foot.append(build, skinSwitch());
+  home.append(foot);
+  app.append(home);
+}
+
 function render() {
   repaintKeepingScroll(app, () => renderInto());
 }
@@ -708,11 +755,22 @@ function render() {
  *  scroll throws the player back to the top of 66 Video rows. */
 function renderInto() {
   app.innerHTML = '';
+  // PX1: the boot door opens on the pixel home; every section keeps
+  // its shell. The pause door is untouched - its own slice.
+  if (mode === 'boot' && section === 'home') { renderHome(); return; }
   const shell = el('div', 'shell');
 
   const side = el('aside', 'side');
   const brand = el('div', 'brand');
-  brand.append(el('h1', null, 'Daggerfall'));
+  const h1 = el('h1', null, 'Daggerfall');
+  if (mode === 'boot') {
+    // PX1: at boot the wordmark is the way back to the pixel home -
+    // the same affordance every site's masthead carries. Escape does
+    // it too (onKey); this is the one a finger can see.
+    h1.style.cursor = 'pointer';
+    h1.onclick = () => go('home');
+  }
+  brand.append(h1);
   brand.append(skinSwitch());   // the word ENHANCED became the switch
   side.append(brand);
 
@@ -793,7 +851,8 @@ function onKey(e) {
   const back = confirming ? () => { confirming = null; render(); }
     : sheetOpen ? () => { sheetOpen = false; render(); }
       : mode === 'pause' ? () => onAction('resume')
-        : null;
+        : section !== 'home' ? () => go('home')   // PX1: a section backs out to the front face
+          : null;
   if (!back) return;
   e.preventDefault();
   // A MODAL OVERLAY OWNS ITS INPUT (the wizard's own law, U50). On
@@ -842,12 +901,13 @@ export function mountEnhancedMenu(host, {
   mode = m === 'pause' ? 'pause' : 'boot';
   hooks = h ?? {};
   sections = mode === 'pause' ? SECTIONS_PAUSE : SECTIONS_BOOT;
-  // WHICH PANE OPENS. Boot opens on Continue - the one save a
-  // returning player wants. Pause opens on SAVE GAME, which is what a
-  // player most often pressed Escape for, and Settings - the reason
-  // this door exists at all - is one press away and permanently
-  // visible on the rail, which is the thing classic could not do.
-  section = mode === 'pause' ? 'save' : 'continue';
+  // WHICH PANE OPENS. Boot opens on the PIXEL HOME (PX1) - the front
+  // face itself, every section one press away. Pause opens on SAVE
+  // GAME, which is what a player most often pressed Escape for, and
+  // Settings - the reason this door exists at all - is one press away
+  // and permanently visible on the rail, which is the thing classic
+  // could not do.
+  section = mode === 'pause' ? 'save' : 'home';
   category = CATEGORIES[0].id;
   pickedKey = null;
   sheetOpen = false;
@@ -856,6 +916,11 @@ export function mountEnhancedMenu(host, {
   render();
   keyHandler = onKey;
   globalThis.addEventListener('keydown', keyHandler, { capture: true });
+  // PX1: the pixel ground is drawn for the viewport it mounted on; a
+  // rotate or a resize while the home is up redraws it, or the sky
+  // stretches - the prototype's own phone-shot lesson.
+  resizeHandler = () => { if (mode === 'boot' && section === 'home') render(); };
+  globalThis.addEventListener('resize', resizeHandler);
   lockHandler = releaseLock;
   releaseLock();
   if (typeof document !== 'undefined') document.addEventListener('pointerlockchange', lockHandler);
@@ -875,8 +940,10 @@ export function mountEnhancedMenu(host, {
       // again.
       if (keyHandler) globalThis.removeEventListener('keydown', keyHandler, { capture: true });
       if (lockHandler && typeof document !== 'undefined') document.removeEventListener('pointerlockchange', lockHandler);
+      if (resizeHandler) globalThis.removeEventListener('resize', resizeHandler);
       keyHandler = null;
       lockHandler = null;
+      resizeHandler = null;
       host.innerHTML = '';
       app = null;
       onAction = () => {};

@@ -152,12 +152,13 @@ test('U51: the fork asks the SKIN, not only the document', () => {
 });
 
 test('U51: the pause door opens on the pane a player pressed Escape for', () => {
-  // Boot opens on Continue - the one save a returning player wants.
   // Pause opens on SAVE GAME, and Settings - the reason this door
   // exists at all - is one press away and permanently on the rail,
-  // which is the thing classic could not do at any price.
+  // which is the thing classic could not do at any price. PX1 moved
+  // BOOT onto the pixel home ('home'); the pause half is this pin's
+  // law and is unchanged.
   const src = read('src/ui/enhancedMenu.js');
-  assert.match(src, /section = mode === 'pause' \? 'save' : 'continue';/);
+  assert.match(src, /section = mode === 'pause' \? 'save' : 'home';/);
 });
 
 test('U51: the pause door mounts the FRONT DOOR, not a second design', () => {

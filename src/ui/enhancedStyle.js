@@ -63,14 +63,23 @@ export const ENHANCED_TOKENS = `:root {
 export const FONT_DISPLAY = 'Cormorant:wght@300;400;600';
 export const FONT_DATA = 'Barlow+Semi+Condensed:wght@400;500;600';
 export const FONT_BRAND = 'Grenze+Gotisch:wght@300;400;500';
+/* THE PIXEL FACES (PX1, Mac 2026-08-27): the menu's home screen is
+   pixel art now - Jacquard 12 is a 12px-grid pixel BLACKLETTER (the
+   wordmark; the same family Grenze Gotisch was chosen to evoke, on an
+   actual pixel grid), Pixelify Sans the list face beside it. Chosen in
+   menu-pixel.html, the prototype of record. */
+export const FONT_PIXEL_BRAND = 'Jacquard+12';
+export const FONT_PIXEL_DATA = 'Pixelify+Sans:wght@400;500';
 export const fontsUrl = (families) =>
   `https://fonts.googleapis.com/css2?${families.map((f) => `family=${f}`).join('&')}&display=swap`;
 
 /** The one Google Fonts request the enhanced skin makes (Port-Ledger:
  *  the port's only third-party request, non-blocking, `?nofonts` skips
  *  it). A named export rather than a literal so nothing else can hold
- *  a second copy of it. */
-export const ENHANCED_FONTS_URL = fontsUrl([FONT_DISPLAY, FONT_DATA]);
+ *  a second copy of it. PX1 folded the two pixel faces into the SAME
+ *  request rather than making a second one - one request is the row's
+ *  own claim. */
+export const ENHANCED_FONTS_URL = fontsUrl([FONT_DISPLAY, FONT_DATA, FONT_PIXEL_BRAND, FONT_PIXEL_DATA]);
 
 export const ENHANCED_CSS = `
 /* ── TOKENS ── see ENHANCED_TOKENS above */
@@ -1028,6 +1037,71 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   .ovcard { right: 12px; bottom: 76px; }
   .ovfilters { left: 12px; bottom: 12px; flex-wrap: wrap; max-width: calc(100vw - 24px); }
 }
+
+/* ── PX1: THE PIXEL HOME (Mac, 2026-08-27) ──────────────────
+   The boot menu's front face in Daggerfall's own idiom, adopted from
+   menu-pixel.html: no boxes - the list floats over the dithered night
+   (src/ui/pixelGround.js), the wordmark is pixel blackletter, and the
+   focused row wears THE CLASSIC SHADOWED-LABEL PAIR - yellow
+   243,239,44 over its 93,77,12 shadow at +1,+1 (scaled x2 for the
+   larger type), the idiom every native window draws. States SNAP:
+   pixels do not tween, so there are no transitions in this block. */
+.px-home { position: fixed; inset: 0; overflow: hidden; background: #0a0c11;
+  font-family: 'Pixelify Sans', monospace; color: #d8cfae;
+  -webkit-font-smoothing: none; }
+.px-ground { position: absolute; left: -25%; top: -25%; width: 150%; height: 150%;
+  image-rendering: pixelated; animation: px-drift 160s linear infinite alternate; }
+@keyframes px-drift { from { transform: translate(0,0) } to { transform: translate(4%,2%) } }
+.px-vignette { position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(95% 95% at 50% 45%, transparent 60%, rgba(0,0,0,0.5) 100%); }
+.px-stage { position: relative; height: 100%; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; padding: 24px; }
+.px-wordmark { font-family: 'Jacquard 12', var(--brand); font-weight: 400; margin: 0;
+  font-size: 96px; line-height: 1; text-align: center;
+  text-shadow: 4px 4px 0 rgba(0,0,0,0.7); }
+.px-wordmark small { display: block; font-family: 'Pixelify Sans', monospace;
+  font-size: 16px; letter-spacing: 0.5em; text-indent: 0.5em;
+  text-transform: uppercase; color: #7d7460; margin-top: 8px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.px-rule { display: flex; align-items: center; gap: 16px;
+  width: min(420px, 70vw); margin: 28px 0 30px; }
+.px-rule::before, .px-rule::after { content: ''; flex: 1; height: 2px;
+  background: #7d7460; opacity: 0.55; }
+.px-gem { position: relative; width: 2px; height: 2px; background: var(--brass);
+  box-shadow:
+    0 -4px 0 var(--brass), 0 4px 0 var(--brass),
+    -4px 0 0 var(--brass), 4px 0 0 var(--brass),
+    -2px -2px 0 var(--brass), 2px -2px 0 var(--brass),
+    -2px 2px 0 var(--brass), 2px 2px 0 var(--brass); }
+.px-menu { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.px-menu button { font: inherit; font-size: 28px; font-weight: 400;
+  letter-spacing: 0.18em; text-indent: 0.18em; text-transform: uppercase;
+  color: #d8cfae; background: none; border: 0; cursor: pointer;
+  padding: 8px 26px; min-height: 48px; text-align: center;
+  display: flex; align-items: center; gap: 18px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); transition: none; }
+.px-menu button .px-c { font-size: 22px; color: rgb(243,239,44); visibility: hidden;
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-menu button:hover, .px-menu button:focus-visible { outline: none;
+  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-menu button:hover .px-c, .px-menu button:focus-visible .px-c { visibility: visible; }
+.px-foot { position: absolute; left: 0; right: 0; bottom: 0;
+  display: flex; justify-content: space-between; align-items: flex-end;
+  padding: 12px 16px; font-size: 15px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: #7d7460;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+/* The skin switch keeps skinSwitch()'s own markup; on the pixel foot
+   the active option takes the classic gold, and stays a 44px target. */
+.px-foot .skinswitch { display: flex; align-items: center; gap: 10px; }
+.px-foot .skinopt { font: inherit; min-height: 44px; color: #7d7460; cursor: pointer;
+  border: 0; background: none; padding: 0 6px; }   /* the shell's box has no place on the boxless face */
+.px-foot .skinopt.on { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-foot .skinhint { font-size: 12px; color: #7d7460; opacity: 0.8; }
+@media (max-width: 480px) {
+  .px-wordmark { font-size: 60px; }
+  .px-menu button { font-size: 24px; letter-spacing: 0.12em; text-indent: 0.12em; }
+}
+@media (prefers-reduced-motion: reduce) { .px-ground { animation: none; } }
 `;
 
 const STYLE_ID = 'dagger-enhanced-style';
