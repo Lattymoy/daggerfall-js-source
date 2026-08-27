@@ -189,8 +189,15 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     f.batch = null;
   }
 
-  function damageFoe(f, damage, playerFeet, knockDir = null) {
-    if (f.ai && !f.ai.isHostile) { f.ai.isHostile = true; f.ai.makeHostileToPlayer?.(undefined, playerFeet ?? null); }   // wave 36: seeded with where the attack came from
+  /** AUDIT 26 F035/F041: `fromPlayer` is this door's provenance flag.
+   *  DFU flips hostility inside HandleAttackFromSource's player gate
+   *  (DaggerfallEntityBehaviour.cs:203, :250-261) while
+   *  EnemyMotor.ApplyFallDamage calls DecreaseHealth alone
+   *  (:1398-1401), so a language-pacified foe that takes fall damage
+   *  must not turn on the player with no player action. Defaults
+   *  TRUE: every player blow and spell is unchanged. */
+  function damageFoe(f, damage, playerFeet, knockDir = null, { fromPlayer = true } = {}) {
+    if (fromPlayer && f.ai && !f.ai.isHostile) { f.ai.isHostile = true; f.ai.makeHostileToPlayer?.(undefined, playerFeet ?? null); }   // wave 36: seeded with where the attack came from
     f.entity.health -= damage;
     if (f.entity.health <= 0) {
       // X5: the SOUL TRAP intercept, where EnemyEntity.SetHealth's
@@ -297,7 +304,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
           // does not add. The feet are what DFU passes, so the feet are
           // what the port passes.
           hitEffects?.showBloodSplash(0, [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]]);
-          damageFoe(f, fdmg, null, null);
+          damageFoe(f, fdmg, null, null, { fromPlayer: false });   // F041: a fall is nobody's attack
         }
       }
       // out of relevance (fresh senses, so a just-spawned foe's

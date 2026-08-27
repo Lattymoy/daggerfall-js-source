@@ -144,7 +144,15 @@ test('audit24 wave36: the watch raises and lowers the alert, and takes fall dama
   // ApplyFallDamage runs for EVERY enemy (:173) - the motor has always
   // produced landedFall for guards, and nobody read it.
   assert.ok(cg.includes('if (g.ai.landedFall > 0 && !g.dead) {'), 'the watch bills its own falls');
-  assert.ok(cg.includes('damageGuard(g, gdmg, null, null);'), 'through the pool damage door, so death and crime fire');
+  // AUDIT 26 F035: through the pool damage door, so the death fires -
+  // but NOT the crime. ApplyFallDamage (:1398-1401) calls
+  // DecreaseHealth and nothing else; the Murder assignment lives
+  // inside HandleAttackFromSource's player-source gate
+  // (DaggerfallEntityBehaviour.cs:203, :265-269), which a fall never
+  // enters. The old needle here pinned the crime as correct while
+  // citing the very member that carries none.
+  assert.ok(cg.includes("damageGuard(g, gdmg, null, null, { fromPlayer: false });"),
+    'the fall is sourceless: death yes, Murder no');
 });
 
 test('audit24 wave36: hostility SEEDS the remembered position - the freeze wave 35 could have shipped', () => {
