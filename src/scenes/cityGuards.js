@@ -42,6 +42,7 @@ import { setEnemyAlert } from '../systems/encounters.js';   // AUDIT 24 (wave 36
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';   // AUDIT 24 (wave 36): ApplyFallDamage, for the watch too
 import { SOUND } from '../systems/soundClips.js';
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
+import { copyEffectEntry } from '../systems/save.js';   // AUDIT 26 F217
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
 import { MobileUnit } from '../characters/mobileUnit.js';
 import { EnemyAI, withinYaw, isBackFacing } from '../characters/enemyMotor.js';
@@ -162,8 +163,10 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     const tex = await getTexture(archive);
     const mobile = new MobileUnit(GUARD_MOBILE_TYPE, basics, (rec) => tex.getFrameCount(rec), Math.random, 'male');
     const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
-    guards.push({ mobile, ai, attack, entity, batch, tex, archive, dead: false, _prevMState: 'Idle', _mout: null,
-      sounds: new EnemySoundSource(GUARD_MOBILE_TYPE, rand) });   // AUDIT 24 (wave 41)
+    const g = { mobile, ai, attack, entity, batch, tex, archive, dead: false, _prevMState: 'Idle', _mout: null,
+      sounds: new EnemySoundSource(GUARD_MOBILE_TYPE, rand) };   // AUDIT 24 (wave 41)
+    guards.push(g);
+    return g;   // AUDIT 26 F217: the restore overlays the record it minted - two interleaved async spawns make `guards[length-1]` a race
   }
 
   /** The verbatim SpawnCityGuards law. pool = live persons as
@@ -636,7 +639,41 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     }
   }
 
-  return { guards, spawnCityGuards, update, offsetAll, collectPixel, resolvePlayerHit, resolveCivilianHit, activeCount, lootTargets, takeLoot,
+  /** AUDIT 26 F217: the watch's half of the SAVE ENVELOPE - the same
+   *  law as the encounter pool's (exteriorFoes.js snapshotWorld):
+   *  natives in, dead guards out. A quickload during a pursuit
+   *  despawned the whole watch - a free escape from any crime. */
+  function snapshotWorld(toNative) {
+    return guards.filter((g) => !g.dead).map((g) => {
+      const wc = toNative(g.ai.feet);
+      return {
+        nativeX: wc.x, nativeZ: wc.z, y: g.ai.feet[1], yaw: g.ai.yaw,
+        health: g.entity.health, maxHealth: g.entity.maxHealth,
+        magicka: g.entity.magicka ?? 0, fatigue: g.entity.fatigue ?? 0,
+        items: (g.entity.items ?? []).map((it) => ({ ...it })),
+        activeEffects: (g.entity.activeEffects ?? []).map(copyEffectEntry),
+        hostile: g.ai.isHostile !== false,
+      };
+    });
+  }
+  function restoreWorld(saved, fromNative, yOffset = 0) {
+    for (const sg of saved ?? []) {
+      const [lx, lz] = fromNative(sg.nativeX, sg.nativeZ);
+      spawnGuardAt([lx, sg.y + yOffset, lz], sg.yaw ?? 0, null).then((g) => {
+        if (!g) return;
+        g.entity.maxHealth = sg.maxHealth ?? g.entity.maxHealth;
+        g.entity.health = Math.min(sg.health ?? g.entity.health, g.entity.maxHealth);
+        if (sg.magicka != null) g.entity.magicka = sg.magicka;
+        if (sg.fatigue != null) g.entity.fatigue = sg.fatigue;
+        if (sg.items) g.entity.items = sg.items.map((it) => ({ ...it }));
+        if (sg.activeEffects) g.entity.activeEffects = sg.activeEffects.map((a) => ({ ...a }));
+        // spawnGuardAt seeds the crime pursuit (makeHostileToPlayer);
+        // a restored PEACEFUL guard stands down.
+        if (sg.hostile === false) g.ai.isHostile = false;
+      }).catch((e) => console.error('[guards] restore failed:', e?.message ?? e));
+    }
+  }
+  return { guards, spawnCityGuards, update, offsetAll, collectPixel, resolvePlayerHit, resolveCivilianHit, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld,
     // M2 (spellcasting above ground): the player's spell damage rides
     // THE SAME door the melee swing uses - corpse, Murder on the kill,
     // hostility - so a fireball is not a free crime channel.

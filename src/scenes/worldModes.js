@@ -2621,6 +2621,17 @@ export function createWorldModes(host) {
           // restored-Symbol duplicate quirk sceneMount records.
           questBridge, talkSave,
           onQuestRestored: () => { onQuestRestored?.(); mountQuestResources(); },
+          // AUDIT 26 F222/F223/F101: the host's half of the pose -
+          // this mode machine owns the modal player and camera; the
+          // context owns the weapon and folds weaponDrawn in itself.
+          pose: {
+            read: () => ({ yaw: cam.yaw, pitch: cam.pitch, crouching: !!player.crouching }),
+            apply: (p) => {
+              cam.yaw = p.yaw ?? cam.yaw;
+              cam.pitch = p.pitch ?? cam.pitch;
+              if (p.crouching != null) player.crouching = !!p.crouching;
+            },
+          },
         });
       dungeonCtx = ctx;
       // P10 host parity (2026-08-16 audit: only the standalone scene

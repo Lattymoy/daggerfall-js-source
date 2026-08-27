@@ -1755,6 +1755,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       // hosts call - two inline copies of this envelope is exactly
       // how the dungeon half drifted to saving neither.
       ...composeSessionState({ questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession } }),
+      // AUDIT 26 F222/F223/F101: the POSE - weaponDrawn
+      // (SerializablePlayer :175, restored Sheathed = !weaponDrawn),
+      // yaw/pitch/isCrouching (PlayerPositionData_v1 :212-214).
+      pose: { yaw: cam.yaw, pitch: cam.pitch, crouching: !!player.crouching, weaponDrawn: !weaponRig.playerWeapon.sheathed },
       locationKey: 'world',
       world: {
         pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],
@@ -1762,6 +1766,15 @@ export async function bootWorld(canvas, renderer, params, status) {
         // NATIVES with the compensation-free height, the player
         // half's exact law.
         piles: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos)).map((sp) => ({ ...sp, y: sp.y - state.compensation[1] })),
+        // AUDIT 26 F216/F217: LIVE ENEMIES ride the envelope - DFU's
+        // SaveData_v1 carries enemyData wherever the player stands
+        // (:865, restored :1006). Saved nowhere, a quickload during a
+        // wilderness ambush or a guard pursuit despawned every
+        // attacker with the spawn catch-up suppressed: a free escape
+        // from any outdoor fight. Natives, the pile law; the
+        // compensation-free height rides per record.
+        foes: exteriorFoes.snapshotWorld((pos) => state.worldCoords(pos)).map((sf) => ({ ...sf, y: sf.y - state.compensation[1] })),
+        guards: cityGuards.snapshotWorld((pos) => state.worldCoords(pos)).map((sg) => ({ ...sg, y: sg.y - state.compensation[1] })),
       },
     });
     townTalk.say(writeQuicksave(snap) ? 'Game saved.' : 'Save failed (storage full or disabled).');
@@ -1796,8 +1809,24 @@ export async function bootWorld(canvas, renderer, params, status) {
         // live pile (the reference's sweep); the envelope re-mints the
         // saved ones at their native spots.
         droppedLoot.restoreWorld(w.piles, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
+        // F216/F217: the pools re-mint through their one spawn chain,
+        // then overlay the saved truth (SerializableEnemy's own
+        // rebuild-then-set shape). Async behind the art; the teleport
+        // above already tore the old pools down with the pixel.
+        exteriorFoes.restoreWorld(w.foes, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
+        cityGuards.restoreWorld(w.guards, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
       } else if (extras.locationKey && extras.locationKey !== 'world') {
         townTalk.say('(saved elsewhere - character restored; travel there yourself)');
+      }
+      // AUDIT 26 F222/F223/F101: the pose lands with the position -
+      // RestorePosition sets yaw/pitch/isCrouching and
+      // Sheathed = !weaponDrawn (:420-421). Presence-gated: an old
+      // envelope leaves the live pose standing.
+      if (extras.pose) {
+        cam.yaw = extras.pose.yaw ?? cam.yaw;
+        cam.pitch = extras.pose.pitch ?? cam.pitch;
+        if (extras.pose.crouching != null) player.crouching = !!extras.pose.crouching;
+        if (extras.pose.weaponDrawn != null) weaponRig.playerWeapon.sheathed = !extras.pose.weaponDrawn;
       }
       _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // no spawn catch-up across a load (DFU LoadInProgress)
       surfacePlayer();
