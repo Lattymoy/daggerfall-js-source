@@ -3610,7 +3610,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT 23 (wts-1): the Normal-weather sky adds the CALENDAR season
     // (DaggerfallSky.cs:354-357); rain/snow keep their boot variant.
     sky.use((currentEntry ? currentEntry.skyBase : 16) + (weatherSkyOffset === 0
-      ? seasonValue(dateFromClassicMinutes(playerTicker.classicMinutes)) : weatherSkyOffset), minute, weatherSkyOffset === 0);
+      ? seasonValue(dateFromClassicMinutes(playerTicker.classicMinutes)) : weatherSkyOffset), minute, weatherSkyOffset === 0,
+    { weather, classicMinutes: playerTicker.classicMinutes });   // ES1: the enhanced sky's clouds and moons
     // Verbatim: fog is never disabled (SetFog keeps RenderSettings.fog on);
     // Sunny/Overcast ARE linear fog to 2400 - the classic distance haze.
     // DaggerfallSky.SetSkyFogColor (:318-325): anything denser than
