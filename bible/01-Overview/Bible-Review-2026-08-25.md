@@ -12,7 +12,7 @@ consumer", "0%") - verified against today's `src/`, `test/` and
 refute by default: a false finding is more expensive than a missed
 one, so every finding below carries the evidence that survived.
 
-Baseline at review time (HEAD 12d9ef2): `npm test` 3,382 tests, 0
+Baseline at review time (HEAD 0fe3c09): `npm test` 3,382 tests, 0
 fail, 188 skipped (all ARENA2 corpus gates - no game data in this
 container, so no real-data claim was re-verified against the corpus);
 `node tools/ledgerSweep.mjs` 33 unstruck rows, 93 struck, 20 suspect.

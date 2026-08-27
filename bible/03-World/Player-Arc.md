@@ -315,12 +315,12 @@ browser pointer-lock semantics, and the collision behaviour of real
 dungeon geometry. All are fixed and rooted; the durable record:
 
 ### Boot / build crashes (were silent black screens)
-- **S2 blocks binding** (b50101f): the treasure loop iterated the
+- **S2 blocks binding** (75e3d2d): the treasure loop iterated the
   raw BlocksFile READER parameter, not `dungeon.blocks`. Field names
   matched the wrong shape so every gate passed; it black-screened
   only WITH data. Fixed to `dungeon.blocks`. (Recorded in full in
   Systems-Arc S2.)
-- **Phantom identifiers** (3c9120f): `trs` was called unimported in
+- **Phantom identifiers** (090366b): `trs` was called unimported in
   characterSprite.js since C8 E3d - vite emitted it as a presumed
   global, so node --check / build / tests all passed while the FIRST
   real viewmodel frame threw. CLASS CLOSED: eslint flat config with
@@ -328,7 +328,7 @@ dungeon geometry. All are fixed and rooted; the durable record:
   FLASH_TYPE_KEY (unexported), and quadInto (phantom for the file's
   life). One live-tested module (draped.js) was misread as an orphan
   and git-rm'd; the suite caught it same run and it was restored.
-- **Unguarded foe build** (1fefb89): the entire `?foes` block in
+- **Unguarded foe build** (a1e69c1): the entire `?foes` block in
   buildDungeonContext (dynamic imports, BODY00I0 fetch, the per-foe
   CLASS-enemy loop) was unguarded on the awaited build path, so one
   bad enemy (missing CLASS*.CFG, a rig/equipment error) rejected the
@@ -338,24 +338,24 @@ dungeon geometry. All are fixed and rooted; the durable record:
   to a playable foe-less dungeon), both loud.
 
 ### Spawn placement (were "stuck in a hole")
-- **Eye-at-marker** (466690d): the standalone `?dungeon` host set
+- **Eye-at-marker** (68afe09): the standalone `?dungeon` host set
   cam.pos to the RAW start marker (a floor point), so the eye was at
   the floor and the feet ~1.5 below it, wedged. `ctx.startSpawn()`
   now owns the verbatim MovePlayerToMarker placement (marker + up *
   height*0.6 = +1.08, then floorLanding) ONCE; both hosts consume
   it, the worldModes inline copy died.
-- **Movement under the overlay** (823605b): both hosts ran live
+- **Movement under the overlay** (e77f5a5): both hosts ran live
   movement while the chargen overlay captured typing, so a name with
   w/a/s/d walked the player off the start ledge during creation.
   Overlays now HOLD the world everywhere (the standalone gates
   actions.update + both movement branches on uiOverlayActive; the
   world/exterior shells gate on modes.dungeonCtx.uiOverlayActive).
-- **Wrong marker** (1266f6a): startSpawn used StartMarker (RDB flat
+- **Wrong marker** (5f31d1d): startSpawn used StartMarker (RDB flat
   record 10) unconditionally, but DFU StartDungeonInterior with
   preferEnterMarker=true uses the EnterMarker (record 8, the
   entrance vestibule). Now prefers enterMarker with startMarker
   fallback, verbatim.
-- **Single-ray floorLanding** (ed26d1f): floorLanding cast ONE
+- **Single-ray floorLanding** (954338d): floorLanding cast ONE
   downward ray from the marker's exact x,z; over a floor seam / grate
   / tile-edge it MISSED and returned the raw airborne position, so
   the player free-fell and wedged on a lower ledge. Now samples the
@@ -365,7 +365,7 @@ dungeon geometry. All are fixed and rooted; the durable record:
   void still returns raw for gravity.
 
 ### Look / input
-- **Bare requestPointerLock** (64f0268): `canvas.requestPointerLock()`
+- **Bare requestPointerLock** (9bb337a): `canvas.requestPointerLock()`
   was called bare in all four hosts. Modern Chrome returns a Promise
   that REJECTS (unfocused, pending, or the post-Escape cooldown); the
   unhandled rejection surfaced as a crash overlay (`sh/<` =
@@ -375,16 +375,16 @@ dungeon geometry. All are fixed and rooted; the durable record:
   rejection, tolerates the void API, survives a sync throw, and binds
   one pointerlockerror log; all four hosts route through it. Pinned
   (3 tests) never to throw. The CLICK TO LOOK centre-screen hint
-  (e5f5278) covers a dropped lock so the player is never stranded.
+  (286118b) covers a dropped lock so the player is never stranded.
 
 ### Collision
-- **g:0 knife-edge** (66fc16d): feet placed dead on the floor put the
+- **g:0 knife-edge** (049854c): feet placed dead on the floor put the
   lower sphere centre at exactly floor+radius, on the boundary of the
   `d2 >= radius*radius` reject, so grounding flickered off at rest.
   Contact detection now reaches radius+SKIN (0.37) while the push-out
   still fires only within radius - a resting floor a hair away holds
   the player up, the body never sinks. Regression pinned.
-- **SKIN-shell phantom flags** (b9fb8d6): the g:0 change let
+- **SKIN-shell phantom flags** (9afdc0e): the g:0 change let
   ceiling/pushedDown be set for NON-TOUCHING triangles in the
   radius..radius+SKIN shell. Those are movement-gate flags (step-up
   and ground-snap reject when pushedDown is set), so a tread/riser
@@ -396,7 +396,7 @@ dungeon geometry. All are fixed and rooted; the durable record:
   something" from "am I blocked/pushed".
 
 ### The FP viewmodel (the "hole" itself)
-- **Camera inside the body** (f7492f5, d7843d2): the ACTUAL cause of
+- **Camera inside the body** (9f6dad8, 33cb4ce): the ACTUAL cause of
   the persistent "stuck in a hole". The FP viewmodel renders the
   player's OWN full-body rig; the mini-camera sat at eye height 1.7,
   INSIDE the 1.8-tall body, and tracked world pitch - so pitching up
@@ -411,7 +411,7 @@ dungeon geometry. All are fixed and rooted; the durable record:
   from the geometry but tuned without ARENA2 - open to nudging.
 
 ### Diagnostics shipped (kept in the code)
-- **F8 debug HUD** (4fe1ec1, e5f5278, fe215d5): an on-screen readout
+- **F8 debug HUD** (b415a9a, 286118b, 53f50f3): an on-screen readout
   (classic font, top-left) toggled by F8 - build tag, feet, enter +
   start markers, overlay/chargenDone, pointer-lock state, career,
   hp/mp, motor (grounded/velY/yaw), raw mouse (dx/dy/lock), and raw
@@ -709,8 +709,8 @@ IsMovingLessThanHalfSpeed:
 ## P14 (2026-08-16): movement parity audit - jump + inclines SHIPPED
 
 Live report (Mac): "jump isn't working correctly and I can't use
-inclines" - the SAME defects Mac's b9e9aa6 stairs/jump experiment
-fixed and 01c5504 reverted fourteen minutes later to clear the
+inclines" - the SAME defects Mac's 03cfa1e stairs/jump experiment
+fixed and ed3c557 reverted fourteen minutes later to clear the
 parallel-lane merge (the fixes never re-landed; the timeline is in
 the commit graph). This slice re-derives all of it on the current
 tree (which threads the P12 per-call capsule height through every

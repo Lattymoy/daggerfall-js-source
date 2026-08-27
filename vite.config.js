@@ -90,7 +90,7 @@ function buildTagMeta() {
   };
 }
 
-// base is set for GitHub Pages deploy at lattymoy.github.io/<repo>/
+// base is set for GitHub Pages deploy at lattymoy.github.io/daggerfall-js-source/
 export default defineConfig({
   base: './',
   build: {

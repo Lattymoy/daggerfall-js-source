@@ -216,7 +216,7 @@ test('U60: no probe drives the root as if it were the game', () => {
     'and the one that may drive the root goes on to the game');
   // And the tools that read the built game page read it from its home.
   assert.match(read('tools/verify-deploy.mjs'), /readFile\('dist\/play\/index\.html'/);
-  assert.match(read('tools/verify-deploy.mjs'), /lattymoy\.github\.io\/project-dagger\/play\//);
+  assert.match(read('tools/verify-deploy.mjs'), /lattymoy\.github\.io\/daggerfall-js-source\/play\//);
   assert.match(read('tools/staleChunkProbe.mjs'), /join\(dN, 'play', 'index\.html'\)/);
   assert.match(read('tools/screenshot.mjs'), /localhost:5199\/play\/\?\$\{query\}/);
 });

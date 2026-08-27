@@ -103,7 +103,7 @@ export function gitContains(a, d) {
 }
 
 async function main() {
-  const url = process.argv[2] || 'https://lattymoy.github.io/project-dagger/play/';
+  const url = process.argv[2] || 'https://lattymoy.github.io/daggerfall-js-source/play/';
   const localHtml = await readFile('dist/play/index.html', 'utf8');
   const bundle = entryBundle(localHtml);
   if (!bundle) { console.error('no entry script ref in local dist/play/index.html'); process.exit(1); }

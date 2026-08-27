@@ -1373,7 +1373,7 @@ AddQuestNPC (:995-1063), Guild.GetReputation, DaggerfallDateTime.cs
 (:374-424, :641-652) with the format literals dug out of the
 Internal_Strings_en localization asset itself, and
 QuestListsManager.InitAtGameStart. THREE findings, fixed and shipped
-mid-audit (commit f03f3dc):
+mid-audit (commit db3fea5):
 
 1. **The faction-listener shutdown arm** (PlayerActivate.cs
    :1530-1535). A quest actively LISTENING on the clicked NPC's
@@ -3213,8 +3213,8 @@ opened both files myself.
 **Two item highs - and the container took the findings with it.**
 
 Between waves the container was reclaimed again. The local clone rolled
-back to `aee02a3`, `git reset --hard origin/...` restored everything to
-`bfc74f0`, and the vendored C# survived (it is large but it is on disk,
+back to `5e47aab`, `git reset --hard origin/...` restored everything to
+`f95205a`, and the vendored C# survived (it is large but it is on disk,
 not in `/tmp`). What did **not** survive was the workflow journal and
 the task output - so the thirty-five remaining findings lost their
 `csBehaviour`/`portBehaviour`/`reachable` prose. Their titles, slices

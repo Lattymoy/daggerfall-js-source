@@ -1688,7 +1688,7 @@ rearViewSpace + mirrorFillFraction (the tool's unconditional
 mirroredOfFront flag was a defect - fixed). Harness draws front +
 back shells per person under the same matrix.
 
-RECONCILIATION NOTE: commit 2ba6413 is a mislabeled sweep - a
+RECONCILIATION NOTE: commit 0da703d is a mislabeled sweep - a
 parallel session in the same container had already shipped C6g
 (1003f16) and staged this C6h work; a tree-wide `git add -A` from the
 other session committed the WIP under a duplicate C6g message,

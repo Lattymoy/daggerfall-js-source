@@ -1,8 +1,12 @@
-# project-dagger
+# daggerfall-js-source
 
 **Daggerfall JavaScript** - a 1:1 JavaScript port of Daggerfall. Data layer
 and game logic translated from Daggerfall Unity (MIT, Interkarma and
-contributors); presentation rebuilt on hand-rolled WebGL2.
+contributors); presentation rebuilt on hand-rolled WebGL2. MIT licensed, with
+Daggerfall Unity's notice alongside (LICENSE). The project's working name in
+the docs and the code is `project-dagger`.
+
+Play it: https://lattymoy.github.io/daggerfall-js-source/
 
 The site is `index.html` (what it is, how to play, credits); the game is
 `play/index.html`, served at `/play/`. Both deploy from `main` to GitHub
