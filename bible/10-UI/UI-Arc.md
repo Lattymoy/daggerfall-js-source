@@ -6138,3 +6138,19 @@ Two pins in `travelmapwindow.test.js` were re-aimed on the way past:
 one sliced `frame()` by a magic 900 characters, and the other checked
 for a `dispose` anywhere in the function rather than in the drain, and
 survived its own mutant.
+
+## FROM PLAY (2026-08-27): Z IN A DUNGEON - the second door to the sheath
+
+Mac: "cannot sheath/desheath in dungeons". Every host polls ReadyWeapon
+per frame on an edge - WeaponManager.Update:284's ActionStarted, which
+is where DFU reads it; it is not in GameManager's key dispatch chain
+(:509-557). U45 gave routeAction a ReadyWeapon arm so the large HUD's
+sheath panel could reach the same door, and from that commit the
+KEYBOARD reached it too: the two dungeon hosts route keydown through
+routeKey -> routeAction, and the dungeon context is the one ctx that
+carries toggleSheath. One press, two toggles, net nothing. Above ground
+and indoors the ctx had no toggleSheath, so one path fired and it
+worked - which is why it read as "dungeons only". routeKey now declines
+POLLED_ACTIONS (ReadyWeapon); the panel keeps routeAction. Pinned in
+test/sheathkey.test.js (the keyboard OFF, the panel ON, every host's
+poll and both dungeon routers present), 2 mutants dead.

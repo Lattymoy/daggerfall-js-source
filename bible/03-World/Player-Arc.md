@@ -1125,3 +1125,23 @@ than drifting.
 
 Pins: 4 in `classicstart.test.js` + the live probe; 4 mutations, 4
 killed.
+
+## FROM PLAY (2026-08-27): THE EXTERIOR SIDE OF THE DOOR - the airborne spawn
+
+Mac: "when entering/exiting locations your character spawns in the air
+and drops". Both exterior exits are RepositionPlayer in DFU
+(StreamingWorld.cs:283-288 -> :1330-1351): the door position plus the
+normal times an offset is where the controller's CENTRE goes, and it
+goes no lower than terrain + height/2 + 0.15. The port's spawn is the
+FEET (motor.pos; the eye is 1.7 above it), and both exits handed it the
+door CENTRE - about 0.9u up - then let gravity floor it. Every building
+door and dungeon door out was a small fall. `repositionFeetY(terrainY,
+centreY)` in player/enterExit.js is the law in feet: max(terrain +
+0.15, centre - h/2); both exits read the terrain off the collider they
+are about to stand on. The world host's arrivals were the same shape
+by a different route - `centerHeight + 2` at the teleport and
+`heightAt + 2` at the first drop-in, with gravity for the rest - where
+PositionPlayerToLocation ends in FixStanding (:1597-1608); both now
+floorLanding on the built pixel, and a saved y (load, anchor recall)
+is restored as saved. enterexit.test.js +2, mutant dead. exterior.js's
+dev-host +2 is left as it was.
