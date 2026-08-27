@@ -6391,3 +6391,20 @@ new shape with its pause half unchanged. Verified live over the built
 bundle: menu.html on desktop + phone, a Settings walk, Escape home,
 zero page errors. Prototypes of record: menu-redesign.html (smooth),
 menu-pixel.html (adopted).
+
+PX1b (same day, Mac): THE SKY LIVES AND THE FOOT SETTLES.
+drawPixelGround takes `t` seconds - the fog blobs orbit their homes on
+unequal periods and the bright quarter of the stars twinkle in STEPPED
+levels (a pixel star fades in levels, not a ramp); default t=0 is the
+prior still frame, and the module never schedules - the home mount
+owns an 8fps interval (pixel art's cadence; 60fps dither reads as
+noise), cleared by every rebuild and by unmount, skipped under
+prefers-reduced-motion. The foot is a three-zone grid: build left,
+the skin toggle DEAD CENTER with the 'switch anytime' hint hidden
+(the shell keeps it), and ABOUT as the bottom-right plaque - the ONE
+box on the boxless face - leaving the center list; the About SECTION
+stays on the shell rail so the rail-hole pin and shared-sections law
+hold. Under 480px the foot stacks two rows (the three zones made the
+toggle wrap into the build line - caught in the phone shot). Probed
+live: two canvas frames 1.5s apart differ, the About box opens its
+pane with the clock cleared, Escape returns home, zero page errors.

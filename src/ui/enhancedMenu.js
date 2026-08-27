@@ -145,6 +145,7 @@ let hooks = {};
 let keyHandler = null;
 let lockHandler = null;
 let resizeHandler = null;   // PX1: the home ground's redraw-on-resize
+let groundTimer = null;     // PX1b: the home sky's 8fps clock - cleared by every rebuild and by unmount
 
 const el = (t, cls, txt) => {
   const n = document.createElement(t);
@@ -714,7 +715,20 @@ function renderHome() {
   const home = el('div', 'px-home');
   const ground = document.createElement('canvas');
   ground.className = 'px-ground';
-  drawPixelGround(ground, globalThis.innerWidth ?? 1280, globalThis.innerHeight ?? 720);
+  const vw = () => globalThis.innerWidth ?? 1280;
+  const vh = () => globalThis.innerHeight ?? 720;
+  drawPixelGround(ground, vw(), vh(), 0);
+  // PX1b: THE SKY LIVES - fog orbits and stars twinkle at 8fps, the
+  // cadence pixel art animates at; a 60fps dither shimmer reads as
+  // noise. The module draws, this mount owns the clock: one interval,
+  // cleared by every rebuild (renderInto) and by unmount, skipped
+  // entirely under prefers-reduced-motion - the same opt-out the CSS
+  // drift honours.
+  const still = typeof globalThis.matchMedia === 'function' && globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!still) {
+    const t0 = Date.now();
+    groundTimer = setInterval(() => drawPixelGround(ground, vw(), vh(), (Date.now() - t0) / 1000), 125);
+  }
   home.append(ground);
   home.append(el('div', 'px-vignette'));
 
@@ -728,7 +742,12 @@ function renderHome() {
 
   const menu = el('nav', 'px-menu');
   menu.setAttribute('aria-label', 'Main menu');
+  // PX1b: About leaves the center list for the corner box below - the
+  // list is what a player DOES, the box is who made it. The SECTION
+  // still exists on the shell rail untouched, so the rail-hole pin and
+  // the shared-sections law hold.
   for (const label of sections) {
+    if (label === 'About') continue;
     const id = idOf(label);
     const b = el('button');
     b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label), el('span', 'px-c', '\u25c6'));
@@ -738,10 +757,15 @@ function renderHome() {
   stage.append(menu);
   home.append(stage);
 
+  // PX1b: three-zone foot - build left, the skin toggle CENTERED (its
+  // 'switch anytime' hint hidden here by the px-foot rules; the shell
+  // keeps it), and About as the bottom-right box.
   const foot = el('div', 'px-foot');
-  const build = el('span');
+  const build = el('span', 'px-build');
   build.append(document.createTextNode('build '), el('span', null, BUILD_TAG));
-  foot.append(build, skinSwitch());
+  const about = el('button', 'px-about', 'About');
+  about.onclick = () => go('about');
+  foot.append(build, skinSwitch(), about);
   home.append(foot);
   app.append(home);
 }
@@ -754,6 +778,7 @@ function render() {
  *  list carries the same steppers, and a repaint that forgets the
  *  scroll throws the player back to the top of 66 Video rows. */
 function renderInto() {
+  if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }
   app.innerHTML = '';
   // PX1: the boot door opens on the pixel home; every section keeps
   // its shell. The pause door is untouched - its own slice.
@@ -941,6 +966,7 @@ export function mountEnhancedMenu(host, {
       if (keyHandler) globalThis.removeEventListener('keydown', keyHandler, { capture: true });
       if (lockHandler && typeof document !== 'undefined') document.removeEventListener('pointerlockchange', lockHandler);
       if (resizeHandler) globalThis.removeEventListener('resize', resizeHandler);
+      if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }
       keyHandler = null;
       lockHandler = null;
       resizeHandler = null;
