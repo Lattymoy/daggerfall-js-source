@@ -41,9 +41,23 @@ export const PLACE_SCORES = Object.freeze({
 });
 
 /** Cues beyond DFU's - the enhanced side's own. The records land here
- *  as the tracks arrive (Mac: "I have the danger and death tracks to
- *  follow"); until then the keys are absent, not placeholders. */
-export const EXTRA_SCORES = Object.freeze({});
+ *  as the tracks arrive; a cue without one is absent, not a placeholder. */
+export const EXTRA_SCORES = Object.freeze({
+  /** EM4 ("This is danger"). 2:43, looped. The place's track crossfades
+   *  into this while the enemies have you (enhancedMusic/danger.js) and
+   *  back when they lose you. Key measured off the file: C 1.00, G 0.72,
+   *  D 0.45, D# 0.45, F 0.25, G# 0.21 - C minor, a semitone off the
+   *  dungeon track's B - so the composed underscore is faded OUT under
+   *  it rather than played in the wrong key. Mac's to confirm. */
+  danger: Object.freeze({
+    id: 'danger',
+    file: '../music/enhanced/danger.mp3',
+    loop: true,
+    gain: 1.0,
+    root: 48,          // C3
+    mode: 'aeolian',
+  }),
+});
 
 export const scoreFor = (environment) => PLACE_SCORES[environment] ?? null;
 

@@ -450,3 +450,100 @@ test('EM2c player: a second track crossfades - the old layer ramps out, the new 
   assert.equal(first.paused, true, '...and then paused');
   assert.equal(tp.retiring, 0);
 });
+
+// ── EM4: DANGER ───────────────────────────────────────────────────
+import { DangerMeter, dangerRaw } from '../src/systems/enhancedMusic/danger.js';
+import { EXTRA_SCORES } from '../src/systems/enhancedMusic/scores.js';
+import { areEnemiesNearby } from '../src/systems/encounters.js';
+
+const foe = ({ dead = false, ...over } = {}) => ({ dead, ai: { detected: true, inSight: true, _dist: 5, ...over } });
+
+test('EM4 raw: the signal is AreEnemiesNearby\'s own fields - a foe that can see you, nearer counting more', () => {
+  assert.equal(dangerRaw([]), 0);
+  assert.equal(dangerRaw([foe({ detected: false })]), 0, 'unaware: nothing');
+  assert.equal(dangerRaw([foe({ inSight: false })]), 0, 'heard but not seen: nothing - the rest law\'s line, exactly');
+  assert.equal(dangerRaw([foe({ dead: true })]), 0);
+  assert.ok(dangerRaw([foe({ _dist: 2 })]) > dangerRaw([foe({ _dist: 25 })]), 'nearer is more');
+  assert.equal(dangerRaw([foe({ _dist: 29.9 })]), 0.25, 'a distant watcher still counts a quarter');
+  assert.equal(dangerRaw([foe({ _dist: 1 }), foe({ _dist: 1 })]), 1, 'two in your face saturate');
+  // The same foes answer the rest law the same way.
+  const seen = [foe()], unseen = [foe({ inSight: false })];
+  assert.equal(areEnemiesNearby(seen), dangerRaw(seen) > 0);
+  assert.equal(areEnemiesNearby(unseen), dangerRaw(unseen) > 0);
+});
+
+test('EM4 meter: rises fast, holds, falls slow, and decides with hysteresis - it does not flutter', () => {
+  const m = new DangerMeter();
+  let flips = 0;
+  const run = (seconds, raw) => { for (let t = 0; t < seconds; t += 1 / 60) if (m.update(1 / 60, raw)) flips++; };
+  run(0.3, 1);
+  assert.ok(m.level > 0.5 && m.active, `seen for 0.3 s: ON (level ${m.level.toFixed(2)})`);
+  assert.equal(flips, 1);
+  // The foe steps behind a pillar for two seconds: the hold keeps it ON.
+  run(2, 0);
+  assert.ok(m.active && m.level > 0.5, 'a two-second blink does not end the danger');
+  assert.equal(flips, 1, 'no flip');
+  run(1, 1);
+  // The fight ends: hold six seconds, then fall - OFF well after, not at once.
+  run(6, 0);
+  assert.ok(m.active, 'still ON through the hold');
+  run(3, 0);
+  assert.ok(m.active, 'the fall is slow: ON three seconds after the hold');
+  run(12, 0);
+  assert.ok(!m.active, 'OFF eventually');
+  assert.equal(flips, 2, 'one ON, one OFF, in ~24 seconds of a fight with a blink in it');
+  // Hysteresis: a weak, flickering signal around the threshold does not flip.
+  const w = new DangerMeter();
+  let f2 = 0;
+  for (let i = 0; i < 600; i++) if (w.update(1 / 60, i % 2 ? 0.5 : 0.1)) f2++;
+  assert.ok(f2 <= 1, `a 50/50 flicker flips at most once (${f2})`);
+  w.reset();
+  assert.equal(w.level, 0); assert.equal(w.active, false);
+});
+
+test('EM4 service: danger crossfades to the danger track and back, quiets the underscore, and resets on a new cue', () => {
+  assert.equal(EXTRA_SCORES.danger.id, 'danger');
+  assert.match(EXTRA_SCORES.danger.file, /^\.\.\/music\/enhanced\/danger\.mp3$/);
+  assert.ok(read('test/doctrine.test.js').includes(`['public/music/enhanced/danger.mp3', "OURS - `));
+  const svc = new MusicService();
+  const log = [];
+  svc.player = { play: () => true, stop: () => log.push('song-stop'), playing: true, setTrim: (t) => log.push(`trim:${t}`) };
+  svc._audio = { stop: () => {}, playing: false };
+  svc._track = { playing: true, track: null, fadeOut: () => log.push('track-fade'), stop: () => {} };
+  svc.playTrack = async (t) => { log.push(`track:${t.id}`); svc._track.track = t; return true; };
+  // No place score (classic skin, or an unscored place): the report is inert.
+  assert.equal(svc.reportDanger(1, [foe()]), false);
+  assert.deepEqual(log, []);
+  // A scored dungeon.
+  const song = composeScore(D, hashSeed('d'));
+  svc.playEnhanced({ track: { id: 'dungeon', file: 'd.mp3' }, song });
+  log.length = 0;
+  for (let i = 0; i < 30; i++) svc.reportDanger(1 / 60, [foe()]);
+  assert.ok(svc.inDanger);
+  assert.deepEqual(log, ['track:danger', 'trim:0'], 'seen: the danger track, the underscore quiet');
+  log.length = 0;
+  for (let i = 0; i < 60 * 20; i++) svc.reportDanger(1 / 60, []);
+  assert.ok(!svc.inDanger);
+  assert.deepEqual(log, ['track:dungeon', `trim:${UNDERSCORE_TRIM}`], 'lost you: the place\'s track back, the underscore back under it');
+  // A new cue mid-danger resets: the town does not start in danger.
+  for (let i = 0; i < 30; i++) svc.reportDanger(1 / 60, [foe()]);
+  assert.ok(svc.inDanger);
+  svc._current = null;
+  svc.playEnhanced({ track: { id: 'city', file: 'c.mp3' }, song: null });
+  assert.ok(!svc.inDanger);
+  assert.equal(svc._dangerMeter.level, 0, 'the meter starts over');
+  // A place that composes alone: danger over the piece, then the piece comes back up alone.
+  log.length = 0;
+  svc.playEnhanced({ track: null, song });
+  log.length = 0;
+  for (let i = 0; i < 30; i++) svc.reportDanger(1 / 60, [foe()]);
+  assert.deepEqual(log, ['track:danger', 'trim:0']);
+  log.length = 0;
+  for (let i = 0; i < 60 * 20; i++) svc.reportDanger(1 / 60, []);
+  assert.deepEqual(log, ['track-fade', 'trim:1']);
+  // The hosts report from the frame functions both dungeon hosts and the exterior share.
+  const ctx = read('src/scenes/dungeonContext.js');
+  const drawFoes = ctx.slice(ctx.indexOf('function drawFoes('), ctx.indexOf('function drawFoes(') + 2200);
+  assert.match(drawFoes, /music\.reportDanger\(dt, foes\);/);
+  assert.match(read('src/scenes/world.js'), /music\.reportDanger\(dt, \[\.\.\.\(cityGuards\?\.guards \?\? \[\]\), \.\.\.exteriorFoes\.foes\]\);/);
+});

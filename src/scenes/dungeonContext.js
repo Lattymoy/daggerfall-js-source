@@ -77,6 +77,7 @@ import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor } from '../syste
 import { spendPoolLowest } from '../systems/chargen.js';
 import { ClassFile } from '../formats/classFile.js';
 import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, raiseAtRestEnd, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord, restVitals, restFullyHealed, createRestDeps} from './shared.js';
+import { music } from '../systems/music.js';   // EM4: the danger report
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
@@ -2207,6 +2208,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // clock lives here and no host can forget it. Real dt, and it ENDS
     // (a finished splash frees its batch inside tick).
     hitEffects.tick(dt);
+    // EM4: the danger report, from the same frame function for the same
+    // reason - both dungeon hosts call it, so neither can forget it.
+    // The meter reads the fields areEnemiesNearby reads.
+    music.reportDanger(dt, foes);
     const _mobileBatches = [];   // C11: the frame's live sprite-mobile quads
     if (playerFeet) lastPlayerFeet = [...playerFeet];
     // B1: QuestResourceBehaviour.Update every frame the object lives
