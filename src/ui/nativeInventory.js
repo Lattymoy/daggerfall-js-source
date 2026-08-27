@@ -474,8 +474,13 @@ export class NativeInventoryWindow {
         getQuest: this.hooks.getQuest ?? null,
       });
       if (!plan.ok) { this._refuse(plan.refusal); return; }
+      // AUDIT 26 F156: the map interception (:1471-1478) - the reveal
+      // runs, the item is consumed, nothing lands in the destination.
+      // The use arm IS RecordLocationFromMap here, no-seam pending law
+      // included.
+      if (plan.map) { this._use(it, this.hooks.items()); return; }
       audio.playOneShot(SOUND.ButtonClick, 1);   // DoTransferItem (:1583)
-      applyTransfer(it, plan, this.hooks.items(), to);
+      applyTransfer(it, plan, this.hooks.items(), to, { entity: this.hooks.entity, fromLocal: true });   // F157: a lit torch leaving the pack goes out
       return;
     }
     if (this.mode === 'use') { this._use(it, this.hooks.items()); return; }   // U25
@@ -533,6 +538,7 @@ export class NativeInventoryWindow {
         getQuest: this.hooks.getQuest ?? null,
       });
       if (!plan.ok) { this._refuse(plan.refusal); return; }
+      if (plan.map) { this._use(it, remote); return; }   // F156: either direction
       // DoTransferItem: gold rides its own clink (:1569), everything
       // else the button click (:1583) - after the carry gate, so a
       // refused transfer stays silent.

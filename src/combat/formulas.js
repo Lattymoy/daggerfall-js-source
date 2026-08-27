@@ -574,12 +574,24 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
       isCivilian: !!enchantCtx?.targetIsCivilian,
     });
   }
+  // V3: the Ring of Namira, at DFU's own dispatch site - the tail of
+  // CalculateAttackDamage when an ENEMY damages the PLAYER
+  // (FormulaHelper.cs:702-719). The same registered-hook shape as
+  // above: artifactEffects imports this file's savingThrow chain, so
+  // a direct import here would close a cycle; worldTick registers.
+  if (target?.isPlayer && !attacker.isPlayer && damage > 0) {
+    _playerStruckHook?.(attacker, target, damage);
+  }
   return damage;
 }
 
 let _racialHitHook = null;
 /** worldTick's registration seam for the racial-override hit hook. */
 export function setRacialHitHook(fn) { _racialHitHook = fn ?? null; }
+let _playerStruckHook = null;
+/** worldTick's registration seam for the enemy-damages-player tail
+ *  (V3: the Ring of Namira's reflection). */
+export function setPlayerStruckHook(fn) { _playerStruckHook = fn ?? null; }
 
 // ---- GetEnemyEntityLanguageSkill (FormulaHelper.cs:2808-2880) ----
 // Class enemies: the six stealth careers speak Streetwise, the rest

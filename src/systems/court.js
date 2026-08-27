@@ -281,7 +281,12 @@ export function startCourt(player, regionIndex, crime, { rolls = Math.random, df
     if ((dfRand() & 1) !== 0) fine += 40;
     else daysInPrison += 3;
   }
-  const gold = goldAmount(player);
+  // AUDIT 26 F178: the fine clamp is GetGoldAmount - coins PLUS
+  // letters (DaggerfallCourtWindow.cs:169) - and the payment spends
+  // letters through deductGold, so the two agree. A defendant holding
+  // a 5000-gold letter and ten coins pays the whole 400 fine instead
+  // of ten coins and nine extra days.
+  const gold = totalGoldAmount(player);
   if (gold < fine) {
     daysInPrison += Math.trunc((fine - gold) / 40);
     fine = gold;

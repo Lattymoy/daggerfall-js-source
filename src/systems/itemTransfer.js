@@ -42,6 +42,7 @@ import {
   addItem, canHoldAmount, effectiveUnitWeightInKg, totalWeight, isSummoned,
   GOLD_PIECE_WEIGHT_KG,
 } from './inventory.js';
+import { isMap, isLightSource } from './useItem.js';   // AUDIT 26 F156/F157: the map interception + the lit-torch clear
 import { CANNOT_REMOVE_ITEM_TEXT } from './createItem.js';
 // AUDIT 26: DaggerfallEntity.MaxEncumbrance, enchantment allowance and
 // all - :1417 reads playerEntity.MaxEncumbrance, not the bare formula.
@@ -179,6 +180,14 @@ export function planStore(item, {
   if (!item) return { ok: false, refusal: REFUSAL.missing };
   if (item.group === 'Transportation') return { ok: false, refusal: REFUSAL.transport };
   if (isSummoned(item)) return { ok: false, refusal: REFUSAL.summoned };
+  // AUDIT 26 F156: THE MAP ARM (:1471-1478), between the summoned
+  // guard and the quest arm. A MiscItems.Map in EITHER direction is
+  // intercepted: RecordLocationFromMap runs, the item is removed, and
+  // it never lands in the destination - pulling a treasure map out of
+  // a loot pile reveals a location instead of bagging paper. The plan
+  // ANSWERS the interception; the window routes to its own reveal
+  // (its use arm carries the no-reveal-seam pending law).
+  if (isMap(item)) return { ok: true, map: true, amount: item.stackCount ?? 1 };
   // AUDIT 26: TransferItem's QUEST arm (:1480-1505), the guard ONE
   // STATEMENT below the summoned one and ABOVE every capacity gate -
   // so a quest item stopped by a full wagon has still had its
@@ -221,6 +230,7 @@ export function planTake(item, {
   // to put it there) and is written anyway rather than left to a
   // future transfer path to rediscover.
   if (isSummoned(item)) return { ok: false, refusal: REFUSAL.summoned };
+  if (isMap(item)) return { ok: true, map: true, amount: item.stackCount ?? 1 };   // F156: either direction
   // AUDIT 26: the quest arm, the OTHER caller. `from` is remoteItems
   // here, so the refusal cannot fire without CanDropQuestItems, and
   // picking the item back up CLEARS PlayerDropped (:1499-1500) - which
@@ -265,7 +275,22 @@ export function planTake(item, {
  *
  * @returns the item that arrived in `to` (the new record when split).
  */
-export function applyTransfer(item, plan, from, to) {
+/** AUDIT 26 F157 - TransferItem :1506-1508, verbatim: a LIT light
+ *  source leaving the PACK stops lighting the player.
+ *  `if (item.IsLightSource && playerEntity.LightSource == item &&
+ *  from == localItems) playerEntity.LightSource = null` - without it,
+ *  dropping or selling a lit torch left the player carrying its light
+ *  (and its condition burn) from an item in a pile or a shop. One
+ *  home, because the trade window's staging arms need it too. */
+export function clearLightSourceOnLeave(item, entity, fromLocal) {
+  if (fromLocal && entity && isLightSource(item) && entity.lightSource === item) entity.lightSource = null;
+}
+
+export function applyTransfer(item, plan, from, to, { entity = null, fromLocal = false } = {}) {
+  clearLightSourceOnLeave(item, entity, fromLocal);
+  return _applyTransfer(item, plan, from, to);
+}
+function _applyTransfer(item, plan, from, to) {
   const stack = item.stackCount ?? 1;
   if (plan.amount < stack) {
     item.stackCount = stack - plan.amount;

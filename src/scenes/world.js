@@ -1308,11 +1308,40 @@ export async function bootWorld(canvas, renderer, params, status) {
         const pf = enchantFeet();
         return enchantFoes().filter((f) => !f.dead && f.ai
           && Math.hypot(f.ai.feet[0] - pf[0], f.ai.feet[1] - pf[1], f.ai.feet[2] - pf[2]) <= range)
-          .map((f) => ({ mobileType: f.mobileType ?? f.entity?.mobileType ?? 128, hurt: (n) => foeSinks(f).hurt(n) }));
+          // V3: distance rides along - the Skull of Corruption clones
+          // the NEAREST enemy; the field is additive, no reader broke
+          .map((f) => ({ mobileType: f.mobileType ?? f.entity?.mobileType ?? 128, distance: Math.hypot(f.ai.feet[0] - pf[0], f.ai.feet[1] - pf[1], f.ai.feet[2] - pf[2]), hurt: (n) => foeSinks(f).hurt(n) }));
       },
       spawnFoe: (mobileType) => {
         const pf = enchantFeet();
         exteriorFoes.spawnFoe(mobileType, [pf[0] + 2, pf[1] + 1, pf[2]]).catch(() => {});
+      },
+      // V3: the artifact doors. messageBox is Azura's TEXT.RSC popup
+      // (the infection host's flatten, at this consumer);
+      // openCharacterSheet is the Oghma's sheet push; replaceFoe is
+      // the Wabbajack's transform over the exterior pool - the old
+      // foe leaves through removeFoe (a quest foe still in use is
+      // left alone, QuestResourceBehaviour's own check) and the new
+      // type spawns at its feet with the damage taken carried over.
+      // spawnAlliedFoe stays UNMOUNTED: no ally/team combat yet - the
+      // two summons' range gates and fail lines run, the spawn idles.
+      messageBox: (id) => {
+        const lines = plainLines(townTalk.lines(id));
+        if (lines?.length) townTalk.showOverlay(new ChoiceWindow({ lines }));
+      },
+      openCharacterSheet: () => townTalk.showOverlay(makeCharSheetWindow()),
+      replaceFoe: (targetEntity, mobileType) => {
+        const f = enchantFoes().find((x) => !x.dead && x.entity === targetEntity);
+        if (!f) return;
+        if (f.questBehaviour && !f.questBehaviour.isFoeDead) return;
+        const feet = f.ai?.feet ? [...f.ai.feet] : enchantFeet();
+        const missing = (targetEntity.maxHealth ?? 0) - (targetEntity.health ?? 0);
+        exteriorFoes.removeFoe(f);
+        exteriorFoes.spawnFoe(mobileType, feet).then((nf) => {
+          if (!nf?.entity) return;
+          nf.entity.wabbajackActive = true;   // once per creature (WabbajackEffect:68)
+          nf.entity.health -= missing;        // carry over damage (:94)
+        }).catch(() => {});
       },
       // R1: the AllowMagicRepairs seam goes LIVE - RepairsObjects'
       // enchanted-item skip and the break-consumption arm both read it
@@ -3339,6 +3368,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (!_overlayHeld) playerTicker.tick(dt * timeScaleMult, {
         running: player.isRunning && !player.standing,   // AUDIT 23 (entity-2): PlayerEntity.cs:408
         swimming: player.swimming,
+        climbing: !!player.climb?.isClimbing,   // AUDIT 26 F083: the band's first arm (:405-408)
         jumped: player.jumped,   // C6: the per-jump drain+tally ride the tick
       });
         // AUDIT 18 HOST GAP: levitate/waterWalking/slowFall were

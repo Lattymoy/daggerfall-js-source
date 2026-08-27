@@ -21,6 +21,7 @@
 //   (Range(4, 6+1)) spends by the lowest-first policy where no UI
 //   is mounted.
 
+import { OGHMA_BONUS_POOL } from './artifactEffects.js';   // V3: the sheet's oghmaBonusPool (:44)
 import { SKILLS } from './skills.js';
 import { hitPointsPerLevelUp, spendPoolLowest } from './chargen.js';
 
@@ -141,6 +142,16 @@ export function checkForLevelUp(entity) {
 export function applyLevelUp(entity, distribute, rolls = Math.random, prerolledPool = null) {
   // The sheet gates on ReadyToLevelUp alone (UpdatePlayerValues :370)
   if (!entity.readyToLevelUp) return false;
+  // V3: the OGHMA arm (DaggerfallCharacterSheetWindow.cs:374-383) -
+  // the Infinium grants a FIXED 30-point pool with NO Level++ and no
+  // health raise; both flags clear together (:392-393).
+  if (entity.oghmaLevelUp) {
+    distribute(entity.stats, OGHMA_BONUS_POOL);
+    entity.readyToLevelUp = false;
+    entity.oghmaLevelUp = false;
+    entity.pendingLevel = null;
+    return true;
+  }
   entity.level += 1;   // L-slice (entity-9): Level++, never a jump to the calculated level
   entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // PERMANENT endurance, verbatim (audit F8 - DFU reads Stats.PermanentEndurance here, not the live value)
   entity.health = Math.min(entity.health, entity.maxHealth);

@@ -27,9 +27,10 @@ import { tickActiveEffects } from './effects.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
 import { FATIGUE_LOSS, killIfAnyLiveStatZero } from './statMods.js';
 import { decayEnemyAlert } from './encounters.js';   // PlayerEntity.Update:380-384, the 8-hour alert decay
-import { dice100, setRacialHitHook } from '../combat/formulas.js';
+import { dice100, setRacialHitHook, setPlayerStruckHook } from '../combat/formulas.js';
 import { onLycanthropeHit } from './lycanthropy.js';
 import { onVampireHit } from './vampirism.js';
+import { onPlayerStruckByEnemy } from './artifactEffects.js';   // V3: the Ring of Namira's reflection
 
 // V2a/V2b: OnWeaponHitEntity's registration - formulas.js cannot
 // import the curses (the dice100 cycle), and every host loads THIS
@@ -38,6 +39,9 @@ setRacialHitHook((attacker, target, { nowMinutes = 0, mobileType = null, isCivil
   onVampireHit(attacker, nowMinutes);
   onLycanthropeHit(attacker, target, { nowMinutes, mobileType, isCivilian });
 });
+// V3: the other tail - an enemy damaging the player runs the Ring of
+// Namira's reflection (registered here for the same cycle reason).
+setPlayerStruckHook((attacker, target, damage) => onPlayerStruckByEnemy(attacker, target, damage));
 import { normalizeReputations, NORMALIZE_INTERVAL_MINUTES } from './court.js';   // AUDIT 23 (C4)
 // S43: the entity update's 7-day and 38-day arms (PlayerEntity.cs:460-472).
 import { regionPowerUpdate } from './regionPower.js';
@@ -433,7 +437,13 @@ export function tickPlayerMinutes({
   // fatigue (S20) while it costs many magic rounds.
   if (Math.floor(next) !== Math.floor(classicMinutes)) {
     let loss = FATIGUE_LOSS.Default;
-    if (activity.running) loss = FATIGUE_LOSS.Running;
+    // AUDIT 26 F083: the CLIMBING arm heads DFU's band
+    // (PlayerEntity.cs:405-408 - climbing, else running, else the
+    // swimming arms; ClimbingFatigueLoss 22 at :110). The port tested
+    // running and swimming alone and FATIGUE_LOSS.Climbing had zero
+    // consumers - a climber paid half the classic drain per minute.
+    if (activity.climbing) loss = FATIGUE_LOSS.Climbing;
+    else if (activity.running) loss = FATIGUE_LOSS.Running;
     else if (activity.swimming) {
       // AUDIT 21 F8: THE ARGONIAN EXEMPTION, and its short-circuit.
       //     if (Race != Races.Argonian && Dice100.FailedRoll(...Swimming))
