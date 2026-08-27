@@ -20,12 +20,7 @@ import { MidiBsaFile } from '../formats/hmiFile.js';
 import { selectSong } from './songManager.js';
 import { SongPlayer, AudioSongPlayer } from './songPlayer.js';   // M-EXT: the replacement's player shares the volume law
 import { hasReplacement, replacementBytes } from './musicReplacement.js';   // M-EXT: SoundReplacement.TryImportSong
-import { TrackPlayer } from './enhancedMusic/trackPlayer.js';   // EM2a: Mac's own tracks, streamed
-import { trackGain } from './songPlayer.js';   // EM2b: the setting alone - no synth trim on a mastered track
-import { UNDERSCORE_TRIM } from './enhancedMusic/scores.js';   // EM2c: how far under a track the composed piece sits
-import { DangerMeter, dangerRaw } from './enhancedMusic/danger.js';   // EM4
-import { layerMix } from './enhancedMusic/palettes.js';   // EM4b: the danger level as a per-layer gain
-import { onSettingChange } from './settings.js';
+import { onSettingChange } from './settings.js';   // 2026-08-27: MusicVolume applies live
 
 export class MusicService {
   constructor() {
@@ -40,9 +35,9 @@ export class MusicService {
     // live boot probe, not by the suite (AUDIT 19).
     this._booted = null;
     this._current = null;
-    // EM2b: the MusicVolume setting is LIVE in fact, not just in tier -
-    // every player this service owns re-levels the moment it is written,
-    // so the slider is heard on the menu theme and mid-song alike.
+    // 2026-08-27: the MusicVolume setting is LIVE in fact, not just in
+    // tier - both players this service owns re-level the moment it is
+    // written, so the slider is heard mid-song, not at the next one.
     this._unsubscribe = onSettingChange((section, key) => {
       if (section === 'Controls' && key === 'MusicVolume') this.resyncGain();
     });
@@ -52,7 +47,6 @@ export class MusicService {
   resyncGain() {
     this.player?.resyncGain?.();
     this._audio?.resyncGain?.();
-    this._track?.resyncGain?.();
   }
 
   /** The one bootstrap. Safe to call from every host, every entry.
@@ -104,12 +98,7 @@ export class MusicService {
       // run yet, so retry on the next frame rather than racing it.
       const tryStart = () => {
         if (!this._pending) return;
-        const p = this._pending;
-        // A name is an archive song, a song object a composed piece, and
-        // a record with a file one of Mac's tracks (EM2a).
-        if (typeof p === 'string') { if (this.playSong(p)) this._pending = null; return; }
-        if (p.file) { this.playTrack(p).then((ok) => { if (ok && this._pending === p) this._pending = null; }); return; }
-        if (this.playScore(p)) this._pending = null;
+        if (this.playSong(this._pending)) this._pending = null;
       };
       tryStart();
       if (this._pending && typeof requestAnimationFrame !== 'undefined') {
@@ -123,8 +112,8 @@ export class MusicService {
 
   /** The context only exists after a gesture, so the player is built
    *  lazily on the first play that finds one. */
-  _ensurePlayer({ needsArchive = true } = {}) {
-    if (needsArchive && !this.enabled) return null;
+  _ensurePlayer() {
+    if (!this.enabled) return null;
     if (this.player) return this.player;
     if (!audio.ctx) return null;
     this.player = new SongPlayer(audio.ctx);
@@ -159,109 +148,12 @@ export class MusicService {
     return this._playBuiltIn(name);
   }
 
-  /** EM2a: play one of Mac's own TRACKS (a scores.js record), streamed.
-   *  Needs a clock and nothing else - no archive, no folder pick - so
-   *  the enhanced front door can call it before any data exists. The
-   *  browser's gesture rule may refuse the first play; then it is
-   *  pended and the gesture hook replays it. Resolves true when sound
-   *  is moving. Never throws. */
-  async playTrack(track) {
-    if (!track?.file) return false;
-    if (this._track?.playing && this._track.track?.id === track.id) return true;
-    const ctx = audio.ensureClock();
-    if (!ctx) return false;
-    this.attachGestureStart();
-    this._track ??= new TrackPlayer(ctx, { gain: trackGain });
-    this._audio?.stop();    // a replacement must not sound underneath (the scheduler may: the underscore, EM2c)
-    this._currentTrack = track.id;
-    const ok = await this._track.play(track);
-    if (!ok && this._currentTrack === track.id) this._pending = track;   // the gesture rule: replayed on the first gesture
-    return ok;
-  }
-
-  /** The game's own music taking over from a track: fade it under,
-   *  never cut it. EM2a's one rule for the other three doors. */
-  _fadeTrackUnder() { if (this._track?.playing) this._track.fadeOut(); }
-
-  /** EM4: the hosts report their foes every frame (the dungeon's
-   *  drawFoes, the exterior's pools) and the meter decides, slowly,
-   *  whether the enemies have you. When they do, the place's track
-   *  crossfades into the danger track and the composed underscore -
-   *  in the place's key, not danger's - fades out under it; when they
-   *  lose you, the place's own track comes back. Nothing happens under
-   *  the classic skin or in a place the enhanced side is not scoring:
-   *  there is no place score to return to. Returns the meter's state. */
-  reportDanger(dt, foes) {
-    if (!this._placeScore?.song || !this._placeScore.palette) return false;
-    this._dangerMeter ??= new DangerMeter();
-    const meter = this._dangerMeter;
-    meter.update(dt, dangerRaw(foes));
-    this._danger = meter.active;
-    // EM4b: the LEVEL, continuous and slewed, becomes the piece's layer
-    // mix - the tension layers come up from silence, the motif thins,
-    // the bed darkens - through the scheduler's change-guarded door.
-    this.player?.setLayerMix?.(layerMix(this._placeScore.palette, meter.level));
-    return meter.active;
-  }
-
-  get inDanger() { return Boolean(this._danger); }
-  get dangerLevel() { return this._dangerMeter?.level ?? 0; }
-
-  /** EM2c: play the enhanced side's answer for a cue - `{ track, song }`
-   *  from enhancedMusic.enhancedScore. A track crossfades from whatever
-   *  track played before; the composed piece plays UNDER it, trimmed,
-   *  or alone at full level when the place has no track. Both halves
-   *  are idempotent, so the director may call this every frame it
-   *  would have called play. Returns true when something is sounding
-   *  or pending for the gesture. */
-  playEnhanced(score) {
-    if (!score) return false;
-    const { track, song } = score;
-    // EM4: a new cue is the PLACE's score again; whatever danger the
-    // last place was in does not follow the player through the door.
-    this._placeScore = score;
-    this._danger = false;
-    this._dangerMeter?.reset();
-    this.player?.resetLayerMix?.();   // EM4b: a new place starts at rest
-    let any = false;
-    if (track) { this.playTrack(track); any = true; }
-    if (song) {
-      // Under a track: the piece is trimmed and the track stays. Alone:
-      // playScore's own door fades any track under and resets the trim.
-      const player = this._ensurePlayer({ needsArchive: false });
-      if (player) {
-        if (track) player.setTrim?.(UNDERSCORE_TRIM);
-        if (this.playScore(song, { under: Boolean(track) })) any = true;
-      } else { this._pending = song; }
-    } else {
-      if (!track && this._track?.playing) this._track.fadeOut();   // nothing at all: fade whatever track is up
-      this.player?.stop();
-    }
-    return any;
-  }
-
-  /** EM1: play a COMPOSED song - the enhanced side's piece for a cue,
-   *  in the reader's own shape - through the same scheduler and bank.
-   *  Idempotent per piece, like playSong per name. Pending like playSong
-   *  when the page has no context yet: the gesture hook replays it. */
-  playScore(song, { under = false } = {}) {
-    if (!song?.events?.length) return false;
-    const player = this._ensurePlayer({ needsArchive: false });   // composed: MIDI.BSA is not consulted
-    if (!player) { this._pending = song; return false; }
-    if (this._current === song.name && player.playing) return true;
-    this._audio?.stop();   // a replacement must not sound underneath
-    if (!under) { this._fadeTrackUnder(); player.setTrim?.(1); }   // EM2c: under a track, the track stays and the piece is trimmed
-    this._current = song.name;
-    return player.play(song);
-  }
-
   /** The MIDI.BSA path - what playSong did before replacements existed,
    *  and still the fallback for every song a pick does not cover. */
   _playBuiltIn(name) {
     const player = this._ensurePlayer();
     if (!player) return false;
     this._audio?.stop();   // a replacement must not sound underneath
-    this._fadeTrackUnder();
     const index = this.archive.getSongIndex(name);
     if (index === null || index === undefined || index < 0) {
       console.warn(`[music] no song named ${name} in MIDI.BSA`);
@@ -304,7 +196,6 @@ export class MusicService {
     const player = this._ensureAudioPlayer();
     if (!player) return;
     this.player?.stop();          // the MIDI player must not sound underneath
-    this._fadeTrackUnder();
     player.playing = true;        // commit BEFORE the await - see above
     let buffer = null;
     try {
@@ -332,7 +223,7 @@ export class MusicService {
   /** Is a song sounding right now? The director asks each frame - it is
    *  the port's stand-in for DFU's `songPlayer.IsPlaying`, which drives
    *  both the re-evaluation and the replay in UpdateSong. */
-  get playing() { return Boolean(this.player?.playing || this._audio?.playing || this._track?.playing); }
+  get playing() { return Boolean(this.player?.playing || this._audio?.playing); }
 
   stop() {
     // AUDIT 19 F12: clear the PENDING request too. `_pending` is what the
@@ -343,7 +234,6 @@ export class MusicService {
     this._pending = null;
     this.player?.stop();
     this._audio?.stop();   // M-EXT: both players, or a replacement outlives the stop
-    this._track?.stop();   // EM2a: and the track
   }
 
   get current() { return this._current; }

@@ -103,13 +103,6 @@ async function boot() {
   //     title moment is its own slice.
   if (isEnhanced()) {
     const { runEnhancedMenu } = await import('./ui/enhancedMenu.js');
-    // EM2a: THE DOOR'S OWN TITLE MOMENT, the slice the note above named.
-    // Mac's main theme, streamed, before any folder pick - it needs a
-    // clock and nothing else. Not awaited: the browser may hold it for
-    // the first gesture, and the menu must not wait on that.
-    const { music } = await import('./systems/music.js');
-    const { TITLE_THEME } = await import('./systems/enhancedMusic/scores.js');
-    music.playEnhanced({ track: TITLE_THEME, song: null });
     status('main menu');
     const choice = await runEnhancedMenu();
     await ensureData();

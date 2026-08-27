@@ -116,7 +116,7 @@ await page.route('**/arena2/**', async (route) => {
   return route.fulfill({ status: 404, body: '' });
 });
 
-await page.goto(`${BASE}/play/?skin=enhanced`, { waitUntil: 'load' });
+await page.goto(`${BASE}/play/?skin=enhanced`, { waitUntil: 'networkidle' });
 await page.waitForSelector('#enhanced-menu .railbtn', { timeout: 20000 });
 await page.locator('#enhanced-menu .railbtn', { hasText: 'New Game' }).first().click();
 await page.getByRole('button', { name: 'Begin', exact: true }).click();
@@ -241,7 +241,7 @@ await ctx.close();
   const errs2 = [];
   p2.on('pageerror', (e) => errs2.push(e.message));
   await p2.route('**/arena2/**', (route) => route.fulfill({ status: 404, body: '' }));
-  await p2.goto(`${BASE}/play/?skin=enhanced`, { waitUntil: 'load' });
+  await p2.goto(`${BASE}/play/?skin=enhanced`, { waitUntil: 'networkidle' });
   await p2.waitForSelector('#enhanced-menu .railbtn', { timeout: 20000 });
   await p2.locator('#enhanced-menu .railbtn', { hasText: 'New Game' }).first().click();
   await p2.getByRole('button', { name: 'Begin', exact: true }).click();

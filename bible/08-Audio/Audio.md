@@ -245,3 +245,43 @@ Pinned synthetically (a miniature of track 5, plus the boundary:
 65,535 advances, 65,536 shunts) and in the corpus pins, which were
 re-run against the real archive: D1 at 224.383 s, SUNNYDAY at 57 s,
 every checksum but SUNNYDAY's unchanged.
+
+## FROM PLAY (2026-08-27): THE MUSIC SLIDER, LIVE - and a replacement pack at its own level
+
+Two fixes that had shipped inside the Enhanced Music arc and were
+reverted with it, re-landed alone at Mac's word ("we can reimplement
+the true fixes").
+
+THE SLIDER. `Controls/MusicVolume` was LIVE in the registry's tier and
+read once per player, at `_ensureMaster`, and never again - so the
+slider was heard at the NEXT song, and a song that loops (every
+Daggerfall song does) never heard it at all. `settings.setValue` now
+PUBLISHES every write (`onSettingChange`: a small subscriber set - the
+section, the key, the string as stored, the default's string when the
+override is dropped; a throwing listener is warned and skipped so a bad
+listener cannot fail a write), and MusicService subscribes: on
+MusicVolume it re-levels both of its players with a 50 ms ramp on each
+master, so a slider drag is not a zipper. Every writer already goes
+through setValue (the enhanced pane, the classic settings window, the
+pause window), so nothing else had to learn the door - and any other
+LIVE consumer can take it instead of polling.
+
+THE PACK. MUSIC_GAIN (0.22) is the FM bank's trim: raw oscillators sum
+hot and the classic songs are mixed under it. The M-EXT replacement
+player - a user's own music files, mastered with their own headroom -
+took the same trim on top of the setting, "deliberately shared" when
+that feature shipped, and played at a fifth of itself (0.22 x the 0.5
+default). It reads `trackGain()` now, the setting alone, beside the
+scheduler's `musicGain()`; one setting still moves both through the
+service's resync, so the mixer cannot drift. The header that recorded
+the shared law records the split.
+
+Pins: `test/musicvolume.test.js`, 4 tests - the publish (once, the
+default's string on a drop, unsubscribe, a throwing listener skipped
+with the write landing), the service re-levelling exactly its two
+players on exactly that key and stopping when torn down, each player's
+ramp (the scheduler to MUSIC_GAIN x the setting, the pack to the
+setting alone, within 60 ms, and no throw before a master exists), and
+every writer going through setValue. The replacement suite's shared-law
+pin re-aimed at the split. 3 mutants, 3 dead.
+
