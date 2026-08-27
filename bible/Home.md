@@ -263,10 +263,10 @@ combat line numbers below are refreshed with it.
 - `src/scenes/exterior.js:1034` - (FLAGGED); swallowing the browser reload is not optional.
 - `src/scenes/exterior.js:1331` - (FLAGGED: the climate People table pends; the test city is
 - `src/scenes/exterior.js:1490` - FLAGGED here exactly as in world.js - no tile lookup yet).
-- `src/scenes/exterior.js:1831` - ground (FLAGGED with world.js's same gap), so Detect Treasure
-- `src/scenes/shared.js:244` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
-- `src/scenes/shared.js:261` - *  mirrors motorStats (the INTERIM entity carries no stats). */
-- `src/scenes/shared.js:366` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
+- `src/scenes/exterior.js:1832` - ground (FLAGGED with world.js's same gap), so Detect Treasure
+- `src/scenes/shared.js:269` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
+- `src/scenes/shared.js:286` - *  mirrors motorStats (the INTERIM entity carries no stats). */
+- `src/scenes/shared.js:391` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
 - `src/scenes/world.js:778` - FLAGGED loud: the People faction rides the START location's
 - `src/scenes/world.js:813` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
@@ -280,8 +280,8 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:2957` - FLAGGED: the QuestComplete loot window pends the UI arc - the
 - `src/scenes/world.js:2984` - castle interior (FLAGGED with the palace blocks).
 - `src/scenes/world.js:3440` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:3788` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/world.js:3861` - (FLAGGED: exterior corpse containers are the loot arc's), so
+- `src/scenes/world.js:3789` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:3862` - (FLAGGED: exterior corpse containers are the loot arc's), so
 - `src/scenes/worldModes.js:292` - rather than pretending to scan. FLAGGED.
 - `src/scenes/worldModes.js:441` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:589` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon

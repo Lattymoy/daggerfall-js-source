@@ -492,8 +492,14 @@ test('audit18 hosts: a rainy or snowy night shows the DAY sky at frame 0', () =>
 
 test('audit18 hosts: BOTH exterior hosts thread the weather style into the sky', () => {
   for (const host of EXTERIOR_HOSTS) {
-    assert.match(src(host), /sky\.use\([^;]*minute, weatherSkyOffset === 0\)/,
+    // ES1 (2026-08-27) gave the call a fourth argument - the weather and
+    // the classic clock, which the ENHANCED sky needs for its clouds and
+    // its moons - so the night-sky flag is no longer the last thing on
+    // the line. It is still the third argument and still the weather's.
+    assert.match(src(host), /sky\.use\([^;]*minute, weatherSkyOffset === 0[,)]/,
       `${host} shows NITE on every night minute regardless of weather`);
+    assert.match(src(host), /\{ weather, classicMinutes: playerTicker\.classicMinutes \}\);\s*\/\/ ES1/,
+      `${host} does not feed the enhanced sky its weather and clock`);
   }
 });
 
