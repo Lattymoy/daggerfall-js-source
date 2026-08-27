@@ -36,6 +36,15 @@ import { goldStack, LETTER_OF_CREDIT_TEMPLATE } from './inventory.js';   // AUDI
 import { getPeopleOfCurrentRegion } from './talk.js';   // T3a shipped the lookup
 import { changeReputation } from './factionRep.js';     // S25
 
+/** PlayerEntity.CrimeCommitted's SETTER (:2345-2355), the ONE home
+ *  every crime write goes through (V4): a transformed lycanthrope is
+ *  never tagged - SuppressCrime turns the write into Crimes.None. */
+import { racialSuppressCrime } from './lycanthropy.js';
+export function setCrimeCommitted(entity, crime) {
+  entity.crimeCommitted = racialSuppressCrime(entity) ? 0 : crime;
+  return entity.crimeCommitted;
+}
+
 export const CRIMES = Object.freeze({
   None: 0, Attempted_Breaking_And_Entering: 1, Trespassing: 2,
   Breaking_And_Entering: 3, Assault: 4, Murder: 5, Tax_Evasion: 6,

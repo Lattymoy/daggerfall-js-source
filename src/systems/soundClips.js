@@ -20,6 +20,10 @@ export const SOUND = {
   AnimalCow: 103,
   SwingLowPitch: 105,
   SwingHighPitch: 106,
+  EnemyWerewolfBark: 143,    // V4: the lycanthrope's own attack voices (SoundClips.cs:214-215, :234-235)
+  EnemyWerewolfAttack: 144,
+  EnemyWereboarBark: 158,
+  EnemyWereboarAttack: 159,
   FallDamage: 91,     // P14: PlayerFootsteps on ApplyPlayerFallDamage
   FallHard: 92,       // P14: PlayerFootsteps on HardFallAlert
   Hit1: 108,          // Hit1..Hit5 = 108..112; DFU rolls Hit1 + Range
@@ -94,6 +98,7 @@ const SWING_LOW = new Set(['Warhammer', 'Battle Axe', 'Katana', 'Claymore', 'Dai
 const SWING_HIGH = new Set(['Dagger', 'Tanto', 'Shortsword']);   // Wakazashi rides MEDIUM in DFU
 export function swingSoundFor(weapon) {
   if (!weapon) return SOUND.SwingHighPitch;
+  if (weapon.werecreatureClaws) return SOUND.SwingHighPitch;   // V4: SetFPSWeapon's SwingWeaponSound (:339)
   if (SWING_LOW.has(weapon.name)) return SOUND.SwingLowPitch;
   if (SWING_HIGH.has(weapon.name)) return SOUND.SwingHighPitch;
   return SOUND.SwingMediumPitch;

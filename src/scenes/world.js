@@ -52,7 +52,7 @@ import { clearSceneCache } from '../systems/sceneCache.js';   // P1: SaveLoadMan
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
 import { createTravelMapWindow, travelMapDoorReady, preloadTravelMapArt, canFindPlace } from '../ui/travelMapDoor.js';   // W1's classic art window + U61's overworld, one door
 import { racialRestBlock, racialFastTravelBlock, cureVampirism } from '../systems/vampirism.js';   // V2b: the vampire's rest and daylight gates; V2d: $CUREVAM's cure arm
-import { cureLycanthropy } from '../systems/lycanthropy.js';   // V2d: $CUREWER's cure arm
+import { cureLycanthropy, racialSuppressPopulationSpawns, racialSuppressInventory, racialSuppressTalk } from '../systems/lycanthropy.js';   // V2d: $CUREWER's cure arm; V4: the transformed gates
 import { setRacialQuestHost } from '../systems/racialQuests.js';   // V2d: the quest-start seam (the machine is this host's)
 import { randomCemeteryLocationIndex } from '../systems/infection.js';   // V2e: GetRandomCemetery's pick half
 import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: the vampire clan pool asks as a Member
@@ -132,7 +132,7 @@ import { createWorldModes } from './worldModes.js';
 import { createQuestBridge, tokensToRows } from './questBridge.js';
 import { loadQuestPack } from './questData.js';
 import { ensureFactionRep, getReputation, changeReputation } from '../systems/factionRep.js';
-import { changeLegalRep, legalRepOf, CRIMES } from '../systems/court.js';   // PlayerEntity.Update:498-511 reads the region's LegalRep and levies Criminal_Conspiracy
+import { changeLegalRep, legalRepOf, CRIMES, setCrimeCommitted } from '../systems/court.js';   // PlayerEntity.Update:498-511 reads the region's LegalRep and levies Criminal_Conspiracy
 import { isEquipped, unequipSlot } from '../systems/equip.js';
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { makeItemPermanent } from '../systems/quest/item.js';
@@ -523,6 +523,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           },
         };
         population = new TownPopulation(nav, {
+          suppressSpawns: () => racialSuppressPopulationSpawns(playerEntity),   // V4: the transformed lycanthrope empties the streets
           totalBlocks: loc.width * loc.height,
           // AUDIT 23 (characters-4/5): billboard race = the climate's
           // People; the NAME bank = the REGION's (MobilePersonNPC.cs:214).
@@ -1071,7 +1072,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         severePunishmentFlags: playerEntity.regionConditions?.[_region]?.severePunishmentFlags ?? 0,
       });
       for (let s = 0; s < _owed; s++) {
-        playerEntity.crimeCommitted = CRIMES.Criminal_Conspiracy;
+        setCrimeCommitted(playerEntity, CRIMES.Criminal_Conspiracy);   // V4: through the one setter (SuppressCrime)
         _witnessResponse();
       }
     }
@@ -1546,7 +1547,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // alone (:558-559) since its header carries the claim. The crime
     // is a STRING key here, the shape arrestFlow already reads.
     commitCrime: (crime, spawnGuards) => {
-      playerEntity.crimeCommitted = crime;
+      setCrimeCommitted(playerEntity, crime);   // V4: through the one setter (SuppressCrime)
       if (spawnGuards) _crimeResponse();
     },
     endLines: (id) => townTalk.lines(id),
@@ -2066,7 +2067,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     toggleCharSheet: () => townTalk.showOverlay(makeCharSheetWindow()),
     toggleLogbook: () => townTalk.showOverlay(makeJournalWindow('activeQuests')),
     toggleNotebook: () => townTalk.showOverlay(makeJournalWindow('notebook')),
-    toggleInventory: () => { if (inventoryDoorReady()) townTalk.showOverlay(makeInventoryWindow()); },
+    toggleInventory: () => {
+      // V4: GetSuppressInventory (LycanthropyEffect.cs:409-421)
+      const sup = racialSuppressInventory(playerEntity);
+      if (sup) { townTalk.say(sup.text); return; }
+      if (inventoryDoorReady()) townTalk.showOverlay(makeInventoryWindow());
+    },
     toggleSpellbook: () => toggleSpellbook(),
     toggleAutomap: () => toggleExteriorAutomap(),
     openTravelMap: () => toggleTravelMap(),
