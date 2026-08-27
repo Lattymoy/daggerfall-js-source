@@ -198,22 +198,123 @@ skipped, and the service re-levelling exactly its three players on
 exactly that key; each player's resyncGain ramping its master to the
 setting now).
 
+## EM2c (2026-08-27): THE DUNGEON TRACK, THE UNDERSCORE, THE CROSSFADE - SHIPPED
+
+Mac: "Fix it also. Here is also the new dungeon track. I have the
+danger and death tracks to follow."
+
+FIX IT ALSO: the M-EXT replacement player - the user's own music packs
+- took the FM trim too, a mastered file at a fifth of itself (0.22 x
+the default 0.5 = 0.11). It reads `trackGain()` now, the setting alone,
+beside the scheduler's `musicGain()`; one setting still moves both
+through the service's resync. The header that had recorded the shared
+law records the split.
+
+THE TRACK: 3:09, 48 kHz, peak 0.64; MP3 at VBR ~155 kbps (3.7 MB) at
+public/music/enhanced/dungeon.mp3, OURS. It is the first PLACE_SCORES
+record, and it carries a KEY: measured off the file's pitch-class
+energy (B 1.00, F# 0.42, D 0.32, C# 0.28, E 0.24 - a B minor triad with
+the aeolian second), root 47 (B2), aeolian, and MAC'S TO CONFIRM; no
+tempo named, so the piece keeps the palette's own.
+
+THE UNDERSCORE: `enhancedScore` answers `{ track, song }` now. A place
+with a score and a palette gets both, and the piece is composed IN THE
+TRACK'S KEY (the record's root and mode, and its tempo when named); a
+record that names no key plays alone rather than clash. The service's
+`playEnhanced` plays the track, then the piece UNDER it at
+UNDERSCORE_TRIM (0.35) on the scheduler's new master trim - felt more
+than heard: -19 dB under the track at the default setting, measured on
+the offline mix - and a piece alone plays at full trim through
+playScore's own door, which fades any track under. The dungeon seed law
+holds under a track: the same dungeon, the same piece, in B.
+
+THE CROSSFADE: the track player grew a LAYER gain per play under ONE
+master. A new track fades in over three seconds while the old layer
+fades out on its own timer and is then paused and released; the master
+carries the setting alone, so re-levelling never fights a fade. Fades
+ride AudioParams, never the element's volume.
+
+Heard: dungeon-with-underscore.wav, the track at the default setting
+with the B-aeolian piece under it at the trim, rendered offline through
+the real voice code - the balance is Mac's to move (UNDERSCORE_TRIM is
+one number). Pins: three more (the door composing in the track's key
+with every underscore note in it and the seed law under a track; the
+service - track then trimmed piece, idempotent, the piece never fading
+the track it sits under, a piece alone fading the track and playing at
+full trim, a track alone stopping the scheduler; the crossfade - the
+old layer to 0 and still playing, the new to its record gain, the
+master untouched, the old element paused when its timer fires). The
+replacement pin re-aimed at the split. 4 mutants, 4 dead.
+
+TO FOLLOW: the danger and death tracks. `EXTRA_SCORES` is their home -
+cues beyond DFU's, the enhanced side's own - and their doors are EM4
+(danger from the enemy-senses law, crossfading the dungeon track into
+its danger variant and back) and the death screen.
+
+## EM4 (2026-08-27): DANGER - SHIPPED
+
+Mac: "This is danger." 2:43, MP3 (3.5 MB) at
+public/music/enhanced/danger.mp3, OURS; key measured off the file
+(C 1.00, G 0.72, D 0.45, D# 0.45, F 0.25, G# 0.21 - C minor), a
+semitone off the dungeon track's B, which decides one thing below.
+Mac's to confirm.
+
+THE SIGNAL IS DFU'S. "An enemy that can see the player" is
+AreEnemiesNearby's own line - `detected && inSight` on the foe's AI,
+the law that refuses a rest (encounters.areEnemiesNearby) - and
+`dangerRaw` reads exactly those fields off exactly those records: every
+living foe that can see you counts, nearer counting more (a distant
+watcher a quarter, two in your face saturate). A foe that has only
+HEARD you does not count, as it does not for the rest law.
+
+THE METER IS OURS, and it is project-final's lesson made structural:
+that arc drove its mix from a per-frame threat number and the music
+fluttered. `DangerMeter` is a slew - it rises fast (0.35 s to most of
+a step: a foe seeing you is news), HOLDS six seconds after the raw
+signal drops (a foe behind a pillar does not end the fight), then falls
+slowly (5 s), and the decision has hysteresis (on at 0.5, off at 0.15).
+Pinned: seen for 0.3 s is ON; a two-second blink does not flip; the
+fight's end is OFF well after the last sighting; a 50/50 flicker around
+the threshold flips at most once.
+
+THE DOOR is on the service: `reportDanger(dt, foes)` from the hosts,
+inert unless the enhanced side is scoring the place (there is nothing
+to return to otherwise - the classic skin never crossfades). When the
+meter switches ON, the place's track CROSSFADES into the danger track
+and the composed underscore - written in the PLACE's key, not
+danger's - fades to silence under it rather than play a semitone
+wrong; OFF crossfades the place's own track back and lifts the
+underscore to its trim. A place that composes alone gets the danger
+track over its piece and the piece back alone after. A NEW CUE RESETS
+the meter and the flag: whatever danger the last place was in does not
+follow the player through a door.
+
+THE HOSTS report from the frame functions they already share: the
+dungeon context's drawFoes (both dungeon hosts call it - the splash
+clock's reasoning), and the exterior host's foe tick, over both of its
+pools, the watch and the encounter foes, exactly as it asks
+areEnemiesNearby. Pins: three (the raw law against the rest law's own
+answers; the meter's temper; the service's door - ON, OFF, the reset,
+the alone-piece arm - and both hosts' reports). 3 mutants, 3 dead.
+
+TO FOLLOW: death. `EXTRA_SCORES.death` when the track lands, its door
+the death screen.
+
 ## The board
 
-1. **EM2 - MAC'S TRACKS FOR THE PLACES.** The player and the score
-   table exist (EM2a); what remains is PLACE_SCORES entries as tracks
-   arrive - each with the track's key and tempo so the composed piece
-   plays UNDERNEATH it at a lower gain - and the crossfade between two
-   tracks on a cue change (equal-power, a few seconds; the pure
-   director's shape from project-final). Each file gets an OURS row.
+1. **EM2 - MAC'S TRACKS FOR THE PLACES.** The machinery is whole
+   (EM2a-c): a record per place with the track's key, the piece under
+   it, the crossfade. What remains is the records, one per track as it
+   arrives, each with an OURS row - and the danger and death cues in
+   EXTRA_SCORES with their doors (EM4, the death screen).
 2. **EM3 - THE OTHER PLACES.** Palettes for the city by day and by
    night, wilderness with the weather folded in as the director folds
    it, taverns (the one place that wants percussion), temples, the
    Mages Guild. Each is a record; the composer stays as it is.
-3. **EM4 - DYNAMICS.** Danger from the enemy-senses law (how many have
-   seen you, how near) and health, smoothed with a slew, driving
-   per-layer gains - the motif thins and the bed darkens as danger
-   rises. Slow scalars, never a frame-rate number.
+3. **EM4 - DYNAMICS.** Danger SHIPPED as a track crossfade on the
+   rest law's own signal through a slew (above). Health, and the finer
+   per-layer dynamics of the composed piece (the motif thinning, the
+   bed darkening), remain.
 4. **EM5 - THE LAB.** A page that composes a palette live, with every
    record field as a control and a render button - the tuning surface,
    for Mac's ear.

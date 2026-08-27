@@ -3726,6 +3726,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       const _pf = walkMode && playerSpawned ? player.pos : cam.pos;
       if (!townTalk.overlayActive) runEncounterTick(_pf);
       exteriorFoes.update(townTalk.overlayActive ? 0 : dt, _pf, cam.pos, _foeSenses());
+      // EM4: the danger report, both of this host's pools - the watch and the encounter foes - as areEnemiesNearby asks them.
+      music.reportDanger(dt, [...(cityGuards?.guards ?? []), ...exteriorFoes.foes]);
       livePersonBatches.push(...exteriorFoes.batches());
     }
     droppedLoot.tickFlats(dt);   // FA1 slice 3

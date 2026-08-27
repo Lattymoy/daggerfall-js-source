@@ -586,25 +586,38 @@ build what already ships.
 naming the slice, the same way section C rows are closed. If an entry
 is still open after a slice that touched its area, say why.**
 
-### 1. The bank purchase window's 3D model preview
+### 1. ~~The bank purchase window's 3D model preview~~ SHIPPED (H4 2026-08-27)
 
-`ui/bankPurchaseWindow.js:49` - `display: [117, 12, 104, 91], //
-FLAGGED: the 3D preview`. The rect is drawn and empty. This is the last
-piece of the bank purchase flow H2 left open, and H3 made it tractable
-without meaning to: `houseMeshRadius` already resolves the model behind
-a `buildingKey` and reads its mesh, which is the same lookup the
-preview needs, and `SHIP_MODEL_IDS`/`shipCameraDist` are already in
-`systems/banking.js` for the ship half. Self-contained, no new
-subsystem. **Recommended next.**
+The 104x91 panel shows the selected building's own ARCH3D model live,
+rotating -1 degree per 0.02s (the window's clock, real-time
+accumulated). The split: the WINDOW owns the rotation and the camera
+law (houses from (0,3,-20), near 0.7 far 100, Unity's default
+60-degree lens; the ships arm's (0,12,SHIP_CAMERA_DIST) pairs sit in
+banking.js beside the model ids for the day a ships list exists) and
+worldModes owns drawBankModelPreview - the automap's second-beginFrame
+precedent cut down to a panel: scissor BEFORE beginFrame so the clear
+touches only the display rect, viewport AFTER it (beginFrame sets the
+full one), the ONE mirror on the projection, the mesh through the
+pipeline's own async getGpuMesh, clear color borrowed and returned.
+RECORDED: DFU climate-swaps the preview's textures and lights it with
+a 0.4 directional + hard shadows; the port draws base textures under
+the collapsed-ambient idiom the automap records. Pins in
+`test/bankpreview.test.js`.
 
-### 2. The sixteen `.FLC` summoning videos
+### 2. ~~The sixteen `.FLC` summoning videos~~ SHIPPED (G7b 2026-08-27)
 
-`systems/daedraSummoning.js:38` names it: HIRCINE.FLC and its fifteen
-siblings, one per Daedra prince, played when a summoning succeeds. G7
-shipped the SERVICE whole; this is its residue. The decoder already
-exists - `formats/flcFile.js` (F1) and `ui/flcPlayer.js` (F2a) were
-built for the three chargen constellation animations and are the same
-reader. Mostly a mount, not a port.
+`ui/daedraSummonedWindow.js` is DaggerfallDaedraSummonedWindow: the
+prince's own film fullscreen and LOOPING (FLCPlayer.Loop's default)
+over the F1/F2a reader the constellations built, the quest offer read
+over it in FOUR-LINE chunks (a click or any key turns the page), the
+last chunk answering to Yes/No through the offer flow's REAL respond -
+so accept runs startQuestImmediate and refuse runs the rumor/topic
+sweeps - and the answer's own message reading through the same chunks
+before the last click closes. The refusal's 3-5 daedra ride a
+spawnRefusalFoes door FLAGGED unmounted (the interior foe pool's
+standing gap, the coven-failure seam). The host mounts ONE consumer
+of the offer step: the film window when the FLC loads, the box chain
+when it cannot - never traps.
 
 ### 3. ~~Morph Self, the last inert effect~~ TAKEN (V2a 2026-08-27)
 

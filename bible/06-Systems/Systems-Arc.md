@@ -4052,3 +4052,79 @@ cure with the birth-race law pinned against the name override, the
 background/suppression walk for all three states, the voice's
 always-a-clip law with the verbatim ids and the fire/pick split, and
 the three consumers' override-first order.
+
+## H4 - THE PICTURE OF THE HOUSE: the purchase preview goes live (2026-08-27)
+
+The last piece of the bank purchase flow, and the ledger's own
+recommended-next row. DaggerfallBankPurchasePopUp's 104x91 display
+panel renders the selected building's own ARCH3D model, rotating one
+NEGATIVE degree per 0.02 seconds of real time (:68, :163-178) - and
+now the port's does too, split along the seam the two halves already
+suggested: the WINDOW owns the rotation clock (a real-time
+accumulator in tick(dt), so any frame pacing spins at DFU's rate) and
+the camera law (Display3dModelSelection :245 - houses from (0,3,-20),
+near 0.7 far 100, Unity's default 60-degree lens; the ships arm's
+(0,12,shipCameraDist) pairs now sit in banking.js beside the model
+ids they pair with, for the day a ships list exists), and the HOST
+owns the GL: worldModes' drawBankModelPreview is the automap's
+second-beginFrame precedent cut down to a panel - scissor BEFORE
+beginFrame so its CLEAR touches only the display rect, viewport AFTER
+it (beginFrame sets the full one), the ONE mirror on the projection
+(mat4's law - this pass culls), the model spun by the window's yaw
+through trs, the mesh through the pipeline's own async getGpuMesh
+(the panel stays empty for the frames the load takes - DFU's own
+first-frame gap), and the clear color borrowed and returned.
+
+SelectNone shows an empty panel, exactly as DFU starts (:298); the
+result box is never painted over; the rect travels in CANVAS pixels
+because that is the scissor's frame. Fog and lighting overrides
+self-heal - every mode's frame body re-sets both before its own
+beginFrame. RECORDED: DFU climate-swaps the preview's textures and
+lights with a 0.4 directional + hard shadows; the port draws the base
+textures under the collapsed-ambient idiom the automap records.
+
+Pins: 4 in `test/bankpreview.test.js` - the popup's own constants
+with the ship pairs, the negative-degree clock across mixed frame
+pacing (values off the 0.02 boundary: the accumulator is float math),
+the window's gate-and-order laws, and the host pass's bracket order
+with both states restored.
+
+## G7b - THE PRINCE ON FILM: the summoning videos (2026-08-27)
+
+The board's item two, and G7's recorded residue. A successful
+summoning now plays the prince's own .FLC - sixteen films, one per
+Daedra, the names the DAEDRA table has carried since G7 - through
+`ui/daedraSummonedWindow.js`, which is DaggerfallDaedraSummonedWindow
+whole: the film fullscreen at 320x200 and LOOPING (FLCPlayer.Loop's
+default - the reader is F1's FlcFile and F2a's FlcPlayer, built for
+the chargen constellations and reused untouched), the quest offer
+read over the bottom in FOUR-LINE chunks (TextLinesPerChunk 4 - DFU
+steps tokens by eight, the port flattens to lines first and steps
+four; one law, two spellings, recorded), a click or any key turning
+the page, and the LAST chunk answering to Yes/No alone.
+
+THE WINDOW IS PRESENTATION; THE MACHINE IS REAL. It consumes the
+offer flow's own STEP ({ kind:'offer', prompt, respond }) - the same
+machinery the ServiceFlowWindow boxes wrap - so Yes runs
+startQuestImmediate and the accept message, No runs the rumor and
+topic sweeps and the refusal, and the answer's message reads through
+the same chunks before the last click closes (one close, however
+many keys land on the tail). The refusal ALSO owes 3-5 daedra at
+8..64 units (:86-87, the window's own spawn, distinct from the quest
+popup's 1-3): that rides a spawnRefusalFoes door FLAGGED unmounted -
+the interior foe pool's standing gap, the same seam the coven
+failure records.
+
+THE HOST MOUNTS ONE CONSUMER of the step: worldModes fetches the
+film on a successful summons and mounts the window when the FLC
+reads; an unreadable or unfetchable film falls back to the box chain
+- never traps, and never two respond() paths for one offer. The FLC
+texture rides the chargen release-then-upload law and the drain's
+bare dispose() releases the last frame.
+
+Pins: 5 in `test/daedrasummonwindow.test.js` - the token pairing,
+the chunk walk with the last-offer-page click doing NOTHING (DFU
+waits on Yes/No), Yes through the real respond with paging-not-
+re-responding pinned past the answer, No's flagged spawn and the
+empty-popup immediate close, and the sixteen distinct films with the
+host's one-consumer order and fallback greps.

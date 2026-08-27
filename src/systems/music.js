@@ -22,6 +22,8 @@ import { SongPlayer, AudioSongPlayer } from './songPlayer.js';   // M-EXT: the r
 import { hasReplacement, replacementBytes } from './musicReplacement.js';   // M-EXT: SoundReplacement.TryImportSong
 import { TrackPlayer } from './enhancedMusic/trackPlayer.js';   // EM2a: Mac's own tracks, streamed
 import { trackGain } from './songPlayer.js';   // EM2b: the setting alone - no synth trim on a mastered track
+import { UNDERSCORE_TRIM, EXTRA_SCORES } from './enhancedMusic/scores.js';   // EM2c: how far under a track the composed piece sits; EM4: the danger cue
+import { DangerMeter, dangerRaw } from './enhancedMusic/danger.js';   // EM4
 import { onSettingChange } from './settings.js';
 
 export class MusicService {
@@ -164,16 +166,15 @@ export class MusicService {
    *  is moving. Never throws. */
   async playTrack(track) {
     if (!track?.file) return false;
-    if (this._current === track.id && this._track?.playing) return true;
+    if (this._track?.playing && this._track.track?.id === track.id) return true;
     const ctx = audio.ensureClock();
     if (!ctx) return false;
     this.attachGestureStart();
     this._track ??= new TrackPlayer(ctx, { gain: trackGain });
-    this.player?.stop();    // the scheduler must not sound underneath
-    this._audio?.stop();    // nor a replacement
-    this._current = track.id;
+    this._audio?.stop();    // a replacement must not sound underneath (the scheduler may: the underscore, EM2c)
+    this._currentTrack = track.id;
     const ok = await this._track.play(track);
-    if (!ok && this._current === track.id) this._pending = track;   // the gesture rule: replayed on the first gesture
+    if (!ok && this._currentTrack === track.id) this._pending = track;   // the gesture rule: replayed on the first gesture
     return ok;
   }
 
@@ -181,17 +182,82 @@ export class MusicService {
    *  never cut it. EM2a's one rule for the other three doors. */
   _fadeTrackUnder() { if (this._track?.playing) this._track.fadeOut(); }
 
+  /** EM4: the hosts report their foes every frame (the dungeon's
+   *  drawFoes, the exterior's pools) and the meter decides, slowly,
+   *  whether the enemies have you. When they do, the place's track
+   *  crossfades into the danger track and the composed underscore -
+   *  in the place's key, not danger's - fades out under it; when they
+   *  lose you, the place's own track comes back. Nothing happens under
+   *  the classic skin or in a place the enhanced side is not scoring:
+   *  there is no place score to return to. Returns the meter's state. */
+  reportDanger(dt, foes) {
+    if (!this._placeScore || !EXTRA_SCORES.danger) return false;
+    this._dangerMeter ??= new DangerMeter();
+    if (this._dangerMeter.update(dt, dangerRaw(foes))) this._setDanger(this._dangerMeter.active);
+    return this._dangerMeter.active;
+  }
+
+  _setDanger(active) {
+    if (active === this._danger) return;
+    this._danger = active;
+    const { track, song } = this._placeScore;
+    if (active) {
+      this.playTrack(EXTRA_SCORES.danger);
+      if (song) this.player?.setTrim?.(0);          // the underscore is in the place's key; under danger it goes quiet
+    } else if (track) {
+      this.playTrack(track);                         // the crossfade back
+      if (song) this.player?.setTrim?.(UNDERSCORE_TRIM);
+    } else {
+      this._track?.fadeOut();                        // a place that composes alone: the piece comes back up
+      if (song) this.player?.setTrim?.(1);
+    }
+  }
+
+  get inDanger() { return Boolean(this._danger); }
+
+  /** EM2c: play the enhanced side's answer for a cue - `{ track, song }`
+   *  from enhancedMusic.enhancedScore. A track crossfades from whatever
+   *  track played before; the composed piece plays UNDER it, trimmed,
+   *  or alone at full level when the place has no track. Both halves
+   *  are idempotent, so the director may call this every frame it
+   *  would have called play. Returns true when something is sounding
+   *  or pending for the gesture. */
+  playEnhanced(score) {
+    if (!score) return false;
+    const { track, song } = score;
+    // EM4: a new cue is the PLACE's score again; whatever danger the
+    // last place was in does not follow the player through the door.
+    this._placeScore = score;
+    this._danger = false;
+    this._dangerMeter?.reset();
+    let any = false;
+    if (track) { this.playTrack(track); any = true; }
+    if (song) {
+      // Under a track: the piece is trimmed and the track stays. Alone:
+      // playScore's own door fades any track under and resets the trim.
+      const player = this._ensurePlayer({ needsArchive: false });
+      if (player) {
+        if (track) player.setTrim?.(UNDERSCORE_TRIM);
+        if (this.playScore(song, { under: Boolean(track) })) any = true;
+      } else { this._pending = song; }
+    } else {
+      if (!track && this._track?.playing) this._track.fadeOut();   // nothing at all: fade whatever track is up
+      this.player?.stop();
+    }
+    return any;
+  }
+
   /** EM1: play a COMPOSED song - the enhanced side's piece for a cue,
    *  in the reader's own shape - through the same scheduler and bank.
    *  Idempotent per piece, like playSong per name. Pending like playSong
    *  when the page has no context yet: the gesture hook replays it. */
-  playScore(song) {
+  playScore(song, { under = false } = {}) {
     if (!song?.events?.length) return false;
     const player = this._ensurePlayer({ needsArchive: false });   // composed: MIDI.BSA is not consulted
     if (!player) { this._pending = song; return false; }
-    if (this._current === song.name && this.playing) return true;
+    if (this._current === song.name && player.playing) return true;
     this._audio?.stop();   // a replacement must not sound underneath
-    this._fadeTrackUnder();
+    if (!under) { this._fadeTrackUnder(); player.setTrim?.(1); }   // EM2c: under a track, the track stays and the piece is trimmed
     this._current = song.name;
     return player.play(song);
   }

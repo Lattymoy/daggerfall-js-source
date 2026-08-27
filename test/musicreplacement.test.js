@@ -202,10 +202,15 @@ test('music: a replacement OVERRIDES, and a miss falls through to MIDI.BSA', () 
   // no-replacement path - a pack file that will not decode still plays
   const start = m.slice(m.indexOf('async _startReplacement('));
   assert.match(start.slice(0, start.indexOf('\n  }')), /if \(!buffer\) \{ player\.playing = false; this\._playBuiltIn\(name\); return; \}/);
-  // both players read the ONE volume law, so the mixer cannot drift
+  // ONE SETTING moves both players (the service's resync); the LAW split
+  // on 2026-08-27 (EM2b/c, Mac: "fix it also"): the scheduler keeps the
+  // FM bank's trim, a replacement - a mastered file - takes the setting
+  // alone, as Mac's own tracks do.
   const sp = src('systems/songPlayer.js');
-  assert.equal((sp.match(/this\._master\.gain\.value = musicGain\(\)/g) ?? []).length, 3,
-    'SongPlayer once, AudioSongPlayer on build AND on every start');
+  assert.equal((sp.match(/this\._master\.gain\.value = musicGain\(\) \* this\.trim/g) ?? []).length, 1, 'SongPlayer once, trimmed');
+  assert.equal((sp.match(/this\._master\.gain\.value = trackGain\(\);/g) ?? []).length, 2,
+    'AudioSongPlayer on build AND on every start, untrimmed');
+  assert.doesNotMatch(sp.slice(sp.indexOf('export class AudioSongPlayer')), /musicGain\(\)/, 'the replacement player never reads the trimmed law');
   // the replacement loops, because Daggerfall's songs do
   assert.match(sp, /src\.loop = this\.loop;/);
 });

@@ -149,10 +149,11 @@ test('EM1 door: the enhanced skin composes for a place with a palette, and nothi
   const dungeon = { environment: MUSIC_ENV.DungeonInterior, dungeonKey: 4242, gameDays: 3, locationIndex: 7 };
   const city = { environment: MUSIC_ENV.City, gameDays: 3, locationIndex: 7, dungeonKey: null };
   assert.equal(enhancedScore(dungeon, { enhanced: false }), null, 'classic skin: null, the classic song plays');
-  assert.equal(enhancedScore(city, { enhanced: true }), null, 'no palette yet: null, the classic song plays');
+  assert.equal(enhancedScore(city, { enhanced: true }), null, 'no palette, no track yet: null, the classic song plays');
   assert.equal(enhancedScore(null, { enhanced: true }), null);
   const s = enhancedScore(dungeon, { enhanced: true });
-  assert.ok(s?.events?.length, 'enhanced skin + a palette: a composed piece');
+  assert.ok(s?.song?.events?.length, 'enhanced skin + a palette: a composed piece');
+  assert.equal(s.track?.id, 'dungeon', '...and the dungeon has Mac\'s track (EM2c)');
   // The seed law: a dungeon composes on its own key across days and visits...
   assert.equal(cueSeed(dungeon), cueSeed({ ...dungeon, gameDays: 99, locationIndex: 1 }));
   assert.notEqual(cueSeed(dungeon), cueSeed({ ...dungeon, dungeonKey: 4243 }));
@@ -170,16 +171,16 @@ test('EM1 door: the director asks the enhanced side through its play sink, with 
   manager = new SongManager({
     play: (name) => {
       const score = enhancedScore(manager.currentContext, { enhanced: true });
-      played.push(score ? score.name : `classic:${name}`);
+      played.push(score ? `${score.track?.id ?? '-'}+${score.song?.name ?? '-'}` : `classic:${name}`);
     },
     stop: () => played.push('stop'),
   });
   manager.update({ environment: MUSIC_ENV.DungeonInterior, dungeonKey: 77, gameDays: 1, locationIndex: 3 });
-  assert.match(played[0], /^enhanced:dungeonInterior:\d+$/, 'in a dungeon the piece is composed');
+  assert.match(played[0], /^dungeon\+enhanced:dungeonInterior:\d+$/, 'in a dungeon: Mac\'s track with the piece under it');
   manager.update({ environment: MUSIC_ENV.City, gameDays: 1, locationIndex: 3, dungeonKey: null });
   assert.match(played[1], /^classic:/, 'in the city the classic song plays - no palette yet');
   assert.match(read('src/scenes/shared.js'), /const score = enhancedScore\(manager\?\.currentContext\);/, 'the real sink does this');
-  assert.match(read('src/scenes/shared.js'), /score \? music\.playScore\(score\) : music\.playFrom\(\[name\], \{ gameDays: 0 \}\)/);
+  assert.match(read('src/scenes/shared.js'), /score \? music\.playEnhanced\(score\) : music\.playFrom\(\[name\], \{ gameDays: 0 \}\)/);
 });
 
 test('EM1 service: playScore plays a composed song through the one scheduler, and needs no archive', () => {
@@ -243,8 +244,17 @@ test('EM2a scores: the title theme is Mac\'s file, tracked, allow-listed, reacha
   const tracked = execFileSync('git', ['ls-files', 'public/music'], { encoding: 'utf8' }).split('\n');
   assert.ok(tracked.includes(onDisk), `${onDisk} is tracked`);
   assert.ok(read('test/doctrine.test.js').includes(`['${onDisk}', "OURS - `), 'and on the doctrine allow-list as OURS');
-  assert.deepEqual(PLACE_SCORES, {}, 'no place has a track yet - the composer plays alone (EM1)');
-  assert.equal(scoreFor(MUSIC_ENV.DungeonInterior), null);
+  // EM2c: every scored place is a tracked, allow-listed MP3 reachable from /play/.
+  for (const [env, rec] of Object.entries(PLACE_SCORES)) {
+    assert.ok(MUSIC_ENV[Object.keys(MUSIC_ENV).find((k) => MUSIC_ENV[k] === env)], `${env} is a director environment`);
+    assert.match(rec.file, /^\.\.\/music\/enhanced\/[\w-]+\.mp3$/);
+    const f = 'public/' + rec.file.replace(/^\.\.\//, '');
+    assert.ok(tracked.includes(f), `${f} is tracked`);
+    assert.ok(read('test/doctrine.test.js').includes(`['${f}', "OURS - `), `${f} is allow-listed as OURS`);
+    if (rec.root !== undefined) assert.ok(rec.root >= 0 && rec.root <= 127 && SCALE_MODES[rec.mode], `${env} names a real key`);
+  }
+  assert.equal(scoreFor(MUSIC_ENV.DungeonInterior)?.id, 'dungeon');
+  assert.equal(scoreFor(MUSIC_ENV.City), null);
 });
 
 test('EM2a track player: streams through a media source into a ramped gain, fades under, never throws', async () => {
@@ -255,7 +265,8 @@ test('EM2a track player: streams through a media source into a ramped gain, fade
   assert.equal(tp.element.loop, true);
   assert.equal(tp.element.paused, false, 'the element plays');
   assert.deepEqual(ctx.log.filter((l) => l[0] === 'source'), [['source', TITLE_THEME.file]], 'one media source, on the file');
-  assert.ok(ctx.log.some((l) => l[0] === 'gain' && l[1] === 'ramp' && l[2] === 0.5), 'the gain ramps to the setting times the track gain');
+  assert.ok(ctx.log.some((l) => l[0] === 'gain' && l[1] === 'ramp' && l[2] === 1), 'the LAYER ramps to the record gain (the master carries the setting)');
+  assert.equal(tp.master.gain.value, 0.5, 'the master is the setting');
   assert.equal(await tp.play(TITLE_THEME), true, 'idempotent per track');
   assert.equal(ctx.log.filter((l) => l[0] === 'source').length, 1, 'no second source');
   const el = tp.element;
@@ -263,7 +274,8 @@ test('EM2a track player: streams through a media source into a ramped gain, fade
   assert.equal(tp.playing, false);
   assert.equal(el.paused, true, 'faded out at 0s pauses now');
   assert.equal(tp.element, null);
-  assert.ok(ctx.log.some((l) => l[0] === 'gain' && l[1] === 'ramp' && l[2] === 0), 'the fade is a ramp to zero on the gain, never the element');
+  assert.ok(ctx.log.some((l) => l[0] === 'gain' && l[1] === 'ramp' && l[2] === 0), 'the fade is a ramp to zero on the layer, never the element');
+  assert.equal(tp.master.gain.value, 0.5, 'the master did not move for a fade');
   assert.equal(DEFAULT_FADE_SECONDS, 3);
   // The gesture rule: a refused play leaves the element armed and reports false.
   const shy = new TrackPlayer(fakeCtx(), { gain: () => 1, createElement: fakeElement('refuses') });
@@ -282,7 +294,7 @@ test('EM2a service: playTrack needs a clock and no archive, pends on refusal, an
   // With a track sounding, the composed piece fades it under rather than cutting it.
   const fades = [];
   svc._track = { playing: true, fadeOut: (s) => fades.push(s ?? 'default'), stop: () => fades.push('stop') };
-  svc.player = { play: () => true, stop: () => {}, playing: false };
+  svc.player = { play: () => true, stop: () => {}, playing: false, setTrim: () => {} };
   assert.equal(svc.playScore(composeScore(D, hashSeed('x'))), true);
   assert.deepEqual(fades, ['default'], 'faded, with the default fade');
   assert.equal(svc.playing, true, 'a sounding track counts as playing for the director');
@@ -290,10 +302,10 @@ test('EM2a service: playTrack needs a clock and no archive, pends on refusal, an
   assert.ok(fades.includes('stop'), 'stop stops the track too');
   // The wiring: the enhanced door plays it before the menu, un-awaited.
   const main = read('src/main.js');
-  assert.match(main, /music\.playTrack\(TITLE_THEME\);\s*\n\s*status\('main menu'\);/, 'the theme is asked for before the menu shows');
+  assert.match(main, /music\.playEnhanced\(\{ track: TITLE_THEME, song: null \}\);\s*\n\s*status\('main menu'\);/, 'the theme is asked for before the menu shows, alone');
   assert.match(read('src/systems/audio.js'), /ensureClock\(\) \{/, 'a clock without the archives');
   const src = read('src/systems/music.js');
-  for (const door of ['  _playBuiltIn(name) {', '  async _startReplacement(name) {', '  playScore(song) {']) {
+  for (const door of ['  _playBuiltIn(name) {', '  async _startReplacement(name) {', '  playScore(song, { under = false } = {}) {']) {
     const at = src.indexOf(door);
     assert.ok(at >= 0, `${door.trim()} exists`);
     assert.match(src.slice(at, at + 1600), /this\._fadeTrackUnder\(\);/, `${door.trim()} fades the track under`);
@@ -359,17 +371,179 @@ test('EM2b live: each player\'s resyncGain ramps its master to the setting now',
   setValue('Controls', 'MusicVolume', 0.7);
   sp.resyncGain();
   const last = ctx.log.filter((l) => l[0] === 'gain' && l[1] === 'ramp').pop();
-  assert.ok(Math.abs(last[2] - MUSIC_GAIN * 0.7) < 1e-9, 'the scheduler ramps to MUSIC_GAIN x the setting');
+  assert.ok(Math.abs(last[2] - MUSIC_GAIN * 0.7) < 1e-9, 'the scheduler ramps to MUSIC_GAIN x the setting (trim 1 alone)');
   assert.ok(last[3] - ctx.currentTime <= 0.06, 'a short ramp, not a zipper');
   const ap = new AudioSongPlayer(ctx); ap._ensureMaster(); ap.resyncGain();
-  assert.ok(Math.abs(ctx.log.filter((l) => l[0] === 'gain' && l[1] === 'ramp').pop()[2] - MUSIC_GAIN * 0.7) < 1e-9);
+  assert.ok(Math.abs(ctx.log.filter((l) => l[0] === 'gain' && l[1] === 'ramp').pop()[2] - 0.7) < 1e-9, 'a replacement pack takes the setting alone (EM2c, "fix it also")');
   // The track: the setting times the record's gain, no trim.
   const tp = new TrackPlayer(ctx, { gain: trackGain, createElement: fakeElement() });
   return tp.play({ id: 't', file: 'x.mp3', gain: 0.9 }).then(() => {
     setValue('Controls', 'MusicVolume', 1);
     tp.resyncGain();
     const l = ctx.log.filter((x) => x[0] === 'gain' && x[1] === 'ramp').pop();
-    assert.ok(Math.abs(l[2] - 0.9) < 1e-9, 'the track ramps to setting x record gain');
+    assert.ok(Math.abs(l[2] - 1) < 1e-9, 'the master ramps to the setting; the layer keeps the record gain');
     _resetForTests();
   });
+});
+
+// ── EM2c: THE DUNGEON TRACK, THE UNDERSCORE, THE CROSSFADE ────────
+import { UNDERSCORE_TRIM } from '../src/systems/enhancedMusic/scores.js';
+
+test('EM2c door: a scored place composes its piece IN THE TRACK\'S KEY; a track without a key plays alone', () => {
+  const dungeon = { environment: MUSIC_ENV.DungeonInterior, dungeonKey: 9, gameDays: 1, locationIndex: 2 };
+  const s = enhancedScore(dungeon, { enhanced: true });
+  assert.equal(s.track.id, 'dungeon');
+  assert.equal(s.song.meta.root, s.track.root, 'the piece is composed on the track\'s root');
+  assert.equal(s.song.meta.mode, s.track.mode, '...and in its mode');
+  assert.ok(notesOf(s.song).every((n) => inMode(s.track.root, s.track.mode, n.note)), 'every underscore note is in the track\'s key');
+  // The seed law still holds under a track: same dungeon, same piece.
+  const again = enhancedScore({ ...dungeon, gameDays: 40 }, { enhanced: true });
+  assert.deepEqual(again.song.events, s.song.events);
+});
+
+test('EM2c service: playEnhanced plays the track with the piece trimmed under it, or either alone', () => {
+  const svc = new MusicService();
+  const log = [];
+  svc.player = { play: (song) => { log.push(`song:${song.name}`); svc.player.playing = true; return true; }, stop: () => log.push('song-stop'), playing: false, setTrim: (t) => log.push(`trim:${t}`) };
+  svc._audio = { stop: () => {}, playing: false };
+  // no clock in node: playTrack refuses, but the underscore half still runs; drive the track through a fake player instead
+  svc._track = { playing: false, track: null, play: async (t) => { log.push(`track:${t.id}`); svc._track.playing = true; svc._track.track = t; return true; }, fadeOut: () => log.push('track-fade'), stop: () => {} };
+  const song = composeScore(D, hashSeed('u'));
+  // Since playTrack needs audio.ensureClock (no window here), assert the composition of the call through a subclass hook.
+  svc.playTrack = async (t) => svc._track.play(t);
+  assert.equal(svc.playEnhanced({ track: { id: 'dungeon', file: 'x.mp3' }, song }), true);
+  assert.deepEqual(log, ['track:dungeon', `trim:${UNDERSCORE_TRIM}`, `song:${song.name}`], 'track first, then the piece under it at the underscore trim');
+  assert.ok(!log.includes('track-fade'), 'the piece under a track does NOT fade the track');
+  log.length = 0;
+  assert.equal(svc.playEnhanced({ track: { id: 'dungeon', file: 'x.mp3' }, song }), true);
+  assert.deepEqual(log, ['track:dungeon', `trim:${UNDERSCORE_TRIM}`], 'idempotent: the same track and piece do not restart');
+  log.length = 0;
+  svc._current = null;
+  assert.equal(svc.playEnhanced({ track: null, song }), true);
+  assert.deepEqual(log, ['track-fade', 'trim:1', `song:${song.name}`], 'a piece alone fades the track out and plays at full trim');
+  log.length = 0;
+  assert.equal(svc.playEnhanced({ track: { id: 'title', file: 't.mp3' }, song: null }), true);
+  assert.deepEqual(log, ['track:title', 'song-stop'], 'a track alone stops the scheduler');
+  assert.equal(svc.playEnhanced(null), false);
+  assert.ok(UNDERSCORE_TRIM > 0 && UNDERSCORE_TRIM < 1);
+});
+
+test('EM2c player: a second track crossfades - the old layer ramps out, the new ramps in, the master stays', async () => {
+  const ctx = fakeCtx();
+  const timers = [];
+  const tp = new TrackPlayer(ctx, { gain: () => 0.6, createElement: fakeElement(), schedule: (fn, ms) => timers.push([fn, ms]) });
+  await tp.play({ id: 'a', file: 'a.mp3', gain: 1 });
+  const first = tp.element;
+  ctx.log.length = 0;
+  await tp.play({ id: 'b', file: 'b.mp3', gain: 0.8 }, { fadeIn: 2 });
+  assert.equal(tp.track.id, 'b');
+  assert.equal(tp.playing, true);
+  assert.equal(first.paused, false, 'the old element keeps playing while it fades');
+  assert.equal(tp.retiring, 1, 'one layer retiring');
+  const ramps = ctx.log.filter((l) => l[0] === 'gain' && l[1] === 'ramp').map((l) => l[2]);
+  assert.deepEqual(ramps, [0, 0.8], 'the old layer to 0, the new layer to its record gain');
+  assert.ok(!ctx.log.some((l) => l[0] === 'gain' && l[1] === 'ramp' && l[2] === 0.6), 'the master (the setting) is not ramped by a crossfade');
+  assert.equal(ctx.log.filter((l) => l[0] === 'source').length, 1, 'one new media source');
+  assert.equal(timers.length, 1);
+  assert.equal(timers[0][1], DEFAULT_FADE_SECONDS * 1000 + 50, 'the old layer is torn down after its fade');
+  timers[0][0]();
+  assert.equal(first.paused, true, '...and then paused');
+  assert.equal(tp.retiring, 0);
+});
+
+// ── EM4: DANGER ───────────────────────────────────────────────────
+import { DangerMeter, dangerRaw } from '../src/systems/enhancedMusic/danger.js';
+import { EXTRA_SCORES } from '../src/systems/enhancedMusic/scores.js';
+import { areEnemiesNearby } from '../src/systems/encounters.js';
+
+const foe = ({ dead = false, ...over } = {}) => ({ dead, ai: { detected: true, inSight: true, _dist: 5, ...over } });
+
+test('EM4 raw: the signal is AreEnemiesNearby\'s own fields - a foe that can see you, nearer counting more', () => {
+  assert.equal(dangerRaw([]), 0);
+  assert.equal(dangerRaw([foe({ detected: false })]), 0, 'unaware: nothing');
+  assert.equal(dangerRaw([foe({ inSight: false })]), 0, 'heard but not seen: nothing - the rest law\'s line, exactly');
+  assert.equal(dangerRaw([foe({ dead: true })]), 0);
+  assert.ok(dangerRaw([foe({ _dist: 2 })]) > dangerRaw([foe({ _dist: 25 })]), 'nearer is more');
+  assert.equal(dangerRaw([foe({ _dist: 29.9 })]), 0.25, 'a distant watcher still counts a quarter');
+  assert.equal(dangerRaw([foe({ _dist: 1 }), foe({ _dist: 1 })]), 1, 'two in your face saturate');
+  // The same foes answer the rest law the same way.
+  const seen = [foe()], unseen = [foe({ inSight: false })];
+  assert.equal(areEnemiesNearby(seen), dangerRaw(seen) > 0);
+  assert.equal(areEnemiesNearby(unseen), dangerRaw(unseen) > 0);
+});
+
+test('EM4 meter: rises fast, holds, falls slow, and decides with hysteresis - it does not flutter', () => {
+  const m = new DangerMeter();
+  let flips = 0;
+  const run = (seconds, raw) => { for (let t = 0; t < seconds; t += 1 / 60) if (m.update(1 / 60, raw)) flips++; };
+  run(0.3, 1);
+  assert.ok(m.level > 0.5 && m.active, `seen for 0.3 s: ON (level ${m.level.toFixed(2)})`);
+  assert.equal(flips, 1);
+  // The foe steps behind a pillar for two seconds: the hold keeps it ON.
+  run(2, 0);
+  assert.ok(m.active && m.level > 0.5, 'a two-second blink does not end the danger');
+  assert.equal(flips, 1, 'no flip');
+  run(1, 1);
+  // The fight ends: hold six seconds, then fall - OFF well after, not at once.
+  run(6, 0);
+  assert.ok(m.active, 'still ON through the hold');
+  run(3, 0);
+  assert.ok(m.active, 'the fall is slow: ON three seconds after the hold');
+  run(12, 0);
+  assert.ok(!m.active, 'OFF eventually');
+  assert.equal(flips, 2, 'one ON, one OFF, in ~24 seconds of a fight with a blink in it');
+  // Hysteresis: a weak, flickering signal around the threshold does not flip.
+  const w = new DangerMeter();
+  let f2 = 0;
+  for (let i = 0; i < 600; i++) if (w.update(1 / 60, i % 2 ? 0.5 : 0.1)) f2++;
+  assert.ok(f2 <= 1, `a 50/50 flicker flips at most once (${f2})`);
+  w.reset();
+  assert.equal(w.level, 0); assert.equal(w.active, false);
+});
+
+test('EM4 service: danger crossfades to the danger track and back, quiets the underscore, and resets on a new cue', () => {
+  assert.equal(EXTRA_SCORES.danger.id, 'danger');
+  assert.match(EXTRA_SCORES.danger.file, /^\.\.\/music\/enhanced\/danger\.mp3$/);
+  assert.ok(read('test/doctrine.test.js').includes(`['public/music/enhanced/danger.mp3', "OURS - `));
+  const svc = new MusicService();
+  const log = [];
+  svc.player = { play: () => true, stop: () => log.push('song-stop'), playing: true, setTrim: (t) => log.push(`trim:${t}`) };
+  svc._audio = { stop: () => {}, playing: false };
+  svc._track = { playing: true, track: null, fadeOut: () => log.push('track-fade'), stop: () => {} };
+  svc.playTrack = async (t) => { log.push(`track:${t.id}`); svc._track.track = t; return true; };
+  // No place score (classic skin, or an unscored place): the report is inert.
+  assert.equal(svc.reportDanger(1, [foe()]), false);
+  assert.deepEqual(log, []);
+  // A scored dungeon.
+  const song = composeScore(D, hashSeed('d'));
+  svc.playEnhanced({ track: { id: 'dungeon', file: 'd.mp3' }, song });
+  log.length = 0;
+  for (let i = 0; i < 30; i++) svc.reportDanger(1 / 60, [foe()]);
+  assert.ok(svc.inDanger);
+  assert.deepEqual(log, ['track:danger', 'trim:0'], 'seen: the danger track, the underscore quiet');
+  log.length = 0;
+  for (let i = 0; i < 60 * 20; i++) svc.reportDanger(1 / 60, []);
+  assert.ok(!svc.inDanger);
+  assert.deepEqual(log, ['track:dungeon', `trim:${UNDERSCORE_TRIM}`], 'lost you: the place\'s track back, the underscore back under it');
+  // A new cue mid-danger resets: the town does not start in danger.
+  for (let i = 0; i < 30; i++) svc.reportDanger(1 / 60, [foe()]);
+  assert.ok(svc.inDanger);
+  svc._current = null;
+  svc.playEnhanced({ track: { id: 'city', file: 'c.mp3' }, song: null });
+  assert.ok(!svc.inDanger);
+  assert.equal(svc._dangerMeter.level, 0, 'the meter starts over');
+  // A place that composes alone: danger over the piece, then the piece comes back up alone.
+  log.length = 0;
+  svc.playEnhanced({ track: null, song });
+  log.length = 0;
+  for (let i = 0; i < 30; i++) svc.reportDanger(1 / 60, [foe()]);
+  assert.deepEqual(log, ['track:danger', 'trim:0']);
+  log.length = 0;
+  for (let i = 0; i < 60 * 20; i++) svc.reportDanger(1 / 60, []);
+  assert.deepEqual(log, ['track-fade', 'trim:1']);
+  // The hosts report from the frame functions both dungeon hosts and the exterior share.
+  const ctx = read('src/scenes/dungeonContext.js');
+  const drawFoes = ctx.slice(ctx.indexOf('function drawFoes('), ctx.indexOf('function drawFoes(') + 2200);
+  assert.match(drawFoes, /music\.reportDanger\(dt, foes\);/);
+  assert.match(read('src/scenes/world.js'), /music\.reportDanger\(dt, \[\.\.\.\(cityGuards\?\.guards \?\? \[\]\), \.\.\.exteriorFoes\.foes\]\);/);
 });

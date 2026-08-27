@@ -173,24 +173,32 @@ export class SongPlayer {
     this._voices = [];
     this._master = null;
     this._destination = destination;
+    // EM2c: a trim on the master for the UNDERSCORE - the composed piece
+    // under one of Mac's tracks sits at a fraction of the music level.
+    // 1 when a piece plays alone.
+    this.trim = 1;
   }
 
   _ensureMaster() {
     if (this._master || !this.ctx) return;
     this._master = this.ctx.createGain();
-    this._master.gain.value = musicGain();
+    this._master.gain.value = musicGain() * this.trim;
     this._master.connect(this._destination ?? this.ctx.destination);
   }
 
   /** EM2b: the MusicVolume setting moved - follow it now, not at the
-   *  next song. A short ramp, so a slider drag is not a zipper. */
+   *  next song. A short ramp, so a slider drag is not a zipper. EM2c:
+   *  and the trim, by the same door (`setTrim`). */
   resyncGain() {
     if (!this._master) return;
     const now = this.ctx.currentTime;
     this._master.gain.cancelScheduledValues(now);
     this._master.gain.setValueAtTime(this._master.gain.value, now);
-    this._master.gain.linearRampToValueAtTime(musicGain(), now + 0.05);
+    this._master.gain.linearRampToValueAtTime(musicGain() * this.trim, now + 0.05);
   }
+
+  /** EM2c: the underscore trim, ramped. */
+  setTrim(trim) { this.trim = trim; this.resyncGain(); }
 
   /** Start a decoded song (hmiFile getSong result). Idempotent per song. */
   play(song) {
@@ -477,10 +485,14 @@ export class SongPlayer {
  * AudioSource plays it, so replacement and built-in music share one
  * volume and one "is something playing" answer. That sharing is the
  * part worth keeping, and it is why this lives beside SongPlayer
- * rather than in the replacement module: `musicGain()` is the one
- * volume law (MUSIC_GAIN x Controls/MusicVolume) and both players read
- * it, so the mixer cannot drift between a built-in song and a
- * replacement of the same song.
+ * rather than in the replacement module. THE LEVEL LAW SPLIT ON
+ * 2026-08-27 (EM2b/EM2c, Mac: "fix it also"): MUSIC_GAIN is the FM
+ * bank's trim - raw oscillators sum hot - and a user's replacement is a
+ * MASTERED file with its own headroom, exactly like Mac's own tracks,
+ * so it played at a fifth of itself under the trim. This player reads
+ * `trackGain()` now - Controls/MusicVolume alone - beside SongPlayer's
+ * `musicGain()`; one setting still moves both, through the service's
+ * resync, so the mixer cannot drift between them.
  *
  * LOOPS BY DEFAULT, because Daggerfall's songs do. A replacement track
  * that has been cut with its own fade still loops - DFU's clips loop
@@ -504,7 +516,7 @@ export class AudioSongPlayer {
   _ensureMaster() {
     if (this._master || !this.ctx) return;
     this._master = this.ctx.createGain();
-    this._master.gain.value = musicGain();
+    this._master.gain.value = trackGain();   // EM2c (Mac: 'fix it also'): a user's mastered pack takes the setting alone, as Mac's tracks do
     this._master.connect(this._destination ?? this.ctx.destination);
   }
 
@@ -514,7 +526,7 @@ export class AudioSongPlayer {
     const now = this.ctx.currentTime;
     this._master.gain.cancelScheduledValues(now);
     this._master.gain.setValueAtTime(this._master.gain.value, now);
-    this._master.gain.linearRampToValueAtTime(musicGain(), now + 0.05);
+    this._master.gain.linearRampToValueAtTime(trackGain(), now + 0.05);
   }
 
   /** Start a decoded AudioBuffer. Returns false rather than throwing on
@@ -526,7 +538,7 @@ export class AudioSongPlayer {
     // The gain is re-read on every start, not just on the first: a
     // player who moves the music slider between songs expects the next
     // one to obey it, and the node is built once.
-    this._master.gain.value = musicGain();
+    this._master.gain.value = trackGain();   // EM2c (Mac: 'fix it also'): a user's mastered pack takes the setting alone, as Mac's tracks do
     const src = this.ctx.createBufferSource();
     src.buffer = buffer;
     src.loop = this.loop;

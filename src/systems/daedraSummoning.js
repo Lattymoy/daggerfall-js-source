@@ -35,10 +35,10 @@
 // rain-lovers and Sheogorath are the only ones the weather can
 // PENALISE, by not being their weather.
 //
-// FLAGGED: the .FLC summoning videos (HIRCINE.FLC and its fifteen
-// siblings) are the presentation half - DaggerfallDaedraSummoningWindow
-// plays one behind the prince's greeting. The port carries the file
-// names so the day that window lands there is nothing to look up.
+// THE .FLC FILMS went live in G7b: ui/daedraSummonedWindow.js plays
+// each prince's own animation fullscreen with the quest offer read
+// over it in four-line chunks - the file names this table carried
+// were, as promised, all it had to look up.
 
 import { FACTION_FLAGS } from './factionRep.js';
 import { FACTION_TYPES, GUILD_GROUPS } from '../formats/factionFile.js';
