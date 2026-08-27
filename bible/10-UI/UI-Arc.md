@@ -6408,3 +6408,20 @@ hold. Under 480px the foot stacks two rows (the three zones made the
 toggle wrap into the build line - caught in the phone shot). Probed
 live: two canvas frames 1.5s apart differ, the About box opens its
 pane with the clock cleared, Escape returns home, zero page errors.
+
+PX2 (same day): THE PAUSE DOOR WEARS THE FACE. Both doors open on
+`section = 'home'` now - U51's pause law ('open on Save Game, what
+Escape was pressed for') is REPLACED DELIBERATELY, one press of depth
+traded for the adopted face, Save Game the second row a thumb meets
+and Resume the first; the pin repinned to the new shape with a
+MEASURED resume-arm assertion beside it. The pause face draws NO SKY
+and NO WORDMARK - the paused frame is the ground (`.px-over`, a 0.78
+ink scrim; a masthead on every Escape is a billboard) - and the clock
+never starts, so pause costs no interval. The Escape ladder unified:
+confirm -> sheet -> any section backs to home -> home resumes (pause)
+or stays (boot); the shell wordmark goes home in both modes. Probed
+live over a stand-in frame with the module mounted in pause mode:
+scrim on, sky and wordmark absent, Save pane opens, Escape home,
+Escape resumes exactly once, zero page errors. STANDING CAVEAT: the
+scrim is tuned against a stand-in - the first real-ARENA2 eyeball may
+move the 0.78.

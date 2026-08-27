@@ -1049,6 +1049,9 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .px-home { position: fixed; inset: 0; overflow: hidden; background: #0a0c11;
   font-family: 'Pixelify Sans', monospace; color: #d8cfae;
   -webkit-font-smoothing: none; }
+/* PX2: the pause face - a scrim, not the night; the paused frame is
+   the ground. */
+.px-home.px-over { background: rgba(10,12,17,0.78); }
 .px-ground { position: absolute; left: -25%; top: -25%; width: 150%; height: 150%;
   image-rendering: pixelated; animation: px-drift 160s linear infinite alternate; }
 @keyframes px-drift { from { transform: translate(0,0) } to { transform: translate(4%,2%) } }
