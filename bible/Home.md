@@ -275,13 +275,13 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:1720` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
 - `src/scenes/world.js:2123` - (FLAGGED); swallowing the browser reload is not optional.
 - `src/scenes/world.js:2402` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:2584` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
-- `src/scenes/world.js:2679` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:2957` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:2984` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:3440` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:3788` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/world.js:3861` - (FLAGGED: exterior corpse containers are the loot arc's), so
+- `src/scenes/world.js:2589` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
+- `src/scenes/world.js:2684` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:2985` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:3012` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:3468` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:3816` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:3889` - (FLAGGED: exterior corpse containers are the loot arc's), so
 - `src/scenes/worldModes.js:292` - rather than pretending to scan. FLAGGED.
 - `src/scenes/worldModes.js:441` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:589` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon

@@ -5090,3 +5090,78 @@ Pins: 5 in `test/macrocoverage.test.js` - the gate, the date/time
 laws at their boundaries, the player globals with %ski's BLANK arm,
 the fourteen bands and the %ct fallback, and the error shapes with
 the news pair and the %fae/%fea asymmetry.
+
+## Q5 - FOURTEEN GUARDS RETIRED (2026-08-27)
+
+The pended-action list drops from twenty to SIX. Fourteen
+GUARD_PATTERNS rows became real ActionTemplates in
+`systems/quest/actions.js`, each verbatim against its Actions/*.cs:
+
+- **WhenSkillLevel / WhenAttributeLevel** - always-live trigger
+  conditions over `skillValue(entity, id)` and `liveStat(entity,
+  key)` (STAT_KEYS_BY_ENUM maps C#'s Stats enum names onto the
+  port's stat keys), inclusive `>=`, and the C# law that an unknown
+  skill/attribute name SetCompletes and THROWS at parse.
+- **SeasonCondition / WeatherCondition / ClimateCondition** -
+  always-on triggers. Season reads `seasonValue()` off the classic
+  calendar. Weather is EQUALITY against the questWorld's
+  `currentWeatherKey()` - DFU folds WeatherType groups to seven
+  names and the port's WEATHER_TYPES is exactly those seven, so the
+  fold is the identity (RECORDED, not silent). Climate carries
+  QUEST_CLIMATES (name -> 223..232) plus the CLIMATE_BASE_OF fold
+  for `climate base desert|mountain|temperate|swamp`, read off
+  `currentClimateIndex()` (world.js answers from maps.getClimateIndex
+  at the travel pixel).
+- **SetPlayerCrime** - the CRIMES enum name validated at parse
+  (unknown THROWS), the VALUE fired through hooks.setPlayerCrime -
+  world.js routes it into court.js's setCrimeCommitted, so V4's
+  racial crime-suppression gate rides the same one setter.
+- **PayMoney** - `pay N gold` counts COINS alone
+  (getGoldPieces/deductGoldPieces), `pay N money` the whole purse
+  (getGold/deductGold); covering starts the paid task, not-covering
+  the otherwise task, and an uncovered pay deducts NOTHING.
+- **JournalNote** - the message's tokens through world.addNote.
+- **TrainPc** - quest success + the QuestComplete popup, the
+  classic-MINUTE training stamp (floor(sec/60)), raiseTime
+  3*3600, fatigue - DefaultFatigueLoss*180, and the tally
+  Range(10,21) * SKILL_ADVANCEMENT_MULTIPLIER into tallySkill. DFU
+  defers the payload to the popup's OnClose; the port folds it
+  inline at fire (RECORDED - the popup is presentation here).
+- **KillFoe** - foe.kill() (deathTrigger); a missing symbol
+  SetCompletes and THROWS, verbatim.
+- **UnrestrainFoe** - clearRestrained(), or WAITS on a missing foe
+  (C# returns without completing). AND THE QUIRK, pinned loudly:
+  DFU's Test() is unanchored (QuestAction.cs:142) and RestrainFoe
+  registers before UnrestrainFoe (QuestMachine.cs:395 vs :426), so
+  a parsed `unrestrain foe _x_` is EATEN by RestrainFoe and
+  RESTRAINS in C# too. No shipped quest writes the line. The port
+  keeps the registration order - quirk preserved, class reachable
+  only directly (and by save shape), exactly as upstream.
+- **RunQuest** - starts the child by name (hooks.startQuest ->
+  scheduleQuestByName), tracks its uid across saves, then routes
+  questComplete+questSuccess to the success task, anything else -
+  an unservable name included, immediately - to the failure task.
+- **SpawnCityGuards** - the immediate flag through
+  hooks.spawnCityGuards; world.js spawns off the guard pool at the
+  player's feet.
+- **Enemies** - makehostile walks exteriorFoes + cityGuards setting
+  hostility; clear removes them (hooks.makeEnemiesHostile /
+  clearEnemies).
+
+The SIX that stay pended each name their blocker in GUARD_PATTERNS:
+CastEffectDo (effect-template registry lookup by key), WorldUpdate
+(the world-variant system), ClickedFoe (no foe-click door),
+ChangeFoeInfighting + ChangeFoeTeam (MobileTeams combat - the
+completion analysis's item 5), PromptMulti (the multi-button prompt
+window).
+
+Wiring: machine hooks gain setPlayerCrime, getGoldPieces,
+deductGoldPieces, raiseTime, spawnCityGuards, makeEnemiesHostile,
+clearEnemies, getQuest-by-uid; questWorld gains currentWeatherKey
+and currentClimateIndex; world.js mounts every door (the bridge ctx
+passthroughs in scenes/questBridge.js).
+
+Pins: 10 in `test/questactions5.test.js`, on the questremainder
+harness - and the harness taught its own law twice: bare QBN lines
+form the STARTUP task (named tasks never run untriggered), and the
+first run of the foe pins exposed the shadowing quirk above.
