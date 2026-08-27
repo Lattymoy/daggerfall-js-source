@@ -145,6 +145,7 @@ let hooks = {};
 let keyHandler = null;
 let lockHandler = null;
 let resizeHandler = null;   // PX1: the home ground's redraw-on-resize
+let groundTimer = null;     // PX1b: the home sky's 8fps clock - cleared by every rebuild and by unmount
 
 const el = (t, cls, txt) => {
   const n = document.createElement(t);
@@ -714,24 +715,50 @@ function go(id) { section = id; pickedKey = null; sheetOpen = false; confirming 
 // Escape from any section returns here (see onKey); the skin switch is
 // skinSwitch(), the one door.
 function renderHome() {
-  const home = el('div', 'px-home');
-  const ground = document.createElement('canvas');
-  ground.className = 'px-ground';
-  drawPixelGround(ground, globalThis.innerWidth ?? 1280, globalThis.innerHeight ?? 720);
-  home.append(ground);
+  // PX2: the pause door wears the same face over the LIVE FRAME - no
+  // sky (there is a world behind), no wordmark (a masthead on every
+  // Escape is a billboard), a scrim instead of the opaque night.
+  const paused = mode === 'pause';
+  const home = el('div', `px-home${paused ? ' px-over' : ''}`);
+  if (!paused) {
+    const ground = document.createElement('canvas');
+    ground.className = 'px-ground';
+    const vw = () => globalThis.innerWidth ?? 1280;
+    const vh = () => globalThis.innerHeight ?? 720;
+    drawPixelGround(ground, vw(), vh(), 0);
+    // PX1b: THE SKY LIVES - fog orbits and stars twinkle at 8fps, the
+    // cadence pixel art animates at; a 60fps dither shimmer reads as
+    // noise. The module draws, this mount owns the clock: one interval,
+    // cleared by every rebuild (renderInto) and by unmount, skipped
+    // entirely under prefers-reduced-motion - the same opt-out the CSS
+    // drift honours.
+    const still = typeof globalThis.matchMedia === 'function' && globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!still) {
+      const t0 = Date.now();
+      groundTimer = setInterval(() => drawPixelGround(ground, vw(), vh(), (Date.now() - t0) / 1000), 125);
+    }
+    home.append(ground);
+  }
   home.append(el('div', 'px-vignette'));
 
   const stage = el('div', 'px-stage');
-  const mark = el('h1', 'px-wordmark', 'Daggerfall');
-  mark.append(el('small', null, 'JavaScript'));
-  stage.append(mark);
+  if (!paused) {
+    const mark = el('h1', 'px-wordmark', 'Daggerfall');
+    mark.append(el('small', null, 'JavaScript'));
+    stage.append(mark);
+  }
   const rule = el('div', 'px-rule');
   rule.append(el('span', 'px-gem'));
   stage.append(rule);
 
   const menu = el('nav', 'px-menu');
   menu.setAttribute('aria-label', 'Main menu');
+  // PX1b: About leaves the center list for the corner box below - the
+  // list is what a player DOES, the box is who made it. The SECTION
+  // still exists on the shell rail untouched, so the rail-hole pin and
+  // the shared-sections law hold.
   for (const label of sections) {
+    if (label === 'About') continue;
     const id = idOf(label);
     const b = el('button');
     b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label), el('span', 'px-c', '\u25c6'));
@@ -741,10 +768,15 @@ function renderHome() {
   stage.append(menu);
   home.append(stage);
 
+  // PX1b: three-zone foot - build left, the skin toggle CENTERED (its
+  // 'switch anytime' hint hidden here by the px-foot rules; the shell
+  // keeps it), and About as the bottom-right box.
   const foot = el('div', 'px-foot');
-  const build = el('span');
+  const build = el('span', 'px-build');
   build.append(document.createTextNode('build '), el('span', null, BUILD_TAG));
-  foot.append(build, skinSwitch());
+  const about = el('button', 'px-about', 'About');
+  about.onclick = () => go('about');
+  foot.append(build, skinSwitch(), about);
   home.append(foot);
   app.append(home);
 }
@@ -757,22 +789,21 @@ function render() {
  *  list carries the same steppers, and a repaint that forgets the
  *  scroll throws the player back to the top of 66 Video rows. */
 function renderInto() {
+  if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }
   app.innerHTML = '';
-  // PX1: the boot door opens on the pixel home; every section keeps
-  // its shell. The pause door is untouched - its own slice.
-  if (mode === 'boot' && section === 'home') { renderHome(); return; }
+  // PX1/PX2: both doors open on the pixel home; every section keeps
+  // its shell.
+  if (section === 'home') { renderHome(); return; }
   const shell = el('div', 'shell');
 
   const side = el('aside', 'side');
   const brand = el('div', 'brand');
   const h1 = el('h1', null, 'Daggerfall');
-  if (mode === 'boot') {
-    // PX1: at boot the wordmark is the way back to the pixel home -
-    // the same affordance every site's masthead carries. Escape does
-    // it too (onKey); this is the one a finger can see.
-    h1.style.cursor = 'pointer';
-    h1.onclick = () => go('home');
-  }
+  // PX1/PX2: the wordmark is the way back to the pixel home - the
+  // same affordance every site's masthead carries. Escape does it too
+  // (onKey); this is the one a finger can see.
+  h1.style.cursor = 'pointer';
+  h1.onclick = () => go('home');
   brand.append(h1);
   brand.append(skinSwitch());   // the word ENHANCED became the switch
   side.append(brand);
@@ -853,8 +884,8 @@ function onKey(e) {
   // way).
   const back = confirming ? () => { confirming = null; render(); }
     : sheetOpen ? () => { sheetOpen = false; render(); }
-      : mode === 'pause' ? () => onAction('resume')
-        : section !== 'home' ? () => go('home')   // PX1: a section backs out to the front face
+      : section !== 'home' ? () => go('home')   // PX1/PX2: a section backs out to the face
+        : mode === 'pause' ? () => onAction('resume')   // Escape on the pause face resumes
           : null;
   if (!back) return;
   e.preventDefault();
@@ -904,13 +935,12 @@ export function mountEnhancedMenu(host, {
   mode = m === 'pause' ? 'pause' : 'boot';
   hooks = h ?? {};
   sections = mode === 'pause' ? SECTIONS_PAUSE : SECTIONS_BOOT;
-  // WHICH PANE OPENS. Boot opens on the PIXEL HOME (PX1) - the front
-  // face itself, every section one press away. Pause opens on SAVE
-  // GAME, which is what a player most often pressed Escape for, and
-  // Settings - the reason this door exists at all - is one press away
-  // and permanently visible on the rail, which is the thing classic
-  // could not do.
-  section = mode === 'pause' ? 'save' : 'home';
+  // WHICH PANE OPENS. Both doors open on the PIXEL HOME (PX1/PX2) -
+  // the face itself, every section one press away. Pause used to open
+  // straight on SAVE GAME (U51's law: what Escape was pressed for);
+  // PX2 trades one press of depth for the face Mac adopted, with Save
+  // Game the second row a thumb meets and Resume the first.
+  section = 'home';
   category = CATEGORIES[0].id;
   pickedKey = null;
   sheetOpen = false;
@@ -944,6 +974,7 @@ export function mountEnhancedMenu(host, {
       if (keyHandler) globalThis.removeEventListener('keydown', keyHandler, { capture: true });
       if (lockHandler && typeof document !== 'undefined') document.removeEventListener('pointerlockchange', lockHandler);
       if (resizeHandler) globalThis.removeEventListener('resize', resizeHandler);
+      if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }
       keyHandler = null;
       lockHandler = null;
       resizeHandler = null;

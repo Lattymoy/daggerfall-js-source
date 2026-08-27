@@ -1049,6 +1049,9 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .px-home { position: fixed; inset: 0; overflow: hidden; background: #0a0c11;
   font-family: 'Pixelify Sans', monospace; color: #d8cfae;
   -webkit-font-smoothing: none; }
+/* PX2: the pause face - a scrim, not the night; the paused frame is
+   the ground. */
+.px-home.px-over { background: rgba(10,12,17,0.78); }
 .px-ground { position: absolute; left: -25%; top: -25%; width: 150%; height: 150%;
   image-rendering: pixelated; animation: px-drift 160s linear infinite alternate; }
 @keyframes px-drift { from { transform: translate(0,0) } to { transform: translate(4%,2%) } }
@@ -1085,21 +1088,46 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .px-menu button:hover, .px-menu button:focus-visible { outline: none;
   color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
 .px-menu button:hover .px-c, .px-menu button:focus-visible .px-c { visibility: visible; }
+/* PX1b: THREE ZONES - build left, the skin toggle dead center, About
+   the bottom-right box. A grid, because flex space-between centers the
+   middle child only when the outer two happen to weigh the same. */
 .px-foot { position: absolute; left: 0; right: 0; bottom: 0;
-  display: flex; justify-content: space-between; align-items: flex-end;
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: end;
   padding: 12px 16px; font-size: 15px; letter-spacing: 0.12em;
   text-transform: uppercase; color: #7d7460;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.px-build { justify-self: start; }
 /* The skin switch keeps skinSwitch()'s own markup; on the pixel foot
-   the active option takes the classic gold, and stays a 44px target. */
-.px-foot .skinswitch { display: flex; align-items: center; gap: 10px; }
+   the active option takes the classic gold, stays a 44px target, and
+   the 'switch anytime' hint is the shell's - the centered pair reads
+   as a control on its own. */
+.px-foot .skinswitch { justify-self: center; display: flex; align-items: center; gap: 14px; }
 .px-foot .skinopt { font: inherit; min-height: 44px; color: #7d7460; cursor: pointer;
   border: 0; background: none; padding: 0 6px; }   /* the shell's box has no place on the boxless face */
 .px-foot .skinopt.on { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
-.px-foot .skinhint { font-size: 12px; color: #7d7460; opacity: 0.8; }
+.px-foot .skinhint { display: none; }
+/* The About box: the ONE box on the boxless face, which is what makes
+   it read as a plaque rather than a menu row. 2px border in whole
+   pixels, gold on hover by the same pair. */
+.px-about { font: inherit; font-size: 16px; letter-spacing: 0.14em; text-indent: 0.14em;
+  text-transform: uppercase; color: #d8cfae; cursor: pointer;
+  justify-self: end; min-height: 44px; padding: 8px 18px;
+  background: rgba(10,12,17,0.55); border: 2px solid #7d7460;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); transition: none; }
+.px-about:hover, .px-about:focus-visible { outline: none;
+  color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
 @media (max-width: 480px) {
   .px-wordmark { font-size: 60px; }
   .px-menu button { font-size: 24px; letter-spacing: 0.12em; text-indent: 0.12em; }
+  /* PX1b: a phone foot is two rows - the toggle centered on its own,
+     build and About beneath it - because three zones across 393px made
+     the toggle wrap vertically and shoulder into the build line. */
+  .px-foot { grid-template-columns: 1fr auto;
+    grid-template-areas: 'switch switch' 'build about'; row-gap: 4px; }
+  .px-foot .skinswitch { grid-area: switch; }
+  .px-build { grid-area: build; align-self: center; }
+  .px-about { grid-area: about; }
 }
 @media (prefers-reduced-motion: reduce) { .px-ground { animation: none; } }
 `;

@@ -6391,3 +6391,37 @@ new shape with its pause half unchanged. Verified live over the built
 bundle: menu.html on desktop + phone, a Settings walk, Escape home,
 zero page errors. Prototypes of record: menu-redesign.html (smooth),
 menu-pixel.html (adopted).
+
+PX1b (same day, Mac): THE SKY LIVES AND THE FOOT SETTLES.
+drawPixelGround takes `t` seconds - the fog blobs orbit their homes on
+unequal periods and the bright quarter of the stars twinkle in STEPPED
+levels (a pixel star fades in levels, not a ramp); default t=0 is the
+prior still frame, and the module never schedules - the home mount
+owns an 8fps interval (pixel art's cadence; 60fps dither reads as
+noise), cleared by every rebuild and by unmount, skipped under
+prefers-reduced-motion. The foot is a three-zone grid: build left,
+the skin toggle DEAD CENTER with the 'switch anytime' hint hidden
+(the shell keeps it), and ABOUT as the bottom-right plaque - the ONE
+box on the boxless face - leaving the center list; the About SECTION
+stays on the shell rail so the rail-hole pin and shared-sections law
+hold. Under 480px the foot stacks two rows (the three zones made the
+toggle wrap into the build line - caught in the phone shot). Probed
+live: two canvas frames 1.5s apart differ, the About box opens its
+pane with the clock cleared, Escape returns home, zero page errors.
+
+PX2 (same day): THE PAUSE DOOR WEARS THE FACE. Both doors open on
+`section = 'home'` now - U51's pause law ('open on Save Game, what
+Escape was pressed for') is REPLACED DELIBERATELY, one press of depth
+traded for the adopted face, Save Game the second row a thumb meets
+and Resume the first; the pin repinned to the new shape with a
+MEASURED resume-arm assertion beside it. The pause face draws NO SKY
+and NO WORDMARK - the paused frame is the ground (`.px-over`, a 0.78
+ink scrim; a masthead on every Escape is a billboard) - and the clock
+never starts, so pause costs no interval. The Escape ladder unified:
+confirm -> sheet -> any section backs to home -> home resumes (pause)
+or stays (boot); the shell wordmark goes home in both modes. Probed
+live over a stand-in frame with the module mounted in pause mode:
+scrim on, sky and wordmark absent, Save pane opens, Escape home,
+Escape resumes exactly once, zero page errors. STANDING CAVEAT: the
+scrim is tuned against a stand-in - the first real-ARENA2 eyeball may
+move the 0.78.

@@ -26,17 +26,23 @@ const OVER = 1.5;    // the canvas overdraws 150% so the drift never shows an ed
 
 const hx = (s) => [parseInt(s.slice(1, 3), 16), parseInt(s.slice(3, 5), 16), parseInt(s.slice(5, 7), 16)];
 
-/** Draw the sky into `canvas`, sized for a viewport of w x h css px. */
-export function drawPixelGround(canvas, w, h) {
+/** Draw the sky into `canvas`, sized for a viewport of w x h css px.
+ *  `t` is seconds; it LIVES the sky - the fog blobs orbit their homes
+ *  and a quarter of the stars twinkle on their own seeded phases. The
+ *  default 0 draws the same still frame every prior caller got. The
+ *  caller owns the clock: this module never schedules anything. */
+export function drawPixelGround(canvas, w, h, t = 0) {
   const W = (canvas.width = Math.max(4, Math.ceil((w * OVER) / SCALE)));
   const H = (canvas.height = Math.max(4, Math.ceil((h * OVER) / SCALE)));
   const g = canvas.getContext('2d');
   const img = g.createImageData(W, H);
   let seed = 0xda66e4;
   const rnd = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 0x100000000;
+  // The blobs drift in slow ellipses around their homes - different
+  // periods so the pair never repeats together.
   const fogs = [
-    { x: W * 0.30, y: H * 0.72, r: H * 0.55, k: 1.4 },
-    { x: W * 0.78, y: H * 0.35, r: H * 0.45, k: 0.9 },
+    { x: W * (0.30 + 0.05 * Math.sin(t / 41)), y: H * (0.72 + 0.03 * Math.cos(t / 53)), r: H * 0.55, k: 1.4 },
+    { x: W * (0.78 + 0.06 * Math.cos(t / 47)), y: H * (0.35 + 0.04 * Math.sin(t / 59)), r: H * 0.45, k: 0.9 },
   ];
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
@@ -59,7 +65,12 @@ export function drawPixelGround(canvas, w, h) {
   const n = Math.round((W * H) / 1440);
   for (let i = 0; i < n; i++) {
     const x = (rnd() * W) | 0, y = (rnd() * H * 0.55) | 0;
-    const b = rnd() < 0.25 ? 200 : 120;
+    const bright = rnd() < 0.25;
+    const phase = rnd() * Math.PI * 2;
+    let b = bright ? 200 : 120;
+    // A quarter twinkle: brightness stepped by a slow seeded sine -
+    // STEPPED, because a pixel star fades in levels, not a ramp.
+    if (bright) b = [140, 170, 200, 230][Math.floor(2 + 1.99 * Math.sin(t / 1.7 + phase))];
     const o = (y * W + x) * 4;
     img.data[o] = b; img.data[o + 1] = b; img.data[o + 2] = b - 10;
   }
