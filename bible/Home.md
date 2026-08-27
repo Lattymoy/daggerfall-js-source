@@ -251,12 +251,12 @@ combat line numbers below are refreshed with it.
 - `src/scenes/cityGuards.js:27` - FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
 - `src/scenes/cityGuards.js:309` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
 - `src/scenes/cityGuards.js:618` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
-- `src/scenes/dungeonContext.js:242` - the chain lives, the motion is INTERIM (loud) until flats can tween.
-- `src/scenes/dungeonContext.js:684` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:690` - effects FLAGGED to the effect-library slice.
-- `src/scenes/dungeonContext.js:700` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:1196` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/dungeonContext.js:2831` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
+- `src/scenes/dungeonContext.js:243` - the chain lives, the motion is INTERIM (loud) until flats can tween.
+- `src/scenes/dungeonContext.js:733` - index into the 18 careers) or the INTERIM default Warrior (16,
+- `src/scenes/dungeonContext.js:739` - effects FLAGGED to the effect-library slice.
+- `src/scenes/dungeonContext.js:749` - "database FLAGGED" narrows to the skill/loot message ids).
+- `src/scenes/dungeonContext.js:1245` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/dungeonContext.js:3019` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
 - `src/scenes/exterior.js:556` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:562` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:790` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
@@ -278,11 +278,11 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:2432` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
 - `src/scenes/world.js:2619` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
 - `src/scenes/world.js:2714` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:3039` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:3066` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:3526` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:3885` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/world.js:3958` - (FLAGGED: exterior corpse containers are the loot arc's), so
+- `src/scenes/world.js:3044` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:3071` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:3531` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:3890` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:3963` - (FLAGGED: exterior corpse containers are the loot arc's), so
 - `src/scenes/worldModes.js:293` - rather than pretending to scan. FLAGGED.
 - `src/scenes/worldModes.js:447` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:626` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon

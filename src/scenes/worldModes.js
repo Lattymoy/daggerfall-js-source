@@ -4236,6 +4236,19 @@ export function createWorldModes(host) {
      *  the scene mount above), so a wave pending inside a building
      *  waits, and leaving invalidates it exactly as DFU's
      *  OnTransitionExterior handler does. */
+    /** MT-iv: the INSIDE pool's half of DFU's one
+     *  ActiveGameObjectDatabase (ChangeFoeInfighting.cs:59 /
+     *  ChangeFoeTeam.cs:77 walk it globally). world.js unions this
+     *  into questFoeInstances, so `change foe X team 1` finally
+     *  reaches a quest foe standing in a dungeon - before this the
+     *  action never found an instance, and since SetComplete sits
+     *  inside the instance walk it re-ran every machine tick for
+     *  ever. The INTERIOR arm stays empty: that host has no enemy
+     *  pool (the Q4-v flag above). */
+    liveQuestFoes() {
+      if (mode !== 'dungeon' || !dungeonCtx) return [];
+      return dungeonCtx.foes.filter((f) => !f.dead && f.questBehaviour);
+    },
     tryPlaceQuestFoe(handle) {
       if (mode !== 'dungeon' || !dungeonCtx) return false;
       const feet = player.pos;

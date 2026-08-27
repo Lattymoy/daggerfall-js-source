@@ -58,8 +58,14 @@ test('F041: the hostility flip is gated the same way, in both foe pools', () => 
   // pin guards is unchanged and asserted for both: nothing
   // re-hostiles a foe unless the PLAYER was the source. The dungeon
   // host keeps the narrow arm until MT-iv arms it.
-  assert.match(src('scenes/dungeonContext.js'), /if \(fromPlayer && foe\.ai && !foe\.ai\.isHostile\)/,
-    'scenes/dungeonContext.js re-hostiles only for a PLAYER source');
+  // MT-iv armed this host too, so BOTH pools now run the whole of
+  // MakeEnemyHostileToAttacker inside the gate; the dungeon keeps the
+  // narrow raise as its foeDeps-absent fallback (the subsystem can
+  // fail to load and a foe must still stand up).
+  const dg = src('scenes/dungeonContext.js');
+  assert.match(dg, /if \(fromPlayer && foe\.ai\) \{/, 'scenes/dungeonContext.js re-hostiles only for a PLAYER source');
+  assert.match(dg, /foe\.ai\.makeEnemyHostileToAttacker\?\.\(foeDeps\.PLAYER_TARGET/, 'through the whole C# method');
+  assert.match(dg, /\} else if \(!foe\.ai\.isHostile\) \{/, 'with the legacy raise as the no-subsystem fallback');
   const xf = src('scenes/exteriorFoes.js');
   assert.match(xf, /if \(fromPlayer && f\.ai\) \{\n\s*f\.ai\.makeEnemyHostileToAttacker\?\.\(PLAYER_TARGET/,
     'scenes/exteriorFoes.js re-hostiles only for a PLAYER source');
@@ -79,7 +85,9 @@ test('F035/F041: the FALL arms - and MT-ii\'s foe-source door - pass fromPlayer 
     // getting that wrong would re-hostile the victim toward the
     // player and revert a struck ally's team for a blow the player
     // never struck. The dungeon keeps its single fall arm (MT-iv).
-    const expected = f.includes('dungeon') ? 1 : 2;
+    // MT-iv gave the dungeon its foe-source door too, so all THREE
+    // pools now carry the pair (the fall arm and hurtFromFoe).
+    const expected = 2;
     assert.equal(hits.length, expected, `${f} has ${expected} sourceless caller(s)`);
     falseCalls += hits.length;
     // every one of them is either the FALL arm or the foe-source door
@@ -89,7 +97,7 @@ test('F035/F041: the FALL arms - and MT-ii\'s foe-source door - pass fromPlayer 
         `${f}: a sourceless call is the FALL arm or the foe-source door`);
     }
   }
-  assert.equal(falseCalls, 5);
+  assert.equal(falseCalls, 6);
 });
 
 // ── F038 ──────────────────────────────────────────────────────────
@@ -157,7 +165,10 @@ test('F052: a landed player arrow thuds and splashes, at the real impact point',
   // knockback, as WeaponDamage has them
   const sound = arm.indexOf('audio.play3d(hitSoundFor(m.weapon)');
   const pain = arm.indexOf('enemyPainVoice(f, dmg)');
-  const knock = arm.indexOf('damageFoe(f, dmg, null, m.dir)');
+  // MT-iv passes the player's feet here: damageFoe's player arm keys
+  // on them, so an arrow KILL reverts a struck ally to its species
+  // the way a sword kill does. Ordering unchanged.
+  const knock = arm.indexOf('damageFoe(f, dmg, lastPlayerFeet, m.dir)');
   assert.ok(sound > -1 && sound < pain && pain < knock, 'sound, blood, then the voice and the knockback');
 });
 

@@ -62,7 +62,10 @@ test('audit24 wave33: no host freezes the animation, and every host consumes its
   assert.equal(d.includes('if (!_fParalyzed || !f._mout) {'), false, 'the dungeon animation freeze is retired');
   // what actually stops the blow is the consume-and-clear, gated like
   // EnemyAttack.Update's early return - which leaves the latch SET.
-  assert.ok(d.includes('if (playerFeet && !_fParalyzed && f.mobile.doMeleeDamage) { f.mobile.doMeleeDamage = false; resolveFoeMelee(f, playerFeet); }'),
+  // MT-iv: gated on a live TARGET, as EnemyAttack.MeleeDamage is
+  // (:136-137 returns at `senses.Target == null`). The consume-and-
+  // clear the pin guards is unchanged.
+  assert.ok(d.includes('if (_tgt && !_fParalyzed && f.mobile.doMeleeDamage) { f.mobile.doMeleeDamage = false; resolveFoeMelee(f, _pf); }'),
     'the dungeon consumes and clears');
   assert.ok(d.includes('if (playerFeet && !_fParalyzed && f.mobile.shootArrow) {\n            f.mobile.shootArrow = false;'),
     'and so does its archer arm');
