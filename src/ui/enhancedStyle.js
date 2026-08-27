@@ -1129,6 +1129,24 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   text-transform: uppercase; text-align: center; margin: 14px 0 4px;
   border-top: 2px solid rgba(125,116,96,0.3); padding-top: 10px;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.px-qarch.px-qfirst { border-top: 0; padding-top: 2px; margin-top: 2px; }   /* PX5: the first heading needs no rule above it */
+/* PX5: a running clock on a rail row - a gold gem pushed to the right. */
+.px-qtimed { margin-left: auto; font-size: 11px; color: rgb(243,239,44);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* PX5: the kind tag and the timer under the quest name. */
+.px-qmeta { display: flex; align-items: center; justify-content: center; gap: 18px;
+  margin: -8px 0 12px; }
+.px-qkind { color: #7d7460; font-size: 13px; letter-spacing: 0.24em; text-indent: 0.24em;
+  text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.px-qtimer { color: #c5bda2; font-size: 14px; letter-spacing: 0.1em;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-qtimer.urgent { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* PX5: the world's date and time, bottom-right on the scrim. */
+.px-clock { position: absolute; right: 18px; bottom: 12px; text-align: right;
+  display: flex; flex-direction: column; gap: 2px;
+  color: #c5bda2; font-size: 15px; letter-spacing: 0.1em;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-clocktime { color: #7d7460; font-size: 13px; letter-spacing: 0.14em; }
 .px-qdetail { flex: 1; padding: 4px 6px 4px 22px; overflow-y: auto; }
 .px-qname { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 6px 0 14px; }
 .px-qname h3 { font-size: 24px; font-weight: 400; letter-spacing: 0.14em; text-indent: 0.14em;

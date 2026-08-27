@@ -6487,3 +6487,29 @@ message. On a phone the journal stacks, rail above detail. Probed
 live over a busy stand-in frame: 4 rail rows + the Archive heading,
 the archived verdict renders, no foot at pause, Escape resumes once,
 zero page errors both viewports.
+
+PX5 (same day, Mac): TIMERS, THE CLOCK, AND MAIN/SIDE. Three asks,
+each grounded in something the port already carries. (1) QUEST
+TIMERS: the world's questLog walk now reports the TIGHTEST RUNNING
+clock per quest - Clock resources carry remainingTimeInSeconds with
+clockEnabled/clockFinished (quest/clock.js:92,164) - and the journal
+draws it under the quest name as 'Time remains: N days N hours'
+(hours+min under a day, min alone under an hour), URGENT GOLD below
+one game day, with a gold gem pushed right on the rail row of any
+timed quest. (2) THE DATE AND TIME sit bottom-right on the scrim, the
+reference's corner: dateString + the header formatter's HH:MM:SS over
+THE ONE CLOCK (worldMinutes, AUDIT 23 C2) imported directly - every
+host already reads that module, so no seam and no drift; one read per
+render is the truth for a paused clock. (3) MAIN/SIDE LABELING by the
+pack's own naming - DFU ships the story quests as S0000*.txt (34
+files in vendor/dfu-quests/Quests) and _BRISIEN is the MQ opener
+(StartGameBehaviour.cs:445-447) - the rail groups MAIN QUESTS above
+QUESTS (headings only when BOTH kinds are on the log; one group under
+a header is a header explaining nothing) and the detail carries a
+Main Quest / Side Quest tag beside the timer. The archive stays
+ungrouped honestly: the notebook's filed header keeps only the
+display name, so the questName is gone by the time a quest is filed.
+Probed live: the three headings render, two timed gems, the urgent
+tag on a 9.5-hour letter, Side Quest under its name, the corner
+clock reading the probe's own set minutes, zero page errors both
+viewports.
