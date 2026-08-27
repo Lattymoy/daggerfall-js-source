@@ -159,6 +159,7 @@ import {
 import { findRentedRoom, removeExpiredRooms } from '../systems/tavern.js';
 import { canRest as guildCanRest } from '../systems/guildServices.js';
 import { interiorRestPlace, restDecision } from '../systems/restSession.js';   // CanRest's inside-a-building bag + the scene-free open gate above it
+import { racialRestBlock } from '../systems/vampirism.js';   // V2b: the vampire's rest gate
 import { orderOf } from '../systems/guildVariants.js';
 import { joinedGuildOfGroup } from '../systems/guilds.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js';
@@ -3736,13 +3737,19 @@ export function createWorldModes(host) {
     // have made loitering in a city a crime.
     toggleRest() {
       if (interiorOverlay) return;
+      const rb = racialRestBlock(playerEntity, Math.floor(interiorTicker.classicMinutes));   // V2b
       const d = restDecision({
         enemiesNearby: false,   // no foe pool in a building interior
         swimming: false,        // nor water
         grounded: startRestGroundedCheck(!!player.grounded, player.pos, interiorCtx?.collider),
+        racialOverrideBlocks: !!rb,
       });
       if (d.kind !== 'rest') {
-        if (d.kind === 'blocked') return;   // a racial override says nothing at all
+        if (d.kind === 'blocked') {
+          const lines = plainLines(townTalk?.lines?.(rb.textId));   // V2b: the unfed vampire's own box
+          if (lines) mountInterior(new ActionTextBox(lines));
+          return;
+        }
         const lines = d.message ? [d.message] : plainLines(townTalk?.lines?.(d.textId));
         if (lines) mountInterior(new ActionTextBox(lines));
         return;

@@ -233,6 +233,10 @@ export const isImmuneToParalysis = (entity) => hasActiveEffect(entity, 'freeActi
  *  Resistant here and falls through to the save. */
 export function isEntityImmuneToParalysis(entity) {
   if (careerTolerance(entity.career ?? {}, EFFECT_FLAGS.Paralysis) === 'Immune' || isImmuneToParalysis(entity)) return true;
+  // V2b: the vampire's compound race carries Paralysis immunity
+  // (VampirismEffect.CreateCompoundRace + ConstantEffect's
+  // IsImmuneToParalysis) - the curse entry is the race now
+  if (entity.racialOverride?.immuneParalysis && !entity.racialOverride.ended) return true;
   if (entity.isPlayer) {
     const rt = entity.raceTemplate ?? raceById(entity.raceId) ?? raceByKey(entity.race) ?? null;
     if (((rt?.immunityFlags ?? 0) & EFFECT_FLAGS.Paralysis) !== 0) {

@@ -558,8 +558,28 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
       nowMinutes: enchantCtx?.nowMinutes ?? 0, ctx: enchantCtx,
     });
   }
+  // V2a/V2b: RacialOverrideEffect.OnWeaponHitEntity, at the same tail
+  // for the same one-home reason - DFU calls it from the player's
+  // strike resolution (WeaponManager.cs:616-618). The vampire FEEDS on
+  // any landed hit; the werewolf's satiation asks whether the dead
+  // target was an INNOCENT (a civilian, or the city watch by
+  // mobileType - carried by every foe entity this formula ever sees).
+  // A REGISTERED hook, not an import: the curses import effects.js,
+  // which imports this file's dice100 - a direct import here closes
+  // that cycle. worldTick registers it, and every host loads worldTick.
+  if (attacker.isPlayer && attacker.racialOverride) {
+    _racialHitHook?.(attacker, target, {
+      nowMinutes: enchantCtx?.nowMinutes ?? 0,
+      mobileType: target?.mobileType ?? null,
+      isCivilian: !!enchantCtx?.targetIsCivilian,
+    });
+  }
   return damage;
 }
+
+let _racialHitHook = null;
+/** worldTick's registration seam for the racial-override hit hook. */
+export function setRacialHitHook(fn) { _racialHitHook = fn ?? null; }
 
 // ---- GetEnemyEntityLanguageSkill (FormulaHelper.cs:2808-2880) ----
 // Class enemies: the six stealth careers speak Streetwise, the rest

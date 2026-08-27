@@ -21,12 +21,23 @@
 import { updateDiseases } from './diseases.js';
 import { runInfections } from './infection.js';   // V1: UpdateDisease's override, which the base walk skips
 import { consumeRacialOverridePending, lycanthropyMagicRound } from './lycanthropy.js';   // V2a: the curse the deploy mints
+import { consumeVampirismPending, vampirismMagicRound } from './vampirism.js';   // V2b: the other curse
 import { updatePoisons } from './poisons.js';
 import { tickActiveEffects } from './effects.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
 import { FATIGUE_LOSS, killIfAnyLiveStatZero } from './statMods.js';
 import { decayEnemyAlert } from './encounters.js';   // PlayerEntity.Update:380-384, the 8-hour alert decay
-import { dice100 } from '../combat/formulas.js';
+import { dice100, setRacialHitHook } from '../combat/formulas.js';
+import { onLycanthropeHit } from './lycanthropy.js';
+import { onVampireHit } from './vampirism.js';
+
+// V2a/V2b: OnWeaponHitEntity's registration - formulas.js cannot
+// import the curses (the dice100 cycle), and every host loads THIS
+// module, so the hook rides here.
+setRacialHitHook((attacker, target, { nowMinutes = 0, mobileType = null, isCivilian = false } = {}) => {
+  onVampireHit(attacker, nowMinutes);
+  onLycanthropeHit(attacker, target, { nowMinutes, mobileType, isCivilian });
+});
 import { normalizeReputations, NORMALIZE_INTERVAL_MINUTES } from './court.js';   // AUDIT 23 (C4)
 // S43: the entity update's 7-day and 38-day arms (PlayerEntity.cs:460-472).
 import { regionPowerUpdate } from './regionPower.js';
@@ -160,7 +171,9 @@ export function runMagicRoundsFor(entity, from, to, { sinks, rolls = Math.random
     // fold then rides every round, exactly as RacialOverrideEffect's
     // constant pass does (a vampirism pending stands - V2b).
     consumeRacialOverridePending(entity, { now: r + 1 });
+    consumeVampirismPending(entity, { now: r + 1 });
     lycanthropyMagicRound(entity, { nowMinutes: r + 1, say });
+    vampirismMagicRound(entity, { nowMinutes: r + 1 });
     updatePoisons(entity, r + 1, sinks, rolls, say);
     tickActiveEffects(entity, sinks);
     // E1: the enchantment pump rides the SAME round (DoMagicRound's

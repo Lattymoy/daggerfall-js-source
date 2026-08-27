@@ -89,6 +89,19 @@ export const YOU_DREAM_OF_THE_MOON = 'You dream of the moon.';
 export const YOU_NEED_TO_HUNT = 'You need to hunt the innocent.';
 export const ONCE_PER_DAY = 'You may only cast this spell once per day.';
 
+/** PlayerEffectManager.CureAll at a racial override's Start (:120 /
+ *  VampirismEffect.cs:81): every effect of the old life ends - the
+ *  diseases through their own end law, the rest generically (the
+ *  infection that brought us here is already ended by
+ *  deployInfection). ONE home for both curses. */
+export function endOldLifeEffects(entity) {
+  cureAllDiseases(entity);
+  for (const a of entity.activeEffects ?? []) {
+    if (a.kind === 'disease' || a.kind === 'poison') continue;   // ended above by their own law
+    a.ended = true;
+  }
+}
+
 /** The live curse entry, or null. */
 export const liveLycanthropy = (entity) =>
   (entity?.activeEffects ?? []).find((a) => a.kind === 'racialOverride'
@@ -133,14 +146,7 @@ export function createLycanthropyCurse(entity, infectionType, { now = 0 } = {}) 
     statMods: {},
     skillMods: {},
   };
-  // CureAll (:120): every other effect ends - spells, poisons, and
-  // the diseases through their own end law (the infection that
-  // brought us here is already ended by deployInfection).
-  cureAllDiseases(entity);
-  for (const a of entity.activeEffects ?? []) {
-    if (a.kind === 'disease' || a.kind === 'poison') continue;   // ended above by their own law
-    a.ended = true;
-  }
+  endOldLifeEffects(entity);
   entity.activeEffects = entity.activeEffects || [];
   entity.activeEffects.push(entry);
   // the marker infectionAccepted and the disease gate read - REBUILT

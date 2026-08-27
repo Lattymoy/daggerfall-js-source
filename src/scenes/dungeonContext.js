@@ -27,6 +27,7 @@ import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, setDeathPresente
 import { addItem, spendArrow } from '../systems/inventory.js';
 import { worldAabb } from '../player/activate.js';
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface
+import { racialRestBlock } from '../systems/vampirism.js';   // V2b: the vampire's rest gate
 // U26: this host's own equip hook is retired - the native inventory
 // window owns equipping, the career gate (S23) and the paperdoll, so
 // the duplicate pair here had nothing left to serve. AUDIT 17e F17's
@@ -2748,17 +2749,23 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // they were passing the raw `grounded` flag, which refuses a
       // near-ground levitator DFU lets sleep (review 16f found the
       // drift risk; the S40 review found the divergence).
+      const rb = racialRestBlock(playerEntity, classicMinutesRef.value);   // V2b: the vampire's rest gate
       const d = restDecision({
         enemiesNearby: _restDeps.enemiesNearby(),
         swimming: _activity.swimming,
         grounded: startRestGroundedCheck(_grounded, lastPlayerFeet, collider),
+        racialOverrideBlocks: !!rb,
       });
       if (d.kind !== 'rest') {
         // E-slice: the ROUTED leg closes - DFU raises the alert on the
         // enemies arm (DaggerfallUI.cs:655, not the rest window's
         // :655), which is what arms this host's rest-encounter roll.
         if (d.kind === 'enemies') setEnemyAlert(playerEntity, true, classicMinutesRef.value);
-        if (d.kind === 'blocked') return;   // a racial override says nothing at all
+        if (d.kind === 'blocked') {
+          const lines2 = rscLines(rb.textId);   // V2b: the unfed vampire's own box
+          if (lines2) activeOverlay = new ActionTextBox(lines2);
+          return;
+        }
         const lines = d.message ? [d.message] : rscLines(d.textId);
         if (lines) activeOverlay = new ActionTextBox(lines);
         return;

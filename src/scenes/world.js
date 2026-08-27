@@ -51,6 +51,7 @@ import { isHouseOwned, shipCoords, ownsShip } from '../systems/banking.js';   //
 import { clearSceneCache } from '../systems/sceneCache.js';   // P1: SaveLoadManager.ClearSceneCache, at PlayerGPS's map-pixel seam
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
 import { createTravelMapWindow, travelMapDoorReady, preloadTravelMapArt, canFindPlace } from '../ui/travelMapDoor.js';   // W1's classic art window + U61's overworld, one door
+import { racialRestBlock, racialFastTravelBlock } from '../systems/vampirism.js';   // V2b: the vampire's rest and daylight gates
 import { buildMapDict } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict
 import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
@@ -1515,6 +1516,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // this host had none of it, because rest was a dungeon feature.
     // Outdoors all three inputs are live: real foes, real water, and a
     // levitating or falling player who cannot lie down.
+    // V2b: the vampire's own rest gate - CheckStartRest is LAST in
+    // DFU's ladder and the override speaks for itself (TEXT.RSC 36)
+    const rb = racialRestBlock(playerEntity, Math.floor(worldMinutes()));
     const d = restDecision({
       enemiesNearby: outdoorRestDeps.enemiesNearby(),
       swimming: !!player.swimming,
@@ -1524,6 +1528,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // up here it is also what lets a page whose motor is never
       // stepped rest at all, since `grounded` sits at its initialiser.
       grounded: startRestGroundedCheck(!!player.grounded, player.pos, collider),
+      racialOverrideBlocks: !!rb,
     });
     if (d.kind !== 'rest') {
       // DFU raises the enemy alert on the enemies arm
@@ -1531,7 +1536,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       // DoRestForAWhile; a bare citation here resolves to the wrong
       // file, since every other number in this block is the window's).
       if (d.kind === 'enemies') setEnemyAlert(playerEntity, true, Math.floor(worldMinutes()));
-      if (d.kind === 'blocked') return;   // a racial override says nothing at all
+      if (d.kind === 'blocked') {
+        // V2b: the override's OWN refusal - the unfed vampire's box
+        const lines = plainLines(townTalk.lines(rb.textId));
+        if (lines) townTalk.showOverlay(new ActionTextBox(lines));
+        return;
+      }
       // plainLines: TEXT.RSC answers { text, center } ROWS and
       // ActionTextBox iterates STRINGS (V5b's finding).
       const lines = d.message ? [d.message] : plainLines(townTalk.lines(d.textId));
@@ -1689,7 +1699,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       const clamp = arrivalClampMinutes(playerTicker.classicMinutes, {
         speedCautious: opts.speedCautious,
-        sunAverse: false,   // vampirism / DamageFromSunlight ride their arcs
+        // V2b: the vampirism arc LANDED - a sun-damaged racial
+        // override arrives at dusk, never in daylight (the law has
+        // supported this parameter since the F-slice; only the wiring
+        // waited). Career DamageFromSunlight still rides its own arc.
+        sunAverse: !!playerEntity.racialOverride?.sunDamage,
       });
       if (clamp > 0) playerTicker.advance(clamp);
       _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // X-slice: PreventEnemySpawns parity - no spawn catch-up for the traveled window
@@ -1784,6 +1798,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // law: a missing IMG closes a door, never the game); the enhanced
     // overworld reads no art at all.
     if (!travelMapDoorReady()) { townTalk.say('(the travel map art is unavailable)'); return; }
+    // V2b: CheckFastTravel at the map's own door, where DFU calls it
+    // (DaggerfallUI.cs:625) - a sun-damaged override cannot fast
+    // travel by day, and the refusal is the override's own line.
+    const ftb = racialFastTravelBlock(playerEntity, Math.floor(worldMinutes()));
+    if (ftb) { townTalk.say(ftb.text); return; }
     _travelMap = buildTravelMapWindow({ onTravel: (pick, opts, computed) => { fastTravelTo(pick, opts, computed); } });
     if (!_travelMap) { townTalk.say('(the travel map art is unavailable)'); return; }
     if (gotoPlace) _travelMap.gotoPlace(gotoPlace);   // GotoPlace (:214-217), consumed on the map's first tick

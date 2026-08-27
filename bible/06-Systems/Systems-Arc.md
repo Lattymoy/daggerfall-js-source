@@ -3697,3 +3697,47 @@ respawn; PassiveSpecials and the artifact payloads.
 
 Pins: 12 in `test/lycanthropy.test.js`, the walk from the moons to the
 save round-trip, every figure DFU's own constant.
+
+## V2b - THE VAMPIRISM CURSE: the other override, and the gates go live (2026-08-27)
+
+`VampirismEffect.cs` on V2a's exact shape - the curse as an
+activeEffects entry, the marker rebuilt on restore, the advantages
+through the same one-arm channels. The vampire's asymmetries are the
+slice's spine, each pinned against the werewolf's: +20 on SEVEN stats
+(Willpower, Personality and Luck join; Intelligence belongs to the
+Anthotis alone), +30 on six skills with Swimming pointedly absent,
+silver-to-be-hit and paralysis immunity ALWAYS - there is no
+untransformed vampire - and FEEDING IS FIGHTING: OnWeaponHitEntity's
+whole body is UpdateSatiation, no innocence test, where the werewolf
+must hunt the innocent.
+
+THE HOOK IS REGISTERED, NOT IMPORTED. OnWeaponHitEntity lands at
+combat/formulas' one-home tail (where OnMonsterHit and the Strikes
+payloads already ride), but formulas cannot import the curses - they
+import effects.js, which imports formulas' own dice100 - so the tail
+calls a registered hook and worldTick, which every host loads,
+registers it. The setEnchantmentHooks precedent, one module over.
+
+THE GATES WENT LIVE ACROSS THE HOSTS. restDecision's
+racialOverrideBlocks parameter - shipped dead in S40 - now feeds from
+racialRestBlock in ALL FOUR hosts, and the blocked arm SPEAKS (the
+unfed vampire's TEXT.RSC 36 box; the S40 sweep that pinned the silent
+return advances with it). CheckFastTravel lands where DFU calls it -
+the travel map's own door (DaggerfallUI.cs:625) - and the arrival
+clamp's sunAverse parameter, wired dead since the F-slice with its
+comment promising "vampirism rides its arc", is finally live: a
+sun-damaged override arrives at dusk.
+
+THE CLANS ARE REAL: eight spell tables (the base Levitate/Charm
+Mortal/Calm Humanoid plus each clan's own, Selenu's three resists to
+Montalion's Recall), granted under the 'vampire' tag the spellbook
+has honored since U42, and the cure stamps PreviousVampireClan - the
+clan outlives the curse, as DFU's reputations expect.
+
+FLAGGED, each loudly: the sun/holy DAMAGE itself (PassiveSpecials
+needs the IsPlayerInSunlight seam - V2c, and the entry already
+carries sunDamage/holyDamage for it), the quests, the guild swap, the
+cemetery respawn, the art and voices, the artifact payloads.
+
+Pins: 9 in `test/vampirism.test.js`; the S40 rest sweeps and the
+round-order sweep advance.
