@@ -85,7 +85,8 @@ export class MusicService {
       // run yet, so retry on the next frame rather than racing it.
       const tryStart = () => {
         if (!this._pending) return;
-        if (this.playSong(this._pending)) this._pending = null;
+        const p = this._pending;
+        if (typeof p === 'string' ? this.playSong(p) : this.playScore(p)) this._pending = null;
       };
       tryStart();
       if (this._pending && typeof requestAnimationFrame !== 'undefined') {
@@ -99,8 +100,8 @@ export class MusicService {
 
   /** The context only exists after a gesture, so the player is built
    *  lazily on the first play that finds one. */
-  _ensurePlayer() {
-    if (!this.enabled) return null;
+  _ensurePlayer({ needsArchive = true } = {}) {
+    if (needsArchive && !this.enabled) return null;
     if (this.player) return this.player;
     if (!audio.ctx) return null;
     this.player = new SongPlayer(audio.ctx);
@@ -133,6 +134,20 @@ export class MusicService {
       return true;
     }
     return this._playBuiltIn(name);
+  }
+
+  /** EM1: play a COMPOSED song - the enhanced side's piece for a cue,
+   *  in the reader's own shape - through the same scheduler and bank.
+   *  Idempotent per piece, like playSong per name. Pending like playSong
+   *  when the page has no context yet: the gesture hook replays it. */
+  playScore(song) {
+    if (!song?.events?.length) return false;
+    const player = this._ensurePlayer({ needsArchive: false });   // composed: MIDI.BSA is not consulted
+    if (!player) { this._pending = song; return false; }
+    if (this._current === song.name && this.playing) return true;
+    this._audio?.stop();   // a replacement must not sound underneath
+    this._current = song.name;
+    return player.play(song);
   }
 
   /** The MIDI.BSA path - what playSong did before replacements existed,
