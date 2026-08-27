@@ -86,6 +86,12 @@ export const MOONS = Object.freeze({
  *  every game sun is, so it reads at a glance. */
 export const SUN_RADIUS = 0.032;
 
+/** The pole the star field turns about: north (+Z here, since the sun's
+ *  arc is the XZ east-west line), leaned toward the zenith so the field
+ *  wheels at an angle rather than spinning flat overhead. Ours - the
+ *  Iliac Bay has no stated latitude. */
+export const STAR_POLE = Object.freeze([0, 0.622244, 0.782823]);   // unit: the shader normalises anyway, but a direction should BE one
+
 /** Interpolate the palette at a sun elevation (degrees). Pure. */
 export function paletteAt(elevDeg) {
   const keys = SKY_KEYS;
@@ -142,18 +148,49 @@ export function moonSkyDirection(minuteOfDay, phase, tilt = 0) {
   return rotX(rotZ(sun, -angle), tilt);
 }
 
+/** THE WEATHER'S HAND, EASED (ES1c). The sim flips its type on one
+ *  frame - sunny to rain, between two ticks - and the sky was rebuilt
+ *  from the type every frame, so the whole dome changed in the time it
+ *  takes to draw once. A weather row is a set of NUMBERS, so the sky
+ *  keeps its own and walks them toward the row the sim is asking for:
+ *  cover, softness, greyness, wind and the two cloud colours, all on
+ *  one time constant. Pure and injectable: `dt` in, the eased row out.
+ *  (The same lesson as the danger meter's slew - a slow, meaningful
+ *  state should arrive slowly, and nothing about a sky changes in a
+ *  frame.) */
+export const WEATHER_EASE_SECONDS = 14;
+
+export function easeWeather(from, to, dt, seconds = WEATHER_EASE_SECONDS) {
+  if (!from) return { ...to };
+  const k = seconds <= 0 ? 1 : 1 - Math.exp(-Math.max(0, dt) / seconds);
+  const n = (a, b) => a + (b - a) * k;
+  const v3 = (a, b) => [n(a[0], b[0]), n(a[1], b[1]), n(a[2], b[2])];
+  return {
+    cover: n(from.cover, to.cover), soft: n(from.soft, to.soft), grey: n(from.grey, to.grey),
+    wind: [n(from.wind[0], to.wind[0]), n(from.wind[1], to.wind[1])],
+    lit: v3(from.lit, to.lit), shade: v3(from.shade, to.shade),
+  };
+}
+
+/** A weather row as numbers (colours resolved), for the ease. */
+export const weatherRow = (weather) => {
+  const w = WEATHER_SKY[weather] ?? WEATHER_SKY.sunny;
+  return { cover: w.cover, soft: w.soft, grey: w.grey, wind: [...w.wind], lit: hex(w.lit), shade: hex(w.shade) };
+};
+
 /** The whole state the shader takes for one frame. Pure but for the
- *  clock it is handed. */
-export function skyState({ minuteOfDay, weather = 'sunny', classicMinutes = 0, seconds = 0, phases = null }) {
+ *  clock it is handed. `row` overrides the weather's numbers with an
+ *  eased set (the controller keeps one and walks it). */
+export function skyState({ minuteOfDay, weather = 'sunny', classicMinutes = 0, seconds = 0, phases = null, row = null }) {
   const sunDir = sunSkyDirection(minuteOfDay);
   const elevDeg = Math.asin(Math.max(-1, Math.min(1, sunDir[1]))) * 180 / Math.PI;
   const pal = paletteAt(elevDeg);
-  const w = WEATHER_SKY[weather] ?? WEATHER_SKY.sunny;
+  const w = row ?? weatherRow(weather);
   const day = daylightScale(minuteOfDay);
   // Weather greys the dome and hides the sun, the stars and the moons.
   const zenith = mix3(pal.zenith, hex(GREY_ZENITH), w.grey * (0.35 + 0.65 * day));
   const horizon = mix3(pal.horizon, hex(GREY_HORIZON), w.grey * (0.35 + 0.65 * day));
-  const cloudLitDay = hex(w.lit), cloudShadeDay = hex(w.shade);
+  const cloudLitDay = w.lit, cloudShadeDay = w.shade;
   // By night the clouds are the night's own colour, faintly lit by the moons.
   const nightLit = [0.16, 0.19, 0.25], nightShade = [0.07, 0.09, 0.13];
   const twilight = clamp01((elevDeg + 12) / 16);   // 0 well below the horizon, 1 by day
@@ -166,8 +203,13 @@ export function skyState({ minuteOfDay, weather = 'sunny', classicMinutes = 0, s
     const vis = dir[1] > -0.05 ? clamp01(1 - 0.9 * day) * (1 - w.cover * 0.35) : 0;   // faint by day; the clouds themselves hide it where they are
     return { dir, radius: m.radius, color: hex(m.color), vis, phase };
   };
+  // ES1c: the field's turn. One full revolution a day about the pole -
+  // the same clock the sun rides, so the two agree - and the pole is
+  // north, tilted off the zenith the way a sky's is anywhere but the
+  // pole itself.
+  const starAngle = (minuteOfDay / 1440) * Math.PI * 2;
   return {
-    sunDir, elevDeg,
+    sunDir, elevDeg, starAngle, starPole: STAR_POLE,
     zenith, horizon, sun: pal.sun, glow: pal.glow,
     glowAmount: pal.glowAmount * (1 - w.grey * 0.7),
     sunVis: sunDir[1] > -0.02 ? 1 : 0,               // the clouds occlude the disc where they are (shader)
@@ -200,6 +242,8 @@ uniform float uMoonAVis, uMoonBVis;
 uniform float uCloudCover, uCloudSoft, uTime;
 uniform vec2 uWind;
 uniform float uFogMix;
+uniform vec3 uStarPole;
+uniform float uStarAngle;
 out vec4 outColor;
 
 float hash21(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
@@ -212,6 +256,17 @@ float fbm(vec2 p) {
   float v = 0.0, a = 0.5;
   for (int i = 0; i < 5; i++) { v += a * vnoise(p); p = p * 2.03 + vec2(17.1, 9.7); a *= 0.5; }
   return v;
+}
+
+// ES1c: ONE CLOUD DECK. The far deck is given a smaller, slower,
+// thinner treatment; sunAz is how much this ray points at the sun,
+// which is what lights the deck. Returns cover (x) and the noise the
+// colour is chosen by (y).
+vec2 deck(vec3 dir, float scale, vec2 wind, float cover, float soft, float bias) {
+  vec2 p = dir.xz / (dir.y + 0.18) * scale + wind * uTime;
+  float n = fbm(p) + bias;
+  float cov = smoothstep(1.0 - cover, 1.0 - cover + soft, n);
+  return vec2(cov, n);
 }
 
 vec3 moon(vec3 dir, vec4 m, vec3 col, float vis) {
@@ -234,7 +289,16 @@ vec3 moon(vec3 dir, vec4 m, vec3 col, float vis) {
 float stars(vec3 dir, float amount) {
   if (amount <= 0.0 || dir.y < 0.0) return 0.0;
   float s = 0.0;
-  vec2 sc = vec2(atan(dir.x, dir.z), asin(dir.y));
+  // ES1c: THE FIELD WHEELS. The stars were fixed in world space, so
+  // midnight's sky was dusk's sky exactly - the one thing about a night
+  // sky everybody has seen is that it turns. It turns about a POLE
+  // (uStarPole: north, tilted off the zenith), by uStarAngle, which the
+  // clock advances a full turn a day, so the field rises in the east
+  // and sets in the west like everything else.
+  vec3 axis = normalize(uStarPole);
+  float ca = cos(uStarAngle), sa = sin(uStarAngle);
+  vec3 d = dir * ca + cross(axis, dir) * sa + axis * dot(axis, dir) * (1.0 - ca);   // Rodrigues
+  vec2 sc = vec2(atan(d.x, d.z), asin(clamp(d.y, -1.0, 1.0)));
   for (int layer = 0; layer < 2; layer++) {
     float scale = layer == 0 ? 70.0 : 130.0;
     vec2 g = sc * scale + float(layer) * 31.7;
@@ -248,7 +312,7 @@ float stars(vec3 dir, float amount) {
       s += b * (layer == 0 ? 1.4 : 0.8) * exp(-d * d * 60.0);
     }
   }
-  return s * amount * smoothstep(0.0, 0.08, dir.y);
+  return s * amount * smoothstep(0.0, 0.08, dir.y);   // the fade is on the REAL elevation: a star sets where the horizon is
 }
 
 void main() {
@@ -288,23 +352,50 @@ void main() {
   float disc = smoothstep(cos(uSunRadius), cos(uSunRadius * 0.6), cosSun) * uSunVis;
   float halo = (pow(max(cosSun, 0.0), 40.0) * 0.55 + pow(max(cosSun, 0.0), 8.0) * 0.10) * uSunVis;
 
-  // Clouds on a dome, drifting.
+  // ES1c: TWO DECKS, LIT BY THE SUN. One fbm sheet coloured by its own
+  // noise was a smear: it had no depth (nothing moved against anything)
+  // and no idea where the sun was, so a bank never had a bright rim and
+  // never had a dark belly. Now a HIGH deck - small, slow, thin - sits
+  // behind a LOW one - large, faster, thicker - and both are lit by
+  // sunAz, how far this ray is from the sun: toward the sun a bank is
+  // rimmed (the light coming through its edge), away from it the thick
+  // parts go to the shade colour. The lighting fades out at night with
+  // the palette's own sun colour, which is black below the horizon.
   float cloud = 0.0;
   if (dir.y > 0.0) {
-    vec2 p = dir.xz / (dir.y + 0.18) * 1.5 + uWind * uTime;
-    float n = fbm(p);
-    float cov = smoothstep(1.0 - uCloudCover, 1.0 - uCloudCover + uCloudSoft, n);
-    // Towards the horizon the cover flattens into the haze rather than
-    // stopping: the detail goes, the colour goes to the horizon's.
     float near = smoothstep(0.28, 0.0, dir.y);
+    vec2 hi = deck(dir, 0.95, uWind * 0.55, uCloudCover * 0.75, uCloudSoft * 1.5, 0.0);
+    vec2 lo = deck(dir, 1.9, uWind, uCloudCover, uCloudSoft, 0.0);
+    // The low deck covers the high one where it is; what is left of the
+    // high deck shows through the gaps.
+    float covHi = hi.x * (1.0 - lo.x) * 0.7;
+    float cov = lo.x + covHi;
     cloud = mix(cov, cov * uCloudCover, near);
-    vec3 cc = mix(uCloudShade, uCloudLit, smoothstep(0.5, 0.95, n));
-    cc = mix(cc, mix(uHorizon, cc, 0.55), near);
+    float n = mix(hi.y, lo.y, lo.x);                       // the deck in front decides the colour
+    float sunAz = max(dot(dir, uSunDir), 0.0);
+    // The rim: strongest at the thin edges of a bank, and only near the sun.
+    float edge = 1.0 - abs(n - (1.0 - uCloudCover)) * 3.0;
+    float rim = clamp(edge, 0.0, 1.0) * pow(sunAz, 3.0);
+    float thick = smoothstep(0.45, 0.95, n);
+    vec3 cc = mix(uCloudShade, uCloudLit, thick * 0.75 + 0.25 * pow(sunAz, 1.5));
+    cc += uSunColor * rim * 0.55 * uSunVis;                 // lit through the edge
+    cc = mix(cc, cc * 0.86, (1.0 - pow(sunAz, 0.7)) * thick);   // the belly away from the sun
+    cc = mix(cc, mix(uHorizon, cc, 0.55), near);            // into the haze at the horizon
     color = mix(color, cc, cloud);
   }
   color += uSunColor * disc * (1.0 - cloud) + uSunColor * halo * (1.0 - 0.7 * cloud);
 
-  outColor = vec4(mix(clamp(color, 0.0, 1.0), uFogColor, uFogMix), 1.0);
+  // ES1c: DITHER. A dome is one big smooth gradient and eight bits is
+  // not enough for one: 46% of the rows in a noon frame came out
+  // byte-identical to the row above, which is a visible stair. A
+  // sub-bit of hash noise before the write breaks the stair and costs
+  // two instructions; it is about one quantisation step, so it is never
+  // itself visible. TRIANGULAR, not flat: two hashes summed give the
+  // error a triangular distribution, which is the shape that fully
+  // decorrelates it from the signal - a flat one left a third of the
+  // rows still identical to the row above.
+  float d = (hash21(gl_FragCoord.xy) + hash21(gl_FragCoord.xy + 13.7) - 1.0) / 255.0;
+  outColor = vec4(mix(clamp(color, 0.0, 1.0), uFogColor, uFogMix) + d, 1.0);
 }`;
 
 /** The pass. Same contract as SkyRenderer: draw(yaw, pitch, fovY, aspect)
@@ -328,7 +419,7 @@ export class EnhancedSkyRenderer {
     this.u = {};
     for (const name of ['uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uZenith', 'uHorizon', 'uSunColor', 'uGlowColor', 'uCloudLit', 'uCloudShade',
       'uFogColor', 'uSunDir', 'uSunRadius', 'uSunVis', 'uGlowAmount', 'uStars', 'uMoonA', 'uMoonB', 'uMoonAColor', 'uMoonBColor',
-      'uMoonAVis', 'uMoonBVis', 'uCloudCover', 'uCloudSoft', 'uTime', 'uWind', 'uFogMix']) {
+      'uMoonAVis', 'uMoonBVis', 'uCloudCover', 'uCloudSoft', 'uTime', 'uWind', 'uFogMix', 'uStarPole', 'uStarAngle']) {
       this.u[name] = gl.getUniformLocation(prog, name);
     }
     this.vao = gl.createVertexArray();
@@ -377,6 +468,8 @@ export class EnhancedSkyRenderer {
     gl.uniform1f(u.uCloudCover, s.cloudCover); gl.uniform1f(u.uCloudSoft, s.cloudSoft);
     gl.uniform1f(u.uTime, s.seconds); gl.uniform2f(u.uWind, s.wind[0], s.wind[1]);
     gl.uniform1f(u.uFogMix, this.fogMix);
+    gl.uniform3fv(u.uStarPole, s.starPole);
+    gl.uniform1f(u.uStarAngle, s.starAngle);
     // HANDEDNESS: as the classic pass - the triangle winds CCW under a
     // CW front face, so culling is off for it.
     gl.disable(gl.CULL_FACE);

@@ -40,7 +40,13 @@ async function shoot(label, q) {
       sum += l; if (l > max) max = l; if (l > 250) bright++;
       if (r > 150 && r > b + 20 && l > 100) warm++;   // Masser's colour class: a warm, lit disc
     }
-    return { mean: sum / n, max, brightFrac: bright / n, warmFrac: warm / n, glError: gl.getError() };
+    // A cheap fingerprint of WHERE the bright points are, for the wheel:
+    // the row and column sums of the pixels over 200, folded to a number.
+    let starHash = 0;
+    for (let i = 0; i < n; i++) {
+      if ((px[i * 4] + px[i * 4 + 1] + px[i * 4 + 2]) / 3 > 200) { starHash = (starHash * 31 + i) >>> 0; }
+    }
+    return { mean: sum / n, max, brightFrac: bright / n, warmFrac: warm / n, starHash, glError: gl.getError() };
   });
   await page.screenshot({ path: `${shots}/sky-${label}.png` });
   console.log(`  ${shots}/sky-${label}.png  mean ${stats.mean.toFixed(1)} max ${stats.max} bright ${(stats.brightFrac * 100).toFixed(2)}%`);
@@ -66,6 +72,14 @@ const moonNight = (() => {
 })();
 const moons = await shoot('evening-moons', `hour=22&weather=sunny&day=${moonNight.day}&yaw=${moonNight.yaw.toFixed(0)}&pitch=${moonNight.pitch.toFixed(0)}`);
 console.log(`  (Masser phase ${moonNight.phase}, at yaw ${moonNight.yaw.toFixed(0)} pitch ${moonNight.pitch.toFixed(0)} on day ${moonNight.day})`);
+// ES1c: the clouds are LIT. At mid-morning under cloud, looking AT the
+// sun and looking AWAY from it must not be the same picture.
+const towardSun = await shoot('cloudy-toward-sun', 'hour=8&weather=cloudy&yaw=90&pitch=25');
+const awaySun = await shoot('cloudy-away-sun', 'hour=8&weather=cloudy&yaw=270&pitch=25');
+// ES1c: the field WHEELS. The same camera three hours later is a
+// different sky - it was byte-identical before.
+const night3 = await shoot('midnight-plus-3h', 'hour=3&weather=sunny&yaw=90&pitch=20&day=3');
+
 const overcast = await shoot('overcast', 'hour=12&weather=overcast&yaw=90&pitch=12');
 const storm = await shoot('storm', 'hour=12&weather=thunder&yaw=90&pitch=12');
 const foggy = await shoot('fog', 'hour=12&weather=fog&yaw=90&pitch=12&fog=0.8');
@@ -76,6 +90,10 @@ check('noon is brighter than midnight', noon.mean > night.mean * 3, `${noon.mean
 check('the sun\'s disc is in the frame looking up at noon', noonUp.brightFrac > 0.0005 && noonUp.max === 255, `${(noonUp.brightFrac * 100).toFixed(3)}% at 255`);
 check('the storm is darker than the overcast, which is darker than the clear noon', storm.mean < overcast.mean && overcast.mean < noon.mean, `${storm.mean.toFixed(0)} < ${overcast.mean.toFixed(0)} < ${noon.mean.toFixed(0)}`);
 check('midnight has points of light (stars)', night.max > 120 && night.mean < 40, `max ${night.max} mean ${night.mean.toFixed(0)}`);
+check('the clouds are lit: under the same cloud, toward the sun is brighter than away from it',
+  towardSun.mean > awaySun.mean * 1.06, `${towardSun.mean.toFixed(0)} vs ${awaySun.mean.toFixed(0)}`);
+check('the star field wheels: three hours on is a different sky, still full of stars',
+  night3.starHash !== night.starHash && night3.max > 200, `${night.starHash} -> ${night3.starHash}`);
 check('Masser is in the frame when the camera is pointed at where the law puts it', moons.warmFrac > 0.0003 && moons.warmFrac < 0.01, `${(moons.warmFrac * 100).toFixed(3)}% of the frame is its warm lit disc`);
 
 await browser.close();
