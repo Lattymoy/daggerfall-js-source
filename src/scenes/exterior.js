@@ -1589,7 +1589,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // during a flash frame); ?flashtest pins it on for shots.
     const flash = params.has('flashtest') ? 2 : (lightning ? lightning.tick(dt) : 1);
     renderer.setLighting(
-      exteriorAmbient(minute, 1, weatherSun), sunScale(minute) * weatherSun * flash,   // AUDIT 23 (wts-2): ambient rides the weather scale too
+      exteriorAmbient(minute, 1, weatherSun), sunScale(minute) * weatherSun * flash * sky.sunFactor(),   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground)
       new Float32Array(SUN_RIG_COLOR));
     // R12: the player-following indirect point light (SunlightRig) -
     // intensity x the daylight curve, weather-dimmed with the rig,
