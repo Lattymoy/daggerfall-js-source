@@ -275,7 +275,7 @@ test('ES1c stars: the field wheels about a pole, one turn a day, on the same clo
   const fs = read('src/render/enhancedSky.js');
   assert.match(fs, /float ca = cos\(uStarAngle\), sa = sin\(uStarAngle\);/, 'the turn is the CLOCK\'s angle - a constant here is a field that stands still');
   assert.match(fs, /vec3 d = dir \* ca \+ cross\(axis, dir\) \* sa \+ axis \* dot\(axis, dir\) \* \(1\.0 - ca\);/, 'Rodrigues about the pole');
-  assert.match(fs, /vec2 sc = vec2\(atan\(d\.x, d\.z\), asin\(clamp\(d\.y, -1\.0, 1\.0\)\)\);/, 'the field is sampled in the TURNED frame');
+  assert.match(fs, /cubeSnap\(d, scale, sc2\);/, 'the field is sampled in the TURNED frame (d, not dir) - ES1f casts it on the cube');
   assert.match(fs, /smoothstep\(0\.0, 0\.08, dir\.y\)/, '...but a star sets where the REAL horizon is');
 });
 
@@ -367,8 +367,7 @@ test('ES1e retro: the enhanced sky is drawn on the PAINTED sky\'s own angular pi
   const fs = read('src/render/enhancedSky.js');
   // The snap happens to the DIRECTION, before anything is computed - so
   // the sun, the moons, the stars and the cloud edges are all ON the grid.
-  assert.match(fs, /cell = floor\(vec2\(az, el\) \/ uRetroStep\);/);
-  assert.match(fs, /dir = vec3\(sin\(q\.x\) \* ce, sin\(q\.y\), cos\(q\.x\) \* ce\);/);
+  assert.match(fs, /if \(uRetroStep > 0\.0\) dir = cubeSnap\(dir, 1\.57079633 \/ uRetroStep, cell\);/);
   const body = fs.slice(fs.indexOf('void main() {'));
   assert.ok(body.indexOf('uRetroStep > 0.0') < body.indexOf('float e = clamp(dir.y'), 'snapped BEFORE the dome is coloured');
   // Ordered dither, indexed by the angular cell (not the screen pixel,
@@ -380,4 +379,38 @@ test('ES1e retro: the enhanced sky is drawn on the PAINTED sky\'s own angular pi
   // noise rather than the hash, which was structured under magnification.
   assert.match(fs, /float ign = fract\(52\.9829189 \* fract\(0\.06711056 \* gl_FragCoord\.x \+ 0\.00583715 \* gl_FragCoord\.y\)\);/);
   assert.doesNotMatch(fs, /hash21\(gl_FragCoord\.xy\) \+ hash21\(gl_FragCoord\.xy \+ 13\.7\)/, 'the structured hash dither is gone');
+});
+
+// ── ES1f: NO POLE, NO CIRCLE ──────────────────────────────────────
+// Mac: "any way to get rid of the circle that everything weaves into.
+// The circle when you look up at the very middle." The grid was
+// azimuth/elevation, which puts its POLE at the zenith: the elevation
+// rings became concentric circles and the azimuth cells converged to
+// nothing, so looking straight up was a bullseye.
+test('ES1f: the grid is cast on a CUBE, and its faces are equi-angular - no pole and no beat', () => {
+  const fs = read('src/render/enhancedSky.js');
+  // The lat-long snap is gone, root and branch.
+  assert.doesNotMatch(fs, /floor\(vec2\(az, el\) \/ uRetroStep\)/, 'no azimuth/elevation snap');
+  assert.doesNotMatch(fs, /vec2 sc = vec2\(atan\(d\.x, d\.z\), asin\(clamp\(d\.y, -1\.0, 1\.0\)\)\);/, 'and no lat-long star field');
+  // A cube: six faces, the major axis chosen, the cell id carrying its face.
+  assert.match(fs, /vec3 cubeSnap\(vec3 dir, float n, out vec2 cellOut\) \{/);
+  assert.match(fs, /if \(a\.x >= m\) \{ raw = dir\.zy \/ a\.x; face = dir\.x > 0\.0 \? 0\.0 : 1\.0; \}/);
+  assert.match(fs, /cellOut = cell \+ face \* 977\.0;/, 'a face\'s cells are its own, so the dither does not run across a seam');
+  // EQUI-ANGULAR: a plain cube face is a tangent plane, so its cells
+  // cover 2.6x less sky at the corners - a cell size that varies across
+  // the frame beats against the screen grid and draws curved rings,
+  // which is the pole's ghost rather than its cure.
+  assert.match(fs, /vec2 uv = atan\(raw\) \* 1\.27323954;/, '4/PI: the face is warped to equal angles');
+  assert.match(fs, /vec2 t = tan\(\(cell \+ 0\.5\) \/ n \* 0\.78539816\);/, 'PI/4: and warped back to rebuild the ray');
+  // ...which makes the count exact: 90 degrees a face over n cells at
+  // one step each, so n = (PI/2)/step, 256 a face, 512 across 180 -
+  // SKY??.DAT's own width, which is the whole point of the step.
+  const n = (Math.PI / 2) / RETRO.step;
+  assert.ok(Math.abs(n - 256) < 1e-9, `${n} cells a face`);
+  assert.ok(Math.abs(1.57079633 / RETRO.step - 256) < 1e-4, 'and the shader computes the same n');
+  // The star field rides the same cube, so it has no pinwheel and no
+  // density pile-up at a pole - and its scales were raised to keep the
+  // count, because a cube covers the sphere with far fewer cells.
+  assert.match(fs, /cubeSnap\(d, scale, sc2\);/);
+  assert.match(fs, /float scale = layer == 0 \? 127\.0 : 236\.0;/);
 });

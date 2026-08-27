@@ -754,6 +754,53 @@ coloured, the Bayer indexed by the angular cell, and IGN on the smooth
 pass). 6 mutants, 6 dead. Probe 10/10, with retro measured against
 smooth: 124 changes and 8 levels across a row, against 376 and 69.
 
+## ES1f - NO POLE, NO CIRCLE (2026-08-27, Mac's report) - SHIPPED
+
+Mac, looking up: "any way to get rid of the circle that everything
+weaves into. The circle when you look up at the very middle."
+
+He was looking straight at the projection's seam. ES1e snapped the ray
+in AZIMUTH and ELEVATION, and a lat-long grid has its POLE at the
+zenith: the elevation rings become concentric circles centred there and
+the azimuth cells converge to nothing, so the sky wove into a bullseye
+overhead - at every hour, in every weather, and in the star field too,
+which had its own pole and piled its density onto it. (The painted sky
+never shows this because its strip stops at 77 degrees and everything
+above it is a flat fill; a dome that reaches the zenith has nowhere to
+hide.)
+
+A CUBE HAS NO POLE. The direction is projected onto whichever of six
+faces it points at, snapped on that face's square grid, and rebuilt.
+The zenith becomes an ordinary patch of an ordinary face. The star
+field rides the same grid, so it has no pinwheel and an even density
+(its scales were raised to keep the count: a cube covers the sphere
+with far fewer cells than a lat-long grid does).
+
+AND THE FACES ARE EQUI-ANGULAR, which was the second pass and the one
+that finished it. A plain cube face is a TANGENT plane, so its cells
+cover 2.6x less sky at the corners than at the centre - and a cell size
+that varies across the frame beats against the screen's own grid and
+draws curved moire rings. That is the pole's ghost rather than its
+cure, and an amplified difference image showed it plainly. Warping each
+face by atan (the equi-angular cubemap of 360 video) makes every cell
+the same angle everywhere. It also makes the count exact: 90 degrees a
+face over n cells at one step each is n = (PI/2)/step = 256 a face,
+512 across 180 degrees - which is SKY??.DAT's own width, so the retro
+pixel is now provably the painted sky's pixel rather than approximately
+it.
+
+Verified the way it was reported: looking straight up, at noon, at
+dusk, under cloud and at night. The bullseye is gone from all of them,
+and a 22x amplified deviation image - which is how the residual ring
+was found in the first place - shows an even weave with no centre.
+Pins: 1 more (13) - the lat-long snap gone root and branch, the cube's
+face choice and its per-face cell ids, the atan/tan warp both ways, the
+count landing exactly on 256 a face, and the star field on the same
+cube. 3 mutants, 3 dead. The probe's retro-vs-smooth threshold was
+retuned: the equi-angular cells are a touch smaller near the horizon
+than the lat-long ones they replaced, so `changes` alone was the wrong
+measure and LEVELS - 8 against 69 - is the decisive one.
+
 ON THE HORIZON: the sky as a setting rather than a URL, lightning on
 the thunder weather, and a season's hand on the palette.
 
