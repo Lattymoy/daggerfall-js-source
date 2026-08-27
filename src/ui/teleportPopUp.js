@@ -39,8 +39,6 @@
 // popup already carries.
 
 import { loadImg, nativeMetrics, drawImg, drawRect, shadowText } from './nativePanel.js';
-import { audio } from '../systems/audio.js';
-import { SOUND } from '../systems/soundClips.js';
 
 /** TELE00I0's own size, which IS mainPanelRect's (:21). */
 export const TELEPORT_PANEL_W = 171, TELEPORT_PANEL_H = 57;
@@ -84,19 +82,20 @@ export class TeleportPopUpWindow {
     this.isChoiceWindow = true;
   }
 
-  _click() { audio.playOneShot(SOUND.ButtonClick, 1); }
 
   /** NoButton_OnMouseClick (:112-115) - CloseWindow, and nothing
    *  else: the travel map underneath is still in teleport mode and
-   *  another destination can be picked. */
-  _no() { this._click(); this.done = true; this.deps.onExit?.(); }
+   *  another destination can be picked. AUDIT 26 F146: neither Yes nor
+   *  No plays a sound - the file sets no ClickSound and calls no
+   *  PlayOneShot, so AddButton's null click sound stays null. The port
+   *  had invented a ButtonClick on both; do not re-add it. */
+  _no() { this.done = true; this.deps.onExit?.(); }
 
   /** TeleportAway (:134-150). The window hands the destination back
    *  and closes; the HOST owns the exterior transition and the world
    *  re-init, because those are PlayerEnterExit's and StreamingWorld's
    *  and this is a 171x57 panel. */
   _yes() {
-    this._click();
     this.done = true;
     this.deps.onTeleport?.(this.destination.pixel, this.destination.name);
   }

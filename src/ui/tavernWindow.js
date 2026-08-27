@@ -54,6 +54,8 @@ import { ServiceFlowWindow, macroRows } from './guildServiceWindows.js';
 import { goldAmount, totalGoldAmount, deductGold } from '../systems/court.js';
 import { dayOfYearFromMinutes } from '../systems/gameDate.js';
 import { raceDisplayName, honorificOf } from '../systems/talkSession.js';
+import { audio } from '../systems/audio.js';   // F145: the ButtonClick roster
+import { SOUND } from '../systems/soundClips.js';
 import {
   TOO_MANY_DAYS_ID, OFFER_PRICE_ID, NOT_ENOUGH_GOLD_ID,
   HOW_MANY_DAYS_ID, HOW_MANY_ADDITIONAL_DAYS_ID,
@@ -134,12 +136,22 @@ export class TavernWindow {
     });
   }
 
-  /** Every chain the two buttons raise runs in ONE ServiceFlowWindow
-   *  whose close closes the tavern with it - which is DFU's shape,
-   *  since both buttons call CloseWindow before the chain starts. */
-  _chain(boxes) {
-    if (!boxes?.length) { this._close(); return; }
-    this.flow = new ServiceFlowWindow(boxes, { onClose: () => { this.flow = null; this._close(); } });
+  /** Every chain the two buttons raise runs in ONE ServiceFlowWindow.
+   *  AUDIT 26 F143: only FOOD closes the tavern with its chain -
+   *  DoFoodAndDrink calls CloseWindow FIRST (:286). The ROOM button
+   *  never does: its input box closes ITSELF before the handler runs
+   *  (DaggerfallInputMessageBox.cs:298-304), invalid input and the
+   *  350-day refusal just return (:176-178, :188-191), and
+   *  ConfirmRenting's CloseWindow (:212) pops the just-pushed price
+   *  box - UserInterfaceWindow.CloseWindow pops the stack's TOP
+   *  (:127-132) - so every ending of the rental chain lands back on
+   *  the four-button panel. The old header claimed both buttons
+   *  close-before-chain, and every rental ending tore the tavern down. */
+  _chain(boxes, { closesTavern = false } = {}) {
+    if (!boxes?.length) { this.flow = null; if (closesTavern) this._close(); return; }
+    this.flow = new ServiceFlowWindow(boxes, {
+      onClose: () => { this.flow = null; if (closesTavern) this._close(); },
+    });
   }
 
   /** RoomButton_OnMouseClick (:153-171). The expiry sweep runs FIRST,
@@ -217,12 +229,13 @@ export class TavernWindow {
     const h = this.hooks;
     const now = h.now();
     if (!canEat(h.entity.lastTimePlayerAteOrDrankAtTavern, now)) {
-      this._chain([{ rows: line(YOU_ARE_NOT_HUNGRY) }]);
+      this._chain([{ rows: line(YOU_ARE_NOT_HUNGRY) }], { closesTavern: true });   // F143: food closes (:286)
       return;
     }
     this._chain([{
       picker: [...TAVERN_MENU],
       onPick: (i) => {
+        audio.playOneShot(SOUND.ButtonClick, 1);   // F145: FoodAndDrink_OnItemPicked (:307)
         const r = eatOrDrink(i, { gold: totalGoldAmount(h.entity), gameMinutes: now });   // F103: GetGoldAmount (:324)
         if (r.kind === 'ignore') return null;
         if (r.kind === 'poor') return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID) }];
@@ -232,7 +245,7 @@ export class TavernWindow {
         return null;             // DFU shows nothing at all on a meal
       },
       onCancel: () => null,
-    }]);
+    }], { closesTavern: true });   // F143: DoFoodAndDrink's CloseWindow-first (:286)
   }
 
   input(code, e = null) {
@@ -246,10 +259,12 @@ export class TavernWindow {
 
   click(vx, vy) {
     if (this.flow) return this.flow.click(vx, vy);
-    if (inRect(TAVERN_RECTS.room, vx, vy)) { this._room(); return true; }
-    if (inRect(TAVERN_RECTS.talk, vx, vy)) { this.hooks.onTalk?.(); this._close(); return true; }
-    if (inRect(TAVERN_RECTS.food, vx, vy)) { this._food(); return true; }
-    if (inRect(TAVERN_RECTS.exit, vx, vy)) { this._close(); return true; }
+    // F145: PlayOneShot(SoundClips.ButtonClick) heads all four handlers
+    // (Exit :135, Room :155, Talk :264, Food :339).
+    if (inRect(TAVERN_RECTS.room, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._room(); return true; }
+    if (inRect(TAVERN_RECTS.talk, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.hooks.onTalk?.(); this._close(); return true; }
+    if (inRect(TAVERN_RECTS.food, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._food(); return true; }
+    if (inRect(TAVERN_RECTS.exit, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return true; }
     return false;
   }
 

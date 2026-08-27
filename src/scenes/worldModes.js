@@ -1375,13 +1375,16 @@ export function createWorldModes(host) {
           houses: () => pricedHousesForSale(),
           drawModelPreview: drawBankModelPreview,   // H4: the live 3D panel
 
-          rows: (id) => townTalk?.lines?.(id) ?? [],
           buy: (h) => purchaseHouse(playerEntity.bankAccounts, playerEntity.houses, region, h, bankPurse(), {
             meshRadius: h.meshRadius ?? 0,
             mapId: dir?.mapId ?? 0,
             location: dir?.locationName ?? '',
             sideEffects: { ...houseSideEffects(), playerName: playerEntity.name ?? '', regionName: dir?.regionName ?? '' },
           }),
+          // F138: GeneratePurchaseHousePopup is the BANKING window's
+          // (:234-237) - the purchase list has already closed by the
+          // time the result shows, so the box is win's GeneratePopup.
+          showResult: (result, amount) => win._popup(result, amount),
           onClose: () => { if (interiorOverlay === pw) interiorOverlay = win; },
         });
         interiorOverlay = pw;

@@ -258,7 +258,15 @@ export class BankWindow {
       } else this._dismissBox();
       return true;
     }
-    if (inRect(BANK_RECTS.exit, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return true; }
+    if (inRect(BANK_RECTS.exit, vx, vy)) {
+      // AUDIT 26 F140: ExitButton_OnMouseClick (:473-478) - the sound
+      // always fires, but EXIT is a NO-OP while an amount is being
+      // typed (`if (!transactionInput.Enabled) CloseWindow()`); the
+      // Escape path below already gated this, so the two disagreed.
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      if (this.transactionType === TRANSACTION_TYPE.None) this._close();
+      return true;
+    }
     for (const name of Object.keys(OPENS).concat([
       'depositLetters', 'loanBorrow', 'buyHouse', 'sellHouse', 'buyShip', 'sellShip',
     ])) {
