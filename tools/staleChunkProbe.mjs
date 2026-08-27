@@ -107,7 +107,7 @@ try {
       });
     });
     page.on('response', (r) => { if (r.status() === 404) gone.push(r.url().split('/').pop()); });
-    await page.goto(base, { waitUntil: 'networkidle' });
+    await page.goto(base, { waitUntil: 'load' });
     await new Promise((r) => setTimeout(r, 4000));
     const out = {
       docs,

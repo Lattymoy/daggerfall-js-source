@@ -177,7 +177,7 @@ test('music: the service commits BEFORE the await, or the director storms it', (
   assert.ok(raise < body.indexOf('await'),
     'the playing flag must be raised before the first await');
   // and `playing` must ANSWER for the audio player, not just the MIDI one
-  assert.match(m, /get playing\(\) \{ return Boolean\(this\.player\?\.playing \|\| this\._audio\?\.playing\); \}/);
+  assert.match(m, /get playing\(\) \{ return Boolean\(this\.player\?\.playing \|\| this\._audio\?\.playing \|\| this\._track\?\.playing\); \}/);
   // a mode change can overtake a decode - the result is dropped, not
   // played over the song that replaced it
   assert.ok((body.match(/this\._current !== name/g) ?? []).length >= 2,

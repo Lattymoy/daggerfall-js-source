@@ -107,16 +107,68 @@ bell on the tonic), the door under both skins and the seed law, the
 director's sink with the manager's context, and the service's new
 door. 4 mutants, 4 dead.
 
+## EM2a (2026-08-27): THE TITLE THEME - Mac's first track, on the door - SHIPPED
+
+Mac: "This is the main theme that should play on startup." A 2:50 WAV
+(48 kHz stereo, peak 0.72), encoded to MP3 at VBR ~155 kbps (3.3 MB)
+because MP3 is the one format every browser on the site's list plays -
+iOS Safari does not play Ogg Vorbis - and shipped at
+public/music/enhanced/main-theme.mp3 with an OURS row on the doctrine
+allow-list: his composition, nothing of the game's in it.
+
+THE PLAYER STREAMS. `enhancedMusic/trackPlayer.js` is an <audio>
+element through a MediaElementSource into a gain node into the music
+bus: project-final's stem arc decoded every track to PCM at boot and
+paid 240-509 MB and a six-second freeze for it, and a three-minute
+theme decoded is 60 MB of float a phone does not need to hold. Fades
+ride the gain node's AudioParam (setValueAtTime + linearRamp), never
+the element's volume and never a curve that can throw over itself.
+`MusicService.playTrack(record)` is the door on the service: it needs a
+CLOCK and nothing else - `audio.ensureClock()`, new, is ensure()'s two
+archive-free halves (the context, the gesture resume) made idempotent -
+so the enhanced front door can ask before any folder pick exists. The
+browser's gesture rule may refuse the first play; then the request is
+PENDED and the service's gesture hook (which now knows a name from a
+song from a track) replays it on the first pointer or key. THE ONE
+RULE FOR THE OTHER DOORS: when the game's own music takes over - a
+composed piece, an archive song, a replacement - the track is FADED
+UNDER over three seconds, never cut; `stop()` stops it too; a sounding
+track counts as `playing` for the director.
+
+THE WIRING is one line in main.js's enhanced branch, un-awaited, before
+`runEnhancedMenu()` - the "title moment" the boot's own note had named
+as its own slice. So the theme plays on the door, carries through the
+folder pick and the wizard, and fades as Privateer's Hold's piece
+begins.
+
+FOUND ON THE WAY: eleven probes opened /play/ with `waitUntil:
+'networkidle'`, and a page with a streaming media element never lets
+the network idle - Chromium holds the media request open - so every one
+of them hung at goto. They wait for `load` now (module scripts delay
+the load event; each probe then waits for its own selector as it
+always did). The wait was the wrong one all along; the theme was only
+the first thing that made it matter.
+
+Proof: tools/enhancedMenuProbe.mjs, launched without the gesture rule
+as the render tools are, reads the track through the service after the
+first click - mounted on Mac's file, playing, looped, the service's
+current, and SIGNAL MEASURED on the track's own bus through an
+AnalyserNode (peak 0.055) - on desktop and Pixel 5: 22/22. Pins: three
+more in test/enhancedMusic.test.js (the score record tracked,
+allow-listed and reachable from /play/; the player through a fake
+context - one media source, the ramped gain, the fade as a ramp to
+zero, the refused play left armed; the service needing a clock and no
+archive, every other door fading the track under, main.js asking
+before the menu).
+
 ## The board
 
-1. **EM2 - MAC'S TRACKS.** A score table (cue -> file under
-   public/music/enhanced/, with the track's key and tempo) and a
-   streamed full-track player: an <audio> element into the music bus,
-   looped, crossfaded on cue change (equal-power, a few seconds; the
-   pure director's shape from project-final), with the composed piece
-   playing UNDERNEATH in the track's key and tempo at a lower gain.
-   Each file gets an OURS row on the doctrine allow-list. Nothing ships
-   until a track exists; the slot is built empty.
+1. **EM2 - MAC'S TRACKS FOR THE PLACES.** The player and the score
+   table exist (EM2a); what remains is PLACE_SCORES entries as tracks
+   arrive - each with the track's key and tempo so the composed piece
+   plays UNDERNEATH it at a lower gain - and the crossfade between two
+   tracks on a cue change (equal-power, a few seconds; the pure
+   director's shape from project-final). Each file gets an OURS row.
 2. **EM3 - THE OTHER PLACES.** Palettes for the city by day and by
    night, wilderness with the weather folded in as the director folds
    it, taverns (the one place that wants percussion), temples, the

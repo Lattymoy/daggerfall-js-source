@@ -20,6 +20,8 @@ import { MidiBsaFile } from '../formats/hmiFile.js';
 import { selectSong } from './songManager.js';
 import { SongPlayer, AudioSongPlayer } from './songPlayer.js';   // M-EXT: the replacement's player shares the volume law
 import { hasReplacement, replacementBytes } from './musicReplacement.js';   // M-EXT: SoundReplacement.TryImportSong
+import { TrackPlayer } from './enhancedMusic/trackPlayer.js';   // EM2a: Mac's own tracks, streamed
+import { musicGain } from './songPlayer.js';
 
 export class MusicService {
   constructor() {
@@ -86,7 +88,11 @@ export class MusicService {
       const tryStart = () => {
         if (!this._pending) return;
         const p = this._pending;
-        if (typeof p === 'string' ? this.playSong(p) : this.playScore(p)) this._pending = null;
+        // A name is an archive song, a song object a composed piece, and
+        // a record with a file one of Mac's tracks (EM2a).
+        if (typeof p === 'string') { if (this.playSong(p)) this._pending = null; return; }
+        if (p.file) { this.playTrack(p).then((ok) => { if (ok && this._pending === p) this._pending = null; }); return; }
+        if (this.playScore(p)) this._pending = null;
       };
       tryStart();
       if (this._pending && typeof requestAnimationFrame !== 'undefined') {
@@ -136,6 +142,31 @@ export class MusicService {
     return this._playBuiltIn(name);
   }
 
+  /** EM2a: play one of Mac's own TRACKS (a scores.js record), streamed.
+   *  Needs a clock and nothing else - no archive, no folder pick - so
+   *  the enhanced front door can call it before any data exists. The
+   *  browser's gesture rule may refuse the first play; then it is
+   *  pended and the gesture hook replays it. Resolves true when sound
+   *  is moving. Never throws. */
+  async playTrack(track) {
+    if (!track?.file) return false;
+    if (this._current === track.id && this._track?.playing) return true;
+    const ctx = audio.ensureClock();
+    if (!ctx) return false;
+    this.attachGestureStart();
+    this._track ??= new TrackPlayer(ctx, { gain: musicGain });
+    this.player?.stop();    // the scheduler must not sound underneath
+    this._audio?.stop();    // nor a replacement
+    this._current = track.id;
+    const ok = await this._track.play(track);
+    if (!ok && this._current === track.id) this._pending = track;   // the gesture rule: replayed on the first gesture
+    return ok;
+  }
+
+  /** The game's own music taking over from a track: fade it under,
+   *  never cut it. EM2a's one rule for the other three doors. */
+  _fadeTrackUnder() { if (this._track?.playing) this._track.fadeOut(); }
+
   /** EM1: play a COMPOSED song - the enhanced side's piece for a cue,
    *  in the reader's own shape - through the same scheduler and bank.
    *  Idempotent per piece, like playSong per name. Pending like playSong
@@ -146,6 +177,7 @@ export class MusicService {
     if (!player) { this._pending = song; return false; }
     if (this._current === song.name && this.playing) return true;
     this._audio?.stop();   // a replacement must not sound underneath
+    this._fadeTrackUnder();
     this._current = song.name;
     return player.play(song);
   }
@@ -156,6 +188,7 @@ export class MusicService {
     const player = this._ensurePlayer();
     if (!player) return false;
     this._audio?.stop();   // a replacement must not sound underneath
+    this._fadeTrackUnder();
     const index = this.archive.getSongIndex(name);
     if (index === null || index === undefined || index < 0) {
       console.warn(`[music] no song named ${name} in MIDI.BSA`);
@@ -198,6 +231,7 @@ export class MusicService {
     const player = this._ensureAudioPlayer();
     if (!player) return;
     this.player?.stop();          // the MIDI player must not sound underneath
+    this._fadeTrackUnder();
     player.playing = true;        // commit BEFORE the await - see above
     let buffer = null;
     try {
@@ -225,7 +259,7 @@ export class MusicService {
   /** Is a song sounding right now? The director asks each frame - it is
    *  the port's stand-in for DFU's `songPlayer.IsPlaying`, which drives
    *  both the re-evaluation and the replay in UpdateSong. */
-  get playing() { return Boolean(this.player?.playing || this._audio?.playing); }
+  get playing() { return Boolean(this.player?.playing || this._audio?.playing || this._track?.playing); }
 
   stop() {
     // AUDIT 19 F12: clear the PENDING request too. `_pending` is what the
@@ -236,6 +270,7 @@ export class MusicService {
     this._pending = null;
     this.player?.stop();
     this._audio?.stop();   // M-EXT: both players, or a replacement outlives the stop
+    this._track?.stop();   // EM2a: and the track
   }
 
   get current() { return this._current; }
