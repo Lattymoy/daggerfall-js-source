@@ -2884,7 +2884,7 @@ export function createWorldModes(host) {
       // by the update that sets them, so their readers ride the motor's
       // own gate: a jump taken the instant before a window opened would
       // otherwise be re-reported on every paused frame.
-      if (!overlayHeld) dungeonCtx.reportActivity?.({ running: held(keys, 'Run') && moving, swimming: player.swimming, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing
+      if (!overlayHeld) dungeonCtx.reportActivity?.({ running: held(keys, 'Run') && moving, swimming: player.swimming, climbing: !!player.climb?.isClimbing, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing (AUDIT 26 F083: + the climbing arm)
       // PlayerMotor.StartRestGroundedCheck (:184-194) reads the LIVE
       // grounded state; dungeonContext's `_grounded` is host-fed and
       // only dungeon.js:270 fed it, so in a world-hosted dungeon the

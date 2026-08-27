@@ -262,8 +262,8 @@ combat line numbers below are refreshed with it.
 - `src/scenes/exterior.js:779` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/exterior.js:1018` - (FLAGGED); swallowing the browser reload is not optional.
 - `src/scenes/exterior.js:1315` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:1472` - FLAGGED here exactly as in world.js - no tile lookup yet).
-- `src/scenes/exterior.js:1813` - ground (FLAGGED with world.js's same gap), so Detect Treasure
+- `src/scenes/exterior.js:1473` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:1814` - ground (FLAGGED with world.js's same gap), so Detect Treasure
 - `src/scenes/shared.js:244` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:261` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:366` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
@@ -279,9 +279,9 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:2613` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
 - `src/scenes/world.js:2891` - FLAGGED: the QuestComplete loot window pends the UI arc - the
 - `src/scenes/world.js:2918` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:3373` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:3710` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/world.js:3783` - (FLAGGED: exterior corpse containers are the loot arc's), so
+- `src/scenes/world.js:3374` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:3711` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:3784` - (FLAGGED: exterior corpse containers are the loot arc's), so
 - `src/scenes/worldModes.js:291` - rather than pretending to scan. FLAGGED.
 - `src/scenes/worldModes.js:440` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:588` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
@@ -325,7 +325,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/chargen.js:132` - /** INTERIM headless pool policy (loud; the chargen UI replaces it):
 - `src/systems/chargen.js:151` - spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // INTERIM policy (the U2b flow replaces this path)
 - `src/systems/chargenSession.js:7` - played the pre-chargen INTERIM entity (flat skills 30, maxHealth
-- `src/systems/chargenSession.js:306` - *    - scenes/dungeonContext.js  FLAGGED: it holds the RAW flow as its
+- `src/systems/chargenSession.js:310` - *    - scenes/dungeonContext.js  FLAGGED: it holds the RAW flow as its
 - `src/systems/controlsConfig.js:8` - FLAGGED with I1's combo flag: GetDuplicates' second and third
 - `src/systems/court.js:28` - FLAGGED loud: guild rescues (Thieves/Dark Brotherhood) pend the
 - `src/systems/court.js:246` - *  daysInPrison } (guild rescues FLAGGED). */

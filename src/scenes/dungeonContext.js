@@ -930,7 +930,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let _motorYaw = 0;   // A1: the automap window's player-arrow heading
   let _mouseState = 'no events';
   let _inputState = '';
-  const _activity = { running: false, swimming: false, jumped: false, movingLessThanHalfSpeed: true };   // P11 fatigue state; P13 sneak state; C6 jump edge
+  const _activity = { running: false, swimming: false, climbing: false, jumped: false, movingLessThanHalfSpeed: true };   // AUDIT 26 F083: + climbing   // P11 fatigue state; P13 sneak state; C6 jump edge
   let _grounded = true;   // U7: the rest gate reads the motor's live grounded flag
   // U7: the rest session's scene seams. tickVitals = one rested hour
   // (the S20 rates + the Medical tally, clamped); enemiesNearby is
@@ -2825,10 +2825,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // jump fatigue/tally (PlayerEntity: 11 x multiplier + Jumping
     // tally once per jump), and the state the per-minute fatigue
     // drain reads.
-    reportActivity({ running = false, swimming = false, jumped = false, movingLessThanHalfSpeed = true, fell = 0 } = {}) {
+    reportActivity({ running = false, swimming = false, climbing = false, jumped = false, movingLessThanHalfSpeed = true, fell = 0 } = {}) {
       if (swimming && !_activity.swimming) audio.playOneShot(SOUND.SplashLarge);   // PlayLargeSplash on entry
       _activity.running = running;
       _activity.swimming = swimming;
+      _activity.climbing = climbing;   // AUDIT 26 F083: ClimbingFatigueLoss's live flag
       _activity.movingLessThanHalfSpeed = movingLessThanHalfSpeed;   // P13: IsMovingLessThanHalfSpeed (the motor computes it)
       // AUDIT 23 (C6): the jump drain+tally moved into tickPlayerMinutes
       // (PlayerEntity.cs:425-430 is the entity update) - the edge rides

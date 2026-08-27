@@ -90,9 +90,10 @@ const blankRegion = () => ({
 });
 
 /** InitializeRegionData's array half (:2189-2218). The twelve bootstrap
- *  RegionPowerAndConditionsUpdate passes at the tail of that member are
- *  NOT here: they belong to the update itself, which is the next slice,
- *  and running them from a store constructor would be a second caller. */
+ *  RegionPowerAndConditionsUpdate passes at the tail of that member
+ *  live in regionPower.bootstrapRegionPower (AUDIT 26 F107), called
+ *  from BOTH construction paths - not here, because a store
+ *  constructor running the walk would be a second caller. */
 export function createRegionConditions(regionCount = REGION_COUNT) {
   return Array.from({ length: regionCount }, blankRegion);
 }

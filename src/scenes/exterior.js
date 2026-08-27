@@ -1440,6 +1440,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // 88/min running drain was dead above ground. C6: the jump edge.
         running: player.isRunning && !player.standing,
         swimming: player.swimming,
+        climbing: !!player.climb?.isClimbing,   // AUDIT 26 F083
         jumped: player.jumped,
       });
       // AUDIT 18 HOST GAP: levitate/waterWalking/slowFall were written

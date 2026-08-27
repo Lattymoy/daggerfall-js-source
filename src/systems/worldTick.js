@@ -433,7 +433,13 @@ export function tickPlayerMinutes({
   // fatigue (S20) while it costs many magic rounds.
   if (Math.floor(next) !== Math.floor(classicMinutes)) {
     let loss = FATIGUE_LOSS.Default;
-    if (activity.running) loss = FATIGUE_LOSS.Running;
+    // AUDIT 26 F083: the CLIMBING arm heads DFU's band
+    // (PlayerEntity.cs:405-408 - climbing, else running, else the
+    // swimming arms; ClimbingFatigueLoss 22 at :110). The port tested
+    // running and swimming alone and FATIGUE_LOSS.Climbing had zero
+    // consumers - a climber paid half the classic drain per minute.
+    if (activity.climbing) loss = FATIGUE_LOSS.Climbing;
+    else if (activity.running) loss = FATIGUE_LOSS.Running;
     else if (activity.swimming) {
       // AUDIT 21 F8: THE ARGONIAN EXEMPTION, and its short-circuit.
       //     if (Race != Races.Argonian && Dice100.FailedRoll(...Swimming))
