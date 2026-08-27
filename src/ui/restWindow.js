@@ -211,6 +211,9 @@ export class RestWindow {
 
   input(action) {
     if (this.state === 'refused') { this._close(); return; }
+    // F144: the over-cap box is click-anywhere; dismissing lands on
+    // the selection page, NOT back in a prompt - the prompt is gone.
+    if (this.state === 'hoursRefused') { this.notice = null; this.state = 'selection'; return; }
     if (this.state === 'confirm') {
       // ConfirmIllegalRest*_OnButtonClick (:659-666, :684-691): the box
       // closes either way, and only Yes carries on - No leaves the
@@ -262,9 +265,18 @@ export class RestWindow {
       // 100-hour rest through the day someone widened the field.
       if (this.value === '') return;
       const hours = Number(this.value);
-      if (this.mode === 'loiter' && hours > loiterLimitHours()) { this.notice = cannotLoiterLines(); this.value = PROMPT_INITIAL; return; }
+      // AUDIT 26 F144: the refusal is a NEW box over the SELECTION
+      // page - the input box has already closed itself before the
+      // handler runs (DaggerfallInputMessageBox.cs:298-304), so
+      // TEXT.RSC 26 shows with no live field beneath it, and a retry
+      // needs a fresh While/Loiter press, which re-runs the whole
+      // gate INCLUDING CanRest and its Vagrancy side effect. The old
+      // cut kept the field up under the notice and retried past
+      // _canRest.
+      if (this.mode === 'loiter' && hours > loiterLimitHours()) { this.notice = cannotLoiterLines(); this.state = 'hoursRefused'; this.value = PROMPT_INITIAL; return; }
       if (this.mode === 'timed' && hours > MAX_REST_HOURS) {
         this.notice = this.deps.endLines?.(CANNOT_REST_MORE_THAN_99_HOURS_ID) ?? null;
+        this.state = 'hoursRefused';
         this.value = PROMPT_INITIAL;
         return;
       }
@@ -355,6 +367,7 @@ export class RestWindow {
    *  they refuse through is the presence of this method. */
   click() {
     if (this.state === 'ended' || this.state === 'refused') this.input(this.state === 'ended' ? 'confirm' : 'back');
+    else if (this.state === 'hoursRefused') this.input('confirm');   // F144: click-anywhere
     else if (this.state === 'resting') this.input('back');   // StopButton_OnMouseClick (:708-712)
     return true;
   }
@@ -375,7 +388,10 @@ export class RestWindow {
       lines = [ILLEGAL_REST_WARNING, '', 'Y - yes', 'N - no'];
     } else if (this.state === 'hours') {
       lines = [(this.mode === 'loiter' ? LOITER_PROMPT : REST_PROMPT) + this.value + '_'];
-      if (this.notice) lines = [...this.notice, '', ...lines];
+    } else if (this.state === 'hoursRefused') {
+      // F144: the refusal alone - no field, no cursor; the original
+      // prompt self-closed before the handler ever saw the number.
+      lines = [...(this.notice ?? [])];
     } else if (this.state === 'resting') {
       const v = this.deps.vitals?.() ?? null;
       // ShowStatus (:317-346): FullRest shows hours PAST against the
