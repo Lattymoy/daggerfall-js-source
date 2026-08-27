@@ -159,3 +159,35 @@ test('IF: quest foes stand from BUILDING MARKERS too - DFU\'s second path into a
   assert.match(WM, /questFlats = \[\];\n\s+interiorFoeStands = \[\];/);
   assert.ok(!WM.includes('this adapter\'s standFoe stays'), 'the fifth flag sentence is gone');
 });
+
+// ── CV1 (2026-08-27): the punishment wave's NUMBERS, verified against
+// the C# and pinned as values rather than names. The F194 ledger row
+// still called the coven failure a non-fix ("no interior foe pool");
+// the IF slice had shipped the pool AND both doors under it - the row
+// was stale, and this re-sweep is its close.
+test('CV1: the punishment wave carries DFU\'s exact numbers and picks ONE type per wave', async () => {
+  const { DAEDRIC_FOES } = await import('../src/systems/daedraSummoning.js');
+  const { REFUSAL_FOE_COUNT, COVEN_FAIL_FOE_COUNT } = await import('../src/ui/daedraSummonedWindow.js');
+  // daedricFoes (DaggerfallQuestPopupWindow.cs:70-72), ORDER AND ALL -
+  // the Range(0,5) draw indexes this array, so a reorder changes which
+  // prince answers a given roll.
+  assert.deepEqual([...DAEDRIC_FOES],
+    ['DaedraLord', 'DaedraSeducer', 'Daedroth', 'FireDaedra', 'FrostDaedra']);
+  // Range(3, 6) = 3..5 (the refusal, DaggerfallDaedraSummonedWindow
+  // .cs:125); Range(1, 4) = 1..3 (the coven failure, :257).
+  assert.deepEqual([...REFUSAL_FOE_COUNT], [3, 5]);
+  assert.deepEqual([...COVEN_FAIL_FOE_COUNT], [1, 3]);
+  const WM = readFileSync(new URL('../src/scenes/worldModes.js', import.meta.url), 'utf8');
+  // ONE type per wave: the draw sits OUTSIDE the count loop, exactly
+  // as the C# passes one foeType and a SpawnCount to one spawner.
+  const at = WM.indexOf('function spawnDaedricPunishment');
+  const body = WM.slice(at, WM.indexOf('return stood;', at));
+  assert.ok(body.indexOf('DAEDRIC_FOES[') < body.indexOf('for (let i = 0; i < count; i++)'),
+    'the type is drawn once, before the loop - a per-foe draw is a different wave');
+  // The two distance rings, verbatim: refusal 8..64, coven 4..64.
+  assert.match(WM, /minDistance: 8, maxDistance: 64,/);
+  assert.match(WM, /minDistance: 4, maxDistance: 64,/);
+  // Both counts are inclusive-range draws off their constants.
+  assert.match(WM, /REFUSAL_FOE_COUNT\[0\] \+ Math\.floor\(Math\.random\(\) \* \(REFUSAL_FOE_COUNT\[1\] \+ 1 - REFUSAL_FOE_COUNT\[0\]\)\)/);
+  assert.match(WM, /COVEN_FAIL_FOE_COUNT\[0\] \+ Math\.floor\(Math\.random\(\) \* \(COVEN_FAIL_FOE_COUNT\[1\] \+ 1 - COVEN_FAIL_FOE_COUNT\[0\]\)\)/);
+});
