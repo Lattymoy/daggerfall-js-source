@@ -223,8 +223,14 @@ export class MobilePerson {
    * @returns {record, frame, flip} for the billboard
    */
   update(dt, cameraPos, wantsToStop = false) {
-    if (!wantsToStop && this.state === 'idle') this.state = 'move';
-    else if (wantsToStop && this.state !== 'idle') this.state = 'idle';
+    // AUDIT 26 F021: SetIdle resets `currentFrame = 0` and
+    // `animTimer = 1` on EVERY idle/move transition
+    // (MobilePersonBillboard.cs:292-313), so each state starts at its
+    // first frame. The port carried one monotonic frame/timer across
+    // states and took `frame % n` - a walker stopping to face the
+    // player entered the idle cycle at an arbitrary phase.
+    if (!wantsToStop && this.state === 'idle') { this.state = 'move'; this.frame = 0; this._timer = 0; }
+    else if (wantsToStop && this.state !== 'idle') { this.state = 'idle'; this.frame = 0; this._timer = 0; }
 
     if (this.state === 'seek') this._seek();
     else if (this.state === 'move') {

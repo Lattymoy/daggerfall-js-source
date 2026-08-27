@@ -228,7 +228,6 @@ alone, flagged at its new site inside calculateAttackDamage. The
 combat line numbers below are refreshed with it.
 
 - `src/characters/enemyCasting.js:71` - * the magicka and a ranged spell at all. FLAGGED, and narrow: in DFU
-- `src/characters/enemyMotor.js:928` - FLAGGED, until target prediction ships). At zero the foe stops.
 - `src/characters/mobileUnit.js:21` - clock). DEFERRED (FLAGGED): the Seducer transform pair.
 - `src/characters/paperdollArt.js:70` - *  needs no new field; FLAGGED: a remote list (shop stock, a corpse)
 - `src/characters/playerEntity.js:5` - chargenSession - AUDIT 23). INTERIM until then, loudly: flat
@@ -332,9 +331,9 @@ combat line numbers below are refreshed with it.
 - `src/systems/daedraSummoning.js:38` - FLAGGED: the .FLC summoning videos (HIRCINE.FLC and its fifteen
 - `src/systems/effects.js:25` - FLAGGED skipped (the library grows here).
 - `src/systems/effects.js:43` - *  effect (:515). FLAGGED: DFU pulls it from the localised string
-- `src/systems/effects.js:647` - enchantment bundles are FLAGGED to their own arc.
-- `src/systems/effects.js:1347` - out.skipped++;   // FLAGGED: the library grows one family at a time
-- `src/systems/effects.js:1351` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
+- `src/systems/effects.js:665` - enchantment bundles are FLAGGED to their own arc.
+- `src/systems/effects.js:1406` - out.skipped++;   // FLAGGED: the library grows one family at a time
+- `src/systems/effects.js:1410` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
 - `src/systems/enchantments.js:127` - had been FLAGGED at its own site since S4c - "a magic item still
 - `src/systems/enchantments.js:629` - a MagicRound-FLAGGED row's is the payload callback :1767
 - `src/systems/encounters.js:201` - * FLAGGED, both from the tail of the C#: the pacified/team test

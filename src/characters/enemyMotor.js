@@ -920,26 +920,48 @@ export class EnemyAI {
     return true;
   }
 
+  /** HandleNoAction (:357-366), the UNCONDITIONAL half - no target
+   *  (a pacified foe's equivalent in this single-target port), the
+   *  give-up timer spent, or a position never seen, and the search
+   *  ramp resets on EVERY arm. DFU also drops CanAct here; the port's
+   *  _classicTick keeps its own early returns for that half. */
+  _handleNoAction() {
+    if (!this.isHostile || this.giveUpTimer <= 0 || this.predictedTargetPos === null) {
+      this.searchMult = 0;
+    }
+  }
+
   _classicTick(playerFeet) {
-    // G1 (EnemyMotor verbatim): detection refills GiveUpTimer to 200
-    // classic ticks; while undetected it counts down and the foe KEEPS
-    // pursuing (12.5s of blind chase toward the target - DFU pursues
-    // the predicted last-known position; the live position stands in,
-    // FLAGGED, until target prediction ships). At zero the foe stops.
-    if (this.detected) this.giveUpTimer = GIVE_UP_TICKS;
-    else if (this.giveUpTimer > 0) this.giveUpTimer--;
-    if (!this.detected && this.giveUpTimer <= 0) { this.moving = false; return; }
-    // HandleNoAction (:357-366): no target, the give-up timer spent, or a
-    // position never seen, and the foe takes NO action - CanAct goes
-    // false and the search ramp resets. Wave 35 adds the third arm.
-    if (this.predictedTargetPos === null) { this.moving = false; this.searchMult = 0; return; }
+    // AUDIT 26 F010/F014: the GiveUpTimer refill/decrement used to live
+    // HERE, inside the CanAct-gated decision - fused, exactly what the
+    // finding names. It is UpdateTimers work and runs unconditionally
+    // now (_step), so a knocked-back or paralyzed foe still runs down
+    // its 12.5s blind-pursuit window. What remains here is TakeAction's
+    // own guard: by this point a detected foe has been refilled to 200,
+    // so `giveUpTimer <= 0` alone is DFU's HandleNoAction arm (:363 -
+    // no `!detected` term; the refill has already run).
+    if (this.giveUpTimer <= 0) { this.moving = false; return; }
+    // HandleNoAction's third arm (:357-366): a position never seen
+    // takes no action. The searchMult reset is hoisted with the rest
+    // of HandleNoAction (AUDIT 26 F012) - it fires on ALL THREE arms
+    // in _step, not just this one.
+    if (this.predictedTargetPos === null) { this.moving = false; return; }
     // GetDestination (:528-565), all three arms since wave 35.
     const detouring = this.avoidObstaclesTimer > 0;
     this._getDestination(playerFeet);
     const dx = this.destination[0] - this.feet[0], dz = this.destination[2] - this.feet[2];
-    // "If detouring, always attempt to move" (:480-484) - TakeAction's
-    // FIRST branch, ahead of the stop-distance test entirely, which is
-    // why a detouring foe walks past its own melee range to get round.
+    // Ranged attacks (:468-470) - the FIRST branch of TakeAction's
+    // action ladder, AHEAD of the detour (AUDIT 26 F011: the port took
+    // the detour first, so for up to 0.75s after an obstacle probe an
+    // archer walked its detour instead of standing off - it shot on
+    // the move; DFU's shooter in band with the target in sight stands
+    // off and shoots while avoidObstaclesTimer merely decays).
+    // DoRangedAttack reads senses.DistanceToTarget itself (:571-572),
+    // so the detour state does not change what it measures.
+    if (this._doRangedAttack(dx, dz)) return;
+    // "If detouring, always attempt to move" (:481-484) - ahead of the
+    // stop-distance test, which is why a detouring foe walks past its
+    // own melee range to get round.
     if (detouring) {
       if (!withinYaw(this.yaw, dx, dz, MOVE_YAW_GATE_DEG)) {
         this.yaw = turnTowards(this.yaw, dx, dz);
@@ -949,11 +971,6 @@ export class EnemyAI {
       this.moving = true;
       return;
     }
-    // Ranged attacks (:468-470) - AHEAD of the advance/retreat decision,
-    // and its `return true` is what keeps a shooter at its distance.
-    // (DoRangedAttack reads senses.DistanceToTarget itself, never the
-    // `distance` below - :571.)
-    if (this._doRangedAttack(dx, dz)) return;
     // :479-482 - THE DISTANCE THE STOP TEST USES. It is the distance to
     // the TARGET only while the target is in sight and no detour is
     // running; otherwise it is the distance to the DESTINATION, which
@@ -1016,6 +1033,15 @@ export class EnemyAI {
     // stealth context (see _senses).
     // C15: knockback is CanAct=false - decisions skip, senses run.
     const knocked = this.knockbackSpeed > 0;
+    // AUDIT 26 F010: CanAct, EXPOSED. HandleParalysis and
+    // KnockbackMovement clear it (:255, :317) and the attack/cast
+    // components' bow-roll and spell branches live behind
+    // `if (CanAct) TakeAction` in DFU (:171-172) - the port's
+    // components read this instead of re-deriving it, so a foe in
+    // hit-stun stops shooting and casting exactly as DFU's does.
+    // (The MELEE decision is CanAct-independent in DFU - EnemyAttack
+    // .FixedUpdate rolls it regardless - and stays ungated.)
+    this.canAct = !paralyzed && !knocked && this.isHostile;
     // EnemyMotor.UpdateTimers runs every FixedUpdate, after
     // HandleParalysis and KnockbackMovement have settled CanAct, and
     // BEFORE TakeAction reads avoidObstaclesTimer (:166-172).
@@ -1033,10 +1059,30 @@ export class EnemyAI {
     // "a classic tick happened this step" as the same thing, and says so.
     this._targetPosPredict = classicTicks > 0;
     this._senses(playerFeet, senses);
+    // AUDIT 26 F014 (UpdateTimers, UNCONDITIONAL - EnemyMotor.cs runs
+    // it every FixedUpdate at :170, after the CanAct writers and
+    // before the CanAct gate): detection refills GiveUpTimer to 200
+    // classic ticks (:419-420, every FixedUpdate); while undetected it
+    // counts down on the CLASSIC cadence (:423-424) and the foe keeps
+    // pursuing - 12.5s of blind chase. The port had both inside the
+    // gated decision, so a paralyzed foe froze its window and woke
+    // still hunting where DFU's had given up.
+    // AUDIT 26 F012 (HandleNoAction, UNCONDITIONAL - :168, ditto):
+    // no target (a pacified foe's equivalent - single-target port),
+    // the give-up timer spent, or a position never seen, and
+    // searchMult resets on EVERY arm (:357-366) - the port reset it
+    // on the third alone, so a foe that ramped its search to 10 and
+    // gave up resumed a later pursuit aiming 10 units past the
+    // last-known position. HandleNoAction runs BEFORE UpdateTimers'
+    // refill in DFU's order, and does here too.
+    this._handleNoAction();
+    if (this.detected) this.giveUpTimer = GIVE_UP_TICKS;
     for (let i = 0; i < classicTicks; i++) {
+      if (!this.detected && this.giveUpTimer > 0) this.giveUpTimer--;
       // C-slice: a pacified foe (IsHostile false) keeps its senses
-      // but takes no action - DFU's motor only pursues hostiles.
-      if (!paralyzed && !knocked && this.isHostile) this._classicTick(playerFeet);
+      // but takes no action - DFU's motor only pursues hostiles
+      // (its senses hold no Target, so HandleNoAction drops CanAct).
+      if (this.canAct) this._classicTick(playerFeet);
     }
     if (paralyzed || !this.isHostile) this.moving = false;
 

@@ -54,6 +54,10 @@ test('audit24 wave35: an archer STANDS OFF - it does not walk up to melee range'
   const mk = (opts) => {
     const ai = new EnemyAI(clearStub(), [0, 0, 0], 0, { liveSpeed: 50, ...opts });
     ai.detected = true;
+    // AUDIT 26 F014: the GiveUpTimer refill is UpdateTimers work and
+    // moved to _step, unconditional - by the time _classicTick runs, a
+    // detected foe holds 200. Direct _classicTick fixtures model that.
+    ai.giveUpTimer = 200;
     ai.inSight = true;
     ai.lastKnownTargetPos = [0, 0, 20];
     ai.predictedTargetPos = ai.lastKnownTargetPos;
@@ -92,7 +96,7 @@ test('audit24 wave35: an archer STANDS OFF - it does not walk up to melee range'
 
 test('audit24 wave35: the stand-off turns to face, and comes BEFORE the melee stop', () => {
   const ai = new EnemyAI(clearStub(), [0, 0, 0], Math.PI, { liveSpeed: 50, hasBowAttack: true });
-  ai.detected = true; ai.inSight = true;
+  ai.detected = true; ai.giveUpTimer = 200; ai.inSight = true;
   ai.lastKnownTargetPos = [0, 0, 20];
   ai.predictedTargetPos = ai.lastKnownTargetPos;
   ai.destination = ai.lastKnownTargetPos;
@@ -110,8 +114,14 @@ test('audit24 wave35: the stand-off turns to face, and comes BEFORE the melee st
   const body = src.slice(src.indexOf('  _classicTick(playerFeet) {'));
   assert.ok(body.indexOf('_doRangedAttack(dx, dz)') < body.indexOf('distance <= MELEE_DISTANCE'),
     'ranged first, melee stop second');
-  assert.ok(body.indexOf('if (detouring)') < body.indexOf('_doRangedAttack(dx, dz)'),
-    'and the detour override first of all');
+  // AUDIT 26 F011: this pin used to assert the detour came FIRST -
+  // restating the port rather than the C#. TakeAction calls
+  // DoRangedAttack (:469) and DoTouchSpell (:473) BEFORE the
+  // avoidObstaclesTimer branch (:481-484): a shooter in band with the
+  // target in sight stands off and shoots while the timer merely
+  // decays. The port shot on the move for up to 0.75s per probe.
+  assert.ok(body.indexOf('_doRangedAttack(dx, dz)') < body.indexOf('if (detouring)'),
+    'DoRangedAttack ahead of the detour branch (EnemyMotor.cs:469 vs :481)');
 });
 
 test('audit24 wave35: ClearPathToPosition is the two probes plus a cast, and it is a GATE', () => {
@@ -335,12 +345,32 @@ test('audit24 wave35: lastPositionDiff needs TWO consecutive sighted prediction 
 test('audit24 wave35: HandleNoAction - a target never seen means no action at all', () => {
   const ai = new EnemyAI(clearStub(), [0, 0, 0], 0, { liveSpeed: 50 });
   ai.detected = true;
+  ai.giveUpTimer = 200;
   ai.searchMult = 6;
   assert.equal(ai.predictedTargetPos, null, 'the ResetPlayerPos sentinel');
   ai.moving = true;
   ai._classicTick([0, 0, 5]);
   assert.equal(ai.moving, false, 'EnemyMotor.cs:359-364 - CanAct goes false');
-  assert.equal(ai.searchMult, 0, 'and the search ramp resets with it');
+  // AUDIT 26 F012: the searchMult reset is HandleNoAction's, which is
+  // NOT part of TakeAction - it runs unconditionally every FixedUpdate
+  // (:168), knocked back, paralyzed and pacified included. It lives in
+  // _handleNoAction now, and fires on ALL THREE arms, where the port
+  // reset it on the never-seen arm alone - a foe that ramped its
+  // search to 10 and gave up resumed a later pursuit aiming 10 units
+  // past the last-known position.
+  assert.equal(ai.searchMult, 6, '_classicTick no longer owns the reset');
+  ai._handleNoAction();
+  assert.equal(ai.searchMult, 0, 'the never-seen arm resets');
+  const gaveUp = new EnemyAI(clearStub(), [0, 0, 0], 0, { liveSpeed: 50 });
+  gaveUp.detected = false; gaveUp.giveUpTimer = 0; gaveUp.searchMult = 10;
+  gaveUp.lastKnownTargetPos = [0, 0, 5]; gaveUp.predictedTargetPos = gaveUp.lastKnownTargetPos;
+  gaveUp._handleNoAction();
+  assert.equal(gaveUp.searchMult, 0, 'the gave-up arm resets too (the arm the port missed)');
+  const pacified = new EnemyAI(clearStub(), [0, 0, 0], 0, { liveSpeed: 50 });
+  pacified.isHostile = false; pacified.giveUpTimer = 200; pacified.searchMult = 4;
+  pacified.lastKnownTargetPos = [0, 0, 5]; pacified.predictedTargetPos = pacified.lastKnownTargetPos;
+  pacified._handleNoAction();
+  assert.equal(pacified.searchMult, 0, 'and the no-target arm (a pacified foe)');
 });
 
 test('audit24 wave35: hasRangedSpell is the SELECTION-FREE half, and draws no roll', () => {
@@ -407,6 +437,7 @@ test('audit24 wave35: the wave-34 re-read - three corrections it produced', () =
   // is in sight (:479-482).
   const lost = new EnemyAI(clearStub(), [0, 0, 0], 0, { liveSpeed: 50 });
   lost.detected = true;
+  lost.giveUpTimer = 200;
   lost.inSight = false;
   lost.lastKnownTargetPos = [0, 0, 30];
   lost.predictedTargetPos = lost.lastKnownTargetPos;

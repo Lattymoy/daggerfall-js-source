@@ -336,6 +336,7 @@ test('audit24 wave34: boxed in, the sweep gives up after eight probes', () => {
 test('audit24 wave34: the detour is COMMITTED - it overrides the stop distance and cuts short on arrival', () => {
   const ai = new EnemyAI(world({}), [0, 0, 0], 0, { liveSpeed: 50 });
   ai.detected = true;
+  ai.giveUpTimer = 200;   // AUDIT 26 F014: the refill lives in _step now
   ai.inSight = true;
   ai._dist = 0.5;                       // well inside melee range
   // wave 35: HandleNoAction (:357-366) refuses to act at all until the
@@ -345,7 +346,7 @@ test('audit24 wave34: the detour is COMMITTED - it overrides the stop distance a
   ai.avoidObstaclesTimer = DETOUR_TIMER;
   ai.detourDestination = [0, 0, 5];
   ai._classicTick([0, 0, 0.5]);
-  assert.equal(ai.moving, true, 'TakeAction\'s FIRST branch: if detouring, always attempt to move');
+  assert.equal(ai.moving, true, 'if detouring, always attempt to move (:481-484 - behind the ranged arms since AUDIT 26 F011, but still ahead of the stop test)');
   assert.deepEqual(ai.destination, [0, 0, 5], 'and it steers at the detour, not the target');
 
   // UpdateTimers zeroes the timer inside 0.3 of the destination,

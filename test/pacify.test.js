@@ -18,9 +18,17 @@ const foe = (mobileType) => ({
   level: 1, health: 20, maxHealth: 20, mobileType,
 });
 // chanceMod 0 so the stored chance is exactly chanceBase
+// AUDIT 26 F072/F073: the arm rolls the no-magnitude SAVING THROW
+// after its chance now (EEM:565-580) - so the roll stream is a
+// sequence: the FIRST draw is the OnCast chance (as before), and
+// every later draw is the target's save, held high so the save FAILS
+// and the effect lands. A constant low roll would have the target
+// shrug every cast off - which is DFU's behaviour too, pinned in
+// audit26_magicgates.test.js.
+const seqRolls = (first) => { let i = 0; return () => (i++ === 0 ? first : 0.99); };
 const cast = (target, type, subType, chanceBase = 100, roll = 0.0) => applySpell(
   buildCustomSpell({ slots: [{ type, subType, settings: { ...blankEffectSettings(), chanceBase, chanceMod: 0 } }], rangeType: 1 }),
-  1, target, {}, () => roll, null, {});
+  1, target, {}, seqRolls(roll), null, {});
 
 test('X8: the four Pacify variants map to DFU\'s EnemyGroups in SetVariantProperties order', () => {
   // 0 Animals, 1 Undead, 2 Humanoid, 3 Daedra (PacifyEffect.cs:70-73)

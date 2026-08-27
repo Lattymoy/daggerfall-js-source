@@ -94,7 +94,10 @@ test('c2combat combat-12: the enemy melee DFRandom byte draws on every idle clas
   const tick = s.indexOf('this._classicTimer -= CLASSIC_UPDATE_INTERVAL;');
   const draw = s.indexOf('const meleePass = attackRollPasses(this.liveSpeed) && this.meleeTimer === 0;');
   const oneShot = s.indexOf("const oneShot = this.machine.state !== 'Idle';");
-  const band = s.indexOf('if (this.rangedAttack && ai.inSight && ai.detected && ai.giveUpTimer > 0');
+  // AUDIT 26 F010: the band arm gained the CanAct term (the bow roll
+  // rides `if (CanAct) TakeAction` in DFU, :171-172); the DRAW stays
+  // ahead of it, because EnemyAttack.FixedUpdate is CanAct-independent.
+  const band = s.indexOf('if (this.rangedAttack && ai.canAct !== false && ai.inSight && ai.detected && ai.giveUpTimer > 0');
   const gate = s.indexOf('if (!meleePass) continue;');
   assert.ok(draw > 0, 'the draw is the LEFT operand of the && (FixedUpdate :81)');
   assert.ok(band > draw, 'the draw precedes the band arm - the attack component ticks even for a banded bow foe');
