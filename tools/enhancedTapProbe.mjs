@@ -65,6 +65,15 @@ for (const [label, opts] of [
   const ctx = await browser.newContext(opts);
   const page = await ctx.newPage();
   await page.goto(`${BASE}/play/`, { waitUntil: 'networkidle' });
+  // PX1/PX8: the boot door opens on the PIXEL HOME now, not the rail.
+  // The home's own buttons are targets too, so it is measured before
+  // walking through it into the shell.
+  await page.waitForSelector('#enhanced-menu .px-home');
+  {
+    const bad = await page.evaluate(MEASURE, FLOOR);
+    check(`${label}: pixel home`, bad.length === 0, JSON.stringify(bad));
+  }
+  await page.locator('#enhanced-menu .px-menu button', { hasText: 'Load Game' }).click();
   await page.waitForSelector('#enhanced-menu .railbtn');
 
   // every pane, because a target that only exists under Settings is
