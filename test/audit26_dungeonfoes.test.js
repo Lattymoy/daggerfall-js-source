@@ -243,7 +243,10 @@ test('F036: the world host runs those rolls in the catch-up loop and calls Spawn
   assert.ok(fn.includes('legalRep: legalRepOf(playerEntity, _region)'), 'off the current region\'s LegalRep');
   assert.ok(fn.includes('severePunishmentFlags: playerEntity.regionConditions?.[_region]?.severePunishmentFlags ?? 0'),
     'and the region record\'s SeverePunishmentFlags');
-  assert.ok(fn.includes('playerEntity.crimeCommitted = CRIMES.Criminal_Conspiracy;'),
+  // V4 advanced this pin: every crime write routes through court.js's
+  // setCrimeCommitted (PlayerEntity.CrimeCommitted's setter - the
+  // SuppressCrime gate), so the levy is the setter call now.
+  assert.ok(fn.includes('setCrimeCommitted(playerEntity, CRIMES.Criminal_Conspiracy);'),
     'each success levies Criminal_Conspiracy first, exactly as :502/:509');
   assert.ok(fn.indexOf('intermittentEnemySpawn({') < fn.indexOf('passiveGuardSpawns({'),
     'after the spawn roll, which breaks out of the loop before them (:492)');

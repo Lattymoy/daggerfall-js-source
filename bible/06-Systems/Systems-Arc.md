@@ -3963,3 +3963,47 @@ sum, the Oghma end to end into applyLevelUp, both summons' gates with
 the unmounted door pinned ABSENT, the Wabbajack's forced reroll and
 latch with the world door's three laws, and Namira's four team arms
 plus the no-ring null.
+
+## V4 - THE BEAST IN TOWN: the transformed host laws (2026-08-27)
+
+LycanthropyEffect's transformed members, the host half the curse had
+been running without. The gates are lycanthropy.js's - the
+racialRestBlock shape, { text } or null, live only while
+isTransformed - and the two refusal lines are Internal_Strings
+380/381 READ VERBATIM from the sparse clone, widened to
+Assets/Localization for the purpose: "You cannot access the inventory
+while shapechanged..." (the ellipsis is the string's own) and "You
+get no response."
+
+WHERE EACH LANDS: talk at townTalk's B7 one-window-opener, so the
+mobile path, the static-NPC click and the guild TALK button all
+refuse at once; inventory at world/exterior's toggleInventory and
+INSIDE the dungeon's openInventory, loot included. CRIME through a
+new court.js setCrimeCommitted - PlayerEntity.CrimeCommitted's own
+setter (:2345-2355), which every scene write now routes through
+(talk.js's pickpocket write gates inline: court imports talk, so the
+one setter would close a cycle). POPULATION through a suppressSpawns
+gate on TownPopulation's PROMOTE arm alone (PopulationManager
+:174-191): pending walkers hold, the ones already out keep walking -
+the streets empty around the beast, DFU's own shape.
+
+AND THE CLAWS ARE REAL. The Werecreature rig - WEAPON11.CIF, the
+animation set, the unarmed machine - had shipped with the FPS weapon
+work and nothing ever selected it; the rig's per-frame worn-weapon
+sync now consults racialFpsWeapon and binds the WERECLAWS_ITEM marker
+the moment of the morph, whatever the hand slot holds: silent draw
+(DrawWeaponSound None), SwingHighPitch, hand-to-hand rules. The
+attack VOICES ride beside the player grunt at all three hit sites:
+10% the attack cry ELSE 20% the bark - two separate Dice100 rolls,
+strain-keyed (werewolf 144/143, wereboar 159/158).
+
+FLAGGED, each loudly: the transformed paperdoll body and the vampire
+art/voices, the 4-20s real-time move-sound loop, the allied-spawn
+door.
+
+Pins: 6 in `test/beastform.test.js` - the gates' transformed-only
+walk through the REAL morph and cure, the crime setter both sides
+with every scene write proven routed, the promote-arm hold, the claws
+end to end (marker -> type -> swing sound -> rig consult -> silent
+draw), the voice's two-separate-rolls law with both strains and all
+four clip ids, and the door sweep.

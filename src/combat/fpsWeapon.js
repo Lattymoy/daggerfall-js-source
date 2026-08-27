@@ -158,6 +158,10 @@ export function getWeaponAnims(weaponType) {
 export function weaponTypeForItem(item) {
   const W = WEAPONS, T = WEAPON_TYPES;
   if (!item) return T.Melee;
+  // V4: SetFPSWeapon's claws (LycanthropyEffect.cs:332-345) - the
+  // transformed rig binds the WERECLAWS_ITEM marker, which is not a
+  // template at all
+  if (item.werecreatureClaws) return T.Werecreature;
   let result;
   switch (item.templateIndex) {
     case W.Dagger: result = T.Dagger; break;
