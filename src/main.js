@@ -109,7 +109,7 @@ async function boot() {
     // the first gesture, and the menu must not wait on that.
     const { music } = await import('./systems/music.js');
     const { TITLE_THEME } = await import('./systems/enhancedMusic/scores.js');
-    music.playTrack(TITLE_THEME);
+    music.playEnhanced({ track: TITLE_THEME, song: null });
     status('main menu');
     const choice = await runEnhancedMenu();
     await ensureData();

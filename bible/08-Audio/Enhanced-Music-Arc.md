@@ -198,14 +198,66 @@ skipped, and the service re-levelling exactly its three players on
 exactly that key; each player's resyncGain ramping its master to the
 setting now).
 
+## EM2c (2026-08-27): THE DUNGEON TRACK, THE UNDERSCORE, THE CROSSFADE - SHIPPED
+
+Mac: "Fix it also. Here is also the new dungeon track. I have the
+danger and death tracks to follow."
+
+FIX IT ALSO: the M-EXT replacement player - the user's own music packs
+- took the FM trim too, a mastered file at a fifth of itself (0.22 x
+the default 0.5 = 0.11). It reads `trackGain()` now, the setting alone,
+beside the scheduler's `musicGain()`; one setting still moves both
+through the service's resync. The header that had recorded the shared
+law records the split.
+
+THE TRACK: 3:09, 48 kHz, peak 0.64; MP3 at VBR ~155 kbps (3.7 MB) at
+public/music/enhanced/dungeon.mp3, OURS. It is the first PLACE_SCORES
+record, and it carries a KEY: measured off the file's pitch-class
+energy (B 1.00, F# 0.42, D 0.32, C# 0.28, E 0.24 - a B minor triad with
+the aeolian second), root 47 (B2), aeolian, and MAC'S TO CONFIRM; no
+tempo named, so the piece keeps the palette's own.
+
+THE UNDERSCORE: `enhancedScore` answers `{ track, song }` now. A place
+with a score and a palette gets both, and the piece is composed IN THE
+TRACK'S KEY (the record's root and mode, and its tempo when named); a
+record that names no key plays alone rather than clash. The service's
+`playEnhanced` plays the track, then the piece UNDER it at
+UNDERSCORE_TRIM (0.35) on the scheduler's new master trim - felt more
+than heard: -19 dB under the track at the default setting, measured on
+the offline mix - and a piece alone plays at full trim through
+playScore's own door, which fades any track under. The dungeon seed law
+holds under a track: the same dungeon, the same piece, in B.
+
+THE CROSSFADE: the track player grew a LAYER gain per play under ONE
+master. A new track fades in over three seconds while the old layer
+fades out on its own timer and is then paused and released; the master
+carries the setting alone, so re-levelling never fights a fade. Fades
+ride AudioParams, never the element's volume.
+
+Heard: dungeon-with-underscore.wav, the track at the default setting
+with the B-aeolian piece under it at the trim, rendered offline through
+the real voice code - the balance is Mac's to move (UNDERSCORE_TRIM is
+one number). Pins: three more (the door composing in the track's key
+with every underscore note in it and the seed law under a track; the
+service - track then trimmed piece, idempotent, the piece never fading
+the track it sits under, a piece alone fading the track and playing at
+full trim, a track alone stopping the scheduler; the crossfade - the
+old layer to 0 and still playing, the new to its record gain, the
+master untouched, the old element paused when its timer fires). The
+replacement pin re-aimed at the split. 4 mutants, 4 dead.
+
+TO FOLLOW: the danger and death tracks. `EXTRA_SCORES` is their home -
+cues beyond DFU's, the enhanced side's own - and their doors are EM4
+(danger from the enemy-senses law, crossfading the dungeon track into
+its danger variant and back) and the death screen.
+
 ## The board
 
-1. **EM2 - MAC'S TRACKS FOR THE PLACES.** The player and the score
-   table exist (EM2a); what remains is PLACE_SCORES entries as tracks
-   arrive - each with the track's key and tempo so the composed piece
-   plays UNDERNEATH it at a lower gain - and the crossfade between two
-   tracks on a cue change (equal-power, a few seconds; the pure
-   director's shape from project-final). Each file gets an OURS row.
+1. **EM2 - MAC'S TRACKS FOR THE PLACES.** The machinery is whole
+   (EM2a-c): a record per place with the track's key, the piece under
+   it, the crossfade. What remains is the records, one per track as it
+   arrives, each with an OURS row - and the danger and death cues in
+   EXTRA_SCORES with their doors (EM4, the death screen).
 2. **EM3 - THE OTHER PLACES.** Palettes for the city by day and by
    night, wilderness with the weather folded in as the director folds
    it, taverns (the one place that wants percussion), temples, the
