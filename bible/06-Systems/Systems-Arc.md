@@ -4088,3 +4088,43 @@ with the ship pairs, the negative-degree clock across mixed frame
 pacing (values off the 0.02 boundary: the accumulator is float math),
 the window's gate-and-order laws, and the host pass's bracket order
 with both states restored.
+
+## G7b - THE PRINCE ON FILM: the summoning videos (2026-08-27)
+
+The board's item two, and G7's recorded residue. A successful
+summoning now plays the prince's own .FLC - sixteen films, one per
+Daedra, the names the DAEDRA table has carried since G7 - through
+`ui/daedraSummonedWindow.js`, which is DaggerfallDaedraSummonedWindow
+whole: the film fullscreen at 320x200 and LOOPING (FLCPlayer.Loop's
+default - the reader is F1's FlcFile and F2a's FlcPlayer, built for
+the chargen constellations and reused untouched), the quest offer
+read over the bottom in FOUR-LINE chunks (TextLinesPerChunk 4 - DFU
+steps tokens by eight, the port flattens to lines first and steps
+four; one law, two spellings, recorded), a click or any key turning
+the page, and the LAST chunk answering to Yes/No alone.
+
+THE WINDOW IS PRESENTATION; THE MACHINE IS REAL. It consumes the
+offer flow's own STEP ({ kind:'offer', prompt, respond }) - the same
+machinery the ServiceFlowWindow boxes wrap - so Yes runs
+startQuestImmediate and the accept message, No runs the rumor and
+topic sweeps and the refusal, and the answer's message reads through
+the same chunks before the last click closes (one close, however
+many keys land on the tail). The refusal ALSO owes 3-5 daedra at
+8..64 units (:86-87, the window's own spawn, distinct from the quest
+popup's 1-3): that rides a spawnRefusalFoes door FLAGGED unmounted -
+the interior foe pool's standing gap, the same seam the coven
+failure records.
+
+THE HOST MOUNTS ONE CONSUMER of the step: worldModes fetches the
+film on a successful summons and mounts the window when the FLC
+reads; an unreadable or unfetchable film falls back to the box chain
+- never traps, and never two respond() paths for one offer. The FLC
+texture rides the chargen release-then-upload law and the drain's
+bare dispose() releases the last frame.
+
+Pins: 5 in `test/daedrasummonwindow.test.js` - the token pairing,
+the chunk walk with the last-offer-page click doing NOTHING (DFU
+waits on Yes/No), Yes through the real respond with paging-not-
+re-responding pinned past the answer, No's flagged spawn and the
+empty-popup immediate close, and the sixteen distinct films with the
+host's one-consumer order and fallback greps.
