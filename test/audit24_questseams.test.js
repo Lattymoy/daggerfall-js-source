@@ -35,8 +35,9 @@ const PENDING = new Map([
   // the placement law sat fully ported in sceneMount.js with no
   // caller. A ported function with no caller is a comment.
   // B3 (blocker 3) MOUNTED the respawn trio - respawnPlayerAtSite,
-  // isRespawning, setPlayerScenePosition (the Building arm alone
-  // stays FLAGGED at the mount and answers false).
+  // isRespawning, setPlayerScenePosition (BT1 retired the Building
+  // flag: DFU's TeleportPc has no building arm - insideDungeon is
+  // hardcoded true for every place).
   // M-X: the macro table's talk/news and interior reads - the
   // handlers answer the charter's null through optional reads until
   // the talk-news arc (the TalkManager getters, the lord names) and

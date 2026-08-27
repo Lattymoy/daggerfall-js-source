@@ -63,7 +63,6 @@ import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   //
 import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1
-import { SITE_TYPES } from '../systems/quest/place.js';   // B3: the respawn dispatch reads the site type
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE, setEnemyAlert, areEnemiesNearby, passiveGuardSpawns } from '../systems/encounters.js';   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { snapshotPlayer, restorePlayer, composeSessionState, restoreSessionState } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
@@ -1755,18 +1754,22 @@ export async function bootWorld(canvas, renderer, params, status) {
   // dungeon. The port's halves all existed - forceExitToExterior,
   // _teleportToPixel, startInDungeon - and nothing composed them, so
   // every TeleportPc idled forever on its declared-pending seam.
-  // FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
-  // Interior off exteriorDoors) still pends for QUEST teleports -
-  // respawnPlayerAtSite answers false for Building sites and the
-  // action keeps retrying, the same idle as before for that one site
-  // type. IS1 built the door-finder half (modes.restoreInterior keys
-  // a saved door identity into the live doorTargets), but a quest
-  // site arrives with a buildingKey and NO saved door or position -
-  // the marker landing is its own work. Dungeon-less locations fall
-  // through to the exterior landing, which is C#'s own "all else
-  // fails" arm (:561-565).
+  // BT1 (2026-08-27) RETIRED THE BUILDING FLAG by reading the caller:
+  // DFU's TeleportPc is a PARTIAL implementation by its own header
+  // ("Does not exactly emulate classic for 'transfer pc inside'...")
+  // and hardcodes RespawnPlayer(x, y, insideDungeon: TRUE) for EVERY
+  // place (TeleportPc.cs:113-118) - there is no building arm in DFU to
+  // port, so the refusal that idled the action forever was the
+  // divergence, not the missing feature. The composer attempts the
+  // dungeon UNCONDITIONALLY; dungeon-less locations fall through to
+  // the exterior landing, C#'s own "all else fails" arm (:561-565),
+  // and a building-site teleport takes the same path, marker math and
+  // all - the C#'s dungeon-space landing for a non-dungeon marker is
+  // the recorded wart. The shipped corpus never reaches it: every
+  // `teleport pc to` targets a dungeon place and `transfer pc inside`
+  // is S0000016's story dungeon alone.
   let _respawning = false;
-  async function _respawnAtSite(loc, siteType) {
+  async function _respawnAtSite(loc) {
     modes?.forceExitToExterior();
     const px = longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude);
     await _teleportToPixel(px.x, px.y);
@@ -1777,10 +1780,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!weatherOverride && weatherRespawn(Math.floor(playerTicker.classicMinutes), maps.getClimateIndex(px.x, px.y))) {
       applyWeather(currentWeather());
     }
-    if (siteType === SITE_TYPES.Dungeon) {
-      const entered = await modes?.startInDungeon();
-      if (!entered) console.warn('[quest] respawn: no dungeon entrance at site - exterior landing (the C# fallback arm)');
-    }
+    // insideDungeon TRUE always (TeleportPc.cs:116) - never a site-type
+    // dispatch; the entrance failing IS the exterior fallback.
+    const entered = await modes?.startInDungeon();
+    if (!entered) console.warn('[quest] respawn: no dungeon entrance at site - exterior landing (the C# fallback arm)');
     surfacePlayer();
   }
   let _traveling = false;
@@ -2795,18 +2798,18 @@ export async function bootWorld(canvas, renderer, params, status) {
      *  modes host (dungeon mode owns the only rest overlay). */
     raiseOnEncounterEvent: () => modes?.raiseOnEncounterEvent?.(),
     // ---- B3: THE RESPAWN SEAMS (TeleportPc's transport - see
-    // _respawnAtSite above for the composition and the Building flag).
+    // _respawnAtSite above for the composition and the BT1 record of
+    // DFU's own partial implementation).
     /** GetLocation + RespawnPlayer (TeleportPc.cs:96-118): true =
      *  the respawn STARTED (the action idles on isRespawning); false =
-     *  unresolvable location or an unsupported site type, retry. */
+     *  unresolvable location, retry - the C#'s ONLY refusal. */
     respawnPlayerAtSite: (place) => {
       const sd = place?.siteDetails;
       if (!sd || _respawning) return false;
-      if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
       const loc = maps.getLocationByName(sd.regionName, sd.locationName);
       if (!loc?.loaded) return false;
       _respawning = true;
-      _respawnAtSite(loc, sd.siteType)
+      _respawnAtSite(loc)
         .catch((e) => console.error('[quest] respawn failed:', e?.message ?? e))
         .finally(() => { _respawning = false; });
       return true;
