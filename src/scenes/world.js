@@ -2252,6 +2252,9 @@ export async function bootWorld(canvas, renderer, params, status) {
         loadKey: (key) => worldQuickLoad({ key }),
         exitToMenu: exitToTitleMenu,
         textLines: (id) => townTalk.lines(id),
+        // PX3: the pause window's Quests tab - the SAME seam the F5
+        // logbook reads (:1525).
+        questMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
       });
     },
     cycleMode: (dir) => townTalk.setMode(dir > 0 ? hudLargeNextMode(getInteractionMode()) : hudLargePrevMode(getInteractionMode())),

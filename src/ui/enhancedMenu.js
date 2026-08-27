@@ -99,6 +99,12 @@ import { BUILD_TAG } from '../buildTag.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { repaintKeepingScroll } from './domRepaint.js';
 import { drawPixelGround } from './pixelGround.js';
+// PX3: the pause window's Stats tab reads the shared player entity
+// through the char sheet's own model - one law, not a restatement.
+// Both are plain modules with no game data; the boot door never
+// renders the tab, so the front door still reads no game state.
+import { sheetModel } from './enhancedCharSheet.js';
+import { playerEntity } from '../characters/playerEntity.js';
 import { overlayAction } from './input.js';   // U51: Escape, through the shared table
 
 // ── THE RAIL ─────────────────────────────────────────────────────
@@ -146,6 +152,7 @@ let keyHandler = null;
 let lockHandler = null;
 let resizeHandler = null;   // PX1: the home ground's redraw-on-resize
 let groundTimer = null;     // PX1b: the home sky's 8fps clock - cleared by every rebuild and by unmount
+let pauseTab = 'system';    // PX3: which tab the pause window shows - System lands on Resume/Save
 
 const el = (t, cls, txt) => {
   const n = document.createElement(t);
@@ -741,12 +748,23 @@ function renderHome() {
   }
   home.append(el('div', 'px-vignette'));
 
-  const stage = el('div', 'px-stage');
-  if (!paused) {
-    const mark = el('h1', 'px-wordmark', 'Daggerfall');
-    mark.append(el('small', null, 'JavaScript'));
-    stage.append(mark);
+  // PX3: PAUSE IS A WINDOW, NOT A SECOND MAIN MENU (Mac's reference:
+  // Skyrim's journal - a framed panel with tabs over the paused game).
+  // Three tabs: Quests, Stats, System. The window replaces the
+  // fullscreen list; the foot and the About plaque stay on the scrim.
+  if (paused) {
+    const stage = el('div', 'px-stage');
+    stage.append(pauseWindow());
+    home.append(stage);
+    appendPxFoot(home);
+    app.append(home);
+    return;
   }
+
+  const stage = el('div', 'px-stage');
+  const mark = el('h1', 'px-wordmark', 'Daggerfall');
+  mark.append(el('small', null, 'JavaScript'));
+  stage.append(mark);
   const rule = el('div', 'px-rule');
   rule.append(el('span', 'px-gem'));
   stage.append(rule);
@@ -768,9 +786,15 @@ function renderHome() {
   stage.append(menu);
   home.append(stage);
 
-  // PX1b: three-zone foot - build left, the skin toggle CENTERED (its
-  // 'switch anytime' hint hidden here by the px-foot rules; the shell
-  // keeps it), and About as the bottom-right box.
+  appendPxFoot(home);
+  app.append(home);
+}
+
+/** PX1b: three-zone foot - build left, the skin toggle CENTERED (its
+ *  'switch anytime' hint hidden here by the px-foot rules; the shell
+ *  keeps it), and About as the bottom-right box. One builder for both
+ *  faces (PX3 gave pause its own stage). */
+function appendPxFoot(home) {
   const foot = el('div', 'px-foot');
   const build = el('span', 'px-build');
   build.append(document.createTextNode('build '), el('span', null, BUILD_TAG));
@@ -778,7 +802,103 @@ function renderHome() {
   about.onclick = () => go('about');
   foot.append(build, skinSwitch(), about);
   home.append(foot);
-  app.append(home);
+}
+
+// ── PX3: THE PAUSE WINDOW ────────────────────────────────────────
+const PAUSE_TABS = Object.freeze([['quests', 'Quests'], ['stats', 'Stats'], ['system', 'System']]);
+// The token formattings that carry a journal line - questJournal's own
+// counted set (DaggerfallQuestJournalWindow.cs:658-662 via its :322).
+const JOURNAL_LINE_FORMATTINGS = new Set(['text', 'newline', 'highlight', 'question', 'answer']);
+
+function pauseWindow() {
+  const win = el('div', 'px-win');
+  for (const c of ['tl', 'tr', 'bl', 'br']) win.append(el('span', `px-gem px-corner px-${c}`));
+
+  const tabs = el('div', 'px-tabs');
+  for (const [id, label] of PAUSE_TABS) {
+    const b = el('button', id === pauseTab ? 'on' : null);
+    b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label), el('span', 'px-c', '\u25c6'));
+    b.onclick = () => { pauseTab = id; render(); };
+    tabs.append(b);
+  }
+  win.append(tabs);
+
+  const body = el('div', 'px-body');
+  ({ quests: pauseQuests, stats: pauseStats, system: pauseSystem })[pauseTab](body);
+  win.append(body);
+  return win;
+}
+
+/** The System tab: the pause actions, compact. About stays the corner
+ *  plaque; everything else keeps its shell pane, so no law moved. */
+function pauseSystem(body) {
+  const list = el('div', 'px-menu px-compact');
+  for (const label of sections) {
+    if (label === 'About') continue;
+    const id = idOf(label);
+    const b = el('button');
+    b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label), el('span', 'px-c', '\u25c6'));
+    b.onclick = RAIL_ACTS[id] ? () => onAction(RAIL_ACTS[id]) : () => go(id);
+    list.append(b);
+  }
+  body.append(list);
+}
+
+/** The Stats tab: the char sheet's OWN model over the shared entity -
+ *  the summary a pause glance wants; the full sheet stays the F5
+ *  window's. */
+function pauseStats(body) {
+  const m = sheetModel(playerEntity);
+  const head2 = el('div', 'px-statshead');
+  head2.append(el('strong', null, m.name || 'Adventurer'));
+  head2.append(el('span', null, `${m.race} ${m.career}${m.career ? ', ' : ''}Level ${m.level}`));
+  body.append(head2);
+  const vit = el('div', 'px-statgrid');
+  for (const [label, v] of [
+    ['Health', `${m.health.now} / ${m.health.max}`],
+    ['Fatigue', `${m.fatigue.now} / ${m.fatigue.max}`],
+    ['Magicka', `${m.magicka.now} / ${m.magicka.max}`],
+    ['Gold', String(m.gold)],
+    ['Encumbrance', `${m.encumbrance.now} / ${m.encumbrance.max}`],
+  ]) {
+    const r = el('div', 'px-stat');
+    r.append(el('span', 'k', label), el('span', 'v', v));
+    vit.append(r);
+  }
+  body.append(vit);
+  const attrs = el('div', 'px-statgrid px-attrs');
+  for (const a of m.attributes) {
+    const r = el('div', 'px-stat');
+    r.append(el('span', 'k', a.key.slice(0, 3).toUpperCase()), el('span', 'v', String(a.value)));
+    attrs.append(r);
+  }
+  body.append(attrs);
+}
+
+/** The Quests tab: the machine's own log messages through the host's
+ *  questMessages hook - the SAME seam the F5 logbook reads
+ *  (world.js:1525). A host without the hook says so rather than
+ *  drawing an empty page that lies about the journal. */
+function pauseQuests(body) {
+  const src = hooks.questMessages;
+  if (!src) {
+    body.append(el('p', 'px-note', 'The journal is not wired into this place yet.'));
+    return;
+  }
+  const msgs = src() ?? [];
+  if (!msgs.length) {
+    body.append(el('p', 'px-note', 'No active quests.'));
+    return;
+  }
+  for (const msg of msgs) {
+    const tokens = Array.isArray(msg) ? msg : (msg?.getTextTokens?.() ?? []);
+    const lines = tokens.filter((t) => JOURNAL_LINE_FORMATTINGS.has(t?.formatting)).map((t) => String(t?.text ?? ''));
+    if (!lines.length) continue;
+    const q = el('div', 'px-quest');
+    for (const line of lines) q.append(el('p', null, line));
+    body.append(q);
+  }
+  if (!body.childElementCount) body.append(el('p', 'px-note', 'No active quests.'));
 }
 
 function render() {
@@ -941,6 +1061,7 @@ export function mountEnhancedMenu(host, {
   // PX2 trades one press of depth for the face Mac adopted, with Save
   // Game the second row a thumb meets and Resume the first.
   section = 'home';
+  pauseTab = 'system';
   category = CATEGORIES[0].id;
   pickedKey = null;
   sheetOpen = false;

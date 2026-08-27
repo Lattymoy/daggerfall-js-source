@@ -2954,6 +2954,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         loadKey: (key) => ctx.quickLoad?.(setPlayerPos, key),
         exitToMenu: exitToTitleMenu,
         textLines: (id) => rscLines(id),
+        // PX3 FLAGGED: questMessages - the dungeon quest mount is
+        // itself a pending seam (AUDIT 25 P0), so the pause window's
+        // Quests tab says so here too.
       });
     },
     /** A1: the M window, in the one overlay slot (toggleCharSheet's

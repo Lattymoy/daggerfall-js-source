@@ -1052,6 +1052,63 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 /* PX2: the pause face - a scrim, not the night; the paused frame is
    the ground. */
 .px-home.px-over { background: rgba(10,12,17,0.78); }
+/* ── PX3: THE PAUSE WINDOW ── a framed panel with tabs (Mac's
+   reference: Skyrim's journal), whole pixels throughout: 2px border,
+   corner gems, a tab strip whose active tab wears the classic gold
+   pair. The window scrolls its body; the scrim keeps the foot. */
+.px-win { position: relative; width: min(860px, 94vw); height: min(620px, 74dvh);
+  display: flex; flex-direction: column;
+  background: rgba(10,12,17,0.88); border: 2px solid #7d7460; }
+/* Each gem CENTERS on its corner: the core is 2px with 4px shadow
+   arms, so a translate by half its own size puts the diamond's heart
+   exactly on the frame's corner point. SCOPED under .px-win because
+   the base .px-gem rule sits LATER in this sheet and its
+   position:relative won the single-class tie - all four gems piled up
+   relative at the top-left (caught by the geometry probe). */
+.px-win .px-corner { position: absolute; }
+.px-win .px-tl { left: -1px; top: -1px; transform: translate(-50%,-50%); }
+.px-win .px-tr { right: -1px; top: -1px; transform: translate(50%,-50%); }
+.px-win .px-bl { left: -1px; bottom: -1px; transform: translate(-50%,50%); }
+.px-win .px-br { right: -1px; bottom: -1px; transform: translate(50%,50%); }
+.px-tabs { display: flex; justify-content: center; gap: 4px;
+  border-bottom: 2px solid rgba(125,116,96,0.55); padding: 6px 8px 2px; }
+.px-tabs button { font: inherit; font-size: 20px; letter-spacing: 0.16em; text-indent: 0.16em;
+  text-transform: uppercase; color: #d8cfae; background: none; border: 0; cursor: pointer;
+  min-height: 44px; padding: 6px 18px; display: flex; align-items: center; gap: 12px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); transition: none; }
+.px-tabs button .px-c { font-size: 15px; color: rgb(243,239,44); visibility: hidden;
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-tabs button:hover, .px-tabs button:focus-visible { outline: none;
+  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-tabs button.on { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-tabs button.on .px-c, .px-tabs button:hover .px-c, .px-tabs button:focus-visible .px-c { visibility: visible; }
+.px-body { flex: 1; overflow-y: auto; padding: 18px 26px; }
+/* System: the same floating list, sized for a panel. */
+.px-menu.px-compact { gap: 0; }
+.px-menu.px-compact button { font-size: 22px; min-height: 46px; padding: 6px 22px; }
+/* Stats */
+.px-statshead { display: flex; flex-direction: column; align-items: center; gap: 4px;
+  margin: 6px 0 16px; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-statshead strong { font-size: 26px; font-weight: 400; letter-spacing: 0.1em; }
+.px-statshead span { color: #7d7460; font-size: 16px; letter-spacing: 0.12em; text-transform: uppercase; }
+.px-statgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 6px 18px; margin-bottom: 14px; }
+.px-stat { display: flex; justify-content: space-between; gap: 10px;
+  border-bottom: 2px solid rgba(125,116,96,0.3); padding: 6px 2px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-stat .k { color: #7d7460; font-size: 15px; letter-spacing: 0.14em; text-transform: uppercase; align-self: center; }
+.px-stat .v { font-size: 19px; white-space: nowrap; }
+.px-attrs { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
+/* Quests */
+.px-quest { margin: 0 0 16px; padding: 10px 14px; border-left: 2px solid var(--brass);
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-quest p { margin: 0 0 4px; font-size: 17px; line-height: 1.45; }
+.px-note { color: #7d7460; text-align: center; margin-top: 24px; font-size: 17px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+@media (max-width: 480px) {
+  .px-win { width: 100vw; height: calc(100dvh - 92px); border-left: 0; border-right: 0; }
+  .px-tabs button { font-size: 17px; letter-spacing: 0.1em; text-indent: 0.1em; padding: 6px 10px; gap: 8px; }
+}
 .px-ground { position: absolute; left: -25%; top: -25%; width: 150%; height: 150%;
   image-rendering: pixelated; animation: px-drift 160s linear infinite alternate; }
 @keyframes px-drift { from { transform: translate(0,0) } to { transform: translate(4%,2%) } }

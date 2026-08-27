@@ -6425,3 +6425,31 @@ scrim on, sky and wordmark absent, Save pane opens, Escape home,
 Escape resumes exactly once, zero page errors. STANDING CAVEAT: the
 scrim is tuned against a stand-in - the first real-ARENA2 eyeball may
 move the 0.78.
+
+PX3 (same day, Mac's reference: Skyrim's journal): PAUSE IS A WINDOW,
+NOT A SECOND MAIN MENU. The pause face became a framed panel -
+min(860px, 94vw) x min(620px, 74dvh), 2px border, four corner gems
+CENTERED on the frame's corner points - with three tabs: QUESTS,
+STATS, SYSTEM (the landing tab; Resume and Save under a thumb). The
+Quests tab reads the machine's own log messages through a NEW
+`hooks.questMessages` seam - the SAME expression the F5 logbook reads
+- flattening each message's counted formattings (questJournal's own
+set) into paragraph blocks with a brass rail; THE FOUR HOSTS RULE:
+world.js WIRED, worldModes/exterior/dungeonContext FLAGGED by name at
+their own openPauseFlow sites (worldModes has no bridge handle yet,
+exterior mounts no machine, the dungeon quest mount is itself AUDIT
+25 P0), each saying so in the tab rather than drawing an empty page
+that lies. The Stats tab is `sheetModel(playerEntity)` - the char
+sheet's OWN model, one law - as name/race/career/level, five vitals
+rows and the eight attributes; the full sheet stays the F5 window's.
+The System tab is the pause list compact (About stays the corner
+plaque); every row keeps its shell pane, Escape from a pane returns
+to the window, Escape on the window resumes. The foot builder
+extracted (appendPxFoot) so both faces share one. TWO CSS LESSONS
+CAUGHT BY PROBES: the corner gems piled up relative at the top-left
+because base .px-gem sits LATER in the sheet and won the single-class
+tie (now scoped .px-win .px-corner), and the probe itself first
+collided with the lab page's own hidden boot menu (scope selectors to
+the probe host). Probed live: two quest blocks render, 13 stat rows,
+Save pane opens from System, Escape window, Escape resumes once,
+zero page errors, desktop + phone.
