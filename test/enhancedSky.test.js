@@ -221,3 +221,77 @@ test('ES1 seam: enhanced skin only, one renderer field, the classic pass untouch
   // The lab is a page like the other prototypes, built as one.
   assert.match(read('vite.config.js'), /sky: 'sky\.html',/);
 });
+
+// ── ES1c: THE POLISH (2026-08-27, Mac: "how can we improve this") ──
+// Four of five taken: the banding, the clouds, the weather's snap, the
+// stars standing still. (The fifth - cloud shadow on the world - is a
+// world change, not a sky one, and stays on the board.)
+import { easeWeather, weatherRow, WEATHER_EASE_SECONDS, STAR_POLE } from '../src/render/enhancedSky.js';
+
+test('ES1c weather: the sim flips in a frame, the sky walks - eased, monotone, and whole on the first call', () => {
+  const clear = weatherRow('sunny'), storm = weatherRow('thunder');
+  assert.deepEqual(easeWeather(null, storm, 1), { ...storm }, 'the first call takes the row whole: a boot into rain is rain');
+  assert.deepEqual(easeWeather(clear, storm, 0), { ...clear }, 'no time, no move');
+  // One step is a fraction of the way, and the way is monotone.
+  let row = clear, last = clear.cover;
+  for (let t = 0; t < 60; t += 1 / 60) {
+    row = easeWeather(row, storm, 1 / 60);
+    assert.ok(row.cover >= last - 1e-12, 'cover never goes backwards on the way to a stormier row');
+    last = row.cover;
+  }
+  const span = storm.cover - clear.cover;
+  assert.ok(Math.abs(row.cover - storm.cover) < span * 0.02, `a minute in it has all but arrived (${(row.cover).toFixed(4)} of ${storm.cover})`);
+  const half = easeWeather(clear, storm, WEATHER_EASE_SECONDS);
+  assert.ok(half.cover > clear.cover && half.cover < storm.cover, 'at the time constant it is part way, not there');
+  assert.ok(Math.abs(half.cover - (clear.cover + (storm.cover - clear.cover) * (1 - Math.exp(-1)))) < 1e-9, 'exponential, one time constant');
+  // Every number the shader takes eases, colours included.
+  for (const k of ['cover', 'soft', 'grey']) assert.ok(Number.isFinite(half[k]), k);
+  assert.equal(half.wind.length, 2);
+  assert.equal(half.lit.length, 3);
+  assert.ok(half.lit.every((v, i) => (v - clear.lit[i]) * (storm.lit[i] - clear.lit[i]) >= 0), 'the cloud colours ease too');
+  assert.ok(WEATHER_EASE_SECONDS >= 5 && WEATHER_EASE_SECONDS <= 30, `${WEATHER_EASE_SECONDS}s: a weather turns, it does not cut`);
+  // skyState takes the eased row over the type's own.
+  const eased = skyState({ minuteOfDay: 12 * 60, weather: 'sunny', row: half });
+  assert.equal(eased.cloudCover, half.cover, 'the state is built from the eased row');
+  assert.notEqual(eased.cloudCover, weatherRow('sunny').cover);
+  // And the controller keeps one and walks it.
+  const shared = read('src/scenes/shared.js');
+  assert.match(shared, /weatherRowNow = easeWeather\(weatherRowNow, want, dt\);/);
+  assert.match(shared, /row: weatherRowNow,/);
+});
+
+test('ES1c stars: the field wheels about a pole, one turn a day, on the same clock as the sun', () => {
+  const at = (h) => skyState({ minuteOfDay: h * 60 }).starAngle;
+  assert.equal(at(0), 0);
+  assert.ok(Math.abs(at(12) - Math.PI) < 1e-9, 'half a turn by noon');
+  assert.ok(Math.abs(at(24) - Math.PI * 2) < 1e-9, 'a full turn a day');
+  assert.ok(at(3) > at(0) && at(21) > at(3), 'it only goes one way');
+  // The pole is a unit vector, off the zenith, so the field wheels at an
+  // angle rather than spinning flat overhead.
+  const len = Math.hypot(...STAR_POLE);
+  assert.ok(Math.abs(len - 1) < 1e-6, `${len}: a direction`);
+  assert.ok(STAR_POLE[1] > 0.3 && STAR_POLE[1] < 0.9, 'tilted: neither flat nor overhead');
+  assert.deepEqual(skyState({ minuteOfDay: 60 }).starPole, STAR_POLE, 'and the state carries it to the shader');
+  const fs = read('src/render/enhancedSky.js');
+  assert.match(fs, /float ca = cos\(uStarAngle\), sa = sin\(uStarAngle\);/, 'the turn is the CLOCK\'s angle - a constant here is a field that stands still');
+  assert.match(fs, /vec3 d = dir \* ca \+ cross\(axis, dir\) \* sa \+ axis \* dot\(axis, dir\) \* \(1\.0 - ca\);/, 'Rodrigues about the pole');
+  assert.match(fs, /vec2 sc = vec2\(atan\(d\.x, d\.z\), asin\(clamp\(d\.y, -1\.0, 1\.0\)\)\);/, 'the field is sampled in the TURNED frame');
+  assert.match(fs, /smoothstep\(0\.0, 0\.08, dir\.y\)/, '...but a star sets where the REAL horizon is');
+});
+
+test('ES1c clouds and dither: two decks lit by the sun, and a triangular dither on the gradient', () => {
+  const fs = read('src/render/enhancedSky.js');
+  // Two decks: a high one and a low one, the low occluding the high.
+  assert.match(fs, /vec2 deck\(vec3 dir, float scale, vec2 wind, float cover, float soft, float bias\)/);
+  assert.match(fs, /vec2 hi = deck\(dir, 0\.95, uWind \* 0\.55,/, 'the high deck is smaller and slower');
+  assert.match(fs, /vec2 lo = deck\(dir, 1\.9, uWind,/, 'the low one larger and faster - so they move against each other');
+  assert.match(fs, /float covHi = hi\.x \* \(1\.0 - lo\.x\) \* 0\.7;/, 'the low deck covers the high one where it is');
+  // Lit by the sun: a rim toward it, a darker belly away from it.
+  assert.match(fs, /float sunAz = max\(dot\(dir, uSunDir\), 0\.0\);/);
+  assert.match(fs, /cc \+= uSunColor \* rim \* 0\.55 \* uSunVis;/, 'the rim is the sun through the edge, and is nothing at night');
+  assert.match(fs, /\(1\.0 - pow\(sunAz, 0\.7\)\) \* thick/, 'and the belly darkens away from it');
+  assert.doesNotMatch(fs, /vec3 cc = mix\(uCloudShade, uCloudLit, smoothstep\(0\.5, 0\.95, n\)\);/, 'the old unlit colouring is gone');
+  // The dither: triangular, one quantisation step, on the final write.
+  assert.match(fs, /float d = \(hash21\(gl_FragCoord\.xy\) \+ hash21\(gl_FragCoord\.xy \+ 13\.7\) - 1\.0\) \/ 255\.0;/);
+  assert.match(fs, /outColor = vec4\(mix\(clamp\(color, 0\.0, 1\.0\), uFogColor, uFogMix\) \+ d, 1\.0\);/, 'added at the write, after the fog');
+});

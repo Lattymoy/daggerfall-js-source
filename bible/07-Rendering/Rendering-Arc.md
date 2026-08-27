@@ -622,7 +622,60 @@ world's geometry covers this band in play, and where it does not - the
 streamed world's far edge - a pale band blends into the distance haze
 where a dark one would announce itself.
 
-ON THE HORIZON: the sky as a setting rather than a URL, a real fog and
-cloud shadow on the world under it, lightning on the thunder weather,
-and a season's hand on the palette.
+## ES1c - THE POLISH (2026-08-27, Mac's call) - SHIPPED
+
+Mac, on the first sky: "how can we improve this". Five faults were put
+to him off the frames and the code; he took four. The fifth - a moving
+cloud's shadow on the ground - is a change to the WORLD's lighting, not
+the sky's, and stays on the board.
+
+THE BANDING. A dome is one enormous smooth gradient and eight bits is
+not enough for one: 46% of the rows down the middle of a noon frame came
+out byte-identical to the row above, which is a visible stair. A
+sub-quantisation dither at the write breaks it. FLAT noise only took it
+to 32%; TRIANGULAR noise - two hashes summed, the shape that fully
+decorrelates the quantisation error from the signal - took it to 25%,
+which is what a dithered gradient looks like. Two instructions.
+
+THE CLOUDS WERE FLAT. One fbm sheet coloured by its own noise value: it
+had no depth, because nothing moved against anything, and no idea where
+the sun was, so a bank never had a bright rim or a dark belly. Now TWO
+DECKS - a high one, smaller and slower and thinner, behind a low one,
+larger and faster, which occludes it where it is - and both LIT: a rim
+where the ray points near the sun (the light coming through a thin
+edge, gated by uSunVis so it is nothing at night), the thick parts
+darkening away from it. The probe judges it: under the same cloud at
+mid-morning, looking east at the sun is 183 against 164 looking west.
+
+THE WEATHER SNAPPED. The sim flips its type between two ticks and the
+state was rebuilt from the type every frame, so the whole dome changed
+in the time it takes to draw once. A weather row is a set of NUMBERS,
+so the sky keeps its own and walks them - cover, softness, greyness,
+wind and both cloud colours, one exponential on a 14-second constant
+(`easeWeather`, pure, injectable). The first call takes the row whole:
+a boot into rain is rain. The same lesson as the danger meter: a slow,
+meaningful state should arrive slowly.
+
+THE STARS STOOD STILL. The field was fixed in world space, so midnight's
+sky was dusk's sky exactly - the one thing everybody has seen a night
+sky do is turn. It turns now, about a POLE (north, leaned off the
+zenith - ours; the Iliac Bay has no stated latitude), one revolution a
+day on the same clock the sun rides, by Rodrigues in the shader. The
+field is sampled in the TURNED frame but fades at the REAL horizon, so
+a star sets where the horizon is. The probe fingerprints where the
+bright points are: three hours on is a different sky, and still full of
+stars.
+
+Pins: 4 more in `test/enhancedSky.test.js` (10 now) - the ease
+(exponential, monotone, whole on the first call, no time no move,
+colours eased too, and the controller keeping one and walking it), the
+wheel (a full turn a day, one way, a unit pole off the zenith, the
+turned sample and the real fade), and the shader's decks, rim, belly
+and triangular dither. 5 mutants, 5 dead. Probe: 9/9, with the lit
+pair and the wheel added.
+
+ON THE HORIZON: cloud shadow on the world (the fifth fault - the sky
+already computes the cover at the sun; the world's light does not read
+it), the sky as a setting rather than a URL, lightning on the thunder
+weather, and a season's hand on the palette.
 

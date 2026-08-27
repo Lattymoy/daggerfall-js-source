@@ -11,7 +11,7 @@ import { SkyFile } from '../formats/skyFile.js';
 import { SkyRenderer, buildDaySkyPanorama, buildNightSkyPanorama, buildFallbackSkyPanorama, nightSkyImageName } from '../render/skyRenderer.js';
 import { SEASON } from '../world/climateSwaps.js';
 import { skyFrameForTime } from '../world/worldClock.js';
-import { EnhancedSkyRenderer, skyState } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin
+import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin
 import { isEnhanced } from '../systems/uiSkin.js';
 import { hasActiveEffect, isBlending, isInvisible, isAShade } from '../systems/effects.js';
 import { skillValue, tallySkill, SKILLS, SKILL_NAMES } from '../systems/skills.js';
@@ -123,6 +123,8 @@ export function createSkyController(gl, params) {
   // it without knowing which pass it is.
   const enhancedSky = isEnhanced() && params.get('sky') !== 'classic' ? new EnhancedSkyRenderer(gl) : null;
   const t0 = (typeof performance !== 'undefined' ? performance.now() : 0);
+  let weatherRowNow = null;   // ES1c: the eased weather, walked toward the sim's row
+  let weatherAt = null;
   // "index:frame" | "index:night" -> panorama, LRU-BOUNDED.
   //
   // AUDIT 24 (the seven-slice sweep): this Map had no eviction at all.
@@ -198,11 +200,22 @@ export function createSkyController(gl, params) {
      *  it is synchronous - numbers into uniforms, nothing to load. */
     use(skyIndex, minuteOfDay, showNightSky = true, extra = null) {
       if (enhancedSky) {
+        const now = (typeof performance !== 'undefined' ? performance.now() : 0);
+        const seconds = (now - t0) / 1000;
+        // ES1c: the weather EASES. The sim flips its type between two
+        // ticks; the sky walks its numbers toward the new row over
+        // WEATHER_EASE_SECONDS instead of changing in one frame. The
+        // first call takes the row whole - a boot into rain is rain.
+        const want = weatherRow(extra?.weather ?? 'sunny');
+        const dt = weatherAt === null ? 0 : Math.min(1, Math.max(0, seconds - weatherAt));
+        weatherAt = seconds;
+        weatherRowNow = easeWeather(weatherRowNow, want, dt);
         enhancedSky.setState(skyState({
           minuteOfDay,
           weather: extra?.weather ?? 'sunny',
           classicMinutes: extra?.classicMinutes ?? 0,
-          seconds: ((typeof performance !== 'undefined' ? performance.now() : 0) - t0) / 1000,
+          seconds,
+          row: weatherRowNow,
         }));
         return;
       }
