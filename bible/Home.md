@@ -228,7 +228,6 @@ alone, flagged at its new site inside calculateAttackDamage. The
 combat line numbers below are refreshed with it.
 
 - `src/characters/enemyCasting.js:71` - * the magicka and a ranged spell at all. FLAGGED, and narrow: in DFU
-- `src/characters/enemyMotor.js:928` - FLAGGED, until target prediction ships). At zero the foe stops.
 - `src/characters/mobileUnit.js:21` - clock). DEFERRED (FLAGGED): the Seducer transform pair.
 - `src/characters/paperdollArt.js:70` - *  needs no new field; FLAGGED: a remote list (shop stock, a corpse)
 - `src/characters/playerEntity.js:5` - chargenSession - AUDIT 23). INTERIM until then, loudly: flat
@@ -345,7 +344,6 @@ combat line numbers below are refreshed with it.
 - `src/systems/equip.js:17` - hooks below. FLAGGED: equip sounds.
 - `src/systems/equip.js:240` - /** INTERIM starting equipment (chargen's starting-gear roll
 - `src/systems/factionRep.js:229` - *  pre-chargen INTERIM entity (characters/playerEntity.js) has no
-- `src/systems/gameDate.js:23` - FLAGGED, deliberately: the two LUNAR PHASE getters (:134-150,
 - `src/systems/guildServiceActions.js:195` - *  turning into a vampire or werebeast - FLAGGED: the port has no
 - `src/systems/guildServiceFlow.js:236` - *  override's law). Every other arm is FLAGGED with the window it
 - `src/systems/guildVariants.js:191` - Banking does not exist yet, so WHICH of the two is FLAGGED to the

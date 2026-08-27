@@ -20,12 +20,13 @@
 // classicMinutes counts from that start, so a live date is
 // dateFromClassicMinutes(classicGameStartTime + elapsed).
 //
-// FLAGGED, deliberately: the two LUNAR PHASE getters (:134-150,
-// GetLunarPhase) are not here - nothing in the port reads a moon yet,
-// and DFU's own comment says the logic mirrors the Enhanced Sky mod
-// rather than classic. RaiseTime's carry chain is not ported either:
-// this module is pure functions over an absolute minute count, so
-// there is no mutable clock object to carry.
+// The LUNAR PHASE getters SHIPPED at V2a (lunarPhase below - the
+// werewolf's full-moon forced change reads them); this header said
+// "nothing in the port reads a moon yet" for three days after that
+// stopped being true, and the Ledger's lunar row aged the same way.
+// RaiseTime's carry chain is not ported, by design: this module is
+// pure functions over an absolute minute count, so there is no
+// mutable clock object to carry.
 
 export const SECONDS_PER_MINUTE = 60;
 export const MINUTES_PER_HOUR = 60;

@@ -124,7 +124,13 @@ export class EnemyAttack {
       // :357-364 drops CanAct the moment GiveUpTimer hits 0). Sight
       // alone let a Chameleoned player be shot at, and let a foe that
       // had given up keep firing.
-      if (this.rangedAttack && ai.inSight && ai.detected && ai.giveUpTimer > 0
+      // AUDIT 26 F010: the bow band rides `if (CanAct) TakeAction`
+      // (:171-172), so a knocked-back or paralyzed foe holds its
+      // fire - the roll is UnityEngine.Random (:592), not the shared
+      // DFRandom stream, so gating it slides nothing. `!== false`
+      // keeps the old callers (and the headless tests' bare-object
+      // ai stubs) on the permissive default.
+      if (this.rangedAttack && ai.canAct !== false && ai.inSight && ai.detected && ai.giveUpTimer > 0
           && dist > MIN_RANGED_DISTANCE && dist < MAX_RANGED_DISTANCE) {
         // ...and the 1/32 roll itself sits behind `if (!isPlayingOneShot)`
         // (:587), so a swing in flight DOES hold the bow roll.

@@ -87,6 +87,18 @@ export const RANGED_ATTACK1_ANIMS = Object.freeze([
   A(24, RANGED_ATTACK1_ANIM_SPEED, false), A(23, RANGED_ATTACK1_ANIM_SPEED, true), A(22, RANGED_ATTACK1_ANIM_SPEED, true), A(21, RANGED_ATTACK1_ANIM_SPEED, true),
 ]);
 
+// AUDIT 26 F009: RangedAttack2Anims (EnemyBasics.cs:103-113 - records
+// 25-29, RangedAttack2AnimSpeed 10, "475, 489, 490 humanoid mobiles
+// only"). Battlemage (130) and Nightblade (133) carry
+// hasRangedAttack2 AND hasSpellAnimation, so for them records 20-24
+// are the SPELL-cast frames - a Battlemage shooting its bow off the
+// one-table 'ranged' state played its spell-casting sprite.
+export const RANGED_ATTACK2_ANIM_SPEED = 10;
+export const RANGED_ATTACK2_ANIMS = Object.freeze([
+  A(25, RANGED_ATTACK2_ANIM_SPEED, false), A(26, RANGED_ATTACK2_ANIM_SPEED, false), A(27, RANGED_ATTACK2_ANIM_SPEED, false), A(28, RANGED_ATTACK2_ANIM_SPEED, false),
+  A(29, RANGED_ATTACK2_ANIM_SPEED, false), A(28, RANGED_ATTACK2_ANIM_SPEED, true), A(27, RANGED_ATTACK2_ANIM_SPEED, true), A(26, RANGED_ATTACK2_ANIM_SPEED, true),
+]);
+
 // C17: the female-thief idle (FemaleTexture 483) - record 11 rides
 // the front diagonals, verbatim quirk.
 export const FEMALE_THIEF_IDLE_ANIMS = Object.freeze([
@@ -106,7 +118,7 @@ export const MOBILE_WRAITH = 23;
  *  other caster casts over the primary attack records - and note the
  *  Spell branch has NO ghost/wraith special (verbatim: they cast on
  *  PrimaryAttackAnims, not their own attack table). */
-export function stateAnims(state, mobileType, hasIdle, hasSpellAnimation = false, femaleThief = false) {
+export function stateAnims(state, mobileType, hasIdle, hasSpellAnimation = false, femaleThief = false, hasRangedAttack1 = true, hasRangedAttack2 = false) {
   if (state === 'move') {
     if (mobileType === MOBILE_GHOST || mobileType === MOBILE_WRAITH) return GHOST_WRAITH_MOVE_ANIMS;
     if (mobileType === MOBILE_SLAUGHTERFISH) return SLAUGHTERFISH_MOVE_ANIMS;
@@ -117,7 +129,15 @@ export function stateAnims(state, mobileType, hasIdle, hasSpellAnimation = false
     return PRIMARY_ATTACK_ANIMS;
   }
   if (state === 'spell') return hasSpellAnimation ? RANGED_ATTACK1_ANIMS : PRIMARY_ATTACK_ANIMS;
-  if (state === 'ranged') return RANGED_ATTACK1_ANIMS;   // C17: HasRangedAttack1 archers (records 20-24)
+  if (state === 'ranged') {
+    // AUDIT 26 F009 - EnemyMotor.cs:594-597: RangedAttack1 only when
+    // `HasRangedAttack1 && !HasRangedAttack2`, else RangedAttack2
+    // (records 25-29, DaggerfallMobileUnit.cs:837-842). Battlemage and
+    // Nightblade carry both flags plus hasSpellAnimation, so their
+    // 20-24 records are spell frames - the one-table state drew them
+    // for bow shots.
+    return (hasRangedAttack1 && !hasRangedAttack2) ? RANGED_ATTACK1_ANIMS : RANGED_ATTACK2_ANIMS;
+  }
   if (state === 'hurt') return HURT_ANIMS;
   // idle (branch order verbatim: ghost/wraith, seducer N/A, the
   // female thief 483, rat, slaughterfish, !hasIdle, idle)
@@ -187,7 +207,7 @@ export class MobileUnit {
 
   _anims() {
     const femaleThief = this.basics.femaleTexture === 483 && this.gender === 'female';
-    return stateAnims(this.state, this.mobileType, this.basics.hasIdle ?? false, this.basics.hasSpellAnimation ?? false, femaleThief);
+    return stateAnims(this.state, this.mobileType, this.basics.hasIdle ?? false, this.basics.hasSpellAnimation ?? false, femaleThief, this.basics.hasRangedAttack1 ?? true, this.basics.hasRangedAttack2 ?? false);
   }
 
   _change(state) {
