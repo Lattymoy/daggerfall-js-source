@@ -177,7 +177,7 @@ import { placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js'
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { positionHash, staticNpcData } from './questBridge.js';   // B7: the guild popup's TALK builds display data without re-registering the click
-import { staticNpcName } from '../characters/staticNpc.js';   // wave 24: StaticNPC.DisplayName
+import { staticNpcName, getNameBankOfRegion, isChildNPCData } from '../characters/staticNpc.js';   // wave 24: StaticNPC.DisplayName
 import { GENDERS } from '../characters/nameHelper.js';
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 let _charT0 = (typeof performance !== 'undefined' ? performance.now() : 0);
@@ -345,6 +345,11 @@ export function createWorldModes(host) {
   let interiorCtx = null;
   // E2: the entered building's identity + the shop browse overlay.
   let interiorBuilding = null;
+  /** GetNameBankOfCurrentRegion (PlayerGPS.cs:421-427) - F016. An
+   *  unknown region answers Breton, which is DFU's own fallback. */
+  const currentNameBank = () => getNameBankOfRegion(
+    interiorBuilding?.regionIndex ?? buildingDirectory?.()?.regionIndex ?? -1);
+
   let interiorOverlay = null;
   // V2c: THE SUNLIGHT SEAM (THE FOUR HOSTS RULE). This host owns the
   // mode machine for BOTH town pages - world.js and exterior.js each
@@ -1091,7 +1096,10 @@ export function createWorldModes(host) {
     // every static NPC stayed a stranger no matter how well liked -
     // and topicTree's same-building-static test (:558), which matches
     // a topic caption against this name and therefore never matched.
-    const displayName = staticNpcName(npcData, { getFaction: (id) => dict?.get(id) ?? null });
+    // F016: the bank is the CURRENT REGION's (SetRuntimeData :309),
+    // never the NPC's race - the mobile pools have passed it since
+    // AUDIT 23 and this seam re-exports the same reader.
+    const displayName = staticNpcName(npcData, { getFaction: (id) => dict?.get(id) ?? null, nameBank: currentNameBank() });
     const talk = npcSession?.talkToStaticNPC(
       // TalkToStaticNPC reads targetNPC.Data (TalkManager.cs:752-770):
       // the nameSeed the work pool and castleNPCsSpokenTo are keyed by,
@@ -1101,7 +1109,10 @@ export function createWorldModes(host) {
       // only 25% work roll for all of them, the questor pool (keyed by
       // the real seeds) could never match, and every NPC's answers
       // randomized identically.
-      { data: npcData, isChildNPC: !!pn.isChildNPC, displayName },
+      // AUDIT 26 F020: IsChildNPCData (StaticNPC.cs:342-350) - the
+      // texture pair or faction 514. `pn.isChildNPC` was a flag NOTHING
+      // ever wrote, so a child in a castle could pass the questor door.
+      { data: npcData, isChildNPC: isChildNPCData(npcData), displayName },
       // R1: StaticNPCClick's own arms pass menu:FALSE (:1633 et al);
       // the repair popup's Talk button calls TalkToStaticNPC with the
       // DEFAULT menu=true (DaggerfallMerchantRepairPopupWindow.cs:147)
@@ -1552,9 +1563,9 @@ export function createWorldModes(host) {
      *  NPC clicked directly. */
     const talkToStaticNpcHere = ({ isSpyMaster }) => {
       const dict2 = townTalk?.factionDict ?? null;
-      const displayName2 = staticNpcName(npcData, { getFaction: (id) => dict2?.get(id) ?? null });
+      const displayName2 = staticNpcName(npcData, { getFaction: (id) => dict2?.get(id) ?? null, nameBank: currentNameBank() });   // F016
       const talk2 = npcSession?.talkToStaticNPC(
-        { data: npcData, isChildNPC: !!pn.isChildNPC, displayName: displayName2 },
+        { data: npcData, isChildNPC: isChildNPCData(npcData), displayName: displayName2 },   // F020
         { menu: true, isSpyMaster });
       if (talk2?.kind === 'talk' && townTalk?.openTalkWindow) {
         interiorOverlay = null;   // the popup yields to the conversation, as DFU's CloseWindow-then-push does

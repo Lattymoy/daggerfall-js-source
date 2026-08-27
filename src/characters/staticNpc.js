@@ -12,7 +12,7 @@
 // differ between one building and the next.
 
 import { srand } from '../formats/dfRandom.js';
-import { fullName, getNameBank, getNameBankOfRegion, GENDERS } from './nameHelper.js';
+import { fullName, getNameBankOfRegion, BANK_TYPES, GENDERS } from './nameHelper.js';
 import { RACES } from '../systems/races.js';
 // ONE HOME for FactionFile.FactionTypes (FactionFile.cs:530-546) - the
 // enum the parser already mints. Individual is 4; 3 is Subgroup.
@@ -230,14 +230,20 @@ export function raceFromFactionRace(factionRace) {
  *  @param {object} data      staticNpcData's result
  *  @param {object} [deps]
  *  @param {function(number):object|null} [deps.getFaction]
- *  @param {number} [deps.nameBank]  BankTypes; defaults from the race
+ *  @param {number} [deps.nameBank]  BankTypes - the CURRENT REGION's
+ *    (MapsFile.GetNameBankOfRegion). AUDIT 26 F016: this defaulted
+ *    from the NPC's race, which DFU never does anywhere -
+ *    SetRuntimeData stores `GetNameBankOfCurrentRegion()` (:309) and
+ *    GetDisplayName reads that bank (:325-326). The fallback here is
+ *    Breton because that is what GetNameBankOfCurrentRegion answers
+ *    for an unknown region (PlayerGPS.cs:421-427), NOT a race guess.
  */
 export function staticNpcName(data, { getFaction = null, nameBank = null } = {}) {
   const fd = getFaction?.(data.factionID) ?? null;
   // GetDisplayName (:319) tests `factionData.type == (int)FactionTypes.Individual`.
   if (fd && fd.type === FACTION_TYPES.Individual) return fd.name;
   srand(data.nameSeed);
-  const bank = nameBank ?? bankForRace(data.race);
+  const bank = nameBank ?? BANK_TYPES.Breton;   // F016: GetNameBankOfCurrentRegion's own fallback
   // AUDIT 24 (wave 24): `data.gender` is the Genders enum, which is
   // what FullName takes - C# passes `npcData.gender` straight through
   // (:328). The string compare here was propping up the stale
@@ -246,15 +252,36 @@ export function staticNpcName(data, { getFaction = null, nameBank = null } = {})
   return fullName(bank, data.gender);
 }
 
-/** The name bank a race draws from; a race the bank table does not
- *  know falls to Breton exactly as getNameBank does. */
-export const bankForRace = (race) => getNameBank(raceKeyOf(race));
+/** TextureReader.IsChildNPCTexture (:1076-1137), verbatim - the eight
+ *  archives that hold child sprites and the exact records checked in
+ *  each. AUDIT 26 F020: neither this table nor the 514 faction lived
+ *  in the port, so `isChildNPC` was read in four places and written
+ *  nowhere. */
+const CHILD_NPC_TEXTURES = Object.freeze({
+  181: Object.freeze(new Set([3])),                                                       // templePeople
+  182: Object.freeze(new Set([4, 5, 6, 18, 36, 37, 38, 42, 43, 52, 53])),                  // mediumCommonPeople
+  184: Object.freeze(new Set([15])),                                                      // flatPeople2
+  186: Object.freeze(new Set([4, 5, 6, 7, 19, 37, 38, 39, 43, 44, 53, 54])),               // testBigFlats
+  197: Object.freeze(new Set([3])),                                                       // kludgeTown
+  334: Object.freeze(new Set([2, 3, 6, 9, 12])),                                           // daggerfallPeople
+  346: Object.freeze(new Set([2, 3, 12, 15, 16, 18])),                                     // wayrestPeople
+  357: Object.freeze(new Set([5, 6, 7, 8])),                                               // sentinelPeople
+});
+export const isChildNPCTexture = (archive, record) => !!CHILD_NPC_TEXTURES[archive]?.has(record);
 
-/** The port's RACES enum is 1-based (Breton = 1); the bank table is
- *  keyed by the race's NAME. */
-function raceKeyOf(race) {
-  for (const [key, value] of Object.entries(RACES)) if (value === race) return key;
-  return 'Breton';
+/** StaticNPC.IsChildNPCData (:342-350): a child by TEXTURE PAIR or by
+ *  the children faction (514). DFU gates both questor arms on it
+ *  (TalkManager.cs:755-770) and the work pool (:2842). */
+export const CHILDREN_FACTION_ID = 514;
+export function isChildNPCData(data) {
+  if (!data) return false;
+  return isChildNPCTexture(data.billboardArchiveIndex, data.billboardRecordIndex)
+    || data.factionID === CHILDREN_FACTION_ID;
 }
+
+// AUDIT 26 F016: `bankForRace` and its raceKeyOf helper lived here to
+// serve the race default above. DFU has no such path - no line in
+// StaticNPC, TalkManager or anywhere else derives a name bank from a
+// race - so both are gone with the default that invented them.
 
 export { getNameBankOfRegion };

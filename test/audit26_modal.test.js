@@ -14,6 +14,7 @@ import { fileURLToPath } from 'node:url';
 import { staticNpcData, staticNpcName } from '../src/characters/staticNpc.js';
 import { RACES } from '../src/systems/races.js';
 import { NPCSession, SOCIAL_GROUP } from '../src/systems/npcSession.js';
+import { getNameBankOfRegion } from '../src/characters/nameHelper.js';   // F016
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = (f) => readFileSync(join(ROOT, f), 'utf8');
@@ -191,7 +192,8 @@ test('AUDIT 26 F018: the talk seam is handed StaticNPC.Data - the block record h
 
   // the host passes the derived record at BOTH talk seams - the click and
   // the guild popup's Talk button - and seeds the answer PRNG from it
-  assert.equal(WM.match(/\{ data: npcData, isChildNPC: !!pn\.isChildNPC, displayName/g)?.length, 2);
+  // F020: the flag nobody wrote became the real predicate.
+  assert.equal(WM.match(/\{ data: npcData, isChildNPC: isChildNPCData\(npcData\)/g)?.length, 2);
   assert.equal(WM.match(/npcSeed: npcData\.nameSeed/g)?.length, 2);
   assert.doesNotMatch(WM, /npcSeed: pn\.nameSeed/, 'the field nothing writes is gone');
   assert.doesNotMatch(WM, /\{ data: pn,/, 'and so is the block record as `data`');
@@ -215,12 +217,16 @@ test('AUDIT 26 F017: the popup Talk reads the same StaticNPC.Data the click deri
   assert.equal(withLookups.race, RACES.Breton, 'a named faction lends its race');
   // no lookups: GetFactionData's out-struct default is FactionRaces.Nord
   assert.equal(staticNpcData(pn, { buildingKey: 7, locationIndex: 9 }).race, RACES.Nord);
-  // same seed, different bank, different draw - the two seams answered
-  // different names for one NPC
-  assert.notEqual(
-    staticNpcName(withLookups, { getFaction }),
-    staticNpcName(staticNpcData(pn, { buildingKey: 7, locationIndex: 9 }), { getFaction }),
-    'the race picks the name bank, so the popup renamed the NPC it opened over',
+  // AUDIT 26 F016 removed the race->bank path this pin demonstrated
+  // the hazard through: the bank is the REGION's now (SetRuntimeData
+  // :309), so the same seed draws the same name whatever race the two
+  // derivations landed on. F017's real point - one derivation, lent
+  // to the popup - is the source pins below; the RACE divergence
+  // itself is still pinned, one assertion up.
+  assert.equal(
+    staticNpcName(withLookups, { getFaction, nameBank: getNameBankOfRegion(17) }),
+    staticNpcName(staticNpcData(pn, { buildingKey: 7, locationIndex: 9 }), { getFaction, nameBank: getNameBankOfRegion(17) }),
+    'one region, one bank - the race no longer renames the NPC',
   );
 
   // the host derives it ONCE per click and lends it to the popup, which is

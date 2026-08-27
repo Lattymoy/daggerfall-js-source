@@ -674,8 +674,86 @@ turned sample and the real fade), and the shader's decks, rim, belly
 and triangular dither. 5 mutants, 5 dead. Probe: 9/9, with the lit
 pair and the wheel added.
 
-ON THE HORIZON: cloud shadow on the world (the fifth fault - the sky
-already computes the cover at the sun; the world's light does not read
-it), the sky as a setting rather than a URL, lightning on the thunder
-weather, and a season's hand on the palette.
+## ES1d - THE CLOUD IN FRONT OF THE SUN (2026-08-27, Mac's call) - SHIPPED
+
+The fifth fault, taken next: "do it." A weather already scales the
+world's sunlight (WeatherManager, verbatim), but an individual cloud
+passing overhead changed nothing on the ground - the sky hid the sun's
+disc and the ground did not notice.
+
+IT IS ONE FIELD, ASKED TWICE. The shader already multiplies the sun's
+disc by `1 - cloud` along the sun's own ray. `sunOcclusion(state)` is
+that same number on the CPU: the shader's hash, value noise, fbm and
+`deck` written in JS and evaluated at `state.sunDir`. So what you SEE
+and what you FEEL cannot disagree - the disc goes and the ground goes
+with it, because it is one field at one direction. The two texts are
+pinned against each other line for line (the deck calls, the occlusion
+sum, and the six magic numbers of the noise), because a drift here is a
+sun that dims when the sky says it should not.
+
+WHAT IT IS AND IS NOT. It is a DIMMING, not a projected shadow: the
+dome is infinitely far, so the cover moves with the WIND (which a real
+cloud shadow does) but not with the walker (which a real one also
+does). Measured over 400 seconds at nine in the morning: a clear sky
+occludes 0.02 on average, a broken one sweeps the whole range 0.00 to
+1.00 - which is the point, a bank crossing the sun - and a solid deck
+sits at 1.00.
+
+AND IT TAKES THE KEY LIGHT ONLY. `CLOUD_SHADOW` is 0.55, and it
+multiplies `sunScale * weatherSun * flash` in both exterior hosts and
+NOTHING ELSE. Under a cloud the direct sun goes; the sky itself still
+lights the ground, so the ambient and the indirect are untouched. Both
+halves pinned.
+
+## ES1e - THE RETRO PASS (2026-08-27, Mac's call) - SHIPPED
+
+Mac: "I really want to try and match the retro artwork aesthetic of
+Daggerfall." A smooth 24-bit dome beside a chunky classic sprite was
+the one thing in the enhanced sky that did not look like the game.
+Two knobs, both the era's own techniques rather than a filter over the
+top, and ON BY DEFAULT (`?sky=smooth` keeps the modern dome).
+
+THE PIXEL IS THE PAINTED SKY'S PIXEL. Not a screen grid - the first
+attempt snapped to 320x200 in NDC and it was wrong in three ways at
+once. SKY??.DAT is 512 pixels across 180 degrees, which skyRenderer
+already names SKY_ANGLE_PER_PIXEL (PI/512), and the ray's azimuth and
+elevation are snapped to exactly that step BEFORE anything is computed.
+So: the enhanced sky's pixels are the SAME SIZE as the painted sky's,
+and the two skins read as one game; they are fixed to the WORLD, so
+they stay put when you turn your head instead of crawling with the
+camera, as a bitmap sky's do; and they do not move with the field of
+view or the window, so a phone and a desktop see the same sky at the
+same scale. Everything is drawn ON that grid - the sun's disc, the
+moons' terminators, the stars, the cloud edges.
+
+THE COLOUR IS A 1996 GRADIENT. Posterised to 26 levels a channel with
+an ORDERED (Bayer 4x4) dither - the exact thing a 256-colour gradient
+did in 1996, and the reason Daggerfall's own skies have that woven look
+up close. The Bayer cell is indexed by the ANGULAR cell, not the screen
+pixel: one dither cell per sky pixel, or it is a fine weave under a
+coarse one, and it would crawl when the camera turned.
+
+FOUND ON THE WAY: the SMOOTH pass's dither, added in ES1c, was
+`hash21(gl_FragCoord.xy)` - which measured well (46% of identical rows
+down to 25%) but is STRUCTURED at integer coordinates, a visible weave
+under magnification, which is the one thing a dither must not be. It is
+interleaved gradient noise now, the standard for exactly this.
+
+ONE DOOR: `retroFor(search)` decides, and the game and the LAB both
+call it, so the lab cannot show a sky the game does not draw - which it
+did for one run, and the probe caught it (retro and smooth measured
+identically because the lab never read the flag).
+
+Pins: 2 more (12 now) - the occlusion (nothing at night, clear barely,
+broken sweeping, solid whole; the two texts pinned against each other;
+the key light dimmed in both hosts and the ambient NOT), and the retro
+pass (the step IS SKY_ANGLE_PER_PIXEL, the levels a palette's not a
+24-bit one, on by default and off with ?sky=smooth through one door
+both callers use, the snap on the DIRECTION before the dome is
+coloured, the Bayer indexed by the angular cell, and IGN on the smooth
+pass). 6 mutants, 6 dead. Probe 10/10, with retro measured against
+smooth: 124 changes and 8 levels across a row, against 376 and 69.
+
+ON THE HORIZON: the sky as a setting rather than a URL, lightning on
+the thunder weather, and a season's hand on the palette.
 

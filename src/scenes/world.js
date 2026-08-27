@@ -145,7 +145,7 @@ import { RumorMill, tokensToString } from '../systems/rumorMill.js';
 import { isFaction2RelatedToFaction1 } from '../systems/factionRelations.js';   // S44: the member this host used to stub as false
 import { expandQuestMessage } from '../systems/quest/questMacros.js';
 // TK-ii: THE TOPIC TREE - the quest topic/dialog-link seams land.
-import { TopicTree, QUEST_INFO_RESOURCE_TYPE } from '../systems/topicTree.js';
+import { TopicTree, QUEST_INFO_RESOURCE_TYPE, QUESTION_TYPE } from '../systems/topicTree.js';
 import { NPCSession } from '../systems/npcSession.js';
 import { getPeopleOfCurrentRegion, getReactionToPlayer } from '../systems/talk.js';
 import { BUILDING_TYPES as TALK_BUILDING_TYPES } from '../world/buildingNames.js';
@@ -2787,7 +2787,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     // whole wilderness and sent this to Breton everywhere outdoors.
     raceOfCurrentRegion: () => (RACE_BY_NAME_BANK[getNameBankOfRegion(_questRegionIndex())] ?? 'Breton'),
     factionRaceId: (race) => (OATH_RACE_INDEX[race] ?? 0),
-    questorGender: () => npcSession.getQuestorGender(),
+    // AUDIT 26 F097: GetMacroDataSource copies potentialQuestorGender
+    // ONLY when the current question is Work and there are NPCs with
+    // work (TalkManagerMCP.cs:32-36); otherwise the context field keeps
+    // the Genders enum default, Male. So %g..%g4 in a NON-Work record
+    // resolve male in DFU whatever questor is remembered - the port
+    // read the questor unconditionally and could say "she" there.
+    questorGender: () => {
+      const q = answerPipeline.currentQuestionListItem;
+      if (q?.questionType !== QUESTION_TYPE.Work || !npcSession.workAvailable) return null;   // null -> the male branch (HasNPCsWithWork)
+      return npcSession.getQuestorGender();
+    },
     bumpSeed: (delta) => bumpSeed(delta),
   });
 
@@ -3670,7 +3680,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     animalAmbience.update(dt, cam.pos);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
     const flash = params.has('flashtest') ? 2 : (lightning ? lightning.tick(dt) : 1);
     renderer.setLighting(
-      exteriorAmbient(minute, 1, weatherSun), sunScale(minute) * weatherSun * flash,   // AUDIT 23 (wts-2)
+      exteriorAmbient(minute, 1, weatherSun), sunScale(minute) * weatherSun * flash * sky.sunFactor(),   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground)
       new Float32Array(SUN_RIG_COLOR));
     // R12: the player-following indirect light rides the camera in
     // the streaming world (walk mode keeps cam at the player's eye).

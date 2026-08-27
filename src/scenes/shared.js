@@ -11,7 +11,7 @@ import { SkyFile } from '../formats/skyFile.js';
 import { SkyRenderer, buildDaySkyPanorama, buildNightSkyPanorama, buildFallbackSkyPanorama, nightSkyImageName } from '../render/skyRenderer.js';
 import { SEASON } from '../world/climateSwaps.js';
 import { skyFrameForTime } from '../world/worldClock.js';
-import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin
+import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, retroFor } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin
 import { isEnhanced } from '../systems/uiSkin.js';
 import { hasActiveEffect, isBlending, isInvisible, isAShade } from '../systems/effects.js';
 import { skillValue, tallySkill, SKILLS, SKILL_NAMES } from '../systems/skills.js';
@@ -122,6 +122,7 @@ export function createSkyController(gl, params) {
   // either way: the hosts read clearColor / set fogMix and fogColor on
   // it without knowing which pass it is.
   const enhancedSky = isEnhanced() && params.get('sky') !== 'classic' ? new EnhancedSkyRenderer(gl) : null;
+  if (enhancedSky) enhancedSky.retro = retroFor(params.toString());   // ES1e: retro unless ?sky=smooth - one door, shared with the lab
   const t0 = (typeof performance !== 'undefined' ? performance.now() : 0);
   let weatherRowNow = null;   // ES1c: the eased weather, walked toward the sim's row
   let weatherAt = null;
@@ -194,6 +195,14 @@ export function createSkyController(gl, params) {
   return {
     renderer: enhancedSky ?? sky,
     enhanced: Boolean(enhancedSky),
+    /** ES1d: how much the world's KEY light is taken by the cloud that
+     *  is in front of the sun this frame - the number the shader uses to
+     *  hide the disc, handed to the light so the two agree. 1 under a
+     *  clear sky and under the classic sky, which has no cloud field. */
+    sunFactor() {
+      const occ = enhancedSky?.state?.sunOcclusion ?? 0;
+      return 1 - CLOUD_SHADOW * occ;
+    },
     /** Ensure the panorama for (skyIndex, minuteOfDay); async, frame-late.
      *  ES1: the enhanced sky takes the same call and needs the weather
      *  and the classic clock too (`extra`), for the clouds and the moons;
