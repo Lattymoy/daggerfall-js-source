@@ -21,8 +21,13 @@
 // initial magic round"), consuming round 1; re-casts of an incumbent
 // STACK rounds onto it (audit F12 - AddState "Stack my rounds onto
 // incumbent") and fire no initial round (the joining instance is
-// never added to liveEffects). Effects outside these keys stay
-// FLAGGED skipped (the library grows here).
+// never added to liveEffects). The three keys above are EXAMPLES of
+// those round laws, not the library's extent: EF1 measured it and all
+// 91 of DFU's classic keys land (see applySpell's skip counter and
+// test/effectcoverage.test.js, which regenerates the key set from the
+// effect classes). This header claimed otherwise for as long as the
+// counter did - a stale sentence propagates, because the next reader
+// finds it twice and believes it.
 
 import { savingThrow, rollMagnitude, EFFECT_FLAGS, careerTolerance } from './spellcast.js';
 import { raceById, raceByKey } from './races.js';   // L2-slice (magic-10): the racial immunity arm
@@ -727,11 +732,22 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
         }
       }
     }
-    if (e.type === 43) {
+    if (e.type === 43 && classicSub(e) === 255) {
       // TP-slice: Teleport-Effect (43,255) - Start PROMPTS rather
       // than assigning anything (Teleport.cs:63-68); the HOST owns
       // the anchor/teleport box. TargetFlags_Self is the property
       // gate (:52), so only a CasterOnly arrival raises the marker.
+      //
+      // EF1: the subgroup test was MISSING here, and only here. DFU
+      // keys this class `MakeClassicKey(43, 255)` (Teleport.cs:51)
+      // like every other 255-subgroup family, but the port's arm read
+      // the GROUP alone - so all 256 subgroups of group 43 raised the
+      // teleport marker and `continue`d past the skip counter. The
+      // arm's own comment said "(43,255)" the whole time; the code
+      // did not. Classic data only ever carries 43,-1 (which masks to
+      // 255), so no real spell reached it - but the effect library's
+      // one job is to answer a key, and answering 255 keys DFU has no
+      // class for is the same defect as answering none.
       if ((spell.rangeType ?? 0) === 0) out.teleport = true;
       continue;
     }
@@ -1427,7 +1443,18 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       }
       continue;
     }
-    out.skipped++;   // FLAGGED: the library grows one family at a time
+    // EF1: THE LIBRARY IS COMPLETE, and this line is now the honest
+    // answer to a key Daggerfall Unity has no effect class for -
+    // never a placeholder for a family still to come. The sentence
+    // that used to stand here ("the library grows one family at a
+    // time") outlived the growing: every one of DFU's 91 classic
+    // keys - the 82 written as literals plus ElementalResistance's
+    // five (8,0-8,4) and Pacify's four (33,0-33,3), which build
+    // theirs from a loop variable - drives through this loop without
+    // reaching it. test/effectcoverage.test.js regenerates that key
+    // set from the effect classes and proves it, rather than
+    // asserting a number somebody counted once.
+    out.skipped++;
   }
   // E2: pin the pushed entries to the held item (FromEquippedItem).
   // Instant MARKERS stay unpinned - they are one-round probe residue,
