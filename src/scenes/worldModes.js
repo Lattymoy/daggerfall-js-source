@@ -25,7 +25,7 @@ import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, ext
 import { startRestGroundedCheck } from '../player/motor.js';   // S40: the rest gate's grounded input
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { pickActivatable, worldAabb, activationTargets } from '../player/activate.js';
-import { transferAll, removeOne, addItem, isEnchanted, totalWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE, spendArrow } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
+import { removeOne, addItem, isEnchanted, totalWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE, spendArrow } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { createPlayerTicker , wireInfectionVideos, endRunToTitleMenu, exitToTitleMenu, doorSpellFor, consumeDoorSpell, wireDoorSpells, createDetectFeed, createRestDeps} from './shared.js';   // AUDIT 18: the interior host's world clock; S40: its rest deps
@@ -78,7 +78,7 @@ import { ChoiceWindow } from '../ui/talkWindow.js';
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from '../ui/text.js';
 import { hudScale } from '../ui/hud.js';
-import { isShop, isRepairShop, stockShopShelf, stockHouseContainer, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves
+import { isShop, isRepairShop, stockShopShelf, stockHouseContainer, PRIVATE_PROPERTY_TEXT_ID, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves
 import { identifySpellPass, identifiedTallyText, NOT_ENOUGH_SPELL_POINTS_TEXT } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll; F067: its magicka refusal
 import { liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // X10: the Dispel Magic picker
 import { ListPickerWindow, listPickerArtLoaded } from '../ui/listPicker.js';   // X10
@@ -919,8 +919,8 @@ export function createWorldModes(host) {
     if (!isShop(b.buildingType)) {
       // BS1: a shelf model inside a LIBRARY, GUILDHALL or TEMPLE is a
       // BOOKSHELF (DaggerfallInterior.cs:808-814) - the same model a
-      // shop makes loot shelves of. Owned-house storage still pends
-      // (FLAGGED - MakeHouseContainer, the house-ownership arm).
+      // shop makes loot shelves of. (An OWNED house's shelf never
+      // reaches here - HC1 births it a container at build.)
       if (b.buildingType === BUILDING_TYPES.Library || b.buildingType === BUILDING_TYPES.GuildHall
         || b.buildingType === BUILDING_TYPES.Temple) openBookshelf(shelf, b);
       return;
@@ -2836,6 +2836,11 @@ export function createWorldModes(host) {
           return { hallAccessAnytime: hallAccessAnytime(g, m), isMember: isMember(m) };
         },
       });
+      // HC1: AddFurnitureAction's IsHouseOwned(buildingKey) answer,
+      // evaluated at build like DFU's (:816) - the bank registry is the
+      // host's, the peopleVisible idiom. Ships route at ACTIVATION
+      // only, as DFU does.
+      const houseOwned = !!interiorBuilding && isHouseOwned(playerEntity.houses ?? [], interiorBuilding.regionIndex ?? 0, interiorBuilding.buildingKey);
       // P8: parent the interior at the entered building's world matrix
       // (verbatim ownerPosition + buildingMatrix) - context coordinates
       // come back world-frame, landings run in one frame, and the walk
@@ -2849,7 +2854,7 @@ export function createWorldModes(host) {
         // a building was entered from ?world / ?exterior - the same
         // building reached through ?interior=NAME:REC omitted it.
         hit.dfBlock, hit.dfBlock.index, hit.recordIndex, hit.climateBase, hit.season,
-        hit.door.matrix, { voxelfolk, piece, paint, setupStaticNpc, peopleVisible });
+        hit.door.matrix, { voxelfolk, piece, paint, setupStaticNpc, houseOwned, peopleVisible });
       const siblings = entries.filter((e) =>
         e.dfBlock === hit.dfBlock && e.recordIndex === hit.recordIndex);
       const landing = interiorLanding(
@@ -3034,24 +3039,43 @@ export function createWorldModes(host) {
         return true;
       }
       if (key.startsWith('container:')) {
-        // S2b/F209: open the house container - PlayerActivate.cs
-        // :902-918. An OWNED house never stocks (DFU marks
-        // `stockedDate = 1` and breaks - the furniture is yours and
-        // empty); anyone else's stocks ON FIRST ACCESS through
-        // StockHouseContainer, the `??=` being the same null-latch
-        // the shop shelves ride. Then the synchronous transfer
-        // through the shared inventory (open-feedback and the
-        // private-property Yes/No box pend the UI arc).
+        // S2b/F209 -> HC1: the WHOLE HouseContainers arm of
+        // PlayerActivate (:902-925). An owned interior - the house,
+        // or a SHIP with OwnsShip (:905-906, "not distinguishing
+        // between ships") - is YOUR storage: never stocked (DFU marks
+        // `stockedDate = 1` and breaks) and the inventory opens with
+        // the container as the remote loot target, two-way. Anyone
+        // else's stocks ON FIRST ACCESS through StockHouseContainer
+        // (the `??=` is the same null-latch the shop shelves ride),
+        // an EMPTY result does nothing (:917-918), and a full one
+        // asks the TEXT.RSC 37 private-property question - Yes opens
+        // the same loot-target inventory, No claims nothing
+        // (PrivateProperty_OnButtonClick :1085-1096). The theft
+        // basket behind `loot.houseOwned` (:919) stays FLAGGED to the
+        // crime arc beside the shelf-stealing roll.
         const c = interiorCtx.containers[Number(key.split(':')[1])];
         if (c) {
           const b = interiorBuilding;
-          if (isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, b?.buildingKey)) {
-            c.items ??= [];
+          const openLoot = () => {
+            const win = host.makeInventory?.({ loot: { items: () => c.items } });
+            if (win) interiorOverlay = win;
+          };
+          const owned = (b?.buildingType === BUILDING_TYPES.Ship && ownsShip(playerEntity))
+            || isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, b?.buildingKey);
+          if (owned) {
+            c.items ??= [];   // stockedDate = 1: latched, so the save carries it
+            openLoot();
           } else {
             c.items ??= stockHouseContainer({ buildingType: b?.buildingType, record: c.record }, playerEntity);
+            if (c.items.length === 0) return true;   // "If no contents, do nothing"
+            interiorOverlay = new ChoiceWindow({
+              lines: _rowsText(townTalk?.lines?.(PRIVATE_PROPERTY_TEXT_ID) ?? [], 'This looks like private property. Do you still want to look through it?'),
+              options: [
+                { code: 'KeyY', label: 'Y - yes', action: openLoot },
+                { code: 'KeyN', label: 'N - no', action: () => {} },
+              ],
+            });
           }
-          transferAll(c.items, playerEntity.items);
-          surfacePlayer();
         }
         return true;
       }

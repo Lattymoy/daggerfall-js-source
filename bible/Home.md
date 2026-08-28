@@ -286,7 +286,6 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:3794` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
 - `src/scenes/world.js:4158` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:799` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
-- `src/scenes/worldModes.js:923` - (FLAGGED - MakeHouseContainer, the house-ownership arm).
 - `src/scenes/worldModes.js:936` - FLAGGED to the crime arc, as the Ledger records.
 - `src/scenes/worldModes.js:1005` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
 - `src/scenes/worldModes.js:1020` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
@@ -306,11 +305,12 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:2467` - with the trade window's own mode flow, the same INTERIM the
 - `src/scenes/worldModes.js:2692` - first (owned houses and quest buildings FLAGGED/seamed per
 - `src/scenes/worldModes.js:2700` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
-- `src/scenes/worldModes.js:3607` - too. FLAGGED: interior loot containers are the loot arc's -
-- `src/scenes/worldModes.js:3749` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:3848` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:4186` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
-- `src/scenes/worldModes.js:4324` - PX3 FLAGGED: questMessages - the quest machine lives on the
+- `src/scenes/worldModes.js:3054` - basket behind `loot.houseOwned` (:919) stays FLAGGED to the
+- `src/scenes/worldModes.js:3631` - too. FLAGGED: interior loot containers are the loot arc's -
+- `src/scenes/worldModes.js:3773` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:3872` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:4210` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
+- `src/scenes/worldModes.js:4348` - PX3 FLAGGED: questMessages - the quest machine lives on the
 - `src/systems/advancement.js:84` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED

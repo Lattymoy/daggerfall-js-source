@@ -235,8 +235,10 @@ test('F209: the latch and the owned-house guard are wired', () => {
   const wm = src('scenes/worldModes.js');
   assert.ok(wm.includes('c.items ??= stockHouseContainer({ buildingType: b?.buildingType, record: c.record }, playerEntity);'));
   const arm = wm.slice(wm.indexOf("if (key.startsWith('container:')) {"));
-  assert.ok(arm.slice(0, 1200).includes('isHouseOwned(playerEntity.houses ?? []'), 'the owner guard sits in the arm');
-  assert.ok(arm.slice(0, 1200).includes('c.items ??= [];'), 'owned = empty, stockedDate-serialized in DFU');
+  // HC1 grew the arm (the ship guard, the Yes/No box, the loot-target
+  // open) - the window widens with it, the guards themselves stand.
+  assert.ok(arm.slice(0, 2000).includes('isHouseOwned(playerEntity.houses ?? []'), 'the owner guard sits in the arm');
+  assert.ok(arm.slice(0, 2000).includes('c.items ??= [];'), 'owned = empty, stockedDate-serialized in DFU');
   // the continue roll defaults to the CLASSIC stream - DaggerfallLoot's
   // one DFRandom draw (:370) - while everything else is engine RNG.
   const ss = src('systems/shopStock.js');
