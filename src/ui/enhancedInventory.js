@@ -656,39 +656,48 @@ function dollPanel(url) {
  *  drawn), the anatomy down the center, marks and crystals in the
  *  off-body bottom row. Keyed by label + occurrence, in worn.rows'
  *  own y-then-x order, so the first Bracer is the right-side one. */
-/** The map speaks in SHORT slot words - a tile is a small panel and
- *  'Chest, clothes' on two lines spilt out of it; the full name rides
- *  the title attribute and the plaque, so nothing is truncated
- *  mid-word, it is TRANSLATED. */
-const WORN_SHORT = Object.freeze({
-  'Chest, clothes': 'Shirt', 'Chest, armour': 'Cuirass',
-  'Legs, armour': 'Greaves', 'Legs, clothes': 'Legs',
-  'Right arm': 'R\u00b7Arm', 'Left arm': 'L\u00b7Arm',
-  'Right hand': 'R\u00b7Hand', 'Left hand': 'L\u00b7Hand',
-});
-const shortSlot = (label) => WORN_SHORT[label] ?? label;
-
-const WORN_AREAS = Object.freeze({
-  Head: ['1 / 3'],
-  Cloak: ['1 / 2', '1 / 4'],
-  Amulet: ['2 / 1', '2 / 5'],
-  'Chest, clothes': ['2 / 3'],
-  'Right arm': ['3 / 1'],
-  Bracer: ['3 / 2', '3 / 4'],
-  'Chest, armour': ['3 / 3'],
-  'Left arm': ['3 / 5'],
-  'Right hand': ['4 / 1'],
-  Bracelet: ['4 / 2', '4 / 4'],
-  Gloves: ['4 / 3'],
-  'Left hand': ['4 / 5'],
-  Ring: ['5 / 2', '5 / 4'],
-  'Legs, armour': ['5 / 3'],
-  'Legs, clothes': ['6 / 3'],
-  Unnamed: ['6 / 2', '6 / 4'],
-  Feet: ['7 / 3'],
-  Mark: ['7 / 1', '7 / 2'],
-  Crystal: ['7 / 4', '7 / 5'],
-});
+/** PX19e (Mac: "instead of a thousand equipment slots, a smart
+ *  system with minimal slots"): ELEVEN FAMILIES, TWENTY-SEVEN SLOTS.
+ *  The data keeps DFU's 27 - equip.js, equippedModel and every law
+ *  are untouched - but the MAP shows the reference's own count:
+ *  eleven large panels, each a slot FAMILY. CHEST holds the armour
+ *  layered over the clothes; NECK both amulets; ARMS the arm pieces
+ *  and bracers; HANDS the gloves and bracelets; TOKENS the marks,
+ *  crystals and the unnamed pair (which therefore surface exactly
+ *  when filled, keeping U53's hidden-slot law). A filled family
+ *  shows its TOP piece with a count badge when it holds more, and
+ *  clicking CYCLES the family - minimal to look at, nothing out of
+ *  reach. The composition is the reference's: helm crowned, neck
+ *  and rings on the right flank, the big chest center spanning two
+ *  rows, weapons flanking low, feet grounding it. */
+/** PX19g (Mac: "stop making incremental improvements and actually
+ *  look"): THE CHARACTER REGION COMPOSED. The doll is not decoration
+ *  slapped behind a grid - it OWNS the center column, framed, with a
+ *  home whether or not its art can draw (an empty frame reads
+ *  Avatar, so the composition never collapses to a pile of tiles).
+ *  HEAD sits above it, CHEST below it - on the body - and the
+ *  families flank it symmetrically, five rows a side, the whole
+ *  region SIZED TO FIT its space: no scrolling character sheet.
+ *      Cloaks   HEAD    Neck
+ *      Arms    [DOLL]   Rings
+ *      Hands   [DOLL]   Tokens
+ *      R-Wpn   [DOLL]   L-Wpn
+ *      Legs    CHEST    Feet         */
+const WORN_FAMILIES = Object.freeze([
+  { id: 'cloaks', label: 'Cloaks', area: '1 / 1', slots: ['Cloak'] },
+  { id: 'head', label: 'Head', area: '1 / 2', slots: ['Head'] },
+  { id: 'neck', label: 'Neck', area: '1 / 3', slots: ['Amulet'] },
+  { id: 'arms', label: 'Arms', area: '2 / 1', slots: ['Right arm', 'Left arm', 'Bracer'] },
+  { id: 'rings', label: 'Rings', area: '2 / 3', slots: ['Ring'] },
+  { id: 'hands', label: 'Hands', area: '3 / 1', slots: ['Gloves', 'Bracelet'] },
+  { id: 'tokens', label: 'Tokens', area: '3 / 3', slots: ['Mark', 'Crystal', 'Unnamed'] },
+  { id: 'rhand', label: 'R\u00b7Weapon', area: '4 / 1', slots: ['Right hand'] },
+  { id: 'lhand', label: 'L\u00b7Weapon', area: '4 / 3', slots: ['Left hand'] },
+  { id: 'legs', label: 'Legs', area: '5 / 1', slots: ['Legs, armour', 'Legs, clothes'] },
+  { id: 'chest', label: 'Chest', area: '5 / 2', slots: ['Chest, armour', 'Chest, clothes'] },
+  { id: 'feet', label: 'Feet', area: '5 / 3', slots: ['Feet'] },
+]);
+const DOLL_AREA = '2 / 2 / span 3 / auto';
 function equippedList() {
   const wrap = el('section', 'equipped');
   const head = el('div', 'equippedhead');
@@ -696,58 +705,65 @@ function equippedList() {
   head.append(el('p', 'meta', `${worn.filled} of ${worn.total} slots filled`));
   wrap.append(head);
   const map = el('div', 'wornmap');
+  // PX19g: the doll's FRAME is part of the composition and is always
+  // there - art inside it when the paperdoll can draw, a quiet
+  // Avatar plaque when it cannot. Slapped-behind is over.
   const dollUrl = paperDollDataUrl(paperDollPixels(), { scale: 3 });
+  const dollFrame = el('div', 'wornmap-doll');
+  dollFrame.style.gridArea = DOLL_AREA;
   if (dollUrl) {
-    const doll = dollPanel(dollUrl);
-    doll.classList.add('wornmap-doll');
-    map.append(doll);
+    const img = document.createElement('img');
+    img.src = dollUrl;
+    img.alt = 'Your character';
+    dollFrame.append(img);
+  } else {
+    dollFrame.append(el('span', 'worntile', '\u25c7'), el('span', 'wornslot', 'Avatar'));
   }
+  map.append(dollFrame);
   wrap.append(map);
-  const seen = {};
-  const place = (node, row) => {
-    const n = seen[row.label] ?? 0;
-    seen[row.label] = n + 1;
-    const area = WORN_AREAS[row.label]?.[n];
-    if (area) node.style.gridArea = area;
-    map.append(node);
-  };
+  const byLabel = new Map();
   for (const row of worn.rows) {
-    // AN EMPTY SLOT IS NOT A CONTROL, so it is not a BUTTON. The first
-    // draft made every row a button and disabled the empty ones, which
-    // the pack probe's 44px touch-target rule caught immediately - a
-    // disabled button is still a button, and twenty-two 24px ones is
-    // exactly the "control that can only do nothing" this arc keeps
-    // deleting. `wornempty`, not `empty`: the stylesheet already has an
-    // `.empty` COMPONENT (a dashed placeholder card), and reusing the
-    // bare word drew every unfilled slot as one. Third collision of
-    // this shape in the arc, after `.detail` and `.packcol`.
-    // PX19b (Mac: keep the CLASSIC'S PANEL-BASED equip section): the
-    // worn list is a TILE GRID now - each slot a bordered panel with
-    // the item's monogram tile and its slot word beneath, the
-    // classic's own reading one language over. Empties stay NON-
-    // BUTTONS (the law above) drawn as dim open slots; the probe's
-    // class names (.wornrow/.wornname) ride the tiles unchanged.
-    if (!row.item) {
+    if (!byLabel.has(row.label)) byLabel.set(row.label, []);
+    byLabel.get(row.label).push(row);
+  }
+  for (const fam of WORN_FAMILIES) {
+    const rows = fam.slots.flatMap((s) => byLabel.get(s) ?? []);
+    // Slot order within a family IS the layer order: armour before
+    // clothes, arms before bracers - the first filled row is the top
+    // of the pile, the piece a body shows.
+    const filled = rows.filter((r) => r.item);
+    // AN EMPTY FAMILY IS NOT A CONTROL, so it is not a BUTTON - the
+    // law that shaped the old per-slot rows (twenty-two disabled 24px
+    // buttons on a bare character), one size up. `wornempty`, not
+    // `empty`: the stylesheet owns `.empty` as a component, the third
+    // collision of that shape in the arc after `.detail`/`.packcol`.
+    if (!filled.length) {
       const d = el('div', 'wornrow wornempty');
-      d.title = row.label;
-      d.append(el('span', 'worntile', '\u25c7'), el('span', 'wornslot', shortSlot(row.label)), el('span', 'wornname wornempty', '\u2014'));
-      place(d, row);
+      d.title = fam.slots.join(' \u00b7 ');
+      d.style.gridArea = fam.area;
+      d.append(el('span', 'worntile', '\u25c7'), el('span', 'wornslot', fam.label), el('span', 'wornname wornempty', '\u2014'));
+      map.append(d);
       continue;
     }
-    const b = el('button', `wornrow${row.item === picked ? ' on' : ''}`);
-    const line = itemLine(row.item, deps.entity);
-    b.title = `${row.label}: ${line.name}`;
+    const top = filled.find((r) => r.item === picked) ?? filled[0];
+    const line = itemLine(top.item, deps.entity);
+    const b = el('button', `wornrow${filled.some((r) => r.item === picked) ? ' on' : ''}`);
+    b.title = filled.map((r) => `${r.label}: ${itemLine(r.item, deps.entity).name}`).join('\n');
+    b.style.gridArea = fam.area;
     b.append(itemTile(line));
-    b.append(el('span', 'wornslot', shortSlot(row.label)));
+    b.append(el('span', 'wornslot', fam.label));
     b.append(el('span', 'wornname', line.name));
-    // SELECTS, rather than unequipping on the spot. The slot map's node
-    // took the item straight off, which is right for a control whose
-    // only meaning is "this one" - a named row has a detail panel
-    // behind it, and Take off is a button in there next to Use. A row
-    // that undressed you on a mis-click would be the small-target
-    // problem again with a bigger target.
-    b.onclick = () => { picked = row.item; side = 'local'; notice = null; render(); };
-    place(b, row);
+    if (filled.length > 1) b.append(el('span', 'worncount', String(filled.length)));
+    // SELECTS, never undresses (the mis-click law) - and a click on an
+    // already-picked family CYCLES to its next piece and wraps, so a
+    // family of four is four taps and all 27 slots stay reachable
+    // from eleven panels.
+    b.onclick = () => {
+      const i = filled.findIndex((r) => r.item === picked);
+      picked = filled[(i + 1) % filled.length].item;
+      side = 'local'; notice = null; render();
+    };
+    map.append(b);
   }
   return wrap;
 }
@@ -1088,15 +1104,23 @@ function render() {
     // it. The PAIR LAW survives the furniture: same remoteModel, same
     // remoteCol, same take/stow arms - only the wall between them
     // moved.
+    // PX19f (Mac: "you are ignoring the entire UI panel"): THE WHOLE
+    // ANATOMY, not one organ. The reference's skeleton adopted:
+    // CHARACTER REGION LEFT (the worn families with the doll - the
+    // big area), DETAILS RIGHT (the plaque column, where the concept
+    // hangs its Details), and the INVENTORY AS A BOTTOM DOCK - a tile
+    // GRID with its category tabs as a horizontal strip directly
+    // above it, exactly where Equipment/Consumables sit in the
+    // concept. The pair law is untouched: the loot rides its own
+    // window (PX19c).
+    const main = el('div', 'pack-main');
+    main.append(characterCol(), el('div', 'packstage'));
+    main.querySelector('.packstage').append(detailCol());
+    const dock = el('div', 'pack-dock');
     const lists = el('div', 'packlists');
     lists.append(listCol());
-    // PX16b: the reference's order left to right - the category
-    // spine, the names, then the SHOWCASE: the figure (the paper
-    // sprite viewer standing where Skyrim renders the item) with the
-    // detail plaque floating beside it.
-    grid.append(catsCol(), lists, el('div', 'packstage'));
-    const stage = grid.querySelector('.packstage');
-    stage.append(characterCol(), detailCol());
+    dock.append(catsCol(), lists);
+    grid.append(main, dock);
     win.append(grid);
     // PX16b: the reference's BOTTOM BAR - carry weight as a meter
     // (blood past four-fifths, the reference's red), gold beside it.

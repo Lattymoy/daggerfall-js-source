@@ -1697,11 +1697,18 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   display: flex; align-items: center; gap: 14px; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
 .pack-shell .pack-id h2::before { content: ''; flex: 0 0 48px; height: 2px;
   background: linear-gradient(90deg, transparent, rgba(125,116,96,0.7)); }
-.pack-shell .pack { flex: 1; min-height: 0; display: grid;
-  grid-template-columns: 168px minmax(220px, 280px) 1fr; gap: 0; background: transparent; }
-.pack-shell .packcats { background: rgba(0,0,0,0.3); border-right: 2px solid rgba(125,116,96,0.35);
-  overflow-y: auto; padding: 8px 0; }
-.pack-shell .packtabs { display: flex; flex-direction: column; gap: 0; margin: 0; }
+/* PX19f: the reference's skeleton - the character region and the
+   details share the top; the inventory is a BOTTOM DOCK. */
+.pack-shell .pack { flex: 1; min-height: 0; display: flex; flex-direction: column;
+  background: transparent; }
+.pack-shell .pack-main { flex: 1; min-height: 0; display: grid;
+  grid-template-columns: 1fr minmax(300px, 380px); }
+.pack-shell .pack-dock { flex: 0 0 auto; max-height: 38%; display: flex;
+  flex-direction: column; border-top: 2px solid rgba(125,116,96,0.35);
+  background: rgba(0,0,0,0.25); }
+.pack-shell .packcats { background: transparent; border-right: 0;
+  border-bottom: 2px solid rgba(125,116,96,0.3); overflow-x: auto; padding: 0 8px; }
+.pack-shell .packtabs { display: flex; flex-direction: row; gap: 2px; margin: 0; }
 .pack-shell .packtab { display: flex; align-items: center; gap: 10px; text-align: left;
   min-height: 44px; padding: 8px 14px; border: 0; background: none; cursor: pointer;
   color: #a89f88; font-family: inherit; font-size: 13px; letter-spacing: 0.16em;
@@ -1709,31 +1716,36 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .pack-shell .packtab .count { font-family: inherit; font-size: 11px; color: #7d7460;
   background: none; border: 0; margin-left: auto; }
 .pack-shell .packtab:hover, .pack-shell .packtab:focus-visible { outline: none; color: #d8cfae; }
-.pack-shell .packtab.on { color: rgb(243,239,44); font-size: 15px;
-  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.pack-shell .packtab.on { color: rgb(243,239,44);
+  box-shadow: inset 0 -2px 0 var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
 .pack-shell .packtab.on::after { content: '\\25c6'; font-size: 10px; margin-left: 8px; }
-.pack-shell .packlists, .pack-shell .list { background: rgba(0,0,0,0.2);
-  border-right: 2px solid rgba(125,116,96,0.35); overflow-y: auto; }
-/* In a window the PAIR stacks - local above the ground/wagon - one
-   readable column instead of two starved ones; .remotefirst keeps
-   flipping the order for containers and reward trays. */
-.pack-shell .packlists { display: flex; flex-direction: column; }
-.pack-shell .packlists.remotefirst { flex-direction: column-reverse; }
-.pack-shell .packremote { border-top: 2px solid rgba(125,116,96,0.3); background: transparent; }
-.pack-shell .packcol { padding: 6px 0; }
-.pack-shell .itemrow { display: flex; align-items: center; width: 100%; text-align: left;
-  background: none; border: 0; min-height: 44px; padding: 8px 16px; cursor: pointer;
-  color: #a89f88; font-family: inherit; font-size: 15px; letter-spacing: 0.05em;
-  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
-.pack-shell .itemrow .tile { display: none; }
-.pack-shell .itemrow .itemname small { display: none; }
+.pack-shell .packlists { display: block; background: transparent; overflow-y: auto; }   /* the base sheet's two-column grid, off - the loot has its own window */
+/* The dock's rows are the reference's TILE GRID: square panels, the
+   monogram carrying the item, the count in the corner, the name in
+   the title and the plaque. The tiles live directly in .packcol -
+   '.list' is the SHELL'S word, the .detail/.packcol lesson again
+   (and backticks may NEVER appear inside this template literal:
+   this comment's first draft closed ENHANCED_CSS mid-file and made
+   the rest a tagged-template call - the octal lesson's sibling). */
+.pack-shell .pack-dock .packcol { padding: 8px 10px; display: flex; flex-wrap: wrap;
+  gap: 6px; align-content: flex-start; }
+.pack-shell .itemrow { position: relative; display: flex; align-items: center;
+  justify-content: center; width: 56px; height: 56px; padding: 0; cursor: pointer;
+  background: rgba(10,12,17,0.6); border: 2px solid rgba(125,116,96,0.35);
+  color: #a89f88; font-family: inherit; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.pack-shell .itemrow .tile { display: flex; width: 34px; height: 34px; align-items: center;
+  justify-content: center; border: 0; background: none; font-size: 16px; color: #c5bda2; }
+.pack-shell .itemrow .itemname { position: absolute; width: 1px; height: 1px;
+  overflow: hidden; clip-path: inset(50%); }   /* the probes read it; the plaque shows it */
 .pack-shell .itemrow .itemwt { display: none; }
-.pack-shell .itemrow .itemname { display: -webkit-box; -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical; overflow: hidden; line-height: 1.35; }
-.pack-shell .itemrow:hover, .pack-shell .itemrow:focus-visible { outline: none; color: #d8cfae; }
-.pack-shell .itemrow.on { color: rgb(243,239,44); background: none; box-shadow: none;
+.pack-shell .itemrow .rowcount, .pack-shell .itemrow .count { position: absolute;
+  right: 2px; bottom: 1px; font-size: 9px; color: var(--brass);
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.pack-shell .itemrow:hover, .pack-shell .itemrow:focus-visible { outline: none;
+  border-color: var(--brass); color: #d8cfae; }
+.pack-shell .itemrow.on { border-color: var(--brass); color: rgb(243,239,44);
+  outline: 2px solid rgba(192,138,62,0.5); outline-offset: 2px; box-shadow: none;
   text-shadow: 2px 2px 0 rgb(93,77,12); }
-.pack-shell .itemrow.on::after { content: '\\25c6'; font-size: 10px; margin-left: auto; }
 .pack-shell .packempty { color: #7d7460; padding: 12px 16px; font-size: 14px;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 .pack-shell .remotehead, .pack-shell .equippedhead { font-family: inherit; color: #7d7460;
@@ -1749,9 +1761,14 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .pack-shell .remoteacts { padding: 0 10px; }
 /* The showcase column: the figure over the plaque, both scrolling
    together, the game glass behind them through the window. */
-.pack-shell .packstage { position: relative; background: transparent; overflow-y: auto;
+/* PX19g: NO SCROLLING CHARACTER SHEET, NO WEB CHROME. The region and
+   the plaque are sized to fit; the dock and the loot may scroll but
+   without scrollbar furniture - a game panel, not a web page. */
+.pack-shell .packstage { position: relative; background: rgba(0,0,0,0.25);
+  border-left: 2px solid rgba(125,116,96,0.35); overflow: hidden;
   display: flex; flex-direction: column; align-items: center; gap: 18px;
   padding: 18px 20px 22px; }
+.pack-shell .charcol { overflow: hidden; padding: 8px 16px; }
 .pack-shell .figure-doll { border: 2px solid rgba(125,116,96,0.55); background: rgba(0,0,0,0.3); }
 .pack-shell .slotmap, .pack-shell .wornlist, .pack-shell .equipped { background: rgba(0,0,0,0.3); }
 /* PX19d: THE SLOTS STAND ON THE BODY (Mac's concept reference) - the
@@ -1763,24 +1780,39 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    cannot. The chosen tile wears the gold pair and the brass frame;
    an empty slot is a dim open diamond and NOT a button. */
 .pack-shell .equipped { display: block; text-align: center; padding-bottom: 10px; }
+/* PX19g: the region FITS ITS SPACE - 5 rows of 52 + gaps + the WORN
+   head ~= 310, inside the main area's ~380 - so the character sheet
+   never scrolls. The doll owns the center: a framed panel spanning
+   rows 2-4, art inside when it can draw, a quiet Avatar plaque when
+   it cannot. */
 .pack-shell .wornmap { position: relative; display: grid;
-  grid-template-columns: repeat(5, 1fr); grid-auto-rows: 52px;
-  gap: 5px; width: min(330px, 96%); margin: 6px auto 0; }
-.pack-shell .wornmap-doll { position: absolute; left: 50%; top: 46%;
-  transform: translate(-50%,-50%); z-index: 0; border: 0; background: none; opacity: 0.85; }
-.pack-shell .wornmap-doll img { max-height: 100%; image-rendering: pixelated; }
+  grid-template-columns: repeat(3, 1fr); grid-auto-rows: 52px;
+  gap: 6px; width: min(380px, 96%); margin: 6px auto 0; }
+.pack-shell .wornmap-doll { grid-area: 2 / 2 / span 3 / auto;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; border: 2px solid rgba(125,116,96,0.45); background: rgba(0,0,0,0.35);
+  overflow: hidden; color: rgba(125,116,96,0.6); }
+.pack-shell .wornmap-doll img { max-width: 100%; max-height: 100%; object-fit: contain;
+  image-rendering: pixelated; }
+.pack-shell .wornmap-doll .wornslot { color: rgba(125,116,96,0.6); }
 .pack-shell .equipped .wornrow { position: relative; z-index: 1;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 1px; min-height: 44px; padding: 2px; overflow: hidden;
+  gap: 3px; min-height: 44px; padding: 4px 3px; overflow: hidden;
   background: rgba(10,12,17,0.72); border: 2px solid rgba(125,116,96,0.35);
   color: #a89f88; font-family: inherit; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
-/* the name lives in the plaque; the DOM keeps it for the probes */
-.pack-shell .wornrow .wornname { display: none; }
+/* PX19g: at the fitted 52px row the name line CLIPS - so the tiles
+   speak monogram + family word + badge (the reference's own read:
+   the piece, not its caption) and the NAME lives in the plaque and
+   the title. The DOM keeps .wornname for every probe that reads it. */
+.pack-shell .wornrow .wornname { position: absolute; width: 1px; height: 1px;
+  overflow: hidden; clip-path: inset(50%); }
+.pack-shell .worncount { position: absolute; right: 3px; top: 2px; font-size: 9px;
+  color: var(--brass); text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
 .pack-shell .wornrow .tile { display: flex; width: 24px; height: 24px; align-items: center;
   justify-content: center; border: 0; background: none; font-size: 14px; color: #c5bda2; }
 .pack-shell .wornrow .worntile { font-size: 14px; color: rgba(125,116,96,0.6); }
 .pack-shell .wornslot { flex: 0 0 auto;   /* the base rule's 88px was a column WIDTH; on a vertical tile it becomes 88px of HEIGHT */
-  font-size: 8px; letter-spacing: 0.08em; text-transform: uppercase;
+  font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
   color: #7d7460; max-width: 100%; line-height: 1.1; white-space: nowrap; }
 .pack-shell .wornrow .itemwt { display: none; }
 .pack-shell button.wornrow { cursor: pointer; }
@@ -1837,10 +1869,9 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .pack-shell .packgold { display: flex; align-items: baseline; }
 .pack-shell .sheet-notice { color: #c5bda2; text-align: center;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
-.pack-shell ::-webkit-scrollbar { width: 10px; }
-.pack-shell ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
-.pack-shell ::-webkit-scrollbar-thumb { background: rgba(125,116,96,0.5);
-  border: 2px solid rgba(0,0,0,0.3); border-radius: 0; }
+.pack-shell ::-webkit-scrollbar { display: none; }
+.pack-shell .pack-dock .packcol, .pack-shell .packlists, .loot-win { scrollbar-width: none; }
+.loot-win::-webkit-scrollbar { display: none; }
 /* PX19c: THE LOOT WINDOW - containers, corpses, the wagon and a
    littered ground ride their OWN smaller window beside the pack,
    the same frame language one size down; absent entirely when the
@@ -1858,12 +1889,16 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .loot-win .remotehead { border-top: 0; padding-top: 12px; }
 @media (max-width: 640px) {
   .pack-win { width: 100vw; height: 100dvh; border-left: 0; border-right: 0; }
-  .pack-shell .pack { grid-template-columns: 120px 1fr; }
+  /* PX19f: on a phone the main area is the character region alone
+     (the detail keeps its SHEET) and the dock grows to half. */
+  .pack-shell .pack-main { grid-template-columns: 1fr; }
+  .pack-shell .pack-dock { max-height: 50%; }
   /* the stage dissolves but its CHILDREN keep flowing - display:none
      here would hide the fixed detail SHEET inside it; contents lets
      the sheet fix to the viewport while the figure alone hides. */
+  /* PX19f: the phone SHOWS the character region now - it is the
+     window's point; the detail keeps its fixed sheet via contents. */
   .pack-shell .packstage { display: contents; }
-  .pack-shell .charcol { display: none; }
   /* the loot window stacks under the pack on a phone */
   .pack-shell { grid-auto-flow: row; gap: 0; }
   .loot-win { width: 100vw; max-height: 40dvh; border-left: 0; border-right: 0; }

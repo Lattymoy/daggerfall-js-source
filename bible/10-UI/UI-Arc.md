@@ -7256,6 +7256,81 @@ filter; the optional-doll test asserts tiles-alone is the no-data
 answer, now with a MEASURED empty-model assert beside the text pin),
 and the remote probe's doll selector reads .wornmap. Suite 3998/0.
 
+PX19e (Mac, holding the reference up again: "are you ignoring this?
+instead of a thousand equipment slots, a smart system with minimal
+slots"): ELEVEN FAMILIES, TWENTY-SEVEN SLOTS - and the correction
+owned: PX19d rebuilt the same clutter with better alignment; the
+reference has ~11 large panels and the slice shipped 25 small ones.
+The smart system: the DATA keeps DFU's 27 (equip.js, equippedModel,
+every law untouched; the WORN counter still says 'of 27') but the
+MAP shows the reference's own count - twelve family panels: Cloaks,
+Head, Neck (both amulets), Arms (arm pieces + bracers), CHEST
+spanning two rows (armour layered over clothes - slot order within
+a family IS the layer order, and the panel shows the TOP of the
+pile), Rings, Hands (gloves + bracelets), Tokens (marks, crystals
+and the unnamed pair - which therefore surface exactly when filled,
+U53's hidden law kept by construction), R-Weapon, Legs, L-Weapon,
+Feet. A family holding more than one piece wears a brass COUNT
+badge, and a click on an already-picked family CYCLES to its next
+piece and wraps - minimal to look at, all 27 one tap-run away; an
+empty family is one quiet open-diamond panel and NOT a button.
+PROBE LESSON, recorded against the next stub: deps.entity is the
+ENTITY OBJECT (worn = equippedModel(deps.entity)) while deps.items
+is a GETTER - two lab drives dressed a function and read an empty
+map before the seam was read instead of assumed; the third drive
+proved chest=Steel Cuirass badge 2, rings badge 2, and the cycle
+Cuirass -> Linen Shirt in the plaque, zero errors. Suite 4127/0.
+
+PX19f (Mac: "you are ignoring the entire UI panel... tab
+positioning? the inventory grid at the bottom? tunnel visioned"):
+THE WHOLE ANATOMY, and the tunnel named. Five slices stared at the
+equip organ; the reference is a BODY: character region LEFT (the
+worn families with the doll - the big area), DETAILS RIGHT (the
+plaque column, where the concept hangs its Details), the INVENTORY
+AS A BOTTOM DOCK - a square TILE GRID (monogram + corner count, the
+name in the title and the plaque) with its category tabs as a
+horizontal strip directly above it, exactly where
+Equipment/Consumables sit in the concept - and the carry/gold bar
+beneath. Structurally: .pack became main-over-dock; the tabs strip
+underlines its chosen tab in brass with inline counts; the phone
+now SHOWS the character region (the old charcol hide died - hiding
+the window's point was PX19d's leftover) while the detail keeps its
+sheet. TWO TRAPS ON THE WAY, both recorded: (1) the dock's tiles
+append to .packcol, not '.list' - the shell owns that word, the
+.detail/.packcol collision family's fourth member, caught when the
+tile rules matched nothing; (2) BACKTICKS INSIDE THE TEMPLATE
+LITERAL - a CSS comment quoting '.list' in backticks CLOSED
+ENHANCED_CSS mid-file and made the remainder a tagged-template call
+(ENHANCED_TOKENS.list is not a function, at import) - the octal
+escape's sibling, now warned about inside the sheet itself. Bisected
+by stash: clean tree served, edited tree failed at module load.
+Probed both viewports: dock tiles inline, worn map visible on the
+phone, zero errors. Suite green, build green.
+
+PX19g (Mac: "stop making incremental improvements and actually look
+- why is the paperdoll slapped on, why are there scrollbars"): THE
+REGION COMPOSED, THE CHROME GONE. Two design failures owned. (1) THE
+DOLL HAD NO HOME - absolutely positioned behind the grid, present
+only when art loaded, related to nothing. It OWNS THE CENTER now: a
+framed panel spanning rows 2-4 of the worn map, art inside when the
+paperdoll can draw and a quiet Avatar plaque when it cannot, so the
+composition never collapses. HEAD crowns it, CHEST sits at its feet
+- on the body - and the families flank it symmetrically, five rows a
+side: Cloaks/Arms/Hands/R-Weapon/Legs against
+Neck/Rings/Tokens/L-Weapon/Feet. (2) SIX STYLED SCROLLBARS made a
+game window read as a web page. The cure is fit, not furniture: the
+character region and the plaque are SIZED TO FIT their space
+(5x52 + gaps + the head ~= 310 in ~380, measured
+scrollHeight<=clientHeight in the probe), overflow hidden; the dock
+and the loot may still scroll but with the chrome removed
+(display:none webkit + scrollbar-width none) - wheel and touch work,
+nothing is drawn. At the fitted row the in-tile name line clipped,
+so tiles speak monogram + family word + badge (the reference's own
+read - the piece, not its caption) and the name lives in the plaque
+and the title; .wornname stays in the DOM for the probes. Verified:
+char region fits, doll frame present art or no art, zero visible
+bars by measurement, zero errors. Suite 4128/0, build green.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk
