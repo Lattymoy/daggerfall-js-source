@@ -21,6 +21,10 @@ import { PlayerWeapon, WEAPON_REACH } from './playerWeapon.js';
 import { racialFpsWeapon } from '../systems/lycanthropy.js';   // V4: the transformed rig's claws
 import { EQUIP_SLOTS } from '../systems/equip.js';   // AUDIT 17e F17
 import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES } from './fpsWeapon.js';
+// MW-IMPORT slice 5: the opt-in 3D viewmodel. Inert unless ?mwfp=1 AND
+// Morrowind data is attached; the classic sprite path below is the law
+// and runs untouched otherwise.
+import { createMwFpView } from './mwFpArms.js';
 import { worldAabb, rayAabb } from '../player/activate.js';
 import { SOUND } from '../systems/soundClips.js';
 import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSound
@@ -39,6 +43,8 @@ import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSou
  * }
  */
 export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, say = () => {}, spellArmed = () => false, bindWorn = true }) {
+  let mwView = null;
+  createMwFpView(renderer).then((v) => { mwView = v; }).catch((e) => console.warn('mwfp:', e.message));
   const playerWeapon = new PlayerWeapon({});
   // AUDIT 17e F17 / THE FOUR HOSTS RULE: U8h bound the worn weapon in
   // the two EXTERIOR hosts by hand, so the interior host (which owns
@@ -152,6 +158,9 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // swing sound at the HIT FRAME of a swing that hit no enemy
       // (WeaponManager.cs:1059 else-arm) and at bow frame 4 (:376-380),
       // both of which ride the machine's events at the hosts now.
+      if (mwView && mwView.active() && !paralyzed) {
+        mwView.update(dt, weaponTypeForItem(playerWeapon.weapon), playerWeapon.machine.state);
+      }
       return paralyzed ? [] : playerWeapon.update(dt);
     },
     /** The overlay draw, LAST in the host's frame (composites over the
@@ -160,6 +169,10 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       bowArrowGuard();
       if (paralyzed || !shown()) return;
       const c = cv();
+      if (mwView && mwView.active()) {
+        mwView.draw(c, weaponTypeForItem(playerWeapon.weapon));
+        return;
+      }
       const art = c && artFor(playerWeapon.weapon);
       if (art) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame);
     },

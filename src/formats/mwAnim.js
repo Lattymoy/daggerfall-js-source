@@ -45,9 +45,12 @@ export function parseAnimGroups(textKeys) {
       const marker = m[2].toLowerCase();
       let g = groups.get(name);
       if (!g) {
-        g = { start: null, stop: null, loopStart: null, loopStop: null };
+        g = { start: null, stop: null, loopStart: null, loopStop: null, markers: new Map() };
         groups.set(name, g);
       }
+      // Every marker is kept - attack sub-segments ("chop start",
+      // "chop hit"...) live here for the first-person layer.
+      g.markers.set(marker, time);
       if (marker === 'start') g.start = time;
       else if (marker === 'stop') g.stop = time;
       else if (marker === 'loop start') g.loopStart = time;
