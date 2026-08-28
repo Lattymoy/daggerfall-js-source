@@ -6621,3 +6621,19 @@ settingRow and the same rising help sheet. The closing line says
 nothing-hidden law kept by TELLING rather than by showing all 171
 mid-game. Boot keeps the full shell. Probed: 7 dividers, 48 rows,
 no chips, the help sheet rises, zero errors both viewports.
+
+PX10b (same day, Mac: "it's the old ui backdrop"): THE ROWS SHED THE
+OLD CHROME. The base .row/.step/.val/.panes rules are the OLD
+sheet's - slate fills, 1px iron hairlines, the brass inset - and
+PX8's repaint was scoped to .shell, which the pause window is not
+in. The same repaint now lives scoped under .px-setwrap: transparent
+rows on 2px dim separators, pixel-bordered steppers and switches
+with the gold pair, the outline-not-inset selected state, the dcard
+repainted for the sheet - and the 44px target pseudo-element plus
+every measured size untouched. THE SLATE WAS NOT WHERE IT LOOKED:
+killing .list's background changed nothing because the visible panel
+was .panes' own var(--iron) grid ground (the base sheet colours its
+column GAPS by painting the grid behind them) - found by computed
+style, not by staring at the sheet, the PX9 lesson applied within
+the hour. Probed both viewports, the pane now sits on the window's
+own translucent ground.
