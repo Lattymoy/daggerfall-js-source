@@ -1560,6 +1560,44 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    keeps the shell's 0.38 breath and the dcard its own bordered card. */
 .wizard .stagebody { background: transparent; }
 
+/* ── PX14: THE DIAL ── the in-game compass rose. A glance, not a
+   room: 0.45 scrim, a knot of layered diamonds, four 2px arms with
+   the label at each end, the gold pair on the chosen one, states
+   SNAP. Every arm is a real >=44px button. */
+.px-dial { position: fixed; inset: 0; z-index: 14; background: rgba(10,12,17,0.45);
+  display: grid; place-items: center;
+  font-family: 'Pixelify Sans', monospace; -webkit-font-smoothing: none; color: #d8cfae; }
+.px-rose { position: relative; width: min(560px, 86vw); height: min(560px, 86vh); }
+.px-knot { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+  color: var(--brass); font-size: 26px; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-knot2 { font-size: 44px; color: rgba(125,116,96,0.55); }
+/* The four arms: absolute at the rose's compass points, each a rule
+   drawn by its own ::before toward the knot. */
+.px-arm { position: absolute; font: inherit; font-size: 22px; letter-spacing: 0.18em;
+  text-indent: 0.18em; text-transform: uppercase; color: #d8cfae; background: none;
+  border: 0; cursor: pointer; min-height: 44px; min-width: 44px; padding: 8px 14px;
+  display: flex; align-items: center; gap: 12px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); transition: none; }
+.px-arm .px-c { font-size: 13px; color: rgb(243,239,44); visibility: hidden;
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-arm.on, .px-arm:hover, .px-arm:focus-visible { outline: none;
+  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-arm.on .px-c, .px-arm:hover .px-c, .px-arm:focus-visible .px-c { visibility: visible; }
+.px-arm::before { content: ''; position: absolute; background: rgba(125,116,96,0.55); }
+.px-n { left: 50%; top: 6%; transform: translateX(-50%); }
+.px-n::before { left: 50%; top: 100%; width: 2px; height: 90px; transform: translateX(-50%); }
+.px-s { left: 50%; bottom: 6%; transform: translateX(-50%); }
+.px-s::before { left: 50%; bottom: 100%; width: 2px; height: 90px; transform: translateX(-50%); }
+.px-e { right: 4%; top: 50%; transform: translateY(-50%); }
+.px-e::before { right: 100%; top: 50%; height: 2px; width: 110px; transform: translateY(-50%); }
+.px-w { left: 4%; top: 50%; transform: translateY(-50%); }
+.px-w::before { left: 100%; top: 50%; height: 2px; width: 110px; transform: translateY(-50%); }
+@media (max-width: 480px) {
+  .px-arm { font-size: 17px; }
+  .px-n::before, .px-s::before { height: 56px; }
+  .px-e::before, .px-w::before { width: 64px; }
+}
+
 /* ── PX9: SETTINGS INSIDE THE PAUSE WINDOW ──────────────────────
    The same paneSettings DOM, reflowed for the window: the category
    subrail becomes a wrapping chip strip on top, the rows scroll
