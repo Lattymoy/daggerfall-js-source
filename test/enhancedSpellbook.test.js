@@ -89,9 +89,12 @@ test('PX23 book: the pixel family\'s own bones, and no invented furniture', () =
   assert.match(read('src/ui/enhancedMenu.js'), /d\.append\(el\('span', 'px-gem'\), el\('span', 'px-divword', word\), el\('span', 'px-gem'\)\);/,
     'and it matches the window it was borrowed from');
   // The head is the pack's three zones (PX19/PX21d), centred.
-  assert.match(css, /\.sb-shell \.sb-top \{ display: grid; grid-template-columns: 1fr auto 1fr;/);
+  // PX24: the head is the FAMILY's now - shared with the chronicle
+  // rather than scoped to this one window, which is what that slice's
+  // first render caught.
+  assert.match(css, /\.sb-shell \.sb-top, \.cr-shell \.sb-top \{ display: grid; grid-template-columns: 1fr auto 1fr;/);
   // The cost rides the rail row, right-aligned in brass - the classic's
   // "cost - name" as a column, which reads better than a prefix.
-  assert.match(css, /\.sb-shell \.sb-cost \{ margin-left: auto; color: var\(--brass\);/);
+  assert.match(css, /\.sb-shell \.sb-cost, \.cr-shell \.sb-cost \{ margin-left: auto; color: var\(--brass\);/);
   assert.match(book, /b\.append\(el\('span', 'sb-cost', String\(r\.cost\)\)\);/);
 });
