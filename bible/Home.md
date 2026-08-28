@@ -258,18 +258,17 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:735` - index into the 18 careers) or the INTERIM default Warrior (16,
 - `src/scenes/dungeonContext.js:741` - effects FLAGGED to the effect-library slice.
 - `src/scenes/dungeonContext.js:751` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:1254` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/dungeonContext.js:1290` - onTeleport INTERIM shape). Absent, the engine's dispatch
-- `src/scenes/dungeonContext.js:3016` - PX3 FLAGGED: questMessages - the dungeon quest mount is
-- `src/scenes/dungeonContext.js:3086` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
+- `src/scenes/dungeonContext.js:1255` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/dungeonContext.js:1291` - onTeleport INTERIM shape). Absent, the engine's dispatch
+- `src/scenes/dungeonContext.js:3017` - PX3 FLAGGED: questMessages - the dungeon quest mount is
+- `src/scenes/dungeonContext.js:3087` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
 - `src/scenes/exterior.js:558` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:564` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:792` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:1008` - PX3 FLAGGED: questMessages - this test host mounts no quest
-- `src/scenes/exterior.js:1040` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:1337` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:1500` - FLAGGED here exactly as in world.js - no tile lookup yet).
-- `src/scenes/exterior.js:1844` - ground (FLAGGED with world.js's same gap), so Detect Treasure
+- `src/scenes/exterior.js:801` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/exterior.js:1018` - PX3 FLAGGED: questMessages - this test host mounts no quest
+- `src/scenes/exterior.js:1050` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/exterior.js:1347` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:1510` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/exteriorFoes.js:550` - FLAGGED: the arrow's IMPACT still only knows the player
 - `src/scenes/shared.js:292` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:309` - *  mirrors motorStats (the INTERIM entity carries no stats). */
@@ -279,15 +278,14 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:821` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/world.js:827` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/world.js:1274` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
-- `src/scenes/world.js:2280` - FLAGGED in systems/healthStatus.js (macro producers pend).
-- `src/scenes/world.js:2353` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:2632` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:2914` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:3244` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:3271` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:3752` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:4116` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/world.js:4189` - (FLAGGED: exterior corpse containers are the loot arc's), so
+- `src/scenes/world.js:2292` - FLAGGED in systems/healthStatus.js (macro producers pend).
+- `src/scenes/world.js:2365` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:2644` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:2926` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:3256` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:3283` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:3764` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:4128` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:798` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
 - `src/scenes/worldModes.js:922` - (FLAGGED - MakeHouseContainer, the house-ownership arm).
 - `src/scenes/worldModes.js:935` - FLAGGED to the crime arc, as the Ledger records.
@@ -341,7 +339,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/enchantments.js:679` - a MagicRound-FLAGGED row's is the payload callback :1767
 - `src/systems/encounters.js:221` - * STILL FLAGGED: the FoeSpawner sweep (:721-728) pends quest spawners
 - `src/systems/equip.js:17` - hooks below. FLAGGED: equip sounds.
-- `src/systems/equip.js:240` - /** INTERIM starting equipment (chargen's starting-gear roll
+- `src/systems/equip.js:277` - /** INTERIM starting equipment (chargen's starting-gear roll
 - `src/systems/factionRep.js:229` - *  pre-chargen INTERIM entity (characters/playerEntity.js) has no
 - `src/systems/guildServiceActions.js:195` - *  turning into a vampire or werebeast - FLAGGED: the port has no
 - `src/systems/guildServiceFlow.js:239` - *  override's law). Every other arm is FLAGGED with the window it
@@ -401,7 +399,7 @@ combat line numbers below are refreshed with it.
 - `src/ui/messageBox.js:35` - FLAGGED: the scrolling variant (a label taller than MaxTextHeight
 - `src/ui/messageBox.js:155` - so the strip never rides higher than that. FLAGGED as a
 - `src/ui/nativeInventory.js:41` - still said Equip and equip-after-transfer were FLAGGED after U8g
-- `src/ui/nativeInventory.js:285` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
+- `src/ui/nativeInventory.js:302` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
 - `src/ui/nativeTalk.js:273` - lands with the Tell-me-about slice (FLAGGED).
 - `src/ui/nativeTalk.js:298` - B5-6: the four pages that were INTERIM no-ops. Each falls back
 - `src/ui/paperDoll.js:18` - Human +2 - Breton INTERIM), record = playerTextureRecord

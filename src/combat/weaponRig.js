@@ -75,13 +75,25 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     return cache.get(key);
   }
 
-  /** WeaponManager.Update's ShowWeapons legs, verbatim order. */
+  /** WeaponManager.Update's ShowWeapons legs, verbatim order.
+   *  FX1 (F024/F025) rebuilt both clocks:
+   *  - the bow COOLDOWN is an EARLY RETURN (:230-233), leaving
+   *    ShowWeapon at its prior value - the bow stays DRAWN through
+   *    the ~1.3s cooldown instead of blinking out and popping back.
+   *    The latch below is that "prior value".
+   *  - a running EQUIP countdown shows EMPTY HANDS (:275-281) - the
+   *    port drew the new weapon while silently refusing attacks,
+   *    which was the block half without its cue. */
+  let _lastShown = false;
   function shown() {
-    if (playerWeapon.sheathed) return false;
-    if (spellArmed()) return false;                            // HasReadySpell / IsPlayingAnim
     const m = playerWeapon.machine;
-    if (m.isBow && m.now < m.cooldownUntil) return false;      // bow cooldown hide
-    return true;
+    if (m.isBow && m.now < m.cooldownUntil) return _lastShown;   // F024: the early return freezes the state
+    let v = true;
+    if (spellArmed()) v = false;                               // HasReadySpell / IsPlayingAnim
+    else if ((entity?.equipCountdown ?? 0) > 0) v = false;     // F025: empty hands while equipping
+    else if (playerWeapon.sheathed) v = false;
+    _lastShown = v;
+    return v;
   }
 
   /** FPSWeapon.UpdateWeapon's bow guard: an UNsheathed bow with zero
@@ -174,7 +186,15 @@ export function envAttack(actions, collider, eye, lookDir, rolls = Math.random) 
     best = o; bestD = d;
   }
   if (!best) return false;
-  if (best.kind === 'door') { actions.attemptBash(best, rolls()); return true; }
+  // FX1 (F182): Receive(player, Attack) fires on ANY struck object
+  // carrying an action FIRST - an action door is one GameObject with
+  // both components in DFU (WeaponManager.cs:458-465) - and only THEN
+  // a door bashes (:467-472). The old door-only branch meant an
+  // Attack- or MultiTrigger-flagged door record (Castle Wayrest's
+  // doors are MultiTrigger) never fired on a weapon hit, because the
+  // bash path passes the Door trigger alone, which those records
+  // reject.
   actions.receive(best, 'Attack');
+  if (best.kind === 'door') { actions.attemptBash(best, rolls()); return true; }
   return false;
 }

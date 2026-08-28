@@ -93,7 +93,7 @@ import { ChoiceWindow } from '../ui/talkWindow.js';   // V1: the infection popup
 import { startInfection, liveInfection } from '../systems/infection.js';   // V1 probe surface: the bite and the lifecycle
 import { diseaseCount } from '../systems/diseases.js';
 import { MINUTES_PER_DAY } from '../systems/gameDate.js';
-import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
+import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -637,6 +637,15 @@ export async function bootExterior(canvas, renderer, params, status) {
   const detectFeed = createDetectFeed(playerEntity, {
     entities: () => ((modes?.mode ?? 'exterior') === 'exterior' ? cityGuards.guards : [])
       .filter((f) => !f.dead && f.ai).map(foeNearbyRecord),
+    // FX1 (F207): the world piles + guard corpses mark outdoors -
+    // UpdateNearbyObjects walks every active loot container with no
+    // scene gate (PlayerGPS.cs:747, :766-776).
+    loot: () => [
+      ...droppedLoot._piles.map(lootNearbyRecord),
+      ...cityGuards.guards
+        .filter((g) => !!g.corpse && !!g.entity)
+        .map((g) => lootNearbyRecord({ pos: g.corpseMarker?.pos ?? g.ai?.feet ?? null, items: g.entity.items ?? [] })),
+    ],
     feet: detectFeet,
   });
   const cityGuards = createCityGuards({
@@ -858,6 +867,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // assembling a second one from a different dependency list.
   const makeInventoryWindow = (extra = {}) => createInventoryWindow({
     openBook: openBookHook,   // B1: the use-mode book arm
+    say: (l) => townTalk.say(l),   // FX1 (F128): the "Equipping %s" cue on close
     items: () => (playerEntity.items ??= []),
     wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
     entity: playerEntity,
@@ -1840,9 +1850,9 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (hudArt) {
       const _hfw = [-view[2], -view[10]];
       // X4: the Detect markers. This host's nearby pool is the city
-      // guards - the only entities it spawns. No loot piles above
-      // ground (FLAGGED with world.js's same gap), so Detect Treasure
-      // is live and finds nothing here.
+      // guards - the only entities it spawns - and, since FX1 (F207),
+      // the world piles and guard corpses: DFU's loot walk has no
+      // scene gate.
       const _dFeet = detectFeet();
       const _detected = detectFeed.tick(dt);
       drawHud(renderer, canvas, hudArt, playerEntity,

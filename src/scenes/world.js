@@ -111,7 +111,7 @@ import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_
 import { audio } from '../systems/audio.js';
 import { music } from '../systems/music.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
-import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
+import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
 import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // StartRestGroundedCheck's ONE home
@@ -1285,6 +1285,17 @@ export async function bootWorld(canvas, renderer, params, status) {
   const enchantFoes = () => ((modes?.mode ?? 'exterior') === 'exterior' ? [...cityGuards.guards, ...exteriorFoes.foes] : []);
   const detectFeed = createDetectFeed(playerEntity, {
     entities: () => enchantFoes().filter((f) => !f.dead && f.ai).map(foeNearbyRecord),
+    // FX1 (F207): UpdateNearbyObjects walks EVERY active DaggerfallLoot
+    // with no scene gate (PlayerGPS.cs:747, :766-776) - the world piles
+    // the player drops and the lootable corpse containers both mark
+    // outdoors in DFU. The old entities-only feed rested on "no loot
+    // piles above ground", false since droppedLoot mounted.
+    loot: () => [
+      ...droppedLoot._piles.map(lootNearbyRecord),
+      ...[...cityGuards.guards, ...exteriorFoes.foes]
+        .filter((f) => !!f.corpse && !!f.entity)
+        .map((f) => lootNearbyRecord({ pos: f.corpseMarker?.pos ?? f.ai?.feet ?? null, items: f.entity.items ?? [] })),
+    ],
     feet: () => enchantFeet(),
   });
   {
@@ -1453,6 +1464,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // assembling a second one from a different dependency list.
   const makeInventoryWindow = (extra = {}) => createInventoryWindow({
     openBook: openBookHook,   // B1: the use-mode book arm
+    say: (l) => townTalk.say(l),   // FX1 (F128): the "Equipping %s" cue on close
     items: () => (playerEntity.items ??= []),
     wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
     entity: playerEntity,
@@ -4185,10 +4197,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       const _hfw = [-view[2], -view[10]];
       // X4: the Detect markers. Exterior mode's nearby pool is the
       // guards plus the encounter foes - the same list the spell
-      // engine already targets. There are no loot PILES above ground
-      // (FLAGGED: exterior corpse containers are the loot arc's), so
-      // Detect Treasure is live but finds nothing out here, which is
-      // its own honest answer rather than a missing feature.
+      // engine already targets - and, since FX1 (F207), the world
+      // piles and corpse containers too: Detect Treasure marks your
+      // own dropped pile out here, as DFU's ungated loot walk does.
       const _detected = detectFeed.tick(dt);
       drawHud(renderer, canvas, hudArt, playerEntity,
         ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt,

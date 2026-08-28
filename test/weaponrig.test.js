@@ -9,10 +9,15 @@
 // consume, other action objects Receive(Attack)).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createWeaponRig, envAttack } from '../src/combat/weaponRig.js';
 import { SOUND } from '../src/systems/soundClips.js';
 import { EQUIP_SLOTS } from '../src/systems/equip.js';
 import { equipSoundFor } from '../src/characters/weapons.js';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 const stubAudio = () => {
   const a = { played: [], playOneShot(id) { a.played.push(id); } };
@@ -127,10 +132,15 @@ test('weaponRig: envAttack - a door in reach bashes and consumes; others Receive
   };
   const clear = { raycast: () => Infinity };
   const eye = [0, 1, 0], dir = [0, 0, 1];
-  // A door: bashed, swing consumed (true).
+  // A door: Receive(Attack) FIRST, then bashed, swing consumed (true).
+  // FX1 (F182): DFU's WeaponEnvDamage fires Receive on ANY struck
+  // action object before the door check (:458-472) - an action door
+  // is one GameObject with both components - so an Attack- or
+  // MultiTrigger-flagged door record fires on every weapon hit.
   const d = mkActions('door');
   assert.equal(envAttack(d.actions, clear, eye, dir), true);
   assert.equal(d.calls.bashed, 1);
+  assert.deepEqual(d.calls.received, ['Attack'], 'the door record hears the Attack trigger too');
   // A lever: Receive(Attack), swing continues (false).
   const l = mkActions('model');
   assert.equal(envAttack(l.actions, clear, eye, dir), false);
@@ -139,4 +149,19 @@ test('weaponRig: envAttack - a door in reach bashes and consumes; others Receive
   const w = mkActions('door');
   assert.equal(envAttack(w.actions, { raycast: () => 0.4 }, eye, dir), false);
   assert.equal(w.calls.bashed, 0);
+  assert.deepEqual(w.calls.received, []);
+});
+
+test('FX1 (F024/F025): the show clocks - the bow cooldown FREEZES the state, an equip countdown shows empty hands', () => {
+  const rig = readFileSync(join(ROOT, 'src', 'combat', 'weaponRig.js'), 'utf8');
+  // F024: WeaponManager.Update RETURNS EARLY on cooldown (:230-233),
+  // leaving ShowWeapon at its prior value - the latch is that value.
+  // The old code hid the bow through the ~1.3s cooldown (blink).
+  assert.match(rig, /if \(m\.isBow && m\.now < m\.cooldownUntil\) return _lastShown;/);
+  assert.match(rig, /let _lastShown = false;/);
+  // F025: a running equip countdown shows EMPTY HANDS (:275-281) -
+  // the port drew the new weapon while refusing attacks.
+  assert.match(rig, /else if \(\(entity\?\.equipCountdown \?\? 0\) > 0\) v = false;/);
+  // and the latch records every non-cooldown answer
+  assert.match(rig, /_lastShown = v;\n\s+return v;/);
 });

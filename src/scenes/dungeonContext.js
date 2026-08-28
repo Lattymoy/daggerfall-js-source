@@ -874,6 +874,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (sup) { hudText.add(sup.text); return null; }
     return createInventoryWindow({
       openBook: openBookHook,   // B1: the use-mode book arm
+      say: (l) => hudText.add(l),   // FX1 (F128): the "Equipping %s" cue on close
       items: () => (playerEntity.items ??= []),
       wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice
       // W-slice: CheckWagonAccess's dungeon arm - the wagon is
