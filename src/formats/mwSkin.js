@@ -113,12 +113,39 @@ export function buildSkeleton(nif) {
 }
 
 /**
+ * The ACCUMULATION ROOT: the topmost tracked bone. Morrowind animations
+ * carry the actor's locomotion in this bone's translation channel (a
+ * flight cycle literally contains the flight path - OAAB's bat keys
+ * y=1892 into it), and the engine extracts that motion for MOVEMENT
+ * while the visual skeleton stays put. The reference accumulates X,Y
+ * and leaves Z animated (jumps, hovers). Posing without extraction is
+ * the geometry-all-over-the-place bug: every walk loop translates the
+ * whole body away.
+ */
+export function accumRootRef(skeleton, tracks) {
+  let best = null;
+  let bestDepth = Infinity;
+  for (const [ref, node] of skeleton.nodes) {
+    if (!tracks || !tracks.has(node.name.toLowerCase())) continue;
+    let d = 0;
+    for (let p = node.parent; p >= 0 && skeleton.nodes.has(p); p = skeleton.nodes.get(p).parent) d++;
+    if (d < bestDepth) {
+      bestDepth = d;
+      best = ref;
+    }
+  }
+  return best;
+}
+
+/**
  * Pose the skeleton from tracks at a time: local transforms per node,
- * rest values where a channel has no keys.
+ * rest values where a channel has no keys. Pass `accumRoot` (from
+ * accumRootRef) to extract root motion: that bone's X,Y pin to rest
+ * and only Z stays animated, the reference's (1,1,0) accumulation.
  * @returns {Map<number, {rotation:Float32Array, translation:number[],
  *   scale:number}>}
  */
-export function poseSkeleton(skeleton, tracks, sampleTrack, time) {
+export function poseSkeleton(skeleton, tracks, sampleTrack, time, opts = {}) {
   const pose = new Map();
   for (const [ref, node] of skeleton.nodes) {
     const track = tracks && tracks.get(node.name.toLowerCase());
@@ -127,9 +154,13 @@ export function poseSkeleton(skeleton, tracks, sampleTrack, time) {
       continue;
     }
     const s = sampleTrack(track, time);
+    let translation = s.translation ?? node.rest.translation;
+    if (ref === opts.accumRoot && s.translation) {
+      translation = [node.rest.translation[0], node.rest.translation[1], s.translation[2]];
+    }
     pose.set(ref, {
       rotation: s.rotation ? quatToMat33(s.rotation) : node.rest.rotation,
-      translation: s.translation ?? node.rest.translation,
+      translation,
       scale: s.scale ?? node.rest.scale,
     });
   }

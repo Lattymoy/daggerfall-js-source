@@ -23,7 +23,7 @@ import { parseNif } from '../formats/mwNifFile.js';
 import { flattenNif } from '../formats/mwNifMesh.js';
 import { decodeDds } from '../formats/mwDdsFile.js';
 import { collectTextKeys, parseAnimGroups, extractTracks, sampleTrack } from '../formats/mwAnim.js';
-import { buildSkeleton, poseSkeleton, skeletonSpaceMatrices, skinBatch } from '../formats/mwSkin.js';
+import { buildSkeleton, poseSkeleton, skeletonSpaceMatrices, skinBatch, accumRootRef } from '../formats/mwSkin.js';
 import { bindPart, attachmentTransform } from '../formats/mwCharacter.js';
 import { parseEsm } from '../formats/mwEsmFile.js';
 import { assembleNpc, indexSkins } from '../formats/mwNpc.js';
@@ -349,7 +349,11 @@ function updateAnimation(nowMs) {
   if (!g) return;
   const span = Math.max(g.stop - g.start, 1e-6);
   const t = anim.seek != null ? anim.seek : g.start + (((nowMs - anim.t0) / 1000) % span);
-  const pose = poseSkeleton(loaded.skeleton, anim.tracks, sampleTrack, t);
+  // Root motion extracted (reference (1,1,0) accumulation) - the walk
+  // stays under the actor instead of walking the mesh off the stage.
+  const pose = poseSkeleton(loaded.skeleton, anim.tracks, sampleTrack, t, {
+    accumRoot: accumRootRef(loaded.skeleton, anim.tracks),
+  });
   const matsByRoot = new Map();
   const rootRef = skeletonRootRef();
   if (!matsByRoot.has(rootRef)) {
