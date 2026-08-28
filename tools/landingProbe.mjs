@@ -46,13 +46,31 @@ async function landing(label, ctxOpts) {
 
   const tokens = await page.locator('style#enhanced-tokens').textContent();
   check(`${label}: the skin's token block is on the page`, /--brass:\s*#c08a3e/.test(tokens ?? ''));
-  const sub = await page.locator('.brand .sub').evaluate((el) => getComputedStyle(el).color);
-  check(`${label}: a computed colour on the page IS brass`, sub === 'rgb(192, 138, 62)', sub);
+  // U63: the gem on the rule is the brass one, drawn the pixel face's
+  // way (a box-shadow cross), so the colour is read off its background.
+  const gem = await page.locator('.rule .gem').first().evaluate((el) => getComputedStyle(el).backgroundColor);
+  check(`${label}: a computed colour on the page IS brass`, gem === 'rgb(192, 138, 62)', gem);
+  const face = await page.locator('h1.wordmark').evaluate((el) => getComputedStyle(el).fontFamily);
+  check(`${label}: the wordmark is the MENU's face`, /Jacquard 12/.test(face), face);
+  check(`${label}: ...and it loaded`, await page.evaluate(() => document.fonts.check("40px 'Jacquard 12'")));
+  const body = await page.evaluate(() => getComputedStyle(document.body).fontFamily);
+  check(`${label}: the body is the menu's list face`, /Pixelify Sans/.test(body), body);
+  // U63: the night is the menu's own - a fixed layer with the ramp, the
+  // fog and a star field from pixelGround's seed, all in CSS.
+  const night = await page.locator('.night').evaluate((el) => {
+    const cs = getComputedStyle(el), after = getComputedStyle(el, '::after');
+    return { fixed: cs.position === 'fixed', layers: (cs.backgroundImage.match(/gradient/g) || []).length,
+      stars: (after.boxShadow.match(/rgb/g) || []).length };
+  });
+  check(`${label}: the night is the menu's sky, in CSS`, night.fixed && night.layers >= 3 && night.stars >= 90, JSON.stringify(night));
+  // U63: the ground is the PIXEL home's own base (#0a0c11), not the
+  // enhanced shell's --ink - the night is painted over it.
   const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  check(`${label}: the ground is ink`, bg === 'rgb(14, 16, 19)', bg);
-  check(`${label}: one fonts link, and it asks for the brand face`,
+  check(`${label}: the ground is the pixel home's base`, bg === 'rgb(10, 12, 17)', bg);
+  const fontHref = await page.locator('link[rel=stylesheet][href*="fonts.googleapis.com"]').getAttribute('href') ?? '';
+  check(`${label}: one fonts link, and it is the SKIN's own request`,
     (await page.locator('link[rel=stylesheet][href*="fonts.googleapis.com"]').count()) === 1
-    && /Grenze\+Gotisch/.test(await page.locator('link[rel=stylesheet][href*="fonts.googleapis.com"]').getAttribute('href') ?? ''));
+    && /Jacquard\+12/.test(fontHref) && /Pixelify\+Sans/.test(fontHref));
   // The face RESOLVED, not merely was asked for (needs the network; the
   // page itself never traps on it - Georgia is the fallback).
   const h1Face = await page.locator('h1').evaluate((el) => getComputedStyle(el).fontFamily);
@@ -62,19 +80,13 @@ async function landing(label, ctxOpts) {
   check(`${label}: no script, no canvas on the landing`,
     (await page.locator('script:not([src^="/@vite/"]), canvas, video').count()) === 0);   // vite's own HMR client is the dev server's, not the page's
   // U60c: the three pictures resolve and paint at their declared size.
-  const pics = await page.locator('.shot img').evaluateAll((els) => els.map((i) => [i.getAttribute('src'), i.complete && i.naturalWidth > 0, i.naturalWidth === Number(i.getAttribute('width'))]));
+  await page.locator('#look').scrollIntoViewIfNeeded();
+  await page.waitForTimeout(900);   // the pictures are lazy; they are below the door
+  const pics = await page.locator('#look figure img').evaluateAll((els) => els.map((i) => [i.getAttribute('src'), i.complete && i.naturalWidth > 0, i.naturalWidth === Number(i.getAttribute('width'))]));
   check(`${label}: the three pictures load at their declared size`, pics.length === 3 && pics.every(([, ok, sized]) => ok && sized), JSON.stringify(pics));
-  const strip = await page.locator('.end .stat').evaluateAll((els) => els.map((e) => e.textContent));
-  check(`${label}: the ledger strip carries two figures`, strip.length === 2 && strip.every((t) => /^[\d,]{4,}$/.test(t)), strip.join(' / '));
-  check(`${label}: the gate wears its four corner fittings`,
-    await page.locator('.gate').evaluate((el) => {
-      const w = (n, ps) => getComputedStyle(n, ps).borderTopWidth + getComputedStyle(n, ps).borderLeftWidth
-        + getComputedStyle(n, ps).borderBottomWidth + getComputedStyle(n, ps).borderRightWidth;
-      const fit = el.querySelector('.fit');
-      return [w(el, '::before'), w(el, '::after'), w(fit, '::before'), w(fit, '::after')]
-        .every((x) => x.includes('2px'));
-    }));
-  const play = await page.locator('.gate a.act.primary').getAttribute('href');
+  const strip = await page.locator('.foot .stat').evaluateAll((els) => els.map((e) => e.textContent));
+  check(`${label}: the foot carries two figures`, strip.length === 2 && strip.every((t) => /^[\d,]{4,}$/.test(t)), strip.join(' / '));
+  const play = await page.locator('a.plaque').getAttribute('href');
   check(`${label}: Play points one directory down`, play === './play/', play);
   check(`${label}: no page errors`, errors.length === 0, errors.join(' | '));
   await page.screenshot({ path: `${shots}/landing-${label}.png`, fullPage: true });
@@ -83,18 +95,17 @@ async function landing(label, ctxOpts) {
 }
 
 const desk = await landing('desktop', { viewport: { width: 1400, height: 900 } });
-check('desktop: the rail foot (source + build) shows',
-  await desk.page.locator('.foot').isVisible());
-check('desktop: the phone bar does not',
-  !(await desk.page.locator('.thumb').isVisible()));
+check('desktop: the foot carries build, tests, lines and Source',
+  await desk.page.locator('.foot').isVisible()
+  && (await desk.page.locator('.foot .stat').count()) === 2);
 
-// The door behind the door: press Play, land in the enhanced menu with
-// no data, no picker.
-await desk.page.locator('.gate a.act.primary').click();
-await desk.page.waitForSelector('#enhanced-menu .railbtn', { timeout: 15000 });
+// The door behind the door: press Play, land on the PIXEL HOME with no
+// data, no picker.
+await desk.page.locator('a.plaque').click();
+await desk.page.waitForSelector('.px-menu button', { timeout: 15000 });
 check('desktop: Play opens /play/', new URL(desk.page.url()).pathname.endsWith('/play/'), desk.page.url());
-check('desktop: the enhanced menu draws with no ARENA2',
-  (await desk.page.locator('#enhanced-menu .railbtn').count()) === 6);
+check('desktop: the pixel home draws with no ARENA2',
+  (await desk.page.locator('.px-menu button').count()) === 5);
 check('desktop: the folder pick has NOT been asked for',
   (await desk.page.locator('#pick').count()) === 0);
 await desk.page.screenshot({ path: `${shots}/landing-desktop-play.png` });
@@ -102,10 +113,11 @@ console.log(`  ${shots}/landing-desktop-play.png`);
 await desk.ctx.close();
 
 const phone = await landing('phone', { ...devices['Pixel 5'] });
-check('phone: the rail foot hides', !(await phone.page.locator('.foot').isVisible()));
-check('phone: Play sits in the thumb bar', await phone.page.locator('.thumb a.act.primary').isVisible());
-const thumb = await phone.page.locator('.thumb a.act.primary').boundingBox();
-check('phone: the thumb bar Play is a 44px target', !!thumb && thumb.height >= 44, `${thumb?.height}px`);
+check('phone: the foot stacks and still carries its figures',
+  await phone.page.locator('.foot').isVisible()
+  && (await phone.page.locator('.foot .stat').count()) === 2);
+const plaque = await phone.page.locator('a.plaque').boundingBox();
+check('phone: Play is a 44px target', !!plaque && plaque.height >= 44, `${plaque?.height}px`);
 await phone.ctx.close();
 
 await browser.close();

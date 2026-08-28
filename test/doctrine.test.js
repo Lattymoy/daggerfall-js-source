@@ -36,9 +36,9 @@ const PUBLIC_ALLOWLIST = new Map([
   // tool boots its own vite with no data folder, proves the game's own
   // data fetch 404s, and aborts if the folder pick appears. Not one
   // pixel on them came from the game.
-  ['public/site/menu-settings.png', 'OURS - the enhanced Settings pane, no game data loaded (tools/siteShots.mjs)'],
+  ['public/site/menu-settings.png', 'OURS - the enhanced settings shell, no game data loaded (tools/siteShots.mjs)'],
   ['public/site/menu-phone.png', 'OURS - the enhanced menu on a phone, no game data loaded (tools/siteShots.mjs)'],
-  ['public/site/pack-sample.png', 'OURS - the enhanced pack with a sample character, no game data loaded (tools/siteShots.mjs)'],
+  ['public/site/menu-home.png', 'OURS - the enhanced pixel home, no game data loaded (tools/siteShots.mjs)'],
   // THE BAKED SKIN (tools/skin/). These pixels never touched ARENA2: the
   // source is our own generated eight-direction turnaround, projected onto
   // buildNeutralBody, which is a from-scratch DESIGNED figure and not a trace
