@@ -728,8 +728,15 @@ test('U58 + AUDIT 26: only the REMOTE list sends the click to the quest system',
   assert.match(body, /from === 'remote' && item\.questItem/,
     'the local list is sending clicks the classic window does not send');
   // and it happens on the CLICK, before the pick - a player who looks
-  // and does not take has still clicked
-  assert.ok(body.indexOf('setPlayerClicked()') < body.indexOf('picked = item'),
+  // and does not take has still clicked. (PX19i respelled the pick as
+  // a toggle - `picked = wasPicked ? null : item` - and this pin used
+  // to grep the old literal `picked = item`, so it went red while the
+  // LAW it protects stood: the quest click still fires first, on every
+  // click, as its own comment records. Anchor on the assignment, not
+  // one spelling of its right-hand side.)
+  const pickAt = body.search(/picked = (wasPicked \? null : )?item/);
+  assert.ok(pickAt > 0, 'the pick assignment is gone');
+  assert.ok(body.indexOf('setPlayerClicked()') < pickAt,
     'the click reaches the quest system only after the selection changes');
 });
 
