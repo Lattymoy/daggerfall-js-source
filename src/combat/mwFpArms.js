@@ -279,7 +279,51 @@ export async function createMwFpView(renderer, playerEntity = null) {
   }
 
   const skinnedSets = [];
-  const attachedSets = []; // {batches, attachRef, transforms}
+  const attachedSets = []; // {batches, attachRef}
+
+  /**
+   * MW8: a body part is EITHER skinned - carrying its own bone weights
+   * - OR a rigid mesh the engine HANGS OFF A BONE, and Morrowind's
+   * arms are overwhelmingly the latter: one small mesh per limb,
+   * attached at the left bone and again at the right. bindPart has
+   * always answered both halves; every caller here took `.skinned` and
+   * dropped `.attached` on the floor, so a rigid part was parsed,
+   * bound, and thrown away. That is why MW7 did not fix the reported
+   * sprite: the arms loaded and vanished, skinnedSets stayed empty,
+   * and `ready` stayed false. attachedSets was declared at slice 5 and
+   * never once written to - the home these parts needed, empty for as
+   * long as it has existed.
+   *
+   * A missing bone costs that SIDE, not the part: retail skeletons
+   * vary and half an arm beats no arm, which is the same rule the
+   * mesh lookup already follows.
+   */
+  const addPart = (partNif, bones, label) => {
+    const sides = bones?.length ? bones : [null];
+    let tookSkinned = false;
+    let placed = 0;
+    for (const bone of sides) {
+      let bound;
+      try {
+        bound = bindPart(skeleton, partNif, bone ? { attachBone: bone } : {});
+      } catch (err) {
+        status(`${label}: ${err.message}`);
+        continue;
+      }
+      // Skinned geometry names its own bones, so it binds ONCE - only
+      // the rigid half is placed per side.
+      if (!tookSkinned && bound.skinned.length) {
+        skinnedSets.push(...bound.skinned);
+        tookSkinned = true;
+        placed += bound.skinned.length;
+      }
+      if (bound.attached.length) {
+        attachedSets.push({ batches: bound.attached, attachRef: bound.attachRef });
+        placed += bound.attached.length;
+      }
+    }
+    return placed;
+  };
   const baseBatches = flattenNif(baseNif);
   for (const b of baseBatches) {
     if (b.skinned && b.skin) skinnedSets.push(b);
@@ -291,8 +335,7 @@ export async function createMwFpView(renderer, playerEntity = null) {
       continue;
     }
     try {
-      const bound = bindPart(skeleton, parseNif(bytes));
-      skinnedSets.push(...bound.skinned);
+      addPart(parseNif(bytes), null, name);   // MW8: rigid parts kept too
     } catch (err) {
       status(`${name}: ${err.message}`);
     }
@@ -327,11 +370,12 @@ export async function createMwFpView(renderer, playerEntity = null) {
         // the sprite while holding perfectly good geometry.
         const bytes = file(part.model) || file(part.thirdPersonModel);
         if (!bytes) continue;
+        const label = `${part.slot} (${part.bodyId})`;
         try {
-          const bound = bindPart(skeleton, parseNif(bytes));
-          skinnedSets.push(...bound.skinned);
+          // MW8: at the left bone AND the right - one mesh, two arms.
+          if (!addPart(parseNif(bytes), part.attachBones, label)) status(`${label}: nothing to draw`);
         } catch (err) {
-          status(`${part.slot} (${part.bodyId}): ${err.message}`);
+          status(`${label}: ${err.message}`);
         }
       }
     }
@@ -600,6 +644,26 @@ export async function createMwFpView(renderer, playerEntity = null) {
       skinBatch(batch, skeleton, pose, matsFor(batch.skin.skeletonRoot), out, null);
       drawSet(batch, out);
     }
+    // MW8: the rigid half of the rig - every attached part posed at its
+    // OWN bone's skeleton-space affine. The weapon has always drawn
+    // this way; the arms had no such loop at all, which is the other
+    // half of why they never appeared.
+    const drawAttached = (batches, attachRef, mats) => {
+      const at = attachmentTransform(mats, attachRef);
+      for (const batch of batches) {
+        let out = posScratch.get(batch);
+        if (!out) posScratch.set(batch, (out = new Float32Array(batch.positions.length)));
+        for (let v = 0; v < batch.positions.length; v += 3) {
+          const [x, y, z] = [batch.positions[v], batch.positions[v + 1], batch.positions[v + 2]];
+          out[v] = at.a[0] * x + at.a[1] * y + at.a[2] * z + at.t[0];
+          out[v + 1] = at.a[3] * x + at.a[4] * y + at.a[5] * z + at.t[1];
+          out[v + 2] = at.a[6] * x + at.a[7] * y + at.a[8] * z + at.t[2];
+        }
+        drawSet(batch, out);
+      }
+    };
+    for (const set of attachedSets) drawAttached(set.batches, set.attachRef, matsFor(rootRef));
+
     const weapon = weaponFor(weaponType);
     if (weapon) {
       for (const batch of weapon.skinned) {
@@ -608,20 +672,7 @@ export async function createMwFpView(renderer, playerEntity = null) {
         skinBatch(batch, skeleton, pose, matsFor(batch.skin.skeletonRoot), out, null);
         drawSet(batch, out);
       }
-      if (weapon.attached.length) {
-        const at = attachmentTransform(matsFor(rootRef), weapon.attachRef);
-        for (const batch of weapon.attached) {
-          let out = posScratch.get(batch);
-          if (!out) posScratch.set(batch, (out = new Float32Array(batch.positions.length)));
-          for (let v = 0; v < batch.positions.length; v += 3) {
-            const [x, y, z] = [batch.positions[v], batch.positions[v + 1], batch.positions[v + 2]];
-            out[v] = at.a[0] * x + at.a[1] * y + at.a[2] * z + at.t[0];
-            out[v + 1] = at.a[3] * x + at.a[4] * y + at.a[5] * z + at.t[1];
-            out[v + 2] = at.a[6] * x + at.a[7] * y + at.a[8] * z + at.t[2];
-          }
-          drawSet(batch, out);
-        }
-      }
+      if (weapon.attached.length) drawAttached(weapon.attached, weapon.attachRef, matsFor(rootRef));
     }
     // Composite: the stage canvas into the stream texture, the stream
     // texture over the scene through the classic screen-quad path.
@@ -657,12 +708,25 @@ export async function createMwFpView(renderer, playerEntity = null) {
     view.ready = false;                       // active() answers false the instant it is dropped
     for (const t of texCache.values()) if (t) gl.deleteTexture(t);
     texCache.clear();
-    for (const set of skinnedSets) {
-      const geo = set.batch?.__geo;
-      if (!geo) continue;
+    // MW8: this walked `set.batch?.__geo` and freed NOTHING - the sets
+    // ARE the batches (drawSet hangs __geo straight off them), so every
+    // lookup was undefined and every iteration hit the `continue`. The
+    // MWAUDIT pin held me to a dispose that existed, not to one that
+    // worked. It also never reached the rigid parts or the weapon
+    // meshes, which is now everything the view uploaded.
+    const freeBatch = (batch) => {
+      const geo = batch?.__geo;
+      if (!geo) return;
       if (geo.vao) gl.deleteVertexArray(geo.vao);
       for (const b of [geo.pos, geo.nrm, geo.uv, geo.idx]) if (b) gl.deleteBuffer(b);
-      set.batch.__geo = null;
+      batch.__geo = null;
+    };
+    for (const batch of skinnedSets) freeBatch(batch);
+    for (const set of attachedSets) for (const batch of set.batches) freeBatch(batch);
+    for (const entry of weaponMeshes.values()) {
+      if (!entry) continue;
+      for (const batch of entry.skinned) freeBatch(batch);
+      for (const batch of entry.attached) freeBatch(batch);
     }
     mainGl.deleteTexture(streamTex);          // the one on the GAME's context
   };
@@ -674,9 +738,12 @@ export async function createMwFpView(renderer, playerEntity = null) {
   // POSE for ever while the sprite path it should have fallen back to
   // sits unused. Both halves are required, and the status line says
   // which one is missing rather than reporting a bare failure.
-  view.ready = skinnedSets.length > 0 && groups.size > 0;
+  // MW8: ...and GEOMETRY means either kind. Counting only the skinned
+  // half declared a rig with two perfectly good rigid arms unready.
+  const drawable = skinnedSets.length + attachedSets.length;
+  view.ready = drawable > 0 && groups.size > 0;
   status(view.ready
-    ? `ready: ${skinnedSets.length} skinned sets, ${groups.size} groups`
-    : skinnedSets.length === 0 ? 'no skinned geometry in base' : 'no animation groups - the sprite path stands');
+    ? `ready: ${skinnedSets.length} skinned + ${attachedSets.length} attached sets, ${groups.size} groups`
+    : drawable === 0 ? 'no arm geometry loaded' : 'no animation groups - the sprite path stands');
   return view;
 }
