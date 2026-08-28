@@ -799,10 +799,16 @@ function paneEnhanced(body) {
   const live = el('div', 'card');
   live.append(el('h3', null, 'Switches'));
   live.append(skinRow());
+  // R3W (Mac, 2026-08-28): this row promised THREE things and shipped
+  // one. The map layer was written and never wired - nothing in src/
+  // called roadModel and the renderer had no slot - and travel by road
+  // is still an orphaned module, so "travel follows them" was simply
+  // untrue. The map half is wired now; the travel claim is removed
+  // until R4 is, rather than left standing as the sky row's was.
   live.append(prefRow('roads', 'Roads',
-    'Roads between towns, generated from the terrain: drawn on the ground and on the travel map, '
-    + 'and travel follows them. The first world load bakes the network (about half a minute, '
-    + 'reported as it goes) and caches it; after that it is instant.'));
+    'Roads between towns, generated from the terrain and drawn both on the ground and on the '
+    + 'travel map. The first world load bakes the network (about half a minute, reported as it '
+    + 'goes) and caches it; after that it is instant.'));
   // RA1 (Mac, 2026-08-28): this row said "not built" while ES1 had
   // been the enhanced skin's default sky for a day - a shipped
   // enhancement wearing a hole's label. It is a SWITCH now, over the
