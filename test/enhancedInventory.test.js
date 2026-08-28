@@ -954,3 +954,90 @@ test('PX20b: a LOOT target opens its own frame alone - the pack is never built',
     assert.ok(src.includes(law), `${law} is still here - PX20b changed what is DRAWN`);
   }
 });
+
+// ── PX21: THE LOOT WINDOW READS, AND TRANSPORT HAS A HOME ─────────
+test('PX21a: mounts and the cart get their own strip - the tab they fall into is not a home', () => {
+  const src = read('src/ui/enhancedInventory.js');
+  // A horse and a cart are Transportation, and filterByTab has NO arm
+  // for them: they land in the fourth tab with the shirts. That is
+  // DFU's own behaviour, and it is why a player who buys a horse
+  // cannot find it - so the strip is a place, not a decoration.
+  const nat = read('src/ui/nativeInventory.js');
+  assert.doesNotMatch(nat, /tab === 'transport'|group === 'Transportation'/, 'still no tab arm - the strip is the answer');
+  assert.match(src, /const TRANSPORT = Object\.freeze\(\[/);
+  assert.match(src, /\{ id: 'mount', label: 'Mount', owned: hasHorse,/);
+  assert.match(src, /\{ id: 'cart', label: 'Cart', owned: hasCart,/);
+  // U58's law: the SESSION answers "do you have one" and hands back the
+  // item to draw. No template index is read in the window - the pin
+  // that caught the first draft doing it stays exactly as it was.
+  assert.match(src, /const owned = t\.owned\(items\) \? transportItem\(items, t\.id\) : null;/);
+  assert.doesNotMatch(src, /SMALL_CART_TEMPLATE|TRANSPORT_HORSE|templateIndex === 9[34]/, 'no second cart or horse check');
+  const sess = read('src/systems/inventorySession.js');
+  assert.match(sess, /export const hasHorse = \(items = \[\]\) =>/, 'and the mount question has a home beside the cart\'s');
+  assert.match(sess, /export const TRANSPORT_HORSE_TEMPLATE = 94;/);
+  assert.match(sess, /export function transportItem\(items = \[\], kind\)/);
+  // The cart plaque IS the wagon's door - one control for the thing and
+  // the place it opens - and it refuses through the session, not twice.
+  assert.match(src, /if \(isCart && owned\) \{[\s\S]{0,240}node\.onclick = toggleWagon;/);
+  assert.match(src, /el\(isCart && owned \? 'button' : 'div',/, 'a plaque that only reports is not a button');
+  assert.match(src, /col2\.append\(transportStrip\(\)\);/);
+});
+
+test('PX21b: the loot window is ROWS, not the dock\'s anonymous squares', () => {
+  const css = read('src/ui/enhancedStyle.js');
+  // The dock's tile grid is right for a bag you know and wrong for a
+  // chest you have never opened: the only question a container asks is
+  // what is in it.
+  assert.match(css, /\.pack-shell \.itemrow \{[\s\S]{0,200}width: 56px; height: 56px;/, 'the dock keeps its tiles');
+  assert.match(css, /\.loot-win \.itemrow \{ width: 100%; height: auto; min-height: 52px;/);
+  assert.match(css, /\.loot-win \.itemrow \.itemname \{ position: static;[\s\S]{0,120}clip-path: none;/,
+    'the name is readable here, where the dock hides it');
+  assert.match(css, /\.loot-win \.itemrow \.itemwt \{ display: block;/, 'and the weight, which the dock drops');
+  assert.match(css, /\.pack-shell \.itemrow \.itemwt \{ display: none; \}/, '...still dropped in the dock');
+  assert.match(css, /\.loot-win \.itemrow \.itemname small \{/, 'material and word beneath the name');
+});
+
+test('PX21c: the hover plaque names a pile without opening it, on the take\'s own pick', async () => {
+  const hov = read('src/ui/lootHover.js');
+  // The lines are pure: names, a count only when a stack, and a tail
+  // rather than a list - a pile is a glance.
+  const { hoverLines, HOVER_MAX } = await import('../src/ui/lootHover.js');
+  assert.deepEqual(hoverLines([]), { shown: [], rest: 0, empty: true });
+  assert.deepEqual(hoverLines([{ name: 'Ruby', stackCount: 3 }, { name: 'Helm' }]),
+    { shown: [{ name: 'Ruby', stack: 3 }, { name: 'Helm', stack: 0 }], rest: 0, empty: false });
+  const many = hoverLines(Array.from({ length: HOVER_MAX + 4 }, (_, i) => ({ name: `x${i}` })));
+  assert.equal(many.shown.length, HOVER_MAX);
+  assert.equal(many.rest, 4);
+  assert.deepEqual(hoverLines(null), { shown: [], rest: 0, empty: true }, 'nothing under the crosshair is not a crash');
+  // ONE NODE, rewritten only when the key changes - a per-frame rebuild
+  // is PX19k's entrance replay in another hat.
+  assert.match(hov, /if \(key === shownKey\) return;/);
+  assert.match(hov, /export function showLootHover\(key, items, title = 'Loot'\)/);
+  assert.match(hov, /export const HOVER_MAX = 6;/);
+  // A READOUT: no clicks, no keys, nothing to dismiss.
+  const css = read('src/ui/enhancedStyle.js');
+  assert.match(css, /\.loothover \{[\s\S]{0,400}pointer-events: none;/);
+  assert.match(hov, /setAttribute\('aria-hidden', 'true'\)/);
+  assert.doesNotMatch(hov, /addEventListener|onclick/, 'a readout listens to nothing');
+  // The host runs the SAME pick the take runs, throttled, enhanced only.
+  const ctx = read('src/scenes/dungeonContext.js');
+  const frame = ctx.slice(ctx.indexOf('function drawFoes('), ctx.indexOf('function drawFoes(') + 3000);
+  assert.match(frame, /_hoverAt \+= dt;/);
+  assert.match(frame, /if \(_hoverAt >= 0\.1\)/, '10Hz: a raycast over every pile is not free');
+  assert.match(frame, /if \(isEnhanced\(\) && eye\)/, 'the classic HUD says nothing about a pile - Daggerfall\'s own answer');
+  assert.match(frame, /pickActivatable\(eye, dir, api\.lootTargets\(\), collider\)/, 'the take\'s own pick');
+  assert.match(frame, /showLootHover\(key, key \? api\.lootContents\(key\) : null,/);
+  // lootContents shares takeLoot's key vocabulary rather than a second one.
+  assert.match(ctx, /lootContents\(key\) \{[\s\S]{0,400}const \[kind, iStr\] = key\.split\(':'\);/);
+  for (const kind of ["'loot'", "'corpse'", "'droppedLoot'"]) {
+    assert.ok(ctx.slice(ctx.indexOf('lootContents(key) {'), ctx.indexOf('takeLoot(key) {')).includes(kind), `${kind} resolves`);
+  }
+  assert.match(read('src/scenes/droppedLoot.js'), /const contents = \(key\) => piles\.find\(\(p\) => `droppedLoot:\$\{p\.id\}` === key/);
+  // ...and it leaves with the host that raised it.
+  // ...after NT1's dead latch, which is pinned as the FIRST act of
+  // destroy - the first draft put the teardown ahead of it and
+  // resourcesafety.test.js caught it.
+  const destroyFn = ctx.slice(ctx.indexOf('    destroy() {'), ctx.indexOf('    destroy() {') + 500);
+  assert.ok(destroyFn.indexOf('_ctxDead = true;') < destroyFn.indexOf('destroyLootHover();'), 'the latch stays first');
+  assert.ok(destroyFn.includes('destroyLootHover();'));
+});

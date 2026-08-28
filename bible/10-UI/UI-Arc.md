@@ -7472,6 +7472,75 @@ follows the 4x. 8 mutations, 8 dead. Verified in a real browser at
 1440x900 with a synthetic paperdoll (no ARENA2 here) and with four
 pieces worn, both modes shot.
 
+PX21a (Mac: "we need to find a way to fit in the mounts/wagon in the
+inventory"): THE TRANSPORT STRIP. A horse and a cart are
+ItemGroups.Transportation, and filterByTab has NO arm for them - they
+fall through into the fourth tab with the shirts. That is DFU's own
+behaviour and it is why a player who buys a horse cannot find it. They
+are not WORN and not really CARRIED: they are what you TRAVEL with, so
+they get their own strip under the map, two plaques, beside a
+wear-left/carry-right composition with no room for a third idea. THE
+CART PLAQUE IS THE WAGON'S DOOR - the thing and the place it opens are
+one control - and it refuses the way inventorySession refuses, because
+the refusal is that module's law and this is a button. A plaque that
+only reports is a div, not a button (the empty-family law, one strip
+down). FOUND BY A PIN: the first draft read `templateIndex === 93`
+itself, which U58's "no second cart check" caught immediately and
+rightly. The fix was not to weaken the pin but to give the question a
+home: `hasHorse` and `transportItem` now sit beside `hasCart` in
+inventorySession, so the pack, the road and whatever comes next read
+one answer. No template index is read in the window at all.
+
+PX21b (Mac: "give it a solid redesign with readability"): THE LOOT
+WINDOW READS. The loot list inherited the DOCK's 56px tile grid -
+anonymous squares with the name behind a clip-path. That is right for
+a bag you already know and WRONG for a chest you have never opened:
+the only question a container asks is what is in it. In this window
+the rows are ROWS - the icon, the name, its material and word beneath,
+the weight on the right, one per line - while the dock keeps its tiles,
+both pinned, because the two lists answer different questions.
+
+PX21c (Mac: "a small tooltip for when you're hovering over a lootpile,
+showing you the list of items that are available"): THE HOVER PLAQUE.
+Daggerfall tells you nothing about a pile until you open it, and
+opening it is a window. Look at a pile now and a small plaque names
+what is in it, so "is this worth stopping for" is answered in the
+world rather than through a door. Six lines then "and N more", counts
+only on stacks - a pile is a glance, not a list.
+
+  IT IS A READOUT, NOT A CONTROL: no clicks, no keys, nothing to
+  dismiss, pointer-events off, aria-hidden (a crosshair is not a
+  reading order), and the module listens to nothing - pinned.
+
+  IT CANNOT DISAGREE WITH THE DOOR. The plaque runs the SAME
+  `pickActivatable` the take runs, over the same `lootTargets()`, and
+  reads `lootContents(key)` - a new read-only accessor that shares
+  `takeLoot`'s exact key vocabulary rather than inventing a second one,
+  with a matching accessor on droppedLoot. What the plaque names is
+  what the button opens.
+
+  ONE NODE, UPDATED ON CHANGE. A per-frame DOM rebuild is PX19k's
+  entrance replay in another hat: the node is made once and rewritten
+  only when the KEY changes, so staring at a pile costs nothing after
+  the first frame. The pick itself runs at 10Hz - a raycast over every
+  pile and corpse is not free, and a plaque that answers within a tenth
+  of a second answers instantly to a player.
+
+  IT RIDES THE SHARED FRAME. `dungeonContext.drawFoes`, which both
+  dungeon hosts call - the splash clock's reasoning one slice on - so
+  neither host can forget it and neither can run it twice. Enhanced
+  skin only: the classic HUD saying nothing about a pile is
+  Daggerfall's own answer, not an omission. It tears down with the
+  host. The context's returned object needed a name (`api`) for the
+  frame to ask itself, which is all that change is.
+
+Pins: 3 in enhancedInventory.test.js (the strip and its one-home
+questions; the loot rows against the dock's tiles, both directions;
+the plaque's purity, its lines, and the host's throttled enhanced-only
+pick with the shared key vocabulary). 10 mutations, 10 dead. Verified
+in a real browser: the strip with a horse and a cart in the bag, the
+loot window with five items, and the plaque with eight.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk

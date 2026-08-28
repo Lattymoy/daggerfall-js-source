@@ -1877,8 +1877,14 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
 .pack-shell .wornrow.wornempty .wornname { color: rgba(125,116,96,0.5); }
 /* The word and the name are one stack beside the monogram. */
-.pack-shell .wornrow .worntext { display: flex; flex-direction: column; gap: 3px;
+.pack-shell .wornrow .worntext, .pack-shell .transport .worntext {
+  display: flex; flex-direction: column; gap: 3px;
   min-width: 0; align-items: flex-start; }
+.pack-shell .transport .wornname { display: block; font-size: 14px; color: #d8cfae;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pack-shell .transport .wornname.wornempty { color: rgba(125,116,96,0.5); }
+.pack-shell .transport .wornslot { font-size: 11px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: #7d7460; }
 .pack-shell .wornrow .worntile, .pack-shell .wornrow .tile { flex: 0 0 auto; }
 .pack-shell .worncount { position: absolute; right: 5px; top: 4px; font-size: 11px;
   color: var(--brass); text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
@@ -1964,8 +1970,85 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .loot-win .px-tr { right: -1px; top: -1px; transform: translate(50%,-50%); }
 .loot-win .px-bl { left: -1px; bottom: -1px; transform: translate(-50%,50%); }
 .loot-win .px-br { right: -1px; bottom: -1px; transform: translate(50%,50%); }
-.loot-win .packremote { border-top: 0; background: transparent; }
-.loot-win .remotehead { border-top: 0; padding-top: 12px; }
+.loot-win .packremote { border-top: 0; background: transparent; padding: 0 0 4px; }
+.loot-win .remotehead { border-top: 0; padding: 14px 16px 10px;
+  border-bottom: 2px solid rgba(125,116,96,0.3); }
+
+/* ── PX21b: THE LOOT WINDOW READS ───────────────────────────────
+   Mac: "give it a solid redesign with readability". The loot list
+   inherited the DOCK's 56px tile grid - anonymous squares with the
+   name behind a clip-path - which is right for a bag you already know
+   and wrong for a chest you have never opened: the whole question a
+   container asks is WHAT IS IN IT. So in this window the rows are
+   ROWS: the icon, the name, its material and word beneath, the weight
+   on the right, one per line, at a size a player reads at a glance. */
+.loot-win .remotewho h3 { font-size: 16px; color: #d8cfae; }
+.loot-win .remotewho .meta { font-size: 12px; letter-spacing: 0.14em; color: #7d7460;
+  text-transform: uppercase; margin-top: 6px; }
+.loot-win .packlists, .loot-win .packcol { display: block; padding: 0; }
+.loot-win .itemrow { width: 100%; height: auto; min-height: 52px;
+  display: flex; align-items: center; justify-content: flex-start; gap: 12px;
+  padding: 8px 14px; border: 0; border-bottom: 2px solid rgba(125,116,96,0.16);
+  text-align: left; }
+.loot-win .itemrow:last-child { border-bottom: 0; }
+.loot-win .itemrow .tile { width: 38px; height: 38px; font-size: 18px; flex: 0 0 auto; }
+.loot-win .itemrow .itemname { position: static; width: auto; height: auto;
+  clip-path: none; overflow: hidden; display: flex; flex-direction: column; gap: 2px;
+  min-width: 0; flex: 1; font-size: 14px; color: #d8cfae; }
+.loot-win .itemrow .itemname > span { overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; }
+.loot-win .itemrow .itemname small { font-size: 11px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: #7d7460; }
+.loot-win .itemrow .itemwt { display: block; flex: 0 0 auto; font-size: 12px;
+  color: #7d7460; font-variant-numeric: tabular-nums; }
+.loot-win .itemrow .rowcount, .loot-win .itemrow .count { position: static;
+  font-size: 12px; margin-left: 4px; }
+.loot-win .itemrow:hover, .loot-win .itemrow:focus-visible { background: rgba(125,116,96,0.12); }
+.loot-win .itemrow.on { background: rgba(192,138,62,0.14); outline: 0;
+  box-shadow: inset 3px 0 0 var(--brass); }
+
+/* ── PX21c: THE LOOT HOVER PLAQUE ───────────────────────────────
+   A readout under the crosshair, not a control: centred low so it
+   never sits on the reticle, in the same dress as the floating
+   windows, with pointer-events off because nothing here is clickable.
+   It SNAPS on and off - the whole point is that it answers before you
+   have finished deciding to ask. */
+.loothover { position: fixed; left: 50%; bottom: 16%; transform: translateX(-50%);
+  z-index: 6; display: none; min-width: 190px; max-width: 300px; padding: 10px 14px;
+  background: rgba(10,12,17,0.9); border: 2px solid #7d7460; pointer-events: none;
+  font-family: 'Pixelify Sans', monospace; -webkit-font-smoothing: none; color: #d8cfae;
+  font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.loothover.on { display: block; }
+.loothover-head { font-size: 11px; letter-spacing: 0.3em; text-indent: 0.3em;
+  text-transform: uppercase; color: #7d7460; text-align: center;
+  padding-bottom: 8px; margin-bottom: 8px;
+  border-bottom: 2px solid rgba(125,116,96,0.3); }
+.loothover-row { display: flex; align-items: baseline; gap: 10px; font-size: 14px;
+  line-height: 1.5; }
+.loothover-count { margin-left: auto; color: var(--brass); font-size: 12px; }
+.loothover-empty, .loothover-more { color: #7d7460; font-size: 12px; }
+
+/* ── PX21a: THE TRANSPORT STRIP ─────────────────────────────────
+   What you travel with, under what you wear and carry. Two plaques,
+   the cart's one doubling as the wagon's door. */
+.pack-shell .transport { flex: 0 0 auto; display: grid;
+  grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px auto 0;
+  width: min(960px, 100%); }
+.pack-shell .transport .tplaque { display: flex; align-items: center; gap: 14px;
+  min-height: 52px; padding: 8px 14px; text-align: left; cursor: default;
+  background: rgba(10,12,17,0.6); border: 2px solid rgba(125,116,96,0.35);
+  color: #a89f88; font-family: inherit; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.pack-shell .transport button.tplaque { cursor: pointer; }
+.pack-shell .transport button.tplaque:hover, .pack-shell .transport button.tplaque:focus-visible {
+  outline: none; border-color: var(--brass); color: #d8cfae; }
+.pack-shell .transport .tplaque.on { border-color: var(--brass); color: rgb(243,239,44);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.pack-shell .transport .tplaque.tempty { border-style: dashed; }
+.pack-shell .transport .tgo { margin-left: auto; font-size: 11px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--brass); }
+.pack-shell .transport .worntile { font-size: 22px; }
+.pack-shell .transport .tile { width: 34px; height: 34px; font-size: 18px; }
 @media (max-width: 640px) {
   .pack-win { width: 100vw; height: 100dvh; border-left: 0; border-right: 0; }
   /* PX19f: on a phone the main area is the character region alone

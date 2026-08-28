@@ -80,7 +80,7 @@ import {
   planStore, planTake, applyTransfer, planDropGold, WAGON_KG_LIMIT,
 } from '../systems/itemTransfer.js';
 import {
-  openState, remoteTarget, planWagonToggle, hasCart,
+  openState, remoteTarget, planWagonToggle, hasCart, hasHorse, transportItem,
 } from '../systems/inventorySession.js';
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all
 import { liveStat } from '../systems/statMods.js';
@@ -803,6 +803,53 @@ function equippedList() {
   return wrap;
 }
 
+/** PX21a (Mac: "we need to find a way to fit in the mounts/wagon in
+ *  the inventory"). A horse and a cart are ItemGroups.Transportation,
+ *  and filterByTab has no arm for them - they fall through into the
+ *  fourth tab with the shirts, which is DFU's own behaviour and is why
+ *  a player who buys a horse cannot find it. They are not WORN and not
+ *  really CARRIED: they are what you TRAVEL with, so they get their own
+ *  strip under the map, beside the wear-left/carry-right map that has
+ *  no room for a third idea.
+ *
+ *  The CART plaque is also the wagon's door - the one the loot frame's
+ *  Wagon button opens - so the thing and the place it opens are the
+ *  same control. It refuses the way the session refuses (no cart, or a
+ *  dungeon with the exit too far), because the refusal is
+ *  inventorySession's law and this is a button, not a second rule. */
+const TRANSPORT = Object.freeze([
+  { id: 'mount', label: 'Mount', owned: hasHorse, empty: 'On foot' },
+  { id: 'cart', label: 'Cart', owned: hasCart, empty: 'None' },
+]);
+
+function transportStrip() {
+  const items = deps.items?.() ?? [];
+  const strip = el('div', 'transport');
+  for (const t of TRANSPORT) {
+    // U58's law, honoured: the SESSION answers "do you have one" and
+    // hands back the item to draw. No template index is read here.
+    const owned = t.owned(items) ? transportItem(items, t.id) : null;
+    const isCart = t.id === 'cart';
+    // A plaque that opens something is a BUTTON; one that only reports
+    // is not - the empty-family law from the worn map, one strip down.
+    const node = el(isCart && owned ? 'button' : 'div',
+      `tplaque${owned ? '' : ' tempty'}${isCart && session.usingWagon ? ' on' : ''}`);
+    const line = owned ? itemLine(owned, deps.entity) : null;
+    node.append(line ? itemTile(line) : el('span', 'worntile', '\u25c7'));
+    const txt = el('span', 'worntext');
+    txt.append(el('span', 'wornslot', t.label),
+      el('span', `wornname${owned ? '' : ' wornempty'}`, line ? line.name : t.empty));
+    node.append(txt);
+    if (isCart && owned) {
+      node.append(el('span', 'tgo', session.usingWagon ? 'Close' : 'Open'));
+      node.onclick = toggleWagon;
+      node.title = session.usingWagon ? 'Leave the wagon' : 'Open the wagon';
+    }
+    strip.append(node);
+  }
+  return strip;
+}
+
 function characterCol() {
   // PX19d: the doll lives INSIDE the worn map now (behind the tiles);
   // stacking figurePanel above it would draw the avatar twice - or
@@ -810,6 +857,7 @@ function characterCol() {
   // twice. The map alone is the figure.
   const col2 = el('section', 'charcol');
   col2.append(equippedList());
+  col2.append(transportStrip());
   return col2;
 }
 
