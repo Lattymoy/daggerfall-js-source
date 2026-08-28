@@ -6999,6 +6999,29 @@ not visibly soften in headless shots - the LIVE canvas behind it
 will, which is what backdrop-filter is for; Mac's data run owns the
 final blur radius. Suite green, build green.
 
+PX18 (Mac: integrate the enhanced map): THE WORLD MAP JOINS THE
+FAMILY. Two moves. (1) THE DIAL'S MAP ARM in the world host opens
+THE WORLD MAP (U61's overworld - hudCtx.openTravelMap), Skyrim's own
+reading of the word; the local automap keeps its M key untouched,
+and the dungeon's Map arm stays its automap because there is no
+travelling underground. (2) THE CHROME: U61's screen already holds
+the right philosophy - the GL world IS the picture, the chrome
+floats - so the slice is paint alone: Pixelify across the ov*
+classes, the search field as the wizard's pixel input, region chips
+as gem-less pixel plaques with the gold pair on the active filter,
+results on 2px rules, and the TRAVEL CARD in the pack's plaque
+language verbatim (bone frame, offset dim outline, ruled title,
+key/value pairs on 2px rules, gold primary acts, ghost secondary) -
+one plaque, three windows. Every travel law (the ill-travel ask, the
+cost pairs, hold-to-skip) untouched beneath the paint. ONE
+SELF-INFLICTED CUT, recorded: the first CSS insert anchored on the
+FILE'S last template terminator instead of ENHANCED_CSS's own and
+amputated every export after the sheet - the suite caught it in
+eight failures inside a minute, and the re-insert anchors on the CSS
+template's terminator found FROM its export. Append blind to a file
+with more than one template and the tail pays. Suite 3949/0, build
+green.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk

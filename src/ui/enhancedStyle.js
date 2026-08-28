@@ -1864,6 +1864,63 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .px-setwrap .dcard p { color: #c5bda2; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .px-setwrap .dcard code { font-family: inherit; border: 2px solid rgba(125,116,96,0.4);
   border-radius: 0; background: rgba(0,0,0,0.35); letter-spacing: 0.06em; }
+
+/* ── PX18: THE WORLD MAP WEARS THE PIXELS ── U61's overworld screen
+   (the GL world IS the picture; the chrome floats over it) joins the
+   family: Pixelify chrome, 2px frames, the gold pair on the hand,
+   glass panels at the established scrims, the travel card in the
+   pack's plaque language. The GL frame and every travel law
+   underneath are untouched. */
+#enhanced-travelmap, .ovroot { font-family: 'Pixelify Sans', monospace;
+  -webkit-font-smoothing: none; color: #d8cfae; }
+.ovroot button { transition: none; border-radius: 0; }
+.ovtop { background: rgba(10,12,17,0.45); border-bottom: 2px solid rgba(125,116,96,0.35); }
+.ovlabel { font-family: inherit; letter-spacing: 0.18em; text-indent: 0.18em;
+  text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.ovsearch input { font-family: inherit; font-size: 16px; letter-spacing: 0.06em;
+  color: #d8cfae; background: rgba(0,0,0,0.4); border: 2px solid rgba(125,116,96,0.55);
+  border-radius: 0; padding: 8px 12px; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.ovsearch input:focus { outline: none; border-color: var(--brass); color: rgb(243,239,44);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.ovresult { font-family: inherit; border: 0; border-bottom: 2px solid rgba(125,116,96,0.3);
+  background: rgba(10,12,17,0.72); color: #c5bda2; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.ovresult:hover, .ovresult:focus-visible { outline: none; color: rgb(243,239,44);
+  background: rgba(0,0,0,0.5); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.ovresult-region { color: #7d7460; }
+.ovchip { font-family: inherit; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: #a89f88; background: rgba(10,12,17,0.45); border: 2px solid rgba(125,116,96,0.4);
+  border-radius: 0; min-height: 44px; padding: 6px 12px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.ovchip:hover, .ovchip:focus-visible { outline: none; color: rgb(243,239,44);
+  border-color: var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.ovchip.on { color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.ovcard { position: relative; border: 2px solid rgba(216,207,174,0.7);
+  outline: 2px solid rgba(125,116,96,0.35); outline-offset: 4px; border-radius: 0;
+  background: rgba(10,12,17,0.72); font-family: inherit;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.ovcard h3, .ovcard h2 { font-family: inherit; font-weight: 400; letter-spacing: 0.14em;
+  text-indent: 0.14em; text-transform: uppercase; text-align: center;
+  border-bottom: 2px solid rgba(125,116,96,0.5); padding-bottom: 8px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.ovmeta { color: #7d7460; font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase;
+  text-align: center; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.ovprompt, .ovnotice { color: #c5bda2; text-align: center; font-size: 15px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.ovpair { display: flex; justify-content: space-between; gap: 14px;
+  border-bottom: 2px solid rgba(125,116,96,0.3); min-height: 32px; align-items: baseline; }
+.ovpair-k { color: #7d7460; font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.ovacts { display: flex; justify-content: center; gap: 10px; }
+.ovroot .act { border: 2px solid var(--brass); border-radius: 0; background: none;
+  color: rgb(243,239,44); font-family: inherit; letter-spacing: 0.14em; text-transform: uppercase;
+  min-height: 44px; padding: 8px 16px; text-shadow: 2px 2px 0 rgb(93,77,12); }
+.ovroot .act.ovghost { border-color: rgba(125,116,96,0.55); color: #d8cfae;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.ovroot .act:hover, .ovroot .act:focus-visible { outline: none; color: rgb(243,239,44);
+  border-color: var(--brass); background: rgba(0,0,0,0.35); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.ovskip, .ovhint { color: #7d7460; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 `;
 
 const STYLE_ID = 'dagger-enhanced-style';

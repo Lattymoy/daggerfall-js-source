@@ -2317,7 +2317,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     toggleDial: () => openPixelDial([
       { id: 'skills', label: 'Skills', dir: 'n', open: () => hudCtx.toggleCharSheet() },
       { id: 'items', label: 'Items', dir: 'e', open: () => hudCtx.toggleInventory() },
-      { id: 'map', label: 'Map', dir: 's', open: () => hudCtx.toggleAutomap() },
+      // PX18: MAP on the dial is THE WORLD MAP (U61's overworld) -
+      // Skyrim's own reading of the word; the local automap keeps its
+      // M key untouched.
+      { id: 'map', label: 'Map', dir: 's', open: () => hudCtx.openTravelMap() },
       { id: 'magic', label: 'Magic', dir: 'w', open: () => hudCtx.toggleSpellbook() },
     ]),
     quickSave: () => worldQuickSave(),
