@@ -268,6 +268,12 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    never the ini string - \`4\` reads Beautiful, \`True\` reads On.
    (settingsLaw.formatValue owns that, and this borrows it whole.) */
 .ctl { display: flex; align-items: center; gap: 2px; flex: 0 0 auto; }
+/* AUDIT UI (2026-08-27): A ROW'S VALUE BUTTON. It was sized INLINE in
+   three places - b.style.minHeight = '38px' - and an inline style is
+   unreachable by a media query, so the coarse-pointer rule below could
+   not raise it however it was written. The size lives in the sheet
+   now, which is the only place a responsive law can see. */
+.rowact { min-height: 38px; padding: 8px 16px; }
 .val {
   min-width: 76px; text-align: right; font-variant-numeric: tabular-nums;
   color: var(--brass); font-size: 14px;
@@ -334,12 +340,20 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    the in-game prototype follows and for the same reason. The
    settings sub-rail becomes a horizontal scroller and the help
    becomes a sheet, because one column is one column. */
-@media (max-width: 860px) {
+/* AUDIT UI (2026-08-27): A THUMB IS NOT A SCREEN WIDTH. Every 44px rule
+   in this sheet hangs off max-width 860px, which is a PROXY - and it
+   fails on the very device the proxy stands in for. Measured on an iPad
+   in landscape: 1080px wide, pointer:coarse true, touch true, and the
+   skin switch drew 28px, the settings steppers 34px, the value buttons
+   38px. The width query stays, because a narrow window wants the
+   roomier layout whatever is pointing at it; the coarse-pointer query
+   joins it, because that is the question actually being asked. */
+@media (max-width: 860px), (pointer: coarse) {
   .shell { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
   .side { display: contents; }
   .brand { padding: 22px 20px 16px; background: var(--ink); }
   .brand h1 { font-size: 27px; }
-  .skinopt { min-height: 44px; padding: 8px 14px; }   /* a thumb's target, as every control on a phone */
+  .skinopt { min-height: 44px; padding: 8px 14px; }   /* a thumb's target, as every control a thumb can reach */
   .rail {
     order: 3; display: flex; gap: 2px; padding: 0 12px 12px;
     padding-bottom: max(12px, env(safe-area-inset-bottom));
@@ -1388,6 +1402,13 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .shell .row.on { outline: 2px solid rgba(192,138,62,0.6); outline-offset: -2px; }
 .shell .row-name { text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .shell .ctl .val { letter-spacing: 0.08em; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+/* AUDIT UI: the settings row's own controls, sized for a thumb wherever
+   there is one. Here rather than in each component, so the LAW has one
+   home and the next control added to a row inherits it. */
+@media (pointer: coarse) {
+  .step { width: 44px; height: 44px; }
+  .rowact, .ctl .act { min-height: 44px; }
+}
 .shell .step { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; background: none;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .shell .step:hover { color: rgb(243,239,44); border-color: var(--brass);

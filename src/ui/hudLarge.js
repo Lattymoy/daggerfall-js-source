@@ -44,9 +44,10 @@
 // live through racialOverrideHeadArt, and the identity KEY carries
 // the override so the morph swaps the face the same frame.
 //
-// FLAGGED, by name: HUDActiveSpells (the buff/debuff icon rows) and
-// HUDEscortingNPCFaces (quest-gated) are the other two components of
-// this row and are not here. LargeHUDOffsetHorse and
+// HUDActiveSpells (ui/hudActiveSpells.js, U46) and
+// HUDEscortingNPCFaces (ui/hudEscortFaces.js, FE1) are the other two
+// components of this row, each in its own home.
+// FLAGGED: LargeHUDOffsetHorse and
 // LargeHUDUndockedOffsetWeapon move the bar for the horse sprite and
 // the viewmodel; both settings exist in the store and neither is
 // read, because the port draws no horse sprite and its viewmodel has

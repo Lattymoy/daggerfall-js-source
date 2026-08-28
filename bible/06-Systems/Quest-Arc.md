@@ -5269,3 +5269,85 @@ Pins: 3 in `test/questvideo.test.js` (the ten corpus names swept
 through createNew byte-for-byte, the machine-to-hook flow with
 complete-at-push, and the door's source law). Campaign: 5 mutants,
 5 killed.
+
+## FE1 - THE HUD ESCORTING FACES (2026-08-28)
+
+AddFace/DropFace parsed since Q2b and their machine hooks rode the
+bridge since Q4 - into a world ctx that mounted neither, so every
+escort quest ran faceless. The panel is `ui/hudEscortFaces.js`, a
+port of HUDEscortingNPCFaces.cs (EscortingNPCFacePanel) whole:
+
+- **One panel, module-level** - DFU has one HUD and one
+  EscortingNPCFacePanel on it; the state follows the damage-flash /
+  blink-clock precedent, and `drawHud` (the one host-agnostic call)
+  draws it on BOTH branches, because the large-HUD force-off block
+  (DaggerfallHUD.cs:214-220) never names escortingFaces.
+- **CreateFaceDetails verbatim**: Person carries quest UID, symbol
+  (as its ORIGINAL string - FaceDetails is plain JSON for the
+  envelope), race, gender, faceIndex; an Individual NPC reads
+  FACTION.TXT's own `face` field (0..60 -> FACES.CIF, 61..502 ->
+  TFAC00I0.RCI, both stretched into 48x48 panels); a Children-faction
+  (514) Person portraits as a child - variant offset 0-or-2 plus the
+  gender, "indexed 0-3", the pick a UnityEngine.Random draw riding
+  the ENGINE-PRNG rule's injectable roll. A Foe is "always a Breton
+  face for now" with Range(0, 10). The generic arm's race switch
+  supports Redguard and defaults everything else to Breton (:207's
+  own comment), gender picking the PaperDollHeads file; children read
+  KIDS00I0.CIF.
+- **Layout law** (:56-87): column at (8, 36), spaceY 40 or 50 when
+  the panel is taller than 40, maxFaces 3 disabling the rest.
+- **The quest-end sweep is a NEW machine seam**: tombstoneQuest
+  raises `deps.onQuestEnded(quest)` LAST (QuestMachine.cs:1042-1048's
+  own order - dispose, tombstone, SiteLink scrub, raise), the bridge
+  fans it to ctx, and the panel drops every face of the ended quest -
+  DFU's own "unlike Daggerfall will try to remove face when related
+  quest ends, even if quest script forgets to drop face".
+- **The envelope**: `escortingFaces` rides composeSessionState beside
+  quest/talk/travelMap (SaveData_v1.escortingFaces,
+  SaveLoadManager.cs:869), and the restore's null arm CLEARS
+  (:1071-1079) - a pre-FE1 save loads with no stale portraits. Init
+  at world boot clears too (the OnNewGame/OnStartLoad pair, :306-316).
+
+QUIRK KEPT: DaggerfallHUD.cs:207 wires the ShowEscortingFaces setting
+to the panel's `EnableBorder` - a flag nothing gives border textures -
+so the setting does nothing and the faces are unconditional. RECORDED
+DEPARTURE: DFU loads face textures synchronously and THROWS on a
+missing one; the port is data-gated - async loads, a face draws from
+the frame its art lands, a missing record costs that face (warned
+once), never the session. The audit24 CTX_PENDING table lost its
+addFace/dropFace rows - removing a row means mounting it.
+
+Pins: 12 in `test/escortfaces.test.js`. Campaign: 13 mutants, 13
+killed.
+
+## RW1 - THE QUESTCOMPLETE LOOT WINDOW (2026-08-28)
+
+The last of Q4-v's recorded quest seams with a real body behind it.
+GivePc's offer arm has been complete on the ACTION side since Q2b-ii -
+questSuccess, the QuestComplete popup, MakePermanent, the reoffer
+release, then `hooks.offerReward` - but the world's hook was a FLAGGED
+direct-add with a "You have been given" HUD line. It is GivePc.cs
+:150-196's own flow now:
+
+- **A real container**: the reward is a dropped-loot pile minted at
+  the player ("CreateDroppedLootContainer(PlayerObject, ...)"), and
+  the inventory opens over it as its REMOTE target - the player takes
+  what they want, and a reward left untaken stays a pile at their
+  feet, exactly as DFU's container persists.
+- **The OnClose law** (:173, :189-196): the loot window opens when
+  the QuestComplete box the action just raised CLOSES - a one-shot
+  latch armed by offerReward and fired by the quest box's onClose;
+  immediate when no box is up.
+- **The mode that owns the ground mints**: `modes.mintRewardPile`
+  routes the dungeon to its own droppedLoot
+  (dungeonContext.offerRewardLoot -> the same three-way takeLoot door
+  every pile rides), and answers undefined everywhere else so the
+  world host mints - the same split the inventory's onDrop already
+  rides. undefined and null are DISTINCT here: null means the mode
+  owned the ground and could not mint (no feet yet, already warned),
+  and folding it with ?? would drop an exterior pile inside a dungeon.
+- The emptied container frees on window close (releaseEmptied - the
+  drop arm's own law), and the Merchant container image is the pile's
+  treasure billboard in this port's vocabulary.
+
+Pins: 4 in `test/questreward.test.js`. Campaign: 8 mutants, 8 killed.

@@ -47,6 +47,10 @@ test('composeSessionState: bridge + trio -> {quest, talk}; absent halves -> null
       filterDungeons: false, filterTemples: false, filterHomes: false, filterTowns: false,
       sleepInn: true, speedCautious: true, travelShip: true,
     },
+    // FE1 added a FOURTH half the same way: SaveData_v1.escortingFaces
+    // (SaveLoadManager.cs:869) off the one HUD panel - empty when no
+    // quest ever escorted anyone.
+    escortingFaces: [],
   });
 });
 

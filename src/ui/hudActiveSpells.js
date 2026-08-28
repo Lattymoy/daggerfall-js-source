@@ -42,8 +42,8 @@
 // never blinks (:157-160) because an equipped item's effect is not
 // running out, it is just there. Paused, everything shows solid.
 //
-// FLAGGED: HUDEscortingNPCFaces, the third component of that row, is
-// quest-gated and not here. DFU's icon PACKS (Resources/SpellIcons)
+// HUDEscortingNPCFaces, the third component of that row, shipped at
+// FE1 (ui/hudEscortFaces.js). DFU's icon PACKS (Resources/SpellIcons)
 // are already a Ledger note on ui/spellIcons.js and stay one.
 
 import { drawSpellIcon, spellIconsLoaded } from './spellIcons.js';

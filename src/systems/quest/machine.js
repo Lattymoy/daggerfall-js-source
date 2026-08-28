@@ -128,6 +128,10 @@
 //   onQuestStarted(quest)      - RaiseOnQuestStartedEvent; the
 //                                QuestListsManager's one-time
 //                                recording listens (Q4 wires)
+//   onQuestEnded(quest)        - RaiseOnQuestEndedEvent (TombstoneQuest,
+//                                QuestMachine.cs:1047); the HUD escort
+//                                faces' unlike-Daggerfall sweep listens
+//                                (FE1 wires)
 //   forceTopicListsUpdate()    - TalkManager.ForceTopicListsUpdate
 //                                (PlaceNpc nudges it; Q4 wires)
 //
@@ -942,6 +946,10 @@ export class QuestMachine {
     // sequential-guild-hall case; Q3-i VERIFY: the scrub was missing).
     this.siteLinks = this.siteLinks.filter((link) => link.questUID !== quest.uid);
     quest.tombstone();
+    // RaiseOnQuestEndedEvent (QuestMachine.cs:1047) - LAST, after the
+    // dispose, the tombstone and the SiteLink scrub, C#'s own order.
+    // The HUD escorting faces' "unlike Daggerfall" sweep rides it.
+    this.deps.onQuestEnded?.(quest);
   }
 
   /** RemoveQuest (QuestMachine.cs): tombstones first if the quest is
