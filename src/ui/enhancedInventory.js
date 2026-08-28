@@ -87,8 +87,6 @@ import { liveStat } from '../systems/statMods.js';
 import { conditionWord, conditionPercentage, materialName } from '../systems/itemInfo.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { repaintKeepingScroll } from './domRepaint.js';
-// PX16: the pack stands on the living sky, the wizard's own pattern.
-import { drawPixelGround } from './pixelGround.js';
 import { overlayAction } from './input.js';
 
 /** Slot id -> where it sits on the body, and what to call it.
@@ -859,8 +857,11 @@ function goldField() {
   return form;
 }
 
-function listCol() {
-  const col = el('section', 'packcol');
+/** PX16b: the reference's LEFT SPINE - categories stacked vertically,
+ *  small caps, the chosen one bright with the gem at its edge. Same
+ *  TABS, same counts, same handlers; only the axis changed. */
+function catsCol() {
+  const col = el('section', 'packcol packcats');
   const tabs = el('div', 'packtabs');
   for (const t of TABS) {
     const b = el('button', `packtab${t === tab ? ' on' : ''}`, t[0].toUpperCase() + t.slice(1));
@@ -870,6 +871,11 @@ function listCol() {
     tabs.append(b);
   }
   col.append(tabs);
+  return col;
+}
+
+function listCol() {
+  const col = el('section', 'packcol');
   const rows = model.tabs.find((x) => x.tab === tab)?.items ?? [];
   if (!rows.length) {
     col.append(el('p', 'packempty', 'Nothing in this pack answers to that page.'));
@@ -990,32 +996,19 @@ function detailCol() {
   return col;
 }
 
-let groundTimer = null;   // PX16: the pack sky's 8fps clock - every repaint re-owns it, unmount ends it
-
 function render() {
   repaints++;
-  if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }
   repaintKeepingScroll(host, () => {
     host.innerHTML = '';
-    {
-      const ground = document.createElement('canvas');
-      ground.className = 'px-ground';
-      const vw = () => globalThis.innerWidth ?? 1280;
-      const vh = () => globalThis.innerHeight ?? 720;
-      drawPixelGround(ground, vw(), vh(), 0);
-      const still = typeof globalThis.matchMedia === 'function' && globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (!still) {
-        const t0 = Date.now();
-        groundTimer = setInterval(() => drawPixelGround(ground, vw(), vh(), (Date.now() - t0) / 1000), 125);
-      }
-      host.append(ground, el('div', 'px-vignette'));
-    }
+    // PX16b (Mac: "really study the reference"): the reference's
+    // ground is THE GAME - two translucent columns on the left third,
+    // the world showing through the right. So no sky here: the paused
+    // frame is the ground (the pause door's law, one window over) and
+    // every column carries its own scrim.
     const shell = el('div', 'pack-shell');
     const head = el('header', 'pack-id');
     const who = el('div');
     who.append(el('h2', null, 'Pack'));
-    who.append(el('p', 'meta',
-      `${plural(model.count, 'item')} · ${model.encumbrance.now} / ${model.encumbrance.max} kg · ${model.gold.toLocaleString()} gold`));
     head.append(who);
     const close = el('button', 'act', 'Close');
     close.onclick = () => onExit();
@@ -1024,8 +1017,8 @@ function render() {
     const grid = el('div', 'pack');
     // The two lists are a PAIR - DFU's window is local beside remote -
     // so they share one grid cell and split it, which keeps the outer
-    // three-column shape (and every phone rule written against it)
-    // exactly as it was.
+    // column shape (and every phone rule written against it) exactly
+    // as it was.
     // A CONTAINER or a REWARD TRAY is what the player opened the
     // window FOR, so on a stacked layout that list goes first. The
     // ground and the wagon are the other way round - there the pack is
@@ -1033,8 +1026,30 @@ function render() {
     const first = remote.kind === 'container' || remote.kind === 'reward';
     const lists = el('div', `packlists${first ? ' remotefirst' : ''}`);
     lists.append(listCol(), remoteCol());
-    grid.append(characterCol(), lists, detailCol());
+    // PX16b: the reference's order left to right - the category
+    // spine, the names, then the SHOWCASE: the figure (the paper
+    // sprite viewer standing where Skyrim renders the item) with the
+    // detail plaque floating beside it.
+    grid.append(catsCol(), lists, el('div', 'packstage'));
+    const stage = grid.querySelector('.packstage');
+    stage.append(characterCol(), detailCol());
     shell.append(grid);
+    // PX16b: the reference's BOTTOM BAR - carry weight as a meter
+    // (blood past four-fifths, the reference's red), gold beside it.
+    const bar = el('footer', 'packbar');
+    const carry = el('div', 'packcarry');
+    const heavy = model.encumbrance.max > 0 && model.encumbrance.now / model.encumbrance.max >= 0.8;
+    carry.append(el('span', 'k', 'Carry Weight'),
+      el('span', 'v', `${model.encumbrance.now} / ${model.encumbrance.max}`));
+    const meter = el('div', 'px-meter');
+    const fill = el('div', `px-fill${heavy ? ' blood' : ''}`);
+    fill.style.width = `${model.encumbrance.max > 0 ? Math.min(100, (model.encumbrance.now / model.encumbrance.max) * 100) : 0}%`;
+    meter.append(fill);
+    carry.append(meter);
+    const gold = el('div', 'packgold');
+    gold.append(el('span', 'k', 'Gold'), el('span', 'v', model.gold.toLocaleString()));
+    bar.append(el('span', 'packitems', plural(model.count, 'item')), carry, gold);
+    shell.append(bar);
     if (notice) shell.append(el('p', 'sheet-notice', notice));
     host.append(shell);
   });
@@ -1122,7 +1137,6 @@ export function mountEnhancedInventory(hostEl, d = {}) {
       // eats the key that opens the pack, for the rest of the session.
       if (keyHandler) globalThis.removeEventListener('keydown', keyHandler, { capture: true });
       if (lockHandler && typeof document !== 'undefined') document.removeEventListener('pointerlockchange', lockHandler);
-      if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }   // PX16: the sky's clock has the same owner
       keyHandler = null;
       lockHandler = null;
       hostEl.innerHTML = '';

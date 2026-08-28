@@ -6822,6 +6822,34 @@ rows render, the sky behind, zero page errors. The lab's zero
 kg/gold figures are the stub's, not the window's - the real entity
 fills them, as Mac's data run will show.
 
+PX16b (Mac: "you're rushing this - really study the reference"): THE
+REFERENCE READ PROPERLY, and the correction owned. PX16's first cut
+got the paint right and the ANATOMY wrong: horizontal tabs, a full
+sheet, and a sky the reference never shows. The reference's actual
+shape, now held: TWO TRANSLUCENT COLUMNS ON THE LEFT THIRD - the
+categories stacked VERTICALLY (small caps, counts, the chosen one
+bright with the gem at its edge), then BARE NAMES with counts (the
+material line and per-row weight leave for the plaque; ellipsis over
+wrap) - and the GAME on the right two-thirds, where the figure (the
+paper sprite viewer) stands as the showcase and the detail floats as
+the reference's corner-bracketed PLAQUE: 2px bone frame with an
+offset dim outline for the double bracket, name over a rule, the
+stat PAIRS as right-aligned small labels beside big figures, acts
+beneath with the gold primary. CARRY WEIGHT is a METER in the bottom
+bar - blood past four-fifths, the reference's red - with gold beside
+it and the item count left. THE SKY CAME OFF: the reference's ground
+is THE GAME, so the paused frame shows through (the pause door's
+law, one window over) and the ground-canvas mount from the first cut
+was REMOVED, clock and all. Structure only moved in render() - the
+tabs became catsCol, the right column became the packstage holding
+characterCol + detailCol, the bar was added - and every law
+(wagon pair, remote-first, refusals, V4, F6, the quest-click arm,
+the packdetail phone sheet's named-class lesson) sits exactly where
+it was; the suite stayed green through the whole reshape. Serif
+leak round two: WORN's h3 was the actual node, not the head div.
+Probed over a stand-in frame: vertical spine confirmed by geometry,
+plaque pairs aligned, bar present, zero page errors.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk
