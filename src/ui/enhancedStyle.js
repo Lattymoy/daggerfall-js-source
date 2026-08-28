@@ -1982,6 +1982,19 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    container asks is WHAT IS IN IT. So in this window the rows are
    ROWS: the icon, the name, its material and word beneath, the weight
    on the right, one per line, at a size a player reads at a glance. */
+/* PX21d (Mac: "center all the elements at the top in the loot
+   window"): the head inherited the base sheet's space-between row -
+   the title and the meta left, the buttons pushed right - which is a
+   COLUMN's header, made when the remote was a column beside the pack.
+   In a 340px window of its own it reads as two things that fell to
+   opposite walls. The head is a centred stack now: the title, the
+   count under it, the buttons in a centred row beneath, each one
+   sitting over the list it acts on. The base rules are untouched;
+   this is the loot frame's own dress. */
+.loot-win .remotehead { flex-direction: column; align-items: center;
+  justify-content: center; text-align: center; gap: 10px; margin: 0; }
+.loot-win .remotewho { display: flex; flex-direction: column; align-items: center; }
+.loot-win .remoteacts { justify-content: center; padding: 0; }
 .loot-win .remotewho h3 { font-size: 16px; color: #d8cfae; }
 .loot-win .remotewho .meta { font-size: 12px; letter-spacing: 0.14em; color: #7d7460;
   text-transform: uppercase; margin-top: 6px; }

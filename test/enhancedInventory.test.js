@@ -997,6 +997,20 @@ test('PX21b: the loot window is ROWS, not the dock\'s anonymous squares', () => 
   assert.match(css, /\.loot-win \.itemrow \.itemname small \{/, 'material and word beneath the name');
 });
 
+test('PX21d: the loot window\'s head is a centred stack, not a column header', () => {
+  const css = read('src/ui/enhancedStyle.js');
+  // The base .remotehead is a space-between ROW - the title left, the
+  // buttons pushed right - written when the remote was a column beside
+  // the pack. In a 340px window of its own that reads as two things
+  // that fell to opposite walls.
+  assert.match(css, /^\.remotehead \{\n  display: flex; align-items: flex-start; justify-content: space-between;/m,
+    'the base column header is untouched');
+  assert.match(css, /\.loot-win \.remotehead \{ flex-direction: column; align-items: center;/);
+  assert.match(css, /\.loot-win \.remotewho \{ display: flex; flex-direction: column; align-items: center; \}/);
+  assert.match(css, /\.loot-win \.remoteacts \{ justify-content: center; padding: 0; \}/,
+    'and the buttons sit over the list they act on');
+});
+
 test('PX21c: the hover plaque names a pile without opening it, on the take\'s own pick', async () => {
   const hov = read('src/ui/lootHover.js');
   // The lines are pure: names, a count only when a stack, and a tail
