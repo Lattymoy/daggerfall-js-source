@@ -1705,7 +1705,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .pack-shell .pack { flex: 1; min-height: 0; display: flex; flex-direction: column;
   background: transparent; }
 .pack-shell .pack-main { flex: 1; min-height: 0; display: grid;
-  grid-template-columns: 1fr minmax(300px, 380px); }
+  grid-template-columns: 1fr; }   /* PX19i: the details ride a tooltip; the character takes the width */
 .pack-shell .pack-dock { flex: 0 0 auto; max-height: 38%; display: flex;
   flex-direction: column; border-top: 2px solid rgba(125,116,96,0.35);
   background: rgba(0,0,0,0.25); }
@@ -1764,16 +1764,22 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .pack-shell .remoteacts { padding: 0 10px; }
 /* The showcase column: the figure over the plaque, both scrolling
    together, the game glass behind them through the window. */
-/* PX19g: NO SCROLLING CHARACTER SHEET, NO WEB CHROME. The region and
-   the plaque are sized to fit; the dock and the loot may scroll but
-   without scrollbar furniture - a game panel, not a web page. */
-.pack-shell .packstage { position: relative; background: rgba(0,0,0,0.25);
-  border-left: 2px solid rgba(125,116,96,0.35); overflow: hidden;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 18px; padding: 18px 20px 22px; }
+/* PX19g/i: NO SCROLLING CHARACTER SHEET, NO WEB CHROME - and no
+   right panel: the details are a TOOLTIP, absolutely placed beside
+   its anchor inside the frame, in the plaque's own dress; the phone
+   keeps the .packdetail bottom sheet's physics untouched. */
 .pack-shell .charcol { overflow: hidden; padding: 8px 16px; display: flex;
   flex-direction: column; justify-content: center; }
-.pack-shell .packstage .sheet-notice { margin: 0; }
+/* .packtip.packdetail outranks the base .packdetail column rules
+   (same-specificity, later-in-sheet was the trap: the tip computed
+   RELATIVE, joined the flex column and folded the whole window -
+   caught by measuring pre/post heights, 557 -> 260). */
+.pack-shell .packtip.packdetail { position: absolute; z-index: 4;
+  width: 320px; max-width: 320px; }   /* the three acts on one line */
+@media (max-width: 640px) {
+  .pack-shell .packtip.packdetail { position: fixed; width: auto; max-width: none;
+    left: 0 !important; top: auto !important; }
+}
 .pack-shell .figure-doll { border: 2px solid rgba(125,116,96,0.55); background: rgba(0,0,0,0.3); }
 .pack-shell .slotmap, .pack-shell .wornlist, .pack-shell .equipped { background: rgba(0,0,0,0.3); }
 /* PX19d: THE SLOTS STAND ON THE BODY (Mac's concept reference) - the
@@ -1904,9 +1910,8 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   /* the stage dissolves but its CHILDREN keep flowing - display:none
      here would hide the fixed detail SHEET inside it; contents lets
      the sheet fix to the viewport while the figure alone hides. */
-  /* PX19f: the phone SHOWS the character region now - it is the
-     window's point; the detail keeps its fixed sheet via contents. */
-  .pack-shell .packstage { display: contents; }
+  /* PX19f/i: the phone shows the character region; the detail is the
+     .packdetail sheet, now the tooltip's phone dress. */
   /* the loot window stacks under the pack on a phone */
   .pack-shell { grid-auto-flow: row; gap: 0; }
   .loot-win { width: 100vw; max-height: 40dvh; border-left: 0; border-right: 0; }

@@ -7352,6 +7352,30 @@ errors, suite green, build green. What remains is DATA'S, not
 design's: the real doll in the frame and real monograms in the
 tiles on Mac's ARENA2 run.
 
+PX19i (Mac: no right panel - a tooltip that pops up and off on
+click): THE DETAILS BECAME A TOOLTIP. The plaque column is gone and
+the character region takes the width it frees; the plaque itself
+rides as a click-anchored tooltip in its own dress - up beside
+whatever the hand touched, flipped left when the right edge
+refuses, clamped to the frame, dismissed by a click away or a
+second click on the same thing (a family's cycle closes when it
+would wrap to where it started; a single-piece family is a plain
+toggle). The quest-click law fires before the toggle, exactly as
+DFU counts a look. The PHONE keeps the .packdetail bottom sheet -
+same component, different physics. THREE HUNTS, ALL BY MEASUREMENT:
+(1) the tooltip computed RELATIVE and folded the whole window (pack
+557 -> 260 pre/post click) - .pack-shell .packdetail's base column
+rules tied the new rule's specificity and won by sheet order;
+.packtip.packdetail outranks the tie. (2) the picked item highlights
+in TWO places (family panel and dock tile) and the positioner
+anchored to the first .on it found, not the clicked one - pickedAt
+records where the hand touched ('worn'/'dock'/'loot') and the
+anchor selector follows it. (3) 300px wrapped the third act to its
+own line; 320 seats WEAR/DROP/USE together. Verified: layout intact
+after pick, tooltip absolute, anchored to the clicked dock tile and
+to a family panel in separate drives, click-away and toggle both
+close, zero errors. Suite green, build green.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk

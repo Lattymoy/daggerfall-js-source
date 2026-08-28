@@ -357,6 +357,7 @@ let host = null;
 let deps = {};
 let model = null;
 let worn = { rows: [], filled: 0, total: 0 };   // U59: the slots, as rows
+let pickedAt = null;   // PX19i: WHERE the pick happened ('worn'|'dock'|'loot') - the same item highlights in two places, and the tooltip anchors to the one the hand touched
 let tab = TABS[0];
 let picked = null;      // the selected item object
 let side = 'local';     // which list `picked` came out of
@@ -761,8 +762,13 @@ function equippedList() {
     // family of four is four taps and all 27 slots stay reachable
     // from eleven panels.
     b.onclick = () => {
+      // PX19i: cycle through the family, and when the cycle would
+      // land back where it started the tooltip goes AWAY instead -
+      // a single-piece family is a plain toggle.
       const i = filled.findIndex((r) => r.item === picked);
-      picked = filled[(i + 1) % filled.length].item;
+      const next = filled[(i + 1) % filled.length].item;
+      picked = (i >= 0 && next === picked) ? null : next;
+      pickedAt = 'worn';
       side = 'local'; notice = null; render();
     };
     map.append(b);
@@ -823,6 +829,7 @@ function itemTile(line) {
 function itemRow(item, from = 'local') {
   const line = itemLine(item, deps.entity);
   const row = el('button', `itemrow${picked === item && side === from ? ' on' : ''}`);
+  const wasPicked = picked === item && side === from;
   row.append(itemTile(line));
   const mid = el('span', 'itemname');
   mid.append(el('span', null, line.name + (line.stack ? ` ×${line.stack}` : '')));
@@ -842,7 +849,12 @@ function itemRow(item, from = 'local') {
     if (from === 'remote' && item.questItem) {
       deps.getQuest?.(item.questUID)?.getItem?.(item.questSymbol)?.setPlayerClicked();
     }
-    picked = item; side = from; notice = null; render();
+    // PX19i: the tooltip's toggle - a second click on the picked item
+    // puts it away (the quest-click above already fired either way,
+    // exactly as DFU counts a look).
+    picked = wasPicked ? null : item;
+    pickedAt = from === 'remote' ? 'loot' : 'dock';
+    side = from; notice = null; render();
   };
   return row;
 }
@@ -1115,9 +1127,15 @@ function render() {
     // above it, exactly where Equipment/Consumables sit in the
     // concept. The pair law is untouched: the loot rides its own
     // window (PX19c).
+    // PX19i (Mac: no right panel - a tooltip that pops up and off on
+    // click): the details column is GONE and the character region
+    // takes the width it frees; the plaque rides as a TOOLTIP
+    // anchored beside whatever was clicked (positioned after the DOM
+    // lands, clamped to the window), dismissed by a click away or a
+    // second click on the same thing. The PHONE keeps its bottom
+    // SHEET - same component, the .packdetail phone rules' physics.
     const main = el('div', 'pack-main');
-    main.append(characterCol(), el('div', 'packstage'));
-    main.querySelector('.packstage').append(detailCol());
+    main.append(characterCol());
     const dock = el('div', 'pack-dock');
     const lists = el('div', 'packlists');
     lists.append(listCol());
@@ -1141,6 +1159,35 @@ function render() {
     bar.append(el('span', 'packitems', plural(model.count, 'item')), carry, gold);
     win.append(bar);
     if (notice) win.append(el('p', 'sheet-notice', notice));
+    if (picked) {
+      const tip = detailCol();
+      tip.classList.add('packtip');
+      win.append(tip);
+      // After layout: anchored beside the picked element, flipped
+      // left when the right edge refuses, clamped to the frame.
+      requestAnimationFrame(() => {
+        const at = { worn: '.wornmap .wornrow.on', dock: '.pack-dock .itemrow.on', loot: '.loot-win .itemrow.on' }[pickedAt];
+        const on = (at && (win.querySelector(at) ?? shell.querySelector(at)))
+          ?? win.querySelector('.wornrow.on, .itemrow.on');
+        if (!on || !tip.isConnected) return;
+        const w = win.getBoundingClientRect();
+        const r = on.getBoundingClientRect();
+        const tw = tip.offsetWidth; const th = tip.offsetHeight;
+        let left = r.right - w.left + 12;
+        if (left + tw > w.width - 10) left = r.left - w.left - tw - 12;
+        if (left < 10) left = 10;
+        let top = r.top - w.top + r.height / 2 - th / 2;
+        top = Math.max(10, Math.min(top, w.height - th - 10));
+        tip.style.left = `${Math.round(left)}px`;
+        tip.style.top = `${Math.round(top)}px`;
+      });
+    }
+    // A click that lands on nothing interactive puts the tooltip away.
+    win.addEventListener('click', (e) => {
+      if (!picked) return;
+      if (e.target.closest('.packtip') || e.target.closest('button')) return;
+      picked = null; render();
+    });
     shell.append(win);
     if (remote.kind !== 'ground' || remote.count > 0) {
       const loot = el('aside', 'loot-win');
