@@ -87,6 +87,8 @@ import { liveStat } from '../systems/statMods.js';
 import { conditionWord, conditionPercentage, materialName } from '../systems/itemInfo.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { repaintKeepingScroll } from './domRepaint.js';
+// PX16: the pack stands on the living sky, the wizard's own pattern.
+import { drawPixelGround } from './pixelGround.js';
 import { overlayAction } from './input.js';
 
 /** Slot id -> where it sits on the body, and what to call it.
@@ -988,10 +990,26 @@ function detailCol() {
   return col;
 }
 
+let groundTimer = null;   // PX16: the pack sky's 8fps clock - every repaint re-owns it, unmount ends it
+
 function render() {
   repaints++;
+  if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }
   repaintKeepingScroll(host, () => {
     host.innerHTML = '';
+    {
+      const ground = document.createElement('canvas');
+      ground.className = 'px-ground';
+      const vw = () => globalThis.innerWidth ?? 1280;
+      const vh = () => globalThis.innerHeight ?? 720;
+      drawPixelGround(ground, vw(), vh(), 0);
+      const still = typeof globalThis.matchMedia === 'function' && globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!still) {
+        const t0 = Date.now();
+        groundTimer = setInterval(() => drawPixelGround(ground, vw(), vh(), (Date.now() - t0) / 1000), 125);
+      }
+      host.append(ground, el('div', 'px-vignette'));
+    }
     const shell = el('div', 'pack-shell');
     const head = el('header', 'pack-id');
     const who = el('div');
@@ -1104,6 +1122,7 @@ export function mountEnhancedInventory(hostEl, d = {}) {
       // eats the key that opens the pack, for the rest of the session.
       if (keyHandler) globalThis.removeEventListener('keydown', keyHandler, { capture: true });
       if (lockHandler && typeof document !== 'undefined') document.removeEventListener('pointerlockchange', lockHandler);
+      if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }   // PX16: the sky's clock has the same owner
       keyHandler = null;
       lockHandler = null;
       hostEl.innerHTML = '';
