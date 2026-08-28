@@ -655,17 +655,23 @@ function equippedList() {
     // `.empty` COMPONENT (a dashed placeholder card), and reusing the
     // bare word drew every unfilled slot as one. Third collision of
     // this shape in the arc, after `.detail` and `.packcol`.
+    // PX19b (Mac: keep the CLASSIC'S PANEL-BASED equip section): the
+    // worn list is a TILE GRID now - each slot a bordered panel with
+    // the item's monogram tile and its slot word beneath, the
+    // classic's own reading one language over. Empties stay NON-
+    // BUTTONS (the law above) drawn as dim open slots; the probe's
+    // class names (.wornrow/.wornname) ride the tiles unchanged.
     if (!row.item) {
       const d = el('div', 'wornrow wornempty');
-      d.append(el('span', 'wornslot', row.label), el('span', 'wornname wornempty', '\u2014'));
+      d.append(el('span', 'worntile', '\u25c7'), el('span', 'wornslot', row.label), el('span', 'wornname wornempty', '\u2014'));
       wrap.append(d);
       continue;
     }
     const b = el('button', `wornrow${row.item === picked ? ' on' : ''}`);
     const line = itemLine(row.item, deps.entity);
+    b.append(itemTile(line));
     b.append(el('span', 'wornslot', row.label));
     b.append(el('span', 'wornname', line.name));
-    b.append(el('span', 'itemwt', `${line.weight.toFixed(2)} kg`));
     // SELECTS, rather than unequipping on the spot. The slot map's node
     // took the item straight off, which is right for a control whose
     // only meaning is "this one" - a named row has a detail panel

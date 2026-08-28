@@ -7052,6 +7052,19 @@ hides; the phone sheet verified open on a pick. Every window law
 (pair, remote-first, refusals, V4, F6, the quest click) exactly
 where it was; suite green through the reshape both times.
 
+PX19b (Mac, with the classic screenshot: lists for browsing but keep
+the classic's PANEL-BASED equip section): THE EQUIP PANELS. The worn
+list became a grid of slot TILES beside the doll - each a 2px panel
+holding the item's monogram with the slot word beneath, the chosen
+one in the gold pair with the brass frame and the offset outline;
+an EMPTY slot is a dim open diamond over its slot word, remains a
+NON-BUTTON (the pack probe's own law), and drops the em-dash line
+(the diamond and the word carry it). The probe's class names
+(.wornrow/.wornname) ride the tiles unchanged so every existing
+selector keeps reading, and selection still opens the plaque rather
+than undressing on a tap (the mis-click law). Verified: 25 tiles
+render off the 27-slot table, every empty a div, suite green.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk

@@ -1747,11 +1747,34 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   padding: 18px 20px 22px; }
 .pack-shell .figure-doll { border: 2px solid rgba(125,116,96,0.55); background: rgba(0,0,0,0.3); }
 .pack-shell .slotmap, .pack-shell .wornlist, .pack-shell .equipped { background: rgba(0,0,0,0.3); }
-.pack-shell .wornrow { background: none; border: 0; border-bottom: 2px solid rgba(125,116,96,0.25);
+/* PX19b: THE EQUIP PANELS - the classic's own section, one language
+   over. The worn list is a grid of slot TILES beside the doll: each
+   a 2px panel holding the item's monogram with the slot word
+   beneath; the chosen one wears the gold pair and the brass frame;
+   an empty slot is a dim open diamond and NOT a button. */
+.pack-shell .equipped { display: block; }
+.pack-shell .equipped .wornrow { display: inline-flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 3px;
+  width: 76px; min-height: 76px; margin: 3px; padding: 6px 2px; vertical-align: top;
+  background: rgba(0,0,0,0.3); border: 2px solid rgba(125,116,96,0.35);
   color: #a89f88; font-family: inherit; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
-.pack-shell .wornrow:hover, .pack-shell .wornrow.on { color: rgb(243,239,44);
-  background: none; text-shadow: 2px 2px 0 rgb(93,77,12); }
-.pack-shell .wornrow.wornempty { color: rgba(125,116,96,0.5); }
+.pack-shell .equipped { text-align: center; padding-bottom: 10px; }
+.pack-shell .wornrow .tile { display: flex; width: 30px; height: 30px; align-items: center;
+  justify-content: center; border: 0; background: none; font-size: 15px; color: #c5bda2; }
+.pack-shell .wornrow .worntile { font-size: 15px; color: rgba(125,116,96,0.6); }
+.pack-shell .wornslot { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: #7d7460; }
+.pack-shell .wornname { font-size: 10px; max-width: 70px; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.25; }
+.pack-shell .wornrow .itemwt { display: none; }
+.pack-shell button.wornrow { cursor: pointer; }
+.pack-shell button.wornrow:hover, .pack-shell button.wornrow:focus-visible { outline: none;
+  color: rgb(243,239,44); border-color: var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.pack-shell .wornrow.on { color: rgb(243,239,44); border-color: var(--brass);
+  outline: 2px solid rgba(192,138,62,0.5); outline-offset: 2px;
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.pack-shell .wornrow.wornempty { color: rgba(125,116,96,0.5); border-color: rgba(125,116,96,0.2); }
+.pack-shell .wornrow.wornempty .wornname { display: none; }   /* the open diamond and the slot word carry an empty */
 .pack-shell .packdetail { position: relative; transform: none; width: 100%; max-width: 420px; }
 .pack-shell .packdetail .card, .pack-shell .card { min-width: 0; max-width: none;
   border: 2px solid rgba(216,207,174,0.7); outline: 2px solid rgba(125,116,96,0.35);
