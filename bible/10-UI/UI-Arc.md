@@ -6587,3 +6587,24 @@ times out on the CLEAN tree too in this container - it needs ARENA2
 - and the classic settingsProbe fails pre-existing for the same
 reason, both verified by stash before being attributed to the
 environment.
+
+PX9 (same day, Mac: "why isn't this in the pause menu"): SETTINGS
+INSIDE THE WINDOW. PX7's 'needs the room' was overruled and rightly:
+pausing should never leave the frame. The System rail's Settings row
+now SELECTS like every other, and the detail renders THE SAME
+paneSettings function - its category/pickedKey/sheetOpen machine,
+the F7 effective-cache, the F8 second-tap-opens-the-card gesture,
+the reset ask, all untouched - REFLOWED by CSS alone
+(.px-setwrap): the category subrail becomes a wrapping chip strip
+across the window's top, the 21..66 rows scroll beneath it, and the
+help/reset detail rises as a SHEET inside the window (absolute over
+px-win, the phone pattern applied one size up, stepped transition,
+reduced-motion honoured). paneSettings owns its own confirm
+placement, so the reset ask lands in the sheet where the press was
+made. Boot keeps the fullscreen shell, where there is room. The
+Escape ladder needed nothing: sheet -> window -> resume fell out of
+the existing rungs, VERIFIED BY DIRECT STATE READ (__menu +
+DOM after each press) after a probe boolean contradicted the model -
+the diagnostic showed the model right and the probe's assertion its
+own artifact, which is the difference between checking and assuming.
+Suite green, tap probe 26 ok unchanged.
