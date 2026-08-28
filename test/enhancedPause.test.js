@@ -382,3 +382,39 @@ test('PX22: a quest is filed under its kind, never TITLED by it', () => {
   assert.match(src, /section\('Archived', finished, ' done'\);/);
   assert.doesNotMatch(src, /finished\.filter\(\(q\) => q\.main\)/);
 });
+
+test('PX22: the timer PX5 designed is still there, and only when there is one', () => {
+  // Mac, checking: "the timer we also designed is integrated when
+  // needed, correct?" It was never pinned - PX5 shipped it live-probed
+  // - so it is pinned now, on the way past.
+  const src = read('src/ui/enhancedMenu.js');
+  // THE WORDS. Days show days and hours; under a day, hours and
+  // minutes; under an hour, minutes alone, never zero.
+  assert.match(src, /function remainWords\(s\) \{/);
+  const words = src.slice(src.indexOf('function remainWords(s) {'), src.indexOf('function remainWords(s) {') + 420);
+  assert.match(words, /if \(d > 0\) return `\$\{d\} day\$\{d === 1 \? '' : 's'\}/);
+  assert.match(words, /if \(h > 0\) return `\$\{h\} hour/);
+  assert.match(words, /return `\$\{Math\.max\(1, m2\)\} min`;/, 'never "0 min" - a live clock always has a minute left');
+  // TWO PLACES, both conditional: a gem on the rail row, the words in
+  // the detail. A quest with no clock gets neither.
+  assert.match(src, /if \(q\.clockSeconds != null\) b\.append\(el\('span', 'px-qtimed', '\\u25c6'\)\);/);
+  assert.match(src, /if \(sel\.clockSeconds != null\) \{/);
+  assert.match(src, /Time remains: \$\{remainWords\(sel\.clockSeconds\)\}/);
+  // URGENT below one GAME DAY - the threshold in seconds, not a guess.
+  assert.match(src, /const urgent = sel\.clockSeconds < 86400;/);
+  assert.match(read('src/ui/enhancedStyle.js'), /\.px-qtimer\.urgent/);
+  // THE CLOCK ITSELF is the quest machine's: the TIGHTEST running
+  // Clock resource on the quest, by clockEnabled && !clockFinished.
+  // All three hosts that build a log walk it the same way - the four
+  // hosts rule, on a law rather than a frame.
+  for (const host of ['src/scenes/world.js', 'src/scenes/dungeonContext.js']) {
+    const h = read(host);
+    assert.match(h, /if \(r\.clockEnabled && !r\.clockFinished && Number\.isFinite\(r\.remainingTimeInSeconds\)\)/, host);
+    assert.match(h, /Math\.min\(clockSeconds, r\.remainingTimeInSeconds\)/, `${host}: the TIGHTEST clock`);
+  }
+  // world.js carries it twice on purpose - its own questLog and the
+  // pauseQuestLog worldModes borrows - so the modal host's journal
+  // shows the same timers the world's does.
+  assert.equal((read('src/scenes/world.js').match(/clockSeconds = clockSeconds == null/g) ?? []).length, 2);
+  assert.match(read('src/scenes/worldModes.js'), /questLog: \(\) => host\.pauseQuestLog\?\.\(\) \?\? \{ active: \[\], finished: \[\] \}/);
+});
