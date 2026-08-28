@@ -151,6 +151,118 @@ the camera". That reasoning described something the engine does not do.
 
 ---
 
+# The animation layer
+
+## 8. There are ELEVEN weapon short groups, not four
+
+`apps/openmw/mwmechanics/weapontype.cpp:21-345`, one template
+specialisation per type. Read out in full:
+
+| ESM type | short | long group | attach bone |
+|---|---|---|---|
+| ShortBladeOneHand | `1s` | `shortbladeonehand` | Weapon Bone |
+| LongBladeOneHand | `1h` | `weapononehand` | Weapon Bone |
+| BluntOneHand | `1b` | `bluntonehand` | Weapon Bone |
+| AxeOneHand | `1b` | `bluntonehand` | Weapon Bone |
+| LongBladeTwoHand | `2c` | `weapontwohand` | Weapon Bone |
+| AxeTwoHand | `2b` | `blunttwohand` | Weapon Bone |
+| BluntTwoClose | `2b` | `blunttwohand` | Weapon Bone |
+| BluntTwoWide | `2w` | `weapontwowide` | Weapon Bone |
+| SpearTwoWide | `2w` | `weapontwowide` | Weapon Bone |
+| MarksmanBow | `bow` | `bowandarrow` | **Weapon Bone Left** |
+| MarksmanCrossbow | `crossbow` | `crossbow` | Weapon Bone |
+| MarksmanThrown | `1t` | `throwweapon` | Weapon Bone |
+| HandToHand | `hh` | `handtohand` | - |
+| Spell | `spell` | `spellcast` | - |
+| PickProbe | `1h` | `pickprobe` | - |
+| Arrow | - | - | `Bip01 Arrow` |
+| Bolt | - | - | `ArrowBone` |
+
+THE REVERTED ARC HAD FOUR CLASSES: onehand, twohand, twowide, bow. So
+`shortbladeonehand`, `bluntonehand`, `blunttwohand`, `throwweapon`,
+`crossbow` and `spellcast` did not exist in it at all - every
+one-hander was forced onto `weapononehand`, and every two-hander onto
+one of two groups.
+
+The `blunttwohand` / `2b` group is the one that matters most for
+Daggerfall: two-handed AXES and two-handed close BLUNT live there.
+MWAUDIT reasoned that Daggerfall's Staff, Warhammer and Battleaxe were
+all "wide" and moved all three to `weapontwowide`. By this table a
+two-handed axe is `2b`, not `2w`. The original mapping was wrong and
+the correction was wrong in a different direction; neither was read
+off anything.
+
+A BOW ATTACHES AT A DIFFERENT BONE - `Weapon Bone Left`. The reverted
+code had one `MW_WEAPON_BONE = 'weapon bone'` for every type.
+
+## 9. Group names are composed, and the fallback is a real function
+
+Idle is `"idle" + shortGroup` - `idle1h`, `idle2b`, `idlebow`
+(`character.cpp:799-803`). Movement and jump compose the same way
+(`:509`, `:674-686`).
+
+The fallback, `CharacterController::fallbackShortWeaponGroup`
+(`character.cpp:602-637`):
+
+1. not a real weapon -> the BARE base group, blend mask
+   **lower body only**
+2. two-handed melee -> base + `2c` (LongBladeTwoHand's short group)
+3. otherwise -> base + `1h` (LongBladeOneHand's short group)
+4. crossbow -> lower-body mask even when the fallback exists
+5. still missing -> bare base group, lower-body mask
+
+The long group falls back the same way (`:573-580`).
+
+MWAUDIT INVENTED A DIFFERENT CHAIN - "the asked-for group, the class
+idle, any idle, then whatever the file carries". The real chain has a
+fixed two-step ladder and terminates at the bare group. Its tail, "any
+idle / the first group in the file", exists nowhere in the engine.
+
+THE BLEND MASK IS THE PART WE HAVE NO CONCEPT OF. When the engine
+falls back it plays the animation on the LOWER BODY ONLY. For a
+first-person arms rig that is the whole difference between a wrong
+animation and no animation on the arms.
+
+## 10. First-person Idle loops 2-5 times
+
+```cpp
+// play until the Loop Stop key 2 to 5 times, then play until the Stop key
+// this replicates original engine behavior for the "Idle1h" 1st-person animation
+numLoops = 1 + Misc::Rng::rollDice(4, prng);
+```
+- `character.cpp:806-810`
+
+A first-person-specific behaviour, engine-PRNG driven, that the
+reverted arc did not have.
+
+## 11. Attack keys are namespaced by the LONG group
+
+```cpp
+mAnimation->getTextKeyTime(mCurrentWeapon + ": " + mAttackType + " min attack");
+```
+- `character.cpp:1241-1242`, where `mCurrentWeapon` is the long group
+
+So the text keys read `weapononehand: chop min attack`, and start/stop
+are `<attackType> start` / `<attackType> stop` (`:1635-1636`). A bow's
+attack type is the literal `"shoot"` (`:1677`).
+
+`getBestAttack` (`character.cpp:65-78`) picks the type from the WEAPON
+RECORD's own damage spread - slash/chop/thrust summed over their min
+and max, ties going to slash. That is a data-driven choice the port
+would have to make from Daggerfall's own item data instead.
+
+---
+
+# The divergence this port must record, LOUDLY
+
+Daggerfall's weapon taxonomy is not Morrowind's. Any mapping from
+Daggerfall's `WEAPON_TYPES` onto the eleven short groups above is a
+PORT DECISION, not a ported rule, and belongs in the recorded
+divergences with its reasoning visible - not inferred inside a lookup
+table where the last attempt hid it twice.
+
+---
+
 ## What is still unknown
 
 These rules come from the reference implementation. They have NOT been
