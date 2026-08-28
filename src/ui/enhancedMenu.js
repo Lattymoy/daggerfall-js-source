@@ -94,6 +94,7 @@ import {
 } from '../systems/settings.js';
 import { mostRecentRestorable, deleteSave } from '../systems/saveSlots.js';   // SAV4: the slot store
 import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES } from '../systems/uiSkin.js';
+import { getPref, setPref } from '../systems/uiPrefs.js';   // R7: the Enhanced pane's own switches
 import { dateFromClassicMinutes, dateString, dateTimeString } from '../systems/gameDate.js';
 // PX5: the pause clock reads THE ONE CLOCK directly (AUDIT 23 C2's
 // law - every host already reads this same module), so no host seam
@@ -118,7 +119,15 @@ import { overlayAction } from './input.js';   // U51: Escape, through the shared
 // the thing behind them is not built, so a section that has no engine
 // yet still has a home and says what it is waiting on. A rail with a
 // hole in it teaches the player the hole is permanent.
-const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Settings', 'Mods', 'About'];
+// R7 (Mac): ENHANCED is a section of its own, and on the BOOT rail
+// only. The port's own switches were scattered - the skin under the
+// brand, roads in no interface at all, the Morrowind arms behind a
+// query flag nobody would guess - and a switch a player cannot find is
+// not shipped. It is absent from SECTIONS_PAUSE deliberately: these
+// answer "what kind of game am I about to play", which is settled by
+// the time a pause menu opens, and two of them cannot take effect
+// without a reload anyway.
+const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Enhanced', 'Settings', 'Mods', 'About'];
 
 // U51: the same rail with the boot-only questions swapped for the
 // in-game ones. Continue and New Game answer "which game", which is
@@ -732,6 +741,85 @@ function write(key, next) {
 // blocks four keys on exactly that ground). The section still exists,
 // because Mac's call was to set the menus up now, and because a rail
 // that quietly omits mods teaches the player they are impossible.
+// ── ENHANCED ─────────────────────────────────────────────────────
+//
+// Every switch that is OURS rather than Daggerfall's. DFU's own 171
+// keys stay in Settings, which is a different question - that screen
+// answers "how should the game behave", this one answers "how much of
+// this is still Daggerfall".
+//
+// NOTHING IS HIDDEN FOR NOT BEING BUILT. The rail's own law (see
+// SECTIONS_BOOT) is that a section with no engine still has a home and
+// says what it waits on, because a list with a hole in it teaches the
+// player the hole is permanent. So an enhancement that does not exist
+// yet is listed, greyed, with the reason - and one that exists but
+// cannot run here says what it needs instead of failing silently.
+
+/** One toggle over a uiPrefs key. */
+function prefRow(key, name, note, { onChange = null } = {}) {
+  const row = el('div', 'row');
+  const main = el('button', 'row-main');
+  main.append(el('div', 'row-name', name));
+  if (note) main.append(el('div', 'row-note', note));
+  const on = !!getPref(key);
+  main.onclick = () => { setPref(key, !on); onChange?.(!on); render(); };
+  row.append(main);
+  const ctl = el('div', 'ctl');
+  const b = el('button', `act${on ? ' primary' : ''}`, on ? 'On' : 'Off');
+  b.style.minHeight = '38px';
+  b.style.padding = '8px 16px';
+  b.setAttribute('aria-pressed', String(on));
+  b.onclick = () => { setPref(key, !on); onChange?.(!on); render(); };
+  ctl.append(b, el('span', 'tier live'));
+  row.append(ctl);
+  return row;
+}
+
+/** An enhancement that is not switchable HERE, and why. Never a
+ *  control that looks live and does nothing - the dead affordance this
+ *  project keeps finding. */
+function inertRow(name, note, state) {
+  const row = el('div', 'row');
+  const main = el('div', 'row-main');
+  main.append(el('div', 'row-name', name));
+  main.append(el('div', 'row-note', note));
+  row.append(main);
+  const ctl = el('div', 'ctl');
+  const tag = el('span', 'tier', state);
+  // The column is narrow and .tier wraps: the first render broke
+  // "opt-in" across the hyphen and "not built" across the space.
+  tag.style.whiteSpace = 'nowrap';
+  ctl.append(tag);
+  row.append(ctl);
+  return row;
+}
+
+function paneEnhanced(body) {
+  const live = el('div', 'card');
+  live.append(el('h3', null, 'Switches'));
+  live.append(skinRow());
+  live.append(prefRow('roads', 'Roads',
+    'Roads between towns, generated from the terrain: drawn on the ground and on the travel map, '
+    + 'and travel follows them. The first world load bakes the network (about half a minute, '
+    + 'reported as it goes) and caches it; after that it is instant.'));
+  body.append(live);
+
+  const waiting = el('div', 'card');
+  waiting.append(el('h3', null, 'Not switchable here'));
+  waiting.append(inertRow('Morrowind first-person arms',
+    'A 3D viewmodel in place of the weapon sprite. Needs your own Morrowind data attached in '
+    + 'Settings, and the ?mwfp=1 flag - it is an experiment, not a finished skin.',
+    'opt-in'));
+  waiting.append(inertRow('Procedural sky',
+    'The sky is Daggerfall\u2019s own SKY*.DAT panorama, ported as-is. Nothing procedural is built yet.',
+    'not built'));
+  waiting.append(inertRow('Enhanced music',
+    'A generative score was built and removed at your direction. The game plays MIDI.BSA, and your own '
+    + 'replacement tracks if you attach them in Settings.',
+    'removed'));
+  body.append(waiting);
+}
+
 function paneMods(body) {
   body.append(empty('No add-ons installed', 'This port has no mod system, so there is no loader for a mod to load into.'));
   const c = el('div', 'card');
@@ -1292,7 +1380,7 @@ function renderInto() {
       ({
         continue: paneContinue, new: paneNew, load: paneLoad,
         save: paneSave, exit: paneExit,
-        mods: paneMods, about: paneAbout,
+        mods: paneMods, about: paneAbout, enhanced: paneEnhanced,
       })[section](body);
     }
     pane.append(body);

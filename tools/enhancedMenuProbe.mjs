@@ -38,7 +38,7 @@ async function run(label, opts) {
   // 1. THE DOOR OPENED WITHOUT DATA. ensureArena2's picker is a fixed
   //    overlay with a #pick input; if it is up, the claim is false.
   check(`${label}: the menu draws with no ARENA2`,
-    (await page.locator('.px-menu button').count()) === 5);
+    (await page.locator('.px-menu button').count()) === 6)   // R7 added Enhanced;
 
   const sw = await page.evaluate(() => {
     const on = document.querySelector('.skinswitch .skinopt.on'), off = document.querySelector('.skinswitch .skinopt:not(.on)');
@@ -87,7 +87,42 @@ async function run(label, opts) {
   // with the shell's 'switch anytime' hint hidden - the centred pair
   // reads as a control on its own.
 
+  // 2c. R7: THE ENHANCED SECTION. A source sweep can say the pane
+  //     exists and is dispatched; only a browser can say the rail entry
+  //     opens it without throwing, that roads read ON by default, that
+  //     a press PERSISTS, and that the inert rows carry no control.
+  await page.goto(`${BASE}/play/`, { waitUntil: 'networkidle' });
+  await page.locator('.px-menu button').filter({ hasText: /Enhanced/ }).first().click();
+  await page.waitForTimeout(300);
+  const pane = await page.evaluate(() => {
+    const rows = [...document.querySelectorAll('#enhanced-menu .row')];
+    const find = (n) => rows.find((r) => r.querySelector('.row-name')?.textContent === n);
+    const roads = find('Roads'), sky = find('Procedural sky');
+    return {
+      roads: roads ? roads.querySelector('.ctl .act')?.textContent : null,
+      roadsTarget: roads ? Math.round(roads.querySelector('.ctl .act').getBoundingClientRect().height) : 0,
+      skin: !!find('Interface Style'),
+      skyHasButton: sky ? !!sky.querySelector('button') : null,
+      skyReason: sky ? sky.querySelector('.row-note')?.textContent?.slice(0, 24) : null,
+    };
+  });
+  check(`${label}: the Enhanced section opens with its switches`,
+    pane.roads !== null && pane.skin, JSON.stringify(pane));
+  check(`${label}: roads read ON by default`, pane.roads === 'On', String(pane.roads));
+  check(`${label}: an unbuilt enhancement is LISTED with a reason and NO control`,
+    pane.skyHasButton === false && !!pane.skyReason, JSON.stringify(pane.skyReason));
+  if (label === 'phone') check("phone: the roads switch is a thumb's target", pane.roadsTarget >= 38, `${pane.roadsTarget}px`);
+  await page.locator('#enhanced-menu .row', { hasText: 'Roads' }).locator('.ctl .act').click();
+  const roadsOff = await page.evaluate(async () => {
+    const m = await import('/src/systems/uiPrefs.js');
+    m._resetForTests();
+    return m.getPref('roads');
+  });
+  check(`${label}: the roads switch PERSISTS`, roadsOff === false, String(roadsOff));
+  await page.locator('#enhanced-menu .row', { hasText: 'Roads' }).locator('.ctl .act').click();
+
   // 3. THE PICK APPEARS WHEN A GAME STARTS, and not one moment before.
+  await page.goto(`${BASE}/play/`, { waitUntil: 'networkidle' });
   await page.keyboard.press('Escape');   // PX2: Escape backs a section out to home
   await page.waitForSelector('.px-menu button', { timeout: 10000 });
   await page.locator('.px-menu button').filter({ hasText: /New Game/ }).first().click();

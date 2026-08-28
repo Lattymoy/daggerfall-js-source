@@ -80,10 +80,19 @@ function countingInputs() {
 
 // ── the switch ───────────────────────────────────────────────────
 
-test('roads default OFF - the bake is not a cost anyone pays unasked', () => {
-  // Twenty-six seconds is a fine price for a player who asked; it is
-  // not a fine price silently on a first boot.
-  assert.equal(PREF_DEFAULTS.roads, false);
+test('roads default ON, and the bake stays visible and cached', () => {
+  // R6 shipped this false. Mac's call reversed it: a player on the
+  // ENHANCED skin has asked for enhancements, and one nobody finds is
+  // not shipped. What the reversal owes them is that the twenty-six
+  // seconds is announced and paid once - so the pins that make it
+  // survivable are named here, beside the default they justify.
+  assert.equal(PREF_DEFAULTS.roads, true);
+  const world = readFileSync('src/scenes/world.js', 'utf8');
+  assert.match(world, /status\(`baking roads: \$\{phase\}/,
+    'the bake must report, or an on-by-default cost looks like a hang');
+  assert.match(world, /try \{\s*\n\s*if \(getPref\('roads'\)\)/,
+    'and it must be behind the preference AND a catch - on by default '
+    + 'means a bake that throws would otherwise take every boot down');
 });
 
 test('the preference lives on the UI shelf, NOT in DFU\'s settings store', () => {
