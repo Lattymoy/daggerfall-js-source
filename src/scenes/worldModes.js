@@ -134,6 +134,7 @@ import {
 import { GuildServiceWindow, preloadGuildServiceArt, guildServiceArtLoaded } from '../ui/guildServiceWindow.js';
 import { CovenWindow, preloadCovenArt, covenArtLoaded } from '../ui/covenWindow.js';   // CW1: DaggerfallWitchesCovenPopupWindow
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
+import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
 import { preloadMessageBoxArt } from '../ui/messageBox.js';
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
@@ -4312,9 +4313,6 @@ export function createWorldModes(host) {
       // never one, and the port's gate here was a stopgap for the
       // unbuilt serialization, not a law. The doors are the WORLD
       // host's own composer, riding in on the host bag.
-      // PX15 FLAGGED: toggleDial - the interior ctx's own doors (its
-      // charsheet/inventory mounts differ from the world's) need
-      // their per-door audit before the Tab arm lands here.
       openPauseFlow((w) => { interiorOverlay = w; }, {
         quickSave: host.quickSave,
         quickLoad: host.quickLoad,
@@ -4327,6 +4325,16 @@ export function createWorldModes(host) {
         // world host's bridge (world.js:2240); this mode's pause has no
         // handle to it yet, so the Quests tab says so.
       });
+    },
+    // PX15b: THE DIAL - three arms here, because the interior ctx has
+    // three doors (no automap inside a building); the rose never
+    // draws a dead arm.
+    toggleDial() {
+      return openPixelDial([
+        { id: 'skills', label: 'Skills', dir: 'n', open: () => interiorKeyCtx.toggleCharSheet() },
+        { id: 'items', label: 'Items', dir: 'e', open: () => interiorKeyCtx.toggleInventory() },
+        { id: 'magic', label: 'Magic', dir: 'w', open: () => interiorKeyCtx.toggleSpellbook() },
+      ]);
     },
     toggleCharSheet() { mountInterior(host.makeCharSheet?.()); },
     // BS1/F198: the Status action's health box (the four-hosts seam).

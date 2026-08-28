@@ -23,6 +23,7 @@ import { RDB_SIDE } from '../world/rdbLayout.js';
 import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, DOOR_VERB_FLAGS, classifyPlacementAction, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT } from '../world/actionSystem.js';
 import { TextRsc } from '../formats/textRsc.js';
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // U51 picks the skin
+import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
 import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
@@ -3013,9 +3014,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     togglePause(setPlayerPos = null) {
       if (activeOverlay || !pauseDoorReady()) return;
       const ctx = this;   // the sibling save verbs on this same context
-      // PX15 FLAGGED: toggleDial - the dungeon has no native inventory
-      // door at all (ui/input.js:84's own note), so its rose draws
-      // three arms, not a dead fourth; wired after the door audit.
       openPauseFlow((w) => { activeOverlay = w; }, {
         quickSave: () => ctx.quickSave?.(),
         // the LOAD arm needs the host's position applier, exactly as
@@ -3465,6 +3463,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     toggleInventory() {
       if (activeOverlay) return;
       activeOverlay = openInventory(null);
+    },
+    // PX15b: THE DIAL - the dungeon ctx carries all four doors (the
+    // PX15 flag's 'no native inventory' cited input.js:84's HISTORY;
+    // toggleInventory above is the door it lacked then and has now).
+    toggleDial() {
+      // The host object is an anonymous returned literal, so the doors
+      // are reached through `this` - routeKey calls ctx.toggleDial()
+      // as a method, and the entry arrows inherit that binding.
+      return openPixelDial([
+        { id: 'skills', label: 'Skills', dir: 'n', open: () => this.toggleCharSheet() },
+        { id: 'items', label: 'Items', dir: 'e', open: () => this.toggleInventory() },
+        { id: 'map', label: 'Map', dir: 's', open: () => this.toggleAutomap() },
+        { id: 'magic', label: 'Magic', dir: 'w', open: () => this.toggleSpellbook() },
+      ]);
     },
     toggleSpellbook() {
       if (activeOverlay) return;
