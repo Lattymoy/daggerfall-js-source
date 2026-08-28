@@ -387,8 +387,7 @@ combat line numbers below are refreshed with it.
 - `src/ui/enhancedMenu.js:1588` - if (action === 'delete') return;   // FLAGGED: no save manager yet
 - `src/ui/exteriorAutomapWindow.js:22` - (:682-709) is FLAGGED - the port's directory carries named
 - `src/ui/guildServiceWindow.js:33` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
-- `src/ui/hudActiveSpells.js:45` - FLAGGED: HUDEscortingNPCFaces, the third component of that row, is
-- `src/ui/hudLarge.js:47` - FLAGGED, by name: HUDActiveSpells (the buff/debuff icon rows) and
+- `src/ui/hudLarge.js:50` - FLAGGED: LargeHUDOffsetHorse and
 - `src/ui/input.js:15` - and E's DFU meaning (AbortSpell) with Q's (RecastSpell) - FLAGGED
 - `src/ui/itemMakerWindow.js:46` - FLAGGED: DFU opens a DaggerfallInputMessageBox from the rename
 - `src/ui/listPicker.js:22` - FLAGGED: the scroll bar draws as DFU's plain thumb rect rather than
