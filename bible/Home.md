@@ -241,8 +241,7 @@ combat line numbers below are refreshed with it.
 - `src/characters/playerEntity.js:29` - fatigue: 3200,    // (Str 50 + End 0) x 64 pre-chargen (INTERIM stats above); applyCharacter re-derives from the rolled stats (S15)
 - `src/combat/combatVoices.js:121` - * FLAGGED, both sites: DFU consults the racial override first -
 - `src/combat/formulas.js:10` - FLAGGED interims (all documented at their site): proficiency
-- `src/combat/formulas.js:101` - *  INTERIM_WEAPON ever baked. S3d's assignStartingGear mints its
-- `src/combat/formulas.js:178` - *  FLAGGED: DFU's player arm takes the UNDEAD modifier while the
+- `src/combat/formulas.js:102` - *  INTERIM_WEAPON ever baked. S3d's assignStartingGear mints its
 - `src/combat/playerWeapon.js:13` - INTERIM_WEAPON is the PRE-CHARGEN fallback only (AUDIT 23: the
 - `src/combat/playerWeapon.js:47` - /** INTERIM starting weapon (items arc replaces): Iron Dagger.
 - `src/combat/playerWeapon.js:57` - export const INTERIM_WEAPON = Object.freeze({

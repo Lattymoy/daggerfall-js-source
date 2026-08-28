@@ -28,6 +28,7 @@ import { weaponMinDamage, weaponMaxDamage, weaponSkillUsed } from '../characters
 import { equipTableOf, lowerCondition, slotForBodyPart, EQUIP_SLOTS, weaponProficiencyFlag } from '../systems/equip.js';   // C-slice: DamageEquipment; CF1: GetWeaponSkillUsed as a ProficiencyFlag, -1 quirk included
 import { SHIELD_PARTS } from '../systems/armorMaterials.js';
 import { totalWeight } from '../systems/inventory.js';   // EW1: ItemCollection.GetWeight, the one home for a stack's kg
+import { liveVampirism } from '../systems/racialLive.js';   // VU1: an import-free LEAF - vampirism.js cycles back here through loot.js
 import { breakNormalPowerConcealment } from '../systems/concealment.js';   // wave 31: BreakNormalPowerConcealmentEffects, in its own leaf so this import cannot cycle
 
 // ---- Dice100.cs verbatim ----
@@ -175,16 +176,28 @@ export function enemyEntityGroup(careerIndex) {
  *     dreugh, lamia - is an ATTACKER on the player, so that arm is
  *     where the whole modifier lives.
  *
- *  FLAGGED: DFU's player arm takes the UNDEAD modifier while the
- *  player HasVampirism(); the vampirism effect is not ported, so only
- *  the humanoid arm exists here. */
+ *  VU1: the player arm takes the UNDEAD modifier while the player
+ *  has vampirism, as DFU's does. The flag that used to stand here said
+ *  "the vampirism effect is not ported, so only the humanoid arm
+ *  exists" - and systems/vampirism.js had shipped, `liveVampirism` and
+ *  all, some slices earlier. The blocker retired and the sentence did
+ *  not, so every vampire character in the port took the wrong
+ *  modifier. */
 export function bonusOrPenaltyByEnemyType(attacker, target) {
   if (!attacker || !target) return 0;
   const flags = attacker.attackModifierFlags ?? attacker.career?.attackModifierFlags ?? null;
   if (flags == null) return 0;
   let group = ENEMY_GROUPS.None;
   if (target.isPlayer) {
-    group = ENEMY_GROUPS.Humanoid;   // "Player is assumed humanoid" (:1048)
+    // VU1 - :1042-1048's TWO arms, not one. "Vampires are undead,
+    // therefore use undead modifier" is DFU's own comment on the
+    // HasVampirism() branch; only the else is "Player is assumed
+    // humanoid". A vampire player was taking the humanoid modifier
+    // from every attacker, which is the wrong sign as often as not -
+    // a career with a humanoid BONUS was quietly helping itself
+    // against a target it should have feared, and a monster with an
+    // undead phobia lost its penalty entirely.
+    group = liveVampirism(target) ? ENEMY_GROUPS.Undead : ENEMY_GROUPS.Humanoid;
   } else if (target.affinity === 'Human') {
     group = ENEMY_GROUPS.Humanoid;
   } else {
