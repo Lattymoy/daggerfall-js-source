@@ -25,10 +25,11 @@
 //   (RaiseReputationForDoingSentence; the classic double-raise on
 //   fine+prison is DFU-noted and kept). Release clears the crime.
 //
-// FLAGGED loud: guild rescues (Thieves/Dark Brotherhood) pend the
-// guilds arc; execution (punishmentType 1) is unreachable in classic
+// FLAGGED loud: execution (punishmentType 1) is unreachable in classic
 // and here; the prison time-skip rides the host clock callback;
-// banishment's SeverePunishmentFlags consequences pend.
+// banishment's SeverePunishmentFlags consequences pend. (The guild
+// rescues - Thieves/Dark Brotherhood - landed at CR1, guildRescue
+// below.)
 
 import { rand } from '../formats/dfRandom.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
@@ -82,6 +83,42 @@ export const TEXT_FOUND_GUILTY = 8055;
 export const TEXT_FREE_TO_GO = 8062;
 export const TEXT_BANISHED = 8063;
 export const TEXT_HOW_CONVINCE = 8064;
+// CR1: the guild rescue records (DaggerfallCourtWindow.cs:33-34)
+export const TEXT_RESCUE_TG = 550;           // courtTextTG - "the Thieves Guild has intervened"
+export const TEXT_RESCUE_DB = 551;           // courtTextDB - the Dark Brotherhood's
+// FactionFile.FactionIDs (FactionFile.cs:91/:135)
+export const THIEVES_GUILD_FACTION_ID = 42;
+export const DARK_BROTHERHOOD_FACTION_ID = 108;
+
+/** CR1 - the guild rescue arms (DaggerfallCourtWindow.cs:177-221),
+ *  checked AFTER the penalty is computed and BEFORE the plead box.
+ *  Assault (4) or murder (3): a Dark Brotherhood member may be
+ *  rescued; attempted breaking and entering / trespassing / breaking
+ *  and entering (<=2) or pickpocketing (11): a Thieves Guild member.
+ *  The gate is `guild.Rank >= Random.Range(0, 20)` - a UnityEngine
+ *  draw (the ENGINE-PRNG rule's injectable roll), and it is drawn
+ *  ONLY for a member: C#'s IsMember() gate stands outside the roll,
+ *  so a non-member consumes nothing from the stream.
+ *
+ *  `guildRankOf(factionId)` answers the member's rank or null for a
+ *  non-member (GuildManager.GetGuild(...).IsMember()/Rank).
+ *  Answers { guild, textId } for the flow's release box, or null. */
+export function guildRescue(court, { guildRankOf = () => null, roll = Math.random } = {}) {
+  const crimeType = court.crime - 1;
+  if (crimeType === 4 || crimeType === 3) {
+    const rank = guildRankOf(DARK_BROTHERHOOD_FACTION_ID);
+    if (rank != null && rank >= Math.floor(roll() * 20)) {
+      return { guild: 'DarkBrotherhood', textId: TEXT_RESCUE_DB };
+    }
+  }
+  if (crimeType <= 2 || crimeType === 11) {
+    const rank = guildRankOf(THIEVES_GUILD_FACTION_ID);
+    if (rank != null && rank >= Math.floor(roll() * 20)) {
+      return { guild: 'ThievesGuild', textId: TEXT_RESCUE_TG };
+    }
+  }
+  return null;
+}
 
 export const legalRepOf = (player, regionIndex) => player.legalRep?.[regionIndex] ?? 0;
 /** ClampLegalReputations' bounds (PlayerEntity.cs:2245-2247). */
@@ -252,7 +289,8 @@ export function surrenderToCityGuards(player, regionIndex, voluntary, { setHealt
 }
 
 /** The court's state-0 math. Returns { punishmentType, fine,
- *  daysInPrison } (guild rescues FLAGGED). */
+ *  daysInPrison } - the guild rescue arms (guildRescue above) run on
+ *  this record before any plea. */
 export function startCourt(player, regionIndex, crime, { rolls = Math.random, dfRand = rand } = {}) {
   // AUDIT 21 F6: HandleCourtLogic's FIRST statement, on every state -
   // "Close immediately if no crime assigned to player"
