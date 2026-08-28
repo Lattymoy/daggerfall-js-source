@@ -6704,6 +6704,27 @@ race select -> Enter confirms (the flow's own no-description arm) ->
 gender -> class method -> class list -> Knight -> name, every state
 read from the flow itself, zero page errors. The chargen browser
 probe still needs ARENA2 (pre-existing, stash-verified in PX8).
+P0 LIVE CRASH (Mac, deployed build, real ARENA2, mobile): with the
+wizard up on the race description (Morrowind / Dark Elf), a CRASH
+panel: TypeError: Cannot read properties of null (reading '0') at
+<minified>.update <- drawFoes <- frame. DECODED AGAINST SOURCE: the
+world frame is STILL RUNNING beneath the wizard and dies indexing a
+null feet array - enemyTargets._targetFeet (:269) returns playerFeet
+or ai.target.ai.feet and enemyMotor.update indexes them raw (:183,
+:216) - so either the player's feet or a held target's ai was torn
+down while a foe still updated against it. The shape that fits: an
+old session's dungeon frame SURVIVING the exit-to-menu -> New Game
+unwind (U27 / Ledger A) and updating foes against disposed state
+under the wizard - the same host-keeps-running family as the U50
+keyboard finding, one layer down. NOT the UI arc: today's slices are
+paint, hooks-at-pause, and the wizard view; none touch the frame
+path. NOT YET FIXED because the null is a SYMPTOM - guarding
+feet?.[0] would draw foes against a dead world and call it working.
+NEXT SESSION: repro on the live path (boot -> Continue -> pause ->
+Exit -> New Game), find which teardown leaves the frame loop alive,
+and kill the loop at the unwind - the fix is an owner for the frame,
+not a null check. Needs ARENA2, so it waits for a data-bearing run.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk
