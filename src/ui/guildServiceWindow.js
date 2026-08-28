@@ -99,8 +99,17 @@ export class GuildServiceWindow {
   _dismissTop(button = null) {
     const b = this.boxes.shift();
     if (!b) return;
-    if (button === MB_BUTTONS.Yes) b.onYes?.();
-    else if (button === MB_BUTTONS.No) b.onNo?.();
+    if (button === MB_BUTTONS.Yes) {
+      // CW1: a Yes handler may ANSWER A BOX - the summoning's
+      // are-you-sure resolves to "not enough gold" / "the daedra does
+      // not answer" / the greeting, each a box DFU pushes over the
+      // popup (DaggerfallQuestPopupWindow.cs:207-266). This window
+      // dropped the return, so the temple path spent the gold and
+      // said nothing. A null return means the handler DISPATCHED
+      // (the film window replaced this one in the overlay slot).
+      const next = b.onYes?.();
+      if (next?.rows) this.boxes.unshift({ ...next });
+    } else if (button === MB_BUTTONS.No) b.onNo?.();
     if (b.closesWindow) this._close();
     // G6: ClickAnywhereToClose + OnClose (:436-437). The Spymaster's
     // greeting is a box whose DISMISSAL is the service - it hands the

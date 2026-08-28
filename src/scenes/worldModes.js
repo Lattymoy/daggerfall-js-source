@@ -129,6 +129,7 @@ import {
   MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID, DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID, CANNOT_BE_REPAIRED_TEXT,
 } from '../systems/repairService.js';
 import { GuildServiceWindow, preloadGuildServiceArt, guildServiceArtLoaded } from '../ui/guildServiceWindow.js';
+import { CovenWindow, preloadCovenArt, covenArtLoaded } from '../ui/covenWindow.js';   // CW1: DaggerfallWitchesCovenPopupWindow
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
 import { preloadMessageBoxArt } from '../ui/messageBox.js';
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';
@@ -563,6 +564,7 @@ export function createWorldModes(host) {
   const ensureInteriorWindowArt = () => {
     ensureShopFont();                                       // FONT0003 + the trade art
     preloadGuildServiceArt({ renderer, fetchBytes, palette });
+    preloadCovenArt({ renderer, fetchBytes, palette });   // CW1: DAED00I0 for the witches' panel
     preloadPauseFlowArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] pause/controls art unavailable:', e?.message ?? e));   // I3/I4
     preloadMessageBoxArt({ renderer, fetchBytes, palette });   // U11 parchment for its boxes
     preloadListPickerArt({ renderer, fetchBytes, palette });   // U24: PICK00I0 for the training skill list
@@ -1266,6 +1268,8 @@ export function createWorldModes(host) {
       isTavern: (t) => t === BUILDING_TYPES.Tavern,
     });
     if (route.kind === 'guildService') { openGuildService(pn, route, npcData); return; }
+    // CW1: the coven's own popup (StaticNPCClick's WitchesCoven arm).
+    if (route.kind === 'witchesCoven') { openWitchesCoven(pn, npcData); return; }
     // R1: the repair-shop merchant (DaggerfallMerchantRepairPopupWindow
     // - Armorer/GeneralStore/WeaponSmith per RMBLayout.IsRepairShop).
     // The popup carries THREE buttons (:82-97): Repair (the window's
@@ -1367,15 +1371,12 @@ export function createWorldModes(host) {
     // override, a reaction below -20, and a standing rejection - each
     // already said its piece through the session's messageBox seam
     if (talk && talk.kind !== 'talk') return;
-    // FLAGGED, each with the slice it waits on:
-    //   merchant  - DaggerfallMerchantServicePopupWindow's SELL and
-    //               BANKING arms: sell needs the trade window's mode
-    //               split, banking needs a bank that does not exist
-    //               yet. (Repair landed with R1 and the tavern with
-    //               U39; both are consumed above.)
-    //   witchesCoven - DaggerfallWitchesCovenPopupWindow.
-    // Both fall through to TALK, which is DFU's own last arm for an
-    // NPC with no special handling, so nothing is inert.
+    // CW1 retired the FLAGGED list that lived here - every arm it
+    // named is consumed above: repair (R1), tavern (U39), banking
+    // (openBank), sell (U40, "needs the trade window's mode split"
+    // outlived the split), and the coven popup (CW1 itself). What
+    // still falls through to TALK is DFU's own last arm for an NPC
+    // with no special handling, so nothing is inert.
     console.log('[interior] static NPC route:', route.kind, route.service ?? '');
     // B7 (AUDIT 25 blocker 7): the conversation OPENS. TalkToNpc's
     // tail is pushTalkWindow (TalkManager.cs:2653) - the engine has
@@ -1772,34 +1773,77 @@ export function createWorldModes(host) {
     return true;
   }
 
+  /** B7: the popup's TALK button is TalkToStaticNPC with menu
+   *  defaulted TRUE (DaggerfallGuildServicePopupWindow.cs:294) -
+   *  the same engine doors, then the window push. G6 gave it a
+   *  SECOND caller: the Spymaster's greeting hands the player to
+   *  this same door on dismissal, with isSpyMaster true (:713).
+   *  CW1 gave it a THIRD: the coven popup's Talk button
+   *  (DaggerfallWitchesCovenPopupWindow.cs:168, the same default-TRUE
+   *  menu), which is why the door hoisted out of openGuildService.
+   *
+   *  It reads the SAME StaticNPC.Data the click derived: DFU's popup
+   *  is handed the very StaticNPC component the click routed
+   *  (:294 TalkToStaticNPC(staticNPC)), and Data is computed once at
+   *  layout. Re-deriving it here dropped GetRaceFromFaction's two
+   *  lookups (StaticNPC.cs:357-369) - which only the bridge's world
+   *  seam can answer - so every NPC reached through the popup was
+   *  stamped Nord and drew a different generated name than the same
+   *  NPC clicked directly. */
+  function popupTalkToStaticNpc(npcData, { isSpyMaster = false } = {}) {
+    const dict2 = townTalk?.factionDict ?? null;
+    const displayName2 = staticNpcName(npcData, { getFaction: (id) => dict2?.get(id) ?? null, nameBank: currentNameBank() });   // F016
+    const talk2 = npcSession?.talkToStaticNPC(
+      { data: npcData, isChildNPC: isChildNPCData(npcData), displayName: displayName2 },   // F020
+      { menu: true, isSpyMaster });
+    if (talk2?.kind === 'talk' && townTalk?.openTalkWindow) {
+      interiorOverlay = null;   // the popup yields to the conversation, as DFU's CloseWindow-then-push does
+      townTalk.openTalkWindow(talk2.greeting, { npcSeed: npcData.nameSeed, npcName: displayName2 });
+      return;
+    }
+    if (!talk2) townTalk?.say?.('You get no response.');   // no session mounted - the old line
+  }
+
+  /** CW1: DaggerfallWitchesCovenPopupWindow - the coven's four-button
+   *  panel on DAED00I0.IMG. Talk is the popup door above; Summon is
+   *  DaedraSummoningService with the WITCH NPC's OWN factionID (:186),
+   *  through the same openServiceFlow arm the temples take; Quest is
+   *  the Witches-pool nonmember offer (offerFlow.offerCovenQuest),
+   *  boxed on a ServiceFlowWindow like every guild offer. */
+  function openWitchesCoven(pn, npcData) {
+    if (!covenArtLoaded() || !_shopFont) return;   // no art, no window (the U8 idiom)
+    const dict = townTalk?.factionDict ?? null;
+    const store = ensureFactionRep(playerEntity, dict);
+    const rows = (id) => townTalk?.lines?.(id) ?? [];
+    let win = null;
+    win = new CovenWindow({
+      rows,
+      onTalk: () => popupTalkToStaticNpc(npcData),
+      onSummon: () => openServiceFlow('guildServiceDaedraSummoning', {
+        guild: null, memberships: [], store, rows, route: null,
+        summonerFactionId: pn.factionID,
+      }),
+      onQuest: () => {
+        if (!questBridge || !store) return null;
+        // GetQuest (:121-158): the NPC's faction homes the offer and
+        // its reputation feeds the pool filter.
+        const step = questBridge.offerCovenQuest(pn.factionID, getReputation(store, pn.factionID));
+        const boxes = questBridge.offerBoxes(step, rows);
+        if (!boxes.length || !guildServiceArtLoaded()) return null;
+        let offerWin = null;
+        offerWin = new ServiceFlowWindow(boxes, {
+          onClose: () => { if (interiorOverlay === offerWin) interiorOverlay = null; },
+        });
+        interiorOverlay = offerWin;
+        return { dispatched: true };
+      },
+      onClose: () => { if (interiorOverlay === win) interiorOverlay = null; },
+    });
+    interiorOverlay = win;
+  }
+
   function openGuildService(pn, route, npcData) {
-    /** B7: the popup's TALK button is TalkToStaticNPC with menu
-     *  defaulted TRUE (DaggerfallGuildServicePopupWindow.cs:294) -
-     *  the same engine doors, then the window push. G6 gave it a
-     *  SECOND caller: the Spymaster's greeting hands the player to
-     *  this same door on dismissal, with isSpyMaster true (:713).
-     *
-     *  It reads the SAME StaticNPC.Data the click derived: DFU's popup
-     *  is handed the very StaticNPC component the click routed
-     *  (:294 TalkToStaticNPC(staticNPC)), and Data is computed once at
-     *  layout. Re-deriving it here dropped GetRaceFromFaction's two
-     *  lookups (StaticNPC.cs:357-369) - which only the bridge's world
-     *  seam can answer - so every NPC reached through the popup was
-     *  stamped Nord and drew a different generated name than the same
-     *  NPC clicked directly. */
-    const talkToStaticNpcHere = ({ isSpyMaster }) => {
-      const dict2 = townTalk?.factionDict ?? null;
-      const displayName2 = staticNpcName(npcData, { getFaction: (id) => dict2?.get(id) ?? null, nameBank: currentNameBank() });   // F016
-      const talk2 = npcSession?.talkToStaticNPC(
-        { data: npcData, isChildNPC: isChildNPCData(npcData), displayName: displayName2 },   // F020
-        { menu: true, isSpyMaster });
-      if (talk2?.kind === 'talk' && townTalk?.openTalkWindow) {
-        interiorOverlay = null;   // the popup yields to the conversation, as DFU's CloseWindow-then-push does
-        townTalk.openTalkWindow(talk2.greeting, { npcSeed: npcData.nameSeed, npcName: displayName2 });
-        return;
-      }
-      if (!talk2) townTalk?.say?.('You get no response.');   // no session mounted - the old line
-    };
+    const talkToStaticNpcHere = (o) => popupTalkToStaticNpc(npcData, o);
     const dict = townTalk?.factionDict ?? null;
     const guild = createGuildForGroup(route.guildGroup, route.buildingFactionId, dict);
     if (!guild) { townTalk?.say?.('You get no response.'); return; }
@@ -1904,13 +1948,20 @@ export function createWorldModes(host) {
   /** DoGuildService's three built arms (U24). Each returns a
    *  ServiceFlowWindow, or null for a destination that does not exist
    *  yet. `onClose` uses the same identity guard as the popup's. */
-  function openServiceFlow(destination, { guild, memberships, store, rows, route, talkAsSpymaster = null }) {
+  // CW1: guild is NULLABLE - the coven popup reaches ONE arm of this
+  // switch (the summoning) with no guild at all, exactly as DFU's
+  // DaedraSummoningService lives on the guild-less base popup class
+  // (DaggerfallQuestPopupWindow, not the guild window). summonerFactionId
+  // overrides the building faction for that arm: the coven summons by
+  // the WITCH NPC's own factionID (:186), the one summoner whose id is
+  // not the hall it stands in.
+  function openServiceFlow(destination, { guild, memberships, store, rows, route, talkAsSpymaster = null, summonerFactionId = null }) {
     if (!destination) return null;
-    const membership = membershipOf(memberships, guild);
+    const membership = guild ? membershipOf(memberships, guild) : null;
     const b = interiorBuilding;
     const closeSelf = () => { if (interiorOverlay === flow) interiorOverlay = null; };
     const now = () => interiorTicker.classicMinutes;   // already CLASSIC minutes (AUDIT 21 F2)
-    const godName = guild.divine ?? '';
+    const godName = guild?.divine ?? '';
     let flow = null;
     // R1: the guild repair service - the same keyed flow the repair
     // shops open, with guild.ReducedRepairCost bound (FightersGuild's
@@ -2053,7 +2104,7 @@ export function createWorldModes(host) {
       // answer to the second spends two hundred thousand gold before
       // anything is rolled.
       const dict = townTalk?.factionDict ?? null;
-      const summonerId = b?.factionId ?? 0;
+      const summonerId = summonerFactionId ?? b?.factionId ?? 0;
       const summoner = dict?.get(summonerId) ?? null;
       const store = ensureFactionRep(playerEntity, dict);
       const daedra = daedraForSummoner({

@@ -287,32 +287,32 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:3746` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
 - `src/scenes/world.js:4110` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/world.js:4183` - (FLAGGED: exterior corpse containers are the loot arc's), so
-- `src/scenes/worldModes.js:793` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
-- `src/scenes/worldModes.js:876` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
-- `src/scenes/worldModes.js:885` - FLAGGED to the crime arc, as the Ledger records.
-- `src/scenes/worldModes.js:954` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
-- `src/scenes/worldModes.js:969` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
-- `src/scenes/worldModes.js:1007` - credit instead. FLAGGED: there is nowhere to cash one yet, so
-- `src/scenes/worldModes.js:1176` - is the quest machine's, FLAGGED with it.
-- `src/scenes/worldModes.js:1181` - FLAGGED, above ground only, each with the DFU line it owes:
-- `src/scenes/worldModes.js:1275` - trade window in Sell mode. The BANKING arm stays FLAGGED below;
-- `src/scenes/worldModes.js:1370` - FLAGGED, each with the slice it waits on:
-- `src/scenes/worldModes.js:1599` - fixed ship scenes and stays FLAGGED, so those buttons keep
-- `src/scenes/worldModes.js:1631` - H3: the sell price, which was FLAGGED at zero because it needs
-- `src/scenes/worldModes.js:1809` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:1865` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
-- `src/scenes/worldModes.js:1923` - skip, the refusal line. Only the destination was a FLAGGED null,
-- `src/scenes/worldModes.js:2198` - been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:2243` - destination has been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:2262` - been FLAGGED nulls since G3.
-- `src/scenes/worldModes.js:2367` - with the trade window's own mode flow, the same INTERIM the
-- `src/scenes/worldModes.js:2592` - first (owned houses and quest buildings FLAGGED/seamed per
-- `src/scenes/worldModes.js:2600` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
-- `src/scenes/worldModes.js:3507` - too. FLAGGED: interior loot containers are the loot arc's -
-- `src/scenes/worldModes.js:3649` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:3748` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:4086` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
-- `src/scenes/worldModes.js:4224` - PX3 FLAGGED: questMessages - the quest machine lives on the
+- `src/scenes/worldModes.js:795` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
+- `src/scenes/worldModes.js:878` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
+- `src/scenes/worldModes.js:887` - FLAGGED to the crime arc, as the Ledger records.
+- `src/scenes/worldModes.js:956` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
+- `src/scenes/worldModes.js:971` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
+- `src/scenes/worldModes.js:1009` - credit instead. FLAGGED: there is nowhere to cash one yet, so
+- `src/scenes/worldModes.js:1178` - is the quest machine's, FLAGGED with it.
+- `src/scenes/worldModes.js:1183` - FLAGGED, above ground only, each with the DFU line it owes:
+- `src/scenes/worldModes.js:1279` - trade window in Sell mode. The BANKING arm stays FLAGGED below;
+- `src/scenes/worldModes.js:1374` - CW1 retired the FLAGGED list that lived here - every arm it
+- `src/scenes/worldModes.js:1600` - fixed ship scenes and stays FLAGGED, so those buttons keep
+- `src/scenes/worldModes.js:1632` - H3: the sell price, which was FLAGGED at zero because it needs
+- `src/scenes/worldModes.js:1853` - FactionData; the port's pre-chargen INTERIM entity does not, and
+- `src/scenes/worldModes.js:1909` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
+- `src/scenes/worldModes.js:1974` - skip, the refusal line. Only the destination was a FLAGGED null,
+- `src/scenes/worldModes.js:2249` - been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:2294` - destination has been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:2313` - been FLAGGED nulls since G3.
+- `src/scenes/worldModes.js:2418` - with the trade window's own mode flow, the same INTERIM the
+- `src/scenes/worldModes.js:2643` - first (owned houses and quest buildings FLAGGED/seamed per
+- `src/scenes/worldModes.js:2651` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
+- `src/scenes/worldModes.js:3558` - too. FLAGGED: interior loot containers are the loot arc's -
+- `src/scenes/worldModes.js:3700` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:3799` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:4137` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
+- `src/scenes/worldModes.js:4275` - PX3 FLAGGED: questMessages - the quest machine lives on the
 - `src/systems/advancement.js:84` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
@@ -386,6 +386,7 @@ combat line numbers below are refreshed with it.
 - `src/ui/bookReader.js:25` - INTERIM, loud: lines draw in the host font at a fixed 10px row -
 - `src/ui/chargenArt.js:718` - *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
 - `src/ui/chargenArt.js:850` - *  from the difficulty law). FLAGGED: the dagger's one-second fading
+- `src/ui/covenWindow.js:27` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
 - `src/ui/enhancedMenu.js:1294` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
 - `src/ui/enhancedMenu.js:1449` - if (action === 'delete') return;   // FLAGGED: no save manager yet
 - `src/ui/exteriorAutomapWindow.js:22` - (:682-709) is FLAGGED - the port's directory carries named

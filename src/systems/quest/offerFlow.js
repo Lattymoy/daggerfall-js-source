@@ -139,6 +139,29 @@ export class QuestOfferFlow {
     return this._offerQuest();
   }
 
+  /** CW1 - DaggerfallWitchesCovenPopupWindow.GetQuest (:121-158): the
+   *  coven is not a proper guild. The pool is the Witches group as
+   *  NONMEMBER, rank = player level ("Not a proper guild so rank =
+   *  player level"), and the witch NPC's own faction homes the offer.
+   *  The window calls GetGuildQuest - pool + select in ONE call
+   *  (QuestListsManager.cs:322-327) - so the coven never sees the
+   *  guildQuestListBox picker, which is the guild POPUP's own UI. No
+   *  guild rides the offer, so no ExternalMCP is set (the offerNamedQuest
+   *  shape, not offerGuildQuest's). */
+  offerCovenQuest(factionId, reputation = 0) {
+    this.offeredQuest = null;
+    this.questPool = null;
+    this.menu = false;
+    this._guild = null;
+    this._guildCtx = { guildGroup: GUILD_GROUPS.Witches, buildingFactionId: factionId };
+    // Just exit if this NPC already involved in an active quest (:125-129)
+    if (this.machine.isLastNPCClickedAnActiveQuestor()) return { kind: 'close' };
+    const level = this.machine.deps.playerLevel?.() ?? 0;
+    this.offeredQuest = this.questLists.getGuildQuest(
+      GUILD_GROUPS.Witches, MEMBERSHIP_STATUS.Nonmember, factionId, reputation, level);
+    return this._offerQuest();
+  }
+
   offerGuildQuest({ guildGroup, guild, buildingFactionId = 0 }) {
     this.offeredQuest = null;
     this.menu = false;
