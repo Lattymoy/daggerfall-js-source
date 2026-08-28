@@ -70,7 +70,14 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     const now = `${morrowindDataGeneration()}|${mwFpPrefGeneration()}`;
     if (now === mwSeen) return;
     mwSeen = now;
-    mwView = null;   // drop the stale view first: a rebuild that fails leaves the SPRITE path, never a half-built rig
+    // MWAUDIT: HAND THE OLD ONE BACK before dropping it. MWFIX made
+    // this the first code in the port that discards a live MW view,
+    // and the view holds real GL - a texture per material, a VAO and
+    // four buffers per batch, and the stream texture on the GAME's own
+    // context. Dropping the reference alone would leak all of it once
+    // per attach and once per toggle.
+    mwView?.dispose?.();
+    mwView = null;   // a rebuild that fails leaves the SPRITE path, never a half-built rig
     buildMwView();
   };
   buildMwView();
