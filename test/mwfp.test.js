@@ -204,7 +204,13 @@ test('MWAUDIT: ready means POSEABLE, and the KF cannot erase the base\'s groups'
   // geometry with no playable group used to count as ready, which is
   // the bind-pose freeze wearing a different hat: the layer draws,
   // badly, where the sprite path was correct.
-  assert.match(src, /view\.ready = skinnedSets\.length > 0 && groups\.size > 0;/,
+  // MW8 widened the GEOMETRY half to count rigid parts as well as
+  // skinned ones; the claim this pin makes - that geometry alone is not
+  // ready, a playable clip is also required - is untouched, and both
+  // lines are held so neither half can quietly go.
+  assert.match(src, /const drawable = skinnedSets\.length \+ attachedSets\.length;/,
+    'geometry means either kind');
+  assert.match(src, /view\.ready = drawable > 0 && groups\.size > 0;/,
     'both halves are required');
   assert.match(src, /'no animation groups - the sprite path stands'/,
     'and the status says WHICH half is missing');
@@ -213,4 +219,86 @@ test('MWAUDIT: ready means POSEABLE, and the KF cannot erase the base\'s groups'
   // replace the base's groups with an empty map
   assert.match(src, /if \(kfGroups\.size\) groups = kfGroups;/,
     'the groups follow the tracks only if the KF actually has any');
+});
+
+// ── MW8: the rigid half of the rig ─────────────────────────────────
+//
+// THE DEFECT MW7 DID NOT FIX. MW7 found the arms and bound them, then
+// took only bindPart's `.skinned` and let `.attached` fall on the
+// floor - and Morrowind's arms are RIGID parts hung off a bone, so
+// that is all of them. skinnedSets stayed empty, ready stayed false,
+// and the report was unchanged: still the 2D sprite. `attachedSets`
+// had been declared since slice 5 and never once written to, which is
+// the missing home the parts needed, and there was no draw loop for it
+// either. The live probe read ALL GREEN throughout, because its BASE
+// nif carries skinned geometry and retail's base_anim.1st.nif - a
+// first-person SKELETON - carries none.
+
+test('MW8: a Morrowind body part arrives RIGID - the premise, in real data', async () => {
+  // Not an assumption about retail: fixture/plain.nif is a body part in
+  // the shape the fixture writer emits, and it has no skin at all.
+  const { MwBsaFile } = await import('../src/formats/mwBsaFile.js');
+  const { parseNif } = await import('../src/formats/mwNifFile.js');
+  const { flattenNif } = await import('../src/formats/mwNifMesh.js');
+  const { bindPart } = await import('../src/formats/mwCharacter.js');
+  const { buildSkeleton } = await import('../src/formats/mwSkin.js');
+  const bsa = new MwBsaFile(new Uint8Array(
+    readFileSync(new URL('./fixtures/mw/fixture.bsa', import.meta.url))));
+  const part = parseNif(bsa.get('meshes/fixture/plain.nif'));
+  const batches = flattenNif(part);
+  assert.equal(batches.filter((b) => b.skinned && b.skin).length, 0, 'no skinned batches');
+  assert.equal(batches.length, 1, 'one rigid batch');
+
+  const skeleton = buildSkeleton(parseNif(bsa.get('meshes/base_anim.nif')));
+  const bound = bindPart(skeleton, part);
+  assert.equal(bound.skinned.length, 0,
+    'so a loader that reads only .skinned gets NOTHING - the whole defect, in one line');
+  assert.equal(bound.attached.length, 1, 'the geometry was there the entire time, in .attached');
+  assert.ok(bound.attachRef >= 0, 'with a bone to hang it from');
+});
+
+test('MW8: the FP layer keeps BOTH halves, draws them, and counts them ready', () => {
+  const fp = src('combat/mwFpArms.js')
+    .split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n');
+  // one loader, and it writes the home that was always empty
+  assert.match(fp, /const addPart = \(partNif, bones, label\) => \{/, 'one part loader');
+  assert.match(fp, /attachedSets\.push\(\{ batches: bound\.attached, attachRef: bound\.attachRef \}\)/,
+    'the rigid half is HELD - slice 5 declared attachedSets and never wrote to it');
+  assert.ok(!/bindPart\([^)]*\)[^;]*;\s*\n\s*skinnedSets\.push\(\.\.\.bound\.skinned\);/.test(fp),
+    'and no caller takes only .skinned any more - that was the drop');
+  // a rigid part is placed at EACH of its bones: one mesh, two arms
+  assert.match(fp, /const sides = bones\?\.length \? bones : \[null\];/, 'left bone and right bone');
+  assert.match(fp, /if \(!tookSkinned && bound\.skinned\.length\)/,
+    'while skinned geometry names its own bones and binds once, not per side');
+  // a missing bone costs the SIDE, not the part
+  assert.match(fp, /catch \(err\) \{\s+status\(`\$\{label\}: \$\{err\.message\}`\);\s+continue;/,
+    'a bone the skeleton lacks skips that side and keeps going');
+  // and they are actually drawn
+  assert.match(fp, /for \(const set of attachedSets\) drawAttached\(set\.batches, set\.attachRef, matsFor\(rootRef\)\);/,
+    'the rigid parts have a draw loop - there was none');
+  assert.match(fp, /const drawAttached = \(batches, attachRef, mats\) => \{/,
+    'through the same attachment transform the weapon has always used');
+  // ready means either kind of geometry
+  assert.match(fp, /const drawable = skinnedSets\.length \+ attachedSets\.length;/,
+    'ready counts both - counting only skinned called a two-armed rig unready');
+  assert.match(fp, /view\.ready = drawable > 0 && groups\.size > 0;/, 'and still demands a playable clip');
+});
+
+test('MW8: dispose frees what it walks - the MWAUDIT teardown freed nothing', () => {
+  // MINE, from MWAUDIT. drawSet hangs __geo straight off the BATCH, and
+  // skinnedSets holds batches - so `set.batch?.__geo` was undefined on
+  // every iteration and the loop `continue`d through the whole list. The
+  // pin I wrote then held me to a dispose that EXISTED, not one that
+  // worked, which is the same class of miss as a pin matching its own
+  // comment.
+  const fp = src('combat/mwFpArms.js')
+    .split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n');
+  assert.ok(!/set\.batch\?\.__geo/.test(fp), 'the batch IS the set - no .batch indirection');
+  assert.match(fp, /const freeBatch = \(batch\) => \{\s+const geo = batch\?\.__geo;/,
+    'freed off the batch itself');
+  assert.match(fp, /for \(const batch of skinnedSets\) freeBatch\(batch\);/, 'the skinned half');
+  assert.match(fp, /for \(const set of attachedSets\) for \(const batch of set\.batches\) freeBatch\(batch\);/,
+    'the rigid half');
+  assert.match(fp, /for \(const entry of weaponMeshes\.values\(\)\)/,
+    'and the weapon meshes, which the teardown never reached at all');
 });
