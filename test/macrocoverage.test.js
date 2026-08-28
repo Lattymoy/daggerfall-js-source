@@ -12,8 +12,9 @@ import {
   getContextValue, macroTableCoverage, setIdFactions,
 } from '../src/systems/quest/questMacros.js';
 import { CLASSIC_GAME_START_TIME } from '../src/systems/gameDate.js';
+import { dfuFile } from './dfuRoot.mjs';   // PY1: DFU_PATH, then the in-tree sparse clone
 
-const DFU_MACROHELPER = new URL('../tools/parity/dfu/Assets/Scripts/Utility/MacroHelper.cs', import.meta.url);
+const DFU_MACROHELPER = dfuFile('Assets/Scripts/Utility/MacroHelper.cs');
 
 test('M-X GATE: every macro in MacroHelper.cs has a row in the port\'s table', (t) => {
   if (!existsSync(DFU_MACROHELPER)) {

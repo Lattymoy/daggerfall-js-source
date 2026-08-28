@@ -4178,3 +4178,59 @@ StartEquippedItem - and the port does now:
   playEquipSounds=false load arm, pinned.
 
 Pins: 4 in `test/equipsounds.test.js`. Campaign: 7 mutants, 7 killed.
+
+## EF1 - THE EFFECT LIBRARY MEASURED: no gap, and 255 phantom keys (2026-08-28)
+
+`applySpell`'s last line, `out.skipped++`, carried the sentence "the
+library grows one family at a time" from the port's first magic slice
+until this one. It was picked as the next slice on the strength of that
+sentence - the biggest remaining gameplay gap. It is not a gap at all,
+and finding that out took three attempts, two of which were wrong in
+ways worth keeping:
+
+- **The wrong instrument.** The first measurement asked
+  `effectActiveIdentity` which families it could name, and answered "65
+  reached, 17 skipped". That function is the ACTIVE-ENTRY classifier:
+  an instant family handled inline legitimately has no active identity,
+  so Open, SpellAbsorption, CreateItem and fourteen others were being
+  counted absent while sitting in the file. Every one of the 17 turned
+  up in a grep of the port. **A proxy is not the measurement.**
+- **The incomplete corpus.** The second asked the real counter, but
+  against a key set built by grepping `MakeClassicKey(g, s)` for
+  literals - 82 keys. DFU has 91. ElementalResistance.cs:194 and
+  PacifyEffect.cs:111 build theirs from a loop variable
+  (`MakeClassicKey(8, (byte)variantIndex)` over the five
+  DFCareer.Elements, `MakeClassicKey(33, (byte)variantIndex)` over the
+  four EnemyGroups), and a grep for literals cannot see nine real
+  families. **Zero gaps against the wrong corpus is not zero gaps.**
+- **The one-sided question.** Against the full 91 the counter answers
+  zero, honestly - the library is complete. But "is any key missing?"
+  was the wrong question to stop at, and asking the other direction
+  found the defect: sweeping all 65,536 classic keys through the real
+  dispatcher, the port answered **346**. The 255 extras were group 43,
+  subgroups 0-254.
+
+The defect: the Teleport arm read `e.type === 43` and never its
+subgroup, where DFU keys the class `MakeClassicKey(43, 255)`
+(Teleport.cs:51). Every other arm in the file tests
+`classicSub(e) === 255`; this one had lost it, while its own comment
+still read "(43,255)". No classic spell reached it - records store "no
+subgroup" as the signed byte -1, which `classicSub` masks to 255 - so
+the fix changes no shipping behaviour. It is still the same defect as a
+missing family, pointing the other way: the library's one job is to
+answer exactly DFU's keys, and answering 255 that DFU does not define
+fails that as squarely as answering none.
+
+The FLAGGED sentence is retired; the line it sat on stays, now as the
+honest answer to a key DFU has no class for.
+
+**A coverage claim must be measured from both sides.** "No key is
+missing" was TRUE on the broken code and would have passed forever.
+
+Pins: 4 in `test/effectcoverage.test.js` - two ungated (the
+discriminating-counter control, and the group-43 subgroup law, which
+catches the defect with no checkout present), two regenerating DFU's
+whole key set from the effect classes. Campaign: 5 mutants, 5 killed,
+including one that drops a single loop-keyed variant (8,4) and one that
+over-reaches a DIFFERENT family, so the sweep is proven to generalise
+past the case it was written for.

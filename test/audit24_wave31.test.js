@@ -12,14 +12,15 @@ import { calculateAttackDamage } from '../src/combat/formulas.js';
 import { killIfAnyLiveStatZero, REFRESH_MODS_DELAY, STAT_KEYS_ORDER } from '../src/systems/statMods.js';
 import { tickPlayerMinutes, resetMagicRoundMarker } from '../src/systems/worldTick.js';
 import { snapshotPlayer } from '../src/systems/save.js';
+import { dfuFile } from './dfuRoot.mjs';   // PY1: DFU_PATH, then the in-tree sparse clone
 
 const rd = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
 const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
 const concealed = (...kinds) => kinds.map((kind) => ({ kind, roundsRemaining: 30 }));
 
-const WM_CS = new URL('../tools/parity/dfu/Assets/Scripts/Game/WeaponManager.cs', import.meta.url);
-const EA_CS = new URL('../tools/parity/dfu/Assets/Scripts/Game/EnemyAttack.cs', import.meta.url);
-const EEM_CS = new URL('../tools/parity/dfu/Assets/Scripts/Game/MagicAndEffects/EntityEffectManager.cs', import.meta.url);
+const WM_CS = dfuFile('Assets/Scripts/Game/WeaponManager.cs');   // PY1: the ONE checkout home
+const EA_CS = dfuFile('Assets/Scripts/Game/EnemyAttack.cs');
+const EEM_CS = dfuFile('Assets/Scripts/Game/MagicAndEffects/EntityEffectManager.cs');
 const noDfu = !existsSync(WM_CS) || !existsSync(EA_CS) || !existsSync(EEM_CS);
 
 test('audit24 wave31: the break ends the three NORMAL powers and nothing else', () => {

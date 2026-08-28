@@ -1,0 +1,153 @@
+// EF1 - THE EFFECT LIBRARY ANSWERS EXACTLY DAGGERFALL UNITY'S KEYS
+// (2026-08-28). applySpell walks a spell's effect records and dispatches
+// each to its family; a record no arm claims falls through to
+// `out.skipped++`. That line carried the sentence "the library grows one
+// family at a time" from the port's first magic slice to this one, and
+// the sentence had gone stale without anyone measuring it.
+//
+// TWO THINGS CAME OUT OF MEASURING IT.
+//
+// The first: there is no gap. All 91 of DFU's classic keys land - the 82
+// spelled as literals, plus ElementalResistance's five (8,0-8,4) and
+// PacifyEffect's four (33,0-33,3), which build their keys from a loop
+// variable and so are invisible to a grep for `MakeClassicKey(g, s)`.
+// My own first count missed exactly those nine.
+//
+// The second, which is why this file exists as a PIN and not a note: the
+// port answered 255 keys DFU has NO class for. The Teleport arm tested
+// `e.type === 43` and never its subgroup, where DFU keys the class
+// `MakeClassicKey(43, 255)` (Teleport.cs:51) - so every subgroup of
+// group 43 raised the teleport marker and `continue`d past the counter.
+// Its own comment read "(43,255)". Every other arm in the file tests
+// `classicSub(e) === 255`; this one had lost it.
+//
+// A COVERAGE CLAIM MUST BE MEASURED FROM BOTH SIDES. "No key is missing"
+// would have passed on the broken code - it was true. The defect was in
+// the other direction, and only a pin that also asks "is any key ANSWERED
+// that DFU does not define?" can see it. That is the sweep below.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
+
+import { applySpell } from '../src/systems/effects.js';
+import { dfuFile } from './dfuRoot.mjs';   // PY1: DFU_PATH, then the in-tree sparse clone
+
+/** A one-effect spell record with every roll gate wide open. */
+const eff = (type, subType) => ({
+  type, subType,
+  magnitudeBaseLow: 10, magnitudeBaseHigh: 10, magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 1,
+  durationBase: 10, durationMod: 0, durationPerLevel: 1, chanceBase: 100, chanceMod: 0, chancePerLevel: 1,
+});
+const mkTarget = () => ({
+  level: 1, maxHealth: 100, health: 100, maxMagicka: 100, magicka: 50, maxFatigue: 100, fatigue: 100,
+  career: {}, skills: new Array(40).fill(50),
+  stats: { strength: 50, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50 },
+  activeEffects: [],
+});
+const SINKS = { hurt: () => {}, heal: () => {}, say: () => {}, drainFatigue: () => {}, restoreFatigue: () => {} };
+
+/** Drive one classic key through applySpell and answer its `out`.
+ *  rangeType 0 is CasterOnly, and the two bypass flags are set, so NO
+ *  save, reflection, resistance or chance gate can `continue` past an
+ *  arm and be mistaken for the family being absent. What is measured is
+ *  dispatch alone. */
+function drive(g, s) {
+  return applySpell({ element: 0, rangeType: 0, effects: [eff(g, s)] }, 1, mkTarget(), SINKS,
+    () => 0.5, { entity: mkTarget(), sinks: {} }, { bypassChance: true, bypassSavingThrows: true });
+}
+const handles = (g, s) => drive(g, s).skipped === 0;
+
+test('EF1: the skip counter is DISCRIMINATING - a key no family owns is counted', () => {
+  // THE CONTROL, FIRST. A coverage pin whose measurement cannot report
+  // a miss proves nothing, and this one is cheap: keys outside the
+  // classic space must reach the counter. Without this arm, an
+  // `out.skipped` that had been accidentally wired to never increment
+  // would make every assertion below pass vacuously.
+  assert.equal(handles(99, 0), false, 'a group that does not exist');
+  assert.equal(handles(7, 77), false, 'a real group, an unreal subgroup');
+  assert.equal(handles(45, 255), false, 'one past the last classic group');
+  assert.equal(drive(99, 0).skipped, 1, 'and the count is per-effect, not a flag');
+});
+
+test('EF1: Teleport is keyed (43,255) - the group alone does not answer', () => {
+  // The defect this file was written for. DFU: Teleport.cs:51,
+  // `properties.ClassicKey = MakeClassicKey(43, 255)`.
+  const tele = drive(43, 255);
+  assert.equal(tele.skipped, 0, '43,255 IS the teleport effect');
+  assert.equal(tele.teleport, true, 'and a CasterOnly cast raises the host marker');
+  // classic records store "no subgroup" as the signed byte -1, which
+  // `classicSub` masks to 255 - the spelling the port's own teleport
+  // fixtures use, and it must keep resolving to the same family.
+  assert.equal(drive(43, -1).teleport, true, 'subType -1 masks to 255');
+  // ...and every other subgroup of the group is NOT a teleport.
+  for (const s of [0, 1, 42, 254]) {
+    const out = drive(43, s);
+    assert.equal(out.teleport, undefined, `43,${s} is not a teleport effect in DFU`);
+    assert.equal(out.skipped, 1, `43,${s} has no effect class and must be counted as skipped`);
+  }
+});
+
+// The DFU tree is an EXTERNAL reference (Port-Doctrine keeps it out of
+// the repo, as ARENA2 is), so the regeneration arms below skip where it
+// is absent - resolved through dfuRoot.mjs, which honours DFU_PATH.
+const DFU_EFFECTS = dfuFile('Assets/Scripts/Game/MagicAndEffects/Effects/');
+const noDfu = !existsSync(DFU_EFFECTS);
+
+/** Every classic key DFU defines, read off the effect classes. */
+function dfuClassicKeys() {
+  const files = [];
+  const walk = (dir) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const p = new URL(`${e.name}${e.isDirectory() ? '/' : ''}`, dir);
+      if (e.isDirectory()) walk(p);
+      else if (e.name.endsWith('.cs')) files.push(p);
+    }
+  };
+  walk(DFU_EFFECTS);
+  const keys = new Map();
+  // THE TWO FAMILIES A GREP CANNOT SEE. Both call MakeClassicKey with a
+  // loop variable, not a literal - ElementalResistance.cs:194 over the
+  // five DFCareer.Elements, PacifyEffect.cs:111 over the four
+  // DFCareer.EnemyGroups. Reading only the literals undercounts DFU by
+  // nine and would let nine real gaps through this pin.
+  const VARIANTS = { 'ElementalResistance.cs': [8, 5], 'PacifyEffect.cs': [33, 4] };
+  for (const f of files) {
+    const src = readFileSync(f, 'utf8');
+    const name = f.pathname.split('/').pop();
+    for (const m of src.matchAll(/MakeClassicKey\((\d+),\s*(?:\(byte\))?(\d+)\)/g)) keys.set(`${m[1]},${m[2]}`, name);
+    const v = VARIANTS[name];
+    if (v) for (let i = 0; i < v[1]; i++) keys.set(`${v[0]},${i}`, name);
+  }
+  return keys;
+}
+
+test('EF1: every DFU classic key REACHES a family - the library has no gap', { skip: noDfu }, () => {
+  const dfu = dfuClassicKeys();
+  assert.ok(dfu.size > 85, `found ${dfu.size} classic-keyed effect classes - the walk found the tree`);
+  assert.ok(dfu.has('8,4') && dfu.has('33,3'), 'the two loop-keyed families are in the set');
+  const gaps = [...dfu].filter(([k]) => {
+    const [g, s] = k.split(',').map(Number);
+    return !handles(g, s);
+  }).map(([k, name]) => `${k} (${name})`).sort();
+  assert.deepEqual(gaps, [],
+    'these effect families exist in Daggerfall Unity and fall through applySpell to out.skipped');
+});
+
+test('EF1: and NO key outside DFU\'s set is answered - the sweep both ways', { skip: noDfu }, () => {
+  // THE ARM THAT CAUGHT GROUP 43. The whole 256x256 classic key space,
+  // driven through the real dispatcher; the set that does not skip must
+  // be EXACTLY DFU's. An arm that widens past its own family shows up
+  // here as an extra and nowhere else - the gap test above passes
+  // happily while the port answers keys that do not exist.
+  const dfu = dfuClassicKeys();
+  const extra = [];
+  for (let g = 0; g < 256; g++) {
+    for (let s = 0; s < 256; s++) {
+      if (dfu.has(`${g},${s}`)) continue;
+      if (handles(g, s)) extra.push(`${g},${s}`);
+    }
+  }
+  assert.deepEqual(extra, [],
+    'applySpell claims these keys, but no Daggerfall Unity effect class defines them - an arm\n'
+    + 'is testing its effect GROUP without its subgroup (the shape of the Teleport defect EF1 fixed)');
+});
