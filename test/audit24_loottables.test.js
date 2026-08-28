@@ -18,9 +18,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { LOOT_MATRICES, ITEM_GROUPS } from '../src/systems/loot.js';
+import { dfuFile } from './dfuRoot.mjs';   // PY1: DFU_PATH, then the in-tree sparse clone
 
-const LOOT_TABLES = new URL('../tools/parity/dfu/Assets/Scripts/Game/Items/LootTables.cs', import.meta.url);
-const ITEM_ENUMS = new URL('../tools/parity/dfu/Assets/Scripts/Game/Items/ItemEnums.cs', import.meta.url);
+const LOOT_TABLES = dfuFile('Assets/Scripts/Game/Items/LootTables.cs');   // PY1: the ONE checkout home
+const ITEM_ENUMS = dfuFile('Assets/Scripts/Game/Items/ItemEnums.cs');
 const noDfu = !existsSync(LOOT_TABLES) || !existsSync(ITEM_ENUMS);
 
 test('audit24 tables: LOOT_MATRICES is REBUILT from LootTables.cs, cell for cell', { skip: noDfu }, () => {
