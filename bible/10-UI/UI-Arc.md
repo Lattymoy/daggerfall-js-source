@@ -6938,6 +6938,24 @@ rather than escaping it. Verified: dcard 338px in the 340 slot,
 prose in two paragraphs both viewports, the long-sword name whole on
 a phone, suite 3907/0, build green.
 
+PX17b (Mac, live: "tab isn't working in-game"): THE BELL NOBODY
+RANG. PX15 hung toggleDial on the world's hudCtx and trusted
+routeKey's Tab arm to ring it - but the WORLD host never calls
+routeKey: like exterior it runs its own keydown ladder, and PX15's
+audit gave only exterior the inline arm. So the overworld's rose was
+wired and UNREACHABLE - the drawn-door-that-opens-nothing bug,
+inverted, and exactly what a live thumb finds that a lab probe
+mounting the module directly cannot. The arm now lives in the
+world's own ladder behind the same overlay/mode gate as its sibling
+doors, preventDefault only when the dial answers. The lesson joins
+the record: a key wiring is not wired until the HOST'S OWN dispatch
+path is traced from addEventListener to the door - the ctx field
+existing is the bell, not the rope. Verified: suite 3914/0, build
+green, the px-dial marker present in the shipped bundle
+(main-GBK3EX-r.js) per the deploy-confirmation rule. The four hosts'
+Tab paths now: world (inline arm), exterior (inline arm), interior +
+dungeon (routeKey's arm).
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk

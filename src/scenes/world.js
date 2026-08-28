@@ -2389,6 +2389,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     // host over. QuickLoad keeps its own arm below because it is the
     // one action that works with a window UP (the death screen's F11).
     if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
+      // PX17b (Mac: "tab isn't working in-game"): THE BELL NOBODY
+      // RANG. PX15 hung toggleDial on hudCtx and trusted routeKey's
+      // Tab arm to ring it - but THIS host never calls routeKey; like
+      // exterior it runs its own ladder, and only exterior got the
+      // inline arm. So the world's rose was wired and unreachable -
+      // the drawn-door-that-opens-nothing bug, inverted. The arm now
+      // lives here, behind the same overlay/mode gate as every
+      // sibling door; preventDefault only when the dial answers, so
+      // classic Tab keeps its default.
+      if (e.code === 'Tab' && hudCtx.toggleDial()) { e.preventDefault(); return; }
       if (act === 'CharacterSheet') { hudCtx.toggleCharSheet(); return; }
       // U43: LogBook (L) and NoteBook (N) - two of GameManager's own
       // dispatch chain (:541-548) that the port bound at I1 and then

@@ -279,12 +279,12 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:1275` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
 - `src/scenes/world.js:2293` - FLAGGED in systems/healthStatus.js (macro producers pend).
 - `src/scenes/world.js:2383` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:2662` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:2944` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:3274` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:3301` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:3784` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:4148` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:2672` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:2954` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:3284` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:3311` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:3794` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:4158` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:799` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
 - `src/scenes/worldModes.js:923` - (FLAGGED - MakeHouseContainer, the house-ownership arm).
 - `src/scenes/worldModes.js:936` - FLAGGED to the crime arc, as the Ledger records.
