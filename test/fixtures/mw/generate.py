@@ -463,6 +463,85 @@ def make_part():
     write_nif(HERE / "part.nif", [root])
 
 
+def make_rotbind():
+    # ORDER-DISTINGUISHING skin fixture. The main rig's translation-only
+    # inverse binds commute, so BoneSkel(InvBind(v)) and the REVERSE both
+    # round-trip at rest - the composition order was untestable there
+    # (and retail, whose binds rotate, is exactly where a reversed order
+    # would explode). Here the bone RESTS rotated 90deg about Z with the
+    # matching inverse bind Rz(-90), plus a translation on each side:
+    # rest round-trips ONLY in the reference order.
+    root = NifFormat.NiNode()
+    root.name = b"RotRoot"
+    ident(root.rotation)
+    root.scale = 1.0
+
+    b = NifFormat.NiNode()
+    b.name = b"RotBone"
+    b.scale = 1.0
+    # rest: Rz(90) then translate (2, 0, 0). PYFFI TRAP: its m_RC names
+    # are COLUMN-major against the NIF wire (proved by byte-walk when
+    # this fixture first round-trip-failed) - wire position 1 receives
+    # m_21, not m_12 - so authoring wire-row-major means assigning the
+    # TRANSPOSE of what the name suggests.
+    b.rotation.m_11, b.rotation.m_21, b.rotation.m_31 = 0.0, -1.0, 0.0
+    b.rotation.m_12, b.rotation.m_22, b.rotation.m_32 = 1.0, 0.0, 0.0
+    b.rotation.m_13, b.rotation.m_23, b.rotation.m_33 = 0.0, 0.0, 1.0
+    b.translation.x = 2.0
+    root.add_child(b)
+
+    tri = NifFormat.NiTriShape()
+    tri.name = b"RotSkin"
+    ident(tri.rotation)
+    tri.scale = 1.0
+    root.add_child(tri)
+
+    d = NifFormat.NiTriShapeData()
+    tri.data = d
+    d.num_vertices = 3
+    d.has_vertices = True
+    d.vertices.update_size()
+    for v, (x, y, z) in zip(d.vertices, [(1, 0, 0), (2, 0, 0), (1, 1, 0)]):
+        v.x, v.y, v.z = x, y, z
+    d.num_triangles = 1
+    d.num_triangle_points = 3
+    d.triangles.update_size()
+    d.triangles[0].v_1, d.triangles[0].v_2, d.triangles[0].v_3 = 0, 1, 2
+    d.update_center_radius()
+
+    si = NifFormat.NiSkinInstance()
+    sd = NifFormat.NiSkinData()
+    si.data = sd
+    si.skeleton_root = root
+    si.num_bones = 1
+    si.bones.update_size()
+    si.bones[0] = b
+    sd.num_bones = 1
+    ident(sd.skin_transform.rotation)
+    sd.skin_transform.scale = 1.0
+    sd.bone_list.update_size()
+    bl = sd.bone_list[0]
+    # inverse bind = inverse of the rest: Rz(-90) o translate(-2,0,0)
+    # as one affine: A = Rz(-90), t = A*(-2,0,0) = (0, 2, 0).
+    # Same pyffi transpose trap as above: assign column-wise.
+    bl.skin_transform.rotation.m_11, bl.skin_transform.rotation.m_21 = 0.0, 1.0
+    bl.skin_transform.rotation.m_12, bl.skin_transform.rotation.m_22 = -1.0, 0.0
+    bl.skin_transform.rotation.m_33 = 1.0
+    bl.skin_transform.rotation.m_31 = bl.skin_transform.rotation.m_32 = 0.0
+    bl.skin_transform.rotation.m_13 = bl.skin_transform.rotation.m_23 = 0.0
+    bl.skin_transform.translation.y = 2.0
+    bl.skin_transform.scale = 1.0
+    bl.bounding_sphere_radius = 1.0
+    bl.num_vertices = 3
+    bl.vertex_weights.update_size()
+    for i, vw in enumerate(bl.vertex_weights):
+        vw.index = i
+        vw.weight = 1.0
+    tri.skin_instance = si
+
+    write_nif(HERE / "rotbind.nif", [root])
+
+
 def make_esm():
     # Independent TES3 writer, struct-level like the BSA one: header,
     # a race, skin/head/hair BODY records over the fixture meshes, a
@@ -556,5 +635,6 @@ if __name__ == "__main__":
     make_animated()
     make_kf()
     make_part()
+    make_rotbind()
     make_esm()
     make_bsa()

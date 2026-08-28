@@ -1684,7 +1684,10 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .pack-shell button { transition: none; border-radius: 0; }
 .pack-win { position: relative; width: min(1040px, 95vw); height: min(660px, 86dvh);
   display: flex; flex-direction: column;
-  background: rgba(10,12,17,0.72); border: 2px solid #7d7460; }
+  background: rgba(10,12,17,0.72); border: 2px solid #7d7460;
+  transform: translateY(8px); transition: transform 0.22s steps(5, end); }
+.pack-shell.on .pack-win { transform: none; }
+@media (prefers-reduced-motion: reduce) { .pack-win { transform: none; transition: none; } }
 .pack-win .px-corner { position: absolute; }
 .pack-win .px-tl { left: -1px; top: -1px; transform: translate(-50%,-50%); }
 .pack-win .px-tr { right: -1px; top: -1px; transform: translate(50%,-50%); }
@@ -1702,7 +1705,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .pack-shell .pack { flex: 1; min-height: 0; display: flex; flex-direction: column;
   background: transparent; }
 .pack-shell .pack-main { flex: 1; min-height: 0; display: grid;
-  grid-template-columns: 1fr minmax(300px, 380px); }
+  grid-template-columns: 1fr; }   /* PX19i: the details ride a tooltip; the character takes the width */
 .pack-shell .pack-dock { flex: 0 0 auto; max-height: 38%; display: flex;
   flex-direction: column; border-top: 2px solid rgba(125,116,96,0.35);
   background: rgba(0,0,0,0.25); }
@@ -1755,20 +1758,28 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .pack-shell .remotewho, .pack-shell .remotewho * { font-family: inherit; }
 .pack-shell h3, .pack-shell .equippedhead h3, .pack-shell .remotehead * { font-family: inherit;
   font-weight: 400; letter-spacing: 0.24em; text-indent: 0.24em; text-transform: uppercase; }
-.pack-shell .equippedhead h3 { font-size: 13px; color: #7d7460; margin: 0;
-  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
-.pack-shell .equippedhead .meta { font-size: 10px; color: #7d7460; }
+.pack-shell .equippedhead h3 { font-size: 17px; color: #d8cfae; margin: 0;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.pack-shell .equippedhead .meta { font-size: 10px; color: #7d7460; margin: 2px 0 0; }
 .pack-shell .remoteacts { padding: 0 10px; }
 /* The showcase column: the figure over the plaque, both scrolling
    together, the game glass behind them through the window. */
-/* PX19g: NO SCROLLING CHARACTER SHEET, NO WEB CHROME. The region and
-   the plaque are sized to fit; the dock and the loot may scroll but
-   without scrollbar furniture - a game panel, not a web page. */
-.pack-shell .packstage { position: relative; background: rgba(0,0,0,0.25);
-  border-left: 2px solid rgba(125,116,96,0.35); overflow: hidden;
-  display: flex; flex-direction: column; align-items: center; gap: 18px;
-  padding: 18px 20px 22px; }
-.pack-shell .charcol { overflow: hidden; padding: 8px 16px; }
+/* PX19g/i: NO SCROLLING CHARACTER SHEET, NO WEB CHROME - and no
+   right panel: the details are a TOOLTIP, absolutely placed beside
+   its anchor inside the frame, in the plaque's own dress; the phone
+   keeps the .packdetail bottom sheet's physics untouched. */
+.pack-shell .charcol { overflow: hidden; padding: 8px 16px; display: flex;
+  flex-direction: column; justify-content: center; }
+/* .packtip.packdetail outranks the base .packdetail column rules
+   (same-specificity, later-in-sheet was the trap: the tip computed
+   RELATIVE, joined the flex column and folded the whole window -
+   caught by measuring pre/post heights, 557 -> 260). */
+.pack-shell .packtip.packdetail { position: absolute; z-index: 4;
+  width: 320px; max-width: 320px; }   /* the three acts on one line */
+@media (max-width: 640px) {
+  .pack-shell .packtip.packdetail { position: fixed; width: auto; max-width: none;
+    left: 0 !important; top: auto !important; }
+}
 .pack-shell .figure-doll { border: 2px solid rgba(125,116,96,0.55); background: rgba(0,0,0,0.3); }
 .pack-shell .slotmap, .pack-shell .wornlist, .pack-shell .equipped { background: rgba(0,0,0,0.3); }
 /* PX19d: THE SLOTS STAND ON THE BODY (Mac's concept reference) - the
@@ -1791,6 +1802,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .pack-shell .wornmap-doll { grid-area: 2 / 2 / span 3 / auto;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 4px; border: 2px solid rgba(125,116,96,0.45); background: rgba(0,0,0,0.35);
+  outline: 2px solid rgba(125,116,96,0.25); outline-offset: 3px;
   overflow: hidden; color: rgba(125,116,96,0.6); }
 .pack-shell .wornmap-doll img { max-width: 100%; max-height: 100%; object-fit: contain;
   image-rendering: pixelated; }
@@ -1821,7 +1833,9 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .pack-shell .wornrow.on { color: rgb(243,239,44); border-color: var(--brass);
   outline: 2px solid rgba(192,138,62,0.5); outline-offset: 2px;
   text-shadow: 2px 2px 0 rgb(93,77,12); }
-.pack-shell .wornrow.wornempty { color: rgba(125,116,96,0.5); border-color: rgba(125,116,96,0.2); }
+.pack-shell .wornrow.wornempty { color: rgba(125,116,96,0.5);
+  border-color: rgba(125,116,96,0.22); background: rgba(0,0,0,0.18); }
+.pack-shell button.wornrow .tile { color: #d8cfae; }
 .pack-shell .wornrow.wornempty .wornname { display: none; }   /* the open diamond and the slot word carry an empty */
 .pack-shell .packdetail { position: relative; transform: none; width: 100%; max-width: 420px; }
 .pack-shell .packdetail .card, .pack-shell .card { min-width: 0; max-width: none;
@@ -1896,9 +1910,8 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   /* the stage dissolves but its CHILDREN keep flowing - display:none
      here would hide the fixed detail SHEET inside it; contents lets
      the sheet fix to the viewport while the figure alone hides. */
-  /* PX19f: the phone SHOWS the character region now - it is the
-     window's point; the detail keeps its fixed sheet via contents. */
-  .pack-shell .packstage { display: contents; }
+  /* PX19f/i: the phone shows the character region; the detail is the
+     .packdetail sheet, now the tooltip's phone dress. */
   /* the loot window stacks under the pack on a phone */
   .pack-shell { grid-auto-flow: row; gap: 0; }
   .loot-win { width: 100vw; max-height: 40dvh; border-left: 0; border-right: 0; }

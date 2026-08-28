@@ -86,6 +86,8 @@
 // the pick is a zip upload.
 // ═══════════════════════════════════════════════════════════════════
 
+import { morrowindDataCount } from '../scenes/dataSource.js';   // MW-IMPORT: the enhanced shell's own attach door
+import { mwFpPreference, setMwFpPreference } from '../combat/mwFpPref.js';
 import { CATEGORIES, keysOf } from '../ui/settingsMap.js';
 import { widgetFor, blockedReason, formatValue, stepValue, COLOUR_KEYS } from '../ui/settingsLaw.js';
 import { labelOf, helpOf, INSTEAD, TIER_TEXT } from '../ui/settingsCopy.js';
@@ -812,12 +814,38 @@ function paneEnhanced(body) {
     + 'Daggerfall\u2019s SKY*.DAT panorama. Takes effect when the world next loads.'));
   body.append(live);
 
+  // MW-IMPORT: the attach door, ON THIS SURFACE - the launcher window
+  // has its M/F keys, but the enhanced skin never routes through it, so
+  // the card lives here too. Attaching data IS the opt-in; the 3D
+  // first-person draws by default once data is present, and the toggle
+  // turns it off without detaching anything.
+  const mw = el('div', 'card');
+  mw.append(el('h3', null, 'Morrowind assets'));
+  mw.append(el('p', 'meta',
+    'Your own Morrowind.bsa (and Tribunal, Bloodmoon, Morrowind.esm) power the 3D layer - '
+    + 'first-person arms and weapons in-game, and the full mesh/NPC browser at mw-viewer.html. '
+    + 'Stored in this browser exactly like ARENA2; nothing uploads.'));
+  const mwState = () => {
+    const n = morrowindDataCount();
+    return `${n} archive${n === 1 ? '' : 's'} attached \u00b7 3D first-person ${mwFpPreference() ? 'ON' : 'off'}`;
+  };
+  mw.append(stats([['State', mwState()]]));
+  mw.append(acts([
+    { label: 'Attach data', primary: true, onClick: async () => {
+      const ds = await import('../scenes/dataSource.js');
+      await ds.pickMorrowindFiles();
+      render();
+    } },
+    { label: mwFpPreference() ? 'Turn 3D first-person off' : 'Turn 3D first-person on',
+      onClick: () => { setMwFpPreference(!mwFpPreference()); render(); } },
+    // The blurb NAMED the viewer without a way to reach it - a door
+    // described is not a door. One press, new tab, same origin.
+    { label: 'Open mesh viewer', onClick: () => window.open('mw-viewer.html', '_blank') },
+  ]));
+  body.append(mw);
+
   const waiting = el('div', 'card');
   waiting.append(el('h3', null, 'Not switchable here'));
-  waiting.append(inertRow('Morrowind first-person arms',
-    'A 3D viewmodel in place of the weapon sprite. Needs your own Morrowind data attached in '
-    + 'Settings, and the ?mwfp=1 flag - it is an experiment, not a finished skin.',
-    'opt-in'));
   waiting.append(inertRow('Enhanced music',
     'A generative score was built and removed at your direction. The game plays MIDI.BSA, and your own '
     + 'replacement tracks if you attach them in Settings.',

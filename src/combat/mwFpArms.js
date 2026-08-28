@@ -50,6 +50,7 @@ import {
 } from '../formats/mwSkin.js';
 import { bindPart, attachmentTransform } from '../formats/mwCharacter.js';
 import { WEAPON_TYPES } from './fpsWeapon.js';
+import { mwFpPreference } from './mwFpPref.js';
 
 // --- pure mapping ----------------------------------------------------------
 
@@ -179,43 +180,6 @@ function param(name) {
     return new URLSearchParams(location.search).get(name);
   } catch {
     return null;
-  }
-}
-
-// --- activation ------------------------------------------------------------
-// ON BY DEFAULT (Mac's call, 2026-08-28): attaching Morrowind data IS
-// the opt-in - with data present the 3D viewmodel draws unless turned
-// off. Precedence: ?mwfp=1/0 (probe/dev override) > the stored
-// preference (the F toggle beside the attach button) > true.
-const PREF_KEY = 'mwfp';
-
-/** Pure decision, pinned in test/mwfp.test.js. */
-export function mwFpEnabled(search, stored) {
-  try {
-    const q = new URLSearchParams(search).get('mwfp');
-    if (q === '0') return false;
-    if (q === '1') return true;
-  } catch {
-    /* no location - node tests pass search explicitly */
-  }
-  if (stored === '0') return false;
-  if (stored === '1') return true;
-  return true;
-}
-
-export function mwFpPreference() {
-  try {
-    return mwFpEnabled(location.search, localStorage.getItem(PREF_KEY));
-  } catch {
-    return true;
-  }
-}
-
-export function setMwFpPreference(on) {
-  try {
-    localStorage.setItem(PREF_KEY, on ? '1' : '0');
-  } catch {
-    /* private mode - the session default (on) stands */
   }
 }
 
