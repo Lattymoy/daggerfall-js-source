@@ -6725,6 +6725,36 @@ Exit -> New Game), find which teardown leaves the frame loop alive,
 and kill the loop at the unwind - the fix is an owner for the frame,
 not a null check. Needs ARENA2, so it waits for a data-bearing run.
 
+PX14 (Mac's vision, with reference shots: Skyrim's in-game compass):
+THE DIAL. A new module, src/ui/pixelDial.js - one press over the
+live game raises a four-armed rose on a 0.45 scrim (a glance, not a
+room): SKILLS above, ITEMS right, MAP below, MAGIC left, a knot of
+layered diamonds at the center, 2px arm rules, the gold pair on the
+chosen arm, everything the glyph and nothing eased. The dial ROUTES
+to the windows the hosts already own (toggleCharSheet /
+toggleInventory / toggleAutomap / toggleSpellbook) and reimplements
+nothing - each window's pixel redesign is its own follow-on slice.
+Input whole: hover/arrows-WASD select, click/Enter/Space commit
+(the dial unmounts FIRST so the opened window never finds it eating
+keys), scrim-click/Escape close, capture-and-stop per U50's modal
+law, unused keys pass untouched, every arm a real 44px button. A
+host passes only the doors it has - NEVER a dead arm (a drawn door
+opening nothing is the hidden-settings bug wearing ornament).
+Probed live: arrow selects one gold arm, Enter commits 'items' and
+the dial is gone, Escape closes once, a click commits 'magic', zero
+page errors. FLAGGED (THE FOUR HOSTS RULE): no host wired yet -
+Tab is free in all four key tables by grep, and PX15 wires it
+per-host WITH the key-table audit each time (AUDIT 17e's F5 lesson).
+THE ROAD FROM HERE, recorded as the plan Mac asked made real:
+PX15 host wiring (Tab -> dial, four hosts, one at a time);
+PX16 THE INVENTORY on the journal's bones - category rail (the
+reference's ALL/WEAPONS/APPAREL/... spine), item list with counts,
+detail card with weight/value/effect lines, and the PAPER DOLL as
+the sprite viewer beside it; PX17 THE MAP page wearing the pixel
+frame; PX18 THE SPELLBOOK. Each slice keeps its window's laws and
+changes the paint and the bones - the journal pattern, applied until
+the whole in-game surface speaks one language.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk
