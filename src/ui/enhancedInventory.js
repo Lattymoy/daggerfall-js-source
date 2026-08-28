@@ -1009,6 +1009,17 @@ function render() {
     // frame is the ground (the pause door's law, one window over) and
     // every column carries its own scrim.
     const shell = el('div', 'pack-shell');
+    // PX19 (Mac: centered, window-based; creative authority): THE
+    // PACK IS A WINDOW NOW - the pause window's own frame (corner
+    // gems, 2px border, the 0.72 glass) centered over the game, and
+    // it ARRIVES like the dial: a stepped fade while the world drops
+    // into the same depth-of-field. One entrance gesture for every
+    // floating surface. The window carries its own footer; the right
+    // column is the showcase compressed - figure above, plaque
+    // beneath.
+    requestAnimationFrame(() => requestAnimationFrame(() => shell.classList.add('on')));
+    const win = el('div', 'pack-win');
+    for (const c of ['tl', 'tr', 'bl', 'br']) win.append(el('span', `px-gem px-corner px-${c}`));
     const head = el('header', 'pack-id');
     const who = el('div');
     who.append(el('h2', null, 'Pack'));
@@ -1016,7 +1027,7 @@ function render() {
     const close = el('button', 'act', 'Close');
     close.onclick = () => onExit();
     head.append(close);
-    shell.append(head);
+    win.append(head);
     const grid = el('div', 'pack');
     // The two lists are a PAIR - DFU's window is local beside remote -
     // so they share one grid cell and split it, which keeps the outer
@@ -1036,7 +1047,7 @@ function render() {
     grid.append(catsCol(), lists, el('div', 'packstage'));
     const stage = grid.querySelector('.packstage');
     stage.append(characterCol(), detailCol());
-    shell.append(grid);
+    win.append(grid);
     // PX16b: the reference's BOTTOM BAR - carry weight as a meter
     // (blood past four-fifths, the reference's red), gold beside it.
     const bar = el('footer', 'packbar');
@@ -1052,8 +1063,9 @@ function render() {
     const gold = el('div', 'packgold');
     gold.append(el('span', 'k', 'Gold'), el('span', 'v', model.gold.toLocaleString()));
     bar.append(el('span', 'packitems', plural(model.count, 'item')), carry, gold);
-    shell.append(bar);
-    if (notice) shell.append(el('p', 'sheet-notice', notice));
+    win.append(bar);
+    if (notice) win.append(el('p', 'sheet-notice', notice));
+    shell.append(win);
     host.append(shell);
   });
 }

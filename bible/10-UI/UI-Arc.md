@@ -7029,6 +7029,29 @@ respected. 62px rules (34 on a phone) give all four the same 12px
 breath - re-measured {12,12,12,11} - and the mid gems recentred with
 them. Suite green, build green.
 
+PX19 (Mac's feedback: centered and window-based, creative authority
+granted): THE PACK IS A WINDOW. The fullscreen columns became the
+pause window's own frame - corner gems, 2px dim border, the 0.72
+ink glass - min(1040px, 95vw) x min(660px, 86dvh) centered over the
+game, ARRIVING WITH THE DIAL'S OWN GESTURE: a five-step fade while
+the world behind drops into the same depth-of-field (blur 6px,
+saturate 85) - one entrance for every floating surface, which is
+what cohesion means in motion. Inside, the reference's anatomy
+compressed to the frame: the category spine left on a quiet 0.3,
+bare names in the middle with the LOCAL/GROUND PAIR STACKED (one
+readable column instead of two starved ones; .remotefirst still
+flips the order for containers and reward trays, the pair law
+intact), and the SHOWCASE right - the figure above, the bracketed
+plaque beneath, both on the window's glass. The window carries its
+own footer: items left, the carry meter (blood past four-fifths),
+gold right. ONE TRAP OF MY OWN CAUGHT BEFORE IT SHIPPED: the phone
+rule first hid .packstage outright, which would have hidden the
+fixed detail SHEET inside it - display:contents dissolves the stage
+while the sheet keeps fixing to the viewport and only the figure
+hides; the phone sheet verified open on a pick. Every window law
+(pair, remote-first, refusals, V4, F6, the quest click) exactly
+where it was; suite green through the reshape both times.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk
