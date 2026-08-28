@@ -27,7 +27,9 @@ export class AudioEngine {
     this.snd = null;
     this.buffers = new Map();   // index -> AudioBuffer
     this.enabled = false;
-    this._booted = false;
+    // NT1 (F215): null, not false - the ??= boot latch below rejects a
+    // false (music.js:36 learned this at AUDIT 19).
+    this._booted = null;
     this._listener = { x: 0, y: 0, z: 0, fx: 0, fy: 0, fz: -1 };
     this._master = null;   // SETT: the SoundVolume bus (see _out)
   }
@@ -66,9 +68,17 @@ export class AudioEngine {
    *  Idempotent by construction, so every host entry point can call it
    *  unconditionally - which is the point: a host that forgets is the
    *  bug this replaces. */
-  async ensure(fetchBytes) {
-    if (this._booted) return;
-    this._booted = true;
+  ensure(fetchBytes) {
+    // NT1 (F215): the flag IS the promise - the sibling MusicService's
+    // AUDIT 19 law ("a guard set before its own async work is not
+    // idempotence, it is a race with a flag on it", music.js:62-67).
+    // The boolean version returned to a concurrent second caller BEFORE
+    // init finished, so that caller's immediate one-shots dropped while
+    // `enabled` was still false. Every caller now awaits the same boot.
+    return (this._booted ??= this._boot(fetchBytes));
+  }
+
+  async _boot(fetchBytes) {
     if (typeof window !== 'undefined') {
       // AUDIT 19 F2(vid): create the context EAGERLY, suspended. A browser
       // will not let it RUN before a gesture, but it will let it exist -
@@ -81,7 +91,9 @@ export class AudioEngine {
       // sitting behind the DAGGER.SND fetch meant a caller had to await
       // the whole load to get a clock - which parked the boot splash on a
       // black screen while the sound and music archives read in. The sync
-      // prefix hands the context to an un-awaited caller immediately.
+      // prefix hands the context to an un-awaited caller immediately -
+      // an async body runs synchronously to its first await, and _boot
+      // is entered synchronously from ensure's ??=.
       this._ensureCtx();
       this.attachGestureResume();
     }

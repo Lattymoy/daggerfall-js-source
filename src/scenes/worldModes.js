@@ -2859,7 +2859,11 @@ export function createWorldModes(host) {
         e.dfBlock === hit.dfBlock && e.recordIndex === hit.recordIndex);
       const landing = interiorLanding(
         doorWorldPosition(hit.door), ctx.enterMarkers, ctx.doors);
-      if (!landing) throw new Error('no interior landing');
+      // NT1 (F054): the context is fully built - GPU billboard batches,
+      // voxelfolk meshes - and `interiorCtx` is not yet assigned, so a
+      // throw here used to leak the whole build on EVERY E-press at
+      // such a door (the callers only log it). Free it first.
+      if (!landing) { ctx.destroy(); throw new Error('no interior landing'); }
       exitReturn = { siblings };
       exteriorDoor = hit.door;   // IS1: SetExteriorDoors - the save's way back in
       interiorCtx = ctx;

@@ -1590,6 +1590,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     playerWeapon.weapon = { name: 'Short Bow', ...createWeapon(129, 0) };   // scripted demo: the rig's worn bind is off for this context (see createWeaponRig bindWorn)
   }
   const corpses = [];
+  // NT1 (F213): the context's own dead latch - destroy() sets it so the
+  // async continuations (a corpse whose texture is still warming) stop
+  // publishing GPU batches onto a torn-down scene.
+  let _ctxDead = false;
   async function spawnCorpse(f) {
     const ct = ENEMY_BASICS[f.mobileType]?.corpseTexture;
     // C12: a flyer dies mid-air - the corpse lands on the floor
@@ -1600,7 +1604,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!t || ct.record >= t.recordCount) return;
     // SL2 (save-load-2): a backward load can RESURRECT this foe while
     // the texture warms - a corpse must never mint for a live foe.
-    if (!f.dead) return;
+    // NT1 (F213): ...and a context torn down while the texture warms
+    // must not receive a corpse either - the foe IS dead on exit, so
+    // only the context's own latch can stop the orphan mint.
+    if (!f.dead || _ctxDead) return;
     uploadRecord(ct.archive, ct.record);
     const size = scaledBillboardSize(t.getSize(ct.record), t.getScale(ct.record));
     // The billboard shader BOTTOM-anchors (position = base): the old
@@ -3571,6 +3578,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     exitDoors,
     colliderTris,
     destroy() {
+      _ctxDead = true;   // NT1 (F213): before anything frees - the warm-window continuations read it
       // A1: OnTransitionToDungeonExterior's automap half - marks the
       // player outside and, at AutomapNumberOfDungeons = 0, forgets
       // the map the moment you leave (Automap.cs:2530-2534).
@@ -3589,9 +3597,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       for (const m of missiles) if (m.batch) renderer.destroyBillboardBatch(m.batch);
       for (const t of torches) { t.handle?.stop(); t.handle = null; }   // A2: free looping sources
       // U26 / EVERY ALLOCATION HAS AN OWNER: the dropped piles own a
-      // billboard batch each and leave with the dungeon.
-      for (const p of droppedLoot._piles) if (p.batch) renderer.destroyBillboardBatch(p.batch);
+      // billboard batch each and leave with the dungeon. NT1 (F213):
+      // dead FIRST - the documented removal protocol (droppedLoot.js
+      // mount reads it) - so a pile dropped at the exit whose texture
+      // is still warming cannot mint onto the orphan.
+      for (const p of droppedLoot._piles) { p.dead = true; if (p.batch) renderer.destroyBillboardBatch(p.batch); }
       droppedLoot._piles.length = 0;
+      // NT1 (F214): the context minted its own cast engine; a spell in
+      // flight at the exit owned a batch nothing else can reach.
+      magic.destroy();
       // V2c: hand the sunlight seam back to whoever held it (the town
       // page's worldModes registration) - a latched dungeon answer
       // would keep the sun off the player forever after the exit.

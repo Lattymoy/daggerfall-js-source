@@ -259,8 +259,8 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:752` - "database FLAGGED" narrows to the skill/loot message ids).
 - `src/scenes/dungeonContext.js:1256` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/dungeonContext.js:1292` - onTeleport INTERIM shape). Absent, the engine's dispatch
-- `src/scenes/dungeonContext.js:3053` - PX3 FLAGGED: questMessages - the dungeon quest mount is
-- `src/scenes/dungeonContext.js:3123` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
+- `src/scenes/dungeonContext.js:3060` - PX3 FLAGGED: questMessages - the dungeon quest mount is
+- `src/scenes/dungeonContext.js:3130` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
 - `src/scenes/exterior.js:559` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:565` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:802` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
@@ -305,11 +305,11 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:2467` - with the trade window's own mode flow, the same INTERIM the
 - `src/scenes/worldModes.js:2692` - first (owned houses and quest buildings FLAGGED/seamed per
 - `src/scenes/worldModes.js:2700` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
-- `src/scenes/worldModes.js:3054` - basket behind `loot.houseOwned` (:919) stays FLAGGED to the
-- `src/scenes/worldModes.js:3632` - too. FLAGGED: interior loot containers are the loot arc's -
-- `src/scenes/worldModes.js:3774` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:3873` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:4211` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
+- `src/scenes/worldModes.js:3058` - basket behind `loot.houseOwned` (:919) stays FLAGGED to the
+- `src/scenes/worldModes.js:3636` - too. FLAGGED: interior loot containers are the loot arc's -
+- `src/scenes/worldModes.js:3778` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:3877` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:4215` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
 - `src/systems/advancement.js:84` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED

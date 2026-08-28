@@ -98,8 +98,8 @@ test('IS1: ONE transition core - the click and the restore share TransitionInter
     'a shop saved open loads open, whatever hour the load happens at');
   assert.match(body, /const spot = restore\?\.pos \?\? floored;/,
     "RestorePosition's interior arm: the saved position lands raw over the door landing");
-  assert.match(body, /if \(!landing\) throw new Error\('no interior landing'\);/,
-    'the doorless-interior guard still runs on a restore - it must refuse exactly as it refuses a click');
+  assert.match(body, /if \(!landing\) \{ ctx\.destroy\(\); throw new Error\('no interior landing'\); \}/,
+    'the doorless-interior guard still runs on a restore - it must refuse exactly as it refuses a click (and NT1 frees the build it abandons)');
 });
 
 test('IS1: the exterior door latches at entry and leaves at every exit', () => {

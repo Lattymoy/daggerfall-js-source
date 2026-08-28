@@ -548,6 +548,22 @@ export function createPlayerMagic({
       }
     },
     batches: () => batches,
+    /** NT1 (F214) / EVERY ALLOCATION HAS AN OWNER: the engine's own
+     *  teardown. A per-context engine (the dungeon's, dungeonContext
+     *  mints one) dies with its scene, and a spell in flight at the
+     *  exit owned a batch nothing could reach - retireMissile frees
+     *  each flight (and marks it dead, so an in-flight texture warm
+     *  publishes nothing), the candle's clear() drops its sprite
+     *  through its own retire path, and whatever still stands in
+     *  `batches` (an impact flash mid-fade) frees with the rest.
+     *  Terminal: no update runs after this. */
+    destroy() {
+      for (const m of missiles) retireMissile(m);
+      missiles.length = 0;
+      candle.clear();
+      for (const b of batches) { flatAnims.remove(b); renderer.destroyBillboardBatch(b); }
+      batches.length = 0;
+    },
     /** X11: the candle's point light, in nearestLights' own vec4 shape,
      *  or null. Each host prepends it to the array it hands the
      *  renderer - the candle is 1.4 units away, so it is always the

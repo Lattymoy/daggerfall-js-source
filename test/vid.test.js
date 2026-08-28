@@ -869,14 +869,20 @@ test('U22/AUDIT 19: the boot starts audio BEFORE it plays the splash', () => {
   assert.ok(boot < play, 'audio must be booted BEFORE the video is constructed');
   assert.doesNotMatch(main.slice(boot - 10, boot + 30), /await ensureAudio/,
     'and NOT awaited - the await parked the splash behind two archive loads');
-  // The sync prefix: the context is created before ensure()'s first await,
+  // The sync prefix: the context is created before the boot's first await,
   // so an un-awaited caller still has a clock by the next statement.
+  // NT1 (F215): ensure is the ??= promise latch now (music.js's AUDIT 19
+  // law - every caller awaits the SAME boot) and the body lives in _boot;
+  // _boot is entered synchronously from the ??=, so the prefix law is
+  // unchanged: _ensureCtx() before any await.
   const audioSrc = readFileSync('src/systems/audio.js', 'utf8');
-  const ensureBody = audioSrc.slice(audioSrc.indexOf('async ensure('));
-  const ctxAt = ensureBody.indexOf('this._ensureCtx()');
-  const awaitAt = ensureBody.indexOf('await ');
+  assert.match(audioSrc, /return \(this\._booted \?\?= this\._boot\(fetchBytes\)\);/,
+    'the flag IS the promise - a boolean guard here is the F215 race');
+  const bootBody = audioSrc.slice(audioSrc.indexOf('async _boot('));
+  const ctxAt = bootBody.indexOf('this._ensureCtx()');
+  const awaitAt = bootBody.indexOf('await ');
   assert.ok(ctxAt > 0 && awaitAt > 0 && ctxAt < awaitAt,
-    'audio.ensure must create the context in its synchronous prefix, before any await');
+    'the boot must create the context in its synchronous prefix, before any await');
 });
 
 test('merge audit: video audio rides the LIVE SoundVolume, read at each clip', () => {

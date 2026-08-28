@@ -624,8 +624,8 @@ test('audit18 hosts: the audio bootstrap runs in EVERY host, not only in a dunge
   // early into a service whose archive has not arrived.
   assert.match(src('src/systems/music.js'), /this\._booted \?\?= this\._boot\(/,
     'MusicService.ensure must memoise the boot promise'); 
-  assert.match(src('src/systems/audio.js'), /if \(this\._booted\) return;/,
-    'AudioEngine.ensure must stay idempotent');
+  assert.match(src('src/systems/audio.js'), /this\._booted \?\?= this\._boot\(/,
+    'AudioEngine.ensure must memoise the boot promise (NT1 F215 closed the boolean race this pin used to accept)');
 });
 
 test('audit18 hosts: worldModes feeds the rest gate its live grounded state', () => {
