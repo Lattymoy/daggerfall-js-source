@@ -7408,6 +7408,70 @@ click aimed at the tabs beneath it (the click-away dismiss eats the
 first tap) - by design, one tap to put the tip away, the next to
 act. Suite fail 0, build green.
 
+PX20a (Mac: "spread out and organize the center of the inventory
+panel now that we have more space. Enlarge the paper sprite and
+remove the background"): THE CENTRE, REORGANIZED. PX19i freed the
+whole width when the details became a tooltip, and the worn map kept
+the 380px it was given when it had a third of the window - a 1036px
+area with 330px of dead air down each side. Two faults, not one: the
+map was small, AND the doll's cell was three of five rows in the
+middle column, which is LANDSCAPE, and a paperdoll is a standing
+figure. So HEAD and CHEST left the centre for the flanks and the doll
+took the WHOLE column, six rows tall - which also gave the two sides
+something to say: what you WEAR down the left, top to toe, what you
+CARRY (and stand in) down the right. The sprite draws at 4x now, not
+3x: the cell is more than twice the size and a 3x sprite scaled up by
+object-fit is a blur on a window where every other pixel is exact.
+AND THE FRAME WENT. PX19g framed the doll because "an empty frame
+reads Avatar, so the composition never collapses" - true, and true
+only when there is NO ART. The frame is the placeholder's alone
+(.noart) and the figure stands on the window's own glass with a hard
+pixel drop-shadow.
+
+PX20b (Mac: "when looting items, only open the loot tooltip, not the
+entire inventory window"): THE LOOT FRAME ALONE. DFU opens the whole
+parchment because DFU has ONE window with both lists in it; PX19c had
+already split the remote into its own smaller frame, which makes a
+lighter answer possible. A container now opens THAT frame and nothing
+else - and the pack's window is NOT BUILT, not built-and-hidden,
+because a hidden window still runs layout and would have eaten the
+tooltip's anchor. One frame owns the tooltip and the click-away
+listener, whichever is showing. The way back is a PACK button on the
+loot frame, present only while the pack is closed (a button that opens
+what is already open is PX14's drawn-door-opening-nothing bug). Every
+law behind the glass is untouched - take, stow, the remote model, the
+wagon, the gold popup - because this slice changes which frames are
+DRAWN.
+
+PX20c (Mac, on the render: "ensure the paperdoll's slot is a perfect
+fit. Move the name outside of the space and to the top bar, remove the
+slots filled subtext. Utilize the entire area for enlarged icons and
+displayability"): THE WHOLE AREA. A PERFECT FIT is not a letterbox -
+the cell now carries the sprite's OWN aspect (110/184, the classic
+paperdoll's exact proportion) and the centre grid column is `auto`, so
+it takes precisely the width the aspect-locked figure asks for and the
+flanks split everything left. Measured: cell 234x392, image 234x392,
+no air on any side, at any window size, because the ratio is the
+constraint rather than a pixel. THE NAME went to the title bar, after
+PACK, where the window is already named; the "0 of 27 slots filled"
+line went entirely, because it is a number nobody reads and the tiles
+say it by being empty. Between them they had taken ~50px off the top
+of a region that is not theirs. With that space and the auto column
+the map runs 960px wide and the tiles are 300px - so THE TILE IS A ROW
+again: a 26px monogram, and beside it the family word over THE PIECE'S
+NAME. PX19g had hidden that name behind a clip-path because a 52px
+square clipped it; nothing about that reasoning survives a 300px tile.
+
+Pins: 4 in enhancedInventory.test.js (the six-a-side map and the auto
+column; the unframed 4x sprite and its aspect-locked cell, with
+110x184 read from paperDoll.js rather than typed; the name in the bar,
+the count gone and the name line back; and the loot frame alone with
+the pack unbuilt, the frame owning the tooltip, the Pack button
+conditional, and the transfer ladder still present). The U59 doll pin
+follows the 4x. 8 mutations, 8 dead. Verified in a real browser at
+1440x900 with a synthetic paperdoll (no ARENA2 here) and with four
+pieces worn, both modes shot.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk

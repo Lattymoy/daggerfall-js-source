@@ -1768,8 +1768,8 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    right panel: the details are a TOOLTIP, absolutely placed beside
    its anchor inside the frame, in the plaque's own dress; the phone
    keeps the .packdetail bottom sheet's physics untouched. */
-.pack-shell .charcol { overflow: hidden; padding: 8px 16px; display: flex;
-  flex-direction: column; justify-content: center; }
+.pack-shell .charcol { overflow: hidden; padding: 12px 22px 16px; display: flex;
+  flex-direction: column; justify-content: stretch; }
 /* .packtip.packdetail outranks the base .packdetail column rules
    (same-specificity, later-in-sheet was the trap: the tip computed
    RELATIVE, joined the flex column and folded the whole window -
@@ -1800,41 +1800,96 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    when its art can draw; the tiles alone are the schematic when it
    cannot. The chosen tile wears the gold pair and the brass frame;
    an empty slot is a dim open diamond and NOT a button. */
-.pack-shell .equipped { display: block; text-align: center; padding-bottom: 10px; }
+.pack-shell .equipped { display: flex; flex-direction: column; min-height: 0;
+  text-align: center; }
+.pack-shell .equipped .wornmap { flex: 1; min-height: 0; }
+/* PX20c: the name in the title bar, after PACK, in the dim - the bar
+   already names the window, so the character is the second word. */
+.pack-shell .pack-id .pack-who { color: #7d7460; margin-left: 4px; }
+.pack-shell .pack-id .pack-who::before { content: '\\00b7'; margin-right: 14px; }
 /* PX19g: the region FITS ITS SPACE - 5 rows of 52 + gaps + the WORN
    head ~= 310, inside the main area's ~380 - so the character sheet
    never scrolls. The doll owns the center: a framed panel spanning
    rows 2-4, art inside when it can draw, a quiet Avatar plaque when
    it cannot. */
+/* PX20a (Mac: "spread out and organize the center now that we have
+   more space"): PX19i freed the whole width when the details became a
+   tooltip, and the map kept the 380px it was given when it had a third
+   of the window - a 1036px area with 330px of dead air down each side.
+   The map is now SIZED TO ITS SPACE: wider, with the centre column
+   carrying half again the flanks (it holds a standing figure; they
+   hold a word and a monogram), and rows that FILL the height instead
+   of stopping at 52px: five rows of 1fr each, with the
+   map claiming the area's height, so the composition breathes at any
+   window size rather than at one. */
 .pack-shell .wornmap { position: relative; display: grid;
-  grid-template-columns: repeat(3, 1fr); grid-auto-rows: 52px;
-  gap: 6px; width: min(380px, 96%); margin: 6px auto 0; }
-.pack-shell .wornmap-doll { grid-area: 2 / 2 / span 3 / auto;
+  /* PX20c: the centre column is AUTO - it takes exactly the width the
+     aspect-locked sprite asks for, so there is no air beside the
+     figure and the two flanks split everything that is left. The map
+     then fills the region it was given rather than floating in it. */
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-rows: repeat(6, minmax(44px, 1fr));
+  gap: 12px; width: min(960px, 100%); height: 100%; margin: 0 auto;
+  align-content: stretch; }
+/* PX20a (Mac: "enlarge the paper sprite and remove the background"):
+   the sprite stands on the window's own glass. PX19g framed it because
+   an empty frame reads Avatar and the composition never collapses -
+   that reasoning holds only when there is NO ART, so the frame is now
+   the placeholder's alone (the .noart class). With art, no border, no
+   background, no outline: a character standing among their gear. */
+.pack-shell .wornmap-doll { grid-area: 1 / 2 / span 6 / auto;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 4px; border: 2px solid rgba(125,116,96,0.45); background: rgba(0,0,0,0.35);
-  outline: 2px solid rgba(125,116,96,0.25); outline-offset: 3px;
-  overflow: hidden; color: rgba(125,116,96,0.6); }
-.pack-shell .wornmap-doll img { max-width: 100%; max-height: 100%; object-fit: contain;
-  image-rendering: pixelated; }
+  gap: 4px; border: 0; background: none; outline: 0;
+  overflow: visible; color: rgba(125,116,96,0.6); padding: 2px 0; }
+.pack-shell .wornmap-doll.noart { border: 2px solid rgba(125,116,96,0.45);
+  background: rgba(0,0,0,0.35); outline: 2px solid rgba(125,116,96,0.25);
+  outline-offset: 3px; overflow: hidden; }
+/* PX20c (Mac: "ensure the paperdoll's slot is a perfect fit"): the
+   cell was whatever the grid's centre column happened to be, so the
+   sprite sat inside it with air down both sides - object-fit letterbox,
+   which is a fit only in the sense that nothing overflows. The cell now
+   CARRIES THE SPRITE'S OWN ASPECT: aspect-ratio 110/184, the classic
+   paperdoll's exact proportion, height-driven and centred in the
+   column. The sprite then fills it edge to edge with no letterbox at
+   all, and it stays a perfect fit at every window size because the
+   ratio is the constraint rather than a measured pixel. */
+.pack-shell .wornmap-doll img { display: block; height: 100%; width: 100%;
+  object-fit: contain; image-rendering: pixelated;
+  filter: drop-shadow(3px 3px 0 rgba(0,0,0,0.55)); }
+.pack-shell .wornmap-doll.hasart { aspect-ratio: 110 / 184; height: 100%; width: auto;
+  justify-self: center; align-self: center; padding: 0; }
 .pack-shell .wornmap-doll .wornslot { color: rgba(125,116,96,0.6); }
+/* PX20c: the tile is a ROW again, because the width is there now - a
+   big monogram on the left, the family word and THE PIECE'S NAME
+   stacked beside it. PX19g had to hide the name when the tiles were
+   52px squares and it clipped; nothing about that reasoning survives a
+   300px tile, so the name comes back where a player reads it. */
 .pack-shell .equipped .wornrow { position: relative; z-index: 1;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 3px; min-height: 44px; padding: 4px 3px; overflow: hidden;
+  display: flex; flex-direction: row; align-items: center; justify-content: flex-start;
+  gap: 14px; min-height: 44px; padding: 8px 14px; overflow: hidden; text-align: left;
   background: rgba(10,12,17,0.72); border: 2px solid rgba(125,116,96,0.35);
   color: #a89f88; font-family: inherit; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
-/* PX19g: at the fitted 52px row the name line CLIPS - so the tiles
-   speak monogram + family word + badge (the reference's own read:
-   the piece, not its caption) and the NAME lives in the plaque and
-   the title. The DOM keeps .wornname for every probe that reads it. */
-.pack-shell .wornrow .wornname { position: absolute; width: 1px; height: 1px;
-  overflow: hidden; clip-path: inset(50%); }
-.pack-shell .worncount { position: absolute; right: 3px; top: 2px; font-size: 9px;
+/* PX19g hid this line because a 52px square clipped it; PX20c gives
+   the tiles the region's whole width and the name comes back - the
+   family word above it in the dim, the piece itself in the bone. */
+.pack-shell .wornrow .wornname { display: block; font-size: 14px; color: #d8cfae;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.pack-shell .wornrow.wornempty .wornname { color: rgba(125,116,96,0.5); }
+/* The word and the name are one stack beside the monogram. */
+.pack-shell .wornrow .worntext { display: flex; flex-direction: column; gap: 3px;
+  min-width: 0; align-items: flex-start; }
+.pack-shell .wornrow .worntile, .pack-shell .wornrow .tile { flex: 0 0 auto; }
+.pack-shell .worncount { position: absolute; right: 5px; top: 4px; font-size: 11px;
   color: var(--brass); text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
-.pack-shell .wornrow .tile { display: flex; width: 24px; height: 24px; align-items: center;
-  justify-content: center; border: 0; background: none; font-size: 14px; color: #c5bda2; }
-.pack-shell .wornrow .worntile { font-size: 14px; color: rgba(125,116,96,0.6); }
+.pack-shell .wornrow .tile { display: flex; width: 40px; height: 40px; align-items: center;
+  justify-content: center; border: 0; background: none; font-size: 24px; color: #c5bda2; }
+/* PX20c: the tiles carry the area now, so the MONOGRAM carries the
+   tile - the reference's own read is the piece, big, with its family
+   word under it. */
+.pack-shell .wornrow .worntile { font-size: 26px; color: rgba(125,116,96,0.6); }
 .pack-shell .wornslot { flex: 0 0 auto;   /* the base rule's 88px was a column WIDTH; on a vertical tile it becomes 88px of HEIGHT */
-  font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+  font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
   color: #7d7460; max-width: 100%; line-height: 1.1; white-space: nowrap; }
 .pack-shell .wornrow .itemwt { display: none; }
 .pack-shell button.wornrow { cursor: pointer; }
