@@ -1,10 +1,17 @@
 // Spell casting vs the player (Systems S4b). Verbatim ports from DFU
 // FormulaHelper.SavingThrow, EntityEffect.GetMagnitude,
 // DaggerfallMissile constants, and DaggerfallAction.CastSpell (MIT,
-// Daggerfall Workshop). Scope (loud): the RESOLVED effect family is
-// classic Damage Health - direct (type 4, sub 0) and continuous
-// (type 1, sub 0) applied as an instant hit; every other effect in a
-// trap spell is SKIPPED with a flag until the effect-library slice.
+// Daggerfall Workshop).
+//
+// EF1c: this header used to declare a SCOPE - "the RESOLVED effect
+// family is classic Damage Health... every other effect in a trap
+// spell is SKIPPED with a flag until the effect-library slice" - and
+// it had outlived every clause. This module never resolved effects at
+// all: it owns the saving throw, the magnitude roll and the missile
+// constants, and systems/effects.js has dispatched the whole library
+// (all 91 of DFU's classic keys - EF1) for a long time. A scope note
+// describing a neighbour's old shape is worse than none, because it
+// reads as current and nothing here contradicts it.
 
 import { dice100 } from '../combat/formulas.js';
 import { liveStat } from './statMods.js';   // F9: MagicResist reads the LIVE willpower
@@ -66,9 +73,14 @@ const raceTemplateOf = (target) =>
 /**
  * FormulaHelper.SavingThrow verbatim for our entities. Returns the
  * percent of damage/duration that lands (0..100). Magic-effect
- * resistances (HasResistanceFlag / GetResistanceChance) are set only
- * by the ElementalResistance family (classic 8,0..4), which the
- * effect library has not reached, so nothing can raise one yet.
+ * resistances (HasResistanceFlag / GetResistanceChance) are set by the
+ * ElementalResistance family (classic 8,0..4), which is LIVE - casting
+ * 8,0 pushes an `elementalResistance` entry that the function
+ * immediately below sums. (EF1c: this said the family was one "the
+ * effect library has not reached, so nothing can raise one yet",
+ * standing directly above the reader of the entries it declared could
+ * not exist. Two neighbours, opposite claims, and only one of them
+ * runs.)
  */
 /** X1: the live Elemental Resistance chance for one element, summed
  *  over every active instance (DFU's additive RaiseResistanceChance).
@@ -156,9 +168,12 @@ export function rollMagnitude(effect, casterLevel, rolls = Math.random) {
   return base + plus * Math.floor(casterLevel / per);
 }
 
-/** The resolved classic damage family: (4,0) Damage Health,
- *  (1,0) Continuous Damage Health (instant application - the
- *  rounds system pends the effect-library slice). */
+/** The classic damage-health pair: (4,0) Damage Health and (1,0)
+ *  Continuous Damage Health. EF1c: the parenthesis here read "(instant
+ *  application - the rounds system pends the effect-library slice)".
+ *  It ships: (1,0) enters activeEffects as a `continuousDamage` entry
+ *  and tickActiveEffects re-rolls its magnitude every round for the
+ *  duration, which is the verbatim GetMagnitude-per-MagicRound law. */
 export const isDamageHealthEffect = (e) =>
   (e.type === 4 && e.subType === 0) || (e.type === 1 && e.subType === 0);
 

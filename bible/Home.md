@@ -256,12 +256,11 @@ combat line numbers below are refreshed with it.
 - `src/scenes/cityGuards.js:618` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
 - `src/scenes/dungeonContext.js:250` - the chain lives, the motion is INTERIM (loud) until flats can tween.
 - `src/scenes/dungeonContext.js:746` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:752` - effects FLAGGED to the effect-library slice.
-- `src/scenes/dungeonContext.js:762` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:1279` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/dungeonContext.js:1315` - onTeleport INTERIM shape). Absent, the engine's dispatch
-- `src/scenes/dungeonContext.js:3102` - PX3 FLAGGED: questMessages - the dungeon quest mount is
-- `src/scenes/dungeonContext.js:3172` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
+- `src/scenes/dungeonContext.js:770` - "database FLAGGED" narrows to the skill/loot message ids).
+- `src/scenes/dungeonContext.js:1287` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/dungeonContext.js:1323` - onTeleport INTERIM shape). Absent, the engine's dispatch
+- `src/scenes/dungeonContext.js:3110` - PX3 FLAGGED: questMessages - the dungeon quest mount is
+- `src/scenes/dungeonContext.js:3180` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
 - `src/scenes/exterior.js:560` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:566` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:803` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
