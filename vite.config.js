@@ -90,7 +90,9 @@ function buildTagMeta() {
   };
 }
 
-// base is set for GitHub Pages deploy at lattymoy.github.io/daggerfall-js-source/
+// base is './' - RELATIVE, so the same build serves from a project path
+// (lattymoy.github.io/daggerfall-js-source/) and from the apex of the
+// custom domain (daggerfalljs.dev, U64) without a rebuild.
 export default defineConfig({
   base: './',
   build: {

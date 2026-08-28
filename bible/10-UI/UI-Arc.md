@@ -85,6 +85,61 @@ None of these blocks anything; all are real.
                         will be, because this repo holds no game data.
 
 
+## U64 THE DOMAIN, AND THE HAT (2026-08-27, Mac's call)
+
+Mac: "1. Set up this with my domain I purchased. 2. Set up my kofi
+donation page on the website."
+
+THE DOMAIN IS daggerfalljs.dev, NOT daggerfall.dev. Mac named the
+latter; the Porkbun account holds the former, registered the same day
+beside fightlife.gg. The account is the fact and the record says so,
+because a wrong host in a pin is a test that passes against nothing.
+
+DNS, set through Porkbun's API: the two PARKING records Porkbun leaves
+on a new domain (an ALIAS and a wildcard CNAME, both to
+pixie.porkbun.com) deleted first - they answer before GitHub would -
+then GitHub Pages' four apex A records and four AAAA, and www as a
+CNAME to lattymoy.github.io. The custom domain went on the repo's Pages
+settings by API; the first attempt, which set `https_enforced` at the
+same time, was refused with "the certificate does not exist yet" -
+GitHub issues the certificate FROM the cname, so the cname goes on
+alone and enforcement follows it. `.dev` is on the HSTS preload list,
+so HTTPS is not optional there; it is on.
+
+NOTHING WAS REBUILT. `base: './'` has been relative since the site
+existed, so the same artifact serves from a project path and from an
+apex - the comment above it named the old host and now explains the
+rule instead. The page's own links are relative too, so it names no
+host at all: the verifier and the README were the only two places that
+did, and the pin now holds the PATH (the game is one directory down)
+with the host following the domain.
+
+THE HAT IS A PLAQUE. Mac asked for "an icon that's visible near the
+top": a link at the door's top right in the About plaque's own shape -
+the second box on a page that had one - with a CUP DRAWN IN BOX-SHADOW
+PIXELS beside the words. Not an <img>, because a badge would be this
+site's only raster and a raster is the one thing it does not carry;
+not the Ko-fi widget, because that is a third-party script on a page
+whose whole point is that it runs none. Ten art pixels on the same 4px
+grid as everything else - a filled body, a lip, a handle, and two
+pixels of steam in the dim rather than the brass. The first draft drew
+the body as a RING and read as an 'o'; caught at 3x and filled. A
+credits line carries the reason ("the port is free and always will be,
+and it takes no money to run"), and those two links are the only ask on
+the page.
+
+Pins: 2 more (14) - the mark is one link and a credits line and never
+an image, it is at the top right, it is a 44px target and the door
+makes room for it on a phone, the cup's pixels are all on the grid with
+exactly two of steam; and the live host is the domain in both places
+that name one while the page names none. 4 mutants, 4 dead.
+
+RESIDUE: www.daggerfalljs.dev was still answering 503 an hour in -
+GitHub provisions the apex certificate first and the www alias after,
+and it had not landed when this was written. The apex serves; if www is
+still 503 tomorrow the fix is to re-save the domain in the repo's Pages
+settings, which re-triggers provisioning.
+
 ## U63 THE SITE WEARS THE GAME'S FACE (2026-08-27, Mac's call)
 
 Mac: "we've been doing some heavy UI work in another session and I want

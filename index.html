@@ -74,6 +74,38 @@
     .doorlinks { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 10px 26px; justify-content: center; }
     .doorlinks a { border: 0; }
 
+    /* THE KO-FI MARK (U64). Top right of the door, the ONE thing above
+       the wordmark - a small plaque with a CUP drawn in box-shadow
+       pixels beside the word, because an <img> would be the page's only
+       raster and a raster is what this site does not carry. The cup is
+       nine pixels: a body, a lip, a handle and a curl of steam that is
+       simply two more pixels; at 3px a piece it reads at a glance and it
+       is the same square pixel as everything else on the page. */
+    .kofi {
+      position: absolute; top: 0; right: 0; z-index: 2;
+      display: flex; align-items: center; gap: 14px;
+      margin: 16px; padding: 10px 16px; min-height: 44px;
+      font-size: 14px; letter-spacing: 0.14em; text-indent: 0.14em; text-transform: uppercase;
+      color: #d8cfae; background: rgba(10,12,17,0.55); border: 2px solid #7d7460;
+      text-shadow: 2px 2px 0 rgba(0,0,0,0.8);
+    }
+    .kofi:hover, .kofi:focus-visible { outline: none; color: rgb(243,239,44); border-color: var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
+    .cup {
+      /* One art pixel is 4css; the element is the top-left pixel and the
+         box-shadows are the rest. A FILLED body - the first draft was a
+         ring and read as an 'o' - with a lip, a handle and two pixels of
+         steam rising off-centre. */
+      position: relative; width: 4px; height: 4px; margin-right: 20px; background: var(--brass);
+      box-shadow:
+        4px 0 0 var(--brass), 8px 0 0 var(--brass),
+        0 4px 0 var(--brass), 4px 4px 0 var(--brass), 8px 4px 0 var(--brass),
+        0 8px 0 var(--brass), 4px 8px 0 var(--brass), 8px 8px 0 var(--brass),
+        4px 12px 0 var(--brass),
+        12px 4px 0 var(--brass), 12px 8px 0 var(--brass),
+        4px -8px 0 #7d7460, 8px -14px 0 #7d7460;
+    }
+    .kofi:hover .cup, .kofi:focus-visible .cup { background: rgb(243,239,44); }
+
     /* THE FOOT: the home face's three zones, at the foot of the door. */
     .foot {
       position: absolute; left: 0; right: 0; bottom: 0;
@@ -140,7 +172,8 @@
       .cols, .grid, .keys, .shots .pair { grid-template-columns: 1fr; }
       .qa { grid-template-columns: 1fr; gap: 4px 0; }
       .qa dd { margin-bottom: 16px; }
-      .door { padding-bottom: 140px; }
+      .door { padding-bottom: 140px; padding-top: 84px; }   /* the Ko-fi plaque's room */
+      .kofi { margin: 12px; font-size: 13px; }
       /* PX1b's own phone rule: three zones wrap the middle one into the
          build line, so the foot stacks. */
       .foot { grid-template-columns: 1fr; justify-items: center; gap: 8px; text-align: center; }
@@ -154,6 +187,9 @@
   <a class="skip" href="#main">Skip to content</a>
 
   <header class="door">
+    <a class="kofi" href="https://ko-fi.com/dfjs" rel="noopener">
+      <i class="cup" aria-hidden="true"></i>Support on Ko-fi
+    </a>
     <h1 class="wordmark">Daggerfall<small>JavaScript</small></h1>
     <div class="rule"><i class="gem"></i></div>
     <p class="dek">The 1996 game with its rules intact, on a renderer built from scratch. Desktop or phone. Nothing to install.</p>
@@ -349,6 +385,9 @@
 
         <dt><a href="https://www.dfworkshop.net/">Daggerfall Workshop</a> and <a href="https://en.uesp.net/wiki/Daggerfall:Daggerfall">UESP</a></dt>
         <dd>The documentation of Daggerfall's file formats that the readers were checked against.</dd>
+
+        <dt><a href="https://ko-fi.com/dfjs">Ko-fi</a></dt>
+        <dd>The port is free and always will be, and it takes no money to run - it is a static site and your own game files. If you would like to put something in the hat anyway, it goes to the time this takes.</dd>
 
         <dt><a href="https://github.com/Lattymoy">Lattymoy</a></dt>
         <dd>Built the port. Source, docs and the ledger are on <a href="https://github.com/Lattymoy/daggerfall-js-source">GitHub</a>.<span class="meta">Set in Jacquard 12 and Pixelify Sans, loaded from Google Fonts: the one request this site makes to anyone else.</span></dd>
