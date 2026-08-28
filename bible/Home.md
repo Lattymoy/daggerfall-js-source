@@ -369,7 +369,6 @@ combat line numbers below are refreshed with it.
 - `src/systems/talk.js:266` - *  FLAGGED to the crime slice - the state lands now, verbatim).
 - `src/systems/talk.js:279` - TallyCrimeGuildRequirements(true, 1) FLAGGED: the TG
 - `src/systems/talkMacros.js:268` - *  the handler table has for them - here, the empty string. FLAGGED:
-- `src/systems/talkSession.js:21` - FLAGGED: the guild greeting indexes (records 8550..8571) pend the
 - `src/systems/tavern.js:195` - FLAGGED, with the slices they wait on:
 - `src/systems/tradeModes.js:4` - U8c shipped the shop screen in BUY mode only, and said so: "FLAGGED
 - `src/systems/tradeModes.js:127` - *  destination has been a FLAGGED null, so the mode could not be
