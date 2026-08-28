@@ -604,7 +604,22 @@ export function applyNightStars(bmp, random) {
  *  host routes damage through hurtPlayer (which mints the death
  *  screen) while the exterior hosts assign health directly - that
  *  difference is preserved, not unified. */
-export function applyFallLanding(entity, distance, { hurt = null, sound = null } = {}) {
+export function applyFallLanding(entity, distance, { hurt = null, sound = null, inOutdoorWater = false } = {}) {
+  // FD1 - CheckFallingDamage's FIRST statement after clearing `falling`
+  // (AcrobatMotor.cs:212-214): "don't take damage if landing in outdoor
+  // water", `if (StreamingWorld.PlayerTileMapIndex == 0) return;`.
+  //
+  // It returns BEFORE fallDistance is computed, so the exemption
+  // suppresses the BadFallDetected half too - a water landing costs
+  // neither HP nor the hard-fall grunt. Putting the test after the
+  // distance, or inside only the damage arm, would leave the player
+  // splashing into a lake and still hearing the ground-impact sound,
+  // which is the kind of half-port that reads as done.
+  //
+  // Hosts pass this from isOutdoorWaterTile(the tile under the
+  // player); it defaults FALSE, which is DFU's own answer for the
+  // -1 the streaming world reports off terrain (indoors, dungeons).
+  if (inOutdoorWater) return;
   if (distance > FALL_DAMAGE_THRESHOLD) {
     const dmg = Math.trunc(FALL_HP_PER_METRE * (distance - FALL_DAMAGE_THRESHOLD));
     // AUDIT 21 (hosts lane, F6): the no-`hurt` arm went through the ONE

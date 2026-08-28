@@ -343,7 +343,10 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // should not be the place that remembers which arm applies to it.
     const guardWeight = ENEMY_BASICS[GUARD_MOBILE_TYPE]?.weight ?? 0;
     if (knockDir && weaponKnockbackApplies(g.ai.knockbackSpeed, true, guardWeight)) {
-      const w = enemyWeightClassicUnits(true, 'male', guardWeight);
+      // EW1: a guard is the one foe whose kit is never empty - the
+      // watch spawns armed and armoured, so this is the call site
+      // where the missing item term moved the answer most.
+      const w = enemyWeightClassicUnits(true, 'male', guardWeight, g.entity?.items);
       g.ai.knockbackSpeed = weaponKnockbackSpeed(damage, w);
       g.ai.knockbackDir = [knockDir[0], knockDir[1], knockDir[2]];
     }

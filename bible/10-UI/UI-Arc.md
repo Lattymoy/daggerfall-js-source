@@ -7739,6 +7739,35 @@ dropped. The probe surface is untouched: it reads the classic window's
 own fields and runs on the classic skin, where the door hands back
 exactly that window.
 
+PX23b (Mac: "revisit the spell UI and give it the same love"): THE
+SAME TWO FAULTS, FOUND AGAIN. The chronicle's lesson applied one
+window over, and both halves of it were here too.
+
+IT READ THE NAMES AND THREW AWAY THE NUMBERS. `spellEffects` hands
+back the effect RECORDS, and every one carries `magnitudeBaseLow/High`
+with its per-level step, `durationBase/Mod`, and `chanceBase/Mod` -
+the exact fields systems/effects.js:446-454 reads to resolve a live
+effect. The first draft printed the two names and dropped the rest,
+which is the chronicle's flattened date wearing a different hat. Each
+part now appears only when the effect HAS it, because "0 to 0" is
+worse than nothing.
+
+AND IT COULD DO LESS THAN THE CLASSIC. The classic asks "Enter spell
+name : " (:934) and the first draft had no rename. It has one now,
+with the edit surviving a re-render and a new pick abandoning it.
+
+TWO THINGS IT NOW SAYS THAT THE CLASSIC DOES NOT. The target and
+element are icons in the classic and their meaning appears only on
+HOVER (:384/:388); this window draws no icons - it reads no ARENA2 -
+so it prints TARGET_DESCRIPTIONS and ELEMENT_DESCRIPTIONS as words,
+imported not retyped, and an index off the end prints no chip rather
+than a blank one. And the cost line says NOT ENOUGH MAGICKA in the
+urgent gold when the spell is past the player's pool, which is the
+question a book is opened with and which the classic answers only by
+failing at the cast.
+
+Pins: 3 more (6). 5 more mutations, 5 dead.
+
 Verified live: the book opens through the door on the enhanced skin,
 Ready calls the engine with the free flag and closes the window, and
 Delete on a vampire spell answers "Cannot delete special vampire

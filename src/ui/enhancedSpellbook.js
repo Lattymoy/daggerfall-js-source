@@ -30,11 +30,12 @@
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { overlayAction } from './input.js';
 import {
-  spellEffects, spellPointCost, EFFECT_NOT_FOUND,
+  spellEffects, spellPointCost, EFFECT_NOT_FOUND, ENTER_SPELL_NAME,
   CANNOT_DELETE_VAMP, CANNOT_DELETE_WERE,
   VAMPIRE_SPELL_TAG, LYCANTHROPY_SPELL_TAG,
 } from './spellbookWindow.js';
 import { effectByKey } from '../systems/spellEffects.js';   // the classic book's own source (spellbookWindow.js:120)
+import { TARGET_DESCRIPTIONS, ELEMENT_DESCRIPTIONS } from './spellIcons.js';   // PX23b: the classic's OWN words for the two icons
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
@@ -48,15 +49,60 @@ let deps = {};
 let onExit = () => {};
 let picked = 0;
 let notice = null;
+let renaming = null;   // PX23b: the name being edited, kept across renders
 
-/** The two words the classic prints for an effect, by the same key and
- *  the same fallback (spellbookWindow.effectLabels). Pure. */
+/**
+ * PX23b: AN EFFECT CARRIES NUMBERS, and the first draft read none.
+ *
+ * `spellEffects` hands back the effect RECORDS, not just their type -
+ * every one carries `magnitudeBaseLow/High` with their per-level
+ * step, `durationBase/Mod/PerLevel`, and `chanceBase/Mod/PerLevel`
+ * (systems/effects.js:446-454 reads exactly these). The first draft
+ * printed the two NAMES and threw the rest away, which is the same
+ * fault the chronicle's flattened date was: the data was already
+ * there.
+ *
+ * The words are DFU's own spell-maker phrasing, and each part appears
+ * only when that effect HAS it - a Free Action has no magnitude, and
+ * printing "0 to 0" would be worse than printing nothing.
+ */
 export function effectWords(effect) {
   if (!effect) return null;
   const key = `${effect.type},${effect.subType & 0xff}`;
   const template = effectByKey(key);
-  if (!template) return { group: EFFECT_NOT_FOUND, subgroup: key };
-  return { group: template.group, subgroup: template.subgroup ?? '' };
+  const base = template
+    ? { group: template.group, subgroup: template.subgroup ?? '' }
+    : { group: EFFECT_NOT_FOUND, subgroup: key };
+  const lo = effect.magnitudeBaseLow ?? 0;
+  const hi = effect.magnitudeBaseHigh ?? 0;
+  const perLevel = effect.magnitudeLevelBase ?? 0;
+  const parts = [];
+  if (lo || hi) {
+    const span = lo === hi ? `${lo}` : `${lo}-${hi}`;
+    parts.push(perLevel ? `${span} +${perLevel}/level` : span);
+  }
+  const dur = effect.durationBase ?? 0;
+  if (dur) {
+    const per = effect.durationMod ?? 0;
+    parts.push(per ? `${dur} +${per}/level rounds` : `${dur} rounds`);
+  }
+  const ch = effect.chanceBase ?? 0;
+  if (ch) {
+    const per = effect.chanceMod ?? 0;
+    parts.push(per ? `${ch}% +${per}/level` : `${ch}%`);
+  }
+  return { ...base, parts };
+}
+
+/** The two words the classic shows as TOOLTIPS on the target and
+ *  element icons (spellbookWindow.js:384/388). This window draws no
+ *  icons - it reads no ARENA2 - so it prints what those icons mean,
+ *  which is strictly more than the classic tells you at a glance. */
+export function spellFrame(spell) {
+  return {
+    target: TARGET_DESCRIPTIONS[spell?.rangeType ?? -1] ?? null,
+    element: ELEMENT_DESCRIPTIONS[spell?.element ?? -1] ?? null,
+  };
 }
 
 /** The rail's rows: name, cost, and whether the book may delete it.
@@ -71,6 +117,7 @@ export function bookModel(spells, castCost) {
     undeletable: sp?.tag === VAMPIRE_SPELL_TAG ? CANNOT_DELETE_VAMP
       : sp?.tag === LYCANTHROPY_SPELL_TAG ? CANNOT_DELETE_WERE : null,
     effects: spellEffects(sp).map(effectWords).filter(Boolean),
+    frame: spellFrame(sp),
     spell: sp,
   }));
 }
@@ -133,8 +180,21 @@ function render() {
   name.append(el('span', 'px-qwing'), el('h3', null, sel.name), el('span', 'px-qwing px-flip'));
   detail.append(name);
   const meta = el('div', 'px-qmeta');
-  meta.append(el('span', 'px-qtimer', `${sel.cost} spell points`));
+  // AFFORDABLE OR NOT, which is the question a player opens this book
+  // with. The classic answers it only by failing at the cast.
+  const short = Number.isFinite(magicka) && sel.cost > magicka;
+  meta.append(el('span', `px-qtimer${short ? ' urgent' : ''}`,
+    short ? `${sel.cost} spell points - not enough magicka` : `${sel.cost} spell points`));
   detail.append(meta);
+  // THE TWO ICONS THE CLASSIC DRAWS, as the words they mean. This
+  // window reads no ARENA2, and the classic only tells you these on
+  // hover - so printing them is strictly more than it says.
+  if (sel.frame.target || sel.frame.element) {
+    const frame = el('div', 'sb-frame');
+    if (sel.frame.target) frame.append(el('span', 'sb-chip', sel.frame.target));
+    if (sel.frame.element) frame.append(el('span', 'sb-chip', sel.frame.element));
+    detail.append(frame);
+  }
   detail.append(pxDivider('Effects'));
   if (!sel.effects.length) {
     detail.append(el('p', 'px-note', 'No effects.'));
@@ -142,8 +202,16 @@ function render() {
     const list = el('div', 'sb-effects');
     for (const e of sel.effects) {
       const row = el('div', 'sb-effect');
-      row.append(el('span', 'px-c', '\u25c6'), el('span', 'sb-group', e.group));
-      if (e.subgroup) row.append(el('span', 'sb-sub', e.subgroup));
+      const line = el('div', 'sb-effline');
+      line.append(el('span', 'px-c', '\u25c6'), el('span', 'sb-group', e.group));
+      if (e.subgroup) line.append(el('span', 'sb-sub', e.subgroup));
+      row.append(line);
+      // The numbers the effect record already held.
+      if (e.parts.length) {
+        const nums = el('div', 'sb-nums');
+        for (const part of e.parts) nums.append(el('span', 'sb-num', part));
+        row.append(nums);
+      }
       list.append(row);
     }
     detail.append(list);
@@ -157,6 +225,12 @@ function render() {
     onExit();
   };
   acts.append(ready);
+  // RENAME. The classic asks "Enter spell name : " (ENTER_SPELL_NAME,
+  // :934) and the first draft dropped it - a prettier window that can
+  // do less, which is the chronicle's lesson one window over.
+  const rename = el('button', 'act', 'Rename');
+  rename.onclick = () => { renaming = renaming === null ? sel.name : null; notice = null; render(); };
+  acts.append(rename);
   const del = el('button', 'act', 'Delete');
   del.onclick = () => {
     if (sel.undeletable) { notice = sel.undeletable; render(); return; }
@@ -168,6 +242,26 @@ function render() {
   };
   acts.append(del);
   detail.append(acts);
+  if (renaming !== null) {
+    const form = el('form', 'sb-rename');
+    const input = el('input');
+    input.type = 'text';
+    input.value = renaming;
+    input.maxLength = 30;
+    input.setAttribute('aria-label', ENTER_SPELL_NAME.trim());
+    input.oninput = () => { renaming = input.value; };
+    const ok = el('button', 'act primary', 'Save');
+    ok.type = 'submit';
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      const name = renaming.trim();
+      if (name) sel.spell.name = name;
+      renaming = null;
+      render();
+    };
+    form.append(el('span', 'sb-renamelabel', ENTER_SPELL_NAME.trim()), input, ok);
+    detail.append(form);
+  }
   if (notice) detail.append(el('p', 'sheet-notice', notice));
   wrap.append(detail);
   body.append(wrap);
@@ -205,13 +299,14 @@ export function mountEnhancedSpellbook(hostEl, d = {}) {
   onExit = d.onExit ?? (() => {});
   picked = 0;
   notice = null;
+  renaming = null;
   render();
   window.addEventListener('keydown', onKey, true);
   return {
     render,
     destroy() {
       window.removeEventListener('keydown', onKey, true);
-      host = null; deps = {}; picked = 0; notice = null;
+      host = null; deps = {}; picked = 0; notice = null; renaming = null;
     },
   };
 }
