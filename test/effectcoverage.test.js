@@ -28,9 +28,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { join, relative, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { applySpell } from '../src/systems/effects.js';
 import { dfuFile } from './dfuRoot.mjs';   // PY1: DFU_PATH, then the in-tree sparse clone
+
+const HERE = dirname(fileURLToPath(import.meta.url));
 
 /** A one-effect spell record with every roll gate wide open. */
 const eff = (type, subType) => ({
@@ -56,6 +60,12 @@ function drive(g, s) {
     () => 0.5, { entity: mkTarget(), sinks: {} }, { bypassChance: true, bypassSavingThrows: true });
 }
 const handles = (g, s) => drive(g, s).skipped === 0;
+/** EF1c: the same drive against a CALLER'S target, so the effect's
+ *  residue can be inspected after the cast. */
+function drive2(target, g, s) {
+  return applySpell({ element: 0, rangeType: 0, effects: [eff(g, s)] }, 1, target, SINKS,
+    () => 0.5, { entity: mkTarget(), sinks: {} }, { bypassChance: true, bypassSavingThrows: true });
+}
 
 test('EF1: the skip counter is DISCRIMINATING - a key no family owns is counted', () => {
   // THE CONTROL, FIRST. A coverage pin whose measurement cannot report
@@ -150,4 +160,127 @@ test('EF1: and NO key outside DFU\'s set is answered - the sweep both ways', { s
   assert.deepEqual(extra, [],
     'applySpell claims these keys, but no Daggerfall Unity effect class defines them - an arm\n'
     + 'is testing its effect GROUP without its subgroup (the shape of the Teleport defect EF1 fixed)');
+});
+
+// ── EF1c: THE SENTENCES THE LIBRARY OUTGREW ─────────────────────────
+// EF1 proved the library answers all 91 keys and retired the counter's
+// flag. Four other sentences still deferred work to "the effect-library
+// slice", and each was checked by RUNNING the thing it described rather
+// than by reading around it:
+//
+//   dungeonContext.js - trap spells resolve "the classic damage-health
+//     family... other effects FLAGGED to the effect-library slice".
+//     M3 moved this host's missiles onto the shared cast engine, so a
+//     landed bolt goes explodeAt / applySpellToPlayer -> applySpell.
+//   spellcast.js header - a SCOPE note for a module that resolves no
+//     effects at all; it owns the saving throw and the magnitude roll.
+//   spellcast.js - ElementalResistance is a family "the effect library
+//     has not reached, so nothing can raise one yet", written directly
+//     above the function that sums the entries it says cannot exist.
+//   spellcast.js - continuous damage as "instant application - the
+//     rounds system pends the effect-library slice".
+//
+// The last two are pinned below by behaviour. THE LESSON IS THE FIRST
+// ONE'S: a stale sentence is not one sentence. EF1 retired the flag on
+// the counter and left the same claim in the module header four lines
+// from the top, and these four besides. A claim usually has more than
+// one home, so grep the claim, not the line.
+import { tickActiveEffects } from '../src/systems/effects.js';
+import { elementalResistanceChance, isDamageHealthEffect } from '../src/systems/spellcast.js';
+
+test('EF1c: ElementalResistance (8,0..4) RAISES a resistance, per element', () => {
+  const t = mkTarget();
+  assert.equal(elementalResistanceChance(t, 0), 0, 'nothing resisted before the cast');
+  const out = drive2(t, 8, 0);
+  assert.equal(out.skipped, 0, 'the family lands');
+  assert.equal(elementalResistanceChance(t, 0), 100, 'Fire is resisted after casting 8,0');
+  // per-ELEMENT, not a blanket flag: the variant index IS the element
+  // (ElementalResistance.cs:194 keys 8 + (byte)DFCareer.Elements).
+  assert.equal(elementalResistanceChance(t, 1), 0, 'Frost is untouched by the Fire variant');
+  const t2 = mkTarget();
+  drive2(t2, 8, 4);
+  assert.equal(elementalResistanceChance(t2, 4), 100, 'and the Magic variant resists Magic');
+  assert.equal(elementalResistanceChance(t2, 0), 0);
+});
+
+test('EF1c: Continuous Damage Health (1,0) TICKS per round - it is not an instant hit', () => {
+  const t = mkTarget();
+  const hurt = [];
+  const sinks = { hurt: (n) => hurt.push(n), heal: () => {}, say: () => {} };
+  const out = applySpell({ element: 0, rangeType: 0, effects: [eff(1, 0)] }, 1, t, sinks,
+    () => 0.5, null, { bypassChance: true, bypassSavingThrows: true });
+  assert.equal(out.continuous, 1, 'it joins the round ticker rather than resolving whole');
+  assert.equal(out.damage, 0, 'and none of it lands as direct damage');
+  const entry = t.activeEffects.find((a) => a.kind === 'continuousDamage');
+  assert.ok(entry, 'a continuousDamage entry is live on the target');
+  // AssignBundle's "initial magic round" consumes round 1 at cast, so a
+  // durationBase of 10 leaves 9 and the first tick has already been paid.
+  assert.equal(hurt.length, 1, 'the INITIAL magic round fires at assignment');
+  const before = entry.roundsRemaining;
+  tickActiveEffects(t, sinks, () => 0.5);
+  assert.equal(hurt.length, 2, 'and every round after it damages again');
+  assert.equal(t.activeEffects.find((a) => a.kind === 'continuousDamage')?.roundsRemaining, before - 1);
+  // the pair spellcast.js names is still exactly those two keys
+  assert.equal(isDamageHealthEffect({ type: 4, subType: 0 }), true);
+  assert.equal(isDamageHealthEffect({ type: 1, subType: 0 }), true);
+  assert.equal(isDamageHealthEffect({ type: 1, subType: 1 }), false, 'ContinuousDamageFatigue is not the health pair');
+});
+
+test('EF1c: no source defers work to "the effect-library slice" any more', () => {
+  // THE SOURCE SWEEP, the shape PY1's path pin and R6's bare-`this` pin
+  // take: the rule "do not write that the library pends" is exactly the
+  // kind the next reader breaks by copying a neighbouring header. Four
+  // sentences said it; the sweep is what stops a fifth.
+  //
+  // IT BANS THE CLAIM AS AN ASSERTION, NOT AS A QUOTATION, and getting
+  // that distinction right took two tries the campaign forced.
+  //
+  // Per LINE was the first attempt and it flagged EF1c's own
+  // corrections, which quote the retired wording so the next reader can
+  // see what was wrong; the quotes wrap across lines, so no same-line
+  // exemption can tell quotation from assertion. Per BLOCK, exempting
+  // any block naming EF1c, was the second - and the mutation campaign
+  // killed it: a NEW "other effects pend the effect-library slice"
+  // pasted into that same block SURVIVED, because one mention of the
+  // slice bought the whole block a permanent pass. That is a sweep that
+  // stops sweeping exactly where the next stale sentence would land.
+  //
+  // So: strip QUOTED spans from the block, then look for the claim in
+  // what is left. A correction quotes the old wording; a defect states
+  // it. (Banning the phrase outright was the other option and it is
+  // worse - it makes the honest fix unwritable and teaches the next
+  // person to launder the sentence instead of retiring it.)
+  const SRC = join(HERE, '..', 'src');
+  const CLAIM = /effect[- ]library slice|effect library has not reached/;
+  // a quoted span may wrap lines, carrying `//` or `*` decoration
+  const unquote = (s) => s.replace(/"[^"]*"/g, '""');
+  const offenders = [];
+  const walk = (dir) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const p = join(dir, e.name);
+      if (e.isDirectory()) { walk(p); continue; }
+      if (!e.name.endsWith('.js')) continue;
+      const lines = readFileSync(p, 'utf8').split('\n');
+      const isComment = (l) => /^\s*(\/\/|\/\*|\*)/.test(l);
+      for (let i = 0; i < lines.length; i++) {
+        if (!isComment(lines[i])) continue;
+        let j = i;
+        while (j + 1 < lines.length && isComment(lines[j + 1])) j++;
+        const block = lines.slice(i, j + 1).join('\n');
+        if (CLAIM.test(unquote(block))) {
+          // report the first line whose own text still claims it once
+          // the block's quotations are removed
+          const rows = lines.slice(i, j + 1);
+          const at = rows.findIndex((l, k) => CLAIM.test(unquote(rows.slice(0, k + 1).join('\n')).split('\n')[k] ?? ''));
+          const hit = at >= 0 ? at : rows.findIndex((l) => CLAIM.test(l));
+          offenders.push(`${relative(SRC, p)}:${i + hit + 1}: ${rows[hit].trim()}`);
+        }
+        i = j;
+      }
+    }
+  };
+  walk(SRC);
+  assert.deepEqual(offenders, [],
+    'the effect library answers all 91 of DFU\'s classic keys (EF1); a comment saying work\n'
+    + 'waits on it is telling the next reader a gap exists where there is none');
 });

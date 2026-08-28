@@ -747,9 +747,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // loud - the chargen UI replaces the default and the pool policy).
   // S4b: trap spells - SPELLS.STD by index; CastSpell actions queue
   // missiles that fly at the player (speed 25, radius 0.45, life 8s,
-  // element billboards 375-379). Resolution: the classic
-  // damage-health family through the verbatim saving throw; other
-  // effects FLAGGED to the effect-library slice.
+  // element billboards 375-379). Resolution: the WHOLE library, since
+  // M3 moved this host's missiles onto the shared cast engine - a
+  // landed trap bolt goes through magic.explodeAt /
+  // magic.applySpellToPlayer to applySpell, so a paralysis or drain
+  // trap lands exactly as its SPELLS.STD record says. (EF1c: this read
+  // "the classic damage-health family... other effects flagged to the
+  // effect-library slice" long after both halves stopped being true.
+  // The quote is deliberately lower-cased: tools/regenOpenFlags.mjs
+  // harvests the upper-case token into Home.md's open-flag board, so
+  // quoting a retired flag verbatim keeps it on the board as open work
+  // - which is how eleven retirement notes are already sitting there.)
   const _pendingCasts = [];
   const missiles = [];
   // G4: BOTH magic registries, through the one shared loader. This
@@ -2224,7 +2232,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // only pool that had the precedence right, and one home means the
       // other two cannot drift away from it again.
       if (weaponKnockbackApplies(foe.ai.knockbackSpeed, isClass, mobileWeight)) {
-        const w = enemyWeightClassicUnits(isClass, foe.gender, mobileWeight);
+        // EW1: the foe's own kit is half of DFU's weight
+        const w = enemyWeightClassicUnits(isClass, foe.gender, mobileWeight, foe.entity?.items);
         foe.ai.knockbackSpeed = weaponKnockbackSpeed(damage, w);
         foe.ai.knockbackDir = [knockDir[0], knockDir[1], knockDir[2]];
       }
