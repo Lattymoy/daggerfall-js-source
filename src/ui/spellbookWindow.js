@@ -86,9 +86,6 @@
 // - no localization LOOKUP: every string above is DFU's own en text,
 //   read out of Internal_Strings.csv and held as a constant with its
 //   TextManager key named, rather than resolved at runtime.
-// - the ICON PICKER is a port window of its own (SpellIconPickerWindow
-//   is 352 lines of DFU); until it lands, clicking the icon panel
-//   says so rather than doing nothing - FLAGGED below.
 // - DFU's spell VERSION gate (:746-747) has nothing to gate: the
 //   port's records carry no bundle version.
 // - DFU wires the name label's rename AND the icon panel's picker in
@@ -104,7 +101,7 @@
 //   pass both (:262). The port has one castCost hook for both, so
 //   the offer's price rides the player's live skills either way.
 //
-// FLAGGED, idling loudly: the icon picker; the effect popup's body
+// FLAGGED, idling loudly: the effect popup's body
 // (ShowEffectPopup reads each effect's own SpellBookDescription
 // tokens, which the port's effect table does not carry yet, so the
 // box shows the group/subgroup pair alone); and DFU's
@@ -125,6 +122,7 @@ import { calculateTradePrice } from '../systems/shopStock.js';
 import { ROW_SPACING, SELECTED_TEXT_COLOR } from './listPicker.js';   // ListBox.cs:36-37 and DaggerfallUI.cs:62 - one home each
 import { ALT_SHADOW_1 } from './chargenArt.js';   // DaggerfallAlternateShadowColor1, already homed
 import { ToolTip } from './toolTip.js';   // U37's shared component - SetupIcons points three panels at it
+import { SpellIconPickerWindow } from './spellIconPickerWindow.js';   // MC1: the window the icon panel's click pushes
 import {
   expandGuildMacros, TRADE_MESSAGE_BASE_ID, NOT_ENOUGH_GOLD_ID, cureOfferMessageOffset,
 } from '../systems/guildServiceActions.js';   // DaggerfallTradeWindow's shared ids (:33-34) and the three haggle BANDS, all already homed
@@ -352,6 +350,7 @@ export class SpellbookWindow {
   }
 
   wheel(dir) {
+    if (this.top === 'iconPicker') { this._iconPicker?.wheel(dir); return; }   // MC1
     if (!dir || this.top) return;
     this.scrollIndex += Math.sign(dir);
     this._clampScroll();
@@ -361,6 +360,7 @@ export class SpellbookWindow {
    *  under the pointer is HIGHLIGHTED - a colour swap, not a bar -
    *  and leaving the list clears it to -1. */
   hover(vx, vy) {
+    if (this.top === 'iconPicker') { this._iconPicker?.hover(vx, vy); return; }   // MC1: the selection follows the pointer
     const [lx, ly, lw, lh] = SPELLBOOK_RECTS.list;
     const x = vx - PANEL_X, y = vy - PANEL_Y;
     this._tipHover(x, y, vx, vy);
@@ -568,6 +568,28 @@ export class SpellbookWindow {
     this._edit();
   }
 
+  /** MC1: the icon picker mounts over the book (uiManager.PushWindow,
+   *  :957) and IconPicker_OnClose (:960-974) is the same struct
+   *  copy-then-SetSpell shape as the rename above: a non-null pick
+   *  writes the icon onto a COPY of the selected spell, marks it
+   *  `custom` so the save keeps it, refreshes the selection and plays
+   *  the edit sound; a cancel (null) changes nothing. */
+  _openIconPicker() {
+    this.top = 'iconPicker';
+    this._iconPicker = new SpellIconPickerWindow({
+      onClose: (icon) => {
+        this.top = null;
+        this._iconPicker = null;
+        if (!icon) return;
+        const list = this.deps.spells?.() ?? [];
+        const spell = list[this.selectedIndex];
+        if (!spell) return;   // GetSpell's false arm (:963-964)
+        list[this.selectedIndex] = { ...spell, icon: icon.index, custom: true };
+        this._edit();   // editSpellBook (:972)
+      },
+    });
+  }
+
   /** BuyButton_OnMouseClick (:975-1013): spellbook, gold, then the
    *  haggle line chosen by how the price compares. */
   buyButton() {
@@ -610,6 +632,7 @@ export class SpellbookWindow {
   // --- the host seam ---
 
   input(code, e = null) {
+    if (this.top === 'iconPicker') { this._iconPicker?.input(code); return; }   // MC1: the picker is modal
     if (this.top === 'rename') {
       if (code === 'Escape') { this.top = null; return; }
       if (code === 'Enter' || code === 'NumpadEnter') { this.confirmRename(); return; }
@@ -664,6 +687,7 @@ export class SpellbookWindow {
   }
 
   click(vx, vy) {
+    if (this.top === 'iconPicker') return this._iconPicker?.click(vx, vy) ?? true;   // MC1
     if (this.top === 'delete' || this.top === 'sort' || this.top === 'trade') {
       const hit = this._box ? messageBoxHit(this._box, vx, vy) : null;
       if (hit === MB_BUTTONS.Yes) this.input('KeyY');
@@ -689,10 +713,9 @@ export class SpellbookWindow {
         return true;
       }
       if (hitPanel(SPELLBOOK_RECTS.spellIcon, vx, vy)) {
-        // SpellIconPanel_OnMouseClick pushes the picker (:954-958)
+        // MC1: SpellIconPanel_OnMouseClick pushes the picker (:954-958)
         this._click();
-        this.top = 'note';
-        this._noteRows = ['The icon picker is not built yet.'];
+        this._openIconPicker();
         return true;
       }
     }
@@ -876,7 +899,10 @@ export class SpellbookWindow {
       }
     }
 
-    if (this.top === 'rename') {
+    if (this.top === 'iconPicker') {
+      this._box = null;
+      this._iconPicker?.draw(renderer, canvas, font);   // MC1: the picker rides over the book
+    } else if (this.top === 'rename') {
       this._box = layoutMessageBox(font, [`${ENTER_SPELL_NAME}${this.renameText}_`], []);
       this._drawBox(renderer, m, font);
     } else if (this.top) {
