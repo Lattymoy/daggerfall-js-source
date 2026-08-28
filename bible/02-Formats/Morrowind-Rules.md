@@ -263,6 +263,121 @@ table where the last attempt hid it twice.
 
 ---
 
+# The attachment layer
+
+## 12. Skinned and rigid parts take COMPLETELY different paths
+
+`SceneUtil::attach`, `components/sceneutil/attach.cpp:114-198`, branches
+on whether the loaded part is itself a Skeleton:
+
+**Skinned** (`:117-142`) - the part's rig geometry is COPIED onto the
+actor's master skeleton and re-bound by bone name. The part's own
+skeleton is discarded. It is never parented to a bone.
+
+**Rigid** (`:143-197`) - cloned and parented UNDER the bone, with two
+transforms the reverted arc knew nothing about. See 13 and 14.
+
+## 13. The mirror: left-side rigid parts are the mesh with X NEGATED
+
+```cpp
+if (attachNode->getName().find("Left") != std::string::npos)
+{
+    trans->setScale(osg::Vec3f(-1.f, 1.f, 1.f));
+    // Need to invert culling because of the negative scale
+    trans->setStateSet(frontFaceStateSet);
+}
+```
+- `attach.cpp:166-181`
+
+A substring test for `Left` on the ATTACH BONE's name. One mesh serves
+both sides; the left is the right, mirrored, with the front face
+flipped so backface culling still works.
+
+MW8 ATTACHED THE SAME MESH AT BOTH BONES WITH NO MIRROR. The left hand
+would have been a second right hand, inside-out under culling.
+
+## 14. `BoneOffset` - a named node inside the part mesh
+
+```cpp
+FindByNameVisitor findBoneOffset("BoneOffset");
+...
+trans->setPosition(boneOffset->getMatrix().getTrans());
+// Now that we used it, get rid of the redundant node.
+```
+- `attach.cpp:147-164`
+
+A part may carry a node literally named `BoneOffset` whose matrix
+TRANSLATION becomes the attachment offset; the node is then dropped
+from the scene. Must be a MatrixTransform or it is a hard error.
+
+Absent from the reverted arc entirely.
+
+## 15. The bone name is also a GEOMETRY FILTER
+
+```cpp
+const std::string_view bonefilter = (type == ESM::PRT_Hair) ? "hair" : bonename;
+mObjectParts[type] = insertBoundedPart(mesh, bonename, bonefilter, ...);
+```
+- `npcanimation.cpp:799-802` (hair is the documented sole exception)
+
+and the filter test, `attach.cpp:159-166` of CopyRigVisitor:
+
+```cpp
+if (ciStartsWith(name, mFilter)) return true;
+constexpr std::string_view prefix = "tri ";
+if (ciStartsWith(name, prefix)) return ciStartsWith(name.substr(4), mFilter);
+```
+
+Case-insensitive PREFIX match on the drawable's name, with Morrowind's
+`Tri ` naming convention stripped first. So a skinned part file
+containing both `Tri Left Hand` and `Tri Right Hand` yields the correct
+side BY NAME - the filter is how a skinned part picks its side, where a
+rigid part uses the mirror in 13.
+
+THIS IS THE DISTINCTION THE REVERTED ARC FUMBLED IN BOTH DIRECTIONS:
+it bound skinned parts once with no filter, and attached rigid parts at
+both bones with no mirror.
+
+## 16. Bone lookup IS case-insensitive, and duplicates go to the FIRST
+
+```cpp
+BoneCache::iterator found = mBoneCache.find(Misc::StringUtils::lowerCase(name));
+```
+- `components/sceneutil/skeleton.cpp:55-66`, cache built at
+  `:23-29` with `mCache.emplace(lowerCase(node.getName()), mPath)`
+
+Lowercased on both sides - so the reverted arc's lowercasing was
+CORRECT, and is recorded here as parity confirmed rather than a
+correction. `emplace` does not overwrite, so where a skeleton repeats a
+bone name the FIRST in depth-first order wins. The cached value is the
+whole root-to-node transform path.
+
+## 17. The weapon bone is overridden PER WEAPON TYPE at attach time
+
+`npcanimation.cpp:780-796`: for `PRT_Weapon` the generic `Weapon Bone`
+from the part table is replaced by the equipped weapon type's own
+`mAttachBone` when that node exists in the actor - which is how a bow
+reaches `Weapon Bone Left` (rule 8). The part table's entry is only the
+fallback, exactly as its own comment says.
+
+## 18. The `x` prefix on actor models is CONDITIONAL
+
+`Misc::ResourceHelpers::correctActorModelPath`,
+`components/misc/resourcehelpers.cpp:180-199`: insert `x` before the
+FILENAME, swap `.nif` for `.kf`, and **use the x-form only if that KF
+exists in the VFS** - otherwise keep the original path.
+
+This refines rule 6 above, which read as though the names were fixed.
+They are not: `base_anim_female.1st.nif` is promoted to
+`xbase_anim_female.1st.nif` only when `xbase_anim_female.1st.kf` is
+present. The male first-person entry is already x-form in the settings,
+so the insert yields a non-existent `xx` name and the original stands.
+
+(`correctMeshPath` is just the `meshes` prefix, `:206-211` - the one
+path rule the reverted arc had right.)
+
+---
+
 ## What is still unknown
 
 These rules come from the reference implementation. They have NOT been
