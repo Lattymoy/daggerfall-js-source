@@ -377,6 +377,22 @@ def make_plain():
     write_nif(HERE / "plain.nif", [root])
 
 
+def make_flight_kf():
+    # Root-motion fixture: Bone0's translation channel carries a 300-unit
+    # flight along Y, the way retail movement groups carry the actor's
+    # path in the accumulation root. Posing WITHOUT extraction must send
+    # the mesh flying; WITH it, the body stays put and only Z animates.
+    helper = NifFormat.NiSequenceStreamHelper()
+    helper.name = b"xflight"
+    sed = NifFormat.NiStringExtraData()
+    sed.string_data = b"Bone0"
+    sed.bytes_remaining = 4 + len(b"Bone0")
+    helper.extra_data = sed
+    kd = make_keyframe_data(trans_keys=[(0.0, (0.0, 0.0, 0.0)), (1.0, (0.0, 300.0, 0.0))])
+    helper.controller = make_keyframe_controller(None, kd, 0.0, 1.0)
+    write_nif(HERE / "xflight.kf", [helper])
+
+
 def make_part():
     # A body-part file the retail way: its OWN copies of the bones it
     # needs (matching names, matching rest pose), a skinned shape weighted
@@ -634,6 +650,7 @@ if __name__ == "__main__":
     make_plain()
     make_animated()
     make_kf()
+    make_flight_kf()
     make_part()
     make_rotbind()
     make_esm()

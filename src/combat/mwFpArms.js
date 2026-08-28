@@ -47,6 +47,7 @@ import {
   poseSkeleton,
   skeletonSpaceMatrices,
   skinBatch,
+  accumRootRef,
 } from '../formats/mwSkin.js';
 import { bindPart, attachmentTransform } from '../formats/mwCharacter.js';
 import { WEAPON_TYPES } from './fpsWeapon.js';
@@ -472,7 +473,9 @@ export async function createMwFpView(renderer) {
 
   view.draw = (canvas, weaponType) => {
     const t = playing ? playing.t : 0;
-    const pose = poseSkeleton(skeleton, playing ? tracks : null, sampleTrack, t);
+    const pose = poseSkeleton(skeleton, playing ? tracks : null, sampleTrack, t, {
+      accumRoot: playing ? accumRootRef(skeleton, tracks) : null,
+    });
     const rootRef = [...skeleton.nodes.entries()].find(([, n]) => n.parent < 0)?.[0] ?? -1;
     const matsCache = new Map();
     const matsFor = (root) => {

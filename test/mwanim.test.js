@@ -15,6 +15,7 @@ import {
   skeletonSpaceMatrices,
   skinToSkelMatrix,
   skinBatch,
+  accumRootRef,
 } from '../src/formats/mwSkin.js';
 
 const ANIMATED = new Uint8Array(
@@ -235,4 +236,42 @@ test('mwskin: skinToSkelMatrix cancels the chain between skeleton root and skin 
   ];
   assert.ok(nearVec(apply(10, 0, 5), [0, 0, 0]));
   assert.ok(nearVec(apply(10, 1, 5), [1, 0, 0]));
+});
+
+const FLIGHT = new Uint8Array(
+  readFileSync(new URL('./fixtures/mw/xflight.kf', import.meta.url)),
+);
+
+test('mwskin: the accumulation root is the topmost tracked bone', () => {
+  const nif = parseNif(ANIMATED);
+  const skeleton = buildSkeleton(nif);
+  const tracks = extractTracks(parseNif(FLIGHT));
+  const ref = accumRootRef(skeleton, tracks);
+  assert.equal(skeleton.nodes.get(ref).name, 'Bone0');
+  // With no tracks there is nothing to accumulate.
+  assert.equal(accumRootRef(skeleton, new Map()), null);
+});
+
+test('mwskin: root motion extracted - the flight stays under the actor', () => {
+  // xflight.kf keys a 300-unit Y path into Bone0's translation, the way
+  // retail movement groups carry the actor's locomotion (OAAB's bat
+  // keys y=1892 the same way - the geometry-all-over-the-place bug).
+  const nif = parseNif(ANIMATED);
+  const batch = flattenNif(nif).find((b) => b.skinned);
+  const skeleton = buildSkeleton(nif);
+  const tracks = extractTracks(parseNif(FLIGHT));
+  const out = new Float32Array(batch.positions.length);
+
+  // WITHOUT extraction the body flies: v1 rides Bone0 to y=300.
+  const wild = poseSkeleton(skeleton, tracks, sampleTrack, 1.0);
+  skinBatch(batch, skeleton, wild, skeletonSpaceMatrices(skeleton, wild, batch.skin.skeletonRoot), out, null);
+  assert.ok(near(out[4], 300, 1e-3), `unextracted v1.y ${out[4]}`);
+
+  // WITH extraction (reference (1,1,0): X,Y pinned, Z animated) the
+  // authored verts come back exactly - the actor moved, the mesh didn't.
+  const pinned = poseSkeleton(skeleton, tracks, sampleTrack, 1.0, {
+    accumRoot: accumRootRef(skeleton, tracks),
+  });
+  skinBatch(batch, skeleton, pinned, skeletonSpaceMatrices(skeleton, pinned, batch.skin.skeletonRoot), out, null);
+  assert.ok(nearVec(Array.from(out), [0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1]));
 });
