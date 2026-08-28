@@ -3442,6 +3442,31 @@ export async function bootWorld(canvas, renderer, params, status) {
     // its dependency list; worldModes only chooses the slot.
     makeCharSheet: () => (charSheetDoorReady() ? makeCharSheetWindow() : null),
     makeJournal: (mode) => makeJournalWindow(mode),
+    // PX17c: the pause window's journal seams ride into the interior
+    // arm - the SAME expressions the world's own pause hands over
+    // (PX3/PX4/PX5), so a pause inside a tavern shows the same rail,
+    // separators and timers as one on the road.
+    pauseQuestMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
+    pauseQuestLog: () => {
+      const m = questBridge?.machine;
+      const active = [];
+      if (m) {
+        for (const q of m.quests.values()) {
+          const les = q.getLogMessages();
+          if (!les?.length) continue;
+          const messages = les.map((le) => q.getMessage(le.messageID)).filter(Boolean);
+          if (!messages.length) continue;
+          let clockSeconds = null;
+          for (const r of q.resources.values()) {
+            if (r.clockEnabled && !r.clockFinished && Number.isFinite(r.remainingTimeInSeconds)) {
+              clockSeconds = clockSeconds == null ? r.remainingTimeInSeconds : Math.min(clockSeconds, r.remainingTimeInSeconds);
+            }
+          }
+          active.push({ id: String(q.uid), name: q.displayName || null, questName: q.questName || '', clockSeconds, messages });
+        }
+      }
+      return { active, finished: questBridge?.notebook?.getFinishedQuests() ?? [] };
+    },
     revealLocation,
     magic, spellsByIndex: () => spellsByIndex,   // M2: the one cast engine + SPELLS.STD ride into the interior arm
     townTalk,   // U23: the interior host borrows FACTION.TXT/TEXT.RSC + the talk seam

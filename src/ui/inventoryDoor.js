@@ -81,7 +81,13 @@ function enhancedInventoryOverlay(deps) {
   host.id = 'enhanced-inventory';
   // z-index 13, the depth every in-game enhanced screen shares: they
   // are peers and are never stacked on each other.
-  host.style.cssText = 'position:fixed;inset:0;z-index:13;background:#0e1013;overflow:hidden';
+  // PX17c (Mac: "IT SHOULD BE TRANSPARENT LIKE THE REFERENCE"): the
+  // pack's own scrims carry the tone now (PX16b/c) and the reference's
+  // ground is THE GAME - this opaque slab was the pause door's pre-PX4
+  // shape, one door over, and it blacked out every scrim behind it.
+  // Same standing caveat as PX4: the classic window keeps its own
+  // opaque draw; only the enhanced host goes glass.
+  host.style.cssText = 'position:fixed;inset:0;z-index:13;background:transparent;overflow:hidden';
   document.body.append(host);
 
   const close = () => {

@@ -4345,9 +4345,11 @@ export function createWorldModes(host) {
         loadKey: host.loadKey,
         exitToMenu: exitToTitleMenu,
         textLines: (id) => townTalk?.lines?.(id) ?? null,
-        // PX3 FLAGGED: questMessages - the quest machine lives on the
-        // world host's bridge (world.js:2240); this mode's pause has no
-        // handle to it yet, so the Quests tab says so.
+        // PX17c: the journal seams the host now carries (world.js) -
+        // the PX3 flag paid; a tavern pause shows the developed
+        // journal, separators, timers and all.
+        questMessages: () => host.pauseQuestMessages?.() ?? [],
+        questLog: () => host.pauseQuestLog?.() ?? { active: [], finished: [] },
       });
     },
     // PX15b: THE DIAL - three arms here, because the interior ctx has

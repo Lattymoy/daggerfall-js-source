@@ -259,8 +259,8 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:752` - "database FLAGGED" narrows to the skill/loot message ids).
 - `src/scenes/dungeonContext.js:1256` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/dungeonContext.js:1292` - onTeleport INTERIM shape). Absent, the engine's dispatch
-- `src/scenes/dungeonContext.js:3028` - PX3 FLAGGED: questMessages - the dungeon quest mount is
-- `src/scenes/dungeonContext.js:3098` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
+- `src/scenes/dungeonContext.js:3053` - PX3 FLAGGED: questMessages - the dungeon quest mount is
+- `src/scenes/dungeonContext.js:3123` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
 - `src/scenes/exterior.js:559` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:565` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:802` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
@@ -283,8 +283,8 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:2954` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
 - `src/scenes/world.js:3284` - FLAGGED: the QuestComplete loot window pends the UI arc - the
 - `src/scenes/world.js:3311` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:3794` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:4158` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:3819` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:4183` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:799` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
 - `src/scenes/worldModes.js:936` - FLAGGED to the crime arc, as the Ledger records.
 - `src/scenes/worldModes.js:1005` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
@@ -310,7 +310,6 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:3773` - string is the seam that was a FLAGGED null until this slice,
 - `src/scenes/worldModes.js:3872` - *  FLAGGED null this slice closed. */
 - `src/scenes/worldModes.js:4210` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
-- `src/scenes/worldModes.js:4348` - PX3 FLAGGED: questMessages - the quest machine lives on the
 - `src/systems/advancement.js:84` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED

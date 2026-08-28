@@ -3015,6 +3015,31 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (activeOverlay || !pauseDoorReady()) return;
       const ctx = this;   // the sibling save verbs on this same context
       openPauseFlow((w) => { activeOverlay = w; }, {
+        // PX17c: the dungeon HAS the bridge (opts.questBridge feeds
+        // the F5 journal at :3449 and the notebook at :867) - the PX3
+        // flag was too conservative, so it is paid with the same walk
+        // the world's pause runs, off THIS host's own bridge.
+        questMessages: () => opts.questBridge?.machine.getAllQuestLogMessages() ?? [],
+        questLog: () => {
+          const m = opts.questBridge?.machine;
+          const active = [];
+          if (m) {
+            for (const q of m.quests.values()) {
+              const les = q.getLogMessages();
+              if (!les?.length) continue;
+              const messages = les.map((le) => q.getMessage(le.messageID)).filter(Boolean);
+              if (!messages.length) continue;
+              let clockSeconds = null;
+              for (const r of q.resources.values()) {
+                if (r.clockEnabled && !r.clockFinished && Number.isFinite(r.remainingTimeInSeconds)) {
+                  clockSeconds = clockSeconds == null ? r.remainingTimeInSeconds : Math.min(clockSeconds, r.remainingTimeInSeconds);
+                }
+              }
+              active.push({ id: String(q.uid), name: q.displayName || null, questName: q.questName || '', clockSeconds, messages });
+            }
+          }
+          return { active, finished: opts.questBridge?.notebook?.getFinishedQuests() ?? [] };
+        },
         quickSave: () => ctx.quickSave?.(),
         // the LOAD arm needs the host's position applier, exactly as
         // routeKey's own QuickLoad case passes it

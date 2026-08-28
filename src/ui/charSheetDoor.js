@@ -83,7 +83,9 @@ function enhancedCharSheetOverlay(entity, hooks) {
   const host = document.createElement('div');
   host.id = 'enhanced-charsheet';
   // z-index 13, the pause door's depth: they are peers, never stacked.
-  host.style.cssText = 'position:fixed;inset:0;z-index:13;background:#0e1013;overflow:hidden';
+  // PX17c: the same glass as the inventory door - one family, one
+  // ground (the paused game), the pause door's PX4 law finished.
+  host.style.cssText = 'position:fixed;inset:0;z-index:13;background:transparent;overflow:hidden';
   document.body.append(host);
 
   const close = () => {
