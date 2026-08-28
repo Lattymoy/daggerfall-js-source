@@ -14,6 +14,8 @@ import { createNetwork, linkPixels, ROAD_TRACK, ROAD_TRUNK, networkHasAnyRoad } 
 import { loadOrBakeRoadsAsync, serializeRoads } from '../src/systems/roadBake.js';
 import { paintRoadTiles, ROAD_TILE_HALF_WIDTH, ROAD_TILE_RECORDS, isRoadTile } from '../src/world/roadTiles.js';
 import { roadPoints } from '../src/ui/overworldModel.js';
+import { ROAD_TILE_RECORD_BY_KIND, ROAD_TILE_RECORD } from '../src/world/roadTiles.js';
+import { pickFootstepSet, FOOTSTEP } from '../src/systems/footsteps.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = (f) => readFileSync(join(root, f), 'utf8');
@@ -394,4 +396,88 @@ test('RB1: an EMPTY bake is never cached, and an empty cache reads as a miss', a
   const d = await loadOrBakeRoadsAsync(serializeRoads(full), async () => { touched++; return { network: full }; });
   assert.equal(touched, 0, 'a good cache is still read, not rebaked');
   assert.equal(d.fromCache, true);
+});
+
+
+// ── RC2: a trunk and a track look different underfoot ────────────
+test('RC2: the two classes paint DIFFERENT records, and both are still road', () => {
+  const net = createNetwork(8, 8);
+  linkPixels(net.trunkExits, 8, 3, 4, 4, 4);   // a trunk from the west
+  linkPixels(net.trackExits, 8, 4, 4, 4, 3);   // a track to the north
+  const tm = new Uint8Array(T * T);
+  paintRoadTiles(tm, net, 4, 4);
+
+  const seen = new Set();
+  for (const v of tm) if (v) seen.add(v & 0x3f);
+  assert.equal(seen.size, 2, 'the classes are told apart on the ground at all');
+  assert.ok(seen.has(ROAD_TILE_RECORD_BY_KIND[ROAD_TRUNK]));
+  assert.ok(seen.has(ROAD_TILE_RECORD_BY_KIND[ROAD_TRACK]));
+  // ...and BOTH remain road to the nav law and to every road reader -
+  // this ships no art and changes nothing about what counts as road.
+  for (const r of seen) assert.ok(ROAD_TILE_RECORDS.includes(r), `${r} is one of DFU's road records`);
+  for (let y = 0; y < T; y++) {
+    for (let x = 0; x < T; x++) {
+      if (tm[x + y * T]) assert.ok(isRoadTile(tm[x + y * T]), 'every painted tile reads as road');
+    }
+  }
+  // the trunk keeps 46 - the record the single-record version used and
+  // the one the older pins name
+  assert.equal(ROAD_TILE_RECORD_BY_KIND[ROAD_TRUNK], ROAD_TILE_RECORD);
+});
+
+test('RC2: an explicit `record` still overrides both classes', () => {
+  // A probe or a pin must be able to paint the whole network in one
+  // record and read it back without knowing the classes.
+  const net = createNetwork(8, 8);
+  linkPixels(net.trunkExits, 8, 3, 4, 4, 4);
+  linkPixels(net.trackExits, 8, 4, 4, 4, 3);
+  const tm = new Uint8Array(T * T);
+  paintRoadTiles(tm, net, 4, 4, { record: 55 });
+  const seen = new Set();
+  for (const v of tm) if (v) seen.add(v & 0x3f);
+  assert.deepEqual([...seen], [55], 'one record for the lot when the caller says so');
+});
+
+// ── FS1: the tile under the player ───────────────────────────────
+test('FS1: a road underfoot rings like stone, and open ground does not', () => {
+  // pickFootstepSet has carried this arm since the FS-slice with NO
+  // producer anywhere in src/ - the exterior host passed inside,
+  // winter and climate, and nothing else.
+  const ground = pickFootstepSet({ inside: false, winter: false, climateIndex: 302 });
+  const road = pickFootstepSet({ inside: false, winter: false, climateIndex: 302, onExteriorPath: true });
+  assert.deepEqual(ground, [FOOTSTEP.Outside1, FOOTSTEP.Outside2], 'the field beside it');
+  assert.deepEqual(road, [FOOTSTEP.Stone1, FOOTSTEP.Stone2], 'and the road itself');
+  assert.notDeepEqual(road, ground, 'a road sounds different from the field beside it');
+  // The path arm sits AFTER the snow arm in DFU's own write order, so
+  // a road in winter is stone rather than snow.
+  const snowRoad = pickFootstepSet({ inside: false, winter: true, climateIndex: 302, onExteriorPath: true });
+  assert.deepEqual(snowRoad, [FOOTSTEP.Stone1, FOOTSTEP.Stone2], 'a cleared road in winter is stone');
+  const snow = pickFootstepSet({ inside: false, winter: true, climateIndex: 302 });
+  assert.deepEqual(snow, [FOOTSTEP.Snow1, FOOTSTEP.Snow2], 'while the field around it is not');
+});
+
+test('FS1: what the probe reads off a real tilemap IS what isRoadTile answers', () => {
+  // The chain end to end: paint a road, read a tile the way the probe
+  // reads it, and ask the same question the footstep arm asks.
+  const net = createNetwork(8, 8);
+  linkPixels(net.trunkExits, 8, 3, 4, 4, 4);   // straight through, row MID
+  linkPixels(net.trunkExits, 8, 4, 4, 5, 4);
+  const tm = new Uint8Array(T * T);
+  paintRoadTiles(tm, net, 4, 4);
+  assert.equal(isRoadTile(tm[40 + MID * T]), true, 'on the road');
+  assert.equal(isRoadTile(tm[40 + 20 * T]), false, 'off it');
+  // the probe's "no information" answer must not read as road
+  assert.equal(isRoadTile(null ?? 0), false, 'an unstreamed pixel is not a road');
+});
+
+test('FS1: the host retains the tilemap and probes it at the right scale', () => {
+  const w = src('src/scenes/world.js');
+  assert.match(w, /tilemapTex, tilemap, groundArchive/, 'the pixel record keeps its tilemap');
+  assert.match(w, /const TERRAIN_TILE_WORLD = 2 \* TERRAIN_TILE_DIM;/,
+    'a terrain tile is 2 x WorldMapTileDim world units - locationWorldRect walks the same step');
+  assert.match(w, /const ty = Math\.floor\(\(wc\.z - origin\.z\) \/ TERRAIN_TILE_WORLD\);/,
+    'rows rise with z, which is why row 127 is north');
+  assert.match(w, /onExteriorPath: isRoadTile\(playerGroundTile\(\) \?\? 0\)/, 'and the footsteps read it');
+  // off the built world the probe says NOTHING rather than "not road"
+  assert.match(w, /if \(!built_\?\.tilemap\) return null;/);
 });
