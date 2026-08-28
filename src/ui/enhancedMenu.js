@@ -1298,23 +1298,32 @@ function pauseQuests(body) {
       rail.append(b);
     }
   };
-  // PX5: main quests above side quests, each under its own small
-  // heading - shown only when BOTH kinds are on the log, because a
-  // rail of one group under a header is a header explaining nothing.
+  // PX22 (Mac: "quests aren't supposed to be titled as main quest...
+  // what we developed had 3 sections for main, side and archived"):
+  // THE RAIL IS THREE SECTIONS, ALWAYS. PX5 made the two active
+  // headings CONDITIONAL - "a rail of one group under a header is a
+  // header explaining nothing" - and that reasoning is fine for a
+  // heading that only labels; it is wrong for one that is the
+  // journal's SHAPE. A player who opens the journal on their first
+  // side quest should learn that a main-quest section exists and is
+  // empty, not meet a different window later. So all three stand, in
+  // order, and an empty one says so in the dim - the same anti-lie
+  // idiom as the worn map's empty families and the site's not-yet box.
+  //
+  // The ARCHIVE is not split by kind, and that is not an oversight:
+  // the notebook's filed header keeps only the display name, so the
+  // questName main/side is gone by the time a quest is filed
+  // (notebook.js:151-182). Three sections is the shape the DATA has.
   const mains = active.filter((q) => q.main);
   const sides = active.filter((q) => !q.main);
-  if (mains.length && sides.length) {
-    rail.append(el('div', 'px-qarch px-qfirst', 'Main Quests'));
-    railList(mains, '');
-    rail.append(el('div', 'px-qarch', 'Quests'));
-    railList(sides, '');
-  } else {
-    railList(active, '');
-  }
-  if (finished.length) {
-    rail.append(el('div', 'px-qarch', 'Archive'));
-    railList(finished, ' done');
-  }
+  const section = (label, items, cls, first = false) => {
+    rail.append(el('div', `px-qarch${first ? ' px-qfirst' : ''}`, label));
+    if (items.length) railList(items, cls);
+    else rail.append(el('div', 'px-qnone', '\u2014'));
+  };
+  section('Main Quests', mains, '', true);
+  section('Side Quests', sides, '');
+  section('Archived', finished, ' done');
   wrap.append(rail);
 
   const detail = el('div', 'px-qdetail');
@@ -1323,14 +1332,19 @@ function pauseQuests(body) {
     head2.append(el('span', 'px-qwing'), el('h3', null, sel.name), el('span', 'px-qwing px-flip'));
     detail.append(head2);
     if (sel.entries) {
+      // PX22: NO KIND TAG. PX5 put "Main Quest" / "Side Quest" beside
+      // the timer; with the rail always showing three named sections
+      // that is the same fact twice, and a quest is not TITLED by its
+      // kind - it is filed under it. (The same cut PX20c made to the
+      // pack's slots-filled count.) The meta line is the timer's now,
+      // and exists only when there is a timer.
       const meta = el('div', 'px-qmeta');
-      meta.append(el('span', 'px-qkind', sel.main ? 'Main Quest' : 'Side Quest'));
       if (sel.clockSeconds != null) {
         // Under a game day the words go URGENT gold.
         const urgent = sel.clockSeconds < 86400;
         meta.append(el('span', `px-qtimer${urgent ? ' urgent' : ''}`, `Time remains: ${remainWords(sel.clockSeconds)}`));
       }
-      detail.append(meta);
+      if (meta.childNodes.length) detail.append(meta);   // PX22: an empty meta line is a gap the eye reads as a mistake
     }
     if (sel.entries) {
       // Active: the LATEST entry is the state of the quest; the trail

@@ -7554,6 +7554,58 @@ column header is still the column header, and this is the loot frame's
 own dress, which is the same seam PX21b used to give this window rows
 where the dock has tiles.
 
+PX22 (Mac: "quests aren't supposed to be titled as main quest, etc.
+What we developed had 3 sections for main, side and archived. Please
+research this thoroughly and ensure it's 1 to 1"): THE JOURNAL'S THREE
+SECTIONS.
+
+WHAT THE RESEARCH FOUND, and it did not match. The rail was built
+exactly as this arc recorded it. PX4 (commit 1dc10db1) shipped ACTIVE
+plus an "Archive" heading. PX5 (commit 1b798025) added the main/side
+split with two decisions written down at the time: the headings appear
+"only when BOTH kinds are on the log, because a rail of one group under
+a header is a header explaining nothing", the side group is called
+"Quests", and the DETAIL carries a "Main Quest" / "Side Quest" tag
+beside the timer. So the code and the record agreed; what they did not
+match was the three-section design Mac remembers. Said plainly here
+rather than quietly reshaped, because a record that bends to the last
+thing said stops being a record - and then reshaped, because the design
+is Mac's call and this is it.
+
+THREE SECTIONS, ALWAYS: Main Quests, Side Quests, Archived, in that
+order, from one `section()` helper called three times rather than a
+conditional pair. PX5's argument against a lone heading is sound for a
+heading that only LABELS; it is wrong for one that is the window's
+SHAPE. A player who opens the journal on their first side quest should
+learn that a main-quest section exists and is empty - not meet a
+different window later - so an empty section still stands and says so
+with a dim em-dash. That is the worn map's empty-family idiom and the
+site's not-yet box, one window over.
+
+NO KIND TAG. "Main Quest" / "Side Quest" beside the timer was the same
+fact the rail now states, twice - and a quest is FILED under its kind,
+not TITLED by it, which is what Mac's first sentence is about. The meta
+line is the timer's alone now, and it is only appended when it holds
+something, because an empty div leaves a gap the eye reads as a
+mistake. (The same cut PX20c made to the pack's slots-filled count.)
+
+WHAT DID NOT CHANGE: the grouping law. `isMainQuest(q.questName)` still
+reads the pack's own naming - DFU ships the story quests as S0000*.txt
+and _BRISIEN is the MQ opener (StartGameBehaviour.cs:445-447) - so
+which quest is which is untouched. And the ARCHIVE is still not split
+by kind, which is the DATA's shape rather than an omission: the
+notebook's filed header keeps only the display name, so the questName
+is gone by the time a quest is filed (notebook.js:151-182). Three
+sections is what this log can honestly draw.
+
+Pins: 2 in enhancedPause.test.js (the three sections in order from one
+helper, PX5's conditional and both old words gone, the empty section
+standing; and no kind tag anywhere in the journal detail with the meta
+line conditional, the grouping law unchanged, the archive unsplit). 6
+mutations, 6 dead. Driven live through the real pause face with three
+logs - both kinds, sides only, mains only - and all three drew the
+three headings with the empty ones marked.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk
