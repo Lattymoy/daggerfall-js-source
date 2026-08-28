@@ -214,6 +214,38 @@ function stampRun(tilemap, ax, ay, bx, by, half, record, stopMask = null) {
  *
  *  A single exit is a dead end and a junction is three or more, and
  *  neither is a curve: both keep their spokes to the centre. */
+/** RZ2 (Mac, 2026-08-28) - WHERE a through road's control point goes.
+ *
+ *  RR1 put it at the pixel CENTRE always, which rounds a right-angle
+ *  turn correctly and is badly wrong for a gentle one: a road drifting
+ *  east-north-east has to dive to the middle of every pixel and back
+ *  out to a corner, and it scallops. Measured over five pixels, that
+ *  road stood a mean 28 tiles and a peak 46 off its own line - about
+ *  290 world units of detour, which is the ground half of the zig-zag.
+ *
+ *  The control point is now placed by how sharply the road actually
+ *  turns here, using the two exits' directions from the centre:
+ *
+ *    opposite exits (a straight-through road)  -> the chord's midpoint,
+ *                                                 so the road is straight
+ *    perpendicular exits (a real corner)       -> the centre, so the
+ *                                                 corner rounds as it did
+ *    anything between                          -> weighted between them
+ *
+ *  `1 - |dot|` is that weight: 0 when the exits face opposite ways,
+ *  1 when they are at right angles. So the rounding RR1 added is kept
+ *  exactly where it was needed and taken out of the road's way
+ *  everywhere else. */
+export function throughControl(a, b) {
+  const ax = a.x - MID, ay = a.y - MID;
+  const bx = b.x - MID, by = b.y - MID;
+  const la = Math.hypot(ax, ay) || 1, lb = Math.hypot(bx, by) || 1;
+  const dot = (ax / la) * (bx / lb) + (ay / la) * (by / lb);
+  const w = 1 - Math.abs(dot);
+  const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+  return { x: mx + (MID - mx) * w, y: my + (MID - my) * w };
+}
+
 function curvePoints(ax, ay, cx, cy, bx, by) {
   // Sampled fine enough that consecutive samples never differ by more
   // than a tile on either axis; stampPath drops the duplicates.
@@ -315,8 +347,9 @@ export function paintRoadTiles(tilemap, network, px, py, {
     // the straight approaches - they have to stop at the footprint,
     // and a curve that halts halfway is not a curve.
     if (exits.length === 2 && !located) {
+      const c = throughControl(exits[0], exits[1]);
       painted += stampPath(tilemap,
-        curvePoints(exits[0].x, exits[0].y, MID, MID, exits[1].x, exits[1].y),
+        curvePoints(exits[0].x, exits[0].y, c.x, c.y, exits[1].x, exits[1].y),
         half, rec, null);
       continue;
     }

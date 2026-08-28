@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { createNetwork, linkPixels, ROAD_TRACK, ROAD_TRUNK, networkHasAnyRoad } from '../src/systems/roads.js';
 import { loadOrBakeRoadsAsync, serializeRoads } from '../src/systems/roadBake.js';
-import { paintRoadTiles, ROAD_TILE_HALF_WIDTH, ROAD_TILE_RECORDS, isRoadTile } from '../src/world/roadTiles.js';
+import { paintRoadTiles, ROAD_TILE_HALF_WIDTH, ROAD_TILE_RECORDS, isRoadTile, throughControl } from '../src/world/roadTiles.js';
 import { roadPoints, chaikin, simplifyChain, reliefPoint, sampleHeightByte, SIMPLIFY_EPSILON } from '../src/ui/overworldModel.js';
 import { ROAD_TILE_RECORD_BY_KIND, ROAD_TILE_RECORD } from '../src/world/roadTiles.js';
 import { pickFootstepSet, FOOTSTEP } from '../src/systems/footsteps.js';
@@ -285,26 +285,82 @@ test('RR1: a through road is ROUNDED - no mitred corner at the pixel centre', ()
   }
 });
 
-test('RR1: the curve bends toward the CENTRE, on a diagonal pair too', () => {
-  // The axis-aligned pair above cannot tell a centre control point
-  // from `(exits[0].x, exits[1].y)` - exitTile puts MID on the
-  // non-moving axis, so that expression lands ON the centre and the
-  // two are the same curve. A DIAGONAL exit separates them.
-  const net = createNetwork(8, 8);
-  linkPixels(net.trunkExits, 8, 4, 4, 5, 3);   // NE, exit tile (127,127)
-  linkPixels(net.trunkExits, 8, 3, 4, 4, 4);   // W,  exit tile (0,64)
-  const tm = new Uint8Array(T * T);
-  paintRoadTiles(tm, net, 4, 4);
-  const nearRoad = (cx, cy, r = 3) => {
-    for (let y = cy - r; y <= cy + r; y++) {
-      for (let x = cx - r; x <= cx + r; x++) if (isRoad(tm, x, y)) return true;
+test('RZ2: the control point is placed by how sharply the road turns', () => {
+  // RR1 put it at the centre ALWAYS. That rounds a right angle
+  // correctly and scallops a gentle bend: a road drifting
+  // east-north-east had to dive to the middle of every pixel and back
+  // out to a corner, standing a mean 28 tiles and a peak 46 off its
+  // own line over five pixels.
+  const W = { x: 0, y: MID }, E = { x: T - 1, y: MID };
+  const N = { x: MID, y: T - 1 }, NE = { x: T - 1, y: T - 1 };
+
+  // opposite exits: the chord's midpoint, so a through road is STRAIGHT
+  const straight = throughControl(W, E);
+  // the chord's own midpoint - exits sit at 0 and 127, so that is
+  // 63.5, half a tile off MID and exactly where the straight line runs
+  assert.equal(straight.x, (W.x + E.x) / 2, 'a straight road stays on its chord');
+  assert.equal(straight.y, MID);
+
+  // perpendicular exits: the centre, so a real corner rounds as before
+  const corner = throughControl(W, N);
+  assert.equal(corner.x, MID, 'a right angle still bows to the centre');
+  assert.equal(corner.y, MID);
+
+  // 135 degrees: mostly the chord, a little of the centre
+  const gentle = throughControl(W, NE);
+  const chordMid = { x: (W.x + NE.x) / 2, y: (W.y + NE.y) / 2 };
+  const toChord = Math.hypot(gentle.x - chordMid.x, gentle.y - chordMid.y);
+  const toCentre = Math.hypot(gentle.x - MID, gentle.y - MID);
+  assert.ok(toChord < toCentre, 'a gentle bend sits nearer its chord than the centre');
+  assert.ok(toChord > 0, 'but is not perfectly straight - it still bends');
+});
+
+test('RZ2: a drifting road stays far nearer its own line than it did', () => {
+  // The behavioural half, stitched across five pixels the way the
+  // streamed world lays them - each painted independently, so this is
+  // the picture the player walks.
+  const chain = [[2, 5], [3, 5], [4, 4], [5, 4], [6, 3]];
+  const net = createNetwork(9, 9);
+  for (let i = 1; i < chain.length; i++) {
+    linkPixels(net.trunkExits, 9, chain[i - 1][0], chain[i - 1][1], chain[i][0], chain[i][1]);
+  }
+  const PX = [2, 3, 4, 5, 6], PY = [3, 4, 5];
+  const BW = PX.length * T, BH = PY.length * T;
+  const big = new Uint8Array(BW * BH);
+  for (let j = 0; j < PY.length; j++) {
+    for (let i = 0; i < PX.length; i++) {
+      const tm = new Uint8Array(T * T);
+      paintRoadTiles(tm, net, PX[i], PY[j]);
+      for (let y = 0; y < T; y++) {
+        for (let x = 0; x < T; x++) big[(i * T + x) + ((j * T) + (T - 1 - y)) * BW] = tm[x + y * T];
+      }
     }
-    return false;
-  };
-  // centre control (64,64) puts the midpoint at (64, 80)
-  assert.ok(nearRoad(64, 80), 'the curve bows through the middle of the pixel');
-  // a control at (127,64) would put it out at (95, 80)
-  assert.equal(nearRoad(95, 80), false, 'not out toward the east edge');
+  }
+  const pts = [];
+  for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) if (big[x + y * BW]) pts.push([x, y]);
+  assert.ok(pts.length > 0);
+  let a = pts[0], b = pts[0];
+  for (const p of pts) { if (p[0] < a[0]) a = p; if (p[0] > b[0]) b = p; }
+  const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy);
+  let max = 0;
+  for (const p of pts) {
+    const d = Math.abs(dy * p[0] - dx * p[1] + b[0] * a[1] - b[1] * a[0]) / len;
+    if (d > max) max = d;
+  }
+  // 45.9 with the centre control; the exit POINTS themselves set the
+  // floor, since a diagonal step must pass through a shared corner.
+  assert.ok(max < 40, `the drifting road stands ${max.toFixed(1)} tiles off its line`);
+  // and the road is still one connected thing across every seam
+  const road = (x, y) => x >= 0 && y >= 0 && x < BW && y < BH && big[x + y * BW] !== 0;
+  let cells = 0, orth = 0;
+  for (let y = 0; y < BH; y++) {
+    for (let x = 0; x < BW; x++) {
+      if (!road(x, y)) continue;
+      cells++;
+      if (road(x - 1, y) || road(x + 1, y) || road(x, y - 1) || road(x, y + 1)) orth++;
+    }
+  }
+  assert.equal(orth, cells, 'every tile of the stitched road has an orthogonal neighbour');
 });
 
 test('RR1: the MAP layer rounds its chains too - a right angle stops being one', () => {
