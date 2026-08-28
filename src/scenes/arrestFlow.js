@@ -18,6 +18,7 @@
 // advanceDays; banishment shows 8063. Release clears the crime (the
 // guards despawn on the crime-clear law in cityGuards).
 
+import { expandMacroValues } from '../systems/quest/questMacros.js';   // MH1: the ONE macro walk
 import { ChoiceWindow } from '../ui/talkWindow.js';
 import {
   CRIMES, CRIME_NAMES, penaltyText, TEXT_SURRENDER, TEXT_COURT_START, TEXT_FOUND_GUILTY,
@@ -103,11 +104,16 @@ export function createArrestFlow({
     // (chargen runs in every host and writes the name; AUDIT 23).
     const name = playerEntity.name ?? '';
     if (!name) t = t.replace(/,\s*%pcn\s*,/g, '');
-    return t.replaceAll('%pcn', name)
-      .replaceAll('%cri', CRIME_NAMES[crimeId()] ?? 'None')
-      .replaceAll('%pen', penaltyText(court))
-      .replaceAll('%cn', townTalk.locationName ?? '')
-      .replaceAll('%gtp', String(court.fine)).replaceAll('%dip', String(court.daysInPrison));
+    // MH1: the court record rides the ONE walk with its value map -
+    // %cri/%pen/%gtp/%dip are MacroHelper's own court symbols.
+    return expandMacroValues(t, {
+      pcn: name,
+      cri: CRIME_NAMES[crimeId()] ?? 'None',
+      pen: penaltyText(court),
+      cn: townTalk.locationName ?? '',
+      gtp: String(court.fine),
+      dip: String(court.daysInPrison),
+    });
   }
 
   function startCourtFlow() {

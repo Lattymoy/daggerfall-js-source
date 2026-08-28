@@ -42,3 +42,10 @@ public/visual-changes/
 
 # V4's playthrough screenshots (tools/firstHourProbe.mjs default SHOTS dir).
 firsthour-shots/
+
+# THE ONE ALLOWED .BSA: the MW fixture archive is OURS - written by
+# test/fixtures/mw/generate.py from pyffi-authored meshes and a hand-
+# packed DDS, no game data in it. The corpus guard above ate it SILENTLY
+# on two slices (git add -A stages nothing ignored and says nothing),
+# a parallel session had to force-add it after CI went red.
+!test/fixtures/mw/fixture.bsa

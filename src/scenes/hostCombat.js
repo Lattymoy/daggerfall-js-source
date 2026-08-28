@@ -320,7 +320,7 @@ export function enemySoundOccluded(collider, feet, playerFeet) {
  * means and DFU's own comment says why: an inverse curve leaves the
  * sound "audible almost everywhere".
  */
-export function tickEnemySound(source, feet, playerFeet, dt, { audio = null, collider = null } = {}) {
+export function tickEnemySound(source, feet, playerFeet, dt, { audio = null, collider = null, hearing = 1 } = {}) {
   if (!source || !feet) return null;
   const dx = (playerFeet?.[0] ?? 0) - feet[0];
   const dy = (playerFeet?.[1] ?? 0) - feet[1];
@@ -329,16 +329,20 @@ export function tickEnemySound(source, feet, playerFeet, dt, { audio = null, col
   // does with playerInAttractRadius false.
   const dist = playerFeet ? Math.hypot(dx, dy, dz) : Infinity;
   const out = source.tick(dt, dist, () => enemySoundOccluded(collider, feet, playerFeet));
-  if (out) playEnemyClip(audio, out, feet);
+  if (out) playEnemyClip(audio, out, feet, hearing);
   return out;
 }
 
 /** PlayAttackSound's play, and the attract one's - the same device
- *  settings, because in DFU they are the same AudioSource. */
-export function playEnemyClip(audio, out, feet) {
+ *  settings, because in DFU they are the same AudioSource. CF1:
+ *  `hearing` is acuteHearingMultiplier(playerEntity) - DFU scales the
+ *  enemy AudioSource's maxDistance at spawn (DaggerfallEnemy.Start
+ *  :62-70); the port scales it here, on the one seam every enemy
+ *  clip rides. */
+export function playEnemyClip(audio, out, feet, hearing = 1) {
   if (!out || out.clip == null) return null;
   audio?.play3d?.(out.clip, [feet[0], feet[1] + 1, feet[2]], out.volume,
-    { maxDistance: ATTRACT_RADIUS, distanceModel: 'linear' });
+    { maxDistance: ATTRACT_RADIUS * hearing, distanceModel: 'linear' });
   return out.clip;
 }
 

@@ -13,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 import {
   generateItems, generateRandomLoot, createRandomClothing, LOOT_MATRICES, BOOK_TEMPLATE,
 } from '../src/systems/loot.js';
+import { getRandomBookID } from '../src/systems/books.js';   // IM1: the mint's message roll
 import {
   goldStack, GOLD_TEMPLATE, addItem, transferAll, itemWeight, totalWeight,
   isStackable, ARROW_TEMPLATE, OIL_TEMPLATE,
@@ -282,10 +283,13 @@ test('audit18 items: looted clothing rolls the dye, then the template variant', 
 test('audit18 items: book variant is Range(0, TotalVariants) = Range(0, 2)', () => {
   assert.equal(BOOK_TEMPLATE, 277);
   assert.equal(ITEM_TEMPLATES[BOOK_TEMPLATE].variants, 2);
-  // loot: BK hit at roll .04, variant draw .75 -> floor(.75*2) = 1
+  // loot: BK hit at roll .04, then IM1's CreateRandomBook order -
+  // the message draw (.75 -> GetRandomBookID) BEFORE the variant
+  // draw (.99 -> floor(.99*2) = 1). The mint carried no id at all
+  // before IM1: no title on the panel, nothing for the reader.
   const k = generateRandomLoot(LOOT_MATRICES.K, { level: 1, gender: 'male' },
     seq(0, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.04, 0.75, 0.99, 0.99));
-  assert.deepEqual(k.find((i) => i.group === 'Books'), { group: 'Books', templateIndex: 277, variant: 1, name: 'Book', maxCondition: 20, currentCondition: 20 });   // AUDIT 23 (items-5)
+  assert.deepEqual(k.find((i) => i.group === 'Books'), { group: 'Books', templateIndex: 277, message: getRandomBookID(() => 0.75), variant: 1, name: 'Book', maxCondition: 20, currentCondition: 20 });   // AUDIT 23 (items-5)
   // shop: the same draw, five rows off a quality-20 Bookseller
   const shelf = stockShopShelf({ buildingType: BUILDING_TYPES.Bookseller, quality: 20 }, { level: 5, gender: 'male' }, { rolls: () => 0.75 });
   const books = shelf.filter((i) => i.group === 'Books');

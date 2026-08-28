@@ -68,8 +68,15 @@ export function collectCityLights(dfBlock, getScaledSize) {
 /**
  * Pick the nearest `max` lights to a position; returns flat vec4 data
  * [x, y, z, range] ready for the renderer.
+ *
+ * LT1: pass `colorOf` - `(light, index) => [r, g, b]`, the light's
+ * colour x intensity - and the return becomes `{ data, colors }`:
+ * `colors` is the flat vec3 array in the SAME pick order as `data`,
+ * from the ONE sort (a second sort could diverge on distance ties).
+ * Without it the return is the bare vec4 array, unchanged - the
+ * exterior lantern callers.
  */
-export function nearestLights(lights, pos, max = 16, range = CITY_LIGHT_RANGE) {
+export function nearestLights(lights, pos, max = 16, range = CITY_LIGHT_RANGE, colorOf = null) {
   const perLight = typeof range !== 'number' ? range : null;
   const sorted = lights
     .map((l, index) => {
@@ -87,5 +94,11 @@ export function nearestLights(lights, pos, max = 16, range = CITY_LIGHT_RANGE) {
     out[i * 4 + 2] = sorted[i].l.z;
     out[i * 4 + 3] = perLight ? perLight[sorted[i].index] : range;
   }
-  return out;
+  if (!colorOf) return out;
+  const colors = new Float32Array(sorted.length * 3);
+  for (let i = 0; i < sorted.length; i++) {
+    const c = colorOf(sorted[i].l, sorted[i].index);
+    colors[i * 3] = c[0]; colors[i * 3 + 1] = c[1]; colors[i * 3 + 2] = c[2];
+  }
+  return { data: out, colors };
 }

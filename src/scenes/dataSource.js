@@ -25,9 +25,15 @@ const STORE = 'arena2';
 const MUSIC_STORE = 'music';
 /** M-TEX: the same reasoning as the music store, one domain over. */
 const TEXTURE_STORE = 'textures';
+/** MW-IMPORT: user-supplied Morrowind data (Morrowind.bsa, expansions,
+ *  Morrowind.esm) for the opt-in 3D asset layer. Same doctrine as
+ *  ARENA2 - actively-sold game data, never in the repo or build, lives
+ *  only in the player's browser. Its lifecycle is its own: attaching
+ *  or clearing it never touches the ARENA2 set. */
+const MW_STORE = 'morrowind';
 /** Every injected-asset store, so the upgrade and the helpers below
  *  cannot drift from each other - adding a third domain is one entry. */
-const ASSET_STORES = [MUSIC_STORE, TEXTURE_STORE];
+const ASSET_STORES = [MUSIC_STORE, TEXTURE_STORE, MW_STORE];
 const mem = new Map(); // NAME -> Uint8Array
 
 // Ingest DIET (2026-08-14, the mobile storage fix): ARENA2 is 517MB
@@ -112,7 +118,7 @@ function openDb() {
     // existing player arrives here at version 1 holding a full ARENA2
     // ingest, and re-creating `arena2` would throw and take their data
     // with it.
-    const req = indexedDB.open(DB_NAME, 3);
+    const req = indexedDB.open(DB_NAME, 4);
     req.onupgradeneeded = () => {
       const d = req.result;
       if (!d.objectStoreNames.contains(STORE)) d.createObjectStore(STORE);
@@ -310,6 +316,65 @@ export async function storeMusicFiles(files) {
 export const storedMusicNames = () => assetNames(MUSIC_STORE);
 export const loadMusicFile = (fileName) => assetBytes(MUSIC_STORE, fileName);
 export const clearStoredMusic = () => clearAssets(MUSIC_STORE);
+
+export async function storeMorrowindFiles(files) {
+  // .bsa archives + .esm records; MwBsaFile magic-checks at read, so a
+  // wrong archive fails loudly there, not silently here.
+  return storeAssets(MW_STORE, files, (n) => /\.(bsa|esm)$/i.test(n));
+}
+export const storedMorrowindNames = () => assetNames(MW_STORE);
+export const loadMorrowindFile = (fileName) => assetBytes(MW_STORE, fileName);
+export const clearStoredMorrowind = () => clearAssets(MW_STORE);
+export const hasStoredMorrowind = async () =>
+  (await storedMorrowindNames()).some((n) => /\.bsa$/i.test(n));
+
+/** Every stored .bsa opened, in override order: expansions and mods
+ *  answer BEFORE Morrowind.bsa, the way the engine's load order does. */
+export async function loadMorrowindArchives() {
+  const { MwBsaFile } = await import('../formats/mwBsaFile.js');
+  const names = (await storedMorrowindNames()).filter((n) => /\.bsa$/i.test(n));
+  const rank = (n) => {
+    const l = n.toLowerCase();
+    if (l.includes('morrowind')) return 3;
+    if (l.includes('tribunal')) return 2;
+    if (l.includes('bloodmoon')) return 1;
+    return 0; // unknown packs override everything
+  };
+  names.sort((a, b) => rank(a) - rank(b));
+  const archives = [];
+  for (const n of names) {
+    try {
+      archives.push(new MwBsaFile(await loadMorrowindFile(n)));
+    } catch (err) {
+      console.warn(`morrowind archive ${n}: ${err.message}`);
+    }
+  }
+  return archives;
+}
+
+/** Sync-readable state for the settings row; -1 until registered. */
+let _mwCount = -1;
+export const morrowindDataCount = () => Math.max(_mwCount, 0);
+/** Bootstrap arm (scenes/shared.js): count the stored archives once so
+ *  the settings dialog can report attachment without an async hop. */
+export async function registerMorrowindData() {
+  _mwCount = (await storedMorrowindNames()).filter((n) => /\.bsa$/i.test(n)).length;
+  return _mwCount;
+}
+
+export async function pickMorrowindFiles() {
+  return pickAssetFolder({
+    title: 'Your Morrowind data',
+    blurb: `<p>Pick your Morrowind <b>Data Files</b> folder (or just
+      <b>Morrowind.bsa</b>). Nothing is uploaded - it is stored in this
+      browser, exactly like the ARENA2 pick.</p>
+      <p style="color:#999">Powers the opt-in 3D asset layer. You need
+      to own Morrowind; Tribunal.bsa and Bloodmoon.bsa join in if
+      they're in the folder.</p>`,
+    store: storeMorrowindFiles,
+    register: registerMorrowindData,
+  });
+}
 
 export async function storeTextureFiles(files) {
   const { textureEntry } = await import('../systems/textureReplacement.js');

@@ -54,6 +54,7 @@ import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   //
 import { RestWindow } from '../ui/restWindow.js';   // S40: rest above ground
 import { setEnemyAlert, areEnemiesNearby } from '../systems/encounters.js';   // the enemy arm RAISES the alert before refusing; the RESTING variant asks the pool, the STRICT one gates the townsfolk idle
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5): the collapse box
+import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
 import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { calculateCastCost } from '../systems/spellcost.js';   // M2
@@ -92,7 +93,7 @@ import { ChoiceWindow } from '../ui/talkWindow.js';   // V1: the infection popup
 import { startInfection, liveInfection } from '../systems/infection.js';   // V1 probe surface: the bite and the lifecycle
 import { diseaseCount } from '../systems/diseases.js';
 import { MINUTES_PER_DAY } from '../systems/gameDate.js';
-import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
+import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, claimFrame, frameAlive, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -106,6 +107,7 @@ import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseL
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';   // I2: the rebindable registry
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
+import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
 import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
 import { discoveredBuildings } from '../systems/discovery.js';   // A2: the nameplates' gate
 import { activeMemberships } from '../systems/guilds.js';   // F117
@@ -478,7 +480,8 @@ export async function bootExterior(canvas, renderer, params, status) {
   // door in playerEntity.js; the door calls this. Registered here rather than
   // passed down four call chains, because there is one player and one death.
   setDeathPresenter(() => {
-    if (!(townTalk.overlay instanceof DeathScreen)) townTalk.showOverlay(new DeathScreen({ onReset: () => endRunToTitleMenu(renderer) }));   // D1
+    // DC1: the LIVE eye and capsule, as PlayerEntity_OnDeath reads them.
+    if (!(townTalk.overlay instanceof DeathScreen)) townTalk.showOverlay(new DeathScreen({ eyeHeight: player.eye[1] - player.pos[1], capsuleHeight: player.height, onReset: () => endRunToTitleMenu(renderer) }));   // D1
   });
   // F117: Stendarr's rank-in-fifty, consulted by the door before the
   // presenter. No submersion model above ground; townTalk closes later
@@ -635,6 +638,15 @@ export async function bootExterior(canvas, renderer, params, status) {
   const detectFeed = createDetectFeed(playerEntity, {
     entities: () => ((modes?.mode ?? 'exterior') === 'exterior' ? cityGuards.guards : [])
       .filter((f) => !f.dead && f.ai).map(foeNearbyRecord),
+    // FX1 (F207): the world piles + guard corpses mark outdoors -
+    // UpdateNearbyObjects walks every active loot container with no
+    // scene gate (PlayerGPS.cs:747, :766-776).
+    loot: () => [
+      ...droppedLoot._piles.map(lootNearbyRecord),
+      ...cityGuards.guards
+        .filter((g) => !!g.corpse && !!g.entity)
+        .map((g) => lootNearbyRecord({ pos: g.corpseMarker?.pos ?? g.ai?.feet ?? null, items: g.entity.items ?? [] })),
+    ],
     feet: detectFeet,
   });
   const cityGuards = createCityGuards({
@@ -856,6 +868,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // assembling a second one from a different dependency list.
   const makeInventoryWindow = (extra = {}) => createInventoryWindow({
     openBook: openBookHook,   // B1: the use-mode book arm
+    say: (l) => townTalk.say(l),   // FX1 (F128): the "Equipping %s" cue on close
     items: () => (playerEntity.items ??= []),
     wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
     entity: playerEntity,
@@ -986,6 +999,15 @@ export async function bootExterior(canvas, renderer, params, status) {
     // other's note about the deliberately withheld quest hooks. They
     // agreed. That is what drift looks like the day before it stops.
     toggleCharSheet: () => townTalk.showOverlay(makeCharSheetWindow()),
+    // BS1/F198: the Status action's health box (the four-hosts seam).
+    // ST1: the record-22 box leads here too; this dev scene has no
+    // quest machine (see TickRest's note), so the null context leaves
+    // each macro as its bracketed placeholder - the null-MCP posture.
+    showStatus: () => {
+      const rows = (id) => townTalk.lines(id);
+      townTalk.showOverlay(new ActionTextBox(statusInfoRows(rows, null))
+        .addNext(healthStatusRows(playerEntity, rows)));
+    },
     toggleInventory: () => {
       // V4: GetSuppressInventory (LycanthropyEffect.cs:409-421)
       const sup = racialSuppressInventory(playerEntity);
@@ -1040,6 +1062,16 @@ export async function bootExterior(canvas, renderer, params, status) {
     // doors, so they are one object now rather than two ladders that
     // would drift. `hudCtx` is ui/input.js's routeAction contract.
     if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
+      // PX15b: THE DIAL - this host routes its own keys (no routeKey),
+      // so the Tab arm lives in ITS ladder, behind the same
+      // overlay/mode gate as every sibling door. preventDefault only
+      // when the dial answers, so classic Tab keeps its default.
+      if (e.code === 'Tab' && openPixelDial([
+        { id: 'skills', label: 'Skills', dir: 'n', open: () => hudCtx.toggleCharSheet() },
+        { id: 'items', label: 'Items', dir: 'e', open: () => hudCtx.toggleInventory() },
+        { id: 'map', label: 'Map', dir: 's', open: () => hudCtx.toggleAutomap() },
+        { id: 'magic', label: 'Magic', dir: 'w', open: () => hudCtx.toggleSpellbook() },
+      ])) { e.preventDefault(); return; }
       if (act === 'CharacterSheet') { hudCtx.toggleCharSheet(); return; }
       // U8d: F6 opens the classic inventory (DFU's default Inventory
       // binding; same host rule as F5).
@@ -1384,7 +1416,9 @@ export async function bootExterior(canvas, renderer, params, status) {
   const ambience = new AmbientEffects(EXTERIOR_AMBIENT_WAITS);   // A3
   let last = performance.now();
   const lookGate = makeLookGate(canvas);
+  const _frameToken = claimFrame();   // P0: this session owns the loop until someone claims after it
   function frame(now) {
+    if (!frameAlive(_frameToken)) return;   // P0: a later boot or an unwind killed this loop
     const dt = Math.min(0.1, (now - last) / 1000);
     last = now;
     lookGate(townTalk.overlayActive || (modes?.overlayHeld ?? false));   // a window up frees the cursor; closing re-locks
@@ -1505,6 +1539,8 @@ export async function bootExterior(canvas, renderer, params, status) {
         if (_step) audio.playOneShot(_step.clip, _step.volume);
       }
       cam.pos = player.eye;
+      // DC1: PlayerDeath.Update's camera sink (per-frame off the fresh eye array).
+      if (townTalk.overlay instanceof DeathScreen) cam.pos[1] -= townTalk.overlay.drop;
       const useHeld = keys.has('KeyE');   // I2 departure: DFU activates on Mouse0 and E is AbortSpell - the pointer-parity slice owns the move
       if (useHeld && !latch.use && !modes.transitioning) {
         // T3b: a townsperson under the ray wins the activation (the
@@ -1834,9 +1870,9 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (hudArt) {
       const _hfw = [-view[2], -view[10]];
       // X4: the Detect markers. This host's nearby pool is the city
-      // guards - the only entities it spawns. No loot piles above
-      // ground (FLAGGED with world.js's same gap), so Detect Treasure
-      // is live and finds nothing here.
+      // guards - the only entities it spawns - and, since FX1 (F207),
+      // the world piles and guard corpses: DFU's loot walk has no
+      // scene gate.
       const _dFeet = detectFeet();
       const _detected = detectFeed.tick(dt);
       drawHud(renderer, canvas, hudArt, playerEntity,

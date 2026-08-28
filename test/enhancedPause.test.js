@@ -303,10 +303,11 @@ test('U51: the pointer lock is dropped, and kept dropped', () => {
 });
 
 // ── THE PANES TELL THE TRUTH ABOUT WHAT THE HOST WILL DO ─────────
-// Two of the four hosts hand `savingPrevented: () => true` and no save
-// or load hook at all. A Save button drawn there would be the lie the
-// anti-lie law forbids, and a rail with the row removed would teach
-// the player the door was never there.
+// The probe host (exterior.js) hands `savingPrevented: () => true` and
+// no save or load hook at all (IS1 wired the interior mode's doors). A
+// Save button drawn there would be the lie the anti-lie law forbids,
+// and a rail with the row removed would teach the player the door was
+// never there.
 test('U51: save and load answer the host, not the rail', () => {
   const src = read('src/ui/enhancedMenu.js');
   const save = src.slice(src.indexOf('function paneSave(body)'), src.indexOf('function paneExit(body)'));

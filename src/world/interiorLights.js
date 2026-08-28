@@ -18,15 +18,13 @@
 // interiorLightProperties below and every light collected here carries
 // its own range, intensity and colour.
 //
-// RENDERER GAP (Port-Ledger, Rendering arc): only the per-light RANGE
-// reaches the GPU. Renderer.setPointLights takes a vec4 per light
-// [x, y, z, range] plus ONE shared vec3 uPointColor, and the four
-// fragment shaders that light a scene accumulate a scalar `pointDiff`
-// before multiplying by that single colour - so per-light intensity
-// and colour cannot be uploaded without a per-light colour channel in
-// the light uniform (a vec3 array, and a vec3 accumulator in each of
-// the four shaders). Until that lands both interior hosts pass
-// INTERIOR_LIGHT_COLOR, the prefab white, for every light.
+// LT1 closed the renderer gap: Renderer.setPointLights carries an
+// optional per-light colour array (vec3 colour x intensity beside each
+// vec4 [x,y,z,range]), the four fragment shaders accumulate a vec3
+// `pointAcc` weighted by `uPointColors[i]`, and both interior hosts
+// pass every light's own colour and intensity from the switch below.
+// A host that passes no colour array gets the shared colour splatted
+// across its lights - the exterior lantern path, unchanged.
 //
 // Interior ambient is PlayerAmbientLight's verbatim
 // InteriorAmbientLight (0.18); the night variant (0.20, 0.18, 0.20) is

@@ -409,10 +409,16 @@ const refresh = () => {
  *  so an equip during a compose is not dropped - which is why this can
  *  be fired at every change without a guard of its own. A build with
  *  no doll art returns immediately and the panel keeps the schematic. */
+let _dollWarned = false;
 function refreshFigure() {
   Promise.resolve(refreshPaperDoll(deps.entity))
     .then(() => { if (host) render(); })
-    .catch(() => { /* no art, no doll - the schematic is the answer */ });
+    .catch((e) => {
+      // PX19c: the schematic fallback is the honest DISPLAY, but a
+      // SILENT failure reads as "the doll was never integrated" - it
+      // says why, once, so a live report carries its own diagnosis.
+      if (!_dollWarned) { _dollWarned = true; console.warn('[pack] the paper doll could not draw:', e?.message ?? e); }
+    });
 }
 
 /** Wearing something, through the ONE chain. A refusal is REPORTED -
@@ -655,17 +661,23 @@ function equippedList() {
     // `.empty` COMPONENT (a dashed placeholder card), and reusing the
     // bare word drew every unfilled slot as one. Third collision of
     // this shape in the arc, after `.detail` and `.packcol`.
+    // PX19b (Mac: keep the CLASSIC'S PANEL-BASED equip section): the
+    // worn list is a TILE GRID now - each slot a bordered panel with
+    // the item's monogram tile and its slot word beneath, the
+    // classic's own reading one language over. Empties stay NON-
+    // BUTTONS (the law above) drawn as dim open slots; the probe's
+    // class names (.wornrow/.wornname) ride the tiles unchanged.
     if (!row.item) {
       const d = el('div', 'wornrow wornempty');
-      d.append(el('span', 'wornslot', row.label), el('span', 'wornname wornempty', '\u2014'));
+      d.append(el('span', 'worntile', '\u25c7'), el('span', 'wornslot', row.label), el('span', 'wornname wornempty', '\u2014'));
       wrap.append(d);
       continue;
     }
     const b = el('button', `wornrow${row.item === picked ? ' on' : ''}`);
     const line = itemLine(row.item, deps.entity);
+    b.append(itemTile(line));
     b.append(el('span', 'wornslot', row.label));
     b.append(el('span', 'wornname', line.name));
-    b.append(el('span', 'itemwt', `${line.weight.toFixed(2)} kg`));
     // SELECTS, rather than unequipping on the spot. The slot map's node
     // took the item straight off, which is right for a control whose
     // only meaning is "this one" - a named row has a detail panel
@@ -857,8 +869,11 @@ function goldField() {
   return form;
 }
 
-function listCol() {
-  const col = el('section', 'packcol');
+/** PX16b: the reference's LEFT SPINE - categories stacked vertically,
+ *  small caps, the chosen one bright with the gem at its edge. Same
+ *  TABS, same counts, same handlers; only the axis changed. */
+function catsCol() {
+  const col = el('section', 'packcol packcats');
   const tabs = el('div', 'packtabs');
   for (const t of TABS) {
     const b = el('button', `packtab${t === tab ? ' on' : ''}`, t[0].toUpperCase() + t.slice(1));
@@ -868,6 +883,11 @@ function listCol() {
     tabs.append(b);
   }
   col.append(tabs);
+  return col;
+}
+
+function listCol() {
+  const col = el('section', 'packcol');
   const rows = model.tabs.find((x) => x.tab === tab)?.items ?? [];
   if (!rows.length) {
     col.append(el('p', 'packempty', 'Nothing in this pack answers to that page.'));
@@ -891,6 +911,9 @@ function listCol() {
 // is picked and closes back down - rather than borrowed by accident.
 function detailCol() {
   const col = el('section', `packcol packdetail${picked ? ' open' : ''}`);
+  // PX16c: the plaque wears the pause window's own corners - one
+  // frame language across every enhanced surface.
+  for (const c of ['tl', 'tr', 'bl', 'br']) col.append(el('span', `px-gem px-corner px-${c}`));
   const close = el('button', 'sheet-close', 'Close');
   close.onclick = () => { picked = null; render(); };
   col.append(close);
@@ -992,32 +1015,84 @@ function render() {
   repaints++;
   repaintKeepingScroll(host, () => {
     host.innerHTML = '';
+    // PX16b (Mac: "really study the reference"): the reference's
+    // ground is THE GAME - two translucent columns on the left third,
+    // the world showing through the right. So no sky here: the paused
+    // frame is the ground (the pause door's law, one window over) and
+    // every column carries its own scrim.
     const shell = el('div', 'pack-shell');
+    // PX19 (Mac: centered, window-based; creative authority): THE
+    // PACK IS A WINDOW NOW - the pause window's own frame (corner
+    // gems, 2px border, the 0.72 glass) centered over the game, and
+    // it ARRIVES like the dial: a stepped fade while the world drops
+    // into the same depth-of-field. One entrance gesture for every
+    // floating surface. The window carries its own footer; the right
+    // column is the showcase compressed - figure above, plaque
+    // beneath.
+    requestAnimationFrame(() => requestAnimationFrame(() => shell.classList.add('on')));
+    const win = el('div', 'pack-win');
+    for (const c of ['tl', 'tr', 'bl', 'br']) win.append(el('span', `px-gem px-corner px-${c}`));
     const head = el('header', 'pack-id');
     const who = el('div');
     who.append(el('h2', null, 'Pack'));
-    who.append(el('p', 'meta',
-      `${plural(model.count, 'item')} · ${model.encumbrance.now} / ${model.encumbrance.max} kg · ${model.gold.toLocaleString()} gold`));
     head.append(who);
     const close = el('button', 'act', 'Close');
     close.onclick = () => onExit();
     head.append(close);
-    shell.append(head);
+    win.append(head);
     const grid = el('div', 'pack');
     // The two lists are a PAIR - DFU's window is local beside remote -
     // so they share one grid cell and split it, which keeps the outer
-    // three-column shape (and every phone rule written against it)
-    // exactly as it was.
+    // column shape (and every phone rule written against it) exactly
+    // as it was.
     // A CONTAINER or a REWARD TRAY is what the player opened the
     // window FOR, so on a stacked layout that list goes first. The
     // ground and the wagon are the other way round - there the pack is
     // what you came to empty.
-    const first = remote.kind === 'container' || remote.kind === 'reward';
-    const lists = el('div', `packlists${first ? ' remotefirst' : ''}`);
-    lists.append(listCol(), remoteCol());
-    grid.append(characterCol(), lists, detailCol());
-    shell.append(grid);
-    if (notice) shell.append(el('p', 'sheet-notice', notice));
+    // PX19c (Mac: containers/bodies/ground as their OWN smaller
+    // window): the pack's middle column is the LOCAL list alone now -
+    // the room the split buys - and the remote rides a second,
+    // smaller window in the same frame language beside the pack,
+    // present only when it has a reason to be: always for a
+    // container, a corpse's tray, or the wagon (the thing you opened
+    // the window FOR), and for the ground only once something lies on
+    // it. The PAIR LAW survives the furniture: same remoteModel, same
+    // remoteCol, same take/stow arms - only the wall between them
+    // moved.
+    const lists = el('div', 'packlists');
+    lists.append(listCol());
+    // PX16b: the reference's order left to right - the category
+    // spine, the names, then the SHOWCASE: the figure (the paper
+    // sprite viewer standing where Skyrim renders the item) with the
+    // detail plaque floating beside it.
+    grid.append(catsCol(), lists, el('div', 'packstage'));
+    const stage = grid.querySelector('.packstage');
+    stage.append(characterCol(), detailCol());
+    win.append(grid);
+    // PX16b: the reference's BOTTOM BAR - carry weight as a meter
+    // (blood past four-fifths, the reference's red), gold beside it.
+    const bar = el('footer', 'packbar');
+    const carry = el('div', 'packcarry');
+    const heavy = model.encumbrance.max > 0 && model.encumbrance.now / model.encumbrance.max >= 0.8;
+    carry.append(el('span', 'k', 'Carry Weight'),
+      el('span', 'v', `${model.encumbrance.now} / ${model.encumbrance.max}`));
+    const meter = el('div', 'px-meter');
+    const fill = el('div', `px-fill${heavy ? ' blood' : ''}`);
+    fill.style.width = `${model.encumbrance.max > 0 ? Math.min(100, (model.encumbrance.now / model.encumbrance.max) * 100) : 0}%`;
+    meter.append(fill);
+    carry.append(meter);
+    const gold = el('div', 'packgold');
+    gold.append(el('span', 'k', 'Gold'), el('span', 'v', model.gold.toLocaleString()));
+    bar.append(el('span', 'packitems', plural(model.count, 'item')), carry, gold);
+    win.append(bar);
+    if (notice) win.append(el('p', 'sheet-notice', notice));
+    shell.append(win);
+    if (remote.kind !== 'ground' || remote.count > 0) {
+      const loot = el('aside', 'loot-win');
+      for (const c of ['tl', 'tr', 'bl', 'br']) loot.append(el('span', `px-gem px-corner px-${c}`));
+      loot.append(remoteCol());
+      shell.append(loot);
+    }
     host.append(shell);
   });
 }

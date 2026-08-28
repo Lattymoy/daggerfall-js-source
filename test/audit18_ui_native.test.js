@@ -132,8 +132,14 @@ test('audit18 ui-native F2/F3/F4: drawHud lays out verbatim HUDVitals/HUDCompass
   const r = recorder();
   drawHud(r, canvas, hudArt(), { ...vitalsFull, currentBreath: 12 }, 0);
   const q = r.quads;
-  // three vitals bars first, in classic order
-  const bars = q.slice(0, 3);
+  // VB1: with EnableVitalsIndicators shipping TRUE the vitals are NINE
+  // quads in Components.Add order (HUDVitals.cs:108-119) - three loss
+  // trails (solid colour, tex null), three gain bars, then the three
+  // art-filled mains on top. The geometry law this pin owns rides the
+  // MAIN bars, same as it always did.
+  assert.deepEqual(q.slice(0, 6).map((b) => b.tex), [null, null, null, null, null, null],
+    'the six indicator bars draw BEHIND the mains');
+  const bars = q.slice(6, 9);
   assert.deepEqual(bars.map((b) => b.tex), ['tex:MAIN03I0', 'tex:MAIN04I0', 'tex:MAIN05I0']);
   // PositionIndicators: barWidth = nativeBarWidth * Scale.x, offsets
   // 0 / barWidth*2 / barWidth*4 -> a stride of 8 native px.

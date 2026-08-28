@@ -8,11 +8,15 @@ import {
   INFO_TEXT, HELM_AND_SHIELD_MATERIAL_DISPLAY, armorShouldShowMaterial, itemInfoTextId,
   CONDITION_WORDS, CONDITION_THRESHOLDS, conditionPercentage, conditionWord,
   weightString, weaponDamageString, armourModString, materialName, expandItemInfo, itemInfoRows,
+  setBookAuthor, getBookAuthor,
 } from '../src/systems/itemInfo.js';
+import { potionRecipeKey, POTION_RECIPES } from '../src/systems/potions.js';   // IM1
 import { TEMPLATES } from '../src/systems/useItem.js';
 import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
 import { WEAPON_MATERIALS } from '../src/characters/weapons.js';
 import { TextRsc } from '../src/formats/textRsc.js';
+
+const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
 
 // ── GetItemInfo's record switch (:748-817) ────────────────────────
 
@@ -158,12 +162,65 @@ test('U25: the panel fills every macro its records use - none survives to the sc
   assert.equal(/Condition/.test(arrow), false);
 });
 
-test('U25: the four macros the port cannot compute fall back rather than printing raw', () => {
-  // %hs the trapped soul, %po the potion recipe, %bt/%ba the book -
-  // each waits on its own arc, and each has a named fallback
+test('U25 -> IM1: no macro prints raw, and the fallbacks stand only where no source exists', () => {
+  // Template 274 is neither book nor potion: %po and %bt fall to the
+  // item's own name, %ba to DFU's unknownAuthor text - 'unknown author', lowercase,
+  // Internal_Strings.csv verbatim ('Anonymous' was the port's
+  // invention and IM1 retired it; BS1 caught the casing), %hs to Nothing.
   const out = expandItemInfo('%hs %po %bt by %ba', { name: 'Thing', templateIndex: 274 });
   assert.equal(/%/.test(out), false, out);
-  assert.equal(out, 'Nothing Thing Thing by Anonymous');
+  assert.equal(out, 'Nothing Thing Thing by unknown author');
+});
+
+test('IM1: an identified book\'s name IS its title - ResolveItemName\'s "Books are handled differently" arm', () => {
+  const book = { group: 'Books', templateIndex: 277, name: 'Book', message: 0 };
+  // GetBookTitle(message, shortName) through the vendored legacy
+  // mapping; %bt maps to ItemName in MacroHelper's table (:62), so
+  // one arm feeds both macros.
+  assert.equal(expandItemInfo('%it', book), 'The First Scroll of Baan Dar');
+  assert.equal(expandItemInfo('%bt', book), 'The First Scroll of Baan Dar');
+  // an id outside the mapping keeps the shortName (GetBookTitle's
+  // defaultBookTitle), and an UNIDENTIFIED book stays the bare
+  // template - the early return above the Books arm wins.
+  assert.equal(expandItemInfo('%bt', { group: 'Books', templateIndex: 277, name: 'Book', message: 99999 }), 'Book');
+  // UNIDENTIFIED (an enchanted book not yet identified): the early
+  // return wins over the Books arm - the bare template name, by VALUE,
+  // never the title.
+  const unread = { group: 'Books', templateIndex: 277, name: 'Named Tome', message: 0, enchantments: [{ type: 1 }] };
+  assert.notEqual(expandItemInfo('%bt', unread), 'The First Scroll of Baan Dar');
+  assert.equal(expandItemInfo('%bt', unread), expandItemInfo('%it', { templateIndex: 277, enchantments: [{ type: 1 }] }));
+});
+
+test('IM1: %po answers the recipe by the item\'s own key - Potion() verbatim, both arms', () => {
+  const key = potionRecipeKey(POTION_RECIPES[0].ingredients);
+  const potion = { group: 'UselessItems1', templateIndex: TEMPLATES.Glass_Bottle, potionRecipeKey: key };
+  const recipe = { group: 'MiscItems', templateIndex: TEMPLATES.Potion_recipe, potionRecipeKey: key };
+  // a POTION answers the potionOf template whole; a RECIPE the bare
+  // name (its record reads "Potion recipe for %po").
+  assert.equal(expandItemInfo('%po', potion), `Potion of ${POTION_RECIPES[0].displayName}`);
+  assert.equal(expandItemInfo('%po', recipe), POTION_RECIPES[0].displayName);
+  // a key the broker does not know reads Unknown Powers (:232)
+  assert.equal(expandItemInfo('%po', { ...potion, potionRecipeKey: 'no-such' }), 'Potion of Unknown Powers');
+});
+
+test('IM1: the %ba cache - the reader\'s load feeds it, an empty author line keeps the fallback', () => {
+  const book = { group: 'Books', templateIndex: 277, name: 'Book', message: 424242 };
+  assert.equal(expandItemInfo('%ba', book), 'unknown author');
+  setBookAuthor(424242, 'Marobar Sul');
+  assert.equal(getBookAuthor(424242), 'Marobar Sul');
+  assert.equal(expandItemInfo('%ba', book), 'Marobar Sul');
+  // DFU's `bookFile.Author != null` gate: an empty line stores nothing
+  setBookAuthor(424243, '');
+  assert.equal(getBookAuthor(424243), null);
+  // the reader is the ONE writer (bookReader.js feeds the cache on load)
+  const reader = readFileSync(join(SRC, 'ui', 'bookReader.js'), 'utf8');
+  assert.match(reader, /setBookAuthor\(item\?\.message, bookFile\.author\);/);
+});
+
+test('IM1: a dungeon-loot book carries its id - CreateRandomBook\'s message roll, BEFORE the variant', () => {
+  const loot = readFileSync(join(SRC, 'systems', 'loot.js'), 'utf8');
+  assert.match(loot, /message: getRandomBookID\(rolls\), variant: Math\.floor\(rolls\(\)/,
+    'the id rolls first, then the variant, in the one mint expression');
 });
 
 test('AUDIT 22 F2: a multi-variant record reads ANY of its variants, with alignment', () => {

@@ -178,7 +178,7 @@ test('texture: BOTH packs have a URL door, and one trip can set up both', () => 
 
 test('texture: registration rides the ONE bootstrap, and the row reports it', () => {
   assert.match(src('scenes/shared.js'), /setTextureReplacements\(names, loadTextureFile\)/);
-  assert.match(src('scenes/shared.js'), /Promise\.all\(\[sound, songs, replacements, textures\]\)/);
+  assert.match(src('scenes/shared.js'), /Promise\.all\(\[sound, songs, replacements, textures, morrowind\]\)/);
   // the settings row offers BOTH picks, and the alternate carries its
   // own KEY because the dialog has no button hit-testing to choose
   // with - a button that looked clickable and did nothing would be the
@@ -189,7 +189,7 @@ test('texture: registration rides the ONE bootstrap, and the row reports it', ()
   assert.match(w, /textureReplacementCount\(\)/);
   // both stores exist and the upgrade creates what is MISSING
   const d = src('scenes/dataSource.js');
-  assert.match(d, /const ASSET_STORES = \[MUSIC_STORE, TEXTURE_STORE\];/);
-  assert.match(d, /indexedDB\.open\(DB_NAME, 3\)/);
+  assert.match(d, /const ASSET_STORES = \[MUSIC_STORE, TEXTURE_STORE, MW_STORE\];/);
+  assert.match(d, /indexedDB\.open\(DB_NAME, 4\)/);
   assert.match(d, /for \(const name of ASSET_STORES\)/);
 });

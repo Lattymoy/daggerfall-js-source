@@ -319,8 +319,8 @@ test('U26: the dungeon host wires the four things the swap needed', () => {
   assert.ok(ctx.includes('droppedLoot.batches()'), 'and they draw');
   assert.ok(ctx.includes('droppedLoot.releaseEmptied()'), 'and empty ones are freed on close');
   // EVERY ALLOCATION HAS AN OWNER: the piles leave with the dungeon
-  assert.ok(/destroy\(\)[\s\S]*droppedLoot\._piles\) if \(p\.batch\) renderer\.destroyBillboardBatch/.test(ctx),
-    'the piles\' BATCHES are destroyed in destroy(), not just the array emptied');
+  assert.ok(/destroy\(\)[\s\S]*droppedLoot\._piles\) \{ p\.dead = true; if \(p\.batch\) renderer\.destroyBillboardBatch/.test(ctx),
+    'the piles\' BATCHES are destroyed in destroy() - marked dead first (NT1), not just the array emptied');
 
   // 2. BOTH dungeon hosts route the new key prefix. The standalone
   //    scene and the world-modes machine each own a loot arm, and a

@@ -29,6 +29,8 @@ import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { srand, rand, randomRangeInclusive } from '../formats/dfRandom.js';   // the painting identity's whole PRNG
 import { fullName } from '../characters/nameHelper.js';   // %an: NameHelper.FullName(race, gender)
 import { soulTrapNameSuffix } from './mysticism.js';   // F077: ResolveItemLongName's soul arm
+import { potionRecipeByKey } from './potions.js';   // IM1: %po's producer (GetPotionRecipe)
+import { bookTitle } from './books.js';   // IM1: GetBookTitle's legacy-data arm
 
 /** The thirteen ids GetItemInfo names as constants (:750-762). */
 export const INFO_TEXT = Object.freeze({
@@ -323,7 +325,7 @@ export function paintingMacros(info, readVariant) {
   return { sub, adj, pp1, pp2, artist: fullName(bank, gender) };
 }
 
-export function expandItemInfo(text, item, { name = null, soul = null, potion = null, bookTitle = null, bookAuthor = null, painting = null } = {}) {
+export function expandItemInfo(text, item, { name = null, soul = null, potion = null, bookTitle: macroBookTitle = null, bookAuthor = null, painting = null } = {}) {
   const t = templateByIndex(item?.templateIndex);
   // X7: ResolveItemName (:265-292) and ResolveItemLongName (:296-303).
   // An UNIDENTIFIED item gives up two things at once: its own name
@@ -343,17 +345,45 @@ export function expandItemInfo(text, item, { name = null, soul = null, potion = 
   // carried the law with no caller since it was ported; this is the
   // naming path it was written for. (DFU's "(empty)" alternative is
   // commented out at :365-368, so a blank empty trap is deliberate.)
-  const itemName = identified
-    ? (name ?? item?.name ?? t?.name ?? '') + soulTrapNameSuffix(item, enemyDisplayName)
-    : (t?.name ?? '');
+  // IM1 - ResolveItemName's Books arm (:279-280): "Books are handled
+  // differently" - an IDENTIFIED book's name IS its title,
+  // GetBookTitle(message, shortName), with the shortName standing when
+  // the id is outside the mapping. The unidentified early-return above
+  // it still wins, so an unread find stays "Book". %bt maps to
+  // ItemName in MacroHelper's own table (:62), so the title reaches
+  // both macros through this one arm.
+  const itemName = !identified ? (t?.name ?? '')
+    : item?.group === 'Books' ? (bookTitle(item?.message ?? -1) ?? name ?? item?.name ?? t?.name ?? '')
+      : (name ?? item?.name ?? t?.name ?? '') + soulTrapNameSuffix(item, enemyDisplayName);
   const soulName = soul ?? (item?.trappedSoulType != null ? enemyDisplayName(item.trappedSoulType) : null);
+  // IM1 - Potion() (DaggerfallUnityItemMCP.cs:230-241): the recipe by
+  // the item's own key, "Unknown Powers" when the broker knows none
+  // (the C# reads localized unknownPowers; recipe key 255 = classic's
+  // unknown). A RECIPE answers the bare name - its record reads
+  // "Potion recipe for %po" - while a POTION answers the localized
+  // potionOf template whole, "Potion of %po" with the name in it.
+  const potionName = (isPotion(item) || isPotionRecipe(item))
+    ? (potionRecipeByKey(item?.potionRecipeKey)?.displayName ?? 'Unknown Powers')
+    : null;
+  const potionMacro = potion
+    ?? (isPotionRecipe(item) ? potionName
+      : isPotion(item) ? `Potion of ${potionName}` : null);
+  // IM1 - BookAuthor (:162-183): DFU opens the book FILE at info time
+  // and reads its author line; the port's fetch is async, so the
+  // author rides the reader's own load (setBookAuthor below) and is
+  // cached thereafter - RECORDED: a book's author reads Unknown
+  // Author until the book has been opened once this session. The
+  // fallback is DFU's own unknownAuthor text, not an invention.
+  const authorMacro = bookAuthor ?? _bookAuthors.get(item?.message) ?? null;
   return (text ?? '')
     .replaceAll('%it', itemName)
     .replaceAll('%arm', itemName)
     .replaceAll('%wep', itemName)
-    .replaceAll('%bt', bookTitle ?? itemName)
-    .replaceAll('%ba', bookAuthor ?? 'Anonymous')
-    .replaceAll('%po', potion ?? itemName)
+    .replaceAll('%bt', macroBookTitle ?? itemName)
+    // BS1 caught IM1's casing: Internal_Strings.csv reads "unknown
+    // author", lowercase, verbatim.
+    .replaceAll('%ba', authorMacro ?? 'unknown author')
+    .replaceAll('%po', potionMacro ?? itemName)
     // The painting five (:185-218). Unfilled they printed raw on the
     // panel; with no PAINT.DAT they now read as the blank they are,
     // which is the same choice %bt/%ba make one line up.
@@ -380,6 +410,20 @@ export function expandItemInfo(text, item, { name = null, soul = null, potion = 
 let _paintFile = null;
 export function setPaintFile(paintFile) { _paintFile = paintFile ?? null; }
 export function getPaintFile() { return _paintFile; }
+
+/** IM1: the %ba author cache, fed by the book reader when a file
+ *  opens (the paint-file registration shape, for the same reason:
+ *  the info panel is synchronous and the port's file reads are not).
+ *  DFU opens the BOK file at info time (BookAuthor, :162-183); here
+ *  the author arrives with the reader's own load and stands for the
+ *  session. An empty author line stays unknown, as DFU's
+ *  `bookFile.Author != null` gate keeps the fallback for it. */
+const _bookAuthors = new Map();
+export function setBookAuthor(id, author) {
+  if (id == null || !author) return;
+  _bookAuthors.set(id, author);
+}
+export const getBookAuthor = (id) => _bookAuthors.get(id) ?? null;
 
 /** The panel's rows: the record, expanded, split on its own breaks.
  *  `rows(id)` is the host's TEXT.RSC reader.

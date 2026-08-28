@@ -624,8 +624,8 @@ test('audit18 hosts: the audio bootstrap runs in EVERY host, not only in a dunge
   // early into a service whose archive has not arrived.
   assert.match(src('src/systems/music.js'), /this\._booted \?\?= this\._boot\(/,
     'MusicService.ensure must memoise the boot promise'); 
-  assert.match(src('src/systems/audio.js'), /if \(this\._booted\) return;/,
-    'AudioEngine.ensure must stay idempotent');
+  assert.match(src('src/systems/audio.js'), /this\._booted \?\?= this\._boot\(/,
+    'AudioEngine.ensure must memoise the boot promise (NT1 F215 closed the boolean race this pin used to accept)');
 });
 
 test('audit18 hosts: worldModes feeds the rest gate its live grounded state', () => {
@@ -645,9 +645,12 @@ test('audit18 hosts: an open interior window swallows the pointer even with no c
 });
 
 test('audit18 hosts: interior point lights carry their PER-LIGHT range in both hosts', () => {
+  // LT1 widened the call: the same nearestLights pick now also carries
+  // colorOf - per-light colour x intensity - so the pin asserts BOTH
+  // per-light channels ride the one call.
   for (const host of ['src/scenes/worldModes.js', 'src/scenes/interior.js']) {
-    assert.match(src(host), /nearestLights\([A-Za-z.]+\.lights, cam\.pos, 16, [A-Za-z.]+\.lights\.map\(\(l\) => l\.range\)\)/,
-      `${host} passes a scalar range, so per-record light ranges never reach the shader`);
+    assert.match(src(host), /nearestLights\([A-Za-z.]+\.lights, cam\.pos, 16, [A-Za-z.]+\.lights\.map\(\(l\) => l\.range\),\n\s*\(l\) => \[l\.color\[0\] \* l\.intensity, l\.color\[1\] \* l\.intensity, l\.color\[2\] \* l\.intensity\]\)/,
+      `${host} must pass per-record range AND colour x intensity to the shader`);
   }
 });
 

@@ -25,6 +25,7 @@ import { goldStack } from './inventory.js';
 import { ITEM_TEMPLATES, mintCondition, GROUP_TEMPLATE_INDICES, templateByIndex } from './itemTemplates.js';
 import { CLOTHING_DYES } from '../characters/dyes.js';
 import { legacyEnchantmentValue } from './enchantments.js';   // G4: ItemBuilder's closing value sum
+import { getRandomBookID } from './books.js';   // IM1: CreateRandomBook's message roll
 
 // LootChanceMatrix rows, verbatim (22 keys, '-' included).
 export const LOOT_MATRICES = Object.freeze({
@@ -167,9 +168,13 @@ export function generateRandomLoot(matrix, who, rolls = Math.random) {
     halving(matrix.MI, () => createRegularMagicItem(_magicItemTemplates, level, who.gender, rolls));
   }
   halving(matrix.CL, () => createRandomClothing(who.gender, rolls));
-  // CreateRandomBook: CurrentVariant = Range(0, book.TotalVariants),
-  // and TotalVariants is ItemTemplate.variants (2 for template 277).
-  halving(matrix.BK, () => ({ group: 'Books', templateIndex: BOOK_TEMPLATE, variant: Math.floor(rolls() * (ITEM_TEMPLATES[BOOK_TEMPLATE]?.variants ?? 0)) }));
+  // CreateRandomBook: message = GetRandomBookID() FIRST (IM1 - the
+  // mint never set it, so a dungeon-loot book had no id: no title on
+  // the info panel and nothing for the reader to open), THEN
+  // CurrentVariant = Range(0, book.TotalVariants), variants 2 for
+  // template 277. The file-read price (book.value = bookFile.Price)
+  // stays the loud interim shopStock records.
+  halving(matrix.BK, () => ({ group: 'Books', templateIndex: BOOK_TEMPLATE, message: getRandomBookID(rolls), variant: Math.floor(rolls() * (ITEM_TEMPLATES[BOOK_TEMPLATE]?.variants ?? 0)) }));
   halving(matrix.RL, () => ({ group: 'ReligiousItems', templateIndex: pick(ITEM_GROUPS.ReligiousItems, rolls) }));
   return items;
 }

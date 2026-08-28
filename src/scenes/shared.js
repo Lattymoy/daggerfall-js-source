@@ -40,7 +40,7 @@ import { getBool } from '../systems/settings.js';   // M-FM: Audio/AlternateMusi
 import { SongManager, musicEnvironment, holdEnvironment } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
 
-import { getBytes, storedMusicNames, loadMusicFile, storedTextureNames, loadTextureFile } from './dataSource.js';   // M-EXT/M-TEX: the player's own packs
+import { getBytes, storedMusicNames, loadMusicFile, storedTextureNames, loadTextureFile, registerMorrowindData } from './dataSource.js';   // M-EXT/M-TEX: the player's own packs
 
 
 /** The data seam every scene uses - delegates to the ARENA2 data
@@ -663,7 +663,10 @@ export function ensureAudio(fetch = fetchBytes) {
   const textures = storedTextureNames()
     .then((names) => setTextureReplacements(names, loadTextureFile))
     .catch(() => 0);
-  return Promise.all([sound, songs, replacements, textures]);
+  // MW-IMPORT: same seam, same never-traps rule - no data means the
+  // opt-in 3D layer stays inert, which is its resting state anyway.
+  const morrowind = registerMorrowindData().catch(() => 0);
+  return Promise.all([sound, songs, replacements, textures, morrowind]);
 }
 
 // --- The outdoor fog COLOUR (DaggerfallSky.SetSkyFogColor) -----------
@@ -984,6 +987,7 @@ export function fatigueLossMultiplierFor(entity) {
  *  NEVER TRAPS: a missing or undecodable video costs the video, not
  *  the return to the menu. */
 export async function endRunToTitleMenu(renderer) {
+  claimFrame();   // P0: the death video owns the canvas - the host loop stops here
   try {
     const { playVideo } = await import('../ui/videoPlayer.js');
     const { getBytes } = await import('./dataSource.js');
@@ -1087,7 +1091,23 @@ export function wireInfectionVideos(renderer, { textAt = null, showText = null, 
  *  standalone - and a browser has no quit, so the door out is the
  *  title menu by the same bare-URL unwind chargen's cancel uses.
  *  Dying takes the same door AFTER its video (above). */
+// P0 (Mac 2026-08-28, the crash under the wizard): THE FRAME OWNER.
+// Each scene host's requestAnimationFrame loop had NO owner - nothing
+// could stop one once started, so any unwind that failed to navigate
+// (or any path that boots a second host) left an old frame updating
+// foes against torn state. The token is a generation counter: a host
+// claims it at boot, checks it at the top of every frame, and stops
+// recursing the moment anyone claims after it - a later boot, or the
+// two unwinds below, which claim BEFORE they act so the old loop is
+// dead even if navigation stalls. The fix is this owner, not a null
+// check: guarding feet?.[0] would draw foes against a dead world and
+// call it working.
+let _frameGeneration = 0;
+export function claimFrame() { return ++_frameGeneration; }
+export const frameAlive = (token) => token === _frameGeneration;
+
 export function exitToTitleMenu() {
+  claimFrame();   // P0: the old loop dies before the navigation
   if (typeof location !== 'undefined') location.href = location.pathname;
 }
 

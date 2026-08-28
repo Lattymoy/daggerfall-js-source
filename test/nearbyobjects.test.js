@@ -3,6 +3,9 @@
 // dispelNearby, and enchantments' nearbyFoes dep).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   NEARBY, REFRESH_NEARBY_OBJECTS_INTERVAL, NEARBY_DEFAULT_MAX_RANGE,
   entityFlags, lootFlags, updateNearbyObjects, getNearbyObjects, createNearbyScan,
@@ -242,4 +245,23 @@ test('X4 detect: a recast and a RESTORE both keep detecting - two DFU defects th
   restored.activeEffects.push({ kind: 'detectEnemy', roundsRemaining: 4 });
   assert.equal(hasLiveDetector(restored), true);
   assert.equal(detectedMarkers(restored, list).length, 1);
+});
+
+test('FX1 (F207): the OUTDOOR feeds carry loot pools - piles and corpses mark above ground', () => {
+  // PlayerGPS.UpdateNearbyObjects walks EVERY active DaggerfallLoot
+  // with no scene gate (:747, :766-776) - the "no loot piles above
+  // ground" premise the two exterior feeds rested on has been false
+  // since droppedLoot mounted. Both hosts feed the world piles AND
+  // the corpse containers now, the dungeonContext shape.
+  const ROOT2 = join(dirname(fileURLToPath(import.meta.url)), '..');
+  for (const [p, corpses] of [
+    ['src/scenes/world.js', /\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\]/],
+    ['src/scenes/exterior.js', /\.\.\.cityGuards\.guards\n/],
+  ]) {
+    const s = readFileSync(join(ROOT2, p), 'utf8');
+    assert.match(s, /loot: \(\) => \[\n\s+\.\.\.droppedLoot\._piles\.map\(lootNearbyRecord\),/, `${p} feeds the world piles`);
+    assert.match(s, corpses, `${p} feeds its corpse containers`);
+    assert.ok(!s.includes('There are no loot PILES above ground'), `${p}: the false premise is gone`);
+    assert.ok(!s.includes('No loot piles above\n      // ground'), `${p}: the false premise is gone (short form)`);
+  }
 });

@@ -135,3 +135,24 @@ test('MT-iv: ChangeFoeTeam finally reaches a quest foe standing in a DUNGEON', (
   assert.match(wm, /if \(mode !== 'dungeon' \|\| !dungeonCtx\) return \[\];/,
     'and the INTERIOR arm stays empty - that host has no enemy pool');
 });
+
+test("P0b (Mac 2026-08-28): the dungeon's CAST arm guards on the SELECTED target, not the player", () => {
+  // The live crash: `playerFeet[0], n is null` inside
+  // EnemyCaster.update. _targetFeet answers NULL exactly when the
+  // target machine is ARMED and holds no target (its duel opponent
+  // died this frame) - and the cast arm guarded on `playerFeet`, a
+  // DIFFERENT variable that is non-null whenever the player stands in
+  // the block, then passed _tgt in. The attack arm one screen up and
+  // the exterior host both guarded on _tgt all along; this pin closes
+  // the one arm that did not, in the shape audit24_wave32 already
+  // pins for the exterior.
+  assert.match(DG, /const _tgt = _targetFeet\(f\);/, 'the selected-target feet exist');
+  assert.match(DG, /return rec\.ai\._armedTargeting \? null : _pf;/,
+    'armed-with-no-target really answers null - the state the guard is for');
+  assert.ok(DG.includes('if (_tgt && f.caster && !_fParalyzed && f.ai.isHostile) {'),
+    'the cast arm gates on _tgt');
+  assert.ok(!DG.includes('if (playerFeet && f.caster && !_fParalyzed && f.ai.isHostile) {'),
+    'and the playerFeet guard that let the null through is gone');
+  assert.ok(DG.includes('(_fParalyzed || !_tgt) ? [] : f.attack.update(dt, f.ai, _tgt);'),
+    'beside the attack arm that always guarded correctly');
+});

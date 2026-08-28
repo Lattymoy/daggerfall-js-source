@@ -304,6 +304,10 @@ export const PRIVATE_PROPERTY_MODELS_15_AND_UP = Object.freeze([
  *  PlayerActivate) rides the same declared pend as shelf restocking
  *  (the header above); the caller's `items ??=` null-latch is the
  *  port's stock-once mapping. */
+/** HC1 - PlayerActivate's PrivatePropertyId (:94): the TEXT.RSC 37
+ *  Yes/No question a stocked house container asks before opening. */
+export const PRIVATE_PROPERTY_TEXT_ID = 37;
+
 export function stockHouseContainer({ buildingType, record }, playerEntity = {}, { rolls = Math.random, contRand = rand } = {}) {
   const items = [];
   if (buildingType == null || buildingType > BUILDING_TYPES.Town23) return items;

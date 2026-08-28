@@ -39,22 +39,61 @@ export const equipTableOf = (entity) => equipOf(entity).slots;
 export const getEquipSlot = (entity, item) => equipOf(entity).getEquipSlot(numeric(item));
 
 /** UnequipItem(slot): clears the slot + the item's mark. */
-/** CH3 (AUDIT 23 characters-13): the SWAP PAUSE - every hand item
- *  LEAVING or ARRIVING adds its group-index delay onto the entity's
- *  countdown, accumulating (the writer sums both sides per hand with
- *  += at DaggerfallInventoryWindow.cs:1198); the weapon rig blocks
- *  the attack while it runs and drains at the classic 980 units per
- *  second. The table quirk carries verbatim: EquipDelayTimes indexes
- *  by the item's index WITHIN ITS OWN GROUP, so a shield swap bills
- *  the low armor indexes against the weapon delay table. Leavers
- *  bill here (the one unequip door), arrivers in equipItem - each
- *  transition exactly once. */
-function billEquipDelay(entity, item) {
-  const gi = item.group === 'Weapons' ? item.templateIndex - 113
-    : item.group === 'Armor' ? item.templateIndex - 102 : -1;
-  if (gi >= 0 && gi < EQUIP_DELAY_TIMES.length) {
-    entity.equipCountdown = (entity.equipCountdown ?? 0) + EQUIP_DELAY_TIMES[gi];
+/** CH3 (AUDIT 23 characters-13), REBUILT AT FX1 (F128): the SWAP
+ *  PAUSE is billed PER INVENTORY VISIT, not per transition. DFU
+ *  snapshots the hand items when the inventory window is PUSHED
+ *  (SetEquipDelayTime(false), DaggerfallInventoryWindow.cs:667) and
+ *  bills ONCE on pop, and only for a hand whose item actually
+ *  changed: delay(last) + delay(current) (:729, :1164-1199). CH3 put
+ *  the bill inside unequipSlot/equipItem - each TRANSITION - so
+ *  dagger-then-katana out of empty hands billed 500+500+3400 where
+ *  DFU bills 3400, and re-equipping the same weapon billed twice
+ *  what DFU bills nothing for. The window owns the clock now; the
+ *  equip table just moves items.
+ *
+ *  The table quirk carries verbatim: EquipDelayTimes indexes by the
+ *  item's index WITHIN ITS OWN GROUP, so a shield swap bills the low
+ *  armor indexes against the weapon delay table. The weapon rig
+ *  still blocks the attack while the countdown runs and drains it at
+ *  the classic 980 units per second. DFU keeps two countdowns (one
+ *  per hand); the port's single entity.equipCountdown sums them,
+ *  the CH3 collapse kept. */
+export function equipDelayFor(item) {
+  const gi = item?.group === 'Weapons' ? item.templateIndex - 113
+    : item?.group === 'Armor' ? item.templateIndex - 102 : -1;
+  return (gi >= 0 && gi < EQUIP_DELAY_TIMES.length) ? EQUIP_DELAY_TIMES[gi] : 0;
+}
+
+/** SetEquipDelayTime(setTime: false) - the window-push snapshot of
+ *  both hand items (:1201-1214: null hands snapshot as null). */
+export function equipDelaySnapshot(entity) {
+  const slots = equipTableOf(entity);
+  return { right: slots[EQUIP_SLOTS.RightHand] ?? null, left: slots[EQUIP_SLOTS.LeftHand] ?? null };
+}
+
+/** SetEquipDelayTime(setTime: true) - the window-pop bill: each hand
+ *  whose item CHANGED (reference compare, as C#'s !=) adds the
+ *  leaver's delay plus the arriver's, and both hands' totals land on
+ *  the one countdown (+=, :1198-1199). `equipping` carries the
+ *  changed hands' CURRENT items for the "Equipping %s" cue the
+ *  window shows after billing (:731-756) - DFU gates each cue on
+ *  that hand's countdown being positive, which under the port's
+ *  single-countdown collapse reads as "that hand billed". */
+export function billEquipDelayOnClose(entity, snap) {
+  if (!snap) return { delay: 0, equipping: [] };
+  const slots = equipTableOf(entity);
+  const current = { right: slots[EQUIP_SLOTS.RightHand] ?? null, left: slots[EQUIP_SLOTS.LeftHand] ?? null };
+  let delay = 0;
+  const equipping = [];
+  for (const hand of ['right', 'left']) {
+    if (snap[hand] !== current[hand]) {
+      if (snap[hand]) delay += equipDelayFor(snap[hand]);
+      if (current[hand]) delay += equipDelayFor(current[hand]);
+      if (current[hand]) equipping.push(current[hand]);
+    }
   }
+  if (delay > 0) entity.equipCountdown = (entity.equipCountdown ?? 0) + delay;
+  return { delay, equipping: delay > 0 ? equipping : [] };
 }
 
 export function unequipSlot(entity, slot) {
@@ -64,7 +103,6 @@ export function unequipSlot(entity, slot) {
   slots[slot] = null;
   delete item.equipSlot;
   updateEquippedArmorValues(entity, item, false);   // U8h: the armor table adds back
-  if (slot === EQUIP_SLOTS.RightHand || slot === EQUIP_SLOTS.LeftHand) billEquipDelay(entity, item);   // CH3: the leaver's half
   _hooks.onEquipChange?.(entity);   // E1: the fold follows the worn set
   _hooks.onItemUnequipped?.(entity, item);   // E2: StopEquippedItem - the Unequipped payloads (ItemEquipTable.cs:163/:202/:231)
   return item;
@@ -201,7 +239,6 @@ export function equipItem(entity, item) {
   }
   un(slot);   // swap the occupant out (alwaysEquip)
   item.equipSlot = slot;
-  if (slot === EQUIP_SLOTS.RightHand || slot === EQUIP_SLOTS.LeftHand) billEquipDelay(entity, item);   // CH3: the arriver's half
   slots[slot] = item;
   updateEquippedArmorValues(entity, item, true);   // U8h: the armor table subtracts
   _hooks.onEquipChange?.(entity);   // E1: the fold follows the worn set

@@ -27,7 +27,8 @@
 //     doors - the way back out).
 // Not built here (routed): people flats (Characters arc), furniture actions /
 // house containers / loot (Systems arc), point lights (Rendering arc),
-// ladder behavior 41409 (Player arc), spawn points (Systems arc).
+// ladder behavior 41409 (Player arc). Spawn points ARE built here (HC1) -
+// they are pure layout data, position-only.
 
 import { ROTATION_DIVISOR } from '../formats/blocksFile.js';
 import { GLOBAL_SCALE } from './meshReader.js';
@@ -194,5 +195,14 @@ export function layoutInterior(dfBlock, blockIndex, recordIndex, getModel) {
     });
   }
 
-  return { placements, actionDoors, flats, markers, doors };
+  // AddSpawnPoints (DaggerfallInterior.cs:915-921): the Section3
+  // records are "spawn/waypoint data for placing interior enemies"
+  // (DFU's own note on the method) - position-only, same axis flip and
+  // scale as every flat.
+  const spawnPoints = [];
+  for (const obj of recordData.interior.blockSection3Records ?? []) {
+    spawnPoints.push([obj.xPos * GLOBAL_SCALE, -obj.yPos * GLOBAL_SCALE, obj.zPos * GLOBAL_SCALE]);
+  }
+
+  return { placements, actionDoors, flats, markers, doors, spawnPoints };
 }

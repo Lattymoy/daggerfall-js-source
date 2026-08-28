@@ -6453,3 +6453,645 @@ collided with the lab page's own hidden boot menu (scope selectors to
 the probe host). Probed live: two quest blocks render, 13 stat rows,
 Save pane opens from System, Escape window, Escape resumes once,
 zero page errors, desktop + phone.
+
+PX4 (same day, Mac: "go all in"): THE JOURNAL, AND THE GLASS. Three
+moves. (1) The pause face sheds its foot - no skin toggle, no About
+plaque (Mac's call); About rides the System tab list, the switch
+stays on the boot face and the settings shell. (2) TRANSLUCENCY: the
+enhanced pause host's background went transparent - the classic pause
+has always drawn its panel over the live frame in the same overlay
+slot, so the frame is there to show - the scrim dropped to 0.55 and
+the window to 0.72, per the reference; the STANDING CAVEAT is written
+at the host (a scene that stopped presenting under an overlay would
+show the renderer's pale clear through it; the classic window's
+behaviour says none does, the first real-ARENA2 eyeball owns the
+verdict, and the boot door stays opaque for exactly that clear). (3)
+THE JOURNAL: the Quests tab became the reference's page - a rail of
+quest NAMES (active first, THE ARCHIVE beneath a small heading, done
+rows dimmed), the chosen quest on the right with its name inside wing
+rules, the LATEST log entry as the description, and the trail as
+diamond-marked entries newest-first under a titled JOURNAL divider -
+because a Daggerfall quest speaks in journal entries, not objective
+flags: the entries ARE the tasks, and inventing checkbox objectives
+the machine does not track would be a lying UI. Archived quests parse
+the notebook's own filed header ('<name> completed|ended at <date>:',
+notebook.js:151-182) back into name/verdict/date - the verdict line
+gold for completed, dim for ended - with the headerless overflow
+entry (the notebook's kept quirk) reading as a continuation. Data
+arrives RAW through the new `hooks.questLog` (world.js walks
+machine.quests for per-quest displayName + messages and hands
+notebook.getFinishedQuests() beside it); ONE flattener in the menu
+(journalLines) serves every journal source. THE FOUR HOSTS: world
+wired; the other three keep their PX3 flags and the wired-tab-only
+message. On a phone the journal stacks, rail above detail. Probed
+live over a busy stand-in frame: 4 rail rows + the Archive heading,
+the archived verdict renders, no foot at pause, Escape resumes once,
+zero page errors both viewports.
+
+PX5 (same day, Mac): TIMERS, THE CLOCK, AND MAIN/SIDE. Three asks,
+each grounded in something the port already carries. (1) QUEST
+TIMERS: the world's questLog walk now reports the TIGHTEST RUNNING
+clock per quest - Clock resources carry remainingTimeInSeconds with
+clockEnabled/clockFinished (quest/clock.js:92,164) - and the journal
+draws it under the quest name as 'Time remains: N days N hours'
+(hours+min under a day, min alone under an hour), URGENT GOLD below
+one game day, with a gold gem pushed right on the rail row of any
+timed quest. (2) THE DATE AND TIME sit bottom-right on the scrim, the
+reference's corner: dateString + the header formatter's HH:MM:SS over
+THE ONE CLOCK (worldMinutes, AUDIT 23 C2) imported directly - every
+host already reads that module, so no seam and no drift; one read per
+render is the truth for a paused clock. (3) MAIN/SIDE LABELING by the
+pack's own naming - DFU ships the story quests as S0000*.txt (34
+files in vendor/dfu-quests/Quests) and _BRISIEN is the MQ opener
+(StartGameBehaviour.cs:445-447) - the rail groups MAIN QUESTS above
+QUESTS (headings only when BOTH kinds are on the log; one group under
+a header is a header explaining nothing) and the detail carries a
+Main Quest / Side Quest tag beside the timer. The archive stays
+ungrouped honestly: the notebook's filed header keeps only the
+display name, so the questName is gone by the time a quest is filed.
+Probed live: the three headings render, two timed gems, the urgent
+tag on a 9.5-hour letter, Side Quest under its name, the corner
+clock reading the probe's own set minutes, zero page errors both
+viewports.
+
+PX6 (same day, Mac: "give it the same love"): THE STATS PAGE. The
+journal's own bones - a rail of pages, the chosen one on the right,
+because one structure learned once is the whole window's. Four pages,
+every row something the game actually carries. CHARACTER: name in the
+wing rules, race/career/level tag, and the three vitals as
+WHOLE-PIXEL METERS - 2px frame, flat fill, no easing - health in the
+skin's blood, fatigue in bone, magicka in verdigris, with gold and
+encumbrance under a BURDEN divider. ATTRIBUTES: the eight on meters
+against the classic 100. SKILLS: the three career groups open under
+their own dividers - the character's chosen shape - each skill on a
+thin meter, with Miscellaneous behind the F5 sheet's own disclosure
+gesture ('Show N miscellaneous skills'). STANDING: the five NAMED
+social groups getReactionToPlayer reads (factionFile.js:23-27),
+positive gold / negative blood, with the honest line that guild rank
+lives with each guild hall - and LEGAL STANDING DELIBERATELY ABSENT:
+it is per-region (court.js owns player.legalRep[region]) and the
+window does not know where you stand, so a number without its region
+would be a lying row; it waits on a host region seam. Probed live
+with a mid-game Battlemage: 3 vitals meters, 12 career skill rows
+growing to 35 through the disclosure, 5 standing rows with 2 gold
+and 2 blood, zero page errors both viewports. (Follow-up, Mac: the
+Standing caption removed.)
+
+PX7 (same day, Mac): THE SYSTEM PAGE. The journal's bones a third
+time - and NOT a third implementation of anything: the rail is the
+pause list (Resume ACTS from the rail, the shell's own RAIL_ACTS
+reasoning; Settings alone still opens its shell, because three
+columns of 171 keys need the room an 860px window does not have and
+a cramped settings page is worse than a door to a good one), and the
+detail renders the SAME pane functions the shell has always run -
+paneSave's overwrite card, paneLoad's no-confirm law and its
+delete-behind-ask, paneMods' honest waiting room, paneAbout,
+paneExit's confirm - so every audited law keeps its one home and
+ONLY THE PAINT changed: .px-sys repaints .card/.act/.empty/.stats/
+.tag/.row in whole pixels (2px-bordered cards, gold primary acts,
+quiet key/value rows). The confirm card renders INSIDE the detail
+(the ask() flow lands where the press was made). ONE FONT CATCH from
+the eyeball: the card h3 fell back to the shell's Cormorant because
+the repaint never declared a family - font-family: inherit now, the
+same one-rule-forgot shape as PX3's gem specificity. Probed live:
+seven rail rows, the Exit confirm titled 'Leave this game' inside
+the window, Cancel restores the pane, Resume acts exactly once,
+About's stats grid pixel-faced, zero page errors both viewports.
+
+PX8 (same day, Mac: "Settings next"): THE SHELL WEARS THE PIXELS.
+The section shell - side rail, brand, pane, and above all the
+settings three-pane screen - repainted into the pixel idiom in ONE
+block scoped under `.shell` (the menu's root alone; the wizard, the
+sheet and the inventory own other roots, verified by grep before the
+first rule was written). EVERY RULE IS PAINT: Pixelify on the shell,
+Jacquard on the brand, 2px borders and zero radii on cards, acts,
+steppers, swatches and the dcard's code chip, the gold pair on
+active rail/subrail rows and primary acts, square tier dots and
+legend squares - and NO geometry moved, so AUDIT F1's 44px floors,
+the phone sheet, the F8 second-tap gesture and its dot all keep
+their laws. Settings still lives in the shell (PX7's reasoning
+stands); it just stops looking like a different game. THE TAP PROBE
+EARNED ITS KEEP TWICE: it predates the pixel home and hung waiting
+for a rail the boot no longer opens on, so it now measures the HOME
+FACE first and walks through it - and that walk found the real one:
+on a Pixel 5 the centered list's last rows ran UNDER the fixed foot,
+whose skin switch intercepted their taps - Load Game drawn and
+unreachable, the F1 shape exactly. The first fix keyed on max-WIDTH
+and a landscape phone (851x393) sailed past it: the condition was
+never 'narrow', it was SHORT. The stage now stops centering, scrolls
+and reserves the foot's height under (max-height: 560px) or
+(max-width: 480px). Probe green end to end on the enhanced legs -
+the pixel home + five panes + all seven settings categories, both
+orientations, 26 ok; the probe's WIZARD leg (.prov on /chargen.html)
+times out on the CLEAN tree too in this container - it needs ARENA2
+- and the classic settingsProbe fails pre-existing for the same
+reason, both verified by stash before being attributed to the
+environment.
+
+PX9 (same day, Mac: "why isn't this in the pause menu"): SETTINGS
+INSIDE THE WINDOW. PX7's 'needs the room' was overruled and rightly:
+pausing should never leave the frame. The System rail's Settings row
+now SELECTS like every other, and the detail renders THE SAME
+paneSettings function - its category/pickedKey/sheetOpen machine,
+the F7 effective-cache, the F8 second-tap-opens-the-card gesture,
+the reset ask, all untouched - REFLOWED by CSS alone
+(.px-setwrap): the category subrail becomes a wrapping chip strip
+across the window's top, the 21..66 rows scroll beneath it, and the
+help/reset detail rises as a SHEET inside the window (absolute over
+px-win, the phone pattern applied one size up, stepped transition,
+reduced-motion honoured). paneSettings owns its own confirm
+placement, so the reset ask lands in the sheet where the press was
+made. Boot keeps the fullscreen shell, where there is room. The
+Escape ladder needed nothing: sheet -> window -> resume fell out of
+the existing rungs, VERIFIED BY DIRECT STATE READ (__menu +
+DOM after each press) after a probe boolean contradicted the model -
+the diagnostic showed the model right and the probe's assertion its
+own artifact, which is the difference between checking and assuming.
+Suite green, tap probe 26 ok unchanged.
+
+PX10 (same day, Mac): CONDENSED AT PAUSE, THE CATALOG AT BOOT. The
+pause window's Settings pane shows only the keys whose tier is LIVE
+- derived from the tier map itself, so a setting that gains a
+consumer joins the pane the same day it does - 48 rows today,
+grouped under the categories' own titles as pxDividers (48 flat read
+as a wall; the dividers give the scroll a spine without the chip
+strip this pane exists to shed), rendered through the SAME
+settingRow and the same rising help sheet. The closing line says
+'Every setting lives on the main menu's Settings' - the U30
+nothing-hidden law kept by TELLING rather than by showing all 171
+mid-game. Boot keeps the full shell. Probed: 7 dividers, 48 rows,
+no chips, the help sheet rises, zero errors both viewports.
+
+PX10b (same day, Mac: "it's the old ui backdrop"): THE ROWS SHED THE
+OLD CHROME. The base .row/.step/.val/.panes rules are the OLD
+sheet's - slate fills, 1px iron hairlines, the brass inset - and
+PX8's repaint was scoped to .shell, which the pause window is not
+in. The same repaint now lives scoped under .px-setwrap: transparent
+rows on 2px dim separators, pixel-bordered steppers and switches
+with the gold pair, the outline-not-inset selected state, the dcard
+repainted for the sheet - and the 44px target pseudo-element plus
+every measured size untouched. THE SLATE WAS NOT WHERE IT LOOKED:
+killing .list's background changed nothing because the visible panel
+was .panes' own var(--iron) grid ground (the base sheet colours its
+column GAPS by painting the grid behind them) - found by computed
+style, not by staring at the sheet, the PX9 lesson applied within
+the hour. Probed both viewports, the pane now sits on the window's
+own translucent ground.
+
+PX11 (same day, Mac: the fullscreen settings gets the treatment):
+THE SHELL STANDS ON THE SKY. The boot shell renders over the home's
+own ground canvas - same drawPixelGround, same 8fps clock under the
+same groundTimer owner (every render clears it; pause never reaches
+the branch), same reduced-motion opt-out - and every old panel
+colour came off: the side rail and subrail scrimmed at 0.62/0.45
+with 2px dim rules where the base sheet painted its grid gaps, the
+list under a 0.38 breath of scrim so the stars stay BEHIND the words
+(the readability nudge the first eyeball asked for), the detail at
+0.55, rows transparent on 2px separators with the outline-not-inset
+selected state. Paint and grounds only - the grid, the sizes and
+every measured target are exactly where PX8 left them, and the tap
+probe's 26 stayed 26. Probed live: the shell's sky animates (two
+canvas frames apart differ), Escape still backs out to the home,
+zero page errors both viewports. The enhanced skin is now the one
+treatment everywhere a menu exists: home, pause window, and the
+fullscreen catalog.
+
+PX12 (same day, Mac: "a truly detailed pass"): THE CRAFT LAYER,
+flaw-by-flaw, each named before it was written. (1) SCROLLBARS: the
+browser default broke the idiom on every scrolling column - square
+10px rails, dim square thumbs, brass on hover, shell and pause
+window alike, plus the Firefox pair. (2) THE GEM SPEAKS EVERYWHERE:
+active rail rows and category chips lead with the same diamond every
+other surface does - the GLYPH, never a rotated box, because a
+rotated square anti-aliases its diagonals and the pixel font does
+not. (3) Section titles took the window's wing rules. (4) ONE DATA
+COLOUR: values read c5bda2 everywhere now - brass is ornament, gold
+is the hand. (5) The F8 more-dot became the diamond. (6) Empty
+states shed the dashed 1px box for a quiet open diamond over pixel
+type. (7) KEYBOARD FOCUS in the language: rows take a brass outline
++ the gold pair under :focus-visible, so a tab reads like a hover.
+(8) The last row transition died. ONE REAL BUG ON THE WAY: the gem
+escapes were written as \25c6 inside the CSS template literal,
+which JS reads as a LEGACY OCTAL - node's loader took it, esbuild
+refused it, and the page 500'd until the file carried the doubled
+escape; the lesson is that the two parsers disagree exactly where a
+template literal meets a CSS escape, and the build gate is the one
+that catches it (it did). Verified: suite green, build green, tap
+probe 26/26, focus gems live in the shot, zero page errors.
+
+PX13 (same day, Mac: redesign the new-game flow, complete parity):
+THE WIZARD WEARS THE PIXELS. Paint and ornament over U50's machine,
+which does not move - every stage, every back arm (Cancel on the
+first stage is still RaceSelectWindow's Cancelled + U27's unwind),
+the keyboard table, the walk-not-a-menu rail law, and the
+never-traps art fallbacks are the flow's and stay the flow's; the
+suite is the parity gate and stayed green. THE GROUND: the wizard
+stands on the living sky - drawPixelGround behind .shell.wizard,
+8fps under a mount-owned clock cleared by every repaint and by
+unmount (the same owner discipline as every listener in that
+unmount). THE RAIL IS A GEM SPINE: done stages a dim filled diamond,
+the current stage the gold pair, the road ahead an open one - the
+walk drawn as ornament, read at a glance; the phone stepstrip's segs
+squared and brassed. THE STAGES: every question sits in the wing
+rules; the big choices, the race fallback grid, the ten face frames,
+and the five reflex bands are pixel PLAQUES (2px border, translucent
+ink, gold hand); the name box is a pixel field with a gold focus;
+the action bar trades its hairline for the 2px rule. VERIFIED BY A
+LAB WALK on a stub flow (new ChargenFlow(careers, rng), the suite's
+own construction; no ARENA2 in this container, so the map and
+portraits exercise their fallback arms, which is itself coverage):
+race select -> Enter confirms (the flow's own no-description arm) ->
+gender -> class method -> class list -> Knight -> name, every state
+read from the flow itself, zero page errors. The chargen browser
+probe still needs ARENA2 (pre-existing, stash-verified in PX8).
+P0 LIVE CRASH (Mac, deployed build, real ARENA2, mobile): with the
+wizard up on the race description (Morrowind / Dark Elf), a CRASH
+panel: TypeError: Cannot read properties of null (reading '0') at
+<minified>.update <- drawFoes <- frame. DECODED AGAINST SOURCE: the
+world frame is STILL RUNNING beneath the wizard and dies indexing a
+null feet array - enemyTargets._targetFeet (:269) returns playerFeet
+or ai.target.ai.feet and enemyMotor.update indexes them raw (:183,
+:216) - so either the player's feet or a held target's ai was torn
+down while a foe still updated against it. The shape that fits: an
+old session's dungeon frame SURVIVING the exit-to-menu -> New Game
+unwind (U27 / Ledger A) and updating foes against disposed state
+under the wizard - the same host-keeps-running family as the U50
+keyboard finding, one layer down. NOT the UI arc: today's slices are
+paint, hooks-at-pause, and the wizard view; none touch the frame
+path. NOT YET FIXED because the null is a SYMPTOM - guarding
+feet?.[0] would draw foes against a dead world and call it working.
+NEXT SESSION: repro on the live path (boot -> Continue -> pause ->
+Exit -> New Game), find which teardown leaves the frame loop alive,
+and kill the loop at the unwind - the fix is an owner for the frame,
+not a null check. Needs ARENA2, so it waits for a data-bearing run.
+STRUCTURAL HALF LANDED (P0 owner, 2026-08-28, this repo's lane): the
+frame OWNER exists now - shared.claimFrame() is a generation counter,
+each of the three rAF hosts (world, exterior, dungeon; worldModes'
+frame is CALLED by world's, so it rides the same token) claims at
+boot and checks at the TOP of every frame, and both unwinds
+(exitToTitleMenu, endRunToTitleMenu) claim BEFORE they act - so an
+old session's loop is dead the moment a new session boots or an
+unwind starts, whatever left it alive. The stale-loop FAMILY is
+closed by construction; the LIVE REPRO on the exact path (boot ->
+Continue -> pause -> Exit -> New Game, real ARENA2) is still owed to
+a data-bearing session to confirm which teardown was leaking and
+that no second cause hides behind it. test/frameowner.test.js pins
+the generation law, the three hosts' claim+check, and both unwinds'
+claims; 4 mutations, 4 dead.
+
+P0b LIVE CRASH, SECOND FILING (Mac 2026-08-28, deployed 3a23bff, the
+same `n[0], n is null` shape - DIFFERENT ROOT CAUSE, decoded to the
+line): line 40 col 39203 of main-C3j4GYWq.js is
+enemyCasting.js:149's `playerFeet[0]`, and the caller frame is the
+DUNGEON foe loop. dungeonContext's cast arm guarded on `playerFeet`
+- non-null whenever the player stands in the block - then passed
+`_tgt`, the SELECTED target's feet, which _targetFeet answers as
+NULL exactly when the MT-iv target machine is armed and holds no
+target (its duel opponent died this frame). So a dungeon with
+infighting live crashed the frame a caster's opponent fell with the
+player in plain sight. The attack arm one screen up and the exterior
+host both guarded on `_tgt` all along; the fix is the one-word guard
+swap to the shape they share, which is also DFU's own law (the cast
+branches read the senses' target and do not run without one - the
+guard IS the law, not a papered-over null check). Pinned in
+dungeoninfighting.test.js beside the MT-iv wiring pins - the exterior
+arm was pinned in audit24_wave32 and the dungeon arm never was, which
+is precisely how the wrong guard survived; 2 mutations, 2 dead,
+including "the null arm is real" so the law cannot be masked by
+making _targetFeet never answer null.
+
+PX14 (Mac's vision, with reference shots: Skyrim's in-game compass):
+THE DIAL. A new module, src/ui/pixelDial.js - one press over the
+live game raises a four-armed rose on a 0.45 scrim (a glance, not a
+room): SKILLS above, ITEMS right, MAP below, MAGIC left, a knot of
+layered diamonds at the center, 2px arm rules, the gold pair on the
+chosen arm, everything the glyph and nothing eased. The dial ROUTES
+to the windows the hosts already own (toggleCharSheet /
+toggleInventory / toggleAutomap / toggleSpellbook) and reimplements
+nothing - each window's pixel redesign is its own follow-on slice.
+Input whole: hover/arrows-WASD select, click/Enter/Space commit
+(the dial unmounts FIRST so the opened window never finds it eating
+keys), scrim-click/Escape close, capture-and-stop per U50's modal
+law, unused keys pass untouched, every arm a real 44px button. A
+host passes only the doors it has - NEVER a dead arm (a drawn door
+opening nothing is the hidden-settings bug wearing ornament).
+Probed live: arrow selects one gold arm, Enter commits 'items' and
+the dial is gone, Escape closes once, a click commits 'magic', zero
+page errors. FLAGGED (THE FOUR HOSTS RULE): no host wired yet -
+Tab is free in all four key tables by grep, and PX15 wires it
+per-host WITH the key-table audit each time (AUDIT 17e's F5 lesson).
+THE ROAD FROM HERE, recorded as the plan Mac asked made real:
+PX15 host wiring (Tab -> dial, four hosts, one at a time);
+PX16 THE INVENTORY on the journal's bones - category rail (the
+reference's ALL/WEAPONS/APPAREL/... spine), item list with counts,
+detail card with weight/value/effect lines, and the PAPER DOLL as
+the sprite viewer beside it; PX17 THE MAP page wearing the pixel
+frame; PX18 THE SPELLBOOK. Each slice keeps its window's laws and
+changes the paint and the bones - the journal pattern, applied until
+the whole in-game surface speaks one language.
+
+PX15 (the road's first mile): TAB RAISES THE ROSE. Three moves, one
+seam each. (1) routeKey grew a Tab arm beside its F8 diagnostics arm
+- both the port's own, neither a DFU action - and `=== true` is the
+law: a host without the arm, or the classic skin, answers false and
+Tab keeps its browser default, so classic behaviour is
+byte-for-byte untouched. (2) pixelDial grew openPixelDial, the
+pauseDoor pattern one size down: the isEnhanced + document gate
+lives ONCE in the opener, a second call while the dial is up CLOSES
+it (Tab is a toggle; the singleton makes racing frames safe), Tab
+inside the dial closes it too, and the pointer lock releases on open
+- the dial is a pointer surface, and the hosts' click-to-relock
+covers the way back exactly as it does for the pause door. (3) THE
+WORLD HOST WIRED: hudCtx.toggleDial hands the rose this host's own
+four doors - toggleCharSheet, toggleInventory (with its V4
+lycanthropy suppression intact, because the dial routes and the door
+keeps its law), toggleAutomap, toggleSpellbook - the reference's
+four, every one real on this ctx. THE OTHER THREE FLAGGED BY NAME at
+their pause sites: worldModes' interior mounts differ, exterior is
+the test host, and the dungeon HAS NO native inventory door at all
+(ui/input.js:84's own note) so its rose will draw three arms, not a
+dead fourth - each lands with its own door audit. Held-key safety
+reasoned and kept: the dial captures only keydown, so a W held
+through open/close still delivers its keyup to the host and nothing
+sticks. Suite green, build green.
+
+PX16 (Mac: "use the reference and develop the new inventory - go all
+out"): THE PACK WEARS THE PIXELS. The enhanced inventory
+(ui/enhancedInventory.js) is a LIVING window - wagon pairing,
+remote-first ordering, wear/use/stow with their refusals, the V4
+suppression, the F6 claim - so the slice is the wizard's pattern at
+full depth: the window's laws do not move, the ground and the paint
+do. THE SKY: drawPixelGround behind .pack-shell, 8fps, the clock
+re-owned by every repaint and ended by the same unmount that owns
+the F6 listener. THE PAINT, the reference read closely: the window's
+name in a wing rule with the carry/gold line beside it; the category
+spine as gem-led pixel chips (the chosen one leads with the
+diamond); item rows transparent on 2px rules with counts and
+condition in the one data colour, selection the outline-not-inset;
+the FIGURE - the paper doll plaque and the worn list as quiet rows
+under a small-caps heading, the sprite viewer's frame standing ready
+for the art (the doll image itself is ARENA2-fed and draws the
+moment a data-bearing host feeds it, exactly as the native window's
+does); the remote pane (ground/wagon/container) the same rows; the
+detail as the reference's centered plaque - name over a rule, WEIGHT
+and VALUE as paired figures, acts as pixel plaques with the gold
+primary; square scrollbars. ONE SERIF LEAK caught in the eyeball
+(equipped/remote heads missing font-family: inherit - the recurring
+one-rule-forgot) and fixed in the same slice. Probed in the lab on
+stub items: four tabs with counts, gem on the active tab, equipped
+rows render, the sky behind, zero page errors. The lab's zero
+kg/gold figures are the stub's, not the window's - the real entity
+fills them, as Mac's data run will show.
+
+PX16b (Mac: "you're rushing this - really study the reference"): THE
+REFERENCE READ PROPERLY, and the correction owned. PX16's first cut
+got the paint right and the ANATOMY wrong: horizontal tabs, a full
+sheet, and a sky the reference never shows. The reference's actual
+shape, now held: TWO TRANSLUCENT COLUMNS ON THE LEFT THIRD - the
+categories stacked VERTICALLY (small caps, counts, the chosen one
+bright with the gem at its edge), then BARE NAMES with counts (the
+material line and per-row weight leave for the plaque; ellipsis over
+wrap) - and the GAME on the right two-thirds, where the figure (the
+paper sprite viewer) stands as the showcase and the detail floats as
+the reference's corner-bracketed PLAQUE: 2px bone frame with an
+offset dim outline for the double bracket, name over a rule, the
+stat PAIRS as right-aligned small labels beside big figures, acts
+beneath with the gold primary. CARRY WEIGHT is a METER in the bottom
+bar - blood past four-fifths, the reference's red - with gold beside
+it and the item count left. THE SKY CAME OFF: the reference's ground
+is THE GAME, so the paused frame shows through (the pause door's
+law, one window over) and the ground-canvas mount from the first cut
+was REMOVED, clock and all. Structure only moved in render() - the
+tabs became catsCol, the right column became the packstage holding
+characterCol + detailCol, the bar was added - and every law
+(wagon pair, remote-first, refusals, V4, F6, the quest-click arm,
+the packdetail phone sheet's named-class lesson) sits exactly where
+it was; the suite stayed green through the whole reshape. Serif
+leak round two: WORN's h3 was the actual node, not the head div.
+Probed over a stand-in frame: vertical spine confirmed by geometry,
+plaque pairs aligned, bar present, zero page errors.
+
+PX16c (Mac: design parity with our other UIs + the reference's
+transparency): ONE LANGUAGE, ONE GLASS. The plaque wears the pause
+window's own FOUR CORNER GEMS (detailCol appends them; the centering
+rules are PX3's, scoped here) so every framed surface carries the
+same corners; PACK takes the head's wing rules like every titled
+face; and the scrims came down to the values the other faces already
+use - the root a 0.18 breath, the spine 0.5, the lists the shell's
+own 0.38, the figure panels 0.4, the bar 0.45, the plaque the pause
+window's 0.72 - so the world reads THROUGH the columns as it does in
+the reference, not as a glow behind a curtain. Suite green through
+it.
+
+PX15b: ALL FOUR HOSTS CARRY THE ROSE. The three PX15 flags paid,
+each with its own door audit first. THE INTERIOR (worldModes'
+interiorKeyCtx): THREE arms - Skills, Items, Magic - because the
+interior ctx has no automap door, and the rose never draws a dead
+arm. THE DUNGEON: all FOUR - the PX15 flag's 'no native inventory'
+cited input.js:84's HISTORY; toggleInventory sits on the ctx today,
+so the audit corrected the flag rather than obeying it. Its host
+object is an anonymous returned literal, so the doors are reached
+through `this` (routeKey calls ctx.toggleDial() as a method; the
+entry arrows inherit the binding - caught by lint before it could
+be caught by a player). THE EXTERIOR: this host routes its own keys
+with no routeKey at all, so its Tab arm lives in ITS ladder, behind
+the same overlay/mode gate as every sibling door, preventDefault
+only when the dial answers so classic Tab keeps its default. One
+anchor lesson banked: the first patch died silently mid-script and
+the gates ran green over an UNCHANGED tree - the rewrite reports
+every anchor by name, which is the difference between a patch and a
+hope. Suite green, build green; Tab now raises the rose in every
+place a player can stand.
+
+PX17a (Mac: audit everything + two live text bugs): THE AUDIT AND
+THE COLLISION. PASS A, wiring greps across the whole arc: every
+ground clock and key listener has a balanced owner (set counts match
+clear counts in enhancedMenu/enhancedChargen/pixelDial/
+enhancedInventory), toggleDial answers on world/interior/dungeon
+with exterior's inline ladder arm by design, every dial door exists
+on its ctx, questLog/questMessages produce at world and consume in
+the menu, zero single-escaped CSS content rules, px-corner rules
+scoped everywhere corners are appended. ONE WART RECORDED, not
+hidden: a host binding (F5 etc.) pressed while the dial is up opens
+that window BENEATH the rose - the already-open guards make it safe,
+and a future slice may close the dial on any host window key.
+PASS B, the bugs, measured not guessed. (1) THE WIZARD'S SMOOSH had
+TWO roots. The visible one: the confirm carried `detail sheet open`,
+where 'sheet' meant the PHONE-SHEET STATE - but the char sheet
+window owns `.sheet` as a THREE-COLUMN LAYOUT class in the same
+stylesheet, so the confirm inherited repeat(3, minmax(0,1fr)) inside
+a 340px slot and set its prose one word per line (dcard measured
+112px; the rule found by matching every stylesheet rule against the
+live node, not by reading). The generic-name toll the codebase has
+paid twice before (.detail, .packcol), paid a third time: the state
+class is `wizsheet` now, both confirms and all four phone rules
+renamed. The deeper one: TEXT.RSC hands lines HARD-WRAPPED for the
+classic 320 screen and the view rendered each as its own paragraph,
+fighting every other viewport - the lines are now JOINED into
+flowing prose (a blank line is the paragraph break it always meant),
+15px/1.6 in the card, and the browser wraps for the width it has;
+the flow's data untouched. (2) THE PACK'S INCOMPLETE TEXT: names now
+WRAP to two lines before the ellipsis (an inventory that hides the
+ends of its own names lies by omission; the full name is always in
+the plaque), and the plaque's stat pairs wrap inside the frame
+rather than escaping it. Verified: dcard 338px in the 340 slot,
+prose in two paragraphs both viewports, the long-sword name whole on
+a phone, suite 3907/0, build green.
+
+PX17b (Mac, live: "tab isn't working in-game"): THE BELL NOBODY
+RANG. PX15 hung toggleDial on the world's hudCtx and trusted
+routeKey's Tab arm to ring it - but the WORLD host never calls
+routeKey: like exterior it runs its own keydown ladder, and PX15's
+audit gave only exterior the inline arm. So the overworld's rose was
+wired and UNREACHABLE - the drawn-door-that-opens-nothing bug,
+inverted, and exactly what a live thumb finds that a lab probe
+mounting the module directly cannot. The arm now lives in the
+world's own ladder behind the same overlay/mode gate as its sibling
+doors, preventDefault only when the dial answers. The lesson joins
+the record: a key wiring is not wired until the HOST'S OWN dispatch
+path is traced from addEventListener to the door - the ctx field
+existing is the bell, not the rope. Verified: suite 3914/0, build
+green, the px-dial marker present in the shipped bundle
+(main-GBK3EX-r.js) per the deploy-confirmation rule. The four hosts'
+Tab paths now: world (inline arm), exterior (inline arm), interior +
+dungeon (routeKey's arm).
+
+PX17c (Mac, live, rightly angry: the journal in-game is not the one
+we built, and the inventory ground is still opaque): BUILT ONCE,
+CARRIED EVERYWHERE - the Tab bug's disease, cured across the family.
+(1) THE JOURNAL: the developed journal (rail, MAIN QUESTS/QUESTS/
+ARCHIVE separators, timers, verdicts) lived only behind the WORLD
+host's pause; a pause in a tavern or a dungeon hit the two FLAGGED
+sites and showed the not-wired line instead. The interior now reads
+the seams through its host object (world exposes pauseQuestMessages/
+pauseQuestLog beside makeJournal, the same expressions its own pause
+hands over), and the dungeon builds them from ITS OWN bridge -
+opts.questBridge already feeds its F5 journal and notebook, so the
+PX3 flag was too conservative and is paid with the same walk. Every
+pause with a machine behind it now shows the same journal. (2) THE
+GLASS: inventoryDoor and charSheetDoor still painted the opaque
+#0e1013 slab the pause door shed in PX4 - it blacked out every scrim
+the pack carried, which is why the reference transparency never
+survived contact with the live game. Both doors are transparent now;
+the classic windows keep their own opaque draw; PX4's ARENA2-eyeball
+caveat covers the family. THE PATTERN, named for the record: a
+surface is not shipped when it renders in a lab - it is shipped when
+every HOST a player can stand in reaches it; the flags were honest
+but flags do not pause a game, and three of them are paid today.
+
+PX17d (Mac: a better dial - detailed, cohesive, fade in, depth of
+field): THE ROSE, BUILT. The sketch became the piece: four corner
+gems frame the dial space (the family's one frame language), the
+center is a LAYERED KNOT - a wide open diamond over a brass diamond
+over a gold core - and each arm is a 2px rule with a small brass gem
+at its middle and an open terminal past the label; the chosen arm
+goes the gold pair, its rule brasses, its flanking diamonds light.
+A dim keys line teaches the hand at the bottom (Arrows choose /
+Enter opens / Tab closes). ACTIVATION: the dial FADES INTO VIEW over
+220ms in FIVE PIXEL STEPS - opacity and the depth-of-field together
+(backdrop-filter blur(7px) + saturate(82%): the world behind falls
+out of focus, the reference's own gesture) - steps(), not an ease,
+so the motion law holds; reduced-motion gets the end state at once;
+CLOSE STAYS INSTANT because the dial must be gone before the window
+it opens takes the keys. Probe note, honest: computed style confirms
+the blur applies, but a flat lab background on the same layer does
+not visibly soften in headless shots - the LIVE canvas behind it
+will, which is what backdrop-filter is for; Mac's data run owns the
+final blur radius. Suite green, build green.
+
+PX18 (Mac: integrate the enhanced map): THE WORLD MAP JOINS THE
+FAMILY. Two moves. (1) THE DIAL'S MAP ARM in the world host opens
+THE WORLD MAP (U61's overworld - hudCtx.openTravelMap), Skyrim's own
+reading of the word; the local automap keeps its M key untouched,
+and the dungeon's Map arm stays its automap because there is no
+travelling underground. (2) THE CHROME: U61's screen already holds
+the right philosophy - the GL world IS the picture, the chrome
+floats - so the slice is paint alone: Pixelify across the ov*
+classes, the search field as the wizard's pixel input, region chips
+as gem-less pixel plaques with the gold pair on the active filter,
+results on 2px rules, and the TRAVEL CARD in the pack's plaque
+language verbatim (bone frame, offset dim outline, ruled title,
+key/value pairs on 2px rules, gold primary acts, ghost secondary) -
+one plaque, three windows. Every travel law (the ill-travel ask, the
+cost pairs, hold-to-skip) untouched beneath the paint. ONE
+SELF-INFLICTED CUT, recorded: the first CSS insert anchored on the
+FILE'S last template terminator instead of ENHANCED_CSS's own and
+amputated every export after the sheet - the suite caught it in
+eight failures inside a minute, and the re-insert anchors on the CSS
+template's terminator found FROM its export. Append blind to a file
+with more than one template and the tail pays. Suite 3949/0, build
+green.
+
+PX18b (Mac: the east and west arms touch the knot): MEASURED, NOT
+EYEBALLED - the four clearances read {n:12, s:12, e:-38, w:-39}, so
+the horizontal rules overran the knot by the width the vertical ones
+respected. 62px rules (34 on a phone) give all four the same 12px
+breath - re-measured {12,12,12,11} - and the mid gems recentred with
+them. Suite green, build green.
+
+PX19 (Mac's feedback: centered and window-based, creative authority
+granted): THE PACK IS A WINDOW. The fullscreen columns became the
+pause window's own frame - corner gems, 2px dim border, the 0.72
+ink glass - min(1040px, 95vw) x min(660px, 86dvh) centered over the
+game, ARRIVING WITH THE DIAL'S OWN GESTURE: a five-step fade while
+the world behind drops into the same depth-of-field (blur 6px,
+saturate 85) - one entrance for every floating surface, which is
+what cohesion means in motion. Inside, the reference's anatomy
+compressed to the frame: the category spine left on a quiet 0.3,
+bare names in the middle with the LOCAL/GROUND PAIR STACKED (one
+readable column instead of two starved ones; .remotefirst still
+flips the order for containers and reward trays, the pair law
+intact), and the SHOWCASE right - the figure above, the bracketed
+plaque beneath, both on the window's glass. The window carries its
+own footer: items left, the carry meter (blood past four-fifths),
+gold right. ONE TRAP OF MY OWN CAUGHT BEFORE IT SHIPPED: the phone
+rule first hid .packstage outright, which would have hidden the
+fixed detail SHEET inside it - display:contents dissolves the stage
+while the sheet keeps fixing to the viewport and only the figure
+hides; the phone sheet verified open on a pick. Every window law
+(pair, remote-first, refusals, V4, F6, the quest click) exactly
+where it was; suite green through the reshape both times.
+
+PX19b (Mac, with the classic screenshot: lists for browsing but keep
+the classic's PANEL-BASED equip section): THE EQUIP PANELS. The worn
+list became a grid of slot TILES beside the doll - each a 2px panel
+holding the item's monogram with the slot word beneath, the chosen
+one in the gold pair with the brass frame and the offset outline;
+an EMPTY slot is a dim open diamond over its slot word, remains a
+NON-BUTTON (the pack probe's own law), and drops the em-dash line
+(the diamond and the word carry it). The probe's class names
+(.wornrow/.wornname) ride the tiles unchanged so every existing
+selector keeps reading, and selection still opens the plaque rather
+than undressing on a tap (the mis-click law). Verified: 25 tiles
+render off the 27-slot table, every empty a div, suite green.
+
+PX19c (Mac: containers/bodies/ground as their OWN smaller window;
+and the paperdoll "which you haven't done"): THE LOOT WINDOW AND THE
+DOLL'S MISSING PRELOAD. (1) THE SPLIT: the pack's middle column is
+the LOCAL list alone now - the room the split buys - and the remote
+rides a second, smaller window (min 340px) in the same frame
+language beside the pack: corner gems, the 0.72 glass, remoteCol
+mounted whole inside it, so every take/stow arm, the wagon cap, the
+gold field and the quest-click law moved furniture without moving
+law. PRESENCE RULE: the loot window exists for a container, a
+corpse's tray, the wagon, or a littered ground - and not at all over
+bare earth (a window with nothing to say is the dead-arm bug as
+furniture). Phone stacks it beneath the pack at 40dvh. Verified both
+ways: bare ground 0 loot windows, a chest 1 window 2 rows, zero
+errors. (2) THE DOLL: figurePanel was always integrated -
+paperDollDataUrl over paperDollPixels with the slot map as the
+honest fallback - but TWO wires were missing. The refresh's catch
+swallowed failures SILENTLY, so a live miss read as "never
+integrated" - it warns once now, so the next report carries its own
+diagnosis. And the art PRELOAD ran only in the world host: a new
+game's first dungeon opened a pack with the schematic where the
+avatar belongs - the 17g F1 shape exactly, one art over.
+preloadPaperDollForEntity now warms in dungeonContext beside the
+pause art, same loud-never-boot posture. The world's interiors
+already rode the world's preload.
+
+PX13b (Mac: the stage ground was still the old basic ui): .stagebody
+carried var(--iron) - the SAME gap-paint trick PX10b found on the
+settings .panes, one file later - now transparent, and the walk
+floats on the open sky like every other face; the class list keeps
+the shell's 0.38 breath and the dcard its bordered card.

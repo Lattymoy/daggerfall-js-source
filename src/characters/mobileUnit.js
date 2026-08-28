@@ -31,6 +31,8 @@
 // port cleared both flags at the top of every update, which made them
 // edges: a blow the player should have taken on waking was dropped.
 
+import { rand } from '../formats/dfRandom.js';   // NT2 (F210): the gender roll is a DFRandom draw
+
 // Speeds in frames-per-second (EnemyBasics).
 export const MOVE_ANIM_SPEED = 6;
 export const FLY_ANIM_SPEED = 10;   // flying enemies' move/idle clock (GetStateAnims override)
@@ -188,6 +190,22 @@ export function rollAttackFrames(basics, roll100) {
  * @param frameCount (record) => frames in that record (texture data)
  */
 export class MobileUnit {
+  /** NT2 (F210) - GetTextureArchive's gender arm
+   *  (DaggerfallMobileUnit.cs:621-630): a HUMAN enemy with unspecified
+   *  gender rolls `DFRandom.random_range(0, 2)` - ONE draw off the
+   *  shared classic LCG, == 0 male - and a monster stays unspecified,
+   *  which reads as the male texture. The ENGINE-PRNG rule (Ledger A)
+   *  says a DFRandom draw does NOT ride an injectable roll, so this
+   *  reads the stream directly. Before this the hosts rolled
+   *  Math.random at their spawn arms - and the dungeon LAYOUT path
+   *  never rolled at all, so every random human class enemy stood male.
+   */
+  static resolveGender(gender, basics) {
+    if (gender && gender !== 'unspecified') return gender;
+    if (basics?.affinity === 'Human') return rand() % 2 === 0 ? 'male' : 'female';
+    return 'unspecified';
+  }
+
   constructor(mobileType, basics, frameCount, rolls = Math.random, gender = 'male') {
     this.mobileType = mobileType;
     this.basics = basics;

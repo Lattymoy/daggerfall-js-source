@@ -26,7 +26,8 @@ import { cureAllDiseases } from './effects.js';
 import { calculateCost, calculateTradePrice } from './shopStock.js';
 import { trainingPrice, trainingMax, trainingSkills, reducedCureCost } from './guildServices.js';
 import { getHolidayId, FREE_CURE_HOLIDAYS, HALF_PRICE_CURE_HOLIDAY } from './holidays.js';
-import { expandMacros } from './talkSession.js';
+import { firstName } from './talkSession.js';   // MH1: %pcf's own reader
+import { expandMacroValues } from './quest/questMacros.js';   // MH1: the ONE macro walk
 
 /** MacroHelper's four (Utility/MacroHelper.cs :50, :105, :107, :153),
  *  which are all these three windows ask for. The FULL table is 100+
@@ -36,36 +37,29 @@ import { expandMacros } from './talkSession.js';
  *  %gii the gold in hand, %god the temple's divine, %pct the player's
  *  GUILD TITLE, which U23's recovered rank titles finally make real.
  *
- *  The shared %pcn/%pcf/%cn/%oth live in talkSession.expandMacros and
- *  are applied first, so a guild record with a player name in it
- *  reads correctly too. */
+ *  The shared %pcn/%pcf/%cn/%oth ride the same value map, so a guild
+ *  record with a player name in it reads correctly too. */
 export function expandGuildMacros(text, { amount = null, gold = null, god = null, guildTitle = null, roomHours = null, race = null, honorific = null, shopName = null, playerName = '', cityName = '' } = {}) {
-  let out = expandMacros(text ?? '', { playerName, cityName });
-  // U39: %ra and %hnr are MacroHelper STATICS - ExpandRandomTextRecord
-  // runs the whole table over every record, so they resolve in a
-  // service window's TEXT.RSC exactly as they do in a greeting. The
-  // tavern's own "how many days" prompt (5102) opens with "Good day,
-  // %ra." and printed the macro raw on screen until U39's live probe
-  // read it back. The port already had both readers (talkSession's
-  // raceDisplayName / honorificOf); nothing had connected them here.
-  if (race != null) out = out.replaceAll('%ra', race);
-  if (honorific != null) out = out.replaceAll('%hnr', honorific);
-  if (amount != null) out = out.replaceAll('%a', String(amount));
-  if (gold != null) out = out.replaceAll('%gii', String(gold));
-  if (god != null) out = out.replaceAll('%god', god);
-  if (guildTitle != null) out = out.replaceAll('%pct', guildTitle);
-  // U39: MacroHelper.cs:80 `{ "%dwr", RoomHoursLeft }` - the hours a
-  // rented room still has to run, which the tavern's "how many
-  // ADDITIONAL days" prompt quotes back at the player. It lives here
-  // rather than in the tavern because this is the one table every
-  // service window's TEXT.RSC goes through.
-  if (roomHours != null) out = out.replaceAll('%dwr', String(roomHours));
-  // U40: MacroHelper.cs:69 `{ "%cpn", ShopName }` - the CURRENT SHOP's
-  // name, which the trade records quote back at the player ("%cpn
-  // prides itself on having the lowest prices in %cn"). The live probe
-  // read all three of that record's macros raw off the real game.
-  if (shopName != null) out = out.replaceAll('%cpn', shopName);
-  return out;
+  // MH1: ONE walk (questMacros.expandMacroValues) over ONE value map.
+  // A null value leaves its token VERBATIM - exactly the `if (x !=
+  // null)` guards the old replaceAll chain carried - and the walk's
+  // maximal-munch match retires the chain's latent %a-inside-%adj
+  // corruption. The per-symbol sources below are unchanged.
+  return expandMacroValues(text ?? '', {
+    pcf: firstName(playerName), pcn: playerName, cn: cityName, oth: '',
+    ra: race, hnr: honorific,
+    a: amount == null ? null : String(amount),
+    gii: gold == null ? null : String(gold),
+    god,
+    pct: guildTitle,
+    // U39: MacroHelper.cs:80 `{ "%dwr", RoomHoursLeft }` - the hours a
+    // rented room still has to run, which the tavern's "how many
+    // ADDITIONAL days" prompt quotes back at the player.
+    dwr: roomHours == null ? null : String(roomHours),
+    // U40: MacroHelper.cs:69 `{ "%cpn", ShopName }` - the CURRENT
+    // SHOP's name, which the trade records quote back at the player.
+    cpn: shopName,
+  });
 }
 
 /** DaggerfallTradeWindow's two shared ids, which all three of these

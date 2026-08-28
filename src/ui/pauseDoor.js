@@ -109,10 +109,15 @@ function enhancedPauseOverlay(show, hooks) {
   const host = document.createElement('div');
   host.id = 'enhanced-pause';
   // z-index 13: above the front door (12), below the wizard (14).
-  // Opaque for the reason runEnhancedMenu's host is - the renderer
-  // clears to the pale Iliac Bay sky and it would otherwise wash
-  // straight through the screen.
-  host.style.cssText = 'position:fixed;inset:0;z-index:13;background:#0e1013;overflow:hidden';
+  // PX4 (Mac): TRANSLUCENT - the classic pause has always drawn its
+  // panel over the live frame in the same overlay slot, so the frame
+  // is there to show; the menu's own .px-over scrim owns the tone.
+  // STANDING CAVEAT: a host that stops presenting under an overlay
+  // would show the renderer's pale clear through this - the classic
+  // window's behaviour says none does, but the first real-ARENA2
+  // eyeball owns the verdict (the boot door stays opaque for exactly
+  // that clear).
+  host.style.cssText = 'position:fixed;inset:0;z-index:13;background:transparent;overflow:hidden';
   document.body.append(host);
 
   const close = () => {

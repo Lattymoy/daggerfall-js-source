@@ -94,7 +94,11 @@ import {
 } from '../systems/settings.js';
 import { mostRecentRestorable, deleteSave } from '../systems/saveSlots.js';   // SAV4: the slot store
 import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES } from '../systems/uiSkin.js';
-import { dateFromClassicMinutes, dateString } from '../systems/gameDate.js';
+import { dateFromClassicMinutes, dateString, dateTimeString } from '../systems/gameDate.js';
+// PX5: the pause clock reads THE ONE CLOCK directly (AUDIT 23 C2's
+// law - every host already reads this same module), so no host seam
+// is needed and no host can drift.
+import { worldMinutes } from '../systems/worldTick.js';
 import { BUILD_TAG } from '../buildTag.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { repaintKeepingScroll } from './domRepaint.js';
@@ -105,6 +109,8 @@ import { drawPixelGround } from './pixelGround.js';
 // renders the tab, so the front door still reads no game state.
 import { sheetModel } from './enhancedCharSheet.js';
 import { playerEntity } from '../characters/playerEntity.js';
+// PX6: the Stats page's skill labels - the one home (systems/skills.js).
+import { SKILL_NAMES } from '../systems/skills.js';
 import { overlayAction } from './input.js';   // U51: Escape, through the shared table
 
 // ── THE RAIL ─────────────────────────────────────────────────────
@@ -120,10 +126,11 @@ const SECTIONS_BOOT = ['Continue', 'New Game', 'Load Game', 'Settings', 'Mods', 
 // Exit answer "what now", which is the only thing left to ask.
 //
 // SAVE AND LOAD STAY ON THE RAIL EVEN WHERE THE HOST REFUSES THEM.
-// Two of the four hosts hand `savingPrevented: () => true` and no save
-// hook at all (exterior, worldModes), and the pane says so in words. A
-// rail that drops the row instead teaches the player the door was
-// never there - the same argument the Mods section is built on.
+// One host still hands `savingPrevented: () => true` and no save hook
+// at all (exterior.js, the block-viewer probe; IS1 wired the interior
+// mode's doors), and the pane says so in words. A rail that drops the
+// row instead teaches the player the door was never there - the same
+// argument the Mods section is built on.
 const SECTIONS_PAUSE = ['Resume', 'Save Game', 'Load Game', 'Settings', 'Mods', 'About', 'Exit'];
 
 const idOf = (label) => label.toLowerCase().split(' ')[0];
@@ -153,6 +160,10 @@ let lockHandler = null;
 let resizeHandler = null;   // PX1: the home ground's redraw-on-resize
 let groundTimer = null;     // PX1b: the home sky's 8fps clock - cleared by every rebuild and by unmount
 let pauseTab = 'system';    // PX3: which tab the pause window shows - System lands on Resume/Save
+let questSel = null;        // PX4: the journal's selected row - 'a:<uid>' | 'f:<index>' | null = first active
+let statsSec = 'character'; // PX6: the Stats page's rail - character | attributes | skills | standing
+let statsAllSkills = false; // PX6: the Miscellaneous disclosure, the sheet's own gesture
+let sysSec = 'save';        // PX7: the System page's rail - which pane fills the detail
 
 const el = (t, cls, txt) => {
   const n = document.createElement(t);
@@ -483,6 +494,43 @@ function paneSettings(pane) {
   pane.append(panes);
 }
 
+/** PX10: THE CONDENSED SETTINGS (pause only). Every key whose tier is
+ *  LIVE - derived from the tier map itself, so a setting that gains a
+ *  consumer joins this pane the same day - rendered through the SAME
+ *  settingRow every screen uses, with the same rising sheet for help.
+ *  The full catalog stays on the main menu's Settings (Mac's call:
+ *  'the pause menu should have a more condensed settings menu while
+ *  the main menu holds most settings'), and the closing line says so
+ *  rather than letting the short list read as the whole store - the
+ *  U30 nothing-hidden law kept by TELLING, not by showing all 171. */
+function paneQuickSettings(pane) {
+  const panes = el('div', 'panes');
+  const list = el('div', 'list');
+  let any = false;
+  // One scroll, grouped under the categories' own titles - 48 live
+  // rows flat read as a wall; the dividers give the scroll a spine
+  // without bringing back the chip strip this pane exists to shed.
+  for (const cat of CATEGORIES) {
+    const liveKeys = keysOf(cat.id).filter((key) => tierOf(key) === 'live');
+    if (!liveKeys.length) continue;
+    any = true;
+    list.append(pxDivider(cat.title));
+    for (const key of liveKeys) list.append(settingRow(key));
+  }
+  if (!any) list.append(empty('Nothing live here yet', 'No setting has an in-game consumer in this build.'));
+  list.append(el('p', 'px-note', 'Every setting lives on the main menu\u2019s Settings.'));
+  panes.append(list);
+
+  const detail = el('div', 'detail');
+  const close = el('button', 'sheet-close', 'Close');
+  close.onclick = () => { sheetOpen = false; confirming = null; render(); };
+  detail.append(close);
+  detail.append(confirming ? confirmCard() : (pickedKey ? helpCard(pickedKey) : el('div')));
+  if (sheetOpen) detail.classList.add('open');
+  panes.append(detail);
+  pane.append(panes);
+}
+
 /** THE ONE WAY TO SWITCH SKINS, for every control that offers it.
  *  Stores the choice through uiSkin and reloads without any ?skin=
  *  override: the two skins are two hosts and there is nothing to hand
@@ -756,7 +804,16 @@ function renderHome() {
     const stage = el('div', 'px-stage');
     stage.append(pauseWindow());
     home.append(stage);
-    appendPxFoot(home);
+    // PX4 (Mac): NO FOOT AT PAUSE - no skin toggle, no About plaque;
+    // About is a System-tab row instead, and the skin switch stays on
+    // the boot face and the settings shell.
+    // PX5: the world's date and time, bottom-right like the reference,
+    // through DFU's own header formatter over THE ONE CLOCK - a paused
+    // clock, so one read at render is the truth for the whole visit.
+    const d = dateFromClassicMinutes(Math.floor(worldMinutes()));
+    const clock = el('div', 'px-clock');
+    clock.append(el('span', null, dateString(d)), el('span', 'px-clocktime', dateTimeString(d).split(' on ')[0]));
+    home.append(clock);
     app.append(home);
     return;
   }
@@ -829,76 +886,333 @@ function pauseWindow() {
   return win;
 }
 
-/** The System tab: the pause actions, compact. About stays the corner
- *  plaque; everything else keeps its shell pane, so no law moved. */
+// ── PX7: THE SYSTEM PAGE ─────────────────────────────────────────
+// The journal's bones a third time - and NOT a third implementation
+// of anything: the detail renders the SAME pane functions the shell
+// has always run (paneSave's overwrite card, paneLoad's no-confirm
+// law and delete-behind-ask, paneMods' honest waiting room,
+// paneAbout, paneExit's confirm), so every audited law keeps its one
+// home and only the paint changes (.px-win repaints .card/.act/.empty
+// in the pixel idiom). Resume ACTS from the rail - a pane whose only
+// content repeats the word just pressed is a pane that wasted a press
+// (the shell's own RAIL_ACTS reasoning). PX9 (Mac: "why isn't this in
+// the pause menu"): SETTINGS LIVES HERE TOO - the same paneSettings
+// function, its category/pickedKey/sheetOpen machine and every F7/F8
+// law intact, REFLOWED by CSS into the window's shape: the category
+// rail becomes a chip strip across the top, the rows scroll beneath,
+// and the help/reset card rises as the SHEET the phone layout already
+// proved. Boot keeps the fullscreen shell, where there is room.
+const SYSTEM_PANES = Object.freeze([
+  ['resume', 'Resume'], ['save', 'Save Game'], ['load', 'Load Game'],
+  ['settings', 'Settings'], ['mods', 'Mods'], ['about', 'About'], ['exit', 'Exit'],
+]);
+
 function pauseSystem(body) {
-  const list = el('div', 'px-menu px-compact');
-  for (const label of sections) {
-    if (label === 'About') continue;
-    const id = idOf(label);
-    const b = el('button');
-    b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label), el('span', 'px-c', '\u25c6'));
-    b.onclick = RAIL_ACTS[id] ? () => onAction(RAIL_ACTS[id]) : () => go(id);
-    list.append(b);
+  const wrap = el('div', 'px-journal');
+  const rail = el('div', 'px-qrail');
+  for (const [id, label] of SYSTEM_PANES) {
+    const b = el('button', `px-qrow${id === sysSec && !RAIL_ACTS[id] ? ' on' : ''}`);
+    b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label));
+    b.onclick = RAIL_ACTS[id] ? () => onAction(RAIL_ACTS[id])
+      : () => { sysSec = id; confirming = null; sheetOpen = false; pickedKey = null; render(); };
+    rail.append(b);
   }
-  body.append(list);
+  wrap.append(rail);
+  const detail = el('div', `px-qdetail px-sys${sysSec === 'settings' ? ' px-setwrap' : ''}`);
+  if (sysSec === 'settings') {
+    // PX10 (Mac): CONDENSED at pause - the keys with LIVE consumers,
+    // the ones a hand mid-game actually reaches for; the full catalog
+    // stays on the main menu, and the pane says so. The pane owns its
+    // own confirm/help placement (the sheet).
+    paneQuickSettings(detail);
+  } else if (confirming) {
+    detail.append(confirmCard());
+  } else {
+    ({ save: paneSave, load: paneLoad, mods: paneMods, about: paneAbout, exit: paneExit })[sysSec](detail);
+  }
+  wrap.append(detail);
+  body.append(wrap);
 }
 
-/** The Stats tab: the char sheet's OWN model over the shared entity -
- *  the summary a pause glance wants; the full sheet stays the F5
- *  window's. */
+// ── PX6: THE STATS PAGE ──────────────────────────────────────────
+// The journal's own bones - a rail of pages, the chosen one on the
+// right - because one structure learned once is the whole window's.
+// Everything drawn is something the entity actually carries: the char
+// sheet's model (vitals, attributes, the career skill groups), and
+// the three reputation stores the talk and court systems read.
+const STATS_SECTIONS = Object.freeze([
+  ['character', 'Character'], ['attributes', 'Attributes'],
+  ['skills', 'Skills'], ['standing', 'Standing'],
+]);
+// The five NAMED social groups getReactionToPlayer reads
+// (formats/factionFile.js:23-27; talk.js seeds the array) - the enum
+// slots past Underworld are DFU's own placeholders and stay unlisted.
+const SOCIAL_GROUP_NAMES = Object.freeze(['Commoners', 'Merchants', 'Scholars', 'Nobility', 'Underworld']);
+
+/** A whole-pixel meter: 2px frame, flat fill, no easing. */
+function pxMeter(now, max, tone) {
+  const wrap = el('div', 'px-meter');
+  const fill = el('div', `px-fill${tone ? ` ${tone}` : ''}`);
+  const pct = max > 0 ? Math.max(0, Math.min(100, (now / max) * 100)) : 0;
+  fill.style.width = `${pct}%`;
+  wrap.append(fill);
+  return wrap;
+}
+
+function meterRow(label, now, max, tone) {
+  const r = el('div', 'px-mrow');
+  const top = el('div', 'px-mtop');
+  top.append(el('span', 'k', label), el('span', 'v', `${now} / ${max}`));
+  r.append(top, pxMeter(now, max, tone));
+  return r;
+}
+
 function pauseStats(body) {
   const m = sheetModel(playerEntity);
-  const head2 = el('div', 'px-statshead');
-  head2.append(el('strong', null, m.name || 'Adventurer'));
-  head2.append(el('span', null, `${m.race} ${m.career}${m.career ? ', ' : ''}Level ${m.level}`));
-  body.append(head2);
-  const vit = el('div', 'px-statgrid');
-  for (const [label, v] of [
-    ['Health', `${m.health.now} / ${m.health.max}`],
-    ['Fatigue', `${m.fatigue.now} / ${m.fatigue.max}`],
-    ['Magicka', `${m.magicka.now} / ${m.magicka.max}`],
-    ['Gold', String(m.gold)],
-    ['Encumbrance', `${m.encumbrance.now} / ${m.encumbrance.max}`],
-  ]) {
-    const r = el('div', 'px-stat');
-    r.append(el('span', 'k', label), el('span', 'v', v));
-    vit.append(r);
+  const wrap = el('div', 'px-journal');
+  const rail = el('div', 'px-qrail');
+  for (const [id, label] of STATS_SECTIONS) {
+    const b = el('button', `px-qrow${id === statsSec ? ' on' : ''}`);
+    b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label));
+    b.onclick = () => { statsSec = id; render(); };
+    rail.append(b);
   }
-  body.append(vit);
-  const attrs = el('div', 'px-statgrid px-attrs');
-  for (const a of m.attributes) {
-    const r = el('div', 'px-stat');
-    r.append(el('span', 'k', a.key.slice(0, 3).toUpperCase()), el('span', 'v', String(a.value)));
-    attrs.append(r);
-  }
-  body.append(attrs);
+  wrap.append(rail);
+  const detail = el('div', 'px-qdetail');
+  ({ character: statsCharacter, attributes: statsAttributes, skills: statsSkills, standing: statsStanding })[statsSec](detail, m);
+  wrap.append(detail);
+  body.append(wrap);
 }
 
-/** The Quests tab: the machine's own log messages through the host's
- *  questMessages hook - the SAME seam the F5 logbook reads
- *  (world.js:1525). A host without the hook says so rather than
- *  drawing an empty page that lies about the journal. */
+/** CHARACTER: who you are, and the three bars a glance wants - health
+ *  in the skin's blood, fatigue in bone, magicka in verdigris. */
+function statsCharacter(detail, m) {
+  const head2 = el('div', 'px-qname');
+  head2.append(el('span', 'px-qwing'), el('h3', null, m.name || 'Adventurer'), el('span', 'px-qwing px-flip'));
+  detail.append(head2);
+  const meta = el('div', 'px-qmeta');
+  meta.append(el('span', 'px-qkind', `${m.race}${m.career ? ` ${m.career}` : ''} \u00b7 Level ${m.level}`));
+  detail.append(meta);
+  detail.append(meterRow('Health', m.health.now, m.health.max, 'blood'));
+  detail.append(meterRow('Fatigue', m.fatigue.now, m.fatigue.max, ''));
+  detail.append(meterRow('Magicka', m.magicka.now, m.magicka.max, 'verdigris'));
+  detail.append(pxDivider('Burden'));
+  const g = el('div', 'px-statgrid');
+  for (const [label, v] of [['Gold', String(m.gold)], ['Encumbrance', `${m.encumbrance.now} / ${m.encumbrance.max}`]]) {
+    const r = el('div', 'px-stat');
+    r.append(el('span', 'k', label), el('span', 'v', v));
+    g.append(r);
+  }
+  detail.append(g);
+}
+
+/** ATTRIBUTES: the eight, each with a meter on the classic 100. */
+function statsAttributes(detail, m) {
+  detail.append(pxDivider('Attributes'));
+  for (const a of m.attributes) {
+    detail.append(meterRow(a.key[0].toUpperCase() + a.key.slice(1), a.value, 100, ''));
+  }
+}
+
+/** SKILLS: the three career groups open - the character's chosen
+ *  shape - and Miscellaneous behind the sheet's own disclosure. */
+function statsSkills(detail, m) {
+  for (const group of m.groups) {
+    if (!group.career && !statsAllSkills) continue;
+    if (!group.ids.length) continue;
+    detail.append(pxDivider(group.name));
+    const grid = el('div', 'px-skillgrid');
+    for (const id of group.ids) {
+      const r = el('div', 'px-skill');
+      const top = el('div', 'px-mtop');
+      top.append(el('span', 'k', SKILL_NAMES[id] ?? `Skill ${id}`), el('span', 'v', String(m.skill(id))));
+      r.append(top, pxMeter(m.skill(id), 100, 'thin'));
+      grid.append(r);
+    }
+    detail.append(grid);
+  }
+  const more = el('button', 'px-qrow px-disclose');
+  const miscCount = m.groups[3]?.ids.length ?? 0;
+  more.append(el('span', 'px-c', '\u25c6'),
+    document.createTextNode(statsAllSkills ? 'Hide miscellaneous' : `Show ${miscCount} miscellaneous skills`));
+  more.onclick = () => { statsAllSkills = !statsAllSkills; render(); };
+  detail.append(more);
+}
+
+/** STANDING: the three reputation stores the game actually reads -
+ *  the five named social groups (getReactionToPlayer's own inputs).
+ *  Legal standing is PER REGION and the window does not know where
+ *  you stand, so it stays with the court until a host hands a region
+ *  seam - drawing a number without its region would be a lying row. */
+function statsStanding(detail) {
+  detail.append(pxDivider('Reputation'));
+  const reps = playerEntity.sGroupReputations ?? [];
+  for (let i = 0; i < SOCIAL_GROUP_NAMES.length; i++) {
+    const v = reps[i] ?? 0;
+    const r = el('div', 'px-stat');
+    r.append(el('span', 'k', SOCIAL_GROUP_NAMES[i]),
+      el('span', `v${v > 0 ? ' won' : v < 0 ? ' bad' : ''}`, v > 0 ? `+${v}` : String(v)));
+    detail.append(r);
+  }
+}
+
+/** PX5: THE MAIN QUEST, by the pack's own naming - DFU ships the
+ *  story quests as S0000*.txt (34 files in vendor/dfu-quests/Quests)
+ *  and _BRISIEN is the main quest's opener (StartGameBehaviour.cs:
+ *  445-447 via questBridge.GAME_START_QUESTS). Everything else on the
+ *  log is a side quest. */
+const isMainQuest = (questName) => /^S0000/.test(questName ?? '') || questName === '_BRISIEN';
+
+/** PX5: remaining game seconds as words - days+hours above a day,
+ *  hours+minutes below it, minutes alone under an hour. */
+function remainWords(s) {
+  const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m2 = Math.floor((s % 3600) / 60);
+  if (d > 0) return `${d} day${d === 1 ? '' : 's'}${h ? ` ${h} hour${h === 1 ? '' : 's'}` : ''}`;
+  if (h > 0) return `${h} hour${h === 1 ? '' : 's'}${m2 ? ` ${m2} min` : ''}`;
+  return `${Math.max(1, m2)} min`;
+}
+
+/** One flattener for every journal source: message object or raw
+ *  token array in, text lines out, questJournal's own counted set. */
+function journalLines(msgOrTokens) {
+  const tokens = Array.isArray(msgOrTokens) ? msgOrTokens : (msgOrTokens?.getTextTokens?.() ?? []);
+  return tokens.filter((t) => JOURNAL_LINE_FORMATTINGS.has(t?.formatting)).map((t) => String(t?.text ?? ''));
+}
+
+/** The finished-quest header the notebook files:
+ *  '<name> completed|ended at <date>:' (notebook.js:151-182). The name
+ *  and the verdict come back out of it; a headerless overflow entry
+ *  (the notebook's own kept quirk) reads as a continuation. */
+function parseFinished(entry, index) {
+  const head2 = entry?.[0];
+  const header = head2?.formatting === 'highlight' ? String(head2.text ?? '') : null;
+  const m = header ? /^(.*?) (completed|ended) at (.*?):?$/.exec(header) : null;
+  return {
+    key: `f:${index}`,
+    name: m ? m[1] : (header ?? 'Quest record'),
+    success: m ? m[2] === 'completed' : null,
+    when: m ? m[3] : null,
+    lines: journalLines(header ? entry.slice(1) : entry).filter((l, i, a) => l !== '' || a[i - 1] !== ''),
+  };
+}
+
+/** A titled ornamental divider - line, gem, WORD, gem, line - the
+ *  reference's OBJECTIVES rule in whole pixels. */
+function pxDivider(word) {
+  const d = el('div', 'px-divider');
+  d.append(el('span', 'px-gem'), el('span', 'px-divword', word), el('span', 'px-gem'));
+  return d;
+}
+
+/** PX4 - THE JOURNAL (Mac's reference: Skyrim's quest page). A rail of
+ *  quest names on the left - active first, THE ARCHIVE beneath them -
+ *  and the selected quest on the right: name under its ornament, the
+ *  latest entry as the description, and every step of the trail as a
+ *  diamond-bulleted entry, newest first, exactly the shape the
+ *  machine's log walk gives (a Daggerfall quest speaks in journal
+ *  entries, not objective flags - the entries ARE the tasks). Data
+ *  arrives raw through hooks.questLog (world.js wires it beside the
+ *  F5 logbook's flat seam); a host without the hook says so. */
 function pauseQuests(body) {
-  const src = hooks.questMessages;
-  if (!src) {
+  if (!hooks.questLog) {
     body.append(el('p', 'px-note', 'The journal is not wired into this place yet.'));
     return;
   }
-  const msgs = src() ?? [];
-  if (!msgs.length) {
+  const log = hooks.questLog() ?? { active: [], finished: [] };
+  const active = (log.active ?? []).map((q, i) => ({
+    key: `a:${q.id ?? i}`,
+    name: q.name || `Quest ${i + 1}`,
+    main: isMainQuest(q.questName),
+    clockSeconds: Number.isFinite(q.clockSeconds) ? q.clockSeconds : null,
+    entries: (q.messages ?? []).map(journalLines).filter((ls) => ls.length),
+  })).filter((q) => q.entries.length);
+  const finished = (log.finished ?? []).map(parseFinished).filter((q) => q.lines.length || q.name);
+  if (!active.length && !finished.length) {
     body.append(el('p', 'px-note', 'No active quests.'));
     return;
   }
-  for (const msg of msgs) {
-    const tokens = Array.isArray(msg) ? msg : (msg?.getTextTokens?.() ?? []);
-    const lines = tokens.filter((t) => JOURNAL_LINE_FORMATTINGS.has(t?.formatting)).map((t) => String(t?.text ?? ''));
-    if (!lines.length) continue;
-    const q = el('div', 'px-quest');
-    for (const line of lines) q.append(el('p', null, line));
-    body.append(q);
+  const rows = [...active, ...finished];
+  if (!rows.some((r) => r.key === questSel)) questSel = rows[0].key;
+  const sel = rows.find((r) => r.key === questSel);
+
+  const wrap = el('div', 'px-journal');
+  const rail = el('div', 'px-qrail');
+  const railList = (items, cls) => {
+    for (const q of items) {
+      const b = el('button', `px-qrow${cls}${q.key === questSel ? ' on' : ''}`);
+      b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(q.name));
+      if (q.clockSeconds != null) b.append(el('span', 'px-qtimed', '\u25c6'));
+      b.onclick = () => { questSel = q.key; render(); };
+      rail.append(b);
+    }
+  };
+  // PX5: main quests above side quests, each under its own small
+  // heading - shown only when BOTH kinds are on the log, because a
+  // rail of one group under a header is a header explaining nothing.
+  const mains = active.filter((q) => q.main);
+  const sides = active.filter((q) => !q.main);
+  if (mains.length && sides.length) {
+    rail.append(el('div', 'px-qarch px-qfirst', 'Main Quests'));
+    railList(mains, '');
+    rail.append(el('div', 'px-qarch', 'Quests'));
+    railList(sides, '');
+  } else {
+    railList(active, '');
   }
-  if (!body.childElementCount) body.append(el('p', 'px-note', 'No active quests.'));
+  if (finished.length) {
+    rail.append(el('div', 'px-qarch', 'Archive'));
+    railList(finished, ' done');
+  }
+  wrap.append(rail);
+
+  const detail = el('div', 'px-qdetail');
+  if (sel) {
+    const head2 = el('div', 'px-qname');
+    head2.append(el('span', 'px-qwing'), el('h3', null, sel.name), el('span', 'px-qwing px-flip'));
+    detail.append(head2);
+    if (sel.entries) {
+      const meta = el('div', 'px-qmeta');
+      meta.append(el('span', 'px-qkind', sel.main ? 'Main Quest' : 'Side Quest'));
+      if (sel.clockSeconds != null) {
+        // Under a game day the words go URGENT gold.
+        const urgent = sel.clockSeconds < 86400;
+        meta.append(el('span', `px-qtimer${urgent ? ' urgent' : ''}`, `Time remains: ${remainWords(sel.clockSeconds)}`));
+      }
+      detail.append(meta);
+    }
+    if (sel.entries) {
+      // Active: the LATEST entry is the state of the quest; the trail
+      // beneath it, newest first.
+      const latest = sel.entries[sel.entries.length - 1];
+      const desc = el('div', 'px-qdesc');
+      for (const line of latest) desc.append(el('p', null, line));
+      detail.append(desc);
+      if (sel.entries.length > 1) {
+        detail.append(pxDivider('Journal'));
+        for (let i = sel.entries.length - 2; i >= 0; i--) {
+          const e = el('div', 'px-qentry');
+          const mark = el('span', 'px-qmark', '\u25c7');
+          const text = el('div');
+          for (const line of sel.entries[i]) text.append(el('p', null, line));
+          e.append(mark, text);
+          detail.append(e);
+        }
+      }
+    } else {
+      // Archived: the verdict line, then the filed record.
+      const verdict = sel.success == null ? null
+        : `${sel.success ? 'Completed' : 'Ended'}${sel.when ? ` at ${sel.when}` : ''}`;
+      if (verdict) detail.append(el('p', `px-qverdict${sel.success ? ' won' : ''}`, verdict));
+      const desc = el('div', 'px-qdesc');
+      for (const line of sel.lines) {
+        if (line === '') { desc.append(el('div', 'px-qgap')); continue; }
+        desc.append(el('p', null, line));
+      }
+      detail.append(desc);
+    }
+  }
+  wrap.append(detail);
+  body.append(wrap);
 }
 
 function render() {
@@ -914,6 +1228,24 @@ function renderInto() {
   // PX1/PX2: both doors open on the pixel home; every section keeps
   // its shell.
   if (section === 'home') { renderHome(); return; }
+  // PX11 (Mac): the BOOT shell stands on the same living sky as the
+  // home - the ground draws behind it and the shell's own chrome goes
+  // translucent (enhancedStyle's PX11 block), so Settings at boot is
+  // the one treatment, fullscreen. Same clock, same owner, same
+  // reduced-motion opt-out; pause never reaches this branch.
+  if (mode === 'boot') {
+    const ground = document.createElement('canvas');
+    ground.className = 'px-ground';
+    const vw = () => globalThis.innerWidth ?? 1280;
+    const vh = () => globalThis.innerHeight ?? 720;
+    drawPixelGround(ground, vw(), vh(), 0);
+    const still = typeof globalThis.matchMedia === 'function' && globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!still) {
+      const t0 = Date.now();
+      groundTimer = setInterval(() => drawPixelGround(ground, vw(), vh(), (Date.now() - t0) / 1000), 125);
+    }
+    app.append(ground, el('div', 'px-vignette'));
+  }
   const shell = el('div', 'shell');
 
   const side = el('aside', 'side');
@@ -1062,6 +1394,10 @@ export function mountEnhancedMenu(host, {
   // Game the second row a thumb meets and Resume the first.
   section = 'home';
   pauseTab = 'system';
+  questSel = null;
+  statsSec = 'character';
+  statsAllSkills = false;
+  sysSec = 'save';
   category = CATEGORIES[0].id;
   pickedKey = null;
   sheetOpen = false;

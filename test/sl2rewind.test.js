@@ -63,8 +63,8 @@ test('SL2 save-load-2: spawnCorpse keys its batch to the foe and aborts on a mid
   const fn = dc.slice(i, dc.indexOf('\n  }\n', i));
   // the race: getTexture awaits; a backward load can resurrect the
   // foe before the batch mints - a corpse must never stand for a live foe
-  const guard = fn.indexOf('if (!f.dead) return;');
-  assert.ok(guard > 0, 'the resurrect race guard exists');
+  const guard = fn.indexOf('if (!f.dead || _ctxDead) return;');
+  assert.ok(guard > 0, 'the resurrect race guard exists (widened at NT1 with the context dead latch)');
   assert.ok(guard > fn.indexOf('await getTexture'), 'the guard re-checks AFTER the await');
   assert.ok(guard < fn.indexOf('createBillboardBatch'), 'and before the mint');
   assert.ok(fn.includes('f.corpseBatch = batch;'), 'the batch keys to its foe so the rewind can free it');

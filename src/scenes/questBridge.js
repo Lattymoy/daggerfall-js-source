@@ -280,6 +280,11 @@ export function createQuestBridge(ctx) {
     offerDaedricQuest(questName, summonerFactionId) {
       return offerFlow.offerNamedQuest(questName, summonerFactionId);
     },
+    /** CW1: the coven popup's Quest button - the Witches pool as
+     *  nonmember, homed on the witch NPC's own faction. */
+    offerCovenQuest(factionId, reputation = 0) {
+      return offerFlow.offerCovenQuest(factionId, reputation);
+    },
     offerSocialQuest(npcData, socialGroup, menu = false) {
       return offerFlow.offerSocialQuest(npcData, socialGroup, menu);
     },

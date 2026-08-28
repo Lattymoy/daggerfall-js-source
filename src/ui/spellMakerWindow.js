@@ -10,12 +10,13 @@
 // than closing.
 //
 // DEPARTURES (recorded): DFU's window is native INFO01I0.IMG art
-// with invisible hit-buttons, hover tips, an icon picker over
-// ICON00I0's 69 icons, and modal message boxes; this is a keyed
-// text window - one cursor, ENTER to act, in the travelMap/automap
-// idiom the port's other map-and-list windows use. The icon is kept
-// on the record (the runtime does not draw spell icons anywhere yet,
-// so a picker would choose an invisible thing) at the default 1.
+// with invisible hit-buttons, hover tips, and modal message boxes;
+// this is a keyed text window - one cursor, ENTER to act, in the
+// travelMap/automap idiom the port's other map-and-list windows use.
+// MC1: the ICON is real now - the icon row's ENTER pushes the native
+// SpellIconPickerWindow (the same window the spellbook's icon panel
+// opens) and +/- is the Next/PreviousIconButton wrap cycle; the
+// picker is the one pointer-driven surface over this keyed sheet.
 // Refusals show as an inline notice line rather than a modal box.
 // The INERT MARK is the port's own: effects whose runtime arm is not
 // ported are listed with a bullet, so nobody spends gold on a spell
@@ -33,8 +34,9 @@ import {
   SPELLMAKER_NOT_ENOUGH_GOLD_ID, MUST_CHOOSE_NAME_ID,
   updateAllowedButtons, enforceSelected, cycleAllowed,
   DEFAULT_TARGET_INDEX, DEFAULT_ELEMENT_INDEX,
-  TARGET_FLAGS_ALL, ELEMENT_FLAGS_MAGIC_ONLY,
+  TARGET_FLAGS_ALL, ELEMENT_FLAGS_MAGIC_ONLY, SPELL_ICON_COUNT,
 } from '../systems/spellMaker.js';
+import { SpellIconPickerWindow } from './spellIconPickerWindow.js';   // MC1: SelectIconButton's window (:894-898)
 import { goldAmount } from '../systems/court.js';
 
 // TargetTypes / ElementTypes in DFU's declaration order, which IS the
@@ -81,6 +83,7 @@ export class SpellMakerWindow {
     this.allowedElements = ELEMENT_FLAGS_MAGIC_ONLY;
     this.name = '';
     this.icon = DEFAULT_SPELL_ICON;
+    this.picker = null;   // MC1: the icon picker, mounted over the sheet
     this.mode = 'main';
     this.cursor = 0;
     this.notice = '';
@@ -120,11 +123,15 @@ export class SpellMakerWindow {
   // ---- rows on the main sheet ---------------------------------------
   _rows() {
     return [...this.slots.map((_, i) => ({ kind: 'slot', i })),
-      { kind: 'target' }, { kind: 'element' }, { kind: 'name' }, { kind: 'buy' }];
+      { kind: 'target' }, { kind: 'element' }, { kind: 'icon' }, { kind: 'name' }, { kind: 'buy' }];
   }
 
   input(action, e = null) {
     this.notice = '';
+    // MC1: the picker is modal over the keyed sheet - the host's
+    // Escape arrives as 'back' and is CancelWindow; every other keyed
+    // action stays with the pointer-driven window.
+    if (this.picker) { if (action === 'back') this.picker.cancel(); return; }
     if (this.mode === 'group') return this._inputList(action, spellMakerGroups().length, (i) => {
       this.pickGroup = spellMakerGroups()[i];
       const subs = spellMakerSubgroups(this.pickGroup);
@@ -215,6 +222,18 @@ export class SpellMakerWindow {
       this.rangeType = cycleAllowed(this.rangeType, dir, this.allowedTargets);
     } else if (row.kind === 'element') {
       this.element = cycleAllowed(this.element, dir, this.allowedElements);   // SetSpellElement (:526-528)
+    } else if (row.kind === 'icon') {
+      // MC1: ENTER is SelectIconButton pushing the picker (:894-898);
+      // +/- are the Next/PreviousIconButton wrap-around cycle
+      // (:875-892, over GetIconCount - the classic 69 here).
+      if (action === 'confirm') {
+        this.picker = new SpellIconPickerWindow({
+          // IconPicker_OnClose (:1013-1017): a null pick keeps the icon
+          onClose: (icon) => { this.picker = null; if (icon) this.icon = icon.index; },
+        });
+      } else {
+        this.icon = (this.icon + dir + SPELL_ICON_COUNT) % SPELL_ICON_COUNT;
+      }
     } else if (row.kind === 'name') {
       this.mode = 'name';
     } else if (row.kind === 'buy') {
@@ -239,9 +258,17 @@ export class SpellMakerWindow {
   }
 
   // ---- drawing --------------------------------------------------------
+  // MC1: the picker is pointer-driven; the keyed sheet has no pointer
+  // surface of its own, so these three exist only to hand the events
+  // through while the picker is up (the host routes them generically).
+  click(vx, vy) { return this.picker ? this.picker.click(vx, vy) : false; }
+  hover(vx, vy) { this.picker?.hover(vx, vy); }
+  wheel(dir) { this.picker?.wheel(dir); }
+
   draw(renderer, canvas, font, s) {
     renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, [0.04, 0.03, 0.02, 0.92]);
     if (!font) return;
+    if (this.picker) { this._drawMain((t, row, c = WHITE) => drawText(renderer, font, t, 16 * s, (14 + row * 10) * s, s, c)); return this.picker.draw(renderer, canvas, font); }   // MC1
     const line = (t, row, c = WHITE) => drawText(renderer, font, t, 16 * s, (14 + row * 10) * s, s, c);
     if (this.mode === 'group') return this._drawList(line, 'Choose an effect group', spellMakerGroups(), (g) => g);
     if (this.mode === 'sub') {
@@ -296,6 +323,7 @@ export class SpellMakerWindow {
         text = `Effect ${r.i + 1}: ${eff ? eff.name + (eff.ported ? '' : '  (no effect yet)') : '-'}`;
       } else if (r.kind === 'target') text = `Target:  ${TARGET_LABELS[this.rangeType]}`;
       else if (r.kind === 'element') text = `Element: ${ELEMENT_LABELS[this.element]}`;
+      else if (r.kind === 'icon') text = `Icon:    #${this.icon}  (ENTER picks, +/- cycles)`;   // MC1
       else if (r.kind === 'name') text = `Name:    ${this.name || '-'}`;
       else text = `Buy this spell  (${gold} gold)`;
       line(mark + text, i + 2, sel ? HOT : WHITE);

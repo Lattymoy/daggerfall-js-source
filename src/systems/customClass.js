@@ -40,6 +40,34 @@ export function daggerY(points) {
   return Math.min(186, Math.trunc(115 + 41 * (-points / 12)));
 }
 
+/** CG1 - AnimateDagger (CreateCharCustomClass.cs:515-531) as data.
+ *  Every UpdateDifficulty ends by spawning a trail panel AT the
+ *  dagger's (already-moved) position at full alpha, fading
+ *  `255 * timeLeft / 1s` and removed at zero - so a spot the dagger
+ *  leaves within a second keeps a fading ghost there, and rapid
+ *  changes leave a chain of them. A trail under the dagger's CURRENT
+ *  position is an identical sprite over an identical sprite -
+ *  invisible - which is why detecting the y CHANGE at draw time is
+ *  observationally DFU's spawn-on-every-UpdateDifficulty. */
+export const DAGGER_TRAIL_LINGER_S = 1.0;   // daggerTrailLingerTime (:35)
+
+/** Advance the trail set for this frame's dagger position. `state` is
+ *  the caller's bag ({} to start); `now` in seconds, any monotonic
+ *  clock. Returns the live trails as draw entries { y, alpha 0..1 },
+ *  oldest first (Components.Add order - later trails draw on top). */
+export function tickDaggerTrails(state, y, now) {
+  state.trails ??= [];
+  if (state.lastY == null) state.lastY = y;
+  if (y !== state.lastY) {
+    state.trails.push({ y, born: now });
+    state.lastY = y;
+  }
+  for (let i = state.trails.length - 1; i >= 0; i--) {
+    if (now - state.trails[i].born >= DAGGER_TRAIL_LINGER_S) state.trails.splice(i, 1);
+  }
+  return state.trails.map((t) => ({ y: t.y, alpha: 1 - (now - t.born) / DAGGER_TRAIL_LINGER_S }));
+}
+
 /** The skill list the pickers draw from: all 35 display names,
  *  alphabetical "a la classic" (:196-199), MINUS the ones already
  *  assigned - SkillPicker_OnItemPicked removes the pick from the

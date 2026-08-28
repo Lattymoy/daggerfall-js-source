@@ -50,6 +50,7 @@ import { morphSelf } from '../systems/lycanthropy.js';   // V2a: the MorphSelf a
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { createMagicCandle, CANDLE } from './magicCandle.js';   // X11: the Light effect's candle
 import { CAPSULE_HEIGHT } from '../player/motor.js';   // PlayerController.height, the candle's y term
+import { createHitEffects } from './hitEffects.js';   // AUDIT 26 F033: DaggerfallMissile's impact flash
 
 export function createPlayerMagic({
   renderer, audio, getTexture, uploadRecord, uploadRecordFrame = null, collider,
@@ -94,6 +95,23 @@ export function createPlayerMagic({
     onSpawn: (b) => batches.push(b),
     onRetire: (b) => { const i = batches.indexOf(b); if (i >= 0) batches.splice(i, 1); },
   });
+
+  // AUDIT 26 F033: the impact flash needs the same three renderer deps
+  // the candle takes, and rides `batches` the same way.
+  const impacts = createHitEffects({
+    renderer,
+    getTexture,
+    uploadRecordFrame: uploadRecord,
+    onSpawn: (b) => batches.push(b),
+    onRetire: (b) => { const i = batches.indexOf(b); if (i >= 0) batches.splice(i, 1); },
+  });
+  /** DaggerfallMissile.DoCollision (:364-370) - record 1 of the
+   *  missile's own element archive, one-shot at 15fps, gated on
+   *  `elementType != None && targetType != ByTouch` (rangeType 1). */
+  function showImpactFlash(m, pos) {
+    if (!m.spell || m.spell.element == null || m.spell.rangeType === 1) return;
+    impacts.showImpactFlash(missileArchive(m.spell.element), pos);
+  }
 
   /** Every spell landing ON THE PLAYER rides this: the S19 Paralyze
    *  awakeAlert ("You are paralyzed.", once per new instance) fires
@@ -384,6 +402,7 @@ export function createPlayerMagic({
     // each host's frame - hostMagic is shared by three of them and a
     // per-host tick is the four-hosts shape waiting to happen.
     flatAnims.tick(dt);
+    impacts.tick(dt);   // F033
     // X11: the candle, same reasoning. A host that passes no forward
     // gets a candle straight in front of the world's +Z rather than a
     // crash, and that is visible enough to be reported rather than
@@ -402,10 +421,11 @@ export function createPlayerMagic({
       const step = MISSILE_SPEED * dt;
       const hitWall = collider.raycast(m.pos, m.dir, step + MISSILE_COLLIDER_RADIUS);
       if (Number.isFinite(hitWall) && hitWall <= step + MISSILE_COLLIDER_RADIUS) {
+        const impact = [m.pos[0] + m.dir[0] * hitWall, m.pos[1] + m.dir[1] * hitWall, m.pos[2] + m.dir[2] * hitWall];
         if (m.spell.rangeType === 4) {
-          const impact = [m.pos[0] + m.dir[0] * hitWall, m.pos[1] + m.dir[1] * hitWall, m.pos[2] + m.dir[2] * hitWall];
           explodeAt(impact, m.spell, playerEntity.level, playerFeet, playerCaster());
         }
+        showImpactFlash(m, impact);   // F033: DFU flashes on ANY wall hit, AoE or not
         retireMissile(m);
         continue;
       }
@@ -423,6 +443,7 @@ export function createPlayerMagic({
             const mCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
             if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, m.casterLevel ?? 1, playerFeet, mCaster);
             else applySpellToPlayer(m.spell, m.casterLevel ?? 1, mCaster);
+            showImpactFlash(m, [m.pos[0], m.pos[1], m.pos[2]]);   // F033
             retireMissile(m);
           }
         }
@@ -434,6 +455,7 @@ export function createPlayerMagic({
         if (Math.hypot(fx, fy, fz) <= MISSILE_COLLIDER_RADIUS + 0.45) {
           if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, playerEntity.level, playerFeet, playerCaster());
           else applySpellToFoe(m.spell, playerEntity.level, f, playerCaster());
+          showImpactFlash(m, [m.pos[0], m.pos[1], m.pos[2]]);   // F033
           retireMissile(m);
           break;
         }
@@ -516,6 +538,7 @@ export function createPlayerMagic({
      *  DIFFERENCE, recomputed next update, so no GL churn is needed. */
     offsetAll(offset) {
       candle.offsetAll(offset);
+      impacts.offsetAll(offset);   // F033: a flash mid-animation follows the recenter too
       for (const m of missiles) {
         if (m.dead) continue;
         for (let a = 0; a < 3; a++) {
@@ -525,6 +548,22 @@ export function createPlayerMagic({
       }
     },
     batches: () => batches,
+    /** NT1 (F214) / EVERY ALLOCATION HAS AN OWNER: the engine's own
+     *  teardown. A per-context engine (the dungeon's, dungeonContext
+     *  mints one) dies with its scene, and a spell in flight at the
+     *  exit owned a batch nothing could reach - retireMissile frees
+     *  each flight (and marks it dead, so an in-flight texture warm
+     *  publishes nothing), the candle's clear() drops its sprite
+     *  through its own retire path, and whatever still stands in
+     *  `batches` (an impact flash mid-fade) frees with the rest.
+     *  Terminal: no update runs after this. */
+    destroy() {
+      for (const m of missiles) retireMissile(m);
+      missiles.length = 0;
+      candle.clear();
+      for (const b of batches) { flatAnims.remove(b); renderer.destroyBillboardBatch(b); }
+      batches.length = 0;
+    },
     /** X11: the candle's point light, in nearestLights' own vec4 shape,
      *  or null. Each host prepends it to the array it hands the
      *  renderer - the candle is 1.4 units away, so it is always the

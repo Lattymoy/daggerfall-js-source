@@ -23,11 +23,14 @@
 // radios and the toned reaction law SHIPPED - AUDIT 23 dropped the
 // stale clause.)
 
+import { expandMacroValues } from './quest/questMacros.js';   // MH1: the ONE macro walk
+
 export const NO_RESPONSE_TEXT_ID = 7205;
 export const MIN_NEUTRAL_REACTION = 0;
 export const MIN_LIKE_REACTION = 10;
 export const MIN_VERY_LIKE_REACTION = 30;
 export const REFUSE_TALK_REACTION = -20;   // TalkToNpc: reaction < -20 -> 7205
+
 export const OATH_BASE_TEXT_ID = 201;
 
 // FactionRaces (FACTION.TXT race column, FactionFile.cs:609-623) - the
@@ -72,13 +75,13 @@ export const oathTextId = (race) => OATH_BASE_TEXT_ID + (OATH_RACE_INDEX[race] ?
 
 /** Expand the greeting-set macros; unknown %codes stay verbatim.
  *  %cn is MacroHelper.CityName (MacroHelper.cs:566-573): the current
- *  LOCATION name, falling back to the region name off-location. */
+ *  LOCATION name, falling back to the region name off-location.
+ *  MH1: the walk is questMacros' expandMacroValues - this is a VALUE
+ *  MAP now, not a replaceAll chain. */
 export function expandMacros(text, { playerName = '', oath = '', cityName = '' } = {}) {
-  return text
-    .replaceAll('%pcf', firstName(playerName))
-    .replaceAll('%pcn', playerName)
-    .replaceAll('%cn', cityName)
-    .replaceAll('%oth', oath);
+  return expandMacroValues(text, {
+    pcf: firstName(playerName), pcn: playerName, cn: cityName, oth: oath,
+  });
 }
 
 /** The Where-is ANSWER record's macro chain. TalkManager's
@@ -96,11 +99,10 @@ export function expandAnswerRecord(raw, {
   // callers with no identity in hand.
   honorific = honorificOf('male'), race = raceDisplayName('Breton'),
 } = {}) {
-  return expandMacros(raw, { playerName, oath, cityName })
-    .replaceAll('%hnt', hint)
-    .replaceAll('%key', key)
-    .replaceAll('%hnr', honorific)
-    .replaceAll('%ra', race);
+  return expandMacroValues(raw, {
+    pcf: firstName(playerName), pcn: playerName, cn: cityName, oth: oath,
+    hnt: hint, key, hnr: honorific, ra: race,
+  });
 }
 
 /**

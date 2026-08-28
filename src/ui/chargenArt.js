@@ -45,7 +45,7 @@ import { FntFile } from '../formats/fntFile.js';   // AUDIT 18: FONT0002, Dagger
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';   // U11
 import { FACES_PER_RACE, raceById, raceArt } from '../systems/races.js';
 import { SKILL_NAMES } from '../systems/skills.js';
-import { daggerY, REP_GREEN, REP_RED, REP_EXIT, REP_BAR_TOP, REP_BAR_BOTTOM, REP_GROUPS, HELP_TOPICS } from '../systems/customClass.js';   // U20a
+import { daggerY, tickDaggerTrails, REP_GREEN, REP_RED, REP_EXIT, REP_BAR_TOP, REP_BAR_BOTTOM, REP_GROUPS, HELP_TOPICS } from '../systems/customClass.js';   // U20a; CG1 the trail machine
 import { labelRows, labelFor, LABEL_ORIGIN, LABEL_HIT_HEIGHT } from '../systems/specialAdvantages.js';   // U20b
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 
@@ -847,10 +847,11 @@ function drawSpecialAdv(renderer, m, font, flow) {
 /** U20a - CreateCharCustomClass (CUST00I0.IMG full-screen): the name
  *  box, the freeEdit stats rollout, the twelve skill buttons' labels,
  *  the HP label and the difficulty DAGGER (CUST08I0 at x220, its Y
- *  from the difficulty law). FLAGGED: the dagger's one-second fading
- *  TRAIL (AnimateDagger, :513-531) does not draw - the port has no
- *  per-frame UI tween seam here, and the dagger itself lands on the
- *  verbatim pixel. Sub-windows draw OVER it, as their pushes do. */
+ *  from the difficulty law). CG1: the dagger's one-second fading
+ *  TRAIL draws too - AnimateDagger's machine lives in
+ *  systems/customClass.js (tickDaggerTrails), and the trails draw
+ *  AFTER the dagger, DFU's Components.Add order. Sub-windows draw
+ *  OVER it, as their pushes do. */
 function drawCustomClass(renderer, m, font, flow) {
   const c = flow.custom;
   if (!c) return false;   // the hit path guards the same way
@@ -867,7 +868,18 @@ function drawCustomClass(renderer, m, font, flow) {
   });
   // hpLabel (:169) and the difficulty dagger (:500-512)
   shadowText(renderer, font, String(c.hp), m, ...CUSTOM_HP_LABEL);
-  drawImg(renderer, img('CUST08I0.IMG'), m, CUSTOM_DAGGER_X, daggerY(flow.customDifficulty()));
+  const dagger = img('CUST08I0.IMG');
+  const dy = daggerY(flow.customDifficulty());
+  drawImg(renderer, dagger, m, CUSTOM_DAGGER_X, dy);
+  // CG1: AnimateDagger's trail - a full-alpha copy spawns where the
+  // dagger LANDS and fades over one second, so a spot it leaves within
+  // that second keeps a fading ghost. Drawn after the dagger
+  // (Components.Add order); the ghost under the live dagger is an
+  // identical sprite over an identical sprite, invisible - as in DFU.
+  c._daggerTrails ??= {};
+  for (const t of tickDaggerTrails(c._daggerTrails, dy, performance.now() / 1000)) {
+    drawImg(renderer, dagger, m, CUSTOM_DAGGER_X, t.y, dagger.w, dagger.h, [1, 1, 1, t.alpha], { blend: true });
+  }
   // the sub-windows, each pushed OVER this one
   if (c.sub === 'skillPick') {
     const names = c.pickItems.map((id) => SKILL_NAMES[id]);
@@ -1036,16 +1048,22 @@ function drawClassQuestions(renderer, m, font, flow) {
   const frame = q.scroll[flow.qScrollFrame % q.scroll.length];
   drawImg(renderer, frame, m, 0, QSCROLL_Y);
   // the question label: black, unshadowed (:262-263), rows at the
-  // label position inside the scroll. DFU pixel-clips the label to
-  // the textArea; the port draws the rows that fit it WHOLE - a
-  // documented departure until the renderer grows a scissor seam.
+  // label position inside the scroll. CG1: DFU pixel-clips the label
+  // to the textArea (MultiFormatTextLabel RestrictedRenderArea over
+  // the Panel at (20, 136) 320x48, CreateCharClassQuestions.cs
+  // :125-126, :268-271) - the scissor bracket shears the boundary row
+  // AT THE PIXEL, so a scrolling line slides out instead of popping.
+  // Rows wholly outside still skip; rows overlapping the edge draw and
+  // let the scissor cut them.
   const top = QSCROLL_Y + QSCROLL_TEXT_OFFSET;
   const bottom = QSCROLL_Y + QSCROLL_H - QSCROLL_TEXT_OFFSET;
+  renderer.setScreenScissor(m.ox + QSCROLL_TEXT_LEFT * m.s, m.oy + top * m.s, QSCROLL_W * m.s, (bottom - top) * m.s);
   for (let i = 0; i < flow.qDisplay.lines.length; i++) {
     const vy = QSCROLL_Y + flow.qLabelY + i * QUESTION_ROW_H;
-    if (vy < top || vy + QUESTION_ROW_H > bottom) continue;
+    if (vy + QUESTION_ROW_H <= top || vy >= bottom) continue;
     drawText(renderer, font, flow.qDisplay.lines[i], m.ox + QSCROLL_TEXT_LEFT * m.s, m.oy + vy * m.s, m.s, QUESTION_TEXT_COLOR);
   }
+  renderer.clearScreenScissor();
   drawConstellationAnim(renderer, m);   // LAST: DFU's anim panels are the last children (F2-P1)
   return true;
 }

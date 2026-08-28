@@ -52,6 +52,9 @@ import { NAME_MAX_CHARACTERS as NAME_MAX } from './chargen.js';
 import { traceProvinces, MAP_W, MAP_H, PROVINCE_NAMES } from './provinceMap.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { repaintKeepingScroll } from './domRepaint.js';
+// PX13: the wizard stands on the same living sky as every other
+// enhanced face - drawn by the one module, clocked by this mount.
+import { drawPixelGround } from './pixelGround.js';
 
 /** DFU's WizardStages, in the order the flow walks them, with the
  *  words a player reads. The flow's own state names are the keys.
@@ -207,7 +210,14 @@ function raceStage() {
   // which is long, modal in DFU, and raised by the press that chose a
   // province - comes up over it. A prompt that lived off-screen behind
   // a sheet would leave a phone showing a map and nothing else.
-  const detail = el('div', `detail${flow.raceConfirm ? ' sheet open' : ''}`);
+  // PX17a ROOT CAUSE of the smooshed confirm: 'sheet' here meant the
+  // PHONE-SHEET STATE, but the char sheet window owns `.sheet` as a
+  // THREE-COLUMN LAYOUT class in the same stylesheet - so the race
+  // confirm inherited three minmax(0,1fr) columns inside a 340px
+  // slot and set its prose one word per line. The codebase has paid
+  // this exact generic-name toll twice before (.detail, .packcol);
+  // the state class is now the wizard's own word.
+  const detail = el('div', `detail${flow.raceConfirm ? ' wizsheet open' : ''}`);
   const close = el('button', 'sheet-close', 'Back to the map');
   close.onclick = () => { flow.applyHit({ cancelRace: true }); paint(); };
   detail.append(close);
@@ -215,10 +225,20 @@ function raceStage() {
   if (flow.raceConfirm) {
     const d = el('div', 'dcard');
     d.append(el('h3', null, `${PROVINCE_NAMES[flow.race.key] ?? flow.race.name} \u00b7 ${flow.race.name}`));
+    // PX17a (Mac: the right-hand text smooshed): TEXT.RSC hands lines
+    // HARD-WRAPPED for the classic 320px screen; rendering each as
+    // its own paragraph fights every other viewport - ragged on a
+    // desk, re-wrapped mush on a phone. So the lines are JOINED into
+    // flowing prose and the browser wraps them for the width it has;
+    // a BLANK line in the record is the paragraph break it always
+    // meant. The flow's data is untouched - this is the view's job.
+    let para = [];
+    const flush = () => { if (para.length) { d.append(el('p', null, para.join(' '))); para = []; } };
     for (const line of flow.raceConfirm) {
-      const text = typeof line === 'string' ? line : line.text;
-      if (text?.trim()) d.append(el('p', null, text));
+      const text = (typeof line === 'string' ? line : line.text) ?? '';
+      if (text.trim()) para.push(text.trim()); else flush();
     }
+    flush();
     const a = el('div', 'acts');
     const yes = el('button', 'act primary', `Play as ${flow.race.name}`);
     yes.onclick = () => { flow.input('confirm'); paint(); };
@@ -313,7 +333,7 @@ function classStage() {
   }
   pane.append(list);
 
-  const detail = el('div', `detail${flow.classConfirm ? ' sheet open' : ''}`);
+  const detail = el('div', `detail${flow.classConfirm ? ' wizsheet open' : ''}`);   // PX17a: same rename as the race confirm - the class stage pays the same toll
   const close = el('button', 'sheet-close', 'Back to the list');
   close.onclick = () => { flow.applyHit({ cancelClass: true }); paint(); };
   detail.append(close);
@@ -857,8 +877,28 @@ function paint() {
 /** The rebuild itself. Wrapped rather than rewritten, so a tap on a
  *  stepper does not throw the skills list back to the top - see
  *  ui/domRepaint.js for why every repaint needs that. */
+let groundTimer = null;   // PX13: the wizard sky's 8fps clock - cleared by every repaint and by unmount
+
 function paintInto() {
+  if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }
   host.innerHTML = '';
+  // PX13: the sky behind the walk - same drawPixelGround, same 8fps
+  // cadence, same reduced-motion opt-out as the menu's faces. Every
+  // repaint replaces the canvas, so every repaint re-owns the clock.
+  {
+    const ground = document.createElement('canvas');
+    ground.className = 'px-ground';
+    const vw = () => globalThis.innerWidth ?? 1280;
+    const vh = () => globalThis.innerHeight ?? 720;
+    drawPixelGround(ground, vw(), vh(), 0);
+    const still = typeof globalThis.matchMedia === 'function' && globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!still) {
+      const t0 = Date.now();
+      groundTimer = setInterval(() => drawPixelGround(ground, vw(), vh(), (Date.now() - t0) / 1000), 125);
+    }
+    const vig = el('div', 'px-vignette');
+    host.append(ground, vig);
+  }
   const shell = el('div', 'shell wizard');
 
   const side = el('aside', 'side');
@@ -1068,7 +1108,9 @@ export function mountEnhancedChargen(hostEl, {
     unmount() {
       // EVERY LISTENER HAS AN OWNER. A window-level keydown outlives
       // the DOM it was mounted for, so a wizard torn down without this
-      // keeps eating keys for the whole session.
+      // keeps eating keys for the whole session. The sky's clock has
+      // the same owner for the same reason (PX13).
+      if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }
       if (keyHandler) globalThis.removeEventListener('keydown', keyHandler, { capture: true });
       if (lockHandler) document.removeEventListener('pointerlockchange', lockHandler);
       keyHandler = null;

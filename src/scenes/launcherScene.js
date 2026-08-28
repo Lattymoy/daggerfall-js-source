@@ -55,6 +55,10 @@ export async function runLauncher(canvas, renderer, status) {
         const { pickTextureFolder } = await import('./dataSource.js');
         await pickTextureFolder();
       },
+      onPickMorrowind: async () => {
+        const { pickMorrowindFiles } = await import('./dataSource.js');
+        await pickMorrowindFiles();
+      },
     });
     const finish = () => {
       if (done) return;

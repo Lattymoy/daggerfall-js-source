@@ -48,9 +48,12 @@ export async function loadImg({ renderer, fetchBytes, palette }, name) {
   return { tex: renderer.uploadTexture('img', name, bitmapToColor32(bmp, palette)), w: bmp.width, h: bmp.height };
 }
 
-/** Draw an IMG at a virtual position (its own size by default). */
-export function drawImg(renderer, img, m, x, y, w = img.w, h = img.h) {
-  renderer.drawScreenQuad(img.tex, { x: m.ox + x * m.s, y: m.oy + y * m.s, w: w * m.s, h: h * m.s });
+/** Draw an IMG at a virtual position (its own size by default).
+ *  CG1: `color` is the optional tint x alpha and `opts` passes through
+ *  to drawScreenQuad ({ blend: true } for real alpha) - the dagger
+ *  trail's BackgroundColor fade rides both. */
+export function drawImg(renderer, img, m, x, y, w = img.w, h = img.h, color = undefined, opts = undefined) {
+  renderer.drawScreenQuad(img.tex, { x: m.ox + x * m.s, y: m.oy + y * m.s, w: w * m.s, h: h * m.s }, undefined, color, opts);
 }
 
 /** Draw a SUBREGION of an IMG at its own virtual position (DFU's

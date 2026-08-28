@@ -29,8 +29,9 @@ import { jumpSpeedMultiplier } from '../systems/skills.js';
 import {
   pickActivatable, activationTargets,
 } from '../player/activate.js';
-import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells } from './shared.js';
+import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells, claimFrame, frameAlive } from './shared.js';
 import { routeKey, held, moveHeld, anyMove, actionOf, swallowBrowserKey } from '../ui/input.js';
+import { capturePendingScreenshot } from '../systems/saveSlots.js';   // SS1: the context arms the shot, THIS loop delivers it
 import { routeLargeHudClick } from '../ui/hudLarge.js';   // U45: the bar's eleven panels
 import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { createDataPipeline } from './dataPipeline.js';
@@ -39,6 +40,7 @@ import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U14: t
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { totalWeight } from '../systems/inventory.js';   // F027: PlayerEntity.CarriedWeight
+import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
 
 // Water surface color: presentation choice (see renderer WATER_VS note).
 // R11: the surface is the classic water tile (climate ground archive
@@ -78,6 +80,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   status(`laying out ${dungeonName}`);
   const pipeline = createDataPipeline({ renderer, arch, palette });
   let _poseCam = null;   // AUDIT 26 F222: filled once the camera exists
+  let _motorRef = null;   // DC1: filled once the motor exists (the same late-bound shape)
   const ctx = await buildDungeonContext(
     { ...pipeline, renderer, arch, palette }, dfLocation, blocks, dfLocation.climate.climateType, { foes: !params.has('nofoes'), playerClass: params.has('class') ? Number(params.get('class')) : undefined, playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined, playerWeapon: params.get('weapon') ?? undefined,
       // AUDIT 26 F222/F223: the dev scene's half of the pose. The cam
@@ -86,7 +89,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
       pose: {
         read: () => (_poseCam ? { yaw: _poseCam.yaw, pitch: _poseCam.pitch } : {}),
         apply: (p) => { if (_poseCam) { _poseCam.yaw = p.yaw ?? _poseCam.yaw; _poseCam.pitch = p.pitch ?? _poseCam.pitch; } },
-      } });
+      },
+      // DC1: the death sequence starts from the LIVE eye and capsule
+      // (a crouched death). Late-bound like pose - the motor is built
+      // below, after this context; null falls to standing defaults.
+      motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null) });
 
   // U21: the menu's LOAD GAME. The context is built, so restore into
   // it through the host's own quickLoad - the same call F12 makes -
@@ -114,6 +121,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // spawn drops onto the start-marker floor.
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const player = new PlayerMotor(ctx.collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), carriedWeight: () => totalWeight(playerEntity.items ?? []), climbing: climbingDeps(playerEntity) });   // AcrobatMotor skill jump (P14) + M3 climbing (no HUD seam in the standalone host); motorStats = the LIVE entity
+  _motorRef = player;   // DC1: the motorState seam binds here
     const _footsteps = new FootstepMachine();   // FS-slice
   player.spawn(spawn[0], spawn[1], spawn[2]);
   console.log(`[spawn] marker ${JSON.stringify(ctx.startMarker)} -> feet [${spawn.map((v) => v.toFixed(3)).join(', ')}] (startSpawn build)`);
@@ -255,6 +263,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // Verbatim dungeon lighting: PlayerAmbientLight.DungeonAmbientLight,
   // no sun; every light flickers (DaggerfallLight Animate).
   renderer.setLighting(new Float32Array(DUNGEON_AMBIENT), 0);
+  renderer.setWindowEmission(windowEmissionRGB('day'));   // F001: SetDungeonTextures keeps GetMaterial's Day default (MaterialReader.cs:456-461)
   // Verbatim DungeonFogSettings: exponential 0.005, fog color black.
   renderer.setFog('exp', 0.005, 0, 0, new Float32Array([0, 0, 0]));
 
@@ -355,7 +364,9 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // very pass that was closing it. The pin below now sweeps ALL FOUR.
   const musicDirector = createMusicDirector();
   const lookGate = makeLookGate(canvas);
+  const _frameToken = claimFrame();   // P0: this session owns the loop until someone claims after it
   function frame(now) {
+    if (!frameAlive(_frameToken)) return;   // P0: a later boot or an unwind killed this loop
     const dt = Math.min(0.1, (now - last) / 1000);
     last = now;
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
@@ -453,12 +464,26 @@ export async function bootDungeon(canvas, renderer, params, status) {
       if (keys.has('KeyA')) for (let a = 0; a < 3; a++) cam.pos[a] -= right[a] * speed;   // fly-cam (dev)
       if (keys.has('KeyD')) for (let a = 0; a < 3; a++) cam.pos[a] += right[a] * speed;   // fly-cam (dev)
     }
+    // DC1: PlayerDeath.Update's camera sink. The walk branch above is
+    // HELD while any overlay is up - the death screen included - so
+    // the sink writes the camera itself, absolute off the motionless
+    // eye each frame (never cumulative), the way DFU keeps moving the
+    // camera while InputManager.IsPaused holds the player.
+    if (walkMode && (ctx.deathDrop ?? 0) > 0) {
+      const _eye = player.eye;
+      cam.pos = [_eye[0], _eye[1] - ctx.deathDrop, _eye[2]];
+    }
 
     const target = [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]];
     const proj = mirrorProjectionX(perspective(fieldOfView(), canvas.clientWidth / canvas.clientHeight, 0.05, 800));   // HANDEDNESS (mat4's law)
     const view = lookAt(cam.pos, target, [0, 1, 0]);
 
     ctx.flicker.tick(dt);
+    // AUDIT 26 F183: per FRAME, not once at load - the ambient depends
+    // on which block the player stands in (PlayerAmbientLight.cs:82-90),
+    // so it has to follow them across a castle or special-area
+    // boundary the way the load-time write never could.
+    renderer.setLighting(new Float32Array(ctx.ambient), 0);
     renderer.setPointLights(
       withPlayerLights(nearestLights(ctx.lights, cam.pos, 16, ctx.flicker.ranges),
         ctx.candleLight?.(), playerTorchLight(playerEntity, player.pos, cam.yaw)),   // X11 candle; T1 torch
@@ -492,6 +517,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // dungeon inventory probe hit it on its first press of F6.
       frames++;
       if (shotMode) window.__frame = frames;
+      capturePendingScreenshot(canvas);   // SS1: a save armed under an overlay still lands its shot
       requestAnimationFrame(frame);
       return;   // U2b/U3: hold gameplay, keep the loop (AUDIT 18 F5: the overlay's own clock still runs - DFU's RestWindow.Update ticks on realtime under timeScale 0)
     }
@@ -503,6 +529,10 @@ export async function bootDungeon(canvas, renderer, params, status) {
     frames++;
     if (shotMode) window.__frame = frames;
     if (shotMode && frames === 5) window.__shotReady = true;
+    // SS1: deliver a pending save screenshot after the frame's last
+    // draw (preserveDrawingBuffer false - the buffer is only this
+    // task's to read).
+    capturePendingScreenshot(canvas);
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);

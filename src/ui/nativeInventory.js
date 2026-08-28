@@ -63,7 +63,7 @@ import { planStore, planTake, applyTransfer, planDropGold } from '../systems/ite
 import {
   openState, remoteTarget, planWagonToggle, closeSession,
 } from '../systems/inventorySession.js';
-import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, isBrokenItem, FORBIDDEN_EQUIPMENT_TEXT_ID, ITEM_BROKEN_TEXT_ID } from '../systems/equip.js';   // S23
+import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, isBrokenItem, FORBIDDEN_EQUIPMENT_TEXT_ID, ITEM_BROKEN_TEXT_ID, equipDelaySnapshot, billEquipDelayOnClose } from '../systems/equip.js';   // S23; FX1 (F128): the per-visit swap-pause clock
 import { drawPaperDoll, refreshPaperDoll, slotAtPaperDoll, ARMOR_LABEL_POS } from './paperDoll.js';
 import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel, safeScrollIndex } from './itemScroller.js';
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
@@ -221,6 +221,11 @@ export class NativeInventoryWindow {
     this.allowDungeonWagonAccess = open.allowDungeonWagonAccess;
     this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);   // AUDIT 17f: icons follow the wearer's morphology
     if (hooks.entity) refreshPaperDoll(hooks.entity);   // U8g: the doll composes fresh on open
+    // FX1 (F128): SetEquipDelayTime(false) on the window PUSH - the
+    // hand snapshot the close bills against. The swap pause is billed
+    // per inventory VISIT (once, and only for a hand that changed),
+    // never per transition.
+    this._handSnapshot = hooks.entity ? equipDelaySnapshot(hooks.entity) : null;
   }
 
   /** ShowWagon (:1047-1080): the flag flips and the remote scroll
@@ -277,6 +282,18 @@ export class NativeInventoryWindow {
    *  skipped and a session drop was silently LOST. */
   _closeSilently() {
     this.done = true;
+    // FX1 (F128): SetEquipDelayTime(true) on the pop - the ONE bill
+    // for this visit, then DFU's "Equipping %s" cue per changed hand
+    // (:729-756; the string is Internal_Strings' equippingWeapon,
+    // the name the item's TEMPLATE name). Runs on hand-offs too -
+    // this is the B-C1 one-close-law seam.
+    if (this._handSnapshot && this.hooks.entity) {
+      const r = billEquipDelayOnClose(this.hooks.entity, this._handSnapshot);
+      this._handSnapshot = null;   // a re-entrant close bills nothing
+      for (const it of r.equipping) {
+        this.hooks.say?.(`Equipping ${templateByIndex(it.templateIndex)?.name ?? it.name ?? ''}`);
+      }
+    }
     closeSession(this.hooks, this);   // the world pile mints on close (OnPop)
   }
 

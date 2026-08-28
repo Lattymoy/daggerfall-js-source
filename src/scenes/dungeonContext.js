@@ -14,7 +14,7 @@ import { layoutDungeon } from '../world/dungeonLayout.js';
 import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, automapRevealTick, automapEntranceTick, automapDungeonKey, SCAN_INTERVAL_S } from '../systems/automap.js';   // A1
 import { AutomapWindow } from '../ui/automapWindow.js';   // A1: the M window
 import { applyTextureTable } from '../world/dungeonTextures.js';
-import { collectDungeonLights } from '../world/dungeonLights.js';
+import { collectDungeonLights, dungeonAmbientFor, DUNGEON_AMBIENT, SPECIAL_AREA_BLOCK } from '../world/dungeonLights.js';   // AUDIT 26 F183: the castle / special-area ambients
 import { CityLightAnimator, MINUTES_PER_DAY } from '../world/worldClock.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { MobileUnit } from '../characters/mobileUnit.js';   // C11: classic sprite monsters
@@ -23,7 +23,9 @@ import { RDB_SIDE } from '../world/rdbLayout.js';
 import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, DOOR_VERB_FLAGS, classifyPlacementAction, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT } from '../world/actionSystem.js';
 import { TextRsc } from '../formats/textRsc.js';
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // U51 picks the skin
+import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
+import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
 import { addItem, spendArrow } from '../systems/inventory.js';
 import { worldAabb } from '../player/activate.js';
@@ -104,7 +106,7 @@ import { dice100, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockback
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost, effectSchool, EFFECT_COST_TABLE } from '../systems/spellcost.js';
 import { snapshotPlayer, restorePlayer, composeSessionState, restoreSessionState , copyEffectEntry } from '../systems/save.js';   // B4: the ONE quest+talk composer
-import { saveSlot, loadSlot, quickLoadSlot, QUICK_SAVE_NAME } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave
+import { saveSlot, loadSlot, quickLoadSlot, QUICK_SAVE_NAME, requestScreenshot } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave; SS1: the shot arms here, the HOST loop delivers it
 import { bindQuestFoeHost } from './questFoeHost.js';   // B1: quest foes ride this pool
 import { dungeonKey } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
@@ -128,7 +130,7 @@ import { ActionSystem } from '../world/actionSystem.js';
 import { collectDungeonEnemies } from '../characters/dungeonEnemies.js';
 import { ENEMY_BASICS, enemyDisplayName } from '../characters/enemyBasics.js';
 import { createHitEffects, bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
-import { EnemySoundSource } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
+import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { activeMemberships } from '../systems/guilds.js';   // F117
 import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // F117: Stendarr
@@ -556,6 +558,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   async function buildFoeAt(e, fallbackFlat = true) {
     const basics = ENEMY_BASICS[e.mobileType];
     if (!basics) return;
+    // NT2 (F210): GetTextureArchive's gender arm, at the ONE entry every
+    // spawn record passes - a human with unspecified gender rolls the
+    // shared DFRandom stream (== 0 male). The dungeon LAYOUT path never
+    // rolled at all before this, so every random human class enemy
+    // stood male; a monster stays unspecified and reads the male texture.
+    e.gender = MobileUnit.resolveGender(e.gender, basics);
     // C17 THE HUMANOID PIVOT: class enemies (128+) render as classic
     // sprite mobiles too - the voxel foe rig goes ON ICE with the
     // voxel FP weapon (Mac's classic-visuals direction). The entity
@@ -762,6 +770,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // I3: the Escape window's panel, same failure posture (a missing
   // OPTN00I0 costs the pause menu, loudly, never the boot).
   preloadPauseFlowArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] pause/controls art unavailable:', e?.message ?? e));
+  // PX19c: the pack's PAPER DOLL warms here too, beside the arts it
+  // rides with - the world host preloaded it and this one never did,
+  // so a new game's first dungeon opened a pack with the schematic
+  // where the avatar belongs (the 17g F1 shape exactly, one art
+  // over). Same failure posture: loud, never the boot.
+  preloadPaperDollForEntity({ renderer, fetchBytes, palette, getTexture }, playerEntity, 'dungeon')
+    .catch((e) => console.warn('[pack] paper doll art unavailable:', e?.message ?? e));
   // S16: enemy spell lists ride SPELLS.STD (loaded just above, after
   // the foe build) - SetEnemyCareer's assignment tail per live foe:
   // class enemies with CastsMagic take EnemyClassSpells[min(6,
@@ -873,6 +888,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (sup) { hudText.add(sup.text); return null; }
     return createInventoryWindow({
       openBook: openBookHook,   // B1: the use-mode book arm
+      say: (l) => hudText.add(l),   // FX1 (F128): the "Equipping %s" cue on close
       items: () => (playerEntity.items ??= []),
       wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice
       // W-slice: CheckWagonAccess's dungeon arm - the wagon is
@@ -1022,8 +1038,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const z = feet[2] + Math.cos(a) * minDistance;
       const landed = foeDeps.floorLanding(collider, [x, feet[1] + 1.5, z]);
       if (!landed || Math.abs(landed[1] - feet[1]) > 6) continue;
-      const gender = basics.femaleTexture && Math.random() < 0.5 ? 'female' : 'male';
-      await buildFoeAt({ mobileType, gender, x: landed[0], y: landed[1], z: landed[2], spawnDistanceType: 0 }, false);
+      // NT2 (F210): no ad-hoc roll - buildFoeAt resolves an unspecified
+      // gender through GetTextureArchive's own DFRandom arm.
+      await buildFoeAt({ mobileType, gender: 'unspecified', x: landed[0], y: landed[1], z: landed[2], spawnDistanceType: 0 }, false);
       return;
     }
   }
@@ -1133,7 +1150,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // slot - a window holding GL resources (the automap's batches
       // + micro-map texture) must release them or they leak per death.
       activeOverlay?.dispose?.();
-      activeOverlay = new DeathScreen({ onReset: () => endRunToTitleMenu(renderer) });   // D1
+      // DC1: the LIVE eye and capsule, as PlayerEntity_OnDeath reads
+      // them. The motor lives in the scene host (dungeon.js), so it
+      // arrives through opts.motorState - the F222 pose seam's shape,
+      // late-bound because the motor is built after this context. A
+      // host that passes none (worldModes replaces this presenter
+      // outright) falls to the constructor's standing defaults.
+      const _ms = opts.motorState?.() ?? null;
+      activeOverlay = new DeathScreen({ eyeHeight: _ms?.eyeLevel, capsuleHeight: _ms?.capsule, onReset: () => endRunToTitleMenu(renderer) });   // D1
     }
   });
   // F117: Stendarr's rank-in-fifty, consulted by the door before the
@@ -1278,6 +1302,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       for (const f of gone) questPoolOps.removeFoe(f);
       if (gone.length) hudText.add(`${gone.length} dispelled.`);
     },
+    // PR1: the two window seams this host cannot mount, LOUD (the
+    // onTeleport INTERIM shape). Absent, the engine's dispatch
+    // optional-chained into silence: Identify refunded its cost and
+    // said NOTHING, Dispel Magic spent the cast on nothing and said
+    // NOTHING - the anti-lie law's exact shape. The full trade window
+    // and the bundle picker live on the worldModes host; DFU has no
+    // standalone dungeon scene at all (this is the port's own dev
+    // route), so the shipped bootWorld path carries both windows and
+    // this host says why it cannot.
+    onIdentify: () => hudText.add('You cannot concentrate on that right now. (the Identify window lives in the ?world route)'),
+    onDispelMagic: () => hudText.add('You cannot concentrate on that right now. (the Dispel Magic picker lives in the ?world route)'),
     renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
     now: () => classicMinutesRef.value,   // V2a: MorphSelf's once-a-day clock
     collider,
@@ -1569,6 +1604,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     playerWeapon.weapon = { name: 'Short Bow', ...createWeapon(129, 0) };   // scripted demo: the rig's worn bind is off for this context (see createWeaponRig bindWorn)
   }
   const corpses = [];
+  // NT1 (F213): the context's own dead latch - destroy() sets it so the
+  // async continuations (a corpse whose texture is still warming) stop
+  // publishing GPU batches onto a torn-down scene.
+  let _ctxDead = false;
   async function spawnCorpse(f) {
     const ct = ENEMY_BASICS[f.mobileType]?.corpseTexture;
     // C12: a flyer dies mid-air - the corpse lands on the floor
@@ -1579,7 +1618,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!t || ct.record >= t.recordCount) return;
     // SL2 (save-load-2): a backward load can RESURRECT this foe while
     // the texture warms - a corpse must never mint for a live foe.
-    if (!f.dead) return;
+    // NT1 (F213): ...and a context torn down while the texture warms
+    // must not receive a corpse either - the foe IS dead on exit, so
+    // only the context's own latch can stop the orphan mint.
+    if (!f.dead || _ctxDead) return;
     uploadRecord(ct.archive, ct.record);
     const size = scaledBillboardSize(t.getSize(ct.record), t.getScale(ct.record));
     // The billboard shader BOTTOM-anchors (position = base): the old
@@ -1726,6 +1768,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     armFlatAnim(m.batch, t, archive, 0, flatAnims, uploadRecordFrame, { fps: MISSILE_FPS });
     billboardBatches.push(m.batch);
   }
+  /** AUDIT 26 F033 - DaggerfallMissile.DoCollision's impact flash
+   *  (:364-370). Element None (an arrow) and ByTouch both skip it, so
+   *  the gate lives here rather than at the three call sites. */
+  function showImpactFlash(m, pos) {
+    if (!m.spell || m.spell.element == null || m.spell.rangeType === 1) return;   // rangeType 1 = TargetTypes.ByTouch
+    hitEffects?.showImpactFlash(missileArchive(m.spell.element), pos);
+  }
   function retireMissile(m) {
     if (m.draw && m.draw.object) {
       const di = dynamicDraws.indexOf(m.draw);
@@ -1773,11 +1822,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // AUDIT 23 (magic-2) - DaggerfallMissile.cs:399-402 DoCollision:
         // an AreaAtRange payload explodes AT THE IMPACT POINT whatever
         // was struck; the port retired wall hits with no payload.
+        const impact = [m.pos[0] + m.dir[0] * hitWall, m.pos[1] + m.dir[1] * hitWall, m.pos[2] + m.dir[2] * hitWall];
         if (m.spell?.rangeType === 4) {
-          const impact = [m.pos[0] + m.dir[0] * hitWall, m.pos[1] + m.dir[1] * hitWall, m.pos[2] + m.dir[2] * hitWall];
           const wCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
           magic.explodeAt(impact, m.spell, m.casterLevel ?? playerEntity.level, playerFeet, wCaster);
         }
+        // AUDIT 26 F033: DoCollision swaps the billboard to record 1 of
+        // the missile's own element archive, one-shot at 15fps
+        // (:364-370) - gated on `elementType != None && targetType !=
+        // ByTouch`, so arrows never flash and neither does a touch cast.
+        // DFU flashes on ANY wall hit, so `impact` is hoisted out of
+        // the AoE branch above rather than computed inside it.
+        showImpactFlash(m, impact);
         retireMissile(m);
         continue;
       }
@@ -1920,6 +1976,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           const fCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
           if (m.spell.rangeType === 4) magic.explodeAt(m.pos, m.spell, m.casterLevel ?? playerEntity.level, playerFeet, fCaster);
           else applySpell(m.spell, m.casterLevel ?? playerEntity.level, af.entity, foeSinks(af), Math.random, fCaster);
+          showImpactFlash(m, [m.pos[0], m.pos[1], m.pos[2]]);   // F033
           retireMissile(m);
         }
         continue;
@@ -1932,6 +1989,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         const mCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
         if (m.spell.rangeType === 4) magic.explodeAt(m.pos, m.spell, m.casterLevel ?? playerEntity.level, playerFeet, mCaster);
         else magic.applySpellToPlayer(m.spell, m.casterLevel ?? playerEntity.level, mCaster);
+        showImpactFlash(m, [m.pos[0], m.pos[1], m.pos[2]]);   // F033
         retireMissile(m);
       }
     }
@@ -2330,6 +2388,27 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
     return false;
   }
+  /** AUDIT 26 F183: the castle block's sibling. SpecialAreaCheck
+   *  (PlayerEnterExit.cs:1221-1238) switches on the block NAME and has
+   *  exactly one case - S0000161.RDB, the Daggerfall treasure room.
+   *  Same block lookup, same question. */
+  function specialAreaBlockAt(x, z) {
+    for (const b of dungeon.blocks) {
+      if (x >= b.originX && x < b.originX + RDB_SIDE && z >= b.originZ && z < b.originZ + RDB_SIDE) {
+        return b.name === SPECIAL_AREA_BLOCK;
+      }
+    }
+    return false;
+  }
+  /** The ambient the player's CURRENT block takes
+   *  (PlayerAmbientLight.cs:82-90), castle before special area. */
+  function ambientAt(feet) {
+    if (!feet) return DUNGEON_AMBIENT;
+    return dungeonAmbientFor({
+      inCastle: castleBlockAt(feet[0], feet[2]),
+      inSpecialArea: specialAreaBlockAt(feet[0], feet[2]),
+    });
+  }
   // P12/P18: breath/drowning (PlayerEntity.FixedUpdate on the classic
   // update cadence). Submerged = the controller CENTER (feet + 0.9)
   // + 76*GlobalScale - 0.95 below the block water surface (the head-
@@ -2635,7 +2714,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // One home now, and the two exterior pools (which had nothing at
       // all) ask the same object the same way.
       f.sounds ??= new EnemySoundSource(f.mobileType);
-      tickEnemySound(f.sounds, f.ai.feet, playerFeet || eye, dt, { audio, collider });
+      tickEnemySound(f.sounds, f.ai.feet, playerFeet || eye, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity) });
       // AUDIT 23 (characters-11) - EnemyAttack.cs:70-77: the divisor
       // mints every update from PermanentSpeed / max(8, LiveSpeed).
       f.mobile.frameSpeedDivisor = Math.max(1, Math.trunc((f.entity.stats?.speed ?? 50) / Math.max(8, liveStat(f.entity, 'speed'))));
@@ -2663,14 +2742,24 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // this arm's own `!f.entity.isClass` gate was the same drift.
       if (_strikeEdge) {
         f.sounds ??= new EnemySoundSource(f.mobileType);
-        playEnemyClip(audio, f.sounds.attack(), f.ai.feet);
+        playEnemyClip(audio, f.sounds.attack(), f.ai.feet, acuteHearingMultiplier(playerEntity));
       }
       // S16: the casting decision rides beside the attack machine
       // (DoRangedAttack's spell branch + DoTouchSpell); the decision
       // casts INSTANTLY. RESIDUAL (honest): DFU casters also hold at
       // range and strafe (Enhanced AI) or stand off - our motor keeps
       // the C8 pursuit; the foe casts while closing.
-      if (playerFeet && f.caster && !_fParalyzed && f.ai.isHostile) {
+      // P0b (Mac 2026-08-28, the live dungeon crash): guard on _tgt,
+      // not playerFeet - the two differ exactly when the MT-iv target
+      // machine is ARMED and holds NO target (its duel opponent died
+      // this frame), where _targetFeet answers null while the player
+      // stands in plain sight. The attack arm above and the exterior
+      // host both already guard on _tgt; this arm alone read the
+      // wrong variable and handed the null into EnemyCaster.update's
+      // playerFeet[0]. DFU's cast branches read the senses' target
+      // and simply do not run without one - so the guard IS the law,
+      // not a papered-over null.
+      if (_tgt && f.caster && !_fParalyzed && f.ai.isHostile) {
         // MT-iv: the decision aims at the SELECTED target and reads
         // that target's own entity, so a foe duelling another foe
         // neither picks its school off the player's effects nor
@@ -2889,6 +2978,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  block the player is standing in - the Castle playlist and
      *  doNotPlayInCastle both had it hardcoded false. */
     get inCastle() { return lastPlayerFeet ? castleBlockAt(lastPlayerFeet[0], lastPlayerFeet[2]) : false; },
+    /** F183: the ambient this block takes - the host applies it. */
+    get ambient() { return ambientAt(lastPlayerFeet); },
+    get inSpecialArea() { return lastPlayerFeet ? specialAreaBlockAt(lastPlayerFeet[0], lastPlayerFeet[2]) : false; },
     musicSeed: dungeonKey(
       (dfLocation?.dungeon?.recordElement?.header?.unknown2 ?? 0) & 0xffff,
       dfLocation?.regionIndex ?? 0),
@@ -2944,6 +3036,31 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (activeOverlay || !pauseDoorReady()) return;
       const ctx = this;   // the sibling save verbs on this same context
       openPauseFlow((w) => { activeOverlay = w; }, {
+        // PX17c: the dungeon HAS the bridge (opts.questBridge feeds
+        // the F5 journal at :3449 and the notebook at :867) - the PX3
+        // flag was too conservative, so it is paid with the same walk
+        // the world's pause runs, off THIS host's own bridge.
+        questMessages: () => opts.questBridge?.machine.getAllQuestLogMessages() ?? [],
+        questLog: () => {
+          const m = opts.questBridge?.machine;
+          const active = [];
+          if (m) {
+            for (const q of m.quests.values()) {
+              const les = q.getLogMessages();
+              if (!les?.length) continue;
+              const messages = les.map((le) => q.getMessage(le.messageID)).filter(Boolean);
+              if (!messages.length) continue;
+              let clockSeconds = null;
+              for (const r of q.resources.values()) {
+                if (r.clockEnabled && !r.clockFinished && Number.isFinite(r.remainingTimeInSeconds)) {
+                  clockSeconds = clockSeconds == null ? r.remainingTimeInSeconds : Math.min(clockSeconds, r.remainingTimeInSeconds);
+                }
+              }
+              active.push({ id: String(q.uid), name: q.displayName || null, questName: q.questName || '', clockSeconds, messages });
+            }
+          }
+          return { active, finished: opts.questBridge?.notebook?.getFinishedQuests() ?? [] };
+        },
         quickSave: () => ctx.quickSave?.(),
         // the LOAD arm needs the host's position applier, exactly as
         // routeKey's own QuickLoad case passes it
@@ -3133,10 +3250,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         locationKey: _locationKey,
         world: collectWorld(),
       });
-      const ok = saveSlot(playerEntity.name, saveName, snap).ok;
-      if (ok) hudText.add('Game saved.');
+      const r = saveSlot(playerEntity.name, saveName, snap);
+      // SS1: arm the deferred shot; the HOST's frame loop delivers it
+      // (dungeon.js's tail) - this context owns no canvas of its own.
+      if (r.ok) requestScreenshot(r.key);
+      if (r.ok) hudText.add('Game saved.');
       else hudText.add('Save failed (storage full or disabled).');   // never silent - the write can fail on real browsers
-      return ok;
+      return r.ok;
     },
     quickLoad(setPlayerPos, key = null) {
       const snap = key != null ? loadSlot(key) : quickLoadSlot(playerEntity.name);
@@ -3192,6 +3312,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // U3: ONE overlay seam (chargen, level-up, char sheet) - hosts
     // pause gameplay while any overlay is active.
     get uiOverlayActive() { return !!activeOverlay; },
+    // DC1: PlayerDeath.Update's camera sink, read by the scene host's
+    // one per-frame eye write; zero whenever no death runs.
+    get deathDrop() { return activeOverlay instanceof DeathScreen ? activeOverlay.drop : 0; },
     overlayWindow: () => activeOverlay,   // U26 probe surface
     /** U43-ii: the way IN to that slot. The context has held an
      *  overlay since U3 and exposed only a getter, so the quest
@@ -3342,6 +3465,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         renderer.setScreenOffset(0, 0);
       }
     },
+    // BS1/F198 + ST1: the Status action's chain (the four-hosts
+    // seam) - the record-22 status text, then the health box.
+    showStatus() {
+      if (activeOverlay) return;
+      activeOverlay = new ActionTextBox(statusInfoRows(rscLines, opts.questBridge?.machine?.macroContext?.() ?? null))
+        .addNext(healthStatusRows(playerEntity, rscLines));
+    },
     toggleCharSheet() {
       if (activeOverlay) return;
       preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: lazy - ready by the next open at worst
@@ -3379,6 +3509,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     toggleInventory() {
       if (activeOverlay) return;
       activeOverlay = openInventory(null);
+    },
+    // PX15b: THE DIAL - the dungeon ctx carries all four doors (the
+    // PX15 flag's 'no native inventory' cited input.js:84's HISTORY;
+    // toggleInventory above is the door it lacked then and has now).
+    toggleDial() {
+      // The host object is an anonymous returned literal, so the doors
+      // are reached through `this` - routeKey calls ctx.toggleDial()
+      // as a method, and the entry arrows inherit that binding.
+      return openPixelDial([
+        { id: 'skills', label: 'Skills', dir: 'n', open: () => this.toggleCharSheet() },
+        { id: 'items', label: 'Items', dir: 'e', open: () => this.toggleInventory() },
+        { id: 'map', label: 'Map', dir: 's', open: () => this.toggleAutomap() },
+        { id: 'magic', label: 'Magic', dir: 'w', open: () => this.toggleSpellbook() },
+      ]);
     },
     toggleSpellbook() {
       if (activeOverlay) return;
@@ -3448,6 +3592,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     exitDoors,
     colliderTris,
     destroy() {
+      _ctxDead = true;   // NT1 (F213): before anything frees - the warm-window continuations read it
       // A1: OnTransitionToDungeonExterior's automap half - marks the
       // player outside and, at AutomapNumberOfDungeons = 0, forgets
       // the map the moment you leave (Automap.cs:2530-2534).
@@ -3466,9 +3611,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       for (const m of missiles) if (m.batch) renderer.destroyBillboardBatch(m.batch);
       for (const t of torches) { t.handle?.stop(); t.handle = null; }   // A2: free looping sources
       // U26 / EVERY ALLOCATION HAS AN OWNER: the dropped piles own a
-      // billboard batch each and leave with the dungeon.
-      for (const p of droppedLoot._piles) if (p.batch) renderer.destroyBillboardBatch(p.batch);
+      // billboard batch each and leave with the dungeon. NT1 (F213):
+      // dead FIRST - the documented removal protocol (droppedLoot.js
+      // mount reads it) - so a pile dropped at the exit whose texture
+      // is still warming cannot mint onto the orphan.
+      for (const p of droppedLoot._piles) { p.dead = true; if (p.batch) renderer.destroyBillboardBatch(p.batch); }
       droppedLoot._piles.length = 0;
+      // NT1 (F214): the context minted its own cast engine; a spell in
+      // flight at the exit owned a batch nothing else can reach.
+      magic.destroy();
       // V2c: hand the sunlight seam back to whoever held it (the town
       // page's worldModes registration) - a latched dungeon answer
       // would keep the sun off the player forever after the exit.

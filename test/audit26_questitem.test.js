@@ -84,11 +84,11 @@ test('F077: a filled soul trap says whose soul it holds', () => {
   const ii = src('systems/itemInfo.js');
   assert.ok(ii.includes('soulTrapNameSuffix(item, enemyDisplayName)'), 'the long-name path appends it');
   // ...on the IDENTIFIED branch only: DFU's `!IsIdentified || IsArtifact`
-  // early return (:302) sits BEFORE the soul arm.
-  const arm = ii.slice(ii.indexOf('const identified = itemIsIdentified(item);'));
-  const suffixAt = arm.indexOf('soulTrapNameSuffix');
-  const unidAt = arm.indexOf("(t?.name ?? '');");
-  assert.ok(suffixAt > 0 && suffixAt < unidAt, 'the suffix is on the identified branch, not the fallback');
+  // early return (:302) sits BEFORE the soul arm. IM1 reshaped the
+  // ternary (the unidentified arm leads, the Books arm follows), so
+  // the pin holds the exact identified tail instead of source order.
+  assert.match(ii, /const itemName = !identified \? \(t\?\.name \?\? ''\)\n\s+: item\?\.group === 'Books' \? [^\n]+\n\s+: \(name \?\? item\?\.name \?\? t\?\.name \?\? ''\) \+ soulTrapNameSuffix\(item, enemyDisplayName\);/,
+    'the suffix is on the identified non-book arm, behind the unidentified early return');
 });
 
 // ── F079 ──────────────────────────────────────────────────────────

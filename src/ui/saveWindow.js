@@ -121,6 +121,8 @@ export class SaveWindow {
     this.renameText = '';
     this._charRows = [];
     this._lastClick = { t: 0, index: -1 };
+    this._shot = null;                  // SS1: the selected slot's decoded screenshot
+    this._renderer = null;              // latched at draw so dispose can release
     this.refresh();
     // "Autoselect save at top of list" in load mode (:291-292).
     if (this.mode === 'load' && this.rows.length > 0) this._select(0);
@@ -244,6 +246,48 @@ export class SaveWindow {
   _boxHit(vx, vy) {
     return this._box ? messageBoxHit(this._box, vx, vy) : null;
   }
+
+  /** SS1: GetSaveScreenshot -> the panel texture (:255-268 + :195-201).
+   *  The stored data URL decodes through an Image, asynchronously -
+   *  until it lands the panel stays bare, which is GetSaveScreenshot
+   *  -> null's own look. Cached for the SELECTED slot only and
+   *  RELEASED on change (every allocation has an owner); an overwrite
+   *  changes the URL under the same key and re-decodes. Headless (no
+   *  Image/document) always answers null. */
+  _shotTexture(renderer, key) {
+    this._renderer = renderer;
+    const url = screenshotOf(key);
+    if (!url) { this._dropShot(); return null; }
+    if (this._shot?.key === key && this._shot.url === url) return this._shot.tex;
+    this._dropShot();
+    const shot = { key, url, tex: null };
+    this._shot = shot;
+    if (typeof Image === 'undefined' || typeof document === 'undefined') return null;
+    const img = new Image();
+    img.onload = () => {
+      if (this._shot !== shot) return;   // superseded while decoding
+      try {
+        const c = document.createElement('canvas');
+        c.width = img.width; c.height = img.height;
+        const ctx = c.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const data = ctx.getImageData(0, 0, c.width, c.height);
+        shot.tex = renderer.uploadTexture('saveshot', key,
+          { width: c.width, height: c.height, colors: data.data }, { smooth: true });
+      } catch { /* a corrupt shot draws as none */ }
+    };
+    img.src = url;
+    return null;
+  }
+
+  _dropShot() {
+    if (this._shot?.tex) this._renderer?.releaseTexture?.('saveshot', this._shot.key);
+    this._shot = null;
+  }
+
+  /** The overlay slots dispose what they replace - the shot texture
+   *  leaves with the window. */
+  dispose() { this._dropShot(); }
 
   click(vx, vy) {
     // The stacked boxes swallow every click (their own hit tables).
@@ -402,7 +446,12 @@ export class SaveWindow {
     panel(R.screenshot, SW_COLORS.list);
     const key = this._selectedKey();
     if (key !== -1) {
-      const tex = this.hooks.screenshotTexture?.(key, screenshotOf(key));
+      // SS1: the WINDOW loads the shot itself, exactly as the C#'s
+      // UpdateSelectedSaveInfo calls GetSaveScreenshot and sets the
+      // panel texture (:195-201); the hook stays as the override seam.
+      const tex = this.hooks.screenshotTexture
+        ? this.hooks.screenshotTexture(key, screenshotOf(key))
+        : this._shotTexture(renderer, key);
       if (tex) {
         const [sx, sy, sw, sh] = at(R.screenshot);
         renderer.drawScreenQuad(tex, { x: m.ox + sx * m.s, y: m.oy + sy * m.s, w: sw * m.s, h: sh * m.s });

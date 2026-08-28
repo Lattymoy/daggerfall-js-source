@@ -910,20 +910,20 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
      A shared class name across two screens is worth the reset: the
      alternative is a second class doing the same job in a second
      stylesheet, which is how two screens drift. */
-  .stagebody > .detail:not(.sheet) {
+  .stagebody > .detail:not(.wizsheet) {
     position: static; transform: none; max-height: none; z-index: auto;
     border-top: 1px solid var(--iron); padding-bottom: 0;
     background: var(--slate);
   }
-  .stagebody > .detail:not(.sheet) .sheet-close { display: none; }
-  .stagebody > .detail.sheet {
+  .stagebody > .detail:not(.wizsheet) .sheet-close { display: none; }
+  .stagebody > .detail.wizsheet {
     position: fixed; left: 0; right: 0; bottom: 0; max-height: 72dvh; z-index: 20;
     background: #12161b;
     transform: translateY(101%); transition: transform 0.22s ease;
     border-top: 1px solid var(--brass);
     padding-bottom: max(76px, calc(env(safe-area-inset-bottom) + 76px));
   }
-  .stagebody > .detail.sheet.open { transform: translateY(0); }
+  .stagebody > .detail.wizsheet.open { transform: translateY(0); }
   /* the rail is the desk's; the strip is the phone's - never both */
   .wizard .rail { display: none; }
   .choose { padding: 28px 20px; gap: 22px; }
@@ -1051,14 +1051,14 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   -webkit-font-smoothing: none; }
 /* PX2: the pause face - a scrim, not the night; the paused frame is
    the ground. */
-.px-home.px-over { background: rgba(10,12,17,0.78); }
+.px-home.px-over { background: rgba(10,12,17,0.55); }   /* PX4: the game reads through */
 /* ── PX3: THE PAUSE WINDOW ── a framed panel with tabs (Mac's
    reference: Skyrim's journal), whole pixels throughout: 2px border,
    corner gems, a tab strip whose active tab wears the classic gold
    pair. The window scrolls its body; the scrim keeps the foot. */
-.px-win { position: relative; width: min(860px, 94vw); height: min(620px, 74dvh);
+.px-win { position: relative; width: min(920px, 94vw); height: min(620px, 74dvh);
   display: flex; flex-direction: column;
-  background: rgba(10,12,17,0.88); border: 2px solid #7d7460; }
+  background: rgba(10,12,17,0.72); border: 2px solid #7d7460; }   /* PX4: slight transparency, per the reference */
 /* Each gem CENTERS on its corner: the core is 2px with 4px shadow
    arms, so a translate by half its own size puts the diamond's heart
    exactly on the frame's corner point. SCOPED under .px-win because
@@ -1105,9 +1105,142 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .px-quest p { margin: 0 0 4px; font-size: 17px; line-height: 1.45; }
 .px-note { color: #7d7460; text-align: center; margin-top: 24px; font-size: 17px;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+/* ── PX4: THE JOURNAL ── the reference's shape: names on a left rail
+   (the archive beneath a small heading), the chosen quest on the
+   right - its name inside wing rules, the latest entry as the
+   description, the trail as diamond-marked entries under a titled
+   divider. */
+.px-journal { display: flex; gap: 0; min-height: 100%; }
+.px-qrail { flex: 0 0 240px; border-right: 2px solid rgba(125,116,96,0.45);
+  padding: 4px 12px 4px 0; overflow-y: auto; }
+.px-qrow { font: inherit; font-size: 16px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: #d8cfae; background: none; border: 0; cursor: pointer; text-align: left;
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  min-height: 44px; padding: 6px 8px; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); transition: none; }
+.px-qrow .px-c { font-size: 12px; color: rgb(243,239,44); visibility: hidden;
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-qrow:hover, .px-qrow:focus-visible { outline: none; color: rgb(243,239,44);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-qrow.on { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-qrow.on .px-c, .px-qrow:hover .px-c, .px-qrow:focus-visible .px-c { visibility: visible; }
+.px-qrow.done { color: #7d7460; }
+.px-qrow.done.on { color: rgb(243,239,44); }
+.px-qarch { color: #7d7460; font-size: 13px; letter-spacing: 0.3em; text-indent: 0.3em;
+  text-transform: uppercase; text-align: center; margin: 14px 0 4px;
+  border-top: 2px solid rgba(125,116,96,0.3); padding-top: 10px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.px-qarch.px-qfirst { border-top: 0; padding-top: 2px; margin-top: 2px; }   /* PX5: the first heading needs no rule above it */
+/* PX5: a running clock on a rail row - a gold gem pushed to the right. */
+.px-qtimed { margin-left: auto; font-size: 11px; color: rgb(243,239,44);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* PX5: the kind tag and the timer under the quest name. */
+.px-qmeta { display: flex; align-items: center; justify-content: center; gap: 18px;
+  margin: -8px 0 12px; }
+.px-qkind { color: #7d7460; font-size: 13px; letter-spacing: 0.24em; text-indent: 0.24em;
+  text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.px-qtimer { color: #c5bda2; font-size: 14px; letter-spacing: 0.1em;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-qtimer.urgent { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* PX5: the world's date and time, bottom-right on the scrim. */
+.px-clock { position: absolute; right: 18px; bottom: 12px; text-align: right;
+  display: flex; flex-direction: column; gap: 2px;
+  color: #c5bda2; font-size: 15px; letter-spacing: 0.1em;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-clocktime { color: #7d7460; font-size: 13px; letter-spacing: 0.14em; }
+/* ── PX6: THE STATS PAGE ── meters and rows in whole pixels. */
+.px-mrow { margin: 0 0 14px; }
+.px-mtop { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 5px; }
+.px-mtop .k { color: #7d7460; font-size: 14px; letter-spacing: 0.16em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.px-mtop .v { font-size: 18px; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); white-space: nowrap; }
+.px-meter { height: 10px; border: 2px solid rgba(125,116,96,0.55); background: rgba(0,0,0,0.4); }
+.px-fill { height: 100%; background: #d8cfae; }
+.px-fill.blood { background: var(--blood); }
+.px-fill.verdigris { background: var(--verdigris); }
+.px-fill.thin { background: rgba(216,207,174,0.75); }
+.px-skillgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 4px 26px; margin-bottom: 8px; }
+.px-skill { margin: 0 0 8px; }
+.px-skill .px-meter { height: 6px; border-width: 2px; }
+.px-skill .px-mtop { margin-bottom: 3px; }
+.px-skill .px-mtop .v { font-size: 16px; }
+.px-disclose { width: auto; margin: 10px auto 0; }
+.px-stat .v.won { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-stat .v.bad { color: var(--blood); }
+/* ── PX7: THE SYSTEM PAGE ── the shell's own panes repainted in whole
+   pixels. The LAWS stay in the pane functions; every rule here is
+   paint over the same markup (.card/.act/.empty/.stats/.tag/.row). */
+.px-sys .card, .px-sys .dcard { background: rgba(0,0,0,0.35); border: 2px solid rgba(125,116,96,0.55);
+  padding: 16px 20px; margin: 0 0 14px; }
+.px-sys h3 { font-family: inherit;   /* the shell's own h3 rule sets Cormorant; the window is pixel */
+  font-size: 22px; font-weight: 400; letter-spacing: 0.12em; text-indent: 0.12em;
+  text-transform: uppercase; margin: 0 0 6px; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-sys p, .px-sys .meta { color: #c5bda2; font-size: 16px; line-height: 1.5; margin: 0 0 8px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-sys .tag { display: inline-block; color: rgb(243,239,44); font-size: 12px;
+  letter-spacing: 0.24em; text-indent: 0.24em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgb(93,77,12); margin: 0 0 4px; }
+.px-sys .stats { display: grid; grid-template-columns: auto 1fr; gap: 4px 18px; margin: 8px 0 10px; }
+.px-sys .stats dt { color: #7d7460; font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.px-sys .stats dd { margin: 0; font-size: 16px; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-sys .acts { display: flex; gap: 12px; margin-top: 10px; }
+.px-sys .act { font: inherit; font-size: 17px; letter-spacing: 0.16em; text-indent: 0.16em;
+  text-transform: uppercase; color: #d8cfae; background: none; cursor: pointer;
+  border: 2px solid rgba(125,116,96,0.55); padding: 8px 20px; min-height: 44px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); transition: none; }
+.px-sys .act:hover, .px-sys .act:focus-visible { outline: none; color: rgb(243,239,44);
+  border-color: var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-sys .act.primary { color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-sys .act:disabled { color: rgba(125,116,96,0.45); border-color: rgba(125,116,96,0.3);
+  cursor: default; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.px-sys .empty { text-align: center; margin: 14px 0; }
+.px-sys .empty h3 { font-size: 17px; color: #c5bda2; }
+.px-sys .empty p { color: #7d7460; font-size: 15px; }
+/* Mods' DFU-switch rows keep their shell markup; here they read as
+   quiet key/value rows. */
+.px-sys .row { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  border-bottom: 2px solid rgba(125,116,96,0.3); min-height: 44px; }
+.px-sys .row-main { font: inherit; background: none; border: 0; color: inherit; text-align: left;
+  cursor: default; padding: 6px 0; }
+.px-sys .row-name { font-size: 15px; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-sys .ctl { display: flex; align-items: center; gap: 8px; }
+.px-sys .ctl .val { color: #7d7460; font-size: 14px; letter-spacing: 0.1em;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.px-qdetail { flex: 1; padding: 4px 6px 4px 22px; overflow-y: auto; }
+.px-qname { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 6px 0 14px; }
+.px-qname h3 { font-size: 24px; font-weight: 400; letter-spacing: 0.14em; text-indent: 0.14em;
+  text-transform: uppercase; margin: 0; text-align: center;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-qwing { flex: 1; height: 2px; max-width: 120px;
+  background: linear-gradient(90deg, transparent, rgba(125,116,96,0.7)); }
+.px-qwing.px-flip { background: linear-gradient(90deg, rgba(125,116,96,0.7), transparent); }
+.px-qdesc p { margin: 0 0 5px; font-size: 17px; line-height: 1.5;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-qgap { height: 10px; }
+.px-divider { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 16px 0 12px; }
+.px-divider::before, .px-divider::after { content: ''; flex: 1; height: 2px; max-width: 140px;
+  background: rgba(125,116,96,0.55); }
+.px-divword { color: #7d7460; font-size: 13px; letter-spacing: 0.3em; text-indent: 0.3em;
+  text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.px-qentry { display: flex; gap: 12px; margin: 0 0 12px; }
+.px-qmark { color: var(--brass); font-size: 14px; line-height: 1.6;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-qentry p { margin: 0 0 4px; font-size: 16px; line-height: 1.45; color: #c5bda2;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-qverdict { text-align: center; color: #7d7460; font-size: 14px; letter-spacing: 0.2em;
+  text-transform: uppercase; margin: -6px 0 12px; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.px-qverdict.won { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
 @media (max-width: 480px) {
-  .px-win { width: 100vw; height: calc(100dvh - 92px); border-left: 0; border-right: 0; }
+  .px-win { width: 100vw; height: calc(100dvh - 48px); border-left: 0; border-right: 0; }
   .px-tabs button { font-size: 17px; letter-spacing: 0.1em; text-indent: 0.1em; padding: 6px 10px; gap: 8px; }
+  /* PX4: the journal stacks - the rail is a strip of rows across the
+     top, the detail beneath, both still whole pixels. */
+  .px-journal { flex-direction: column; }
+  .px-qrail { flex: 0 0 auto; max-height: 32%; border-right: 0;
+    border-bottom: 2px solid rgba(125,116,96,0.45); padding: 0 0 6px; }
+  .px-qdetail { padding: 10px 2px 4px; }
 }
 .px-ground { position: absolute; left: -25%; top: -25%; width: 150%; height: 150%;
   image-rendering: pixelated; animation: px-drift 160s linear infinite alternate; }
@@ -1177,6 +1310,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 @media (max-width: 480px) {
   .px-wordmark { font-size: 60px; }
   .px-menu button { font-size: 24px; letter-spacing: 0.12em; text-indent: 0.12em; }
+
   /* PX1b: a phone foot is two rows - the toggle centered on its own,
      build and About beneath it - because three zones across 393px made
      the toggle wrap vertically and shoulder into the build line. */
@@ -1187,6 +1321,658 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   .px-about { grid-area: about; }
 }
 @media (prefers-reduced-motion: reduce) { .px-ground { animation: none; } }
+/* PX8, caught by the tap probe TWICE: centering the list on a SHORT
+   screen ran its last rows UNDER the fixed foot, whose skin switch
+   then intercepted their taps - Load Game was drawn and unreachable,
+   the AUDIT F1 shape exactly. The first fix keyed on max-WIDTH and a
+   landscape phone (851x393) sailed past it: the condition was never
+   'narrow', it was 'short'. The stage stops centering, scrolls, and
+   reserves the foot's height whenever height is the constraint; the
+   foot stacks two rows only where width also runs out. */
+@media (max-height: 560px), (max-width: 480px) {
+  .px-stage { justify-content: flex-start; padding: 7dvh 24px 132px; overflow-y: auto; }
+}
+
+/* ── PX8: THE SHELL WEARS THE PIXELS (Mac: "Settings next") ─────
+   The section shell - side rail, pane, and above all the settings
+   three-pane screen - repainted into the pixel idiom. EVERY RULE
+   HERE IS PAINT: scoped under .shell (the menu's root alone; the
+   wizard, sheet and inventory own other roots), later in the sheet
+   so it wins the ties, and it moves NO geometry - the 44px targets
+   AUDIT F1's tap probe measures, the phone sheet, the second-tap
+   gesture and the dot all keep their sizes and their laws. */
+.shell { font-family: 'Pixelify Sans', monospace; -webkit-font-smoothing: none; }
+.shell button { transition: none; border-radius: 0; }
+.shell .brand h1 { font-family: 'Jacquard 12', var(--brand); font-weight: 400;
+  letter-spacing: 0.02em; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.shell .skinopt { border-radius: 0; letter-spacing: 0.14em; }
+.shell .skinopt.on { color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.shell .railbtn { letter-spacing: 0.12em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.shell .railbtn.on { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.shell .railbtn:hover { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.shell .head h2 { font-family: inherit; font-weight: 400; letter-spacing: 0.14em;
+  text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.shell .card, .shell .dcard { border: 2px solid rgba(125,116,96,0.55); border-radius: 0;
+  background: rgba(0,0,0,0.35); }
+.shell .card h3, .shell .dcard h3, .shell .empty h3 { font-family: inherit; font-weight: 400;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.shell .tag { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12);
+  letter-spacing: 0.24em; background: none; border: 0; }
+.shell .act { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; background: none;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--bone);
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.shell .act:hover, .shell .act:focus-visible { color: rgb(243,239,44); border-color: var(--brass);
+  background: none; text-shadow: 2px 2px 0 rgb(93,77,12); }
+.shell .act.primary { color: rgb(243,239,44); border-color: var(--brass); background: none;
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.shell .act:disabled { color: rgba(125,116,96,0.45); border-color: rgba(125,116,96,0.3); }
+/* ── the settings screen ── */
+.shell .subbtn { letter-spacing: 0.1em; text-transform: uppercase; border-radius: 0;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.shell .subbtn.on { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.shell .subbtn .count { font-family: inherit; border-radius: 0;
+  border: 2px solid rgba(125,116,96,0.4); background: none; }
+.shell .more-dot { border-radius: 0; width: 6px; height: 6px; background: var(--brass); }
+.shell .legend i { border-radius: 0; width: 6px; height: 6px; }
+.shell .row { border-radius: 0; }
+.shell .row.on { outline: 2px solid rgba(192,138,62,0.6); outline-offset: -2px; }
+.shell .row-name { text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.shell .ctl .val { letter-spacing: 0.08em; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.shell .step { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; background: none;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.shell .step:hover { color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.shell .swatch { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; }
+.shell .dcard h3 { font-size: 20px; }
+.shell .dcard code { font-family: inherit; border: 2px solid rgba(125,116,96,0.4);
+  border-radius: 0; background: rgba(0,0,0,0.35); letter-spacing: 0.06em; }
+.shell .sheet-close { letter-spacing: 0.2em; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+/* tier dots stay their tier colours; only the shape squares off. */
+/* ── PX11: THE SHELL STANDS ON THE SKY (Mac: the fullscreen settings
+   gets the treatment) ── the boot shell renders over the home's own
+   ground canvas; every old panel colour comes off and real 2px rules
+   replace the painted grid gaps. Paint and grounds only - the grid,
+   the sizes and every measured target are exactly where they were. */
+.shell { position: relative; z-index: 1; background: transparent; }
+.shell .side { background: rgba(10,12,17,0.62); border-right: 2px solid rgba(125,116,96,0.35); }
+.shell .pane { background: transparent; }
+.shell .head { background: transparent; border-bottom: 2px solid rgba(125,116,96,0.35); }
+.shell .panes { background: transparent; }
+.shell .subrail { background: rgba(10,12,17,0.45); border-right: 2px solid rgba(125,116,96,0.35); }
+.shell .list { background: rgba(10,12,17,0.38); }   /* a breath of scrim so the stars stay behind the words */
+.shell .detail { background: rgba(10,12,17,0.55); border-left: 2px solid rgba(125,116,96,0.35); }
+.shell .row { background: none; border-bottom: 2px solid rgba(125,116,96,0.3); }
+.shell .row:hover { background: rgba(0,0,0,0.25); }
+.shell .row.on { background: rgba(0,0,0,0.25); box-shadow: none; }
+.shell .foot { background: transparent; }
+
+/* ── PX12: THE DETAIL PASS ──────────────────────────────────────
+   The craft layer, named flaw by flaw before it was written:
+   1. SCROLLBARS. The browser default broke the idiom on every
+      scrolling column. Square 10px rails, dim square thumbs, brass
+      on hover - shell and pause window alike, plus the Firefox pair.
+   2. THE GEM SPEAKS EVERYWHERE. The rail's and the category strip's
+      active rows take the same diamond every other surface leads
+      with - the glyph, never a rotated box (a rotated square
+      anti-aliases its diagonals; the pixel font does not).
+   3. SECTION TITLES take the window's wing rules.
+   4. ONE DATA COLOUR. Values read #c5bda2 in the window and brass in
+      the shell; data is c5bda2 everywhere now - brass is ornament,
+      gold is the hand.
+   5. THE F8 DOT becomes the diamond it always wanted to be.
+   6. EMPTY STATES shed the dashed 1px box for a quiet open diamond
+      over pixel type.
+   7. KEYBOARD FOCUS in the language: rows and chips take the gold
+      pair plus a brass outline under :focus-visible, so a tab is as
+      visible as a hover.
+   8. NOTHING EASES. The last row transition dies. */
+.shell ::-webkit-scrollbar, .px-win ::-webkit-scrollbar { width: 10px; height: 10px; }
+.shell ::-webkit-scrollbar-track, .px-win ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+.shell ::-webkit-scrollbar-thumb, .px-win ::-webkit-scrollbar-thumb {
+  background: rgba(125,116,96,0.5); border: 2px solid rgba(0,0,0,0.3); border-radius: 0; }
+.shell ::-webkit-scrollbar-thumb:hover, .px-win ::-webkit-scrollbar-thumb:hover { background: var(--brass); }
+.shell, .px-win { scrollbar-width: thin; scrollbar-color: rgba(125,116,96,0.6) rgba(0,0,0,0.3); }
+
+.shell .railbtn.on .rk::before, .shell .railbtn:focus-visible .rk::before {
+  content: '\\25c6  '; color: rgb(243,239,44); font-size: 12px;
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.shell .subbtn.on::before { content: '\\25c6'; color: rgb(243,239,44); font-size: 11px;
+  margin-right: 8px; text-shadow: 2px 2px 0 rgb(93,77,12); }
+.shell .more-dot { width: auto; height: auto; background: none; }
+.shell .more-dot::before { content: '\\25c6'; color: var(--brass); font-size: 10px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+
+.shell .head { display: flex; align-items: center; gap: 16px;
+  border-bottom: 2px solid rgba(125,116,96,0.35); }
+.shell .head::before, .shell .head::after { content: ''; flex: 1; height: 2px; max-width: 110px;
+  background: linear-gradient(90deg, transparent, rgba(125,116,96,0.7)); }
+.shell .head::after { background: linear-gradient(90deg, rgba(125,116,96,0.7), transparent); }
+.shell .head h2 { font-size: 24px; letter-spacing: 0.14em; text-indent: 0.14em; }
+
+.shell .val, .px-setwrap .val { color: #c5bda2; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+
+.shell .empty, .px-sys .empty { border: 0; text-align: center; padding: 20px 22px; }
+.shell .empty::before, .px-sys .empty::before { content: '\\25c7'; display: block;
+  color: rgba(125,116,96,0.7); font-size: 15px; margin-bottom: 8px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.shell .empty h3 { font-family: inherit; font-size: 16px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: #c5bda2; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.shell .empty p { text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+
+.shell .row-main:focus-visible { outline: 2px solid var(--brass); outline-offset: -2px; }
+.shell .row-main:focus-visible .row-name { color: rgb(243,239,44);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.shell .subbtn:focus-visible, .shell .railbtn:focus-visible { outline: none;
+  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-qrow:focus-visible { outline: none; }
+.px-setwrap .row-main:focus-visible { outline: 2px solid var(--brass); outline-offset: -2px; }
+
+.shell .row, .shell .act, .shell .step { transition: none; }
+.shell .dcard .status { color: #c5bda2; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.shell .tag { border: 2px solid rgba(125,116,96,0.4); color: rgb(243,239,44);
+  text-shadow: 2px 2px 0 rgb(93,77,12); letter-spacing: 0.24em; }
+
+/* ── PX13: THE WIZARD WEARS THE PIXELS ──────────────────────────
+   The new-game walk on the same sky, in the same language - paint
+   over U50's machine, which does not move: every stage, every back
+   arm, the keyboard table and the walk-not-a-menu rail law are the
+   flow's and stay the flow's.
+   THE RAIL IS A GEM SPINE: done stages carry a dim filled diamond,
+   the current stage the gold pair, the road ahead an open one - the
+   walk drawn as ornament, read at a glance. */
+.wizard { background: transparent; }
+.wizard .railbtn .rk::before { content: '\\25c7  '; color: rgba(125,116,96,0.55);
+  font-size: 12px; }
+.wizard .railbtn.done .rk::before { content: '\\25c6  '; color: #7d7460; }
+.wizard .railbtn.on .rk::before { content: '\\25c6  '; color: rgb(243,239,44);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.wizard .railbtn.done { border-left-color: transparent; }
+.wizard .railbtn.done .rk { color: #7d7460; }
+.wizard .railbtn.todo .rk { color: rgba(125,116,96,0.5); }
+.wizard .stepstrip .seg { border-radius: 0; background: rgba(125,116,96,0.3); }
+.wizard .stepstrip .seg.on { background: var(--brass); }
+.wizard .steptext { letter-spacing: 0.14em; text-transform: uppercase; color: #7d7460;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+/* The stage questions take the window's wing rules - every screen
+   asks its one question between the same ornaments. */
+.wizard .choose h2 { font-family: inherit; font-weight: 400; font-size: 24px;
+  letter-spacing: 0.14em; text-indent: 0.14em; text-transform: uppercase;
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.wizard .choose h2::before, .wizard .choose h2::after { content: ''; flex: 0 0 90px; height: 2px; }
+.wizard .choose h2::before { background: linear-gradient(90deg, transparent, rgba(125,116,96,0.7)); }
+.wizard .choose h2::after { background: linear-gradient(90deg, rgba(125,116,96,0.7), transparent); }
+/* The big choices: pixel plaques - the About box's language at
+   decision size. */
+.wizard .bigbtn { border: 2px solid rgba(125,116,96,0.55); border-radius: 0;
+  background: rgba(10,12,17,0.55); color: #d8cfae; font-family: inherit;
+  letter-spacing: 0.1em; text-transform: uppercase; font-size: 16px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); transition: none; }
+.wizard .bigbtn:hover, .wizard .bigbtn:focus-visible { outline: none;
+  color: rgb(243,239,44); border-color: var(--brass); background: rgba(0,0,0,0.35);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.wizard .bigbtn.on { color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* The race grid and the map's fallback list ride the same plaque. */
+.wizard .racegrid button { border: 2px solid rgba(125,116,96,0.55); border-radius: 0;
+  background: rgba(10,12,17,0.55); color: #d8cfae; font-family: inherit;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); transition: none; }
+.wizard .racegrid button:hover, .wizard .racegrid button:focus-visible { outline: none;
+  color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* The name box: a pixel field - ink ground, 2px frame, gold focus. */
+.wizard .namebox { font-family: inherit; font-size: 20px; letter-spacing: 0.08em;
+  color: #d8cfae; background: rgba(0,0,0,0.4); border: 2px solid rgba(125,116,96,0.55);
+  border-radius: 0; padding: 10px 14px; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.wizard .namebox:focus { outline: none; border-color: var(--brass);
+  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* The ten faces: 2px frames, the chosen one gold - and the number
+   fallback reads as a plaque, not a hole. */
+.wizard .facegrid button { border: 2px solid rgba(125,116,96,0.55); border-radius: 0;
+  background: rgba(10,12,17,0.55); transition: none; }
+.wizard .facegrid button:hover, .wizard .facegrid button:focus-visible { outline: none; border-color: var(--brass); }
+.wizard .facegrid button.on { border-color: var(--brass);
+  outline: 2px solid rgba(192,138,62,0.5); outline-offset: 2px; }
+.wizard .facenum { font-family: inherit; color: #7d7460; font-size: 18px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+/* Reflexes: the five bands as plaques, the chosen one gold. */
+.wizard .reflexbtn { border: 2px solid rgba(125,116,96,0.55); border-radius: 0;
+  background: rgba(10,12,17,0.55); color: #d8cfae; font-family: inherit;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); transition: none; }
+.wizard .reflexbtn:hover, .wizard .reflexbtn:focus-visible { outline: none;
+  color: rgb(243,239,44); border-color: var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.wizard .reflexbtn.on { color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* The map's caption and the pending-stage words sit in pixel dim. */
+.wizard .mapnote { color: #7d7460; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+/* PX17a: the description reads as prose - a size a person reads at,
+   air between the lines, air between the paragraphs. */
+.wizard .dcard p { font-size: 15px; line-height: 1.6; margin: 0 0 12px;
+  color: #c5bda2; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+/* The action bar's Back/Cancel is the shell's own .act, already
+   repainted; the bar just loses its old hairline for the 2px rule. */
+.wizard .actionbar { border-top: 2px solid rgba(125,116,96,0.35); background: transparent; }
+/* PX13b (Mac: "the main background is still the old basic ui"): the
+   stage ground was .stagebody's var(--iron) - the SAME gap-paint
+   trick PX10b found on the settings .panes, one file later. Off, and
+   the walk floats on the sky like every other face; the class list
+   keeps the shell's 0.38 breath and the dcard its own bordered card. */
+.wizard .stagebody { background: transparent; }
+
+/* ── PX14/PX17d: THE DIAL, BUILT ── the in-game compass rose with
+   its craft pass. FADE INTO VIEW: opacity and the depth-of-field
+   blur step in together over 220ms in five pixel steps - the world
+   behind falls out of focus (backdrop blur + a light desaturate),
+   which is the reference's own gesture; reduced-motion gets the end
+   state at once. CLOSE IS INSTANT - the dial must be gone before the
+   window it opens takes the keys. Everything else is the family:
+   corner gems framing the dial space, a layered diamond knot, 2px
+   arm rules with a mid gem and an open terminal, labels in the caps,
+   the chosen arm in the gold pair with its flanking diamonds. */
+.px-dial { position: fixed; inset: 0; z-index: 14; background: rgba(10,12,17,0.4);
+  display: grid; place-items: center; grid-template-rows: 1fr auto;
+  font-family: 'Pixelify Sans', monospace; -webkit-font-smoothing: none; color: #d8cfae;
+  opacity: 0; backdrop-filter: blur(0px) saturate(100%);
+  -webkit-backdrop-filter: blur(0px) saturate(100%);
+  transition: opacity 0.22s steps(5, end), backdrop-filter 0.22s steps(5, end),
+    -webkit-backdrop-filter 0.22s steps(5, end); }
+.px-dial.on { opacity: 1; backdrop-filter: blur(7px) saturate(82%);
+  -webkit-backdrop-filter: blur(7px) saturate(82%); }
+@media (prefers-reduced-motion: reduce) {
+  .px-dial { transition: none; opacity: 1; backdrop-filter: blur(7px) saturate(82%);
+    -webkit-backdrop-filter: blur(7px) saturate(82%); }
+}
+.px-rose { position: relative; width: min(560px, 86vw); height: min(500px, 78vh); }
+.px-rose .px-corner { position: absolute; }
+.px-rose .px-tl { left: -1px; top: -1px; transform: translate(-50%,-50%); }
+.px-rose .px-tr { right: -1px; top: -1px; transform: translate(50%,-50%); }
+.px-rose .px-bl { left: -1px; bottom: -1px; transform: translate(-50%,50%); }
+.px-rose .px-br { right: -1px; bottom: -1px; transform: translate(50%,50%); }
+/* THE KNOT: three layered diamonds, one center. */
+.px-knotwrap { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+.px-knot { position: absolute; left: 0; top: 0; transform: translate(-50%,-50%);
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-knot-outer { font-size: 64px; color: rgba(125,116,96,0.4); }
+.px-knot-mid { font-size: 34px; color: var(--brass); }
+.px-knot-core { font-size: 14px; color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* THE ARMS: a 2px rule from the knot, a small gem at its middle, an
+   open terminal past the label. */
+.px-arm { position: absolute; font: inherit; font-size: 22px; letter-spacing: 0.18em;
+  text-indent: 0.18em; text-transform: uppercase; color: #c5bda2; background: none;
+  border: 0; cursor: pointer; min-height: 44px; min-width: 44px; padding: 8px 14px;
+  display: flex; align-items: center; gap: 12px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); transition: none; }
+.px-arm .px-c { font-size: 13px; color: rgb(243,239,44); visibility: hidden;
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-arm .px-term { font-size: 11px; color: rgba(125,116,96,0.7);
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-arm::before { content: ''; position: absolute; background: rgba(125,116,96,0.55); }
+.px-arm::after { content: '\\25c6'; position: absolute; font-size: 9px;
+  color: rgba(192,138,62,0.8); text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-arm.on, .px-arm:hover, .px-arm:focus-visible { outline: none;
+  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-arm.on .px-c, .px-arm:hover .px-c, .px-arm:focus-visible .px-c { visibility: visible; }
+.px-arm.on .px-term, .px-arm:hover .px-term { color: var(--brass); }
+.px-arm.on::before, .px-arm:hover::before { background: var(--brass); }
+.px-n { left: 50%; top: 5%; transform: translateX(-50%); flex-direction: column; gap: 6px; }
+.px-n .px-term { order: -1; }
+.px-n::before { left: 50%; top: 100%; width: 2px; height: 92px; transform: translateX(-50%); }
+.px-n::after { left: 50%; top: calc(100% + 42px); transform: translate(-50%,-50%); }
+.px-s { left: 50%; bottom: 5%; transform: translateX(-50%); flex-direction: column-reverse; gap: 6px; }
+.px-s .px-term { order: -1; }
+.px-s::before { left: 50%; bottom: 100%; width: 2px; height: 92px; transform: translateX(-50%); }
+.px-s::after { left: 50%; bottom: calc(100% + 42px); transform: translate(-50%,50%); }
+.px-e { right: 3%; top: 50%; transform: translateY(-50%); flex-direction: row-reverse; }
+/* PX18b (Mac): the horizontal rules stopped ON the knot while the
+   vertical ones stopped short - measured -38px vs +12px clearance.
+   62px gives east and west the same 12px breath as north and south;
+   the mid gems recentre with them. */
+.px-e::before { right: 100%; top: 50%; height: 2px; width: 62px; transform: translateY(-50%); }
+.px-e::after { right: calc(100% + 31px); top: 50%; transform: translate(50%,-50%); }
+.px-w { left: 3%; top: 50%; transform: translateY(-50%); }
+.px-w .px-term { order: -1; }
+.px-w::before { left: 100%; top: 50%; height: 2px; width: 62px; transform: translateY(-50%); }
+.px-w::after { left: calc(100% + 31px); top: 50%; transform: translate(-50%,-50%); }
+/* THE HINT: the keys, taught where they are used. */
+.px-dialhint { color: #7d7460; font-size: 13px; letter-spacing: 0.2em; text-indent: 0.2em;
+  text-transform: uppercase; margin: 0 0 18px; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+@media (max-width: 480px) {
+  .px-arm { font-size: 17px; }
+  .px-n::before, .px-s::before { height: 58px; }
+  .px-e::before, .px-w::before { width: 34px; }
+  .px-n::after { top: calc(100% + 26px); }
+  .px-s::after { bottom: calc(100% + 26px); }
+  .px-e::after { right: calc(100% + 17px); }
+  .px-w::after { left: calc(100% + 17px); }
+  .px-knot-outer { font-size: 46px; }
+  .px-knot-mid { font-size: 26px; }
+}
+
+/* ── PX19: THE PACK IS A WINDOW ── (Mac: centered, window-based).
+   The pause window's own frame - corner gems, 2px dim border, 0.72
+   ink glass - centered over the live game, arriving with THE DIAL'S
+   OWN GESTURE: a five-step fade while the world behind drops into
+   depth-of-field. Inside, the reference's anatomy compressed to a
+   window: the category spine left, bare names middle (local over the
+   ground/wagon pair, the pair law intact), the SHOWCASE right -
+   figure above, the bracketed plaque beneath - and the window
+   carries its own footer: items, the carry meter (blood past
+   four-fifths), gold. */
+.pack-shell { position: absolute; inset: 0; z-index: 1; background: rgba(10,12,17,0.45);
+  display: grid; place-items: center;
+  font-family: 'Pixelify Sans', monospace; -webkit-font-smoothing: none; color: #d8cfae;
+  opacity: 0; backdrop-filter: blur(0px) saturate(100%); -webkit-backdrop-filter: blur(0px) saturate(100%);
+  transition: opacity 0.22s steps(5, end), backdrop-filter 0.22s steps(5, end),
+    -webkit-backdrop-filter 0.22s steps(5, end); }
+.pack-shell.on { opacity: 1; backdrop-filter: blur(6px) saturate(85%);
+  -webkit-backdrop-filter: blur(6px) saturate(85%); }
+@media (prefers-reduced-motion: reduce) {
+  .pack-shell { transition: none; opacity: 1; backdrop-filter: blur(6px) saturate(85%);
+    -webkit-backdrop-filter: blur(6px) saturate(85%); } }
+.pack-shell button { transition: none; border-radius: 0; }
+.pack-win { position: relative; width: min(1040px, 95vw); height: min(660px, 86dvh);
+  display: flex; flex-direction: column;
+  background: rgba(10,12,17,0.72); border: 2px solid #7d7460; }
+.pack-win .px-corner { position: absolute; }
+.pack-win .px-tl { left: -1px; top: -1px; transform: translate(-50%,-50%); }
+.pack-win .px-tr { right: -1px; top: -1px; transform: translate(50%,-50%); }
+.pack-win .px-bl { left: -1px; bottom: -1px; transform: translate(-50%,50%); }
+.pack-win .px-br { right: -1px; bottom: -1px; transform: translate(50%,50%); }
+.pack-shell .pack-id { display: flex; justify-content: space-between; align-items: center;
+  background: transparent; border-bottom: 2px solid rgba(125,116,96,0.35); padding: 8px 16px; }
+.pack-shell .pack-id h2 { font-family: inherit; font-weight: 400; font-size: 20px; margin: 0;
+  letter-spacing: 0.18em; text-indent: 0.18em; text-transform: uppercase;
+  display: flex; align-items: center; gap: 14px; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.pack-shell .pack-id h2::before { content: ''; flex: 0 0 48px; height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(125,116,96,0.7)); }
+.pack-shell .pack { flex: 1; min-height: 0; display: grid;
+  grid-template-columns: 168px minmax(220px, 280px) 1fr; gap: 0; background: transparent; }
+.pack-shell .packcats { background: rgba(0,0,0,0.3); border-right: 2px solid rgba(125,116,96,0.35);
+  overflow-y: auto; padding: 8px 0; }
+.pack-shell .packtabs { display: flex; flex-direction: column; gap: 0; margin: 0; }
+.pack-shell .packtab { display: flex; align-items: center; gap: 10px; text-align: left;
+  min-height: 44px; padding: 8px 14px; border: 0; background: none; cursor: pointer;
+  color: #a89f88; font-family: inherit; font-size: 13px; letter-spacing: 0.16em;
+  text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.pack-shell .packtab .count { font-family: inherit; font-size: 11px; color: #7d7460;
+  background: none; border: 0; margin-left: auto; }
+.pack-shell .packtab:hover, .pack-shell .packtab:focus-visible { outline: none; color: #d8cfae; }
+.pack-shell .packtab.on { color: rgb(243,239,44); font-size: 15px;
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.pack-shell .packtab.on::after { content: '\\25c6'; font-size: 10px; margin-left: 8px; }
+.pack-shell .packlists, .pack-shell .list { background: rgba(0,0,0,0.2);
+  border-right: 2px solid rgba(125,116,96,0.35); overflow-y: auto; }
+/* In a window the PAIR stacks - local above the ground/wagon - one
+   readable column instead of two starved ones; .remotefirst keeps
+   flipping the order for containers and reward trays. */
+.pack-shell .packlists { display: flex; flex-direction: column; }
+.pack-shell .packlists.remotefirst { flex-direction: column-reverse; }
+.pack-shell .packremote { border-top: 2px solid rgba(125,116,96,0.3); background: transparent; }
+.pack-shell .packcol { padding: 6px 0; }
+.pack-shell .itemrow { display: flex; align-items: center; width: 100%; text-align: left;
+  background: none; border: 0; min-height: 44px; padding: 8px 16px; cursor: pointer;
+  color: #a89f88; font-family: inherit; font-size: 15px; letter-spacing: 0.05em;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.pack-shell .itemrow .tile { display: none; }
+.pack-shell .itemrow .itemname small { display: none; }
+.pack-shell .itemrow .itemwt { display: none; }
+.pack-shell .itemrow .itemname { display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden; line-height: 1.35; }
+.pack-shell .itemrow:hover, .pack-shell .itemrow:focus-visible { outline: none; color: #d8cfae; }
+.pack-shell .itemrow.on { color: rgb(243,239,44); background: none; box-shadow: none;
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.pack-shell .itemrow.on::after { content: '\\25c6'; font-size: 10px; margin-left: auto; }
+.pack-shell .packempty { color: #7d7460; padding: 12px 16px; font-size: 14px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.pack-shell .remotehead, .pack-shell .equippedhead { font-family: inherit; color: #7d7460;
+  font-size: 11px; letter-spacing: 0.3em; text-indent: 0.3em; text-transform: uppercase;
+  text-align: center; background: none; border-top: 2px solid rgba(125,116,96,0.3);
+  border-bottom: 0; padding: 10px 0 4px; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.pack-shell .remotewho, .pack-shell .remotewho * { font-family: inherit; }
+.pack-shell h3, .pack-shell .equippedhead h3, .pack-shell .remotehead * { font-family: inherit;
+  font-weight: 400; letter-spacing: 0.24em; text-indent: 0.24em; text-transform: uppercase; }
+.pack-shell .equippedhead h3 { font-size: 13px; color: #7d7460; margin: 0;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.pack-shell .equippedhead .meta { font-size: 10px; color: #7d7460; }
+.pack-shell .remoteacts { padding: 0 10px; }
+/* The showcase column: the figure over the plaque, both scrolling
+   together, the game glass behind them through the window. */
+.pack-shell .packstage { position: relative; background: transparent; overflow-y: auto;
+  display: flex; flex-direction: column; align-items: center; gap: 18px;
+  padding: 18px 20px 22px; }
+.pack-shell .figure-doll { border: 2px solid rgba(125,116,96,0.55); background: rgba(0,0,0,0.3); }
+.pack-shell .slotmap, .pack-shell .wornlist, .pack-shell .equipped { background: rgba(0,0,0,0.3); }
+/* PX19b: THE EQUIP PANELS - the classic's own section, one language
+   over. The worn list is a grid of slot TILES beside the doll: each
+   a 2px panel holding the item's monogram with the slot word
+   beneath; the chosen one wears the gold pair and the brass frame;
+   an empty slot is a dim open diamond and NOT a button. */
+.pack-shell .equipped { display: block; }
+.pack-shell .equipped .wornrow { display: inline-flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 3px;
+  width: 76px; min-height: 76px; margin: 3px; padding: 6px 2px; vertical-align: top;
+  background: rgba(0,0,0,0.3); border: 2px solid rgba(125,116,96,0.35);
+  color: #a89f88; font-family: inherit; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.pack-shell .equipped { text-align: center; padding-bottom: 10px; }
+.pack-shell .wornrow .tile { display: flex; width: 30px; height: 30px; align-items: center;
+  justify-content: center; border: 0; background: none; font-size: 15px; color: #c5bda2; }
+.pack-shell .wornrow .worntile { font-size: 15px; color: rgba(125,116,96,0.6); }
+.pack-shell .wornslot { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: #7d7460; }
+.pack-shell .wornname { font-size: 10px; max-width: 70px; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.25; }
+.pack-shell .wornrow .itemwt { display: none; }
+.pack-shell button.wornrow { cursor: pointer; }
+.pack-shell button.wornrow:hover, .pack-shell button.wornrow:focus-visible { outline: none;
+  color: rgb(243,239,44); border-color: var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.pack-shell .wornrow.on { color: rgb(243,239,44); border-color: var(--brass);
+  outline: 2px solid rgba(192,138,62,0.5); outline-offset: 2px;
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.pack-shell .wornrow.wornempty { color: rgba(125,116,96,0.5); border-color: rgba(125,116,96,0.2); }
+.pack-shell .wornrow.wornempty .wornname { display: none; }   /* the open diamond and the slot word carry an empty */
+.pack-shell .packdetail { position: relative; transform: none; width: 100%; max-width: 420px; }
+.pack-shell .packdetail .card, .pack-shell .card { min-width: 0; max-width: none;
+  border: 2px solid rgba(216,207,174,0.7); outline: 2px solid rgba(125,116,96,0.35);
+  outline-offset: 4px; border-radius: 0; background: rgba(10,12,17,0.72); padding: 14px 18px; }
+.pack-shell .card h3 { font-family: inherit; font-weight: 400; font-size: 18px;
+  letter-spacing: 0.14em; text-indent: 0.14em; text-transform: uppercase; text-align: center;
+  margin: 0 0 8px; padding-bottom: 8px; border-bottom: 2px solid rgba(125,116,96,0.5);
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.pack-shell .card .stats { display: grid; grid-template-columns: auto auto;
+  justify-content: center; align-items: baseline; gap: 6px 14px; margin: 10px 0; }
+.pack-shell .card .stats dt { color: #7d7460; font-size: 11px; letter-spacing: 0.22em;
+  text-transform: uppercase; text-align: right; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.pack-shell .card .stats dd { margin: 0; font-size: 19px; overflow-wrap: anywhere;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.pack-shell .card .meta, .pack-shell .card p { color: #c5bda2; text-align: center; font-size: 14px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.pack-shell .card .tag { float: right; color: #c5bda2; font-size: 10px; letter-spacing: 0.2em;
+  text-transform: uppercase; border: 0; background: none;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.pack-shell .acts { display: flex; justify-content: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.pack-shell .act { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; background: none;
+  color: #d8cfae; font-family: inherit; letter-spacing: 0.12em; text-transform: uppercase;
+  min-height: 44px; padding: 8px 14px; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.pack-shell .act:hover, .pack-shell .act:focus-visible { outline: none;
+  color: rgb(243,239,44); border-color: var(--brass); background: none;
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.pack-shell .act.primary { color: rgb(243,239,44); border-color: var(--brass); background: none;
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.pack-shell .act:disabled { color: rgba(125,116,96,0.45); border-color: rgba(125,116,96,0.3); }
+.pack-shell .sheet-close { color: #7d7460; background: none; border: 0;
+  letter-spacing: 0.2em; text-transform: uppercase; min-height: 44px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.pack-shell .packbar { display: flex; align-items: center; gap: 22px;
+  border-top: 2px solid rgba(125,116,96,0.35); background: rgba(0,0,0,0.3);
+  padding: 8px 16px; }
+.pack-shell .packbar .k { color: #7d7460; font-size: 11px; letter-spacing: 0.22em;
+  text-transform: uppercase; margin-right: 8px; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.pack-shell .packbar .v { font-size: 16px; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.pack-shell .packitems { color: #7d7460; font-size: 12px; letter-spacing: 0.14em;
+  text-transform: uppercase; margin-right: auto; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.pack-shell .packcarry { display: flex; align-items: center; gap: 10px; }
+.pack-shell .packcarry .px-meter { width: 140px; height: 8px;
+  border: 2px solid rgba(125,116,96,0.55); background: rgba(0,0,0,0.4); }
+.pack-shell .packgold { display: flex; align-items: baseline; }
+.pack-shell .sheet-notice { color: #c5bda2; text-align: center;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.pack-shell ::-webkit-scrollbar { width: 10px; }
+.pack-shell ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+.pack-shell ::-webkit-scrollbar-thumb { background: rgba(125,116,96,0.5);
+  border: 2px solid rgba(0,0,0,0.3); border-radius: 0; }
+/* PX19c: THE LOOT WINDOW - containers, corpses, the wagon and a
+   littered ground ride their OWN smaller window beside the pack,
+   the same frame language one size down; absent entirely when the
+   ground is bare. */
+.pack-shell { grid-auto-flow: column; gap: 18px; }
+.loot-win { position: relative; width: min(340px, 90vw); max-height: min(560px, 80dvh);
+  display: flex; flex-direction: column; overflow-y: auto;
+  background: rgba(10,12,17,0.72); border: 2px solid #7d7460; padding-bottom: 8px; }
+.loot-win .px-corner { position: absolute; }
+.loot-win .px-tl { left: -1px; top: -1px; transform: translate(-50%,-50%); }
+.loot-win .px-tr { right: -1px; top: -1px; transform: translate(50%,-50%); }
+.loot-win .px-bl { left: -1px; bottom: -1px; transform: translate(-50%,50%); }
+.loot-win .px-br { right: -1px; bottom: -1px; transform: translate(50%,50%); }
+.loot-win .packremote { border-top: 0; background: transparent; }
+.loot-win .remotehead { border-top: 0; padding-top: 12px; }
+@media (max-width: 640px) {
+  .pack-win { width: 100vw; height: 100dvh; border-left: 0; border-right: 0; }
+  .pack-shell .pack { grid-template-columns: 120px 1fr; }
+  /* the stage dissolves but its CHILDREN keep flowing - display:none
+     here would hide the fixed detail SHEET inside it; contents lets
+     the sheet fix to the viewport while the figure alone hides. */
+  .pack-shell .packstage { display: contents; }
+  .pack-shell .charcol { display: none; }
+  /* the loot window stacks under the pack on a phone */
+  .pack-shell { grid-auto-flow: row; gap: 0; }
+  .loot-win { width: 100vw; max-height: 40dvh; border-left: 0; border-right: 0; }
+}
+
+/* ── PX9: SETTINGS INSIDE THE PAUSE WINDOW ──────────────────────
+   The same paneSettings DOM, reflowed for the window: the category
+   subrail becomes a wrapping chip strip on top, the rows scroll
+   beneath, and the help/reset detail rises as a SHEET inside the
+   window - the phone pattern the screen already carries, applied one
+   size up. All paint and flow; the machine underneath is untouched. */
+.px-setwrap { padding: 0; overflow: hidden; display: flex; }
+.px-setwrap .panes { display: flex; flex-direction: column; flex: 1; min-width: 0; position: relative; overflow: hidden;
+  background: none; }   /* PX10b: the slate lived on .panes (its base gap-colour trick), not .list */
+.px-setwrap .subrail { display: flex; flex-direction: row; flex-wrap: wrap; gap: 2px;
+  width: auto; border-right: 0; border-bottom: 2px solid rgba(125,116,96,0.45);
+  padding: 4px 6px 6px; overflow: visible; }
+.px-setwrap .subbtn { min-height: 44px; padding: 6px 12px; font-size: 14px;
+  display: flex; align-items: center; gap: 8px;
+  color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-setwrap .subbtn.on { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-setwrap .subbtn .count { font-size: 11px; }
+.px-setwrap .list { flex: 1; overflow-y: auto; padding: 8px 12px 12px; background: none; }   /* PX10b: the old sheet's slate panel, off */
+.px-setwrap .row { min-height: 44px; }
+/* The sheet: absolute within the window (px-win is relative), risen
+   by the same .open class the phone sheet uses. */
+.px-setwrap .detail { position: absolute; left: 0; right: 0; bottom: 0; max-height: 78%;
+  overflow-y: auto; z-index: 5; background: rgba(10,12,17,0.96);
+  border-top: 2px solid var(--brass);
+  transform: translateY(101%); transition: transform 0.18s steps(4); }
+.px-setwrap .detail.open { transform: translateY(0); }
+.px-setwrap .sheet-close { display: block; width: 100%; min-height: 44px;
+  color: #7d7460; letter-spacing: 0.2em; text-transform: uppercase;
+  border-bottom: 2px solid rgba(125,116,96,0.4);
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+@media (prefers-reduced-motion: reduce) { .px-setwrap .detail { transition: none; } }
+
+/* ── PX10b: THE ROWS SHED THE OLD CHROME (Mac: "it's the old ui
+   backdrop") ── the base .row/.step/.val rules are the OLD sheet's -
+   slate hover fills, 1px iron hairlines, brass inset - and PX8's
+   repaint was scoped to .shell, which the pause window is not in.
+   Same repaint, scoped here; the 44px target pseudo-element and every
+   size stay exactly as measured. */
+.px-setwrap .row { background: none; border-bottom: 2px solid rgba(125,116,96,0.3); }
+.px-setwrap .row:hover { background: rgba(0,0,0,0.25); }
+.px-setwrap .row.on { background: rgba(0,0,0,0.25); box-shadow: none;
+  outline: 2px solid rgba(192,138,62,0.6); outline-offset: -2px; }
+.px-setwrap .row-name { font-size: 15px; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-setwrap .val { color: #c5bda2; letter-spacing: 0.08em;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.px-setwrap .step { border: 2px solid rgba(125,116,96,0.55); border-radius: 0;
+  background: none; color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-setwrap .step:hover { color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-setwrap .act { border: 2px solid rgba(125,116,96,0.55); border-radius: 0;
+  background: none; color: #d8cfae; letter-spacing: 0.14em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); transition: none; }
+.px-setwrap .act:hover, .px-setwrap .act:focus-visible { color: rgb(243,239,44);
+  border-color: var(--brass); background: none; text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-setwrap .act.primary { color: rgb(243,239,44); border-color: var(--brass);
+  background: none; text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-setwrap .swatch { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; }
+.px-setwrap .legend i, .px-setwrap .row i { border-radius: 0; }
+.px-setwrap .dcard h3 { font-family: inherit; font-weight: 400; letter-spacing: 0.12em;
+  text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-setwrap .dcard p { color: #c5bda2; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-setwrap .dcard code { font-family: inherit; border: 2px solid rgba(125,116,96,0.4);
+  border-radius: 0; background: rgba(0,0,0,0.35); letter-spacing: 0.06em; }
+
+/* ── PX18: THE WORLD MAP WEARS THE PIXELS ── U61's overworld screen
+   (the GL world IS the picture; the chrome floats over it) joins the
+   family: Pixelify chrome, 2px frames, the gold pair on the hand,
+   glass panels at the established scrims, the travel card in the
+   pack's plaque language. The GL frame and every travel law
+   underneath are untouched. */
+#enhanced-travelmap, .ovroot { font-family: 'Pixelify Sans', monospace;
+  -webkit-font-smoothing: none; color: #d8cfae; }
+.ovroot button { transition: none; border-radius: 0; }
+.ovtop { background: rgba(10,12,17,0.45); border-bottom: 2px solid rgba(125,116,96,0.35); }
+.ovlabel { font-family: inherit; letter-spacing: 0.18em; text-indent: 0.18em;
+  text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.ovsearch input { font-family: inherit; font-size: 16px; letter-spacing: 0.06em;
+  color: #d8cfae; background: rgba(0,0,0,0.4); border: 2px solid rgba(125,116,96,0.55);
+  border-radius: 0; padding: 8px 12px; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.ovsearch input:focus { outline: none; border-color: var(--brass); color: rgb(243,239,44);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.ovresult { font-family: inherit; border: 0; border-bottom: 2px solid rgba(125,116,96,0.3);
+  background: rgba(10,12,17,0.72); color: #c5bda2; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.ovresult:hover, .ovresult:focus-visible { outline: none; color: rgb(243,239,44);
+  background: rgba(0,0,0,0.5); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.ovresult-region { color: #7d7460; }
+.ovchip { font-family: inherit; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: #a89f88; background: rgba(10,12,17,0.45); border: 2px solid rgba(125,116,96,0.4);
+  border-radius: 0; min-height: 44px; padding: 6px 12px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.ovchip:hover, .ovchip:focus-visible { outline: none; color: rgb(243,239,44);
+  border-color: var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.ovchip.on { color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.ovcard { position: relative; border: 2px solid rgba(216,207,174,0.7);
+  outline: 2px solid rgba(125,116,96,0.35); outline-offset: 4px; border-radius: 0;
+  background: rgba(10,12,17,0.72); font-family: inherit;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.ovcard h3, .ovcard h2 { font-family: inherit; font-weight: 400; letter-spacing: 0.14em;
+  text-indent: 0.14em; text-transform: uppercase; text-align: center;
+  border-bottom: 2px solid rgba(125,116,96,0.5); padding-bottom: 8px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.ovmeta { color: #7d7460; font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase;
+  text-align: center; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.ovprompt, .ovnotice { color: #c5bda2; text-align: center; font-size: 15px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.ovpair { display: flex; justify-content: space-between; gap: 14px;
+  border-bottom: 2px solid rgba(125,116,96,0.3); min-height: 32px; align-items: baseline; }
+.ovpair-k { color: #7d7460; font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.ovacts { display: flex; justify-content: center; gap: 10px; }
+.ovroot .act { border: 2px solid var(--brass); border-radius: 0; background: none;
+  color: rgb(243,239,44); font-family: inherit; letter-spacing: 0.14em; text-transform: uppercase;
+  min-height: 44px; padding: 8px 16px; text-shadow: 2px 2px 0 rgb(93,77,12); }
+.ovroot .act.ovghost { border-color: rgba(125,116,96,0.55); color: #d8cfae;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.ovroot .act:hover, .ovroot .act:focus-visible { outline: none; color: rgb(243,239,44);
+  border-color: var(--brass); background: rgba(0,0,0,0.35); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.ovskip, .ovhint { color: #7d7460; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 `;
 
 const STYLE_ID = 'dagger-enhanced-style';

@@ -21,6 +21,10 @@ import { PlayerWeapon, WEAPON_REACH } from './playerWeapon.js';
 import { racialFpsWeapon } from '../systems/lycanthropy.js';   // V4: the transformed rig's claws
 import { EQUIP_SLOTS } from '../systems/equip.js';   // AUDIT 17e F17
 import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES } from './fpsWeapon.js';
+// MW-IMPORT slice 5: the opt-in 3D viewmodel. Inert unless ?mwfp=1 AND
+// Morrowind data is attached; the classic sprite path below is the law
+// and runs untouched otherwise.
+import { createMwFpView } from './mwFpArms.js';
 import { worldAabb, rayAabb } from '../player/activate.js';
 import { SOUND } from '../systems/soundClips.js';
 import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSound
@@ -39,6 +43,8 @@ import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSou
  * }
  */
 export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, say = () => {}, spellArmed = () => false, bindWorn = true }) {
+  let mwView = null;
+  createMwFpView(renderer).then((v) => { mwView = v; }).catch((e) => console.warn('mwfp:', e.message));
   const playerWeapon = new PlayerWeapon({});
   // AUDIT 17e F17 / THE FOUR HOSTS RULE: U8h bound the worn weapon in
   // the two EXTERIOR hosts by hand, so the interior host (which owns
@@ -75,13 +81,25 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     return cache.get(key);
   }
 
-  /** WeaponManager.Update's ShowWeapons legs, verbatim order. */
+  /** WeaponManager.Update's ShowWeapons legs, verbatim order.
+   *  FX1 (F024/F025) rebuilt both clocks:
+   *  - the bow COOLDOWN is an EARLY RETURN (:230-233), leaving
+   *    ShowWeapon at its prior value - the bow stays DRAWN through
+   *    the ~1.3s cooldown instead of blinking out and popping back.
+   *    The latch below is that "prior value".
+   *  - a running EQUIP countdown shows EMPTY HANDS (:275-281) - the
+   *    port drew the new weapon while silently refusing attacks,
+   *    which was the block half without its cue. */
+  let _lastShown = false;
   function shown() {
-    if (playerWeapon.sheathed) return false;
-    if (spellArmed()) return false;                            // HasReadySpell / IsPlayingAnim
     const m = playerWeapon.machine;
-    if (m.isBow && m.now < m.cooldownUntil) return false;      // bow cooldown hide
-    return true;
+    if (m.isBow && m.now < m.cooldownUntil) return _lastShown;   // F024: the early return freezes the state
+    let v = true;
+    if (spellArmed()) v = false;                               // HasReadySpell / IsPlayingAnim
+    else if ((entity?.equipCountdown ?? 0) > 0) v = false;     // F025: empty hands while equipping
+    else if (playerWeapon.sheathed) v = false;
+    _lastShown = v;
+    return v;
   }
 
   /** FPSWeapon.UpdateWeapon's bow guard: an UNsheathed bow with zero
@@ -140,6 +158,9 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // swing sound at the HIT FRAME of a swing that hit no enemy
       // (WeaponManager.cs:1059 else-arm) and at bow frame 4 (:376-380),
       // both of which ride the machine's events at the hosts now.
+      if (mwView && mwView.active() && !paralyzed) {
+        mwView.update(dt, weaponTypeForItem(playerWeapon.weapon), playerWeapon.machine.state);
+      }
       return paralyzed ? [] : playerWeapon.update(dt);
     },
     /** The overlay draw, LAST in the host's frame (composites over the
@@ -148,6 +169,10 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       bowArrowGuard();
       if (paralyzed || !shown()) return;
       const c = cv();
+      if (mwView && mwView.active()) {
+        mwView.draw(c, weaponTypeForItem(playerWeapon.weapon));
+        return;
+      }
       const art = c && artFor(playerWeapon.weapon);
       if (art) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame);
     },
@@ -174,7 +199,15 @@ export function envAttack(actions, collider, eye, lookDir, rolls = Math.random) 
     best = o; bestD = d;
   }
   if (!best) return false;
-  if (best.kind === 'door') { actions.attemptBash(best, rolls()); return true; }
+  // FX1 (F182): Receive(player, Attack) fires on ANY struck object
+  // carrying an action FIRST - an action door is one GameObject with
+  // both components in DFU (WeaponManager.cs:458-465) - and only THEN
+  // a door bashes (:467-472). The old door-only branch meant an
+  // Attack- or MultiTrigger-flagged door record (Castle Wayrest's
+  // doors are MultiTrigger) never fired on a weapon hit, because the
+  // bash path passes the Door trigger alone, which those records
+  // reject.
   actions.receive(best, 'Attack');
+  if (best.kind === 'door') { actions.attemptBash(best, rolls()); return true; }
   return false;
 }

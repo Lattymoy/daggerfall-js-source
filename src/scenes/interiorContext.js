@@ -129,12 +129,13 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   // EMPTY, opened through the shared pickup.
   const containers = [];
   // E2: shop shelves. DFU's AddFurnitureAction chain checks the
-  // SHELF set FIRST - a shelf-set model in a plain house is NOTHING
-  // (the else-chain never reaches the house-container check). That
-  // also fixes an S2b parity slip: 41035/41037 sit in BOTH sets and
-  // had been house containers everywhere. Shelves stock lazily
+  // SHELF set FIRST - a shelf-set model in a plain UNOWNED house is
+  // NOTHING (the else-chain never reaches the house-container check).
+  // That also fixes an S2b parity slip: 41035/41037 sit in BOTH sets
+  // and had been house containers everywhere. Shelves stock lazily
   // (StockShopShelf on first activation) when the building IsShop;
-  // Library/Guild/Temple bookshelves + owned-house storage pend.
+  // Library/Guild/Temple bookshelves route at activation (BS1), and
+  // the OWNED-house arm lands below (HC1).
   const shelves = [];
   const collider = new Collider(() => -Infinity);
   for (const p of interior.placements) {
@@ -157,7 +158,20 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     collider.addMesh('interior', cpu.positions, cpu.indices, matrix);
     if (p.modelIdNum === LADDER_MODEL_ID) ladders.push({ cpu, matrix });
     if (isShopShelfModel(p.modelIdNum)) {
-      shelves.push({ cpu, matrix, items: null });
+      if (opts.houseOwned) {
+        // HC1 - AddFurnitureAction's OWNED arm (:816-819): in a house
+        // the player OWNS, the shelf-set model is MakeHouseContainer -
+        // your furniture is storage, not merchandise. `opts.houseOwned`
+        // is the host's already-evaluated IsHouseOwned(buildingKey)
+        // answer, the peopleVisible idiom - the bank registry lives
+        // with the host, as DFU's DaggerfallBankManager does. (An
+        // owned residence is never a shop or a Library/GuildHall/
+        // Temple, so the two arms ahead of this one in DFU's chain
+        // cannot fire on it.)
+        containers.push({ cpu, matrix, items: null, record: containerTextureRecord(p.modelIdNum) });
+      } else {
+        shelves.push({ cpu, matrix, items: null });
+      }
     } else if (isHouseContainerModel(p.modelIdNum)) {
       // F209: `items: null` IS the stock-once latch, the shelf idiom
       // one line up - StockHouseContainer runs on first access
@@ -338,6 +352,13 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     .filter((m) => m.type === INTERIOR_MARKER.ENTER)
     .map((m) => [m.x, m.y, m.z]);
 
+  // HC1 - the spawn points into the parent frame, like every other
+  // coordinate here. NO DFU CORE CALLER consumes GetRandomSpawnPoint
+  // or the SpawnPoints property (a 706-file sweep of the pinned
+  // clone) - the surface is mod-facing, ported for parity and for
+  // whatever the enemies arc grows into.
+  const spawnPoints = interior.spawnPoints.map(([x, y, z]) => parentPt(x, y, z));
+
   return {
     drawList,
     actions,
@@ -356,6 +377,12 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     containers,
     shelves,   // E2: shop shelf models (stocked lazily by the mode host)
     enterMarkers,
+    spawnPoints,
+    /** GetRandomSpawnPoint (DaggerfallInterior.cs:1298-1311): null is
+     *  DFU's `return false` - the caller uses its own fallback. The
+     *  pick is Random.Range(0, count), int-exclusive. */
+    getRandomSpawnPoint: (roll = Math.random) =>
+      (spawnPoints.length === 0 ? null : spawnPoints[Math.floor(roll() * spawnPoints.length)]),
     doors: interior.doors.map((d) => ({ ...d, matrix: parent(d.matrix) })),
     collider,
     destroy() {

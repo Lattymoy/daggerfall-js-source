@@ -39,9 +39,20 @@ export class ActionTextBox {
   constructor(lines) {
     this.lines = lines;
     this.done = false;
+    this._next = [];
   }
 
-  input() { this.done = true; }
+  /** ST1: DaggerfallMessageBox.AddNextMessageBox - dismissing this
+   *  box shows the next box's rows in its place, and only the LAST
+   *  dismissal closes. DisplayStatusInfo chains the record-22 status
+   *  text into the health box this way (DaggerfallUI.cs:1623-1626).
+   *  Answers `this` so a chain reads as one expression. */
+  addNext(lines) { this._next.push(lines); return this; }
+
+  input() {
+    if (this._next.length) { this.lines = this._next.shift(); return; }
+    this.done = true;
+  }
 
   draw(renderer, canvas, font, s) {
     if (messageBoxArtLoaded() && font) {

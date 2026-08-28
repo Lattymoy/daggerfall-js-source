@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { EnemyAI } from '../src/characters/enemyMotor.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../src/player/motor.js';
 import { EQUIP_DELAY_TIMES } from '../src/characters/weaponStates.js';
-import { equipItem, unequipSlot, EQUIP_SLOTS } from '../src/systems/equip.js';
+import { equipItem, unequipSlot, EQUIP_SLOTS, equipDelaySnapshot, billEquipDelayOnClose } from '../src/systems/equip.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = (f) => readFileSync(join(root, f), 'utf8');
@@ -71,32 +71,61 @@ test('ch3 characters-8: both pools bill the landing through their damage doors w
   }
 });
 
-test('ch3 characters-13: the swap pause - both halves bill, the table quirk, the rig block and drain', () => {
+test('ch3 characters-13 -> FX1 (F128): the swap pause bills PER INVENTORY VISIT, at the window seam', () => {
   const e = { items: [], stats: {} };
   const dagger = { group: 'Weapons', templateIndex: 113 };
-  // equipping into an empty hand bills the arriver alone (Dagger = 500)
-  equipItem(e, dagger);
-  assert.equal(e.equipCountdown, EQUIP_DELAY_TIMES[0]);
-  assert.equal(e.equipCountdown, 500);
-  // swapping to a Katana bills the leaver AND the arriver (+= sum)
   const katana = { group: 'Weapons', templateIndex: 123 };
+  // The equip table itself bills NOTHING now - DFU's SetEquipDelayTime
+  // lives on the inventory WINDOW (:667 snapshot, :729 bill), and CH3's
+  // per-transition bill overcharged every multi-step swap.
+  equipItem(e, dagger);
   equipItem(e, katana);
-  assert.equal(e.equipCountdown, 500 + 500 + EQUIP_DELAY_TIMES[10], 'dagger out + katana in accumulate');
-  // a bare unequip bills the leaver
-  e.equipCountdown = 0;
   unequipSlot(e, EQUIP_SLOTS.RightHand);
-  assert.equal(e.equipCountdown, EQUIP_DELAY_TIMES[10], 'the katana leaving bills alone');
-  // the verbatim quirk: a shield indexes its ARMOR group index into
-  // the WEAPON delay table (Buckler 109 -> armor index 7 -> 1700)
+  assert.equal(e.equipCountdown ?? 0, 0, 'transitions outside a visit are free');
+  // ONE VISIT, empty hands -> katana (the dagger passes through):
+  // bills the katana alone (3400), not CH3's 500 + 500 + 3400.
+  let snap = equipDelaySnapshot(e);
+  equipItem(e, dagger);
+  equipItem(e, katana);
+  let r = billEquipDelayOnClose(e, snap);
+  assert.equal(e.equipCountdown, EQUIP_DELAY_TIMES[10]);
+  assert.deepEqual(r.equipping, [katana], 'the Equipping cue names the arriver');
+  // a SWAP visit bills leaver + arriver (the += sum, :1170-1176)
   e.equipCountdown = 0;
+  snap = equipDelaySnapshot(e);
+  equipItem(e, dagger);
+  billEquipDelayOnClose(e, snap);
+  assert.equal(e.equipCountdown, EQUIP_DELAY_TIMES[10] + EQUIP_DELAY_TIMES[0], 'katana out + dagger in');
+  // re-equipping the SAME weapon bills nothing (reference compare,
+  // lastRightHandItem != currentRightHandItem)
+  e.equipCountdown = 0;
+  snap = equipDelaySnapshot(e);
+  unequipSlot(e, EQUIP_SLOTS.RightHand);
+  equipItem(e, dagger);
+  r = billEquipDelayOnClose(e, snap);
+  assert.equal(e.equipCountdown ?? 0, 0, 'same item back = no change = no bill');
+  assert.deepEqual(r.equipping, []);
+  // the verbatim quirk survives the move: a shield indexes its ARMOR
+  // group index into the WEAPON delay table (Buckler 109 -> 7 -> 1700)
+  e.equipCountdown = 0;
+  snap = equipDelaySnapshot(e);
   equipItem(e, { group: 'Armor', templateIndex: 109 });
+  billEquipDelayOnClose(e, snap);
   assert.equal(e.equipCountdown, EQUIP_DELAY_TIMES[7]);
-  // a non-hand piece bills nothing
+  // a non-hand piece bills nothing (the hands did not change)
   e.equipCountdown = 0;
+  snap = equipDelaySnapshot(e);
   equipItem(e, { group: 'Armor', templateIndex: 102 });   // cuirass -> chest
+  billEquipDelayOnClose(e, snap);
   assert.equal(e.equipCountdown, 0, 'only hand slots pause the swing');
-  // the rig: the block + the classic 980/s drain
+  // the rig: the block + the classic 980/s drain (unchanged)
   const rig = src('src/combat/weaponRig.js');
   assert.ok(rig.includes("(entity?.equipCountdown ?? 0) > 0) return;"), 'a running pause blocks the attack input');
   assert.ok(rig.includes('entity.equipCountdown - dt * 980'), 'and drains at the classic approximation');
+  // the window owns the clock: snapshot in the ctor, bill in the ONE
+  // close law (the B-C1 seam, so hand-offs bill too)
+  const w = src('src/ui/nativeInventory.js');
+  assert.ok(w.includes('this._handSnapshot = hooks.entity ? equipDelaySnapshot(hooks.entity) : null;'), 'push snapshots');
+  assert.ok(w.includes('billEquipDelayOnClose(this.hooks.entity, this._handSnapshot)'), 'pop bills once');
+  assert.ok(w.includes('`Equipping ${templateByIndex(it.templateIndex)?.name ?? it.name ?? \'\'}`'), 'the Internal_Strings equippingWeapon cue');
 });
