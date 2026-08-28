@@ -273,18 +273,18 @@ combat line numbers below are refreshed with it.
 - `src/scenes/shared.js:314` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:419` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:838` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:873` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:879` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1332` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
-- `src/scenes/world.js:2350` - FLAGGED in systems/healthStatus.js (macro producers pend).
-- `src/scenes/world.js:2443` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:2732` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:3086` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:3449` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:3476` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:3984` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:4358` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:839` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:884` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:890` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1343` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
+- `src/scenes/world.js:2361` - FLAGGED in systems/healthStatus.js (macro producers pend).
+- `src/scenes/world.js:2454` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:2743` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:3097` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:3466` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:3493` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:4001` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:4375` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:799` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
 - `src/scenes/worldModes.js:936` - FLAGGED to the crime arc, as the Ledger records.
 - `src/scenes/worldModes.js:1005` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
@@ -360,7 +360,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/potions.js:245` - FLAGGED, with the slice it waits on:
 - `src/systems/races.js:6` - port had only ever instantiated for Breton (the loud INTERIM the
 - `src/systems/regionConditions.js:25` - consequences are FLAGGED in court.js).
-- `src/systems/save.js:138` - (playerEntity's INTERIM skills: 30) - spreading it threw.
+- `src/systems/save.js:139` - (playerEntity's INTERIM skills: 30) - spreading it threw.
 - `src/systems/sceneCache.js:154` - FLAGGED, with the slice it waits on:
 - `src/systems/settings.js:39` - INTERIM doctrine - named, not silently ignored)
 - `src/systems/shopStock.js:22` - INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);
