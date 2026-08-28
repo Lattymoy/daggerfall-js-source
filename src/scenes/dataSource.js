@@ -352,6 +352,16 @@ export async function loadMorrowindArchives() {
   return archives;
 }
 
+/** Sync-readable state for the settings row; -1 until registered. */
+let _mwCount = -1;
+export const morrowindDataCount = () => Math.max(_mwCount, 0);
+/** Bootstrap arm (scenes/shared.js): count the stored archives once so
+ *  the settings dialog can report attachment without an async hop. */
+export async function registerMorrowindData() {
+  _mwCount = (await storedMorrowindNames()).filter((n) => /\.bsa$/i.test(n)).length;
+  return _mwCount;
+}
+
 export async function pickMorrowindFiles() {
   return pickAssetFolder({
     title: 'Your Morrowind data',
@@ -362,7 +372,7 @@ export async function pickMorrowindFiles() {
       to own Morrowind; Tribunal.bsa and Bloodmoon.bsa join in if
       they're in the folder.</p>`,
     store: storeMorrowindFiles,
-    register: async () => {},
+    register: registerMorrowindData,
   });
 }
 
