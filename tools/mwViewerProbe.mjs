@@ -109,6 +109,34 @@ ok(
   `dropped .kf drives Bone1 to z=3, got ${kfPosed && kfPosed[11].toFixed(3)}`,
 );
 
+// SLICE 4: assembly - load the animated base, add part.nif in add-part
+// mode with the Hat on Bone1, seek the pose, and read BOTH the part's
+// rebound skin and the attachment matrix back. Hand-computed: part v0/v1
+// swing with Bone0's quarter turn, v2 rides Bone1 to z=2, and the Hat's
+// attach translation IS Bone1's posed position (0,0,2).
+await page.selectOption('#meshsel', 'meshes/fixture/animated.nif');
+await page.waitForTimeout(200);
+await page.click('#addpart');
+await page.selectOption('#attachsel', 'Bone1');
+await page.selectOption('#meshsel', 'meshes/fixture/part.nif');
+await page.waitForTimeout(200);
+const status4 = await page.textContent('#status');
+ok(/1 part \(meshes\/fixture\/part\.nif: 1 skinned, 1 attached\)/.test(status4),
+  `part binds: ${status4.replace('\n', ' | ')}`);
+await page.evaluate(() => window.__mwviewerSetAnimTime(1.5));
+await page.waitForTimeout(200);
+const partPosed = await page.evaluate(() => window.__mwviewerSkinnedPositions(1));
+const nearq = (arr, i, e) => arr && Math.abs(arr[i] - e) < 1e-3;
+ok(
+  nearq(partPosed, 0, 0) && nearq(partPosed, 1, 0.5) && nearq(partPosed, 4, 1.5) && nearq(partPosed, 8, 2),
+  `part skin follows the base pose, got (${partPosed && partPosed.map((v) => v.toFixed(2)).join(',')})`,
+);
+const attachT = await page.evaluate(() => window.__mwviewerAttachT(0));
+ok(
+  attachT && Math.abs(attachT[0]) < 1e-3 && Math.abs(attachT[1]) < 1e-3 && Math.abs(attachT[2] - 2) < 1e-3,
+  `Hat rides Bone1 to (0,0,2), got (${attachT && attachT.map((v) => v.toFixed(3))})`,
+);
+
 ok(crashes.length === 0, `no pageerrors${crashes.length ? `: ${crashes[0]}` : ''}`);
 
 await browser.close();
