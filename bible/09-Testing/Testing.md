@@ -1,11 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-<<<<<<< HEAD
 Node 22). Suite: 4365 tests across 444 files.
-=======
-Node 22). Suite: 4358 tests across 442 files.
->>>>>>> b1091083 (MW root motion: the scatter, run to ground and fixed)
 
 **THE ARENA2-GATED PINS ARE HALF-BLIND, AND THAT IS A KNOWN COST.** A
 pin behind `{ skip: skipReal }` never runs on CI, so a law change that
