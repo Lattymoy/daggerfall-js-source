@@ -1391,6 +1391,23 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   border-radius: 0; background: rgba(0,0,0,0.35); letter-spacing: 0.06em; }
 .shell .sheet-close { letter-spacing: 0.2em; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 /* tier dots stay their tier colours; only the shape squares off. */
+/* ── PX11: THE SHELL STANDS ON THE SKY (Mac: the fullscreen settings
+   gets the treatment) ── the boot shell renders over the home's own
+   ground canvas; every old panel colour comes off and real 2px rules
+   replace the painted grid gaps. Paint and grounds only - the grid,
+   the sizes and every measured target are exactly where they were. */
+.shell { position: relative; z-index: 1; background: transparent; }
+.shell .side { background: rgba(10,12,17,0.62); border-right: 2px solid rgba(125,116,96,0.35); }
+.shell .pane { background: transparent; }
+.shell .head { background: transparent; border-bottom: 2px solid rgba(125,116,96,0.35); }
+.shell .panes { background: transparent; }
+.shell .subrail { background: rgba(10,12,17,0.45); border-right: 2px solid rgba(125,116,96,0.35); }
+.shell .list { background: rgba(10,12,17,0.38); }   /* a breath of scrim so the stars stay behind the words */
+.shell .detail { background: rgba(10,12,17,0.55); border-left: 2px solid rgba(125,116,96,0.35); }
+.shell .row { background: none; border-bottom: 2px solid rgba(125,116,96,0.3); }
+.shell .row:hover { background: rgba(0,0,0,0.25); }
+.shell .row.on { background: rgba(0,0,0,0.25); box-shadow: none; }
+.shell .foot { background: transparent; }
 
 /* ── PX9: SETTINGS INSIDE THE PAUSE WINDOW ──────────────────────
    The same paneSettings DOM, reflowed for the window: the category
