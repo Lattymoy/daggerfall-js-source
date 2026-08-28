@@ -75,6 +75,7 @@ function trackFromController(nif, ctrl) {
     frequency: ctrl.frequency,
     phase: ctrl.phase,
     rotationType: data.rotationType,
+    axisOrder: data.axisOrder ?? 0,
     rotationKeys: data.rotationKeys,
     xyzRotations: data.xyzRotations,
     translations: data.translations,
@@ -237,14 +238,34 @@ function quatMul(a, b) {
   ];
 }
 
+// Application order per NIF axis-order code, matching the reference's
+// getXYZRotation table exactly (each triple applied left to right).
+const AXIS_ORDERS = [
+  [0, 1, 2], // XYZ
+  [0, 2, 1], // XZY
+  [1, 2, 0], // YZX
+  [1, 0, 2], // YXZ
+  [2, 0, 1], // ZXY
+  [2, 1, 0], // ZYX
+  [0, 1, 0], // XYX
+  [1, 2, 1], // YZY
+  [2, 0, 2], // ZXZ
+];
+
 function sampleRotation(track, time) {
   if (track.rotationType === KEY_TYPE.xyz) {
     const [gx, gy, gz] = track.xyzRotations;
-    const ax = sampleGroup(gx, 1, time) ?? 0;
-    const ay = sampleGroup(gy, 1, time) ?? 0;
-    const az = sampleGroup(gz, 1, time) ?? 0;
-    // Composed as Z * Y * X (apply X first), the MW axis-order-0 default.
-    return quatMul(axisQuat(2, az), quatMul(axisQuat(1, ay), axisQuat(0, ax)));
+    const angles = [
+      sampleGroup(gx, 1, time) ?? 0,
+      sampleGroup(gy, 1, time) ?? 0,
+      sampleGroup(gz, 1, time) ?? 0,
+    ];
+    const order = AXIS_ORDERS[track.axisOrder ?? 0] ?? AXIS_ORDERS[0];
+    // Apply order[0] first: q = q2 x q1 x q0 in Hamilton terms.
+    let q = axisQuat(order[0], angles[order[0]]);
+    q = quatMul(axisQuat(order[1], angles[order[1]]), q);
+    q = quatMul(axisQuat(order[2], angles[order[2]]), q);
+    return q;
   }
   const keys = track.rotationKeys;
   if (!keys || !keys.length) return null;

@@ -13,6 +13,7 @@ import {
   buildSkeleton,
   poseSkeleton,
   skeletonSpaceMatrices,
+  skinToSkelMatrix,
   skinBatch,
 } from '../src/formats/mwSkin.js';
 
@@ -177,4 +178,61 @@ test('mwnifmesh addendum: a skinned shape ignores its own node transform', () =>
   shape.translation = [100, 100, 100];
   const batch = flattenNif(nif).find((b) => b.skinned);
   assert.ok(nearVec(Array.from(batch.positions.slice(0, 3)), [0, 0, 0]));
+});
+
+test('mwskin: ROTATED inverse bind round-trips - the composition order is provable', () => {
+  // The main rig's translation-only binds commute, so the reference
+  // order BoneSkel(InvBind(v)) and its reverse both round-tripped there.
+  // RotBone rests at Rz(90) then +2x, invBind is the true inverse:
+  // the identity holds ONLY in the reference order. v0 (1,0,0):
+  //   InvBind: Rz(-90)*v + (0,2,0) = (0,-1,0)+(0,2,0) = (0,1,0)
+  //   BoneSkel: Rz(90)*(0,1,0) + (2,0,0) = (-1,0,0)+(2,0,0) = (1,0,0) OK
+  // Reversed it lands at (0,3,0) - nowhere near.
+  const ROT = new Uint8Array(
+    readFileSync(new URL('./fixtures/mw/rotbind.nif', import.meta.url)),
+  );
+  const nif = parseNif(ROT);
+  const batch = flattenNif(nif).find((b) => b.skinned);
+  const skeleton = buildSkeleton(nif);
+  const pose = poseSkeleton(skeleton, null, sampleTrack, 0);
+  const mats = skeletonSpaceMatrices(skeleton, pose, batch.skin.skeletonRoot);
+  const out = new Float32Array(batch.positions.length);
+  skinBatch(batch, skeleton, pose, mats, out, null);
+  assert.ok(nearVec(Array.from(out), [1, 0, 0, 2, 0, 0, 1, 1, 0]));
+});
+
+test('mwskin: skinToSkelMatrix cancels the chain between skeleton root and skin root', () => {
+  // Hand-built: Root -> Mid (Rz90, +10x) -> RootBone (+0,0,5). The
+  // skin declares RootBone as its root; skeleton space is Root's.
+  // skinToSkel must be inverse(Mid o RootBone):
+  //   forward (0,0,0): Mid o RootBone maps origin -> Rz90*(0,0,5)+... 
+  //   chain(v) = Mid(RootBone(v)) ; chain(origin) = Mid((0,0,5))
+  //     = Rz90*(0,0,5) + (10,0,0) = (10, 0, 5)
+  //   so skinToSkel(10,0,5) must return (0,0,0), and skinToSkel of
+  //   chain(1,0,0) = Mid((1,0,5)) = (0,1,5)+(10,0,0) = (10,1,5)
+  //     must return (1,0,0).
+  const I3f = Float32Array.from([1, 0, 0, 0, 1, 0, 0, 0, 1]);
+  const rz90 = Float32Array.from([0, -1, 0, 1, 0, 0, 0, 0, 1]);
+  const mk = (over) => ({
+    type: 'NiNode', name: '', flags: 0, translation: [0, 0, 0],
+    rotation: I3f, scale: 1, properties: [], children: [], effects: [], ...over,
+  });
+  const nif = {
+    records: [
+      mk({ name: 'Root', children: [1] }),
+      mk({ name: 'Mid', rotation: rz90, translation: [10, 0, 0], children: [2] }),
+      mk({ name: 'RootBone', translation: [0, 0, 5] }),
+    ],
+    roots: [0],
+  };
+  const skeleton = buildSkeleton(nif);
+  const pose = poseSkeleton(skeleton, null, sampleTrack, 0);
+  const m = skinToSkelMatrix(skeleton, pose, 0, 2);
+  const apply = (x, y, z) => [
+    m.a[0] * x + m.a[1] * y + m.a[2] * z + m.t[0],
+    m.a[3] * x + m.a[4] * y + m.a[5] * z + m.t[1],
+    m.a[6] * x + m.a[7] * y + m.a[8] * z + m.t[2],
+  ];
+  assert.ok(nearVec(apply(10, 0, 5), [0, 0, 0]));
+  assert.ok(nearVec(apply(10, 1, 5), [1, 0, 0]));
 });

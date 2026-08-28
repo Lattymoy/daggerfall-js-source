@@ -80,6 +80,8 @@ await page.selectOption('#meshsel', 'meshes/fixture/animated.nif');
 await page.waitForTimeout(200);
 const status3 = await page.textContent('#status');
 ok(/skinned \(bind-pose preview\)/.test(status3), 'animated fixture loads with skin');
+// Bind pose is the default now - playing is a choice the probe makes.
+await page.selectOption('#animsel', 'Move');
 await page.evaluate(() => window.__mwviewerSetAnimTime(1.5));
 await page.waitForTimeout(200);
 const posed = await page.evaluate(() => window.__mwviewerSkinnedPositions());
@@ -101,6 +103,7 @@ ok(rest && Math.abs(rest[11] - 1) < 1e-3, 'seek back to group start restores bin
 // External .kf overrides inline tracks: Bone1 rides to z=3 at its end.
 await page.setInputFiles('#file', 'test/fixtures/mw/xfixture.kf');
 await page.waitForTimeout(300);
+await page.selectOption('#animsel', 'Move');
 await page.evaluate(() => window.__mwviewerSetAnimTime(1.0));
 await page.waitForTimeout(200);
 const kfPosed = await page.evaluate(() => window.__mwviewerSkinnedPositions());
@@ -120,6 +123,7 @@ await page.click('#addpart');
 await page.selectOption('#attachsel', 'Bone1');
 await page.selectOption('#meshsel', 'meshes/fixture/part.nif');
 await page.waitForTimeout(200);
+await page.selectOption('#animsel', 'Move');
 const status4 = await page.textContent('#status');
 ok(/1 part \(meshes\/fixture\/part\.nif: 1 skinned, 1 attached\)/.test(status4),
   `part binds: ${status4.replace('\n', ' | ')}`);

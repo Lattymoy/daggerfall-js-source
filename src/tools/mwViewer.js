@@ -153,6 +153,29 @@ function refreshNpcList() {
   }
 }
 
+// ?mwdebug=1 - per-batch skin diagnostics to the console, the ground
+// truth to send back when retail geometry misbehaves.
+const MW_DEBUG = new URLSearchParams(location.search).get('mwdebug') === '1';
+
+function debugDump(label, batches) {
+  if (!MW_DEBUG) return;
+  for (const b of batches) {
+    if (!b.skinned || !b.skin) continue;
+    console.log(`[mwdebug] ${label} :: ${b.name}`, {
+      verts: b.positions.length / 3,
+      skeletonRootRef: b.skin.skeletonRoot,
+      bones: b.skin.bones.map((bn) => ({
+        name: bn.name,
+        ref: bn.ref,
+        invBindT: Array.from(bn.invBind.t).map((x) => +x.toFixed(3)),
+        weights: bn.indices.length,
+      })),
+      skinTransformT: Array.from(b.skin.transform.translation).map((x) => +x.toFixed(3)),
+      firstVert: Array.from(b.positions.slice(0, 3)).map((x) => +x.toFixed(3)),
+    });
+  }
+}
+
 function loadNpc(id) {
   if (!esm || !bsa || !id) return;
   let a;
@@ -218,9 +241,11 @@ function wireAnimation(nif) {
     opt.textContent = `anim: ${name}`;
     animSel.appendChild(opt);
   }
-  // A player drops a .kf to see it move - start the first group at once.
-  animSel.selectedIndex = 1;
-  startGroup(animSel.value);
+  // BIND POSE FIRST (retail-scatter triage, 2026-08-28): a mesh loads
+  // still, and animation is a choice - so a wrong pose can never be
+  // mistaken for wrong skinning. Pick a group to play it.
+  animSel.selectedIndex = 0;
+  startGroup('');
 }
 
 function startGroup(name) {
@@ -264,6 +289,7 @@ function addPartFromBytes(bytes, name, opts = {}) {
     const bound = bindPart(loaded.skeleton, partNif, {
       attachBone: opts.attachBone ?? ($('attachsel').value || undefined),
     });
+    debugDump(`part ${name}`, bound.skinned);
     const group = buildGroup([...bound.skinned, ...bound.attached]);
     holder.add(group);
     const attachedMeshes = [];
@@ -478,6 +504,7 @@ function loadNifBytes(bytes, name) {
       }
     });
     loaded = { name, group, batches, skinnedMeshes, skeleton: buildSkeleton(nif), parts: [] };
+    debugDump(name, batches);
     // The attach-bone list follows the loaded skeleton.
     const attachSel = $('attachsel');
     attachSel.innerHTML = '';
