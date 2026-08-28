@@ -121,13 +121,72 @@ test('the two rails differ only where the question does', () => {
     assert.ok(boot.includes(s2), `${s2} must stay on the front door`);
     assert.ok(pause.includes(s2), `${s2} must reach the pause door too`);
   }
-  assert.deepEqual(boot.filter((x) => !shared.includes(x)), ['Continue', 'New Game']);
+  // ENHANCED IS BOOT-ONLY, and that is the question it answers rather
+  // than an omission: "how much of this is still Daggerfall" is
+  // settled before a game starts, and two of its switches (the skin,
+  // the road bake) cannot take effect without a reload anyway. A row
+  // on the pause rail that quietly needed a restart would be the dead
+  // affordance this project keeps finding.
+  assert.deepEqual(boot.filter((x) => !shared.includes(x)),
+    ['Continue', 'New Game', 'Enhanced']);
+  assert.ok(!pause.includes('Enhanced'), 'and it must NOT reach the pause door');
   assert.deepEqual(pause.filter((x) => !shared.includes(x)), ['Resume', 'Save Game', 'Exit']);
   // SETTINGS IS THE POINT. U49's own record says settings were
   // reachable only at boot; a pause rail without them would have left
   // that true on the skin built to fix it.
   assert.ok(pause.includes('Settings'),
     'the whole reason this door exists is that settings were reachable only at boot');
+});
+
+test('R7: the Enhanced section has a pane, and it is wired to the rail', () => {
+  // A rail entry with no pane throws on the click - the dispatch is a
+  // lookup, so a missing key is `undefined(body)`.
+  const src = read('src/ui/enhancedMenu.js');
+  assert.match(src, /function paneEnhanced\(body\)/, 'the pane must exist');
+  assert.match(src, /enhanced: paneEnhanced/, 'and the boot dispatch must know it');
+  // idOf('Enhanced') is what the dispatch keys on
+  assert.match(src, /const idOf = \(label\) => label\.toLowerCase\(\)/);
+});
+
+test('R7: every switch on the Enhanced pane is REAL, and the rest say why not', () => {
+  // The pane's own law, and the rail's: an enhancement that does not
+  // exist is listed with its reason rather than dropped, because a list
+  // with a hole teaches the player the hole is permanent - but it must
+  // NEVER be drawn as a control. A button that looks live and does
+  // nothing is the dead affordance AUDIT F4 found on Delete.
+  const src = read('src/ui/enhancedMenu.js');
+  const from = src.indexOf('function paneEnhanced(body)');
+  const pane = src.slice(from, src.indexOf('\n}', from));
+
+  // the live half toggles keys that actually exist in the prefs store
+  const prefs = read('src/systems/uiPrefs.js');
+  for (const m of pane.matchAll(/prefRow\('(\w+)'/g)) {
+    assert.match(prefs, new RegExp(`\\n\\s*${m[1]}:`),
+      `the pane toggles '${m[1]}', which is not a uiPrefs key`);
+  }
+  assert.match(pane, /prefRow\('roads'/, 'roads is the switch this arc built');
+  assert.match(pane, /skinRow\(\)/, 'and the skin switch comes home here');
+
+  // the inert half carries a reason and NO control
+  assert.match(pane, /inertRow\(/, 'unbuilt enhancements must still be listed');
+  const inert = read('src/ui/enhancedMenu.js');
+  const iFrom = inert.indexOf('function inertRow(');
+  const inertFn = inert.slice(iFrom, inert.indexOf('\n}', iFrom));
+  assert.ok(!/onclick/.test(inertFn), 'an inert row must not be clickable');
+  assert.ok(!/el\('button'/.test(inertFn), 'nor drawn as a button');
+});
+
+test('R7: the pane does not claim a feature the tree does not have', () => {
+  // Enhanced Music was built and REVERTED whole; the sky is
+  // DaggerfallSky.cs ported as-is. Listing either as a live switch
+  // would be the screen lying about the build.
+  const src = read('src/ui/enhancedMenu.js');
+  const from = src.indexOf('function paneEnhanced(body)');
+  const pane = src.slice(from, src.indexOf('\n}', from));
+  for (const gone of ['music', 'sky', 'mwfp']) {
+    assert.ok(!new RegExp(`prefRow\\('${gone}`).test(pane),
+      `${gone} has no engine in this tree and must not be a switch`);
+  }
 });
 
 // AUDIT F3/F4: two destructive actions shipped without a confirm -
