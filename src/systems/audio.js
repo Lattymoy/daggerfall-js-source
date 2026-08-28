@@ -13,6 +13,7 @@
 
 import { SndFile, SAMPLE_RATE } from '../formats/sndFile.js';
 import { getFloat } from './settings.js';   // SETT: SoundVolume
+import { setEquipSoundSink } from './equip.js';   // ES2: the equip moment's one audio door
 
 /** Unsigned 8-bit PCM -> Float32 samples, verbatim (b - 128) / 128. */
 export function pcm8ToFloat32(bytes) {
@@ -69,6 +70,12 @@ export class AudioEngine {
    *  unconditionally - which is the point: a host that forgets is the
    *  bug this replaces. */
   ensure(fetchBytes) {
+    // ES2: the equip sound rings through this engine wherever it is
+    // booted - registered HERE because every host's boot passes
+    // through ensure, so no host can forget the wire (the FOUR HOSTS
+    // RULE's structural arm). DaggerfallUI.PlayOneShot is a global
+    // reach in C# for the same reason.
+    setEquipSoundSink((clip) => this.playOneShot(clip));
     // NT1 (F215): the flag IS the promise - the sibling MusicService's
     // AUDIT 19 law ("a guard set before its own async work is not
     // idempotence, it is a race with a flag on it", music.js:62-67).

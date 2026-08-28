@@ -4153,3 +4153,28 @@ answer null (no rescue) until then, exactly as an IsMember() false
 does. The court header's FLAGGED clause is retired.
 
 Pins: 3 in `test/courtrescue.test.js`. Campaign: 7 mutants, 7 killed.
+
+## ES2 - THE EQUIP SOUND (2026-08-28)
+
+equip.js's header FLAGGED it since U8f. DFU rings a per-item clip at
+EquipItem's own moment (ItemEquipTable.cs:144-146,
+DaggerfallUI.PlayOneShot(item.GetEquipSound())), BEFORE
+StartEquippedItem - and the port does now:
+
+- `getEquipSound(item)` is DaggerfallUnityItem.cs:820-841 verbatim:
+  clothing 381, jewellery/gems 383; armor splits shield-or-Helm to
+  plate (419) FIRST, then the EXACT material - Leather (0x0000) 417,
+  Chain (0x0100) 418, with Chain2 (0x0103) falling to plate on C#'s
+  own `==` - else plate; weapons by template (axes 415, long blades
+  378, two-handed 379, short blades 377, flail 414, mace/hammer 413,
+  staff 380, bows 416); everything else SoundClips.None (null, rings
+  nothing).
+- The sink registers inside `audio.ensure` - every host's boot passes
+  through it, so no host can forget the wire (the FOUR HOSTS RULE's
+  structural arm; DaggerfallUI.PlayOneShot is a global reach in C#
+  for the same reason).
+- The RESTORE path stays silent: rebuildEquipState refills slots
+  directly and never enters equipItem - the port's shape of DFU's
+  playEquipSounds=false load arm, pinned.
+
+Pins: 4 in `test/equipsounds.test.js`. Campaign: 7 mutants, 7 killed.
