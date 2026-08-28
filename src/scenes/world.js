@@ -14,7 +14,7 @@ import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, LOCATION_TYPES } from '../formats/mapsFile.js';
 import { WoodsFile } from '../formats/woodsFile.js';
-import { buildTerrainGrid, buildTerrainIndices, convertTilemap, TERRAIN_TILE_DIM } from '../world/terrainSurface.js';
+import { buildTerrainGrid, buildTerrainIndices, convertTilemap, isOutdoorWaterTile, TERRAIN_TILE_DIM } from '../world/terrainSurface.js';   // FD1: PlayerTileMapIndex == 0
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
@@ -4080,16 +4080,20 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (zNowW && !zPrevW) weaponRig.toggleSheath();
         zPrevW = zNowW;
         // P14 fall damage (host parity - CheckFallingDamage +
-        // PlayerHealth verbatim; sounds 91/92). The outdoor-water
-        // exemption (PlayerTileMapIndex == 0) is FLAGGED: a water
-        // landing still bills like ground. FS1 built the tile probe
-        // this was waiting on - playerGroundTile below - so what
-        // remains is only reading tile 0 off it and taking the
-        // exemption, which is a fall-damage law and wants its own
-        // pass rather than riding a footstep change. Death at 0 rides
-        // the shared entity; the exterior death screen pends with the
-        // world-mode UI arc.
-        applyFallLanding(playerEntity, player.landedFallDistance, { sound: (id) => audio.playOneShot(id) });
+        // PlayerHealth verbatim; sounds 91/92). FD1 took the
+        // outdoor-water exemption off the board: playerGroundTile is
+        // FS1's probe and isOutdoorWaterTile is DFU's
+        // PlayerTileMapIndex == 0, so a landing in a lake now costs
+        // neither HP nor the hard-fall grunt. A null tile - the
+        // player over a pixel still streaming - is DFU's -1 and takes
+        // the damage, which is the safe direction: a missed exemption
+        // costs HP, an over-eager one makes every fall free. Death at
+        // 0 rides the shared entity; the exterior death screen pends
+        // with the world-mode UI arc.
+        applyFallLanding(playerEntity, player.landedFallDistance, {
+          sound: (id) => audio.playOneShot(id),
+          inOutdoorWater: isOutdoorWaterTile(playerGroundTile()),
+        });
         // FS-slice: PlayerFootsteps - the exterior stride (snow by
         // season + CLIMATE.PAK; the path/water tile arms ride the
         // tile-under-player flag above).

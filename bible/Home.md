@@ -260,13 +260,12 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:1323` - onTeleport INTERIM shape). Absent, the engine's dispatch
 - `src/scenes/dungeonContext.js:3111` - PX3 FLAGGED: questMessages - the dungeon quest mount is
 - `src/scenes/dungeonContext.js:3181` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
-- `src/scenes/exterior.js:560` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/exterior.js:566` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:803` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:1027` - PX3 FLAGGED: questMessages - this test host mounts no quest
-- `src/scenes/exterior.js:1059` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:1366` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:1531` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:583` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/exterior.js:589` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/exterior.js:826` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/exterior.js:1050` - PX3 FLAGGED: questMessages - this test host mounts no quest
+- `src/scenes/exterior.js:1082` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/exterior.js:1389` - (FLAGGED: the climate People table pends; the test city is
 - `src/scenes/shared.js:297` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:314` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:419` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
@@ -280,8 +279,7 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:2799` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
 - `src/scenes/world.js:3160` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
 - `src/scenes/world.js:3576` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:4084` - exemption (PlayerTileMapIndex == 0) is FLAGGED: a water
-- `src/scenes/world.js:4475` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:4479` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:800` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
 - `src/scenes/worldModes.js:937` - FLAGGED to the crime arc, as the Ledger records.
 - `src/scenes/worldModes.js:1006` - at the concluded deal (:1036-1051). FLAGGED: the equipped test

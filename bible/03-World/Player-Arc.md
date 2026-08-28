@@ -1145,3 +1145,70 @@ PositionPlayerToLocation ends in FixStanding (:1597-1608); both now
 floorLanding on the built pixel, and a saved y (load, anchor recall)
 is restored as saved. enterexit.test.js +2, mutant dead. exterior.js's
 dev-host +2 is left as it was.
+
+## FD1 (2026-08-28): THE OUTDOOR-WATER FALL EXEMPTION SHIPPED
+
+`AcrobatMotor.CheckFallingDamage` (:208-224) opens, after clearing
+`falling`, with a line the port never had:
+
+```csharp
+// don't take damage if landing in outdoor water
+if (GameManager.Instance.StreamingWorld.PlayerTileMapIndex == 0)
+    return;
+float fallDistance = fallStartLevel - myTransform.position.y;
+```
+
+Both exterior hosts billed a water landing exactly like ground, and
+both carried the same flag, worded identically, saying so.
+
+**The return sits ABOVE the distance**, so the exemption covers the
+`BadFallDetected` half too: a landing in a lake costs neither HP nor
+the hard-fall grunt. Writing the test inside the damage arm instead
+would leave the player splashing into water and still hearing the
+ground-impact sound - a half-port that reads as done, and the
+campaign's fourth mutant.
+
+**The index needed no new law.** `PlayerTileMapIndex`
+(StreamingWorld.cs:345) is `TileMap[...].r / 4` over the bytes
+TerrainHelper's `UpdateTileMapDataJob` writes, and the port already
+had that job verbatim in `convertTilemap` - 0xFF sentinel included. So
+the index is that conversion `>> 2`, and the slice's real work was
+factoring `convertTile` out as a per-tile door onto the law the array
+path already ran. A second copy beside the fall code is exactly how the
+water sentinel comes to be handled in one place and not the other.
+
+Two things fell out of reading the encoding properly:
+
+- **The 0xFF sentinel IS water.** `setLocationTiles` stores a zero
+  tileBitfield as 0xFF so `AssignTiles` will not overwrite it, and
+  `convertWater` (true on the default texturer) restores it to record
+  0 - which is water. A town ground tile that encoded as zero reads as
+  water to every consumer of this index. A plain `& 0x3f` mask, the
+  obvious-looking law and the campaign's first mutant, answers 63 and
+  loses the case entirely.
+- **The sentinel collides with a real tile.** Record 63 with both the
+  rotate (0x40) and flip (0x80) bits set is the byte 0xFF exactly, so
+  it reads as water rather than 63. The C# tests `tile == byte.MaxValue`
+  first and cannot tell them apart either. This surfaced as a FAILING
+  assertion in the first version of the pin, which claimed a record
+  always survives its transform bits; the honest resolution was to pin
+  the collision, not to drop the case quietly.
+
+**-1 is why this needs no interior arm.**
+`UpdatePlayerTerrainTileIndex` (:321) sets the index to -1 and returns
+early when the player is over no terrain - every dungeon, every
+building. -1 is not 0, so the exemption is false there by
+construction, and the port's `null` tile maps onto it exactly. That is
+also the safe direction: a missed exemption costs the player HP, an
+over-eager one makes every fall free.
+
+The exterior host got its own probe, `playerGroundTileRaw`, the twin of
+world.js's FS1 `playerGroundTile`. Its stride is DERIVED as
+`RMB_SIDE / GROUND_TILE_DIM` rather than repeating the 6.4 the ground
+draw passes as a literal - a probe that agrees with the picture only by
+coincidence is one that will stop agreeing.
+
+Pins: 6 in `test/fallwater.test.js`, including a source sweep that both
+exterior hosts pass the tile and that no underground host invents one,
+and a regeneration arm asserting from `AcrobatMotor.cs` that the water
+return still precedes the distance. Campaign: 6 mutants, 6 killed.

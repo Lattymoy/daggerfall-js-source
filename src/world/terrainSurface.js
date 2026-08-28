@@ -22,22 +22,52 @@ import {
 } from './terrainSampler.js';
 import { WORLD_MAP_TILE_DIM } from './terrainTiles.js';
 
+/** Verbatim UpdateTileMapDataJob byte conversion, for ONE tile - the
+ *  one home, because FD1 needed the same conversion per-tile off the
+ *  render path and a second copy of this is exactly how the water
+ *  sentinel would come to be handled in one place and not the other. */
+export function convertTile(tile) {
+  if (tile === 0xff) return 0;   // convertWater: FF sentinel back to record 0
+  let record = (tile * 4) & 0xff;
+  if ((tile & 64) !== 0) record += 1;
+  if ((tile & 128) !== 0) record += 2;
+  return record;
+}
+
 /** Verbatim UpdateTileMapDataJob byte conversion. */
 export function convertTilemap(tilemapData) {
   const out = new Uint8Array(tilemapData.length);
-  for (let i = 0; i < tilemapData.length; i++) {
-    const tile = tilemapData[i];
-    if (tile === 0xff) {
-      out[i] = 0; // convertWater: FF sentinel back to record 0
-      continue;
-    }
-    let record = (tile * 4) & 0xff;
-    if ((tile & 64) !== 0) record += 1;
-    if ((tile & 128) !== 0) record += 2;
-    out[i] = record;
-  }
+  for (let i = 0; i < tilemapData.length; i++) out[i] = convertTile(tilemapData[i]);
   return out;
 }
+
+/** FD1 - StreamingWorld.PlayerTileMapIndex (StreamingWorld.cs:345):
+ *  `playerTerrain.TileMap[...].r / 4`, where `.r` is what the job
+ *  above writes. So the index is the CONVERTED byte >> 2, which is:
+ *
+ *    - 0 for the 0xFF location-zero sentinel, because convertWater
+ *      restores it to record 0 - and record 0 IS water. A town ground
+ *      tile that happened to encode as zero therefore reads as WATER
+ *      to every consumer of this index. That is DFU's behaviour, kept.
+ *    - `tile & 0x3f` otherwise: (tile * 4) & 0xff is (tile & 0x3f) * 4,
+ *      and the rotate/flip addends are both under 4, so the divide
+ *      drops them. The port's `recordOf` masks for the same reason.
+ *
+ *  `null` is the port's "no built terrain under the player", which is
+ *  DFU's -1 (UpdatePlayerTerrainTileIndex:321 sets it before any
+ *  lookup and returns early off-terrain). -1 is not 0, so every
+ *  consumer that tests for water gets FALSE indoors and underground -
+ *  which is why this needs no interior arm. */
+export const playerTileMapIndex = (rawTile) => (rawTile == null ? -1 : convertTile(rawTile) >> 2);
+
+/** DFU's terrain tile record 0. StreamingWorld's own doc comment
+ *  lists it: "0 = Water, 1 = Dirt, 2 = Grass, 3 = Stone" (:175-178). */
+export const WATER_TILE_INDEX = 0;
+
+/** AcrobatMotor.CheckFallingDamage:213 - "don't take damage if
+ *  landing in outdoor water". Answers false for a null tile, as -1
+ *  does in C#. */
+export const isOutdoorWaterTile = (rawTile) => playerTileMapIndex(rawTile) === WATER_TILE_INDEX;
 
 /**
  * Build the height grid for one pixel: positions + normals over the
