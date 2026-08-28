@@ -39,9 +39,17 @@ test('F035/F041: every damage door takes a provenance flag, defaulting TRUE', ()
 
 test('F035: the Murder crime is gated on the player being the source', () => {
   const cg = src('scenes/cityGuards.js');
-  // inside damageGuard, the assignment is now conditional...
-  assert.ok(cg.includes('if (fromPlayer) setCrimeCommitted(playerEntity, CRIME_MURDER);'),
-    'a watchman who dies falling brands nobody');
+  // inside damageGuard, the assignment is CONDITIONAL on the player
+  // being the source. CG2 grew that arm into a block - the guard's
+  // death also tallies toward the Dark Brotherhood now - so the pin
+  // anchors on the GATE and what it encloses, not on a one-line
+  // spelling, exactly as F041 below already does for its own widened
+  // arm. The law is unchanged: a watchman who dies falling brands
+  // nobody.
+  const gate = cg.indexOf('if (fromPlayer)');
+  assert.ok(gate > 0, 'the murder assignment still sits behind a fromPlayer gate');
+  assert.ok(cg.slice(gate, gate + 300).includes('setCrimeCommitted(playerEntity, CRIME_MURDER)'),
+    'and the Murder assignment is what that gate encloses');
   // ...and the CIVILIAN murder arm, which IS a player weapon hit,
   // stays unconditional - the two must not be confused.
   const civ = cg.slice(cg.indexOf('best.disable();'));

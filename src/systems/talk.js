@@ -18,6 +18,7 @@
 
 import { SOCIAL_GROUP_COUNT, FACTION_TYPES, SOCIAL_GROUPS, GUILD_GROUPS } from '../formats/factionFile.js';
 import { racialSuppressCrime } from './lycanthropy.js';   // V4: SuppressCrime's inline gate (court.js imports this module)
+import { tallyCrimeGuildRequirements } from './crimeGuilds.js';   // CG2: a leaf, so this module can reach it
 import { calculatePickpocketingChance, dice100 } from '../combat/formulas.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
 import { goldStack } from './inventory.js';   // AUDIT 17f: one gold mint
@@ -276,10 +277,12 @@ export function pickpocketTownsperson(player, { rolls = Math.random, nothingText
       let stack = player.items.find((it) => it.group === 'Currency');
       if (!stack) player.items.push(stack = goldStack(0));
       stack.stackCount += gold;
-      // TallyCrimeGuildRequirements(true, 1) FLAGGED: the TG
-      // quest/invitation slice consumes the tally (guild MEMBERSHIP
-      // itself shipped at G2 - AUDIT 23 reflagged the true blocker,
-      // matching cityGuards.js's own notes).
+      // CG2: PlayerActivate.cs:1641's TallyCrimeGuildRequirements(true,
+      // 1) - the pinched purse counts toward the Thieves Guild's ten.
+      // Only the arm that actually TOOK something tallies: the 33%
+      // "nothing to steal" arm below is a successful pickpocket that
+      // stole nothing, and DFU's call sits inside the gold branch.
+      tallyCrimeGuildRequirements(player, true, 1);
       return { success: true, gold, message: gold === 1 ? 'You pinched 1 gold piece.' : `You pinched ${gold} gold pieces.` };
     }
     return { success: true, gold: 0, message: nothingText() };

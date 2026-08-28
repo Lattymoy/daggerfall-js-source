@@ -56,6 +56,7 @@ import { createTravelMapWindow, travelMapDoorReady, preloadTravelMapArt, canFind
 import { racialRestBlock, racialFastTravelBlock, cureVampirism } from '../systems/vampirism.js';   // V2b: the vampire's rest and daylight gates; V2d: $CUREVAM's cure arm
 import { cureLycanthropy, racialSuppressPopulationSpawns, racialSuppressInventory, racialSuppressTalk } from '../systems/lycanthropy.js';   // V2d: $CUREWER's cure arm; V4: the transformed gates
 import { setRacialQuestHost } from '../systems/racialQuests.js';   // V2d: the quest-start seam (the machine is this host's)
+import { setCrimeGuildQuestHost, setCrimeGuildClock } from '../systems/crimeGuilds.js';   // CG2
 import { randomCemeteryLocationIndex } from '../systems/infection.js';   // V2e: GetRandomCemetery's pick half
 import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: the vampire clan pool asks as a Member
 import { playerInSunlight, playerInHolyPlace } from '../systems/passiveSpecials.js';   // V2c: the enchant ctx's two E1 flags
@@ -769,6 +770,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (playerEntity.fatigue <= 0 && playerEntity.health > 0) onExhaustedExterior();
   };
   const playerTicker = createPlayerTicker(playerEntity, {
+    // CG2: PlayerEnterExit.IsPlayerInside - the crime-guild letter's
+    // gate. The same predicate this host already hands the quest
+    // machine at :1064, so the two cannot disagree about where the
+    // player is standing.
+    isInside: () => (modes?.mode ?? 'exterior') !== 'exterior',
     onExhausted: onExhaustedExterior,
     say: (msg) => console.log('[player]', msg),
     onLevelUp: () => {
@@ -3614,6 +3620,18 @@ export async function bootWorld(canvas, renderer, params, status) {
       GUILD_GROUPS.Vampires, MEMBERSHIP_STATUS.Member, clanFactionId,
       (() => { const s = _questStore(); return s ? getReputation(s, clanFactionId) : 0; })(), level),
   });
+  // CG2: the crime-guild doors, beside the racial one because they are
+  // the same shape - PlayerEntity.Update starts a quest, so the machine
+  // is registered once here rather than threaded through the tick.
+  // startQuest carries the FACTION ID as DFU's StartQuest(name,
+  // factionId) does, so the initiation quest is owned by the guild that
+  // sent the letter.
+  setCrimeGuildQuestHost({
+    startQuest: (name, factionId) => questBridge.machine.startQuestByName(name, factionId),
+  });
+  // The clock the tally stamps its three-day letter from - the same
+  // classic minute every other dated law in this host reads.
+  setCrimeGuildClock(() => Math.floor(playerTicker.classicMinutes));
   if (_questStartPending) questInitAtGameStart();
   // VAR, not const: the pointer and wheel listeners far above close over
   // this binding and are live before it is assigned, so it must exist

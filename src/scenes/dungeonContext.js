@@ -2562,6 +2562,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       fatigueMultiplier: fatigueLossMultiplier(),
       rolls: Math.random,
       say: (msg) => hudText.add(msg),
+      // CG2: a dungeon IS inside - HandleStartingCrimeGuildQuests
+      // gates on !IsPlayerInside, so the invitation letter waits at
+      // the door rather than finding the player underground. The
+      // pending clock is untouched; it lands the moment they surface.
+      inside: true,
     });
     classicMinutesRef.value = _tick.classicMinutes;
     // AUDIT 24 (wave 32): the FOE half of the same broker event, on the

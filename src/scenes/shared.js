@@ -772,7 +772,13 @@ export const plainLines = (rows) => (rows?.length
  * first-hour probe caught as a TypeError at draw time and no unit
  * test in either lane could have.
  */
-export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, onExhausted = null } = {}) {
+export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, onExhausted = null,
+  // CG2: PlayerEnterExit.IsPlayerInside, for the crime-guild letter's
+  // outside-only gate. Defaults to "inside" - the REFUSING answer -
+  // because a host that has not said where the player stands must not
+  // deliver a letter it cannot place, and the dungeon host is inside
+  // by construction anyway.
+  isInside = () => true } = {}) {
   // AUDIT 21 F2: a VIEW on the one world clock, not an owner. This used to
   // close over its own accumulator, so the three hosts that build a ticker -
   // world, exterior, worldModes - each counted from zero and only while
@@ -825,7 +831,7 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
       const r = tickPlayerMinutes({
         entity, classicMinutes: worldMinutes(), dt, sinks, activity,
         fatigueMultiplier: fatigueLossMultiplierFor(entity),
-        say,
+        say, inside: isInside(),
       });
       setWorldMinutes(r.classicMinutes);
       // PlayerEntity.Update:380-384's 8-hour alert decay used to be
