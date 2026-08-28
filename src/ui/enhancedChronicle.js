@@ -34,18 +34,41 @@ let host = null;
 let deps = {};
 let onExit = () => {};
 let section = 'notes';
+let draft = '';   // PX24b: the note being written, kept across renders
 
 export const CHRONICLE_SECTIONS = Object.freeze([
   ['notes', 'Notes'], ['messages', 'Messages'], ['history', 'History'],
 ]);
 
-/** One flattener for every source here: a token array or a message
- *  object in, text lines out. The journal's own (enhancedMenu's
- *  journalLines), because these are the same tokens. */
 const LINE_FORMATTINGS = new Set(['text', 'newline', 'highlight', 'question', 'answer']);
+
+/** Flat lines, when all that is wanted is the text. */
 export function chronicleLines(entry) {
   const tokens = Array.isArray(entry) ? entry : (entry?.getTextTokens?.() ?? []);
   return tokens.filter((t) => LINE_FORMATTINGS.has(t?.formatting)).map((t) => String(t?.text ?? ''));
+}
+
+/**
+ * PX24b: AN ENTRY HAS A HEAD, and the first draft threw it away.
+ *
+ * `PlayerNotebook._createNote` puts a HIGHLIGHT token first - the
+ * dated header, `noteHeader` formatted with the host's own
+ * dateTimeString and cityName (notebook.js:106) - and the finished-
+ * quest filing does the same (:179). Flattening every token to a
+ * string turned that date into just another line, and the window
+ * numbered its entries 1, 2, 3 instead, which tells a player nothing.
+ *
+ * So: the leading highlight is the HEAD, the rest is the body. This is
+ * the same split enhancedMenu's `parseFinished` makes on the same
+ * shape, and a continuation page - which notebook.js deliberately
+ * files with NO header (:97-107) - correctly comes back headless.
+ */
+export function chronicleEntry(entry) {
+  const tokens = Array.isArray(entry) ? entry : (entry?.getTextTokens?.() ?? []);
+  const kept = tokens.filter((t) => LINE_FORMATTINGS.has(t?.formatting));
+  const head = kept[0]?.formatting === 'highlight' ? String(kept[0].text ?? '') : null;
+  const body = (head === null ? kept : kept.slice(1)).map((t) => String(t?.text ?? '')).filter((l) => l.length);
+  return { head, body };
 }
 
 /**
@@ -54,18 +77,13 @@ export function chronicleLines(entry) {
  */
 export function chronicleModel(d = {}) {
   const nb = d.notebook?.() ?? null;
-  const notes = (nb?.getNotes?.() ?? []).map(chronicleLines).filter((ls) => ls.length);
-  const messages = (nb?.getMessages?.() ?? []).map(chronicleLines).filter((ls) => ls.length);
+  const entries = (list) => (list ?? []).map(chronicleEntry).filter((e) => e.head || e.body.length);
+  const notes = entries(nb?.getNotes?.());
+  const messages = entries(nb?.getMessages?.());
   // The history is already lines - chargen composes backStory as
   // strings, and playerHistory.js reads exactly this.
   const history = (d.entity?.backStory ?? []).map((l) => String(l ?? '')).filter((l) => l.length);
   return { notes, messages, history };
-}
-
-function pxDivider(word) {
-  const d = el('div', 'px-divider');
-  d.append(el('span', 'px-gem'), el('span', 'px-divword', word), el('span', 'px-gem'));
-  return d;
 }
 
 function render() {
@@ -121,21 +139,62 @@ function render() {
     }
   } else {
     const rows = model[section];
+    // PX24b: THE PLAYER MAY WRITE. The classic notebook has AddNote and
+    // RemoveNote (notebook.js:78, :67); the first draft was read-only,
+    // which is a LOSS of function dressed as a nicer window. The
+    // composer sits above the entries, where a new note lands.
+    if (section === 'notes' && deps.notebook?.()) {
+      const compose = el('form', 'cr-compose');
+      const input = el('input');
+      input.type = 'text';
+      input.placeholder = 'Write a note';
+      input.maxLength = 200;
+      input.value = draft;
+      input.oninput = () => { draft = input.value; };
+      const add = el('button', 'act primary', 'Add');
+      add.type = 'submit';
+      compose.onsubmit = (e) => {
+        e.preventDefault();
+        const text = draft.trim();
+        if (!text) return;
+        // The notebook's own AddNote - it wraps the lines and stamps
+        // the dated header itself, from the host's clock and city.
+        deps.notebook().addNote(text);
+        draft = '';
+        render();
+      };
+      compose.append(input, add);
+      detail.append(compose);
+    }
     if (!rows.length) {
-      detail.append(el('p', 'px-note', section === 'notes' ? 'No notes yet.' : 'No messages yet.'));
+      detail.append(el('p', 'px-note', section === 'notes' ? 'Nothing written yet.' : 'No messages yet.'));
     } else {
       // NEWEST FIRST for messages (the ring's own order is oldest
       // first and the last thing you were told is the thing you
       // opened this for); notes keep the player's OWN order, because
       // they arranged them (MoveNote is a law, notebook.js:64-72).
-      const list = section === 'messages' ? [...rows].reverse() : rows;
+      const list = section === 'messages'
+        ? rows.map((e, i) => ({ e, i })).reverse()
+        : rows.map((e, i) => ({ e, i }));
       const box = el('div', 'cr-entries');
-      list.forEach((lines, i) => {
+      for (const { e, i } of list) {
         const entry = el('div', 'cr-entry');
-        entry.append(pxDivider(String(section === 'messages' ? list.length - i : i + 1)));
-        for (const line of lines) entry.append(el('p', null, line));
+        const top = el('div', 'cr-head');
+        // THE DATE, which the notebook wrote and the first draft lost.
+        // A continuation page files with no header (notebook.js:97-107)
+        // and honestly says so rather than inventing one.
+        top.append(el('span', 'cr-when', e.head ?? '\u2014 continued \u2014'));
+        if (section === 'notes' && deps.notebook?.()) {
+          const rm = el('button', 'cr-rm', '\u00d7');
+          rm.title = 'Remove this note';
+          rm.setAttribute('aria-label', 'Remove this note');
+          rm.onclick = () => { deps.notebook().removeNote(i); render(); };
+          top.append(rm);
+        }
+        entry.append(top);
+        for (const line of e.body) entry.append(el('p', null, line));
         box.append(entry);
-      });
+      }
       detail.append(box);
     }
   }
@@ -171,13 +230,14 @@ export function mountEnhancedChronicle(hostEl, d = {}) {
   deps = d;
   onExit = d.onExit ?? (() => {});
   section = CHRONICLE_SECTIONS.some(([id]) => id === d.section) ? d.section : 'notes';
+  draft = '';
   render();
   window.addEventListener('keydown', onKey, true);
   return {
     render,
     destroy() {
       window.removeEventListener('keydown', onKey, true);
-      host = null; deps = {}; section = 'notes';
+      host = null; deps = {}; section = 'notes'; draft = '';
     },
   };
 }
