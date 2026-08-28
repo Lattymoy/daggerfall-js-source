@@ -109,6 +109,9 @@ import { layoutNature } from '../world/terrainNature.js';
 import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, generateSamples } from '../world/terrainSampler.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
 import { paintRoadTiles } from '../world/roadTiles.js';   // R5 (enhanced): roads on the ground
+import { roadsForWorld, bakeInputs } from '../systems/roadsBoot.js';   // R6
+import { storeDerived, loadDerived } from './dataSource.js';
+import { getPref } from '../systems/uiPrefs.js';
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
 import { music } from '../systems/music.js';
@@ -235,6 +238,31 @@ export async function bootWorld(canvas, renderer, params, status) {
       const p = longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude);
       locationIndex.set(`${p.x},${p.y}`, loc);
     }
+  }
+
+  // R6: the road network, once. Off unless the player asked for it;
+  // cached after the first bake, so the twenty-six seconds is paid on
+  // the turn rather than on arrival. NEVER TRAPS - roads decorate a
+  // game that ran without them, so a bake that throws costs the roads
+  // and nothing else.
+  let roadNetwork = null;
+  try {
+    if (getPref('roads')) {
+      status('baking roads');
+      const r = await roadsForWorld({
+        enabled: true,
+        load: (k) => loadDerived(k),
+        save: (k, b) => storeDerived(k, b),
+        inputs: () => bakeInputs(woods, maps, locationIndex),
+        onProgress: ({ phase, done, total }) =>
+          status(`baking roads: ${phase} ${done}/${total}`),
+      });
+      roadNetwork = r.network;
+      console.log(`[roads] ${r.fromCache ? 'from cache' : 'baked'}`, r.stats ?? '');
+    }
+  } catch (e) {
+    console.warn('[roads] unavailable this session', e);
+    roadNetwork = null;
   }
 
   // U31 / THE CLASSIC START. StartGameBehaviour (:371-401) does not
@@ -384,8 +412,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     // squares, using assignTiles' own skip-non-zero rule - so a town's
     // stamped ground wins inside its rect, the road fills the ground
     // outside it, and the 1:1 tile law is not touched. roadNetwork is
-    // null until the enhanced bake has run, and null paints nothing.
-    paintRoadTiles(tilemap, this._roadNetwork ?? null, px, py);
+    // null until R6's bake has run, and null paints nothing.
+    //
+    // A MODULE BINDING, NOT `this`. The first version of this line read
+    // `this._roadNetwork` - and buildPixel is a plain function in an ES
+    // module, so `this` is undefined and the property access threw a
+    // TypeError on EVERY streamed pixel before `?? null` could help.
+    // Nothing caught it: no node test drives buildPixel (it wants GL
+    // and ARENA2) and the build only checks syntax.
+    paintRoadTiles(tilemap, roadNetwork, px, py);
     assignTiles(generateTileData(samples, px, py), tilemap, true);
     const climate = getWorldClimateSettings(maps.getClimateIndex(px, py));
     const climateBase = climate.climateType;

@@ -189,7 +189,18 @@ test('texture: registration rides the ONE bootstrap, and the row reports it', ()
   assert.match(w, /textureReplacementCount\(\)/);
   // both stores exist and the upgrade creates what is MISSING
   const d = src('scenes/dataSource.js');
-  assert.match(d, /const ASSET_STORES = \[MUSIC_STORE, TEXTURE_STORE, MW_STORE\];/);
-  assert.match(d, /indexedDB\.open\(DB_NAME, 4\)/);
+  // R6 RE-AIMED THIS, as M-TEX re-aimed it before: a fourth domain
+  // (the DERIVED store) joined the list, and a pin spelling the list
+  // out breaks on every new domain while proving nothing extra. The
+  // LAW is membership - this store is an ASSET store, listed apart
+  // from the ARENA2 one - so that is what is asserted now.
+  assert.match(d, /const ASSET_STORES = \[[^\]]*\bTEXTURE_STORE\b[^\]]*\];/);
+  // R6: the version literal moved to 5 with the derived store. What
+  // these pins actually protect is that the open is VERSIONED at all
+  // and that the upgrade creates only what is MISSING - an existing
+  // player must gain the new store and keep every byte of the old
+  // ones. A hardcoded number breaks on every domain and proves
+  // nothing the `contains` guard below does not already say.
+  assert.match(d, /indexedDB\.open\(DB_NAME, \d+\)/);
   assert.match(d, /for \(const name of ASSET_STORES\)/);
 });
