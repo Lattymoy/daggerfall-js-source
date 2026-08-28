@@ -614,12 +614,60 @@ export function buildRoadNetwork({
     report('trunk', ++trunkLaid, Math.max(1, hubs.length - 1));
   }
 
-  // RC1: the candidate graph is the k nearest hubs, which is not
-  // guaranteed connected - so what comes out is a spanning FOREST, and
-  // a hub in a component of its own is a town no trunk reaches. That
-  // used to be silent. Count the components and report them; the spur
-  // pass below still joins any hub the forest stranded, because a hub
-  // with no road on its pixel is a spur candidate like any other.
+  // ── 3b. RC3: JOIN THE FOREST ────────────────────────────────────
+  //
+  // The candidate graph is the k nearest hubs, and that is not
+  // guaranteed connected - so stage 3 produces a spanning FOREST, not
+  // a tree. RC1 made that visible; this makes it stop happening.
+  //
+  // It is not a rare shape. Daggerfall's towns clump by province, and
+  // a clumped map reproduces it immediately: three clusters of nine
+  // hubs give three trunk networks that never meet, while every
+  // statistic reports contentment - no hub is stranded, because each
+  // sits in a cluster of nine, and no spur is orphaned, because each
+  // finds its own cluster's road. Three road systems, no complaint.
+  //
+  // Boruvka's shape, over COMPONENTS rather than hubs: while more than
+  // one remains, take the closest pair of hubs that sit in different
+  // components, route it, and merge. Distance picks the CANDIDATE and
+  // the router prices it, which is the same division of labour the
+  // stage above uses. A pair that will not route is remembered so the
+  // loop cannot retry it for ever, and if no pair at all routes the
+  // remaining components are genuinely unreachable from one another -
+  // an island - and that is reported rather than looped on.
+  const componentsOf = () => {
+    const seen = new Set();
+    for (let i = 0; i < hubs.length; i++) seen.add(uf.find(i));
+    return seen;
+  };
+  let bridgesLaid = 0;
+  const unroutable = new Set();
+  const forestBefore = componentsOf().size;
+  if (forestBefore > 1) report('bridges', 0, forestBefore - 1);
+  while (componentsOf().size > 1) {
+    let best = null, bestD = Infinity;
+    for (let i = 0; i < hubs.length; i++) {
+      for (let j = i + 1; j < hubs.length; j++) {
+        if (uf.find(i) === uf.find(j)) continue;
+        const key = `${i}:${j}`;
+        if (unroutable.has(key)) continue;
+        const d = (hubs[i].x - hubs[j].x) ** 2 + (hubs[i].y - hubs[j].y) ** 2;
+        // ties break on the pair's index, so the bake stays reproducible
+        if (d < bestD) { bestD = d; best = { i, j, key }; }
+      }
+    }
+    if (!best) break;   // every remaining pair refused to route
+    const r = routeRoad(field, hubs[best.i], hubs[best.j], opts);
+    if (!r) { unroutable.add(best.key); continue; }
+    uf.union(best.i, best.j);
+    layPath(network, field, r.path, ROAD_TRUNK);
+    bridgesLaid++;
+    report('bridges', bridgesLaid, Math.max(1, forestBefore - 1));
+  }
+
+  // What is left after the join. One component is a single connected
+  // trunk network; more than one means islands the router could not
+  // cross, which is a fact about the map rather than a bug here.
   const componentSize = new Map();
   for (let i = 0; i < hubs.length; i++) {
     const r = uf.find(i);
@@ -695,7 +743,7 @@ export function buildRoadNetwork({
       // RC1: 1 means the trunk skeleton is one connected network.
       // Anything higher is a forest, and strandedHubs counts the towns
       // left entirely alone by it.
-      trunkComponents, strandedHubs,
+      trunkComponents, strandedHubs, bridgesLaid, forestBefore,
     },
   };
 }

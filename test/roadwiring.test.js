@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { createNetwork, linkPixels, ROAD_TRACK, ROAD_TRUNK, networkHasAnyRoad } from '../src/systems/roads.js';
+import { createNetwork, linkPixels, ROAD_TRACK, ROAD_TRUNK, networkHasAnyRoad, buildCostField, buildRoadNetwork } from '../src/systems/roads.js';
 import { loadOrBakeRoadsAsync, serializeRoads } from '../src/systems/roadBake.js';
 import { paintRoadTiles, ROAD_TILE_HALF_WIDTH, ROAD_TILE_RECORDS, isRoadTile, throughControl, simplifyKeepingCorners } from '../src/world/roadTiles.js';
 import { roadPoints, chaikin, simplifyChain, reliefPoint, sampleHeightByte, SIMPLIFY_EPSILON } from '../src/ui/overworldModel.js';
@@ -773,4 +773,116 @@ test('RZ3: the chain cache does not touch the network the bake serializes', () =
   linkPixels(net.trunkExits, 8, 2, 2, 3, 2);
   paintRoadTiles(new Uint8Array(T * T), net, 2, 2);
   assert.deepEqual(Object.keys(net).filter((k) => k.startsWith('_')), [], 'the network grew no fields');
+});
+
+
+// ── RC3: the trunk forest ────────────────────────────────────────
+/** A map whose hubs CLUMP, the way Daggerfall's towns clump by
+ *  province - which is the shape that splits the skeleton. */
+function clumpedMap(clusters, { wallAt = null, hubsPer = 6, W = 120, H = 80 } = {}) {
+  const hb = new Uint8Array(W * H).fill(40);
+  const locs = [];
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  for (const [cx, cy] of clusters) {
+    for (let i = 0; i < hubsPer; i++) {
+      locs.push({ x: Math.round(cx + (rnd() - 0.5) * 14), y: Math.round(cy + (rnd() - 0.5) * 14), locationType: 0 });
+    }
+  }
+  const field = buildCostField({ heightBytes: hb, climateAt: () => 2, width: W, height: H, isWater: () => false });
+  if (wallAt !== null) {
+    for (let y = 0; y < H; y++) for (let x = wallAt; x <= wallAt + 4; x++) field.cost[y * W + x] = Infinity;
+  }
+  const built = buildRoadNetwork({ field, locations: locs, heightBytes: hb });
+  // the caller needs the hubs to walk the road between them
+  return { ...built, locations: locs, hubs: locs.filter((l) => l.locationType === 0) };
+}
+
+test('RC3: a clumped map used to build three road systems that never met', () => {
+  // The candidate graph is the k nearest hubs and is not guaranteed
+  // connected, so stage 3 produced a spanning FOREST. Worse, every
+  // statistic reported contentment: no hub STRANDED, because each sits
+  // in a cluster of its own kind, and no spur ORPHANED, because each
+  // finds its own cluster's road. Three road systems, no complaint.
+  const r = clumpedMap([[15, 15], [100, 20], [60, 65]]);
+  assert.equal(r.stats.forestBefore, 3, 'the forest is real, and this is the shape that makes it');
+  assert.equal(r.stats.bridgesLaid, 2, 'joining N components takes N-1 bridges');
+  assert.equal(r.stats.trunkComponents, 1, 'and what comes out is ONE network');
+  // the old signals that stayed silent through all of it
+  assert.equal(r.stats.strandedHubs, 0);
+  assert.equal(r.stats.orphans, 0);
+});
+
+test('RC3: an ISLAND is reported, not looped on', () => {
+  // Two clusters either side of an impassable wall cannot be joined by
+  // any road. The loop must stop, say so, and not retry the same
+  // refusing pair for ever.
+  const r = clumpedMap([[20, 20], [95, 40]], { wallAt: 58 });
+  assert.equal(r.stats.forestBefore, 2);
+  assert.equal(r.stats.bridgesLaid, 0, 'no bridge is forced across water');
+  assert.equal(r.stats.trunkComponents, 2, 'the two islands are reported as they are');
+});
+
+test('RC3: a map that was already one network is not touched', () => {
+  const r = clumpedMap([[40, 40]], { hubsPer: 10 });
+  assert.equal(r.stats.forestBefore, 1, 'one cluster, one component');
+  assert.equal(r.stats.bridgesLaid, 0, 'so nothing to bridge');
+  assert.equal(r.stats.trunkComponents, 1);
+});
+
+/** Walk the road itself, on the GROUND, from one hub - the exit planes
+ *  are the road, so this asks whether a cart could actually get there.
+ *  union-find agreeing is not the same claim. */
+function hubsReachableOnTheRoad(network, hubs) {
+  const { width, height, trunkExits, trackExits } = network;
+  const seen = new Uint8Array(width * height);
+  const start = hubs[0];
+  const stack = [[start.x, start.y]];
+  seen[start.y * width + start.x] = 1;
+  const STEPS = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
+  while (stack.length) {
+    const [x, y] = stack.pop();
+    const bits = trunkExits[y * width + x] | trackExits[y * width + x];
+    for (let d = 0; d < 8; d++) {
+      if (!(bits & (1 << d))) continue;
+      const nx = x + STEPS[d][0], ny = y + STEPS[d][1];
+      if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+      if (seen[ny * width + nx]) continue;
+      seen[ny * width + nx] = 1;
+      stack.push([nx, ny]);
+    }
+  }
+  return hubs.filter((h) => seen[h.y * width + h.x]).length;
+}
+
+test('RC3: the join lays ROAD, not just a union-find merge', () => {
+  // The exact lie RC1 caught one stage earlier, repeated here: a union
+  // without a layPath leaves the bookkeeping claiming two components
+  // joined with nothing on the ground between them. Every count agrees
+  // - one component, two bridges - and no cart can make the journey.
+  // So walk the EXIT PLANES from one hub and count how many others are
+  // actually reachable along road.
+  const r = clumpedMap([[15, 15], [100, 20], [60, 65]]);
+  assert.equal(r.stats.trunkComponents, 1, 'the bookkeeping says one network');
+  assert.equal(hubsReachableOnTheRoad(r.network, r.hubs), r.hubs.length,
+    'and every hub is reachable along the road ITSELF, not merely in the union-find');
+});
+
+test('RC3: the join is deterministic - the same map bakes the same roads', () => {
+  const a = clumpedMap([[15, 15], [100, 20], [60, 65]]);
+  const b = clumpedMap([[15, 15], [100, 20], [60, 65]]);
+  assert.deepEqual(a.stats, b.stats, 'same statistics');
+  assert.deepEqual([...a.network.trunkExits], [...b.network.trunkExits], 'and the same trunk plane, byte for byte');
+
+  // The FIRST tied pair wins, not the last. Read from the source
+  // because it is unobservable: `<` and `<=` are BOTH deterministic,
+  // so no reproducibility pin can separate them, and they differ only
+  // when two cross-component pairs are EXACTLY equidistant - which
+  // real hub coordinates essentially never are, and which cannot be
+  // staged here either, since a fixture tight enough to tie is also
+  // tight enough for the k=5 candidate graph to have joined the two
+  // clusters already. Recorded rather than contorted around: the day
+  // the scan order changes, this line is what says which pair the bake
+  // was supposed to pick.
+  assert.match(src('src/systems/roads.js'), /if \(d < bestD\) \{ bestD = d; best = \{ i, j, key \}; \}/);
 });
