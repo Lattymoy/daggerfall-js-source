@@ -125,6 +125,25 @@ export function createCandleWobble(rolls = Math.random) {
  * and "no candle" without branching.
  */
 export function withPlayerLights(base, ...lights) {
+  // LT1: a host riding the per-light colour channel hands the PAIRED
+  // shape - `{ data, colors }` from nearestLights' colorOf arm - and
+  // gets it back with the player lights prepended to BOTH arrays under
+  // the one cap. A player light may carry its own `color` (colour x
+  // intensity); absent, it stays the white the shared channel always
+  // gave it - the torch/candle look is not this seam's to change.
+  if (base && base.data) {
+    const live = lights.filter(Boolean);
+    if (!live.length) return base;
+    const data = withPlayerLights(base.data, ...live);
+    const keep = (data.length / 4 - live.length) * 3;
+    const colors = new Float32Array(keep + live.length * 3);
+    live.forEach((l, i) => {
+      const c = l.color ?? [1, 1, 1];
+      colors[i * 3] = c[0]; colors[i * 3 + 1] = c[1]; colors[i * 3 + 2] = c[2];
+    });
+    colors.set(base.colors.subarray(0, keep), live.length * 3);
+    return { data, colors };
+  }
   const live = lights.filter(Boolean);
   if (!live.length) return base;
   const keep = Math.min(Math.max(0, 16 - live.length), base.length / 4) * 4;

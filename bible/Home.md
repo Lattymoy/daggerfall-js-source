@@ -306,10 +306,10 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:2692` - first (owned houses and quest buildings FLAGGED/seamed per
 - `src/scenes/worldModes.js:2700` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
 - `src/scenes/worldModes.js:3054` - basket behind `loot.houseOwned` (:919) stays FLAGGED to the
-- `src/scenes/worldModes.js:3631` - too. FLAGGED: interior loot containers are the loot arc's -
-- `src/scenes/worldModes.js:3773` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:3872` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:4210` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
+- `src/scenes/worldModes.js:3632` - too. FLAGGED: interior loot containers are the loot arc's -
+- `src/scenes/worldModes.js:3774` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:3873` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:4211` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
 - `src/systems/advancement.js:84` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED

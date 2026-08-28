@@ -38,7 +38,7 @@ uniform vec3 uSunColor;
 uniform vec3 uEmissionColor;
 uniform int uPointCount;
 uniform vec4 uPointLights[16]; // xyz scene-space, w range
-uniform vec3 uPointColor;
+uniform vec3 uPointColors[16]; // LT1: per-light colour x intensity (AddLight's second switch)
 uniform vec4 uIndirect;       // R12: xyz player pos, w range (0 = off)
 uniform vec3 uIndirectColor;  // color x intensity x daylight scale
 uniform vec3 uFogColor;
@@ -66,15 +66,15 @@ void main() {
   vec3 lit = tex.rgb * (uAmbient + uSunColor * (uSunScale * diff));
   // Point lights (city lanterns): N.L with a squared linear falloff to the
   // range - documented equivalence to the Unity point light this replaces.
-  float pointDiff = 0.0;
+  vec3 pointAcc = vec3(0.0);
   for (int i = 0; i < 16; i++) {
     if (i >= uPointCount) break;
     vec3 L = uPointLights[i].xyz - vWorldPos;
     float d = length(L);
     float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
-    pointDiff += att * att * max(dot(n, L / max(d, 1e-4)), 0.0);
+    pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];
   }
-  lit += tex.rgb * pointDiff * uPointColor;
+  lit += tex.rgb * pointAcc;
   // R12: the player-following indirect point light (SunlightRig's
   // IndirectLight) - same falloff shape as the lantern lights; the
   // zeroed default color makes this a no-op in unlit scenes.
@@ -134,7 +134,7 @@ uniform float uSunScale;
 uniform vec3 uSunColor;
 uniform int uPointCount;
 uniform vec4 uPointLights[16];
-uniform vec3 uPointColor;
+uniform vec3 uPointColors[16]; // LT1: per-light colour x intensity (AddLight's second switch)
 uniform vec4 uIndirect;       // R12: xyz player pos, w range (0 = off)
 uniform vec3 uIndirectColor;  // color x intensity x daylight scale
 uniform vec3 uFogColor;
@@ -155,15 +155,15 @@ void main() {
   vec3 n = normalize(vNormal);
   float diff = max(dot(n, uLightDir), 0.0);
   vec3 lit = vColor * (uAmbient + uSunColor * (uSunScale * diff));
-  float pointDiff = 0.0;
+  vec3 pointAcc = vec3(0.0);
   for (int i = 0; i < 16; i++) {
     if (i >= uPointCount) break;
     vec3 L = uPointLights[i].xyz - vWorldPos;
     float d = length(L);
     float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
-    pointDiff += att * att * max(dot(n, L / max(d, 1e-4)), 0.0);
+    pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];
   }
-  lit += vColor * pointDiff * uPointColor;
+  lit += vColor * pointAcc;
   // R12: the player-following indirect light (see the mesh FS).
   vec3 iL = uIndirect.xyz - vWorldPos;
   float iD = length(iL);
@@ -206,7 +206,7 @@ uniform int uSpectral;
 uniform vec3 uTint; // time-of-day: ambient + sunColor * sunScale * 0.5
 uniform int uPointCount;
 uniform vec4 uPointLights[16]; // xyz scene-space, w range
-uniform vec3 uPointColor;
+uniform vec3 uPointColors[16]; // LT1: per-light colour x intensity (AddLight's second switch)
 uniform vec4 uIndirect;       // R12: xyz player pos, w range (0 = off)
 uniform vec3 uIndirectColor;  // color x intensity x daylight scale
 uniform vec3 uFogColor;
@@ -231,19 +231,19 @@ void main() {
   // Point lights on flats: billboards have no normal, so the term is
   // attenuation-only (squared linear falloff) - documented equivalence
   // to Unity's vertex-lit billboards.
-  float pointDiff = 0.0;
+  vec3 pointAcc = vec3(0.0);
   for (int i = 0; i < 16; i++) {
     if (i >= uPointCount) break;
     float d = length(uPointLights[i].xyz - vBBWorld);
     float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
-    pointDiff += att * att;
+    pointAcc += att * att * uPointColors[i];
   }
   vec3 emission = texture(uEmissionTex, vUV).rgb;   // spectral eyes/body glow (black tex otherwise)
   // R12: the indirect term, attenuation-only like the lantern term
   // (billboards have no normal).
   float iD = length(uIndirect.xyz - vBBWorld);
   float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
-  vec3 lit = tex.rgb * (uTint + pointDiff * uPointColor + iAtt * iAtt * uIndirectColor) + emission;
+  vec3 lit = tex.rgb * (uTint + pointAcc + iAtt * iAtt * uIndirectColor) + emission;
   outColor = vec4(mix(uFogColor, lit, fogFactorAt(vBBWorld)), uSpectral == 1 ? tex.a : 1.0);
 }`;
 
@@ -333,7 +333,7 @@ uniform float uSunScale;
 uniform vec3 uSunColor;
 uniform int uPointCount;
 uniform vec4 uPointLights[16];
-uniform vec3 uPointColor;
+uniform vec3 uPointColors[16]; // LT1: per-light colour x intensity (AddLight's second switch)
 uniform vec4 uIndirect;       // R12: xyz player pos, w range (0 = off)
 uniform vec3 uIndirectColor;  // color x intensity x daylight scale
 uniform vec3 uFogColor;
@@ -372,15 +372,15 @@ void main() {
   vec3 n = normalize(vNormal);
   float diff = max(dot(n, uLightDir), 0.0);
   vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff));
-  float pointDiff = 0.0;
+  vec3 pointAcc = vec3(0.0);
   for (int i = 0; i < 16; i++) {
     if (i >= uPointCount) break;
     vec3 L = uPointLights[i].xyz - vWorldPos;
     float d = length(L);
     float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
-    pointDiff += att * att * max(dot(n, L / max(d, 1e-4)), 0.0);
+    pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];
   }
-  lit += tex * pointDiff * uPointColor;
+  lit += tex * pointAcc;
   // R12: the player-following indirect light (see the mesh FS).
   vec3 iL = uIndirect.xyz - vWorldPos;
   float iD = length(iL);
@@ -459,7 +459,7 @@ export class Renderer {
     this.uEmissionColor = gl.getUniformLocation(this.program, 'uEmissionColor');
     this.uPointCount = gl.getUniformLocation(this.program, 'uPointCount');
     this.uPointLights = gl.getUniformLocation(this.program, 'uPointLights');
-    this.uPointColor = gl.getUniformLocation(this.program, 'uPointColor');
+    this.uPointColors = gl.getUniformLocation(this.program, 'uPointColors');
     this.uIndirect = gl.getUniformLocation(this.program, 'uIndirect');
     this.uIndirectColor = gl.getUniformLocation(this.program, 'uIndirectColor');
 
@@ -468,6 +468,11 @@ export class Renderer {
     this._windowEmission = new Float32Array([0, 0, 0]);
     this._pointLights = new Float32Array(0); // vec4 per light [x,y,z,range]
     this._pointColor = new Float32Array([1, 1, 1]);
+    // LT1: per-light colour x intensity (vec3 per light). null = every
+    // light wears the shared _pointColor - the exterior lantern path,
+    // bit-identical to the pre-LT1 scalar channel.
+    this._pointColors = null;
+    this._pointColorScratch = new Float32Array(16 * 3);
     // R12: the player-following indirect light - zeroed = off (the
     // shader term contributes nothing), so unlit scenes stay exact.
     this._indirect = new Float32Array([0, 0, 0, 0]);
@@ -503,7 +508,7 @@ export class Renderer {
       sunColor: gl.getUniformLocation(cp, 'uSunColor'),
       pointCount: gl.getUniformLocation(cp, 'uPointCount'),
       pointLights: gl.getUniformLocation(cp, 'uPointLights'),
-      pointColor: gl.getUniformLocation(cp, 'uPointColor'),
+      pointColors: gl.getUniformLocation(cp, 'uPointColors'),
       indirect: gl.getUniformLocation(cp, 'uIndirect'),
       indirectColor: gl.getUniformLocation(cp, 'uIndirectColor'),
     };
@@ -539,7 +544,7 @@ export class Renderer {
     this.tUSunColor = gl.getUniformLocation(this.terrainProgram, 'uSunColor');
     this.tUPointCount = gl.getUniformLocation(this.terrainProgram, 'uPointCount');
     this.tUPointLights = gl.getUniformLocation(this.terrainProgram, 'uPointLights');
-    this.tUPointColor = gl.getUniformLocation(this.terrainProgram, 'uPointColor');
+    this.tUPointColors = gl.getUniformLocation(this.terrainProgram, 'uPointColors');
     this.tUIndirect = gl.getUniformLocation(this.terrainProgram, 'uIndirect');
     this.tUIndirectColor = gl.getUniformLocation(this.terrainProgram, 'uIndirectColor');
     this.tileArrays = new Map(); // archive -> TEXTURE_2D_ARRAY
@@ -598,7 +603,7 @@ export class Renderer {
     this.bbUTint = gl.getUniformLocation(this.bbProgram, 'uTint');
     this.bbUPointCount = gl.getUniformLocation(this.bbProgram, 'uPointCount');
     this.bbUPointLights = gl.getUniformLocation(this.bbProgram, 'uPointLights');
-    this.bbUPointColor = gl.getUniformLocation(this.bbProgram, 'uPointColor');
+    this.bbUPointColors = gl.getUniformLocation(this.bbProgram, 'uPointColors');
     this.bbUIndirect = gl.getUniformLocation(this.bbProgram, 'uIndirect');
     this.bbUIndirectColor = gl.getUniformLocation(this.bbProgram, 'uIndirectColor');
     this._proj = null;
@@ -688,7 +693,7 @@ export class Renderer {
     const count = this._pointLights.length / 4;
     gl.uniform1i(c.pointCount, count);
     if (count > 0) gl.uniform4fv(c.pointLights, this._pointLights);
-    gl.uniform3fv(c.pointColor, this._pointColor);
+    if (count > 0) gl.uniform3fv(c.pointColors, this._pointColorData(count));
     gl.uniform4fv(c.indirect, this._indirect);
     gl.uniform3fv(c.indirectColor, this._indirectColor);
     this._uploadFog(this._charFog);
@@ -1124,7 +1129,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const count = this._pointLights.length / 4;
     gl.uniform1i(this.uPointCount, count);
     if (count > 0) gl.uniform4fv(this.uPointLights, this._pointLights);
-    gl.uniform3fv(this.uPointColor, this._pointColor);
+    if (count > 0) gl.uniform3fv(this.uPointColors, this._pointColorData(count));
     gl.uniform4fv(this.uIndirect, this._indirect);
     gl.uniform3fv(this.uIndirectColor, this._indirectColor);
     // Camera position from the view matrix (view = R^T * T(-eye)).
@@ -1203,10 +1208,26 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     }
   }
 
-  /** Scene-space point lights as flat vec4s [x,y,z,range], max 16. */
-  setPointLights(data, color) {
+  /** Scene-space point lights as flat vec4s [x,y,z,range], max 16.
+   *  LT1: `colors` is the optional per-light channel - flat vec3s of
+   *  colour x intensity in the SAME order as `data` (AddLight's second
+   *  switch, interiorLightProperties). Absent, every light wears the
+   *  shared `color` - the exterior lantern path, unchanged. */
+  setPointLights(data, color, colors = null) {
     this._pointLights = data.subarray ? data.subarray(0, 16 * 4) : data;
     if (color) this._pointColor = color;
+    this._pointColors = colors ? (colors.subarray ? colors.subarray(0, 16 * 3) : colors) : null;
+  }
+
+  /** LT1: the vec3 array a frame uploads - the host's per-light colours
+   *  when given, else the shared colour splatted across the count. */
+  _pointColorData(count) {
+    if (this._pointColors) return this._pointColors;
+    const s = this._pointColorScratch;
+    for (let i = 0; i < count * 3; i += 3) {
+      s[i] = this._pointColor[0]; s[i + 1] = this._pointColor[1]; s[i + 2] = this._pointColor[2];
+    }
+    return s.subarray(0, count * 3);
   }
 
   /** R12: the player-following indirect point light (SunlightRig's
@@ -1409,7 +1430,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const count = this._pointLights.length / 4;
     gl.uniform1i(this.tUPointCount, count);
     if (count > 0) gl.uniform4fv(this.tUPointLights, this._pointLights);
-    gl.uniform3fv(this.tUPointColor, this._pointColor);
+    if (count > 0) gl.uniform3fv(this.tUPointColors, this._pointColorData(count));
     gl.uniform4fv(this.tUIndirect, this._indirect);
     gl.uniform3fv(this.tUIndirectColor, this._indirectColor);
     gl.activeTexture(gl.TEXTURE0);
@@ -1483,7 +1504,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const bbCount = this._pointLights.length >> 2;
     gl.uniform1i(this.bbUPointCount, bbCount);
     if (bbCount > 0) gl.uniform4fv(this.bbUPointLights, this._pointLights);
-    gl.uniform3fv(this.bbUPointColor, this._pointColor);
+    if (bbCount > 0) gl.uniform3fv(this.bbUPointColors, this._pointColorData(bbCount));
     gl.uniform4fv(this.bbUIndirect, this._indirect);
     gl.uniform3fv(this.bbUIndirectColor, this._indirectColor);
     gl.uniform1i(this.bbUEmissionTex, 1);

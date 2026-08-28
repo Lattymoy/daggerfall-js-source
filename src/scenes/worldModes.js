@@ -35,7 +35,7 @@ import { buildDungeonContext } from './dungeonContext.js';
 import { DOOR_TYPE } from '../world/meshReader.js';
 import { getGroundArchive } from '../world/climateSwaps.js';
 import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js';
-import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
+import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C12): the one clock; G4's probe moves it
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
@@ -3528,14 +3528,15 @@ export function createWorldModes(host) {
     // re-apply on the city-lights edge never reaches it. The port's
     // exterior glow used to follow the player indoors.
     renderer.setWindowEmission(windowEmissionRGB('disabled'));
-    renderer.setPointLights(
-      withPlayerLights(nearestLights(interiorCtx.lights, cam.pos, 16, interiorCtx.lights.map((l) => l.range)),
-        magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw)),   // per-light range (DaggerfallInterior.AddLight); a scalar drops the per-record switch   // X11 candle; T1 torch
-      // Each light also CARRIES its own intensity and colour from that
-      // same switch (interiorLightProperties), but setPointLights has
-      // one shared colour uniform, so the prefab white goes up for all
-      // of them - see interiorLights.js's RENDERER GAP note.
-      new Float32Array(INTERIOR_LIGHT_COLOR));
+    // LT1: per-light range AND colour x intensity - AddLight's whole
+    // second switch reaches the GPU (interiorLightProperties; the
+    // colorOf arm rides the ONE distance sort). The candle and torch
+    // keep the white the shared channel always gave them.
+    const _itLit = withPlayerLights(
+      nearestLights(interiorCtx.lights, cam.pos, 16, interiorCtx.lights.map((l) => l.range),
+        (l) => [l.color[0] * l.intensity, l.color[1] * l.intensity, l.color[2] * l.intensity]),
+      magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw));   // X11 candle; T1 torch
+    renderer.setPointLights(_itLit.data, null, _itLit.colors);
     interiorCtx.actions.update(dt);
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
     for (const d of interiorCtx.drawList) renderer.drawMesh(d.mesh, d.matrix, interiorCtx.texRemap);

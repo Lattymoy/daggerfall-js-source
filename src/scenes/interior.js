@@ -10,7 +10,7 @@ import { requestLook } from '../player/pointerLock.js';
 import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
-import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
+import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
 import { worldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C12)
 import { nearestLights } from '../world/cityLights.js';
@@ -133,11 +133,11 @@ export async function bootInterior(canvas, renderer, params, status) {
     const proj = mirrorProjectionX(perspective(fieldOfView(), canvas.clientWidth / canvas.clientHeight, 0.05, 500));   // HANDEDNESS (mat4's law)
     const view = lookAt(cam.pos, target, [0, 1, 0]);
 
-    renderer.setPointLights(
-      nearestLights(ctx.lights, cam.pos, 16, ctx.lights.map((l) => l.range)),   // per-light range (DaggerfallInterior.AddLight); a scalar drops the per-record switch
-      // l.intensity / l.color (AddLight's same switch) are carried but
-      // not uploadable - one shared colour uniform; see interiorLights.js.
-      new Float32Array(INTERIOR_LIGHT_COLOR));
+    // LT1: per-light range AND colour x intensity - AddLight's whole
+    // second switch reaches the GPU (interiorLightProperties).
+    const lit = nearestLights(ctx.lights, cam.pos, 16, ctx.lights.map((l) => l.range),
+      (l) => [l.color[0] * l.intensity, l.color[1] * l.intensity, l.color[2] * l.intensity]);
+    renderer.setPointLights(lit.data, null, lit.colors);
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
     for (const d of ctx.drawList) renderer.drawMesh(d.mesh, d.matrix, ctx.texRemap);
     // Swing doors (P4) draw at rest through their ActionSystem matrices;
