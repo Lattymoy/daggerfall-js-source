@@ -21,12 +21,7 @@ import { PlayerWeapon, WEAPON_REACH } from './playerWeapon.js';
 import { racialFpsWeapon } from '../systems/lycanthropy.js';   // V4: the transformed rig's claws
 import { EQUIP_SLOTS } from '../systems/equip.js';   // AUDIT 17e F17
 import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES } from './fpsWeapon.js';
-// MW-IMPORT slice 5: the opt-in 3D viewmodel. Inert unless ?mwfp=1 AND
-// Morrowind data is attached; the classic sprite path below is the law
 // and runs untouched otherwise.
-import { createMwFpView } from './mwFpArms.js';
-import { morrowindDataGeneration } from '../scenes/dataSource.js';   // MWFIX: the attach signal
-import { mwFpPrefGeneration } from './mwFpPref.js';                  // MWFIX: the toggle signal
 import { worldAabb, rayAabb } from '../player/activate.js';
 import { SOUND } from '../systems/soundClips.js';
 import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSound
@@ -45,42 +40,6 @@ import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSou
  * }
  */
 export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, say = () => {}, spellArmed = () => false, bindWorn = true }) {
-  // MWFIX: the view is REBUILT when its inputs change. It used to be a
-  // one-shot at construction, so attaching Morrowind data to a running
-  // game - or toggling the 3D preference beside the attach - did
-  // nothing at all until a page reload. That is the whole of the bug
-  // report's "after uploading does not work"; the archives were fine.
-  //
-  // Both inputs publish a monotonic generation, so the poll is an
-  // integer compare per frame and the rebuild happens only on a real
-  // change. One build at a time (`mwBuilding`), because the load is
-  // async and a second press must not race the first.
-  let mwView = null;
-  let mwBuilding = false;
-  let mwSeen = `${morrowindDataGeneration()}|${mwFpPrefGeneration()}`;
-  const buildMwView = () => {
-    if (mwBuilding) return;
-    mwBuilding = true;
-    createMwFpView(renderer, entity)
-      .then((v) => { mwView = v; })
-      .catch((e) => console.warn('mwfp:', e.message))
-      .finally(() => { mwBuilding = false; });
-  };
-  const mwRecheck = () => {
-    const now = `${morrowindDataGeneration()}|${mwFpPrefGeneration()}`;
-    if (now === mwSeen) return;
-    mwSeen = now;
-    // MWAUDIT: HAND THE OLD ONE BACK before dropping it. MWFIX made
-    // this the first code in the port that discards a live MW view,
-    // and the view holds real GL - a texture per material, a VAO and
-    // four buffers per batch, and the stream texture on the GAME's own
-    // context. Dropping the reference alone would leak all of it once
-    // per attach and once per toggle.
-    mwView?.dispose?.();
-    mwView = null;   // a rebuild that fails leaves the SPRITE path, never a half-built rig
-    buildMwView();
-  };
-  buildMwView();
   const playerWeapon = new PlayerWeapon({});
   // AUDIT 17e F17 / THE FOUR HOSTS RULE: U8h bound the worn weapon in
   // the two EXTERIOR hosts by hand, so the interior host (which owns
@@ -194,10 +153,6 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // swing sound at the HIT FRAME of a swing that hit no enemy
       // (WeaponManager.cs:1059 else-arm) and at bow frame 4 (:376-380),
       // both of which ride the machine's events at the hosts now.
-      mwRecheck();   // MWFIX: an attach or a toggle mid-session lands here
-      if (mwView && mwView.active() && !paralyzed) {
-        mwView.update(dt, weaponTypeForItem(playerWeapon.weapon), playerWeapon.machine.state);
-      }
       return paralyzed ? [] : playerWeapon.update(dt);
     },
     /** The overlay draw, LAST in the host's frame (composites over the
@@ -206,10 +161,6 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       bowArrowGuard();
       if (paralyzed || !shown()) return;
       const c = cv();
-      if (mwView && mwView.active()) {
-        mwView.draw(c, weaponTypeForItem(playerWeapon.weapon));
-        return;
-      }
       const art = c && artFor(playerWeapon.weapon);
       if (art) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame);
     },

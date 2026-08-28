@@ -29,8 +29,6 @@ import { effectiveSettings, setValue, saveSettings, resetToDefaults, tierOf, DEF
 import { getPref, setPref, isOpen, setOpen } from '../systems/uiPrefs.js';
 import { replacementCount } from '../systems/musicReplacement.js';   // M-EXT: the row reports what the pick covers
 import { textureReplacementCount } from '../systems/textureReplacement.js';   // M-TEX: and the texture half
-import { morrowindDataCount } from '../scenes/dataSource.js';   // MW-IMPORT: and the third domain's
-import { mwFpPreference, setMwFpPreference } from '../combat/mwFpPref.js';   // MW-IMPORT: the 3D-viewmodel toggle lives beside the attach
 import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES } from '../systems/uiSkin.js';
 import { measureText, drawText } from './text.js';
 import { drawRect, shadowText } from './nativePanel.js';
@@ -405,8 +403,6 @@ export class SettingsWindow {
       lines.push('');
       lines.push(`Music files supplied: ${replacementCount()}`);
       lines.push(`Texture files supplied: ${textureReplacementCount()}`);
-      lines.push(`Morrowind archives attached: ${morrowindDataCount()}`);
-      lines.push(`3D first-person (with Morrowind data): ${mwFpPreference() ? 'ON' : 'off'}`);
       lines.push('A Daggerfall Unity music pack works AS-IS - its');
       lines.push('song_*.ogg names are already the right ones.');
       lines.push('Otherwise name files after the song they replace,');
@@ -415,13 +411,9 @@ export class SettingsWindow {
         title: labelOf(key), key, lines,
         buttons: [{ id: 'pick', label: 'Enter - Music' },
           ...(this.onPickTextures ? [{ id: 'pickTex', label: 'T - Textures' }] : []),
-          ...(this.onPickMorrowind ? [{ id: 'pickMw', label: 'M - Morrowind' }] : []),
-          ...(this.onPickMorrowind ? [{ id: 'fpToggle', label: 'F - 3D toggle' }] : []),
           { id: 'close', label: 'Esc - Close' }],
         onYes: () => this.onPickMusic(),
         onAlt: this.onPickTextures ? () => this.onPickTextures() : null,
-        onAlt2: this.onPickMorrowind ? () => this.onPickMorrowind() : null,
-        onAlt3: this.onPickMorrowind ? () => setMwFpPreference(!mwFpPreference()) : null,
       };
     }
     return { title: labelOf(key), key, lines, buttons: [{ id: 'close', label: 'Close' }] };
@@ -480,20 +472,6 @@ export class SettingsWindow {
       // clickable and doing nothing.
       if (code === 'KeyT' && this.dialog.onAlt) {
         const alt = this.dialog.onAlt;
-        this.dialog = null;
-        alt();
-        this._click();
-        return;
-      }
-      if (code === 'KeyM' && this.dialog.onAlt2) {
-        const alt = this.dialog.onAlt2;
-        this.dialog = null;
-        alt();
-        this._click();
-        return;
-      }
-      if (code === 'KeyF' && this.dialog.onAlt3) {
-        const alt = this.dialog.onAlt3;
         this.dialog = null;
         alt();
         this._click();
@@ -595,8 +573,6 @@ export class SettingsWindow {
         // button (or the field around them) still declines.
         const b = d.buttons[i];
         if (b && b.id === 'pickTex' && d.onAlt) d.onAlt();
-        else if (b && b.id === 'pickMw' && d.onAlt2) d.onAlt2();
-        else if (b && b.id === 'fpToggle' && d.onAlt3) d.onAlt3();
       }
       this._click();
       return true;
