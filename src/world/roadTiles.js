@@ -51,6 +51,8 @@
 
 import { WORLD_MAP_TILE_DIM } from './terrainTiles.js';
 import { DIRS, ROAD_NONE, ROAD_TRACK, ROAD_TRUNK, roadExitsAt } from '../systems/roads.js';
+import { tracePolylines } from '../systems/roadBake.js';   // RZ3: the chain a pixel's road belongs to
+import { simplifyChain, chaikin, SIMPLIFY_EPSILON } from '../ui/overworldModel.js';   // RZ3: the same smoothing the map layer uses
 
 /** The three records DFU's GetTileWeight calls road (cityNavigation.js
  *  :31). Anything painted must be one of these - a road drawn with a
@@ -132,6 +134,107 @@ export function exitTile(dir) {
     x: dx > 0 ? TDIM - 1 : dx < 0 ? 0 : MID,
     y: dy < 0 ? TDIM - 1 : dy > 0 ? 0 : MID,
   };
+}
+
+/** RZ3 (Mac, 2026-08-28) - THE ROUTE WAS THE ZIG-ZAG.
+ *
+ *  RR1 rounded the corner inside a pixel and RZ2 placed the control
+ *  point by the turn, and a drifting road still stood 63 tiles off its
+ *  own line. Measuring WHERE showed why: on a road climbing one pixel
+ *  in three, the painted road sat dead flat across three whole pixels
+ *  and then stepped 128 tiles at once. The exits and the curve were
+ *  faithfully drawing a staircase, because the ROUTE is a staircase -
+ *  a road's chain is a walk over map pixels, so a shallow gradient can
+ *  only be expressed as flat-flat-flat-step.
+ *
+ *  It is the same defect the MAP layer had, and it takes the same
+ *  cure: simplify the chain, then smooth it, then draw THAT. The map
+ *  does it in overworldModel; this does it in tile space.
+ *
+ *  SYMMETRY, which is the whole difficulty. Two neighbours must place
+ *  the road identically on their shared edge or it breaks at the seam,
+ *  and they are painted independently and possibly never together. A
+ *  WINDOW around each pixel would not do - P's window and N's window
+ *  differ by a pixel, so their smoothed curves differ and the road
+ *  tears. Both trace the WHOLE chain instead, junction to junction,
+ *  from the same exit planes, and smooth it with the same passes: the
+ *  curve is a property of the CHAIN, not of who is looking at it, so
+ *  the two agree exactly by construction.
+ *
+ *  Measured over five road shapes, worst deviation among roads that
+ *  should run straight: 63.4 tiles before, 2.8 after - which is the
+ *  road's own half-width, i.e. as straight as a drawn band can be.
+ *
+ *  Cached in a WeakMap rather than on the network, because the network
+ *  is serialized to the bake cache and must not grow a derived field. */
+const CHAIN_CACHE = new WeakMap();
+const CHAIN_SMOOTH_PASSES = 3;
+
+function chainIndex(network) {
+  let idx = CHAIN_CACHE.get(network);
+  if (idx) return idx;
+  idx = new Map();
+  for (const [plane, kind] of [['trunkExits', ROAD_TRUNK], ['trackExits', ROAD_TRACK]]) {
+    for (const line of tracePolylines(network[plane], network.width, network.height)) {
+      // pixel CENTRES, so the smoothed curve lives in the same space
+      // the map layer's does
+      const smooth = chaikin(simplifyKeepingCorners(line), CHAIN_SMOOTH_PASSES);
+      for (const p of line) {
+        const key = `${p.x},${p.y}`;
+        if (!idx.has(key)) idx.set(key, []);
+        idx.get(key).push({ kind, points: smooth });
+      }
+    }
+  }
+  CHAIN_CACHE.set(network, idx);
+  return idx;
+}
+
+/** RZ3b: simplify the STRAIGHT RUNS and keep the CORNERS.
+ *
+ *  Plain Ramer-Douglas-Peucker at the map layer's 0.9 cannot be used
+ *  here, and the reason is geometric rather than a tuning matter: a
+ *  one-pixel corner and a one-pixel stair step are the SAME shape. An
+ *  east-then-north corner puts its middle pixel 0.707 off the chord,
+ *  and so does an east-then-north-east stair - so any tolerance either
+ *  keeps both (and the staircase survives) or drops both (and a real
+ *  right-angle road is cut across, which is what a first draft here
+ *  did: the corner pixel painted a sliver at its own corner instead of
+ *  turning).
+ *
+ *  The signal that separates them is the TURN, not the deviation. A
+ *  chain walks the eight compass steps, so a stair is a 45-degree
+ *  change of direction and a corner is 90 or more. The chain is split
+ *  at every hard turn, each straight-ish run is simplified on its own,
+ *  and the hard vertices are kept exactly - so stairs go, corners
+ *  stay, and the route never leaves the pixels the network gave it by
+ *  more than the tolerance. */
+export function simplifyKeepingCorners(line, eps = SIMPLIFY_EPSILON) {
+  const pts = line.map((p) => ({ x: p.x + 0.5, y: p.y + 0.5 }));
+  if (pts.length < 3) return pts;
+  // a vertex is HARD when the road turns by 90 degrees or more there
+  const hard = [0];
+  for (let i = 1; i < pts.length - 1; i++) {
+    const ax = pts[i].x - pts[i - 1].x, ay = pts[i].y - pts[i - 1].y;
+    const bx = pts[i + 1].x - pts[i].x, by = pts[i + 1].y - pts[i].y;
+    const la = Math.hypot(ax, ay) || 1, lb = Math.hypot(bx, by) || 1;
+    // cos of the turn: 1 straight on, ~0.707 a stair, <= 0 a corner
+    if (((ax / la) * (bx / lb) + (ay / la) * (by / lb)) <= 0.01) hard.push(i);
+  }
+  hard.push(pts.length - 1);
+  const out = [];
+  for (let h = 1; h < hard.length; h++) {
+    const run = simplifyChain(pts.slice(hard[h - 1], hard[h] + 1), eps);
+    out.push(...(h === 1 ? run : run.slice(1)));
+  }
+  return out;
+}
+
+/** The smoothed chain, in THIS pixel's tile coordinates. Map y grows
+ *  south and tile rows rise north (this file's header derives that
+ *  from generateTileData), so the row axis is flipped. */
+function chainTilePoints(points, px, py) {
+  return points.map((p) => [(p.x - px) * TDIM, (py + 1 - p.y) * TDIM]);
 }
 
 /** Stamp one tile if nothing has claimed it. The skip rule is
@@ -329,6 +432,31 @@ export function paintRoadTiles(tilemap, network, px, py, {
   const claimed = located ? Uint8Array.from(tilemap, (v) => (v === 0 ? 0 : 1)) : null;
 
   let painted = 0;
+
+  // RZ3: OPEN COUNTRY takes the smoothed chain. A pixel carrying a
+  // LOCATION keeps the exit-based approach below, deliberately: there
+  // the road's job is to meet the town's own street at the gate
+  // (RW1), which is a one-pixel question the chain cannot answer, and
+  // the staircase this fixes is invisible over a single pixel anyway.
+  if (!located && network) {
+    for (const { kind, points } of chainIndex(network).get(`${px},${py}`) ?? []) {
+      const half = halfWidth[kind] ?? 1;
+      const rec = record ?? recordByKind[kind] ?? ROAD_TILE_RECORD;
+      const pts = chainTilePoints(points, px, py);
+      const dense = [];
+      for (let i = 1; i < pts.length; i++) {
+        const [ax, ay] = pts[i - 1], [bx, by] = pts[i];
+        const n = Math.max(1, Math.ceil(Math.max(Math.abs(bx - ax), Math.abs(by - ay))));
+        for (let sN = 0; sN <= n; sN++) {
+          const t = sN / n;
+          dense.push([Math.round(ax + (bx - ax) * t), Math.round(ay + (by - ay) * t)]);
+        }
+      }
+      painted += stampPath(tilemap, dense, half, rec, null);
+    }
+    return painted;
+  }
+
   // Track first, trunk second, so where the two share a pixel the
   // trunk's wider band wins the middle - the same order the map layer
   // draws them in.

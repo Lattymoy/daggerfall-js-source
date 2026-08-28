@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { createNetwork, linkPixels, ROAD_TRACK, ROAD_TRUNK, networkHasAnyRoad } from '../src/systems/roads.js';
 import { loadOrBakeRoadsAsync, serializeRoads } from '../src/systems/roadBake.js';
-import { paintRoadTiles, ROAD_TILE_HALF_WIDTH, ROAD_TILE_RECORDS, isRoadTile, throughControl } from '../src/world/roadTiles.js';
+import { paintRoadTiles, ROAD_TILE_HALF_WIDTH, ROAD_TILE_RECORDS, isRoadTile, throughControl, simplifyKeepingCorners } from '../src/world/roadTiles.js';
 import { roadPoints, chaikin, simplifyChain, reliefPoint, sampleHeightByte, SIMPLIFY_EPSILON } from '../src/ui/overworldModel.js';
 import { ROAD_TILE_RECORD_BY_KIND, ROAD_TILE_RECORD } from '../src/world/roadTiles.js';
 import { pickFootstepSet, FOOTSTEP } from '../src/systems/footsteps.js';
@@ -647,4 +647,130 @@ test('RZ1: the tolerance sits just under one pixel, for a stated reason', () => 
   assert.ok(SIMPLIFY_EPSILON < 1, 'and keeps anything that bends by a whole pixel');
   // a chain too short to simplify comes back untouched
   assert.deepEqual(simplifyChain([{ x: 1, y: 1 }, { x: 2, y: 2 }]), [{ x: 1, y: 1 }, { x: 2, y: 2 }]);
+});
+
+
+// ── RZ3: the ROUTE was the zig-zag ───────────────────────────────
+/** Stitch a chain of map pixels the way the streamed world lays them -
+ *  each painted on its own, which is the only way a seam defect shows. */
+function stitchChain(chain, plane = 'trunkExits') {
+  const xs = [...new Set(chain.map((c) => c[0]))].sort((a, b) => a - b);
+  const ys = [...new Set(chain.map((c) => c[1]))].sort((a, b) => a - b);
+  const net = createNetwork(32, 32);
+  for (let i = 1; i < chain.length; i++) {
+    linkPixels(net[plane], 32, chain[i - 1][0], chain[i - 1][1], chain[i][0], chain[i][1]);
+  }
+  const W = xs.length * T, H = ys.length * T;
+  const big = new Uint8Array(W * H);
+  for (let j = 0; j < ys.length; j++) {
+    for (let i = 0; i < xs.length; i++) {
+      const tm = new Uint8Array(T * T);
+      paintRoadTiles(tm, net, xs[i], ys[j]);
+      for (let y = 0; y < T; y++) {
+        for (let x = 0; x < T; x++) big[(i * T + x) + ((j * T) + (T - 1 - y)) * W] = tm[x + y * T];
+      }
+    }
+  }
+  return { big, W, H };
+}
+function deviation({ big, W, H }) {
+  const pts = [];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (big[x + y * W]) pts.push([x, y]);
+  let a = pts[0], b = pts[0];
+  for (const p of pts) { if (p[0] < a[0]) a = p; if (p[0] > b[0]) b = p; }
+  const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy) || 1;
+  let max = 0;
+  for (const p of pts) {
+    const d = Math.abs(dy * p[0] - dx * p[1] + b[0] * a[1] - b[1] * a[0]) / len;
+    if (d > max) max = d;
+  }
+  const road = (x, y) => x >= 0 && y >= 0 && x < W && y < H && big[x + y * W] !== 0;
+  let cells = 0, orth = 0;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (!road(x, y)) continue;
+      cells++;
+      if (road(x - 1, y) || road(x + 1, y) || road(x, y - 1) || road(x, y + 1)) orth++;
+    }
+  }
+  return { max, connected: orth === cells };
+}
+
+test('RZ3: a road on a shallow gradient runs STRAIGHT, not flat-flat-step', () => {
+  // The measurement that found this: on a road climbing one pixel in
+  // three, the painted road sat dead flat across three whole pixels
+  // and then stepped 128 tiles at once - 63.4 tiles off its own line.
+  // The exits and the curve were faithfully drawing a staircase,
+  // because the ROUTE is a staircase at pixel resolution.
+  for (const [name, chain] of [
+    ['1 in 2', [[2, 10], [3, 10], [4, 9], [5, 9], [6, 8]]],
+    ['1 in 3', [[2, 11], [3, 11], [4, 11], [5, 10], [6, 10], [7, 10], [8, 9]]],
+    ['1 in 4', [[2, 10], [3, 10], [4, 10], [5, 10], [6, 9], [7, 9], [8, 9], [9, 9]]],
+  ]) {
+    const r = deviation(stitchChain(chain));
+    assert.ok(r.max < 8, `a ${name} gradient stands ${r.max.toFixed(1)} tiles off its line`);
+    assert.equal(r.connected, true, `and the ${name} road is unbroken across every seam`);
+  }
+  // ...and the shapes that were already right have not moved
+  assert.ok(deviation(stitchChain([[2, 8], [3, 8], [4, 8], [5, 8], [6, 8]])).max < 4, 'straight');
+  assert.ok(deviation(stitchChain([[2, 10], [3, 9], [4, 8], [5, 7], [6, 6]])).max < 5, 'diagonal');
+});
+
+test('RZ3: a stair is dropped and a CORNER is kept - the turn tells them apart', () => {
+  // A one-pixel corner and a one-pixel stair are the SAME shape: both
+  // stand 0.707 off their chord, so no RDP tolerance can separate them
+  // - it either keeps both and the staircase survives, or drops both
+  // and a right-angle road is cut across. A first draft here did the
+  // latter: the corner pixel painted a sliver at its own corner
+  // instead of turning. The TURN separates them - a stair is 45
+  // degrees, a corner is 90 or more.
+  const stair = simplifyKeepingCorners([{ x: 0, y: 2 }, { x: 1, y: 2 }, { x: 2, y: 1 }, { x: 3, y: 1 }]);
+  assert.ok(stair.length < 4, 'the stair steps are gone');
+
+  const corner = simplifyKeepingCorners([{ x: 0, y: 2 }, { x: 1, y: 2 }, { x: 1, y: 1 }]);
+  assert.equal(corner.length, 3, 'a one-pixel right angle survives intact');
+  assert.deepEqual(corner[1], { x: 1.5, y: 2.5 }, 'and it is the corner pixel itself that is kept');
+
+  // a chain too short to simplify comes back as its own centres
+  assert.deepEqual(simplifyKeepingCorners([{ x: 0, y: 0 }, { x: 1, y: 0 }]),
+    [{ x: 0.5, y: 0.5 }, { x: 1.5, y: 0.5 }]);
+});
+
+test('RZ3: both neighbours draw the SAME road on their shared seam', () => {
+  // Symmetry is the whole difficulty: the two pixels are painted
+  // independently and possibly never together, so they must place the
+  // road identically or it tears. They trace the WHOLE chain, junction
+  // to junction, from the same exit planes - the curve belongs to the
+  // CHAIN, not to whoever is looking at it.
+  const chain = [[2, 11], [3, 11], [4, 11], [5, 10], [6, 10]];
+  const net = createNetwork(32, 32);
+  for (let i = 1; i < chain.length; i++) {
+    linkPixels(net.trunkExits, 32, chain[i - 1][0], chain[i - 1][1], chain[i][0], chain[i][1]);
+  }
+  // pixels (3,11) and (4,11) share a vertical seam
+  const left = new Uint8Array(T * T), right = new Uint8Array(T * T);
+  paintRoadTiles(left, net, 3, 11);
+  paintRoadTiles(right, net, 4, 11);
+  const leftEdge = [], rightEdge = [];
+  for (let y = 0; y < T; y++) {
+    if (left[(T - 1) + y * T]) leftEdge.push(y);
+    if (right[0 + y * T]) rightEdge.push(y);
+  }
+  assert.ok(leftEdge.length > 0 && rightEdge.length > 0, 'both pixels reach the seam');
+  // they must OVERLAP, or the road tears at the boundary
+  assert.ok(leftEdge.some((y) => rightEdge.includes(y)),
+    `the seam tears: left rows ${leftEdge} vs right rows ${rightEdge}`);
+});
+
+test('RZ3: the chain cache does not touch the network the bake serializes', () => {
+  // The artifact is serialized to the cache; a derived field grafted
+  // onto it would ride along or break the envelope. A WeakMap keeps
+  // the index off the object entirely.
+  const src_ = src('src/world/roadTiles.js');
+  assert.match(src_, /const CHAIN_CACHE = new WeakMap\(\);/);
+  assert.equal(/network\.__chains/.test(src_), false, 'nothing is written onto the network');
+  const net = createNetwork(8, 8);
+  linkPixels(net.trunkExits, 8, 2, 2, 3, 2);
+  paintRoadTiles(new Uint8Array(T * T), net, 2, 2);
+  assert.deepEqual(Object.keys(net).filter((k) => k.startsWith('_')), [], 'the network grew no fields');
 });
