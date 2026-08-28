@@ -80,7 +80,7 @@ import {
   planStore, planTake, applyTransfer, planDropGold, WAGON_KG_LIMIT,
 } from '../systems/itemTransfer.js';
 import {
-  openState, remoteTarget, planWagonToggle, hasCart,
+  openState, remoteTarget, planWagonToggle, hasCart, hasHorse, transportItem,
 } from '../systems/inventorySession.js';
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all
 import { liveStat } from '../systems/statMods.js';
@@ -369,6 +369,17 @@ let session = { usingWagon: false, allowDungeonWagonAccess: false, chooseOne: nu
 let dropped = [];
 let wagonLocal = [];
 let remote = null;
+/* PX20b (Mac: "when looting items, only open the loot tooltip, not the
+   entire inventory window"). DFU opens the whole parchment because DFU
+   has ONE window and both lists live in it; PX19c already split the
+   remote into its own smaller frame, which makes a lighter answer
+   possible: opening a CONTAINER shows that frame alone. The pack is a
+   press away and everything behind the glass is unchanged - the
+   transfer ladder, the remote model, the take/stow arms, the wagon,
+   the gold popup - because this is which frames are DRAWN, not what
+   the window does. Opening the pack from a key (F6) or the world opens
+   both, exactly as before. */
+let packOpen = true;
 let goldEntry = null;   // the drop-gold field's live text, or null
 let onExit = () => {};
 let keyHandler = null;
@@ -676,43 +687,56 @@ function dollPanel(url) {
  *  slapped behind a grid - it OWNS the center column, framed, with a
  *  home whether or not its art can draw (an empty frame reads
  *  Avatar, so the composition never collapses to a pile of tiles).
- *  HEAD sits above it, CHEST below it - on the body - and the
- *  families flank it symmetrically, five rows a side, the whole
- *  region SIZED TO FIT its space: no scrolling character sheet.
- *      Cloaks   HEAD    Neck
- *      Arms    [DOLL]   Rings
- *      Hands   [DOLL]   Tokens
- *      R-Wpn   [DOLL]   L-Wpn
- *      Legs    CHEST    Feet         */
+ *  PX20a (Mac: "spread out and organize the center ... enlarge the
+ *  paper sprite"): the doll's cell was three of five rows in the
+ *  middle column - LANDSCAPE, and a paperdoll is a standing figure.
+ *  HEAD and CHEST moved to the flanks, so the doll takes the WHOLE
+ *  centre column, six rows tall, and the sprite is portrait at last.
+ *  The two sides now say something: what you WEAR down the left, top
+ *  to toe, and what you CARRY (and stand in) down the right.
+ *      Head    [DOLL]   Rings
+ *      Neck    [DOLL]   Tokens
+ *      Cloaks  [DOLL]   R-Wpn
+ *      Chest   [DOLL]   L-Wpn
+ *      Arms    [DOLL]   Legs
+ *      Hands   [DOLL]   Feet        */
 const WORN_FAMILIES = Object.freeze([
-  { id: 'cloaks', label: 'Cloaks', area: '1 / 1', slots: ['Cloak'] },
-  { id: 'head', label: 'Head', area: '1 / 2', slots: ['Head'] },
-  { id: 'neck', label: 'Neck', area: '1 / 3', slots: ['Amulet'] },
-  { id: 'arms', label: 'Arms', area: '2 / 1', slots: ['Right arm', 'Left arm', 'Bracer'] },
-  { id: 'rings', label: 'Rings', area: '2 / 3', slots: ['Ring'] },
-  { id: 'hands', label: 'Hands', area: '3 / 1', slots: ['Gloves', 'Bracelet'] },
-  { id: 'tokens', label: 'Tokens', area: '3 / 3', slots: ['Mark', 'Crystal', 'Unnamed'] },
-  { id: 'rhand', label: 'R\u00b7Weapon', area: '4 / 1', slots: ['Right hand'] },
+  { id: 'head', label: 'Head', area: '1 / 1', slots: ['Head'] },
+  { id: 'neck', label: 'Neck', area: '2 / 1', slots: ['Amulet'] },
+  { id: 'cloaks', label: 'Cloaks', area: '3 / 1', slots: ['Cloak'] },
+  { id: 'chest', label: 'Chest', area: '4 / 1', slots: ['Chest, armour', 'Chest, clothes'] },
+  { id: 'arms', label: 'Arms', area: '5 / 1', slots: ['Right arm', 'Left arm', 'Bracer'] },
+  { id: 'hands', label: 'Hands', area: '6 / 1', slots: ['Gloves', 'Bracelet'] },
+  { id: 'rings', label: 'Rings', area: '1 / 3', slots: ['Ring'] },
+  { id: 'tokens', label: 'Tokens', area: '2 / 3', slots: ['Mark', 'Crystal', 'Unnamed'] },
+  { id: 'rhand', label: 'R\u00b7Weapon', area: '3 / 3', slots: ['Right hand'] },
   { id: 'lhand', label: 'L\u00b7Weapon', area: '4 / 3', slots: ['Left hand'] },
-  { id: 'legs', label: 'Legs', area: '5 / 1', slots: ['Legs, armour', 'Legs, clothes'] },
-  { id: 'chest', label: 'Chest', area: '5 / 2', slots: ['Chest, armour', 'Chest, clothes'] },
-  { id: 'feet', label: 'Feet', area: '5 / 3', slots: ['Feet'] },
+  { id: 'legs', label: 'Legs', area: '5 / 3', slots: ['Legs, armour', 'Legs, clothes'] },
+  { id: 'feet', label: 'Feet', area: '6 / 3', slots: ['Feet'] },
 ]);
-const DOLL_AREA = '2 / 2 / span 3 / auto';
+const DOLL_AREA = '1 / 2 / span 6 / auto';
 function equippedList() {
+  // PX20c (Mac: "move the name outside of the space and to the top
+  // bar, remove the slots filled subtext... utilize the entire area").
+  // PX19h put the character's NAME over the map as a plate, and PX19g
+  // put a count under it; between them they took ~50px off the top of
+  // the region for two things that are not the region. The name is a
+  // WINDOW title now, beside 'Pack' in the bar that already names the
+  // window; the count is gone, because 0 of 27 slots filled is a
+  // number nobody reads and the tiles say it by being empty. The whole
+  // area is the map's.
   const wrap = el('section', 'equipped');
-  const head = el('div', 'equippedhead');
-  // PX19h: the region is the CHARACTER'S - it carries their NAME,
-  // the reference's own name plate; 'Worn' only when no one is named.
-  head.append(el('h3', null, deps.entity?.name || 'Worn'));
-  head.append(el('p', 'meta', `${worn.filled} of ${worn.total} slots filled`));
-  wrap.append(head);
   const map = el('div', 'wornmap');
   // PX19g: the doll's FRAME is part of the composition and is always
   // there - art inside it when the paperdoll can draw, a quiet
   // Avatar plaque when it cannot. Slapped-behind is over.
-  const dollUrl = paperDollDataUrl(paperDollPixels(), { scale: 3 });
-  const dollFrame = el('div', 'wornmap-doll');
+  // PX20a: 4x, not 3x - the cell is half again as tall as it was, and
+  // a 3x sprite scaled up by object-fit is a blur where every other
+  // pixel on this window is exact.
+  const dollUrl = paperDollDataUrl(paperDollPixels(), { scale: 4 });
+  // PX20a: the frame belongs to the PLACEHOLDER, not to the sprite -
+  // with art the figure stands on the window's own glass.
+  const dollFrame = el('div', `wornmap-doll${dollUrl ? ' hasart' : ' noart'}`);
   dollFrame.style.gridArea = DOLL_AREA;
   if (dollUrl) {
     const img = document.createElement('img');
@@ -744,7 +768,9 @@ function equippedList() {
       const d = el('div', 'wornrow wornempty');
       d.title = fam.slots.join(' \u00b7 ');
       d.style.gridArea = fam.area;
-      d.append(el('span', 'worntile', '\u25c7'), el('span', 'wornslot', fam.label), el('span', 'wornname wornempty', '\u2014'));
+      const txt = el('span', 'worntext');
+      txt.append(el('span', 'wornslot', fam.label), el('span', 'wornname wornempty', '\u2014'));
+      d.append(el('span', 'worntile', '\u25c7'), txt);
       map.append(d);
       continue;
     }
@@ -754,8 +780,9 @@ function equippedList() {
     b.title = filled.map((r) => `${r.label}: ${itemLine(r.item, deps.entity).name}`).join('\n');
     b.style.gridArea = fam.area;
     b.append(itemTile(line));
-    b.append(el('span', 'wornslot', fam.label));
-    b.append(el('span', 'wornname', line.name));
+    const txt = el('span', 'worntext');
+    txt.append(el('span', 'wornslot', fam.label), el('span', 'wornname', line.name));
+    b.append(txt);
     if (filled.length > 1) b.append(el('span', 'worncount', String(filled.length)));
     // SELECTS, never undresses (the mis-click law) - and a click on an
     // already-picked family CYCLES to its next piece and wraps, so a
@@ -776,6 +803,53 @@ function equippedList() {
   return wrap;
 }
 
+/** PX21a (Mac: "we need to find a way to fit in the mounts/wagon in
+ *  the inventory"). A horse and a cart are ItemGroups.Transportation,
+ *  and filterByTab has no arm for them - they fall through into the
+ *  fourth tab with the shirts, which is DFU's own behaviour and is why
+ *  a player who buys a horse cannot find it. They are not WORN and not
+ *  really CARRIED: they are what you TRAVEL with, so they get their own
+ *  strip under the map, beside the wear-left/carry-right map that has
+ *  no room for a third idea.
+ *
+ *  The CART plaque is also the wagon's door - the one the loot frame's
+ *  Wagon button opens - so the thing and the place it opens are the
+ *  same control. It refuses the way the session refuses (no cart, or a
+ *  dungeon with the exit too far), because the refusal is
+ *  inventorySession's law and this is a button, not a second rule. */
+const TRANSPORT = Object.freeze([
+  { id: 'mount', label: 'Mount', owned: hasHorse, empty: 'On foot' },
+  { id: 'cart', label: 'Cart', owned: hasCart, empty: 'None' },
+]);
+
+function transportStrip() {
+  const items = deps.items?.() ?? [];
+  const strip = el('div', 'transport');
+  for (const t of TRANSPORT) {
+    // U58's law, honoured: the SESSION answers "do you have one" and
+    // hands back the item to draw. No template index is read here.
+    const owned = t.owned(items) ? transportItem(items, t.id) : null;
+    const isCart = t.id === 'cart';
+    // A plaque that opens something is a BUTTON; one that only reports
+    // is not - the empty-family law from the worn map, one strip down.
+    const node = el(isCart && owned ? 'button' : 'div',
+      `tplaque${owned ? '' : ' tempty'}${isCart && session.usingWagon ? ' on' : ''}`);
+    const line = owned ? itemLine(owned, deps.entity) : null;
+    node.append(line ? itemTile(line) : el('span', 'worntile', '\u25c7'));
+    const txt = el('span', 'worntext');
+    txt.append(el('span', 'wornslot', t.label),
+      el('span', `wornname${owned ? '' : ' wornempty'}`, line ? line.name : t.empty));
+    node.append(txt);
+    if (isCart && owned) {
+      node.append(el('span', 'tgo', session.usingWagon ? 'Close' : 'Open'));
+      node.onclick = toggleWagon;
+      node.title = session.usingWagon ? 'Leave the wagon' : 'Open the wagon';
+    }
+    strip.append(node);
+  }
+  return strip;
+}
+
 function characterCol() {
   // PX19d: the doll lives INSIDE the worn map now (behind the tiles);
   // stacking figurePanel above it would draw the avatar twice - or
@@ -783,6 +857,7 @@ function characterCol() {
   // twice. The map alone is the figure.
   const col2 = el('section', 'charcol');
   col2.append(equippedList());
+  col2.append(transportStrip());
   return col2;
 }
 
@@ -893,6 +968,14 @@ function remoteCol() {
   const g = el('button', 'act', 'Gold');
   g.onclick = () => { goldEntry = goldEntry == null ? '0' : null; notice = null; render(); };
   acts.append(g);
+  // PX20b: the way back to the whole pack, from the loot-only frame.
+  // It appears only when the pack is HIDDEN - a button that opens what
+  // is already open is the drawn-door-opening-nothing bug (PX14's law).
+  if (!packOpen) {
+    const b = el('button', 'act', 'Pack');
+    b.onclick = () => { packOpen = true; picked = null; render(); };
+    acts.append(b);
+  }
   head.append(acts);
   col.append(head);
   if (goldEntry != null) col.append(goldField());
@@ -1099,10 +1182,16 @@ function render() {
     // beneath.
     if (arriving) requestAnimationFrame(() => requestAnimationFrame(() => shell.classList.add('on')));
     const win = el('div', 'pack-win');
+    if (packOpen) {
     for (const c of ['tl', 'tr', 'bl', 'br']) win.append(el('span', `px-gem px-corner px-${c}`));
     const head = el('header', 'pack-id');
     const who = el('div');
-    who.append(el('h2', null, 'Pack'));
+    // PX20c: PACK, and whose. The name rides the title bar rather than
+    // standing on the composition it describes.
+    const title = el('h2', null, 'Pack');
+    const name = deps.entity?.name;
+    if (name) title.append(el('span', 'pack-who', name));
+    who.append(title);
     head.append(who);
     const close = el('button', 'act', 'Close');
     close.onclick = () => onExit();
@@ -1143,6 +1232,10 @@ function render() {
     // lands, clamped to the window), dismissed by a click away or a
     // second click on the same thing. The PHONE keeps its bottom
     // SHEET - same component, the .packdetail phone rules' physics.
+    // PX20b: with a loot target and the pack still closed, the pack's
+    // whole frame is never BUILT - not built and hidden. A hidden
+    // window that still runs its layout is a window whose bugs you
+    // cannot see (and the tooltip would anchor into it).
     const main = el('div', 'pack-main');
     main.append(characterCol());
     const dock = el('div', 'pack-dock');
@@ -1168,18 +1261,32 @@ function render() {
     bar.append(el('span', 'packitems', plural(model.count, 'item')), carry, gold);
     win.append(bar);
     if (notice) win.append(el('p', 'sheet-notice', notice));
+    }
+
+    // The LOOT frame is built next, because with the pack closed it is
+    // the frame the tooltip anchors into and the click-away listens on.
+    const loot = (remote.kind !== 'ground' || remote.count > 0) ? el('aside', 'loot-win') : null;
+    if (loot) {
+      for (const c of ['tl', 'tr', 'bl', 'br']) loot.append(el('span', `px-gem px-corner px-${c}`));
+      loot.append(remoteCol());
+      if (!packOpen && notice) loot.append(el('p', 'sheet-notice', notice));
+    }
+    // PX20b: one FRAME owns the tooltip and the click-away - the pack
+    // when it is open, the loot window when it is alone. Without this
+    // the tip anchored into a window nobody could see.
+    const frame = packOpen ? win : (loot ?? win);
     if (picked) {
       const tip = detailCol();
       tip.classList.add('packtip');
-      win.append(tip);
+      frame.append(tip);
       // After layout: anchored beside the picked element, flipped
       // left when the right edge refuses, clamped to the frame.
       requestAnimationFrame(() => {
         const at = { worn: '.wornmap .wornrow.on', dock: '.pack-dock .itemrow.on', loot: '.loot-win .itemrow.on' }[pickedAt];
-        const on = (at && (win.querySelector(at) ?? shell.querySelector(at)))
-          ?? win.querySelector('.wornrow.on, .itemrow.on');
+        const on = (at && (frame.querySelector(at) ?? shell.querySelector(at)))
+          ?? frame.querySelector('.wornrow.on, .itemrow.on');
         if (!on || !tip.isConnected) return;
-        const w = win.getBoundingClientRect();
+        const w = frame.getBoundingClientRect();
         const r = on.getBoundingClientRect();
         const tw = tip.offsetWidth; const th = tip.offsetHeight;
         let left = r.right - w.left + 12;
@@ -1192,18 +1299,13 @@ function render() {
       });
     }
     // A click that lands on nothing interactive puts the tooltip away.
-    win.addEventListener('click', (e) => {
+    frame.addEventListener('click', (e) => {
       if (!picked) return;
       if (e.target.closest('.packtip') || e.target.closest('button')) return;
       picked = null; render();
     });
-    shell.append(win);
-    if (remote.kind !== 'ground' || remote.count > 0) {
-      const loot = el('aside', 'loot-win');
-      for (const c of ['tl', 'tr', 'bl', 'br']) loot.append(el('span', `px-gem px-corner px-${c}`));
-      loot.append(remoteCol());
-      shell.append(loot);
-    }
+    if (packOpen) shell.append(win);
+    if (loot) shell.append(loot);
     host.append(shell);
   });
 }
@@ -1236,7 +1338,10 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   onExit = d.onExit ?? (() => {});
   tab = TABS[0];
   picked = null;
-  side = 'local';
+  // PX20b: a LOOT target opens its own frame alone; every other way in
+  // (F6, the world's inventory door) opens the pack as it always did.
+  packOpen = !d.loot;
+  side = d.loot ? 'remote' : 'local';
   notice = null;
   goldEntry = null;
   repaints = 0;

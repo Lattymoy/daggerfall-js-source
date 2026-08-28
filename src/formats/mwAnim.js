@@ -64,6 +64,32 @@ export function parseAnimGroups(textKeys) {
   return groups;
 }
 
+/**
+ * MWAUDIT: THE CASE-INSENSITIVE DOOR onto that map, and the reason it
+ * has to exist.
+ *
+ * parseAnimGroups above lowercases every MARKER (`m[2].toLowerCase()`)
+ * and keeps the GROUP name exactly as written - an inconsistency
+ * inside one function, and the consumer that matters looks groups up
+ * by a hard-coded capitalisation ('Idle1h', 'WeaponOneHand'). A file
+ * that writes `idle1h:` therefore resolves nothing, and a first-person
+ * rig with no group to play freezes in its bind pose. OpenMW
+ * lowercases group names on the way in for exactly this reason: real
+ * data and mods do not agree on case.
+ *
+ * The map itself stays keyed by the ORIGINAL name, because the mesh
+ * viewer is a coverage scout and must show what the file actually
+ * says. This is the lookup, not a second store.
+ */
+export function findAnimGroup(groups, name) {
+  if (!groups || !name) return null;
+  const direct = groups.get(name);
+  if (direct) return direct;
+  const want = String(name).toLowerCase();
+  for (const [key, g] of groups) if (key.toLowerCase() === want) return g;
+  return null;
+}
+
 // --- tracks ----------------------------------------------------------------
 
 function trackFromController(nif, ctrl) {

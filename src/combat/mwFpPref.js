@@ -29,7 +29,16 @@ export function mwFpPreference() {
   }
 }
 
+/** MWFIX: the same generation signal the attach carries, for the same
+ *  reason - the view reads this preference ONCE at construction, so
+ *  the toggle beside the attach was as dead as the attach was. Bumped
+ *  on every write, whether or not the store accepted it: the session
+ *  value is what the view reads back. */
+let _prefGeneration = 0;
+export const mwFpPrefGeneration = () => _prefGeneration;
+
 export function setMwFpPreference(on) {
+  _prefGeneration++;
   try {
     localStorage.setItem(PREF_KEY, on ? '1' : '0');
   } catch {

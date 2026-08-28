@@ -186,5 +186,8 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
     }
   }
 
-  return { dropPile, restorePiles, collectPixel, snapshotWorld, restoreWorld, batches, tickFlats, lootTargets, pileFor, releaseEmptied, offsetAll, _piles: piles };
+  /** PX21c: what a pile HOLDS, by the same key lootTargets emits -
+   *  read-only, for the hover plaque. */
+  const contents = (key) => piles.find((p) => `droppedLoot:${p.id}` === key && !p.dead)?.items ?? null;
+  return { contents, dropPile, restorePiles, collectPixel, snapshotWorld, restoreWorld, batches, tickFlats, lootTargets, pileFor, releaseEmptied, offsetAll, _piles: piles };
 }

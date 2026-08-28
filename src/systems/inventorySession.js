@@ -53,6 +53,25 @@ export const WAGON_REFUSAL = Object.freeze({
 export const hasCart = (items = []) =>
   (items ?? []).some((it) => it?.templateIndex === SMALL_CART_TEMPLATE);
 
+/** ItemGroups.Transportation.Horse's template index. */
+export const TRANSPORT_HORSE_TEMPLATE = 94;
+
+/** PX21a: the same question for a mount. There was no law for this
+ *  because nothing asked before - roadTravel takes `hasHorse` as an
+ *  OPTION its caller works out, and the pack had no place for a horse
+ *  at all. One home for both, so the pack, the road and anything after
+ *  them read the same answer. */
+export const hasHorse = (items = []) =>
+  (items ?? []).some((it) => it?.templateIndex === TRANSPORT_HORSE_TEMPLATE);
+
+/** The ITEM behind either answer, for a window that wants to draw it -
+ *  its name, its icon. Null when there is none. `kind` is 'mount' or
+ *  'cart', the words the UI uses; the template indices stay here. */
+export function transportItem(items = [], kind) {
+  const template = kind === 'mount' ? TRANSPORT_HORSE_TEMPLATE : SMALL_CART_TEMPLATE;
+  return (items ?? []).find((it) => it?.templateIndex === template) ?? null;
+}
+
 /**
  * What OPENING the window decides, before the player touches
  * anything. Pure: it reads the hook bag and answers, so a screen can

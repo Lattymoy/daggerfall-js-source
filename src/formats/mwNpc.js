@@ -115,3 +115,76 @@ export function assembleNpc(esm, npcId, skinIndex = null) {
 
   return { npc, race, animFile, parts, missing };
 }
+
+// ── MW7: THE FIRST-PERSON ARMS ─────────────────────────────────────
+//
+// Slice 5 built a first-person rig and slice 6 built body assembly,
+// and nothing ever joined them - so on RETAIL data the rig loaded
+// meshes\base_anim.1st.nif (Morrowind's first-person SKELETON and
+// animation carrier), found no skinned geometry inside it, and fell
+// back to the classic sprite for ever. The visible arms were never
+// anywhere near it: in Morrowind they are ordinary body parts, chosen
+// by race and sex exactly as the third-person body is, in their
+// first-person variants.
+
+/** The arm chain a first-person view shows, outermost first. There is
+ *  no chest or head in view, so the third-person slot walk would drag
+ *  in geometry that only clips the camera. */
+export const FIRST_PERSON_SLOTS = Object.freeze(['hand', 'wrist', 'forearm', 'upperarm']);
+
+/**
+ * Morrowind's first-person mesh name: the same part with `1st` before
+ * the extension - `b\B_N_Nord_M_Hand.nif` -> `b\B_N_Nord_M_Hand.1st.nif`.
+ * OpenMW performs this same insert when it dresses the first-person
+ * body, and it is why every body part ships a `.1st` twin.
+ */
+export function firstPersonModel(model) {
+  if (!model) return null;
+  const dot = model.lastIndexOf('.');
+  return dot < 0 ? `${model}.1st` : `${model.slice(0, dot)}.1st${model.slice(dot)}`;
+}
+
+/**
+ * The body parts one character's first-person arms are made of.
+ *
+ * `race` is the MORROWIND race id (lowercase, spaced - 'dark elf'),
+ * which mwRaceId below turns a Daggerfall race name into. Each part
+ * answers BOTH names: the `.1st` variant the first person wants, and
+ * the plain third-person mesh, because a caller that cannot find the
+ * former should draw the latter rather than nothing - a slightly wrong
+ * arm beats a missing one, and beats falling back to a sprite while
+ * holding perfectly good geometry.
+ *
+ * Sex-matched with the male fallback retail relies on, the same rule
+ * assembleNpc uses.
+ */
+export function firstPersonArmParts(skinIndex, race, female) {
+  const skins = skinIndex?.get(String(race).toLowerCase()) ?? new Map();
+  const out = [];
+  for (const slot of FIRST_PERSON_SLOTS) {
+    const p = MW_BODY_PARTS.indexOf(slot);
+    const pair = skins.get(p);
+    if (!pair) continue;
+    const body = (female && pair.female) || pair.male || pair.female;
+    if (!body?.model) continue;
+    out.push({
+      slot,
+      bodyId: body.id,
+      model: MESH_ROOT + firstPersonModel(body.model),
+      thirdPersonModel: MESH_ROOT + body.model,
+      attachBones: PART_BONES[slot] ?? [],
+    });
+  }
+  return out;
+}
+
+/**
+ * A Daggerfall race name -> the Morrowind race id that carries its
+ * body parts. Every one of Daggerfall's eight races is also a
+ * Morrowind race, so this is a spelling change and not a mapping:
+ * the port writes 'DarkElf', the ESM writes 'dark elf'.
+ */
+export function mwRaceId(dfRace) {
+  if (!dfRace) return null;
+  return String(dfRace).replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
+}

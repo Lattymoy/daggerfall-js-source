@@ -7408,6 +7408,222 @@ click aimed at the tabs beneath it (the click-away dismiss eats the
 first tap) - by design, one tap to put the tip away, the next to
 act. Suite fail 0, build green.
 
+PX20a (Mac: "spread out and organize the center of the inventory
+panel now that we have more space. Enlarge the paper sprite and
+remove the background"): THE CENTRE, REORGANIZED. PX19i freed the
+whole width when the details became a tooltip, and the worn map kept
+the 380px it was given when it had a third of the window - a 1036px
+area with 330px of dead air down each side. Two faults, not one: the
+map was small, AND the doll's cell was three of five rows in the
+middle column, which is LANDSCAPE, and a paperdoll is a standing
+figure. So HEAD and CHEST left the centre for the flanks and the doll
+took the WHOLE column, six rows tall - which also gave the two sides
+something to say: what you WEAR down the left, top to toe, what you
+CARRY (and stand in) down the right. The sprite draws at 4x now, not
+3x: the cell is more than twice the size and a 3x sprite scaled up by
+object-fit is a blur on a window where every other pixel is exact.
+AND THE FRAME WENT. PX19g framed the doll because "an empty frame
+reads Avatar, so the composition never collapses" - true, and true
+only when there is NO ART. The frame is the placeholder's alone
+(.noart) and the figure stands on the window's own glass with a hard
+pixel drop-shadow.
+
+PX20b (Mac: "when looting items, only open the loot tooltip, not the
+entire inventory window"): THE LOOT FRAME ALONE. DFU opens the whole
+parchment because DFU has ONE window with both lists in it; PX19c had
+already split the remote into its own smaller frame, which makes a
+lighter answer possible. A container now opens THAT frame and nothing
+else - and the pack's window is NOT BUILT, not built-and-hidden,
+because a hidden window still runs layout and would have eaten the
+tooltip's anchor. One frame owns the tooltip and the click-away
+listener, whichever is showing. The way back is a PACK button on the
+loot frame, present only while the pack is closed (a button that opens
+what is already open is PX14's drawn-door-opening-nothing bug). Every
+law behind the glass is untouched - take, stow, the remote model, the
+wagon, the gold popup - because this slice changes which frames are
+DRAWN.
+
+PX20c (Mac, on the render: "ensure the paperdoll's slot is a perfect
+fit. Move the name outside of the space and to the top bar, remove the
+slots filled subtext. Utilize the entire area for enlarged icons and
+displayability"): THE WHOLE AREA. A PERFECT FIT is not a letterbox -
+the cell now carries the sprite's OWN aspect (110/184, the classic
+paperdoll's exact proportion) and the centre grid column is `auto`, so
+it takes precisely the width the aspect-locked figure asks for and the
+flanks split everything left. Measured: cell 234x392, image 234x392,
+no air on any side, at any window size, because the ratio is the
+constraint rather than a pixel. THE NAME went to the title bar, after
+PACK, where the window is already named; the "0 of 27 slots filled"
+line went entirely, because it is a number nobody reads and the tiles
+say it by being empty. Between them they had taken ~50px off the top
+of a region that is not theirs. With that space and the auto column
+the map runs 960px wide and the tiles are 300px - so THE TILE IS A ROW
+again: a 26px monogram, and beside it the family word over THE PIECE'S
+NAME. PX19g had hidden that name behind a clip-path because a 52px
+square clipped it; nothing about that reasoning survives a 300px tile.
+
+Pins: 4 in enhancedInventory.test.js (the six-a-side map and the auto
+column; the unframed 4x sprite and its aspect-locked cell, with
+110x184 read from paperDoll.js rather than typed; the name in the bar,
+the count gone and the name line back; and the loot frame alone with
+the pack unbuilt, the frame owning the tooltip, the Pack button
+conditional, and the transfer ladder still present). The U59 doll pin
+follows the 4x. 8 mutations, 8 dead. Verified in a real browser at
+1440x900 with a synthetic paperdoll (no ARENA2 here) and with four
+pieces worn, both modes shot.
+
+PX21a (Mac: "we need to find a way to fit in the mounts/wagon in the
+inventory"): THE TRANSPORT STRIP. A horse and a cart are
+ItemGroups.Transportation, and filterByTab has NO arm for them - they
+fall through into the fourth tab with the shirts. That is DFU's own
+behaviour and it is why a player who buys a horse cannot find it. They
+are not WORN and not really CARRIED: they are what you TRAVEL with, so
+they get their own strip under the map, two plaques, beside a
+wear-left/carry-right composition with no room for a third idea. THE
+CART PLAQUE IS THE WAGON'S DOOR - the thing and the place it opens are
+one control - and it refuses the way inventorySession refuses, because
+the refusal is that module's law and this is a button. A plaque that
+only reports is a div, not a button (the empty-family law, one strip
+down). FOUND BY A PIN: the first draft read `templateIndex === 93`
+itself, which U58's "no second cart check" caught immediately and
+rightly. The fix was not to weaken the pin but to give the question a
+home: `hasHorse` and `transportItem` now sit beside `hasCart` in
+inventorySession, so the pack, the road and whatever comes next read
+one answer. No template index is read in the window at all.
+
+PX21b (Mac: "give it a solid redesign with readability"): THE LOOT
+WINDOW READS. The loot list inherited the DOCK's 56px tile grid -
+anonymous squares with the name behind a clip-path. That is right for
+a bag you already know and WRONG for a chest you have never opened:
+the only question a container asks is what is in it. In this window
+the rows are ROWS - the icon, the name, its material and word beneath,
+the weight on the right, one per line - while the dock keeps its tiles,
+both pinned, because the two lists answer different questions.
+
+PX21c (Mac: "a small tooltip for when you're hovering over a lootpile,
+showing you the list of items that are available"): THE HOVER PLAQUE.
+Daggerfall tells you nothing about a pile until you open it, and
+opening it is a window. Look at a pile now and a small plaque names
+what is in it, so "is this worth stopping for" is answered in the
+world rather than through a door. Six lines then "and N more", counts
+only on stacks - a pile is a glance, not a list.
+
+  IT IS A READOUT, NOT A CONTROL: no clicks, no keys, nothing to
+  dismiss, pointer-events off, aria-hidden (a crosshair is not a
+  reading order), and the module listens to nothing - pinned.
+
+  IT CANNOT DISAGREE WITH THE DOOR. The plaque runs the SAME
+  `pickActivatable` the take runs, over the same `lootTargets()`, and
+  reads `lootContents(key)` - a new read-only accessor that shares
+  `takeLoot`'s exact key vocabulary rather than inventing a second one,
+  with a matching accessor on droppedLoot. What the plaque names is
+  what the button opens.
+
+  ONE NODE, UPDATED ON CHANGE. A per-frame DOM rebuild is PX19k's
+  entrance replay in another hat: the node is made once and rewritten
+  only when the KEY changes, so staring at a pile costs nothing after
+  the first frame. The pick itself runs at 10Hz - a raycast over every
+  pile and corpse is not free, and a plaque that answers within a tenth
+  of a second answers instantly to a player.
+
+  IT RIDES THE SHARED FRAME. `dungeonContext.drawFoes`, which both
+  dungeon hosts call - the splash clock's reasoning one slice on - so
+  neither host can forget it and neither can run it twice. Enhanced
+  skin only: the classic HUD saying nothing about a pile is
+  Daggerfall's own answer, not an omission. It tears down with the
+  host. The context's returned object needed a name (`api`) for the
+  frame to ask itself, which is all that change is.
+
+Pins: 3 in enhancedInventory.test.js (the strip and its one-home
+questions; the loot rows against the dock's tiles, both directions;
+the plaque's purity, its lines, and the host's throttled enhanced-only
+pick with the shared key vocabulary). 10 mutations, 10 dead. Verified
+in a real browser: the strip with a horse and a cart in the bag, the
+loot window with five items, and the plaque with eight.
+
+PX21d (Mac: "center all the elements at the top in the loot window"):
+THE HEAD IS A STACK. The head inherited the base sheet's space-between
+ROW - the title and count left, the buttons pushed right - which is a
+COLUMN's header, written when the remote was a column beside the pack
+rather than a window of its own. At 340px wide that reads as two things
+that fell to opposite walls. It is a centred stack now: the title, the
+count beneath it, the buttons in a centred row under both, each sitting
+over the list it acts on. Measured: title, count and button row all 0px
+from the window's centre line. The base rules are untouched - the
+column header is still the column header, and this is the loot frame's
+own dress, which is the same seam PX21b used to give this window rows
+where the dock has tiles.
+
+PX22 (Mac: "quests aren't supposed to be titled as main quest, etc.
+What we developed had 3 sections for main, side and archived. Please
+research this thoroughly and ensure it's 1 to 1"): THE JOURNAL'S THREE
+SECTIONS.
+
+WHAT THE RESEARCH FOUND, and it did not match. The rail was built
+exactly as this arc recorded it. PX4 (commit 1dc10db1) shipped ACTIVE
+plus an "Archive" heading. PX5 (commit 1b798025) added the main/side
+split with two decisions written down at the time: the headings appear
+"only when BOTH kinds are on the log, because a rail of one group under
+a header is a header explaining nothing", the side group is called
+"Quests", and the DETAIL carries a "Main Quest" / "Side Quest" tag
+beside the timer. So the code and the record agreed; what they did not
+match was the three-section design Mac remembers. Said plainly here
+rather than quietly reshaped, because a record that bends to the last
+thing said stops being a record - and then reshaped, because the design
+is Mac's call and this is it.
+
+THREE SECTIONS, ALWAYS: Main Quests, Side Quests, Archived, in that
+order, from one `section()` helper called three times rather than a
+conditional pair. PX5's argument against a lone heading is sound for a
+heading that only LABELS; it is wrong for one that is the window's
+SHAPE. A player who opens the journal on their first side quest should
+learn that a main-quest section exists and is empty - not meet a
+different window later - so an empty section still stands and says so
+with a dim em-dash. That is the worn map's empty-family idiom and the
+site's not-yet box, one window over.
+
+NO KIND TAG. "Main Quest" / "Side Quest" beside the timer was the same
+fact the rail now states, twice - and a quest is FILED under its kind,
+not TITLED by it, which is what Mac's first sentence is about. The meta
+line is the timer's alone now, and it is only appended when it holds
+something, because an empty div leaves a gap the eye reads as a
+mistake. (The same cut PX20c made to the pack's slots-filled count.)
+
+WHAT DID NOT CHANGE: the grouping law. `isMainQuest(q.questName)` still
+reads the pack's own naming - DFU ships the story quests as S0000*.txt
+and _BRISIEN is the MQ opener (StartGameBehaviour.cs:445-447) - so
+which quest is which is untouched. And the ARCHIVE is still not split
+by kind, which is the DATA's shape rather than an omission: the
+notebook's filed header keeps only the display name, so the questName
+is gone by the time a quest is filed (notebook.js:151-182). Three
+sections is what this log can honestly draw.
+
+Pins: 2 in enhancedPause.test.js (the three sections in order from one
+helper, PX5's conditional and both old words gone, the empty section
+standing; and no kind tag anywhere in the journal detail with the meta
+line conditional, the grouping law unchanged, the archive unsplit). 6
+mutations, 6 dead. Driven live through the real pause face with three
+logs - both kinds, sides only, mains only - and all three drew the
+three headings with the empty ones marked.
+
+PX22b (Mac, checking: "and the timer we also designed is integrated
+when needed, correct?"): YES - AND NOW IT IS PINNED. PX5 shipped the
+timer live-probed and never wrote a test for it, so the answer was a
+reading of the code rather than something the suite defends. Driven
+through the real pause face with four quests: 4 days 5 hours reads
+plainly, 9 hours 30 min reads URGENT, 22 min reads urgent, and a quest
+with no clock gets NEITHER the rail gem nor the words - which is the
+"when needed" half of the question. The words are PX5's own: days with
+hours, hours with minutes under a day, minutes alone under an hour,
+and never "0 min", because a live clock always has a minute left. The
+threshold is one GAME DAY in seconds, not a guess. The clock is the
+machine's - the TIGHTEST running Clock resource on the quest
+(clockEnabled && !clockFinished, quest/clock.js:92,164) - and all
+three log builders walk it identically, world.js twice on purpose (its
+own questLog and the pauseQuestLog worldModes borrows, so the modal
+host's journal shows the same timers the world's does). 1 pin, 5
+mutations, 5 dead.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk

@@ -3,7 +3,10 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseEsm, MW_BODY_PARTS, BODY_TYPE } from '../src/formats/mwEsmFile.js';
-import { assembleNpc, indexSkins, PART_BONES } from '../src/formats/mwNpc.js';
+import {
+  assembleNpc, indexSkins, PART_BONES,
+  firstPersonModel, firstPersonArmParts, mwRaceId, FIRST_PERSON_SLOTS,
+} from '../src/formats/mwNpc.js';
 import { MwBsaFile, normalizeBsaPath } from '../src/formats/mwBsaFile.js';
 
 // fixture.esm is written by test/fixtures/mw/generate.py - an
@@ -120,4 +123,94 @@ test('mwesm: retail Morrowind.esm parses; fargoth assembles to meshes that exist
   const beastNpc = [...esm.npcs.values()].find((n) => esm.races.get(n.race)?.beast && !n.model);
   assert.ok(beastNpc, 'retail has beast NPCs');
   assert.equal(assembleNpc(esm, beastNpc.id).animFile, 'meshes\\base_animkna.nif');
+});
+
+// ── MW7: the first-person arms ─────────────────────────────────────
+//
+// THE DEFECT THIS CLOSES: slice 5 built a first-person rig and slice 6
+// built body assembly, and nothing joined them. On RETAIL data the rig
+// loaded meshes\base_anim.1st.nif - Morrowind's first-person SKELETON
+// and animation carrier, which holds no body geometry - found nothing
+// skinned, and fell back to the classic sprite for ever. Reported as
+// "I upload my files, everything is enabled, it still shows me only
+// the 2d sprite ingame", and that is exactly what the code did.
+
+test('MW7: the .1st law - the same part with 1st before the extension', () => {
+  // OpenMW performs this same insert when it dresses the first-person
+  // body, and it is why every Morrowind body part ships a .1st twin.
+  assert.equal(firstPersonModel('b\\B_N_Nord_M_Hand.nif'), 'b\\B_N_Nord_M_Hand.1st.nif');
+  assert.equal(firstPersonModel('b\\B_N_Dark Elf_F_Forearm.NIF'), 'b\\B_N_Dark Elf_F_Forearm.1st.NIF');
+  // a path whose DIRECTORIES carry dots must not be cut at one of them
+  assert.equal(firstPersonModel('a.b\\c.nif'), 'a.b\\c.1st.nif');
+  // and a name with no extension still answers something usable
+  assert.equal(firstPersonModel('hand'), 'hand.1st');
+  assert.equal(firstPersonModel(null), null);
+});
+
+test('MW7: every Daggerfall race is a Morrowind race - a spelling change, not a mapping', () => {
+  // All eight of Daggerfall's races also exist in Morrowind, so the
+  // body parts are there to be found; the port writes 'DarkElf' and
+  // the ESM writes 'dark elf'.
+  assert.equal(mwRaceId('Breton'), 'breton');
+  assert.equal(mwRaceId('Redguard'), 'redguard');
+  assert.equal(mwRaceId('Nord'), 'nord');
+  assert.equal(mwRaceId('DarkElf'), 'dark elf');
+  assert.equal(mwRaceId('HighElf'), 'high elf');
+  assert.equal(mwRaceId('WoodElf'), 'wood elf');
+  assert.equal(mwRaceId('Khajiit'), 'khajiit');
+  assert.equal(mwRaceId('Argonian'), 'argonian');
+  assert.equal(mwRaceId(null), null);
+});
+
+test('MW7: the arm chain - slots, order, sex match, and BOTH mesh names', () => {
+  // Hand-built body records: the fixture ESM carries head/hair/chest
+  // only, and the logic under test is which SLOTS an arm is made of.
+  const body = (id, part, female, model) => ({ id, part, female, model, kind: BODY_TYPE.skin, race: 'nord', vampire: 0 });
+  const bodies = new Map(Object.entries({
+    hand_m: body('hand_m', MW_BODY_PARTS.indexOf('hand'), false, 'b\\hand_m.nif'),
+    hand_f: body('hand_f', MW_BODY_PARTS.indexOf('hand'), true, 'b\\hand_f.nif'),
+    wrist_m: body('wrist_m', MW_BODY_PARTS.indexOf('wrist'), false, 'b\\wrist_m.nif'),
+    // forearm is MALE ONLY - retail does this constantly, and a female
+    // character must fall back to it rather than lose the limb
+    fore_m: body('fore_m', MW_BODY_PARTS.indexOf('forearm'), false, 'b\\fore_m.nif'),
+    // a CHEST is in the set and must NOT be dragged into first person
+    chest_m: body('chest_m', MW_BODY_PARTS.indexOf('chest'), false, 'b\\chest_m.nif'),
+  }));
+  const idx = indexSkins(bodies);
+
+  const male = firstPersonArmParts(idx, 'nord', false);
+  assert.deepEqual(male.map((p) => p.slot), ['hand', 'wrist', 'forearm'],
+    'the arm chain, outermost first - and no chest, which would only clip the camera');
+  assert.equal(male[0].model, 'meshes\\b\\hand_m.1st.nif', 'the first-person twin');
+  assert.equal(male[0].thirdPersonModel, 'meshes\\b\\hand_m.nif',
+    'and the plain mesh, so a missing twin costs a slightly wrong arm rather than the whole layer');
+  assert.deepEqual(male[0].attachBones, PART_BONES.hand, 'both hands');
+
+  const female = firstPersonArmParts(idx, 'nord', true);
+  assert.equal(female[0].bodyId, 'hand_f', 'sex-matched where the race ships a female part');
+  assert.equal(female[2].bodyId, 'fore_m', 'and falls back to male where it does not');
+
+  // a race with no parts at all is empty, not an exception
+  assert.deepEqual(firstPersonArmParts(idx, 'khajiit', false), []);
+  assert.deepEqual(firstPersonArmParts(null, 'nord', false), []);
+  // the slot list is the contract
+  assert.deepEqual([...FIRST_PERSON_SLOTS], ['hand', 'wrist', 'forearm', 'upperarm']);
+});
+
+test('MW7: the FP layer actually ASKS for them - the two slices are joined', () => {
+  const fp = readFileSync(new URL('../src/combat/mwFpArms.js', import.meta.url), 'utf8')
+    .split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n');
+  assert.match(fp, /import \{ indexSkins, firstPersonArmParts, mwRaceId \}/, 'slice 6 reaches slice 5');
+  assert.match(fp, /createMwFpView\(renderer, playerEntity = null\)/, 'the view knows whose arms to build');
+  assert.match(fp, /if \(!skinnedSets\.length && playerEntity\) \{/,
+    'and only when the base carried none - explicit mwfparms still wins, so the probe keeps working');
+  assert.match(fp, /file\(part\.model\) \|\| file\(part\.thirdPersonModel\)/, 'first-person twin, then the plain mesh');
+  assert.match(fp, /playerEntity\.gender === 'female'/, 'sex-matched');
+  // each failure says which piece is missing rather than going quiet
+  for (const said of ['no Morrowind.esm attached', 'no player race to choose arms for', 'body parts in the ESM']) {
+    assert.ok(fp.includes(said), `the status names the missing piece: ${said}`);
+  }
+  // and the rig hands the player in
+  const rig = readFileSync(new URL('../src/combat/weaponRig.js', import.meta.url), 'utf8');
+  assert.match(rig, /createMwFpView\(renderer, entity\)/, 'the weapon rig passes its entity');
 });
