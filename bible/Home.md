@@ -241,8 +241,7 @@ combat line numbers below are refreshed with it.
 - `src/combat/formulas.js:10` - FLAGGED interims (all documented at their site): proficiency
 - `src/combat/formulas.js:100` - *  INTERIM_WEAPON ever baked. S3d's assignStartingGear mints its
 - `src/combat/formulas.js:177` - *  FLAGGED: DFU's player arm takes the UNDEAD modifier while the
-- `src/combat/formulas.js:448` - FLAGGED: CalculateProficiencyModifiers pends the career
-- `src/combat/formulas.js:662` - *  MobileEnemy.Weight, class = female 240 / male 350. FLAGGED: the
+- `src/combat/formulas.js:690` - *  MobileEnemy.Weight, class = female 240 / male 350. FLAGGED: the
 - `src/combat/playerWeapon.js:13` - INTERIM_WEAPON is the PRE-CHARGEN fallback only (AUDIT 23: the
 - `src/combat/playerWeapon.js:47` - /** INTERIM starting weapon (items arc replaces): Iron Dagger.
 - `src/combat/playerWeapon.js:57` - export const INTERIM_WEAPON = Object.freeze({

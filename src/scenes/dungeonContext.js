@@ -129,7 +129,7 @@ import { ActionSystem } from '../world/actionSystem.js';
 import { collectDungeonEnemies } from '../characters/dungeonEnemies.js';
 import { ENEMY_BASICS, enemyDisplayName } from '../characters/enemyBasics.js';
 import { createHitEffects, bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
-import { EnemySoundSource } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
+import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { activeMemberships } from '../systems/guilds.js';   // F117
 import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // F117: Stendarr
@@ -2692,7 +2692,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // One home now, and the two exterior pools (which had nothing at
       // all) ask the same object the same way.
       f.sounds ??= new EnemySoundSource(f.mobileType);
-      tickEnemySound(f.sounds, f.ai.feet, playerFeet || eye, dt, { audio, collider });
+      tickEnemySound(f.sounds, f.ai.feet, playerFeet || eye, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity) });
       // AUDIT 23 (characters-11) - EnemyAttack.cs:70-77: the divisor
       // mints every update from PermanentSpeed / max(8, LiveSpeed).
       f.mobile.frameSpeedDivisor = Math.max(1, Math.trunc((f.entity.stats?.speed ?? 50) / Math.max(8, liveStat(f.entity, 'speed'))));
@@ -2720,7 +2720,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // this arm's own `!f.entity.isClass` gate was the same drift.
       if (_strikeEdge) {
         f.sounds ??= new EnemySoundSource(f.mobileType);
-        playEnemyClip(audio, f.sounds.attack(), f.ai.feet);
+        playEnemyClip(audio, f.sounds.attack(), f.ai.feet, acuteHearingMultiplier(playerEntity));
       }
       // S16: the casting decision rides beside the attack machine
       // (DoRangedAttack's spell branch + DoTouchSpell); the decision

@@ -43,7 +43,7 @@ import { onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
 import { MINUTES_PER_DAY } from '../systems/worldTick.js';
 import { mintCorpseMarker, playBodyFall, corpseLootTargets, takeCorpseLoot, sayEnemyDied } from './corpseMarker.js';
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
-import { EnemySoundSource } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
+import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage   // AUDIT 24 (wave 38): EnemyDeath's one home
 import { bindQuestFoeHost } from './questFoeHost.js';   // B1: quest foes ride this pool
 
@@ -437,13 +437,13 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // AUDIT 24 (wave 41): EnemySounds.FixedUpdate - the attract
       // cadence this pool never had. The counter steps every frame and
       // the sound fires only inside the 16m radius.
-      tickEnemySound(f.sounds, f.ai.feet, playerFeet, dt, { audio, collider });
+      tickEnemySound(f.sounds, f.ai.feet, playerFeet, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity) });
       const mstate = f.attack.machine.state;
       const strikeEdge = mstate !== 'Idle' && (f._prevMState ?? 'Idle') === 'Idle';
       f._prevMState = mstate;
       // PlayAttackSound at the START of the swing, as the dungeon does
       // (MeleeAnimation fires it once on the edge, not at the hit).
-      if (strikeEdge) playEnemyClip(audio, f.sounds.attack(), f.ai.feet);
+      if (strikeEdge) playEnemyClip(audio, f.sounds.attack(), f.ai.feet, acuteHearingMultiplier(playerEntity));   // CF1: acute hearing
       f._mout = f.mobile.update(dt, {
         moving: f.ai.moving,
         striking: strikeEdge && !f.attack.firedRanged,

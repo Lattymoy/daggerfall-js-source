@@ -73,7 +73,7 @@ import { WEAPON_REACH } from '../combat/playerWeapon.js';
 import { rayPersonDistance } from './townTalk.js';
 import { mintCorpseMarker, playBodyFall, corpseLootTargets, takeCorpseLoot, sayEnemyDied } from './corpseMarker.js';
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
-import { EnemySoundSource } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
+import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage   // AUDIT 24 (wave 38): EnemyDeath's one home
 
 // PlayerEntity.Crimes (the two this module levies - the enum lives
@@ -450,14 +450,14 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // within 16m, and the watch is the ONE class enemy the human
       // mute spares (:222), which is why you hear it and not a
       // brigand.
-      tickEnemySound(g.sounds, g.ai.feet, playerFeet, dt, { audio, collider });
+      tickEnemySound(g.sounds, g.ai.feet, playerFeet, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity) });
       g.mobile.frameSpeedDivisor = Math.max(1, Math.trunc((g.entity.stats?.speed ?? 50) / Math.max(8, liveStat(g.entity, 'speed'))));   // AUDIT 23 (characters-11)
       const events = (_gParalyzed || !_tgt) ? [] : g.attack.update(dt, g.ai, _tgt);   // MT-ii: at the SELECTED target
       void events;
       const mstate = g.attack.machine.state;
       const strikeEdge = mstate !== 'Idle' && (g._prevMState ?? 'Idle') === 'Idle';
       g._prevMState = mstate;
-      if (strikeEdge) playEnemyClip(audio, g.sounds.attack(), g.ai.feet);   // AUDIT 24 (wave 41)
+      if (strikeEdge) playEnemyClip(audio, g.sounds.attack(), g.ai.feet, acuteHearingMultiplier(playerEntity));   // AUDIT 24 (wave 41); CF1: acute hearing
       g._mout = g.mobile.update(dt, {
         moving: g.ai.moving,
         striking: strikeEdge,

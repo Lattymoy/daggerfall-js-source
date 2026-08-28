@@ -19,13 +19,13 @@ import { enchantArmorMod, enchantChanceToHitMod, enchantWeightAllowanceMult, doI
 import { liveStat } from '../systems/statMods.js';   // S14: fortify-aware stat reads
 import { skillValue, SKILLS } from '../systems/skills.js';   // S3: real skills (enemies stay flat, verbatim)
 import { RACES } from '../systems/races.js';   // CalculateRacialModifiers reads the DFU-numbered race id
-import { SPECIAL_ABILITY_BITS } from '../systems/specialAdvantages.js';   // AUDIT 21 F2: the Adrenaline Rush bit
+import { SPECIAL_ABILITY_BITS, PROFICIENCY_BITS } from '../systems/specialAdvantages.js';   // AUDIT 21 F2: the Adrenaline Rush bit; CF1: the HandToHand expertise bit
 // NOT from rest.js, which re-exports healingRateModifier FROM here - importing
 // hasSpecialAbility back out of it makes a cycle, and the ESM binding lands in
 // the temporal dead zone: the helper reads `undefined` at call time and the
 // bonus silently never applies. specialAdvantages.js is a leaf.
 import { weaponMinDamage, weaponMaxDamage, weaponSkillUsed } from '../characters/weapons.js';   // AUDIT 18: GetBaseDamageMin/Max and GetWeaponSkillIDAsShort resolve the TEMPLATE, never a baked field or a display name
-import { equipTableOf, lowerCondition, slotForBodyPart, EQUIP_SLOTS } from '../systems/equip.js';   // C-slice: DamageEquipment
+import { equipTableOf, lowerCondition, slotForBodyPart, EQUIP_SLOTS, weaponProficiencyFlag } from '../systems/equip.js';   // C-slice: DamageEquipment; CF1: GetWeaponSkillUsed as a ProficiencyFlag, -1 quirk included
 import { SHIELD_PARTS } from '../systems/armorMaterials.js';
 import { breakNormalPowerConcealment } from '../systems/concealment.js';   // wave 31: BreakNormalPowerConcealmentEffects, in its own leaf so this import cannot cycle
 
@@ -204,6 +204,32 @@ export function bonusOrPenaltyByEnemyType(attacker, target) {
  *  AUDIT 18: not ported at all before now - the site note claiming the
  *  entity "has no career/race yet" went stale when chargen shipped
  *  (chargen.applyCharacter writes the DFU-numbered raceId). */
+/** FormulaHelper.CalculateProficiencyModifiers (:908-931), verbatim -
+ *  CF1, the "Expertise In" career flag's reader (S23 shipped only the
+ *  FORBIDDEN half of the proficiency bitfield; the port packs the
+ *  EXPERT set at bits 16..21 of the same career field, the chargen
+ *  writer's own layout). An expert weapon: damage +(level/3 + 1),
+ *  to-hit +level. The weaponless arm reads the HandToHand bit - and
+ *  DFU's own comment says "Hand-to-hand proficiency is not applied in
+ *  classic" while the code applies it, a recorded DFU departure the
+ *  port follows bug-for-bug. weaponProficiencyFlag carries equip.js's
+ *  -1 quirk for an unlisted weapon template, so `expert & -1` grants
+ *  the bonus to ANY expert career swinging one - GetWeaponSkillUsed's
+ *  Skills.None = -1 masking against every bit, the same both careers'
+ *  forbidden test already rides. */
+export function proficiencyModifiers(attacker, weapon) {
+  const mods = { damageMod: 0, toHitMod: 0 };
+  const expert = ((attacker.career?.weaponArmorShieldsBitfield ?? 0) >>> 16) & 0x3f;
+  const grant = () => {
+    mods.damageMod = Math.trunc(attacker.level / 3) + 1;
+    mods.toHitMod = attacker.level;
+  };
+  if (weapon) {
+    if ((expert & weaponProficiencyFlag(weapon)) !== 0) grant();
+  } else if ((expert & PROFICIENCY_BITS.handToHand) !== 0) grant();
+  return mods;
+}
+
 export function racialModifiers(attacker, weapon) {
   const mods = { damageMod: 0, toHitMod: 0 };
   if (!weapon) return mods;
@@ -445,9 +471,11 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   // order: swing mods (the caller's damageMod/toHitMod - they need the
   // screen weapon's state), then proficiency, then racial, then
   // backstab onto chanceToHitMod alone.
-  // FLAGGED: CalculateProficiencyModifiers pends the career
-  // proficiency flags (Port-Ledger "Expertise In") - 0.
   if (attacker.isPlayer) {
+    // CF1: proficiency BEFORE racial - FormulaHelper.cs:602-609's order
+    const prof = proficiencyModifiers(attacker, weapon);
+    damageModifiers += prof.damageMod;
+    chanceToHitMod += prof.toHitMod;
     const racial = racialModifiers(attacker, weapon);
     damageModifiers += racial.damageMod;
     chanceToHitMod += racial.toHitMod;
