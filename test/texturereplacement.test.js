@@ -178,7 +178,7 @@ test('texture: BOTH packs have a URL door, and one trip can set up both', () => 
 
 test('texture: registration rides the ONE bootstrap, and the row reports it', () => {
   assert.match(src('scenes/shared.js'), /setTextureReplacements\(names, loadTextureFile\)/);
-  assert.match(src('scenes/shared.js'), /Promise\.all\(\[sound, songs, replacements, textures, morrowind\]\)/);
+  assert.match(src('scenes/shared.js'), /Promise\.all\(\[sound, songs, replacements, textures\]\)/);
   // the settings row offers BOTH picks, and the alternate carries its
   // own KEY because the dialog has no button hit-testing to choose
   // with - a button that looked clickable and did nothing would be the

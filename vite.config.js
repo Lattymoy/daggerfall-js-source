@@ -112,10 +112,6 @@ export default defineConfig({
         landing: 'index.html',
         main: 'play/index.html',
         viewer: 'viewer.html',
-        // MW-IMPORT SLICE 2: the Morrowind mesh viewer - user-supplied
-        // Morrowind.bsa / loose NIFs through a picker, nothing baked in.
-        // Doubles as the record-coverage scout for the strict NIF reader.
-        mwViewer: 'mw-viewer.html',
         sky: 'sky.html',   // ES1: the enhanced sky lab
         // A PROTOTYPE, and deployed on purpose: a design that claims to
         // adapt to a phone has to be opened on one.

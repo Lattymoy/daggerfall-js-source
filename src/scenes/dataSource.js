@@ -25,12 +25,6 @@ const STORE = 'arena2';
 const MUSIC_STORE = 'music';
 /** M-TEX: the same reasoning as the music store, one domain over. */
 const TEXTURE_STORE = 'textures';
-/** MW-IMPORT: user-supplied Morrowind data (Morrowind.bsa, expansions,
- *  Morrowind.esm) for the opt-in 3D asset layer. Same doctrine as
- *  ARENA2 - actively-sold game data, never in the repo or build, lives
- *  only in the player's browser. Its lifecycle is its own: attaching
- *  or clearing it never touches the ARENA2 set. */
-const MW_STORE = 'morrowind';
 /** R6: DERIVED artifacts - bytes the game GENERATED from the player's
  *  own data, not bytes the player supplied. The road network is the
  *  first: a whole-map bake costs about twenty-six seconds, so it is
@@ -45,7 +39,7 @@ const MW_STORE = 'morrowind';
 const DERIVED_STORE = 'derived';
 /** Every injected-asset store, so the upgrade and the helpers below
  *  cannot drift from each other - adding a domain is one entry. */
-const ASSET_STORES = [MUSIC_STORE, TEXTURE_STORE, MW_STORE, DERIVED_STORE];
+const ASSET_STORES = [MUSIC_STORE, TEXTURE_STORE, DERIVED_STORE];
 const mem = new Map(); // NAME -> Uint8Array
 
 // Ingest DIET (2026-08-14, the mobile storage fix): ARENA2 is 517MB
@@ -251,7 +245,7 @@ export async function clearStoredData() {
   mem.clear();
   const d = await getDb();
   // The ARENA2 set AND every artifact DERIVED from it. The injected
-  // stores (music, textures, Morrowind) are the player's own packs and
+  // stores (music, textures) are the player's own packs and
   // survive - re-picking the game files is not asking to lose them -
   // but a road network baked from the folder being replaced is not a
   // pack, it is an ANSWER ABOUT that folder, and keeping it would hand
@@ -350,15 +344,6 @@ export const storedMusicNames = () => assetNames(MUSIC_STORE);
 export const loadMusicFile = (fileName) => assetBytes(MUSIC_STORE, fileName);
 export const clearStoredMusic = () => clearAssets(MUSIC_STORE);
 
-export async function storeMorrowindFiles(files) {
-  // .bsa archives + .esm records; MwBsaFile magic-checks at read, so a
-  // wrong archive fails loudly there, not silently here.
-  return storeAssets(MW_STORE, files, (n) => /\.(bsa|esm)$/i.test(n));
-}
-export const storedMorrowindNames = () => assetNames(MW_STORE);
-export const loadMorrowindFile = (fileName) => assetBytes(MW_STORE, fileName);
-export const clearStoredMorrowind = () => clearAssets(MW_STORE);
-
 /** R6: one derived artifact, by key. Bytes in, bytes out - this door
  *  knows nothing about what it holds, and the artifact's OWN envelope
  *  (systems/roadBake.js: magic, version, checksum) is what decides
@@ -378,97 +363,6 @@ export async function storeDerived(key, bytes) {
 }
 export const loadDerived = (key) => assetBytes(DERIVED_STORE, key);
 export const clearDerived = () => clearAssets(DERIVED_STORE);
-export const hasStoredMorrowind = async () =>
-  (await storedMorrowindNames()).some((n) => /\.bsa$/i.test(n));
-
-/** Every stored .bsa opened, in override order: expansions and mods
- *  answer BEFORE Morrowind.bsa, the way the engine's load order does. */
-export async function loadMorrowindArchives() {
-  const { MwBsaFile } = await import('../formats/mwBsaFile.js');
-  const names = (await storedMorrowindNames()).filter((n) => /\.bsa$/i.test(n));
-  const rank = (n) => {
-    const l = n.toLowerCase();
-    if (l.includes('morrowind')) return 3;
-    if (l.includes('tribunal')) return 2;
-    if (l.includes('bloodmoon')) return 1;
-    return 0; // unknown packs override everything
-  };
-  names.sort((a, b) => rank(a) - rank(b));
-  const archives = [];
-  for (const n of names) {
-    try {
-      archives.push(new MwBsaFile(await loadMorrowindFile(n)));
-    } catch (err) {
-      console.warn(`morrowind archive ${n}: ${err.message}`);
-    }
-  }
-  return archives;
-}
-
-/** Sync-readable state for the settings row; -1 until registered. */
-let _mwCount = -1;
-export const morrowindDataCount = () => Math.max(_mwCount, 0);
-/**
- * MWFIX: the ATTACH GENERATION. The 3D first-person view is built once,
- * at weapon-rig construction, off a `hasStoredMorrowind()` read - so
- * attaching data to a running game changed nothing until a reload, and
- * the bug report's "after uploading does not work at all" is that, not
- * a bad archive. A monotonic counter is the cheapest honest signal a
- * live consumer can poll: it moves only when the stored set is
- * re-counted with a DIFFERENT answer, so a rig comparing integers
- * rebuilds exactly when there is something new to build from.
- */
-let _mwGeneration = 0;
-export const morrowindDataGeneration = () => _mwGeneration;
-
-/** Bootstrap arm (scenes/shared.js): count the stored archives once so
- *  the settings dialog can report attachment without an async hop. */
-export async function registerMorrowindData() {
-  const next = (await storedMorrowindNames()).filter((n) => /\.bsa$/i.test(n)).length;
-  if (next !== _mwCount) { _mwGeneration++; _mwEsm = undefined; }   // MW7: a new attach re-reads the ESM
-  _mwCount = next;
-  return _mwCount;
-}
-
-/**
- * MW7: the stored Morrowind.esm, parsed - the record file the body
- * parts live in. It is NOT inside the BSA (it sits beside it in Data
- * Files, which is why storeMorrowindFiles takes .esm as well as .bsa),
- * so it has its own door. Answers null when no .esm was attached: the
- * first-person layer degrades to the classic sprite rather than
- * failing, exactly as it does for any other missing piece.
- *
- * Parsed once and cached - the file is tens of megabytes and the rig
- * rebuilds on every attach and every toggle.
- */
-let _mwEsm;
-export async function loadMorrowindEsm() {
-  if (_mwEsm !== undefined) return _mwEsm;
-  const name = (await storedMorrowindNames()).find((n) => /\.esm$/i.test(n));
-  if (!name) return (_mwEsm = null);
-  try {
-    const { parseEsm } = await import('../formats/mwEsmFile.js');
-    _mwEsm = parseEsm(await loadMorrowindFile(name));
-  } catch (err) {
-    console.warn(`morrowind esm ${name}: ${err.message}`);
-    _mwEsm = null;
-  }
-  return _mwEsm;
-}
-
-export async function pickMorrowindFiles() {
-  return pickAssetFolder({
-    title: 'Your Morrowind data',
-    blurb: `<p>Pick your Morrowind <b>Data Files</b> folder (or just
-      <b>Morrowind.bsa</b>). Nothing is uploaded - it is stored in this
-      browser, exactly like the ARENA2 pick.</p>
-      <p style="color:#999">Powers the opt-in 3D asset layer. You need
-      to own Morrowind; Tribunal.bsa and Bloodmoon.bsa join in if
-      they're in the folder.</p>`,
-    store: storeMorrowindFiles,
-    register: registerMorrowindData,
-  });
-}
 
 export async function storeTextureFiles(files) {
   const { textureEntry } = await import('../systems/textureReplacement.js');

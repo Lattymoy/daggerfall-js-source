@@ -177,9 +177,9 @@ test('R7: every switch on the Enhanced pane is REAL, and the rest say why not', 
 });
 
 test('R7: the pane does not claim a feature the tree does not have', () => {
-  // Enhanced Music was built and REVERTED whole; the Morrowind arms
-  // are a query-flag experiment. Listing either as a live switch would
-  // be the screen lying about the build. (The sky came OFF this list
+  // Enhanced Music and the Morrowind 3D layer were both built and
+  // REVERTED WHOLE. Listing either as a live switch would be the
+  // screen lying about the build. (The sky came OFF this list
   // with RA1: ES1 shipped a procedural sky and the pane still said
   // "not built" - the same lie with the sign flipped.)
   const src = read('src/ui/enhancedMenu.js');
