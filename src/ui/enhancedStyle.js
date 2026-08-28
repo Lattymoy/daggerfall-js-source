@@ -1775,7 +1775,17 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    RELATIVE, joined the flex column and folded the whole window -
    caught by measuring pre/post heights, 557 -> 260). */
 .pack-shell .packtip.packdetail { position: absolute; z-index: 4;
-  width: 320px; max-width: 320px; }   /* the three acts on one line */
+  width: 320px; max-width: 320px;
+  /* the tip is INVISIBLE FURNITURE: the base sheet's .packcol slate
+     ground + padding were riding under the card and drew a grey mat
+     around the plaque - the CARD is the frame, the wrapper is
+     nothing. */
+  background: transparent; padding: 0; border: 0; }
+/* ...and the tip's CARD is near-opaque: the 0.72 glass is the pause
+   window's, made for a dimmed scrim - a tooltip floats over LIVE
+   text, and glass there reads as the dock bleeding through the
+   plaque. */
+.pack-shell .packtip.packdetail .card { background: rgba(10,12,17,0.96); }   /* (0,4,0): the base card rule ties at (0,3,0) later in the sheet - the same tie the tip's position rule already paid */
 @media (max-width: 640px) {
   .pack-shell .packtip.packdetail { position: fixed; width: auto; max-width: none;
     left: 0 !important; top: auto !important; }
