@@ -7331,6 +7331,27 @@ and the title; .wornname stays in the DOM for the probes. Verified:
 char region fits, doll frame present art or no art, zero visible
 bars by measurement, zero errors. Suite 4128/0, build green.
 
+PX19h (Mac: "don't come back until it's perfect"): THE FINISH PASS,
+self-directed, every call made against the reference and the
+family's own laws. (1) THE NAME PLATE: the region is the
+CHARACTER'S, so it carries their name - Aelric of Daggerfall
+crowning the worn map with the slot count as its quiet second line;
+'Worn' only when no one is named. (2) THE ENTRANCE, FULLY SPOKEN:
+the window RISES eight pixels through the same five steps as its
+fade - one gesture, opacity, blur and lift together; reduced-motion
+gets the end state. (3) DEPTH GRAMMAR: empty families RECEDE
+(darker ground, fainter border) and filled ones STAND (bone
+monogram), so the eye finds the kit at a glance without reading a
+word. (4) THE CENTERPIECE SAYS SO: the doll frame wears the
+plaque's own double frame (offset outline), marking the center as
+the center. (5) THE DETAILS COMPOSE: the plaque holds the middle of
+its column instead of floating over a void, and the region centers
+in its own space. Verified in one dressed drive: the name plate
+reads, the region fits with zero scroll, the entrance lands, zero
+errors, suite green, build green. What remains is DATA'S, not
+design's: the real doll in the frame and real monograms in the
+tiles on Mac's ARENA2 run.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk

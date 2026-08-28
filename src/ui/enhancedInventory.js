@@ -701,7 +701,9 @@ const DOLL_AREA = '2 / 2 / span 3 / auto';
 function equippedList() {
   const wrap = el('section', 'equipped');
   const head = el('div', 'equippedhead');
-  head.append(el('h3', null, 'Worn'));
+  // PX19h: the region is the CHARACTER'S - it carries their NAME,
+  // the reference's own name plate; 'Worn' only when no one is named.
+  head.append(el('h3', null, deps.entity?.name || 'Worn'));
   head.append(el('p', 'meta', `${worn.filled} of ${worn.total} slots filled`));
   wrap.append(head);
   const map = el('div', 'wornmap');
