@@ -88,6 +88,7 @@ import { openPixelDial } from '../ui/pixelDial.js';   // PX15: the Tab compass r
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw
+import { initEscortFaces, addEscortFace, dropEscortFace, escortQuestEnded } from '../ui/hudEscortFaces.js';   // FE1: the quest escorts' portrait column
 import { largeHudOptions, routeLargeHudClick, hudLargeNextMode, hudLargePrevMode } from '../ui/hudLarge.js';   // U45: the classic bottom bar and its eleven panels
 import { trackHudPointer } from '../ui/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
 import { getInteractionMode } from '../player/interactionMode.js';   // U45: the mode panel's cycle reads it
@@ -870,6 +871,16 @@ export async function bootWorld(canvas, renderer, params, status) {
   let hudArt = null;
   loadHud({ fetchBytes, ImgFile, palette, renderer }).then((a) => { hudArt = a; })
     .catch((e) => console.error('[hud]', e));
+  // FE1: the escort faces panel's session mount. Init CLEARS - DFU's
+  // OnNewGame and OnStartLoad handlers both do (HUDEscortingNPCFaces
+  // .cs:306-316) - and a load refills through restoreSessionState's
+  // escortingFaces arm. getFactionData is the same persistent-store
+  // read the quest world hook makes: the fixed-NPC portrait index is
+  // FACTION.TXT's own `face` field.
+  initEscortFaces({
+    fetchBytes, palette, renderer,
+    getFactionData: (id) => _questStore()?.dict.get(id) ?? null,
+  });
   preloadInventoryArt({ renderer, fetchBytes, palette });   // U8d: INVE00I0/01I0 warm at boot
   preloadChargenArt({ renderer, fetchBytes, palette });   // U10: CHAR0*/PICK00/TMAP00 warm at boot
   preloadMessageBoxArt({ renderer, fetchBytes, palette });   // U11: SPOP/BUTTONS warm at boot
@@ -3286,6 +3297,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     addDialog: (uid, name, type, instantRebuild) => topicTree.addDialogForQuestInfoResource(uid, name, type, instantRebuild),
     removeQuestInfoTopics: (uid) => topicTree.removeQuestInfoTopicsForSpecificQuest(uid),
     forceTopicListsUpdate: () => topicTree.forceTopicListsUpdate(),
+    // FE1: the HUD escorting faces - AddFace/DropFace's world half
+    // (declared by the bridge since Q4, mounted now) and the
+    // quest-end sweep off the tombstone's OnQuestEnded.
+    addFace: (r) => addEscortFace(r),
+    dropFace: (r) => dropEscortFace(r),
+    onQuestEnded: (q) => escortQuestEnded(q),
     // TK-i: the six rumor seams land in the mill (TalkManager's own
     // methods, 1:1)
     addQuestRumor: (uid, m) => rumorMill.addQuestRumorToRumorMill(uid, m),

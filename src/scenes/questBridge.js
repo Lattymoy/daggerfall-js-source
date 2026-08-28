@@ -207,6 +207,9 @@ export function createQuestBridge(ctx) {
     addFinishedQuest: (messages) => notebook.addFinishedQuest(messages),
     // the one-time recording IS the OnQuestStarted subscription
     onQuestStarted: (q) => { questLists.noteQuestStarted(q); ctx.onQuestStarted?.(q); },
+    // FE1: the tombstone's OnQuestEnded (QuestMachine.cs:1047) - the
+    // HUD escort faces' quest-end sweep rides the world ctx
+    onQuestEnded: (q) => ctx.onQuestEnded?.(q),
   });
 
   questLists = new QuestListsManager({

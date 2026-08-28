@@ -26,6 +26,7 @@ import {
   updateHudVitals, drawVitalsBars, vitalsSkin, vitalsIndicatorsEnabled, VITAL_KEYS,
 } from './hudVitals.js';
 import { preloadSpellIcons } from './spellIcons.js';   // U46: the sheet the rows draw from
+import { drawEscortFaces } from './hudEscortFaces.js';   // FE1: the quest escorts' portrait column
 import { nativeMetrics } from './nativePanel.js';
 import { ToolTip } from './toolTip.js';
 
@@ -334,6 +335,9 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
     // it, so the bar survives the large HUD - drawn here after the
     // crosshair, the order the components are added in (:158-160).
     drawBreathBar(renderer, canvas, art, vitals, s2);
+    // FE1: the escort faces survive the large HUD - the force-off
+    // block (DaggerfallHUD.cs:214-220) never names escortingFaces.
+    drawEscortFaces(renderer, canvas);
     drawSpellIconRows(renderer, canvas, vitals, dt, { font, cursorActive, largeHudRect: lastLargeHudBar, hover });
     return;
   }
@@ -406,6 +410,10 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // hosts make, so they ride it rather than four pasted frame bodies.
   // The two geometry constants travel as arguments: this module is
   // their home and hudCrosshair must not import back into it.
+  // FE1: the quest escorts' portrait column, top-left on the fitted
+  // virtual screen - unconditional, the EnableBorder quirk's own
+  // consequence (see hudEscortFaces.js's header).
+  drawEscortFaces(renderer, canvas);
   drawCrosshairAndModeIcon(renderer, canvas, font,
     { cursorActive, scale: s, border: HUD_BORDER, barWidth: HUD_NATIVE_BAR_WIDTH });
   drawSpellIconRows(renderer, canvas, vitals, dt, { font, cursorActive, largeHudRect: null, hover });

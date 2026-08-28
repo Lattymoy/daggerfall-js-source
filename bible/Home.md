@@ -274,18 +274,18 @@ combat line numbers below are refreshed with it.
 - `src/scenes/shared.js:314` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:419` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:846` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:881` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:887` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1340` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
-- `src/scenes/world.js:2372` - FLAGGED in systems/healthStatus.js (macro producers pend).
-- `src/scenes/world.js:2465` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:2754` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:3108` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:3471` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:3498` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:4006` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:4380` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:847` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:892` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:898` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1351` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
+- `src/scenes/world.js:2383` - FLAGGED in systems/healthStatus.js (macro producers pend).
+- `src/scenes/world.js:2476` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:2765` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:3119` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:3488` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:3515` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:4023` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:4397` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:799` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
 - `src/scenes/worldModes.js:936` - FLAGGED to the crime arc, as the Ledger records.
 - `src/scenes/worldModes.js:1005` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
@@ -361,7 +361,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/potions.js:245` - FLAGGED, with the slice it waits on:
 - `src/systems/races.js:6` - port had only ever instantiated for Breton (the loud INTERIM the
 - `src/systems/regionConditions.js:25` - consequences are FLAGGED in court.js).
-- `src/systems/save.js:138` - (playerEntity's INTERIM skills: 30) - spreading it threw.
+- `src/systems/save.js:139` - (playerEntity's INTERIM skills: 30) - spreading it threw.
 - `src/systems/sceneCache.js:154` - FLAGGED, with the slice it waits on:
 - `src/systems/settings.js:39` - INTERIM doctrine - named, not silently ignored)
 - `src/systems/shopStock.js:22` - INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);
@@ -388,8 +388,7 @@ combat line numbers below are refreshed with it.
 - `src/ui/enhancedMenu.js:1581` - if (action === 'delete') return;   // FLAGGED: no save manager yet
 - `src/ui/exteriorAutomapWindow.js:22` - (:682-709) is FLAGGED - the port's directory carries named
 - `src/ui/guildServiceWindow.js:33` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
-- `src/ui/hudActiveSpells.js:45` - FLAGGED: HUDEscortingNPCFaces, the third component of that row, is
-- `src/ui/hudLarge.js:47` - FLAGGED, by name: HUDActiveSpells (the buff/debuff icon rows) and
+- `src/ui/hudLarge.js:50` - FLAGGED: LargeHUDOffsetHorse and
 - `src/ui/input.js:15` - and E's DFU meaning (AbortSpell) with Q's (RecastSpell) - FLAGGED
 - `src/ui/itemMakerWindow.js:46` - FLAGGED: DFU opens a DaggerfallInputMessageBox from the rename
 - `src/ui/listPicker.js:22` - FLAGGED: the scroll bar draws as DFU's plain thumb rect rather than
