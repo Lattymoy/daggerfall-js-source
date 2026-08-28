@@ -871,6 +871,22 @@ void main() {
   /** Positioned screen-space quad in PIXELS (origin top-left), with a
    *  source UV rect - textured (uv0/uv1) or solid color (tex null).
    *  The UI arc's primitive (U1): compass window + vitals bars. */
+  /** CG1: the UI scissor bracket - DFU's MultiFormatTextLabel
+   *  RestrictedRenderArea seam. Top-left-origin canvas pixels, the
+   *  same space drawScreenQuad's dst lives in (the screen-shake
+   *  offset applies here too, so clip and content move together).
+   *  SCISSOR_TEST also gates gl.clear, so every set MUST be closed by
+   *  clearScreenScissor before the bracket's caller returns. */
+  setScreenScissor(x, y, w, h) {
+    const gl = this.gl;
+    const ox = this._screenOffset?.[0] ?? 0, oy = this._screenOffset?.[1] ?? 0;
+    const yTop = Math.round(y + oy), hh = Math.max(0, Math.round(h));
+    gl.enable(gl.SCISSOR_TEST);
+    gl.scissor(Math.round(x + ox), gl.drawingBufferHeight - yTop - hh, Math.max(0, Math.round(w)), hh);
+  }
+
+  clearScreenScissor() { this.gl.disable(this.gl.SCISSOR_TEST); }
+
   drawScreenQuad(tex, dst, src = { u0: 0, v0: 0, u1: 1, v1: 1 }, color = [1, 1, 1, 1], opts = {}) {
     const gl = this.gl;
     if (!this.screenQuadProgram) {
