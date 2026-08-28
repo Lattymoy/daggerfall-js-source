@@ -584,13 +584,34 @@ export function buildRoadNetwork({
   let trunkLaid = 0;
   const spanning = [];
   for (const c of tree) {
-    if (!uf.union(c.a, c.b)) continue;
-    spanning.push(c);
+    if (uf.find(c.a) === uf.find(c.b)) continue;   // already joined
+    // RC1 (2026-08-28): ROUTE FIRST, then commit. The union used to
+    // run before the reroute and `if (!r) continue` came after it, so
+    // a reroute that failed against the LIVE field left union-find
+    // claiming the two hubs joined with no trunk between them - the
+    // tree said connected, the ground said nothing, and every later
+    // candidate that would have joined them was skipped as redundant.
     const r = routeRoad(field, hubs[c.a], hubs[c.b], opts);
     if (!r) continue;
+    uf.union(c.a, c.b);
+    spanning.push(c);
     layPath(network, field, r.path, ROAD_TRUNK);
     report('trunk', ++trunkLaid, Math.max(1, hubs.length - 1));
   }
+
+  // RC1: the candidate graph is the k nearest hubs, which is not
+  // guaranteed connected - so what comes out is a spanning FOREST, and
+  // a hub in a component of its own is a town no trunk reaches. That
+  // used to be silent. Count the components and report them; the spur
+  // pass below still joins any hub the forest stranded, because a hub
+  // with no road on its pixel is a spur candidate like any other.
+  const componentSize = new Map();
+  for (let i = 0; i < hubs.length; i++) {
+    const r = uf.find(i);
+    componentSize.set(r, (componentSize.get(r) ?? 0) + 1);
+  }
+  const trunkComponents = componentSize.size;
+  const strandedHubs = hubs.filter((_, i) => componentSize.get(uf.find(i)) === 1).length;
 
   // 4. loops. The reroute follows the network (it is cheap to);
   //    re-pricing THAT PATH under the virgin costs asks what the
@@ -621,7 +642,13 @@ export function buildRoadNetwork({
   const w = network.width;
   const spurGoal = (x, y) => (trunkExits[y * w + x] | trackExits[y * w + x]) !== 0;
   let spursLaid = 0, orphans = 0;
-  for (const s of spurs) {
+  // RC1: EVERY remaining location, which is what the comment above has
+  // always said and what the code did not do - it walked `spurs`, the
+  // non-hub types only. A hub the trunk forest stranded therefore got
+  // no road at all and nothing reported it. The hasRoad guard below
+  // already skips anything the trunk pass served, so widening the walk
+  // costs nothing for a hub that is already on the network.
+  for (const s of all) {
     if (hasRoad(network, s.x, s.y)) continue;
     const r = routeRoad(field, s, null, { ...opts, goalTest: spurGoal });
     if (!r) { orphans++; report('spurs', spursLaid + orphans, spurs.length); continue; }
@@ -636,6 +663,10 @@ export function buildRoadNetwork({
       hubs: hubs.length, spurs: spurs.length,
       candidates: candidates.length, routable: routable.length,
       trunkLaid, loopsLaid, spursLaid, orphans,
+      // RC1: 1 means the trunk skeleton is one connected network.
+      // Anything higher is a forest, and strandedHubs counts the towns
+      // left entirely alone by it.
+      trunkComponents, strandedHubs,
     },
   };
 }

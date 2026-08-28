@@ -320,7 +320,15 @@ test('U61: the world host builds through the door, once, and gates on it', () =>
   assert.doesNotMatch(src, /travelMapArtLoaded/, 'hosts ask the DOOR, never the raw art');
   assert.equal([...src.matchAll(/if \(!travelMapDoorReady\(\)\)/g)].length, 2,
     'BOTH openers gate on the door predicate - a single match let one drop its gate unnoticed (the review)');
-  assert.match(src, /woods,\n\s*getPlayerPixel: playerTravelPixel/, 'the relief rides the one dep bag');
+  // R3W (2026-08-28): read as MEMBERSHIP of the one bag, not as two
+  // adjacent lines. The first draft required `woods,` and
+  // `getPlayerPixel:` to be consecutive, so adding the roads dep
+  // between them failed a pin about the relief - a spelling, not the
+  // law it names.
+  const bag = src.slice(src.indexOf('createTravelMapWindow({'));
+  assert.match(bag, /\bwoods,/, 'the relief rides the one dep bag');
+  assert.match(bag, /getPlayerPixel: playerTravelPixel/, '...and so does the player pixel');
+  assert.match(bag, /roads: \(\) => \{/, '...and the road chains for the map layer');
 });
 
 test('U61: the other three hosts still refuse the map, by name', () => {

@@ -65,6 +65,7 @@ import { checkLocationDiscovered } from './travelMapWindow.js';
 import {
   buildOverworldGrid, buildMarkerModel, routePoints, overworldHeight,
   OVERWORLD_DOT_COLORS, OVERWORLD_DOT_SIZES,
+  roadModel, roadLayersForDistance,
 } from './overworldModel.js';
 import { OverworldRenderer } from '../render/overworldRenderer.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
@@ -331,6 +332,9 @@ export class OverworldMapWindow {
           cloudY: overworldHeight(0) + CLOUD_LIFT,
           cloudAlpha: this._cloudAlpha(),
           markerScale: clamp(220 / this._cam.dist, 0.35, 2.4),
+          // R3W: trunk roads are always on - they are the shape of the
+          // province - and tracks fade out above TRACK_FADE_DIST.
+          roadLayers: roadLayersForDistance(this._cam.dist),
           rings: this._rings(),
         });
         this._proj = proj; this._view = view; this._vw = w; this._vh = h;
@@ -400,6 +404,20 @@ export class OverworldMapWindow {
       }
       this._grid = grid;
       this._ov.setTerrain(grid);
+
+      // R3W (2026-08-28): THE ROAD LAYER, wired. R1-R3 built the
+      // network, the tracer and the model and then stopped: nothing in
+      // src/ ever called roadModel, and this renderer had no slot to
+      // put one in, so the enhanced map drew no roads at all while the
+      // Switches row promised it did. The chains come in already
+      // traced (roadBake.traceNetwork); the model lifts them onto this
+      // same relief, through the same mapping the route uses.
+      const chains = this.deps.roads?.();
+      if (chains) {
+        this._ov.setRoads(roadModel(chains, {
+          heightBytes: bytes, width: this._size.width, height: this._size.height,
+        }));
+      }
     }
     if (this._markersDirty) {
       this._markersDirty = false;
