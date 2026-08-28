@@ -464,7 +464,7 @@ export const UNDEAD_DESIGNS = [
     id: MOBILE_TYPES.Wraith,
     name: 'Wraith',
     level: 15,
-    damage: [10, 45],
+    damage: [20, 45],
     weaponTier: 0,
     // The same absence, gone further: colder, thinner, and LESS there.
     // A wraith at the ghost's opacity is just a blue ghost — the

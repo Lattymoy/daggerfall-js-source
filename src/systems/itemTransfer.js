@@ -195,10 +195,12 @@ export function planStore(item, {
   if (!dryRun && questTransferRefused(item, { fromLocal: true, toWagon: usingWagon, getQuest })) {
     return { ok: false, refusal: REFUSAL.questItem };
   }
-  // G6 (:1994): nothing goes INTO a choose-one pile, so nothing of the
-  // player's can be dumped into a reward list they are only choosing
-  // from. The WAGON is not that pile, so it is still open.
-  if (chooseOne && !usingWagon) return { ok: false, refusal: REFUSAL.chooseOnePile };
+  // G6 / NT3 (F162): DFU's local Remove arm runs only
+  // `if (remoteItems != null && !chooseOne)` (:1994) - while a
+  // choose-one reward list is up NOTHING leaves the pack, wagon or no
+  // wagon. The old `&& !usingWagon` exemption here let a cart owner
+  // stage gear into the wagon mid-choose-one.
+  if (chooseOne) return { ok: false, refusal: REFUSAL.chooseOnePile };
   const stack = item.stackCount ?? 1;
   if (usingWagon) {
     // :1996-1999 -> WagonCanHoldAmount (:1425-1434). Zero fits refuses

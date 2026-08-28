@@ -1180,23 +1180,39 @@ const pts = new Map();
 // interrupt rule). Active on LEFT-drag in first person and on
 // RIGHT-drag in orbit (left-drag keeps the orbit camera). Bows:
 // press = nock+draw, release = loose.
-let gest = null;   // { x, y, t0 }
+let gest = null;   // { points: [{t, dx, dy, mag}], x, y, travel } - the game's trail shape (NT3 F135)
 const combatPose = () => poseIx > 0;   // fpMelee1H swings now (ATTACKS_FP shipped) - the old exclusion predated the FP clips
 const gestureStart = () => {
   if (!combatPose()) return false;
   if (POSE_NAMES[poseIx] === 'rangedAim') { fireAttack('Up'); return true; }   // draw
-  gest = { x: 0, y: 0, t0: performance.now() };
+  gest = { points: [], x: 0, y: 0, travel: 0 };
   return true;
 };
 const gestureMove = (dx, dy) => {
   if (!gest) return;
-  if (performance.now() - gest.t0 > MAX_GESTURE_SECONDS * 1000) { gest.x = 0; gest.y = 0; gest.t0 = performance.now(); }   // stale gesture resets (verbatim)
-  gest.x += dx; gest.y += dy;
+  // NT3 (F135): the GAME's own gesture law (combat/playerWeapon.js
+  // after AUDIT 24) instead of the collapsed version this bench had
+  // kept - TrimOld is a ROLLING one-second window over a timestamped
+  // trail (WeaponManager.cs:111-123), and the gate is TravelDist /
+  // longestDim, the summed PATH length: "This isn't equal to the
+  // magnitude of the sum because the trail may bend" (:99-100, :808).
+  // The strike DIRECTION still reads the sum. Curved drags now swing
+  // here exactly as they do in the game this bench demonstrates.
+  const now = performance.now() / 1000;
+  let old = 0;
+  for (const p of gest.points) {
+    if (now - p.t <= MAX_GESTURE_SECONDS) break;   // chronological trail
+    old++; gest.x -= p.dx; gest.y -= p.dy; gest.travel -= p.mag;
+  }
+  if (old) gest.points.splice(0, old);
+  const mag = Math.hypot(dx, dy);
+  gest.points.push({ t: now, dx, dy, mag });
+  gest.x += dx; gest.y += dy; gest.travel += mag;
   const longest = Math.max(S.clientWidth, S.clientHeight);
-  if (Math.hypot(gest.x, gest.y) / longest >= ATTACK_THRESHOLD) {
+  if (gest.travel / longest >= ATTACK_THRESHOLD) {
     const ang = Math.atan2(-gest.y, gest.x) * 180 / Math.PI;   // screen y-down -> math degrees (0=Right, 90=Up)
     fireAttack(gestureDirection(ang));
-    gest = { x: 0, y: 0, t0: performance.now() };
+    gest = { points: [], x: 0, y: 0, travel: 0 };   // Gesture.Clear (:149-154)
   }
 };
 const gestureEnd = () => { gest = null; if (POSE_NAMES[poseIx] === 'rangedAim') bowRelease(); };

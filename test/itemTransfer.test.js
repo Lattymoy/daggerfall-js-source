@@ -70,10 +70,11 @@ test('U56 planStore: DFU\'s guards, in DFU\'s order', () => {
   const c = planStore(book(), { remote: [], chooseOne: { items: [] } });
   assert.equal(c.refusal, REFUSAL.chooseOnePile);
   assert.equal(c.refusal.text, null, 'the pile refusal says nothing either');
-  // but the WAGON is not that pile - a reward window with a cart open
-  // can still stow, so the wagon arm sits below the pile guard
-  assert.equal(planStore(book(), { remote: [], chooseOne: { items: [] }, usingWagon: true }).ok, true,
-    'the choose-one guard swallowed the wagon');
+  // NT3 (F162): and the wagon is NOT an exemption - DFU's local Remove
+  // arm is `remoteItems != null && !chooseOne` (:1994), so while the
+  // reward list is up nothing leaves the pack at all
+  assert.equal(planStore(book(), { remote: [], chooseOne: { items: [] }, usingWagon: true }).ok, false,
+    'a cart owner cannot stage into the wagon mid-choose-one');
 
   // ── LAST: WagonCanHoldAmount (:1425-1434) ────────────────────
   // 400 books at 2kg = 800kg offered into an empty 750kg wagon:

@@ -10,7 +10,7 @@ import { clampArmorVariant } from './armorMaterials.js';   // AUDIT 23 (items-6)
 import { conditionMultipliersByMaterial } from '../characters/weapons.js';   // AUDIT 23 (items-5)
 import { GROUP_TEMPLATE_INDICES } from './itemTemplatesData.js';
 import TEMPLATES_JSON from '../characters/itemTemplates.json' with { type: 'json' };
-import { playerArchiveFor } from '../characters/paperdollArt.js';   // AUDIT 17f: SetRace, one home
+import { playerArchiveFor, resolvePaperdollRecord } from '../characters/paperdollArt.js';   // AUDIT 17f: SetRace, one home; NT3 (F006): the record law too
 
 export { GROUP_TEMPLATE_INDICES };
 
@@ -76,7 +76,6 @@ export function itemBaseValue(item) {
 const WORLD_TEXTURE_GROUPS = new Set(['UselessItems1', 'ReligiousItems', 'MiscItems']);
 const ARROW_TEMPLATE = 131;
 const KATANA_TEMPLATE = 121;
-const CLOAK_TEMPLATES = new Set([154, 155, 191, 192]);
 
 /** UseWorldTexture verbatim. */
 export function usesWorldTexture(item, template = templateByIndex(item.templateIndex)) {
@@ -149,7 +148,13 @@ export function inventoryItemImage(item, identity = undefined) {
       const v = item.group === 'Armor'
         ? clampArmorVariant(item.templateIndex, item.material ?? 0, item.variant ?? 0)
         : Math.min(item.variant ?? 0, t.variants - 1);
-      record = t.playerTextureRecord + (CLOAK_TEMPLATES.has(item.templateIndex) ? 1 : 0) + v;
+      // NT3 (F006): the record law runs from its ONE home now -
+      // resolvePaperdollRecord IS GetInventoryTextureRecord's variant
+      // resolution (start + variant, cloaks skipping their
+      // interior-first record). This file used to carry a private
+      // second copy with its own CLOAK_TEMPLATES set; a correction to
+      // the home copy would never have reached the running path.
+      record = resolvePaperdollRecord(t, v);
     } else {
       record = t.playerTextureRecord;
     }

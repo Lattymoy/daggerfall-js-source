@@ -73,11 +73,16 @@ export function openState(deps = {}) {
   const allowDungeonWagonAccess = !!(
     deps.dungeon?.inside && hasCart(deps.items?.() ?? []) && deps.dungeon?.nearExit?.()
   );
-  // DFU's no-loot arm opens STRAIGHT onto the wagon in Remove mode -
-  // the classic leave-the-haul-at-the-entrance flow. A loot target
-  // outranks it: the corpse you just opened is what you meant.
+  // NT3 (F161): CheckWagonAccess has TWO branches and only the first
+  // selects Remove - the arm where the flag was pre-set by the
+  // EXIT-DOOR PROMPT flow (:1084-1088, a producer the port does not
+  // have yet; when it lands it must pass a flag that forces Remove).
+  // Mere PROXIMITY (:1089-1096) only shows the wagon and leaves the
+  // action mode at OnPush's default, so a plain F6 near the exit with
+  // a cart still EQUIPS on a local click. A loot target outranks the
+  // wagon show: the corpse you just opened is what you meant.
   let usingWagon = false;
-  if (allowDungeonWagonAccess && !deps.loot) { usingWagon = true; mode = 'remove'; }
+  if (allowDungeonWagonAccess && !deps.loot) usingWagon = true;
   return { mode, usingWagon, allowDungeonWagonAccess, chooseOne };
 }
 

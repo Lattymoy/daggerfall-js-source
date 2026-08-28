@@ -53,7 +53,9 @@ test('wagon: CheckWagonAccess - a no-loot dungeon open near the exit lands ON th
   });
   assert.equal(w.allowDungeonWagonAccess, true);
   assert.equal(w.usingWagon, true, 'the classic leave-the-haul flow opens on the cart');
-  assert.equal(w.mode, 'remove');
+  // NT3 (F161): SHOWN, not armed - proximity keeps OnPush's Equip
+  // default; only the exit-door PROMPT arm selects Remove (:1084-1088)
+  assert.equal(w.mode, 'equip');
   // with a LOOT target the pile stays the remote (the :1094 arm)
   const pile = [book()];
   const wl = new NativeInventoryWindow({

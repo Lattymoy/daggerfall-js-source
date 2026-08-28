@@ -157,7 +157,10 @@ test('I4: Default resets the live registry and re-stages from it', () => {
 });
 
 test('I4: GetButtonText\'s classic table and FormatButtonText (:322-410, :561-568)', () => {
-  assert.equal(buttonText(null), 'None');
+  // NT3 (F082): the classic-font tail UPPERCASES everything the table
+  // does not already answer in caps (`SDFFontRendering ? text :
+  // text.ToUpper()`, :521) - the port draws the classic font.
+  assert.equal(buttonText(null), 'NONE');
   assert.equal(buttonText('AltLeft'), 'LALT');
   assert.equal(buttonText('ShiftLeft'), 'LSHIFT');
   assert.equal(buttonText('ControlRight'), 'RCTRL');
@@ -168,13 +171,19 @@ test('I4: GetButtonText\'s classic table and FormatButtonText (:322-410, :561-56
   assert.equal(buttonText('Digit4'), 'A4', 'Alpha4 -> A4');
   assert.equal(buttonText('Numpad7'), 'KPAD7');
   assert.equal(buttonText('KeyW'), 'W', 'a letter key is its letter');
-  assert.equal(buttonText('Space'), 'Space');
-  // camel case splits, and past the cap the elongation stands in
-  assert.equal(buttonText('ArrowLeft'), 'Left Arrow');
-  assert.ok('Left Arrow'.length <= MAX_BUTTON_TEXT);
+  assert.equal(buttonText('Space'), 'SPACE');
+  assert.equal(buttonText('Enter'), 'ENTER');
+  // NT3 (F082): the arrows take the friendly switch's names - "Left",
+  // not "Left Arrow" (:474-479) - and the tail caps them
+  assert.equal(buttonText('ArrowLeft'), 'LEFT');
+  assert.equal(buttonText('ArrowDown'), 'DOWN');
+  // camel case splits (then caps); past the 10-char cap the elongation
+  // stands in ("PrintScreen" splits to 12 and shows '...', verbatim)
+  assert.equal(buttonText('NumLock'), 'NUM LOCK');
+  assert.equal(buttonText('PrintScreen'), ELONGATED_TEXT);
   assert.equal(buttonText('SomethingVeryLongIndeed'), ELONGATED_TEXT);
-  assert.equal(buttonText('SomethingVeryLongIndeed', true), 'Something Very Long Indeed',
-    'the full-string arm skips the cap');
+  assert.equal(buttonText('SomethingVeryLongIndeed', true), 'SOMETHING VERY LONG INDEED',
+    'the full-string arm skips the cap - and still rides the classic ToUpper tail (:521 applies to every return)');
 });
 
 test('I4: the window wiring - one flow factory, the right-click seam, both panels warm', () => {

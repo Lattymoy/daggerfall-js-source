@@ -124,8 +124,8 @@ export const BEAST_DESIGNS = [
     id: MOBILE_TYPES.GrizzlyBear,
     name: 'Grizzly Bear',
     attack: 'maul',
-    level: 8,
-    damage: [1, 20],
+    level: 4,
+    damage: [1, 8],
     weaponTier: 0,
     // A mountain on short legs, and almost no tail: the bear's mass is
     // the whole of it, so the barrel is nearly as wide as it is tall.
@@ -146,8 +146,8 @@ export const BEAST_DESIGNS = [
     id: MOBILE_TYPES.SabertoothTiger,
     name: 'Sabertooth Tiger',
     attack: 'lunge',
-    level: 10,
-    damage: [1, 25],
+    level: 4,
+    damage: [1, 10],
     weaponTier: 0,
     // Longer than the bear on longer legs and half its width: a cat is
     // built to cover ground, not to hold it. Carries its tail up.
@@ -213,8 +213,8 @@ export const BEAST_DESIGNS = [
     id: MOBILE_TYPES.Spider,
     name: 'Giant Spider',
     attack: 'lunge',
-    level: 3,
-    damage: [1, 8],
+    level: 4,
+    damage: [5, 15],
     weaponTier: 0,
     // NO SPINE AT ALL, which is why it has its own builder rather than
     // more numbers on the quadruped's. That builder assumes a backbone
@@ -234,8 +234,8 @@ export const BEAST_DESIGNS = [
     id: MOBILE_TYPES.GiantScorpion,
     name: 'Giant Scorpion',
     attack: 'sting',
-    level: 9,
-    damage: [1, 20],
+    level: 12,
+    damage: [15, 25],
     weaponTier: 0,
     // The same plan with things added: claws forward, and a tail that
     // arches UP AND OVER rather than dragging. Lower and flatter than

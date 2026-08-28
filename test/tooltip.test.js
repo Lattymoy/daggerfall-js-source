@@ -144,7 +144,7 @@ test('U37: the tip is SUPPRESSED unless the label elongated (:214-216)', async (
   const mf2 = w2.buttons.find((x) => x.action === 'MoveForwards');
   w2.hover(mf2.x + 1, mf2.y + 1);
   w2.tick(1);
-  assert.equal(w2.tip.text, 'Something Very Long Indeed', 'the elongated label shows its full text');
+  assert.equal(w2.tip.text, 'SOMETHING VERY LONG INDEED', 'the elongated label shows its full text - capped by the classic ToUpper tail (NT3 F082)');
   // hovering nothing clears it
   w2.hover(-1, -1);
   w2.tick(1);

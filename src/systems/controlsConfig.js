@@ -130,7 +130,7 @@ const CLASSIC_NAMES = Object.freeze({
 /** GetButtonText + FormatButtonText. `full` skips the length cap
  *  (the tooltip/full-string arm). */
 export function buttonText(code, full = false) {
-  if (code == null) return 'None';   // KeyCode.None.ToString()
+  if (code == null) return 'NONE';   // KeyCode.None.ToString(), through the classic-font ToUpper tail (NT3 F082)
   if (CLASSIC_NAMES[code]) return CLASSIC_NAMES[code];
   let t = code;
   const digit = /^Digit(\d)$/.exec(code);
@@ -138,9 +138,15 @@ export function buttonText(code, full = false) {
   const pad = /^Numpad(\w+)$/.exec(code);
   if (pad) t = `KPAD${pad[1]}`;                    // Keypad0.. -> KPAD0..
   else if (/^Key([A-Z])$/.test(code)) t = code.slice(3);   // KeyW -> W
-  else if (/^Arrow(\w+)$/.test(code)) t = `${code.slice(5)} Arrow`;   // LeftArrow, camel-split
+  // NT3 (F082): the arrows fall past the classic table to the friendly
+  // switch, which names them "Left"/"Right"/"Up"/"Down" (:468-479) -
+  // not "Left Arrow" - and the classic-font tail UPPERCASES everything
+  // (`SDFFontRendering ? text : text.ToUpper()`, :521; the port draws
+  // the classic font, so the non-SDF arm is its law). ENTER, SPACE,
+  // LEFT - as the DOS-inspired window shows them.
+  else if (/^Arrow(\w+)$/.test(code)) t = code.slice(5);
   if (t.length <= MAX_BUTTON_TEXT || full) {
-    return t.replace(/(?<=[a-z])([A-Z])/g, ' $1').trim();
+    return t.replace(/(?<=[a-z])([A-Z])/g, ' $1').trim().toUpperCase();
   }
   return ELONGATED_TEXT;
 }

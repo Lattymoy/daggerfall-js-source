@@ -54,11 +54,13 @@ test('U57 openState: what opening the window already decided', () => {
   assert.equal(openState({ ...bag(cart()), dungeon: { inside: false, nearExit: () => true } })
     .allowDungeonWagonAccess, false, 'the proximity check only runs inside');
 
-  // and with access and NO container, the window opens ON the cart in
-  // Remove - the leave-the-haul-at-the-entrance flow
+  // and with access and NO container, the window opens ON the cart -
+  // NT3 (F161): SHOWING it only. Mere proximity leaves OnPush's Equip
+  // default; Remove belongs to the exit-door PROMPT arm alone
+  // (:1084-1088), whose producer is recorded as pending.
   const s = openState({ ...bag(cart()), dungeon: near });
   assert.equal(s.usingWagon, true);
-  assert.equal(s.mode, 'remove');
+  assert.equal(s.mode, 'equip');
   // a LOOT target outranks it: the corpse you just opened is the one
   // you meant, and access is still granted so the button can toggle
   const l = openState({ ...bag(cart()), dungeon: near, loot: { items: () => [] } });
