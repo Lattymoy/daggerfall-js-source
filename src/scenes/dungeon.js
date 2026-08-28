@@ -80,6 +80,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   status(`laying out ${dungeonName}`);
   const pipeline = createDataPipeline({ renderer, arch, palette });
   let _poseCam = null;   // AUDIT 26 F222: filled once the camera exists
+  let _motorRef = null;   // DC1: filled once the motor exists (the same late-bound shape)
   const ctx = await buildDungeonContext(
     { ...pipeline, renderer, arch, palette }, dfLocation, blocks, dfLocation.climate.climateType, { foes: !params.has('nofoes'), playerClass: params.has('class') ? Number(params.get('class')) : undefined, playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined, playerWeapon: params.get('weapon') ?? undefined,
       // AUDIT 26 F222/F223: the dev scene's half of the pose. The cam
@@ -88,7 +89,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
       pose: {
         read: () => (_poseCam ? { yaw: _poseCam.yaw, pitch: _poseCam.pitch } : {}),
         apply: (p) => { if (_poseCam) { _poseCam.yaw = p.yaw ?? _poseCam.yaw; _poseCam.pitch = p.pitch ?? _poseCam.pitch; } },
-      } });
+      },
+      // DC1: the death sequence starts from the LIVE eye and capsule
+      // (a crouched death). Late-bound like pose - the motor is built
+      // below, after this context; null falls to standing defaults.
+      motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null) });
 
   // U21: the menu's LOAD GAME. The context is built, so restore into
   // it through the host's own quickLoad - the same call F12 makes -
@@ -116,6 +121,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // spawn drops onto the start-marker floor.
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const player = new PlayerMotor(ctx.collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), carriedWeight: () => totalWeight(playerEntity.items ?? []), climbing: climbingDeps(playerEntity) });   // AcrobatMotor skill jump (P14) + M3 climbing (no HUD seam in the standalone host); motorStats = the LIVE entity
+  _motorRef = player;   // DC1: the motorState seam binds here
     const _footsteps = new FootstepMachine();   // FS-slice
   player.spawn(spawn[0], spawn[1], spawn[2]);
   console.log(`[spawn] marker ${JSON.stringify(ctx.startMarker)} -> feet [${spawn.map((v) => v.toFixed(3)).join(', ')}] (startSpawn build)`);
@@ -455,6 +461,15 @@ export async function bootDungeon(canvas, renderer, params, status) {
       if (keys.has('KeyS')) for (let a = 0; a < 3; a++) cam.pos[a] -= fwd[a] * speed;   // fly-cam (dev)
       if (keys.has('KeyA')) for (let a = 0; a < 3; a++) cam.pos[a] -= right[a] * speed;   // fly-cam (dev)
       if (keys.has('KeyD')) for (let a = 0; a < 3; a++) cam.pos[a] += right[a] * speed;   // fly-cam (dev)
+    }
+    // DC1: PlayerDeath.Update's camera sink. The walk branch above is
+    // HELD while any overlay is up - the death screen included - so
+    // the sink writes the camera itself, absolute off the motionless
+    // eye each frame (never cumulative), the way DFU keeps moving the
+    // camera while InputManager.IsPaused holds the player.
+    if (walkMode && (ctx.deathDrop ?? 0) > 0) {
+      const _eye = player.eye;
+      cam.pos = [_eye[0], _eye[1] - ctx.deathDrop, _eye[2]];
     }
 
     const target = [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]];

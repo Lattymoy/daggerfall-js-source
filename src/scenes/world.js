@@ -718,7 +718,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   // door in playerEntity.js; the door calls this. Registered here rather than
   // passed down four call chains, because there is one player and one death.
   setDeathPresenter(() => {
-    if (!(townTalk.overlay instanceof DeathScreen)) townTalk.showOverlay(new DeathScreen({ onReset: () => endRunToTitleMenu(renderer) }));   // D1
+    // DC1: the sequence starts from the LIVE eye and capsule, the way
+    // PlayerEntity_OnDeath reads mainCamera.localPosition.y and
+    // playerController.height at the death - a crouched death sinks
+    // from the crouched eye toward a quarter of the CROUCHED capsule
+    // below the feet, not the standing pair.
+    if (!(townTalk.overlay instanceof DeathScreen)) townTalk.showOverlay(new DeathScreen({ eyeHeight: player.eye[1] - player.pos[1], capsuleHeight: player.height, onReset: () => endRunToTitleMenu(renderer) }));   // D1
   });
   // F117: Stendarr's rank-in-fifty, consulted by the door before the
   // presenter. This host has no submersion model, so submerged is the
@@ -3757,6 +3762,11 @@ export async function bootWorld(canvas, renderer, params, status) {
           if (_step) audio.playOneShot(_step.clip, _step.volume);
         }
         cam.pos = player.eye;
+        // DC1: PlayerDeath.Update's camera sink - while the death
+        // overlay runs, the eye rides down the sequence's drop (the
+        // fresh array from player.eye makes this per-frame, never
+        // cumulative). The player does not move; only the camera dies.
+        if (townTalk.overlay instanceof DeathScreen) cam.pos[1] -= townTalk.overlay.drop;
         const useHeld = keys.has('KeyE');   // I2 departure: DFU activates on Mouse0 and E is AbortSpell - the pointer-parity slice owns the move
         if (useHeld && !latch.use && !modes.transitioning) {
           // T3b: a townsperson under the ray wins the activation (the

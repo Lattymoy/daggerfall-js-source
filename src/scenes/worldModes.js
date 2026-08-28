@@ -251,7 +251,10 @@ export function createWorldModes(host) {
     if (playerEntity.fatigue <= 0 && playerEntity.health > 0) onExhaustedInterior();
   };
   const presentInteriorDeath = () => {
-    if (!(interiorOverlay instanceof DeathScreen)) interiorOverlay = new DeathScreen({ onReset: () => endRunToTitleMenu(renderer) });   // D1
+    // DC1: the LIVE eye and capsule, as PlayerEntity_OnDeath reads them
+    // (`player` is the host destructure below; this runs at death, long
+    // after it binds - the U45 TDZ shape only bites immediate reads).
+    if (!(interiorOverlay instanceof DeathScreen)) interiorOverlay = new DeathScreen({ eyeHeight: player.eye[1] - player.pos[1], capsuleHeight: player.height, onReset: () => endRunToTitleMenu(renderer) });   // D1
   };
   // AUDIT 23 (hosts-1): this constructor runs AFTER the exterior host
   // registered its presenter, and used to overwrite it for good - a
@@ -3310,6 +3313,11 @@ export function createWorldModes(host) {
       }
     }
     cam.pos = player.eye;
+    // DC1: PlayerDeath.Update's camera sink. Both modal modes route
+    // death to interiorOverlay (the AUDIT 23 hosts-1 presenter), so
+    // this ONE per-frame write covers a building and a ?world dungeon
+    // alike; the fresh eye array keeps it per-frame, never cumulative.
+    if (interiorOverlay instanceof DeathScreen) cam.pos[1] -= interiorOverlay.drop;
     const useHeld = keys.has('KeyE');   // I2 departure: DFU activates on Mouse0 and E is AbortSpell - the pointer-parity slice owns the move
     const zNow = held(keys, 'ReadyWeapon');   // sheathe toggle (audit 2026-08-17)
     // C9: per-mode routing (the old unconditional dungeonCtx read

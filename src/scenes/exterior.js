@@ -478,7 +478,8 @@ export async function bootExterior(canvas, renderer, params, status) {
   // door in playerEntity.js; the door calls this. Registered here rather than
   // passed down four call chains, because there is one player and one death.
   setDeathPresenter(() => {
-    if (!(townTalk.overlay instanceof DeathScreen)) townTalk.showOverlay(new DeathScreen({ onReset: () => endRunToTitleMenu(renderer) }));   // D1
+    // DC1: the LIVE eye and capsule, as PlayerEntity_OnDeath reads them.
+    if (!(townTalk.overlay instanceof DeathScreen)) townTalk.showOverlay(new DeathScreen({ eyeHeight: player.eye[1] - player.pos[1], capsuleHeight: player.height, onReset: () => endRunToTitleMenu(renderer) }));   // D1
   });
   // F117: Stendarr's rank-in-fifty, consulted by the door before the
   // presenter. No submersion model above ground; townTalk closes later
@@ -1505,6 +1506,8 @@ export async function bootExterior(canvas, renderer, params, status) {
         if (_step) audio.playOneShot(_step.clip, _step.volume);
       }
       cam.pos = player.eye;
+      // DC1: PlayerDeath.Update's camera sink (per-frame off the fresh eye array).
+      if (townTalk.overlay instanceof DeathScreen) cam.pos[1] -= townTalk.overlay.drop;
       const useHeld = keys.has('KeyE');   // I2 departure: DFU activates on Mouse0 and E is AbortSpell - the pointer-parity slice owns the move
       if (useHeld && !latch.use && !modes.transitioning) {
         // T3b: a townsperson under the ray wins the activation (the

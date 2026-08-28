@@ -20,7 +20,7 @@ import { RACES } from '../src/systems/races.js';
 import { combatVoicesEnabled } from '../src/combat/combatVoices.js';
 import { DeathScreen } from '../src/ui/deathScreen.js';
 import { SOUND } from '../src/systems/soundClips.js';
-import { EYE_HEIGHT, CAPSULE_HEIGHT } from '../src/player/motor.js';
+import { EYE_HEIGHT, CAPSULE_HEIGHT, CROUCH_EYE_HEIGHT, CROUCH_HEIGHT } from '../src/player/motor.js';
 import { KEEP } from '../src/scenes/dataSource.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -123,6 +123,70 @@ test('death: every overlay slot TICKS, or the sequence stalls in that host alone
   // window's death path does) and the draw below would then read null.
   assert.match(code('scenes/worldModes.js'), /const w = interiorOverlay;\n\s+w\.tick\?\.\(dt\);/,
     'the interior arm must tick its overlay');
+});
+
+// ---------------------------------------------------------------
+// DC1: the camera sink is WIRED - the drop reaches cam.pos in all
+// four hosts, and the sequence starts from the LIVE eye and capsule
+// (PlayerEntity_OnDeath reads mainCamera.localPosition.y and
+// playerController.height at the death, not the standing pair).
+// ---------------------------------------------------------------
+test('DC1: a crouched death sinks from the crouched eye toward the CROUCHED quarter-capsule', () => {
+  const seq = new PlayerDeathSequence({ eyeHeight: CROUCH_EYE_HEIGHT, capsuleHeight: CROUCH_HEIGHT });
+  assert.equal(seq.startCameraHeight, CROUCH_EYE_HEIGHT);
+  assert.equal(seq.targetCameraHeight, deathCameraTarget(CROUCH_HEIGHT));
+  assert.ok(Math.abs(deathCameraTarget(CROUCH_HEIGHT) - (0.9 - 0.9 * 1.25)) < 1e-9, '-0.225: a quarter of the CROUCHED capsule below the feet');
+  for (let i = 0; i < 200; i++) seq.tick(1 / 60);
+  assert.ok(Math.abs(seq.drop - (CROUCH_EYE_HEIGHT - deathCameraTarget(CROUCH_HEIGHT))) < 1e-9, 'the full crouched sink is 1.025, not the standing 2.15');
+});
+
+test('DC1: the three direct hosts pass the LIVE eye and capsule and sink cam.pos by the drop', () => {
+  // The construction reads the motor at the death (PlayerEntity_OnDeath's
+  // live reads), and the frame subtracts the drop AFTER the eye write -
+  // off player.eye's fresh array, so it is per-frame, never cumulative.
+  for (const [h, overlaySlot] of [
+    ['scenes/world.js', 'townTalk.overlay'],
+    ['scenes/exterior.js', 'townTalk.overlay'],
+    ['scenes/worldModes.js', 'interiorOverlay'],
+  ]) {
+    const src = code(h);
+    assert.match(src, /new DeathScreen\(\{ eyeHeight: player\.eye\[1\] - player\.pos\[1\], capsuleHeight: player\.height, onReset:/,
+      `${h} constructs the death screen from the LIVE motor heights`);
+    const sink = `if (${overlaySlot} instanceof DeathScreen) cam.pos[1] -= ${overlaySlot}.drop;`;
+    assert.ok(src.includes(sink), `${h} sinks its camera by the sequence's drop`);
+    // ORDER: the sink must follow the frame's eye write, or the eye
+    // write undoes it. Find the sink, then the nearest eye write above.
+    const at = src.indexOf(sink);
+    const eyeWrite = src.lastIndexOf('cam.pos = player.eye;', at);
+    assert.ok(eyeWrite !== -1 && at - eyeWrite < 500, `${h}: the sink rides immediately after the per-frame eye write`);
+  }
+});
+
+test('DC1: the standalone dungeon sinks OUTSIDE the overlay-held walk branch, through the context seam', () => {
+  // dungeon.js's whole walk branch is HELD while any overlay is up -
+  // the death screen included - so a sink inside it would never run
+  // during the one state it exists for. The sink is its own absolute
+  // write off the motionless eye, after the branch closes.
+  const scene = code('scenes/dungeon.js');
+  assert.match(scene, /if \(walkMode && \(ctx\.deathDrop \?\? 0\) > 0\) \{\n\s+const _eye = player\.eye;\n\s+cam\.pos = \[_eye\[0\], _eye\[1\] - ctx\.deathDrop, _eye\[2\]\];\n\s+\}/,
+    'the absolute sink write exists');
+  const sinkAt = scene.indexOf('ctx.deathDrop ?? 0) > 0');
+  const flyBranch = scene.indexOf("} else if (!overlayHeld) {");
+  assert.ok(flyBranch !== -1 && sinkAt > flyBranch, 'the sink sits after the held walk/fly branches close');
+  // The view matrix is built from cam.pos BELOW the sink, or the sink
+  // writes a camera nobody renders.
+  const view = scene.indexOf('const view = lookAt(cam.pos', sinkAt);
+  assert.ok(view !== -1, 'the sink lands before the frame builds its view');
+  // The seam's two halves: the context computes the drop off its own
+  // overlay slot, and the scene binds the live motor for the start heights.
+  const ctxSrc = code('scenes/dungeonContext.js');
+  assert.match(ctxSrc, /get deathDrop\(\) \{ return activeOverlay instanceof DeathScreen \? activeOverlay\.drop : 0; \}/,
+    'the context exposes the drop (zero outside a death)');
+  assert.match(ctxSrc, /const _ms = opts\.motorState\?\.\(\) \?\? null;\n\s+activeOverlay = new DeathScreen\(\{ eyeHeight: _ms\?\.eyeLevel, capsuleHeight: _ms\?\.capsule, onReset:/,
+    'the presenter takes the live heights through opts.motorState');
+  assert.match(scene, /motorState: \(\) => \(_motorRef \? \{ eyeLevel: _motorRef\.eye\[1\] - _motorRef\.pos\[1\], capsule: _motorRef\.height \} : null\)/,
+    'the scene passes the seam, late-bound like the F222 pose');
+  assert.match(scene, /_motorRef = player;/, 'the slot binds once the motor exists');
 });
 
 // ---------------------------------------------------------------

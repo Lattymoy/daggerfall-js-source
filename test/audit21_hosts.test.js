@@ -277,7 +277,10 @@ test('AUDIT 21 hosts F6: no host writes player health raw any more', () => {
     // D1: raising it is half the law - the run has to END, or death is
     // a screen you sit on for ever. Every host hands the screen the
     // one shared onReset (the death video, then the title menu).
-    assert.match(code(h), /new DeathScreen\(\{ onReset: \(\) => endRunToTitleMenu\(renderer\) \}\)/,
+    // DC1 grew the constructor: every host now leads with the LIVE
+    // eyeHeight/capsuleHeight pair (playerdeath.test.js pins each
+    // host's exact form); this pin keeps holding the onReset tail.
+    assert.match(code(h), /new DeathScreen\(\{ eyeHeight: [^\n]*, onReset: \(\) => endRunToTitleMenu\(renderer\) \}\)/,
       `${h} must wire the death screen to the shared end-of-run seam`);
   }
 });

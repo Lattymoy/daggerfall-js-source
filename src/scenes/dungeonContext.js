@@ -1133,7 +1133,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // slot - a window holding GL resources (the automap's batches
       // + micro-map texture) must release them or they leak per death.
       activeOverlay?.dispose?.();
-      activeOverlay = new DeathScreen({ onReset: () => endRunToTitleMenu(renderer) });   // D1
+      // DC1: the LIVE eye and capsule, as PlayerEntity_OnDeath reads
+      // them. The motor lives in the scene host (dungeon.js), so it
+      // arrives through opts.motorState - the F222 pose seam's shape,
+      // late-bound because the motor is built after this context. A
+      // host that passes none (worldModes replaces this presenter
+      // outright) falls to the constructor's standing defaults.
+      const _ms = opts.motorState?.() ?? null;
+      activeOverlay = new DeathScreen({ eyeHeight: _ms?.eyeLevel, capsuleHeight: _ms?.capsule, onReset: () => endRunToTitleMenu(renderer) });   // D1
     }
   });
   // F117: Stendarr's rank-in-fifty, consulted by the door before the
@@ -3246,6 +3253,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // U3: ONE overlay seam (chargen, level-up, char sheet) - hosts
     // pause gameplay while any overlay is active.
     get uiOverlayActive() { return !!activeOverlay; },
+    // DC1: PlayerDeath.Update's camera sink, read by the scene host's
+    // one per-frame eye write; zero whenever no death runs.
+    get deathDrop() { return activeOverlay instanceof DeathScreen ? activeOverlay.drop : 0; },
     overlayWindow: () => activeOverlay,   // U26 probe surface
     /** U43-ii: the way IN to that slot. The context has held an
      *  overlay since U3 and exposed only a getter, so the quest
