@@ -670,20 +670,34 @@ function dollPanel(url) {
  *  reach. The composition is the reference's: helm crowned, neck
  *  and rings on the right flank, the big chest center spanning two
  *  rows, weapons flanking low, feet grounding it. */
+/** PX19g (Mac: "stop making incremental improvements and actually
+ *  look"): THE CHARACTER REGION COMPOSED. The doll is not decoration
+ *  slapped behind a grid - it OWNS the center column, framed, with a
+ *  home whether or not its art can draw (an empty frame reads
+ *  Avatar, so the composition never collapses to a pile of tiles).
+ *  HEAD sits above it, CHEST below it - on the body - and the
+ *  families flank it symmetrically, five rows a side, the whole
+ *  region SIZED TO FIT its space: no scrolling character sheet.
+ *      Cloaks   HEAD    Neck
+ *      Arms    [DOLL]   Rings
+ *      Hands   [DOLL]   Tokens
+ *      R-Wpn   [DOLL]   L-Wpn
+ *      Legs    CHEST    Feet         */
 const WORN_FAMILIES = Object.freeze([
   { id: 'cloaks', label: 'Cloaks', area: '1 / 1', slots: ['Cloak'] },
   { id: 'head', label: 'Head', area: '1 / 2', slots: ['Head'] },
   { id: 'neck', label: 'Neck', area: '1 / 3', slots: ['Amulet'] },
   { id: 'arms', label: 'Arms', area: '2 / 1', slots: ['Right arm', 'Left arm', 'Bracer'] },
-  { id: 'chest', label: 'Chest', area: '2 / 2 / span 2 / auto', slots: ['Chest, armour', 'Chest, clothes'] },
   { id: 'rings', label: 'Rings', area: '2 / 3', slots: ['Ring'] },
   { id: 'hands', label: 'Hands', area: '3 / 1', slots: ['Gloves', 'Bracelet'] },
   { id: 'tokens', label: 'Tokens', area: '3 / 3', slots: ['Mark', 'Crystal', 'Unnamed'] },
   { id: 'rhand', label: 'R\u00b7Weapon', area: '4 / 1', slots: ['Right hand'] },
-  { id: 'legs', label: 'Legs', area: '4 / 2', slots: ['Legs, armour', 'Legs, clothes'] },
   { id: 'lhand', label: 'L\u00b7Weapon', area: '4 / 3', slots: ['Left hand'] },
-  { id: 'feet', label: 'Feet', area: '5 / 2', slots: ['Feet'] },
+  { id: 'legs', label: 'Legs', area: '5 / 1', slots: ['Legs, armour', 'Legs, clothes'] },
+  { id: 'chest', label: 'Chest', area: '5 / 2', slots: ['Chest, armour', 'Chest, clothes'] },
+  { id: 'feet', label: 'Feet', area: '5 / 3', slots: ['Feet'] },
 ]);
+const DOLL_AREA = '2 / 2 / span 3 / auto';
 function equippedList() {
   const wrap = el('section', 'equipped');
   const head = el('div', 'equippedhead');
@@ -691,12 +705,21 @@ function equippedList() {
   head.append(el('p', 'meta', `${worn.filled} of ${worn.total} slots filled`));
   wrap.append(head);
   const map = el('div', 'wornmap');
+  // PX19g: the doll's FRAME is part of the composition and is always
+  // there - art inside it when the paperdoll can draw, a quiet
+  // Avatar plaque when it cannot. Slapped-behind is over.
   const dollUrl = paperDollDataUrl(paperDollPixels(), { scale: 3 });
+  const dollFrame = el('div', 'wornmap-doll');
+  dollFrame.style.gridArea = DOLL_AREA;
   if (dollUrl) {
-    const doll = dollPanel(dollUrl);
-    doll.classList.add('wornmap-doll');
-    map.append(doll);
+    const img = document.createElement('img');
+    img.src = dollUrl;
+    img.alt = 'Your character';
+    dollFrame.append(img);
+  } else {
+    dollFrame.append(el('span', 'worntile', '\u25c7'), el('span', 'wornslot', 'Avatar'));
   }
+  map.append(dollFrame);
   wrap.append(map);
   const byLabel = new Map();
   for (const row of worn.rows) {

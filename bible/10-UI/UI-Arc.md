@@ -7307,6 +7307,30 @@ by stash: clean tree served, edited tree failed at module load.
 Probed both viewports: dock tiles inline, worn map visible on the
 phone, zero errors. Suite green, build green.
 
+PX19g (Mac: "stop making incremental improvements and actually look
+- why is the paperdoll slapped on, why are there scrollbars"): THE
+REGION COMPOSED, THE CHROME GONE. Two design failures owned. (1) THE
+DOLL HAD NO HOME - absolutely positioned behind the grid, present
+only when art loaded, related to nothing. It OWNS THE CENTER now: a
+framed panel spanning rows 2-4 of the worn map, art inside when the
+paperdoll can draw and a quiet Avatar plaque when it cannot, so the
+composition never collapses. HEAD crowns it, CHEST sits at its feet
+- on the body - and the families flank it symmetrically, five rows a
+side: Cloaks/Arms/Hands/R-Weapon/Legs against
+Neck/Rings/Tokens/L-Weapon/Feet. (2) SIX STYLED SCROLLBARS made a
+game window read as a web page. The cure is fit, not furniture: the
+character region and the plaque are SIZED TO FIT their space
+(5x52 + gaps + the head ~= 310 in ~380, measured
+scrollHeight<=clientHeight in the probe), overflow hidden; the dock
+and the loot may still scroll but with the chrome removed
+(display:none webkit + scrollbar-width none) - wheel and touch work,
+nothing is drawn. At the fitted row the in-tile name line clipped,
+so tiles speak monogram + family word + badge (the reference's own
+read - the piece, not its caption) and the name lives in the plaque
+and the title; .wornname stays in the DOM for the probes. Verified:
+char region fits, doll frame present art or no art, zero visible
+bars by measurement, zero errors. Suite 4128/0, build green.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk

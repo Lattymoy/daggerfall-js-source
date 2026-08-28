@@ -1761,11 +1761,14 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .pack-shell .remoteacts { padding: 0 10px; }
 /* The showcase column: the figure over the plaque, both scrolling
    together, the game glass behind them through the window. */
+/* PX19g: NO SCROLLING CHARACTER SHEET, NO WEB CHROME. The region and
+   the plaque are sized to fit; the dock and the loot may scroll but
+   without scrollbar furniture - a game panel, not a web page. */
 .pack-shell .packstage { position: relative; background: rgba(0,0,0,0.25);
-  border-left: 2px solid rgba(125,116,96,0.35); overflow-y: auto;
+  border-left: 2px solid rgba(125,116,96,0.35); overflow: hidden;
   display: flex; flex-direction: column; align-items: center; gap: 18px;
   padding: 18px 20px 22px; }
-.pack-shell .charcol { overflow-y: auto; padding: 12px 16px; }
+.pack-shell .charcol { overflow: hidden; padding: 8px 16px; }
 .pack-shell .figure-doll { border: 2px solid rgba(125,116,96,0.55); background: rgba(0,0,0,0.3); }
 .pack-shell .slotmap, .pack-shell .wornlist, .pack-shell .equipped { background: rgba(0,0,0,0.3); }
 /* PX19d: THE SLOTS STAND ON THE BODY (Mac's concept reference) - the
@@ -1777,24 +1780,32 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    cannot. The chosen tile wears the gold pair and the brass frame;
    an empty slot is a dim open diamond and NOT a button. */
 .pack-shell .equipped { display: block; text-align: center; padding-bottom: 10px; }
+/* PX19g: the region FITS ITS SPACE - 5 rows of 52 + gaps + the WORN
+   head ~= 310, inside the main area's ~380 - so the character sheet
+   never scrolls. The doll owns the center: a framed panel spanning
+   rows 2-4, art inside when it can draw, a quiet Avatar plaque when
+   it cannot. */
 .pack-shell .wornmap { position: relative; display: grid;
-  grid-template-columns: repeat(3, 1fr); grid-auto-rows: 84px;
-  gap: 8px; width: min(340px, 96%); margin: 6px auto 0; }
-.pack-shell .wornmap-doll { position: absolute; left: 50%; top: 46%;
-  transform: translate(-50%,-50%); z-index: 0; border: 0; background: none; opacity: 0.85; }
-.pack-shell .wornmap-doll img { max-height: 100%; image-rendering: pixelated; }
+  grid-template-columns: repeat(3, 1fr); grid-auto-rows: 52px;
+  gap: 6px; width: min(380px, 96%); margin: 6px auto 0; }
+.pack-shell .wornmap-doll { grid-area: 2 / 2 / span 3 / auto;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; border: 2px solid rgba(125,116,96,0.45); background: rgba(0,0,0,0.35);
+  overflow: hidden; color: rgba(125,116,96,0.6); }
+.pack-shell .wornmap-doll img { max-width: 100%; max-height: 100%; object-fit: contain;
+  image-rendering: pixelated; }
+.pack-shell .wornmap-doll .wornslot { color: rgba(125,116,96,0.6); }
 .pack-shell .equipped .wornrow { position: relative; z-index: 1;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 3px; min-height: 44px; padding: 4px 3px; overflow: hidden;
   background: rgba(10,12,17,0.72); border: 2px solid rgba(125,116,96,0.35);
   color: #a89f88; font-family: inherit; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
-/* PX19e: eleven family panels have room for the piece's NAME - one
-   line, clipped whole-word; the count badge marks a family holding
-   more, and the cycle reaches every piece. */
-.pack-shell .wornrow .wornname { display: block; font-size: 9px; color: #a89f88;
-  max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
-.pack-shell .wornrow.on .wornname { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* PX19g: at the fitted 52px row the name line CLIPS - so the tiles
+   speak monogram + family word + badge (the reference's own read:
+   the piece, not its caption) and the NAME lives in the plaque and
+   the title. The DOM keeps .wornname for every probe that reads it. */
+.pack-shell .wornrow .wornname { position: absolute; width: 1px; height: 1px;
+  overflow: hidden; clip-path: inset(50%); }
 .pack-shell .worncount { position: absolute; right: 3px; top: 2px; font-size: 9px;
   color: var(--brass); text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
 .pack-shell .wornrow .tile { display: flex; width: 24px; height: 24px; align-items: center;
@@ -1858,10 +1869,9 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .pack-shell .packgold { display: flex; align-items: baseline; }
 .pack-shell .sheet-notice { color: #c5bda2; text-align: center;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
-.pack-shell ::-webkit-scrollbar { width: 10px; }
-.pack-shell ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
-.pack-shell ::-webkit-scrollbar-thumb { background: rgba(125,116,96,0.5);
-  border: 2px solid rgba(0,0,0,0.3); border-radius: 0; }
+.pack-shell ::-webkit-scrollbar { display: none; }
+.pack-shell .pack-dock .packcol, .pack-shell .packlists, .loot-win { scrollbar-width: none; }
+.loot-win::-webkit-scrollbar { display: none; }
 /* PX19c: THE LOOT WINDOW - containers, corpses, the wagon and a
    littered ground ride their OWN smaller window beside the pack,
    the same frame language one size down; absent entirely when the
