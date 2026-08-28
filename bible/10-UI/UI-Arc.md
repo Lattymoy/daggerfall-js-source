@@ -6739,6 +6739,27 @@ that no second cause hides behind it. test/frameowner.test.js pins
 the generation law, the three hosts' claim+check, and both unwinds'
 claims; 4 mutations, 4 dead.
 
+P0b LIVE CRASH, SECOND FILING (Mac 2026-08-28, deployed 3a23bff, the
+same `n[0], n is null` shape - DIFFERENT ROOT CAUSE, decoded to the
+line): line 40 col 39203 of main-C3j4GYWq.js is
+enemyCasting.js:149's `playerFeet[0]`, and the caller frame is the
+DUNGEON foe loop. dungeonContext's cast arm guarded on `playerFeet`
+- non-null whenever the player stands in the block - then passed
+`_tgt`, the SELECTED target's feet, which _targetFeet answers as
+NULL exactly when the MT-iv target machine is armed and holds no
+target (its duel opponent died this frame). So a dungeon with
+infighting live crashed the frame a caster's opponent fell with the
+player in plain sight. The attack arm one screen up and the exterior
+host both guarded on `_tgt` all along; the fix is the one-word guard
+swap to the shape they share, which is also DFU's own law (the cast
+branches read the senses' target and do not run without one - the
+guard IS the law, not a papered-over null check). Pinned in
+dungeoninfighting.test.js beside the MT-iv wiring pins - the exterior
+arm was pinned in audit24_wave32 and the dungeon arm never was, which
+is precisely how the wrong guard survived; 2 mutations, 2 dead,
+including "the null arm is real" so the law cannot be masked by
+making _targetFeet never answer null.
+
 PX14 (Mac's vision, with reference shots: Skyrim's in-game compass):
 THE DIAL. A new module, src/ui/pixelDial.js - one press over the
 live game raises a four-armed rose on a 0.45 scrim (a glance, not a

@@ -260,9 +260,9 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:751` - "database FLAGGED" narrows to the skill/loot message ids).
 - `src/scenes/dungeonContext.js:1255` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/dungeonContext.js:1291` - onTeleport INTERIM shape). Absent, the engine's dispatch
-- `src/scenes/dungeonContext.js:3006` - PX15 FLAGGED: toggleDial - the dungeon has no native inventory
-- `src/scenes/dungeonContext.js:3020` - PX3 FLAGGED: questMessages - the dungeon quest mount is
-- `src/scenes/dungeonContext.js:3090` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
+- `src/scenes/dungeonContext.js:3016` - PX15 FLAGGED: toggleDial - the dungeon has no native inventory
+- `src/scenes/dungeonContext.js:3030` - PX3 FLAGGED: questMessages - the dungeon quest mount is
+- `src/scenes/dungeonContext.js:3100` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
 - `src/scenes/exterior.js:558` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:564` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:801` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM

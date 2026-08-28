@@ -2727,7 +2727,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // casts INSTANTLY. RESIDUAL (honest): DFU casters also hold at
       // range and strafe (Enhanced AI) or stand off - our motor keeps
       // the C8 pursuit; the foe casts while closing.
-      if (playerFeet && f.caster && !_fParalyzed && f.ai.isHostile) {
+      // P0b (Mac 2026-08-28, the live dungeon crash): guard on _tgt,
+      // not playerFeet - the two differ exactly when the MT-iv target
+      // machine is ARMED and holds NO target (its duel opponent died
+      // this frame), where _targetFeet answers null while the player
+      // stands in plain sight. The attack arm above and the exterior
+      // host both already guard on _tgt; this arm alone read the
+      // wrong variable and handed the null into EnemyCaster.update's
+      // playerFeet[0]. DFU's cast branches read the senses' target
+      // and simply do not run without one - so the guard IS the law,
+      // not a papered-over null.
+      if (_tgt && f.caster && !_fParalyzed && f.ai.isHostile) {
         // MT-iv: the decision aims at the SELECTED target and reads
         // that target's own entity, so a foe duelling another foe
         // neither picks its school off the player's effects nor
