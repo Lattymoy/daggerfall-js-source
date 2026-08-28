@@ -64,6 +64,7 @@ import { BssFile } from '../formats/bssFile.js';
 // module's two GEOMETRY CONSTANTS, which travel as arguments here too:
 // see drawHudLarge's barFill.
 import { bitmapToColor32, largeHudBar } from './hud.js';
+import { drawVitalsBars } from './hudVitals.js';   // VB1: the nine-bar law - no cycle, hudVitals reads only the settings store
 import { raceArt } from '../systems/races.js';
 import { racialOverrideHeadArt } from '../systems/vampirism.js';   // V5: the curse heads, DFU's override-first order
 import { getBool, getFloat, getInt } from '../systems/settings.js';
@@ -336,13 +337,16 @@ export async function loadHudLargeHead({ fetchBytes, palette, renderer }, entity
  * background, compass, head, vitals, mode icon - and the eight
  * unpainted hit rectangles draw nothing at all.
  *
- * `barFill` arrives as an argument rather than an import for the same
+ * `vitalsBars` arrives as data rather than an import for the same
  * reason ui/hudCrosshair.js takes its two constants that way: ui/hud.js
- * is their home, it calls this, and this must not import back into it.
+ * owns the rig update (it computes the one vitals snapshot), it calls
+ * this, and this must not import back into it. VB1: the rig is this
+ * bar's OWN HUDVitals instance (HUDLarge.cs:66) - loss trails, gain
+ * bars and the F149 swap ride the large HUD exactly as the small one.
  */
 export function drawHudLarge(renderer, canvas, art, entity, heading01, {
   docked = true, undockedScale = 0.75, alignment = 0,
-  mode = 'grab', barFill = null, maxFatigueOf = null, barArt = null,
+  mode = 'grab', vitalsBars = null,
 } = {}) {
   if (!art) return null;
   const bar = largeHudRect(canvas, { docked, undockedScale, alignment });
@@ -361,22 +365,15 @@ export function drawHudLarge(renderer, canvas, art, entity, heading01, {
   // race's own head bitmap both stretch into rects that match neither.
   if (art.head) renderer.drawScreenQuad(art.head.tex, at(LARGE_HUD_RECTS.head));
 
-  if (barFill) {
+  if (vitalsBars?.rig && vitalsBars.skin) {
     // The bar ART is the small HUD's own MAIN03/04/05 - the same three
-    // files, at different rects - so it arrives from ui/hud.js rather
-    // than being loaded a second time.
-    const bars = [
-      ['health', barArt?.health, entity?.health ?? 0, entity?.maxHealth ?? 1],
-      ['fatigue', barArt?.fatigue, entity?.fatigue ?? 0, (maxFatigueOf ? maxFatigueOf(entity) : 0) || 1],
-      ['magicka', barArt?.magicka, entity?.magicka ?? 0, entity?.maxMagicka ?? 1],
-    ];
-    for (const [key, img, cur, max] of bars) {
-      if (!img) continue;
-      const r = at(LARGE_HUD_RECTS[key]);
-      const { ratio, v0, v1 } = barFill(cur, max);
-      const h = r.h * ratio;
-      if (h > 0) renderer.drawScreenQuad(img.tex, { x: r.x, y: r.y + r.h - h, w: r.w, h }, { u0: 0, v0, u1: 1, v1 });
-    }
+    // files, at different rects - so the skin arrives from ui/hud.js
+    // rather than being loaded a second time, swap already applied.
+    drawVitalsBars(renderer, vitalsBars.rig, vitalsBars.skin, {
+      health: at(LARGE_HUD_RECTS.health),
+      fatigue: at(LARGE_HUD_RECTS.fatigue),
+      magicka: at(LARGE_HUD_RECTS.magicka),
+    }, vitalsBars.indicators);
   }
 
   const sub = MODE_SUBRECT[mode] ?? MODE_SUBRECT.grab;

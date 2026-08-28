@@ -20,6 +20,11 @@ import { drawCrosshairAndModeIcon } from './hudCrosshair.js';   // U38
 import { playerDamageFlash } from './damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage rides the one HUD call
 import { drawHudLarge } from './hudLarge.js';   // U45: the classic bottom bar - an ALTERNATIVE HUD, see below
 import { drawActiveSpells, activeSpellAt, createBlinkClock, hudPointer } from './hudActiveSpells.js';   // U46: the buff/debuff icon rows
+// VB1: the indicator rig (F148) and the colour swap (F149) - HUDVitals'
+// loss trails and gain bars, the smoother, and the one change detector.
+import {
+  updateHudVitals, drawVitalsBars, vitalsSkin, vitalsIndicatorsEnabled, VITAL_KEYS,
+} from './hudVitals.js';
 import { preloadSpellIcons } from './spellIcons.js';   // U46: the sheet the rows draw from
 import { nativeMetrics } from './nativePanel.js';
 import { ToolTip } from './toolTip.js';
@@ -296,6 +301,16 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   playerDamageFlash.tick(dt);
   playerDamageFlash.draw(renderer, canvas);
   if (!art) return;
+  // VB1: the one vitals snapshot both rigs read - the same fallbacks
+  // the plain bars carried since S15. `cursorActive` stands in for
+  // DFU's IsGamePaused at the detector (see hudVitals.js's header).
+  const cur = {
+    health: vitals.health ?? 0, maxHealth: vitals.maxHealth || 1,
+    fatigue: vitals.fatigue ?? 0, maxFatigue: maxFatigue(vitals) || 1,   // S15: the (Str+End) x 64 ceiling
+    magicka: vitals.magicka ?? 0, maxMagicka: vitals.maxMagicka || 1,
+  };
+  const skin = vitalsSkin(art);
+  const indicators = vitalsIndicatorsEnabled();
   // U45 - THE LARGE HUD IS AN ALTERNATIVE, NOT AN ADDITION.
   // DaggerfallHUD.cs:214-220 turns off the vitals, the compass AND the
   // interaction-mode icon whenever it is on, "as they conflict in
@@ -306,8 +321,11 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // here with the mode icon suppressed.
   if (largeHud?.art) {
     const s2 = hudScale(canvas.width, canvas.height);
+    // VB1: HUDLarge owns its OWN HUDVitals instance (HUDLarge.cs:66) -
+    // the second rig, updated only while this branch is the live HUD.
     lastLargeHudBar = drawHudLarge(renderer, canvas, largeHud.art, vitals, heading01, {
-      ...largeHud, barFill, maxFatigueOf: maxFatigue, barArt: art,
+      ...largeHud,
+      vitalsBars: { rig: updateHudVitals(true, cur, dt, cursorActive), skin, indicators },
     });
     drawCrosshairAndModeIcon(renderer, canvas, font,
       { cursorActive, scale: s2, border: HUD_BORDER, barWidth: HUD_NATIVE_BAR_WIDTH, showModeIcon: false });
@@ -323,18 +341,20 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   const s = hudScale(canvas.width, canvas.height);
   const bottom = canvas.height - HUD_BORDER;
   // Vitals, left to right: health, fatigue, magicka (classic order),
-  // strided by barWidth * 2 = 8 native px (PositionIndicators).
-  let x = HUD_BORDER;
-  const bars = [
-    [art.health, vitals.health, vitals.maxHealth],
-    [art.fatigue, vitals.fatigue ?? 0, maxFatigue(vitals) || 1],   // S15: the live fatigue stat ((Str+End) x 64 ceiling)
-    [art.magicka, vitals.magicka ?? 0, vitals.maxMagicka ?? 1],
-  ];
-  for (const [img, cur, max] of bars) {
-    const { ratio, v0, v1 } = barFill(cur, max);
-    const w = img.w * s, hFull = img.h * s, h = hFull * ratio;
-    if (h > 0) renderer.drawScreenQuad(img.tex, { x, y: bottom - h, w, h }, { u0: 0, v0, u1: 1, v1 });
-    x += HUD_BAR_STRIDE * s;
+  // strided by barWidth * 2 = 8 native px (PositionIndicators). VB1:
+  // the nine-bar rig draws here - loss trails behind, gain bars
+  // between, the art-filled mains on top (Components.Add order,
+  // HUDVitals.cs:108-119) - and the skin carries the F149 swap.
+  {
+    const rig = updateHudVitals(false, cur, dt, cursorActive);
+    let x = HUD_BORDER;
+    const rects = {};
+    for (const k of VITAL_KEYS) {
+      const img = skin[k].img;
+      rects[k] = { x, y: bottom - img.h * s, w: img.w * s, h: img.h * s };
+      x += HUD_BAR_STRIDE * s;
+    }
+    drawVitalsBars(renderer, rig, skin, rects, indicators);
   }
   drawBreathBar(renderer, canvas, art, vitals, s);
   // Compass, bottom-right: strip window first, frame over it.

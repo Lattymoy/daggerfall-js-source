@@ -11,8 +11,10 @@ teller, the classic TRAVEL MAP with its region pages and travel popup,
 the SPELLBOOK with its icons and the guilds' buy mode, ONE
 DISPATCH so those windows work in a building and not only outdoors,
 and the classic LARGE HUD with its eleven clickable panels, and the
-BANK'S HOUSE MARKET, and the WITCHES COVEN's four-button panel, and the pixel dial).
-81 modules
+BANK'S HOUSE MARKET, and the WITCHES COVEN's four-button panel, and the pixel dial, and the
+VITALS INDICATORS - HUDVitals' smoothed loss trails and instant gain
+bars, with the health/fatigue colour swap).
+82 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

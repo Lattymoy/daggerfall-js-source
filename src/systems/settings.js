@@ -160,6 +160,12 @@ export const LIVE = Object.freeze({
   'Enhancements/AssetInjection': 'src/systems/musicReplacement.js',   // M-EXT: DFU's own gate on SoundReplacement, now real for MUSIC
   'Audio/AlternateMusic': 'src/scenes/shared.js',   // M-FM: read once in createMusicDirector, for all three hosts
   'GUI/InteractionModeIcon': 'src/ui/hudCrosshair.js',
+  // VB1: the vitals indicators (F148) and the health/fatigue swap
+  // (F149). Both were surfaced on the settings screen and read by
+  // nothing - DFU ships EnableVitalsIndicators TRUE, so the port's
+  // three plain bars had been the setting-FALSE path all along.
+  'GUI/EnableVitalsIndicators': 'src/ui/hudVitals.js',
+  'GUI/SwapHealthAndFatigueColors': 'src/ui/hudVitals.js',
   // U41: the classic travel map. Stored-tier since the settings
   // screen shipped - the outline it offers is drawn by a window the
   // port did not have until the region pages landed.
