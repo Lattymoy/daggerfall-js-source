@@ -13,7 +13,7 @@ import { dirname, join } from 'node:path';
 import { createNetwork, linkPixels, ROAD_TRACK, ROAD_TRUNK, networkHasAnyRoad } from '../src/systems/roads.js';
 import { loadOrBakeRoadsAsync, serializeRoads } from '../src/systems/roadBake.js';
 import { paintRoadTiles, ROAD_TILE_HALF_WIDTH, ROAD_TILE_RECORDS, isRoadTile } from '../src/world/roadTiles.js';
-import { roadPoints } from '../src/ui/overworldModel.js';
+import { roadPoints, chaikin, simplifyChain, reliefPoint, sampleHeightByte, SIMPLIFY_EPSILON } from '../src/ui/overworldModel.js';
 import { ROAD_TILE_RECORD_BY_KIND, ROAD_TILE_RECORD } from '../src/world/roadTiles.js';
 import { pickFootstepSet, FOOTSTEP } from '../src/systems/footsteps.js';
 
@@ -480,4 +480,115 @@ test('FS1: the host retains the tilemap and probes it at the right scale', () =>
   assert.match(w, /onExteriorPath: isRoadTile\(playerGroundTile\(\) \?\? 0\)/, 'and the footsteps read it');
   // off the built world the probe says NOTHING rather than "not road"
   assert.match(w, /if \(!built_\?\.tilemap\) return null;/);
+});
+
+
+// ── RH1: the map's roads ride the relief ─────────────────────────
+test('RH1: a smoothed road has a HEIGHT at every vertex, not NaN', () => {
+  // reliefPoint indexed heightBytes with the raw coordinates, which
+  // held while every vertex WAS a pixel. RR1's smoothing put
+  // fractional points between pixels, and a fractional array index is
+  // undefined - so overworldHeight(undefined) was NaN. Measured on a
+  // three-pixel corner before the fix: 6 of 12 vertices NaN, which is
+  // a road with no height for half its length.
+  const hb = new Uint8Array(16 * 16);
+  for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) hb[y * 16 + x] = 20 + x * 4;
+  const ctx = { heightBytes: hb, width: 16, height: 16 };
+  const [buf] = roadPoints([[{ x: 2, y: 8 }, { x: 8, y: 8 }, { x: 8, y: 2 }]], ctx, 0);
+  for (let i = 1; i < buf.length; i += 3) {
+    assert.ok(Number.isFinite(buf[i]), `vertex ${(i - 1) / 3} has a real height`);
+  }
+});
+
+test('RH1: the sample is BILINEAR, and exact on a pixel', () => {
+  const hb = new Uint8Array(4 * 4);
+  hb[0] = 0; hb[1] = 100;              // (0,0)=0  (1,0)=100
+  hb[4] = 0; hb[5] = 100;              // (0,1)=0  (1,1)=100
+  const w = 4, h = 4;
+  // exact on a pixel - anything already right must not move
+  assert.equal(sampleHeightByte(hb, w, h, 0, 0), 0);
+  assert.equal(sampleHeightByte(hb, w, h, 1, 0), 100);
+  // and interpolated between two, which is what the drawn surface does
+  // between its one-vertex-per-pixel centres
+  assert.equal(sampleHeightByte(hb, w, h, 0.5, 0), 50);
+  assert.equal(sampleHeightByte(hb, w, h, 0.25, 0), 25);
+  // clamped at the edges rather than reading off the end
+  assert.equal(sampleHeightByte(hb, w, h, -3, -3), 0);
+  assert.ok(Number.isFinite(sampleHeightByte(hb, w, h, 99, 99)));
+  // reliefPoint at an integer pixel still answers what it always did
+  const ctx = { heightBytes: hb, width: w, height: h };
+  assert.deepEqual(reliefPoint(1, 0, ctx, 0), [1.5, reliefPoint(1, 0, ctx, 0)[1], -0.5]);
+});
+
+// ── RZ1: simplify, THEN smooth ───────────────────────────────────
+const turning = (pts) => {
+  let total = 0;
+  for (let i = 1; i < pts.length - 1; i++) {
+    const a = Math.atan2(pts[i].y - pts[i - 1].y, pts[i].x - pts[i - 1].x);
+    const b = Math.atan2(pts[i + 1].y - pts[i].y, pts[i + 1].x - pts[i].x);
+    let d = Math.abs(b - a);
+    if (d > Math.PI) d = 2 * Math.PI - d;
+    total += d * 180 / Math.PI;
+  }
+  return total;
+};
+/** the staircase a traced chain makes of an east-north-east road */
+const staircase = () => {
+  const out = []; let y = 0;
+  for (let x = 0; x < 24; x++) { if (x % 3 === 0) y++; out.push({ x, y }); }
+  return out;
+};
+
+test('RZ1: a grid staircase becomes STRAIGHT, because smoothing alone cannot', () => {
+  const stair = staircase();
+  assert.equal(Math.round(turning(stair)), 630, 'the raw chain wobbles this much');
+  // Chaikin alone takes the worst corner down but moves the TOTAL not
+  // at all - it spreads the same wobble over more vertices. That is
+  // why simplification had to come first, and pinning it here is what
+  // stops someone "simplifying" the pipeline back to smoothing alone.
+  assert.equal(Math.round(turning(chaikin(stair, 2))), 630,
+    'smoothing rounds corners; it does not decide which are real');
+  // simplify DOES
+  const simp = simplifyChain(stair);
+  assert.equal(Math.round(turning(simp)), 0, 'the staircase was an artifact of the grid');
+  assert.equal(simp.length, 2, 'and collapses to the line it always was');
+});
+
+test('RZ1: roadPoints itself straightens - the pipeline, not just the helper', () => {
+  // The helpers can both be right while roadPoints uses neither. This
+  // drives the actual model builder, which is what draws the map.
+  const ctx = { heightBytes: new Uint8Array(32 * 32).fill(30), width: 32, height: 32 };
+  const [buf] = roadPoints([staircase()], ctx, 0);
+  const verts = buf.length / 3;
+  // simplify collapses the 24-pixel staircase to its two ends, and
+  // Chaikin leaves a two-point chain alone. Smoothing WITHOUT
+  // simplifying would give 96 vertices of the same wobble.
+  assert.ok(verts < 12, `a straight-running road draws as a straight line, got ${verts} vertices`);
+  // and the ends are still exactly where the tracer put them
+  assert.equal(buf[0], Math.fround(0 + 0.5));
+  assert.equal(buf[buf.length - 3], Math.fround(23 + 0.5));
+});
+
+test('RZ1: a road that genuinely turns KEEPS its corner', () => {
+  // The risk of simplifying is flattening real shape. A right-angle
+  // road must survive with its angle intact and only shed the pixels
+  // along its two straight legs.
+  const corner = [];
+  for (let x = 0; x < 12; x++) corner.push({ x, y: 0 });
+  for (let y = 1; y < 12; y++) corner.push({ x: 11, y });
+  const simp = simplifyChain(corner);
+  assert.equal(Math.round(turning(simp)), 90, 'the corner is still a corner');
+  assert.equal(simp.length, 3, 'reduced to its two legs and the bend between them');
+  // ends are exact - they are where the tracer split at a junction
+  assert.deepEqual(simp[0], corner[0]);
+  assert.deepEqual(simp[simp.length - 1], corner[corner.length - 1]);
+});
+
+test('RZ1: the tolerance sits just under one pixel, for a stated reason', () => {
+  // A diagonal step stands at most sqrt(2)/2 off the line it belongs
+  // to, so the tolerance has to clear that and stay under a pixel.
+  assert.ok(SIMPLIFY_EPSILON > Math.SQRT2 / 2, 'clears a diagonal grid step');
+  assert.ok(SIMPLIFY_EPSILON < 1, 'and keeps anything that bends by a whole pixel');
+  // a chain too short to simplify comes back untouched
+  assert.deepEqual(simplifyChain([{ x: 1, y: 1 }, { x: 2, y: 2 }]), [{ x: 1, y: 1 }, { x: 2, y: 2 }]);
 });

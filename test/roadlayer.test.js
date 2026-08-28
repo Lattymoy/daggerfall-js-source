@@ -105,7 +105,13 @@ test('every traced chain becomes its OWN vertex run', () => {
   model.trunk.forEach((buf, i) => {
     const line = lines.trunk[i];
     assert.equal(buf.length % 3, 0);
-    assert.ok(buf.length >= line.length * 3, 'smoothing only adds vertices');
+    // RZ1: the count is no longer monotone in EITHER direction.
+    // Simplify runs first and DROPS the grid staircase, then Chaikin
+    // adds points back around the corners that survived - so a
+    // straight-ish chain comes out far shorter than it went in, which
+    // is the whole point. What must hold is that a chain still has
+    // vertices and still has its ends.
+    assert.ok(buf.length >= 6, 'a chain is still at least a segment');
     const [x0, , z0] = reliefPoint(line[0].x, line[0].y, c, RELIEF_LIFT.trunk);
     const last = line[line.length - 1];
     const [xn, , zn] = reliefPoint(last.x, last.y, c, RELIEF_LIFT.trunk);
