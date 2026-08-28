@@ -42,6 +42,7 @@ import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 46
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
 import { RestWindow } from '../ui/restWindow.js';   // S40: rest above ground
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
+import { healthStatusRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
 import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 // V5: resting above ground. RestWindow and RestSession have been
 // finished since U7; what was missing was a host outside the dungeon
@@ -2273,6 +2274,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // U43 factored the window builders out for the interior arm to
     // mount; this reads the same ones rather than a third copy.
     toggleCharSheet: () => townTalk.showOverlay(makeCharSheetWindow()),
+    // BS1/F198: the Status action's HEALTH box (CreateHealthStatusBox)
+    // - which disease you carry, once incubation is over. The record-22
+    // status text that precedes it in DFU's DisplayStatusInfo chain is
+    // FLAGGED in systems/healthStatus.js (macro producers pend).
+    showStatus: () => townTalk.showOverlay(new ActionTextBox(healthStatusRows(playerEntity, (id) => townTalk.lines(id)))),
     toggleLogbook: () => townTalk.showOverlay(makeJournalWindow('activeQuests')),
     toggleNotebook: () => townTalk.showOverlay(makeJournalWindow('notebook')),
     toggleInventory: () => {

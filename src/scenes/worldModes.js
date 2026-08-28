@@ -40,6 +40,9 @@ import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C12): the one clock; G4's probe moves it
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
+import { healthStatusRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
+import { makeOpenBookHook } from '../ui/bookReader.js';   // BS1: the shelf pick opens the reader
+import { populateBookshelf, bookshelfAccess, bookshelfTitles } from '../systems/bookshelf.js';   // BS1
 import { maxFatigue, liveStat } from '../systems/statMods.js';   // AUDIT 23 (C5); U40: strength for MaxEncumbrance
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // U40: the letter-of-credit gate
 import { nearestLights } from '../world/cityLights.js';
@@ -871,11 +874,56 @@ export function createWorldModes(host) {
   // two quests are otherwise the same word in every list.
   const _itemLabel = (it) => questLetterName(it, (uid) => questBridge?.machine.getQuest(uid) ?? null)
     ?? it.name ?? templateByIndex(it.templateIndex)?.name ?? it.group;
+  /** BS1: the book reader on a bare id - the bookshelf picks by id,
+   *  and makeOpenBookHook reads item.message, so a `{ message }`
+   *  wrapper IS the item. Mounts into this host's own overlay slot
+   *  (bookshelves are interior-only, one host). */
+  const _openBookById = makeOpenBookHook({ fetchBytes, showReader: (w) => { interiorOverlay = w; } });
+  /** BS1: DaggerfallBookshelf.ReadBook (:66-89) on the shelf the click
+   *  hit. The guild is the BUILDING faction's, resolved the way
+   *  GetGuild(factionID) resolves DFU's; only a GuildHall or Temple
+   *  consults it (a Library is public). The book list is Start()'s
+   *  ten draws, minted lazily per shelf - the same lazy-per-activation
+   *  idiom the shop shelves stock by - and a pick opens the reader on
+   *  the id (BookShelf_OnItemPicked, :91-96). */
+  function openBookshelf(shelf, b) {
+    const dict = townTalk?.factionDict ?? null;
+    const bf = b.factionId ? (dict?.get(b.factionId) ?? null) : null;
+    const guild = bf ? createGuildForGroup(bf.ggroup, b.factionId, dict) : null;
+    const membership = guild ? membershipOf(activeMemberships(playerEntity), guild) : null;
+    const access = bookshelfAccess({ buildingType: b.buildingType, guild, membership });
+    if (!access.allowed) {
+      interiorOverlay = new ActionTextBox([access.text]);   // DaggerfallUI.MessageBox(accessMembersOnly)
+      return;
+    }
+    shelf.books ??= populateBookshelf();
+    if (!listPickerArtLoaded()) return;   // no art, no window (the U8 idiom)
+    let picker = null;
+    picker = new ListPickerWindow({
+      items: bookshelfTitles(shelf.books),
+      onPick: (i) => {
+        // PopWindow then OpenBook + the reader push (:93-95): the
+        // picker yields, the reader arrives on the fetch.
+        if (interiorOverlay === picker) interiorOverlay = null;
+        _openBookById({ message: shelf.books[i] });
+      },
+      onCancel: () => { if (interiorOverlay === picker) interiorOverlay = null; },
+    });
+    interiorOverlay = picker;
+  }
   function openShelf(i) {
     const b = interiorBuilding;
     const shelf = interiorCtx?.shelves[i];
     if (!b || !shelf) return;
-    if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
+    if (!isShop(b.buildingType)) {
+      // BS1: a shelf model inside a LIBRARY, GUILDHALL or TEMPLE is a
+      // BOOKSHELF (DaggerfallInterior.cs:808-814) - the same model a
+      // shop makes loot shelves of. Owned-house storage still pends
+      // (FLAGGED - MakeHouseContainer, the house-ownership arm).
+      if (b.buildingType === BUILDING_TYPES.Library || b.buildingType === BUILDING_TYPES.GuildHall
+        || b.buildingType === BUILDING_TYPES.Temple) openBookshelf(shelf, b);
+      return;
+    }
     shelf.items ??= stockShopShelf({ buildingType: b.buildingType, quality: b.quality }, playerEntity);
     // AUDIT 26 F066: DFU NEVER opens a paying trade window in a
     // closed shop. PlayerActivate gates shelf activation on
@@ -4278,6 +4326,8 @@ export function createWorldModes(host) {
       });
     },
     toggleCharSheet() { mountInterior(host.makeCharSheet?.()); },
+    // BS1/F198: the Status action's health box (the four-hosts seam).
+    showStatus() { mountInterior(new ActionTextBox(healthStatusRows(playerEntity, (id) => townTalk?.lines?.(id) ?? []))); },
     toggleInventory() { mountInterior(host.makeInventory?.()); },
     // M2/I2: the CastSpell action opens the spellbook
     // (GameManager.cs:550-553); the cast itself is the attack click.

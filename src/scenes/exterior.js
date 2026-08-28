@@ -54,6 +54,7 @@ import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   //
 import { RestWindow } from '../ui/restWindow.js';   // S40: rest above ground
 import { setEnemyAlert, areEnemiesNearby } from '../systems/encounters.js';   // the enemy arm RAISES the alert before refusing; the RESTING variant asks the pool, the STRICT one gates the townsfolk idle
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5): the collapse box
+import { healthStatusRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
 import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { calculateCastCost } from '../systems/spellcost.js';   // M2
@@ -987,6 +988,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     // other's note about the deliberately withheld quest hooks. They
     // agreed. That is what drift looks like the day before it stops.
     toggleCharSheet: () => townTalk.showOverlay(makeCharSheetWindow()),
+    // BS1/F198: the Status action's health box (the four-hosts seam).
+    showStatus: () => townTalk.showOverlay(new ActionTextBox(healthStatusRows(playerEntity, (id) => townTalk.lines(id)))),
     toggleInventory: () => {
       // V4: GetSuppressInventory (LycanthropyEffect.cs:409-421)
       const sup = racialSuppressInventory(playerEntity);

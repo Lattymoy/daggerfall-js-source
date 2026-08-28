@@ -164,11 +164,12 @@ test('U25: the panel fills every macro its records use - none survives to the sc
 
 test('U25 -> IM1: no macro prints raw, and the fallbacks stand only where no source exists', () => {
   // Template 274 is neither book nor potion: %po and %bt fall to the
-  // item's own name, %ba to DFU's unknownAuthor text ('Anonymous' was
-  // the port's invention and IM1 retired it), %hs to Nothing.
+  // item's own name, %ba to DFU's unknownAuthor text - 'unknown author', lowercase,
+  // Internal_Strings.csv verbatim ('Anonymous' was the port's
+  // invention and IM1 retired it; BS1 caught the casing), %hs to Nothing.
   const out = expandItemInfo('%hs %po %bt by %ba', { name: 'Thing', templateIndex: 274 });
   assert.equal(/%/.test(out), false, out);
-  assert.equal(out, 'Nothing Thing Thing by Unknown Author');
+  assert.equal(out, 'Nothing Thing Thing by unknown author');
 });
 
 test('IM1: an identified book\'s name IS its title - ResolveItemName\'s "Books are handled differently" arm', () => {
@@ -204,7 +205,7 @@ test('IM1: %po answers the recipe by the item\'s own key - Potion() verbatim, bo
 
 test('IM1: the %ba cache - the reader\'s load feeds it, an empty author line keeps the fallback', () => {
   const book = { group: 'Books', templateIndex: 277, name: 'Book', message: 424242 };
-  assert.equal(expandItemInfo('%ba', book), 'Unknown Author');
+  assert.equal(expandItemInfo('%ba', book), 'unknown author');
   setBookAuthor(424242, 'Marobar Sul');
   assert.equal(getBookAuthor(424242), 'Marobar Sul');
   assert.equal(expandItemInfo('%ba', book), 'Marobar Sul');

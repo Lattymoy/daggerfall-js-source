@@ -380,7 +380,9 @@ export function expandItemInfo(text, item, { name = null, soul = null, potion = 
     .replaceAll('%arm', itemName)
     .replaceAll('%wep', itemName)
     .replaceAll('%bt', macroBookTitle ?? itemName)
-    .replaceAll('%ba', authorMacro ?? 'Unknown Author')
+    // BS1 caught IM1's casing: Internal_Strings.csv reads "unknown
+    // author", lowercase, verbatim.
+    .replaceAll('%ba', authorMacro ?? 'unknown author')
     .replaceAll('%po', potionMacro ?? itemName)
     // The painting five (:185-218). Unfilled they printed raw on the
     // panel; with no PAINT.DAT they now read as the blank they are,

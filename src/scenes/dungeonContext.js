@@ -24,6 +24,7 @@ import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, DOOR_VERB_FLAGS, classifyPlac
 import { TextRsc } from '../formats/textRsc.js';
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // U51 picks the skin
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
+import { healthStatusRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
 import { addItem, spendArrow } from '../systems/inventory.js';
 import { worldAabb } from '../player/activate.js';
@@ -3405,6 +3406,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       } finally {
         renderer.setScreenOffset(0, 0);
       }
+    },
+    // BS1/F198: the Status action's health box (the four-hosts seam).
+    showStatus() {
+      if (activeOverlay) return;
+      activeOverlay = new ActionTextBox(healthStatusRows(playerEntity, rscLines));
     },
     toggleCharSheet() {
       if (activeOverlay) return;
