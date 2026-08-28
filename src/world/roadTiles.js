@@ -61,8 +61,35 @@ export const ROAD_TILE_RECORDS = Object.freeze([46, 47, 55]);
 /** The body record. SKIN, and explicitly UNVERIFIED BY EYE: this
  *  container has no ARENA2, so which of the three reads best is a
  *  question for a machine that can render them. Parameterised so that
- *  answering it is a call-site change, not a code change. */
+ *  answering it is a call-site change, not a code change.
+ *
+ *  Kept as the single-record default and as the fallback for a class
+ *  the table below does not name. */
 export const ROAD_TILE_RECORD = 46;
+
+/** RC2 (Mac, 2026-08-28) - A TRUNK AND A TRACK LOOK DIFFERENT.
+ *
+ *  The network has carried the class since R1 and the map layer has
+ *  drawn the two at their own colours and lifts since R3 - but
+ *  underfoot both painted record 46, so a goat track to a graveyard
+ *  was indistinguishable from the Daggerfall-to-Wayrest highway.
+ *
+ *  All three of these are road to DFU's own nav law (cityNavigation
+ *  tileWeight :31, "Roads are great!"), so this ships no art and
+ *  changes nothing about what counts as a road - only which of the
+ *  three each class draws with.
+ *
+ *  WHICH IS WHICH IS UNVERIFIED, for the same reason the record above
+ *  says so: nothing here can render them. The assignment is the
+ *  ordering claim only - the trunk keeps 46, the record the single-
+ *  record version already used and the one every existing pin names,
+ *  and the track takes 47 so the two differ at all. An eye on ARENA2
+ *  should settle it, and this is a table so that settling it is a
+ *  value change. */
+export const ROAD_TILE_RECORD_BY_KIND = Object.freeze({
+  [ROAD_TRACK]: 47,
+  [ROAD_TRUNK]: 46,
+});
 
 /** Half-width in tiles, by road class - so 0 paints a single-tile
  *  line and 1 paints a 3-tile band. A tile is 819.2 / 128 = 6.4 world
@@ -248,7 +275,7 @@ function curvePoints(ax, ay, cx, cy, bx, by) {
  * @returns {number} tiles painted (0 when no road crosses this pixel)
  */
 export function paintRoadTiles(tilemap, network, px, py, {
-  record = ROAD_TILE_RECORD, halfWidth = ROAD_TILE_HALF_WIDTH,
+  record = null, recordByKind = ROAD_TILE_RECORD_BY_KIND, halfWidth = ROAD_TILE_HALF_WIDTH,
 } = {}) {
   if (!network) return 0;
   const { trunk, track } = roadExitsAt(network, px, py);
@@ -276,6 +303,10 @@ export function paintRoadTiles(tilemap, network, px, py, {
   for (const [bits, kind] of [[track, ROAD_TRACK], [trunk, ROAD_TRUNK]]) {
     if (!bits) continue;
     const half = halfWidth[kind] ?? 1;
+    // RC2: `record` still overrides everything when a caller passes
+    // one, so a probe or a pin can paint the whole network in one
+    // record and read it back without knowing the classes.
+    const rec = record ?? recordByKind[kind] ?? ROAD_TILE_RECORD;
     const exits = [];
     for (let d = 0; d < 8; d++) if (bits & DIRS[d].bit) exits.push(exitTile(d));
 
@@ -286,14 +317,14 @@ export function paintRoadTiles(tilemap, network, px, py, {
     if (exits.length === 2 && !located) {
       painted += stampPath(tilemap,
         curvePoints(exits[0].x, exits[0].y, MID, MID, exits[1].x, exits[1].y),
-        half, record, null);
+        half, rec, null);
       continue;
     }
     for (const e of exits) {
       // Inward from the EDGE, so a run that meets the town stops at
       // its boundary instead of being erased cell by cell.
       const t = located ? aimFor(streets, box, e) : { x: MID, y: MID };
-      painted += stampRun(tilemap, e.x, e.y, t.x, t.y, half, record, claimed);
+      painted += stampRun(tilemap, e.x, e.y, t.x, t.y, half, rec, claimed);
     }
   }
   return painted;

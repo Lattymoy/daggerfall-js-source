@@ -278,13 +278,13 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:892` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/world.js:898` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/world.js:1351` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
-- `src/scenes/world.js:2383` - FLAGGED in systems/healthStatus.js (macro producers pend).
-- `src/scenes/world.js:2476` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:2765` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:3126` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:3542` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:4050` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:4424` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:2409` - FLAGGED in systems/healthStatus.js (macro producers pend).
+- `src/scenes/world.js:2502` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:2791` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:3152` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:3568` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:4076` - exemption (PlayerTileMapIndex == 0) is FLAGGED: a water
+- `src/scenes/world.js:4460` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:799` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
 - `src/scenes/worldModes.js:936` - FLAGGED to the crime arc, as the Ledger records.
 - `src/scenes/worldModes.js:1005` - at the concluded deal (:1036-1051). FLAGGED: the equipped test

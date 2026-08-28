@@ -105,12 +105,12 @@ import { buildingDataForDoor, locationBuildings } from '../systems/talkTopics.js
 import { hitSoundFor, swingSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
-import { StreamingWorldState, worldCoordToMapPixel, locationWorldRect, isInLocationRect } from '../world/streamingWorld.js';
+import { StreamingWorldState, worldCoordToMapPixel, locationWorldRect, isInLocationRect, mapPixelToWorldCoords } from '../world/streamingWorld.js';
 import { getBool, getInt } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
 import { layoutNature } from '../world/terrainNature.js';
 import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, generateSamples } from '../world/terrainSampler.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
-import { paintRoadTiles } from '../world/roadTiles.js';   // R5 (enhanced): roads on the ground
+import { paintRoadTiles, isRoadTile } from '../world/roadTiles.js';   // R5 (enhanced): roads on the ground; FS1: the tile under the player
 import { roadsForWorld, bakeInputs } from '../systems/roadsBoot.js';   // R6
 import { traceNetwork } from '../systems/roadBake.js';   // R3W: the map layer's chains
 import { bakeRoadsOffThread } from '../systems/roadBakeClient.js';   // RA1: the bake in a Worker
@@ -650,7 +650,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
 
     built.set(key, {
-      px, py, terrain, tilemapTex, groundArchive, models, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
+      px, py, terrain, tilemapTex, tilemap, groundArchive, models, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
       population, locOrigin, personBatches,   // T2 towns
       npcs: pixelNpcs,   // AUDIT 26 (F019): RMBLayout's street StaticNPCs, pixel-local
       locBlocks,   // T3d: the Where-is directory's block scan
@@ -1772,6 +1772,32 @@ export async function bootWorld(canvas, renderer, params, status) {
   const playerTravelPixel = () => {
     const wc = state.worldCoords(walkMode ? player.pos : cam.pos);
     return worldCoordToMapPixel(wc.x, wc.z);
+  };
+  /** FS1 (2026-08-28) - THE TILE UNDER THE PLAYER, which this host has
+   *  wanted since the FS-slice: the footstep block's own comment says
+   *  "the path/water tile arms ride the tile-under-player flag", and
+   *  there was no flag to ride.
+   *
+   *  A terrain tile is 2 x WorldMapTileDim = 256 world units - the same
+   *  step locationWorldRect walks when it shifts a pixel corner by the
+   *  location's tile origin (streamingWorld.js:60-61). Tile ROWS rise
+   *  with z, which is why row 127 is north and row 0 south, exactly as
+   *  roadTiles' header derives it from generateTileData.
+   *
+   *  Answers null off the built world - a pixel still streaming has no
+   *  tilemap, and a caller must read that as "no information", not as
+   *  "not a road". */
+  const TERRAIN_TILE_WORLD = 2 * TERRAIN_TILE_DIM;
+  const playerGroundTile = () => {
+    const wc = state.worldCoords(walkMode ? player.pos : cam.pos);
+    const p = worldCoordToMapPixel(wc.x, wc.z);
+    const built_ = built.get(`${p.x},${p.y}`);
+    if (!built_?.tilemap) return null;
+    const origin = mapPixelToWorldCoords(p.x, p.y);
+    const tx = Math.floor((wc.x - origin.x) / TERRAIN_TILE_WORLD);
+    const ty = Math.floor((wc.z - origin.z) / TERRAIN_TILE_WORLD);
+    if (tx < 0 || ty < 0 || tx >= TERRAIN_TILE_DIM || ty >= TERRAIN_TILE_DIM) return null;
+    return built_.tilemap[tx + ty * TERRAIN_TILE_DIM];
   };
   const footsteps = new FootstepMachine();   // FS-slice
   /** The teleport core fast travel and the quickload share: destroy
@@ -4047,11 +4073,14 @@ export async function bootWorld(canvas, renderer, params, status) {
         zPrevW = zNowW;
         // P14 fall damage (host parity - CheckFallingDamage +
         // PlayerHealth verbatim; sounds 91/92). The outdoor-water
-        // exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-        // has no tile-under-player lookup yet, so a water landing
-        // bills like ground until the tile probe ships. Death at 0
-        // rides the shared entity; the exterior death screen pends
-        // with the world-mode UI arc.
+        // exemption (PlayerTileMapIndex == 0) is FLAGGED: a water
+        // landing still bills like ground. FS1 built the tile probe
+        // this was waiting on - playerGroundTile below - so what
+        // remains is only reading tile 0 off it and taking the
+        // exemption, which is a fall-damage law and wants its own
+        // pass rather than riding a footstep change. Death at 0 rides
+        // the shared entity; the exterior death screen pends with the
+        // world-mode UI arc.
         applyFallLanding(playerEntity, player.landedFallDistance, { sound: (id) => audio.playOneShot(id) });
         // FS-slice: PlayerFootsteps - the exterior stride (snow by
         // season + CLIMATE.PAK; the path/water tile arms ride the
@@ -4062,7 +4091,14 @@ export async function bootWorld(canvas, renderer, params, status) {
             grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
             standingStill: !anyMove(mv),
             halfSpeed: player.movingLessThanHalfSpeed,
-          }, pickFootstepSet({ inside: false, winter: season === SEASON.Winter, climateIndex: maps.getClimateIndex(_p.x, _p.y) }));
+          }, pickFootstepSet({
+            inside: false,
+            winter: season === SEASON.Winter,
+            climateIndex: maps.getClimateIndex(_p.x, _p.y),
+            // FS1: a road underfoot rings like stone. pickFootstepSet has
+            // carried this arm since the FS-slice with nothing to feed it.
+            onExteriorPath: isRoadTile(playerGroundTile() ?? 0),
+          }));
           if (_step) audio.playOneShot(_step.clip, _step.volume);
         }
         cam.pos = player.eye;
