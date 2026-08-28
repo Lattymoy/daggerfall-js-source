@@ -6637,3 +6637,21 @@ column GAPS by painting the grid behind them) - found by computed
 style, not by staring at the sheet, the PX9 lesson applied within
 the hour. Probed both viewports, the pane now sits on the window's
 own translucent ground.
+
+PX11 (same day, Mac: the fullscreen settings gets the treatment):
+THE SHELL STANDS ON THE SKY. The boot shell renders over the home's
+own ground canvas - same drawPixelGround, same 8fps clock under the
+same groundTimer owner (every render clears it; pause never reaches
+the branch), same reduced-motion opt-out - and every old panel
+colour came off: the side rail and subrail scrimmed at 0.62/0.45
+with 2px dim rules where the base sheet painted its grid gaps, the
+list under a 0.38 breath of scrim so the stars stay BEHIND the words
+(the readability nudge the first eyeball asked for), the detail at
+0.55, rows transparent on 2px separators with the outline-not-inset
+selected state. Paint and grounds only - the grid, the sizes and
+every measured target are exactly where PX8 left them, and the tap
+probe's 26 stayed 26. Probed live: the shell's sky animates (two
+canvas frames apart differ), Escape still backs out to the home,
+zero page errors both viewports. The enhanced skin is now the one
+treatment everywhere a menu exists: home, pause window, and the
+fullscreen catalog.

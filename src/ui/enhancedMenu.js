@@ -1228,6 +1228,24 @@ function renderInto() {
   // PX1/PX2: both doors open on the pixel home; every section keeps
   // its shell.
   if (section === 'home') { renderHome(); return; }
+  // PX11 (Mac): the BOOT shell stands on the same living sky as the
+  // home - the ground draws behind it and the shell's own chrome goes
+  // translucent (enhancedStyle's PX11 block), so Settings at boot is
+  // the one treatment, fullscreen. Same clock, same owner, same
+  // reduced-motion opt-out; pause never reaches this branch.
+  if (mode === 'boot') {
+    const ground = document.createElement('canvas');
+    ground.className = 'px-ground';
+    const vw = () => globalThis.innerWidth ?? 1280;
+    const vh = () => globalThis.innerHeight ?? 720;
+    drawPixelGround(ground, vw(), vh(), 0);
+    const still = typeof globalThis.matchMedia === 'function' && globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!still) {
+      const t0 = Date.now();
+      groundTimer = setInterval(() => drawPixelGround(ground, vw(), vh(), (Date.now() - t0) / 1000), 125);
+    }
+    app.append(ground, el('div', 'px-vignette'));
+  }
   const shell = el('div', 'shell');
 
   const side = el('aside', 'side');
