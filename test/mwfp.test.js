@@ -9,7 +9,7 @@ import {
   MW_WEAPON_BONE,
 } from '../src/combat/mwFpArms.js';
 import { WEAPON_TYPES } from '../src/combat/fpsWeapon.js';
-import { mwFpEnabled } from '../src/combat/mwFpArms.js';
+import { mwFpEnabled } from '../src/combat/mwFpPref.js';
 import { parseAnimGroups } from '../src/formats/mwAnim.js';
 import { readFileSync } from 'node:fs';
 const src = (p) => readFileSync(new URL(`../src/${p}`, import.meta.url), 'utf8');

@@ -30,7 +30,7 @@ import { getPref, setPref, isOpen, setOpen } from '../systems/uiPrefs.js';
 import { replacementCount } from '../systems/musicReplacement.js';   // M-EXT: the row reports what the pick covers
 import { textureReplacementCount } from '../systems/textureReplacement.js';   // M-TEX: and the texture half
 import { morrowindDataCount } from '../scenes/dataSource.js';   // MW-IMPORT: and the third domain's
-import { mwFpPreference, setMwFpPreference } from '../combat/mwFpArms.js';   // MW-IMPORT: the 3D-viewmodel toggle lives beside the attach
+import { mwFpPreference, setMwFpPreference } from '../combat/mwFpPref.js';   // MW-IMPORT: the 3D-viewmodel toggle lives beside the attach
 import { uiSkin, otherSkin, setUiSkin, SKIN_NAMES } from '../systems/uiSkin.js';
 import { measureText, drawText } from './text.js';
 import { drawRect, shadowText } from './nativePanel.js';

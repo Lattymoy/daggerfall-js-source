@@ -87,7 +87,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { morrowindDataCount } from '../scenes/dataSource.js';   // MW-IMPORT: the enhanced shell's own attach door
-import { mwFpPreference, setMwFpPreference } from '../combat/mwFpArms.js';
+import { mwFpPreference, setMwFpPreference } from '../combat/mwFpPref.js';
 import { CATEGORIES, keysOf } from '../ui/settingsMap.js';
 import { widgetFor, blockedReason, formatValue, stepValue, COLOUR_KEYS } from '../ui/settingsLaw.js';
 import { labelOf, helpOf, INSTEAD, TIER_TEXT } from '../ui/settingsCopy.js';
@@ -838,6 +838,9 @@ function paneEnhanced(body) {
     } },
     { label: mwFpPreference() ? 'Turn 3D first-person off' : 'Turn 3D first-person on',
       onClick: () => { setMwFpPreference(!mwFpPreference()); render(); } },
+    // The blurb NAMED the viewer without a way to reach it - a door
+    // described is not a door. One press, new tab, same origin.
+    { label: 'Open mesh viewer', onClick: () => window.open('mw-viewer.html', '_blank') },
   ]));
   body.append(mw);
 
