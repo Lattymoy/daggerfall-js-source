@@ -847,7 +847,20 @@ function paneEnhanced(body) {
     const n = morrowindDataCount();
     return `${n} archive${n === 1 ? '' : 's'} attached \u00b7 3D first-person ${mwFpPreference() ? 'ON' : 'off'}`;
   };
-  mw.append(stats([['State', mwState()]]));
+  // MWDIAG: WHY IT IS NOT DRAWING, on the surface that offers the
+  // toggle. The layer has always published its own reason
+  // (window.__mwfp.status - "no skinned geometry in base", "missing
+  // meshes\base_anim.1st.nif", "ready: 3 skinned sets, 41 groups"),
+  // and the only way to read it was the browser console. A player who
+  // attaches data, turns the toggle on and still sees the sprite has
+  // no way to tell WHICH of five different things went wrong. The card
+  // that promises the feature is where that answer belongs.
+  const mwRig = () => {
+    const m = globalThis.__mwfp;
+    if (!m) return 'no rig yet - enter the world once with data attached';
+    return m.ready ? `drawing \u00b7 ${m.status}` : `NOT drawing \u00b7 ${m.status}`;
+  };
+  mw.append(stats([['State', mwState()], ['Rig', mwRig()]]));
   mw.append(acts([
     { label: 'Attach data', primary: true, onClick: async () => {
       const ds = await import('../scenes/dataSource.js');
