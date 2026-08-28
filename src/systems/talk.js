@@ -291,3 +291,51 @@ export function pickpocketTownsperson(player, { rolls = Math.random, nothingText
   if (!racialSuppressCrime(player)) player.crimeCommitted = 'Pickpocketing';
   return { success: false, gold: 0, message: 'You are not successful.' };
 }
+
+// ── TN1: THE LORD'S NAME (MacroHelper.cs:310-331, verbatim) ──────
+// GetLordNameForFaction feeds %fl1/%fl2 (the news pair's lords) and
+// %ol1 (the OLD ruler, oldRuler=true). The law: if the faction's
+// FIRST child is an Individual, she/he IS the ruler and answers by
+// name; otherwise the ruler is GENERATED - gender from the ruler
+// title's parity ("even entries are female titles/genders, odd
+// entries are male ones": (ruler+1)%2, and nameHelper's GENDERS is
+// Male 0 / Female 1, so the arithmetic lands as written), the name
+// bank from the faction's RACE byte, and the DFRandom stream SEEDED
+// from rulerNameSeed - the high half for the old ruler, the low half
+// for the current one, "matched to classic: used to retain the same
+// old and new ruler name for each region". The seeding is the
+// ENGINE-PRNG rule's DFRandom arm: srand into the one shared classic
+// stream, exactly as DFRandom.Seed is a static set in C#.
+
+import { GENDERS, getNameBank, fullName } from '../characters/nameHelper.js';
+import { srand } from '../formats/dfRandom.js';
+
+/** FactionFile.FactionRaces (FactionFile.cs:609-622) -> the port's
+ *  race keys (nameHelper's BANK_BY_RACE vocabulary). Skakmat (11) and
+ *  Orc (17) fall through like None: GetRaceFromFactionRace answers
+ *  Races.None and GetNameBank's default arm answers Breton. */
+export const FACTION_RACE_KEYS = Object.freeze({
+  0: 'Nord', 1: 'Khajiit', 2: 'Redguard', 3: 'Breton',
+  4: 'Argonian', 5: 'WoodElf', 6: 'HighElf', 7: 'DarkElf',
+});
+
+/**
+ * @param {Map<number, object>} factionDict - the live FactionFile dict
+ * @param {number} factionId
+ * @param {boolean} [oldRuler]
+ */
+export function lordNameForFaction(factionDict, factionId, oldRuler = false) {
+  const fd = factionDict?.get(factionId);
+  // C# GetFactionData's out-param defaults on a miss: no children, ruler
+  // 0, race 0, seed 0 - the generate arm runs over zeros, verbatim.
+  const children = fd?.children ?? null;
+  if (children && children.length > 0) {
+    const firstChild = factionDict.get(children[0]);
+    if (firstChild?.type === FACTION_TYPES.Individual) return firstChild.name;
+  }
+  const gender = ((fd?.ruler ?? 0) + 1) % 2 === 1 ? GENDERS.Female : GENDERS.Male;
+  const raceKey = FACTION_RACE_KEYS[fd?.race ?? 0] ?? null;
+  const seed = fd?.rulerNameSeed ?? 0;
+  srand(oldRuler ? seed >>> 16 : seed & 0xffff);
+  return fullName(getNameBank(raceKey), gender);
+}

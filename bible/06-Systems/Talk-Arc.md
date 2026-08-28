@@ -1058,3 +1058,48 @@ headless charter); one mutation campaign per sandbox with the
 baseline re-measured after every sync (THE BASELINE TRAP: the
 confirm verdict string is meaningless, only the fails count against
 the current baseline decides); equivalents need PROOFS.
+
+## TN1 - THE TALK-NEWS GETTERS (2026-08-28)
+
+Seven seams the macro table and the machine declared and nothing
+production-side answered, so %fa/%fae/%fe/%fea/%fnpc/%fpc/%fpa,
+%fl1/%fl2/%ol1 and %olf all expanded to the charter's null in every
+rumor and news record:
+
+- **The four npcData faction names**. TK-iv computed npcFactionName /
+  pcFactionName / allyFactionName / enemyFactionName in every arm of
+  getGreetingIndex and recorded them as "the names nobody reads" - a
+  claim that was STALE on arrival: TalkManager.cs:1795-1824's getters
+  read all four and MacroHelper.cs:965-995 routes seven macros through
+  them (with C#'s own asymmetries, %fea reading the ALLY and %fae the
+  ENEMY, kept and pinned). world.js mounts them off the live
+  npcSession.
+- **GetFactionName's HolyOrder arm** (:1815-1822): a Holy Order
+  conversation answers the TEMPLE'S deity - Temple.FactionOrderName is
+  `parent.deity.ToString()` - resolved through guildVariants.getDivine
+  off the building the player is inside; outside a temple the port
+  falls to pcFactionName (recorded - C# would be off in GetGuild's
+  catch-land).
+- **GetLordNameForFaction** (MacroHelper.cs:310-331), the one home in
+  systems/talk.js: a first child who is an Individual IS the ruler and
+  answers by name; otherwise the ruler is GENERATED - gender from the
+  ruler title's parity ("even entries are female"), the name bank from
+  the faction's RACE byte (FACTION_RACE_KEYS is FactionFile.cs:609-622;
+  Skakmat and Orc default like None), and the classic stream SEEDED
+  from rulerNameSeed - high half for the OLD ruler (%ol1), low half
+  for the current (%fl1/%fl2), "matched to classic: used to retain the
+  same old and new ruler name for each region". The ENGINE-PRNG rule's
+  DFRandom arm: srand into the one shared stream.
+- **GetOldLeaderFateString** (%olf): the pipeline's own localized
+  fates (answerPipeline, TK-iii) - the strings sat shipped and
+  unreachable.
+
+Pins: 6 in `test/talknews.test.js` - the lord-name law driven with
+expectations computed by seeding the same stream by hand (which kills
+a swapped seed half, a flipped parity and a wrong bank each exactly;
+and taught its own lesson: the expectation must be computed BEFORE the
+call, because the call re-seeds the one shared stream and argument
+order evaluates left to right), the FactionRaces table against the C#
+enum, the seven macro handlers against a stub world, and the world
+mounts source-pinned. audit24_questseams' seven PENDING rows dropped -
+removing a row means mounting it. Campaign: 9 mutants, 9 killed.

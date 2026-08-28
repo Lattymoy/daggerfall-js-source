@@ -42,13 +42,11 @@ const PENDING = new Map([
   // handlers answer the charter's null through optional reads until
   // the talk-news arc (the TalkManager getters, the lord names) and
   // the interior host (the building name, the tavern pick) mount them.
-  ['factionNPC', 'M-X: TalkManager.GetFactionNPC - the talk-news arc'],
-  ['factionNPCAlly', 'M-X: TalkManager.GetFactionNPCAlly - the talk-news arc'],
-  ['factionNPCEnemy', 'M-X: TalkManager.GetFactionNPCEnemy - the talk-news arc'],
-  ['factionName', 'M-X: TalkManager.GetFactionName - the talk-news arc'],
-  ['factionPC', 'M-X: TalkManager.GetFactionPC - the talk-news arc'],
-  ['lordNameForFaction', 'M-X: GetLordNameForFaction (%fl1/%fl2/%ol1) - the talk-news arc'],
-  ['oldLeaderFate', 'M-X: GetOldLeaderFateString (%olf) - the talk-news arc'],
+  // TN1 (2026-08-28) MOUNTED the seven talk-news getters - the four
+  // npcData faction names (TK-iv computed them; MacroHelper.cs:965-995
+  // reads them), GetFactionName's HolyOrder deity arm,
+  // GetLordNameForFaction and GetOldLeaderFateString. Removing a row
+  // means mounting it, and it did.
   ['currentBuildingName', 'M-X: %cbd is the interior host\'s - the handler answers [invalid] meanwhile, DFU\'s outside arm'],
   ['randomTavernName', 'M-X: %nt walks the building directory - the interior/town host\'s'],
   // QG1 MOUNTED getClassicSpellEffects (spellRecordOfIndex, the G4

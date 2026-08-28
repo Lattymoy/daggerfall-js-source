@@ -147,7 +147,7 @@ import { makeItemPermanent } from '../systems/quest/item.js';
 import { guildOfFaction, membershipOf, guildFactionIdOfGroup, joinedGuildOfGroup, activeMemberships } from '../systems/guilds.js';   // V2e: the per-read vampire book pick
 import { GUILD_GROUPS } from '../formats/factionFile.js';   // the membership book's key - the travel popup's free-ship read
 import { freeShipTravel, avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // KnightlyOrder.FreeShipTravel, the second half of hasShip
-import { resolveVariantGuild, orderOf } from '../systems/guildVariants.js';
+import { resolveVariantGuild, orderOf, getDivine } from '../systems/guildVariants.js';   // TN1: GetFactionName's HolyOrder arm
 // TK-i: THE RUMOR MILL - the quest machine's rumor seams stop being silent.
 import { RumorMill, tokensToString } from '../systems/rumorMill.js';
 import { isFaction2RelatedToFaction1 } from '../systems/factionRelations.js';   // S44: the member this host used to stub as false
@@ -155,7 +155,7 @@ import { expandQuestMessage } from '../systems/quest/questMacros.js';
 // TK-ii: THE TOPIC TREE - the quest topic/dialog-link seams land.
 import { TopicTree, QUEST_INFO_RESOURCE_TYPE, QUESTION_TYPE } from '../systems/topicTree.js';
 import { NPCSession } from '../systems/npcSession.js';
-import { getPeopleOfCurrentRegion, getReactionToPlayer } from '../systems/talk.js';
+import { getPeopleOfCurrentRegion, getReactionToPlayer, lordNameForFaction } from '../systems/talk.js';   // TN1: %fl1/%fl2/%ol1's one home
 import { BUILDING_TYPES as TALK_BUILDING_TYPES } from '../world/buildingNames.js';
 import { AnswerPipeline, TALK_STRINGS } from '../systems/answerPipeline.js';
 import { expandRandomTextRecord as expandTalkRecord } from '../systems/talkMacros.js';
@@ -2802,6 +2802,34 @@ export async function bootWorld(canvas, renderer, params, status) {
     // entries ARE the classic (type, subType) pairs - C# folds both
     // sides through MakeClassicKey's byte casts (EntityEffect.cs:999-
     // 1002), so the compare folds to byte too.
+    // TN1: THE TALK-NEWS GETTERS, mounted at last. The four faction
+    // names are TalkManager's npcData fields - TK-iv computed them in
+    // every arm of getGreetingIndex and recorded "the names nobody
+    // reads"; MacroHelper.cs:965-995 reads all four through the
+    // TalkManager getters (:1795-1824), so %fa/%fae/%fe/%fea/%fnpc/
+    // %fpc/%fpa stop expanding empty. GetFactionName's HolyOrder arm
+    // (:1815-1822) answers the TEMPLE'S deity - Temple.FactionOrder-
+    // Name is `parent.deity.ToString()` - resolved through getDivine
+    // off the building the player is inside; outside one (or in a
+    // non-temple) C# would be off in GetGuild's catch-land, and the
+    // port falls to pcFactionName, recorded.
+    factionNPC: () => npcSession.npcData?.npcFactionName ?? '',
+    factionNPCAlly: () => npcSession.npcData?.allyFactionName ?? '',
+    factionNPCEnemy: () => npcSession.npcData?.enemyFactionName ?? '',
+    factionPC: () => npcSession.npcData?.pcFactionName ?? '',
+    factionName: () => {
+      if (npcSession.npcData?.guildGroup === GUILD_GROUPS.HolyOrder) {
+        const divine = getDivine(townTalk.factionDict, modes?.interiorBuilding?.factionID ?? 0);
+        if (divine) return divine;
+      }
+      return npcSession.npcData?.pcFactionName ?? '';
+    },
+    // %fl1/%fl2/%ol1 - MacroHelper.GetLordNameForFaction, the one home
+    // in systems/talk.js (the first-child Individual, the parity
+    // gender, the seeded classic stream)
+    lordNameForFaction: (id, old = false) => lordNameForFaction(townTalk.factionDict, id, old),
+    // %olf - the pipeline's own localized fates (answerPipeline TALK_STRINGS)
+    oldLeaderFate: (i) => answerPipeline.getOldLeaderFateString(i),
     getClassicSpellEffects: (spellID) => spellRecordOfIndex(spellID)?.effects ?? null,
     spellHasMatchForClassicEffect: (sp, effect) => (sp?.effects ?? []).some((e) =>
       ((e.type ?? 0) & 0xff) === ((effect.type ?? 0) & 0xff)
