@@ -4234,3 +4234,52 @@ whole key set from the effect classes. Campaign: 5 mutants, 5 killed,
 including one that drops a single loop-keyed variant (8,4) and one that
 over-reaches a DIFFERENT family, so the sweep is proven to generalise
 past the case it was written for.
+
+## EF1c - THE SENTENCES THE LIBRARY OUTGREW (2026-08-28)
+
+EF1 retired the flag on `applySpell`'s skip counter. EF1b found the
+same claim four lines from the top of the same file. This is the rest
+of them: four sentences across two more modules that deferred work to
+"the effect-library slice", every one checked by RUNNING the thing it
+described.
+
+- `dungeonContext.js` said trap spells resolve "the classic
+  damage-health family... other effects FLAGGED to the effect-library
+  slice". M3 moved this host's missiles onto the shared cast engine, so
+  a landed bolt goes `explodeAt` / `applySpellToPlayer` -> `applySpell`:
+  a paralysis or drain trap has been landing whole for a long time.
+- `spellcast.js`'s header declared a SCOPE - "the RESOLVED effect
+  family is classic Damage Health... every other effect in a trap spell
+  is SKIPPED with a flag" - for a module that resolves no effects at
+  all. It owns the saving throw, the magnitude roll and the missile
+  constants. A scope note describing a NEIGHBOUR's old shape is worse
+  than none: it reads as current and nothing local contradicts it.
+- `spellcast.js` called ElementalResistance a family "the effect
+  library has not reached, so nothing can raise one yet" - written
+  directly above `elementalResistanceChance`, the function that sums
+  the entries it declared could not exist. Casting 8,0 raises Fire to
+  100 and leaves Frost at 0. Two neighbours, opposite claims, and only
+  one of them runs.
+- `spellcast.js` called continuous damage "instant application - the
+  rounds system pends". It enters `activeEffects` as a
+  `continuousDamage` entry and re-rolls its magnitude every round.
+
+None of the four changed behaviour; all four were the port lying to its
+next reader about where its own edges are - which is the more expensive
+kind of wrong, because it sends someone to build what is already built.
+
+**A CLAIM USUALLY HAS MORE THAN ONE HOME.** EF1 fixed the line it was
+looking at. Grep the claim, not the line.
+
+Pins: 3 appended to `test/effectcoverage.test.js` (one subject, one
+row) - the resistance law per element, the continuous-damage round
+tick, and a SOURCE SWEEP so a fifth sentence cannot land. Campaign: 4
+applicable mutants, 4 killed - and the sweep's design is the campaign's
+doing. Its first shape matched per line and flagged EF1c's own
+corrections, which quote the retired wording across line breaks; its
+second exempted any comment block naming EF1c, and a mutant pasting a
+BRAND-NEW "other effects pend the effect-library slice" into that same
+block SURVIVED. The shipped sweep strips quoted spans and reads what is
+left, so a correction may quote the old sentence and an assertion is
+still caught. **An exemption wide enough to cover the fix is wide
+enough to hide the next defect.**
