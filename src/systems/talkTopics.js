@@ -31,6 +31,8 @@ import { generateBuildingName, isNamedBuildingType, BUILDING_TYPES } from '../wo
 import { randomRangeInclusive, srand } from '../formats/dfRandom.js';
 import { RMB_SIDE } from '../world/locationLayout.js';
 import { directionHintString } from './talk.js';   // wave 27: one compass law
+import { staticNpcData, isChildNPCData } from '../characters/staticNpc.js';   // QP1: the one SetLayoutData law
+import { collectInteriorPeople } from '../characters/interiorPeople.js';   // QP1: the one people mapper
 
 // TalkManager.knowledgeModifiers (verbatim, 8 question rows x 5
 // social groups).
@@ -234,6 +236,61 @@ export function locationBuildings(exteriorBuildings, blocks) {
         recordIndex: i,
         modelId: model?.modelId ?? null,
         modelIdNum: model?.modelIdNum ?? null,
+      });
+    }
+  }
+  return out;
+}
+
+/**
+ * QP1 - GetBuildingList's QUESTOR half (TalkManager.cs:2807-2874): the
+ * per-building people records the "any work" pool is built from.
+ * AUDIT 24 found npcSession.buildQuestorPool dead - the policy shipped
+ * and nothing could feed it, because the host's building seam carried
+ * no per-building NPC records. This walk is that feed, pure:
+ *
+ * - the SAME correlation locationBuildings rides (mergeNamedBuildings,
+ *   indexed by subrecord, keyed by MakeBuildingKey) - C# walks
+ *   RMBLayout.GetBuildingData per block and reads
+ *   `SubRecords[i].Interior.BlockPeopleRecords` (:2810);
+ * - each person through the ONE SetLayoutData law (staticNpcData -
+ *   nameSeed = position ^ (buildingKey + locationIndex), the flags&32
+ *   gender, the faction race fold) plus the IsChildNPCData verdict the
+ *   pool's child gate reads (:2842);
+ * - buildingName through the same generateBuildingName the directory
+ *   uses (:2853-2860 calls BuildingNames.GetName again for the entry);
+ *   an unnamed building's is null and the pool drops the candidate at
+ *   its isNamedBuilding gate, exactly as C# does at :2862.
+ *
+ * The 25% roll, the social-group filter and the spent-roll ordering
+ * all stay in npcSession.buildQuestorPool - policy there, data here.
+ */
+export function questorCandidateBuildings(exteriorBuildings, blocks, {
+  locationIndex = 0, mapId = 0, nameOpts = {}, getFaction = null, raceOfCurrentRegion = null,
+} = {}) {
+  const merged = mergeNamedBuildings(exteriorBuildings, blocks);
+  const out = [];
+  for (const b of blocks) {
+    const list = merged.get(b) ?? [];
+    const count = Math.min(list.length, b.dfBlock.rmbBlock.subRecords?.length ?? list.length);
+    for (let i = 0; i < count; i++) {
+      const data = list[i];
+      if (!data) continue;
+      const buildingKey = makeBuildingKey(b.x ?? 0, b.y ?? 0, i);
+      const sub = b.dfBlock.rmbBlock.subRecords?.[i];
+      const npcs = (sub?.interior?.blockPeopleRecords ? collectInteriorPeople(sub) : []).map((p) => {
+        const d = staticNpcData(p, {
+          mapId, locationIndex, buildingKey, getFaction, raceOfCurrentRegion,
+        });
+        return { ...d, isChild: isChildNPCData(d) };
+      });
+      out.push({
+        buildingType: data.buildingType,
+        buildingKey,
+        isNamedBuilding: isNamedBuildingType(data.buildingType),
+        buildingName: generateBuildingName(data.nameSeed, data.buildingType,
+          { ...nameOpts, factionId: data.factionId }),
+        npcs,
       });
     }
   }

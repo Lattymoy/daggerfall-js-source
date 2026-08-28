@@ -33,7 +33,8 @@ import { createPlayerMagic } from './hostMagic.js';   // M2: spellcasting above 
 import { setDefaultEnchantCtx } from '../systems/enchantments.js';   // E2: the host's enchantCtx mount
 import { applySpell } from '../systems/effects.js';   // E2: CastWhenStrikes' target arm
 import { ChoiceWindow } from '../ui/talkWindow.js';   // TP-slice: the anchor/teleport prompt
-import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in)
+import { preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in)
+import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the book's one door
 import { calculateCastCost } from '../systems/spellcost.js';   // M2   // T3b
 import { rangedDamageSpells } from '../systems/spellcast.js';   // U42: the flight probe's picker
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C2): the ONE clock
@@ -856,6 +857,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer, canvas, fetchBytes, playerEntity, palette,
     regionIndex: startLoc.regionIndex,
     onCrime: () => _crimeResponse(),   // G1: late-bound - the guards mount below
+    // QP1: GetBuildingList's questor half lands in the pool. Late-bound
+    // like onCrime - npcSession mounts below, and the first topics set
+    // (the streaming update) runs long after boot.
+    onBuildingList: (buildings) => npcSession.buildQuestorPool(buildings),
   });
   townTalk.ensureLoaded();
   preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: INFO00I0 warms at boot
@@ -1031,6 +1036,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     };
     townTalk.setTopics({
       exteriorBuildings: dfLocation.exterior.buildings,
+      // QP1: the questor pool's SetLayoutData identities - the same
+      // locationIndex npcSession's own guard reads (_questLoc()), and
+      // the mapId SetLayoutData stamps into every NPCData.
+      locationIndex: dfLocation.locationIndex ?? 0,
+      mapId: dfLocation.mapTableData?.mapId ?? 0,
       blocks: cur.locBlocks,
       doors: buildingDoors.filter((e) => e.pixelKey === key).map((e) => ({
         dfBlock: e.dfBlock, recordIndex: e.recordIndex,
@@ -1590,17 +1600,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
 
   let _spellbook = null;   // U42: the live window, for the probe surface
-  const makeSpellbookWindow = () => (spellbookArtLoaded()
-    ? (_spellbook = new SpellbookWindow({
-      spells: () => (playerEntity.spells ??= []),
-      entity: playerEntity,
-      castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
-      // SpellsListBox_OnUseSelectedItem (:770-784): SetReadySpell,
-      // then PopToHUD - and the lycanthropy spell casts free.
-      onReady: (sp, { noSpellPointCost } = {}) => magic.readySpell(sp, { free: !!noSpellPointCost }),
-      rows: (id) => townTalk.lines(id),
-    }))
-    : null);
+  // PX23: the book's ONE door (ui/spellbookDoor.js). This host hands it
+  // only what this host knows - the entity, the engine, the cost and
+  // the way it reaches TEXT.RSC.
+  const makeSpellbookWindow = () => (_spellbook = createSpellbookWindow({
+    entity: playerEntity,
+    magic,
+    castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
+    rows: (id) => townTalk.lines(id),
+  }));
   const toggleSpellbook = () => {
     if (townTalk.overlayActive) return;
     const w = makeSpellbookWindow();
@@ -4453,6 +4461,13 @@ export async function bootWorld(canvas, renderer, params, status) {
         }
         addItem(playerEntity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });   // BowDamage: the arrow is recoverable from the target
       },
+      // AR1: the impact learns the FOES - the shaft an archer looses
+      // at another foe (MT-ii's infighting selection) LANDS now, on
+      // BowDamage's non-player arm. Both pools are candidates; the
+      // shooter is excluded inside the flight module.
+      foeTargets: [...exteriorFoes.foes, ...cityGuards.guards]
+        .filter((t) => !t.dead && t.ai).map((t) => ({ feet: t.ai.feet, ref: t })),
+      onFoeHit: (m, t) => exteriorFoes.arrowHitFoe(m, t),
     });
     arrows.draw(renderer);
     // C9: the exterior FP weapon - swings/sounds through the rig; the

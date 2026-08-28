@@ -4128,3 +4128,53 @@ waits on Yes/No), Yes through the real respond with paging-not-
 re-responding pinned past the answer, No's flagged spawn and the
 empty-popup immediate close, and the sixteen distinct films with the
 host's one-consumer order and fallback greps.
+
+## CR1 - THE COURT GUILD RESCUES (2026-08-28)
+
+The arm court.js's header FLAGGED to the guilds arc since the court
+shipped: DaggerfallCourtWindow.cs:177-221. After the penalty math and
+BEFORE the plead box, a member's guild may intervene - assault or
+murder (crimeType 3/4) through the Dark Brotherhood (faction 108),
+a thieving crime (crimeType <=2 or 11, pickpocketing) through the
+Thieves Guild (faction 42). The gate is `guild.Rank >=
+Random.Range(0, 20)` - an ENGINE-PRNG injectable roll drawn ONLY for
+a member, because C#'s IsMember() stands outside the Range call and
+the port keeps that stream discipline (pinned: a non-member consumes
+nothing). The rescued exit is the acquittal's own trio (:191-193):
+FillVitalSigns, RaiseReputationForDoingSentence, release - a rescued
+player never pleads. The release box carries TEXT.RSC 550 (courtTextTG)
+or 551 (courtTextDB) through the court macro pass.
+
+`guildRescue` is pure in systems/court.js; arrestFlow's default
+`guildRankOf` is the same guildOfFaction/membershipOf read the quest
+world's getGuild makes, over townTalk's faction tree - so the arms go
+live the day the Thieves Guild or Dark Brotherhood is joinable, and
+answer null (no rescue) until then, exactly as an IsMember() false
+does. The court header's FLAGGED clause is retired.
+
+Pins: 3 in `test/courtrescue.test.js`. Campaign: 7 mutants, 7 killed.
+
+## ES2 - THE EQUIP SOUND (2026-08-28)
+
+equip.js's header FLAGGED it since U8f. DFU rings a per-item clip at
+EquipItem's own moment (ItemEquipTable.cs:144-146,
+DaggerfallUI.PlayOneShot(item.GetEquipSound())), BEFORE
+StartEquippedItem - and the port does now:
+
+- `getEquipSound(item)` is DaggerfallUnityItem.cs:820-841 verbatim:
+  clothing 381, jewellery/gems 383; armor splits shield-or-Helm to
+  plate (419) FIRST, then the EXACT material - Leather (0x0000) 417,
+  Chain (0x0100) 418, with Chain2 (0x0103) falling to plate on C#'s
+  own `==` - else plate; weapons by template (axes 415, long blades
+  378, two-handed 379, short blades 377, flail 414, mace/hammer 413,
+  staff 380, bows 416); everything else SoundClips.None (null, rings
+  nothing).
+- The sink registers inside `audio.ensure` - every host's boot passes
+  through it, so no host can forget the wire (the FOUR HOSTS RULE's
+  structural arm; DaggerfallUI.PlayOneShot is a global reach in C#
+  for the same reason).
+- The RESTORE path stays silent: rebuildEquipState refills slots
+  directly and never enters equipItem - the port's shape of DFU's
+  playEquipSounds=false load arm, pinned.
+
+Pins: 4 in `test/equipsounds.test.js`. Campaign: 7 mutants, 7 killed.

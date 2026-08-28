@@ -1133,3 +1133,40 @@ remained after TN1, mounted:
 Pins: 6 in `test/interiorseams.test.js` (the two macro flows with
 C#'s "[invalid]" arm on the handler, the four world mounts and the
 one-bag law source-pinned). Campaign: 7 mutants, 7 killed.
+
+## QP1 - THE ANY-WORK QUESTOR POOL GOES LIVE (2026-08-28)
+
+AUDIT 24 found `npcSession.buildQuestorPool` dead: the 25%-roll policy
+shipped and pinned, and nothing could feed it - the host's building
+seam carried no per-building NPC records, so `npcsWithWork` stayed
+empty for ever, `WorkAvailable` answered false, the Work topic's gate
+never opened and no townsperson ever had "any work". The feed is
+TalkManager.GetBuildingList's questor half (:2807-2874):
+
+- **`talkTopics.questorCandidateBuildings`** - a pure walk over the
+  SAME correlation the directory rides (mergeNamedBuildings, indexed
+  by subrecord, keyed by MakeBuildingKey): per block, per building,
+  `SubRecords[i].Interior.BlockPeopleRecords` through the ONE people
+  mapper (collectInteriorPeople) and the ONE SetLayoutData law
+  (staticNpcData - nameSeed = position ^ (buildingKey +
+  locationIndex), flags&32 gender, the faction race fold) plus the
+  IsChildNPCData verdict the pool's child gate reads. buildingName
+  through the same generateBuildingName (:2853-2860 calls GetName
+  again for the entry); an unnamed building's is null and the pool
+  drops the candidate at its isNamedBuilding gate, exactly :2862.
+- **The trigger is the rebuild** - C# populates the pool INSIDE the
+  one building walk, so townTalk's rebuildDirectory (the port's
+  GetBuildingList) hands the candidates out through the host's
+  `onBuildingList` door, and world.js lands them in
+  npcSession.buildQuestorPool. The pool's own locationIndex guard
+  makes re-entry a no-op, C#'s own shape.
+- Topics gained the SetLayoutData identities (locationIndex, mapId) -
+  the same locationIndex the pool's guard reads off _questLoc().
+- Policy stays where it was: the 25% roll, the three social groups,
+  the spent-roll ordering, the named-building drop - all in
+  npcSession, all already pinned.
+
+Pins: 5 in `test/questorpool.test.js` (the walk on fixture blocks,
+the SetLayoutData law per person, an end-to-end walk-to-pool mint
+keyed by the walk's own seed, the two mounts). Campaign: 8 mutants,
+8 killed.

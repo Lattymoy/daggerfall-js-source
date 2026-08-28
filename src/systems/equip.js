@@ -14,7 +14,11 @@
 // the unequipped list. Items STAY in the bag and carry equipSlot
 // when worn (FilterLocalItems hides them). E2: the enchantment
 // start/stop payloads fire through the onItemEquipped/onItemUnequipped
-// hooks below. FLAGGED: equip sounds.
+// hooks below. ES2: the equip sound rings at EquipItem's own moment
+// (ItemEquipTable.cs:145-146) through the one sink the host mounts -
+// and NOT on restore, because rebuildEquipState refills the slots
+// directly, which is the port's shape of DFU's playEquipSounds=false
+// load arm.
 
 import { mintCondition, templateByIndex } from './itemTemplates.js';   // AUDIT 23
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
@@ -242,6 +246,9 @@ export function equipItem(entity, item) {
   slots[slot] = item;
   updateEquippedArmorValues(entity, item, true);   // U8h: the armor table subtracts
   _hooks.onEquipChange?.(entity);   // E1: the fold follows the worn set
+  // ES2: "Play equip sound" (ItemEquipTable.cs:144-146) - BEFORE
+  // StartEquippedItem, C#'s own order. SoundClips.None plays nothing.
+  { const clip = getEquipSound(item); if (clip != null) _equipSoundSink?.(clip); }
   _hooks.onItemEquipped?.(entity, item);   // E2: StartEquippedItem - the Equipped|Held payloads (ItemEquipTable.cs:149)
   return unequipped;
 }
@@ -383,6 +390,48 @@ export function lowerCondition(item, amount, owner = null, say = null) {
  *  constant effects re-apply next frame (DoConstantEffects), and a
  *  fold that waited for the next magic round would lag up to a
  *  classic minute. onItemBroken is the Breaks payload edge above. */
+/** ES2 - GetEquipSound (DaggerfallUnityItem.cs:820-841), verbatim:
+ *  the SoundClips id the equip moment rings, or null for C#'s None.
+ *  Clothing 381, jewellery/gems 383; armor splits shield-or-Helm to
+ *  plate (419), then the EXACT material: Leather (0x0000) 417, Chain
+ *  (0x0100) 418 - Chain2 (0x0103) falls to plate on C#'s own `==` -
+ *  else plate; weapons by template, axes 415, long blades 378,
+ *  two-handed blades 379, short blades 377, flail 414, mace/hammer
+ *  413, staff 380, bows 416. */
+export function getEquipSound(item) {
+  switch (item?.group) {
+    case 'MensClothing':
+    case 'WomensClothing':
+      return 381;   // EquipClothing
+    case 'Jewellery':
+    case 'Gems':
+      return 383;   // EquipJewellery
+    case 'Armor':
+      if (isShieldTemplate(item.templateIndex) || item.templateIndex === 107) return 419;   // GetIsShield() || Helm
+      if (item.material === 0x0000) return 417;   // ArmorMaterialTypes.Leather
+      if (item.material === 0x0100) return 418;   // ArmorMaterialTypes.Chain, exactly
+      return 419;   // EquipPlate
+    case 'Weapons':
+      switch (item.templateIndex) {
+        case 127: case 128: return 415;              // Battle_Axe, War_Axe
+        case 118: case 120: case 119: case 121: return 378;   // Broadsword, Longsword, Saber, Katana
+        case 122: case 123: return 379;              // Claymore, Dai_Katana
+        case 113: case 114: case 117: case 116: return 377;   // Dagger, Tanto, Wakazashi, Shortsword
+        case 125: return 414;                        // Flail
+        case 124: case 126: return 413;              // Mace, Warhammer
+        case 115: return 380;                        // Staff
+        case 129: case 130: return 416;              // Short_Bow, Long_Bow
+        default: return null;
+      }
+    default:
+      return null;
+  }
+}
+
+/** ES2: the host's one audio door for the equip moment. */
+let _equipSoundSink = null;
+export function setEquipSoundSink(fn) { _equipSoundSink = fn; }
+
 const _hooks = { onEquipChange: null, onItemBroken: null, onItemEquipped: null, onItemUnequipped: null };
 export function setEnchantmentHooks({ onEquipChange = null, onItemBroken = null, onItemEquipped = null, onItemUnequipped = null } = {}) {
   _hooks.onEquipChange = onEquipChange;

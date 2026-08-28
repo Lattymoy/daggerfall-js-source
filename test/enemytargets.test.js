@@ -17,9 +17,10 @@ import {
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 import { makeEnemyEntity } from '../src/characters/enemyEntity.js';
 import { MOBILE_TYPES } from '../src/characters/mobileTypes.js';
+import { dfuFile } from './dfuRoot.mjs';   // PY1: DFU_PATH, then the in-tree sparse clone
 const DAEDROTH = MOBILE_TYPES.Daedroth;
 
-const DFU_ENUMS = new URL('../tools/parity/dfu/Assets/Scripts/DaggerfallUnityEnums.cs', import.meta.url);
+const DFU_ENUMS = dfuFile('Assets/Scripts/DaggerfallUnityEnums.cs');
 
 const clearCollider = () => ({
   raycast: () => Infinity,

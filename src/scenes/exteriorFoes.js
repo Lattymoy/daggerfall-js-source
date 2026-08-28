@@ -43,6 +43,7 @@ import { onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
 import { MINUTES_PER_DAY } from '../systems/worldTick.js';
 import { mintCorpseMarker, playBodyFall, corpseLootTargets, takeCorpseLoot, sayEnemyDied } from './corpseMarker.js';
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
+import { addItem } from '../systems/inventory.js';   // AR1: BowDamage's recoverable arrow, in the TARGET's items
 import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage   // AUDIT 24 (wave 38): EnemyDeath's one home
 import { bindQuestFoeHost } from './questFoeHost.js';   // B1: quest foes ride this pool
@@ -550,11 +551,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         f.mobile.shootArrow = false;
         // MT-ii: the shaft flies at the SELECTED target - BowDamage
         // carries the same two-arm split as MeleeDamage (:134-148).
-        // FLAGGED: the arrow's IMPACT still only knows the player
-        // (the host's arrows.update has one onPlayerHit door), so an
-        // arrow loosed at another foe flies true and lands nothing.
-        // Written loudly rather than aimed wrongly: the alternative
-        // was firing at the player while the archer faced a bear.
+        // AR1 closed the impact half: arrows.update tests every live
+        // foe but the shooter, and arrowHitFoe below runs BowDamage's
+        // non-player arm, so an arrow loosed at another foe LANDS.
         const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
         const d = [_tgt[0] - from[0], _tgt[1] + 0.9 - from[1], _tgt[2] - from[2]];
         const l = Math.hypot(...d) || 1;
@@ -761,6 +760,26 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       }).catch((e) => console.error('[encounter] restore failed:', e?.message ?? e));
     }
   }
+  /** AR1: BowDamage's non-player arm (EnemyAttack.cs:134-148 with
+   *  :303's bowAttack=true) - the host's arrow update calls this when
+   *  an enemy shaft contacts a foe. Same shared payload as the melee
+   *  foe arm above; the target's own pool owns its death chain
+   *  through hurtFromFoe. The arrow is recoverable from the TARGET
+   *  (:146-148 - senses.Target.Entity.Items.AddItem), damage or not. */
+  function arrowHitFoe(m, target) {
+    const f = m.shooterFoe;
+    if (!f || f.dead || !target) return;
+    const dir = [...m.dir];
+    applyDamageToNonPlayer(f, target, {
+      weapon: m.weapon, direction: dir, bowAttack: true, rolls, calculateAttackDamage,
+      dealDamage: (t, d) => (t.hurtFromFoe ? t.hurtFromFoe(d, dir) : damageFoe(t, d, null, dir)),
+      audio, hitEffects,
+    });
+    if (target.entity?.items) {
+      addItem(target.entity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
+    }
+  }
+
   return { foes, spawnFoe, damageFoe, update, resolvePlayerHit, batches, offsetAll, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld, destroy,
-    collectPixel, removeFoe: questPoolOps.removeFoe };
+    collectPixel, arrowHitFoe, removeFoe: questPoolOps.removeFoe };
 }

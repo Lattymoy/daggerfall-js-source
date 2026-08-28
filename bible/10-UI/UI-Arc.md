@@ -7682,8 +7682,132 @@ visible rather than hidden with the flex constraint named as what
 holds it). PX21e's own pin re-aimed at the new law rather than left
 asserting the clip. 3 mutations, 3 dead.
 
+PX23 (Mac: "lets do the spellbook next"): THE BOOK'S ONE DOOR, AND THE
+PIXEL BOOK. The arc's own board named this and its greps still held:
+FOUR hosts built the player's spellbook with the same deps and one
+difference each - how that host reaches TEXT.RSC. Everything else was
+byte-identical: the list latched onto the entity with `??=`, the
+entity, calculateCastCost, and readySpell with the lycanthropy free
+cast. That is U52's finding and U53's a fifth time, and it gets the
+same answer: `ui/spellbookDoor.js`, with each host handing it only
+what that host knows.
+
+THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
+worldModes.js:2373 as a second book built by hand 342 lines below the
+factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
+`offered`, the building's quality, the shop name, the haggling skills
+and the classic clock. A different question with different deps, and
+it stays where it is; the pin names it by those deps so the next sweep
+does not mistake it either. The record is corrected rather than
+quietly worked around.
+
+THE BOOK BORROWS EVERY LAW IT COULD READ. The point cost with its
+free-cast quirk (spellPointCost - a lycanthropy spell reads 0, pinned
+equal to the classic's own answer), the effects filter that drops
+empty slots, the effect naming through the same effectByKey
+spellbookWindow.js:120 imports with its "<effect not found>"
+fallback, and both delete refusals as the classic's own CONSTANTS and
+WORDS. This window is paint and bones; the book's rules stay in the
+book.
+
+THE BONES ARE THE JOURNAL'S, a fifth time - a rail of names with the
+cost right-aligned in brass beside each (the classic's row is
+"cost - name", and a column reads better than a prefix), the chosen
+spell inside wing rules, its effects one to a line under the pause
+window's own gem-word-gem divider, and READY and DELETE beneath. What
+the classic says in a grid of ARENA2 icons, this says in words,
+because this window reads no game data.
+
+FOUND ON THE WAY: the first draft invented a divider (`px-div`,
+`px-divline`) and a window head (`px-wintop`) that do not exist in
+the sheet - so both rendered as bare text. Caught by looking at the
+render rather than the DOM, which reported everything correct. They
+are the pause window's `px-divider` and the pack's three-zone head
+now, both pinned against the windows they came from.
+
+THREE PINS CAUGHT THE SEAM, which is what they are for. U42's four-hosts
+pin asserted every host constructs `new SpellbookWindow` and holds the
+live window; S27's asserted `magic.readySpell(sp, { free: ... })` in
+worldModes; audit18's asserted the `onReady` arm in dungeonContext. All
+three guard laws that are UNCHANGED - one construction per host, the
+player's own array by reference, the ONE cast engine, the book readies -
+and all three were reading them at the address they used to live at.
+Each was re-aimed at the door rather than loosened, and each kept a
+half at the host: the hosts still show ONE construction and must still
+HAND THE ENGINE to the door, which is the thing that could actually be
+dropped. The probe surface is untouched: it reads the classic window's
+own fields and runs on the classic skin, where the door hands back
+exactly that window.
+
+Verified live: the book opens through the door on the enhanced skin,
+Ready calls the engine with the free flag and closes the window, and
+Delete on a vampire spell answers "Cannot delete special vampire
+spells." Pins: 3 in a new test/enhancedSpellbook.test.js. 4
+mutations, 4 dead.
+
+PX24 (Mac: "with the logbook and history, I want them as one detailed
+UI"): THE CHRONICLE. Two classic windows built at four sites -
+questJournal.js from charSheetNav:53, world.js:1641 and
+dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
+seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
+on the enhanced skin, ONE WINDOW.
+
+They merge because they are one subject: THE THINGS WRITTEN DOWN ABOUT
+YOU. Your own NOTES (PlayerNotebook.getNotes), the MESSAGES you were
+sent (the 50-slot ring), and your HISTORY (entity.backStory, chargen's
+own). Three sections on the journal's bones a sixth time, with a COUNT
+beside each name in the rail - "Notes 0" answers the question a player
+opens this window with before they have clicked anything.
+
+QUESTS ARE NOT IN IT, and that is the decision this slice turns on.
+The classic logbook has FOUR modes and two of them are active and
+finished quests - which the pause window's Quests tab has carried
+since PX4, in three named sections since PX22. Carrying them here as
+well would be the two character sheets again, which is the very thing
+the F5 overlay is on the board to resolve. So the chronicle takes the
+two logbook modes with NO home and the history beside them, and the
+pin holds it: no quest list, ever.
+
+THE CLASSIC SKIN KEEPS ITS TWO WINDOWS. Merging them is an ENHANCED
+idea - the classic pair are different art, different layouts and
+different laws - and each half keeps its own art gate, so a host that
+can open one and not the other still gets the one.
+
+TWO SMALL DEPARTURES, both recorded: the HISTORY is one page rather
+than paginated (the classic pages because it draws into a fixed
+320x200 panel; a DOM column scrolls, and a life story read whole beats
+one read four lines at a time), and MESSAGES run newest first (the
+ring's own order is oldest-first, and the last thing you were told is
+what you opened this for) while NOTES keep the player's own order,
+because MoveNote is a law they arranged.
+
+FOUND ON THE FIRST RENDER: the framed head was scoped to `.sb-shell`
+alone, so this window's title stacked left instead of centring. It is
+the FAMILY's head now - shared between the spellbook and the chronicle
+rather than copied - which is the same lesson PX23's invented divider
+taught one slice earlier: borrow the class, do not restate it.
+
+Pins: 4 in a new test/enhancedChronicle.test.js. 4 mutations, 4 dead.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk
 floats on the open sky like every other face; the class list keeps
 the shell's 0.38 breath and the dcard its bordered card.
+
+## PL1 - THE INPUT-BOX CURSOR-TOGGLE REFUSAL (2026-08-28)
+
+pointerLock.js's FLAGGED admission closed: DFU refuses the cursor
+toggle for 0.3 seconds after an input message box closes
+(PlayerMouseLook.cs:192-196 over the stamp
+DaggerfallInputMessageBox.CloseWindow writes at :301) - Return both
+submits the box and is the toggle's default binding, and DFU's own
+comment says "players often think this is a bug" when the submitting
+keypress frees the mouse. The port's ActionInputBox (ShowTextWithInput
+- the riddle entry) stamps `noteInputBoxClosed()` on BOTH exits
+(submit and Escape), and bindCursorToggle's one onKey - the door all
+four hosts share - refuses through `cursorToggleRefused()`, keeping
+C#'s strict-greater boundary: exactly 0.3s still refuses.
+
+Pins: 2 appended to `test/pointerlock.test.js`. Campaign: 4 mutants,
+4 killed.
