@@ -325,11 +325,10 @@ combat line numbers below are refreshed with it.
 - `src/systems/chargenSession.js:310` - *    - scenes/dungeonContext.js  FLAGGED: it holds the RAW flow as its
 - `src/systems/controlsConfig.js:8` - FLAGGED with I1's combo flag: GetDuplicates' second and third
 - `src/systems/court.js:28` - FLAGGED loud: execution (punishmentType 1) is unreachable in classic
-- `src/systems/effects.js:25` - FLAGGED skipped (the library grows here).
-- `src/systems/effects.js:43` - *  effect (:515). FLAGGED: DFU pulls it from the localised string
-- `src/systems/effects.js:55` - *  Same FLAGGED caveat as the line above: DFU reads these from the
-- `src/systems/effects.js:680` - enchantment bundles are FLAGGED to their own arc.
-- `src/systems/effects.js:1456` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
+- `src/systems/effects.js:48` - *  effect (:515). FLAGGED: DFU pulls it from the localised string
+- `src/systems/effects.js:60` - *  Same FLAGGED caveat as the line above: DFU reads these from the
+- `src/systems/effects.js:685` - enchantment bundles are FLAGGED to their own arc.
+- `src/systems/effects.js:1461` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
 - `src/systems/enchantments.js:151` - had been FLAGGED at its own site since S4c - "a magic item still
 - `src/systems/enchantments.js:679` - a MagicRound-FLAGGED row's is the payload callback :1767
 - `src/systems/encounters.js:221` - * STILL FLAGGED: the FoeSpawner sweep (:721-728) pends quest spawners
