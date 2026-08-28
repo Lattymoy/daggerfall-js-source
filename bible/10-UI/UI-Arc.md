@@ -7653,6 +7653,35 @@ Pins: 1 (the frame's overflow and the head's fix, the rows in their
 own box, the widen threshold and its class, the grid and NOT multicol,
 and Empty. still spanning both tracks). 5 mutations, 5 dead.
 
+PX21f (Mac: "the tooltip that pops up when you click on an item has
+scrolling"): A TOOLTIP IS NOT A SCROLL BOX. The tip is a
+`section.packcol.packdetail.packtip`, and `.packcol` is a COLUMN's
+rule: slate ground, padding, and OVERFLOW: AUTO. PX19j turned the
+first two off on this exact element - "the tip is INVISIBLE FURNITURE"
+- and did not notice the third. The 2px scrollHeight/clientHeight gap
+that rounding leaves was enough to draw a scrollbar on a tooltip
+wherever scrollbars are not overlays, and any item whose card runs a
+line taller makes it a real scroll. The column keeps its overflow
+because it is a column; the tip is `overflow: visible`. That is the
+same class-collision this file has now hit four times (.detail,
+.packcol, .empty, and this).
+
+AND A CLIP I HAD JUST INTRODUCED. PX21e stopped the loot frame
+scrolling with `overflow: hidden`, which works - and the tooltip is a
+CHILD of that frame in the loot-only flow, so a tip near the bottom
+edge would have been clipped invisibly, which is worse than the scroll
+it replaced. The frame is `overflow: visible` again: the no-scroll
+guarantee never needed clipping, because the head is fixed and the
+list has `min-height: 0`, so the content cannot exceed the frame in
+the first place. Re-measured after the change: the loot window still
+does not scroll at 8 or 18 items, the last row still sits 10px inside,
+and the tip is unclipped in both flows.
+
+Pins: 1 (the column still scrolls and the tooltip does not; the frame
+visible rather than hidden with the flex constraint named as what
+holds it). PX21e's own pin re-aimed at the new law rather than left
+asserting the clip. 3 mutations, 3 dead.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk

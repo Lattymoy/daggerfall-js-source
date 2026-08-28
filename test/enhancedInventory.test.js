@@ -1061,8 +1061,10 @@ test('PX21e: the loot window never scrolls - it grows, then widens, and its head
   const src = read('src/ui/enhancedInventory.js');
   // THE FRAME CANNOT SCROLL. It carried overflow-y itself, so a pile
   // past the cap scrolled its own title and buttons out of sight.
-  assert.match(css, /\.loot-win \{ position: relative;[\s\S]{0,200}overflow: hidden;/);
-  assert.doesNotMatch(css, /\.loot-win \{ position: relative;[\s\S]{0,200}overflow-y: auto;/);
+  // (PX21f moved this from `hidden` to `visible`: hidden stopped the
+  // scroll AND clipped the tooltip, and the no-scroll guarantee never
+  // needed clipping - see the PX21f pin below.)
+  assert.doesNotMatch(css, /\.loot-win \{ position: relative;[\s\S]{0,240}overflow-y: auto;/);
   // The head is fixed furniture; the rows are their own box.
   assert.match(css, /\.loot-win \.packremote \{ display: flex; flex-direction: column; min-height: 0; flex: 1; \}/);
   assert.match(css, /\.loot-win \.remotehead \{ flex: 0 0 auto; \}/);
@@ -1081,4 +1083,25 @@ test('PX21e: the loot window never scrolls - it grows, then widens, and its head
   assert.match(css, /\.loot-win\.wide \.remotelist \{ display: grid; grid-template-columns: 1fr 1fr;/);
   assert.doesNotMatch(css, /\.loot-win\.wide \.remotelist \{ column-count/, 'multicol was the wrong answer');
   assert.match(css, /\.loot-win\.wide \.remotelist \.packempty \{ grid-column: 1 \/ -1; \}/, 'and Empty. still spans');
+});
+
+test('PX21f: a tooltip is not a scroll box, and the loot frame does not clip it', () => {
+  const css = read('src/ui/enhancedStyle.js');
+  // `.packcol` is a COLUMN's rule - slate ground, padding, and
+  // OVERFLOW: AUTO. PX19j turned the first two off on the tooltip and
+  // did not notice the third; the 2px scrollHeight/clientHeight gap
+  // rounding leaves was enough to draw a scrollbar on a tooltip
+  // wherever scrollbars are not overlays.
+  assert.match(css, /^\.packcol \{ background: var\(--slate\); overflow: auto;/m, 'the column still scrolls - it is a column');
+  const tip = css.slice(css.indexOf('.pack-shell .packtip.packdetail {'), css.indexOf('.pack-shell .packtip.packdetail .card'));
+  assert.match(tip, /overflow: visible; \}/, 'the tooltip does not');
+  // And the loot frame no longer CLIPS: PX21e used overflow:hidden to
+  // stop the frame scrolling, but the tip is a child of that frame in
+  // the loot-only flow, so a tip near the bottom edge would vanish -
+  // worse than the scroll it replaced. The no-scroll guarantee is the
+  // flex constraint (fixed head + a list that can shrink), not clipping.
+  assert.match(css, /\.loot-win \{ position: relative;[\s\S]{0,240}overflow: visible;/);
+  assert.doesNotMatch(css, /\.loot-win \{ position: relative;[\s\S]{0,240}overflow: hidden;/);
+  assert.match(css, /\.loot-win \.remotehead \{ flex: 0 0 auto; \}/);
+  assert.match(css, /\.loot-win \.remotelist \{ flex: 1; min-height: 0;/);
 });
