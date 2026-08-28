@@ -6608,3 +6608,16 @@ DOM after each press) after a probe boolean contradicted the model -
 the diagnostic showed the model right and the probe's assertion its
 own artifact, which is the difference between checking and assuming.
 Suite green, tap probe 26 ok unchanged.
+
+PX10 (same day, Mac): CONDENSED AT PAUSE, THE CATALOG AT BOOT. The
+pause window's Settings pane shows only the keys whose tier is LIVE
+- derived from the tier map itself, so a setting that gains a
+consumer joins the pane the same day it does - 48 rows today,
+grouped under the categories' own titles as pxDividers (48 flat read
+as a wall; the dividers give the scroll a spine without the chip
+strip this pane exists to shed), rendered through the SAME
+settingRow and the same rising help sheet. The closing line says
+'Every setting lives on the main menu's Settings' - the U30
+nothing-hidden law kept by TELLING rather than by showing all 171
+mid-game. Boot keeps the full shell. Probed: 7 dividers, 48 rows,
+no chips, the help sheet rises, zero errors both viewports.
