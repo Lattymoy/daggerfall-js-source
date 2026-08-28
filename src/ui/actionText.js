@@ -12,6 +12,7 @@
 import { drawText, measureText } from './text.js';
 import { nativeMetrics } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxArtLoaded } from './messageBox.js';   // U11
+import { noteInputBoxClosed } from '../player/pointerLock.js';   // PL1: the 0.3s toggle refusal's stamp
 
 /** DaggerfallInputMessageBox maxCharacters. */
 export const MAX_INPUT = 20;
@@ -80,10 +81,13 @@ export class ActionInputBox {
   input(action) {
     if (action === 'confirm') {
       this.done = true;
+      // PL1: CloseWindow's stamp (DaggerfallInputMessageBox.cs:301) -
+      // the Return that just submitted must not also free the mouse.
+      noteInputBoxClosed();
       this.onInput?.(this.value);
       return;
     }
-    if (action === 'back') { this.done = true; return; }
+    if (action === 'back') { this.done = true; noteInputBoxClosed(); return; }
     if (action === 'backspace') { this.value = this.value.slice(0, -1); return; }
     if (action.startsWith('char:') && this.value.length < MAX_INPUT) this.value += action.slice(5);
   }

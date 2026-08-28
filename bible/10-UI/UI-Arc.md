@@ -7687,3 +7687,20 @@ carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk
 floats on the open sky like every other face; the class list keeps
 the shell's 0.38 breath and the dcard its bordered card.
+
+## PL1 - THE INPUT-BOX CURSOR-TOGGLE REFUSAL (2026-08-28)
+
+pointerLock.js's FLAGGED admission closed: DFU refuses the cursor
+toggle for 0.3 seconds after an input message box closes
+(PlayerMouseLook.cs:192-196 over the stamp
+DaggerfallInputMessageBox.CloseWindow writes at :301) - Return both
+submits the box and is the toggle's default binding, and DFU's own
+comment says "players often think this is a bug" when the submitting
+keypress frees the mouse. The port's ActionInputBox (ShowTextWithInput
+- the riddle entry) stamps `noteInputBoxClosed()` on BOTH exits
+(submit and Escape), and bindCursorToggle's one onKey - the door all
+four hosts share - refuses through `cursorToggleRefused()`, keeping
+C#'s strict-greater boundary: exactly 0.3s still refuses.
+
+Pins: 2 appended to `test/pointerlock.test.js`. Campaign: 4 mutants,
+4 killed.
