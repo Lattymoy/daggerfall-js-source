@@ -33,7 +33,8 @@ import { createPlayerMagic } from './hostMagic.js';   // M2: spellcasting above 
 import { setDefaultEnchantCtx } from '../systems/enchantments.js';   // E2: the host's enchantCtx mount
 import { applySpell } from '../systems/effects.js';   // E2: CastWhenStrikes' target arm
 import { ChoiceWindow } from '../ui/talkWindow.js';   // TP-slice: the anchor/teleport prompt
-import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in)
+import { preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in)
+import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the book's one door
 import { calculateCastCost } from '../systems/spellcost.js';   // M2   // T3b
 import { rangedDamageSpells } from '../systems/spellcast.js';   // U42: the flight probe's picker
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C2): the ONE clock
@@ -1590,17 +1591,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
 
   let _spellbook = null;   // U42: the live window, for the probe surface
-  const makeSpellbookWindow = () => (spellbookArtLoaded()
-    ? (_spellbook = new SpellbookWindow({
-      spells: () => (playerEntity.spells ??= []),
-      entity: playerEntity,
-      castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
-      // SpellsListBox_OnUseSelectedItem (:770-784): SetReadySpell,
-      // then PopToHUD - and the lycanthropy spell casts free.
-      onReady: (sp, { noSpellPointCost } = {}) => magic.readySpell(sp, { free: !!noSpellPointCost }),
-      rows: (id) => townTalk.lines(id),
-    }))
-    : null);
+  // PX23: the book's ONE door (ui/spellbookDoor.js). This host hands it
+  // only what this host knows - the entity, the engine, the cost and
+  // the way it reaches TEXT.RSC.
+  const makeSpellbookWindow = () => (_spellbook = createSpellbookWindow({
+    entity: playerEntity,
+    magic,
+    castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
+    rows: (id) => townTalk.lines(id),
+  }));
   const toggleSpellbook = () => {
     if (townTalk.overlayActive) return;
     const w = makeSpellbookWindow();

@@ -1402,6 +1402,34 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .shell .row.on { outline: 2px solid rgba(192,138,62,0.6); outline-offset: -2px; }
 .shell .row-name { text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .shell .ctl .val { letter-spacing: 0.08em; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+/* ── PX23: THE SPELLBOOK ────────────────────────────────────────
+   The journal's bones a fifth time; only the paint is new. The rail
+   carries a cost beside each name (the classic's row is "cost - name",
+   and a column reads better than a prefix), and the effects are the
+   words the classic prints, one to a line under their own divider. */
+.sb-shell .px-win { width: min(920px, 94vw); height: min(620px, 86dvh); }
+.sb-shell .sb-top { display: grid; grid-template-columns: 1fr auto 1fr;
+  align-items: center; padding: 12px 16px;
+  border-bottom: 2px solid rgba(125,116,96,0.35); }
+.sb-shell .sb-who { text-align: center; }
+.sb-shell .sb-who h2 { font-family: inherit; font-weight: 400; font-size: 20px; margin: 0;
+  letter-spacing: 0.18em; text-indent: 0.18em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.sb-shell .sb-magicka { margin: 6px 0 0; color: #7d7460;
+  font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.sb-shell .sb-top .act { justify-self: end; }
+.sb-shell .sb-row { display: flex; align-items: center; }
+.sb-shell .sb-cost { margin-left: auto; color: var(--brass); font-size: 13px;
+  font-variant-numeric: tabular-nums; }
+.sb-shell .sb-row.on .sb-cost { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.sb-shell .sb-effects { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 0; }
+.sb-shell .sb-effect { display: flex; align-items: baseline; gap: 10px; font-size: 15px;
+  color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.sb-shell .sb-sub { color: #7d7460; font-size: 13px; letter-spacing: 0.12em;
+  text-transform: uppercase; }
+.sb-shell .sb-acts { display: flex; gap: 10px; margin-top: 22px; }
+
 /* AUDIT UI: the settings row's own controls, sized for a thumb wherever
    there is one. Here rather than in each component, so the LAW has one
    home and the next control added to a row inherits it. */

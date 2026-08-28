@@ -213,10 +213,25 @@ test('S27: THE FOUR HOSTS - every host mounts the ONE cast engine', () => {
     assert.ok(/createPlayerMagic\(\{/.test(src), `${host} mounts the engine`);
   }
   const wm = read('src/scenes/worldModes.js');
-  // U42: the classic spellbook hands the ready callback DFU's own
+  // U42: the spellbook hands the ready callback DFU's own
   // noSpellPointCost flag (the lycanthropy free cast), so the call
-  // carries a second argument now - still the ONE engine.
-  assert.ok(/magic\.readySpell\(sp, \{ free:/.test(wm), 'the interior arm readies through the engine');
+  // carries a second argument - still the ONE engine.
+  //
+  // PX23: and that call moved ONE FILE. Four hosts built the book
+  // identically, so the build went into ui/spellbookDoor.js and took
+  // the readySpell arm with it. The law is unchanged and is pinned
+  // where it now lives; what each host must still do is HAND THE
+  // ENGINE to the door, which is the thing that could actually be
+  // dropped.
+  const door = read('src/ui/spellbookDoor.js');
+  assert.ok(/magic\?\.readySpell\?\.\(sp, \{ free: !!noSpellPointCost \}\)/.test(door),
+    'the door readies through the engine');
+  for (const host of ['src/scenes/exterior.js', 'src/scenes/world.js', 'src/scenes/dungeonContext.js', 'src/scenes/worldModes.js']) {
+    const src = read(host);
+    const call = src.slice(src.indexOf('createSpellbookWindow({'), src.indexOf('createSpellbookWindow({') + 320);
+    assert.ok(/\bmagic,/.test(call), `${host} hands the engine to the door`);
+  }
+  assert.ok(wm.includes('createSpellbookWindow({'), 'the interior arm takes the door');
   assert.ok(/magic\?\.interceptAttack\(/.test(wm), 'and casts through it (I2: the attack click, not a cast key)');
   // and worldModes is still the ROUTER for the dungeon context
   assert.ok(/buildDungeonContext/.test(wm), 'worldModes mounts the dungeon context');

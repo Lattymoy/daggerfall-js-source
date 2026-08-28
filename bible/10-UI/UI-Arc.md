@@ -7682,6 +7682,69 @@ visible rather than hidden with the flex constraint named as what
 holds it). PX21e's own pin re-aimed at the new law rather than left
 asserting the clip. 3 mutations, 3 dead.
 
+PX23 (Mac: "lets do the spellbook next"): THE BOOK'S ONE DOOR, AND THE
+PIXEL BOOK. The arc's own board named this and its greps still held:
+FOUR hosts built the player's spellbook with the same deps and one
+difference each - how that host reaches TEXT.RSC. Everything else was
+byte-identical: the list latched onto the entity with `??=`, the
+entity, calculateCastCost, and readySpell with the lycanthropy free
+cast. That is U52's finding and U53's a fifth time, and it gets the
+same answer: `ui/spellbookDoor.js`, with each host handing it only
+what that host knows.
+
+THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
+worldModes.js:2373 as a second book built by hand 342 lines below the
+factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
+`offered`, the building's quality, the shop name, the haggling skills
+and the classic clock. A different question with different deps, and
+it stays where it is; the pin names it by those deps so the next sweep
+does not mistake it either. The record is corrected rather than
+quietly worked around.
+
+THE BOOK BORROWS EVERY LAW IT COULD READ. The point cost with its
+free-cast quirk (spellPointCost - a lycanthropy spell reads 0, pinned
+equal to the classic's own answer), the effects filter that drops
+empty slots, the effect naming through the same effectByKey
+spellbookWindow.js:120 imports with its "<effect not found>"
+fallback, and both delete refusals as the classic's own CONSTANTS and
+WORDS. This window is paint and bones; the book's rules stay in the
+book.
+
+THE BONES ARE THE JOURNAL'S, a fifth time - a rail of names with the
+cost right-aligned in brass beside each (the classic's row is
+"cost - name", and a column reads better than a prefix), the chosen
+spell inside wing rules, its effects one to a line under the pause
+window's own gem-word-gem divider, and READY and DELETE beneath. What
+the classic says in a grid of ARENA2 icons, this says in words,
+because this window reads no game data.
+
+FOUND ON THE WAY: the first draft invented a divider (`px-div`,
+`px-divline`) and a window head (`px-wintop`) that do not exist in
+the sheet - so both rendered as bare text. Caught by looking at the
+render rather than the DOM, which reported everything correct. They
+are the pause window's `px-divider` and the pack's three-zone head
+now, both pinned against the windows they came from.
+
+THREE PINS CAUGHT THE SEAM, which is what they are for. U42's four-hosts
+pin asserted every host constructs `new SpellbookWindow` and holds the
+live window; S27's asserted `magic.readySpell(sp, { free: ... })` in
+worldModes; audit18's asserted the `onReady` arm in dungeonContext. All
+three guard laws that are UNCHANGED - one construction per host, the
+player's own array by reference, the ONE cast engine, the book readies -
+and all three were reading them at the address they used to live at.
+Each was re-aimed at the door rather than loosened, and each kept a
+half at the host: the hosts still show ONE construction and must still
+HAND THE ENGINE to the door, which is the thing that could actually be
+dropped. The probe surface is untouched: it reads the classic window's
+own fields and runs on the classic skin, where the door hands back
+exactly that window.
+
+Verified live: the book opens through the door on the enhanced skin,
+Ready calls the engine with the free flag and closes the window, and
+Delete on a vampire spell answers "Cannot delete special vampire
+spells." Pins: 3 in a new test/enhancedSpellbook.test.js. 4
+mutations, 4 dead.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk

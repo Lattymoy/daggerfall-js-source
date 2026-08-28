@@ -1015,17 +1015,28 @@ test('U42 buy: SPBK01I0 is the background, and the cost/gold labels replace the 
 
 // ── the hosts ─────────────────────────────────────────────────────
 
-test('U42 / THE FOUR HOSTS: every host opens the CLASSIC book, from ONE construction', () => {
+test('U42 / THE FOUR HOSTS: every host opens the book from ONE construction - the DOOR since PX23', () => {
+  // U42's law is unchanged: four hosts, one construction each, the
+  // player's OWN array by reference, the art warmed. What moved is
+  // WHERE the construction lives. PX23 collapsed the four identical
+  // builds into `ui/spellbookDoor.js` - the U52/U53 seam a fifth time -
+  // so the host's one construction is now a call to the door, and the
+  // laws the pin was guarding moved WITH it rather than being dropped.
   const src = (f) => readFileSync(new URL(`../src/${f}`, import.meta.url), 'utf8');
   for (const host of ['scenes/world.js', 'scenes/exterior.js', 'scenes/dungeonContext.js', 'scenes/worldModes.js']) {
     const s = src(host);
-    assert.ok(s.includes("from '../ui/spellbookWindow.js'"), `${host} imports the classic window`);
+    assert.ok(s.includes("from '../ui/spellbookDoor.js'"), `${host} takes the door`);
     assert.equal(s.includes('knownSpells'), false, `${host}: the interim known-list helper is gone`);
     assert.ok(s.includes('const makeSpellbookWindow = () =>'), `${host}: ONE construction`);
-    assert.ok(/spells: \(\) => \(playerEntity\.spells \?\?= \[\]\)/.test(s),
-      `${host}: the book is the player's OWN array, by reference`);
+    assert.ok(/createSpellbookWindow\(\{/.test(s), `${host}: and it is the door's`);
     assert.ok(/preloadSpellbookArt\(/.test(s), `${host} warms SPBK00I0/01I0`);
   }
+  // THE LAWS DID NOT VANISH, they moved one file: the door latches the
+  // player's own array by reference, exactly as each host used to.
+  const door = src('ui/spellbookDoor.js');
+  assert.ok(/spells: \(\) => \(entity\.spells \?\?= \[\]\)/.test(door),
+    "the door holds the player's OWN array, by reference");
+  assert.ok(door.includes("from './spellbookWindow.js'"), 'and it is the classic window it builds on the classic skin');
   // and the keyed window is DELETED, not merely unimported
   assert.equal(src('ui/deathScreen.js').includes('SpellbookWindow'), false);
 });
@@ -1056,7 +1067,11 @@ test('U42: the live probe surface exists on both exterior hosts, and castProbe r
   for (const host of ['scenes/world.js', 'scenes/exterior.js']) {
     const s = readFileSync(new URL(`../src/${host}`, import.meta.url), 'utf8');
     assert.ok(s.includes('window.__spellbook = () =>'), `${host} carries the probe surface`);
-    assert.ok(/_spellbook = new SpellbookWindow\(/.test(s), `${host}'s factory holds the live window`);
+    // PX23: the factory still HOLDS the live window; it just asks the
+    // door for it. The probe reads the CLASSIC window's own fields
+    // (buyMode, selectedIndex) and runs on the classic skin, where the
+    // door hands back exactly that window.
+    assert.ok(/_spellbook = createSpellbookWindow\(/.test(s), `${host}'s factory holds the live window`);
   }
   const probe = readFileSync(new URL('../tools/spellbookProbe.mjs', import.meta.url), 'utf8');
   assert.ok(probe.includes('__spellbook'), 'the probe reads that surface');
