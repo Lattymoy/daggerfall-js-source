@@ -7745,6 +7745,50 @@ Delete on a vampire spell answers "Cannot delete special vampire
 spells." Pins: 3 in a new test/enhancedSpellbook.test.js. 4
 mutations, 4 dead.
 
+PX24 (Mac: "with the logbook and history, I want them as one detailed
+UI"): THE CHRONICLE. Two classic windows built at four sites -
+questJournal.js from charSheetNav:53, world.js:1641 and
+dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
+seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
+on the enhanced skin, ONE WINDOW.
+
+They merge because they are one subject: THE THINGS WRITTEN DOWN ABOUT
+YOU. Your own NOTES (PlayerNotebook.getNotes), the MESSAGES you were
+sent (the 50-slot ring), and your HISTORY (entity.backStory, chargen's
+own). Three sections on the journal's bones a sixth time, with a COUNT
+beside each name in the rail - "Notes 0" answers the question a player
+opens this window with before they have clicked anything.
+
+QUESTS ARE NOT IN IT, and that is the decision this slice turns on.
+The classic logbook has FOUR modes and two of them are active and
+finished quests - which the pause window's Quests tab has carried
+since PX4, in three named sections since PX22. Carrying them here as
+well would be the two character sheets again, which is the very thing
+the F5 overlay is on the board to resolve. So the chronicle takes the
+two logbook modes with NO home and the history beside them, and the
+pin holds it: no quest list, ever.
+
+THE CLASSIC SKIN KEEPS ITS TWO WINDOWS. Merging them is an ENHANCED
+idea - the classic pair are different art, different layouts and
+different laws - and each half keeps its own art gate, so a host that
+can open one and not the other still gets the one.
+
+TWO SMALL DEPARTURES, both recorded: the HISTORY is one page rather
+than paginated (the classic pages because it draws into a fixed
+320x200 panel; a DOM column scrolls, and a life story read whole beats
+one read four lines at a time), and MESSAGES run newest first (the
+ring's own order is oldest-first, and the last thing you were told is
+what you opened this for) while NOTES keep the player's own order,
+because MoveNote is a law they arranged.
+
+FOUND ON THE FIRST RENDER: the framed head was scoped to `.sb-shell`
+alone, so this window's title stacked left instead of centring. It is
+the FAMILY's head now - shared between the spellbook and the chronicle
+rather than copied - which is the same lesson PX23's invented divider
+taught one slice earlier: borrow the class, do not restate it.
+
+Pins: 4 in a new test/enhancedChronicle.test.js. 4 mutations, 4 dead.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk
