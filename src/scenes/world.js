@@ -79,7 +79,8 @@ import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';
 import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold, totalGoldAmount, deductGoldPieces } from '../systems/court.js';   // AUDIT 17e F6   // G2   // F-slice: travel gold; U41: GetGoldAmount + the pieces half of DeductFastTravelGold
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
-import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
+import { pickActivatable, pickQuestFoe } from '../player/activate.js';   // G3: corpse loot; QG1: the foe-click door
+import { spellRecordOfIndex } from '../systems/loot.js';   // QG1: CastSpellDo's classic-record read (the G4 registry)
 import { LevelUpScreen, preloadCharSheetArt } from '../ui/charsheet.js';   // U8a (LevelUpScreen: AUDIT 21 hosts F3)
 import { createCharSheetWindow, charSheetDoorReady } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
@@ -1237,6 +1238,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     playerSinks: playerSpellSinks,
     say: (l) => townTalk.say(l),
     now: () => playerTicker.classicMinutes,   // V2a: MorphSelf's once-a-day clock
+    // QG1: the ready-spell doors - the machine's CastSpellDo /
+    // CastEffectDo latches ride these two events (machine.js's own
+    // contract since the Q arc; nothing raised them until now, so the
+    // three corpus quests' `cast X spell do` triggers never fired).
+    onNewReadySpell: (sp) => questBridge?.machine?.notifyNewReadySpell?.(sp),
+    onCastReadySpell: (sp) => questBridge?.machine?.notifyCastReadySpell?.(sp),
     surfacePlayer,
     foes: () => (modes?.mode ?? 'exterior') === 'exterior' ? [...cityGuards.guards, ...exteriorFoes.foes] : [],   // X-slice: encounter foes are spell targets too
     foeSinks,
@@ -2784,6 +2791,21 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the seven-name enum, the climate the MAPS.BSA index at the
     // player's pixel.
     currentWeatherKey: () => WEATHER_TYPES[weatherOverride ?? currentWeather()] ?? null,
+    // QG1: CastSpellDo's two documented world reads, live at last -
+    // the machine has declared both since the Q-arc and nothing
+    // production-side answered them, so `cast X spell do` (three
+    // corpus quests) completed its template at parse and the trigger
+    // was dead. The record read is the G4 SPELLS.STD registry
+    // (first-duplicate-wins, the Free Action patch applied - the same
+    // dict DFU's broker rebuilds); the match is EntityEffectBundle
+    // .HasMatchForClassicEffect over the port's spells, whose effect
+    // entries ARE the classic (type, subType) pairs - C# folds both
+    // sides through MakeClassicKey's byte casts (EntityEffect.cs:999-
+    // 1002), so the compare folds to byte too.
+    getClassicSpellEffects: (spellID) => spellRecordOfIndex(spellID)?.effects ?? null,
+    spellHasMatchForClassicEffect: (sp, effect) => (sp?.effects ?? []).some((e) =>
+      ((e.type ?? 0) & 0xff) === ((effect.type ?? 0) & 0xff)
+      && ((e.subType ?? 0) & 0xff) === ((effect.subType ?? 0) & 0xff)),
     currentClimateIndex: () => maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y),
     currentLocationType: () => _questLoc()?.mapTableData?.locationType ?? null,
     currentRegionName: () => maps.getRegion(_questRegionIndex())?.name ?? '',
@@ -3289,6 +3311,18 @@ export async function bootWorld(canvas, renderer, params, status) {
       buttons: 'YesNo',
       onYes: () => { respond(true); return []; },
       onNo: () => { respond(false); return []; },
+    }),
+    // QG1: PromptMulti's 2-4 button box. The buttons are BUTTONS.RCI
+    // record numbers (the C# casts them to MessageBoxButtons unchecked
+    // and the box loads the art by record); the click answers the
+    // NUMBER back and the action routes by value. No cancel and no
+    // click-through - AllowCancel false, ClickAnywhereToClose false
+    // (PromptMulti.cs:87-88) - which is ServiceFlowWindow's
+    // buttonsMulti contract.
+    showPromptMulti: (q, message, buttons, respond) => showQuestBox({
+      rows: tokensToRows(message.getTextTokens(-1, q.rolls)),
+      buttonsMulti: buttons,
+      onButton: (b) => { respond(b); return []; },
     }),
     playVideo: (name) => console.warn('[quest] video playback pends:', name),
     // DELTA (recorded): C# skips while the audio source is BUSY and
@@ -3899,6 +3933,16 @@ export async function bootWorld(canvas, renderer, params, status) {
           // PlayerActivate nearest-hit order); G3: a guard corpse next
           // (loot pickup on the dungeon's S2 shape); doors otherwise.
           const useFwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+          // QG1: the quest-resource click arm runs FIRST and does not
+          // consume the activation (PlayerActivate.cs:325-339 - the
+          // Hit Checks region's opening arm, no return, skipped in
+          // Info mode). A live foe carrying a QuestResourceBehaviour
+          // takes the click through its own DoClick, and the ladder
+          // below still runs - exactly the C# fall-through.
+          if (getInteractionMode() !== 'info') {
+            const qf = pickQuestFoe(cam.pos, useFwd, [...exteriorFoes.foes, ...cityGuards.guards], collider);
+            if (qf) qf.questBehaviour.doClick();
+          }
           if (!townTalk.tryActivate(cam.pos, useFwd, _livePersons)) {
             // AUDIT 24 (wave 38): BOTH corpse pools go into ONE pick.
             // The watch and the encounter foes leave the same container

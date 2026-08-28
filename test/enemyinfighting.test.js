@@ -204,15 +204,16 @@ test('MT-iii: no instance standing leaves BOTH actions live - SetComplete sits i
   assert.equal([...q2.tasks.values()][0].actions[0].isComplete, false, 'an absent door idles the arm, never throws');
 });
 
-test('MT-iii: the guard list is down to FOUR, and both rows became real registry templates', () => {
+test('MT-iii: the guard list shrank again - QG1 left ONE - and both MT rows are real registry templates', () => {
+  // This pin said FOUR when MT-iii shipped; QG1 (2026-08-28) retired
+  // CastEffectDo, ClickedFoe and PromptMulti with the ready-spell
+  // doors and the foe-click surface, so the count moved with the tree.
   const a = rd('src/systems/quest/actions.js');
   const guards = a.slice(a.indexOf('const GUARD_PATTERNS'), a.indexOf('const guard ='));
   assert.ok(!guards.includes('ChangeFoeInfighting:'), 'the guard row is GONE - retiring a flag deletes the sentence');
   assert.ok(!guards.includes('ChangeFoeTeam:'), 'both of them');
   assert.match(a, /new ChangeFoeInfighting\(null\),\n\s*new ChangeFoeTeam\(null\),/, 'the C#-order registry slots are real templates now');
   const rows = (guards.match(/^ {2}\w+: \//gm) ?? []).length;
-  assert.equal(rows, 4, 'CastEffectDo, WorldUpdate, ClickedFoe, PromptMulti - and each names its blocker');
-  for (const blocker of ['CastEffectDo', 'WorldUpdate', 'ClickedFoe', 'PromptMulti']) {
-    assert.ok(guards.includes(`- ${blocker}`) || guards.includes(`${blocker} /`) || guards.includes(`${blocker}:`), `${blocker} still names itself`);
-  }
+  assert.equal(rows, 1, 'WorldUpdate alone - and it names its blocker');
+  assert.ok(guards.includes('- WorldUpdate'), 'WorldUpdate still names itself');
 });

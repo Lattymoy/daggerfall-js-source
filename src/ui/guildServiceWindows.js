@@ -47,6 +47,7 @@ export const CURED_DISEASE = 'You are cured.';
 /** A box in the chain:
  *    { rows }                      click-anywhere
  *    { rows, buttons: 'YesNo', onYes }
+ *    { rows, buttonsMulti: [recordNums], onButton(n) }   QG1: PromptMulti - click-only, no cancel
  *    { rows, field: {...}, onInput(text) }
  *    { picker: [labels], onPick(i) }
  */
@@ -128,6 +129,11 @@ export class ServiceFlowWindow {
       else if (code === 'KeyN' || code === 'Escape') this._advance(t.onNo?.() ?? null);
       return;
     }
+    // QG1: a buttonsMulti box takes NO keys - PromptMulti.cs:87-88
+    // sets AllowCancel and ClickAnywhereToClose false, and the C#
+    // shortcut table has no rows for out-of-enum button records. The
+    // only way out is a button click.
+    if (t.buttonsMulti) return;
     this._advance(t.onClick?.() ?? null);
   }
 
@@ -139,6 +145,14 @@ export class ServiceFlowWindow {
       const hit = this._box ? messageBoxHit(this._box, vx, vy) : null;
       if (hit === MB_BUTTONS.Yes) this._advance(t.onYes?.() ?? null);
       else if (hit === MB_BUTTONS.No) this._advance(t.onNo?.() ?? null);
+      return true;
+    }
+    // QG1: PromptMulti's 2-4 buttons - the hit answers the BUTTONS.RCI
+    // record number and the box advances only on a real button (no
+    // click-anywhere: PromptMulti.cs:87).
+    if (t.buttonsMulti) {
+      const hit = this._box ? messageBoxHit(this._box, vx, vy) : null;
+      if (hit != null && t.buttonsMulti.includes(hit)) this._advance(t.onButton?.(hit) ?? null);
       return true;
     }
     if (t.field) return true;   // the field takes keys, not clicks
@@ -160,7 +174,7 @@ export class ServiceFlowWindow {
     const sizing = t.field
       ? [...t.rows, ` > ${'0'.repeat(t.field.maxCharacters ?? 8)}_`]
       : null;
-    const buttons = t.buttons === 'YesNo' ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : [];
+    const buttons = t.buttons === 'YesNo' ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : (t.buttonsMulti ?? []);
     this._box = layoutMessageBox(font, rows, buttons, sizing ? { sizingRows: sizing } : {});
     drawMessageBox(renderer, m, font, this._box);
   }

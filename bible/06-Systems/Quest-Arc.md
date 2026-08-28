@@ -5165,3 +5165,86 @@ Pins: 10 in `test/questactions5.test.js`, on the questremainder
 harness - and the harness taught its own law twice: bare QBN lines
 form the STARTUP task (named tasks never run untriggered), and the
 first run of the foe pins exposed the shadowing quirk above.
+
+## QG1 - THE LAST RETIRABLE GUARDS + THE READY-SPELL DOORS (2026-08-28)
+
+The pended-action list drops from four to ONE. CastEffectDo, ClickedFoe
+and PromptMulti became real ActionTemplates in `systems/quest/actions.js`,
+each verbatim against its Actions/*.cs, and the machinery two of them
+(and the already-shipped CastSpellDo) wait on went LIVE:
+
+- **THE READY-SPELL DOORS**. machine.js has declared
+  notifyNewReadySpell/notifyCastReadySpell and the two world reads
+  (getClassicSpellEffects, spellHasMatchForClassicEffect) since the Q
+  arc - and NOTHING production-side raised or answered them, so the
+  three corpus quests that write `cast X spell do` (Banish_Daedra,
+  Open, Sleep) completed their template at parse and the trigger was
+  dead. Now: hostMagic raises onNewReadySpell in readySpell right
+  after the assignment (EntityEffectManager.cs:348) and
+  onCastReadySpell at all four release exits (self/touch/area/missile,
+  before the ready clears - :391/:2085/:2130); world.js and
+  dungeonContext's own engine route both into the bridge's machine
+  (the standalone probes have no bridge and the chain no-ops); and
+  questWorld answers getClassicSpellEffects off the G4 SPELLS.STD
+  registry (spellRecordOfIndex) and spellHasMatchForClassicEffect as
+  byte-folded classic-pair equality - the port's spells carry the
+  (type, subType) pairs MakeClassicKey folds through byte casts
+  (EntityEffect.cs:999-1002), so the compare folds to byte too. An
+  ABORTED ready raises neither event, which is why the actions latch
+  instead of polling (AUDIT 24's own lesson, kept).
+- **CastEffectDo** - the CastSpellDo latch machinery (constructor
+  subscription, cast clears, abort does not, complete unsubscribes
+  deaf-forever) with TWO C# differences kept: a readied bundle that
+  does not CONTAIN the effect KEEPS the latch (:69-77 has no clear on
+  the fall-through - the sibling consumes one bundle per evaluation),
+  and the compare is by effect-template KEY. The key vocabulary is
+  DFU's own per-class literals ("Levitate",
+  "ContinuousDamage-SpellPoints"), derived in ONE home -
+  spellEffects.dfuEffectKeyOf: group name with spaces removed,
+  -SubGroup (spaces removed) where one exists, byte-folded lookup.
+- **ClickedFoe** - ClickedNpc "cut-and-pasted ... and made it work for
+  foes" (the C# header's own note). The gold arm reads and spends
+  GoldPieces - COINS, Q5's getGoldPieces/deductGoldPieces - and an
+  uncovered click starts the otherwise-task, fires nothing and
+  deducts nothing. AND THE QUIRK, pinned loudly: THE SAY FORMS ARE
+  SAY-SHADOWED IN C# TOO - Test() is unanchored and Say registers at
+  QuestMachine.cs:366 while ClickedFoe registers at :417, so a parsed
+  `clicked foe _x_ say 1011` mints a SAY (ClickedNpc escapes only
+  because trigger conditions register at the top, :351). The port
+  keeps the registration order; the say arms are reachable by direct
+  construction and save shape, exactly as upstream. THE CLICK DOOR:
+  PlayerActivate.cs:325-339's quest-resource arm, wired - the
+  activation ladder in world.js (exterior) and worldModes (dungeon)
+  runs player/activate.pickQuestFoe FIRST (live foe carrying a
+  questBehaviour, 0.45 half-width body + ai.height, DEFAULT
+  activation distance, wall-occluded), skips Info mode, clicks
+  through the behaviour's doClick, and DOES NOT consume - the C# arm
+  has no return and the rest of the ladder still runs. The interior
+  mode has no enemy pool (the Q4-v flag) and the standalone probes
+  have no machine - no door needed, recorded.
+- **PromptMulti** - 2-4 buttons over a quest message; the numbers are
+  BUTTONS.RCI records (the C# casts to MessageBoxButtons UNCHECKED -
+  the header's own example uses 24/25/28, past the named enum's last
+  value 20), `:name` suffixes are commentary the pattern discards,
+  the click routes by button VALUE down an else-if chain (first match
+  wins on duplicates), SetComplete runs at SHOW, allowRearm false. A
+  missing message id NREs in C# (:82 reads unguarded); the port takes
+  Prompt's recorded no-box arm. The box is the machine's
+  showPromptMulti hook -> the bridge -> world.js's showQuestBox with
+  the new buttonsMulti contract on ServiceFlowWindow: arbitrary
+  BUTTONS.RCI records drawn (the message-box layer already warms any
+  record lazily), NO keys and NO cancel (AllowCancel false,
+  ClickAnywhereToClose false, :87-88), the hit answers the record
+  number.
+
+The ONE guard left names its blocker in GUARD_PATTERNS: WorldUpdate
+(the world-data variant system - no block/building variant swaps exist
+in the port).
+
+Pins: 15 in `test/questguards.test.js` on the Q5 harness (which taught
+its startup-task lesson again - bare QBN lines form the startup task;
+named tasks never run untriggered). Campaign: 20 mutants, 20 killed -
+the ClickedFoe rearm mutant survived round one because the base
+postTick clears every click anyway, and the pin that kills it is the
+LAW's own shape: two tasks watching one foe in one tick,
+first-come-first-serve.

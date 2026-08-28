@@ -54,6 +54,7 @@ import { getIndividualFactionID, getFactionDataOrThrow } from './person.js';
 import { markerScenePosition } from './sceneMount.js';
 import { isSongFileDefined, songFileToRecordName } from '../songFiles.js';
 import { MOBILE_TEAMS } from '../../characters/enemyTargets.js';   // MT-iii: ChangeFoeTeam's enum door
+import { dfuEffectKeyOf } from '../spellEffects.js';   // QG1: CastEffectDo's key vocabulary, one home
 
 /** TalkManager.cs:285-291 - the dialog-link resource types. */
 export const QUEST_INFO_RESOURCE_TYPE = Object.freeze({
@@ -495,6 +496,71 @@ export class ClickedItem extends ActionTemplate {
   }
 }
 
+/** ClickedFoe.cs: ClickedNpc "cut-and-pasted ... and made it work for
+ *  foes" (the file's own header note), verbatim - QG1 retired the
+ *  guard. The one LAW difference from the ported ClickedNpc above:
+ *  the gold arm reads and spends `PlayerEntity.GoldPieces` (:91-94),
+ *  the COINS alone - Q5's getGoldPieces/deductGoldPieces pair - where
+ *  this port's ClickedNpc rides getGold. The click itself arrives
+ *  through the foe's QuestResourceBehaviour (the host activation
+ *  ladder's PlayerActivate.cs:325-339 arm: any quest resource that is
+ *  not a Person, in any mode but Info, within DefaultActivationDistance
+ *  - QG1 wired that door).
+ *
+ *  THE SAY FORMS ARE SAY-SHADOWED, IN C# TOO - the UnrestrainFoe
+ *  quirk's shape, pinned loudly. Test() is unanchored
+ *  (QuestAction.cs:142) and Say registers at QuestMachine.cs:366
+ *  while ClickedFoe registers at :417 - so a parsed `clicked foe _x_
+ *  say 1011` matches Say's `say (\d+)` FIRST and mints a Say action.
+ *  ClickedNpc does not share the fate only because trigger conditions
+ *  register at the TOP (:351, before Say). No shipped quest writes
+ *  any `clicked foe` line. The port keeps the registration order -
+ *  quirk preserved; the say arms are reachable only by direct
+ *  construction and by save shape, exactly as upstream. */
+export class ClickedFoe extends ActionTemplate {
+  static typeName = 'ClickedFoe';
+  get saveShape() { return [['npcSymbol', 'sym'], ['id'], ['goldAmount'], ['taskSymbol', 'sym']]; }
+  constructor(parentQuest) { super(parentQuest); this.isTriggerCondition = true; }
+  get pattern() {
+    return /clicked foe (?<aFoe>[a-zA-Z0-9_.-]+) and at least (?<goldAmount>\d+) gold otherwise do (?<taskName>[a-zA-Z0-9_.]+)|clicked foe (?<aFoe2>[a-zA-Z0-9_.-]+) say (?<id>\d+)|clicked foe (?<aFoe3>[a-zA-Z0-9_.-]+) say (?<idName>\w+)|clicked foe (?<aFoe4>[a-zA-Z0-9_.-]+)/;
+  }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const g = match.groups;
+    const action = new ClickedFoe(parentQuest);
+    action.npcSymbol = new QuestSymbol(g.aFoe ?? g.aFoe2 ?? g.aFoe3 ?? g.aFoe4);
+    action.id = questParseInt(g.id ?? '');
+    if (action.id === 0 && g.idName) {
+      action.id = questParseInt(staticMessagesTable().getValue('id', g.idName));
+    }
+    action.goldAmount = questParseInt(g.goldAmount ?? '');
+    action.taskSymbol = new QuestSymbol(g.taskName ?? '');
+    return action;
+  }
+  checkTrigger(caller) {
+    // Always true once the owning task is triggered (:74-77)
+    if (caller.getTriggerValue()) return true;
+    const foe = this.parentQuest.getFoe(this.npcSymbol);
+    if (!foe) return false;
+    if (foe.hasPlayerClicked) {
+      if (this.goldAmount > 0 && this.taskSymbol && this.taskSymbol.name) {
+        if ((this.parentQuest.hooks?.getGoldPieces?.() ?? 0) >= this.goldAmount) {
+          this.parentQuest.hooks?.deductGoldPieces?.(this.goldAmount);
+        } else {
+          // the otherwise-task, and the trigger does NOT fire (:96-100)
+          this.parentQuest.startTask(this.taskSymbol);
+          return false;
+        }
+      }
+      if (this.id !== 0) this.parentQuest.showMessagePopup(this.id);
+      this.parentQuest.scheduleClickRearm(foe);
+      return true;
+    }
+    return false;
+  }
+}
+
 /** KilledFoe.cs: fires when the Foe's kill count reaches the target
  *  (a missing count parses 0 and is raised to 1). */
 export class KilledFoe extends ActionTemplate {
@@ -635,6 +701,85 @@ export class Prompt extends ActionTemplate {
     if (message) {
       this.parentQuest.hooks?.showPrompt?.(this.parentQuest, message, (isYes) => {
         this.parentQuest.startTask(isYes ? this.yesTaskSymbol : this.noTaskSymbol);
+      });
+    }
+    this.setComplete();
+  }
+}
+
+/** PromptMulti.cs: "a dialog with 2-4 buttons that each execute a
+ *  different task" - QG1 retired the guard. The example the C# header
+ *  itself gives: `promptmulti 1072 4:noChoice _dirRand_ 24:south
+ *  _headS_ 25:west _headW_ 28:swest _headSW_` - the `:name` after a
+ *  button number is commentary the pattern discards, and the NUMBER is
+ *  cast unchecked to MessageBoxButtons (:91-99), which is to say it is
+ *  a BUTTONS.RCI record index (24/25/28 sit past the named enum's last
+ *  value, 20, in C# too - the box's AddButton loads the art straight
+ *  off the record). The box itself is the machine's showPromptMulti
+ *  hook, PROMPT's own precedent: the host lays the parchment (the
+ *  message-box layer already warms arbitrary BUTTONS.RCI records), the
+ *  C# NRE on a missing message id (:82 reads it unguarded) lands as
+ *  Prompt's recorded no-box arm instead. The click routes by BUTTON
+ *  VALUE down an else-if chain (:111-118), so duplicate numbers pick
+ *  the FIRST option - verbatim. AllowCancel is false (:88): the box
+ *  offers no way out but a button. SetComplete runs at SHOW (:105);
+ *  the box outlives the action, and allowRearm is false (:46). */
+export class PromptMulti extends ActionTemplate {
+  static typeName = 'PromptMulti';
+  get saveShape() {
+    return [['id'], ['opt1button'], ['opt2button'], ['opt3button'], ['opt4button'],
+      ['opt1TaskSymbol', 'sym'], ['opt2TaskSymbol', 'sym'],
+      ['opt3TaskSymbol', 'sym'], ['opt4TaskSymbol', 'sym']];
+  }
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.allowRearm = false;
+    this.id = 0;
+    this.opt1button = 0; this.opt2button = 0; this.opt3button = 0; this.opt4button = 0;
+    this.opt1TaskSymbol = null; this.opt2TaskSymbol = null;
+    this.opt3TaskSymbol = null; this.opt4TaskSymbol = null;
+  }
+  get pattern() {
+    return /promptmulti (?<id>\d+) (?<opt1>[0-9]+)(:[a-zA-Z0-9]+)? (?<opt1TaskName>[a-zA-Z0-9_.]+) (?<opt2>[0-9]+)(:[a-zA-Z0-9]+)? (?<opt2TaskName>[a-zA-Z0-9_.]+) (?<opt3>[0-9]+)(:[a-zA-Z0-9]+)? (?<opt3TaskName>[a-zA-Z0-9_.]+) (?<opt4>[0-9]+)(:[a-zA-Z0-9]+)? (?<opt4TaskName>[a-zA-Z0-9_.]+)|promptmulti (?<id2>\d+) (?<opt1b>[0-9]+)(:[a-zA-Z0-9]+)? (?<opt1TaskName2>[a-zA-Z0-9_.]+) (?<opt2b>[0-9]+)(:[a-zA-Z0-9]+)? (?<opt2TaskName2>[a-zA-Z0-9_.]+) (?<opt3b>[0-9]+)(:[a-zA-Z0-9]+)? (?<opt3TaskName2>[a-zA-Z0-9_.]+)|promptmulti (?<id3>\d+) (?<opt1c>[0-9]+)(:[a-zA-Z0-9]+)? (?<opt1TaskName3>[a-zA-Z0-9_.]+) (?<opt2c>[0-9]+)(:[a-zA-Z0-9]+)? (?<opt2TaskName3>[a-zA-Z0-9_.]+)/;
+  }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const g = match.groups;
+    const prompt = new PromptMulti(parentQuest);
+    prompt.id = questParseInt(g.id ?? g.id2 ?? g.id3);
+    prompt.opt1button = questParseInt(g.opt1 ?? g.opt1b ?? g.opt1c);
+    prompt.opt1TaskSymbol = new QuestSymbol(g.opt1TaskName ?? g.opt1TaskName2 ?? g.opt1TaskName3);
+    prompt.opt2button = questParseInt(g.opt2 ?? g.opt2b ?? g.opt2c);
+    prompt.opt2TaskSymbol = new QuestSymbol(g.opt2TaskName ?? g.opt2TaskName2 ?? g.opt2TaskName3);
+    const opt3Name = g.opt3TaskName ?? g.opt3TaskName2;
+    if (opt3Name) {
+      prompt.opt3button = questParseInt(g.opt3 ?? g.opt3b);
+      prompt.opt3TaskSymbol = new QuestSymbol(opt3Name);
+    }
+    if (g.opt4TaskName) {
+      prompt.opt4button = questParseInt(g.opt4);
+      prompt.opt4TaskSymbol = new QuestSymbol(g.opt4TaskName);
+    }
+    return prompt;
+  }
+  update(_caller) {
+    const message = this.parentQuest.getMessage(this.id);
+    if (message) {
+      // 2-4 buttons in declaration order; the 3rd and 4th ride their
+      // symbols' presence, exactly as the C# AddButton arms (:93-100)
+      const buttons = [this.opt1button, this.opt2button];
+      if (this.opt3TaskSymbol) buttons.push(this.opt3button);
+      if (this.opt4TaskSymbol) buttons.push(this.opt4button);
+      this.parentQuest.hooks?.showPromptMulti?.(this.parentQuest, message, buttons, (button) => {
+        // MessageBox_OnButtonClick's else-if chain, verbatim - first
+        // matching VALUE wins on duplicates, and no symbol is tested
+        // (:111-118; only a SHOWN button can arrive here, and every
+        // shown button has its symbol)
+        if (button === this.opt1button) this.parentQuest.startTask(this.opt1TaskSymbol);
+        else if (button === this.opt2button) this.parentQuest.startTask(this.opt2TaskSymbol);
+        else if (button === this.opt3button) this.parentQuest.startTask(this.opt3TaskSymbol);
+        else if (button === this.opt4button) this.parentQuest.startTask(this.opt4TaskSymbol);
       });
     }
     this.setComplete();
@@ -2617,6 +2762,79 @@ export class CastSpellDo extends ActionTemplate {
   }
 }
 
+/** CastEffectDo.cs: starts a task when the player READIES a spell
+ *  containing one specific effect, "matches effect by key" - QG1
+ *  retired the guard. The same latch machinery as CastSpellDo above
+ *  (constructor subscription, a cast clears, an abort does not, and
+ *  SetComplete unsubscribes with no resubscribe on rearm - the same
+ *  deaf-forever quirk, :80-85), with TWO differences, both C#'s:
+ *
+ *  - the VALIDATE arm eats the latch (:62-66) exactly as the sibling,
+ *    BUT a readied bundle that simply does not CONTAIN the effect
+ *    KEEPS the latch (:69-77 has no clear on the fall-through), so
+ *    the same bundle is re-evaluated every tick until a cast or a
+ *    match - where CastSpellDo consumes one bundle per evaluation.
+ *    Pinned; do not "fix" it into the sibling's shape.
+ *  - the KEY. C# compares Settings.Effects[i].Key, the effect
+ *    template's per-class registry key literal ("Levitate",
+ *    "ContinuousDamage-Health"). The port's spells carry classic
+ *    (type, subType) pairs, so the compare rides spellEffects'
+ *    dfuEffectKeyOf - the one derivation of DFU's key convention -
+ *    and `cast Levitate effect do _t_` means here exactly what it
+ *    means there. No shipped quest writes the line (corpus: zero
+ *    hits); the vocabulary exists for custom quests, "should support
+ *    custom effects from mods" being the C# header's own reason. */
+export class CastEffectDo extends ActionTemplate {
+  static typeName = 'CastEffectDo';
+  get saveShape() { return [['effectKey'], ['taskSymbol', 'sym']]; }
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.effectKey = null;
+    this.taskSymbol = null;
+    // transient, NOT saved (C#'s SaveData_v1 carries two fields):
+    this.lastReadySpell = null;
+    this._eventsBound = true;   // the ctor's two += subscriptions
+  }
+  get pattern() { return /cast (?<effectKey>[a-zA-Z0-9_.-]+) effect do (?<aTask>[a-zA-Z0-9_.-]+)/; }
+
+  /** PlayerEffectManager_OnNewReadySpell (:89-93). */
+  onNewReadySpell(spell) { if (this._eventsBound) this.lastReadySpell = spell ?? null; }
+
+  /** PlayerEffectManager_OnCastReadySpell (:95-99): a CAST clears the
+   *  latch "so player can't queue it up before entering location". */
+  onCastReadySpell(_spell) { if (this._eventsBound) this.lastReadySpell = null; }
+
+  /** SetComplete (:80-85): completing UNSUBSCRIBES, never rebound. */
+  setComplete() {
+    super.setComplete();
+    this._eventsBound = false;
+  }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new CastEffectDo(parentQuest);
+    action.effectKey = match.groups.effectKey;
+    action.taskSymbol = new QuestSymbol(match.groups.aTask);
+    return action;
+  }
+  update(_caller) {
+    // Validate (:62-66) - and the arm clears the latch on the way out
+    if (!this.effectKey || !this.taskSymbol || !this.lastReadySpell) {
+      this.lastReadySpell = null;
+      return;
+    }
+    // Compare readied spell for target effect (:69-77). NO latch
+    // clear on a miss - see the header.
+    for (const effect of this.lastReadySpell.effects ?? []) {
+      if (dfuEffectKeyOf(effect.type, effect.subType) === this.effectKey) {
+        this.parentQuest.startTask(this.taskSymbol);
+        this.setComplete();
+        break;
+      }
+    }
+  }
+}
+
 /** CreateNpcAt.cs: a DOCUMENTED no-op - legacy TEMPLATE scripts
  *  "reserve" a site before placing; DFU creates SiteLinks in the
  *  placement actions either way, so this only completes. */
@@ -3221,21 +3439,13 @@ class PendingTrigger extends ActionTemplate {
 }
 
 const GUARD_PATTERNS = Object.freeze({
-  // Q5 (2026-08-27) retired fourteen rows into real classes above and
-  // MT-iii (2026-08-27) took the two MobileTeams rows with the
-  // infighting slice. The FOUR left each name their blocker:
-  //  - CastEffectDo: needs the effect-template key registry the cast
-  //    windows use, bridged into the machine (spell arc)
+  // Q5 (2026-08-27) retired fourteen rows, MT-iii took the two
+  // MobileTeams rows, and QG1 (2026-08-28) took CastEffectDo,
+  // ClickedFoe and PromptMulti with the ready-spell doors and the
+  // foe-click surface. The ONE left names its blocker:
   //  - WorldUpdate: needs the world-data variant system (no
   //    block/building variant swaps exist in the port)
-  //  - ClickedFoe: needs the foe-click surface (foes have no click
-  //    door; NPC clicks have one, foe clicks do not)
-  //  - PromptMulti: needs a multi-button prompt window (the host's
-  //    prompt door is Yes/No)
-  CastEffectDo: /cast ([a-zA-Z0-9_.-]+) effect do ([a-zA-Z0-9_.-]+)/,
   WorldUpdate: /worldupdate (location) at (\d+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (locationnew) named (.+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (block) ([a-zA-Z0-9_.-]+) at (\d+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (blockAll) ([a-zA-Z0-9_.-]+) variant ([a-zA-Z0-9_.-]+)|worldupdate (building) ([a-zA-Z0-9_.-]+) (\d+) at (\d+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (buildingAll) ([a-zA-Z0-9_.-]+) (\d+) variant ([a-zA-Z0-9_.-]+)/,
-  ClickedFoe: /clicked foe ([a-zA-Z0-9_.-]+) and at least (\d+) gold otherwise do ([a-zA-Z0-9_.]+)|clicked foe ([a-zA-Z0-9_.-]+) say (\d+)|clicked foe ([a-zA-Z0-9_.-]+) say (\w+)|clicked foe ([a-zA-Z0-9_.-]+)/,
-  PromptMulti: /promptmulti (\d+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+)|promptmulti (\d+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+)|promptmulti (\d+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+) ([0-9]+)(:[a-zA-Z0-9]+)? ([a-zA-Z0-9_.]+)/,
 });
 const guard = (name) => new PendingTrigger(null, GUARD_PATTERNS[name]);
 
@@ -3310,7 +3520,7 @@ export function defaultActionTemplates() {
     new MakePcDiseased(null),
     new CurePcDisease(null),
     new CastSpellDo(null),
-    guard('CastEffectDo'),
+    new CastEffectDo(null),
     new CastSpellOnFoe(null),
     new RemoveFoe(null),
     new LegalRepute(null),
@@ -3318,7 +3528,7 @@ export function defaultActionTemplates() {
     new DestroyNpc(null),
     guard('WorldUpdate'),
     new EnemiesAction(null),
-    guard('ClickedFoe'),
+    new ClickedFoe(null),
     new KillFoeAction(null),
     new PayMoney(null),
     new JournalNote(null),
@@ -3329,6 +3539,6 @@ export function defaultActionTemplates() {
     new SpawnCityGuardsAction(null),
     new UnrestrainFoe(null),
     new TrainPc(null),
-    guard('PromptMulti'),
+    new PromptMulti(null),
   ];
 }

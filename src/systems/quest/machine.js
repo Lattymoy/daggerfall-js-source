@@ -308,6 +308,9 @@ export class QuestMachine {
     return {
       showPopup: (q, tokens) => this.deps.showPopup?.(q, tokens),
       showPrompt: (q, message, respond) => this.deps.showPrompt?.(q, message, respond),
+      // QG1: PromptMulti's 2-4 button box - BUTTONS.RCI record
+      // numbers out, the clicked record number back
+      showPromptMulti: (q, message, buttons, respond) => this.deps.showPromptMulti?.(q, message, buttons, respond),
       changeReputation: (fid, amount, propagate) => this.deps.changeReputation?.(fid, amount, propagate),
       changeLegalRep: (amount) => this.deps.changeLegalRep?.(amount),
       playerLevel: () => this.deps.playerLevel?.() ?? 0,

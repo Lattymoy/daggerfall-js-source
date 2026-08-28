@@ -63,6 +63,15 @@ export function createPlayerMagic({
   onCreateItem = null, // X11b: the conjured-item picker seam ({rounds}) - the host owns the window
   now = null,          // V2a: the classic-minutes clock MorphSelf's once-a-day gate reads
   rolls = Math.random,   // ENGINE-PRNG RULE: the saving-throw/magnitude roll slot (uniform; sequence-free)
+  // QG1: EntityEffectManager's two ready-spell events, the doors the
+  // quest machine's CastSpellDo/CastEffectDo latches ride. NEW raises
+  // in SetReadySpell right after `readySpell = spell` (:348); CAST
+  // raises with the readied spell as it actually FIRES (:391/:2085/
+  // :2130 - every release path), before the ready is cleared. An
+  // ABORT raises neither - AbortReadySpell (:361-365) is silent,
+  // which is precisely why the machine latches instead of polling.
+  onNewReadySpell = null,
+  onCastReadySpell = null,
 }) {
   const playerCaster = () => ({ entity: playerEntity, sinks: playerSinks });
   // Classic click-to-cast: DFU's armed state IS the readied spell -
@@ -290,6 +299,7 @@ export function createPlayerMagic({
       lastCastCost = cost;
       if (r.healed > 0) say(`You are healed ${r.healed} points.`);
       surfacePlayer();
+      onCastReadySpell?.(sp);   // QG1: RaiseOnCastReadySpell, before the ready clears
       readiedSpell = null;   // DFU OnReleaseFrame: a cast consumes the ready
       return true;
     }
@@ -310,6 +320,7 @@ export function createPlayerMagic({
       tallyCastSkills(sp);
       surfacePlayer();
       applySpellToFoe(sp, playerEntity.level, t, playerCaster());
+      onCastReadySpell?.(sp);   // QG1: RaiseOnCastReadySpell, before the ready clears
       readiedSpell = null;   // DFU OnReleaseFrame: a cast consumes the ready
       return true;
     }
@@ -322,6 +333,7 @@ export function createPlayerMagic({
       for (const t of sweepFoes(eye, EXPLOSION_RADIUS, foes())) {
         applySpellToFoe(sp, playerEntity.level, t, playerCaster());
       }
+      onCastReadySpell?.(sp);   // QG1: RaiseOnCastReadySpell, before the ready clears
       readiedSpell = null;   // DFU OnReleaseFrame: a cast consumes the ready
       return true;
     }
@@ -331,6 +343,7 @@ export function createPlayerMagic({
     tallyCastSkills(sp);
     surfacePlayer();
     missiles.push({ spell: sp, pos: [eye[0], eye[1], eye[2]], dir: [...dir], age: 0, batch: null, fromPlayer: true });
+    onCastReadySpell?.(sp);   // QG1: RaiseOnCastReadySpell, before the ready clears
     readiedSpell = null;   // DFU OnReleaseFrame: a cast consumes the ready
     return true;
   }
@@ -351,6 +364,7 @@ export function createPlayerMagic({
     }
     readiedSpell = sp;
     readiedFree = free;
+    onNewReadySpell?.(sp);   // :348 - after the assignment, before the CasterOnly instant cast
     if (sp.rangeType === 0) { castInput(null, null); return; }
     // AUDIT 24 scenes: SetReadySpell's own line, verbatim -
     // GetLocalizedText("pressButtonToFireSpell") = "Press button to

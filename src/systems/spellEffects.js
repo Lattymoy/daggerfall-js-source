@@ -192,3 +192,24 @@ export const spellMakerSubgroups = (group) =>
  *  effects through this; the maker's pickers go through the two
  *  functions above. */
 export const effectByKey = (key) => SPELL_MAKER_EFFECTS.find((e) => e.key === key) ?? null;
+
+/** QG1: DFU's effect-template REGISTRY key for a classic pair. Every
+ *  DFU effect class carries a per-class EffectKey literal, and the
+ *  literals follow one convention across the classic set: the group
+ *  name with its spaces removed, then `-SubGroup` (spaces removed)
+ *  where a subgroup exists - "ContinuousDamage-SpellPoints",
+ *  "WaterBreathing", "Levitate", "Drain-Strength". CastEffectDo
+ *  matches quest-source keys against readied bundles by exactly these
+ *  strings (CastEffectDo.cs:71), so this is the port's one derivation
+ *  of that vocabulary. Byte-folded lookup, because spell records
+ *  spell the no-subtype value as -1 and the registry as 255 - the
+ *  same fold MakeClassicKey's byte casts perform. Null for a pair the
+ *  registry does not carry. */
+export function dfuEffectKeyOf(type, subType) {
+  const t = (type ?? 0) & 0xff;
+  const s = (subType ?? 0) & 0xff;
+  const row = SPELL_MAKER_EFFECTS.find((e) => (e.type & 0xff) === t && (e.subType & 0xff) === s);
+  if (!row) return null;
+  const g = row.group.replace(/ /g, '');
+  return row.subgroup ? `${g}-${row.subgroup.replace(/ /g, '')}` : g;
+}

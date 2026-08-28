@@ -93,6 +93,46 @@ export function activationTargets(objects, distance = DOOR_ACTIVATION_DISTANCE) 
 }
 
 /**
+ * QG1 - the FOE half of PlayerActivate's quest-resource click arm
+ * (PlayerActivate.cs:325-339): an activate ray landing on a live foe
+ * that carries a QuestResourceBehaviour, within the DEFAULT activation
+ * distance. The CALLER owns the two law gates that sit around the C#
+ * call - `currentMode != Info` and the non-consuming fall-through (the
+ * C# arm does not return; the rest of the activation ladder still
+ * runs) - because both are the host ladder's, not the pick's.
+ *
+ * The body is the port's own foe volume: feet + ai.height, the 0.45
+ * half-width the missile hit test uses (spellcast.js) - foes are
+ * billboards and carry no mesh AABB. Occlusion is pickActivatable's
+ * posture: solid world strictly in front blocks the click.
+ *
+ * @param {Array<object>} foes - live pool entries ({ai, dead, questBehaviour})
+ * @returns {object|null} the nearest clicked quest foe
+ */
+export function pickQuestFoe(eye, dir, foes, collider, distance = DEFAULT_ACTIVATION_DISTANCE) {
+  let best = null;
+  let bestD = Infinity;
+  for (const f of foes ?? []) {
+    if (!f || f.dead || !f.questBehaviour) continue;
+    const feet = f.ai?.feet;
+    if (!feet) continue;
+    const h = f.ai?.height ?? 1.8;
+    const half = 0.45;
+    const aabb = {
+      min: [feet[0] - half, feet[1], feet[2] - half],
+      max: [feet[0] + half, feet[1] + h, feet[2] + half],
+    };
+    const d = rayAabb(eye, dir, aabb);
+    if (d === null || d > distance || d >= bestD) continue;
+    const wall = collider?.raycast?.(eye, dir, d) ?? Infinity;
+    if (Number.isFinite(wall) && wall < d - 0.05) continue;
+    best = f;
+    bestD = d;
+  }
+  return best;
+}
+
+/**
  * Pick the nearest activatable the eye ray hits within reach and sight.
  * @param {Array<{key:string, aabb:{min,max}, distance?:number}>} targets
  * @returns {string|null} target key

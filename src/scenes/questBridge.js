@@ -162,6 +162,9 @@ export function createQuestBridge(ctx) {
     addHUDText: (t) => ctx.addHUDText?.(t),
     showPopup: (q, tokens) => ctx.showPopup?.(q, tokens),
     showPrompt: (q, message, respond) => ctx.showPrompt?.(q, message, respond),
+    // QG1: PromptMulti's box - 2-4 BUTTONS.RCI records, the click
+    // answering the record number back (the action routes by value)
+    showPromptMulti: (q, message, buttons, respond) => ctx.showPromptMulti?.(q, message, buttons, respond),
     playVideo: (name) => ctx.playVideo?.(name),
     playSound: (id) => ctx.playSound?.(id),
     playSong: (name) => ctx.playSong?.(name),

@@ -24,7 +24,7 @@
 import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding, repositionFeetY } from '../player/enterExit.js';
 import { startRestGroundedCheck } from '../player/motor.js';   // S40: the rest gate's grounded input
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
-import { pickActivatable, worldAabb, activationTargets } from '../player/activate.js';
+import { pickActivatable, worldAabb, activationTargets, pickQuestFoe } from '../player/activate.js';   // QG1: the foe-click door
 import { removeOne, addItem, isEnchanted, totalWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE, spendArrow } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
@@ -3219,6 +3219,14 @@ export function createWorldModes(host) {
   function tryExitDungeon() {
     const eye = player.eye;
     const dir = eyeDir();
+    // QG1: the quest-resource click arm runs FIRST and does not
+    // consume the activation (PlayerActivate.cs:325-339 - no return,
+    // skipped in Info mode): a live quest foe under the ray takes the
+    // click through its own DoClick, and the ladder below still runs.
+    if (getInteractionMode() !== 'info' && dungeonCtx) {
+      const qf = pickQuestFoe(eye, dir, dungeonCtx.foes, dungeonCtx.collider);
+      if (qf) qf.questBehaviour.doClick();
+    }
     const targets = dungeonCtx.exitDoors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d) }));
     targets.push(...activationTargets(dungeonCtx.actions.objects));   // effects ride their precomputed aabb (crash fix, audit 2026-08-16)
     targets.push(...dungeonCtx.lootTargets());   // S2: piles + lootable corpses

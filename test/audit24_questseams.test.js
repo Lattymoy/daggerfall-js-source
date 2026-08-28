@@ -51,8 +51,9 @@ const PENDING = new Map([
   ['oldLeaderFate', 'M-X: GetOldLeaderFateString (%olf) - the talk-news arc'],
   ['currentBuildingName', 'M-X: %cbd is the interior host\'s - the handler answers [invalid] meanwhile, DFU\'s outside arm'],
   ['randomTavernName', 'M-X: %nt walks the building directory - the interior/town host\'s'],
-  ['getClassicSpellEffects', 'CastSpellDo needs the SPELLS.STD classic records'],
-  ['spellHasMatchForClassicEffect', 'rides the readied-bundle seam above'],
+  // QG1 MOUNTED getClassicSpellEffects (spellRecordOfIndex, the G4
+  // registry) and spellHasMatchForClassicEffect (byte-folded classic
+  // pairs) - removing a row means mounting it, and it did.
   ['readiedSpell', 'RETIRED by AUDIT 24 - the latch is the action\'s now; the name survives only in a comment'],
   ['isHouseOwned', 'the residence-ownership half of the Place arc'],
   ['buildingNameOpts', 'the building-name option bag'],

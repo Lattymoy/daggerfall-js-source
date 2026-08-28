@@ -1261,6 +1261,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // below and reuse the engine's explodeAt/applySpellToPlayer. The
   // absorb context is the dungeon constant (inside, no daylight).
   const magic = createPlayerMagic({
+    // QG1: the ready-spell doors - this host's own cast engine raises
+    // into the same machine the world lane's does (opts.questBridge is
+    // handed down by world.js/worldModes; the standalone ?dungeon
+    // probe has none and the chain no-ops).
+    onNewReadySpell: (sp) => opts.questBridge?.machine?.notifyNewReadySpell?.(sp),
+    onCastReadySpell: (sp) => opts.questBridge?.machine?.notifyCastReadySpell?.(sp),
     // hudText.add, not `say?.()`. There is no `say` in this scope — the
     // optional-call syntax made an undefined identifier look like a
     // guarded one, so it read as safe and was a ReferenceError waiting
