@@ -562,8 +562,7 @@ function skinRow() {
   row.append(main);
   const ctl = el('div', 'ctl');
   const b = el('button', 'act primary', SKIN_NAMES[uiSkin()]);
-  b.style.minHeight = '38px';
-  b.style.padding = '8px 16px';
+  b.classList.add('rowact');   // AUDIT UI: sized by the sheet, so the coarse-pointer rule can reach it
   b.onclick = () => switchSkin();
   ctl.append(b, el('span', 'tier live'));
   row.append(ctl);
@@ -702,8 +701,7 @@ function settingRow(key, { compact = false } = {}) {
     // A switch has one direction, so it gets one control rather than a
     // pair of arrows pointing at the same place.
     const b = el('button', 'act', formatValue(key, raw));
-    b.style.minHeight = '38px';
-    b.style.padding = '8px 16px';
+    b.classList.add('rowact');   // AUDIT UI: sized by the sheet, not inline
     if (raw === 'True') b.classList.add('primary');
     b.onclick = () => write(key, stepValue(key, raw, 1));
     ctl.append(b);
@@ -767,8 +765,7 @@ function prefRow(key, name, note, { onChange = null } = {}) {
   row.append(main);
   const ctl = el('div', 'ctl');
   const b = el('button', `act${on ? ' primary' : ''}`, on ? 'On' : 'Off');
-  b.style.minHeight = '38px';
-  b.style.padding = '8px 16px';
+  b.classList.add('rowact');   // AUDIT UI: sized by the sheet, so the coarse-pointer rule can reach it
   b.setAttribute('aria-pressed', String(on));
   b.onclick = () => { setPref(key, !on); onChange?.(!on); render(); };
   ctl.append(b, el('span', 'tier live'));
