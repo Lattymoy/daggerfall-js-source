@@ -7541,6 +7541,19 @@ pick with the shared key vocabulary). 10 mutations, 10 dead. Verified
 in a real browser: the strip with a horse and a cart in the bag, the
 loot window with five items, and the plaque with eight.
 
+PX21d (Mac: "center all the elements at the top in the loot window"):
+THE HEAD IS A STACK. The head inherited the base sheet's space-between
+ROW - the title and count left, the buttons pushed right - which is a
+COLUMN's header, written when the remote was a column beside the pack
+rather than a window of its own. At 340px wide that reads as two things
+that fell to opposite walls. It is a centred stack now: the title, the
+count beneath it, the buttons in a centred row under both, each sitting
+over the list it acts on. Measured: title, count and button row all 0px
+from the window's centre line. The base rules are untouched - the
+column header is still the column header, and this is the loot frame's
+own dress, which is the same seam PX21b used to give this window rows
+where the dock has tiles.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk
