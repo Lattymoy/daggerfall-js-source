@@ -31,6 +31,7 @@
 import {
   loadMorrowindArchives,
   hasStoredMorrowind,
+  loadMorrowindEsm,
 } from '../scenes/dataSource.js';
 import { normalizeBsaPath } from '../formats/mwBsaFile.js';
 import { parseNif } from '../formats/mwNifFile.js';
@@ -51,6 +52,7 @@ import {
   accumRootRef,
 } from '../formats/mwSkin.js';
 import { bindPart, attachmentTransform } from '../formats/mwCharacter.js';
+import { indexSkins, firstPersonArmParts, mwRaceId } from '../formats/mwNpc.js';   // MW7: the arms themselves
 import { WEAPON_TYPES } from './fpsWeapon.js';
 import { mwFpPreference } from './mwFpPref.js';
 
@@ -217,7 +219,7 @@ function param(name) {
  * attached, and the meshes load. `renderer` is the game renderer -
  * its gl uploads the stream texture, its drawScreenQuad composites.
  */
-export async function createMwFpView(renderer) {
+export async function createMwFpView(renderer, playerEntity = null) {
   const inert = { active: () => false, update: () => {}, draw: () => {}, dispose: () => {}, status: 'off' };
   if (!mwFpPreference()) return inert;
   if (!(await hasStoredMorrowind())) {
@@ -293,6 +295,45 @@ export async function createMwFpView(renderer) {
       skinnedSets.push(...bound.skinned);
     } catch (err) {
       status(`${name}: ${err.message}`);
+    }
+  }
+
+  // MW7: THE ARMS. base_anim.1st.nif is Morrowind's first-person
+  // SKELETON and animation carrier - it holds no body geometry, so
+  // everything above this line leaves the rig with bones and clips and
+  // nothing to draw. The visible arms are ordinary body parts chosen
+  // by race and sex, in their `.1st` variants, exactly as the
+  // third-person body is assembled (slice 6). The two slices were
+  // built and never joined, which is why a retail attach showed the
+  // classic sprite for ever: skinnedSets stayed empty and the view was
+  // never ready.
+  //
+  // Explicit `mwfparms` still wins by running first - it is the probe
+  // and dev door and must keep working against fixture data that has
+  // no ESM at all.
+  if (!skinnedSets.length && playerEntity) {
+    const esm = await loadMorrowindEsm();
+    const race = mwRaceId(playerEntity.race);
+    if (!esm) {
+      status('no Morrowind.esm attached - the arms live in its body records');
+    } else if (!race) {
+      status('no player race to choose arms for');
+    } else {
+      const parts = firstPersonArmParts(indexSkins(esm.bodies), race, playerEntity.gender === 'female');
+      if (!parts.length) status(`no ${race} body parts in the ESM`);
+      for (const part of parts) {
+        // the first-person twin, then the third-person mesh: a
+        // slightly wrong arm beats no arm, and beats falling back to
+        // the sprite while holding perfectly good geometry.
+        const bytes = file(part.model) || file(part.thirdPersonModel);
+        if (!bytes) continue;
+        try {
+          const bound = bindPart(skeleton, parseNif(bytes));
+          skinnedSets.push(...bound.skinned);
+        } catch (err) {
+          status(`${part.slot} (${part.bodyId}): ${err.message}`);
+        }
+      }
     }
   }
 

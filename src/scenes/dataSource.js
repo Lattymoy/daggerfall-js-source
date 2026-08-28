@@ -425,9 +425,35 @@ export const morrowindDataGeneration = () => _mwGeneration;
  *  the settings dialog can report attachment without an async hop. */
 export async function registerMorrowindData() {
   const next = (await storedMorrowindNames()).filter((n) => /\.bsa$/i.test(n)).length;
-  if (next !== _mwCount) _mwGeneration++;
+  if (next !== _mwCount) { _mwGeneration++; _mwEsm = undefined; }   // MW7: a new attach re-reads the ESM
   _mwCount = next;
   return _mwCount;
+}
+
+/**
+ * MW7: the stored Morrowind.esm, parsed - the record file the body
+ * parts live in. It is NOT inside the BSA (it sits beside it in Data
+ * Files, which is why storeMorrowindFiles takes .esm as well as .bsa),
+ * so it has its own door. Answers null when no .esm was attached: the
+ * first-person layer degrades to the classic sprite rather than
+ * failing, exactly as it does for any other missing piece.
+ *
+ * Parsed once and cached - the file is tens of megabytes and the rig
+ * rebuilds on every attach and every toggle.
+ */
+let _mwEsm;
+export async function loadMorrowindEsm() {
+  if (_mwEsm !== undefined) return _mwEsm;
+  const name = (await storedMorrowindNames()).find((n) => /\.esm$/i.test(n));
+  if (!name) return (_mwEsm = null);
+  try {
+    const { parseEsm } = await import('../formats/mwEsmFile.js');
+    _mwEsm = parseEsm(await loadMorrowindFile(name));
+  } catch (err) {
+    console.warn(`morrowind esm ${name}: ${err.message}`);
+    _mwEsm = null;
+  }
+  return _mwEsm;
 }
 
 export async function pickMorrowindFiles() {
