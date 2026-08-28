@@ -21,8 +21,13 @@
 // initial magic round"), consuming round 1; re-casts of an incumbent
 // STACK rounds onto it (audit F12 - AddState "Stack my rounds onto
 // incumbent") and fire no initial round (the joining instance is
-// never added to liveEffects). Effects outside these keys stay
-// FLAGGED skipped (the library grows here).
+// never added to liveEffects). The three keys above are EXAMPLES of
+// those round laws, not the library's extent: EF1 measured it and all
+// 91 of DFU's classic keys land (see applySpell's skip counter and
+// test/effectcoverage.test.js, which regenerates the key set from the
+// effect classes). This header claimed otherwise for as long as the
+// counter did - a stale sentence propagates, because the next reader
+// finds it twice and believes it.
 
 import { savingThrow, rollMagnitude, EFFECT_FLAGS, careerTolerance } from './spellcast.js';
 import { raceById, raceByKey } from './races.js';   // L2-slice (magic-10): the racial immunity arm
