@@ -1780,7 +1780,15 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
      ground + padding were riding under the card and drew a grey mat
      around the plaque - the CARD is the frame, the wrapper is
      nothing. */
-  background: transparent; padding: 0; border: 0; }
+  background: transparent; padding: 0; border: 0;
+  /* PX21f (Mac: "the tooltip that pops up when you click on an item
+     has scrolling"): AND NO OVERFLOW. .packcol is a COLUMN's rule -
+     slate ground, padding, and overflow:auto - and PX19j turned off
+     the first two on this element without noticing the third. A
+     tooltip is not a scroll box: it is as tall as what it says. The
+     2px scrollHeight/clientHeight gap that rounding leaves was enough
+     to draw a scrollbar on it wherever scrollbars are not overlays. */
+  overflow: visible; }
 /* ...and the tip's CARD is near-opaque: the 0.72 glass is the pause
    window's, made for a dimmed scrim - a tooltip floats over LIVE
    text, and glass there reads as the dock bleeding through the
@@ -1969,8 +1977,15 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    broken. The frame is fixed furniture now; only the LIST inside it
    can move, and it WIDENS to two columns first, which holds any
    container Daggerfall builds without moving at all. */
+/* PX21f: VISIBLE, not hidden. PX21e used overflow:hidden to stop
+   the frame scrolling, and it does - but the tooltip is a CHILD of
+   this frame in the loot-only flow, so a tip near the bottom edge
+   would have been clipped invisibly, which is worse than the scroll it
+   replaced. The no-scroll guarantee does not need clipping: the head
+   is fixed and the list has min-height 0, so the content cannot
+   exceed the frame in the first place. */
 .loot-win { position: relative; width: min(340px, 90vw); max-height: min(700px, 86dvh);
-  display: flex; flex-direction: column; overflow: hidden;
+  display: flex; flex-direction: column; overflow: visible;
   background: rgba(10,12,17,0.72); border: 2px solid #7d7460; padding-bottom: 8px; }
 .loot-win.wide { width: min(680px, 94vw); }
 .loot-win .px-corner { position: absolute; }
