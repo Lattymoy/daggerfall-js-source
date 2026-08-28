@@ -1598,6 +1598,88 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   .px-e::before, .px-w::before { width: 64px; }
 }
 
+/* ── PX16: THE PACK WEARS THE PIXELS (Mac's reference: Skyrim's
+   inventory - category spine, item list with counts, the weight/value
+   plaque, the figure beside it) ── one paint block over the window
+   whose laws (wagon pair, remote-first, refusals, F6) do not move. */
+.pack-shell { position: relative; z-index: 1; background: transparent;
+  font-family: 'Pixelify Sans', monospace; -webkit-font-smoothing: none; color: #d8cfae; }
+.pack-shell button { transition: none; border-radius: 0; }
+/* The head: the window's name in the wing rules, the carry/gold line
+   as the reference's footer figures, one data colour. */
+.pack-shell .pack-id { background: transparent; border-bottom: 2px solid rgba(125,116,96,0.35); }
+.pack-shell .pack-id h2 { font-family: inherit; font-weight: 400; font-size: 24px;
+  letter-spacing: 0.16em; text-indent: 0.16em; text-transform: uppercase;
+  display: flex; align-items: center; gap: 14px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.pack-shell .pack-id h2::after { content: ''; flex: 0 0 90px; height: 2px;
+  background: linear-gradient(90deg, rgba(125,116,96,0.7), transparent); }
+.pack-shell .pack-id .meta { color: #c5bda2; letter-spacing: 0.1em;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+/* The category spine: the reference's ALL/WEAPONS/APPAREL rail as
+   pixel chips, the chosen one leading with the gem. */
+.pack-shell .packtab { color: #d8cfae; font-family: inherit; letter-spacing: 0.12em;
+  text-transform: uppercase; border: 0; border-bottom: 2px solid rgba(125,116,96,0.3);
+  background: none; cursor: pointer; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.pack-shell .packtab:hover, .pack-shell .packtab:focus-visible { outline: none;
+  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.pack-shell .packtab.on { color: rgb(243,239,44); border-bottom-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.pack-shell .packtab.on::before { content: '\\25c6  '; font-size: 11px; }
+/* The lists: transparent on a breath of scrim, rows on 2px rules,
+   counts and markers in the data colour. */
+.pack-shell .packlists, .pack-shell .list { background: rgba(10,12,17,0.38); }
+.pack-shell .itemrow { background: none; border: 0; border-bottom: 2px solid rgba(125,116,96,0.3);
+  color: #d8cfae; font-family: inherit; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.pack-shell .itemrow:hover, .pack-shell .itemrow:focus-visible { outline: none;
+  background: rgba(0,0,0,0.25); color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.pack-shell .itemrow.on { background: rgba(0,0,0,0.25); color: rgb(243,239,44);
+  box-shadow: none; outline: 2px solid rgba(192,138,62,0.6); outline-offset: -2px;
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.pack-shell .rowmeta, .pack-shell .rowcount { color: #c5bda2; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+/* The figure: the paper doll in a 2px plaque, the worn list beneath
+   it as quiet rows - the sprite viewer's frame, ready for the art. */
+.pack-shell .figure-doll { border: 2px solid rgba(125,116,96,0.55); background: rgba(0,0,0,0.35); }
+.pack-shell .equippedhead, .pack-shell .remotehead { font-family: inherit; color: #7d7460; font-size: 13px;
+  letter-spacing: 0.3em; text-indent: 0.3em; text-transform: uppercase; text-align: center;
+  background: none; border-bottom: 2px solid rgba(125,116,96,0.3);
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.pack-shell .wornrow { background: none; border: 0; border-bottom: 2px solid rgba(125,116,96,0.25);
+  color: #d8cfae; font-family: inherit; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.pack-shell .wornrow:hover, .pack-shell .wornrow.on { color: rgb(243,239,44);
+  background: rgba(0,0,0,0.25); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.pack-shell .wornrow.wornempty { color: rgba(125,116,96,0.5); }
+.pack-shell .slotmap { background: rgba(10,12,17,0.38); }
+/* The detail: the reference's centered plaque - name over a rule,
+   WEIGHT and VALUE as the paired figures, the acts as pixel plaques. */
+.pack-shell .card { border: 2px solid rgba(125,116,96,0.55); border-radius: 0;
+  background: rgba(0,0,0,0.35); }
+.pack-shell .card h3 { font-family: inherit; font-weight: 400; letter-spacing: 0.14em;
+  text-indent: 0.14em; text-transform: uppercase; text-align: center;
+  border-bottom: 2px solid rgba(125,116,96,0.4); padding-bottom: 8px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.pack-shell .card .meta, .pack-shell .card p { color: #c5bda2;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.pack-shell .card .stats { display: flex; justify-content: center; gap: 28px; }
+.pack-shell .card .stats dt { color: #7d7460; font-size: 13px; letter-spacing: 0.2em;
+  text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.pack-shell .card .stats dd { margin: 0; font-size: 19px; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.pack-shell .act { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; background: none;
+  color: #d8cfae; font-family: inherit; letter-spacing: 0.14em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.pack-shell .act:hover, .pack-shell .act:focus-visible { outline: none;
+  color: rgb(243,239,44); border-color: var(--brass); background: none;
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.pack-shell .act.primary { color: rgb(243,239,44); border-color: var(--brass); background: none;
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.pack-shell .act:disabled { color: rgba(125,116,96,0.45); border-color: rgba(125,116,96,0.3); }
+.pack-shell .remotewho, .pack-shell .remotewho * { font-family: inherit; }
+.pack-shell .sheet-notice { color: #c5bda2; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.pack-shell ::-webkit-scrollbar { width: 10px; }
+.pack-shell ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+.pack-shell ::-webkit-scrollbar-thumb { background: rgba(125,116,96,0.5);
+  border: 2px solid rgba(0,0,0,0.3); border-radius: 0; }
+
 /* ── PX9: SETTINGS INSIDE THE PAUSE WINDOW ──────────────────────
    The same paneSettings DOM, reflowed for the window: the category
    subrail becomes a wrapping chip strip on top, the rows scroll

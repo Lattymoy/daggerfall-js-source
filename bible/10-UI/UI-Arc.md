@@ -6794,6 +6794,34 @@ reasoned and kept: the dial captures only keydown, so a W held
 through open/close still delivers its keyup to the host and nothing
 sticks. Suite green, build green.
 
+PX16 (Mac: "use the reference and develop the new inventory - go all
+out"): THE PACK WEARS THE PIXELS. The enhanced inventory
+(ui/enhancedInventory.js) is a LIVING window - wagon pairing,
+remote-first ordering, wear/use/stow with their refusals, the V4
+suppression, the F6 claim - so the slice is the wizard's pattern at
+full depth: the window's laws do not move, the ground and the paint
+do. THE SKY: drawPixelGround behind .pack-shell, 8fps, the clock
+re-owned by every repaint and ended by the same unmount that owns
+the F6 listener. THE PAINT, the reference read closely: the window's
+name in a wing rule with the carry/gold line beside it; the category
+spine as gem-led pixel chips (the chosen one leads with the
+diamond); item rows transparent on 2px rules with counts and
+condition in the one data colour, selection the outline-not-inset;
+the FIGURE - the paper doll plaque and the worn list as quiet rows
+under a small-caps heading, the sprite viewer's frame standing ready
+for the art (the doll image itself is ARENA2-fed and draws the
+moment a data-bearing host feeds it, exactly as the native window's
+does); the remote pane (ground/wagon/container) the same rows; the
+detail as the reference's centered plaque - name over a rule, WEIGHT
+and VALUE as paired figures, acts as pixel plaques with the gold
+primary; square scrollbars. ONE SERIF LEAK caught in the eyeball
+(equipped/remote heads missing font-family: inherit - the recurring
+one-rule-forgot) and fixed in the same slice. Probed in the lab on
+stub items: four tabs with counts, gem on the active tab, equipped
+rows render, the sky behind, zero page errors. The lab's zero
+kg/gold figures are the stub's, not the window's - the real entity
+fills them, as Mac's data run will show.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk
