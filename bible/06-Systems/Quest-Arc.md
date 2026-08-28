@@ -5248,3 +5248,24 @@ the ClickedFoe rearm mutant survived round one because the base
 postTick clears every click anyway, and the pin that kills it is the
 LAW's own shape: two tasks watching one foe in one tick,
 first-come-first-serve.
+
+## QV1 - THE QUEST VIDEO DOOR (2026-08-28)
+
+PlayVideo's parse law shipped at Q2b and the machine's playVideo hook
+has carried the name since Q4-v - into a console.warn saying the seam
+"pends". TEN corpus quests write `play video N` (the main-quest ANIMs:
+0003, 0005-0010, 0013-0015), so a shipped line dead-ended at a warn.
+The world host's door is live: the infection lane's own player mount
+(ui/videoPlayer - the DaggerfallVidPlayerWindow shape, owning the
+frame loop for its lifetime), pushed OFF the tick's frame for the same
+re-entrancy reason, with DFU's own flag - EndOnAnyKey = false
+(PlayVideo.cs:78) - and Escape still skipping any video (AUDIT 26
+F151's disjunct law). NEVER TRAPS: a missing or undecodable ANIM costs
+the video and the quest rolls on - SetComplete already ran at the
+push, exactly as in C#. One door serves every mode: the bridge ctx is
+world.js's in interior and dungeon modes alike.
+
+Pins: 3 in `test/questvideo.test.js` (the ten corpus names swept
+through createNew byte-for-byte, the machine-to-hook flow with
+complete-at-push, and the door's source law). Campaign: 5 mutants,
+5 killed.

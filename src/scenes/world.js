@@ -3324,7 +3324,28 @@ export async function bootWorld(canvas, renderer, params, status) {
       buttonsMulti: buttons,
       onButton: (b) => { respond(b); return []; },
     }),
-    playVideo: (name) => console.warn('[quest] video playback pends:', name),
+    // QV1: PlayVideo's door, live - ten corpus quests write `play
+    // video N` (the main-quest ANIMs) and the line warned-and-dropped.
+    // The player is the infection lane's own mount (ui/videoPlayer,
+    // the DaggerfallVidPlayerWindow shape; it owns the frame loop for
+    // its lifetime), pushed OFF the tick's frame for the same
+    // re-entrancy reason. EndOnAnyKey is FALSE - PlayVideo.cs:78's
+    // own assignment - and Escape still skips any video (AUDIT 26
+    // F151: GetBackButtonDown is its own disjunct). NEVER TRAPS: a
+    // missing or undecodable ANIM costs the video and the quest rolls
+    // on - SetComplete already ran at the push, exactly as in C#.
+    playVideo: (name) => {
+      Promise.resolve().then(async () => {
+        try {
+          const { playVideo } = await import('../ui/videoPlayer.js');
+          const { getBytes } = await import('./dataSource.js');
+          const played = await playVideo(renderer.canvas, renderer, await getBytes(name), { endOnAnyKey: false });
+          if (typeof window !== 'undefined') (window.__questVideos ??= []).push({ name, played });
+        } catch (e) {
+          console.warn(`[quest] ${name} unavailable - skipping the video:`, e?.message ?? e);
+        }
+      });
+    },
     // DELTA (recorded): C# skips while the audio source is BUSY and
     // only a real play re-stamps PlaySound's timer; the port's one-shot
     // engine has no busy state, so every call reports played.
