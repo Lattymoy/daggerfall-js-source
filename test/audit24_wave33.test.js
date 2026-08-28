@@ -4,12 +4,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { MobileUnit, PRIMARY_ATTACK_ANIM_SPEED } from '../src/characters/mobileUnit.js';
+import { dfuFile } from './dfuRoot.mjs';   // PY1: DFU_PATH, then the in-tree sparse clone
 
 const rd = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
-const MOTOR_CS = new URL('../tools/parity/dfu/Assets/Scripts/Game/EnemyMotor.cs', import.meta.url);
-const ATTACK_CS = new URL('../tools/parity/dfu/Assets/Scripts/Game/EnemyAttack.cs', import.meta.url);
-const DMU_CS = new URL('../tools/parity/dfu/Assets/Scripts/Internal/DaggerfallMobileUnit.cs', import.meta.url);
-const MU_CS = new URL('../tools/parity/dfu/Assets/Scripts/Internal/Base/MobileUnit.cs', import.meta.url);
+const MOTOR_CS = dfuFile('Assets/Scripts/Game/EnemyMotor.cs');
+const ATTACK_CS = dfuFile('Assets/Scripts/Game/EnemyAttack.cs');
+const DMU_CS = dfuFile('Assets/Scripts/Internal/DaggerfallMobileUnit.cs');
+const MU_CS = dfuFile('Assets/Scripts/Internal/Base/MobileUnit.cs');
 const noDfu = ![MOTOR_CS, ATTACK_CS, DMU_CS, MU_CS].every((u) => existsSync(u));
 
 const BASICS = { hasIdle: true, primaryAttackAnimFrames: [0, 1, -1, 2] };

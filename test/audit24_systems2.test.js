@@ -10,6 +10,7 @@ import { dateString, daySuffix } from '../src/systems/gameDate.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 import { checkBuildingTypeInSkipList } from '../src/systems/topicTree.js';
 import { MAGIC_ONLY_KEYS } from '../src/systems/effects.js';
+import { dfuFile } from './dfuRoot.mjs';   // PY1: DFU_PATH, then the in-tree sparse clone
 
 const rd = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
 
@@ -135,7 +136,7 @@ test('audit24 systems: %god falls back to the REGION temple before it rolls', ()
 
 // The vendored DFU tree is gitignored, so this gate skips wherever it is
 // absent - the same charter the ARENA2-backed pins run under.
-const DFU_EFFECTS = new URL('../tools/parity/dfu/Assets/Scripts/Game/MagicAndEffects/Effects/', import.meta.url);
+const DFU_EFFECTS = dfuFile('Assets/Scripts/Game/MagicAndEffects/Effects/');   // PY1: the ONE checkout home
 const noDfu = !existsSync(DFU_EFFECTS);
 
 test('audit24 systems: MAGIC_ONLY_KEYS is REGENERATED from the effect classes, not guessed', { skip: noDfu }, () => {

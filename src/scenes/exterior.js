@@ -47,7 +47,8 @@ import { TownPopulation } from '../systems/townPopulation.js';
 import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES, personWantsToStop } from '../characters/mobilePerson.js';
 import { createTownTalk } from './townTalk.js';   // T3b
 import { createPlayerMagic } from './hostMagic.js';   // M2: spellcasting above ground
-import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in)
+import { preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in)
+import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the book's one door
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C2): the ONE clock
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice } from './hostCombat.js';   // AUDIT 23 (C14)
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
@@ -901,15 +902,15 @@ export async function bootExterior(canvas, renderer, params, status) {
   // host makes, handing the player's own array by reference so the
   // window's delete/swap/sort/rename land in the save envelope.
   let _spellbook = null;   // U42: the live window, for the probe surface
-  const makeSpellbookWindow = () => (spellbookArtLoaded()
-    ? (_spellbook = new SpellbookWindow({
-      spells: () => (playerEntity.spells ??= []),
-      entity: playerEntity,
-      castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
-      onReady: (sp, { noSpellPointCost } = {}) => magic.readySpell(sp, { free: !!noSpellPointCost }),
-      rows: (id) => townTalk.lines(id),
-    }))
-    : null);
+  // PX23: the book's ONE door (ui/spellbookDoor.js). This host hands it
+  // only what this host knows - the entity, the engine, the cost and
+  // the way it reaches TEXT.RSC.
+  const makeSpellbookWindow = () => (_spellbook = createSpellbookWindow({
+    entity: playerEntity,
+    magic,
+    castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
+    rows: (id) => townTalk.lines(id),
+  }));
   const toggleSpellbook = () => {
     if (townTalk.overlayActive) return;
     const w = makeSpellbookWindow();

@@ -24,6 +24,7 @@ import { seedCustomSpellIndex } from './spellMaker.js';   // S1: made spells car
 import { seedBundleSeq } from './effects.js';   // X10: the live-bundle counter's restore half
 import { SOCIAL_GROUPS } from '../formats/factionFile.js';   // AUDIT 24
 import { travelMapSaveData, restoreTravelMapSaveData } from './travelMapState.js';   // U41: TravelMapSaveData
+import { getEscortFacesSaveData, restoreEscortFacesSaveData } from '../ui/hudEscortFaces.js';   // FE1: SaveData_v1.escortingFaces
 import { resetMagicRoundMarker } from './worldTick.js';   // EntityEffectBroker.InitMagicRoundTimer, on the LOAD arm (:230-233)
 import { isMembershipStore } from './guilds.js';   // V2e: the two-book membership store rides the save whole
 
@@ -496,6 +497,10 @@ export function composeSessionState({ questBridge = null, talk = null } = {}) {
     // in systems/travelMapState.js, so it rides the same composer
     // both hosts already call rather than a second inline envelope.
     travelMap: travelMapSaveData(),
+    // FE1: saveData.escortingFaces (SaveLoadManager.cs:869) - the HUD
+    // escort portraits ride every save, off the one panel, exactly as
+    // DFU reaches DaggerfallHUD.EscortingFaces from its serializer.
+    escortingFaces: getEscortFacesSaveData(),
   };
 }
 
@@ -514,6 +519,10 @@ export function restoreSessionState(extras, { questBridge = null, talk = null } 
   // so a pre-U41 save clears the filters rather than keeping the
   // live session's.
   restoreTravelMapSaveData(extras?.travelMap ?? null);
+  // FE1: RestoreEscortingFacesData (SaveLoadManager.cs:1071-1079) -
+  // null is DFU's OWN arm here: a save without the block CLEARS the
+  // panel, so a pre-FE1 save loads with no stale portraits.
+  restoreEscortFacesSaveData(extras?.escortingFaces ?? null);
   if (extras?.talk && talk) {
     talk.mill.restoreSaveData(extras.talk);
     talk.tree.restoreSaveData(extras.talk);   // the orphan sweep + relink + TellMeAbout tail run inside

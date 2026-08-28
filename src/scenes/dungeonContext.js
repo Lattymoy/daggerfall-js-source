@@ -63,7 +63,8 @@ import { LevelUpScreen, preloadCharSheetArt } from '../ui/charsheet.js';
 import { createCharSheetWindow } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
 import { DeathScreen } from '../ui/deathScreen.js';
-import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in)
+import { preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';
+import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the book's one door
 // U26: the dungeon finally gets the SAME inventory window the exterior
 // hosts have had since U8d - tabs, paperdoll, the real info panel and
 // point-and-click Use. The keyed InventoryWindow it used until now is
@@ -858,17 +859,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  handed by reference. Null when the art has not landed - this
    *  host has no HUD line to say so with, and DFU without SPBK00I0
    *  has no window either. */
-  const makeSpellbookWindow = () => (spellbookArtLoaded()
-    ? new SpellbookWindow({
-      spells: () => (playerEntity.spells ??= []),
-      entity: playerEntity,
-      castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
-      // M3: the ready laws (silence gate, cost-at-ready, instant
-      // CasterOnly, the click latch) live in the ONE engine.
-      onReady: (sp, { noSpellPointCost } = {}) => magic.readySpell(sp, { free: !!noSpellPointCost }),
-      rows: (id) => textRsc?.variantLinesById(id) ?? [],
-    })
-    : null);
+  // PX23: the book's ONE door. Four hosts built this identically but
+  // for how each reaches TEXT.RSC; that difference is all this host
+  // hands it now.
+  const makeSpellbookWindow = () => createSpellbookWindow({
+    entity: playerEntity,
+    magic,
+    castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
+    rows: (id) => textRsc?.variantLinesById(id) ?? [],
+  });
 
   /** The quest bridge's two reads, or NEITHER - charSheetHooks turns
    *  the absence into the sheet's refusal rather than an empty book. */
@@ -3628,6 +3627,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (activeOverlay) return source.length;
       activeOverlay = openInventory(source, onEmptied);
       return source.length;
+    },
+    /** RW1: GivePc's reward container (GivePc.cs:167-171) - a dropped
+     *  pile at the player's feet, "CreateDroppedLootContainer(
+     *  PlayerObject, ...)" in this host's own vocabulary. Answers the
+     *  OPEN thunk the caller fires when the QuestComplete box closes
+     *  (the messageBox.OnClose law, :189-196), or null with no ground
+     *  position yet - the same no-feet-no-pile arm onDrop carries. */
+    offerRewardLoot(dfItem) {
+      if (!lastPlayerFeet) { console.warn('[loot] reward before the first frame; no ground position yet'); return null; }
+      const pile = droppedLoot.dropPile([dfItem], [...lastPlayerFeet]);
+      return pile ? () => { this.takeLoot(`droppedLoot:${pile.id}`); } : null;
     },
     textureTable: dungeon.textureTable,
     exitDoors,

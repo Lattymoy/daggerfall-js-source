@@ -562,8 +562,7 @@ function skinRow() {
   row.append(main);
   const ctl = el('div', 'ctl');
   const b = el('button', 'act primary', SKIN_NAMES[uiSkin()]);
-  b.style.minHeight = '38px';
-  b.style.padding = '8px 16px';
+  b.classList.add('rowact');   // AUDIT UI: sized by the sheet, so the coarse-pointer rule can reach it
   b.onclick = () => switchSkin();
   ctl.append(b, el('span', 'tier live'));
   row.append(ctl);
@@ -702,8 +701,7 @@ function settingRow(key, { compact = false } = {}) {
     // A switch has one direction, so it gets one control rather than a
     // pair of arrows pointing at the same place.
     const b = el('button', 'act', formatValue(key, raw));
-    b.style.minHeight = '38px';
-    b.style.padding = '8px 16px';
+    b.classList.add('rowact');   // AUDIT UI: sized by the sheet, not inline
     if (raw === 'True') b.classList.add('primary');
     b.onclick = () => write(key, stepValue(key, raw, 1));
     ctl.append(b);
@@ -767,8 +765,7 @@ function prefRow(key, name, note, { onChange = null } = {}) {
   row.append(main);
   const ctl = el('div', 'ctl');
   const b = el('button', `act${on ? ' primary' : ''}`, on ? 'On' : 'Off');
-  b.style.minHeight = '38px';
-  b.style.padding = '8px 16px';
+  b.classList.add('rowact');   // AUDIT UI: sized by the sheet, so the coarse-pointer rule can reach it
   b.setAttribute('aria-pressed', String(on));
   b.onclick = () => { setPref(key, !on); onChange?.(!on); render(); };
   ctl.append(b, el('span', 'tier live'));
@@ -799,16 +796,16 @@ function paneEnhanced(body) {
   const live = el('div', 'card');
   live.append(el('h3', null, 'Switches'));
   live.append(skinRow());
-  // R3W (Mac, 2026-08-28): this row promised THREE things and shipped
-  // one. The map layer was written and never wired - nothing in src/
-  // called roadModel and the renderer had no slot - and travel by road
-  // is still an orphaned module, so "travel follows them" was simply
-  // untrue. The map half is wired now; the travel claim is removed
-  // until R4 is, rather than left standing as the sky row's was.
+  // R3W/R4W (Mac, 2026-08-28): this row promised THREE things and
+  // shipped one - the map layer and the travel slice were both written
+  // and never called. R3W wired the map and the claim came OUT rather
+  // than being left standing as the sky row's was; R4W wired travel
+  // and it goes back in. Every clause here is now reachable.
   live.append(prefRow('roads', 'Roads',
-    'Roads between towns, generated from the terrain and drawn both on the ground and on the '
-    + 'travel map. The first world load bakes the network (about half a minute, reported as it '
-    + 'goes) and caches it; after that it is instant.'));
+    'Roads between towns, generated from the terrain: drawn on the ground and on the travel map, '
+    + 'and travel follows them - the route you watch is the route you are charged for, and never '
+    + 'costs more than the direct road. The first world load bakes the network (about half a '
+    + 'minute, reported as it goes) and caches it; after that it is instant.'));
   // RA1 (Mac, 2026-08-28): this row said "not built" while ES1 had
   // been the enhanced skin's default sky for a day - a shipped
   // enhancement wearing a hole's label. It is a SWITCH now, over the

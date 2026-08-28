@@ -38,7 +38,7 @@
 
 import {
   DIRS, oppositeDir, ROAD_TRUNK, ROAD_TRACK,
-  buildCostField, buildRoadNetwork, createNetwork,
+  buildCostField, buildRoadNetwork, createNetwork, networkHasAnyRoad,
 } from './roads.js';
 
 /** Bumping this WIPES every cached bake. Bump it whenever a change
@@ -254,14 +254,26 @@ export function loadOrBakeRoads(cachedBytes, bake) {
  *  envelope law never saw. */
 export async function loadOrBakeRoadsAsync(cachedBytes, bake) {
   const cached = deserializeRoads(cachedBytes);
-  if (cached) return { network: cached, fromCache: true, bytes: null, stats: null };
+  // RB1: an EMPTY cache entry is treated as a miss, not a hit. The
+  // envelope is intact and the version matches, so every check below
+  // passes it - but a network with no road in it is the one artifact
+  // that can never become right on its own, and reading it back
+  // forever is how a bad bake becomes permanent. Rebaking costs the
+  // half minute once; keeping it costs the feature.
+  if (cached && networkHasAnyRoad(cached)) {
+    return { network: cached, fromCache: true, bytes: null, stats: null };
+  }
   const r = await bake();
   const network = r.network ?? deserializeRoads(r.bytes);
   if (!network) throw new Error('roads: the bake answered neither a network nor readable bytes');
+  // ...and the same emptiness is not written in the first place. The
+  // network still comes back, so this boot behaves exactly as it would
+  // have; only the cache is spared.
+  const empty = !networkHasAnyRoad(network);
   return {
     network,
     fromCache: false,
-    bytes: r.bytes ?? serializeRoads(network),
+    bytes: empty ? null : (r.bytes ?? serializeRoads(network)),
     stats: r.stats ?? null,
   };
 }

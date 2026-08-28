@@ -212,6 +212,19 @@ export function walkRoadPath(start, end, {
       if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
       const ni = ny * width + nx;
       if (closed[ni]) continue;
+      // R4W: A ROAD ROUTE STAYS ON LAND. With a ship an ocean pixel
+      // charges 51 against a foot traveller's ~204, so the search used
+      // to DETOUR INTO water to save minutes - measured at 6 of 300
+      // journeys across an avoidable lake, and 0 once a horse made the
+      // land term cheap. That is a cheaper journey, but it is not a
+      // road one: roads.js will not lay a road on water either
+      // (buildCostField's isWater), and a route line drawn across open
+      // sea contradicts the one thing this slice promises, that the
+      // drawn line, the flight and the bill are the same journey.
+      // Sea travel is not lost - planJourney below still takes
+      // classic's path when it prices cheaper, which is exactly the
+      // crossing a ship is for.
+      if (climateAt(nx, ny) === CLIMATES.Ocean) continue;
       // ONE PIXEL ENTERED, ONE CHARGE - diagonals included, because
       // that is exactly what the classic walk does.
       const step = travelPixelMinutes(climateAt(nx, ny), transportModifier, {
@@ -245,9 +258,29 @@ export function planJourney(start, end, {
     return { path: classicPath, byRoad: false, ...calculate(start, end, opts) };
   }
   const routed = walkRoadPath(start, end, { width, height, climateAt, network, opts, roadSpeed });
-  const path = routed ? routed.path : classicPath;
-  const priced = calculate(start, end, {
-    ...opts, path, roadAt: roadAtFor(network), roadSpeed,
-  });
-  return { path, byRoad: path !== classicPath, ...priced };
+  const roadOpts = { ...opts, roadAt: roadAtFor(network), roadSpeed };
+
+  // R4W: the guarantee is now STRUCTURAL, not an argument. The header
+  // reasoned that classic's walk is a member of the searched graph, so
+  // a least-cost answer can never be worse - which held (0 of 900
+  // journeys came back worse when it was measured) right up until the
+  // land-only rule above removed some of classic's walks from that
+  // graph. A coastal journey classic crosses by sea is exactly such a
+  // walk. So price BOTH and take the cheaper: the property survives
+  // the router changing, and it survives the next change too.
+  const classicPriced = calculate(start, end, roadOpts);
+  if (!routed) return { path: classicPath, byRoad: false, ...classicPriced };
+
+  const roadPriced = calculate(start, end, { ...roadOpts, path: routed.path });
+  if (roadPriced.minutes > classicPriced.minutes) {
+    return { path: classicPath, byRoad: false, ...classicPriced };
+  }
+  // byRoad says the journey actually FOLLOWS road, not merely that a
+  // router ran: a routed path over open country costs the same as
+  // classic and is not a road journey.
+  return {
+    path: routed.path,
+    byRoad: routed.path.some((p) => roadOpts.roadAt(p.x, p.y) !== ROAD_NONE),
+    ...roadPriced,
+  };
 }

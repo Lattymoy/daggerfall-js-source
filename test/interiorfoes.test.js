@@ -13,11 +13,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
+import { dfuFile } from './dfuRoot.mjs';   // PY1: DFU_PATH, then the in-tree sparse clone
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const WM = rd('src/scenes/worldModes.js');
 const XF = rd('src/scenes/exteriorFoes.js');
-const DFU_INTERIOR = new URL('../tools/parity/dfu/Assets/Scripts/Internal/DaggerfallInterior.cs', import.meta.url);
+const DFU_INTERIOR = dfuFile('Assets/Scripts/Internal/DaggerfallInterior.cs');
 
 test('IF GATE: DFU building interiors carry NO enemy marker - the fact the slice is built on', (t) => {
   if (!existsSync(DFU_INTERIOR)) { t.diagnostic('DFU clone absent - the enum gate skipped'); return; }

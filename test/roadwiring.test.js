@@ -10,8 +10,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { createNetwork, linkPixels, ROAD_TRACK, ROAD_TRUNK } from '../src/systems/roads.js';
+import { createNetwork, linkPixels, ROAD_TRACK, ROAD_TRUNK, networkHasAnyRoad } from '../src/systems/roads.js';
+import { loadOrBakeRoadsAsync, serializeRoads } from '../src/systems/roadBake.js';
 import { paintRoadTiles, ROAD_TILE_HALF_WIDTH, ROAD_TILE_RECORDS, isRoadTile } from '../src/world/roadTiles.js';
+import { roadPoints } from '../src/ui/overworldModel.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = (f) => readFileSync(join(root, f), 'utf8');
@@ -218,4 +220,178 @@ test('RC1: the forest is counted and reported, and every location gets a spur tr
   // walked `spurs`, the non-hub types only, so a stranded hub got no
   // road at all and nothing reported it.
   assert.match(s, /for \(const s of all\) \{/, 'the spur pass walks every location');
+});
+
+// ── RR1: rounded, not mitred ─────────────────────────────────────
+test('RR1: a through road is ROUNDED - no mitred corner at the pixel centre', () => {
+  // Every exit used to be a straight spoke to the centre, so a road
+  // entering west and leaving north painted two spokes meeting at a
+  // hard 90 degrees - and a chain of those corners across the province
+  // is the zig-zag. A pixel with exactly two exits is one Bezier now.
+  const net = createNetwork(8, 8);
+  linkPixels(net.trunkExits, 8, 3, 4, 4, 4);   // W
+  linkPixels(net.trunkExits, 8, 4, 4, 4, 3);   // N
+  const tm = new Uint8Array(T * T);
+  paintRoadTiles(tm, net, 4, 4);
+
+  // The mitre's signature is the centre row running clean to the
+  // centre column and stopping dead. On a curve the road has already
+  // begun to bend before it gets there, so the centre row's road ends
+  // WEST of the corner.
+  let lastOnCentreRow = -1;
+  for (let x = 0; x < T; x++) if (isRoad(tm, x, MID)) lastOnCentreRow = x;
+  assert.ok(lastOnCentreRow < MID - 2,
+    `the run bends away before the centre, got x=${lastOnCentreRow}`);
+
+  // ...and it is still 4-connected end to end, and still meets BOTH
+  // edges exactly where the neighbours' runs meet them.
+  assert.ok(isRoad(tm, 0, MID), 'it starts at the west edge tile');
+  assert.ok(isRoad(tm, MID, T - 1), 'and ends at the north edge tile');
+  let cells = 0, orth = 0;
+  for (let y = 0; y < T; y++) {
+    for (let x = 0; x < T; x++) {
+      if (!isRoad(tm, x, y)) continue;
+      cells++;
+      if (isRoad(tm, x - 1, y) || isRoad(tm, x + 1, y) || isRoad(tm, x, y - 1) || isRoad(tm, x, y + 1)) orth++;
+    }
+  }
+  assert.equal(orth, cells, 'the curve is 4-connected throughout');
+
+  // WHICH WAY it bows is the law, not merely that it bows. The control
+  // point is the pixel CENTRE, so the curve is pulled toward the
+  // middle of the pixel - a road through a pixel goes through it. A
+  // control point pulled to a corner instead still draws a smooth
+  // curve, just one hugging the wrong two edges, so this pins the
+  // side: a quadratic's midpoint lands halfway to its control point.
+  const nearRoad = (cx, cy, r = 3) => {
+    for (let y = cy - r; y <= cy + r; y++) {
+      for (let x = cx - r; x <= cx + r; x++) if (isRoad(tm, x, y)) return true;
+    }
+    return false;
+  };
+  // centre control: B(0.5) = (0,64)/4 + (64,64)/2 + (64,127)/4 = (48, 80)
+  assert.ok(nearRoad(48, 80), 'the curve bows toward the middle of the pixel');
+  // corner control (0,127) would put it at (16, 111) instead
+  assert.equal(nearRoad(16, 111), false, 'and not toward the north-west corner');
+
+  // ...and it never leaves the hull its three control points span.
+  for (let y = 0; y < T; y++) {
+    for (let x = 0; x < T; x++) {
+      if (!isRoad(tm, x, y)) continue;
+      assert.ok(x <= MID + 1 && y >= MID - 1, `the curve stayed in its hull, got ${x},${y}`);
+    }
+  }
+});
+
+test('RR1: the curve bends toward the CENTRE, on a diagonal pair too', () => {
+  // The axis-aligned pair above cannot tell a centre control point
+  // from `(exits[0].x, exits[1].y)` - exitTile puts MID on the
+  // non-moving axis, so that expression lands ON the centre and the
+  // two are the same curve. A DIAGONAL exit separates them.
+  const net = createNetwork(8, 8);
+  linkPixels(net.trunkExits, 8, 4, 4, 5, 3);   // NE, exit tile (127,127)
+  linkPixels(net.trunkExits, 8, 3, 4, 4, 4);   // W,  exit tile (0,64)
+  const tm = new Uint8Array(T * T);
+  paintRoadTiles(tm, net, 4, 4);
+  const nearRoad = (cx, cy, r = 3) => {
+    for (let y = cy - r; y <= cy + r; y++) {
+      for (let x = cx - r; x <= cx + r; x++) if (isRoad(tm, x, y)) return true;
+    }
+    return false;
+  };
+  // centre control (64,64) puts the midpoint at (64, 80)
+  assert.ok(nearRoad(64, 80), 'the curve bows through the middle of the pixel');
+  // a control at (127,64) would put it out at (95, 80)
+  assert.equal(nearRoad(95, 80), false, 'not out toward the east edge');
+});
+
+test('RR1: the MAP layer rounds its chains too - a right angle stops being one', () => {
+  // The traced chain is a walk over map pixels, so every turn in it is
+  // a multiple of 45 degrees. Chaikin cuts those corners; without it
+  // the drawn road is a staircase.
+  const ctx = { heightBytes: new Uint8Array(16 * 16).fill(30), width: 16, height: 16 };
+  const corner = [{ x: 2, y: 8 }, { x: 8, y: 8 }, { x: 8, y: 2 }];
+  const [buf] = roadPoints([corner], ctx, 0);
+  assert.ok(buf.length / 3 > corner.length, 'smoothing added vertices');
+  // the ENDS are exact - they are where the tracer split at a junction
+  assert.equal(buf[0], Math.fround(2 + 0.5));
+  assert.equal(buf[buf.length - 3], Math.fround(8 + 0.5));
+  // ...and no vertex sits exactly on the old hard corner any more
+  const cornerX = Math.fround(8 + 0.5), cornerZ = Math.fround(-(8 + 0.5));
+  let onCorner = 0;
+  for (let i = 0; i < buf.length; i += 3) {
+    if (buf[i] === cornerX && buf[i + 2] === cornerZ) onCorner++;
+  }
+  assert.equal(onCorner, 0, 'the mitre vertex is cut away');
+});
+
+test('RR1: a straight through road is unchanged, and a junction keeps its spokes', () => {
+  // W->E through the centre: the Bezier's control point is ON the
+  // line, so the curve IS the straight run. Nothing moves.
+  const thru = createNetwork(8, 8);
+  linkPixels(thru.trunkExits, 8, 3, 4, 4, 4);
+  linkPixels(thru.trunkExits, 8, 4, 4, 5, 4);
+  const a = new Uint8Array(T * T);
+  paintRoadTiles(a, thru, 4, 4);
+  for (let x = 0; x < T; x++) assert.ok(isRoad(a, x, MID), `the straight run is unbroken at x=${x}`);
+
+  // Three exits is a junction, not a curve - it keeps spokes to the
+  // centre, so the centre tile itself is road.
+  const junc = createNetwork(8, 8);
+  linkPixels(junc.trunkExits, 8, 3, 4, 4, 4);
+  linkPixels(junc.trunkExits, 8, 4, 4, 5, 4);
+  linkPixels(junc.trunkExits, 8, 4, 4, 4, 3);
+  const b = new Uint8Array(T * T);
+  paintRoadTiles(b, junc, 4, 4);
+  assert.ok(isRoad(b, MID, MID), 'a junction still meets at the centre');
+});
+
+// ── RP1 / RB1 ────────────────────────────────────────────────────
+test('RP1: the loops phase reports as it goes, not once at the end', () => {
+  const s = src('src/systems/roads.js');
+  assert.match(s, /report\('loops', 0, loopCandidates\.length\);/, 'it opens the phase');
+  assert.match(s, /report\('loops', \+\+loopsSeen, loopCandidates\.length\);/,
+    'and ticks per candidate EXAMINED - most are rejected, so counting the laid ones would crawl then jump');
+  assert.equal(/report\('loops', loopsLaid, loopsLaid\)/.test(s), false,
+    'the done === total report that made the bar look instant is gone');
+});
+
+test('RB1: an EMPTY bake is never cached, and an empty cache reads as a miss', async () => {
+  const empty = createNetwork(8, 8);
+  const full = createNetwork(8, 8);
+  linkPixels(full.trunkExits, 8, 2, 2, 3, 2);
+  assert.equal(networkHasAnyRoad(empty), false);
+  assert.equal(networkHasAnyRoad(full), true);
+  // BOTH planes count. A network of nothing but TRACK is a real
+  // network - most of the province is spurs - and reading it as empty
+  // would rebake a good artifact on every single boot.
+  const trackOnly = createNetwork(8, 8);
+  linkPixels(trackOnly.trackExits, 8, 2, 2, 3, 2);
+  assert.equal(networkHasAnyRoad(trackOnly), true, 'a track-only network is not empty');
+
+  // a bake that lays nothing still ANSWERS - this boot is unaffected -
+  // but it writes no bytes, so it cannot become permanent
+  const a = await loadOrBakeRoadsAsync(null, async () => ({ network: empty }));
+  assert.equal(a.fromCache, false);
+  assert.equal(a.network, empty, 'the caller still gets its network');
+  assert.equal(a.bytes, null, 'and nothing is handed to the store');
+
+  // a bake that lays road IS cached
+  const b = await loadOrBakeRoadsAsync(null, async () => ({ network: full }));
+  assert.ok(b.bytes, 'a real network is cached');
+
+  // an ALREADY-poisoned cache recovers: intact envelope, right
+  // version, no road - a hit by every other test, and a miss by this
+  // one, so the bake runs again instead of the emptiness surviving.
+  let rebaked = 0;
+  const c = await loadOrBakeRoadsAsync(serializeRoads(empty), async () => { rebaked++; return { network: full }; });
+  assert.equal(rebaked, 1, 'the empty cache was rebaked, not read back');
+  assert.equal(c.fromCache, false);
+  assert.equal(networkHasAnyRoad(c.network), true);
+
+  // ...while a cache WITH road is still a hit and never rebakes
+  let touched = 0;
+  const d = await loadOrBakeRoadsAsync(serializeRoads(full), async () => { touched++; return { network: full }; });
+  assert.equal(touched, 0, 'a good cache is still read, not rebaked');
+  assert.equal(d.fromCache, true);
 });

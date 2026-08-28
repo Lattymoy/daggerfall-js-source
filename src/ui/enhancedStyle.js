@@ -268,6 +268,12 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    never the ini string - \`4\` reads Beautiful, \`True\` reads On.
    (settingsLaw.formatValue owns that, and this borrows it whole.) */
 .ctl { display: flex; align-items: center; gap: 2px; flex: 0 0 auto; }
+/* AUDIT UI (2026-08-27): A ROW'S VALUE BUTTON. It was sized INLINE in
+   three places - b.style.minHeight = '38px' - and an inline style is
+   unreachable by a media query, so the coarse-pointer rule below could
+   not raise it however it was written. The size lives in the sheet
+   now, which is the only place a responsive law can see. */
+.rowact { min-height: 38px; padding: 8px 16px; }
 .val {
   min-width: 76px; text-align: right; font-variant-numeric: tabular-nums;
   color: var(--brass); font-size: 14px;
@@ -334,12 +340,20 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    the in-game prototype follows and for the same reason. The
    settings sub-rail becomes a horizontal scroller and the help
    becomes a sheet, because one column is one column. */
-@media (max-width: 860px) {
+/* AUDIT UI (2026-08-27): A THUMB IS NOT A SCREEN WIDTH. Every 44px rule
+   in this sheet hangs off max-width 860px, which is a PROXY - and it
+   fails on the very device the proxy stands in for. Measured on an iPad
+   in landscape: 1080px wide, pointer:coarse true, touch true, and the
+   skin switch drew 28px, the settings steppers 34px, the value buttons
+   38px. The width query stays, because a narrow window wants the
+   roomier layout whatever is pointing at it; the coarse-pointer query
+   joins it, because that is the question actually being asked. */
+@media (max-width: 860px), (pointer: coarse) {
   .shell { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
   .side { display: contents; }
   .brand { padding: 22px 20px 16px; background: var(--ink); }
   .brand h1 { font-size: 27px; }
-  .skinopt { min-height: 44px; padding: 8px 14px; }   /* a thumb's target, as every control on a phone */
+  .skinopt { min-height: 44px; padding: 8px 14px; }   /* a thumb's target, as every control a thumb can reach */
   .rail {
     order: 3; display: flex; gap: 2px; padding: 0 12px 12px;
     padding-bottom: max(12px, env(safe-area-inset-bottom));
@@ -1388,6 +1402,57 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .shell .row.on { outline: 2px solid rgba(192,138,62,0.6); outline-offset: -2px; }
 .shell .row-name { text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .shell .ctl .val { letter-spacing: 0.08em; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+/* ── PX23: THE SPELLBOOK ────────────────────────────────────────
+   The journal's bones a fifth time; only the paint is new. The rail
+   carries a cost beside each name (the classic's row is "cost - name",
+   and a column reads better than a prefix), and the effects are the
+   words the classic prints, one to a line under their own divider. */
+.sb-shell .px-win { width: min(920px, 94vw); height: min(620px, 86dvh); }
+.sb-shell .sb-top, .cr-shell .sb-top { display: grid; grid-template-columns: 1fr auto 1fr;
+  align-items: center; padding: 12px 16px;
+  border-bottom: 2px solid rgba(125,116,96,0.35); }
+.sb-shell .sb-who, .cr-shell .sb-who { text-align: center; }
+.sb-shell .sb-who h2, .cr-shell .sb-who h2 { font-family: inherit; font-weight: 400; font-size: 20px; margin: 0;
+  letter-spacing: 0.18em; text-indent: 0.18em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.sb-shell .sb-magicka, .cr-shell .sb-magicka { margin: 6px 0 0; color: #7d7460;
+  font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.sb-shell .sb-top .act, .cr-shell .sb-top .act { justify-self: end; }
+.sb-shell .sb-row { display: flex; align-items: center; }
+.sb-shell .sb-cost, .cr-shell .sb-cost { margin-left: auto; color: var(--brass); font-size: 13px;
+  font-variant-numeric: tabular-nums; }
+.sb-shell .sb-row.on .sb-cost { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.sb-shell .sb-effects { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 0; }
+.sb-shell .sb-effect { display: flex; align-items: baseline; gap: 10px; font-size: 15px;
+  color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.sb-shell .sb-sub { color: #7d7460; font-size: 13px; letter-spacing: 0.12em;
+  text-transform: uppercase; }
+.sb-shell .sb-acts { display: flex; gap: 10px; margin-top: 22px; }
+
+/* ── PX24: THE CHRONICLE ────────────────────────────────────────
+   The spellbook's frame with a reading column instead of a card: the
+   notes and messages are ENTRIES, each under its own numbered
+   divider, and the history is one page of prose rather than the
+   classic's four-lines-and-a-Next-button. */
+.cr-shell .px-win { width: min(920px, 94vw); height: min(620px, 86dvh); }
+.cr-shell .px-qdetail { overflow-y: auto; }
+.cr-shell .cr-prose p, .cr-shell .cr-entry p { margin: 0 0 10px; font-size: 15px;
+  line-height: 1.65; color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.cr-shell .cr-prose { max-width: 62ch; }
+.cr-shell .cr-entries { display: flex; flex-direction: column; gap: 6px; }
+.cr-shell .cr-entry { max-width: 62ch; }
+.cr-shell .cr-entry .px-divword { color: #7d7460; }
+.cr-shell .cr-row .sb-cost { color: #7d7460; }
+.cr-shell .cr-row.on .sb-cost { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+
+/* AUDIT UI: the settings row's own controls, sized for a thumb wherever
+   there is one. Here rather than in each component, so the LAW has one
+   home and the next control added to a row inherits it. */
+@media (pointer: coarse) {
+  .step { width: 44px; height: 44px; }
+  .rowact, .ctl .act { min-height: 44px; }
+}
 .shell .step { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; background: none;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .shell .step:hover { color: rgb(243,239,44); border-color: var(--brass);

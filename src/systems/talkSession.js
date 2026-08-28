@@ -18,10 +18,13 @@
 // the Where-is answer set's %hnt/%key/%hnr/%ra. Unknown macros pass
 // through verbatim (LOUD - the full MacroHelper pends).
 //
-// FLAGGED: the guild greeting indexes (records 8550..8571) pend the
-// guilds arc with static NPCs; quest greetings pend quests. (The tone
+// The guild greeting indexes (records 8550..8571) and the post-quest
+// questor greetings both live in systems/npcSession.js now - the
+// GREETINGS table + getGreetingIndex ladder (TK-iv) and
+// getNPCQuestGreeting; this module stays the MOBILE path. (The tone
 // radios and the toned reaction law SHIPPED - AUDIT 23 dropped the
-// stale clause.)
+// stale clause, and the CR1-era sweep dropped this one: a flag that
+// says "pends" about a thing that shipped is the screen lying.)
 
 import { expandMacroValues } from './quest/questMacros.js';   // MH1: the ONE macro walk
 

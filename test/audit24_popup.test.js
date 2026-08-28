@@ -138,7 +138,10 @@ test('audit24 wave21: the host STACKS quest boxes instead of replacing them', ()
   const fn = s.slice(i, s.indexOf('\n  };', i));
   assert.match(fn, /if \(_questBoxWin && !_questBoxWin\.done && _liveQuestOverlay\(_questBoxWin\)\) \{\s*\n\s*_questBoxWin\.push\(\[box\]\);/,
     'a live box takes the next one on top of it');
-  assert.match(fn, /onClose: \(\) => \{ if \(_questBoxWin === win\) _questBoxWin = null; \}/,
+  // RW1 grew the onClose body (the GivePc reward latch fires here
+  // too), so the anchor is the GUARD itself rather than the whole
+  // one-line literal - the law never moved.
+  assert.match(fn, /onClose: \(\) => \{\s*\n?\s*if \(_questBoxWin === win\) _questBoxWin = null;/,
     'and the reference clears when the player closes it (the U24 identity guard)');
   // The tokens arrive expanded - the host must NOT read them again.
   const hook = s.slice(s.indexOf('showPopup: (_q, tokens) => {'), s.indexOf('showPrompt:'));

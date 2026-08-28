@@ -64,6 +64,7 @@ import { areEnemiesNearby } from '../systems/encounters.js';   // IF: GameManage
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { audio } from '../systems/audio.js';
 import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in), and the guilds' BUY mode
+import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the book's one door
 import { calculateCastCost } from '../systems/spellcost.js';   // M2
 import { SOUND, swingSoundFor } from '../systems/soundClips.js';   // AUDIT 23: the bow loose + no-enemy swing sounds
 import { fetchBytes, applyMotorEffectFlags, applyFallLanding, ridePlatform } from './shared.js';
@@ -1984,15 +1985,15 @@ export function createWorldModes(host) {
    *  Backspace window, ONE construction. The player's own array is
    *  handed by reference: the window's delete/swap/sort/rename write
    *  into it, and the save envelope reads the same array. */
-  const makeSpellbookWindow = () => (spellbookArtLoaded()
-    ? new SpellbookWindow({
-      spells: () => (playerEntity.spells ??= []),
-      entity: playerEntity,
-      castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
-      onReady: (sp, { noSpellPointCost } = {}) => magic.readySpell(sp, { free: !!noSpellPointCost }),
-      rows: (id) => townTalk?.lines?.(id) ?? [],
-    })
-    : null);
+  // PX23: the book's ONE door. (The BUY window below is not this one -
+  // it is the spell merchant's shop, with its own deps, and it keeps
+  // building itself.)
+  const makeSpellbookWindow = () => createSpellbookWindow({
+    entity: playerEntity,
+    magic,
+    castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
+    rows: (id) => townTalk?.lines?.(id) ?? [],
+  });
 
   /** DoGuildService's three built arms (U24). Each returns a
    *  ServiceFlowWindow, or null for a destination that does not exist
@@ -4888,6 +4889,15 @@ export function createWorldModes(host) {
       if (mode === 'interior') { mountInterior(win); return true; }
       if (mode === 'dungeon' && dungeonCtx?.showOverlay) return dungeonCtx.showOverlay(win);
       return false;
+    },
+    /** RW1: GivePc's reward container in the MODE that owns the
+     *  ground. The dungeon mints through its own droppedLoot and
+     *  answers the open thunk; interior and exterior fall through to
+     *  the world host's pile (null) - the same seam the inventory's
+     *  onDrop already rides. */
+    mintRewardPile(dfItem) {
+      if (mode === 'dungeon' && dungeonCtx?.offerRewardLoot) return dungeonCtx.offerRewardLoot(dfItem);
+      return undefined;   // not this mode's ground - the world host mints
     },
     // wave 21: the host asks whether the box it pushed is still the
     // one in the slot before it stacks another onto it

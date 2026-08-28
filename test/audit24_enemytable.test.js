@@ -35,13 +35,17 @@ import * as TALK from '../src/systems/talk.js';
 import { GLOBAL_SCALE } from '../src/world/meshReader.js';
 import { ENCOUNTER_TABLES as ENCOUNTER_TABLES_SRC } from '../src/characters/encounterTables.js';
 import { extractEnemyBasics, sliceEnemyTable } from '../tools/extractEnemyBasics.lib.mjs';
+import { dfuFile, missingDfu } from './dfuRoot.mjs';   // PY1
 
-const ENEMY_CS = new URL('../tools/parity/dfu/Assets/Scripts/Utility/EnemyBasics.cs', import.meta.url);
-const SOUND_CS = new URL('../tools/parity/dfu/Assets/Scripts/SoundClips.cs', import.meta.url);
-const ENCOUNTERS_CS = new URL('../tools/parity/dfu/Assets/Scripts/Utility/RandomEncounters.cs', import.meta.url);
-const ENUMS_CS = new URL('../tools/parity/dfu/Assets/Scripts/DaggerfallUnityEnums.cs', import.meta.url);
-const noDfu = !existsSync(ENEMY_CS) || !existsSync(SOUND_CS);
-const noEnc = !existsSync(ENCOUNTERS_CS) || !existsSync(ENUMS_CS);
+// PY1: the checkout resolves through the ONE home (DFU_PATH, then
+// the in-tree sparse clone) - these regeneration pins skipped for ever
+// wherever the reference tree was not at tools/parity/dfu.
+const ENEMY_CS = dfuFile('Assets/Scripts/Utility/EnemyBasics.cs');
+const SOUND_CS = dfuFile('Assets/Scripts/SoundClips.cs');
+const ENCOUNTERS_CS = dfuFile('Assets/Scripts/Utility/RandomEncounters.cs');
+const ENUMS_CS = dfuFile('Assets/Scripts/DaggerfallUnityEnums.cs');
+const noDfu = missingDfu('Assets/Scripts/Utility/EnemyBasics.cs', 'Assets/Scripts/SoundClips.cs');
+const noEnc = missingDfu('Assets/Scripts/Utility/RandomEncounters.cs', 'Assets/Scripts/DaggerfallUnityEnums.cs');
 
 test('audit24 wave23: ENEMY_BASICS is what the extractor produces from EnemyBasics.cs TODAY', { skip: noDfu }, () => {
   const fresh = extractEnemyBasics(readFileSync(ENEMY_CS, 'utf8'), readFileSync(SOUND_CS, 'utf8'));
@@ -213,7 +217,7 @@ test('audit24 wave23: there is exactly ONE encounter table', () => {
 // seven filenames out per race, one literal at a time, which is
 // exactly where a scheme goes to break. Rebuild and compare.
 
-const RACE_CS = new URL('../tools/parity/dfu/Assets/Scripts/Game/Entities/RaceTemplate.cs', import.meta.url);
+const RACE_CS = dfuFile('Assets/Scripts/Game/Entities/RaceTemplate.cs');
 const noRace = !existsSync(RACE_CS);
 
 test('audit24 wave23: RACE_TEMPLATES is REBUILT from RaceTemplate.cs, filename for filename', { skip: noRace }, () => {
@@ -268,7 +272,7 @@ test('audit24 wave23: RACE_TEMPLATES is REBUILT from RaceTemplate.cs, filename f
 // its rows are hand-added because the generator predates them. These
 // lists decide what loot generation and shop stock can mint at all.
 
-const ITEM_ENUMS_CS = new URL('../tools/parity/dfu/Assets/Scripts/Game/Items/ItemEnums.cs', import.meta.url);
+const ITEM_ENUMS_CS = dfuFile('Assets/Scripts/Game/Items/ItemEnums.cs');
 const noItemEnums = !existsSync(ITEM_ENUMS_CS);
 
 test('audit24 wave23: GROUP_TEMPLATE_INDICES is REBUILT from ItemEnums.cs', { skip: noItemEnums }, () => {
@@ -348,7 +352,7 @@ test('audit24 wave23: GetMaterialArmorValue has ONE implementation', () => {
 
 // ---- the PlayerActivate reach constants ---------------------------
 
-const PLAYER_ACTIVATE_CS = new URL('../tools/parity/dfu/Assets/Scripts/Game/PlayerActivate.cs', import.meta.url);
+const PLAYER_ACTIVATE_CS = dfuFile('Assets/Scripts/Game/PlayerActivate.cs');
 const noActivate = !existsSync(PLAYER_ACTIVATE_CS);
 
 test('audit24 wave23: the activation distances are REBUILT from PlayerActivate.cs', { skip: noActivate }, () => {

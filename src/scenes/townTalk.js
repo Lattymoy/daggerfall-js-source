@@ -37,7 +37,7 @@ import {
 import { startMobileTalk, expandMacros, expandAnswerRecord, oathTextId, honorificOf, raceDisplayName } from '../systems/talkSession.js';
 import { REGION_RACES } from '../formats/mapsFile.js';
 import { ChoiceWindow } from '../ui/talkWindow.js';
-import { buildBuildingDirectory, TOPIC_CATEGORIES, whereIsAnswer, reactionTier012, buildingHint } from '../systems/talkTopics.js';
+import { buildBuildingDirectory, questorCandidateBuildings, TOPIC_CATEGORIES, whereIsAnswer, reactionTier012, buildingHint } from '../systems/talkTopics.js';
 import { LIST_ITEM_TYPE, QUESTION_TYPE } from '../systems/topicTree.js';   // TK-vi: the window's rows are the tree's ListItems; B6: the Work question type
 import { discoverBuilding } from '../systems/discovery.js';   // T4: %loc's mark side effect
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
@@ -75,7 +75,7 @@ export function rayPersonDistance(camPos, fwd, feet) {
   return t / fl * Math.hypot(fwd[0], fwd[1], fwd[2]);
 }
 
-export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null }) {
+export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null, onBuildingList = null }) {
   /** TK-v: the talk engine, or null before it is built / with no
    *  game data. A getter, because world.js wires the four modules to
    *  each other and can only hand them over once all four exist. */
@@ -165,6 +165,21 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       const opts = nameOpts();
       if (!opts) return;
       directory = buildBuildingDirectory(topics.exteriorBuildings, topics.blocks, topics.doors, opts);
+      // QP1: GetBuildingList's questor half rides the SAME rebuild -
+      // C# populates npcsWithWork inside the one building walk
+      // (TalkManager.cs:2807-2874). The candidates go out through the
+      // host's door because the pool (npcSession) is the host's to
+      // hold; the pool's own locationIndex guard makes re-entry a
+      // no-op, so calling on every rebuild is C#'s own shape.
+      onBuildingList?.(questorCandidateBuildings(topics.exteriorBuildings, topics.blocks, {
+        locationIndex: topics.locationIndex ?? 0,
+        mapId: topics.mapId ?? 0,
+        nameOpts: opts,
+        getFaction: (id) => factions?.factionDict?.get(id) ?? null,
+        // PlayerGPS.GetRaceOfCurrentRegion's numeric read, the same
+        // REGION_RACES+1 the quest world's currentRegionRace makes
+        raceOfCurrentRegion: () => (REGION_RACES[topics.regionIndex ?? regionIndex] ?? 0) + 1,
+      }));
     } catch (e) { console.warn('[town] building directory failed:', e.message); }
   }
 

@@ -3442,9 +3442,14 @@ const GUARD_PATTERNS = Object.freeze({
   // Q5 (2026-08-27) retired fourteen rows, MT-iii took the two
   // MobileTeams rows, and QG1 (2026-08-28) took CastEffectDo,
   // ClickedFoe and PromptMulti with the ready-spell doors and the
-  // foe-click surface. The ONE left names its blocker:
-  //  - WorldUpdate: needs the world-data variant system (no
-  //    block/building variant swaps exist in the port)
+  // foe-click surface. The ONE left is a DECISION, not a queue slot
+  // (RW1 sweep, 2026-08-28):
+  //  - WorldUpdate: the whole body routes into WorldDataVariants -
+  //    the MOD-facing world-data replacement system the Port-Ledger
+  //    holds at "Not planned (mod system)" - and ZERO of the 265
+  //    vendored quests write a worldupdate line. The guard parses
+  //    the verbatim pattern and pends loudly, which is the honest
+  //    floor until the mod system itself is ever taken up.
   WorldUpdate: /worldupdate (location) at (\d+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (locationnew) named (.+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (block) ([a-zA-Z0-9_.-]+) at (\d+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (blockAll) ([a-zA-Z0-9_.-]+) variant ([a-zA-Z0-9_.-]+)|worldupdate (building) ([a-zA-Z0-9_.-]+) (\d+) at (\d+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (buildingAll) ([a-zA-Z0-9_.-]+) (\d+) variant ([a-zA-Z0-9_.-]+)/,
 });
 const guard = (name) => new PendingTrigger(null, GUARD_PATTERNS[name]);

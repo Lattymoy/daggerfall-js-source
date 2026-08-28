@@ -77,8 +77,9 @@ const PENDING = new Map([
 const CTX_PENDING = new Map([
   // endVampirism/endLycanthropy left this list at V2d: the world host
   // mounts both onto the real cures (cureVampirism/cureLycanthropy).
-  ['addFace', 'the HUD escorting faces (AddFace/DropFace)'],
-  ['dropFace', 'rides the faces seam above'],
+  // FE1 MOUNTED addFace/dropFace - the HUD escorting faces panel
+  // (ui/hudEscortFaces.js) - and the new onQuestEnded sweep beside
+  // them.
   ['onQuestStarted', "an OPTIONAL host listener - the bridge already fans RaiseOnQuestStartedEvent to the QuestListsManager's one-time recording itself"],
 ]);
 
