@@ -579,8 +579,13 @@ test('audit18: the three retired flags are DELETED, not rewritten', () => {
   // SpellsListBox_OnUseSelectedItem seam, so it carries the
   // noSpellPointCost flag (the lycanthropy free cast) alongside the
   // spell. The claim this pins is unchanged: the book READIES.
-  assert.ok(/onReady: \(sp, \{ noSpellPointCost \} = \{\}\) =>/.test(src),
+  // PX23: the onReady arm moved into ui/spellbookDoor.js with the rest
+  // of the build the four hosts shared. The CLAIM this pins is
+  // unchanged - the book readies - and it is pinned where it now lives.
+  const doorSrc = readFileSync(new URL('../src/ui/spellbookDoor.js', import.meta.url), 'utf8');
+  assert.ok(/onReady: \(sp, \{ noSpellPointCost \} = \{\}\) =>/.test(doorSrc),
     'the spellbook really does ready a spell');
+  assert.ok(/createSpellbookWindow\(\{/.test(src), 'and this host opens the book through that door');
   // the truncated "INTERIM (loud): the" sentence with no predicate
   assert.equal(/INTERIM \(loud\): the\n/.test(src), false);
   // the WORLD-state-is-FLAGGED quicksave note, false since collectWorld shipped

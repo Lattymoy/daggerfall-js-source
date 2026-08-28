@@ -63,7 +63,8 @@ import { LevelUpScreen, preloadCharSheetArt } from '../ui/charsheet.js';
 import { createCharSheetWindow } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
 import { DeathScreen } from '../ui/deathScreen.js';
-import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in)
+import { preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';
+import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the book's one door
 // U26: the dungeon finally gets the SAME inventory window the exterior
 // hosts have had since U8d - tabs, paperdoll, the real info panel and
 // point-and-click Use. The keyed InventoryWindow it used until now is
@@ -858,17 +859,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  handed by reference. Null when the art has not landed - this
    *  host has no HUD line to say so with, and DFU without SPBK00I0
    *  has no window either. */
-  const makeSpellbookWindow = () => (spellbookArtLoaded()
-    ? new SpellbookWindow({
-      spells: () => (playerEntity.spells ??= []),
-      entity: playerEntity,
-      castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
-      // M3: the ready laws (silence gate, cost-at-ready, instant
-      // CasterOnly, the click latch) live in the ONE engine.
-      onReady: (sp, { noSpellPointCost } = {}) => magic.readySpell(sp, { free: !!noSpellPointCost }),
-      rows: (id) => textRsc?.variantLinesById(id) ?? [],
-    })
-    : null);
+  // PX23: the book's ONE door. Four hosts built this identically but
+  // for how each reaches TEXT.RSC; that difference is all this host
+  // hands it now.
+  const makeSpellbookWindow = () => createSpellbookWindow({
+    entity: playerEntity,
+    magic,
+    castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
+    rows: (id) => textRsc?.variantLinesById(id) ?? [],
+  });
 
   /** The quest bridge's two reads, or NEITHER - charSheetHooks turns
    *  the absence into the sheet's refusal rather than an empty book. */
