@@ -6903,6 +6903,41 @@ every anchor by name, which is the difference between a patch and a
 hope. Suite green, build green; Tab now raises the rose in every
 place a player can stand.
 
+PX17a (Mac: audit everything + two live text bugs): THE AUDIT AND
+THE COLLISION. PASS A, wiring greps across the whole arc: every
+ground clock and key listener has a balanced owner (set counts match
+clear counts in enhancedMenu/enhancedChargen/pixelDial/
+enhancedInventory), toggleDial answers on world/interior/dungeon
+with exterior's inline ladder arm by design, every dial door exists
+on its ctx, questLog/questMessages produce at world and consume in
+the menu, zero single-escaped CSS content rules, px-corner rules
+scoped everywhere corners are appended. ONE WART RECORDED, not
+hidden: a host binding (F5 etc.) pressed while the dial is up opens
+that window BENEATH the rose - the already-open guards make it safe,
+and a future slice may close the dial on any host window key.
+PASS B, the bugs, measured not guessed. (1) THE WIZARD'S SMOOSH had
+TWO roots. The visible one: the confirm carried `detail sheet open`,
+where 'sheet' meant the PHONE-SHEET STATE - but the char sheet
+window owns `.sheet` as a THREE-COLUMN LAYOUT class in the same
+stylesheet, so the confirm inherited repeat(3, minmax(0,1fr)) inside
+a 340px slot and set its prose one word per line (dcard measured
+112px; the rule found by matching every stylesheet rule against the
+live node, not by reading). The generic-name toll the codebase has
+paid twice before (.detail, .packcol), paid a third time: the state
+class is `wizsheet` now, both confirms and all four phone rules
+renamed. The deeper one: TEXT.RSC hands lines HARD-WRAPPED for the
+classic 320 screen and the view rendered each as its own paragraph,
+fighting every other viewport - the lines are now JOINED into
+flowing prose (a blank line is the paragraph break it always meant),
+15px/1.6 in the card, and the browser wraps for the width it has;
+the flow's data untouched. (2) THE PACK'S INCOMPLETE TEXT: names now
+WRAP to two lines before the ellipsis (an inventory that hides the
+ends of its own names lies by omission; the full name is always in
+the plaque), and the plaque's stat pairs wrap inside the frame
+rather than escaping it. Verified: dcard 338px in the 340 slot,
+prose in two paragraphs both viewports, the long-sword name whole on
+a phone, suite 3907/0, build green.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk

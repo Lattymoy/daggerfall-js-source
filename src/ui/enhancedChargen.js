@@ -210,7 +210,14 @@ function raceStage() {
   // which is long, modal in DFU, and raised by the press that chose a
   // province - comes up over it. A prompt that lived off-screen behind
   // a sheet would leave a phone showing a map and nothing else.
-  const detail = el('div', `detail${flow.raceConfirm ? ' sheet open' : ''}`);
+  // PX17a ROOT CAUSE of the smooshed confirm: 'sheet' here meant the
+  // PHONE-SHEET STATE, but the char sheet window owns `.sheet` as a
+  // THREE-COLUMN LAYOUT class in the same stylesheet - so the race
+  // confirm inherited three minmax(0,1fr) columns inside a 340px
+  // slot and set its prose one word per line. The codebase has paid
+  // this exact generic-name toll twice before (.detail, .packcol);
+  // the state class is now the wizard's own word.
+  const detail = el('div', `detail${flow.raceConfirm ? ' wizsheet open' : ''}`);
   const close = el('button', 'sheet-close', 'Back to the map');
   close.onclick = () => { flow.applyHit({ cancelRace: true }); paint(); };
   detail.append(close);
@@ -218,10 +225,20 @@ function raceStage() {
   if (flow.raceConfirm) {
     const d = el('div', 'dcard');
     d.append(el('h3', null, `${PROVINCE_NAMES[flow.race.key] ?? flow.race.name} \u00b7 ${flow.race.name}`));
+    // PX17a (Mac: the right-hand text smooshed): TEXT.RSC hands lines
+    // HARD-WRAPPED for the classic 320px screen; rendering each as
+    // its own paragraph fights every other viewport - ragged on a
+    // desk, re-wrapped mush on a phone. So the lines are JOINED into
+    // flowing prose and the browser wraps them for the width it has;
+    // a BLANK line in the record is the paragraph break it always
+    // meant. The flow's data is untouched - this is the view's job.
+    let para = [];
+    const flush = () => { if (para.length) { d.append(el('p', null, para.join(' '))); para = []; } };
     for (const line of flow.raceConfirm) {
-      const text = typeof line === 'string' ? line : line.text;
-      if (text?.trim()) d.append(el('p', null, text));
+      const text = (typeof line === 'string' ? line : line.text) ?? '';
+      if (text.trim()) para.push(text.trim()); else flush();
     }
+    flush();
     const a = el('div', 'acts');
     const yes = el('button', 'act primary', `Play as ${flow.race.name}`);
     yes.onclick = () => { flow.input('confirm'); paint(); };
@@ -316,7 +333,7 @@ function classStage() {
   }
   pane.append(list);
 
-  const detail = el('div', `detail${flow.classConfirm ? ' sheet open' : ''}`);
+  const detail = el('div', `detail${flow.classConfirm ? ' wizsheet open' : ''}`);   // PX17a: same rename as the race confirm - the class stage pays the same toll
   const close = el('button', 'sheet-close', 'Back to the list');
   close.onclick = () => { flow.applyHit({ cancelClass: true }); paint(); };
   detail.append(close);

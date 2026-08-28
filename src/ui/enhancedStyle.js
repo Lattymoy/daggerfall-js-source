@@ -910,20 +910,20 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
      A shared class name across two screens is worth the reset: the
      alternative is a second class doing the same job in a second
      stylesheet, which is how two screens drift. */
-  .stagebody > .detail:not(.sheet) {
+  .stagebody > .detail:not(.wizsheet) {
     position: static; transform: none; max-height: none; z-index: auto;
     border-top: 1px solid var(--iron); padding-bottom: 0;
     background: var(--slate);
   }
-  .stagebody > .detail:not(.sheet) .sheet-close { display: none; }
-  .stagebody > .detail.sheet {
+  .stagebody > .detail:not(.wizsheet) .sheet-close { display: none; }
+  .stagebody > .detail.wizsheet {
     position: fixed; left: 0; right: 0; bottom: 0; max-height: 72dvh; z-index: 20;
     background: #12161b;
     transform: translateY(101%); transition: transform 0.22s ease;
     border-top: 1px solid var(--brass);
     padding-bottom: max(76px, calc(env(safe-area-inset-bottom) + 76px));
   }
-  .stagebody > .detail.sheet.open { transform: translateY(0); }
+  .stagebody > .detail.wizsheet.open { transform: translateY(0); }
   /* the rail is the desk's; the strip is the phone's - never both */
   .wizard .rail { display: none; }
   .choose { padding: 28px 20px; gap: 22px; }
@@ -1550,6 +1550,10 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   text-shadow: 2px 2px 0 rgb(93,77,12); }
 /* The map's caption and the pending-stage words sit in pixel dim. */
 .wizard .mapnote { color: #7d7460; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+/* PX17a: the description reads as prose - a size a person reads at,
+   air between the lines, air between the paragraphs. */
+.wizard .dcard p { font-size: 15px; line-height: 1.6; margin: 0 0 12px;
+  color: #c5bda2; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 /* The action bar's Back/Cancel is the shell's own .act, already
    repainted; the bar just loses its old hairline for the 2px rule. */
 .wizard .actionbar { border-top: 2px solid rgba(125,116,96,0.35); background: transparent; }
@@ -1652,8 +1656,12 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    the per-row weight leave for the plaque. */
 .pack-shell .itemrow .itemname small { display: none; }
 .pack-shell .itemrow .itemwt { display: none; }
-.pack-shell .itemrow .itemname { display: block; white-space: nowrap; overflow: hidden;
-  text-overflow: ellipsis; }
+/* PX17a (Mac: incomplete text): names WRAP to a second line rather
+   than truncate - an inventory that hides the ends of its own names
+   is lying by omission. Two lines, then the ellipsis, and the full
+   name is always in the plaque. */
+.pack-shell .itemrow .itemname { display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden; line-height: 1.35; }
 .pack-shell .itemrow:hover, .pack-shell .itemrow:focus-visible { outline: none; color: #d8cfae; }
 .pack-shell .itemrow.on { color: rgb(243,239,44); background: none; box-shadow: none;
   text-shadow: 2px 2px 0 rgb(93,77,12); }
@@ -1704,7 +1712,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .pack-shell .card .stats { display: grid; grid-template-columns: auto auto;
   justify-content: center; align-items: baseline; gap: 6px 14px; margin: 10px 0; }
 .pack-shell .card .stats dt { text-align: right; }
-.pack-shell .card .stats dd { white-space: nowrap; }
+.pack-shell .card .stats dd { overflow-wrap: anywhere; }   /* PX17a: the pair wraps before it escapes the plaque */
 .pack-shell .card .stats dt { color: #7d7460; font-size: 12px; letter-spacing: 0.22em;
   text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 .pack-shell .card .stats dd { margin: 0; font-size: 21px; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
