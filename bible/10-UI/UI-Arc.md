@@ -6724,6 +6724,20 @@ NEXT SESSION: repro on the live path (boot -> Continue -> pause ->
 Exit -> New Game), find which teardown leaves the frame loop alive,
 and kill the loop at the unwind - the fix is an owner for the frame,
 not a null check. Needs ARENA2, so it waits for a data-bearing run.
+STRUCTURAL HALF LANDED (P0 owner, 2026-08-28, this repo's lane): the
+frame OWNER exists now - shared.claimFrame() is a generation counter,
+each of the three rAF hosts (world, exterior, dungeon; worldModes'
+frame is CALLED by world's, so it rides the same token) claims at
+boot and checks at the TOP of every frame, and both unwinds
+(exitToTitleMenu, endRunToTitleMenu) claim BEFORE they act - so an
+old session's loop is dead the moment a new session boots or an
+unwind starts, whatever left it alive. The stale-loop FAMILY is
+closed by construction; the LIVE REPRO on the exact path (boot ->
+Continue -> pause -> Exit -> New Game, real ARENA2) is still owed to
+a data-bearing session to confirm which teardown was leaking and
+that no second cause hides behind it. test/frameowner.test.js pins
+the generation law, the three hosts' claim+check, and both unwinds'
+claims; 4 mutations, 4 dead.
 
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the

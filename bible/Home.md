@@ -268,7 +268,7 @@ combat line numbers below are refreshed with it.
 - `src/scenes/exterior.js:1018` - PX3 FLAGGED: questMessages - this test host mounts no quest
 - `src/scenes/exterior.js:1050` - (FLAGGED); swallowing the browser reload is not optional.
 - `src/scenes/exterior.js:1347` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:1510` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:1512` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/exteriorFoes.js:550` - FLAGGED: the arrow's IMPACT still only knows the player
 - `src/scenes/shared.js:292` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:309` - *  mirrors motorStats (the INTERIM entity carries no stats). */
@@ -284,8 +284,8 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:2926` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
 - `src/scenes/world.js:3256` - FLAGGED: the QuestComplete loot window pends the UI arc - the
 - `src/scenes/world.js:3283` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:3764` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:4128` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:3766` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:4130` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:798` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
 - `src/scenes/worldModes.js:922` - (FLAGGED - MakeHouseContainer, the house-ownership arm).
 - `src/scenes/worldModes.js:935` - FLAGGED to the crime arc, as the Ledger records.

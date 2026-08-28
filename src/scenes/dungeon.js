@@ -29,7 +29,7 @@ import { jumpSpeedMultiplier } from '../systems/skills.js';
 import {
   pickActivatable, activationTargets,
 } from '../player/activate.js';
-import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells } from './shared.js';
+import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells, claimFrame, frameAlive } from './shared.js';
 import { routeKey, held, moveHeld, anyMove, actionOf, swallowBrowserKey } from '../ui/input.js';
 import { capturePendingScreenshot } from '../systems/saveSlots.js';   // SS1: the context arms the shot, THIS loop delivers it
 import { routeLargeHudClick } from '../ui/hudLarge.js';   // U45: the bar's eleven panels
@@ -364,7 +364,9 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // very pass that was closing it. The pin below now sweeps ALL FOUR.
   const musicDirector = createMusicDirector();
   const lookGate = makeLookGate(canvas);
+  const _frameToken = claimFrame();   // P0: this session owns the loop until someone claims after it
   function frame(now) {
+    if (!frameAlive(_frameToken)) return;   // P0: a later boot or an unwind killed this loop
     const dt = Math.min(0.1, (now - last) / 1000);
     last = now;
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
