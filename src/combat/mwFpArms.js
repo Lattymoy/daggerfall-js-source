@@ -39,6 +39,7 @@ import { decodeDds } from '../formats/mwDdsFile.js';
 import {
   collectTextKeys,
   parseAnimGroups,
+  findAnimGroup,
   extractTracks,
   sampleTrack,
 } from '../formats/mwAnim.js';
@@ -60,13 +61,28 @@ export function mwWeaponClass(weaponType) {
   switch (weaponType) {
     case WEAPON_TYPES.Bow:
       return 'bow';
+    // MWAUDIT: THESE ARE WIDE WEAPONS, not close ones. Morrowind
+    // splits two-handed into CLOSE (weapontwohand / idle2c - the
+    // two-handed long blades) and WIDE (weapontwowide / idle2w - axes,
+    // war hammers, staves and spears), and all three of Daggerfall's
+    // two-handers here are the wide kind. They were mapped to the
+    // CLOSE grip, which is why this module's own header has listed
+    // Idle2w among the four idle groups since slice 5 while the table
+    // below never once reached it.
+    //
+    // INFERRED FROM MORROWIND'S TAXONOMY, NOT VERIFIED AGAINST RETAIL
+    // DATA - there is no Morrowind install in this repo to read the
+    // group names out of. It is safe to be wrong: an absent group
+    // falls through idleFallback to the class idle and then to a
+    // generic one, so a bad guess costs a grip, never a frozen rig.
+    // Worth a look with real data attached.
     case WEAPON_TYPES.Staff:
     case WEAPON_TYPES.Staff_Magic:
     case WEAPON_TYPES.Warhammer:
     case WEAPON_TYPES.Warhammer_Magic:
     case WEAPON_TYPES.Battleaxe:
     case WEAPON_TYPES.Battleaxe_Magic:
-      return 'twohand';
+      return 'twowide';
     case WEAPON_TYPES.Melee:
     case WEAPON_TYPES.Werecreature:
       return 'handtohand';
@@ -77,11 +93,22 @@ export function mwWeaponClass(weaponType) {
   }
 }
 
+// MWAUDIT: `twohand` (idle2c / WeaponTwoHand) is Morrowind's
+// two-handed CLOSE grip and NO Daggerfall weapon type can reach it -
+// weaponTypeForItem folds Claymore and Dai-Katana into LongBlade
+// beside Broadsword, because Daggerfall's own first-person art draws
+// no separate two-handed blade. The row stays because it is the
+// correct name for that grip the moment anything can ask for it, and
+// saying so is better than a table that looks arbitrary.
 const CLASS_GROUPS = Object.freeze({
   onehand: { idle: 'Idle1h', attack: 'WeaponOneHand' },
   twohand: { idle: 'Idle2c', attack: 'WeaponTwoHand' },
+  twowide: { idle: 'Idle2w', attack: 'WeaponTwoWide' },
   handtohand: { idle: 'Idle', attack: 'HandToHand' },
-  bow: { idle: 'Idle1h', attack: 'BowAndArrow' },
+  // The header has always named IdleBow; the table asked for Idle1h.
+  // Ask for the specific one and let idleFallback reach Idle1h when a
+  // file does not carry it - that is what the chain is for.
+  bow: { idle: 'IdleBow', attack: 'BowAndArrow' },
   none: { idle: 'Idle', attack: null },
 });
 
@@ -191,7 +218,7 @@ function param(name) {
  * its gl uploads the stream texture, its drawScreenQuad composites.
  */
 export async function createMwFpView(renderer) {
-  const inert = { active: () => false, update: () => {}, draw: () => {}, status: 'off' };
+  const inert = { active: () => false, update: () => {}, draw: () => {}, dispose: () => {}, status: 'off' };
   if (!mwFpPreference()) return inert;
   if (!(await hasStoredMorrowind())) {
     window.__mwfp = { ready: false, status: 'no morrowind data attached' };
@@ -235,7 +262,14 @@ export async function createMwFpView(renderer) {
       const kfTracks = extractTracks(kfNif);
       if (kfTracks.size) {
         tracks = kfTracks;
-        groups = parseAnimGroups(collectTextKeys(kfNif));
+        // MWAUDIT: the groups follow the tracks ONLY IF THE KF HAS
+        // ANY. Retail's xbase_anim.1st.kf carries both, so this arm is
+        // normally a straight swap - but a KF with tracks and no text
+        // keys used to overwrite the base's groups with an EMPTY map,
+        // which leaves a rig that cannot name a single clip. Keeping
+        // the base's groups is strictly better than keeping none.
+        const kfGroups = parseAnimGroups(collectTextKeys(kfNif));
+        if (kfGroups.size) groups = kfGroups;
       }
     } catch (err) {
       status(`${kfName}: ${err.message}`);
@@ -351,7 +385,7 @@ export async function createMwFpView(renderer) {
       gl.bufferData(gl.ARRAY_BUFFER, batch.normals || new Float32Array(positions.length), gl.DYNAMIC_DRAW);
       gl.enableVertexAttribArray(1);
       gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
-      const uvBuf = gl.createBuffer();
+      const uvBuf = (geo.uv = gl.createBuffer());   // MWAUDIT: kept, so dispose can free it
       gl.bindBuffer(gl.ARRAY_BUFFER, uvBuf);
       gl.bufferData(
         gl.ARRAY_BUFFER,
@@ -441,17 +475,47 @@ export async function createMwFpView(renderer) {
     // data (whose groups are not the retail names) can drive the loop.
     const forced = param('mwfpgroup');
     if (forced && !mwSegmentForState(state)) {
-      const g = groups.get(forced);
+      const g = findAnimGroup(groups, forced);
       if (g) return { key: forced, start: g.start, stop: g.stop, oneShot: false };
     }
-    const group = groups.get(want.group);
-    if (!group) return null;
+    // MWAUDIT: THE FALLBACK CHAIN. Every lookup used to be a hard
+    // `groups.get(exactCase)` and every miss returned null - which
+    // left `playing` null, and draw() renders t=0, so a rig that could
+    // not find its group stood in its BIND POSE while active() still
+    // answered true. Frozen arms are worse than the classic sprite,
+    // and the sprite is what a player should get when the 3D layer has
+    // nothing to play.
+    //
+    // So: the asked-for group, then the class idle, then any idle at
+    // all, then whatever the file does carry. A rig that is `ready`
+    // always has something to play, so the layer never flickers
+    // between 3D and sprite mid-frame; a rig with NO usable group is
+    // not ready at all (see view.ready) and the sprite draws.
+    const group = findAnimGroup(groups, want.group);
     if (want.segment) {
-      const win = mwSegmentWindow(group, want.segment);
+      const win = group && mwSegmentWindow(group, want.segment);
       if (win) return { key: `${want.group}:${want.segment}`, ...win, oneShot: true };
-      return null;
+      // the swing has no clip here - stand in the class idle rather
+      // than freeze mid-strike
+      const idle = idleFallback(weaponType);
+      return idle && { key: `${idle.name}:idlefallback`, start: idle.g.start, stop: idle.g.stop, oneShot: false };
     }
-    return { key: want.group, start: group.start, stop: group.stop, oneShot: false };
+    if (group) return { key: want.group, start: group.start, stop: group.stop, oneShot: false };
+    const idle = idleFallback(weaponType);
+    return idle && { key: idle.name, start: idle.g.start, stop: idle.g.stop, oneShot: false };
+  }
+
+  /** The idle this weapon class wants, then a generic one, then the
+   *  first playable group the file carries. Named so the key that
+   *  drives the playing-clip compare stays stable per fallback. */
+  function idleFallback(weaponType) {
+    const wanted = CLASS_GROUPS[mwWeaponClass(weaponType)]?.idle;
+    for (const name of [wanted, 'Idle1h', 'Idle']) {
+      const g = name && findAnimGroup(groups, name);
+      if (g) return { name, g };
+    }
+    const first = groups.entries().next().value;
+    return first ? { name: first[0], g: first[1] } : null;
   }
 
   view.update = (dt, weaponType, state) => {
@@ -526,8 +590,52 @@ export async function createMwFpView(renderer) {
     renderer.drawScreenQuad(streamTex, { x: 0, y: 0, w: canvas.width, h: canvas.height });
   };
 
+  /**
+   * MWAUDIT: THE VIEW HANDS ITS GL BACK.
+   *
+   * Nothing here ever needed a teardown: the view was built exactly
+   * once per weapon rig, so its owner was the process and the page
+   * outlived it. MWFIX changed that - the rig REBUILDS the view on
+   * every attach and every 3D toggle - and a rebuild that drops the
+   * old view on the floor leaks everything it held: one texture per
+   * material, four buffers and a VAO per geometry batch, and the
+   * stream texture on the MAIN renderer's context, which is the one
+   * that matters because it is the context the game draws through.
+   *
+   * (This is the same law the encounter pool needed a teardown for at
+   * IF, and for the same reason: a second owner appears and the
+   * process stops being it. Found auditing my own fix.)
+   *
+   * Idempotent - a rebuild races nothing, but a dispose that ran twice
+   * would delete names GL has already recycled.
+   */
+  let disposed = false;
+  view.dispose = () => {
+    if (disposed) return;
+    disposed = true;
+    view.ready = false;                       // active() answers false the instant it is dropped
+    for (const t of texCache.values()) if (t) gl.deleteTexture(t);
+    texCache.clear();
+    for (const set of skinnedSets) {
+      const geo = set.batch?.__geo;
+      if (!geo) continue;
+      if (geo.vao) gl.deleteVertexArray(geo.vao);
+      for (const b of [geo.pos, geo.nrm, geo.uv, geo.idx]) if (b) gl.deleteBuffer(b);
+      set.batch.__geo = null;
+    }
+    mainGl.deleteTexture(streamTex);          // the one on the GAME's context
+  };
+
   view.active = () => view.ready;
-  view.ready = skinnedSets.length > 0;
-  status(view.ready ? `ready: ${skinnedSets.length} skinned sets, ${groups.size} groups` : 'no skinned geometry in base');
+  // MWAUDIT: READY MEANS POSEABLE, not merely built. This was
+  // `skinnedSets.length > 0` alone - geometry with no playable group
+  // counted as ready, and a rig that can name no clip draws its BIND
+  // POSE for ever while the sprite path it should have fallen back to
+  // sits unused. Both halves are required, and the status line says
+  // which one is missing rather than reporting a bare failure.
+  view.ready = skinnedSets.length > 0 && groups.size > 0;
+  status(view.ready
+    ? `ready: ${skinnedSets.length} skinned sets, ${groups.size} groups`
+    : skinnedSets.length === 0 ? 'no skinned geometry in base' : 'no animation groups - the sprite path stands');
   return view;
 }

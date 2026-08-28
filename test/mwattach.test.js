@@ -112,7 +112,9 @@ test('MWFIX 3: attaching data or toggling the preference REBUILDS the view - it 
   assert.match(rig, /mwRecheck\(\);/, 'once per frame, in update');
   assert.match(rig, /mwSeen = `\$\{morrowindDataGeneration\(\)\}\|\$\{mwFpPrefGeneration\(\)\}`/,
     'against BOTH signals - the attach and the toggle beside it');
-  assert.match(rig, /mwView = null;\s+\/\/ drop the stale view first/,
+  assert.match(rig, /mwView\?\.dispose\?\.\(\);/,
+    'MWAUDIT: and the old view hands its GL back before it is dropped');
+  assert.match(rig, /mwView = null;\s+\/\/ a rebuild that fails leaves the SPRITE path/,
     'a failed rebuild leaves the SPRITE path, never a half-built rig');
   assert.match(rig, /if \(mwBuilding\) return;/, 'and one build at a time - a second press cannot race the first');
 
@@ -131,6 +133,38 @@ test('MWFIX 3: attaching data or toggling the preference REBUILDS the view - it 
   const ds = rd('src/scenes/dataSource.js');
   assert.match(ds, /if \(next !== _mwCount\) _mwGeneration\+\+;/,
     'a re-count that finds the same archives is not a change');
+});
+
+test('MWFIX2: the mesh-viewer link resolves to the SITE ROOT, from the game as well as the menu', () => {
+  // THE DEFECT: the build puts every extra page at the site root
+  // (vite.config's rollup inputs) and the game one directory down at
+  // /play/, so a bare relative 'mw-viewer.html' asked for
+  // /play/mw-viewer.html and 404'd. It worked from menu.html, which is
+  // why it shipped.
+  const em = rd('src/ui/enhancedMenu.js');
+  assert.match(em, /window\.open\(sitePage\('mw-viewer\.html'\), '_blank'\)/, 'the link goes through the resolver');
+  assert.ok(!em.includes("window.open('mw-viewer.html'"), 'and the bare relative form is gone');
+  assert.match(em, /const sitePage = \(page\) => \{/, 'which has a home and states its reasoning');
+
+  // the law itself, exercised over both doors AND both deploy shapes -
+  // `base: './'` promises the same build serves from a project path and
+  // from the apex domain, so neither may hard-code a leading slash
+  const sitePage = (href, page) => {
+    const dir = new URL('.', href);
+    const root = /\/play\/$/.test(dir.pathname) ? new URL('..', dir) : dir;
+    return new URL(page, root).href;
+  };
+  const cases = [
+    ['https://daggerfalljs.dev/play/', 'https://daggerfalljs.dev/mw-viewer.html'],
+    ['https://daggerfalljs.dev/menu.html', 'https://daggerfalljs.dev/mw-viewer.html'],
+    ['https://x.github.io/repo/play/', 'https://x.github.io/repo/mw-viewer.html'],
+    ['https://x.github.io/repo/menu.html', 'https://x.github.io/repo/mw-viewer.html'],
+  ];
+  for (const [from, want] of cases) {
+    assert.equal(sitePage(from, 'mw-viewer.html'), want, `from ${from}`);
+  }
+  // and the page it points at is a REAL build input, not a hope
+  assert.match(rd('vite.config.js'), /mwViewer: 'mw-viewer\.html'/, 'the viewer is built at the root');
 });
 
 test('MWFIX: the classic sprite path is untouched - it is the law this layer draws over', () => {

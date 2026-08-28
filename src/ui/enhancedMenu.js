@@ -814,6 +814,24 @@ function paneEnhanced(body) {
     + 'Daggerfall\u2019s SKY*.DAT panorama. Takes effect when the world next loads.'));
   body.append(live);
 
+  // MWFIX2: A SIBLING PAGE IS NOT A SIBLING OF THE GAME. The build puts
+  // every extra page at the SITE ROOT (vite.config's rollup inputs) but
+  // the game itself one directory down at /play/, so a bare relative
+  // 'mw-viewer.html' resolves against the running document: from
+  // menu.html at the root it works, and from the game it asks for
+  // /play/mw-viewer.html and 404s. That is why it survived - the door
+  // was only ever pressed from the root during development.
+  //
+  // Resolving against location.href keeps `base: './'`'s promise (the
+  // same build serves from a project path AND from the apex domain),
+  // and stepping out of /play/ is the one thing the bare form got
+  // wrong. Anything not under /play/ is already at the root.
+  const sitePage = (page) => {
+    const dir = new URL('.', location.href);
+    const root = /\/play\/$/.test(dir.pathname) ? new URL('..', dir) : dir;
+    return new URL(page, root).href;
+  };
+
   // MW-IMPORT: the attach door, ON THIS SURFACE - the launcher window
   // has its M/F keys, but the enhanced skin never routes through it, so
   // the card lives here too. Attaching data IS the opt-in; the 3D
@@ -840,7 +858,7 @@ function paneEnhanced(body) {
       onClick: () => { setMwFpPreference(!mwFpPreference()); render(); } },
     // The blurb NAMED the viewer without a way to reach it - a door
     // described is not a door. One press, new tab, same origin.
-    { label: 'Open mesh viewer', onClick: () => window.open('mw-viewer.html', '_blank') },
+    { label: 'Open mesh viewer', onClick: () => window.open(sitePage('mw-viewer.html'), '_blank') },
   ]));
   body.append(mw);
 
