@@ -1764,23 +1764,30 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    an empty slot is a dim open diamond and NOT a button. */
 .pack-shell .equipped { display: block; text-align: center; padding-bottom: 10px; }
 .pack-shell .wornmap { position: relative; display: grid;
-  grid-template-columns: repeat(5, 1fr); grid-auto-rows: 52px;
-  gap: 5px; width: min(330px, 96%); margin: 6px auto 0; }
+  grid-template-columns: repeat(3, 1fr); grid-auto-rows: 84px;
+  gap: 8px; width: min(340px, 96%); margin: 6px auto 0; }
 .pack-shell .wornmap-doll { position: absolute; left: 50%; top: 46%;
   transform: translate(-50%,-50%); z-index: 0; border: 0; background: none; opacity: 0.85; }
 .pack-shell .wornmap-doll img { max-height: 100%; image-rendering: pixelated; }
 .pack-shell .equipped .wornrow { position: relative; z-index: 1;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 1px; min-height: 44px; padding: 2px; overflow: hidden;
+  gap: 2px; min-height: 44px; padding: 4px 3px; overflow: hidden;
   background: rgba(10,12,17,0.72); border: 2px solid rgba(125,116,96,0.35);
   color: #a89f88; font-family: inherit; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
-/* the name lives in the plaque; the DOM keeps it for the probes */
-.pack-shell .wornrow .wornname { display: none; }
+/* PX19e: eleven family panels have room for the piece's NAME - one
+   line, clipped whole-word; the count badge marks a family holding
+   more, and the cycle reaches every piece. */
+.pack-shell .wornrow .wornname { display: block; font-size: 9px; color: #a89f88;
+  max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.pack-shell .wornrow.on .wornname { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.pack-shell .worncount { position: absolute; right: 3px; top: 2px; font-size: 9px;
+  color: var(--brass); text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
 .pack-shell .wornrow .tile { display: flex; width: 24px; height: 24px; align-items: center;
   justify-content: center; border: 0; background: none; font-size: 14px; color: #c5bda2; }
 .pack-shell .wornrow .worntile { font-size: 14px; color: rgba(125,116,96,0.6); }
 .pack-shell .wornslot { flex: 0 0 auto;   /* the base rule's 88px was a column WIDTH; on a vertical tile it becomes 88px of HEIGHT */
-  font-size: 8px; letter-spacing: 0.08em; text-transform: uppercase;
+  font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
   color: #7d7460; max-width: 100%; line-height: 1.1; white-space: nowrap; }
 .pack-shell .wornrow .itemwt { display: none; }
 .pack-shell button.wornrow { cursor: pointer; }

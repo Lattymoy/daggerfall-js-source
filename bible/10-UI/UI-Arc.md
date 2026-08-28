@@ -7256,6 +7256,31 @@ filter; the optional-doll test asserts tiles-alone is the no-data
 answer, now with a MEASURED empty-model assert beside the text pin),
 and the remote probe's doll selector reads .wornmap. Suite 3998/0.
 
+PX19e (Mac, holding the reference up again: "are you ignoring this?
+instead of a thousand equipment slots, a smart system with minimal
+slots"): ELEVEN FAMILIES, TWENTY-SEVEN SLOTS - and the correction
+owned: PX19d rebuilt the same clutter with better alignment; the
+reference has ~11 large panels and the slice shipped 25 small ones.
+The smart system: the DATA keeps DFU's 27 (equip.js, equippedModel,
+every law untouched; the WORN counter still says 'of 27') but the
+MAP shows the reference's own count - twelve family panels: Cloaks,
+Head, Neck (both amulets), Arms (arm pieces + bracers), CHEST
+spanning two rows (armour layered over clothes - slot order within
+a family IS the layer order, and the panel shows the TOP of the
+pile), Rings, Hands (gloves + bracelets), Tokens (marks, crystals
+and the unnamed pair - which therefore surface exactly when filled,
+U53's hidden law kept by construction), R-Weapon, Legs, L-Weapon,
+Feet. A family holding more than one piece wears a brass COUNT
+badge, and a click on an already-picked family CYCLES to its next
+piece and wraps - minimal to look at, all 27 one tap-run away; an
+empty family is one quiet open-diamond panel and NOT a button.
+PROBE LESSON, recorded against the next stub: deps.entity is the
+ENTITY OBJECT (worn = equippedModel(deps.entity)) while deps.items
+is a GETTER - two lab drives dressed a function and read an empty
+map before the seam was read instead of assumed; the third drive
+proved chest=Steel Cuirass badge 2, rings badge 2, and the cycle
+Cuirass -> Linen Shirt in the plaque, zero errors. Suite 4127/0.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk
