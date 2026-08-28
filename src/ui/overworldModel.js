@@ -242,10 +242,38 @@ export function buildMarkerModel(summaries, filters, { isDiscovered = checkLocat
  * Clamped rather than guarded: a path may touch the edge of the data,
  * and the edge byte is the honest answer there.
  */
+/** RH1 (Mac, 2026-08-28) - the height under a point that need not sit
+ *  on a pixel.
+ *
+ *  This used to index heightBytes with the raw coordinates, which was
+ *  fine while every road and route vertex WAS a pixel: the values were
+ *  integers and the clamp left them alone. RR1's smoothing put
+ *  fractional points between pixels, and a fractional array index is
+ *  `undefined` - so `overworldHeight(undefined)` was NaN and half of
+ *  every smoothed road had no height at all. Measured on a three-pixel
+ *  corner: 6 of 12 vertices NaN.
+ *
+ *  BILINEAR rather than a floor, because that is what the picture does.
+ *  buildOverworldGrid puts one vertex per pixel at `px + 0.5`, so the
+ *  drawn surface between two pixel centres is the GPU's interpolation
+ *  of their heights - a road flooring to its pixel would ride above or
+ *  below the very ground it is drawn on, between every pair of
+ *  centres. At integer coordinates the weights are zero and this
+ *  returns exactly what the old line returned, so nothing that was
+ *  already right moves. */
+export function sampleHeightByte(heightBytes, width, height, px, py) {
+  const cx = Math.min(width - 1, Math.max(0, px));
+  const cy = Math.min(height - 1, Math.max(0, py));
+  const x0 = Math.floor(cx), y0 = Math.floor(cy);
+  const x1 = Math.min(width - 1, x0 + 1), y1 = Math.min(height - 1, y0 + 1);
+  const fx = cx - x0, fy = cy - y0;
+  const h00 = heightBytes[y0 * width + x0], h10 = heightBytes[y0 * width + x1];
+  const h01 = heightBytes[y1 * width + x0], h11 = heightBytes[y1 * width + x1];
+  return (h00 * (1 - fx) + h10 * fx) * (1 - fy) + (h01 * (1 - fx) + h11 * fx) * fy;
+}
+
 export function reliefPoint(px, py, { heightBytes, width, height }, lift = 0) {
-  const bx = Math.min(width - 1, Math.max(0, px));
-  const by = Math.min(height - 1, Math.max(0, py));
-  return [px + 0.5, overworldHeight(heightBytes[by * width + bx]) + lift, -(py + 0.5)];
+  return [px + 0.5, overworldHeight(sampleHeightByte(heightBytes, width, height, px, py)) + lift, -(py + 0.5)];
 }
 
 /**
@@ -322,9 +350,52 @@ export function chaikin(line, passes = 2) {
   return pts;
 }
 
+/** RZ1 (Mac, 2026-08-28) - Ramer-Douglas-Peucker, run BEFORE the
+ *  corner cut.
+ *
+ *  Chaikin alone was not enough and the measurement says why: on a
+ *  24-pixel staircase it takes the worst turn from 45 degrees down to
+ *  14, but the TOTAL turning stays at 630 either way - it spreads the
+ *  same wobble over four times as many vertices without ever removing
+ *  it. Smoothing rounds corners; it does not decide which corners are
+ *  real.
+ *
+ *  A traced chain walks map pixels, so a road running east-north-east
+ *  is a staircase whose steps are an artifact of the grid, not of the
+ *  road. Simplifying first drops those: the same staircase collapses
+ *  to a straight line (630 degrees to 0, 24 points to 2), while a road
+ *  that genuinely turns a corner keeps its 90 degrees exactly and
+ *  merely sheds the pixels along its two straight legs.
+ *
+ *  The tolerance is just under one pixel. A diagonal step stands at
+ *  most ~0.71 of a pixel off the line it belongs to, so 0.9 removes
+ *  grid stairs and leaves anything that bends by more than a pixel -
+ *  which is every turn a road actually takes. */
+export const SIMPLIFY_EPSILON = 0.9;
+
+export function simplifyChain(line, eps = SIMPLIFY_EPSILON) {
+  if (line.length < 3) return line.slice();
+  const a = line[0], b = line[line.length - 1];
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len = Math.hypot(dx, dy);
+  let idx = -1, dmax = 0;
+  for (let i = 1; i < line.length - 1; i++) {
+    const p = line[i];
+    const d = len === 0
+      ? Math.hypot(p.x - a.x, p.y - a.y)
+      : Math.abs(dy * p.x - dx * p.y + b.x * a.y - b.y * a.x) / len;
+    if (d > dmax) { dmax = d; idx = i; }
+  }
+  if (dmax <= eps) return [a, b];
+  return [
+    ...simplifyChain(line.slice(0, idx + 1), eps).slice(0, -1),
+    ...simplifyChain(line.slice(idx), eps),
+  ];
+}
+
 export function roadPoints(lines, ctx, lift) {
   return lines.map((line) => {
-    const smooth = chaikin(line);
+    const smooth = chaikin(simplifyChain(line));
     const pts = new Float32Array(smooth.length * 3);
     smooth.forEach((p, i) => {
       const [x, y, z] = reliefPoint(p.x, p.y, ctx, lift);

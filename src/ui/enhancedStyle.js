@@ -1440,9 +1440,34 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .cr-shell .cr-prose p, .cr-shell .cr-entry p { margin: 0 0 10px; font-size: 15px;
   line-height: 1.65; color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .cr-shell .cr-prose { max-width: 62ch; }
-.cr-shell .cr-entries { display: flex; flex-direction: column; gap: 6px; }
-.cr-shell .cr-entry { max-width: 62ch; }
-.cr-shell .cr-entry .px-divword { color: #7d7460; }
+/* PX24b: AN ENTRY IS A CARD WITH A DATE. The notebook stamps every
+   note with the day and the city it was written in; the first draft
+   flattened that into the body and numbered the entries instead. The
+   head carries the date, the body the words, and a note carries the
+   remove the classic has always had. */
+.cr-shell .cr-entries { display: flex; flex-direction: column; gap: 14px; }
+.cr-shell .cr-entry { max-width: 66ch; padding: 12px 16px 10px;
+  background: rgba(10,12,17,0.5); border: 2px solid rgba(125,116,96,0.3); }
+.cr-shell .cr-entry:hover { border-color: rgba(125,116,96,0.55); }
+.cr-shell .cr-head { display: flex; align-items: baseline; gap: 12px;
+  padding-bottom: 8px; margin-bottom: 10px;
+  border-bottom: 2px solid rgba(125,116,96,0.28); }
+.cr-shell .cr-when { flex: 1; min-width: 0; color: var(--brass); font-size: 12px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.cr-shell .cr-rm { flex: 0 0 auto; min-width: 28px; min-height: 28px; padding: 0 8px;
+  background: none; border: 2px solid rgba(125,116,96,0.35); color: #7d7460;
+  font: inherit; font-size: 14px; cursor: pointer; }
+.cr-shell .cr-rm:hover, .cr-shell .cr-rm:focus-visible { outline: none;
+  color: rgb(243,239,44); border-color: var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.cr-shell .cr-compose { display: flex; gap: 10px; margin: 0 0 18px; max-width: 66ch; }
+.cr-shell .cr-compose input { flex: 1; min-width: 0; min-height: 44px; padding: 8px 12px;
+  background: rgba(10,12,17,0.6); border: 2px solid rgba(125,116,96,0.35);
+  color: #d8cfae; font: inherit; font-size: 15px; }
+.cr-shell .cr-compose input:focus { outline: none; border-color: var(--brass); }
+.cr-shell .cr-compose input::placeholder { color: #7d7460; }
+@media (pointer: coarse) { .cr-shell .cr-rm { min-width: 44px; min-height: 44px; } }
 .cr-shell .cr-row .sb-cost { color: #7d7460; }
 .cr-shell .cr-row.on .sb-cost { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
 

@@ -7787,7 +7787,32 @@ the FAMILY's head now - shared between the spellbook and the chronicle
 rather than copied - which is the same lesson PX23's invented divider
 taught one slice earlier: borrow the class, do not restate it.
 
-Pins: 4 in a new test/enhancedChronicle.test.js. 4 mutations, 4 dead.
+PX24b (Mac, on the render: "you can do better than this"). He was
+right, and right about two different things.
+
+IT WAS THIN, and worse, it LOST FUNCTION. The classic notebook has
+AddNote and RemoveNote; the first draft was read-only, which is a
+prettier window that can do less - not an improvement, a regression
+wearing better paint. The composer sits above the entries where a new
+note lands, each note carries a remove, both appear only when there IS
+a notebook (a control that cannot act is the drawn-door bug), and the
+draft survives a re-render or every keystroke would eat what was
+typed.
+
+AND IT THREW AWAY A DATE THE DATA ALREADY HELD. `_createNote` stamps
+every note with a HIGHLIGHT token first - the day and the city, from
+the host's own clock (notebook.js:106) - and the finished-quest filing
+does the same. Flattening every token to a string turned that header
+into just another line, and the window numbered its entries 1, 2, 3
+instead, which tells a player nothing. `chronicleEntry` makes the
+split the journal's own `parseFinished` makes on the same shape: the
+leading highlight is the HEAD, the rest is the body. A continuation
+page, which notebook.js deliberately files with NO header (:97-107),
+comes back headless and the window says "continued" rather than
+inventing a date. The entries are cards now, each with its date in
+brass above its words.
+
+Pins: 6 in test/enhancedChronicle.test.js. 9 mutations, 9 dead.
 
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
