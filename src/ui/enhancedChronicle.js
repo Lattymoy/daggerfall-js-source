@@ -75,6 +75,22 @@ export function chronicleEntry(entry) {
  * What each section holds, as rows of lines. Pure: the whole model the
  * window draws, and the only place that knows where each comes from.
  */
+/**
+ * PX24c: WHAT A MESSAGE IS, checked rather than assumed.
+ *
+ * `addMessage` builds `[{formatting:'center', text:''}, {text: str}]`
+ * (notebook.js:123) - a CENTRE token and the words. It never writes a
+ * highlight, so a message has NO dated head, ever. PX24b's fallback
+ * printed "- continued -" on every one of them, which is a lie about
+ * all fifty: a continuation is a note whose page split, and a message
+ * simply has no header to begin with.
+ *
+ * The ring DOES unwrap correctly - `getMessages` walks from
+ * nextMessageIndex round to it (:114-118), so what comes back is
+ * chronological even after the fiftieth message overwrites the first.
+ * Verified rather than assumed; the reverse below is right because of
+ * that, not by luck.
+ */
 export function chronicleModel(d = {}) {
   const nb = d.notebook?.() ?? null;
   const entries = (list) => (list ?? []).map(chronicleEntry).filter((e) => e.head || e.body.length);
@@ -130,6 +146,19 @@ function render() {
     // draws into a fixed 320x200 panel; a DOM column scrolls, and a
     // life story read in one column beats one read four lines at a
     // time with a Next button.
+    // PX24c: WHO THIS IS, which the window held and never said. The
+    // entity carries race, career and level - the same three the pause
+    // window's Stats page reads through sheetModel - and a life story
+    // with no one's name on it is a page of prose. Each part appears
+    // only if it is there.
+    const who = [deps.entity?.race, deps.entity?.career?.name].filter(Boolean).join(' ');
+    const lvl = Number.isFinite(deps.entity?.level) ? `Level ${deps.entity.level}` : null;
+    if (who || lvl) {
+      const line = el('div', 'sb-frame');
+      if (who) line.append(el('span', 'sb-chip', who));
+      if (lvl) line.append(el('span', 'sb-chip', lvl));
+      detail.append(line);
+    }
     if (!model.history.length) {
       detail.append(el('p', 'px-note', 'Nothing written yet.'));
     } else {
@@ -180,10 +209,15 @@ function render() {
       for (const { e, i } of list) {
         const entry = el('div', 'cr-entry');
         const top = el('div', 'cr-head');
-        // THE DATE, which the notebook wrote and the first draft lost.
-        // A continuation page files with no header (notebook.js:97-107)
-        // and honestly says so rather than inventing one.
-        top.append(el('span', 'cr-when', e.head ?? '\u2014 continued \u2014'));
+        // THE DATE, which the notebook wrote and PX24 lost. A NOTE
+        // whose page split files with no header (notebook.js:97-107)
+        // and says so; a MESSAGE never has one at all, so it gets the
+        // only true thing there is to say - which of them is newest.
+        const head = e.head ?? (section === 'messages'
+          ? (i === rows.length - 1 ? 'Most recent' : null)
+          : '\u2014 continued \u2014');
+        top.append(el('span', 'cr-when', head ?? ''));
+        if (!head) top.classList.add('cr-headless');
         if (section === 'notes' && deps.notebook?.()) {
           const rm = el('button', 'cr-rm', '\u00d7');
           rm.title = 'Remove this note';

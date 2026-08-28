@@ -7841,7 +7841,37 @@ comes back headless and the window says "continued" rather than
 inventing a date. The entries are cards now, each with its date in
 brass above its words.
 
-Pins: 6 in test/enhancedChronicle.test.js. 9 mutations, 9 dead.
+PX24c (Mac: "do it" - the same look for messages and history). Two
+faults, one of them mine from the pass before.
+
+PX24b PRINTED A LIE ON EVERY MESSAGE. `addMessage` builds a CENTRE
+token and the words (notebook.js:123) and never a highlight, so a
+message has no dated head - ever. The "- continued -" fallback,
+correct for a NOTE whose page split, ran on all fifty messages
+instead. It is the note's alone now; a message gets the only true
+thing there is to say, which of them is newest, and a headless card
+collapses its head row rather than printing an empty one.
+
+THE RING WAS CHECKED, NOT ASSUMED. It looked like a defect - a
+fifty-slot ring written in place must be unwrapped before "newest
+first" means anything - and `getMessages` already does it, walking
+from nextMessageIndex round to it (:114-118). So the window's reverse
+is right BECAUSE of that rather than by luck, and the pin now says so,
+which is worth more than the fix I did not need to make.
+
+THE HISTORY SAYS WHO IT IS ABOUT. The entity carries race, career and
+level - the same three the pause window's Stats page reads - and a
+life story with nobody's name on it is a page of prose. Each part only
+if it is there.
+
+AND THE THIRD SCOPING FAULT. `.sb-frame` and `.sb-chip` were scoped to
+the spellbook alone, so the identity line rendered as bare running
+text - after PX23's invented divider and PX24's stacked head, the same
+mistake three slices running. The family's shared parts share their
+selector now, and one pin holds all four together (head, chip row,
+chip, rail count) so there is no fourth.
+
+Pins: 8 in test/enhancedChronicle.test.js. 12 mutations, 12 dead.
 
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
