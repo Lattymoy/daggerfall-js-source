@@ -257,7 +257,10 @@ test('U60: no probe drives the root as if it were the game', () => {
     'and the one that may drive the root goes on to the game - the PIXEL home now (U63)');
   // And the tools that read the built game page read it from its home.
   assert.match(read('tools/verify-deploy.mjs'), /readFile\('dist\/play\/index\.html'/);
-  assert.match(read('tools/verify-deploy.mjs'), /lattymoy\.github\.io\/daggerfall-js-source\/play\//);
+  // U64: the live site is the custom domain now. The path is what this
+  // pin is for - the verifier must poll the GAME, one directory down -
+  // and the host follows the domain.
+  assert.match(read('tools/verify-deploy.mjs'), /'https:\/\/daggerfalljs\.dev\/play\/'/);
   assert.match(read('tools/staleChunkProbe.mjs'), /join\(dN, 'play', 'index\.html'\)/);
   assert.match(read('tools/screenshot.mjs'), /localhost:5199\/play\/\?\$\{query\}/);
 });
@@ -358,10 +361,15 @@ test('U63: the page is the pixel face\'s own idioms, not the shell it replaced',
   assert.match(css, /rgb\(243,239,44\)/, 'the classic shadowed-label pair, for what is live');
   assert.match(css, /text-shadow: 2px 2px 0 rgb\(93,77,12\)/);
   assert.match(skin, /color: rgb\(243,239,44\); text-shadow: 2px 2px 0 rgb\(93,77,12\)/, '...which is the menu\'s pair');
-  // ONE box on a boxless page, as the About plaque is on the home face.
+  // TWO boxes, and both are plaques: Play at the centre and the Ko-fi
+  // mark at the top right - the same shape the About plaque has on the
+  // home face, which is what makes a box read as a plaque here. Nothing
+  // else on the page is boxed.
   const boxes = (css.match(/border: 2px solid #7d7460/g) ?? []).length;
-  assert.equal(boxes, 1, 'the plaque is the one box');
+  assert.equal(boxes, 2, 'Play and Ko-fi, both plaques');
   assert.match(css, /\.plaque \{/);
+  assert.match(css, /\.kofi \{/);
+  assert.match(skin, /\.px-about \{[\s\S]{0,400}border: 2px solid #7d7460/, '...which is the About plaque\'s own shape');
   // The foot is the home face's three zones.
   assert.match(css, /grid-template-columns: 1fr auto 1fr/, 'build left, a figure centre, Source right');
   assert.match(skin, /\.px-foot \{[\s\S]{0,200}grid-template-columns: 1fr auto 1fr/, '...which is the menu\'s foot');
@@ -391,4 +399,48 @@ test('U63: the pictures show the UI that exists, and were retaken by the tool', 
   assert.match(tool, /waitForSelector\('\.px-menu button'/, 'and it waits for the PIXEL home, not the old rail');
   assert.ok(!tool.includes('pack-sample'), 'the staged pack shot is gone with the seam that posed it');
   assert.ok(!read('test/doctrine.test.js').includes('pack-sample'));
+});
+
+// ── U64: THE DOMAIN, AND THE HAT ──────────────────────────────────
+test('U64: the Ko-fi mark is a plaque with a drawn cup, near the top, and it is the only ask', () => {
+  const css = landing.match(/<style>([\s\S]*?)<\/style>/)?.[1] ?? '';
+  // ONE link, and one in the credits with a reason attached - not a
+  // banner, not a badge, and not an <img>: an image would be the page's
+  // only raster, and a raster is the one thing this site does not carry.
+  const asks = [...landing.matchAll(/href="(https:\/\/ko-fi\.com\/[\w-]+)"/g)].map((m) => m[1]);
+  assert.deepEqual(asks, ['https://ko-fi.com/dfjs', 'https://ko-fi.com/dfjs'], 'the mark, and the credits line');
+  assert.match(landing, /<a class="kofi" href="https:\/\/ko-fi\.com\/dfjs" rel="noopener">/);
+  assert.doesNotMatch(landing, /<img[^>]*ko-fi/i, 'no badge image');
+  // Near the top, out of the wordmark's way, and a thumb's target.
+  assert.match(css, /\.kofi \{[\s\S]{0,200}position: absolute; top: 0; right: 0;/);
+  assert.match(css, /\.kofi \{[\s\S]{0,400}min-height: 44px;/);
+  assert.match(css, /\.door \{ padding-bottom: 140px; padding-top: 84px; \}/, 'and the door makes room for it on a phone');
+  // The cup is DRAWN: one box-shadow pixel list, in the skin's own brass
+  // and dim, on the same 4px grid the rest of the page uses.
+  const cup = css.slice(css.indexOf('.cup {'), css.indexOf('.cup {') + 900);
+  assert.match(cup, /box-shadow:/);
+  const px = (cup.match(/-?\d+px -?\d+px 0 (var\(--brass\)|#7d7460)/g) ?? []);
+  assert.ok(px.length >= 9, `${px.length} shadow pixels drawn (the element itself is the tenth)`);
+  assert.ok(px.filter((p) => p.includes('#7d7460')).length === 2, 'two of them are steam');
+  for (const p of px) {
+    const [x, y] = p.split(' ').slice(0, 2).map((v) => Math.abs(Number(v.replace('px', ''))));
+    assert.equal(x % 2, 0, `${p}: on the grid`);
+    assert.equal(y % 2, 0, `${p}: on the grid`);
+  }
+  assert.ok(cup.includes('#7d7460'), 'the steam is dim, not brass');
+});
+
+test('U64: the live site is the custom domain, and the build does not care which', () => {
+  // `base: './'` means the SAME build serves from a project path and
+  // from an apex, so the domain moved with no rebuild - which is why
+  // the vite comment says so rather than naming a host.
+  assert.match(read('vite.config.js'), /base is '\.\/' - RELATIVE, so the same build serves from a project path/);
+  assert.match(read('vite.config.js'), /base: '\.\/',/);
+  assert.match(read('README.md'), /Play it: https:\/\/daggerfalljs\.dev\//);
+  assert.match(read('tools/verify-deploy.mjs'), /'https:\/\/daggerfalljs\.dev\/play\/'/);
+  // The page's own links are RELATIVE, so nothing on it names a host at
+  // all - the domain could move again and the page would not notice.
+  const internal = [...landing.matchAll(/href="(\.\/[^"]*)"/g)].map((m) => m[1]);
+  assert.ok(internal.includes('./play/'), 'Play is relative');
+  assert.doesNotMatch(landing, /https?:\/\/(daggerfalljs\.dev|lattymoy\.github\.io)/, 'the page names no host of its own');
 });
