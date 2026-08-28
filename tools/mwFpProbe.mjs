@@ -52,7 +52,7 @@ await page.evaluate(async () => {
   const bytes = new Uint8Array(await (await fetch('/test/fixtures/mw/fixture.bsa')).arrayBuffer());
   await ds.storeMorrowindFiles([new File([bytes], 'fixture.bsa')]);
 });
-const drive = await page.evaluate(async () => {
+const driveBody = async () => {
   const out = {};
   const mod = await import('/src/combat/mwFpArms.js');
   const { WEAPON_TYPES } = await import('/src/combat/fpsWeapon.js');
@@ -98,12 +98,39 @@ const drive = await page.evaluate(async () => {
   }
   out.diff = diff;
   return out;
-});
+};
+const drive = await page.evaluate(driveBody);
 console.log('view drive:', JSON.stringify(drive));
 ok(drive.ready === true, `view ready (${drive.status})`);
 ok(drive.quadCalls === 2, `stream composited through drawScreenQuad (${drive.quadCalls} calls)`);
 ok(drive.coveredA > 400, `the rig covers pixels on the 320x200 stage (${drive.coveredA})`);
 ok(drive.diff > 100, `the Move loop MOVES between two fixed times (${drive.diff} px changed)`);
+
+// --- HALF 1b: MW8, the RIGID part ----------------------------------------
+// THE HOLE THIS FILLS. Half 1 draws because its BASE nif carries
+// skinned geometry - and retail's base_anim.1st.nif carries none. It
+// is a first-person SKELETON. So every arm on real data arrives as a
+// body part, and Morrowind's arm parts are RIGID meshes hung off a
+// bone, not skinned ones. That path had no draw loop at all and its
+// loader dropped `.attached` on the floor, so this probe could report
+// ALL GREEN while a retail attach showed the classic sprite - which is
+// exactly what happened, twice.
+//
+// fixture/plain.nif is one rigid batch and no skin: the retail shape.
+// The proof is differential - the SAME rig, once without the part and
+// once with - so it cannot pass on the base's own geometry.
+await page.goto(`http://localhost:5221/play/?${viewQuery}&mwfparms=meshes/fixture/plain.nif`);
+const rigid = await page.evaluate(driveBody);
+console.log('rigid drive:', JSON.stringify(rigid));
+ok(rigid.ready === true, `rigid-part rig ready (${rigid.status})`);
+ok(/1 attached/.test(rigid.status || ''), `the rigid part is HELD, not dropped (${rigid.status})`);
+// Measured at the SECOND pose. `mwfparms` carries no bone, so the part
+// attaches at the skeleton root, and at the first sampled pose it lands
+// wholly inside the base mesh's silhouette - identical coverage, drawn
+// or not. The second pose swings it clear, and that is where the part
+// either exists or does not.
+ok(rigid.coveredB > drive.coveredB,
+  `and DRAWN - it adds pixels the same rig without it never had (${rigid.coveredB} > ${drive.coveredB})`);
 
 // --- HALF 2: the full game boot, where ARENA2 lives -----------------------
 const arena2 = process.env.ARENA2_PATH;

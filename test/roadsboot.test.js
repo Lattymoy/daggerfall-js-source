@@ -90,9 +90,21 @@ test('roads default ON, and the bake stays visible and cached', () => {
   const world = readFileSync('src/scenes/world.js', 'utf8');
   assert.match(world, /status\(`baking roads: \$\{phase\}/,
     'the bake must report, or an on-by-default cost looks like a hang');
-  assert.match(world, /try \{\s*\n\s*if \(getPref\('roads'\)\)/,
-    'and it must be behind the preference AND a catch - on by default '
-    + 'means a bake that throws would otherwise take every boot down');
+  // R3W (2026-08-28): read as ORDER, not adjacency. The first draft
+  // required `try {` and the `if` to be consecutive lines, so adding
+  // the skin gate's comment between them failed a pin about the catch.
+  const tryAt = world.indexOf('  let roadNetwork = null;');
+  const gate = world.indexOf("getPref('roads')", tryAt);
+  const catchAt = world.indexOf('} catch', tryAt);
+  assert.ok(tryAt > 0 && world.slice(tryAt, gate).includes('try {'),
+    'the bake sits inside a try - on by default means a bake that throws '
+    + 'would otherwise take every boot down');
+  assert.ok(gate > 0 && catchAt > gate, '...and behind the preference, inside it');
+  // R3W: and behind the SKIN. Roads are an enhanced-mode addition;
+  // classic Daggerfall has none, so a classic session must not bake
+  // them or paint them across its terrain.
+  assert.match(world, /if \(isEnhanced\(\) && getPref\('roads'\)\)/,
+    'roads are gated on the enhanced skin as well as the preference');
 });
 
 test('the preference lives on the UI shelf, NOT in DFU\'s settings store', () => {
