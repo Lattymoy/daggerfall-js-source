@@ -132,8 +132,7 @@ function isClaimed(mask, x, y) {
 }
 
 /** A band of tiles along a straight run, inclusive of both ends. */
-function stampRun(tilemap, ax, ay, bx, by, half, record, stopMask = null) {
-  const steps = Math.max(Math.abs(bx - ax), Math.abs(by - ay));
+function stampPath(tilemap, pts, half, record, stopMask = null) {
   let painted = 0;
   let px = null, py = null;
   const band = (cx, cy) => {
@@ -145,10 +144,8 @@ function stampRun(tilemap, ax, ay, bx, by, half, record, stopMask = null) {
     }
     return n;
   };
-  for (let s = 0; s <= steps; s++) {
-    const t = steps === 0 ? 0 : s / steps;
-    const cx = Math.round(ax + (bx - ax) * t);
-    const cy = Math.round(ay + (by - ay) * t);
+  for (const [cx, cy] of pts) {
+    if (cx === px && cy === py) continue;   // the sampler oversamples on purpose
     // RW1: 4-CONNECTED. When a step moves on BOTH axes the two cells
     // touch only at a corner, so the elbow between them is stamped
     // too. Without it a half=0 run is a staircase of corner-touching
@@ -160,6 +157,49 @@ function stampRun(tilemap, ax, ay, bx, by, half, record, stopMask = null) {
     px = cx; py = cy;
   }
   return painted;
+}
+
+/** A straight run, inclusive of both ends. */
+function stampRun(tilemap, ax, ay, bx, by, half, record, stopMask = null) {
+  const steps = Math.max(Math.abs(bx - ax), Math.abs(by - ay));
+  const pts = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = steps === 0 ? 0 : i / steps;
+    pts.push([Math.round(ax + (bx - ax) * t), Math.round(ay + (by - ay) * t)]);
+  }
+  return stampPath(tilemap, pts, half, record, stopMask);
+}
+
+/** RR1 (Mac, 2026-08-28) - A THROUGH ROAD IS ROUNDED, NOT MITRED.
+ *
+ *  Every exit used to be a straight spoke from the edge to the pixel
+ *  CENTRE, so a road entering west and leaving north painted two
+ *  spokes meeting at a hard 90-degree corner in the middle of the
+ *  tilemap - and a road that curves gently across the province became
+ *  a chain of those corners, which is the zig-zag.
+ *
+ *  A pixel carrying exactly two exits of a class is a through road,
+ *  and it is drawn as ONE quadratic Bezier from edge to edge with the
+ *  centre as the control point. The curve still passes through the
+ *  middle of the pixel and still meets both edges exactly where the
+ *  neighbours' runs meet them, so the seam law is untouched - only
+ *  the corner between them is rounded away.
+ *
+ *  A single exit is a dead end and a junction is three or more, and
+ *  neither is a curve: both keep their spokes to the centre. */
+function curvePoints(ax, ay, cx, cy, bx, by) {
+  // Sampled fine enough that consecutive samples never differ by more
+  // than a tile on either axis; stampPath drops the duplicates.
+  const n = Math.max(8, 2 * (Math.abs(ax - bx) + Math.abs(ay - by) + Math.abs(ax - cx) + Math.abs(ay - cy)));
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const t = i / n, u = 1 - t;
+    pts.push([
+      Math.round(u * u * ax + 2 * u * t * cx + t * t * bx),
+      Math.round(u * u * ay + 2 * u * t * cy + t * t * by),
+    ]);
+  }
+  return pts;
 }
 
 /**
@@ -236,9 +276,20 @@ export function paintRoadTiles(tilemap, network, px, py, {
   for (const [bits, kind] of [[track, ROAD_TRACK], [trunk, ROAD_TRUNK]]) {
     if (!bits) continue;
     const half = halfWidth[kind] ?? 1;
-    for (let d = 0; d < 8; d++) {
-      if (!(bits & DIRS[d].bit)) continue;
-      const e = exitTile(d);
+    const exits = [];
+    for (let d = 0; d < 8; d++) if (bits & DIRS[d].bit) exits.push(exitTile(d));
+
+    // RR1: a THROUGH road on an open pixel is one rounded curve rather
+    // than two spokes mitred at the centre. A location's pixel keeps
+    // the straight approaches - they have to stop at the footprint,
+    // and a curve that halts halfway is not a curve.
+    if (exits.length === 2 && !located) {
+      painted += stampPath(tilemap,
+        curvePoints(exits[0].x, exits[0].y, MID, MID, exits[1].x, exits[1].y),
+        half, record, null);
+      continue;
+    }
+    for (const e of exits) {
       // Inward from the EDGE, so a run that meets the town stops at
       // its boundary instead of being erased cell by cell.
       const t = located ? aimFor(streets, box, e) : { x: MID, y: MID };

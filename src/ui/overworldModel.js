@@ -292,10 +292,41 @@ export function routePoints(start, path, ctx) {
  * that silently jumps between two unconnected roads draws a road that
  * is not there.
  */
+/** RR1 (Mac, 2026-08-28) - CHAIKIN'S CORNER CUT, twice.
+ *
+ *  A traced chain is a walk over MAP PIXELS, so every turn in it is a
+ *  multiple of 45 degrees and a road that curves gently across the
+ *  province draws as a staircase of hard little corners. Each pass
+ *  replaces every interior vertex with two points a quarter and three
+ *  quarters along its neighbouring segments, which rounds the corner
+ *  without moving the road off its pixels: the curve stays inside the
+ *  convex hull of the chain it came from, so a road never bows into a
+ *  pixel it does not run through.
+ *
+ *  The ENDS are kept exactly. A chain's endpoints are where it meets
+ *  the next chain at a junction, and moving them would open a gap
+ *  between two roads that the tracer split. */
+export function chaikin(line, passes = 2) {
+  let pts = line;
+  for (let n = 0; n < passes; n++) {
+    if (pts.length < 3) return pts;
+    const out = [pts[0]];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i], b = pts[i + 1];
+      out.push({ x: a.x * 0.75 + b.x * 0.25, y: a.y * 0.75 + b.y * 0.25 });
+      out.push({ x: a.x * 0.25 + b.x * 0.75, y: a.y * 0.25 + b.y * 0.75 });
+    }
+    out.push(pts[pts.length - 1]);
+    pts = out;
+  }
+  return pts;
+}
+
 export function roadPoints(lines, ctx, lift) {
   return lines.map((line) => {
-    const pts = new Float32Array(line.length * 3);
-    line.forEach((p, i) => {
+    const smooth = chaikin(line);
+    const pts = new Float32Array(smooth.length * 3);
+    smooth.forEach((p, i) => {
       const [x, y, z] = reliefPoint(p.x, p.y, ctx, lift);
       pts[i * 3] = x; pts[i * 3 + 1] = y; pts[i * 3 + 2] = z;
     });

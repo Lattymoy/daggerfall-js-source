@@ -97,15 +97,35 @@ test('every traced chain becomes its OWN vertex run', () => {
   assert.ok(lines.trunk.length > 1, 'the fixture must have more than one chain to test this');
   assert.equal(model.trunk.length, lines.trunk.length);
   assert.equal(model.track.length, lines.track.length);
-  model.trunk.forEach((buf, i) => assert.equal(buf.length, lines.trunk[i].length * 3));
+  // RR1: Chaikin smoothing ADDS vertices, so the count is no longer
+  // one per pixel - what this pin is about is that each chain gets its
+  // OWN buffer, and that a smoothed chain still starts and ends
+  // exactly where the tracer put it (moving an end would open a gap at
+  // the junction the tracer split on).
+  model.trunk.forEach((buf, i) => {
+    const line = lines.trunk[i];
+    assert.equal(buf.length % 3, 0);
+    assert.ok(buf.length >= line.length * 3, 'smoothing only adds vertices');
+    const [x0, , z0] = reliefPoint(line[0].x, line[0].y, c, RELIEF_LIFT.trunk);
+    const last = line[line.length - 1];
+    const [xn, , zn] = reliefPoint(last.x, last.y, c, RELIEF_LIFT.trunk);
+    assert.equal(buf[0], Math.fround(x0), 'the chain starts where the tracer put it');
+    assert.equal(buf[2], Math.fround(z0));
+    assert.equal(buf[buf.length - 3], Math.fround(xn), 'and ends there too');
+    assert.equal(buf[buf.length - 1], Math.fround(zn));
+  });
 });
 
 test('road vertices ride the relief - a chain over varying ground varies in height', () => {
   const c = ctx();
   for (let x = 0; x < W; x++) c.heightBytes[8 * W + x] = x * 6;
   const [buf] = roadPoints([[{ x: 3, y: 8 }, { x: 4, y: 8 }, { x: 5, y: 8 }]], c, RELIEF_LIFT.trunk);
-  assert.ok(buf[1] < buf[4] && buf[4] < buf[7], 'the road should climb with the ground');
-  assert.equal(buf[1], Math.fround(overworldHeight(18) + RELIEF_LIFT.trunk));
+  // RR1: read the climb END TO END rather than off the first three
+  // vertices - smoothing interleaves new ones between them, so
+  // consecutive triples are now a fraction of a pixel apart.
+  assert.ok(buf[1] < buf[buf.length - 2], 'the road should climb with the ground');
+  assert.equal(buf[1], Math.fround(overworldHeight(18) + RELIEF_LIFT.trunk),
+    'and the first vertex still sits on its own pixel\'s ground');
 });
 
 test('an empty network models to nothing rather than throwing', () => {
