@@ -1553,6 +1553,12 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 /* The action bar's Back/Cancel is the shell's own .act, already
    repainted; the bar just loses its old hairline for the 2px rule. */
 .wizard .actionbar { border-top: 2px solid rgba(125,116,96,0.35); background: transparent; }
+/* PX13b (Mac: "the main background is still the old basic ui"): the
+   stage ground was .stagebody's var(--iron) - the SAME gap-paint
+   trick PX10b found on the settings .panes, one file later. Off, and
+   the walk floats on the sky like every other face; the class list
+   keeps the shell's 0.38 breath and the dcard its own bordered card. */
+.wizard .stagebody { background: transparent; }
 
 /* ── PX9: SETTINGS INSIDE THE PAUSE WINDOW ──────────────────────
    The same paneSettings DOM, reflowed for the window: the category

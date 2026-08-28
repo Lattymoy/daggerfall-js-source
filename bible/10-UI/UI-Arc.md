@@ -6704,3 +6704,8 @@ race select -> Enter confirms (the flow's own no-description arm) ->
 gender -> class method -> class list -> Knight -> name, every state
 read from the flow itself, zero page errors. The chargen browser
 probe still needs ARENA2 (pre-existing, stash-verified in PX8).
+PX13b (Mac: the stage ground was still the old basic ui): .stagebody
+carried var(--iron) - the SAME gap-paint trick PX10b found on the
+settings .panes, one file later - now transparent, and the walk
+floats on the open sky like every other face; the class list keeps
+the shell's 0.38 breath and the dcard its bordered card.
