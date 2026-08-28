@@ -46,6 +46,11 @@ function mat33Apply(m, x, y, z) {
   ];
 }
 
+/** Copy a translation triple into a plain array. */
+function bt3(t) {
+  return [t[0], t[1], t[2]];
+}
+
 const IDENTITY = Object.freeze({
   rotation: Float32Array.from([1, 0, 0, 0, 1, 0, 0, 0, 1]),
   translation: [0, 0, 0],
@@ -126,37 +131,71 @@ export function flattenNif(nif, opts = {}) {
   function emit(shape, world, props) {
     const data = deref(nif, shape.data);
     if (!data || !data.vertices) return;
+    const skinned = shape.skin >= 0;
     const n = data.numVertices;
     const positions = new Float32Array(n * 3);
-    for (let i = 0; i < n; i++) {
-      const [x, y, z] = mat33Apply(
-        world.rotation,
-        data.vertices[i * 3] * world.scale,
-        data.vertices[i * 3 + 1] * world.scale,
-        data.vertices[i * 3 + 2] * world.scale,
-      );
-      positions[i * 3] = x + world.translation[0];
-      positions[i * 3 + 1] = y + world.translation[1];
-      positions[i * 3 + 2] = z + world.translation[2];
-    }
     let normals = null;
-    if (data.normals) {
-      normals = new Float32Array(n * 3);
+    if (skinned) {
+      // NetImmerse ignores a skinned shape's own transform: verts stay in
+      // skin space, as authored, and the bones place them (mwSkin.js).
+      positions.set(data.vertices);
+      if (data.normals) normals = Float32Array.from(data.normals);
+    } else {
       for (let i = 0; i < n; i++) {
         const [x, y, z] = mat33Apply(
           world.rotation,
-          data.normals[i * 3],
-          data.normals[i * 3 + 1],
-          data.normals[i * 3 + 2],
+          data.vertices[i * 3] * world.scale,
+          data.vertices[i * 3 + 1] * world.scale,
+          data.vertices[i * 3 + 2] * world.scale,
         );
-        normals[i * 3] = x;
-        normals[i * 3 + 1] = y;
-        normals[i * 3 + 2] = z;
+        positions[i * 3] = x + world.translation[0];
+        positions[i * 3 + 1] = y + world.translation[1];
+        positions[i * 3 + 2] = z + world.translation[2];
       }
+      if (data.normals) {
+        normals = new Float32Array(n * 3);
+        for (let i = 0; i < n; i++) {
+          const [x, y, z] = mat33Apply(
+            world.rotation,
+            data.normals[i * 3],
+            data.normals[i * 3 + 1],
+            data.normals[i * 3 + 2],
+          );
+          normals[i * 3] = x;
+          normals[i * 3 + 1] = y;
+          normals[i * 3 + 2] = z;
+        }
+      }
+    }
+    let skin = null;
+    if (skinned) {
+      const si = deref(nif, shape.skin);
+      const sd = deref(nif, si.data);
+      skin = {
+        skeletonRoot: si.skeletonRoot,
+        rootBone: si.skeletonRoot,
+        transform: sd.transform,
+        bones: si.bones.map((ref, i) => ({
+          ref,
+          name: (deref(nif, ref)?.name || '').toLowerCase(),
+          invBind: {
+            a: (() => {
+              const bt = sd.bones[i].transform;
+              const a = new Float32Array(9);
+              for (let k = 0; k < 9; k++) a[k] = bt.rotation[k] * bt.scale;
+              return a;
+            })(),
+            t: bt3(sd.bones[i].transform.translation),
+          },
+          indices: sd.bones[i].indices,
+          weights: sd.bones[i].weights,
+        })),
+      };
     }
     batches.push({
       name: shape.name || '',
-      skinned: shape.skin >= 0,
+      skinned,
+      skin,
       positions,
       normals,
       uvs: data.uvSets.length ? Float32Array.from(data.uvSets[0]) : null,

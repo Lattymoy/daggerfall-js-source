@@ -22,6 +22,8 @@ import { MwBsaFile, normalizeBsaPath } from '../formats/mwBsaFile.js';
 import { parseNif } from '../formats/mwNifFile.js';
 import { flattenNif } from '../formats/mwNifMesh.js';
 import { decodeDds } from '../formats/mwDdsFile.js';
+import { collectTextKeys, parseAnimGroups, extractTracks, sampleTrack } from '../formats/mwAnim.js';
+import { buildSkeleton, poseSkeleton, skeletonSpaceMatrices, skinBatch } from '../formats/mwSkin.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('c');
@@ -95,6 +97,13 @@ canvas.addEventListener(
 );
 
 // Debug/probe hook, the game's __set culture: pose the orbit exactly.
+window.__mwviewerSetAnimTime = (t) => {
+  anim.seek = t;
+};
+window.__mwviewerSkinnedPositions = () => {
+  const s = loaded && loaded.skinnedMeshes[0];
+  return s ? Array.from(s.mesh.geometry.attributes.position.array) : null;
+};
 window.__mwviewerView = (yaw, pitch, dist) => {
   orbit.yaw = yaw;
   orbit.pitch = pitch;
@@ -106,8 +115,82 @@ window.__mwviewerView = (yaw, pitch, dist) => {
 let bsa = null; // MwBsaFile of the last archive opened
 const looseTextures = new Map(); // normalized name -> Uint8Array (loose .dds)
 const textureCache = new Map(); // normalized name -> THREE.Texture|null
-let loaded = null; // { name, group, batches }
+let loaded = null; // { name, group, batches, skinnedMeshes, skeleton }
 let allMeshNames = [];
+// Animation state. A dropped .kf overrides a mesh's inline tracks - the
+// retail xbase_anim.kf arrangement.
+let kfTracks = null;
+let kfGroups = null;
+const anim = { tracks: null, groups: null, playing: null, t0: 0, seek: null };
+const animSel = $('animsel');
+
+function wireAnimation(nif) {
+  const skinnedMeshes = loaded ? loaded.skinnedMeshes : [];
+  const inlineTracks = extractTracks(nif);
+  const inlineGroups = parseAnimGroups(collectTextKeys(nif));
+  anim.tracks = kfTracks && kfTracks.size ? kfTracks : inlineTracks;
+  anim.groups = kfGroups && kfGroups.size ? kfGroups : inlineGroups;
+  anim.playing = null;
+  anim.seek = null;
+  animSel.innerHTML = '';
+  const usable = skinnedMeshes.length && anim.tracks.size && anim.groups.size;
+  animSel.style.display = usable ? '' : 'none';
+  if (!usable) return;
+  const bind = document.createElement('option');
+  bind.value = '';
+  bind.textContent = 'bind pose';
+  animSel.appendChild(bind);
+  for (const name of anim.groups.keys()) {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = `anim: ${name}`;
+    animSel.appendChild(opt);
+  }
+  // A player drops a .kf to see it move - start the first group at once.
+  animSel.selectedIndex = 1;
+  startGroup(animSel.value);
+}
+
+function startGroup(name) {
+  anim.playing = name || null;
+  anim.t0 = performance.now();
+  anim.seek = null;
+  if (!anim.playing && loaded) {
+    for (const s of loaded.skinnedMeshes) restoreBind(s);
+  }
+}
+
+function restoreBind(s) {
+  s.mesh.geometry.attributes.position.array.set(s.basePositions);
+  s.mesh.geometry.attributes.position.needsUpdate = true;
+  if (s.baseNormals) {
+    s.mesh.geometry.attributes.normal.array.set(s.baseNormals);
+    s.mesh.geometry.attributes.normal.needsUpdate = true;
+  }
+  s.mesh.geometry.computeBoundingSphere();
+}
+
+function updateAnimation(nowMs) {
+  if (!loaded || !anim.playing || !loaded.skeleton) return;
+  const g = anim.groups.get(anim.playing);
+  if (!g) return;
+  const span = Math.max(g.stop - g.start, 1e-6);
+  const t = anim.seek != null ? anim.seek : g.start + (((nowMs - anim.t0) / 1000) % span);
+  const pose = poseSkeleton(loaded.skeleton, anim.tracks, sampleTrack, t);
+  const matsByRoot = new Map();
+  for (const s of loaded.skinnedMeshes) {
+    const root = s.batch.skin.skeletonRoot;
+    if (!matsByRoot.has(root)) {
+      matsByRoot.set(root, skeletonSpaceMatrices(loaded.skeleton, pose, root));
+    }
+    const pos = s.mesh.geometry.attributes.position;
+    const nrm = s.batch.normals ? s.mesh.geometry.attributes.normal : null;
+    skinBatch(s.batch, loaded.skeleton, pose, matsByRoot.get(root), pos.array, nrm && nrm.array);
+    pos.needsUpdate = true;
+    if (nrm) nrm.needsUpdate = true;
+    s.mesh.geometry.computeBoundingSphere();
+  }
+}
 
 function setStatus(text) {
   statusEl.textContent = text;
@@ -158,9 +241,15 @@ function buildGroup(batches) {
   const group = new THREE.Group();
   for (const b of batches) {
     const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(b.positions, 3));
-    if (b.normals) geo.setAttribute('normal', new THREE.BufferAttribute(b.normals, 3));
-    else geo.computeVertexNormals();
+    // Skinned batches are re-skinned in place every frame: the attribute
+    // must be a COPY, or skinBatch reads its own last output (source is
+    // b.positions) and the pose runs away frame over frame.
+    const pos = b.skinned ? Float32Array.from(b.positions) : b.positions;
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    if (b.normals) {
+      const nrm = b.skinned ? Float32Array.from(b.normals) : b.normals;
+      geo.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
+    } else geo.computeVertexNormals();
     if (b.uvs) geo.setAttribute('uv', new THREE.BufferAttribute(b.uvs, 2));
     if (b.colors) geo.setAttribute('color', new THREE.BufferAttribute(b.colors, 4));
     geo.setIndex(new THREE.BufferAttribute(b.indices, 1));
@@ -214,7 +303,19 @@ function loadNifBytes(bytes, name) {
     const batches = flattenNif(nif);
     const group = buildGroup(batches);
     holder.add(group);
-    loaded = { name, group, batches };
+    const skinnedMeshes = [];
+    group.children.forEach((mesh, i) => {
+      if (batches[i].skinned && batches[i].skin) {
+        skinnedMeshes.push({
+          mesh,
+          batch: batches[i],
+          basePositions: Float32Array.from(batches[i].positions),
+          baseNormals: batches[i].normals ? Float32Array.from(batches[i].normals) : null,
+        });
+      }
+    });
+    loaded = { name, group, batches, skinnedMeshes, skeleton: buildSkeleton(nif) };
+    wireAnimation(nif);
     const tris = batches.reduce((s, b) => s + b.indices.length / 3, 0);
     const textured = batches.filter((b) => b.material.textureFile).length;
     setStatus(
@@ -262,6 +363,16 @@ async function takeFiles(files) {
       looseTextures.set(normalizeBsaPath(`textures\\${f.name}`), bytes);
       looseTextures.set(normalizeBsaPath(f.name), bytes);
       textureCache.clear();
+    } else if (lower.endsWith('.kf')) {
+      try {
+        const kfNif = parseNif(bytes);
+        kfTracks = extractTracks(kfNif);
+        kfGroups = parseAnimGroups(collectTextKeys(kfNif));
+        setStatus(`${f.name}: ${kfTracks.size} bone tracks, ${kfGroups.size} groups`);
+        if (loaded) wireAnimation(kfNif);
+      } catch (err) {
+        setStatus(`${f.name}\n${err.message}`);
+      }
     } else if (lower.endsWith('.nif')) pendingNif = { bytes, name: f.name };
   }
   // Loose mesh last, so its textures (archive or loose) are already in.
@@ -275,6 +386,7 @@ document.addEventListener('drop', (e) => {
   takeFiles([...e.dataTransfer.files]);
 });
 meshSel.addEventListener('change', () => loadNifBytes(bsa.get(meshSel.value), meshSel.value));
+animSel.addEventListener('change', () => startGroup(animSel.value));
 $('filter').addEventListener('input', refreshMeshList);
 
 // --- bar buttons ----------------------------------------------------------
@@ -321,6 +433,7 @@ function tick(now) {
   const dt = (now - last) / 1000;
   last = now;
   if (spinning) orbit.yaw += dt * 0.5;
+  updateAnimation(now);
   resize();
   applyOrbit();
   renderer.render(scene, camera);

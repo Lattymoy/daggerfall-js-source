@@ -22,13 +22,14 @@
 </head>
 <body>
 <canvas id="c"></canvas>
-<div id="hud">MORROWIND MESH VIEWER &middot; drop Morrowind.bsa / .nif / .dds &middot; drag to rotate &middot; wheel or pinch to zoom</div>
+<div id="hud">MORROWIND MESH VIEWER &middot; drop Morrowind.bsa / .nif / .kf / .dds &middot; drag to rotate &middot; wheel or pinch to zoom</div>
 <div id="status">no data loaded - your files stay in this tab, nothing uploads</div>
 <div id="bar">
   <label class="filebtn" for="file">open files</label>
-  <input id="file" type="file" multiple accept=".bsa,.nif,.dds,.BSA,.NIF,.DDS">
+  <input id="file" type="file" multiple accept=".bsa,.nif,.kf,.dds,.BSA,.NIF,.KF,.DDS">
   <input id="filter" type="text" placeholder="filter meshes">
   <select id="meshsel"></select>
+  <select id="animsel" style="display:none"></select>
   <button id="spin" class="on">auto-spin</button>
   <button id="reset">reset view</button>
   <button id="wire">wireframe</button>
