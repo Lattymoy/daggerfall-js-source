@@ -6655,3 +6655,26 @@ canvas frames apart differ), Escape still backs out to the home,
 zero page errors both viewports. The enhanced skin is now the one
 treatment everywhere a menu exists: home, pause window, and the
 fullscreen catalog.
+
+PX12 (same day, Mac: "a truly detailed pass"): THE CRAFT LAYER,
+flaw-by-flaw, each named before it was written. (1) SCROLLBARS: the
+browser default broke the idiom on every scrolling column - square
+10px rails, dim square thumbs, brass on hover, shell and pause
+window alike, plus the Firefox pair. (2) THE GEM SPEAKS EVERYWHERE:
+active rail rows and category chips lead with the same diamond every
+other surface does - the GLYPH, never a rotated box, because a
+rotated square anti-aliases its diagonals and the pixel font does
+not. (3) Section titles took the window's wing rules. (4) ONE DATA
+COLOUR: values read c5bda2 everywhere now - brass is ornament, gold
+is the hand. (5) The F8 more-dot became the diamond. (6) Empty
+states shed the dashed 1px box for a quiet open diamond over pixel
+type. (7) KEYBOARD FOCUS in the language: rows take a brass outline
++ the gold pair under :focus-visible, so a tab reads like a hover.
+(8) The last row transition died. ONE REAL BUG ON THE WAY: the gem
+escapes were written as \25c6 inside the CSS template literal,
+which JS reads as a LEGACY OCTAL - node's loader took it, esbuild
+refused it, and the page 500'd until the file carried the doubled
+escape; the lesson is that the two parsers disagree exactly where a
+template literal meets a CSS escape, and the build gate is the one
+that catches it (it did). Verified: suite green, build green, tap
+probe 26/26, focus gems live in the shot, zero page errors.

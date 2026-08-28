@@ -1409,6 +1409,72 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .shell .row.on { background: rgba(0,0,0,0.25); box-shadow: none; }
 .shell .foot { background: transparent; }
 
+/* ── PX12: THE DETAIL PASS ──────────────────────────────────────
+   The craft layer, named flaw by flaw before it was written:
+   1. SCROLLBARS. The browser default broke the idiom on every
+      scrolling column. Square 10px rails, dim square thumbs, brass
+      on hover - shell and pause window alike, plus the Firefox pair.
+   2. THE GEM SPEAKS EVERYWHERE. The rail's and the category strip's
+      active rows take the same diamond every other surface leads
+      with - the glyph, never a rotated box (a rotated square
+      anti-aliases its diagonals; the pixel font does not).
+   3. SECTION TITLES take the window's wing rules.
+   4. ONE DATA COLOUR. Values read #c5bda2 in the window and brass in
+      the shell; data is c5bda2 everywhere now - brass is ornament,
+      gold is the hand.
+   5. THE F8 DOT becomes the diamond it always wanted to be.
+   6. EMPTY STATES shed the dashed 1px box for a quiet open diamond
+      over pixel type.
+   7. KEYBOARD FOCUS in the language: rows and chips take the gold
+      pair plus a brass outline under :focus-visible, so a tab is as
+      visible as a hover.
+   8. NOTHING EASES. The last row transition dies. */
+.shell ::-webkit-scrollbar, .px-win ::-webkit-scrollbar { width: 10px; height: 10px; }
+.shell ::-webkit-scrollbar-track, .px-win ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+.shell ::-webkit-scrollbar-thumb, .px-win ::-webkit-scrollbar-thumb {
+  background: rgba(125,116,96,0.5); border: 2px solid rgba(0,0,0,0.3); border-radius: 0; }
+.shell ::-webkit-scrollbar-thumb:hover, .px-win ::-webkit-scrollbar-thumb:hover { background: var(--brass); }
+.shell, .px-win { scrollbar-width: thin; scrollbar-color: rgba(125,116,96,0.6) rgba(0,0,0,0.3); }
+
+.shell .railbtn.on .rk::before, .shell .railbtn:focus-visible .rk::before {
+  content: '\\25c6  '; color: rgb(243,239,44); font-size: 12px;
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.shell .subbtn.on::before { content: '\\25c6'; color: rgb(243,239,44); font-size: 11px;
+  margin-right: 8px; text-shadow: 2px 2px 0 rgb(93,77,12); }
+.shell .more-dot { width: auto; height: auto; background: none; }
+.shell .more-dot::before { content: '\\25c6'; color: var(--brass); font-size: 10px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+
+.shell .head { display: flex; align-items: center; gap: 16px;
+  border-bottom: 2px solid rgba(125,116,96,0.35); }
+.shell .head::before, .shell .head::after { content: ''; flex: 1; height: 2px; max-width: 110px;
+  background: linear-gradient(90deg, transparent, rgba(125,116,96,0.7)); }
+.shell .head::after { background: linear-gradient(90deg, rgba(125,116,96,0.7), transparent); }
+.shell .head h2 { font-size: 24px; letter-spacing: 0.14em; text-indent: 0.14em; }
+
+.shell .val, .px-setwrap .val { color: #c5bda2; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+
+.shell .empty, .px-sys .empty { border: 0; text-align: center; padding: 20px 22px; }
+.shell .empty::before, .px-sys .empty::before { content: '\\25c7'; display: block;
+  color: rgba(125,116,96,0.7); font-size: 15px; margin-bottom: 8px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.shell .empty h3 { font-family: inherit; font-size: 16px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: #c5bda2; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.shell .empty p { text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+
+.shell .row-main:focus-visible { outline: 2px solid var(--brass); outline-offset: -2px; }
+.shell .row-main:focus-visible .row-name { color: rgb(243,239,44);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.shell .subbtn:focus-visible, .shell .railbtn:focus-visible { outline: none;
+  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-qrow:focus-visible { outline: none; }
+.px-setwrap .row-main:focus-visible { outline: 2px solid var(--brass); outline-offset: -2px; }
+
+.shell .row, .shell .act, .shell .step { transition: none; }
+.shell .dcard .status { color: #c5bda2; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.shell .tag { border: 2px solid rgba(125,116,96,0.4); color: rgb(243,239,44);
+  text-shadow: 2px 2px 0 rgb(93,77,12); letter-spacing: 0.24em; }
+
 /* ── PX9: SETTINGS INSIDE THE PAUSE WINDOW ──────────────────────
    The same paneSettings DOM, reflowed for the window: the category
    subrail becomes a wrapping chip strip on top, the rows scroll
