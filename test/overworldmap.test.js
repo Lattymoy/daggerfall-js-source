@@ -397,11 +397,22 @@ test('U61: the trip on the panel is the law\'s own answer, live per toggle', () 
         { sleepModeInn: opts.sleepModeInn, hasShip: false, travelShip: opts.travelShip });
       return { ...t, ...c, days: travelDays(t.minutes) };
     };
-    assert.deepEqual(st.trip, expect(st.opts), 'the numbers are calculateTravelTime/TripCost verbatim');
+    // R4W: the trip now rides planJourney, so it carries the chosen
+    // `path` and `byRoad` beside the numbers. Compare the NUMBERS -
+    // which is what this pin was ever about - and separately pin the
+    // property that matters: with NO road network the answer is
+    // classic's, exactly.
+    const numbers = (t) => ({
+      minutes: t.minutes, oceanPixels: t.oceanPixels,
+      piecesCost: t.piecesCost, totalCost: t.totalCost, days: t.days,
+    });
+    assert.deepEqual(numbers(st.trip), numbers(expect(st.opts)),
+      'the numbers are calculateTravelTime/TripCost verbatim');
+    assert.equal(st.trip.byRoad, false, 'and with no network the journey is not by road');
     win._toggleOpt('speedCautious');
-    assert.deepEqual(st.trip, expect(st.opts), 'and they follow every toggle');
+    assert.deepEqual(numbers(st.trip), numbers(expect(st.opts)), 'and they follow every toggle');
     win._toggleOpt('travelShip');
-    assert.deepEqual(st.trip, expect(st.opts));
+    assert.deepEqual(numbers(st.trip), numbers(expect(st.opts)));
     win.dispose();
   });
 });
@@ -541,7 +552,11 @@ test('U61: the window computes no travel law of its own', () => {
     assert.doesNotMatch(src, new RegExp(forbidden.replace(/[*+()]/g, '\\$&')),
       `the law fragment "${forbidden}" must not be re-derived in the view`);
   }
-  for (const needle of ['walkTravelPath(', 'calculateTravelTime(', 'calculateTripCost(', 'travelDays(',
+  // R4W: planJourney replaced the view's direct walkTravelPath call -
+  // it OWNS the walk now (classic's path is its fallback and its
+  // yardstick), so the view running it is the same law through one
+  // more door, not a law of its own.
+  for (const needle of ['planJourney(', 'calculateTravelTime(', 'calculateTripCost(', 'travelDays(',
     'travelMapPopUpState()', 'setTravelMapPopUpState(', 'travelMapFilters()', 'checkLocationDiscovered(']) {
     assert.ok(src.includes(needle), `the view runs the owning module: ${needle}`);
   }

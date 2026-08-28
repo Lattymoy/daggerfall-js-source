@@ -2248,6 +2248,9 @@ export async function bootWorld(canvas, renderer, params, status) {
         _roadChains ??= traceNetwork(roadNetwork);
         return _roadChains;
       },
+      // R4W: the router searches the NETWORK, not the traced chains -
+      // it needs roadKindAt per pixel, which a polyline cannot answer.
+      roadNetwork: () => roadNetwork,
       getPlayerPixel: playerTravelPixel,
       getClimateIndex: (x, yy) => maps.getClimateIndex(x, yy),
       // GetGoldAmount is coins PLUS letters of credit; the popup's
