@@ -7281,6 +7281,32 @@ map before the seam was read instead of assumed; the third drive
 proved chest=Steel Cuirass badge 2, rings badge 2, and the cycle
 Cuirass -> Linen Shirt in the plaque, zero errors. Suite 4127/0.
 
+PX19f (Mac: "you are ignoring the entire UI panel... tab
+positioning? the inventory grid at the bottom? tunnel visioned"):
+THE WHOLE ANATOMY, and the tunnel named. Five slices stared at the
+equip organ; the reference is a BODY: character region LEFT (the
+worn families with the doll - the big area), DETAILS RIGHT (the
+plaque column, where the concept hangs its Details), the INVENTORY
+AS A BOTTOM DOCK - a square TILE GRID (monogram + corner count, the
+name in the title and the plaque) with its category tabs as a
+horizontal strip directly above it, exactly where
+Equipment/Consumables sit in the concept - and the carry/gold bar
+beneath. Structurally: .pack became main-over-dock; the tabs strip
+underlines its chosen tab in brass with inline counts; the phone
+now SHOWS the character region (the old charcol hide died - hiding
+the window's point was PX19d's leftover) while the detail keeps its
+sheet. TWO TRAPS ON THE WAY, both recorded: (1) the dock's tiles
+append to .packcol, not '.list' - the shell owns that word, the
+.detail/.packcol collision family's fourth member, caught when the
+tile rules matched nothing; (2) BACKTICKS INSIDE THE TEMPLATE
+LITERAL - a CSS comment quoting '.list' in backticks CLOSED
+ENHANCED_CSS mid-file and made the remainder a tagged-template call
+(ENHANCED_TOKENS.list is not a function, at import) - the octal
+escape's sibling, now warned about inside the sheet itself. Bisected
+by stash: clean tree served, edited tree failed at module load.
+Probed both viewports: dock tiles inline, worn map visible on the
+phone, zero errors. Suite green, build green.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk

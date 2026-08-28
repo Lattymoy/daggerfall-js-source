@@ -1081,15 +1081,23 @@ function render() {
     // it. The PAIR LAW survives the furniture: same remoteModel, same
     // remoteCol, same take/stow arms - only the wall between them
     // moved.
+    // PX19f (Mac: "you are ignoring the entire UI panel"): THE WHOLE
+    // ANATOMY, not one organ. The reference's skeleton adopted:
+    // CHARACTER REGION LEFT (the worn families with the doll - the
+    // big area), DETAILS RIGHT (the plaque column, where the concept
+    // hangs its Details), and the INVENTORY AS A BOTTOM DOCK - a tile
+    // GRID with its category tabs as a horizontal strip directly
+    // above it, exactly where Equipment/Consumables sit in the
+    // concept. The pair law is untouched: the loot rides its own
+    // window (PX19c).
+    const main = el('div', 'pack-main');
+    main.append(characterCol(), el('div', 'packstage'));
+    main.querySelector('.packstage').append(detailCol());
+    const dock = el('div', 'pack-dock');
     const lists = el('div', 'packlists');
     lists.append(listCol());
-    // PX16b: the reference's order left to right - the category
-    // spine, the names, then the SHOWCASE: the figure (the paper
-    // sprite viewer standing where Skyrim renders the item) with the
-    // detail plaque floating beside it.
-    grid.append(catsCol(), lists, el('div', 'packstage'));
-    const stage = grid.querySelector('.packstage');
-    stage.append(characterCol(), detailCol());
+    dock.append(catsCol(), lists);
+    grid.append(main, dock);
     win.append(grid);
     // PX16b: the reference's BOTTOM BAR - carry weight as a meter
     // (blood past four-fifths, the reference's red), gold beside it.
