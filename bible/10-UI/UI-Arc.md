@@ -6979,6 +6979,26 @@ surface is not shipped when it renders in a lab - it is shipped when
 every HOST a player can stand in reaches it; the flags were honest
 but flags do not pause a game, and three of them are paid today.
 
+PX17d (Mac: a better dial - detailed, cohesive, fade in, depth of
+field): THE ROSE, BUILT. The sketch became the piece: four corner
+gems frame the dial space (the family's one frame language), the
+center is a LAYERED KNOT - a wide open diamond over a brass diamond
+over a gold core - and each arm is a 2px rule with a small brass gem
+at its middle and an open terminal past the label; the chosen arm
+goes the gold pair, its rule brasses, its flanking diamonds light.
+A dim keys line teaches the hand at the bottom (Arrows choose /
+Enter opens / Tab closes). ACTIVATION: the dial FADES INTO VIEW over
+220ms in FIVE PIXEL STEPS - opacity and the depth-of-field together
+(backdrop-filter blur(7px) + saturate(82%): the world behind falls
+out of focus, the reference's own gesture) - steps(), not an ease,
+so the motion law holds; reduced-motion gets the end state at once;
+CLOSE STAYS INSTANT because the dial must be gone before the window
+it opens takes the keys. Probe note, honest: computed style confirms
+the blur applies, but a flat lab background on the same layer does
+not visibly soften in headless shots - the LIVE canvas behind it
+will, which is what backdrop-filter is for; Mac's data run owns the
+final blur radius. Suite green, build green.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk

@@ -74,20 +74,39 @@ export function mountPixelDial(hostEl, { entries = [], onClose = () => {} } = {}
 
   const root = el('div', 'px-dial');
   const rose = el('div', 'px-rose');
-  rose.append(el('span', 'px-knot', '\u25c6'));
-  rose.append(el('span', 'px-knot px-knot2', '\u25c7'));
+  // PX17d (Mac: a better drawing - detailed, cohesive): the rose is
+  // BUILT now, not sketched. Four corner gems frame the dial space
+  // (the pause window's own corners - one frame language); the
+  // center is a layered KNOT - a wide open diamond, a brass diamond,
+  // a gold core - and each arm ends in a terminal gem with a small
+  // mid-rule gem on the way, all the glyph, nothing rotated.
+  for (const c of ['tl', 'tr', 'bl', 'br']) rose.append(el('span', `px-gem px-corner px-${c}`));
+  const knot = el('div', 'px-knotwrap');
+  knot.append(el('span', 'px-knot px-knot-outer', '\u25c7'));
+  knot.append(el('span', 'px-knot px-knot-mid', '\u25c6'));
+  knot.append(el('span', 'px-knot px-knot-core', '\u25c6'));
+  rose.append(knot);
 
   const byDir = {};
   for (const entry of entries) {
     if (!DIRS[entry.dir] || byDir[entry.dir]) continue;   // one arm per direction, no dead arms
     byDir[entry.dir] = entry;
     const arm = el('button', `px-arm px-${entry.dir}`);
+    arm.append(el('span', 'px-term', '\u25c7'));   // the terminal at the rule's far end
     arm.append(el('span', 'px-c', '\u25c6'), document.createTextNode(entry.label));
     arm.onmouseenter = () => select(entry.dir);
     arm.onclick = () => commit(entry.dir);
     rose.append(arm);
   }
   root.append(rose);
+  // The keys, taught where they are used - small, dim, one line.
+  root.append(el('p', 'px-dialhint', 'Arrows choose \u00b7 Enter opens \u00b7 Tab closes'));
+  // PX17d: FADE INTO VIEW - one frame after mount the .on class lands
+  // and the stepped fade + the depth-of-field blur run together
+  // (steps(), the pixel cadence; reduced-motion gets the end state
+  // instantly). Close stays INSTANT: the dial must be gone before the
+  // window it opens takes the keys.
+  requestAnimationFrame(() => requestAnimationFrame(() => root.classList.add('on')));
 
   // The scrim is the close: a glance dismissed by looking away.
   root.onclick = (e) => { if (e.target === root) close(); };
