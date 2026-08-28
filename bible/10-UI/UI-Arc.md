@@ -6678,3 +6678,29 @@ escape; the lesson is that the two parsers disagree exactly where a
 template literal meets a CSS escape, and the build gate is the one
 that catches it (it did). Verified: suite green, build green, tap
 probe 26/26, focus gems live in the shot, zero page errors.
+
+PX13 (same day, Mac: redesign the new-game flow, complete parity):
+THE WIZARD WEARS THE PIXELS. Paint and ornament over U50's machine,
+which does not move - every stage, every back arm (Cancel on the
+first stage is still RaceSelectWindow's Cancelled + U27's unwind),
+the keyboard table, the walk-not-a-menu rail law, and the
+never-traps art fallbacks are the flow's and stay the flow's; the
+suite is the parity gate and stayed green. THE GROUND: the wizard
+stands on the living sky - drawPixelGround behind .shell.wizard,
+8fps under a mount-owned clock cleared by every repaint and by
+unmount (the same owner discipline as every listener in that
+unmount). THE RAIL IS A GEM SPINE: done stages a dim filled diamond,
+the current stage the gold pair, the road ahead an open one - the
+walk drawn as ornament, read at a glance; the phone stepstrip's segs
+squared and brassed. THE STAGES: every question sits in the wing
+rules; the big choices, the race fallback grid, the ten face frames,
+and the five reflex bands are pixel PLAQUES (2px border, translucent
+ink, gold hand); the name box is a pixel field with a gold focus;
+the action bar trades its hairline for the 2px rule. VERIFIED BY A
+LAB WALK on a stub flow (new ChargenFlow(careers, rng), the suite's
+own construction; no ARENA2 in this container, so the map and
+portraits exercise their fallback arms, which is itself coverage):
+race select -> Enter confirms (the flow's own no-description arm) ->
+gender -> class method -> class list -> Knight -> name, every state
+read from the flow itself, zero page errors. The chargen browser
+probe still needs ARENA2 (pre-existing, stash-verified in PX8).

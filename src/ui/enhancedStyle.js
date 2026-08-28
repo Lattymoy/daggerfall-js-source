@@ -1475,6 +1475,85 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .shell .tag { border: 2px solid rgba(125,116,96,0.4); color: rgb(243,239,44);
   text-shadow: 2px 2px 0 rgb(93,77,12); letter-spacing: 0.24em; }
 
+/* ── PX13: THE WIZARD WEARS THE PIXELS ──────────────────────────
+   The new-game walk on the same sky, in the same language - paint
+   over U50's machine, which does not move: every stage, every back
+   arm, the keyboard table and the walk-not-a-menu rail law are the
+   flow's and stay the flow's.
+   THE RAIL IS A GEM SPINE: done stages carry a dim filled diamond,
+   the current stage the gold pair, the road ahead an open one - the
+   walk drawn as ornament, read at a glance. */
+.wizard { background: transparent; }
+.wizard .railbtn .rk::before { content: '\\25c7  '; color: rgba(125,116,96,0.55);
+  font-size: 12px; }
+.wizard .railbtn.done .rk::before { content: '\\25c6  '; color: #7d7460; }
+.wizard .railbtn.on .rk::before { content: '\\25c6  '; color: rgb(243,239,44);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.wizard .railbtn.done { border-left-color: transparent; }
+.wizard .railbtn.done .rk { color: #7d7460; }
+.wizard .railbtn.todo .rk { color: rgba(125,116,96,0.5); }
+.wizard .stepstrip .seg { border-radius: 0; background: rgba(125,116,96,0.3); }
+.wizard .stepstrip .seg.on { background: var(--brass); }
+.wizard .steptext { letter-spacing: 0.14em; text-transform: uppercase; color: #7d7460;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+/* The stage questions take the window's wing rules - every screen
+   asks its one question between the same ornaments. */
+.wizard .choose h2 { font-family: inherit; font-weight: 400; font-size: 24px;
+  letter-spacing: 0.14em; text-indent: 0.14em; text-transform: uppercase;
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.wizard .choose h2::before, .wizard .choose h2::after { content: ''; flex: 0 0 90px; height: 2px; }
+.wizard .choose h2::before { background: linear-gradient(90deg, transparent, rgba(125,116,96,0.7)); }
+.wizard .choose h2::after { background: linear-gradient(90deg, rgba(125,116,96,0.7), transparent); }
+/* The big choices: pixel plaques - the About box's language at
+   decision size. */
+.wizard .bigbtn { border: 2px solid rgba(125,116,96,0.55); border-radius: 0;
+  background: rgba(10,12,17,0.55); color: #d8cfae; font-family: inherit;
+  letter-spacing: 0.1em; text-transform: uppercase; font-size: 16px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); transition: none; }
+.wizard .bigbtn:hover, .wizard .bigbtn:focus-visible { outline: none;
+  color: rgb(243,239,44); border-color: var(--brass); background: rgba(0,0,0,0.35);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.wizard .bigbtn.on { color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* The race grid and the map's fallback list ride the same plaque. */
+.wizard .racegrid button { border: 2px solid rgba(125,116,96,0.55); border-radius: 0;
+  background: rgba(10,12,17,0.55); color: #d8cfae; font-family: inherit;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); transition: none; }
+.wizard .racegrid button:hover, .wizard .racegrid button:focus-visible { outline: none;
+  color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* The name box: a pixel field - ink ground, 2px frame, gold focus. */
+.wizard .namebox { font-family: inherit; font-size: 20px; letter-spacing: 0.08em;
+  color: #d8cfae; background: rgba(0,0,0,0.4); border: 2px solid rgba(125,116,96,0.55);
+  border-radius: 0; padding: 10px 14px; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.wizard .namebox:focus { outline: none; border-color: var(--brass);
+  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* The ten faces: 2px frames, the chosen one gold - and the number
+   fallback reads as a plaque, not a hole. */
+.wizard .facegrid button { border: 2px solid rgba(125,116,96,0.55); border-radius: 0;
+  background: rgba(10,12,17,0.55); transition: none; }
+.wizard .facegrid button:hover, .wizard .facegrid button:focus-visible { outline: none; border-color: var(--brass); }
+.wizard .facegrid button.on { border-color: var(--brass);
+  outline: 2px solid rgba(192,138,62,0.5); outline-offset: 2px; }
+.wizard .facenum { font-family: inherit; color: #7d7460; font-size: 18px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+/* Reflexes: the five bands as plaques, the chosen one gold. */
+.wizard .reflexbtn { border: 2px solid rgba(125,116,96,0.55); border-radius: 0;
+  background: rgba(10,12,17,0.55); color: #d8cfae; font-family: inherit;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); transition: none; }
+.wizard .reflexbtn:hover, .wizard .reflexbtn:focus-visible { outline: none;
+  color: rgb(243,239,44); border-color: var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.wizard .reflexbtn.on { color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* The map's caption and the pending-stage words sit in pixel dim. */
+.wizard .mapnote { color: #7d7460; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+/* The action bar's Back/Cancel is the shell's own .act, already
+   repainted; the bar just loses its old hairline for the 2px rule. */
+.wizard .actionbar { border-top: 2px solid rgba(125,116,96,0.35); background: transparent; }
+
 /* ── PX9: SETTINGS INSIDE THE PAUSE WINDOW ──────────────────────
    The same paneSettings DOM, reflowed for the window: the category
    subrail becomes a wrapping chip strip on top, the rows scroll

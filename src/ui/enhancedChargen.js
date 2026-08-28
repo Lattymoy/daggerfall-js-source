@@ -52,6 +52,9 @@ import { NAME_MAX_CHARACTERS as NAME_MAX } from './chargen.js';
 import { traceProvinces, MAP_W, MAP_H, PROVINCE_NAMES } from './provinceMap.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { repaintKeepingScroll } from './domRepaint.js';
+// PX13: the wizard stands on the same living sky as every other
+// enhanced face - drawn by the one module, clocked by this mount.
+import { drawPixelGround } from './pixelGround.js';
 
 /** DFU's WizardStages, in the order the flow walks them, with the
  *  words a player reads. The flow's own state names are the keys.
@@ -857,8 +860,28 @@ function paint() {
 /** The rebuild itself. Wrapped rather than rewritten, so a tap on a
  *  stepper does not throw the skills list back to the top - see
  *  ui/domRepaint.js for why every repaint needs that. */
+let groundTimer = null;   // PX13: the wizard sky's 8fps clock - cleared by every repaint and by unmount
+
 function paintInto() {
+  if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }
   host.innerHTML = '';
+  // PX13: the sky behind the walk - same drawPixelGround, same 8fps
+  // cadence, same reduced-motion opt-out as the menu's faces. Every
+  // repaint replaces the canvas, so every repaint re-owns the clock.
+  {
+    const ground = document.createElement('canvas');
+    ground.className = 'px-ground';
+    const vw = () => globalThis.innerWidth ?? 1280;
+    const vh = () => globalThis.innerHeight ?? 720;
+    drawPixelGround(ground, vw(), vh(), 0);
+    const still = typeof globalThis.matchMedia === 'function' && globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!still) {
+      const t0 = Date.now();
+      groundTimer = setInterval(() => drawPixelGround(ground, vw(), vh(), (Date.now() - t0) / 1000), 125);
+    }
+    const vig = el('div', 'px-vignette');
+    host.append(ground, vig);
+  }
   const shell = el('div', 'shell wizard');
 
   const side = el('aside', 'side');
@@ -1068,7 +1091,9 @@ export function mountEnhancedChargen(hostEl, {
     unmount() {
       // EVERY LISTENER HAS AN OWNER. A window-level keydown outlives
       // the DOM it was mounted for, so a wizard torn down without this
-      // keeps eating keys for the whole session.
+      // keeps eating keys for the whole session. The sky's clock has
+      // the same owner for the same reason (PX13).
+      if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }
       if (keyHandler) globalThis.removeEventListener('keydown', keyHandler, { capture: true });
       if (lockHandler) document.removeEventListener('pointerlockchange', lockHandler);
       keyHandler = null;
