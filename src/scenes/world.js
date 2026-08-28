@@ -856,6 +856,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer, canvas, fetchBytes, playerEntity, palette,
     regionIndex: startLoc.regionIndex,
     onCrime: () => _crimeResponse(),   // G1: late-bound - the guards mount below
+    // QP1: GetBuildingList's questor half lands in the pool. Late-bound
+    // like onCrime - npcSession mounts below, and the first topics set
+    // (the streaming update) runs long after boot.
+    onBuildingList: (buildings) => npcSession.buildQuestorPool(buildings),
   });
   townTalk.ensureLoaded();
   preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: INFO00I0 warms at boot
@@ -1031,6 +1035,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     };
     townTalk.setTopics({
       exteriorBuildings: dfLocation.exterior.buildings,
+      // QP1: the questor pool's SetLayoutData identities - the same
+      // locationIndex npcSession's own guard reads (_questLoc()), and
+      // the mapId SetLayoutData stamps into every NPCData.
+      locationIndex: dfLocation.locationIndex ?? 0,
+      mapId: dfLocation.mapTableData?.mapId ?? 0,
       blocks: cur.locBlocks,
       doors: buildingDoors.filter((e) => e.pixelKey === key).map((e) => ({
         dfBlock: e.dfBlock, recordIndex: e.recordIndex,

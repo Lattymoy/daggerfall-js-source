@@ -275,16 +275,16 @@ combat line numbers below are refreshed with it.
 - `src/scenes/shared.js:419` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
 - `src/scenes/world.js:847` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:892` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:898` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1351` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
-- `src/scenes/world.js:2383` - FLAGGED in systems/healthStatus.js (macro producers pend).
-- `src/scenes/world.js:2476` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:2765` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:3126` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:3542` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:4050` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:4424` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:896` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:902` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1360` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
+- `src/scenes/world.js:2392` - FLAGGED in systems/healthStatus.js (macro producers pend).
+- `src/scenes/world.js:2485` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:2774` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:3135` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:3551` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:4059` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:4433` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:799` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
 - `src/scenes/worldModes.js:936` - FLAGGED to the crime arc, as the Ledger records.
 - `src/scenes/worldModes.js:1005` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
@@ -353,7 +353,6 @@ combat line numbers below are refreshed with it.
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
 - `src/systems/loot.js:228` - G4: THE VALUE IS OVERWRITTEN (:632). This had been FLAGGED here
 - `src/systems/lycanthropy.js:46` - FLAGGED, with the slice it waits on:
-- `src/systems/npcSession.js:628` - FLAGGED: no host calls this. C# populates the pool INSIDE
 - `src/systems/passiveSpecials.js:8` - arms FLAGGED since E1.
 - `src/systems/playerTorch.js:12` - arm is FLAGGED here rather than guessed - see the note below.
 - `src/systems/playerTorch.js:51` - FLAGGED (blocked on data this reference tree does not carry): the
