@@ -6979,6 +6979,56 @@ surface is not shipped when it renders in a lab - it is shipped when
 every HOST a player can stand in reaches it; the flags were honest
 but flags do not pause a game, and three of them are paid today.
 
+PX17d (Mac: a better dial - detailed, cohesive, fade in, depth of
+field): THE ROSE, BUILT. The sketch became the piece: four corner
+gems frame the dial space (the family's one frame language), the
+center is a LAYERED KNOT - a wide open diamond over a brass diamond
+over a gold core - and each arm is a 2px rule with a small brass gem
+at its middle and an open terminal past the label; the chosen arm
+goes the gold pair, its rule brasses, its flanking diamonds light.
+A dim keys line teaches the hand at the bottom (Arrows choose /
+Enter opens / Tab closes). ACTIVATION: the dial FADES INTO VIEW over
+220ms in FIVE PIXEL STEPS - opacity and the depth-of-field together
+(backdrop-filter blur(7px) + saturate(82%): the world behind falls
+out of focus, the reference's own gesture) - steps(), not an ease,
+so the motion law holds; reduced-motion gets the end state at once;
+CLOSE STAYS INSTANT because the dial must be gone before the window
+it opens takes the keys. Probe note, honest: computed style confirms
+the blur applies, but a flat lab background on the same layer does
+not visibly soften in headless shots - the LIVE canvas behind it
+will, which is what backdrop-filter is for; Mac's data run owns the
+final blur radius. Suite green, build green.
+
+PX18 (Mac: integrate the enhanced map): THE WORLD MAP JOINS THE
+FAMILY. Two moves. (1) THE DIAL'S MAP ARM in the world host opens
+THE WORLD MAP (U61's overworld - hudCtx.openTravelMap), Skyrim's own
+reading of the word; the local automap keeps its M key untouched,
+and the dungeon's Map arm stays its automap because there is no
+travelling underground. (2) THE CHROME: U61's screen already holds
+the right philosophy - the GL world IS the picture, the chrome
+floats - so the slice is paint alone: Pixelify across the ov*
+classes, the search field as the wizard's pixel input, region chips
+as gem-less pixel plaques with the gold pair on the active filter,
+results on 2px rules, and the TRAVEL CARD in the pack's plaque
+language verbatim (bone frame, offset dim outline, ruled title,
+key/value pairs on 2px rules, gold primary acts, ghost secondary) -
+one plaque, three windows. Every travel law (the ill-travel ask, the
+cost pairs, hold-to-skip) untouched beneath the paint. ONE
+SELF-INFLICTED CUT, recorded: the first CSS insert anchored on the
+FILE'S last template terminator instead of ENHANCED_CSS's own and
+amputated every export after the sheet - the suite caught it in
+eight failures inside a minute, and the re-insert anchors on the CSS
+template's terminator found FROM its export. Append blind to a file
+with more than one template and the tail pays. Suite 3949/0, build
+green.
+
+PX18b (Mac: the east and west arms touch the knot): MEASURED, NOT
+EYEBALLED - the four clearances read {n:12, s:12, e:-38, w:-39}, so
+the horizontal rules overran the knot by the width the vertical ones
+respected. 62px rules (34 on a phone) give all four the same 12px
+breath - re-measured {12,12,12,11} - and the mid gems recentred with
+them. Suite green, build green.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk

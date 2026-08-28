@@ -1564,42 +1564,93 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    keeps the shell's 0.38 breath and the dcard its own bordered card. */
 .wizard .stagebody { background: transparent; }
 
-/* ── PX14: THE DIAL ── the in-game compass rose. A glance, not a
-   room: 0.45 scrim, a knot of layered diamonds, four 2px arms with
-   the label at each end, the gold pair on the chosen one, states
-   SNAP. Every arm is a real >=44px button. */
-.px-dial { position: fixed; inset: 0; z-index: 14; background: rgba(10,12,17,0.45);
-  display: grid; place-items: center;
-  font-family: 'Pixelify Sans', monospace; -webkit-font-smoothing: none; color: #d8cfae; }
-.px-rose { position: relative; width: min(560px, 86vw); height: min(560px, 86vh); }
-.px-knot { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
-  color: var(--brass); font-size: 26px; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
-.px-knot2 { font-size: 44px; color: rgba(125,116,96,0.55); }
-/* The four arms: absolute at the rose's compass points, each a rule
-   drawn by its own ::before toward the knot. */
+/* ── PX14/PX17d: THE DIAL, BUILT ── the in-game compass rose with
+   its craft pass. FADE INTO VIEW: opacity and the depth-of-field
+   blur step in together over 220ms in five pixel steps - the world
+   behind falls out of focus (backdrop blur + a light desaturate),
+   which is the reference's own gesture; reduced-motion gets the end
+   state at once. CLOSE IS INSTANT - the dial must be gone before the
+   window it opens takes the keys. Everything else is the family:
+   corner gems framing the dial space, a layered diamond knot, 2px
+   arm rules with a mid gem and an open terminal, labels in the caps,
+   the chosen arm in the gold pair with its flanking diamonds. */
+.px-dial { position: fixed; inset: 0; z-index: 14; background: rgba(10,12,17,0.4);
+  display: grid; place-items: center; grid-template-rows: 1fr auto;
+  font-family: 'Pixelify Sans', monospace; -webkit-font-smoothing: none; color: #d8cfae;
+  opacity: 0; backdrop-filter: blur(0px) saturate(100%);
+  -webkit-backdrop-filter: blur(0px) saturate(100%);
+  transition: opacity 0.22s steps(5, end), backdrop-filter 0.22s steps(5, end),
+    -webkit-backdrop-filter 0.22s steps(5, end); }
+.px-dial.on { opacity: 1; backdrop-filter: blur(7px) saturate(82%);
+  -webkit-backdrop-filter: blur(7px) saturate(82%); }
+@media (prefers-reduced-motion: reduce) {
+  .px-dial { transition: none; opacity: 1; backdrop-filter: blur(7px) saturate(82%);
+    -webkit-backdrop-filter: blur(7px) saturate(82%); }
+}
+.px-rose { position: relative; width: min(560px, 86vw); height: min(500px, 78vh); }
+.px-rose .px-corner { position: absolute; }
+.px-rose .px-tl { left: -1px; top: -1px; transform: translate(-50%,-50%); }
+.px-rose .px-tr { right: -1px; top: -1px; transform: translate(50%,-50%); }
+.px-rose .px-bl { left: -1px; bottom: -1px; transform: translate(-50%,50%); }
+.px-rose .px-br { right: -1px; bottom: -1px; transform: translate(50%,50%); }
+/* THE KNOT: three layered diamonds, one center. */
+.px-knotwrap { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+.px-knot { position: absolute; left: 0; top: 0; transform: translate(-50%,-50%);
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-knot-outer { font-size: 64px; color: rgba(125,116,96,0.4); }
+.px-knot-mid { font-size: 34px; color: var(--brass); }
+.px-knot-core { font-size: 14px; color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* THE ARMS: a 2px rule from the knot, a small gem at its middle, an
+   open terminal past the label. */
 .px-arm { position: absolute; font: inherit; font-size: 22px; letter-spacing: 0.18em;
-  text-indent: 0.18em; text-transform: uppercase; color: #d8cfae; background: none;
+  text-indent: 0.18em; text-transform: uppercase; color: #c5bda2; background: none;
   border: 0; cursor: pointer; min-height: 44px; min-width: 44px; padding: 8px 14px;
   display: flex; align-items: center; gap: 12px;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.85); transition: none; }
 .px-arm .px-c { font-size: 13px; color: rgb(243,239,44); visibility: hidden;
   text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-arm .px-term { font-size: 11px; color: rgba(125,116,96,0.7);
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-arm::before { content: ''; position: absolute; background: rgba(125,116,96,0.55); }
+.px-arm::after { content: '\\25c6'; position: absolute; font-size: 9px;
+  color: rgba(192,138,62,0.8); text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .px-arm.on, .px-arm:hover, .px-arm:focus-visible { outline: none;
   color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
 .px-arm.on .px-c, .px-arm:hover .px-c, .px-arm:focus-visible .px-c { visibility: visible; }
-.px-arm::before { content: ''; position: absolute; background: rgba(125,116,96,0.55); }
-.px-n { left: 50%; top: 6%; transform: translateX(-50%); }
-.px-n::before { left: 50%; top: 100%; width: 2px; height: 90px; transform: translateX(-50%); }
-.px-s { left: 50%; bottom: 6%; transform: translateX(-50%); }
-.px-s::before { left: 50%; bottom: 100%; width: 2px; height: 90px; transform: translateX(-50%); }
-.px-e { right: 4%; top: 50%; transform: translateY(-50%); }
-.px-e::before { right: 100%; top: 50%; height: 2px; width: 110px; transform: translateY(-50%); }
-.px-w { left: 4%; top: 50%; transform: translateY(-50%); }
-.px-w::before { left: 100%; top: 50%; height: 2px; width: 110px; transform: translateY(-50%); }
+.px-arm.on .px-term, .px-arm:hover .px-term { color: var(--brass); }
+.px-arm.on::before, .px-arm:hover::before { background: var(--brass); }
+.px-n { left: 50%; top: 5%; transform: translateX(-50%); flex-direction: column; gap: 6px; }
+.px-n .px-term { order: -1; }
+.px-n::before { left: 50%; top: 100%; width: 2px; height: 92px; transform: translateX(-50%); }
+.px-n::after { left: 50%; top: calc(100% + 42px); transform: translate(-50%,-50%); }
+.px-s { left: 50%; bottom: 5%; transform: translateX(-50%); flex-direction: column-reverse; gap: 6px; }
+.px-s .px-term { order: -1; }
+.px-s::before { left: 50%; bottom: 100%; width: 2px; height: 92px; transform: translateX(-50%); }
+.px-s::after { left: 50%; bottom: calc(100% + 42px); transform: translate(-50%,50%); }
+.px-e { right: 3%; top: 50%; transform: translateY(-50%); flex-direction: row-reverse; }
+/* PX18b (Mac): the horizontal rules stopped ON the knot while the
+   vertical ones stopped short - measured -38px vs +12px clearance.
+   62px gives east and west the same 12px breath as north and south;
+   the mid gems recentre with them. */
+.px-e::before { right: 100%; top: 50%; height: 2px; width: 62px; transform: translateY(-50%); }
+.px-e::after { right: calc(100% + 31px); top: 50%; transform: translate(50%,-50%); }
+.px-w { left: 3%; top: 50%; transform: translateY(-50%); }
+.px-w .px-term { order: -1; }
+.px-w::before { left: 100%; top: 50%; height: 2px; width: 62px; transform: translateY(-50%); }
+.px-w::after { left: calc(100% + 31px); top: 50%; transform: translate(-50%,-50%); }
+/* THE HINT: the keys, taught where they are used. */
+.px-dialhint { color: #7d7460; font-size: 13px; letter-spacing: 0.2em; text-indent: 0.2em;
+  text-transform: uppercase; margin: 0 0 18px; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 @media (max-width: 480px) {
   .px-arm { font-size: 17px; }
-  .px-n::before, .px-s::before { height: 56px; }
-  .px-e::before, .px-w::before { width: 64px; }
+  .px-n::before, .px-s::before { height: 58px; }
+  .px-e::before, .px-w::before { width: 34px; }
+  .px-n::after { top: calc(100% + 26px); }
+  .px-s::after { bottom: calc(100% + 26px); }
+  .px-e::after { right: calc(100% + 17px); }
+  .px-w::after { left: calc(100% + 17px); }
+  .px-knot-outer { font-size: 46px; }
+  .px-knot-mid { font-size: 26px; }
 }
 
 /* ── PX16b: THE PACK, THE REFERENCE READ PROPERLY ──────────────
@@ -1817,6 +1868,63 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .px-setwrap .dcard p { color: #c5bda2; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .px-setwrap .dcard code { font-family: inherit; border: 2px solid rgba(125,116,96,0.4);
   border-radius: 0; background: rgba(0,0,0,0.35); letter-spacing: 0.06em; }
+
+/* ── PX18: THE WORLD MAP WEARS THE PIXELS ── U61's overworld screen
+   (the GL world IS the picture; the chrome floats over it) joins the
+   family: Pixelify chrome, 2px frames, the gold pair on the hand,
+   glass panels at the established scrims, the travel card in the
+   pack's plaque language. The GL frame and every travel law
+   underneath are untouched. */
+#enhanced-travelmap, .ovroot { font-family: 'Pixelify Sans', monospace;
+  -webkit-font-smoothing: none; color: #d8cfae; }
+.ovroot button { transition: none; border-radius: 0; }
+.ovtop { background: rgba(10,12,17,0.45); border-bottom: 2px solid rgba(125,116,96,0.35); }
+.ovlabel { font-family: inherit; letter-spacing: 0.18em; text-indent: 0.18em;
+  text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.ovsearch input { font-family: inherit; font-size: 16px; letter-spacing: 0.06em;
+  color: #d8cfae; background: rgba(0,0,0,0.4); border: 2px solid rgba(125,116,96,0.55);
+  border-radius: 0; padding: 8px 12px; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.ovsearch input:focus { outline: none; border-color: var(--brass); color: rgb(243,239,44);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.ovresult { font-family: inherit; border: 0; border-bottom: 2px solid rgba(125,116,96,0.3);
+  background: rgba(10,12,17,0.72); color: #c5bda2; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.ovresult:hover, .ovresult:focus-visible { outline: none; color: rgb(243,239,44);
+  background: rgba(0,0,0,0.5); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.ovresult-region { color: #7d7460; }
+.ovchip { font-family: inherit; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: #a89f88; background: rgba(10,12,17,0.45); border: 2px solid rgba(125,116,96,0.4);
+  border-radius: 0; min-height: 44px; padding: 6px 12px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.ovchip:hover, .ovchip:focus-visible { outline: none; color: rgb(243,239,44);
+  border-color: var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.ovchip.on { color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.ovcard { position: relative; border: 2px solid rgba(216,207,174,0.7);
+  outline: 2px solid rgba(125,116,96,0.35); outline-offset: 4px; border-radius: 0;
+  background: rgba(10,12,17,0.72); font-family: inherit;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.ovcard h3, .ovcard h2 { font-family: inherit; font-weight: 400; letter-spacing: 0.14em;
+  text-indent: 0.14em; text-transform: uppercase; text-align: center;
+  border-bottom: 2px solid rgba(125,116,96,0.5); padding-bottom: 8px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.ovmeta { color: #7d7460; font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase;
+  text-align: center; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.ovprompt, .ovnotice { color: #c5bda2; text-align: center; font-size: 15px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.ovpair { display: flex; justify-content: space-between; gap: 14px;
+  border-bottom: 2px solid rgba(125,116,96,0.3); min-height: 32px; align-items: baseline; }
+.ovpair-k { color: #7d7460; font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.ovacts { display: flex; justify-content: center; gap: 10px; }
+.ovroot .act { border: 2px solid var(--brass); border-radius: 0; background: none;
+  color: rgb(243,239,44); font-family: inherit; letter-spacing: 0.14em; text-transform: uppercase;
+  min-height: 44px; padding: 8px 16px; text-shadow: 2px 2px 0 rgb(93,77,12); }
+.ovroot .act.ovghost { border-color: rgba(125,116,96,0.55); color: #d8cfae;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.ovroot .act:hover, .ovroot .act:focus-visible { outline: none; color: rgb(243,239,44);
+  border-color: var(--brass); background: rgba(0,0,0,0.35); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.ovskip, .ovhint { color: #7d7460; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 `;
 
 const STYLE_ID = 'dagger-enhanced-style';

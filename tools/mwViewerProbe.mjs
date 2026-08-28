@@ -72,6 +72,43 @@ await page.waitForTimeout(300);
 const status2 = await page.textContent('#status');
 ok(/skinned \(bind-pose preview\)/.test(status2), 'skinned fixture loads as bind-pose preview');
 
+// SLICE 3: skeleton + keyframes, the deterministic way - seek the Move
+// group to its end and read the CPU-skinned verts back. Hand-computed:
+// Bone1 slides z 1->2, Bone0 turns 90deg about Z; v1 (1,0,0) lands at
+// (0,1,0), v3 (1,0,1) lands at (1,0,2), v2 blends to z=1.6.
+await page.selectOption('#meshsel', 'meshes/fixture/animated.nif');
+await page.waitForTimeout(200);
+const status3 = await page.textContent('#status');
+ok(/skinned \(bind-pose preview\)/.test(status3), 'animated fixture loads with skin');
+await page.evaluate(() => window.__mwviewerSetAnimTime(1.5));
+await page.waitForTimeout(200);
+const posed = await page.evaluate(() => window.__mwviewerSkinnedPositions());
+const nearp = (i, e) => posed && Math.abs(posed[i] - e) < 1e-3;
+ok(
+  nearp(3, 0) && nearp(4, 1) && nearp(5, 0),
+  `v1 rotated to (0,1,0), got (${posed && posed.slice(3, 6).map((v) => v.toFixed(3))})`,
+);
+ok(
+  nearp(9, 1) && nearp(10, 0) && nearp(11, 2),
+  `v3 translated to (1,0,2), got (${posed && posed.slice(9, 12).map((v) => v.toFixed(3))})`,
+);
+ok(nearp(8, 1.6), `v2 blended to z=1.6, got ${posed && posed[8].toFixed(3)}`);
+await page.evaluate(() => window.__mwviewerSetAnimTime(0.5));
+await page.waitForTimeout(200);
+const rest = await page.evaluate(() => window.__mwviewerSkinnedPositions());
+ok(rest && Math.abs(rest[11] - 1) < 1e-3, 'seek back to group start restores bind z');
+
+// External .kf overrides inline tracks: Bone1 rides to z=3 at its end.
+await page.setInputFiles('#file', 'test/fixtures/mw/xfixture.kf');
+await page.waitForTimeout(300);
+await page.evaluate(() => window.__mwviewerSetAnimTime(1.0));
+await page.waitForTimeout(200);
+const kfPosed = await page.evaluate(() => window.__mwviewerSkinnedPositions());
+ok(
+  kfPosed && Math.abs(kfPosed[11] - 3) < 1e-3,
+  `dropped .kf drives Bone1 to z=3, got ${kfPosed && kfPosed[11].toFixed(3)}`,
+);
+
 ok(crashes.length === 0, `no pageerrors${crashes.length ? `: ${crashes[0]}` : ''}`);
 
 await browser.close();

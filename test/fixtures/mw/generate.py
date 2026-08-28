@@ -116,7 +116,13 @@ def make_mesh():
     write_nif(HERE / "mesh.nif", [root])
 
 
-def make_skinned():
+def build_skinned_rig():
+    # Shared by skinned.nif and animated.nif: root, two bones (Bone1 at
+    # z=1), a 4-vert strip skinned to them. The per-bone NiSkinData
+    # transform is the INVERSE BIND (mesh space -> bone space), so Bone_i
+    # carries translation z = -i; at rest the skinning identity
+    # world(bone) o invBind collapses to I and the authored verts come
+    # back exactly - the round-trip test/mwanim.test.js pins.
     root = NifFormat.NiNode()
     root.name = b"SkinRoot"
     ident(root.rotation)
@@ -168,9 +174,10 @@ def make_skinned():
         [(0, 1.0), (1, 1.0), (2, 0.4)],   # Bone0
         [(2, 0.6), (3, 1.0)],             # Bone1
     ]
-    for bl, wl in zip(sd.bone_list, weights):
+    for i, (bl, wl) in enumerate(zip(sd.bone_list, weights)):
         ident(bl.skin_transform.rotation)
         bl.skin_transform.scale = 1.0
+        bl.skin_transform.translation.z = -float(i)  # inverse bind
         bl.bounding_sphere_radius = 1.0
         bl.num_vertices = len(wl)
         bl.vertex_weights.update_size()
@@ -178,8 +185,99 @@ def make_skinned():
             vw.index = idx
             vw.weight = w
     tri.skin_instance = si
+    return root, bones
 
+
+def make_skinned():
+    root, _bones = build_skinned_rig()
     write_nif(HERE / "skinned.nif", [root])
+
+
+def make_keyframe_data(rot_keys=None, trans_keys=None):
+    kd = NifFormat.NiKeyframeData()
+    if rot_keys:
+        kd.num_rotation_keys = len(rot_keys)
+        kd.rotation_type = 1  # linear quaternions
+        kd.quaternion_keys.update_size()
+        for k, (t, (w, x, y, z)) in zip(kd.quaternion_keys, rot_keys):
+            k.time = t
+            k.value.w, k.value.x, k.value.y, k.value.z = w, x, y, z
+    if trans_keys:
+        kd.translations.num_keys = len(trans_keys)
+        kd.translations.interpolation = 1  # linear
+        kd.translations.keys.update_size()
+        for k, (t, (x, y, z)) in zip(kd.translations.keys, trans_keys):
+            k.time = t
+            k.value.x, k.value.y, k.value.z = x, y, z
+    return kd
+
+
+def make_keyframe_controller(target, kd, start, stop):
+    kc = NifFormat.NiKeyframeController()
+    kc.flags = 8  # active
+    kc.frequency = 1.0
+    kc.phase = 0.0
+    kc.start_time = start
+    kc.stop_time = stop
+    kc.target = target
+    kc.data = kd
+    return kc
+
+
+ROT90Z = (0.7071067811865476, 0.0, 0.0, 0.7071067811865476)  # w,x,y,z
+
+
+def make_animated():
+    # skinned rig + inline controllers + text-key groups, the way retail
+    # base_anim.nif carries its animations. Two groups: Idle holds still,
+    # Move slides Bone1 up one unit while Bone0 turns 90 deg about Z.
+    root, bones = build_skinned_rig()
+
+    tke = NifFormat.NiTextKeyExtraData()
+    tke.num_text_keys = 4
+    tke.text_keys.update_size()
+    for k, (t, txt) in zip(
+        tke.text_keys,
+        [(0.0, b"Idle: Start"), (0.5, b"Idle: Stop"), (0.5, b"Move: Start"), (1.5, b"Move: Stop")],
+    ):
+        k.time = t
+        k.value = txt
+    root.extra_data = tke
+
+    kd0 = make_keyframe_data(rot_keys=[(0.5, (1.0, 0.0, 0.0, 0.0)), (1.5, ROT90Z)])
+    bones[0].controller = make_keyframe_controller(bones[0], kd0, 0.0, 1.5)
+    kd1 = make_keyframe_data(trans_keys=[(0.5, (0.0, 0.0, 1.0)), (1.5, (0.0, 0.0, 2.0))])
+    bones[1].controller = make_keyframe_controller(bones[1], kd1, 0.0, 1.5)
+
+    write_nif(HERE / "animated.nif", [root])
+
+
+def make_kf():
+    # External keyframes, the xbase_anim.kf shape: NiSequenceStreamHelper
+    # whose extra chain is [text keys, one NiStringExtraData per
+    # controller naming its bone] and whose controller chain pairs with
+    # those names in order.
+    helper = NifFormat.NiSequenceStreamHelper()
+    helper.name = b"xfixture"
+
+    tke = NifFormat.NiTextKeyExtraData()
+    tke.num_text_keys = 2
+    tke.text_keys.update_size()
+    for k, (t, txt) in zip(tke.text_keys, [(0.0, b"Move: Start"), (1.0, b"Move: Stop")]):
+        k.time = t
+        k.value = txt
+
+    sed = NifFormat.NiStringExtraData()
+    sed.string_data = b"Bone1"
+    sed.bytes_remaining = 4 + len(b"Bone1")
+
+    helper.extra_data = tke
+    tke.next_extra_data = sed
+
+    kd = make_keyframe_data(trans_keys=[(0.0, (0.0, 0.0, 1.0)), (1.0, (0.0, 0.0, 3.0))])
+    helper.controller = make_keyframe_controller(None, kd, 0.0, 1.0)
+
+    write_nif(HERE / "xfixture.kf", [helper])
 
 
 def make_dds():
@@ -276,6 +374,8 @@ def make_bsa():
         (b"meshes\\fixture\\Mesh.NIF", (HERE / "mesh.nif").read_bytes()),
         (b"meshes\\fixture\\skinned.nif", (HERE / "skinned.nif").read_bytes()),
         (b"meshes\\fixture\\plain.nif", (HERE / "plain.nif").read_bytes()),
+        (b"meshes\\fixture\\animated.nif", (HERE / "animated.nif").read_bytes()),
+        (b"meshes\\fixture\\xfixture.kf", (HERE / "xfixture.kf").read_bytes()),
         (b"textures\\fixture.dds", (HERE / "fixture.dds").read_bytes()),
     ]
     name_buf = b""
@@ -305,4 +405,6 @@ if __name__ == "__main__":
     make_dds()
     make_skinned()
     make_plain()
+    make_animated()
+    make_kf()
     make_bsa()

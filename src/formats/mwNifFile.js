@@ -110,6 +110,50 @@ class NifStream {
 
 // --- shared bases -----------------------------------------------------------
 
+/** NIF key interpolation types. */
+export const KEY_TYPE = Object.freeze({
+  linear: 1,
+  quadratic: 2,
+  tbc: 3,
+  xyz: 4,
+  constant: 5,
+});
+
+/** NiTimeController base: chain link, timing, and the target it drives. */
+function readTimeController(s, rec) {
+  rec.next = s.ref();
+  rec.flags = s.u16();
+  rec.frequency = s.f32();
+  rec.phase = s.f32();
+  rec.startTime = s.f32();
+  rec.stopTime = s.f32();
+  rec.target = s.ref();
+}
+
+/**
+ * KeyGroup<T> of `dim`-component float values: uint32 count, then (only
+ * when count > 0) uint32 interpolation type and the keys. Quadratic keys
+ * carry forward/backward tangents; TBC keys carry tension/continuity/bias.
+ */
+function readKeyGroup(s, dim) {
+  const count = s.u32();
+  const group = { type: 0, keys: [] };
+  if (count === 0) return group;
+  group.type = s.u32();
+  const val = () => (dim === 1 ? s.f32() : s.f32Array(dim));
+  for (let i = 0; i < count; i++) {
+    const key = { time: s.f32(), value: val() };
+    if (group.type === KEY_TYPE.quadratic) {
+      key.forward = val();
+      key.backward = val();
+    } else if (group.type === KEY_TYPE.tbc) {
+      key.tbc = [s.f32(), s.f32(), s.f32()];
+    }
+    group.keys.push(key);
+  }
+  return group;
+}
+
 /** NiObjectNET: name, extra-data chain head, controller chain head. */
 function readObjectNET(s, rec) {
   rec.name = s.string();
@@ -341,6 +385,43 @@ const READERS = {
     const numKeys = s.u32();
     rec.keys = [];
     for (let i = 0; i < numKeys; i++) rec.keys.push({ time: s.f32(), text: s.string() });
+  },
+
+  // --- animation (slice 3) ---
+  // NiSequenceStreamHelper is the root of an external .kf: its extra
+  // chain holds the text keys then one NiStringExtraData per controller
+  // naming the target bone; its controller chain holds the keyframe
+  // controllers in the same order.
+  NiSequenceStreamHelper(s, rec) {
+    readObjectNET(s, rec);
+  },
+
+  NiKeyframeController(s, rec) {
+    readTimeController(s, rec);
+    rec.data = s.ref();
+  },
+
+  NiKeyframeData(s, rec) {
+    const numRot = s.u32();
+    rec.rotationType = 0;
+    rec.rotationKeys = [];
+    rec.xyzRotations = null;
+    if (numRot > 0) {
+      rec.rotationType = s.u32();
+      if (rec.rotationType === KEY_TYPE.xyz) {
+        // MW-era XYZ: axis order, then one float key group per axis.
+        rec.axisOrder = s.u32();
+        rec.xyzRotations = [readKeyGroup(s, 1), readKeyGroup(s, 1), readKeyGroup(s, 1)];
+      } else {
+        for (let i = 0; i < numRot; i++) {
+          const key = { time: s.f32(), value: [s.f32(), s.f32(), s.f32(), s.f32()] }; // w,x,y,z
+          if (rec.rotationType === KEY_TYPE.tbc) key.tbc = [s.f32(), s.f32(), s.f32()];
+          rec.rotationKeys.push(key);
+        }
+      }
+    }
+    rec.translations = readKeyGroup(s, 3);
+    rec.scales = readKeyGroup(s, 1);
   },
 };
 
