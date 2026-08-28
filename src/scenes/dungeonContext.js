@@ -134,6 +134,9 @@ import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySou
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { activeMemberships } from '../systems/guilds.js';   // F117
 import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   // F117: Stendarr
+import { pickActivatable } from '../player/activate.js';   // PX21c: the hover runs the take's own pick
+import { showLootHover, destroyLootHover } from '../ui/lootHover.js';   // PX21c
+import { isEnhanced } from '../systems/uiSkin.js';
 
 
 
@@ -999,7 +1002,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     for (const l of lines) hudText.add(l);
   };
   actions.onTrespass = () => console.warn('[action] trespass check fired (MakeEnemiesHostile) - foes are hostile-on-sight; passive teams pend the faction model');
-  let lastPlayerFeet = null;   // S11: the save position
+  let lastPlayerFeet = null;
+  let _hoverAt = 0;   // PX21c: the plaque's 10Hz cadence   // S11: the save position
   let debugHud = false;   // F8 diagnostics
   let _motorState = '';
   let _motorYaw = 0;   // A1: the automap window's player-arrow heading
@@ -2469,6 +2473,25 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // clock lives here and no host can forget it. Real dt, and it ENDS
     // (a finished splash frees its batch inside tick).
     hitEffects.tick(dt);
+    // PX21c: THE HOVER PLAQUE, from the frame function both dungeon
+    // hosts already call - the splash clock's reasoning, one slice on.
+    // It runs the SAME pick the take runs, at 10Hz rather than every
+    // frame (a raycast over every pile and corpse is not free, and a
+    // plaque that answers within a tenth of a second answers instantly
+    // to a player). Enhanced skin only: the classic HUD says nothing
+    // about a pile until you open it, which is Daggerfall's own answer.
+    _hoverAt += dt;
+    if (_hoverAt >= 0.1) {
+      _hoverAt = 0;
+      let key = null;
+      if (isEnhanced() && eye) {
+        const dir = [-view[2], -view[6], -view[10]];
+        const k = pickActivatable(eye, dir, api.lootTargets(), collider);
+        if (k && (k.startsWith('loot:') || k.startsWith('corpse:') || k.startsWith('droppedLoot:'))) key = k;
+      }
+      showLootHover(key, key ? api.lootContents(key) : null,
+        key?.startsWith('corpse:') ? 'Remains' : 'Loot');
+    }
     const _mobileBatches = [];   // C11: the frame's live sprite-mobile quads
     if (playerFeet) lastPlayerFeet = [...playerFeet];
     // B1: QuestResourceBehaviour.Update every frame the object lives
@@ -2969,7 +2992,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let automapArrow = null;
   try { automapArrow = await getGpuMesh(99900); if (automapArrow) await ensureRemap(99900); } catch { automapArrow = null; }
 
-  return {
+  const api = {
     // AUDIT 19 / 1:1: SelectCurrentSong's dungeon arm seeds DFRandom with
     // the dungeon record header's Unknown2 XOR the region byte
     // (SongManager.cs:346-358). An earlier pass flagged this as
@@ -3557,6 +3580,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       targets.push(...droppedLoot.lootTargets());   // U26: the player's own drops
       return targets;
     },
+    /** PX21c: what a loot key HOLDS, without opening it - the same
+     *  three kinds takeLoot resolves, read-only, for the hover plaque.
+     *  It shares takeLoot's own key vocabulary rather than inventing a
+     *  second one, so what the plaque names is what the button opens. */
+    lootContents(key) {
+      const [kind, iStr] = key.split(':');
+      const i = Number(iStr);
+      if (kind === 'loot') return lootPiles[i]?.batch ? (lootPiles[i].items ?? []) : null;
+      if (kind === 'corpse') { const f = foes[i]; return f?.dead ? (f.entity?.items ?? []) : null; }
+      if (kind === 'droppedLoot') return droppedLoot.contents?.(key) ?? null;
+      return null;
+    },
     /** U26: PlayerActivate's loot handling, verbatim in shape - the
      *  container becomes the inventory window's REMOTE TARGET and the
      *  player takes what they want, rather than the whole pile
@@ -3599,6 +3634,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     colliderTris,
     destroy() {
       _ctxDead = true;   // NT1 (F213): before anything frees - the warm-window continuations read it
+      // PX21c: the plaque leaves with the host that raised it - AFTER
+      // the latch, which NT1 pins as the first act of this function.
+      destroyLootHover();
       // A1: OnTransitionToDungeonExterior's automap half - marks the
       // player outside and, at AutomapNumberOfDungeons = 0, forgets
       // the map the moment you leave (Automap.cs:2530-2534).
@@ -3632,4 +3670,5 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       setPassiveSpecialsHost(_prevPassiveHost);
     },
   };
+  return api;
 }

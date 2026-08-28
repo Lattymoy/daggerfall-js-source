@@ -40,6 +40,21 @@
   <button id="bg">bg</button>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- MWAUDIT: SAY SO WHEN THE CDN IS NOT THERE. three.js is fetched at
+     runtime, and the viewer's whole render path is built on it - so
+     offline, on a blocked network, or with the CDN down, every module
+     below threw "THREE is not defined" into the console and the page
+     just sat there reading "no data loaded", which is a lie: the data
+     was never the problem. The port's never-traps rule is that a
+     surface which cannot do its job says why. -->
+<script>
+  if (typeof THREE === 'undefined') {
+    document.getElementById('status').textContent =
+      'three.js did not load - this page fetches it from cdnjs at runtime, so it needs a network. '
+      + 'Your Morrowind files are fine and nothing was uploaded.';
+    document.getElementById('file')?.setAttribute('disabled', 'disabled');
+  }
+</script>
 <script type="module" src="/src/tools/mwViewer.js"></script>
 </body>
 </html>

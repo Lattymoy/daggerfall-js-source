@@ -31,6 +31,7 @@
 import {
   loadMorrowindArchives,
   hasStoredMorrowind,
+  loadMorrowindEsm,
 } from '../scenes/dataSource.js';
 import { normalizeBsaPath } from '../formats/mwBsaFile.js';
 import { parseNif } from '../formats/mwNifFile.js';
@@ -39,6 +40,7 @@ import { decodeDds } from '../formats/mwDdsFile.js';
 import {
   collectTextKeys,
   parseAnimGroups,
+  findAnimGroup,
   extractTracks,
   sampleTrack,
 } from '../formats/mwAnim.js';
@@ -50,6 +52,7 @@ import {
   accumRootRef,
 } from '../formats/mwSkin.js';
 import { bindPart, attachmentTransform } from '../formats/mwCharacter.js';
+import { indexSkins, firstPersonArmParts, mwRaceId } from '../formats/mwNpc.js';   // MW7: the arms themselves
 import { WEAPON_TYPES } from './fpsWeapon.js';
 import { mwFpPreference } from './mwFpPref.js';
 
@@ -60,13 +63,28 @@ export function mwWeaponClass(weaponType) {
   switch (weaponType) {
     case WEAPON_TYPES.Bow:
       return 'bow';
+    // MWAUDIT: THESE ARE WIDE WEAPONS, not close ones. Morrowind
+    // splits two-handed into CLOSE (weapontwohand / idle2c - the
+    // two-handed long blades) and WIDE (weapontwowide / idle2w - axes,
+    // war hammers, staves and spears), and all three of Daggerfall's
+    // two-handers here are the wide kind. They were mapped to the
+    // CLOSE grip, which is why this module's own header has listed
+    // Idle2w among the four idle groups since slice 5 while the table
+    // below never once reached it.
+    //
+    // INFERRED FROM MORROWIND'S TAXONOMY, NOT VERIFIED AGAINST RETAIL
+    // DATA - there is no Morrowind install in this repo to read the
+    // group names out of. It is safe to be wrong: an absent group
+    // falls through idleFallback to the class idle and then to a
+    // generic one, so a bad guess costs a grip, never a frozen rig.
+    // Worth a look with real data attached.
     case WEAPON_TYPES.Staff:
     case WEAPON_TYPES.Staff_Magic:
     case WEAPON_TYPES.Warhammer:
     case WEAPON_TYPES.Warhammer_Magic:
     case WEAPON_TYPES.Battleaxe:
     case WEAPON_TYPES.Battleaxe_Magic:
-      return 'twohand';
+      return 'twowide';
     case WEAPON_TYPES.Melee:
     case WEAPON_TYPES.Werecreature:
       return 'handtohand';
@@ -77,11 +95,22 @@ export function mwWeaponClass(weaponType) {
   }
 }
 
+// MWAUDIT: `twohand` (idle2c / WeaponTwoHand) is Morrowind's
+// two-handed CLOSE grip and NO Daggerfall weapon type can reach it -
+// weaponTypeForItem folds Claymore and Dai-Katana into LongBlade
+// beside Broadsword, because Daggerfall's own first-person art draws
+// no separate two-handed blade. The row stays because it is the
+// correct name for that grip the moment anything can ask for it, and
+// saying so is better than a table that looks arbitrary.
 const CLASS_GROUPS = Object.freeze({
   onehand: { idle: 'Idle1h', attack: 'WeaponOneHand' },
   twohand: { idle: 'Idle2c', attack: 'WeaponTwoHand' },
+  twowide: { idle: 'Idle2w', attack: 'WeaponTwoWide' },
   handtohand: { idle: 'Idle', attack: 'HandToHand' },
-  bow: { idle: 'Idle1h', attack: 'BowAndArrow' },
+  // The header has always named IdleBow; the table asked for Idle1h.
+  // Ask for the specific one and let idleFallback reach Idle1h when a
+  // file does not carry it - that is what the chain is for.
+  bow: { idle: 'IdleBow', attack: 'BowAndArrow' },
   none: { idle: 'Idle', attack: null },
 });
 
@@ -190,8 +219,8 @@ function param(name) {
  * attached, and the meshes load. `renderer` is the game renderer -
  * its gl uploads the stream texture, its drawScreenQuad composites.
  */
-export async function createMwFpView(renderer) {
-  const inert = { active: () => false, update: () => {}, draw: () => {}, status: 'off' };
+export async function createMwFpView(renderer, playerEntity = null) {
+  const inert = { active: () => false, update: () => {}, draw: () => {}, dispose: () => {}, status: 'off' };
   if (!mwFpPreference()) return inert;
   if (!(await hasStoredMorrowind())) {
     window.__mwfp = { ready: false, status: 'no morrowind data attached' };
@@ -235,7 +264,14 @@ export async function createMwFpView(renderer) {
       const kfTracks = extractTracks(kfNif);
       if (kfTracks.size) {
         tracks = kfTracks;
-        groups = parseAnimGroups(collectTextKeys(kfNif));
+        // MWAUDIT: the groups follow the tracks ONLY IF THE KF HAS
+        // ANY. Retail's xbase_anim.1st.kf carries both, so this arm is
+        // normally a straight swap - but a KF with tracks and no text
+        // keys used to overwrite the base's groups with an EMPTY map,
+        // which leaves a rig that cannot name a single clip. Keeping
+        // the base's groups is strictly better than keeping none.
+        const kfGroups = parseAnimGroups(collectTextKeys(kfNif));
+        if (kfGroups.size) groups = kfGroups;
       }
     } catch (err) {
       status(`${kfName}: ${err.message}`);
@@ -243,7 +279,51 @@ export async function createMwFpView(renderer) {
   }
 
   const skinnedSets = [];
-  const attachedSets = []; // {batches, attachRef, transforms}
+  const attachedSets = []; // {batches, attachRef}
+
+  /**
+   * MW8: a body part is EITHER skinned - carrying its own bone weights
+   * - OR a rigid mesh the engine HANGS OFF A BONE, and Morrowind's
+   * arms are overwhelmingly the latter: one small mesh per limb,
+   * attached at the left bone and again at the right. bindPart has
+   * always answered both halves; every caller here took `.skinned` and
+   * dropped `.attached` on the floor, so a rigid part was parsed,
+   * bound, and thrown away. That is why MW7 did not fix the reported
+   * sprite: the arms loaded and vanished, skinnedSets stayed empty,
+   * and `ready` stayed false. attachedSets was declared at slice 5 and
+   * never once written to - the home these parts needed, empty for as
+   * long as it has existed.
+   *
+   * A missing bone costs that SIDE, not the part: retail skeletons
+   * vary and half an arm beats no arm, which is the same rule the
+   * mesh lookup already follows.
+   */
+  const addPart = (partNif, bones, label) => {
+    const sides = bones?.length ? bones : [null];
+    let tookSkinned = false;
+    let placed = 0;
+    for (const bone of sides) {
+      let bound;
+      try {
+        bound = bindPart(skeleton, partNif, bone ? { attachBone: bone } : {});
+      } catch (err) {
+        status(`${label}: ${err.message}`);
+        continue;
+      }
+      // Skinned geometry names its own bones, so it binds ONCE - only
+      // the rigid half is placed per side.
+      if (!tookSkinned && bound.skinned.length) {
+        skinnedSets.push(...bound.skinned);
+        tookSkinned = true;
+        placed += bound.skinned.length;
+      }
+      if (bound.attached.length) {
+        attachedSets.push({ batches: bound.attached, attachRef: bound.attachRef });
+        placed += bound.attached.length;
+      }
+    }
+    return placed;
+  };
   const baseBatches = flattenNif(baseNif);
   for (const b of baseBatches) {
     if (b.skinned && b.skin) skinnedSets.push(b);
@@ -255,10 +335,49 @@ export async function createMwFpView(renderer) {
       continue;
     }
     try {
-      const bound = bindPart(skeleton, parseNif(bytes));
-      skinnedSets.push(...bound.skinned);
+      addPart(parseNif(bytes), null, name);   // MW8: rigid parts kept too
     } catch (err) {
       status(`${name}: ${err.message}`);
+    }
+  }
+
+  // MW7: THE ARMS. base_anim.1st.nif is Morrowind's first-person
+  // SKELETON and animation carrier - it holds no body geometry, so
+  // everything above this line leaves the rig with bones and clips and
+  // nothing to draw. The visible arms are ordinary body parts chosen
+  // by race and sex, in their `.1st` variants, exactly as the
+  // third-person body is assembled (slice 6). The two slices were
+  // built and never joined, which is why a retail attach showed the
+  // classic sprite for ever: skinnedSets stayed empty and the view was
+  // never ready.
+  //
+  // Explicit `mwfparms` still wins by running first - it is the probe
+  // and dev door and must keep working against fixture data that has
+  // no ESM at all.
+  if (!skinnedSets.length && playerEntity) {
+    const esm = await loadMorrowindEsm();
+    const race = mwRaceId(playerEntity.race);
+    if (!esm) {
+      status('no Morrowind.esm attached - the arms live in its body records');
+    } else if (!race) {
+      status('no player race to choose arms for');
+    } else {
+      const parts = firstPersonArmParts(indexSkins(esm.bodies), race, playerEntity.gender === 'female');
+      if (!parts.length) status(`no ${race} body parts in the ESM`);
+      for (const part of parts) {
+        // the first-person twin, then the third-person mesh: a
+        // slightly wrong arm beats no arm, and beats falling back to
+        // the sprite while holding perfectly good geometry.
+        const bytes = file(part.model) || file(part.thirdPersonModel);
+        if (!bytes) continue;
+        const label = `${part.slot} (${part.bodyId})`;
+        try {
+          // MW8: at the left bone AND the right - one mesh, two arms.
+          if (!addPart(parseNif(bytes), part.attachBones, label)) status(`${label}: nothing to draw`);
+        } catch (err) {
+          status(`${label}: ${err.message}`);
+        }
+      }
     }
   }
 
@@ -351,7 +470,7 @@ export async function createMwFpView(renderer) {
       gl.bufferData(gl.ARRAY_BUFFER, batch.normals || new Float32Array(positions.length), gl.DYNAMIC_DRAW);
       gl.enableVertexAttribArray(1);
       gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
-      const uvBuf = gl.createBuffer();
+      const uvBuf = (geo.uv = gl.createBuffer());   // MWAUDIT: kept, so dispose can free it
       gl.bindBuffer(gl.ARRAY_BUFFER, uvBuf);
       gl.bufferData(
         gl.ARRAY_BUFFER,
@@ -441,17 +560,47 @@ export async function createMwFpView(renderer) {
     // data (whose groups are not the retail names) can drive the loop.
     const forced = param('mwfpgroup');
     if (forced && !mwSegmentForState(state)) {
-      const g = groups.get(forced);
+      const g = findAnimGroup(groups, forced);
       if (g) return { key: forced, start: g.start, stop: g.stop, oneShot: false };
     }
-    const group = groups.get(want.group);
-    if (!group) return null;
+    // MWAUDIT: THE FALLBACK CHAIN. Every lookup used to be a hard
+    // `groups.get(exactCase)` and every miss returned null - which
+    // left `playing` null, and draw() renders t=0, so a rig that could
+    // not find its group stood in its BIND POSE while active() still
+    // answered true. Frozen arms are worse than the classic sprite,
+    // and the sprite is what a player should get when the 3D layer has
+    // nothing to play.
+    //
+    // So: the asked-for group, then the class idle, then any idle at
+    // all, then whatever the file does carry. A rig that is `ready`
+    // always has something to play, so the layer never flickers
+    // between 3D and sprite mid-frame; a rig with NO usable group is
+    // not ready at all (see view.ready) and the sprite draws.
+    const group = findAnimGroup(groups, want.group);
     if (want.segment) {
-      const win = mwSegmentWindow(group, want.segment);
+      const win = group && mwSegmentWindow(group, want.segment);
       if (win) return { key: `${want.group}:${want.segment}`, ...win, oneShot: true };
-      return null;
+      // the swing has no clip here - stand in the class idle rather
+      // than freeze mid-strike
+      const idle = idleFallback(weaponType);
+      return idle && { key: `${idle.name}:idlefallback`, start: idle.g.start, stop: idle.g.stop, oneShot: false };
     }
-    return { key: want.group, start: group.start, stop: group.stop, oneShot: false };
+    if (group) return { key: want.group, start: group.start, stop: group.stop, oneShot: false };
+    const idle = idleFallback(weaponType);
+    return idle && { key: idle.name, start: idle.g.start, stop: idle.g.stop, oneShot: false };
+  }
+
+  /** The idle this weapon class wants, then a generic one, then the
+   *  first playable group the file carries. Named so the key that
+   *  drives the playing-clip compare stays stable per fallback. */
+  function idleFallback(weaponType) {
+    const wanted = CLASS_GROUPS[mwWeaponClass(weaponType)]?.idle;
+    for (const name of [wanted, 'Idle1h', 'Idle']) {
+      const g = name && findAnimGroup(groups, name);
+      if (g) return { name, g };
+    }
+    const first = groups.entries().next().value;
+    return first ? { name: first[0], g: first[1] } : null;
   }
 
   view.update = (dt, weaponType, state) => {
@@ -495,6 +644,26 @@ export async function createMwFpView(renderer) {
       skinBatch(batch, skeleton, pose, matsFor(batch.skin.skeletonRoot), out, null);
       drawSet(batch, out);
     }
+    // MW8: the rigid half of the rig - every attached part posed at its
+    // OWN bone's skeleton-space affine. The weapon has always drawn
+    // this way; the arms had no such loop at all, which is the other
+    // half of why they never appeared.
+    const drawAttached = (batches, attachRef, mats) => {
+      const at = attachmentTransform(mats, attachRef);
+      for (const batch of batches) {
+        let out = posScratch.get(batch);
+        if (!out) posScratch.set(batch, (out = new Float32Array(batch.positions.length)));
+        for (let v = 0; v < batch.positions.length; v += 3) {
+          const [x, y, z] = [batch.positions[v], batch.positions[v + 1], batch.positions[v + 2]];
+          out[v] = at.a[0] * x + at.a[1] * y + at.a[2] * z + at.t[0];
+          out[v + 1] = at.a[3] * x + at.a[4] * y + at.a[5] * z + at.t[1];
+          out[v + 2] = at.a[6] * x + at.a[7] * y + at.a[8] * z + at.t[2];
+        }
+        drawSet(batch, out);
+      }
+    };
+    for (const set of attachedSets) drawAttached(set.batches, set.attachRef, matsFor(rootRef));
+
     const weapon = weaponFor(weaponType);
     if (weapon) {
       for (const batch of weapon.skinned) {
@@ -503,20 +672,7 @@ export async function createMwFpView(renderer) {
         skinBatch(batch, skeleton, pose, matsFor(batch.skin.skeletonRoot), out, null);
         drawSet(batch, out);
       }
-      if (weapon.attached.length) {
-        const at = attachmentTransform(matsFor(rootRef), weapon.attachRef);
-        for (const batch of weapon.attached) {
-          let out = posScratch.get(batch);
-          if (!out) posScratch.set(batch, (out = new Float32Array(batch.positions.length)));
-          for (let v = 0; v < batch.positions.length; v += 3) {
-            const [x, y, z] = [batch.positions[v], batch.positions[v + 1], batch.positions[v + 2]];
-            out[v] = at.a[0] * x + at.a[1] * y + at.a[2] * z + at.t[0];
-            out[v + 1] = at.a[3] * x + at.a[4] * y + at.a[5] * z + at.t[1];
-            out[v + 2] = at.a[6] * x + at.a[7] * y + at.a[8] * z + at.t[2];
-          }
-          drawSet(batch, out);
-        }
-      }
+      if (weapon.attached.length) drawAttached(weapon.attached, weapon.attachRef, matsFor(rootRef));
     }
     // Composite: the stage canvas into the stream texture, the stream
     // texture over the scene through the classic screen-quad path.
@@ -526,8 +682,68 @@ export async function createMwFpView(renderer) {
     renderer.drawScreenQuad(streamTex, { x: 0, y: 0, w: canvas.width, h: canvas.height });
   };
 
+  /**
+   * MWAUDIT: THE VIEW HANDS ITS GL BACK.
+   *
+   * Nothing here ever needed a teardown: the view was built exactly
+   * once per weapon rig, so its owner was the process and the page
+   * outlived it. MWFIX changed that - the rig REBUILDS the view on
+   * every attach and every 3D toggle - and a rebuild that drops the
+   * old view on the floor leaks everything it held: one texture per
+   * material, four buffers and a VAO per geometry batch, and the
+   * stream texture on the MAIN renderer's context, which is the one
+   * that matters because it is the context the game draws through.
+   *
+   * (This is the same law the encounter pool needed a teardown for at
+   * IF, and for the same reason: a second owner appears and the
+   * process stops being it. Found auditing my own fix.)
+   *
+   * Idempotent - a rebuild races nothing, but a dispose that ran twice
+   * would delete names GL has already recycled.
+   */
+  let disposed = false;
+  view.dispose = () => {
+    if (disposed) return;
+    disposed = true;
+    view.ready = false;                       // active() answers false the instant it is dropped
+    for (const t of texCache.values()) if (t) gl.deleteTexture(t);
+    texCache.clear();
+    // MW8: this walked `set.batch?.__geo` and freed NOTHING - the sets
+    // ARE the batches (drawSet hangs __geo straight off them), so every
+    // lookup was undefined and every iteration hit the `continue`. The
+    // MWAUDIT pin held me to a dispose that existed, not to one that
+    // worked. It also never reached the rigid parts or the weapon
+    // meshes, which is now everything the view uploaded.
+    const freeBatch = (batch) => {
+      const geo = batch?.__geo;
+      if (!geo) return;
+      if (geo.vao) gl.deleteVertexArray(geo.vao);
+      for (const b of [geo.pos, geo.nrm, geo.uv, geo.idx]) if (b) gl.deleteBuffer(b);
+      batch.__geo = null;
+    };
+    for (const batch of skinnedSets) freeBatch(batch);
+    for (const set of attachedSets) for (const batch of set.batches) freeBatch(batch);
+    for (const entry of weaponMeshes.values()) {
+      if (!entry) continue;
+      for (const batch of entry.skinned) freeBatch(batch);
+      for (const batch of entry.attached) freeBatch(batch);
+    }
+    mainGl.deleteTexture(streamTex);          // the one on the GAME's context
+  };
+
   view.active = () => view.ready;
-  view.ready = skinnedSets.length > 0;
-  status(view.ready ? `ready: ${skinnedSets.length} skinned sets, ${groups.size} groups` : 'no skinned geometry in base');
+  // MWAUDIT: READY MEANS POSEABLE, not merely built. This was
+  // `skinnedSets.length > 0` alone - geometry with no playable group
+  // counted as ready, and a rig that can name no clip draws its BIND
+  // POSE for ever while the sprite path it should have fallen back to
+  // sits unused. Both halves are required, and the status line says
+  // which one is missing rather than reporting a bare failure.
+  // MW8: ...and GEOMETRY means either kind. Counting only the skinned
+  // half declared a rig with two perfectly good rigid arms unready.
+  const drawable = skinnedSets.length + attachedSets.length;
+  view.ready = drawable > 0 && groups.size > 0;
+  status(view.ready
+    ? `ready: ${skinnedSets.length} skinned + ${attachedSets.length} attached sets, ${groups.size} groups`
+    : drawable === 0 ? 'no arm geometry loaded' : 'no animation groups - the sprite path stands');
   return view;
 }

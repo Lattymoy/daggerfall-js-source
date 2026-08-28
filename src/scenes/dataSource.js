@@ -408,11 +408,52 @@ export async function loadMorrowindArchives() {
 /** Sync-readable state for the settings row; -1 until registered. */
 let _mwCount = -1;
 export const morrowindDataCount = () => Math.max(_mwCount, 0);
+/**
+ * MWFIX: the ATTACH GENERATION. The 3D first-person view is built once,
+ * at weapon-rig construction, off a `hasStoredMorrowind()` read - so
+ * attaching data to a running game changed nothing until a reload, and
+ * the bug report's "after uploading does not work at all" is that, not
+ * a bad archive. A monotonic counter is the cheapest honest signal a
+ * live consumer can poll: it moves only when the stored set is
+ * re-counted with a DIFFERENT answer, so a rig comparing integers
+ * rebuilds exactly when there is something new to build from.
+ */
+let _mwGeneration = 0;
+export const morrowindDataGeneration = () => _mwGeneration;
+
 /** Bootstrap arm (scenes/shared.js): count the stored archives once so
  *  the settings dialog can report attachment without an async hop. */
 export async function registerMorrowindData() {
-  _mwCount = (await storedMorrowindNames()).filter((n) => /\.bsa$/i.test(n)).length;
+  const next = (await storedMorrowindNames()).filter((n) => /\.bsa$/i.test(n)).length;
+  if (next !== _mwCount) { _mwGeneration++; _mwEsm = undefined; }   // MW7: a new attach re-reads the ESM
+  _mwCount = next;
   return _mwCount;
+}
+
+/**
+ * MW7: the stored Morrowind.esm, parsed - the record file the body
+ * parts live in. It is NOT inside the BSA (it sits beside it in Data
+ * Files, which is why storeMorrowindFiles takes .esm as well as .bsa),
+ * so it has its own door. Answers null when no .esm was attached: the
+ * first-person layer degrades to the classic sprite rather than
+ * failing, exactly as it does for any other missing piece.
+ *
+ * Parsed once and cached - the file is tens of megabytes and the rig
+ * rebuilds on every attach and every toggle.
+ */
+let _mwEsm;
+export async function loadMorrowindEsm() {
+  if (_mwEsm !== undefined) return _mwEsm;
+  const name = (await storedMorrowindNames()).find((n) => /\.esm$/i.test(n));
+  if (!name) return (_mwEsm = null);
+  try {
+    const { parseEsm } = await import('../formats/mwEsmFile.js');
+    _mwEsm = parseEsm(await loadMorrowindFile(name));
+  } catch (err) {
+    console.warn(`morrowind esm ${name}: ${err.message}`);
+    _mwEsm = null;
+  }
+  return _mwEsm;
 }
 
 export async function pickMorrowindFiles() {
@@ -450,10 +491,43 @@ export const clearStoredTextures = () => clearAssets(TEXTURE_STORE);
  * resolves 0 - a player who opens this to see what it is and closes it
  * has not broken anything, and the classic assets were already there.
  */
+/**
+ * MWFIX: THE PICKER OUTRANKS WHATEVER OPENED IT.
+ *
+ * This overlay stood at z-index 11 while the enhanced shell that opens
+ * it stands at 12 - so pressing "Attach data" built the picker BEHIND
+ * an opaque full-screen pane. Nothing appeared to happen; the file
+ * input was there, unreachable, with `document.elementFromPoint` at
+ * its own centre answering a shell element. And because the only exit
+ * was a Close button under that same pane, the overlay was never
+ * removed and its promise never resolved: it lingered in the DOM and
+ * surfaced later - a flash when the shell came down at New Game, then
+ * again once chargen (14) finished - which is exactly what the bug
+ * report described.
+ *
+ * The landscape it has to clear: 12 the enhanced shell, 13 the pause /
+ * inventory / character doors, 14 chargen, 20 the top overlays. This
+ * modal is opened FROM those, so it must sit above all of them. The
+ * number is not eyeballed - test/datasourcepicker.test.js reads every
+ * z-index literal in src/ and fails if any reaches this one.
+ */
+export const ASSET_PICKER_Z = 40;
+
+/** MWFIX: is the asset picker on screen? A modal opened FROM another
+ *  overlay has to be able to say so, because the opener may own the
+ *  keyboard - the enhanced shell takes Escape on `globalThis` in
+ *  CAPTURE and stops it (enhancedMenu.js:1529), which is right for a
+ *  screen with nothing above it and wrong the moment something is.
+ *  Its own stated law is that a modal overlay owns its input; this is
+ *  how the one above it says "that's me". */
+let _pickerOpen = false;
+export const assetPickerOpen = () => _pickerOpen;
+
 async function pickAssetFolder({ title, blurb, store, register }) {
   return new Promise((resolve) => {
     const ui = document.createElement('div');
-    ui.style.cssText = 'position:fixed;inset:0;background:#111;color:#ddd;font:14px monospace;display:flex;align-items:center;justify-content:center;z-index:11';
+    _pickerOpen = true;
+    ui.style.cssText = `position:fixed;inset:0;background:#111;color:#ddd;font:14px monospace;display:flex;align-items:center;justify-content:center;z-index:${ASSET_PICKER_Z}`;
     ui.innerHTML = `
       <div style="max-width:460px;text-align:center;border:1px solid #444;padding:24px">
         <h2 style="margin-top:0">${title}</h2>
@@ -477,7 +551,24 @@ async function pickAssetFolder({ title, blurb, store, register }) {
         msg.textContent = `could not store that: ${err?.message ?? err}`;
       }
     });
-    ui.querySelector('#adone').addEventListener('click', () => { ui.remove(); resolve(count); });
+    // THREE WAYS OUT, because a modal that can be covered must never be
+    // a trap - the function's own contract above says cancelling is not
+    // an error, and until MWFIX that was only true of the one button.
+    // Escape and a backdrop click join it; `close` is idempotent, so
+    // whichever fires first wins and the rest are no-ops.
+    let closed = false;
+    const close = () => {
+      if (closed) return;
+      closed = true;
+      _pickerOpen = false;
+      globalThis.removeEventListener('keydown', onKey, true);
+      ui.remove();
+      resolve(count);
+    };
+    const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
+    globalThis.addEventListener('keydown', onKey, true);
+    ui.addEventListener('click', (e) => { if (e.target === ui) close(); });   // the backdrop, never the card
+    ui.querySelector('#adone').addEventListener('click', close);
   });
 }
 

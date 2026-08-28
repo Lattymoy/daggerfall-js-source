@@ -18,9 +18,22 @@ test('mwfp: engine weapon types land in the right Morrowind class', () => {
   assert.equal(mwWeaponClass(WEAPON_TYPES.LongBlade), 'onehand');
   assert.equal(mwWeaponClass(WEAPON_TYPES.Dagger_Magic), 'onehand');
   assert.equal(mwWeaponClass(WEAPON_TYPES.Mace), 'onehand');
-  assert.equal(mwWeaponClass(WEAPON_TYPES.Warhammer), 'twohand');
-  assert.equal(mwWeaponClass(WEAPON_TYPES.Battleaxe_Magic), 'twohand');
-  assert.equal(mwWeaponClass(WEAPON_TYPES.Staff), 'twohand');
+  // MWAUDIT: these three are Morrowind's two-handed WIDE weapons, not
+  // its close ones. MW splits weapontwohand/idle2c (two-handed long
+  // blades) from weapontwowide/idle2w (axes, war hammers, staves), and
+  // an axe swung on the close grip is the wrong animation. They were
+  // all mapped to 'twohand', which is why the module's own header
+  // listed Idle2w among its idle groups while nothing ever asked for
+  // it. INFERRED from MW's taxonomy - see the note at the mapping.
+  assert.equal(mwWeaponClass(WEAPON_TYPES.Warhammer), 'twowide');
+  assert.equal(mwWeaponClass(WEAPON_TYPES.Battleaxe_Magic), 'twowide');
+  assert.equal(mwWeaponClass(WEAPON_TYPES.Staff), 'twowide');
+  // ...and NO Daggerfall type reaches the close grip, because
+  // weaponTypeForItem folds Claymore and Dai-Katana into LongBlade
+  // beside Broadsword - Daggerfall draws no separate two-handed blade.
+  const all = Object.values(WEAPON_TYPES);
+  assert.equal(all.filter((t) => mwWeaponClass(t) === 'twohand').length, 0,
+    'the close grip is unreachable from Daggerfall art, and the row says so');
   assert.equal(mwWeaponClass(WEAPON_TYPES.Bow), 'bow');
   assert.equal(mwWeaponClass(WEAPON_TYPES.Melee), 'handtohand');
   assert.equal(mwWeaponClass(WEAPON_TYPES.Werecreature), 'handtohand');
@@ -47,10 +60,12 @@ test('mwfp: the full decision - idle groups per class, attack group + segment', 
     segment: 'thrust',
   });
   assert.deepEqual(mwAnimForState(WEAPON_TYPES.Warhammer, 'StrikeDown'), {
-    group: 'WeaponTwoHand',
+    group: 'WeaponTwoWide',
     segment: 'chop',
   });
-  assert.deepEqual(mwAnimForState(WEAPON_TYPES.Bow, 'Idle'), { group: 'Idle1h', segment: null });
+  // the bow asks for its OWN idle now; idleFallback reaches Idle1h for
+  // a file that does not carry one, which is what the chain is for
+  assert.deepEqual(mwAnimForState(WEAPON_TYPES.Bow, 'Idle'), { group: 'IdleBow', segment: null });
   assert.deepEqual(mwAnimForState(WEAPON_TYPES.Melee, 'StrikeLeft'), {
     group: 'HandToHand',
     segment: 'slash',
@@ -131,4 +146,159 @@ test('mwfp: ON BY DEFAULT - the precedence matrix', () => {
   assert.match(w, /code === 'KeyF' && this\.dialog\.onAlt3/);
   assert.match(w, /b\.id === 'fpToggle' && d\.onAlt3/);
   assert.match(w, /3D first-person \(with Morrowind data\)/);
+});
+
+// ── MWAUDIT: the fallback chain, and the teardown ──────────────────
+
+test('MWAUDIT: a missing group falls back to an idle - it never freezes in the bind pose', () => {
+  // THE DEFECT: every group lookup was a hard exact-case get, and every
+  // miss returned null from pick(). update() then set `playing = null`
+  // and draw() renders t=0 - so a rig that could not find its group
+  // stood in its BIND POSE while active() still answered true. The
+  // player got frozen 3D arms where the classic sprite would have been
+  // correct. The chain is: the asked-for group, the class idle, any
+  // idle, then whatever the file carries.
+  const src = readFileSync(new URL('../src/combat/mwFpArms.js', import.meta.url), 'utf8');
+  assert.match(src, /function idleFallback\(weaponType\) \{/, 'the chain has a home');
+  assert.match(src, /for \(const name of \[wanted, 'Idle1h', 'Idle'\]\)/, 'class idle, then a generic one');
+  assert.match(src, /const first = groups\.entries\(\)\.next\(\)\.value;/, 'then whatever the file does carry');
+  // a swing with no clip stands in the idle rather than freezing mid-strike
+  assert.match(src, /the swing has no clip here - stand in the class idle rather/, 'the striking arm falls back too');
+  // and every lookup goes through the case-insensitive door
+  // CODE only - the comment above the fix quotes the old call to say
+  // what it replaced, and a pin that reads prose is testing the wrong
+  // thing (the same trap the MWFIX swing pin hit).
+  const code = src.split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n');
+  assert.ok(!/groups\.get\(/.test(code), 'no raw exact-case group lookups survive');
+  assert.match(src, /findAnimGroup\(groups, want\.group\)/, 'the wanted group');
+  assert.match(src, /findAnimGroup\(groups, forced\)/, 'and the probe override');
+});
+
+test('MWAUDIT: the view hands its GL back - a rebuild must not leak the old one', () => {
+  // Nothing ever disposed this view because it was built once per rig
+  // and the process outlived it. MWFIX made the rig REBUILD on attach
+  // and on toggle, which turned "no teardown" into a leak per press:
+  // a texture per material, a VAO and four buffers per batch, and the
+  // stream texture on the GAME's own context.
+  // CODE only, again: a source pin that reads comments passes against
+  // the very line commented OUT, which is the mutation it exists to
+  // catch. (Proven: commenting out the streamTex delete did not fail
+  // this test until the filter went in.)
+  const raw = readFileSync(new URL('../src/combat/mwFpArms.js', import.meta.url), 'utf8');
+  const src = raw.split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n');
+  assert.match(src, /view\.dispose = \(\) => \{/, 'the view has a teardown');
+  assert.match(src, /if \(disposed\) return;/, 'idempotent - a double dispose would delete recycled names');
+  assert.match(src, /view\.ready = false;/, 'and active() answers false the instant it is dropped');
+  assert.match(src, /for \(const t of texCache\.values\(\)\) if \(t\) gl\.deleteTexture\(t\);/, 'material textures');
+  assert.match(src, /gl\.deleteVertexArray\(geo\.vao\)/, 'the VAOs');
+  assert.match(src, /for \(const b of \[geo\.pos, geo\.nrm, geo\.uv, geo\.idx\]\)/, 'ALL FOUR buffers - the uv one was never even kept before');
+  assert.match(src, /mainGl\.deleteTexture\(streamTex\);/, "and the stream texture on the GAME's context");
+  // the inert stub takes the same call, so a caller never has to ask which it holds
+  assert.match(src, /const inert = \{ active: \(\) => false, update: \(\) => \{\}, draw: \(\) => \{\}, dispose: \(\) => \{\}/,
+    'the inert view answers dispose too');
+});
+
+test('MWAUDIT: ready means POSEABLE, and the KF cannot erase the base\'s groups', () => {
+  const raw = readFileSync(new URL('../src/combat/mwFpArms.js', import.meta.url), 'utf8');
+  const src = raw.split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n');
+  // geometry with no playable group used to count as ready, which is
+  // the bind-pose freeze wearing a different hat: the layer draws,
+  // badly, where the sprite path was correct.
+  // MW8 widened the GEOMETRY half to count rigid parts as well as
+  // skinned ones; the claim this pin makes - that geometry alone is not
+  // ready, a playable clip is also required - is untouched, and both
+  // lines are held so neither half can quietly go.
+  assert.match(src, /const drawable = skinnedSets\.length \+ attachedSets\.length;/,
+    'geometry means either kind');
+  assert.match(src, /view\.ready = drawable > 0 && groups\.size > 0;/,
+    'both halves are required');
+  assert.match(src, /'no animation groups - the sprite path stands'/,
+    'and the status says WHICH half is missing');
+  // retail's xbase_anim.1st.kf carries tracks AND keys, so the swap is
+  // normally straight - but a KF with tracks and no keys used to
+  // replace the base's groups with an empty map
+  assert.match(src, /if \(kfGroups\.size\) groups = kfGroups;/,
+    'the groups follow the tracks only if the KF actually has any');
+});
+
+// ── MW8: the rigid half of the rig ─────────────────────────────────
+//
+// THE DEFECT MW7 DID NOT FIX. MW7 found the arms and bound them, then
+// took only bindPart's `.skinned` and let `.attached` fall on the
+// floor - and Morrowind's arms are RIGID parts hung off a bone, so
+// that is all of them. skinnedSets stayed empty, ready stayed false,
+// and the report was unchanged: still the 2D sprite. `attachedSets`
+// had been declared since slice 5 and never once written to, which is
+// the missing home the parts needed, and there was no draw loop for it
+// either. The live probe read ALL GREEN throughout, because its BASE
+// nif carries skinned geometry and retail's base_anim.1st.nif - a
+// first-person SKELETON - carries none.
+
+test('MW8: a Morrowind body part arrives RIGID - the premise, in real data', async () => {
+  // Not an assumption about retail: fixture/plain.nif is a body part in
+  // the shape the fixture writer emits, and it has no skin at all.
+  const { MwBsaFile } = await import('../src/formats/mwBsaFile.js');
+  const { parseNif } = await import('../src/formats/mwNifFile.js');
+  const { flattenNif } = await import('../src/formats/mwNifMesh.js');
+  const { bindPart } = await import('../src/formats/mwCharacter.js');
+  const { buildSkeleton } = await import('../src/formats/mwSkin.js');
+  const bsa = new MwBsaFile(new Uint8Array(
+    readFileSync(new URL('./fixtures/mw/fixture.bsa', import.meta.url))));
+  const part = parseNif(bsa.get('meshes/fixture/plain.nif'));
+  const batches = flattenNif(part);
+  assert.equal(batches.filter((b) => b.skinned && b.skin).length, 0, 'no skinned batches');
+  assert.equal(batches.length, 1, 'one rigid batch');
+
+  const skeleton = buildSkeleton(parseNif(bsa.get('meshes/base_anim.nif')));
+  const bound = bindPart(skeleton, part);
+  assert.equal(bound.skinned.length, 0,
+    'so a loader that reads only .skinned gets NOTHING - the whole defect, in one line');
+  assert.equal(bound.attached.length, 1, 'the geometry was there the entire time, in .attached');
+  assert.ok(bound.attachRef >= 0, 'with a bone to hang it from');
+});
+
+test('MW8: the FP layer keeps BOTH halves, draws them, and counts them ready', () => {
+  const fp = src('combat/mwFpArms.js')
+    .split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n');
+  // one loader, and it writes the home that was always empty
+  assert.match(fp, /const addPart = \(partNif, bones, label\) => \{/, 'one part loader');
+  assert.match(fp, /attachedSets\.push\(\{ batches: bound\.attached, attachRef: bound\.attachRef \}\)/,
+    'the rigid half is HELD - slice 5 declared attachedSets and never wrote to it');
+  assert.ok(!/bindPart\([^)]*\)[^;]*;\s*\n\s*skinnedSets\.push\(\.\.\.bound\.skinned\);/.test(fp),
+    'and no caller takes only .skinned any more - that was the drop');
+  // a rigid part is placed at EACH of its bones: one mesh, two arms
+  assert.match(fp, /const sides = bones\?\.length \? bones : \[null\];/, 'left bone and right bone');
+  assert.match(fp, /if \(!tookSkinned && bound\.skinned\.length\)/,
+    'while skinned geometry names its own bones and binds once, not per side');
+  // a missing bone costs the SIDE, not the part
+  assert.match(fp, /catch \(err\) \{\s+status\(`\$\{label\}: \$\{err\.message\}`\);\s+continue;/,
+    'a bone the skeleton lacks skips that side and keeps going');
+  // and they are actually drawn
+  assert.match(fp, /for \(const set of attachedSets\) drawAttached\(set\.batches, set\.attachRef, matsFor\(rootRef\)\);/,
+    'the rigid parts have a draw loop - there was none');
+  assert.match(fp, /const drawAttached = \(batches, attachRef, mats\) => \{/,
+    'through the same attachment transform the weapon has always used');
+  // ready means either kind of geometry
+  assert.match(fp, /const drawable = skinnedSets\.length \+ attachedSets\.length;/,
+    'ready counts both - counting only skinned called a two-armed rig unready');
+  assert.match(fp, /view\.ready = drawable > 0 && groups\.size > 0;/, 'and still demands a playable clip');
+});
+
+test('MW8: dispose frees what it walks - the MWAUDIT teardown freed nothing', () => {
+  // MINE, from MWAUDIT. drawSet hangs __geo straight off the BATCH, and
+  // skinnedSets holds batches - so `set.batch?.__geo` was undefined on
+  // every iteration and the loop `continue`d through the whole list. The
+  // pin I wrote then held me to a dispose that EXISTED, not one that
+  // worked, which is the same class of miss as a pin matching its own
+  // comment.
+  const fp = src('combat/mwFpArms.js')
+    .split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n');
+  assert.ok(!/set\.batch\?\.__geo/.test(fp), 'the batch IS the set - no .batch indirection');
+  assert.match(fp, /const freeBatch = \(batch\) => \{\s+const geo = batch\?\.__geo;/,
+    'freed off the batch itself');
+  assert.match(fp, /for \(const batch of skinnedSets\) freeBatch\(batch\);/, 'the skinned half');
+  assert.match(fp, /for \(const set of attachedSets\) for \(const batch of set\.batches\) freeBatch\(batch\);/,
+    'the rigid half');
+  assert.match(fp, /for \(const entry of weaponMeshes\.values\(\)\)/,
+    'and the weapon meshes, which the teardown never reached at all');
 });

@@ -86,7 +86,7 @@
 // the pick is a zip upload.
 // ═══════════════════════════════════════════════════════════════════
 
-import { morrowindDataCount } from '../scenes/dataSource.js';   // MW-IMPORT: the enhanced shell's own attach door
+import { morrowindDataCount, assetPickerOpen } from '../scenes/dataSource.js';   // MW-IMPORT: the enhanced shell's own attach door; MWFIX: and the modal it opens owns the keyboard
 import { mwFpPreference, setMwFpPreference } from '../combat/mwFpPref.js';
 import { CATEGORIES, keysOf } from '../ui/settingsMap.js';
 import { widgetFor, blockedReason, formatValue, stepValue, COLOUR_KEYS } from '../ui/settingsLaw.js';
@@ -800,10 +800,16 @@ function paneEnhanced(body) {
   const live = el('div', 'card');
   live.append(el('h3', null, 'Switches'));
   live.append(skinRow());
+  // R3W (Mac, 2026-08-28): this row promised THREE things and shipped
+  // one. The map layer was written and never wired - nothing in src/
+  // called roadModel and the renderer had no slot - and travel by road
+  // is still an orphaned module, so "travel follows them" was simply
+  // untrue. The map half is wired now; the travel claim is removed
+  // until R4 is, rather than left standing as the sky row's was.
   live.append(prefRow('roads', 'Roads',
-    'Roads between towns, generated from the terrain: drawn on the ground and on the travel map, '
-    + 'and travel follows them. The first world load bakes the network (about half a minute, '
-    + 'reported as it goes) and caches it; after that it is instant.'));
+    'Roads between towns, generated from the terrain and drawn both on the ground and on the '
+    + 'travel map. The first world load bakes the network (about half a minute, reported as it '
+    + 'goes) and caches it; after that it is instant.'));
   // RA1 (Mac, 2026-08-28): this row said "not built" while ES1 had
   // been the enhanced skin's default sky for a day - a shipped
   // enhancement wearing a hole's label. It is a SWITCH now, over the
@@ -813,6 +819,24 @@ function paneEnhanced(body) {
     + 'weather, drawn procedurally on the painted sky\u2019s own pixel grid. Off returns '
     + 'Daggerfall\u2019s SKY*.DAT panorama. Takes effect when the world next loads.'));
   body.append(live);
+
+  // MWFIX2: A SIBLING PAGE IS NOT A SIBLING OF THE GAME. The build puts
+  // every extra page at the SITE ROOT (vite.config's rollup inputs) but
+  // the game itself one directory down at /play/, so a bare relative
+  // 'mw-viewer.html' resolves against the running document: from
+  // menu.html at the root it works, and from the game it asks for
+  // /play/mw-viewer.html and 404s. That is why it survived - the door
+  // was only ever pressed from the root during development.
+  //
+  // Resolving against location.href keeps `base: './'`'s promise (the
+  // same build serves from a project path AND from the apex domain),
+  // and stepping out of /play/ is the one thing the bare form got
+  // wrong. Anything not under /play/ is already at the root.
+  const sitePage = (page) => {
+    const dir = new URL('.', location.href);
+    const root = /\/play\/$/.test(dir.pathname) ? new URL('..', dir) : dir;
+    return new URL(page, root).href;
+  };
 
   // MW-IMPORT: the attach door, ON THIS SURFACE - the launcher window
   // has its M/F keys, but the enhanced skin never routes through it, so
@@ -829,7 +853,20 @@ function paneEnhanced(body) {
     const n = morrowindDataCount();
     return `${n} archive${n === 1 ? '' : 's'} attached \u00b7 3D first-person ${mwFpPreference() ? 'ON' : 'off'}`;
   };
-  mw.append(stats([['State', mwState()]]));
+  // MWDIAG: WHY IT IS NOT DRAWING, on the surface that offers the
+  // toggle. The layer has always published its own reason
+  // (window.__mwfp.status - "no skinned geometry in base", "missing
+  // meshes\base_anim.1st.nif", "ready: 3 skinned sets, 41 groups"),
+  // and the only way to read it was the browser console. A player who
+  // attaches data, turns the toggle on and still sees the sprite has
+  // no way to tell WHICH of five different things went wrong. The card
+  // that promises the feature is where that answer belongs.
+  const mwRig = () => {
+    const m = globalThis.__mwfp;
+    if (!m) return 'no rig yet - enter the world once with data attached';
+    return m.ready ? `drawing \u00b7 ${m.status}` : `NOT drawing \u00b7 ${m.status}`;
+  };
+  mw.append(stats([['State', mwState()], ['Rig', mwRig()]]));
   mw.append(acts([
     { label: 'Attach data', primary: true, onClick: async () => {
       const ds = await import('../scenes/dataSource.js');
@@ -840,7 +877,7 @@ function paneEnhanced(body) {
       onClick: () => { setMwFpPreference(!mwFpPreference()); render(); } },
     // The blurb NAMED the viewer without a way to reach it - a door
     // described is not a door. One press, new tab, same origin.
-    { label: 'Open mesh viewer', onClick: () => window.open('mw-viewer.html', '_blank') },
+    { label: 'Open mesh viewer', onClick: () => window.open(sitePage('mw-viewer.html'), '_blank') },
   ]));
   body.append(mw);
 
@@ -1267,23 +1304,32 @@ function pauseQuests(body) {
       rail.append(b);
     }
   };
-  // PX5: main quests above side quests, each under its own small
-  // heading - shown only when BOTH kinds are on the log, because a
-  // rail of one group under a header is a header explaining nothing.
+  // PX22 (Mac: "quests aren't supposed to be titled as main quest...
+  // what we developed had 3 sections for main, side and archived"):
+  // THE RAIL IS THREE SECTIONS, ALWAYS. PX5 made the two active
+  // headings CONDITIONAL - "a rail of one group under a header is a
+  // header explaining nothing" - and that reasoning is fine for a
+  // heading that only labels; it is wrong for one that is the
+  // journal's SHAPE. A player who opens the journal on their first
+  // side quest should learn that a main-quest section exists and is
+  // empty, not meet a different window later. So all three stand, in
+  // order, and an empty one says so in the dim - the same anti-lie
+  // idiom as the worn map's empty families and the site's not-yet box.
+  //
+  // The ARCHIVE is not split by kind, and that is not an oversight:
+  // the notebook's filed header keeps only the display name, so the
+  // questName main/side is gone by the time a quest is filed
+  // (notebook.js:151-182). Three sections is the shape the DATA has.
   const mains = active.filter((q) => q.main);
   const sides = active.filter((q) => !q.main);
-  if (mains.length && sides.length) {
-    rail.append(el('div', 'px-qarch px-qfirst', 'Main Quests'));
-    railList(mains, '');
-    rail.append(el('div', 'px-qarch', 'Quests'));
-    railList(sides, '');
-  } else {
-    railList(active, '');
-  }
-  if (finished.length) {
-    rail.append(el('div', 'px-qarch', 'Archive'));
-    railList(finished, ' done');
-  }
+  const section = (label, items, cls, first = false) => {
+    rail.append(el('div', `px-qarch${first ? ' px-qfirst' : ''}`, label));
+    if (items.length) railList(items, cls);
+    else rail.append(el('div', 'px-qnone', '\u2014'));
+  };
+  section('Main Quests', mains, '', true);
+  section('Side Quests', sides, '');
+  section('Archived', finished, ' done');
   wrap.append(rail);
 
   const detail = el('div', 'px-qdetail');
@@ -1292,14 +1338,19 @@ function pauseQuests(body) {
     head2.append(el('span', 'px-qwing'), el('h3', null, sel.name), el('span', 'px-qwing px-flip'));
     detail.append(head2);
     if (sel.entries) {
+      // PX22: NO KIND TAG. PX5 put "Main Quest" / "Side Quest" beside
+      // the timer; with the rail always showing three named sections
+      // that is the same fact twice, and a quest is not TITLED by its
+      // kind - it is filed under it. (The same cut PX20c made to the
+      // pack's slots-filled count.) The meta line is the timer's now,
+      // and exists only when there is a timer.
       const meta = el('div', 'px-qmeta');
-      meta.append(el('span', 'px-qkind', sel.main ? 'Main Quest' : 'Side Quest'));
       if (sel.clockSeconds != null) {
         // Under a game day the words go URGENT gold.
         const urgent = sel.clockSeconds < 86400;
         meta.append(el('span', `px-qtimer${urgent ? ' urgent' : ''}`, `Time remains: ${remainWords(sel.clockSeconds)}`));
       }
-      detail.append(meta);
+      if (meta.childNodes.length) detail.append(meta);   // PX22: an empty meta line is a gap the eye reads as a mistake
     }
     if (sel.entries) {
       // Active: the LATEST entry is the state of the quest; the trail
@@ -1443,6 +1494,13 @@ function renderInto() {
 // is the same Escape, rebound the same way, as Escape anywhere else.
 function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
+  // MWFIX: ...AND SO DOES THE ONE ABOVE THIS. The law three paragraphs
+  // down - a modal overlay owns its input - cuts both ways: this
+  // handler is on `globalThis` in CAPTURE and stops what it takes, so
+  // it reaches a key before any modal THIS screen opened. The asset
+  // picker is exactly that, and Escape over it must close the picker,
+  // not walk this screen's back stack out from under it.
+  if (assetPickerOpen()) return;
   const t = e.target;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
   if (overlayAction(e) !== 'back') return;

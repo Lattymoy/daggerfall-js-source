@@ -1768,8 +1768,8 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    right panel: the details are a TOOLTIP, absolutely placed beside
    its anchor inside the frame, in the plaque's own dress; the phone
    keeps the .packdetail bottom sheet's physics untouched. */
-.pack-shell .charcol { overflow: hidden; padding: 8px 16px; display: flex;
-  flex-direction: column; justify-content: center; }
+.pack-shell .charcol { overflow: hidden; padding: 12px 22px 16px; display: flex;
+  flex-direction: column; justify-content: stretch; }
 /* .packtip.packdetail outranks the base .packdetail column rules
    (same-specificity, later-in-sheet was the trap: the tip computed
    RELATIVE, joined the flex column and folded the whole window -
@@ -1780,7 +1780,15 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
      ground + padding were riding under the card and drew a grey mat
      around the plaque - the CARD is the frame, the wrapper is
      nothing. */
-  background: transparent; padding: 0; border: 0; }
+  background: transparent; padding: 0; border: 0;
+  /* PX21f (Mac: "the tooltip that pops up when you click on an item
+     has scrolling"): AND NO OVERFLOW. .packcol is a COLUMN's rule -
+     slate ground, padding, and overflow:auto - and PX19j turned off
+     the first two on this element without noticing the third. A
+     tooltip is not a scroll box: it is as tall as what it says. The
+     2px scrollHeight/clientHeight gap that rounding leaves was enough
+     to draw a scrollbar on it wherever scrollbars are not overlays. */
+  overflow: visible; }
 /* ...and the tip's CARD is near-opaque: the 0.72 glass is the pause
    window's, made for a dimmed scrim - a tooltip floats over LIVE
    text, and glass there reads as the dock bleeding through the
@@ -1800,41 +1808,102 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    when its art can draw; the tiles alone are the schematic when it
    cannot. The chosen tile wears the gold pair and the brass frame;
    an empty slot is a dim open diamond and NOT a button. */
-.pack-shell .equipped { display: block; text-align: center; padding-bottom: 10px; }
+.pack-shell .equipped { display: flex; flex-direction: column; min-height: 0;
+  text-align: center; }
+.pack-shell .equipped .wornmap { flex: 1; min-height: 0; }
+/* PX20c: the name in the title bar, after PACK, in the dim - the bar
+   already names the window, so the character is the second word. */
+.pack-shell .pack-id .pack-who { color: #7d7460; margin-left: 4px; }
+.pack-shell .pack-id .pack-who::before { content: '\\00b7'; margin-right: 14px; }
 /* PX19g: the region FITS ITS SPACE - 5 rows of 52 + gaps + the WORN
    head ~= 310, inside the main area's ~380 - so the character sheet
    never scrolls. The doll owns the center: a framed panel spanning
    rows 2-4, art inside when it can draw, a quiet Avatar plaque when
    it cannot. */
+/* PX20a (Mac: "spread out and organize the center now that we have
+   more space"): PX19i freed the whole width when the details became a
+   tooltip, and the map kept the 380px it was given when it had a third
+   of the window - a 1036px area with 330px of dead air down each side.
+   The map is now SIZED TO ITS SPACE: wider, with the centre column
+   carrying half again the flanks (it holds a standing figure; they
+   hold a word and a monogram), and rows that FILL the height instead
+   of stopping at 52px: five rows of 1fr each, with the
+   map claiming the area's height, so the composition breathes at any
+   window size rather than at one. */
 .pack-shell .wornmap { position: relative; display: grid;
-  grid-template-columns: repeat(3, 1fr); grid-auto-rows: 52px;
-  gap: 6px; width: min(380px, 96%); margin: 6px auto 0; }
-.pack-shell .wornmap-doll { grid-area: 2 / 2 / span 3 / auto;
+  /* PX20c: the centre column is AUTO - it takes exactly the width the
+     aspect-locked sprite asks for, so there is no air beside the
+     figure and the two flanks split everything that is left. The map
+     then fills the region it was given rather than floating in it. */
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-rows: repeat(6, minmax(44px, 1fr));
+  gap: 12px; width: min(960px, 100%); height: 100%; margin: 0 auto;
+  align-content: stretch; }
+/* PX20a (Mac: "enlarge the paper sprite and remove the background"):
+   the sprite stands on the window's own glass. PX19g framed it because
+   an empty frame reads Avatar and the composition never collapses -
+   that reasoning holds only when there is NO ART, so the frame is now
+   the placeholder's alone (the .noart class). With art, no border, no
+   background, no outline: a character standing among their gear. */
+.pack-shell .wornmap-doll { grid-area: 1 / 2 / span 6 / auto;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 4px; border: 2px solid rgba(125,116,96,0.45); background: rgba(0,0,0,0.35);
-  outline: 2px solid rgba(125,116,96,0.25); outline-offset: 3px;
-  overflow: hidden; color: rgba(125,116,96,0.6); }
-.pack-shell .wornmap-doll img { max-width: 100%; max-height: 100%; object-fit: contain;
-  image-rendering: pixelated; }
+  gap: 4px; border: 0; background: none; outline: 0;
+  overflow: visible; color: rgba(125,116,96,0.6); padding: 2px 0; }
+.pack-shell .wornmap-doll.noart { border: 2px solid rgba(125,116,96,0.45);
+  background: rgba(0,0,0,0.35); outline: 2px solid rgba(125,116,96,0.25);
+  outline-offset: 3px; overflow: hidden; }
+/* PX20c (Mac: "ensure the paperdoll's slot is a perfect fit"): the
+   cell was whatever the grid's centre column happened to be, so the
+   sprite sat inside it with air down both sides - object-fit letterbox,
+   which is a fit only in the sense that nothing overflows. The cell now
+   CARRIES THE SPRITE'S OWN ASPECT: aspect-ratio 110/184, the classic
+   paperdoll's exact proportion, height-driven and centred in the
+   column. The sprite then fills it edge to edge with no letterbox at
+   all, and it stays a perfect fit at every window size because the
+   ratio is the constraint rather than a measured pixel. */
+.pack-shell .wornmap-doll img { display: block; height: 100%; width: 100%;
+  object-fit: contain; image-rendering: pixelated;
+  filter: drop-shadow(3px 3px 0 rgba(0,0,0,0.55)); }
+.pack-shell .wornmap-doll.hasart { aspect-ratio: 110 / 184; height: 100%; width: auto;
+  justify-self: center; align-self: center; padding: 0; }
 .pack-shell .wornmap-doll .wornslot { color: rgba(125,116,96,0.6); }
+/* PX20c: the tile is a ROW again, because the width is there now - a
+   big monogram on the left, the family word and THE PIECE'S NAME
+   stacked beside it. PX19g had to hide the name when the tiles were
+   52px squares and it clipped; nothing about that reasoning survives a
+   300px tile, so the name comes back where a player reads it. */
 .pack-shell .equipped .wornrow { position: relative; z-index: 1;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 3px; min-height: 44px; padding: 4px 3px; overflow: hidden;
+  display: flex; flex-direction: row; align-items: center; justify-content: flex-start;
+  gap: 14px; min-height: 44px; padding: 8px 14px; overflow: hidden; text-align: left;
   background: rgba(10,12,17,0.72); border: 2px solid rgba(125,116,96,0.35);
   color: #a89f88; font-family: inherit; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
-/* PX19g: at the fitted 52px row the name line CLIPS - so the tiles
-   speak monogram + family word + badge (the reference's own read:
-   the piece, not its caption) and the NAME lives in the plaque and
-   the title. The DOM keeps .wornname for every probe that reads it. */
-.pack-shell .wornrow .wornname { position: absolute; width: 1px; height: 1px;
-  overflow: hidden; clip-path: inset(50%); }
-.pack-shell .worncount { position: absolute; right: 3px; top: 2px; font-size: 9px;
+/* PX19g hid this line because a 52px square clipped it; PX20c gives
+   the tiles the region's whole width and the name comes back - the
+   family word above it in the dim, the piece itself in the bone. */
+.pack-shell .wornrow .wornname { display: block; font-size: 14px; color: #d8cfae;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.pack-shell .wornrow.wornempty .wornname { color: rgba(125,116,96,0.5); }
+/* The word and the name are one stack beside the monogram. */
+.pack-shell .wornrow .worntext, .pack-shell .transport .worntext {
+  display: flex; flex-direction: column; gap: 3px;
+  min-width: 0; align-items: flex-start; }
+.pack-shell .transport .wornname { display: block; font-size: 14px; color: #d8cfae;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pack-shell .transport .wornname.wornempty { color: rgba(125,116,96,0.5); }
+.pack-shell .transport .wornslot { font-size: 11px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: #7d7460; }
+.pack-shell .wornrow .worntile, .pack-shell .wornrow .tile { flex: 0 0 auto; }
+.pack-shell .worncount { position: absolute; right: 5px; top: 4px; font-size: 11px;
   color: var(--brass); text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
-.pack-shell .wornrow .tile { display: flex; width: 24px; height: 24px; align-items: center;
-  justify-content: center; border: 0; background: none; font-size: 14px; color: #c5bda2; }
-.pack-shell .wornrow .worntile { font-size: 14px; color: rgba(125,116,96,0.6); }
+.pack-shell .wornrow .tile { display: flex; width: 40px; height: 40px; align-items: center;
+  justify-content: center; border: 0; background: none; font-size: 24px; color: #c5bda2; }
+/* PX20c: the tiles carry the area now, so the MONOGRAM carries the
+   tile - the reference's own read is the piece, big, with its family
+   word under it. */
+.pack-shell .wornrow .worntile { font-size: 26px; color: rgba(125,116,96,0.6); }
 .pack-shell .wornslot { flex: 0 0 auto;   /* the base rule's 88px was a column WIDTH; on a vertical tile it becomes 88px of HEIGHT */
-  font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+  font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
   color: #7d7460; max-width: 100%; line-height: 1.1; white-space: nowrap; }
 .pack-shell .wornrow .itemwt { display: none; }
 .pack-shell button.wornrow { cursor: pointer; }
@@ -1901,16 +1970,141 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    the same frame language one size down; absent entirely when the
    ground is bare. */
 .pack-shell { grid-auto-flow: column; gap: 18px; }
-.loot-win { position: relative; width: min(340px, 90vw); max-height: min(560px, 80dvh);
-  display: flex; flex-direction: column; overflow-y: auto;
+/* PX21e (Mac: "in the tooltip for looting, it makes you scroll which
+   should not be a thing at all"): THE WINDOW DOES NOT SCROLL. It
+   carried overflow-y ITSELF, so a pile past the cap scrolled its own
+   title and buttons out of sight - which is the part that reads as
+   broken. The frame is fixed furniture now; only the LIST inside it
+   can move, and it WIDENS to two columns first, which holds any
+   container Daggerfall builds without moving at all. */
+/* PX21f: VISIBLE, not hidden. PX21e used overflow:hidden to stop
+   the frame scrolling, and it does - but the tooltip is a CHILD of
+   this frame in the loot-only flow, so a tip near the bottom edge
+   would have been clipped invisibly, which is worse than the scroll it
+   replaced. The no-scroll guarantee does not need clipping: the head
+   is fixed and the list has min-height 0, so the content cannot
+   exceed the frame in the first place. */
+.loot-win { position: relative; width: min(340px, 90vw); max-height: min(700px, 86dvh);
+  display: flex; flex-direction: column; overflow: visible;
   background: rgba(10,12,17,0.72); border: 2px solid #7d7460; padding-bottom: 8px; }
+.loot-win.wide { width: min(680px, 94vw); }
 .loot-win .px-corner { position: absolute; }
 .loot-win .px-tl { left: -1px; top: -1px; transform: translate(-50%,-50%); }
 .loot-win .px-tr { right: -1px; top: -1px; transform: translate(50%,-50%); }
 .loot-win .px-bl { left: -1px; bottom: -1px; transform: translate(-50%,50%); }
 .loot-win .px-br { right: -1px; bottom: -1px; transform: translate(50%,50%); }
-.loot-win .packremote { border-top: 0; background: transparent; }
-.loot-win .remotehead { border-top: 0; padding-top: 12px; }
+.loot-win .packremote { border-top: 0; background: transparent; padding: 0 0 4px; }
+.loot-win .remotehead { border-top: 0; padding: 14px 16px 10px;
+  border-bottom: 2px solid rgba(125,116,96,0.3); }
+
+/* ── PX21b: THE LOOT WINDOW READS ───────────────────────────────
+   Mac: "give it a solid redesign with readability". The loot list
+   inherited the DOCK's 56px tile grid - anonymous squares with the
+   name behind a clip-path - which is right for a bag you already know
+   and wrong for a chest you have never opened: the whole question a
+   container asks is WHAT IS IN IT. So in this window the rows are
+   ROWS: the icon, the name, its material and word beneath, the weight
+   on the right, one per line, at a size a player reads at a glance. */
+/* PX21d (Mac: "center all the elements at the top in the loot
+   window"): the head inherited the base sheet's space-between row -
+   the title and the meta left, the buttons pushed right - which is a
+   COLUMN's header, made when the remote was a column beside the pack.
+   In a 340px window of its own it reads as two things that fell to
+   opposite walls. The head is a centred stack now: the title, the
+   count under it, the buttons in a centred row beneath, each one
+   sitting over the list it acts on. The base rules are untouched;
+   this is the loot frame's own dress. */
+.loot-win .remotehead { flex-direction: column; align-items: center;
+  justify-content: center; text-align: center; gap: 10px; margin: 0; }
+.loot-win .remotewho { display: flex; flex-direction: column; align-items: center; }
+.loot-win .remoteacts { justify-content: center; padding: 0; }
+.loot-win .remotewho h3 { font-size: 16px; color: #d8cfae; }
+.loot-win .remotewho .meta { font-size: 12px; letter-spacing: 0.14em; color: #7d7460;
+  text-transform: uppercase; margin-top: 6px; }
+.loot-win .packlists, .loot-win .packcol { display: block; padding: 0; }
+/* The column is a flex box so the head stays put and the list takes
+   what is left; min-height 0 is what lets a flex child actually shrink
+   rather than push its parent open. */
+.loot-win .packremote { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.loot-win .remotehead { flex: 0 0 auto; }
+.loot-win .remotelist { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; }
+.loot-win .remotelist::-webkit-scrollbar { display: none; }
+/* NOT MULTICOL. column-count was the obvious answer and it is the
+   wrong one: a multicol box that is also a SCROLL container fragments
+   in the block direction, so the overflow columns went below the fold
+   and the list scrolled anyway - measured, 14 rows spilling 203px past
+   the frame. A GRID has no fragmentation: two tracks, rows in reading
+   order, a definite height, nothing to overflow. */
+.loot-win.wide .remotelist { display: grid; grid-template-columns: 1fr 1fr;
+  align-content: start; }
+.loot-win.wide .remotelist .packempty { grid-column: 1 / -1; }
+.loot-win .itemrow { width: 100%; height: auto; min-height: 52px;
+  display: flex; align-items: center; justify-content: flex-start; gap: 12px;
+  padding: 8px 14px; border: 0; border-bottom: 2px solid rgba(125,116,96,0.16);
+  text-align: left; }
+.loot-win .itemrow:last-child { border-bottom: 0; }
+.loot-win .itemrow .tile { width: 38px; height: 38px; font-size: 18px; flex: 0 0 auto; }
+.loot-win .itemrow .itemname { position: static; width: auto; height: auto;
+  clip-path: none; overflow: hidden; display: flex; flex-direction: column; gap: 2px;
+  min-width: 0; flex: 1; font-size: 14px; color: #d8cfae; }
+.loot-win .itemrow .itemname > span { overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; }
+.loot-win .itemrow .itemname small { font-size: 11px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: #7d7460; }
+.loot-win .itemrow .itemwt { display: block; flex: 0 0 auto; font-size: 12px;
+  color: #7d7460; font-variant-numeric: tabular-nums; }
+.loot-win .itemrow .rowcount, .loot-win .itemrow .count { position: static;
+  font-size: 12px; margin-left: 4px; }
+.loot-win .itemrow:hover, .loot-win .itemrow:focus-visible { background: rgba(125,116,96,0.12); }
+.loot-win .itemrow.on { background: rgba(192,138,62,0.14); outline: 0;
+  box-shadow: inset 3px 0 0 var(--brass); }
+
+/* ── PX21c: THE LOOT HOVER PLAQUE ───────────────────────────────
+   A readout under the crosshair, not a control: centred low so it
+   never sits on the reticle, in the same dress as the floating
+   windows, with pointer-events off because nothing here is clickable.
+   It SNAPS on and off - the whole point is that it answers before you
+   have finished deciding to ask. */
+.loothover { position: fixed; left: 50%; bottom: 16%; transform: translateX(-50%);
+  z-index: 6; display: none; min-width: 190px; max-width: 300px; padding: 10px 14px;
+  background: rgba(10,12,17,0.9); border: 2px solid #7d7460; pointer-events: none;
+  font-family: 'Pixelify Sans', monospace; -webkit-font-smoothing: none; color: #d8cfae;
+  font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.loothover.on { display: block; }
+.loothover-head { font-size: 11px; letter-spacing: 0.3em; text-indent: 0.3em;
+  text-transform: uppercase; color: #7d7460; text-align: center;
+  padding-bottom: 8px; margin-bottom: 8px;
+  border-bottom: 2px solid rgba(125,116,96,0.3); }
+.loothover-row { display: flex; align-items: baseline; gap: 10px; font-size: 14px;
+  line-height: 1.5; }
+.loothover-count { margin-left: auto; color: var(--brass); font-size: 12px; }
+.loothover-empty, .loothover-more { color: #7d7460; font-size: 12px; }
+
+/* ── PX21a: THE TRANSPORT STRIP ─────────────────────────────────
+   What you travel with, under what you wear and carry. Two plaques,
+   the cart's one doubling as the wagon's door. */
+.pack-shell .transport { flex: 0 0 auto; display: grid;
+  grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px auto 0;
+  width: min(960px, 100%); }
+.pack-shell .transport .tplaque { display: flex; align-items: center; gap: 14px;
+  min-height: 52px; padding: 8px 14px; text-align: left; cursor: default;
+  background: rgba(10,12,17,0.6); border: 2px solid rgba(125,116,96,0.35);
+  color: #a89f88; font-family: inherit; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.pack-shell .transport button.tplaque { cursor: pointer; }
+.pack-shell .transport button.tplaque:hover, .pack-shell .transport button.tplaque:focus-visible {
+  outline: none; border-color: var(--brass); color: #d8cfae; }
+.pack-shell .transport .tplaque.on { border-color: var(--brass); color: rgb(243,239,44);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.pack-shell .transport .tplaque.tempty { border-style: dashed; }
+.pack-shell .transport .tgo { margin-left: auto; font-size: 11px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--brass); }
+.pack-shell .transport .worntile { font-size: 22px; }
+.pack-shell .transport .tile { width: 34px; height: 34px; font-size: 18px; }
+
+/* PX22: an empty section still stands, and says so. */
+.px-qnone { padding: 6px 14px 10px; color: rgba(125,116,96,0.55); font-size: 13px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 @media (max-width: 640px) {
   .pack-win { width: 100vw; height: 100dvh; border-left: 0; border-right: 0; }
   /* PX19f: on a phone the main area is the character region alone

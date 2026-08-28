@@ -6,6 +6,7 @@ import { flattenNif } from '../src/formats/mwNifMesh.js';
 import {
   collectTextKeys,
   parseAnimGroups,
+  findAnimGroup,
   extractTracks,
   sampleTrack,
 } from '../src/formats/mwAnim.js';
@@ -274,4 +275,47 @@ test('mwskin: root motion extracted - the flight stays under the actor', () => {
   });
   skinBatch(batch, skeleton, pinned, skeletonSpaceMatrices(skeleton, pinned, batch.skin.skeletonRoot), out, null);
   assert.ok(nearVec(Array.from(out), [0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1]));
+});
+
+// ── MWAUDIT: the group lookup, and why it cannot be case-sensitive ──
+
+test('MWAUDIT: findAnimGroup resolves whatever case the file wrote - the map keeps the original', () => {
+  // THE DEFECT: parseAnimGroups lowercases every MARKER and keeps the
+  // GROUP name exactly as written, while the first-person layer looked
+  // groups up by a hard-coded capitalisation. A file writing `idle1h:`
+  // resolved nothing, and a rig with no group to play freezes in its
+  // bind pose. OpenMW lowercases group names on the way in for exactly
+  // this reason: real data and mods do not agree on case.
+  const groups = parseAnimGroups([
+    { time: 0, text: 'idle1h: Start' },
+    { time: 1, text: 'idle1h: Stop' },
+    { time: 2, text: 'WEAPONONEHAND: Start' },
+    { time: 3, text: 'WEAPONONEHAND: Stop' },
+  ]);
+  // the MAP is untouched - the mesh viewer is a coverage scout and
+  // must show what the file actually says
+  assert.deepEqual([...groups.keys()].sort(), ['WEAPONONEHAND', 'idle1h'],
+    'the original spelling survives for display');
+  // ...and the lookup answers the canonical name the port asks with
+  assert.ok(findAnimGroup(groups, 'Idle1h'), "asked as 'Idle1h', stored as 'idle1h'");
+  assert.ok(findAnimGroup(groups, 'WeaponOneHand'), "asked as 'WeaponOneHand', stored upper");
+  assert.equal(findAnimGroup(groups, 'Idle1h').stop, 1, 'and it is the right group, not just any');
+  // exact case still works, and a real miss is still a miss
+  assert.ok(findAnimGroup(groups, 'idle1h'), 'the exact key still resolves');
+  assert.equal(findAnimGroup(groups, 'Idle2w'), null, 'a group the file lacks is still absent');
+  assert.equal(findAnimGroup(null, 'Idle'), null, 'and a missing map answers null rather than throwing');
+});
+
+test('MWAUDIT: the marker half was already case-insensitive - the two halves now agree', () => {
+  // The inconsistency was WITHIN one function: markers normalised,
+  // group names not. This pins both halves so neither can drift back.
+  const g = parseAnimGroups([
+    { time: 0, text: 'Walk: START' },
+    { time: 1, text: 'Walk: Loop Start' },
+    { time: 5, text: 'Walk: sToP' },
+  ]);
+  const w = findAnimGroup(g, 'walk');
+  assert.equal(w.start, 0, 'START');
+  assert.equal(w.stop, 5, 'sToP');
+  assert.equal(w.loopStart, 1, 'Loop Start');
 });

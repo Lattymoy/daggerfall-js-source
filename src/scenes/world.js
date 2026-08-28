@@ -112,6 +112,7 @@ import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
 import { paintRoadTiles } from '../world/roadTiles.js';   // R5 (enhanced): roads on the ground
 import { roadsForWorld, bakeInputs } from '../systems/roadsBoot.js';   // R6
+import { traceNetwork } from '../systems/roadBake.js';   // R3W: the map layer's chains
 import { bakeRoadsOffThread } from '../systems/roadBakeClient.js';   // RA1: the bake in a Worker
 import { storeDerived, loadDerived } from './dataSource.js';
 import { getPref } from '../systems/uiPrefs.js';
@@ -183,6 +184,7 @@ import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseL
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';   // I2: the rebindable registry
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
+import { isEnhanced } from '../systems/uiSkin.js';   // R3W: roads are an enhanced-only addition
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -255,8 +257,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   // a hang ("stuck on baking roads"). In a Worker the page keeps
   // painting and every progress report lands.
   let roadNetwork = null;
+  let _roadChains = null;   // R3W: traceNetwork's output, memoised for the map
   try {
-    if (getPref('roads')) {
+    // R3W: gated on the SKIN as well as the preference. Roads are an
+    // enhanced-mode addition - classic Daggerfall has none - and the
+    // preference alone let a classic session bake the network and
+    // paint tracks across its terrain, which is a parity break in the
+    // one direction this port never takes.
+    if (isEnhanced() && getPref('roads')) {
       status('baking roads');
       const r = await roadsForWorld({
         enabled: true,
@@ -2240,6 +2248,17 @@ export async function bootWorld(canvas, renderer, params, status) {
   function buildTravelMapWindow(extra = {}) {
     return createTravelMapWindow({
       maps, mapDict, woods,
+      // R3W (2026-08-28): the baked network, TRACED, for the enhanced
+      // map's road layer. It used to be a closure-local with exactly
+      // one consumer - paintRoadTiles on the ground - so the map half
+      // of R1-R3 had nothing to draw even after it was written.
+      // Traced lazily and once: the window asks on its first scene
+      // build, and a host that baked nothing answers null.
+      roads: () => {
+        if (!roadNetwork) return null;
+        _roadChains ??= traceNetwork(roadNetwork);
+        return _roadChains;
+      },
       getPlayerPixel: playerTravelPixel,
       getClimateIndex: (x, yy) => maps.getClimateIndex(x, yy),
       // GetGoldAmount is coins PLUS letters of credit; the popup's
