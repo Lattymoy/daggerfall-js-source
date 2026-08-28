@@ -7606,6 +7606,24 @@ mutations, 6 dead. Driven live through the real pause face with three
 logs - both kinds, sides only, mains only - and all three drew the
 three headings with the empty ones marked.
 
+PX22b (Mac, checking: "and the timer we also designed is integrated
+when needed, correct?"): YES - AND NOW IT IS PINNED. PX5 shipped the
+timer live-probed and never wrote a test for it, so the answer was a
+reading of the code rather than something the suite defends. Driven
+through the real pause face with four quests: 4 days 5 hours reads
+plainly, 9 hours 30 min reads URGENT, 22 min reads urgent, and a quest
+with no clock gets NEITHER the rail gem nor the words - which is the
+"when needed" half of the question. The words are PX5's own: days with
+hours, hours with minutes under a day, minutes alone under an hour,
+and never "0 min", because a live clock always has a minute left. The
+threshold is one GAME DAY in seconds, not a guess. The clock is the
+machine's - the TIGHTEST running Clock resource on the quest
+(clockEnabled && !clockFinished, quest/clock.js:92,164) - and all
+three log builders walk it identically, world.js twice on purpose (its
+own questLog and the pauseQuestLog worldModes borrows, so the modal
+host's journal shows the same timers the world's does). 1 pin, 5
+mutations, 5 dead.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk
