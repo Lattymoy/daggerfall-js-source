@@ -1079,7 +1079,16 @@ function render() {
     // the world showing through the right. So no sky here: the paused
     // frame is the ground (the pause door's law, one window over) and
     // every column carries its own scrim.
-    const shell = el('div', 'pack-shell');
+    // PX19k (Mac: "why does the UI refresh every time you click"):
+    // every click re-renders the window - that is the one-way render
+    // law and it is fine - but the ENTRANCE was keyed inside render,
+    // so the 220ms fade + rise + depth-of-field REPLAYED on every
+    // pick: the player watched the window re-arrive per click. The
+    // entrance belongs to the FIRST paint only; every later render is
+    // born already-arrived (created WITH .on, no transition runs on a
+    // freshly inserted element's initial style).
+    const arriving = repaints === 1;
+    const shell = el('div', `pack-shell${arriving ? '' : ' on'}`);
     // PX19 (Mac: centered, window-based; creative authority): THE
     // PACK IS A WINDOW NOW - the pause window's own frame (corner
     // gems, 2px border, the 0.72 glass) centered over the game, and
@@ -1088,7 +1097,7 @@ function render() {
     // floating surface. The window carries its own footer; the right
     // column is the showcase compressed - figure above, plaque
     // beneath.
-    requestAnimationFrame(() => requestAnimationFrame(() => shell.classList.add('on')));
+    if (arriving) requestAnimationFrame(() => requestAnimationFrame(() => shell.classList.add('on')));
     const win = el('div', 'pack-win');
     for (const c of ['tl', 'tr', 'bl', 'br']) win.append(el('span', `px-gem px-corner px-${c}`));
     const head = el('header', 'pack-id');

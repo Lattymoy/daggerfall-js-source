@@ -7393,6 +7393,21 @@ BANKED from this stretch: my command chains gated on grep matching
 rather than the fail count - which is how a red once slipped past
 && into a commit - so gates now grep the literal 'fail 0'.
 
+PX19k (Mac, live: "why does the UI refresh every time you click"):
+THE REPLAYED ENTRANCE. Every click re-renders the window - that is
+the one-way render law and it stays - but the pack's ENTRANCE
+(fade + rise + depth-of-field, 220ms) was keyed INSIDE render, so
+the player watched the window re-arrive on every pick, tab and
+cycle. The entrance belongs to the FIRST paint: repaints === 1 runs
+the two-rAF class dance; every later render is born already-arrived
+(created WITH .on - a freshly inserted element does not transition
+from its initial style). Proven by sampling shell opacity the
+instant after three consecutive re-renders: 1, 1, 1. The probe also
+tripped over real behaviour worth knowing: the open tip INTERCEPTS a
+click aimed at the tabs beneath it (the click-away dismiss eats the
+first tap) - by design, one tap to put the tip away, the next to
+act. Suite fail 0, build green.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk
