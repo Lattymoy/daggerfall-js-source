@@ -269,7 +269,6 @@ combat line numbers below are refreshed with it.
 - `src/scenes/exterior.js:1058` - (FLAGGED); swallowing the browser reload is not optional.
 - `src/scenes/exterior.js:1365` - (FLAGGED: the climate People table pends; the test city is
 - `src/scenes/exterior.js:1530` - FLAGGED here exactly as in world.js - no tile lookup yet).
-- `src/scenes/exteriorFoes.js:553` - FLAGGED: the arrow's IMPACT still only knows the player
 - `src/scenes/shared.js:297` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:314` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:419` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
@@ -284,7 +283,7 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:3135` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
 - `src/scenes/world.js:3551` - castle interior (FLAGGED with the palace blocks).
 - `src/scenes/world.js:4059` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:4433` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:4440` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:799` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
 - `src/scenes/worldModes.js:936` - FLAGGED to the crime arc, as the Ledger records.
 - `src/scenes/worldModes.js:1005` - at the concluded deal (:1036-1051). FLAGGED: the equipped test

@@ -46,7 +46,7 @@ export class ArrowFlight {
     this.arrows.push({ pos: [...from], dir: [...dir], age: 0, gpu: null, dead: false, ...meta });
   }
 
-  update(dt, { playerFeet = null, onPlayerHit = null } = {}) {
+  update(dt, { playerFeet = null, onPlayerHit = null, foeTargets = null, onFoeHit = null } = {}) {
     let live = 0;
     const c = typeof this._collider === 'function' ? this._collider() : this._collider;
     for (const m of this.arrows) {
@@ -74,6 +74,23 @@ export class ArrowFlight {
           m.dead = true;
           continue;
         }
+      }
+      // AR1: the impact learns the FOES - MT-ii's infighting arrows
+      // flew true at a selected foe and landed nothing, because this
+      // module knew only the player capsule. Same contact law, every
+      // live foe but the SHOOTER (an archer must not feather itself
+      // on the release frame).
+      if (m.enemy && foeTargets && onFoeHit) {
+        for (const t of foeTargets) {
+          if (!t?.feet || t.ref === m.shooterFoe || t.ref?.dead) continue;
+          const dx = t.feet[0] - m.pos[0], dy = t.feet[1] + 0.9 - m.pos[1], dz = t.feet[2] - m.pos[2];
+          if (Math.hypot(dx, dy, dz) <= MISSILE_COLLIDER_RADIUS + 0.45) {
+            onFoeHit(m, t.ref);
+            m.dead = true;
+            break;
+          }
+        }
+        if (m.dead) continue;
       }
       // The mesh raycast never sees bare TERRAIN (the collider's
       // heightAt fallback floor) - an arrow at or under it has landed.

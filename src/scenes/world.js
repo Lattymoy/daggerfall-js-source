@@ -4426,6 +4426,13 @@ export async function bootWorld(canvas, renderer, params, status) {
         }
         addItem(playerEntity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });   // BowDamage: the arrow is recoverable from the target
       },
+      // AR1: the impact learns the FOES - the shaft an archer looses
+      // at another foe (MT-ii's infighting selection) LANDS now, on
+      // BowDamage's non-player arm. Both pools are candidates; the
+      // shooter is excluded inside the flight module.
+      foeTargets: [...exteriorFoes.foes, ...cityGuards.guards]
+        .filter((t) => !t.dead && t.ai).map((t) => ({ feet: t.ai.feet, ref: t })),
+      onFoeHit: (m, t) => exteriorFoes.arrowHitFoe(m, t),
     });
     arrows.draw(renderer);
     // C9: the exterior FP weapon - swings/sounds through the rig; the
