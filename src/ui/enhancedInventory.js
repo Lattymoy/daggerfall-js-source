@@ -655,17 +655,23 @@ function equippedList() {
     // `.empty` COMPONENT (a dashed placeholder card), and reusing the
     // bare word drew every unfilled slot as one. Third collision of
     // this shape in the arc, after `.detail` and `.packcol`.
+    // PX19b (Mac: keep the CLASSIC'S PANEL-BASED equip section): the
+    // worn list is a TILE GRID now - each slot a bordered panel with
+    // the item's monogram tile and its slot word beneath, the
+    // classic's own reading one language over. Empties stay NON-
+    // BUTTONS (the law above) drawn as dim open slots; the probe's
+    // class names (.wornrow/.wornname) ride the tiles unchanged.
     if (!row.item) {
       const d = el('div', 'wornrow wornempty');
-      d.append(el('span', 'wornslot', row.label), el('span', 'wornname wornempty', '\u2014'));
+      d.append(el('span', 'worntile', '\u25c7'), el('span', 'wornslot', row.label), el('span', 'wornname wornempty', '\u2014'));
       wrap.append(d);
       continue;
     }
     const b = el('button', `wornrow${row.item === picked ? ' on' : ''}`);
     const line = itemLine(row.item, deps.entity);
+    b.append(itemTile(line));
     b.append(el('span', 'wornslot', row.label));
     b.append(el('span', 'wornname', line.name));
-    b.append(el('span', 'itemwt', `${line.weight.toFixed(2)} kg`));
     // SELECTS, rather than unequipping on the spot. The slot map's node
     // took the item straight off, which is right for a control whose
     // only meaning is "this one" - a named row has a detail panel
@@ -1009,6 +1015,17 @@ function render() {
     // frame is the ground (the pause door's law, one window over) and
     // every column carries its own scrim.
     const shell = el('div', 'pack-shell');
+    // PX19 (Mac: centered, window-based; creative authority): THE
+    // PACK IS A WINDOW NOW - the pause window's own frame (corner
+    // gems, 2px border, the 0.72 glass) centered over the game, and
+    // it ARRIVES like the dial: a stepped fade while the world drops
+    // into the same depth-of-field. One entrance gesture for every
+    // floating surface. The window carries its own footer; the right
+    // column is the showcase compressed - figure above, plaque
+    // beneath.
+    requestAnimationFrame(() => requestAnimationFrame(() => shell.classList.add('on')));
+    const win = el('div', 'pack-win');
+    for (const c of ['tl', 'tr', 'bl', 'br']) win.append(el('span', `px-gem px-corner px-${c}`));
     const head = el('header', 'pack-id');
     const who = el('div');
     who.append(el('h2', null, 'Pack'));
@@ -1016,7 +1033,7 @@ function render() {
     const close = el('button', 'act', 'Close');
     close.onclick = () => onExit();
     head.append(close);
-    shell.append(head);
+    win.append(head);
     const grid = el('div', 'pack');
     // The two lists are a PAIR - DFU's window is local beside remote -
     // so they share one grid cell and split it, which keeps the outer
@@ -1036,7 +1053,7 @@ function render() {
     grid.append(catsCol(), lists, el('div', 'packstage'));
     const stage = grid.querySelector('.packstage');
     stage.append(characterCol(), detailCol());
-    shell.append(grid);
+    win.append(grid);
     // PX16b: the reference's BOTTOM BAR - carry weight as a meter
     // (blood past four-fifths, the reference's red), gold beside it.
     const bar = el('footer', 'packbar');
@@ -1052,8 +1069,9 @@ function render() {
     const gold = el('div', 'packgold');
     gold.append(el('span', 'k', 'Gold'), el('span', 'v', model.gold.toLocaleString()));
     bar.append(el('span', 'packitems', plural(model.count, 'item')), carry, gold);
-    shell.append(bar);
-    if (notice) shell.append(el('p', 'sheet-notice', notice));
+    win.append(bar);
+    if (notice) win.append(el('p', 'sheet-notice', notice));
+    shell.append(win);
     host.append(shell);
   });
 }

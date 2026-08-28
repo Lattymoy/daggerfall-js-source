@@ -1653,129 +1653,151 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   .px-knot-mid { font-size: 26px; }
 }
 
-/* ── PX16b: THE PACK, THE REFERENCE READ PROPERLY ──────────────
-   The reference's anatomy, held to: TWO TRANSLUCENT COLUMNS ON THE
-   LEFT THIRD - categories stacked vertically, then bare names with
-   counts, the chosen row bright with the gem at its edge - and the
-   GAME on the right two-thirds, where the figure (the paper sprite
-   viewer) stands as the showcase with the detail PLAQUE floating
-   beside it: name over a rule, WEIGHT and VALUE as small-label /
-   big-figure pairs, the effect line beneath. Carry weight is a METER
-   in the bottom bar, blood past four-fifths, gold beside it. The
-   ground is THE PAUSED GAME - no sky, no sheet; every column carries
-   its own scrim, the pause door's law one window over. */
-.pack-shell { position: absolute; inset: 0; z-index: 1; background: rgba(10,12,17,0.18);   /* PX16c: a breath, not a curtain - the world reads through */
-  display: flex; flex-direction: column;
-  font-family: 'Pixelify Sans', monospace; -webkit-font-smoothing: none; color: #d8cfae; }
+/* ── PX19: THE PACK IS A WINDOW ── (Mac: centered, window-based).
+   The pause window's own frame - corner gems, 2px dim border, 0.72
+   ink glass - centered over the live game, arriving with THE DIAL'S
+   OWN GESTURE: a five-step fade while the world behind drops into
+   depth-of-field. Inside, the reference's anatomy compressed to a
+   window: the category spine left, bare names middle (local over the
+   ground/wagon pair, the pair law intact), the SHOWCASE right -
+   figure above, the bracketed plaque beneath - and the window
+   carries its own footer: items, the carry meter (blood past
+   four-fifths), gold. */
+.pack-shell { position: absolute; inset: 0; z-index: 1; background: rgba(10,12,17,0.45);
+  display: grid; place-items: center;
+  font-family: 'Pixelify Sans', monospace; -webkit-font-smoothing: none; color: #d8cfae;
+  opacity: 0; backdrop-filter: blur(0px) saturate(100%); -webkit-backdrop-filter: blur(0px) saturate(100%);
+  transition: opacity 0.22s steps(5, end), backdrop-filter 0.22s steps(5, end),
+    -webkit-backdrop-filter 0.22s steps(5, end); }
+.pack-shell.on { opacity: 1; backdrop-filter: blur(6px) saturate(85%);
+  -webkit-backdrop-filter: blur(6px) saturate(85%); }
+@media (prefers-reduced-motion: reduce) {
+  .pack-shell { transition: none; opacity: 1; backdrop-filter: blur(6px) saturate(85%);
+    -webkit-backdrop-filter: blur(6px) saturate(85%); } }
 .pack-shell button { transition: none; border-radius: 0; }
+.pack-win { position: relative; width: min(1040px, 95vw); height: min(660px, 86dvh);
+  display: flex; flex-direction: column;
+  background: rgba(10,12,17,0.72); border: 2px solid #7d7460; }
+.pack-win .px-corner { position: absolute; }
+.pack-win .px-tl { left: -1px; top: -1px; transform: translate(-50%,-50%); }
+.pack-win .px-tr { right: -1px; top: -1px; transform: translate(50%,-50%); }
+.pack-win .px-bl { left: -1px; bottom: -1px; transform: translate(-50%,50%); }
+.pack-win .px-br { right: -1px; bottom: -1px; transform: translate(50%,50%); }
 .pack-shell .pack-id { display: flex; justify-content: space-between; align-items: center;
-  background: transparent; border-bottom: 2px solid rgba(125,116,96,0.35); padding: 10px 18px; }
-.pack-shell .pack-id h2 { font-family: inherit; font-weight: 400; font-size: 22px; margin: 0;
+  background: transparent; border-bottom: 2px solid rgba(125,116,96,0.35); padding: 8px 16px; }
+.pack-shell .pack-id h2 { font-family: inherit; font-weight: 400; font-size: 20px; margin: 0;
   letter-spacing: 0.18em; text-indent: 0.18em; text-transform: uppercase;
-  display: flex; align-items: center; gap: 14px;
-  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
-.pack-shell .pack-id h2::before { content: ''; flex: 0 0 60px; height: 2px;
+  display: flex; align-items: center; gap: 14px; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.pack-shell .pack-id h2::before { content: ''; flex: 0 0 48px; height: 2px;
   background: linear-gradient(90deg, transparent, rgba(125,116,96,0.7)); }
 .pack-shell .pack { flex: 1; min-height: 0; display: grid;
-  grid-template-columns: 190px minmax(240px, 320px) 1fr; gap: 0; background: transparent; }
-/* Column one: the spine. */
-.pack-shell .packcats { background: rgba(10,12,17,0.5); border-right: 2px solid rgba(125,116,96,0.35);
-  overflow-y: auto; padding: 10px 0; }
+  grid-template-columns: 168px minmax(220px, 280px) 1fr; gap: 0; background: transparent; }
+.pack-shell .packcats { background: rgba(0,0,0,0.3); border-right: 2px solid rgba(125,116,96,0.35);
+  overflow-y: auto; padding: 8px 0; }
 .pack-shell .packtabs { display: flex; flex-direction: column; gap: 0; margin: 0; }
 .pack-shell .packtab { display: flex; align-items: center; gap: 10px; text-align: left;
-  min-height: 44px; padding: 8px 16px; border: 0; background: none; cursor: pointer;
-  color: #a89f88; font-family: inherit; font-size: 14px; letter-spacing: 0.18em;
+  min-height: 44px; padding: 8px 14px; border: 0; background: none; cursor: pointer;
+  color: #a89f88; font-family: inherit; font-size: 13px; letter-spacing: 0.16em;
   text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
 .pack-shell .packtab .count { font-family: inherit; font-size: 11px; color: #7d7460;
   background: none; border: 0; margin-left: auto; }
-.pack-shell .packtab:hover, .pack-shell .packtab:focus-visible { outline: none;
-  color: #d8cfae; }
-.pack-shell .packtab.on { color: rgb(243,239,44); font-size: 16px;
+.pack-shell .packtab:hover, .pack-shell .packtab:focus-visible { outline: none; color: #d8cfae; }
+.pack-shell .packtab.on { color: rgb(243,239,44); font-size: 15px;
   text-shadow: 2px 2px 0 rgb(93,77,12); }
-.pack-shell .packtab.on::after { content: '\\25c6'; font-size: 11px; margin-left: 8px; }
-/* Column two: the names. Bare rows - the tile and the per-row weight
-   leave for the plaque; a name, a count, generous air. */
-.pack-shell .packlists, .pack-shell .list { background: rgba(10,12,17,0.38);   /* the shell's own list breath (PX11) */
+.pack-shell .packtab.on::after { content: '\\25c6'; font-size: 10px; margin-left: 8px; }
+.pack-shell .packlists, .pack-shell .list { background: rgba(0,0,0,0.2);
   border-right: 2px solid rgba(125,116,96,0.35); overflow-y: auto; }
-.pack-shell .packcol { padding: 8px 0; }
+/* In a window the PAIR stacks - local above the ground/wagon - one
+   readable column instead of two starved ones; .remotefirst keeps
+   flipping the order for containers and reward trays. */
+.pack-shell .packlists { display: flex; flex-direction: column; }
+.pack-shell .packlists.remotefirst { flex-direction: column-reverse; }
+.pack-shell .packremote { border-top: 2px solid rgba(125,116,96,0.3); background: transparent; }
+.pack-shell .packcol { padding: 6px 0; }
 .pack-shell .itemrow { display: flex; align-items: center; width: 100%; text-align: left;
-  background: none; border: 0; min-height: 44px; padding: 8px 18px; cursor: pointer;
-  color: #a89f88; font-family: inherit; font-size: 16px; letter-spacing: 0.06em;
+  background: none; border: 0; min-height: 44px; padding: 8px 16px; cursor: pointer;
+  color: #a89f88; font-family: inherit; font-size: 15px; letter-spacing: 0.05em;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
 .pack-shell .itemrow .tile { display: none; }
-/* Bare names, the reference's list: the material/condition line and
-   the per-row weight leave for the plaque. */
 .pack-shell .itemrow .itemname small { display: none; }
 .pack-shell .itemrow .itemwt { display: none; }
-/* PX17a (Mac: incomplete text): names WRAP to a second line rather
-   than truncate - an inventory that hides the ends of its own names
-   is lying by omission. Two lines, then the ellipsis, and the full
-   name is always in the plaque. */
 .pack-shell .itemrow .itemname { display: -webkit-box; -webkit-line-clamp: 2;
   -webkit-box-orient: vertical; overflow: hidden; line-height: 1.35; }
 .pack-shell .itemrow:hover, .pack-shell .itemrow:focus-visible { outline: none; color: #d8cfae; }
 .pack-shell .itemrow.on { color: rgb(243,239,44); background: none; box-shadow: none;
   text-shadow: 2px 2px 0 rgb(93,77,12); }
-.pack-shell .itemrow.on::after { content: '\\25c6'; font-size: 11px; margin-left: auto; }
-.pack-shell .packempty { color: #7d7460; padding: 14px 18px; font-size: 15px;
+.pack-shell .itemrow.on::after { content: '\\25c6'; font-size: 10px; margin-left: auto; }
+.pack-shell .packempty { color: #7d7460; padding: 12px 16px; font-size: 14px;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 .pack-shell .remotehead, .pack-shell .equippedhead { font-family: inherit; color: #7d7460;
-  font-size: 12px; letter-spacing: 0.3em; text-indent: 0.3em; text-transform: uppercase;
+  font-size: 11px; letter-spacing: 0.3em; text-indent: 0.3em; text-transform: uppercase;
   text-align: center; background: none; border-top: 2px solid rgba(125,116,96,0.3);
   border-bottom: 0; padding: 10px 0 4px; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 .pack-shell .remotewho, .pack-shell .remotewho * { font-family: inherit; }
-/* WORN's h3 - the serif leak's actual node - and every stray h3/p in
-   the shell come home to the pixel face. */
 .pack-shell h3, .pack-shell .equippedhead h3, .pack-shell .remotehead * { font-family: inherit;
   font-weight: 400; letter-spacing: 0.24em; text-indent: 0.24em; text-transform: uppercase; }
-.pack-shell .equippedhead h3 { font-size: 14px; color: #7d7460; margin: 0;
+.pack-shell .equippedhead h3 { font-size: 13px; color: #7d7460; margin: 0;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
-.pack-shell .equippedhead .meta { font-size: 11px; color: #7d7460; }
-.pack-shell .remoteacts { padding: 0 12px; }
-/* The right two-thirds: the showcase. Transparent to the game; the
-   figure plaque and the floating detail live here. */
+.pack-shell .equippedhead .meta { font-size: 10px; color: #7d7460; }
+.pack-shell .remoteacts { padding: 0 10px; }
+/* The showcase column: the figure over the plaque, both scrolling
+   together, the game glass behind them through the window. */
 .pack-shell .packstage { position: relative; background: transparent; overflow-y: auto;
-  display: flex; align-items: flex-start; justify-content: center; gap: 24px;
-  padding: 26px 26px 90px; flex-wrap: wrap; }
-.pack-shell .figure-doll { border: 2px solid rgba(125,116,96,0.55); background: rgba(10,12,17,0.4); }
-.pack-shell .slotmap, .pack-shell .wornlist, .pack-shell .equipped { background: rgba(10,12,17,0.4); }
-.pack-shell .wornrow { background: none; border: 0; border-bottom: 2px solid rgba(125,116,96,0.25);
+  display: flex; flex-direction: column; align-items: center; gap: 18px;
+  padding: 18px 20px 22px; }
+.pack-shell .figure-doll { border: 2px solid rgba(125,116,96,0.55); background: rgba(0,0,0,0.3); }
+.pack-shell .slotmap, .pack-shell .wornlist, .pack-shell .equipped { background: rgba(0,0,0,0.3); }
+/* PX19b: THE EQUIP PANELS - the classic's own section, one language
+   over. The worn list is a grid of slot TILES beside the doll: each
+   a 2px panel holding the item's monogram with the slot word
+   beneath; the chosen one wears the gold pair and the brass frame;
+   an empty slot is a dim open diamond and NOT a button. */
+.pack-shell .equipped { display: block; }
+.pack-shell .equipped .wornrow { display: inline-flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 3px;
+  width: 76px; min-height: 76px; margin: 3px; padding: 6px 2px; vertical-align: top;
+  background: rgba(0,0,0,0.3); border: 2px solid rgba(125,116,96,0.35);
   color: #a89f88; font-family: inherit; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
-.pack-shell .wornrow:hover, .pack-shell .wornrow.on { color: rgb(243,239,44);
-  background: none; text-shadow: 2px 2px 0 rgb(93,77,12); }
-.pack-shell .wornrow.wornempty { color: rgba(125,116,96,0.5); }
-/* THE PLAQUE: the reference's corner-bracketed card. The 2px frame
-   with an inset hairline reads as the double bracket; the tag corner
-   (Stolen / equipped) rides the top rule. */
-.pack-shell .packdetail { position: relative; transform: none; }
-.pack-shell .packdetail .px-corner { position: absolute; }
-.pack-shell .packdetail .px-tl { left: -1px; top: -1px; transform: translate(-50%,-50%); }
-.pack-shell .packdetail .px-tr { right: -1px; top: -1px; transform: translate(50%,-50%); }
-.pack-shell .packdetail .px-bl { left: -1px; bottom: -1px; transform: translate(-50%,50%); }
-.pack-shell .packdetail .px-br { right: -1px; bottom: -1px; transform: translate(50%,50%); }
-.pack-shell .packdetail .card, .pack-shell .card { min-width: 300px; max-width: 380px;
+.pack-shell .equipped { text-align: center; padding-bottom: 10px; }
+.pack-shell .wornrow .tile { display: flex; width: 30px; height: 30px; align-items: center;
+  justify-content: center; border: 0; background: none; font-size: 15px; color: #c5bda2; }
+.pack-shell .wornrow .worntile { font-size: 15px; color: rgba(125,116,96,0.6); }
+.pack-shell .wornslot { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: #7d7460; }
+.pack-shell .wornname { font-size: 10px; max-width: 70px; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.25; }
+.pack-shell .wornrow .itemwt { display: none; }
+.pack-shell button.wornrow { cursor: pointer; }
+.pack-shell button.wornrow:hover, .pack-shell button.wornrow:focus-visible { outline: none;
+  color: rgb(243,239,44); border-color: var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.pack-shell .wornrow.on { color: rgb(243,239,44); border-color: var(--brass);
+  outline: 2px solid rgba(192,138,62,0.5); outline-offset: 2px;
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.pack-shell .wornrow.wornempty { color: rgba(125,116,96,0.5); border-color: rgba(125,116,96,0.2); }
+.pack-shell .wornrow.wornempty .wornname { display: none; }   /* the open diamond and the slot word carry an empty */
+.pack-shell .packdetail { position: relative; transform: none; width: 100%; max-width: 420px; }
+.pack-shell .packdetail .card, .pack-shell .card { min-width: 0; max-width: none;
   border: 2px solid rgba(216,207,174,0.7); outline: 2px solid rgba(125,116,96,0.35);
-  outline-offset: 4px; border-radius: 0; background: rgba(10,12,17,0.72); padding: 16px 20px; }   /* the pause window's own 0.72 */
-.pack-shell .card h3 { font-family: inherit; font-weight: 400; font-size: 20px;
+  outline-offset: 4px; border-radius: 0; background: rgba(10,12,17,0.72); padding: 14px 18px; }
+.pack-shell .card h3 { font-family: inherit; font-weight: 400; font-size: 18px;
   letter-spacing: 0.14em; text-indent: 0.14em; text-transform: uppercase; text-align: center;
   margin: 0 0 8px; padding-bottom: 8px; border-bottom: 2px solid rgba(125,116,96,0.5);
   text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
 .pack-shell .card .stats { display: grid; grid-template-columns: auto auto;
   justify-content: center; align-items: baseline; gap: 6px 14px; margin: 10px 0; }
-.pack-shell .card .stats dt { text-align: right; }
-.pack-shell .card .stats dd { overflow-wrap: anywhere; }   /* PX17a: the pair wraps before it escapes the plaque */
-.pack-shell .card .stats dt { color: #7d7460; font-size: 12px; letter-spacing: 0.22em;
-  text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
-.pack-shell .card .stats dd { margin: 0; font-size: 21px; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
-.pack-shell .card .meta, .pack-shell .card p { color: #c5bda2; text-align: center; font-size: 15px;
+.pack-shell .card .stats dt { color: #7d7460; font-size: 11px; letter-spacing: 0.22em;
+  text-transform: uppercase; text-align: right; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.pack-shell .card .stats dd { margin: 0; font-size: 19px; overflow-wrap: anywhere;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.pack-shell .card .meta, .pack-shell .card p { color: #c5bda2; text-align: center; font-size: 14px;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
-.pack-shell .card .tag { float: right; color: #c5bda2; font-size: 11px; letter-spacing: 0.2em;
+.pack-shell .card .tag { float: right; color: #c5bda2; font-size: 10px; letter-spacing: 0.2em;
   text-transform: uppercase; border: 0; background: none;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
-.pack-shell .acts { display: flex; justify-content: center; gap: 10px; margin-top: 12px; }
+.pack-shell .acts { display: flex; justify-content: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
 .pack-shell .act { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; background: none;
-  color: #d8cfae; font-family: inherit; letter-spacing: 0.14em; text-transform: uppercase;
-  min-height: 44px; padding: 8px 16px; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+  color: #d8cfae; font-family: inherit; letter-spacing: 0.12em; text-transform: uppercase;
+  min-height: 44px; padding: 8px 14px; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
 .pack-shell .act:hover, .pack-shell .act:focus-visible { outline: none;
   color: rgb(243,239,44); border-color: var(--brass); background: none;
   text-shadow: 2px 2px 0 rgb(93,77,12); }
@@ -1785,25 +1807,33 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .pack-shell .sheet-close { color: #7d7460; background: none; border: 0;
   letter-spacing: 0.2em; text-transform: uppercase; min-height: 44px;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
-/* The bottom bar: the reference's line - items left, the carry meter
-   and gold right. */
-.pack-shell .packbar { display: flex; align-items: center; gap: 26px;
-  border-top: 2px solid rgba(125,116,96,0.35); background: rgba(10,12,17,0.45);
-  padding: 10px 18px; }
-.pack-shell .packbar .k { color: #7d7460; font-size: 12px; letter-spacing: 0.22em;
+.pack-shell .packbar { display: flex; align-items: center; gap: 22px;
+  border-top: 2px solid rgba(125,116,96,0.35); background: rgba(0,0,0,0.3);
+  padding: 8px 16px; }
+.pack-shell .packbar .k { color: #7d7460; font-size: 11px; letter-spacing: 0.22em;
   text-transform: uppercase; margin-right: 8px; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
-.pack-shell .packbar .v { font-size: 17px; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
-.pack-shell .packitems { color: #7d7460; font-size: 13px; letter-spacing: 0.14em;
+.pack-shell .packbar .v { font-size: 16px; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.pack-shell .packitems { color: #7d7460; font-size: 12px; letter-spacing: 0.14em;
   text-transform: uppercase; margin-right: auto; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 .pack-shell .packcarry { display: flex; align-items: center; gap: 10px; }
-.pack-shell .packcarry .px-meter { width: 150px; height: 8px;
+.pack-shell .packcarry .px-meter { width: 140px; height: 8px;
   border: 2px solid rgba(125,116,96,0.55); background: rgba(0,0,0,0.4); }
 .pack-shell .packgold { display: flex; align-items: baseline; }
-.pack-shell .sheet-notice { color: #c5bda2; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.pack-shell .sheet-notice { color: #c5bda2; text-align: center;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 .pack-shell ::-webkit-scrollbar { width: 10px; }
 .pack-shell ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
 .pack-shell ::-webkit-scrollbar-thumb { background: rgba(125,116,96,0.5);
   border: 2px solid rgba(0,0,0,0.3); border-radius: 0; }
+@media (max-width: 640px) {
+  .pack-win { width: 100vw; height: 100dvh; border-left: 0; border-right: 0; }
+  .pack-shell .pack { grid-template-columns: 120px 1fr; }
+  /* the stage dissolves but its CHILDREN keep flowing - display:none
+     here would hide the fixed detail SHEET inside it; contents lets
+     the sheet fix to the viewport while the figure alone hides. */
+  .pack-shell .packstage { display: contents; }
+  .pack-shell .charcol { display: none; }
+}
 
 /* ── PX9: SETTINGS INSIDE THE PAUSE WINDOW ──────────────────────
    The same paneSettings DOM, reflowed for the window: the category
