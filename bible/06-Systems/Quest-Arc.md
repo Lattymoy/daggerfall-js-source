@@ -5319,3 +5319,35 @@ addFace/dropFace rows - removing a row means mounting it.
 
 Pins: 12 in `test/escortfaces.test.js`. Campaign: 13 mutants, 13
 killed.
+
+## RW1 - THE QUESTCOMPLETE LOOT WINDOW (2026-08-28)
+
+The last of Q4-v's recorded quest seams with a real body behind it.
+GivePc's offer arm has been complete on the ACTION side since Q2b-ii -
+questSuccess, the QuestComplete popup, MakePermanent, the reoffer
+release, then `hooks.offerReward` - but the world's hook was a FLAGGED
+direct-add with a "You have been given" HUD line. It is GivePc.cs
+:150-196's own flow now:
+
+- **A real container**: the reward is a dropped-loot pile minted at
+  the player ("CreateDroppedLootContainer(PlayerObject, ...)"), and
+  the inventory opens over it as its REMOTE target - the player takes
+  what they want, and a reward left untaken stays a pile at their
+  feet, exactly as DFU's container persists.
+- **The OnClose law** (:173, :189-196): the loot window opens when
+  the QuestComplete box the action just raised CLOSES - a one-shot
+  latch armed by offerReward and fired by the quest box's onClose;
+  immediate when no box is up.
+- **The mode that owns the ground mints**: `modes.mintRewardPile`
+  routes the dungeon to its own droppedLoot
+  (dungeonContext.offerRewardLoot -> the same three-way takeLoot door
+  every pile rides), and answers undefined everywhere else so the
+  world host mints - the same split the inventory's onDrop already
+  rides. undefined and null are DISTINCT here: null means the mode
+  owned the ground and could not mint (no feet yet, already warned),
+  and folding it with ?? would drop an exterior pile inside a dungeon.
+- The emptied container frees on window close (releaseEmptied - the
+  drop arm's own law), and the Merchant container image is the pile's
+  treasure billboard in this port's vocabulary.
+
+Pins: 4 in `test/questreward.test.js`. Campaign: 8 mutants, 8 killed.

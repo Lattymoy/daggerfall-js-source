@@ -2775,13 +2775,20 @@ export async function bootWorld(canvas, renderer, params, status) {
   // only its tail. `push()` unshifts to the front, which is exactly
   // PushWindow.
   let _questBoxWin = null;
+  // RW1: GivePc's `messageBox.OnClose += QuestCompleteMessage_OnClose`
+  // (GivePc.cs:173, :189-196) - ONE deferred act armed by offerReward
+  // and fired when the box the player is reading closes.
+  let _onQuestBoxClosed = null;
   const showQuestBox = (box) => {
     if (_questBoxWin && !_questBoxWin.done && _liveQuestOverlay(_questBoxWin)) {
       _questBoxWin.push([box]);
       return;
     }
     const win = new ServiceFlowWindow([box], {
-      onClose: () => { if (_questBoxWin === win) _questBoxWin = null; },
+      onClose: () => {
+        if (_questBoxWin === win) _questBoxWin = null;
+        const fire = _onQuestBoxClosed; _onQuestBoxClosed = null; fire?.();
+      },
     });
     _questBoxWin = win;
     // U43-ii: the modal slot first - interior OR dungeon, both of
@@ -3484,13 +3491,33 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (it.questItem && it.questUID === uid && it.questSymbol?.name === sym?.name) makeItemPermanent(it);
       }
     },
+    // RW1: OfferToPlayerWithQuestComplete's world half (GivePc.cs
+    // :150-171 + :189-196). The reward is a DROPPED LOOT container at
+    // the player - "CreateDroppedLootContainer(PlayerObject, ...)" -
+    // and the inventory opens over it as its remote target when the
+    // QuestComplete box the action just raised CLOSES (the
+    // messageBox.OnClose law). The mode that owns the ground mints
+    // the pile: the dungeon through its own droppedLoot, everywhere
+    // else this host's - the same split the inventory's onDrop rides.
+    // A reward left untaken stays a pile at the player's feet,
+    // exactly as DFU's container persists.
     offerReward: (q, dfItem) => {
-      // FLAGGED: the QuestComplete loot window pends the UI arc - the
-      // reward lands directly with a HUD line, never silently.
-      playerEntity.items = playerEntity.items || [];
-      addItem(playerEntity.items, dfItem);
-      townTalk.say(`You have been given ${dfItem.name ?? 'an item'}.`);
-      surfacePlayer();
+      // undefined = "not my mode" (this host mints); null = the mode
+      // owned the ground and could not mint (already warned) - the
+      // ?? shortcut would fold the two, so the split is explicit.
+      let open = modes?.mintRewardPile?.(dfItem);
+      if (open === undefined) {
+        open = () => {
+          const pile = droppedLoot.dropPile([dfItem], dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`);
+          if (!pile) return;
+          townTalk.showOverlay(makeInventoryWindow({
+            onClose: () => droppedLoot.releaseEmptied(),
+            loot: { items: () => pile.items },
+          }));
+        };
+      }
+      if (open && _questBoxWin && !_questBoxWin.done && _liveQuestOverlay(_questBoxWin)) _onQuestBoxClosed = open;
+      else open?.();
     },
     // IsPlayerInTown(true, true), through the one closure S40 gave it.
     // That closure replaced `locationType <= 2`, which is City /

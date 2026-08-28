@@ -3629,6 +3629,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       activeOverlay = openInventory(source, onEmptied);
       return source.length;
     },
+    /** RW1: GivePc's reward container (GivePc.cs:167-171) - a dropped
+     *  pile at the player's feet, "CreateDroppedLootContainer(
+     *  PlayerObject, ...)" in this host's own vocabulary. Answers the
+     *  OPEN thunk the caller fires when the QuestComplete box closes
+     *  (the messageBox.OnClose law, :189-196), or null with no ground
+     *  position yet - the same no-feet-no-pile arm onDrop carries. */
+    offerRewardLoot(dfItem) {
+      if (!lastPlayerFeet) { console.warn('[loot] reward before the first frame; no ground position yet'); return null; }
+      const pile = droppedLoot.dropPile([dfItem], [...lastPlayerFeet]);
+      return pile ? () => { this.takeLoot(`droppedLoot:${pile.id}`); } : null;
+    },
     textureTable: dungeon.textureTable,
     exitDoors,
     colliderTris,

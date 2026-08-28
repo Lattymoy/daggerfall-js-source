@@ -4889,6 +4889,15 @@ export function createWorldModes(host) {
       if (mode === 'dungeon' && dungeonCtx?.showOverlay) return dungeonCtx.showOverlay(win);
       return false;
     },
+    /** RW1: GivePc's reward container in the MODE that owns the
+     *  ground. The dungeon mints through its own droppedLoot and
+     *  answers the open thunk; interior and exterior fall through to
+     *  the world host's pile (null) - the same seam the inventory's
+     *  onDrop already rides. */
+    mintRewardPile(dfItem) {
+      if (mode === 'dungeon' && dungeonCtx?.offerRewardLoot) return dungeonCtx.offerRewardLoot(dfItem);
+      return undefined;   // not this mode's ground - the world host mints
+    },
     // wave 21: the host asks whether the box it pushed is still the
     // one in the slot before it stacks another onto it
     get questOverlay() {
