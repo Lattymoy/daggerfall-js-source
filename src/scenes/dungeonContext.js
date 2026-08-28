@@ -558,6 +558,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   async function buildFoeAt(e, fallbackFlat = true) {
     const basics = ENEMY_BASICS[e.mobileType];
     if (!basics) return;
+    // NT2 (F210): GetTextureArchive's gender arm, at the ONE entry every
+    // spawn record passes - a human with unspecified gender rolls the
+    // shared DFRandom stream (== 0 male). The dungeon LAYOUT path never
+    // rolled at all before this, so every random human class enemy
+    // stood male; a monster stays unspecified and reads the male texture.
+    e.gender = MobileUnit.resolveGender(e.gender, basics);
     // C17 THE HUMANOID PIVOT: class enemies (128+) render as classic
     // sprite mobiles too - the voxel foe rig goes ON ICE with the
     // voxel FP weapon (Mac's classic-visuals direction). The entity
@@ -1025,8 +1031,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const z = feet[2] + Math.cos(a) * minDistance;
       const landed = foeDeps.floorLanding(collider, [x, feet[1] + 1.5, z]);
       if (!landed || Math.abs(landed[1] - feet[1]) > 6) continue;
-      const gender = basics.femaleTexture && Math.random() < 0.5 ? 'female' : 'male';
-      await buildFoeAt({ mobileType, gender, x: landed[0], y: landed[1], z: landed[2], spawnDistanceType: 0 }, false);
+      // NT2 (F210): no ad-hoc roll - buildFoeAt resolves an unspecified
+      // gender through GetTextureArchive's own DFRandom arm.
+      await buildFoeAt({ mobileType, gender: 'unspecified', x: landed[0], y: landed[1], z: landed[2], spawnDistanceType: 0 }, false);
       return;
     }
   }

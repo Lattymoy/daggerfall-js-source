@@ -102,7 +102,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       entity.items = generateLootItems(basics.lootTableKey ?? '-', { level: playerEntity.level, gender: playerEntity.gender });
       equipEnemy(entity, mobileType, playerEntity.level);
       addEnemyLootExtras(entity.items, basics, rolls);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397, after the equipment as DFU has it
-      const gender = forcedGender ?? (basics.femaleTexture && rolls() < 0.5 ? 'female' : 'male');
+      // NT2 (F210): GetTextureArchive's gender arm - a DFRandom draw off
+      // the shared stream (Ledger A: a DFRandom site never rides the
+      // injectable roll), humans only; monsters read the male texture.
+      const gender = MobileUnit.resolveGender(forcedGender ?? 'unspecified', basics);
       const behaviour = basics.behaviour ?? 'General';
       const ai = new EnemyAI(collider, [pos[0], pos[1] + 0.1, pos[2]], yaw ?? rolls() * Math.PI * 2, {
         liveSpeed: entity.liveSpeed,

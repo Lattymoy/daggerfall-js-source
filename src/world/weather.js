@@ -120,12 +120,18 @@ export function fogFactor(settings, distance) {
  * sets the flash budget (StormLightningShort 4-8, StormLightningThunder
  * 5-10, StormThunderRoll 20-30 with the thunder delayed 1.7 s - sound
  * lands with the Audio arc, the class is exposed for it); each budget
- * slot is TWO frames: maybe-on (Random.value < 0.6 -> the sun light at
- * intensity 2) then off. Frame-quantized exactly as the coroutine's
- * WaitForEndOfFrame pairs. The commented-out SkyColorScale flash is
- * deprecated upstream and skipped. Engine randomness -> umRandom
- * (Port-Ledger A). At night the sun is disabled, so flashes are
- * invisible - verbatim (DFU only touches LightForEffects).
+ * slot rolls Random.value < 0.6 ONCE: a LIT slot spends TWO frames
+ * (on at intensity 2, then off - the coroutine's yield inside the
+ * branch plus the unconditional off-yield, :368-382), a SKIPPED slot
+ * spends ONE (just the off) - NT2 (F186) fixed the port's flat
+ * two-frames-per-slot, which ran a storm's flash train up to twice as
+ * long. The NEXT 4-35s wait re-arms AT STRIKE time (Update:146-152
+ * ticks waitCounter every frame and StartWaiting() fires with
+ * PlayEffects), so successive strikes no longer drift later by each
+ * run's length. The commented-out SkyColorScale flash is deprecated
+ * upstream and skipped. Engine randomness -> umRandom (Port-Ledger A).
+ * At night the sun is disabled, so flashes are invisible - verbatim
+ * (DFU only touches LightForEffects).
  */
 export class LightningPlayer {
   constructor(seed = 1) {
@@ -133,7 +139,8 @@ export class LightningPlayer {
     this._wait = this._nextWait();
     this._slots = 0;
     this._phase = 0; // 0 waiting, 1 in-sequence
-    this._slotFrame = 0;
+    this._slotsDone = 0;
+    this._litHalf = false;
     this._on = false;
     this.lastClipClass = null; // 'short' | 'thunder' | 'roll' for audio
   }
@@ -148,8 +155,9 @@ export class LightningPlayer {
 
   /** Advance one rendered frame; returns the sun intensity multiplier. */
   tick(dtSeconds) {
+    // waitCounter ticks every Update (:146), flash run or no flash run.
+    this._wait -= dtSeconds;
     if (this._phase === 0) {
-      this._wait -= dtSeconds;
       if (this._wait > 0) return 1;
       // Strike: pick the clip class and its flash budget.
       const pick = this._rng.nextFloat();
@@ -164,18 +172,29 @@ export class LightningPlayer {
       }
       this._slots = this._int(min, max);
       this._phase = 1;
-      this._slotFrame = 0;
+      this._slotsDone = 0;
+      this._litHalf = false;
+      // StartWaiting() fires WITH PlayEffects (:150-151): the next wait
+      // is armed at STRIKE, not at the end of the flash run.
+      this._wait = this._nextWait();
     }
-    // In sequence: even frames maybe-on, odd frames off.
-    if (this._slotFrame % 2 === 0) {
-      this._on = this._rng.nextFloat() < 0.6;
+    // Coroutine frames: a lit slot's second frame is its off half; a
+    // fresh slot rolls once - lit spends this frame ON, skipped spends
+    // it OFF and completes immediately.
+    if (this._litHalf) {
+      this._on = false;
+      this._litHalf = false;
+      this._slotsDone++;
+    } else if (this._rng.nextFloat() < 0.6) {
+      this._on = true;
+      this._litHalf = true;
     } else {
       this._on = false;
+      this._slotsDone++;
     }
-    this._slotFrame++;
-    if (this._slotFrame >= this._slots * 2) {
+    if (this._slotsDone >= this._slots) {
       this._phase = 0;
-      this._wait = this._nextWait();
+      this._on = false;   // "Reset values just to be sure" (:384-386)
     }
     return this._on ? 2 : 1;
   }

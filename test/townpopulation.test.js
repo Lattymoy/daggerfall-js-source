@@ -50,7 +50,11 @@ test('mobilePerson: seeks the best neighbor, marches, and the politeness idle', 
     rand: seq(0.9, 0.9, 0.9, 0.9, 0.9),   // no random shuffle, keep the downgrade branch live
   });
   person.place(33, 30);   // ON the road
-  assert.ok(nav.occupied(33, 30));
+  // NT2 (F022): the SPAWN sets no occupancy flag - DFU's spawn path
+  // only positions the transform (PopulationManager.cs:150-166) and
+  // Occupied is written solely in SetTargetPosition (:438-439), so
+  // other walkers may enter this tile until the first target claims one.
+  assert.equal(nav.occupied(33, 30), false, 'no flag at spawn');
   // Seek: current weight 15; stepping E/W is grass (12 < 15) - the
   // downgrade branch (rand .9 > .2 keeps the search) picks a
   // roadward best or marches N/S along the road.

@@ -134,7 +134,12 @@ export class MobilePerson {
     // origin target.
     this.target = [...this.pos];
     this.tx = -1; this.ty = -1;
-    this.nav.setOccupied(gx, gy);
+    // NT2 (F022): NO occupancy flag at spawn - DFU's spawn path sets
+    // none (SpawnAvailableMobile only positions the transform,
+    // PopulationManager.cs:150-166; GetRandomSpawnPosition only tests
+    // weight, CityNavigation.cs:512-535). Occupied is written solely in
+    // SetTargetPosition (:438-439), so other walkers may enter this
+    // tile until the first target claims one - exactly as DFU's do.
     this.state = 'seek';
     this.seekCount = 0;
     this.moveCount = 0;

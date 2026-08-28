@@ -108,8 +108,16 @@ export function layoutNature(heightmapData, tilemapData, opts) {
     for (let x = 0; x < tDim; x++) {
       const steepness = steepnessAt(x, y);
       if (steepness > MAX_STEEPNESS) continue;
-      // Rect.Contains: min-inclusive, max-exclusive.
-      if (rect && x >= rect.xMin && x < rect.xMax && y >= rect.yMin && y < rect.yMax) continue;
+      // Rect.Contains: min-inclusive, max-exclusive. NT2 (F188): the
+      // loop's guard re-evaluates `rect.x > 0 && rect.y > 0` on the
+      // EXPANDED rect (TerrainNature.cs:124 - Unity's rect.x IS xMin
+      // after `xMin -=`), so a location whose pre-clearance min sits in
+      // (0, 4] on an axis gets the containment test DISABLED outright
+      // and nature scatters across the town footprint - eight-block
+      // places, verbatim. The port used to test containment
+      // unconditionally and suppressed those billboards.
+      if (rect && rect.xMin > 0 && rect.yMin > 0
+        && x >= rect.xMin && x < rect.xMax && y >= rect.yMin && y < rect.yMax) continue;
 
       const tile = tilemapData[y * tDim + x] & 0x3f;
       if (tile === 1) {
