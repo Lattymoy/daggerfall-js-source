@@ -9,6 +9,7 @@ import {
   MW_WEAPON_BONE,
 } from '../src/combat/mwFpArms.js';
 import { WEAPON_TYPES } from '../src/combat/fpsWeapon.js';
+import { mwFpEnabled } from '../src/combat/mwFpArms.js';
 import { parseAnimGroups } from '../src/formats/mwAnim.js';
 import { readFileSync } from 'node:fs';
 const src = (p) => readFileSync(new URL(`../src/${p}`, import.meta.url), 'utf8');
@@ -111,4 +112,23 @@ test('mwfp: the attach door is FINDABLE - settings row, its key, the one bootstr
   const d = src('scenes/dataSource.js');
   assert.match(d, /if \(l\.includes\('morrowind'\)\) return 3;/);
   assert.match(d, /return 0; \/\/ unknown packs override everything/);
+});
+
+test('mwfp: ON BY DEFAULT - the precedence matrix', () => {
+  // Attaching Morrowind data IS the opt-in; with data present the 3D
+  // viewmodel draws unless turned off. Query overrides preference
+  // overrides the default-true.
+  assert.equal(mwFpEnabled('', null), true);
+  assert.equal(mwFpEnabled('', '0'), false);
+  assert.equal(mwFpEnabled('', '1'), true);
+  assert.equal(mwFpEnabled('?mwfp=0', '1'), false);
+  assert.equal(mwFpEnabled('?mwfp=1', '0'), true);
+  assert.equal(mwFpEnabled('?other=x', '0'), false);
+  // The toggle sits beside the attach, labelled with its key, handled,
+  // and in the id dispatch.
+  const w = src('ui/settingsWindow.js');
+  assert.match(w, /label: 'F - 3D toggle'/);
+  assert.match(w, /code === 'KeyF' && this\.dialog\.onAlt3/);
+  assert.match(w, /b\.id === 'fpToggle' && d\.onAlt3/);
+  assert.match(w, /3D first-person \(with Morrowind data\)/);
 });

@@ -141,11 +141,13 @@ if (arena2 && existsSync(arena2)) {
   for (let i = 0; i < A.length; i++) if (Math.abs(A[i] - B[i]) > 12) diff++;
   ok(diff > 300, `in-game FP region animates (${diff} changed samples; /tmp/mw-fp-probe.png)`);
 
-  await page.goto(`http://localhost:5221/play/?nomenu&class=1&novideo`);
+  // Default is ON now - the control run forces OFF and the layer must
+  // return inert before touching anything.
+  await page.goto(`http://localhost:5221/play/?nomenu&class=1&novideo&mwfp=0`);
   await page.waitForTimeout(Number(process.env.BOOT_WAIT ?? 12000));
   await page.mouse.click(640, 400);
   await page.waitForTimeout(1500);
-  ok((await page.evaluate(() => window.__mwfp ?? null)) === null, 'without the flag the layer never wakes');
+  ok((await page.evaluate(() => window.__mwfp ?? null)) === null, 'mwfp=0 forces the layer inert');
 } else {
   console.log('skip in-game half: ARENA2_PATH not set - the dungeon cannot boot without it');
 }
