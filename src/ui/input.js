@@ -93,6 +93,11 @@ export function routeKey(e, ctx, setPlayerPos = null) {
   // Diagnostics, not a DFU action: DFU's F8 is PrintScreen, which has
   // no consumer here yet, and the debug HUD is the port's own.
   if (e.code === 'F8') { ctx.toggleDebugHud?.(); return true; }
+  // PX15: THE DIAL, the port's own too - Tab raises the enhanced
+  // compass rose. `=== true` matters: a host without the arm, or the
+  // classic skin (the opener's own gate), answers false and Tab keeps
+  // its default, so classic behaviour is byte-for-byte untouched.
+  if (e.code === 'Tab') { return ctx.toggleDial?.() === true; }
   const act = actionOf(e);
   if (POLLED_ACTIONS.has(act)) return false;
   return routeAction(act, ctx, setPlayerPos);

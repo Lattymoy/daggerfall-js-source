@@ -42,6 +42,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
+import { isEnhanced } from '../systems/uiSkin.js';
 
 const el = (t, cls, txt) => {
   const n = document.createElement(t);
@@ -117,6 +118,7 @@ export function mountPixelDial(hostEl, { entries = [], onClose = () => {} } = {}
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); return; }
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); commit(); return; }
+    if (e.key === 'Tab') { e.preventDefault(); e.stopPropagation(); close(); return; }   // PX15: Tab toggles - the key that opened it closes it
     for (const [dir, { keys }] of Object.entries(DIRS)) {
       if (keys.includes(e.key)) {
         e.preventDefault(); e.stopPropagation();
@@ -131,4 +133,29 @@ export function mountPixelDial(hostEl, { entries = [], onClose = () => {} } = {}
 
   hostEl.append(root);
   return { unmount };
+}
+
+// ── PX15: THE DOOR (the pauseDoor pattern, one size down) ─────────
+// One gated opener the hosts call from routeKey's Tab arm. The skin
+// fork and the document test live HERE, once - a classic player never
+// mounts a byte of it, and a headless test routing Tab gets false and
+// keeps its default. A second call while the dial is up CLOSES it:
+// Tab is a toggle, and the singleton is what makes two hosts' frames
+// racing the key safe. The pointer lock is released on open - the
+// dial is a pointer surface - and the hosts' own click-to-relock
+// covers the way back, exactly as it does for the pause door.
+let _open = null;
+
+export function openPixelDial(entries) {
+  if (!isEnhanced() || typeof document === 'undefined') return false;
+  if (_open) { _open.unmount(); _open = null; return true; }
+  document.exitPointerLock?.();
+  const handle = mountPixelDial(document.body, {
+    entries,
+    onClose: () => { _open = null; },
+  });
+  const inner = handle.unmount;
+  handle.unmount = () => { inner(); _open = null; };
+  _open = handle;
+  return true;
 }

@@ -3003,6 +3003,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     togglePause(setPlayerPos = null) {
       if (activeOverlay || !pauseDoorReady()) return;
       const ctx = this;   // the sibling save verbs on this same context
+      // PX15 FLAGGED: toggleDial - the dungeon has no native inventory
+      // door at all (ui/input.js:84's own note), so its rose draws
+      // three arms, not a dead fourth; wired after the door audit.
       openPauseFlow((w) => { activeOverlay = w; }, {
         quickSave: () => ctx.quickSave?.(),
         // the LOAD arm needs the host's position applier, exactly as

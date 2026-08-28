@@ -83,6 +83,7 @@ import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
 import { LevelUpScreen, preloadCharSheetArt } from '../ui/charsheet.js';   // U8a (LevelUpScreen: AUDIT 21 hosts F3)
 import { createCharSheetWindow, charSheetDoorReady } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
+import { openPixelDial } from '../ui/pixelDial.js';   // PX15: the Tab compass rose
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw
@@ -2302,6 +2303,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     toggleSpellbook: () => toggleSpellbook(),
     toggleAutomap: () => toggleExteriorAutomap(),
     openTravelMap: () => toggleTravelMap(),
+    // PX15: THE DIAL - Tab (routeKey's arm) raises the compass rose
+    // over the live world, each arm one of THIS host's own doors: the
+    // dial routes, the windows keep every law they have. The four are
+    // the reference's four; every door below exists on this ctx, so
+    // no arm is dead.
+    toggleDial: () => openPixelDial([
+      { id: 'skills', label: 'Skills', dir: 'n', open: () => hudCtx.toggleCharSheet() },
+      { id: 'items', label: 'Items', dir: 'e', open: () => hudCtx.toggleInventory() },
+      { id: 'map', label: 'Map', dir: 's', open: () => hudCtx.toggleAutomap() },
+      { id: 'magic', label: 'Magic', dir: 'w', open: () => hudCtx.toggleSpellbook() },
+    ]),
     quickSave: () => worldQuickSave(),
     quickLoad: () => worldQuickLoad(),
     // S40: the Rest door. Above ground this key did nothing at all

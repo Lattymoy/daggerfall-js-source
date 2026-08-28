@@ -6769,6 +6769,31 @@ frame; PX18 THE SPELLBOOK. Each slice keeps its window's laws and
 changes the paint and the bones - the journal pattern, applied until
 the whole in-game surface speaks one language.
 
+PX15 (the road's first mile): TAB RAISES THE ROSE. Three moves, one
+seam each. (1) routeKey grew a Tab arm beside its F8 diagnostics arm
+- both the port's own, neither a DFU action - and `=== true` is the
+law: a host without the arm, or the classic skin, answers false and
+Tab keeps its browser default, so classic behaviour is
+byte-for-byte untouched. (2) pixelDial grew openPixelDial, the
+pauseDoor pattern one size down: the isEnhanced + document gate
+lives ONCE in the opener, a second call while the dial is up CLOSES
+it (Tab is a toggle; the singleton makes racing frames safe), Tab
+inside the dial closes it too, and the pointer lock releases on open
+- the dial is a pointer surface, and the hosts' click-to-relock
+covers the way back exactly as it does for the pause door. (3) THE
+WORLD HOST WIRED: hudCtx.toggleDial hands the rose this host's own
+four doors - toggleCharSheet, toggleInventory (with its V4
+lycanthropy suppression intact, because the dial routes and the door
+keeps its law), toggleAutomap, toggleSpellbook - the reference's
+four, every one real on this ctx. THE OTHER THREE FLAGGED BY NAME at
+their pause sites: worldModes' interior mounts differ, exterior is
+the test host, and the dungeon HAS NO native inventory door at all
+(ui/input.js:84's own note) so its rose will draw three arms, not a
+dead fourth - each lands with its own door audit. Held-key safety
+reasoned and kept: the dial captures only keydown, so a W held
+through open/close still delivers its keyup to the host and nothing
+sticks. Suite green, build green.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk

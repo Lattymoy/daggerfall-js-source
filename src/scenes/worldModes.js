@@ -4312,6 +4312,9 @@ export function createWorldModes(host) {
       // never one, and the port's gate here was a stopgap for the
       // unbuilt serialization, not a law. The doors are the WORLD
       // host's own composer, riding in on the host bag.
+      // PX15 FLAGGED: toggleDial - the interior ctx's own doors (its
+      // charsheet/inventory mounts differ from the world's) need
+      // their per-door audit before the Tab arm lands here.
       openPauseFlow((w) => { interiorOverlay = w; }, {
         quickSave: host.quickSave,
         quickLoad: host.quickLoad,

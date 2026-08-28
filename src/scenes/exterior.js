@@ -1011,6 +1011,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     toggleRest: () => toggleRest(),
     togglePause: () => {
       if (!pauseDoorReady()) return;
+      // PX15 FLAGGED: toggleDial - this test host's door set differs;
+      // audited wiring is PX15's per-host pass.
       openPauseFlow((w) => townTalk.showOverlay(w), {
         savingPrevented: () => true,
         exitToMenu: exitToTitleMenu,
