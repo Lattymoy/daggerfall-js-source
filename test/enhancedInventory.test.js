@@ -1055,3 +1055,30 @@ test('PX21c: the hover plaque names a pile without opening it, on the take\'s ow
   assert.ok(destroyFn.indexOf('_ctxDead = true;') < destroyFn.indexOf('destroyLootHover();'), 'the latch stays first');
   assert.ok(destroyFn.includes('destroyLootHover();'));
 });
+
+test('PX21e: the loot window never scrolls - it grows, then widens, and its head never moves', () => {
+  const css = read('src/ui/enhancedStyle.js');
+  const src = read('src/ui/enhancedInventory.js');
+  // THE FRAME CANNOT SCROLL. It carried overflow-y itself, so a pile
+  // past the cap scrolled its own title and buttons out of sight.
+  assert.match(css, /\.loot-win \{ position: relative;[\s\S]{0,200}overflow: hidden;/);
+  assert.doesNotMatch(css, /\.loot-win \{ position: relative;[\s\S]{0,200}overflow-y: auto;/);
+  // The head is fixed furniture; the rows are their own box.
+  assert.match(css, /\.loot-win \.packremote \{ display: flex; flex-direction: column; min-height: 0; flex: 1; \}/);
+  assert.match(css, /\.loot-win \.remotehead \{ flex: 0 0 auto; \}/);
+  assert.match(css, /\.loot-win \.remotelist \{ flex: 1; min-height: 0; overflow-y: auto;/);
+  assert.match(src, /const list = el\('div', 'remotelist'\);/);
+  assert.match(src, /for \(const it of remote\.items\) list\.append\(itemRow\(it, 'remote'\)\);/);
+  assert.doesNotMatch(src, /for \(const it of remote\.items\) col\.append\(/, 'the rows left the column');
+  // A LONG PILE WIDENS rather than scrolling.
+  assert.match(src, /export const LOOT_ONE_COLUMN = 8;/);
+  assert.match(src, /loot-win\$\{remote\.count > LOOT_ONE_COLUMN \? ' wide' : ''\}/);
+  assert.match(css, /\.loot-win\.wide \{ width: min\(680px, 94vw\); \}/);
+  // ...as a GRID, not multicol: a multicol box that is also a scroll
+  // container fragments in the block direction, so the overflow columns
+  // went below the fold and it scrolled anyway (measured: 14 rows
+  // spilling 203px past the frame). A grid has nothing to fragment.
+  assert.match(css, /\.loot-win\.wide \.remotelist \{ display: grid; grid-template-columns: 1fr 1fr;/);
+  assert.doesNotMatch(css, /\.loot-win\.wide \.remotelist \{ column-count/, 'multicol was the wrong answer');
+  assert.match(css, /\.loot-win\.wide \.remotelist \.packempty \{ grid-column: 1 \/ -1; \}/, 'and Empty. still spans');
+});
