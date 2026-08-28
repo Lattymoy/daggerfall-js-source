@@ -33,6 +33,7 @@ import { drawText, measureText } from './text.js';
 import { RSC, TOKEN_TEXT } from '../formats/textRsc.js';
 import { BookFile } from '../formats/bookFile.js';
 import { getBookFileName } from '../systems/books.js';
+import { setBookAuthor } from '../systems/itemInfo.js';   // IM1: the %ba cache
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 
@@ -137,6 +138,9 @@ export function makeOpenBookHook({ fetchBytes, showReader }) {
     try {
       const bookFile = new BookFile();
       bookFile.load(await fetchBytes(name), name);
+      // IM1: the file's author line feeds the %ba cache - DFU reads it
+      // at info time (BookAuthor :162-183); the port's read is here.
+      setBookAuthor(item?.message, bookFile.author);
       showReader(new BookReaderWindow(bookFile));
     } catch (e) {
       console.warn(`[book] ${name} failed to open:`, e?.message ?? e);
