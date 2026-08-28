@@ -7624,6 +7624,35 @@ own questLog and the pauseQuestLog worldModes borrows, so the modal
 host's journal shows the same timers the world's does). 1 pin, 5
 mutations, 5 dead.
 
+PX21e (Mac: "in the tooltip for looting, it makes you scroll which
+should not be a thing at all"): THE LOOT WINDOW DOES NOT SCROLL. Two
+faults, and the second was the one that read as broken. The window
+carried `overflow-y` ITSELF, so a pile past the cap scrolled its own
+TITLE AND BUTTONS out of sight - the frame moving with its contents.
+And the cap was low enough (560px, 80dvh) that eight of PX21b's
+readable rows already reached it.
+
+The frame is fixed furniture now: `overflow: hidden`, the head
+`flex: 0 0 auto`, and the rows moved out of the column into their own
+`.remotelist` box. Then the real answer to "not a thing at all": a
+long pile WIDENS instead of scrolling - past eight rows the window
+goes to 680px and the list becomes two columns, which holds any
+container Daggerfall builds in the same height.
+
+FOUND ON THE WAY: `column-count` was the obvious way to do that and is
+the wrong one. A multicol box that is ALSO a scroll container
+fragments in the BLOCK direction, so the overflow columns went below
+the fold and the list scrolled anyway - measured, fourteen rows
+spilling 203px past the frame, which is the bug the rule existed to
+prevent. A GRID has nothing to fragment: two tracks, rows in reading
+order, a definite height. Measured across six pile sizes - 3, 8, 9,
+14, 18, 24 - the window never scrolls, the list never scrolls, and the
+last row sits 10px above the frame every time.
+
+Pins: 1 (the frame's overflow and the head's fix, the rows in their
+own box, the widen threshold and its class, the grid and NOT multicol,
+and Empty. still spanning both tracks). 5 mutations, 5 dead.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk
