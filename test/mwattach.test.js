@@ -1,0 +1,142 @@
+// MWFIX - THE ATTACH FLOW'S THREE DEFECTS, each pinned at the shape
+// that let it happen. Reported from retail: "in the enhanced settings
+// you're unable to upload by pressing the button", and "instead the
+// upload appears for a split second when starting a new game and then
+// appears after creating your character, and after uploading does not
+// work at all". Three separate faults, one report.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { ASSET_PICKER_Z } from '../src/scenes/dataSource.js';
+import { mwFpPrefGeneration, setMwFpPreference, mwFpEnabled } from '../src/combat/mwFpPref.js';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
+
+/** Every z-index literal in src/, with where it came from. */
+function zIndexLiterals() {
+  const out = [];
+  const walk = (dir) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, e.name);
+      if (e.isDirectory()) { walk(full); continue; }
+      if (!e.name.endsWith('.js')) continue;
+      const src = readFileSync(full, 'utf8');
+      for (const m of src.matchAll(/z-index:\s*(\d+)/g)) {
+        out.push({ file: full.slice(ROOT.length + 1), z: Number(m[1]) });
+      }
+    }
+  };
+  walk(join(ROOT, 'src'));
+  return out;
+}
+
+test('MWFIX 1: the asset picker OUTRANKS every overlay in src/ - the gate, not an eyeballed number', () => {
+  // THE DEFECT: the picker stood at 11 while the enhanced shell that
+  // opens it stands at 12, so "Attach data" built a full-screen modal
+  // BEHIND an opaque pane. Measured in a real browser before the fix:
+  // document.elementFromPoint at the file input's own centre answered
+  // a shell element, and the input was not the hit target.
+  const all = zIndexLiterals();
+  assert.ok(all.length > 5, `the sweep found the landscape (${all.length} literals)`);
+  const above = all.filter((x) => x.z >= ASSET_PICKER_Z);
+  assert.deepEqual(above, [],
+    `nothing may stand at or above the picker (${ASSET_PICKER_Z}); found: ${above.map((x) => `${x.file}=${x.z}`).join(', ')}`);
+  // and the shell it is opened from is genuinely below it
+  const shell = all.find((x) => x.file === 'src/ui/enhancedMenu.js');
+  assert.ok(shell && shell.z < ASSET_PICKER_Z, 'the enhanced shell sits below the picker it opens');
+  // the literal is GONE from the picker - it reads the constant
+  const ds = rd('src/scenes/dataSource.js');
+  assert.match(ds, /z-index:\$\{ASSET_PICKER_Z\}/, 'the overlay takes the constant, so the gate above governs it');
+});
+
+test('MWFIX 2: the picker can ALWAYS be closed - the leak was a modal with one unreachable exit', () => {
+  // THE DEFECT: `ui.remove()` fired only on the Close button, which sat
+  // under the same pane that hid the picker. So the overlay was never
+  // removed and its promise never resolved - it lingered in the DOM and
+  // surfaced whenever nothing higher was mounted: the "split second" at
+  // New Game (shell down, chargen not yet up), then again after chargen.
+  const ds = rd('src/scenes/dataSource.js');
+  const fn = ds.slice(ds.indexOf('async function pickAssetFolder'));
+  const body = fn.slice(0, fn.indexOf('\n}\n') + 3);
+  assert.match(body, /const close = \(\) => \{/, 'one close path');
+  assert.match(body, /if \(closed\) return;/, 'idempotent - whichever exit fires first wins');
+  assert.match(body, /e\.key === 'Escape'/, 'Escape closes it');
+  assert.match(body, /if \(e\.target === ui\) close\(\)/, 'so does the backdrop, never the card');
+  assert.match(body, /globalThis\.removeEventListener\('keydown', onKey, true\)/, 'and the key listener leaves with it');
+  // THREE distinct exits, each reaching the one close path (the button
+  // passes it by reference; the other two call it)
+  assert.match(body, /globalThis\.addEventListener\('keydown', onKey, true\)/, 'exit 1: the key listener is armed, where the shell listens (see MWFIX 2b)');
+  assert.match(body, /ui\.addEventListener\('click', \(e\) => \{ if \(e\.target === ui\) close\(\); \}\)/, 'exit 2: the backdrop');
+  assert.match(body, /querySelector\('#adone'\)\.addEventListener\('click', close\)/, 'exit 3: the button, by reference');
+  // and every one of them resolves, so the caller's await cannot hang
+  assert.match(body, /resolve\(count\);/, 'closing resolves rather than hanging the await');
+});
+
+test('MWFIX 2b: the picker OWNS THE KEYBOARD while it is up - found by the probe, not the suite', () => {
+  // The node pins above proved Escape was WIRED. The live probe proved
+  // it did not WORK: the enhanced shell takes keydown on `globalThis`
+  // in CAPTURE and stops what it takes (enhancedMenu.js), so it
+  // reached Escape first and walked its own back stack while the
+  // picker stayed up. Same target, same phase, and the shell
+  // registered first - so the picker cannot win by ordering. It says
+  // it is up, and the shell yields, which is the shell's OWN stated
+  // law ("a modal overlay owns its input") applied to the modal it
+  // opened.
+  const ds = rd('src/scenes/dataSource.js');
+  assert.match(ds, /export const assetPickerOpen = \(\) => _pickerOpen;/, 'the picker publishes that it is up');
+  assert.match(ds, /_pickerOpen = true;/, 'set when it mounts');
+  assert.match(ds, /_pickerOpen = false;/, 'and cleared on the ONE close path');
+  assert.match(ds, /globalThis\.addEventListener\('keydown', onKey, true\)/, 'it listens where the shell listens');
+  assert.match(ds, /globalThis\.removeEventListener\('keydown', onKey, true\)/, 'and leaves cleanly');
+
+  const em = rd('src/ui/enhancedMenu.js');
+  assert.match(em, /if \(assetPickerOpen\(\)\) return;/, 'the shell yields to it');
+  // the yield is BEFORE the shell consumes the key
+  const fn = em.slice(em.indexOf('function onKey(e) {'));
+  const yieldAt = fn.indexOf('assetPickerOpen()');
+  const stopAt = fn.indexOf('e.stopPropagation()');
+  assert.ok(yieldAt > 0 && stopAt > yieldAt, 'and yields before it stops propagation, or the picker never sees the key');
+});
+
+test('MWFIX 3: attaching data or toggling the preference REBUILDS the view - it was a one-shot', () => {
+  // THE DEFECT: createMwFpView ran once at weapon-rig construction off
+  // a hasStoredMorrowind() read, so data attached to a running game
+  // changed nothing until a reload. "After uploading does not work at
+  // all" was this, not a bad archive.
+  const rig = rd('src/combat/weaponRig.js');
+  assert.match(rig, /const mwRecheck = \(\) => \{/, 'the rig re-checks');
+  assert.match(rig, /mwRecheck\(\);/, 'once per frame, in update');
+  assert.match(rig, /mwSeen = `\$\{morrowindDataGeneration\(\)\}\|\$\{mwFpPrefGeneration\(\)\}`/,
+    'against BOTH signals - the attach and the toggle beside it');
+  assert.match(rig, /mwView = null;\s+\/\/ drop the stale view first/,
+    'a failed rebuild leaves the SPRITE path, never a half-built rig');
+  assert.match(rig, /if \(mwBuilding\) return;/, 'and one build at a time - a second press cannot race the first');
+
+  // the preference signal moves on every write...
+  const g0 = mwFpPrefGeneration();
+  setMwFpPreference(false);
+  assert.equal(mwFpPrefGeneration(), g0 + 1, 'the toggle publishes a change');
+  setMwFpPreference(true);
+  assert.equal(mwFpPrefGeneration(), g0 + 2, 'and again coming back');
+  // ...and the decision it feeds is unchanged (the classic path is law)
+  assert.equal(mwFpEnabled('?mwfp=0', '1'), false, 'the query override still wins');
+  assert.equal(mwFpEnabled('', '0'), false, 'the stored preference still reads');
+  assert.equal(mwFpEnabled('', null), true, 'and the default is still ON - attaching data is the opt-in');
+
+  // the data signal only moves on a REAL change of the stored set
+  const ds = rd('src/scenes/dataSource.js');
+  assert.match(ds, /if \(next !== _mwCount\) _mwGeneration\+\+;/,
+    'a re-count that finds the same archives is not a change');
+});
+
+test('MWFIX: the classic sprite path is untouched - it is the law this layer draws over', () => {
+  const rig = rd('src/combat/weaponRig.js');
+  // the sprite draw is still the else of an ACTIVE view, exactly as before
+  assert.match(rig, /if \(mwView && mwView\.active\(\)\) \{[\s\S]{0,200}?return;\s*\}\s*const art = c && artFor/,
+    'an inactive or absent view falls straight through to drawFpsWeapon');
+  assert.ok(!rd('src/combat/fpsWeapon.js').includes('mwFp'), 'and fpsWeapon.js never learns about the 3D layer');
+});

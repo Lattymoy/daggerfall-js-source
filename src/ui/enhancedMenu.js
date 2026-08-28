@@ -86,7 +86,7 @@
 // the pick is a zip upload.
 // ═══════════════════════════════════════════════════════════════════
 
-import { morrowindDataCount } from '../scenes/dataSource.js';   // MW-IMPORT: the enhanced shell's own attach door
+import { morrowindDataCount, assetPickerOpen } from '../scenes/dataSource.js';   // MW-IMPORT: the enhanced shell's own attach door; MWFIX: and the modal it opens owns the keyboard
 import { mwFpPreference, setMwFpPreference } from '../combat/mwFpPref.js';
 import { CATEGORIES, keysOf } from '../ui/settingsMap.js';
 import { widgetFor, blockedReason, formatValue, stepValue, COLOUR_KEYS } from '../ui/settingsLaw.js';
@@ -1443,6 +1443,13 @@ function renderInto() {
 // is the same Escape, rebound the same way, as Escape anywhere else.
 function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
+  // MWFIX: ...AND SO DOES THE ONE ABOVE THIS. The law three paragraphs
+  // down - a modal overlay owns its input - cuts both ways: this
+  // handler is on `globalThis` in CAPTURE and stops what it takes, so
+  // it reaches a key before any modal THIS screen opened. The asset
+  // picker is exactly that, and Escape over it must close the picker,
+  // not walk this screen's back stack out from under it.
+  if (assetPickerOpen()) return;
   const t = e.target;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
   if (overlayAction(e) !== 'back') return;
