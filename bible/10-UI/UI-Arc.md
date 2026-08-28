@@ -85,6 +85,89 @@ None of these blocks anything; all are real.
                         will be, because this repo holds no game data.
 
 
+## U63 THE SITE WEARS THE GAME'S FACE (2026-08-27, Mac's call)
+
+Mac: "we've been doing some heavy UI work in another session and I want
+to update our website, reorganized and bring it inline with our new UI."
+
+PX1-PX19 made the enhanced UI PIXEL ART - a Bayer-dithered night, a
+Jacquard 12 blackletter wordmark, Pixelify Sans lists, the classic
+shadowed-label pair, boxless centred faces and framed windows with
+corner gems. The site was still wearing the shell that replaced: a left
+rail, Grenze Gotisch, brass-outlined panels - AND THREE SCREENSHOTS OF A
+MENU THAT NO LONGER EXISTS, which is wrong rather than stale.
+
+REORGANIZED MEANS THE SHELL WENT. The old page was the old menu's shape:
+a sticky rail beside a scrolling pane. The home face has no rail - it is
+centred and boxless - so the site is now a DOOR: a full-viewport stage
+with the wordmark, the tracked JAVASCRIPT sub-line, a rule with the
+brass gem, the one line of what it is, the ARENA2 sentence said before
+anything asks for it, and PLAY as THE ONE BOX (the About plaque's own
+shape, on a page with no other box). The sections below stack centred,
+each opened by its own rule and gem, in the order a stranger needs
+them. The foot is the home face's three zones: build and the test count
+left, the line count dead centre, Source right.
+
+THE NIGHT IS THE MENU'S NIGHT, NOT A LIKENESS OF IT. The page is a
+DOCUMENT - no script, no canvas, and that is a pin - so it cannot run
+`ui/pixelGround.js`. `scripts/landingHtml.mjs` builds the same sky in
+CSS instead and injects it beside the tokens: the six-step RAMP as a
+hard-stopped gradient, the two fog blobs as radials at the same
+relative homes, the dither as a 2px checker, and the stars as a
+box-shadow list from THE SAME SEED AND THE SAME LCG. Pinned both ways -
+the ramp steps, the seed and the LCG against pixelGround's own text,
+and the FIRST STAR against pixelGround's own stream, because a shared
+seed that lands the field somewhere else is a shared style, not a
+shared law. What it has not got is the drift and the twinkle: those
+need a clock, and a clock needs a script.
+
+ONE FONTS REQUEST, WHOLE. The site used to take a SUBSET of the skin's
+request (the brand + data faces) because it was set in Grenze Gotisch
+and the menu was not. It takes the skin's own URL now - one cache entry
+for both pages, and no way for the site to be set in a face the game
+has not got.
+
+THE COLOUR LAW, RESTATED WHERE IT NOW BITES. U60's rule was "every
+colour on this page is a var()", which held while the site wore the
+shell's four tokens. The pixel face's palette is LITERALS in
+enhancedStyle.js - rgb(243,239,44) over rgb(93,77,12), #d8cfae,
+#7d7460 - because they are a drawing's colours, not a theme's. So the
+pin is the same intent stated against the new fact: EVERY COLOUR ON THE
+PAGE MUST BE ONE THE SKIN USES. It caught three of mine on the first
+run (#a99f86, #3a3527, #23202a - invented mid-tones) and they were
+replaced with the skin's own.
+
+FOUND ON THE WAY, AND IT WAS IN THE GAME: Pixelify Sans ships an fi
+LIGATURE whose glyph reads as a CAPITAL A. Caught on this page's first
+render and magnified - "files" read "Ales", "first" read "Arst" - and
+then found in the shipped UI, where "Enemies Fight Each Other" was
+reading "Enemies Aght Each Other" in the settings list. Every enhanced
+screen is set in this face, so `font-variant-ligatures: none` went on
+the roots of BOTH pixel faces (`.shell` and `.px-home`) as well as the
+site. Verified by eye at 3x on both, before and after.
+
+THE PICTURES WERE RETAKEN, and one was retired. `tools/siteShots.mjs`
+now shoots the pixel home, the home on a phone, and the settings shell.
+The pack shot is gone: it was reachable only through a test seam (a
+hand-built entity with the doll forced to its no-art schematic), and
+with PX16's inventory it would need a new seam to pose a screen a
+player cannot reach without game files anyway. Three pictures of
+screens that draw themselves is a truer set than four with one staged.
+
+THE PROBES FOLLOWED. `enhancedMenuProbe.mjs` was still waiting on
+`#enhanced-menu .railbtn` - it had not been runnable since PX1 landed -
+and U62's switch check was reading the SHELL's copy of the switch
+because it ran after the Settings click. Both fixed: the pixel home's
+list, the switch measured on the fresh home where PX1b put it (dead
+centre of the foot, the hint hidden, the lit option gold and 44px), and
+an Escape back to home before New Game, which is PX2's own ladder.
+22/22. The landing probe grew the face and the night: the wordmark's
+computed family IS Jacquard 12 and `document.fonts` says it loaded, the
+body is Pixelify Sans, and the night is fixed with three gradient
+layers and 90 stars. 40/40 on desktop and Pixel 5.
+
+Pins: `test/landing.test.js` 12 (four new), 6 mutants dead.
+
 ## U62 THE SWITCH ON THE DOOR (2026-08-27, Mac's call)
 
 Mac: "not hide the enhanced version toggle within a settings window and

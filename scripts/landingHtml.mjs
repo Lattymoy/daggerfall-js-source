@@ -15,13 +15,15 @@
 // it without Vite and assert the tokens on the page ARE the skin's.
 import { readFileSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { ENHANCED_TOKENS, FONT_BRAND, FONT_DATA, fontsUrl } from '../src/ui/enhancedStyle.js';
+import { ENHANCED_TOKENS, ENHANCED_FONTS_URL } from '../src/ui/enhancedStyle.js';
 
-/** The landing page's own request: the brand face and the data face,
- *  through the skin's URL builder. The woff2 files Google serves are
- *  shared with the game by file URL, so the data face is fetched once
- *  for both pages whatever the css2 URL says. */
-export const LANDING_FONTS_URL = fontsUrl([FONT_BRAND, FONT_DATA]);
+/** U63: the landing page asks for THE SKIN'S OWN REQUEST, not a subset.
+ *  It used to load the brand + data faces, because the site was set in
+ *  Grenze Gotisch and the menu was not; PX1 made the menu pixel art and
+ *  U63 made the site follow, so both now want Jacquard 12 and Pixelify
+ *  Sans. One URL for both pages means one cache entry and no way for the
+ *  site to be set in a face the game does not have. */
+export const LANDING_FONTS_URL = ENHANCED_FONTS_URL;
 
 /** The page this plugin is for - only the root document. `/play/index.html`
  *  is the game and gets nothing from here but the icon. */
@@ -83,6 +85,66 @@ export function countSrcLines(read = (p) => readFileSync(p, 'utf8')) {
 /** The figures as the page shows them: grouped digits, no decimals. */
 export const figure = (n) => new Intl.NumberFormat('en-US').format(n);
 
+/* ── THE NIGHT, IN CSS (U63, 2026-08-27) ──────────────────────────
+   The menu's home face stands on `ui/pixelGround.js`: a vertical
+   gradient quantized through a six-step RAMP by 4x4 Bayer thresholds,
+   two drifting fog blobs, and stars scattered on a seeded LCG so every
+   load sees the same sky. The landing page cannot run it - it is a
+   DOCUMENT, with no script and no canvas, and that is a pin - so the
+   same sky is built here out of CSS and injected: the ramp as a
+   hard-stopped gradient, the blobs as two radial gradients at the same
+   relative homes, the dither as a 2px checker, and the stars as a
+   box-shadow list from THE SAME SEED AND THE SAME LCG. The constants
+   are pinned against pixelGround's own text, so the site's sky cannot
+   drift from the menu's. What it does not have is the drift and the
+   twinkle: those need a clock, and a clock needs a script. */
+export const GROUND_RAMP = ['#07080d', '#0b0d14', '#10141d', '#161c27', '#1e2632', '#28313f'];
+export const GROUND_SEED = 0xda66e4;
+
+/** pixelGround's own generator, at the page's scale: the upper 55% of
+ *  the sky, density by area, a bright quarter. Returns CSS box-shadow
+ *  parts, deterministic for a given size. */
+export function groundStars(w = 1920, h = 1080, scale = 4) {
+  const W = Math.ceil(w / scale), H = Math.ceil(h / scale);
+  let seed = GROUND_SEED;
+  const rnd = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 0x100000000;
+  const n = Math.round((W * H) / 1440);
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const x = (rnd() * W) | 0, y = (rnd() * H * 0.55) | 0;
+    const bright = rnd() < 0.25;
+    rnd();                                  // the phase draw, kept so the stream matches pixelGround's
+    const b = bright ? 200 : 120;
+    out.push(`${x * scale}px ${y * scale}px 0 0 rgb(${b},${b},${b - 10})`);
+  }
+  return out;
+}
+
+/** The whole ground as one <style> block: ramp, fog, dither, stars. */
+export function groundCss(w, h) {
+  const stops = GROUND_RAMP.map((c, i) => {
+    const a = Math.round((i / GROUND_RAMP.length) * 100), b = Math.round(((i + 1) / GROUND_RAMP.length) * 100);
+    return `${c} ${a}% ${b}%`;
+  }).join(', ');
+  return `.night {
+  background:
+    radial-gradient(46% 34% at 78% 35%, rgba(40,49,63,0.55) 0%, transparent 100%),
+    radial-gradient(58% 42% at 30% 72%, rgba(40,49,63,0.75) 0%, transparent 100%),
+    linear-gradient(180deg, ${stops});
+}
+.night::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.028) 0 2px, transparent 2px 4px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.028) 0 2px, transparent 2px 4px);
+}
+.night::after {
+  content: ''; position: absolute; left: 0; top: 0; width: 4px; height: 4px;
+  pointer-events: none; border-radius: 0;
+  box-shadow: ${groundStars(w, h).join(', ')};
+}`;
+}
+
 /** What the page needs to be a landing page: a <style> holding the
  *  skin's tokens, the skin's font link, and the build stamp filled in.
  *  Returns Vite's { html, tags } shape. The stamp is a data attribute
@@ -113,6 +175,10 @@ export function transformLanding(html, {
     html: stamped,
     tags: [
       { tag: 'style', attrs: { id: 'enhanced-tokens' }, children: tokens, injectTo: 'head-prepend' },
+      // A viewport, not a page: `.night` is fixed, so the field covers
+      // one screen. 1920x1080 gives the same 90 stars pixelGround draws
+      // at that size - the same law at the same density.
+      { tag: 'style', attrs: { id: 'pixel-ground' }, children: groundCss(1920, 1080), injectTo: 'head' },
       // The phone's address bar takes the page's ground - read from the
       // same block rather than typed, so it cannot disagree with it.
       ...(ink ? [{ tag: 'meta', attrs: { name: 'theme-color', content: ink }, injectTo: 'head' }] : []),
