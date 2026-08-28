@@ -836,7 +836,7 @@ test('U59: the doll is the COMPOSITOR\'s, and the schematic is the fallback', ()
   const src = read('src/ui/enhancedInventory.js');
   // one compositor: the pane reads finished pixels and never blits
   assert.match(src, /paperDollPixels\(\)/);
-  assert.match(src, /paperDollDataUrl\(paperDollPixels\(\), \{ scale: 3 \}\)/);
+  assert.match(src, /paperDollDataUrl\(paperDollPixels\(\), \{ scale: 4 \}\)/);   // PX20a: 4x, for a cell twice the size
   const code2 = code('src/ui/enhancedInventory.js');
   for (const law of ['BlitItems', 'applyDyeToIndex', 'paperdollOrder', 'PAPERDOLL_ORIGIN', 'BG_SUBRECT']) {
     assert.ok(!code2.includes(law), `a second paperdoll compositor is growing here (${law})`);
@@ -846,7 +846,7 @@ test('U59: the doll is the COMPOSITOR\'s, and the schematic is the fallback', ()
   // still sees their kit; the DOLL rides behind them only when its
   // art can draw. The pin follows the shape.
   const fp = src.slice(src.indexOf('function equippedList()'), src.indexOf('function characterCol()'));
-  assert.match(fp, /const dollUrl = paperDollDataUrl\(paperDollPixels\(\), \{ scale: 3 \}\);/);
+  assert.match(fp, /const dollUrl = paperDollDataUrl\(paperDollPixels\(\), \{ scale: 4 \}\);/);
   assert.match(fp, /if \(dollUrl\)/, 'the doll must be OPTIONAL - tiles alone are the no-data answer');
   assert.match(fp, /wornmap/);
   // and the compositor is asked to recompose when the kit changes, or
@@ -856,5 +856,101 @@ test('U59: the doll is the COMPOSITOR\'s, and the schematic is the fallback', ()
     assert.ok(from > 0, `${fn} is gone`);
     const body = src.slice(from, src.indexOf('\nfunction ', from + fn.length));
     assert.match(body, /refreshFigure\(\)/, `${fn} leaves the avatar stale`);
+  }
+});
+
+// ── PX20: THE CENTRE, AND THE LOOT FRAME ──────────────────────────
+// Mac, on the pack: "spread out and organize the center of the
+// inventory panel now that we have more space. Enlarge the paper
+// sprite and remove the background"; then "ensure the paperdoll's slot
+// is a perfect fit. Move the name outside of the space and to the top
+// bar, remove the slots filled subtext. Utilize the entire area for
+// enlarged icons and displayability." And: "when looting items, only
+// open the loot tooltip, not the entire inventory window."
+
+test('PX20a: the doll owns the CENTRE COLUMN, and the map is wear-left, carry-right', () => {
+  const src = read('src/ui/enhancedInventory.js');
+  // Six rows a side, the doll spanning all six: a standing figure gets
+  // a portrait cell. The old 2/2/span 3 was landscape.
+  assert.match(src, /const DOLL_AREA = '1 \/ 2 \/ span 6 \/ auto';/);
+  const fams = src.slice(src.indexOf('const WORN_FAMILIES'), src.indexOf('const DOLL_AREA'));
+  const left = [...fams.matchAll(/label: '([^']+)', area: '(\d) \/ 1'/g)].map((m) => [Number(m[2]), m[1]]);
+  const right = [...fams.matchAll(/label: '([^']+)', area: '(\d) \/ 3'/g)].map((m) => [Number(m[2]), m[1]]);
+  assert.equal(left.length, 6, 'six down the left');
+  assert.equal(right.length, 6, 'six down the right');
+  assert.deepEqual(left.map((r) => r[0]), [1, 2, 3, 4, 5, 6], 'no gaps, no doubles');
+  assert.deepEqual(right.map((r) => r[0]), [1, 2, 3, 4, 5, 6]);
+  assert.deepEqual(left.map((r) => r[1]), ['Head', 'Neck', 'Cloaks', 'Chest', 'Arms', 'Hands'], 'what you WEAR, top to toe');
+  assert.ok(right.map((r) => r[1]).includes('Legs') && right.map((r) => r[1]).includes('Feet'));
+  assert.ok(!fams.includes("area: '1 / 2'"), 'nothing shares the doll\'s column');
+  const css = read('src/ui/enhancedStyle.js');
+  assert.match(css, /grid-template-columns: minmax\(0, 1fr\) auto minmax\(0, 1fr\);/, 'the centre column is AUTO - the sprite sets its width');
+  assert.match(css, /grid-template-rows: repeat\(6, minmax\(44px, 1fr\)\);/);
+});
+
+test('PX20a/c: the sprite is unframed, 4x, and its cell is a PERFECT FIT', () => {
+  const css = read('src/ui/enhancedStyle.js');
+  const doll = css.slice(css.indexOf('.pack-shell .wornmap-doll {'), css.indexOf('.pack-shell .wornmap-doll .wornslot'));
+  // No border, no background, no outline - the figure stands on the
+  // window's own glass. The FRAME belongs to the placeholder alone,
+  // which is what PX19g's reasoning was actually about.
+  assert.match(doll, /border: 0; background: none; outline: 0;/);
+  assert.match(doll, /\.pack-shell \.wornmap-doll\.noart \{ border: 2px solid/, 'the placeholder keeps its frame');
+  // A perfect fit is the sprite's OWN ratio on the cell, not a
+  // letterbox inside whatever the grid left.
+  assert.match(css, /\.pack-shell \.wornmap-doll\.hasart \{ aspect-ratio: 110 \/ 184;/);
+  const src = read('src/ui/enhancedInventory.js');
+  assert.match(src, /wornmap-doll\$\{dollUrl \? ' hasart' : ' noart'\}/, 'and the class says which');
+  assert.match(src, /paperDollDataUrl\(paperDollPixels\(\), \{ scale: 4 \}\)/, '4x: a bigger cell wants more pixels, not a scaled 3x');
+  // 110x184 is the classic paperdoll's own size, not a number typed here.
+  const pd = read('src/ui/paperDoll.js');
+  assert.match(pd, /export const PAPERDOLL_W = 110;/);
+  assert.match(pd, /export const PAPERDOLL_H = 184;/);
+});
+
+test('PX20c: the name is in the title bar, the count is gone, the tiles carry the width', () => {
+  const src = read('src/ui/enhancedInventory.js');
+  const fn = src.slice(src.indexOf('function equippedList()'), src.indexOf('function characterCol()'));
+  assert.ok(!fn.includes('equippedhead'), 'no name plate standing on the map');
+  // (the phrase survives in the comment that records WHY it went; the
+  // pin is about the DOM, so it reads the code with comments stripped)
+  const fnCode = code('src/ui/enhancedInventory.js')
+    .slice(code('src/ui/enhancedInventory.js').indexOf('function equippedList()'));
+  assert.ok(!fnCode.slice(0, fnCode.indexOf('function characterCol()')).includes('slots filled'),
+    'and no count under it');
+  assert.match(src, /if \(name\) title\.append\(el\('span', 'pack-who', name\)\);/, 'the name rides the window title');
+  const css = read('src/ui/enhancedStyle.js');
+  assert.match(css, /\.pack-shell \.pack-id \.pack-who \{ color: #7d7460;/);
+  // The tile is a ROW now, and the piece's NAME is visible again -
+  // PX19g hid it because a 52px square clipped it, and that reason is
+  // gone with the width.
+  assert.match(css, /\.pack-shell \.equipped \.wornrow \{[\s\S]{0,220}flex-direction: row;/);
+  assert.match(css, /\.pack-shell \.wornrow \.wornname \{ display: block;/);
+  assert.doesNotMatch(css, /\.pack-shell \.wornrow \.wornname \{ position: absolute; width: 1px;/, 'the clip-path hide is gone');
+  assert.match(fn, /txt\.append\(el\('span', 'wornslot', fam\.label\), el\('span', 'wornname', line\.name\)\)/, 'word over name, beside the monogram');
+  assert.match(css, /\.pack-shell \.wornrow \.worntile \{ font-size: 26px;/, 'and the monogram is sized for the tile');
+});
+
+test('PX20b: a LOOT target opens its own frame alone - the pack is never built', () => {
+  const src = read('src/ui/enhancedInventory.js');
+  assert.match(src, /^let packOpen = true;$/m);
+  assert.match(src, /packOpen = !d\.loot;/, 'a loot session opens closed');
+  assert.match(src, /side = d\.loot \? 'remote' : 'local';/, '...on the side the player came for');
+  // NOT BUILT, not built-and-hidden: the pack's whole body sits behind
+  // the flag, so a hidden window cannot run layout or eat the tooltip.
+  const render = src.slice(src.indexOf('function render()'), src.indexOf('// ── THE KEYBOARD'));
+  assert.match(render, /const win = el\('div', 'pack-win'\);\n    if \(packOpen\) \{/);
+  assert.match(render, /if \(packOpen\) shell\.append\(win\);/);
+  // One frame owns the tooltip and the click-away, whichever is shown.
+  assert.match(render, /const frame = packOpen \? win : \(loot \?\? win\);/);
+  assert.match(render, /frame\.append\(tip\);/);
+  assert.match(render, /frame\.addEventListener\('click'/);
+  assert.doesNotMatch(render, /win\.addEventListener\('click'/, 'the listener follows the frame, not the pack');
+  // The way back, and only when there is somewhere to go.
+  assert.match(src, /if \(!packOpen\) \{\n    const b = el\('button', 'act', 'Pack'\);/);
+  assert.match(src, /b\.onclick = \(\) => \{ packOpen = true; picked = null; render\(\); \};/);
+  // The transfer ladder is untouched: this slice draws frames.
+  for (const law of ['function take(', 'function stow(', 'remoteModel', 'toggleWagon']) {
+    assert.ok(src.includes(law), `${law} is still here - PX20b changed what is DRAWN`);
   }
 });
