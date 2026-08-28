@@ -6608,3 +6608,32 @@ DOM after each press) after a probe boolean contradicted the model -
 the diagnostic showed the model right and the probe's assertion its
 own artifact, which is the difference between checking and assuming.
 Suite green, tap probe 26 ok unchanged.
+
+PX10 (same day, Mac): CONDENSED AT PAUSE, THE CATALOG AT BOOT. The
+pause window's Settings pane shows only the keys whose tier is LIVE
+- derived from the tier map itself, so a setting that gains a
+consumer joins the pane the same day it does - 48 rows today,
+grouped under the categories' own titles as pxDividers (48 flat read
+as a wall; the dividers give the scroll a spine without the chip
+strip this pane exists to shed), rendered through the SAME
+settingRow and the same rising help sheet. The closing line says
+'Every setting lives on the main menu's Settings' - the U30
+nothing-hidden law kept by TELLING rather than by showing all 171
+mid-game. Boot keeps the full shell. Probed: 7 dividers, 48 rows,
+no chips, the help sheet rises, zero errors both viewports.
+
+PX10b (same day, Mac: "it's the old ui backdrop"): THE ROWS SHED THE
+OLD CHROME. The base .row/.step/.val/.panes rules are the OLD
+sheet's - slate fills, 1px iron hairlines, the brass inset - and
+PX8's repaint was scoped to .shell, which the pause window is not
+in. The same repaint now lives scoped under .px-setwrap: transparent
+rows on 2px dim separators, pixel-bordered steppers and switches
+with the gold pair, the outline-not-inset selected state, the dcard
+repainted for the sheet - and the 44px target pseudo-element plus
+every measured size untouched. THE SLATE WAS NOT WHERE IT LOOKED:
+killing .list's background changed nothing because the visible panel
+was .panes' own var(--iron) grid ground (the base sheet colours its
+column GAPS by painting the grid behind them) - found by computed
+style, not by staring at the sheet, the PX9 lesson applied within
+the hour. Probed both viewports, the pane now sits on the window's
+own translucent ground.

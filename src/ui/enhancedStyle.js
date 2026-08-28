@@ -1399,7 +1399,8 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    window - the phone pattern the screen already carries, applied one
    size up. All paint and flow; the machine underneath is untouched. */
 .px-setwrap { padding: 0; overflow: hidden; display: flex; }
-.px-setwrap .panes { display: flex; flex-direction: column; flex: 1; min-width: 0; position: relative; overflow: hidden; }
+.px-setwrap .panes { display: flex; flex-direction: column; flex: 1; min-width: 0; position: relative; overflow: hidden;
+  background: none; }   /* PX10b: the slate lived on .panes (its base gap-colour trick), not .list */
 .px-setwrap .subrail { display: flex; flex-direction: row; flex-wrap: wrap; gap: 2px;
   width: auto; border-right: 0; border-bottom: 2px solid rgba(125,116,96,0.45);
   padding: 4px 6px 6px; overflow: visible; }
@@ -1408,7 +1409,7 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .px-setwrap .subbtn.on { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
 .px-setwrap .subbtn .count { font-size: 11px; }
-.px-setwrap .list { flex: 1; overflow-y: auto; padding: 8px 12px 12px; }
+.px-setwrap .list { flex: 1; overflow-y: auto; padding: 8px 12px 12px; background: none; }   /* PX10b: the old sheet's slate panel, off */
 .px-setwrap .row { min-height: 44px; }
 /* The sheet: absolute within the window (px-win is relative), risen
    by the same .open class the phone sheet uses. */
@@ -1422,6 +1423,38 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   border-bottom: 2px solid rgba(125,116,96,0.4);
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 @media (prefers-reduced-motion: reduce) { .px-setwrap .detail { transition: none; } }
+
+/* ── PX10b: THE ROWS SHED THE OLD CHROME (Mac: "it's the old ui
+   backdrop") ── the base .row/.step/.val rules are the OLD sheet's -
+   slate hover fills, 1px iron hairlines, brass inset - and PX8's
+   repaint was scoped to .shell, which the pause window is not in.
+   Same repaint, scoped here; the 44px target pseudo-element and every
+   size stay exactly as measured. */
+.px-setwrap .row { background: none; border-bottom: 2px solid rgba(125,116,96,0.3); }
+.px-setwrap .row:hover { background: rgba(0,0,0,0.25); }
+.px-setwrap .row.on { background: rgba(0,0,0,0.25); box-shadow: none;
+  outline: 2px solid rgba(192,138,62,0.6); outline-offset: -2px; }
+.px-setwrap .row-name { font-size: 15px; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-setwrap .val { color: #c5bda2; letter-spacing: 0.08em;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.px-setwrap .step { border: 2px solid rgba(125,116,96,0.55); border-radius: 0;
+  background: none; color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-setwrap .step:hover { color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-setwrap .act { border: 2px solid rgba(125,116,96,0.55); border-radius: 0;
+  background: none; color: #d8cfae; letter-spacing: 0.14em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); transition: none; }
+.px-setwrap .act:hover, .px-setwrap .act:focus-visible { color: rgb(243,239,44);
+  border-color: var(--brass); background: none; text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-setwrap .act.primary { color: rgb(243,239,44); border-color: var(--brass);
+  background: none; text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-setwrap .swatch { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; }
+.px-setwrap .legend i, .px-setwrap .row i { border-radius: 0; }
+.px-setwrap .dcard h3 { font-family: inherit; font-weight: 400; letter-spacing: 0.12em;
+  text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-setwrap .dcard p { color: #c5bda2; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.px-setwrap .dcard code { font-family: inherit; border: 2px solid rgba(125,116,96,0.4);
+  border-radius: 0; background: rgba(0,0,0,0.35); letter-spacing: 0.06em; }
 `;
 
 const STYLE_ID = 'dagger-enhanced-style';

@@ -494,6 +494,43 @@ function paneSettings(pane) {
   pane.append(panes);
 }
 
+/** PX10: THE CONDENSED SETTINGS (pause only). Every key whose tier is
+ *  LIVE - derived from the tier map itself, so a setting that gains a
+ *  consumer joins this pane the same day - rendered through the SAME
+ *  settingRow every screen uses, with the same rising sheet for help.
+ *  The full catalog stays on the main menu's Settings (Mac's call:
+ *  'the pause menu should have a more condensed settings menu while
+ *  the main menu holds most settings'), and the closing line says so
+ *  rather than letting the short list read as the whole store - the
+ *  U30 nothing-hidden law kept by TELLING, not by showing all 171. */
+function paneQuickSettings(pane) {
+  const panes = el('div', 'panes');
+  const list = el('div', 'list');
+  let any = false;
+  // One scroll, grouped under the categories' own titles - 48 live
+  // rows flat read as a wall; the dividers give the scroll a spine
+  // without bringing back the chip strip this pane exists to shed.
+  for (const cat of CATEGORIES) {
+    const liveKeys = keysOf(cat.id).filter((key) => tierOf(key) === 'live');
+    if (!liveKeys.length) continue;
+    any = true;
+    list.append(pxDivider(cat.title));
+    for (const key of liveKeys) list.append(settingRow(key));
+  }
+  if (!any) list.append(empty('Nothing live here yet', 'No setting has an in-game consumer in this build.'));
+  list.append(el('p', 'px-note', 'Every setting lives on the main menu\u2019s Settings.'));
+  panes.append(list);
+
+  const detail = el('div', 'detail');
+  const close = el('button', 'sheet-close', 'Close');
+  close.onclick = () => { sheetOpen = false; confirming = null; render(); };
+  detail.append(close);
+  detail.append(confirming ? confirmCard() : (pickedKey ? helpCard(pickedKey) : el('div')));
+  if (sheetOpen) detail.classList.add('open');
+  panes.append(detail);
+  pane.append(panes);
+}
+
 /** THE ONE WAY TO SWITCH SKINS, for every control that offers it.
  *  Stores the choice through uiSkin and reloads without any ?skin=
  *  override: the two skins are two hosts and there is nothing to hand
@@ -883,9 +920,11 @@ function pauseSystem(body) {
   wrap.append(rail);
   const detail = el('div', `px-qdetail px-sys${sysSec === 'settings' ? ' px-setwrap' : ''}`);
   if (sysSec === 'settings') {
-    // paneSettings owns its own confirm placement (the reset ask
-    // renders inside its detail sheet).
-    paneSettings(detail);
+    // PX10 (Mac): CONDENSED at pause - the keys with LIVE consumers,
+    // the ones a hand mid-game actually reaches for; the full catalog
+    // stays on the main menu, and the pane says so. The pane owns its
+    // own confirm/help placement (the sheet).
+    paneQuickSettings(detail);
   } else if (confirming) {
     detail.append(confirmCard());
   } else {
