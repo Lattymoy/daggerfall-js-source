@@ -638,3 +638,30 @@ frame function both dungeon hosts already call, and neither host runs
 it itself - so none can forget it and none can run it twice. The
 wave-39 wiring pin, which had pinned dungeon.js and said nothing about
 worldModes, now pins the context and both hosts' absence. Mutant dead.
+
+## AR1 - THE ARROW'S IMPACT LEARNS THE FOES (2026-08-28)
+
+MT-ii gave enemy archers infighting TARGET SELECTION and admitted,
+FLAGGED, that the impact still only knew the player - the host's
+arrows.update had one onPlayerHit door, so an arrow loosed at another
+foe flew true and landed nothing ("written loudly rather than aimed
+wrongly"). Closed:
+
+- `ArrowFlight.update` gains `foeTargets`/`onFoeHit` beside the
+  player pair: an ENEMY arrow tests every live foe capsule (the same
+  radius-plus-0.45-body contact law, post-step like the player arm)
+  but the SHOOTER - an archer must not feather itself on the release
+  frame - and a dead foe is no target. Player arrows keep the
+  visible-flight-only law; their foe impacts resolve at the fire
+  host's own hit chain.
+- `exteriorFoes.arrowHitFoe` is BowDamage's non-player arm
+  (EnemyAttack.cs:134-148 with :303's bowAttack=true): the same
+  applyDamageToNonPlayer payload the melee foe arm rides, the
+  target's own pool owning its death chain through hurtFromFoe, and
+  the arrow recoverable from the TARGET's items (:146-148), damage
+  or not.
+- world.js wires BOTH pools in (encounter foes and the city watch);
+  the shooter exclusion lives in the flight module where the contact
+  is decided.
+
+Pins: 7 in `test/arrowfoes.test.js`. Campaign: 7 mutants, 7 killed.

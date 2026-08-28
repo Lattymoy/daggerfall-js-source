@@ -35,10 +35,22 @@ let _errBound = false;
 // every relock-on-gesture arm in every host already goes through, so
 // there is no ninth call site to remember.
 //
-// FLAGGED: DFU also refuses the toggle for 0.3 seconds after an input
-// message box closes, because Return both submits the box and is the
-// default binding here ("players often think this is a bug"). The
-// port's boxes do not share a clock with this module yet.
+// PL1: DFU refuses the toggle for 0.3 seconds after an input message
+// box closes (PlayerMouseLook.cs:192-196 over the stamp
+// DaggerfallInputMessageBox.CloseWindow writes at :301), because
+// Return both submits the box and is the toggle's default binding -
+// "players often think this is a bug". The port's input boxes stamp
+// through noteInputBoxClosed below.
+let _timeClosedInputBox = -Infinity;
+export const INPUT_BOX_TOGGLE_REFUSAL_MS = 300;
+/** DaggerfallInputMessageBox.CloseWindow's stamp (:301). */
+export function noteInputBoxClosed(now = (typeof performance !== 'undefined' ? performance.now() : Date.now())) {
+  _timeClosedInputBox = now;
+}
+/** PlayerMouseLook.cs:196's gate - C# ALLOWS when the elapsed time is
+ *  strictly greater than 0.3s, so <= refuses. */
+export const cursorToggleRefused = (now = (typeof performance !== 'undefined' ? performance.now() : Date.now())) =>
+  now - _timeClosedInputBox <= INPUT_BOX_TOGGLE_REFUSAL_MS;
 let _cursorActive = false;
 export const cursorActive = () => _cursorActive;
 export const setCursorActive = (b) => { _cursorActive = !!b; };
@@ -59,6 +71,9 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionOf = nu
     if (isWindowUp()) return;
     if (actionOf(e) !== 'ActivateCursor') return;
     e.preventDefault();
+    // PL1: "Don't allow activate cursor for 0.3 seconds after closing
+    // an input message box" (PlayerMouseLook.cs:192-196).
+    if (cursorToggleRefused()) return;
     toggleCursorActive(canvas);
   };
   addEventListener('keydown', onKey);

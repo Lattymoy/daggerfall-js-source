@@ -476,6 +476,21 @@ export function layPath(network, field, path, kind) {
   return network;
 }
 
+/** RB1 (2026-08-28): does this network carry ANY road at all? A bake
+ *  that completes but lays nothing is a real outcome - readers that
+ *  answered no locations, a filter that took them all - and it used to
+ *  serialize as a perfectly valid cache entry, so every later boot
+ *  read the emptiness back as a hit and the player had no roads for
+ *  good, with no door to drop it. */
+export function networkHasAnyRoad(network) {
+  if (!network) return false;
+  const { trunkExits, trackExits } = network;
+  for (let i = 0; i < trunkExits.length; i++) {
+    if (trunkExits[i] !== 0 || trackExits[i] !== 0) return true;
+  }
+  return false;
+}
+
 /** The exits at one pixel, by class. */
 export function roadExitsAt(network, x, y) {
   if (x < 0 || y < 0 || x >= network.width || y >= network.height) {
@@ -619,16 +634,30 @@ export function buildRoadNetwork({
   //    number. Comparing the two COSTS can never fire - see the header.
   const inTree = new Set(spanning.map((c) => `${c.a}:${c.b}`));
   let loopsLaid = 0;
-  for (const c of routable) {
-    if (inTree.has(`${c.a}:${c.b}`)) continue;
+  // RP1 (2026-08-28): this phase used to report ONCE, after it had
+  // finished, and with done === total - so the bar sat frozen for the
+  // whole of it and then jumped to complete. It is a full reroute per
+  // off-tree candidate, which measured as the largest single share of
+  // a real bake, and a silent stretch that long is the "stuck on
+  // baking roads" complaint RA1 was called in for. Report per
+  // CANDIDATE EXAMINED against the count actually examined, not per
+  // loop laid: most candidates are rejected, so counting the laid ones
+  // would crawl and then jump too.
+  const loopCandidates = routable.filter((c) => !inTree.has(`${c.a}:${c.b}`));
+  let loopsSeen = 0;
+  report('loops', 0, loopCandidates.length);
+  for (const c of loopCandidates) {
     const r = routeRoad(field, hubs[c.a], hubs[c.b], opts);
-    if (!r) continue;
-    const onTheGround = pathCost(virgin, field.width, r.path, heightBytes, gradientWeight);
-    if (onTheGround <= loopFactor * c.direct) continue;   // the network already serves it
-    layPath(network, field, c.path, ROAD_TRUNK);
-    loopsLaid++;
+    if (r) {
+      const onTheGround = pathCost(virgin, field.width, r.path, heightBytes, gradientWeight);
+      // the network already serves it
+      if (onTheGround > loopFactor * c.direct) {
+        layPath(network, field, c.path, ROAD_TRUNK);
+        loopsLaid++;
+      }
+    }
+    report('loops', ++loopsSeen, loopCandidates.length);
   }
-  report('loops', loopsLaid, loopsLaid);
 
   // 5. spurs: every remaining location joins the NEAREST network pixel.
   //

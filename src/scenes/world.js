@@ -857,6 +857,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer, canvas, fetchBytes, playerEntity, palette,
     regionIndex: startLoc.regionIndex,
     onCrime: () => _crimeResponse(),   // G1: late-bound - the guards mount below
+    // QP1: GetBuildingList's questor half lands in the pool. Late-bound
+    // like onCrime - npcSession mounts below, and the first topics set
+    // (the streaming update) runs long after boot.
+    onBuildingList: (buildings) => npcSession.buildQuestorPool(buildings),
   });
   townTalk.ensureLoaded();
   preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: INFO00I0 warms at boot
@@ -1032,6 +1036,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     };
     townTalk.setTopics({
       exteriorBuildings: dfLocation.exterior.buildings,
+      // QP1: the questor pool's SetLayoutData identities - the same
+      // locationIndex npcSession's own guard reads (_questLoc()), and
+      // the mapId SetLayoutData stamps into every NPCData.
+      locationIndex: dfLocation.locationIndex ?? 0,
+      mapId: dfLocation.mapTableData?.mapId ?? 0,
       blocks: cur.locBlocks,
       doors: buildingDoors.filter((e) => e.pixelKey === key).map((e) => ({
         dfBlock: e.dfBlock, recordIndex: e.recordIndex,
@@ -4416,6 +4425,13 @@ export async function bootWorld(canvas, renderer, params, status) {
         }
         addItem(playerEntity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });   // BowDamage: the arrow is recoverable from the target
       },
+      // AR1: the impact learns the FOES - the shaft an archer looses
+      // at another foe (MT-ii's infighting selection) LANDS now, on
+      // BowDamage's non-player arm. Both pools are candidates; the
+      // shooter is excluded inside the flight module.
+      foeTargets: [...exteriorFoes.foes, ...cityGuards.guards]
+        .filter((t) => !t.dead && t.ai).map((t) => ({ feet: t.ai.feet, ref: t })),
+      onFoeHit: (m, t) => exteriorFoes.arrowHitFoe(m, t),
     });
     arrows.draw(renderer);
     // C9: the exterior FP weapon - swings/sounds through the rig; the

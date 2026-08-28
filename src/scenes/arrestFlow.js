@@ -25,7 +25,10 @@ import {
   TEXT_FREE_TO_GO, TEXT_BANISHED, TEXT_HOW_CONVINCE,
   lowerRepForCrime, surrenderToCityGuards, startCourt, pleaGuilty,
   pleaNotGuilty, resolveGuiltyVerdict, raiseRepForSentence, TEXT_EXECUTED,
+  guildRescue,
 } from '../systems/court.js';
+import { guildOfFaction, membershipOf, activeMemberships } from '../systems/guilds.js';   // CR1: the rescue arms' member reads
+import { resolveVariantGuild } from '../systems/guildVariants.js';
 import { advanceWorldMinutes, MINUTES_PER_DAY } from '../systems/worldTick.js';
 import { fillVitalSigns } from '../systems/statMods.js';   // F038: the acquittal's refill
 
@@ -47,6 +50,16 @@ export function createArrestFlow({
   advanceDays = (days) => advanceWorldMinutes(days * MINUTES_PER_DAY),
   advanceMinutes = (m) => advanceWorldMinutes(m),
   rolls = Math.random,
+  // CR1: GuildManager.GetGuild(factionId).IsMember()/Rank for the
+  // rescue arms - the member's rank, or null for a non-member. The
+  // default is the same guildOfFaction/membershipOf read the quest
+  // world's getGuild makes, over townTalk's faction tree.
+  guildRankOf = (factionId) => {
+    const dict = townTalk.factionDict ?? null;
+    const g = guildOfFaction(factionId, resolveVariantGuild(dict), dict);
+    const m = g ? membershipOf(activeMemberships(playerEntity), g) : null;
+    return m ? (m.rank ?? 0) : null;
+  },
 }) {
   const text = (id, fallback) => {
     const v = townTalk.texts(id);
@@ -125,6 +138,20 @@ export function createArrestFlow({
     // the port, which left CourtSongs unreachable.
     playerEntity.arrested = true;
     const court = startCourt(playerEntity, regionIndex, crimeId(), { rolls });
+    // CR1: the guild rescue arms (DaggerfallCourtWindow.cs:177-221),
+    // BEFORE the plead box - a rescued player never pleads. The exit
+    // is the acquittal's own trio (:191-193): FillVitalSigns,
+    // RaiseReputationForDoingSentence, then state 100's release.
+    const rescue = court ? guildRescue(court, { guildRankOf, roll: rolls }) : null;
+    if (rescue) {
+      clearArrest();
+      fillVitalSigns(playerEntity);
+      raiseRepForSentence(playerEntity, court);
+      townTalk.showOverlay(new ChoiceWindow({
+        lines: courtLines(rescue.textId, 'Your guild has arranged your release.', court),
+      }));
+      return;
+    }
     townTalk.showOverlay(new ChoiceWindow({
       lines: [courtMacros(text(TEXT_COURT_START, 'You stand accused. How do you plead?')[0] ?? '', court)],
       options: [
