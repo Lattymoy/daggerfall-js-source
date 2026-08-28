@@ -86,9 +86,14 @@ export const TEXT_HOW_CONVINCE = 8064;
 // CR1: the guild rescue records (DaggerfallCourtWindow.cs:33-34)
 export const TEXT_RESCUE_TG = 550;           // courtTextTG - "the Thieves Guild has intervened"
 export const TEXT_RESCUE_DB = 551;           // courtTextDB - the Dark Brotherhood's
-// FactionFile.FactionIDs (FactionFile.cs:91/:135)
-export const THIEVES_GUILD_FACTION_ID = 42;
-export const DARK_BROTHERHOOD_FACTION_ID = 108;
+// FactionFile.FactionIDs (FactionFile.cs:91/:135). CG2 moved the two
+// DECLARATIONS into systems/crimeGuilds.js and re-exports them here, so
+// this file's surface is unchanged: talk.js needs the ids for the
+// pickpocket tally and cannot import this module (court.js imports
+// talk.js - see the note at its pickpocket arm), so the one home for
+// them has to be a leaf.
+import { THIEVES_GUILD_FACTION_ID, DARK_BROTHERHOOD_FACTION_ID } from './crimeGuilds.js';
+export { THIEVES_GUILD_FACTION_ID, DARK_BROTHERHOOD_FACTION_ID };
 
 /** CR1 - the guild rescue arms (DaggerfallCourtWindow.cs:177-221),
  *  checked AFTER the penalty is computed and BEFORE the plead box.

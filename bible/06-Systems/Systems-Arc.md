@@ -4283,3 +4283,73 @@ block SURVIVED. The shipped sweep strips quoted spans and reads what is
 left, so a correction may quote the old sentence and an assertion is
 still caught. **An exemption wide enough to cover the fix is wide
 enough to hide the next defect.**
+
+## CG2 - THE CRIME-GUILD TALLY: how the invitation is earned (2026-08-28)
+
+G2 pinned that neither the Thieves Guild nor the Dark Brotherhood can
+be joined by asking - `DaggerfallGuild`'s join arm throws
+`NotImplementedException` for both, because classic INVITES you. CG1
+never asked where the invitation comes from. This is it.
+
+`TallyCrimeGuildRequirements` (PlayerEntity.cs:1271-1299): every theft
+counts one toward ten, every murder counts toward fifteen - a murdered
+civilian weighing **five** where a killed watchman weighs **one**, so
+three dead townsfolk arm the Brotherhood against fifteen dead guards.
+Crossing either threshold stamps a clock 4320 classic minutes (three
+days) out. `HandleStartingCrimeGuildQuests` (:1503-1522), called from
+the tail of `PlayerEntity.Update`'s per-minute block at :531, delivers
+the letter when that clock runs down **and the player is outside**, then
+parks the tally at `InviteSent` (100) so it can never fire twice.
+
+**THE READER SHIPPED AND THE CONSUMER NEVER DID** - the third slice in
+a row with that shape, after EW1's weight term and FD1's water
+exemption. `formats/characterRecord.js` has parsed all four fields since
+the .SAV work (0x211, 0x21f, 0x222) and `systems/classicSave.js`
+imports every one onto the entity, so a player importing a classic save
+at nine thefts arrived carrying a tally nothing in the port would ever
+read again. Four live crime sites named the missing call in their own
+comments.
+
+Wired at all four: the killed watchman (`cityGuards`, weight 1), the
+murdered civilian (`cityGuards`, weight 5), the pinched purse
+(`talk.js` - only the arm that actually took gold, as DFU's call sits
+inside that branch), and the picked exterior lock (`worldModes`, before
+the success text as in C#). The shop-shelf and trade-window thefts stay
+recorded rather than wired: those windows have no crime path yet.
+
+Three things the port's own shape forced, each pinned:
+
+- **`?? 0` is load-bearing, not defensive noise.** The port mints
+  player entities lazily - `systems/save.js` reads every persistent
+  field with its own `?? 0` - so a fresh character reaches the tally
+  with these UNDEFINED where PlayerEntity.cs:90-93 declares them zero.
+  DFU's gate ported literally as `=== 0` reads false against undefined
+  and would have frozen the tally for every new game, leaving the guild
+  reachable only from a classic import. Caught while writing it; it is
+  the campaign's first mutant now.
+- **The three effects are atomic, so an unwired host does nothing.**
+  DFU parks the tally, clears the clock and starts the quest as one
+  act. A port that did the first two with no quest machine mounted
+  would mark the player permanently invited to a guild whose initiation
+  never ran - strictly worse than waiting. With no registered host the
+  letter simply stays pending.
+- **The four fields join the save.** AUDIT 18 F3's lesson exactly:
+  nobody steals ten times in one sitting, so a tally that resets on load
+  makes the guild unreachable by any player who saves.
+
+`crimeGuilds.js` is a LEAF on purpose, and the two faction ids moved
+into it from `court.js`, which now re-exports them: `talk.js` needs them
+for the pickpocket tally and cannot import `court.js`, because
+`court.js` imports `talk.js` - a cycle its own pickpocket comment names.
+
+Pins: 10 in `test/crimeguilds.test.js`. Campaign: 12 mutants, 12
+killed - **after three survived the first run, all three for the same
+reason EW1 recorded a slice ago.** The delay pin asserted
+`NOW + CRIME_GUILD_LETTER_DELAY_MINUTES` and the InviteSent pin asserted
+`=== INVITE_SENT`, so both moved with the constants they were meant to
+guard; the `inside` default had no arm at all, because every assertion
+passed it explicitly. They assert 4320 and 100 as literals now, and the
+omitted-`inside` case has its own arm. **Writing down "a pin that
+computes its expectation the way the code does is not a pin" did not
+stop me doing it again the next slice** - which is the argument for the
+campaign, not for the note.

@@ -112,6 +112,7 @@ import { bindCursorToggle } from '../player/pointerLock.js';   // U45: PlayerMou
 import { buildingIsUnlocked, buildingLockValue, isBuildingOpen, LOCKED_EXTERIOR_DOOR_TEXT } from '../systems/buildingLocks.js';   // R1: opening hours + the unlocked ladder   // P1: the people gate reads the same hours
 import { peopleAreVisible } from '../characters/interiorPeople.js';   // P1: AddPeople's visibility tail
 import { exteriorLockpickingChance, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT } from '../world/actionSystem.js';
+import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2: the break-in tally
 import { discoverBuilding, undiscoverBuilding, getLastLockpickAttempt, setLastLockpickAttempt } from '../systems/discovery.js';   // H3: selling a house takes its name back off the map
 import { BUILDING_KEY_0 } from '../systems/talkTopics.js';   // H3: the no-key key both ship interiors are filed under
 import { getHolidayId } from '../systems/holidays.js';
@@ -308,6 +309,12 @@ export function createWorldModes(host) {
   // scans it through the one shared areEnemiesNearby instead of
   // answering a literal false.
   const interiorTicker = createPlayerTicker(playerEntity, {
+    // CG2: this ticker IS the interior one - inside by construction, so
+    // the crime-guild letter never arrives while the player is indoors
+    // (HandleStartingCrimeGuildQuests' !IsPlayerInside gate). Written
+    // rather than left to the default, because a default that happens
+    // to be right is not the same as a law that is stated.
+    isInside: () => true,
     onExhausted: onExhaustedInterior,   // AUDIT 23 (C5)
     say,
     onLevelUp: () => {
@@ -2701,8 +2708,8 @@ export function createWorldModes(host) {
     // (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
     // their Breaking_And_Entering crimes (:571-583/:621-627 - no
     // weapon-vs-static-door path exists yet), the house greeting
-    // (:585-628) and TallyCrimeGuildRequirements (the TG advancement
-    // arc).
+    // (:585-628). TallyCrimeGuildRequirements landed at CG2 on the
+    // success arm below.
     {
       const bd = buildingDataForDoor?.(hit) ?? null;
       const locId = discoveryLocationId?.() ?? null;
@@ -2770,6 +2777,12 @@ export function createWorldModes(host) {
           const chance = exteriorLockpickingChance(lockValue, lockpick);
           const roll = 1 + Math.floor(Math.random() * 100);   // Random.Range(1, 101), success strictly chance > roll
           if (chance > roll) {
+            // CG2: PlayerActivate.cs:552 - the tally lands BEFORE the
+            // success text and the unlock sound, as it does in C#. A
+            // picked exterior lock IS a break-in and counts one toward
+            // the Thieves Guild's ten; the FAILED roll below tallies
+            // nothing, because nothing was broken into.
+            tallyCrimeGuildRequirements(playerEntity, true, 1);
             townTalk?.say?.(LOCKPICKING_SUCCESS_TEXT);
             audio.playOneShot(SOUND.ActivateLockUnlock, 1);
           } else {

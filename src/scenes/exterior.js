@@ -492,6 +492,9 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (playerEntity.fatigue <= 0 && playerEntity.health > 0) onExhaustedExterior();
   };
   const playerTicker = createPlayerTicker(playerEntity, {
+    // CG2: this host has no interior mode at all - the player is always
+    // outdoors here, so the crime-guild letter may always land.
+    isInside: () => false,
     say: (msg) => console.log('[player]', msg),
     onExhausted: onExhaustedExterior,
     onLevelUp: () => {

@@ -96,8 +96,10 @@ test('PX24b: an entry keeps its DATED HEAD - the notebook wrote one and the firs
   assert.deepEqual(chronicleEntry([T('...and the rest of it.')]), { head: null, body: ['...and the rest of it.'] });
   assert.deepEqual(chronicleEntry(null), { head: null, body: [] });
   const cr = read('src/ui/enhancedChronicle.js');
-  assert.match(cr, /el\('span', 'cr-when', e\.head \?\? '\\u2014 continued \\u2014'\)/,
-    'and the window says "continued" rather than inventing a date');
+  // PX24c narrowed this: the continued fallback is the NOTE's alone,
+  // because a message never has a head at all - see the PX24c pin.
+  assert.match(cr, /: '\\u2014 continued \\u2014'\);/,
+    'and a note whose page split says "continued" rather than inventing a date');
   assert.doesNotMatch(cr, /pxDivider\(String\(/, 'the meaningless 1, 2, 3 dividers are gone');
 });
 
@@ -121,4 +123,47 @@ test('PX24b: the player may WRITE - the first draft was read-only, which is a lo
   assert.match(cr, /input\.oninput = \(\) => \{ draft = input\.value; \};/);
   // A thumb can reach the remove.
   assert.match(read('src/ui/enhancedStyle.js'), /@media \(pointer: coarse\) \{ \.cr-shell \.cr-rm \{ min-width: 44px; min-height: 44px; \} \}/);
+});
+
+// ── PX24c: MESSAGES AND HISTORY GET THE SAME LOOK ─────────────────
+test('PX24c: a message has NO head, and PX24b printed a lie on every one', () => {
+  // addMessage builds [{formatting:'center', text:''}, {text: str}]
+  // (notebook.js:123). It never writes a highlight, so a message has no
+  // dated head, ever - and PX24b's fallback printed "- continued -" on
+  // all fifty. A continuation is a NOTE whose page split; a message
+  // simply has no header to begin with.
+  const nb = read('src/systems/notebook.js');
+  assert.match(nb, /const message = \[\{ formatting: 'center', text: '' \}, \{ formatting: 'text', text: str \}\];/);
+  const cr = read('src/ui/enhancedChronicle.js');
+  assert.match(cr, /const head = e\.head \?\? \(section === 'messages'\n\s*\? \(i === rows\.length - 1 \? 'Most recent' : null\)\n\s*: '\\u2014 continued \\u2014'\);/,
+    'the continued fallback is the NOTE\'s alone');
+  assert.match(cr, /if \(!head\) top\.classList\.add\('cr-headless'\);/);
+  assert.match(read('src/ui/enhancedStyle.js'), /\.cr-shell \.cr-head\.cr-headless \{ padding-bottom: 0;/);
+  // THE RING UNWRAPS ITSELF - checked, not assumed. getMessages walks
+  // from nextMessageIndex round to it, so what comes back is already
+  // chronological even after the fiftieth overwrites the first; the
+  // window's reverse is right BECAUSE of that, not by luck.
+  assert.match(nb, /for \(let i = this\.nextMessageIndex; i < this\.messages\.length; i\+\+\) result\.push/);
+  assert.match(nb, /for \(let i = 0; i < this\.nextMessageIndex; i\+\+\) result\.push/);
+  assert.match(cr, /The ring DOES unwrap correctly/);
+});
+
+test('PX24c: the history says WHO it is about, and the family shares its parts', () => {
+  const cr = read('src/ui/enhancedChronicle.js');
+  // The entity carries race, career and level - the same three the
+  // pause window's Stats page reads - and a life story with nobody's
+  // name on it is a page of prose. Each part only if it is there.
+  assert.match(cr, /const who = \[deps\.entity\?\.race, deps\.entity\?\.career\?\.name\]\.filter\(Boolean\)\.join\(' '\);/);
+  assert.match(cr, /Number\.isFinite\(deps\.entity\?\.level\) \? `Level \$\{deps\.entity\.level\}` : null/);
+  assert.match(cr, /if \(who \|\| lvl\) \{/, 'no identity, no line');
+  // THE THIRD SCOPING FAULT, and the pin that ends it: the framed
+  // window's shared parts are shared, not scoped to one member. The
+  // head was PX24's, the divider PX23's, the chip this one's.
+  const css = read('src/ui/enhancedStyle.js');
+  for (const [part, sel] of [
+    ['the head', /\.sb-shell \.sb-top, \.cr-shell \.sb-top \{/],
+    ['the chip row', /\.sb-shell \.sb-frame, \.cr-shell \.sb-frame \{/],
+    ['the chip', /\.sb-shell \.sb-chip, \.cr-shell \.sb-chip \{/],
+    ['the rail count', /\.sb-shell \.sb-cost, \.cr-shell \.sb-cost \{/],
+  ]) assert.match(css, sel, `${part} is the FAMILY's, not one window's`);
 });
