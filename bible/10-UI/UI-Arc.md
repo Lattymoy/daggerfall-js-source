@@ -6871,6 +6871,18 @@ leak round two: WORN's h3 was the actual node, not the head div.
 Probed over a stand-in frame: vertical spine confirmed by geometry,
 plaque pairs aligned, bar present, zero page errors.
 
+PX16c (Mac: design parity with our other UIs + the reference's
+transparency): ONE LANGUAGE, ONE GLASS. The plaque wears the pause
+window's own FOUR CORNER GEMS (detailCol appends them; the centering
+rules are PX3's, scoped here) so every framed surface carries the
+same corners; PACK takes the head's wing rules like every titled
+face; and the scrims came down to the values the other faces already
+use - the root a 0.18 breath, the spine 0.5, the lists the shell's
+own 0.38, the figure panels 0.4, the bar 0.45, the plaque the pause
+window's 0.72 - so the world reads THROUGH the columns as it does in
+the reference, not as a glow behind a curtain. Suite green through
+it.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk

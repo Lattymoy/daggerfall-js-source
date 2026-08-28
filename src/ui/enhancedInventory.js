@@ -899,6 +899,9 @@ function listCol() {
 // is picked and closes back down - rather than borrowed by accident.
 function detailCol() {
   const col = el('section', `packcol packdetail${picked ? ' open' : ''}`);
+  // PX16c: the plaque wears the pause window's own corners - one
+  // frame language across every enhanced surface.
+  for (const c of ['tl', 'tr', 'bl', 'br']) col.append(el('span', `px-gem px-corner px-${c}`));
   const close = el('button', 'sheet-close', 'Close');
   close.onclick = () => { picked = null; render(); };
   col.append(close);
