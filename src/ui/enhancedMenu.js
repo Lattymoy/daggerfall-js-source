@@ -846,9 +846,6 @@ function paneEnhanced(body) {
 
   const waiting = el('div', 'card');
   waiting.append(el('h3', null, 'Not switchable here'));
-  waiting.append(inertRow('Procedural sky',
-    'The sky is Daggerfall\u2019s own SKY*.DAT panorama, ported as-is. Nothing procedural is built yet.',
-    'not built'));
   waiting.append(inertRow('Enhanced music',
     'A generative score was built and removed at your direction. The game plays MIDI.BSA, and your own '
     + 'replacement tracks if you attach them in Settings.',
