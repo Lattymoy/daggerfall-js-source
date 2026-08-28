@@ -136,6 +136,47 @@ export function getMacro(word) {
   return { token: '', type: MACRO_TYPES.None, symbol: '' };
 }
 
+/**
+ * MH1 - THE ONE WALK for window text outside the quest pipeline.
+ * MacroHelper is ONE file in DFU; the port had grown a third,
+ * lawless path beside its two real tables - replaceAll chains in
+ * talkSession, guildServiceActions and arrestFlow, each window
+ * rediscovering the two or three symbols it needed. This is the walk
+ * they all ride now.
+ *
+ * `values` is the CALLER's macro data source - its MCP, as a plain
+ * map of symbol (no '%') to value. The resolution per token:
+ *   1. the exact symbol in `values`: a non-null value expands (a
+ *      function is called - lazy, for values that cost something);
+ *      an explicitly NULL value leaves the token VERBATIM, which is
+ *      the `if (x != null)` guard the legacy chains carried;
+ *   2. absent from the map, the CONTEXT HANDLERS answer when a
+ *      questLike context (machine.macroContext()) rides in - the
+ *      same GetValue ladder the quest pipeline runs;
+ *   3. otherwise the token stays VERBATIM - these windows never
+ *      printed DFU's [undefined] shape and MH1 does not start.
+ *
+ * THE MATCH IS MAXIMAL-MUNCH WITH EXACT LOOKUP, GetMacro's own law
+ * (`%\w+`, then a dictionary hit on the whole symbol). That RETIRES
+ * a latent legacy bug: replaceAll('%a', ...) would also fire inside
+ * '%adj' or '%arm' and corrupt the longer symbol - the walk matches
+ * '%adj' whole, misses the map, and leaves it alone.
+ */
+export function expandMacroValues(text, values = {}, questLike = null) {
+  return String(text ?? '').replace(/%\w+/g, (token) => {
+    const sym = token.slice(1);
+    if (sym in values) {
+      const v = values[sym];
+      if (v == null) return token;
+      return String(typeof v === 'function' ? v() : v);
+    }
+    if (questLike && HANDLERS[token]) {
+      return getContextValue(token, questLike, questLike.hooks);
+    }
+    return token;
+  });
+}
+
 // ---- the quest's macro data source (QuestMCP.cs) ----
 
 // The NotImplemented sentinel: a source method C#'s MacroDataSource
