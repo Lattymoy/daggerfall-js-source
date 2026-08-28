@@ -242,4 +242,28 @@ export function loadOrBakeRoads(cachedBytes, bake) {
   return { network, fromCache: false, bytes: serializeRoads(network), stats };
 }
 
+/** The same round trip when the bake runs OFF this thread (RA1). The
+ *  synchronous form above froze the page for the whole bake - the boot
+ *  stall this audit was called on - so the world host now hands a bake
+ *  that resolves from a Worker. Two answer shapes, both honest homes:
+ *  a same-thread bake answers `{network, stats}` and the bytes are
+ *  serialized here; a worker answers `{bytes, stats}` - it serialized
+ *  on its own side so ONE flat buffer crosses the thread boundary -
+ *  and the network is read back through deserializeRoads, the same
+ *  door the cache uses, so a worker cannot hand back a shape the
+ *  envelope law never saw. */
+export async function loadOrBakeRoadsAsync(cachedBytes, bake) {
+  const cached = deserializeRoads(cachedBytes);
+  if (cached) return { network: cached, fromCache: true, bytes: null, stats: null };
+  const r = await bake();
+  const network = r.network ?? deserializeRoads(r.bytes);
+  if (!network) throw new Error('roads: the bake answered neither a network nor readable bytes');
+  return {
+    network,
+    fromCache: false,
+    bytes: r.bytes ?? serializeRoads(network),
+    stats: r.stats ?? null,
+  };
+}
+
 export { ROAD_TRUNK, ROAD_TRACK };

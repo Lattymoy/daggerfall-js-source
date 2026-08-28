@@ -285,6 +285,41 @@ export function octile(ax, ay, bx, by) {
   return (dx > dy ? dx - dy : dy - dx) + DIAG * Math.min(dx, dy);
 }
 
+// ── ROUTER SCRATCH (RA1, 2026-08-28) ─────────────────────────────
+// routeRoad used to allocate three fresh full-map arrays per call -
+// g (Float64, 4MB at the real map), from (Int32, 2MB) and closed
+// (Uint8, 0.5MB) - and .fill() two of them. A full bake makes about
+// seventeen thousand routeRoad calls (candidates + tree reroutes +
+// loop reroutes + ~14,800 spurs), which is ~110GB of allocation churn
+// and seconds of pure memset before a single node is expanded. The
+// audit that found it: the "stuck on baking roads" boot stall.
+//
+// The scratch is reused across calls with a GENERATION STAMP instead:
+// a cell's g/from are valid only when seen[i] carries this call's
+// generation, and closed is its own stamp plane. Nothing is refilled
+// between calls, and the results are bit-identical - the determinism
+// pin holds because a stale cell reads as the same Infinity/unclosed
+// the fresh fill produced. routeRoad never re-enters itself (goalTest
+// is a plain predicate), so one shared scratch is safe.
+let _scratch = null;
+function routerScratch(N) {
+  if (_scratch === null || _scratch.g.length !== N) {
+    _scratch = {
+      g: new Float64Array(N),
+      from: new Int32Array(N),
+      seen: new Int32Array(N),      // g/from valid where seen[i] === gen
+      closedAt: new Int32Array(N),  // closed where closedAt[i] === gen
+      gen: 0,
+    };
+  }
+  if (++_scratch.gen === 0x7fffffff) {   // stamp wrap: start the count over clean
+    _scratch.seen.fill(0);
+    _scratch.closedAt.fill(0);
+    _scratch.gen = 1;
+  }
+  return _scratch;
+}
+
 /**
  * Least-cost route from `start` to `goal` (A*) or to the nearest pixel
  * satisfying `goalTest` (Dijkstra - no single target means no
@@ -315,9 +350,7 @@ export function routeRoad(field, start, goal, {
   if (!goalTest && !(cost[goal.y * width + goal.x] < Infinity)) return null;
   if (isGoal(start.x, start.y)) return { path: [{ x: start.x, y: start.y }], cost: 0 };
 
-  const g = new Float64Array(N).fill(Infinity);
-  const from = new Int32Array(N).fill(-1);
-  const closed = new Uint8Array(N);
+  const { g, from, seen, closedAt, gen } = routerScratch(N);
   const heap = new Heap();
 
   const h = goalTest ? () => 0 : (x, y) => octile(x, y, goal.x, goal.y) * minStep;
@@ -334,13 +367,15 @@ export function routeRoad(field, start, goal, {
   };
 
   g[si] = 0;
+  from[si] = -1;
+  seen[si] = gen;
   heap.push(h(start.x, start.y), cross(start.x, start.y), si);
 
   let expansions = 0;
   while (heap.n > 0) {
     const ci = heap.pop();
-    if (closed[ci]) continue;
-    closed[ci] = 1;
+    if (closedAt[ci] === gen) continue;
+    closedAt[ci] = gen;
     const cx = ci % width, cy = (ci - cx) / width;
 
     if (isGoal(cx, cy)) {
@@ -360,16 +395,18 @@ export function routeRoad(field, start, goal, {
       const nx = cx + DIRS[d].dx, ny = cy + DIRS[d].dy;
       if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
       const ni = ny * width + nx;
-      if (closed[ni]) continue;
+      if (closedAt[ni] === gen) continue;
       const nc = cost[ni];
       if (!(nc < Infinity)) continue;
       const dh = heightBytes[ni] - cb;
       const len = (DIRS[d].dx !== 0 && DIRS[d].dy !== 0) ? DIAG : 1;
       const step = ((cc + nc) * 0.5) * len + gradientWeight * dh * dh;
       const ng = g[ci] + step;
-      if (ng < g[ni]) {
+      // a cell another CALL touched reads as the fresh fill's Infinity
+      if (ng < (seen[ni] === gen ? g[ni] : Infinity)) {
         g[ni] = ng;
         from[ni] = ci;
+        seen[ni] = gen;
         heap.push(ng + h(nx, ny), cross(nx, ny), ni);
       }
     }
@@ -573,12 +610,20 @@ export function buildRoadNetwork({
   report('loops', loopsLaid, loopsLaid);
 
   // 5. spurs: every remaining location joins the NEAREST network pixel.
+  //
+  // RA1: the goal test reads the exit planes DIRECTLY. It is hasRoad's
+  // own law - either plane non-zero - but hasRoad goes through
+  // roadExitsAt, which allocates a fresh {trunk, track} object, and
+  // this predicate runs once per POPPED NODE across ~14,800 spur
+  // Dijkstras: millions of throwaway objects inside the bake's hottest
+  // loop. Same test, no allocation.
+  const { trunkExits, trackExits } = network;
+  const w = network.width;
+  const spurGoal = (x, y) => (trunkExits[y * w + x] | trackExits[y * w + x]) !== 0;
   let spursLaid = 0, orphans = 0;
   for (const s of spurs) {
     if (hasRoad(network, s.x, s.y)) continue;
-    const r = routeRoad(field, s, null, {
-      ...opts, goalTest: (x, y) => hasRoad(network, x, y),
-    });
+    const r = routeRoad(field, s, null, { ...opts, goalTest: spurGoal });
     if (!r) { orphans++; report('spurs', spursLaid + orphans, spurs.length); continue; }
     layPath(network, field, r.path, ROAD_TRACK);
     spursLaid++;

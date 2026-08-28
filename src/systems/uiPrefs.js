@@ -26,6 +26,16 @@ export const PREF_DEFAULTS = Object.freeze({
   // the boot status line, the artifact is cached from then on, and the
   // Enhanced screen turns it off in one press.
   roads: true,
+  // RA1 (Mac, 2026-08-28): THE ENHANCED SKY GETS ITS SWITCH. ES1 has
+  // been the enhanced skin's default sky since it landed, but the
+  // Enhanced pane still listed it "not built" with no control - a
+  // shipped enhancement wearing a hole's label, the exact thing the
+  // rail-hole law forbids. On = the procedural dome (sun, both moons
+  // on their real phases, stars, weather clouds); off = Daggerfall's
+  // own painted SKY*.DAT panorama under the same enhanced skin.
+  // ?sky=classic stays the URL door and forces the panorama either
+  // way (probe pins ride it).
+  proceduralSky: true,
   textScale: 0,        // 0 = normal, 1 = large (buys a whole scale step)
   category: 'game',
   open: {},            // "video:stored" -> true

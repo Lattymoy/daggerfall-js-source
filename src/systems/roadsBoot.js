@@ -32,7 +32,7 @@
 
 import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { isWaterPixel } from '../ui/overworldModel.js';
-import { bakeRoads, loadOrBakeRoads, ROADS_V } from './roadBake.js';
+import { bakeRoads, loadOrBakeRoadsAsync, ROADS_V } from './roadBake.js';
 
 /** The cache key. ROADS_V rides IN it as well as inside the envelope:
  *  the envelope refusing a stale version would rebake correctly, but
@@ -92,10 +92,16 @@ export function bakeInputs(woods, maps, locationIndex) {
  * @param {(bytes: Uint8Array) => Promise<unknown>} o.save - store write
  * @param {() => object} o.inputs - bakeInputs(...), called ONLY on a miss
  * @param {(p: object) => void} [o.onProgress]
+ * @param {(inputs: object, onProgress: Function|null) => Promise<object>|object} [o.bake]
+ *        - RA1: WHERE the bake runs, injected like everything else.
+ *        Default is the same-thread bakeRoads; the world host hands
+ *        roadBakeClient.bakeRoadsOffThread so the half minute runs in
+ *        a Worker and the page keeps painting its progress. Called
+ *        ONLY on a miss, with the lazily-assembled inputs.
  * @returns {Promise<{network: object|null, fromCache: boolean, stats: object|null}>}
  */
 export async function roadsForWorld({
-  enabled, load, save, inputs, onProgress = null, key = roadsCacheKey(),
+  enabled, load, save, inputs, onProgress = null, key = roadsCacheKey(), bake = null,
 }) {
   if (!enabled) return { network: null, fromCache: false, stats: null };
 
@@ -109,8 +115,9 @@ export async function roadsForWorld({
   // inputs() is called lazily and ONLY here, so a cache hit never
   // touches the readers - which is the whole point of the twenty-six
   // seconds being paid once.
+  const runBake = bake ?? ((inp, prog) => bakeRoads({ ...inp, onProgress: prog }));
   const { network, fromCache, bytes, stats } =
-    loadOrBakeRoads(cached, () => bakeRoads({ ...inputs(), onProgress }));
+    await loadOrBakeRoadsAsync(cached, () => runBake(inputs(), onProgress));
 
   if (bytes) {
     try {

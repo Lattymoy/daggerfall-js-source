@@ -802,6 +802,14 @@ function paneEnhanced(body) {
     'Roads between towns, generated from the terrain: drawn on the ground and on the travel map, '
     + 'and travel follows them. The first world load bakes the network (about half a minute, '
     + 'reported as it goes) and caches it; after that it is instant.'));
+  // RA1 (Mac, 2026-08-28): this row said "not built" while ES1 had
+  // been the enhanced skin's default sky for a day - a shipped
+  // enhancement wearing a hole's label. It is a SWITCH now, over the
+  // same uiPrefs shelf as roads.
+  live.append(prefRow('proceduralSky', 'Procedural sky',
+    'The enhanced sky: sun, both moons on their real phases, stars, and clouds that follow the '
+    + 'weather, drawn procedurally on the painted sky\u2019s own pixel grid. Off returns '
+    + 'Daggerfall\u2019s SKY*.DAT panorama. Takes effect when the world next loads.'));
   body.append(live);
 
   const waiting = el('div', 'card');
@@ -810,9 +818,6 @@ function paneEnhanced(body) {
     'A 3D viewmodel in place of the weapon sprite. Needs your own Morrowind data attached in '
     + 'Settings, and the ?mwfp=1 flag - it is an experiment, not a finished skin.',
     'opt-in'));
-  waiting.append(inertRow('Procedural sky',
-    'The sky is Daggerfall\u2019s own SKY*.DAT panorama, ported as-is. Nothing procedural is built yet.',
-    'not built'));
   waiting.append(inertRow('Enhanced music',
     'A generative score was built and removed at your direction. The game plays MIDI.BSA, and your own '
     + 'replacement tracks if you attach them in Settings.',

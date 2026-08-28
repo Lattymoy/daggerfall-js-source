@@ -110,6 +110,7 @@ import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
 import { paintRoadTiles } from '../world/roadTiles.js';   // R5 (enhanced): roads on the ground
 import { roadsForWorld, bakeInputs } from '../systems/roadsBoot.js';   // R6
+import { bakeRoadsOffThread } from '../systems/roadBakeClient.js';   // RA1: the bake in a Worker
 import { storeDerived, loadDerived } from './dataSource.js';
 import { getPref } from '../systems/uiPrefs.js';
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
@@ -240,11 +241,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
   }
 
-  // R6: the road network, once. Off unless the player asked for it;
-  // cached after the first bake, so the twenty-six seconds is paid on
-  // the turn rather than on arrival. NEVER TRAPS - roads decorate a
-  // game that ran without them, so a bake that throws costs the roads
-  // and nothing else.
+  // R6: the road network, once. Cached after the first bake, so the
+  // half minute is paid on the turn rather than on arrival. NEVER
+  // TRAPS - roads decorate a game that ran without them, so a bake
+  // that throws costs the roads and nothing else.
+  //
+  // RA1: the bake runs OFF this thread (roadBakeClient). It used to
+  // run synchronously right here, and R7's on-by-default meant every
+  // first boot parked the main thread for the whole grind - the
+  // status line below never even painted, so a healthy bake read as
+  // a hang ("stuck on baking roads"). In a Worker the page keeps
+  // painting and every progress report lands.
   let roadNetwork = null;
   try {
     if (getPref('roads')) {
@@ -256,6 +263,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         inputs: () => bakeInputs(woods, maps, locationIndex),
         onProgress: ({ phase, done, total }) =>
           status(`baking roads: ${phase} ${done}/${total}`),
+        bake: bakeRoadsOffThread,
       });
       roadNetwork = r.network;
       console.log(`[roads] ${r.fromCache ? 'from cache' : 'baked'}`, r.stats ?? '');

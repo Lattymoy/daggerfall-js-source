@@ -143,6 +143,17 @@ function openDb() {
     };
     req.onsuccess = () => res(req.result);
     req.onerror = () => rej(req.error);
+    // RA1: a version-bump open WAITS FOREVER while any other tab still
+    // holds the database at an older version - onblocked, not onerror -
+    // and every boot await upstream of getDb() hangs with it, wearing
+    // whatever status line was set last ("baking roads", famously).
+    // The wait itself is correct (the open proceeds the moment the old
+    // tab closes); waiting SILENTLY is the bug. Say so, in the console
+    // and on the title bar the status convention already uses.
+    req.onblocked = () => {
+      console.warn('[dataSource] database upgrade blocked - close other tabs running this game');
+      try { document.title = 'Daggerfall JavaScript - close other game tabs to continue'; } catch { /* no-DOM host */ }
+    };
   });
 }
 

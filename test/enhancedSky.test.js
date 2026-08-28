@@ -205,8 +205,12 @@ test('ES1 horizon: the dome continues BELOW the line - no flat slab, no glow und
 
 test('ES1 seam: enhanced skin only, one renderer field, the classic pass untouched', () => {
   const shared = read('src/scenes/shared.js');
-  assert.match(shared, /const enhancedSky = isEnhanced\(\) && params\.get\('sky'\) !== 'classic' \? new EnhancedSkyRenderer\(gl\) : null;/,
-    'the enhanced sky is the skin\'s, with ?sky=classic the escape hatch');
+  // RA1 widened the seam: the skin's, with ?sky=classic the URL escape
+  // hatch AND the Enhanced pane's own switch (uiPrefs proceduralSky,
+  // default on) - the pane row said "not built" while this line had
+  // been building it for a day.
+  assert.match(shared, /const enhancedSky = isEnhanced\(\) && params\.get\('sky'\) !== 'classic' && getPref\('proceduralSky'\)\s*\n?\s*\? new EnhancedSkyRenderer\(gl\) : null;/,
+    'the enhanced sky is the skin\'s, behind the URL hatch and the player\'s own switch');
   assert.match(shared, /renderer: enhancedSky \?\? sky,/, 'ONE renderer field: the hosts do not know which pass they hold');
   assert.match(shared, /\(enhancedSky \?\? sky\)\.draw\(yaw, pitch, fovY, aspect\)/);
   // The classic pass keeps its verbatim laws - this arc adds beside it.

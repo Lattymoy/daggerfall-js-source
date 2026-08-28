@@ -177,16 +177,25 @@ test('R7: every switch on the Enhanced pane is REAL, and the rest say why not', 
 });
 
 test('R7: the pane does not claim a feature the tree does not have', () => {
-  // Enhanced Music was built and REVERTED whole; the sky is
-  // DaggerfallSky.cs ported as-is. Listing either as a live switch
-  // would be the screen lying about the build.
+  // Enhanced Music was built and REVERTED whole; the Morrowind arms
+  // are a query-flag experiment. Listing either as a live switch would
+  // be the screen lying about the build. (The sky came OFF this list
+  // with RA1: ES1 shipped a procedural sky and the pane still said
+  // "not built" - the same lie with the sign flipped.)
   const src = read('src/ui/enhancedMenu.js');
   const from = src.indexOf('function paneEnhanced(body)');
   const pane = src.slice(from, src.indexOf('\n}', from));
-  for (const gone of ['music', 'sky', 'mwfp']) {
+  for (const gone of ['music', 'mwfp']) {
     assert.ok(!new RegExp(`prefRow\\('${gone}`).test(pane),
       `${gone} has no engine in this tree and must not be a switch`);
   }
+  // RA1: the sky IS built (render/enhancedSky.js, on by default), so
+  // the pane must offer the switch and must no longer call it a hole.
+  assert.match(pane, /prefRow\('proceduralSky'/, 'the ES1 sky must be a real switch');
+  assert.ok(!/not built/.test(pane) || !/[Pp]rocedural sky[^]*not built/.test(pane),
+    'the pane must not still label the shipped sky "not built"');
+  assert.ok(!/Nothing procedural is built yet/.test(pane),
+    'the stale ES1 denial sentence must be gone');
 });
 
 // AUDIT F3/F4: two destructive actions shipped without a confirm -

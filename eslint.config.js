@@ -24,6 +24,11 @@ export default [
         WebGL2RenderingContext: 'readonly', AudioContext: 'readonly', createImageBitmap: 'readonly',
         TextDecoder: 'readonly', TextEncoder: 'readonly', DecompressionStream: 'readonly', Response: 'readonly', Blob: 'readonly',
         KeyboardEvent: 'readonly', Touch: 'readonly', TouchEvent: 'readonly', innerWidth: 'readonly',
+        // RA1: the road bake's module Worker. `new Worker(new URL(...))`
+        // must stay in exactly that spelling - Vite's static analysis
+        // matches the bare constructor to bundle the worker entry, so
+        // `globalThis.Worker` would lint clean and break the build.
+        Worker: 'readonly',
       },
     },
     // AUDIT 26's duplicate-key class: `{ toggleRest: A, ..., toggleRest: B }`

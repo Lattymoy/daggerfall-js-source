@@ -269,22 +269,22 @@ combat line numbers below are refreshed with it.
 - `src/scenes/exterior.js:1365` - (FLAGGED: the climate People table pends; the test city is
 - `src/scenes/exterior.js:1530` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/exteriorFoes.js:553` - FLAGGED: the arrow's IMPACT still only knows the player
-- `src/scenes/shared.js:292` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
-- `src/scenes/shared.js:309` - *  mirrors motorStats (the INTERIM entity carries no stats). */
-- `src/scenes/shared.js:414` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
+- `src/scenes/shared.js:297` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
+- `src/scenes/shared.js:314` - *  mirrors motorStats (the INTERIM entity carries no stats). */
+- `src/scenes/shared.js:419` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:829` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:864` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:870` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1317` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
-- `src/scenes/world.js:2335` - FLAGGED in systems/healthStatus.js (macro producers pend).
-- `src/scenes/world.js:2428` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:2717` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:2999` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:3329` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:3356` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:3864` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:4228` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:837` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:872` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:878` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1325` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
+- `src/scenes/world.js:2343` - FLAGGED in systems/healthStatus.js (macro producers pend).
+- `src/scenes/world.js:2436` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:2725` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:3007` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:3337` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:3364` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:3872` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:4236` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:799` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
 - `src/scenes/worldModes.js:936` - FLAGGED to the crime arc, as the Ledger records.
 - `src/scenes/worldModes.js:1005` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
@@ -383,8 +383,8 @@ combat line numbers below are refreshed with it.
 - `src/ui/bookReader.js:25` - INTERIM, loud: lines draw in the host font at a fixed 10px row -
 - `src/ui/chargenArt.js:718` - *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
 - `src/ui/covenWindow.js:27` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
-- `src/ui/enhancedMenu.js:1400` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
-- `src/ui/enhancedMenu.js:1555` - if (action === 'delete') return;   // FLAGGED: no save manager yet
+- `src/ui/enhancedMenu.js:1405` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
+- `src/ui/enhancedMenu.js:1560` - if (action === 'delete') return;   // FLAGGED: no save manager yet
 - `src/ui/exteriorAutomapWindow.js:22` - (:682-709) is FLAGGED - the port's directory carries named
 - `src/ui/guildServiceWindow.js:33` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
 - `src/ui/hudActiveSpells.js:45` - FLAGGED: HUDEscortingNPCFaces, the third component of that row, is

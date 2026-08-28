@@ -13,6 +13,7 @@ import { SEASON } from '../world/climateSwaps.js';
 import { skyFrameForTime } from '../world/worldClock.js';
 import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, retroFor } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin
 import { isEnhanced } from '../systems/uiSkin.js';
+import { getPref } from '../systems/uiPrefs.js';   // RA1: the Enhanced pane's sky switch
 import { hasActiveEffect, isBlending, isInvisible, isAShade } from '../systems/effects.js';
 import { skillValue, tallySkill, SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { DOOR_SPELL_TEXT } from '../systems/mysticism.js';   // X1: the door-spell alert lines
@@ -118,11 +119,15 @@ export function createSkyController(gl, params) {
   // port's own procedural dome - sun, moons on DFU's phases, stars,
   // clouds, weather - and the classic panorama pass is never built for.
   // `?sky=classic` keeps the painted sky under the enhanced skin (a
-  // probe's pin, or a player's preference until it is a setting); the
-  // classic skin never takes the enhanced sky. ONE `renderer` field
-  // either way: the hosts read clearColor / set fogMix and fogColor on
-  // it without knowing which pass it is.
-  const enhancedSky = isEnhanced() && params.get('sky') !== 'classic' ? new EnhancedSkyRenderer(gl) : null;
+  // probe's pin); the classic skin never takes the enhanced sky. RA1
+  // made the player's own door real: the Enhanced pane's Procedural
+  // sky switch (uiPrefs, default on), read here at mount like the
+  // roads pref is at the world host - the sky pass is built once per
+  // scene, so a flip takes effect when the world next loads. ONE
+  // `renderer` field either way: the hosts read clearColor / set
+  // fogMix and fogColor on it without knowing which pass it is.
+  const enhancedSky = isEnhanced() && params.get('sky') !== 'classic' && getPref('proceduralSky')
+    ? new EnhancedSkyRenderer(gl) : null;
   if (enhancedSky) enhancedSky.retro = retroFor(params.toString());   // ES1e: retro unless ?sky=smooth - one door, shared with the lab
   const t0 = (typeof performance !== 'undefined' ? performance.now() : 0);
   let weatherRowNow = null;   // ES1c: the eased weather, walked toward the sim's row
