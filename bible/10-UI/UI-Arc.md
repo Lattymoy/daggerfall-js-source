@@ -6956,6 +6956,29 @@ green, the px-dial marker present in the shipped bundle
 Tab paths now: world (inline arm), exterior (inline arm), interior +
 dungeon (routeKey's arm).
 
+PX17c (Mac, live, rightly angry: the journal in-game is not the one
+we built, and the inventory ground is still opaque): BUILT ONCE,
+CARRIED EVERYWHERE - the Tab bug's disease, cured across the family.
+(1) THE JOURNAL: the developed journal (rail, MAIN QUESTS/QUESTS/
+ARCHIVE separators, timers, verdicts) lived only behind the WORLD
+host's pause; a pause in a tavern or a dungeon hit the two FLAGGED
+sites and showed the not-wired line instead. The interior now reads
+the seams through its host object (world exposes pauseQuestMessages/
+pauseQuestLog beside makeJournal, the same expressions its own pause
+hands over), and the dungeon builds them from ITS OWN bridge -
+opts.questBridge already feeds its F5 journal and notebook, so the
+PX3 flag was too conservative and is paid with the same walk. Every
+pause with a machine behind it now shows the same journal. (2) THE
+GLASS: inventoryDoor and charSheetDoor still painted the opaque
+#0e1013 slab the pause door shed in PX4 - it blacked out every scrim
+the pack carried, which is why the reference transparency never
+survived contact with the live game. Both doors are transparent now;
+the classic windows keep their own opaque draw; PX4's ARENA2-eyeball
+caveat covers the family. THE PATTERN, named for the record: a
+surface is not shipped when it renders in a lab - it is shipped when
+every HOST a player can stand in reaches it; the flags were honest
+but flags do not pause a game, and three of them are paid today.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk
