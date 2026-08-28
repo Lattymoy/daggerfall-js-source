@@ -20,7 +20,7 @@ test('mwbsa: normalizeBsaPath lowercases and forward-slashes', () => {
 
 test('mwbsa: directory, listing, and byte-exact retrieval', () => {
   const bsa = new MwBsaFile(ARCHIVE);
-  assert.equal(bsa.fileCount, 7);
+  assert.equal(bsa.fileCount, 8);
   assert.deepEqual(bsa.list(), [
     'meshes/fixture/mesh.nif',
     'meshes/fixture/skinned.nif',
@@ -28,6 +28,7 @@ test('mwbsa: directory, listing, and byte-exact retrieval', () => {
     'meshes/fixture/animated.nif',
     'meshes/fixture/xfixture.kf',
     'meshes/fixture/part.nif',
+    'meshes/base_anim.nif',
     'textures/fixture.dds',
   ]);
   // Retrieval is case/slash-insensitive and byte-exact against the loose

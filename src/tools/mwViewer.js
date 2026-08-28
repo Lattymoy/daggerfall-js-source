@@ -25,6 +25,8 @@ import { decodeDds } from '../formats/mwDdsFile.js';
 import { collectTextKeys, parseAnimGroups, extractTracks, sampleTrack } from '../formats/mwAnim.js';
 import { buildSkeleton, poseSkeleton, skeletonSpaceMatrices, skinBatch } from '../formats/mwSkin.js';
 import { bindPart, attachmentTransform } from '../formats/mwCharacter.js';
+import { parseEsm } from '../formats/mwEsmFile.js';
+import { assembleNpc, indexSkins } from '../formats/mwNpc.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('c');
@@ -128,6 +130,69 @@ let allMeshNames = [];
 // retail xbase_anim.kf arrangement.
 let kfTracks = null;
 let kfGroups = null;
+// ESM state: parsed records + the skin index, for NPC assembly.
+let esm = null;
+let esmSkins = null;
+const npcSel = $('npcsel');
+
+function refreshNpcList() {
+  const filter = $('filter').value.toLowerCase();
+  npcSel.innerHTML = '';
+  npcSel.style.display = esm && bsa ? '' : 'none';
+  if (!esm || !bsa) return;
+  const blank = document.createElement('option');
+  blank.value = '';
+  blank.textContent = `npc... (${esm.npcs.size})`;
+  npcSel.appendChild(blank);
+  for (const id of [...esm.npcs.keys()].sort()) {
+    if (filter && !id.includes(filter)) continue;
+    const opt = document.createElement('option');
+    opt.value = id;
+    opt.textContent = id;
+    npcSel.appendChild(opt);
+  }
+}
+
+function loadNpc(id) {
+  if (!esm || !bsa || !id) return;
+  let a;
+  try {
+    a = assembleNpc(esm, id, esmSkins);
+  } catch (err) {
+    setStatus(err.message);
+    return;
+  }
+  const baseKey = normalizeBsaPath(a.animFile);
+  if (!bsa.has(baseKey)) {
+    setStatus(`${a.npc.name}: base skeleton ${a.animFile} not in archive`);
+    return;
+  }
+  loadNifBytes(bsa.get(baseKey), baseKey);
+  let bound = 0;
+  const troubles = [];
+  loaded.npcBound = [];
+  for (const part of a.parts) {
+    const key = normalizeBsaPath(part.model);
+    if (!bsa.has(key)) {
+      troubles.push(`${part.slot}: ${part.model} not in archive`);
+      continue;
+    }
+    // Paired limbs attach at their first bone for now - the mirror
+    // lands with the clothing slice; the data already names both.
+    if (addPartFromBytes(bsa.get(key), key, { attachBone: part.attachBones[0], quiet: true })) {
+      bound++;
+      loaded.npcBound.push(part.bodyId);
+    } else {
+      // addPartFromBytes wrote the error into status; keep it.
+      troubles.push(`${part.slot}: ${statusEl.textContent.split('\n').pop()}`);
+    }
+  }
+  setStatus(
+    `${a.npc.name} (${a.race.name ?? a.npc.race}) - ${bound}/${a.parts.length} parts bound` +
+      (troubles.length ? ` | ${troubles.slice(0, 3).join('; ')}` : '') +
+      (a.missing.length ? ` | ${a.missing.length} slots without skins` : ''),
+  );
+}
 const anim = { tracks: null, groups: null, playing: null, t0: 0, seek: null };
 const animSel = $('animsel');
 
@@ -189,7 +254,7 @@ function skeletonRootRef() {
 // the loaded skeleton instead of replacing the scene.
 let addPartMode = false;
 
-function addPartFromBytes(bytes, name) {
+function addPartFromBytes(bytes, name, opts = {}) {
   if (!loaded || !loaded.skeleton) {
     setStatus('load a base mesh first, then add parts');
     return;
@@ -197,7 +262,7 @@ function addPartFromBytes(bytes, name) {
   try {
     const partNif = parseNif(bytes);
     const bound = bindPart(loaded.skeleton, partNif, {
-      attachBone: $('attachsel').value || undefined,
+      attachBone: opts.attachBone ?? ($('attachsel').value || undefined),
     });
     const group = buildGroup([...bound.skinned, ...bound.attached]);
     holder.add(group);
@@ -224,14 +289,22 @@ function addPartFromBytes(bytes, name) {
       for (const mesh of attachedMeshes) mesh.matrix.copy(m4);
     }
     loaded.parts.push({ name, group, attachedMeshes, attachRef: bound.attachRef });
+    if (opts.quiet) {
+      frameCamera();
+      window.__mwviewer = { name, loaded, error: null };
+      return true;
+    }
     setStatus(
       `${loaded.name} + ${loaded.parts.length} part${loaded.parts.length === 1 ? '' : 's'} (${name}: ${bound.skinned.length} skinned, ${bound.attached.length} attached)`,
     );
     frameCamera();
   } catch (err) {
     setStatus(`${name}\n${err.message}`);
+    window.__mwviewer = { name, loaded, error: err.message };
+    return false;
   }
   window.__mwviewer = { name, loaded, error: null };
+  return true;
 }
 
 function restoreBind(s) {
@@ -459,6 +532,18 @@ async function takeFiles(files) {
     const bytes = new Uint8Array(await f.arrayBuffer());
     const lower = f.name.toLowerCase();
     if (lower.endsWith('.bsa')) openArchive(bytes, f.name);
+    else if (lower.endsWith('.esm') || lower.endsWith('.esp')) {
+      try {
+        esm = parseEsm(bytes);
+        esmSkins = indexSkins(esm.bodies);
+        refreshNpcList();
+        setStatus(
+          `${f.name}: ${esm.npcs.size} NPCs, ${esm.bodies.size} body parts, ${esm.races.size} races`,
+        );
+      } catch (err) {
+        setStatus(`${f.name}\n${err.message}`);
+      }
+    }
     else if (lower.endsWith('.dds')) {
       looseTextures.set(normalizeBsaPath(`textures\\${f.name}`), bytes);
       looseTextures.set(normalizeBsaPath(f.name), bytes);
@@ -493,7 +578,11 @@ meshSel.addEventListener('change', () => {
   else loadNifBytes(bsa.get(meshSel.value), meshSel.value);
 });
 animSel.addEventListener('change', () => startGroup(animSel.value));
-$('filter').addEventListener('input', refreshMeshList);
+$('filter').addEventListener('input', () => {
+  refreshMeshList();
+  refreshNpcList();
+});
+npcSel.addEventListener('change', () => loadNpc(npcSel.value));
 
 // --- bar buttons ----------------------------------------------------------
 let spinning = true;
