@@ -241,14 +241,27 @@ test('music: replacements get their OWN store, away from the download diet', () 
   // one, and it is reached through the shared asset helpers.
   const d = src('scenes/dataSource.js');
   assert.match(d, /const MUSIC_STORE = 'music';/);
-  assert.match(d, /ASSET_STORES = \[MUSIC_STORE, TEXTURE_STORE, MW_STORE\]/,
+  // R6 RE-AIMED THIS, as M-TEX re-aimed it before: a fourth domain
+  // (the DERIVED store) joined the list, and a pin spelling the list
+  // out breaks on every new domain while proving nothing extra. The
+  // LAW is membership - this store is an ASSET store, listed apart
+  // from the ARENA2 one - so that is what is asserted now.
+  assert.match(d, /ASSET_STORES = \[[^\]]*\bMUSIC_STORE\b[^\]]*\]/,
     'music is an ASSET store, listed apart from the ARENA2 one');
+  assert.doesNotMatch(d, /ASSET_STORES = \[[^\]]*\bSTORE\b\s*[,\]]/,
+    'and the ARENA2 store is NOT one of them');
   assert.match(d, /assetNames\(MUSIC_STORE\)/);
   assert.match(d, /assetBytes\(MUSIC_STORE, fileName\)/);
   assert.match(d, /storeAssets\(MUSIC_STORE, files/);
   // the upgrade creates what is MISSING - an existing player arrives on
   // an older version holding a full ARENA2 ingest and must not lose it
-  assert.match(d, /indexedDB\.open\(DB_NAME, 4\)/);
+  // R6: the version literal moved to 5 with the derived store. What
+  // these pins actually protect is that the open is VERSIONED at all
+  // and that the upgrade creates only what is MISSING - an existing
+  // player must gain the new store and keep every byte of the old
+  // ones. A hardcoded number breaks on every domain and proves
+  // nothing the `contains` guard below does not already say.
+  assert.match(d, /indexedDB\.open\(DB_NAME, \d+\)/);
   assert.match(d, /if \(!d\.objectStoreNames\.contains\(STORE\)\) d\.createObjectStore\(STORE\);/);
   assert.match(d, /if \(!d\.objectStoreNames\.contains\(name\)\) d\.createObjectStore\(name\);/);
   // clearStoredData is ARENA2 recovery and must NOT sweep the music:

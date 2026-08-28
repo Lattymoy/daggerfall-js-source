@@ -15,6 +15,12 @@ export const PREF_DEFAULTS = Object.freeze({
   // uiSkin.js rather than here - that module resolves the ?skin
   // override on top of this and is the one place the vocabulary lives.
   skin: 'enhanced',
+  // R6: ROADS OFF BY DEFAULT. The whole-map bake is about twenty-six
+  // seconds - a fine price once, for a player who asked for roads;
+  // not a fine price silently, on a first boot, for a feature nobody
+  // mentioned. The cost is paid on the turn, and after that it is
+  // cached and not paid again.
+  roads: false,
   textScale: 0,        // 0 = normal, 1 = large (buys a whole scale step)
   category: 'game',
   open: {},            // "video:stored" -> true

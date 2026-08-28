@@ -31,9 +31,21 @@ const TEXTURE_STORE = 'textures';
  *  only in the player's browser. Its lifecycle is its own: attaching
  *  or clearing it never touches the ARENA2 set. */
 const MW_STORE = 'morrowind';
+/** R6: DERIVED artifacts - bytes the game GENERATED from the player's
+ *  own data, not bytes the player supplied. The road network is the
+ *  first: a whole-map bake costs about twenty-six seconds, so it is
+ *  computed once and kept.
+ *
+ *  It is a store of its own for the reason the others are, plus one
+ *  more: a derived artifact is only valid FOR the data it came from,
+ *  so it must die with an ARENA2 re-pick. clearStoredData sweeps it -
+ *  the only injected store that recovery touches, and deliberately,
+ *  because keeping a road network baked from a folder the player has
+ *  just replaced is worse than paying for a rebake. */
+const DERIVED_STORE = 'derived';
 /** Every injected-asset store, so the upgrade and the helpers below
- *  cannot drift from each other - adding a third domain is one entry. */
-const ASSET_STORES = [MUSIC_STORE, TEXTURE_STORE, MW_STORE];
+ *  cannot drift from each other - adding a domain is one entry. */
+const ASSET_STORES = [MUSIC_STORE, TEXTURE_STORE, MW_STORE, DERIVED_STORE];
 const mem = new Map(); // NAME -> Uint8Array
 
 // Ingest DIET (2026-08-14, the mobile storage fix): ARENA2 is 517MB
@@ -118,7 +130,10 @@ function openDb() {
     // existing player arrives here at version 1 holding a full ARENA2
     // ingest, and re-creating `arena2` would throw and take their data
     // with it.
-    const req = indexedDB.open(DB_NAME, 4);
+    // 5 (R6): the derived store. The upgrade is ADDITIVE and every arm
+    // below is guarded by `contains`, so a player arriving at any older
+    // version gains the new store and keeps every byte of the old ones.
+    const req = indexedDB.open(DB_NAME, 5);
     req.onupgradeneeded = () => {
       const d = req.result;
       if (!d.objectStoreNames.contains(STORE)) d.createObjectStore(STORE);
@@ -224,9 +239,16 @@ async function finishIngest(entries, msg) {
 export async function clearStoredData() {
   mem.clear();
   const d = await getDb();
+  // The ARENA2 set AND every artifact DERIVED from it. The injected
+  // stores (music, textures, Morrowind) are the player's own packs and
+  // survive - re-picking the game files is not asking to lose them -
+  // but a road network baked from the folder being replaced is not a
+  // pack, it is an ANSWER ABOUT that folder, and keeping it would hand
+  // the new data the old map. Sweeping it costs one rebake.
   await new Promise((res, rej) => {
-    const tx = d.transaction(STORE, 'readwrite');
+    const tx = d.transaction([STORE, DERIVED_STORE], 'readwrite');
     tx.objectStore(STORE).clear();
+    tx.objectStore(DERIVED_STORE).clear();
     tx.oncomplete = () => res();
     tx.onerror = () => rej(tx.error);
   });
@@ -325,6 +347,26 @@ export async function storeMorrowindFiles(files) {
 export const storedMorrowindNames = () => assetNames(MW_STORE);
 export const loadMorrowindFile = (fileName) => assetBytes(MW_STORE, fileName);
 export const clearStoredMorrowind = () => clearAssets(MW_STORE);
+
+/** R6: one derived artifact, by key. Bytes in, bytes out - this door
+ *  knows nothing about what it holds, and the artifact's OWN envelope
+ *  (systems/roadBake.js: magic, version, checksum) is what decides
+ *  whether what comes back is usable. That is why there is no version
+ *  here: a stale or torn record is refused by the reader and rebaked,
+ *  which is strictly better than a store-level stamp that can only
+ *  answer "different", never "damaged". */
+export async function storeDerived(key, bytes) {
+  const d = await getDb();
+  await new Promise((res, rej) => {
+    const tx = d.transaction(DERIVED_STORE, 'readwrite');
+    tx.objectStore(DERIVED_STORE).put(bytes, key);
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
+  return true;
+}
+export const loadDerived = (key) => assetBytes(DERIVED_STORE, key);
+export const clearDerived = () => clearAssets(DERIVED_STORE);
 export const hasStoredMorrowind = async () =>
   (await storedMorrowindNames()).some((n) => /\.bsa$/i.test(n));
 
