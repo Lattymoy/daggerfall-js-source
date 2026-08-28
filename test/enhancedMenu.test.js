@@ -362,3 +362,28 @@ test('Load and Continue are only drawn when there IS a save', () => {
   const load = src.slice(src.indexOf('function paneLoad'), src.indexOf('// ── SETTINGS'));
   assert.match(load, /if \(save\) \{/, 'Load draws its slot only when the slot is there');
 });
+
+// ── AUDIT UI (2026-08-27): A THUMB IS NOT A SCREEN WIDTH ──────────
+// Mac: "a comprehensive audit on all of our enhanced UI work so far".
+// The live sweep across every enhanced surface, at desktop, phone and
+// TABLET, found one real fault and one cause worth naming.
+test('AUDIT UI: the 44px law follows the POINTER, not the viewport width', () => {
+  const css = read('src/ui/enhancedStyle.js');
+  // Every 44px rule hung off `max-width: 860px`, which is a PROXY for
+  // touch - and it fails on the device the proxy stands in for.
+  // Measured on an iPad in landscape: 1080px wide, pointer:coarse true,
+  // and the skin switch drew 28px, the steppers 34px, the value
+  // buttons 38px. The width query STAYS (a narrow window wants the
+  // roomier layout whatever is pointing at it); coarse joins it.
+  assert.match(css, /@media \(max-width: 860px\), \(pointer: coarse\) \{/);
+  assert.match(css, /@media \(pointer: coarse\) \{\s*\n\s*\.step \{ width: 44px; height: 44px; \}\s*\n\s*\.rowact, \.ctl \.act \{ min-height: 44px; \}/);
+  // AND THE CAUSE. The value button was sized INLINE in three places -
+  // `b.style.minHeight = '38px'` - and an inline style is unreachable
+  // by a media query, so the coarse rule could not have raised it
+  // however it was written. The size lives in the sheet now.
+  const menu = read('src/ui/enhancedMenu.js');
+  assert.doesNotMatch(menu, /style\.minHeight/, 'no control sizes itself inline');
+  assert.doesNotMatch(menu, /b\.style\.padding = '8px 16px'/);
+  assert.equal((menu.match(/classList\.add\('rowact'\)/g) ?? []).length, 3, 'all three sites take the class');
+  assert.match(css, /\.rowact \{ min-height: 38px; padding: 8px 16px; \}/, 'the compact size a mouse keeps');
+});
