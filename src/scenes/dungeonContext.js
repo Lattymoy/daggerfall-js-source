@@ -2232,7 +2232,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // only pool that had the precedence right, and one home means the
       // other two cannot drift away from it again.
       if (weaponKnockbackApplies(foe.ai.knockbackSpeed, isClass, mobileWeight)) {
-        const w = enemyWeightClassicUnits(isClass, foe.gender, mobileWeight);
+        // EW1: the foe's own kit is half of DFU's weight
+        const w = enemyWeightClassicUnits(isClass, foe.gender, mobileWeight, foe.entity?.items);
         foe.ai.knockbackSpeed = weaponKnockbackSpeed(damage, w);
         foe.ai.knockbackDir = [knockDir[0], knockDir[1], knockDir[2]];
       }

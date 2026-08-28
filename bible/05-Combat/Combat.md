@@ -665,3 +665,55 @@ wrongly"). Closed:
   is decided.
 
 Pins: 7 in `test/arrowfoes.test.js`. Campaign: 7 mutants, 7 killed.
+
+## EW1 - THE ENEMY WEIGHT TERM (2026-08-28)
+
+`GetEnemyEntityWeightInClassicUnits` (FormulaHelper.cs:2881-2898) is
+two halves and the port shipped one:
+
+```
+int itemWeightsClassic = (int)(e.Items.GetWeight() * 4);
+int baseWeight;
+if (EnemyMonster)  baseWeight = e.MobileEnemy.Weight;
+else if (Female)   baseWeight = 240;
+else               baseWeight = 350;
+return itemWeightsClassic + baseWeight;
+```
+
+The item half was absent, so every armed or armoured foe in the game
+weighed what a naked one does. Weight is `weaponKnockbackSpeed`'s
+DIVISOR, so this was not a rounding nit - a kitted foe was thrown
+further by every blow that landed. The city watch is the worst case:
+it spawns armed and armoured and has no unarmoured variant.
+
+**THE SHAPE MATTERED AS MUCH AS THE TERM.** The port opened with
+`if (!isClass) return mobileWeight ?? 0`, and DFU computes
+`itemWeightsClassic` BEFORE the type branch - it lands on the monster
+base as much as the class one. Bolting the term onto the class arm of
+an early-return function would have looked like the fix and left every
+monster in the game still weighing its bare mobile weight. The branch
+is a `baseWeight` assignment here, as it is in C#, and the monster arm
+is the pin this file was written for; the campaign's first mutant is
+exactly that plausible wrong fix.
+
+`totalWeight` (inventory.js:315) IS `ItemCollection.GetWeight`, so the
+only arithmetic added is the x4 and C#'s truncating `(int)` cast. Four
+pools call the formula (dungeon foes, the shared host-combat arm, the
+city watch, exterior foes) and all four now hand the foe's own list
+through; a source sweep holds them there, because a new pool copying a
+three-argument call is how one pool silently goes back to naked foes.
+
+Pins: 6 in `test/enemyweight.test.js`, one of them REGENERATING the
+constants from FormulaHelper.cs - including the assertion that DFU's
+item term is computed above the type branch, which is the law the
+shape depends on. Campaign: 5 mutants, 5 killed.
+
+**AND ONE OF THEM ONLY DIED ON THE SECOND TRY.** Swapping `Math.trunc`
+for `Math.round` SURVIVED the first version of the truncation pin,
+because the fixture kit's weight x 4 happened to be a whole number, and
+the assertion re-derived its expectation as `Math.trunc(kg * 4)` from
+that same value. Both implementations satisfy a pin like that. It is
+pinned now on 4 x 0.1 kg = 1.6 classic units, where truncation takes 1
+and rounding takes 2, asserted as the literal 1. **A pin that computes
+its expectation the way the code does is not a pin, and a fixture that
+cannot distinguish two implementations does not test between them.**
