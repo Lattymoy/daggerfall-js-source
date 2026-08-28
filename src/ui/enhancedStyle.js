@@ -1825,6 +1825,21 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .pack-shell ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
 .pack-shell ::-webkit-scrollbar-thumb { background: rgba(125,116,96,0.5);
   border: 2px solid rgba(0,0,0,0.3); border-radius: 0; }
+/* PX19c: THE LOOT WINDOW - containers, corpses, the wagon and a
+   littered ground ride their OWN smaller window beside the pack,
+   the same frame language one size down; absent entirely when the
+   ground is bare. */
+.pack-shell { grid-auto-flow: column; gap: 18px; }
+.loot-win { position: relative; width: min(340px, 90vw); max-height: min(560px, 80dvh);
+  display: flex; flex-direction: column; overflow-y: auto;
+  background: rgba(10,12,17,0.72); border: 2px solid #7d7460; padding-bottom: 8px; }
+.loot-win .px-corner { position: absolute; }
+.loot-win .px-tl { left: -1px; top: -1px; transform: translate(-50%,-50%); }
+.loot-win .px-tr { right: -1px; top: -1px; transform: translate(50%,-50%); }
+.loot-win .px-bl { left: -1px; bottom: -1px; transform: translate(-50%,50%); }
+.loot-win .px-br { right: -1px; bottom: -1px; transform: translate(50%,50%); }
+.loot-win .packremote { border-top: 0; background: transparent; }
+.loot-win .remotehead { border-top: 0; padding-top: 12px; }
 @media (max-width: 640px) {
   .pack-win { width: 100vw; height: 100dvh; border-left: 0; border-right: 0; }
   .pack-shell .pack { grid-template-columns: 120px 1fr; }
@@ -1833,6 +1848,9 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
      the sheet fix to the viewport while the figure alone hides. */
   .pack-shell .packstage { display: contents; }
   .pack-shell .charcol { display: none; }
+  /* the loot window stacks under the pack on a phone */
+  .pack-shell { grid-auto-flow: row; gap: 0; }
+  .loot-win { width: 100vw; max-height: 40dvh; border-left: 0; border-right: 0; }
 }
 
 /* ── PX9: SETTINGS INSIDE THE PAUSE WINDOW ──────────────────────

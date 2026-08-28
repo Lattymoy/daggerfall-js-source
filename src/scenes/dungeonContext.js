@@ -770,6 +770,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // I3: the Escape window's panel, same failure posture (a missing
   // OPTN00I0 costs the pause menu, loudly, never the boot).
   preloadPauseFlowArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] pause/controls art unavailable:', e?.message ?? e));
+  // PX19c: the pack's PAPER DOLL warms here too, beside the arts it
+  // rides with - the world host preloaded it and this one never did,
+  // so a new game's first dungeon opened a pack with the schematic
+  // where the avatar belongs (the 17g F1 shape exactly, one art
+  // over). Same failure posture: loud, never the boot.
+  preloadPaperDollForEntity({ renderer, fetchBytes, palette, getTexture }, playerEntity, 'dungeon')
+    .catch((e) => console.warn('[pack] paper doll art unavailable:', e?.message ?? e));
   // S16: enemy spell lists ride SPELLS.STD (loaded just above, after
   // the foe build) - SetEnemyCareer's assignment tail per live foe:
   // class enemies with CastsMagic take EnemyClassSpells[min(6,

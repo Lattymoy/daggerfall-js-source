@@ -409,10 +409,16 @@ const refresh = () => {
  *  so an equip during a compose is not dropped - which is why this can
  *  be fired at every change without a guard of its own. A build with
  *  no doll art returns immediately and the panel keeps the schematic. */
+let _dollWarned = false;
 function refreshFigure() {
   Promise.resolve(refreshPaperDoll(deps.entity))
     .then(() => { if (host) render(); })
-    .catch(() => { /* no art, no doll - the schematic is the answer */ });
+    .catch((e) => {
+      // PX19c: the schematic fallback is the honest DISPLAY, but a
+      // SILENT failure reads as "the doll was never integrated" - it
+      // says why, once, so a live report carries its own diagnosis.
+      if (!_dollWarned) { _dollWarned = true; console.warn('[pack] the paper doll could not draw:', e?.message ?? e); }
+    });
 }
 
 /** Wearing something, through the ONE chain. A refusal is REPORTED -
@@ -1043,9 +1049,18 @@ function render() {
     // window FOR, so on a stacked layout that list goes first. The
     // ground and the wagon are the other way round - there the pack is
     // what you came to empty.
-    const first = remote.kind === 'container' || remote.kind === 'reward';
-    const lists = el('div', `packlists${first ? ' remotefirst' : ''}`);
-    lists.append(listCol(), remoteCol());
+    // PX19c (Mac: containers/bodies/ground as their OWN smaller
+    // window): the pack's middle column is the LOCAL list alone now -
+    // the room the split buys - and the remote rides a second,
+    // smaller window in the same frame language beside the pack,
+    // present only when it has a reason to be: always for a
+    // container, a corpse's tray, or the wagon (the thing you opened
+    // the window FOR), and for the ground only once something lies on
+    // it. The PAIR LAW survives the furniture: same remoteModel, same
+    // remoteCol, same take/stow arms - only the wall between them
+    // moved.
+    const lists = el('div', 'packlists');
+    lists.append(listCol());
     // PX16b: the reference's order left to right - the category
     // spine, the names, then the SHOWCASE: the figure (the paper
     // sprite viewer standing where Skyrim renders the item) with the
@@ -1072,6 +1087,12 @@ function render() {
     win.append(bar);
     if (notice) win.append(el('p', 'sheet-notice', notice));
     shell.append(win);
+    if (remote.kind !== 'ground' || remote.count > 0) {
+      const loot = el('aside', 'loot-win');
+      for (const c of ['tl', 'tr', 'bl', 'br']) loot.append(el('span', `px-gem px-corner px-${c}`));
+      loot.append(remoteCol());
+      shell.append(loot);
+    }
     host.append(shell);
   });
 }

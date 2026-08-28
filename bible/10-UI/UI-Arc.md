@@ -7065,6 +7065,31 @@ selector keeps reading, and selection still opens the plaque rather
 than undressing on a tap (the mis-click law). Verified: 25 tiles
 render off the 27-slot table, every empty a div, suite green.
 
+PX19c (Mac: containers/bodies/ground as their OWN smaller window;
+and the paperdoll "which you haven't done"): THE LOOT WINDOW AND THE
+DOLL'S MISSING PRELOAD. (1) THE SPLIT: the pack's middle column is
+the LOCAL list alone now - the room the split buys - and the remote
+rides a second, smaller window (min 340px) in the same frame
+language beside the pack: corner gems, the 0.72 glass, remoteCol
+mounted whole inside it, so every take/stow arm, the wagon cap, the
+gold field and the quest-click law moved furniture without moving
+law. PRESENCE RULE: the loot window exists for a container, a
+corpse's tray, the wagon, or a littered ground - and not at all over
+bare earth (a window with nothing to say is the dead-arm bug as
+furniture). Phone stacks it beneath the pack at 40dvh. Verified both
+ways: bare ground 0 loot windows, a chest 1 window 2 rows, zero
+errors. (2) THE DOLL: figurePanel was always integrated -
+paperDollDataUrl over paperDollPixels with the slot map as the
+honest fallback - but TWO wires were missing. The refresh's catch
+swallowed failures SILENTLY, so a live miss read as "never
+integrated" - it warns once now, so the next report carries its own
+diagnosis. And the art PRELOAD ran only in the world host: a new
+game's first dungeon opened a pack with the schematic where the
+avatar belongs - the 17g F1 shape exactly, one art over.
+preloadPaperDollForEntity now warms in dungeonContext beside the
+pause art, same loud-never-boot posture. The world's interiors
+already rode the world's preload.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk
