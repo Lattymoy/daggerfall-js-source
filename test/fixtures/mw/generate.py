@@ -366,6 +366,92 @@ def make_plain():
     write_nif(HERE / "plain.nif", [root])
 
 
+def make_part():
+    # A body-part file the retail way: its OWN copies of the bones it
+    # needs (matching names, matching rest pose), a skinned shape weighted
+    # to them, and an unskinned shape ("Hat") that assembly attaches to a
+    # bone. The assembler rebinds everything onto the BASE skeleton by
+    # bone name - these local nodes only carry the names across.
+    root = NifFormat.NiNode()
+    root.name = b"PartRoot"
+    ident(root.rotation)
+    root.scale = 1.0
+
+    bones = []
+    for i in range(2):
+        b = NifFormat.NiNode()
+        b.name = f"Bone{i}".encode()
+        ident(b.rotation)
+        b.scale = 1.0
+        b.translation.z = float(i)
+        root.add_child(b)
+        bones.append(b)
+
+    tri = NifFormat.NiTriShape()
+    tri.name = b"PartSkin"
+    ident(tri.rotation)
+    tri.scale = 1.0
+    root.add_child(tri)
+
+    d = NifFormat.NiTriShapeData()
+    tri.data = d
+    d.num_vertices = 3
+    d.has_vertices = True
+    d.vertices.update_size()
+    for v, (x, y, z) in zip(d.vertices, [(0.5, 0, 0), (1.5, 0, 0), (0.5, 0, 1)]):
+        v.x, v.y, v.z = x, y, z
+    d.num_triangles = 1
+    d.num_triangle_points = 3
+    d.triangles.update_size()
+    d.triangles[0].v_1, d.triangles[0].v_2, d.triangles[0].v_3 = 0, 1, 2
+    d.update_center_radius()
+
+    si = NifFormat.NiSkinInstance()
+    sd = NifFormat.NiSkinData()
+    si.data = sd
+    si.skeleton_root = root
+    si.num_bones = 2
+    si.bones.update_size()
+    si.bones[0], si.bones[1] = bones[0], bones[1]
+    sd.num_bones = 2
+    ident(sd.skin_transform.rotation)
+    sd.skin_transform.scale = 1.0
+    sd.bone_list.update_size()
+    weights = [[(0, 1.0), (1, 1.0)], [(2, 1.0)]]
+    for i, (bl, wl) in enumerate(zip(sd.bone_list, weights)):
+        ident(bl.skin_transform.rotation)
+        bl.skin_transform.scale = 1.0
+        bl.skin_transform.translation.z = -float(i)
+        bl.bounding_sphere_radius = 1.0
+        bl.num_vertices = len(wl)
+        bl.vertex_weights.update_size()
+        for vw, (idx, w) in zip(bl.vertex_weights, wl):
+            vw.index = idx
+            vw.weight = w
+    tri.skin_instance = si
+
+    hat = NifFormat.NiTriShape()
+    hat.name = b"Hat"
+    ident(hat.rotation)
+    hat.scale = 1.0
+    hat.translation.z = 0.2
+    root.add_child(hat)
+    hd = NifFormat.NiTriShapeData()
+    hat.data = hd
+    hd.num_vertices = 3
+    hd.has_vertices = True
+    hd.vertices.update_size()
+    for v, (x, y, z) in zip(hd.vertices, [(0, 0, 0), (0.3, 0, 0), (0, 0.3, 0)]):
+        v.x, v.y, v.z = x, y, z
+    hd.num_triangles = 1
+    hd.num_triangle_points = 3
+    hd.triangles.update_size()
+    hd.triangles[0].v_1, hd.triangles[0].v_2, hd.triangles[0].v_3 = 0, 1, 2
+    hd.update_center_radius()
+
+    write_nif(HERE / "part.nif", [root])
+
+
 def make_bsa():
     # Independent Morrowind BSA v0x100 writer, straight from the layout doc
     # in src/formats/mwBsaFile.js. Hash table intentionally zeroed - names
@@ -376,6 +462,7 @@ def make_bsa():
         (b"meshes\\fixture\\plain.nif", (HERE / "plain.nif").read_bytes()),
         (b"meshes\\fixture\\animated.nif", (HERE / "animated.nif").read_bytes()),
         (b"meshes\\fixture\\xfixture.kf", (HERE / "xfixture.kf").read_bytes()),
+        (b"meshes\\fixture\\part.nif", (HERE / "part.nif").read_bytes()),
         (b"textures\\fixture.dds", (HERE / "fixture.dds").read_bytes()),
     ]
     name_buf = b""
@@ -407,4 +494,5 @@ if __name__ == "__main__":
     make_plain()
     make_animated()
     make_kf()
+    make_part()
     make_bsa()

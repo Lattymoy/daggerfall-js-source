@@ -24,6 +24,7 @@ import { flattenNif } from '../formats/mwNifMesh.js';
 import { decodeDds } from '../formats/mwDdsFile.js';
 import { collectTextKeys, parseAnimGroups, extractTracks, sampleTrack } from '../formats/mwAnim.js';
 import { buildSkeleton, poseSkeleton, skeletonSpaceMatrices, skinBatch } from '../formats/mwSkin.js';
+import { bindPart, attachmentTransform } from '../formats/mwCharacter.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('c');
@@ -100,9 +101,15 @@ canvas.addEventListener(
 window.__mwviewerSetAnimTime = (t) => {
   anim.seek = t;
 };
-window.__mwviewerSkinnedPositions = () => {
-  const s = loaded && loaded.skinnedMeshes[0];
+window.__mwviewerSkinnedPositions = (i = 0) => {
+  const s = loaded && loaded.skinnedMeshes[i];
   return s ? Array.from(s.mesh.geometry.attributes.position.array) : null;
+};
+window.__mwviewerAttachT = (p = 0) => {
+  const part = loaded && loaded.parts[p];
+  if (!part || !part.attachedMeshes.length) return null;
+  const e = part.attachedMeshes[0].matrix.elements;
+  return [e[12], e[13], e[14]];
 };
 window.__mwviewerView = (yaw, pitch, dist) => {
   orbit.yaw = yaw;
@@ -160,6 +167,73 @@ function startGroup(name) {
   }
 }
 
+function affineToMatrix4(m) {
+  // Row-major {a,t} into THREE's column-major Matrix4 via set(row-major).
+  return new THREE.Matrix4().set(
+    m.a[0], m.a[1], m.a[2], m.t[0],
+    m.a[3], m.a[4], m.a[5], m.t[1],
+    m.a[6], m.a[7], m.a[8], m.t[2],
+    0, 0, 0, 1,
+  );
+}
+
+function skeletonRootRef() {
+  for (const [ref, node] of loaded.skeleton.nodes) {
+    if (node.parent < 0) return ref;
+  }
+  return -1;
+}
+
+// ADD-PART MODE: a character is base_anim + body parts, joined by bone
+// name. With the toggle on, the next mesh picked or dropped BINDS onto
+// the loaded skeleton instead of replacing the scene.
+let addPartMode = false;
+
+function addPartFromBytes(bytes, name) {
+  if (!loaded || !loaded.skeleton) {
+    setStatus('load a base mesh first, then add parts');
+    return;
+  }
+  try {
+    const partNif = parseNif(bytes);
+    const bound = bindPart(loaded.skeleton, partNif, {
+      attachBone: $('attachsel').value || undefined,
+    });
+    const group = buildGroup([...bound.skinned, ...bound.attached]);
+    holder.add(group);
+    const attachedMeshes = [];
+    group.children.forEach((mesh, i) => {
+      const batch = i < bound.skinned.length ? bound.skinned[i] : null;
+      if (batch) {
+        loaded.skinnedMeshes.push({
+          mesh,
+          batch,
+          basePositions: Float32Array.from(batch.positions),
+          baseNormals: batch.normals ? Float32Array.from(batch.normals) : null,
+        });
+      } else {
+        mesh.matrixAutoUpdate = false;
+        attachedMeshes.push(mesh);
+      }
+    });
+    if (attachedMeshes.length) {
+      // Rest placement now; the animation loop repositions when playing.
+      const pose = poseSkeleton(loaded.skeleton, null, sampleTrack, 0);
+      const mats = skeletonSpaceMatrices(loaded.skeleton, pose, skeletonRootRef());
+      const m4 = affineToMatrix4(attachmentTransform(mats, bound.attachRef));
+      for (const mesh of attachedMeshes) mesh.matrix.copy(m4);
+    }
+    loaded.parts.push({ name, group, attachedMeshes, attachRef: bound.attachRef });
+    setStatus(
+      `${loaded.name} + ${loaded.parts.length} part${loaded.parts.length === 1 ? '' : 's'} (${name}: ${bound.skinned.length} skinned, ${bound.attached.length} attached)`,
+    );
+    frameCamera();
+  } catch (err) {
+    setStatus(`${name}\n${err.message}`);
+  }
+  window.__mwviewer = { name, loaded, error: null };
+}
+
 function restoreBind(s) {
   s.mesh.geometry.attributes.position.array.set(s.basePositions);
   s.mesh.geometry.attributes.position.needsUpdate = true;
@@ -178,6 +252,15 @@ function updateAnimation(nowMs) {
   const t = anim.seek != null ? anim.seek : g.start + (((nowMs - anim.t0) / 1000) % span);
   const pose = poseSkeleton(loaded.skeleton, anim.tracks, sampleTrack, t);
   const matsByRoot = new Map();
+  const rootRef = skeletonRootRef();
+  if (!matsByRoot.has(rootRef)) {
+    matsByRoot.set(rootRef, skeletonSpaceMatrices(loaded.skeleton, pose, rootRef));
+  }
+  for (const part of loaded.parts) {
+    if (!part.attachedMeshes.length) continue;
+    const m4 = affineToMatrix4(attachmentTransform(matsByRoot.get(rootRef), part.attachRef));
+    for (const mesh of part.attachedMeshes) mesh.matrix.copy(m4);
+  }
   for (const s of loaded.skinnedMeshes) {
     const root = s.batch.skin.skeletonRoot;
     if (!matsByRoot.has(root)) {
@@ -288,16 +371,23 @@ function frameCamera() {
 
 function disposeLoaded() {
   if (!loaded) return;
-  holder.remove(loaded.group);
-  loaded.group.traverse((o) => {
-    if (o.geometry) o.geometry.dispose();
-    if (o.material) o.material.dispose();
-  });
+  const groups = [loaded.group, ...loaded.parts.map((p) => p.group)];
+  for (const g of groups) {
+    holder.remove(g);
+    g.traverse((o) => {
+      if (o.geometry) o.geometry.dispose();
+      if (o.material) o.material.dispose();
+    });
+  }
   loaded = null;
 }
 
 function loadNifBytes(bytes, name) {
   disposeLoaded();
+  // A dropped .kf rides the mesh it was dropped on; a fresh load starts
+  // from that mesh's own inline animation again.
+  kfTracks = null;
+  kfGroups = null;
   try {
     const nif = parseNif(bytes);
     const batches = flattenNif(nif);
@@ -314,7 +404,17 @@ function loadNifBytes(bytes, name) {
         });
       }
     });
-    loaded = { name, group, batches, skinnedMeshes, skeleton: buildSkeleton(nif) };
+    loaded = { name, group, batches, skinnedMeshes, skeleton: buildSkeleton(nif), parts: [] };
+    // The attach-bone list follows the loaded skeleton.
+    const attachSel = $('attachsel');
+    attachSel.innerHTML = '';
+    for (const [, node] of loaded.skeleton.nodes) {
+      if (!node.name) continue;
+      const opt = document.createElement('option');
+      opt.value = node.name;
+      opt.textContent = `attach: ${node.name}`;
+      attachSel.appendChild(opt);
+    }
     wireAnimation(nif);
     const tris = batches.reduce((s, b) => s + b.indices.length / 3, 0);
     const textured = batches.filter((b) => b.material.textureFile).length;
@@ -376,7 +476,10 @@ async function takeFiles(files) {
     } else if (lower.endsWith('.nif')) pendingNif = { bytes, name: f.name };
   }
   // Loose mesh last, so its textures (archive or loose) are already in.
-  if (pendingNif) loadNifBytes(pendingNif.bytes, pendingNif.name);
+  if (pendingNif) {
+    if (addPartMode) addPartFromBytes(pendingNif.bytes, pendingNif.name);
+    else loadNifBytes(pendingNif.bytes, pendingNif.name);
+  }
 }
 
 $('file').addEventListener('change', (e) => takeFiles([...e.target.files]));
@@ -385,7 +488,10 @@ document.addEventListener('drop', (e) => {
   e.preventDefault();
   takeFiles([...e.dataTransfer.files]);
 });
-meshSel.addEventListener('change', () => loadNifBytes(bsa.get(meshSel.value), meshSel.value));
+meshSel.addEventListener('change', () => {
+  if (addPartMode) addPartFromBytes(bsa.get(meshSel.value), meshSel.value);
+  else loadNifBytes(bsa.get(meshSel.value), meshSel.value);
+});
 animSel.addEventListener('change', () => startGroup(animSel.value));
 $('filter').addEventListener('input', refreshMeshList);
 
@@ -412,6 +518,11 @@ $('twoside').addEventListener('click', () => {
     loaded.group.traverse(
       (o) => o.material && (o.material.side = twoSided ? THREE.DoubleSide : THREE.FrontSide),
     );
+});
+$('addpart').addEventListener('click', () => {
+  addPartMode = !addPartMode;
+  $('addpart').classList.toggle('on', addPartMode);
+  $('attachsel').style.display = addPartMode ? '' : 'none';
 });
 $('bg').addEventListener('click', () => {
   bgIndex = (bgIndex + 1) % BGS.length;
