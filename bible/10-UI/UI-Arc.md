@@ -7022,6 +7022,13 @@ template's terminator found FROM its export. Append blind to a file
 with more than one template and the tail pays. Suite 3949/0, build
 green.
 
+PX18b (Mac: the east and west arms touch the knot): MEASURED, NOT
+EYEBALLED - the four clearances read {n:12, s:12, e:-38, w:-39}, so
+the horizontal rules overran the knot by the width the vertical ones
+respected. 62px rules (34 on a phone) give all four the same 12px
+breath - re-measured {12,12,12,11} - and the mid gems recentred with
+them. Suite green, build green.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk

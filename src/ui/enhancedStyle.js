@@ -1628,23 +1628,27 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .px-s::before { left: 50%; bottom: 100%; width: 2px; height: 92px; transform: translateX(-50%); }
 .px-s::after { left: 50%; bottom: calc(100% + 42px); transform: translate(-50%,50%); }
 .px-e { right: 3%; top: 50%; transform: translateY(-50%); flex-direction: row-reverse; }
-.px-e::before { right: 100%; top: 50%; height: 2px; width: 112px; transform: translateY(-50%); }
-.px-e::after { right: calc(100% + 52px); top: 50%; transform: translate(50%,-50%); }
+/* PX18b (Mac): the horizontal rules stopped ON the knot while the
+   vertical ones stopped short - measured -38px vs +12px clearance.
+   62px gives east and west the same 12px breath as north and south;
+   the mid gems recentre with them. */
+.px-e::before { right: 100%; top: 50%; height: 2px; width: 62px; transform: translateY(-50%); }
+.px-e::after { right: calc(100% + 31px); top: 50%; transform: translate(50%,-50%); }
 .px-w { left: 3%; top: 50%; transform: translateY(-50%); }
 .px-w .px-term { order: -1; }
-.px-w::before { left: 100%; top: 50%; height: 2px; width: 112px; transform: translateY(-50%); }
-.px-w::after { left: calc(100% + 52px); top: 50%; transform: translate(-50%,-50%); }
+.px-w::before { left: 100%; top: 50%; height: 2px; width: 62px; transform: translateY(-50%); }
+.px-w::after { left: calc(100% + 31px); top: 50%; transform: translate(-50%,-50%); }
 /* THE HINT: the keys, taught where they are used. */
 .px-dialhint { color: #7d7460; font-size: 13px; letter-spacing: 0.2em; text-indent: 0.2em;
   text-transform: uppercase; margin: 0 0 18px; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 @media (max-width: 480px) {
   .px-arm { font-size: 17px; }
   .px-n::before, .px-s::before { height: 58px; }
-  .px-e::before, .px-w::before { width: 66px; }
+  .px-e::before, .px-w::before { width: 34px; }
   .px-n::after { top: calc(100% + 26px); }
   .px-s::after { bottom: calc(100% + 26px); }
-  .px-e::after { right: calc(100% + 30px); }
-  .px-w::after { left: calc(100% + 30px); }
+  .px-e::after { right: calc(100% + 17px); }
+  .px-w::after { left: calc(100% + 17px); }
   .px-knot-outer { font-size: 46px; }
   .px-knot-mid { font-size: 26px; }
 }
