@@ -107,6 +107,7 @@ import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseL
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';   // I2: the rebindable registry
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
+import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass rose
 import { ExteriorAutomapWindow } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M
 import { discoveredBuildings } from '../systems/discovery.js';   // A2: the nameplates' gate
 import { activeMemberships } from '../systems/guilds.js';   // F117
@@ -1018,8 +1019,6 @@ export async function bootExterior(canvas, renderer, params, status) {
     toggleRest: () => toggleRest(),
     togglePause: () => {
       if (!pauseDoorReady()) return;
-      // PX15 FLAGGED: toggleDial - this test host's door set differs;
-      // audited wiring is PX15's per-host pass.
       openPauseFlow((w) => townTalk.showOverlay(w), {
         savingPrevented: () => true,
         exitToMenu: exitToTitleMenu,
@@ -1063,6 +1062,16 @@ export async function bootExterior(canvas, renderer, params, status) {
     // doors, so they are one object now rather than two ladders that
     // would drift. `hudCtx` is ui/input.js's routeAction contract.
     if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
+      // PX15b: THE DIAL - this host routes its own keys (no routeKey),
+      // so the Tab arm lives in ITS ladder, behind the same
+      // overlay/mode gate as every sibling door. preventDefault only
+      // when the dial answers, so classic Tab keeps its default.
+      if (e.code === 'Tab' && openPixelDial([
+        { id: 'skills', label: 'Skills', dir: 'n', open: () => hudCtx.toggleCharSheet() },
+        { id: 'items', label: 'Items', dir: 'e', open: () => hudCtx.toggleInventory() },
+        { id: 'map', label: 'Map', dir: 's', open: () => hudCtx.toggleAutomap() },
+        { id: 'magic', label: 'Magic', dir: 'w', open: () => hudCtx.toggleSpellbook() },
+      ])) { e.preventDefault(); return; }
       if (act === 'CharacterSheet') { hudCtx.toggleCharSheet(); return; }
       // U8d: F6 opens the classic inventory (DFU's default Inventory
       // binding; same host rule as F5).

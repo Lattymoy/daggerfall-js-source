@@ -6883,6 +6883,26 @@ window's 0.72 - so the world reads THROUGH the columns as it does in
 the reference, not as a glow behind a curtain. Suite green through
 it.
 
+PX15b: ALL FOUR HOSTS CARRY THE ROSE. The three PX15 flags paid,
+each with its own door audit first. THE INTERIOR (worldModes'
+interiorKeyCtx): THREE arms - Skills, Items, Magic - because the
+interior ctx has no automap door, and the rose never draws a dead
+arm. THE DUNGEON: all FOUR - the PX15 flag's 'no native inventory'
+cited input.js:84's HISTORY; toggleInventory sits on the ctx today,
+so the audit corrected the flag rather than obeying it. Its host
+object is an anonymous returned literal, so the doors are reached
+through `this` (routeKey calls ctx.toggleDial() as a method; the
+entry arrows inherit the binding - caught by lint before it could
+be caught by a player). THE EXTERIOR: this host routes its own keys
+with no routeKey at all, so its Tab arm lives in ITS ladder, behind
+the same overlay/mode gate as every sibling door, preventDefault
+only when the dial answers so classic Tab keeps its default. One
+anchor lesson banked: the first patch died silently mid-script and
+the gates ran green over an UNCHANGED tree - the rewrite reports
+every anchor by name, which is the difference between a patch and a
+hope. Suite green, build green; Tab now raises the rose in every
+place a player can stand.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk
