@@ -14,8 +14,9 @@ and the classic LARGE HUD with its eleven clickable panels, and the
 BANK'S HOUSE MARKET, and the WITCHES COVEN's four-button panel, and the pixel dial, and the
 VITALS INDICATORS - HUDVitals' smoothed loss trails and instant gain
 bars, with the health/fatigue colour swap - and the SPELL ICON PICKER
-both icon clicks had been waiting on).
-83 modules
+both icon clicks had been waiting on, and the COLOUR PICKER that makes
+the settings screen's seven colour rows editable).
+84 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

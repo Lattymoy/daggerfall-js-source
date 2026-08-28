@@ -35,6 +35,12 @@ import { drawRect, shadowText } from './nativePanel.js';
 import { wrapText } from './talkWindow.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
+// CP1: the HSV picker behind every colour row (ColorPicker.cs; DFU
+// mounts it from the advanced settings screen's AddColorPicker rows).
+import {
+  ColorPickerWindow, colorPickerLayout, parseHexRGBA, rgbToHsv,
+  COLOR_PREVIEW_W, COLOR_PREVIEW_H, pickerColors, NUMBER_OF_COLORS,
+} from './colorPicker.js';
 
 // ---- palette. Every pair carries its contrast; nothing is signalled
 // by colour alone (a focused row also gets a tick and a bracket). ----
@@ -80,6 +86,7 @@ export class SettingsWindow {
     this.scroll = 0;
     this.saveFailed = false;
     this.dialog = null;      // { title, lines, buttons }
+    this.colorPicker = null; // CP1: the HSV picker over a colour row
     this._font = null;
   }
 
@@ -317,7 +324,10 @@ export class SettingsWindow {
     if (!it) return;
     if (it.kind === 'group') { this._toggleGroup(it.id); return; }
     if (it.widget === 'blocked') { this.dialog = this._detail(it.key); return; }
-    if (it.widget === 'text' || it.widget === 'colour') { this.dialog = this._detail(it.key); return; }
+    // CP1: a colour row's CHANGE gesture opens the picker - DFU's
+    // AddColorPicker button push. Enter/help keep the detail dialog.
+    if (it.widget === 'colour') { this._openColorPicker(it.key); return; }
+    if (it.widget === 'text') { this.dialog = this._detail(it.key); return; }
     // the lock-out decision keeps its confirm rather than silently hiding the screen
     if (it.key === 'GUI/ShowOptionsAtStart' && it.value === 'True') {
       this.dialog = {
@@ -425,9 +435,34 @@ export class SettingsWindow {
     this.onLaunch();
   }
 
+  /** CP1: seed the picker from the setting's live RRGGBBAA value
+   *  (SetColor(sender.BackgroundColor)); OK commits the eight hex
+   *  digits, cancel changes nothing. */
+  _openColorPicker(key) {
+    const [sec, k] = key.split('/');
+    const eff = effectiveSettings();
+    const parsed = parseHexRGBA(String(eff[sec]?.[k] ?? '')) ?? { rgb: [1, 1, 1], a: 1 };
+    this.colorPicker = new ColorPickerWindow({
+      color: parsed,
+      onPicked: (hex8) => this._commit(key, hex8),
+      onClose: () => { this.colorPicker = null; },
+    });
+  }
+
   /** Raw key codes, the overlay contract every window here follows. */
   input(code, e = null, canvas = null) {
     const L = this.layout(canvas ?? { width: 1280, height: 800 });
+    if (this.colorPicker) {
+      // the picker is modal: hex digits feed the box (its one
+      // focusable control - the port needs no click-to-focus),
+      // Enter is OK, Escape is CancelWindow.
+      const cp = this.colorPicker;
+      if (code === 'Escape') cp.cancel();
+      else if (code === 'Enter') { cp.ok(); this._click(); }
+      else if (code === 'Backspace') cp.typeHex('\b');
+      else if (/^[0-9a-fA-F]$/.test(e?.key ?? '')) cp.typeHex(e.key);
+      return;
+    }
     if (this.dialog) {
       // M-TEX: a SECOND action needs a way to be chosen, and this
       // dialog has no button hit-testing - Enter/Space/Escape are the
@@ -492,6 +527,29 @@ export class SettingsWindow {
   /** PAGE coordinates. Returns true when the click was consumed. */
   click(vx, vy, canvas = null) {
     const L = this.layout(canvas ?? { width: 1280, height: 800 });
+    if (this.colorPicker) {
+      // CP1: the tap surfaces. The picture places the crosshair and
+      // samples (Update's drag, collapsed to the host's single-shot
+      // law); the slider trough pages the hue by DisplayUnits; OK
+      // fires the pick; a tap OUTSIDE the panel declines, the house
+      // dialog posture (DFU's popup ignores it, but touch has no
+      // Escape key to decline with).
+      const cp = this.colorPicker;
+      const g = colorPickerLayout(L.page[2], L.page[3]);
+      if (inRect(g.preview, vx, vy)) {
+        cp.pickAt(
+          (vx - g.preview[0]) / g.preview[2] * COLOR_PREVIEW_W,
+          (vy - g.preview[1]) / g.preview[3] * COLOR_PREVIEW_H);
+      } else if (inRect(g.slider, vx, vy)) {
+        cp.sliderClick((vx - g.slider[0]) / g.slider[2]);
+      } else if (inRect(g.ok, vx, vy)) {
+        cp.ok();
+        this._click();
+      } else if (!inRect(g.panel, vx, vy)) {
+        cp.cancel();
+      }
+      return true;
+    }
     if (this.dialog) {
       // A DRAWN BUTTON IS A REAL BUTTON. This used to run the
       // affirmative for a click ANYWHERE, so the Cancel on Reset
@@ -548,7 +606,10 @@ export class SettingsWindow {
     return false;
   }
 
-  wheel(dir) { this.scroll = Math.max(0, this.scroll + (dir > 0 ? 1 : -1)); }
+  wheel(dir) {
+    if (this.colorPicker) { this.colorPicker.wheel(dir); return; }   // CP1: one hue a notch (:181-191)
+    this.scroll = Math.max(0, this.scroll + (dir > 0 ? 1 : -1));
+  }
 
   // ---------------- drawing ----------------
   // Reads the SAME layout() the clicks read. Nothing here computes a
@@ -660,6 +721,7 @@ export class SettingsWindow {
     btn(L.footer.play, 'PLAY', true);
 
     if (this.dialog) this._drawDialog(renderer, m, font, L);
+    if (this.colorPicker) this._drawColorPicker(renderer, m, font, L);
   }
 
   _drawDialog(renderer, m, font, L) {
@@ -678,6 +740,71 @@ export class SettingsWindow {
       if (i === 0) drawText(renderer, font, b.label, m.ox + (bx + Math.floor((bw - measureText(font.fnt, b.label)) / 2)) * m.s, m.oy + (by + 2) * m.s, m.s, col);
       else shadowText(renderer, font, b.label, m, bx, by + 2, { color: col, align: 'center', w: bw });
     });
+  }
+
+  /** CP1: the picker's draw. The panel's ground is the LIVE PICKED
+   *  COLOUR (ConfirmColorPicked :203-206 - the panel is the swatch),
+   *  the S/V picture rides an uploaded texture regenerated per hue
+   *  (released first: uploadTexture memoizes by key), the hue slider
+   *  is the 360-colour strip with the DisplayUnits/TotalUnits thumb
+   *  tinted (1,1,1,0.7), and the crosshair is drawn as a cross - the
+   *  Resources "Crosshair" PNG the port does not carry. */
+  _drawColorPicker(renderer, m, font, L) {
+    const cp = this.colorPicker;
+    const g = colorPickerLayout(L.page[2], L.page[3]);
+    const rect = ([x, y, w, h]) => ({ x: m.ox + x * m.s, y: m.oy + y * m.s, w: w * m.s, h: h * m.s });
+    renderer.drawScreenQuad(null, { x: 0, y: 0, w: 4096, h: 4096 }, undefined, [0, 0, 0, 0.55]);
+    const [px, py, pw, ph] = g.panel;
+    drawRect(renderer, m, px - 1, py - 1, pw + 2, ph + 2, [1, 1, 1, 1]);   // Outline.Enabled (:84)
+    drawRect(renderer, m, px, py, pw, ph, [...cp.color, cp.alpha]);
+    // the S/V picture (rows stored bottom-up; the screen draws top-down)
+    if (cp._previewDirty && renderer.releaseTexture) {
+      renderer.releaseTexture('colorpicker', 'preview');
+      const w = COLOR_PREVIEW_W, h = COLOR_PREVIEW_H;
+      const colors = new Uint32Array(w * h);
+      const u8 = new Uint8Array(colors.buffer);
+      for (let r = 0; r < h; r++) {
+        for (let c = 0; c < w; c++) {
+          const [rr, gg, bb] = cp.preview[(h - 1 - r) * w + c];
+          const o = (r * w + c) * 4;
+          u8[o] = Math.round(rr * 255); u8[o + 1] = Math.round(gg * 255);
+          u8[o + 2] = Math.round(bb * 255); u8[o + 3] = 255;
+        }
+      }
+      this._previewTex = renderer.uploadTexture('colorpicker', 'preview', { width: w, height: h, colors });
+      cp._previewDirty = false;
+    }
+    if (this._previewTex) renderer.drawScreenQuad(this._previewTex, rect(g.preview));
+    // the crosshair, at the picked point
+    const chx = g.preview[0] + (cp.crosshair[0] / COLOR_PREVIEW_W) * g.preview[2];
+    const chy = g.preview[1] + (cp.crosshair[1] / COLOR_PREVIEW_H) * g.preview[3];
+    drawRect(renderer, m, chx - 3, chy, 7, 1, [1, 1, 1, 0.9]);
+    drawRect(renderer, m, chx, chy - 3, 1, 7, [1, 1, 1, 0.9]);
+    // the hue slider: GetSliderBackground's 360-colour strip, once
+    if (!this._hueTex && renderer.uploadTexture) {
+      const colors = new Uint32Array(NUMBER_OF_COLORS);
+      const u8 = new Uint8Array(colors.buffer);
+      pickerColors().forEach(([r, gg, b], i) => {
+        const o = i * 4;
+        u8[o] = Math.round(r * 255); u8[o + 1] = Math.round(gg * 255);
+        u8[o + 2] = Math.round(b * 255); u8[o + 3] = 255;
+      });
+      this._hueTex = renderer.uploadTexture('colorpicker', 'hues', { width: NUMBER_OF_COLORS, height: 1, colors });
+    }
+    if (this._hueTex) renderer.drawScreenQuad(this._hueTex, rect(g.slider));
+    const t = cp.thumb();
+    drawRect(renderer, m, g.slider[0] + t.start * g.slider[2], g.slider[1], Math.max(2, t.w * g.slider[2]), g.slider[3], [1, 1, 1, 0.7]);
+    // hex box, readouts, OK
+    if (font) {
+      shadowText(renderer, font, `#${cp.hexText}_`, m, g.hexAt[0], g.hexAt[1], { color: TEXT });
+      const [r, gg, b] = cp.color;
+      shadowText(renderer, font, `RGBA(${r.toFixed(3)}, ${gg.toFixed(3)}, ${b.toFixed(3)}, ${cp.alpha.toFixed(3)})`, m, g.rgbaAt[0], g.rgbaAt[1], { color: TEXT });
+      const [hh, ss, vv] = rgbToHsv(...cp.color);
+      shadowText(renderer, font, `HSV(${hh.toFixed(2)}, ${ss.toFixed(2)}, ${vv.toFixed(2)})`, m, g.hsvAt[0], g.hsvAt[1], { color: TEXT });
+      const [ox, oy, ow, oh] = g.ok;
+      drawRect(renderer, m, ox, oy, ow, oh, FOCUS);
+      drawText(renderer, font, 'OK', m.ox + (ox + Math.floor((ow - measureText(font.fnt, 'OK')) / 2)) * m.s, m.oy + (oy + Math.floor(oh / 2) - 3) * m.s, m.s, INK);
+    }
   }
 
   /** What tools/settingsProbe.mjs serialises - the SAME layout the
