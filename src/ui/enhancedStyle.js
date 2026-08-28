@@ -1754,25 +1754,34 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   padding: 18px 20px 22px; }
 .pack-shell .figure-doll { border: 2px solid rgba(125,116,96,0.55); background: rgba(0,0,0,0.3); }
 .pack-shell .slotmap, .pack-shell .wornlist, .pack-shell .equipped { background: rgba(0,0,0,0.3); }
-/* PX19b: THE EQUIP PANELS - the classic's own section, one language
-   over. The worn list is a grid of slot TILES beside the doll: each
-   a 2px panel holding the item's monogram with the slot word
-   beneath; the chosen one wears the gold pair and the brass frame;
+/* PX19d: THE SLOTS STAND ON THE BODY (Mac's concept reference) - the
+   worn map places each tile AT the classic doll's own anatomical
+   coordinate, scaled: helm above, amulets and rings on their flanks,
+   hands at the hands, feet below, marks and crystals in the off-body
+   row the map already gives them. The DOLL stands behind the tiles
+   when its art can draw; the tiles alone are the schematic when it
+   cannot. The chosen tile wears the gold pair and the brass frame;
    an empty slot is a dim open diamond and NOT a button. */
-.pack-shell .equipped { display: block; }
-.pack-shell .equipped .wornrow { display: inline-flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 3px;
-  width: 76px; min-height: 76px; margin: 3px; padding: 6px 2px; vertical-align: top;
-  background: rgba(0,0,0,0.3); border: 2px solid rgba(125,116,96,0.35);
+.pack-shell .equipped { display: block; text-align: center; padding-bottom: 10px; }
+.pack-shell .wornmap { position: relative; display: grid;
+  grid-template-columns: repeat(5, 1fr); grid-auto-rows: 52px;
+  gap: 5px; width: min(330px, 96%); margin: 6px auto 0; }
+.pack-shell .wornmap-doll { position: absolute; left: 50%; top: 46%;
+  transform: translate(-50%,-50%); z-index: 0; border: 0; background: none; opacity: 0.85; }
+.pack-shell .wornmap-doll img { max-height: 100%; image-rendering: pixelated; }
+.pack-shell .equipped .wornrow { position: relative; z-index: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1px; min-height: 44px; padding: 2px; overflow: hidden;
+  background: rgba(10,12,17,0.72); border: 2px solid rgba(125,116,96,0.35);
   color: #a89f88; font-family: inherit; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
-.pack-shell .equipped { text-align: center; padding-bottom: 10px; }
-.pack-shell .wornrow .tile { display: flex; width: 30px; height: 30px; align-items: center;
-  justify-content: center; border: 0; background: none; font-size: 15px; color: #c5bda2; }
-.pack-shell .wornrow .worntile { font-size: 15px; color: rgba(125,116,96,0.6); }
-.pack-shell .wornslot { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
-  color: #7d7460; }
-.pack-shell .wornname { font-size: 10px; max-width: 70px; overflow: hidden;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.25; }
+/* the name lives in the plaque; the DOM keeps it for the probes */
+.pack-shell .wornrow .wornname { display: none; }
+.pack-shell .wornrow .tile { display: flex; width: 24px; height: 24px; align-items: center;
+  justify-content: center; border: 0; background: none; font-size: 14px; color: #c5bda2; }
+.pack-shell .wornrow .worntile { font-size: 14px; color: rgba(125,116,96,0.6); }
+.pack-shell .wornslot { flex: 0 0 auto;   /* the base rule's 88px was a column WIDTH; on a vertical tile it becomes 88px of HEIGHT */
+  font-size: 8px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: #7d7460; max-width: 100%; line-height: 1.1; white-space: nowrap; }
 .pack-shell .wornrow .itemwt { display: none; }
 .pack-shell button.wornrow { cursor: pointer; }
 .pack-shell button.wornrow:hover, .pack-shell button.wornrow:focus-visible { outline: none;

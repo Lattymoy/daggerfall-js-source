@@ -608,11 +608,10 @@ function dropGold(text) {
 // ── THE CHARACTER PANEL ──────────────────────────────────────────
 // The screen's one picture of the player, and the place the VOXEL
 // character render lands when it is ready: this panel owns the space
-// and the sizing, and what fills it is one decision in `figurePanel`.
-// Today that is the paperdoll when its art is loaded and the
-// schematic when it is not - which is also why the schematic stays.
-// It is the only one of the two that needs no ARENA2, so it is what a
-// player with no game data still sees.
+// and the sizing. PX19d: what fills it is the WORN MAP - the tiles on
+// the body's own coordinates ARE the schematic now (they need no
+// ARENA2, so a player with no game data still sees their slots), and
+// the paperdoll stands behind them whenever its art can draw.
 
 /** The avatar, at whatever scale the column gives it. */
 function dollPanel(url) {
@@ -638,19 +637,80 @@ function dollPanel(url) {
   return wrap;
 }
 
-/** Whichever picture of the player this build can draw. */
-function figurePanel() {
-  const url = paperDollDataUrl(paperDollPixels(), { scale: 3 });
-  return url ? dollPanel(url) : slotMap();
-}
 
-/** The twenty-seven slots, named, with what is in them. */
+/** The twenty-seven slots, named, with what is in them.
+ *  PX19d (Mac's concept reference): THE SLOTS STAND ON THE BODY. The
+ *  SLOT_MAP has carried the classic doll's anatomical coordinates
+ *  since U59 - the tiles now sit AT them, scaled: helm above, amulets
+ *  and rings on their flanks, hands at the hands, feet below, the
+ *  marks and crystals settling into the off-body row the map already
+ *  gives them. The DOLL STANDS BEHIND the tiles when it has art;
+ *  names retreat to the plaque (the tile is monogram + slot word,
+ *  the reference's own reading) but stay in the DOM for every probe
+ *  that counts them. */
+/** PX19d composition: the classic dot coordinates were made for 12px
+ *  markers - 56px tiles at those centers pile onto each other - so
+ *  the map is a DESIGNED grid instead: five columns, seven rows, the
+ *  paired slots split to the sides the classic gives them (the
+ *  viewer's left is the character's RIGHT, exactly as the doll is
+ *  drawn), the anatomy down the center, marks and crystals in the
+ *  off-body bottom row. Keyed by label + occurrence, in worn.rows'
+ *  own y-then-x order, so the first Bracer is the right-side one. */
+/** The map speaks in SHORT slot words - a tile is a small panel and
+ *  'Chest, clothes' on two lines spilt out of it; the full name rides
+ *  the title attribute and the plaque, so nothing is truncated
+ *  mid-word, it is TRANSLATED. */
+const WORN_SHORT = Object.freeze({
+  'Chest, clothes': 'Shirt', 'Chest, armour': 'Cuirass',
+  'Legs, armour': 'Greaves', 'Legs, clothes': 'Legs',
+  'Right arm': 'R\u00b7Arm', 'Left arm': 'L\u00b7Arm',
+  'Right hand': 'R\u00b7Hand', 'Left hand': 'L\u00b7Hand',
+});
+const shortSlot = (label) => WORN_SHORT[label] ?? label;
+
+const WORN_AREAS = Object.freeze({
+  Head: ['1 / 3'],
+  Cloak: ['1 / 2', '1 / 4'],
+  Amulet: ['2 / 1', '2 / 5'],
+  'Chest, clothes': ['2 / 3'],
+  'Right arm': ['3 / 1'],
+  Bracer: ['3 / 2', '3 / 4'],
+  'Chest, armour': ['3 / 3'],
+  'Left arm': ['3 / 5'],
+  'Right hand': ['4 / 1'],
+  Bracelet: ['4 / 2', '4 / 4'],
+  Gloves: ['4 / 3'],
+  'Left hand': ['4 / 5'],
+  Ring: ['5 / 2', '5 / 4'],
+  'Legs, armour': ['5 / 3'],
+  'Legs, clothes': ['6 / 3'],
+  Unnamed: ['6 / 2', '6 / 4'],
+  Feet: ['7 / 3'],
+  Mark: ['7 / 1', '7 / 2'],
+  Crystal: ['7 / 4', '7 / 5'],
+});
 function equippedList() {
   const wrap = el('section', 'equipped');
   const head = el('div', 'equippedhead');
   head.append(el('h3', null, 'Worn'));
   head.append(el('p', 'meta', `${worn.filled} of ${worn.total} slots filled`));
   wrap.append(head);
+  const map = el('div', 'wornmap');
+  const dollUrl = paperDollDataUrl(paperDollPixels(), { scale: 3 });
+  if (dollUrl) {
+    const doll = dollPanel(dollUrl);
+    doll.classList.add('wornmap-doll');
+    map.append(doll);
+  }
+  wrap.append(map);
+  const seen = {};
+  const place = (node, row) => {
+    const n = seen[row.label] ?? 0;
+    seen[row.label] = n + 1;
+    const area = WORN_AREAS[row.label]?.[n];
+    if (area) node.style.gridArea = area;
+    map.append(node);
+  };
   for (const row of worn.rows) {
     // AN EMPTY SLOT IS NOT A CONTROL, so it is not a BUTTON. The first
     // draft made every row a button and disabled the empty ones, which
@@ -669,14 +729,16 @@ function equippedList() {
     // class names (.wornrow/.wornname) ride the tiles unchanged.
     if (!row.item) {
       const d = el('div', 'wornrow wornempty');
-      d.append(el('span', 'worntile', '\u25c7'), el('span', 'wornslot', row.label), el('span', 'wornname wornempty', '\u2014'));
-      wrap.append(d);
+      d.title = row.label;
+      d.append(el('span', 'worntile', '\u25c7'), el('span', 'wornslot', shortSlot(row.label)), el('span', 'wornname wornempty', '\u2014'));
+      place(d, row);
       continue;
     }
     const b = el('button', `wornrow${row.item === picked ? ' on' : ''}`);
     const line = itemLine(row.item, deps.entity);
+    b.title = `${row.label}: ${line.name}`;
     b.append(itemTile(line));
-    b.append(el('span', 'wornslot', row.label));
+    b.append(el('span', 'wornslot', shortSlot(row.label)));
     b.append(el('span', 'wornname', line.name));
     // SELECTS, rather than unequipping on the spot. The slot map's node
     // took the item straight off, which is right for a control whose
@@ -685,54 +747,21 @@ function equippedList() {
     // that undressed you on a mis-click would be the small-target
     // problem again with a bigger target.
     b.onclick = () => { picked = row.item; side = 'local'; notice = null; render(); };
-    wrap.append(b);
+    place(b, row);
   }
   return wrap;
 }
 
 function characterCol() {
-  // NOT `.packcol`. That class means "one of the item lists" to the
-  // stylesheet AND to every probe selector, and borrowing it for the
-  // character column made `.packcol:not(.packremote)` match the doll -
-  // the same collision U53 hit by naming the detail column `.detail`.
-  const col = el('section', 'charcol');
-  col.append(figurePanel(), equippedList());
-  return col;
+  // PX19d: the doll lives INSIDE the worn map now (behind the tiles);
+  // stacking figurePanel above it would draw the avatar twice - or
+  // the schematic beside the map, which is the same information told
+  // twice. The map alone is the figure.
+  const col2 = el('section', 'charcol');
+  col2.append(equippedList());
+  return col2;
 }
 
-function slotMap() {
-  const wrap = el('div', 'slotmap');
-  const s = svg('svg', { viewBox: '0 0 220 320', role: 'img', 'aria-label': 'Equipment slots' });
-  const fig = svg('g', { class: 'figure' });
-  for (const d of FIGURE) fig.append(svg('path', { d }));
-  s.append(fig);
-
-  for (const [id, at] of Object.entries(SLOT_MAP)) {
-    const slot = Number(id);
-    const item = model.worn.get(slot);
-    if (at.hidden && !item) continue;
-    const g = svg('g', {
-      class: `node${item ? ' filled' : ''}${at.off ? ' off' : ''}`,
-      tabindex: item ? '0' : '-1',
-      role: item ? 'button' : 'presentation',
-    });
-    const title = svg('title', {});
-    title.textContent = item ? `${at.label}: ${item.name} — click to take off` : `${at.label}: empty`;
-    g.append(title, svg('circle', { cx: at.x, cy: at.y, r: item ? 7 : 4.5 }));
-    if (item) {
-      g.addEventListener('click', () => takeOff(slot));
-      g.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); takeOff(slot); }
-      });
-    }
-    s.append(g);
-  }
-  wrap.append(s);
-  const filled = model.worn.size;
-  const total = Object.keys(SLOT_MAP).length;
-  wrap.append(el('p', 'slotcount', `${filled} of ${total} slots filled`));
-  return wrap;
-}
 
 // NO "WORN" MARK ON A ROW, and the reason is DFU's: filterByTab is
 // FilterLocalItems, and its first line drops every equipped item -

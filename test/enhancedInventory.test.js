@@ -177,8 +177,14 @@ test('U53: DFU’s two unnamed slots are hidden until something is in them', () 
   assert.equal(SLOT_MAP[EQUIP_SLOTS.Unknown2].hidden, true);
   const named = Object.entries(SLOT_MAP).filter(([, at]) => !at.hidden);
   assert.equal(named.length, Object.keys(SLOT_MAP).length - 2);
-  // the view draws a hidden node only when filled
-  assert.match(read('src/ui/enhancedInventory.js'), /if \(at\.hidden && !item\) continue;/);
+  // the view draws a hidden node only when filled. PX19d: the pinned
+  // expression was slotMap's copy of the law; slotMap is gone (the
+  // worn map IS the schematic now) and the law's surviving home is
+  // equippedModel's row filter - the pin follows the shape, and the
+  // MEASURED half below proves the behaviour, not just the text.
+  assert.match(read('src/ui/enhancedInventory.js'), /rows\.filter\(\(r\) => r\.item \|\| !r\.hidden\)/);
+  const empty = equippedModel({ equipTable: [] });
+  assert.ok(empty.rows.every((r) => r.label !== 'Unnamed'), 'an empty Unnamed slot leaked into the rows');
 });
 
 // ── THE ITEM LINE ────────────────────────────────────────────────
@@ -835,11 +841,14 @@ test('U59: the doll is the COMPOSITOR\'s, and the schematic is the fallback', ()
   for (const law of ['BlitItems', 'applyDyeToIndex', 'paperdollOrder', 'PAPERDOLL_ORIGIN', 'BG_SUBRECT']) {
     assert.ok(!code2.includes(law), `a second paperdoll compositor is growing here (${law})`);
   }
-  // the fallback is the SCHEMATIC, which is the only one of the two
-  // that needs no ARENA2 - so a player with no game data still sees
-  // their kit
-  const fp = src.slice(src.indexOf('function figurePanel()'), src.indexOf('function equippedList()'));
-  assert.match(fp, /return url \? dollPanel\(url\) : slotMap\(\);/);
+  // PX19d: the schematic IS the worn map now - the tiles on the
+  // body's coordinates need no ARENA2, so a player with no game data
+  // still sees their kit; the DOLL rides behind them only when its
+  // art can draw. The pin follows the shape.
+  const fp = src.slice(src.indexOf('function equippedList()'), src.indexOf('function characterCol()'));
+  assert.match(fp, /const dollUrl = paperDollDataUrl\(paperDollPixels\(\), \{ scale: 3 \}\);/);
+  assert.match(fp, /if \(dollUrl\)/, 'the doll must be OPTIONAL - tiles alone are the no-data answer');
+  assert.match(fp, /wornmap/);
   // and the compositor is asked to recompose when the kit changes, or
   // the avatar shows yesterday's armour
   for (const fn of ['function wear(item)', 'function takeOff(slot)']) {

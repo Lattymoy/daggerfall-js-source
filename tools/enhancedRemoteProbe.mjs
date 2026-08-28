@@ -292,7 +292,7 @@ async function runPhoneOrder() {
     return {
       local: b('#enhanced-inventory .packcol:not(.packremote):not(.packdetail)'),
       remote: b('#enhanced-inventory .packremote'),
-      doll: b('#enhanced-inventory .slotmap'),
+      doll: b('#enhanced-inventory .wornmap'),   // PX19d: the worn map took the schematic's job
       vh: innerHeight,
     };
   });

@@ -7228,6 +7228,34 @@ preloadPaperDollForEntity now warms in dungeonContext beside the
 pause art, same loud-never-boot posture. The world's interiors
 already rode the world's preload.
 
+PX19d (Mac's concept reference, the D4-style sheet): THE SLOTS STAND
+ON THE BODY. The flat tile grid became an anatomical composition:
+five columns, seven rows - CLOAK/HEAD/CLOAK the crown, amulets on
+the outer flanks, R-ARM/BRACER/CUIRASS/BRACER/L-ARM across the
+chest row, hands at the hands, rings and greaves, legs, feet, marks
+and crystals in the off-body bottom row - the paired slots split to
+the sides the classic doll gives them (the viewer's left is the
+character's RIGHT), and the DOLL stands behind the tiles whenever
+its art can draw. THREE ROOT CAUSES paid on the way, each measured:
+(1) the first cut placed tiles at SLOT_MAP's classic dot coordinates
+- made for 12px markers, so 56px tiles piled onto each other; the
+composition is a DESIGNED grid keyed by label + occurrence in
+worn.rows' own y-then-x order. (2) Two-line slot names spilt out of
+the compacted tiles; the map speaks SHORT slot words now (Shirt,
+Cuirass, Greaves, R-Arm) - translated, never truncated, with the
+full name on the title and in the plaque. (3) The last spill was the
+base .wornslot's flex-basis: 88px - a column WIDTH in the old
+horizontal rows that became 88px of HEIGHT on a vertical tile;
+overridden with auto, and the spill probe reads 0 of 25.
+HOUSEKEEPING WITH THE REDESIGN: figurePanel and slotMap are GONE -
+the worn map IS the schematic (it needs no ARENA2, so a player with
+no data still sees their kit) and the doll-behind-tiles is the art
+path; the two source-text pins that pointed at the removed bodies
+follow the law to its surviving homes (equippedModel's hidden-slot
+filter; the optional-doll test asserts tiles-alone is the no-data
+answer, now with a MEASURED empty-model assert beside the text pin),
+and the remote probe's doll selector reads .wornmap. Suite 3998/0.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk
