@@ -86,8 +86,7 @@
 // the pick is a zip upload.
 // ═══════════════════════════════════════════════════════════════════
 
-import { morrowindDataCount, assetPickerOpen } from '../scenes/dataSource.js';   // MW-IMPORT: the enhanced shell's own attach door; MWFIX: and the modal it opens owns the keyboard
-import { mwFpPreference, setMwFpPreference } from '../combat/mwFpPref.js';
+import { assetPickerOpen } from '../scenes/dataSource.js';   // MWFIX: the asset picker owns the keyboard while it is open
 import { CATEGORIES, keysOf } from '../ui/settingsMap.js';
 import { widgetFor, blockedReason, formatValue, stepValue, COLOUR_KEYS } from '../ui/settingsLaw.js';
 import { labelOf, helpOf, INSTEAD, TIER_TEXT } from '../ui/settingsCopy.js';
@@ -123,8 +122,8 @@ import { overlayAction } from './input.js';   // U51: Escape, through the shared
 // hole in it teaches the player the hole is permanent.
 // R7 (Mac): ENHANCED is a section of its own, and on the BOOT rail
 // only. The port's own switches were scattered - the skin under the
-// brand, roads in no interface at all, the Morrowind arms behind a
-// query flag nobody would guess - and a switch a player cannot find is
+// brand and roads in no interface at all - and a switch a player
+// cannot find is
 // not shipped. It is absent from SECTIONS_PAUSE deliberately: these
 // answer "what kind of game am I about to play", which is settled by
 // the time a pause menu opens, and two of them cannot take effect
@@ -800,16 +799,16 @@ function paneEnhanced(body) {
   const live = el('div', 'card');
   live.append(el('h3', null, 'Switches'));
   live.append(skinRow());
-  // R3W (Mac, 2026-08-28): this row promised THREE things and shipped
-  // one. The map layer was written and never wired - nothing in src/
-  // called roadModel and the renderer had no slot - and travel by road
-  // is still an orphaned module, so "travel follows them" was simply
-  // untrue. The map half is wired now; the travel claim is removed
-  // until R4 is, rather than left standing as the sky row's was.
+  // R3W/R4W (Mac, 2026-08-28): this row promised THREE things and
+  // shipped one - the map layer and the travel slice were both written
+  // and never called. R3W wired the map and the claim came OUT rather
+  // than being left standing as the sky row's was; R4W wired travel
+  // and it goes back in. Every clause here is now reachable.
   live.append(prefRow('roads', 'Roads',
-    'Roads between towns, generated from the terrain and drawn both on the ground and on the '
-    + 'travel map. The first world load bakes the network (about half a minute, reported as it '
-    + 'goes) and caches it; after that it is instant.'));
+    'Roads between towns, generated from the terrain: drawn on the ground and on the travel map, '
+    + 'and travel follows them - the route you watch is the route you are charged for, and never '
+    + 'costs more than the direct road. The first world load bakes the network (about half a '
+    + 'minute, reported as it goes) and caches it; after that it is instant.'));
   // RA1 (Mac, 2026-08-28): this row said "not built" while ES1 had
   // been the enhanced skin's default sky for a day - a shipped
   // enhancement wearing a hole's label. It is a SWITCH now, over the
@@ -819,67 +818,6 @@ function paneEnhanced(body) {
     + 'weather, drawn procedurally on the painted sky\u2019s own pixel grid. Off returns '
     + 'Daggerfall\u2019s SKY*.DAT panorama. Takes effect when the world next loads.'));
   body.append(live);
-
-  // MWFIX2: A SIBLING PAGE IS NOT A SIBLING OF THE GAME. The build puts
-  // every extra page at the SITE ROOT (vite.config's rollup inputs) but
-  // the game itself one directory down at /play/, so a bare relative
-  // 'mw-viewer.html' resolves against the running document: from
-  // menu.html at the root it works, and from the game it asks for
-  // /play/mw-viewer.html and 404s. That is why it survived - the door
-  // was only ever pressed from the root during development.
-  //
-  // Resolving against location.href keeps `base: './'`'s promise (the
-  // same build serves from a project path AND from the apex domain),
-  // and stepping out of /play/ is the one thing the bare form got
-  // wrong. Anything not under /play/ is already at the root.
-  const sitePage = (page) => {
-    const dir = new URL('.', location.href);
-    const root = /\/play\/$/.test(dir.pathname) ? new URL('..', dir) : dir;
-    return new URL(page, root).href;
-  };
-
-  // MW-IMPORT: the attach door, ON THIS SURFACE - the launcher window
-  // has its M/F keys, but the enhanced skin never routes through it, so
-  // the card lives here too. Attaching data IS the opt-in; the 3D
-  // first-person draws by default once data is present, and the toggle
-  // turns it off without detaching anything.
-  const mw = el('div', 'card');
-  mw.append(el('h3', null, 'Morrowind assets'));
-  mw.append(el('p', 'meta',
-    'Your own Morrowind.bsa (and Tribunal, Bloodmoon, Morrowind.esm) power the 3D layer - '
-    + 'first-person arms and weapons in-game, and the full mesh/NPC browser at mw-viewer.html. '
-    + 'Stored in this browser exactly like ARENA2; nothing uploads.'));
-  const mwState = () => {
-    const n = morrowindDataCount();
-    return `${n} archive${n === 1 ? '' : 's'} attached \u00b7 3D first-person ${mwFpPreference() ? 'ON' : 'off'}`;
-  };
-  // MWDIAG: WHY IT IS NOT DRAWING, on the surface that offers the
-  // toggle. The layer has always published its own reason
-  // (window.__mwfp.status - "no skinned geometry in base", "missing
-  // meshes\base_anim.1st.nif", "ready: 3 skinned sets, 41 groups"),
-  // and the only way to read it was the browser console. A player who
-  // attaches data, turns the toggle on and still sees the sprite has
-  // no way to tell WHICH of five different things went wrong. The card
-  // that promises the feature is where that answer belongs.
-  const mwRig = () => {
-    const m = globalThis.__mwfp;
-    if (!m) return 'no rig yet - enter the world once with data attached';
-    return m.ready ? `drawing \u00b7 ${m.status}` : `NOT drawing \u00b7 ${m.status}`;
-  };
-  mw.append(stats([['State', mwState()], ['Rig', mwRig()]]));
-  mw.append(acts([
-    { label: 'Attach data', primary: true, onClick: async () => {
-      const ds = await import('../scenes/dataSource.js');
-      await ds.pickMorrowindFiles();
-      render();
-    } },
-    { label: mwFpPreference() ? 'Turn 3D first-person off' : 'Turn 3D first-person on',
-      onClick: () => { setMwFpPreference(!mwFpPreference()); render(); } },
-    // The blurb NAMED the viewer without a way to reach it - a door
-    // described is not a door. One press, new tab, same origin.
-    { label: 'Open mesh viewer', onClick: () => window.open(sitePage('mw-viewer.html'), '_blank') },
-  ]));
-  body.append(mw);
 
   const waiting = el('div', 'card');
   waiting.append(el('h3', null, 'Not switchable here'));

@@ -58,7 +58,8 @@ import { perspective, lookAt, mirrorProjectionX } from '../world/mat4.js';
 import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { REGION_NAMES, longitudeLatitudeToMapPixel, getPixelFromPixelID, patchRegionIndex } from '../formats/mapsFile.js';
 import { locationSummaryAt } from '../systems/mapDirectory.js';
-import { walkTravelPath, calculateTravelTime, calculateTripCost, travelDays } from '../systems/travel.js';
+import { calculateTravelTime, calculateTripCost, travelDays } from '../systems/travel.js';
+import { planJourney } from '../systems/roadTravel.js';   // R4W: one journey for the bill, the line and the flight
 import { travelMapFilters, travelMapPopUpState, setTravelMapPopUpState, travelMapSaveData } from '../systems/travelMapState.js';
 import { getDaggerfallDistance, MatchesCutOff } from '../systems/editDistance.js';
 import { checkLocationDiscovered } from './travelMapWindow.js';
@@ -583,16 +584,44 @@ export class OverworldMapWindow {
     if (o) setTravelMapPopUpState(o);
   }
 
+  /** R4W - ONE JOURNEY, THREE CONSUMERS: the card's bill, the drawn
+   *  route line and the camera flight. That was R4's whole promise and
+   *  it shipped unwired - the card called calculateTravelTime over
+   *  walkTravelPath and the flight called walkTravelPath again, so
+   *  they were two computations that happened to agree because neither
+   *  knew about roads. planJourney picks the path and the law prices
+   *  THAT path, so the minutes on the card are the minutes of the line
+   *  you watch. Memoised on the journey's inputs, because the card
+   *  re-renders on every toggle. */
+  _journey(dest, opts) {
+    const start = this.deps.getPlayerPixel();
+    const network = this.deps.roadNetwork?.() ?? null;
+    const key = `${start.x},${start.y}>${dest.x},${dest.y}|${JSON.stringify(opts)}|${network ? 1 : 0}`;
+    if (this._journeyKey === key) return this._journeyVal;
+    const j = planJourney(start, dest, {
+      enabled: Boolean(network),
+      width: this._size.width,
+      height: this._size.height,
+      climateAt: (x, y) => this.deps.getClimateIndex?.(x, y) ?? -1,
+      network,
+      opts,
+      calculate: (s, e, o) => calculateTravelTime(s, e, o, this.deps.getClimateIndex),
+    });
+    this._journeyKey = key;
+    this._journeyVal = j;
+    return j;
+  }
+
   _refreshTrip() {
     const st = this._panelState;
     if (!st?.opts || !this._selected) return;
     const dest = getPixelFromPixelID(this._selected.summary.id);
-    const time = calculateTravelTime(this.deps.getPlayerPixel(), dest, {
+    const time = this._journey(dest, {
       speedCautious: st.opts.speedCautious,
       sleepModeInn: st.opts.sleepModeInn,
       travelShip: st.opts.travelShip,
       hasHorse: st.hasHorse, hasCart: st.hasCart,
-    }, this.deps.getClimateIndex);
+    });
     const cost = calculateTripCost(time.minutes, time.oceanPixels, {
       sleepModeInn: st.opts.sleepModeInn, hasShip: st.hasShip, travelShip: st.opts.travelShip,
     });
@@ -670,7 +699,14 @@ export class OverworldMapWindow {
   _beginFlight() {
     const start = this.deps.getPlayerPixel();
     const dest = getPixelFromPixelID(this._selected.summary.id);
-    const path = walkTravelPath(start, dest);
+    // R4W: the SAME journey the card billed, not a second walk.
+    const st = this._panelState;
+    const path = this._journey(dest, {
+      speedCautious: st?.opts?.speedCautious,
+      sleepModeInn: st?.opts?.sleepModeInn,
+      travelShip: st?.opts?.travelShip,
+      hasHorse: st?.hasHorse, hasCart: st?.hasCart,
+    }).path;
     const bytes = this.deps.woods?.heightMapBuffer;
     const ptsF32 = routePoints(start, path, {
       heightBytes: bytes, width: this._size.width, height: this._size.height,

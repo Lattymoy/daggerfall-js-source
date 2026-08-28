@@ -41,7 +41,7 @@ import { getBool } from '../systems/settings.js';   // M-FM: Audio/AlternateMusi
 import { SongManager, musicEnvironment, holdEnvironment } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
 
-import { getBytes, storedMusicNames, loadMusicFile, storedTextureNames, loadTextureFile, registerMorrowindData } from './dataSource.js';   // M-EXT/M-TEX: the player's own packs
+import { getBytes, storedMusicNames, loadMusicFile, storedTextureNames, loadTextureFile } from './dataSource.js';   // M-EXT/M-TEX: the player's own packs
 
 
 /** The data seam every scene uses - delegates to the ARENA2 data
@@ -668,10 +668,7 @@ export function ensureAudio(fetch = fetchBytes) {
   const textures = storedTextureNames()
     .then((names) => setTextureReplacements(names, loadTextureFile))
     .catch(() => 0);
-  // MW-IMPORT: same seam, same never-traps rule - no data means the
-  // opt-in 3D layer stays inert, which is its resting state anyway.
-  const morrowind = registerMorrowindData().catch(() => 0);
-  return Promise.all([sound, songs, replacements, textures, morrowind]);
+  return Promise.all([sound, songs, replacements, textures]);
 }
 
 // --- The outdoor fog COLOUR (DaggerfallSky.SetSkyFogColor) -----------
