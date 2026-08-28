@@ -51,15 +51,19 @@ test('mwanim: inline tracks - bones, timing, exact key values', () => {
 test('mwanim: text keys become named groups; multi-line keys split', () => {
   const groups = parseAnimGroups(collectTextKeys(parseNif(ANIMATED)));
   assert.deepEqual([...groups.keys()].sort(), ['Idle', 'Move']);
-  assert.deepEqual(groups.get('Idle'), { start: 0, stop: 0.5, loopStart: null, loopStop: null });
-  assert.deepEqual(groups.get('Move'), { start: 0.5, stop: 1.5, loopStart: null, loopStop: null });
+  const flat = ({ start, stop, loopStart, loopStop }) => ({ start, stop, loopStart, loopStop });
+  assert.deepEqual(flat(groups.get('Idle')), { start: 0, stop: 0.5, loopStart: null, loopStop: null });
+  assert.deepEqual(flat(groups.get('Move')), { start: 0.5, stop: 1.5, loopStart: null, loopStop: null });
   // Retail packs several markers into one key's text.
   const packed = parseAnimGroups([
     { time: 0, text: 'SoundGen: Left\r\nWalk: Start' },
     { time: 2, text: 'Walk: Loop Stop\nWalk: Stop' },
     { time: 0.5, text: 'Walk: Loop Start' },
   ]);
-  assert.deepEqual(packed.get('Walk'), { start: 0, stop: 2, loopStart: 0.5, loopStop: 2 });
+  const w = packed.get('Walk');
+  assert.deepEqual([w.start, w.stop, w.loopStart, w.loopStop], [0, 2, 0.5, 2]);
+  // Every marker is retained for the FP layer's sub-segments.
+  assert.equal(w.markers.get('loop start'), 0.5);
 });
 
 test('mwanim: linear sampling - lerp midpoint, slerp half-angle', () => {
@@ -127,7 +131,8 @@ test('mwanim: external .kf maps controllers to bones by the string-extra chain',
     ],
   );
   const groups = parseAnimGroups(collectTextKeys(nif));
-  assert.deepEqual(groups.get('Move'), { start: 0, stop: 1, loopStart: null, loopStop: null });
+  const g = groups.get('Move');
+  assert.deepEqual([g.start, g.stop], [0, 1]);
 });
 
 test('mwskin: bind pose round-trips the authored vertices exactly', () => {

@@ -241,14 +241,14 @@ test('music: replacements get their OWN store, away from the download diet', () 
   // one, and it is reached through the shared asset helpers.
   const d = src('scenes/dataSource.js');
   assert.match(d, /const MUSIC_STORE = 'music';/);
-  assert.match(d, /ASSET_STORES = \[MUSIC_STORE, TEXTURE_STORE\]/,
+  assert.match(d, /ASSET_STORES = \[MUSIC_STORE, TEXTURE_STORE, MW_STORE\]/,
     'music is an ASSET store, listed apart from the ARENA2 one');
   assert.match(d, /assetNames\(MUSIC_STORE\)/);
   assert.match(d, /assetBytes\(MUSIC_STORE, fileName\)/);
   assert.match(d, /storeAssets\(MUSIC_STORE, files/);
   // the upgrade creates what is MISSING - an existing player arrives on
   // an older version holding a full ARENA2 ingest and must not lose it
-  assert.match(d, /indexedDB\.open\(DB_NAME, 3\)/);
+  assert.match(d, /indexedDB\.open\(DB_NAME, 4\)/);
   assert.match(d, /if \(!d\.objectStoreNames\.contains\(STORE\)\) d\.createObjectStore\(STORE\);/);
   assert.match(d, /if \(!d\.objectStoreNames\.contains\(name\)\) d\.createObjectStore\(name\);/);
   // clearStoredData is ARENA2 recovery and must NOT sweep the music:

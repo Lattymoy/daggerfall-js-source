@@ -189,7 +189,7 @@ test('texture: registration rides the ONE bootstrap, and the row reports it', ()
   assert.match(w, /textureReplacementCount\(\)/);
   // both stores exist and the upgrade creates what is MISSING
   const d = src('scenes/dataSource.js');
-  assert.match(d, /const ASSET_STORES = \[MUSIC_STORE, TEXTURE_STORE\];/);
-  assert.match(d, /indexedDB\.open\(DB_NAME, 3\)/);
+  assert.match(d, /const ASSET_STORES = \[MUSIC_STORE, TEXTURE_STORE, MW_STORE\];/);
+  assert.match(d, /indexedDB\.open\(DB_NAME, 4\)/);
   assert.match(d, /for \(const name of ASSET_STORES\)/);
 });
