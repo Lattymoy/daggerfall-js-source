@@ -54,7 +54,7 @@ import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   //
 import { RestWindow } from '../ui/restWindow.js';   // S40: rest above ground
 import { setEnemyAlert, areEnemiesNearby } from '../systems/encounters.js';   // the enemy arm RAISES the alert before refusing; the RESTING variant asks the pool, the STRICT one gates the townsfolk idle
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5): the collapse box
-import { healthStatusRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
+import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
 import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { calculateCastCost } from '../systems/spellcost.js';   // M2
@@ -999,7 +999,14 @@ export async function bootExterior(canvas, renderer, params, status) {
     // agreed. That is what drift looks like the day before it stops.
     toggleCharSheet: () => townTalk.showOverlay(makeCharSheetWindow()),
     // BS1/F198: the Status action's health box (the four-hosts seam).
-    showStatus: () => townTalk.showOverlay(new ActionTextBox(healthStatusRows(playerEntity, (id) => townTalk.lines(id)))),
+    // ST1: the record-22 box leads here too; this dev scene has no
+    // quest machine (see TickRest's note), so the null context leaves
+    // each macro as its bracketed placeholder - the null-MCP posture.
+    showStatus: () => {
+      const rows = (id) => townTalk.lines(id);
+      townTalk.showOverlay(new ActionTextBox(statusInfoRows(rows, null))
+        .addNext(healthStatusRows(playerEntity, rows)));
+    },
     toggleInventory: () => {
       // V4: GetSuppressInventory (LycanthropyEffect.cs:409-421)
       const sup = racialSuppressInventory(playerEntity);

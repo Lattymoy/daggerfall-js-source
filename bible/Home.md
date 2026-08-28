@@ -266,11 +266,11 @@ combat line numbers below are refreshed with it.
 - `src/scenes/exterior.js:558` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:564` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:801` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:1014` - PX15 FLAGGED: toggleDial - this test host's door set differs;
-- `src/scenes/exterior.js:1020` - PX3 FLAGGED: questMessages - this test host mounts no quest
-- `src/scenes/exterior.js:1052` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:1349` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:1514` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:1021` - PX15 FLAGGED: toggleDial - this test host's door set differs;
+- `src/scenes/exterior.js:1027` - PX3 FLAGGED: questMessages - this test host mounts no quest
+- `src/scenes/exterior.js:1059` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/exterior.js:1356` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:1521` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/exteriorFoes.js:550` - FLAGGED: the arrow's IMPACT still only knows the player
 - `src/scenes/shared.js:292` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:309` - *  mirrors motorStats (the INTERIM entity carries no stats). */
@@ -281,13 +281,13 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:828` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/world.js:1275` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
 - `src/scenes/world.js:2293` - FLAGGED in systems/healthStatus.js (macro producers pend).
-- `src/scenes/world.js:2377` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:2656` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:2938` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:3268` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:3295` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:3778` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:4142` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:2383` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:2662` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:2944` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:3274` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:3301` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:3784` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:4148` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:798` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
 - `src/scenes/worldModes.js:922` - (FLAGGED - MakeHouseContainer, the house-ownership arm).
 - `src/scenes/worldModes.js:935` - FLAGGED to the crime arc, as the Ledger records.
@@ -346,7 +346,6 @@ combat line numbers below are refreshed with it.
 - `src/systems/factionRep.js:229` - *  pre-chargen INTERIM entity (characters/playerEntity.js) has no
 - `src/systems/guildServiceActions.js:195` - *  turning into a vampire or werebeast - FLAGGED: the port has no
 - `src/systems/guildServiceFlow.js:239` - *  override's law). Every other arm is FLAGGED with the window it
-- `src/systems/healthStatus.js:23` - FLAGGED at the host seam, so the Status key opens the health half
 - `src/systems/inputActions.js:302` - FLAGGED, each with the slice it waits on:
 - `src/systems/inventory.js:43` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
 - `src/systems/itemInfo.js:5` - U8e's inventory shipped an INTERIM info panel that made up its own

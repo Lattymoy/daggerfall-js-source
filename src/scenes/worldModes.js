@@ -40,7 +40,7 @@ import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C12): the one clock; G4's probe moves it
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
-import { healthStatusRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
+import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
 import { makeOpenBookHook } from '../ui/bookReader.js';   // BS1: the shelf pick opens the reader
 import { populateBookshelf, bookshelfAccess, bookshelfTitles } from '../systems/bookshelf.js';   // BS1
 import { maxFatigue, liveStat } from '../systems/statMods.js';   // AUDIT 23 (C5); U40: strength for MaxEncumbrance
@@ -4330,7 +4330,13 @@ export function createWorldModes(host) {
     },
     toggleCharSheet() { mountInterior(host.makeCharSheet?.()); },
     // BS1/F198: the Status action's health box (the four-hosts seam).
-    showStatus() { mountInterior(new ActionTextBox(healthStatusRows(playerEntity, (id) => townTalk?.lines?.(id) ?? []))); },
+    showStatus() {
+      // ST1: the record-22 chain (DisplayStatusInfo), through the
+      // bridge world.js hands down
+      const rows = (id) => townTalk?.lines?.(id) ?? [];
+      mountInterior(new ActionTextBox(statusInfoRows(rows, questBridge?.machine?.macroContext?.() ?? null))
+        .addNext(healthStatusRows(playerEntity, rows)));
+    },
     toggleInventory() { mountInterior(host.makeInventory?.()); },
     // M2/I2: the CastSpell action opens the spellbook
     // (GameManager.cs:550-553); the cast itself is the attack click.

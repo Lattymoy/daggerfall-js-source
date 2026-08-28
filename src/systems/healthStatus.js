@@ -17,14 +17,32 @@
 //   - if nothing qualified after all that, record 18 again (the
 //     `if (tokens == null)` tail).
 //
-// The record-22 STATUS box that precedes this one in DFU's
-// DisplayStatusInfo chain is NOT here: its text is macro-heavy
-// (%reg and friends) and the port has no producer set for it yet -
-// FLAGGED at the host seam, so the Status key opens the health half
-// alone rather than printing raw macros.
+// ST1: the record-22 STATUS box that precedes this one in DFU's
+// DisplayStatusInfo (:1615-1628) is statusInfoRows below. Its text -
+// "You are in %cn. / It is %tim on %dat. / In the eyes of the law of
+// %crn, / you are %ltn." (Internal_RSC.csv record 22) - is
+// macro-heavy, and every producer it needs already lives in the
+// quest arc's ONE macro table (questMacros HANDLERS: %cn, %tim,
+// %dat, %crn, %ltn), so the expansion goes through
+// expandQuestMessage with the machine's quest-shaped macroContext()
+// rather than a second expander. DFU chains the two boxes with
+// AddNextMessageBox; the port's ActionTextBox.addNext is that chain.
 
 import { diseaseCount, contractedMessageRecord } from './diseases.js';
 import { poisonCount } from './poisons.js';
+import { expandQuestMessage } from './quest/questMacros.js';
+
+export const STATUS_INFO_ID = 22;   // SetTextTokens(22) (DaggerfallUI.cs:1620)
+
+/** DisplayStatusInfo's first box (:1617-1620): record 22 expanded.
+ *  `questLike` is machine.macroContext() - null (a headless host)
+ *  leaves each macro as its bracketed placeholder, which is exactly
+ *  MacroHelper's own null-MCP posture, never a throw. */
+export function statusInfoRows(rows, questLike = null) {
+  const tokens = (rows(STATUS_INFO_ID) ?? []).map((text) => ({ text }));
+  expandQuestMessage(questLike, tokens);
+  return tokens.map((t) => t.text);
+}
 
 export const YOU_ARE_HEALTHY_ID = 18;        // youAreHealthyID (:1632)
 export const YOU_HAVE_BEEN_POISONED_ID = 117;   // youHaveBeenPoisoned (:1633)

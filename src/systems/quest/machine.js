@@ -289,6 +289,17 @@ export class QuestMachine {
     return null;
   }
 
+  /** ST1: a quest-SHAPED context for expanding CONTEXT macros in
+   *  non-quest text - the record-22 status box is DFU's
+   *  SetTextTokens(22), whose macros resolve through MacroHelper's
+   *  STATIC handlers reaching GameManager singletons; the port's
+   *  equivalents are the questMacros HANDLERS reading these hooks.
+   *  Only nowSeconds and hooks are read by that path
+   *  (getContextValue builds its mcp from them). */
+  macroContext() {
+    return { nowSeconds: () => this.deps.nowSeconds?.() ?? 0, hooks: this._buildHooks() };
+  }
+
   /** The per-quest hook surface over the machine deps. Built BEFORE
    *  the parse since Q2b-ii: the Item mint reads player/guild/region
    *  facts at create time, exactly as DFU parses with the live
