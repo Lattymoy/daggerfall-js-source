@@ -940,6 +940,11 @@ function itemRow(item, from = 'local') {
 // anything at all - was the second one missing. It is a peer of the
 // pack list rather than a panel hung off it, because that is what it
 // is: the ground is a container the player is standing in.
+/** PX21e: how many rows fit ONE column of the loot window at its cap.
+ *  Past this it widens to two rather than scrolling - a container is a
+ *  glance, and a title that scrolls away is the part that reads broken. */
+export const LOOT_ONE_COLUMN = 8;
+
 function remoteCol() {
   const col = el('section', 'packcol packremote');
   const head = el('div', 'remotehead');
@@ -979,12 +984,22 @@ function remoteCol() {
   head.append(acts);
   col.append(head);
   if (goldEntry != null) col.append(goldField());
+  // PX21e (Mac: "in the tooltip for looting, it makes you scroll which
+  // should not be a thing at all"): THE LIST IS ITS OWN BOX. The rows
+  // sat directly in the column beside the head and the WHOLE WINDOW
+  // carried overflow-y - so a pile past the cap scrolled the title and
+  // the buttons away with it, which is the part that reads as broken.
+  // The head is fixed furniture now and the rows live in a list, which
+  // is also what lets them FLOW INTO A SECOND COLUMN before anything
+  // scrolls at all.
+  const list = el('div', 'remotelist');
   if (!remote.items.length) {
-    col.append(el('p', 'packempty', remote.kind === 'ground'
+    list.append(el('p', 'packempty', remote.kind === 'ground'
       ? 'Nothing dropped here yet.'
       : 'Empty.'));
   }
-  for (const it of remote.items) col.append(itemRow(it, 'remote'));
+  for (const it of remote.items) list.append(itemRow(it, 'remote'));
+  col.append(list);
   return col;
 }
 
@@ -1265,7 +1280,10 @@ function render() {
 
     // The LOOT frame is built next, because with the pack closed it is
     // the frame the tooltip anchors into and the click-away listens on.
-    const loot = (remote.kind !== 'ground' || remote.count > 0) ? el('aside', 'loot-win') : null;
+    // PX21e: a long pile WIDENS rather than scrolls - two columns of
+    // rows hold twice as much in the same height.
+    const loot = (remote.kind !== 'ground' || remote.count > 0)
+      ? el('aside', `loot-win${remote.count > LOOT_ONE_COLUMN ? ' wide' : ''}`) : null;
     if (loot) {
       for (const c of ['tl', 'tr', 'bl', 'br']) loot.append(el('span', `px-gem px-corner px-${c}`));
       loot.append(remoteCol());

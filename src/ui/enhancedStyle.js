@@ -1962,9 +1962,17 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    the same frame language one size down; absent entirely when the
    ground is bare. */
 .pack-shell { grid-auto-flow: column; gap: 18px; }
-.loot-win { position: relative; width: min(340px, 90vw); max-height: min(560px, 80dvh);
-  display: flex; flex-direction: column; overflow-y: auto;
+/* PX21e (Mac: "in the tooltip for looting, it makes you scroll which
+   should not be a thing at all"): THE WINDOW DOES NOT SCROLL. It
+   carried overflow-y ITSELF, so a pile past the cap scrolled its own
+   title and buttons out of sight - which is the part that reads as
+   broken. The frame is fixed furniture now; only the LIST inside it
+   can move, and it WIDENS to two columns first, which holds any
+   container Daggerfall builds without moving at all. */
+.loot-win { position: relative; width: min(340px, 90vw); max-height: min(700px, 86dvh);
+  display: flex; flex-direction: column; overflow: hidden;
   background: rgba(10,12,17,0.72); border: 2px solid #7d7460; padding-bottom: 8px; }
+.loot-win.wide { width: min(680px, 94vw); }
 .loot-win .px-corner { position: absolute; }
 .loot-win .px-tl { left: -1px; top: -1px; transform: translate(-50%,-50%); }
 .loot-win .px-tr { right: -1px; top: -1px; transform: translate(50%,-50%); }
@@ -1999,6 +2007,22 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .loot-win .remotewho .meta { font-size: 12px; letter-spacing: 0.14em; color: #7d7460;
   text-transform: uppercase; margin-top: 6px; }
 .loot-win .packlists, .loot-win .packcol { display: block; padding: 0; }
+/* The column is a flex box so the head stays put and the list takes
+   what is left; min-height 0 is what lets a flex child actually shrink
+   rather than push its parent open. */
+.loot-win .packremote { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.loot-win .remotehead { flex: 0 0 auto; }
+.loot-win .remotelist { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; }
+.loot-win .remotelist::-webkit-scrollbar { display: none; }
+/* NOT MULTICOL. column-count was the obvious answer and it is the
+   wrong one: a multicol box that is also a SCROLL container fragments
+   in the block direction, so the overflow columns went below the fold
+   and the list scrolled anyway - measured, 14 rows spilling 203px past
+   the frame. A GRID has no fragmentation: two tracks, rows in reading
+   order, a definite height, nothing to overflow. */
+.loot-win.wide .remotelist { display: grid; grid-template-columns: 1fr 1fr;
+  align-content: start; }
+.loot-win.wide .remotelist .packempty { grid-column: 1 / -1; }
 .loot-win .itemrow { width: 100%; height: auto; min-height: 52px;
   display: flex; align-items: center; justify-content: flex-start; gap: 12px;
   padding: 8px 14px; border: 0; border-bottom: 2px solid rgba(125,116,96,0.16);
