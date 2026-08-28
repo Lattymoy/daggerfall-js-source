@@ -7376,6 +7376,38 @@ after pick, tooltip absolute, anchored to the clicked dock tile and
 to a family panel in separate drives, click-away and toggle both
 close, zero errors. Suite green, build green.
 
+PX19j (Mac, live: "what is the stupid grey border"): THE TIP'S
+FURNITURE. Two layers, both measured. (1) The grey mat: the tooltip
+is DOM-wise a .packcol section, and the BASE sheet's
+.packcol { background: var(--slate); padding } rode under the card -
+a slate box around the plaque. The tip is invisible furniture now:
+transparent, no padding, no border; the CARD is the frame. (2) The
+bleed behind it: the card's 0.72 glass is the pause window's value,
+made for a dimmed scrim - a tooltip floats over LIVE text and the
+dock's tabs read straight through the plaque. The tip's card is
+0.96 now - and the first fix rule LOST A SPECIFICITY TIE to the
+base card rule later in the sheet ((0,3,0) vs (0,3,0), exactly the
+tie the tip's own position rule had already paid one rule up),
+found by computed style (0.72 surviving), won at (0,4,0). ALSO
+BANKED from this stretch: my command chains gated on grep matching
+rather than the fail count - which is how a red once slipped past
+&& into a commit - so gates now grep the literal 'fail 0'.
+
+PX19k (Mac, live: "why does the UI refresh every time you click"):
+THE REPLAYED ENTRANCE. Every click re-renders the window - that is
+the one-way render law and it stays - but the pack's ENTRANCE
+(fade + rise + depth-of-field, 220ms) was keyed INSIDE render, so
+the player watched the window re-arrive on every pick, tab and
+cycle. The entrance belongs to the FIRST paint: repaints === 1 runs
+the two-rAF class dance; every later render is born already-arrived
+(created WITH .on - a freshly inserted element does not transition
+from its initial style). Proven by sampling shell opacity the
+instant after three consecutive re-renders: 1, 1, 1. The probe also
+tripped over real behaviour worth knowing: the open tip INTERCEPTS a
+click aimed at the tabs beneath it (the click-away dismiss eats the
+first tap) - by design, one tap to put the tip away, the next to
+act. Suite fail 0, build green.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk
