@@ -326,3 +326,59 @@ test('U51: save and load answer the host, not the rail', () => {
   // and both rows stay on the rail wherever they are refused
   assert.match(src, /const SECTIONS_PAUSE = \['Resume', 'Save Game', 'Load Game'/);
 });
+
+// ── PX22: THE JOURNAL'S THREE SECTIONS ────────────────────────────
+// Mac: "quests aren't supposed to be titled as main quest, etc. What we
+// developed had 3 sections for main, side and archived."
+//
+// WHAT THE RECORD SAID, stated plainly because it did not match: PX5
+// shipped the two active headings CONDITIONALLY ("headings only when
+// BOTH kinds are on the log; one group under a header is a header
+// explaining nothing"), named the side group "Quests", and put a
+// "Main Quest" / "Side Quest" TAG in the detail beside the timer. The
+// code did exactly that. Mac's call reshapes it: three named sections,
+// always, and no tag.
+test('PX22: the rail is three named sections, always - Main, Side, Archived', () => {
+  const src = read('src/ui/enhancedMenu.js');
+  const at = src.indexOf('const mains = active.filter');
+  const fn = src.slice(at, src.indexOf('wrap.append(rail);', at));
+  // One helper, three calls, in order - not a conditional pair.
+  assert.match(fn, /section\('Main Quests', mains, '', true\);/);
+  assert.match(fn, /section\('Side Quests', sides, ''\);/);
+  assert.match(fn, /section\('Archived', finished, ' done'\);/);
+  assert.ok(fn.indexOf("'Main Quests'") < fn.indexOf("'Side Quests'"), 'main above side');
+  assert.ok(fn.indexOf("'Side Quests'") < fn.indexOf("'Archived'"), 'archived last');
+  // PX5's conditional is gone, and so is the bare word "Quests" for
+  // the side group - the thing that read as a title rather than a file.
+  assert.doesNotMatch(fn, /if \(mains\.length && sides\.length\)/, 'no conditional headings');
+  assert.doesNotMatch(fn, /el\('div', 'px-qarch', 'Quests'\)/);
+  assert.doesNotMatch(fn, /el\('div', 'px-qarch', 'Archive'\)/, "'Archive' is 'Archived' now");
+  // An empty section still STANDS and says so - the worn map's empty
+  // families, one window over. A player meeting their first side quest
+  // learns the main section exists rather than meeting a different
+  // window later.
+  assert.match(fn, /if \(items\.length\) railList\(items, cls\);\s*\n\s*else rail\.append\(el\('div', 'px-qnone', '\\u2014'\)\);/);
+  assert.match(read('src/ui/enhancedStyle.js'), /\.px-qnone \{/);
+});
+
+test('PX22: a quest is filed under its kind, never TITLED by it', () => {
+  const src = read('src/ui/enhancedMenu.js');
+  const jat = src.indexOf('const mains = active.filter');
+  const detail = src.slice(src.indexOf("const head2 = el('div', 'px-qname');", jat), src.indexOf('// Active: the LATEST', jat));
+  // The detail's meta line carried "Main Quest"/"Side Quest" beside the
+  // timer. With three named sections that is the same fact twice, and a
+  // quest is not titled by its kind.
+  assert.doesNotMatch(detail, /px-qkind/, 'no kind tag in the journal detail');
+  assert.doesNotMatch(src, /sel\.main \? 'Main Quest' : 'Side Quest'/);
+  // ...and the meta line only exists when it holds something, or an
+  // empty div leaves a gap the eye reads as a mistake.
+  assert.match(detail, /if \(meta\.childNodes\.length\) detail\.append\(meta\);/);
+  // The GROUPING still uses the same law it always did - the pack's own
+  // naming, S0000*.txt - so nothing about which quest is which changed.
+  assert.match(src, /main: isMainQuest\(q\.questName\)/);
+  // The archive is NOT split by kind, and that is the data's shape: the
+  // notebook's filed header keeps only the display name, so the
+  // questName is gone by the time a quest is filed.
+  assert.match(src, /section\('Archived', finished, ' done'\);/);
+  assert.doesNotMatch(src, /finished\.filter\(\(q\) => q\.main\)/);
+});

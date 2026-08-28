@@ -2062,6 +2062,10 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
   text-transform: uppercase; color: var(--brass); }
 .pack-shell .transport .worntile { font-size: 22px; }
 .pack-shell .transport .tile { width: 34px; height: 34px; font-size: 18px; }
+
+/* PX22: an empty section still stands, and says so. */
+.px-qnone { padding: 6px 14px 10px; color: rgba(125,116,96,0.55); font-size: 13px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 @media (max-width: 640px) {
   .pack-win { width: 100vw; height: 100dvh; border-left: 0; border-right: 0; }
   /* PX19f: on a phone the main area is the character region alone
