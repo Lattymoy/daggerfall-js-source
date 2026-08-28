@@ -61,7 +61,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   const buildMwView = () => {
     if (mwBuilding) return;
     mwBuilding = true;
-    createMwFpView(renderer)
+    createMwFpView(renderer, entity)
       .then((v) => { mwView = v; })
       .catch((e) => console.warn('mwfp:', e.message))
       .finally(() => { mwBuilding = false; });

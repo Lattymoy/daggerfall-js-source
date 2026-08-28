@@ -131,8 +131,10 @@ test('MWFIX 3: attaching data or toggling the preference REBUILDS the view - it 
 
   // the data signal only moves on a REAL change of the stored set
   const ds = rd('src/scenes/dataSource.js');
-  assert.match(ds, /if \(next !== _mwCount\) _mwGeneration\+\+;/,
+  assert.match(ds, /if \(next !== _mwCount\) \{\s+_mwGeneration\+\+;/,
     'a re-count that finds the same archives is not a change');
+  assert.match(ds, /_mwGeneration\+\+;\s+_mwEsm = undefined;/,
+    'MW7: and a real change drops the cached ESM, so arms attached later are actually read');
 });
 
 test('MWFIX2: the mesh-viewer link resolves to the SITE ROOT, from the game as well as the menu', () => {
