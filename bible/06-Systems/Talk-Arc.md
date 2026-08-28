@@ -1103,3 +1103,33 @@ order evaluates left to right), the FactionRaces table against the C#
 enum, the seven macro handlers against a stub world, and the world
 mounts source-pinned. audit24_questseams' seven PENDING rows dropped -
 removing a row means mounting it. Campaign: 9 mutants, 9 killed.
+
+## IH1 - THE LAST FOUR PENDING SEAMS (2026-08-28)
+
+audit24_questseams' PENDING map is EMPTY of M-X rows. The four that
+remained after TN1, mounted:
+
+- **%cbd** (MacroHelper.CurrentBuilding, :849-867): inside a building
+  the name is REGENERATED from the building's own nameSeed through
+  generateBuildingName with the current location and region; outside
+  one the hook answers null and the HANDLER supplies C#'s "[invalid]"
+  literal - the world does not spell it.
+- **%nt** (MacroHelper.NearbyTavern, :630-642): "just gets a random
+  tavern from current location and ignores how near it is" - a uniform
+  roll (the ENGINE-PRNG rule's injectable slot) over the talk
+  directory's taverns, the localized "tavern" when the location has
+  none.
+- **Place.isHouseOwned** (Place.cs:1196 -> DaggerfallBankManager
+  .IsHouseOwned :140-148): banking.js's own law over the CURRENT
+  region's owned-house slot - the quest residence filter stops
+  offering the player's own house as a quest site.
+- **Place.buildingNameOpts**: townTalk's name bag - and the bag is ONE
+  now: nameOpts() extracted out of rebuildDirectory (which consumes
+  it), exposed on the api beside the directory, so the quest's
+  generated building names and the talk directory's cannot drift.
+  The bag literal (regent, bank, palace, temple-child laws) exists
+  exactly once and a pin counts it.
+
+Pins: 6 in `test/interiorseams.test.js` (the two macro flows with
+C#'s "[invalid]" arm on the handler, the four world mounts and the
+one-bag law source-pinned). Campaign: 7 mutants, 7 killed.

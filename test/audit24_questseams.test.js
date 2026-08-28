@@ -47,14 +47,15 @@ const PENDING = new Map([
   // reads them), GetFactionName's HolyOrder deity arm,
   // GetLordNameForFaction and GetOldLeaderFateString. Removing a row
   // means mounting it, and it did.
-  ['currentBuildingName', 'M-X: %cbd is the interior host\'s - the handler answers [invalid] meanwhile, DFU\'s outside arm'],
-  ['randomTavernName', 'M-X: %nt walks the building directory - the interior/town host\'s'],
+  // IH1 (2026-08-28) MOUNTED %cbd (the interior building's name
+  // regenerated through the ONE name bag) and %nt (the directory's
+  // tavern pick).
   // QG1 MOUNTED getClassicSpellEffects (spellRecordOfIndex, the G4
   // registry) and spellHasMatchForClassicEffect (byte-folded classic
   // pairs) - removing a row means mounting it, and it did.
   ['readiedSpell', 'RETIRED by AUDIT 24 - the latch is the action\'s now; the name survives only in a comment'],
-  ['isHouseOwned', 'the residence-ownership half of the Place arc'],
-  ['buildingNameOpts', 'the building-name option bag'],
+  // IH1 MOUNTED isHouseOwned (banking's own law over the current
+  // region) and buildingNameOpts (townTalk's one name bag).
   ['currentRegionCourt', 'GetCourtOfCurrentRegion - the region faction trio'],
   ['currentRegionFaction', 'GetCurrentRegionFaction - the region faction trio'],
   ['currentRegionPeople', 'GetPeopleOfCurrentRegion - the region faction trio'],

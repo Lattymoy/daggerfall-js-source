@@ -130,27 +130,41 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   // Names ride the topics' OWN region (bank names, the name bank, the
   // province ruler); the People faction/greetings stay on the boot
   // region until travel lands (the recorded cross-region flag).
+  // IH1: the ONE name bag, extracted so the quest world's
+  // buildingNameOpts hook and the directory build cannot drift - a
+  // second copy of "which bank, whose regent, what the palace is
+  // called" is how %cbd and the talk directory come to disagree about
+  // the same building. Null while no topics/factions stand (the quest
+  // hook answers {} through it and generateBuildingName falls to its
+  // own defaults, DFU's own out-of-location posture).
+  function nameOpts() {
+    if (!topics || !factions) return null;
+    const region = topics.regionIndex ?? regionIndex;
+    const province = findFactions(factions.factionDict, { type: FACTION_TYPES.Province, region })[0];
+    return {
+      locationName: topics.locationName, regionName: topics.regionName,
+      nameBank: getNameBankOfRegion(region),
+      regentRuler: province?.ruler ?? 0,
+      factionName: (id) => factions.getFaction(id)?.name ?? '',
+      templeName: (id) => {
+        const f = factions.getFaction(id);
+        return (f?.children?.length ? factions.getFaction(f.children[0])?.name : f?.name) ?? '';
+      },
+      palaceName: (locName) => {
+        const id = { Daggerfall: 475, Wayrest: 476, Sentinel: 477 }[locName];
+        const v = id ? textRsc?.plainText(id) : null;
+        return v?.[0] ? v[0].replace(/\.$/, '') : 'Palace';
+      },
+    };
+  }
+
   function rebuildDirectory() {
     directory = [];
     if (!topics || !factions) return;
     try {
-      const region = topics.regionIndex ?? regionIndex;
-      const province = findFactions(factions.factionDict, { type: FACTION_TYPES.Province, region })[0];
-      directory = buildBuildingDirectory(topics.exteriorBuildings, topics.blocks, topics.doors, {
-        locationName: topics.locationName, regionName: topics.regionName,
-        nameBank: getNameBankOfRegion(region),
-        regentRuler: province?.ruler ?? 0,
-        factionName: (id) => factions.getFaction(id)?.name ?? '',
-        templeName: (id) => {
-          const f = factions.getFaction(id);
-          return (f?.children?.length ? factions.getFaction(f.children[0])?.name : f?.name) ?? '';
-        },
-        palaceName: (locName) => {
-          const id = { Daggerfall: 475, Wayrest: 476, Sentinel: 477 }[locName];
-          const v = id ? textRsc?.plainText(id) : null;
-          return v?.[0] ? v[0].replace(/\.$/, '') : 'Palace';
-        },
-      });
+      const opts = nameOpts();
+      if (!opts) return;
+      directory = buildBuildingDirectory(topics.exteriorBuildings, topics.blocks, topics.doors, opts);
     } catch (e) { console.warn('[town] building directory failed:', e.message); }
   }
 
@@ -736,6 +750,10 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // loaded here, once, so worldModes borrows them rather than opening
     // a second copy of each file.
     get factionDict() { return factions?.factionDict ?? null; },
+    // IH1: the quest world's two reads - the ONE name bag, and the
+    // named-building directory the %nt tavern pick draws from
+    nameOpts,
+    get buildingDirectory() { return directory; },
     // AUDIT 22 F2: a RANDOM variant, because DFU shows nearly every
     // one of these with GetRandomTokens - the rank refusal alone has
     // eight, and the port drew the same one forever.

@@ -156,7 +156,7 @@ import { expandQuestMessage } from '../systems/quest/questMacros.js';
 import { TopicTree, QUEST_INFO_RESOURCE_TYPE, QUESTION_TYPE } from '../systems/topicTree.js';
 import { NPCSession } from '../systems/npcSession.js';
 import { getPeopleOfCurrentRegion, getReactionToPlayer, lordNameForFaction } from '../systems/talk.js';   // TN1: %fl1/%fl2/%ol1's one home
-import { BUILDING_TYPES as TALK_BUILDING_TYPES } from '../world/buildingNames.js';
+import { BUILDING_TYPES as TALK_BUILDING_TYPES, generateBuildingName } from '../world/buildingNames.js';   // IH1: %cbd regenerates the current building's name
 import { AnswerPipeline, TALK_STRINGS } from '../systems/answerPipeline.js';
 import { expandRandomTextRecord as expandTalkRecord } from '../systems/talkMacros.js';
 import { OATH_RACE_INDEX } from '../systems/talkSession.js';
@@ -2813,6 +2813,35 @@ export async function bootWorld(canvas, renderer, params, status) {
     // off the building the player is inside; outside one (or in a
     // non-temple) C# would be off in GetGuild's catch-land, and the
     // port falls to pcFactionName, recorded.
+    // IH1: the LAST four pending world reads.
+    // %cbd - MacroHelper.CurrentBuilding (:849-867): inside a building
+    // the name is REGENERATED from the building's own seed through
+    // BuildingNames.GetName with the current location and region;
+    // outside one C# answers "[invalid]", which is the handler's own
+    // null arm here.
+    currentBuildingName: () => {
+      const b = modes?.interiorBuilding;
+      if (!b) return null;
+      return generateBuildingName(b.nameSeed, b.buildingType,
+        { ...(townTalk.nameOpts?.() ?? {}), factionId: b.factionId ?? 0 });
+    },
+    // %nt - MacroHelper.NearbyTavern (:630-642): "just gets a random
+    // tavern from current location and ignores how near it is" -
+    // UnityEngine.Random.Range over the directory's taverns (the
+    // ENGINE-PRNG rule's injectable uniform roll), the localized
+    // "tavern" when the location has none.
+    randomTavernName: (roll = Math.random) => {
+      const taverns = (townTalk.buildingDirectory ?? []).filter((b) => b.buildingType === TALK_BUILDING_TYPES.Tavern);
+      if (!taverns.length) return 'tavern';
+      return taverns[Math.floor(roll() * taverns.length)]?.name ?? 'tavern';
+    },
+    // Place.SetupSites' residence filter (Place.cs:1196):
+    // DaggerfallBankManager.IsHouseOwned reads the CURRENT region's
+    // owned-house slot (:140-148) - banking.js's own law, H1's home.
+    isHouseOwned: (buildingKey) => isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey),
+    // Place's _getBuildingName bag - townTalk's ONE name bag, so the
+    // quest's generated names and the talk directory's cannot drift.
+    buildingNameOpts: () => townTalk.nameOpts?.() ?? {},
     factionNPC: () => npcSession.npcData?.npcFactionName ?? '',
     factionNPCAlly: () => npcSession.npcData?.allyFactionName ?? '',
     factionNPCEnemy: () => npcSession.npcData?.enemyFactionName ?? '',
