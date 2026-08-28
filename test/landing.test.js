@@ -24,7 +24,7 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { Writable } from 'node:stream';
 import { execFileSync } from 'node:child_process';
-import { ENHANCED_TOKENS, ENHANCED_FONTS_URL, ENHANCED_CSS, FONT_BRAND, FONT_DATA, FONT_DISPLAY, FONT_PIXEL_BRAND, FONT_PIXEL_DATA, fontsUrl } from '../src/ui/enhancedStyle.js';
+import { ENHANCED_TOKENS, ENHANCED_FONTS_URL, ENHANCED_CSS, FONT_DATA, FONT_DISPLAY, FONT_PIXEL_BRAND, FONT_PIXEL_DATA, fontsUrl } from '../src/ui/enhancedStyle.js';
 import { transformLanding, LANDING_PATH, LANDING_FONTS_URL, countTests, countSrcLines, figure } from '../scripts/landingHtml.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -64,8 +64,11 @@ test('U60: the root document is a page about the game, and the game is at /play/
   assert.doesNotMatch(landing, /\/src\//, 'the landing page reaches into no game code');
   assert.doesNotMatch(landing, /\.(BSA|IMG|CIF|COL|RSC|VID|DAT|PAK|SND|XMI|HMI)\b/, 'no ARENA2 file is named');
   // The door: one Play in the gate, one in the phone bar, both to ./play/.
-  const plays = [...landing.matchAll(/<a class="act primary" href="([^"]+)">Play<\/a>/g)].map((m) => m[1]);
-  assert.deepEqual(plays, ['./play/', './play/']);
+  // U63: the door has ONE Play - the pixel face's one box, the About
+  // plaque's own shape. (The old page had two: a gate button and a
+  // phone bar, because the shell put them in different places.)
+  const plays = [...landing.matchAll(/<a class="plaque" href="([^"]+)">Play<\/a>/g)].map((m) => m[1]);
+  assert.deepEqual(plays, ['./play/']);
 
   // The game page is the file that used to be index.html: the mobile
   // build's meta and the canvas's touch rule came with it.
@@ -76,17 +79,39 @@ test('U60: the root document is a page about the game, and the game is at /play/
   assert.ok(existsSync(join(root, 'play/index.html')));
 });
 
-test('U60: the landing page owns no colour - every one is a token the skin declares', () => {
+test('U63: the landing page owns no colour - every one is the SKIN\'s, token or literal', () => {
+  // U60's rule was "every colour is a var()", which held while the site
+  // wore the enhanced shell's four tokens. PX1 made the menu PIXEL ART,
+  // and the pixel face's palette is LITERALS in enhancedStyle.js -
+  // rgb(243,239,44) over rgb(93,77,12), #d8cfae, #7d7460 - not tokens,
+  // because they are a drawing's colours rather than a theme's. So the
+  // rule is the same rule, stated where it now bites: every colour on
+  // this page must be one the SKIN itself uses. A colour the game does
+  // not have is the drift the injection exists to stop.
   const css = landing.match(/<style>([\s\S]*?)<\/style>/)?.[1] ?? '';
   assert.ok(css.length > 1000, 'the page carries its layout inline');
-  assert.doesNotMatch(css, /#[0-9a-f]{3,8}\b/i, 'no hex colour in the landing stylesheet');
-  assert.doesNotMatch(css, /\b(rgba?|hsla?)\(/, 'no literal colour function either');
+  const skin = read('src/ui/enhancedStyle.js');
+  const norm = (c) => c.toLowerCase().replace(/\s+/g, '');
+  const skinColours = new Set([
+    ...[...skin.matchAll(/#[0-9a-fA-F]{3,8}\b/g)].map((m) => norm(m[0])),
+    ...[...skin.matchAll(/rgba?\([^)]*\)/g)].map((m) => norm(m[0])),
+  ]);
+  const pageColours = [
+    ...[...css.matchAll(/#[0-9a-fA-F]{3,8}\b/g)].map((m) => norm(m[0])),
+    ...[...css.matchAll(/rgba?\([^)]*\)/g)].map((m) => norm(m[0])),
+  ];
+  assert.ok(pageColours.length > 10, 'the page does draw in colour');
+  const foreign = [...new Set(pageColours)].filter((c) => !skinColours.has(c));
+  assert.deepEqual(foreign, [], 'colours on the landing page that the skin does not use');
+  // The tokens it does take are the skin's, and it declares none itself.
   const declared = new Set([...ENHANCED_TOKENS.matchAll(/--([\w-]+):/g)].map((m) => m[1]));
   const used = new Set([...css.matchAll(/var\(--([\w-]+)\)/g)].map((m) => m[1]));
-  assert.ok(used.size >= 6, `the page uses the tokens (${[...used].join(', ')})`);
+  assert.ok(used.size >= 2, `the page uses the tokens (${[...used].join(', ')})`);
   for (const t of used) assert.ok(declared.has(t), `var(--${t}) is not a token the skin declares`);
-  // And the page never declares one of its own.
-  assert.doesNotMatch(css, /--[\w-]+:/, 'the landing declares no custom property - the skin does');
+  assert.doesNotMatch(css, /^\s*--[\w-]+:/m, 'the landing declares no custom property - the skin does');
+  // U63: and it is set in the PIXEL faces, which is what the menu wears.
+  assert.match(css, /font-family: 'Pixelify Sans', monospace/, 'the body face is the menu\'s list face');
+  assert.match(css, /font-family: 'Jacquard 12', var\(--brand\)/, 'and the headings are the menu\'s wordmark face');
 });
 
 // ── THE SEAM ──────────────────────────────────────────────────────
@@ -116,10 +141,17 @@ test('U60: the injected block IS the skin\'s token block, and the skin still wea
   assert.equal(ENHANCED_FONTS_URL,
     'https://fonts.googleapis.com/css2?family=Cormorant:wght@300;400;600&family=Barlow+Semi+Condensed:wght@400;500;600&family=Jacquard+12&family=Pixelify+Sans:wght@400;500&display=swap',
     'the skin\'s request is these bytes exactly - PX1 added the two pixel faces; the landing\'s brand face still adds nothing to it');
-  assert.equal(LANDING_FONTS_URL, fontsUrl([FONT_BRAND, FONT_DATA]));
-  assert.match(FONT_BRAND, /^Grenze\+Gotisch:wght@/);
-  assert.match(ENHANCED_TOKENS, /--brand: 'Grenze Gotisch'/, 'the face is a token the skin declares');
-  assert.match(landing, /h1, h2, h3 \{ font-family: var\(--brand\)/, 'and every heading on the page is set in it');
+  // U63: the site takes THAT request, whole - one URL, one cache entry,
+  // and no way for the site to be set in a face the game does not have.
+  // It used to take a subset (brand + data), because the site was set in
+  // Grenze Gotisch and the menu was not; PX1 made the menu pixel art and
+  // U63 made the site follow.
+  assert.equal(LANDING_FONTS_URL, ENHANCED_FONTS_URL, 'one request for both pages');
+  assert.equal(LANDING_FONTS_URL, fontsUrl([FONT_DISPLAY, FONT_DATA, FONT_PIXEL_BRAND, FONT_PIXEL_DATA]));
+  assert.match(FONT_PIXEL_BRAND, /^Jacquard\+12/);
+  assert.match(FONT_PIXEL_DATA, /^Pixelify\+Sans/);
+  assert.match(ENHANCED_TOKENS, /--brand: 'Grenze Gotisch'/, 'the --brand token stays as the wordmark face\'s fallback');
+  assert.match(landing, /h1, h2, h3 \{ font-family: 'Jacquard 12', var\(--brand\)/, 'the headings are the menu\'s wordmark face, with --brand behind it');
   const ink = ENHANCED_TOKENS.match(/--ink:\s*(#[0-9a-f]{6})/)?.[1];
   const theme = out.tags.find((t) => t.tag === 'meta' && t.attrs.name === 'theme-color');
   assert.equal(theme?.attrs.content, ink, 'the phone\'s address bar reads the ink token');
@@ -155,8 +187,12 @@ test('U60: the build stamp fills every stamp on the page, links the commit, and 
   assert.ok(lines > 100000, `tracked src/ JS is ${lines} lines`);
   const shown = transformLanding(landing, { stats: { tests, lines } }).html;
   const cells = [...shown.matchAll(/<span class="stat" data-stat="(\w+)">([^<]*)<\/span>/g)].map((m) => [m[1], m[2]]);
-  assert.deepEqual(cells, [['tests', figure(tests)], ['lines', figure(lines)], ['tests', figure(tests)], ['lines', figure(lines)]],
-    'both strips carry both figures');
+  // U63: the door's foot is the home face's THREE ZONES - build and the
+  // test count on the left, the line count dead centre, Source on the
+  // right - and the page's end carries the build alone. So the figures
+  // appear once each, not twice, and the stamp is what appears twice.
+  assert.deepEqual(cells, [['tests', figure(tests)], ['lines', figure(lines)]],
+    'the foot carries both figures, once each');
   assert.equal(figure(122323), '122,323');
   assert.match(landing, /\.stat\[data-stat="tests"\]::after \{ content: ' tests'; \}/);
   assert.match(landing, /\.stat\[data-stat="lines"\]::after \{ content: ' lines of JS'; \}/);
@@ -217,11 +253,14 @@ test('U60: no probe drives the root as if it were the game', () => {
     src.split('\n').forEach((line, i) => { if (rootAsGame.test(line)) offenders.push(`tools/${f}:${i + 1}`); });
   }
   assert.deepEqual(offenders, [], 'these drive the landing page and expect a game');
-  assert.match(read('tools/landingProbe.mjs'), /goto\(`\$\{BASE\}\/play\/`|waitForSelector\('#enhanced-menu/,
-    'and the one that may drive the root goes on to the game');
+  assert.match(read('tools/landingProbe.mjs'), /waitForSelector\('\.px-menu button'/,
+    'and the one that may drive the root goes on to the game - the PIXEL home now (U63)');
   // And the tools that read the built game page read it from its home.
   assert.match(read('tools/verify-deploy.mjs'), /readFile\('dist\/play\/index\.html'/);
-  assert.match(read('tools/verify-deploy.mjs'), /lattymoy\.github\.io\/daggerfall-js-source\/play\//);
+  // U64: the live site is the custom domain now. The path is what this
+  // pin is for - the verifier must poll the GAME, one directory down -
+  // and the host follows the domain.
+  assert.match(read('tools/verify-deploy.mjs'), /'https:\/\/daggerfalljs\.dev\/play\/'/);
   assert.match(read('tools/staleChunkProbe.mjs'), /join\(dN, 'play', 'index\.html'\)/);
   assert.match(read('tools/screenshot.mjs'), /localhost:5199\/play\/\?\$\{query\}/);
 });
@@ -254,4 +293,154 @@ test('U60: the dev server answers the game\'s relative data fetch from /play/', 
     delete process.env.ARENA2_PATH;
     rmSync(fake, { recursive: true, force: true });
   }
+});
+
+// ── U63: THE SITE WEARS THE GAME'S FACE ───────────────────────────
+// Mac: "update our website, reorganized and bring it inline with our new
+// UI." PX1 made the enhanced menu pixel art - a Bayer-dithered night, a
+// Jacquard 12 blackletter wordmark, Pixelify Sans lists, the classic
+// shadowed-label pair - and the site was still wearing the shell it
+// replaced, down to three screenshots of a menu that no longer exists.
+import { groundCss, groundStars, GROUND_RAMP, GROUND_SEED } from '../scripts/landingHtml.mjs';
+
+test('U63: the night is the MENU\'s night - pixelGround\'s ramp, seed and star law, in CSS', () => {
+  // The page is a DOCUMENT: it cannot run pixelGround.js, and that is a
+  // pin above. So the same sky is BUILT - and the constants are pinned
+  // against pixelGround's own text, because a sky that drifts from the
+  // menu's is worse than no sky at all.
+  const ground = read('src/ui/pixelGround.js');
+  for (const c of GROUND_RAMP) assert.ok(ground.includes(c), `${c} is pixelGround's own ramp step`);
+  assert.match(ground, new RegExp(`let seed = 0x${GROUND_SEED.toString(16)}`), 'and the same seed');
+  assert.match(ground, /seed \* 1664525 \+ 1013904223/, 'and the same LCG');
+  assert.match(read('scripts/landingHtml.mjs'), /seed = \(seed \* 1664525 \+ 1013904223\) >>> 0\) \/ 0x100000000/);
+  assert.match(read('scripts/landingHtml.mjs'), /const n = Math\.round\(\(W \* H\) \/ 1440\);/, 'and the same density law');
+  // Deterministic, in the upper half, and at the menu's own count for a
+  // 1920x1080 viewport: (480*270)/1440 = 90.
+  const stars = groundStars(1920, 1080);
+  assert.equal(stars.length, 90);
+  assert.deepEqual(groundStars(1920, 1080), stars, 'the same sky every build');
+  // ...and it is THE MENU'S sky, not merely a deterministic one: the
+  // first star lands where pixelGround's own stream puts it, which is
+  // what makes the seed a shared law rather than a shared style.
+  const first = (seed) => {
+    let s0 = seed; const rnd = () => (s0 = (s0 * 1664525 + 1013904223) >>> 0) / 0x100000000;
+    return [(rnd() * 480) | 0, (rnd() * 270 * 0.55) | 0];
+  };
+  const [fx, fy] = first(GROUND_SEED);
+  assert.equal(stars[0], `${fx * 4}px ${fy * 4}px 0 0 rgb(200,200,190)`, 'the first star is pixelGround\'s first star');
+  const ys = stars.map((s) => Number(s.split(' ')[1].replace('px', '')));
+  assert.ok(Math.max(...ys) <= 1080 * 0.56, 'the field is the upper half, as pixelGround draws it');
+  // The whole ground as one block: ramp, fog, dither, stars.
+  const css = groundCss(1920, 1080);
+  for (const c of GROUND_RAMP) assert.ok(css.includes(c), 'the ramp is in the gradient');
+  assert.equal((css.match(/radial-gradient/g) ?? []).length, 2, 'two fog blobs, as the menu has');
+  assert.match(css, /repeating-linear-gradient\(0deg[^)]*\) 0 2px/, 'the dither is a 2px checker');
+  assert.match(css, /\.night::after \{[\s\S]*box-shadow:/, 'and the stars are one box-shadow list');
+  assert.doesNotMatch(css, /url\(/, 'no image, on a page that may not carry one');
+  // ...injected, not typed into the page.
+  const out = transformLanding(landing, {});
+  const block = out.tags.find((t) => t.tag === 'style' && t.attrs.id === 'pixel-ground');
+  assert.ok(block?.children.includes(GROUND_RAMP[0]), 'the ground is injected beside the tokens');
+  assert.doesNotMatch(landing, /repeating-linear-gradient|box-shadow: \d+px \d+px 0 0 rgb/, 'and the page itself holds no sky');
+  assert.match(landing, /\.night \{ position: fixed; inset: 0; z-index: -1; \}/, 'the page just declares where it goes');
+});
+
+test('U63: the page is the pixel face\'s own idioms, not the shell it replaced', () => {
+  const css = landing.match(/<style>([\s\S]*?)<\/style>/)?.[1] ?? '';
+  const skin = read('src/ui/enhancedStyle.js');
+  // The shell is GONE: no rail, no two-column grid, no .act buttons.
+  for (const dead of ['.shell', '.railbtn', '.side {', '.pane {', '.act.primary', '.thumb']) {
+    assert.ok(!css.includes(dead), `${dead} belongs to the shell the menu replaced`);
+  }
+  // The idioms it took instead, each one the menu's own:
+  assert.match(css, /\.rule::before, \.rule::after \{ content: ''; flex: 1; height: 2px;/, 'the rule');
+  assert.match(skin, /\.px-rule::before, \.px-rule::after \{ content: ''; flex: 1; height: 2px;/, '...which is the menu\'s rule');
+  assert.match(css, /0 -4px 0 var\(--brass\), 0 4px 0 var\(--brass\)/, 'the gem, drawn as a box-shadow cross');
+  assert.match(skin, /0 -4px 0 var\(--brass\), 0 4px 0 var\(--brass\)/, '...which is the menu\'s gem');
+  assert.match(css, /letter-spacing: 0\.5em; text-indent: 0\.5em/, 'the wordmark\'s tracked sub-line');
+  assert.match(css, /rgb\(243,239,44\)/, 'the classic shadowed-label pair, for what is live');
+  assert.match(css, /text-shadow: 2px 2px 0 rgb\(93,77,12\)/);
+  assert.match(skin, /color: rgb\(243,239,44\); text-shadow: 2px 2px 0 rgb\(93,77,12\)/, '...which is the menu\'s pair');
+  // TWO boxes, and both are plaques: Play at the centre and the Ko-fi
+  // mark at the top right - the same shape the About plaque has on the
+  // home face, which is what makes a box read as a plaque here. Nothing
+  // else on the page is boxed.
+  const boxes = (css.match(/border: 2px solid #7d7460/g) ?? []).length;
+  assert.equal(boxes, 2, 'Play and Ko-fi, both plaques');
+  assert.match(css, /\.plaque \{/);
+  assert.match(css, /\.kofi \{/);
+  assert.match(skin, /\.px-about \{[\s\S]{0,400}border: 2px solid #7d7460/, '...which is the About plaque\'s own shape');
+  // The foot is the home face's three zones.
+  assert.match(css, /grid-template-columns: 1fr auto 1fr/, 'build left, a figure centre, Source right');
+  assert.match(skin, /\.px-foot \{[\s\S]{0,200}grid-template-columns: 1fr auto 1fr/, '...which is the menu\'s foot');
+});
+
+test('U63: the fi ligature is off - "files" is not "Ales", on the site AND in the game', () => {
+  // Pixelify Sans ships an `fi` ligature whose glyph reads as a capital
+  // A. Caught on this page's first render and magnified: "files" read
+  // "Ales", "first" read "Arst". Every enhanced screen is set in this
+  // face, so the fix is at the root of both.
+  const css = landing.match(/<style>([\s\S]*?)<\/style>/)?.[1] ?? '';
+  assert.match(css, /font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;/);
+  const skin = read('src/ui/enhancedStyle.js');
+  const shell = skin.slice(skin.indexOf('.shell { font-family:'), skin.indexOf('.shell { font-family:') + 600);
+  assert.match(shell, /font-variant-ligatures: none/, 'the enhanced shell');
+  const home = skin.slice(skin.indexOf('.px-home {'), skin.indexOf('.px-home {') + 400);
+  assert.match(home, /font-variant-ligatures: none/, 'and the pixel home');
+});
+
+test('U63: the pictures show the UI that exists, and were retaken by the tool', () => {
+  // The three shots were of the OLD enhanced menu, which PX1 replaced -
+  // a site showing a screen the game no longer has is wrong, not stale.
+  const shots = [...landing.matchAll(/<img\s[^>]*src="\.\/site\/([\w-]+)\.png"/g)].map((m) => m[1]);
+  assert.deepEqual(shots, ['menu-home', 'menu-phone', 'menu-settings']);
+  const tool = read('tools/siteShots.mjs');
+  for (const s of shots) assert.ok(tool.includes(`shot('${s}'`), `${s} is taken by tools/siteShots.mjs`);
+  assert.match(tool, /waitForSelector\('\.px-menu button'/, 'and it waits for the PIXEL home, not the old rail');
+  assert.ok(!tool.includes('pack-sample'), 'the staged pack shot is gone with the seam that posed it');
+  assert.ok(!read('test/doctrine.test.js').includes('pack-sample'));
+});
+
+// ── U64: THE DOMAIN, AND THE HAT ──────────────────────────────────
+test('U64: the Ko-fi mark is a plaque with a drawn cup, near the top, and it is the only ask', () => {
+  const css = landing.match(/<style>([\s\S]*?)<\/style>/)?.[1] ?? '';
+  // ONE link, and one in the credits with a reason attached - not a
+  // banner, not a badge, and not an <img>: an image would be the page's
+  // only raster, and a raster is the one thing this site does not carry.
+  const asks = [...landing.matchAll(/href="(https:\/\/ko-fi\.com\/[\w-]+)"/g)].map((m) => m[1]);
+  assert.deepEqual(asks, ['https://ko-fi.com/dfjs', 'https://ko-fi.com/dfjs'], 'the mark, and the credits line');
+  assert.match(landing, /<a class="kofi" href="https:\/\/ko-fi\.com\/dfjs" rel="noopener">/);
+  assert.doesNotMatch(landing, /<img[^>]*ko-fi/i, 'no badge image');
+  // Near the top, out of the wordmark's way, and a thumb's target.
+  assert.match(css, /\.kofi \{[\s\S]{0,200}position: absolute; top: 0; right: 0;/);
+  assert.match(css, /\.kofi \{[\s\S]{0,400}min-height: 44px;/);
+  assert.match(css, /\.door \{ padding-bottom: 140px; padding-top: 84px; \}/, 'and the door makes room for it on a phone');
+  // The cup is DRAWN: one box-shadow pixel list, in the skin's own brass
+  // and dim, on the same 4px grid the rest of the page uses.
+  const cup = css.slice(css.indexOf('.cup {'), css.indexOf('.cup {') + 900);
+  assert.match(cup, /box-shadow:/);
+  const px = (cup.match(/-?\d+px -?\d+px 0 (var\(--brass\)|#7d7460)/g) ?? []);
+  assert.ok(px.length >= 9, `${px.length} shadow pixels drawn (the element itself is the tenth)`);
+  assert.ok(px.filter((p) => p.includes('#7d7460')).length === 2, 'two of them are steam');
+  for (const p of px) {
+    const [x, y] = p.split(' ').slice(0, 2).map((v) => Math.abs(Number(v.replace('px', ''))));
+    assert.equal(x % 2, 0, `${p}: on the grid`);
+    assert.equal(y % 2, 0, `${p}: on the grid`);
+  }
+  assert.ok(cup.includes('#7d7460'), 'the steam is dim, not brass');
+});
+
+test('U64: the live site is the custom domain, and the build does not care which', () => {
+  // `base: './'` means the SAME build serves from a project path and
+  // from an apex, so the domain moved with no rebuild - which is why
+  // the vite comment says so rather than naming a host.
+  assert.match(read('vite.config.js'), /base is '\.\/' - RELATIVE, so the same build serves from a project path/);
+  assert.match(read('vite.config.js'), /base: '\.\/',/);
+  assert.match(read('README.md'), /Play it: https:\/\/daggerfalljs\.dev\//);
+  assert.match(read('tools/verify-deploy.mjs'), /'https:\/\/daggerfalljs\.dev\/play\/'/);
+  // The page's own links are RELATIVE, so nothing on it names a host at
+  // all - the domain could move again and the page would not notice.
+  const internal = [...landing.matchAll(/href="(\.\/[^"]*)"/g)].map((m) => m[1]);
+  assert.ok(internal.includes('./play/'), 'Play is relative');
+  assert.doesNotMatch(landing, /https?:\/\/(daggerfalljs\.dev|lattymoy\.github\.io)/, 'the page names no host of its own');
 });

@@ -85,6 +85,144 @@ None of these blocks anything; all are real.
                         will be, because this repo holds no game data.
 
 
+## U64 THE DOMAIN, AND THE HAT (2026-08-27, Mac's call)
+
+Mac: "1. Set up this with my domain I purchased. 2. Set up my kofi
+donation page on the website."
+
+THE DOMAIN IS daggerfalljs.dev, NOT daggerfall.dev. Mac named the
+latter; the Porkbun account holds the former, registered the same day
+beside fightlife.gg. The account is the fact and the record says so,
+because a wrong host in a pin is a test that passes against nothing.
+
+DNS, set through Porkbun's API: the two PARKING records Porkbun leaves
+on a new domain (an ALIAS and a wildcard CNAME, both to
+pixie.porkbun.com) deleted first - they answer before GitHub would -
+then GitHub Pages' four apex A records and four AAAA, and www as a
+CNAME to lattymoy.github.io. The custom domain went on the repo's Pages
+settings by API; the first attempt, which set `https_enforced` at the
+same time, was refused with "the certificate does not exist yet" -
+GitHub issues the certificate FROM the cname, so the cname goes on
+alone and enforcement follows it. `.dev` is on the HSTS preload list,
+so HTTPS is not optional there; it is on.
+
+NOTHING WAS REBUILT. `base: './'` has been relative since the site
+existed, so the same artifact serves from a project path and from an
+apex - the comment above it named the old host and now explains the
+rule instead. The page's own links are relative too, so it names no
+host at all: the verifier and the README were the only two places that
+did, and the pin now holds the PATH (the game is one directory down)
+with the host following the domain.
+
+THE HAT IS A PLAQUE. Mac asked for "an icon that's visible near the
+top": a link at the door's top right in the About plaque's own shape -
+the second box on a page that had one - with a CUP DRAWN IN BOX-SHADOW
+PIXELS beside the words. Not an <img>, because a badge would be this
+site's only raster and a raster is the one thing it does not carry;
+not the Ko-fi widget, because that is a third-party script on a page
+whose whole point is that it runs none. Ten art pixels on the same 4px
+grid as everything else - a filled body, a lip, a handle, and two
+pixels of steam in the dim rather than the brass. The first draft drew
+the body as a RING and read as an 'o'; caught at 3x and filled. A
+credits line carries the reason ("the port is free and always will be,
+and it takes no money to run"), and those two links are the only ask on
+the page.
+
+Pins: 2 more (14) - the mark is one link and a credits line and never
+an image, it is at the top right, it is a 44px target and the door
+makes room for it on a phone, the cup's pixels are all on the grid with
+exactly two of steam; and the live host is the domain in both places
+that name one while the page names none. 4 mutants, 4 dead.
+
+RESIDUE: www.daggerfalljs.dev was still answering 503 an hour in -
+GitHub provisions the apex certificate first and the www alias after,
+and it had not landed when this was written. The apex serves; if www is
+still 503 tomorrow the fix is to re-save the domain in the repo's Pages
+settings, which re-triggers provisioning.
+
+## U63 THE SITE WEARS THE GAME'S FACE (2026-08-27, Mac's call)
+
+Mac: "we've been doing some heavy UI work in another session and I want
+to update our website, reorganized and bring it inline with our new UI."
+
+PX1-PX19 made the enhanced UI PIXEL ART - a Bayer-dithered night, a
+Jacquard 12 blackletter wordmark, Pixelify Sans lists, the classic
+shadowed-label pair, boxless centred faces and framed windows with
+corner gems. The site was still wearing the shell that replaced: a left
+rail, Grenze Gotisch, brass-outlined panels - AND THREE SCREENSHOTS OF A
+MENU THAT NO LONGER EXISTS, which is wrong rather than stale.
+
+REORGANIZED MEANS THE SHELL WENT. The old page was the old menu's shape:
+a sticky rail beside a scrolling pane. The home face has no rail - it is
+centred and boxless - so the site is now a DOOR: a full-viewport stage
+with the wordmark, the tracked JAVASCRIPT sub-line, a rule with the
+brass gem, the one line of what it is, the ARENA2 sentence said before
+anything asks for it, and PLAY as THE ONE BOX (the About plaque's own
+shape, on a page with no other box). The sections below stack centred,
+each opened by its own rule and gem, in the order a stranger needs
+them. The foot is the home face's three zones: build and the test count
+left, the line count dead centre, Source right.
+
+THE NIGHT IS THE MENU'S NIGHT, NOT A LIKENESS OF IT. The page is a
+DOCUMENT - no script, no canvas, and that is a pin - so it cannot run
+`ui/pixelGround.js`. `scripts/landingHtml.mjs` builds the same sky in
+CSS instead and injects it beside the tokens: the six-step RAMP as a
+hard-stopped gradient, the two fog blobs as radials at the same
+relative homes, the dither as a 2px checker, and the stars as a
+box-shadow list from THE SAME SEED AND THE SAME LCG. Pinned both ways -
+the ramp steps, the seed and the LCG against pixelGround's own text,
+and the FIRST STAR against pixelGround's own stream, because a shared
+seed that lands the field somewhere else is a shared style, not a
+shared law. What it has not got is the drift and the twinkle: those
+need a clock, and a clock needs a script.
+
+ONE FONTS REQUEST, WHOLE. The site used to take a SUBSET of the skin's
+request (the brand + data faces) because it was set in Grenze Gotisch
+and the menu was not. It takes the skin's own URL now - one cache entry
+for both pages, and no way for the site to be set in a face the game
+has not got.
+
+THE COLOUR LAW, RESTATED WHERE IT NOW BITES. U60's rule was "every
+colour on this page is a var()", which held while the site wore the
+shell's four tokens. The pixel face's palette is LITERALS in
+enhancedStyle.js - rgb(243,239,44) over rgb(93,77,12), #d8cfae,
+#7d7460 - because they are a drawing's colours, not a theme's. So the
+pin is the same intent stated against the new fact: EVERY COLOUR ON THE
+PAGE MUST BE ONE THE SKIN USES. It caught three of mine on the first
+run (#a99f86, #3a3527, #23202a - invented mid-tones) and they were
+replaced with the skin's own.
+
+FOUND ON THE WAY, AND IT WAS IN THE GAME: Pixelify Sans ships an fi
+LIGATURE whose glyph reads as a CAPITAL A. Caught on this page's first
+render and magnified - "files" read "Ales", "first" read "Arst" - and
+then found in the shipped UI, where "Enemies Fight Each Other" was
+reading "Enemies Aght Each Other" in the settings list. Every enhanced
+screen is set in this face, so `font-variant-ligatures: none` went on
+the roots of BOTH pixel faces (`.shell` and `.px-home`) as well as the
+site. Verified by eye at 3x on both, before and after.
+
+THE PICTURES WERE RETAKEN, and one was retired. `tools/siteShots.mjs`
+now shoots the pixel home, the home on a phone, and the settings shell.
+The pack shot is gone: it was reachable only through a test seam (a
+hand-built entity with the doll forced to its no-art schematic), and
+with PX16's inventory it would need a new seam to pose a screen a
+player cannot reach without game files anyway. Three pictures of
+screens that draw themselves is a truer set than four with one staged.
+
+THE PROBES FOLLOWED. `enhancedMenuProbe.mjs` was still waiting on
+`#enhanced-menu .railbtn` - it had not been runnable since PX1 landed -
+and U62's switch check was reading the SHELL's copy of the switch
+because it ran after the Settings click. Both fixed: the pixel home's
+list, the switch measured on the fresh home where PX1b put it (dead
+centre of the foot, the hint hidden, the lit option gold and 44px), and
+an Escape back to home before New Game, which is PX2's own ladder.
+22/22. The landing probe grew the face and the night: the wordmark's
+computed family IS Jacquard 12 and `document.fonts` says it loaded, the
+body is Pixelify Sans, and the night is fixed with three gradient
+layers and 90 stars. 40/40 on desktop and Pixel 5.
+
+Pins: `test/landing.test.js` 12 (four new), 6 mutants dead.
+
 ## U62 THE SWITCH ON THE DOOR (2026-08-27, Mac's call)
 
 Mac: "not hide the enhanced version toggle within a settings window and
@@ -7064,6 +7202,31 @@ NON-BUTTON (the pack probe's own law), and drops the em-dash line
 selector keeps reading, and selection still opens the plaque rather
 than undressing on a tap (the mis-click law). Verified: 25 tiles
 render off the 27-slot table, every empty a div, suite green.
+
+PX19c (Mac: containers/bodies/ground as their OWN smaller window;
+and the paperdoll "which you haven't done"): THE LOOT WINDOW AND THE
+DOLL'S MISSING PRELOAD. (1) THE SPLIT: the pack's middle column is
+the LOCAL list alone now - the room the split buys - and the remote
+rides a second, smaller window (min 340px) in the same frame
+language beside the pack: corner gems, the 0.72 glass, remoteCol
+mounted whole inside it, so every take/stow arm, the wagon cap, the
+gold field and the quest-click law moved furniture without moving
+law. PRESENCE RULE: the loot window exists for a container, a
+corpse's tray, the wagon, or a littered ground - and not at all over
+bare earth (a window with nothing to say is the dead-arm bug as
+furniture). Phone stacks it beneath the pack at 40dvh. Verified both
+ways: bare ground 0 loot windows, a chest 1 window 2 rows, zero
+errors. (2) THE DOLL: figurePanel was always integrated -
+paperDollDataUrl over paperDollPixels with the slot map as the
+honest fallback - but TWO wires were missing. The refresh's catch
+swallowed failures SILENTLY, so a live miss read as "never
+integrated" - it warns once now, so the next report carries its own
+diagnosis. And the art PRELOAD ran only in the world host: a new
+game's first dungeon opened a pack with the schematic where the
+avatar belongs - the 17g F1 shape exactly, one art over.
+preloadPaperDollForEntity now warms in dungeonContext beside the
+pause art, same loud-never-boot posture. The world's interiors
+already rode the world's preload.
 
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the

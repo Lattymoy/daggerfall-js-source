@@ -10,6 +10,8 @@ import {
 } from '../src/combat/mwFpArms.js';
 import { WEAPON_TYPES } from '../src/combat/fpsWeapon.js';
 import { parseAnimGroups } from '../src/formats/mwAnim.js';
+import { readFileSync } from 'node:fs';
+const src = (p) => readFileSync(new URL(`../src/${p}`, import.meta.url), 'utf8');
 
 test('mwfp: engine weapon types land in the right Morrowind class', () => {
   assert.equal(mwWeaponClass(WEAPON_TYPES.LongBlade), 'onehand');
@@ -88,4 +90,25 @@ test('mwfp: the iron weapon-mesh table covers every drawable type; bone name fix
     assert.match(MW_WEAPON_MESH[t], /^meshes\\w\\w_/, `type ${t}`);
   }
   assert.equal(MW_WEAPON_BONE, 'weapon bone');
+});
+
+test('mwfp: the attach door is FINDABLE - settings row, its key, the one bootstrap', () => {
+  // A feature reachable only by typing a query param is a feature nobody
+  // finds - the M-EXT lesson, applied to the third domain. The dialog
+  // reports the attachment, the button is labelled with its key, the key
+  // is handled, the click path dispatches by BUTTON ID (three optional
+  // picks broke the old index arithmetic), and registration rides the
+  // one bootstrap all four hosts already call.
+  const w = src('ui/settingsWindow.js');
+  assert.match(w, /Morrowind archives attached: \$\{morrowindDataCount\(\)\}/);
+  assert.match(w, /label: 'M - Morrowind'/, 'the button says which key');
+  assert.match(w, /code === 'KeyM' && this\.dialog\.onAlt2/);
+  assert.match(w, /b\.id === 'pickMw' && d\.onAlt2/);
+  assert.match(src('scenes/shared.js'), /const morrowind = registerMorrowindData\(\)\.catch\(\(\) => 0\);/);
+  assert.match(src('scenes/launcherScene.js'), /pickMorrowindFiles/);
+  // The store never sweeps with ARENA2 recovery, and archives open in
+  // engine override order - expansions answer before Morrowind.bsa.
+  const d = src('scenes/dataSource.js');
+  assert.match(d, /if \(l\.includes\('morrowind'\)\) return 3;/);
+  assert.match(d, /return 0; \/\/ unknown packs override everything/);
 });

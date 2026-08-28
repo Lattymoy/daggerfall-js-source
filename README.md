@@ -6,7 +6,7 @@ contributors); presentation rebuilt on hand-rolled WebGL2. MIT licensed, with
 Daggerfall Unity's notice alongside (LICENSE). The project's working name in
 the docs and the code is `project-dagger`.
 
-Play it: https://lattymoy.github.io/daggerfall-js-source/
+Play it: https://daggerfalljs.dev/
 
 The site is `index.html` (what it is, how to play, credits); the game is
 `play/index.html`, served at `/play/`. Both deploy from `main` to GitHub

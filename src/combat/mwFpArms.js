@@ -435,6 +435,13 @@ export async function createMwFpView(renderer) {
 
   function pick(weaponType, state) {
     const want = mwAnimForState(weaponType, state);
+    // Dev/probe override: force a named group while idling, so fixture
+    // data (whose groups are not the retail names) can drive the loop.
+    const forced = param('mwfpgroup');
+    if (forced && !mwSegmentForState(state)) {
+      const g = groups.get(forced);
+      if (g) return { key: forced, start: g.start, stop: g.stop, oneShot: false };
+    }
     const group = groups.get(want.group);
     if (!group) return null;
     if (want.segment) {

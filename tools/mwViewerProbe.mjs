@@ -137,6 +137,35 @@ ok(
   `Hat rides Bone1 to (0,0,2), got (${attachT && attachT.map((v) => v.toFixed(3))})`,
 );
 
+// SLICE 6: the ESM path - drop fixture.esm, pick an NPC, and the whole
+// character assembles: base skeleton from the archive, the chest skin
+// rebound, head+hair attached at the Head bone, sex matching live.
+await page.setInputFiles('#file', 'test/fixtures/mw/fixture.esm');
+await page.waitForTimeout(300);
+const esmStatus = await page.textContent('#status');
+ok(/2 NPCs, 4 body parts, 1 races/.test(esmStatus), `esm parses: ${esmStatus}`);
+await page.selectOption('#npcsel', 'test npc');
+await page.waitForTimeout(400);
+const npcStatus = await page.textContent('#status');
+ok(/Test NPC \(Test Race\) - 3\/3 parts bound/.test(npcStatus), `npc assembles: ${npcStatus}`);
+ok(/11 slots without skins/.test(npcStatus), 'the honest missing-slots census reaches the status line');
+const npcParts = await page.evaluate(() => ({
+  skins: window.__mwviewer.loaded.skinnedMeshes.length,
+  parts: window.__mwviewer.loaded.parts.length,
+  attach: window.__mwviewerAttachT(0),
+}));
+ok(npcParts.skins === 2, `base + chest skin both skinned (${npcParts.skins})`);
+ok(npcParts.parts === 3, `three parts bound (${npcParts.parts})`);
+ok(Array.isArray(npcParts.attach), 'head attaches with a live matrix');
+// The female NPC swaps in the female chest - read the bound part ids.
+await page.selectOption('#npcsel', 'test npc f');
+await page.waitForTimeout(400);
+const fStatus = await page.textContent('#status');
+ok(/Test NPC F/.test(fStatus), `female npc assembles: ${fStatus}`);
+const fBound = await page.evaluate(() => window.__mwviewer.loaded.npcBound);
+ok(fBound && fBound.includes('b_test_chest_f') && !fBound.includes('b_test_chest'),
+  `sex matching bound the female chest (${fBound})`);
+
 ok(crashes.length === 0, `no pageerrors${crashes.length ? `: ${crashes[0]}` : ''}`);
 
 await browser.close();
