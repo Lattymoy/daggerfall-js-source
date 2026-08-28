@@ -11,6 +11,7 @@ const MESH = new Uint8Array(readFileSync(new URL('./fixtures/mw/mesh.nif', impor
 const SKINNED = new Uint8Array(
   readFileSync(new URL('./fixtures/mw/skinned.nif', import.meta.url)),
 );
+const DDS = new Uint8Array(readFileSync(new URL('./fixtures/mw/fixture.dds', import.meta.url)));
 
 test('mwbsa: normalizeBsaPath lowercases and forward-slashes', () => {
   assert.equal(normalizeBsaPath('Meshes\\B\\Foo.NIF'), 'meshes/b/foo.nif');
@@ -19,17 +20,18 @@ test('mwbsa: normalizeBsaPath lowercases and forward-slashes', () => {
 
 test('mwbsa: directory, listing, and byte-exact retrieval', () => {
   const bsa = new MwBsaFile(ARCHIVE);
-  assert.equal(bsa.fileCount, 3);
+  assert.equal(bsa.fileCount, 4);
   assert.deepEqual(bsa.list(), [
     'meshes/fixture/mesh.nif',
     'meshes/fixture/skinned.nif',
+    'meshes/fixture/plain.nif',
     'textures/fixture.dds',
   ]);
   // Retrieval is case/slash-insensitive and byte-exact against the loose
   // fixtures the archive was packed from.
   assert.deepEqual(bsa.get('Meshes\\Fixture\\MESH.NIF'), MESH);
   assert.deepEqual(bsa.get('meshes/fixture/skinned.nif'), SKINNED);
-  assert.deepEqual(bsa.get('textures\\fixture.dds'), new Uint8Array([1, 2, 3, 4, 5]));
+  assert.deepEqual(bsa.get('textures\\fixture.dds'), DDS);
   assert.equal(bsa.has('textures/fixture.dds'), true);
   assert.equal(bsa.has('textures/absent.dds'), false);
 });
