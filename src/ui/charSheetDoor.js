@@ -61,132 +61,91 @@ export function createCharSheetWindow(deps = {}) {
   // give: node drives these hosts headless and keeps the canvas window
   // rather than getting a special case written for it.
   if (isEnhanced() && typeof document !== 'undefined') {
-    return enhancedCharSheetOverlay(deps.entity, hooks);
+    // PX27: THE ENHANCED SHEET IS THE PAUSE WINDOW'S STATS PAGE.
+    //
+    // There were two enhanced character sheets - this door's overlay
+    // and the pause window's Stats tab - reading the SAME four
+    // sections out of the SAME sheetModel, which enhancedMenu imports
+    // from enhancedCharSheet.js. One of them was the last pre-PX
+    // surface in the game and drew its three columns hard against the
+    // left edge; the other is the sheet this arc built. Keeping both
+    // was the fault the F5 overlay existed to demonstrate.
+    //
+    // The DOOR's contract does not change - the host is handed an
+    // overlay it mounts, exactly as before - so no host learns
+    // anything new. What changes is which face is inside it, and the
+    // sheet's own four buttons become that page's doors, out of these
+    // same hooks: PX25 built the Stats page to take them.
+    return enhancedSheetPageOverlay(hooks);
   }
   return new CharSheet(deps.entity, hooks);
 }
 
 /**
- * THE ENHANCED SHEET, in the shape the hosts already push.
- *
- * With no child up it is the wizard's and the pause door's contract:
- * a fixed opaque div, its own keyboard, every host arm a no-op BY
- * DESIGN. With a child up it is the OPPOSITE - the div goes hidden and
- * every arm forwards, because the child is a canvas window drawing
- * underneath.
+ * PX27: the pause window, opened on Stats, in the overlay shape the
+ * hosts already push. The keyboard, the scrim and the frame are all
+ * enhancedMenu's; this only chooses the page and forwards the sheet's
+ * own four buttons onto it.
  */
-function enhancedCharSheetOverlay(entity, hooks) {
+function enhancedSheetPageOverlay(hooks) {
   let fired = false;
   let view = null;
-  let child = null;
-
   const host = document.createElement('div');
-  host.id = 'enhanced-charsheet';
+  host.id = 'enhanced-sheetpage';
   // z-index 13, the pause door's depth: they are peers, never stacked.
-  // PX17c: the same glass as the inventory door - one family, one
-  // ground (the paused game), the pause door's PX4 law finished.
   host.style.cssText = 'position:fixed;inset:0;z-index:13;background:transparent;overflow:hidden';
   document.body.append(host);
-
   const close = () => {
     if (fired) return;
-    view?.unmount();
+    try { view?.unmount?.(); } catch { /* already gone */ }
     view = null;
     host.remove();
     fired = true;   // last: `done` must not be true while the DOM is up
   };
-
-  /** A finished child pops, and the sheet comes back. CharSheet's own
-   *  `_stepChild`, with the DOM half added. */
-  const stepChild = () => {
-    if (child?.done) {
-      child.dispose?.();
-      child = null;
-      host.style.visibility = '';
-      view?.repaint?.();   // the pack may have changed while it was up
-    }
-    return !!child;
-  };
-
-  /** PushWindow. The hook's own refusal travels: a host that hands no
-   *  factory gets the sheet's notice, not a dead button. */
-  const open = (which) => {
-    const w = hooks[which]?.();
-    if (!w) return false;
-    child = w;
-    // HIDDEN, NOT REMOVED. The child draws on the canvas underneath and
-    // this div is opaque; visibility keeps the mounted view alive so
-    // popping back is instant and the scroll position survives.
-    host.style.visibility = 'hidden';
-    return true;
-  };
-
-  const overlay = {
-    isChoiceWindow: true,
-    get done() { return fired; },
-    // EVERY ARM FORWARDS WHILE A CHILD IS UP (U42's lesson), and does
-    // nothing otherwise - the view owns its own input the way the
-    // wizard's and the pause door's do.
-    input(action, e = null) {
-      if (child) { child.input?.(action, e); stepChild(); }
-      /* else: the view's own capture keydown owns the keyboard */
-    },
-    click(vx, vy) {
-      if (!child) return false;   /* the view is a fixed opaque div; pointers never get here */
-      if (child.clickNative) child.clickNative(vx, vy);
-      else child.click?.(vx, vy);
-      stepChild();
-      return true;
-    },
-    wheel(dir) {
-      if (!child) return false;   /* the view scrolls itself */
-      child.wheel?.(dir);
-      stepChild();
-      return true;
-    },
-    hover(vx, vy, e = null) {
-      // U42 EXACTLY: the host seams test for `hover` on the OVERLAY and
-      // never reach the child when it is missing, which cost the
-      // spellbook its highlight and its tooltips on this very route.
-      if (!child) return false;
-      child.hover?.(vx, vy, e);
-      stepChild();
-      return true;
-    },
-    tick(dt) {
-      if (child) { child.tick?.(dt); stepChild(); }
-      /* else: nothing on this screen moves on a clock */
-    },
-    draw(renderer, canvas, font, s) {
-      // The ONLY arm that exists because the child is canvas. With no
-      // child there is nothing to draw - this screen is DOM.
-      if (child) return child.draw?.(renderer, canvas, font, s);
-      return undefined;
-    },
-    dispose() {
-      child?.dispose?.();
-      child = null;
-      close();
-    },
-  };
-
-  // Mounted lazily so a player on the classic skin never loads a byte
-  // of the enhanced sheet. A failure costs the sheet, so it says so and
-  // takes its empty div with it rather than leaving the host holding an
-  // overlay that never reports done - a frozen game.
-  import('./enhancedCharSheet.js').then(({ mountEnhancedCharSheet }) => {
-    if (fired) { host.remove(); return; }   // disposed before the module landed
-    view = mountEnhancedCharSheet(host, {
-      entity,
-      hooks,
-      open,
-      onExit: close,
+  import('./enhancedMenu.js').then(({ mountEnhancedMenu }) => {
+    if (fired) return;
+    view = mountEnhancedMenu(host, {
+      mode: 'pause',
+      at: 'stats',
+      onAction: (a) => { if (a === 'resume') close(); },
+      // The sheet's own buttons, onto the page PX25 built to take
+      // them. A host that hands no hook gets no button, which is the
+      // same honest refusal the classic sheet gives.
+      hooks: {
+        openPack: hooks.inventory ? () => { close(); hooks.inventory(); } : undefined,
+        openSpellbook: hooks.spellbook ? () => { close(); hooks.spellbook(); } : undefined,
+        openChronicle: hooks.logbook ? () => { close(); hooks.logbook(); } : undefined,
+      },
     });
   }).catch((e) => {
-    console.warn('[charsheet] the enhanced sheet would not mount', e);
-    host.remove();
-    fired = true;
+    console.warn('[charsheet] the sheet page would not mount:', e?.message ?? e);
+    close();
   });
-
-  return overlay;
+  return {
+    get done() { return fired; },
+    draw() {},
+    onKey() { return false; },
+    onPointer() { return false; },
+    close,
+    // `dispose` and `destroy` are both the hosts' words for the same
+    // act; the overlay this replaced answered both, so this does too.
+    dispose: close,
+    destroy: close,
+  };
 }
+
+/* PX27: THE ENHANCED SHEET OVERLAY IS RETIRED.
+ *
+ * It lived here from U52 until this slice and was the last pre-PX
+ * surface in the game: a `.sheet-shell` of three columns filling the
+ * viewport from the left edge, with the sheet's four buttons down its
+ * side. Everything it showed, the pause window's Stats page shows -
+ * the same four sections out of the same sheetModel, which
+ * enhancedMenu imports from ui/enhancedCharSheet.js - and since PX25
+ * that page takes the four buttons too.
+ *
+ * `ui/enhancedCharSheet.js` STAYS: `sheetModel` is the model both
+ * sheets always read, and it is now read by the one that remains.
+ * What went is the ~200 lines of view that drew the second one.
+ */
+

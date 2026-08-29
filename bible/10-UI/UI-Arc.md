@@ -7957,6 +7957,48 @@ the viewport's centre line.
 
 Pins: 2 more (24 in enhancedPause.test.js). 8 mutations, 8 dead.
 
+PX27: THE F5 SHEET IS RETIRED. There were TWO enhanced character
+sheets - this door's overlay and the pause window's Stats page -
+reading the same four sections out of the same `sheetModel`, which
+enhancedMenu imports from ui/enhancedCharSheet.js. One of them was the
+last pre-PX surface in the game and drew its three columns hard
+against the left edge. PX25 gave the Stats page the four buttons the
+overlay carried and PX26 sent the dial's north to it; F5 was the last
+caller, and now it lands there too.
+
+THE DOOR'S CONTRACT DOES NOT CHANGE. The host is handed an overlay it
+mounts, exactly as before, so no host learned anything new - only
+which face is inside it. The sheet's own four buttons become the
+page's doors out of the same hooks, and a host that hands no hook gets
+NO button, which is the honest refusal the classic sheet gives rather
+than a dead one.
+
+THE CHILD-PUSH MACHINERY WENT WITH IT, and that is the part worth
+recording. The old overlay could PUSH a canvas child - hiding its own
+div while the child drew underneath, popping back with the scroll
+intact - because the sheet's four buttons opened CLASSIC windows.
+PX23 and PX24 gave all three an enhanced window, so the doors now
+CLOSE the sheet and hand over rather than stacking on it. Four U52
+pins described that machinery; they were rewritten to the law that
+replaced them rather than deleted, because "this is how it is done
+now" is worth as much as the mechanism was.
+
+FOUND BY ONE OF THOSE PINS: the new overlay answered `destroy` and not
+`dispose`, and the hosts use both words. A real teardown bug, caught
+by a pin I was in the middle of rewriting.
+
+`ui/enhancedCharSheet.js` STAYS - `sheetModel` is the model both
+sheets always read, and the one that remains reads it. What went is
+the view that drew the second.
+
+Pins: the four U52 child-push pins become 2 (the door hands back the
+Stats page and the host holds it; the machinery is gone and the doors
+close-then-hand-over, with the landing and the missing-hook refusal
+pinned too). 5 mutations, 5 dead. Verified live: F5's door lands on
+Stats, 0px off centre, carrying only the doors the host handed over,
+Escape closes it, and no `.sheet-shell` is left anywhere on the
+enhanced path.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk
