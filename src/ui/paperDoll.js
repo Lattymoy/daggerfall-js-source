@@ -167,6 +167,18 @@ export const paperDollArtLoaded = () => !!_art;
  *  baked offset minus paperDollOrigin. rows = [y0,y1) source band
  *  (the censor welds); remap = the dye. Index 0 stays transparent;
  *  0xFF is the classic mask (removed - ChangeMask). */
+/* PX29 (Mac: "remove the background from the paperdoll in the
+   inventory UI"): WHICH PIXELS ARE THE FIGURE.
+   DFU fills the panel with backgroundSubRect first and blits the body
+   and every item over it (PaperDollRenderer), and the port does the
+   same - so the composite has no notion of "figure" to hand out. It
+   does now, and EXACTLY rather than by colour-matching: every layer
+   after the background goes through this one `blit`, so a mask
+   written here is the figure and nothing else. The CLASSIC window is
+   untouched - it draws the composite whole, background included,
+   because that is what DFU draws. */
+let _figure = null;   // 1 where a layer painted, 0 where only the background did
+
 function blit(out, img, { rows = null, remap = null, atOffset = null } = {}) {
   const [orgX, orgY] = PAPERDOLL_ORIGIN;
   const off = atOffset ?? img.off;
@@ -185,6 +197,7 @@ function blit(out, img, { rows = null, remap = null, atOffset = null } = {}) {
       const c = _art.palette.get(idx);
       const o = (dy * PAPERDOLL_W + dx) * 4;
       out[o] = c.r; out[o + 1] = c.g; out[o + 2] = c.b; out[o + 3] = 255;
+      if (_figure) _figure[dy * PAPERDOLL_W + dx] = 1;
     }
   }
 }
@@ -229,6 +242,7 @@ export async function refreshPaperDoll(entity) {
   _refreshing = true;
   try {
     const out = new Uint8Array(PAPERDOLL_W * PAPERDOLL_H * 4);
+    _figure = new Uint8Array(PAPERDOLL_W * PAPERDOLL_H);   // PX29: filled by blit, below
     const layout = [];
     // V5: the racial override's three art laws - the beast/crypt
     // background, the whole-body suppression (PaperDollRenderer:165 -
@@ -363,6 +377,27 @@ export function slotAtPaperDoll(px, py) {
  * shows without one.
  */
 export const paperDollPixels = () => _pixels;
+
+/**
+ * PX29: the composite with the BACKGROUND made transparent - the
+ * figure alone, for a window that has its own ground to stand it on.
+ *
+ * The enhanced pack draws the doll on the window's glass, so DFU's
+ * panel behind it is a rectangle of someone else's art in the middle
+ * of a composed screen. The classic window keeps the whole composite,
+ * background included, because that is what DFU draws.
+ *
+ * Null when there is no doll yet, exactly as paperDollPixels is.
+ */
+export function paperDollFigurePixels() {
+  if (!_pixels || !_figure) return _pixels;
+  const out = new Uint8Array(_pixels.length);
+  out.set(_pixels);
+  for (let i = 0; i < _figure.length; i++) {
+    if (!_figure[i]) out[i * 4 + 3] = 0;   // background: transparent, not recoloured
+  }
+  return out;
+}
 
 /** Test seam. */
 export const _debugPaperDoll = () => ({ live: !!_live, layers: _layout.map((l) => l.slot), version: _version });
