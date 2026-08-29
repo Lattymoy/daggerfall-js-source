@@ -156,7 +156,10 @@ test('IS1: the interior pause and F9/F11 land on the world composer; the stopgap
   const modes = read('src/scenes/worldModes.js');
   assert.ok(!modes.includes('savingPrevented'),
     'RETIRING A FLAG DELETES THE SENTENCE: no interior cannot-save arm survives anywhere in the mode host');
-  const pause = modes.slice(modes.indexOf('    togglePause() {'), modes.indexOf('    toggleCharSheet()'));
+  // PX26 gave togglePause its own options; the slice follows it. The
+  // law here is unchanged - the interior pause hands the world's
+  // composer through.
+  const pause = modes.slice(modes.indexOf('    togglePause(opts = {}) {'), modes.indexOf('    toggleCharSheet()'));
   for (const door of ['quickSave: host.quickSave', 'quickLoad: host.quickLoad', 'playerName: host.playerName', 'saveAs: host.saveAs', 'loadKey: host.loadKey']) {
     assert.ok(pause.includes(door), `the pause hands ${door.split(':')[0]} through`);
   }

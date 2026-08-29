@@ -4356,7 +4356,15 @@ export function createWorldModes(host) {
       w.input(code, e);
       if (w.done && interiorOverlay === w) interiorOverlay = null;
     },
-    togglePause() {
+    // PX26 (Mac: "the north option should be the new journal we
+    // developed" / "the skill ui opens on the lefthand side when it
+    // should be center"): ONE FIX FOR BOTH. The dial's north was the
+    // F5 overlay - the last pre-PX surface, and the one that lays its
+    // three columns against the left edge. The pause window's Stats
+    // page IS that sheet, off the same sheetModel, and is centred by
+    // construction. This host's own pause flow, landed on it.
+    openSheetPage() { this.togglePause({ at: 'stats' }); },
+    togglePause(opts = {}) {
       if (!pauseDoorReady()) return;
       // IS1: the interior saves like anywhere else - DFU's ONE
       // standing save block is mid-rappel (RappelMotor.cs:66,
@@ -4365,6 +4373,7 @@ export function createWorldModes(host) {
       // unbuilt serialization, not a law. The doors are the WORLD
       // host's own composer, riding in on the host bag.
       openPauseFlow((w) => { interiorOverlay = w; }, {
+        at: opts.at ?? null,   // PX26: the page the door was pressed for
         // PX25: the sheet's own doors, through this host's own arms.
         openPack: () => mountInterior(host.makeInventory?.()),
         openSpellbook: () => { if (magic) mountInterior(makeSpellbookWindow()); },
@@ -4388,7 +4397,7 @@ export function createWorldModes(host) {
     // draws a dead arm.
     toggleDial() {
       return openPixelDial([
-        { id: 'skills', label: 'Skills', dir: 'n', open: () => interiorKeyCtx.toggleCharSheet() },
+        { id: 'skills', label: 'Skills', dir: 'n', open: () => interiorKeyCtx.openSheetPage() },
         { id: 'items', label: 'Items', dir: 'e', open: () => interiorKeyCtx.toggleInventory() },
         { id: 'magic', label: 'Magic', dir: 'w', open: () => interiorKeyCtx.toggleSpellbook() },
       ]);

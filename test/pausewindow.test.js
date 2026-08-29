@@ -121,7 +121,9 @@ test('I3: the wiring - four hosts, one Escape door each, art preloaded', () => {
   const code = (rel) => readFileSync(join(root, 'src', rel), 'utf8');
   // routeKey's Escape case covers the two dungeon contexts
   assert.match(code('ui/input.js'), /case 'Escape': return ctx\.togglePause/);
-  assert.match(code('scenes/dungeonContext.js'), /togglePause\(setPlayerPos = null\)/);
+  // PX26: ...and its own options after it. setPlayerPos is still the
+  // first argument, which is what this pin is actually about.
+  assert.match(code('scenes/dungeonContext.js'), /togglePause\(setPlayerPos = null, opts = \{\}\)/);
   // The exterior hosts hand-route. U43 moved the overlay/mode gate up
   // to cover the whole ladder at once - the same ladder the large HUD's
   // panels now reach through hudCtx - so the Escape ARM is inside that
@@ -137,7 +139,11 @@ test('I3: the wiring - four hosts, one Escape door each, art preloaded', () => {
     // settings and no way out.
     const arm = src.indexOf("if (act === 'Escape' && pauseDoorReady()) { hudCtx.togglePause(); return; }");
     assert.ok(arm > gate, `${rel} opens on Escape, inside that gate`);
-    assert.match(src, /togglePause: \(\) => \{/, `${rel} has exactly one pause door`);
+    // PX26: the door takes its own options now (the dial's north lands
+    // on Stats). ONE door is the law and it is unchanged - the count
+    // below is what this pin is actually counting.
+    assert.equal((src.match(/togglePause: \(opts = \{\}\) => \{/g) ?? []).length, 1,
+      `${rel} has exactly one pause door`);
     assert.match(src, /preloadPauseFlowArt\(/, `${rel} warms the art`);
   }
   // the interior arm rides worldModes' own overlay slot. U43 moved it
@@ -148,7 +154,10 @@ test('I3: the wiring - four hosts, one Escape door each, art preloaded', () => {
   // replaced.
   const modes = code('scenes/worldModes.js');
   assert.match(modes, /const interiorKeyCtx = \{/, 'the interior arm has a routeKey ctx');
-  assert.match(modes, /togglePause\(\) \{/, '...whose Escape door is togglePause, as routeKey calls it');
+  // PX26: with its own options after it - routeKey still calls it with
+  // none, which is what the default is for.
+  assert.match(modes, /togglePause\(opts = \{\}\) \{/, '...whose Escape door is togglePause, as routeKey calls it');
+  assert.match(code('ui/input.js'), /case 'Escape': return ctx\.togglePause/, 'and routeKey calls it bare');
   assert.match(modes, /if \(routeKey\(e, interiorKeyCtx\)\)/, '...and the table drives it');
   assert.match(modes, /preloadPauseFlowArt\(/);
   // and the door out is the ONE menu unwind (audit24_onehome watches
