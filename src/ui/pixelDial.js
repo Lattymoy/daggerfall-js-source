@@ -42,6 +42,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
+import { closeTopOverlay } from './enhancedOverlays.js';   // PX28
 import { isEnhanced } from '../systems/uiSkin.js';
 
 const el = (t, cls, txt) => {
@@ -168,6 +169,14 @@ let _open = null;
 export function openPixelDial(entries) {
   if (!isEnhanced() || typeof document === 'undefined') return false;
   if (_open) { _open.unmount(); _open = null; return true; }
+  // PX28 (Mac: "when hitting tab a second time, it should minimize any
+  // UI"): the dial already closed ITSELF on a second press; what it
+  // could not do was close what it had OPENED. Press Tab, press Items,
+  // and the pack was up with Tab doing nothing, because each enhanced
+  // window owns its own keyboard and knows nothing of the others. So
+  // Tab now means PUT THIS AWAY first, and only raises the dial when
+  // there is nothing to put away.
+  if (closeTopOverlay()) return true;
   document.exitPointerLock?.();
   const handle = mountPixelDial(document.body, {
     entries,

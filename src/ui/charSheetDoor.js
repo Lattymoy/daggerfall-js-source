@@ -37,6 +37,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { isEnhanced } from '../systems/uiSkin.js';
+import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
 import { CharSheet, charSheetArtLoaded } from './charsheet.js';
 import { charSheetHooks } from './charSheetNav.js';
 
@@ -90,6 +91,7 @@ export function createCharSheetWindow(deps = {}) {
 function enhancedSheetPageOverlay(hooks) {
   let fired = false;
   let view = null;
+  let unregister = () => {};   // PX28
   const host = document.createElement('div');
   host.id = 'enhanced-sheetpage';
   // z-index 13, the pause door's depth: they are peers, never stacked.
@@ -101,7 +103,11 @@ function enhancedSheetPageOverlay(hooks) {
     view = null;
     host.remove();
     fired = true;   // last: `done` must not be true while the DOM is up
+    unregister();
   };
+  // PX28: AFTER `close` exists - a const is not hoisted, and the
+  // first placement of this line read it before its initialiser.
+  unregister = registerOverlay(close);
   import('./enhancedMenu.js').then(({ mountEnhancedMenu }) => {
     if (fired) return;
     view = mountEnhancedMenu(host, {

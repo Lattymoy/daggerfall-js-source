@@ -8030,6 +8030,40 @@ existing pin would have caught, because every pin PX24 wrote was about
 the door's own behaviour and all of them passed. 2 pins (10), 3
 mutations, 3 dead.
 
+PX28 (Mac: "when hitting tab a second time, it should minimize any UI"
+/ "when looting, there's a 2nd popup when you take something, there
+shouldn't be"): TWO SMALL LAWS.
+
+TAB MEANS PUT THIS AWAY. The dial already closed ITSELF on a second
+press - openPixelDial's own toggle - but it could not close what it
+had OPENED. Press Tab, press Items, and the pack was up with Tab doing
+nothing, because each enhanced window owns its own keyboard and knows
+nothing of the others. `ui/enhancedOverlays.js` is the smallest honest
+fix: a STACK of close-arms that every enhanced overlay registers with
+on mount and clears on teardown, and Tab closes the top one before it
+would raise the dial. It holds FUNCTIONS, never DOM - a registry that
+reached into windows would be a second owner of them, and every one
+already owns its own teardown. A stack rather than a slot because the
+windows do stack, and the top one is what a player means by "this".
+
+LOOTING JUST TAKES. `take()` set `picked = taken`, which raises the
+tooltip on the item that just moved - and in the loot-only flow that
+is a card nobody asked for, popping over the frame being read. With
+the PACK open the same selection is useful: the thing you took is
+selected in your bag, on the tab it landed in. So the selection is the
+PACK's behaviour and not the take's, and the transfer itself is
+untouched - this changes what is SHOWN. Measured: three rows, take
+one, two rows and no popup.
+
+FOUND BY A PIN, and it was mine: the registration line went into
+charSheetDoor by POSITION rather than by dependency and landed above
+`const close`, which is not hoisted - so opening the sheet threw
+"Cannot access 'close' before initialization". PX27's own pin caught
+it on the next full run. All four doors were then checked for the same
+placement; three were already right.
+
+Pins: 2 (one each). 5 mutations, 5 dead.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk
