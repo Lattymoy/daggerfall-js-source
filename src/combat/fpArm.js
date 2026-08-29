@@ -415,6 +415,26 @@ export function createFpArm() {
 
   const active = () => !!(built && built.ok && mesh && renderer && camera && state);
 
+  /**
+   * MW-D9f: THE UPDATE PREDICATE, WHICH IS NOT THE DRAW PREDICATE.
+   *
+   * active() is about DRAWING, and it requires a GPU mesh - correctly,
+   * because drawing without one is the frozen-arm failure MWFIX2 shipped.
+   * But the mesh is created BY update(), on its first run. Gate the
+   * update on active() and the two deadlock: no mesh, so not active; not
+   * active, so never updated; never updated, so no mesh. A built arm sat
+   * at frames 0 forever and the classic sprite drew instead.
+   *
+   * Nothing could see it. The node pins drive update() directly and the
+   * browser probe drives its own loop, so both skipped the one gate that
+   * mattered - the seam, not the engine. THE MEASUREMENT HAS TO RUN THE
+   * CALLER'S CONDITION, not a condition that reaches the same code.
+   *
+   * These are exactly update()'s own requirements: a camera is a DRAW
+   * term, and posing without one is harmless work, not a wrong picture.
+   */
+  const ready = () => !!(built && built.ok && state && renderer);
+
   function releaseMesh() {
     if (mesh && renderer && renderer.gl) {
       const gl = renderer.gl;
@@ -427,6 +447,7 @@ export function createFpArm() {
   return {
     attach(r, cam) { renderer = r || null; camera = cam || null; },
     active,
+    ready,
     get frames() { return frames; },
 
     async build(opts) {

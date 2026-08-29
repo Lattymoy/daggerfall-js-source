@@ -377,3 +377,84 @@ test('MW-D9c: EVERY .esm is read, not the first - an expansion first must not em
   assert.equal(good.raceIsThere, true);
   assert.deepEqual(good.racesFound, ['breton', 'nord']);
 });
+
+test('MW-D9f: a built arm reaches the screen - the update gate is not the draw gate', async () => {
+  // THE DEFECT, reported by Mac as "still not seeing it ingame even
+  // though it's built", and it was never about his data.
+  //
+  //   active() = built && ok && MESH && renderer && camera && state
+  //   mesh is created by update(), on its first run
+  //   the rig ran update ONLY when active()
+  //
+  // No mesh, so not active; not active, so never updated; never updated,
+  // so no mesh. A perfectly built arm sat at frames 0 for the life of the
+  // tab and the classic sprite drew in its place. Every existing pin
+  // drove update() directly and the browser probe drove its own loop, so
+  // all of them ran the ENGINE and none of them ran the SEAM.
+  //
+  // This one builds a real arm through the real build path (fixture
+  // archives, fixture .esm) and then runs THE RIG'S OWN CONDITION.
+  const files = new Map([
+    [fpSkeletonPath({}), f('armskel.nif')],
+    [FP_CLIP_PATH, f('armidle.kf')],
+    ['meshes/fixture/armhand.nif', f('armhand.nif')],
+    ['meshes/fixture/armcuff.nif', f('armcuff.nif')],
+  ]);
+  const deps = {
+    loadMorrowindArchives: async () => [{ has: (p) => files.has(p), get: (p) => files.get(p) }],
+    storedMorrowindNames: async () => ['armparts.esm'],
+    loadMorrowindFile: async () => f('armparts.esm'),
+  };
+  let made = 0;
+  let sprites = 0; let composites = 0;
+  const renderer = {
+    gl: null,
+    createCharacterMesh: () => { made++; return { vao: {}, buffers: [] }; },
+    updateCharacterMesh: () => {},
+    renderCharacterSprite: () => { sprites++; return { tex: {} }; },
+    drawScreenOverlayQuad: () => { composites++; },
+  };
+  const arm = createFpArm();
+  arm.attach(renderer, () => ({ pos: [0, 1.6, 0], yaw: 0 }));
+
+  const built = await arm.build({ race: 'armrace', deps });
+  assert.equal(built.ok, true, built.ok ? '' : `${built.stage}: ${built.error}`);
+  // Rule 3's missing-slot arm stays exercised: this .esm has hand and
+  // upper arm only.
+  assert.deepEqual(built.notes.filter((n) => /no record/.test(n)),
+    ['wrist: no record for this actor', 'forearm: no record for this actor']);
+
+  // A built arm is NOT yet drawable - there is no GPU mesh until a frame
+  // runs, and drawing without one is the frozen-arm failure.
+  assert.equal(arm.active(), false, 'built is not drawable');
+  assert.equal(arm.frames, 0);
+  assert.equal(made, 0);
+  // ...but it IS ready to be stepped, which is the distinction the rig
+  // collapsed.
+  assert.equal(arm.ready(), true, 'and a built arm is ready to step');
+
+  // THE RIG'S PER-FRAME LINE, run as the rig runs it.
+  for (let i = 0; i < 3; i++) if (arm.ready()) arm.update(1 / 60);
+  assert.equal(arm.frames, 3, 'the rig gate must actually step the arm');
+  assert.equal(made, 1, 'and the mesh is created once, then updated in place');
+  assert.equal(arm.active(), true, 'so the very next draw call has something to draw');
+  assert.notEqual(arm.draw({ clientWidth: 320, clientHeight: 200 }), false,
+    'and draw() no longer refuses');
+  assert.equal(sprites, 1, 'the offscreen first-person pass ran');
+  assert.equal(composites, 1, 'and it was composited over the scene');
+});
+
+test('MW-D9f: the rig gates the step on ready() and the draw on active()', () => {
+  const rig = rd('src/combat/weaponRig.js');
+  assert.match(rig, /if \(!paralyzed && fpArm\.ready\(\)\) fpArm\.update\(dt\);/,
+    'the per-frame step rides ready()');
+  assert.ok(!/fpArm\.active\(\)\) fpArm\.update/.test(rig),
+    'and never active(), which cannot be true until update has already run');
+  assert.match(rig, /if \(fpArm\.active\(\)\) \{ fpArm\.draw\(c\); return; \}/,
+    'while the draw still rides active() - the mesh term is a DRAW term');
+
+  // ready() must not require the mesh, or the deadlock comes straight back.
+  const src = rd('src/combat/fpArm.js');
+  assert.match(src, /const ready = \(\) => !!\(built && built\.ok && state && renderer\);/,
+    'ready() is update()\'s own requirements - no mesh term, no camera term');
+});
