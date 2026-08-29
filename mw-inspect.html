@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Morrowind data inspector</title>
+<style>
+  :root { color-scheme: dark; --bg:#14120f; --fg:#e8e0d0; --dim:#9a9083; --line:#3a342c;
+          --ok:#7fb069; --bad:#d1495b; --warn:#e0a458; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.55 ui-monospace,Menlo,Consolas,monospace; }
+  main { max-width:min(100%,900px); margin:0 auto; padding:24px 18px 64px; }
+  h1 { font-size:20px; margin:0 0 4px; letter-spacing:.02em; }
+  h2 { font-size:15px; margin:28px 0 8px; color:var(--fg); border-bottom:1px solid var(--line); padding-bottom:5px; }
+  p.lede { color:var(--dim); margin:0 0 20px; max-width:70ch; }
+  #drop { border:1px dashed var(--line); border-radius:8px; padding:22px; text-align:center; color:var(--dim);
+          background:#191712; cursor:pointer; }
+  #drop.over { border-color:var(--warn); color:var(--fg); }
+  #drop input { display:none; }
+  table { border-collapse:collapse; width:100%; margin:6px 0 4px; }
+  td,th { text-align:left; padding:4px 10px 4px 0; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--dim); font-weight:normal; }
+  .ok{color:var(--ok)} .bad{color:var(--bad)} .warn{color:var(--warn)} .dim{color:var(--dim)}
+  .note { color:var(--dim); font-size:13px; max-width:75ch; margin:6px 0 0; }
+  code { color:var(--warn); }
+  label { color:var(--dim); margin-right:14px; }
+  select { background:#191712; color:var(--fg); border:1px solid var(--line); padding:3px 6px; font:inherit; }
+  .err { color:var(--bad); white-space:pre-wrap; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Morrowind data inspector</h1>
+  <p class="lede">
+    Drop your <code>Morrowind.bsa</code> and <code>Morrowind.esm</code> here. This page reads them and tells
+    you what is actually inside &mdash; it draws nothing and it uploads nothing. Everything stays in this
+    browser tab. Close it and it is gone.
+  </p>
+
+  <div id="drop" tabindex="0" role="button">
+    <input type="file" id="file" multiple accept=".bsa,.esm">
+    drop files here, or click to choose
+  </div>
+  <div id="out"></div>
+
+  <p class="note" id="foot"></p>
+</main>
+
+<script type="module">
+import {
+  parseBsaIndex, readNifHeader, bodyParts, armReport, FP_SKELETONS, ARM_PARTS,
+} from '/src/tools/mwInspect.js';
+
+const out = document.getElementById('out');
+const drop = document.getElementById('drop');
+const input = document.getElementById('file');
+const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+
+let bsa = null;   // {bytes, index}
+let esm = null;   // {bytes, parts}
+// Errors are STATE, not a one-off insertion. They used to be written
+// straight into #out and then wiped by the very next render() - so a
+// corrupt archive flashed its reason and erased it. The live probe caught
+// that; the node tests could not have, because it is a defect in when the
+// DOM is rewritten rather than in what any function returns.
+let errors = [];
+
+drop.addEventListener('click', () => input.click());
+drop.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') input.click(); });
+input.addEventListener('change', () => take([...input.files]));
+for (const ev of ['dragenter', 'dragover']) {
+  drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over'); });
+}
+for (const ev of ['dragleave', 'drop']) {
+  drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('over'); });
+}
+drop.addEventListener('drop', (e) => take([...(e.dataTransfer?.files || [])]));
+
+async function take(files) {
+  errors = [];
+  for (const f of files) {
+    const bytes = new Uint8Array(await f.arrayBuffer());
+    try {
+      if (/\.bsa$/i.test(f.name)) bsa = { name: f.name, bytes, index: parseBsaIndex(bytes) };
+      else if (/\.esm$/i.test(f.name)) esm = { name: f.name, bytes, parts: bodyParts(bytes) };
+      else errors.push(`${f.name}: not a .bsa or .esm`);
+    } catch (err) {
+      errors.push(`${f.name}: ${err.message}`);
+    }
+  }
+  render();
+}
+
+function render() {
+  let h = '';
+
+  if (bsa) {
+    const have = new Set(bsa.index.files.map((f) => f.name));
+    h += `<h2>${esc(bsa.name)} &mdash; ${bsa.index.fileCount.toLocaleString()} files</h2>`;
+    h += '<table><tr><th>first-person skeleton</th><th>for</th><th></th></tr>';
+    for (const s of FP_SKELETONS) {
+      const present = have.has(s.path);
+      const ghost = /REVERTED/.test(s.who);
+      const cls = present ? (ghost ? 'warn' : 'ok') : (ghost ? 'dim' : 'bad');
+      const word = present ? 'present' : 'ABSENT';
+      h += `<tr><td><code>${esc(s.path)}</code></td><td class="dim">${esc(s.who)}</td>`
+        + `<td class="${cls}">${word}</td></tr>`;
+    }
+    h += '</table>';
+    const ghostPresent = have.has('meshes/base_anim.1st.nif');
+    h += `<p class="note">${ghostPresent
+      ? 'Note: <code>base_anim.1st.nif</code> IS in this archive. That is not the file OpenMW asks for '
+        + '(it wants <code>xbase_anim.1st.nif</code> for a male non-beast actor), so its presence does not '
+        + 'mean the old code would have worked &mdash; only that the name existed.'
+      : 'Note: <code>base_anim.1st.nif</code> is <b>not in this archive</b>. The reverted first-person rig '
+        + 'asked for exactly that file, which is why it never drew anything. This one line is the whole '
+        + 'reason this page exists.'}</p>`;
+
+    // header of whichever skeletons are actually here
+    const rows = [];
+    for (const s of FP_SKELETONS) {
+      if (!s.path.endsWith('.nif')) continue;
+      const f = bsa.index.files.find((x) => x.name === s.path);
+      if (!f) continue;
+      const hdr = readNifHeader(bsa.bytes.subarray(f.offset, f.offset + Math.min(f.size, 256)));
+      rows.push(hdr.ok
+        ? `<tr><td><code>${esc(s.path)}</code></td><td class="ok">${esc(hdr.magic)}</td>`
+          + `<td>v${esc(hdr.versionText)}</td><td class="dim">bool = ${hdr.boolBytes} bytes</td></tr>`
+        : `<tr><td><code>${esc(s.path)}</code></td><td class="bad" colspan="3">${esc(hdr.why)}</td></tr>`);
+    }
+    if (rows.length) {
+      h += '<h2>NIF headers</h2><table><tr><th>file</th><th>format</th><th>version</th><th></th></tr>'
+        + rows.join('') + '</table>';
+    }
+  }
+
+  if (esm) {
+    const parts = esm.parts;
+    const races = [...new Set(parts.filter((p) => p.skin && p.playable).map((p) => p.race))].sort();
+    const fp = parts.filter((p) => p.firstPerson).length;
+    h += `<h2>${esc(esm.name)} &mdash; ${parts.length.toLocaleString()} body records</h2>`;
+    h += `<p class="note">${fp.toLocaleString()} of them are first-person records &mdash; that is, their `
+      + '<b>record id ends in <code>1st</code></b>. That is what makes a part first-person; it is not a '
+      + 'filename with <code>.1st</code> spliced into it, which is what the reverted code looked for.</p>';
+    if (races.length) {
+      const sel = localStorage.getItem('mwi.race') || (races.includes('nord') ? 'nord' : races[0]);
+      const fem = localStorage.getItem('mwi.female') === '1';
+      h += '<p><label>race <select id="race">'
+        + races.map((r) => `<option${r === sel ? ' selected' : ''}>${esc(r)}</option>`).join('')
+        + '</select></label><label><input type="checkbox" id="fem"'
+        + (fem ? ' checked' : '') + '> female</label></p>';
+      h += '<table><tr><th>arm slot</th><th>first-person record</th><th>verdict</th></tr>';
+      for (const row of armReport(parts, sel, fem)) {
+        const cls = row.firstPerson ? 'ok' : row.thirdPersonFallback ? 'warn' : 'bad';
+        h += `<tr><td>${esc(row.slot)}</td>`
+          + `<td class="dim">${esc(row.firstPerson?.id || row.thirdPersonFallback?.id || '&mdash;')}</td>`
+          + `<td class="${cls}">${esc(row.verdict)}</td></tr>`;
+      }
+      h += '</table>';
+      h += `<p class="note">These four slots &mdash; ${ARM_PARTS.join(', ')} &mdash; are the only parts the `
+        + 'engine lets fall back to a third-person mesh when the <code>1st</code> record is missing. That is a '
+        + 'fallback rule, not the list of what gets drawn.</p>';
+    }
+  }
+
+  if (!bsa && !esm) h = '';
+  h = errors.map((e) => `<p class="err">${esc(e)}</p>`).join('') + h;
+  out.innerHTML = h;
+
+  const race = document.getElementById('race');
+  const fem = document.getElementById('fem');
+  if (race) race.addEventListener('change', () => { localStorage.setItem('mwi.race', race.value); render(); });
+  if (fem) fem.addEventListener('change', () => { localStorage.setItem('mwi.female', fem.checked ? '1' : '0'); render(); });
+
+  document.getElementById('foot').innerHTML = (bsa || esm)
+    ? 'Every rule this page applies is cited in <code>bible/02-Formats/Morrowind-Rules.md</code>. '
+      + 'It reports what is in your files; it makes no claim that anything will draw.'
+    : '';
+}
+</script>
+</body>
+</html>
