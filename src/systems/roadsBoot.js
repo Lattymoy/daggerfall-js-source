@@ -6,14 +6,37 @@
 // something decides to bake and hands the result to the world, which
 // is this module.
 //
-// ── WHY IT IS OFF BY DEFAULT ─────────────────────────────────────
+// ── THE SWITCH: OFF AT R6, ON SINCE R7 ───────────────────────────
 //
-// The bake is about twenty-six seconds at full Iliac Bay scale. That
-// is a fine price ONCE, for a player who asked for roads; it is not a
-// fine price silently, on someone's first boot, for a feature they did
-// not know existed. So the preference defaults false and the cost is
-// paid on the turn, not on arrival - and after the first time it is
-// paid at all, because the artifact is cached.
+// R6 shipped roads OFF by default, on the argument that a whole-map
+// bake was about twenty-six seconds: a fine price ONCE for a player
+// who asked, and not a fine price silently on a first boot for a
+// feature nobody mentioned. R7 REVERSED IT (Mac) - a player arriving
+// at the ENHANCED skin has asked, because that is what the skin is -
+// so PREF_DEFAULTS.roads is TRUE. What the reversal owes the player is
+// the bake being VISIBLE and PAID ONCE, which is what the progress
+// reporting and the cache below are for.
+//
+// This header said the opposite until 2026-08-29. R7 flipped the value
+// and flipped the pin with it, and left the PROSE - so the one file a
+// reader opens to learn what the default IS went on telling them the
+// retired answer, under a heading explaining why. roadsboot.test.js
+// now holds this header against PREF_DEFAULTS itself, both ways: flip
+// the preference back and it demands the opposite words, and deleting
+// a false sentence without writing the true one fails it too.
+//
+// The retired words were "the preference defaults false", under a
+// heading reading "WHY IT IS OFF BY DEFAULT". They are quoted here per
+// IN1 - a correction has to be able to write down what it retired -
+// and the pin strips quoted spans with flagSites' own rule rather than
+// growing a second copy of it.
+//
+// AND THE TWENTY-SIX SECONDS IS RETIRED TOO. RA1 took the router's
+// per-call allocation out and measured the same scale at 17.2s -> 2.3s;
+// re-measured 2026-08-29 on the reference fixture's own shape
+// (1000x500, 15,251 locations, 512 hubs) it is 3.2 seconds. R6's
+// argument was already being made with a number the port had stopped
+// paying.
 //
 // It lives in systems/uiPrefs.js rather than systems/settings.js for
 // that module's own stated reason: the settings store is DFU's
@@ -113,8 +136,8 @@ export async function roadsForWorld({
   }
 
   // inputs() is called lazily and ONLY here, so a cache hit never
-  // touches the readers - which is the whole point of the twenty-six
-  // seconds being paid once.
+  // touches the readers - which is the whole point of the bake being
+  // paid once.
   const runBake = bake ?? ((inp, prog) => bakeRoads({ ...inp, onProgress: prog }));
   const { network, fromCache, bytes, stats } =
     await loadOrBakeRoadsAsync(cached, () => runBake(inputs(), onProgress));

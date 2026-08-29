@@ -29,10 +29,14 @@ export const PREF_DEFAULTS = Object.freeze({
   // player arriving at the ENHANCED skin has asked, because that is
   // what the skin is. An enhancement nobody finds is not shipped.
   //
-  // What that argument owes the player is the twenty-six seconds being
-  // VISIBLE and PAID ONCE: the world host reports every bake phase on
-  // the boot status line, the artifact is cached from then on, and the
-  // Enhanced screen turns it off in one press.
+  // (RA1 then took that bake to seconds - 2.3s at full scale, 3.2s
+  // re-measured 2026-08-29 - so the argument R6 lost is now weaker
+  // still. The reversal stands on the skin, not on the clock.)
+  //
+  // What that argument owes the player is the bake being VISIBLE and
+  // PAID ONCE: the world host reports every bake phase on the boot
+  // status line, the artifact is cached from then on, and the Enhanced
+  // screen turns it off in one press.
   roads: true,
   // RA1 (Mac, 2026-08-28): THE ENHANCED SKY GETS ITS SWITCH. ES1 has
   // been the enhanced skin's default sky since it landed, but the
