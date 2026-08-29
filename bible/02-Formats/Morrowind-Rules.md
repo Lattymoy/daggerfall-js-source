@@ -4789,3 +4789,80 @@ port should implement - but as a NAMED DEFAULT with the reason written down,
 not as a property of the format. A Russian player's Morrowind.bsa would
 decode to mojibake bone names under a hardcoded win1252, and the failure mode
 would be "no bone matched" with nothing pointing at the cause.
+
+---
+
+# Part VI - OBSERVED ON RETAIL DATA (2026-08-29)
+
+The first entry in this document that is not read off source code. Mac ran
+mw-inspect.html against his own Morrowind.bsa and Morrowind.esm. Everything
+below is a fact about retail data, and where it contradicts something
+recorded above, the observation wins.
+
+## CORRECTION: `meshes/base_anim.1st.nif` IS in the retail archive
+
+MW-R1 recorded, under rule 6, that the reverted rig hardcoded
+`base_anim.1st.nif` and that this name "appears nowhere in that table", and
+its commit went further: "That alone would have failed the load on retail
+data."
+
+THE SECOND HALF WAS WRONG. The file is present in Morrowind.bsa and parses
+as a valid NetImmerse 4.0.0.2 NIF. The load SUCCEEDED. Rule 6 remains
+correct in what it actually says - the engine asks for `xbase_anim.1st.nif`
+for a male non-beast actor and never asks for the plain name - but the
+inference drawn from it, that the reverted rig died at the file load, is
+disproved.
+
+The real cause stands where MW8 put it: the base skeleton carries no body
+geometry, and the arms that were loaded afterwards were thrown away because
+only bindPart's `.skinned` half was kept. A wrong filename would have been
+the easier bug.
+
+WHAT THIS COSTS: any rule in this document whose evidence is "the engine
+does not ask for X" says nothing about whether X is in the archive, and
+nothing about what happens if you ask for it anyway. Four skeletons are
+present and parse - xbase_anim.1st.nif, base_anim_female.1st.nif,
+base_animkna.1st.nif and base_anim.1st.nif - all NetImmerse 4.0.0.2, all
+with 4-byte bools, which confirms the header and threshold rules of Part V
+against real files.
+
+`meshes/wolf/skin.1st.nif` is ABSENT, which is expected and benign: the
+werewolf skeleton ships with Bloodmoon, and only Morrowind.bsa was attached.
+
+## THE FINDING: retail gives a Nord male ONE first-person arm record
+
+Morrowind.esm carries 1,125 BODY records, 64 of them first-person (record id
+ending `1st`). For race `nord`, male, the four arm slots resolve:
+
+| slot | record | first-person? |
+|---|---|---|
+| hand | `b_n_nord_m_hands.1st` | YES |
+| wrist | `b_n_nord_m_wrist` | no - third-person fallback |
+| forearm | `b_n_nord_m_forearm` | no - third-person fallback |
+| upperarm | `b_n_nord_m_upper arm` | no - third-person fallback |
+
+THE FALLBACK IS THE MAIN PATH, NOT AN EDGE CASE. Rule 3 (npcanimation.cpp:
+1217-1253) lets exactly hand/wrist/forearm/upperarm fall back to their
+third-person mesh when the `1st` record is missing. On retail data three of
+those four slots take that path for a Nord male. A port that implements only
+the `1st` records - which is the obvious reading, and close to what MW7
+did - draws a pair of hands and nothing joining them to the player.
+
+Two further details visible in the same row, both fatal to the filename
+approach:
+
+- The hand record is `b_n_nord_m_hand**S**.1st` - PLURAL. MW7 spliced
+  `.1st` into the MODL path of a record found by slot, so whatever it built
+  came from the singular stem. The engine does not build names; it looks up
+  a record id.
+- `b_n_nord_m_upper arm` contains a SPACE. Any lookup that assumes record
+  ids are path-safe or token-safe breaks on the upper arm specifically.
+
+## What this section does NOT establish
+
+These are one player's files, one race and one sex. The arm coverage for
+other races, for females, and with Tribunal or Bloodmoon attached is
+unmeasured. The inspector reports whatever it is given, so widening this
+table costs nothing but attaching more archives and changing the dropdown -
+and until that is done, "three of four slots fall back" is a fact about
+nord/male and not yet a fact about Morrowind.
