@@ -177,11 +177,21 @@ test('A2 review: every townTalk overlay drop frees the occupant (the A1 death-pr
   // uploadTexture memoizes forever, so a window replaced or dropped
   // without dispose leaks its texture AND leaves a live cache key -
   // the exact A1 bug, one slot over. All four clear-points covered.
+  // THE FOUR CLEAR-POINTS BECAME ONE at the 2026-08-29 recursion fix
+  // (townTalk.dropOverlay), so this reads the seam and then checks that
+  // every drop still goes through it - which is strictly stronger than
+  // the four literals it replaces: those could only fail for the four
+  // sites they named, and a FIFTH drop added tomorrow passed them all.
   const t = src('src/scenes/townTalk.js');
-  assert.match(t, /if \(overlay && overlay !== win\) overlay\.dispose\?\.\(\);/, 'showOverlay frees what it replaces');
-  assert.match(t, /overlay\.dispose\?\.\(\); overlay = null; \}/, 'the font-less drop frees');
-  assert.match(t, /_onOverlayClosed = null;\n\s*overlay\.dispose\?\.\(\);/, 'the keydown close frees');
-  assert.match(t, /_onOverlayClosed = null; overlay\.dispose\?\.\(\); overlay = null; cb\?\.\(\);/, 'the pointerdown close frees');
+  const seam = t.match(/function dropOverlay\([\s\S]*?\n {2}}/)?.[0] ?? '';
+  assert.ok(seam.includes('win.dispose?.()'), 'the one drain frees the occupant');
+  assert.match(t, /outgoing\?\.dispose\?\.\(\);/, 'showOverlay frees what it replaces');
+  // Nothing else in the module may dispose the slot - a drop that
+  // sidesteps the seam is both a leak and a way back into the crash.
+  const strays = [...t.matchAll(/^.*\boverlay\??\.dispose\?\.\(\).*$/gm)].map((m) => m[0].trim());
+  assert.deepEqual(strays, [], `a drop bypasses dropOverlay:\n  ${strays.join('\n  ')}`);
+  for (const site of ['if (overlay?.done) dropOverlay();', 'dropOverlay(false)'])
+    assert.ok(t.includes(site), `a clear-point stopped going through the seam: ${site}`);
   // and the exterior window really exposes one
   assert.match(src('src/ui/exteriorAutomapWindow.js'), /dispose\(\) \{/);
 });

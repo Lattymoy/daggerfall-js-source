@@ -82,6 +82,27 @@ property no producer writes - so the enchanted paths were dead in
 the shipping game and green in CI. Build fixtures from the real
 producer, or assert the producer's own output.
 
+THE SLOT IS EMPTIED BEFORE THE OCCUPANT IS TOLD (from play,
+2026-08-29). A host slot that holds ONE thing - an overlay, a
+context, a live window - must be nulled BEFORE the thing in it is
+disposed, closed or notified, because a teardown runs the
+occupant's code and the occupant may ask the host to clear the
+slot. townTalk disposed first and cleared after, S40 had opened a
+door for exactly that callback (DFU's PopToHUD before
+RaiseSkills), and the re-entrant close read a slot still pointing
+at the window being disposed: fifty frames of
+closeOverlay -> onClose -> _close -> dispose -> closeOverlay, on
+EVERY close path of the rest window, off the live site. Clearing
+first makes the re-entrant call answer with the truth - the slot
+IS free - and it is the same law for a REPLACEMENT: put the
+successor in the slot before telling the outgoing occupant, so
+its identity guard sees the new one and leaves it alone. The
+occupant owes the other half: a close that dispatches a callback
+dispatches it ONCE, however many doors call it, so a window is
+safe to close from either side and no future host has to know the
+rule. Pin both halves against the other being broken, or the next
+window finds the half nobody fixed.
+
 ASYNC NEVER DROPS (17e). DFU is synchronous; where the port awaits,
 a request arriving mid-flight must be COALESCED, never discarded.
 refreshPaperDoll's boolean re-entrancy guard silently threw away
@@ -371,8 +392,8 @@ combat line numbers below are refreshed with it.
 - `src/ui/potionMakerWindow.js:24` - FLAGGED: DFU's ingredient buttons carry a tooltip and a stack-count
 - `src/ui/restWindow.js:2` - text-panel idiom (backgrounds FLAGGED pending art-name
 - `src/ui/restWindow.js:11` - FLAGGED: DFU's Update also closes on the TOGGLE BINDING - the key
-- `src/ui/restWindow.js:127` - FLAGGED, all three from OnPop/Update and all three belonging to
-- `src/ui/restWindow.js:401` - where classic counts DOWN. The backgrounds are still FLAGGED
+- `src/ui/restWindow.js:140` - FLAGGED, all three from OnPop/Update and all three belonging to
+- `src/ui/restWindow.js:414` - where classic counts DOWN. The backgrounds are still FLAGGED
 - `src/ui/spellbookWindow.js:104` - FLAGGED, idling loudly: the effect popup's body
 - `src/ui/spellbookWindow.js:931` - *  drawn as a flat bar in the panel's own brass - FLAGGED. */
 - `src/ui/tavernWindow.js:40` - FLAGGED, with the slices they wait on:

@@ -12,6 +12,7 @@ import {
   CANNOT_REST_MORE_THAN_99_HOURS_ID, PROMPT_MAX_CHARS, PROMPT_INITIAL,
 } from '../src/systems/restSession.js';
 import { RestWindow } from '../src/ui/restWindow.js';
+import { createTownTalk } from '../src/scenes/townTalk.js';   // the 2026-08-29 crash pins drive the real host
 import { restVitals, restFullyHealed, createRestDeps } from '../src/scenes/shared.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 import { LOCATION_TYPES } from '../src/formats/mapsFile.js';
@@ -1349,7 +1350,29 @@ test('S40: PopToHUD runs BEFORE RaiseSkills, so a rest-end level-up is not swall
     assert.match(src(f), /onClose: \(\) => \{ if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\); \},/, f);
   }
   // ...and townTalk grew that door, with the caller's identity guard.
-  assert.match(src('src/scenes/townTalk.js'), /closeOverlay\(win = null\) \{\n\s+if \(!overlay \|\| \(win && overlay !== win\)\) return false;/);
+  // The EMPTY-slot half of that guard moved into the one drain at the
+  // 2026-08-29 crash fix, so the door reads the identity and delegates
+  // the rest - asserted by BEHAVIOUR rather than by shape, which is
+  // what this pin was always about (the host must refuse to close a
+  // slot holding someone else's window, and must answer an empty one).
+  const tt = src('src/scenes/townTalk.js');
+  assert.match(tt, /closeOverlay\(win = null\) \{/, 'townTalk lost the PopToHUD door');
+  assert.match(tt, /if \(win && overlay !== win\) return false;/, 'the identity guard');
+  const host = createTownTalk({
+    renderer: { uploadTexture: () => ({}) }, canvas: { width: 640, height: 400 },
+    fetchBytes: async () => { throw new Error('this pin loads no ARENA2'); },
+    playerEntity: { name: 'T', stats: { personality: 50 }, skills: 30, skillUses: [] },
+    regionIndex: 0,
+  });
+  assert.equal(host.closeOverlay(), false, 'an empty slot reported a close');
+  const mine = { dispose() { this.disposed = true; } };
+  const theirs = {};
+  host.showOverlay(mine);
+  assert.equal(host.closeOverlay(theirs), false, "a window closed someone else's slot");
+  assert.equal(host.overlay, mine);
+  assert.equal(host.closeOverlay(mine), true);
+  assert.equal(mine.disposed, true);
+  assert.equal(host.overlay, null);
 });
 
 test('S40: the window owns the POINTER, so no host grabs look under it', () => {
@@ -1731,6 +1754,24 @@ test('S40/merge: a rest REPLACED in the slot still clears its flags', () => {
   assert.match(wm, /const mountInterior = \(w\) => \{\n\s+if \(!w\) return;\n\s+if \(interiorOverlay && interiorOverlay !== w\) interiorOverlay\.dispose\?\.\(\);/);
   assert.match(wm, /if \(mode === 'interior'\) \{ mountInterior\(win\); return true; \}/,
     'the quest box goes through it, not a raw assignment');
-  assert.match(src('src/scenes/townTalk.js'), /if \(overlay && overlay !== win\) overlay\.dispose\?\.\(\);/,
-    'townTalk has always had this shape - it is where the interior one came from');
+  // townTalk is where the interior seam came from, and it still frees
+  // what it replaces - but since the 2026-08-29 crash fix the SLOT
+  // holds the successor before the outgoing window is told, so an
+  // outgoing window that closes this slot from inside its own dispose
+  // finds the new occupant and leaves it alone. Read as behaviour,
+  // because that ordering is the whole point and a regex cannot see it.
+  const host = createTownTalk({
+    renderer: { uploadTexture: () => ({}) }, canvas: { width: 640, height: 400 },
+    fetchBytes: async () => { throw new Error('this pin loads no ARENA2'); },
+    playerEntity: { name: 'T', stats: { personality: 50 }, skills: 30, skillUses: [] },
+    regionIndex: 0,
+  });
+  let sawInSlot;
+  const outgoing = { dispose() { this.disposed = true; sawInSlot = host.overlay; } };
+  const successor = { isQuestBox: true };
+  host.showOverlay(outgoing);
+  host.showOverlay(successor);
+  assert.equal(outgoing.disposed, true, 'the replaced window leaked its textures');
+  assert.equal(sawInSlot, successor, 'the outgoing window was told while it still held the slot');
+  assert.equal(host.overlay, successor);
 });
