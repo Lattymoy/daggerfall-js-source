@@ -156,10 +156,15 @@ const zstr = (bytes, s, n) => {
   return latin1(bytes.subarray(s, e));
 };
 
-/** Morrowind's body-part slots, by BYDT index.
- *  components/esm3/loadbody.hpp MeshPart. */
-export const MW_BODY_PARTS = Object.freeze(['head', 'hair', 'neck', 'chest', 'groin', 'hand',
-  'wrist', 'forearm', 'upperarm', 'foot', 'ankle', 'knee', 'upperleg', 'clavicle', 'tail']);
+/** Morrowind's body-part slots, by BYDT index
+ *  (components/esm3/loadbody.hpp MeshPart). ONE HOME: the ESM reader owns
+ *  this table. The inspector carried its own copy while the format layer
+ *  was reverted out of the tree; now that the layer is back, a second
+ *  copy is exactly the duplicate-declaration the one-home audit exists to
+ *  catch - and it caught it. Re-exported so this module's own API is
+ *  unchanged for its page and its pins. */
+export { MW_BODY_PARTS } from '../formats/mwEsmFile.js';
+import { MW_BODY_PARTS } from '../formats/mwEsmFile.js';
 
 /** The four parts allowed to fall back to a third-person mesh when the
  *  first-person record is missing (rule 3 / npcanimation.cpp:1217-1253).

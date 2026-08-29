@@ -17,7 +17,8 @@
     "trademodes": "node tools/tradeModeProbe.mjs",
     "peoplegate": "node tools/peopleGateProbe.mjs",
     "deeds": "node tools/deedProbe.mjs",
-    "mwinspect": "node tools/mwInspectProbe.mjs"
+    "mwinspect": "node tools/mwInspectProbe.mjs",
+    "mwviewer": "node tools/mwViewerProbe.mjs"
   },
   "devDependencies": {
     "playwright": "^1.56.0",
