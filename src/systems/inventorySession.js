@@ -57,10 +57,10 @@ export const hasCart = (items = []) =>
 export const TRANSPORT_HORSE_TEMPLATE = 94;
 
 /** PX21a: the same question for a mount. There was no law for this
- *  because nothing asked before - roadTravel takes `hasHorse` as an
+ *  because nothing asked before - the travel law takes `hasHorse` as an
  *  OPTION its caller works out, and the pack had no place for a horse
- *  at all. One home for both, so the pack, the road and anything after
- *  them read the same answer. */
+ *  at all. One home for both, so the pack, the travel card and anything
+ *  after them read the same answer. */
 export const hasHorse = (items = []) =>
   (items ?? []).some((it) => it?.templateIndex === TRANSPORT_HORSE_TEMPLATE);
 

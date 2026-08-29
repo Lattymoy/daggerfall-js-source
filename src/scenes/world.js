@@ -113,11 +113,6 @@ import { getBool, getInt } from '../systems/settings.js';   // U31: StartCellX/Y
 import { layoutNature } from '../world/terrainNature.js';
 import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, generateSamples } from '../world/terrainSampler.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
-import { paintRoadTiles, isRoadTile } from '../world/roadTiles.js';   // R5 (enhanced): roads on the ground; FS1: the tile under the player
-import { roadsForWorld, bakeInputs } from '../systems/roadsBoot.js';   // R6
-import { traceNetwork } from '../systems/roadBake.js';   // R3W: the map layer's chains
-import { bakeRoadsOffThread } from '../systems/roadBakeClient.js';   // RA1: the bake in a Worker
-import { storeDerived, loadDerived } from './dataSource.js';
 import { getPref } from '../systems/uiPrefs.js';
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
@@ -189,7 +184,7 @@ import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseL
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { actionOf, held, moveHeld, anyMove, swallowBrowserKey } from '../ui/input.js';   // I2: the rebindable registry
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin
-import { isEnhanced } from '../systems/uiSkin.js';   // R3W: roads are an enhanced-only addition
+import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: the mills are an enhanced-only addition
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -248,44 +243,6 @@ export async function bootWorld(canvas, renderer, params, status) {
       const p = longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude);
       locationIndex.set(`${p.x},${p.y}`, loc);
     }
-  }
-
-  // R6: the road network, once. Cached after the first bake, so the
-  // half minute is paid on the turn rather than on arrival. NEVER
-  // TRAPS - roads decorate a game that ran without them, so a bake
-  // that throws costs the roads and nothing else.
-  //
-  // RA1: the bake runs OFF this thread (roadBakeClient). It used to
-  // run synchronously right here, and R7's on-by-default meant every
-  // first boot parked the main thread for the whole grind - the
-  // status line below never even painted, so a healthy bake read as
-  // a hang ("stuck on baking roads"). In a Worker the page keeps
-  // painting and every progress report lands.
-  let roadNetwork = null;
-  let _roadChains = null;   // R3W: traceNetwork's output, memoised for the map
-  try {
-    // R3W: gated on the SKIN as well as the preference. Roads are an
-    // enhanced-mode addition - classic Daggerfall has none - and the
-    // preference alone let a classic session bake the network and
-    // paint tracks across its terrain, which is a parity break in the
-    // one direction this port never takes.
-    if (isEnhanced() && getPref('roads')) {
-      status('baking roads');
-      const r = await roadsForWorld({
-        enabled: true,
-        load: (k) => loadDerived(k),
-        save: (k, b) => storeDerived(k, b),
-        inputs: () => bakeInputs(woods, maps, locationIndex),
-        onProgress: ({ phase, done, total }) =>
-          status(`baking roads: ${phase} ${done}/${total}`),
-        bake: bakeRoadsOffThread,
-      });
-      roadNetwork = r.network;
-      console.log(`[roads] ${r.fromCache ? 'from cache' : 'baked'}`, r.stats ?? '');
-    }
-  } catch (e) {
-    console.warn('[roads] unavailable this session', e);
-    roadNetwork = null;
   }
 
   // U31 / THE CLASSIC START. StartGameBehaviour (:371-401) does not
@@ -435,19 +392,6 @@ export async function bootWorld(canvas, renderer, params, status) {
       locationRect = setLocationTiles(dfLocation, maps, blocks, tilemap);
       blendLocationTerrain(samples, avg, locationRect);
     }
-    // R5: the road goes down AFTER the location and BEFORE marching
-    // squares, using assignTiles' own skip-non-zero rule - so a town's
-    // stamped ground wins inside its rect, the road fills the ground
-    // outside it, and the 1:1 tile law is not touched. roadNetwork is
-    // null until R6's bake has run, and null paints nothing.
-    //
-    // A MODULE BINDING, NOT `this`. The first version of this line read
-    // `this._roadNetwork` - and buildPixel is a plain function in an ES
-    // module, so `this` is undefined and the property access threw a
-    // TypeError on EVERY streamed pixel before `?? null` could help.
-    // Nothing caught it: no node test drives buildPixel (it wants GL
-    // and ARENA2) and the build only checks syntax.
-    paintRoadTiles(tilemap, roadNetwork, px, py);
     assignTiles(generateTileData(samples, px, py), tilemap, true);
     const climate = getWorldClimateSettings(maps.getClimateIndex(px, py));
     const climateBase = climate.climateType;
@@ -507,7 +451,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // WM2d: THE MILLS THIS BLOCK STANDS. Classic Daggerfall places
         // none, so rmbLayout adds them; the tower joins the static model
         // list and only the SAIL needs a matrix per frame. Enhanced skin
-        // only, the same door the roads take. The phase is keyed on the
+        // only, the same door the enhanced skin owns. The phase is keyed on the
         // MAP PIXEL plus the mill's local position, never its world
         // position - the floating origin shifts the world under the
         // player and a world-keyed phase would re-seed every mill in
@@ -1977,12 +1921,12 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  A terrain tile is 2 x WorldMapTileDim = 256 world units - the same
    *  step locationWorldRect walks when it shifts a pixel corner by the
    *  location's tile origin (streamingWorld.js:60-61). Tile ROWS rise
-   *  with z, which is why row 127 is north and row 0 south, exactly as
-   *  roadTiles' header derives it from generateTileData.
+   *  with z, which is why row 127 is north and row 0 south, derived
+   *  from generateTileData.
    *
    *  Answers null off the built world - a pixel still streaming has no
-   *  tilemap, and a caller must read that as "no information", not as
-   *  "not a road". */
+   *  tilemap, and a caller must read that as "no information" rather
+   *  than as any particular tile. */
   const TERRAIN_TILE_WORLD = 2 * TERRAIN_TILE_DIM;
   const playerGroundTile = () => {
     const wc = state.worldCoords(walkMode ? player.pos : cam.pos);
@@ -2479,20 +2423,6 @@ export async function bootWorld(canvas, renderer, params, status) {
   function buildTravelMapWindow(extra = {}) {
     return createTravelMapWindow({
       maps, mapDict, woods,
-      // R3W (2026-08-28): the baked network, TRACED, for the enhanced
-      // map's road layer. It used to be a closure-local with exactly
-      // one consumer - paintRoadTiles on the ground - so the map half
-      // of R1-R3 had nothing to draw even after it was written.
-      // Traced lazily and once: the window asks on its first scene
-      // build, and a host that baked nothing answers null.
-      roads: () => {
-        if (!roadNetwork) return null;
-        _roadChains ??= traceNetwork(roadNetwork);
-        return _roadChains;
-      },
-      // R4W: the router searches the NETWORK, not the traced chains -
-      // it needs roadKindAt per pixel, which a polyline cannot answer.
-      roadNetwork: () => roadNetwork,
       getPlayerPixel: playerTravelPixel,
       getClimateIndex: (x, yy) => maps.getClimateIndex(x, yy),
       // TP1: the popup's GuildManager.FastTravel fold reads the
@@ -4343,9 +4273,10 @@ export async function bootWorld(canvas, renderer, params, status) {
             inside: false,
             winter: season === SEASON.Winter,
             climateIndex: maps.getClimateIndex(_p.x, _p.y),
-            // FS1: a road underfoot rings like stone. pickFootstepSet has
-            // carried this arm since the FS-slice with nothing to feed it.
-            onExteriorPath: isRoadTile(playerGroundTile() ?? 0),
+            // FS1's onExteriorPath arm has nothing to feed it again:
+            // the road system it was wired to is gone, and classic
+            // Daggerfall has no path underfoot to read.
+            onExteriorPath: false,
           }));
           if (_step) audio.playOneShot(_step.clip, _step.volume);
         }
