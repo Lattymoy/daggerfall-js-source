@@ -721,3 +721,36 @@ test('MW-D7: the draw mapper is fixed over the WHOLE clip, not per frame', async
   assert.ok(each.some((b) => b.maxX < union.maxX - 1e-3),
     'and it is genuinely WIDER than some frames - a per-frame mapper would rescale those and hide the motion');
 });
+
+test('MW-D9d: NiCamera parses, and the records after it stay in sync', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { parseNif } = await import('../src/formats/mwNifFile.js');
+  const { buildSkeleton } = await import('../src/formats/mwSkin.js');
+  const bytes = new Uint8Array(readFileSync(new URL('./fixtures/mw/armskelcam.nif', import.meta.url)));
+
+  // REPORTED LIVE (Mac, MW-D9): `skeleton: NIF: unimplemented record type
+  // "NiCamera" (record 17)`. Retail first-person skeletons carry one -
+  // rule 54's camera tracks a node named "Camera" - and an unimplemented
+  // type is FATAL to a 4.0.0.2 NIF, because there are no per-record
+  // sizes and so nothing can be skipped. One missing reader cost the
+  // whole file.
+  const nif = parseNif(bytes);
+  const cam = nif.records.find((r) => r.type === 'NiCamera');
+  assert.ok(cam, 'the camera record is read rather than throwing');
+  assert.equal(cam.name, 'Camera');
+  // The values, so a WRONG-BUT-SAME-LENGTH layout is caught too.
+  assert.equal(cam.frustum.left, -0.5);
+  assert.equal(cam.frustum.right, 0.5);
+  assert.equal(cam.frustum.far, 1000);
+  assert.equal(cam.viewport.right, 1);
+  assert.equal(cam.lodAdjust, 1);
+
+  // AND THE REAL TEST: the fixture puts a bone AFTER the camera, so a
+  // wrong field count desyncs the stream and this bone comes out wrong
+  // or the parse dies. A camera written last would hide that entirely.
+  const skel = buildSkeleton(nif);
+  assert.ok(skel.byName.has('bip01 spine1'),
+    'the record after the camera is still readable - the field count is right');
+  assert.ok(skel.byName.has('weapon bone') && skel.byName.has('weapon bone left'),
+    'and everything before it survived too');
+});
