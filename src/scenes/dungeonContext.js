@@ -108,7 +108,9 @@ import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost, effectSchool, EFFECT_COST_TABLE } from '../systems/spellcost.js';
 import { snapshotPlayer, restorePlayer, composeSessionState, restoreSessionState , copyEffectEntry } from '../systems/save.js';   // B4: the ONE quest+talk composer
 import { saveSlot, loadSlot, quickLoadSlot, QUICK_SAVE_NAME, requestScreenshot } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave; SS1: the shot arms here, the HOST loop delivers it
-import { bindQuestFoeHost } from './questFoeHost.js';   // B1: quest foes ride this pool
+import { bindQuestFoeHost, placeFoeEnv, entityOccupancy } from './questFoeHost.js';   // B1: quest foes ride this pool   // RE1: the placement ring's env over this host's collider
+import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // RE1: FoeSpawner.PlaceFoeFreely, the one home
+import { fieldOfView } from '../ui/viewSettings.js';   // RE1: the ring needs the view cone the LOS arm avoids
 import { dungeonKey } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4: the shared PlayRandomlyIfPlayerNear pass
@@ -1061,22 +1063,56 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // the same chain as the load loop, at the classic minimum distance
   // from the player (CreateFoeSpawner's placement compressed to the
   // eight compass points, floor-landed, nearest workable first).
-  async function _spawnEncounter({ mobileType, minDistance }) {
+  /** RE1: DFU's spawner is a MonoBehaviour that retries every frame
+   *  for free; a bounded loop is the port's own call, so a spawn that
+   *  cannot find a spot in a sealed room does not spin. The same bound
+   *  the enchantment stander uses. */
+  const ENCOUNTER_PLACE_ATTEMPTS = 12;
+  /** RE1: the rest interruption, stood through DFU's own placement.
+   *
+   *  This used to walk EIGHT COMPASS POINTS at minDistance and take
+   *  the first with a floor under it, so the thing that woke you
+   *  arrived due north unless north was blocked, could stand inside a
+   *  wall the ray never tested, and could share a spot with a foe
+   *  already there. PlayerEntity's arm goes out through
+   *  CreateFoeSpawner - PlaceFoeFreely - like every other spawn.
+   *
+   *  ITS FLAG IS FALSE (PlayerEntity.cs:610), alone among the three
+   *  encounter arms, and that is the one you feel: with the check set
+   *  the foe is placed just outside your view, and cleared it takes
+   *  any bearing in the circle. DFU's own comment is "Don't care about
+   *  player's field of view (e.g. at rest)" - a monster that finds you
+   *  asleep is allowed to be standing over you when you wake. The band
+   *  and the flag both ride in on the hit; encounters.js carries them
+   *  per arm because they are the spawner's arguments. */
+  async function _spawnEncounter({ mobileType, minDistance, maxDistance, lineOfSightCheck }) {
     const feet = lastPlayerFeet;
     if (!feet || !foeDeps) return;
-    const basics = ENEMY_BASICS[mobileType];
-    if (!basics) return;
-    for (let i = 0; i < 8; i++) {
-      const a = (i * Math.PI) / 4;
-      const x = feet[0] + Math.sin(a) * minDistance;
-      const z = feet[2] + Math.cos(a) * minDistance;
-      const landed = foeDeps.floorLanding(collider, [x, feet[1] + 1.5, z]);
-      if (!landed || Math.abs(landed[1] - feet[1]) > 6) continue;
-      // NT2 (F210): no ad-hoc roll - buildFoeAt resolves an unspecified
-      // gender through GetTextureArchive's own DFRandom arm.
-      await buildFoeAt({ mobileType, gender: 'unspecified', x: landed[0], y: landed[1], z: landed[2], spawnDistanceType: 0 }, false);
-      return;
+    if (!ENEMY_BASICS[mobileType]) return;
+    const env = placeFoeEnv({
+      collider,
+      // the cast origin is the controller centre, as every other
+      // consumer of the ring has it
+      playerFeet: [feet[0], feet[1] + 0.9, feet[2]],
+      playerYawRad: _motorYaw,
+      fovDegrees: fieldOfView() * 180 / Math.PI,   // fieldOfView() answers RADIANS
+      isOccupied: entityOccupancy((f) => f.ai?.feet, () => foes, feet),
+    });
+    let spot = null;
+    for (let i = 0; i < ENCOUNTER_PLACE_ATTEMPTS && !spot; i++) {
+      spot = placeFoeFreely(env, { minDistance, maxDistance, lineOfSightCheck });
     }
+    if (!spot) return;
+    // FinalizeFoe (FoeSpawner.cs:210-226): a flier hangs 1.5 above the
+    // test point; a walker lands through the build chain's own floor.
+    const fly = (ENEMY_BASICS[mobileType].behaviour ?? 'General') === 'Flying';
+    // NT2 (F210): no ad-hoc roll - buildFoeAt resolves an unspecified
+    // gender through GetTextureArchive's own DFRandom arm.
+    const f = await buildFoeAt({
+      mobileType, gender: 'unspecified',
+      x: spot.x, y: fly ? spot.y + 1.5 : spot.y, z: spot.z, spawnDistanceType: 0,
+    }, false);
+    if (f?.ai) f.ai.yaw = Math.atan2(feet[0] - spot.x, feet[2] - spot.z);   // LookAt player
   }
   /** The rest window's clock jump for THIS host: the world minutes
    *  plus IntermittentEnemySpawn's catch-up loop, which is a dungeon

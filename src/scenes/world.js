@@ -1170,16 +1170,17 @@ export async function bootWorld(canvas, renderer, params, status) {
         playerLevel: playerEntity.level,
       });
       if (hit) {
-        // eight compass points at the classic distance, terrain-landed
-        for (let d = 0; d < 8; d++) {
-          const a = (d * Math.PI) / 4;
-          const x = playerFeet[0] + Math.sin(a) * hit.minDistance;
-          const z = playerFeet[2] + Math.cos(a) * hit.minDistance;
-          const down = collider.raycast([x, playerFeet[1] + 20, z], [0, -1, 0], 60);
-          if (!Number.isFinite(down)) continue;
-          exteriorFoes.spawnFoe(hit.mobileType, [x, playerFeet[1] + 20 - down, z]).catch(() => {});
-          break;
-        }
+        // RE1: DFU's own placement. This used to walk eight compass
+        // points at minDistance and take the first with ground under
+        // it - so an encounter arrived due NORTH of the player unless
+        // north was blocked, could stand inside a wall the ray never
+        // tested, and could share a spot with something already
+        // standing there. PlayerEntity's arms all go out through
+        // CreateFoeSpawner, which is PlaceFoeFreely, which is the
+        // function the quest arm and the enchantment arms already use.
+        // The band and the line-of-sight flag ride in on the hit -
+        // they are the spawner's arguments and differ per arm.
+        _standEncounterFoe(hit, playerFeet);
         break;
       }
       // PlayerEntity.Update:498-511 - the SAME minute's second arm,
@@ -1435,6 +1436,34 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  MonoBehaviour running for free, and a spawn that cannot find a
    *  spot in a sealed corridor must not spin here. */
   const LOOSE_FOE_PLACE_ATTEMPTS = 12;
+  /** RE1: an intermittent encounter, stood through DFU's placement.
+   *  Separate from _standLooseFoe because the two differ in what they
+   *  are: a loose foe is summoned AT the player and takes the enchant
+   *  ctx's live pool, an encounter is rolled by the world clock, is
+   *  always exterior (the dungeon arm is dungeonContext's), and
+   *  carries its own band. Same law, same retry rule, different
+   *  arguments - which is exactly how DFU's call sites differ. */
+  const _standEncounterFoe = (hit, feet) => {
+    const env = placeFoeEnv({
+      collider,
+      playerFeet: [feet[0], feet[1] + 0.9, feet[2]],
+      playerYawRad: cam.yaw,
+      fovDegrees: fieldOfView() * 180 / Math.PI,
+      isOccupied: entityOccupancy((f) => f.ai?.feet, () => exteriorFoePool(), feet),
+    });
+    let spot = null;
+    for (let i = 0; i < LOOSE_FOE_PLACE_ATTEMPTS && !spot; i++) {
+      spot = placeFoeFreely(env, {
+        minDistance: hit.minDistance, maxDistance: hit.maxDistance,
+        lineOfSightCheck: hit.lineOfSightCheck,
+      });
+    }
+    if (!spot) return null;
+    const fly = (ENEMY_BASICS[hit.mobileType]?.behaviour ?? 'General') === 'Flying';
+    return exteriorFoes.spawnFoe(hit.mobileType, [spot.x, fly ? spot.y + 1.5 : spot.y, spot.z], {
+      yaw: Math.atan2(feet[0] - spot.x, feet[2] - spot.z),   // LookAt player
+    }).catch(() => null);
+  };
   const _standLooseFoe = (mobileType, { allied = false, lineOfSightCheck = true } = {}) => {
     const mode = _mode();
     // Interiors have no foe pool to stand one in, so they still refuse

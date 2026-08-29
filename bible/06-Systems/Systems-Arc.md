@@ -4712,3 +4712,58 @@ the sentence IN1 just deleted was doing.
 Pins: 8 in `test/flagsites.test.js`. Campaign: 12 mutants, 12 killed -
 including the unbounded span that swallowed a real flag, pinned with
 the `talkMacros` shape that caught it.
+
+## RE1 - THE RANDOM ENCOUNTER STANDS WHERE DFU STANDS IT (2026-08-29)
+
+Every random-spawn arm in `PlayerEntity` goes out through
+`GameObjectHelper.CreateFoeSpawner`, which is
+`FoeSpawner.PlaceFoeFreely`: a bearing chosen against the field of
+view, backed off whatever the ray hits by a separation the surface
+angle decides, on a floor found below, in space nothing already
+occupies.
+
+Both port hosts instead walked **eight compass points** at
+`minDistance` and took the first with ground under it. That is three
+wrongs at once:
+
+- the foe arrives **due north** of the player unless north is blocked -
+  the loop starts at bearing 0 and breaks on the first hit;
+- it can stand **inside a wall**: nothing tested the space, only the
+  ground beneath it;
+- it can **share a spot** with a foe already standing there.
+
+SD1 made the law consumable from a host and added the arm this needed.
+RE1 carries the call sites' arguments as data, because **the three
+encounter arms do not pass the same things**:
+
+| arm | min | max | LOS |
+|---|---|---|---|
+| location night (`PlayerEntity.cs:574`) | 10 | 20 | true |
+| wilderness (`:594`) | 10 | 20 | true |
+| **dungeon rest (`:610`)** | 8 | 20 | **false** |
+| SpawnCityGuards (`:687`) | 12.8 | 51.2 | true |
+
+The maximum is `CreateFoeSpawner`'s own default wherever the call site
+does not pass one, which is why it is 20 three times and not
+`PlaceFoeFreely`'s signature 5.
+
+**The dungeon arm alone clears the line-of-sight check, and it is the
+one a player feels.** Set, the foe is placed just outside your view -
+you hear it before you see it. Cleared, it takes any bearing in the
+circle, and DFU's own comment says why: *"Don't care about player's
+field of view (e.g. at rest)"*. A monster that finds you asleep in a
+dungeon is allowed to be standing over you when you wake. The port had
+no such distinction to lose, because it had no bearing law at all.
+
+`SpawnCityGuards` is carried in the table and **not wired**. The port
+stands guards through the street-person pool - `cityGuards`'
+`spawnGuardAt` takes a person's own position and facing - which is a
+different placement problem from this ring. The row exists so the table
+is the whole call-site list and a reader can see what is not wired,
+rather than the row quietly not being there.
+
+Pins: 6 in `test/encounterplace.test.js`. Campaign: 22 mutants, 22
+killed, after one survivor: the dungeon host's **flier lift** had no
+pin, though the exterior one did. FinalizeFoe raises a flying foe 1.5
+above the test point, and a bat woken at rest was standing on the floor
+with nothing to say so.

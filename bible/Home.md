@@ -246,13 +246,13 @@ combat line numbers below are refreshed with it.
 - `src/scenes/arrestFlow.js:199` - SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
 - `src/scenes/arrestFlow.js:267` - FLAGGED, still owed to their own slices: PreventEnemySpawns across the
 - `src/scenes/cityGuards.js:27` - FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
-- `src/scenes/dungeonContext.js:250` - the chain lives, the motion is INTERIM (loud) until flats can tween.
-- `src/scenes/dungeonContext.js:767` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:1298` - FS1 - FLAGGED (THE FOUR HOSTS RULE): THE ENCHANT CTX IS NOT
-- `src/scenes/dungeonContext.js:1333` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/dungeonContext.js:1369` - onTeleport INTERIM shape). Absent, the engine's dispatch
-- `src/scenes/dungeonContext.js:3177` - PX3 FLAGGED: questMessages - the dungeon quest mount is
-- `src/scenes/dungeonContext.js:3248` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
+- `src/scenes/dungeonContext.js:252` - the chain lives, the motion is INTERIM (loud) until flats can tween.
+- `src/scenes/dungeonContext.js:769` - index into the 18 careers) or the INTERIM default Warrior (16,
+- `src/scenes/dungeonContext.js:1334` - FS1 - FLAGGED (THE FOUR HOSTS RULE): THE ENCHANT CTX IS NOT
+- `src/scenes/dungeonContext.js:1369` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/dungeonContext.js:1405` - onTeleport INTERIM shape). Absent, the engine's dispatch
+- `src/scenes/dungeonContext.js:3213` - PX3 FLAGGED: questMessages - the dungeon quest mount is
+- `src/scenes/dungeonContext.js:3284` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
 - `src/scenes/exterior.js:586` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:592` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:829` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
@@ -264,9 +264,9 @@ combat line numbers below are refreshed with it.
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
 - `src/scenes/world.js:909` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/world.js:915` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:2944` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:3724` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:4639` - building doors are the E-enter seam, not bashables - FLAGGED
+- `src/scenes/world.js:2973` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:3753` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:4668` - building doors are the E-enter seam, not bashables - FLAGGED
 - `src/scenes/worldModes.js:807` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
 - `src/scenes/worldModes.js:944` - FLAGGED to the crime arc, as the Ledger records.
 - `src/scenes/worldModes.js:1013` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
@@ -313,7 +313,8 @@ combat line numbers below are refreshed with it.
 - `src/systems/effects.js:1461` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
 - `src/systems/enchantments.js:151` - had been FLAGGED at its own site since S4c - "a magic item still
 - `src/systems/enchantments.js:679` - a MagicRound-FLAGGED row's is the payload callback :1767
-- `src/systems/encounters.js:221` - * STILL FLAGGED: the FoeSpawner sweep (:721-728) pends quest spawners
+- `src/systems/encounters.js:79` - :687 - SpawnCityGuards, a WIDE band and 2..5 of them. FLAGGED: the
+- `src/systems/encounters.js:258` - * STILL FLAGGED: the FoeSpawner sweep (:721-728) pends quest spawners
 - `src/systems/equip.js:284` - /** INTERIM starting equipment (chargen's starting-gear roll
 - `src/systems/factionRep.js:229` - *  pre-chargen INTERIM entity (characters/playerEntity.js) has no
 - `src/systems/guildServiceActions.js:189` - *  turning into a vampire or werebeast - FLAGGED: the port has no

@@ -48,6 +48,43 @@ export const MIN_DUNGEON_SPAWN_DISTANCE = 8;
 export const MIN_LOCATION_SPAWN_DISTANCE = 10;
 export const MIN_WILDERNESS_SPAWN_DISTANCE = 10;
 
+// RE1 - THE SPAWNER'S OWN ARGUMENTS.
+//
+// Every random-spawn arm in PlayerEntity goes out through
+// GameObjectHelper.CreateFoeSpawner, and the three encounter arms do
+// not pass the same things. The distance above is only the first of
+// them: the maximum is CreateFoeSpawner's own default (:1314), and the
+// LINE-OF-SIGHT flag is the first positional argument, which the
+// dungeon arm alone passes FALSE.
+//
+// That flag is the visible one. With it set, FoeSpawner.PlaceFoeFreely
+// puts the foe on a bearing just OUTSIDE the field of view - you hear
+// it before you see it. Cleared, it takes any bearing in the circle,
+// and DFU's own comment says why: "Don't care about player's field of
+// view (e.g. at rest)". A monster that finds you asleep in a dungeon
+// is allowed to be standing in front of you when you wake.
+//
+// The port had none of this. Both hosts walked EIGHT COMPASS POINTS at
+// minDistance and took the first with ground under it, so a wilderness
+// encounter arrived due north of the player unless north was blocked,
+// could stand inside a wall the ray never tested, and could share a
+// spot with something already there.
+export const SPAWNER_ARMS = Object.freeze({
+  // :574 - in a location rect at night
+  locationNight: Object.freeze({ minDistance: MIN_LOCATION_SPAWN_DISTANCE, maxDistance: 20, lineOfSightCheck: true }),
+  // :594 - the wilderness roll, day or night
+  wilderness: Object.freeze({ minDistance: MIN_WILDERNESS_SPAWN_DISTANCE, maxDistance: 20, lineOfSightCheck: true }),
+  // :610 - resting in a dungeon under an alert. THE ONE THAT PASSES FALSE.
+  dungeonRest: Object.freeze({ minDistance: MIN_DUNGEON_SPAWN_DISTANCE, maxDistance: 20, lineOfSightCheck: false }),
+  // :687 - SpawnCityGuards, a WIDE band and 2..5 of them. FLAGGED: the
+  // port stands guards through the street-person pool (cityGuards'
+  // spawnGuardAt takes a person's own position and facing), which is a
+  // different placement problem from this ring and is not folded in
+  // here. The row is carried so the table is the whole call site list
+  // and a reader can see what is not wired.
+  cityGuards: Object.freeze({ minDistance: 12.8, maxDistance: 51.2, lineOfSightCheck: true }),
+});
+
 /** The 144-minute cadence (:559): a spawn WINDOW opens on the game
  *  minutes where (minutes/12) % 12 == 0 - twelve minutes in every
  *  144, exactly classic's integer arithmetic. */
@@ -115,19 +152,19 @@ export function intermittentEnemySpawn(ctx, rolls = Math.random) {
     if (ctx.inLocationRect) {
       if ((timeOfDay < 360 || timeOfDay > 1080) && rollLocationNight(rolls()) === 0) {
         const mobileType = chooseRandomEnemy({ ...ctx, isDay: false }, rolls);
-        if (mobileType !== -1) return { mobileType, minDistance: MIN_LOCATION_SPAWN_DISTANCE };
+        if (mobileType !== -1) return { mobileType, ...SPAWNER_ARMS.locationNight };
       }
       return null;
     }
     const day = timeOfDay >= 360 && timeOfDay <= 1080;
     if (day ? rollWildernessDay(rolls()) !== 0 : rollWildernessNight(rolls()) !== 0) return null;
     const mobileType = chooseRandomEnemy({ ...ctx, isDay: day }, rolls);
-    return mobileType === -1 ? null : { mobileType, minDistance: MIN_WILDERNESS_SPAWN_DISTANCE };
+    return mobileType === -1 ? null : { mobileType, ...SPAWNER_ARMS.wilderness };
   }
   if (ctx.inDungeon && ctx.isResting) {
     if (rollDungeon(ctx.enemyAlertActive, rolls()) === 0) {
       const mobileType = chooseRandomEnemy(ctx, rolls);
-      if (mobileType !== -1) return { mobileType, minDistance: MIN_DUNGEON_SPAWN_DISTANCE };
+      if (mobileType !== -1) return { mobileType, ...SPAWNER_ARMS.dungeonRest };
     }
   }
   return null;
