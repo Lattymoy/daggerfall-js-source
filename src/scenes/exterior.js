@@ -415,6 +415,12 @@ export async function bootExterior(canvas, renderer, params, status) {
   // nothing. Its textures are classic (archive, record) pairs and load
   // out of the player's own ARENA2 like every other model's.
   const rotorMesh = windmills.length ? await getRotorMesh() : null;
+  // WM2c: say so either way. "I see no windmills" is not a report anyone
+  // can act on - it could be no mill placed, no rotor uploaded, or no
+  // wind to turn one - and this line separates the first case from the
+  // other two at a glance in the console.
+  console.log(`[windmills] ${windmills.length} placed in ${locationName}`
+    + (windmills.length ? '' : ' - no block here stands one'));
 
   // Load any flat archives not already fetched, then build one batch per
   // (archive, record) with its scaled billboard size.

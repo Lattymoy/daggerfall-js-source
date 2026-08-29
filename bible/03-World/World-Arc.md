@@ -1379,8 +1379,44 @@ a mill instead of mounted on it is what that looks like, and nobody in
 a container without ARENA2 can answer it. It is a one-look question,
 and it is the last one outstanding.
 
+### WM2c: "I'm not seeing any windmills" - and the reading that may be backwards (2026-08-29)
+
+Mac, on the deployed build: no windmills. The deploy is not the cause -
+the merge deployed successfully and the site serves it.
+
+**The suspect is WM2a's own reading of the data, and it is worth stating
+plainly because it may have been backwards.** WM2a found model 41600 in
+the SUBRECORDS of `FARMAA00/01/02/05/06/07` and concluded "our port
+already draws it, statically, and WM2 is animation rather than
+placement". But those files are `WorldData/*.RMB.json` FROM KAMER'S MOD,
+and a DFU WorldData override REPLACES a block. His mod's own description
+is *"Adds Windmills to some farms"*. So the 41600 in those files may be
+HIS addition, not Daggerfall's - in which case no classic block stands a
+mill, the port never places one, and a rotor wired to a placement that
+never happens cannot draw a thing. Every pin still passes, because every
+pin tests the rotor and none of them tests that a mill exists.
+
+That is the shape this arc keeps producing: a claim read off the mod and
+carried forward as though it were read off the game.
+
+**It is settled by BLOCKS.BSA and nothing else**, so
+`tools/windmillProbe.mjs` now walks every RMB block in it and reports
+which ones name a mill model, subrecords and misc-3d counted separately
+(WM2a's reading came from the subrecords). No hit means the placement is
+its own slice - porting what the WorldData overrides do, which is a
+different and larger job than turning a sail.
+
+Both hosts also now SAY what they found: `[windmills] N placed in
+<location>`, and on no mill, "no block here stands one". "I see no
+windmills" could be no mill placed, no rotor uploaded, or no wind to
+turn one, and that line separates the first from the other two in the
+console without anyone running node.
+
 ### What is still not settled
 
+- **Whether any classic block places a mill at all** - the WM2c question
+  above, and the one that decides whether the wiring can ever show
+  anything. Run the probe against a real ARENA2.
 - **Nobody has seen this.** No GL and no ARENA2 here, so every pin above
   is a source sweep. The sail's placement, its scale against the classic
   tower, whether classic 41600 already carries static sails that would

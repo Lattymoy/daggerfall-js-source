@@ -525,6 +525,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           // shifts the world under the player, and a phase that moved
           // with it would re-seed every mill on every origin shift.
           if (WINDMILL_MODELS[placed.modelIdNum]) {
+            if (!rotorMesh) console.log(`[windmills] first mill streamed in (model ${placed.modelIdNum})`);
             rotorMesh = await getRotorMesh();
             windmills.push({ local, state: { angle: rotorPhase(px + local[12], py + local[14]) } });
           }
