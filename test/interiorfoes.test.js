@@ -43,7 +43,12 @@ test('IF: the pool is the ONE factory, mounted with the interior collider - not 
   // and the two arms it does carry for the exterior are answered
   // honestly rather than left to misfire
   assert.match(WM, /currentPixelKey: \(\) => null,/, 'a host whose corpses never stream out of range');
-  assert.match(WM, /hitEffects: null,/, 'no blood pool in this host - RECORDED, not silently dropped');
+  // HE1 CLOSED THIS. The line asserted an absence that was recorded
+  // rather than silent - which was the right shape for the absence and
+  // the wrong thing to keep once the pool existed. The other three
+  // hosts have mounted it since AUDIT 24 wave 39; this one does now.
+  assert.match(WM, /hitEffects: interiorHitEffects,/, 'the blood pool, as the other three hosts have');
+  assert.doesNotMatch(WM, /hitEffects: null,/, 'and the recorded absence is deleted, not annotated');
 });
 
 test('IF: the pool lives exactly as long as the interior, and hands its batches back', () => {

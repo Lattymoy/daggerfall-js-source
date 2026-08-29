@@ -191,6 +191,13 @@ export function createHitEffects({ renderer, getTexture, uploadRecordFrame, onSp
         onSpawn?.(e.batch);
       }
     },
+    /** Retire everything, now. HE1 gave this its second caller and the
+     *  reason is worth writing down: worldModes keeps ONE pool across
+     *  every building the player walks through, so a splash still
+     *  animating when the door closes would be drawn in the NEXT
+     *  building, in the previous one's coordinates. DFU needs no
+     *  equivalent - its splashes are children of the scene objects
+     *  Unity destroys with the interior. */
     clear() { for (let i = live.length - 1; i >= 0; i--) retire(live[i]); },
     _live: live,
   };

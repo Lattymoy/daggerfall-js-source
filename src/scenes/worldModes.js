@@ -57,6 +57,7 @@ import { tallySkill, skillValue, SKILLS } from '../systems/skills.js';
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playPlayerVoice, playerPainVoice } from './hostCombat.js';   // AUDIT 21 hosts F8: the swing law, shared with the dungeon and the guards; IF: the pain cry
 import { createExteriorFoes } from './exteriorFoes.js';   // IF: the ONE foe-pool factory - see interiorFoes below
 import { createDroppedLoot } from './droppedLoot.js';   // ID1: the interior's own ground pile
+import { createHitEffects } from './hitEffects.js';   // HE1: EnemyBlood.ShowBloodSplash, the fourth host
 import { hitSoundFor } from '../systems/soundClips.js';   // IF: the blow that lands on the player indoors
 import { sensesContext } from './shared.js';   // IF: the one senses builder every pool is handed
 import { makeInView } from '../player/cameraView.js';   // IF: the swing's in-view test, the guards' own
@@ -402,6 +403,17 @@ export function createWorldModes(host) {
    *  NO pixel key - that argument is `TrackLooseObject`, and DFU puts
    *  it behind `!IsPlayerInside`. */
   const interiorDropped = createDroppedLoot({ renderer, getTexture, uploadRecordFrame });
+  /** HE1: EnemyBlood.ShowBloodSplash, in the fourth host. The other
+   *  three have mounted this pool since AUDIT 24 wave 39 and this one
+   *  passed `hitEffects: null` into its foe pool with the absence
+   *  RECORDED - so a blow landed inside a building drew no blood,
+   *  while the identical blow one step outside the door did. Nothing
+   *  new was needed: the factory takes the three handles this scope
+   *  already destructures from the pipeline.
+   *
+   *  ONE pool for every building, not one per interior context, so it
+   *  survives a door - which is why it needs the clear() below. */
+  const interiorHitEffects = createHitEffects({ renderer, getTexture, uploadRecordFrame });
   /** PlayerMotor.FindGroundPosition, on the interior's own collider -
    *  the world host's `dropFeet` in this host's frame. */
   const interiorDropFeet = () => {
@@ -555,12 +567,11 @@ export function createWorldModes(host) {
     return createExteriorFoes({
       renderer, collider: ctx.collider, fetchBytes, getTexture, uploadRecordFrame,
       playerEntity, audio,
-      // no hitEffects handle exists in this host - RECORDED, not
-      // silently dropped: a blow landed inside a building draws no
-      // blood splash until the interior grows the pool the dungeon
-      // and the exterior already have. Everything else the payload
-      // does (sound, knockback, death, corpse, loot) runs.
-      hitEffects: null,
+      // HE1: and the blood it draws. This was `null` with the absence
+      // recorded; the pool is mounted now, so the whole payload -
+      // sound, knockback, death, corpse, loot AND the splash - runs
+      // indoors exactly as it does in the other three hosts.
+      hitEffects: interiorHitEffects,
       playerWeaponSheathed: () => !!interiorWeapon.playerWeapon.sheathed,
       currentMinute: () => Math.floor(interiorTicker.classicMinutes),
       // exterior.js's arm, and for the same reason: a host whose
@@ -3332,6 +3343,7 @@ export function createWorldModes(host) {
     interiorFoes?.destroy?.();   // IF: OnTransitionExterior tears the interior's enemies down with it
     interiorFoes = null;
     interiorDropped.restorePiles(null);   // ID1: the piles are cached above; free their batches with the scene
+    interiorHitEffects.clear();   // HE1: a splash mid-animation must not follow the player into the next building
     interiorCtx = null;
     interiorBuilding = null;   // E2: the identity + overlay leave with the interior
     exteriorDoor = null;       // IS1: ...and the way back in with them
@@ -3848,6 +3860,13 @@ export function createWorldModes(host) {
     interiorArrows.draw(renderer, interiorCtx.texRemap);
     interiorCtx.flatAnims.tick(dt);   // FA1
     renderer.drawBillboards(interiorCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
+    // HE1: the blood, on the same axis and the same call the exterior
+    // host makes for its own pool.
+    interiorHitEffects.tick(dt);
+    {
+      const _blood = interiorHitEffects.batches();
+      if (_blood.length) renderer.drawBillboards(_blood, camRight, new Float32Array([0, 1, 0]));
+    }
     // ID1: the player's own piles, on the same axis and the same call
     // the dungeon host makes for its droppedLoot.
     interiorDropped.tickFlats(dt);
@@ -5122,6 +5141,7 @@ export function createWorldModes(host) {
         interiorFoes?.destroy?.();
         interiorFoes = null;
         interiorDropped.restorePiles(null);   // ID1: same teardown, the quest-teleport / load arm
+        interiorHitEffects.clear();   // HE1: the same
         interiorCtx = null; interiorBuilding = null; interiorOverlay = null; exteriorDoor = null;
       }
       if (dungeonCtx) {
