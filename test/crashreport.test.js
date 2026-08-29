@@ -220,12 +220,20 @@ test('a model missing from ARCH3D costs the placement, never the building', () =
   // console instead of the doctrine's loud warn.
   const layout = readFileSync(new URL('../src/world/interiorLayout.js', import.meta.url), 'utf8');
   assert.match(layout, /if \(!model\) \{[\s\S]*?continue;/, 'the layout drops a placement it has no model for');
+  // WM3 MOVED THE LOOP, NOT THE LAW. The four copies of the climate/
+  // dungeon remap became one seam (src/world/texRemap.js), so the two
+  // halves of this guard now live in two files: the CALL SITE guards
+  // the receiver with `?.subMeshes`, and the seam guards the value it
+  // is handed. Both halves are pinned, because either one alone
+  // resurrects the TypeError.
+  const seam = readFileSync(new URL('../src/world/texRemap.js', import.meta.url), 'utf8');
+  assert.match(seam, /for \(const sm of subMeshes \?\? \[\]\)/, 'the shared seam survives an undefined submesh list');
   const ctx = readFileSync(new URL('../src/scenes/interiorContext.js', import.meta.url), 'utf8');
-  assert.match(ctx, /for \(const sm of cpu\?\.subMeshes \?\? \[\]\)/, 'the RECEIVER is guarded, not just the value');
+  assert.match(ctx, /remapSubMeshes\(cpuModels\.get\(id\)\?\.subMeshes,/, 'the RECEIVER is guarded, not just the value');
   assert.match(ctx, /if \(!cpu\) console\.warn/, 'and the seam says so once, where it is discovered');
   // the dungeon's action-door arm had the same three traps
   const dungeon = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
-  assert.match(dungeon, /for \(const sm of cpu\?\.subMeshes \?\? \[\]\)/, 'ensureRemap guards its receiver');
+  assert.match(dungeon, /remapSubMeshes\(cpuModels\.get\(id\)\?\.subMeshes,/, 'ensureRemap guards its receiver');
   const doorArm = dungeon.match(/for \(const d of b\.layout\.actionDoors\)[\s\S]*?\n {4}}/)[0];
   assert.match(doorArm, /if \(!gpu \|\| !cpu\) \{/, 'the dungeon door arm skips a missing model');
 });

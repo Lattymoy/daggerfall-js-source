@@ -21,6 +21,7 @@ import { layoutInterior, INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { multiply, transformPoint } from '../world/mat4.js';
 import { collectInteriorLights } from '../world/interiorLights.js';
 import { applyClimate } from '../world/climateSwaps.js';
+import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { Collider } from '../player/collider.js';
 import { isHouseContainerModel, containerTextureRecord } from '../systems/containers.js';
@@ -103,23 +104,14 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   // Climate swap table over the interior's submeshes, pruned like the
   // standalone scene when the swapped archive lacks the record.
   const texRemap = new Map();
+  const climateArchive = (archive, record) => applyClimate(archive, record, climateBase, season);
   for (const id of pending.keys()) {
-    // `?? []` guards the VALUE, never the RECEIVER: an id whose model
-    // is absent lands in `pending` as undefined (collect writes
-    // cpuModels.get(id) and getGpuMesh only fills cpuModels on
-    // success), so this line threw before the placement guard below
-    // could ever run.
-    const cpu = cpuModels.get(id);
-    for (const sm of cpu?.subMeshes ?? []) {
-      const swapped = applyClimate(sm.textureArchive, sm.textureRecord, climateBase, season);
-      if (swapped === sm.textureArchive) continue;
-      const key = `${sm.textureArchive}_${sm.textureRecord}`;
-      if (texRemap.has(key)) continue;
-      const t = await getTexture(swapped);
-      if (sm.textureRecord >= t.recordCount) continue;
-      uploadRecord(swapped, sm.textureRecord);
-      texRemap.set(key, `${swapped}_${sm.textureRecord}`);
-    }
+    // The undefined submesh list is the seam's to survive, not this
+    // loop's: an id whose model is absent lands in `pending` as
+    // undefined (collect writes cpuModels.get(id) and getGpuMesh only
+    // fills cpuModels on success), so this threw before the placement
+    // guard below could ever run.
+    await remapSubMeshes(cpuModels.get(id)?.subMeshes, texRemap, climateArchive, deps);
   }
 
   const drawList = [];

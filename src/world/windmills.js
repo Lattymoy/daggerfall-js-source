@@ -68,6 +68,7 @@
 // with synthetic wind, no ARENA2 and no GL.
 // ═══════════════════════════════════════════════════════════════════
 
+import { BODY, CLIMATE_SKINS, SKIN_SLOTS } from './windmillMesh.js';
 import { WEATHER_SKY } from '../render/enhancedSky.js';
 import { multiply, trs } from './mat4.js';
 
@@ -86,12 +87,20 @@ import { multiply, trs } from './mat4.js';
 // (world/rmbLayout.js, from vendor/windmills-kamer/placements.json) and
 // a table of classic ids has nothing left to answer.
 
-/** The rotor turns about the model's LOCAL Z, negative-ward - Kamer's
+/** The rotor turns about the model's LOCAL Z - Kamer's
  *  `transform.Rotate(0f, 0f, -13 * Time.deltaTime, Space.Self)`. The
  *  sign lives here rather than in the angle so that "how fast" and
- *  "which way round" stay separable: a rate is never negative. */
+ *  "which way round" stay separable: a rate is never negative.
+ *
+ *  HIS SIGN IS NEGATIVE AND OURS IS POSITIVE, and that is not a
+ *  disagreement. The bake converts his meshes from Collada's
+ *  right-handed space into the left-handed one his numbers are written
+ *  in, by negating X - and a mirror reverses the sense of a rotation
+ *  about an axis in its plane: `M R(t) M-1 = R(-t)` for `M = diag(-1,
+ *  1, 1)`. So +13 here turns the sails the way -13 turns his. Flip one
+ *  without the other and the mill runs backwards. */
 export const ROTOR_AXIS = 'z';
-export const ROTOR_SIGN = -1;
+export const ROTOR_SIGN = 1;
 
 /** Fair weather turns at the classic rate (see the header). */
 export const CALM_ROTOR_DEG_PER_SEC = 13;
@@ -239,4 +248,38 @@ export function rotorMatrix(modelMatrix, hub, angleDeg, axis = ROTOR_AXIS) {
   const spin = multiply(trs(hx, hy, hz, 0, 0, 0),
     multiply(rot, trs(-hx, -hy, -hz, 0, 0, 0)));
   return multiply(modelMatrix, spin);
+}
+
+/**
+ * WM2e: THE MILL, SKINNED FOR ITS CLIMATE AND SEASON.
+ *
+ * Kamer ships seventeen variant prefabs and only two of the body's five
+ * texture groups ever differ between them: the WALLS and the ROOF. So
+ * this substitutes those two and shares everything else - the vertex
+ * data is the same buffer for every climate, and only the tiny
+ * subMeshes array is rebuilt.
+ *
+ * NOT through the location's texRemap, which would have been the
+ * obvious door: that map is keyed by "archive_record" over the WHOLE
+ * scene, and the mill's walls are 364_2 - a key other buildings can
+ * carry. Remapping it for the mill would re-skin them too. The mill
+ * owns its own upload instead, which is why the pipeline caches a mesh
+ * per climate.
+ *
+ * An unknown climate base keeps the mill as authored (temperate),
+ * rather than dropping its textures and drawing it untextured.
+ *
+ * @param {number} climateBase - 0/100/300/400, the API ClimateBaseType
+ * @param {boolean} isWinter
+ */
+export function skinnedBody(climateBase, isWinter) {
+  const skin = CLIMATE_SKINS.get(climateBase);
+  if (!skin) return BODY;
+  const walls = isWinter ? skin.winterWalls : skin.walls;
+  const roof = isWinter ? skin.winterRoof : skin.roof;
+  const subMeshes = BODY.subMeshes.map((sm, i) => {
+    const swap = i === SKIN_SLOTS.walls ? walls : i === SKIN_SLOTS.roof ? roof : null;
+    return swap ? { ...sm, textureArchive: swap[0], textureRecord: swap[1] } : sm;
+  });
+  return { ...BODY, subMeshes };
 }
