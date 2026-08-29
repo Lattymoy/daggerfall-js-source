@@ -1281,9 +1281,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // affinity scans (:421, :624), and SoulBound's break release (:502).
   // Every one of them is optional-chained, which is exactly the
   // AUDIT 24 seam shape - a ported law that evaporates in SILENCE with
-  // a green suite. In the world host's DUNGEON MODE the ctx is mounted
-  // but its foe pool answers empty by design, which is a narrower gap
-  // than this one and is stated at its own mount.
+  // a green suite. The world host's DUNGEON MODE used to share the
+  // second half of this gap - its mounted ctx answered an empty foe
+  // pool in every mode but exterior - and EC1 closed that one: the
+  // mount reads THIS context's foes and sinks through modes.dungeonCtx
+  // when the live mode is dungeon. What is still open is only the
+  // standalone host, which has no ctx to read them with.
   //
   // world.js:1373 claimed for several slices that this was "FLAGGED
   // there with the rest of its enchant wiring". It was not; FS1 found
