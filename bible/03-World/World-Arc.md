@@ -1498,6 +1498,74 @@ weakened to `over < 0` is EQUIVALENT, because at `over === 0` the
 fall-through computes `0 * gain = 0`, which is the answer the guard
 returns.
 
+### WM2e: the handedness - one root cause under both faults (2026-08-29)
+
+Mac's screenshot: the mills stand, and two things are wrong. The sail
+hangs in mid-air beside the mill instead of on it, and the tower stands
+off its spot, across a path.
+
+**One root cause. Collada is right-handed; Unity is left-handed.** Every
+number the mod carries - the prefab's hub offset, the WorldData
+placements - is written in UNITY's space, because that is where Kamer
+authored them. The DAE's vertices are not: Unity's importer negates X on
+the way in, and WM2a shipped without doing the same.
+
+Both faults follow:
+
+- **The sail.** The hub offset is x **+3.96**. The body's cap - measured
+  off the baked mesh - sits at x **-3.95**, its mirror. So the sail was
+  mounted about a point a whole cap's width away from the shaft, in
+  empty air. Its Y was right all along (6.01 against a cap spanning
+  4.06..10.84), which is why it looked like a near miss rather than
+  nonsense.
+- **The tower.** Mirroring a body whose own bounds are NOT symmetric
+  about its origin (x -12.06..3.89) swings its mass about eight units
+  across the anchor point. That is what stood it on the path.
+
+The bake negates X now, with the normals mirrored and the winding
+reversed with it - a mirror turns every triangle inside out and the
+renderer culls back faces. After it: the cap's centre is **3.94**
+against a hub of **3.96**, and the hub sits 1.53 beyond the cap's face
+along +Z, which is the windshaft. The sail is flat in Z. It mounts.
+
+**The spin sign flipped with it, and that is not a disagreement.** A
+mirror reverses the sense of a rotation about an axis in its plane
+(`M R(t) M-1 = R(-t)` for `M = diag(-1,1,1)`), so Kamer's -13 deg/s and
+our +13 turn the sails the same way. Flip one without the other and the
+mill runs backwards.
+
+**Why every pin passed through it.** The arc had eleven pins on the
+rotor and not one asked whether the rotor MEETS THE MILL: they asked if
+it was flat, if it was centred on its own origin, if it spun, if its
+feet were on the ground. Each true, and the sail in mid-air. The pins
+now assert the hub lands within 3 units of some piece of mill, and that
+it shares the CAP's centre across the shaft while standing clear of it
+along the shaft - because "near the mill" alone would pass a hub at the
+wrong corner.
+
+### WM2e also: the climate and season skins
+
+Kamer ships seventeen `41600_*` variant prefabs and only **two** of the
+body's five texture groups ever differ across them - the WALLS and the
+ROOF. Plank and Windmill are 067_1 and the Door is 332_0 in every one.
+
+Carried verbatim in `vendor/windmills-kamer/variants.json` rather than
+derived, because they are not quite a climate rebase: his walls do
+follow ClimateSwaps' own law (364 -> 064/164/464 by climate base, +1 for
+winter) but his roofs do not - 369_3 temperate, 069_1 desert, 369_0
+mountain, 369_1 swamp, and one snow roof 103_1 shared by every winter.
+He picked them by eye.
+
+**The desert mill never winters**, which is his prefabs and
+`ClimateSwaps.cs` stating the same rule independently.
+
+Applied by uploading the mill's own mesh per climate rather than through
+the location's `texRemap` - that map is keyed `archive_record` over the
+whole scene, and the mill's walls are `364_2`, a key other buildings can
+carry. Remapping it for the mill would have re-skinned them too. So the
+pipeline caches one body mesh per climate and season, sharing the vertex
+buffers and rebuilding only the small subMeshes array.
+
 ## RX: THE ROAD SYSTEM, REMOVED WHOLE (2026-08-29)
 
 Mac: *"entirely rip out our road system we have developed. Completely

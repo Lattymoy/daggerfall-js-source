@@ -457,7 +457,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // player and a world-keyed phase would re-seed every mill in
         // sight on every shift.
         if (b.layout.windmills.length && isEnhanced()) {
-          const parts = await getWindmillMeshes();
+          const parts = await getWindmillMeshes(climateBase, season === SEASON.Winter);
           if (!millParts) {
             millParts = parts;
             console.log(`[windmills] first mill streamed in (${b.blockName})`);

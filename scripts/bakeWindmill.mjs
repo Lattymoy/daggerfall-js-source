@@ -143,6 +143,31 @@ export function parseCollada(text, materialTextures = null) {
     subMeshes.push({ ...tex, startIndex, primitiveCount: Number(count) });
   }
 
+  // ── HANDEDNESS: COLLADA IS RIGHT-HANDED, UNITY IS LEFT ──────────
+  //
+  // The mod's numbers - the prefab offsets, the WorldData placements -
+  // are all in UNITY's space, because that is where Kamer authored
+  // them. The DAE's vertices are not: Unity's model importer negates X
+  // on the way in, which is the conversion between the two hands.
+  //
+  // WM2d shipped without this and it cost both of the faults Mac's
+  // screenshot showed. The sail hung in mid-air to one side of the
+  // mill, because the prefab's hub offset (x +3.96) was being applied
+  // to a body whose cap sits at x -3.95 - the mirror of it. And the
+  // TOWER stood in the wrong place, because mirroring a body whose own
+  // bounds are not symmetric about its origin (-12.06..3.89) swings its
+  // mass eight units across the anchor, which is what put it on the
+  // path.
+  //
+  // So negate X here and the mod's numbers are usable VERBATIM, which
+  // is the whole point. The winding is reversed with it: a mirror turns
+  // every triangle inside out, and the renderer culls back faces.
+  for (let i = 0; i < positions.length; i += 3) positions[i] = -positions[i];
+  for (let i = 0; i < normals.length; i += 3) normals[i] = -normals[i];
+  for (let i = 0; i < indices.length; i += 3) {
+    const t = indices[i]; indices[i] = indices[i + 2]; indices[i + 2] = t;
+  }
+
   // The sail must be flat in exactly ONE axis, and that axis is the one
   // it turns about. If a re-export ever makes it flat in two (or none),
   // the rotor law's axis is no longer derivable and this must fail.
@@ -210,6 +235,15 @@ export const ${name} = Object.freeze({
 });`;
 }).join('\n\n');
 
+// HIS CLIMATE AND SEASON SKINS, carried verbatim - see variants.json for
+// why they are not derived from ClimateSwaps.
+const variants = JSON.parse(
+  readFileSync(new URL('../vendor/windmills-kamer/variants.json', import.meta.url), 'utf8'));
+const skinRows = Object.entries(variants.climates).map(([base, c]) =>
+  `  [${base}, Object.freeze({ name: '${c.name}', `
+  + `walls: [${c.walls}], roof: [${c.roof}], `
+  + `winterWalls: [${c.winterWalls}], winterRoof: [${c.winterRoof}] })],`).join('\n');
+
 // WHERE THE MILLS STAND - the six placements Kamer chose, carried as the
 // RAW record fields rather than baked matrices, so the placement MATH
 // stays in world/rmbLayout.js where every other model's lives.
@@ -239,6 +273,15 @@ writeFileSync(new URL('../src/world/windmillMesh.js', import.meta.url),
 // turning axis is the axis it is flat in - see src/world/windmills.js.
 
 ${blocks}
+
+/** THE MILL'S SKIN per climate base, and per season within it. Only the
+ *  WALLS and the ROOF ever change - slots ${JSON.stringify(variants.slots)} of the body's five
+ *  texture groups - and DESERT NEVER WINTERS, which is both Kamer's
+ *  prefabs and ClimateSwaps.cs's own rule. */
+export const SKIN_SLOTS = Object.freeze(${JSON.stringify(variants.slots)});
+export const CLIMATE_SKINS = new Map([
+${skinRows}
+]);
 
 /** WHERE THE MILLS STAND. Classic Daggerfall places NO windmill - these
  *  six blocks each gain one, which is what Kamer's WorldData overrides
