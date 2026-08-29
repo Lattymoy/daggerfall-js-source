@@ -11,6 +11,18 @@ route - the Ledger's "instead of taking their mod, I want us to develop
 our own and better" was about not lifting someone's work uninvited, and
 an invitation settles it.
 
+## A note on `interior.json`, which is different from the rest
+
+Everything else in this folder is **Kamer's own work** - his geometry,
+his choice of where to stand it, his climate skins. `interior.json` is
+not: it is **Daggerfall block data**, 16 interior models with their
+flats, markers and a person, in the game's own record shapes.
+
+It is here on **Mac's explicit call, 2026-08-29** - asked twice and
+answered "Put it in" - and it is on the Port-Ledger as an approved
+departure. It is called out here so that nobody reading this folder
+later mistakes it for more of the author's work.
+
 ## What is here, and what deliberately is NOT
 
 Here: the mill, and where it stands.

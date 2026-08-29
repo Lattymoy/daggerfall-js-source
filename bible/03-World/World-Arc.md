@@ -1621,6 +1621,67 @@ That is a call for Mac, not a slice: it is the same question the
 Morrowind arc and the quest pack each had to answer about where vendored
 data stops.
 
+### WM2g: the mill has an inside (2026-08-29)
+
+WM2f ended by putting the interior question to Mac as a doctrine call.
+Mac, having been asked twice: *"Put it in"*. So it is in.
+
+**What was missing.** A static door's interior resolves as
+`subRecords[recordIndex].interior`, and the subrecord the mill's
+building belongs to is one Kamer ADDED - not in the block the port reads
+out of `BLOCKS.BSA`. WM2f left the building without a recordIndex for
+that reason, so its door stood and never opened.
+
+`rmbLayout.attachWindmillRecord(dfBlock)` appends the subrecord the
+block is missing, and the building takes its index. Two things about it:
+
+- **Its exterior is EMPTY, deliberately.** The mill and its building are
+  placed by `windmillsFor`; a subrecord carrying them as well would
+  stand every one of them twice.
+- **It is idempotent**, because `BlocksFile` CACHES its parsed blocks:
+  the same `dfBlock` object comes back for every location that uses the
+  block and for every re-entry. A second append would grow the array
+  without bound AND move the recordIndex a live door already refers to.
+
+`vendor/windmills-kamer/interior.json` is the interior verbatim -
+identical in all six blocks, so one copy serves them all -
+and `scripts/bakeWindmillInterior.mjs` converts it into
+`blocksFile`'s own parsed shape. That conversion is the point: his file
+is DFU's PascalCase serialization, and the port's consumers read what
+`blocksFile` produces. Converted at bake time, the interior arrives as
+an ordinary subrecord and **nothing downstream knows where it came
+from**.
+
+**THE HEADER COUNTS ARE REBUILT FROM THE ARRAYS.** He declares 44
+models, 12 flats and 10 door records over arrays of 16, 11 and 0 - the
+third header-versus-data mismatch in these files, after `FARMAA01`
+declaring one subrecord while carrying two and the subrecords declaring
+one 3D record while carrying two. A consumer that trusted a count would
+walk off the end of the array. The arrays are the truth, every time.
+
+Its first model is **41601** - Kamer's other windmill model, the
+machinery with the roller and the plank gear. His replacement for it is
+not vendored, so it draws from the player's own ARCH3D or not at all.
+`layoutInterior` already drops a model it cannot resolve rather than
+failing the whole build, and that is pinned now, because this is the
+first interior in the port that can name a model an ARCH3D may not
+carry.
+
+**The pin that matters** drives the interior through the port's REAL
+`layoutInterior` with a stand-in model getter. A data blob that
+satisfies a shape check and then throws on the path that consumes it is
+worth nothing, and that path is GL-free, so there is no excuse not to
+run it.
+
+### The doctrine note, because this one is a departure
+
+Everything else vendored from this mod is Kamer's own geometry or his
+own choice of where to stand it. **This is block data** - 16 interior
+models, 11 flats, 51 markers and a person, in Daggerfall's own record
+shapes. It is on the Ledger as an approved departure with Mac's words
+attached, rather than slipped in quietly, and the vendor README says so
+at the top of the file.
+
 ## RX: THE ROAD SYSTEM, REMOVED WHOLE (2026-08-29)
 
 Mac: *"entirely rip out our road system we have developed. Completely
