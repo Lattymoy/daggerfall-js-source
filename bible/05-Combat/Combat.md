@@ -841,10 +841,10 @@ because both were checked rather than assumed:
 
 ### What the audit could NOT do, and what it ships instead
 
-It could not run the game. This container has no ARENA2 data and the
-dungeon needs a browser, so "it works at every layer I can reach" is
-exactly as far as the evidence goes - and a fix invented past that
-point would be a guess dressed as a slice.
+It could not run the game - a live dungeon is a running browser, which
+no unit test is - so "it works at every layer I can reach" is exactly as
+far as the evidence goes, and a fix invented past that point would be a
+guess dressed as a slice.
 
 So IF1 ships the **instrument**: an F8 census line reading
 

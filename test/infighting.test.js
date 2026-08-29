@@ -17,9 +17,9 @@
 //      per-foe targeting closure) and acts on a foe target in all
 //      three arms: melee, missiles, casting
 //
-// What could NOT be verified here is the live frame: this container has
-// no ARENA2 data and the dungeon needs a browser. So IF1 also ships the
-// F8 census that reads the answer off a real dungeon in one keypress.
+// What could NOT be verified here is the live frame - a running dungeon
+// in a browser, which no unit test is. So IF1 also ships the F8 census
+// that reads the answer off a real dungeon in one keypress.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -114,8 +114,8 @@ test('IF1 (7): the DUNGEON host arms the machine and acts on a foe target', () =
 });
 
 test('IF1: the F8 census reads the answer off a live dungeon', () => {
-  // The audit could not run the game - no ARENA2 here, and the dungeon
-  // needs a browser - so it ships the instrument instead of a guess.
+  // The audit reaches every layer a unit test can; the live frame it
+  // cannot. So it ships the instrument instead of a guess.
   const dc = read('src/scenes/dungeonContext.js');
   assert.match(dc, /function _foeCensus\(\)/);
   assert.match(dc, /const armed = live\.filter\(\(f\) => f\.ai\._armedTargeting\)\.length;/);
