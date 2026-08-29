@@ -512,3 +512,78 @@ const stampFootprint = () => {
 
 
 
+
+
+// ── RG1: the road meets the town's own street ────────────────────
+/** A stamped town footprint, as setLocationTiles leaves one, with its
+ *  own street optionally running along a given row. */
+const townWithStreet = (streetRow = null) => {
+  const tm = new Uint8Array(T * T);
+  for (let y = 40; y <= 88; y++) for (let x = 40; x <= 88; x++) tm[x + y * T] = 0xff;
+  if (streetRow !== null) for (let x = 40; x <= 88; x++) tm[x + streetRow * T] = 46;
+  return tm;
+};
+/** The row a road painted OUTSIDE the footprint reaches the town on. */
+const arrivalRow = (tm) => {
+  // the CENTRE of the band, not its first row - a trunk is five tiles
+  // wide, so picking the first cell found at the furthest column reads
+  // two tiles off.
+  let maxX = -1;
+  for (let y = 0; y < T; y++) {
+    for (let x = 0; x < 40; x++) if (isRoadTile(tm[x + y * T]) && x > maxX) maxX = x;
+  }
+  if (maxX < 0) return null;
+  const rows = [];
+  for (let y = 0; y < T; y++) if (isRoadTile(tm[maxX + y * T])) rows.push(y);
+  return rows.reduce((a, b) => a + b, 0) / rows.length;
+};
+
+test('RG1: a road aims at the town STREET, not at the pixel centre', () => {
+  // A run aimed at the centre leaves the footprint wherever the line
+  // from the middle happens to cross it, which has nothing to do with
+  // where the town's own roads come out - so a highway could arrive at
+  // the back of a building while the gate sat round the corner.
+  const net = createNetwork(8, 8);
+  linkPixels(net.trunkExits, 8, 3, 4, 4, 4);   // arrives from the WEST, at row MID
+
+  const bare = townWithStreet(null);
+  paintRoadTiles(bare, net, 4, 4);
+  assert.equal(arrivalRow(bare), MID, 'with no street it still runs to the centre, exactly as before');
+
+  // the town's street runs along row 80, well north of where the road
+  // arrives - the road should bend to meet it
+  const gated = townWithStreet(80);
+  paintRoadTiles(gated, net, 4, 4);
+  const row = arrivalRow(gated);
+  assert.ok(Math.abs(row - 80) < Math.abs(row - MID),
+    `the road should reach the wall beside the STREET (row 80), got row ${row}`);
+});
+
+test('RG1: and the town keeps its own ground', () => {
+  const net = createNetwork(8, 8);
+  linkPixels(net.trunkExits, 8, 3, 4, 4, 4);
+  const tm = townWithStreet(80);
+  paintRoadTiles(tm, net, 4, 4);
+  for (let y = 40; y <= 88; y++) {
+    for (let x = 40; x <= 88; x++) {
+      const v = tm[x + y * T];
+      assert.ok(v === 0xff || (y === 80 && v === 46),
+        `the road overwrote the town at ${x},${y}`);
+    }
+  }
+});
+
+test('RG1: every record DFU calls road counts as a street', () => {
+  // 46, 47 and 55 are the three cityNavigation.tileWeight calls road
+  // (":31, Roads are great!"), and a town's RMB ground uses all three.
+  const net = createNetwork(8, 8);
+  linkPixels(net.trunkExits, 8, 3, 4, 4, 4);
+  for (const rec of ROAD_TILE_RECORDS) {
+    const tm = new Uint8Array(T * T);
+    for (let y = 40; y <= 88; y++) for (let x = 40; x <= 88; x++) tm[x + y * T] = 0xff;
+    for (let x = 40; x <= 88; x++) tm[x + 80 * T] = rec;
+    paintRoadTiles(tm, net, 4, 4);
+    const row = arrivalRow(tm);
+    assert.ok(Math.abs(row - 80) < Math.abs(row - MID), `record ${rec} is a street`);
+  }
+});
