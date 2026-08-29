@@ -35,7 +35,7 @@
 // tilt), and the body sits BEHIND the lens or you render the inside of
 // your own torso.
 
-import { lookAt, perspective, trs } from '../world/mat4.js';
+import { lookAt, perspective, trs, mirrorProjectionX } from '../world/mat4.js';
 import { CHAR_PIXEL, CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
 import { sampleTrack, resetClip, advanceClip } from '../formats/mwAnim.js';
 import { accumRootRef } from '../formats/mwSkin.js';
@@ -440,7 +440,31 @@ export function createFpArm() {
       // RULE 29: this pass gets its own 60-degree field of view. And the
       // camera looks LEVEL - the downward cast reaches the hands without
       // tilting the lens into the torso from beneath.
-      const proj = perspective(Math.PI / 3, pw / ph, 0.05, 12);
+      //
+      // AND IT RIDES THE HANDEDNESS MIRROR, which the pass this technique
+      // was borrowed from does not.
+      //
+      // mat4's law: a right-handed lookAt puts world +x on screen-LEFT,
+      // which is the mirror image the port presented until M1 - every
+      // town flipped east-west, every sign reading backwards. The fix is
+      // ONE mirror at the projection, and EVERY world pass rides it.
+      // The voxel viewmodel was left out with the reason given as "its
+      // pass never culls" - an explanation of why it was SAFE to leave,
+      // not a claim that it was right.
+      //
+      // For an arm it is not safe, it is the whole thing: measured, a
+      // point one metre to the player's RIGHT lands at NDC x -1.96
+      // through the unmirrored pass and +1.96 through a world pass. The
+      // arm would be a mirror image of the world composited under it -
+      // your sword hand on the wrong side of the screen, and every left
+      // hand a right one. Nothing in the picture says so, because an arm
+      // looks like an arm either way.
+      //
+      // Mirroring is free here for exactly the reason the original note
+      // gives: drawCharacter disables back-face culling for its draw
+      // (renderer.js), so the winding flip a negative-x scale causes
+      // costs nothing.
+      const proj = mirrorProjectionX(perspective(Math.PI / 3, pw / ph, 0.05, 12));
       const fwd = [sinY, ARM_CAST, cosY];
       const view = lookAt(eye, [eye[0] + fwd[0], eye[1] + fwd[1], eye[2] + fwd[2]], [0, 1, 0]);
       const tex = renderer.renderCharacterSprite(mesh, model, proj, view, pw, ph);

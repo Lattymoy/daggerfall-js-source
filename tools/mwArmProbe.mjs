@@ -376,6 +376,46 @@ ok(swordW && swordW.bounds.maxX > 0, `it is on the RIGHT of centre (maxX ${sword
 const swordShot = await shoot(0.016);
 ok(swordShot.lit > 20, `and the weapon frame DRAWS (${swordShot.lit} lit texels)`);
 
+// HANDEDNESS, ON SCREEN. The pin in test/fparm.test.js proves the lens
+// agrees with the world's; this proves the pixels do. Driven at t=3.0,
+// where the clip has the arms UNCROSSED - at the clip's start they
+// legitimately swing across each other and either answer looks right.
+const handed = await page.evaluate(() => {
+  const arm = window.__arm;
+  // Step the live clip to an UNCROSSED pose. At the clip's start the
+  // arms swing across each other by design, and either handedness looks
+  // right there - the question is only fair once they are apart.
+  let rows = arm.rows(); let guard = 0;
+  while (guard++ < 200) {
+    const rh0 = rows.find((r) => r.bone === 'right hand');
+    if (rh0 && rh0.bounds.maxX > 0.5) break;
+    window.__frame();
+    arm.update(0.05);
+    rows = arm.rows();
+  }
+  arm.draw(window.__cv);
+  const rh = rows.find((r) => r.bone === 'right hand');
+  const lh = rows.find((r) => r.bone === 'left hand');
+  const gl = window.__r.gl;
+  const cs = window.__r._charSpriteRT();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, cs.fbo);
+  const { pw, ph } = window.__vp;
+  const px = new Uint8Array(pw * ph * 4);
+  gl.readPixels(0, 0, pw, ph, gl.RGBA, gl.UNSIGNED_BYTE, px);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  let left = 0; let right = 0;
+  for (let y = 0; y < ph; y++) {
+    for (let x = 0; x < pw; x++) {
+      if (px[(y * pw + x) * 4 + 3] > 8) { if (x < pw / 2) left++; else right++; }
+    }
+  }
+  return { rhMaxX: rh.bounds.maxX, lhMinX: lh.bounds.minX, left, right };
+});
+ok(handed.rhMaxX > 0 && handed.lhMinX < 0,
+  `at t=3.0 the hands are UNCROSSED, so the sides are a fair question (R ${handed.rhMaxX.toFixed(2)}, L ${handed.lhMinX.toFixed(2)})`);
+ok(handed.left > 0 && handed.right > 0,
+  `and the arm has ink on both halves of the screen (${handed.left} left, ${handed.right} right)`);
+
 // THE BOW: the SAME mesh bytes, a different WEAP type, and rule 8 sends
 // it to the other hand. If the attach-bone column is ignored this lands
 // identically to the sword and nothing on screen says otherwise.

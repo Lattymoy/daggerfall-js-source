@@ -296,3 +296,41 @@ test('MW-D9: picking a record prefers the material, avoids the enchanted, and ne
   assert.equal(pickWeaponRecord(recs, MW_WEAPON_TYPE.AxeTwoHand), null,
     'a type your archives do not carry is EMPTY HANDS, not a different weapon');
 });
+
+test('MW-D9: the arm rides the SAME handedness mirror as the world it is composited over', async () => {
+  const { perspective, lookAt, mirrorProjectionX, multiply } = await import('../src/world/mat4.js');
+  const src = readFileSync(new URL('../src/combat/fpArm.js', import.meta.url), 'utf8');
+
+  // THE DEFECT THIS PINS, found by rendering the arm and looking at it.
+  // mat4's law: a right-handed lookAt puts world +x on screen-LEFT, and
+  // the port shipped that mirror image until M1 - towns flipped
+  // east-west, signs backwards. The fix is ONE mirror at the projection
+  // and EVERY world pass rides it. The viewmodel pass this technique was
+  // borrowed from does NOT, with the reason recorded as "its pass never
+  // culls" - which is why it was SAFE to leave, not why it was right.
+  //
+  // For an arm it is the whole thing: unmirrored, the player's sword
+  // hand draws on the wrong side of the screen, against a world drawn
+  // the other way round. An arm looks like an arm either way, so no
+  // picture and no symmetry score can see it - only this can.
+  const eye = [0, 1.6, 0];
+  const view = lookAt(eye, [eye[0], eye[1] - 0.2, eye[2] + 1], [0, 1, 0]);
+  const ndcX = (proj, p) => {
+    const m = multiply(proj, view);
+    return (m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12])
+      / (m[3] * p[0] + m[7] * p[1] + m[11] * p[2] + m[15]);
+  };
+  const P = [1, 1.32, 0.62];                       // one metre to the player's right
+  const lens = () => perspective(Math.PI / 3, 4 / 3, 0.05, 12);
+  const worldSide = Math.sign(ndcX(mirrorProjectionX(lens()), P));
+  const bareSide = Math.sign(ndcX(lens(), P));
+  assert.equal(worldSide, 1, 'a world pass puts the player\'s right on SCREEN RIGHT');
+  assert.equal(bareSide, -1, 'and an unmirrored lens puts it on screen LEFT - the two disagree');
+
+  // So the arm's own pass must take the mirror, and the source says so.
+  assert.match(src, /const proj = mirrorProjectionX\(perspective\(Math\.PI \/ 3, pw \/ ph, 0\.05, 12\)\);/,
+    'the arm\'s projection rides mat4\'s one mirror, like every other world pass');
+  // and rule 29's 60 degrees survives the mirror, which changes only x.
+  assert.ok(Math.abs(mirrorProjectionX(lens())[5] - lens()[5]) < 1e-9,
+    'the mirror negates x alone - the field of view is untouched');
+});

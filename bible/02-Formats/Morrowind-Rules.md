@@ -303,6 +303,39 @@ enchanted record is never taken (it carries a glow this slice does not
 draw); a missing attach bone is NAMED; and none of these fail the arms -
 you get the arms, empty-handed, with the reason next to the button.
 
+AND ONE MORE DEFECT THAT ONLY RENDERING IT FOUND - THE HANDEDNESS.
+
+mat4's own law (src/world/mat4.js:90-115): a right-handed lookAt puts
+world +x on screen-LEFT, and the port shipped exactly that mirror image
+until M1 - every town flipped east-west, every sign reading backwards,
+and the input layer tuned against the mirror so it PLAYED correctly and
+only text could tell. The fix is ONE mirror at the projection, and EVERY
+world pass rides it.
+
+The viewmodel pass this technique was borrowed from does NOT, and the
+note beside it gives the reason as "its pass never culls" - which is why
+it was SAFE to leave unmirrored, not a claim that it was right. MW-D8
+inherited that, and for an arm it is not a nicety: MEASURED, a point one
+metre to the player's right lands at NDC x -1.96 through the unmirrored
+lens and +1.96 through a world pass. The arm was a mirror image of the
+world composited under it - the sword hand on the wrong side of the
+screen, every left hand a right one, and NOTHING in the picture saying
+so, because an arm looks like an arm either way.
+
+Fixed at MW-D9: the arm's projection takes mirrorProjectionX like every
+other pass. It costs nothing, for the same reason the original note
+gives - drawCharacter disables back-face culling for its draw, so the
+winding flip a negative-x scale causes has no consequence.
+
+WHY NO EXISTING LAYER CAUGHT IT, which is the lesson rather than the
+bug: every left/right assertion in the probe and the pins is in MODEL
+space (piece bounds), and x-symmetry is symmetric under a mirror by
+definition. Nothing measured which side of the SCREEN a hand landed on.
+The pin is now analytic - the arm's lens and a world lens must agree on
+the sign of +x - with a probe layer that reads the framebuffer at a clip
+time where the arms are UNCROSSED, since at the clip's start they swing
+across each other and either answer looks right.
+
 NEXT, IN ORDER: (1) the texture - rules 36 and 61, which needs a dynamic
 vertex door on the textured program and a DDS upload, and is now the
 single biggest visible gap; (2) attack clips - rules 10 and 11, whose
