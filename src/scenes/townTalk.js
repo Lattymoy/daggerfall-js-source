@@ -76,12 +76,39 @@ export function rayPersonDistance(camPos, fwd, feet) {
 }
 
 export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null, onBuildingList = null }) {
+  // RP1 - THE REGION IS READ LIVE, NOT CAPTURED AT BOOT.
+  //
+  // This took a plain number, and the world host had no choice but to
+  // hand it `startLoc.regionIndex` - so every region-keyed answer in
+  // this module stayed the BOOT region's for the whole session, however
+  // far the player streamed. Three things went stale together: the
+  // wandering NPC race (computed once, right below), the People faction
+  // the reaction law reads (resolved once inside ensureLoaded), and -
+  // worst - the map-discovery KEY, which files a building under
+  // `${region}:${city}`. A building discovered in Daggerfall after
+  // walking out of Betony was filed under Betony.
+  //
+  // `regionIndex` now takes a NUMBER or a GETTER. The dev hosts, which
+  // each build exactly one location and cannot stream out of it, keep
+  // passing their number; the world host passes its live
+  // PlayerGPS.CurrentRegionIndex read.
+  const regionNow = typeof regionIndex === 'function' ? regionIndex : () => regionIndex;
   /** TK-v: the talk engine, or null before it is built / with no
    *  game data. A getter, because world.js wires the four modules to
    *  each other and can only hand them over once all four exist. */
   const engine = () => (typeof talkEngine === 'function' ? talkEngine() : talkEngine);
   const hud = new HudText();
   let font = null, factions = null, textRsc = null, people = null;
+  // RP1: which region `people` was resolved for. FACTION.TXT is parsed
+  // once and kept; only the per-region LOOKUP re-runs, and only when
+  // the region actually changes - a border crossing, not every frame.
+  let _peopleRegion = null;
+  const peopleNow = () => {
+    if (!factions) return people;
+    const r = regionNow();
+    if (r !== _peopleRegion) { _peopleRegion = r; people = getPeopleOfCurrentRegion(factions.factionDict, r); }
+    return people;
+  };
   let overlay = null;
   let loaded = false, loading = null;
   let directory = [];   // T3c: the location's named buildings
@@ -100,7 +127,10 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   let currentTier = 1;
   let _questionsAsked = 0;           // TalkManager.numQuestionsAsked
 
-  const npcRace = REGION_RACES[regionIndex] === 1 ? 'Redguard' : 'Breton';
+  /** RP1: was a `const` computed at construction. The race of the
+   *  people you meet is the CURRENT region's, and it is what picks the
+   *  oath pool (%oth) below. */
+  const npcRaceNow = () => (REGION_RACES[regionNow()] === 1 ? 'Redguard' : 'Breton');
 
   async function ensureLoaded() {
     if (loaded || loading) return loading;
@@ -111,7 +141,8 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       try {
         factions = new FactionFile();
         factions.load(await fetchBytes('FACTION.TXT'));
-        people = getPeopleOfCurrentRegion(factions.factionDict, regionIndex);
+        _peopleRegion = regionNow();
+        people = getPeopleOfCurrentRegion(factions.factionDict, _peopleRegion);
       } catch (e) { console.warn('[town] FACTION.TXT unavailable:', e.message); }
       try { textRsc = new TextRsc().load(await fetchBytes('TEXT.RSC')); }
       catch { console.warn('[town] TEXT.RSC unavailable; classic strings fall back'); }
@@ -139,7 +170,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   // own defaults, DFU's own out-of-location posture).
   function nameOpts() {
     if (!topics || !factions) return null;
-    const region = topics.regionIndex ?? regionIndex;
+    const region = topics.regionIndex ?? regionNow();
     const province = findFactions(factions.factionDict, { type: FACTION_TYPES.Province, region })[0];
     return {
       locationName: topics.locationName, regionName: topics.regionName,
@@ -178,7 +209,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
         getFaction: (id) => factions?.factionDict?.get(id) ?? null,
         // PlayerGPS.GetRaceOfCurrentRegion's numeric read, the same
         // REGION_RACES+1 the quest world's currentRegionRace makes
-        raceOfCurrentRegion: () => (REGION_RACES[topics.regionIndex ?? regionIndex] ?? 0) + 1,
+        raceOfCurrentRegion: () => (REGION_RACES[topics.regionIndex ?? regionNow()] ?? 0) + 1,
       }));
     } catch (e) { console.warn('[town] building directory failed:', e.message); }
   }
@@ -196,7 +227,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  drawn ONLY when the record carries %oth (DFU expands lazily). */
   const expandRecord = (raw) => expandMacros(raw, {
     playerName: playerEntity.name ?? '',
-    oath: raw.includes('%oth') ? randomPooledText(oathTextId(npcRace), '') : '',   // F047: GetRandomText(201 + oathId)
+    oath: raw.includes('%oth') ? randomPooledText(oathTextId(npcRaceNow()), '') : '',   // F047: GetRandomText(201 + oathId)
     cityName: cityName(),
   });
   const randomVariant = (id, fallback) => {
@@ -377,9 +408,9 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     }
     // The pre-engine fallback (a host with no talk engine mounted -
     // exterior.js): the reaction-threshold greeting ladder alone.
-    const reaction = people ? getReactionToPlayer(people, playerEntity) : 0;
+    const reaction = peopleNow() ? getReactionToPlayer(peopleNow(), playerEntity) : 0;
     const t = startMobileTalk({
-      reaction, textVariants, playerName: playerEntity.name ?? '', npcRace, rolls, cityName: cityName(),
+      reaction, textVariants, playerName: playerEntity.name ?? '', npcRace: npcRaceNow(), rolls, cityName: cityName(),
     });
     if (t.refused) { hud.add(t.text || 'You get no response.'); return; }
     if (!directory.length) { overlay = new TalkWindow(t); return; }
@@ -621,7 +652,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   function questionText(building) {
     const asked = engine()?.pipeline?.numQuestionsAsked ?? _questionsAsked;
     const opening = randomVariant((asked === 0 ? 7215 : 7218) + tone, 'Hail to thee');
-    const rp = people ? getReactionToPlayer(people, playerEntity) : 0;
+    const rp = peopleNow() ? getReactionToPlayer(peopleNow(), playerEntity) : 0;
     const npcName = (rp <= 0 ? randomVariant(7221 + tone, 'stranger') : (_talkNpc?.nameNPC || 'stranger'));
     const q = randomVariant(7225 + tone, '%1com. Where can I find %key?');
     return expandRecord(q)
@@ -646,14 +677,18 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       const h = buildingHint(rolls, false);
       hint = randomVariant(h.textId, h.reveal ? '... Let me just mark %loc here on your map' : '%loc is %di of here')
         .replaceAll('%loc', building.name).replaceAll('%di', a.direction);
-      if (h.reveal) discoverBuilding(`${regionIndex}:${cityName()}`, building);
+      // RP1: the discovery key is the CURRENT region's. This read the
+      // boot region, so a building revealed after streaming across a
+      // border was filed under the region the session started in and
+      // the map never showed it where the player actually was.
+      if (h.reveal) discoverBuilding(`${regionNow()}:${cityName()}`, building);
     }
     // AUDIT 18 F1: ExpandRandomTextRecord (TalkManager.cs:3580-3587)
     // runs the FULL MacroHelper over the answer record - %oth and %cn
     // resolve here exactly as they do in the greeting.
     return expandAnswerRecord(raw, {
       playerName: playerEntity.name ?? '',
-      oath: raw.includes('%oth') ? randomPooledText(oathTextId(npcRace), '') : '',   // F047: GetRandomText(201 + oathId)
+      oath: raw.includes('%oth') ? randomPooledText(oathTextId(npcRaceNow()), '') : '',   // F047: GetRandomText(201 + oathId)
       cityName: cityName(),
       hint, key: building.name,
       honorific: honorificOf(playerEntity.gender),   // T4: the real %hnr/%ra
@@ -832,7 +867,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     get directory() { return directory; },   // E2: the hosts name shops for the browse window by buildingKey
     get locationName() { return cityName(); },   // G2: %cn for the court boxes (MacroHelper.CityName)
     _debug: () => ({
-      mode: getInteractionMode(), overlay: !!overlay, people: people?.name ?? null,
+      mode: getInteractionMode(), overlay: !!overlay, people: peopleNow()?.name ?? null,
       buildings: directory.length, tone: TONE_NAMES[tone], toneSession: [...toneSession],
       native: !!overlay?.conversation, topicMode: overlay?.topicMode ?? null,
       topicCount: overlay?.topics?.length ?? null,

@@ -122,8 +122,11 @@ test('QP1 townTalk: rebuildDirectory feeds the pool through the host door', () =
     'the walk rides the SAME rebuild the directory does (GetBuildingList\'s one breath)');
   assert.match(tt, /getFaction: \(id\) => factions\?\.factionDict\?\.get\(id\) \?\? null,/,
     'the faction lookup is townTalk\'s own FACTION.TXT');
-  assert.match(tt, /raceOfCurrentRegion: \(\) => \(REGION_RACES\[topics\.regionIndex \?\? regionIndex\] \?\? 0\) \+ 1,/,
-    'GetRaceOfCurrentRegion\'s numeric read');
+  // RP1 turned the module's boot-captured `regionIndex` into the live
+  // `regionNow()`; the LAW pinned here is unchanged - the topics bag's
+  // own region wins, and the answer is the +1 numeric race id.
+  assert.match(tt, /raceOfCurrentRegion: \(\) => \(REGION_RACES\[topics\.regionIndex \?\? \w+\(?\)?\] \?\? 0\) \+ 1,/,
+    'GetRaceOfCurrentRegion\'s numeric read, off the topics region when it has one');
 });
 
 test('QP1 world: topics carry the SetLayoutData identities, the door lands in npcSession', () => {

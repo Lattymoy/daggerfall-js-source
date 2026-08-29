@@ -267,15 +267,14 @@ combat line numbers below are refreshed with it.
 - `src/scenes/shared.js:314` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:419` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:854` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:903` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:909` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1367` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
-- `src/scenes/world.js:2435` - FLAGGED in systems/healthStatus.js (macro producers pend).
-- `src/scenes/world.js:2532` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:2821` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:3601` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:4516` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:909` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:915` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1373` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
+- `src/scenes/world.js:2441` - FLAGGED in systems/healthStatus.js (macro producers pend).
+- `src/scenes/world.js:2538` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:2827` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:3607` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:4522` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:807` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
 - `src/scenes/worldModes.js:944` - FLAGGED to the crime arc, as the Ledger records.
 - `src/scenes/worldModes.js:1013` - at the concluded deal (:1036-1051). FLAGGED: the equipped test

@@ -851,9 +851,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   // T3b: the town interaction seam (modes/talk/pickpocket) - the same
   // module the exterior host mounts (the standing host rule). It is
   // also this host's first HUD-text layer; the rig's say routes there.
-  // FLAGGED loud: the People faction rides the START location's
-  // region - cross-region streaming keeps the boot region's people
-  // until the current-pixel region wiring lands with travel.
+  // RP1: the People faction, the NPC race and the map-discovery key all
+  // read the CURRENT region now. The flag that stood here said this
+  // waited on "the current-pixel region wiring [landing] with travel" -
+  // and _questRegionIndex below IS that wiring, shipped: it is the same
+  // PlayerGPS.CurrentRegionIndex read the quest bridge, the map table
+  // and the name bank already go through.
   // TK-v: the talk ENGINE the host window draws through. Assigned
   // after all four are built (they reference each other), so townTalk
   // reads it lazily through the getter below.
@@ -861,7 +864,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   const townTalk = createTownTalk({
     talkEngine: () => talkEngineRef,
     renderer, canvas, fetchBytes, playerEntity, palette,
-    regionIndex: startLoc.regionIndex,
+    // RP1: a GETTER, not startLoc's number - see the note above. It is
+    // declared below this call, so the arrow defers the read to call
+    // time, which is what makes it live in the first place.
+    regionIndex: () => _questRegionIndex(),
     onCrime: () => _crimeResponse(),   // G1: late-bound - the guards mount below
     // QP1: GetBuildingList's questor half lands in the pool. Late-bound
     // like onCrime - npcSession mounts below, and the first topics set
