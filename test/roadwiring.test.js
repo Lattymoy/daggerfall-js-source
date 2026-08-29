@@ -886,3 +886,69 @@ test('RC3: the join is deterministic - the same map bakes the same roads', () =>
   // was supposed to pick.
   assert.match(src('src/systems/roads.js'), /if \(d < bestD\) \{ bestD = d; best = \{ i, j, key \}; \}/);
 });
+
+
+// ── RZ4/RZ5: the seam a LOCATION sits on ─────────────────────────
+/** A stamped town footprint, as setLocationTiles leaves one. */
+const stampFootprint = () => {
+  const tm = new Uint8Array(T * T);
+  for (let y = 40; y <= 88; y++) for (let x = 40; x <= 88; x++) tm[x + y * T] = 0xff;
+  return tm;
+};
+
+test('RZ4: a road on a GRADIENT does not tear where it reaches a town', () => {
+  // RZ3 gave open country the smoothed chain and left a location's
+  // pixel on the exit rule, so the two disagreed about where a road
+  // crosses a seam. On a 1-in-3 gradient the open neighbour left at
+  // tile rows 126-127 and the town took the road in at 63-65 - sixty
+  // two tiles of nothing, at every town the road reached.
+  const chain = [[2, 11], [3, 11], [4, 11], [5, 10], [6, 10], [7, 10], [8, 9]];
+  const net = createNetwork(32, 32);
+  for (let i = 1; i < chain.length; i++) {
+    linkPixels(net.trunkExits, 32, chain[i - 1][0], chain[i - 1][1], chain[i][0], chain[i][1]);
+  }
+  const town = stampFootprint();
+  paintRoadTiles(town, net, 4, 11);
+  const open = new Uint8Array(T * T);
+  paintRoadTiles(open, net, 3, 11);
+
+  const rows = (tm, col) => {
+    const out = [];
+    for (let y = 0; y < T; y++) { const v = tm[col + y * T]; if (v && v !== 0xff) out.push(y); }
+    return out;
+  };
+  const left = rows(open, T - 1), right = rows(town, 0);
+  assert.ok(left.length && right.length, 'both pixels put road on the seam');
+  assert.ok(left.some((y) => right.includes(y)),
+    `the road tears at the town: neighbour rows ${left} vs town rows ${right}`);
+});
+
+test('RZ5: out of bounds is not the same as CLAIMED', () => {
+  // The chain pass begins OUTSIDE its pixel and only its width reaches
+  // in, so a stop mask that counts out-of-bounds as claimed halts the
+  // run before it paints anything - which is precisely how the tear
+  // above survived a first fix. A run that starts at the pixel's own
+  // edge still stops when it leaves.
+  const s_ = src('src/world/roadTiles.js');
+  assert.match(s_, /function isClaimed\(mask, x, y, outOfBoundsStops = true\)/);
+  assert.match(s_, /return outOfBoundsStops;/, 'the caller decides what leaving the tilemap means');
+  assert.match(s_, /densifyChain\(c\.points, px, py\), half, rec, claimed, false\)/,
+    'the chain pass says leaving is not stopping');
+});
+
+test('RZ5: and the town keeps its ground, holes included', () => {
+  // The mask still stops the run at the town's own stamped ground -
+  // dropping it entirely was the other way this went wrong, and it
+  // filled the unstamped HOLES inside the footprint with road.
+  const chain = [[2, 4], [3, 4], [4, 4]];
+  const net = createNetwork(9, 9);
+  for (let i = 1; i < chain.length; i++) {
+    linkPixels(net.trunkExits, 9, chain[i - 1][0], chain[i - 1][1], chain[i][0], chain[i][1]);
+  }
+  const town = stampFootprint();
+  town[MID + MID * T] = 0;   // a hole at the town's centre, on the road's line
+  paintRoadTiles(town, net, 3, 4);
+  assert.equal(town[MID + MID * T], 0, 'the hole inside the footprint is still unpainted');
+  // ...and every stamped cell is untouched
+  assert.equal(town[(MID + 8) + (MID + 8) * T], 0xff, 'the 1:1 tile law holds');
+});
