@@ -513,6 +513,36 @@ test('PX26 / THE FOUR HOSTS: north opens a REAL arm on every host', () => {
   assert.match(read('src/scenes/dungeonContext.js'), /openSheetPage\(\) \{ this\.togglePause\(null, \{ at: 'stats' \}\); \},/);
 });
 
+test('PX28b: TAB ITSELF closes an open window - the registry answers the key', () => {
+  // Mac: "Tab should also minimize any open UI menus, currently it only
+  // applies to the radial." PX28 taught the DIAL to put a window away,
+  // and that was the wrong half: openPixelDial is only reached through
+  // the HOST's key routing, and while an enhanced window is up the
+  // WINDOW owns the keyboard - so Tab never got there.
+  const reg = read('src/ui/enhancedOverlays.js');
+  // ONE listener, where the registry already knows what is open, so a
+  // window added later is covered by having registered at all.
+  assert.match(reg, /window\.addEventListener\('keydown', onTab, true\);/, 'capture phase');
+  assert.match(reg, /if \(e\.code !== 'Tab'/);
+  assert.match(reg, /closeTopOverlay\(\);/);
+  assert.equal((reg.match(/addEventListener/g) ?? []).length, 1, 'ONE listener, not one per window');
+  // ALIVE ONLY WHILE THE STACK IS: registering starts it, the last
+  // unregister stops it, and closing the last one stops it too - or
+  // Tab would be eaten in a world with nothing open.
+  assert.match(reg, /stack\.push\(entry\);\n\s*listen\(\);/);
+  assert.match(reg, /if \(!stack\.length\) unlisten\(\);/);
+  assert.equal((reg.match(/if \(!stack\.length\) unlisten\(\);/g) ?? []).length, 2,
+    'both ways the stack can empty');
+  assert.match(reg, /export function clearOverlays\(\) \{ stack\.length = 0; unlisten\(\); \}/);
+  // A TEXT FIELD OWNS TAB - the chronicle's composer and the
+  // spellbook's rename are both fields.
+  assert.match(reg, /t\.tagName === 'INPUT' \|\| t\.tagName === 'TEXTAREA' \|\| t\.isContentEditable/);
+  // NOT through overlayAction's 'back': Escape means back a LEVEL in a
+  // window that has them, and Tab means put this away. Two words.
+  assert.doesNotMatch(read('src/ui/input.js'), /Tab: 'back'/);
+  assert.match(read('src/ui/input.js'), /Escape: 'back'/);
+});
+
 test('PX28: Tab puts away what it opened, then raises the dial', () => {
   // Mac: "when hitting tab a second time, it should minimize any UI."
   // The dial already closed ITSELF on a second press; what it could not
