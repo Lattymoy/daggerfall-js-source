@@ -101,7 +101,9 @@ import {
   LightningPlayer,
 } from '../world/weather.js';
 // WM2b: the windmill's law, and the vendored rotor it turns.
-import { WINDMILL_MODELS, ROTOR_HUB, rotorPhase, advanceRotor, mountRotor } from '../world/windmills.js';
+import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor } from '../world/windmills.js';
+import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
+import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: mills are an enhanced-skin departure, like the roads
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { setWeather, currentWeather, tickWeather } from '../systems/weatherSim.js';   // W1: the live weather state
 import { SEASON } from '../world/climateSwaps.js';
@@ -171,7 +173,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // and the exterior prefab is audible from frame one).
   ensureAudio(fetchBytes);
 
-  const { textureFiles, getTexture, uploadRecord, uploadRecordFrame, getGpuMesh, getRotorMesh, gpuMeshes, cpuModels } = pipeline;
+  const { textureFiles, getTexture, uploadRecord, uploadRecordFrame, getGpuMesh, getWindmillMeshes, gpuMeshes, cpuModels } = pipeline;
 
   // Collect the location's model ids + referenced texture archives.
   const modelIds = new Set();
@@ -265,6 +267,14 @@ export async function bootExterior(canvas, renderer, params, status) {
   };
   const drawList = [];
   const windmills = [];   // WM2b: placed mills whose rotor turns each frame
+  // WM2d: the mill's two parts, uploaded once for the location and only
+  // when a block here actually stands one - a town with no farm pays
+  // nothing. Enhanced skin only: the 1:1 lane sees the game's own farms.
+  const millCount = loc.blocks.reduce((n, b) => n + b.layout.windmills.length, 0);
+  const millParts = (millCount && isEnhanced()) ? await getWindmillMeshes() : null;
+  console.log(`[windmills] ${millCount} placed in ${locationName}`
+    + (millCount && !isEnhanced() ? ' - classic skin, not drawn' : '')
+    + (millCount ? '' : ' - no block here stands one'));
   // Player collision (P1): every placed model's triangles, world-space,
   // over the flat ground floor.
   const collider = new Collider(() => GROUND_OFFSET * 0.025);
@@ -282,19 +292,6 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (!mesh) continue;
       const matrix = multiply(originMatrix, placed.matrix);
       drawList.push({ mesh, matrix });
-      // WM2b: a mill gets a sail. The tower is the classic model and
-      // draws in the list above like anything else; only the rotor is
-      // extra, and it needs its own matrix per frame, so it cannot ride
-      // a list built once at load.
-      if (WINDMILL_MODELS[placed.modelIdNum]) {
-        windmills.push({
-          matrix,
-          // Deterministic in the mill's own world position, so a farm's
-          // mills are not a chorus line and the same mill is at the same
-          // phase every time the player walks up to it.
-          state: { angle: rotorPhase(matrix[12], matrix[14]) },
-        });
-      }
       const cpu = cpuModels.get(placed.modelIdNum);
       collider.addMesh('world', cpu.positions, cpu.indices, matrix);
       colliderTris += cpu.indices.length / 3;
@@ -314,6 +311,25 @@ export async function bootExterior(canvas, renderer, params, status) {
         }
       }
     }
+    // WM2d: THE MILLS THIS BLOCK STANDS. Classic Daggerfall places none,
+    // so rmbLayout adds them - the tower is a placement like any other
+    // and joins the static list, and only the SAIL needs a matrix per
+    // frame. Enhanced-skin only, the same door the roads take.
+    if (millParts) {
+      for (const w of b.layout.windmills) {
+        const matrix = multiply(originMatrix, w.matrix);
+        drawList.push({ mesh: millParts.body, matrix });
+        collider.addMesh('world', BODY.positions, BODY.indices, matrix);
+        windmills.push({
+          matrix,
+          // Deterministic in the mill's own world position, so a farm's
+          // mills are not a chorus line and the same mill is at the same
+          // phase every time the player walks up to it.
+          state: { angle: rotorPhase(matrix[12], matrix[14]) },
+        });
+      }
+    }
+
     // Ground tiles gather into one location-wide tilemap for the R9
     // tilemap-shader pass. These bytes are PRE-conversion (tileBitfield
     // space); convertTilemap turns a byte b into texture record
@@ -410,11 +426,6 @@ export async function bootExterior(canvas, renderer, params, status) {
     return locationTilemap[tx + ty * tilemapDim];
   };
 
-  // WM2b: the rotor mesh, uploaded ONCE for the whole location and only
-  // if a mill was actually placed - a town with no farm block pays
-  // nothing. Its textures are classic (archive, record) pairs and load
-  // out of the player's own ARENA2 like every other model's.
-  const rotorMesh = windmills.length ? await getRotorMesh() : null;
 
   // Load any flat archives not already fetched, then build one batch per
   // (archive, record) with its scaled billboard size.
@@ -1766,12 +1777,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     // picks the mills up on the same fourteen-second curve it picks the
     // sky up on. A null row is "no wind is known" - the classic sky
     // eases nothing - and a mill then stands still rather than guessing.
-    if (rotorMesh && windmills.length) {
+    if (millParts && windmills.length) {
       const wind = sky.wind();
       if (wind) {
         for (const w of windmills) {
           advanceRotor(w.state, dt, wind);
-          renderer.drawMesh(rotorMesh, mountRotor(w.matrix, ROTOR_HUB, w.state.angle), texRemap);
+          renderer.drawMesh(millParts.rotor, mountRotor(w.matrix, ROTOR_HUB, w.state.angle), texRemap);
         }
       }
     }

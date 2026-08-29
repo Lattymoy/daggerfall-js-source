@@ -180,7 +180,8 @@ import {
   LightningPlayer,
 } from '../world/weather.js';
 import { PrecipitationRenderer } from '../render/precipitation.js';
-import { WINDMILL_MODELS, ROTOR_HUB, rotorPhase, advanceRotor, mountRotor } from '../world/windmills.js';   // WM2b: the sails
+import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor } from '../world/windmills.js';   // WM2b: the sails
+import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
 import { setWeather, currentWeather, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers } from '../systems/weatherSim.js';   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
 import { classicSaveToSnapshot, takePendingClassicSave, peekPendingClassicSave } from '../systems/classicSave.js';   // SAV3: the classic-save import arm
 import { readTokens as readRscTokens, RSC } from '../formats/textRsc.js';   // SAV3: the classic rumors' token payloads
@@ -368,11 +369,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and the exterior prefab is audible from frame one).
   ensureAudio(fetchBytes);
 
-  const { getTexture, uploadRecord, uploadRecordFrame, getGpuMesh, getRotorMesh, cpuModels } = pipeline;
-  // WM2b: the vendored windmill rotor, uploaded on the first mill this
-  // session streams in and held for the rest of it. One mesh, however
-  // many mills - the per-mill state is the angle and nothing else.
-  let rotorMesh = null;
+  const { getTexture, uploadRecord, uploadRecordFrame, getGpuMesh, getWindmillMeshes, cpuModels } = pipeline;
+  // WM2b/WM2d: the vendored mill's two parts, uploaded on the first mill
+  // this session streams in and held for the rest of it. One pair of
+  // meshes however many mills - the per-mill state is the angle alone.
+  let millParts = null;
 
   // T2 towns: the person textures (climate People table pends - Breton
   // + guard, the T1 flag), loaded once on the first populated pixel.
@@ -503,6 +504,28 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (const b of loc.blocks) {
         const originMatrix = trs(
           locLocal[0] + b.originX, locLocal[1], locLocal[2] + b.originZ, 0, 0, 0);
+        // WM2d: THE MILLS THIS BLOCK STANDS. Classic Daggerfall places
+        // none, so rmbLayout adds them; the tower joins the static model
+        // list and only the SAIL needs a matrix per frame. Enhanced skin
+        // only, the same door the roads take. The phase is keyed on the
+        // MAP PIXEL plus the mill's local position, never its world
+        // position - the floating origin shifts the world under the
+        // player and a world-keyed phase would re-seed every mill in
+        // sight on every shift.
+        if (b.layout.windmills.length && isEnhanced()) {
+          const parts = await getWindmillMeshes();
+          if (!millParts) {
+            millParts = parts;
+            console.log(`[windmills] first mill streamed in (${b.blockName})`);
+          }
+          for (const w of b.layout.windmills) {
+            const local = multiply(originMatrix, w.matrix);
+            models.push({ gpu: parts.body, local });
+            collider.addMesh(key, BODY.positions, BODY.indices, local,
+              () => state.pixelTranslation(px, py));
+            windmills.push({ local, state: { angle: rotorPhase(px + local[12], py + local[14]) } });
+          }
+        }
         for (const placed of b.layout.models) {
           const gpu = await getGpuMesh(placed.modelIdNum);
           if (!gpu) continue;
@@ -518,16 +541,6 @@ export async function bootWorld(canvas, renderer, params, status) {
           }
           const local = multiply(originMatrix, placed.matrix);
           models.push({ gpu, local });
-          // WM2b: a mill gets a sail. The tower is the classic model and
-          // rides the list above; only the rotor needs a matrix per frame.
-          // The phase is keyed on the MAP PIXEL plus the mill's local
-          // position, never its world position - the floating origin
-          // shifts the world under the player, and a phase that moved
-          // with it would re-seed every mill on every origin shift.
-          if (WINDMILL_MODELS[placed.modelIdNum]) {
-            rotorMesh = await getRotorMesh();
-            windmills.push({ local, state: { angle: rotorPhase(px + local[12], py + local[14]) } });
-          }
           const cpu = cpuModels.get(placed.modelIdNum);
           collider.addMesh(key, cpu.positions, cpu.indices, local,
             () => state.pixelTranslation(px, py));
@@ -4560,10 +4573,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       // same fourteen-second curve it picks the sky up on. A null row is
       // "no wind is known" (the classic sky eases nothing), and a mill
       // then stands still rather than guessing at one.
-      if (rotorMesh && windNow) {
+      if (millParts && windNow) {
         for (const w of p.windmills) {
           advanceRotor(w.state, dt, windNow);
-          renderer.drawMesh(rotorMesh, mountRotor(multiply(pixelMatrix, w.local), ROTOR_HUB, w.state.angle), p.texRemap);
+          renderer.drawMesh(millParts.rotor, mountRotor(multiply(pixelMatrix, w.local), ROTOR_HUB, w.state.angle), p.texRemap);
         }
       }
       // FA1: the flats that move. The animator is PER PIXEL because

@@ -1379,6 +1379,92 @@ a mill instead of mounted on it is what that looks like, and nobody in
 a container without ARENA2 can answer it. It is a one-look question,
 and it is the last one outstanding.
 
+### WM2c: "I'm not seeing any windmills" - and the reading that may be backwards (2026-08-29)
+
+Mac, on the deployed build: no windmills. The deploy is not the cause -
+the merge deployed successfully and the site serves it.
+
+**The suspect is WM2a's own reading of the data, and it is worth stating
+plainly because it may have been backwards.** WM2a found model 41600 in
+the SUBRECORDS of `FARMAA00/01/02/05/06/07` and concluded "our port
+already draws it, statically, and WM2 is animation rather than
+placement". But those files are `WorldData/*.RMB.json` FROM KAMER'S MOD,
+and a DFU WorldData override REPLACES a block. His mod's own description
+is *"Adds Windmills to some farms"*. So the 41600 in those files may be
+HIS addition, not Daggerfall's - in which case no classic block stands a
+mill, the port never places one, and a rotor wired to a placement that
+never happens cannot draw a thing. Every pin still passes, because every
+pin tests the rotor and none of them tests that a mill exists.
+
+That is the shape this arc keeps producing: a claim read off the mod and
+carried forward as though it were read off the game.
+
+**It is settled by BLOCKS.BSA and nothing else**, so
+`tools/windmillProbe.mjs` now walks every RMB block in it and reports
+which ones name a mill model, subrecords and misc-3d counted separately
+(WM2a's reading came from the subrecords). No hit means the placement is
+its own slice - porting what the WorldData overrides do, which is a
+different and larger job than turning a sail.
+
+Both hosts also now SAY what they found: `[windmills] N placed in
+<location>`, and on no mill, "no block here stands one". "I see no
+windmills" could be no mill placed, no rotor uploaded, or no wind to
+turn one, and that line separates the first from the other two in the
+console without anyone running node.
+
+### WM2d: the mills are PLACED - because Daggerfall places none (2026-08-29)
+
+WM2c asked whether any classic block stands a mill and proposed running
+a probe against real ARENA2 to find out. It did not need ARENA2. The
+answer was already in the mod, in the files WM2a had misread:
+
+- `FARMAA01.RMB.json` declares `NumBlockDataRecords: 1` and carries
+  **two** subrecords.
+- `FARMAA00.RMB.json` declares **7** and puts the mill in subrecord 7.
+
+The extra subrecord in each is the mill Kamer ADDS - which his mod's
+description says outright, *"Adds Windmills to some farms"*. **Classic
+Daggerfall stands no windmill anywhere.** So WM2b matched placed models
+against a table of mill ids that could never match, uploaded a rotor
+that was never asked for, and drew nothing, while every pin passed -
+because every pin tested the rotor and none tested that a mill existed.
+
+So the port places its own. Three parts:
+
+- **The tower.** `vendor/windmills-kamer/Windmill.dae` (his
+  `New_Windmill 2.dae`), 332 triangles, five texture groups. Its
+  materials carry no texture in the DAE - they are bound in the Unity
+  prefab's `m_Materials` in the DAE's own triangle order, through `.mat`
+  files whose names ARE the classic (archive, record) pairs (Walls
+  364_2, Plank 067_1, Roof 369_3, Windmill 067_1, Door 332_0). The bake
+  takes that map explicitly and REFUSES any material it does not name,
+  because a silently untextured submesh draws as garbage.
+- **The placements.** `vendor/windmills-kamer/placements.json` - the six
+  spots he chose, and ONLY the added record from each block. A WorldData
+  override carries a whole RMB block, which is Daggerfall's layout and
+  therefore game data; the position, rotation and subrecord frame of the
+  model HE added are his authorship, and that is all that travels.
+- **The layout.** `rmbLayout.windmillsFor(blockName)`, so the mill's
+  matrix is built by the same two lines as every other placed model's -
+  a mill placed by different arithmetic from its neighbours would drift
+  from them the first time that law is touched. The hosts consume
+  `b.layout.windmills` and never rebuild the matrix; a pin forbids
+  `ROTATION_DIVISOR` appearing in either.
+
+Both hosts now draw the TOWER into their static list (with a collider,
+so you cannot walk through it) and the SAIL per frame. Enhanced skin
+only, the same door the roads take - the 1:1 lane sees Daggerfall's own
+farms, unchanged.
+
+`WINDMILL_MODELS` is **retired**, table and flag together. It answered
+"which classic model id carries a rotor", a question whose premise was
+false, and it was the thing the hosts matched on while nothing appeared.
+
+A cheap standing check came with it: each mill's FEET must land within
+1.5 units of the block's ground - the placement's own Y against the
+tower's own base - which catches a mill floating or sunk without anyone
+looking at it.
+
 ### What is still not settled
 
 - **Nobody has seen this.** No GL and no ARENA2 here, so every pin above

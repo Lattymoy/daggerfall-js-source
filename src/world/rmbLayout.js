@@ -18,6 +18,7 @@
 // records are later features of this arc; see bible/03-World/World-Arc.md.
 
 import { ROTATION_DIVISOR, RMB_DIMENSION } from '../formats/blocksFile.js';
+import { PLACEMENTS as WINDMILL_PLACEMENTS } from './windmillMesh.js';   // WM2d: the mills Daggerfall does not stand
 import { GLOBAL_SCALE } from './meshReader.js';
 import { trs, multiply } from './mat4.js';
 
@@ -83,7 +84,45 @@ export function layoutRmbBlock(dfBlock) {
     });
   }
 
-  return { models, groundTiles: buildGroundTilemap(dfBlock) };
+  return { models, windmills: windmillsFor(dfBlock.name), groundTiles: buildGroundTilemap(dfBlock) };
+}
+
+/**
+ * WM2d: THE MILLS, PLACED - because classic Daggerfall places none.
+ *
+ * WM2b wired a rotor onto model 41600 on the strength of finding that id
+ * in Kamer's WorldData block overrides, and nothing ever turned, because
+ * those files are HIS blocks: `FARMAA01`'s declares
+ * `NumBlockDataRecords: 1` and carries TWO subrecords, `FARMAA00`'s
+ * declares 7 and puts the mill in subrecord 7. The extra subrecord in
+ * each is the mill he ADDS. No classic block stands one, so the port
+ * never placed one, so there was nothing to hang a sail on.
+ *
+ * This is the port's side of that override, and it lives HERE rather
+ * than in the hosts for the reason the rest of this module exists: the
+ * matrix a placed model gets is one law, and a mill placed by different
+ * arithmetic from its neighbours would drift from them the first time
+ * that law is touched. The subrecord frame and the model matrix are the
+ * SAME two lines the building loop above uses.
+ *
+ * Enhanced-skin only is enforced by the CALLER, not here - this module
+ * is pure layout and has no business reading a preference.
+ */
+export function windmillsFor(blockName) {
+  const out = [];
+  for (const p of WINDMILL_PLACEMENTS) {
+    if (p.block !== blockName) continue;
+    const subRecordMatrix = trs(
+      p.subX * GLOBAL_SCALE, 0, (RMB_DIMENSION - p.subZ) * GLOBAL_SCALE,
+      0, -p.subRot / ROTATION_DIVISOR, 0
+    );
+    const modelMatrix = trs(
+      p.x * GLOBAL_SCALE, -p.y * GLOBAL_SCALE, p.z * GLOBAL_SCALE,
+      0, -p.rotY / ROTATION_DIVISOR, 0
+    );
+    out.push({ matrix: multiply(subRecordMatrix, modelMatrix) });
+  }
+  return out;
 }
 
 /**

@@ -69,34 +69,20 @@
 import { WEATHER_SKY } from '../render/enhancedSky.js';
 import { multiply, trs } from './mat4.js';
 
-// The model ids that carry a turning rotor.
+// WM2d RETIRED `WINDMILL_MODELS`, the table of "which classic model id
+// carries a rotor", along with the FLAGGED note asking for the two it
+// could not confirm. The table rested on WM2a's reading that model
+// 41600 stands in Daggerfall's farm blocks, and that reading was
+// backwards: the 41600 was in KAMER'S WorldData overrides, which
+// REPLACE a block - FARMAA01's declares one subrecord and carries two,
+// FARMAA00's puts the mill in subrecord 7 of a seven-record block. The
+// extra subrecord in each is the mill he adds.
 //
-// 41600 is now settled from the other side: the vendored sail's own
-// geometry is named `model41600_001-mesh`, so the mod's author built
-// that rotor FOR model 41600 and the id is his, not an inference.
-//
-// FLAGGED, still awaiting real data: 41601 and the watermill 21411 are
-// read off the mod's manifest and LoadWindmill.cs and are NOT confirmed
-// against a real ARCH3D.BSA - the container this was written in has no
-// ARENA2 - and no vendored geometry names them. A model id here that is
-// not a mill turns something that should stand still, so the wiring
-// slice confirms those two against the real mesh before spinning them.
-//
-// The instrument for that exists and needs no work first:
-//
-//   ARENA2_PATH=/path/to/ARENA2 node tools/windmillProbe.mjs
-//
-// prints each model's submeshes and its CONNECTED COMPONENTS - if the
-// sail is its own island of geometry, or carries its own texture
-// record, the rotor/tower split WM2 needs is already made by the art -
-// and draws every component in its own colour from three sides,
-// because "that part is the sail" is a claim only an eye settles.
-// `--selftest` runs it against a synthetic windmill with no ARENA2.
-export const WINDMILL_MODELS = Object.freeze({
-  41600: 'windmill',       // the farm windmill, the mod's own target
-  41601: 'windmill',       // its second dressing
-  21411: 'watermill',      // the mod spins this one too (LoadWindmill.cs)
-});
+// Classic Daggerfall stands no windmill at all, so there was never a
+// model id to match on, and the hosts matched on one for a whole slice
+// while nothing appeared. The port places its own mills now
+// (world/rmbLayout.js, from vendor/windmills-kamer/placements.json) and
+// a table of classic ids has nothing left to answer.
 
 /** The rotor turns about the model's LOCAL Z, negative-ward - Kamer's
  *  `transform.Rotate(0f, 0f, -13 * Time.deltaTime, Space.Self)`. The
