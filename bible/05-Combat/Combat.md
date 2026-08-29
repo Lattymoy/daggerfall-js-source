@@ -867,3 +867,48 @@ drawn-door rule applied to a diagnostic. The harness's new
 anchor-uniqueness check earned its keep a second time, refusing
 `'team': 'Undead'` (9 matches) before it could mutate a row the pins do
 not cover.
+
+## HE1 — a blow landed indoors drew no blood (2026-08-29)
+
+`EnemyBlood.ShowBloodSplash` has been ported since AUDIT 24 wave 39 and
+mounted in **three** hosts: `world.js`, `exterior.js` and
+`dungeonContext.js` each build a `createHitEffects` pool and hand it to
+their foe pool. `worldModes`' interior arm passed `hitEffects: null` and
+recorded the absence:
+
+> no hitEffects handle exists in this host — RECORDED, not silently
+> dropped: a blow landed inside a building draws no blood splash until
+> the interior grows the pool the dungeon and the exterior already have.
+
+That is the right shape for an absence, and the wrong thing to keep once
+nothing was blocking it. **Nothing was.** The factory takes
+`{ renderer, getTexture, uploadRecordFrame }` — all three already
+destructured in that scope — and the interior frame already draws
+billboards on the same axis for foes, quest stands, dropped piles and
+the magic engine's own impact pool. So the same blow drew blood one step
+outside a shop door and none inside it, for no reason anyone had chosen.
+
+**And the pool outlives the room.** The other three hosts mount one pool
+per host, whose scene lasts as long as the host does. This host keeps
+*one* pool across every building the player walks through, so a splash
+still animating when the door closes would be drawn in the **next**
+building, in the previous one's coordinates. Both interior teardowns
+clear it.
+
+Pins: 6 in `test/interiorblood.test.js`, the first two behavioural
+against the real pool with a counting renderer — `clear()` frees every
+batch it made rather than merely emptying the list, and a *warming*
+splash (one whose texture has not resolved yet, so it has no batch) is
+retired too, which is precisely the one that would otherwise publish
+into the next room. Campaign: 8 mutants, 8 killed.
+
+**THE SECOND NEAR-MISS OF THE DAY, and it is worth the pair.** I wrote a
+`clear()` for `hitEffects.js` and lint answered `Duplicate key 'clear'`:
+the member had been there all along, for the world host's own teardown.
+HE1 is its second *caller*, not its author. PT1 made the identical
+mistake hours earlier with `Dice100.FailedRoll` — writing a fourth home
+for a member whose home was one screen away — and both were caught by
+something cheap and mechanical rather than by care: a lint rule and a
+neighbouring call site. **When a slice's premise is "this thing has no
+home yet", check before writing the home, because that premise is the
+one most often wrong in a codebase this size.**
