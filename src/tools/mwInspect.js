@@ -308,3 +308,89 @@ export function armMeshPaths(rows) {
     };
   });
 }
+
+/** MW-D3: PARSE THE MESH FOR REAL, AND SHOW IT.
+ *
+ * The scan above answers "is there a NiSkinInstance" without parsing. This
+ * does the opposite: it runs the restored strict reader (parseNif +
+ * flattenNif, MW-IMPORT slices 1-2) over an actual arm mesh and hands back
+ * geometry a page can draw.
+ *
+ * IT IS ALLOWED TO FAIL, AND SAYING SO IS THE POINT. An unknown record
+ * type throws and kills the whole file - that is the format, not a bug in
+ * the reader (niffile.cpp has no skip path). A community-mesh sweep put
+ * 602 such failures across 14 record types on the worklist. So a failure
+ * here is a FACT about which records this file needs, reported with the
+ * message, not swallowed into an empty view the way the reverted rig
+ * swallowed everything.
+ */
+export async function parseMeshForPreview(bytes) {
+  let parseNif; let flattenNif;
+  try {
+    ({ parseNif } = await import('../formats/mwNifFile.js'));
+    ({ flattenNif } = await import('../formats/mwNifMesh.js'));
+  } catch (err) {
+    return { ok: false, error: `reader unavailable: ${err.message}` };
+  }
+  let nif;
+  try {
+    nif = parseNif(bytes);
+  } catch (err) {
+    return { ok: false, stage: 'parse', error: err.message };
+  }
+  let batches;
+  try {
+    batches = flattenNif(nif);
+  } catch (err) {
+    return { ok: false, stage: 'flatten', error: err.message };
+  }
+  const shapes = batches.map((b) => ({
+    positions: b.positions,
+    indices: b.indices,
+    skinned: !!(b.skinned && b.skin),
+    vertices: b.positions ? b.positions.length / 3 : 0,
+    triangles: b.indices ? b.indices.length / 3 : 0,
+  })).filter((s) => s.vertices > 0 && s.triangles > 0);
+  if (!shapes.length) return { ok: false, stage: 'geometry', error: 'parsed, but it carries no drawable geometry' };
+  return {
+    ok: true,
+    shapes,
+    vertices: shapes.reduce((n, s) => n + s.vertices, 0),
+    triangles: shapes.reduce((n, s) => n + s.triangles, 0),
+    skinnedShapes: shapes.filter((s) => s.skinned).length,
+    bounds: meshBounds(shapes),
+  };
+}
+
+/** Axis-aligned bounds over every shape, for framing a preview.
+ *  Morrowind is Z-UP, so a front view is x across and z up. */
+export function meshBounds(shapes) {
+  let minX = Infinity; let minY = Infinity; let minZ = Infinity;
+  let maxX = -Infinity; let maxY = -Infinity; let maxZ = -Infinity;
+  for (const s of shapes) {
+    const p = s.positions;
+    for (let i = 0; i < p.length; i += 3) {
+      if (p[i] < minX) minX = p[i];
+      if (p[i] > maxX) maxX = p[i];
+      if (p[i + 1] < minY) minY = p[i + 1];
+      if (p[i + 1] > maxY) maxY = p[i + 1];
+      if (p[i + 2] < minZ) minZ = p[i + 2];
+      if (p[i + 2] > maxZ) maxZ = p[i + 2];
+    }
+  }
+  if (!Number.isFinite(minX)) return null;
+  return { minX, minY, minZ, maxX, maxY, maxZ };
+}
+
+/** Fit the bounds into a w x h box, front view (x across, z up, z flipped
+ *  because canvas y grows downward). Returns a point mapper. Uniform
+ *  scale - a per-axis fit would make a hand look correct while hiding
+ *  proportions that are actually wrong. */
+export function frontViewMapper(bounds, w, h, pad = 8) {
+  const spanX = Math.max(bounds.maxX - bounds.minX, 1e-6);
+  const spanZ = Math.max(bounds.maxZ - bounds.minZ, 1e-6);
+  const scale = Math.min((w - pad * 2) / spanX, (h - pad * 2) / spanZ);
+  const cx = (bounds.minX + bounds.maxX) / 2;
+  const cz = (bounds.minZ + bounds.maxZ) / 2;
+  return (x, y, z) => [w / 2 + (x - cx) * scale, h / 2 - (z - cz) * scale];
+}

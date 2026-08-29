@@ -25,6 +25,11 @@
   label { color:var(--dim); margin-right:14px; }
   select { background:#191712; color:var(--fg); border:1px solid var(--line); padding:3px 6px; font:inherit; }
   .err { color:var(--bad); white-space:pre-wrap; }
+  .draws { display:flex; flex-wrap:wrap; gap:14px; margin:10px 0 2px; }
+  .draw { border:1px solid var(--line); border-radius:6px; padding:8px; background:#191712; }
+  .draw canvas { display:block; background:#0f0d0b; border-radius:3px; }
+  .draw .cap { color:var(--dim); font-size:12px; margin-top:6px; }
+  .draw .cap b { color:var(--fg); font-weight:normal; }
 </style>
 </head>
 <body>
@@ -48,7 +53,7 @@
 <script type="module">
 import {
   parseBsaIndex, readNifHeader, bodyParts, armReport, FP_SKELETONS, ARM_PARTS,
-  armMeshPaths, skinVerdict,
+  armMeshPaths, skinVerdict, parseMeshForPreview, frontViewMapper,
 } from '/src/tools/mwInspect.js';
 
 const out = document.getElementById('out');
@@ -189,6 +194,7 @@ function render() {
             + `</td><td class="dim">${top}</td></tr>`;
         }
         h += '</table>';
+        h += '<div class="draws" id="draws"></div>';
         h += '<p class="note">This is a record-type <b>scan</b>, not a parse: it can tell you a '
           + '<code>NiSkinInstance</code> is present in the file, and nothing more. It is here because the last '
           + 'attempted fix assumed these meshes were <b>rigid</b> &mdash; parts hung off a bone &mdash; from '
@@ -211,10 +217,62 @@ function render() {
   if (race) race.addEventListener('change', () => { localStorage.setItem('mwi.race', race.value); render(); });
   if (fem) fem.addEventListener('change', () => { localStorage.setItem('mwi.female', fem.checked ? '1' : '0'); render(); });
 
+  drawArms();
+
   document.getElementById('foot').innerHTML = (bsa || esm)
     ? 'Every rule this page applies is cited in <code>bible/02-Formats/Morrowind-Rules.md</code>. '
       + 'It reports what is in your files; it makes no claim that anything will draw.'
     : '';
+}
+
+// MW-D3: run the REAL reader over each arm mesh and draw what comes back.
+// Not the rig - no skeleton, no bones, no pose. Just: does this file parse,
+// and is what comes out shaped like a hand? A wireframe answers that in a
+// way no test output can, and a failure prints its stage and message
+// instead of leaving an empty box.
+async function drawArms() {
+  const host = document.getElementById('draws');
+  if (!host || !bsa || !esm) return;
+  const sel = localStorage.getItem('mwi.race') || 'nord';
+  const fem = localStorage.getItem('mwi.female') === '1';
+  const have = new Map(bsa.index.files.map((f) => [f.name, f]));
+  for (const p of armMeshPaths(armReport(esm.parts, sel, fem))) {
+    if (!p.path) continue;
+    const f = have.get(p.path);
+    if (!f) continue;
+    const box = document.createElement('div');
+    box.className = 'draw';
+    host.append(box);
+    const r = await parseMeshForPreview(bsa.bytes.subarray(f.offset, f.offset + f.size));
+    if (!r.ok) {
+      box.innerHTML = `<div class="cap"><b>${esc(p.slot)}</b><br><span class="bad">`
+        + `${esc(r.stage || 'failed')}: ${esc(r.error)}</span></div>`;
+      continue;
+    }
+    const W = 190; const H = 190;
+    const cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    box.append(cv);
+    const g = cv.getContext('2d');
+    const map = frontViewMapper(r.bounds, W, H);
+    g.strokeStyle = 'rgba(224,164,88,.55)';
+    g.lineWidth = 0.5;
+    g.beginPath();
+    for (const sh of r.shapes) {
+      const pos = sh.positions; const idx = sh.indices;
+      for (let i = 0; i + 2 < idx.length; i += 3) {
+        const a = idx[i] * 3; const b = idx[i + 1] * 3; const c = idx[i + 2] * 3;
+        const [ax, ay] = map(pos[a], pos[a + 1], pos[a + 2]);
+        const [bx, by] = map(pos[b], pos[b + 1], pos[b + 2]);
+        const [cx2, cy2] = map(pos[c], pos[c + 1], pos[c + 2]);
+        g.moveTo(ax, ay); g.lineTo(bx, by); g.lineTo(cx2, cy2); g.closePath();
+      }
+    }
+    g.stroke();
+    box.insertAdjacentHTML('beforeend', `<div class="cap"><b>${esc(p.slot)}</b> `
+      + `&middot; ${r.triangles.toLocaleString()} tris &middot; `
+      + `${r.skinnedShapes ? 'skinned' : 'rigid'}</div>`);
+  }
 }
 </script>
 </body>
