@@ -516,7 +516,9 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
       notes.push(`${part.slot}: ${err.message}`);
       continue;
     }
-    let tookSkinned = false;
+    // MW-D6: the nameless-shape extension binds ONCE for the part; a
+    // NAMED shape binds once PER SIDE, filtered. See the block below.
+    let tookNameless = false;
     for (const bone of bones.length ? bones : [null]) {
       if (bone && !skeleton.byName.has(bone.toLowerCase())) {
         notes.push(`${part.slot}: this skeleton has no bone "${bone}"`);
@@ -530,18 +532,42 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
         continue;
       }
 
-      // RULE 12 + 15: skinned geometry carries its own bones, so it binds
-      // ONCE - and picks its side by the shape NAME, not by the mirror.
-      if (!tookSkinned) {
-        for (const batch of bound.skinned) {
-          if (bone && !shapeMatchesBone(batch.name, bone)) continue;
-          const out = new Float32Array(batch.positions.length);
-          mod.skinBatch(batch, skeleton, pose, mod.skelMats(skeleton, pose, batch.skin.skeletonRoot), out, null);
-          pieces.push({ slot: part.slot, bone, kind: 'skinned', mirrored: false,
-            positions: out, indices: batch.indices });
-        }
-        if (bound.skinned.length) tookSkinned = true;
+      // RULE 12 + 15: skinned geometry carries its own bones, so it is
+      // never MIRRORED - it picks its side by the shape NAME. And it
+      // binds ONCE PER SIDE, not once per part.
+      //
+      // MW-D6 CORRECTION. This block used to be wrapped in a
+      // `if (!tookSkinned)` latch raised by the first bone that yielded
+      // any skinned batch, so a two-bone slot - and every arm slot is one
+      // (`PART_BONES.hand = ['left hand','right hand']`) - emitted the
+      // LEFT hand and never asked for the right. The filter that exists
+      // precisely to pick a side ran once and then was skipped, which on
+      // retail data is a one-handed arm.
+      //
+      // Rule 4 is what the latch contradicted: sPartList is a MULTIMAP,
+      // `{ MP_Hand, PRT_RHand }, { MP_Hand, PRT_LHand }` - one mesh part,
+      // two slots, "each side its own part reference at its own bone".
+      // The doc already warns that the first attempt "treated a part as
+      // one mesh attached at two bones in one pass"; the latch was the
+      // same error wearing the other face.
+      //
+      // A latch is still needed, but only for the port's own EXTENSION to
+      // rule 15: a shape with no name matches every bone (OpenMW's
+      // ciStartsWith("", filter) is false and the engine drops it), so a
+      // nameless one-shape part would bind at every side and stack
+      // duplicates in the same place. That one binds once.
+      let namelessHere = false;
+      for (const batch of bound.skinned) {
+        const nameless = !String(batch.name || '').trim();
+        if (nameless && tookNameless) continue;
+        if (bone && !shapeMatchesBone(batch.name, bone)) continue;
+        const out = new Float32Array(batch.positions.length);
+        mod.skinBatch(batch, skeleton, pose, mod.skelMats(skeleton, pose, batch.skin.skeletonRoot), out, null);
+        pieces.push({ slot: part.slot, bone, kind: 'skinned', mirrored: false,
+          positions: out, indices: batch.indices });
+        if (nameless) namelessHere = true;
       }
+      tookNameless = tookNameless || namelessHere;
 
       // RULE 12 + 13: a rigid part is PLACED at the bone, once per side,
       // with x negated on the left.
@@ -562,6 +588,28 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
     bounds: pieces.length ? meshBounds(pieces) : null,
     error: pieces.length ? null : 'nothing bound - see the notes for why',
   };
+}
+
+/** MW-D6: one row per assembled piece, for the page's table and the
+ *  probe's readback - so neither invents its own summary of the same
+ *  data and the two can disagree.
+ *
+ *  KEYED BY SLOT **AND** BONE. Every arm slot is two-boned (rule 4's
+ *  multimap), so a key of slot alone collides on exactly the case this
+ *  stage exists to show. Bounds are PER PIECE, not the assembly's, which
+ *  is what makes a left/right mix-up readable in a table as well as on
+ *  the canvas. */
+export function armPieceRows(pieces) {
+  return (pieces ?? []).map((p) => ({
+    key: `${p.slot} @ ${p.bone ?? '(no bone)'}`,
+    slot: p.slot,
+    bone: p.bone ?? null,
+    kind: p.kind,
+    mirrored: !!p.mirrored,
+    vertices: p.positions ? p.positions.length / 3 : 0,
+    triangles: p.indices ? p.indices.length / 3 : 0,
+    bounds: meshBounds([p]),
+  }));
 }
 
 /** RULE 15's filter, verbatim: a case-insensitive PREFIX match on the

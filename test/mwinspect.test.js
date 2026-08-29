@@ -5,7 +5,7 @@ import {
   isFirstPersonId, FP_SKELETONS, ARM_PARTS, MW_BODY_PARTS,
   scanNifRecordTypes, skinVerdict, armMeshPaths, parseMeshForPreview, meshBounds, frontViewMapper,
   skeletonReport, checkRequiredBones, FP_REQUIRED_BONES,
-  assembleFirstPersonArm, shapeMatchesBone, placeAtBone,
+  assembleFirstPersonArm, shapeMatchesBone, placeAtBone, armPieceRows,
 } from '../src/tools/mwInspect.js';
 
 // MW-D: the diagnostic that should have existed before any renderer.
@@ -408,10 +408,11 @@ test('MW-D5: rule 15 excludes a skinned shape whose name does not match its bone
   });
   assert.equal(r.pieces.filter((p) => p.kind === 'skinned').length, 0,
     'a shape the bone filter rejects contributes nothing');
-  // RECORDED GAP, not an oversight: no fixture mesh is named after a bone
-  // this fixture skeleton carries, so the filter's ACCEPT path cannot be
-  // exercised end-to-end here. It is pinned directly on shapeMatchesBone
-  // above. Retail names its shapes "Tri Left Hand" and would exercise it.
+  // THE GAP RECORDED HERE IS CLOSED by "MW-D6: rule 15's ACCEPT path,
+  // end to end" below - armskel.nif carries Morrowind's own bone names
+  // and armhand.nif names its shapes the retail way, so the ACCEPT
+  // branch now runs through the real readers. This test keeps the
+  // REJECT half; the two are a matched pair.
 });
 
 test('MW-D5: assembly reports WHY it produced nothing, and never silently empties', async () => {
@@ -432,4 +433,116 @@ test('MW-D5: assembly reports WHY it produced nothing, and never silently emptie
   assert.equal(noParts.ok, false, 'no parts is not a success');
   assert.match(noParts.error, /nothing bound/);
   assert.deepEqual(noParts.pieces, []);
+});
+
+// ── MW-D6: the arm ASSEMBLES with Morrowind's own vocabulary ───────
+//
+// Every fixture MW-D5 had spoke SkinRoot/Bone0/Bone1 and named its shapes
+// "Skinned"/"PartSkin". Two attachment rules cannot be exercised in that
+// vocabulary at all, which is why MW-D5 pinned them by direct call and
+// recorded the gap. armskel.nif carries rule 5's own bone names and
+// armhand.nif names its shapes the retail way, so both rules now run END
+// TO END through the real readers, with NO test-only `bones` override.
+
+const armFixture = async (name) => {
+  const { readFileSync } = await import('node:fs');
+  return new Uint8Array(readFileSync(new URL(`./fixtures/mw/${name}`, import.meta.url)));
+};
+
+test('MW-D6: rule 15\'s ACCEPT path, end to end - each side binds its OWN shape', async () => {
+  // THE GAP MW-D5 RECORDED, CLOSED. One part file carries "Tri Right Hand"
+  // and "Tri Left Hand"; PART_BONES.hand is ['left hand','right hand'], so
+  // the engine's two filtered passes (rule 4: one mesh part, two slots)
+  // must yield one piece per side, each the shape named for it.
+  const r = await assembleFirstPersonArm({
+    skeletonBytes: await armFixture('armskel.nif'),
+    parts: [{ slot: 'hand', bytes: await armFixture('armhand.nif') }],
+  });
+  assert.equal(r.ok, true, `${r.error} :: ${r.notes.join(' | ')}`);
+  const skinned = r.pieces.filter((p) => p.kind === 'skinned');
+  assert.equal(skinned.length, 2, 'ONE PIECE PER SIDE - a latch that stops after the first bone gives 1');
+  assert.deepEqual(skinned.map((p) => p.bone), ['left hand', 'right hand']);
+  assert.equal(r.pieces.filter((p) => p.kind === 'rigid').length, 0, 'both shapes are skinned');
+  // and the filter put each side's geometry on its own side of x=0
+  const xs = (p) => [...p.positions].filter((_, i) => i % 3 === 0);
+  assert.ok(xs(skinned[0]).every((x) => x < 0), 'the left piece is the left shape');
+  assert.ok(xs(skinned[1]).every((x) => x > 0), 'and the right piece the right one');
+});
+
+test('MW-D6: rule 13\'s mirror, reached END TO END through assembly', async () => {
+  // MW-D5 could only pin the mirror by calling placeAtBone directly,
+  // because no fixture skeleton had a bone named "left" and the branch
+  // was unreachable. armskel has both sides, so the DERIVATION
+  // (`/left/i` on the bone name) is now exercised too - which the direct
+  // call could never test, since it takes `mirror` as an argument.
+  const r = await assembleFirstPersonArm({
+    skeletonBytes: await armFixture('armskel.nif'),
+    parts: [{ slot: 'upperarm', bytes: await armFixture('armcuff.nif') }],
+  });
+  assert.equal(r.ok, true, `${r.error} :: ${r.notes.join(' | ')}`);
+  const rigid = r.pieces.filter((p) => p.kind === 'rigid');
+  assert.equal(rigid.length, 2, 'one placement per side');
+  assert.deepEqual(rigid.map((p) => p.bone), ['left upper arm', 'right upper arm']);
+  assert.deepEqual(rigid.map((p) => p.mirrored), [true, false], 'the LEFT one is mirrored, and only it');
+  const bounds = (p) => {
+    const xs = [...p.positions].filter((_, i) => i % 3 === 0);
+    return [Math.min(...xs), Math.max(...xs)];
+  };
+  const [lMin, lMax] = bounds(rigid[0]);
+  const [rMin, rMax] = bounds(rigid[1]);
+  assert.ok(Math.abs(lMin + rMax) < 1e-5 && Math.abs(lMax + rMin) < 1e-5,
+    `the left piece is the right piece with X negated, exactly (L ${lMin},${lMax} R ${rMin},${rMax})`);
+  // and z is untouched by the mirror - it negates X and ONLY X
+  const zs = (p) => [...p.positions].filter((_, i) => i % 3 === 2).sort();
+  assert.deepEqual(zs(rigid[0]), zs(rigid[1]), 'Z is identical on both sides');
+});
+
+test('MW-D6: a NAMELESS skinned shape binds ONCE, not once per side', async () => {
+  // The port EXTENDS rule 15: OpenMW's ciStartsWith("", "right hand") is
+  // false and the engine drops a nameless shape, while this reader treats
+  // it as "the part". The extension has a consequence the engine does not
+  // have - a nameless shape passes the filter at EVERY bone - so without
+  // a latch one file binds twice and the duplicate lands in the same
+  // place. armnameless.nif exists solely so that branch is enterable.
+  const r = await assembleFirstPersonArm({
+    skeletonBytes: await armFixture('armskel.nif'),
+    parts: [{ slot: 'hand', bytes: await armFixture('armnameless.nif') }],
+  });
+  assert.equal(r.ok, true, `${r.error} :: ${r.notes.join(' | ')}`);
+  assert.equal(r.pieces.filter((p) => p.kind === 'skinned').length, 1,
+    'once for the part, not once per bone');
+});
+
+test('MW-D6: a part the reader refuses is a NOTE, and the rest of the arm still assembles', async () => {
+  const r = await assembleFirstPersonArm({
+    skeletonBytes: await armFixture('armskel.nif'),
+    parts: [
+      { slot: 'hand', bytes: await armFixture('armhand.nif') },
+      { slot: 'wrist', bytes: new Uint8Array([...ascii('not a nif'), 0x0a, 0, 0, 0, 0]) },
+    ],
+  });
+  assert.equal(r.ok, true, 'one bad part does not abandon the arm');
+  assert.equal(r.pieces.filter((p) => p.kind === 'skinned').length, 2, 'the good part still binds both sides');
+  assert.equal(r.notes.length, 1, 'and the bad one is recorded, once');
+  assert.match(r.notes[0], /^wrist:/, 'named by the slot that failed');
+});
+
+test('MW-D6: armPieceRows keys by slot AND bone, and bounds are PER PIECE', async () => {
+  // A key of slot alone collides on every arm slot, because every arm
+  // slot is two-boned; and the assembly-wide bounds would make both sides
+  // read identically in the table, hiding the very mix-up this stage is
+  // built to show.
+  const r = await assembleFirstPersonArm({
+    skeletonBytes: await armFixture('armskel.nif'),
+    parts: [{ slot: 'hand', bytes: await armFixture('armhand.nif') }],
+  });
+  const rows = armPieceRows(r.pieces);
+  assert.equal(rows.length, 2);
+  assert.equal(new Set(rows.map((x) => x.key)).size, 2, 'the two sides get distinct keys');
+  assert.deepEqual(rows.map((x) => x.key), ['hand @ left hand', 'hand @ right hand']);
+  assert.deepEqual(rows.map((x) => x.triangles), [1, 1]);
+  assert.deepEqual(rows.map((x) => x.vertices), [3, 3]);
+  assert.ok(rows[0].bounds.maxX < 0 && rows[1].bounds.minX > 0,
+    'per-piece bounds put each side on its own side of x=0');
+  assert.deepEqual(armPieceRows(null), [], 'and nothing in, nothing out');
 });

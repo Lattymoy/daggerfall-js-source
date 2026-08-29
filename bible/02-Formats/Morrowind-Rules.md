@@ -15,15 +15,52 @@ each stage is provable on the player's own data before the next begins:
   MW-D  the inspector at mw-inspect.html - what is genuinely IN the
         player's archives. MW-D2 skinned-vs-rigid, MW-D3 real parse +
         wireframe, MW-D4 the bones the rules name, MW-D5 assembly at
-        rest pose.
+        rest pose, MW-D6 the assembled arm DRAWN - and the defect that
+        drawing found (below).
 
 CONFIRMED ON RETAIL DATA (Mac, 2026-08-29): the archives parse, the arm
 meshes parse, and the wireframes DRAW. Part VI has the rest.
 
-NEXT, IN ORDER: (1) draw the ASSEMBLED arm on the page - MW-D5's
-assembleFirstPersonArm is written and pinned but is not yet wired to a
-canvas; (2) play an idle clip through it; (3) only then a rig, and only
-then wiring into weaponRig. Nothing MW touches the game today.
+MW-D6 FOUND A DEFECT BY DRAWING, WHICH IS THE POINT OF DRAWING.
+assembleFirstPersonArm latched after the FIRST bone that yielded skinned
+geometry. Every arm slot is two-boned - `PART_BONES.hand = ['left hand',
+'right hand']` - so it emitted the LEFT hand and never asked for the
+right, and rule 15's filter, which exists solely to pick a side, ran once
+and was then skipped. On retail data that is a ONE-HANDED ARM.
+
+Rule 4 is what the latch contradicted: sPartList is a MULTIMAP,
+`{ MP_Hand, PRT_RHand }, { MP_Hand, PRT_LHand }` - one mesh part, two
+slots, each side its own reference at its own bone. This document already
+warned that the first attempt "treated a part as one mesh attached at two
+bones in one pass"; the latch was that same error wearing the other face,
+and it was written by the slice that quoted the warning.
+
+A latch is still needed, but only for the port's own EXTENSION to rule 15
+(a nameless shape matches every bone, where OpenMW's
+`ciStartsWith("", filter)` is false and the engine drops it) - that one
+binds once per part or it stacks duplicates in the same place.
+
+WHY MW-D5's TESTS COULD NOT SEE IT: every fixture spoke
+SkinRoot/Bone0/Bone1 and named its shapes "Skinned"/"PartSkin", so
+assembly never ran with two bones at all. MW-D6 authored four fixtures in
+Morrowind's OWN vocabulary through the same independent writer
+(armskel/armhand/armcuff/armnameless, generate.py), which also CLOSES the
+two gaps MW-D5 recorded as unreachable: rule 15's ACCEPT path and rule
+13's mirror DERIVATION now run end to end with no test-only override.
+
+AND THE PROBE'S OWN LESSON, measured: with the latch reinstated the page
+still lights 1116 pixels. A lit-pixel count - the obvious measurement,
+and the one MW-D3 uses - PASSES a one-handed arm. It took two more
+layers to catch: x-symmetry off the downsampled canvas (0.63 against
+0.99) and a signed per-piece readback (3 pieces, `left hand` only). THE
+MEASUREMENT HAS TO BE ABLE TO FAIL THE WAY THE CODE ACTUALLY FAILS.
+
+NEXT, IN ORDER: (1) play an idle clip through the assembly - and note
+that assembleFirstPersonArm's RETURN VALUE cannot be re-posed as it
+stands, since each piece keeps only baked positions and drops the batch,
+its skin, attachRef, pose and mats; that is an additive change, not a
+rewrite; (2) only then a rig, and only then wiring into weaponRig.
+Nothing MW touches the game today.
 
 THE STANDING RULE FOR THIS WORK: no stage is "done" until it is visible
 on the player's own files. Four fixes shipped green and broken because

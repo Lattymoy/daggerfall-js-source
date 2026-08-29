@@ -643,6 +643,169 @@ def make_bsa():
     print("wrote", HERE / "fixture.bsa", len(out), "bytes")
 
 
+# ---------------------------------------------------------------------
+# MW-D6: the ARM fixtures.
+#
+# Every fixture above speaks the vocabulary SkinRoot/Bone0/Bone1/Head/
+# Chest and names its shapes "Skinned"/"PartSkin"/"Hat". That vocabulary
+# cannot exercise two of the attachment rules AT ALL, which is exactly
+# what MW-D5 recorded and what let three mutants survive a full sweep:
+#
+#   rule 15 (the bone name is a geometry filter) - its ACCEPT branch
+#     needs a shape NAMED after a bone the skeleton carries;
+#   rule 13 (a rigid part on a "left" bone is drawn x-negated) - needs a
+#     bone whose name contains "left".
+#
+# These four give both a home. The names are Morrowind's, from rule 5's
+# sPartList table, so the assembly runs the real PART_BONES path with no
+# test-only override.
+#
+# DELIBERATELY ABSENT: "Weapon Bone", "Weapon Bone Left", "Bip01 Spine1".
+# MW-D4's report asserts that a skeleton lacking them SAYS so, and that
+# half must stay exercised.
+
+
+def _bone(parent, name, t=(0.0, 0.0, 0.0)):
+    b = NifFormat.NiNode()
+    b.name = name.encode()
+    ident(b.rotation)
+    b.scale = 1.0
+    b.translation.x, b.translation.y, b.translation.z = t
+    parent.add_child(b)
+    return b
+
+
+def _tri(parent, name, verts, tris=((0, 1, 2),)):
+    tri = NifFormat.NiTriShape()
+    tri.name = name.encode()
+    ident(tri.rotation)
+    tri.scale = 1.0
+    parent.add_child(tri)
+    d = NifFormat.NiTriShapeData()
+    tri.data = d
+    d.num_vertices = len(verts)
+    d.has_vertices = True
+    d.vertices.update_size()
+    for v, (x, y, z) in zip(d.vertices, verts):
+        v.x, v.y, v.z = x, y, z
+    d.num_triangles = len(tris)
+    d.num_triangle_points = 3 * len(tris)
+    d.triangles.update_size()
+    for t, (a, b, c) in zip(d.triangles, tris):
+        t.v_1, t.v_2, t.v_3 = a, b, c
+    d.update_center_radius()
+    return tri
+
+
+def _skin_to(tri, root, bones_and_weights):
+    """One NiSkinInstance over (bone node, invBind translation, [(vert, w)])."""
+    si = NifFormat.NiSkinInstance()
+    sd = NifFormat.NiSkinData()
+    si.data = sd
+    si.skeleton_root = root
+    si.num_bones = len(bones_and_weights)
+    si.bones.update_size()
+    sd.num_bones = len(bones_and_weights)
+    ident(sd.skin_transform.rotation)
+    sd.skin_transform.scale = 1.0
+    sd.bone_list.update_size()
+    for i, (node, inv_t, wl) in enumerate(bones_and_weights):
+        si.bones[i] = node
+        bl = sd.bone_list[i]
+        ident(bl.skin_transform.rotation)
+        bl.skin_transform.scale = 1.0
+        # THE INVERSE BIND: minus the bone's skeleton-space translation, so
+        # at rest world(bone) o invBind collapses to I and the authored
+        # verts come back exactly - the same round trip build_skinned_rig
+        # relies on, stated per bone because these bones are not on an axis.
+        (bl.skin_transform.translation.x,
+         bl.skin_transform.translation.y,
+         bl.skin_transform.translation.z) = inv_t
+        bl.bounding_sphere_radius = 1.0
+        bl.num_vertices = len(wl)
+        bl.vertex_weights.update_size()
+        for vw, (idx, w) in zip(bl.vertex_weights, wl):
+            vw.index = idx
+            vw.weight = w
+    tri.skin_instance = si
+
+
+# Skeleton-space rest of the arm chain, both sides. Kept here because the
+# fixtures below and the tests both need the same numbers.
+ARM_REST = {
+    "Right Upper Arm": (1.0, 0.0, 3.0), "Left Upper Arm": (-1.0, 0.0, 3.0),
+    "Right Forearm": (1.0, 0.0, 2.0), "Left Forearm": (-1.0, 0.0, 2.0),
+    "Right Hand": (1.0, 0.0, 1.0), "Left Hand": (-1.0, 0.0, 1.0),
+}
+
+
+def make_armskel():
+    # A CHAIN, not a flat list: upper arm -> forearm -> hand, each child a
+    # further -1 in z. A flat list would let a "parent chain ignored"
+    # mutant survive, because every bone would already be in skeleton
+    # space.
+    root = NifFormat.NiNode()
+    root.name = b"Bip01"
+    ident(root.rotation)
+    root.scale = 1.0
+    for side, sx in (("Right", 1.0), ("Left", -1.0)):
+        up = _bone(root, f"{side} Upper Arm", (sx, 0.0, 3.0))
+        fore = _bone(up, f"{side} Forearm", (0.0, 0.0, -1.0))
+        _bone(fore, f"{side} Hand", (0.0, 0.0, -1.0))
+    write_nif(HERE / "armskel.nif", [root])
+
+
+def make_armhand():
+    # ONE part file carrying BOTH sides as separately named shapes - which
+    # is the retail shape rule 15 exists for, and the only way its ACCEPT
+    # branch can be driven end to end.
+    root = NifFormat.NiNode()
+    root.name = b"Bip01"          # matches armskel's root, so skinToSkel is I
+    ident(root.rotation)
+    root.scale = 1.0
+    for side in ("Right", "Left"):
+        bone_name = f"{side} Hand"
+        rest = ARM_REST[bone_name]
+        node = _bone(root, bone_name, rest)
+        sx = 1.0 if side == "Right" else -1.0
+        verts = [(0.8 * sx, 0.0, 0.6), (1.6 * sx, 0.0, 0.6), (1.2 * sx, 0.0, 1.4)]
+        tri = _tri(root, f"Tri {side} Hand", verts)
+        _skin_to(tri, root, [(node, (-rest[0], -rest[1], -rest[2]),
+                             [(0, 1.0), (1, 1.0), (2, 1.0)])])
+    write_nif(HERE / "armhand.nif", [root])
+
+
+def make_armcuff():
+    # A RIGID part - no skin instance - and ASYMMETRIC in x, which is what
+    # makes rule 13's mirror measurable rather than invisible.
+    root = NifFormat.NiNode()
+    root.name = b"CuffRoot"
+    ident(root.rotation)
+    root.scale = 1.0
+    _tri(root, "Cuff", [(0.1, 0.0, -0.3), (0.9, 0.0, -0.3), (0.5, 0.0, 0.3)])
+    write_nif(HERE / "armcuff.nif", [root])
+
+
+def make_armnameless():
+    # A skinned shape with an EMPTY name. The port EXTENDS rule 15 here -
+    # OpenMW's ciStartsWith("", "right hand") is false, so the engine would
+    # drop this shape - and the extension has a consequence the engine does
+    # not: a nameless shape passes the filter at EVERY bone, so without a
+    # latch one part binds once per side and the duplicate lands in the
+    # same place. This fixture is the only thing that can enter that
+    # branch.
+    root = NifFormat.NiNode()
+    root.name = b"Bip01"
+    ident(root.rotation)
+    root.scale = 1.0
+    rest = ARM_REST["Right Hand"]
+    node = _bone(root, "Right Hand", rest)
+    tri = _tri(root, "", [(0.8, 0.0, 0.6), (1.6, 0.0, 0.6), (1.2, 0.0, 1.4)])
+    _skin_to(tri, root, [(node, (-rest[0], -rest[1], -rest[2]),
+                         [(0, 1.0), (1, 1.0), (2, 1.0)])])
+    write_nif(HERE / "armnameless.nif", [root])
+
+
 if __name__ == "__main__":
     make_mesh()
     make_dds()
@@ -653,5 +816,9 @@ if __name__ == "__main__":
     make_flight_kf()
     make_part()
     make_rotbind()
+    make_armskel()
+    make_armhand()
+    make_armcuff()
+    make_armnameless()
     make_esm()
     make_bsa()

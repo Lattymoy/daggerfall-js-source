@@ -66,19 +66,39 @@ const nifRecs = (types) => {
   for (const t of types) out.push(...u32(t.length), ...ascii(t), ...[7, 0, 0, 0, 1, 2, 3]);
   return Uint8Array.from(out);
 };
+//
+// MW-D6 REBUILT THIS FIXTURE. Until now the skeleton was the generic
+// test rig (SkinRoot/Bone0/Bone1), whose vocabulary is not Morrowind's,
+// so assembleFirstPersonArm could bind NOTHING and a probe could only
+// ever prove the failure path. armskel.nif carries rule 5's own bone
+// names for both sides, and armhand/armcuff are shaped like retail parts
+// - so the ASSEMBLY's success path is now measured here, on a page, in
+// pixels, which is this lane's whole standing rule.
+//
+// armskel deliberately omits Weapon Bone, Weapon Bone Left, the spine and
+// the clavicles, so MW-D4's MISSING half stays exercised too.
+const loose = (n) => new Uint8Array(readFileSync(`test/fixtures/mw/${n}`));
 const bsa = buildBsa([
-  // A REAL skeleton, so MW-D4's bone table is actually exercised rather
-  // than short-circuited by a header stub that cannot parse.
-  { name: 'meshes\\XBase_Anim.1st.nif', data: fixtureBsa.get('meshes/base_anim.nif') },
+  { name: 'meshes\\XBase_Anim.1st.nif', data: loose('armskel.nif') },
   { name: 'meshes\\Base_Anim_Female.1st.nif', data: nif('NetImmerse File Format, Version 4.0.0.2', 0x04000002) },
-  { name: 'meshes\\b\\H1.nif', data: nifRecs(['NiNode', 'NiTriShape', 'NiSkinInstance']) },
-  // A REAL NIF, so the draw panel's SUCCESS path is proven live and not
-  // only in node: this one must parse and put pixels on a canvas.
-  { name: 'meshes\\b\\W.nif', data: new Uint8Array(readFileSync('test/fixtures/mw/plain.nif')) },
+  // The HAND: one real file carrying BOTH sides as separately named
+  // shapes - the retail shape rule 15's filter exists for.
+  { name: 'meshes\\b\\H1.nif', data: loose('armhand.nif') },
+  // The WRIST: a record-name STUB the strict reader must refuse, so the
+  // draw panel's "name your failure stage" behaviour stays proven. Its
+  // scan still reads rigid, which is what MW-D2 asserts.
+  { name: 'meshes\\b\\W.nif', data: nifRecs(['NiNode', 'NiTriShape']) },
+  // The UPPER ARM: a real RIGID part, asymmetric in x, which is what
+  // makes rule 13's mirror measurable off the pixels.
+  { name: 'meshes\\b\\U.nif', data: loose('armcuff.nif') },
 ]);
 const esm = Uint8Array.from([
   ...body('b_n_nord_m_hand.1st', 'nord', 'hand', { model: 'b/H1.nif' }),
   ...body('b_n_nord_m_wrist', 'nord', 'wrist', { model: 'b/W.nif' }),   // third-person only
+  // Part VI found `b_n_nord_m_upper arm` on retail - the id carries a
+  // SPACE, and any lookup assuming record ids are token-safe breaks on
+  // this slot specifically. The fixture keeps the space.
+  ...body('b_n_nord_m_upper arm', 'nord', 'upperarm', { model: 'b/U.nif' }),
   ...body('b_n_nord_m_chest', 'nord', 'chest'),                          // not an arm
 ]);
 
@@ -89,7 +109,7 @@ await page.setInputFiles('#file', [
 await page.waitForSelector('#out table', { timeout: 10000 });
 const text = await page.textContent('#out');
 
-ok(/4 files/.test(text), 'the archive is read and its file count shown');
+ok(/5 files/.test(text), 'the archive is read and its file count shown');
 ok(/xbase_anim\.1st\.nif[\s\S]{0,80}present/.test(text), 'the REAL first-person skeleton is reported present');
 ok(/base_anim\.1st\.nif[\s\S]{0,120}ABSENT/.test(text),
   'and the name the reverted rig hardcoded is reported ABSENT');
@@ -97,7 +117,7 @@ ok(/not in this archive[\s\S]{0,200}never drew anything/.test(text),
   'the page SAYS WHY IN WORDS, which is the whole point of it');
 ok(/4\.0\.0\.2/.test(text), 'the NIF header is parsed and its version shown');
 ok(/bool = 4 bytes/.test(text), 'and the version-derived bool width is reported');
-ok(/3 body records/.test(text) && /1 of them are first-person/.test(text),
+ok(/4 body records/.test(text) && /1 of them are first-person/.test(text),
   'the ESM body records are counted, first-person ones separately');
 ok(/hand[\s\S]{0,120}first-person record found/.test(text), 'the hand slot finds its .1st record');
 ok(/wrist[\s\S]{0,160}falls back to the third-person mesh/.test(text),
@@ -132,6 +152,80 @@ ok(pixels.some((n) => n > 200), `and the wireframe actually DRAWS (${pixels.join
 ok(/parse:|flatten:|geometry:/.test(drawText),
   `a mesh the strict reader refuses names its STAGE (got: ${drawText.replace(/\s+/g, ' ').slice(0, 120)})`);
 ok(!/^\s*$/.test(drawText), 'and never an empty box - the reverted rig\'s defining behaviour');
+
+// ── MW-D6: THE ASSEMBLED ARM, DRAWN ───────────────────────────────
+//
+// Three layers, because each is blind to what the next catches:
+//   1. lit pixels     - something was drawn at all
+//   2. x-symmetry     - blind to "two identical right hands", which is
+//                       EXACTLY the defect MW8 shipped, so layer 1 alone
+//                       would have passed it
+//   3. signed readback- which piece, which bone, which side, mirrored or
+//                       not; the only layer that can name what went wrong
+await page.waitForSelector('#assembly canvas', { timeout: 10000 });
+const armText = await page.textContent('#assembly');
+
+const armCanvases = await page.evaluate(() => document.querySelectorAll('#assembly canvas').length);
+ok(armCanvases === 1, `ONE frame for the whole arm, not one per piece (${armCanvases})`);
+
+const armPixels = await page.evaluate(() => {
+  const c = document.querySelector('#assembly canvas');
+  const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+  let n = 0;
+  for (let i = 3; i < d.length; i += 4) if (d[i] > 8) n++;
+  return n;
+});
+ok(armPixels > 200, `the assembled arm actually DRAWS (${armPixels} lit pixels)`);
+
+// LAYER 2. Every part in this fixture is x-symmetric by construction -
+// two mirrored hand shapes, one cuff placed at both upper arms with the
+// left mirrored - and frontViewMapper centres on (minX+maxX)/2 = 0. So a
+// correct drawing is symmetric about the vertical centre line. Drop rule
+// 13's mirror and the left cuff lands on top of the right one instead of
+// opposite it, and the score collapses. Block-downsampled to absorb
+// antialiasing and the even-width off-by-one.
+const sym = await page.evaluate(() => {
+  const c = document.querySelector('#assembly canvas');
+  const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+  const B = 4; const W = Math.ceil(c.width / B); const H = Math.ceil(c.height / B);
+  const cell = new Uint8Array(W * H);
+  for (let y = 0; y < c.height; y++) {
+    for (let x = 0; x < c.width; x++) {
+      if (d[(y * c.width + x) * 4 + 3] > 8) cell[((y / B) | 0) * W + ((x / B) | 0)] = 1;
+    }
+  }
+  let hit = 0; let tot = 0;
+  for (let j = 0; j < H; j++) {
+    for (let i = 0; i < W; i++) {
+      if (cell[j * W + i]) { tot++; if (cell[j * W + (W - 1 - i)]) hit++; }
+    }
+  }
+  return { score: tot ? hit / tot : 0, tot };
+});
+ok(sym.tot > 20 && sym.score >= 0.9,
+  `and it is SYMMETRIC about x=0 - two identical hands would not be (${sym.score.toFixed(2)} over ${sym.tot} cells)`);
+
+// LAYER 3. The signed numbers, off the same rows the page's table shows.
+const arm = await page.evaluate(() => window.__mwArm);
+ok(Array.isArray(arm) && arm.length === 4,
+  `four pieces: a skinned hand per side and a rigid upper arm per side (${arm ? arm.length : 'none'})`);
+if (Array.isArray(arm)) {
+  const skinned = arm.filter((r) => r.kind === 'skinned');
+  const rigid = arm.filter((r) => r.kind === 'rigid');
+  ok(skinned.map((r) => r.bone).join() === 'left hand,right hand',
+    `BOTH hands bind - a latch that stops after the first bone gives one (${skinned.map((r) => r.bone).join() || 'none'})`);
+  ok(rigid.map((r) => r.mirrored).join() === 'true,false', 'and the LEFT upper arm is the mirrored one');
+  const by = (b) => arm.find((r) => r.bone === b);
+  const L = by('left upper arm'); const R = by('right upper arm');
+  ok(L && R && Math.abs(L.bounds.minX + R.bounds.maxX) < 1e-3 && Math.abs(L.bounds.maxX + R.bounds.minX) < 1e-3,
+    'the left rigid piece is the right one with X negated, exactly');
+  ok(by('left hand').bounds.maxX < 0 && by('right hand').bounds.minX > 0,
+    'and rule 15 put each SKINNED side on its own side of x=0');
+}
+ok(/MIRRORED/.test(armText), 'the table names the mirrored piece as such');
+ok(/skinned/.test(armText) && /rigid/.test(armText), 'and both kinds by name');
+ok(/Not in the picture/.test(armText) && /forearm/.test(armText),
+  'a slot with no data is listed WITH ITS REASON, never silently absent');
 
 // MW-D4: the bone table. The fixture skeleton is a TEST RIG, not
 // Morrowind's, so the retail bone names are expected to be MISSING - and

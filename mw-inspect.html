@@ -28,6 +28,8 @@
   .draws { display:flex; flex-wrap:wrap; gap:14px; margin:10px 0 2px; }
   .draw { border:1px solid var(--line); border-radius:6px; padding:8px; background:#191712; }
   .draw canvas { display:block; background:#0f0d0b; border-radius:3px; }
+  .draw.wide canvas { width:380px; height:380px; }
+  .sw { display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:5px; vertical-align:middle; }
   .draw .cap { color:var(--dim); font-size:12px; margin-top:6px; }
   .draw .cap b { color:var(--fg); font-weight:normal; }
 </style>
@@ -55,6 +57,7 @@ import {
   parseBsaIndex, readNifHeader, bodyParts, armReport, FP_SKELETONS, ARM_PARTS,
   armMeshPaths, skinVerdict, parseMeshForPreview, frontViewMapper,
   skeletonReport, checkRequiredBones,
+  assembleFirstPersonArm, armPieceRows,
 } from '/src/tools/mwInspect.js';
 
 const out = document.getElementById('out');
@@ -197,6 +200,7 @@ function render() {
         }
         h += '</table>';
         h += '<div class="draws" id="draws"></div>';
+        h += '<div id="assembly"></div>';
         h += '<p class="note">This is a record-type <b>scan</b>, not a parse: it can tell you a '
           + '<code>NiSkinInstance</code> is present in the file, and nothing more. It is here because the last '
           + 'attempted fix assumed these meshes were <b>rigid</b> &mdash; parts hung off a bone &mdash; from '
@@ -220,6 +224,7 @@ function render() {
   if (fem) fem.addEventListener('change', () => { localStorage.setItem('mwi.female', fem.checked ? '1' : '0'); render(); });
 
   drawArms();
+  drawAssembly();
   reportBones();
 
   document.getElementById('foot').innerHTML = (bsa || esm)
@@ -267,6 +272,40 @@ async function reportBones() {
   host.innerHTML = h;
 }
 
+// MW-D6 extracted these three, because drawAssembly needs all of them and
+// a second copy of any one is how two panels start disagreeing about the
+// same archive. The race default was ALREADY divergent - render() prefers
+// nord then falls back to the first race present, drawArms() hardcoded
+// 'nord' - so a saved race absent from the loaded ESM drew one thing and
+// listed another.
+function selection() {
+  const races = [...new Set(esm.parts.map((p) => p.race).filter(Boolean))].sort();
+  const saved = localStorage.getItem('mwi.race');
+  const race = (saved && races.includes(saved)) ? saved : (races.includes('nord') ? 'nord' : races[0]);
+  return { race, female: localStorage.getItem('mwi.female') === '1', races };
+}
+/** Rule 6's skeleton for the selected actor, as an archive entry. */
+function fpSkeletonEntry() {
+  const want = localStorage.getItem('mwi.female') === '1'
+    ? 'meshes/base_anim_female.1st.nif' : 'meshes/xbase_anim.1st.nif';
+  return bsa.index.files.find((x) => x.name === want)
+    || bsa.index.files.find((x) => x.name === 'meshes/xbase_anim.1st.nif') || null;
+}
+const fileBytes = (f) => bsa.bytes.subarray(f.offset, f.offset + f.size);
+/** Every triangle of one piece, as one path. The caller owns the stroke
+ *  colour, which is the only thing the two panels differ on. */
+function strokePath(g, map, positions, indices) {
+  g.beginPath();
+  for (let i = 0; i + 2 < indices.length; i += 3) {
+    const a = indices[i] * 3; const b = indices[i + 1] * 3; const c = indices[i + 2] * 3;
+    const [ax, ay] = map(positions[a], positions[a + 1], positions[a + 2]);
+    const [bx, by] = map(positions[b], positions[b + 1], positions[b + 2]);
+    const [cx, cy] = map(positions[c], positions[c + 1], positions[c + 2]);
+    g.moveTo(ax, ay); g.lineTo(bx, by); g.lineTo(cx, cy); g.closePath();
+  }
+  g.stroke();
+}
+
 // MW-D3: run the REAL reader over each arm mesh and draw what comes back.
 // Not the rig - no skeleton, no bones, no pose. Just: does this file parse,
 // and is what comes out shaped like a hand? A wireframe answers that in a
@@ -275,17 +314,16 @@ async function reportBones() {
 async function drawArms() {
   const host = document.getElementById('draws');
   if (!host || !bsa || !esm) return;
-  const sel = localStorage.getItem('mwi.race') || 'nord';
-  const fem = localStorage.getItem('mwi.female') === '1';
+  const { race, female } = selection();
   const have = new Map(bsa.index.files.map((f) => [f.name, f]));
-  for (const p of armMeshPaths(armReport(esm.parts, sel, fem))) {
+  for (const p of armMeshPaths(armReport(esm.parts, race, female))) {
     if (!p.path) continue;
     const f = have.get(p.path);
     if (!f) continue;
     const box = document.createElement('div');
     box.className = 'draw';
     host.append(box);
-    const r = await parseMeshForPreview(bsa.bytes.subarray(f.offset, f.offset + f.size));
+    const r = await parseMeshForPreview(fileBytes(f));
     if (!r.ok) {
       box.innerHTML = `<div class="cap"><b>${esc(p.slot)}</b><br><span class="bad">`
         + `${esc(r.stage || 'failed')}: ${esc(r.error)}</span></div>`;
@@ -299,22 +337,110 @@ async function drawArms() {
     const map = frontViewMapper(r.bounds, W, H);
     g.strokeStyle = 'rgba(224,164,88,.55)';
     g.lineWidth = 0.5;
-    g.beginPath();
-    for (const sh of r.shapes) {
-      const pos = sh.positions; const idx = sh.indices;
-      for (let i = 0; i + 2 < idx.length; i += 3) {
-        const a = idx[i] * 3; const b = idx[i + 1] * 3; const c = idx[i + 2] * 3;
-        const [ax, ay] = map(pos[a], pos[a + 1], pos[a + 2]);
-        const [bx, by] = map(pos[b], pos[b + 1], pos[b + 2]);
-        const [cx2, cy2] = map(pos[c], pos[c + 1], pos[c + 2]);
-        g.moveTo(ax, ay); g.lineTo(bx, by); g.lineTo(cx2, cy2); g.closePath();
-      }
-    }
-    g.stroke();
+    for (const sh of r.shapes) strokePath(g, map, sh.positions, sh.indices);
     box.insertAdjacentHTML('beforeend', `<div class="cap"><b>${esc(p.slot)}</b> `
       + `&middot; ${r.triangles.toLocaleString()} tris &middot; `
       + `${r.skinnedShapes ? 'skinned' : 'rigid'}</div>`);
   }
+}
+
+// MW-D6: DRAW THE ASSEMBLED ARM.
+//
+// MW-D3 above draws each arm mesh ALONE, in its own box, framed by its
+// own bounds - which answers "does this file parse" and cannot answer
+// the only question that matters next: do the parts land in the same
+// place, on the right sides, as one arm. Four separately-correct boxes
+// look exactly like a working arm and exactly like a broken one.
+//
+// So this puts every piece assembleFirstPersonArm returns into ONE frame
+// at ONE scale. Rest pose. No clip, no rig, no camera - rules 29/52/53/54
+// are camera and compositing rules that need a player eye and a world to
+// occlude, neither of which a diagnostic page has.
+//
+// The colours are the diagnosis: rule 12 splits skinned from rigid and
+// rule 13 mirrors only the rigid left, so if a piece is the wrong colour
+// or the wrong side, the picture says which rule went wrong.
+const ARM_INK = {
+  skinned: 'rgba(224,164,88,.75)',
+  rigid: 'rgba(120,190,235,.75)',
+  mirrored: 'rgba(150,225,150,.85)',
+};
+const inkFor = (row) => (row.kind === 'skinned' ? ARM_INK.skinned
+  : row.mirrored ? ARM_INK.mirrored : ARM_INK.rigid);
+
+async function drawAssembly() {
+  const host = document.getElementById('assembly');
+  if (!host || !bsa || !esm) return;
+  const skel = fpSkeletonEntry();
+  if (!skel) {
+    host.innerHTML = '<h2>The assembled arm</h2><p class="err">no first-person skeleton in this archive '
+      + '&mdash; rule 6 names <code>xbase_anim.1st.nif</code> (male) and '
+      + '<code>base_anim_female.1st.nif</code>.</p>';
+    return;
+  }
+  const { race, female } = selection();
+  const have = new Map(bsa.index.files.map((f) => [f.name, f]));
+  const parts = []; const missing = [];
+  for (const pth of armMeshPaths(armReport(esm.parts, race, female))) {
+    if (!pth.path) { missing.push(`${pth.slot}: no record for this actor`); continue; }
+    const f = have.get(pth.path);
+    if (!f) { missing.push(`${pth.slot}: ${pth.path} is not in this archive`); continue; }
+    // NO bones override: the real PART_BONES table, the retail names.
+    parts.push({ slot: pth.slot, bytes: fileBytes(f) });
+  }
+  const r = await assembleFirstPersonArm({ skeletonBytes: fileBytes(skel), parts });
+  const rows = r.ok ? armPieceRows(r.pieces) : [];
+  window.__mwArm = r.ok ? rows.map((x) => ({ ...x })) : null;   // the probe reads the same rows the table shows
+
+  let h = `<h2>The assembled arm &mdash; <code>${esc(skel.name)}</code>, rest pose</h2>`;
+  h += '<p class="note">Every part bound to the skeleton at its own bone, in ONE frame at ONE scale. '
+    + 'The panels above draw each mesh alone and cannot show whether the parts agree about where they are. '
+    + 'Front view: x across, z up, y discarded &mdash; so parts overlap rather than occlude.</p>';
+
+  if (!r.ok || !r.bounds) {
+    h += `<p class="err">${esc(r.stage || 'nothing assembled')}: ${esc(r.error || 'no geometry')}</p>`;
+  } else {
+    const W = 380; const H = 380;
+    const box = document.createElement('div');
+    box.className = 'draw wide';
+    const cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    box.append(cv);
+    const g = cv.getContext('2d');
+    const map = frontViewMapper(r.bounds, W, H);
+    g.lineWidth = 0.6;
+    // ONE mapper over the ASSEMBLY's bounds - a per-piece frame would put
+    // every part in the middle of its own box and prove nothing.
+    r.pieces.forEach((piece, i) => {
+      g.strokeStyle = inkFor(rows[i]);
+      strokePath(g, map, piece.positions, piece.indices);
+    });
+    host.innerHTML = h;
+    host.append(box);
+    h = '';
+    host.insertAdjacentHTML('beforeend',
+      `<p class="note"><span class="sw" style="background:${ARM_INK.skinned}"></span>skinned (rule 15 picked its side by shape name) `
+      + `&nbsp; <span class="sw" style="background:${ARM_INK.rigid}"></span>rigid, right `
+      + `&nbsp; <span class="sw" style="background:${ARM_INK.mirrored}"></span>rigid, MIRRORED (rule 13)</p>`);
+    let t = '<table><tr><th>slot @ bone</th><th>kind</th><th>tris</th><th>x range</th></tr>';
+    for (const row of rows) {
+      t += `<tr><td><code>${esc(row.key)}</code></td>`
+        + `<td class="${row.kind === 'skinned' ? 'warn' : 'ok'}">${esc(row.kind)}`
+        + `${row.mirrored ? ' &middot; <b>MIRRORED</b>' : ''}</td>`
+        + `<td>${row.triangles.toLocaleString()}</td>`
+        + `<td class="dim">${row.bounds ? `${row.bounds.minX.toFixed(2)} &hellip; ${row.bounds.maxX.toFixed(2)}` : '&mdash;'}</td></tr>`;
+    }
+    host.insertAdjacentHTML('beforeend', t + '</table>');
+  }
+
+  // WHY a part is not here is the whole point of the panel: an empty view
+  // that says nothing is the failure this arc exists to end.
+  const why = [...missing, ...(r.notes || [])];
+  if (why.length) {
+    h += '<p class="note">Not in the picture:</p><ul class="note">'
+      + why.map((n) => `<li>${esc(n)}</li>`).join('') + '</ul>';
+  }
+  if (h) host.insertAdjacentHTML('beforeend', h);
 }
 </script>
 </body>
