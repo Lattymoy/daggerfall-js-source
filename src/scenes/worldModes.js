@@ -3223,7 +3223,20 @@ export function createWorldModes(host) {
       // ...and the orientation half of the same two members: away from
       // the door you came through, or north for a start with no door.
       const _yaw = ctx.entryFacingYaw(spawn, { preferEnterMarker });
-      if (_yaw !== null) cam.yaw = _yaw;
+      if (_yaw !== null) {
+        cam.yaw = _yaw;
+        // DE2: BOTH members LEVEL THE PITCH, and DE1 shipped only the
+        // yaw half. StartDungeonInterior calls SetFacing(Vector3.forward)
+        // and TransitionDungeonInterior calls SetFacing(doorNormal);
+        // SetFacing(Vector3) is `LookRotation(forward).eulerAngles` fed
+        // to SetFacing(yaw, pitch) (PlayerMouseLook.cs:286-291), and
+        // every vector either member passes is HORIZONTAL - so the
+        // pitch it computes is 0. Walk into a dungeon looking up at the
+        // sky and DFU levels you; the port left you craning at the
+        // ceiling. The guard is DFU's own: TransitionDungeonInterior
+        // only faces when it found a door to face away from.
+        cam.pitch = 0;
+      }
       mountQuestResources();   // B2: AddQuestResourceObjects(SiteTypes.Dungeon) on the transition, as PlayerEnterExit raises it
       console.log(`dungeon: ${ctx.drawList.length} draws, ${ctx.exitDoors.length} exit doors, ` +
         `${ctx.lights.length} lights, ${ctx.waterQuads.length} water, ${ctx.colliderTris} tris, ${ctx.enemies.length} enemies`);
@@ -3295,6 +3308,14 @@ export function createWorldModes(host) {
       // door - the door centre is the controller's centre, not the feet.
       player.spawn(landing.pos[0], repositionFeetY(player.collider.heightAt(landing.pos[0], landing.pos[2]), landing.pos[1]), landing.pos[2]);
       cam.yaw = Math.atan2(landing.normal[0], landing.normal[2]);
+      // DE2: PositionPlayerToDungeonExit ends on
+      // SetHorizontalFacing(foundDoorNormal) (StreamingWorld.cs
+      // :1428-1433), which is SetFacing(yaw, 0f) - the pitch is forced
+      // level EXPLICITLY here rather than falling out of a horizontal
+      // vector, and it is the one call site in the trio that says so in
+      // its own name. Coming up out of a dungeon looking at your feet
+      // put you outside still looking at them.
+      cam.pitch = 0;
     }
     cam.pos = player.eye;
     console.log('exterior: returned at dungeon entrance');

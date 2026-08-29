@@ -1085,3 +1085,47 @@ which anchored on the literal `tryEnterDungeon(hit, entries)`. Its law
 (start-inside must REUSE the door path so `dungeonReturn` is recorded)
 was untouched; re-anchored on the call, plus a new assertion that the
 call is the start-inside member.
+
+### DE2: the same two members level the PITCH, and DE1 shipped only the yaw (2026-08-29)
+
+Pulling the thread on DE1 - the first thing asked for after it - found
+the half of its own fix that was missing.
+
+`SetFacing(Vector3 forward)` is `LookRotation(forward).eulerAngles` fed
+to `SetFacing(yaw, pitch)` (`PlayerMouseLook.cs:286-291`). Every vector
+the dungeon members pass is **horizontal** - `Vector3.forward` for the
+start, a door normal for the transition - so the pitch it computes is
+0, and both members level the view. The exit says it in its own name:
+`PositionPlayerToDungeonExit` ends on
+`SetHorizontalFacing(foundDoorNormal)`, which is `SetFacing(yaw, 0f)`
+(`:294-299`).
+
+DE1 set `cam.yaw` and left `cam.pitch` alone. So walking into a dungeon
+while looking up at the sky kept you craning at the ceiling, and coming
+back out while looking at your feet put you outside still looking at
+them.
+
+Three things bound the fix, each a mutant:
+
+- **The entry levels only when it faces.** `TransitionDungeonInterior`
+  calls `SetFacing` inside its found-a-door branch, so a dungeon with
+  no exit door to read leaves the player's bearing *and* pitch alone.
+  The pitch sits inside the same guard as the yaw.
+- **Buildings still do not face at all.** Neither `TransitionInterior`
+  nor `BuildingTransitionExteriorLogic` touches `PlayerMouseLook` - a
+  shop door leaves your view exactly as it was - and the port matches.
+  Checked rather than assumed, and pinned so it stays that way.
+- **The standalone host was already right.** `scenes/dungeon.js` builds
+  its camera as `{ yaw: 0, pitch: 0 }`, which *is*
+  `SetFacing(Vector3.forward)`. It needs no arm, and the pin stops
+  someone adding one.
+
+Campaign: 7 mutants, 7 killed. The harness gained an **anchor-uniqueness
+check** (`src.count(old) != 1` fails the mutant outright) - LM1 had just
+lost a mutant to an ambiguous anchor silently mutating another function,
+and the check costs one line.
+
+One pin went red on the way: DE1's own, an hour old, anchored on the
+`if (_yaw !== null) cam.yaw = _yaw;` one-liner that became a block. Its
+law - the host asks for the facing of the member it *is*, and applies
+it - was untouched. Re-anchored, per F041.
