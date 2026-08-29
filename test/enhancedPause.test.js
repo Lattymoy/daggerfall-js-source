@@ -539,3 +539,18 @@ test('PX28: Tab puts away what it opened, then raises the dial', () => {
     assert.match(s, /unregister\(\);/, `${door} unregisters on teardown`);
   }
 });
+
+test('PX29: the framed windows are CENTRED, and it is the family that is fixed', () => {
+  // Mac reported the chronicle; the spellbook was 260px and 140px off
+  // too, and had been since PX23 - invisible because every shot of it
+  // was of the ELEMENT rather than the viewport. `.px-home` is
+  // position:fixed inset:0 with no flex; the pause face centres its
+  // window by putting it in a .px-stage, and neither of these two got
+  // one.
+  const css = read('src/ui/enhancedStyle.js');
+  assert.match(css, /\.sb-shell, \.cr-shell \{ display: flex; align-items: center; justify-content: center; \}/,
+    'the FOURTH shared-part fault of this arc, fixed for the family');
+  // ...and the shells really are the ones the two windows mount.
+  assert.match(read('src/ui/enhancedSpellbook.js'), /'px-home px-over sb-shell'/);
+  assert.match(read('src/ui/enhancedChronicle.js'), /'px-home px-over cr-shell'/);
+});

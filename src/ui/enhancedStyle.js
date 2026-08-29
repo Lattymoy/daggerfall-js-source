@@ -1407,6 +1407,16 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    carries a cost beside each name (the classic's row is "cost - name",
    and a column reads better than a prefix), and the effects are the
    words the classic prints, one to a line under their own divider. */
+/* PX29 (Mac: "the new chronicle UI appears on the lefthand side when it
+   should be centered"): AND SO DID THE SPELLBOOK. .px-home is
+   position:fixed inset:0 with no flex of its own - the pause face
+   centres its window by putting it in a .px-stage, and these two
+   windows never got one, so both sat hard against the top-left. 260px
+   and 140px off, measured. It was only invisible because every shot I
+   took of them was of the ELEMENT rather than the viewport.
+   The fourth shared-part fault of this arc, so it is fixed for the
+   FAMILY rather than for the window that was reported. */
+.sb-shell, .cr-shell { display: flex; align-items: center; justify-content: center; }
 .sb-shell .px-win { width: min(920px, 94vw); height: min(620px, 86dvh); }
 .sb-shell .sb-top, .cr-shell .sb-top { display: grid; grid-template-columns: 1fr auto 1fr;
   align-items: center; padding: 12px 16px;
