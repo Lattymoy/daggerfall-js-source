@@ -718,10 +718,31 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  raycast picked. Binds the QuestResourceBehaviour host at the
    *  stand (the activation moment); faces the player (LookAt,
    *  CreateFoe.cs:328) via yawRad. */
-  async function spawnQuestFoe({ mobileType, gender, position, yawRad = null, behaviour }) {
+  /** SD1: the BEHAVIOUR-FREE half of spawnQuestFoe. A released soul
+   *  (SoulBound's break) and the Sanguine Rose's Daedroth are not
+   *  quest resources - they have no behaviour to bind - and until this
+   *  existed the enchant ctx's only spawner was the exterior one, so
+   *  firing either underground stood a foe in the STREAMING world the
+   *  player was not in: alive, ticking and invisible. EC1 made those
+   *  arms refuse rather than misroute; this is the door they refused
+   *  for want of.
+   *
+   *  `allied` is MT-ii's law, and the same two lines exteriorFoes
+   *  carries: SetupDemoEnemy.cs:85-86 overwrites the MobileEnemy
+   *  STRUCT COPY before SetEnemy and EnemyEntity.cs:316 seeds
+   *  Entity.Team from that copy, so BOTH per-instance fields turn and
+   *  the shared frozen basics row does not - getting that wrong would
+   *  ally every foe of the type. */
+  async function spawnLooseFoe(mobileType, position, { gender = null, yawRad = null, allied = false } = {}) {
     const f = await buildFoeAt({ mobileType, gender, x: position[0], y: position[1], z: position[2], spawnDistanceType: 0 }, false);
-    if (!f) { console.error(`[quest] foe ${mobileType} failed to stand in dungeon`); return null; }
+    if (!f) return null;
     if (yawRad != null && f.ai) f.ai.yaw = yawRad;
+    if (allied && f.entity) { f.entity.team = 'PlayerAlly'; f.entity.mobileTeam = 'PlayerAlly'; }
+    return f;
+  }
+  async function spawnQuestFoe({ mobileType, gender, position, yawRad = null, behaviour }) {
+    const f = await spawnLooseFoe(mobileType, position, { gender, yawRad });
+    if (!f) { console.error(`[quest] foe ${mobileType} failed to stand in dungeon`); return null; }
     bindQuestFoeHost(f, behaviour, questPoolOps);
     return f;
   }
@@ -3168,6 +3189,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     enemies,
     foes,
     spawnQuestFoe,   // B1: CreateFoe's dungeon arm stands foes through the one build chain
+    spawnLooseFoe,   // SD1: the same chain with no quest behaviour bound - the enchant ctx's spawner
     drawFoes,
     playerAttackInput,
     toggleSheath: weaponRig.toggleSheath,

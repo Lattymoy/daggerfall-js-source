@@ -1413,6 +1413,59 @@ export async function bootWorld(canvas, renderer, params, status) {
   const _dungeonPool = () => (_mode() === 'dungeon' ? (modes?.dungeonCtx ?? null) : null);
   const enchantFoes = () => liveEnchantFoes(_mode(), modes?.dungeonCtx ?? null, () => [...cityGuards.guards, ...exteriorFoes.foes]);
   const enchantFoeSinks = (f) => liveEnchantFoeSinks(f, modes?.dungeonCtx ?? null, foeSinks);
+  /** SD1: stand a loose foe - SoulBound's break release, the Sanguine
+   *  Rose's Daedroth - through DFU's OWN placement law, in whichever
+   *  world the player is actually standing in.
+   *
+   *  Both arms used to drop the foe at the player's feet plus a fixed
+   *  (+2, +1, 0): inside the player in a corridor, inside the wall
+   *  against one. placeFoeFreely is the same law the quest foe arm
+   *  already stands its foes through (tryPlaceFoe above) - one home,
+   *  and it was already here.
+   *
+   *  minDistance 4, not the function's own 5: CreateFoeSpawner's
+   *  defaults (GameObjectHelper.cs:1314) are the spawner FIELDS both
+   *  enchantment callers get, and PlaceFoeFreely is handed those
+   *  rather than its own signature defaults.
+   *
+   *  The law REFUSES a spot DFU would have rejected - no floor under
+   *  it, something already there, too close to the wall the ray found
+   *  - and DFU's spawner simply tries again next frame. This retries
+   *  the same way. The budget is the port's own call: DFU leaves a
+   *  MonoBehaviour running for free, and a spawn that cannot find a
+   *  spot in a sealed corridor must not spin here. */
+  const LOOSE_FOE_PLACE_ATTEMPTS = 12;
+  const _standLooseFoe = (mobileType, { allied = false, lineOfSightCheck = true } = {}) => {
+    const mode = _mode();
+    // Interiors have no foe pool to stand one in, so they still refuse
+    // - EC1's answer, and the honest one until a pool exists.
+    if (mode !== 'exterior' && mode !== 'dungeon') return null;
+    const d = _dungeonPool();
+    const feet = enchantFeet();
+    const env = placeFoeEnv({
+      collider: d ? d.collider : collider,
+      // origin at the controller centre, as tryPlaceFoe has it - DFU
+      // casts from PlayerObject.transform.position, not the feet
+      playerFeet: [feet[0], feet[1] + 0.9, feet[2]],
+      playerYawRad: cam.yaw,
+      fovDegrees: fieldOfView() * 180 / Math.PI,   // fieldOfView() answers RADIANS
+      isOccupied: entityOccupancy((f) => f.ai?.feet, () => enchantFoes(), feet),
+    });
+    let spot = null;
+    for (let i = 0; i < LOOSE_FOE_PLACE_ATTEMPTS && !spot; i++) {
+      spot = placeFoeFreely(env, { minDistance: 4, maxDistance: 20, lineOfSightCheck });
+    }
+    if (!spot) return null;
+    // FinalizeFoe (FoeSpawner.cs:210-226): a FLYING foe lifts 1.5 from
+    // the test point; walkers land through the pool's own chain.
+    const fly = (ENEMY_BASICS[mobileType]?.behaviour ?? 'General') === 'Flying';
+    const pos = [spot.x, fly ? spot.y + 1.5 : spot.y, spot.z];
+    const yaw = Math.atan2(feet[0] - spot.x, feet[2] - spot.z);   // LookAt player
+    const stand = d
+      ? d.spawnLooseFoe(mobileType, pos, { yawRad: yaw, allied })
+      : exteriorFoes.spawnFoe(mobileType, pos, { yaw, allied });
+    return Promise.resolve(stand).catch(() => null);
+  };
   /** EC1: THIS host's own pools, exterior only - and deliberately NOT
    *  enchantFoes(), which now answers the live mode's. Two consumers
    *  read this feed and both are exterior arms: the HUD Detect markers
@@ -1505,29 +1558,19 @@ export async function bootWorld(canvas, renderer, params, status) {
             hurt: (n) => enchantFoeSinks(f).hurt(n),
           }));
       },
-      // EC1: the two SPAWN arms - SoulBound's break release and the
-      // Sanguine Rose - keep the exterior pool, and are refused rather
-      // than misrouted in the modes that have no spawner of their own.
-      // exteriorFoes.spawnFoe stands a foe in the STREAMING world; a
-      // dungeon record has to come off dungeonContext's build chain
-      // (buildFoeAt, through spawnQuestFoe) or it stands in a world
-      // the player is not currently in - alive, ticking, and invisible.
-      // FLAGGED: the dungeon spawner is spawnQuestFoe, and it binds a
-      // quest BEHAVIOUR to what it stands (bindQuestFoeHost); a plain
-      // released soul has none, so the arm needs the behaviour-free
-      // door split out of it before this can route. Refusing is the
-      // honest answer meanwhile - DFU's CreateFoeSpawner puts the foe
-      // in the scene the player is standing in, and nothing here can.
-      spawnFoe: (mobileType) => {
-        if (_dungeonPool()) return;
-        const pf = enchantFeet();
-        exteriorFoes.spawnFoe(mobileType, [pf[0] + 2, pf[1] + 1, pf[2]]).catch(() => {});
-      },
-      spawnAlliedFoe: (mobileType) => {
-        if (_dungeonPool()) return;
-        const pf = enchantFeet();
-        exteriorFoes.spawnFoe(mobileType, [pf[0] + 2, pf[1] + 1, pf[2]], { allied: true }).catch(() => {});
-      },
+      // SD1: the two SPAWN arms - SoulBound's break release and the
+      // Sanguine Rose's Daedroth. EC1 made them refuse underground
+      // rather than stand a foe in the streaming world the player was
+      // not in; SD1 gives them the door they were refusing for want
+      // of, and DFU's placement law on the way through.
+      //
+      // Both go through _standLooseFoe, which is where the two callers
+      // differ exactly as DFU has them differ: SoulBound passes
+      // lineOfSightCheck FALSE (SoulBound.cs:100 - a released soul may
+      // appear in front of you), the Sanguine Rose takes the default
+      // TRUE and allied TRUE (SanguineRoseEffect.cs:56).
+      spawnFoe: (mobileType) => { _standLooseFoe(mobileType, { lineOfSightCheck: false }); },
+      spawnAlliedFoe: (mobileType) => { _standLooseFoe(mobileType, { allied: true }); },
       // V3: the artifact doors. messageBox is Azura's TEXT.RSC popup
       // (the infection host's flatten, at this consumer);
       // openCharacterSheet is the Oghma's sheet push; replaceFoe is

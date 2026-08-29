@@ -121,17 +121,21 @@ test('EC1: the DETECT feed keeps its own exterior pool - one change, two consume
     'the consumer that made the split necessary is still the one that needs it');
 });
 
-test('EC1: the two SPAWN arms refuse in a dungeon rather than standing a foe in the wrong world', () => {
+test('EC1: the two SPAWN arms never stand a foe in a world the player is not in', () => {
+  // EC1 made both arms REFUSE in a dungeon, because the only spawner
+  // they could reach was the exterior one. SD1 gave them the dungeon's
+  // own door an hour later, so the refusal is now the INTERIOR one -
+  // the mode that still has no foe pool to stand anything in. The law
+  // EC1 was holding is the same; what satisfies it grew.
   const world = read('src/scenes/world.js');
-  const at = world.indexOf('spawnFoe: (mobileType) => {');
-  const arms = world.slice(at, at + 700);
-  assert.equal((arms.match(/if \(_dungeonPool\(\)\) return;/g) ?? []).length, 2,
-    'both SoulBound\'s break release and the Sanguine Rose refuse');
-  // and they still work where the pool they spawn into is the live one
-  assert.match(arms, /exteriorFoes\.spawnFoe\(mobileType, \[pf\[0\] \+ 2, pf\[1\] \+ 1, pf\[2\]\]\)/);
-  assert.match(arms, /exteriorFoes\.spawnFoe\(mobileType, \[pf\[0\] \+ 2, pf\[1\] \+ 1, pf\[2\]\], \{ allied: true \}\)/);
-  // the refusal is FLAGGED, not silent doctrine
-  assert.match(world, /FLAGGED: the dungeon spawner is spawnQuestFoe/);
+  const at = world.indexOf('const _standLooseFoe =');
+  const body = world.slice(at, at + 1600);
+  assert.match(body, /if \(mode !== 'exterior' && mode !== 'dungeon'\) return null;/,
+    'an interior refuses; the two modes with a pool do not');
+  // and neither arm can reach the exterior pool from a dungeon any more
+  assert.match(body, /d\n\s*\? d\.spawnLooseFoe\(/, 'a dungeon stands its foe through the DUNGEON\'s chain');
+  assert.equal(/spawnFoe\(mobileType, \[pf\[0\] \+ 2, pf\[1\] \+ 1, pf\[2\]\]/.test(world), false,
+    'and the fixed player-feet offset both arms used is gone (SD1)');
 });
 
 test('EC1: dungeonContext\'s flag narrows to what is still open', () => {
