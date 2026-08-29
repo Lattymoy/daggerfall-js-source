@@ -12,12 +12,15 @@
 //   node tools/regenOpenFlags.mjs --check  # exit 1 if it would change
 //
 // The list's contract, which test/audit18_bible_docs.test.js enforces:
-//   - one entry per FLAGGED/INTERIM line under src/, both ways, exactly;
+//   - one entry per FLAGGED/INTERIM line under src/, both ways, exactly -
+//     except a marker that is part of an identifier or sits inside a quoted
+//     span, neither of which is a flag (IN1);
 //   - each entry reads `- \`src/path:LINE\` - <the source line, trimmed,
 //     with a leading "// " removed>`.
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
 import { join, dirname, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { flagLines } from './flagSites.mjs';   // IN1: the one definition of an open-flag site
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const HOME = join(root, 'bible/Home.md');
@@ -37,9 +40,11 @@ const quoteFor = (line) => line.trim().replace(/^\/\/\s*/, '');
 
 const entries = [];
 for (const f of walk('src', '.js').sort()) {
-  readFileSync(join(root, f), 'utf8').split('\n').forEach((l, i) => {
-    if (/FLAGGED|INTERIM/.test(l)) entries.push(`- \`${f}:${i + 1}\` - ${quoteFor(l)}`);
-  });
+  const src = readFileSync(join(root, f), 'utf8');
+  const lines = src.split('\n');
+  // IN1: the rule lives in tools/flagSites.mjs, which the AUDIT 18
+  // guard imports too - two copies of it is two rules the day one moves.
+  for (const n of flagLines(src)) entries.push(`- \`${f}:${n}\` - ${quoteFor(lines[n - 1])}`);
 }
 
 const home = readFileSync(HOME, 'utf8');

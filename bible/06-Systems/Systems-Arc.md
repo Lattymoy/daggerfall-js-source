@@ -4649,3 +4649,66 @@ foe), which is F041's own precedent, and `artifacts.test.js` joined the
 campaign so the new anchor is mutation-checked too. **A slice's
 campaign only covers the suites it runs; the full check is what finds
 the pin in the next room.**
+
+## IN1 - THE HARVEST COUNTED QUOTATIONS AND IDENTIFIERS AS FLAGS (2026-08-29)
+
+FS1 recorded that the open-flags count is inflated and deliberately did
+not fix it, because most of the inflation is prose. IN1 is the part
+that is not prose.
+
+`tools/regenOpenFlags.mjs` grepped `/FLAGGED|INTERIM/` per line, so two
+kinds of line that are not open work sat on the board:
+
+- **an identifier that starts with the token.** `INTERIM_WEAPON` is a
+  frozen export; its declaration, its default parameter and every
+  mention of it by name were all listed as open flags.
+- **a quotation.** A correction that says what it retired has to write
+  the retired words down - and writing them down put the flag straight
+  back on the board. **The tree had already grown a workaround for
+  this**: `dungeonContext` quoted a retired flag with the token
+  deliberately lower-cased and said so in the comment, adding that this
+  is "how eleven retirement notes are already sitting there". That is
+  EF1c's lesson leaking out of the pins and into the ledger, so the fix
+  is EF1c's own rule - strip quoted spans, then look. The quote is
+  verbatim again, and the count it asserted is gone: nothing measured
+  it, and I could not measure it either (see below).
+
+**The strip has to be whole-file, and then bounded.** Comments wrap,
+and the quotation that forced the workaround wraps: the opening `"` and
+the token on one line, the closing `"` on the next, so a per-line strip
+sees an unpaired quote and strips nothing. But prose quotes do not
+always pair - a comment quoting DFU can close a quotation opened many
+lines above - so a generous span mis-pairs and blanks whatever sits
+between two unrelated quotes. **A 400-character bound did exactly that
+on the first run and swallowed `talkMacros`' GetValue flag, an open
+one.** The span is capped at two newlines now, which reaches a wrapped
+quotation and cannot reach across a paragraph.
+
+**The failure direction is the design.** Missing a quotation leaves a
+retired flag listed, which a reader can see and dismiss; blanking an
+open flag hides real work, which nobody sees at all. The bound is
+chosen to fail the first way.
+
+**One home, and the guard proved why.** The rule now lives in
+`tools/flagSites.mjs`; the tool and `test/audit18_bible_docs.test.js`
+both import it. They had carried a copy each - and the guard went red
+the moment the tool learned the new rule, which is precisely what two
+copies buys. 165 sites -> 155.
+
+### What IN1 refused to do
+
+The rest of FS1's inflation is the past-tense case: a block that
+mentions a flag in order to say it is **gone**. I wrote a heuristic for
+it and it over-matched badly - it flagged
+`guildServiceWindow`'s "FLAGGED: DFU binds each button to a
+DaggerfallShortcut hotkey" and a dozen more like it, open flags whose
+blocks merely carry a paragraph of history. That is not a rule, it is a
+guess with a number attached.
+
+So it stays open, and the tool's own comment says so. **A wrong count is
+worse than a known-incomplete one** - and asserting one is exactly what
+the sentence IN1 just deleted was doing.
+
+Pins: 8 in `test/flagsites.test.js`. Campaign: 12 mutants, 12 killed -
+including the unbounded span that swallowed a real flag, pinned with
+the `talkMacros` shape that caught it.
