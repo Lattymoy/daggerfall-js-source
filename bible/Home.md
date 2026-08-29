@@ -274,9 +274,8 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:2435` - FLAGGED in systems/healthStatus.js (macro producers pend).
 - `src/scenes/world.js:2528` - (FLAGGED); swallowing the browser reload is not optional.
 - `src/scenes/world.js:2817` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:3178` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:3602` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:4517` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:3597` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:4512` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:807` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
 - `src/scenes/worldModes.js:944` - FLAGGED to the crime arc, as the Ledger records.
 - `src/scenes/worldModes.js:1013` - at the concluded deal (:1036-1051). FLAGGED: the equipped test

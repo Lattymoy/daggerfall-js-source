@@ -3175,11 +3175,6 @@ export async function bootWorld(canvas, renderer, params, status) {
     factionData: (id) => _questStore()?.dict.get(id) ?? null,
     factionName: (id) => _questStore()?.dict.get(id)?.name ?? '',
     peopleOfCurrentRegion: () => getPeopleOfCurrentRegion(_questStore()?.dict ?? null, _questLoc()?.regionIndex ?? -1)?.id ?? 0,
-    // PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-    // Court-of lookup yet, so a faction id of 0 inside a palace and
-    // the three generic Random_* factions still resolve to nothing.
-    // The people arm is live; the court arm rides the automap/region
-    // slice that brings the rest of PlayerGPS.
     // CQ1: PlayerGPS.GetCourtOfCurrentRegion, through the same store
     // and the same region index its People sibling below reads. This
     // was hardcoded 0, which is not "absent" - 0 is a real faction id,
