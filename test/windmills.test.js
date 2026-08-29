@@ -2,12 +2,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  WINDMILL_MODELS, ROTOR_AXIS, ROTOR_SIGN, CALM_ROTOR_DEG_PER_SEC,
+  ROTOR_AXIS, ROTOR_SIGN, CALM_ROTOR_DEG_PER_SEC,
   STALL_WIND, FURL_DEG_PER_SEC, ROTOR_GAIN,
   windSpeed, rotorRate, rotorPhase, advanceRotor, rotorMatrix, mountRotor, ROTOR_HUB,
 } from '../src/world/windmills.js';
 import { WEATHER_SKY, easeWeather, weatherRow } from '../src/render/enhancedSky.js';
 import { identity, trs, transformPoint } from '../src/world/mat4.js';
+import { PLACEMENTS } from '../src/world/windmillMesh.js';
+import { readFileSync } from 'node:fs';
 
 // WM1 - THE WINDMILL'S TURN.
 //
@@ -196,15 +198,21 @@ test('WM1: the roller axis is a different axis, not a different sign', () => {
   assert.ok(!near(byZ[1], 0, 1e-4), 'the axis argument is being ignored');
 });
 
-test('WM1: the model table names what it spins, and nothing else', () => {
-  // A model id here that is NOT a mill turns something that should stand
-  // still - so the table stays small and every entry says what it is.
-  assert.deepEqual(Object.keys(WINDMILL_MODELS).sort(), ['21411', '41600', '41601']);
-  for (const kind of Object.values(WINDMILL_MODELS)) {
-    assert.ok(kind === 'windmill' || kind === 'watermill', `unknown rotor kind ${kind}`);
+test('WM2d: the retired model table is GONE, and the placement replaced it', () => {
+  // The table matched a classic model id that never existed in a farm
+  // block. Deleting it is the fix; this pin stops it coming back, and
+  // requires the thing that took its place to be real.
+  const src = readFileSync(new URL('../src/world/windmills.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(src, /export const WINDMILL_MODELS/,
+    'the classic-model-id table is back - the port places its own mills now');
+  assert.ok(PLACEMENTS.length > 0, 'nothing places a mill');
+  for (const p of PLACEMENTS) {
+    assert.match(p.block, /^FARMAA\d\d\.RMB$/, `${p.block} is not a farm block`);
+    for (const k of ['subX', 'subZ', 'subRot', 'x', 'y', 'z', 'rotY']) {
+      assert.equal(typeof p[k], 'number', `${p.block} placement is missing ${k}`);
+    }
   }
-  assert.ok(Object.isFrozen(WINDMILL_MODELS));
-});
+})
 
 // ---------------------------------------------------------------------------
 // WM2b: MOUNTING the vendored rotor, which is a different transform from

@@ -44,7 +44,7 @@ const ints = (s) => s.trim().split(/\s+/).map((v) => parseInt(v, 10));
  * input it did not understand would bake a mesh missing its normals and
  * nothing would say so.
  */
-export function parseCollada(text) {
+export function parseCollada(text, materialTextures = null) {
   const geoms = [...text.matchAll(/<geometry id="([^"]+)"[^>]*>([\s\S]*?)<\/geometry>/g)];
   if (geoms.length !== 1) throw new Error(`expected 1 geometry, found ${geoms.length}`);
   const [, geomId, geom] = geoms[0];
@@ -70,8 +70,22 @@ export function parseCollada(text) {
     const ref = m[2].match(/<init_from>([^<\s]+)/);
     if (ref) effectImage.set(m[1], images.get(ref[1]) ?? ref[1]);
   }
+  //
+  // A DAE carries a texture per material only when the artist bound one
+  // there. The rotor does; the MILL BODY does not - four of its five
+  // materials are bound in the Unity PREFAB's material list instead, so
+  // the mapping has to be supplied. `materialTextures` is that, keyed by
+  // material id, and when it is given it is AUTHORITATIVE and must be
+  // COMPLETE: a material it does not name throws, exactly as an unbound
+  // one does, because a silently untextured submesh draws as garbage.
   const matTexture = new Map();
   for (const m of text.matchAll(/<material id="([^"]+)"[^>]*>\s*<instance_effect url="#([^"]+)"/g)) {
+    if (materialTextures) {
+      const given = materialTextures[m[1]];
+      if (!given) throw new Error(`material ${m[1]} has no entry in the supplied material map`);
+      matTexture.set(m[1], { textureArchive: given[0], textureRecord: given[1] });
+      continue;
+    }
     const name = effectImage.get(m[2]) ?? '';
     const t = /TEXTURE[._](\d+)[._](\d+)/.exec(name);
     if (!t) throw new Error(`material ${m[1]} names no classic texture (got "${name}")`);
@@ -138,9 +152,7 @@ export function parseCollada(text) {
   });
   const thin = axisSpan.indexOf(Math.min(...axisSpan));
   const others = axisSpan.filter((_, i) => i !== thin);
-  if (!others.every((s) => s > Math.min(...axisSpan) * 3)) {
-    throw new Error(`geometry is not flat in one axis (spans ${axisSpan}) - the turning axis is not derivable`);
-  }
+  const flat = others.every((v) => v > Math.min(...axisSpan) * 3);
 
   return {
     geomId,
@@ -150,7 +162,7 @@ export function parseCollada(text) {
     uvs,
     indices,
     subMeshes,
-    flatAxis: 'xyz'[thin],
+    flatAxis: flat ? 'xyz'[thin] : null,
     bounds: {
       min: [0, 1, 2].map((a) => Math.min(...positions.filter((_, i) => i % 3 === a))),
       max: [0, 1, 2].map((a) => Math.max(...positions.filter((_, i) => i % 3 === a))),
@@ -158,48 +170,83 @@ export function parseCollada(text) {
   };
 }
 
-// Only the rotor. Roller.dae is interior machinery with untextured
-// materials, and the strict reader above rejected it outright rather
-// than baking a mesh with nothing to sample - which is the reader
-// behaving exactly as intended.
-const PARTS = [['ROTOR', 'Blade.dae']];
+// THE PARTS. The rotor's textures are bound in its own DAE; the body's
+// are bound in the Unity PREFAB (Models/Finished/41600.prefab), whose
+// MeshRenderer lists five materials in the DAE's own triangle order -
+// Walls, Plank, Roof, Windmill, Door - resolved through the mod's .mat
+// files, whose names ARE the classic (archive, record) pair. Read once
+// and written down here, because the prefab is not vendored.
+//
+// Roller.dae is not baked: interior machinery, three materials with no
+// texture at all, and the strict reader above rejected it outright -
+// the reader behaving exactly as intended.
+const BODY_MATERIALS = {
+  'Walls-material': [364, 2],
+  'Plank-material': [67, 1],
+  'Roof-material': [369, 3],
+  'Windmill-material': [67, 1],
+  'Door-material': [332, 0],
+};
+const PARTS = [
+  ['ROTOR', 'Blade.dae', null],
+  ['BODY', 'Windmill.dae', BODY_MATERIALS],
+];
 const arr = (a, digits = 6) => `[${a.map((v) => (Number.isInteger(v) ? v : +v.toFixed(digits))).join(', ')}]`;
 
-const blocks = PARTS.map(([name, file]) => {
-  const m = parseCollada(readFileSync(new URL(`../vendor/windmills-kamer/${file}`, import.meta.url), 'utf8'));
+const blocks = PARTS.map(([name, file, mats]) => {
+  const m = parseCollada(readFileSync(new URL(`../vendor/windmills-kamer/${file}`, import.meta.url), 'utf8'), mats);
   return `/** ${name} - \`${file}\`, node \`${m.node}\`, geometry \`${m.geomId}\`.
- *  ${m.positions.length / 3} vertices, ${m.indices.length / 3} triangles, flat in ${m.flatAxis.toUpperCase()}. */
+ *  ${m.positions.length / 3} vertices, ${m.indices.length / 3} triangles${m.flatAxis ? `, flat in ${m.flatAxis.toUpperCase()}` : ''}. */
 export const ${name} = Object.freeze({
   positions: new Float32Array(${arr(m.positions)}),
   normals: new Float32Array(${arr(m.normals)}),
   uvs: new Float32Array(${arr(m.uvs)}),
   indices: new Uint32Array(${arr(m.indices)}),
-  subMeshes: Object.freeze([${m.subMeshes.map((s) => `
-    Object.freeze({ textureArchive: ${s.textureArchive}, textureRecord: ${s.textureRecord}, startIndex: ${s.startIndex}, primitiveCount: ${s.primitiveCount} }),`).join('')}
+  subMeshes: Object.freeze([${m.subMeshes.map((sm) => `
+    Object.freeze({ textureArchive: ${sm.textureArchive}, textureRecord: ${sm.textureRecord}, startIndex: ${sm.startIndex}, primitiveCount: ${sm.primitiveCount} }),`).join('')}
   ]),
-  flatAxis: '${m.flatAxis}',
+  flatAxis: ${m.flatAxis ? `'${m.flatAxis}'` : 'null'},
   bounds: Object.freeze({ min: Object.freeze(${arr(m.bounds.min)}), max: Object.freeze(${arr(m.bounds.max)}) }),
 });`;
 }).join('\n\n');
 
+// WHERE THE MILLS STAND - the six placements Kamer chose, carried as the
+// RAW record fields rather than baked matrices, so the placement MATH
+// stays in world/rmbLayout.js where every other model's lives.
+const placements = JSON.parse(
+  readFileSync(new URL('../vendor/windmills-kamer/placements.json', import.meta.url), 'utf8')
+).placements;
+const placementRows = placements.map((p) => `  Object.freeze({ block: '${p.block}', `
+  + `subX: ${p.subX}, subZ: ${p.subZ}, subRot: ${p.subRot}, `
+  + `x: ${p.x}, y: ${p.y}, z: ${p.z}, rotY: ${p.rotY} }),`).join('\n');
+
 writeFileSync(new URL('../src/world/windmillMesh.js', import.meta.url),
-  `// GENERATED by scripts/bakeWindmill.mjs from vendor/windmills-kamer/*.dae
-// (Kamer's "Windmills of Daggerfall" rotor geometry, vendored WITH THE
-// AUTHOR'S PERMISSION - see vendor/windmills-kamer/README.md). Do not
-// hand-edit; re-run the bake. test/windmillmesh.test.js pins this file
-// against the vendored source, so a drifted bake fails.
+  `// GENERATED by scripts/bakeWindmill.mjs from vendor/windmills-kamer/
+// (Kamer's "Windmills of Daggerfall" models and placements, vendored
+// WITH THE AUTHOR'S PERMISSION - see vendor/windmills-kamer/README.md).
+// Do not hand-edit; re-run the bake. test/windmillmesh.test.js pins this
+// file against the vendored source, so a drifted bake fails.
 //
 // Shape is src/world/meshReader.js's own: positions/normals/uvs/indices
 // plus subMeshes carrying the (textureArchive, textureRecord) pair - so
-// the rotor draws through the same path as every other model, and its
+// both parts draw through the same path as every other model, and their
 // TEXTURES come from the player's own ARENA2 at runtime. No Daggerfall
 // art is in this file or this repository.
 //
 // Coordinates are as exported and UNTRANSFORMED: the export's node
 // matrix composed with Z-up-to-Y-up is the identity, so these are the
-// port's world units already. The hub is the ORIGIN and the turning
-// axis is the axis the part is flat in - see src/world/windmills.js.
+// port's world units already. The rotor's hub is the ORIGIN and its
+// turning axis is the axis it is flat in - see src/world/windmills.js.
 
 ${blocks}
+
+/** WHERE THE MILLS STAND. Classic Daggerfall places NO windmill - these
+ *  six blocks each gain one, which is what Kamer's WorldData overrides
+ *  do on his side and what world/rmbLayout.js does on ours. Raw record
+ *  fields in Daggerfall's own units; the matrix is built where every
+ *  other model's is. */
+export const PLACEMENTS = Object.freeze([
+${placementRows}
+]);
 `);
 console.log('wrote src/world/windmillMesh.js');
