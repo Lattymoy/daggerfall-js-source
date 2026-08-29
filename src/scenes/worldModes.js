@@ -451,6 +451,9 @@ export function createWorldModes(host) {
   const interiorWeapon = createWeaponRig({
     spellArmed: () => magic?.spellArmed() ?? false,   // M2
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
+    // MW-D8: see world.js's twin note - the arm rides the eye, and the
+    // dep is required so a missing one is a reason, never a wrong place.
+    camera: () => ({ pos: player.eye, yaw: cam.yaw }),
     say,
   });
   // C13: the interior arrow flights (collider late-resolved - each

@@ -271,3 +271,42 @@ export function skinBatch(batch, skeleton, pose, skelMats, positionsOut, normals
     }
   }
 }
+
+/**
+ * MW-D7: WHICH BONES THE CLIP ACTUALLY DRIVES.
+ *
+ * poseSkeleton above answers a bone with no track by handing back
+ * `node.rest` (:151-154). That is correct - it is what the reference
+ * does - and it is also the deadliest silent failure in the animation
+ * stage: hand it a .kf that keys nothing this skeleton has, and every
+ * bone falls through to rest. The result is a clean, plausible, entirely
+ * static arm. No error, no warning, no empty picture. A pixel count
+ * passes it. A symmetry check passes it. It looks exactly like a working
+ * idle that happens to be holding still.
+ *
+ * So the match has to be reportable, and it has to be reported by THIS
+ * file, using the same comparison the poser uses one function up
+ * (`node.name.toLowerCase()` against the track map's own lowercased
+ * keys). A copy of that comparison in the page could agree with the page
+ * and disagree with the pose - which is the one way a binding report can
+ * be worse than no report at all.
+ *
+ * @returns {{matched:{bone:string, ref:number}[], unmatchedTracks:string[],
+ *   untrackedBones:string[]}}
+ */
+export function trackBinding(skeleton, tracks) {
+  const matched = [];
+  const untrackedBones = [];
+  const hit = new Set();
+  for (const [ref, node] of skeleton?.nodes ?? []) {
+    const key = node.name.toLowerCase();
+    if (tracks && tracks.has(key)) {
+      matched.push({ bone: node.name, ref });
+      hit.add(key);
+    } else {
+      untrackedBones.push(node.name);
+    }
+  }
+  const unmatchedTracks = [...(tracks?.keys() ?? [])].filter((k) => !hit.has(k));
+  return { matched, unmatchedTracks, untrackedBones };
+}

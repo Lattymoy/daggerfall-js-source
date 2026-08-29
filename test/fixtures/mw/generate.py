@@ -17,6 +17,7 @@
 # Committed outputs: mesh.nif, skinned.nif, fixture.bsa. Regenerate only
 # when the fixture *content* needs to change, and re-pin the tests.
 
+import math
 import struct
 from pathlib import Path
 
@@ -806,6 +807,118 @@ def make_armnameless():
     write_nif(HERE / "armnameless.nif", [root])
 
 
+def make_arm_idle_kf():
+    # MW-D7: THE IDLE CLIP. The first fixture in this tree that a first-
+    # person arm can actually be posed by, and every one of its eleven text
+    # keys is a rule under test rather than decoration.
+    #
+    # WHAT THIS FILE IS NOT. No observation of a retail xbase_anim.1st.kf
+    # exists anywhere in this repository - Part VI of the rules doc records
+    # four skeletons and 1,125 body records, and says nothing about the KF.
+    # So the SHAPE here is read off OpenMW (rule 6's NiSequenceStreamHelper,
+    # rules 21/22/44 for the keys); the CONTENT is an assumption about what
+    # retail idle data contains. Where the two could differ, this file
+    # errs toward exercising the rule.
+    #
+    #   t=0.0 Idle: Start        block A - the decoy. A forward scan for the
+    #   t=0.5 Idle: Stop         group takes this range and looks right.
+    #   t=0.6 Idle1h: Start      a second group whose name STARTS WITH the
+    #   t=0.9 Idle1h: Stop       first - "idle" must not swallow "idle1h".
+    #   t=1.0 Idle: Start        block B - the real one. Rule 22 walks
+    #                            BACKWARDS from the group's last key.
+    #   t=1.5 SoundGen: Left     packed with a LONE \r, so only rule 44's
+    #         Idle: Loop Start   character-set split reaches the loop key.
+    #   t=2.0 Idle: Chop Hit     rule 24's vocabulary: crossed, logged,
+    #                            and deliberately NOT dispatched.
+    #   t=2.5 Idle: Loop Stop    rules 23/49 - the window narrows by being
+    #                            CROSSED, not by being read at load.
+    #   t=3.0 Idle: Stop.        the Scrib's trailing period; rule 22's
+    #                            length-truncated stop compare.
+    #   t=3.2 Sneak:Start        colon with NO space: rule 21 registers no
+    #   t=3.4 Sneak:Stop         group, so a ':'-instead-of-': ' mutant
+    #                            gains a plausible clip and dies here.
+    #
+    # THE TRACKS mirror: the left upper arm's rotation is the right's
+    # negated about Y, which is what R_y(theta) conjugated by the x-mirror
+    # is - so the assembly stays exactly x-symmetric at every time, and
+    # MW-D6's symmetry measurement becomes a per-frame invariant instead of
+    # a one-shot. The forearms translate identically on both sides (a
+    # z-only translation is mirror-safe) and carry NO rotation keys, which
+    # is the only way to observe that a missing channel is rewritten from
+    # the node's own rest every frame rather than held from the last one.
+    #
+    # Bip01 is keyed too, and reaches no geometry by construction: bindPart
+    # sets skeletonRoot == rootBone, skeletonSpaceMatrices makes that node
+    # identity, and skinToSkelMatrix returns identity when they are equal.
+    # It is here so accumRootRef resolves unambiguously and the accumRoot
+    # branch of poseSkeleton RUNS - pinned at the pose, where it is real,
+    # never at the pixels, where it cannot be.
+    helper = NifFormat.NiSequenceStreamHelper()
+    helper.name = b"armidle"
+
+    text_keys = [
+        (0.0, b"Idle: Start"),
+        (0.5, b"Idle: Stop"),
+        (0.6, b"Idle1h: Start"),
+        (0.9, b"Idle1h: Stop"),
+        (1.0, b"Idle: Start"),
+        (1.5, b"SoundGen: Left\rIdle: Loop Start"),
+        (2.0, b"Idle: Chop Hit"),
+        (2.5, b"Idle: Loop Stop"),
+        (3.0, b"Idle: Stop."),
+        (3.2, b"Sneak:Start"),
+        (3.4, b"Sneak:Stop"),
+    ]
+    tke = NifFormat.NiTextKeyExtraData()
+    tke.num_text_keys = len(text_keys)
+    tke.text_keys.update_size()
+    for k, (t, txt) in zip(tke.text_keys, text_keys):
+        k.time = t
+        k.value = txt
+
+    # Rotation about Y by the given angles, right side; the left is negated.
+    def rot_y(deg):
+        a = math.radians(deg) / 2.0
+        return (math.cos(a), 0.0, math.sin(a), 0.0)  # w,x,y,z
+
+    arm_angles = [(0.0, 90.0), (0.5, 90.0), (1.0, 60.0), (1.5, 0.0),
+                  (2.0, -20.0), (2.5, 0.0), (3.0, -60.0)]
+    fore_trans = [(0.0, (0.0, 0.0, -1.0)), (1.0, (0.0, 0.0, -1.0)),
+                  (2.0, (0.0, 0.0, -1.4)), (3.0, (0.0, 0.0, -1.0))]
+
+    tracks = [
+        ("Bip01", make_keyframe_data(trans_keys=[
+            (0.0, (0.0, 0.0, 0.0)), (3.0, (1.0, 0.0, 0.0))])),
+        ("Right Upper Arm", make_keyframe_data(
+            rot_keys=[(t, rot_y(d)) for t, d in arm_angles])),
+        ("Left Upper Arm", make_keyframe_data(
+            rot_keys=[(t, rot_y(-d)) for t, d in arm_angles])),
+        ("Right Forearm", make_keyframe_data(trans_keys=fore_trans)),
+        ("Left Forearm", make_keyframe_data(trans_keys=fore_trans)),
+    ]
+
+    # The extra chain is [text keys, one NiStringExtraData per controller]
+    # and the controller chain pairs with those names BY INDEX - five names,
+    # five controllers, in the same order.
+    helper.extra_data = tke
+    prev_extra = tke
+    prev_ctrl = None
+    for name, kd in tracks:
+        sed = NifFormat.NiStringExtraData()
+        sed.string_data = name.encode()
+        sed.bytes_remaining = 4 + len(name)
+        prev_extra.next_extra_data = sed
+        prev_extra = sed
+        kc = make_keyframe_controller(None, kd, 0.0, 3.0)
+        if prev_ctrl is None:
+            helper.controller = kc
+        else:
+            prev_ctrl.next_controller = kc
+        prev_ctrl = kc
+
+    write_nif(HERE / "armidle.kf", [helper])
+
+
 if __name__ == "__main__":
     make_mesh()
     make_dds()
@@ -820,5 +933,6 @@ if __name__ == "__main__":
     make_armhand()
     make_armcuff()
     make_armnameless()
+    make_arm_idle_kf()
     make_esm()
     make_bsa()

@@ -141,7 +141,7 @@ export function assembleNpc(esm, npcId, skinIndex = null) {
  * built from the singular slot stem finds nothing at all, and
  * `b_n_nord_m_upper arm` contains a SPACE.
  *
- * The correct lookup lives in src/tools/mwInspect.js (isFirstPersonId,
+ * The correct lookup lives in src/formats/mwFirstPerson.js (isFirstPersonId,
  * armReport, armMeshPaths), pinned against hand-built records and proven
  * against real archives.
  *

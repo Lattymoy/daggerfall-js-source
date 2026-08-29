@@ -16,7 +16,10 @@ each stage is provable on the player's own data before the next begins:
         player's archives. MW-D2 skinned-vs-rigid, MW-D3 real parse +
         wireframe, MW-D4 the bones the rules name, MW-D5 assembly at
         rest pose, MW-D6 the assembled arm DRAWN - and the defect that
-        drawing found (below).
+        drawing found (below), MW-D7 an idle CLIP played through that
+        assembly.
+  MW-D8 THE ARM IS IN THE GAME. Untextured, weaponless, idling. See
+        below - including the two defects that only DRAWING IT found.
 
 CONFIRMED ON RETAIL DATA (Mac, 2026-08-29): the archives parse, the arm
 meshes parse, and the wireframes DRAW. Part VI has the rest.
@@ -55,12 +58,195 @@ layers to catch: x-symmetry off the downsampled canvas (0.63 against
 0.99) and a signed per-piece readback (3 pieces, `left hand` only). THE
 MEASUREMENT HAS TO BE ABLE TO FAIL THE WAY THE CODE ACTUALLY FAILS.
 
-NEXT, IN ORDER: (1) play an idle clip through the assembly - and note
-that assembleFirstPersonArm's RETURN VALUE cannot be re-posed as it
-stands, since each piece keeps only baked positions and drops the batch,
-its skin, attachRef, pose and mats; that is an additive change, not a
-rewrite; (2) only then a rig, and only then wiring into weaponRig.
-Nothing MW touches the game today.
+MW-D7 PLAYED THE CLIP. The blocker the last status line named is closed:
+`assembleFirstPersonArm` now SPLITS bind from pose. Each piece keeps what
+a re-pose needs (a skinned one its batch, a rigid one its authored
+positions and attach ref, both their own output buffer), the assembly
+carries the skeleton, the root ref and its resolved readers, and the one
+home for per-frame math is `poseAssembly`. The rest pose became "pose at
+t=0 with no tracks" - the same arithmetic, called once instead of inlined
+- so all 26 MW-D5/D6 pins keep seeing byte-identical numbers.
+
+The clip law itself is four OpenMW members that had no JS home, ported
+into mwAnim.js beside the text keys they read: `TextKeyMap::emplace`
+(rules 44/45/21), `Animation::reset` (22/23/49), `AnimState::shouldLoop`
+(49) and `Animation::runAnimation`'s stepping (50). NOT a modulo of the
+group range.
+
+WHAT MW-D7 HAD TO BE ABLE TO SEE, and could not have with MW-D6's
+measurements. `poseSkeleton` answers a bone with no matching track by
+handing back `node.rest` - correct, and the deadliest silent failure in
+this stage. A .kf keyed to bones the skeleton does not have poses NOTHING
+and draws a clean, static, entirely plausible arm: no error, no empty box,
+a perfect symmetry score and a full pixel count. Three things exist to
+catch it: `trackBinding` in mwSkin.js (the poser's OWN comparison, so the
+report cannot agree with the page while disagreeing with the pose), the
+page saying "an unmatched track poses nothing - the bone holds its rest
+pose, which looks exactly like a working idle", and a probe layer that
+hashes the canvas at six clip times and demands five distinct pictures.
+A seventh layer watches the LIVE canvas across real frames, because every
+other layer drives the pose itself and passes a page frozen on frame one.
+
+AND THE LOOP LAW IS THE PART THAT SEPARATES CORRECT FROM PLAUSIBLE. A
+`% span` player moves, stays symmetric, and draws - and replays the
+clip's INTRO on every wrap instead of the authored loop segment. Only a
+trace can tell them apart, so the probe runs the page's own advanceClip
+and asserts, in time-space AND in pose-space, that after the first
+`loop stop` crossing the playhead never re-enters [1.0, 1.5) and the
+right hand never returns below x=1.4.
+
+MEASURED FINDINGS FROM MW-D7:
+
+  F1  A TRACK ON THE SKELETON ROOT REACHES NO GEOMETRY, BY CONSTRUCTION.
+      `bindPart` sets `skeletonRoot === rootBone`; `skeletonSpaceMatrices`
+      makes the skeleton root identity; `skinToSkelMatrix` returns
+      identity when the two are equal. So keying `Bip01` moves nothing,
+      skinned or rigid. MW-D7 therefore pins accum-root extraction AT THE
+      POSE (`pose.get(bip01).translation` is [0,0,0] with `accumRoot` and
+      [1,0,0] without) and states in the test that the pixel version
+      cannot fail on this rig. The geometric pin stays where it is real,
+      on the SkinRoot/Bone0 fixture, where the tracked bone is BELOW the
+      skin root.
+  F2  `Infinity` does not survive `page.evaluate` - rule 49's default
+      `loopStopTime` JSON-serialises to `null`. `clipReport` carries
+      `loopStopFinite` beside the number so a probe never asserts on a
+      null it cannot read.
+  F3  `parseAnimGroups` produces a NONSENSE BUT NON-NULL group for data
+      that exercises the rules: on armidle.kf it reads `Idle [1.00 ->
+      0.50]`, a range that runs backwards, and is not deleted (the guard
+      only drops nulls). `mwViewer`'s `span = max(stop - start, 1e-6)`
+      would freeze on it. The page now shows both answers side by side.
+
+BOOKED, NOT DONE - each named here so it is not inherited silently:
+
+  * `mwViewer.js:342-348` is now a SECOND HOME for clip time, and the
+    worse one: `% span` with no loop window, a case-SENSITIVE
+    `groups.get` that bypasses findAnimGroup's own MWAUDIT fix, and
+    `accumRootRef` recomputed every frame. MW-D8's first task: replace
+    it with advanceClip or delete it.
+  * `parseAnimGroups` diverges from rules 21/22/44/45 in four ways
+    (splits on `\r\n` as a pair, accepts `Group:Marker`, compares the
+    stop marker exactly, takes file order rather than rule 22's reverse
+    scan). Deliberately NOT re-based here: three MWAUDIT pins assert its
+    present behaviour, and mixing that into the first slice that animates
+    anything would make a failure ambiguous. Its own audit slice.
+  * `KEY_TYPE.constant` is sampled by holding the previous key; the
+    reference flips at the segment midpoint with a strict `>`. Different
+    member, no fixture drives it. `clipReport` names the interpolation
+    type PER CHANNEL so a player can see how much of their own file rides
+    it, which is the most this slice can honestly offer.
+  * `track.frequency` / `phase` are read from every controller and used
+    nowhere. Unchanged, and now printed.
+
+AND THE HONEST SENTENCE ABOUT armidle.kf: no observation of a retail
+`xbase_anim.1st.kf` exists anywhere in this repository. Part VI records
+four skeletons and 1,125 body records and says nothing about the KF. So
+the fixture's SHAPE is read off OpenMW; its CONTENT is an assumption
+about retail idle data, and generate.py says so at the maker.
+
+MW-D8: THE ARM REACHES THE SCREEN, and "nothing MW touches the game" is
+no longer true. It is opt-in, off by default, and behind a button on the
+Enhanced pane's Morrowind card.
+
+NO RENDERER CHANGE WAS NEEDED, which was the surprise. The port had
+ALREADY shipped a first-person pass: renderCharacterSprite
+(render/renderer.js:751) binds an offscreen target with its own depth
+renderbuffer, clears colour and depth, SWAPS the frame's proj/view for
+ones the caller hands it, draws, and restores; drawScreenOverlayQuad
+(:987) composites it fullscreen with an alpha cut and no depth test. It
+was written for a voxel viewmodel that was put on ice in August and has
+had no consumer since. Two recorded rules fall out of it for free:
+
+  rule 29 - the first-person subtree renders with its OWN field of view.
+    We hand the pass `perspective(Math.PI/3, ...)`, which IS the 60-degree
+    default, and the proj/view swap is exactly the mechanism for it.
+  rule 52 - first person gets a bin whose draw CLEARS DEPTH first, so the
+    arms are never clipped by the world. Here that is STRUCTURAL, not
+    emulated: no world geometry is ever drawn into that framebuffer, so
+    there is nothing to be clipped by.
+
+THE TWO DEFECTS DRAWING FOUND, both invisible to every node test:
+
+  D1  THE ARM RENDERED NOTHING - 0 lit texels - with a build that
+      otherwise reported four pieces bound and five clip tracks matched.
+      The placement was copied from the voxel viewmodel, which pushes its
+      rig BACKWARD from the eye and says why: that rig is the player's
+      whole BODY, the camera rides its head, and without the push you
+      render the inside of your own torso (Mac's "stuck in a hole"). This
+      assembly is arms ONLY. There is no head to hide, so the same push
+      put every triangle behind the lens. Arms go IN FRONT of the eye and
+      BELOW the view axis.
+  D2  THE ARM SWUNG AROUND THE PLAYER AS HE TURNED. The model matrix
+      spins the mesh about its own origin, so the centre offset has to be
+      ROTATED before it is backed out of the translation. Subtracting it
+      unrotated left the arm yaw-dependent: 60 lit texels facing one way
+      and 20 facing another with the pose held still. A still screenshot
+      cannot show this. Only a yaw sweep can, and the probe only got one
+      because the MUTATION CAMPAIGN pointed out that at yaw 0 the sine
+      term vanishes and an x-axis error is invisible.
+
+WHAT IT DRAWS, so nobody mistakes a scope boundary for a bug: UNTEXTURED
+grey flat-shaded arms, no weapon in them, playing bare `Idle` forever.
+Rules 36 and 61 (the texture path search, the positional slots) are
+deferred WHOLE, so there is no texture lookup and therefore no magenta
+miss-signal either. Flat shading comes from a face normal computed per
+triangle at pack time - and for a MIRRORED piece that normal is NEGATED,
+because rule 13's X negation reverses the winding and without it the left
+arm lights inside-out. That is rule 13's rendering consequence, which MW8
+also lacked.
+
+THE PORT MAPPER IS A PORT DECISION, RECORDED AS ONE. Rule 54 says the
+first-person camera is a NODE of the rig, tracking "Camera" and falling
+back to "Head". This slice does NOT implement it, because the actor-scale
+rules it needs are tier C - extracted, never verified - and this
+document's own warning is that a tier C rule must be verified before code
+depends on it. Instead a uniform scale is solved ONCE from the arm's
+bounds over the WHOLE clip, so it lands plausibly at any unit scale.
+Solved per frame instead it would renormalise the picture every time the
+arm moved and cancel out the motion it exists to show. The build REPORTS
+whether the skeleton carries a Camera/Head bone, so MW-D9 starts from a
+measurement rather than a guess.
+
+MEASURED, and by what. tools/mwArmProbe.mjs drives the REAL fpArm through
+its deps seam in a real browser against a real WebGL2 context, and reads
+the offscreen target back: no-data refuses without a broken screen; the
+build takes rule 6's skeleton; four pieces bind; the target has ink; the
+arm is in front of the player at EVERY heading; both hands bind and each
+sits on its own side of x=0 at rest; the picture changes across the clip
+in 7 distinct frames and opens to 67% of the frame width while staying
+x-symmetric at 0.86; the loop window is discovered by crossing; a .kf
+keyed to foreign bones REFUSES at the clip stage rather than drawing a
+static plausible arm; and Unload returns the classic sprite.
+
+WHAT THE PROBE CANNOT SEE, stated rather than implied: it does not boot
+the game, because that needs ARENA2 and the player's own Daggerfall data.
+weaponRig's branch, the four hosts' camera dep and the card are pinned in
+node (test/fparm.test.js, test/mwattach.test.js, test/enhancedMenu.test.js)
+and proven by Mac in play. Three mutation campaigns back them: 12/12 on
+the wiring pins, 6/8 on the probe layers, 24/24 inherited from MW-D7.
+
+TWO PROBE MUTANTS SURVIVED AND ARE RECORDED RATHER THAN PAPERED OVER. A
+mapper recomputed per frame still changes the picture, so no pixel layer
+can separate it from a correct one - it is pinned on the SOURCE instead
+(the draw reads built.framing and never arm.bounds). And an active() that
+drops its clip-state term is neutralised by the mesh term, which is
+deliberate defence in depth, not a hole.
+
+TWO SHIPPED PINS WERE STRENGTHENED, NEITHER LOOSENED. MWFIX's "the
+classic sprite path is the ONLY path" named its own successor in its
+comment - "when the rig returns this reverts to the else-of-an-active-view
+form" - and that is what it now is, asserting the ORDER and the RETURN
+where it used to grep one literal it could not condition on. MWFIX 3,
+absent on purpose since the revert because no code had the mechanism, is
+RESTORED: the rig polls morrowindDataGeneration() and drops a stale arm,
+so attaching data mid-game is never silently ignored again.
+
+NEXT, IN ORDER: (1) the texture - rules 36 and 61, which needs a dynamic
+vertex door on the textured program and a DDS upload; (2) rule 54's
+camera bone, now that the build reports whether the data has one, which
+retires the port mapper; (3) the weapon in the hand (rules 8, 17) and
+only then attack clips. Also booked from MW-D7 and NOT done here:
+mwViewer.js:342-348 is still a second home for clip time.
 
 THE STANDING RULE FOR THIS WORK: no stage is "done" until it is visible
 on the player's own files. Four fixes shipped green and broken because

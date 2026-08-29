@@ -1714,8 +1714,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // foes-only playerWeapon had silently disabled in foe-less
   // dungeons. spellArmed = the HasReadySpell / IsPlayingAnim leg.
   let _weaponCanvas = null;   // the context sees a canvas only per drawFoes call
+  // MW-D8: this host has no standing `cam` - drawFoes RECEIVES the eye
+  // and the view each frame - so the rig's camera dep reads the latch
+  // below, set at the same place the HUD derives its heading from. Null
+  // until the first frame, which makes the arm inactive rather than
+  // placed at the origin.
+  let _fpEye = null;
+  let _fpYaw = 0;
   const weaponRig = createWeaponRig({
     renderer, canvas: () => _weaponCanvas, fetchBytes, palette, audio, entity: playerEntity,
+    camera: () => (_fpEye ? { pos: _fpEye, yaw: _fpYaw } : null),
     bindWorn: opts.playerWeapon !== 'bow',   // AUDIT 17e F17: the ?weapon=bow debug flag keeps its scripted weapon
     say: (l) => hudText.add(l),
     spellArmed: () => magic.spellArmed(),
@@ -2579,6 +2587,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   sceneAmbience.setPreset('dungeon');
   function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false, playerHeight = CAPSULE_HEIGHT) {
     _weaponCanvas = canvas;   // C10: the rig's late canvas (gesture dim + the overlay draw)
+    // MW-D8: latch the eye and heading THIS frame, before anything draws.
+    // Set after weaponRig.draw() instead, the arm would render a frame
+    // behind the camera - a lag you only see while turning, which is
+    // most of what a first-person arm does.
+    _fpEye = eye;
+    _fpYaw = Math.atan2(-view[2], -view[10]);
     // THE FOUR HOSTS RULE (2026-08-27, Mac: "blood texture stays static
     // in the air when attacking them in dungeons"). The splash pool's
     // clock was the HOST'S to run - dungeon.js ran it, worldModes never

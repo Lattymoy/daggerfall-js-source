@@ -86,6 +86,8 @@
 // the pick is a zip upload.
 // ═══════════════════════════════════════════════════════════════════
 
+import { fpArm } from '../combat/fpArm.js';
+import { mwRaceId } from '../formats/mwNpc.js';
 import { morrowindDataCount, assetPickerOpen } from '../scenes/dataSource.js';   // MW-IMPORT: the attach door; MWFIX: and the modal it opens owns the keyboard
 import { CATEGORIES, keysOf } from '../ui/settingsMap.js';
 import { widgetFor, blockedReason, formatValue, stepValue, COLOUR_KEYS } from '../ui/settingsLaw.js';
@@ -862,30 +864,71 @@ function paneEnhanced(body) {
   // MW-IMPORT: the attach door, ON THIS SURFACE - the launcher window has
   // its M key, but the enhanced skin never routes through it.
   //
-  // THERE IS NO 3D TOGGLE HERE, DELIBERATELY. The first-person rig was
-  // reverted whole and has not been rebuilt yet; a switch for it would be
-  // the screen claiming a feature this tree does not have, which is
-  // exactly what the R7 pin exists to stop. The card offers what actually
-  // works today: attaching the data, and the two pages that read it.
+  // MW-D8: THERE IS NOW SOMETHING BEHIND THE BUTTON, which is the only
+  // thing that ever made one honest. MW-2 refused a 3D toggle because "a
+  // switch for one would be the screen lying about the build" - true then,
+  // when the rig was reverted and nothing had replaced it. The arm exists
+  // now, so a control for it states a fact.
+  //
+  // IT IS A BUTTON WITH A STATUS LINE, not a preference row. MWDIAG's
+  // lesson: five distinct causes were indistinguishable to the reporter
+  // for three fixes running because the reason lived in a console object
+  // nobody read. The reason belongs on the card, next to the button that
+  // produced it.
   const mw = el('div', 'card');
+  const armState = fpArm.status();
   mw.append(el('h3', null, 'Morrowind assets'));
   mw.append(el('p', 'meta',
-    'Your own Morrowind.bsa (and Tribunal, Bloodmoon, Morrowind.esm) feed the mesh viewer and the '
-    + 'data inspector. Stored in this browser exactly like ARENA2; nothing uploads. The in-game '
-    + 'first-person layer is NOT built - it was removed, and it is being rebuilt against a cited '
-    + 'reference before it comes back.'));
-  mw.append(stats([['State', `${morrowindDataCount()} archive${morrowindDataCount() === 1 ? '' : 's'} attached`]]));
-  mw.append(acts([
-    { label: 'Attach data', primary: true, onClick: async () => {
+    'Your own Morrowind.bsa (and Tribunal, Bloodmoon, Morrowind.esm) feed the mesh viewer, the '
+    + 'data inspector, and the in-game first-person arms. Stored in this browser exactly like '
+    + 'ARENA2; nothing uploads.'));
+  mw.append(el('p', 'meta',
+    'The arms are UNTEXTURED and hold no weapon - grey, flat-shaded, playing the idle clip. That is '
+    + 'this stage, not a failure: textures and the weapon in the hand are the next slices. While the '
+    + 'arms are on, the classic weapon sprite is off; Unload brings it straight back.'));
+  const count = morrowindDataCount();
+  mw.append(stats([
+    ['Data', `${count} archive${count === 1 ? '' : 's'} attached`],
+    ['Arms', armState.active
+      ? `on - ${armState.pieces} pieces from ${armState.skeletonPath}`
+      : armState.reason],
+  ]));
+  const armActions = [
+    { label: 'Attach data', primary: !count, onClick: async () => {
       const ds = await import('../scenes/dataSource.js');
       await ds.pickMorrowindFiles();
       render();
     } },
-    { label: 'Open mesh viewer', onClick: () => window.open(sitePage('mw-viewer.html'), '_blank') },
-    // MW-D: the page that answers what is actually IN the archives - which
-    // is the question four failed fixes never asked.
-    { label: 'Open data inspector', onClick: () => window.open(sitePage('mw-inspect.html'), '_blank') },
-  ]));
+  ];
+  if (count) {
+    armActions.push(armState.active
+      ? { label: 'Unload arms', onClick: () => { fpArm.unload(); render(); } }
+      : { label: 'Build first-person arms', primary: true, onClick: async () => {
+        // Seconds long and synchronous - the BSA index, the whole ESM
+        // walk and every mesh parse, on the main thread. It happens with
+        // the game paused, once, and the card says so before you press
+        // rather than after the tab stops responding.
+        // Rule 6 picks the skeleton by SEX; rules 1-3 pick the body
+        // records by RACE. Both come from the live player, not a default
+        // - a hardcoded 'nord' would draw a Breton's arms on a Redguard
+        // and nothing on screen would say so.
+        await fpArm.build({
+          race: mwRaceId(playerEntity.race),
+          female: !!playerEntity.gender,
+        });
+        render();
+      } });
+  }
+  armActions.push({ label: 'Open mesh viewer', onClick: () => window.open(sitePage('mw-viewer.html'), '_blank') });
+  // MW-D: the page that answers what is actually IN the archives - which
+  // is the question four failed fixes never asked.
+  armActions.push({ label: 'Open data inspector', onClick: () => window.open(sitePage('mw-inspect.html'), '_blank') });
+  mw.append(acts(armActions));
+  // WHY, IN WORDS, WHEN IT DID NOT WORK. An empty box was the reverted
+  // rig's defining behaviour and is the one outcome forbidden here.
+  if (armState.notes && armState.notes.length) {
+    mw.append(el('p', 'meta', `Not in the arms: ${armState.notes.join('; ')}`));
+  }
   body.append(mw);
 
   const waiting = el('div', 'card');

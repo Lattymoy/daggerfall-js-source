@@ -101,11 +101,27 @@ test('MWFIX 2b: the picker OWNS THE KEYBOARD while it is up - found by the probe
   assert.ok(yieldAt > 0 && stopAt > yieldAt, 'and yields before it stops propagation, or the picker never sees the key');
 });
 
-// MWFIX 3's pin is ABSENT ON PURPOSE. It held the weapon rig to
-// rebuilding its first-person view when data is attached or the
-// preference toggled - a real law, and it goes back the moment that rig
-// does. Pinning it now would assert a mechanism no code has, which is
-// the mirror image of the mistake this whole effort is recovering from.
+test('MWFIX 3 (restored at MW-D8): the rig watches the attach GENERATION, not a one-shot read', () => {
+  // ABSENT UNTIL NOW, on purpose: it held the weapon rig to rebuilding
+  // its first-person view when data is attached, and pinning it while no
+  // code had the mechanism would have asserted a mechanism no code has.
+  // MW-D8 built the arm, so the law is real again and the pin returns.
+  //
+  // THE DEFECT IT GUARDS: the reverted rig read hasStoredMorrowind() ONCE
+  // at construction, so attaching data to a running game changed nothing
+  // until a reload - which is what the report "after uploading does not
+  // work at all" actually was.
+  const rig = rd('src/combat/weaponRig.js');
+  assert.match(rig, /morrowindDataGeneration\(\)/, 'the rig polls the generation');
+  assert.match(rig, /let _mwGen = morrowindDataGeneration\(\);/, 'seeded once');
+  assert.match(rig, /const fpRecheck = \(\) => \{[\s\S]{0,240}?if \(g === _mwGen\) return;[\s\S]{0,200}?fpArm\.unload\(\);/,
+    'and compares it every frame, dropping a stale arm when it moves');
+  assert.match(rig, /fpRecheck\(\);/, 'the check is actually called');
+  // It drops rather than rebuilds ON PURPOSE: the parse is seconds long
+  // and synchronous, so it belongs behind a button, not in a frame.
+  assert.ok(!/fpRecheck[\s\S]{0,200}fpArm\.build/.test(rig),
+    'and it does NOT start a multi-second parse from inside the frame loop');
+});
 
 test('MWFIX2: the mesh-viewer link resolves to the SITE ROOT, from the game as well as the menu', () => {
   // THE DEFECT: the build puts every extra page at the site root
@@ -141,12 +157,23 @@ test('MWFIX2: the mesh-viewer link resolves to the SITE ROOT, from the game as w
 
 test('MWFIX: the classic sprite path is the ONLY path, and fpsWeapon never hears of the layer', () => {
   const rig = rd('src/combat/weaponRig.js');
-  // Stronger than the pin this replaces. That one allowed a 3D view and
-  // required the sprite to be its else; today there is no view at all, so
-  // the sprite draw must stand unconditional and the rig must carry no
-  // reference to the removed layer. When the rig returns this reverts to
-  // the else-of-an-active-view form.
-  assert.match(rig, /const art = c && artFor\(playerWeapon\.weapon\);/, 'the sprite draw is unconditional');
+  // THE RIG HAS RETURNED, so this is the else-of-an-active-view form the
+  // previous version named as its own successor: "When the rig returns
+  // this reverts to the else-of-an-active-view form."
+  //
+  // AND IT IS STRICTLY STRONGER THAN WHAT IT REPLACES. That pin was a
+  // grep for one literal, so it could not see the condition its own label
+  // claimed - an arm branch inserted above it passed unchanged. This
+  // asserts the ORDER and the RETURN, so both mutations it was blind to
+  // now fail: an arm branch with no `return` (both composite, a weapon
+  // sprite pasted over a pair of hands), and a sprite draw hoisted above
+  // the branch.
+  assert.match(rig,
+    /if \(fpArm\.active\(\)\) \{ fpArm\.draw\(c\); return; \}\s*const art = c && artFor\(playerWeapon\.weapon\);/,
+    'an inactive arm falls STRAIGHT THROUGH to the sprite, and an active one returns so the two never both draw');
+  // and the branch must name a module the file actually imports, or it is
+  // a literal that satisfies a regex and does nothing.
+  assert.match(rig, /import \{ fpArm \} from '\.\/fpArm\.js';/, 'the arm branch is wired to a real module');
   for (const gone of ['mwView', 'createMwFpView', 'mwFp']) {
     assert.ok(!rig.includes(gone), `weaponRig must not mention ${gone} while the layer is absent`);
   }
