@@ -294,7 +294,8 @@ function drawBreathBar(renderer, canvas, art, vitals, s) {
 /** Draw the HUD. vitals = { health, maxHealth, magicka, maxMagicka };
  *  heading01 = camera yaw / 2pi with 0 facing +z. */
 export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
-  { font = null, cursorActive = false, detected = null, playerXZ = null, largeHud = null, hover = null } = {}) {
+  { font = null, cursorActive = false, detected = null, playerXZ = null, largeHud = null, hover = null,
+    readied = null, weapon = null } = {}) {   // PX30b: for the enhanced HUD's hand plaques
   // AUDIT 24 (wave 39): ShowPlayerDamage's red flash, under the bars.
   // THE FOUR HOSTS RULE, applied before the fact: drawHud is the one
   // host-agnostic call all four make, "last, over the viewmodel", so
@@ -314,7 +315,14 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // Above the `!art` return, like the flash: the enhanced HUD reads no
   // ARENA2, and a player whose HUD art failed to load still has vitals.
   if (isEnhanced() && typeof document !== 'undefined') {
-    drawEnhancedHud(vitals, heading01, dt, { hidden: cursorActive });
+    drawEnhancedHud(vitals, heading01, dt, {
+      hidden: cursorActive,
+      // PX30b: the two things the reference's ability bar would hold.
+      // drawHud already takes an options bag; a host that knows
+      // neither passes neither, and the plaque never draws.
+      readied: readied ?? null,
+      weapon: weapon ?? null,
+    });
     return;
   }
   if (!art) return;

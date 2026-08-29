@@ -25,7 +25,9 @@
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { activeSpellIcons, maxRoundsRemaining } from './hudActiveSpells.js';
 import { liveBundles } from '../systems/mysticism.js';   // PX30: the ONE bundle walk the HUD already uses
-import { compassScroll } from './hud.js';
+import { compassScroll, breathShortThreshold } from './hud.js';
+import { maxBreath, liveStat } from '../systems/statMods.js';   // PX30b: DFU's own breath ceiling
+// (breathShortThreshold lives in hud.js, imported below with compassScroll)
 import { foeTarget, tickFoeTarget } from './hudFoeTarget.js';
 
 /** The compass strip's eight points, in the order a turning player
@@ -134,6 +136,18 @@ function build(doc) {
 
   // BOTTOM: the three vitals, then the effects beneath them.
   const bottom = el('div', 'hud-bottom');
+  // PX30b: THE BREATH BAR, above the vitals. DFU draws it only while
+  // you are holding breath (HUDBreathBar: Amount 0 draws nothing) and
+  // turns it RED below (endurance >> 3) + 4 - the classic's own two
+  // laws, imported rather than restated. It is the one bar that draws
+  // under BOTH huds in DFU, which is why it belongs here and not in
+  // the branch above.
+  const breath = el('div', 'hud-breath');
+  const breathTrack = el('div', 'hud-track');
+  const breathFill = el('i', 'hud-fill');
+  breathTrack.append(breathFill);
+  breath.append(el('span', 'hud-breathlabel', 'Breath'), breathTrack);
+  bottom.append(breath);
   const bars = el('div', 'hud-bars');
   const vital = (kind, label) => {
     const wrap = el('div', `hud-vital hud-${kind}`);
@@ -152,12 +166,23 @@ function build(doc) {
   const health = vital('health', 'Health');
   const fatigue = vital('fatigue', 'Fatigue');
   bottom.append(bars);
+  // PX30b: WHAT IS IN YOUR HANDS. The reference's ability bar has no
+  // Daggerfall equivalent - there are no hotkeyed abilities - but the
+  // two things it would hold do exist: the spell you have READIED and
+  // the weapon you are holding. Two plaques, and each only when there
+  // is one.
+  const hands = el('div', 'hud-hands');
+  const readied = el('div', 'hud-hand hud-readied');
+  const weapon = el('div', 'hud-hand hud-weapon');
+  hands.append(readied, weapon);
+  bottom.append(hands);
   const effects = el('div', 'hud-effects');
   bottom.append(effects);
   root.append(bottom);
 
   doc.body.append(root);
-  return { root, compass, marks, foe, foeName, foeFill, magicka, health, fatigue, effects };
+  return { root, compass, marks, foe, foeName, foeFill, magicka, health, fatigue, effects,
+    breath, breathFill, readied, weapon };
 }
 
 /**
@@ -166,7 +191,8 @@ function build(doc) {
  * `vitals` is the player entity (drawHud's own argument), `heading01`
  * the same heading the classic compass scrolls by.
  */
-export function drawEnhancedHud(vitals, heading01, dt = 0, { hidden = false } = {}) {
+export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
+  const { hidden = false } = opts;
   if (typeof document === 'undefined') return;
   if (!host) { parts = build(document); host = parts.root; }
   tickFoeTarget(dt);
@@ -213,6 +239,48 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, { hidden = false } = 
   for (const [key, part, now, max] of rows) {
     width(part.fill, `${key}W`, (now / max) * 100);
     put(part.num, `${key}N`, `${Math.round(now)}`);
+  }
+
+  // THE BREATH. DFU's own two laws: drawn only while holding breath,
+  // and short below (endurance >> 3) + 4.
+  const held = vitals.currentBreath ?? 0;
+  const showBreath = held > 0;
+  if (last.breathOn !== showBreath) {
+    last.breathOn = showBreath;
+    parts.breath.classList.toggle('on', showBreath);
+  }
+  if (showBreath) {
+    const mb = maxBreath(vitals) || 1;
+    width(parts.breathFill, 'breathW', (held / mb) * 100);
+    const short = breathShortThreshold(liveStat(vitals, 'endurance')) > held;
+    if (last.breathShort !== short) {
+      last.breathShort = short;
+      parts.breath.classList.toggle('short', short);
+    }
+  }
+
+  // THE HANDS. Each plaque only when there is something in it - an
+  // empty one is the drawn-door bug, and a HUD is the worst place for
+  // furniture that says nothing.
+  const readySpell = opts.readied ?? null;
+  const readyName = readySpell ? String(readySpell.name ?? '') : null;
+  if (last.readied !== readyName) {
+    last.readied = readyName;
+    parts.readied.classList.toggle('on', !!readyName);
+    parts.readied.textContent = '';
+    if (readyName) {
+      parts.readied.append(el('span', 'hud-handkind', 'Ready'), el('span', 'hud-handname', readyName));
+    }
+  }
+  const held2 = opts.weapon ?? null;
+  const weaponName = held2 ? String(held2.name ?? '') : null;
+  if (last.weapon !== weaponName) {
+    last.weapon = weaponName;
+    parts.weapon.classList.toggle('on', !!weaponName);
+    parts.weapon.textContent = '';
+    if (weaponName) {
+      parts.weapon.append(el('span', 'hud-handkind', 'Hand'), el('span', 'hud-handname', weaponName));
+    }
   }
 
   // THE EFFECTS. Rebuilt only when the SET changes - a countdown that
