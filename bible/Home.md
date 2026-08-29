@@ -268,27 +268,25 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:2987` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
 - `src/scenes/world.js:3767` - castle interior (FLAGGED with the palace blocks).
 - `src/scenes/world.js:4682` - building doors are the E-enter seam, not bashables - FLAGGED
-- `src/scenes/worldModes.js:885` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
-- `src/scenes/worldModes.js:1022` - FLAGGED to the crime arc, as the Ledger records.
-- `src/scenes/worldModes.js:1091` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
-- `src/scenes/worldModes.js:1106` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
-- `src/scenes/worldModes.js:1315` - is the quest machine's, FLAGGED with it.
-- `src/scenes/worldModes.js:1320` - FLAGGED, above ground only, each with the DFU line it owes:
-- `src/scenes/worldModes.js:1511` - CW1 retired the FLAGGED list that lived here - every arm it
-- `src/scenes/worldModes.js:1751` - fixed ship scenes and stays FLAGGED, so those buttons keep
-- `src/scenes/worldModes.js:1783` - H3: the sell price, which was FLAGGED at zero because it needs
-- `src/scenes/worldModes.js:2004` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:2126` - skip, the refusal line. Only the destination was a FLAGGED null,
-- `src/scenes/worldModes.js:2401` - been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:2446` - destination has been a FLAGGED null since G3.
-- `src/scenes/worldModes.js:2465` - been FLAGGED nulls since G3.
-- `src/scenes/worldModes.js:2570` - with the trade window's own mode flow, the same INTERIM the
-- `src/scenes/worldModes.js:2795` - first (owned houses and quest buildings FLAGGED/seamed per
-- `src/scenes/worldModes.js:2803` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
-- `src/scenes/worldModes.js:3177` - basket behind `loot.houseOwned` (:919) stays FLAGGED to the
-- `src/scenes/worldModes.js:3960` - string is the seam that was a FLAGGED null until this slice,
-- `src/scenes/worldModes.js:4059` - *  FLAGGED null this slice closed. */
-- `src/scenes/worldModes.js:4397` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
+- `src/scenes/worldModes.js:886` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
+- `src/scenes/worldModes.js:1104` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
+- `src/scenes/worldModes.js:1119` - G4: THE GUILD STORE ARM. This had been a FLAGGED null since
+- `src/scenes/worldModes.js:1328` - is the quest machine's, FLAGGED with it.
+- `src/scenes/worldModes.js:1333` - FLAGGED, above ground only, each with the DFU line it owes:
+- `src/scenes/worldModes.js:1524` - CW1 retired the FLAGGED list that lived here - every arm it
+- `src/scenes/worldModes.js:1764` - fixed ship scenes and stays FLAGGED, so those buttons keep
+- `src/scenes/worldModes.js:1796` - H3: the sell price, which was FLAGGED at zero because it needs
+- `src/scenes/worldModes.js:2017` - FactionData; the port's pre-chargen INTERIM entity does not, and
+- `src/scenes/worldModes.js:2139` - skip, the refusal line. Only the destination was a FLAGGED null,
+- `src/scenes/worldModes.js:2414` - been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:2459` - destination has been a FLAGGED null since G3.
+- `src/scenes/worldModes.js:2478` - been FLAGGED nulls since G3.
+- `src/scenes/worldModes.js:2583` - with the trade window's own mode flow, the same INTERIM the
+- `src/scenes/worldModes.js:2808` - first (owned houses and quest buildings FLAGGED/seamed per
+- `src/scenes/worldModes.js:2816` - (:515). X3 wired the Open-spell bypass (:519-520). FLAGGED: the bash arms with
+- `src/scenes/worldModes.js:4000` - string is the seam that was a FLAGGED null until this slice,
+- `src/scenes/worldModes.js:4099` - *  FLAGGED null this slice closed. */
+- `src/scenes/worldModes.js:4437` - *  FLAGGED: pause-and-resume is the DFU behaviour and a
 - `src/systems/advancement.js:84` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/automap.js:54` - the exterior town map (ui/exteriorAutomapWindow.js). FLAGGED
 - `src/systems/banking.js:645` - FLAGGED, with the slices they wait on:
@@ -383,7 +381,7 @@ combat line numbers below are refreshed with it.
 - `src/ui/travelMapWindow.js:10` - this window since the F-slice - the Ledger row called it INTERIM
 - `src/ui/travelMapWindow.js:75` - FLAGGED, idling loudly: the guild TELEPORT mode
 - `src/ui/travelPopUp.js:57` - FLAGGED, each idling loudly: the HUD smash-to-black/fade
-- `src/world/actionSystem.js:466` - FLAGGED, a live gap, not parity.
+- `src/world/actionSystem.js:467` - FLAGGED, a live gap, not parity.
 
 ## Audits
 

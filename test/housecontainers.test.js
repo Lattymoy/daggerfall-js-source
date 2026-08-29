@@ -128,8 +128,15 @@ test('HC1: owner access - house OR ship - opens loot-target storage, never stock
   // and it opens in BOTH arms through the one openLoot
   // RE-ANCHORED at ID1 (F041): one door for this host's inventory
   // windows. The claim is unchanged.
-  assert.ok(arm.slice(0, ownedLatch + 200).includes('interiorInventory({ loot: { items: () => c.items } })'),
+  // RE-ANCHORED again at PT1: openLoot grew a private-property mode
+  // and a close hook, so the window is no longer one line - and a
+  // fixed +200 character reach was always a bet on that. The claim is
+  // the same: BOTH arms open through the one openLoot, whose remote
+  // side IS the container collection.
+  assert.ok(arm.slice(0, ownedLatch).includes('loot: { items: () => c.items },'),
     'the remote side IS the container collection - two-way, live');
+  assert.ok(arm.slice(0, ownedLatch).includes('const openLoot = (privateProperty = false) => {'),
+    'one openLoot, whose only difference between the arms is the theft flag');
   // the old stopgap is GONE: nothing in this arm dumps the container
   // into the player any more
   assert.equal(arm.slice(0, arm.indexOf('interiorCtx.actions.activate')).includes('transferAll('), false,
@@ -148,8 +155,13 @@ test('HC1: a stocked stranger\'s container - empty does NOTHING, full asks TEXT.
   const yes = arm.indexOf("code: 'KeyY'");
   const no = arm.indexOf("code: 'KeyN'");
   assert.ok(yes >= 0 && no > yes, 'Yes/No in DFU\'s button order');
-  assert.ok(arm.slice(yes, no).includes('action: openLoot'),
+  assert.ok(arm.slice(yes, no).includes('action: () => openLoot(true)'),
     'Yes opens the same loot-target inventory (PrivateProperty_OnButtonClick :1090-1093)');
+  // PT1: and it opens it in PRIVATE-PROPERTY mode, which is the whole
+  // difference between this arm and the owned-house one above -
+  // `loot.houseOwned` (:919) is set here and nowhere else.
+  assert.ok(arm.slice(0, yes).includes('openLoot();'),
+    'the OWNED arm opens the same window with the flag off');
   assert.ok(arm.slice(no, no + 120).includes('action: () => {}'),
     'No claims nothing - DFU just clears the LootTarget');
 });

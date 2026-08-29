@@ -51,6 +51,7 @@ import { ACTION_FLAGS, TRIGGER_FLAGS, MOVE_ACTION_FLAGS } from './rdbLayout.js';
 import { CASTSPELL_COOLDOWN_TICK } from '../systems/spellcast.js';   // single source (DaggerfallAction 45.454546)
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { triggerOpen, triggerLock } from '../systems/mysticism.js';   // X1: the Open/Lock door laws live there, not here
+import { dice100 } from '../combat/formulas.js';   // PT1: Dice100 has ONE home, and it is not this file
 
 // The RDB effect-action family (DaggerfallAction delegates that hurt
 // rather than move). Combat-arc row from Port-Ledger C:
@@ -801,7 +802,7 @@ export class ActionSystem {
     }
     this.onLockpickTally?.();   // TallySkill(Lockpicking, 1) (:165)
     const chance = interiorLockpickingChance(this._playerLevel(), o.currentLockValue, skill);
-    if (Math.floor(this._rolls() * 100) >= chance) {   // Dice100.FailedRoll(chance) - Range(0,100) >= chance, the attemptBash convention
+    if (!dice100(chance, this._rolls())) {   // Dice100.FailedRoll(chance) - Range(0,100) >= chance, the attemptBash convention
       this.onLockpickResult?.(o, false);
       o.failedSkillLevel = skill;   // :171
       return false;

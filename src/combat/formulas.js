@@ -730,6 +730,19 @@ export function enemyWeightClassicUnits(isClass, gender, mobileWeight, items = n
   return itemWeightsClassic + baseWeight;
 }
 
+/** PT1: CalculateShopliftingChance, verbatim
+ *  (FormulaHelper.cs). The chance of BEING DETECTED, so a better
+ *  thief lowers it and a fine shop with a heavy armful raises it:
+ *
+ *      chance = 100 - live Pickpocket
+ *      chance += shopQuality + weightAndNumItems
+ *      clamp 5..95
+ */
+export function calculateShopliftingChance(pickpocketSkill, shopQuality, weightAndNumItems) {
+  const chance = (100 - pickpocketSkill) + shopQuality + weightAndNumItems;
+  return Math.max(5, Math.min(95, chance));
+}
+
 // ---- T3a: CalculatePickpocketingChance, verbatim ----
 // chance = live Pickpocket skill; vs an enemy mobile add
 // 5 * (playerLevel - targetLevel); clamp 5..95. targetLevel = null
