@@ -11,6 +11,14 @@
 const STORAGE_KEY = 'dagger.ui.v1';
 
 export const PREF_DEFAULTS = Object.freeze({
+  // PX30c: the enhanced HUD's scale. It lives HERE and not in DFU's
+  // settings, and two pins said so before I listened: the settings
+  // defaults are BAKED from DFU's vendored ini and nothing hand-edits
+  // them, and the tier map's own law is that every key in it "is a
+  // real DFU setting". This one is not - DFU has no HUD of this shape
+  // to scale - so it belongs in the port's own prefs, beside the other
+  // things only this port has.
+  hudScale: 1,
   // ENHANCED IS THE DEFAULT (Mac, 2026-08-25). Read it through
   // uiSkin.js rather than here - that module resolves the ?skin
   // override on top of this and is the one place the vocabulary lives.

@@ -110,6 +110,7 @@ import { drawPixelGround } from './pixelGround.js';
 // Both are plain modules with no game data; the boot door never
 // renders the tab, so the front door still reads no game state.
 import { sheetModel } from './enhancedCharSheet.js';
+import { enhancedHudScale as hudScaleNow, HUD_SCALE_MIN, HUD_SCALE_MAX } from './enhancedHud.js';   // PX30c
 import { playerEntity } from '../characters/playerEntity.js';
 // PX6: the Stats page's skill labels - the one home (systems/skills.js).
 import { SKILL_NAMES } from '../systems/skills.js';
@@ -815,6 +816,36 @@ function paneEnhanced(body) {
     + 'weather, drawn procedurally on the painted sky\u2019s own pixel grid. Off returns '
     + 'Daggerfall\u2019s SKY*.DAT panorama. Takes effect when the world next loads.'));
   body.append(live);
+
+  // PX30c (Mac: "is there anyway I can adjust the sizing?"): THE HUD'S
+  // SCALE LIVES HERE, not in the settings catalog. `EnhancedHUDScale`
+  // is OURS - DFU has no HUD of this shape to scale - and the catalog
+  // is generated from DFU's own vendored ini by scripts/bakeSettings,
+  // which nothing hand-edits (AUDIT 17e F9's lesson, and the bake pin
+  // caught me adding it there on the first full run). The Enhanced
+  // pane is where this port's own switches already live, and the value
+  // itself is in uiPrefs rather than DFU's settings (see enhancedHud).
+  const sizing = el('div', 'card');
+  sizing.append(el('h3', null, 'HUD size'));
+  const row = el('div', 'row');
+  row.append(el('span', 'row-name', 'Gameplay HUD scale'));
+  const ctl = el('div', 'ctl');
+  const val = el('span', 'val', `${hudScaleNow().toFixed(2)}\u00d7`);
+  const step = (delta, label) => {
+    const b = el('button', 'step', label);
+    b.onclick = () => {
+      const next = Math.round(Math.max(HUD_SCALE_MIN, Math.min(HUD_SCALE_MAX, hudScaleNow() + delta)) * 20) / 20;
+      setPref('hudScale', next);
+      val.textContent = `${next.toFixed(2)}\u00d7`;
+    };
+    return b;
+  };
+  ctl.append(step(-0.05, '\u2039'), val, step(0.05, '\u203a'));
+  row.append(ctl);
+  sizing.append(row);
+  sizing.append(el('p', 'note', 'The compass, the bars and the effect chips together. '
+    + 'Takes effect at once; half size still reads and double fills a phone.'));
+  body.append(sizing);
 
   const waiting = el('div', 'card');
   waiting.append(el('h3', null, 'Not switchable here'));

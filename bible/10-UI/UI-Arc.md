@@ -8224,6 +8224,42 @@ belongs on this side too.
 
 Pins: 1 more (5). 4 more mutations, 4 dead.
 
+PX30c (Mac: "is there anyway I can adjust the sizing?" / "for the
+status bars, can we use percentages and organize them within the bar
+itself"): TWO.
+
+THE SCALE IS A SETTING, not a constant - and TWO PINS TAUGHT ME WHERE
+IT LIVES. The first draft put `EnhancedHUDScale` in DFU's settings
+beside `LargeHUDUndockedScale`, which looked right and is not: the
+defaults file is BAKED from DFU's vendored ini and nothing hand-edits
+it (AUDIT 17e F9's lesson), and when I tiered the key instead, the tier
+map's own law - every key in it "is a real DFU setting" - refused it
+too. It is not one. It lives in `systems/uiPrefs.js` now, the port's
+own prefs, with its row in the Enhanced pane where this port's own
+switches already are. A third pin, audit24's one-home, had already made
+me rename the reader `enhancedHudScale`, because the classic HUD
+declares a `hudScale(canvas)` of its own.
+
+It is
+ONE CSS variable the whole sheet reads, so a change moves every bar,
+chip and letter together rather than thirty rules drifting apart -
+measured: the bar row is 598px at 1x and 957px at 1.6x. Clamped to
+0.5-2, and an absent or broken value reads 1 rather than 0, because a
+HUD is not a place to let a typo hide the game.
+
+THE PERCENTAGE IS IN THE BAR. A figure beside a bar is a second thing
+to look at; a percentage ON it is the bar saying what it means. The
+LABEL rides in there too, at the other end, so each bar names itself
+rather than relying on a colour a player has to learn - the fill sits
+behind both and they take the shadow, which is what keeps them legible
+over a full bar and an empty one alike. And never 0% while anything is
+left, which is the quest timer's "never 0 min" law on a bar this time.
+
+Pins: 1 more (6). 5 more mutations, 5 dead. Three of the project's own
+pins shaped this slice rather than merely passing it - the bake, the
+tier map and one-home - which is the system working exactly as it
+should on a change that touched a shared store.
+
 ON THE HORIZON for this HUD: a crosshair in the pixel face, the
 interaction-mode icon, and the arrow count.
 
