@@ -1271,6 +1271,26 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // same implementation - this host's enemy missiles and arrows stay
   // below and reuse the engine's explodeAt/applySpellToPlayer. The
   // absorb context is the dungeon constant (inside, no daylight).
+  //
+  // FS1 - FLAGGED (THE FOUR HOSTS RULE): THE ENCHANT CTX IS NOT
+  // MOUNTED HERE. setDefaultEnchantCtx (systems/enchantments.js:247)
+  // has exactly ONE caller in the tree, scenes/world.js, so in the
+  // standalone ?dungeon host every item-enchantment arm that needs a
+  // host runs against no ctx at all: CastWhenUsed's CasterOnly assign
+  // and its click-to-cast ready (:335-336), the vampiric-drain and
+  // affinity scans (:421, :624), and SoulBound's break release (:502).
+  // Every one of them is optional-chained, which is exactly the
+  // AUDIT 24 seam shape - a ported law that evaporates in SILENCE with
+  // a green suite. In the world host's DUNGEON MODE the ctx is mounted
+  // but its foe pool answers empty by design, which is a narrower gap
+  // than this one and is stated at its own mount.
+  //
+  // world.js:1373 claimed for several slices that this was "FLAGGED
+  // there with the rest of its enchant wiring". It was not; FS1 found
+  // the delegation pointing at a flag nobody had written. The mount
+  // itself is its own slice - the world host's is ~90 lines of live
+  // plumbing (spell reflection re-targeting, per-foe sinks, the say
+  // sink) and none of it is host-portable by copy.
   const magic = createPlayerMagic({
     // QG1: the ready-spell doors - this host's own cast engine raises
     // into the same machine the world lane's does (opts.questBridge is

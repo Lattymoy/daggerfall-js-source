@@ -4405,3 +4405,92 @@ in kind:
   another costume - *a pin that greps for a call does not test that the
   call runs*. It matches the statement at its line start and
   indentation now.
+
+## FS1 - THE STALE-FLAG SWEEP: a delegation is checkable (2026-08-29)
+
+Six times in one run a flag's blocker shipped and the sentence stayed:
+EF1b, EF1c, CQ1b, TP1, RP1 - and then four at once in `world.js`.
+CQ1b's answer was a per-slice second-home pin, and it works, but only
+on the claim a slice is *about*. The population it cannot reach is
+every flag no slice is currently looking at, which is all of them.
+
+FS1's answer is to pin the one form of staleness that is
+**mechanically decidable**. A flag reading *"FLAGGED in `<file>.js`"*
+is not making a judgement call - it is **delegating**, and a
+delegation can be checked: the named file must carry a flag. That is
+the whole law, and it is deliberately narrow. *"FLAGGED with the
+palace blocks"* delegates to an **arc**, which is the board's to hold
+and not a file's; a guard that guessed at those would be measuring
+prose, and the narrow law is the one that can be true.
+
+Four sentences retired, each verified dead against the tree:
+
+- **the record-22 delegation.** `world.js` sent the reader to a flag
+  in `systems/healthStatus.js` saying the status text pends its macro
+  producers. ST1 shipped `statusInfoRows` **into that file** and
+  IM1/MH1 landed the producers - and the stale sentence sat *one line
+  above* ST1's own correction.
+- **"Routing F5/F6 into interiors is its own arc".** U43 shipped it:
+  `worldModes`' interior arm routes the whole `ui/input.js` table over
+  `interiorKeyCtx`, and U43's own comment says in as many words that
+  F5, F6, L, N and R "all died the moment you stepped through a shop
+  door" *before* it. **This one had a second home in `exterior.js`,
+  found by FS1's own second-home pin on its first run** - in a host
+  that builds no interior to step into, so the sentence was
+  second-hand there in the first place, which is how it outlived the
+  arc twice over.
+- **"melee strike frames resolve to nothing"** - written before
+  G1/G4/X. Forty lines below it a swing resolves against live guards,
+  then encounter foes, then wandering civilians.
+- **"targets pend the RMB animal/exterior-foe arc"** - written before
+  AR1. The `arrows.update` call directly above hands `foeTargets`
+  both live pools.
+
+The last two shared a comment with a clause that is **still true**
+(the open world really has no action objects in melee reach; static
+building doors are the E-enter seam, not bashables). **A sentence with
+one true clause keeps its false ones alive** - and a mutant deleting
+the true clause along with the false ones is in the campaign, because
+over-retiring is the equal and opposite failure.
+
+**And one delegation pointed at a flag nobody had ever written.**
+`world.js:1373` said the dungeon-mode enchant ctx was "FLAGGED there
+with the rest of its enchant wiring" in `dungeonContext.js`. It was
+not. `setDefaultEnchantCtx` has exactly **one** caller in the tree, so
+the standalone `?dungeon` host runs every arm that needs a host
+against no ctx at all - CastWhenUsed's CasterOnly assign and its
+click-to-cast ready, the vampiric-drain and affinity scans, SoulBound's
+break release. Every one is optional-chained, so it is **silent**:
+the AUDIT 24 seam shape exactly, a ported law evaporating with a green
+suite. This is the worse of the two failures - the work is real, and
+the ledger could not see it. The flag now lives in the file that owes
+the mount, and the pin asserts its load-bearing claim (one caller,
+`world.js`) so a second host mounting the ctx retires the flag by
+failing. The mount itself is its own slice: the world host's is ~90
+lines of live plumbing - spell-reflection re-targeting, per-foe sinks,
+the say sink - and none of it is host-portable by copy.
+
+Pins: 7 in `test/flagsweep.test.js`. Campaign: 16 mutants, 16 killed.
+One design note from writing it: the population pin (*the guard
+measures at least two delegations*) is not decoration. Comments wrap,
+so the path routinely lands a line or two below the words -
+`dungeonContext`'s `restWindow.js` delegation does exactly that - and
+the first single-line regex read the tree as nearly empty and passed.
+**A guard over an empty population is a green light that means
+nothing.**
+
+### What FS1 did NOT do: the ledger count is inflated
+
+`tools/regenOpenFlags.mjs` greps `FLAGGED|INTERIM` per line, and
+ALL-CAPS `INTERIM` is used two ways in the tree: as the marker, and as
+an ordinary noun for a thing that already shipped. `skills.js` says the
++10% "used to be INTERIM 0"; `itemInfo.js` says U8e "shipped an INTERIM
+info panel" that was then replaced; `playerEntity.js`'s pre-chargen
+INTERIM entity is *referred to* from six other files. Of 47 INTERIM
+lines a substantial share are mentions or past-tense retirements, so
+the count Mac reads overstates the open work.
+
+That is a real finding and FS1 does not fix it, because the fix is a
+classification of 47 sentences one at a time and not a regex - and
+half-doing it would leave the count wrong in a new way. It goes on the
+board as its own slice.

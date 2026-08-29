@@ -1370,8 +1370,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   // saves rolled. nearbyFoes serves the affinity scans off the live
   // pools; spawnFoe is SoulBound's break release. The interior mode
   // shares this mount (its foes list is empty, so the scan arms answer
-  // none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
-  // there with the rest of its enchant wiring. S40 filled isResting
+  // none); the dungeon-mode ctx is dungeonContext's to mount. FS1:
+  // that used to read "FLAGGED there with the rest of its enchant
+  // wiring", and there was no flag there - setDefaultEnchantCtx has
+  // exactly one caller in the tree, this one, so the standalone
+  // ?dungeon host runs every CastWhenUsed / CastWhenStrikes / SoulBound
+  // / affinity arm against no ctx at all. They are optional-chained, so
+  // it is silent. The flag now exists where the work does. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
   // ground (no rest window here yet)", and this slice put one here.
   // V2c filled inSunlight/inHolyPlace in the same way: the answers
@@ -2436,11 +2441,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     // mount; this reads the same ones rather than a third copy.
     toggleCharSheet: () => townTalk.showOverlay(makeCharSheetWindow()),
     // BS1/F198: the Status action's HEALTH box (CreateHealthStatusBox)
-    // - which disease you carry, once incubation is over. The record-22
-    // status text that precedes it in DFU's DisplayStatusInfo chain is
-    // FLAGGED in systems/healthStatus.js (macro producers pend).
+    // - which disease you carry, once incubation is over.
     // ST1: DisplayStatusInfo's chain - the record-22 status text
     // first, the health box on its dismissal (AddNextMessageBox).
+    // FS1: the sentence between these two used to send the reader to
+    // "a FLAG in systems/healthStatus.js (macro producers pend)". ST1
+    // shipped statusInfoRows INTO that file and the macro producers
+    // landed with IM1/MH1, so the flag it pointed at does not exist -
+    // and it sat one line above the correction that says so.
     showStatus: () => {
       const rows = (id) => townTalk.lines(id);
       townTalk.showOverlay(new ActionTextBox(statusInfoRows(rows, questBridge?.machine?.macroContext?.() ?? null))
@@ -2534,8 +2542,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT 17e F41: preventDefault must run for F5 in EVERY mode -
     // the mode gate skipped the handler AND its preventDefault, so
     // pressing F5 inside a building reloaded the page and destroyed
-    // the session. Routing F5/F6 into interiors is its own arc
-    // (FLAGGED); swallowing the browser reload is not optional.
+    // the session. Swallowing the browser reload is not conditional on
+    // this ladder having a destination, which is why it runs above it.
+    // FS1: the arc this used to defer to is U43, and U43 shipped -
+    // worldModes' interior arm routes the whole ui/input.js table over
+    // interiorKeyCtx, so F5/F6/L/N/R open the same windows through a
+    // shop door as outside it (test/modalkeys.test.js red-proofs the
+    // one gate that still stands, a typed name over the bindings).
     swallowBrowserKey(e);   // U47: F5/F6/F11 - one list, in ui/input.js
     const act = actionOf(e);   // I2: the registry owns the code -> action read
     // U45 - THE ONE DOOR PER DESTINATION: this ladder and the large
@@ -4517,12 +4530,17 @@ export async function bootWorld(canvas, renderer, params, status) {
       onFoeHit: (m, t) => exteriorFoes.arrowHitFoe(m, t),
     });
     arrows.draw(renderer);
-    // C9: the exterior FP weapon - swings/sounds through the rig; the
-    // open world has no action objects in melee reach (static building
-    // doors are the E-enter seam, not bashables - FLAGGED with the
-    // towns arc), so melee strike frames resolve to nothing; bows
-    // consume an Arrow + tally and the loose is VISIBLE now (C13 -
-    // targets pend the RMB animal/exterior-foe arc).
+    // C9: the exterior FP weapon - swings/sounds through the rig. The
+    // open world still has no ACTION OBJECTS in melee reach (static
+    // building doors are the E-enter seam, not bashables - FLAGGED
+    // with the towns arc), which is the clause that is still true.
+    // FS1: the two that rode along with it are not. "Melee strike
+    // frames resolve to nothing" was written before G1/G4/X, and forty
+    // lines below this comment a swing resolves against live guards,
+    // then encounter foes, then wandering civilians; "targets pend the
+    // RMB animal/exterior-foe arc" was written before AR1, and the
+    // arrows.update call above hands foeTargets both live pools. A
+    // sentence with one true clause kept two false ones alive.
     if (walkMode && playerSpawned) {
       // M2: the armed click's cast fires with the LIVE look; missiles
       // fly through this host's world every walk frame.
