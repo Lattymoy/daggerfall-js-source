@@ -86,6 +86,7 @@ import { spellRecordOfIndex } from '../systems/loot.js';   // QG1: CastSpellDo's
 import { LevelUpScreen, preloadCharSheetArt } from '../ui/charsheet.js';   // U8a (LevelUpScreen: AUDIT 21 hosts F3)
 import { createCharSheetWindow, charSheetDoorReady } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
+import { createChronicleWindow } from '../ui/chronicleDoor.js';   // PX24d: the chronicle's one door
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15: the Tab compass rose
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
@@ -1779,7 +1780,21 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  Notebook page (DaggerfallUI.cs:704-711). */
   const makeJournalWindow = (mode) => {
     preloadQuestJournalArt({ renderer, fetchBytes, palette });
-    return new QuestJournalWindow({
+    // PX24d: THROUGH THE DOOR. PX24 built ui/chronicleDoor.js and the
+    // enhanced window behind it and then hung the door on nothing -
+    // the seam had ZERO callers, so the chronicle was unreachable in
+    // play and the Stats page's Chronicle button opened the CLASSIC
+    // journal. This is the same shape spellbookDoor's callers use: the
+    // host hands over what only it knows, and the door picks the skin.
+    return createChronicleWindow({
+      entity: playerEntity,
+      // Which page the ENHANCED window opens on. The classic modes map
+      // onto the two sections the chronicle actually holds: the
+      // notebook is Notes, the message log is Messages. The two quest
+      // modes have no page here on purpose - the pause window has
+      // carried quests since PX4 - so they land on Notes, and the
+      // CLASSIC window still gets the mode itself, below.
+      section: mode === 'messages' ? 'messages' : 'notes',
       questMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
       notebook: () => questBridge?.notebook ?? null,
       mode,

@@ -246,13 +246,13 @@ combat line numbers below are refreshed with it.
 - `src/scenes/arrestFlow.js:199` - SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
 - `src/scenes/arrestFlow.js:267` - FLAGGED, still owed to their own slices: PreventEnemySpawns across the
 - `src/scenes/cityGuards.js:27` - FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
-- `src/scenes/dungeonContext.js:252` - the chain lives, the motion is INTERIM (loud) until flats can tween.
-- `src/scenes/dungeonContext.js:769` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:1334` - FS1 - FLAGGED (THE FOUR HOSTS RULE): THE ENCHANT CTX IS NOT
-- `src/scenes/dungeonContext.js:1369` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/dungeonContext.js:1405` - onTeleport INTERIM shape). Absent, the engine's dispatch
-- `src/scenes/dungeonContext.js:3213` - PX3 FLAGGED: questMessages - the dungeon quest mount is
-- `src/scenes/dungeonContext.js:3321` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
+- `src/scenes/dungeonContext.js:253` - the chain lives, the motion is INTERIM (loud) until flats can tween.
+- `src/scenes/dungeonContext.js:770` - index into the 18 careers) or the INTERIM default Warrior (16,
+- `src/scenes/dungeonContext.js:1335` - FS1 - FLAGGED (THE FOUR HOSTS RULE): THE ENCHANT CTX IS NOT
+- `src/scenes/dungeonContext.js:1370` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/dungeonContext.js:1406` - onTeleport INTERIM shape). Absent, the engine's dispatch
+- `src/scenes/dungeonContext.js:3214` - PX3 FLAGGED: questMessages - the dungeon quest mount is
+- `src/scenes/dungeonContext.js:3322` - rest-for-a-while. DFU's toggle-close binding is FLAGGED in
 - `src/scenes/exterior.js:586` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:592` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:829` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
@@ -262,11 +262,11 @@ combat line numbers below are refreshed with it.
 - `src/scenes/shared.js:314` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/shared.js:419` - FLAGGED: the Skeleton's Key artifact (IsArtifact + world texture
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:909` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:915` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:2973` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:3753` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:4668` - building doors are the E-enter seam, not bashables - FLAGGED
+- `src/scenes/world.js:910` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:916` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:2988` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:3768` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:4683` - building doors are the E-enter seam, not bashables - FLAGGED
 - `src/scenes/worldModes.js:807` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
 - `src/scenes/worldModes.js:944` - FLAGGED to the crime arc, as the Ledger records.
 - `src/scenes/worldModes.js:1013` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
