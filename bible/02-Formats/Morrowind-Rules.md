@@ -33,6 +33,14 @@ each stage is provable on the player's own data before the next begins:
         registers have no nif.xml layout at all) and the reader's header
         names them, so a refusal is now a real gap rather than a queue.
 
+AND THE ARMS WERE IN THE WRONG PLACE EVEN ONCE THEY DREW (MW-D10). The
+port mapper is retired for rule 54 and the Z-up rig now turns into the
+renderer's Y-up basis - see below. The measurement that could have
+caught either is new too: tools/mwRigProbe.mjs asks WHERE on the screen
+the ink landed, not just whether there is any. Every earlier layer asked
+"are there lit pixels" or "is the model x-symmetric", and a mis-framed
+arm answers yes to both.
+
 WHY A BUILT ARM DID NOT APPEAR, TWICE (MW-D9f, MW-D9g). Both causes sat
 in the SEAM between the arm and the game, and neither was reachable by
 anything that existed: the node pins call fpArm.update() directly and
@@ -244,17 +252,32 @@ because rule 13's X negation reverses the winding and without it the left
 arm lights inside-out. That is rule 13's rendering consequence, which MW8
 also lacked.
 
-THE PORT MAPPER IS A PORT DECISION, RECORDED AS ONE. Rule 54 says the
-first-person camera is a NODE of the rig, tracking "Camera" and falling
-back to "Head". This slice does NOT implement it, because the actor-scale
-rules it needs are tier C - extracted, never verified - and this
-document's own warning is that a tier C rule must be verified before code
-depends on it. Instead a uniform scale is solved ONCE from the arm's
-bounds over the WHOLE clip, so it lands plausibly at any unit scale.
-Solved per frame instead it would renormalise the picture every time the
-arm moved and cancel out the motion it exists to show. The build REPORTS
-whether the skeleton carries a Camera/Head bone, so MW-D9 starts from a
-measurement rather than a guess.
+THE PORT MAPPER IS RETIRED (MW-D10), AND RULE 54 IS THE PLACEMENT. The
+mapper solved a uniform scale from the arm's clip bounds, pushed it a
+constant distance in front of the eye and dropped it a constant below -
+recorded at the time as "a PORT DECISION, not a claim of parity", and
+deferred because the actor-scale rules it seemed to need are tier C. It
+needed none of them. Rule 54 puts the camera INSIDE the rig
+(camera.cpp:346-357: `getNode("Camera")` then `getNode("Head")`, and in
+first person no height term at all), so the arms are wherever Morrowind
+authored them relative to that node, at whatever scale the file uses,
+and there is nothing to convert or fit. The neck takes 0.75 of the look
+(npcanimation.cpp:719) so the arms lag it, and the lens is
+settings-default.cfg's 60 degrees.
+
+WHAT IT LOOKED LIKE UNTIL THEN, from Mac's screenshot: two forearms
+adrift at the horizon, detached, end-on. Two faults, and the second hid
+inside the first. A Morrowind NIF is Z-UP with +Y forward and this
+renderer is Y-UP with -Z forward, and NOTHING in the chain converted
+between them - not the reader, the flattener, the assembly or the pass -
+so the rig was drawn lying on its side; the fit-to-span framing then
+scaled whatever bounds that produced and landed it "plausibly". A
+90-degree frame error survived three probes and a mutation campaign
+because every assertion was in MODEL space, and model space cannot see
+the frame it is drawn in.
+
+A rig with neither node is REFUSED by name (stage `camera`). There is no
+third fallback in the reference and there is none here.
 
 MEASURED, and by what. tools/mwArmProbe.mjs drives the REAL fpArm through
 its deps seam in a real browser against a real WebGL2 context, and reads

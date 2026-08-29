@@ -809,11 +809,91 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts }) {
  *
  * Mutates `assembly` in place and returns it.
  */
+/**
+ * RULE 54, VERBATIM: THE FIRST-PERSON CAMERA IS A NODE OF THE RIG.
+ *
+ *   mAnimation->setViewMode(NpcAnimation::VM_FirstPerson);
+ *   mTrackingNode = mAnimation->getNode("Camera");
+ *   if (!mTrackingNode) mTrackingNode = mAnimation->getNode("Head");
+ *   mHeightScale = 1.f;
+ *                            - mwrender/camera.cpp:346-357
+ *
+ * and the position it yields is that node's world TRANSLATION with no
+ * height term at all in first person (calculateTrackedPosition, :87-99:
+ * the `res.z() += mHeight * mHeightScale` line is inside
+ * `if (mMode != Mode::FirstPerson)`).
+ *
+ * There is no third fallback. A rig with neither node has no first-person
+ * camera, and inventing one is what MW-D8's port mapper did.
+ */
+export function firstPersonCameraRef(skeleton) {
+  const byName = skeleton && skeleton.byName;
+  if (!byName) return -1;
+  if (byName.has('camera')) return byName.get('camera');
+  if (byName.has('head')) return byName.get('head');
+  return -1;
+}
+
+/** The node NpcAnimation hangs the first-person RotateController on. */
+export const FP_NECK_BONE = 'bip01 neck';
+
+/** NpcAnimation::runAnimation (:711-723):
+ *    float rotateFactor = 0.75f + 0.25f * mAimingFactor;
+ *  mAimingFactor decays to 0 unless the actor is accurately aiming, so
+ *  0.75 is the resting value and 1.0 the aiming one. The arms therefore
+ *  take THREE QUARTERS of the look, which is why they lag the view. */
+export const FP_NECK_ROTATE_FACTOR = 0.75;
+
+const mul33 = (p, l) => {
+  const a = new Float32Array(9);
+  for (let r = 0; r < 3; r++) {
+    for (let c = 0; c < 3; c++) {
+      a[r * 3 + c] = p[r * 3] * l[c] + p[r * 3 + 1] * l[3 + c] + p[r * 3 + 2] * l[6 + c];
+    }
+  }
+  return a;
+};
+const transpose33 = (m) => Float32Array.from([m[0], m[3], m[6], m[1], m[4], m[7], m[2], m[5], m[8]]);
+/** Rotation about -X by `rad`, which is the axis the neck controller
+ *  takes: `osg::Quat(pitch * rotateFactor, osg::Vec3f(-1, 0, 0))`. */
+const rotNegX = (rad) => {
+  const c = Math.cos(rad); const sn = Math.sin(rad);
+  return Float32Array.from([1, 0, 0, 0, c, sn, 0, -sn, c]);
+};
+
+/**
+ * The first-person neck rotation, applied the way RotateController does
+ * it (mwrender/rotatecontroller.cpp:41-60):
+ *
+ *   worldOrient = rotation of the node's matrix relative to the object root
+ *   orient = worldOrient * mRotate * worldOrient^-1 * matrix.getRotate()
+ *
+ * i.e. the pitch is expressed in the OBJECT ROOT's frame and conjugated
+ * into the node's own, then PRE-multiplied onto whatever the animation
+ * already put there. Doing it in the node's local frame instead would
+ * pitch the head sideways as soon as the neck is not axis-aligned.
+ */
+export function applyFirstPersonNeck(skeleton, pose, rootRef, skelMats, pitch) {
+  const ref = skeleton && skeleton.byName ? skeleton.byName.get(FP_NECK_BONE) : undefined;
+  if (ref === undefined || !pitch) return false;
+  const world = skelMats(skeleton, pose, rootRef).get(ref);
+  if (!world) return false;
+  const local = pose.get(ref) ?? skeleton.nodes.get(ref).rest;
+  const w = world.a;
+  const rotate = rotNegX(pitch * FP_NECK_ROTATE_FACTOR);
+  const rotation = mul33(mul33(mul33(w, rotate), transpose33(w)), local.rotation);
+  pose.set(ref, { rotation, translation: local.translation, scale: local.scale });
+  return true;
+}
+
 export function poseAssembly(assembly, { tracks = null, sampleTrack = null,
-  time = 0, accumRoot = null } = {}) {
+  time = 0, accumRoot = null, neckPitch = 0 } = {}) {
   const { fns, skeleton, rootRef, pieces } = assembly;
   if (!fns || !skeleton) return assembly;
   const pose = fns.poseSkeleton(skeleton, tracks, sampleTrack, time, { accumRoot });
+  // Rule 54's other half: the neck takes 0.75 of the look BEFORE any
+  // matrix is composed, because the camera node hangs off it.
+  if (neckPitch) applyFirstPersonNeck(skeleton, pose, rootRef, fns.skelMats, neckPitch);
   const byRoot = new Map([[rootRef, fns.skelMats(skeleton, pose, rootRef)]]);
   const matsFor = (root) => {
     if (!byRoot.has(root)) byRoot.set(root, fns.skelMats(skeleton, pose, root));
@@ -828,6 +908,9 @@ export function poseAssembly(assembly, { tracks = null, sampleTrack = null,
     }
   }
   assembly.pose = pose;
+  // The rig-space transform of every node, kept so rule 54 can read the
+  // camera node's translation without re-posing the skeleton.
+  assembly.mats = byRoot.get(rootRef);
   assembly.time = time;
   assembly.bounds = pieces.length ? meshBounds(pieces) : null;
   return assembly;

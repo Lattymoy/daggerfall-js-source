@@ -877,9 +877,14 @@ def make_arm_idle_kf():
         k.value = txt
 
     # Rotation about Y by the given angles, right side; the left is negated.
-    def rot_y(deg):
+    # Z, not Y: in Morrowind's axes +Y is FORWARD, so a rotation about it
+    # is a ROLL and moves nothing across the frame. The swing that opens
+    # the arms out - and makes the on-screen WIDTH vary, which is the
+    # measurement that catches a per-frame renormalising framing - is
+    # about Z.
+    def rot_z(deg):
         a = math.radians(deg) / 2.0
-        return (math.cos(a), 0.0, math.sin(a), 0.0)  # w,x,y,z
+        return (math.cos(a), 0.0, 0.0, math.sin(a))  # w,x,y,z
 
     arm_angles = [(0.0, 90.0), (0.5, 90.0), (1.0, 60.0), (1.5, 0.0),
                   (2.0, -20.0), (2.5, 0.0), (3.0, -60.0)]
@@ -947,6 +952,271 @@ def make_armskel_weapon():
         _bone(hand, "Weapon Bone" if side == "Right" else "Weapon Bone Left",
               (0.0, 0.0, -0.5))
     write_nif(HERE / "armskelw.nif", [root])
+
+
+# MW-D10: THE FIRST-PERSON-SHAPED FIXTURE, skeleton and parts together.
+#
+# Every arm fixture before this one hangs straight DOWN from the shoulder
+# (armskel: upper arm z=3, forearm z=2, hand z=1, all at y=0) - a T-pose
+# arm, authored to prove SKINNING, and it cannot show where an arm lands
+# on screen. armskelcam has a Camera bone but the same flat geometry.
+#
+# Rule 54 places the eye INSIDE the rig, so the only thing that decides
+# what the player sees is where the arms sit relative to that node. To
+# measure that at all, a fixture needs arms FORWARD of and BELOW an eye,
+# which is what these numbers are: Morrowind's axes (x right, +y forward,
+# z up), the eye at the top, the hands about 0.9 forward and 0.4 down.
+#
+# Bone names are armskel's, so armidle.kf binds to this rig unchanged.
+ARM_FP_REST = {
+    "Bip01 Neck": (0.0, 0.0, 3.0),
+    "Camera": (0.0, 0.10, 0.45),          # under the neck: world z 3.45
+    "Right Upper Arm": (0.40, 0.45, 0.20), "Left Upper Arm": (-0.40, 0.45, 0.20),
+    "Right Forearm": (-0.14, 0.75, -0.05), "Left Forearm": (0.14, 0.75, -0.05),
+    "Right Hand": (-0.05, 0.45, 0.00), "Left Hand": (0.05, 0.45, 0.00),
+}
+
+# THE NECK IS SQUARE, and that is a DECISION with a cost, recorded here.
+#
+# Rule 54's controller conjugates the pitch into the node's own frame
+# (`worldOrient * mRotate * worldOrientInverse * localRot`,
+# rotatecontroller.cpp:57), and with an axis-aligned neck that
+# conjugation is the identity - so a port that drops it behaves
+# identically here and the mutant survives the picture. A yawed neck
+# WOULD catch it, and was tried: it also makes the rig asymmetric, which
+# breaks the x-symmetry and per-side layers MW-D6 built to catch a
+# one-handed arm. A rotation that preserves those (about X) commutes with
+# the pitch and catches nothing.
+#
+# So the rig stays square and the conjugation is pinned on the SOURCE
+# instead (test/fparm.test.js, MW-D10) - the same trade MW-D8 recorded
+# for the once-solved framing, and it is written down rather than
+# discovered later as a hole.
+ARM_FP_NECK_YAW_DEG = 0.0
+
+
+def _rot_z(deg):
+    a = math.radians(deg)
+    c, s = math.cos(a), math.sin(a)
+    return ((c, -s, 0.0), (s, c, 0.0), (0.0, 0.0, 1.0))
+
+
+def _apply(m, v):
+    return tuple(sum(m[r][k] * v[k] for k in range(3)) for r in range(3))
+
+
+def _fp_world():
+    """Skeleton-space rest of every first-person bone, composed rather
+    than restated - the neck's rotation propagates to its descendants and
+    a second hand-written table would drift from it on the first edit."""
+    R = _rot_z(ARM_FP_NECK_YAW_DEG)
+    neck = ARM_FP_REST["Bip01 Neck"]
+    out = {"Bip01 Neck": neck}
+    chains = [["Camera"]]
+    for side in ("Right", "Left"):
+        chains.append([f"{side} Upper Arm", f"{side} Forearm", f"{side} Hand"])
+    for chain in chains:
+        acc = (0.0, 0.0, 0.0)
+        for name in chain:
+            local = ARM_FP_REST[name]
+            acc = tuple(acc[i] + local[i] for i in range(3))
+            turned = _apply(R, acc)
+            out[name] = tuple(neck[i] + turned[i] for i in range(3))
+    return out
+
+
+ARM_FP_WORLD = _fp_world()
+
+
+def make_armfp():
+    root = NifFormat.NiNode()
+    root.name = b"Bip01"
+    ident(root.rotation)
+    root.scale = 1.0
+    neck = _bone(root, "Bip01 Neck", ARM_FP_REST["Bip01 Neck"])
+    # The turn that makes rule 54's conjugation observable.
+    R = _rot_z(ARM_FP_NECK_YAW_DEG)
+    (neck.rotation.m_11, neck.rotation.m_12, neck.rotation.m_13) = R[0]
+    (neck.rotation.m_21, neck.rotation.m_22, neck.rotation.m_23) = R[1]
+    (neck.rotation.m_31, neck.rotation.m_32, neck.rotation.m_33) = R[2]
+    _bone(neck, "Camera", ARM_FP_REST["Camera"])
+    for side in ("Right", "Left"):
+        up = _bone(neck, f"{side} Upper Arm", ARM_FP_REST[f"{side} Upper Arm"])
+        fore = _bone(up, f"{side} Forearm", ARM_FP_REST[f"{side} Forearm"])
+        hand = _bone(fore, f"{side} Hand", ARM_FP_REST[f"{side} Hand"])
+        _bone(hand, "Weapon Bone" if side == "Right" else "Weapon Bone Left",
+              (0.0, 0.18, 0.0))
+    write_nif(HERE / "armfp.nif", [root])
+
+
+def make_armfp_noweapon():
+    # armfp WITHOUT the two weapon bones. Rule 8's attach-bone column has
+    # a present half and an absent half, and MW-D4's report asserts that a
+    # skeleton lacking a bone SAYS so - but rule 54 now refuses any rig
+    # with no Camera node, so the absent half needs a rig that HAS an eye
+    # and LACKS the weapon bones. armskel cannot serve both any more.
+    root = NifFormat.NiNode()
+    root.name = b"Bip01"
+    ident(root.rotation)
+    root.scale = 1.0
+    neck = _bone(root, "Bip01 Neck", ARM_FP_REST["Bip01 Neck"])
+    R = _rot_z(ARM_FP_NECK_YAW_DEG)
+    (neck.rotation.m_11, neck.rotation.m_12, neck.rotation.m_13) = R[0]
+    (neck.rotation.m_21, neck.rotation.m_22, neck.rotation.m_23) = R[1]
+    (neck.rotation.m_31, neck.rotation.m_32, neck.rotation.m_33) = R[2]
+    _bone(neck, "Camera", ARM_FP_REST["Camera"])
+    for side in ("Right", "Left"):
+        up = _bone(neck, f"{side} Upper Arm", ARM_FP_REST[f"{side} Upper Arm"])
+        fore = _bone(up, f"{side} Forearm", ARM_FP_REST[f"{side} Forearm"])
+        _bone(fore, f"{side} Hand", ARM_FP_REST[f"{side} Hand"])
+    write_nif(HERE / "armfpnoweapon.nif", [root])
+
+
+def make_armfp_hand():
+    # Skinned, one shape per side, authored AT the skeleton-space bone and
+    # cancelled by an inverse bind of minus that position - the same round
+    # trip make_armhand relies on, at the first-person rest instead.
+    root = NifFormat.NiNode()
+    root.name = b"Bip01"
+    ident(root.rotation)
+    root.scale = 1.0
+    for side in ("Right", "Left"):
+        bone_name = f"{side} Hand"
+        rest = ARM_FP_WORLD[bone_name]
+        node = _bone(root, bone_name, rest)
+        sx = 1.0 if side == "Right" else -1.0
+        # A palm-sized triangle pair, wider across x than deep in y.
+        verts = [
+            (rest[0] - 0.10 * sx, rest[1] - 0.10, rest[2] - 0.06),
+            (rest[0] + 0.10 * sx, rest[1] - 0.10, rest[2] - 0.06),
+            (rest[0] + 0.08 * sx, rest[1] + 0.12, rest[2] + 0.02),
+            (rest[0] - 0.08 * sx, rest[1] + 0.12, rest[2] + 0.02),
+        ]
+        tri = _tri(root, f"Tri {side} Hand", verts, tris=((0, 1, 2), (0, 2, 3)))
+        _skin_to(tri, root, [(node, (-rest[0], -rest[1], -rest[2]),
+                             [(0, 1.0), (1, 1.0), (2, 1.0), (3, 1.0)])])
+    write_nif(HERE / "armfphand.nif", [root])
+
+
+def make_armfp_arm():
+    # RIGID, like armcuff and for the same reason: rule 12's rigid half
+    # and rule 13's mirror only run on a part with no skin instance, and
+    # the mirror is only measurable on a shape that is ASYMMETRIC in x.
+    # Sized and placed for the first-person rest, so it lands on the
+    # forearm rather than wherever armcuff's numbers happen to fall.
+    root = NifFormat.NiNode()
+    root.name = b"FpSleeveRoot"
+    ident(root.rotation)
+    root.scale = 1.0
+    _tri(root, "Sleeve", [
+        (0.02, -0.28, -0.04),
+        (0.16, -0.24, -0.02),
+        (0.09, 0.26, 0.03),
+    ])
+    write_nif(HERE / "armfparm.nif", [root])
+
+
+def make_armfp_kf():
+    # MW-D10: THE FIRST-PERSON IDLE - armidle's clip LAW with a first
+    # person's motion.
+    #
+    # armidle.kf is MW-D7's clip-law fixture and its eleven text keys are
+    # each a rule; its ROTATIONS reach 90 degrees, because a big swing is
+    # what makes a sampling error visible, and applied to a first-person
+    # rest pose they fling the arms out of frame. This file keeps the
+    # eleven keys VERBATIM - so every clip law stays exercised - and
+    # replaces the motion with a sway a first-person arm could actually
+    # make: the forearms swing out in y and lift in x, which moves the
+    # picture both across and down the frame. Both are needed: the width
+    # layer catches a framing that renormalises per frame, and the
+    # distinct-pictures layer catches a page frozen on frame one.
+    text_keys = [
+        (0.0, b"Idle: Start"),
+        (0.5, b"Idle: Stop"),
+        (0.6, b"Idle1h: Start"),
+        (0.9, b"Idle1h: Stop"),
+        (1.0, b"Idle: Start"),
+        (1.5, b"SoundGen: Left\rIdle: Loop Start"),
+        (2.0, b"Idle: Chop Hit"),
+        (2.5, b"Idle: Loop Stop"),
+        (3.0, b"Idle: Stop."),
+        (3.2, b"Sneak:Start"),
+        (3.4, b"Sneak:Stop"),
+    ]
+    tke = NifFormat.NiTextKeyExtraData()
+    tke.num_text_keys = len(text_keys)
+    tke.text_keys.update_size()
+    for k, (t, txt) in zip(tke.text_keys, text_keys):
+        k.time = t
+        k.value = txt
+
+    # Z, not Y: in Morrowind's axes +Y is FORWARD, so a rotation about it
+    # is a ROLL and moves nothing across the frame. The swing that opens
+    # the arms out - and makes the on-screen WIDTH vary, which is the
+    # measurement that catches a per-frame renormalising framing - is
+    # about Z.
+    def rot_z(deg):
+        a = math.radians(deg) / 2.0
+        return (math.cos(a), 0.0, 0.0, math.sin(a))
+
+    def rot_x(deg):
+        a = math.radians(deg) / 2.0
+        return (math.cos(a), math.sin(a), 0.0, 0.0)
+
+    swing = [(0.0, 0.0), (1.0, 6.0), (1.5, 14.0), (2.0, 20.0), (2.5, 10.0), (3.0, 0.0)]
+    lift = [(0.0, 0.0), (1.0, 8.0), (2.0, 18.0), (3.0, 4.0)]
+    tracks = [
+        ("Right Upper Arm", make_keyframe_data(rot_keys=[(t, rot_z(-d)) for t, d in swing])),
+        ("Left Upper Arm", make_keyframe_data(rot_keys=[(t, rot_z(d)) for t, d in swing])),
+        ("Right Forearm", make_keyframe_data(rot_keys=[(t, rot_x(d)) for t, d in lift])),
+        ("Left Forearm", make_keyframe_data(rot_keys=[(t, rot_x(d)) for t, d in lift])),
+    ]
+
+    helper = NifFormat.NiSequenceStreamHelper()
+    helper.name = b"ArmFpIdle"
+    helper.extra_data = tke
+    prev_extra = tke
+    prev_ctrl = None
+    for name, kd in tracks:
+        sed = NifFormat.NiStringExtraData()
+        sed.string_data = name.encode()
+        sed.bytes_remaining = 4 + len(name)
+        prev_extra.next_extra_data = sed
+        prev_extra = sed
+        kc = make_keyframe_controller(None, kd, 0.0, 3.4)
+        if prev_ctrl is None:
+            helper.controller = kc
+        else:
+            prev_ctrl.next_controller = kc
+        prev_ctrl = kc
+    write_nif(HERE / "armfpidle.kf", [helper])
+
+
+def make_armfp_esm():
+    # Two slots over the two meshes above, ids ending "1st" (rule 1).
+    def sub(tag, data):
+        return tag + struct.pack("<I", len(data)) + data
+
+    def rec(tag, subs):
+        data = b"".join(subs)
+        return tag + struct.pack("<III", len(data), 0, 0) + data
+
+    z = lambda t: t.encode() + b"\x00"
+
+    def body(bid, model, part):
+        return rec(b"BODY", [sub(b"NAME", z(bid)), sub(b"MODL", z(model)),
+                             sub(b"FNAM", z("FpRace")),
+                             sub(b"BYDT", bytes([part, 0, 0, 0]))])
+
+    hedr = struct.pack("<fI", 1.3, 1)
+    hedr += b"fixture".ljust(32, b"\x00")
+    hedr += b"first-person arm parts".ljust(256, b"\x00")
+    hedr += struct.pack("<I", 3)
+    out = rec(b"TES3", [sub(b"HEDR", hedr)])
+    out += body("b_fp_hand_1st", "fixture\\armfphand.nif", 5)      # hand
+    out += body("b_fp_forearm_1st", "fixture\\armfparm.nif", 7)    # forearm
+    (HERE / "armfp.esm").write_bytes(out)
+    print(f"wrote {HERE / 'armfp.esm'} {len(out)} bytes")
 
 
 def make_armskel_camera():
@@ -1620,6 +1890,12 @@ if __name__ == "__main__":
     make_arm_idle_kf()
     make_armskel_weapon()
     make_armskel_camera()
+    make_armfp()
+    make_armfp_noweapon()
+    make_armfp_hand()
+    make_armfp_arm()
+    make_armfp_kf()
+    make_armfp_esm()
     make_weaponmesh()
     make_armparts_esm()
     make_collswitch()

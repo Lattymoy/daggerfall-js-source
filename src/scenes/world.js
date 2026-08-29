@@ -1215,7 +1215,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // MW-D8: the Morrowind arm rides the player's eye. Required, not
     // optional - a host that forgets it gets the classic sprite and a
     // named reason rather than an arm at the world origin.
-    camera: () => ({ pos: player.eye, yaw: cam.yaw }),
+    // MW-D10: pitch too - rule 54 pitches the rig's NECK by 0.75 of it
+    // and the lens by all of it, so the arms lag the look the way they
+    // do in Morrowind. A host that omits it gets arms that never move.
+    camera: () => ({ pos: player.eye, yaw: cam.yaw, pitch: cam.pitch }),
     spellArmed: () => magic.spellArmed(),   // M2
   });
   // M2: SPELLCASTING ABOVE GROUND - exterior.js's twin note applies.

@@ -28,12 +28,13 @@
 //     rather than emulated: no world geometry is ever drawn into that
 //     framebuffer, so there is nothing to be clipped by.
 //
-// The framing constants below are the pre-existing viewmodel pass's own,
-// probe-locked in an earlier audit (render/characterSprite.js:74-86) -
-// including the two laws Mac's "stuck in a hole" report bought: this
-// camera looks LEVEL (pitch is an animation channel, never a camera
-// tilt), and the body sits BEHIND the lens or you render the inside of
-// your own torso.
+// MW-D10: the framing constants this pass USED to borrow from the voxel
+// viewmodel (render/characterSprite.js:74-86) are gone with the mapper
+// that needed them. Rule 54 places the camera inside the rig, so there
+// is no distance to push, no drop to apply and no scale to solve - and
+// the viewmodel's two hard-won laws do not transfer either: its camera
+// looks level because ITS pitch is an animation channel, where this one
+// takes the player's pitch through the neck the reference rotates.
 
 import { lookAt, perspective, trs, mirrorProjectionX } from '../world/mat4.js';
 import { CHAR_PIXEL, CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
@@ -43,6 +44,7 @@ import {
   assembleFirstPersonArm, poseAssembly, armPieceRows, clipReport, clipUnionBounds,
   armReport, armMeshPaths, bodyParts,
   weaponRecords, dfWeaponToMw, pickWeaponRecord, weaponAttachBone, MW_WEAPON_TYPE,
+  firstPersonCameraRef,
 } from '../formats/mwFirstPerson.js';
 import { WEAPONS } from '../characters/weapons.js';
 
@@ -63,98 +65,71 @@ export const FP_CLIP_PATH = 'meshes/xbase_anim.1st.kf';
 export const FP_CLIP_GROUP = 'Idle';
 
 /**
- * THE PORT MAPPER, and it is a PORT DECISION, not a claim of parity.
+ * RULE 54, AND THE PORT MAPPER IS GONE.
  *
- * Rule 54 says the first-person camera is a NODE OF THE RIG - it tracks
- * a bone named "Camera", falling back to "Head", with no height offset.
- * That is the authentic answer and this slice does not implement it,
- * because the actor-scale rules it would need are tier C (extracted,
- * never verified) and the doc's own warning is that a tier C rule must
- * be verified before code depends on it.
+ * MW-D8 shipped an invented framing - fit the arm's clip bounds into a
+ * fixed span, push it ARM_FORWARD metres ahead of the eye and ARM_DROP
+ * below it, cast the lens down by a constant - and its own comment said
+ * it was "a PORT DECISION, not a claim of parity" and that rule 54 was
+ * the authentic answer. Mac's screenshot is what that decision looks
+ * like on retail data: two forearms adrift at the horizon, detached,
+ * wrong scale, wrong angle.
  *
- * So instead: solve a uniform scale ONCE, from the arm's own bounds over
- * the WHOLE clip, so the arm subtends a fixed span whatever unit scale
- * the file happens to use. It lands plausibly on any data. It is not yet
- * authentically right, the card says so, and the build REPORTS whether
- * the skeleton carries a Camera/Head bone - so the next slice starts
- * from a measurement instead of a guess.
+ * The authentic law needs no framing at all, because the camera is
+ * INSIDE THE RIG:
  *
- * ONCE is the load-bearing word. Recomputed per frame from the live
- * bounds, the framing renormalises every time the arm moves and cancels
- * out exactly the motion it exists to show - the trap recorded at
- * mwFirstPerson.js's clipUnionBounds and the runaway at
- * render/mwViewer.js:430-436.
+ *   mTrackingNode = getNode("Camera") ?? getNode("Head")   camera.cpp:353
+ *   position      = that node's world translation, and in first person
+ *                   NO height term at all                  camera.cpp:96
+ *   orientation   = the PLAYER's look                      camera.cpp:127
+ *   the neck takes 0.75 of the pitch              npcanimation.cpp:719
+ *   first person field of view = 60.0            settings-default.cfg
+ *
+ * Everything else follows. The arms sit where Morrowind authored them
+ * relative to that node, at whatever scale the file uses, because the
+ * camera and the arms are in the same rig. There is no metre to convert
+ * into and no span to fit - which is why the invented version could
+ * never have been made right by tuning its constants.
+ *
+ * AND THE BASIS CHANGE NOTHING IN THE CHAIN EVER MADE. A Morrowind NIF
+ * is Z-UP with +Y forward; this renderer is Y-UP with -Z forward.
+ * Neither the reader, the flattener, the assembly nor the pass converted
+ * between them, so the rig was drawn lying on its side and pointing away
+ * from the viewer - which is exactly the two end-on forearms in the
+ * screenshot. The fit-to-span framing then scaled whatever bounds that
+ * produced and landed it "plausibly", which is how a 90-degree error
+ * survived three probes and a mutation campaign: every assertion was in
+ * MODEL space, and model space cannot see the frame it is drawn in.
  */
-export const ARM_TARGET_SPAN = 0.75;   // metres the arm's longest axis fills
-export const ARM_FORWARD = 0.62;       // metres in FRONT of the eye - see below
-export const ARM_DROP = -0.28;         // and below it, so the arms hang in the lower frame
-export const ARM_CAST = -0.20;         // fixed downward look toward the hands, NOT world pitch
+export const NIF_TO_PASS = trs(0, 0, 0, -90, 0, 0);
 
-/**
- * AND HERE IS WHERE THIS DIFFERS FROM THE VOXEL VIEWMODEL IT BORROWS
- * FROM, which is a difference the probe found by drawing rather than one
- * anybody reasoned out first.
- *
- * render/characterSprite.js pushes its rig BACKWARD from the eye
- * (`feet - fwd * 0.25`) and says why: that rig is the player's whole
- * BODY, the camera rides its head, and without the push you render the
- * inside of your own torso - Mac's "stuck in a hole". Only the raised
- * forearm reaches forward into frame.
- *
- * THIS assembly is arms ONLY. There is no head and no torso to hide, so
- * the same push puts every triangle behind the lens and the pass draws
- * NOTHING - measured, tools/mwArmProbe.mjs, 0 lit texels with a build
- * that otherwise reported four pieces bound and five tracks matched.
- * That is this arc's signature failure wearing yet another face, and it
- * is only visible to a probe that reads the target back.
- *
- * So the arms go IN FRONT of the eye and BELOW the view axis, and the
- * two constants are what put them there.
- */
-export function armModelPoint(framing, eye, yaw) {
-  const sinY = Math.sin(yaw); const cosY = Math.cos(yaw);
-  const f = framing;
-  // Where the arm's own CENTRE should land, in world space.
-  const tx = eye[0] + sinY * ARM_FORWARD;
-  const ty = eye[1] + ARM_DROP;
-  const tz = eye[2] + cosY * ARM_FORWARD;
-  // Back out the translation that puts the scaled centre on that point -
-  // and the centre must be ROTATED first, because the model matrix spins
-  // the mesh about its own origin, not about its centre. Subtracting the
-  // unrotated offset leaves the arm swinging around the player as he
-  // turns: measured, tools/mwArmProbe.mjs, 60 lit texels facing one way
-  // and 20 facing another with the pose held still. Yaw-dependence in a
-  // first-person arm is not a thing a still screenshot can show you.
-  const cx = f.centre[0] * f.scale;
-  const cy = f.centre[1] * f.scale;
-  const cz = f.centre[2] * f.scale;
-  // R_y from mat4.trs with rx = rz = 0: [c*x + s*z, y, -s*x + c*z].
-  return [
-    tx - (cosY * cx + sinY * cz),
-    ty - cy,
-    tz - (-sinY * cx + cosY * cz),
-  ];
+/** files/settings-default.cfg: `first person field of view = 60.0`. */
+export const FP_FIELD_OF_VIEW = Math.PI / 3;
+
+/** Rule 54's placement, in the pass's axes: the camera node's rig-space
+ *  translation, with the Z-up basis turned into the renderer's Y-up. */
+export function firstPersonEye(mats, cameraRef) {
+  const node = mats && mats.get(cameraRef);
+  if (!node) return null;
+  const [x, y, z] = node.t;
+  return [x, z, -y];
 }
 
-export function armFraming(unionBounds) {
-  if (!unionBounds) return null;
-  const span = Math.max(
-    unionBounds.maxX - unionBounds.minX,
-    unionBounds.maxY - unionBounds.minY,
-    unionBounds.maxZ - unionBounds.minZ,
-  );
-  const scale = span > 1e-6 ? ARM_TARGET_SPAN / span : 1;
-  return {
-    scale,
-    span,
-    // Centre the arm on its own bounds so the solve does not depend on
-    // where the authoring origin happens to sit.
-    centre: [
-      (unionBounds.minX + unionBounds.maxX) / 2,
-      (unionBounds.minY + unionBounds.maxY) / 2,
-      (unionBounds.minZ + unionBounds.maxZ) / 2,
-    ],
-  };
+/** How far the arm reaches from the camera node, in RIG units - all the
+ *  near and far planes need, measured off the data instead of assuming a
+ *  unit scale the file need not use. */
+export function armReach(eye, unionBounds) {
+  if (!eye || !unionBounds) return 1;
+  let far = 0;
+  for (const x of [unionBounds.minX, unionBounds.maxX]) {
+    for (const y of [unionBounds.minY, unionBounds.maxY]) {
+      for (const z of [unionBounds.minZ, unionBounds.maxZ]) {
+        const d = Math.hypot(x - eye[0], z - eye[1], -y - eye[2]);
+        if (d > far) far = d;
+      }
+    }
+  }
+  return far || 1;
 }
 
 /**
@@ -343,8 +318,24 @@ export async function buildFpArm({ race, female = false, beast = false, weapon =
     const poseAt = (t) => poseAssembly(arm, { tracks, sampleTrack, time: t, accumRoot });
     const c = clip.clip;
     const times = Array.from({ length: 25 }, (_, i) => c.startTime + ((c.stopTime - c.startTime) * i) / 24);
-    const framing = armFraming(clipUnionBounds(arm, poseAt, times));
+    const union = clipUnionBounds(arm, poseAt, times);
     poseAt(c.startTime);
+
+    // RULE 54. No third fallback, and no invented camera: a rig with
+    // neither node has no first-person view, and saying so is the whole
+    // difference between this and the mapper it replaces.
+    const cameraRef = firstPersonCameraRef(arm.skeleton);
+    if (cameraRef < 0) {
+      return {
+        ok: false,
+        stage: 'camera',
+        error: 'this skeleton has no "Camera" bone and no "Head" bone - '
+          + 'rule 54 has nothing to track',
+        notes: [...missing, ...(arm.notes || [])],
+        rows: wanted,
+      };
+    }
+    const reach = armReach(firstPersonEye(arm.mats, cameraRef), union);
 
     return {
       ok: true,
@@ -353,7 +344,8 @@ export async function buildFpArm({ race, female = false, beast = false, weapon =
       accumRoot,
       keys: clip.keys,
       clip: c,
-      framing,
+      cameraRef,
+      reach,
       skeletonPath,
       // MW-D4's PATTERN, applied forward: report the bone the NEXT slice
       // needs rather than guessing it. Rule 54 says the first-person
@@ -479,8 +471,22 @@ export function createFpArm() {
     update(dt) {
       if (!built || !built.ok || !state || !renderer) return;
       advanceClip(state, built.keys, dt, null);
+      // Rule 54's neck: the camera node hangs off "bip01 neck", so the
+      // pitch has to be in the pose before any matrix is composed - the
+      // eye MOVES with the look, it is not a lens tilt.
+      const cam = camera && camera();
       poseAssembly(built.arm, {
         tracks: built.tracks, sampleTrack, time: state.time, accumRoot: built.accumRoot,
+        // NEGATED, and the sign is a real difference between the two
+        // engines rather than a fudge: Morrowind's rot[0] counts pitch
+        // DOWNWARD (the controller takes `Quat(rot[0] * 0.75, (-1,0,0))`
+        // and a positive angle tips the rig's +Y forward axis toward
+        // -Z), while this port's cam.pitch counts UPWARD - world.js
+        // SUBTRACTS the mouse's y delta. Passed unconverted, the neck
+        // rotates the arms the wrong way and DOUBLES the loss: measured,
+        // a 0.25 look-up put every vertex out of frame instead of
+        // sliding them a tenth of the way down it.
+        neckPitch: cam ? -(cam.pitch || 0) : 0,
       });
       packed = packFpArm(built.arm.pieces, packed);
       if (!mesh) mesh = renderer.createCharacterMesh(packed);
@@ -491,49 +497,56 @@ export function createFpArm() {
     draw(canvas) {
       if (!active() || !canvas) return false;
       const cam = camera();
-      if (!cam || !cam.pos) return false;
+      if (!cam) return false;
       const wantW = canvas.clientWidth / CHAR_PIXEL;
       const wantH = canvas.clientHeight / CHAR_PIXEL;
       const s = Math.min(1, CHAR_SPRITE_RT_SIZE / wantW, CHAR_SPRITE_RT_SIZE / wantH);
       const pw = Math.max(2, Math.round(wantW * s));
       const ph = Math.max(2, Math.round(wantH * s));
-      const yaw = cam.yaw || 0;
-      const cosY = Math.cos(yaw); const sinY = Math.sin(yaw);
-      const f = built.framing;
-      const eye = [cam.pos[0], cam.pos[1], cam.pos[2]];
-      const [rx, ry, rz] = armModelPoint(f, eye, yaw);
-      const model = trs(rx, ry, rz, 0, yaw * 180 / Math.PI, 0, f.scale, f.scale, f.scale);
-      // RULE 29: this pass gets its own 60-degree field of view. And the
-      // camera looks LEVEL - the downward cast reaches the hands without
-      // tilting the lens into the torso from beneath.
+
+      // RULE 54: THE WHOLE PASS LIVES IN THE RIG'S OWN SPACE.
       //
-      // AND IT RIDES THE HANDEDNESS MIRROR, which the pass this technique
-      // was borrowed from does not.
+      // The camera is a node of this rig, so the player's world position
+      // and heading do not enter into it at all - turning your head does
+      // not move your arms relative to your eyes. What is left is the
+      // camera node's translation, the player's pitch, and the basis
+      // change from the file's Z-up axes into this renderer's Y-up.
+      const eye = firstPersonEye(built.arm.mats, built.cameraRef);
+      if (!eye) return false;
+      // The neck has already taken 0.75 of the pitch (poseAssembly), so
+      // the eye has MOVED with the look; the lens takes all of it, which
+      // is the lag you feel when you glance down at your hands.
+      const pitch = cam.pitch || 0;
+      const fwd = [0, Math.sin(pitch), -Math.cos(pitch)];
+      const view = lookAt(eye, [eye[0] + fwd[0], eye[1] + fwd[1], eye[2] + fwd[2]], [0, 1, 0]);
+
+      // AND IT RIDES THE HANDEDNESS MIRROR, which the viewmodel pass
+      // this technique was borrowed from does not.
       //
       // mat4's law: a right-handed lookAt puts world +x on screen-LEFT,
       // which is the mirror image the port presented until M1 - every
       // town flipped east-west, every sign reading backwards. The fix is
-      // ONE mirror at the projection, and EVERY world pass rides it.
-      // The voxel viewmodel was left out with the reason given as "its
-      // pass never culls" - an explanation of why it was SAFE to leave,
-      // not a claim that it was right.
+      // ONE mirror at the projection, and EVERY world pass rides it. The
+      // voxel viewmodel was left out with the reason given as "its pass
+      // never culls" - why it was SAFE to leave, not a claim it was right.
       //
-      // For an arm it is not safe, it is the whole thing: measured, a
-      // point one metre to the player's RIGHT lands at NDC x -1.96
-      // through the unmirrored pass and +1.96 through a world pass. The
-      // arm would be a mirror image of the world composited under it -
-      // your sword hand on the wrong side of the screen, and every left
-      // hand a right one. Nothing in the picture says so, because an arm
-      // looks like an arm either way.
+      // For an arm it is the whole thing: measured, a point one metre to
+      // the player's RIGHT lands at NDC x -1.96 through the unmirrored
+      // pass and +1.96 through a world pass. Your sword hand would be on
+      // the wrong side of the screen and every left hand a right one, and
+      // no picture says so, because an arm looks like an arm either way.
       //
-      // Mirroring is free here for exactly the reason the original note
-      // gives: drawCharacter disables back-face culling for its draw
-      // (renderer.js), so the winding flip a negative-x scale causes
-      // costs nothing.
-      const proj = mirrorProjectionX(perspective(Math.PI / 3, pw / ph, 0.05, 12));
-      const fwd = [sinY, ARM_CAST, cosY];
-      const view = lookAt(eye, [eye[0] + fwd[0], eye[1] + fwd[1], eye[2] + fwd[2]], [0, 1, 0]);
-      const tex = renderer.renderCharacterSprite(mesh, model, proj, view, pw, ph);
+      // Mirroring is free for the reason the original note gives:
+      // drawCharacter disables back-face culling (renderer.js), so the
+      // winding flip a negative-x scale causes costs nothing.
+      //
+      // The planes are in RIG UNITS and come off the arm's own reach, so
+      // a file authored at any scale is framed by its own geometry
+      // rather than by a constant that assumes metres.
+      const proj = mirrorProjectionX(
+        perspective(FP_FIELD_OF_VIEW, pw / ph, Math.max(built.reach / 200, 1e-4), built.reach * 4),
+      );
+      const tex = renderer.renderCharacterSprite(mesh, NIF_TO_PASS, proj, view, pw, ph);
       renderer.drawScreenOverlayQuad(tex, pw / CHAR_SPRITE_RT_SIZE, ph / CHAR_SPRITE_RT_SIZE);
       return true;
     },
@@ -550,7 +563,7 @@ export function createFpArm() {
         weapon: built && built.ok ? built.weapon : null,
         esm: built && built.esm ? built.esm : null,
         cameraBone: built && built.ok ? built.cameraBone : null,
-        framing: built && built.ok ? { scale: built.framing.scale, span: built.framing.span } : null,
+        reach: built && built.ok ? built.reach : null,
         clip: built && built.ok ? { start: built.clip.startTime, stop: built.clip.stopTime } : null,
         time: state ? state.time : null,
         frames,
