@@ -82,7 +82,7 @@ import { applyLevelUp } from '../systems/advancement.js';
 import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
 import { spendPoolLowest } from '../systems/chargen.js';
 import { ClassFile } from '../formats/classFile.js';
-import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, raisePlayerSkills, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord, restVitals, restFullyHealed, createRestDeps, fatigueLossMultiplierFor} from './shared.js';
+import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, raisePlayerSkills, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, restVitals, restFullyHealed, createRestDeps, fatigueLossMultiplierFor} from './shared.js';
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
@@ -1011,7 +1011,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // further down and only read at tick time.
   const detectFeed = createDetectFeed(playerEntity, {
     entities: () => foes.filter((f) => !f.dead && f.ai).map(foeNearbyRecord),
-    loot: () => lootPiles.map(lootNearbyRecord),
+    // DT1: the loot pool was the RDB piles ALONE, while this host's own
+    // activation walk (`lootTargets`) has answered three kinds since
+    // U26 - piles, corpses and the player's dropped piles. DFU makes no
+    // such distinction: `GetActiveLoot()` (PlayerGPS.cs:765-776) is
+    // every active DaggerfallLoot in the scene, which underground is
+    // all three. So Detect Treasure in a dungeon missed the corpse you
+    // had just made and the sack you had just dropped - the F207
+    // finding exactly, one host over, and this is where it bites
+    // hardest because a dungeon is where the spell gets cast.
+    loot: () => nearbyLootRecords({ piles: [...lootPiles, ...droppedLoot._piles], foes }),
     feet: () => lastPlayerFeet ?? [0, 0, 0],
   });
   // A2: DaggerfallAction.Play's sound - the RDB soundIndex fires from

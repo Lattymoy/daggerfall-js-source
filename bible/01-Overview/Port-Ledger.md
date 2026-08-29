@@ -276,6 +276,18 @@ World layout:
 
 ## C. DFU features not yet ported (routed)
 
+**DT1 ADDS ONE ROW (2026-08-29):** interior DROPPED PILES. The interior
+host mints no ground pile of its own - `mintRewardPile` falls interior
+drops through to the world host, whose `dropFeet` reads the EXTERIOR
+player and collider - so an item dropped inside a building is not a
+`DaggerfallLoot` in the interior scene the way DFU's is, and the Detect
+scan cannot see it. Found while wiring DT1's loot pools and deliberately
+not taken there: the fix is an interior `droppedLoot` pool, and when it
+lands it joins the feed's `piles` with no other change. Recorded at the
+seam in `worldModes.js` with this row named. | GameObjectHelper /
+DaggerfallLoot, the interior scene's own | Hosts arc
+
+
 SWEPT 2026-08-19, RE-SWEPT 2026-08-24 (L1). The re-sweep judged all 60
 unstruck rows against the tree - ten readers over six rows each, every
 STALE verdict then put to a skeptic whose brief was to REFUTE it,

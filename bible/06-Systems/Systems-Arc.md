@@ -4818,3 +4818,101 @@ testing was fine all along. Applying the same edit by hand with `sed`
 (no count limit) failed the pin immediately, which is what exposed it.
 A "survivor" is a claim about a specific edit; if the anchor is not
 unique, it is a claim about a different edit than the one you wrote.
+
+## DT1 — the Detect scan's loot pool was short in three of four hosts (2026-08-29)
+
+`PlayerGPS.UpdateNearbyObjects` (:747, :765-776) has exactly one loot
+walk:
+
+    foreach (DaggerfallLoot loot in ActiveGameObjectDatabase.GetActiveLoot())
+
+No scene gate, no kind gate, no item test. `GetLootFlags` (:822-836)
+then sets the Treasure bit iff `loot.Items.Count > 0`, so an empty
+container is **in** the list and merely unlit — a different thing from
+being absent, and the distinction matters because the port's
+*activation* walks legitimately do filter on items.
+
+The port had four hosts each deciding for itself which of its own loot
+kinds counted:
+
+| host | fed to the Detect scan |
+|---|---|
+| `world.js` / `exterior.js` | dropped piles + corpses — right, since FX1 (F207) |
+| `dungeonContext.js` | the RDB piles **alone** |
+| `worldModes.js` interior | **nothing at all** |
+
+So FX1's own finding — *"UpdateNearbyObjects walks EVERY active
+DaggerfallLoot with no scene gate"* — survived untouched in the two
+hosts where Detect Treasure is actually cast. Underground the spell
+missed the corpse you had just made and the sack you had just dropped,
+both of which that host's own `lootTargets()` has walked since U26.
+Indoors all three Detect spells were blind, because the feed was handed
+neither pool.
+
+**The interior half had a reason written beside it, and the reason was
+false.** The comment said "both pools are empty until interior loot
+containers ship". Containers shipped at S2b and shelves at E2 —
+`DaggerfallInterior.AddFurnitureAction` (:780-841) is the DFU member,
+hanging a `DaggerfallLoot` on shop shelves at :796-801 and house
+containers at :829-838 — and the foe pool shipped at IF. The sentence
+had been outlived three times over and was still being read as a reason
+not to wire anything.
+
+The fix is one exported walk, `shared.js`'s `nearbyLootRecords`, that
+each host names its own kinds to, so "every active loot container" is
+one sentence again rather than four opinions. Two adapters go with it:
+`containerNearbyRecord` (a furniture model's position is its matrix
+translation, which is what `loot.transform.position` reads) and
+`corpseNearbyRecords`, which absorbs the inline walk the two outdoor
+hosts had each written out.
+
+**An unbrowsed shelf contributes nothing, and that is DFU's answer
+rather than a port limit.** `AddFurnitureAction` adds the component
+empty; `PlayerActivate.cs:881-886` stocks it on *first access*. So
+`Items.Count > 0` is false until the player has opened it and
+`GetLootFlags` withholds the bit. The port's `items: null` is that same
+un-stocked state and maps to a count of zero — present in the list,
+unlit, exactly like DFU's.
+
+The two foe pools spell the same fact differently — `corpse` beside
+`corpseMarker` in `exteriorFoes`, `corpseBatch` in the dungeon — and a
+foe that died with neither is the cull's "gone, no corpse" arm, which
+mints no `CorpseMarker` in DFU either. The walk reads both spellings
+and says so, rather than renaming a field across two pools to make one
+predicate read prettier.
+
+**Four false sentences retired from `worldModes.js` on the way**, found
+by the same sweep and each verified against the tree before deletion:
+the interior detect claim above; "there is nowhere to cash one yet" on
+the letter of credit, which B2 answered with `DepositAll_LOC`
+(`banking.js:461`, the window's own :377-389); "the BANKING arm stays
+FLAGGED below", written nine lines above the live banking arm; and
+"every other arm is FLAGGED by name in
+`guildServiceFlow.SERVICE_DESTINATION`" after DR2 closed the last of
+the twenty — 20 rows, 0 nulls, checked by running it.
+
+**Found and NOT taken, recorded at the seam:** a pile the player drops
+*indoors* is still missing, because the interior host mints no ground
+pile of its own — `mintRewardPile` falls interior drops through to the
+world host, whose `dropFeet` reads the exterior player and collider. In
+DFU that drop is a `DaggerfallLoot` in the interior scene like any
+other. The fix is an interior `droppedLoot` pool, not a line in the
+feed; when it lands it joins `piles` and nothing else changes.
+
+Pins: 10 in `test/detectindoors.test.js`. Campaign: 16 mutants, 16
+killed — among them the F207 regression itself (drop `foes` from
+world.js's call and the pin fires), which is the point of moving a
+twice-written walk into one home. `test/nearbyobjects.test.js`'s FX1
+pin was re-anchored on the law rather than the literal (F041's
+precedent): it had quoted the inline corpse map that no longer exists
+anywhere, and what it asserts is unchanged.
+
+**THE LESSON, and it is FS1's with a sharper edge: A REASON NOT TO WIRE
+SOMETHING NEEDS RE-READING EVERY TIME ITS DEPENDENCIES LAND.** "Both
+pools are empty" was true the day it was written. Three slices then
+filled both pools, and none of them came back to this line, because
+none of them were *about* this line. A flag that names what it waits
+for can be swept when that thing ships; a flag that merely asserts a
+present-tense fact — *is* empty, *has* nothing, *cannot* yet — has no
+trigger at all, and goes on being read as a decision long after it
+stopped being one. Prefer the form that names the dependency.

@@ -113,6 +113,12 @@ export default defineConfig({
         main: 'play/index.html',
         viewer: 'viewer.html',
         sky: 'sky.html',   // ES1: the enhanced sky lab
+        // MW-D: the Morrowind data inspector. Reads a player's own
+        // archives and reports what is IN them; it draws nothing, stores
+        // nothing and is wired to nothing the game runs. It exists
+        // because the reverted first-person arc asked for a skeleton
+        // file that is not in Morrowind.bsa and never said so.
+        mwInspect: 'mw-inspect.html',
         // A PROTOTYPE, and deployed on purpose: a design that claims to
         // adapt to a phone has to be opened on one.
         enhanced: 'enhanced.html',
