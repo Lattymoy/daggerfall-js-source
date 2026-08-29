@@ -7,16 +7,31 @@
 // game shipped, and with the enhanced skin off not one byte of this
 // module is reached.
 //
-// ── WHY THIS IS OUR OWN, AND WHAT IT OWES KAMER ──────────────────
+// ── WHAT THIS OWES KAMER, AND WHAT IT TOOK ───────────────────────
 //
-// "Windmills of Daggerfall" (Kamer, DFU mod, v2.0) is the reference
-// and it is NOT the source: its .dae models, its .PNG textures and its
-// prefabs are its author's work and Daggerfall's art respectively, and
-// neither is ours to ship - the Ledger's own words for the roads
-// apply verbatim ("instead of taking their mod, I want us to develop
-// our own and better"). What we take from it is a READING of the
-// data, credited: the blade assembly turns about the model's local Z,
-// and it turns at 13 degrees a second.
+// "Windmills of Daggerfall" (Kamer, DFU mod, v2.0). W1 shipped this
+// module treating the mod as a reference only, on the roads' precedent
+// ("instead of taking their mod, I want us to develop our own and
+// better") - and that was the wrong call to keep once Mac confirmed
+// THE AUTHOR HAD GIVEN PERMISSION. An invitation is not a lift.
+//
+// So W2a vendors his ROTOR GEOMETRY, and only that:
+// vendor/windmills-kamer/Blade.dae, baked by scripts/bakeWindmill.mjs
+// into world/windmillMesh.js. It is the piece the port could not
+// derive - a sail separated from its tower - and it makes the mesh
+// question W1 flagged moot, because the split was made by the art.
+//
+// His .PNG textures did NOT come across, and that is not about him:
+// they are Daggerfall's art exported to PNG, the doctrine's second
+// non-negotiable ("a render of game data IS game data") is Bethesda's
+// to waive rather than the modder's, and they are unnecessary anyway -
+// the mesh names the classic textures it wants and the port loads
+// those from the player's own ARENA2 like every other model.
+//
+// The BEHAVIOUR below is still ours, and it is still the reason this
+// module exists: what we took from his code is a reading, credited -
+// the blade assembly turns about the model's local Z, at 13 degrees a
+// second.
 //
 // That 13 is the number a Daggerfall player's eye already knows, so
 // it is the one thing here that is not invented - it is the anchor.
@@ -56,12 +71,16 @@ import { multiply, trs } from './mat4.js';
 
 // The model ids that carry a turning rotor.
 //
-// FLAGGED, awaiting real data: these are read off Kamer's mod, which
-// replaces exactly them, and NOT yet confirmed against a real
-// ARCH3D.BSA - the container this was written in has no ARENA2. A
-// model id here that is not a mill turns something that should stand
-// still, so the wiring slice confirms each against the real mesh
-// before it spins anything.
+// 41600 is now settled from the other side: the vendored sail's own
+// geometry is named `model41600_001-mesh`, so the mod's author built
+// that rotor FOR model 41600 and the id is his, not an inference.
+//
+// FLAGGED, still awaiting real data: 41601 and the watermill 21411 are
+// read off the mod's manifest and LoadWindmill.cs and are NOT confirmed
+// against a real ARCH3D.BSA - the container this was written in has no
+// ARENA2 - and no vendored geometry names them. A model id here that is
+// not a mill turns something that should stand still, so the wiring
+// slice confirms those two against the real mesh before spinning them.
 //
 // The instrument for that exists and needs no work first:
 //

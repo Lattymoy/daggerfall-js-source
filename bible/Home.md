@@ -383,7 +383,7 @@ combat line numbers below are refreshed with it.
 - `src/ui/travelMapWindow.js:75` - FLAGGED, idling loudly: the guild TELEPORT mode
 - `src/ui/travelPopUp.js:57` - FLAGGED, each idling loudly: the HUD smash-to-black/fade
 - `src/world/actionSystem.js:467` - FLAGGED, a live gap, not parity.
-- `src/world/windmills.js:59` - FLAGGED, awaiting real data: these are read off Kamer's mod, which
+- `src/world/windmills.js:78` - FLAGGED, still awaiting real data: 41601 and the watermill 21411 are
 
 ## Audits
 

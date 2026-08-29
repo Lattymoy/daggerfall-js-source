@@ -1255,6 +1255,67 @@ the world host was dead on its first terrain load, because nothing in
 the suite drives that path - it wants GL and ARENA2. Nothing in W1 is
 wired into a host, and nothing in it can be reached by one yet.
 
+### W2a: the permission, and the mesh question answered from the other side (2026-08-29)
+
+W1's flag was wrong about what would answer it. It assumed the only
+route to a rotor was reading model 41600's geometry out of a real
+ARCH3D.BSA and splitting the sail from the tower ourselves - so the
+probe above was built to make that possible.
+
+The actual answer was that **Kamer had given permission**, confirmed by
+Mac, and W1 had been treating the mod as reference-only on the roads'
+precedent. That precedent was about not lifting someone's work
+uninvited; an invitation settles it, and holding the line after one has
+been given is not doctrine, it is obstinacy. The record kept saying
+"nothing of the mod is vendored" after it stopped being true, which is
+the same doc-truth defect RF1 had just been filed for two commits
+earlier - corrected in the module header, the Ledger row and here.
+
+So W2a vendors **the rotor geometry, and only that**:
+`vendor/windmills-kamer/Blade.dae` - node `Blades`, geometry
+`model41600_001-mesh`, 26 triangles - baked by
+`scripts/bakeWindmill.mjs` into `src/world/windmillMesh.js` in
+`meshReader`'s own `{positions, normals, uvs, indices, subMeshes}`
+shape, so the sail draws through the same path as every other model.
+
+**It settles W1's flag for 41600 from the other side.** The sail's own
+geometry is named for the model it was built for, so the id is the
+author's rather than our inference, and the SPLIT the wiring needs was
+made by the art - no geometric heuristic required at all. 41601 and the
+watermill 21411 are still flagged: no vendored geometry names them.
+
+Three things the geometry confirmed rather than assumed. The sail is
+flat in **Z**, which is the axis W1's law already turned about, taken
+from `Spin_Up.cs` before any mesh existed - the two agree, and a pin now
+fails if they ever stop. The hub **is the origin** (the sail is centred
+within a tenth of its own half-width on every axis), so `rotorMatrix`'s
+conjugation needs no offset a caller has to know. And the coordinates
+are already the port's: Blender writes `up_axis Z_UP` and bakes the
+object transform into the node matrix, and that matrix composed with the
+standard Z-up-to-Y-up conversion is the identity - so the bake applies
+NO transform, and ASSERTS the node matrix to earn that, because a
+re-export rotated differently would otherwise bake a ceiling fan.
+
+**His `.PNG` textures did not come across, and that is not about him.**
+They are Daggerfall's art exported to PNG; "a render of game data IS
+game data" is Bethesda's to waive, not a modder's. They are also
+unnecessary - the mesh names the classic textures it wants (`TEXTURE.000`
+record 77, `TEXTURE.067` record 1) and the port loads those from the
+player's own ARENA2 exactly as it does for every other model. A pin
+watches that door, and `Roller.dae` was vendored for one commit and
+removed: it is interior machinery, its three materials carry no texture
+at all, and the strict reader rejected it outright rather than baking a
+mesh with nothing to sample.
+
+8 pins in `test/windmillmesh.test.js`; 7 mutants, 7 killed - including
+the two that are not source edits, a dropped submesh and a Daggerfall
+texture export appearing in `vendor/`.
+
+**Still not wired.** W2b owns the per-frame matrix and THE FOUR HOSTS
+RULE. One thing only the probe (or a run) can still answer: whether
+classic model 41600 already carries static sails of its own, which would
+need hiding rather than doubling.
+
 Pins: 12 in `test/windmills.test.js`. Campaign: 15 mutants, 14 killed,
 and the survivor recorded rather than papered over - `over <= 0`
 weakened to `over < 0` is EQUIVALENT, because at `over === 0` the
