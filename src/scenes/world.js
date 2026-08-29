@@ -159,7 +159,7 @@ import { expandQuestMessage } from '../systems/quest/questMacros.js';
 // TK-ii: THE TOPIC TREE - the quest topic/dialog-link seams land.
 import { TopicTree, QUEST_INFO_RESOURCE_TYPE, QUESTION_TYPE } from '../systems/topicTree.js';
 import { NPCSession } from '../systems/npcSession.js';
-import { getPeopleOfCurrentRegion, getReactionToPlayer, lordNameForFaction } from '../systems/talk.js';   // TN1: %fl1/%fl2/%ol1's one home
+import { getPeopleOfCurrentRegion, getCourtOfCurrentRegion, getReactionToPlayer, lordNameForFaction } from '../systems/talk.js';   // TN1: %fl1/%fl2/%ol1's one home; CQ1: the region's court
 import { BUILDING_TYPES as TALK_BUILDING_TYPES, generateBuildingName } from '../world/buildingNames.js';   // IH1: %cbd regenerates the current building's name
 import { AnswerPipeline, TALK_STRINGS } from '../systems/answerPipeline.js';
 import { expandRandomTextRecord as expandTalkRecord } from '../systems/talkMacros.js';
@@ -3180,7 +3180,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the three generic Random_* factions still resolve to nothing.
     // The people arm is live; the court arm rides the automap/region
     // slice that brings the rest of PlayerGPS.
-    courtOfCurrentRegion: () => 0,
+    // CQ1: PlayerGPS.GetCourtOfCurrentRegion, through the same store
+    // and the same region index its People sibling below reads. This
+    // was hardcoded 0, which is not "absent" - 0 is a real faction id,
+    // so a palace interior and the three generic Random_* factions
+    // resolved to whatever faction 0 is rather than to nothing. A
+    // region whose court cannot be resolved answers 0 as the bridge's
+    // own no-faction value (DFU throws; talk.js's getter returns null
+    // and the decision is made here, its sibling's convention).
+    courtOfCurrentRegion: () => getCourtOfCurrentRegion(_questStore()?.dict ?? null, _questLoc()?.regionIndex ?? -1)?.id ?? 0,
     currentLocationIndex: () => _questLoc()?.locationIndex ?? 0,
     nameBankOfCurrentRegion: () => getNameBankOfRegion(_questRegionIndex()),   // AUDIT 24: the POLITIC-derived index, like every other region read - the location's is -1 across the whole wilderness
     buildingType: () => (modes?.interiorBuilding?.buildingType === TALK_BUILDING_TYPES.Palace ? 'Palace' : null),

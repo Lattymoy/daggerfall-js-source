@@ -275,8 +275,8 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:2528` - (FLAGGED); swallowing the browser reload is not optional.
 - `src/scenes/world.js:2817` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
 - `src/scenes/world.js:3178` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:3594` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:4509` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:3602` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:4517` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:807` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
 - `src/scenes/worldModes.js:944` - FLAGGED to the crime arc, as the Ledger records.
 - `src/scenes/worldModes.js:1013` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
@@ -355,7 +355,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/skills.js:113` - *  AUDIT 18: the +10% used to be INTERIM 0 behind a flag blaming a
 - `src/systems/startingGear.js:3` - seedStartingEquipment's INTERIM iron dagger: a new character now
 - `src/systems/talk.js:17` - crime/quest slices - FLAGGED there, not here).
-- `src/systems/talk.js:267` - *  FLAGGED to the crime slice - the state lands now, verbatim).
+- `src/systems/talk.js:293` - *  FLAGGED to the crime slice - the state lands now, verbatim).
 - `src/systems/talkMacros.js:268` - *  the handler table has for them - here, the empty string. FLAGGED:
 - `src/systems/tavern.js:195` - FLAGGED, with the slices they wait on:
 - `src/systems/tradeModes.js:4` - U8c shipped the shop screen in BUY mode only, and said so: "FLAGGED
