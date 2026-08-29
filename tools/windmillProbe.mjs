@@ -87,6 +87,78 @@ if (process.argv.includes('--selftest')) {
   process.exit(0);
 }
 
+// ── THE BLOCK SCAN ───────────────────────────────────────────────
+//
+// The question this was extended to answer, after WM2b wired the rotor
+// and Mac reported seeing no windmills at all: DOES ANY CLASSIC BLOCK
+// PLACE ONE?
+//
+// WM2a read model 41600 out of Kamer's WorldData block overrides and
+// concluded the port already drew the tower. That reading may have been
+// backwards - his mod's own description is "Adds Windmills to some
+// farms", and a WorldData override REPLACES a block, so the 41600 in
+// those files may be HIS addition rather than Daggerfall's. If no
+// classic block places one, the port has nothing to hang a rotor on and
+// no amount of wiring will show a sail.
+//
+// Only BLOCKS.BSA can settle it, so this walks every RMB block in it and
+// reports which ones name a mill model - in the subrecords (buildings)
+// and in the misc-3d list, counted separately, because WM2a's reading
+// came from the subrecords.
+async function scanBlocks(arena2, ids) {
+  const { BlocksFile } = await import('../src/formats/blocksFile.js');
+  const blocks = new BlocksFile();
+  if (!blocks.load(fs.readFileSync(`${arena2}/BLOCKS.BSA`))) {
+    console.error('BLOCKS.BSA did not load as a BLOCKS container');
+    return;
+  }
+  const want = new Set(ids);
+  const hits = [];
+  let rmbCount = 0;
+  for (let i = 0; i < blocks.count; i++) {
+    if (blocks.getBlockName(i).endsWith('.RMB') === false) continue;
+    rmbCount++;
+    let block;
+    try {
+      block = blocks.getBlock(i);
+    } catch {
+      continue;
+    }
+    const rmb = block?.rmbBlock;
+    if (!rmb) continue;
+    const inSub = [], inMisc = [];
+    for (const sub of rmb.subRecords ?? []) {
+      for (const o of sub.exterior?.block3dObjectRecords ?? []) {
+        if (want.has(o.modelIdNum)) inSub.push(o.modelIdNum);
+      }
+    }
+    for (const o of rmb.misc3dObjectRecords ?? []) {
+      if (want.has(o.modelIdNum)) inMisc.push(o.modelIdNum);
+    }
+    if (inSub.length || inMisc.length) {
+      hits.push({ name: blocks.getBlockName(i), inSub, inMisc });
+    }
+    blocks.discardBlock(i);
+  }
+
+  console.log('='.repeat(66));
+  console.log(`BLOCK SCAN: ${rmbCount} RMB blocks in BLOCKS.BSA, looking for ${[...want].join(', ')}`);
+  if (!hits.length) {
+    console.log('\n  *** NO CLASSIC BLOCK PLACES ANY OF THESE MODELS. ***');
+    console.log('  The port therefore never stands one of these mills, and a rotor');
+    console.log('  wired to a placement that does not happen cannot draw. Placing');
+    console.log('  the mill is its own slice - which is what Kamer\'s WorldData');
+    console.log('  overrides do on his side.');
+    return;
+  }
+  console.log(`\n  ${hits.length} block(s) place one:`);
+  for (const h of hits) {
+    console.log(`   ${h.name.padEnd(16)} subrecords: [${h.inSub.join(',') || '-'}]  misc3d: [${h.inMisc.join(',') || '-'}]`);
+  }
+  console.log('\n  So the placement is real and the mills should be standing;');
+  console.log('  if no sail turns, the fault is in the wiring or the hub, not here.');
+}
+
 const A = process.env.ARENA2_PATH;
 if (!A) {
   console.error('set ARENA2_PATH to your ARENA2 folder, e.g.\n'
@@ -235,3 +307,5 @@ for (const id of IDS) {
   fs.writeFileSync(out, PNG.sync.write(png));
   console.log(`\n  wrote ${out}  (front | side | top, one colour per component)`);
 }
+
+await scanBlocks(A, IDS);

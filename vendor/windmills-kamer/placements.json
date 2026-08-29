@@ -1,0 +1,33 @@
+{
+  "_comment": [
+    "WHERE THE MILLS STAND. Extracted from the WorldData/*.RMB.json block",
+    "overrides in Kamer's 'Windmills of Daggerfall' v2.0, vendored with the",
+    "author's permission (see README.md).",
+    "",
+    "ONLY THE ADDED RECORD IS HERE, never the blocks themselves. A DFU",
+    "WorldData override carries a WHOLE RMB block - Daggerfall's own layout -",
+    "and that is game data the doctrine keeps out of this repo. What these",
+    "rows are is the placement Kamer CHOSE for his own model: a position, a",
+    "rotation, and the subrecord frame it hangs off. His authorship, not",
+    "Bethesda's data.",
+    "",
+    "AND THE OVERRIDES PROVE THE MILLS ARE ADDITIONS, which is the question",
+    "that stalled WM2b. FARMAA01's file declares NumBlockDataRecords 1 and",
+    "contains TWO subrecords; FARMAA00 declares 7 and puts the mill in",
+    "subrecord 7. The extra subrecord in each is his. So no classic block",
+    "stands a windmill, the port never placed one, and the rotor WM2b wired",
+    "had nothing to hang on - which is exactly what Mac saw.",
+    "",
+    "FARMAA09.RMB.json ships ZERO BYTES in the mod while being listed in its",
+    "manifest, so that block has no placement here. Six blocks, six mills.",
+    "Units are Daggerfall's own, as the block records store them."
+  ],
+  "placements": [
+    { "block": "FARMAA00.RMB", "subX": 1024, "subZ": 896,  "subRot": 0, "x": 1867,  "y": -663, "z": -1575, "rotY": -512 },
+    { "block": "FARMAA01.RMB", "subX": 3200, "subZ": 448,  "subRot": 0, "x": -2339, "y": -662, "z": -3063, "rotY": -1024 },
+    { "block": "FARMAA02.RMB", "subX": 320,  "subZ": 2112, "subRot": 0, "x": 3162,  "y": -662, "z": -263,  "rotY": -1022 },
+    { "block": "FARMAA05.RMB", "subX": 3200, "subZ": 3328, "subRot": 0, "x": -2962, "y": -662, "z": 1267,  "rotY": 0 },
+    { "block": "FARMAA06.RMB", "subX": 3200, "subZ": 3328, "subRot": 0, "x": -2025, "y": -663, "z": 2365,  "rotY": 0 },
+    { "block": "FARMAA07.RMB", "subX": 3200, "subZ": 3328, "subRot": 0, "x": -2025, "y": -663, "z": -268,  "rotY": -1024 }
+  ]
+}

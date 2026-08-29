@@ -87,39 +87,41 @@ async function run(label, opts) {
   // with the shell's 'switch anytime' hint hidden - the centred pair
   // reads as a control on its own.
 
-  // 2c. R7: THE ENHANCED SECTION. A source sweep can say the pane
-  //     exists and is dispatched; only a browser can say the rail entry
-  //     opens it without throwing, that roads read ON by default, that
-  //     a press PERSISTS, and that the inert rows carry no control.
+  // 2c. THE ENHANCED SECTION. A source sweep can say the pane exists
+  //     and is dispatched; only a browser can say the rail entry opens
+  //     it without throwing, that its switch reads its default, and
+  //     that a press PERSISTS.
+  //
+  //     This rode the ROADS switch until the road system was removed
+  //     whole (2026-08-29, Mac's call). Re-aimed at the procedural sky,
+  //     which is the enhanced pane's other real preference - the checks
+  //     are about the PANE and its switch machinery, not about which
+  //     enhancement happens to be sitting in it.
   await page.goto(`${BASE}/play/`, { waitUntil: 'networkidle' });
   await page.locator('.px-menu button').filter({ hasText: /Enhanced/ }).first().click();
   await page.waitForTimeout(300);
   const pane = await page.evaluate(() => {
     const rows = [...document.querySelectorAll('#enhanced-menu .row')];
     const find = (n) => rows.find((r) => r.querySelector('.row-name')?.textContent === n);
-    const roads = find('Roads'), sky = find('Procedural sky');
+    const sky = find('Procedural sky');
     return {
-      roads: roads ? roads.querySelector('.ctl .act')?.textContent : null,
-      roadsTarget: roads ? Math.round(roads.querySelector('.ctl .act').getBoundingClientRect().height) : 0,
+      sky: sky ? sky.querySelector('.ctl .act')?.textContent : null,
+      skyTarget: sky ? Math.round(sky.querySelector('.ctl .act').getBoundingClientRect().height) : 0,
       skin: !!find('Interface Style'),
-      skyHasButton: sky ? !!sky.querySelector('button') : null,
-      skyReason: sky ? sky.querySelector('.row-note')?.textContent?.slice(0, 24) : null,
     };
   });
   check(`${label}: the Enhanced section opens with its switches`,
-    pane.roads !== null && pane.skin, JSON.stringify(pane));
-  check(`${label}: roads read ON by default`, pane.roads === 'On', String(pane.roads));
-  check(`${label}: an unbuilt enhancement is LISTED with a reason and NO control`,
-    pane.skyHasButton === false && !!pane.skyReason, JSON.stringify(pane.skyReason));
-  if (label === 'phone') check("phone: the roads switch is a thumb's target", pane.roadsTarget >= 38, `${pane.roadsTarget}px`);
-  await page.locator('#enhanced-menu .row', { hasText: 'Roads' }).locator('.ctl .act').click();
-  const roadsOff = await page.evaluate(async () => {
+    pane.sky !== null && pane.skin, JSON.stringify(pane));
+  check(`${label}: the sky reads ON by default`, pane.sky === 'On', String(pane.sky));
+  if (label === 'phone') check("phone: the sky switch is a thumb's target", pane.skyTarget >= 38, `${pane.skyTarget}px`);
+  await page.locator('#enhanced-menu .row', { hasText: 'Procedural sky' }).locator('.ctl .act').click();
+  const skyOff = await page.evaluate(async () => {
     const m = await import('/src/systems/uiPrefs.js');
     m._resetForTests();
-    return m.getPref('roads');
+    return m.getPref('proceduralSky');
   });
-  check(`${label}: the roads switch PERSISTS`, roadsOff === false, String(roadsOff));
-  await page.locator('#enhanced-menu .row', { hasText: 'Roads' }).locator('.ctl .act').click();
+  check(`${label}: the sky switch PERSISTS`, skyOff === false, String(skyOff));
+  await page.locator('#enhanced-menu .row', { hasText: 'Procedural sky' }).locator('.ctl .act').click();
 
   // 3. THE PICK APPEARS WHEN A GAME STARTS, and not one moment before.
   await page.goto(`${BASE}/play/`, { waitUntil: 'networkidle' });

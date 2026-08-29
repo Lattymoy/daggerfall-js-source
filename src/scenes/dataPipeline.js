@@ -10,7 +10,7 @@ import { isExteriorWindow } from '../world/climateSwaps.js';
 import { dfMeshToModel } from '../world/meshReader.js';
 import { fetchBytes, texName } from './shared.js';
 import { decodedTexture, preloadTextureArchive } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones
-import { ROTOR } from '../world/windmillMesh.js';   // WM2b: the vendored rotor, uploaded like any other model
+import { ROTOR, BODY } from '../world/windmillMesh.js';   // WM2b/WM2d: the vendored mill, uploaded like any other model
 
 /** @param deps {{renderer, arch: Arch3dFile, palette: DFPalette}} */
 export function createDataPipeline({ renderer, arch, palette }) {
@@ -150,19 +150,29 @@ export function createDataPipeline({ renderer, arch, palette }) {
    *  collide with (ids are positive), so a host may ask per block
    *  without paying twice, and teardown frees it with everything else.
    */
-  const ROTOR_KEY = -41600;
-  async function getRotorMesh() {
-    if (gpuMeshes.has(ROTOR_KEY)) return gpuMeshes.get(ROTOR_KEY);
-    for (const sm of ROTOR.subMeshes) {
+  const ROTOR_KEY = -41600, BODY_KEY = -41601;
+  async function uploadPart(key, model) {
+    if (gpuMeshes.has(key)) return gpuMeshes.get(key);
+    for (const sm of model.subMeshes) {
       await getTexture(sm.textureArchive);
       uploadRecord(sm.textureArchive, sm.textureRecord);
     }
-    const gpu = renderer.createMesh(ROTOR);
-    gpuMeshes.set(ROTOR_KEY, gpu);
+    const gpu = renderer.createMesh(model);
+    gpuMeshes.set(key, gpu);
     return gpu;
   }
 
+  /** WM2d: the whole mill - the tower Daggerfall never stands, and the
+   *  sail that turns on it. Both parts, one call, so a host cannot wire
+   *  a rotor to a tower that was never uploaded. */
+  async function getWindmillMeshes() {
+    return {
+      body: await uploadPart(BODY_KEY, BODY),
+      rotor: await uploadPart(ROTOR_KEY, ROTOR),
+    };
+  }
+
   loadFlats();   // warm it with the scene; the getters answer null until it lands
-  return { textureFiles, getTexture, getTextureSize, uploadRecord, uploadRecordFrame, getGpuMesh, getRotorMesh, gpuMeshes, cpuModels, palette,
+  return { textureFiles, getTexture, getTextureSize, uploadRecord, uploadRecordFrame, getGpuMesh, getWindmillMeshes, gpuMeshes, cpuModels, palette,
     loadFlats, flatCaption, flatFaceIndex, flatsFile: () => flats };
 }

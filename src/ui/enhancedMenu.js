@@ -126,9 +126,8 @@ import { overlayAction } from './input.js';   // U51: Escape, through the shared
 // hole in it teaches the player the hole is permanent.
 // R7 (Mac): ENHANCED is a section of its own, and on the BOOT rail
 // only. The port's own switches were scattered - the skin under the
-// brand and roads in no interface at all - and a switch a player
-// cannot find is
-// not shipped. It is absent from SECTIONS_PAUSE deliberately: these
+// brand, and the port's own additions in no interface at all - and a
+// switch a player cannot find is not shipped. It is absent from SECTIONS_PAUSE deliberately: these
 // answer "what kind of game am I about to play", which is settled by
 // the time a pause menu opens, and two of them cannot take effect
 // without a reload anyway.
@@ -805,11 +804,6 @@ function paneEnhanced(body) {
   // and never called. R3W wired the map and the claim came OUT rather
   // than being left standing as the sky row's was; R4W wired travel
   // and it goes back in. Every clause here is now reachable.
-  live.append(prefRow('roads', 'Roads',
-    'Roads between towns, generated from the terrain: drawn on the ground and on the travel map, '
-    + 'and travel follows them - the route you watch is the route you are charged for, and never '
-    + 'costs more than the direct road. The first world load bakes the network (about half a '
-    + 'minute, reported as it goes) and caches it; after that it is instant.'));
   // RA1 (Mac, 2026-08-28): this row said "not built" while ES1 had
   // been the enhanced skin's default sky for a day - a shipped
   // enhancement wearing a hole's label. It is a SWITCH now, over the

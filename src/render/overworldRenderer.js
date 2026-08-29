@@ -177,11 +177,6 @@ export class OverworldRenderer {
     this._terrain = null;   // { vao, indexCount, buffers[] }
     this._markers = null;   // { vao, count, buffers[] }
     this._route = null;     // { vao, count, buffer }
-    // R3W (2026-08-28): the road layer. ONE SET PER CHAIN, because
-    // overworldModel.roadPoints splits the network at junctions and a
-    // single LINE_STRIP across two unconnected chains would draw a
-    // road that is not there - the model's own reason for the shape.
-    this._roads = { trunk: [], track: [] };
     this._cloud = null;     // { vao, buffer }
     this._fsTri = null;     // backdrop fullscreen triangle
 
@@ -309,36 +304,6 @@ export class OverworldRenderer {
     this._route = { vao, count: points.length / 3, buffers: [b] };
   }
 
-  /** The road network as drawable chains, or null to clear it.
-   *  Takes overworldModel.roadModel's output: {trunk, track}, each an
-   *  array of Float32Array vertex runs. */
-  setRoads(model) {
-    const gl = this.gl;
-    this._freeRoads();
-    if (!model) return;
-    for (const kind of ['trunk', 'track']) {
-      for (const points of model[kind] ?? []) {
-        if (!points || points.length < 6) continue;   // a lone vertex is a dot, not a road
-        const vao = gl.createVertexArray();
-        gl.bindVertexArray(vao);
-        const b = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, b);
-        gl.bufferData(gl.ARRAY_BUFFER, points, gl.STATIC_DRAW);
-        gl.enableVertexAttribArray(0);
-        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
-        gl.bindVertexArray(null);
-        this._roads[kind].push({ vao, count: points.length / 3, buffers: [b] });
-      }
-    }
-  }
-
-  _freeRoads() {
-    for (const kind of ['trunk', 'track']) {
-      for (const set of this._roads[kind]) this._freeSet(set);
-      this._roads[kind] = [];
-    }
-  }
-
   /**
    * One overworld frame. proj/view are the window's own camera
    * (mirrorProjectionX'd like every world pass - see header). opts:
@@ -376,26 +341,6 @@ export class OverworldRenderer {
 
     // route + markers ride ON the picture, not in it: depth off
     gl.disable(gl.DEPTH_TEST);
-    // R3W: roads FIRST in the overlay group, so the flight route and
-    // the markers stay legible on top of them. Trunk is always drawn;
-    // track fades out with altitude (roadLayersForDistance).
-    const layers = opts.roadLayers;
-    if (layers && (this._roads.trunk.length || this._roads.track.length)) {
-      gl.useProgram(this.pLine);
-      gl.uniformMatrix4fv(this.u.lProj, false, proj);
-      gl.uniformMatrix4fv(this.u.lView, false, view);
-      for (const [kind, on, fallback] of [
-        ['track', layers.track, [0.58, 0.49, 0.36, 0.85]],
-        ['trunk', layers.trunk, [0.72, 0.62, 0.45, 1.0]],
-      ]) {
-        if (!on) continue;
-        gl.uniform4fv(this.u.lColor, opts.roadColors?.[kind] ?? fallback);
-        for (const set of this._roads[kind]) {
-          gl.bindVertexArray(set.vao);
-          gl.drawArrays(gl.LINE_STRIP, 0, set.count);
-        }
-      }
-    }
     if (this._route) {
       gl.useProgram(this.pLine);
       gl.uniformMatrix4fv(this.u.lProj, false, proj);
@@ -456,7 +401,6 @@ export class OverworldRenderer {
     this._freeSet(this._terrain); this._terrain = null;
     this._freeSet(this._markers); this._markers = null;
     this._freeSet(this._route); this._route = null;
-    this._freeRoads();   // R3W: every chain has an owner
     this._freeSet(this._cloud); this._cloud = null;
     this._freeSet(this._fsTri); this._fsTri = null;
     for (const p of [this.pTerrain, this.pMarker, this.pRing, this.pLine, this.pCloud, this.pBackdrop]) {
