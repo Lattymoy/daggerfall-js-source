@@ -1009,6 +1009,46 @@ def make_weaponmesh():
     write_nif(HERE / "weapon.nif", [root])
 
 
+def make_armparts_esm():
+    # MW-D9f: THE .ESM THAT LETS A WHOLE ARM BE BUILT IN NODE.
+    #
+    # fixture.esm carries head/hair/chest records and is pinned by name
+    # and census in several tests, so the arm records live in their own
+    # file rather than perturbing it. Two slots only - hand and upper arm,
+    # over the MW-D6 arm meshes - because armReport's "NOTHING for this
+    # slot" arm has to stay exercised too, and wrist/forearm being absent
+    # is what exercises it.
+    #
+    # Written struct-level, like make_esm and the BSA: header, one race,
+    # two skin BODY records whose ids END IN "1st" (rule 1: a
+    # first-person part is a RECORD id, not a mangled filename).
+    def sub(tag, data):
+        return tag + struct.pack("<I", len(data)) + data
+
+    def rec(tag, subs):
+        data = b"".join(subs)
+        return tag + struct.pack("<III", len(data), 0, 0) + data
+
+    z = lambda t: t.encode() + b"\x00"
+
+    def body(bid, model, part):
+        # BYDT: part index, vampire, flags (0 = male + playable), type
+        # (0 = skin).
+        return rec(b"BODY", [sub(b"NAME", z(bid)), sub(b"MODL", z(model)),
+                             sub(b"FNAM", z("ArmRace")),
+                             sub(b"BYDT", bytes([part, 0, 0, 0]))])
+
+    hedr = struct.pack("<fI", 1.3, 1)
+    hedr += b"fixture".ljust(32, b"\x00")
+    hedr += b"arm parts for the first-person build".ljust(256, b"\x00")
+    hedr += struct.pack("<I", 3)
+    out = rec(b"TES3", [sub(b"HEDR", hedr)])
+    out += body("b_arm_hand_1st", "fixture\\armhand.nif", 5)      # MeshPart hand
+    out += body("b_arm_upperarm_1st", "fixture\\armcuff.nif", 8)  # MeshPart upper arm
+    (HERE / "armparts.esm").write_bytes(out)
+    print(f"wrote {HERE / 'armparts.esm'} {len(out)} bytes")
+
+
 def make_collswitch():
     # MW-D9e: NiCollisionSwitch, which pyffi's nif.xml does not know.
     #
@@ -1581,6 +1621,7 @@ if __name__ == "__main__":
     make_armskel_weapon()
     make_armskel_camera()
     make_weaponmesh()
+    make_armparts_esm()
     make_collswitch()
     make_extras()
     make_zoo()
