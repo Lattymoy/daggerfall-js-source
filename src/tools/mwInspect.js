@@ -222,3 +222,84 @@ export function armReport(parts, race, female) {
   }
   return rows;
 }
+
+/** MW-D2: IS THIS MESH SKINNED, OR RIGID?
+ *
+ * The question MW8's entire design rested on and nobody ever asked of a
+ * real file. MW8 concluded Morrowind's arms are RIGID meshes hung off a
+ * bone, from reading OpenMW's two attach branches. If they are actually
+ * SKINNED, that fix was wrong in the same way MW7's was.
+ *
+ * THIS IS A SCAN, NOT A PARSE, and it is named so you cannot forget that.
+ * A Morrowind NIF (4.0.0.2) stores each record's TYPE NAME as a sized
+ * string immediately before the record, and there are no per-record sizes
+ * - which is exactly why an unknown type is fatal to a real reader (rule:
+ * niffile.cpp throws). A full walk therefore needs every record's layout.
+ * But the type NAMES are recoverable without any of that: a uint32 length
+ * followed by that many bytes of a NIF type name is a pattern a mesh's
+ * other contents essentially never produce.
+ *
+ * So this answers "does a NiSkinInstance appear in this file" with high
+ * confidence and answers NOTHING about geometry, transforms or bones. It
+ * is a census, offered as a census.
+ */
+export function scanNifRecordTypes(bytes) {
+  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const census = new Map();
+  const NAME = /^[A-Z][A-Za-z0-9_]{2,39}$/;
+  for (let i = 0; i + 4 < bytes.length; i++) {
+    const len = dv.getUint32(i, true);
+    if (len < 3 || len > 40 || i + 4 + len > bytes.length) continue;
+    let ok = true;
+    for (let j = i + 4; j < i + 4 + len; j++) {
+      const c = bytes[j];
+      if (c < 0x30 || c > 0x7a || (c > 0x39 && c < 0x41) || (c > 0x5a && c < 0x61 && c !== 0x5f)) { ok = false; break; }
+    }
+    if (!ok) continue;
+    const name = latin1(bytes.subarray(i + 4, i + 4 + len));
+    if (!NAME.test(name)) continue;
+    // Morrowind's own vocabulary: almost everything is Ni*, plus a short
+    // tail of engine markers. Anything else is far more likely to be a
+    // coincidence in vertex data than a record type.
+    if (!/^Ni/.test(name) && !['RootCollisionNode', 'AvoidNode'].includes(name)) continue;
+    census.set(name, (census.get(name) || 0) + 1);
+    i += 3 + len;
+  }
+  return census;
+}
+
+/** The verdict, with its own uncertainty attached. `skinned` is only ever
+ *  true because a NiSkinInstance was SEEN - never inferred from absence of
+ *  something else. */
+export function skinVerdict(bytes) {
+  const header = readNifHeader(bytes);
+  if (!header.ok) return { ok: false, why: header.why };
+  const census = scanNifRecordTypes(bytes);
+  const skinInstances = census.get('NiSkinInstance') || 0;
+  const shapes = (census.get('NiTriShape') || 0) + (census.get('NiTriStrips') || 0);
+  return {
+    ok: true,
+    version: header.versionText,
+    skinned: skinInstances > 0,
+    skinInstances,
+    shapes,
+    census: [...census.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])),
+    method: 'record-type SCAN, not a parse - it can tell you a NiSkinInstance is present, nothing more',
+  };
+}
+
+/** Where an arm slot's mesh actually lives in the archive: the record the
+ *  engine would use for this actor, then its own MODL under meshes/.
+ *  Rule: the .1st RECORD carries its own mesh name; the path is never
+ *  built by splicing .1st into a filename. */
+export function armMeshPaths(rows) {
+  return rows.map((row) => {
+    const rec = row.firstPerson || row.thirdPersonFallback || null;
+    return {
+      slot: row.slot,
+      record: rec ? rec.id : null,
+      firstPerson: !!row.firstPerson,
+      path: rec && rec.model ? `meshes/${rec.model}` : null,
+    };
+  });
+}

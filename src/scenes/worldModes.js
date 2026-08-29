@@ -115,6 +115,7 @@ import { buildingIsUnlocked, buildingLockValue, isBuildingOpen, LOCKED_EXTERIOR_
 import { peopleAreVisible } from '../characters/interiorPeople.js';   // P1: AddPeople's visibility tail
 import { exteriorLockpickingChance, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT } from '../world/actionSystem.js';
 import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2: the break-in tally
+import { theftBasket, privatePropertyTheft, shopShelfTheft } from '../systems/theft.js';   // PT1: the two stealing laws
 import { discoverBuilding, undiscoverBuilding, getLastLockpickAttempt, setLastLockpickAttempt } from '../systems/discovery.js';   // H3: selling a house takes its name back off the map
 import { BUILDING_KEY_0 } from '../systems/talkTopics.js';   // H3: the no-key key both ship interiors are filed under
 import { getHolidayId } from '../systems/holidays.js';
@@ -143,7 +144,7 @@ import { preloadMessageBoxArt } from '../ui/messageBox.js';
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
 import { questLetterName } from '../systems/itemInfo.js';   // ResolveItemLongName's quest-letter arm
-import { goldAmount, totalGoldAmount, deductGold, addGold } from '../systems/court.js';
+import { goldAmount, totalGoldAmount, deductGold, addGold, setCrimeCommitted, CRIMES } from '../systems/court.js';   // PT1: the ONE crime write (V4's SuppressCrime gate rides it)
 // Q4-v: the quest layer's host wiring. The BRIDGE (scenes/questBridge.js)
 // is created by the outer host (world.js) and rides in; this machine owns
 // the interior half - the click stamp, the Quests service arm, the scene
@@ -1018,10 +1019,22 @@ export function createWorldModes(host) {
     // opens the inventory in shelf-STEALING mode
     // (SetShopShelfStealing): the shelf is the Remove-mode remote and
     // taking is stealing. The port's inventory-with-loot shape IS
-    // that window; the shoplifting ROLL and its crime tally stay
-    // FLAGGED to the crime arc, as the Ledger records.
+    // that window, and PT1 gave it the consequence below.
     if (b.insideOpenShop === false) {
-      const win = interiorInventory({ loot: { items: () => shelf.items } });
+      // PT1: SetShopShelfStealing's other half, at the window's own
+      // teardown (:681-687). No roll, no guards, no crime record - a
+      // COUNT comparison against the shelf as it stood when the window
+      // opened, and a Thieves Guild tally if it shrank. The flag that
+      // used to sit here promised "the shoplifting ROLL and its crime
+      // tally"; the roll belongs to the house-container arm and never
+      // to this one.
+      const shelfBefore = shelf.items.length;
+      const win = interiorInventory({
+        loot: { items: () => shelf.items },
+        onClose: () => {
+          if (shopShelfTheft(shelfBefore, shelf.items.length)) tallyCrimeGuildRequirements(playerEntity, true, 1);
+        },
+      });
       if (win) interiorOverlay = win;
       return;
     }
@@ -3173,14 +3186,41 @@ export function createWorldModes(host) {
         // an EMPTY result does nothing (:917-918), and a full one
         // asks the TEXT.RSC 37 private-property question - Yes opens
         // the same loot-target inventory, No claims nothing
-        // (PrivateProperty_OnButtonClick :1085-1096). The theft
-        // basket behind `loot.houseOwned` (:919) stays FLAGGED to the
-        // crime arc beside the shelf-stealing roll.
+        // (PrivateProperty_OnButtonClick :1085-1096). PT1 took the
+        // theft basket behind `loot.houseOwned` (:919), which is why
+        // Yes opens the window in PRIVATE-PROPERTY mode below.
         const c = interiorCtx.containers[Number(key.split(':')[1])];
         if (c) {
           const b = interiorBuilding;
-          const openLoot = () => {
-            const win = interiorInventory({ loot: { items: () => c.items } });
+          // PT1: `loot.houseOwned` (:919) is set in the STRANGER arm
+          // alone, so `isPrivateProperty` (:611) - and the theft roll
+          // with it - is exactly the case where the player is rifling
+          // someone else's furniture. An owned house or ship reaches
+          // openLoot() through the arm above with `privateProperty`
+          // false, and is never a theft.
+          const openLoot = (privateProperty = false) => {
+            const before = privateProperty ? [...(c.items ?? [])] : null;
+            const win = interiorInventory({
+              loot: { items: () => c.items },
+              onClose: () => {
+                if (!privateProperty) return;
+                const out = privatePropertyTheft({
+                  basket: theftBasket(before, c.items ?? []),
+                  pickpocketSkill: skillValue(playerEntity, SKILLS.Pickpocket),
+                  shopQuality: b?.quality ?? 0,
+                });
+                if (!out) return;
+                // The member's own order: the tally is first and is not
+                // conditional on the roll.
+                tallyCrimeGuildRequirements(playerEntity, true, 1);
+                if (out.detected) {
+                  setCrimeCommitted(playerEntity, CRIMES.Theft);
+                  host.spawnCityGuards?.(true);
+                } else {
+                  tallySkill(playerEntity, SKILLS.Pickpocket, 1);
+                }
+              },
+            });
             if (win) interiorOverlay = win;
           };
           const owned = (b?.buildingType === BUILDING_TYPES.Ship && ownsShip(playerEntity))
@@ -3194,7 +3234,7 @@ export function createWorldModes(host) {
             interiorOverlay = new ChoiceWindow({
               lines: _rowsText(townTalk?.lines?.(PRIVATE_PROPERTY_TEXT_ID) ?? [], 'This looks like private property. Do you still want to look through it?'),
               options: [
-                { code: 'KeyY', label: 'Y - yes', action: openLoot },
+                { code: 'KeyY', label: 'Y - yes', action: () => openLoot(true) },
                 { code: 'KeyN', label: 'N - no', action: () => {} },
               ],
             });

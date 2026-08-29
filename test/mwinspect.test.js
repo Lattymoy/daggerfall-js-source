@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   parseBsaIndex, readNifHeader, walkEsm, bodyParts, armReport,
   isFirstPersonId, FP_SKELETONS, ARM_PARTS, MW_BODY_PARTS,
+  scanNifRecordTypes, skinVerdict, armMeshPaths,
 } from '../src/tools/mwInspect.js';
 
 // MW-D: the diagnostic that should have existed before any renderer.
@@ -157,4 +158,87 @@ test('MW-D: the ESM walk cannot desynchronise, because every record carries its 
   // a truncated tail stops the walk instead of throwing - a half-copied
   // archive should report what it has, not refuse to say anything
   assert.deepEqual(walkEsm(esm.subarray(0, esm.length - 4)).map((r) => r.type), ['BODY', 'JUNK']);
+});
+
+// ── MW-D2: the question MW8's design rested on ─────────────────────
+//
+// MW8 concluded Morrowind's arm parts are RIGID meshes hung off a bone,
+// from reading OpenMW's two attach branches - never from a real file. If
+// they are skinned, that fix was wrong the same way MW7's was. These pins
+// cover the SCAN that asks, and they pin its honesty as hard as its
+// mechanics: it must never report skinned by inference.
+
+/** A Morrowind NIF stores each record's TYPE NAME as a sized string
+ *  immediately before the record. Built here the same way. */
+const nifWith = (types, { version = 0x04000002, junk = true } = {}) => {
+  const out = [...ascii('NetImmerse File Format, Version 4.0.0.2'), 0x0a, ...u32(version)];
+  for (const t of types) {
+    out.push(...u32(t.length), ...ascii(t));
+    if (junk) out.push(...[7, 0, 0, 0, 1, 2, 3]);   // a record body the scan must step over
+  }
+  return new Uint8Array(out);
+};
+
+test('MW-D2: the scan finds record types, and reports a skin only when it SEES one', () => {
+  const rigid = skinVerdict(nifWith(['NiNode', 'NiTriShape', 'NiTexturingProperty']));
+  assert.equal(rigid.ok, true);
+  assert.equal(rigid.skinned, false, 'no NiSkinInstance in the file, so not skinned');
+  assert.equal(rigid.shapes, 1);
+  const skinned = skinVerdict(nifWith(['NiNode', 'NiTriShape', 'NiSkinInstance', 'NiSkinData']));
+  assert.equal(skinned.skinned, true);
+  assert.equal(skinned.skinInstances, 1);
+  // THE VERDICT IS THE INSTANCE, NOT ITS NEIGHBOURS. These two files
+  // separate the records that usually travel together, because a scan
+  // that keys off the wrong one passes every fixture where both appear.
+  assert.equal(skinVerdict(nifWith(['NiTriShape', 'NiSkinData'])).skinned, false,
+    'NiSkinData alone is not a skinned shape');
+  assert.equal(skinVerdict(nifWith(['NiTriShape', 'NiSkinInstance'])).skinned, true,
+    'and NiSkinInstance alone IS one');
+  // the verdict carries its own uncertainty - a port must not read this as a parse
+  assert.match(skinned.method, /SCAN, not a parse/);
+  assert.equal(skinVerdict(new Uint8Array([1, 2, 3])).ok, false, 'a non-NIF is refused, not guessed at');
+});
+
+test('MW-D2: the scan does not invent types out of vertex data', () => {
+  // floats and indices are the bulk of a real mesh; none of this is a
+  // length-prefixed NIF name and none of it may be counted as one.
+  const noise = new Uint8Array(4000);
+  for (let i = 0; i < noise.length; i++) noise[i] = (i * 37) & 0xff;
+  const census = scanNifRecordTypes(noise);
+  for (const [name] of census) assert.match(name, /^(Ni|RootCollisionNode|AvoidNode)/,
+    `scan admitted ${name} - the Ni-prefix guard is what keeps vertex data out`);
+  // a lowercase or too-short run is not a type name
+  assert.equal(scanNifRecordTypes(new Uint8Array([...u32(5), ...ascii('nitri')])).size, 0);
+  assert.equal(scanNifRecordTypes(new Uint8Array([...u32(2), ...ascii('Ni')])).size, 0);
+  // NOTE, honestly: the length floor and the name pattern both reject that
+  // one on their own, so neither is individually pinned by it. The
+  // redundancy is deliberate defence in depth, and this comment exists so
+  // a later reader does not mistake a surviving mutant there for a gap.
+  // A WELL-FORMED NAME THAT IS NOT NIF VOCABULARY. This is what the
+  // Ni-prefix guard is actually for, and the noise sweep above cannot
+  // exercise it - random bytes almost never produce a valid length-prefixed
+  // capitalised word, so without this the guard could be deleted unnoticed.
+  const impostor = new Uint8Array([...u32(7), ...ascii('Kittens'), ...u32(6), ...ascii('NiNode')]);
+  const guarded = scanNifRecordTypes(impostor);
+  assert.equal(guarded.has('Kittens'), false, 'a capitalised word is not a record type');
+  assert.equal(guarded.get('NiNode'), 1, 'while the real one beside it is still found');
+});
+
+test('MW-D2: an arm mesh path comes from the RECORD, never from a spliced name', () => {
+  const esm = new Uint8Array([
+    ...body('b_n_nord_m_hands.1st', 'nord', 'hand', { model: 'b/B_N_Nord_M_Hands.1st.NIF' }),
+    ...body('b_n_nord_m_wrist', 'nord', 'wrist', { model: 'b/B_N_Nord_M_Wrist.nif' }),
+  ]);
+  const rows = armReport(bodyParts(esm), 'nord', false);
+  const paths = armMeshPaths(rows);
+  assert.equal(paths[0].path, 'meshes/b/b_n_nord_m_hands.1st.nif');
+  assert.equal(paths[0].firstPerson, true);
+  assert.equal(paths[0].record, 'b_n_nord_m_hands.1st');
+  // the fallback slot resolves to the THIRD-person mesh, which on retail
+  // data is what three of the four arm slots actually use
+  assert.equal(paths[1].path, 'meshes/b/b_n_nord_m_wrist.nif');
+  assert.equal(paths[1].firstPerson, false);
+  // a slot with no record at all resolves to nothing, and says so
+  assert.equal(paths[2].path, null);
+  assert.equal(paths[2].record, null);
 });
