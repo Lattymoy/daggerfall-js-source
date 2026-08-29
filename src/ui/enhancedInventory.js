@@ -577,11 +577,20 @@ function take(item) {
     cb?.(taken);
     return;
   }
-  picked = taken;
-  side = 'local';
-  // The pack's TAB follows what just arrived, or the player takes a
-  // sword on the Ingredients page and watches nothing happen.
-  tab = TABS.find((t) => filterByTab([taken], t).length) ?? tab;
+  // PX28 (Mac: "when looting, there's a 2nd popup when you take
+  // something, there shouldn't be"): SELECTING THE TAKEN ITEM RAISES
+  // THE TOOLTIP, and in the loot-only flow that is a card nobody asked
+  // for, popping over the frame you are reading. With the pack OPEN it
+  // is useful - the thing you just took is selected in your bag, on
+  // the tab it landed in - so the selection is the PACK's behaviour,
+  // not the take's. Looting just takes.
+  picked = packOpen ? taken : null;
+  if (packOpen) {
+    side = 'local';
+    // The pack's TAB follows what just arrived, or the player takes a
+    // sword on the Ingredients page and watches nothing happen.
+    tab = TABS.find((t) => filterByTab([taken], t).length) ?? tab;
+  }
   refresh();
   render();
 }

@@ -1105,3 +1105,20 @@ test('PX21f: a tooltip is not a scroll box, and the loot frame does not clip it'
   assert.match(css, /\.loot-win \.remotehead \{ flex: 0 0 auto; \}/);
   assert.match(css, /\.loot-win \.remotelist \{ flex: 1; min-height: 0;/);
 });
+
+test('PX28: looting just TAKES - no second popup over the frame you are reading', () => {
+  // Mac: "when looting, there's a 2nd popup when you take something,
+  // there shouldn't be." `take()` set `picked = taken`, which raises
+  // the tooltip on the item that just moved. With the PACK open that
+  // is useful - the thing you took is selected in your bag, on the tab
+  // it landed in - so the selection is the PACK's behaviour, not the
+  // take's. In the loot-only flow it is a card nobody asked for.
+  const src = read('src/ui/enhancedInventory.js');
+  assert.match(src, /picked = packOpen \? taken : null;/);
+  assert.match(src, /if \(packOpen\) \{\n\s*side = 'local';/, 'and the side follows the pack, not the take');
+  assert.match(src, /tab = TABS\.find\(\(t\) => filterByTab\(\[taken\], t\)\.length\) \?\? tab;/,
+    'the tab-follows-the-item law is unchanged - it just belongs to the pack');
+  // The transfer itself is untouched: this slice changes what is SHOWN.
+  assert.match(src, /const taken = applyTransfer\(item, plan, from, bag\);/);
+  assert.match(src, /if \(plan\.claimsChoice\) \{/, 'G6\'s one-is-the-whole-gift arm still runs first');
+});

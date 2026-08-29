@@ -127,7 +127,7 @@ import {
   RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS,
   RANDOM_TREASURE_MARKER_RECORD, DUNGEON_LOOT_KEYS,
 } from '../systems/loot.js';
-import { floorLanding } from '../player/enterExit.js';
+import { floorLanding, closestDoorTo } from '../player/enterExit.js';   // DE1: TransitionDungeonInterior orients away from the door it came through
 import { trs, multiply } from '../world/mat4.js';
 import { Collider } from '../player/collider.js';
 import { ActionSystem } from '../world/actionSystem.js';
@@ -3258,18 +3258,55 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  source - both hosts spawn through this (the standalone's raw
      *  marker spawn put the EYE at the marker, feet under the floor:
      *  Mac spawned wedged in the under-geometry shaft). */
-    startSpawn() {
-      // Verbatim PlayerEnterExit.StartDungeonInterior with
-      // preferEnterMarker=true (the default on dungeon entry): the
-      // ENTER marker wins, StartMarker is the fallback. We were using
-      // StartMarker unconditionally - a DIFFERENT point that in
-      // Privateer's Hold sits in tight geometry, so the collider
-      // shoved the capsule off-marker into a wall and it wedged
-      // (Mac: feet 26.10 vs marker 28.38, 'stuck in a hole' while
-      // the numbers jitter but net travel stays ~0).
-      const m = this.enterMarker ?? this.startMarker;
-      if (!m) return [0, 2, 0];
+    startSpawn({ preferEnterMarker = true } = {}) {
+      // DE1 (Mac: "entering a dungeon places you at the end of the
+      // dungeon instead of the entrance") - THERE ARE TWO DFU MEMBERS
+      // HERE AND THEY DO NOT AGREE, and this function was only one of
+      // them:
+      //
+      //   StartDungeonInterior(location, preferEnterMarker = true)
+      //     (:982-987) - starting INSIDE a dungeon with no exterior:
+      //     a new game, a load, a respawn, a quest teleport. The
+      //     ENTER marker wins and StartMarker is the fallback.
+      //
+      //   TransitionDungeonInterior(doorOwner, door, ...) (:923-934)
+      //     - WALKING IN through the entrance, which is how a player
+      //     actually gets into a dungeon. It uses dungeon.StartMarker
+      //     UNCONDITIONALLY. It does not consult the enter marker at
+      //     all, and where the marker is missing it ABORTS the
+      //     transition rather than falling back.
+      //
+      // The port had one `enterMarker ?? startMarker` serving both, so
+      // the walk-in landed on the enter marker - a different point,
+      // and in a large starting block a long way from the door. The
+      // sentence that stood here explained the switch to the enter
+      // marker as a fix for a wedging bug in Privateer's Hold, and it
+      // was: for the STANDALONE host, which is the StartDungeonInterior
+      // case and was right to prefer it. Applying that host's answer to
+      // the other member is what put the player across the dungeon.
+      //
+      // preferEnterMarker=false is therefore not "prefer the other
+      // one" - it is the transition's law, start marker or nothing.
+      const m = preferEnterMarker ? (this.enterMarker ?? this.startMarker) : this.startMarker;
+      if (!m) return null;
       return floorLanding(collider, [m.x, m.y + 1.08, m.z]);
+    },
+    /** Verbatim TransitionDungeonInterior's orientation half
+     *  (:936-952): the player faces the NORMAL of the nearest dungeon
+     *  exit door, which points into the dungeon - so you come through
+     *  the door looking at the room rather than keeping whatever
+     *  bearing you had outside. StartDungeonInterior faces plain north
+     *  instead (SetFacing(Vector3.forward), :1011-1013), because a
+     *  load or a teleport did not come through a door.
+     *
+     *  Answers a yaw in the port's convention (0 = +z = north), or
+     *  null when there is no door to read - the caller keeps its
+     *  bearing rather than snapping to an invented one. */
+    entryFacingYaw(feet, { preferEnterMarker = true } = {}) {
+      if (preferEnterMarker) return 0;   // SetFacing(Vector3.forward)
+      const near = feet ? closestDoorTo(feet, exitDoors) : null;
+      if (!near) return null;
+      return Math.atan2(near.normal[0], near.normal[2]);
     },
     get playerSlowFalling() { return hasActiveEffect(playerEntity, 'slowfall'); },   // S8: hosts feed their motor (P14: the -105 * dt constant-speed law lives in the motor)
     toggleDebugHud() { debugHud = !debugHud; },

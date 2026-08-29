@@ -27,6 +27,7 @@
 // the classic window survives a failed art load and the enhanced one
 // reads no ARENA2 at all, so the readiness gate differs by skin.
 import { isEnhanced } from '../systems/uiSkin.js';
+import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
 import { SpellbookWindow, spellbookArtLoaded } from './spellbookWindow.js';
 
 export { spellbookArtLoaded };
@@ -86,9 +87,11 @@ function enhancedSpellbookOverlay(shared, onClose) {
   let host = null;
   let view = null;
   let done = false;
+  let unregister = () => {};   // PX28: Tab must be able to put this away
   const close = () => {
     if (done) return;
     done = true;
+    unregister();
     try { view?.destroy?.(); } catch { /* already gone */ }
     try { host?.remove(); } catch { /* ditto */ }
     host = null; view = null;
@@ -100,6 +103,7 @@ function enhancedSpellbookOverlay(shared, onClose) {
     host.id = 'enhanced-spellbook';
     host.style.cssText = 'position:fixed;inset:0;z-index:11';
     document.body.append(host);
+  unregister = registerOverlay(close);
     import('./enhancedSpellbook.js').then(({ mountEnhancedSpellbook }) => {
       if (done) return;
       view = mountEnhancedSpellbook(host, { ...shared, onExit: close });

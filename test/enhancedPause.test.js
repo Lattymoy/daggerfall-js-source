@@ -512,3 +512,30 @@ test('PX26 / THE FOUR HOSTS: north opens a REAL arm on every host', () => {
   assert.match(read('src/scenes/world.js'), /openSheetPage: \(\) => hudCtx\.togglePause\(\{ at: 'stats' \}\),/);
   assert.match(read('src/scenes/dungeonContext.js'), /openSheetPage\(\) \{ this\.togglePause\(null, \{ at: 'stats' \}\); \},/);
 });
+
+test('PX28: Tab puts away what it opened, then raises the dial', () => {
+  // Mac: "when hitting tab a second time, it should minimize any UI."
+  // The dial already closed ITSELF on a second press; what it could not
+  // do was close what it had OPENED, because each enhanced window owns
+  // its own keyboard and knows nothing of the others.
+  const dial = read('src/ui/pixelDial.js');
+  assert.match(dial, /if \(_open\) \{ _open\.unmount\(\); _open = null; return true; \}/, 'the dial still toggles itself');
+  assert.match(dial, /if \(closeTopOverlay\(\)\) return true;/, '...and puts away an open window first');
+  const order = dial.indexOf('if (_open)') < dial.indexOf('closeTopOverlay()');
+  assert.ok(order, 'the dial closes ITSELF before it closes anything else - it is the top thing');
+  // A STACK of close-arms, holding FUNCTIONS and never DOM: a registry
+  // that reached into windows would be a second owner of them, and
+  // every one already owns its own teardown.
+  const reg = read('src/ui/enhancedOverlays.js');
+  assert.match(reg, /export function registerOverlay\(close\)/);
+  assert.match(reg, /export function closeTopOverlay\(\)/);
+  assert.doesNotMatch(reg, /document\.|querySelector|innerHTML/, 'it holds functions, never DOM');
+  assert.match(reg, /const stack = \[\];/);
+  // EVERY enhanced overlay registers, and every one unregisters on
+  // teardown - a stack that grows a dead arm would swallow a Tab.
+  for (const door of ['inventoryDoor', 'spellbookDoor', 'chronicleDoor', 'charSheetDoor']) {
+    const s = read(`src/ui/${door}.js`);
+    assert.match(s, /unregister = registerOverlay\(close\);/, `${door} registers`);
+    assert.match(s, /unregister\(\);/, `${door} unregisters on teardown`);
+  }
+});
