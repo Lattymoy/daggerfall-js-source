@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   parseBsaIndex, readNifHeader, walkEsm, bodyParts, armReport,
   isFirstPersonId, FP_SKELETONS, ARM_PARTS, MW_BODY_PARTS,
-  scanNifRecordTypes, skinVerdict, armMeshPaths,
+  scanNifRecordTypes, skinVerdict, armMeshPaths, parseMeshForPreview, meshBounds, frontViewMapper,
 } from '../src/tools/mwInspect.js';
 
 // MW-D: the diagnostic that should have existed before any renderer.
@@ -241,4 +241,50 @@ test('MW-D2: an arm mesh path comes from the RECORD, never from a spliced name',
   // a slot with no record at all resolves to nothing, and says so
   assert.equal(paths[2].path, null);
   assert.equal(paths[2].record, null);
+});
+
+// ── MW-D3: parse it for real, and be honest when that fails ────────
+
+test('MW-D3: the real reader runs on a real fixture mesh, and reports what it found', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { MwBsaFile } = await import('../src/formats/mwBsaFile.js');
+  const bsa = new MwBsaFile(new Uint8Array(
+    readFileSync(new URL('./fixtures/mw/fixture.bsa', import.meta.url))));
+  const r = await parseMeshForPreview(bsa.get('meshes/fixture/plain.nif'));
+  assert.equal(r.ok, true, r.error);
+  assert.ok(r.vertices > 0 && r.triangles > 0, 'geometry came back');
+  assert.equal(r.skinnedShapes, 0, 'plain.nif is the rigid one');
+  const skinned = await parseMeshForPreview(bsa.get('meshes/fixture/skinned.nif'));
+  assert.equal(skinned.skinnedShapes > 0, true, 'and skinned.nif is the other kind');
+});
+
+test('MW-D3: a failure is NAMED with its stage, never swallowed into an empty view', async () => {
+  // The reverted rig's defining behaviour was to end up with nothing and
+  // say nothing. Every failure path here carries a stage and a message.
+  const notNif = await parseMeshForPreview(new Uint8Array([...ascii('nope'), 0x0a, 0, 0, 0, 0]));
+  assert.equal(notNif.ok, false);
+  assert.equal(notNif.stage, 'parse');
+  assert.ok(notNif.error && notNif.error.length, 'and the reader\'s own message is passed through');
+  // a well-formed header with no geometry behind it is its own answer
+  const empty = await parseMeshForPreview(new Uint8Array(
+    [...ascii('NetImmerse File Format, Version 4.0.0.2'), 0x0a, ...u32(0x04000002)]));
+  assert.equal(empty.ok, false);
+  assert.ok(['parse', 'flatten', 'geometry'].includes(empty.stage), `stage was ${empty.stage}`);
+});
+
+test('MW-D3: the front view is Z-UP and UNIFORMLY scaled', () => {
+  const shapes = [{ positions: new Float32Array([0, 0, 0, 10, 0, 0, 0, 0, 5]), indices: [0, 1, 2] }];
+  const b = meshBounds(shapes);
+  assert.deepEqual([b.minX, b.maxX, b.minZ, b.maxZ], [0, 10, 0, 5]);
+  const map = frontViewMapper(b, 100, 100, 0);
+  const [x0, y0] = map(0, 0, 0);
+  const [x1, y1] = map(10, 0, 0);
+  const [, y2] = map(0, 0, 5);
+  assert.ok(x1 > x0, 'x runs across the canvas');
+  assert.ok(y2 < y0, 'and +z runs UP the screen, which canvas y does not');
+  // uniform: the wider axis fills the box, the shorter one does not - a
+  // per-axis fit would hide proportions that are actually wrong
+  assert.equal(Math.round(x1 - x0), 100, 'the 10-unit x span fills the 100px box');
+  assert.equal(Math.round(y0 - y2), 50, 'and the 5-unit z span gets half of it, not all');
+  assert.equal(meshBounds([{ positions: new Float32Array(0) }]), null, 'no vertices is null, not NaN');
 });

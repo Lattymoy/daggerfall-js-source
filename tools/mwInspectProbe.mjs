@@ -9,6 +9,7 @@
 // must say so, in words, on screen.
 //
 // Usage: node tools/mwInspectProbe.mjs
+import { readFileSync } from 'node:fs';
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 
@@ -65,7 +66,9 @@ const bsa = buildBsa([
   { name: 'meshes\\XBase_Anim.1st.nif', data: nif('NetImmerse File Format, Version 4.0.0.2', 0x04000002) },
   { name: 'meshes\\Base_Anim_Female.1st.nif', data: nif('NetImmerse File Format, Version 4.0.0.2', 0x04000002) },
   { name: 'meshes\\b\\H1.nif', data: nifRecs(['NiNode', 'NiTriShape', 'NiSkinInstance']) },
-  { name: 'meshes\\b\\W.nif', data: nifRecs(['NiNode', 'NiTriShape', 'NiTexturingProperty']) },
+  // A REAL NIF, so the draw panel's SUCCESS path is proven live and not
+  // only in node: this one must parse and put pixels on a canvas.
+  { name: 'meshes\\b\\W.nif', data: new Uint8Array(readFileSync('test/fixtures/mw/plain.nif')) },
 ]);
 const esm = Uint8Array.from([
   ...body('b_n_nord_m_hand.1st', 'nord', 'hand', { model: 'b/H1.nif' }),
@@ -101,6 +104,28 @@ ok(/Both kinds are present here, so the rig must handle both/.test(text),
   'and when the two disagree the page says so, instead of picking one');
 ok(/scan<\/b>, not a parse/.test(text) || /scan.{0,12}not a parse/.test(text),
   'the verdict carries its own uncertainty on screen');
+
+// MW-D3: the fixture arm meshes are NOT real NIFs (they are record-name
+// stubs for the scan), so the reader must REFUSE them and print the stage
+// and message rather than leaving an empty box. That is the behaviour
+// under test: a failure that says why.
+await page.waitForSelector('#draws .draw', { timeout: 10000 });
+const drawText = await page.textContent('#draws');
+ok(/hand/.test(drawText) && /wrist/.test(drawText), 'each arm slot with a mesh gets its own panel');
+const pixels = await page.evaluate(() => {
+  const cvs = [...document.querySelectorAll('#draws canvas')];
+  return cvs.map((c) => {
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    let n = 0;
+    for (let i = 3; i < d.length; i += 4) if (d[i] > 8) n++;
+    return n;
+  });
+});
+ok(pixels.length >= 1, 'a real NIF gets a canvas, not just a message');
+ok(pixels.some((n) => n > 200), `and the wireframe actually DRAWS (${pixels.join(', ')} lit pixels)`);
+ok(/parse:|flatten:|geometry:/.test(drawText),
+  `a mesh the strict reader refuses names its STAGE (got: ${drawText.replace(/\s+/g, ' ').slice(0, 120)})`);
+ok(!/^\s*$/.test(drawText), 'and never an empty box - the reverted rig\'s defining behaviour');
 
 // a corrupt archive must be named, not swallowed
 const bad = Uint8Array.from([...u32(0x102), ...u32(0), ...u32(0)]);
