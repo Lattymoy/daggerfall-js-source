@@ -277,7 +277,18 @@ World layout:
 
 ## C. DFU features not yet ported (routed)
 
-**DT1 ADDS ONE ROW (2026-08-29):** interior DROPPED PILES. The interior
+**DT1 ADDED THAT ROW AND ID1 CLOSED IT THE SAME DAY (2026-08-29).**
+The interior host mounts its own `droppedLoot` pool now - the drop at
+`FindGroundPosition` on the interior collider with NO pixel key
+(`TrackLooseObject` is the outdoor arm), the E-ray target and its
+activation, the draw, the CacheScene/RestoreCachedScene halves, both
+teardowns, and the Detect feed's `piles`. `mintRewardPile` took the same
+arm, because GivePc.cs:168 mints through the same member. Every
+inventory window this host opens goes through one door
+(`interiorInventory`) so the next call site cannot miss it. Kept for the
+trail - the original row:
+
+~~interior DROPPED PILES. The interior
 host mints no ground pile of its own - `mintRewardPile` falls interior
 drops through to the world host, whose `dropFeet` reads the EXTERIOR
 player and collider - so an item dropped inside a building is not a
@@ -285,8 +296,8 @@ player and collider - so an item dropped inside a building is not a
 scan cannot see it. Found while wiring DT1's loot pools and deliberately
 not taken there: the fix is an interior `droppedLoot` pool, and when it
 lands it joins the feed's `piles` with no other change. Recorded at the
-seam in `worldModes.js` with this row named. | GameObjectHelper /
-DaggerfallLoot, the interior scene's own | Hosts arc
+seam in `worldModes.js` with this row named.~~ | GameObjectHelper
+.CreateDroppedLootContainer (:716-775) | CLOSED ID1 2026-08-29
 
 
 SWEPT 2026-08-19, RE-SWEPT 2026-08-24 (L1). The re-sweep judged all 60
