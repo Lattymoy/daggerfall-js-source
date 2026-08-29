@@ -9,7 +9,7 @@
 // which is exactly the dungeon convention already on record.
 
 import { FlatAnimator, armFlatAnim, MISSILE_FPS } from '../render/flatAnimation.js';   // FA1: the flats that move
-import { lycanthropeAttackVoice, racialSuppressInventory } from '../systems/lycanthropy.js';   // V4: the beast's attack voice + inventory refusal
+import { lycanthropeAttackVoice, racialSuppressInventory, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V4: the beast's attack voice + inventory refusal; LM1: the 4-20s move-sound loop
 import { layoutDungeon } from '../world/dungeonLayout.js';
 import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, automapRevealTick, automapEntranceTick, automapDungeonKey, SCAN_INTERVAL_S } from '../systems/automap.js';   // A1
 import { AutomapWindow } from '../ui/automapWindow.js';   // A1: the M window
@@ -2673,6 +2673,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // FRONT of the player, and `-view[2..10]` is the same forward the
     // cast above fires down.
     magic.update(dt, playerFeet, [-view[2], -view[6], -view[10]], playerHeight);   // M3: player spell missiles fly in the engine
+    { const mv = lycanthropeMoveSound(playerEntity, dt); if (mv != null) audio.playOneShot(mv, 1); }   // LM1: the beast's own noise while transformed (real time)
     // S19: WeaponManager's paralysis gate - weapons hide and the
     // machine holds while paralyzed (casting is NOT gated, verbatim:
     // DFU has no IsParalyzed check in the casting path).

@@ -63,6 +63,7 @@ import { MOBILE_TYPES } from '../characters/mobileTypes.js';   // IF: the daedri
 import { areEnemiesNearby } from '../systems/encounters.js';   // IF: GameManager.AreEnemiesNearby, one method over this host's database
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { audio } from '../systems/audio.js';
+import { lycanthropeMoveSound } from '../systems/lycanthropy.js';   // LM1: the 4-20s transformed move-sound loop
 import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in), and the guilds' BUY mode
 import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the book's one door
 import { calculateCastCost } from '../systems/spellcost.js';   // M2
@@ -3610,6 +3611,11 @@ export function createWorldModes(host) {
       magic.update(dt, player.pos, eyeDir(), player.height);   // X11: the candle hangs off the look direction
       if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, new Float32Array([0, 1, 0]));
     }
+    // LM1: the transformed move-sound loop, in this host's INTERIOR
+    // arm (dungeon mode runs dungeonContext's frame, which carries its
+    // own). Outside the `if (magic)` above on purpose - the beast
+    // makes its noise whether or not a cast engine was built.
+    { const mv = lycanthropeMoveSound(playerEntity, dt); if (mv != null) audio.playOneShot(mv, 1); }
     if (interiorCtx.animateChars) interiorCtx.animateChars((performance.now() - _charT0) / 1000, _charAnimMode);
     for (const d of interiorCtx.charDraws) renderer.drawCharacter(d.mesh, d.matrix);
     // C9: the interior FP weapon - gesture/swing/sounds through the

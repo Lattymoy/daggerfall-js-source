@@ -4767,3 +4767,54 @@ killed, after one survivor: the dungeon host's **flier lift** had no
 pin, though the exterior one did. FinalizeFoe raises a flying foe 1.5
 above the test point, and a bat woken at rest was standing on the floor
 with nothing to say so.
+
+## LM1 - THE TRANSFORMED MOVE SOUND, AND WHAT THE LEDGER HAD LEFT (2026-08-29)
+
+Asked what was next in the ledger, the honest answer turned out to be
+"almost nothing, and three of its headline claims are stale". The
+re-sweep is recorded in the ledger itself; this is the one row that was
+genuinely open, and the slice that closed it.
+
+`LycanthropyEffect.cs:201-211` + `:586-604`: while transformed, and
+only while transformed, a real-time timer counts down; on expiry the
+beast makes its move noise and the timer re-arms to a fresh
+`Random.Range(4, 20)` seconds. It is what makes walking around as a
+werewolf sound like anything - the port had the attack voices (V4) and
+the wereclaws (V5) and nothing in between.
+
+Three details are load-bearing and each has its own mutant:
+
+- **The timer is armed at the CURSE**, in `Start` (`:67`), not at the
+  first transform and not lazily on the first frame. A lazy arm burns a
+  frame and makes the first howl after a morph a fresh 4-20s instead of
+  the remainder of a wait already running. The first cut did exactly
+  that and the campaign's expectation caught it.
+- **The wait is real time**, `Time.deltaTime` inside ConstantEffect, so
+  a rested night queues no howls and time-scaled travel does not
+  either.
+- **The fire test is `< 0`, not `<= 0`.** A timer landing exactly on
+  zero waits one more frame. That is not pedantry: it is what the
+  arithmetic of a 20-second wait at a 0.5-second frame actually does,
+  and my own expectation was wrong about it before the code was.
+
+The whole block sits inside DFU's `if (isTransformed)`, so an
+untransformed lycanthrope does not tick the timer down at all -
+morphing back mid-wait and returning later **resumes** it. Ticked by
+all four hosts; in `worldModes` the arm sits deliberately outside the
+`if (magic)` block, because the beast makes its noise whether or not a
+cast engine was built.
+
+Pins: 8 in `test/lycanmove.test.js`. Campaign: 18 mutants, 18 killed -
+after one survivor that was **the mutant's fault, not the pin's**, and
+is worth writing down:
+
+**AN AMBIGUOUS MUTATION ANCHOR MUTATES THE WRONG CODE.** The gate
+mutant anchored on `if (!entry?.isTransformed) return null;` -
+`lycanthropy.js` has two of those lines, and the harness's
+`replace(old, new, 1)` took the first, which belongs to
+`lycanthropeAttackVoice`. The campaign then reported SURVIVED about a
+function this slice does not cover, and the pin it was supposedly
+testing was fine all along. Applying the same edit by hand with `sed`
+(no count limit) failed the pin immediately, which is what exposed it.
+A "survivor" is a claim about a specific edit; if the anchor is not
+unique, it is a claim about a different edit than the one you wrote.
