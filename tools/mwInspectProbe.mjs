@@ -53,15 +53,24 @@ await page.goto('http://localhost:5223/mw-inspect.html');
 
 // An archive shaped like RETAIL: it has xbase_anim.1st.nif and does NOT
 // have base_anim.1st.nif - exactly the situation the reverted rig died on.
+// MW-D2: the two arm meshes differ ON PURPOSE - the hand carries a
+// NiSkinInstance and the wrist does not - because a page that reports one
+// verdict for everything would pass a fixture where they agree.
+const nifRecs = (types) => {
+  const out = [...ascii('NetImmerse File Format, Version 4.0.0.2'), 0x0a, ...u32(0x04000002)];
+  for (const t of types) out.push(...u32(t.length), ...ascii(t), ...[7, 0, 0, 0, 1, 2, 3]);
+  return Uint8Array.from(out);
+};
 const bsa = buildBsa([
   { name: 'meshes\\XBase_Anim.1st.nif', data: nif('NetImmerse File Format, Version 4.0.0.2', 0x04000002) },
   { name: 'meshes\\Base_Anim_Female.1st.nif', data: nif('NetImmerse File Format, Version 4.0.0.2', 0x04000002) },
-  { name: 'meshes\\b\\B_N_Nord_M_Hand.nif', data: Uint8Array.from([1, 2, 3]) },
+  { name: 'meshes\\b\\H1.nif', data: nifRecs(['NiNode', 'NiTriShape', 'NiSkinInstance']) },
+  { name: 'meshes\\b\\W.nif', data: nifRecs(['NiNode', 'NiTriShape', 'NiTexturingProperty']) },
 ]);
 const esm = Uint8Array.from([
-  ...body('b_n_nord_m_hand.1st', 'nord', 'hand', { model: 'b/h1.nif' }),
-  ...body('b_n_nord_m_wrist', 'nord', 'wrist'),           // third-person only
-  ...body('b_n_nord_m_chest', 'nord', 'chest'),           // not an arm
+  ...body('b_n_nord_m_hand.1st', 'nord', 'hand', { model: 'b/H1.nif' }),
+  ...body('b_n_nord_m_wrist', 'nord', 'wrist', { model: 'b/W.nif' }),   // third-person only
+  ...body('b_n_nord_m_chest', 'nord', 'chest'),                          // not an arm
 ]);
 
 await page.setInputFiles('#file', [
@@ -71,7 +80,7 @@ await page.setInputFiles('#file', [
 await page.waitForSelector('#out table', { timeout: 10000 });
 const text = await page.textContent('#out');
 
-ok(/3 files/.test(text), 'the archive is read and its file count shown');
+ok(/4 files/.test(text), 'the archive is read and its file count shown');
 ok(/xbase_anim\.1st\.nif[\s\S]{0,80}present/.test(text), 'the REAL first-person skeleton is reported present');
 ok(/base_anim\.1st\.nif[\s\S]{0,120}ABSENT/.test(text),
   'and the name the reverted rig hardcoded is reported ABSENT');
@@ -85,6 +94,13 @@ ok(/hand[\s\S]{0,120}first-person record found/.test(text), 'the hand slot finds
 ok(/wrist[\s\S]{0,160}falls back to the third-person mesh/.test(text),
   'the wrist has no .1st record and the fallback is named as such');
 ok(/forearm[\s\S]{0,120}NOTHING for this slot/.test(text), 'a slot with no data says so plainly');
+
+ok(/SKINNED/.test(text), 'the skinned hand mesh is reported SKINNED');
+ok(/rigid/.test(text), 'and the unskinned wrist mesh is reported rigid');
+ok(/Both kinds are present here, so the rig must handle both/.test(text),
+  'and when the two disagree the page says so, instead of picking one');
+ok(/scan<\/b>, not a parse/.test(text) || /scan.{0,12}not a parse/.test(text),
+  'the verdict carries its own uncertainty on screen');
 
 // a corrupt archive must be named, not swallowed
 const bad = Uint8Array.from([...u32(0x102), ...u32(0), ...u32(0)]);

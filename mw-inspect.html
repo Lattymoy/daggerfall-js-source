@@ -48,6 +48,7 @@
 <script type="module">
 import {
   parseBsaIndex, readNifHeader, bodyParts, armReport, FP_SKELETONS, ARM_PARTS,
+  armMeshPaths, skinVerdict,
 } from '/src/tools/mwInspect.js';
 
 const out = document.getElementById('out');
@@ -159,6 +160,45 @@ function render() {
       h += `<p class="note">These four slots &mdash; ${ARM_PARTS.join(', ')} &mdash; are the only parts the `
         + 'engine lets fall back to a third-person mesh when the <code>1st</code> record is missing. That is a '
         + 'fallback rule, not the list of what gets drawn.</p>';
+
+      // MW-D2: and now the question the whole rig design rests on.
+      if (bsa) {
+        const have = new Map(bsa.index.files.map((f) => [f.name, f]));
+        h += '<h2>Are those arm meshes skinned, or rigid?</h2>';
+        h += '<table><tr><th>slot</th><th>mesh</th><th>in archive</th><th>verdict</th><th>records seen</th></tr>';
+        let anySkinned = false; let anyRigid = false; let anyMissing = false;
+        for (const p of armMeshPaths(armReport(parts, sel, fem))) {
+          if (!p.path) { h += `<tr><td>${esc(p.slot)}</td><td colspan="4" class="dim">no record</td></tr>`; continue; }
+          const f = have.get(p.path);
+          if (!f) {
+            anyMissing = true;
+            h += `<tr><td>${esc(p.slot)}</td><td><code>${esc(p.path)}</code></td>`
+              + '<td class="bad">not found</td><td colspan="2" class="dim">&mdash;</td></tr>';
+            continue;
+          }
+          const v = skinVerdict(bsa.bytes.subarray(f.offset, f.offset + f.size));
+          if (!v.ok) {
+            h += `<tr><td>${esc(p.slot)}</td><td><code>${esc(p.path)}</code></td><td class="ok">yes</td>`
+              + `<td class="bad" colspan="2">${esc(v.why)}</td></tr>`;
+            continue;
+          }
+          if (v.skinned) anySkinned = true; else anyRigid = true;
+          const top = v.census.slice(0, 4).map(([n, c]) => `${n}${c > 1 ? '&times;' + c : ''}`).join(', ');
+          h += `<tr><td>${esc(p.slot)}</td><td><code>${esc(p.path)}</code></td><td class="ok">yes</td>`
+            + `<td class="${v.skinned ? 'warn' : 'ok'}">${v.skinned ? 'SKINNED' : 'rigid'}`
+            + `</td><td class="dim">${top}</td></tr>`;
+        }
+        h += '</table>';
+        h += '<p class="note">This is a record-type <b>scan</b>, not a parse: it can tell you a '
+          + '<code>NiSkinInstance</code> is present in the file, and nothing more. It is here because the last '
+          + 'attempted fix assumed these meshes were <b>rigid</b> &mdash; parts hung off a bone &mdash; from '
+          + 'reading the engine\'s two attach paths, and never checked a real one. '
+          + (anySkinned && anyRigid ? '<b>Both kinds are present here, so the rig must handle both.</b>'
+            : anySkinned ? '<b>These are SKINNED. The rigid-parts assumption was wrong.</b>'
+              : anyRigid ? '<b>These are rigid, as assumed.</b>' : '')
+          + (anyMissing ? ' Some meshes were not found in the archive shown &mdash; those parts likely live in an '
+            + 'expansion archive that has not been attached.' : '') + '</p>';
+      }
     }
   }
 

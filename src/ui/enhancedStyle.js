@@ -1488,6 +1488,29 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .hud-magicka .hud-fill { background: #6f8fd9; }
 .hud-fatigue .hud-fill { background: #74d9a0; }
 
+/* PX30b: THE BREATH, above the vitals - drawn only while held, and
+   red below DFU's own short-on-breath line. */
+.hud-breath { display: none; align-items: center; gap: 8px; }
+.hud-breath.on { display: flex; }
+.hud-breath .hud-track { width: min(140px, 18vw); height: 8px; }
+.hud-breath .hud-fill { background: #f7ef29; }
+.hud-breath.short .hud-fill { background: #8a1f1f; }
+.hud-breathlabel { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: #7d7460; }
+
+/* PX30b: WHAT IS IN YOUR HANDS - the readied spell and the weapon, the
+   two things the reference's ability bar would hold if Daggerfall had
+   one. Each only when there is something in it. */
+.hud-hands { display: flex; gap: 10px; }
+.hud-hand { display: none; align-items: baseline; gap: 8px; padding: 3px 10px;
+  background: rgba(10,12,17,0.6); border: 2px solid rgba(125,116,96,0.45); }
+.hud-hand.on { display: flex; }
+.hud-handkind { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: #7d7460; }
+.hud-handname { font-size: 13px; color: #d8cfae; }
+.hud-readied.on { border-color: var(--brass); }
+.hud-readied .hud-handname { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+
 /* THE EFFECTS, beneath the bars. An expiring one takes the classic
    shadowed pair, which is what this UI has always used for urgency. */
 .hud-effects { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;

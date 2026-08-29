@@ -57,7 +57,11 @@ test('PX30: the HUD rides the ONE host-agnostic call, and the classic keeps its 
   const hud = read('src/ui/hud.js');
   // drawHud is what all four hosts already make, "last, over the
   // viewmodel" - the same reasoning the damage flash rides.
-  assert.match(hud, /if \(isEnhanced\(\) && typeof document !== 'undefined'\) \{\s*\n\s*drawEnhancedHud\(vitals, heading01, dt, \{ hidden: cursorActive \}\);\s*\n\s*return;/);
+  // PX30b gave the call the two hands; the shape it guards is
+  // unchanged - one branch, on the skin, and it RETURNS.
+  assert.match(hud, /if \(isEnhanced\(\) && typeof document !== 'undefined'\) \{\s*\n\s*drawEnhancedHud\(vitals, heading01, dt, \{/);
+  const branch = hud.slice(hud.indexOf('if (isEnhanced() && typeof document'));
+  assert.ok(branch.indexOf('return;') < branch.indexOf('if (!art) return;'), 'the enhanced branch returns');
   // ABOVE the `!art` return, like the flash: the enhanced HUD reads no
   // ARENA2, and a player whose HUD art failed still has vitals.
   assert.ok(hud.indexOf('drawEnhancedHud(') < hud.indexOf('if (!art) return;'), 'above the art gate');
@@ -91,4 +95,35 @@ test('PX30: it is a READOUT, and it is updated rather than rebuilt', () => {
   assert.doesNotMatch(src, /entity\?\.effects\?\.bundles/, 'no second walk');
   assert.match(read('src/ui/hudActiveSpells.js'), /import \{ liveBundles \} from '\.\.\/systems\/mysticism\.js'/,
     'the same one the classic icons read');
+});
+
+test('PX30b: the breath bar and the two hands - each only when there is one', () => {
+  const src = read('src/ui/enhancedHud.js');
+  const css = read('src/ui/enhancedStyle.js');
+  // THE BREATH is DFU's own two laws, imported rather than restated:
+  // drawn only while holding breath (Amount 0 draws nothing) and RED
+  // below (endurance >> 3) + 4.
+  assert.match(src, /const showBreath = held > 0;/);
+  assert.match(src, /breathShortThreshold\(liveStat\(vitals, 'endurance'\)\) > held/);
+  assert.match(src, /import \{ compassScroll, breathShortThreshold \} from '\.\/hud\.js'/,
+    'the threshold is the classic HUD\'s own');
+  assert.match(read('src/ui/hud.js'), /export const breathShortThreshold = \(liveEndurance\) => \(liveEndurance >> 3\) \+ 4;/);
+  assert.match(src, /maxBreath\(vitals\) \|\| 1/, 'and the ceiling is statMods\', not a number typed here');
+  assert.match(css, /\.hud-breath \{ display: none;[\s\S]{0,80}\.hud-breath\.on \{ display: flex; \}/);
+  // THE HANDS. The reference's ability bar has no Daggerfall
+  // equivalent - there are no hotkeyed abilities - but the two things
+  // it would hold do exist. Each plaque draws only when filled: an
+  // empty one is PX14's drawn door, and a HUD is the worst place for
+  // furniture that says nothing.
+  assert.match(src, /parts\.readied\.classList\.toggle\('on', !!readyName\);/);
+  assert.match(src, /parts\.weapon\.classList\.toggle\('on', !!weaponName\);/);
+  assert.match(css, /\.hud-hand \{ display: none;/);
+  assert.match(css, /\.hud-hand\.on \{ display: flex; \}/);
+  // The host hands them over through drawHud's own options bag, so a
+  // host that knows neither passes neither.
+  assert.match(read('src/ui/hud.js'), /readied = null, weapon = null \} = \{\}\)/);
+  assert.match(read('src/ui/hud.js'), /readied: readied \?\? null,\s*\n\s*weapon: weapon \?\? null,/);
+  // ...and both are still GUARDED writes, like everything else here.
+  assert.match(src, /if \(last\.readied !== readyName\) \{/);
+  assert.match(src, /if \(last\.weapon !== weaponName\) \{/);
 });
