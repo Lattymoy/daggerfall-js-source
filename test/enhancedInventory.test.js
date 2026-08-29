@@ -836,6 +836,7 @@ test('U59: the doll is the COMPOSITOR\'s, and the schematic is the fallback', ()
   const src = read('src/ui/enhancedInventory.js');
   // one compositor: the pane reads finished pixels and never blits
   assert.match(src, /paperDollPixels\(\)/);
+  assert.doesNotMatch(src, /\bblit\(/, 'and it still never blits');
   assert.match(src, /paperDollDataUrl\(paperDollPixels\(\), \{ scale: 4 \}\)/);   // PX20a: 4x, for a cell twice the size
   const code2 = code('src/ui/enhancedInventory.js');
   for (const law of ['BlitItems', 'applyDyeToIndex', 'paperdollOrder', 'PAPERDOLL_ORIGIN', 'BG_SUBRECT']) {
@@ -1104,4 +1105,40 @@ test('PX21f: a tooltip is not a scroll box, and the loot frame does not clip it'
   assert.doesNotMatch(css, /\.loot-win \{ position: relative;[\s\S]{0,240}overflow: hidden;/);
   assert.match(css, /\.loot-win \.remotehead \{ flex: 0 0 auto; \}/);
   assert.match(css, /\.loot-win \.remotelist \{ flex: 1; min-height: 0;/);
+});
+
+test('PX28: looting just TAKES - no second popup over the frame you are reading', () => {
+  // Mac: "when looting, there's a 2nd popup when you take something,
+  // there shouldn't be." `take()` set `picked = taken`, which raises
+  // the tooltip on the item that just moved. With the PACK open that
+  // is useful - the thing you took is selected in your bag, on the tab
+  // it landed in - so the selection is the PACK's behaviour, not the
+  // take's. In the loot-only flow it is a card nobody asked for.
+  const src = read('src/ui/enhancedInventory.js');
+  assert.match(src, /picked = packOpen \? taken : null;/);
+  assert.match(src, /if \(packOpen\) \{\n\s*side = 'local';/, 'and the side follows the pack, not the take');
+  assert.match(src, /tab = TABS\.find\(\(t\) => filterByTab\(\[taken\], t\)\.length\) \?\? tab;/,
+    'the tab-follows-the-item law is unchanged - it just belongs to the pack');
+  // The transfer itself is untouched: this slice changes what is SHOWN.
+  assert.match(src, /const taken = applyTransfer\(item, plan, from, bag\);/);
+  assert.match(src, /if \(plan\.claimsChoice\) \{/, 'G6\'s one-is-the-whole-gift arm still runs first');
+});
+
+test('PX29b: the doll is DFU\'s whole composite - the figure mask is REVERTED', () => {
+  // PX29 wrote a mask of "which pixels are the figure" so the pack
+  // could drop DFU's panel, and it blanked the doll ENTIRELY in play.
+  // The reason is the pin: `_pixels` publishes at the END of
+  // refreshPaperDoll - "the composite swaps in whole when done" - and
+  // the mask published at the START. Any pass that returned early left
+  // a VALID composite paired with an all-zero mask, so every pixel read
+  // as background.
+  const pd = read('src/ui/paperDoll.js');
+  assert.ok(!pd.includes('_figure'), 'the mask is gone, not merely unused');
+  assert.ok(!pd.includes('paperDollFigurePixels'), 'and so is the accessor');
+  assert.match(pd, /PX29, REVERTED \(PX29b\)/, 'and the file records why, for whoever tries it again');
+  // TWO BUFFERS DESCRIBING ONE IMAGE MUST SWAP IN TOGETHER. The
+  // composite's own law, which the mask broke by publishing early.
+  assert.match(pd, /_pixels = \{ width: PAPERDOLL_W, height: PAPERDOLL_H, rgba: out, version: _version \};/);
+  // Both windows draw the same composite again.
+  assert.match(read('src/ui/enhancedInventory.js'), /paperDollDataUrl\(paperDollPixels\(\), \{ scale: 4 \}\)/);
 });

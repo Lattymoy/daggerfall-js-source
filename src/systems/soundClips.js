@@ -35,8 +35,10 @@ export const SOUND = {
   AnimalCow: 103,
   SwingLowPitch: 105,
   SwingHighPitch: 106,
+  EnemyWerewolfMove: 142,    // LM1: the transformed MOVE sound (SoundClips.cs:213, :233)
   EnemyWerewolfBark: 143,    // V4: the lycanthrope's own attack voices (SoundClips.cs:214-215, :234-235)
   EnemyWerewolfAttack: 144,
+  EnemyWereboarMove: 157,
   EnemyWereboarBark: 158,
   EnemyWereboarAttack: 159,
   EnemyFemaleVampireBark: 199,   // V5: the vampire player's own gendered attack voices (SoundClips.cs)

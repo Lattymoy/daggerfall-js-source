@@ -143,7 +143,10 @@ test('F046/F047: the three pooled-token sites use GetRandomText, not a variant p
   assert.equal(picker.slice(0, 200).includes('plainText('), false, 'not the subrecord picker');
   // the pickpocket line (8999) and BOTH %oth expansions
   assert.ok(tt.includes('randomPooledText(FOUND_NOTHING_VALUABLE_TEXT_ID'), 'PlayerActivate.cs:1645');
-  assert.equal((tt.match(/randomPooledText\(oathTextId\(npcRace\), ''\)/g) ?? []).length, 2,
+  // RP1 made the race a LIVE read (npcRaceNow()) where it was a boot
+  // constant, so the pin anchors on the pooled picker and the oath id
+  // - the law - rather than on how the race is spelled at the call.
+  assert.equal((tt.match(/randomPooledText\(oathTextId\(.*?\), ''\)/g) ?? []).length, 2,
     'both %oth sites - TalkManagerMCP.Oath :133-143');
   // and randomVariant SURVIVES for the records that really are
   // variant-picked (the greeting/question ladders) - this is not a

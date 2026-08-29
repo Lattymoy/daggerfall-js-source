@@ -4405,3 +4405,416 @@ in kind:
   another costume - *a pin that greps for a call does not test that the
   call runs*. It matches the statement at its line start and
   indentation now.
+
+## FS1 - THE STALE-FLAG SWEEP: a delegation is checkable (2026-08-29)
+
+Six times in one run a flag's blocker shipped and the sentence stayed:
+EF1b, EF1c, CQ1b, TP1, RP1 - and then four at once in `world.js`.
+CQ1b's answer was a per-slice second-home pin, and it works, but only
+on the claim a slice is *about*. The population it cannot reach is
+every flag no slice is currently looking at, which is all of them.
+
+FS1's answer is to pin the one form of staleness that is
+**mechanically decidable**. A flag reading *"FLAGGED in `<file>.js`"*
+is not making a judgement call - it is **delegating**, and a
+delegation can be checked: the named file must carry a flag. That is
+the whole law, and it is deliberately narrow. *"FLAGGED with the
+palace blocks"* delegates to an **arc**, which is the board's to hold
+and not a file's; a guard that guessed at those would be measuring
+prose, and the narrow law is the one that can be true.
+
+Four sentences retired, each verified dead against the tree:
+
+- **the record-22 delegation.** `world.js` sent the reader to a flag
+  in `systems/healthStatus.js` saying the status text pends its macro
+  producers. ST1 shipped `statusInfoRows` **into that file** and
+  IM1/MH1 landed the producers - and the stale sentence sat *one line
+  above* ST1's own correction.
+- **"Routing F5/F6 into interiors is its own arc".** U43 shipped it:
+  `worldModes`' interior arm routes the whole `ui/input.js` table over
+  `interiorKeyCtx`, and U43's own comment says in as many words that
+  F5, F6, L, N and R "all died the moment you stepped through a shop
+  door" *before* it. **This one had a second home in `exterior.js`,
+  found by FS1's own second-home pin on its first run** - in a host
+  that builds no interior to step into, so the sentence was
+  second-hand there in the first place, which is how it outlived the
+  arc twice over.
+- **"melee strike frames resolve to nothing"** - written before
+  G1/G4/X. Forty lines below it a swing resolves against live guards,
+  then encounter foes, then wandering civilians.
+- **"targets pend the RMB animal/exterior-foe arc"** - written before
+  AR1. The `arrows.update` call directly above hands `foeTargets`
+  both live pools.
+
+The last two shared a comment with a clause that is **still true**
+(the open world really has no action objects in melee reach; static
+building doors are the E-enter seam, not bashables). **A sentence with
+one true clause keeps its false ones alive** - and a mutant deleting
+the true clause along with the false ones is in the campaign, because
+over-retiring is the equal and opposite failure.
+
+**And one delegation pointed at a flag nobody had ever written.**
+`world.js:1373` said the dungeon-mode enchant ctx was "FLAGGED there
+with the rest of its enchant wiring" in `dungeonContext.js`. It was
+not. `setDefaultEnchantCtx` has exactly **one** caller in the tree, so
+the standalone `?dungeon` host runs every arm that needs a host
+against no ctx at all - CastWhenUsed's CasterOnly assign and its
+click-to-cast ready, the vampiric-drain and affinity scans, SoulBound's
+break release. Every one is optional-chained, so it is **silent**:
+the AUDIT 24 seam shape exactly, a ported law evaporating with a green
+suite. This is the worse of the two failures - the work is real, and
+the ledger could not see it. The flag now lives in the file that owes
+the mount, and the pin asserts its load-bearing claim (one caller,
+`world.js`) so a second host mounting the ctx retires the flag by
+failing. The mount itself is its own slice: the world host's is ~90
+lines of live plumbing - spell-reflection re-targeting, per-foe sinks,
+the say sink - and none of it is host-portable by copy.
+
+Pins: 7 in `test/flagsweep.test.js`. Campaign: 16 mutants, 16 killed.
+One design note from writing it: the population pin (*the guard
+measures at least two delegations*) is not decoration. Comments wrap,
+so the path routinely lands a line or two below the words -
+`dungeonContext`'s `restWindow.js` delegation does exactly that - and
+the first single-line regex read the tree as nearly empty and passed.
+**A guard over an empty population is a green light that means
+nothing.**
+
+### What FS1 did NOT do: the ledger count is inflated
+
+`tools/regenOpenFlags.mjs` greps `FLAGGED|INTERIM` per line, and
+ALL-CAPS `INTERIM` is used two ways in the tree: as the marker, and as
+an ordinary noun for a thing that already shipped. `skills.js` says the
++10% "used to be INTERIM 0"; `itemInfo.js` says U8e "shipped an INTERIM
+info panel" that was then replaced; `playerEntity.js`'s pre-chargen
+INTERIM entity is *referred to* from six other files. Of 47 INTERIM
+lines a substantial share are mentions or past-tense retirements, so
+the count Mac reads overstates the open work.
+
+That is a real finding and FS1 does not fix it, because the fix is a
+classification of 47 sentences one at a time and not a regex - and
+half-doing it would leave the count wrong in a new way. It goes on the
+board as its own slice.
+
+## EC1 - THE ENCHANT CTX READS THE LIVE FOE POOL (2026-08-29)
+
+`world.js`'s enchant mount answered `[]` for its foe pool in **every
+mode but exterior** - which is the mode the player does not fight in.
+
+DFU has no scene gate here at all. `PlayerGPS.UpdateNearbyObjects`
+(`PlayerGPS.cs:747-777`) walks
+`ActiveGameObjectDatabase.GetActiveEnemyBehaviours()`, every active
+enemy in the scene; and `CastWhenStrikes` does not look a foe up at
+all (`CastWhenStrikes.cs:105`) - it assigns the bundle straight to the
+entity behaviour the strike already handed it. The port's lookup
+exists **only** because it needs the foe RECORD to reach that foe's
+damage and heal sinks. The gate was never DFU's.
+
+What the gate cost, in the streaming host, inside a dungeon: a
+CastWhenStrikes weapon found no record for the foe it had just struck
+and returned, so **paralysis, Wizard's Fire and the other ten classic
+strike spells did nothing**; the vampiric drain and both artifact
+affinity scans saw an empty room. Nothing threw and nothing was
+logged - the enchantment simply had no effect where the fighting is.
+
+And it really was the only ctx in play: **no host passes an
+`enchantCtx` at the strike site** (`formulas.js:465` defaults it
+`null`), so `mergeCtx` folds this one mount under every dispatch, in
+every mode. FS1 had just found the other half of the same hole - the
+standalone `?dungeon` host mounts no ctx at all - and that half is
+still open, now narrowed to exactly what remains true.
+
+**Detect was already right, and checking that mattered.** The obvious
+reading is that the same gate blinds Detect Enemy in a dungeon. It
+does not: each host draws its own HUD off its own feed, and
+`dungeonContext` has always had one holding that host's foes and
+piles. Widening the shared getter *without looking* would have been a
+fix aimed at a bug that was not there.
+
+**One change, two consumers.** `world.js`'s own detect feed has two
+readers and both are exterior arms - this frame's HUD markers, and
+`onDispel`, which removes what it dispels through
+`exteriorFoes.removeFoe`. So the feed keeps an explicit
+`exteriorFoePool()` rather than following the widened getter; widening
+the shared one would have handed dungeon records to the exterior
+pool's remover.
+
+**The two spawn arms refuse rather than misroute.** SoulBound's break
+release and the Sanguine Rose stand a foe through
+`exteriorFoes.spawnFoe`, which puts it in the *streaming world*. Fired
+from inside a dungeon that is a foe alive, ticking and invisible, in a
+world the player is not in. They now refuse in dungeon mode, FLAGGED:
+the dungeon spawner is `spawnQuestFoe`, and it binds a quest
+*behaviour* to what it stands, which a released soul has not - the
+behaviour-free door needs splitting out before this can route.
+Refusing is the honest answer meanwhile.
+
+The law lives in `shared.js` as two small functions rather than inline
+in the host, because it is exact and worth testing on its own: which
+pool is live, and whose sinks a record from it must go through.
+
+Pins: 9 in `test/enchantpool.test.js`, most of them behavioural
+against the extracted law rather than source sweeps. Campaign: 18
+mutants, 18 killed - after two survivors, both of which were mine:
+
+- one mutant was **behaviourally equivalent** (a dungeon with no ctx
+  fell through to `return []` either way). Replaced with one that
+  really differs - the no-ctx dungeon borrowing the exterior pool -
+  which the "must not consult the exterior thunk" pin kills.
+- the other called a bluff in my own code. `liveEnchantFoeSinks` took
+  the MODE as well as the pool, and dropping the mode term SURVIVED -
+  because no record is ever in both pools, so the term could not
+  change an answer. The term is gone. **An unfalsifiable term is not
+  caution; it is a second law that no test is holding**, and the
+  campaign is what tells the two apart.
+
+## SD1 - THE LOOSE FOE STANDS WHERE DFU STANDS IT (2026-08-29)
+
+SoulBound's break release and the Sanguine Rose's Daedroth are the two
+enchantments that put a foe in the world. Both dropped it at the
+player's feet plus a fixed `(+2, +1, 0)` - inside the player in a
+corridor, inside the wall against one - and EC1 had just made them
+refuse underground rather than stand it in the streaming world the
+player was not in.
+
+**The law they needed was already in the tree, and this slice started
+by writing a second copy of it.** B1 ported
+`FoeSpawner.PlaceFoeFreely` for the quest foe arm - the whole raycast
+ring, the surface-angle separation, the floor probe, the overlap
+refusal - and `world.js`'s own `tryPlaceFoe` twenty lines away stands
+its foes through it. A fresh `systems/foeSpawner.js` was written and
+deleted before it was committed, found only because the new call site
+sat near the old one. This is the ONE HOME law's own failure mode, and
+FS1 named it a slice earlier: *a stale claim is expensive because it
+sends someone to build what is already built.* Nothing about the flags
+sent me here - I simply did not look first.
+
+**What was genuinely missing is DFU's other rotation arm.**
+`PlaceFoeFreely` (:141-155) has two: `LineOfSightCheck` true tries to
+spawn just outside the player's field of view; false takes any bearing
+in the circle - DFU's own comment is *"Don't care about player's field
+of view (e.g. at rest)"*. Only the first was ported. It is not a corner
+case: **SoulBound passes false** (`SoulBound.cs:100`), so a released
+soul is allowed to appear in front of you, which is the whole character
+of the effect. The Sanguine Rose takes the default true, and allied
+(`SanguineRoseEffect.cs:56`). The two arms now differ exactly as their
+DFU callers differ, and nothing else about the law changed.
+
+Three details the wiring had to get right, each its own mutant:
+
+- **`minDistance` is 4, not 5.** `PlaceFoeFreely`'s signature says 5,
+  but it is always handed the *spawner's fields*, and
+  `CreateFoeSpawner`'s defaults (`GameObjectHelper.cs:1314`) are 4/20.
+  The band has to be passed or the enchantment callers silently get
+  the wrong one.
+- **The dungeon is raycast against the DUNGEON's geometry.** The ring
+  is a collider query; running it against the exterior collider from
+  inside a dungeon answers about a world the player is not in.
+- **The occupancy term reads EC1's live pool**, so a dungeon foe
+  blocks a dungeon spawn - the two slices compose rather than each
+  knowing half the answer.
+
+`dungeonContext` gains the behaviour-free door EC1 flagged for:
+`spawnLooseFoe` is `spawnQuestFoe` minus the `bindQuestFoeHost` call,
+and `spawnQuestFoe` is now built on it rather than being a second copy
+of the build chain. It carries MT-ii's allied law, the same two lines
+`exteriorFoes` has: both per-instance fields turn and the shared frozen
+basics row does not.
+
+Interiors still refuse. That is EC1's answer and still the honest one -
+there is no foe pool there to stand anything in.
+
+The retry is the port's own call. DFU's spawner is a MonoBehaviour that
+costs nothing to leave running, so it retries every frame for ever; a
+bounded 12 attempts is here because a spawn that cannot find a spot in
+a sealed corridor must not spin. Pinned as a bound, so removing it
+fails.
+
+Pins: 9 in `test/loosefoespawn.test.js`, the placement ones behavioural
+against scripted rolls. Campaign: 25 mutants, 25 killed. Two of the
+first-run failures were mine and worth recording: **the side coin is
+`> 0.5 ? -angle : +angle`**, so the high roll is the MINUS side and my
+first two expectations were simply backwards - the code was right. And
+**EC1's own pin went red**, correctly: it asserted the refusal SD1
+retired. Its law did not change - never stand a foe in a world the
+player is not in - so it now holds the interior refusal, which is the
+part that survives.
+
+A THIRD pin went red at `npm run check`, after the campaign was already
+green: MT-ii's summon pin in `artifacts.test.js` quoted the literal
+`exteriorFoes.spawnFoe(mobileType, [pf[0] + 2, ...], { allied: true })`
+- the fixed offset - so it failed for a change that strengthened
+exactly what it was defending. Re-anchored on the law (the door is
+mounted, and it carries `allied` into whichever live pool stands the
+foe), which is F041's own precedent, and `artifacts.test.js` joined the
+campaign so the new anchor is mutation-checked too. **A slice's
+campaign only covers the suites it runs; the full check is what finds
+the pin in the next room.**
+
+## IN1 - THE HARVEST COUNTED QUOTATIONS AND IDENTIFIERS AS FLAGS (2026-08-29)
+
+FS1 recorded that the open-flags count is inflated and deliberately did
+not fix it, because most of the inflation is prose. IN1 is the part
+that is not prose.
+
+`tools/regenOpenFlags.mjs` grepped `/FLAGGED|INTERIM/` per line, so two
+kinds of line that are not open work sat on the board:
+
+- **an identifier that starts with the token.** `INTERIM_WEAPON` is a
+  frozen export; its declaration, its default parameter and every
+  mention of it by name were all listed as open flags.
+- **a quotation.** A correction that says what it retired has to write
+  the retired words down - and writing them down put the flag straight
+  back on the board. **The tree had already grown a workaround for
+  this**: `dungeonContext` quoted a retired flag with the token
+  deliberately lower-cased and said so in the comment, adding that this
+  is "how eleven retirement notes are already sitting there". That is
+  EF1c's lesson leaking out of the pins and into the ledger, so the fix
+  is EF1c's own rule - strip quoted spans, then look. The quote is
+  verbatim again, and the count it asserted is gone: nothing measured
+  it, and I could not measure it either (see below).
+
+**The strip has to be whole-file, and then bounded.** Comments wrap,
+and the quotation that forced the workaround wraps: the opening `"` and
+the token on one line, the closing `"` on the next, so a per-line strip
+sees an unpaired quote and strips nothing. But prose quotes do not
+always pair - a comment quoting DFU can close a quotation opened many
+lines above - so a generous span mis-pairs and blanks whatever sits
+between two unrelated quotes. **A 400-character bound did exactly that
+on the first run and swallowed `talkMacros`' GetValue flag, an open
+one.** The span is capped at two newlines now, which reaches a wrapped
+quotation and cannot reach across a paragraph.
+
+**The failure direction is the design.** Missing a quotation leaves a
+retired flag listed, which a reader can see and dismiss; blanking an
+open flag hides real work, which nobody sees at all. The bound is
+chosen to fail the first way.
+
+**One home, and the guard proved why.** The rule now lives in
+`tools/flagSites.mjs`; the tool and `test/audit18_bible_docs.test.js`
+both import it. They had carried a copy each - and the guard went red
+the moment the tool learned the new rule, which is precisely what two
+copies buys. 165 sites -> 155.
+
+### What IN1 refused to do
+
+The rest of FS1's inflation is the past-tense case: a block that
+mentions a flag in order to say it is **gone**. I wrote a heuristic for
+it and it over-matched badly - it flagged
+`guildServiceWindow`'s "FLAGGED: DFU binds each button to a
+DaggerfallShortcut hotkey" and a dozen more like it, open flags whose
+blocks merely carry a paragraph of history. That is not a rule, it is a
+guess with a number attached.
+
+So it stays open, and the tool's own comment says so. **A wrong count is
+worse than a known-incomplete one** - and asserting one is exactly what
+the sentence IN1 just deleted was doing.
+
+Pins: 8 in `test/flagsites.test.js`. Campaign: 12 mutants, 12 killed -
+including the unbounded span that swallowed a real flag, pinned with
+the `talkMacros` shape that caught it.
+
+## RE1 - THE RANDOM ENCOUNTER STANDS WHERE DFU STANDS IT (2026-08-29)
+
+Every random-spawn arm in `PlayerEntity` goes out through
+`GameObjectHelper.CreateFoeSpawner`, which is
+`FoeSpawner.PlaceFoeFreely`: a bearing chosen against the field of
+view, backed off whatever the ray hits by a separation the surface
+angle decides, on a floor found below, in space nothing already
+occupies.
+
+Both port hosts instead walked **eight compass points** at
+`minDistance` and took the first with ground under it. That is three
+wrongs at once:
+
+- the foe arrives **due north** of the player unless north is blocked -
+  the loop starts at bearing 0 and breaks on the first hit;
+- it can stand **inside a wall**: nothing tested the space, only the
+  ground beneath it;
+- it can **share a spot** with a foe already standing there.
+
+SD1 made the law consumable from a host and added the arm this needed.
+RE1 carries the call sites' arguments as data, because **the three
+encounter arms do not pass the same things**:
+
+| arm | min | max | LOS |
+|---|---|---|---|
+| location night (`PlayerEntity.cs:574`) | 10 | 20 | true |
+| wilderness (`:594`) | 10 | 20 | true |
+| **dungeon rest (`:610`)** | 8 | 20 | **false** |
+| SpawnCityGuards (`:687`) | 12.8 | 51.2 | true |
+
+The maximum is `CreateFoeSpawner`'s own default wherever the call site
+does not pass one, which is why it is 20 three times and not
+`PlaceFoeFreely`'s signature 5.
+
+**The dungeon arm alone clears the line-of-sight check, and it is the
+one a player feels.** Set, the foe is placed just outside your view -
+you hear it before you see it. Cleared, it takes any bearing in the
+circle, and DFU's own comment says why: *"Don't care about player's
+field of view (e.g. at rest)"*. A monster that finds you asleep in a
+dungeon is allowed to be standing over you when you wake. The port had
+no such distinction to lose, because it had no bearing law at all.
+
+`SpawnCityGuards` is carried in the table and **not wired**. The port
+stands guards through the street-person pool - `cityGuards`'
+`spawnGuardAt` takes a person's own position and facing - which is a
+different placement problem from this ring. The row exists so the table
+is the whole call-site list and a reader can see what is not wired,
+rather than the row quietly not being there.
+
+Pins: 6 in `test/encounterplace.test.js`. Campaign: 22 mutants, 22
+killed, after one survivor: the dungeon host's **flier lift** had no
+pin, though the exterior one did. FinalizeFoe raises a flying foe 1.5
+above the test point, and a bat woken at rest was standing on the floor
+with nothing to say so.
+
+## LM1 - THE TRANSFORMED MOVE SOUND, AND WHAT THE LEDGER HAD LEFT (2026-08-29)
+
+Asked what was next in the ledger, the honest answer turned out to be
+"almost nothing, and three of its headline claims are stale". The
+re-sweep is recorded in the ledger itself; this is the one row that was
+genuinely open, and the slice that closed it.
+
+`LycanthropyEffect.cs:201-211` + `:586-604`: while transformed, and
+only while transformed, a real-time timer counts down; on expiry the
+beast makes its move noise and the timer re-arms to a fresh
+`Random.Range(4, 20)` seconds. It is what makes walking around as a
+werewolf sound like anything - the port had the attack voices (V4) and
+the wereclaws (V5) and nothing in between.
+
+Three details are load-bearing and each has its own mutant:
+
+- **The timer is armed at the CURSE**, in `Start` (`:67`), not at the
+  first transform and not lazily on the first frame. A lazy arm burns a
+  frame and makes the first howl after a morph a fresh 4-20s instead of
+  the remainder of a wait already running. The first cut did exactly
+  that and the campaign's expectation caught it.
+- **The wait is real time**, `Time.deltaTime` inside ConstantEffect, so
+  a rested night queues no howls and time-scaled travel does not
+  either.
+- **The fire test is `< 0`, not `<= 0`.** A timer landing exactly on
+  zero waits one more frame. That is not pedantry: it is what the
+  arithmetic of a 20-second wait at a 0.5-second frame actually does,
+  and my own expectation was wrong about it before the code was.
+
+The whole block sits inside DFU's `if (isTransformed)`, so an
+untransformed lycanthrope does not tick the timer down at all -
+morphing back mid-wait and returning later **resumes** it. Ticked by
+all four hosts; in `worldModes` the arm sits deliberately outside the
+`if (magic)` block, because the beast makes its noise whether or not a
+cast engine was built.
+
+Pins: 8 in `test/lycanmove.test.js`. Campaign: 18 mutants, 18 killed -
+after one survivor that was **the mutant's fault, not the pin's**, and
+is worth writing down:
+
+**AN AMBIGUOUS MUTATION ANCHOR MUTATES THE WRONG CODE.** The gate
+mutant anchored on `if (!entry?.isTransformed) return null;` -
+`lycanthropy.js` has two of those lines, and the harness's
+`replace(old, new, 1)` took the first, which belongs to
+`lycanthropeAttackVoice`. The campaign then reported SURVIVED about a
+function this slice does not cover, and the pin it was supposedly
+testing was fine all along. Applying the same edit by hand with `sed`
+(no count limit) failed the pin immediately, which is what exposed it.
+A "survivor" is a claim about a specific edit; if the anchor is not
+unique, it is a claim about a different edit than the one you wrote.

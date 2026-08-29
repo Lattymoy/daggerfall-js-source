@@ -54,7 +54,7 @@ import { clearSceneCache } from '../systems/sceneCache.js';   // P1: SaveLoadMan
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
 import { createTravelMapWindow, travelMapDoorReady, preloadTravelMapArt, canFindPlace } from '../ui/travelMapDoor.js';   // W1's classic art window + U61's overworld, one door
 import { racialRestBlock, racialFastTravelBlock, cureVampirism } from '../systems/vampirism.js';   // V2b: the vampire's rest and daylight gates; V2d: $CUREVAM's cure arm
-import { cureLycanthropy, racialSuppressPopulationSpawns, racialSuppressInventory, racialSuppressTalk } from '../systems/lycanthropy.js';   // V2d: $CUREWER's cure arm; V4: the transformed gates
+import { cureLycanthropy, racialSuppressPopulationSpawns, racialSuppressInventory, racialSuppressTalk, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V2d: $CUREWER's cure arm; V4: the transformed gates; LM1: the 4-20s move-sound loop
 import { setRacialQuestHost } from '../systems/racialQuests.js';   // V2d: the quest-start seam (the machine is this host's)
 import { setCrimeGuildQuestHost, setCrimeGuildClock } from '../systems/crimeGuilds.js';   // CG2
 import { randomCemeteryLocationIndex } from '../systems/infection.js';   // V2e: GetRandomCemetery's pick half
@@ -86,6 +86,7 @@ import { spellRecordOfIndex } from '../systems/loot.js';   // QG1: CastSpellDo's
 import { LevelUpScreen, preloadCharSheetArt } from '../ui/charsheet.js';   // U8a (LevelUpScreen: AUDIT 21 hosts F3)
 import { createCharSheetWindow, charSheetDoorReady } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
+import { createChronicleWindow } from '../ui/chronicleDoor.js';   // PX24d: the chronicle's one door
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15: the Tab compass rose
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
@@ -122,7 +123,7 @@ import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_
 import { audio } from '../systems/audio.js';
 import { music } from '../systems/music.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
-import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, claimFrame, frameAlive, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills } from './shared.js';   // TP1: PlayerEntity.RaiseSkills
+import { fetchBytes, loadMagicRegistries, parseSeason, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, claimFrame, frameAlive, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
 import { PlayerMotor, startRestGroundedCheck } from '../player/motor.js';   // StartRestGroundedCheck's ONE home
@@ -851,9 +852,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   // T3b: the town interaction seam (modes/talk/pickpocket) - the same
   // module the exterior host mounts (the standing host rule). It is
   // also this host's first HUD-text layer; the rig's say routes there.
-  // FLAGGED loud: the People faction rides the START location's
-  // region - cross-region streaming keeps the boot region's people
-  // until the current-pixel region wiring lands with travel.
+  // RP1: the People faction, the NPC race and the map-discovery key all
+  // read the CURRENT region now. The flag that stood here said this
+  // waited on "the current-pixel region wiring [landing] with travel" -
+  // and _questRegionIndex below IS that wiring, shipped: it is the same
+  // PlayerGPS.CurrentRegionIndex read the quest bridge, the map table
+  // and the name bank already go through.
   // TK-v: the talk ENGINE the host window draws through. Assigned
   // after all four are built (they reference each other), so townTalk
   // reads it lazily through the getter below.
@@ -861,7 +865,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   const townTalk = createTownTalk({
     talkEngine: () => talkEngineRef,
     renderer, canvas, fetchBytes, playerEntity, palette,
-    regionIndex: startLoc.regionIndex,
+    // RP1: a GETTER, not startLoc's number - see the note above. It is
+    // declared below this call, so the arrow defers the read to call
+    // time, which is what makes it live in the first place.
+    regionIndex: () => _questRegionIndex(),
     onCrime: () => _crimeResponse(),   // G1: late-bound - the guards mount below
     // QP1: GetBuildingList's questor half lands in the pool. Late-bound
     // like onCrime - npcSession mounts below, and the first topics set
@@ -1164,16 +1171,17 @@ export async function bootWorld(canvas, renderer, params, status) {
         playerLevel: playerEntity.level,
       });
       if (hit) {
-        // eight compass points at the classic distance, terrain-landed
-        for (let d = 0; d < 8; d++) {
-          const a = (d * Math.PI) / 4;
-          const x = playerFeet[0] + Math.sin(a) * hit.minDistance;
-          const z = playerFeet[2] + Math.cos(a) * hit.minDistance;
-          const down = collider.raycast([x, playerFeet[1] + 20, z], [0, -1, 0], 60);
-          if (!Number.isFinite(down)) continue;
-          exteriorFoes.spawnFoe(hit.mobileType, [x, playerFeet[1] + 20 - down, z]).catch(() => {});
-          break;
-        }
+        // RE1: DFU's own placement. This used to walk eight compass
+        // points at minDistance and take the first with ground under
+        // it - so an encounter arrived due NORTH of the player unless
+        // north was blocked, could stand inside a wall the ray never
+        // tested, and could share a spot with something already
+        // standing there. PlayerEntity's arms all go out through
+        // CreateFoeSpawner, which is PlaceFoeFreely, which is the
+        // function the quest arm and the enchantment arms already use.
+        // The band and the line-of-sight flag ride in on the hit -
+        // they are the spawner's arguments and differ per arm.
+        _standEncounterFoe(hit, playerFeet);
         break;
       }
       // PlayerEntity.Update:498-511 - the SAME minute's second arm,
@@ -1364,8 +1372,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   // saves rolled. nearbyFoes serves the affinity scans off the live
   // pools; spawnFoe is SoulBound's break release. The interior mode
   // shares this mount (its foes list is empty, so the scan arms answer
-  // none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
-  // there with the rest of its enchant wiring. S40 filled isResting
+  // none); the dungeon-mode ctx is dungeonContext's to mount. FS1:
+  // that used to read "FLAGGED there with the rest of its enchant
+  // wiring", and there was no flag there - setDefaultEnchantCtx has
+  // exactly one caller in the tree, this one, so the standalone
+  // ?dungeon host runs every CastWhenUsed / CastWhenStrikes / SoulBound
+  // / affinity arm against no ctx at all. They are optional-chained, so
+  // it is silent. The flag now exists where the work does. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
   // ground (no rest window here yet)", and this slice put one here.
   // V2c filled inSunlight/inHolyPlace in the same way: the answers
@@ -1375,9 +1388,127 @@ export async function bootWorld(canvas, renderer, params, status) {
   // (the player's feet, and exterior mode's foe pool), and one
   // definition beats two that can drift.
   const enchantFeet = () => (walkMode && playerSpawned ? player.pos : cam.pos);
-  const enchantFoes = () => ((modes?.mode ?? 'exterior') === 'exterior' ? [...cityGuards.guards, ...exteriorFoes.foes] : []);
+  // EC1 - THE LIVE FOE POOL. This answered `[]` in every mode but
+  // exterior, which is the mode the player does not fight in. DFU has
+  // NO scene gate here at all: PlayerGPS.UpdateNearbyObjects
+  // (PlayerGPS.cs:747-777) walks ActiveGameObjectDatabase
+  // .GetActiveEnemyBehaviours() - every active enemy in the scene -
+  // and CastWhenStrikes does not look a foe up at all
+  // (CastWhenStrikes.cs:105), it assigns the bundle to the entity
+  // behaviour the strike already handed it. The port needs the lookup
+  // only because it needs the RECORD to reach that foe's sinks; the
+  // gate was never DFU's.
+  //
+  // What the gate cost, in the streaming host, inside a dungeon: a
+  // CastWhenStrikes weapon found no record for the foe it had just
+  // struck and returned, so paralysis, Wizard's Fire and the other ten
+  // classic strike spells did NOTHING; the vampiric drain and both
+  // artifact affinity scans saw an empty room. Nothing threw and
+  // nothing was logged - the enchantment simply had no effect where
+  // the fighting is. The one ctx in play is this mount: no host passes
+  // an enchantCtx at the strike site (formulas.js:465 defaults it
+  // null), so mergeCtx folds this default under every dispatch.
+  // The law itself is in shared.js, tested on its own - which pool is
+  // live, and whose sinks a record from it must go through. This host
+  // supplies the three live reads it asks for.
+  const _mode = () => (modes?.mode ?? 'exterior');
+  const _dungeonPool = () => (_mode() === 'dungeon' ? (modes?.dungeonCtx ?? null) : null);
+  const enchantFoes = () => liveEnchantFoes(_mode(), modes?.dungeonCtx ?? null, () => [...cityGuards.guards, ...exteriorFoes.foes]);
+  const enchantFoeSinks = (f) => liveEnchantFoeSinks(f, modes?.dungeonCtx ?? null, foeSinks);
+  /** SD1: stand a loose foe - SoulBound's break release, the Sanguine
+   *  Rose's Daedroth - through DFU's OWN placement law, in whichever
+   *  world the player is actually standing in.
+   *
+   *  Both arms used to drop the foe at the player's feet plus a fixed
+   *  (+2, +1, 0): inside the player in a corridor, inside the wall
+   *  against one. placeFoeFreely is the same law the quest foe arm
+   *  already stands its foes through (tryPlaceFoe above) - one home,
+   *  and it was already here.
+   *
+   *  minDistance 4, not the function's own 5: CreateFoeSpawner's
+   *  defaults (GameObjectHelper.cs:1314) are the spawner FIELDS both
+   *  enchantment callers get, and PlaceFoeFreely is handed those
+   *  rather than its own signature defaults.
+   *
+   *  The law REFUSES a spot DFU would have rejected - no floor under
+   *  it, something already there, too close to the wall the ray found
+   *  - and DFU's spawner simply tries again next frame. This retries
+   *  the same way. The budget is the port's own call: DFU leaves a
+   *  MonoBehaviour running for free, and a spawn that cannot find a
+   *  spot in a sealed corridor must not spin here. */
+  const LOOSE_FOE_PLACE_ATTEMPTS = 12;
+  /** RE1: an intermittent encounter, stood through DFU's placement.
+   *  Separate from _standLooseFoe because the two differ in what they
+   *  are: a loose foe is summoned AT the player and takes the enchant
+   *  ctx's live pool, an encounter is rolled by the world clock, is
+   *  always exterior (the dungeon arm is dungeonContext's), and
+   *  carries its own band. Same law, same retry rule, different
+   *  arguments - which is exactly how DFU's call sites differ. */
+  const _standEncounterFoe = (hit, feet) => {
+    const env = placeFoeEnv({
+      collider,
+      playerFeet: [feet[0], feet[1] + 0.9, feet[2]],
+      playerYawRad: cam.yaw,
+      fovDegrees: fieldOfView() * 180 / Math.PI,
+      isOccupied: entityOccupancy((f) => f.ai?.feet, () => exteriorFoePool(), feet),
+    });
+    let spot = null;
+    for (let i = 0; i < LOOSE_FOE_PLACE_ATTEMPTS && !spot; i++) {
+      spot = placeFoeFreely(env, {
+        minDistance: hit.minDistance, maxDistance: hit.maxDistance,
+        lineOfSightCheck: hit.lineOfSightCheck,
+      });
+    }
+    if (!spot) return null;
+    const fly = (ENEMY_BASICS[hit.mobileType]?.behaviour ?? 'General') === 'Flying';
+    return exteriorFoes.spawnFoe(hit.mobileType, [spot.x, fly ? spot.y + 1.5 : spot.y, spot.z], {
+      yaw: Math.atan2(feet[0] - spot.x, feet[2] - spot.z),   // LookAt player
+    }).catch(() => null);
+  };
+  const _standLooseFoe = (mobileType, { allied = false, lineOfSightCheck = true } = {}) => {
+    const mode = _mode();
+    // Interiors have no foe pool to stand one in, so they still refuse
+    // - EC1's answer, and the honest one until a pool exists.
+    if (mode !== 'exterior' && mode !== 'dungeon') return null;
+    const d = _dungeonPool();
+    const feet = enchantFeet();
+    const env = placeFoeEnv({
+      collider: d ? d.collider : collider,
+      // origin at the controller centre, as tryPlaceFoe has it - DFU
+      // casts from PlayerObject.transform.position, not the feet
+      playerFeet: [feet[0], feet[1] + 0.9, feet[2]],
+      playerYawRad: cam.yaw,
+      fovDegrees: fieldOfView() * 180 / Math.PI,   // fieldOfView() answers RADIANS
+      isOccupied: entityOccupancy((f) => f.ai?.feet, () => enchantFoes(), feet),
+    });
+    let spot = null;
+    for (let i = 0; i < LOOSE_FOE_PLACE_ATTEMPTS && !spot; i++) {
+      spot = placeFoeFreely(env, { minDistance: 4, maxDistance: 20, lineOfSightCheck });
+    }
+    if (!spot) return null;
+    // FinalizeFoe (FoeSpawner.cs:210-226): a FLYING foe lifts 1.5 from
+    // the test point; walkers land through the pool's own chain.
+    const fly = (ENEMY_BASICS[mobileType]?.behaviour ?? 'General') === 'Flying';
+    const pos = [spot.x, fly ? spot.y + 1.5 : spot.y, spot.z];
+    const yaw = Math.atan2(feet[0] - spot.x, feet[2] - spot.z);   // LookAt player
+    const stand = d
+      ? d.spawnLooseFoe(mobileType, pos, { yawRad: yaw, allied })
+      : exteriorFoes.spawnFoe(mobileType, pos, { yaw, allied });
+    return Promise.resolve(stand).catch(() => null);
+  };
+  /** EC1: THIS host's own pools, exterior only - and deliberately NOT
+   *  enchantFoes(), which now answers the live mode's. Two consumers
+   *  read this feed and both are exterior arms: the HUD Detect markers
+   *  drawn by this frame (dungeon mode draws dungeonContext's HUD off
+   *  dungeonContext's own feed, which has always held that host's foes
+   *  and piles), and onDispel, which removes what it dispels through
+   *  exteriorFoes.removeFoe. Widening the shared getter without
+   *  splitting these would have handed dungeon records to the exterior
+   *  pool's remover - one change, two consumers, and only one of them
+   *  wanted it. */
+  const exteriorFoePool = () => [...cityGuards.guards, ...exteriorFoes.foes];
   const detectFeed = createDetectFeed(playerEntity, {
-    entities: () => enchantFoes().filter((f) => !f.dead && f.ai).map(foeNearbyRecord),
+    entities: () => exteriorFoePool().filter((f) => !f.dead && f.ai).map(foeNearbyRecord),
     // FX1 (F207): UpdateNearbyObjects walks EVERY active DaggerfallLoot
     // with no scene gate (PlayerGPS.cs:747, :766-776) - the world piles
     // the player drops and the lootable corpse containers both mark
@@ -1385,7 +1516,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // piles above ground", false since droppedLoot mounted.
     loot: () => [
       ...droppedLoot._piles.map(lootNearbyRecord),
-      ...[...cityGuards.guards, ...exteriorFoes.foes]
+      ...exteriorFoePool()
         .filter((f) => !!f.corpse && !!f.entity)
         .map((f) => lootNearbyRecord({ pos: f.corpseMarker?.pos ?? f.ai?.feet ?? null, items: f.entity.items ?? [] })),
     ],
@@ -1426,13 +1557,13 @@ export async function bootWorld(canvas, renderer, params, status) {
         const casterOf = () => {
           if (!attacker) return null;
           if (attacker === playerEntity) return { entity: playerEntity, sinks: playerSpellSinks };
-          return af ? { entity: attacker, sinks: foeSinks(af) } : { entity: attacker };
+          return af ? { entity: attacker, sinks: enchantFoeSinks(af) } : { entity: attacker };
         };
         if (target === playerEntity) { magic.applySpellToPlayer(record, attacker?.level ?? 1, casterOf()); return; }
         const f = enchantFoes().find((x) => !x.dead && x.entity === target);
         if (!f) return;
         const caster = casterOf();
-        const r = applySpell(record, attacker?.level ?? 1, target, foeSinks(f), Math.random, caster);
+        const r = applySpell(record, attacker?.level ?? 1, target, enchantFoeSinks(f), Math.random, caster);
         // The same re-target hostMagic does for the cast paths - this
         // door is the enchantment path's equivalent seam.
         if (r.reflected && caster?.entity) {
@@ -1454,17 +1585,22 @@ export async function bootWorld(canvas, renderer, params, status) {
             // (SanguineRoseEffect.cs:47-48, SkullOfCorruptionEffect
             // .cs:47-48), so your own standing summons never count.
             team: f.entity?.team ?? 'PlayerEnemy',
-            hurt: (n) => foeSinks(f).hurt(n),
+            hurt: (n) => enchantFoeSinks(f).hurt(n),
           }));
       },
-      spawnFoe: (mobileType) => {
-        const pf = enchantFeet();
-        exteriorFoes.spawnFoe(mobileType, [pf[0] + 2, pf[1] + 1, pf[2]]).catch(() => {});
-      },
-      spawnAlliedFoe: (mobileType) => {
-        const pf = enchantFeet();
-        exteriorFoes.spawnFoe(mobileType, [pf[0] + 2, pf[1] + 1, pf[2]], { allied: true }).catch(() => {});
-      },
+      // SD1: the two SPAWN arms - SoulBound's break release and the
+      // Sanguine Rose's Daedroth. EC1 made them refuse underground
+      // rather than stand a foe in the streaming world the player was
+      // not in; SD1 gives them the door they were refusing for want
+      // of, and DFU's placement law on the way through.
+      //
+      // Both go through _standLooseFoe, which is where the two callers
+      // differ exactly as DFU has them differ: SoulBound passes
+      // lineOfSightCheck FALSE (SoulBound.cs:100 - a released soul may
+      // appear in front of you), the Sanguine Rose takes the default
+      // TRUE and allied TRUE (SanguineRoseEffect.cs:56).
+      spawnFoe: (mobileType) => { _standLooseFoe(mobileType, { lineOfSightCheck: false }); },
+      spawnAlliedFoe: (mobileType) => { _standLooseFoe(mobileType, { allied: true }); },
       // V3: the artifact doors. messageBox is Azura's TEXT.RSC popup
       // (the infection host's flatten, at this consumer);
       // openCharacterSheet is the Oghma's sheet push; replaceFoe is
@@ -1644,7 +1780,21 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  Notebook page (DaggerfallUI.cs:704-711). */
   const makeJournalWindow = (mode) => {
     preloadQuestJournalArt({ renderer, fetchBytes, palette });
-    return new QuestJournalWindow({
+    // PX24d: THROUGH THE DOOR. PX24 built ui/chronicleDoor.js and the
+    // enhanced window behind it and then hung the door on nothing -
+    // the seam had ZERO callers, so the chronicle was unreachable in
+    // play and the Stats page's Chronicle button opened the CLASSIC
+    // journal. This is the same shape spellbookDoor's callers use: the
+    // host hands over what only it knows, and the door picks the skin.
+    return createChronicleWindow({
+      entity: playerEntity,
+      // Which page the ENHANCED window opens on. The classic modes map
+      // onto the two sections the chronicle actually holds: the
+      // notebook is Notes, the message log is Messages. The two quest
+      // modes have no page here on purpose - the pause window has
+      // carried quests since PX4 - so they land on Notes, and the
+      // CLASSIC window still gets the mode itself, below.
+      section: mode === 'messages' ? 'messages' : 'notes',
       questMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
       notebook: () => questBridge?.notebook ?? null,
       mode,
@@ -2430,11 +2580,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     // mount; this reads the same ones rather than a third copy.
     toggleCharSheet: () => townTalk.showOverlay(makeCharSheetWindow()),
     // BS1/F198: the Status action's HEALTH box (CreateHealthStatusBox)
-    // - which disease you carry, once incubation is over. The record-22
-    // status text that precedes it in DFU's DisplayStatusInfo chain is
-    // FLAGGED in systems/healthStatus.js (macro producers pend).
+    // - which disease you carry, once incubation is over.
     // ST1: DisplayStatusInfo's chain - the record-22 status text
     // first, the health box on its dismissal (AddNextMessageBox).
+    // FS1: the sentence between these two used to send the reader to
+    // "a FLAG in systems/healthStatus.js (macro producers pend)". ST1
+    // shipped statusInfoRows INTO that file and the macro producers
+    // landed with IM1/MH1, so the flag it pointed at does not exist -
+    // and it sat one line above the correction that says so.
     showStatus: () => {
       const rows = (id) => townTalk.lines(id);
       townTalk.showOverlay(new ActionTextBox(statusInfoRows(rows, questBridge?.machine?.macroContext?.() ?? null))
@@ -2457,7 +2610,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the reference's four; every door below exists on this ctx, so
     // no arm is dead.
     toggleDial: () => openPixelDial([
-      { id: 'skills', label: 'Skills', dir: 'n', open: () => hudCtx.toggleCharSheet() },
+      { id: 'skills', label: 'Skills', dir: 'n', open: () => hudCtx.openSheetPage() },
       { id: 'items', label: 'Items', dir: 'e', open: () => hudCtx.toggleInventory() },
       // PX18: MAP on the dial is THE WORLD MAP (U61's overworld) -
       // Skyrim's own reading of the word; the local automap keeps its
@@ -2471,9 +2624,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     // until now - rest existed only in the dungeon host - so neither
     // this ladder nor the large HUD's rest panel had anything to open.
     toggleRest: () => toggleRest(),
-    togglePause: () => {
+    // PX26 (Mac: "the north option should be the new journal we
+    // developed" / "the skill ui opens on the lefthand side when it
+    // should be center"): ONE FIX FOR BOTH. The dial's north was the
+    // F5 overlay - the last pre-PX surface, and the one that lays its
+    // three columns against the left edge. The pause window's Stats
+    // page IS that sheet, off the same sheetModel, and is centred by
+    // construction. This host's own pause flow, landed on it.
+    openSheetPage: () => hudCtx.togglePause({ at: 'stats' }),
+    togglePause: (opts = {}) => {
       if (!pauseDoorReady()) return;
       openPauseFlow((w) => townTalk.showOverlay(w), {
+        at: opts.at ?? null,   // PX26: the page the door was pressed for
         // PX25: the sheet's own doors, through this host's own arms.
         openPack: () => townTalk.showOverlay(makeInventoryWindow()),
         openSpellbook: () => { const w = makeSpellbookWindow(); if (w) townTalk.showOverlay(w); },
@@ -2528,8 +2690,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT 17e F41: preventDefault must run for F5 in EVERY mode -
     // the mode gate skipped the handler AND its preventDefault, so
     // pressing F5 inside a building reloaded the page and destroyed
-    // the session. Routing F5/F6 into interiors is its own arc
-    // (FLAGGED); swallowing the browser reload is not optional.
+    // the session. Swallowing the browser reload is not conditional on
+    // this ladder having a destination, which is why it runs above it.
+    // FS1: the arc this used to defer to is U43, and U43 shipped -
+    // worldModes' interior arm routes the whole ui/input.js table over
+    // interiorKeyCtx, so F5/F6/L/N/R open the same windows through a
+    // shop door as outside it (test/modalkeys.test.js red-proofs the
+    // one gate that still stands, a typed name over the bindings).
     swallowBrowserKey(e);   // U47: F5/F6/F11 - one list, in ui/input.js
     const act = actionOf(e);   // I2: the registry owns the code -> action read
     // U45 - THE ONE DOOR PER DESTINATION: this ladder and the large
@@ -4511,12 +4678,17 @@ export async function bootWorld(canvas, renderer, params, status) {
       onFoeHit: (m, t) => exteriorFoes.arrowHitFoe(m, t),
     });
     arrows.draw(renderer);
-    // C9: the exterior FP weapon - swings/sounds through the rig; the
-    // open world has no action objects in melee reach (static building
-    // doors are the E-enter seam, not bashables - FLAGGED with the
-    // towns arc), so melee strike frames resolve to nothing; bows
-    // consume an Arrow + tally and the loose is VISIBLE now (C13 -
-    // targets pend the RMB animal/exterior-foe arc).
+    // C9: the exterior FP weapon - swings/sounds through the rig. The
+    // open world still has no ACTION OBJECTS in melee reach (static
+    // building doors are the E-enter seam, not bashables - FLAGGED
+    // with the towns arc), which is the clause that is still true.
+    // FS1: the two that rode along with it are not. "Melee strike
+    // frames resolve to nothing" was written before G1/G4/X, and forty
+    // lines below this comment a swing resolves against live guards,
+    // then encounter foes, then wandering civilians; "targets pend the
+    // RMB animal/exterior-foe arc" was written before AR1, and the
+    // arrows.update call above hands foeTargets both live pools. A
+    // sentence with one true clause kept two false ones alive.
     if (walkMode && playerSpawned) {
       // M2: the armed click's cast fires with the LIVE look; missiles
       // fly through this host's world every walk frame.
@@ -4524,6 +4696,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         const _mfwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
         magic.firePending([...cam.pos], _mfwd);
         magic.update(dt, player.pos, _mfwd, player.height);   // X11: the candle hangs off the look direction
+        { const mv = lycanthropeMoveSound(playerEntity, dt); if (mv != null) audio.playOneShot(mv, 1); }   // LM1: the beast's own noise while transformed (real time)
       }
       // U8h/AUDIT 17e F17: the worn-weapon bind moved INTO createWeaponRig
       // so all four hosts inherit it (the interior host was missing it).

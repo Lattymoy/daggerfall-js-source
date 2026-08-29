@@ -1330,3 +1330,50 @@ export function createRestDeps(entity, opts = {}) {
     endLines: (id) => plainLines(rest.endLines?.(id)),
   };
 }
+
+// ---- EC1: THE LIVE ENCHANT FOE POOL ----
+//
+// DFU has NO scene gate on the enemies an enchantment can reach.
+// PlayerGPS.UpdateNearbyObjects (PlayerGPS.cs:747-777) walks
+// ActiveGameObjectDatabase.GetActiveEnemyBehaviours() - every active
+// enemy in the scene - and CastWhenStrikes does not look a foe up at
+// all (CastWhenStrikes.cs:105): it assigns the bundle straight to the
+// entity behaviour the strike handed it.
+//
+// The port needs a lookup because it needs the foe RECORD to reach
+// that foe's damage/heal sinks, and the streaming host's lookup read
+// an EXTERIOR-ONLY pool. Inside a dungeon it found nothing, so a
+// CastWhenStrikes weapon returned without landing, and the vampiric
+// drain and both artifact affinity scans saw an empty room - silently,
+// in the mode the player actually fights in.
+//
+// These two live here rather than inline in the host because the law
+// is small, exact and worth testing on its own: which pool is live,
+// and which host's sinks a record from that pool must go through.
+
+/** The foes an enchantment can reach right now.
+ *  Interiors answer EMPTY honestly rather than by gate: the port
+ *  stands no foe pool inside a building, and DFU's own list holds
+ *  enemies and civilian mobiles, neither of which exists there. */
+export function liveEnchantFoes(mode, dungeonCtx, exteriorPool) {
+  if (mode === 'dungeon') return dungeonCtx?.foes ?? [];
+  if (mode === 'exterior') return exteriorPool?.() ?? [];
+  return [];
+}
+
+/** The sinks for a record liveEnchantFoes handed out.
+ *  Routed by POOL MEMBERSHIP ALONE. A dungeon record sent through the
+ *  exterior pool's damage door would knock back and kill against the
+ *  wrong host's collider, and the mode is one refactor away from
+ *  letting that happen quietly - so the question asked is "whose
+ *  record is this", which has exactly one right answer and does not
+ *  need to know where the player is standing.
+ *
+ *  This took the MODE as well until the campaign called the bluff: no
+ *  record is in both pools, so the mode term could not change an
+ *  answer, and a mutant dropping it SURVIVED. An unfalsifiable term is
+ *  not caution, it is a second law that no test is holding. */
+export function liveEnchantFoeSinks(foe, dungeonCtx, exteriorSinks) {
+  if (dungeonCtx?.foes?.includes(foe)) return dungeonCtx.foeSinksFor(foe);
+  return exteriorSinks(foe);
+}

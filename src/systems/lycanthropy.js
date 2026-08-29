@@ -43,9 +43,9 @@
 // ride vampirism.js's one switch: WOLF00I0/BOAR00I0 backgrounds with
 // the whole-body suppression, WERE01I0/WERE00I0 heads).
 //
-// FLAGGED, with the slice it waits on:
-//  - the 4-20s real-time MOVE sound loop while transformed - the one
-//    remaining LycanthropyEffect member (host audio-frame work)
+// LM1 SHIPPED THE LAST MEMBER: the 4-20s real-time move-sound loop
+// while transformed (lycanthropeMoveSound below). LycanthropyEffect is
+// ported whole.
 
 import {
   LYCANTHROPY_TYPES, INFECTION,
@@ -58,6 +58,14 @@ import { spellRecordOfIndex } from './loot.js';
 import { SKILLS } from './skills.js';
 import { WEAPON_MATERIALS } from '../characters/weapons.js';
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
+
+/** InitMoveSoundTimer (LycanthropyEffect.cs:586-589): Random.Range(4,
+ *  20), the FLOAT overload, so any real value in the band and not an
+ *  integer count of seconds. */
+export const MOVE_SOUND_MIN_SECONDS = 4;
+export const MOVE_SOUND_MAX_SECONDS = 20;
+const initMoveSoundTimer = (rolls) =>
+  MOVE_SOUND_MIN_SECONDS + rolls() * (MOVE_SOUND_MAX_SECONDS - MOVE_SOUND_MIN_SECONDS);
 import { ENCHANTMENT_TYPES } from './enchantments.js';
 import { cureAllDiseases } from './effects.js';
 import { SOUND } from './soundClips.js';   // V4: the transformed attack voices
@@ -140,7 +148,7 @@ export function isWearingHircineRing(entity) {
  * grant the free spell. Returns the entry, or null if the entity
  * already carries an override.
  */
-export function createLycanthropyCurse(entity, infectionType, { now = 0 } = {}) {
+export function createLycanthropyCurse(entity, infectionType, { now = 0, rolls = Math.random } = {}) {
   if (!entity || liveLycanthropy(entity) || entity.racialOverride) return null;
   const entry = {
     kind: 'racialOverride',
@@ -156,6 +164,12 @@ export function createLycanthropyCurse(entity, infectionType, { now = 0 } = {}) 
     raceNameOverride: null,
     statMods: {},
     skillMods: {},
+    // LM1: InitMoveSoundTimer runs in Start (:67) - at the CURSE, not
+    // at the first transform and not on the first frame. So the first
+    // howl after a morph is already part-way through its wait rather
+    // than a fresh 4-20s from the change, and no frame is burned
+    // arming it.
+    moveSoundTimer: initMoveSoundTimer(rolls),
   };
   endOldLifeEffects(entity);
   entity.activeEffects = entity.activeEffects || [];
@@ -362,6 +376,43 @@ export function lycanthropeAttackVoice(entity, rolls = Math.random) {
   return null;
 }
 
+/**
+ * LM1 - THE TRANSFORMED MOVE SOUND (LycanthropyEffect.cs:201-211,
+ * :586-604), the last member of that effect the port had not carried.
+ *
+ * While transformed - and ONLY while transformed - a real-time timer
+ * counts down, and on expiry the beast makes its move noise and the
+ * timer re-arms to a fresh `Random.Range(4, 20)` seconds. It is what
+ * makes walking around as a werewolf sound like anything at all; the
+ * port had the attack voices and the claws and nothing between them.
+ *
+ * REAL time, not game time: DFU decrements by Time.deltaTime inside
+ * ConstantEffect, so a rested night does not queue up howls, and
+ * time-scaled travel does not either.
+ *
+ * The clip goes out through the SCREEN WEAPON's PlayAttackVoice, the
+ * same sink the attack voices use - hosts route it to their own
+ * one-shot.
+ *
+ * @param dt seconds since the last frame
+ * @returns the clip id to play this frame, or null
+ */
+export function lycanthropeMoveSound(entity, dt, rolls = Math.random) {
+  const entry = liveLycanthropy(entity);
+  // The whole block sits inside `if (isTransformed)`: an untransformed
+  // lycanthrope does not tick the timer down, so morphing back mid-wait
+  // and returning later resumes it rather than restarting.
+  if (!entry?.isTransformed) return null;
+  // A curse restored from a save written before LM1 carries no timer.
+  // Arm it and take this frame as the arming one - the alternative is
+  // a NaN countdown that never fires again for that character.
+  if (entry.moveSoundTimer == null) { entry.moveSoundTimer = initMoveSoundTimer(rolls); return null; }
+  entry.moveSoundTimer -= dt;
+  if (entry.moveSoundTimer >= 0) return null;
+  entry.moveSoundTimer = initMoveSoundTimer(rolls);
+  return entry.infectionType === LYCANTHROPY_TYPES.Wereboar
+    ? SOUND.EnemyWereboarMove : SOUND.EnemyWerewolfMove;
+}
 /** SetFPSWeapon (:332-345): while transformed the screen weapon IS
  *  the wereclaws - WeaponTypes.Werecreature (the port's WEAPON11.CIF
  *  rig, type 16), metal None, NO draw sound, SwingHighPitch swing,

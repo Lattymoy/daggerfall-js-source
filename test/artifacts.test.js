@@ -175,11 +175,25 @@ test('V3/MT-ii: the two summons - the range gate, the fail line, the PlayerAlly 
   // MT-ii: THE DOOR IS MOUNTED, and RETIRING A FLAG DELETES THE
   // SENTENCE - the module header's "no host mounts it" is gone with it.
   const w = read('src/scenes/world.js');
-  assert.ok(w.includes('spawnAlliedFoe: (mobileType) => {'), 'world.js mounts the allied spawn');
-  assert.ok(w.includes("exteriorFoes.spawnFoe(mobileType, [pf[0] + 2, pf[1] + 1, pf[2]], { allied: true })"),
-    'through the encounter pool, on team PlayerAlly');
-  assert.ok(read('src/scenes/exteriorFoes.js').includes("if (allied) { entity.team = 'PlayerAlly'; entity.mobileTeam = 'PlayerAlly'; }"),
-    'and BOTH per-instance team fields turn (SetupDemoEnemy.cs:85-86), never the shared static row');
+  // SD1 re-anchored this from the literal spawn line onto the LAW it
+  // holds. The old assertion quoted `exteriorFoes.spawnFoe(mobileType,
+  // [pf[0] + 2, ...], { allied: true })` - a fixed offset from the
+  // player's feet - and SD1 replaced that call with DFU's placement
+  // ring, so the pin went red for a change that strengthened exactly
+  // what it was defending. F041's precedent: anchor on the gate.
+  assert.ok(w.includes("spawnAlliedFoe: (mobileType) => { _standLooseFoe(mobileType, { allied: true }); }"),
+    'world.js mounts the allied spawn');
+  const stander = w.slice(w.indexOf('const _standLooseFoe ='), w.indexOf('const _standLooseFoe =') + 1600);
+  assert.ok(/\? d\.spawnLooseFoe\(mobileType, pos, \{ yawRad: yaw, allied \}\)/.test(stander)
+    && /: exteriorFoes\.spawnFoe\(mobileType, pos, \{ yaw, allied \}\)/.test(stander),
+    'through a live pool either way, carrying allied to it');
+  for (const [f, line] of [
+    ['src/scenes/exteriorFoes.js', "if (allied) { entity.team = 'PlayerAlly'; entity.mobileTeam = 'PlayerAlly'; }"],
+    ['src/scenes/dungeonContext.js', "if (allied && f.entity) { f.entity.team = 'PlayerAlly'; f.entity.mobileTeam = 'PlayerAlly'; }"],
+  ]) {
+    assert.ok(read(f).includes(line),
+      `${f}: BOTH per-instance team fields turn (SetupDemoEnemy.cs:85-86), never the shared static row`);
+  }
   assert.ok(!read('src/systems/artifactEffects.js').includes('the port has no ally/team combat'),
     'the flag sentence is deleted, not merely contradicted');
 

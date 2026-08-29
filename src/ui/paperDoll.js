@@ -167,6 +167,17 @@ export const paperDollArtLoaded = () => !!_art;
  *  baked offset minus paperDollOrigin. rows = [y0,y1) source band
  *  (the censor welds); remap = the dye. Index 0 stays transparent;
  *  0xFF is the classic mask (removed - ChangeMask). */
+/* PX29, REVERTED (PX29b). A mask of "which pixels are the figure"
+   was written here so the enhanced pack could drop DFU's panel. It
+   blanked the doll ENTIRELY in play, and the reason is worth keeping:
+   `_pixels` publishes at the END of refreshPaperDoll - "the composite
+   swaps in whole when done" - and the mask published at the START.
+   Any pass that returned early left a VALID composite paired with an
+   all-zero mask, so every pixel read as background and the figure
+   vanished. Two buffers describing one image must swap in together;
+   whoever tries this again should build the mask locally and publish
+   it beside `_pixels`, in the same statement, or not at all. */
+
 function blit(out, img, { rows = null, remap = null, atOffset = null } = {}) {
   const [orgX, orgY] = PAPERDOLL_ORIGIN;
   const off = atOffset ?? img.off;
@@ -363,6 +374,7 @@ export function slotAtPaperDoll(px, py) {
  * shows without one.
  */
 export const paperDollPixels = () => _pixels;
+
 
 /** Test seam. */
 export const _debugPaperDoll = () => ({ live: !!_live, layers: _layout.map((l) => l.slot), version: _version });

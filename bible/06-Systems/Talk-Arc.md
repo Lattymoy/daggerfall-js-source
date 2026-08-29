@@ -1228,3 +1228,55 @@ carries a per-slice pin that the sentence has no second home, EF1c's
 unquote rule included so a correction may still quote what it retired,
 and CQ1's is mutation-checked by restoring the stale block and watching
 it fail. Open flags 168 -> 167.
+
+## RP1 - THE REGION IS READ LIVE, NOT CAPTURED AT BOOT (2026-08-29)
+
+`createTownTalk` took `regionIndex` as a plain **number**, so the
+streaming world host had nothing to hand it but `startLoc.regionIndex`.
+Every region-keyed answer in the module therefore stayed the *boot*
+region's for the whole session, however far the player streamed. Three
+things went stale together:
+
+- **the wandering NPC race** - `const npcRace = REGION_RACES[...]`,
+  computed once at construction. It picks the oath pool, so a Redguard
+  region's oaths came out of Breton mouths (or the reverse) for anyone
+  who walked across a border;
+- **the People faction** the reaction law reads, resolved once inside
+  `ensureLoaded`;
+- **the map-discovery key**, `` `${region}:${city}` ``. That one is the
+  worst of the three. A building discovered in Daggerfall after walking
+  out of Betony was **filed under Betony**, so the reveal never appeared
+  where the player actually was, and never would.
+
+The flag standing over the call said this waited on *"the current-pixel
+region wiring [to land] with travel"*. It had landed. `world.js`'s
+`_questRegionIndex` - the same `PlayerGPS.CurrentRegionIndex` read that
+the quest bridge, the map table and the name bank already go through -
+was sitting eleven lines below the call that was waiting for it. This is
+the fifth *blocker retired, sentence stayed* of this run.
+
+**One parameter, two shapes.** `const regionNow = typeof regionIndex ===
+'function' ? regionIndex : () => regionIndex;` The streaming host hands
+a getter; the two dev hosts each build exactly one location and cannot
+stream out of it, so their plain number is correct and must not be
+churned into a getter for symmetry's sake (pinned, and the campaign's
+tenth mutant). Downstream, nothing may name the raw parameter again -
+that is exactly how one of the three sites would quietly stay stale -
+and a source sweep holds that line.
+
+**The People lookup is memoised by region, not cached outright.** `if (r
+!== _peopleRegion) { ... }`: FACTION.TXT is still parsed once and kept,
+and only the per-region walk re-runs, on a border crossing. The guard
+matters in both directions - no cache and every reaction roll re-walks
+the faction dict; no invalidation and the boot region's people answer
+for ever, which is the bug.
+
+The sweep pin needed **one line of self-exemption**: it starts *after*
+the normalising line, because that line is the single place the raw
+parameter is legitimately named and a sweep that flags its own subject
+can never pass. PY1's precedent, kept narrow - one line, not a whole
+block named after the slice, which is the mistake EF1c had to undo.
+
+Pins: 6 in `test/regionlive.test.js`, the sixth being CQ1b's per-slice
+second-home check, applied at the time rather than an hour later.
+Campaign: 11 mutants, 11 killed. Open flags 167 -> 166.

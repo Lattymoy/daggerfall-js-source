@@ -7909,6 +7909,224 @@ Pins: 2 in enhancedPause.test.js. 4 mutations, 4 dead. Verified live:
 with two hooks handed over, exactly two doors draw and pressing one
 fires that host's arm.
 
+PX26 (Mac: "the north option should be the new journal we developed" /
+"the skill ui opens on the lefthand side of the screen when it should
+be center"): TWO REPORTS, ONE WINDOW. The dial's north was labelled
+Skills and called `toggleCharSheet` on all four hosts - the F5
+overlay, the last pre-PX surface, and the one that lays its three
+columns against the left edge because `.sheet-shell` fills the
+viewport with no centre. The pause window's Stats page IS that sheet -
+the same four sections off the same `sheetModel` - and it is centred
+by construction. So north opens that, and both reports close together.
+
+THE WINDOW CAN LAND. `mountEnhancedMenu` takes `at`, applied AFTER the
+reset - which is what keeps the reset the default rather than
+something the landing works around - and because the tabbed window IS
+the pause home face, a landing sets the TAB and leaves the section
+alone. `pauseDoor` carries it; the CLASSIC flow takes the same hooks
+and ignores it, having no tabs to land on.
+
+THE FIRST ATTEMPT WAS THROWN AWAY, and this is why the pin exists. A
+scripted edit added `openSheetPage` to one host and silently skipped
+three, because the anchors it matched did not exist in those files -
+leaving north calling `openSheetPage?.()`, which optional-chains into
+undefined. A dial whose north does NOTHING in three of four hosts is
+worse than one pointing at the wrong window, so the branch and the
+working tree went back. Each host's arm was then written BY HAND,
+because all four `togglePause` signatures differ - `()`, `(opts)`,
+`(setPlayerPos, opts)` - which is exactly what defeats a pattern
+match.
+
+The pin that would have caught it now does, and it took two passes to
+make honest: the first version looked for `openSheetPage` anywhere in
+the file and PASSED on a host that only CALLS it, since north itself
+mentions the name. It matches a DEFINITION at column four now, and
+removing the arm from any of the three hosts fails.
+
+FOUR MORE PINS CAUGHT THE SIGNATURE, which is what they are for. U51's,
+U43's, IS1's and I3's all read `togglePause` at its old shape - `()`,
+`(setPlayerPos = null)` - to guard laws that are UNCHANGED: one pause
+door per host, the interior Escape door opening the same flow, the
+world's composer handed through, setPlayerPos still first. Each was
+re-aimed at the new signature rather than loosened, and I3's "exactly
+one pause door" became a COUNT rather than a match, because that is
+what it was always claiming.
+
+Measured: the window lands on Stats with its four sections, 0px off
+the viewport's centre line.
+
+Pins: 2 more (24 in enhancedPause.test.js). 8 mutations, 8 dead.
+
+PX27: THE F5 SHEET IS RETIRED. There were TWO enhanced character
+sheets - this door's overlay and the pause window's Stats page -
+reading the same four sections out of the same `sheetModel`, which
+enhancedMenu imports from ui/enhancedCharSheet.js. One of them was the
+last pre-PX surface in the game and drew its three columns hard
+against the left edge. PX25 gave the Stats page the four buttons the
+overlay carried and PX26 sent the dial's north to it; F5 was the last
+caller, and now it lands there too.
+
+THE DOOR'S CONTRACT DOES NOT CHANGE. The host is handed an overlay it
+mounts, exactly as before, so no host learned anything new - only
+which face is inside it. The sheet's own four buttons become the
+page's doors out of the same hooks, and a host that hands no hook gets
+NO button, which is the honest refusal the classic sheet gives rather
+than a dead one.
+
+THE CHILD-PUSH MACHINERY WENT WITH IT, and that is the part worth
+recording. The old overlay could PUSH a canvas child - hiding its own
+div while the child drew underneath, popping back with the scroll
+intact - because the sheet's four buttons opened CLASSIC windows.
+PX23 and PX24 gave all three an enhanced window, so the doors now
+CLOSE the sheet and hand over rather than stacking on it. Four U52
+pins described that machinery; they were rewritten to the law that
+replaced them rather than deleted, because "this is how it is done
+now" is worth as much as the mechanism was.
+
+FOUND BY ONE OF THOSE PINS: the new overlay answered `destroy` and not
+`dispose`, and the hosts use both words. A real teardown bug, caught
+by a pin I was in the middle of rewriting.
+
+`ui/enhancedCharSheet.js` STAYS - `sheetModel` is the model both
+sheets always read, and the one that remains reads it. What went is
+the view that drew the second.
+
+Pins: the four U52 child-push pins become 2 (the door hands back the
+Stats page and the host holds it; the machinery is gone and the doors
+close-then-hand-over, with the landing and the missing-hook refusal
+pinned too). 5 mutations, 5 dead. Verified live: F5's door lands on
+Stats, 0px off centre, carrying only the doors the host handed over,
+Escape closes it, and no `.sheet-shell` is left anywhere on the
+enhanced path.
+
+PX24d (Mac: "the new chronicles UI is nowhere to be found ingame"):
+THE DOOR WAS HUNG ON NOTHING. He was right, and it was worse than
+missing. PX24 built `ui/chronicleDoor.js` and the window behind it,
+pinned both, verified both in a browser - and never gave the door a
+CALLER. Every host still constructed the classic QuestJournalWindow
+directly, so the enhanced chronicle was unreachable in play, and
+PX25's Chronicle button on the Stats page opened the CLASSIC journal.
+The slice built a door and left it leaning against the wall.
+
+Wired now, the way the spellbook's is: world.js's `makeJournalWindow`
+and dungeonContext's `_openJournal` both go through
+`createChronicleWindow`, handing it what only that host knows.
+worldModes reaches it through world's host bag, which owns the only
+`makeJournal` there is. The exterior has NO journal and builds none -
+which is why PX25 gave it no Chronicle button, and that stays honest.
+
+FOUND WHILE WIRING: the first version of the page mapping was
+`mode === 'notebook' ? 'notes' : 'notes'` - a ternary with the same
+answer on both arms, which is a decision that was never made. The
+enhanced page follows the classic mode now (messages to Messages,
+everything else to Notes), and the classic window still gets the mode
+itself, because the two quest modes deliberately have no page here -
+the pause window has carried quests since PX4.
+
+THE PIN IS THE GENERAL LAW, not this one wiring: EVERY enhanced door
+must have a host that calls it. A door module exists to be the one way
+in, and one with no caller is a window nobody can reach - which no
+existing pin would have caught, because every pin PX24 wrote was about
+the door's own behaviour and all of them passed. 2 pins (10), 3
+mutations, 3 dead.
+
+PX28 (Mac: "when hitting tab a second time, it should minimize any UI"
+/ "when looting, there's a 2nd popup when you take something, there
+shouldn't be"): TWO SMALL LAWS.
+
+TAB MEANS PUT THIS AWAY. The dial already closed ITSELF on a second
+press - openPixelDial's own toggle - but it could not close what it
+had OPENED. Press Tab, press Items, and the pack was up with Tab doing
+nothing, because each enhanced window owns its own keyboard and knows
+nothing of the others. `ui/enhancedOverlays.js` is the smallest honest
+fix: a STACK of close-arms that every enhanced overlay registers with
+on mount and clears on teardown, and Tab closes the top one before it
+would raise the dial. It holds FUNCTIONS, never DOM - a registry that
+reached into windows would be a second owner of them, and every one
+already owns its own teardown. A stack rather than a slot because the
+windows do stack, and the top one is what a player means by "this".
+
+LOOTING JUST TAKES. `take()` set `picked = taken`, which raises the
+tooltip on the item that just moved - and in the loot-only flow that
+is a card nobody asked for, popping over the frame being read. With
+the PACK open the same selection is useful: the thing you took is
+selected in your bag, on the tab it landed in. So the selection is the
+PACK's behaviour and not the take's, and the transfer itself is
+untouched - this changes what is SHOWN. Measured: three rows, take
+one, two rows and no popup.
+
+FOUND BY A PIN, and it was mine: the registration line went into
+charSheetDoor by POSITION rather than by dependency and landed above
+`const close`, which is not hoisted - so opening the sheet threw
+"Cannot access 'close' before initialization". PX27's own pin caught
+it on the next full run. All four doors were then checked for the same
+placement; three were already right.
+
+Pins: 2 (one each). 5 mutations, 5 dead.
+
+PX29 (Mac: "the new chronicle UI appears on the lefthand side when it
+should be centered" / "remove the background from the paperdoll in the
+inventory UI"): TWO MORE.
+
+CENTRED - AND THE SPELLBOOK WAS WRONG TOO. `.px-home` is
+position:fixed inset:0 with no flex of its own; the pause face centres
+its window by putting it in a `.px-stage`, and neither of these two
+windows ever got one. Measured: BOTH sat 260px and 140px off the
+centre, and the spellbook had been that way since PX23. It was
+invisible to me because every screenshot I took of those windows was
+of the ELEMENT, not the viewport - a shot of a window always looks
+centred. This is the FOURTH shared-part fault of this arc (the head,
+the divider, the chips, now the stage), so it is fixed for the FAMILY
+and both shells are pinned as the ones the two windows mount.
+
+PX29b - THE DOLL CHANGE IS REVERTED (Mac: "revert the doll change, you
+removed the entire paperdoll"). It did, and the reason is the part
+worth keeping.
+
+`_pixels` publishes at the END of `refreshPaperDoll` - the file's own
+comment says "the composite swaps in whole when done" - and the mask
+published at the START, before a single layer had been blitted. Any
+pass that returned early left a VALID composite paired with an
+ALL-ZERO mask, and every pixel then read as background: the figure
+vanished entirely. The mechanism was exact; the LIFETIME was wrong.
+
+TWO BUFFERS DESCRIBING ONE IMAGE MUST SWAP IN TOGETHER. Whoever tries
+this again should build the mask locally and publish it beside
+`_pixels` in the same statement, or not at all - and the file and the
+pin both say so now, so the next attempt starts from the failure
+rather than repeating it.
+
+I could not have caught this here: there is no ARENA2 in this
+container, so there is no real composite to strip, and I said so when
+I shipped it. That was the right thing to say and the wrong thing to
+ship - a change whose whole effect is invisible to every check I can
+run is a change to hand over as a question, not as a result.
+
+What follows is the record of the attempt, kept because the reasoning
+about DFU's own compositing still holds.
+
+THE DOLL STANDS ON THE PACK'S OWN GLASS (REVERTED). DFU fills the panel with
+`backgroundSubRect` and blits the body and every item over it
+(PaperDollRenderer), so the composite has no notion of "figure" to
+hand out - PX20a could remove the CSS frame but not the art behind the
+character. It can now, and EXACTLY rather than by matching colours:
+every layer after the background goes through ONE `blit`, so a mask
+written there is the figure and nothing else. `paperDollFigurePixels`
+returns the composite with those pixels made TRANSPARENT - never
+recoloured, which would be a second guess about what the ground is -
+and falls back to the whole composite when there is no mask yet.
+
+THE CLASSIC WINDOW IS UNTOUCHED and pinned so: it draws DFU's whole
+composite, background included, because that is what DFU draws. The
+enhanced pack has its own ground to stand a figure on; the classic one
+does not.
+
+Pins: 1 for the centring, which stands. The doll's pin became the
+record of its own revert - the mask gone rather than merely unused,
+the accessor gone, the file's reason kept, and the composite's
+publish-whole law pinned as the thing the mask broke. U59's and PX20's
+went back to the whole composite. 3 mutations, 3 dead.
+
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
 settings .panes, one file later - now transparent, and the walk

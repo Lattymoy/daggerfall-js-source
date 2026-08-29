@@ -1017,3 +1017,115 @@ dropped; every row claiming baked-discovered).
 Pins: test/travelvisibility.test.js x2 (the hidden barrow absent
 from matches until discoverLocation learns it, the baked town
 findable from the first key; the law-inputs/writer source sweep).
+
+## DE1 - ENTERING A DUNGEON PUT THE PLAYER ACROSS IT (2026-08-29)
+
+Mac: *"when entering a dungeon, it places you at the end of the dungeon
+instead of the entrance."*
+
+**There are two DFU members here and they do not agree.**
+
+`TransitionDungeonInterior` (`PlayerEnterExit.cs:895-963`) is **walking
+in through the entrance** - `PlayerActivate.cs:645`, which is how a
+player actually gets into a dungeon. It uses `dungeon.StartMarker`
+**unconditionally**, never consults the enter marker, and where the
+start marker is missing it **aborts the transition** (`:923-929`)
+rather than placing the player at an invented point. It then faces the
+player along the normal of the nearest dungeon exit door.
+
+`StartDungeonInterior` (`:968-1016`) is **starting inside** a dungeon
+with no exterior - a new game, a load, a respawn, a quest teleport. The
+**enter marker** wins, `StartMarker` is the fallback, and the facing is
+plain north (`SetFacing(Vector3.forward)`).
+
+The port had ONE `enterMarker ?? startMarker` serving both. So the
+walk-in took the enter marker: a different point, in a large starting
+block a long way from the door the player had just opened.
+
+**And the sentence standing over it was true.** It explained the
+enter-marker preference as a fix for a wedging bug in Privateer's Hold,
+and it was one - *for the standalone host*, which is the
+`StartDungeonInterior` case and is right to prefer it. Applying that
+host's answer to the other member is what put the player across the
+dungeon. This is not a stale claim like FS1's four; it is a correct
+claim that was **generalised past its member**.
+
+Both halves are now the two members they always were, and the caller
+says which it is:
+
+- `startSpawn({ preferEnterMarker })` - `true` prefers the enter marker
+  with the start marker as fallback; `false` is the start marker **or
+  nothing**. `false` is not "prefer the other one": the transition has
+  no fallback, so a missing start marker returns null and
+  `tryEnterDungeon` answers false. The player stays outside, standing
+  at the door, which is what DFU's destroyed dungeon and
+  `OnFailedTransition` amount to.
+- `entryFacingYaw(feet, { preferEnterMarker })` - north for the start,
+  the nearest exit door's normal for the transition. `closestDoorTo` is
+  `DaggerfallStaticDoors.FindClosestDoorToPlayer` (`:249-277`) verbatim,
+  in `player/enterExit.js` with the rest of the door geometry.
+
+The default is `preferEnterMarker: true`, matching
+`StartDungeonInterior`'s own signature default - but
+**`tryEnterDungeon`'s default is `false`**, because the overwhelmingly
+common way into a dungeon is through its door. `startInDungeon` (a new
+game) passes `true`; the standalone `?dungeon` host keeps the default,
+because it is `StartDungeonInterior` by definition.
+
+Pins: 7 in `test/dungeonentry.test.js`. Campaign: 19 mutants, 19
+killed, including the bug itself restored as one mutant - and after one
+survivor that was the fixture's fault, not the code's: the pin for
+`closestDoorTo` measuring in **three** dimensions used doors that a
+ground-plane measure ranks the same way. It takes a door on the
+player's own level against a nearer one far below now, which is the
+case a dungeon actually produces.
+
+A third pin went red on the way through - `classicstart.test.js`'s U31,
+which anchored on the literal `tryEnterDungeon(hit, entries)`. Its law
+(start-inside must REUSE the door path so `dungeonReturn` is recorded)
+was untouched; re-anchored on the call, plus a new assertion that the
+call is the start-inside member.
+
+### DE2: the same two members level the PITCH, and DE1 shipped only the yaw (2026-08-29)
+
+Pulling the thread on DE1 - the first thing asked for after it - found
+the half of its own fix that was missing.
+
+`SetFacing(Vector3 forward)` is `LookRotation(forward).eulerAngles` fed
+to `SetFacing(yaw, pitch)` (`PlayerMouseLook.cs:286-291`). Every vector
+the dungeon members pass is **horizontal** - `Vector3.forward` for the
+start, a door normal for the transition - so the pitch it computes is
+0, and both members level the view. The exit says it in its own name:
+`PositionPlayerToDungeonExit` ends on
+`SetHorizontalFacing(foundDoorNormal)`, which is `SetFacing(yaw, 0f)`
+(`:294-299`).
+
+DE1 set `cam.yaw` and left `cam.pitch` alone. So walking into a dungeon
+while looking up at the sky kept you craning at the ceiling, and coming
+back out while looking at your feet put you outside still looking at
+them.
+
+Three things bound the fix, each a mutant:
+
+- **The entry levels only when it faces.** `TransitionDungeonInterior`
+  calls `SetFacing` inside its found-a-door branch, so a dungeon with
+  no exit door to read leaves the player's bearing *and* pitch alone.
+  The pitch sits inside the same guard as the yaw.
+- **Buildings still do not face at all.** Neither `TransitionInterior`
+  nor `BuildingTransitionExteriorLogic` touches `PlayerMouseLook` - a
+  shop door leaves your view exactly as it was - and the port matches.
+  Checked rather than assumed, and pinned so it stays that way.
+- **The standalone host was already right.** `scenes/dungeon.js` builds
+  its camera as `{ yaw: 0, pitch: 0 }`, which *is*
+  `SetFacing(Vector3.forward)`. It needs no arm, and the pin stops
+  someone adding one.
+
+Campaign: 7 mutants, 7 killed. The harness gained an **anchor-uniqueness
+check** (`src.count(old) != 1` fails the mutant outright) - LM1 had just
+lost a mutant to an ambiguous anchor silently mutating another function,
+and the check costs one line.
+
+One pin went red on the way: DE1's own, an hour old, anchored on the
+`if (_yaw !== null) cam.yaw = _yaw;` one-liner that became a block. Its
+law - the host asks for the facing of the member it *is*, and applies
+it - was untouched. Re-anchored, per F041.

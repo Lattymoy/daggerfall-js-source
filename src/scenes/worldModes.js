@@ -63,6 +63,7 @@ import { MOBILE_TYPES } from '../characters/mobileTypes.js';   // IF: the daedri
 import { areEnemiesNearby } from '../systems/encounters.js';   // IF: GameManager.AreEnemiesNearby, one method over this host's database
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { audio } from '../systems/audio.js';
+import { lycanthropeMoveSound } from '../systems/lycanthropy.js';   // LM1: the 4-20s transformed move-sound loop
 import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in), and the guilds' BUY mode
 import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the book's one door
 import { calculateCastCost } from '../systems/spellcost.js';   // M2
@@ -3132,7 +3133,12 @@ export function createWorldModes(host) {
     return true;
   }
 
-  async function tryEnterDungeon(hit, entries) {
+  /** DE1: `preferEnterMarker` names WHICH DFU member the caller is.
+   *  Default FALSE, because the overwhelmingly common way into a
+   *  dungeon is walking through its door - PlayerActivate.cs:645 ->
+   *  TransitionDungeonInterior - and that member takes the START
+   *  marker. startInDungeon passes true for StartDungeonInterior. */
+  async function tryEnterDungeon(hit, entries, { preferEnterMarker = false } = {}) {
     const dfLocation = hit.dfLocation;
     if (!dfLocation || !dfLocation.hasDungeon) return false;
     transitioning = true;
@@ -3200,9 +3206,37 @@ export function createWorldModes(host) {
       mode = 'dungeon';
       dungeonLoc = dfLocation;
       player.collider = ctx.collider;
-      const spawn = ctx.startSpawn();   // ONE source: verbatim MovePlayerToMarker + FixStanding in the context
+      // DE1: WHICH DFU MEMBER THIS IS. Walking in through the door is
+      // TransitionDungeonInterior, which uses the START marker and
+      // aborts where there is none; startInDungeon (a new game) is
+      // StartDungeonInterior, which prefers the ENTER marker. This
+      // function serves both, so the caller says which.
+      const spawn = ctx.startSpawn({ preferEnterMarker });
+      // TransitionDungeonInterior destroys the dungeon and raises
+      // OnFailedTransition when the marker it needs is absent
+      // (:923-929) rather than dropping the player at an invented
+      // point. The port answers false, which is this door's "nothing
+      // happened" - the player stays outside, standing at the door.
+      if (!spawn) { console.error('[dungeon] no start marker; transition aborted'); return false; }
       player.spawn(spawn[0], spawn[1], spawn[2]);
       cam.pos = player.eye;
+      // ...and the orientation half of the same two members: away from
+      // the door you came through, or north for a start with no door.
+      const _yaw = ctx.entryFacingYaw(spawn, { preferEnterMarker });
+      if (_yaw !== null) {
+        cam.yaw = _yaw;
+        // DE2: BOTH members LEVEL THE PITCH, and DE1 shipped only the
+        // yaw half. StartDungeonInterior calls SetFacing(Vector3.forward)
+        // and TransitionDungeonInterior calls SetFacing(doorNormal);
+        // SetFacing(Vector3) is `LookRotation(forward).eulerAngles` fed
+        // to SetFacing(yaw, pitch) (PlayerMouseLook.cs:286-291), and
+        // every vector either member passes is HORIZONTAL - so the
+        // pitch it computes is 0. Walk into a dungeon looking up at the
+        // sky and DFU levels you; the port left you craning at the
+        // ceiling. The guard is DFU's own: TransitionDungeonInterior
+        // only faces when it found a door to face away from.
+        cam.pitch = 0;
+      }
       mountQuestResources();   // B2: AddQuestResourceObjects(SiteTypes.Dungeon) on the transition, as PlayerEnterExit raises it
       console.log(`dungeon: ${ctx.drawList.length} draws, ${ctx.exitDoors.length} exit doors, ` +
         `${ctx.lights.length} lights, ${ctx.waterQuads.length} water, ${ctx.colliderTris} tris, ${ctx.enemies.length} enemies`);
@@ -3227,7 +3261,10 @@ export function createWorldModes(host) {
     const entries = doorTargets();
     const hit = entries.find((e) => e.door.doorType === DOOR_TYPE.DUNGEON_ENTRANCE);
     if (!hit) return false;
-    return tryEnterDungeon(hit, entries);
+    // DE1: this is StartDungeonInterior, not the door transition - the
+    // player is placed inside without ever walking through, so the
+    // ENTER marker wins and the facing is plain north.
+    return tryEnterDungeon(hit, entries, { preferEnterMarker: true });
   }
 
   function tryExitDungeon() {
@@ -3271,6 +3308,14 @@ export function createWorldModes(host) {
       // door - the door centre is the controller's centre, not the feet.
       player.spawn(landing.pos[0], repositionFeetY(player.collider.heightAt(landing.pos[0], landing.pos[2]), landing.pos[1]), landing.pos[2]);
       cam.yaw = Math.atan2(landing.normal[0], landing.normal[2]);
+      // DE2: PositionPlayerToDungeonExit ends on
+      // SetHorizontalFacing(foundDoorNormal) (StreamingWorld.cs
+      // :1428-1433), which is SetFacing(yaw, 0f) - the pitch is forced
+      // level EXPLICITLY here rather than falling out of a horizontal
+      // vector, and it is the one call site in the trio that says so in
+      // its own name. Coming up out of a dungeon looking at your feet
+      // put you outside still looking at them.
+      cam.pitch = 0;
     }
     cam.pos = player.eye;
     console.log('exterior: returned at dungeon entrance');
@@ -3587,6 +3632,11 @@ export function createWorldModes(host) {
       magic.update(dt, player.pos, eyeDir(), player.height);   // X11: the candle hangs off the look direction
       if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, new Float32Array([0, 1, 0]));
     }
+    // LM1: the transformed move-sound loop, in this host's INTERIOR
+    // arm (dungeon mode runs dungeonContext's frame, which carries its
+    // own). Outside the `if (magic)` above on purpose - the beast
+    // makes its noise whether or not a cast engine was built.
+    { const mv = lycanthropeMoveSound(playerEntity, dt); if (mv != null) audio.playOneShot(mv, 1); }
     if (interiorCtx.animateChars) interiorCtx.animateChars((performance.now() - _charT0) / 1000, _charAnimMode);
     for (const d of interiorCtx.charDraws) renderer.drawCharacter(d.mesh, d.matrix);
     // C9: the interior FP weapon - gesture/swing/sounds through the
@@ -4356,7 +4406,15 @@ export function createWorldModes(host) {
       w.input(code, e);
       if (w.done && interiorOverlay === w) interiorOverlay = null;
     },
-    togglePause() {
+    // PX26 (Mac: "the north option should be the new journal we
+    // developed" / "the skill ui opens on the lefthand side when it
+    // should be center"): ONE FIX FOR BOTH. The dial's north was the
+    // F5 overlay - the last pre-PX surface, and the one that lays its
+    // three columns against the left edge. The pause window's Stats
+    // page IS that sheet, off the same sheetModel, and is centred by
+    // construction. This host's own pause flow, landed on it.
+    openSheetPage() { this.togglePause({ at: 'stats' }); },
+    togglePause(opts = {}) {
       if (!pauseDoorReady()) return;
       // IS1: the interior saves like anywhere else - DFU's ONE
       // standing save block is mid-rappel (RappelMotor.cs:66,
@@ -4365,6 +4423,7 @@ export function createWorldModes(host) {
       // unbuilt serialization, not a law. The doors are the WORLD
       // host's own composer, riding in on the host bag.
       openPauseFlow((w) => { interiorOverlay = w; }, {
+        at: opts.at ?? null,   // PX26: the page the door was pressed for
         // PX25: the sheet's own doors, through this host's own arms.
         openPack: () => mountInterior(host.makeInventory?.()),
         openSpellbook: () => { if (magic) mountInterior(makeSpellbookWindow()); },
@@ -4388,7 +4447,7 @@ export function createWorldModes(host) {
     // draws a dead arm.
     toggleDial() {
       return openPixelDial([
-        { id: 'skills', label: 'Skills', dir: 'n', open: () => interiorKeyCtx.toggleCharSheet() },
+        { id: 'skills', label: 'Skills', dir: 'n', open: () => interiorKeyCtx.openSheetPage() },
         { id: 'items', label: 'Items', dir: 'e', open: () => interiorKeyCtx.toggleInventory() },
         { id: 'magic', label: 'Magic', dir: 'w', open: () => interiorKeyCtx.toggleSpellbook() },
       ]);
