@@ -6,6 +6,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { EFFECT_COST_TABLE } from '../src/systems/spellcost.js';
+import { flagLines } from '../tools/flagSites.mjs';   // IN1: the ONE definition of an open-flag site
 
 // AUDIT 18 - the DOC-TRUTH sweep.
 //
@@ -79,9 +80,14 @@ test('AUDIT 18: every open-flags citation in Home.md points at the line it quote
 });
 
 test('AUDIT 18: the open-flags list and the FLAGGED/INTERIM sites in src/ agree BOTH ways', () => {
+  // IN1: the rule for "is this line a flag?" is imported, not copied.
+  // This guard carried its own `/FLAGGED|INTERIM/` and the tool carried
+  // another, which is two rules the day one of them moves - and one
+  // moved: the guard went red the moment the tool learned that an
+  // identifier and a quotation are not open work. One home, both sides.
   const inSrc = new Set();
   for (const f of SRC_FILES) {
-    lines(f).forEach((l, i) => { if (/FLAGGED|INTERIM/.test(l)) inSrc.add(`${f}:${i + 1}`); });
+    for (const n of flagLines(readFileSync(join(root, f), 'utf8'))) inSrc.add(`${f}:${n}`);
   }
   const inDoc = new Set();
   for (const l of lines('bible/Home.md')) {

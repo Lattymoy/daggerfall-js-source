@@ -773,12 +773,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // landed trap bolt goes through magic.explodeAt /
   // magic.applySpellToPlayer to applySpell, so a paralysis or drain
   // trap lands exactly as its SPELLS.STD record says. (EF1c: this read
-  // "the classic damage-health family... other effects flagged to the
+  // "the classic damage-health family... other effects FLAGGED to the
   // effect-library slice" long after both halves stopped being true.
-  // The quote is deliberately lower-cased: tools/regenOpenFlags.mjs
-  // harvests the upper-case token into Home.md's open-flag board, so
-  // quoting a retired flag verbatim keeps it on the board as open work
-  // - which is how eleven retirement notes are already sitting there.)
+  // IN1: that quote used to be deliberately lower-cased, because
+  // tools/regenOpenFlags.mjs harvested the token off any line and put
+  // a QUOTED flag back on the board as open work. The tool strips
+  // quoted spans now - EF1c's own unquote rule, moved from the pins
+  // into the ledger - so a correction may say what it retired in the
+  // retired words, and this one does.)
   const _pendingCasts = [];
   const missiles = [];
   // G4: BOTH magic registries, through the one shared loader. This
