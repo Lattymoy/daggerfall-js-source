@@ -8260,6 +8260,29 @@ pins shaped this slice rather than merely passing it - the bake, the
 tier map and one-home - which is the system working exactly as it
 should on a change that touched a shared store.
 
+PX30d (Mac: "the stamina percentage is a super large percentage"):
+FATIGUE HAS NO FIELD, IT HAS A LAW. DFU stores fatigue x64 and
+computes its ceiling as (Strength + Endurance) x 64 - there is no
+`maxFatigue` on the entity at all. So `vitals.maxFatigue || 1` divided
+by ONE, and a real player - 90 fatigue at 50/50 - read 576000%.
+
+THE CLASSIC HUD NEVER HAD THIS BUG, and the reason is the lesson.
+`drawHud` composes a snapshot with `maxFatigue(vitals)` in it (S15's
+own line) and the classic bars read THAT; my branch returns BEFORE the
+snapshot is built, so it was reading the raw entity while the classic
+read the law. The fix is the same law from the same module. Health and
+magicka DO have fields and are left reading them, which is why only
+this one bar was wrong.
+
+And the percentage is clamped at BOTH ends now: a bar cannot be more
+than full, and a number that says otherwise is a bug wearing a percent
+sign rather than something a player should have to read. The floor at
+1 stays. Measured: 90% for a real player, 0/100 at the ends, 1% on a
+sliver, and a fatigue over its ceiling reading 100 rather than
+spilling.
+
+Pins: 1 more (7). 3 more mutations, 3 dead.
+
 ON THE HORIZON for this HUD: a crosshair in the pixel face, the
 interaction-mode icon, and the arrow count.
 
