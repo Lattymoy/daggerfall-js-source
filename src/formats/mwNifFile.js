@@ -373,6 +373,25 @@ const READERS = {
   },
 
   // --- extra data ---
+  /** RULE 54's node, and the reason it must parse: the first-person
+   *  camera tracks a bone named "Camera", so retail first-person
+   *  SKELETONS carry a NiCamera - and an unimplemented record type is
+   *  fatal to the whole file (a 4.0.0.2 NIF has no per-record sizes, so
+   *  there is nothing to skip). Layout from nif.xml, gated to this
+   *  version: `Unknown Short` and `Use Orthographic Projection` are
+   *  ver1 10.1.0.0, `Unknown Int 2` is ver1 4.2.1.0 and `Unknown Int 3`
+   *  is ver2 3.1 - none of the four exist at 4.0.0.2. */
+  NiCamera(s, rec) {
+    readAVObject(s, rec);
+    rec.frustum = {
+      left: s.f32(), right: s.f32(), top: s.f32(), bottom: s.f32(), near: s.f32(), far: s.f32(),
+    };
+    rec.viewport = { left: s.f32(), right: s.f32(), top: s.f32(), bottom: s.f32() };
+    rec.lodAdjust = s.f32();
+    rec.scene = s.ref();
+    rec.screenPolygons = s.u32();
+  },
+
   NiStringExtraData(s, rec) {
     rec.next = s.ref();
     rec.recordSize = s.u32();

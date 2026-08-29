@@ -949,6 +949,47 @@ def make_armskel_weapon():
     write_nif(HERE / "armskelw.nif", [root])
 
 
+def make_armskel_camera():
+    # MW-D9d: the skeleton WITH a NiCamera, which retail first-person
+    # skeletons carry (rule 54: the FP camera tracks a bone named
+    # "Camera"). An unimplemented record type is FATAL to a 4.0.0.2 NIF -
+    # there are no per-record sizes, so nothing can be skipped - so this
+    # fixture exists to prove the reader eats one and stays in sync with
+    # every record after it. The camera is NOT last, deliberately: a
+    # wrong field count would desync the records that follow, and a
+    # trailing record would hide that.
+    root = NifFormat.NiNode()
+    root.name = b"Bip01"
+    ident(root.rotation)
+    root.scale = 1.0
+    for side, sx in (("Right", 1.0), ("Left", -1.0)):
+        up = _bone(root, f"{side} Upper Arm", (sx, 0.0, 3.0))
+        fore = _bone(up, f"{side} Forearm", (0.0, 0.0, -1.0))
+        hand = _bone(fore, f"{side} Hand", (0.0, 0.0, -1.0))
+        _bone(hand, "Weapon Bone" if side == "Right" else "Weapon Bone Left",
+              (0.0, 0.0, -0.5))
+    cam = NifFormat.NiCamera()
+    cam.name = b"Camera"
+    ident(cam.rotation)
+    cam.scale = 1.0
+    cam.translation.z = 4.0
+    cam.frustum_left = -0.5
+    cam.frustum_right = 0.5
+    cam.frustum_top = 0.4
+    cam.frustum_bottom = -0.4
+    cam.frustum_near = 0.1
+    cam.frustum_far = 1000.0
+    cam.viewport_left = 0.0
+    cam.viewport_right = 1.0
+    cam.viewport_top = 1.0
+    cam.viewport_bottom = 0.0
+    cam.lod_adjust = 1.0
+    root.add_child(cam)
+    # AFTER the camera in the file, so a desync is visible as a bad bone.
+    _bone(root, "Bip01 Spine1", (0.0, 0.0, 2.0))
+    write_nif(HERE / "armskelcam.nif", [root])
+
+
 def make_weaponmesh():
     # A rigid weapon: ONE unskinned shape, asymmetric in every axis so
     # that a wrong bone, a wrong mirror and a wrong rotation are three
@@ -984,6 +1025,7 @@ if __name__ == "__main__":
     make_armnameless()
     make_arm_idle_kf()
     make_armskel_weapon()
+    make_armskel_camera()
     make_weaponmesh()
     make_esm()
     make_bsa()
