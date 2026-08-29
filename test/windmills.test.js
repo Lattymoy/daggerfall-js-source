@@ -4,12 +4,12 @@ import assert from 'node:assert/strict';
 import {
   WINDMILL_MODELS, ROTOR_AXIS, ROTOR_SIGN, CALM_ROTOR_DEG_PER_SEC,
   STALL_WIND, FURL_DEG_PER_SEC, ROTOR_GAIN,
-  windSpeed, rotorRate, rotorPhase, advanceRotor, rotorMatrix,
+  windSpeed, rotorRate, rotorPhase, advanceRotor, rotorMatrix, mountRotor, ROTOR_HUB,
 } from '../src/world/windmills.js';
 import { WEATHER_SKY, easeWeather, weatherRow } from '../src/render/enhancedSky.js';
 import { identity, trs, transformPoint } from '../src/world/mat4.js';
 
-// W1 - THE WINDMILL'S TURN.
+// WM1 - THE WINDMILL'S TURN.
 //
 // The module is pure, so every law here is held with synthetic wind and
 // synthetic placement - no ARENA2, no GL. What it CANNOT hold is the
@@ -23,7 +23,7 @@ const near = (a, b, eps = 1e-9) => Math.abs(a - b) <= eps;
 // The wind reading, and the anchor that ties it to the sky.
 // ---------------------------------------------------------------------------
 
-test('W1: windSpeed is the row LENGTH, not either component', () => {
+test('WM1: windSpeed is the row LENGTH, not either component', () => {
   // The killing fixture is a row whose components differ from each other
   // and from the magnitude, so reading [0], reading [1], or summing them
   // all give a different answer.
@@ -32,7 +32,7 @@ test('W1: windSpeed is the row LENGTH, not either component', () => {
   assert.equal(windSpeed([0, 0]), 0);
 });
 
-test('W1: fair weather turns at the classic 13 deg/s, from the sky\'s own row', () => {
+test('WM1: fair weather turns at the classic 13 deg/s, from the sky\'s own row', () => {
   // THE ANCHOR. Not 13 asserted back at itself: the gain is derived, so
   // this reads the shipped sunny row through the whole chain and only
   // passes if that derivation is right. Re-tune WEATHER_SKY.sunny and
@@ -43,7 +43,7 @@ test('W1: fair weather turns at the classic 13 deg/s, from the sky\'s own row', 
   assert.ok(ROTOR_GAIN > 0);
 });
 
-test('W1: the rotor is still at and below the stall, and never past the furl', () => {
+test('WM1: the rotor is still at and below the stall, and never past the furl', () => {
   assert.equal(rotorRate([STALL_WIND, 0]), 0, 'at the stall exactly, still');
   assert.equal(rotorRate([STALL_WIND * 0.5, 0]), 0);
   assert.equal(rotorRate([0, 0]), 0);
@@ -52,7 +52,7 @@ test('W1: the rotor is still at and below the stall, and never past the furl', (
   assert.equal(rotorRate([10, 10]), FURL_DEG_PER_SEC, 'no wind runs past the furl');
 });
 
-test('W1: the rate is monotone in the wind, and strictly so below the furl', () => {
+test('WM1: the rate is monotone in the wind, and strictly so below the furl', () => {
   const rows = Object.entries(WEATHER_SKY)
     .map(([k, v]) => [k, windSpeed(v.wind), rotorRate(v.wind)])
     .sort((a, b) => a[1] - b[1]);
@@ -77,7 +77,7 @@ test('W1: the rate is monotone in the wind, and strictly so below the furl', () 
 // The integration. This is the law the module exists to get right.
 // ---------------------------------------------------------------------------
 
-test('W1: the angle is INTEGRATED - a weather change never teleports the blades', () => {
+test('WM1: the angle is INTEGRATED - a weather change never teleports the blades', () => {
   // Ten minutes of fair weather, then the sim flips to rain and the
   // host eases the row across. Every frame must move the blades by at
   // most one frame's worth of turn.
@@ -119,7 +119,7 @@ test('W1: the angle is INTEGRATED - a weather change never teleports the blades'
   assert.ok(settled >= 0 && settled < 360);
 });
 
-test('W1: the angle wraps into [0, 360) and a bad dt cannot move it', () => {
+test('WM1: the angle wraps into [0, 360) and a bad dt cannot move it', () => {
   const state = { angle: 359 };
   advanceRotor(state, 1, WEATHER_SKY.thunder.wind);
   assert.ok(state.angle >= 0 && state.angle < 360, `angle escaped: ${state.angle}`);
@@ -133,7 +133,7 @@ test('W1: the angle wraps into [0, 360) and a bad dt cannot move it', () => {
   assert.equal(still.angle, 12.5, 'a NaN frame poisoned the angle');
 });
 
-test('W1: two mills a block apart are not a chorus line, and are stable', () => {
+test('WM1: two mills a block apart are not a chorus line, and are stable', () => {
   const a = rotorPhase(112, 340);
   assert.equal(a, rotorPhase(112, 340), 'the same site drew two different phases');
   assert.ok(a >= 0 && a < 360);
@@ -146,7 +146,7 @@ test('W1: two mills a block apart are not a chorus line, and are stable', () => 
 // The transform.
 // ---------------------------------------------------------------------------
 
-test('W1: the hub is the one point a spin leaves alone', () => {
+test('WM1: the hub is the one point a spin leaves alone', () => {
   // A mill standing well away from the origin, turned a third of the
   // way round. If the spin were composed OUTSIDE the model matrix the
   // whole mill would swing across the field, and the hub would move.
@@ -160,7 +160,7 @@ test('W1: the hub is the one point a spin leaves alone', () => {
   }
 });
 
-test('W1: a full turn is a no-op, and a blade tip really moves', () => {
+test('WM1: a full turn is a no-op, and a blade tip really moves', () => {
   const model = identity();
   const hub = [0, 2, 0];
   const tip = [0, 3.5, 0];   // a metre and a half up the sail from the hub
@@ -176,7 +176,7 @@ test('W1: a full turn is a no-op, and a blade tip really moves', () => {
   assert.ok(near(r0, r1, 1e-4), `the sail changed length: ${r0} -> ${r1}`);
 });
 
-test('W1: the rotor turns the way Kamer\'s does - clockwise seen from +Z', () => {
+test('WM1: the rotor turns the way Kamer\'s does - clockwise seen from +Z', () => {
   // ROTOR_SIGN is negative, so a sail at 12 o'clock goes to 3 o'clock.
   const spun = transformPoint(rotorMatrix(identity(), [0, 0, 0], 90), 0, 1, 0);
   assert.ok(near(spun[0], 1, 1e-4) && near(spun[1], 0, 1e-4),
@@ -187,7 +187,7 @@ test('W1: the rotor turns the way Kamer\'s does - clockwise seen from +Z', () =>
   assert.ok(near(transformPoint(rotorMatrix(identity(), [0, 0, 0], 47), 0, 1, 0.75)[2], 0.75, 1e-4));
 });
 
-test('W1: the roller axis is a different axis, not a different sign', () => {
+test('WM1: the roller axis is a different axis, not a different sign', () => {
   // SpinTime_Roller.cs turns about local X. A point on the X axis is the
   // one an X-spin leaves alone, which a Z-spin would move.
   const onX = transformPoint(rotorMatrix(identity(), [0, 0, 0], 90, 'x'), 1, 0, 0);
@@ -196,7 +196,7 @@ test('W1: the roller axis is a different axis, not a different sign', () => {
   assert.ok(!near(byZ[1], 0, 1e-4), 'the axis argument is being ignored');
 });
 
-test('W1: the model table names what it spins, and nothing else', () => {
+test('WM1: the model table names what it spins, and nothing else', () => {
   // A model id here that is NOT a mill turns something that should stand
   // still - so the table stays small and every entry says what it is.
   assert.deepEqual(Object.keys(WINDMILL_MODELS).sort(), ['21411', '41600', '41601']);
@@ -204,4 +204,63 @@ test('W1: the model table names what it spins, and nothing else', () => {
     assert.ok(kind === 'windmill' || kind === 'watermill', `unknown rotor kind ${kind}`);
   }
   assert.ok(Object.isFrozen(WINDMILL_MODELS));
+});
+
+// ---------------------------------------------------------------------------
+// WM2b: MOUNTING the vendored rotor, which is a different transform from
+// spinning one that is already in place - and the difference is a defect
+// waiting to happen, so it is pinned from both sides.
+// ---------------------------------------------------------------------------
+
+test('WM2b: a mounted rotor SPINS about its own centre at the hub', () => {
+  const model = trs(70, 0, 12, 0, 45, 0);
+  const hub = [3.96, 6.01, -5.5];
+  // The sail's own centre is its origin, so wherever the mount puts it,
+  // it must STAY there while the angle sweeps: that is what spinning is.
+  const at = (deg) => transformPoint(mountRotor(model, hub, deg), 0, 0, 0);
+  const home = at(0);
+  for (const deg of [37, 90, 180, 271, 359]) {
+    const p = at(deg);
+    for (let i = 0; i < 3; i++) {
+      assert.ok(Math.abs(p[i] - home[i]) < 1e-4,
+        `the sail's centre moved at ${deg} deg: ${home} -> ${p}`);
+    }
+  }
+  // ...and it really is AT the hub, not at the model's origin.
+  const originOfModel = transformPoint(model, 0, 0, 0);
+  assert.ok(Math.hypot(home[0] - originOfModel[0], home[1] - originOfModel[1], home[2] - originOfModel[2]) > 1,
+    'the mount ignored the hub offset');
+  // ...and a tip still sweeps.
+  const tip = transformPoint(mountRotor(model, hub, 90), 0, 17, 0);
+  const tip0 = transformPoint(mountRotor(model, hub, 0), 0, 17, 0);
+  assert.ok(Math.hypot(tip[0] - tip0[0], tip[1] - tip0[1], tip[2] - tip0[2]) > 1, 'the sail did not turn');
+});
+
+test('WM2b: conjugating ORIGIN-CENTRED geometry orbits it - the defect, pinned', () => {
+  // rotorMatrix is for geometry already at the hub. Used on the vendored
+  // rotor (centred on its own origin) the sail would swing around the hub
+  // like a gondola instead of turning on it - which on screen reads as a
+  // bug in the wind law rather than in the transform. This pin exists so
+  // that mistake fails a test instead of shipping.
+  const model = identity();
+  const hub = [3.96, 6.01, -5.5];
+  const wrong0 = transformPoint(rotorMatrix(model, hub, 0), 0, 0, 0);
+  const wrong180 = transformPoint(rotorMatrix(model, hub, 180), 0, 0, 0);
+  const swing = Math.hypot(wrong0[0] - wrong180[0], wrong0[1] - wrong180[1], wrong0[2] - wrong180[2]);
+  assert.ok(swing > 1, 'the fixture no longer distinguishes the two transforms');
+
+  const right0 = transformPoint(mountRotor(model, hub, 0), 0, 0, 0);
+  const right180 = transformPoint(mountRotor(model, hub, 180), 0, 0, 0);
+  assert.ok(Math.hypot(right0[0] - right180[0], right0[1] - right180[1], right0[2] - right180[2]) < 1e-4,
+    'mountRotor moved the sail centre - it is meant to be the fixed point');
+});
+
+test('WM2b: the hub is the prefab\'s own number, and the sail hangs clear of the tower', () => {
+  assert.deepEqual([...ROTOR_HUB], [3.96, 6.01, -5.5]);
+  assert.ok(Object.isFrozen(ROTOR_HUB));
+  // Kamer's tower body tops out at y 10.84 and reaches x 3.89. The hub
+  // must sit high on it and at its face, or the sail is buried in the
+  // building - a cheap standing check on a number taken from his prefab.
+  assert.ok(ROTOR_HUB[1] > 0 && ROTOR_HUB[1] < 10.84, 'the hub is not on the tower vertically');
+  assert.ok(ROTOR_HUB[0] >= 3.89 - 1e-6, 'the hub is not out at the tower face in X');
 });

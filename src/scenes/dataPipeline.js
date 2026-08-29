@@ -10,6 +10,7 @@ import { isExteriorWindow } from '../world/climateSwaps.js';
 import { dfMeshToModel } from '../world/meshReader.js';
 import { fetchBytes, texName } from './shared.js';
 import { decodedTexture, preloadTextureArchive } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones
+import { ROTOR } from '../world/windmillMesh.js';   // WM2b: the vendored rotor, uploaded like any other model
 
 /** @param deps {{renderer, arch: Arch3dFile, palette: DFPalette}} */
 export function createDataPipeline({ renderer, arch, palette }) {
@@ -135,7 +136,33 @@ export function createDataPipeline({ renderer, arch, palette }) {
     gpuMeshes.set(modelIdNum, gpu);
     return gpu;
   }
+  /** WM2b: THE WINDMILL ROTOR, uploaded once per scene.
+   *
+   *  Not an ARCH3D record, so it cannot come through getGpuMesh - the
+   *  geometry is Kamer's, vendored with permission and baked by
+   *  scripts/bakeWindmill.mjs (see vendor/windmills-kamer/README.md).
+   *  Everything else about it is ordinary: its submeshes name CLASSIC
+   *  (archive, record) pairs, so its textures load and upload through
+   *  exactly the same two calls every other model's do, out of the
+   *  player's own ARENA2.
+   *
+   *  Cached on the same map as the rest under a key no ARCH3D record can
+   *  collide with (ids are positive), so a host may ask per block
+   *  without paying twice, and teardown frees it with everything else.
+   */
+  const ROTOR_KEY = -41600;
+  async function getRotorMesh() {
+    if (gpuMeshes.has(ROTOR_KEY)) return gpuMeshes.get(ROTOR_KEY);
+    for (const sm of ROTOR.subMeshes) {
+      await getTexture(sm.textureArchive);
+      uploadRecord(sm.textureArchive, sm.textureRecord);
+    }
+    const gpu = renderer.createMesh(ROTOR);
+    gpuMeshes.set(ROTOR_KEY, gpu);
+    return gpu;
+  }
+
   loadFlats();   // warm it with the scene; the getters answer null until it lands
-  return { textureFiles, getTexture, getTextureSize, uploadRecord, uploadRecordFrame, getGpuMesh, gpuMeshes, cpuModels, palette,
+  return { textureFiles, getTexture, getTextureSize, uploadRecord, uploadRecordFrame, getGpuMesh, getRotorMesh, gpuMeshes, cpuModels, palette,
     loadFlats, flatCaption, flatFaceIndex, flatsFile: () => flats };
 }

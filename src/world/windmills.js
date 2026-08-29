@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// W1 — THE WINDMILL'S TURN: what makes the blades go round.
+// WM1 — THE WINDMILL'S TURN: what makes the blades go round.
 //
 // Classic Daggerfall's farm blocks stand a windmill on the ground and
 // it never moves. Turning it is an ENHANCED-ONLY DEPARTURE (Ledger A),
@@ -9,17 +9,17 @@
 //
 // ── WHAT THIS OWES KAMER, AND WHAT IT TOOK ───────────────────────
 //
-// "Windmills of Daggerfall" (Kamer, DFU mod, v2.0). W1 shipped this
+// "Windmills of Daggerfall" (Kamer, DFU mod, v2.0). WM1 shipped this
 // module treating the mod as a reference only, on the roads' precedent
 // ("instead of taking their mod, I want us to develop our own and
 // better") - and that was the wrong call to keep once Mac confirmed
 // THE AUTHOR HAD GIVEN PERMISSION. An invitation is not a lift.
 //
-// So W2a vendors his ROTOR GEOMETRY, and only that:
+// So WM2a vendors his ROTOR GEOMETRY, and only that:
 // vendor/windmills-kamer/Blade.dae, baked by scripts/bakeWindmill.mjs
 // into world/windmillMesh.js. It is the piece the port could not
 // derive - a sail separated from its tower - and it makes the mesh
-// question W1 flagged moot, because the split was made by the art.
+// question WM1 flagged moot, because the split was made by the art.
 //
 // His .PNG textures did NOT come across, and that is not about him:
 // they are Daggerfall's art exported to PNG, the doctrine's second
@@ -88,7 +88,7 @@ import { multiply, trs } from './mat4.js';
 //
 // prints each model's submeshes and its CONNECTED COMPONENTS - if the
 // sail is its own island of geometry, or carries its own texture
-// record, the rotor/tower split W2 needs is already made by the art -
+// record, the rotor/tower split WM2 needs is already made by the art -
 // and draws every component in its own colour from three sides,
 // because "that part is the sail" is a claim only an eye settles.
 // `--selftest` runs it against a synthetic windmill with no ARENA2.
@@ -185,8 +185,51 @@ export function advanceRotor(state, dt, wind) {
   return state.angle;
 }
 
+/** WHERE THE SAIL HANGS on model 41600, in that model's own local
+ *  space. Sourced, not guessed: Kamer's prefab REPLACES model 41600, so
+ *  its root is that model's origin, and its Blades child sits at this
+ *  local position with an identity rotation
+ *  (`Models/Finished/41600.prefab`). Against his own tower body - which
+ *  he authored to stand in for the classic one - it puts the hub just
+ *  past the +X face, high up (the body tops out at y 10.84), at the
+ *  front in Z. The import applies no scale (`globalScale: 1`,
+ *  `useFileScale: 1`), so these are the port's world units already.
+ *
+ *  THE RESIDUAL RISK IS THE CLASSIC TOWER, not this number: the offset
+ *  is exact in HIS body's frame, and it lands correctly on the classic
+ *  41600 only insofar as he built his replacement to match it. A sail
+ *  floating beside a mill rather than mounted on it is what that looks
+ *  like, and it is a one-look question nobody in this container can
+ *  answer. */
+export const ROTOR_HUB = Object.freeze([3.96, 6.01, -5.5]);
+
 /**
- * The transform that turns a rotor, in MODEL space.
+ * MOUNT a rotor whose geometry is centred on its own origin, and turn it.
+ *
+ * `model * T(hub) * R` - carry the sail out to the hub, then spin it
+ * about its own centre there. This is the one the wiring uses, because
+ * the vendored `windmillMesh.ROTOR` is modelled centred on the origin
+ * with its placement supplied separately (see ROTOR_HUB).
+ *
+ * DO NOT reach for rotorMatrix below for this. That one CONJUGATES
+ * (`T(hub) R T(-hub)`), which is right for geometry already sitting at
+ * the hub inside the model - a sail split out of a classic mesh in
+ * place - and wrong here in a way that looks like a bug rather than
+ * reading as one: origin-centred geometry conjugated about an offset
+ * hub does not spin, it ORBITS the hub at the hub's own radius. The
+ * pins hold both, and hold them apart.
+ */
+export function mountRotor(modelMatrix, hub, angleDeg, axis = ROTOR_AXIS) {
+  const a = ROTOR_SIGN * angleDeg;
+  const rot = axis === 'x' ? trs(0, 0, 0, a, 0, 0)
+    : axis === 'y' ? trs(0, 0, 0, 0, a, 0)
+      : trs(0, 0, 0, 0, 0, a);
+  return multiply(modelMatrix, multiply(trs(hub[0], hub[1], hub[2], 0, 0, 0), rot));
+}
+
+/**
+ * The transform that turns a rotor ALREADY POSITIONED at its hub in
+ * MODEL space.
  *
  * The hub is a point on the model, not the origin, so the spin is the
  * classic conjugation - out to the hub, turn, back again - and it is

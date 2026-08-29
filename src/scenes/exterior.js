@@ -100,6 +100,8 @@ import {
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
   LightningPlayer,
 } from '../world/weather.js';
+// WM2b: the windmill's law, and the vendored rotor it turns.
+import { WINDMILL_MODELS, ROTOR_HUB, rotorPhase, advanceRotor, mountRotor } from '../world/windmills.js';
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { setWeather, currentWeather, tickWeather } from '../systems/weatherSim.js';   // W1: the live weather state
 import { SEASON } from '../world/climateSwaps.js';
@@ -169,7 +171,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // and the exterior prefab is audible from frame one).
   ensureAudio(fetchBytes);
 
-  const { textureFiles, getTexture, uploadRecord, uploadRecordFrame, getGpuMesh, gpuMeshes, cpuModels } = pipeline;
+  const { textureFiles, getTexture, uploadRecord, uploadRecordFrame, getGpuMesh, getRotorMesh, gpuMeshes, cpuModels } = pipeline;
 
   // Collect the location's model ids + referenced texture archives.
   const modelIds = new Set();
@@ -262,6 +264,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     return scaledBillboardSize(t.getSize(record), t.getScale(record));
   };
   const drawList = [];
+  const windmills = [];   // WM2b: placed mills whose rotor turns each frame
   // Player collision (P1): every placed model's triangles, world-space,
   // over the flat ground floor.
   const collider = new Collider(() => GROUND_OFFSET * 0.025);
@@ -279,6 +282,19 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (!mesh) continue;
       const matrix = multiply(originMatrix, placed.matrix);
       drawList.push({ mesh, matrix });
+      // WM2b: a mill gets a sail. The tower is the classic model and
+      // draws in the list above like anything else; only the rotor is
+      // extra, and it needs its own matrix per frame, so it cannot ride
+      // a list built once at load.
+      if (WINDMILL_MODELS[placed.modelIdNum]) {
+        windmills.push({
+          matrix,
+          // Deterministic in the mill's own world position, so a farm's
+          // mills are not a chorus line and the same mill is at the same
+          // phase every time the player walks up to it.
+          state: { angle: rotorPhase(matrix[12], matrix[14]) },
+        });
+      }
       const cpu = cpuModels.get(placed.modelIdNum);
       collider.addMesh('world', cpu.positions, cpu.indices, matrix);
       colliderTris += cpu.indices.length / 3;
@@ -393,6 +409,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (tx < 0 || ty < 0 || tx >= tilemapDim || ty >= tilemapDim) return null;
     return locationTilemap[tx + ty * tilemapDim];
   };
+
+  // WM2b: the rotor mesh, uploaded ONCE for the whole location and only
+  // if a mill was actually placed - a town with no farm block pays
+  // nothing. Its textures are classic (archive, record) pairs and load
+  // out of the player's own ARENA2 like every other model's.
+  const rotorMesh = windmills.length ? await getRotorMesh() : null;
 
   // Load any flat archives not already fetched, then build one batch per
   // (archive, record) with its scaled billboard size.
@@ -1735,6 +1757,20 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer.drawTerrain(groundSurface, identityMatrix,
       renderer.tileArrays.get(groundArchive), tilemapTex, 6.4);
     for (const d of drawList) renderer.drawMesh(d.mesh, d.matrix, texRemap);
+    // WM2b: THE SAILS. Driven by the SAME eased wind vector the cloud
+    // deck overhead is drawn with (shared.js's sky.wind()), so a storm
+    // picks the mills up on the same fourteen-second curve it picks the
+    // sky up on. A null row is "no wind is known" - the classic sky
+    // eases nothing - and a mill then stands still rather than guessing.
+    if (rotorMesh && windmills.length) {
+      const wind = sky.wind();
+      if (wind) {
+        for (const w of windmills) {
+          advanceRotor(w.state, dt, wind);
+          renderer.drawMesh(rotorMesh, mountRotor(w.matrix, ROTOR_HUB, w.state.angle), texRemap);
+        }
+      }
+    }
     if (rig && (riding || params.has('rig'))) {
       if (riding) {
         // Gait from live input over the SAME keys the motor reads;

@@ -8,12 +8,12 @@ import { ROTOR } from '../src/world/windmillMesh.js';
 import { parseCollada } from '../scripts/bakeWindmill.mjs';
 import { ROTOR_AXIS } from '../src/world/windmills.js';
 
-// W2a - THE ROTOR GEOMETRY, VENDORED WITH PERMISSION AND BAKED.
+// WM2a - THE ROTOR GEOMETRY, VENDORED WITH PERMISSION AND BAKED.
 //
-// W1 shipped the law and could not answer the mesh: which models carry a
+// WM1 shipped the law and could not answer the mesh: which models carry a
 // rotor and where its hub sits are ARCH3D.BSA questions, and the container
 // has no ARENA2. Kamer's permission answered it a different way - his mod
-// already SEPARATES the sail from the tower, so the split W2 needed was
+// already SEPARATES the sail from the tower, so the split WM2 needed was
 // made by the art and no geometric guess is required at all.
 //
 // These pins hold the three things that could go wrong quietly: the baked
@@ -23,7 +23,7 @@ import { ROTOR_AXIS } from '../src/world/windmills.js';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const VENDOR = join(root, 'vendor/windmills-kamer');
 
-test('W2a: the baked rotor is what the vendored .dae says, re-derived', () => {
+test('WM2a: the baked rotor is what the vendored .dae says, re-derived', () => {
   // The bakeBooks shape: the test does the bake again and compares, so a
   // hand-edited src/world/windmillMesh.js fails instead of shipping
   // geometry nobody derived from the source.
@@ -34,7 +34,7 @@ test('W2a: the baked rotor is what the vendored .dae says, re-derived', () => {
   assert.equal(ROTOR.flatAxis, m.flatAxis);
 });
 
-test('W2a: the sail is flat in the axis the rotor law turns about', () => {
+test('WM2a: the sail is flat in the axis the rotor law turns about', () => {
   // The law came first and assumed Z from Kamer's Spin_Up.cs. The geometry
   // arrived afterwards and has to agree, or one of the two is wrong.
   assert.equal(ROTOR.flatAxis, ROTOR_AXIS);
@@ -46,7 +46,7 @@ test('W2a: the sail is flat in the axis the rotor law turns about', () => {
     `the sail is only ${span[thin]} thin against ${span[0]}x${span[1]} - is this a sail?`);
 });
 
-test('W2a: the hub IS the origin, so the spin needs no offset', () => {
+test('WM2a: the hub IS the origin, so the spin needs no offset', () => {
   // windmills.rotorMatrix conjugates about a hub point. If the sail were
   // modelled off-origin, every caller would need to know its centre and
   // the wiring slice would be guessing at one.
@@ -58,7 +58,7 @@ test('W2a: the hub IS the origin, so the spin needs no offset', () => {
   }
 });
 
-test('W2a: the mesh is well formed - every index lands, every triangle is claimed', () => {
+test('WM2a: the mesh is well formed - every index lands, every triangle is claimed', () => {
   const vertexCount = ROTOR.positions.length / 3;
   assert.equal(ROTOR.normals.length / 3, vertexCount, 'a vertex is missing its normal');
   assert.equal(ROTOR.uvs.length / 2, vertexCount, 'a vertex is missing its uv');
@@ -76,7 +76,7 @@ test('W2a: the mesh is well formed - every index lands, every triangle is claime
   assert.equal(at, ROTOR.indices.length, 'the submeshes do not cover the index buffer');
 });
 
-test('W2a: the rotor names CLASSIC textures and carries none of them', () => {
+test('WM2a: the rotor names CLASSIC textures and carries none of them', () => {
   // The whole reason no .PNG came across: these are (archive, record)
   // pairs the port already loads from the player's own ARENA2.
   assert.ok(ROTOR.subMeshes.length > 0);
@@ -88,7 +88,7 @@ test('W2a: the rotor names CLASSIC textures and carries none of them', () => {
   assert.doesNotMatch(baked, /base64|data:image/, 'image data was baked into the mesh module');
 });
 
-test('W2a: no Daggerfall art was vendored beside the geometry', () => {
+test('WM2a: no Daggerfall art was vendored beside the geometry', () => {
   // The doctrine's second non-negotiable, at the one door this slice
   // opened. The mod ships 20-odd PNG exports of classic textures; the
   // author's permission does not reach them, because they are not his.
@@ -101,7 +101,7 @@ test('W2a: no Daggerfall art was vendored beside the geometry', () => {
   assert.match(readme, /[Pp]ermission/, 'the README must record the permission that admits these files');
 });
 
-test('W2a: a differently-rotated re-export FAILS the bake rather than baking sideways', () => {
+test('WM2a: a differently-rotated re-export FAILS the bake rather than baking sideways', () => {
   // The bake applies no transform, on the ground that this export's node
   // matrix composed with Z-up-to-Y-up is the identity. That is only safe
   // while the matrix is the expected one - so it is asserted, not assumed.
@@ -113,7 +113,7 @@ test('W2a: a differently-rotated re-export FAILS the bake rather than baking sid
     'a re-export with a different object rotation would bake sideways silently');
 });
 
-test('W2a: the reader REFUSES a mesh it does not fully understand', () => {
+test('WM2a: the reader REFUSES a mesh it does not fully understand', () => {
   // A permissive COLLADA reader that skipped an input it did not know
   // would bake a mesh with no normals and say nothing.
   const src = readFileSync(join(VENDOR, 'Blade.dae'), 'utf8');

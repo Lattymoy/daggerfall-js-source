@@ -1,20 +1,20 @@
-// W1 - THE WINDMILL PROBE: what is actually inside model 41600.
+// WM1 - THE WINDMILL PROBE: what is actually inside model 41600.
 //
 // Not part of the suite. Run against your own ARENA2:
 //
 //   ARENA2_PATH=/path/to/ARENA2 node tools/windmillProbe.mjs
 //   ARENA2_PATH=... node tools/windmillProbe.mjs 41600 41601 21411
 //
-// W1 shipped the LAW that turns a rotor (systems/... no: world/windmills.js)
+// WM1 shipped the LAW that turns a rotor (systems/... no: world/windmills.js)
 // and flagged the half it could not answer: WHICH models carry a rotor, and
 // WHERE its hub sits. Those are questions about ARCH3D.BSA, and the container
-// W1 was written in had no ARENA2 - so rather than guess at a mesh and pin the
+// WM1 was written in had no ARENA2 - so rather than guess at a mesh and pin the
 // guess, this prints the mesh.
 //
 // It answers three things, and the third is why it draws:
 //
 //  1. THE SUBMESHES. A DF mesh is grouped by texture, so if the sail carries
-//     its own texture record the split is already done and W2 is a one-line
+//     its own texture record the split is already done and WM2 is a one-line
 //     selection.
 //  2. THE CONNECTED COMPONENTS. If the sail is a separate island of geometry
 //     - no vertex shared with the tower - then the split is done a second way,
@@ -25,7 +25,7 @@
 //     every component is drawn in its own colour from three sides.
 //
 // It writes windmill-<id>.png beside the repo root and prints the numbers a
-// W2 slice needs: per component, its bounding box, its centroid, and the axis
+// WM2 slice needs: per component, its bounding box, its centroid, and the axis
 // it is flattest in - which for a sail cross IS the axis it turns about.
 
 import fs from 'node:fs';
@@ -165,7 +165,7 @@ for (const id of IDS) {
   console.log(`  ${mesh.totalVertices} vertices, ${mesh.totalTriangles} triangles, `
     + `${mesh.subMeshes.length} submesh(es)\n`);
 
-  console.log('  SUBMESHES (grouped by texture - if the sail has its own, W2 is trivial)');
+  console.log('  SUBMESHES (grouped by texture - if the sail has its own, WM2 is trivial)');
   mesh.subMeshes.forEach((sm, i) => {
     const s = stat(sm.planes.map((p) => ({ s: i, points: p.points })));
     console.log(`   [${i}] texture ${sm.textureArchive}_${sm.textureRecord}  `
