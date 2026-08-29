@@ -834,14 +834,10 @@ test('U59: a WORN item has no way to be dropped, because DFU has none', () => {
 
 test('U59: the doll is the COMPOSITOR\'s, and the schematic is the fallback', () => {
   const src = read('src/ui/enhancedInventory.js');
-  // ONE COMPOSITOR: the pane reads FINISHED pixels and never blits.
-  // PX29 changed which finished buffer it reads - the figure rather
-  // than the whole panel - and the law is the same law: the doll is
-  // paperDoll.js's, and this window only draws what it is handed.
-  assert.match(src, /paperDollFigurePixels\(\)/);
+  // one compositor: the pane reads finished pixels and never blits
+  assert.match(src, /paperDollPixels\(\)/);
   assert.doesNotMatch(src, /\bblit\(/, 'and it still never blits');
-  // PX29: the FIGURE, not the whole panel - see the PX29 pin.
-  assert.match(src, /paperDollDataUrl\(paperDollFigurePixels\(\), \{ scale: 4 \}\)/);   // PX20a: 4x, for a cell twice the size
+  assert.match(src, /paperDollDataUrl\(paperDollPixels\(\), \{ scale: 4 \}\)/);   // PX20a: 4x, for a cell twice the size
   const code2 = code('src/ui/enhancedInventory.js');
   for (const law of ['BlitItems', 'applyDyeToIndex', 'paperdollOrder', 'PAPERDOLL_ORIGIN', 'BG_SUBRECT']) {
     assert.ok(!code2.includes(law), `a second paperdoll compositor is growing here (${law})`);
@@ -851,7 +847,7 @@ test('U59: the doll is the COMPOSITOR\'s, and the schematic is the fallback', ()
   // still sees their kit; the DOLL rides behind them only when its
   // art can draw. The pin follows the shape.
   const fp = src.slice(src.indexOf('function equippedList()'), src.indexOf('function characterCol()'));
-  assert.match(fp, /const dollUrl = paperDollDataUrl\(paperDollFigurePixels\(\), \{ scale: 4 \}\);/);
+  assert.match(fp, /const dollUrl = paperDollDataUrl\(paperDollPixels\(\), \{ scale: 4 \}\);/);
   assert.match(fp, /if \(dollUrl\)/, 'the doll must be OPTIONAL - tiles alone are the no-data answer');
   assert.match(fp, /wornmap/);
   // and the compositor is asked to recompose when the kit changes, or
@@ -906,7 +902,7 @@ test('PX20a/c: the sprite is unframed, 4x, and its cell is a PERFECT FIT', () =>
   assert.match(css, /\.pack-shell \.wornmap-doll\.hasart \{ aspect-ratio: 110 \/ 184;/);
   const src = read('src/ui/enhancedInventory.js');
   assert.match(src, /wornmap-doll\$\{dollUrl \? ' hasart' : ' noart'\}/, 'and the class says which');
-  assert.match(src, /paperDollDataUrl\(paperDollFigurePixels\(\), \{ scale: 4 \}\)/, '4x: a bigger cell wants more pixels, not a scaled 3x');
+  assert.match(src, /paperDollDataUrl\(paperDollPixels\(\), \{ scale: 4 \}\)/, '4x: a bigger cell wants more pixels, not a scaled 3x');
   // 110x184 is the classic paperdoll's own size, not a number typed here.
   const pd = read('src/ui/paperDoll.js');
   assert.match(pd, /export const PAPERDOLL_W = 110;/);
@@ -1128,24 +1124,21 @@ test('PX28: looting just TAKES - no second popup over the frame you are reading'
   assert.match(src, /if \(plan\.claimsChoice\) \{/, 'G6\'s one-is-the-whole-gift arm still runs first');
 });
 
-test('PX29: the pack draws the FIGURE, and the classic keeps DFU\'s whole panel', () => {
-  // Mac: "remove the background from the paperdoll in the inventory
-  // UI." DFU fills the panel with backgroundSubRect and blits the body
-  // and every item over it, so the composite has no notion of "figure"
-  // to hand out. It does now, and EXACTLY rather than by matching
-  // colours: every layer after the background goes through ONE blit,
-  // so a mask written there is the figure and nothing else.
+test('PX29b: the doll is DFU\'s whole composite - the figure mask is REVERTED', () => {
+  // PX29 wrote a mask of "which pixels are the figure" so the pack
+  // could drop DFU's panel, and it blanked the doll ENTIRELY in play.
+  // The reason is the pin: `_pixels` publishes at the END of
+  // refreshPaperDoll - "the composite swaps in whole when done" - and
+  // the mask published at the START. Any pass that returned early left
+  // a VALID composite paired with an all-zero mask, so every pixel read
+  // as background.
   const pd = read('src/ui/paperDoll.js');
-  assert.match(pd, /let _figure = null;/);
-  assert.match(pd, /if \(_figure\) _figure\[dy \* PAPERDOLL_W \+ dx\] = 1;/, 'the one blit marks the figure');
-  assert.equal((pd.match(/_figure\[dy \* PAPERDOLL_W \+ dx\] = 1;/g) ?? []).length, 1,
-    'ONE write - a second would mean a layer path that bypasses blit');
-  assert.match(pd, /export function paperDollFigurePixels\(\)/);
-  assert.match(pd, /if \(!_figure\[i\]\) out\[i \* 4 \+ 3\] = 0;/, 'the background goes TRANSPARENT, never recoloured');
-  assert.match(pd, /if \(!_pixels \|\| !_figure\) return _pixels;/, 'and with no composite yet it is honest about it');
-  // THE CLASSIC WINDOW IS UNTOUCHED: it draws the whole composite,
-  // background included, because that is what DFU draws.
-  assert.match(read('src/ui/enhancedInventory.js'), /paperDollDataUrl\(paperDollFigurePixels\(\), \{ scale: 4 \}\)/);
-  assert.doesNotMatch(read('src/ui/nativeInventory.js'), /paperDollFigurePixels/);
-  assert.doesNotMatch(read('src/ui/charsheet.js'), /paperDollFigurePixels/);
+  assert.ok(!pd.includes('_figure'), 'the mask is gone, not merely unused');
+  assert.ok(!pd.includes('paperDollFigurePixels'), 'and so is the accessor');
+  assert.match(pd, /PX29, REVERTED \(PX29b\)/, 'and the file records why, for whoever tries it again');
+  // TWO BUFFERS DESCRIBING ONE IMAGE MUST SWAP IN TOGETHER. The
+  // composite's own law, which the mask broke by publishing early.
+  assert.match(pd, /_pixels = \{ width: PAPERDOLL_W, height: PAPERDOLL_H, rgba: out, version: _version \};/);
+  // Both windows draw the same composite again.
+  assert.match(read('src/ui/enhancedInventory.js'), /paperDollDataUrl\(paperDollPixels\(\), \{ scale: 4 \}\)/);
 });
