@@ -1,6 +1,17 @@
 {
   "_comment": [
     "WHERE THE MILLS STAND. Extracted from the WorldData/*.RMB.json block",
+    "",
+    "EACH SUBRECORD PLACES TWO MODELS, not one. WM2d read only the mill and",
+    "that is why Mac could see no door and enter nothing: model 118 is a",
+    "CLASSIC Daggerfall building - the structure that carries the door - and",
+    "the mill (41600) stands beside it. His subrecord headers declare",
+    "Num3dObjectRecords 1 while carrying 2, the same hand-edit slip as the",
+    "subrecord counts, which is how the second record went unread.",
+    "",
+    "The 41600 record is his own model's placement. The 118 record places a",
+    "model the player already owns, at coordinates he chose - so both are",
+    "his authorship and neither is Daggerfall's layout.",
     "overrides in Kamer's 'Windmills of Daggerfall' v2.0, vendored with the",
     "author's permission (see README.md).",
     "",
@@ -23,11 +34,107 @@
     "Units are Daggerfall's own, as the block records store them."
   ],
   "placements": [
-    { "block": "FARMAA00.RMB", "subX": 1024, "subZ": 896,  "subRot": 0, "x": 1867,  "y": -663, "z": -1575, "rotY": -512 },
-    { "block": "FARMAA01.RMB", "subX": 3200, "subZ": 448,  "subRot": 0, "x": -2339, "y": -662, "z": -3063, "rotY": -1024 },
-    { "block": "FARMAA02.RMB", "subX": 320,  "subZ": 2112, "subRot": 0, "x": 3162,  "y": -662, "z": -263,  "rotY": -1022 },
-    { "block": "FARMAA05.RMB", "subX": 3200, "subZ": 3328, "subRot": 0, "x": -2962, "y": -662, "z": 1267,  "rotY": 0 },
-    { "block": "FARMAA06.RMB", "subX": 3200, "subZ": 3328, "subRot": 0, "x": -2025, "y": -663, "z": 2365,  "rotY": 0 },
-    { "block": "FARMAA07.RMB", "subX": 3200, "subZ": 3328, "subRot": 0, "x": -2025, "y": -663, "z": -268,  "rotY": -1024 }
+    {
+      "block": "FARMAA00.RMB",
+      "subX": 1024,
+      "subZ": 896,
+      "subRot": 0,
+      "x": 1867,
+      "y": -663,
+      "z": -1575,
+      "rotY": -512,
+      "building": {
+        "modelIdNum": 118,
+        "x": 1600,
+        "y": 0,
+        "z": -1736,
+        "rotY": 0
+      }
+    },
+    {
+      "block": "FARMAA01.RMB",
+      "subX": 3200,
+      "subZ": 448,
+      "subRot": 0,
+      "x": -2339,
+      "y": -662,
+      "z": -3063,
+      "rotY": -1024,
+      "building": {
+        "modelIdNum": 118,
+        "x": -2500,
+        "y": 0,
+        "z": -2800,
+        "rotY": -512
+      }
+    },
+    {
+      "block": "FARMAA02.RMB",
+      "subX": 320,
+      "subZ": 2112,
+      "subRot": 0,
+      "x": 3162,
+      "y": -662,
+      "z": -263,
+      "rotY": -1022,
+      "building": {
+        "modelIdNum": 118,
+        "x": 3000,
+        "y": 0,
+        "z": 0,
+        "rotY": -511
+      }
+    },
+    {
+      "block": "FARMAA05.RMB",
+      "subX": 3200,
+      "subZ": 3328,
+      "subRot": 0,
+      "x": -2962,
+      "y": -662,
+      "z": 1267,
+      "rotY": 0,
+      "building": {
+        "modelIdNum": 118,
+        "x": -2800,
+        "y": 0,
+        "z": 1000,
+        "rotY": 512
+      }
+    },
+    {
+      "block": "FARMAA06.RMB",
+      "subX": 3200,
+      "subZ": 3328,
+      "subRot": 0,
+      "x": -2025,
+      "y": -663,
+      "z": 2365,
+      "rotY": 0,
+      "building": {
+        "modelIdNum": 118,
+        "x": -1865,
+        "y": 0,
+        "z": 2100,
+        "rotY": 512
+      }
+    },
+    {
+      "block": "FARMAA07.RMB",
+      "subX": 3200,
+      "subZ": 3328,
+      "subRot": 0,
+      "x": -2025,
+      "y": -663,
+      "z": -268,
+      "rotY": -1024,
+      "building": {
+        "modelIdNum": 118,
+        "x": -2185,
+        "y": 0,
+        "z": 0,
+        "rotY": -512
+      }
+    }
   ]
 }

@@ -476,6 +476,9 @@ export async function bootWorld(canvas, renderer, params, status) {
           }
         }
         for (const placed of b.layout.models) {
+          // WM2f: the mill's companion building is part of an enhanced-skin
+          // departure; the 1:1 lane must not see it.
+          if (placed.enhancedOnly && !isEnhanced()) continue;
           const gpu = await getGpuMesh(placed.modelIdNum);
           if (!gpu) continue;
           await remapSubMeshes(gpu.subMeshes, texRemap, climateArchive, pipeline);
