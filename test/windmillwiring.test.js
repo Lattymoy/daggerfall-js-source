@@ -174,3 +174,47 @@ test('WM2b: the hub the hosts mount at is the module\'s, not a copy', () => {
   }
   assert.deepEqual([...ROTOR_HUB], [3.96, 6.01, -5.5]);
 });
+
+test('WM2f: the mill comes with the building that carries its door', () => {
+  // Mac: "the door is covered and I can't enter it". Kamer's subrecord
+  // places TWO models - a CLASSIC building (118) and the mill beside it
+  // - and WM2d read only the mill, so the structure with the real door
+  // was never placed at all. His subrecord headers declare
+  // Num3dObjectRecords 1 while carrying 2, the same hand-edit slip as
+  // the subrecord counts, which is how the second record went unread.
+  for (const p of PLACEMENTS) {
+    assert.ok(p.building, `${p.block} places a mill with no building`);
+    assert.equal(p.building.modelIdNum, 118, 'the companion is classic model 118');
+  }
+  for (const b of new Set(PLACEMENTS.map((p) => p.block))) {
+    const [mill] = windmillsFor(b);
+    assert.ok(mill.building, `${b} lost its building on the way through the layout`);
+    assert.equal(mill.building.matrix.length, 16);
+    // Beside the mill, not on top of it and not across the farm.
+    const d = Math.hypot(mill.matrix[12] - mill.building.matrix[12],
+      mill.matrix[14] - mill.building.matrix[14]);
+    assert.ok(d > 2 && d < 20, `${b}: the building is ${d.toFixed(1)} units from its mill`);
+  }
+});
+
+test('WM2f: the building rides the ordinary model path, and the 1:1 lane never sees it', () => {
+  // It is a placed model like any other, so it takes its mesh, climate
+  // swap, collider and door geometry from the paths that already exist -
+  // which is also how it would leak into the classic skin, since those
+  // paths know nothing about the enhanced one. Hence the flag.
+  const layout = readFileSync(join(root, 'src/world/rmbLayout.js'), 'utf8');
+  assert.match(layout, /models\.push\(w\.building\)/, 'the building is not placed as an ordinary model');
+  assert.match(layout, /enhancedOnly: true/, 'the building is not marked as an enhanced-skin departure');
+  for (const host of EXTERIOR_HOSTS) {
+    assert.match(src(host), /placed\.enhancedOnly && !isEnhanced\(\)/,
+      `${host} would draw the mill's building on the classic skin`);
+  }
+  // ...and it carries NO recordIndex: its interior lives in a subrecord
+  // Kamer ADDED, which the block the port reads does not have.
+  // layoutInterior would throw on it; worldModes' existing guard refuses
+  // a door whose recordIndex is undefined, so the door simply does not
+  // open. That guard is load-bearing now, so it is pinned.
+  assert.doesNotMatch(layout, /recordIndex[^:]*:\s*\d/, 'the building must not claim a subrecord index');
+  assert.match(src('src/scenes/worldModes.js'), /hit\.recordIndex === undefined\) return false/,
+    'the guard that keeps the mill door from throwing on a subrecord that is not there is gone');
+});

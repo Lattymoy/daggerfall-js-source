@@ -1566,6 +1566,65 @@ carry. Remapping it for the mill would have re-skinned them too. So the
 pipeline caches one body mesh per climate and season, sharing the vertex
 buffers and rebuilding only the small subMeshes array.
 
+### WM2f: the door - the mill comes with a building, and WM2d read half the record (2026-08-29)
+
+Mac: *"the door is covered and I can't enter it, is this in the rar"*.
+Two questions, and the answers are different.
+
+**CAN'T ENTER: that is the rar.** Every mill subrecord carries
+`NumDoorRecords: 0` and `BlockDoorRecords: []` in all six blocks, so
+Kamer's mill is not enterable in his mod either. The subrecord does hold
+an Interior (44 objects, 51 section-3 records, 10 door records) but with
+no exterior door record nothing can reach it.
+
+**THE DOOR BEING COVERED: half the rar, half our fault.** The mill mesh's
+own door panel really is buried - a ray fired at its centre from outside
+hits the Walls at z -3.31 before reaching the Door at z -4.79, so it sits
+1.5 units behind the front wall face in his own `New_Windmill 2.dae`.
+That is his geometry and we draw it faithfully.
+
+But there was no door to find in the first place, because **WM2d read
+half the record**. Every one of those subrecords places TWO models:
+
+    model 118    pos(1600, 0, -1736)     rot 0        <- the BUILDING
+    model 41600  pos(1867, -663, -1575)  rot -512     <- the MILL
+
+Model 118 is a CLASSIC Daggerfall building - the structure with the real
+door - and the mill stands beside it, about 7.8 world units away. WM2d
+extracted only the 41600 rows, so the port stood a mill in an empty field
+with nothing to go into.
+
+**And the reason it went unread is worth writing down.** Those
+subrecords declare `Num3dObjectRecords: 1` while carrying 2 - the same
+hand-edit slip as `FARMAA01`'s "1 subrecord" that carries two, and the
+same slip as the zero-byte `FARMAA09.RMB.json`. Twice now this arc has
+believed one of his headers over his data. Read the array, not the count.
+
+The building goes into `models` like any other placement, so it takes
+the ordinary path - its mesh out of ARCH3D, its climate swap, its
+collider, its door geometry - and no new code. Two things it needs that
+an ordinary model does not:
+
+- **A skin gate.** It is an ordinary model in a departure, so the hosts'
+  generic model loop would have walked it straight into the 1:1 lane: a
+  building standing in a farm Daggerfall leaves empty. It is tagged
+  `enhancedOnly` and both hosts skip it on the classic skin.
+- **No recordIndex, deliberately.** A static door's interior resolves as
+  `subRecords[recordIndex].interior`, and this building belongs to a
+  subrecord Kamer ADDED - one the block the port reads does not have.
+  `layoutInterior` would throw on it. `worldModes` already refuses a door
+  whose recordIndex is undefined, so the door stands and does not open
+  rather than crashing, and that guard is pinned now because it has
+  become load-bearing.
+
+**So the mill still cannot be entered, and now for an honest reason
+rather than a missing building.** Making it enterable needs his added
+subrecord's INTERIOR, which is 44 Daggerfall interior models and their
+placements - block data, and the doctrine keeps that out of the repo.
+That is a call for Mac, not a slice: it is the same question the
+Morrowind arc and the quest pack each had to answer about where vendored
+data stops.
+
 ## RX: THE ROAD SYSTEM, REMOVED WHOLE (2026-08-29)
 
 Mac: *"entirely rip out our road system we have developed. Completely

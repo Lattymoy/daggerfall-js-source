@@ -84,7 +84,22 @@ export function layoutRmbBlock(dfBlock) {
     });
   }
 
-  return { models, windmills: windmillsFor(dfBlock.name), groundTiles: buildGroundTilemap(dfBlock) };
+  // WM2f: the mill's own subrecord places TWO models - a classic
+  // building (the one with the door) and the mill beside it. The
+  // building goes into `models` like any other placed model, so it
+  // takes the ordinary path: its mesh out of ARCH3D, its climate swap,
+  // its collider and its door geometry, none of which needs new code.
+  //
+  // It carries NO recordIndex, deliberately. A static door's interior is
+  // looked up as `subRecords[recordIndex].interior`, and the subrecord
+  // this building belongs to is one Kamer ADDED - it does not exist in
+  // the block the port reads. worldModes already refuses a door whose
+  // recordIndex is undefined, so the door stands and does not open,
+  // rather than throwing on a subrecord that is not there.
+  const mills = windmillsFor(dfBlock.name);
+  for (const w of mills) if (w.building) models.push(w.building);
+
+  return { models, windmills: mills, groundTiles: buildGroundTilemap(dfBlock) };
 }
 
 /**
@@ -120,7 +135,25 @@ export function windmillsFor(blockName) {
       p.x * GLOBAL_SCALE, -p.y * GLOBAL_SCALE, p.z * GLOBAL_SCALE,
       0, -p.rotY / ROTATION_DIVISOR, 0
     );
-    out.push({ matrix: multiply(subRecordMatrix, modelMatrix) });
+    const entry = { matrix: multiply(subRecordMatrix, modelMatrix) };
+    if (p.building) {
+      const b = p.building;
+      entry.building = {
+        modelId: String(b.modelIdNum),
+        modelIdNum: b.modelIdNum,
+        // The whole mill is an ENHANCED-SKIN departure and this half of
+        // it is an ordinary placed model, so it would otherwise ride the
+        // hosts' generic model loop straight into the 1:1 lane - a
+        // building standing in a farm that Daggerfall leaves empty. The
+        // hosts skip it on the classic skin; this flag is how they know.
+        enhancedOnly: true,
+        matrix: multiply(subRecordMatrix, trs(
+          b.x * GLOBAL_SCALE, -b.y * GLOBAL_SCALE, b.z * GLOBAL_SCALE,
+          0, -b.rotY / ROTATION_DIVISOR, 0
+        )),
+      };
+    }
+    out.push(entry);
   }
   return out;
 }
