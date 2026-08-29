@@ -86,6 +86,7 @@ import { spellRecordOfIndex } from '../systems/loot.js';   // QG1: CastSpellDo's
 import { LevelUpScreen, preloadCharSheetArt } from '../ui/charsheet.js';   // U8a (LevelUpScreen: AUDIT 21 hosts F3)
 import { createCharSheetWindow, charSheetDoorReady } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
+import { createChronicleWindow } from '../ui/chronicleDoor.js';   // PX24d: the chronicle's one door
 import { openPixelDial } from '../ui/pixelDial.js';   // PX15: the Tab compass rose
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
@@ -1170,16 +1171,17 @@ export async function bootWorld(canvas, renderer, params, status) {
         playerLevel: playerEntity.level,
       });
       if (hit) {
-        // eight compass points at the classic distance, terrain-landed
-        for (let d = 0; d < 8; d++) {
-          const a = (d * Math.PI) / 4;
-          const x = playerFeet[0] + Math.sin(a) * hit.minDistance;
-          const z = playerFeet[2] + Math.cos(a) * hit.minDistance;
-          const down = collider.raycast([x, playerFeet[1] + 20, z], [0, -1, 0], 60);
-          if (!Number.isFinite(down)) continue;
-          exteriorFoes.spawnFoe(hit.mobileType, [x, playerFeet[1] + 20 - down, z]).catch(() => {});
-          break;
-        }
+        // RE1: DFU's own placement. This used to walk eight compass
+        // points at minDistance and take the first with ground under
+        // it - so an encounter arrived due NORTH of the player unless
+        // north was blocked, could stand inside a wall the ray never
+        // tested, and could share a spot with something already
+        // standing there. PlayerEntity's arms all go out through
+        // CreateFoeSpawner, which is PlaceFoeFreely, which is the
+        // function the quest arm and the enchantment arms already use.
+        // The band and the line-of-sight flag ride in on the hit -
+        // they are the spawner's arguments and differ per arm.
+        _standEncounterFoe(hit, playerFeet);
         break;
       }
       // PlayerEntity.Update:498-511 - the SAME minute's second arm,
@@ -1413,6 +1415,87 @@ export async function bootWorld(canvas, renderer, params, status) {
   const _dungeonPool = () => (_mode() === 'dungeon' ? (modes?.dungeonCtx ?? null) : null);
   const enchantFoes = () => liveEnchantFoes(_mode(), modes?.dungeonCtx ?? null, () => [...cityGuards.guards, ...exteriorFoes.foes]);
   const enchantFoeSinks = (f) => liveEnchantFoeSinks(f, modes?.dungeonCtx ?? null, foeSinks);
+  /** SD1: stand a loose foe - SoulBound's break release, the Sanguine
+   *  Rose's Daedroth - through DFU's OWN placement law, in whichever
+   *  world the player is actually standing in.
+   *
+   *  Both arms used to drop the foe at the player's feet plus a fixed
+   *  (+2, +1, 0): inside the player in a corridor, inside the wall
+   *  against one. placeFoeFreely is the same law the quest foe arm
+   *  already stands its foes through (tryPlaceFoe above) - one home,
+   *  and it was already here.
+   *
+   *  minDistance 4, not the function's own 5: CreateFoeSpawner's
+   *  defaults (GameObjectHelper.cs:1314) are the spawner FIELDS both
+   *  enchantment callers get, and PlaceFoeFreely is handed those
+   *  rather than its own signature defaults.
+   *
+   *  The law REFUSES a spot DFU would have rejected - no floor under
+   *  it, something already there, too close to the wall the ray found
+   *  - and DFU's spawner simply tries again next frame. This retries
+   *  the same way. The budget is the port's own call: DFU leaves a
+   *  MonoBehaviour running for free, and a spawn that cannot find a
+   *  spot in a sealed corridor must not spin here. */
+  const LOOSE_FOE_PLACE_ATTEMPTS = 12;
+  /** RE1: an intermittent encounter, stood through DFU's placement.
+   *  Separate from _standLooseFoe because the two differ in what they
+   *  are: a loose foe is summoned AT the player and takes the enchant
+   *  ctx's live pool, an encounter is rolled by the world clock, is
+   *  always exterior (the dungeon arm is dungeonContext's), and
+   *  carries its own band. Same law, same retry rule, different
+   *  arguments - which is exactly how DFU's call sites differ. */
+  const _standEncounterFoe = (hit, feet) => {
+    const env = placeFoeEnv({
+      collider,
+      playerFeet: [feet[0], feet[1] + 0.9, feet[2]],
+      playerYawRad: cam.yaw,
+      fovDegrees: fieldOfView() * 180 / Math.PI,
+      isOccupied: entityOccupancy((f) => f.ai?.feet, () => exteriorFoePool(), feet),
+    });
+    let spot = null;
+    for (let i = 0; i < LOOSE_FOE_PLACE_ATTEMPTS && !spot; i++) {
+      spot = placeFoeFreely(env, {
+        minDistance: hit.minDistance, maxDistance: hit.maxDistance,
+        lineOfSightCheck: hit.lineOfSightCheck,
+      });
+    }
+    if (!spot) return null;
+    const fly = (ENEMY_BASICS[hit.mobileType]?.behaviour ?? 'General') === 'Flying';
+    return exteriorFoes.spawnFoe(hit.mobileType, [spot.x, fly ? spot.y + 1.5 : spot.y, spot.z], {
+      yaw: Math.atan2(feet[0] - spot.x, feet[2] - spot.z),   // LookAt player
+    }).catch(() => null);
+  };
+  const _standLooseFoe = (mobileType, { allied = false, lineOfSightCheck = true } = {}) => {
+    const mode = _mode();
+    // Interiors have no foe pool to stand one in, so they still refuse
+    // - EC1's answer, and the honest one until a pool exists.
+    if (mode !== 'exterior' && mode !== 'dungeon') return null;
+    const d = _dungeonPool();
+    const feet = enchantFeet();
+    const env = placeFoeEnv({
+      collider: d ? d.collider : collider,
+      // origin at the controller centre, as tryPlaceFoe has it - DFU
+      // casts from PlayerObject.transform.position, not the feet
+      playerFeet: [feet[0], feet[1] + 0.9, feet[2]],
+      playerYawRad: cam.yaw,
+      fovDegrees: fieldOfView() * 180 / Math.PI,   // fieldOfView() answers RADIANS
+      isOccupied: entityOccupancy((f) => f.ai?.feet, () => enchantFoes(), feet),
+    });
+    let spot = null;
+    for (let i = 0; i < LOOSE_FOE_PLACE_ATTEMPTS && !spot; i++) {
+      spot = placeFoeFreely(env, { minDistance: 4, maxDistance: 20, lineOfSightCheck });
+    }
+    if (!spot) return null;
+    // FinalizeFoe (FoeSpawner.cs:210-226): a FLYING foe lifts 1.5 from
+    // the test point; walkers land through the pool's own chain.
+    const fly = (ENEMY_BASICS[mobileType]?.behaviour ?? 'General') === 'Flying';
+    const pos = [spot.x, fly ? spot.y + 1.5 : spot.y, spot.z];
+    const yaw = Math.atan2(feet[0] - spot.x, feet[2] - spot.z);   // LookAt player
+    const stand = d
+      ? d.spawnLooseFoe(mobileType, pos, { yawRad: yaw, allied })
+      : exteriorFoes.spawnFoe(mobileType, pos, { yaw, allied });
+    return Promise.resolve(stand).catch(() => null);
+  };
   /** EC1: THIS host's own pools, exterior only - and deliberately NOT
    *  enchantFoes(), which now answers the live mode's. Two consumers
    *  read this feed and both are exterior arms: the HUD Detect markers
@@ -1505,29 +1588,19 @@ export async function bootWorld(canvas, renderer, params, status) {
             hurt: (n) => enchantFoeSinks(f).hurt(n),
           }));
       },
-      // EC1: the two SPAWN arms - SoulBound's break release and the
-      // Sanguine Rose - keep the exterior pool, and are refused rather
-      // than misrouted in the modes that have no spawner of their own.
-      // exteriorFoes.spawnFoe stands a foe in the STREAMING world; a
-      // dungeon record has to come off dungeonContext's build chain
-      // (buildFoeAt, through spawnQuestFoe) or it stands in a world
-      // the player is not currently in - alive, ticking, and invisible.
-      // FLAGGED: the dungeon spawner is spawnQuestFoe, and it binds a
-      // quest BEHAVIOUR to what it stands (bindQuestFoeHost); a plain
-      // released soul has none, so the arm needs the behaviour-free
-      // door split out of it before this can route. Refusing is the
-      // honest answer meanwhile - DFU's CreateFoeSpawner puts the foe
-      // in the scene the player is standing in, and nothing here can.
-      spawnFoe: (mobileType) => {
-        if (_dungeonPool()) return;
-        const pf = enchantFeet();
-        exteriorFoes.spawnFoe(mobileType, [pf[0] + 2, pf[1] + 1, pf[2]]).catch(() => {});
-      },
-      spawnAlliedFoe: (mobileType) => {
-        if (_dungeonPool()) return;
-        const pf = enchantFeet();
-        exteriorFoes.spawnFoe(mobileType, [pf[0] + 2, pf[1] + 1, pf[2]], { allied: true }).catch(() => {});
-      },
+      // SD1: the two SPAWN arms - SoulBound's break release and the
+      // Sanguine Rose's Daedroth. EC1 made them refuse underground
+      // rather than stand a foe in the streaming world the player was
+      // not in; SD1 gives them the door they were refusing for want
+      // of, and DFU's placement law on the way through.
+      //
+      // Both go through _standLooseFoe, which is where the two callers
+      // differ exactly as DFU has them differ: SoulBound passes
+      // lineOfSightCheck FALSE (SoulBound.cs:100 - a released soul may
+      // appear in front of you), the Sanguine Rose takes the default
+      // TRUE and allied TRUE (SanguineRoseEffect.cs:56).
+      spawnFoe: (mobileType) => { _standLooseFoe(mobileType, { lineOfSightCheck: false }); },
+      spawnAlliedFoe: (mobileType) => { _standLooseFoe(mobileType, { allied: true }); },
       // V3: the artifact doors. messageBox is Azura's TEXT.RSC popup
       // (the infection host's flatten, at this consumer);
       // openCharacterSheet is the Oghma's sheet push; replaceFoe is
@@ -1707,7 +1780,21 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  Notebook page (DaggerfallUI.cs:704-711). */
   const makeJournalWindow = (mode) => {
     preloadQuestJournalArt({ renderer, fetchBytes, palette });
-    return new QuestJournalWindow({
+    // PX24d: THROUGH THE DOOR. PX24 built ui/chronicleDoor.js and the
+    // enhanced window behind it and then hung the door on nothing -
+    // the seam had ZERO callers, so the chronicle was unreachable in
+    // play and the Stats page's Chronicle button opened the CLASSIC
+    // journal. This is the same shape spellbookDoor's callers use: the
+    // host hands over what only it knows, and the door picks the skin.
+    return createChronicleWindow({
+      entity: playerEntity,
+      // Which page the ENHANCED window opens on. The classic modes map
+      // onto the two sections the chronicle actually holds: the
+      // notebook is Notes, the message log is Messages. The two quest
+      // modes have no page here on purpose - the pause window has
+      // carried quests since PX4 - so they land on Notes, and the
+      // CLASSIC window still gets the mode itself, below.
+      section: mode === 'messages' ? 'messages' : 'notes',
       questMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
       notebook: () => questBridge?.notebook ?? null,
       mode,
@@ -2523,7 +2610,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the reference's four; every door below exists on this ctx, so
     // no arm is dead.
     toggleDial: () => openPixelDial([
-      { id: 'skills', label: 'Skills', dir: 'n', open: () => hudCtx.toggleCharSheet() },
+      { id: 'skills', label: 'Skills', dir: 'n', open: () => hudCtx.openSheetPage() },
       { id: 'items', label: 'Items', dir: 'e', open: () => hudCtx.toggleInventory() },
       // PX18: MAP on the dial is THE WORLD MAP (U61's overworld) -
       // Skyrim's own reading of the word; the local automap keeps its
@@ -2537,9 +2624,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     // until now - rest existed only in the dungeon host - so neither
     // this ladder nor the large HUD's rest panel had anything to open.
     toggleRest: () => toggleRest(),
-    togglePause: () => {
+    // PX26 (Mac: "the north option should be the new journal we
+    // developed" / "the skill ui opens on the lefthand side when it
+    // should be center"): ONE FIX FOR BOTH. The dial's north was the
+    // F5 overlay - the last pre-PX surface, and the one that lays its
+    // three columns against the left edge. The pause window's Stats
+    // page IS that sheet, off the same sheetModel, and is centred by
+    // construction. This host's own pause flow, landed on it.
+    openSheetPage: () => hudCtx.togglePause({ at: 'stats' }),
+    togglePause: (opts = {}) => {
       if (!pauseDoorReady()) return;
       openPauseFlow((w) => townTalk.showOverlay(w), {
+        at: opts.at ?? null,   // PX26: the page the door was pressed for
         // PX25: the sheet's own doors, through this host's own arms.
         openPack: () => townTalk.showOverlay(makeInventoryWindow()),
         openSpellbook: () => { const w = makeSpellbookWindow(); if (w) townTalk.showOverlay(w); },

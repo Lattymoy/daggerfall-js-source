@@ -167,3 +167,50 @@ test('PX24c: the history says WHO it is about, and the family shares its parts',
     ['the rail count', /\.sb-shell \.sb-cost, \.cr-shell \.sb-cost \{/],
   ]) assert.match(css, sel, `${part} is the FAMILY's, not one window's`);
 });
+
+// ── PX24d: A DOOR WITH NO CALLERS IS UNREACHABLE UI ───────────────
+// Mac: "the new chronicles UI is nowhere to be found ingame." It was
+// not: PX24 built ui/chronicleDoor.js and the window behind it and
+// then hung the door on NOTHING - zero callers - so every host still
+// constructed the classic QuestJournalWindow directly, and PX25's
+// Chronicle button on the Stats page opened the classic journal.
+test('PX24d: EVERY enhanced door has a host that calls it', () => {
+  // The general law, so the next unhung door fails here rather than in
+  // play. A door module exists to be the ONE way in; one with no
+  // caller is a window nobody can reach.
+  const hosts = ['src/scenes/world.js', 'src/scenes/exterior.js',
+    'src/scenes/dungeonContext.js', 'src/scenes/worldModes.js'].map(read).join('\n');
+  for (const [door, fn] of [
+    ['chronicleDoor', 'createChronicleWindow'],
+    ['spellbookDoor', 'createSpellbookWindow'],
+    ['charSheetDoor', 'createCharSheetWindow'],
+    ['inventoryDoor', 'createInventoryWindow'],
+    ['pauseDoor', 'openPauseFlow'],
+  ]) {
+    assert.ok(hosts.includes(`${fn}(`), `${door}: no host calls ${fn} - the door opens on nothing`);
+    assert.ok(hosts.includes(`from '../ui/${door}.js'`), `${door} is imported by a host`);
+  }
+});
+
+test('PX24d: the journal goes through the door, on every host that has one', () => {
+  // world.js owns the only makeJournal in the host bag, so worldModes
+  // reaches the chronicle through it; the dungeon has its own; the
+  // exterior has NO journal at all and honestly builds none, which is
+  // why PX25 gave it no Chronicle button.
+  const world = read('src/scenes/world.js');
+  assert.match(world, /const makeJournalWindow = \(mode\) => \{[\s\S]{0,900}return createChronicleWindow\(\{/);
+  assert.doesNotMatch(world, /return new QuestJournalWindow\(\{/, 'the host no longer builds the classic window itself');
+  assert.match(world, /makeJournal: \(mode\) => makeJournalWindow\(mode\)/, 'and the host bag carries it for worldModes');
+  const dungeon = read('src/scenes/dungeonContext.js');
+  assert.match(dungeon, /activeOverlay = createChronicleWindow\(\{\n\s*\.\.\.questJournalHooks\(\),/);
+  assert.doesNotMatch(dungeon, /activeOverlay = new QuestJournalWindow\(/);
+  const ext = read('src/scenes/exterior.js');
+  assert.doesNotMatch(ext, /new QuestJournalWindow\(/, 'the exterior has no journal and builds none');
+  // The ENHANCED page follows the classic mode, and the classic window
+  // still gets the mode itself - the two quest modes have no page here
+  // on purpose, since the pause window has carried quests since PX4.
+  for (const s of [world, dungeon]) {
+    assert.match(s, /section: mode === 'messages' \? 'messages' : 'notes',/);
+    assert.match(s, /\bmode,/, 'and the classic window still gets its own mode');
+  }
+});

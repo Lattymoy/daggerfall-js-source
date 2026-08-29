@@ -183,7 +183,10 @@ test('U43: ONE dispatch - the interior host routes the same table as the dungeon
   // U51: the gate became pauseDoorReady (art OR the enhanced skin,
   // which needs none) and the call goes through ui/pauseDoor.js. The
   // door being opened is the same door.
-  assert.match(modes, /togglePause\(\) \{\n      if \(!pauseDoorReady\(\)\) return;\n      \/\/ IS1[^]*?openPauseFlow\(/,
+  // PX26 gave togglePause its own options (the dial's north lands on
+  // Stats); the law is unchanged - the interior Escape door opens the
+  // same pause flow, gated the same way.
+  assert.match(modes, /togglePause\(opts = \{\}\) \{\n      if \(!pauseDoorReady\(\)\) return;\n      \/\/ IS1[^]*?openPauseFlow\(/,
     'the interior Escape door opens the pause flow');
   assert.match(src('scenes/world.js'), /makeCharSheet: \(\) =>/, 'world.js hands its builder down');
   assert.match(src('scenes/world.js'), /makeJournal: \(mode\) =>/);

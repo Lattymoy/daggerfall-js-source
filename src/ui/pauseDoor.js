@@ -77,6 +77,11 @@ export function pauseDoorReady() {
  * AUDIT 18 F9), and `hooks` is that host's own
  * { quickSave, quickLoad, exitToMenu, savingPrevented, textLines }.
  */
+/**
+ * PX26: `hooks.at` names the page the enhanced window opens ON -
+ * 'quests', 'stats' or 'system'. The CLASSIC flow takes the same hooks
+ * and ignores it, because the classic pause has no tabs to land on.
+ */
 export function openPauseFlow(show, hooks = {}) {
   // `document` is the second half of the test for the reason
   // chargenSession's fork gives: a node test drives these hosts
@@ -162,7 +167,7 @@ function enhancedPauseOverlay(show, hooks) {
   // never reports done - which would be a frozen game.
   import('./enhancedMenu.js').then(({ mountEnhancedMenu }) => {
     if (fired) { host.remove(); return; }   // disposed before the module landed
-    view = mountEnhancedMenu(host, { mode: 'pause', hooks, onAction: act });
+    view = mountEnhancedMenu(host, { mode: 'pause', hooks, onAction: act, at: hooks.at ?? null });
   }).catch((e) => {
     console.warn('[pause] the enhanced pause screen would not mount', e);
     host.remove();

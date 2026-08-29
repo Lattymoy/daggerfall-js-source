@@ -4566,3 +4566,204 @@ mutants, 18 killed - after two survivors, both of which were mine:
   change an answer. The term is gone. **An unfalsifiable term is not
   caution; it is a second law that no test is holding**, and the
   campaign is what tells the two apart.
+
+## SD1 - THE LOOSE FOE STANDS WHERE DFU STANDS IT (2026-08-29)
+
+SoulBound's break release and the Sanguine Rose's Daedroth are the two
+enchantments that put a foe in the world. Both dropped it at the
+player's feet plus a fixed `(+2, +1, 0)` - inside the player in a
+corridor, inside the wall against one - and EC1 had just made them
+refuse underground rather than stand it in the streaming world the
+player was not in.
+
+**The law they needed was already in the tree, and this slice started
+by writing a second copy of it.** B1 ported
+`FoeSpawner.PlaceFoeFreely` for the quest foe arm - the whole raycast
+ring, the surface-angle separation, the floor probe, the overlap
+refusal - and `world.js`'s own `tryPlaceFoe` twenty lines away stands
+its foes through it. A fresh `systems/foeSpawner.js` was written and
+deleted before it was committed, found only because the new call site
+sat near the old one. This is the ONE HOME law's own failure mode, and
+FS1 named it a slice earlier: *a stale claim is expensive because it
+sends someone to build what is already built.* Nothing about the flags
+sent me here - I simply did not look first.
+
+**What was genuinely missing is DFU's other rotation arm.**
+`PlaceFoeFreely` (:141-155) has two: `LineOfSightCheck` true tries to
+spawn just outside the player's field of view; false takes any bearing
+in the circle - DFU's own comment is *"Don't care about player's field
+of view (e.g. at rest)"*. Only the first was ported. It is not a corner
+case: **SoulBound passes false** (`SoulBound.cs:100`), so a released
+soul is allowed to appear in front of you, which is the whole character
+of the effect. The Sanguine Rose takes the default true, and allied
+(`SanguineRoseEffect.cs:56`). The two arms now differ exactly as their
+DFU callers differ, and nothing else about the law changed.
+
+Three details the wiring had to get right, each its own mutant:
+
+- **`minDistance` is 4, not 5.** `PlaceFoeFreely`'s signature says 5,
+  but it is always handed the *spawner's fields*, and
+  `CreateFoeSpawner`'s defaults (`GameObjectHelper.cs:1314`) are 4/20.
+  The band has to be passed or the enchantment callers silently get
+  the wrong one.
+- **The dungeon is raycast against the DUNGEON's geometry.** The ring
+  is a collider query; running it against the exterior collider from
+  inside a dungeon answers about a world the player is not in.
+- **The occupancy term reads EC1's live pool**, so a dungeon foe
+  blocks a dungeon spawn - the two slices compose rather than each
+  knowing half the answer.
+
+`dungeonContext` gains the behaviour-free door EC1 flagged for:
+`spawnLooseFoe` is `spawnQuestFoe` minus the `bindQuestFoeHost` call,
+and `spawnQuestFoe` is now built on it rather than being a second copy
+of the build chain. It carries MT-ii's allied law, the same two lines
+`exteriorFoes` has: both per-instance fields turn and the shared frozen
+basics row does not.
+
+Interiors still refuse. That is EC1's answer and still the honest one -
+there is no foe pool there to stand anything in.
+
+The retry is the port's own call. DFU's spawner is a MonoBehaviour that
+costs nothing to leave running, so it retries every frame for ever; a
+bounded 12 attempts is here because a spawn that cannot find a spot in
+a sealed corridor must not spin. Pinned as a bound, so removing it
+fails.
+
+Pins: 9 in `test/loosefoespawn.test.js`, the placement ones behavioural
+against scripted rolls. Campaign: 25 mutants, 25 killed. Two of the
+first-run failures were mine and worth recording: **the side coin is
+`> 0.5 ? -angle : +angle`**, so the high roll is the MINUS side and my
+first two expectations were simply backwards - the code was right. And
+**EC1's own pin went red**, correctly: it asserted the refusal SD1
+retired. Its law did not change - never stand a foe in a world the
+player is not in - so it now holds the interior refusal, which is the
+part that survives.
+
+A THIRD pin went red at `npm run check`, after the campaign was already
+green: MT-ii's summon pin in `artifacts.test.js` quoted the literal
+`exteriorFoes.spawnFoe(mobileType, [pf[0] + 2, ...], { allied: true })`
+- the fixed offset - so it failed for a change that strengthened
+exactly what it was defending. Re-anchored on the law (the door is
+mounted, and it carries `allied` into whichever live pool stands the
+foe), which is F041's own precedent, and `artifacts.test.js` joined the
+campaign so the new anchor is mutation-checked too. **A slice's
+campaign only covers the suites it runs; the full check is what finds
+the pin in the next room.**
+
+## IN1 - THE HARVEST COUNTED QUOTATIONS AND IDENTIFIERS AS FLAGS (2026-08-29)
+
+FS1 recorded that the open-flags count is inflated and deliberately did
+not fix it, because most of the inflation is prose. IN1 is the part
+that is not prose.
+
+`tools/regenOpenFlags.mjs` grepped `/FLAGGED|INTERIM/` per line, so two
+kinds of line that are not open work sat on the board:
+
+- **an identifier that starts with the token.** `INTERIM_WEAPON` is a
+  frozen export; its declaration, its default parameter and every
+  mention of it by name were all listed as open flags.
+- **a quotation.** A correction that says what it retired has to write
+  the retired words down - and writing them down put the flag straight
+  back on the board. **The tree had already grown a workaround for
+  this**: `dungeonContext` quoted a retired flag with the token
+  deliberately lower-cased and said so in the comment, adding that this
+  is "how eleven retirement notes are already sitting there". That is
+  EF1c's lesson leaking out of the pins and into the ledger, so the fix
+  is EF1c's own rule - strip quoted spans, then look. The quote is
+  verbatim again, and the count it asserted is gone: nothing measured
+  it, and I could not measure it either (see below).
+
+**The strip has to be whole-file, and then bounded.** Comments wrap,
+and the quotation that forced the workaround wraps: the opening `"` and
+the token on one line, the closing `"` on the next, so a per-line strip
+sees an unpaired quote and strips nothing. But prose quotes do not
+always pair - a comment quoting DFU can close a quotation opened many
+lines above - so a generous span mis-pairs and blanks whatever sits
+between two unrelated quotes. **A 400-character bound did exactly that
+on the first run and swallowed `talkMacros`' GetValue flag, an open
+one.** The span is capped at two newlines now, which reaches a wrapped
+quotation and cannot reach across a paragraph.
+
+**The failure direction is the design.** Missing a quotation leaves a
+retired flag listed, which a reader can see and dismiss; blanking an
+open flag hides real work, which nobody sees at all. The bound is
+chosen to fail the first way.
+
+**One home, and the guard proved why.** The rule now lives in
+`tools/flagSites.mjs`; the tool and `test/audit18_bible_docs.test.js`
+both import it. They had carried a copy each - and the guard went red
+the moment the tool learned the new rule, which is precisely what two
+copies buys. 165 sites -> 155.
+
+### What IN1 refused to do
+
+The rest of FS1's inflation is the past-tense case: a block that
+mentions a flag in order to say it is **gone**. I wrote a heuristic for
+it and it over-matched badly - it flagged
+`guildServiceWindow`'s "FLAGGED: DFU binds each button to a
+DaggerfallShortcut hotkey" and a dozen more like it, open flags whose
+blocks merely carry a paragraph of history. That is not a rule, it is a
+guess with a number attached.
+
+So it stays open, and the tool's own comment says so. **A wrong count is
+worse than a known-incomplete one** - and asserting one is exactly what
+the sentence IN1 just deleted was doing.
+
+Pins: 8 in `test/flagsites.test.js`. Campaign: 12 mutants, 12 killed -
+including the unbounded span that swallowed a real flag, pinned with
+the `talkMacros` shape that caught it.
+
+## RE1 - THE RANDOM ENCOUNTER STANDS WHERE DFU STANDS IT (2026-08-29)
+
+Every random-spawn arm in `PlayerEntity` goes out through
+`GameObjectHelper.CreateFoeSpawner`, which is
+`FoeSpawner.PlaceFoeFreely`: a bearing chosen against the field of
+view, backed off whatever the ray hits by a separation the surface
+angle decides, on a floor found below, in space nothing already
+occupies.
+
+Both port hosts instead walked **eight compass points** at
+`minDistance` and took the first with ground under it. That is three
+wrongs at once:
+
+- the foe arrives **due north** of the player unless north is blocked -
+  the loop starts at bearing 0 and breaks on the first hit;
+- it can stand **inside a wall**: nothing tested the space, only the
+  ground beneath it;
+- it can **share a spot** with a foe already standing there.
+
+SD1 made the law consumable from a host and added the arm this needed.
+RE1 carries the call sites' arguments as data, because **the three
+encounter arms do not pass the same things**:
+
+| arm | min | max | LOS |
+|---|---|---|---|
+| location night (`PlayerEntity.cs:574`) | 10 | 20 | true |
+| wilderness (`:594`) | 10 | 20 | true |
+| **dungeon rest (`:610`)** | 8 | 20 | **false** |
+| SpawnCityGuards (`:687`) | 12.8 | 51.2 | true |
+
+The maximum is `CreateFoeSpawner`'s own default wherever the call site
+does not pass one, which is why it is 20 three times and not
+`PlaceFoeFreely`'s signature 5.
+
+**The dungeon arm alone clears the line-of-sight check, and it is the
+one a player feels.** Set, the foe is placed just outside your view -
+you hear it before you see it. Cleared, it takes any bearing in the
+circle, and DFU's own comment says why: *"Don't care about player's
+field of view (e.g. at rest)"*. A monster that finds you asleep in a
+dungeon is allowed to be standing over you when you wake. The port had
+no such distinction to lose, because it had no bearing law at all.
+
+`SpawnCityGuards` is carried in the table and **not wired**. The port
+stands guards through the street-person pool - `cityGuards`'
+`spawnGuardAt` takes a person's own position and facing - which is a
+different placement problem from this ring. The row exists so the table
+is the whole call-site list and a reader can see what is not wired,
+rather than the row quietly not being there.
+
+Pins: 6 in `test/encounterplace.test.js`. Campaign: 22 mutants, 22
+killed, after one survivor: the dungeon host's **flier lift** had no
+pin, though the exterior one did. FinalizeFoe raises a flying foe 1.5
+above the test point, and a bat woken at rest was standing on the floor
+with nothing to say so.

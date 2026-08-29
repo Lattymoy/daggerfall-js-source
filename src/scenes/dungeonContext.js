@@ -62,6 +62,7 @@ import { ChargenFlow } from '../ui/chargen.js';
 import { LevelUpScreen, preloadCharSheetArt } from '../ui/charsheet.js';
 import { createCharSheetWindow } from '../ui/charSheetDoor.js';   // U52: the sheet's ONE seam, and the skin fork in front of it
 import { QuestJournalWindow, preloadQuestJournalArt } from '../ui/questJournal.js';   // U43: the LogBook and NoteBook doors
+import { createChronicleWindow } from '../ui/chronicleDoor.js';   // PX24d: the chronicle's one door
 import { DeathScreen } from '../ui/deathScreen.js';
 import { preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';
 import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the book's one door
@@ -108,7 +109,9 @@ import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost, effectSchool, EFFECT_COST_TABLE } from '../systems/spellcost.js';
 import { snapshotPlayer, restorePlayer, composeSessionState, restoreSessionState , copyEffectEntry } from '../systems/save.js';   // B4: the ONE quest+talk composer
 import { saveSlot, loadSlot, quickLoadSlot, QUICK_SAVE_NAME, requestScreenshot } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave; SS1: the shot arms here, the HOST loop delivers it
-import { bindQuestFoeHost } from './questFoeHost.js';   // B1: quest foes ride this pool
+import { bindQuestFoeHost, placeFoeEnv, entityOccupancy } from './questFoeHost.js';   // B1: quest foes ride this pool   // RE1: the placement ring's env over this host's collider
+import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // RE1: FoeSpawner.PlaceFoeFreely, the one home
+import { fieldOfView } from '../ui/viewSettings.js';   // RE1: the ring needs the view cone the LOS arm avoids
 import { dungeonKey } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4: the shared PlayRandomlyIfPlayerNear pass
@@ -718,10 +721,31 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  raycast picked. Binds the QuestResourceBehaviour host at the
    *  stand (the activation moment); faces the player (LookAt,
    *  CreateFoe.cs:328) via yawRad. */
-  async function spawnQuestFoe({ mobileType, gender, position, yawRad = null, behaviour }) {
+  /** SD1: the BEHAVIOUR-FREE half of spawnQuestFoe. A released soul
+   *  (SoulBound's break) and the Sanguine Rose's Daedroth are not
+   *  quest resources - they have no behaviour to bind - and until this
+   *  existed the enchant ctx's only spawner was the exterior one, so
+   *  firing either underground stood a foe in the STREAMING world the
+   *  player was not in: alive, ticking and invisible. EC1 made those
+   *  arms refuse rather than misroute; this is the door they refused
+   *  for want of.
+   *
+   *  `allied` is MT-ii's law, and the same two lines exteriorFoes
+   *  carries: SetupDemoEnemy.cs:85-86 overwrites the MobileEnemy
+   *  STRUCT COPY before SetEnemy and EnemyEntity.cs:316 seeds
+   *  Entity.Team from that copy, so BOTH per-instance fields turn and
+   *  the shared frozen basics row does not - getting that wrong would
+   *  ally every foe of the type. */
+  async function spawnLooseFoe(mobileType, position, { gender = null, yawRad = null, allied = false } = {}) {
     const f = await buildFoeAt({ mobileType, gender, x: position[0], y: position[1], z: position[2], spawnDistanceType: 0 }, false);
-    if (!f) { console.error(`[quest] foe ${mobileType} failed to stand in dungeon`); return null; }
+    if (!f) return null;
     if (yawRad != null && f.ai) f.ai.yaw = yawRad;
+    if (allied && f.entity) { f.entity.team = 'PlayerAlly'; f.entity.mobileTeam = 'PlayerAlly'; }
+    return f;
+  }
+  async function spawnQuestFoe({ mobileType, gender, position, yawRad = null, behaviour }) {
+    const f = await spawnLooseFoe(mobileType, position, { gender, yawRad });
+    if (!f) { console.error(`[quest] foe ${mobileType} failed to stand in dungeon`); return null; }
     bindQuestFoeHost(f, behaviour, questPoolOps);
     return f;
   }
@@ -752,12 +776,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // landed trap bolt goes through magic.explodeAt /
   // magic.applySpellToPlayer to applySpell, so a paralysis or drain
   // trap lands exactly as its SPELLS.STD record says. (EF1c: this read
-  // "the classic damage-health family... other effects flagged to the
+  // "the classic damage-health family... other effects FLAGGED to the
   // effect-library slice" long after both halves stopped being true.
-  // The quote is deliberately lower-cased: tools/regenOpenFlags.mjs
-  // harvests the upper-case token into Home.md's open-flag board, so
-  // quoting a retired flag verbatim keeps it on the board as open work
-  // - which is how eleven retirement notes are already sitting there.)
+  // IN1: that quote used to be deliberately lower-cased, because
+  // tools/regenOpenFlags.mjs harvested the token off any line and put
+  // a QUOTED flag back on the board as open work. The tool strips
+  // quoted spans now - EF1c's own unquote rule, moved from the pins
+  // into the ledger - so a correction may say what it retired in the
+  // retired words, and this one does.)
   const _pendingCasts = [];
   const missiles = [];
   // G4: BOTH magic registries, through the one shared loader. This
@@ -1038,22 +1064,56 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // the same chain as the load loop, at the classic minimum distance
   // from the player (CreateFoeSpawner's placement compressed to the
   // eight compass points, floor-landed, nearest workable first).
-  async function _spawnEncounter({ mobileType, minDistance }) {
+  /** RE1: DFU's spawner is a MonoBehaviour that retries every frame
+   *  for free; a bounded loop is the port's own call, so a spawn that
+   *  cannot find a spot in a sealed room does not spin. The same bound
+   *  the enchantment stander uses. */
+  const ENCOUNTER_PLACE_ATTEMPTS = 12;
+  /** RE1: the rest interruption, stood through DFU's own placement.
+   *
+   *  This used to walk EIGHT COMPASS POINTS at minDistance and take
+   *  the first with a floor under it, so the thing that woke you
+   *  arrived due north unless north was blocked, could stand inside a
+   *  wall the ray never tested, and could share a spot with a foe
+   *  already there. PlayerEntity's arm goes out through
+   *  CreateFoeSpawner - PlaceFoeFreely - like every other spawn.
+   *
+   *  ITS FLAG IS FALSE (PlayerEntity.cs:610), alone among the three
+   *  encounter arms, and that is the one you feel: with the check set
+   *  the foe is placed just outside your view, and cleared it takes
+   *  any bearing in the circle. DFU's own comment is "Don't care about
+   *  player's field of view (e.g. at rest)" - a monster that finds you
+   *  asleep is allowed to be standing over you when you wake. The band
+   *  and the flag both ride in on the hit; encounters.js carries them
+   *  per arm because they are the spawner's arguments. */
+  async function _spawnEncounter({ mobileType, minDistance, maxDistance, lineOfSightCheck }) {
     const feet = lastPlayerFeet;
     if (!feet || !foeDeps) return;
-    const basics = ENEMY_BASICS[mobileType];
-    if (!basics) return;
-    for (let i = 0; i < 8; i++) {
-      const a = (i * Math.PI) / 4;
-      const x = feet[0] + Math.sin(a) * minDistance;
-      const z = feet[2] + Math.cos(a) * minDistance;
-      const landed = foeDeps.floorLanding(collider, [x, feet[1] + 1.5, z]);
-      if (!landed || Math.abs(landed[1] - feet[1]) > 6) continue;
-      // NT2 (F210): no ad-hoc roll - buildFoeAt resolves an unspecified
-      // gender through GetTextureArchive's own DFRandom arm.
-      await buildFoeAt({ mobileType, gender: 'unspecified', x: landed[0], y: landed[1], z: landed[2], spawnDistanceType: 0 }, false);
-      return;
+    if (!ENEMY_BASICS[mobileType]) return;
+    const env = placeFoeEnv({
+      collider,
+      // the cast origin is the controller centre, as every other
+      // consumer of the ring has it
+      playerFeet: [feet[0], feet[1] + 0.9, feet[2]],
+      playerYawRad: _motorYaw,
+      fovDegrees: fieldOfView() * 180 / Math.PI,   // fieldOfView() answers RADIANS
+      isOccupied: entityOccupancy((f) => f.ai?.feet, () => foes, feet),
+    });
+    let spot = null;
+    for (let i = 0; i < ENCOUNTER_PLACE_ATTEMPTS && !spot; i++) {
+      spot = placeFoeFreely(env, { minDistance, maxDistance, lineOfSightCheck });
     }
+    if (!spot) return;
+    // FinalizeFoe (FoeSpawner.cs:210-226): a flier hangs 1.5 above the
+    // test point; a walker lands through the build chain's own floor.
+    const fly = (ENEMY_BASICS[mobileType].behaviour ?? 'General') === 'Flying';
+    // NT2 (F210): no ad-hoc roll - buildFoeAt resolves an unspecified
+    // gender through GetTextureArchive's own DFRandom arm.
+    const f = await buildFoeAt({
+      mobileType, gender: 'unspecified',
+      x: spot.x, y: fly ? spot.y + 1.5 : spot.y, z: spot.z, spawnDistanceType: 0,
+    }, false);
+    if (f?.ai) f.ai.yaw = Math.atan2(feet[0] - spot.x, feet[2] - spot.z);   // LookAt player
   }
   /** The rest window's clock jump for THIS host: the world minutes
    *  plus IntermittentEnemySpawn's catch-up loop, which is a dungeon
@@ -3097,10 +3157,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  still has no pause menu (stated, not silent - preloadPauseArt
      *  logs its own failure), but the ENHANCED screen reads no game
      *  data at all and opens either way. ui/pauseDoor.js owns which. */
-    togglePause(setPlayerPos = null) {
+    // PX26 (Mac: "the north option should be the new journal we
+    // developed" / "the skill ui opens on the lefthand side when it
+    // should be center"): ONE FIX FOR BOTH. The dial's north was the
+    // F5 overlay - the last pre-PX surface, and the one that lays its
+    // three columns against the left edge. The pause window's Stats
+    // page IS that sheet, off the same sheetModel, and is centred by
+    // construction. This host's own pause flow, landed on it.
+    openSheetPage() { this.togglePause(null, { at: 'stats' }); },
+    togglePause(setPlayerPos = null, opts = {}) {
       if (activeOverlay || !pauseDoorReady()) return;
       const ctx = this;   // the sibling save verbs on this same context
       openPauseFlow((w) => { activeOverlay = w; }, {
+        at: opts.at ?? null,   // PX26: the page the door was pressed for
         // PX25: THE SHEET'S OWN DOORS, handed to the page that IS the
         // sheet. Each host passes the arms it already has; a host
         // without one passes nothing and the button never draws.
@@ -3168,6 +3237,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     enemies,
     foes,
     spawnQuestFoe,   // B1: CreateFoe's dungeon arm stands foes through the one build chain
+    spawnLooseFoe,   // SD1: the same chain with no quest behaviour bound - the enchant ctx's spawner
     drawFoes,
     playerAttackInput,
     toggleSheath: weaponRig.toggleSheath,
@@ -3575,7 +3645,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     _openJournal(mode) {
       if (activeOverlay || !opts.questBridge) return;
       preloadQuestJournalArt({ renderer, fetchBytes, palette });
-      activeOverlay = new QuestJournalWindow({ ...questJournalHooks(), mode });
+      // PX24d: through the chronicle's door, the way the spellbook
+      // goes through its own. This host has no map, so it leaves
+      // gotoPlace unset - the same nothing a CanFindPlace miss gives.
+      activeOverlay = createChronicleWindow({
+        ...questJournalHooks(),
+        mode,
+        entity: playerEntity,
+        section: mode === 'messages' ? 'messages' : 'notes',
+      });
     },
     toggleInventory() {
       if (activeOverlay) return;
@@ -3589,7 +3667,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // are reached through `this` - routeKey calls ctx.toggleDial()
       // as a method, and the entry arrows inherit that binding.
       return openPixelDial([
-        { id: 'skills', label: 'Skills', dir: 'n', open: () => this.toggleCharSheet() },
+        { id: 'skills', label: 'Skills', dir: 'n', open: () => this.openSheetPage() },
         { id: 'items', label: 'Items', dir: 'e', open: () => this.toggleInventory() },
         { id: 'map', label: 'Map', dir: 's', open: () => this.toggleAutomap() },
         { id: 'magic', label: 'Magic', dir: 'w', open: () => this.toggleSpellbook() },

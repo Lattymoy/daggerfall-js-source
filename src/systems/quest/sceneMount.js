@@ -202,7 +202,9 @@ export const PLACE_FOE_DEFAULTS = Object.freeze({
   overlapSphereRadius: 0.65, separationDistance: 1.25, maxFloorDistance: 4,
 });
 
-/** One placement attempt just outside the player's view. env:
+/** One placement attempt, just outside the player's view unless the
+ *  caller clears lineOfSightCheck (DFU's spawner field; SoulBound's
+ *  release passes false). env:
  *   playerPosition {x,y,z}; playerYawRadians (Unity yaw: forward =
  *   (sin yaw, 0, cos yaw)); fovDegrees (MainCamera.fieldOfView);
  *   rolls() - the engine-PRNG seam (Ledger A; C# draws Range(0,4),
@@ -213,14 +215,28 @@ export const PLACE_FOE_DEFAULTS = Object.freeze({
  *  Answers the spawn position {x,y,z} (the host stands the foe there,
  *  faces it at the player, and FinalizeFoe aligns ground units /
  *  raises flying ones 1.5 - geometry), or null = retry next tick. */
-export function placeFoeFreely(env, { minDistance = 5, maxDistance = 20 } = {}) {
+export function placeFoeFreely(env, { minDistance = 5, maxDistance = 20, lineOfSightCheck = true } = {}) {
   const C = PLACE_FOE_DEFAULTS;
   const rolls = env.rolls ?? Math.random;
 
-  // Select a left or right direction outside of camera FOV
-  let directionAngle = env.fovDegrees;
-  directionAngle += rolls() * 4;
-  const yawDegrees = (rolls() > 0.5) ? -directionAngle : directionAngle;
+  // SD1: DFU's rotation has TWO arms (:141-155) and only the first was
+  // here. LineOfSightCheck true tries to spawn just outside the
+  // player's field of view; false means "don't care" - DFU's own
+  // comment says `e.g. at rest` - and takes a bearing anywhere in the
+  // circle. It is not a corner case: SoulBound's break release passes
+  // FALSE (SoulBound.cs:100), so a released soul is allowed to appear
+  // in front of you, which is the whole character of the effect. The
+  // quest arm that shipped this law is the LOS one and stays default.
+  let yawDegrees;
+  if (lineOfSightCheck) {
+    // Select a left or right direction outside of camera FOV
+    let directionAngle = env.fovDegrees;
+    directionAngle += rolls() * 4;
+    yawDegrees = (rolls() > 0.5) ? -directionAngle : directionAngle;
+  } else {
+    // Don't care about player's field of view (e.g. at rest)
+    yawDegrees = rolls() * 360;
+  }
   const yaw = env.playerYawRadians + yawDegrees * Math.PI / 180;
   const spawnDirection = { x: Math.sin(yaw), y: 0, z: Math.cos(yaw) };
 
