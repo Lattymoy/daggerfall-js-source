@@ -27,7 +27,7 @@ import { activeSpellIcons, maxRoundsRemaining } from './hudActiveSpells.js';
 import { liveBundles } from '../systems/mysticism.js';   // PX30: the ONE bundle walk the HUD already uses
 import { getPref } from '../systems/uiPrefs.js';   // PX30c: the port's own prefs, not DFU's settings
 import { compassScroll, breathShortThreshold } from './hud.js';
-import { maxBreath, liveStat } from '../systems/statMods.js';   // PX30b: DFU's own breath ceiling
+import { maxBreath, maxFatigue, liveStat } from '../systems/statMods.js';   // PX30b/PX30d: DFU's own ceilings
 // (breathShortThreshold lives in hud.js, imported below with compassScroll)
 import { foeTarget, tickFoeTarget } from './hudFoeTarget.js';
 
@@ -274,10 +274,21 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
 
   // THE VITALS. maxFatigue is the (Str+End)x64 ceiling the classic
   // bars already use; this reads the same snapshot drawHud composed.
+  // PX30d (Mac: "the stamina percentage is a super large percentage"):
+  // FATIGUE HAS NO FIELD, IT HAS A LAW. DFU stores fatigue x64 and
+  // computes the ceiling as (Strength + Endurance) x 64 - there is no
+  // `maxFatigue` on the entity at all, so `vitals.maxFatigue || 1`
+  // divided by ONE and a real player read 576000%.
+  //
+  // The classic HUD never had this bug because it composes a snapshot
+  // with `maxFatigue(vitals)` in it (hud.js's `cur`, S15's own line) -
+  // and my branch returns BEFORE that snapshot is built, so it was
+  // reading the raw entity while the classic read the law. The same
+  // law, from the same module, is the fix.
   const rows = [
     ['magicka', parts.magicka, vitals.magicka ?? 0, vitals.maxMagicka || 1],
     ['health', parts.health, vitals.health ?? 0, vitals.maxHealth || 1],
-    ['fatigue', parts.fatigue, vitals.fatigue ?? 0, vitals.maxFatigue || 1],
+    ['fatigue', parts.fatigue, vitals.fatigue ?? 0, maxFatigue(vitals) || vitals.maxFatigue || 1],
   ];
   for (const [key, part, now, max] of rows) {
     const pct = (now / max) * 100;
@@ -285,7 +296,10 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
     // A percentage, rounded the way a player reads it - and never 0%
     // while there is anything left, because "0%" on a living bar is
     // the same lie "0 min" would have been on the quest timer.
-    const shown = now > 0 ? Math.max(1, Math.round(pct)) : 0;
+    // Clamped to 100 as well as floored at 1: a bar cannot be more
+    // than full, and a number that says otherwise is a bug wearing a
+    // percent sign rather than something a player should have to read.
+    const shown = now > 0 ? Math.max(1, Math.min(100, Math.round(pct))) : 0;
     put(part.num, `${key}N`, `${shown}%`);
   }
 

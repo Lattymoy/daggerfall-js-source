@@ -172,6 +172,34 @@ test('PX30c: the HUD scales from a SETTING, and the percentage lives in the bar'
   assert.match(css, /\.hud-num \{ position: relative; z-index: 1;/);
   // NEVER 0% WHILE ANYTHING IS LEFT - the quest timer's "never 0 min"
   // law, on a bar this time.
-  assert.match(src, /const shown = now > 0 \? Math\.max\(1, Math\.round\(pct\)\) : 0;/);
+  // (PX30d added the upper clamp beside this floor - see its pin.)
+  assert.match(src, /const shown = now > 0 \? Math\.max\(1, Math\.min\(100, Math\.round\(pct\)\)\) : 0;/);
   assert.match(src, /`\$\{shown\}%`/);
+});
+
+test('PX30d: fatigue has no FIELD, it has a LAW - and the bar said 576000%', () => {
+  // Mac: "the stamina percentage is a super large percentage." DFU
+  // stores fatigue x64 and computes its ceiling as (Str + End) x 64;
+  // there is no `maxFatigue` on the entity at all. Reading
+  // `vitals.maxFatigue || 1` therefore divided by ONE, and a real
+  // player - 90 fatigue at 50/50 - read 576000%.
+  //
+  // The CLASSIC HUD never had this bug because it composes a snapshot
+  // with maxFatigue(vitals) in it, and this branch returns BEFORE that
+  // snapshot is built: it was reading the raw entity while the classic
+  // read the law. Same law, same module, is the fix.
+  const src = read('src/ui/enhancedHud.js');
+  assert.match(src, /import \{ maxBreath, maxFatigue, liveStat \} from '\.\.\/systems\/statMods\.js'/);
+  assert.match(src, /\['fatigue', parts\.fatigue, vitals\.fatigue \?\? 0, maxFatigue\(vitals\) \|\| vitals\.maxFatigue \|\| 1\]/);
+  assert.match(read('src/systems/statMods.js'),
+    /export function maxFatigue\(entity\) \{\s*\n\s*return \(liveStat\(entity, 'strength'\) \+ liveStat\(entity, 'endurance'\)\) \* FATIGUE_MULTIPLIER;/);
+  // ...and it is the SAME line the classic HUD's own snapshot uses.
+  assert.match(read('src/ui/hud.js'), /maxFatigue: maxFatigue\(vitals\) \|\| 1,/);
+  // Health and magicka DO have fields, and are left reading them.
+  assert.match(src, /\['health', parts\.health, vitals\.health \?\? 0, vitals\.maxHealth \|\| 1\]/);
+  assert.match(src, /\['magicka', parts\.magicka, vitals\.magicka \?\? 0, vitals\.maxMagicka \|\| 1\]/);
+  // CLAMPED AT BOTH ENDS: a bar cannot be more than full, and a number
+  // that says otherwise is a bug wearing a percent sign. The floor at
+  // 1 stays - never 0% while anything is left.
+  assert.match(src, /const shown = now > 0 \? Math\.max\(1, Math\.min\(100, Math\.round\(pct\)\)\) : 0;/);
 });
