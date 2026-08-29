@@ -4353,3 +4353,55 @@ omitted-`inside` case has its own arm. **Writing down "a pin that
 computes its expectation the way the code does is not a pin" did not
 stop me doing it again the next slice** - which is the argument for the
 campaign, not for the note.
+
+## TP1 - THE FAST-TRAVEL GUILD DISCOUNT + RAISESKILLS ON ARRIVAL (2026-08-29)
+
+`travelPopUp.js` flagged four things as "idling loudly". Two of them
+had stopped idling on anything:
+
+- **`GuildManager.FastTravel` (:284)**, flagged "no guild perk seam".
+  The seam is `activeMemberships`, which G2 shipped. `GuildManager`
+  folds every membership through its guild's own `FastTravel`
+  (:380-386), `Guild.FastTravel` is the identity (:241-244), and
+  exactly one guild in the game overrides it: the Temple of **Akatosh**,
+  god of time, returning `(int)(((95f - rank) / 100) * duration)`. A
+  rank-0 initiate travels in 95% of the time, a rank-9 Patriarch in 86%.
+- **`RaiseSkills` on arrival (:380)**. AUDIT 23 established that
+  `PlayerEntity.Update` runs NO advancement and that DFU calls
+  `RaiseSkills` from exactly two window-closings - rest, which shipped,
+  and this one. `shared.js`'s own doc named this site as *"the other
+  site, unported"*.
+
+**The discount lands BETWEEN `CalculateTravelTime` and
+`CalculateTripCost`** (DaggerfallTravelPopUp.cs:281-296), so Akatosh's
+blessing cuts the FARE as well as the days. That ordering is the whole
+reason the port's flag sat on the line it did, and putting the discount
+after the cost is the plausible wrong wiring - the campaign's seventh
+mutant.
+
+`raiseAtRestEnd` became **`raisePlayerSkills`**, DFU's own member name.
+The old name was true while rest was its only caller and became a small
+lie the moment travel used it; a name that misleads the next reader is
+the same defect as a stale comment, and this run has now found four of
+those.
+
+The two flags that genuinely DO still idle - the HUD smash-to-black
+fade and EXIT's key-up deferral - stay named, and a pin asserts they
+stay named, so this slice cannot be read as having closed the whole row.
+
+Pins: 6 in `test/travelguild.test.js`. Campaign: 9 mutants, 9 killed
+after two survived the first run, and the two survivors were different
+in kind:
+
+- **`break` after the discount survived every behavioural arm, and
+  always would.** Only one guild has the perk and all eight temples
+  share the HolyOrder slot, so no reachable membership book holds two -
+  the mutant is behaviourally EQUIVALENT under real data. What it
+  breaks is the contract `GuildManager.FastTravel` states: thread the
+  duration through *every* membership. The pin now guards that contract
+  explicitly rather than pretending an observable exists.
+- **Wrapping the arrival raise in `if (false)` survived**, because the
+  pin looked for the call as a substring. That is PY1's lesson in
+  another costume - *a pin that greps for a call does not test that the
+  call runs*. It matches the statement at its line start and
+  indentation now.

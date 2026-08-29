@@ -237,6 +237,61 @@ function chainTilePoints(points, px, py) {
   return points.map((p) => [(p.x - px) * TDIM, (py + 1 - p.y) * TDIM]);
 }
 
+/** RZ4 (2026-08-28) - WHERE THE CHAIN ENTERS AND LEAVES THIS PIXEL.
+ *
+ *  RZ3 gave OPEN country the smoothed chain and left a LOCATION's
+ *  pixel on the old exit rule, so that the road could still be aimed
+ *  at the town's own street (RW1). Those two rules disagree about
+ *  where a road crosses a seam, and on a drifting road they disagree
+ *  badly: measured on a 1-in-3 gradient running into a town, the open
+ *  neighbour left at tile rows 126-127 and the town pixel took the
+ *  road in at rows 63-65. Sixty-two tiles of nothing. The road tore at
+ *  every town it reached.
+ *
+ *  Both halves are wanted, and they are not actually in conflict once
+ *  they are asked for different things: the CHAIN says where the road
+ *  crosses the boundary, and the STREET says where it goes once it is
+ *  inside. So a located pixel now starts its runs at the chain's own
+ *  crossings - which its neighbours compute identically, so the seam
+ *  holds - and aims them at the nearest street, stopping at the
+ *  footprint exactly as before. */
+/** The smoothed chain as tile steps, dense enough that consecutive
+ *  samples never skip a tile. */
+function densifyChain(points, px, py) {
+  const pts = chainTilePoints(points, px, py);
+  const dense = [];
+  for (let i = 1; i < pts.length; i++) {
+    const [ax, ay] = pts[i - 1], [bx, by] = pts[i];
+    const n = Math.max(1, Math.ceil(Math.max(Math.abs(bx - ax), Math.abs(by - ay))));
+    for (let k = 0; k <= n; k++) {
+      const t = k / n;
+      dense.push([Math.round(ax + (bx - ax) * t), Math.round(ay + (by - ay) * t)]);
+    }
+  }
+  return dense;
+}
+
+function chainCrossings(points, px, py) {
+  const inside = (x, y) => x >= 0 && y >= 0 && x < TDIM && y < TDIM;
+  const clamp = (v) => (v < 0 ? 0 : v > TDIM - 1 ? TDIM - 1 : v);
+  const pts = chainTilePoints(points, px, py);
+  const out = [];
+  for (let i = 1; i < pts.length; i++) {
+    const [ax, ay] = pts[i - 1], [bx, by] = pts[i];
+    const n = Math.max(1, Math.ceil(Math.max(Math.abs(bx - ax), Math.abs(by - ay))));
+    let was = inside(Math.round(ax), Math.round(ay));
+    for (let k = 1; k <= n; k++) {
+      const t = k / n;
+      const cx = Math.round(ax + (bx - ax) * t), cy = Math.round(ay + (by - ay) * t);
+      const now = inside(cx, cy);
+      // the tile where the road steps over the boundary, either way
+      if (now !== was) out.push({ x: clamp(cx), y: clamp(cy) });
+      was = now;
+    }
+  }
+  return out;
+}
+
 /** Stamp one tile if nothing has claimed it. The skip rule is
  *  assignTiles's own, so a town's stamped ground always wins. */
 function stamp(tilemap, x, y, record) {
@@ -256,13 +311,20 @@ function stamp(tilemap, x, y, record) {
  *
  *  Out of bounds counts as claimed, so a run stops at the tilemap
  *  edge rather than walking off it. */
-function isClaimed(mask, x, y) {
-  if (x < 0 || y < 0 || x >= TDIM || y >= TDIM) return true;
+function isClaimed(mask, x, y, outOfBoundsStops = true) {
+  // OUT OF BOUNDS IS NOT THE SAME AS CLAIMED, and the difference
+  // matters. For a run that STARTS at this pixel's edge and walks
+  // inward, leaving the tilemap is the end of the run. For the chain
+  // pass it is not: that path begins outside the pixel and only its
+  // WIDTH reaches in, so treating the first outside sample as claimed
+  // stops the run before it has painted anything - which tore the road
+  // at every town on a gradient.
+  if (x < 0 || y < 0 || x >= TDIM || y >= TDIM) return outOfBoundsStops;
   return mask[x + y * TDIM] !== 0;
 }
 
 /** A band of tiles along a straight run, inclusive of both ends. */
-function stampPath(tilemap, pts, half, record, stopMask = null) {
+function stampPath(tilemap, pts, half, record, stopMask = null, outOfBoundsStops = true) {
   let painted = 0;
   let px = null, py = null;
   const band = (cx, cy) => {
@@ -282,7 +344,7 @@ function stampPath(tilemap, pts, half, record, stopMask = null) {
     // tiles - not a road you can walk, and not one tileWeight's walk
     // treats as connected.
     if (px !== null && cx !== px && cy !== py) painted += band(cx, py);
-    if (stopMask && isClaimed(stopMask, cx, cy)) break;
+    if (stopMask && isClaimed(stopMask, cx, cy, outOfBoundsStops)) break;
     painted += band(cx, cy);
     px = cx; py = cy;
   }
@@ -440,19 +502,8 @@ export function paintRoadTiles(tilemap, network, px, py, {
   // the staircase this fixes is invisible over a single pixel anyway.
   if (!located && network) {
     for (const { kind, points } of chainIndex(network).get(`${px},${py}`) ?? []) {
-      const half = halfWidth[kind] ?? 1;
-      const rec = record ?? recordByKind[kind] ?? ROAD_TILE_RECORD;
-      const pts = chainTilePoints(points, px, py);
-      const dense = [];
-      for (let i = 1; i < pts.length; i++) {
-        const [ax, ay] = pts[i - 1], [bx, by] = pts[i];
-        const n = Math.max(1, Math.ceil(Math.max(Math.abs(bx - ax), Math.abs(by - ay))));
-        for (let sN = 0; sN <= n; sN++) {
-          const t = sN / n;
-          dense.push([Math.round(ax + (bx - ax) * t), Math.round(ay + (by - ay) * t)]);
-        }
-      }
-      painted += stampPath(tilemap, dense, half, rec, null);
+      painted += stampPath(tilemap, densifyChain(points, px, py),
+        halfWidth[kind] ?? 1, record ?? recordByKind[kind] ?? ROAD_TILE_RECORD, null);
     }
     return painted;
   }
@@ -480,6 +531,38 @@ export function paintRoadTiles(tilemap, network, px, py, {
         curvePoints(exits[0].x, exits[0].y, c.x, c.y, exits[1].x, exits[1].y),
         half, rec, null);
       continue;
+    }
+    // RZ4: a located pixel starts where the CHAIN crosses its boundary,
+    // not at the fixed exit tile - otherwise it disagrees with the
+    // chain-painted neighbour and the road tears at the town's edge.
+    // The fixed exits remain the fallback for a pixel the tracer gave
+    // no chain (a network handed in without one, as the tests do).
+    // RZ4: a LOCATED pixel draws the same curve its neighbours draw,
+    // and then its street runs on top of it.
+    //
+    // It used to draw only the exit-based runs, and that tore the road
+    // at every town on a gradient: the open neighbour left at tile
+    // rows 126-127 while the town took the road in at 63-65, because
+    // the two were using different rules for where a road crosses a
+    // seam. The curve IS the road; a pixel that happens to carry a
+    // location does not get to disagree about where it runs.
+    //
+    // Both passes refuse a claimed cell, so the town's own ground is
+    // exactly as safe as it was - this adds road where the road
+    // already goes, and takes nothing from the 1:1 tile law.
+    if (network) {
+      for (const c of chainIndex(network).get(`${px},${py}`) ?? []) {
+        if (c.kind !== kind) continue;
+        // CLIPPED to this pixel first, THEN masked. The chain begins
+        // outside the pixel and isClaimed counts out-of-bounds as
+        // claimed, so masking the raw path halts the run on its very
+        // first sample; masking a path that never leaves the tilemap
+        // stops it where it should - at the town's own ground. Without
+        // the mask the run would instead walk straight through the
+        // footprint and fill the unstamped HOLES inside it, which is
+        // the thing RW1 put the mask there to prevent.
+        painted += stampPath(tilemap, densifyChain(c.points, px, py), half, rec, claimed, false);
+      }
     }
     for (const e of exits) {
       // Inward from the EDGE, so a run that meets the town stops at

@@ -513,7 +513,7 @@ test('S40 restVitals: one home for the rested hour, and the dungeon host uses it
   assert.match(dc, /advanceMinutes: \(n\) => _restAdvance\(n\),/);
   assert.doesNotMatch(dc, /fatigueRecoveryRate\(maxFatigue/);
   for (const gone of ['fullyHealed: _restFullyHealed', 'dead: () => playerEntity.health <= 0',
-    'onRestFinished: () => raiseAtRestEnd']) {
+    'onRestFinished: () => raisePlayerSkills']) {
     assert.ok(!dc.includes(gone), `the dungeon still hand-rolls ${gone}`);
   }
 });

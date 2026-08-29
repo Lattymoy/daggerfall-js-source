@@ -729,12 +729,20 @@ export function outdoorFogColor(fogSettings, skyClearColor) {
  * This is the per-host carrier: it owns the minute accumulator and the
  * sink set, so a host adds the whole tick with one call.
  */
-/** AUDIT 23 (entity-1) - DaggerfallRestWindow.cs:729-732: skills raise
- *  when the rest-finished popup CLOSES, and only there (PlayerEntity.
- *  Update runs no advancement; DaggerfallTravelPopUp.cs:380 is the
- *  other site, unported). Hosts hand this to their RestWindow deps as
- *  onRestFinished. */
-export function raiseAtRestEnd(entity, { say = () => {}, onLevelUp = null, rolls = Math.random } = {}) {
+/** PlayerEntity.RaiseSkills(), the port's one home for it.
+ *
+ *  AUDIT 23 (entity-1) established that PlayerEntity.Update runs NO
+ *  advancement - DFU calls RaiseSkills from exactly two places, and
+ *  they are both a window closing: DaggerfallRestWindow.cs:729-732
+ *  when the rest-finished popup closes, and DaggerfallTravelPopUp.cs
+ *  :380 when a fast-travel arrival tears its windows down.
+ *
+ *  TP1 renamed this from `raiseAtRestEnd`. That name was true while
+ *  rest was the only caller and became a small lie the moment travel
+ *  used it - and a name that misleads the next reader is the same
+ *  defect as a stale comment, which this run has now found four of.
+ *  It is DFU's member name instead. */
+export function raisePlayerSkills(entity, { say = () => {}, onLevelUp = null, rolls = Math.random } = {}) {
   const raised = raiseSkills(entity, Math.floor(worldMinutes()), rolls, onLevelUp) ?? [];
   for (const id of raised) say(`Your ${SKILL_NAMES[id]} skill has improved.`);
   return raised;
@@ -1303,7 +1311,7 @@ export function createRestDeps(entity, opts = {}) {
     // spread.
     restPlace: place ?? rest.restPlace ?? undefined,
     enemiesNearby: rest.enemiesNearby ?? (() => false),
-    onRestFinished: () => raiseAtRestEnd(entity, { say, onLevelUp }),
+    onRestFinished: () => raisePlayerSkills(entity, { say, onLevelUp }),
     tickVitals: () => restVitals(entity, { day: day(), inside: inside() }),
     fullyHealed: () => restFullyHealed(entity),
     dead: () => entity.health <= 0,

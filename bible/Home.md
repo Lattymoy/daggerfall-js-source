@@ -271,12 +271,12 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:903` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/world.js:909` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/world.js:1367` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
-- `src/scenes/world.js:2423` - FLAGGED in systems/healthStatus.js (macro producers pend).
-- `src/scenes/world.js:2520` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:2809` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:3170` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:3586` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:4501` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:2435` - FLAGGED in systems/healthStatus.js (macro producers pend).
+- `src/scenes/world.js:2532` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:2821` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:3182` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:3606` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:4521` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:807` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
 - `src/scenes/worldModes.js:944` - FLAGGED to the crime arc, as the Ledger records.
 - `src/scenes/worldModes.js:1013` - at the concluded deal (:1036-1051). FLAGGED: the equipped test
@@ -355,7 +355,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/skills.js:113` - *  AUDIT 18: the +10% used to be INTERIM 0 behind a flag blaming a
 - `src/systems/startingGear.js:3` - seedStartingEquipment's INTERIM iron dagger: a new character now
 - `src/systems/talk.js:17` - crime/quest slices - FLAGGED there, not here).
-- `src/systems/talk.js:267` - *  FLAGGED to the crime slice - the state lands now, verbatim).
+- `src/systems/talk.js:293` - *  FLAGGED to the crime slice - the state lands now, verbatim).
 - `src/systems/talkMacros.js:268` - *  the handler table has for them - here, the empty string. FLAGGED:
 - `src/systems/tavern.js:195` - FLAGGED, with the slices they wait on:
 - `src/systems/tradeModes.js:4` - U8c shipped the shop screen in BUY mode only, and said so: "FLAGGED
@@ -398,8 +398,7 @@ combat line numbers below are refreshed with it.
 - `src/ui/teleportPopUp.js:37` - FLAGGED: the HUD smash-to-black/fade either side of the jump
 - `src/ui/travelMapWindow.js:10` - this window since the F-slice - the Ledger row called it INTERIM
 - `src/ui/travelMapWindow.js:75` - FLAGGED, idling loudly: the guild TELEPORT mode
-- `src/ui/travelPopUp.js:52` - FLAGGED, each idling loudly: the HUD smash-to-black/fade
-- `src/ui/travelPopUp.js:155` - this.travelTimeTotalMins = t.minutes;   // GuildManager.FastTravel (:284) FLAGGED
+- `src/ui/travelPopUp.js:57` - FLAGGED, each idling loudly: the HUD smash-to-black/fade
 - `src/world/actionSystem.js:466` - FLAGGED, a live gap, not parity.
 
 ## Audits

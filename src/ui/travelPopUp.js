@@ -49,10 +49,13 @@
 // spends them), so both halves are live here and in the host's
 // deduction; the label above shows the COINS, as DFU's does.
 //
+// TP1 landed two of these: GuildManager.FastTravel's membership
+// discount (:284 - the Temple of Akatosh's, the only one in the game)
+// and RaiseSkills on arrival (:380), both of whose "no seam yet"
+// blockers had retired without the sentence moving.
+//
 // FLAGGED, each idling loudly: the HUD smash-to-black/fade
-// (:242, :381 - no fade layer in the port), GuildManager
-// .FastTravel's membership discount (:284 - no guild perk seam),
-// RaiseSkills on arrival (:380), and EXIT's key-UP deferral
+// (:242, :381 - no fade layer in the port), and EXIT's key-UP deferral
 // (:482-495: DFU plays the click on key-down and pops the window on
 // key-up, so holding E keeps the popup; the port's overlay seam has
 // no key-up edge, so E closes on the down stroke).
@@ -61,6 +64,7 @@ import { loadImg, nativeMetrics, drawImg, drawRect, shadowText } from './nativeP
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded } from './messageBox.js';
 import { drawText } from './text.js';
 import { calculateTravelTime, calculateTripCost, travelDays } from '../systems/travel.js';
+import { guildFastTravel } from '../systems/guildVariants.js';   // TP1: GuildManager.FastTravel
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 
@@ -152,7 +156,15 @@ export class TravelPopUpWindow {
       hasHorse: this.hasHorse,
       hasCart: this.hasCart,
     }, this.deps.getClimateIndex);
-    this.travelTimeTotalMins = t.minutes;   // GuildManager.FastTravel (:284) FLAGGED
+    this.travelTimeTotalMins = t.minutes;
+    // TP1 - GuildManager.FastTravel (:284), between CalculateTravelTime
+    // and CalculateTripCost exactly as DFU orders them, so the Temple
+    // of Akatosh's blessing shortens the FARE as well as the days.
+    // `guildMemberships` is the host's own entity read; a host that
+    // hands none gets the identity, which is every guild but Akatosh's
+    // anyway (Guild.FastTravel is `return duration`).
+    this.travelTimeTotalMins = guildFastTravel(this.deps.playerEntity?.() ?? null,
+      this.travelTimeTotalMins);
     const c = calculateTripCost(this.travelTimeTotalMins, t.oceanPixels, {
       sleepModeInn: this.sleepModeInn,
       hasShip: this.hasShip,
