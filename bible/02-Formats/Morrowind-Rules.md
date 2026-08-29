@@ -1,6 +1,35 @@
 # Morrowind first-person: the rules, from the reference implementation
 
-STATUS: reference only. No code in this tree implements this yet - the
+STATUS (2026-08-29, PAUSED MID-REBUILD - read this first).
+
+WHERE THIS STANDS. The first import arc was reverted whole on 2026-08-28
+after four failed fixes. The rebuild since is deliberately staged, and
+each stage is provable on the player's own data before the next begins:
+
+  MW-1  the format layer RESTORED (BSA, NIF, DDS, skeleton, anim, ESM,
+        character, NPC + the mesh viewer). It was never what failed.
+        MW7's .1st-filename helpers were STRIPPED on the way in - that
+        rule is disproven; see Part VI.
+  MW-2  the data plumbing and attach door. NO 3D toggle: there is no rig,
+        and a switch for one would be the screen lying about the build.
+  MW-D  the inspector at mw-inspect.html - what is genuinely IN the
+        player's archives. MW-D2 skinned-vs-rigid, MW-D3 real parse +
+        wireframe, MW-D4 the bones the rules name, MW-D5 assembly at
+        rest pose.
+
+CONFIRMED ON RETAIL DATA (Mac, 2026-08-29): the archives parse, the arm
+meshes parse, and the wireframes DRAW. Part VI has the rest.
+
+NEXT, IN ORDER: (1) draw the ASSEMBLED arm on the page - MW-D5's
+assembleFirstPersonArm is written and pinned but is not yet wired to a
+canvas; (2) play an idle clip through it; (3) only then a rig, and only
+then wiring into weaponRig. Nothing MW touches the game today.
+
+THE STANDING RULE FOR THIS WORK: no stage is "done" until it is visible
+on the player's own files. Four fixes shipped green and broken because
+nothing could see them.
+
+Original status line: reference only. No code in this tree implements this yet - the
 first import arc was reverted whole on 2026-08-28 (see the R7 guard in
 test/enhancedMenu.test.js). This file exists so a second attempt starts
 from what the engine ACTUALLY does instead of from what seemed
