@@ -42,7 +42,9 @@ import { accumRootRef } from '../formats/mwSkin.js';
 import {
   assembleFirstPersonArm, poseAssembly, armPieceRows, clipReport, clipUnionBounds,
   armReport, armMeshPaths, bodyParts,
+  weaponRecords, dfWeaponToMw, pickWeaponRecord, weaponAttachBone, MW_WEAPON_TYPE,
 } from '../formats/mwFirstPerson.js';
+import { WEAPONS } from '../characters/weapons.js';
 
 /** Rule 6's table, as a decision rather than a list. Werewolf is out of
  *  scope (it ships with Bloodmoon and Part VI records it ABSENT from a
@@ -216,7 +218,7 @@ export function packFpArm(pieces, out = null) {
  * Morrowind.bsa for the life of the tab. Copy what we need, release the
  * rest.
  */
-export async function buildFpArm({ race, female = false, beast = false, deps = null } = {}) {
+export async function buildFpArm({ race, female = false, beast = false, weapon = null, deps = null } = {}) {
   const d = deps || await import('../scenes/dataSource.js');
   const skeletonPath = fpSkeletonPath({ female, beast });
   try {
@@ -246,6 +248,46 @@ export async function buildFpArm({ race, female = false, beast = false, deps = n
       if (!arc) { missing.push(`${w.slot}: ${w.path} is not in your archives`); continue; }
       partBytes.push({ slot: w.slot, bytes: arc.get(w.path).slice() });
     }
+    // MW-D9: THE WEAPON, and it needs no new attach path at all.
+    //
+    // A Morrowind weapon is a RIGID part at a bone - rule 12's rigid
+    // half, the same path armcuff has proved since MW-D6 - so it rides
+    // in as one more part with an explicit `bones` override instead of
+    // the PART_BONES table. Rule 17 is that override: the generic
+    // "Weapon Bone" is replaced by the equipped type's own attach bone
+    // when the actor has that node, which is how a bow reaches
+    // "Weapon Bone Left" (rule 8).
+    //
+    // AND THE BOW COMES OUT MIRRORED, which is faithful and surprising
+    // enough to write down before someone "fixes" it. Rule 13's mirror is
+    // a SUBSTRING TEST on the attach bone's name
+    // (SceneUtil::attach, components/sceneutil/attach.cpp:166-181), and
+    // that function is the generic attach path for every part - weapons
+    // included, not body parts only. "Weapon Bone Left" contains "Left",
+    // so the bow is drawn with X negated by exactly the same rule that
+    // mirrors the left hand. Nothing here special-cases it.
+    const weaponNotes = [];
+    let weaponInfo = null;
+    const mwType = dfWeaponToMw(weapon, WEAPONS);
+    if (mwType !== MW_WEAPON_TYPE.None) {
+      const rec = pickWeaponRecord(weaponRecords(await d.loadMorrowindFile(esmName)), mwType,
+        weapon && weapon.materialName);
+      if (!rec) {
+        weaponNotes.push(`weapon: your archives carry no unenchanted Morrowind weapon of type ${mwType}`);
+      } else {
+        const path = `meshes/${rec.model}`;
+        const arc = find(path);
+        if (!arc) weaponNotes.push(`weapon: ${path} (${rec.id}) is not in your archives`);
+        else {
+          const bone = weaponAttachBone(mwType);
+          partBytes.push({ slot: 'weapon', bones: [bone], bytes: arc.get(path).slice() });
+          weaponInfo = { id: rec.id, name: rec.name, model: rec.model, type: mwType, bone };
+        }
+      }
+    } else if (weapon) {
+      weaponNotes.push('weapon: Morrowind has no weapon type for what you are holding');
+    }
+
     const clipArc = find(FP_CLIP_PATH);
     const kfBytes = clipArc ? clipArc.get(FP_CLIP_PATH).slice() : null;
     archives.length = 0;   // release the mapped archives before any parsing
@@ -294,7 +336,8 @@ export async function buildFpArm({ race, female = false, beast = false, deps = n
       cameraBone: arm.skeleton.byName.has('camera') ? 'Camera'
         : arm.skeleton.byName.has('head') ? 'Head (rule 54 fallback)' : null,
       rows: wanted,
-      notes: [...missing, ...(arm.notes || [])],
+      weapon: weaponInfo,
+      notes: [...missing, ...weaponNotes, ...(arm.notes || [])],
       binding: clip.binding,
       pieces: armPieceRows(arm.pieces).length,
     };
@@ -414,6 +457,7 @@ export function createFpArm() {
         rows: built && built.rows,
         notes: built && built.notes,
         binding: built && built.binding,
+        weapon: built && built.ok ? built.weapon : null,
         cameraBone: built && built.ok ? built.cameraBone : null,
         framing: built && built.ok ? { scale: built.framing.scale, span: built.framing.span } : null,
         clip: built && built.ok ? { start: built.clip.startTime, stop: built.clip.stopTime } : null,

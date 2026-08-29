@@ -191,3 +191,108 @@ test('MW-D8: the arm IMPORTS the assembly law, it does not carry a second copy o
   assert.match(rd('src/tools/mwInspect.js'), /export \* from '\.\.\/formats\/mwFirstPerson\.js';/,
     'and the diagnostic page reads the same home through a shim');
 });
+
+// --- MW-D9: THE WEAPON ------------------------------------------------------
+
+const wpdtRec = (id, model, type, name = 'W', { short = false, enchanted = false } = {}) => {
+  const A = (x) => [...x].map((c) => c.charCodeAt(0));
+  const Z = (x) => [...A(x), 0];
+  const U = (n) => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255];
+  const sub = (n, d) => [...A(n), ...U(d.length), ...d];
+  const w = new Uint8Array(short ? 16 : 32);
+  new DataView(w.buffer).setInt16(10, type, true);
+  const d = [...sub('NAME', Z(id)), ...sub('MODL', Z(model)), ...sub('FNAM', Z(name)),
+    ...(enchanted ? sub('ENAM', Z('ench')) : []), ...sub('WPDT', [...w])];
+  return [...A('WEAP'), ...U(d.length), ...U(0), ...U(0), ...d];
+};
+
+test('MW-D9: WPDT is read at a CITED offset, and a short record is refused not read past', async () => {
+  const { weaponRecords, MW_WEAPON_TYPE } = await import('../src/formats/mwFirstPerson.js');
+  // The layout is components/esm3/loadweap.hpp:71, quoted in the rules
+  // doc: float mWeight; int32 mValue; int16 mType; ... - so mType is at
+  // byte 10, and 4 + 4 + 2 is the whole derivation.
+  const good = weaponRecords(Uint8Array.from(wpdtRec('iron longsword', 'w/x.nif', MW_WEAPON_TYPE.LongBladeOneHand)));
+  assert.equal(good.length, 1);
+  assert.equal(good[0].type, MW_WEAPON_TYPE.LongBladeOneHand);
+  assert.equal(good[0].model, 'w/x.nif', 'and the MODL is lowercased with its slashes normalised');
+
+  // THE BRANCH NO FIXTURE REACHES, which is why it is pinned here: a
+  // truncated WPDT must leave the type at None rather than reading two
+  // bytes of whatever follows. A wrong type is not a visible failure -
+  // it is a sword drawn on the bow's bone, in the wrong hand, with
+  // nothing on screen to say so.
+  const short = weaponRecords(Uint8Array.from(wpdtRec('bad', 'w/x.nif', 9, 'W', { short: true })));
+  assert.equal(short.length, 1, 'the record is still listed');
+  assert.equal(short[0].type, MW_WEAPON_TYPE.None, 'with NO type, rather than a plausible one');
+});
+
+test('MW-D9 rules 8 + 17: the attach bone is a table, and the bow is why', async () => {
+  const { weaponAttachBone, MW_WEAPON_TYPE, DEFAULT_WEAPON_BONE } = await import('../src/formats/mwFirstPerson.js');
+  // Rule 8's column, read out. The reverted arc had FOUR weapon classes
+  // and one bone; the bow is the only weapon that changes hands.
+  assert.equal(weaponAttachBone(MW_WEAPON_TYPE.MarksmanBow), 'Weapon Bone Left');
+  assert.equal(weaponAttachBone(MW_WEAPON_TYPE.Arrow), 'Bip01 Arrow');
+  assert.equal(weaponAttachBone(MW_WEAPON_TYPE.Bolt), 'ArrowBone');
+  for (const t of ['ShortBladeOneHand', 'LongBladeOneHand', 'LongBladeTwoHand', 'BluntOneHand',
+    'BluntTwoClose', 'BluntTwoWide', 'SpearTwoWide', 'AxeOneHand', 'AxeTwoHand',
+    'MarksmanCrossbow', 'MarksmanThrown']) {
+    assert.equal(weaponAttachBone(MW_WEAPON_TYPE[t]), DEFAULT_WEAPON_BONE, `${t} takes the generic bone`);
+  }
+  // A crossbow is NOT a bow for this purpose, which is the row a
+  // four-class taxonomy gets wrong by construction.
+  assert.notEqual(weaponAttachBone(MW_WEAPON_TYPE.MarksmanCrossbow),
+    weaponAttachBone(MW_WEAPON_TYPE.MarksmanBow));
+});
+
+test('MW-D9: the Daggerfall->Morrowind mapping is DECLARED, complete, and keyed by template', async () => {
+  const { DF_TO_MW_WEAPON, dfWeaponToMw, MW_WEAPON_TYPE } = await import('../src/formats/mwFirstPerson.js');
+  const { WEAPONS } = await import('../src/characters/weapons.js');
+  // Every wieldable Daggerfall weapon template has a row. Arrow is
+  // ammunition, not a wielded weapon, and is the only omission.
+  const wieldable = Object.keys(WEAPONS).filter((k) => k !== 'Arrow');
+  for (const k of wieldable) {
+    assert.ok(k in DF_TO_MW_WEAPON, `${k} has a declared mapping`);
+  }
+  assert.equal(Object.keys(DF_TO_MW_WEAPON).length, wieldable.length, 'and no row maps a template that does not exist');
+
+  // The rows that are JUDGEMENT, pinned so a change to them is a visible
+  // change to a recorded divergence rather than a quiet edit.
+  assert.equal(DF_TO_MW_WEAPON.Claymore, MW_WEAPON_TYPE.LongBladeTwoHand, 'a Claymore is TWO-handed in Morrowind');
+  assert.equal(DF_TO_MW_WEAPON.Longsword, MW_WEAPON_TYPE.LongBladeOneHand, 'a Longsword is not');
+  assert.equal(DF_TO_MW_WEAPON.Flail, MW_WEAPON_TYPE.BluntOneHand, 'Morrowind has no flail - this row is the fudge');
+  assert.equal(DF_TO_MW_WEAPON.War_Axe, MW_WEAPON_TYPE.AxeOneHand);
+  assert.equal(DF_TO_MW_WEAPON.Battle_Axe, MW_WEAPON_TYPE.AxeTwoHand);
+  assert.equal(DF_TO_MW_WEAPON.Long_Bow, MW_WEAPON_TYPE.MarksmanBow);
+
+  // The resolver keys on templateIndex, NOT the sprite layer's
+  // WEAPON_TYPES - which folds Claymore and Longsword into one class and
+  // so cannot tell a one-hander from a two-hander.
+  assert.equal(dfWeaponToMw({ templateIndex: WEAPONS.Claymore }, WEAPONS), MW_WEAPON_TYPE.LongBladeTwoHand);
+  assert.equal(dfWeaponToMw({ templateIndex: WEAPONS.Longsword }, WEAPONS), MW_WEAPON_TYPE.LongBladeOneHand);
+  // and NONE means no weapon is drawn, which is the honest answer.
+  assert.equal(dfWeaponToMw(null, WEAPONS), MW_WEAPON_TYPE.None, 'unarmed');
+  assert.equal(dfWeaponToMw({ werecreatureClaws: true }, WEAPONS), MW_WEAPON_TYPE.None, 'wereclaws');
+  assert.equal(dfWeaponToMw({ templateIndex: WEAPONS.Arrow }, WEAPONS), MW_WEAPON_TYPE.None, 'ammunition');
+  assert.equal(dfWeaponToMw({ templateIndex: 9999 }, WEAPONS), MW_WEAPON_TYPE.None, 'a torch');
+});
+
+test('MW-D9: picking a record prefers the material, avoids the enchanted, and never substitutes a type', async () => {
+  const { weaponRecords, pickWeaponRecord, MW_WEAPON_TYPE } = await import('../src/formats/mwFirstPerson.js');
+  const recs = weaponRecords(Uint8Array.from([
+    ...wpdtRec('iron longsword', 'w/i.nif', MW_WEAPON_TYPE.LongBladeOneHand),
+    ...wpdtRec('daedric longsword', 'w/d.nif', MW_WEAPON_TYPE.LongBladeOneHand),
+    ...wpdtRec('ebony longsword of fire', 'w/e.nif', MW_WEAPON_TYPE.LongBladeOneHand, 'W', { enchanted: true }),
+    ...wpdtRec('long bow', 'w/b.nif', MW_WEAPON_TYPE.MarksmanBow),
+  ]));
+  assert.equal(recs.length, 4);
+  assert.equal(pickWeaponRecord(recs, MW_WEAPON_TYPE.LongBladeOneHand, 'Daedric').id, 'daedric longsword');
+  assert.equal(pickWeaponRecord(recs, MW_WEAPON_TYPE.LongBladeOneHand, 'Iron').id, 'iron longsword');
+  // Adamantium and Orcish both map onto ebony, whose only record here is
+  // enchanted - so the fallback is another record of the RIGHT TYPE.
+  assert.equal(pickWeaponRecord(recs, MW_WEAPON_TYPE.LongBladeOneHand, 'Orcish').enchanted, false,
+    'an enchanted record is never taken: it carries a glow this slice does not draw');
+  // THE REFUSAL. A longsword standing in for a bow would hang on the
+  // wrong bone, in the wrong hand, and look entirely deliberate.
+  assert.equal(pickWeaponRecord(recs, MW_WEAPON_TYPE.AxeTwoHand), null,
+    'a type your archives do not carry is EMPTY HANDS, not a different weapon');
+});

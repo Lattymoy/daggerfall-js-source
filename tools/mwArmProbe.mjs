@@ -72,6 +72,42 @@ const BSA_BLIND = buildBsa([
   { name: 'meshes\\b\\U.nif', data: loose('armcuff.nif') },
   { name: 'meshes\\XBase_Anim.1st.kf', data: loose('xfixture.kf') },
 ]);
+// MW-D9: a SECOND skeleton, the one that HAS the weapon bones. armskel
+// deliberately lacks them (MW-D4 asserts a skeleton that lacks a bone
+// SAYS so), so both halves of rule 8's attach-bone column stay reachable.
+const BSA_WEAPON = buildBsa([
+  { name: 'meshes\\XBase_Anim.1st.nif', data: loose('armskelw.nif') },
+  { name: 'meshes\\b\\H1.nif', data: loose('armhand.nif') },
+  { name: 'meshes\\b\\U.nif', data: loose('armcuff.nif') },
+  { name: 'meshes\\XBase_Anim.1st.kf', data: loose('armidle.kf') },
+  { name: 'meshes\\w\\blade.nif', data: loose('weapon.nif') },
+]);
+// The mesh IS here and the BONE is not - armskel omits Weapon Bone by
+// design. Without this third archive the missing-bone path is
+// unreachable, because the plain archive lacks the weapon mesh too and
+// the build refuses one step earlier for a different reason.
+const BSA_NO_WEAPON_BONE = buildBsa([
+  { name: 'meshes\\XBase_Anim.1st.nif', data: loose('armskel.nif') },
+  { name: 'meshes\\b\\H1.nif', data: loose('armhand.nif') },
+  { name: 'meshes\\b\\U.nif', data: loose('armcuff.nif') },
+  { name: 'meshes\\XBase_Anim.1st.kf', data: loose('armidle.kf') },
+  { name: 'meshes\\w\\blade.nif', data: loose('weapon.nif') },
+]);
+const wpdt = (type) => { const b = new Uint8Array(32); new DataView(b.buffer).setInt16(10, type, true); return [...b]; };
+const weap = (id, model, type, name) => {
+  const d = [...sub('NAME', zt(id)), ...sub('MODL', zt(model)), ...sub('FNAM', zt(name)), ...sub('WPDT', wpdt(type))];
+  return [...ascii('WEAP'), ...u32(d.length), ...u32(0), ...u32(0), ...d];
+};
+const ESM_WEAPON = Uint8Array.from([
+  ...body('b_n_nord_m_hands.1st', 'nord', 'hand', { model: 'b/H1.nif' }),
+  ...body('b_n_nord_m_upper arm', 'nord', 'upperarm', { model: 'b/U.nif' }),
+  // ONE mesh, and the two rows below are what put it in two different
+  // hands: type 1 goes on Weapon Bone, type 9 (the bow) on Weapon Bone
+  // Left. Same bytes, two bones - which is the whole of rule 8's column.
+  ...weap('iron longsword', 'w/blade.nif', 1, 'Iron Longsword'),
+  ...weap('long bow', 'w/blade.nif', 9, 'Long Bow'),
+]);
+
 const ESM = Uint8Array.from([
   ...body('b_n_nord_m_hands.1st', 'nord', 'hand', { model: 'b/H1.nif' }),
   ...body('b_n_nord_m_upper arm', 'nord', 'upperarm', { model: 'b/U.nif' }),
@@ -90,12 +126,18 @@ const ok = (cond, label) => { console.log(`${cond ? 'ok  ' : 'FAIL'} ${label}`);
 await page.goto('http://localhost:5224/mw-inspect.html');
 
 const b64 = (u8) => Buffer.from(u8).toString('base64');
-const FIX = { bsa: b64(BSA), blind: b64(BSA_BLIND), esm: b64(ESM) };
+const FIX = {
+  bsa: b64(BSA), blind: b64(BSA_BLIND), esm: b64(ESM),
+  weaponBsa: b64(BSA_WEAPON), weaponEsm: b64(ESM_WEAPON), noBoneBsa: b64(BSA_NO_WEAPON_BONE),
+};
+// The port's own template indices, so the probe drives the SAME mapping
+// the game does rather than a second copy of it.
+const T = { Longsword: 120, Long_Bow: 130, Dagger: 113 };
 
 /** Boot the REAL fpArm through its deps seam and drive it. Everything
  *  inside is shipped code; only IndexedDB is replaced. */
-async function boot(bsaB64) {
-  return page.evaluate(async ({ bsa, esm }) => {
+async function boot(bsaB64, { esm = FIX.esm, weapon = null } = {}) {
+  return page.evaluate(async ({ bsa, esm, weapon }) => {
     const bytes = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
     const [{ Renderer }, { MwBsaFile }, fp] = await Promise.all([
       import('/src/render/renderer.js'),
@@ -126,7 +168,7 @@ async function boot(bsaB64) {
       storedMorrowindNames: async () => ['Morrowind.esm'],
       loadMorrowindFile: async () => bytes(esm),
     };
-    const built = await arm.build({ race: 'nord', female: false, deps });
+    const built = await arm.build({ race: 'nord', female: false, weapon, deps });
     window.__arm = arm;
     window.__armRaw = built.ok ? built.arm : null;
     window.__cv = cv;
@@ -136,7 +178,7 @@ async function boot(bsaB64) {
       renderer.beginFrame(I, I, new Float32Array([0.3, -0.9, 0.2]));
     };
     return { built: { ok: built.ok, stage: built.stage, error: built.error }, status: arm.status() };
-  }, { bsa: bsaB64, esm: FIX.esm });
+  }, { bsa: bsaB64, esm, weapon });
 }
 
 /** Alpha readback off the OFFSCREEN first-person target. It is cleared to
@@ -313,6 +355,57 @@ ok(trace.slice(stopIdx + 1).every((r) => r.time >= 1.5 - 1e-6),
   'and after the first wrap the playhead never re-enters the clip intro');
 ok(new Set(trace.map((r) => Math.round(r.rightHandMaxX * 100))).size >= 3,
   'the pose moves through at least three distinct positions, measured on the piece itself');
+
+// ── L5b: THE WEAPON - RIGHT BONE, RIGHT HAND, AND IT DRAWS ──────────
+// The thing the arms exist to hold. One mesh, two records, two types -
+// so a port that ignores rule 8's attach-bone column puts the bow in the
+// sword's hand and every pixel still looks plausible.
+const sword = await boot(FIX.weaponBsa, { esm: FIX.weaponEsm, weapon: { templateIndex: T.Longsword } });
+ok(sword.built.ok, `the arm builds with a weapon in it${sword.built.ok ? '' : ` (${sword.built.stage}: ${sword.built.error})`}`);
+ok(sword.status.weapon && sword.status.weapon.id === 'iron longsword',
+  `a Daggerfall Longsword resolves to a Morrowind LongBladeOneHand record (${sword.status.weapon && sword.status.weapon.id})`);
+ok(sword.status.weapon && sword.status.weapon.bone === 'Weapon Bone',
+  `and hangs on the generic bone (${sword.status.weapon && sword.status.weapon.bone})`);
+ok(sword.status.pieces === 5, `five pieces now - four arm, one weapon (${sword.status.pieces})`);
+const swordRows = await page.evaluate(() => window.__arm.rows());
+const swordW = swordRows.find((r) => r.slot === 'weapon');
+ok(!!swordW, 'the weapon is a piece in the assembly, through the same rigid path as the cuff');
+ok(swordW && swordW.kind === 'rigid', `and it is RIGID, not skinned (${swordW && swordW.kind})`);
+ok(swordW && swordW.mirrored === false, 'and NOT mirrored, because "Weapon Bone" carries no "Left"');
+ok(swordW && swordW.bounds.maxX > 0, `it is on the RIGHT of centre (maxX ${swordW && swordW.bounds.maxX.toFixed(2)})`);
+const swordShot = await shoot(0.016);
+ok(swordShot.lit > 20, `and the weapon frame DRAWS (${swordShot.lit} lit texels)`);
+
+// THE BOW: the SAME mesh bytes, a different WEAP type, and rule 8 sends
+// it to the other hand. If the attach-bone column is ignored this lands
+// identically to the sword and nothing on screen says otherwise.
+const bow = await boot(FIX.weaponBsa, { esm: FIX.weaponEsm, weapon: { templateIndex: T.Long_Bow } });
+ok(bow.status.weapon && bow.status.weapon.bone === 'Weapon Bone Left',
+  `a BOW goes to the left bone, and only a bow does (${bow.status.weapon && bow.status.weapon.bone})`);
+const bowRows = await page.evaluate(() => window.__arm.rows());
+const bowW = bowRows.find((r) => r.slot === 'weapon');
+ok(bowW && bowW.mirrored === true,
+  'and it comes out MIRRORED - rule 13 is a substring test on the bone name, and "Weapon Bone Left" contains "Left"');
+ok(bowW && bowW.bounds.minX < 0, `so it is on the LEFT of centre (minX ${bowW && bowW.bounds.minX.toFixed(2)})`);
+ok(swordW && bowW && Math.abs(bowW.bounds.minX + swordW.bounds.maxX) < 1e-3,
+  'and it is the sword\'s own mesh with X negated, exactly - one mesh, two hands');
+
+// A weapon the archives cannot serve is a NAMED note, and the arms still
+// draw. Empty hands with a reason beats no arms at all.
+const noWeap = await boot(FIX.weaponBsa, { esm: FIX.weaponEsm, weapon: { templateIndex: T.Dagger } });
+ok(noWeap.built.ok === true, 'a weapon type your archives lack does NOT fail the arm');
+ok(noWeap.status.weapon === null, 'the hand is simply empty');
+ok((noWeap.status.notes || []).some((n) => /^weapon:/.test(n)),
+  `and the card says why (${(noWeap.status.notes || []).find((n) => /^weapon:/.test(n))})`);
+
+// And the skeleton that LACKS the weapon bones reports it rather than
+// dropping the weapon on the floor of the model origin.
+const noBone = await boot(FIX.noBoneBsa, { esm: FIX.weaponEsm, weapon: { templateIndex: T.Longsword } });
+ok(noBone.built.ok === true, 'a skeleton without Weapon Bone still builds the arms');
+ok((noBone.status.notes || []).some((n) => /no bone "Weapon Bone"/.test(n)),
+  `and NAMES the missing bone (${(noBone.status.notes || []).find((n) => /no bone/.test(n)) || 'no note'})`);
+
+await boot(FIX.bsa);   // back to the armed-with-nothing baseline for L6/L7
 
 // ── L6: THE SILENT FAILURE, REFUSED RATHER THAN DRAWN ───────────────
 // A .kf keyed to bones this skeleton lacks poses NOTHING: poseSkeleton
