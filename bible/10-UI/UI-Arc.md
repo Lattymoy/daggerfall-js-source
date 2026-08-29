@@ -8206,10 +8206,26 @@ flattened date, a third time: use what exists.
 Pins: 4 in a new test/enhancedHud.test.js. 6 mutations, 6 dead.
 Verified live with a struck foe, two effects and a real heading.
 
-ON THE HORIZON for this HUD: the readied spell and the equipped
-weapon (the reference's ability bar has no Daggerfall equivalent, but
-those two are what it would hold), a crosshair in the pixel face, and
-the breath bar.
+PX30b - THE HANDS, AND THE BREATH. The reference's ability bar has no
+Daggerfall equivalent - there are no hotkeyed abilities - but the two
+things it would hold do exist: the spell you have READIED
+(hostMagic's own `readied()`) and the weapon in your hand. Two
+plaques, each drawn ONLY when filled, because an empty one is PX14's
+drawn door and a HUD is the worst place for furniture that says
+nothing. They arrive through drawHud's own options bag, so a host that
+knows neither passes neither.
+
+And the BREATH, above the vitals, on DFU's own two laws imported
+rather than restated: drawn only while holding breath (HUDBreathBar -
+Amount 0 draws nothing) and RED below `(endurance >> 3) + 4`, which is
+`breathShortThreshold` out of the classic HUD, with `maxBreath` out of
+statMods. It is the one bar DFU draws under BOTH huds, which is why it
+belongs on this side too.
+
+Pins: 1 more (5). 4 more mutations, 4 dead.
+
+ON THE HORIZON for this HUD: a crosshair in the pixel face, the
+interaction-mode icon, and the arrow count.
 
 PX13b (Mac: the stage ground was still the old basic ui): .stagebody
 carried var(--iron) - the SAME gap-paint trick PX10b found on the
