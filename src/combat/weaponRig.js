@@ -183,7 +183,10 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // Paralysis freezes the arm as it freezes the swing - a clip that
       // keeps idling while the player cannot move is the animation
       // saying something the game does not mean.
-      if (!paralyzed && fpArm.active()) fpArm.update(dt);
+      // MW-D9f: ready(), NOT active(). active() requires the GPU mesh
+      // that update() is the only thing that creates, so gating the
+      // update on it meant a built arm never ran a frame and never drew.
+      if (!paralyzed && fpArm.ready()) fpArm.update(dt);
       return paralyzed ? [] : playerWeapon.update(dt);
     },
     /** The overlay draw, LAST in the host's frame (composites over the
